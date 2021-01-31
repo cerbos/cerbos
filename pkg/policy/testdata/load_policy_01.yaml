@@ -1,0 +1,39 @@
+---
+version: "20210131"
+id: my_policy
+dynamicRoles:
+  definitions:
+    - name: employee_that_owns_the_record
+      parentRoles: ["employee"]
+      computation:
+        script: |-
+          is_owner { resource.owner == request.principal.id }
+
+    - name: any_employee
+      parentRoles: ["employee"]
+
+    - name: direct_manager
+      parentRoles: ["manager"]
+      computation:
+        match:
+          expr:
+            - "resource.attr.geography == principal.attr.geography"
+            - "resource.attr.geography == principal.attr.managed_geographies"
+            - "resource.attr.team IN principal.attr.managed_teams"
+resources:
+  - resource: leave_request
+    actions:
+      - action: create
+        subjects:
+          - employee_that_owns_the_record
+        effect: EFFECT_ALLOW
+
+      - action: view:public
+        condition:
+          match:
+            expr:
+              - "resource.state == APPROVED"
+              - "resource.upcoming_request == true"
+        subjects:
+          - any_employee
+        effect: EFFECT_ALLOW

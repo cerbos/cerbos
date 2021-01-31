@@ -1,0 +1,62 @@
+syntax = "proto3";
+
+package policy.v1;
+
+option go_package = "github.com/charithe/menshen/pkg/generated/policy/v1/policyv1;policyv1";
+
+message PolicySet {
+    map<string,Policy> policies = 1;
+}
+
+message Policy {
+    string version = 1; 
+    string id = 2;
+    oneof subjects {
+        PrincipalList principals = 3;
+        DynamicRoleList dynamic_roles = 4;
+    }
+    repeated Resource resources = 5;
+}
+
+message PrincipalList {
+    repeated string names = 1;
+}
+
+message DynamicRoleList {
+    repeated DynamicRole definitions = 1;
+}
+
+message DynamicRole {
+    string name = 1;
+    repeated string parent_roles = 2;
+    Computation computation = 3;
+}
+
+message Computation {
+    oneof computation {
+        Match match = 1;
+        string script = 2;
+    }
+}
+
+message Match {
+    repeated string expr = 1;
+}
+
+message Resource {
+    string resource = 1;
+    repeated Action actions = 2;
+}
+
+enum Effect {
+    EFFECT_UNSPECIFIED = 0;
+    EFFECT_ALLOW = 1;
+    EFFECT_DENY = 2;
+}
+
+message Action {
+    string action = 1;
+    repeated string subjects = 2;
+    Computation condition = 3;
+    Effect effect = 4;
+}
