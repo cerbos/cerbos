@@ -2,31 +2,63 @@ syntax = "proto3";
 
 package policy.v1;
 
-option go_package = "github.com/charithe/menshen/pkg/generated/policy/v1/policyv1;policyv1";
+option go_package = "github.com/charithe/menshen/pkg/generated/policy/v1;policyv1";
+
+import "shared/v1/shared.proto";
 
 message PolicySet {
-    map<string,Policy> policies = 1;
+    map<string,DerivedRoles> derived_roles = 1;
+    map<string,Policy> resource_policies = 2;
+    map<string,Policy> principal_policies = 3;
 }
 
 message Policy {
-    string version = 1; 
-    string id = 2;
-    oneof subjects {
-        PrincipalList principals = 3;
-        DynamicRoleList dynamic_roles = 4;
+    string api_version = 1;
+    oneof policy_type {
+        ResourcePolicy resource_policy = 2;
+        PrincipalPolicy principal_policy = 3;
     }
-    repeated Resource resources = 5;
 }
 
-message PrincipalList {
-    repeated string names = 1;
+message ResourcePolicy {
+    string resource = 1;
+    string version = 2;
+    repeated string import_derived_roles = 3;
+    repeated ResourceRule rules = 4;
 }
 
-message DynamicRoleList {
-    repeated DynamicRole definitions = 1;
+message ResourceRule {
+    string action = 1;
+    repeated string derived_roles = 2;
+    repeated string roles = 3;
+    Computation condition = 4;
+    shared.v1.Effect effect = 5;
 }
 
-message DynamicRole {
+message PrincipalPolicy {
+    string principal = 1;
+    string version = 2;
+    repeated PrincipalRule rules = 3;
+}
+
+message PrincipalRule {
+    message Action {
+        string action = 1;
+        Computation condition = 2;
+        shared.v1.Effect effect = 3;
+    }
+
+    string resource = 1;
+    repeated Action actions = 2;
+}
+
+message DerivedRoles {
+    string api_version = 1;
+    string name = 2;
+    repeated RoleDef definitions = 4;
+}
+
+message RoleDef {
     string name = 1;
     repeated string parent_roles = 2;
     Computation computation = 3;
@@ -41,22 +73,4 @@ message Computation {
 
 message Match {
     repeated string expr = 1;
-}
-
-message Resource {
-    string resource = 1;
-    repeated Action actions = 2;
-}
-
-enum Effect {
-    EFFECT_UNSPECIFIED = 0;
-    EFFECT_ALLOW = 1;
-    EFFECT_DENY = 2;
-}
-
-message Action {
-    string action = 1;
-    repeated string subjects = 2;
-    Computation condition = 3;
-    Effect effect = 4;
 }

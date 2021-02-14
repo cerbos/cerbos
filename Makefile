@@ -4,6 +4,12 @@ BUF := $(abspath $(TOOLS_BIN_DIR)/buf)
 GOLANGCI_LINT := $(abspath $(TOOLS_BIN_DIR)/golangci-lint)
 PROTOC_GEN_GO := $(abspath $(TOOLS_BIN_DIR)/protoc-gen-go)
 
+PKG := github.com/charithe/menshen
+VERSION := $(shell git describe --tags --always --dirty)
+BUILD_DATE := $(shell date +%Y%m%d-%H%M)
+DOCKER_IMAGE := charithe/menshen:$(VERSION)
+DOCKER := docker
+
 GEN_DIR := pkg/generated
 
 $(BUF): 
@@ -32,3 +38,15 @@ generate: clean $(BUF) $(PROTOC_GEN_GO)
 .PHONY: test
 test:
 	@ go test -v ./...
+
+.PHONY: build
+build: generate test
+	CGO_ENABLED=0 GOOS=linux go build -a -ldflags '-w -s -X $(PKG)/pkg/util.Version=$(VERSION) -X $(PKG)/pkg/util.BuildDate=$(BUILD_DATE)' .
+
+.PHONY: container
+container:
+	@ $(DOCKER) build -t $(DOCKER_IMAGE) .
+
+.PHONY: run
+run:
+	@ go run main.go server --log-level=DEBUG --policy-dir=pkg/testdata/store

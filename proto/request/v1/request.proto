@@ -1,0 +1,29 @@
+syntax = "proto3";
+
+package request.v1;
+
+import "google/protobuf/struct.proto";
+
+option go_package = "github.com/charithe/menshen/pkg/generated/request/v1;requestv1";
+
+message Request {
+    string request_id = 1;
+    Resource resource = 2;
+    Principal principal = 3;
+    string action = 4;
+
+}
+
+message Resource {
+    string name = 1;
+    string version = 2;
+    map<string,google.protobuf.Value> attr = 3;
+}
+
+message Principal {
+    string id = 1;
+    string version = 2;
+    repeated string roles = 3;
+    map<string, google.protobuf.Value> attr = 4;
+}
+

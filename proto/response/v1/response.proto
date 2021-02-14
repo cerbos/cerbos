@@ -1,0 +1,15 @@
+syntax = "proto3";
+
+package response.v1;
+
+option go_package = "github.com/charithe/menshen/pkg/generated/response/v1;responsev1";
+
+import "shared/v1/shared.proto";
+
+message Response {
+    string request_id = 1;
+    uint32 status_code = 2;
+    string status_message = 3;
+    shared.v1.Effect effect = 4;
+}
+

@@ -1,0 +1,48 @@
+{
+  "apiVersion": "paams.dev/v1",
+  "resourcePolicy": {
+    "resource": "leave_request",
+    "version": "20210210",
+    "importDerivedRoles": [
+      "my_derived_roles"
+    ],
+    "rules": [
+      {
+        "action": "*",
+        "roles": [
+          "admin"
+        ],
+        "effect": "EFFECT_ALLOW"
+      },
+      {
+        "action": "create",
+        "derivedRoles": [
+          "employee_that_owns_the_record"
+        ],
+        "effect": "EFFECT_ALLOW"
+      },
+      {
+        "action": "view:*",
+        "derivedRoles": [
+          "employee_that_owns_the_record",
+          "direct_manager"
+        ],
+        "effect": "EFFECT_ALLOW"
+      },
+      {
+        "action": "approve",
+        "derivedRoles": [
+          "direct_manager"
+        ],
+        "condition": {
+          "match": {
+            "expr": [
+              "$resource.attr.status == PENDING_APPROVAL"
+            ]
+          }
+        },
+        "effect": "EFFECT_ALLOW"
+      }
+    ]
+  }
+}

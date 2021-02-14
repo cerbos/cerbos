@@ -1,0 +1,41 @@
+{
+  "apiVersion":  "paams.dev/v1",
+  "name":  "my_derived_roles",
+  "definitions":  [
+    {
+      "name":  "admin",
+      "parentRoles":  [
+        "admin"
+      ]
+    },
+    {
+      "name":  "employee_that_owns_the_record",
+      "parentRoles":  [
+        "employee"
+      ],
+      "computation":  {
+        "script":  "input.resource.attr.owner == input.principal.id"
+      }
+    },
+    {
+      "name":  "any_employee",
+      "parentRoles":  [
+        "employee"
+      ]
+    },
+    {
+      "name":  "direct_manager",
+      "parentRoles":  [
+        "manager"
+      ],
+      "computation":  {
+        "match":  {
+          "expr":  [
+            "$resource.attr.geography == $principal.attr.geography",
+            "$resource.attr.geography == $principal.attr.managed_geographies"
+          ]
+        }
+      }
+    }
+  ]
+}

@@ -1,4 +1,4 @@
-package policy_test
+package policy
 
 import (
 	"os"
@@ -6,69 +6,49 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/stretchr/testify/require"
+	"google.golang.org/protobuf/reflect/protoreflect"
 	"google.golang.org/protobuf/testing/protocmp"
 
 	policyv1 "github.com/charithe/menshen/pkg/generated/policy/v1"
-	"github.com/charithe/menshen/pkg/policy"
+	sharedv1 "github.com/charithe/menshen/pkg/generated/shared/v1"
 )
 
 var (
-	policy01 = policyv1.Policy{
-		Version: "20210131",
-		Id:      "my_policy",
-		Subjects: &policyv1.Policy_DynamicRoles{
-			DynamicRoles: &policyv1.DynamicRoleList{
-				Definitions: []*policyv1.DynamicRole{
+	policy01 = &policyv1.Policy{
+		ApiVersion: "paams.dev/v1",
+		PolicyType: &policyv1.Policy_ResourcePolicy{
+			ResourcePolicy: &policyv1.ResourcePolicy{
+				Resource:           "leave_request",
+				Version:            "20210210",
+				ImportDerivedRoles: []string{"my_derived_roles"},
+				Rules: []*policyv1.ResourceRule{
 					{
-						Name:        "employee_that_owns_the_record",
-						ParentRoles: []string{"employee"},
-						Computation: &policyv1.Computation{
-							Computation: &policyv1.Computation_Script{
-								Script: "is_owner { resource.owner == request.principal.id }",
-							},
-						},
+						Action: "*",
+						Roles:  []string{"admin"},
+						Effect: sharedv1.Effect_EFFECT_ALLOW,
 					},
+
 					{
-						Name:        "any_employee",
-						ParentRoles: []string{"employee"},
+						Action:       "create",
+						DerivedRoles: []string{"employee_that_owns_the_record"},
+						Effect:       sharedv1.Effect_EFFECT_ALLOW,
 					},
+
 					{
-						Name:        "direct_manager",
-						ParentRoles: []string{"manager"},
-						Computation: &policyv1.Computation{
-							Computation: &policyv1.Computation_Match{
-								Match: &policyv1.Match{
-									Expr: []string{
-										"resource.attr.geography == principal.attr.geography",
-										"resource.attr.geography == principal.attr.managed_geographies",
-										"resource.attr.team IN principal.attr.managed_teams",
-									},
-								},
-							},
-						},
+						Action:       "view:*",
+						DerivedRoles: []string{"employee_that_owns_the_record", "direct_manager"},
+						Effect:       sharedv1.Effect_EFFECT_ALLOW,
 					},
-				},
-			},
-		},
-		Resources: []*policyv1.Resource{
-			{
-				Resource: "leave_request",
-				Actions: []*policyv1.Action{
+
 					{
-						Action:   "create",
-						Subjects: []string{"employee_that_owns_the_record"},
-						Effect:   policyv1.Effect_EFFECT_ALLOW,
-					},
-					{
-						Action:   "view:public",
-						Subjects: []string{"any_employee"},
-						Effect:   policyv1.Effect_EFFECT_ALLOW,
+						Action:       "approve",
+						DerivedRoles: []string{"direct_manager"},
+						Effect:       sharedv1.Effect_EFFECT_ALLOW,
 						Condition: &policyv1.Computation{
 							Computation: &policyv1.Computation_Match{
 								Match: &policyv1.Match{
 									Expr: []string{
-										"resource.state == APPROVED",
-										"resource.upcoming_request == true",
+										"$resource.attr.status == PENDING_APPROVAL",
 									},
 								},
 							},
@@ -78,24 +58,128 @@ var (
 			},
 		},
 	}
+
+	policy02 = &policyv1.Policy{
+		ApiVersion: "paams.dev/v1",
+		PolicyType: &policyv1.Policy_PrincipalPolicy{
+			PrincipalPolicy: &policyv1.PrincipalPolicy{
+				Principal: "donald_duck",
+				Version:   "20210210",
+				Rules: []*policyv1.PrincipalRule{
+					{
+						Resource: "leave_request",
+						Actions: []*policyv1.PrincipalRule_Action{
+							{
+								Action: "*",
+								Effect: sharedv1.Effect_EFFECT_ALLOW,
+								Condition: &policyv1.Computation{
+									Computation: &policyv1.Computation_Match{
+										Match: &policyv1.Match{
+											Expr: []string{
+												"$resource.attr.dev_record == true",
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+					{
+						Resource: "salary_record",
+						Actions: []*policyv1.PrincipalRule_Action{
+							{
+								Action: "*",
+								Effect: sharedv1.Effect_EFFECT_DENY,
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	derivedRoles01 = &policyv1.DerivedRoles{
+		ApiVersion: "paams.dev/v1",
+		Name:       "my_derived_roles",
+		Definitions: []*policyv1.RoleDef{
+			{
+				Name:        "admin",
+				ParentRoles: []string{"admin"},
+			},
+			{
+				Name:        "employee_that_owns_the_record",
+				ParentRoles: []string{"employee"},
+				Computation: &policyv1.Computation{
+					Computation: &policyv1.Computation_Script{
+						Script: "input.resource.attr.owner == input.principal.id",
+					},
+				},
+			},
+			{
+				Name:        "any_employee",
+				ParentRoles: []string{"employee"},
+			},
+			{
+				Name:        "direct_manager",
+				ParentRoles: []string{"manager"},
+				Computation: &policyv1.Computation{
+					Computation: &policyv1.Computation_Match{
+						Match: &policyv1.Match{
+							Expr: []string{
+								"$resource.attr.geography == $principal.attr.geography",
+								"$resource.attr.geography == $principal.attr.managed_geographies",
+							},
+						},
+					},
+				},
+			},
+		},
+	}
 )
 
-func TestLoadPolicy(t *testing.T) {
+func TestLoadFromJSONOrYAML(t *testing.T) {
 	testCases := []struct {
 		name    string
 		input   string
-		want    *policyv1.Policy
+		want    protoreflect.ProtoMessage
+		have    protoreflect.ProtoMessage
 		wantErr bool
 	}{
 		{
-			name:  "Valid YAML",
-			input: "testdata/load_policy_01.yaml",
-			want:  &policy01,
+			name:  "YAML ResourcePolicy",
+			input: "../testdata/formats/resource_policy_01.yaml",
+			want:  policy01,
+			have:  &policyv1.Policy{},
 		},
 		{
-			name:  "Valid JSON",
-			input: "testdata/load_policy_01.json",
-			want:  &policy01,
+			name:  "JSON ResourcePolicy",
+			input: "../testdata/formats/resource_policy_01.json",
+			want:  policy01,
+			have:  &policyv1.Policy{},
+		},
+		{
+			name:  "YAML PrincipalPolicy",
+			input: "../testdata/formats/principal_policy_01.yaml",
+			want:  policy02,
+			have:  &policyv1.Policy{},
+		},
+		{
+			name:  "JSON PrincipalPolicy",
+			input: "../testdata/formats/principal_policy_01.json",
+			want:  policy02,
+			have:  &policyv1.Policy{},
+		},
+		{
+			name:  "YAML DerivedRoles",
+			input: "../testdata/formats/derived_roles_01.yaml",
+			want:  derivedRoles01,
+			have:  &policyv1.DerivedRoles{},
+		},
+		{
+			name:  "JSON DerivedRoles",
+			input: "../testdata/formats/derived_roles_01.json",
+			want:  derivedRoles01,
+			have:  &policyv1.DerivedRoles{},
 		},
 	}
 
@@ -107,12 +191,12 @@ func TestLoadPolicy(t *testing.T) {
 
 			defer f.Close()
 
-			have, err := policy.LoadPolicy(f)
+			err = loadFromJSONOrYAML(f, tc.have)
 			if tc.wantErr {
 				require.Error(t, err)
 			} else {
 				require.NoError(t, err)
-				require.Empty(t, cmp.Diff(tc.want, have, protocmp.Transform()))
+				require.Empty(t, cmp.Diff(tc.want, tc.have, protocmp.Transform()))
 			}
 		})
 	}
