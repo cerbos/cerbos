@@ -17,7 +17,7 @@ const (
 	denyVal         = `"deny"`
 	derivedRolesMap = "derived_roles"
 	effectIdent     = "effect"
-	permissionsMap  = "permissions"
+	noMatchVal      = `"no_match"`
 	space           = " "
 )
 
@@ -91,6 +91,10 @@ func (rg *RegoGen) addParentRolesCheck(roleList []string) error {
 
 func (rg *RegoGen) DefaultEffectDeny() {
 	rg.line("default ", effectIdent, " = ", denyVal)
+}
+
+func (rg *RegoGen) DefaultEffectNoMatch() {
+	rg.line("default ", effectIdent, " = ", noMatchVal)
 }
 
 func (rg *RegoGen) AddResourceRule(rule *policyv1.ResourceRule) error {

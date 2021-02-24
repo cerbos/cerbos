@@ -2,6 +2,7 @@ package server
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"os"
 	"os/signal"
@@ -10,15 +11,15 @@ import (
 	"github.com/spf13/cobra"
 	"go.uber.org/zap"
 
-	"github.com/charithe/menshen/pkg/policy"
+	"github.com/charithe/menshen/pkg/config"
 	"github.com/charithe/menshen/pkg/server"
+	"github.com/charithe/menshen/pkg/storage"
 	"github.com/charithe/menshen/pkg/util"
 )
 
 type serverArgs struct {
 	logLevel   string
-	listenAddr string
-	policyDir  string
+	configFile string
 }
 
 var args = serverArgs{}
@@ -27,55 +28,75 @@ const defaultTimeout = 30 * time.Second
 
 func NewCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "server",
-		Short: "Start server",
-		RunE:  doRun,
+		Use:          "server",
+		Short:        "Start server",
+		RunE:         doRun,
+		SilenceUsage: true,
 	}
 
-	cmd.Flags().StringVar(&args.logLevel, "log-level", "INFO", "Log level")
-	cmd.Flags().StringVar(&args.listenAddr, "listen-addr", ":9999", "Listen address")
-	cmd.Flags().StringVar(&args.policyDir, "policy-dir", "", "Path to the directory containing policies")
+	cmd.Flags().StringVar(&args.logLevel, "loglevel", "INFO", "Log level")
+	cmd.Flags().StringVar(&args.configFile, "config", "", "Path to config file")
+
+	cmd.MarkFlagFilename("config")
+	cmd.MarkFlagRequired("config")
 
 	return cmd
 }
 
 func doRun(_ *cobra.Command, _ []string) error {
 	util.InitLogging(args.logLevel)
+	log := zap.S().Named("http.server")
 
-	checker, err := policy.NewChecker(args.policyDir)
-	if err != nil {
-		return err
+	if err := config.Init(args.configFile); err != nil {
+		log.Errorw("Failed to load configuration", "error", err)
+		return fmt.Errorf("failed to load config file %s: %w", args.configFile, err)
 	}
 
-	return startHTTPServer(server.New(checker))
-}
+	conf := config.Get()
 
-func startHTTPServer(s *server.Server) error {
+	ctx, stopFunc := signal.NotifyContext(context.Background(), os.Interrupt)
+	defer stopFunc()
+
+	store, err := storage.New(ctx, conf.Storage)
+	if err != nil {
+		log.Errorw("Failed to create store", "error", err)
+		return fmt.Errorf("failed to create store: %w", err)
+	}
+
+	server, err := server.New(store)
+	if err != nil {
+		log.Errorw("Failed to initialize server", "error", err)
+		return fmt.Errorf("failed to create http server; %w", err)
+	}
+
+	// TODO (cell) Configure TLS
+
 	h := &http.Server{
-		Addr:              args.listenAddr,
-		ErrorLog:          zap.NewStdLog(zap.L().Named("httperr")),
-		Handler:           s.Handler(),
+		Addr:              conf.Server.ListenAddr,
+		ErrorLog:          zap.NewStdLog(zap.L().Named("http.error")),
+		Handler:           server.Handler(),
 		ReadHeaderTimeout: defaultTimeout,
 		ReadTimeout:       defaultTimeout,
 		WriteTimeout:      defaultTimeout,
 	}
 
-	log := zap.S().Named("http.server")
-
+	errChan := make(chan error, 1)
 	go func() {
-		log.Infof("Starting HTTP server on %s", args.listenAddr)
+		log.Infof("Starting HTTP server on %s", conf.Server.ListenAddr)
 		if err := h.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			log.Fatalf("Failed to start HTTP server", "error", err)
+			errChan <- fmt.Errorf("http server failed: %w", err)
 		}
 	}()
 
-	shutdownChan := make(chan os.Signal, 1)
-	signal.Notify(shutdownChan, os.Interrupt)
-	<-shutdownChan
+	select {
+	case err := <-errChan:
+		log.Errorw("Stopping due to error", "error", err)
+		return err
+	case <-ctx.Done():
+		log.Info("Shutting down")
+		shutdownCtx, cancelFunc := context.WithTimeout(context.Background(), defaultTimeout)
+		defer cancelFunc()
 
-	log.Info("Shutting down")
-	ctx, cancelFunc := context.WithTimeout(context.Background(), defaultTimeout)
-	defer cancelFunc()
-
-	return h.Shutdown(ctx)
+		return h.Shutdown(shutdownCtx)
+	}
 }

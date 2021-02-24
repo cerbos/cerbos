@@ -1,6 +1,6 @@
 package paams.principal.donald_duck.v20210210
 
-default effect = "deny"
+default effect = "no_match"
 
 effect = "allow" {
     glob.match("leave_request", [":"], input.resource.name)

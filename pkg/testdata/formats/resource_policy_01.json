@@ -37,7 +37,7 @@
         "condition": {
           "match": {
             "expr": [
-              "$resource.attr.status == PENDING_APPROVAL"
+              "$resource.attr.status == \"PENDING_APPROVAL\""
             ]
           }
         },

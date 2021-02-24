@@ -1,4 +1,4 @@
-FROM golang:1.15-alpine as builder
+FROM golang:1.16-alpine as builder
 ARG SRC_DIR=/go/src/github.com/charithe/menshen
 RUN apk --no-cache add --update make build-base git
 ADD . $SRC_DIR

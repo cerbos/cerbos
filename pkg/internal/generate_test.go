@@ -16,6 +16,7 @@ import (
 
 	policyv1 "github.com/charithe/menshen/pkg/generated/policy/v1"
 	"github.com/charithe/menshen/pkg/internal"
+	"github.com/charithe/menshen/pkg/namer"
 	"github.com/charithe/menshen/pkg/policy"
 )
 
@@ -25,60 +26,16 @@ type testCase struct {
 	want  string
 }
 
-func TestCompile(t *testing.T) {
-	dr := loadDerivedRoles(t, "../testdata/store/derived_roles/derived_roles_01.yaml")
-	rp := loadPolicy(t, "../testdata/store/resource_policies/policy_01.yaml")
-	pp := loadPolicy(t, "../testdata/store/principal_policies/policy_01.yaml")
-
-	pset := &policyv1.PolicySet{
-		DerivedRoles:      map[string]*policyv1.DerivedRoles{"../testdata/derived_roles/derived_roles_01.yaml": dr},
-		ResourcePolicies:  map[string]*policyv1.Policy{"../testdata/resource_policies/policy_01.yaml": rp},
-		PrincipalPolicies: map[string]*policyv1.Policy{"../testdata/principal_policies/policy_01.yaml": pp},
-	}
-
-	result, err := internal.Compile(pset)
-	require.NoError(t, err)
-	require.NotNil(t, result.Compiler)
-
-	require.Contains(t, result.Resources, "leave_request")
-	require.Equal(t, "20210210", result.Resources["leave_request"].HighestVersion)
-	require.Contains(t, result.Resources["leave_request"].Versions, "20210210")
-	require.Equal(t, "data.paams.resource.leave_request.v20210210.effect", result.Resources["leave_request"].EffectQueryForVersion(""))
-	require.Equal(t, "data.paams.resource.leave_request.v20210210.effect", result.Resources["leave_request"].EffectQueryForVersion("20210210"))
-
-	require.Contains(t, result.Principals, "donald_duck")
-	require.Equal(t, "20210210", result.Principals["donald_duck"].HighestVersion)
-	require.Contains(t, result.Principals["donald_duck"].Versions, "20210210")
-	require.Equal(t, "data.paams.principal.donald_duck.v20210210.effect", result.Principals["donald_duck"].EffectQueryForVersion(""))
-	require.Equal(t, "data.paams.principal.donald_duck.v20210210.effect", result.Principals["donald_duck"].EffectQueryForVersion("20210210"))
-}
-
-func TestCompileDerivedRoles(t *testing.T) {
-	testCases := generateTestCasesFromPath(t, "../testdata/store/derived_roles")
-
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			dr := loadDerivedRoles(t, tc.input)
-
-			have, err := internal.CompileDerivedRoles(internal.DerivedRolesModuleName(dr), dr)
-			require.NoError(t, err, "Failed to compile %s", tc.input)
-
-			want := loadRegoModule(t, tc.want)
-			compareRegoModules(t, want, have)
-		})
-	}
-}
-
-func TestCompilePolicy(t *testing.T) {
+func TestGenerateRegoModule(t *testing.T) {
 	testFunc := func(tc testCase) func(*testing.T) {
 		return func(t *testing.T) {
 			p := loadPolicy(t, tc.input)
 
-			have, err := internal.CompilePolicy(internal.PolicyModuleName(p), p)
-			require.NoError(t, err, "Failed to compile %s", tc.input)
+			have, err := internal.GenerateRegoModule(namer.ModuleName(p), p)
+			require.NoError(t, err, "Failed to generate module from %s", tc.input)
 
 			want := loadRegoModule(t, tc.want)
-			compareRegoModules(t, want, have.Mod)
+			compareRegoModules(t, want, have)
 		}
 	}
 
@@ -97,17 +54,14 @@ func TestCompilePolicy(t *testing.T) {
 			t.Run(tc.name, testFunc(tc))
 		}
 	})
-}
 
-func loadDerivedRoles(t *testing.T, path string) *policyv1.DerivedRoles {
-	t.Helper()
-	inp := mkReadCloser(t, path)
-	defer inp.Close()
+	t.Run("derived_roles", func(t *testing.T) {
+		testCases := generateTestCasesFromPath(t, "../testdata/store/derived_roles")
 
-	dr, err := policy.LoadDerivedRoles(inp)
-	require.NoError(t, err, "Failed to load %s", path)
-
-	return dr
+		for _, tc := range testCases {
+			t.Run(tc.name, testFunc(tc))
+		}
+	})
 }
 
 func loadPolicy(t *testing.T, path string) *policyv1.Policy {
@@ -115,7 +69,7 @@ func loadPolicy(t *testing.T, path string) *policyv1.Policy {
 	inp := mkReadCloser(t, path)
 	defer inp.Close()
 
-	p, err := policy.LoadPolicy(inp)
+	p, _, err := policy.ReadPolicy(inp)
 	require.NoError(t, err, "Failed to load %s", path)
 
 	return p

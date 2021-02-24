@@ -4,9 +4,9 @@ package shared.v1;
 
 option go_package = "github.com/charithe/menshen/pkg/generated/shared/v1;sharedv1";
 
-
 enum Effect {
     EFFECT_UNSPECIFIED = 0;
     EFFECT_ALLOW = 1;
     EFFECT_DENY = 2;
+    EFFECT_NO_MATCH = 3;
 }

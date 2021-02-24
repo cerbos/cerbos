@@ -1,0 +1,8 @@
+---
+server:
+  listenAddr: ":9999"
+
+storage:
+  driver: "disk"
+  disk:
+    directory: pkg/testdata/store

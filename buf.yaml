@@ -2,10 +2,14 @@
 version: v1beta1
 build:
   roots:
+    - _vendor
     - proto
+
 lint:
   use:
     - DEFAULT
+  ignore:
+    - validate
 
 breaking:
   use:

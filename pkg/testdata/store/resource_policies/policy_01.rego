@@ -23,6 +23,11 @@ effect = "allow" {
 }
 
 effect = "allow" {
+    glob.match("view:public", [":"], input.action)
+    derived_roles["any_employee"] == true    
+}
+
+effect = "allow" {
     glob.match("approve", [":"], input.action)
     derived_roles["direct_manager"] == true    
     input.resource.attr.status == "PENDING_APPROVAL"

@@ -2,46 +2,76 @@ package server
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"net/http"
+	"sync"
 
 	"github.com/gorilla/mux"
 	"go.uber.org/zap"
 	"google.golang.org/protobuf/encoding/protojson"
 
+	policyv1 "github.com/charithe/menshen/pkg/generated/policy/v1"
 	requestv1 "github.com/charithe/menshen/pkg/generated/request/v1"
 	responsev1 "github.com/charithe/menshen/pkg/generated/response/v1"
 	sharedv1 "github.com/charithe/menshen/pkg/generated/shared/v1"
+	"github.com/charithe/menshen/pkg/namer"
 	"github.com/charithe/menshen/pkg/policy"
+	"github.com/charithe/menshen/pkg/storage"
 )
 
 const maxRequestSize = 1024 * 1024 // 1 MiB
 
 type Server struct {
+	log     *zap.SugaredLogger
+	store   storage.Store
+	mu      sync.RWMutex
 	checker *policy.Checker
 }
 
-func New(checker *policy.Checker) *Server {
-	return &Server{checker: checker}
+func New(store storage.Store) (*Server, error) {
+	index := store.GetIndex()
+	checker := index.GetChecker()
+
+	s := &Server{log: zap.S().Named("http.server"), store: store, checker: checker}
+	index.AddWatcher("http.server", s)
+
+	return s, nil
+}
+
+func (s *Server) IndexUpdated(revision uint64) {
+	s.log.Infow("Detected index update", "revision", revision)
+
+	checker := s.store.GetIndex().GetChecker()
+
+	s.mu.Lock()
+	s.checker = checker
+	s.mu.Unlock()
+
+	s.log.Info("Checker updated")
 }
 
 func (s *Server) Handler() http.Handler {
 	r := mux.NewRouter()
-	r.HandleFunc("/v1/check", s.handleCheck)
+	r.HandleFunc("/v1/check", s.handleCheck).Methods(http.MethodGet, http.MethodPost)
+	r.HandleFunc("/v1/admin/policy", s.handleAdminPolicy).Methods(http.MethodPost, http.MethodPut, http.MethodDelete)
 
 	return r
 }
 
-func (s *Server) handleCheck(w http.ResponseWriter, r *http.Request) {
-	defer func() {
-		if r.Body != nil {
-			_, _ = io.Copy(ioutil.Discard, r.Body)
-			r.Body.Close()
-		}
-	}()
+func cleanup(r *http.Request) {
+	if r.Body != nil {
+		_, _ = io.Copy(ioutil.Discard, r.Body)
+		r.Body.Close()
+	}
+}
 
-	log := zap.S().Named("http.check")
+func (s *Server) handleCheck(w http.ResponseWriter, r *http.Request) {
+	defer cleanup(r)
+
+	log := s.log.Named("check")
 
 	reqBytes, err := ioutil.ReadAll(&io.LimitedReader{R: r.Body, N: maxRequestSize})
 	if err != nil {
@@ -59,13 +89,25 @@ func (s *Server) handleCheck(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if err := req.Validate(); err != nil {
+		log.Errorw("Validation failed for request", "error", err)
+		writeResponse(log, w, req.RequestId, http.StatusBadRequest, fmt.Sprintf("Invalid request: %v", err), sharedv1.Effect_EFFECT_DENY)
+
+		return
+	}
+
 	log = log.With("request_id", req.RequestId)
 
-	effect, err := s.checker.Check(context.TODO(), req)
+	effect, err := s.check(context.TODO(), req)
 	if err != nil {
+		if errors.Is(err, policy.ErrNoPoliciesMatched) {
+			log.Warnw("No policies matched the request", "error", err)
+			writeResponse(log, w, req.RequestId, http.StatusUnauthorized, "No policies matched", sharedv1.Effect_EFFECT_DENY)
+			return
+		}
+
 		log.Errorw("Failed to check policies", "error", err)
 		writeResponse(log, w, req.RequestId, http.StatusInternalServerError, "Internal server error", sharedv1.Effect_EFFECT_DENY)
-
 		return
 	}
 
@@ -77,6 +119,13 @@ func (s *Server) handleCheck(w http.ResponseWriter, r *http.Request) {
 	default:
 		writeResponse(log, w, req.RequestId, http.StatusUnauthorized, "Deny", effect)
 	}
+}
+
+func (s *Server) check(ctx context.Context, req *requestv1.Request) (sharedv1.Effect, error) {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
+	return s.checker.Check(ctx, req)
 }
 
 func writeResponse(log *zap.SugaredLogger, w http.ResponseWriter, requestID string, code int, msg string, effect sharedv1.Effect) {
@@ -99,4 +148,53 @@ func writeResponse(log *zap.SugaredLogger, w http.ResponseWriter, requestID stri
 	if _, err := w.Write(respBytes); err != nil {
 		log.Errorw("Failed to write response", "error", err)
 	}
+}
+
+func (s *Server) handleAdminPolicy(w http.ResponseWriter, r *http.Request) {
+	defer cleanup(r)
+
+	log := s.log.Named("admin.policy")
+
+	rws, ok := s.store.(storage.WritableStore)
+	if !ok {
+		log.Warnw("Store is read-only: rejecting policy admin request")
+		http.Error(w, "Not supported", http.StatusNotImplemented)
+
+		return
+	}
+
+	var fn func(context.Context, *policyv1.Policy) error
+	var action string
+
+	switch r.Method {
+	case http.MethodPut, http.MethodPost:
+		fn = rws.AddOrUpdate
+		action = "AddOrUpdate"
+	case http.MethodDelete:
+		fn = rws.Remove
+		action = "Remove"
+	default:
+		http.Error(w, "Unsupported method", http.StatusMethodNotAllowed)
+		return
+	}
+
+	p, _, err := policy.ReadPolicy(&io.LimitedReader{R: r.Body, N: maxRequestSize})
+	if err != nil {
+		log.Errorw("Failed to read request body", "error", err)
+		http.Error(w, "Bad request", http.StatusBadRequest)
+
+		return
+	}
+
+	modName := namer.ModuleName(p)
+
+	if err := fn(r.Context(), p); err != nil {
+		log.Errorw("Failed to perform action on policy", "policy", modName, "action", action, "error", err)
+		http.Error(w, "Bad request", http.StatusBadRequest)
+
+		return
+	}
+
+	log.Infow("Policy action successful", "policy", modName, "action", action)
+	fmt.Fprintf(w, "OK\n")
 }

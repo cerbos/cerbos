@@ -1,33 +1,32 @@
----
-apiVersion: "paams.dev/v1"
+apiVersion: paams.dev/v1
 resourcePolicy:
-  resource: leave_request
-  version: "20210210"
   importDerivedRoles:
-    - my_derived_roles
+  - my_derived_roles
+  resource: leave_request
   rules:
-    - action: "*"
-      roles:
-        - admin
-      effect: EFFECT_ALLOW
-
-    - action: create
-      derivedRoles:
-        - employee_that_owns_the_record
-      effect: EFFECT_ALLOW
-
-    - action: "view:*"
-      derivedRoles:
-        - employee_that_owns_the_record
-        - direct_manager
-      effect: EFFECT_ALLOW
-
-    - action: approve
-      derivedRoles:
-        - direct_manager
-      effect: EFFECT_ALLOW
-      condition:
-        match:
-          expr:
-            - >-
-              $resource.attr.status == "PENDING_APPROVAL"
+  - action: '*'
+    effect: EFFECT_ALLOW
+    roles:
+    - admin
+  - action: create
+    derivedRoles:
+    - employee_that_owns_the_record
+    effect: EFFECT_ALLOW
+  - action: view:*
+    derivedRoles:
+    - employee_that_owns_the_record
+    - direct_manager
+    effect: EFFECT_ALLOW
+  - action: view:public
+    derivedRoles:
+    - any_employee
+    effect: EFFECT_ALLOW
+  - action: approve
+    condition:
+      match:
+        expr:
+        - $resource.attr.status == "PENDING_APPROVAL"
+    derivedRoles:
+    - direct_manager
+    effect: EFFECT_ALLOW
+  version: "20210210"

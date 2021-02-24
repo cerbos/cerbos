@@ -1,4 +1,0 @@
-- [] Codegen for nested expressions
-- [] Handle parsing of membership expressions
-- [] Codegen for membership
-- [] Codegen for resource condition

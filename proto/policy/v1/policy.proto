@@ -5,72 +5,75 @@ package policy.v1;
 option go_package = "github.com/charithe/menshen/pkg/generated/policy/v1;policyv1";
 
 import "shared/v1/shared.proto";
+import "validate/validate.proto";
 
 message PolicySet {
-    map<string,DerivedRoles> derived_roles = 1;
-    map<string,Policy> resource_policies = 2;
-    map<string,Policy> principal_policies = 3;
+    map<string,Policy> policies = 1 [(validate.rules).map.no_sparse = true];
 }
 
 message Policy {
-    string api_version = 1;
+    string api_version = 1 [(validate.rules).string.const = "paams.dev/v1"];
+    bool disabled = 2;
+    string description = 3;
     oneof policy_type {
-        ResourcePolicy resource_policy = 2;
-        PrincipalPolicy principal_policy = 3;
+        option (validate.required) = true;
+        ResourcePolicy resource_policy = 4;
+        PrincipalPolicy principal_policy = 5;
+        DerivedRoles derived_roles = 6;
     }
 }
 
 message ResourcePolicy {
-    string resource = 1;
-    string version = 2;
-    repeated string import_derived_roles = 3;
-    repeated ResourceRule rules = 4;
+    string resource = 1 [(validate.rules).string = {pattern: "^[[:alpha:]][[:word:]\\@\\.\\-]*(\\:[[:alpha:]][[:word:]\\@\\.\\-]*)*$", min_len: 1}];
+    string version = 2 [(validate.rules).string.pattern = "^[[:word:]]+$"];
+    repeated string import_derived_roles = 3 [(validate.rules).repeated = { unique: true, items { string { pattern: "^[[:word:]\\-\\.]+$" } } }];
+    repeated ResourceRule rules = 4 [(validate.rules).repeated.min_items = 1];
 }
 
 message ResourceRule {
-    string action = 1;
-    repeated string derived_roles = 2;
-    repeated string roles = 3;
+    string action = 1 [(validate.rules).string.min_len = 1];
+    repeated string derived_roles = 2 [(validate.rules).repeated = { unique: true, items { string { pattern: "^[[:word:]\\-\\.]+$" } } }];
+    repeated string roles = 3 [(validate.rules).repeated = { unique: true, items { string { pattern: "^[[:word:]\\-\\.]+$" } } }];
     Computation condition = 4;
-    shared.v1.Effect effect = 5;
+    shared.v1.Effect effect = 5 [(validate.rules).enum = {in: [1,2]}];
 }
 
 message PrincipalPolicy {
-    string principal = 1;
-    string version = 2;
-    repeated PrincipalRule rules = 3;
+    string principal = 1 [(validate.rules).string = {pattern: "^[[:alpha:]][[:word:]\\@\\.\\-]*(\\:[[:alpha:]][[:word:]\\@\\.\\-]*)*$", min_len: 1}];
+    string version = 2 [(validate.rules).string.pattern = "^[[:word:]]+$"];
+    repeated PrincipalRule rules = 3 [(validate.rules).repeated.min_items = 1];
 }
 
 message PrincipalRule {
     message Action {
-        string action = 1;
+        string action = 1 [(validate.rules).string.min_len = 1];
         Computation condition = 2;
-        shared.v1.Effect effect = 3;
+        shared.v1.Effect effect = 3 [(validate.rules).enum = {in: [1,2]}];
     }
 
-    string resource = 1;
-    repeated Action actions = 2;
+    string resource = 1 [(validate.rules).string = {pattern: "^[[:alpha:]][[:word:]\\@\\.\\-]*(\\:[[:alpha:]][[:word:]\\@\\.\\-]*)*$", min_len:1}];
+    repeated Action actions = 2 [(validate.rules).repeated.min_items = 1];
 }
 
 message DerivedRoles {
-    string api_version = 1;
-    string name = 2;
-    repeated RoleDef definitions = 4;
+    string name = 1 [(validate.rules).string = {pattern:"^[[:word:]\\-\\.]+$", min_len: 1}];
+    repeated RoleDef definitions = 2 [(validate.rules).repeated.min_items = 1];
 }
 
 message RoleDef {
-    string name = 1;
-    repeated string parent_roles = 2;
+    string name = 1 [(validate.rules).string.pattern = "^[[:word:]\\-\\.]+$"];
+    repeated string parent_roles = 2 [(validate.rules).repeated = { unique: true, min_items:1, items { string { pattern: "^[[:word:]\\-\\.]+$" } } }];
     Computation computation = 3;
 }
 
 message Computation {
     oneof computation {
+        option (validate.required) = true;
         Match match = 1;
         string script = 2;
     }
 }
 
 message Match {
-    repeated string expr = 1;
+    repeated string expr = 1 [(validate.rules).repeated = {min_items: 1, items { string { min_len: 1} } }];
 }
