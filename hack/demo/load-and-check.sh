@@ -43,7 +43,6 @@ derived_roles:
       computation:
         match:
           expr:
-            - "request.resource.attr.geography == request.principal.attr.geography"
             - "request.resource.attr.geography == request.principal.attr.managed_geographies"
 EOF
 
