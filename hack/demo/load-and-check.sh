@@ -43,8 +43,8 @@ derived_roles:
       computation:
         match:
           expr:
-            - "$resource.attr.geography == $principal.attr.geography"
-            - "$resource.attr.geography == $principal.attr.managed_geographies"
+            - "request.resource.attr.geography == request.principal.attr.geography"
+            - "request.resource.attr.geography == request.principal.attr.managed_geographies"
 EOF
 
 
@@ -78,7 +78,7 @@ resourcePolicy:
     condition:
       match:
         expr:
-        - $resource.attr.status == "PENDING_APPROVAL"
+        - request.resource.attr.status == "PENDING_APPROVAL"
     derivedRoles:
     - direct_manager
     effect: EFFECT_ALLOW
@@ -99,7 +99,7 @@ principalPolicy:
           condition:
             match:
               expr:
-                - "$resource.attr.dev_record == true"
+                - "request.resource.attr.dev_record == true"
           effect: EFFECT_ALLOW
 
     - resource: salary_record

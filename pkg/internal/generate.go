@@ -3,26 +3,35 @@ package internal
 import (
 	"fmt"
 
+	"github.com/google/cel-go/cel"
 	"github.com/open-policy-agent/opa/ast"
 
 	policyv1 "github.com/charithe/menshen/pkg/generated/policy/v1"
 	"github.com/charithe/menshen/pkg/namer"
 )
 
-func GenerateRegoModule(modName string, p *policyv1.Policy) (*ast.Module, error) {
+type CodeGenResult struct {
+	ModName    string
+	Module     *ast.Module
+	Conditions map[string]cel.Program
+}
+
+func GenerateCode(p *policyv1.Policy) (*CodeGenResult, error) {
 	switch pt := p.PolicyType.(type) {
 	case *policyv1.Policy_ResourcePolicy:
-		return generateResourcePolicyModule(modName, pt.ResourcePolicy)
+		return generateResourcePolicy(pt.ResourcePolicy)
 	case *policyv1.Policy_PrincipalPolicy:
-		return generatePrincipalPolicyModule(modName, pt.PrincipalPolicy)
+		return generatePrincipalPolicy(pt.PrincipalPolicy)
 	case *policyv1.Policy_DerivedRoles:
-		return generateDerivedRolesModule(modName, pt.DerivedRoles)
+		return generateDerivedRoles(pt.DerivedRoles)
 	default:
 		return nil, fmt.Errorf("unknown policy type %T", pt)
 	}
 }
 
-func generateResourcePolicyModule(modName string, p *policyv1.ResourcePolicy) (*ast.Module, error) {
+func generateResourcePolicy(p *policyv1.ResourcePolicy) (*CodeGenResult, error) {
+	modName := namer.ResourcePolicyModuleName(p.Resource, p.Version)
+
 	var imports []string
 	if len(p.ImportDerivedRoles) > 0 {
 		imports = make([]string, len(p.ImportDerivedRoles))
@@ -41,14 +50,15 @@ func generateResourcePolicyModule(modName string, p *policyv1.ResourcePolicy) (*
 		}
 	}
 
-	return rg.Module()
+	return rg.Generate()
 }
 
 func derivedRolesImportName(imp string) string {
 	return fmt.Sprintf("data.%s.%s", namer.DerivedRolesModuleName(imp), derivedRolesMap)
 }
 
-func generatePrincipalPolicyModule(modName string, p *policyv1.PrincipalPolicy) (*ast.Module, error) {
+func generatePrincipalPolicy(p *policyv1.PrincipalPolicy) (*CodeGenResult, error) {
+	modName := namer.PrincipalPolicyModuleName(p.Principal, p.Version)
 	rg := NewRegoGen(modName)
 
 	rg.DefaultEffectNoMatch()
@@ -59,10 +69,11 @@ func generatePrincipalPolicyModule(modName string, p *policyv1.PrincipalPolicy) 
 		}
 	}
 
-	return rg.Module()
+	return rg.Generate()
 }
 
-func generateDerivedRolesModule(modName string, dr *policyv1.DerivedRoles) (*ast.Module, error) {
+func generateDerivedRoles(dr *policyv1.DerivedRoles) (*CodeGenResult, error) {
+	modName := namer.DerivedRolesModuleName(dr.Name)
 	rg := NewRegoGen(modName)
 
 	for _, rd := range dr.Definitions {
@@ -71,5 +82,5 @@ func generateDerivedRolesModule(modName string, dr *policyv1.DerivedRoles) (*ast
 		}
 	}
 
-	return rg.Module()
+	return rg.Generate()
 }

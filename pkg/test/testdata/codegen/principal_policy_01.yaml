@@ -10,7 +10,7 @@ principalPolicy:
           condition:
             match:
               expr:
-                - "$resource.attr.dev_record == true"
+                - "request.resource.attr.dev_record == true"
           effect: EFFECT_ALLOW
 
     - resource: salary_record

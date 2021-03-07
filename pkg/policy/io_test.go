@@ -2,6 +2,7 @@ package policy_test
 
 import (
 	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -12,9 +13,12 @@ import (
 	policyv1 "github.com/charithe/menshen/pkg/generated/policy/v1"
 	sharedv1 "github.com/charithe/menshen/pkg/generated/shared/v1"
 	"github.com/charithe/menshen/pkg/policy"
+	"github.com/charithe/menshen/pkg/test"
 )
 
 func TestReadPolicy(t *testing.T) {
+	dir := test.PathToDir(t, "policy_formats")
+
 	testCases := []struct {
 		name    string
 		input   string
@@ -23,32 +27,32 @@ func TestReadPolicy(t *testing.T) {
 	}{
 		{
 			name:  "YAML ResourcePolicy",
-			input: "../testdata/formats/resource_policy_01.yaml",
+			input: filepath.Join(dir, "resource_policy_01.yaml"),
 			want:  mkResourcePolicy(),
 		},
 		{
 			name:  "JSON ResourcePolicy",
-			input: "../testdata/formats/resource_policy_01.json",
+			input: filepath.Join(dir, "resource_policy_01.json"),
 			want:  mkResourcePolicy(),
 		},
 		{
 			name:  "YAML PrincipalPolicy",
-			input: "../testdata/formats/principal_policy_01.yaml",
+			input: filepath.Join(dir, "principal_policy_01.yaml"),
 			want:  mkPrincipalPolicy(),
 		},
 		{
 			name:  "JSON PrincipalPolicy",
-			input: "../testdata/formats/principal_policy_01.json",
+			input: filepath.Join(dir, "principal_policy_01.json"),
 			want:  mkPrincipalPolicy(),
 		},
 		{
 			name:  "YAML DerivedRoles",
-			input: "../testdata/formats/derived_roles_01.yaml",
+			input: filepath.Join(dir, "derived_roles_01.yaml"),
 			want:  mkDerivedRoles(),
 		},
 		{
 			name:  "JSON DerivedRoles",
-			input: "../testdata/formats/derived_roles_01.json",
+			input: filepath.Join(dir, "derived_roles_01.json"),
 			want:  mkDerivedRoles(),
 		},
 	}

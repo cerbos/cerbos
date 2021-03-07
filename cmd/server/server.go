@@ -12,14 +12,16 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/charithe/menshen/pkg/config"
+	"github.com/charithe/menshen/pkg/policy"
 	"github.com/charithe/menshen/pkg/server"
 	"github.com/charithe/menshen/pkg/storage"
 	"github.com/charithe/menshen/pkg/util"
 )
 
 type serverArgs struct {
-	logLevel   string
 	configFile string
+	listenAddr string
+	logLevel   string
 }
 
 var args = serverArgs{}
@@ -34,11 +36,12 @@ func NewCommand() *cobra.Command {
 		SilenceUsage: true,
 	}
 
-	cmd.Flags().StringVar(&args.logLevel, "loglevel", "INFO", "Log level")
 	cmd.Flags().StringVar(&args.configFile, "config", "", "Path to config file")
+	cmd.Flags().StringVar(&args.listenAddr, "listenAddr", "", "Server listen address")
+	cmd.Flags().StringVar(&args.logLevel, "loglevel", "INFO", "Log level")
 
-	cmd.MarkFlagFilename("config")
-	cmd.MarkFlagRequired("config")
+	_ = cmd.MarkFlagFilename("config")
+	_ = cmd.MarkFlagRequired("config")
 
 	return cmd
 }
@@ -47,34 +50,44 @@ func doRun(_ *cobra.Command, _ []string) error {
 	util.InitLogging(args.logLevel)
 	log := zap.S().Named("http.server")
 
-	if err := config.Init(args.configFile); err != nil {
-		log.Errorw("Failed to load configuration", "error", err)
-		return fmt.Errorf("failed to load config file %s: %w", args.configFile, err)
-	}
-
-	conf := config.Get()
-
 	ctx, stopFunc := signal.NotifyContext(context.Background(), os.Interrupt)
 	defer stopFunc()
 
-	store, err := storage.New(ctx, conf.Storage)
+	// load configuration
+	if err := config.LoadAndWatch(ctx, args.configFile); err != nil {
+		log.Errorw("Failed to load configuration", "error", err)
+
+		return err
+	}
+
+	conf, err := getServerConf(args.listenAddr)
+	if err != nil {
+		return err
+	}
+
+	// create the registry instance
+	registry := policy.InitGlobal()
+
+	// create store
+	store, err := storage.New(ctx, registry)
 	if err != nil {
 		log.Errorw("Failed to create store", "error", err)
 		return fmt.Errorf("failed to create store: %w", err)
 	}
 
-	server, err := server.New(store)
-	if err != nil {
-		log.Errorw("Failed to initialize server", "error", err)
-		return fmt.Errorf("failed to create http server; %w", err)
-	}
+	srv := server.New(registry, store)
 
-	// TODO (cell) Configure TLS
+	return startHTTPServer(ctx, srv, conf, log)
+}
+
+func startHTTPServer(ctx context.Context, srv *server.Server, conf Conf, log *zap.SugaredLogger) error {
+	// TODO (cell) Configure TLS with reloadable certificates
+	// TODO (cell) gRPC on the same port
 
 	h := &http.Server{
-		Addr:              conf.Server.ListenAddr,
+		Addr:              conf.ListenAddr,
 		ErrorLog:          zap.NewStdLog(zap.L().Named("http.error")),
-		Handler:           server.Handler(),
+		Handler:           srv.Handler(),
 		ReadHeaderTimeout: defaultTimeout,
 		ReadTimeout:       defaultTimeout,
 		WriteTimeout:      defaultTimeout,
@@ -82,7 +95,7 @@ func doRun(_ *cobra.Command, _ []string) error {
 
 	errChan := make(chan error, 1)
 	go func() {
-		log.Infof("Starting HTTP server on %s", conf.Server.ListenAddr)
+		log.Infof("Starting HTTP server on %s", conf.ListenAddr)
 		if err := h.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			errChan <- fmt.Errorf("http server failed: %w", err)
 		}

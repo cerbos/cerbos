@@ -3,7 +3,6 @@ package policy_test
 import (
 	"context"
 	"fmt"
-	"path/filepath"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -11,21 +10,23 @@ import (
 
 	requestv1 "github.com/charithe/menshen/pkg/generated/request/v1"
 	sharedv1 "github.com/charithe/menshen/pkg/generated/shared/v1"
+	"github.com/charithe/menshen/pkg/policy"
 	"github.com/charithe/menshen/pkg/storage/disk"
+	"github.com/charithe/menshen/pkg/test"
 )
 
 func TestChecker(t *testing.T) {
-	//util.InitLogging("DEBUG")
-	dir, err := filepath.Abs(filepath.Join("..", "testdata", "store"))
-	require.NoError(t, err)
+	dir := test.PathToDir(t, "store")
 
 	ctx, cancelFunc := context.WithCancel(context.Background())
 	defer cancelFunc()
 
-	store, err := disk.NewReadOnlyStore(ctx, dir)
+	reg := policy.InitGlobal()
+
+	_, err := disk.NewReadOnlyStore(ctx, reg, dir)
 	require.NoError(t, err)
 
-	c := store.GetIndex().GetChecker()
+	c := reg.GetChecker()
 
 	testCases := []struct {
 		desc    string

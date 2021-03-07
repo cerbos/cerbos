@@ -5,4 +5,11 @@ server:
 storage:
   driver: "disk"
   disk:
-    directory: pkg/testdata/store
+    directory: pkg/test/testdata/store
+  git:
+    protocol: file
+    url: file://${HOME}/tmp/ava/source
+    branch: policies
+    subDir: policies
+    checkoutDir: ${HOME}/tmp/ava/work
+    updatePollInterval: 60s

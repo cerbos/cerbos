@@ -25,32 +25,34 @@ import (
 const maxRequestSize = 1024 * 1024 // 1 MiB
 
 type Server struct {
-	log     *zap.SugaredLogger
-	store   storage.Store
-	mu      sync.RWMutex
-	checker *policy.Checker
+	log      *zap.SugaredLogger
+	registry policy.Registry
+	store    storage.Store
+	mu       sync.RWMutex
+	checker  *policy.Checker
 }
 
-func New(store storage.Store) (*Server, error) {
-	index := store.GetIndex()
-	checker := index.GetChecker()
+func New(registry policy.Registry, store storage.Store) *Server {
+	s := &Server{
+		log:      zap.S().Named("http.server"),
+		registry: registry,
+		store:    store,
+		checker:  registry.GetChecker(),
+	}
 
-	s := &Server{log: zap.S().Named("http.server"), store: store, checker: checker}
-	index.AddWatcher("http.server", s)
+	registry.AddWatcher("http.server", s)
 
-	return s, nil
+	return s
 }
 
-func (s *Server) IndexUpdated(revision uint64) {
-	s.log.Infow("Detected index update", "revision", revision)
+func (s *Server) RegistryUpdated(revision uint64) {
+	s.log.Infow("Detected registry update", "revision", revision)
 
-	checker := s.store.GetIndex().GetChecker()
+	checker := s.registry.GetChecker()
 
 	s.mu.Lock()
 	s.checker = checker
 	s.mu.Unlock()
-
-	s.log.Info("Checker updated")
 }
 
 func (s *Server) Handler() http.Handler {

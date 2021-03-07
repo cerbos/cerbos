@@ -30,7 +30,7 @@ effect = "allow" {
 effect = "allow" {
     glob.match("approve", [":"], input.action)
     derived_roles["direct_manager"] == true    
-    input.resource.attr.status == "PENDING_APPROVAL"
+    cel_eval(input, "paams.resource.leave_request.v20210210", "cond_0")
 }
     
 

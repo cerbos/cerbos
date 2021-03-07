@@ -2,6 +2,7 @@ package disk
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -15,19 +16,36 @@ import (
 	"github.com/charithe/menshen/pkg/policy"
 )
 
+const (
+	resourcePoliciesDir  = "resource_policies"
+	principalPoliciesDir = "principal_policies"
+	derivedRolesDir      = "derived_roles"
+)
+
 type ReadWriteStore struct {
-	*ReadOnlyStore
+	log       *zap.SugaredLogger
+	registry  policy.Registry
+	policyDir string
+	index     FileIndex
 }
 
-func NewReadWriteStore(ctx context.Context, policyDir string) (*ReadWriteStore, error) {
-	ros, err := NewReadOnlyStore(ctx, policyDir)
-	if err != nil {
+func NewReadWriteStore(ctx context.Context, registry policy.Registry, policyDir string) (*ReadWriteStore, error) {
+	if err := checkValidDir(policyDir); err != nil {
 		return nil, err
 	}
 
-	ros.log = zap.S().Named("disk.store.readwrite").With("root", policyDir)
+	log := zap.S().Named("disk.store.rw").With("root", policyDir)
 
-	return &ReadWriteStore{ReadOnlyStore: ros}, nil
+	idx, err := LoadPoliciesFromDir(ctx, registry, policyDir, log)
+	if err != nil && !errors.Is(err, policy.ErrEmptyTransaction) {
+		return nil, err
+	}
+
+	return &ReadWriteStore{log: log, registry: registry, policyDir: policyDir, index: idx}, nil
+}
+
+func (s *ReadWriteStore) Driver() string {
+	return DriverName
 }
 
 func (s *ReadWriteStore) AddOrUpdate(ctx context.Context, p *policyv1.Policy) error {
@@ -44,12 +62,12 @@ func (s *ReadWriteStore) AddOrUpdate(ctx context.Context, p *policyv1.Policy) er
 		return err
 	}
 
-	tx := s.index.NewTxn()
+	tx := s.registry.NewTransaction()
 	if err := tx.Add(p); err != nil {
 		return err
 	}
 
-	if err := s.index.Commit(ctx, tx); err != nil {
+	if err := s.registry.Update(ctx, tx); err != nil {
 		return err
 	}
 
@@ -57,12 +75,12 @@ func (s *ReadWriteStore) AddOrUpdate(ctx context.Context, p *policyv1.Policy) er
 }
 
 func (s *ReadWriteStore) Remove(ctx context.Context, p *policyv1.Policy) error {
-	tx := s.index.NewTxn()
+	tx := s.registry.NewTransaction()
 	if err := tx.Remove(p); err != nil {
 		return err
 	}
 
-	if err := s.index.Commit(ctx, tx); err != nil {
+	if err := s.registry.Update(ctx, tx); err != nil {
 		return err
 	}
 
@@ -70,10 +88,8 @@ func (s *ReadWriteStore) Remove(ctx context.Context, p *policyv1.Policy) error {
 }
 
 func (s *ReadWriteStore) fileNameForPolicy(p *policyv1.Policy) string {
-	modHash := hash(namer.ModuleName(p))
-
 	// if we have seen this module before, reuse the filename from that module.
-	if prev, ok := s.seen[modHash]; ok {
+	if prev, ok := s.index.Get(namer.ModuleName(p)); ok {
 		return prev
 	}
 

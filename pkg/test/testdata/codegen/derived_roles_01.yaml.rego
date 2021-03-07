@@ -20,6 +20,5 @@ derived_roles["any_employee"] = true {
 
 derived_roles["direct_manager"] = true {
     input.principal.roles[_] == "manager"
-    input.resource.attr.geography == input.principal.attr.geography 
-    input.resource.attr.geography == input.principal.attr.managed_geographies
+    cel_eval(input, "paams.derived_roles.my_derived_roles", "cond_0")
 }

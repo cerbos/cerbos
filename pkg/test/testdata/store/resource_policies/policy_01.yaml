@@ -1,3 +1,4 @@
+---
 apiVersion: paams.dev/v1
 resourcePolicy:
   importDerivedRoles:
@@ -25,7 +26,7 @@ resourcePolicy:
     condition:
       match:
         expr:
-        - $resource.attr.status == "PENDING_APPROVAL"
+        - request.resource.attr.status == "PENDING_APPROVAL"
     derivedRoles:
     - direct_manager
     effect: EFFECT_ALLOW

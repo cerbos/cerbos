@@ -5,7 +5,7 @@ default effect = "no_match"
 effect = "allow" {
     glob.match("leave_request", [":"], input.resource.name)
     glob.match("*", [], input.action)
-    input.resource.attr.dev_record == true
+    cel_eval(input, "paams.principal.donald_duck.v20210210", "cond_0")
 }
 
 effect = "deny" {

@@ -3,6 +3,7 @@ TOOLS_BIN_DIR := $(abspath $(XDG_CACHE_HOME)/menshen/bin)
 
 BUF := $(TOOLS_BIN_DIR)/buf
 GOLANGCI_LINT := $(TOOLS_BIN_DIR)/golangci-lint
+MOCKERY := $(TOOLS_BIN_DIR)/mockery
 PROTOC_GEN_GO := $(TOOLS_BIN_DIR)/protoc-gen-go
 PROTOC_GEN_VALIDATE := $(TOOLS_BIN_DIR)/protoc-gen-validate
 
@@ -18,6 +19,7 @@ DOCKER_IMAGE := charithe/menshen:$(VERSION)
 DOCKER := docker
 
 GEN_DIR := pkg/generated
+MOCK_DIR := pkg/test/mocks
 
 $(TOOLS_BIN_DIR):
 	@ mkdir -p $(TOOLS_BIN_DIR)
@@ -27,6 +29,9 @@ $(BUF): $(TOOLS_BIN_DIR)
 
 $(GOLANGCI_LINT): $(TOOLS_BIN_DIR) 
 	@ GOBIN=$(TOOLS_BIN_DIR) go install github.com/golangci/golangci-lint/cmd/golangci-lint
+
+$(MOCKERY): $(TOOLS_BIN_DIR)
+	@ GOBIN=$(TOOLS_BIN_DIR) go install github.com/vektra/mockery/v2
 
 $(PROTOC_GEN_GO): $(TOOLS_BIN_DIR) 
 	@ GOBIN=$(TOOLS_BIN_DIR) go install google.golang.org/protobuf/cmd/protoc-gen-go
@@ -41,6 +46,7 @@ $(VALIDATE_PROTO):
 .PHONY: clean
 clean:
 	@-rm -rf $(GEN_DIR)
+	@-rm -rf $(MOCK_DIR)
 
 .PHONY: clean-tools
 clean-tools:
@@ -48,17 +54,18 @@ clean-tools:
 
 .PHONY: lint
 lint: $(GOLANGCI_LINT)
-	@ $(GOLANGCI_LINT) run 
+	@ $(GOLANGCI_LINT) run --config=.golangci.yaml 
 
 .PHONY: generate
-generate: clean $(BUF) $(PROTOC_GEN_GO) $(PROTOC_GEN_VALIDATE) $(VALIDATE_PROTO) 
+generate: clean $(BUF) $(PROTOC_GEN_GO) $(PROTOC_GEN_VALIDATE) $(VALIDATE_PROTO) $(MOCKERY)
 	@ $(BUF) lint
 	#@ $(BUF) breaking --against '.git#branch=main'
 	@ $(BUF) generate --template '{"version":"v1beta1","plugins":[{"name":"go","out":"$(GEN_DIR)","opt":"paths=source_relative","path":"$(PROTOC_GEN_GO)"}, {"name":"validate","opt":["paths=source_relative","lang=go"],"out":"$(GEN_DIR)","path":"$(PROTOC_GEN_VALIDATE)"}]}' .
+	@ $(MOCKERY) --quiet --dir=pkg/policy --name="(Registry|Transaction)" --recursive --output=$(MOCK_DIR)
 
 .PHONY: test
 test:
-	@ go test -v ./...
+	@ go test -cover ./...
 
 .PHONY: build
 build: generate test

@@ -19,8 +19,9 @@ import (
 const defaultEffect = sharedv1.Effect_EFFECT_DENY
 
 var (
-	ErrUnexpectedResult  = errors.New("unexpected result")
-	ErrNoPoliciesMatched = errors.New("no matching policies")
+	ErrCheckerNotInitialized = errors.New("checker not initialized")
+	ErrNoPoliciesMatched     = errors.New("no matching policies")
+	ErrUnexpectedResult      = errors.New("unexpected result")
 )
 
 // Checker implements policy checking.
@@ -31,6 +32,10 @@ type Checker struct {
 
 // Check evaluates matching policies against the request and returns an ALLOW or DENY.
 func (c *Checker) Check(ctx context.Context, req *requestv1.Request) (sharedv1.Effect, error) {
+	if c == nil {
+		return defaultEffect, ErrCheckerNotInitialized
+	}
+
 	var queries [2]string
 	i := 0
 

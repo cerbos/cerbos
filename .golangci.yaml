@@ -1,0 +1,71 @@
+---
+run:
+  skip-dirs:
+    - pkg/generated
+
+linters:
+  enable:
+    - asciicheck
+    - bodyclose
+    - dupl
+    - durationcheck
+    - errorlint
+    - exhaustive
+    - exportloopref
+    - forbidigo
+    - forcetypeassert
+    - gocognit
+    - goconst
+    - gocritic
+    - godot
+    - gofumpt
+    - goimports
+    - goheader
+    - gomnd
+    - gosec
+    - ifshort
+    - importas
+    - makezero
+    - misspell
+    - nakedret
+    - nestif
+    - nilerr
+    - noctx
+    - nolintlint
+    - prealloc
+    - predeclared
+    - revive
+    - rowserrcheck
+    - scopelint
+    - sqlclosecheck
+    - thelper
+    - tparallel
+    - unconvert
+    - unparam
+    - wastedassign
+    - whitespace
+  disable:
+    - cyclop
+    - depguard
+    - dogsled
+    - exhaustivestruct
+    - funlen
+    - gci
+    - gochecknoglobals
+    - gochecknoinits
+    - gocyclo
+    - godox
+    - goerr113
+    - gofmt
+    - golint
+    - gomodguard
+    - goprintffuncname
+    - interfacer
+    - lll
+    - maligned
+    - nlreturn
+    - paralleltest
+    - stylecheck
+    - testpackage
+    - wrapcheck
+    - wsl

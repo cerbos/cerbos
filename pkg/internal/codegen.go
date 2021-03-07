@@ -5,20 +5,22 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/google/cel-go/cel"
+	"github.com/google/cel-go/checker/decls"
 	"github.com/open-policy-agent/opa/ast"
 
 	policyv1 "github.com/charithe/menshen/pkg/generated/policy/v1"
 	sharedv1 "github.com/charithe/menshen/pkg/generated/shared/v1"
-	"github.com/charithe/menshen/pkg/pscript"
 )
 
 const (
+	CELEvalIdent = `cel_eval`
+
 	allowVal        = `"allow"`
 	denyVal         = `"deny"`
 	derivedRolesMap = "derived_roles"
 	effectIdent     = "effect"
 	noMatchVal      = `"no_match"`
-	space           = " "
 )
 
 var ErrCompileError = errors.New("code generation error")
@@ -27,6 +29,8 @@ var ErrCompileError = errors.New("code generation error")
 type RegoGen struct {
 	packageName string
 	*strings.Builder
+	condCount  uint
+	conditions map[string]cel.Program
 }
 
 func NewRegoGen(packageName string, imports ...string) *RegoGen {
@@ -51,8 +55,17 @@ func (rg *RegoGen) line(ss ...string) {
 	rg.WriteString("\n")
 }
 
-func (rg *RegoGen) Module() (*ast.Module, error) {
-	return ast.ParseModule("", rg.String())
+func (rg *RegoGen) Generate() (*CodeGenResult, error) {
+	mod, err := ast.ParseModule("", rg.String())
+	if err != nil {
+		return nil, err
+	}
+
+	return &CodeGenResult{
+		ModName:    rg.packageName,
+		Module:     mod,
+		Conditions: rg.conditions,
+	}, nil
 }
 
 func (rg *RegoGen) AddDerivedRole(dr *policyv1.RoleDef) error {
@@ -201,57 +214,42 @@ func (rg *RegoGen) addCondition(cond *policyv1.Computation) error {
 }
 
 func (rg *RegoGen) addMatch(m *policyv1.Match) error {
-	if len(m.Expr) == 0 {
-		return fmt.Errorf("match must contain at least one expression: %w", ErrCompileError)
+	prg, err := generateCELProgram(m)
+	if err != nil {
+		return fmt.Errorf("invalid match block %v: %w", m, err)
 	}
 
-	for _, e := range m.Expr {
-		expr, err := pscript.Parse(e)
-		if err != nil {
-			return err
-		}
+	conditionKey := fmt.Sprintf("cond_%d", rg.condCount)
+	rg.condCount++
 
-		if err := rg.addExpr(expr); err != nil {
-			return err
-		}
+	if rg.conditions == nil {
+		rg.conditions = make(map[string]cel.Program)
 	}
+
+	rg.conditions[conditionKey] = prg
+
+	rg.line(CELEvalIdent, `(input, "`, rg.packageName, `", "`, conditionKey, `")`)
 
 	return nil
 }
 
-func (rg *RegoGen) addExpr(expr *pscript.Expr) error {
-	ref := toReference(expr.Reference)
-	switch {
-	case expr.Comparison != nil:
-		return rg.addExprComparison(ref, expr.Comparison)
-	case expr.Membership != nil:
-		return rg.addExprMembership(ref, expr.Membership)
-	default:
-		return fmt.Errorf("unknown expression [%v]:	%w", expr, ErrCompileError)
+func generateCELProgram(m *policyv1.Match) (cel.Program, error) {
+	env, err := cel.NewEnv(cel.Declarations(decls.NewVar("request", decls.NewMapType(decls.String, decls.Dyn))))
+	if err != nil {
+		return nil, fmt.Errorf("failed to create CEL environment: %w", err)
 	}
-}
 
-func (rg *RegoGen) addExprComparison(ref string, comp *pscript.Comparison) error {
-	op := comp.Op.String()
-
-	switch {
-	case comp.Operand.Reference != nil:
-		rg.line(ref, space, op, space, toReference(*comp.Operand.Reference))
-		return nil
-	case comp.Operand.Scalar != nil:
-		rg.line(ref, space, op, space, comp.Operand.Scalar.String())
-		return nil
-	case comp.Operand.Expr != nil:
-		return nil
-	default:
-		return fmt.Errorf("failed to generate code for comparison: %w", ErrCompileError)
+	expr := make([]string, len(m.Expr))
+	for i, e := range m.Expr {
+		expr[i] = fmt.Sprintf("(%s)", e)
 	}
-}
 
-func (rg *RegoGen) addExprMembership(ref string, match *pscript.Membership) error {
-	return nil
-}
+	finalExpr := strings.Join(expr, " && ")
 
-func toReference(r string) string {
-	return fmt.Sprintf("input.%s", strings.TrimPrefix(r, "$"))
+	celAST, issues := env.Compile(finalExpr)
+	if issues != nil && issues.Err() != nil {
+		return nil, issues.Err()
+	}
+
+	return env.Program(celAST)
 }

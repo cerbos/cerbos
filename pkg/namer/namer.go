@@ -51,5 +51,4 @@ func EffectQueryForPrincipal(principal, version string) string {
 // EffectQueryForResource returns the effect query for the given resource and version.
 func EffectQueryForResource(resource, version string) string {
 	return fmt.Sprintf("data.%s.effect", ResourcePolicyModuleName(resource, version))
-	//return "data.paams.resource.leave_request.v20210210.effect"
 }
