@@ -1,4 +1,4 @@
-package paams.resource.leave_request.v20210210
+package paams.resource.hr_leave_request.v20210210
 
 import data.paams.derived_roles.my_derived_roles.derived_roles
 
@@ -30,7 +30,7 @@ effect = "allow" {
 effect = "allow" {
     glob.match("approve", [":"], input.action)
     derived_roles["direct_manager"] == true    
-    cel_eval(input, "paams.resource.leave_request.v20210210", "cond_0")
+    cel_eval(input, "paams.resource.hr_leave_request.v20210210", "cond_0")
 }
     
 

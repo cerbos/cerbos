@@ -49,11 +49,3 @@ func Dependencies(p *policyv1.Policy) []string {
 		return nil
 	}
 }
-
-// InitGlobal creates a new registry, registers it with OPA runtime and returns the instance.
-func InitGlobal() Registry {
-	reg := NewRegistry()
-	InitRego(reg)
-
-	return reg
-}

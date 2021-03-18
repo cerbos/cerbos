@@ -15,14 +15,19 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
+	"github.com/charithe/menshen/pkg/compile"
 	policyv1 "github.com/charithe/menshen/pkg/generated/policy/v1"
 	sharedv1 "github.com/charithe/menshen/pkg/generated/shared/v1"
 	"github.com/charithe/menshen/pkg/policy"
+	"github.com/charithe/menshen/pkg/storage/disk"
 	"github.com/charithe/menshen/pkg/test"
-	"github.com/charithe/menshen/pkg/test/mocks"
 )
 
-const namePrefix = "git"
+const (
+	namePrefix = "git"
+	policyDir  = "policies"
+	ignoredDir = "ignore"
+)
 
 // TODO (cell) Test HTTPS and SSH auth
 
@@ -30,31 +35,17 @@ func TestNewStore(t *testing.T) {
 	tempDir := t.TempDir()
 	sourceGitDir := filepath.Join(tempDir, "source")
 
-	require.NoError(t, createGitRepo(sourceGitDir, 20))
-
-	setupMocks := func() (*mocks.Registry, *mocks.Transaction) {
-		txn := new(mocks.Transaction)
-		txn.On("Add", mock.MatchedBy(test.AnyPolicy)).Return(nil)
-		txn.On("Remove", mock.MatchedBy(test.AnyPolicy)).Return(nil)
-
-		reg := new(mocks.Registry)
-		reg.On("NewTransaction").Return(txn).Once()
-		reg.On("Update", mock.MatchedBy(test.AnyContext), txn).Return(nil).Once()
-
-		return reg, txn
-	}
+	wantFiles := createGitRepo(t, sourceGitDir, 20)
 
 	// the checkout directory does not exist so the remote repo will be cloned.
 	t.Run("directory does not exist", func(t *testing.T) {
 		checkoutDir := filepath.Join(t.TempDir(), "clone")
 		conf := mkConf(sourceGitDir, checkoutDir)
 
-		reg, txn := setupMocks()
-
-		_, err := NewStore(context.Background(), reg, conf)
+		store, err := NewStore(context.Background(), conf)
 		require.NoError(t, err)
-		txn.AssertNumberOfCalls(t, "Add", 60)
-		reg.AssertNumberOfCalls(t, "Update", 1)
+
+		requireIndexContains(t, store, wantFiles)
 	})
 
 	// the checkout directory is empty so the remote repo will be cloned.
@@ -62,12 +53,10 @@ func TestNewStore(t *testing.T) {
 		checkoutDir := t.TempDir()
 		conf := mkConf(sourceGitDir, checkoutDir)
 
-		reg, txn := setupMocks()
-
-		_, err := NewStore(context.Background(), reg, conf)
+		store, err := NewStore(context.Background(), conf)
 		require.NoError(t, err)
-		txn.AssertNumberOfCalls(t, "Add", 60)
-		reg.AssertNumberOfCalls(t, "Update", 1)
+
+		requireIndexContains(t, store, wantFiles)
 	})
 
 	// the checkout directory already contains the git repo but checked out to the wrong branch.
@@ -83,12 +72,10 @@ func TestNewStore(t *testing.T) {
 
 		conf := mkConf(sourceGitDir, checkoutDir)
 
-		reg, txn := setupMocks()
-
-		_, err = NewStore(context.Background(), reg, conf)
+		store, err := NewStore(context.Background(), conf)
 		require.NoError(t, err)
-		txn.AssertNumberOfCalls(t, "Add", 60)
-		reg.AssertNumberOfCalls(t, "Update", 1)
+
+		requireIndexContains(t, store, wantFiles)
 	})
 
 	// the checkout directory is not empty and not a valid git repo.
@@ -97,120 +84,110 @@ func TestNewStore(t *testing.T) {
 
 		for i := 0; i < 10; i++ {
 			file := filepath.Join(checkoutDir, fmt.Sprintf("file_%02d.txt", i))
-			require.NoError(t, os.WriteFile(file, []byte("some data"), 0644))
+			require.NoError(t, os.WriteFile(file, []byte("some data"), 0600))
 		}
 
 		conf := mkConf(sourceGitDir, checkoutDir)
 
-		reg, txn := setupMocks()
-
-		_, err := NewStore(context.Background(), reg, conf)
+		store, err := NewStore(context.Background(), conf)
+		require.Nil(t, store)
 		require.ErrorIs(t, err, git.ErrRepositoryNotExists)
-		txn.AssertNumberOfCalls(t, "Add", 0)
-		reg.AssertNumberOfCalls(t, "Update", 0)
 	})
 }
 
-func TestUpdateRegistry(t *testing.T) {
+func TestUpdateStore(t *testing.T) {
+	if testing.Short() {
+		t.Skip("Skipping git store tests")
+	}
+
 	tempDir := t.TempDir()
 	sourceGitDir := filepath.Join(tempDir, "source")
 	checkoutDir := filepath.Join(tempDir, "checkout")
 
-	rng := rand.New(rand.NewSource(time.Now().Unix()))
+	rng := rand.New(rand.NewSource(time.Now().Unix())) //nolint:gosec
 	numPolicySets := 20
 
-	require.NoError(t, createGitRepo(sourceGitDir, numPolicySets))
+	_ = createGitRepo(t, sourceGitDir, numPolicySets)
 
-	txnHelper := &mockTxnHelper{}
+	conf := mkConf(sourceGitDir, checkoutDir)
+	store, err := NewStore(context.Background(), conf)
+	require.NoError(t, err)
 
-	setup := func(t *testing.T) (*Store, *mocks.Registry) {
-		t.Helper()
+	index := store.index
 
-		reg := new(mocks.Registry)
-		reg.On("NewTransaction").Return(func() policy.Transaction { return txnHelper.newTxn() })
-		reg.On("Update", mock.Anything, mock.Anything).Return(nil)
-
-		conf := mkConf(sourceGitDir, checkoutDir)
-
-		store, err := NewStore(context.Background(), reg, conf)
-		require.NoError(t, err)
-		txnHelper.last().AssertNumberOfCalls(t, "Add", numPolicySets*3)
-		reg.AssertNumberOfCalls(t, "Update", 1)
-
-		return store, reg
+	setupMock := func() *mockIndex {
+		m := newMockIndex(index)
+		store.index = m
+		return m
 	}
 
-	store, reg := setup(t)
+	notificationChan := make(chan *compile.Incremental, 1)
+	store.SetNotificationChannel(notificationChan)
 
 	t.Run("no changes", func(t *testing.T) {
-		// because the mock registry is shared, only way to ensure that it wasn't called is to
-		// check the call count before and after the function call.
-		reg.AssertNumberOfCalls(t, "Update", 1)
-		require.NoError(t, store.updateRegistry(context.Background()))
-		reg.AssertNumberOfCalls(t, "Update", 1)
+		mockIdx := setupMock()
+		require.NoError(t, store.updateIndex(context.Background()))
+		require.Len(t, mockIdx.calls, 0)
 	})
 
 	t.Run("modify policy", func(t *testing.T) {
+		mockIdx := setupMock()
 		pset := genPolicySet(rng.Intn(numPolicySets))
 
 		require.NoError(t, commitToGitRepo(sourceGitDir, "Modify policy", func(wt *git.Worktree) error {
 			for _, p := range pset {
 				modifyPolicy(p)
-				if err := writePolicies(filepath.Join(sourceGitDir, "policies"), p); err != nil {
-					return err
-				}
 			}
 
-			return nil
+			return writePolicySet(filepath.Join(sourceGitDir, policyDir), pset)
 		}))
 
-		require.NoError(t, store.updateRegistry(context.Background()))
+		require.NoError(t, store.updateIndex(context.Background()))
 
-		txn := txnHelper.last()
-		require.NotNil(t, txn)
+		require.True(t, mockIdx.Called("Apply", mock.Anything))
+		require.Len(t, mockIdx.calls, 1)
 
-		txn.AssertNumberOfCalls(t, "Add", 3)
-		txn.AssertNotCalled(t, "Remove", mock.MatchedBy(test.AnyPolicy))
-		reg.AssertCalled(t, "Update", mock.MatchedBy(test.AnyContext), txn)
+		notice := getNotification(t, notificationChan)
+		require.NotNil(t, notice)
+		require.Len(t, notice.AddOrUpdate, 3)
+		require.Len(t, notice.Remove, 0)
 	})
 
 	t.Run("add policy", func(t *testing.T) {
+		mockIdx := setupMock()
 		pset := genPolicySet(numPolicySets)
 
 		require.NoError(t, commitToGitRepo(sourceGitDir, "Add policy", func(wt *git.Worktree) error {
-			for _, p := range pset {
-				if err := writePolicies(filepath.Join(sourceGitDir, "policies"), p); err != nil {
-					return err
-				}
-
-				if _, err := wt.Add(mkFilePath("policies", p)); err != nil {
-					return err
-				}
+			if err := writePolicySet(filepath.Join(sourceGitDir, policyDir), pset); err != nil {
+				return err
 			}
 
-			return nil
+			_, err := wt.Add(".")
+			return err
 		}))
 
-		require.NoError(t, store.updateRegistry(context.Background()))
+		require.NoError(t, store.updateIndex(context.Background()))
 
-		txn := txnHelper.last()
-		require.NotNil(t, txn)
+		require.True(t, mockIdx.Called("Apply", mock.Anything))
+		require.Len(t, mockIdx.calls, 1)
 
-		txn.AssertNumberOfCalls(t, "Add", 3)
-		txn.AssertNotCalled(t, "Remove", mock.MatchedBy(test.AnyPolicy))
-		reg.AssertCalled(t, "Update", mock.MatchedBy(test.AnyContext), txn)
+		notice := getNotification(t, notificationChan)
+		require.NotNil(t, notice)
+		require.Len(t, notice.AddOrUpdate, 3)
+		require.Len(t, notice.Remove, 0)
 	})
 
 	t.Run("add policy to ignored dir", func(t *testing.T) {
+		mockIdx := setupMock()
 		pset := genPolicySet(numPolicySets)
 
 		require.NoError(t, commitToGitRepo(sourceGitDir, "Add ignored policy", func(wt *git.Worktree) error {
-			for _, p := range pset {
-				if err := writePolicies(filepath.Join(sourceGitDir, "ignored"), p); err != nil {
-					return err
-				}
+			if err := writePolicySet(filepath.Join(sourceGitDir, ignoredDir), pset); err != nil {
+				return err
+			}
 
-				if _, err := wt.Add(mkFilePath("ignored", p)); err != nil {
+			for f := range pset {
+				if _, err := wt.Add(filepath.Join(ignoredDir, f)); err != nil {
 					return err
 				}
 			}
@@ -218,21 +195,17 @@ func TestUpdateRegistry(t *testing.T) {
 			return nil
 		}))
 
-		require.NoError(t, store.updateRegistry(context.Background()))
-
-		txn := txnHelper.last()
-		require.NotNil(t, txn)
-
-		txn.AssertNotCalled(t, "Add", mock.MatchedBy(test.AnyPolicy))
-		txn.AssertNotCalled(t, "Remove", mock.MatchedBy(test.AnyPolicy))
+		require.NoError(t, store.updateIndex(context.Background()))
+		require.Len(t, mockIdx.calls, 0)
 	})
 
 	t.Run("delete policy", func(t *testing.T) {
+		mockIdx := setupMock()
 		pset := genPolicySet(rng.Intn(numPolicySets))
 
 		require.NoError(t, commitToGitRepo(sourceGitDir, "Delete policy", func(wt *git.Worktree) error {
-			for _, p := range pset {
-				fp := mkFilePath("policies", p)
+			for file := range pset {
+				fp := filepath.Join(policyDir, file)
 				if err := os.Remove(filepath.Join(sourceGitDir, fp)); err != nil {
 					return err
 				}
@@ -241,23 +214,25 @@ func TestUpdateRegistry(t *testing.T) {
 			return nil
 		}))
 
-		require.NoError(t, store.updateRegistry(context.Background()))
+		require.NoError(t, store.updateIndex(context.Background()))
 
-		txn := txnHelper.last()
-		require.NotNil(t, txn)
+		require.True(t, mockIdx.Called("Apply", mock.Anything))
+		require.Len(t, mockIdx.calls, 1)
 
-		txn.AssertNumberOfCalls(t, "Remove", 3)
-		txn.AssertNotCalled(t, "Add", mock.MatchedBy(test.AnyPolicy))
-		reg.AssertCalled(t, "Update", mock.MatchedBy(test.AnyContext), txn)
+		notice := getNotification(t, notificationChan)
+		require.NotNil(t, notice)
+		require.Len(t, notice.AddOrUpdate, 0)
+		require.Len(t, notice.Remove, 3)
 	})
 
 	t.Run("move policy out of policy dir", func(t *testing.T) {
+		mockIdx := setupMock()
 		pset := genPolicySet(rng.Intn(numPolicySets))
 
 		require.NoError(t, commitToGitRepo(sourceGitDir, "Move policy out", func(wt *git.Worktree) error {
-			for _, p := range pset {
-				from := filepath.Join(sourceGitDir, mkFilePath("policies", p))
-				to := filepath.Join(sourceGitDir, mkFilePath("ignored", p))
+			for file := range pset {
+				from := filepath.Join(sourceGitDir, filepath.Join(policyDir, file))
+				to := filepath.Join(sourceGitDir, filepath.Join(ignoredDir, file))
 				if err := os.Rename(from, to); err != nil {
 					return err
 				}
@@ -266,37 +241,61 @@ func TestUpdateRegistry(t *testing.T) {
 			return nil
 		}))
 
-		require.NoError(t, store.updateRegistry(context.Background()))
+		require.NoError(t, store.updateIndex(context.Background()))
 
-		txn := txnHelper.last()
-		require.NotNil(t, txn)
+		require.True(t, mockIdx.Called("Apply", mock.Anything))
+		require.Len(t, mockIdx.calls, 1)
 
-		txn.AssertNumberOfCalls(t, "Remove", 3)
-		txn.AssertNotCalled(t, "Add", mock.MatchedBy(test.AnyPolicy))
-		reg.AssertCalled(t, "Update", mock.MatchedBy(test.AnyContext), txn)
+		notice := getNotification(t, notificationChan)
+		require.NotNil(t, notice)
+		require.Len(t, notice.AddOrUpdate, 0)
+		require.Len(t, notice.Remove, 3)
+	})
+
+	t.Run("ignore unsupported file", func(t *testing.T) {
+		mockIdx := setupMock()
+		require.NoError(t, commitToGitRepo(sourceGitDir, "Add unsupported file", func(wt *git.Worktree) error {
+			fp := filepath.Join(sourceGitDir, policyDir, "file1.txt")
+			if err := os.WriteFile(fp, []byte("something"), 0600); err != nil {
+				return err
+			}
+
+			_, err := wt.Add(filepath.Join(policyDir, "file1.txt"))
+
+			return err
+		}))
+
+		require.NoError(t, store.updateIndex(context.Background()))
+		require.Len(t, mockIdx.calls, 0)
 	})
 }
 
-type mockTxnHelper struct {
-	txns []*mocks.Transaction
-}
+func requireIndexContains(t *testing.T, store *Store, wantFiles []string) {
+	t.Helper()
 
-func (m *mockTxnHelper) newTxn() *mocks.Transaction {
-	txn := new(mocks.Transaction)
-	txn.On("Add", mock.Anything).Return(nil)
-	txn.On("Remove", mock.Anything).Return(nil)
-
-	m.txns = append(m.txns, txn)
-
-	return txn
-}
-
-func (m *mockTxnHelper) last() *mocks.Transaction {
-	if len(m.txns) == 0 {
-		return nil
+	var haveFiles []string
+	for p := range store.GetAllPolicies(context.Background()) {
+		require.NoError(t, p.Err, "Policy returned by the store has an error")
+		for _, f := range p.ModToFile {
+			haveFiles = append(haveFiles, f)
+		}
 	}
 
-	return m.txns[len(m.txns)-1]
+	require.ElementsMatch(t, wantFiles, haveFiles)
+}
+
+func getNotification(t *testing.T, notificationChan <-chan *compile.Incremental) *compile.Incremental {
+	t.Helper()
+
+	timer := time.NewTimer(10 * time.Second)
+	defer timer.Stop()
+
+	select {
+	case c := <-notificationChan:
+		return c
+	case <-timer.C:
+		return nil
+	}
 }
 
 func mkConf(gitRepo, checkoutDir string) *Conf {
@@ -309,93 +308,91 @@ func mkConf(gitRepo, checkoutDir string) *Conf {
 	}
 }
 
-func createGitRepo(dir string, policyCount int) error {
-	policyDir := filepath.Join(dir, "policies")
-	if err := os.MkdirAll(policyDir, 0744); err != nil {
-		return fmt.Errorf("failed to create policy dir %s: %w", policyDir, err)
-	}
+func createGitRepo(t *testing.T, dir string, policyCount int) []string {
+	t.Helper()
 
-	ignoredDir := filepath.Join(dir, "ignored")
-	if err := os.MkdirAll(ignoredDir, 0744); err != nil {
-		return fmt.Errorf("failed to create ignored dir %s: %w", ignoredDir, err)
-	}
+	fullPolicyDir := filepath.Join(dir, policyDir)
+	require.NoError(t, os.MkdirAll(fullPolicyDir, 0744), "Failed to create policy dir %s", fullPolicyDir)
+
+	fullIgnoredDir := filepath.Join(dir, ignoredDir)
+	require.NoError(t, os.MkdirAll(fullIgnoredDir, 0744), "Failed to create ignored dir %s", fullIgnoredDir)
 
 	repo, err := git.PlainInit(dir, false)
-	if err != nil {
-		return fmt.Errorf("failed to init Git repo: %w", err)
-	}
+	require.NoError(t, err, "Failed to init Git repo")
 
 	wt, err := repo.Worktree()
-	if err != nil {
-		return fmt.Errorf("failed to get worktree: %w", err)
-	}
+	require.NoError(t, err, "Failed to get worktree")
 
-	if _, err := wt.Commit("Initial commit", &git.CommitOptions{
+	_, err = wt.Commit("Initial commit", &git.CommitOptions{
 		Author: &object.Signature{
 			Name:  "Daffy Duck",
 			Email: "daffy@mallard.dev",
 			When:  time.Now(),
 		},
-	}); err != nil {
-		return fmt.Errorf("failed to do initial commit: %w", err)
-	}
+	})
+	require.NoError(t, err, "Failed to do initial commit")
 
 	head, err := repo.Head()
-	if err != nil {
-		return fmt.Errorf("failed to get head: %w", err)
-	}
+	require.NoError(t, err, "Failed to get head")
 
-	if err := wt.Checkout(&git.CheckoutOptions{
+	err = wt.Checkout(&git.CheckoutOptions{
 		Hash:   head.Hash(),
 		Branch: plumbing.NewBranchReferenceName("policies"),
 		Create: true,
-	}); err != nil {
-		return fmt.Errorf("failed to checkout branch: %w", err)
-	}
+	})
+	require.NoError(t, err, "Failed to checkout branch")
+
+	var allFiles []string
 
 	// write policies
 	for i := 0; i < policyCount; i++ {
 		pset := genPolicySet(i)
 
-		if err := writePolicies(policyDir, pset[:]...); err != nil {
-			return fmt.Errorf("failed to write policies to policy dir: %w", err)
-		}
+		require.NoError(t, writePolicySet(fullPolicyDir, pset), "Failed to write policies to policy dir")
+		require.NoError(t, writePolicySet(fullIgnoredDir, pset), "Failed to write policies to ignored dir")
 
-		if err := writePolicies(ignoredDir, pset[:]...); err != nil {
-			return fmt.Errorf("failed to write policies to ignored dir: %w", err)
+		for f := range pset {
+			allFiles = append(allFiles, filepath.Join(policyDir, f))
 		}
 	}
 
-	if _, err := wt.Add("."); err != nil {
-		return fmt.Errorf("failed to add: %w", err)
-	}
+	_, err = wt.Add(".")
+	require.NoError(t, err, "Failed to add")
 
-	if _, err := wt.Commit("Add policies", &git.CommitOptions{
+	_, err = wt.Commit("Add policies", &git.CommitOptions{
 		Author: &object.Signature{
 			Name:  "Daffy Duck",
 			Email: "daffy@mallard.dev",
 			When:  time.Now(),
 		},
-	}); err != nil {
-		return fmt.Errorf("failed to commit: %w", err)
-	}
+	})
+	require.NoError(t, err, "Failed to commit")
 
-	return nil
+	return allFiles
 }
 
-func genPolicySet(i int) [3]*policyv1.Policy {
+type policySet map[string]*policyv1.Policy
+
+func genPolicySet(i int) policySet {
 	suffix := fmt.Sprintf("%03d", i)
 
-	rp := test.GenResourcePolicy(test.PrefixAndSuffix(namePrefix, suffix))
-	pp := test.GenPrincipalPolicy(test.PrefixAndSuffix(namePrefix, suffix))
-	dr := test.GenDerivedRoles(test.PrefixAndSuffix(namePrefix, suffix))
+	policies := []*policyv1.Policy{
+		test.GenResourcePolicy(test.PrefixAndSuffix(namePrefix, suffix)),
+		test.GenPrincipalPolicy(test.PrefixAndSuffix(namePrefix, suffix)),
+		test.GenDerivedRoles(test.PrefixAndSuffix(namePrefix, suffix)),
+	}
 
-	return [...]*policyv1.Policy{rp, pp, dr}
+	m := make(policySet, len(policies))
+	for _, p := range policies {
+		m[mkFileName(p)] = p
+	}
+
+	return m
 }
 
-func writePolicies(dir string, policies ...*policyv1.Policy) error {
-	for _, p := range policies {
-		if err := writePolicy(dir, p); err != nil {
+func writePolicySet(dir string, pset policySet) error {
+	for f, p := range pset {
+		if err := writePolicy(filepath.Join(dir, f), p); err != nil {
 			return err
 		}
 	}
@@ -403,34 +400,31 @@ func writePolicies(dir string, policies ...*policyv1.Policy) error {
 	return nil
 }
 
-func writePolicy(dir string, p *policyv1.Policy) error {
-	fpath := mkFilePath(dir, p)
-	f, err := os.Create(fpath)
+func writePolicy(path string, p *policyv1.Policy) error {
+	f, err := os.Create(path)
 	if err != nil {
-		return fmt.Errorf("failed to create file %s: %w", fpath, err)
+		return fmt.Errorf("failed to create file %s: %w", path, err)
 	}
 
 	defer f.Close()
 
-	_, err = policy.WritePolicy(f, p)
-
-	return err
+	return policy.WritePolicy(f, p)
 }
 
-func mkFilePath(dir string, p *policyv1.Policy) string {
+func mkFileName(p *policyv1.Policy) string {
 	switch pt := p.PolicyType.(type) {
 	case *policyv1.Policy_ResourcePolicy:
-		return filepath.Join(dir, fmt.Sprintf("%s.%s.yaml", pt.ResourcePolicy.Resource, pt.ResourcePolicy.Version))
+		return fmt.Sprintf("%s.%s.yaml", pt.ResourcePolicy.Resource, pt.ResourcePolicy.Version)
 	case *policyv1.Policy_PrincipalPolicy:
-		return filepath.Join(dir, fmt.Sprintf("%s.%s.yaml", pt.PrincipalPolicy.Principal, pt.PrincipalPolicy.Version))
+		return fmt.Sprintf("%s.%s.yaml", pt.PrincipalPolicy.Principal, pt.PrincipalPolicy.Version)
 	case *policyv1.Policy_DerivedRoles:
-		return filepath.Join(dir, fmt.Sprintf("%s.yaml", pt.DerivedRoles.Name))
+		return fmt.Sprintf("%s.yaml", pt.DerivedRoles.Name)
 	default:
 		panic(fmt.Errorf("unknown policy type %T", pt))
 	}
 }
 
-func commitToGitRepo(dir string, msg string, work func(*git.Worktree) error) error {
+func commitToGitRepo(dir, msg string, work func(*git.Worktree) error) error {
 	repo, err := git.PlainOpen(dir)
 	if err != nil {
 		return fmt.Errorf("failed to open Git repo: %w", err)
@@ -491,4 +485,56 @@ func modifyPolicy(p *policyv1.Policy) *policyv1.Policy {
 	default:
 		return p
 	}
+}
+
+type mockIndex struct {
+	index disk.Index
+	calls []mock.Call
+}
+
+func newMockIndex(index disk.Index) *mockIndex {
+	return &mockIndex{index: index}
+}
+
+func (m *mockIndex) Add(file string, p *policyv1.Policy) (*compile.Incremental, error) {
+	m.calls = append(m.calls, mock.Call{Method: "Add", Arguments: mock.Arguments{file, p}})
+	return m.index.Add(file, p)
+}
+
+func (m *mockIndex) Remove(file string) (*compile.Incremental, error) {
+	m.calls = append(m.calls, mock.Call{Method: "Remove", Arguments: mock.Arguments{file}})
+	return m.index.Remove(file)
+}
+
+func (m *mockIndex) RemoveIfSafe(file string) (*compile.Incremental, error) {
+	m.calls = append(m.calls, mock.Call{Method: "RemoveIfSafe", Arguments: mock.Arguments{file}})
+	return m.index.RemoveIfSafe(file)
+}
+
+func (m *mockIndex) FilenameFor(p *policyv1.Policy) string {
+	m.calls = append(m.calls, mock.Call{Method: "FilenameFor", Arguments: mock.Arguments{p}})
+	return m.index.FilenameFor(p)
+}
+
+func (m *mockIndex) GetAllPolicies(ctx context.Context) <-chan *compile.Unit {
+	m.calls = append(m.calls, mock.Call{Method: "GetAllPolicies", Arguments: mock.Arguments{ctx}})
+	return m.index.GetAllPolicies(ctx)
+}
+
+func (m *mockIndex) Apply(updates *disk.IndexUpdate) (*compile.Incremental, error) {
+	m.calls = append(m.calls, mock.Call{Method: "Apply", Arguments: mock.Arguments{updates}})
+	return m.index.Apply(updates)
+}
+
+func (m *mockIndex) Called(methodName string, expected ...interface{}) bool {
+	for _, call := range m.calls {
+		if call.Method == methodName {
+			_, differences := mock.Arguments(expected).Diff(call.Arguments)
+			if differences == 0 {
+				return true
+			}
+		}
+	}
+
+	return false
 }

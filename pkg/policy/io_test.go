@@ -59,13 +59,13 @@ func TestReadPolicy(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			//fmt.Println(protojson.Format(tc.want))
+			// fmt.Println(protojson.Format(tc.want))
 			f, err := os.Open(tc.input)
 			require.NoError(t, err)
 
 			defer f.Close()
 
-			have, _, err := policy.ReadPolicy(f)
+			have, err := policy.ReadPolicy(f)
 			if tc.wantErr {
 				require.Error(t, err)
 			} else {

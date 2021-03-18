@@ -59,16 +59,20 @@ lint: $(GOLANGCI_LINT)
 .PHONY: generate
 generate: clean $(BUF) $(PROTOC_GEN_GO) $(PROTOC_GEN_VALIDATE) $(VALIDATE_PROTO) $(MOCKERY)
 	@ $(BUF) lint
-	#@ $(BUF) breaking --against '.git#branch=main'
+	@ # $(BUF) breaking --against '.git#branch=main'
 	@ $(BUF) generate --template '{"version":"v1beta1","plugins":[{"name":"go","out":"$(GEN_DIR)","opt":"paths=source_relative","path":"$(PROTOC_GEN_GO)"}, {"name":"validate","opt":["paths=source_relative","lang=go"],"out":"$(GEN_DIR)","path":"$(PROTOC_GEN_VALIDATE)"}]}' .
-	@ $(MOCKERY) --quiet --dir=pkg/policy --name="(Registry|Transaction)" --recursive --output=$(MOCK_DIR)
+	@ $(MOCKERY) --quiet --dir=pkg/storage/disk --name="Index" --recursive --output=$(MOCK_DIR)
 
 .PHONY: test
 test:
 	@ go test -cover ./...
 
+.PHONY: coverage
+coverage:
+	@ hack/scripts/cover.sh
+
 .PHONY: build
-build: generate test
+build: generate lint test
 	CGO_ENABLED=0 GOOS=linux go build -a -ldflags '-w -s -X $(PKG)/pkg/util.Version=$(VERSION) -X $(PKG)/pkg/util.BuildDate=$(BUILD_DATE)' .
 
 .PHONY: container

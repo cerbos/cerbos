@@ -2,7 +2,7 @@ apiVersion: paams.dev/v1
 resourcePolicy:
   importDerivedRoles:
   - my_derived_roles
-  resource: leave_request
+  resource: "hr:leave_request"
   rules:
   - action: '*'
     effect: EFFECT_ALLOW

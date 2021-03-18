@@ -12,6 +12,7 @@ import (
 
 type CodeGenResult struct {
 	ModName    string
+	ModID      namer.ModuleID
 	Module     *ast.Module
 	Conditions map[string]cel.Program
 }

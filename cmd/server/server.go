@@ -2,6 +2,7 @@ package server
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"os"
@@ -12,7 +13,7 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/charithe/menshen/pkg/config"
-	"github.com/charithe/menshen/pkg/policy"
+	"github.com/charithe/menshen/pkg/engine"
 	"github.com/charithe/menshen/pkg/server"
 	"github.com/charithe/menshen/pkg/storage"
 	"github.com/charithe/menshen/pkg/util"
@@ -54,7 +55,7 @@ func doRun(_ *cobra.Command, _ []string) error {
 	defer stopFunc()
 
 	// load configuration
-	if err := config.LoadAndWatch(ctx, args.configFile); err != nil {
+	if err := config.Load(args.configFile); err != nil {
 		log.Errorw("Failed to load configuration", "error", err)
 
 		return err
@@ -65,17 +66,21 @@ func doRun(_ *cobra.Command, _ []string) error {
 		return err
 	}
 
-	// create the registry instance
-	registry := policy.InitGlobal()
-
 	// create store
-	store, err := storage.New(ctx, registry)
+	store, err := storage.New(ctx)
 	if err != nil {
 		log.Errorw("Failed to create store", "error", err)
 		return fmt.Errorf("failed to create store: %w", err)
 	}
 
-	srv := server.New(registry, store)
+	// create engine
+	eng, err := engine.New(ctx, store)
+	if err != nil {
+		log.Errorw("Failed to create engine", "error", err)
+		return fmt.Errorf("failed to create engine: %w", err)
+	}
+
+	srv := server.New(eng, store)
 
 	return startHTTPServer(ctx, srv, conf, log)
 }
@@ -96,7 +101,7 @@ func startHTTPServer(ctx context.Context, srv *server.Server, conf Conf, log *za
 	errChan := make(chan error, 1)
 	go func() {
 		log.Infof("Starting HTTP server on %s", conf.ListenAddr)
-		if err := h.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+		if err := h.ListenAndServe(); err != nil && errors.Is(err, http.ErrServerClosed) {
 			errChan <- fmt.Errorf("http server failed: %w", err)
 		}
 	}()

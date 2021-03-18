@@ -29,7 +29,7 @@ func LoadPolicy(t *testing.T, path string) *policyv1.Policy {
 	inp := mkReadCloser(t, path)
 	defer inp.Close()
 
-	p, _, err := policy.ReadPolicy(inp)
+	p, err := policy.ReadPolicy(inp)
 	require.NoError(t, err, "Failed to load %s", path)
 
 	return p
@@ -45,6 +45,8 @@ func mkReadCloser(t *testing.T, file string) io.ReadCloser {
 }
 
 func PathToDir(t *testing.T, dir string) string {
+	t.Helper()
+
 	_, currFile, _, ok := runtime.Caller(0)
 	if !ok {
 		t.Error("Failed to detect testdata directory")

@@ -7,12 +7,12 @@ import (
 	"io"
 	"io/ioutil"
 	"net/http"
-	"sync"
 
 	"github.com/gorilla/mux"
 	"go.uber.org/zap"
 	"google.golang.org/protobuf/encoding/protojson"
 
+	"github.com/charithe/menshen/pkg/engine"
 	policyv1 "github.com/charithe/menshen/pkg/generated/policy/v1"
 	requestv1 "github.com/charithe/menshen/pkg/generated/request/v1"
 	responsev1 "github.com/charithe/menshen/pkg/generated/response/v1"
@@ -25,34 +25,17 @@ import (
 const maxRequestSize = 1024 * 1024 // 1 MiB
 
 type Server struct {
-	log      *zap.SugaredLogger
-	registry policy.Registry
-	store    storage.Store
-	mu       sync.RWMutex
-	checker  *policy.Checker
+	log   *zap.SugaredLogger
+	eng   *engine.Engine
+	store storage.Store
 }
 
-func New(registry policy.Registry, store storage.Store) *Server {
-	s := &Server{
-		log:      zap.S().Named("http.server"),
-		registry: registry,
-		store:    store,
-		checker:  registry.GetChecker(),
+func New(eng *engine.Engine, store storage.Store) *Server {
+	return &Server{
+		log:   zap.S().Named("http.server"),
+		eng:   eng,
+		store: store,
 	}
-
-	registry.AddWatcher("http.server", s)
-
-	return s
-}
-
-func (s *Server) RegistryUpdated(revision uint64) {
-	s.log.Infow("Detected registry update", "revision", revision)
-
-	checker := s.registry.GetChecker()
-
-	s.mu.Lock()
-	s.checker = checker
-	s.mu.Unlock()
 }
 
 func (s *Server) Handler() http.Handler {
@@ -100,15 +83,14 @@ func (s *Server) handleCheck(w http.ResponseWriter, r *http.Request) {
 
 	log = log.With("request_id", req.RequestId)
 
-	effect, err := s.check(context.TODO(), req)
+	effect, err := s.eng.Check(r.Context(), req)
 	if err != nil {
-		if errors.Is(err, policy.ErrNoPoliciesMatched) {
-			log.Warnw("No policies matched the request", "error", err)
+		if errors.Is(err, engine.ErrNoPoliciesMatched) {
 			writeResponse(log, w, req.RequestId, http.StatusUnauthorized, "No policies matched", sharedv1.Effect_EFFECT_DENY)
 			return
 		}
 
-		log.Errorw("Failed to check policies", "error", err)
+		log.Errorw("Policy check failed", "error", err)
 		writeResponse(log, w, req.RequestId, http.StatusInternalServerError, "Internal server error", sharedv1.Effect_EFFECT_DENY)
 		return
 	}
@@ -123,13 +105,6 @@ func (s *Server) handleCheck(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (s *Server) check(ctx context.Context, req *requestv1.Request) (sharedv1.Effect, error) {
-	s.mu.RLock()
-	defer s.mu.RUnlock()
-
-	return s.checker.Check(ctx, req)
-}
-
 func writeResponse(log *zap.SugaredLogger, w http.ResponseWriter, requestID string, code int, msg string, effect sharedv1.Effect) {
 	respBytes, err := protojson.Marshal(&responsev1.Response{
 		RequestId:     requestID,
@@ -137,7 +112,6 @@ func writeResponse(log *zap.SugaredLogger, w http.ResponseWriter, requestID stri
 		StatusMessage: msg,
 		Effect:        effect,
 	})
-
 	if err != nil {
 		log.Errorw("Failed to marshal response", "error", err)
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
@@ -180,7 +154,7 @@ func (s *Server) handleAdminPolicy(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	p, _, err := policy.ReadPolicy(&io.LimitedReader{R: r.Body, N: maxRequestSize})
+	p, err := policy.ReadPolicy(&io.LimitedReader{R: r.Body, N: maxRequestSize})
 	if err != nil {
 		log.Errorw("Failed to read request body", "error", err)
 		http.Error(w, "Bad request", http.StatusBadRequest)

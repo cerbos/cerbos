@@ -1,13 +1,19 @@
-package policy
+package compile
 
 import (
 	"errors"
 	"fmt"
 
 	"github.com/google/cel-go/cel"
+
+	"github.com/charithe/menshen/pkg/namer"
 )
 
-var ErrNoMatchingConditions = errors.New("no matching conditions")
+var (
+	ErrEmptyConditionIndex  = errors.New("empty condition index")
+	ErrNoMatchingConditions = errors.New("no matching conditions")
+	ErrUnexpectedResult     = errors.New("unexpected result")
+)
 
 type ConditionMap map[string]ConditionEvaluator
 
@@ -46,10 +52,31 @@ func (ce *CELConditionEvaluator) Eval(input interface{}) (bool, error) {
 	return v, nil
 }
 
-type ConditionIndex map[string]ConditionMap
+type ConditionIndex map[namer.ModuleID]ConditionMap
+
+func NewConditionIndex() ConditionIndex {
+	return make(ConditionIndex)
+}
+
+func (ci ConditionIndex) AddConditionEvaluator(modName, key string, condEval ConditionEvaluator) {
+	modID := namer.GenModuleIDFromName(modName)
+	if _, ok := ci[modID]; !ok {
+		ci[modID] = make(ConditionMap)
+	}
+
+	ci[modID][key] = condEval
+}
+
+func (ci ConditionIndex) Add(modName string, condMap ConditionMap) {
+	ci[namer.GenModuleIDFromName(modName)] = condMap
+}
 
 func (ci ConditionIndex) GetConditionEvaluator(modName, key string) (ConditionEvaluator, error) {
-	conds, ok := ci[modName]
+	if ci == nil {
+		return nil, ErrEmptyConditionIndex
+	}
+
+	conds, ok := ci[namer.GenModuleIDFromName(modName)]
 	if !ok {
 		return nil, fmt.Errorf("no conditions found for module %s: %w", modName, ErrNoMatchingConditions)
 	}

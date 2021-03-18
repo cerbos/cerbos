@@ -20,9 +20,9 @@ storage:
     directory: ${STORE_DIR}
 EOF
 
-
 echo "Store directory is $STORE_DIR"
 (
     cd "${SCRIPT_DIR}/../.."
-    go run main.go server --loglevel=DEBUG --config="${TEMP_DIR}/conf.yaml"
+    dlv debug . -- server --config="${TEMP_DIR}/conf.yaml"
 )
+

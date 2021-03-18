@@ -14,7 +14,7 @@ import (
 
 var ErrConfigNotLoaded = errors.New("config not loaded")
 
-var conf *configHolder = &configHolder{}
+var conf = &configHolder{}
 
 type Validator interface {
 	Validate() error

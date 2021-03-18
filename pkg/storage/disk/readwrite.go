@@ -2,104 +2,126 @@ package disk
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
-
-	"go.uber.org/zap"
+	"sync"
 
 	"github.com/google/renameio"
+	"go.uber.org/zap"
 
+	"github.com/charithe/menshen/pkg/compile"
 	policyv1 "github.com/charithe/menshen/pkg/generated/policy/v1"
-	"github.com/charithe/menshen/pkg/namer"
 	"github.com/charithe/menshen/pkg/policy"
 )
 
-const (
-	resourcePoliciesDir  = "resource_policies"
-	principalPoliciesDir = "principal_policies"
-	derivedRolesDir      = "derived_roles"
-)
-
 type ReadWriteStore struct {
-	log       *zap.SugaredLogger
-	registry  policy.Registry
-	policyDir string
-	index     FileIndex
+	policyDir  string
+	index      Index
+	mu         sync.RWMutex
+	notifyChan chan<- *compile.Incremental
 }
 
-func NewReadWriteStore(ctx context.Context, registry policy.Registry, policyDir string) (*ReadWriteStore, error) {
-	if err := checkValidDir(policyDir); err != nil {
+func NewReadWriteStore(ctx context.Context, policyDir string) (*ReadWriteStore, error) {
+	zap.S().Named("disk.store").Infow("Creating disk store", "root", policyDir)
+
+	idx, err := BuildIndex(ctx, os.DirFS(policyDir), ".")
+	if err != nil {
 		return nil, err
 	}
 
-	log := zap.S().Named("disk.store.rw").With("root", policyDir)
-
-	idx, err := LoadPoliciesFromDir(ctx, registry, policyDir, log)
-	if err != nil && !errors.Is(err, policy.ErrEmptyTransaction) {
-		return nil, err
-	}
-
-	return &ReadWriteStore{log: log, registry: registry, policyDir: policyDir, index: idx}, nil
+	return &ReadWriteStore{policyDir: policyDir, index: idx}, nil
 }
 
 func (s *ReadWriteStore) Driver() string {
 	return DriverName
 }
 
-func (s *ReadWriteStore) AddOrUpdate(ctx context.Context, p *policyv1.Policy) error {
-	filePath := s.fileNameForPolicy(p)
+func (s *ReadWriteStore) GetAllPolicies(ctx context.Context) <-chan *compile.Unit {
+	return s.index.GetAllPolicies(ctx)
+}
 
-	f, err := renameio.TempFile("", filePath)
+func (s *ReadWriteStore) SetNotificationChannel(channel chan<- *compile.Incremental) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	s.notifyChan = channel
+}
+
+func (s *ReadWriteStore) notify(ctx context.Context, change *compile.Incremental) error {
+	s.mu.RLock()
+	notifyChan := s.notifyChan //nolint:ifshort
+	s.mu.RUnlock()
+
+	if notifyChan != nil {
+		select {
+		case <-ctx.Done():
+			return fmt.Errorf("failed to send notification: %w", ctx.Err())
+		case notifyChan <- change:
+		}
+	}
+
+	return nil
+}
+
+func (s *ReadWriteStore) AddOrUpdate(ctx context.Context, p *policyv1.Policy) error {
+	if err := policy.Validate(p); err != nil {
+		return fmt.Errorf("invalid policy: %w", err)
+	}
+
+	fileName := s.fileNameForPolicy(p)
+
+	f, err := renameio.TempFile("", filepath.Join(s.policyDir, fileName))
 	if err != nil {
 		return fmt.Errorf("failed to create temp file: %w", err)
 	}
 
-	defer f.Cleanup()
+	defer f.Cleanup() //nolint:errcheck
 
-	if _, err := policy.WritePolicy(f, p); err != nil {
+	if err := policy.WritePolicy(f, p); err != nil {
 		return err
 	}
 
-	tx := s.registry.NewTransaction()
-	if err := tx.Add(p); err != nil {
+	change, err := s.index.Add(fileName, p)
+	if err != nil {
 		return err
 	}
 
-	if err := s.registry.Update(ctx, tx); err != nil {
+	if err := f.CloseAtomicallyReplace(); err != nil {
 		return err
 	}
 
-	return f.CloseAtomicallyReplace()
+	return s.notify(ctx, change)
 }
 
 func (s *ReadWriteStore) Remove(ctx context.Context, p *policyv1.Policy) error {
-	tx := s.registry.NewTransaction()
-	if err := tx.Remove(p); err != nil {
+	fileName := s.fileNameForPolicy(p)
+
+	change, err := s.index.RemoveIfSafe(fileName)
+	if err != nil {
 		return err
 	}
 
-	if err := s.registry.Update(ctx, tx); err != nil {
+	if err := os.Remove(filepath.Join(s.policyDir, fileName)); err != nil {
 		return err
 	}
 
-	return os.Remove(s.fileNameForPolicy(p))
+	return s.notify(ctx, change)
 }
 
 func (s *ReadWriteStore) fileNameForPolicy(p *policyv1.Policy) string {
 	// if we have seen this module before, reuse the filename from that module.
-	if prev, ok := s.index.Get(namer.ModuleName(p)); ok {
+	if prev := s.index.FilenameFor(p); prev != "" {
 		return prev
 	}
 
 	switch pt := p.PolicyType.(type) {
 	case *policyv1.Policy_ResourcePolicy:
-		return filepath.Join(s.policyDir, resourcePoliciesDir, fmt.Sprintf("%s.%s.yaml", pt.ResourcePolicy.Resource, pt.ResourcePolicy.Version))
+		return fmt.Sprintf("resource_%s.%s.yaml", pt.ResourcePolicy.Resource, pt.ResourcePolicy.Version)
 	case *policyv1.Policy_PrincipalPolicy:
-		return filepath.Join(s.policyDir, principalPoliciesDir, fmt.Sprintf("%s.%s.yaml", pt.PrincipalPolicy.Principal, pt.PrincipalPolicy.Version))
+		return fmt.Sprintf("principal_%s.%s.yaml", pt.PrincipalPolicy.Principal, pt.PrincipalPolicy.Version)
 	case *policyv1.Policy_DerivedRoles:
-		return filepath.Join(s.policyDir, derivedRolesDir, fmt.Sprintf("%s.yaml", pt.DerivedRoles.Name))
+		return fmt.Sprintf("derived_roles_%s.yaml", pt.DerivedRoles.Name)
 	default:
 		panic(fmt.Errorf("unknown policy type %T", pt))
 	}

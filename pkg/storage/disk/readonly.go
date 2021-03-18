@@ -2,29 +2,35 @@ package disk
 
 import (
 	"context"
-	"errors"
+	"os"
 
 	"go.uber.org/zap"
 
-	"github.com/charithe/menshen/pkg/policy"
+	"github.com/charithe/menshen/pkg/compile"
 )
 
-type ReadOnlyStore struct{}
+type ReadOnlyStore struct {
+	index Index
+}
 
-func NewReadOnlyStore(ctx context.Context, registry policy.Registry, policyDir string) (*ReadOnlyStore, error) {
-	if err := checkValidDir(policyDir); err != nil {
+func NewReadOnlyStore(ctx context.Context, policyDir string) (*ReadOnlyStore, error) {
+	zap.S().Named("disk.store").Infow("Creating read-only disk store", "root", policyDir)
+	idx, err := BuildIndex(ctx, os.DirFS(policyDir), ".")
+	if err != nil {
 		return nil, err
 	}
 
-	log := zap.S().Named("disk.store.ro").With("root", policyDir)
-
-	if _, err := LoadPoliciesFromDir(ctx, registry, policyDir, log); err != nil && !errors.Is(err, policy.ErrEmptyTransaction) {
-		return nil, err
-	}
-
-	return &ReadOnlyStore{}, nil
+	return &ReadOnlyStore{index: idx}, nil
 }
 
 func (s *ReadOnlyStore) Driver() string {
 	return DriverName
+}
+
+func (s *ReadOnlyStore) GetAllPolicies(ctx context.Context) <-chan *compile.Unit {
+	return s.index.GetAllPolicies(ctx)
+}
+
+func (s *ReadOnlyStore) SetNotificationChannel(chan<- *compile.Incremental) {
+	// nothing to do because this is a read-only store
 }

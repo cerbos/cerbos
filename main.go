@@ -4,8 +4,8 @@ import (
 	"os"
 
 	"github.com/spf13/cobra"
-	"go.uber.org/zap"
 
+	"github.com/charithe/menshen/cmd/compile"
 	"github.com/charithe/menshen/cmd/server"
 	"github.com/charithe/menshen/pkg/util"
 )
@@ -13,15 +13,15 @@ import (
 func main() {
 	cmd := &cobra.Command{
 		Use:           util.AppName,
-		Short:         "PaaMS implementation",
+		Short:         "Access management made easy",
 		Version:       util.Version,
 		SilenceUsage:  true,
 		SilenceErrors: true,
 	}
 
-	cmd.AddCommand(server.NewCommand())
+	cmd.AddCommand(server.NewCommand(), compile.NewCommand())
 	if err := cmd.Execute(); err != nil {
-		zap.S().Errorw("Stopping due to error", "error", err)
+		cmd.PrintErrf("ERROR: %v\n", err)
 		os.Exit(1)
 	}
 }

@@ -8,6 +8,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/go-git/go-git/v5"
@@ -15,6 +16,7 @@ import (
 	"github.com/go-git/go-git/v5/plumbing/object"
 	"go.uber.org/zap"
 
+	"github.com/charithe/menshen/pkg/compile"
 	policyv1 "github.com/charithe/menshen/pkg/generated/policy/v1"
 	"github.com/charithe/menshen/pkg/policy"
 	"github.com/charithe/menshen/pkg/storage/disk"
@@ -23,17 +25,18 @@ import (
 var ErrDirtyState = errors.New("state is dirty")
 
 type Store struct {
-	log      *zap.SugaredLogger
-	registry policy.Registry
-	conf     *Conf
-	repo     *git.Repository
+	log        *zap.SugaredLogger
+	conf       *Conf
+	index      disk.Index
+	repo       *git.Repository
+	mu         sync.RWMutex
+	notifyChan chan<- *compile.Incremental
 }
 
-func NewStore(ctx context.Context, registry policy.Registry, conf *Conf) (*Store, error) {
+func NewStore(ctx context.Context, conf *Conf) (*Store, error) {
 	s := &Store{
-		log:      zap.S().Named("git.store").With("dir", conf.CheckoutDir),
-		registry: registry,
-		conf:     conf,
+		log:  zap.S().Named("git.store").With("dir", conf.CheckoutDir),
+		conf: conf,
 	}
 
 	if err := s.init(ctx); err != nil {
@@ -46,6 +49,33 @@ func NewStore(ctx context.Context, registry policy.Registry, conf *Conf) (*Store
 
 func (s *Store) Driver() string {
 	return DriverName
+}
+
+func (s *Store) GetAllPolicies(ctx context.Context) <-chan *compile.Unit {
+	return s.index.GetAllPolicies(ctx)
+}
+
+func (s *Store) SetNotificationChannel(channel chan<- *compile.Incremental) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	s.notifyChan = channel
+}
+
+func (s *Store) notify(ctx context.Context, change *compile.Incremental) error {
+	s.mu.RLock()
+	notifyChan := s.notifyChan //nolint:ifshort
+	s.mu.RUnlock()
+
+	if notifyChan != nil {
+		select {
+		case <-ctx.Done():
+			return fmt.Errorf("failed to send notification: %w", ctx.Err())
+		case notifyChan <- change:
+		}
+	}
+
+	return nil
 }
 
 func (s *Store) init(ctx context.Context) error {
@@ -144,9 +174,17 @@ func (s *Store) cloneRepo(ctx context.Context) error {
 }
 
 func (s *Store) loadAll(ctx context.Context) error {
-	if _, err := disk.LoadPoliciesFromDir(ctx, s.registry, s.conf.getPolicyDir(), s.log); err != nil && !errors.Is(err, policy.ErrEmptyTransaction) {
+	policyDir := "."
+	if s.conf.SubDir != "" {
+		policyDir = s.conf.SubDir
+	}
+
+	idx, err := disk.BuildIndex(ctx, os.DirFS(s.conf.CheckoutDir), policyDir)
+	if err != nil {
 		return err
 	}
+
+	s.index = idx
 
 	return nil
 }
@@ -208,21 +246,6 @@ func (s *Store) openRepo() error {
 	}
 
 	s.repo = repo
-
-	return nil
-}
-
-func (s *Store) isDirty(wt *git.Worktree) error {
-	s.log.Debug("Checking work tree status")
-	status, err := wt.Status()
-	if err != nil {
-		return fmt.Errorf("failed to get current git status: %w", err)
-	}
-
-	if !status.IsClean() {
-		s.log.Warnf("Git tree status is unclean: no new changes will be pulled until the tree is clean\n%s", status)
-		return ErrDirtyState
-	}
 
 	return nil
 }
@@ -295,7 +318,7 @@ func (s *Store) getTreeForHash(hash plumbing.Hash) (*object.Tree, error) {
 	return commit.Tree()
 }
 
-func (s *Store) updateRegistry(ctx context.Context) error {
+func (s *Store) updateIndex(ctx context.Context) error {
 	s.log.Debug("Checking for new commits")
 
 	changes, err := s.pullAndCompare(ctx)
@@ -310,51 +333,25 @@ func (s *Store) updateRegistry(ctx context.Context) error {
 
 	s.log.Infow("Detected repository changes")
 
-	tx := s.registry.NewTransaction()
-
-	addCount := 0
-	add := func(ce object.ChangeEntry) error {
-		s.log.Infow("Adding policy", "path", ce.Name)
-		if err := s.doTxOpUsingBlob(tx.Add, ce.TreeEntry.Hash); err != nil {
-			s.log.Errorw("Failed to add policy", "path", ce.Name, "error", err)
-			return err
-		}
-
-		addCount++
-
-		return nil
-	}
-
-	removeCount := 0
-	remove := func(ce object.ChangeEntry) error {
-		s.log.Infow("Removing policy", "path", ce.Name)
-		if err := s.doTxOpUsingBlob(tx.Remove, ce.TreeEntry.Hash); err != nil {
-			s.log.Errorw("Failed to remove policy", "path", ce.Name, "error", err)
-			return err
-		}
-
-		removeCount++
-
-		return nil
-	}
+	updates := disk.NewIndexUpdate()
 
 	for _, c := range changes {
 		s.log.Debugw("Processing change", "change", c)
 		switch {
 		case c.From.Name == "" && s.inPolicyDir(c.To.Name): // File created
-			if err := add(c.To); err != nil {
+			if err := s.accumulateChange(c.To, updates.Add); err != nil {
 				return err
 			}
 		case c.To.Name == "" && s.inPolicyDir(c.From.Name): // File deleted
-			if err := remove(c.From); err != nil {
+			if err := s.accumulateChange(c.From, updates.Remove); err != nil {
 				return err
 			}
 		case s.inPolicyDir(c.From.Name) && !s.inPolicyDir(c.To.Name): // File moved out of policy dir
-			if err := remove(c.From); err != nil {
+			if err := s.accumulateChange(c.From, updates.Remove); err != nil {
 				return err
 			}
 		case s.inPolicyDir(c.To.Name): // file moved in or modified
-			if err := add(c.To); err != nil {
+			if err := s.accumulateChange(c.To, updates.Add); err != nil {
 				return err
 			}
 		default:
@@ -362,16 +359,38 @@ func (s *Store) updateRegistry(ctx context.Context) error {
 		}
 	}
 
-	if err := s.registry.Update(ctx, tx); err != nil {
-		s.log.Errorw("Failed to update registry", "error", err)
+	if updates.IsEmpty() {
+		s.log.Info("No changes to registry")
+		return nil
+	}
+
+	change, err := s.index.Apply(updates)
+	if err != nil {
+		s.log.Errorw("Failed to apply changes to index", "error", err)
 		return err
 	}
 
-	if addCount > 0 || removeCount > 0 {
-		s.log.Infof("Registry updated: Added=%d Removed=%d", addCount, removeCount)
-	} else {
-		s.log.Info("No changes to registry")
+	addCount := len(change.AddOrUpdate)
+	removeCount := len(change.Remove)
+
+	s.log.Infof("Index updated: Added=%d Removed=%d", addCount, removeCount)
+	return s.notify(ctx, change)
+}
+
+func (s *Store) accumulateChange(ce object.ChangeEntry, accFn func(string, *policyv1.Policy)) error {
+	if !disk.IsSupportedFileType(ce.Name) {
+		s.log.Infow("Ignoring unsupported file type", "path", ce.Name)
+		return nil
 	}
+
+	s.log.Debugw("Reading policy", "path", ce.Name)
+	p, err := s.readPolicyFromBlob(ce.TreeEntry.Hash)
+	if err != nil {
+		s.log.Errorw("Failed to read policy", "path", ce.Name, "error", err)
+		return err
+	}
+
+	accFn(ce.Name, p)
 
 	return nil
 }
@@ -390,25 +409,25 @@ func (s *Store) inPolicyDir(filePath string) bool {
 	return !strings.Contains(rel, "..")
 }
 
-func (s *Store) doTxOpUsingBlob(op func(*policyv1.Policy) error, hash plumbing.Hash) error {
+func (s *Store) readPolicyFromBlob(hash plumbing.Hash) (*policyv1.Policy, error) {
 	blob, err := s.repo.BlobObject(hash)
 	if err != nil {
-		return fmt.Errorf("failed to get blob for %s: %w", hash, err)
+		return nil, fmt.Errorf("failed to get blob for %s: %w", hash, err)
 	}
 
 	reader, err := blob.Reader()
 	if err != nil {
-		return fmt.Errorf("failed to get reader for blob %s: %w", hash, err)
+		return nil, fmt.Errorf("failed to get reader for blob %s: %w", hash, err)
 	}
 
 	defer reader.Close()
 
-	p, _, err := policy.ReadPolicy(reader)
+	p, err := policy.ReadPolicy(reader)
 	if err != nil {
-		return fmt.Errorf("failed to read policy from blob %s: %w", hash, err)
+		return nil, fmt.Errorf("failed to read policy from blob %s: %w", hash, err)
 	}
 
-	return op(p)
+	return p, nil
 }
 
 func (s *Store) pollForUpdates(ctx context.Context) {
@@ -428,7 +447,7 @@ func (s *Store) pollForUpdates(ctx context.Context) {
 			s.log.Info("Stopped polling for updates")
 			return
 		case <-ticker.C:
-			if err := s.updateRegistry(ctx); err != nil {
+			if err := s.updateIndex(ctx); err != nil {
 				s.log.Errorw("Failed to check for updates", "error", err)
 			}
 		}

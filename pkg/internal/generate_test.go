@@ -21,7 +21,7 @@ func TestGenerateCode(t *testing.T) {
 	for _, tc := range testCases {
 		tc := tc
 		t.Run(tc.Name, func(t *testing.T) {
-			p, _, err := policy.ReadPolicy(bytes.NewReader(tc.Input))
+			p, err := policy.ReadPolicy(bytes.NewReader(tc.Input))
 			require.NoError(t, err, "Failed to read policy")
 
 			have, err := internal.GenerateCode(p)
@@ -29,6 +29,8 @@ func TestGenerateCode(t *testing.T) {
 			if _, ok := tc.Want["err"]; ok {
 				require.Error(t, err)
 			}
+
+			require.NoError(t, err)
 
 			if b, ok := tc.Want["rego"]; ok {
 				want := loadRegoModule(t, b)

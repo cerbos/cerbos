@@ -11,6 +11,7 @@ import (
 
 	policyv1 "github.com/charithe/menshen/pkg/generated/policy/v1"
 	sharedv1 "github.com/charithe/menshen/pkg/generated/shared/v1"
+	"github.com/charithe/menshen/pkg/namer"
 )
 
 const (
@@ -25,7 +26,21 @@ const (
 
 var ErrCompileError = errors.New("code generation error")
 
-// RegoGen is a Rego code generator
+// CELCompileError holds CEL compilation errors.
+type CELCompileError struct {
+	Parent string
+	Issues *cel.Issues
+}
+
+func (cce *CELCompileError) Error() string {
+	return cce.Issues.String()
+}
+
+func (cce *CELCompileError) Unwrap() error {
+	return cce.Issues.Err()
+}
+
+// RegoGen is a Rego code generator.
 type RegoGen struct {
 	packageName string
 	*strings.Builder
@@ -63,6 +78,7 @@ func (rg *RegoGen) Generate() (*CodeGenResult, error) {
 
 	return &CodeGenResult{
 		ModName:    rg.packageName,
+		ModID:      namer.GenModuleIDFromName(rg.packageName),
 		Module:     mod,
 		Conditions: rg.conditions,
 	}, nil
@@ -75,7 +91,7 @@ func (rg *RegoGen) AddDerivedRole(dr *policyv1.RoleDef) error {
 		return err
 	}
 
-	if err := rg.addCondition(dr.Computation); err != nil {
+	if err := rg.addCondition(fmt.Sprintf("Derived role %s", dr.Name), dr.Computation); err != nil {
 		return err
 	}
 
@@ -115,7 +131,7 @@ func (rg *RegoGen) AddResourceRule(rule *policyv1.ResourceRule) error {
 	rg.addActionMatch(rule.Action)
 	rg.addDerivedRolesCheck(rule.DerivedRoles)
 	rg.addRolesCheck(rule.Roles)
-	if err := rg.addCondition(rule.Condition); err != nil {
+	if err := rg.addCondition(fmt.Sprintf("Action %s", rule.Action), rule.Condition); err != nil {
 		return err
 	}
 
@@ -159,7 +175,7 @@ func (rg *RegoGen) AddPrincipalRule(rule *policyv1.PrincipalRule) error {
 		rg.addEffectRuleHead(action.Effect)
 		rg.addResourceMatch(rule.Resource)
 		rg.addActionMatch(action.Action)
-		if err := rg.addCondition(action.Condition); err != nil {
+		if err := rg.addCondition(fmt.Sprintf("Action %s", action.Action), action.Condition); err != nil {
 			return err
 		}
 
@@ -198,13 +214,13 @@ func (rg *RegoGen) addActionMatch(action string) {
 	}
 }
 
-func (rg *RegoGen) addCondition(cond *policyv1.Computation) error {
+func (rg *RegoGen) addCondition(parent string, cond *policyv1.Computation) error {
 	if cond != nil {
 		switch comp := cond.Computation.(type) {
 		case *policyv1.Computation_Script:
 			rg.line(comp.Script)
 		case *policyv1.Computation_Match:
-			if err := rg.addMatch(comp.Match); err != nil {
+			if err := rg.addMatch(parent, comp.Match); err != nil {
 				return err
 			}
 		}
@@ -213,10 +229,10 @@ func (rg *RegoGen) addCondition(cond *policyv1.Computation) error {
 	return nil
 }
 
-func (rg *RegoGen) addMatch(m *policyv1.Match) error {
-	prg, err := generateCELProgram(m)
+func (rg *RegoGen) addMatch(parent string, m *policyv1.Match) error {
+	prg, err := generateCELProgram(parent, m)
 	if err != nil {
-		return fmt.Errorf("invalid match block %v: %w", m, err)
+		return err
 	}
 
 	conditionKey := fmt.Sprintf("cond_%d", rg.condCount)
@@ -233,7 +249,7 @@ func (rg *RegoGen) addMatch(m *policyv1.Match) error {
 	return nil
 }
 
-func generateCELProgram(m *policyv1.Match) (cel.Program, error) {
+func generateCELProgram(parent string, m *policyv1.Match) (cel.Program, error) {
 	env, err := cel.NewEnv(cel.Declarations(decls.NewVar("request", decls.NewMapType(decls.String, decls.Dyn))))
 	if err != nil {
 		return nil, fmt.Errorf("failed to create CEL environment: %w", err)
@@ -248,7 +264,7 @@ func generateCELProgram(m *policyv1.Match) (cel.Program, error) {
 
 	celAST, issues := env.Compile(finalExpr)
 	if issues != nil && issues.Err() != nil {
-		return nil, issues.Err()
+		return nil, &CELCompileError{Parent: parent, Issues: issues}
 	}
 
 	return env.Program(celAST)

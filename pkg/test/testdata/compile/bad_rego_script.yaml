@@ -1,0 +1,62 @@
+---
+wantErrors:
+  - "resource_policies/leave_request_20210210.yaml: [compile error] rego_unsafe_var_error: var resource is unsafe"
+  - "resource_policies/leave_request_20210210.yaml: [compile error] rego_unsafe_var_error: var wibble is unsafe"
+mainDef: "resource_policies/leave_request_20210210.yaml"
+inputDefs:
+  "resource_policies/leave_request_20210210.yaml":
+    apiVersion: paams.dev/v1
+    resourcePolicy:
+      resource: leave_request
+      version: "20210210"
+      importDerivedRoles:
+        - my_derived_roles
+      rules:
+        - action: '*'
+          effect: EFFECT_ALLOW
+          roles:
+            - admin
+        - action: create
+          derivedRoles:
+            - employee_that_owns_the_record
+          effect: EFFECT_ALLOW
+        - action: view:*
+          derivedRoles:
+            - employee_that_owns_the_record
+            - direct_manager
+          effect: EFFECT_ALLOW
+        - action: view:public
+          derivedRoles:
+            - any_employee
+          effect: EFFECT_ALLOW
+        - action: approve
+          condition:
+            script: "wibble"
+          derivedRoles:
+            - direct_manager
+          effect: EFFECT_ALLOW
+
+  "derived_roles/my_derived_roles.yaml":
+    apiVersion: "paams.dev/v1"
+    derived_roles:
+      name: my_derived_roles
+      definitions:
+        - name: tester
+          parentRoles: ["dev", "qa"]
+
+        - name: employee_that_owns_the_record
+          parentRoles: ["employee"]
+          computation:
+            script: |-
+              resource.attr.owner == input.principal.id
+
+        - name: any_employee
+          parentRoles: ["employee"]
+
+        - name: direct_manager
+          parentRoles: ["manager"]
+          computation:
+            match:
+              expr:
+                - "request.resource.attr.geography == request.principal.attr.geography"
+                - "request.resource.attr.geography == request.principal.attr.managed_geographies"

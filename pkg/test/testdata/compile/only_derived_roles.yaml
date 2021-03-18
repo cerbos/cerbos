@@ -1,0 +1,27 @@
+---
+mainDef: "derived_roles/my_derived_roles.yaml"
+inputDefs:
+  "derived_roles/my_derived_roles.yaml":
+    apiVersion: "paams.dev/v1"
+    derived_roles:
+      name: my_derived_roles
+      definitions:
+        - name: tester
+          parentRoles: ["dev", "qa"]
+
+        - name: employee_that_owns_the_record
+          parentRoles: ["employee"]
+          computation:
+            script: |-
+              input.resource.attr.owner == input.principal.id
+
+        - name: any_employee
+          parentRoles: ["employee"]
+
+        - name: direct_manager
+          parentRoles: ["manager"]
+          computation:
+            match:
+              expr:
+                - "request.resource.attr.geography == request.principal.attr.geography"
+                - "request.resource.attr.geography == request.principal.attr.managed_geographies"

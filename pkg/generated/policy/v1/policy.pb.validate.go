@@ -42,29 +42,30 @@ var (
 // define the regex for a UUID once up-front
 var _policy_uuidPattern = regexp.MustCompile("^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$")
 
-// Validate checks the field values on PolicySet with the rules defined in the
+// Validate checks the field values on PolicyUnit with the rules defined in the
 // proto definition for this message. If any rules are violated, an error is returned.
-func (m *PolicySet) Validate() error {
+func (m *PolicyUnit) Validate() error {
 	if m == nil {
 		return nil
 	}
 
-	for key, val := range m.GetPolicies() {
-		_ = val
-
-		if val == nil {
-			return PolicySetValidationError{
-				field:  fmt.Sprintf("Policies[%v]", key),
-				reason: "value cannot be sparse, all pairs must be non-nil",
+	if v, ok := interface{}(m.GetPolicy()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return PolicyUnitValidationError{
+				field:  "Policy",
+				reason: "embedded message failed validation",
+				cause:  err,
 			}
 		}
+	}
 
-		// no validation rules for Policies[key]
+	for idx, item := range m.GetDependencies() {
+		_, _ = idx, item
 
-		if v, ok := interface{}(val).(interface{ Validate() error }); ok {
+		if v, ok := interface{}(item).(interface{ Validate() error }); ok {
 			if err := v.Validate(); err != nil {
-				return PolicySetValidationError{
-					field:  fmt.Sprintf("Policies[%v]", key),
+				return PolicyUnitValidationError{
+					field:  fmt.Sprintf("Dependencies[%v]", idx),
 					reason: "embedded message failed validation",
 					cause:  err,
 				}
@@ -76,9 +77,9 @@ func (m *PolicySet) Validate() error {
 	return nil
 }
 
-// PolicySetValidationError is the validation error returned by
-// PolicySet.Validate if the designated constraints aren't met.
-type PolicySetValidationError struct {
+// PolicyUnitValidationError is the validation error returned by
+// PolicyUnit.Validate if the designated constraints aren't met.
+type PolicyUnitValidationError struct {
 	field  string
 	reason string
 	cause  error
@@ -86,22 +87,22 @@ type PolicySetValidationError struct {
 }
 
 // Field function returns field value.
-func (e PolicySetValidationError) Field() string { return e.field }
+func (e PolicyUnitValidationError) Field() string { return e.field }
 
 // Reason function returns reason value.
-func (e PolicySetValidationError) Reason() string { return e.reason }
+func (e PolicyUnitValidationError) Reason() string { return e.reason }
 
 // Cause function returns cause value.
-func (e PolicySetValidationError) Cause() error { return e.cause }
+func (e PolicyUnitValidationError) Cause() error { return e.cause }
 
 // Key function returns key value.
-func (e PolicySetValidationError) Key() bool { return e.key }
+func (e PolicyUnitValidationError) Key() bool { return e.key }
 
 // ErrorName returns error name.
-func (e PolicySetValidationError) ErrorName() string { return "PolicySetValidationError" }
+func (e PolicyUnitValidationError) ErrorName() string { return "PolicyUnitValidationError" }
 
 // Error satisfies the builtin error interface
-func (e PolicySetValidationError) Error() string {
+func (e PolicyUnitValidationError) Error() string {
 	cause := ""
 	if e.cause != nil {
 		cause = fmt.Sprintf(" | caused by: %v", e.cause)
@@ -113,14 +114,14 @@ func (e PolicySetValidationError) Error() string {
 	}
 
 	return fmt.Sprintf(
-		"invalid %sPolicySet.%s: %s%s",
+		"invalid %sPolicyUnit.%s: %s%s",
 		key,
 		e.field,
 		e.reason,
 		cause)
 }
 
-var _ error = PolicySetValidationError{}
+var _ error = PolicyUnitValidationError{}
 
 var _ interface {
 	Field() string
@@ -128,7 +129,7 @@ var _ interface {
 	Key() bool
 	Cause() error
 	ErrorName() string
-} = PolicySetValidationError{}
+} = PolicyUnitValidationError{}
 
 // Validate checks the field values on Policy with the rules defined in the
 // proto definition for this message. If any rules are violated, an error is returned.

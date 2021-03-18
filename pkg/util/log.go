@@ -49,6 +49,6 @@ func InitLogging(level string) {
 	})
 	logger = zap.New(core, zap.AddStacktrace(stackTraceEnabler))
 
-	zap.ReplaceGlobals(logger.Named("paams"))
+	zap.ReplaceGlobals(logger.Named(AppName))
 	zap.RedirectStdLog(logger.Named("stdlog"))
 }

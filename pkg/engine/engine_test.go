@@ -1,4 +1,4 @@
-package policy_test
+package engine
 
 import (
 	"context"
@@ -10,23 +10,21 @@ import (
 
 	requestv1 "github.com/charithe/menshen/pkg/generated/request/v1"
 	sharedv1 "github.com/charithe/menshen/pkg/generated/shared/v1"
-	"github.com/charithe/menshen/pkg/policy"
 	"github.com/charithe/menshen/pkg/storage/disk"
 	"github.com/charithe/menshen/pkg/test"
 )
 
-func TestChecker(t *testing.T) {
+func TestEngineCheck(t *testing.T) {
 	dir := test.PathToDir(t, "store")
 
 	ctx, cancelFunc := context.WithCancel(context.Background())
 	defer cancelFunc()
 
-	reg := policy.InitGlobal()
-
-	_, err := disk.NewReadOnlyStore(ctx, reg, dir)
+	store, err := disk.NewReadOnlyStore(ctx, dir)
 	require.NoError(t, err)
 
-	c := reg.GetChecker()
+	eng, err := New(ctx, store)
+	require.NoError(t, err)
 
 	testCases := []struct {
 		desc    string
@@ -127,8 +125,7 @@ func TestChecker(t *testing.T) {
 		name := fmt.Sprintf("principal=%s;resource=%s;action=%s", req.Principal.Id, req.Resource.Name, req.Action)
 		t.Run(name, func(t *testing.T) {
 			t.Log(tc.desc)
-			//fmt.Println(protojson.Format(req))
-			resp, err := c.Check(context.Background(), req)
+			resp, err := eng.Check(context.Background(), req)
 			if tc.wantErr {
 				require.Error(t, err)
 				return
