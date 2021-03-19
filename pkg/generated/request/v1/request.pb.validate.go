@@ -167,7 +167,7 @@ func (m *Resource) Validate() error {
 	if !_Resource_Version_Pattern.MatchString(m.GetVersion()) {
 		return ResourceValidationError{
 			field:  "Version",
-			reason: "value does not match regex pattern \"^[[:word:]]+$\"",
+			reason: "value does not match regex pattern \"^[[:word:]]*$\"",
 		}
 	}
 
@@ -254,7 +254,7 @@ var _ interface {
 
 var _Resource_Name_Pattern = regexp.MustCompile("^[[:alpha:]][[:word:]\\@\\.\\-]*(\\:[[:alpha:]][[:word:]\\@\\.\\-]*)*$")
 
-var _Resource_Version_Pattern = regexp.MustCompile("^[[:word:]]+$")
+var _Resource_Version_Pattern = regexp.MustCompile("^[[:word:]]*$")
 
 // Validate checks the field values on Principal with the rules defined in the
 // proto definition for this message. If any rules are violated, an error is returned.
@@ -280,7 +280,7 @@ func (m *Principal) Validate() error {
 	if !_Principal_Version_Pattern.MatchString(m.GetVersion()) {
 		return PrincipalValidationError{
 			field:  "Version",
-			reason: "value does not match regex pattern \"^[[:word:]]+$\"",
+			reason: "value does not match regex pattern \"^[[:word:]]*$\"",
 		}
 	}
 
@@ -397,6 +397,6 @@ var _ interface {
 
 var _Principal_Id_Pattern = regexp.MustCompile("^[[:alpha:]][[:word:]\\@\\.\\-]*(\\:[[:alpha:]][[:word:]\\@\\.\\-]*)*$")
 
-var _Principal_Version_Pattern = regexp.MustCompile("^[[:word:]]+$")
+var _Principal_Version_Pattern = regexp.MustCompile("^[[:word:]]*$")
 
 var _Principal_Roles_Pattern = regexp.MustCompile("^[[:word:]\\-\\.]+$")

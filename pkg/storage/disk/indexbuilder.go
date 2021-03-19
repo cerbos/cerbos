@@ -82,6 +82,7 @@ func BuildIndex(ctx context.Context, fsys fs.FS, rootDir string) (Index, error) 
 		}
 
 		if p.Disabled {
+			ib.addDisabled(path)
 			return nil
 		}
 

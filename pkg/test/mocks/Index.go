@@ -7,6 +7,8 @@ import (
 
 	compile "github.com/charithe/menshen/pkg/compile"
 
+	disk "github.com/charithe/menshen/pkg/storage/disk"
+
 	mock "github.com/stretchr/testify/mock"
 
 	policyv1 "github.com/charithe/menshen/pkg/generated/policy/v1"
@@ -33,6 +35,29 @@ func (_m *Index) Add(_a0 string, _a1 *policyv1.Policy) (*compile.Incremental, er
 	var r1 error
 	if rf, ok := ret.Get(1).(func(string, *policyv1.Policy) error); ok {
 		r1 = rf(_a0, _a1)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// Apply provides a mock function with given fields: _a0
+func (_m *Index) Apply(_a0 *disk.IndexUpdate) (*compile.Incremental, error) {
+	ret := _m.Called(_a0)
+
+	var r0 *compile.Incremental
+	if rf, ok := ret.Get(0).(func(*disk.IndexUpdate) *compile.Incremental); ok {
+		r0 = rf(_a0)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*compile.Incremental)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(*disk.IndexUpdate) error); ok {
+		r1 = rf(_a0)
 	} else {
 		r1 = ret.Error(1)
 	}

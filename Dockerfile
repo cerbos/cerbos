@@ -9,5 +9,4 @@ RUN make build
 FROM scratch
 COPY --from=builder /go/src/github.com/charithe/menshen/menshen /menshen
 ENTRYPOINT ["/menshen"]
-CMD ["server"]
 

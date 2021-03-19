@@ -1,8 +1,8 @@
 ---
 wantErrors:
-  - "principal_policies/donald_duck_20210210.yaml: [invalid match expression] Invalid match expression @ Action *: Syntax error: token recognition error at: '^'"
-  - "principal_policies/donald_duck_20210210.yaml: [invalid match expression] Invalid match expression @ Action *: Syntax error: token recognition error at: '^'"
-  - "principal_policies/donald_duck_20210210.yaml: [invalid match expression] Invalid match expression @ Action *: Syntax error: extraneous input 'true' expecting ')'"
+  - "principal_policies/donald_duck_20210210.yaml: [invalid match expression] Invalid match expression in 'Action *': Syntax error: token recognition error at: '^'"
+  - "principal_policies/donald_duck_20210210.yaml: [invalid match expression] Invalid match expression in 'Action *': Syntax error: token recognition error at: '^'"
+  - "principal_policies/donald_duck_20210210.yaml: [invalid match expression] Invalid match expression in 'Action *': Syntax error: extraneous input 'true' expecting ')'"
 mainDef: "principal_policies/donald_duck_20210210.yaml"
 inputDefs:
   "principal_policies/donald_duck_20210210.yaml":

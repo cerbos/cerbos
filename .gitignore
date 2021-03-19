@@ -1,1 +1,3 @@
 bin/
+docs/*.html
+docs/*.pdf

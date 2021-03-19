@@ -350,7 +350,7 @@ func (idx *index) GetAllPolicies(ctx context.Context) <-chan *compile.Unit {
 
 	idx.mu.RUnlock()
 
-	pchan := make(chan *compile.Unit, 8)
+	pchan := make(chan *compile.Unit, 8) //nolint:gomnd
 	go func(ctx context.Context, policies map[namer.ModuleID][]string) {
 		defer close(pchan)
 

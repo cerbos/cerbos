@@ -53,7 +53,6 @@ linters:
     - predeclared
     - revive
     - rowserrcheck
-    - scopelint
     - sqlclosecheck
     - thelper
     - tparallel
@@ -96,4 +95,3 @@ issues:
     - path: _test\.go
       linters:
         - goconst
-        - scopelint

@@ -45,7 +45,7 @@ func New(ctx context.Context, store storage.Store) (*Engine, error) {
 }
 
 func (engine *Engine) watchNotifications(ctx context.Context) {
-	notificationChan := make(chan *compile.Incremental, 32) //nolint:mnd
+	notificationChan := make(chan *compile.Incremental, 32) //nolint:gomnd
 	defer close(notificationChan)
 
 	engine.store.SetNotificationChannel(notificationChan)

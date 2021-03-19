@@ -1,0 +1,365 @@
+:source-highlighter: rouge
+:docker_image: charithe/menshen
+
+[#tutorial-photo-share]
+= Tutorial: Writing policies for a simple photo-sharing service
+
+.Getting started
+****
+
+* We will use Docker to run the server and the compiler.
+
+[source,shell,subs="attributes"]
+----
+# TODO: Replace with link to Docker registry
+make container DOCKER_IMAGE={docker_image}
+----
+
+* Create a file named `config.yaml` with the following contents:
+
+[source,yaml]
+----
+include::config.yaml[]
+----
+
+* Create a directory named `policies` to hold the policies. 
+
+****
+
+== The Apatr application
+
+Apatr is a simple photo-sharing service that allows users to upload their photos and optionally share them with the rest of the world. Users sign-up to the service either by creating their own user account on the website or by signing-in with an identity provider (IDP) like Google or Facebook. Apatr uses a third-party identity management tool to manage these accounts and authenticating users to the site. Once they are logged-in, users can do the following:
+
+* Create albums to organize their photos
+* Upload photos to albums
+* Share albums or individual photos with other Apatr users
+* Share albums or individual photos with the internet
+
+Apatr also employs a team of moderators to investigate complaints and remove any illegal or offensive items from the site. To respect users privacy, moderators are only allowed to view photos or albums that are public or those that have been flagged as inappropriate by another user.
+
+Apatr’s identity provider allows defining roles for users. The roles currently defined in this system are:
+
+* `moderator`: Member of the moderator team
+* `user`: Authenticated users 
+
+
+== Resources and actions
+
+In the Apatr application, the most obvious resource hierarchy is the following:
+
+* Album
+** Photo
+*** Caption
+*** Comment
+** Description
+* User Profile
+
+
+[caption=]
+.Album permissions matrix
+[%header,cols=".^1,.^1,1,2",grid=rows]
+|===
+| Resource | Action | Allowed role | Condition
+.8+s| album:object 
+m| create 
+m| user 
+| 
+
+.2+m| delete
+m| user
+a| 
+* If user owns the album
+
+m| moderator
+a| 
+* If the album is flagged as inappropriate
+
+m| share
+m| user
+a| 
+* If user owns the album
+
+m| unshare
+m| user
+a| 
+* If user owns the album
+
+.2+m| view
+m| user
+a|
+* If user owns the album 
+* If the album is public
+
+m| moderator
+a| 
+* If the album is flagged as inappropriate
+* If the album is public
+
+m| flag 
+m| user
+a| 
+* If the album is public
+
+|===
+
+
+== Derived roles
+
+There are some recurring themes in the above permissions matrix.
+
+* People who have the `user` role can be either owners or viewers depending on the resource they are trying to access
+* Moderators get extra capabilities when the content is flagged as inappropriate
+
+These capabilities are determined based on contextual information. Let's codify them so that they can be reused.
+
+[source,yaml,linenums]
+----
+---
+apiVersion: "paams.dev/v1"
+description: |-
+  Common dynamic roles used within the Apatr app
+derived_roles:
+  name: apatr_common_roles <1>
+  definitions:
+    - name: owner <2>
+      parentRoles: ["user"] <3>
+      computation:
+        match:
+          expr:
+            - request.resource.attr.owner == request.principal.id <4>
+
+    - name: abuse_moderator
+      parentRoles: ["moderator"]
+      computation:
+        match:
+          expr:
+            - request.resource.attr.flagged == true
+----
+<1> Name that we will use to import this set of roles
+<2> Descriptive name for this derived role
+<3> The static roles (from the identity provider) to which this derived role applies to
+<4> An expression that is applied to the request to determine when this role becomes activated
+
+
+Save the above definition as `apatr_common_roles.yaml` in the `policies` directory.
+
+Run the compiler to make sure that the contents of the file are valid.
+
+[source,shell,subs="attributes"]
+----
+docker run -it -v $(pwd):/photo-share {docker_image} compile /photo-share/policies
+----
+
+
+== Resource policies
+
+Let's write a resource policy for the `album:object` resource. 
+
+[source,yaml,linenums]
+----
+---
+apiVersion: paams.dev/v1
+resourcePolicy:
+  version: "default" <1>
+  importDerivedRoles:
+    - apatr_common_roles <2>
+  resource: "album:object" 
+  rules:
+    - action: '*'
+      effect: EFFECT_ALLOW
+      derivedRoles:
+        - owner
+
+    - action: view
+      effect: EFFECT_ALLOW
+      roles:
+        - user
+      condition:
+        match:
+          expr:
+            - request.resource.attr.public == true
+
+    - action: view
+      effect: EFFECT_ALLOW
+      derivedRoles:
+        - abuse_moderator
+
+    - action: delete
+      effect: EFFECT_ALLOW
+      derivedRoles:
+        - abuse_moderator
+
+    - action: flag
+      effect: EFFECT_ALLOW
+      roles:
+        - user
+      condition:
+        match:
+          expr:
+            - request.resource.attr.public == true
+----
+<1> You can have multiple policy versions for the same resource (e.g. production vs. staging). If the request does not explicitly specify the version, the `default` policy takes effect.
+<2> Import the roles we defined earlier
+
+Save the above policy definition as `resource_album_object.yaml` inside the `policies` directory.
+
+Run the compiler to make sure that the contents of the policies directory are valid.
+
+[source,shell,subs="attributes"]
+----
+docker run -it -v $(pwd):/photo-share {docker_image} compile /photo-share/policies
+----
+
+
+Let's start the server and try out a few requests.
+
+[source,shell,subs="attributes"]
+----
+docker run -it -v $(pwd):/photo-share -p 9999:9999 {docker_image} server --config=/photo-share/config.yaml
+----
+
+
+.Alicia trying to view her own album
+[source,shell,linenums,highlight=2..20]
+----
+cat <<EOF | curl --silent "localhost:9999/v1/check" -d @-
+{
+  "requestId":  "test01",
+  "action":  "view",
+  "resource":  {
+    "version": "default",
+    "name":  "album:object",
+    "attr":  {
+      "owner":  "alicia",
+      "id":  "XX125",
+      "public": false,
+      "flagged": false
+    }
+  },
+  "principal":  {
+    "id":  "alicia",
+    "version": "default",
+    "roles":  ["user"]
+  }
+}
+EOF
+----
+
+----
+{"requestId":"test01","statusCode":200,"statusMessage":"Allow","effect":"EFFECT_ALLOW"}
+----
+
+.Bradley trying to view Alicia's private album
+[source,shell,linenums,highlight=2..18]
+----
+cat <<EOF | curl --silent "localhost:9999/v1/check" -d @-
+{
+  "requestId":  "test02",
+  "action":  "view",
+  "resource":  {
+    "name":  "album:object",
+    "attr":  {
+      "owner":  "alicia",
+      "id":  "XX125",
+      "public": false,
+      "flagged": false
+    }
+  },
+  "principal":  {
+    "id":  "bradley",
+    "roles":  ["user"]
+  }
+}
+EOF
+----
+
+----
+{"requestId":"test02","statusCode":401,"statusMessage":"Deny","effect":"EFFECT_DENY"}
+----
+
+
+.Bradley trying to view Alicia's public album
+[source,shell,linenums,highlight=2..18]
+----
+cat <<EOF | curl --silent "localhost:9999/v1/check" -d @-
+{
+  "requestId":  "test03",
+  "action":  "view",
+  "resource":  {
+    "name":  "album:object",
+    "attr":  {
+      "owner":  "alicia",
+      "id":  "XX220",
+      "public": true,
+      "flagged": false
+    }
+  },
+  "principal":  {
+    "id":  "bradley",
+    "roles":  ["user"]
+  }
+}
+EOF
+----
+
+----
+{"requestId":"test03","statusCode":200,"statusMessage":"Allow","effect":"EFFECT_ALLOW"}
+----
+
+
+.Maria, a moderator, trying to delete an album that is _not_ flagged as inappropriate
+[source,shell,linenums,highlight=2..18]
+----
+cat <<EOF | curl --silent "localhost:9999/v1/check" -d @- 
+{
+  "requestId":  "test04",
+  "action":  "delete",
+  "resource":  {
+    "name":  "album:object",
+    "attr":  {
+      "owner":  "alicia",
+      "id":  "XX220",
+      "public": false,
+      "flagged": false
+    }
+  },
+  "principal":  {
+    "id":  "maria",
+    "roles":  ["user","moderator"]
+  }
+}
+EOF
+----
+
+----
+{"requestId":"test04","statusCode":401,"statusMessage":"Deny","effect":"EFFECT_DENY"}
+----
+
+
+.Maria, a moderator, trying to delete an album that is flagged as inappropriate
+[source,shell,linenums,highlight=2..18]
+----
+cat <<EOF | curl --silent "localhost:9999/v1/check" -d @- 
+{
+  "requestId":  "test05",
+  "action":  "delete",
+  "resource":  {
+    "name":  "album:object",
+    "attr":  {
+      "owner":  "evelin",
+      "id":  "XX666",
+      "public": true,
+      "flagged": true
+    }
+  },
+  "principal":  {
+    "id":  "maria",
+    "roles":  ["user","moderator"]
+  }
+}
+EOF
+----
+
+----
+{"requestId":"test05","statusCode":200,"statusMessage":"Allow","effect":"EFFECT_ALLOW"}
+----

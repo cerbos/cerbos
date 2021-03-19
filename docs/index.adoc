@@ -1,0 +1,10 @@
+:stylesheet: styles/adoc-riak.css
+:doctype: book
+:source-highlighter: rouge
+:docinfo: private
+
+= Documentation
+
+:toc:
+
+include::tutorials/index.adoc[leveloffset=+1]

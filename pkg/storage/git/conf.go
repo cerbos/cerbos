@@ -139,12 +139,3 @@ func (conf *Conf) getOpCtx(parent context.Context) (context.Context, context.Can
 
 	return context.WithTimeout(parent, *conf.OperationTimeout)
 }
-
-func (conf *Conf) getPolicyDir() string {
-	policyDir := conf.CheckoutDir
-	if conf.SubDir != "" {
-		policyDir = filepath.Join(conf.CheckoutDir, conf.SubDir)
-	}
-
-	return policyDir
-}

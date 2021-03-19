@@ -82,3 +82,8 @@ container:
 .PHONY: run
 run:
 	@ go run main.go server --loglevel=DEBUG --config=conf.default.yaml
+
+.PHONY: docs
+docs:
+	 @ $(DOCKER) run --rm -v $(shell pwd)/docs:/documents/ asciidoctor/docker-asciidoctor asciidoctor index.adoc
+	 @ $(DOCKER) run --rm -v $(shell pwd)/docs:/documents/ asciidoctor/docker-asciidoctor asciidoctor-pdf index.adoc
