@@ -20,6 +20,7 @@ import (
 	policyv1 "github.com/charithe/menshen/pkg/generated/policy/v1"
 	"github.com/charithe/menshen/pkg/policy"
 	"github.com/charithe/menshen/pkg/storage/disk"
+	"github.com/charithe/menshen/pkg/util"
 )
 
 var ErrDirtyState = errors.New("state is dirty")
@@ -378,7 +379,7 @@ func (s *Store) updateIndex(ctx context.Context) error {
 }
 
 func (s *Store) accumulateChange(ce object.ChangeEntry, accFn func(string, *policyv1.Policy)) error {
-	if !disk.IsSupportedFileType(ce.Name) {
+	if !util.IsSupportedFileType(ce.Name) {
 		s.log.Infow("Ignoring unsupported file type", "path", ce.Name)
 		return nil
 	}

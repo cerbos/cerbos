@@ -37,99 +37,12 @@ var (
 	_ = sharedv1.Effect(0)
 
 	_ = sharedv1.Effect(0)
+
+	_ = sharedv1.Effect(0)
 )
 
 // define the regex for a UUID once up-front
 var _policy_uuidPattern = regexp.MustCompile("^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$")
-
-// Validate checks the field values on PolicyUnit with the rules defined in the
-// proto definition for this message. If any rules are violated, an error is returned.
-func (m *PolicyUnit) Validate() error {
-	if m == nil {
-		return nil
-	}
-
-	if v, ok := interface{}(m.GetPolicy()).(interface{ Validate() error }); ok {
-		if err := v.Validate(); err != nil {
-			return PolicyUnitValidationError{
-				field:  "Policy",
-				reason: "embedded message failed validation",
-				cause:  err,
-			}
-		}
-	}
-
-	for idx, item := range m.GetDependencies() {
-		_, _ = idx, item
-
-		if v, ok := interface{}(item).(interface{ Validate() error }); ok {
-			if err := v.Validate(); err != nil {
-				return PolicyUnitValidationError{
-					field:  fmt.Sprintf("Dependencies[%v]", idx),
-					reason: "embedded message failed validation",
-					cause:  err,
-				}
-			}
-		}
-
-	}
-
-	return nil
-}
-
-// PolicyUnitValidationError is the validation error returned by
-// PolicyUnit.Validate if the designated constraints aren't met.
-type PolicyUnitValidationError struct {
-	field  string
-	reason string
-	cause  error
-	key    bool
-}
-
-// Field function returns field value.
-func (e PolicyUnitValidationError) Field() string { return e.field }
-
-// Reason function returns reason value.
-func (e PolicyUnitValidationError) Reason() string { return e.reason }
-
-// Cause function returns cause value.
-func (e PolicyUnitValidationError) Cause() error { return e.cause }
-
-// Key function returns key value.
-func (e PolicyUnitValidationError) Key() bool { return e.key }
-
-// ErrorName returns error name.
-func (e PolicyUnitValidationError) ErrorName() string { return "PolicyUnitValidationError" }
-
-// Error satisfies the builtin error interface
-func (e PolicyUnitValidationError) Error() string {
-	cause := ""
-	if e.cause != nil {
-		cause = fmt.Sprintf(" | caused by: %v", e.cause)
-	}
-
-	key := ""
-	if e.key {
-		key = "key for "
-	}
-
-	return fmt.Sprintf(
-		"invalid %sPolicyUnit.%s: %s%s",
-		key,
-		e.field,
-		e.reason,
-		cause)
-}
-
-var _ error = PolicyUnitValidationError{}
-
-var _ interface {
-	Field() string
-	Reason() string
-	Key() bool
-	Cause() error
-	ErrorName() string
-} = PolicyUnitValidationError{}
 
 // Validate checks the field values on Policy with the rules defined in the
 // proto definition for this message. If any rules are violated, an error is returned.
@@ -1138,6 +1051,206 @@ var _ interface {
 	Cause() error
 	ErrorName() string
 } = MatchValidationError{}
+
+// Validate checks the field values on TestSuite with the rules defined in the
+// proto definition for this message. If any rules are violated, an error is returned.
+func (m *TestSuite) Validate() error {
+	if m == nil {
+		return nil
+	}
+
+	if utf8.RuneCountInString(m.GetName()) < 1 {
+		return TestSuiteValidationError{
+			field:  "Name",
+			reason: "value length must be at least 1 runes",
+		}
+	}
+
+	// no validation rules for Description
+
+	// no validation rules for Skip
+
+	// no validation rules for SkipReason
+
+	if len(m.GetTests()) < 1 {
+		return TestSuiteValidationError{
+			field:  "Tests",
+			reason: "value must contain at least 1 item(s)",
+		}
+	}
+
+	for idx, item := range m.GetTests() {
+		_, _ = idx, item
+
+		if v, ok := interface{}(item).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return TestSuiteValidationError{
+					field:  fmt.Sprintf("Tests[%v]", idx),
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	}
+
+	return nil
+}
+
+// TestSuiteValidationError is the validation error returned by
+// TestSuite.Validate if the designated constraints aren't met.
+type TestSuiteValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e TestSuiteValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e TestSuiteValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e TestSuiteValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e TestSuiteValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e TestSuiteValidationError) ErrorName() string { return "TestSuiteValidationError" }
+
+// Error satisfies the builtin error interface
+func (e TestSuiteValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sTestSuite.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = TestSuiteValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = TestSuiteValidationError{}
+
+// Validate checks the field values on Test with the rules defined in the proto
+// definition for this message. If any rules are violated, an error is returned.
+func (m *Test) Validate() error {
+	if m == nil {
+		return nil
+	}
+
+	if utf8.RuneCountInString(m.GetName()) < 1 {
+		return TestValidationError{
+			field:  "Name",
+			reason: "value length must be at least 1 runes",
+		}
+	}
+
+	// no validation rules for Description
+
+	// no validation rules for Skip
+
+	// no validation rules for SkipReason
+
+	if m.GetRequest() == nil {
+		return TestValidationError{
+			field:  "Request",
+			reason: "value is required",
+		}
+	}
+
+	if v, ok := interface{}(m.GetRequest()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return TestValidationError{
+				field:  "Request",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if _, ok := sharedv1.Effect_name[int32(m.GetExpectedEffect())]; !ok {
+		return TestValidationError{
+			field:  "ExpectedEffect",
+			reason: "value must be one of the defined enum values",
+		}
+	}
+
+	return nil
+}
+
+// TestValidationError is the validation error returned by Test.Validate if the
+// designated constraints aren't met.
+type TestValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e TestValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e TestValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e TestValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e TestValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e TestValidationError) ErrorName() string { return "TestValidationError" }
+
+// Error satisfies the builtin error interface
+func (e TestValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sTest.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = TestValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = TestValidationError{}
 
 // Validate checks the field values on PrincipalRule_Action with the rules
 // defined in the proto definition for this message. If any rules are

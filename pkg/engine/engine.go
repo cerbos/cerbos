@@ -7,6 +7,7 @@ import (
 	"fmt"
 
 	"github.com/open-policy-agent/opa/ast"
+	"github.com/open-policy-agent/opa/topdown/cache"
 	"go.uber.org/zap"
 	"google.golang.org/protobuf/encoding/protojson"
 
@@ -19,12 +20,16 @@ import (
 
 var ErrNoPoliciesMatched = errors.New("no matching policies")
 
-const defaultEffect = sharedv1.Effect_EFFECT_DENY
+const (
+	defaultEffect                = sharedv1.Effect_EFFECT_DENY
+	maxQueryCacheSizeBytes int64 = 10 * 1024 * 1024 // 10 MiB
+)
 
 type Engine struct {
-	log      *zap.SugaredLogger
-	store    storage.Store
-	compiler *compile.Compiler
+	log        *zap.SugaredLogger
+	store      storage.Store
+	compiler   *compile.Compiler
+	queryCache cache.InterQueryCache
 }
 
 func New(ctx context.Context, store storage.Store) (*Engine, error) {
@@ -33,10 +38,18 @@ func New(ctx context.Context, store storage.Store) (*Engine, error) {
 		return nil, fmt.Errorf("failed to compile policies: %w", err)
 	}
 
+	cacheSize := maxQueryCacheSizeBytes
+	queryCache := cache.NewInterQueryCache(&cache.Config{
+		InterQueryBuiltinCache: cache.InterQueryBuiltinCacheConfig{
+			MaxSizeBytes: &cacheSize,
+		},
+	})
+
 	engine := &Engine{
-		log:      zap.S().Named("engine"),
-		store:    store,
-		compiler: compiler,
+		log:        zap.S().Named("engine"),
+		store:      store,
+		compiler:   compiler,
+		queryCache: queryCache,
 	}
 
 	go engine.watchNotifications(ctx)
@@ -102,7 +115,7 @@ func (engine *Engine) Check(ctx context.Context, req *requestv1.Request) (shared
 		c := checks[i]
 		log.Debugw("Executing policy", "policy", c.policyName)
 
-		effect, err := c.execute(ctx, input)
+		effect, err := c.execute(ctx, engine.queryCache, input)
 		if err != nil {
 			log.Errorw("Policy execution failed", "policy", c.policyName, "error", err)
 			return defaultEffect, fmt.Errorf("failed to execute policy %s: %w", c.policyName, err)
@@ -165,6 +178,6 @@ type check struct {
 	query      string
 }
 
-func (c *check) execute(ctx context.Context, input ast.Value) (sharedv1.Effect, error) {
-	return c.eval.EvalQuery(ctx, c.query, input)
+func (c *check) execute(ctx context.Context, queryCache cache.InterQueryCache, input ast.Value) (sharedv1.Effect, error) {
+	return c.eval.EvalQuery(ctx, queryCache, c.query, input)
 }

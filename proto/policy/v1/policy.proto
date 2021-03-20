@@ -5,12 +5,8 @@ package policy.v1;
 option go_package = "github.com/charithe/menshen/pkg/generated/policy/v1;policyv1";
 
 import "shared/v1/shared.proto";
+import "request/v1/request.proto";
 import "validate/validate.proto";
-
-message PolicyUnit {
-    Policy policy = 1;
-    repeated Policy dependencies = 2;
-}
 
 message Policy {
     string api_version = 1 [(validate.rules).string.const = "paams.dev/v1"];
@@ -77,4 +73,21 @@ message Computation {
 
 message Match {
     repeated string expr = 1 [(validate.rules).repeated = {min_items: 1, items { string { min_len: 1} } }];
+}
+
+message TestSuite {
+    string name = 1 [(validate.rules).string.min_len = 1];
+    string description = 2;
+    bool skip = 3;
+    string skip_reason = 4;
+    repeated Test tests = 5 [(validate.rules).repeated.min_items = 1];
+}
+
+message Test {
+    string name = 1 [(validate.rules).string.min_len = 1];
+    string description = 2;
+    bool skip = 3;
+    string skip_reason = 4;
+    request.v1.Request request = 5 [(validate.rules).message.required = true];
+    shared.v1.Effect expected_effect = 6 [(validate.rules).enum.defined_only = true];
 }

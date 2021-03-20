@@ -147,7 +147,8 @@ Run the compiler to make sure that the contents of the file are valid.
 
 [source,shell,subs="attributes"]
 ----
-docker run -it -v $(pwd):/photo-share {docker_image} compile /photo-share/policies
+docker run -it -v $(pwd):/photo-share {docker_image} \
+    compile /photo-share/policies
 ----
 
 
@@ -210,12 +211,12 @@ Run the compiler to make sure that the contents of the policies directory are va
 docker run -it -v $(pwd):/photo-share {docker_image} compile /photo-share/policies
 ----
 
-
-Let's start the server and try out a few requests.
+Let's start the server and try out a request.
 
 [source,shell,subs="attributes"]
 ----
-docker run -it -v $(pwd):/photo-share -p 9999:9999 {docker_image} server --config=/photo-share/config.yaml
+docker run -it -v $(pwd):/photo-share -p 9999:9999 {docker_image} \
+    server --config=/photo-share/config.yaml
 ----
 
 
@@ -249,117 +250,31 @@ EOF
 {"requestId":"test01","statusCode":200,"statusMessage":"Allow","effect":"EFFECT_ALLOW"}
 ----
 
-.Bradley trying to view Alicia's private album
-[source,shell,linenums,highlight=2..18]
+It's not practical to start the server and manually make requests every time a policy is updated. So let's write some tests instead.
+
+=== Writing tests to verify behaviour
+
+Create a new directory named `tests` and create a file named `album_object_tests.yaml` with the following contents.
+
+[source,yaml,linenums]
 ----
-cat <<EOF | curl --silent "localhost:9999/v1/check" -d @-
-{
-  "requestId":  "test02",
-  "action":  "view",
-  "resource":  {
-    "name":  "album:object",
-    "attr":  {
-      "owner":  "alicia",
-      "id":  "XX125",
-      "public": false,
-      "flagged": false
-    }
-  },
-  "principal":  {
-    "id":  "bradley",
-    "roles":  ["user"]
-  }
-}
-EOF
+include::tests/album_object_tests.yaml[]
+----
+
+Now run the compiler, pointing it to the `tests` directory.
+
+[source,shell,subs="attributes"]
+----
+docker run -it -v $(pwd):/photo-share {docker_image} \
+    compile --tests=/photo-share/tests /photo-share/policies
 ----
 
 ----
-{"requestId":"test02","statusCode":401,"statusMessage":"Deny","effect":"EFFECT_DENY"}
-----
-
-
-.Bradley trying to view Alicia's public album
-[source,shell,linenums,highlight=2..18]
-----
-cat <<EOF | curl --silent "localhost:9999/v1/check" -d @-
-{
-  "requestId":  "test03",
-  "action":  "view",
-  "resource":  {
-    "name":  "album:object",
-    "attr":  {
-      "owner":  "alicia",
-      "id":  "XX220",
-      "public": true,
-      "flagged": false
-    }
-  },
-  "principal":  {
-    "id":  "bradley",
-    "roles":  ["user"]
-  }
-}
-EOF
-----
-
-----
-{"requestId":"test03","statusCode":200,"statusMessage":"Allow","effect":"EFFECT_ALLOW"}
-----
-
-
-.Maria, a moderator, trying to delete an album that is _not_ flagged as inappropriate
-[source,shell,linenums,highlight=2..18]
-----
-cat <<EOF | curl --silent "localhost:9999/v1/check" -d @- 
-{
-  "requestId":  "test04",
-  "action":  "delete",
-  "resource":  {
-    "name":  "album:object",
-    "attr":  {
-      "owner":  "alicia",
-      "id":  "XX220",
-      "public": false,
-      "flagged": false
-    }
-  },
-  "principal":  {
-    "id":  "maria",
-    "roles":  ["user","moderator"]
-  }
-}
-EOF
-----
-
-----
-{"requestId":"test04","statusCode":401,"statusMessage":"Deny","effect":"EFFECT_DENY"}
-----
-
-
-.Maria, a moderator, trying to delete an album that is flagged as inappropriate
-[source,shell,linenums,highlight=2..18]
-----
-cat <<EOF | curl --silent "localhost:9999/v1/check" -d @- 
-{
-  "requestId":  "test05",
-  "action":  "delete",
-  "resource":  {
-    "name":  "album:object",
-    "attr":  {
-      "owner":  "evelin",
-      "id":  "XX666",
-      "public": true,
-      "flagged": true
-    }
-  },
-  "principal":  {
-    "id":  "maria",
-    "roles":  ["user","moderator"]
-  }
-}
-EOF
-----
-
-----
-{"requestId":"test05","statusCode":200,"statusMessage":"Allow","effect":"EFFECT_ALLOW"}
+Test results
+= AlbumObjectTestSuite (album_object_tests.yaml)
+== View own private album [OK]
+== View someone else's private album [OK]
+== View someone else's public album [OK]
+== Moderator trying to delete an unflagged album [OK]
+== Moderator trying to delete a flagged album [OK]
 ----

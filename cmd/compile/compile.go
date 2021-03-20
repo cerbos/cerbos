@@ -15,16 +15,22 @@ import (
 	"github.com/charithe/menshen/pkg/compile"
 	"github.com/charithe/menshen/pkg/engine"
 	"github.com/charithe/menshen/pkg/storage/disk"
+	"github.com/charithe/menshen/pkg/verify"
 )
 
 var (
 	ErrFailed = errors.New("failed to compile")
 
-	header   = color.New(color.FgHiWhite, color.Bold).SprintFunc()
-	fileName = color.New(color.FgHiCyan).SprintFunc()
-	errorMsg = color.New(color.FgHiRed).SprintFunc()
+	header         = color.New(color.FgHiWhite, color.Bold).SprintFunc()
+	fileName       = color.New(color.FgHiCyan).SprintFunc()
+	errorMsg       = color.New(color.FgHiRed).SprintFunc()
+	testName       = color.New(color.FgHiBlue, color.Bold).SprintFunc()
+	skippedTest    = color.New(color.FgHiWhite).SprintFunc()
+	failedTest     = color.New(color.FgHiRed).SprintFunc()
+	successfulTest = color.New(color.FgHiGreen).SprintFunc()
 
-	format string
+	format     string
+	verifyConf = verify.Config{}
 )
 
 func NewCommand() *cobra.Command {
@@ -37,6 +43,8 @@ func NewCommand() *cobra.Command {
 	}
 
 	cmd.Flags().StringVarP(&format, "format", "f", "", "Output format (valid values: json,plain)")
+	cmd.Flags().StringVar(&verifyConf.TestsDir, "tests", "", "Path to the directory containing tests")
+	cmd.Flags().StringVar(&verifyConf.Run, "run", "", "Run only tests that match this regex")
 
 	return cmd
 }
@@ -55,7 +63,7 @@ func doRun(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("failed to open directory %s: %w", args[0], err)
 	}
 
-	_, err = engine.New(ctx, store)
+	eng, err := engine.New(ctx, store)
 	if err != nil {
 		compErr := new(compile.ErrorList)
 		if errors.As(err, compErr) {
@@ -65,15 +73,22 @@ func doRun(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("failed to create engine: %w", err)
 	}
 
+	if verifyConf.TestsDir != "" {
+		result, err := verify.Verify(ctx, eng, verifyConf)
+		if err != nil {
+			return fmt.Errorf("failed to run tests: %w", err)
+		}
+
+		return displayVerificationResult(cmd, result)
+	}
+
 	return nil
 }
 
 func displayLintErrors(cmd *cobra.Command, errs *disk.IndexBuildError) error {
 	switch strings.ToLower(format) {
 	case "json":
-		enc := json.NewEncoder(cmd.OutOrStdout())
-		enc.SetIndent("", "  ")
-		if err := enc.Encode(map[string]*disk.IndexBuildError{"lintErrors": errs}); err != nil {
+		if err := outputJSON(cmd, map[string]*disk.IndexBuildError{"lintErrors": errs}); err != nil {
 			return err
 		}
 
@@ -120,10 +135,8 @@ func displayLintErrors(cmd *cobra.Command, errs *disk.IndexBuildError) error {
 func displayCompileErrors(cmd *cobra.Command, errs compile.ErrorList) error {
 	switch strings.ToLower(format) {
 	case "json":
-		enc := json.NewEncoder(cmd.OutOrStdout())
-		enc.SetIndent("", "  ")
-		if err := enc.Encode(map[string]compile.ErrorList{"compileErrors": errs}); err != nil {
-			return err
+		if err := outputJSON(cmd, map[string]compile.ErrorList{"compileErrors": errs}); err != nil {
+			return nil
 		}
 
 		return ErrFailed
@@ -137,4 +150,64 @@ func displayCompileErrors(cmd *cobra.Command, errs compile.ErrorList) error {
 	}
 
 	return ErrFailed
+}
+
+func displayVerificationResult(cmd *cobra.Command, result *verify.Result) error {
+	switch strings.ToLower(format) {
+	case "json":
+		if err := outputJSON(cmd, result); err != nil {
+			return err
+		}
+
+		if result.Failed {
+			return ErrFailed
+		}
+
+		return nil
+	case "plain":
+		color.NoColor = true
+	}
+
+	cmd.Println(header("Test results"))
+	for _, sr := range result.Results {
+		cmd.Printf("= %s %s ", testName(sr.Suite), fileName("(", sr.File, ")"))
+		if sr.Skipped {
+			cmd.Println(skippedTest("[SKIPPED]"))
+			continue
+		}
+
+		cmd.Println()
+		for _, tr := range sr.Tests {
+			cmd.Printf("== %s ", testName(tr.Name))
+			if tr.Skipped {
+				cmd.Println(skippedTest("[SKIPPED]"))
+				continue
+			}
+
+			if tr.Failed {
+				cmd.Println(failedTest("[FAILED]"))
+				if tr.Error != "" {
+					cmd.Printf("\tError: %s\n", tr.Error)
+					continue
+				}
+
+				cmd.Printf("\tExpected=%s Actual=%s\n", tr.Expected, tr.Actual)
+				continue
+			}
+
+			cmd.Println(successfulTest("[OK]"))
+		}
+	}
+
+	if result.Failed {
+		return ErrFailed
+	}
+
+	return nil
+}
+
+func outputJSON(cmd *cobra.Command, val interface{}) error {
+	enc := json.NewEncoder(cmd.OutOrStdout())
+	enc.SetIndent("", "  ")
+	return enc.Encode(val)
 }

@@ -14,6 +14,7 @@ import (
 	policyv1 "github.com/charithe/menshen/pkg/generated/policy/v1"
 	"github.com/charithe/menshen/pkg/namer"
 	"github.com/charithe/menshen/pkg/policy"
+	"github.com/charithe/menshen/pkg/util"
 )
 
 var (
@@ -165,8 +166,8 @@ func (idx *index) Add(file string, p *policyv1.Policy) (*compile.Incremental, er
 					continue
 				}
 
-				dp, err := loadPolicy(idx.fsys, f)
-				if err != nil {
+				dp := &policyv1.Policy{}
+				if err := util.LoadFromJSONOrYAML(idx.fsys, f, dp); err != nil {
 					return nil, fmt.Errorf("failed to load policy from %s: %w", f, err)
 				}
 
@@ -366,8 +367,8 @@ func (idx *index) GetAllPolicies(ctx context.Context) <-chan *compile.Unit {
 			}
 
 			for _, f := range files {
-				p, err := loadPolicy(idx.fsys, f)
-				if err != nil {
+				p := &policyv1.Policy{}
+				if err := util.LoadFromJSONOrYAML(idx.fsys, f, p); err != nil {
 					cp.Err = err
 					break
 				}

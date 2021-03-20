@@ -44,12 +44,12 @@ func mkReadCloser(t *testing.T, file string) io.ReadCloser {
 	return f
 }
 
-func PathToDir(t *testing.T, dir string) string {
-	t.Helper()
+func PathToDir(tb testing.TB, dir string) string {
+	tb.Helper()
 
 	_, currFile, _, ok := runtime.Caller(0)
 	if !ok {
-		t.Error("Failed to detect testdata directory")
+		tb.Error("Failed to detect testdata directory")
 		return ""
 	}
 

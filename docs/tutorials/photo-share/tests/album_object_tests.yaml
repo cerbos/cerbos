@@ -1,0 +1,104 @@
+---
+name: AlbumObjectTestSuite
+description: Tests for verifying the album:object resource policy
+tests:
+  - name: View own private album
+    request: {
+      "requestId": "test",
+      "action": "view",
+      "resource": {
+        "name": "album:object",
+        "attr": {
+          "owner": "alicia",
+          "id": "XX125",
+          "public": false,
+          "flagged": false
+        }
+      },
+      "principal": {
+        "id": "alicia",
+        "roles": ["user"]
+      }
+    }
+    expectedEffect: EFFECT_ALLOW
+
+  - name: View someone else's private album
+    request: {
+      "requestId": "test",
+      "action": "view",
+      "resource": {
+        "name": "album:object",
+        "attr": {
+          "owner": "alicia",
+          "id": "XX125",
+          "public": false,
+          "flagged": false
+        }
+      },
+      "principal": {
+        "id": "bradley",
+        "roles": ["user"]
+      }
+    }
+    expectedEffect: EFFECT_DENY
+
+  - name: View someone else's public album
+    request: {
+      "requestId": "test",
+      "action": "view",
+      "resource": {
+        "name": "album:object",
+        "attr": {
+          "owner": "alicia",
+          "id": "XX225",
+          "public": true,
+          "flagged": false
+        }
+      },
+      "principal": {
+        "id": "bradley",
+        "roles": ["user"]
+      }
+    }
+    expectedEffect: EFFECT_ALLOW
+
+  - name: Moderator trying to delete an unflagged album
+    request: {
+      "requestId": "test",
+      "action": "delete",
+      "resource": {
+        "name": "album:object",
+        "attr": {
+          "owner": "alicia",
+          "id": "XX225",
+          "public": true,
+          "flagged": false
+        }
+      },
+      "principal": {
+        "id": "maria",
+        "roles": ["user", "moderator"]
+      }
+    }
+    expectedEffect: EFFECT_DENY
+
+
+  - name: Moderator trying to delete a flagged album
+    request: {
+      "requestId": "test",
+      "action": "delete",
+      "resource": {
+        "name": "album:object",
+        "attr": {
+          "owner": "alicia",
+          "id": "XX666",
+          "public": true,
+          "flagged": true
+        }
+      },
+      "principal": {
+        "id": "maria",
+        "roles": ["user", "moderator"]
+      }
+    }
+    expectedEffect: EFFECT_ALLOW

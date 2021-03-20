@@ -5,15 +5,12 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/fs"
-	"path/filepath"
-	"strings"
 
 	policyv1 "github.com/charithe/menshen/pkg/generated/policy/v1"
 	"github.com/charithe/menshen/pkg/namer"
 	"github.com/charithe/menshen/pkg/policy"
+	"github.com/charithe/menshen/pkg/util"
 )
-
-var supportedFileTypes = map[string]struct{}{".yaml": {}, ".yml": {}, ".json": {}}
 
 // IndexBuildError is an error type that contains details about the failures encountered during the index build.
 type IndexBuildError struct {
@@ -71,12 +68,12 @@ func BuildIndex(ctx context.Context, fsys fs.FS, rootDir string) (Index, error) 
 			return nil
 		}
 
-		if !IsSupportedFileType(d.Name()) {
+		if !util.IsSupportedFileType(d.Name()) {
 			return nil
 		}
 
-		p, err := loadPolicy(fsys, path)
-		if err != nil {
+		p := &policyv1.Policy{}
+		if err := util.LoadFromJSONOrYAML(fsys, path, p); err != nil {
 			ib.addLoadFailure(path, err)
 			return nil
 		}
@@ -200,25 +197,6 @@ func (idx *indexBuilder) build(fsys fs.FS) (*index, error) {
 		dependents:   idx.dependents,
 		dependencies: idx.dependencies,
 	}, nil
-}
-
-// IsSuppportedFileType returns true if the given file has a supported file extension.
-func IsSupportedFileType(fileName string) bool {
-	ext := strings.ToLower(filepath.Ext(fileName))
-	_, exists := supportedFileTypes[ext]
-
-	return exists
-}
-
-func loadPolicy(fsys fs.FS, path string) (*policyv1.Policy, error) {
-	f, err := fsys.Open(path)
-	if err != nil {
-		return nil, err
-	}
-
-	defer f.Close()
-
-	return policy.ReadPolicy(f)
 }
 
 func checkValidDir(fsys fs.FS, dir string) error {

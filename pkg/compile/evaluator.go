@@ -6,6 +6,7 @@ import (
 
 	"github.com/open-policy-agent/opa/ast"
 	"github.com/open-policy-agent/opa/rego"
+	"github.com/open-policy-agent/opa/topdown/cache"
 	"go.uber.org/zap"
 
 	sharedv1 "github.com/charithe/menshen/pkg/generated/shared/v1"
@@ -15,7 +16,7 @@ import (
 const defaultEffect = sharedv1.Effect_EFFECT_DENY
 
 type Evaluator interface {
-	EvalQuery(ctx context.Context, query string, input ast.Value) (sharedv1.Effect, error)
+	EvalQuery(ctx context.Context, queryCache cache.InterQueryCache, query string, input ast.Value) (sharedv1.Effect, error)
 }
 
 type evaluator struct {
@@ -63,8 +64,9 @@ func makeCELEvalImpl(conditionIdx ConditionIndex) rego.Builtin3 {
 	}
 }
 
-func (e *evaluator) EvalQuery(ctx context.Context, query string, input ast.Value) (sharedv1.Effect, error) {
+func (e *evaluator) EvalQuery(ctx context.Context, queryCache cache.InterQueryCache, query string, input ast.Value) (sharedv1.Effect, error) {
 	r := rego.New(
+		rego.InterQueryBuiltinCache(queryCache),
 		rego.Function3(internal.CELEvalFunc, e.celEvalImpl),
 		rego.Compiler(e.compiler),
 		rego.ParsedInput(input),

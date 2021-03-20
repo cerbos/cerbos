@@ -2,6 +2,7 @@ package engine
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"testing"
 
@@ -134,6 +135,93 @@ func TestEngineCheck(t *testing.T) {
 			require.Equal(t, tc.want, resp)
 		})
 	}
+}
+
+func BenchmarkCheck(b *testing.B) {
+	dir := test.PathToDir(b, "store")
+
+	ctx, cancelFunc := context.WithCancel(context.Background())
+	defer cancelFunc()
+
+	store, err := disk.NewReadOnlyStore(ctx, dir)
+	require.NoError(b, err)
+
+	eng, err := New(ctx, store)
+	require.NoError(b, err)
+
+	b.Run("only_resource_policy", func(b *testing.B) {
+		request := mkRequest()
+
+		b.ResetTimer()
+		b.ReportAllocs()
+		for i := 0; i < b.N; i++ {
+			effect, err := eng.Check(ctx, request)
+			if err != nil {
+				b.Errorf("ERROR: %v", err)
+			}
+
+			if effect != sharedv1.Effect_EFFECT_ALLOW {
+				b.Errorf("Unexpected result: %v", effect)
+			}
+		}
+	})
+
+	b.Run("only_principal_policy", func(b *testing.B) {
+		request := mkRequest()
+		request.Action = "approve"
+		request.Principal.Id = "donald_duck"
+		request.Resource.Attr["dev_record"] = structpb.NewBoolValue(true)
+
+		b.ResetTimer()
+		b.ReportAllocs()
+		for i := 0; i < b.N; i++ {
+			effect, err := eng.Check(ctx, request)
+			if err != nil {
+				b.Errorf("ERROR: %v", err)
+			}
+
+			if effect != sharedv1.Effect_EFFECT_ALLOW {
+				b.Errorf("Unexpected result: %v", effect)
+			}
+		}
+	})
+
+	b.Run("fallback_to_resource_policy", func(b *testing.B) {
+		request := mkRequest()
+		request.Action = "view:public"
+		request.Principal.Id = "donald_duck"
+
+		b.ResetTimer()
+		b.ReportAllocs()
+		for i := 0; i < b.N; i++ {
+			effect, err := eng.Check(ctx, request)
+			if err != nil {
+				b.Errorf("ERROR: %v", err)
+			}
+
+			if effect != sharedv1.Effect_EFFECT_ALLOW {
+				b.Errorf("Unexpected result: %v", effect)
+			}
+		}
+	})
+
+	b.Run("no_match", func(b *testing.B) {
+		request := mkRequest()
+		request.Resource.Name = "unknown"
+
+		b.ResetTimer()
+		b.ReportAllocs()
+		for i := 0; i < b.N; i++ {
+			effect, err := eng.Check(ctx, request)
+			if !errors.Is(err, ErrNoPoliciesMatched) {
+				b.Errorf("ERROR: %v", err)
+			}
+
+			if effect != sharedv1.Effect_EFFECT_DENY {
+				b.Errorf("Unexpected result: %v", effect)
+			}
+		}
+	})
 }
 
 func mkRequest() *requestv1.Request {
