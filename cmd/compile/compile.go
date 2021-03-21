@@ -33,6 +33,11 @@ var (
 	verifyConf = verify.Config{}
 )
 
+const (
+	formatJSON  = "json"
+	formatPlain = "plain"
+)
+
 func NewCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:           "compile DIR",
@@ -87,13 +92,13 @@ func doRun(cmd *cobra.Command, args []string) error {
 
 func displayLintErrors(cmd *cobra.Command, errs *disk.IndexBuildError) error {
 	switch strings.ToLower(format) {
-	case "json":
+	case formatJSON:
 		if err := outputJSON(cmd, map[string]*disk.IndexBuildError{"lintErrors": errs}); err != nil {
 			return err
 		}
 
 		return ErrFailed
-	case "plain":
+	case formatPlain:
 		color.NoColor = true
 	}
 
@@ -134,13 +139,13 @@ func displayLintErrors(cmd *cobra.Command, errs *disk.IndexBuildError) error {
 
 func displayCompileErrors(cmd *cobra.Command, errs compile.ErrorList) error {
 	switch strings.ToLower(format) {
-	case "json":
+	case formatJSON:
 		if err := outputJSON(cmd, map[string]compile.ErrorList{"compileErrors": errs}); err != nil {
-			return nil
+			return err
 		}
 
 		return ErrFailed
-	case "plain":
+	case formatPlain:
 		color.NoColor = true
 	}
 
@@ -154,7 +159,7 @@ func displayCompileErrors(cmd *cobra.Command, errs compile.ErrorList) error {
 
 func displayVerificationResult(cmd *cobra.Command, result *verify.Result) error {
 	switch strings.ToLower(format) {
-	case "json":
+	case formatJSON:
 		if err := outputJSON(cmd, result); err != nil {
 			return err
 		}
@@ -164,7 +169,7 @@ func displayVerificationResult(cmd *cobra.Command, result *verify.Result) error 
 		}
 
 		return nil
-	case "plain":
+	case formatPlain:
 		color.NoColor = true
 	}
 
