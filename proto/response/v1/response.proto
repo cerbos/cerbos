@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package response.v1;
 
-option go_package = "github.com/charithe/menshen/pkg/generated/response/v1;responsev1";
+option go_package = "github.com/cerbos/cerbos/pkg/generated/response/v1;responsev1";
 
 import "shared/v1/shared.proto";
 

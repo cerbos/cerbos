@@ -12,9 +12,9 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	policyv1 "github.com/charithe/menshen/pkg/generated/policy/v1"
-	"github.com/charithe/menshen/pkg/policy"
-	"github.com/charithe/menshen/pkg/util"
+	policyv1 "github.com/cerbos/cerbos/pkg/generated/policy/v1"
+	"github.com/cerbos/cerbos/pkg/policy"
+	"github.com/cerbos/cerbos/pkg/util"
 )
 
 func init() {

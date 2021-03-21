@@ -3,7 +3,7 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-TEMP_DIR="${TEMP_DIR:-$(mktemp -d -t menshen-XXXXX)}"
+TEMP_DIR="${TEMP_DIR:-$(mktemp -d -t cerbos-XXXXX)}"
 trap 'rm -rf "$TEMP_DIR"' EXIT
 
 STORE_DIR="${TEMP_DIR}/store"

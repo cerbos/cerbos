@@ -3,8 +3,8 @@ package test
 import (
 	"fmt"
 
-	policyv1 "github.com/charithe/menshen/pkg/generated/policy/v1"
-	sharedv1 "github.com/charithe/menshen/pkg/generated/shared/v1"
+	policyv1 "github.com/cerbos/cerbos/pkg/generated/policy/v1"
+	sharedv1 "github.com/cerbos/cerbos/pkg/generated/shared/v1"
 )
 
 type NameMod func(string) string

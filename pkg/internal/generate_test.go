@@ -10,9 +10,9 @@ import (
 	"github.com/open-policy-agent/opa/format"
 	"github.com/stretchr/testify/require"
 
-	"github.com/charithe/menshen/pkg/internal"
-	"github.com/charithe/menshen/pkg/policy"
-	"github.com/charithe/menshen/pkg/test"
+	"github.com/cerbos/cerbos/pkg/internal"
+	"github.com/cerbos/cerbos/pkg/policy"
+	"github.com/cerbos/cerbos/pkg/test"
 )
 
 func TestGenerateCode(t *testing.T) {

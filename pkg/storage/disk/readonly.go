@@ -6,7 +6,7 @@ import (
 
 	"go.uber.org/zap"
 
-	"github.com/charithe/menshen/pkg/compile"
+	"github.com/cerbos/cerbos/pkg/compile"
 )
 
 type ReadOnlyStore struct {

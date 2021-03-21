@@ -9,9 +9,9 @@ import (
 	"github.com/google/cel-go/checker/decls"
 	"github.com/open-policy-agent/opa/ast"
 
-	policyv1 "github.com/charithe/menshen/pkg/generated/policy/v1"
-	sharedv1 "github.com/charithe/menshen/pkg/generated/shared/v1"
-	"github.com/charithe/menshen/pkg/namer"
+	policyv1 "github.com/cerbos/cerbos/pkg/generated/policy/v1"
+	sharedv1 "github.com/cerbos/cerbos/pkg/generated/shared/v1"
+	"github.com/cerbos/cerbos/pkg/namer"
 )
 
 const (

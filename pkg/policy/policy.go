@@ -3,8 +3,8 @@ package policy
 import (
 	"fmt"
 
-	policyv1 "github.com/charithe/menshen/pkg/generated/policy/v1"
-	"github.com/charithe/menshen/pkg/namer"
+	policyv1 "github.com/cerbos/cerbos/pkg/generated/policy/v1"
+	"github.com/cerbos/cerbos/pkg/namer"
 )
 
 // Kind defines the type of policy (resource, principal, derived_roles etc.).

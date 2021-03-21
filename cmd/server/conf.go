@@ -1,6 +1,6 @@
 package server
 
-import "github.com/charithe/menshen/pkg/config"
+import "github.com/cerbos/cerbos/pkg/config"
 
 const (
 	confKey = "server"

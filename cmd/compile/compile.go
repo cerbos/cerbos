@@ -12,10 +12,10 @@ import (
 	"github.com/fatih/color"
 	"github.com/spf13/cobra"
 
-	"github.com/charithe/menshen/pkg/compile"
-	"github.com/charithe/menshen/pkg/engine"
-	"github.com/charithe/menshen/pkg/storage/disk"
-	"github.com/charithe/menshen/pkg/verify"
+	"github.com/cerbos/cerbos/pkg/compile"
+	"github.com/cerbos/cerbos/pkg/engine"
+	"github.com/cerbos/cerbos/pkg/storage/disk"
+	"github.com/cerbos/cerbos/pkg/verify"
 )
 
 var (

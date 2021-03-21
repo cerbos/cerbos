@@ -13,7 +13,7 @@ import (
 	"github.com/go-git/go-git/v5/plumbing/transport/ssh"
 	"go.uber.org/multierr"
 
-	"github.com/charithe/menshen/pkg/util"
+	"github.com/cerbos/cerbos/pkg/util"
 )
 
 const (

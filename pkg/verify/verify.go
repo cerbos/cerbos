@@ -7,10 +7,10 @@ import (
 	"os"
 	"regexp"
 
-	"github.com/charithe/menshen/pkg/engine"
-	policyv1 "github.com/charithe/menshen/pkg/generated/policy/v1"
-	sharedv1 "github.com/charithe/menshen/pkg/generated/shared/v1"
-	"github.com/charithe/menshen/pkg/util"
+	"github.com/cerbos/cerbos/pkg/engine"
+	policyv1 "github.com/cerbos/cerbos/pkg/generated/policy/v1"
+	sharedv1 "github.com/cerbos/cerbos/pkg/generated/shared/v1"
+	"github.com/cerbos/cerbos/pkg/util"
 )
 
 type Config struct {

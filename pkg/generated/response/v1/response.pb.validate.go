@@ -17,7 +17,7 @@ import (
 
 	"github.com/golang/protobuf/ptypes"
 
-	sharedv1 "github.com/charithe/menshen/pkg/generated/shared/v1"
+	sharedv1 "github.com/cerbos/cerbos/pkg/generated/shared/v1"
 )
 
 // ensure the imports are used

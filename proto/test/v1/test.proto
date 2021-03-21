@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package test.v1;
 
-option go_package = "github.com/charithe/menshen/pkg/generated/test/v1;testv1";
+option go_package = "github.com/cerbos/cerbos/pkg/generated/test/v1;testv1";
 
 import "shared/v1/shared.proto";
 import "policy/v1/policy.proto";

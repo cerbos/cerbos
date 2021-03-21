@@ -3,7 +3,7 @@ package test
 import (
 	"context"
 
-	policyv1 "github.com/charithe/menshen/pkg/generated/policy/v1"
+	policyv1 "github.com/cerbos/cerbos/pkg/generated/policy/v1"
 )
 
 // AnyContext is a function that can be passed to mock.MatchedBy to match any context.

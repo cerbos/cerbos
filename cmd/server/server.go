@@ -12,11 +12,11 @@ import (
 	"github.com/spf13/cobra"
 	"go.uber.org/zap"
 
-	"github.com/charithe/menshen/pkg/config"
-	"github.com/charithe/menshen/pkg/engine"
-	"github.com/charithe/menshen/pkg/server"
-	"github.com/charithe/menshen/pkg/storage"
-	"github.com/charithe/menshen/pkg/util"
+	"github.com/cerbos/cerbos/pkg/config"
+	"github.com/cerbos/cerbos/pkg/engine"
+	"github.com/cerbos/cerbos/pkg/server"
+	"github.com/cerbos/cerbos/pkg/storage"
+	"github.com/cerbos/cerbos/pkg/util"
 )
 
 type serverArgs struct {

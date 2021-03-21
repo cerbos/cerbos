@@ -12,12 +12,12 @@ import (
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/encoding/protojson"
 
-	"github.com/charithe/menshen/pkg/compile"
-	policyv1 "github.com/charithe/menshen/pkg/generated/policy/v1"
-	sharedv1 "github.com/charithe/menshen/pkg/generated/shared/v1"
-	testv1 "github.com/charithe/menshen/pkg/generated/test/v1"
-	"github.com/charithe/menshen/pkg/namer"
-	"github.com/charithe/menshen/pkg/test"
+	"github.com/cerbos/cerbos/pkg/compile"
+	policyv1 "github.com/cerbos/cerbos/pkg/generated/policy/v1"
+	sharedv1 "github.com/cerbos/cerbos/pkg/generated/shared/v1"
+	testv1 "github.com/cerbos/cerbos/pkg/generated/test/v1"
+	"github.com/cerbos/cerbos/pkg/namer"
+	"github.com/cerbos/cerbos/pkg/test"
 )
 
 const letterBytes = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"

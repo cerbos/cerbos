@@ -11,11 +11,11 @@ import (
 	"go.uber.org/zap"
 	"google.golang.org/protobuf/encoding/protojson"
 
-	"github.com/charithe/menshen/pkg/compile"
-	requestv1 "github.com/charithe/menshen/pkg/generated/request/v1"
-	sharedv1 "github.com/charithe/menshen/pkg/generated/shared/v1"
-	"github.com/charithe/menshen/pkg/namer"
-	"github.com/charithe/menshen/pkg/storage"
+	"github.com/cerbos/cerbos/pkg/compile"
+	requestv1 "github.com/cerbos/cerbos/pkg/generated/request/v1"
+	sharedv1 "github.com/cerbos/cerbos/pkg/generated/shared/v1"
+	"github.com/cerbos/cerbos/pkg/namer"
+	"github.com/cerbos/cerbos/pkg/storage"
 )
 
 var ErrNoPoliciesMatched = errors.New("no matching policies")

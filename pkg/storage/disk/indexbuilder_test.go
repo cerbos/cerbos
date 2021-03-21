@@ -8,7 +8,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/charithe/menshen/pkg/test"
+	"github.com/cerbos/cerbos/pkg/test"
 )
 
 func TestBuildIndex(t *testing.T) {

@@ -3,8 +3,8 @@ package policy
 import (
 	"io"
 
-	policyv1 "github.com/charithe/menshen/pkg/generated/policy/v1"
-	"github.com/charithe/menshen/pkg/util"
+	policyv1 "github.com/cerbos/cerbos/pkg/generated/policy/v1"
+	"github.com/cerbos/cerbos/pkg/util"
 )
 
 // ReadPolicy reads a policy from the given reader.

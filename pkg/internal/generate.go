@@ -6,8 +6,8 @@ import (
 	"github.com/google/cel-go/cel"
 	"github.com/open-policy-agent/opa/ast"
 
-	policyv1 "github.com/charithe/menshen/pkg/generated/policy/v1"
-	"github.com/charithe/menshen/pkg/namer"
+	policyv1 "github.com/cerbos/cerbos/pkg/generated/policy/v1"
+	"github.com/cerbos/cerbos/pkg/namer"
 )
 
 type CodeGenResult struct {

@@ -1,4 +1,4 @@
-module github.com/charithe/menshen
+module github.com/cerbos/cerbos
 
 go 1.16
 

@@ -5,10 +5,10 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/charithe/menshen/pkg/compile"
-	policyv1 "github.com/charithe/menshen/pkg/generated/policy/v1"
-	"github.com/charithe/menshen/pkg/storage/disk"
-	"github.com/charithe/menshen/pkg/storage/git"
+	"github.com/cerbos/cerbos/pkg/compile"
+	policyv1 "github.com/cerbos/cerbos/pkg/generated/policy/v1"
+	"github.com/cerbos/cerbos/pkg/storage/disk"
+	"github.com/cerbos/cerbos/pkg/storage/git"
 )
 
 // Store is the common interface implemented by storage backends.

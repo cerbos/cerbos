@@ -5,9 +5,9 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/charithe/menshen/cmd/compile"
-	"github.com/charithe/menshen/cmd/server"
-	"github.com/charithe/menshen/pkg/util"
+	"github.com/cerbos/cerbos/cmd/compile"
+	"github.com/cerbos/cerbos/cmd/server"
+	"github.com/cerbos/cerbos/pkg/util"
 )
 
 func main() {

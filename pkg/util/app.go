@@ -1,7 +1,7 @@
 package util
 
 var (
-	AppName   = "menshen"
+	AppName   = "cerbos"
 	BuildDate = "unknown"
 	Version   = "unknown"
 )

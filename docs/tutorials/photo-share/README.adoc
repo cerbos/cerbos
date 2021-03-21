@@ -1,5 +1,5 @@
 :source-highlighter: rouge
-:docker_image: charithe/menshen
+:docker_image: cerbos/cerbos
 
 [#tutorial-photo-share]
 = Tutorial: Writing policies for a simple photo-sharing service

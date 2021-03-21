@@ -9,10 +9,10 @@ import (
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/types/known/structpb"
 
-	requestv1 "github.com/charithe/menshen/pkg/generated/request/v1"
-	sharedv1 "github.com/charithe/menshen/pkg/generated/shared/v1"
-	"github.com/charithe/menshen/pkg/storage/disk"
-	"github.com/charithe/menshen/pkg/test"
+	requestv1 "github.com/cerbos/cerbos/pkg/generated/request/v1"
+	sharedv1 "github.com/cerbos/cerbos/pkg/generated/shared/v1"
+	"github.com/cerbos/cerbos/pkg/storage/disk"
+	"github.com/cerbos/cerbos/pkg/test"
 )
 
 func TestEngineCheck(t *testing.T) {

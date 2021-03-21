@@ -1,9 +1,9 @@
 package storage
 
 import (
-	"github.com/charithe/menshen/pkg/config"
-	"github.com/charithe/menshen/pkg/storage/disk"
-	"github.com/charithe/menshen/pkg/storage/git"
+	"github.com/cerbos/cerbos/pkg/config"
+	"github.com/cerbos/cerbos/pkg/storage/disk"
+	"github.com/cerbos/cerbos/pkg/storage/git"
 )
 
 const confKey = "storage"

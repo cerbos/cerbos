@@ -9,8 +9,8 @@ import (
 	"github.com/open-policy-agent/opa/topdown/cache"
 	"go.uber.org/zap"
 
-	sharedv1 "github.com/charithe/menshen/pkg/generated/shared/v1"
-	"github.com/charithe/menshen/pkg/internal"
+	sharedv1 "github.com/cerbos/cerbos/pkg/generated/shared/v1"
+	"github.com/cerbos/cerbos/pkg/internal"
 )
 
 const defaultEffect = sharedv1.Effect_EFFECT_DENY

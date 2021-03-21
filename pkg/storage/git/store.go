@@ -16,11 +16,11 @@ import (
 	"github.com/go-git/go-git/v5/plumbing/object"
 	"go.uber.org/zap"
 
-	"github.com/charithe/menshen/pkg/compile"
-	policyv1 "github.com/charithe/menshen/pkg/generated/policy/v1"
-	"github.com/charithe/menshen/pkg/policy"
-	"github.com/charithe/menshen/pkg/storage/disk"
-	"github.com/charithe/menshen/pkg/util"
+	"github.com/cerbos/cerbos/pkg/compile"
+	policyv1 "github.com/cerbos/cerbos/pkg/generated/policy/v1"
+	"github.com/cerbos/cerbos/pkg/policy"
+	"github.com/cerbos/cerbos/pkg/storage/disk"
+	"github.com/cerbos/cerbos/pkg/util"
 )
 
 var ErrDirtyState = errors.New("state is dirty")
@@ -89,7 +89,7 @@ func (s *Store) init(ctx context.Context) error {
 
 	// if the directory does not exist, create it and clone the repo
 	if errors.Is(err, os.ErrNotExist) {
-		if err := os.MkdirAll(s.conf.CheckoutDir, 0744); err != nil {
+		if err := os.MkdirAll(s.conf.CheckoutDir, 0o744); err != nil {
 			return fmt.Errorf("failed to create directory %s: %w", s.conf.CheckoutDir, err)
 		}
 

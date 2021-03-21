@@ -6,7 +6,7 @@ import (
 
 	"github.com/google/cel-go/cel"
 
-	"github.com/charithe/menshen/pkg/namer"
+	"github.com/cerbos/cerbos/pkg/namer"
 )
 
 var (

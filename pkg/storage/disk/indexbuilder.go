@@ -6,10 +6,10 @@ import (
 	"fmt"
 	"io/fs"
 
-	policyv1 "github.com/charithe/menshen/pkg/generated/policy/v1"
-	"github.com/charithe/menshen/pkg/namer"
-	"github.com/charithe/menshen/pkg/policy"
-	"github.com/charithe/menshen/pkg/util"
+	policyv1 "github.com/cerbos/cerbos/pkg/generated/policy/v1"
+	"github.com/cerbos/cerbos/pkg/namer"
+	"github.com/cerbos/cerbos/pkg/policy"
+	"github.com/cerbos/cerbos/pkg/util"
 )
 
 // IndexBuildError is an error type that contains details about the failures encountered during the index build.

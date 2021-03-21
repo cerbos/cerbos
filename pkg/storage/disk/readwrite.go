@@ -10,9 +10,9 @@ import (
 	"github.com/google/renameio"
 	"go.uber.org/zap"
 
-	"github.com/charithe/menshen/pkg/compile"
-	policyv1 "github.com/charithe/menshen/pkg/generated/policy/v1"
-	"github.com/charithe/menshen/pkg/policy"
+	"github.com/cerbos/cerbos/pkg/compile"
+	policyv1 "github.com/cerbos/cerbos/pkg/generated/policy/v1"
+	"github.com/cerbos/cerbos/pkg/policy"
 )
 
 type ReadWriteStore struct {

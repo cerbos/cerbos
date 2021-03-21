@@ -12,14 +12,14 @@ import (
 	"go.uber.org/zap"
 	"google.golang.org/protobuf/encoding/protojson"
 
-	"github.com/charithe/menshen/pkg/engine"
-	policyv1 "github.com/charithe/menshen/pkg/generated/policy/v1"
-	requestv1 "github.com/charithe/menshen/pkg/generated/request/v1"
-	responsev1 "github.com/charithe/menshen/pkg/generated/response/v1"
-	sharedv1 "github.com/charithe/menshen/pkg/generated/shared/v1"
-	"github.com/charithe/menshen/pkg/namer"
-	"github.com/charithe/menshen/pkg/policy"
-	"github.com/charithe/menshen/pkg/storage"
+	"github.com/cerbos/cerbos/pkg/engine"
+	policyv1 "github.com/cerbos/cerbos/pkg/generated/policy/v1"
+	requestv1 "github.com/cerbos/cerbos/pkg/generated/request/v1"
+	responsev1 "github.com/cerbos/cerbos/pkg/generated/response/v1"
+	sharedv1 "github.com/cerbos/cerbos/pkg/generated/shared/v1"
+	"github.com/cerbos/cerbos/pkg/namer"
+	"github.com/cerbos/cerbos/pkg/policy"
+	"github.com/cerbos/cerbos/pkg/storage"
 )
 
 const maxRequestSize = 1024 * 1024 // 1 MiB

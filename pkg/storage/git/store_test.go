@@ -15,12 +15,12 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
-	"github.com/charithe/menshen/pkg/compile"
-	policyv1 "github.com/charithe/menshen/pkg/generated/policy/v1"
-	sharedv1 "github.com/charithe/menshen/pkg/generated/shared/v1"
-	"github.com/charithe/menshen/pkg/policy"
-	"github.com/charithe/menshen/pkg/storage/disk"
-	"github.com/charithe/menshen/pkg/test"
+	"github.com/cerbos/cerbos/pkg/compile"
+	policyv1 "github.com/cerbos/cerbos/pkg/generated/policy/v1"
+	sharedv1 "github.com/cerbos/cerbos/pkg/generated/shared/v1"
+	"github.com/cerbos/cerbos/pkg/policy"
+	"github.com/cerbos/cerbos/pkg/storage/disk"
+	"github.com/cerbos/cerbos/pkg/test"
 )
 
 const (
@@ -84,7 +84,7 @@ func TestNewStore(t *testing.T) {
 
 		for i := 0; i < 10; i++ {
 			file := filepath.Join(checkoutDir, fmt.Sprintf("file_%02d.txt", i))
-			require.NoError(t, os.WriteFile(file, []byte("some data"), 0600))
+			require.NoError(t, os.WriteFile(file, []byte("some data"), 0o600))
 		}
 
 		conf := mkConf(sourceGitDir, checkoutDir)
@@ -256,7 +256,7 @@ func TestUpdateStore(t *testing.T) {
 		mockIdx := setupMock()
 		require.NoError(t, commitToGitRepo(sourceGitDir, "Add unsupported file", func(wt *git.Worktree) error {
 			fp := filepath.Join(sourceGitDir, policyDir, "file1.txt")
-			if err := os.WriteFile(fp, []byte("something"), 0600); err != nil {
+			if err := os.WriteFile(fp, []byte("something"), 0o600); err != nil {
 				return err
 			}
 
@@ -312,10 +312,10 @@ func createGitRepo(t *testing.T, dir string, policyCount int) []string {
 	t.Helper()
 
 	fullPolicyDir := filepath.Join(dir, policyDir)
-	require.NoError(t, os.MkdirAll(fullPolicyDir, 0744), "Failed to create policy dir %s", fullPolicyDir)
+	require.NoError(t, os.MkdirAll(fullPolicyDir, 0o744), "Failed to create policy dir %s", fullPolicyDir)
 
 	fullIgnoredDir := filepath.Join(dir, ignoredDir)
-	require.NoError(t, os.MkdirAll(fullIgnoredDir, 0744), "Failed to create ignored dir %s", fullIgnoredDir)
+	require.NoError(t, os.MkdirAll(fullIgnoredDir, 0o744), "Failed to create ignored dir %s", fullIgnoredDir)
 
 	repo, err := git.PlainInit(dir, false)
 	require.NoError(t, err, "Failed to init Git repo")

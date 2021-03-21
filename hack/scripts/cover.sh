@@ -3,7 +3,7 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-COVERFILE="$(mktemp -t menshen-XXXXX)"
+COVERFILE="$(mktemp -t cerbos-XXXXX)"
 
 trap 'rm -rf "$COVERFILE"' EXIT
 

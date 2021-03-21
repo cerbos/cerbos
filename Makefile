@@ -1,5 +1,5 @@
 XDG_CACHE_HOME ?= $(HOME)/.cache
-TOOLS_BIN_DIR := $(abspath $(XDG_CACHE_HOME)/menshen/bin)
+TOOLS_BIN_DIR := $(abspath $(XDG_CACHE_HOME)/cerbos/bin)
 
 BUF := $(TOOLS_BIN_DIR)/buf
 GOLANGCI_LINT := $(TOOLS_BIN_DIR)/golangci-lint
@@ -12,10 +12,10 @@ VALIDATE_DIR := $(VENDOR_DIR)/validate
 VALIDATE_PROTO := $(VALIDATE_DIR)/validate.proto
 VALIDATE_VERSION := 0.4.1
 
-PKG := github.com/charithe/menshen
+PKG := github.com/cerbos/cerbos
 VERSION := $(shell git describe --tags --always --dirty)
 BUILD_DATE := $(shell date +%Y%m%d-%H%M)
-DOCKER_IMAGE := charithe/menshen:$(VERSION)
+DOCKER_IMAGE := cerbos/cerbos:$(VERSION)
 DOCKER := docker
 
 GEN_DIR := pkg/generated

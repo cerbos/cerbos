@@ -9,7 +9,7 @@ import (
 	"github.com/fatih/color"
 	"github.com/open-policy-agent/opa/ast"
 
-	"github.com/charithe/menshen/pkg/internal"
+	"github.com/cerbos/cerbos/pkg/internal"
 )
 
 var (

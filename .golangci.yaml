@@ -9,7 +9,7 @@ linters-settings:
     default-signifies-exhaustive: true
 
   gci:
-    local-prefixes: github.com/charithe/menshen
+    local-prefixes: github.com/cerbos/cerbos
 
   gofumpt:
     extra-rules: true
