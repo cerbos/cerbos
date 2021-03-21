@@ -115,7 +115,7 @@ These capabilities are determined based on contextual information. Let's codify 
 [source,yaml,linenums]
 ----
 ---
-apiVersion: "paams.dev/v1"
+apiVersion: "cerbos.dev/v1"
 description: |-
   Common dynamic roles used within the Apatr app
 derived_roles:
@@ -159,7 +159,7 @@ Let's write a resource policy for the `album:object` resource.
 [source,yaml,linenums]
 ----
 ---
-apiVersion: paams.dev/v1
+apiVersion: cerbos.dev/v1
 resourcePolicy:
   version: "default" <1>
   importDerivedRoles:

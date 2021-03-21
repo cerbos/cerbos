@@ -94,7 +94,7 @@ func (rpb *ResourcePolicyBuilder) WithRules(rules ...*policyv1.ResourceRule) *Re
 
 func (rpb *ResourcePolicyBuilder) Build() *policyv1.Policy {
 	return &policyv1.Policy{
-		ApiVersion: "paams.dev/v1",
+		ApiVersion: "cerbos.dev/v1",
 		PolicyType: &policyv1.Policy_ResourcePolicy{
 			ResourcePolicy: rpb.rp,
 		},
@@ -104,7 +104,7 @@ func (rpb *ResourcePolicyBuilder) Build() *policyv1.Policy {
 // GenResourcePolicy generates a sample resource policy with some names modified by the NameMod.
 func GenResourcePolicy(mod NameMod) *policyv1.Policy {
 	return &policyv1.Policy{
-		ApiVersion: "paams.dev/v1",
+		ApiVersion: "cerbos.dev/v1",
 		PolicyType: &policyv1.Policy_ResourcePolicy{
 			ResourcePolicy: &policyv1.ResourcePolicy{
 				Resource:           mod("leave_request"),
@@ -221,7 +221,7 @@ func (ppb *PrincipalPolicyBuilder) WithRules(rules ...*policyv1.PrincipalRule) *
 
 func (ppb *PrincipalPolicyBuilder) Build() *policyv1.Policy {
 	return &policyv1.Policy{
-		ApiVersion: "paams.dev/v1",
+		ApiVersion: "cerbos.dev/v1",
 		PolicyType: &policyv1.Policy_PrincipalPolicy{
 			PrincipalPolicy: ppb.pp,
 		},
@@ -230,7 +230,7 @@ func (ppb *PrincipalPolicyBuilder) Build() *policyv1.Policy {
 
 func GenPrincipalPolicy(mod NameMod) *policyv1.Policy {
 	return &policyv1.Policy{
-		ApiVersion: "paams.dev/v1",
+		ApiVersion: "cerbos.dev/v1",
 		PolicyType: &policyv1.Policy_PrincipalPolicy{
 			PrincipalPolicy: &policyv1.PrincipalPolicy{
 				Principal: mod("donald_duck"),
@@ -298,7 +298,7 @@ func (drb *DerivedRolesBuilder) addRoleDef(name string, parentRoles []string, co
 
 func (drb *DerivedRolesBuilder) Build() *policyv1.Policy {
 	return &policyv1.Policy{
-		ApiVersion: "paams.dev/v1",
+		ApiVersion: "cerbos.dev/v1",
 		PolicyType: &policyv1.Policy_DerivedRoles{
 			DerivedRoles: drb.dr,
 		},
@@ -307,7 +307,7 @@ func (drb *DerivedRolesBuilder) Build() *policyv1.Policy {
 
 func GenDerivedRoles(mod NameMod) *policyv1.Policy {
 	return &policyv1.Policy{
-		ApiVersion: "paams.dev/v1",
+		ApiVersion: "cerbos.dev/v1",
 		PolicyType: &policyv1.Policy_DerivedRoles{
 			DerivedRoles: &policyv1.DerivedRoles{
 				Name: mod("my_derived_roles"),

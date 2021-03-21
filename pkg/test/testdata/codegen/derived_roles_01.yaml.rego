@@ -1,4 +1,4 @@
-package paams.derived_roles.my_derived_roles
+package cerbos.derived_roles.my_derived_roles
 
 derived_roles["admin"] = true {
     input.principal.roles[_] == "admin" 
@@ -20,5 +20,5 @@ derived_roles["any_employee"] = true {
 
 derived_roles["direct_manager"] = true {
     input.principal.roles[_] == "manager"
-    cel_eval(input, "paams.derived_roles.my_derived_roles", "cond_0")
+    cel_eval(input, "cerbos.derived_roles.my_derived_roles", "cond_0")
 }

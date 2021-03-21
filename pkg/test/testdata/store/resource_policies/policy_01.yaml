@@ -1,5 +1,5 @@
 ---
-apiVersion: paams.dev/v1
+apiVersion: cerbos.dev/v1
 resourcePolicy:
   importDerivedRoles:
   - my_derived_roles

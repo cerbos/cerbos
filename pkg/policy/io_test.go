@@ -147,7 +147,7 @@ func TestValidate(t *testing.T) {
 
 func mkResourcePolicy() *policyv1.Policy {
 	return &policyv1.Policy{
-		ApiVersion: "paams.dev/v1",
+		ApiVersion: "cerbos.dev/v1",
 		PolicyType: &policyv1.Policy_ResourcePolicy{
 			ResourcePolicy: &policyv1.ResourcePolicy{
 				Resource:           "leave_request",
@@ -194,7 +194,7 @@ func mkResourcePolicy() *policyv1.Policy {
 
 func mkPrincipalPolicy() *policyv1.Policy {
 	return &policyv1.Policy{
-		ApiVersion: "paams.dev/v1",
+		ApiVersion: "cerbos.dev/v1",
 		PolicyType: &policyv1.Policy_PrincipalPolicy{
 			PrincipalPolicy: &policyv1.PrincipalPolicy{
 				Principal: "donald_duck",
@@ -235,7 +235,7 @@ func mkPrincipalPolicy() *policyv1.Policy {
 
 func mkDerivedRoles() *policyv1.Policy {
 	return &policyv1.Policy{
-		ApiVersion: "paams.dev/v1",
+		ApiVersion: "cerbos.dev/v1",
 		PolicyType: &policyv1.Policy_DerivedRoles{
 			DerivedRoles: &policyv1.DerivedRoles{
 				Name: "my_derived_roles",

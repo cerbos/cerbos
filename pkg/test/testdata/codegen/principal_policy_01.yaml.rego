@@ -1,11 +1,11 @@
-package paams.principal.donald_duck.v20210210
+package cerbos.principal.donald_duck.v20210210
 
 default effect = "no_match"
 
 effect = "allow" {
     glob.match("leave_request", [":"], input.resource.name)
     glob.match("*", [], input.action)
-    cel_eval(input, "paams.principal.donald_duck.v20210210", "cond_0")
+    cel_eval(input, "cerbos.principal.donald_duck.v20210210", "cond_0")
 }
 
 effect = "deny" {

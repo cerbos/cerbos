@@ -13,7 +13,7 @@ import (
 var invalidIdentiferChars = regexp.MustCompile(`[^\w\.]+`)
 
 const (
-	ModulePrefix            = "paams"
+	ModulePrefix            = "cerbos"
 	DerivedRolesPrefix      = "derived_roles"
 	PrincipalPoliciesPrefix = "principal"
 	ResourcePoliciesPrefix  = "resource"

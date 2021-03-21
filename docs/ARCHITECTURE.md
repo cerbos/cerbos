@@ -33,7 +33,7 @@ A typical request should be structured as follows:
 Computed roles are defined as follows: 
 
 ```yaml
-apiVersion: paams.dev/v1
+apiVersion: cerbos.dev/v1
 kind: ComputedRoles
 name: my_computed_roles
 definitions:
@@ -64,7 +64,7 @@ A policy is defined per resource in the system.
 
 ```yaml
 ---
-apiVersion: paams.dev/v1
+apiVersion: cerbos.dev/v1
 kind: ResourcePolicy
 name: my_policy
 # Resource this policy applies to.

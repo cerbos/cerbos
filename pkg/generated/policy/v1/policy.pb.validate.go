@@ -51,10 +51,10 @@ func (m *Policy) Validate() error {
 		return nil
 	}
 
-	if m.GetApiVersion() != "paams.dev/v1" {
+	if m.GetApiVersion() != "cerbos.dev/v1" {
 		return PolicyValidationError{
 			field:  "ApiVersion",
-			reason: "value must equal paams.dev/v1",
+			reason: "value must equal cerbos.dev/v1",
 		}
 	}
 
