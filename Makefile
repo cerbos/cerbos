@@ -61,11 +61,11 @@ generate: clean $(BUF) $(PROTOC_GEN_GO) $(PROTOC_GEN_VALIDATE) $(VALIDATE_PROTO)
 	@ $(BUF) lint
 	@ # $(BUF) breaking --against '.git#branch=main'
 	@ $(BUF) generate --template '{"version":"v1beta1","plugins":[{"name":"go","out":"$(GEN_DIR)","opt":"paths=source_relative","path":"$(PROTOC_GEN_GO)"}, {"name":"validate","opt":["paths=source_relative","lang=go"],"out":"$(GEN_DIR)","path":"$(PROTOC_GEN_VALIDATE)"}]}' .
-	@ $(MOCKERY) --quiet --dir=pkg/storage/disk --name="Index" --recursive --output=$(MOCK_DIR)
+	@ # $(MOCKERY) --quiet --dir=pkg/storage/disk --name="Index" --recursive --output=$(MOCK_DIR)
 
 .PHONY: test
 test:
-	@ go test -cover ./...
+	@ go test -cover -race ./...
 
 .PHONY: coverage
 coverage:
