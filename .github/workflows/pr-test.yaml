@@ -1,5 +1,5 @@
 ---
-name: Build
+name: CI
 on:
   push:
     tags:
@@ -45,28 +45,3 @@ jobs:
         uses: golangci/golangci-lint-action@v2
         with:
           version: latest
-
-  benchmark:
-    name: Benchmark
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-go@v2
-        with:
-          go-version: 1.16.x
-      - name: Run benchmark
-        run: go test -bench '^Benchmark' | tee output.txt
-      - name: Download previous benchmark data
-        uses: actions/cache@v1
-        with:
-          path: ./cache
-          key: ${{ runner.os }}-benchmark
-      - name: Store benchmark result
-        uses: rhysd/github-action-benchmark@v1
-        with:
-          tool: 'go'
-          output-file-path: output.txt
-          external-data-json-path: ./cache/benchmark-data.json
-          fail-on-alert: false
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          comment-on-alert: true
