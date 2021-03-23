@@ -7,6 +7,8 @@ import (
 
 	"github.com/google/cel-go/cel"
 	"github.com/google/cel-go/checker/decls"
+	"github.com/google/cel-go/ext"
+	"github.com/google/cel-go/parser"
 	"github.com/open-policy-agent/opa/ast"
 
 	policyv1 "github.com/cerbos/cerbos/pkg/generated/policy/v1"
@@ -250,7 +252,12 @@ func (rg *RegoGen) addMatch(parent string, m *policyv1.Match) error {
 }
 
 func generateCELProgram(parent string, m *policyv1.Match) (cel.Program, error) {
-	env, err := cel.NewEnv(cel.Declarations(decls.NewVar("request", decls.NewMapType(decls.String, decls.Dyn))))
+	env, err := cel.NewEnv(
+		cel.Declarations(decls.NewVar("request", decls.NewMapType(decls.String, decls.Dyn))),
+		cel.Macros(parser.AllMacros...),
+		ext.Strings(),
+		ext.Encoders(),
+	)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create CEL environment: %w", err)
 	}
