@@ -1,0 +1,29 @@
+before:
+  hooks:
+    - make generate
+    - make lint
+    - make test
+    - go mod tidy
+builds:
+  - env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+      - darwin
+    goarch:
+      - amd64
+    ldflags:
+      - -s -w -X github.com/cerbos/cerbos/pkg/util.Version={{.Version}} -X github.com/cerbos/cerbos/pkg/util.commit={{.Commit}} -X github.com/cerbos/cerbos/pkg/util.BuildDate={{.Date}}  
+archives:
+  - replacements:
+      darwin: Darwin
+      linux: Linux
+      amd64: x86_64
+dockers:
+  - image_templates:
+      - "ghcr.io/cerbos/cerbos:latest"
+      - "ghcr.io/cerbos/cerbos:{{ .Version }}"
+checksum:
+  disable: true
+changelog:
+  skip: true

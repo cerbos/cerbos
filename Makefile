@@ -80,7 +80,7 @@ coverage:
 
 .PHONY: build
 build: $(GORELEASER)
-	@ $(GORELEASER) --snapshot --skip-publish --rm-dist
+	@ $(GORELEASER) --config=.goreleaser-dev.yml --snapshot --skip-publish --rm-dist
 
 .PHONY: run
 run:

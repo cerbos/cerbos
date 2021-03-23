@@ -1,10 +1,9 @@
 ---
-name: CI
+name: Release
 on:
   push:
-    branches:
-      - main
-  pull_request:
+    tags:
+      - v*
 jobs:
   test:
     name: Test
@@ -17,6 +16,19 @@ jobs:
 
       - name: Checkout code
         uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+
+      - name: Set up QEMU
+        id: qemu
+        uses: docker/setup-qemu-action@v1
+        with:
+          image: tonistiigi/binfmt:latest
+          platforms: arm64
+
+      - name: Set up Docker Buildx
+        id: buildx
+        uses: docker/setup-buildx-action@v1
 
       - uses: actions/cache@v2
         with:
@@ -28,18 +40,10 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-go-
 
-      - name: Generate
-        run: make generate
-
-      - name: Test
-        run: make test
-
-  golangci:
-    name: Lint
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-      - name: golangci-lint
-        uses: golangci/golangci-lint-action@v2
+      - name: GoReleaser
+        uses: goreleaser/goreleaser-action@v2
         with:
           version: latest
+          args: release --config=.goreleaser-ci.yml --rm-dist
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
