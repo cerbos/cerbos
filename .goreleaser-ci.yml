@@ -21,23 +21,23 @@ archives:
       amd64: x86_64
 dockers:
   - image_templates:
-      - "ghcr.io/charithe/cerbos:{{ .Version }}-amd64"
+      - "ghcr.io/cerbos/cerbos:{{ .Version }}-amd64"
     goarch: amd64
     use_buildx: true
     build_flag_templates:
       - "--platform=linux/amd64"
 
   - image_templates:
-      - "ghcr.io/charithe/cerbos:{{ .Version }}-arm64"
+      - "ghcr.io/cerbos/cerbos:{{ .Version }}-arm64"
     goarch: arm64
     use_buildx: true
     build_flag_templates:
       - "--platform=linux/arm64"
 docker_manifests:
-  - name_template: "ghcr.io/charithe/cerbos:{{ .Version }}"
+  - name_template: "ghcr.io/cerbos/cerbos:{{ .Version }}"
     image_templates:
-      - "ghcr.io/charithe/cerbos:{{ .Version }}-amd64"
-      - "ghcr.io/charithe/cerbos:{{ .Version }}-arm64"
+      - "ghcr.io/cerbos/cerbos:{{ .Version }}-amd64"
+      - "ghcr.io/cerbos/cerbos:{{ .Version }}-arm64"
 checksum:
   name_template: 'checksums.txt'
 changelog:
