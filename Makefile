@@ -3,6 +3,7 @@ TOOLS_BIN_DIR := $(abspath $(XDG_CACHE_HOME)/cerbos/bin)
 
 BUF := $(TOOLS_BIN_DIR)/buf
 GOLANGCI_LINT := $(TOOLS_BIN_DIR)/golangci-lint
+GORELEASER := $(TOOLS_BIN_DIR)/goreleaser
 MOCKERY := $(TOOLS_BIN_DIR)/mockery
 PROTOC_GEN_GO := $(TOOLS_BIN_DIR)/protoc-gen-go
 PROTOC_GEN_VALIDATE := $(TOOLS_BIN_DIR)/protoc-gen-validate
@@ -21,6 +22,9 @@ DOCKER := docker
 GEN_DIR := pkg/generated
 MOCK_DIR := pkg/test/mocks
 
+.PHONY: all
+all: clean generate lint test build
+
 $(TOOLS_BIN_DIR):
 	@ mkdir -p $(TOOLS_BIN_DIR)
 
@@ -29,6 +33,9 @@ $(BUF): $(TOOLS_BIN_DIR)
 
 $(GOLANGCI_LINT): $(TOOLS_BIN_DIR) 
 	@ GOBIN=$(TOOLS_BIN_DIR) go install github.com/golangci/golangci-lint/cmd/golangci-lint
+
+$(GORELEASER): $(TOOLS_BIN_DIR) 
+	@ GOBIN=$(TOOLS_BIN_DIR) go install github.com/goreleaser/goreleaser
 
 $(MOCKERY): $(TOOLS_BIN_DIR)
 	@ GOBIN=$(TOOLS_BIN_DIR) go install github.com/vektra/mockery/v2
@@ -61,23 +68,19 @@ generate: clean $(BUF) $(PROTOC_GEN_GO) $(PROTOC_GEN_VALIDATE) $(VALIDATE_PROTO)
 	@ $(BUF) lint
 	@ # $(BUF) breaking --against '.git#branch=main'
 	@ $(BUF) generate --template '{"version":"v1beta1","plugins":[{"name":"go","out":"$(GEN_DIR)","opt":"paths=source_relative","path":"$(PROTOC_GEN_GO)"}, {"name":"validate","opt":["paths=source_relative","lang=go"],"out":"$(GEN_DIR)","path":"$(PROTOC_GEN_VALIDATE)"}]}' .
-	@ $(MOCKERY) --quiet --dir=pkg/storage/disk --name="Index" --recursive --output=$(MOCK_DIR)
+	@ # $(MOCKERY) --quiet --dir=pkg/storage/disk --name="Index" --recursive --output=$(MOCK_DIR)
 
 .PHONY: test
 test:
-	@ go test -cover ./...
+	@ go test -cover -race ./...
 
 .PHONY: coverage
 coverage:
 	@ hack/scripts/cover.sh
 
 .PHONY: build
-build: generate lint test
-	CGO_ENABLED=0 GOOS=linux go build -a -ldflags '-w -s -X $(PKG)/pkg/util.Version=$(VERSION) -X $(PKG)/pkg/util.BuildDate=$(BUILD_DATE)' .
-
-.PHONY: container
-container:
-	@ $(DOCKER) build -t $(DOCKER_IMAGE) .
+build: $(GORELEASER)
+	@ $(GORELEASER) --config=.goreleaser-dev.yml --snapshot --skip-publish --rm-dist
 
 .PHONY: run
 run:
