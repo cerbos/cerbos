@@ -88,6 +88,6 @@ message Test {
     string description = 2;
     bool skip = 3;
     string skip_reason = 4;
-    request.v1.Request request = 5 [(validate.rules).message.required = true];
+    request.v1.CheckRequest request = 5 [(validate.rules).message.required = true];
     shared.v1.Effect expected_effect = 6 [(validate.rules).enum.defined_only = true];
 }

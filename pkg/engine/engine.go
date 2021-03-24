@@ -78,7 +78,7 @@ func (engine *Engine) watchNotifications(ctx context.Context) {
 	}
 }
 
-func (engine *Engine) Check(ctx context.Context, req *requestv1.Request) (sharedv1.Effect, error) {
+func (engine *Engine) Check(ctx context.Context, req *requestv1.CheckRequest) (sharedv1.Effect, error) {
 	log := engine.log.With("request_id", req.RequestId)
 
 	var checks [2]*check
@@ -132,7 +132,7 @@ func (engine *Engine) Check(ctx context.Context, req *requestv1.Request) (shared
 	return defaultEffect, ErrNoPoliciesMatched
 }
 
-func (engine *Engine) getPrincipalPolicyCheck(req *requestv1.Request) *check {
+func (engine *Engine) getPrincipalPolicyCheck(req *requestv1.CheckRequest) *check {
 	principal := req.Principal.Id
 	version := req.Principal.Version
 
@@ -152,7 +152,7 @@ func (engine *Engine) getPrincipalPolicyCheck(req *requestv1.Request) *check {
 	return nil
 }
 
-func (engine *Engine) getResourcePolicyCheck(req *requestv1.Request) *check {
+func (engine *Engine) getResourcePolicyCheck(req *requestv1.CheckRequest) *check {
 	resource := req.Resource.Name
 	version := req.Resource.Version
 

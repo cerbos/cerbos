@@ -3,20 +3,21 @@ module github.com/cerbos/cerbos
 go 1.16
 
 require (
-	github.com/bufbuild/buf v0.37.0
+	github.com/bufbuild/buf v0.40.0
 	github.com/cespare/xxhash v1.1.0
 	github.com/envoyproxy/protoc-gen-validate v0.4.2-0.20201217164128-7df253a68e6b
 	github.com/fatih/color v1.10.0
 	github.com/fsnotify/fsnotify v1.4.9
 	github.com/ghodss/yaml v1.0.0
 	github.com/go-git/go-git/v5 v5.2.0
-	github.com/golang/protobuf v1.4.3
+	github.com/golang/protobuf v1.5.1
 	github.com/golangci/golangci-lint v1.38.0
 	github.com/google/cel-go v0.7.2
-	github.com/google/go-cmp v0.5.4
+	github.com/google/go-cmp v0.5.5
 	github.com/google/renameio v1.0.0
 	github.com/goreleaser/goreleaser v0.160.0
 	github.com/gorilla/mux v1.7.3
+	github.com/grpc-ecosystem/grpc-gateway/v2 v2.3.0
 	github.com/iancoleman/strcase v0.1.3 // indirect
 	github.com/lyft/protoc-gen-star v0.5.2 // indirect
 	github.com/mitchellh/mapstructure v1.4.1 // indirect
@@ -32,8 +33,10 @@ require (
 	golang.org/x/crypto v0.0.0-20210220033148-5ea612d1eb83 // indirect
 	golang.org/x/lint v0.0.0-20201208152925-83fdc39ff7b5 // indirect
 	golang.org/x/mod v0.4.1 // indirect
-	golang.org/x/net v0.0.0-20210226172049-e18ecbb05110 // indirect
-	golang.org/x/sys v0.0.0-20210305230114-8fe3ee5dd75b // indirect
+	golang.org/x/net v0.0.0-20210324205630-d1beb07c2056 // indirect
 	golang.org/x/term v0.0.0-20210220032956-6a3ed077a48d // indirect
-	google.golang.org/protobuf v1.25.1-0.20201208041424-160c7477e0e8
+	google.golang.org/genproto v0.0.0-20210324141432-3032e8ff099e // indirect
+	google.golang.org/grpc v1.37.0-dev.0.20210309003715-fce74a94bdff
+	google.golang.org/grpc/cmd/protoc-gen-go-grpc v1.1.0
+	google.golang.org/protobuf v1.26.0
 )

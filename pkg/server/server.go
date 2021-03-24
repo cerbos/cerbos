@@ -66,7 +66,7 @@ func (s *Server) handleCheck(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	req := &requestv1.Request{}
+	req := &requestv1.CheckRequest{}
 	if err := protojson.Unmarshal(reqBytes, req); err != nil {
 		log.Errorw("Failed to unmarshal request body", "error", err)
 		writeResponse(log, w, "unknown", http.StatusBadRequest, "Bad request", sharedv1.Effect_EFFECT_DENY)
@@ -106,7 +106,7 @@ func (s *Server) handleCheck(w http.ResponseWriter, r *http.Request) {
 }
 
 func writeResponse(log *zap.SugaredLogger, w http.ResponseWriter, requestID string, code int, msg string, effect sharedv1.Effect) {
-	respBytes, err := protojson.Marshal(&responsev1.Response{
+	respBytes, err := protojson.Marshal(&responsev1.CheckResponse{
 		RequestId:     requestID,
 		StatusCode:    uint32(code),
 		StatusMessage: msg,

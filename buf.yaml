@@ -1,5 +1,8 @@
 ---
 version: v1beta1
+name: buf.build/cerbos/apis
+deps:
+  - "buf.build/beta/googleapis"
 build:
   roots:
     - _vendor

@@ -6,6 +6,9 @@ GOLANGCI_LINT := $(TOOLS_BIN_DIR)/golangci-lint
 GORELEASER := $(TOOLS_BIN_DIR)/goreleaser
 MOCKERY := $(TOOLS_BIN_DIR)/mockery
 PROTOC_GEN_GO := $(TOOLS_BIN_DIR)/protoc-gen-go
+PROTOC_GEN_GO_GRPC := $(TOOLS_BIN_DIR)/protoc-gen-go-grpc
+PROTOC_GEN_GRPC_GATEWAY := $(TOOLS_BIN_DIR)/protoc-gen-grpc-gateway
+PROTOC_GEN_OPENAPIV2 := $(TOOLS_BIN_DIR)/protoc-gen-openapiv2
 PROTOC_GEN_VALIDATE := $(TOOLS_BIN_DIR)/protoc-gen-validate
 
 VENDOR_DIR := _vendor
@@ -21,6 +24,41 @@ DOCKER := docker
 
 GEN_DIR := pkg/generated
 MOCK_DIR := pkg/test/mocks
+
+define BUF_GEN_TEMPLATE
+{\
+  "version": "v1beta1",\
+  "plugins": [\
+    {\
+      "name": "go",\
+      "out": "$(GEN_DIR)",\
+      "opt": "paths=source_relative",\
+      "path": "$(PROTOC_GEN_GO)"\
+    },\
+    {\
+      "name": "validate",\
+      "opt": [\
+        "paths=source_relative",\
+        "lang=go"\
+      ],\
+      "out": "$(GEN_DIR)",\
+      "path": "$(PROTOC_GEN_VALIDATE)"\
+    },\
+    {\
+      "name": "go-grpc",\
+      "opt": "paths=source_relative",\
+      "out": "$(GEN_DIR)",\
+      "path": "$(PROTOC_GEN_GO_GRPC)"\
+    },\
+    {\
+      "name": "grpc-gateway",\
+      "opt": "paths=source_relative",\
+      "out": "$(GEN_DIR)",\
+      "path": "$(PROTOC_GEN_GRPC_GATEWAY)"\
+    },\
+  ]\
+}
+endef
 
 .PHONY: all
 all: clean generate lint test build
@@ -43,6 +81,12 @@ $(MOCKERY): $(TOOLS_BIN_DIR)
 $(PROTOC_GEN_GO): $(TOOLS_BIN_DIR) 
 	@ GOBIN=$(TOOLS_BIN_DIR) go install google.golang.org/protobuf/cmd/protoc-gen-go
 
+$(PROTOC_GEN_GO_GRPC): $(TOOLS_BIN_DIR) 
+	@ GOBIN=$(TOOLS_BIN_DIR) go install google.golang.org/grpc/cmd/protoc-gen-go-grpc
+
+$(PROTOC_GEN_GRPC_GATEWAY): $(TOOLS_BIN_DIR) 
+	@ GOBIN=$(TOOLS_BIN_DIR) go install github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-grpc-gateway
+
 $(PROTOC_GEN_VALIDATE): $(TOOLS_BIN_DIR) 
 	@ GOBIN=$(TOOLS_BIN_DIR) go install github.com/envoyproxy/protoc-gen-validate
 
@@ -64,10 +108,10 @@ lint: $(GOLANGCI_LINT)
 	@ $(GOLANGCI_LINT) run --config=.golangci.yaml 
 
 .PHONY: generate
-generate: clean $(BUF) $(PROTOC_GEN_GO) $(PROTOC_GEN_VALIDATE) $(VALIDATE_PROTO) $(MOCKERY)
+generate: clean $(BUF) $(PROTOC_GEN_GO) $(PROTOC_GEN_GO_GRPC) $(PROTOC_GEN_GRPC_GATEWAY) $(PROTOC_GEN_VALIDATE) $(VALIDATE_PROTO)
 	@ $(BUF) lint
-	@ # $(BUF) breaking --against '.git#branch=main'
-	@ $(BUF) generate --template '{"version":"v1beta1","plugins":[{"name":"go","out":"$(GEN_DIR)","opt":"paths=source_relative","path":"$(PROTOC_GEN_GO)"}, {"name":"validate","opt":["paths=source_relative","lang=go"],"out":"$(GEN_DIR)","path":"$(PROTOC_GEN_VALIDATE)"}]}' .
+	@ # $(BUF) breaking --against '.git#branch=dev'
+	@ $(BUF) generate --template '$(BUF_GEN_TEMPLATE)' .
 	@ # $(MOCKERY) --quiet --dir=pkg/storage/disk --name="Index" --recursive --output=$(MOCK_DIR)
 
 .PHONY: test

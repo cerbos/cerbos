@@ -40,9 +40,10 @@ var (
 // define the regex for a UUID once up-front
 var _response_uuidPattern = regexp.MustCompile("^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$")
 
-// Validate checks the field values on Response with the rules defined in the
-// proto definition for this message. If any rules are violated, an error is returned.
-func (m *Response) Validate() error {
+// Validate checks the field values on CheckResponse with the rules defined in
+// the proto definition for this message. If any rules are violated, an error
+// is returned.
+func (m *CheckResponse) Validate() error {
 	if m == nil {
 		return nil
 	}
@@ -58,9 +59,9 @@ func (m *Response) Validate() error {
 	return nil
 }
 
-// ResponseValidationError is the validation error returned by
-// Response.Validate if the designated constraints aren't met.
-type ResponseValidationError struct {
+// CheckResponseValidationError is the validation error returned by
+// CheckResponse.Validate if the designated constraints aren't met.
+type CheckResponseValidationError struct {
 	field  string
 	reason string
 	cause  error
@@ -68,22 +69,22 @@ type ResponseValidationError struct {
 }
 
 // Field function returns field value.
-func (e ResponseValidationError) Field() string { return e.field }
+func (e CheckResponseValidationError) Field() string { return e.field }
 
 // Reason function returns reason value.
-func (e ResponseValidationError) Reason() string { return e.reason }
+func (e CheckResponseValidationError) Reason() string { return e.reason }
 
 // Cause function returns cause value.
-func (e ResponseValidationError) Cause() error { return e.cause }
+func (e CheckResponseValidationError) Cause() error { return e.cause }
 
 // Key function returns key value.
-func (e ResponseValidationError) Key() bool { return e.key }
+func (e CheckResponseValidationError) Key() bool { return e.key }
 
 // ErrorName returns error name.
-func (e ResponseValidationError) ErrorName() string { return "ResponseValidationError" }
+func (e CheckResponseValidationError) ErrorName() string { return "CheckResponseValidationError" }
 
 // Error satisfies the builtin error interface
-func (e ResponseValidationError) Error() string {
+func (e CheckResponseValidationError) Error() string {
 	cause := ""
 	if e.cause != nil {
 		cause = fmt.Sprintf(" | caused by: %v", e.cause)
@@ -95,14 +96,14 @@ func (e ResponseValidationError) Error() string {
 	}
 
 	return fmt.Sprintf(
-		"invalid %sResponse.%s: %s%s",
+		"invalid %sCheckResponse.%s: %s%s",
 		key,
 		e.field,
 		e.reason,
 		cause)
 }
 
-var _ error = ResponseValidationError{}
+var _ error = CheckResponseValidationError{}
 
 var _ interface {
 	Field() string
@@ -110,4 +111,4 @@ var _ interface {
 	Key() bool
 	Cause() error
 	ErrorName() string
-} = ResponseValidationError{}
+} = CheckResponseValidationError{}

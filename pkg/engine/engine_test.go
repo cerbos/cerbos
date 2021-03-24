@@ -29,7 +29,7 @@ func TestEngineCheck(t *testing.T) {
 
 	testCases := []struct {
 		desc    string
-		request func() *requestv1.Request
+		request func() *requestv1.CheckRequest
 		want    sharedv1.Effect
 		wantErr bool
 	}{
@@ -40,7 +40,7 @@ func TestEngineCheck(t *testing.T) {
 		},
 		{
 			desc: "John tries to approve his own leave_request",
-			request: func() *requestv1.Request {
+			request: func() *requestv1.CheckRequest {
 				// John trying to approve his own leave request
 				req := mkRequest()
 				req.Action = "approve"
@@ -51,7 +51,7 @@ func TestEngineCheck(t *testing.T) {
 		},
 		{
 			desc: "John's manager approves leave_request",
-			request: func() *requestv1.Request {
+			request: func() *requestv1.CheckRequest {
 				// John's manager approving his leave request
 				req := mkRequest()
 				req.Action = "approve"
@@ -66,7 +66,7 @@ func TestEngineCheck(t *testing.T) {
 		},
 		{
 			desc: "Some other manager tries to approve leave_request",
-			request: func() *requestv1.Request {
+			request: func() *requestv1.CheckRequest {
 				// Some other manager trying to approve John's leave request
 				req := mkRequest()
 				req.Action = "approve"
@@ -81,7 +81,7 @@ func TestEngineCheck(t *testing.T) {
 		},
 		{
 			desc: "Donald Duck approves leave_request that has dev_record attribute [Principal policy override]",
-			request: func() *requestv1.Request {
+			request: func() *requestv1.CheckRequest {
 				// Donald Duck has a principal policy that lets him do anything on leave_request as long as it's a dev record
 				req := mkRequest()
 				req.Action = "approve"
@@ -94,7 +94,7 @@ func TestEngineCheck(t *testing.T) {
 		},
 		{
 			desc: "Donald Duck views leave_request [Principal policy cascades to resource policy]",
-			request: func() *requestv1.Request {
+			request: func() *requestv1.CheckRequest {
 				// Donald Duck trying to do something on a non-dev record
 				// It should cascade down to resource policy because there's no explicit rule for Donald Duck
 				req := mkRequest()
@@ -107,7 +107,7 @@ func TestEngineCheck(t *testing.T) {
 		},
 		{
 			desc: "Donald Duck tries to view salary_record [Principal policy override]",
-			request: func() *requestv1.Request {
+			request: func() *requestv1.CheckRequest {
 				// Donald Duck has an explicit deny on salary_record
 				req := mkRequest()
 				req.Action = "view"
@@ -224,8 +224,8 @@ func BenchmarkCheck(b *testing.B) {
 	})
 }
 
-func mkRequest() *requestv1.Request {
-	return &requestv1.Request{
+func mkRequest() *requestv1.CheckRequest {
+	return &requestv1.CheckRequest{
 		RequestId: "test",
 		Action:    "view:public",
 		Resource: &requestv1.Resource{

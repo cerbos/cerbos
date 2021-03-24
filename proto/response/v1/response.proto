@@ -6,7 +6,7 @@ option go_package = "github.com/cerbos/cerbos/pkg/generated/response/v1;response
 
 import "shared/v1/shared.proto";
 
-message Response {
+message CheckResponse {
     string request_id = 1;
     uint32 status_code = 2;
     string status_message = 3;
