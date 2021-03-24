@@ -3,8 +3,17 @@
 :source-highlighter: rouge
 :docinfo: private
 
-= Documentation
+:app-name: cerbos
+:app-version: 0.0.0-alpha1
+:app-docker-img: ghcr.io/cerbos/cerbos:{app-version}
+:app-url: https://github.com/cerbos/cerbos
+:app-download-page: {app-url}/releases/tag/v{app-version}
+
+= Cerbos Documentation
 
 :toc:
 
+include::guide/introduction.adoc[leveloffset=+1]
+include::guide/installation.adoc[leveloffset=+1]
+include::guide/quickstart.adoc[leveloffset=+1]
 include::tutorials/index.adoc[leveloffset=+1]
