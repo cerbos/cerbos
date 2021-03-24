@@ -1,0 +1,243 @@
+= Quickstart
+
+Create the directory structure. 
+
+[source,sh]
+----
+mkdir -p cerbos-quickstart/{git-repo,work-dir} 
+cd cerbos-quickstart
+----
+
+Create the git repository that will hold our polcies and tests.
+
+[source,sh]
+----
+mkdir -p git-repo/{policies,tests}
+----
+
+Add some policies to the git repository.
+
+[source,sh]
+----
+cat > git-repo/policies/derived_roles_common.yaml <<EOF
+---
+apiVersion: "cerbos.dev/v1"
+description: |-
+  Common dynamic roles used within the Apatr app
+derived_roles:
+  name: common_roles
+  definitions:
+    - name: owner
+      parentRoles: ["user"]
+      computation:
+        match:
+          expr:
+            - request.resource.attr.owner == request.principal.id
+EOF
+----
+
+[source,sh]
+----
+cat > git-repo/policies/resource_album.yaml <<EOF
+---
+apiVersion: cerbos.dev/v1
+resourcePolicy:
+  version: "default"
+  importDerivedRoles:
+    - common_roles
+  resource: "album:object"
+  rules:
+    - action: '*'
+      effect: EFFECT_ALLOW
+      derivedRoles:
+        - owner
+EOF
+----
+
+Run the compiler to make sure that the policies are valid.
+
+[source,sh,subs="attributes"]
+----
+{app-name} compile git-repo/policies
+----
+
+Commit the changes.
+
+[source,sh]
+----
+git -C git-repo init
+git -C git-repo add .
+git -C git-repo commit -m 'First commit'
+----
+
+Create the config file for the server.
+
+[source,sh,subs="attributes"]
+----
+cat > conf.yaml <<EOF
+---
+server:
+  listenAddr: ":9999"
+
+storage:
+  driver: "git"
+  git:
+    protocol: file
+    url: file://$(pwd)/git-repo
+    branch: master
+    subDir: policies
+    checkoutDir: $(pwd)/work-dir
+    updatePollInterval: 10s
+EOF
+----
+
+Now start the server.
+
+[source,sh,subs="attributes"]
+----
+{app-name} server --config=conf.yaml
+----
+
+Send a request as the owner. It should be allowed by the policy.
+
+[source,shell,linenums,highlight=2..20]
+----
+cat <<EOF | curl --silent "localhost:9999/v1/check" -d @-
+{
+  "requestId":  "test01",
+  "action":  "view",
+  "resource":  {
+    "version": "default",
+    "name":  "album:object",
+    "attr":  {
+      "owner":  "alicia",
+      "id":  "XX125",
+      "public": true,
+      "flagged": false
+    }
+  },
+  "principal":  {
+    "id":  "alicia",
+    "version": "default",
+    "roles":  ["user"]
+  }
+}
+EOF
+----
+
+----
+{"requestId":"test01","statusCode":200,"statusMessage":"Allow","effect":"EFFECT_ALLOW"}
+----
+
+
+Send a request as someone else. It should be denied by the policy.
+
+[source,shell,linenums,highlight=2..20]
+----
+cat <<EOF | curl --silent "localhost:9999/v1/check" -d @-
+{
+  "requestId":  "test02",
+  "action":  "view",
+  "resource":  {
+    "version": "default",
+    "name":  "album:object",
+    "attr":  {
+      "owner":  "alicia",
+      "id":  "XX125",
+      "public": true,
+      "flagged": false
+    }
+  },
+  "principal":  {
+    "id":  "bradley",
+    "version": "default",
+    "roles":  ["user"]
+  }
+}
+EOF
+----
+
+----
+{"requestId":"test02","statusCode":401,"statusMessage":"Deny","effect":"EFFECT_DENY"}
+----
+
+Now let's edit the policy to allow users to view public albums.
+
+[source,sh]
+----
+cat > git-repo/policies/resource_album.yaml <<EOF
+---
+apiVersion: cerbos.dev/v1
+resourcePolicy:
+  version: "default"
+  importDerivedRoles:
+    - common_roles
+  resource: "album:object"
+  rules:
+    - action: '*'
+      effect: EFFECT_ALLOW
+      derivedRoles:
+        - owner
+
+    - action: view
+      effect: EFFECT_ALLOW
+      roles:
+        - user
+      condition:
+        match:
+          expr:
+            - request.resource.attr.public == true
+EOF
+----
+
+Compile to make sure the policy is still valid.
+
+[source,sh,subs="attributes"]
+----
+{app-name} compile git-repo/policies
+----
+
+Commit the change.
+
+[source,sh]
+----
+git -C git-repo commit -am 'Update album policy'
+----
+
+After a few seconds, the server should pull the changes from the git repository and update itself. 
+
+----
+Detected repository changes
+Index updated: Added=1 Removed=0
+----
+
+Now send the request again. It should be allowed by the updated policy.
+
+[source,shell,linenums,highlight=2..20]
+----
+cat <<EOF | curl --silent "localhost:9999/v1/check" -d @-
+{
+  "requestId":  "test03",
+  "action":  "view",
+  "resource":  {
+    "version": "default",
+    "name":  "album:object",
+    "attr":  {
+      "owner":  "alicia",
+      "id":  "XX125",
+      "public": true,
+      "flagged": false
+    }
+  },
+  "principal":  {
+    "id":  "bradley",
+    "version": "default",
+    "roles":  ["user"]
+  }
+}
+EOF
+----
+
+----
+{"requestId":"test03","statusCode":200,"statusMessage":"Allow","effect":"EFFECT_ALLOW"}
+----

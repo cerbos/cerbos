@@ -87,6 +87,16 @@ func (s *Store) init(ctx context.Context) error {
 		return fmt.Errorf("not a directory: %s", s.conf.CheckoutDir)
 	}
 
+	loadAndStartPoller := func() error {
+		if err := s.loadAll(ctx); err != nil {
+			return err
+		}
+
+		go s.pollForUpdates(ctx)
+
+		return nil
+	}
+
 	// if the directory does not exist, create it and clone the repo
 	if errors.Is(err, os.ErrNotExist) {
 		if err := os.MkdirAll(s.conf.CheckoutDir, 0o744); err != nil {
@@ -97,7 +107,7 @@ func (s *Store) init(ctx context.Context) error {
 			return err
 		}
 
-		return s.loadAll(ctx)
+		return loadAndStartPoller()
 	}
 
 	// check whether the directory is empty
@@ -112,7 +122,7 @@ func (s *Store) init(ctx context.Context) error {
 			return err
 		}
 
-		return s.loadAll(ctx)
+		return loadAndStartPoller()
 	}
 
 	// if not empty, assume it is a git repo and try to pull the latest changes
@@ -120,13 +130,7 @@ func (s *Store) init(ctx context.Context) error {
 		return err
 	}
 
-	if err := s.loadAll(ctx); err != nil {
-		return err
-	}
-
-	go s.pollForUpdates(ctx)
-
-	return nil
+	return loadAndStartPoller()
 }
 
 func isEmptyDir(dir string) (bool, error) {

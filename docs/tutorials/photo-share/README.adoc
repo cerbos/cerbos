@@ -1,5 +1,4 @@
 :source-highlighter: rouge
-:docker_image: cerbos/cerbos
 
 [#tutorial-photo-share]
 = Tutorial: Writing policies for a simple photo-sharing service
@@ -7,12 +6,11 @@
 .Getting started
 ****
 
-* We will use Docker to run the server and the compiler.
+* We will use Docker to run the server and the compiler. 
 
 [source,shell,subs="attributes"]
 ----
-# TODO: Replace with link to Docker registry
-make container DOCKER_IMAGE={docker_image}
+docker pull {app-docker-img}
 ----
 
 * Create a file named `config.yaml` with the following contents:
