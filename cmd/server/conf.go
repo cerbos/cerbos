@@ -1,10 +1,18 @@
 package server
 
-import "github.com/cerbos/cerbos/pkg/config"
+import (
+	"errors"
+	"fmt"
+	"net"
+
+	"github.com/cerbos/cerbos/pkg/config"
+)
 
 const (
 	confKey = "server"
 )
+
+var errEmptyListenAddr = errors.New("server.listenAddr must be a non-empty string")
 
 // Conf holds configuration pertaining to the server.
 type Conf struct {
@@ -26,6 +34,18 @@ type TLSStaticConf struct {
 	Cert string `yaml:"cert"`
 	// Key is the path to the TLS private key file.
 	Key string `yaml:"key"`
+}
+
+func (c *Conf) Validate() error {
+	if c.ListenAddr == "" {
+		return errEmptyListenAddr
+	}
+
+	if _, _, err := net.SplitHostPort(c.ListenAddr); err != nil {
+		return fmt.Errorf("invalid listenAddr '%s': %w", c.ListenAddr, err)
+	}
+
+	return nil
 }
 
 func getServerConf(listenAddrFlag string) (Conf, error) {
