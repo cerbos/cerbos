@@ -1,4 +1,4 @@
-package config
+package config_test
 
 import (
 	"fmt"
@@ -7,6 +7,9 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
+
+	"github.com/cerbos/cerbos/cmd/server"
+	"github.com/cerbos/cerbos/pkg/config"
 )
 
 type Server struct {
@@ -21,11 +24,11 @@ type TLS struct {
 }
 
 func TestLoad(t *testing.T) {
-	require.NoError(t, Load(filepath.Join("testdata", "test.yaml")))
+	require.NoError(t, config.Load(filepath.Join("testdata", "test_load.yaml")))
 
 	t.Run("single_value_read", func(t *testing.T) {
 		var haveCert string
-		require.NoError(t, Get("server.tls.certificate", &haveCert))
+		require.NoError(t, config.Get("server.tls.certificate", &haveCert))
 		require.Equal(t, "cert", haveCert)
 	})
 
@@ -40,7 +43,22 @@ func TestLoad(t *testing.T) {
 		}
 
 		var haveServer Server
-		require.NoError(t, Get("server", &haveServer))
+		require.NoError(t, config.Get("server", &haveServer))
 		require.Equal(t, wantServer, haveServer)
+	})
+}
+
+func TestCerbosConfig(t *testing.T) {
+	t.Run("valid_server_conf", func(t *testing.T) {
+		require.NoError(t, config.Load(filepath.Join("testdata", "valid_server_conf.yaml")))
+		var serverConf server.Conf
+		require.NoError(t, config.Get("server", &serverConf))
+		require.Equal(t, ":9999", serverConf.ListenAddr)
+	})
+
+	t.Run("invalid_server_listen_addr", func(t *testing.T) {
+		require.NoError(t, config.Load(filepath.Join("testdata", "invalid_server_listen_addr.yaml")))
+		var serverConf server.Conf
+		require.Error(t, config.Get("server", &serverConf))
 	})
 }
