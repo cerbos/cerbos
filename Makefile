@@ -39,7 +39,7 @@ build: $(GORELEASER)
 
 .PHONY: run
 run:
-	@ go run main.go server --loglevel=DEBUG --config=conf.default.yaml
+	@ go run main.go server --log-level=DEBUG --config=conf.default.yaml
 
 .PHONY: docs
 docs:

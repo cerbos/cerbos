@@ -24,16 +24,12 @@ type Conf struct {
 
 // TLSConf holds TLS configuration.
 type TLSConf struct {
-	// Static defines statically defined TLS settings.
-	Static *TLSStaticConf `yaml:"static"`
-}
-
-// TLSStaticConf holds static TLS configuration values.
-type TLSStaticConf struct {
 	// Cert is the path to the TLS certificate file.
 	Cert string `yaml:"cert"`
 	// Key is the path to the TLS private key file.
 	Key string `yaml:"key"`
+	//	CACert is the path to the optional CA certificate for verifying client requests.
+	CACert string `yaml:"caCert"`
 }
 
 func (c *Conf) Validate() error {
@@ -48,16 +44,11 @@ func (c *Conf) Validate() error {
 	return nil
 }
 
-func getServerConf(listenAddrFlag string) (Conf, error) {
+func getServerConf() (Conf, error) {
 	conf := Conf{}
 
 	if err := config.Get(confKey, &conf); err != nil {
 		return conf, err
-	}
-
-	// override the listenAddr if the flag is defined.
-	if listenAddrFlag != "" {
-		conf.ListenAddr = listenAddrFlag
 	}
 
 	return conf, nil
