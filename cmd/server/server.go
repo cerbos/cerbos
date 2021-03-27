@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"strings"
 	"time"
 
 	"github.com/google/gops/agent"
@@ -92,7 +93,7 @@ func doRun(_ *cobra.Command, _ []string) error {
 
 func startDebugListener(listenAddr string) {
 	log := zap.S().Named("debug")
-	log.Infof("Starting debug listener on %s", args.debugListenAddr)
+	log.Infof("Starting debug listener at %s", args.debugListenAddr)
 
 	err := agent.Listen(agent.Options{
 		Addr:                   listenAddr,
@@ -129,10 +130,22 @@ func (s *server) start(ctx context.Context) error {
 
 	log := zap.S().Named("server")
 
+	// cmux can't deal with both grpc and HTTP/2 (see https://github.com/soheilhy/cmux/issues/68)
+	// Therefore, we have to have two different modes for when TLS is enabled and when it's not
+	// TLS Enabled: Use HTTP server to serve gRPC too
+	// TLS Disabled: Use cmux to mux the connections (can't reuse first method because gRPC gateway fails to connect)
+	// TODO (cell) Find a better way to handle this
+
 	// create listeners
-	grpcL, httpL, err := s.createListeners()
+	grpcL, err := s.createListener(s.conf.GRPCListenAddr)
 	if err != nil {
-		log.Errorw("Failed to start listener", "error", err)
+		log.Errorw("Failed to create gRPC listener", "error", err)
+		return err
+	}
+
+	httpL, err := s.createListener(s.conf.HTTPListenAddr)
+	if err != nil {
+		log.Errorw("Failed to create HTTP listener", "error", err)
 		return err
 	}
 
@@ -145,19 +158,20 @@ func (s *server) start(ctx context.Context) error {
 
 	grpcServer := s.startGRPCServer(cerbosSvc, grpcL)
 
-	httpServer, err := s.startHTTPServer(ctx, httpL)
+	httpServer, err := s.startHTTPServer(ctx, httpL, grpcServer)
 	if err != nil {
 		log.Errorw("Failed to start HTTP server", "error", err)
 		return err
 	}
-
-	log.Info("Ready to accept requests")
 
 	<-ctx.Done()
 	log.Info("Shutting down")
 
 	// mark this service as NOT_SERVING in the gRPC health check.
 	s.health.Shutdown()
+
+	log.Debug("Shutting down gRPC server")
+	grpcServer.GracefulStop()
 
 	log.Debug("Shutting down HTTP server")
 	shutdownCtx, cancelFunc := context.WithTimeout(context.Background(), defaultTimeout)
@@ -167,50 +181,36 @@ func (s *server) start(ctx context.Context) error {
 		log.Errorw("Failed to cleanly shutdown HTTP server", "error", err)
 	}
 
-	log.Debug("Shutting down gRPC server")
-	grpcServer.GracefulStop()
-
 	log.Info("Shutdown complete")
 
 	return nil
 }
 
-func (s *server) createListeners() (grpcL, httpL net.Listener, err error) {
-	l, err := net.Listen("tcp", s.conf.ListenAddr)
+func (s *server) createListener(listenAddr string) (net.Listener, error) {
+	l, err := net.Listen("tcp", listenAddr)
 	if err != nil {
-		return nil, nil, fmt.Errorf("failed to create listener at '%s': %w", s.conf.ListenAddr, err)
+		return nil, fmt.Errorf("failed to create listener at '%s': %w", listenAddr, err)
 	}
 
-	if s.conf.TLS != nil {
-		tlsConf, err := getTLSConfig(s.conf.TLS)
-		if err != nil {
-			return nil, nil, err
-		}
+	tlsConf, err := s.getTLSConfig()
+	if err != nil {
+		return nil, err
+	}
 
+	if tlsConf != nil {
 		l = tls.NewListener(l, tlsConf)
 	}
 
-	connMux := cmux.New(l)
-	grpcL = connMux.MatchWithWriters(cmux.HTTP2MatchHeaderFieldSendSettings("content-type", "application/grpc"))
-	httpL = connMux.Match(cmux.Any())
-
-	s.group.Go(func() error {
-		log := zap.S().Named("server")
-		log.Infof("Starting listener on %s", s.conf.ListenAddr)
-
-		err := connMux.Serve()
-		if !errors.Is(err, net.ErrClosed) {
-			log.Errorw("Listener failed", "error", err)
-			return err
-		}
-
-		return err
-	})
-
-	return grpcL, httpL, nil
+	return l, nil
 }
 
-func getTLSConfig(conf *TLSConf) (*tls.Config, error) {
+func (s *server) getTLSConfig() (*tls.Config, error) {
+	if s.conf.TLS == nil {
+		return nil, nil
+	}
+
+	conf := s.conf.TLS
+
 	certificate, err := tls.LoadX509KeyPair(conf.Cert, conf.Key)
 	if err != nil {
 		return nil, fmt.Errorf("failed to load certificate and key: %w", err)
@@ -302,40 +302,40 @@ func (s *server) startGRPCServer(cerbosSvc *svc.CerbosService, l net.Listener) *
 	service.RegisterChannelzServiceToServer(server)
 
 	s.group.Go(func() error {
-		log.Debug("Starting gRPC server")
-
+		log.Info(fmt.Sprintf("Starting gRPC server at %s", s.conf.GRPCListenAddr))
 		err := server.Serve(l)
 		if err != nil && !(errors.Is(err, cmux.ErrListenerClosed) || errors.Is(err, cmux.ErrServerClosed)) {
 			log.Error("gRPC server failed", zap.Error(err))
 			return err
 		}
 
+		log.Info("gRPC server stopped")
 		return nil
 	})
 
 	return server
 }
 
-func (s *server) startHTTPServer(ctx context.Context, l net.Listener) (*http.Server, error) {
+func (s *server) startHTTPServer(ctx context.Context, l net.Listener, grpcSrv *grpc.Server) (*http.Server, error) {
 	log := zap.S().Named("http")
 
 	gwmux := runtime.NewServeMux()
 
 	opts := []grpc.DialOption{grpc.WithTransportCredentials(local.NewCredentials())}
-	if s.conf.TLS != nil {
-		tlsConf, err := getTLSConfig(s.conf.TLS)
-		if err != nil {
-			log.Errorw("Failed to get TLS config", "error", err)
-			return nil, err
-		}
 
+	tlsConf, err := s.getTLSConfig()
+	if err != nil {
+		return nil, fmt.Errorf("failed to create TLS config: %w", err)
+	}
+
+	if tlsConf != nil {
+		tlsConf.InsecureSkipVerify = true
 		opts = []grpc.DialOption{grpc.WithTransportCredentials(credentials.NewTLS(tlsConf))}
 	}
 
-	grpcConn, err := grpc.DialContext(ctx, s.conf.ListenAddr, opts...)
+	grpcConn, err := grpc.DialContext(ctx, s.conf.GRPCListenAddr, opts...)
 	if err != nil {
-		log.Errorw("Failed to dial gRPC server", "error", err)
-		return nil, err
+		return nil, fmt.Errorf("failed to dial gRPC: %w", err)
 	}
 
 	if err := svcv1.RegisterCerbosServiceHandler(ctx, gwmux, grpcConn); err != nil {
@@ -347,25 +347,38 @@ func (s *server) startHTTPServer(ctx context.Context, l net.Listener) (*http.Ser
 	mux.Handle("/", gwmux)
 	mux.HandleFunc("/status", s.handleHTTPHealthCheck(grpcConn))
 
+	handler := grpcHandler(grpcSrv, mux)
+
 	h := &http.Server{
 		ErrorLog:          zap.NewStdLog(zap.L().Named("http.error")),
-		Handler:           mux,
+		Handler:           handler,
 		ReadHeaderTimeout: defaultTimeout,
 		ReadTimeout:       defaultTimeout,
 		WriteTimeout:      defaultTimeout,
 	}
 
 	s.group.Go(func() error {
-		log.Debug("Starting HTTP server")
+		log.Infof("Starting HTTP server at %s", s.conf.HTTPListenAddr)
 		err := h.Serve(l)
 		if err != nil && !errors.Is(err, http.ErrServerClosed) {
 			log.Errorw("HTTP server failed", "error", err)
 		}
 
+		log.Info("HTTP server stopped")
 		return err
 	})
 
 	return h, nil
+}
+
+func grpcHandler(grpcSvc *grpc.Server, handler http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.ProtoMajor == 2 && strings.Contains(r.Header.Get("Content-Type"), "application/grpc") {
+			grpcSvc.ServeHTTP(w, r)
+		} else {
+			handler.ServeHTTP(w, r)
+		}
+	})
 }
 
 func (s *server) handleHTTPHealthCheck(conn grpc.ClientConnInterface) http.HandlerFunc {

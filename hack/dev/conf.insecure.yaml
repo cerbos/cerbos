@@ -1,9 +1,7 @@
 ---
 server:
-  listenAddr: ":9999"
-  tls:
-    cert: hack/dev/tls.crt
-    key: hack/dev/tls.key
+  httpListenAddr: ":3592"
+  grpcListenAddr: ":3593"
 
 storage:
   driver: "disk"

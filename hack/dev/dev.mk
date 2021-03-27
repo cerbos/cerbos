@@ -1,8 +1,6 @@
 DEV_DIR := hack/dev
 PROTOSET := cerbos.protoset
-SERVER_ADDR := localhost:9999
 SVC_METHOD := svc.v1.CerbosService/Check
-
 
 define REQUEST_JSON
 {\
@@ -42,7 +40,11 @@ $(DEV_DIR)/tls.crt:
 
 .PHONY: dev-server
 dev-server: $(DEV_DIR)/tls.crt
-	@ go run main.go server --log-level=DEBUG --debug-listen-addr=":6666" --config=$(DEV_DIR)/conf.yaml
+	@ go run main.go server --log-level=DEBUG --debug-listen-addr=":6666" --config=$(DEV_DIR)/conf.secure.yaml
+
+.PHONY: dev-server-insecure
+dev-server-insecure:
+	@ go run main.go server --log-level=DEBUG --debug-listen-addr=":6666" --config=$(DEV_DIR)/conf.insecure.yaml
 
 .PHONY: protoset
 protoset: $(BUF)
@@ -50,12 +52,20 @@ protoset: $(BUF)
 
 .PHONY: check-grpc
 check-grpc: protoset $(GRPCURL)
-	@ $(GRPCURL) -protoset $(PROTOSET) -insecure -d '$(REQUEST_JSON)' $(SERVER_ADDR) $(SVC_METHOD)
+	@ $(GRPCURL) -protoset $(PROTOSET) -authority cerbos.local -insecure -d '$(REQUEST_JSON)' localhost:3593 $(SVC_METHOD)
+
+.PHONY: check-grpc-insecure
+check-grpc-insecure: protoset $(GRPCURL)
+	@ $(GRPCURL) -protoset $(PROTOSET) -plaintext -d '$(REQUEST_JSON)' localhost:3593 $(SVC_METHOD)
 
 .PHONY: check-http
 check-http:
-	@ curl -i -k https://$(SERVER_ADDR)/v1/check -d '$(REQUEST_JSON)'
+	@ curl -i -k https://localhost:3592/v1/check -d '$(REQUEST_JSON)'
+
+.PHONY: check-http-insecure
+check-http-insecure:
+	@ curl -i http://localhost:3592/v1/check -d '$(REQUEST_JSON)'
 
 .PHONY: perf
 perf: protoset $(GHZ)
-	@ $(GHZ) --protoset $(PROTOSET) --insecure -n 500 --call $(SVC_METHOD) -d '$(REQUEST_JSON)' $(SERVER_ADDR)
+	@ $(GHZ) --protoset $(PROTOSET) --cname=cerbos.local -n 500 --call $(SVC_METHOD) -d '$(REQUEST_JSON)' localhost:3593

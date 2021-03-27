@@ -1,0 +1,12 @@
+---
+server:
+  httpListenAddr: ":3592"
+  grpcListenAddr: ":3593"
+  tls:
+    cert: hack/dev/tls.crt
+    key: hack/dev/tls.key
+
+storage:
+  driver: "disk"
+  disk:
+    directory: pkg/test/testdata/store
