@@ -1,6 +1,7 @@
 DOCKER := docker
 
 include tools/tools.mk
+include hack/dev/dev.mk
 
 .PHONY: all
 all: clean generate lint test build
@@ -39,9 +40,10 @@ build: $(GORELEASER)
 
 .PHONY: run
 run:
-	@ go run main.go server --log-level=DEBUG --config=conf.default.yaml
+	@ go run main.go server --config=conf.default.yaml
 
 .PHONY: docs
 docs:
 	 @ $(DOCKER) run --rm -v $(shell pwd)/docs:/documents/ asciidoctor/docker-asciidoctor asciidoctor index.adoc
 	 @ $(DOCKER) run --rm -v $(shell pwd)/docs:/documents/ asciidoctor/docker-asciidoctor asciidoctor-pdf index.adoc
+

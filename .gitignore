@@ -3,3 +3,6 @@ dist/
 docs/*.html
 docs/*.pdf
 dist/
+cerbos.protoset
+hack/dev/tls.crt
+hack/dev/tls.key

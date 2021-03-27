@@ -12,6 +12,7 @@ import (
 	"os/signal"
 	"time"
 
+	"github.com/google/gops/agent"
 	grpc_zap "github.com/grpc-ecosystem/go-grpc-middleware/logging/zap"
 	grpc_ctxtags "github.com/grpc-ecosystem/go-grpc-middleware/tags"
 	grpc_validator "github.com/grpc-ecosystem/go-grpc-middleware/validator"
@@ -22,22 +23,25 @@ import (
 	"golang.org/x/sync/errgroup"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/channelz/service"
+	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/local"
 	"google.golang.org/grpc/health"
 	healthpb "google.golang.org/grpc/health/grpc_health_v1"
 	"google.golang.org/grpc/reflection"
+	"google.golang.org/grpc/status"
 
 	"github.com/cerbos/cerbos/pkg/config"
 	"github.com/cerbos/cerbos/pkg/engine"
 	svcv1 "github.com/cerbos/cerbos/pkg/generated/svc/v1"
+	"github.com/cerbos/cerbos/pkg/logging"
 	"github.com/cerbos/cerbos/pkg/storage"
 	"github.com/cerbos/cerbos/pkg/svc"
-	"github.com/cerbos/cerbos/pkg/util"
 )
 
 type serverArgs struct {
-	configFile string
-	logLevel   string
+	configFile      string
+	logLevel        string
+	debugListenAddr string
 }
 
 var args = serverArgs{}
@@ -54,6 +58,7 @@ func NewCommand() *cobra.Command {
 
 	cmd.Flags().StringVar(&args.configFile, "config", "", "Path to config file")
 	cmd.Flags().StringVar(&args.logLevel, "log-level", "INFO", "Log level")
+	cmd.Flags().StringVar(&args.debugListenAddr, "debug-listen-addr", "", "Address to start the gops listener")
 
 	_ = cmd.MarkFlagFilename("config")
 	_ = cmd.MarkFlagRequired("config")
@@ -62,7 +67,11 @@ func NewCommand() *cobra.Command {
 }
 
 func doRun(_ *cobra.Command, _ []string) error {
-	util.InitLogging(args.logLevel)
+	logging.InitLogging(args.logLevel)
+
+	if args.debugListenAddr != "" {
+		startDebugListener(args.debugListenAddr)
+	}
 
 	ctx, stopFunc := signal.NotifyContext(context.Background(), os.Interrupt)
 	defer stopFunc()
@@ -79,6 +88,20 @@ func doRun(_ *cobra.Command, _ []string) error {
 
 	s := newServer(conf)
 	return s.start(ctx)
+}
+
+func startDebugListener(listenAddr string) {
+	log := zap.S().Named("debug")
+	log.Infof("Starting debug listener on %s", args.debugListenAddr)
+
+	err := agent.Listen(agent.Options{
+		Addr:                   listenAddr,
+		ShutdownCleanup:        true,
+		ReuseSocketAddrAndPort: true,
+	})
+	if err != nil {
+		log.Errorw("Failed to start debug agent", "error", err)
+	}
 }
 
 type server struct {
@@ -128,12 +151,15 @@ func (s *server) start(ctx context.Context) error {
 		return err
 	}
 
+	log.Info("Ready to accept requests")
+
 	<-ctx.Done()
+	log.Info("Shutting down")
 
 	// mark this service as NOT_SERVING in the gRPC health check.
 	s.health.Shutdown()
 
-	log.Info("Shutting down HTTP server")
+	log.Debug("Shutting down HTTP server")
 	shutdownCtx, cancelFunc := context.WithTimeout(context.Background(), defaultTimeout)
 	defer cancelFunc()
 
@@ -141,7 +167,7 @@ func (s *server) start(ctx context.Context) error {
 		log.Errorw("Failed to cleanly shutdown HTTP server", "error", err)
 	}
 
-	log.Info("Shutting down gRPC server")
+	log.Debug("Shutting down gRPC server")
 	grpcServer.GracefulStop()
 
 	log.Info("Shutdown complete")
@@ -166,7 +192,7 @@ func (s *server) createListeners() (grpcL, httpL net.Listener, err error) {
 
 	connMux := cmux.New(l)
 	grpcL = connMux.MatchWithWriters(cmux.HTTP2MatchHeaderFieldSendSettings("content-type", "application/grpc"))
-	httpL = connMux.Match(cmux.HTTP1Fast())
+	httpL = connMux.Match(cmux.Any())
 
 	s.group.Go(func() error {
 		log := zap.S().Named("server")
@@ -262,7 +288,7 @@ func (s *server) startGRPCServer(cerbosSvc *svc.CerbosService, l net.Listener) *
 			grpc_validator.StreamServerInterceptor(),
 		),
 		grpc.ChainUnaryInterceptor(
-			grpc_ctxtags.UnaryServerInterceptor(),
+			grpc_ctxtags.UnaryServerInterceptor(grpc_ctxtags.WithFieldExtractor(svc.ExtractRequestFields)),
 			grpc_zap.UnaryServerInterceptor(log),
 			grpc_validator.UnaryServerInterceptor(),
 		),
@@ -276,7 +302,7 @@ func (s *server) startGRPCServer(cerbosSvc *svc.CerbosService, l net.Listener) *
 	service.RegisterChannelzServiceToServer(server)
 
 	s.group.Go(func() error {
-		log.Info("Starting gRPC server")
+		log.Debug("Starting gRPC server")
 
 		err := server.Serve(l)
 		if err != nil && !(errors.Is(err, cmux.ErrListenerClosed) || errors.Is(err, cmux.ErrServerClosed)) {
@@ -293,12 +319,33 @@ func (s *server) startGRPCServer(cerbosSvc *svc.CerbosService, l net.Listener) *
 func (s *server) startHTTPServer(ctx context.Context, l net.Listener) (*http.Server, error) {
 	log := zap.S().Named("http")
 
-	mux := runtime.NewServeMux()
+	gwmux := runtime.NewServeMux()
+
 	opts := []grpc.DialOption{grpc.WithTransportCredentials(local.NewCredentials())}
-	if err := svcv1.RegisterCerbosServiceHandlerFromEndpoint(ctx, mux, s.conf.ListenAddr, opts); err != nil {
+	if s.conf.TLS != nil {
+		tlsConf, err := getTLSConfig(s.conf.TLS)
+		if err != nil {
+			log.Errorw("Failed to get TLS config", "error", err)
+			return nil, err
+		}
+
+		opts = []grpc.DialOption{grpc.WithTransportCredentials(credentials.NewTLS(tlsConf))}
+	}
+
+	grpcConn, err := grpc.DialContext(ctx, s.conf.ListenAddr, opts...)
+	if err != nil {
+		log.Errorw("Failed to dial gRPC server", "error", err)
+		return nil, err
+	}
+
+	if err := svcv1.RegisterCerbosServiceHandler(ctx, gwmux, grpcConn); err != nil {
 		log.Errorw("Failed to register gRPC gateway", "error", err)
 		return nil, fmt.Errorf("failed to register gRPC service: %w", err)
 	}
+
+	mux := http.NewServeMux()
+	mux.Handle("/", gwmux)
+	mux.HandleFunc("/status", s.handleHTTPHealthCheck(grpcConn))
 
 	h := &http.Server{
 		ErrorLog:          zap.NewStdLog(zap.L().Named("http.error")),
@@ -309,7 +356,7 @@ func (s *server) startHTTPServer(ctx context.Context, l net.Listener) (*http.Ser
 	}
 
 	s.group.Go(func() error {
-		log.Info("Starting HTTP server")
+		log.Debug("Starting HTTP server")
 		err := h.Serve(l)
 		if err != nil && !errors.Is(err, http.ErrServerClosed) {
 			log.Errorw("HTTP server failed", "error", err)
@@ -319,4 +366,23 @@ func (s *server) startHTTPServer(ctx context.Context, l net.Listener) (*http.Ser
 	})
 
 	return h, nil
+}
+
+func (s *server) handleHTTPHealthCheck(conn grpc.ClientConnInterface) http.HandlerFunc {
+	healthClient := healthpb.NewHealthClient(conn)
+	return func(w http.ResponseWriter, r *http.Request) {
+		resp, err := healthClient.Check(r.Context(), &healthpb.HealthCheckRequest{})
+		if err != nil {
+			statusCode := runtime.HTTPStatusFromCode(status.Code(err))
+			http.Error(w, "HealthCheck failure", statusCode)
+			return
+		}
+
+		switch resp.Status {
+		case healthpb.HealthCheckResponse_SERVING, healthpb.HealthCheckResponse_UNKNOWN:
+			fmt.Fprintln(w, resp.Status.String())
+		default:
+			http.Error(w, resp.Status.String(), http.StatusServiceUnavailable)
+		}
+	}
 }

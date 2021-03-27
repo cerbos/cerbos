@@ -5,6 +5,7 @@ import (
 	"errors"
 	"net/http"
 
+	"github.com/grpc-ecosystem/go-grpc-middleware/logging/zap/ctxzap"
 	"go.uber.org/zap"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -14,6 +15,7 @@ import (
 	responsev1 "github.com/cerbos/cerbos/pkg/generated/response/v1"
 	sharedv1 "github.com/cerbos/cerbos/pkg/generated/shared/v1"
 	svcv1 "github.com/cerbos/cerbos/pkg/generated/svc/v1"
+	"github.com/cerbos/cerbos/pkg/logging"
 )
 
 // CerbosService implements the policy checking service.
@@ -32,20 +34,20 @@ func NewCerbosService(eng *engine.Engine) *CerbosService {
 }
 
 func (cs *CerbosService) Check(ctx context.Context, req *requestv1.CheckRequest) (*responsev1.CheckResponse, error) {
-	log := cs.log.With("request_id", req.RequestId)
+	log := ctxzap.Extract(ctx)
 
-	effect, err := cs.eng.Check(ctx, req)
+	effect, err := cs.eng.Check(logging.ToContext(ctx, log), req)
 	if err != nil {
 		if errors.Is(err, engine.ErrNoPoliciesMatched) {
 			log.Info("No policies matched")
 			return newResponse(req.RequestId, http.StatusUnauthorized, "No policies matched", sharedv1.Effect_EFFECT_DENY), nil
 		}
 
-		log.Errorw("Policy check failed", "error", err)
+		log.Error("Policy check failed", zap.Error(err))
 		return nil, status.Errorf(codes.Internal, "Policy execution failed")
 	}
 
-	log.Infow("Decision", "effect", sharedv1.Effect_name[int32(effect)])
+	log.Info("Policy decision made", zap.String("effect", sharedv1.Effect_name[int32(effect)]))
 
 	switch effect {
 	case sharedv1.Effect_EFFECT_ALLOW:

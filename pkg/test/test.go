@@ -13,13 +13,13 @@ import (
 	"github.com/stretchr/testify/require"
 
 	policyv1 "github.com/cerbos/cerbos/pkg/generated/policy/v1"
+	"github.com/cerbos/cerbos/pkg/logging"
 	"github.com/cerbos/cerbos/pkg/policy"
-	"github.com/cerbos/cerbos/pkg/util"
 )
 
 func init() {
-	if logLevel := os.Getenv("TEST_LOG_LEVEL"); logLevel != "" {
-		util.InitLogging(logLevel)
+	if logLevel := os.Getenv("CERBOS_TEST_LOG_LEVEL"); logLevel != "" {
+		logging.InitLogging(logLevel)
 	}
 }
 

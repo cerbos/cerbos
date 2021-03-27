@@ -8,12 +8,12 @@ import (
 
 	"github.com/open-policy-agent/opa/ast"
 	"github.com/open-policy-agent/opa/topdown/cache"
-	"go.uber.org/zap"
 	"google.golang.org/protobuf/encoding/protojson"
 
 	"github.com/cerbos/cerbos/pkg/compile"
 	requestv1 "github.com/cerbos/cerbos/pkg/generated/request/v1"
 	sharedv1 "github.com/cerbos/cerbos/pkg/generated/shared/v1"
+	"github.com/cerbos/cerbos/pkg/logging"
 	"github.com/cerbos/cerbos/pkg/namer"
 	"github.com/cerbos/cerbos/pkg/storage"
 )
@@ -22,11 +22,11 @@ var ErrNoPoliciesMatched = errors.New("no matching policies")
 
 const (
 	defaultEffect                = sharedv1.Effect_EFFECT_DENY
+	loggerName                   = "engine"
 	maxQueryCacheSizeBytes int64 = 10 * 1024 * 1024 // 10 MiB
 )
 
 type Engine struct {
-	log        *zap.SugaredLogger
 	store      storage.Store
 	compiler   *compile.Compiler
 	queryCache cache.InterQueryCache
@@ -46,7 +46,6 @@ func New(ctx context.Context, store storage.Store) (*Engine, error) {
 	})
 
 	engine := &Engine{
-		log:        zap.S().Named("engine"),
 		store:      store,
 		compiler:   compiler,
 		queryCache: queryCache,
@@ -58,6 +57,8 @@ func New(ctx context.Context, store storage.Store) (*Engine, error) {
 }
 
 func (engine *Engine) watchNotifications(ctx context.Context) {
+	log := logging.FromContext(ctx).Named(loggerName).Sugar()
+
 	notificationChan := make(chan *compile.Incremental, 32) //nolint:gomnd
 	defer close(notificationChan)
 
@@ -66,20 +67,20 @@ func (engine *Engine) watchNotifications(ctx context.Context) {
 	for {
 		select {
 		case <-ctx.Done():
-			engine.log.Info("Stopping engine update watch")
+			log.Info("Stopping engine update watch")
 			return
 		case change := <-notificationChan:
 			if errs := engine.compiler.Update(change); errs != nil {
-				engine.log.Errorw("Failed to apply incremental update due to compilation error", "error", errs)
+				log.Errorw("Failed to apply incremental update due to compilation error", "error", errs)
 			} else {
-				engine.log.Debug("Incremental update applied")
+				log.Debug("Incremental update applied")
 			}
 		}
 	}
 }
 
 func (engine *Engine) Check(ctx context.Context, req *requestv1.CheckRequest) (sharedv1.Effect, error) {
-	log := engine.log.With("request_id", req.RequestId)
+	log := logging.FromContext(ctx).Named(loggerName).Sugar()
 
 	var checks [2]*check
 	count := 0
@@ -95,7 +96,7 @@ func (engine *Engine) Check(ctx context.Context, req *requestv1.CheckRequest) (s
 	}
 
 	if count == 0 {
-		log.Debug("No applicable policies for request: denying")
+		log.Warn("No applicable policies for request")
 		return defaultEffect, ErrNoPoliciesMatched
 	}
 

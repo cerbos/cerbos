@@ -2,8 +2,10 @@ XDG_CACHE_HOME ?= $(HOME)/.cache
 TOOLS_BIN_DIR := $(abspath $(XDG_CACHE_HOME)/cerbos/bin)
 
 BUF := $(TOOLS_BIN_DIR)/buf
+GHZ := $(TOOLS_BIN_DIR)/ghz
 GOLANGCI_LINT := $(TOOLS_BIN_DIR)/golangci-lint
 GORELEASER := $(TOOLS_BIN_DIR)/goreleaser
+GRPCURL := $(TOOLS_BIN_DIR)/grpcurl
 MOCKERY := $(TOOLS_BIN_DIR)/mockery
 PROTOC_GEN_GO := $(TOOLS_BIN_DIR)/protoc-gen-go
 PROTOC_GEN_GO_GRPC := $(TOOLS_BIN_DIR)/protoc-gen-go-grpc
@@ -60,11 +62,17 @@ $(TOOLS_BIN_DIR):
 $(BUF): $(TOOLS_BIN_DIR) 
 	@ GOBIN=$(TOOLS_BIN_DIR) go install github.com/bufbuild/buf/cmd/buf
 
+$(GHZ): $(TOOLS_BIN_DIR) 
+	@ GOBIN=$(TOOLS_BIN_DIR) go install github.com/bojand/ghz/cmd/ghz@latest
+ 
 $(GOLANGCI_LINT): $(TOOLS_BIN_DIR) 
 	@ GOBIN=$(TOOLS_BIN_DIR) go install github.com/golangci/golangci-lint/cmd/golangci-lint
 
 $(GORELEASER): $(TOOLS_BIN_DIR) 
 	@ GOBIN=$(TOOLS_BIN_DIR) go install github.com/goreleaser/goreleaser
+
+$(GRPCURL): $(TOOLS_BIN_DIR) 
+	@ GOBIN=$(TOOLS_BIN_DIR) go install github.com/fullstorydev/grpcurl/cmd/grpcurl
 
 $(MOCKERY): $(TOOLS_BIN_DIR)
 	@ GOBIN=$(TOOLS_BIN_DIR) go install github.com/vektra/mockery/v2
