@@ -29,20 +29,20 @@ func TestEngineCheck(t *testing.T) {
 
 	testCases := []struct {
 		desc    string
-		request func() *requestv1.Request
+		request func() *requestv1.CheckRequest
 		want    sharedv1.Effect
 		wantErr bool
 	}{
 		{
 			desc:    "John views own leave request",
-			request: mkRequest,
+			request: test.MkRequest,
 			want:    sharedv1.Effect_EFFECT_ALLOW,
 		},
 		{
 			desc: "John tries to approve his own leave_request",
-			request: func() *requestv1.Request {
+			request: func() *requestv1.CheckRequest {
 				// John trying to approve his own leave request
-				req := mkRequest()
+				req := test.MkRequest()
 				req.Action = "approve"
 
 				return req
@@ -51,9 +51,9 @@ func TestEngineCheck(t *testing.T) {
 		},
 		{
 			desc: "John's manager approves leave_request",
-			request: func() *requestv1.Request {
+			request: func() *requestv1.CheckRequest {
 				// John's manager approving his leave request
-				req := mkRequest()
+				req := test.MkRequest()
 				req.Action = "approve"
 				req.Principal.Id = "sally"
 				req.Principal.Roles = []string{"employee", "manager"}
@@ -66,9 +66,9 @@ func TestEngineCheck(t *testing.T) {
 		},
 		{
 			desc: "Some other manager tries to approve leave_request",
-			request: func() *requestv1.Request {
+			request: func() *requestv1.CheckRequest {
 				// Some other manager trying to approve John's leave request
-				req := mkRequest()
+				req := test.MkRequest()
 				req.Action = "approve"
 				req.Principal.Id = "betty"
 				req.Principal.Roles = []string{"employee", "manager"}
@@ -81,9 +81,9 @@ func TestEngineCheck(t *testing.T) {
 		},
 		{
 			desc: "Donald Duck approves leave_request that has dev_record attribute [Principal policy override]",
-			request: func() *requestv1.Request {
+			request: func() *requestv1.CheckRequest {
 				// Donald Duck has a principal policy that lets him do anything on leave_request as long as it's a dev record
-				req := mkRequest()
+				req := test.MkRequest()
 				req.Action = "approve"
 				req.Principal.Id = "donald_duck"
 				req.Resource.Attr["dev_record"] = structpb.NewBoolValue(true)
@@ -94,10 +94,10 @@ func TestEngineCheck(t *testing.T) {
 		},
 		{
 			desc: "Donald Duck views leave_request [Principal policy cascades to resource policy]",
-			request: func() *requestv1.Request {
+			request: func() *requestv1.CheckRequest {
 				// Donald Duck trying to do something on a non-dev record
 				// It should cascade down to resource policy because there's no explicit rule for Donald Duck
-				req := mkRequest()
+				req := test.MkRequest()
 				req.Action = "view:public"
 				req.Principal.Id = "donald_duck"
 
@@ -107,9 +107,9 @@ func TestEngineCheck(t *testing.T) {
 		},
 		{
 			desc: "Donald Duck tries to view salary_record [Principal policy override]",
-			request: func() *requestv1.Request {
+			request: func() *requestv1.CheckRequest {
 				// Donald Duck has an explicit deny on salary_record
-				req := mkRequest()
+				req := test.MkRequest()
 				req.Action = "view"
 				req.Principal.Id = "donald_duck"
 				req.Resource.Name = "salary_record"
@@ -150,7 +150,7 @@ func BenchmarkCheck(b *testing.B) {
 	require.NoError(b, err)
 
 	b.Run("only_resource_policy", func(b *testing.B) {
-		request := mkRequest()
+		request := test.MkRequest()
 
 		b.ResetTimer()
 		b.ReportAllocs()
@@ -167,7 +167,7 @@ func BenchmarkCheck(b *testing.B) {
 	})
 
 	b.Run("only_principal_policy", func(b *testing.B) {
-		request := mkRequest()
+		request := test.MkRequest()
 		request.Action = "approve"
 		request.Principal.Id = "donald_duck"
 		request.Resource.Attr["dev_record"] = structpb.NewBoolValue(true)
@@ -187,7 +187,7 @@ func BenchmarkCheck(b *testing.B) {
 	})
 
 	b.Run("fallback_to_resource_policy", func(b *testing.B) {
-		request := mkRequest()
+		request := test.MkRequest()
 		request.Action = "view:public"
 		request.Principal.Id = "donald_duck"
 
@@ -206,7 +206,7 @@ func BenchmarkCheck(b *testing.B) {
 	})
 
 	b.Run("no_match", func(b *testing.B) {
-		request := mkRequest()
+		request := test.MkRequest()
 		request.Resource.Name = "unknown"
 
 		b.ResetTimer()
@@ -222,32 +222,4 @@ func BenchmarkCheck(b *testing.B) {
 			}
 		}
 	})
-}
-
-func mkRequest() *requestv1.Request {
-	return &requestv1.Request{
-		RequestId: "test",
-		Action:    "view:public",
-		Resource: &requestv1.Resource{
-			Name:    "leave_request",
-			Version: "20210210",
-			Attr: map[string]*structpb.Value{
-				"id":         structpb.NewStringValue("XX125"),
-				"owner":      structpb.NewStringValue("john"),
-				"geography":  structpb.NewStringValue("GB"),
-				"department": structpb.NewStringValue("marketing"),
-				"team":       structpb.NewStringValue("design"),
-			},
-		},
-		Principal: &requestv1.Principal{
-			Id:      "john",
-			Version: "20210210",
-			Roles:   []string{"employee"},
-			Attr: map[string]*structpb.Value{
-				"geography":  structpb.NewStringValue("GB"),
-				"department": structpb.NewStringValue("marketing"),
-				"team":       structpb.NewStringValue("design"),
-			},
-		},
-	}
 }

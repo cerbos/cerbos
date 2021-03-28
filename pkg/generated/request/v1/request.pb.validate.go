@@ -36,9 +36,10 @@ var (
 // define the regex for a UUID once up-front
 var _request_uuidPattern = regexp.MustCompile("^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$")
 
-// Validate checks the field values on Request with the rules defined in the
-// proto definition for this message. If any rules are violated, an error is returned.
-func (m *Request) Validate() error {
+// Validate checks the field values on CheckRequest with the rules defined in
+// the proto definition for this message. If any rules are violated, an error
+// is returned.
+func (m *CheckRequest) Validate() error {
 	if m == nil {
 		return nil
 	}
@@ -46,7 +47,7 @@ func (m *Request) Validate() error {
 	// no validation rules for RequestId
 
 	if m.GetResource() == nil {
-		return RequestValidationError{
+		return CheckRequestValidationError{
 			field:  "Resource",
 			reason: "value is required",
 		}
@@ -54,7 +55,7 @@ func (m *Request) Validate() error {
 
 	if v, ok := interface{}(m.GetResource()).(interface{ Validate() error }); ok {
 		if err := v.Validate(); err != nil {
-			return RequestValidationError{
+			return CheckRequestValidationError{
 				field:  "Resource",
 				reason: "embedded message failed validation",
 				cause:  err,
@@ -63,7 +64,7 @@ func (m *Request) Validate() error {
 	}
 
 	if m.GetPrincipal() == nil {
-		return RequestValidationError{
+		return CheckRequestValidationError{
 			field:  "Principal",
 			reason: "value is required",
 		}
@@ -71,7 +72,7 @@ func (m *Request) Validate() error {
 
 	if v, ok := interface{}(m.GetPrincipal()).(interface{ Validate() error }); ok {
 		if err := v.Validate(); err != nil {
-			return RequestValidationError{
+			return CheckRequestValidationError{
 				field:  "Principal",
 				reason: "embedded message failed validation",
 				cause:  err,
@@ -80,7 +81,7 @@ func (m *Request) Validate() error {
 	}
 
 	if utf8.RuneCountInString(m.GetAction()) < 1 {
-		return RequestValidationError{
+		return CheckRequestValidationError{
 			field:  "Action",
 			reason: "value length must be at least 1 runes",
 		}
@@ -89,9 +90,9 @@ func (m *Request) Validate() error {
 	return nil
 }
 
-// RequestValidationError is the validation error returned by Request.Validate
-// if the designated constraints aren't met.
-type RequestValidationError struct {
+// CheckRequestValidationError is the validation error returned by
+// CheckRequest.Validate if the designated constraints aren't met.
+type CheckRequestValidationError struct {
 	field  string
 	reason string
 	cause  error
@@ -99,22 +100,22 @@ type RequestValidationError struct {
 }
 
 // Field function returns field value.
-func (e RequestValidationError) Field() string { return e.field }
+func (e CheckRequestValidationError) Field() string { return e.field }
 
 // Reason function returns reason value.
-func (e RequestValidationError) Reason() string { return e.reason }
+func (e CheckRequestValidationError) Reason() string { return e.reason }
 
 // Cause function returns cause value.
-func (e RequestValidationError) Cause() error { return e.cause }
+func (e CheckRequestValidationError) Cause() error { return e.cause }
 
 // Key function returns key value.
-func (e RequestValidationError) Key() bool { return e.key }
+func (e CheckRequestValidationError) Key() bool { return e.key }
 
 // ErrorName returns error name.
-func (e RequestValidationError) ErrorName() string { return "RequestValidationError" }
+func (e CheckRequestValidationError) ErrorName() string { return "CheckRequestValidationError" }
 
 // Error satisfies the builtin error interface
-func (e RequestValidationError) Error() string {
+func (e CheckRequestValidationError) Error() string {
 	cause := ""
 	if e.cause != nil {
 		cause = fmt.Sprintf(" | caused by: %v", e.cause)
@@ -126,14 +127,14 @@ func (e RequestValidationError) Error() string {
 	}
 
 	return fmt.Sprintf(
-		"invalid %sRequest.%s: %s%s",
+		"invalid %sCheckRequest.%s: %s%s",
 		key,
 		e.field,
 		e.reason,
 		cause)
 }
 
-var _ error = RequestValidationError{}
+var _ error = CheckRequestValidationError{}
 
 var _ interface {
 	Field() string
@@ -141,7 +142,7 @@ var _ interface {
 	Key() bool
 	Cause() error
 	ErrorName() string
-} = RequestValidationError{}
+} = CheckRequestValidationError{}
 
 // Validate checks the field values on Resource with the rules defined in the
 // proto definition for this message. If any rules are violated, an error is returned.

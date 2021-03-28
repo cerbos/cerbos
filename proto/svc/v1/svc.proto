@@ -1,0 +1,42 @@
+syntax = "proto3";
+
+package svc.v1;
+
+option go_package = "github.com/cerbos/cerbos/pkg/generated/svc/v1;svcv1";
+
+import "policy/v1/policy.proto";
+import "request/v1/request.proto";
+import "response/v1/response.proto";
+import "google/api/annotations.proto";
+import "google/protobuf/empty.proto";
+
+service CerbosService {
+    rpc Check(request.v1.CheckRequest) returns (response.v1.CheckResponse) {
+        option (google.api.http) = {
+            post: "/v1/check",
+            body: "*"
+        };
+    }
+}
+
+/*
+service CerbosAdminService {
+    rpc AddOrUpdatePolicy(policy.v1.Policy) returns (google.protobuf.Empty) {
+        option (google.api.http) = {
+            post: "/v1/admin/policy",
+            body: "*",
+            additional_bindings {
+                put: "/v1/admin/policy",
+                body: "*"
+            }
+        };
+    }
+
+    rpc DeletePolicy(policy.v1.Policy) returns (google.protobuf.Empty) {
+        option (google.api.http) = {
+            delete: "/v1/admin/policy",
+            body: "*",
+        };
+    }
+}
+*/

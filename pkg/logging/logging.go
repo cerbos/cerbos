@@ -1,14 +1,32 @@
-package util
+package logging
 
 import (
+	"context"
 	"os"
 	"strings"
 
+	"github.com/mattn/go-isatty"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
+
+	"github.com/cerbos/cerbos/pkg/util"
 )
 
+type ctxLog struct{}
+
+var ctxLogKey = &ctxLog{}
+
+// InitLogging initializes the global logger.
 func InitLogging(level string) {
+	if envLevel := os.Getenv("CERBOS_LOG_LEVEL"); envLevel != "" {
+		doInitLogging(envLevel)
+		return
+	}
+
+	doInitLogging(level)
+}
+
+func doInitLogging(level string) {
 	var logger *zap.Logger
 
 	errorPriority := zap.LevelEnablerFunc(func(lvl zapcore.Level) bool {
@@ -37,7 +55,18 @@ func InitLogging(level string) {
 
 	encoderConf := zap.NewDevelopmentEncoderConfig()
 	encoderConf.EncodeLevel = zapcore.CapitalColorLevelEncoder
-	consoleEncoder := zapcore.NewConsoleEncoder(encoderConf)
+
+	var consoleEncoder zapcore.Encoder
+	if !isatty.IsTerminal(os.Stdout.Fd()) {
+		encoderConf := zap.NewProductionEncoderConfig()
+		encoderConf.MessageKey = "message"
+		encoderConf.EncodeTime = zapcore.TimeEncoder(zapcore.ISO8601TimeEncoder)
+		consoleEncoder = zapcore.NewJSONEncoder(encoderConf)
+	} else {
+		encoderConf := zap.NewDevelopmentEncoderConfig()
+		encoderConf.EncodeLevel = zapcore.CapitalColorLevelEncoder
+		consoleEncoder = zapcore.NewConsoleEncoder(encoderConf)
+	}
 
 	core := zapcore.NewTee(
 		zapcore.NewCore(consoleEncoder, consoleErrors, errorPriority),
@@ -49,6 +78,19 @@ func InitLogging(level string) {
 	})
 	logger = zap.New(core, zap.AddStacktrace(stackTraceEnabler))
 
-	zap.ReplaceGlobals(logger.Named(AppName))
+	zap.ReplaceGlobals(logger.Named(util.AppName))
 	zap.RedirectStdLog(logger.Named("stdlog"))
+}
+
+func FromContext(ctx context.Context) *zap.Logger {
+	log, ok := ctx.Value(ctxLogKey).(*zap.Logger)
+	if !ok || log == nil {
+		return zap.L()
+	}
+
+	return log
+}
+
+func ToContext(ctx context.Context, log *zap.Logger) context.Context {
+	return context.WithValue(ctx, ctxLogKey, log)
 }
