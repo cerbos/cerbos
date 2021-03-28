@@ -271,13 +271,6 @@ func (m *Principal) Validate() error {
 		}
 	}
 
-	if !_Principal_Id_Pattern.MatchString(m.GetId()) {
-		return PrincipalValidationError{
-			field:  "Id",
-			reason: "value does not match regex pattern \"^[[:alpha:]][[:word:]\\\\@\\\\.\\\\-]*(\\\\:[[:alpha:]][[:word:]\\\\@\\\\.\\\\-]*)*$\"",
-		}
-	}
-
 	if !_Principal_Version_Pattern.MatchString(m.GetVersion()) {
 		return PrincipalValidationError{
 			field:  "Version",
@@ -395,8 +388,6 @@ var _ interface {
 	Cause() error
 	ErrorName() string
 } = PrincipalValidationError{}
-
-var _Principal_Id_Pattern = regexp.MustCompile("^[[:alpha:]][[:word:]\\@\\.\\-]*(\\:[[:alpha:]][[:word:]\\@\\.\\-]*)*$")
 
 var _Principal_Version_Pattern = regexp.MustCompile("^[[:word:]]*$")
 
