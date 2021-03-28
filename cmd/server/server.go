@@ -82,13 +82,19 @@ func doRun(_ *cobra.Command, _ []string) error {
 		return err
 	}
 
+	// create Cerbos service
+	cerbosSvc, err := createCerbosService(ctx)
+	if err != nil {
+		return err
+	}
+
 	conf, err := getServerConf()
 	if err != nil {
 		return err
 	}
 
 	s := newServer(conf)
-	return s.start(ctx)
+	return s.start(ctx, cerbosSvc)
 }
 
 func startDebugListener(listenAddr string) {
@@ -103,6 +109,22 @@ func startDebugListener(listenAddr string) {
 	if err != nil {
 		log.Errorw("Failed to start debug agent", "error", err)
 	}
+}
+
+func createCerbosService(ctx context.Context) (*svc.CerbosService, error) {
+	// create store
+	store, err := storage.New(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create store: %w", err)
+	}
+
+	// create engine
+	eng, err := engine.New(ctx, store)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create engine: %w", err)
+	}
+
+	return svc.NewCerbosService(eng), nil
 }
 
 type server struct {
@@ -125,16 +147,20 @@ func newServer(conf Conf) *server {
 	}
 }
 
-func (s *server) start(ctx context.Context) error {
+func (s *server) start(ctx context.Context, cerbosSvc *svc.CerbosService) error {
 	defer s.cancelFunc()
 
 	log := zap.S().Named("server")
 
-	// cmux can't deal with both grpc and HTTP/2 (see https://github.com/soheilhy/cmux/issues/68)
-	// Therefore, we have to have two different modes for when TLS is enabled and when it's not
-	// TLS Enabled: Use HTTP server to serve gRPC too
-	// TLS Disabled: Use cmux to mux the connections (can't reuse first method because gRPC gateway fails to connect)
-	// TODO (cell) Find a better way to handle this
+	// It would be nice to have a single port to serve both gRPC and HTTP from. Unfortunately, cmux
+	// can't deal effectively with both gRPC and HTTP/2 when TLS is enabled (see https://github.com/soheilhy/cmux/issues/68).
+	// One way to handle that would be to use the `ServeHTTP` method of gRPC to serve gRPC from the HTTP server.
+	// However, when TLS is disabled, that won't work either because Go's HTTP/2 server does not support h2c (plaintext).
+	// Another potential issue with single-port gRPC and HTTP/2 is when a proxy like Envoy is in front of the server, it
+	// would have a connection pool per port and would end up sending HTTP/2 traffic to gRPC and vice-versa.
+	// So, we have two dedicated ports for HTTP and gRPC traffic. However, if TLS is enabled, you can send gRPC to the
+	// HTTP port as well and it would work. I think that's an acceptable compromise given that we expect TLS to be
+	// enabled in all production settings.
 
 	// create listeners
 	grpcL, err := s.createListener(s.conf.GRPCListenAddr)
@@ -146,13 +172,6 @@ func (s *server) start(ctx context.Context) error {
 	httpL, err := s.createListener(s.conf.HTTPListenAddr)
 	if err != nil {
 		log.Errorw("Failed to create HTTP listener", "error", err)
-		return err
-	}
-
-	// create service
-	cerbosSvc, err := createCerbosService(ctx)
-	if err != nil {
-		log.Errorw("Failed to create Cerbos service", "error", err)
 		return err
 	}
 
@@ -240,7 +259,7 @@ func (s *server) getTLSConfig() (*tls.Config, error) {
 }
 
 func defaultTLSConfig() *tls.Config {
-	// See https://blog.cloudflare.com/exposing-go-on-the-internet/
+	// See https://wiki.mozilla.org/Security/Server_Side_TLS
 	return &tls.Config{
 		MinVersion:               tls.VersionTLS12,
 		PreferServerCipherSuites: true,
@@ -249,31 +268,15 @@ func defaultTLSConfig() *tls.Config {
 			tls.X25519,
 		},
 		CipherSuites: []uint16{
+			tls.TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,
+			tls.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
 			tls.TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,
 			tls.TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,
 			tls.TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305,
 			tls.TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305,
-			tls.TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,
-			tls.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
 		},
 		NextProtos: []string{"h2"},
 	}
-}
-
-func createCerbosService(ctx context.Context) (*svc.CerbosService, error) {
-	// create store
-	store, err := storage.New(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create store: %w", err)
-	}
-
-	// create engine
-	eng, err := engine.New(ctx, store)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create engine: %w", err)
-	}
-
-	return svc.NewCerbosService(eng), nil
 }
 
 func (s *server) startGRPCServer(cerbosSvc *svc.CerbosService, l net.Listener) *grpc.Server {
@@ -329,7 +332,7 @@ func (s *server) startHTTPServer(ctx context.Context, l net.Listener, grpcSrv *g
 	}
 
 	if tlsConf != nil {
-		tlsConf.InsecureSkipVerify = true
+		tlsConf.InsecureSkipVerify = true // we are connecting as localhost which would differ from what the cert is issued for.
 		opts = []grpc.DialOption{grpc.WithTransportCredentials(credentials.NewTLS(tlsConf))}
 	}
 

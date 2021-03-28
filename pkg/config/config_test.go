@@ -53,7 +53,8 @@ func TestCerbosConfig(t *testing.T) {
 		require.NoError(t, config.Load(filepath.Join("testdata", "valid_server_conf.yaml")))
 		var serverConf server.Conf
 		require.NoError(t, config.Get("server", &serverConf))
-		require.Equal(t, ":9999", serverConf.ListenAddr)
+		require.Equal(t, ":3592", serverConf.HTTPListenAddr)
+		require.Equal(t, ":3593", serverConf.GRPCListenAddr)
 	})
 
 	t.Run("invalid_server_listen_addr", func(t *testing.T) {

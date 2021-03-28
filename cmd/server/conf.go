@@ -1,7 +1,6 @@
 package server
 
 import (
-	"errors"
 	"fmt"
 	"net"
 
@@ -9,10 +8,10 @@ import (
 )
 
 const (
-	confKey = "server"
+	confKey               = "server"
+	defaultHTTPListenAddr = ":3592"
+	defaultGRPCListenAddr = ":3593"
 )
-
-var errEmptyListenAddr = errors.New("empty listen address")
 
 // Conf holds configuration pertaining to the server.
 type Conf struct {
@@ -36,11 +35,11 @@ type TLSConf struct {
 
 func (c *Conf) Validate() error {
 	if c.HTTPListenAddr == "" {
-		return fmt.Errorf("server.httpListenAddr is empty: %w", errEmptyListenAddr)
+		c.HTTPListenAddr = defaultHTTPListenAddr
 	}
 
 	if c.GRPCListenAddr == "" {
-		return fmt.Errorf("server.grpcListenAddr is empty: %w", errEmptyListenAddr)
+		c.GRPCListenAddr = defaultGRPCListenAddr
 	}
 
 	if _, _, err := net.SplitHostPort(c.HTTPListenAddr); err != nil {

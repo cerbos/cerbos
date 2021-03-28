@@ -16,6 +16,9 @@ log() {
     echo -e "\e[31m==================================\e[0m"
 }
 
+log "Adding policies via API is currently disabled. This demo will not work for the time being"
+exit 1
+
 log "Adding derived roles"
 cat <<"EOF" | curl -i -XPUT "$POLICY_URL" --data-binary @-
 ---

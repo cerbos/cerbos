@@ -1,6 +1,6 @@
 ---
 server:
-listenAddr: ":9999"
+  httpListenAddr: "i9x"
 
 storage:
   driver: "disk"
