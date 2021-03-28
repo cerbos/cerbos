@@ -22,7 +22,7 @@ message Resource {
 }
 
 message Principal {
-    string id = 1 [(validate.rules).string = {pattern: "^[[:alpha:]][[:word:]\\@\\.\\-]*(\\:[[:alpha:]][[:word:]\\@\\.\\-]*)*$", min_len: 1}];
+    string id = 1 [(validate.rules).string = {min_len: 1}];
     string version = 2 [(validate.rules).string.pattern = "^[[:word:]]*$"];
     repeated string roles = 3 [(validate.rules).repeated = { unique: true, min_items: 1, items { string { pattern: "^[[:word:]\\-\\.]+$" } } }];
     map<string, google.protobuf.Value> attr = 4 [(validate.rules).map.no_sparse = true];
