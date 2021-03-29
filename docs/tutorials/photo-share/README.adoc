@@ -213,7 +213,7 @@ Let's start the server and try out a request.
 
 [source,shell,subs="attributes"]
 ----
-docker run -it -v $(pwd):/photo-share -p 9999:9999 {docker_image} \
+docker run -it -v $(pwd):/photo-share -p 3592:3592 {docker_image} \
     server --config=/photo-share/config.yaml
 ----
 
@@ -221,7 +221,7 @@ docker run -it -v $(pwd):/photo-share -p 9999:9999 {docker_image} \
 .Alicia trying to view her own album
 [source,shell,linenums,highlight=2..20]
 ----
-cat <<EOF | curl --silent "localhost:9999/v1/check" -d @-
+cat <<EOF | curl --silent "localhost:3592/v1/check" -d @-
 {
   "requestId":  "test01",
   "action":  "view",

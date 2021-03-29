@@ -12,7 +12,7 @@ mkdir -p "${STORE_DIR}"
 cat >"${TEMP_DIR}/conf.yaml" <<EOF
 ---
 server:
-  listenAddr: ":9999"
+  httpListenAddr: ":3592"
 
 storage:
   driver: "disk"

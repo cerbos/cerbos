@@ -1,6 +1,8 @@
 DEV_DIR := hack/dev
 PROTOSET := cerbos.protoset
 SVC_METHOD := svc.v1.CerbosService/Check
+GRPC_PORT := 3593
+HTTP_PORT := 3592
 
 define REQUEST_JSON
 {\
@@ -52,20 +54,20 @@ protoset: $(BUF)
 
 .PHONY: check-grpc
 check-grpc: protoset $(GRPCURL)
-	@ $(GRPCURL) -protoset $(PROTOSET) -authority cerbos.local -insecure -d '$(REQUEST_JSON)' localhost:3593 $(SVC_METHOD)
+	@ $(GRPCURL) -protoset $(PROTOSET) -authority cerbos.local -insecure -d '$(REQUEST_JSON)' localhost:$(GRPC_PORT) $(SVC_METHOD)
 
 .PHONY: check-grpc-insecure
 check-grpc-insecure: protoset $(GRPCURL)
-	@ $(GRPCURL) -protoset $(PROTOSET) -plaintext -d '$(REQUEST_JSON)' localhost:3593 $(SVC_METHOD)
+	@ $(GRPCURL) -protoset $(PROTOSET) -plaintext -d '$(REQUEST_JSON)' localhost:$(GRPC_PORT) $(SVC_METHOD)
 
 .PHONY: check-http
 check-http:
-	@ curl -i -k https://localhost:3592/v1/check -d '$(REQUEST_JSON)'
+	@ curl -i -k https://localhost:$(HTTP_PORT)/v1/check -d '$(REQUEST_JSON)'
 
 .PHONY: check-http-insecure
 check-http-insecure:
-	@ curl -i http://localhost:3592/v1/check -d '$(REQUEST_JSON)'
+	@ curl -i http://localhost:$(HTTP_PORT)/v1/check -d '$(REQUEST_JSON)'
 
 .PHONY: perf
 perf: protoset $(GHZ)
-	@ $(GHZ) --protoset $(PROTOSET) --cname=cerbos.local -n 500 --call $(SVC_METHOD) -d '$(REQUEST_JSON)' localhost:3593
+	@ $(GHZ) --protoset $(PROTOSET) --cname=cerbos.local -n 500 --call $(SVC_METHOD) -d '$(REQUEST_JSON)' localhost:$(GRPC_PORT)

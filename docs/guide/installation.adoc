@@ -49,7 +49,7 @@ The server is configured with a YAML file.
 ----
 ---
 server:
-  listenAddr: ":9999"
+  httpListenAddr: ":3592"
 
 storage:
   driver: "disk" # Valid values are "disk" or "git"
@@ -82,7 +82,7 @@ Start the server by passing the configuration file using the `--config` flag.
 .Using Docker
 [source,sh,subs="attributes"]
 ----
-docker run -i -t -p 9999:9999 \
+docker run -i -t -p 3592:3592 \
     -v /path/to/conf/dir:/config \
     {app-docker-img} \
     server --config=/config/conf.yaml
