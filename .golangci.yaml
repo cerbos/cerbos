@@ -3,6 +3,8 @@ run:
   timeout: 120s
   skip-dirs:
     - pkg/generated
+  build-tags:
+    - tests
 
 linters-settings:
   exhaustive:

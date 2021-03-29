@@ -1,3 +1,5 @@
+// +build tests
+
 package test
 
 import (
@@ -110,4 +112,12 @@ func readFileContents(t *testing.T, filePath string) []byte {
 	}
 
 	return nil
+}
+
+func SkipIfGHActions(t *testing.T) {
+	t.Helper()
+
+	if isGH, ok := os.LookupEnv("GITHUB_ACTIONS"); ok && isGH == "true" {
+		t.Skipf("Skipping because of known issue with GitHub Actions")
+	}
 }

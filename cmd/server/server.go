@@ -13,12 +13,12 @@ import (
 	"strings"
 	"time"
 
-	"github.com/ghostunnel/ghostunnel/socket"
 	"github.com/google/gops/agent"
 	grpc_zap "github.com/grpc-ecosystem/go-grpc-middleware/logging/zap"
 	grpc_ctxtags "github.com/grpc-ecosystem/go-grpc-middleware/tags"
 	grpc_validator "github.com/grpc-ecosystem/go-grpc-middleware/validator"
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
+	reuseport "github.com/kavu/go_reuseport"
 	"github.com/soheilhy/cmux"
 	"github.com/spf13/cobra"
 	"go.uber.org/automaxprocs/maxprocs"
@@ -230,7 +230,7 @@ func (s *server) start(ctx context.Context, cerbosSvc *svc.CerbosService) error 
 }
 
 func (s *server) createListener(listenAddr string) (net.Listener, error) {
-	l, err := socket.ParseAndOpen(listenAddr)
+	l, err := parseAndOpen(listenAddr)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create listener at '%s': %w", listenAddr, err)
 	}
@@ -348,13 +348,7 @@ func (s *server) startHTTPServer(ctx context.Context, l net.Listener, grpcSrv *g
 
 	gwmux := runtime.NewServeMux()
 
-	// see https://github.com/grpc/grpc/blob/master/doc/connection-backoff.md
-	opts := []grpc.DialOption{
-		grpc.WithContextDialer(dialFunc),
-		grpc.WithConnectParams(grpc.ConnectParams{
-			MinConnectTimeout: 20 * time.Second, //nolint:gomnd
-		}),
-	}
+	opts := defaultGRPCDialOpts()
 
 	tlsConf, err := s.getTLSConfig()
 	if err != nil {
@@ -407,8 +401,18 @@ func (s *server) startHTTPServer(ctx context.Context, l net.Listener, grpcSrv *g
 	return h, nil
 }
 
+func defaultGRPCDialOpts() []grpc.DialOption {
+	// see https://github.com/grpc/grpc/blob/master/doc/connection-backoff.md
+	return []grpc.DialOption{
+		grpc.WithContextDialer(dialFunc),
+		grpc.WithConnectParams(grpc.ConnectParams{
+			MinConnectTimeout: 20 * time.Second, //nolint:gomnd
+		}),
+	}
+}
+
 func dialFunc(ctx context.Context, address string) (net.Conn, error) {
-	network, addr, _, err := socket.ParseAddress(address)
+	network, addr, err := parseListenAddress(address)
 	if err != nil {
 		return nil, err
 	}
@@ -444,4 +448,39 @@ func (s *server) handleHTTPHealthCheck(conn grpc.ClientConnInterface) http.Handl
 			http.Error(w, resp.Status.String(), http.StatusServiceUnavailable)
 		}
 	}
+}
+
+// inspired by https://github.com/ghostunnel/ghostunnel/blob/6e58c75c8762fe371c1134e89dd55033a6d577a4/socket/net.go#L31
+func parseListenAddress(listenAddr string) (network, addr string, err error) {
+	if strings.HasPrefix(listenAddr, "unix:") {
+		network = "unix"
+		addr = listenAddr[5:]
+
+		return
+	}
+
+	if _, err = net.ResolveTCPAddr("tcp", listenAddr); err != nil {
+		return
+	}
+
+	return "tcp", listenAddr, nil
+}
+
+// inspired by https://github.com/ghostunnel/ghostunnel/blob/6e58c75c8762fe371c1134e89dd55033a6d577a4/socket/net.go#L100
+func parseAndOpen(listenAddr string) (net.Listener, error) {
+	network, addr, err := parseListenAddress(listenAddr)
+	if err != nil {
+		return nil, err
+	}
+
+	if network == "unix" {
+		listener, err := net.Listen(network, addr)
+		if err != nil {
+			return nil, err
+		}
+		listener.(*net.UnixListener).SetUnlinkOnClose(true)
+		return listener, nil
+	}
+
+	return reuseport.NewReusablePortListener(network, addr)
 }

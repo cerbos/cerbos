@@ -13,7 +13,6 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/require"
-	"go.uber.org/automaxprocs/maxprocs"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/local"
@@ -29,48 +28,91 @@ import (
 )
 
 func TestServer(t *testing.T) {
-	undo, _ := maxprocs.Set(maxprocs.Logger(t.Logf))
-	defer undo()
-
 	eng := mkEngine(t)
 	cerbosSvc := svc.NewCerbosService(eng)
 
 	t.Run("with_tls", func(t *testing.T) {
 		testdataDir := test.PathToDir(t, "server")
 
-		conf := Conf{
-			HTTPListenAddr: getFreeListenAddr(t),
-			GRPCListenAddr: getFreeListenAddr(t),
-			TLS: &TLSConf{
-				Cert: filepath.Join(testdataDir, "tls.crt"),
-				Key:  filepath.Join(testdataDir, "tls.key"),
-			},
-		}
+		t.Run("tcp", func(t *testing.T) {
+			test.SkipIfGHActions(t) // GH Actions doesn't let servers run inside the container
 
-		ctx, cancelFunc := context.WithCancel(context.Background())
-		defer cancelFunc()
+			conf := Conf{
+				HTTPListenAddr: getFreeListenAddr(t),
+				GRPCListenAddr: getFreeListenAddr(t),
+				TLS: &TLSConf{
+					Cert: filepath.Join(testdataDir, "tls.crt"),
+					Key:  filepath.Join(testdataDir, "tls.key"),
+				},
+			}
 
-		startServer(ctx, conf, cerbosSvc)
+			ctx, cancelFunc := context.WithCancel(context.Background())
+			defer cancelFunc()
 
-		tlsConf := &tls.Config{InsecureSkipVerify: true} //nolint:gosec
-		testGRPCRequest(t, conf.GRPCListenAddr, grpc.WithTransportCredentials(credentials.NewTLS(tlsConf)))
-		testGRPCRequest(t, conf.HTTPListenAddr, grpc.WithTransportCredentials(credentials.NewTLS(tlsConf))) // Cheeky gRPC on HTTPS port
-		testHTTPRequest(t, fmt.Sprintf("https://%s/v1/check", conf.HTTPListenAddr))
+			startServer(ctx, conf, cerbosSvc)
+
+			tlsConf := &tls.Config{InsecureSkipVerify: true} //nolint:gosec
+			testGRPCRequest(t, conf.GRPCListenAddr, grpc.WithTransportCredentials(credentials.NewTLS(tlsConf)))
+			testGRPCRequest(t, conf.HTTPListenAddr, grpc.WithTransportCredentials(credentials.NewTLS(tlsConf))) // Cheeky gRPC on HTTPS port
+			testHTTPRequest(t, fmt.Sprintf("https://%s/v1/check", conf.HTTPListenAddr))
+		})
+
+		t.Run("uds", func(t *testing.T) {
+			tempDir := t.TempDir()
+
+			conf := Conf{
+				HTTPListenAddr: fmt.Sprintf("unix:%s", filepath.Join(tempDir, "http.sock")),
+				GRPCListenAddr: fmt.Sprintf("unix:%s", filepath.Join(tempDir, "grpc.sock")),
+				TLS: &TLSConf{
+					Cert: filepath.Join(testdataDir, "tls.crt"),
+					Key:  filepath.Join(testdataDir, "tls.key"),
+				},
+			}
+
+			ctx, cancelFunc := context.WithCancel(context.Background())
+			defer cancelFunc()
+
+			startServer(ctx, conf, cerbosSvc)
+
+			tlsConf := &tls.Config{InsecureSkipVerify: true} //nolint:gosec
+			testGRPCRequest(t, conf.GRPCListenAddr, grpc.WithTransportCredentials(credentials.NewTLS(tlsConf)))
+			testGRPCRequest(t, conf.HTTPListenAddr, grpc.WithTransportCredentials(credentials.NewTLS(tlsConf))) // Cheeky gRPC on HTTPS port
+		})
 	})
 
 	t.Run("without_tls", func(t *testing.T) {
-		conf := Conf{
-			HTTPListenAddr: getFreeListenAddr(t),
-			GRPCListenAddr: getFreeListenAddr(t),
-		}
+		t.Run("tcp", func(t *testing.T) {
+			test.SkipIfGHActions(t) // GH Actions doesn't let servers run inside the container
 
-		ctx, cancelFunc := context.WithCancel(context.Background())
-		defer cancelFunc()
+			conf := Conf{
+				HTTPListenAddr: getFreeListenAddr(t),
+				GRPCListenAddr: getFreeListenAddr(t),
+			}
 
-		startServer(ctx, conf, cerbosSvc)
+			ctx, cancelFunc := context.WithCancel(context.Background())
+			defer cancelFunc()
 
-		testGRPCRequest(t, conf.GRPCListenAddr, grpc.WithTransportCredentials(local.NewCredentials()))
-		testHTTPRequest(t, fmt.Sprintf("http://%s/v1/check", conf.HTTPListenAddr))
+			startServer(ctx, conf, cerbosSvc)
+
+			testGRPCRequest(t, conf.GRPCListenAddr, grpc.WithTransportCredentials(local.NewCredentials()))
+			testHTTPRequest(t, fmt.Sprintf("http://%s/v1/check", conf.HTTPListenAddr))
+		})
+
+		t.Run("uds", func(t *testing.T) {
+			tempDir := t.TempDir()
+
+			conf := Conf{
+				HTTPListenAddr: fmt.Sprintf("unix:%s", filepath.Join(tempDir, "http.sock")),
+				GRPCListenAddr: fmt.Sprintf("unix:%s", filepath.Join(tempDir, "grpc.sock")),
+			}
+
+			ctx, cancelFunc := context.WithCancel(context.Background())
+			defer cancelFunc()
+
+			startServer(ctx, conf, cerbosSvc)
+
+			testGRPCRequest(t, conf.GRPCListenAddr, grpc.WithTransportCredentials(local.NewCredentials()))
+		})
 	})
 }
 
@@ -115,7 +157,9 @@ func startServer(ctx context.Context, conf Conf, cerbosSvc *svc.CerbosService) {
 func testGRPCRequest(t *testing.T, addr string, opts ...grpc.DialOption) {
 	t.Helper()
 
-	grpcConn, err := grpc.Dial(addr, opts...)
+	dialOpts := append(defaultGRPCDialOpts(), opts...)
+
+	grpcConn, err := grpc.Dial(addr, dialOpts...)
 	require.NoError(t, err, "Failed to dial gRPC server")
 
 	grpcClient := svcv1.NewCerbosServiceClient(grpcConn)
@@ -143,6 +187,7 @@ func testHTTPRequest(t *testing.T, addr string) {
 
 	customTransport := http.DefaultTransport.(*http.Transport).Clone()
 	customTransport.TLSClientConfig = &tls.Config{InsecureSkipVerify: true} //nolint:gosec
+
 	c := &http.Client{Transport: customTransport}
 	resp, err := c.Do(req)
 

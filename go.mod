@@ -10,7 +10,6 @@ require (
 	github.com/fsnotify/fsnotify v1.4.9
 	github.com/fullstorydev/grpcurl v1.8.0
 	github.com/ghodss/yaml v1.0.0
-	github.com/ghostunnel/ghostunnel v1.5.3
 	github.com/go-git/go-git/v5 v5.2.0
 	github.com/gogo/protobuf v1.3.1 // indirect
 	github.com/golang/protobuf v1.5.1
@@ -23,6 +22,7 @@ require (
 	github.com/grpc-ecosystem/go-grpc-middleware v1.2.2
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.3.0
 	github.com/iancoleman/strcase v0.1.3 // indirect
+	github.com/kavu/go_reuseport v1.5.0
 	github.com/lyft/protoc-gen-star v0.5.2 // indirect
 	github.com/mattn/go-isatty v0.0.12
 	github.com/mitchellh/mapstructure v1.4.1 // indirect
