@@ -10,7 +10,6 @@ all: clean generate lint test build
 clean:
 	@-rm -rf $(GEN_DIR)
 	@-rm -rf $(MOCK_DIR)
-	@ go mod tidy
 
 .PHONY: clean-tools
 clean-tools:
@@ -26,6 +25,7 @@ generate: clean $(BUF) $(PROTOC_GEN_GO) $(PROTOC_GEN_GO_GRPC) $(PROTOC_GEN_GRPC_
 	@ # $(BUF) breaking --against '.git#branch=dev'
 	@ $(BUF) generate --template '$(BUF_GEN_TEMPLATE)' .
 	@ # $(MOCKERY) --quiet --dir=pkg/storage/disk --name="Index" --recursive --output=$(MOCK_DIR)
+	@ go mod tidy
 
 .PHONY: test
 test:
