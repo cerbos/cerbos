@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/require"
+	"go.uber.org/automaxprocs/maxprocs"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/local"
@@ -28,6 +29,9 @@ import (
 )
 
 func TestServer(t *testing.T) {
+	undo, _ := maxprocs.Set(maxprocs.Logger(t.Logf))
+	defer undo()
+
 	eng := mkEngine(t)
 	cerbosSvc := svc.NewCerbosService(eng)
 

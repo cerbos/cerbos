@@ -1,6 +1,6 @@
 ---
 server:
-  listenAddr: ":9999"
+  httpListenAddr: ":3592"
 
 storage:
   driver: "disk"

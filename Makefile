@@ -10,6 +10,7 @@ all: clean generate lint test build
 clean:
 	@-rm -rf $(GEN_DIR)
 	@-rm -rf $(MOCK_DIR)
+	@ go mod tidy
 
 .PHONY: clean-tools
 clean-tools:

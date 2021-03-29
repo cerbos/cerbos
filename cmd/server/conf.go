@@ -2,7 +2,8 @@ package server
 
 import (
 	"fmt"
-	"net"
+
+	"github.com/ghostunnel/ghostunnel/socket"
 
 	"github.com/cerbos/cerbos/pkg/config"
 )
@@ -42,11 +43,11 @@ func (c *Conf) Validate() error {
 		c.GRPCListenAddr = defaultGRPCListenAddr
 	}
 
-	if _, _, err := net.SplitHostPort(c.HTTPListenAddr); err != nil {
+	if _, _, _, err := socket.ParseAddress(c.HTTPListenAddr); err != nil {
 		return fmt.Errorf("invalid httpListenAddr '%s': %w", c.HTTPListenAddr, err)
 	}
 
-	if _, _, err := net.SplitHostPort(c.GRPCListenAddr); err != nil {
+	if _, _, _, err := socket.ParseAddress(c.GRPCListenAddr); err != nil {
 		return fmt.Errorf("invalid grpcListenAddr '%s': %w", c.GRPCListenAddr, err)
 	}
 

@@ -13,6 +13,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/ghostunnel/ghostunnel/socket"
 	"github.com/google/gops/agent"
 	grpc_zap "github.com/grpc-ecosystem/go-grpc-middleware/logging/zap"
 	grpc_ctxtags "github.com/grpc-ecosystem/go-grpc-middleware/tags"
@@ -20,6 +21,7 @@ import (
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"github.com/soheilhy/cmux"
 	"github.com/spf13/cobra"
+	"go.uber.org/automaxprocs/maxprocs"
 	"go.uber.org/zap"
 	"golang.org/x/sync/errgroup"
 	"google.golang.org/grpc"
@@ -69,6 +71,15 @@ func NewCommand() *cobra.Command {
 
 func doRun(_ *cobra.Command, _ []string) error {
 	logging.InitLogging(args.logLevel)
+
+	log := zap.S().Named("server")
+
+	undo, err := maxprocs.Set(maxprocs.Logger(log.Infof))
+	defer undo()
+
+	if err != nil {
+		log.Warnw("Failed to adjust GOMAXPROCS", "error", err)
+	}
 
 	if args.debugListenAddr != "" {
 		startDebugListener(args.debugListenAddr)
@@ -183,30 +194,43 @@ func (s *server) start(ctx context.Context, cerbosSvc *svc.CerbosService) error 
 		return err
 	}
 
-	<-ctx.Done()
-	log.Info("Shutting down")
+	s.group.Go(func() error {
+		<-ctx.Done()
+		log.Info("Shutting down")
 
-	// mark this service as NOT_SERVING in the gRPC health check.
-	s.health.Shutdown()
+		// mark this service as NOT_SERVING in the gRPC health check.
+		s.health.Shutdown()
 
-	log.Debug("Shutting down gRPC server")
-	grpcServer.GracefulStop()
+		log.Debug("Shutting down gRPC server")
+		grpcServer.GracefulStop()
 
-	log.Debug("Shutting down HTTP server")
-	shutdownCtx, cancelFunc := context.WithTimeout(context.Background(), defaultTimeout)
-	defer cancelFunc()
+		log.Debug("Shutting down HTTP server")
+		shutdownCtx, cancelFunc := context.WithTimeout(context.Background(), defaultTimeout)
+		defer cancelFunc()
 
-	if err := httpServer.Shutdown(shutdownCtx); err != nil {
-		log.Errorw("Failed to cleanly shutdown HTTP server", "error", err)
+		if err := httpServer.Shutdown(shutdownCtx); err != nil {
+			log.Errorw("Failed to cleanly shutdown HTTP server", "error", err)
+		}
+
+		log.Info("Shutdown complete")
+		return ctx.Err()
+	})
+
+	err = s.group.Wait()
+	if err != nil {
+		if errors.Is(err, context.Canceled) {
+			return nil
+		}
+
+		log.Errorw("Stopping server due to error", "error", err)
+		return err
 	}
-
-	log.Info("Shutdown complete")
 
 	return nil
 }
 
 func (s *server) createListener(listenAddr string) (net.Listener, error) {
-	l, err := net.Listen("tcp", listenAddr)
+	l, err := socket.ParseAndOpen(listenAddr)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create listener at '%s': %w", listenAddr, err)
 	}
@@ -224,7 +248,7 @@ func (s *server) createListener(listenAddr string) (net.Listener, error) {
 }
 
 func (s *server) getTLSConfig() (*tls.Config, error) {
-	if s.conf.TLS == nil {
+	if s.conf.TLS == nil || (s.conf.TLS.Cert == "" || s.conf.TLS.Key == "") {
 		return nil, nil
 	}
 
@@ -281,7 +305,7 @@ func defaultTLSConfig() *tls.Config {
 
 func (s *server) startGRPCServer(cerbosSvc *svc.CerbosService, l net.Listener) *grpc.Server {
 	log := zap.L().Named("grpc")
-	//	grpc_zap.ReplaceGrpcLoggerV2WithVerbosity(log, -3)
+	// grpc_zap.ReplaceGrpcLoggerV2(log)
 	// TODO (cell) log payload
 
 	opts := []grpc.ServerOption{
@@ -324,7 +348,13 @@ func (s *server) startHTTPServer(ctx context.Context, l net.Listener, grpcSrv *g
 
 	gwmux := runtime.NewServeMux()
 
-	opts := []grpc.DialOption{grpc.WithTransportCredentials(local.NewCredentials())}
+	// see https://github.com/grpc/grpc/blob/master/doc/connection-backoff.md
+	opts := []grpc.DialOption{
+		grpc.WithContextDialer(dialFunc),
+		grpc.WithConnectParams(grpc.ConnectParams{
+			MinConnectTimeout: 20 * time.Second, //nolint:gomnd
+		}),
+	}
 
 	tlsConf, err := s.getTLSConfig()
 	if err != nil {
@@ -333,7 +363,9 @@ func (s *server) startHTTPServer(ctx context.Context, l net.Listener, grpcSrv *g
 
 	if tlsConf != nil {
 		tlsConf.InsecureSkipVerify = true // we are connecting as localhost which would differ from what the cert is issued for.
-		opts = []grpc.DialOption{grpc.WithTransportCredentials(credentials.NewTLS(tlsConf))}
+		opts = append(opts, grpc.WithTransportCredentials(credentials.NewTLS(tlsConf)))
+	} else {
+		opts = append(opts, grpc.WithTransportCredentials(local.NewCredentials()))
 	}
 
 	grpcConn, err := grpc.DialContext(ctx, s.conf.GRPCListenAddr, opts...)
@@ -365,13 +397,24 @@ func (s *server) startHTTPServer(ctx context.Context, l net.Listener, grpcSrv *g
 		err := h.Serve(l)
 		if err != nil && !errors.Is(err, http.ErrServerClosed) {
 			log.Errorw("HTTP server failed", "error", err)
+			return err
 		}
 
 		log.Info("HTTP server stopped")
-		return err
+		return nil
 	})
 
 	return h, nil
+}
+
+func dialFunc(ctx context.Context, address string) (net.Conn, error) {
+	network, addr, _, err := socket.ParseAddress(address)
+	if err != nil {
+		return nil, err
+	}
+
+	dialer := new(net.Dialer)
+	return dialer.DialContext(ctx, network, addr)
 }
 
 func grpcHandler(grpcSvc *grpc.Server, handler http.Handler) http.Handler {
