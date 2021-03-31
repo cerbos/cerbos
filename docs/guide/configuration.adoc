@@ -14,11 +14,14 @@ server:
     key: /path/to/private_key
     caCert: /path/to/CA_certificate # Optional
 
+engine:
+  defaultPolicyVersion: "default" # Default policy version to assume if the request does not specify one.
+
 storage:
   driver: "disk" # Valid values are "disk" or "git"
   disk: # Only required if "driver" is "disk"
     directory: pkg/test/testdata/store
-    readOnly: true # Set to false if you want to write new policies to disk through the API
+    readOnly: true 
   git: # Only required if the "driver" is "git"
     protocol: file # Valid values are "file", "ssh", "https"
     url: file://${HOME}/tmp/cerbos/policies 
@@ -27,7 +30,7 @@ storage:
     checkoutDir: ${HOME}/tmp/cerbos/work # Work directory of the server
     updatePollInterval: 60s # How often the source git repo should be polled for updates
     https: # Only required if the "protocol" is "https"
-      username: charithe
+      username: cerbos
       password: ${GITHUB_TOKEN}
     ssh: # Only required if the "protocol" is "ssh"
       user: git

@@ -1,0 +1,3 @@
+---
+server:
+  listenAddr: ":9999"

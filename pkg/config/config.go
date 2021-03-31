@@ -16,6 +16,14 @@ var ErrConfigNotLoaded = errors.New("config not loaded")
 
 var conf = &configHolder{}
 
+type ConfigSection interface {
+	Key() string
+}
+
+type Defaulter interface {
+	SetDefaults()
+}
+
 type Validator interface {
 	Validate() error
 }
@@ -108,6 +116,11 @@ func Get(key string, out interface{}) error {
 	return conf.Get(key, out)
 }
 
+// GetSection populates a config section.
+func GetSection(section ConfigSection) error {
+	return conf.Get(section.Key(), section)
+}
+
 type configHolder struct {
 	mu       sync.RWMutex
 	provider config.Provider
@@ -118,13 +131,24 @@ func (ch *configHolder) Get(key string, out interface{}) error {
 	defer ch.mu.RUnlock()
 
 	if ch.provider == nil {
+		if d, ok := out.(Defaulter); ok {
+			d.SetDefaults()
+			return nil
+		}
+
 		return ErrConfigNotLoaded
+	}
+
+	// set defaults if any are specified
+	if d, ok := out.(Defaulter); ok {
+		d.SetDefaults()
 	}
 
 	if err := ch.provider.Get(key).Populate(out); err != nil {
 		return err
 	}
 
+	// validate if a validate function is available
 	if v, ok := out.(Validator); ok {
 		return v.Validate()
 	}

@@ -2,8 +2,6 @@ package server
 
 import (
 	"fmt"
-
-	"github.com/cerbos/cerbos/pkg/config"
 )
 
 const (
@@ -32,15 +30,16 @@ type TLSConf struct {
 	CACert string `yaml:"caCert"`
 }
 
+func (c *Conf) Key() string {
+	return confKey
+}
+
+func (c *Conf) SetDefaults() {
+	c.HTTPListenAddr = defaultHTTPListenAddr
+	c.GRPCListenAddr = defaultGRPCListenAddr
+}
+
 func (c *Conf) Validate() error {
-	if c.HTTPListenAddr == "" {
-		c.HTTPListenAddr = defaultHTTPListenAddr
-	}
-
-	if c.GRPCListenAddr == "" {
-		c.GRPCListenAddr = defaultGRPCListenAddr
-	}
-
 	if _, _, err := parseListenAddress(c.HTTPListenAddr); err != nil {
 		return fmt.Errorf("invalid httpListenAddr '%s': %w", c.HTTPListenAddr, err)
 	}
@@ -50,14 +49,4 @@ func (c *Conf) Validate() error {
 	}
 
 	return nil
-}
-
-func getServerConf() (Conf, error) {
-	conf := Conf{}
-
-	if err := config.Get(confKey, &conf); err != nil {
-		return conf, err
-	}
-
-	return conf, nil
 }

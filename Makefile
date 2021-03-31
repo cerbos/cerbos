@@ -29,7 +29,11 @@ generate: clean $(BUF) $(PROTOC_GEN_GO) $(PROTOC_GEN_GO_GRPC) $(PROTOC_GEN_GRPC_
 
 .PHONY: test
 test:
-	@ go test -tags=tests -cover -race ./...
+	@ gotestsum -- -tags=tests -cover -race ./...
+
+.PHONY: test-watch
+test-watch:
+	@ gotestsum --watch -- -tags=tests -cover -race ./...
 
 .PHONY: coverage
 coverage:

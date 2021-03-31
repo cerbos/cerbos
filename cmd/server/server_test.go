@@ -37,7 +37,7 @@ func TestServer(t *testing.T) {
 		t.Run("tcp", func(t *testing.T) {
 			test.SkipIfGHActions(t) // GH Actions doesn't let servers run inside the container
 
-			conf := Conf{
+			conf := &Conf{
 				HTTPListenAddr: getFreeListenAddr(t),
 				GRPCListenAddr: getFreeListenAddr(t),
 				TLS: &TLSConf{
@@ -60,7 +60,7 @@ func TestServer(t *testing.T) {
 		t.Run("uds", func(t *testing.T) {
 			tempDir := t.TempDir()
 
-			conf := Conf{
+			conf := &Conf{
 				HTTPListenAddr: fmt.Sprintf("unix:%s", filepath.Join(tempDir, "http.sock")),
 				GRPCListenAddr: fmt.Sprintf("unix:%s", filepath.Join(tempDir, "grpc.sock")),
 				TLS: &TLSConf{
@@ -84,7 +84,7 @@ func TestServer(t *testing.T) {
 		t.Run("tcp", func(t *testing.T) {
 			test.SkipIfGHActions(t) // GH Actions doesn't let servers run inside the container
 
-			conf := Conf{
+			conf := &Conf{
 				HTTPListenAddr: getFreeListenAddr(t),
 				GRPCListenAddr: getFreeListenAddr(t),
 			}
@@ -101,7 +101,7 @@ func TestServer(t *testing.T) {
 		t.Run("uds", func(t *testing.T) {
 			tempDir := t.TempDir()
 
-			conf := Conf{
+			conf := &Conf{
 				HTTPListenAddr: fmt.Sprintf("unix:%s", filepath.Join(tempDir, "http.sock")),
 				GRPCListenAddr: fmt.Sprintf("unix:%s", filepath.Join(tempDir, "grpc.sock")),
 			}
@@ -145,7 +145,7 @@ func getFreeListenAddr(t *testing.T) string {
 	return addr
 }
 
-func startServer(ctx context.Context, conf Conf, cerbosSvc *svc.CerbosService) {
+func startServer(ctx context.Context, conf *Conf, cerbosSvc *svc.CerbosService) {
 	s := newServer(conf)
 	go func() {
 		if err := s.start(ctx, cerbosSvc); err != nil {
