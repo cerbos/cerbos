@@ -11,6 +11,7 @@ import (
 	"google.golang.org/protobuf/encoding/protojson"
 
 	"github.com/cerbos/cerbos/pkg/compile"
+	"github.com/cerbos/cerbos/pkg/config"
 	requestv1 "github.com/cerbos/cerbos/pkg/generated/request/v1"
 	sharedv1 "github.com/cerbos/cerbos/pkg/generated/shared/v1"
 	"github.com/cerbos/cerbos/pkg/logging"
@@ -27,12 +28,18 @@ const (
 )
 
 type Engine struct {
+	conf       *Conf
 	store      storage.Store
 	compiler   *compile.Compiler
 	queryCache cache.InterQueryCache
 }
 
 func New(ctx context.Context, store storage.Store) (*Engine, error) {
+	conf := &Conf{}
+	if err := config.GetSection(conf); err != nil {
+		return nil, err
+	}
+
 	compiler, err := compile.Compile(store.GetAllPolicies(ctx))
 	if err != nil {
 		return nil, fmt.Errorf("failed to compile policies: %w", err)
@@ -46,6 +53,7 @@ func New(ctx context.Context, store storage.Store) (*Engine, error) {
 	})
 
 	engine := &Engine{
+		conf:       conf,
 		store:      store,
 		compiler:   compiler,
 		queryCache: queryCache,
@@ -138,7 +146,7 @@ func (engine *Engine) getPrincipalPolicyCheck(req *requestv1.CheckRequest) *chec
 	version := req.Principal.Version
 
 	if version == "" {
-		version = namer.DefaultVersion
+		version = engine.conf.DefaultPolicyVersion
 	}
 
 	principalModID := namer.PrincipalPolicyModuleID(principal, version)
@@ -158,7 +166,7 @@ func (engine *Engine) getResourcePolicyCheck(req *requestv1.CheckRequest) *check
 	version := req.Resource.Version
 
 	if version == "" {
-		version = namer.DefaultVersion
+		version = engine.conf.DefaultPolicyVersion
 	}
 
 	resourceModID := namer.ResourcePolicyModuleID(resource, version)

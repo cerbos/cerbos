@@ -99,8 +99,8 @@ func doRun(_ *cobra.Command, _ []string) error {
 		return err
 	}
 
-	conf, err := getServerConf()
-	if err != nil {
+	conf := &Conf{}
+	if err := config.GetSection(conf); err != nil {
 		return err
 	}
 
@@ -139,13 +139,13 @@ func createCerbosService(ctx context.Context) (*svc.CerbosService, error) {
 }
 
 type server struct {
-	conf       Conf
+	conf       *Conf
 	cancelFunc context.CancelFunc
 	group      *errgroup.Group
 	health     *health.Server
 }
 
-func newServer(conf Conf) *server {
+func newServer(conf *Conf) *server {
 	ctx, cancelFunc := context.WithCancel(context.Background())
 
 	group, _ := errgroup.WithContext(ctx)

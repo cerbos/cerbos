@@ -3,6 +3,9 @@ server:
   httpListenAddr: ":9999"
   grpcListenAddr: ":3593"
 
+engine:
+  defaultPolicyVersion: "default"
+
 storage:
   driver: "disk"
   disk:

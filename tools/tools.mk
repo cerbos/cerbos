@@ -5,6 +5,7 @@ BUF := $(TOOLS_BIN_DIR)/buf
 GHZ := $(TOOLS_BIN_DIR)/ghz
 GOLANGCI_LINT := $(TOOLS_BIN_DIR)/golangci-lint
 GORELEASER := $(TOOLS_BIN_DIR)/goreleaser
+GOTESTSUM := $(TOOLS_BIN_DIR)/gotestsum
 GRPCURL := $(TOOLS_BIN_DIR)/grpcurl
 MOCKERY := $(TOOLS_BIN_DIR)/mockery
 PROTOC_GEN_GO := $(TOOLS_BIN_DIR)/protoc-gen-go
@@ -70,6 +71,9 @@ $(GOLANGCI_LINT): $(TOOLS_BIN_DIR)
 
 $(GORELEASER): $(TOOLS_BIN_DIR) 
 	@ GOBIN=$(TOOLS_BIN_DIR) go install github.com/goreleaser/goreleaser
+
+$(GOTESTSUM): $(TOOLS_BIN_DIR) 
+	@ GOBIN=$(TOOLS_BIN_DIR) go install gotest.tools/gotestsum
 
 $(GRPCURL): $(TOOLS_BIN_DIR) 
 	@ GOBIN=$(TOOLS_BIN_DIR) go install github.com/fullstorydev/grpcurl/cmd/grpcurl
