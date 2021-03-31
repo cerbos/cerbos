@@ -316,6 +316,7 @@ func (s *server) startGRPCServer(cerbosSvc *svc.CerbosService, l net.Listener) *
 		),
 		grpc.ChainUnaryInterceptor(
 			grpc_ctxtags.UnaryServerInterceptor(grpc_ctxtags.WithFieldExtractor(svc.ExtractRequestFields)),
+			XForwardedHostUnaryServerInterceptor,
 			grpc_zap.UnaryServerInterceptor(log),
 			grpc_validator.UnaryServerInterceptor(),
 		),
