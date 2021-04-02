@@ -28,6 +28,8 @@ import (
 )
 
 func TestServer(t *testing.T) {
+	test.SkipIfGHActions(t) // TODO (cell) Servers don't work inside GH Actions for some reason.
+
 	eng := mkEngine(t)
 	cerbosSvc := svc.NewCerbosService(eng)
 
@@ -35,8 +37,6 @@ func TestServer(t *testing.T) {
 		testdataDir := test.PathToDir(t, "server")
 
 		t.Run("tcp", func(t *testing.T) {
-			test.SkipIfGHActions(t) // GH Actions doesn't let servers run inside the container
-
 			conf := &Conf{
 				HTTPListenAddr: getFreeListenAddr(t),
 				GRPCListenAddr: getFreeListenAddr(t),
@@ -82,8 +82,6 @@ func TestServer(t *testing.T) {
 
 	t.Run("without_tls", func(t *testing.T) {
 		t.Run("tcp", func(t *testing.T) {
-			test.SkipIfGHActions(t) // GH Actions doesn't let servers run inside the container
-
 			conf := &Conf{
 				HTTPListenAddr: getFreeListenAddr(t),
 				GRPCListenAddr: getFreeListenAddr(t),

@@ -18,6 +18,8 @@ type Conf struct {
 	GRPCListenAddr string `yaml:"grpcListenAddr"`
 	// TLS defines the TLS configuration for the server.
 	TLS *TLSConf `yaml:"tls"`
+	// MetricsEnabled defines whether the metrics endpoint is enabled.
+	MetricsEnabled bool `yaml:"metricsEnabled"`
 }
 
 // TLSConf holds TLS configuration.
@@ -37,6 +39,7 @@ func (c *Conf) Key() string {
 func (c *Conf) SetDefaults() {
 	c.HTTPListenAddr = defaultHTTPListenAddr
 	c.GRPCListenAddr = defaultGRPCListenAddr
+	c.MetricsEnabled = true
 }
 
 func (c *Conf) Validate() error {

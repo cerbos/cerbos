@@ -6,6 +6,13 @@ server:
     cert: hack/dev/tls.crt
     key: hack/dev/tls.key
 
+tracing:
+  sampleProbability: 1.0
+  exporter: jaeger
+  jaeger:
+    agentEndpoint: "localhost:6831"
+    serviceName: "cerbos"
+
 storage:
   driver: "disk"
   disk:
