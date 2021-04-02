@@ -1,15 +1,20 @@
 package compile
 
 import (
+	"context"
 	"fmt"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/open-policy-agent/opa/ast"
+	"go.opencensus.io/stats"
+	"go.opencensus.io/tag"
 
 	policyv1 "github.com/cerbos/cerbos/pkg/generated/policy/v1"
 	"github.com/cerbos/cerbos/pkg/internal"
 	"github.com/cerbos/cerbos/pkg/namer"
+	"github.com/cerbos/cerbos/pkg/observability/metrics"
 )
 
 type Unit struct {
@@ -40,7 +45,7 @@ func Compile(pchan <-chan *Unit) (*Compiler, error) {
 			continue
 		}
 
-		eval, err := compilePolicy(p)
+		eval, err := measureCompileDuration(p)
 		if err.ErrOrNil() != nil {
 			errors = append(errors, err...)
 			continue
@@ -50,6 +55,25 @@ func Compile(pchan <-chan *Unit) (*Compiler, error) {
 	}
 
 	return c, errors.ErrOrNil()
+}
+
+func measureCompileDuration(p *Unit) (*evaluator, ErrorList) {
+	startTime := time.Now()
+	eval, err := compilePolicy(p)
+	durationMs := float64(time.Since(startTime)) / float64(time.Millisecond)
+
+	status := "success"
+	if err != nil {
+		status = "failure"
+	}
+
+	_ = stats.RecordWithTags(
+		context.Background(),
+		[]tag.Mutator{tag.Upsert(metrics.KeyCompileStatus, status)},
+		metrics.CompileDuration.M(durationMs),
+	)
+
+	return eval, err
 }
 
 func compilePolicy(p *Unit) (*evaluator, ErrorList) {
@@ -160,7 +184,7 @@ func (c *Compiler) Update(inc *Incremental) error {
 
 	evaluators := make(map[namer.ModuleID]*evaluator)
 	for _, p := range inc.AddOrUpdate {
-		eval, errs := compilePolicy(p)
+		eval, errs := measureCompileDuration(p)
 		if len(errs) > 0 {
 			errors = append(errors, errs...)
 			continue

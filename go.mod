@@ -3,6 +3,8 @@ module github.com/cerbos/cerbos
 go 1.16
 
 require (
+	contrib.go.opencensus.io/exporter/jaeger v0.2.1
+	contrib.go.opencensus.io/exporter/prometheus v0.3.0
 	github.com/bufbuild/buf v0.40.0
 	github.com/cespare/xxhash v1.1.0
 	github.com/envoyproxy/protoc-gen-validate v0.4.2-0.20201217164128-7df253a68e6b
@@ -27,12 +29,13 @@ require (
 	github.com/mattn/go-isatty v0.0.12
 	github.com/mitchellh/mapstructure v1.4.1 // indirect
 	github.com/open-policy-agent/opa v0.26.0
+	github.com/prometheus/client_golang v1.9.0
 	github.com/rs/zerolog v1.20.0 // indirect
-	github.com/soheilhy/cmux v0.1.5
 	github.com/spf13/afero v1.5.1 // indirect
 	github.com/spf13/cobra v1.1.3
 	github.com/stretchr/testify v1.7.0
 	github.com/vektra/mockery/v2 v2.6.0
+	go.opencensus.io v0.23.0
 	go.uber.org/automaxprocs v1.4.0
 	go.uber.org/config v1.4.0
 	go.uber.org/multierr v1.6.0

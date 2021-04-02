@@ -15,7 +15,7 @@ import (
 	responsev1 "github.com/cerbos/cerbos/pkg/generated/response/v1"
 	sharedv1 "github.com/cerbos/cerbos/pkg/generated/shared/v1"
 	svcv1 "github.com/cerbos/cerbos/pkg/generated/svc/v1"
-	"github.com/cerbos/cerbos/pkg/logging"
+	"github.com/cerbos/cerbos/pkg/observability/logging"
 )
 
 // CerbosService implements the policy checking service.

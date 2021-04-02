@@ -13,14 +13,19 @@ import (
 	"strings"
 	"time"
 
+	"contrib.go.opencensus.io/exporter/prometheus"
 	"github.com/google/gops/agent"
 	grpc_zap "github.com/grpc-ecosystem/go-grpc-middleware/logging/zap"
 	grpc_ctxtags "github.com/grpc-ecosystem/go-grpc-middleware/tags"
 	grpc_validator "github.com/grpc-ecosystem/go-grpc-middleware/validator"
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	reuseport "github.com/kavu/go_reuseport"
-	"github.com/soheilhy/cmux"
+	prom "github.com/prometheus/client_golang/prometheus"
 	"github.com/spf13/cobra"
+	"go.opencensus.io/plugin/ocgrpc"
+	"go.opencensus.io/plugin/ochttp"
+	"go.opencensus.io/stats/view"
+	"go.opencensus.io/zpages"
 	"go.uber.org/automaxprocs/maxprocs"
 	"go.uber.org/zap"
 	"golang.org/x/sync/errgroup"
@@ -36,7 +41,9 @@ import (
 	"github.com/cerbos/cerbos/pkg/config"
 	"github.com/cerbos/cerbos/pkg/engine"
 	svcv1 "github.com/cerbos/cerbos/pkg/generated/svc/v1"
-	"github.com/cerbos/cerbos/pkg/logging"
+	"github.com/cerbos/cerbos/pkg/observability/logging"
+	"github.com/cerbos/cerbos/pkg/observability/metrics"
+	"github.com/cerbos/cerbos/pkg/observability/tracing"
 	"github.com/cerbos/cerbos/pkg/storage"
 	"github.com/cerbos/cerbos/pkg/svc"
 )
@@ -45,11 +52,20 @@ type serverArgs struct {
 	configFile      string
 	logLevel        string
 	debugListenAddr string
+	zpagesEnabled   bool
 }
 
 var args = serverArgs{}
 
-const defaultTimeout = 30 * time.Second
+const (
+	defaultTimeout           = 30 * time.Second
+	metricsReportingInterval = 15 * time.Second
+	minGRPCConnectTimeout    = 20 * time.Second
+
+	healthEndpoint  = "/_cerbos/health"
+	metricsEndpoint = "/_cerbos/metrics"
+	zpagesEndpoint  = "/_cerbos/debug"
+)
 
 func NewCommand() *cobra.Command {
 	cmd := &cobra.Command{
@@ -62,7 +78,9 @@ func NewCommand() *cobra.Command {
 	cmd.Flags().StringVar(&args.configFile, "config", "", "Path to config file")
 	cmd.Flags().StringVar(&args.logLevel, "log-level", "INFO", "Log level")
 	cmd.Flags().StringVar(&args.debugListenAddr, "debug-listen-addr", "", "Address to start the gops listener")
+	cmd.Flags().BoolVar(&args.zpagesEnabled, "zpages-enabled", false, "Enable zpages for debugging")
 
+	_ = cmd.Flags().MarkHidden("zpages-enabled")
 	_ = cmd.MarkFlagFilename("config")
 	_ = cmd.MarkFlagRequired("config")
 
@@ -90,6 +108,11 @@ func doRun(_ *cobra.Command, _ []string) error {
 
 	// load configuration
 	if err := config.Load(args.configFile); err != nil {
+		return err
+	}
+
+	// initialize tracing
+	if err := tracing.Init(); err != nil {
 		return err
 	}
 
@@ -143,6 +166,7 @@ type server struct {
 	cancelFunc context.CancelFunc
 	group      *errgroup.Group
 	health     *health.Server
+	ocExporter *prometheus.Exporter
 }
 
 func newServer(conf *Conf) *server {
@@ -162,6 +186,16 @@ func (s *server) start(ctx context.Context, cerbosSvc *svc.CerbosService) error 
 	defer s.cancelFunc()
 
 	log := zap.S().Named("server")
+
+	if s.conf.MetricsEnabled {
+		ocExporter, err := initOCPromExporter()
+		if err != nil {
+			log.Errorw("Failed to initialize Prometheus exporter", "error", err)
+			return err
+		}
+
+		s.ocExporter = ocExporter
+	}
 
 	// It would be nice to have a single port to serve both gRPC and HTTP from. Unfortunately, cmux
 	// can't deal effectively with both gRPC and HTTP/2 when TLS is enabled (see https://github.com/soheilhy/cmux/issues/68).
@@ -309,6 +343,7 @@ func (s *server) startGRPCServer(cerbosSvc *svc.CerbosService, l net.Listener) *
 	// TODO (cell) log payload
 
 	opts := []grpc.ServerOption{
+		grpc.StatsHandler(&ocgrpc.ServerHandler{}),
 		grpc.ChainStreamInterceptor(
 			grpc_ctxtags.StreamServerInterceptor(),
 			grpc_zap.StreamServerInterceptor(log),
@@ -332,7 +367,7 @@ func (s *server) startGRPCServer(cerbosSvc *svc.CerbosService, l net.Listener) *
 	s.group.Go(func() error {
 		log.Info(fmt.Sprintf("Starting gRPC server at %s", s.conf.GRPCListenAddr))
 		err := server.Serve(l)
-		if err != nil && !(errors.Is(err, cmux.ErrListenerClosed) || errors.Is(err, cmux.ErrServerClosed)) {
+		if err != nil {
 			log.Error("gRPC server failed", zap.Error(err))
 			return err
 		}
@@ -373,15 +408,23 @@ func (s *server) startHTTPServer(ctx context.Context, l net.Listener, grpcSrv *g
 		return nil, fmt.Errorf("failed to register gRPC service: %w", err)
 	}
 
-	mux := http.NewServeMux()
-	mux.Handle("/", gwmux)
-	mux.HandleFunc("/status", s.handleHTTPHealthCheck(grpcConn))
+	handler := &ochttp.Handler{Handler: grpcHandler(grpcSrv, gwmux)}
 
-	handler := grpcHandler(grpcSrv, mux)
+	cerbosMux := http.NewServeMux()
+	cerbosMux.Handle("/", handler)
+	cerbosMux.HandleFunc(healthEndpoint, s.handleHTTPHealthCheck(grpcConn))
+
+	if s.conf.MetricsEnabled && s.ocExporter != nil {
+		cerbosMux.Handle(metricsEndpoint, s.ocExporter)
+	}
+
+	if args.zpagesEnabled {
+		zpages.Handle(cerbosMux, zpagesEndpoint)
+	}
 
 	h := &http.Server{
 		ErrorLog:          zap.NewStdLog(zap.L().Named("http.error")),
-		Handler:           handler,
+		Handler:           cerbosMux,
 		ReadHeaderTimeout: defaultTimeout,
 		ReadTimeout:       defaultTimeout,
 		WriteTimeout:      defaultTimeout,
@@ -406,9 +449,8 @@ func defaultGRPCDialOpts() []grpc.DialOption {
 	// see https://github.com/grpc/grpc/blob/master/doc/connection-backoff.md
 	return []grpc.DialOption{
 		grpc.WithContextDialer(dialFunc),
-		grpc.WithConnectParams(grpc.ConnectParams{
-			MinConnectTimeout: 20 * time.Second, //nolint:gomnd
-		}),
+		grpc.WithConnectParams(grpc.ConnectParams{MinConnectTimeout: minGRPCConnectTimeout}),
+		grpc.WithStatsHandler(&ocgrpc.ClientHandler{}),
 	}
 }
 
@@ -484,4 +526,33 @@ func parseAndOpen(listenAddr string) (net.Listener, error) {
 	}
 
 	return reuseport.NewReusablePortListener(network, addr)
+}
+
+func initOCPromExporter() (*prometheus.Exporter, error) {
+	if err := view.Register(ocgrpc.DefaultServerViews...); err != nil {
+		return nil, fmt.Errorf("failed to register gRPC server views: %w", err)
+	}
+
+	if err := view.Register(ochttp.DefaultServerViews...); err != nil {
+		return nil, fmt.Errorf("failed to register HTTP server views: %w", err)
+	}
+
+	if err := view.Register(metrics.DefaultCerbosViews...); err != nil {
+		return nil, fmt.Errorf("failed to register Cerbos views: %w", err)
+	}
+
+	registry, ok := prom.DefaultRegisterer.(*prom.Registry)
+	if !ok {
+		registry = nil
+	}
+
+	exporter, err := prometheus.NewExporter(prometheus.Options{Registry: registry})
+	if err != nil {
+		return nil, fmt.Errorf("failed to create Prometheus exporter: %w", err)
+	}
+
+	view.RegisterExporter(exporter)
+	view.SetReportingPeriod(metricsReportingInterval)
+
+	return exporter, nil
 }
