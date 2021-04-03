@@ -20,11 +20,11 @@ type ResourceRuleBuilder struct {
 	rule *policyv1.ResourceRule
 }
 
-func NewResourceRule(action string) *ResourceRuleBuilder {
+func NewResourceRule(actions ...string) *ResourceRuleBuilder {
 	return &ResourceRuleBuilder{
 		rule: &policyv1.ResourceRule{
-			Action: action,
-			Effect: sharedv1.Effect_EFFECT_ALLOW,
+			Actions: actions,
+			Effect:  sharedv1.Effect_EFFECT_ALLOW,
 		},
 	}
 }
@@ -114,25 +114,25 @@ func GenResourcePolicy(mod NameMod) *policyv1.Policy {
 				ImportDerivedRoles: []string{mod("my_derived_roles")},
 				Rules: []*policyv1.ResourceRule{
 					{
-						Action: "*",
-						Roles:  []string{"admin"},
-						Effect: sharedv1.Effect_EFFECT_ALLOW,
+						Actions: []string{"*"},
+						Roles:   []string{"admin"},
+						Effect:  sharedv1.Effect_EFFECT_ALLOW,
 					},
 
 					{
-						Action:       "create",
+						Actions:      []string{"create"},
 						DerivedRoles: []string{"employee_that_owns_the_record"},
 						Effect:       sharedv1.Effect_EFFECT_ALLOW,
 					},
 
 					{
-						Action:       "view:*",
+						Actions:      []string{"view:*"},
 						DerivedRoles: []string{"employee_that_owns_the_record", "direct_manager"},
 						Effect:       sharedv1.Effect_EFFECT_ALLOW,
 					},
 
 					{
-						Action:       "approve",
+						Actions:      []string{"approve"},
 						DerivedRoles: []string{"direct_manager"},
 						Effect:       sharedv1.Effect_EFFECT_ALLOW,
 						Condition: &policyv1.Computation{
@@ -355,4 +355,8 @@ func PrefixAndSuffix(prefix, suffix string) NameMod {
 	return func(name string) string {
 		return fmt.Sprintf("%s_%s_%s", prefix, name, suffix)
 	}
+}
+
+func NoMod() NameMod {
+	return func(name string) string { return name }
 }

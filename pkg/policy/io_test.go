@@ -11,7 +11,6 @@ import (
 	"google.golang.org/protobuf/testing/protocmp"
 
 	policyv1 "github.com/cerbos/cerbos/pkg/generated/policy/v1"
-	sharedv1 "github.com/cerbos/cerbos/pkg/generated/shared/v1"
 	"github.com/cerbos/cerbos/pkg/policy"
 	"github.com/cerbos/cerbos/pkg/test"
 )
@@ -28,32 +27,32 @@ func TestReadPolicy(t *testing.T) {
 		{
 			name:  "YAML ResourcePolicy",
 			input: filepath.Join(dir, "resource_policy_01.yaml"),
-			want:  mkResourcePolicy(),
+			want:  test.GenResourcePolicy(test.NoMod()),
 		},
 		{
 			name:  "JSON ResourcePolicy",
 			input: filepath.Join(dir, "resource_policy_01.json"),
-			want:  mkResourcePolicy(),
+			want:  test.GenResourcePolicy(test.NoMod()),
 		},
 		{
 			name:  "YAML PrincipalPolicy",
 			input: filepath.Join(dir, "principal_policy_01.yaml"),
-			want:  mkPrincipalPolicy(),
+			want:  test.GenPrincipalPolicy(test.NoMod()),
 		},
 		{
 			name:  "JSON PrincipalPolicy",
 			input: filepath.Join(dir, "principal_policy_01.json"),
-			want:  mkPrincipalPolicy(),
+			want:  test.GenPrincipalPolicy(test.NoMod()),
 		},
 		{
 			name:  "YAML DerivedRoles",
 			input: filepath.Join(dir, "derived_roles_01.yaml"),
-			want:  mkDerivedRoles(),
+			want:  test.GenDerivedRoles(test.NoMod()),
 		},
 		{
 			name:  "JSON DerivedRoles",
 			input: filepath.Join(dir, "derived_roles_01.json"),
-			want:  mkDerivedRoles(),
+			want:  test.GenDerivedRoles(test.NoMod()),
 		},
 	}
 
@@ -88,7 +87,7 @@ func TestValidate(t *testing.T) {
 		{
 			name: "type=ResourcePolicy;issue=BadAPIVersion",
 			input: func() validator {
-				obj := mkResourcePolicy()
+				obj := test.GenResourcePolicy(test.NoMod())
 				obj.ApiVersion = "something"
 				return obj
 			},
@@ -96,7 +95,7 @@ func TestValidate(t *testing.T) {
 		{
 			name: "type=ResourcePolicy;issue=BadResourceName",
 			input: func() validator {
-				obj := mkResourcePolicy()
+				obj := test.GenResourcePolicy(test.NoMod())
 				rp := obj.GetResourcePolicy()
 				rp.Resource = "a?;#"
 				obj.PolicyType = &policyv1.Policy_ResourcePolicy{ResourcePolicy: rp}
@@ -107,7 +106,7 @@ func TestValidate(t *testing.T) {
 		{
 			name: "type=ResourcePolicy;issue=EmptyResourceName",
 			input: func() validator {
-				obj := mkResourcePolicy()
+				obj := test.GenResourcePolicy(test.NoMod())
 				rp := obj.GetResourcePolicy()
 				rp.Resource = ""
 				obj.PolicyType = &policyv1.Policy_ResourcePolicy{ResourcePolicy: rp}
@@ -118,7 +117,7 @@ func TestValidate(t *testing.T) {
 		{
 			name: "type=ResourcePolicy;issue=NoResourceRules",
 			input: func() validator {
-				obj := mkResourcePolicy()
+				obj := test.GenResourcePolicy(test.NoMod())
 				rp := obj.GetResourcePolicy()
 				rp.Rules = nil
 				obj.PolicyType = &policyv1.Policy_ResourcePolicy{ResourcePolicy: rp}
@@ -129,7 +128,7 @@ func TestValidate(t *testing.T) {
 		{
 			name: "type=PrincipalPolicy;issue=BadAPIVersion",
 			input: func() validator {
-				obj := mkPrincipalPolicy()
+				obj := test.GenPrincipalPolicy(test.NoMod())
 				obj.ApiVersion = "something"
 				return obj
 			},
@@ -145,6 +144,7 @@ func TestValidate(t *testing.T) {
 	}
 }
 
+/*
 func mkResourcePolicy() *policyv1.Policy {
 	return &policyv1.Policy{
 		ApiVersion: "cerbos.dev/v1",
@@ -276,3 +276,4 @@ func mkDerivedRoles() *policyv1.Policy {
 		},
 	}
 }
+*/

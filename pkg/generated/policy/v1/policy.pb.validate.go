@@ -310,11 +310,27 @@ func (m *ResourceRule) Validate() error {
 		return nil
 	}
 
-	if utf8.RuneCountInString(m.GetAction()) < 1 {
-		return ResourceRuleValidationError{
-			field:  "Action",
-			reason: "value length must be at least 1 runes",
+	_ResourceRule_Actions_Unique := make(map[string]struct{}, len(m.GetActions()))
+
+	for idx, item := range m.GetActions() {
+		_, _ = idx, item
+
+		if _, exists := _ResourceRule_Actions_Unique[item]; exists {
+			return ResourceRuleValidationError{
+				field:  fmt.Sprintf("Actions[%v]", idx),
+				reason: "repeated value must contain unique items",
+			}
+		} else {
+			_ResourceRule_Actions_Unique[item] = struct{}{}
 		}
+
+		if utf8.RuneCountInString(item) < 1 {
+			return ResourceRuleValidationError{
+				field:  fmt.Sprintf("Actions[%v]", idx),
+				reason: "value length must be at least 1 runes",
+			}
+		}
+
 	}
 
 	_ResourceRule_DerivedRoles_Unique := make(map[string]struct{}, len(m.GetDerivedRoles()))

@@ -2,27 +2,27 @@
   "apiVersion": "cerbos.dev/v1",
   "resourcePolicy": {
     "resource": "leave_request",
-    "version": "20210210",
+    "version": "default",
     "importDerivedRoles": [
       "my_derived_roles"
     ],
     "rules": [
       {
-        "action": "*",
+        "actions": ["*"],
         "roles": [
           "admin"
         ],
         "effect": "EFFECT_ALLOW"
       },
       {
-        "action": "create",
+        "actions": ["create"],
         "derivedRoles": [
           "employee_that_owns_the_record"
         ],
         "effect": "EFFECT_ALLOW"
       },
       {
-        "action": "view:*",
+        "actions": ["view:*"],
         "derivedRoles": [
           "employee_that_owns_the_record",
           "direct_manager"
@@ -30,14 +30,14 @@
         "effect": "EFFECT_ALLOW"
       },
       {
-        "action": "approve",
+        "actions": ["approve"],
         "derivedRoles": [
           "direct_manager"
         ],
         "condition": {
           "match": {
             "expr": [
-              "$resource.attr.status == \"PENDING_APPROVAL\""
+              "request.resource.attr.status == \"PENDING_APPROVAL\""
             ]
           }
         },

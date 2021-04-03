@@ -10,7 +10,9 @@ effect = "allow" {
 }
 
 effect = "allow" {
-    glob.match("create", [":"], input.action)
+    actions_list := ["create", "edit"]
+    action_matches := [a | a := glob.match(actions_list[_], [":"], input.action)]
+    action_matches[_] == true
     derived_roles["employee_that_owns_the_record"] == true    
 }
 

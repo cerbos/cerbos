@@ -2,7 +2,7 @@
   "apiVersion":  "cerbos.dev/v1",
   "principalPolicy":  {
     "principal":  "donald_duck",
-    "version":  "20210210",
+    "version":  "default",
     "rules":  [
       {
         "resource":  "leave_request",
@@ -12,7 +12,7 @@
             "condition":  {
               "match":  {
                 "expr":  [
-                  "$resource.attr.dev_record == true"
+                  "request.resource.attr.dev_record == true"
                 ]
               }
             },

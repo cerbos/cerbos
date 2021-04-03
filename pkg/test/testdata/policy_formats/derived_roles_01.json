@@ -32,8 +32,8 @@
         "computation": {
           "match": {
             "expr": [
-              "$resource.attr.geography == $principal.attr.geography",
-              "$resource.attr.geography == $principal.attr.managed_geographies"
+              "request.resource.attr.geography == request.principal.attr.geography",
+              "request.resource.attr.geography == request.principal.attr.managed_geographies"
             ]
           }
         }

@@ -11,24 +11,24 @@ inputDefs:
         - beta
         - gamma
       rules:
-        - action: '*'
+        - actions: ['*']
           effect: EFFECT_ALLOW
           roles:
             - admin
-        - action: create
+        - actions: ["create"]
           derivedRoles:
             - employee_that_owns_the_record
           effect: EFFECT_ALLOW
-        - action: view:*
+        - actions: ["view:*"]
           derivedRoles:
             - employee_that_owns_the_record
             - direct_manager
           effect: EFFECT_ALLOW
-        - action: view:public
+        - actions: ["view:public"]
           derivedRoles:
             - any_employee
           effect: EFFECT_ALLOW
-        - action: approve
+        - actions: ["approve"]
           condition:
             match:
               expr:

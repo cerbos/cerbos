@@ -457,9 +457,9 @@ func modifyPolicy(p *policyv1.Policy) *policyv1.Policy {
 	switch pt := p.PolicyType.(type) {
 	case *policyv1.Policy_ResourcePolicy:
 		pt.ResourcePolicy.Rules = append(pt.ResourcePolicy.Rules, &policyv1.ResourceRule{
-			Action: "some_action",
-			Roles:  []string{"admin"},
-			Effect: sharedv1.Effect_EFFECT_ALLOW,
+			Actions: []string{"some_action"},
+			Roles:   []string{"admin"},
+			Effect:  sharedv1.Effect_EFFECT_ALLOW,
 		})
 
 		return p

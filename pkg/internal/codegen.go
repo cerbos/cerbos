@@ -130,10 +130,10 @@ func (rg *RegoGen) DefaultEffectNoMatch() {
 
 func (rg *RegoGen) AddResourceRule(rule *policyv1.ResourceRule) error {
 	rg.addEffectRuleHead(rule.Effect)
-	rg.addActionMatch(rule.Action)
+	rg.addActionsListMatch(rule.Actions)
 	rg.addDerivedRolesCheck(rule.DerivedRoles)
 	rg.addRolesCheck(rule.Roles)
-	if err := rg.addCondition(fmt.Sprintf("Action %s", rule.Action), rule.Condition); err != nil {
+	if err := rg.addCondition(fmt.Sprintf("Action [%s]", strings.Join(rule.Actions, "|")), rule.Condition); err != nil {
 		return err
 	}
 
@@ -206,6 +206,26 @@ func (rg *RegoGen) addResourceMatch(resource string) {
 	} else {
 		rg.line(`glob.match("`, resource, `", [":"], input.resource.name)`)
 	}
+}
+
+func (rg *RegoGen) addActionsListMatch(actions []string) {
+	// if there's a wildcard, the other action names are superfluous.
+	for _, act := range actions {
+		if act == "*" {
+			rg.addActionMatch(act)
+			return
+		}
+	}
+
+	if len(actions) == 1 {
+		rg.addActionMatch(actions[0])
+		return
+	}
+
+	actionsArr := strings.Join(actions, `", "`)
+	rg.line(`actions_list := ["`, actionsArr, `"]`)
+	rg.line(`action_matches := [a | a := glob.match(actions_list[_], [":"], input.action)]`)
+	rg.line(`action_matches[_] == true`)
 }
 
 func (rg *RegoGen) addActionMatch(action string) {
