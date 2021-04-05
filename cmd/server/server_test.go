@@ -18,13 +18,13 @@ import (
 	"google.golang.org/grpc/credentials/local"
 	"google.golang.org/protobuf/encoding/protojson"
 
-	"github.com/cerbos/cerbos/pkg/engine"
-	responsev1 "github.com/cerbos/cerbos/pkg/generated/response/v1"
-	sharedv1 "github.com/cerbos/cerbos/pkg/generated/shared/v1"
-	svcv1 "github.com/cerbos/cerbos/pkg/generated/svc/v1"
-	"github.com/cerbos/cerbos/pkg/storage/disk"
-	"github.com/cerbos/cerbos/pkg/svc"
-	"github.com/cerbos/cerbos/pkg/test"
+	"github.com/cerbos/cerbos/internal/engine"
+	responsev1 "github.com/cerbos/cerbos/internal/generated/response/v1"
+	sharedv1 "github.com/cerbos/cerbos/internal/generated/shared/v1"
+	svcv1 "github.com/cerbos/cerbos/internal/generated/svc/v1"
+	"github.com/cerbos/cerbos/internal/storage/disk"
+	"github.com/cerbos/cerbos/internal/svc"
+	"github.com/cerbos/cerbos/internal/test"
 )
 
 func TestServer(t *testing.T) {

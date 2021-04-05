@@ -16,4 +16,4 @@ tracing:
 storage:
   driver: "disk"
   disk:
-    directory: pkg/test/testdata/store
+    directory: internal/test/testdata/store
