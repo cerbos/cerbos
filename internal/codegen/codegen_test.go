@@ -10,9 +10,9 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/cerbos/cerbos/internal/codegen"
+	cerbosdevv1 "github.com/cerbos/cerbos/internal/genpb/cerbosdev/v1"
 	"github.com/cerbos/cerbos/internal/test"
 	"github.com/cerbos/cerbos/internal/util"
-	cerbosdevv1 "github.com/cerbos/cerbos/pkg/generated/cerbosdev/v1"
 )
 
 func TestGenerateCode(t *testing.T) {

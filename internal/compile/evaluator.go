@@ -10,7 +10,7 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/cerbos/cerbos/internal/codegen"
-	sharedv1 "github.com/cerbos/cerbos/internal/generated/shared/v1"
+	sharedv1 "github.com/cerbos/cerbos/internal/genpb/shared/v1"
 )
 
 const defaultEffect = sharedv1.Effect_EFFECT_DENY

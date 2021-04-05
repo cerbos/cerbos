@@ -16,8 +16,8 @@ import (
 
 	"github.com/cerbos/cerbos/internal/compile"
 	"github.com/cerbos/cerbos/internal/config"
-	requestv1 "github.com/cerbos/cerbos/internal/generated/request/v1"
-	sharedv1 "github.com/cerbos/cerbos/internal/generated/shared/v1"
+	requestv1 "github.com/cerbos/cerbos/internal/genpb/request/v1"
+	sharedv1 "github.com/cerbos/cerbos/internal/genpb/shared/v1"
 	"github.com/cerbos/cerbos/internal/namer"
 	"github.com/cerbos/cerbos/internal/observability/logging"
 	"github.com/cerbos/cerbos/internal/observability/metrics"

@@ -14,7 +14,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	policyv1 "github.com/cerbos/cerbos/internal/generated/policy/v1"
+	policyv1 "github.com/cerbos/cerbos/internal/genpb/policy/v1"
 	"github.com/cerbos/cerbos/internal/observability/logging"
 	"github.com/cerbos/cerbos/internal/policy"
 )

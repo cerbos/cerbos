@@ -11,10 +11,10 @@ import (
 	"google.golang.org/grpc/status"
 
 	"github.com/cerbos/cerbos/internal/engine"
-	requestv1 "github.com/cerbos/cerbos/internal/generated/request/v1"
-	responsev1 "github.com/cerbos/cerbos/internal/generated/response/v1"
-	sharedv1 "github.com/cerbos/cerbos/internal/generated/shared/v1"
-	svcv1 "github.com/cerbos/cerbos/internal/generated/svc/v1"
+	requestv1 "github.com/cerbos/cerbos/internal/genpb/request/v1"
+	responsev1 "github.com/cerbos/cerbos/internal/genpb/response/v1"
+	sharedv1 "github.com/cerbos/cerbos/internal/genpb/shared/v1"
+	svcv1 "github.com/cerbos/cerbos/internal/genpb/svc/v1"
 	"github.com/cerbos/cerbos/internal/observability/logging"
 )
 

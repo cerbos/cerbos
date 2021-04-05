@@ -5,7 +5,7 @@ package test
 import (
 	"google.golang.org/protobuf/types/known/structpb"
 
-	requestv1 "github.com/cerbos/cerbos/internal/generated/request/v1"
+	requestv1 "github.com/cerbos/cerbos/internal/genpb/request/v1"
 )
 
 func MkRequest() *requestv1.CheckRequest {

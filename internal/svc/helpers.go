@@ -1,7 +1,7 @@
 package svc
 
 import (
-	requestv1 "github.com/cerbos/cerbos/internal/generated/request/v1"
+	requestv1 "github.com/cerbos/cerbos/internal/genpb/request/v1"
 	"github.com/cerbos/cerbos/internal/util"
 )
 

@@ -6,7 +6,7 @@ import (
 	"github.com/google/cel-go/cel"
 	"github.com/open-policy-agent/opa/ast"
 
-	policyv1 "github.com/cerbos/cerbos/internal/generated/policy/v1"
+	policyv1 "github.com/cerbos/cerbos/internal/genpb/policy/v1"
 	"github.com/cerbos/cerbos/internal/namer"
 )
 

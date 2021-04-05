@@ -5,8 +5,8 @@ package test
 import (
 	"fmt"
 
-	policyv1 "github.com/cerbos/cerbos/internal/generated/policy/v1"
-	sharedv1 "github.com/cerbos/cerbos/internal/generated/shared/v1"
+	policyv1 "github.com/cerbos/cerbos/internal/genpb/policy/v1"
+	sharedv1 "github.com/cerbos/cerbos/internal/genpb/shared/v1"
 )
 
 type NameMod func(string) string

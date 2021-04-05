@@ -40,7 +40,7 @@ import (
 
 	"github.com/cerbos/cerbos/internal/config"
 	"github.com/cerbos/cerbos/internal/engine"
-	svcv1 "github.com/cerbos/cerbos/internal/generated/svc/v1"
+	svcv1 "github.com/cerbos/cerbos/internal/genpb/svc/v1"
 	"github.com/cerbos/cerbos/internal/observability/logging"
 	"github.com/cerbos/cerbos/internal/observability/metrics"
 	"github.com/cerbos/cerbos/internal/observability/tracing"

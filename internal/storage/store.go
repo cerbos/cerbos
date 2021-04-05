@@ -6,7 +6,7 @@ import (
 	"fmt"
 
 	"github.com/cerbos/cerbos/internal/compile"
-	policyv1 "github.com/cerbos/cerbos/internal/generated/policy/v1"
+	policyv1 "github.com/cerbos/cerbos/internal/genpb/policy/v1"
 	"github.com/cerbos/cerbos/internal/storage/disk"
 	"github.com/cerbos/cerbos/internal/storage/git"
 )

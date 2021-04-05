@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package shared.v1;
 
-option go_package = "github.com/cerbos/cerbos/internal/generated/shared/v1;sharedv1";
+option go_package = "github.com/cerbos/cerbos/internal/genpb/shared/v1;sharedv1";
 
 enum Effect {
     EFFECT_UNSPECIFIED = 0;

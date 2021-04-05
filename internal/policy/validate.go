@@ -3,7 +3,7 @@ package policy
 import (
 	"fmt"
 
-	policyv1 "github.com/cerbos/cerbos/internal/generated/policy/v1"
+	policyv1 "github.com/cerbos/cerbos/internal/genpb/policy/v1"
 )
 
 func Validate(p *policyv1.Policy) error {

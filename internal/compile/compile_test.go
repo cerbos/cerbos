@@ -12,12 +12,12 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/cerbos/cerbos/internal/compile"
-	policyv1 "github.com/cerbos/cerbos/internal/generated/policy/v1"
-	sharedv1 "github.com/cerbos/cerbos/internal/generated/shared/v1"
+	cerbosdevv1 "github.com/cerbos/cerbos/internal/genpb/cerbosdev/v1"
+	policyv1 "github.com/cerbos/cerbos/internal/genpb/policy/v1"
+	sharedv1 "github.com/cerbos/cerbos/internal/genpb/shared/v1"
 	"github.com/cerbos/cerbos/internal/namer"
 	"github.com/cerbos/cerbos/internal/test"
 	"github.com/cerbos/cerbos/internal/util"
-	cerbosdevv1 "github.com/cerbos/cerbos/pkg/generated/cerbosdev/v1"
 )
 
 const letterBytes = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"

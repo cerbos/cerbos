@@ -19,9 +19,9 @@ import (
 	"google.golang.org/protobuf/encoding/protojson"
 
 	"github.com/cerbos/cerbos/internal/engine"
-	responsev1 "github.com/cerbos/cerbos/internal/generated/response/v1"
-	sharedv1 "github.com/cerbos/cerbos/internal/generated/shared/v1"
-	svcv1 "github.com/cerbos/cerbos/internal/generated/svc/v1"
+	responsev1 "github.com/cerbos/cerbos/internal/genpb/response/v1"
+	sharedv1 "github.com/cerbos/cerbos/internal/genpb/shared/v1"
+	svcv1 "github.com/cerbos/cerbos/internal/genpb/svc/v1"
 	"github.com/cerbos/cerbos/internal/storage/disk"
 	"github.com/cerbos/cerbos/internal/svc"
 	"github.com/cerbos/cerbos/internal/test"

@@ -9,8 +9,8 @@ import (
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/types/known/structpb"
 
-	requestv1 "github.com/cerbos/cerbos/internal/generated/request/v1"
-	sharedv1 "github.com/cerbos/cerbos/internal/generated/shared/v1"
+	requestv1 "github.com/cerbos/cerbos/internal/genpb/request/v1"
+	sharedv1 "github.com/cerbos/cerbos/internal/genpb/shared/v1"
 	"github.com/cerbos/cerbos/internal/storage/disk"
 	"github.com/cerbos/cerbos/internal/test"
 )
