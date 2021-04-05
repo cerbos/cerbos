@@ -64,6 +64,21 @@ type Case struct {
 	Want  map[string][]byte
 }
 
+// LoadTestCases loads groups of test files from the given path.
+// Consider a directory containing the following set of files:
+// |- test01.yaml
+// |- test01.yaml.err
+// |- test01.yaml.out
+//
+// The above files will be converted to a Case object as follows:
+// Case {
+//   Name: "test01",
+//   Input: <contents_of_test01.yaml>,
+//   Want: map[string][]byte{
+//     "err": <contents_of_test01.yaml.err>,
+//     "out": <contents_of_test01.yaml.out>,
+//   }
+// }.
 func LoadTestCases(t *testing.T, subDir string) []Case {
 	t.Helper()
 

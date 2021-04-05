@@ -1,6 +1,7 @@
 package compile_test
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
 	"math/rand"
@@ -8,16 +9,15 @@ import (
 	"time"
 	"unsafe"
 
-	"github.com/ghodss/yaml"
 	"github.com/stretchr/testify/require"
-	"google.golang.org/protobuf/encoding/protojson"
 
 	"github.com/cerbos/cerbos/internal/compile"
 	policyv1 "github.com/cerbos/cerbos/internal/generated/policy/v1"
 	sharedv1 "github.com/cerbos/cerbos/internal/generated/shared/v1"
-	testv1 "github.com/cerbos/cerbos/internal/generated/test/v1"
 	"github.com/cerbos/cerbos/internal/namer"
 	"github.com/cerbos/cerbos/internal/test"
+	"github.com/cerbos/cerbos/internal/util"
+	cerbosdevv1 "github.com/cerbos/cerbos/pkg/generated/cerbosdev/v1"
 )
 
 const letterBytes = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
@@ -57,19 +57,16 @@ func TestCompile(t *testing.T) {
 	}
 }
 
-func readTestCase(t *testing.T, data []byte) *testv1.CompileTestCase {
+func readTestCase(t *testing.T, data []byte) *cerbosdevv1.CompileTestCase {
 	t.Helper()
 
-	jsonBytes, err := yaml.YAMLToJSON(data)
-	require.NoError(t, err)
-
-	tc := &testv1.CompileTestCase{}
-	require.NoError(t, protojson.Unmarshal(jsonBytes, tc))
+	tc := &cerbosdevv1.CompileTestCase{}
+	require.NoError(t, util.ReadJSONOrYAML(bytes.NewReader(data), tc))
 
 	return tc
 }
 
-func mkInputChan(t *testing.T, tc *testv1.CompileTestCase) chan *compile.Unit {
+func mkInputChan(t *testing.T, tc *cerbosdevv1.CompileTestCase) chan *compile.Unit {
 	t.Helper()
 
 	p := &compile.Unit{

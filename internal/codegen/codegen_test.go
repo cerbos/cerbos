@@ -2,7 +2,6 @@ package codegen_test
 
 import (
 	"bytes"
-	"strconv"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -11,39 +10,44 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/cerbos/cerbos/internal/codegen"
-	"github.com/cerbos/cerbos/internal/policy"
 	"github.com/cerbos/cerbos/internal/test"
+	"github.com/cerbos/cerbos/internal/util"
+	cerbosdevv1 "github.com/cerbos/cerbos/pkg/generated/cerbosdev/v1"
 )
 
 func TestGenerateCode(t *testing.T) {
 	testCases := test.LoadTestCases(t, "codegen")
 
-	for _, tc := range testCases {
-		tc := tc
-		t.Run(tc.Name, func(t *testing.T) {
-			p, err := policy.ReadPolicy(bytes.NewReader(tc.Input))
-			require.NoError(t, err, "Failed to read policy")
+	for _, tcase := range testCases {
+		tcase := tcase
+		t.Run(tcase.Name, func(t *testing.T) {
+			tc := readTestCase(t, tcase.Input)
 
-			have, err := codegen.GenerateCode(p)
+			have, err := codegen.GenerateCode(tc.InputPolicy)
 
-			if _, ok := tc.Want["err"]; ok {
+			if tc.WantError {
 				require.Error(t, err)
+
+				return
 			}
 
 			require.NoError(t, err)
 
-			if b, ok := tc.Want["rego"]; ok {
-				want := loadRegoModule(t, b)
-				compareRegoModules(t, want, have.Module)
-			}
+			want := loadRegoModule(t, []byte(tc.WantRego))
+			compareRegoModules(t, want, have.Module)
 
-			if b, ok := tc.Want["cond"]; ok {
-				want, err := strconv.Atoi(string(bytes.TrimSpace(b)))
-				require.NoError(t, err)
-				require.Equal(t, want, len(have.Conditions))
-			}
+			require.EqualValues(t, tc.WantNumConditions, len(have.Conditions))
 		})
 	}
+}
+
+func readTestCase(t *testing.T, data []byte) *cerbosdevv1.CodeGenTestCase {
+	t.Helper()
+
+	tc := &cerbosdevv1.CodeGenTestCase{}
+	require.NoError(t, util.ReadJSONOrYAML(bytes.NewReader(data), tc))
+
+	return tc
 }
 
 func loadRegoModule(t *testing.T, contents []byte) *ast.Module {

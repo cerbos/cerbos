@@ -196,7 +196,7 @@ func (rg *RegoGen) AddPrincipalRule(rule *policyv1.PrincipalRule) error {
 		rg.addEffectRuleHead(action.Effect)
 		rg.addResourceMatch(rule.Resource)
 		rg.addActionMatch(action.Action)
-		if err := rg.addCondition(fmt.Sprintf("Action %s", action.Action), action.Condition); err != nil {
+		if err := rg.addCondition(fmt.Sprintf("Action [%s]", action.Action), action.Condition); err != nil {
 			return err
 		}
 
@@ -259,13 +259,21 @@ func (rg *RegoGen) addCondition(parent string, cond *policyv1.Computation) error
 	if cond != nil {
 		switch comp := cond.Computation.(type) {
 		case *policyv1.Computation_Script:
-			rg.line(comp.Script)
+			return rg.addScript(parent, comp.Script)
 		case *policyv1.Computation_Match:
-			if err := rg.addMatch(parent, comp.Match); err != nil {
-				return err
-			}
+			return rg.addMatch(parent, comp.Match)
 		}
 	}
+
+	return nil
+}
+
+func (rg *RegoGen) addScript(parent, script string) error {
+	if _, err := ast.ParseBody(script); err != nil {
+		return fmt.Errorf("failed to parse script for %s: %w", parent, err)
+	}
+
+	rg.line(script)
 
 	return nil
 }
