@@ -9,7 +9,7 @@ engine:
 storage:
   driver: "disk"
   disk:
-    directory: pkg/test/testdata/store
+    directory: internal/test/testdata/store
   git:
     protocol: file
     url: file://${HOME}/tmp/ava/source

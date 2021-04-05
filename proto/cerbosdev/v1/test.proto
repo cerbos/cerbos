@@ -1,0 +1,23 @@
+syntax = "proto3";
+
+package cerbosdev.v1;
+
+option go_package = "github.com/cerbos/cerbos/internal/genpb/cerbosdev/v1;cerbosdevv1";
+
+import "shared/v1/shared.proto";
+import "policy/v1/policy.proto";
+
+message CompileTestCase {
+    string main_def = 1;
+    map<string, policy.v1.Policy> input_defs = 2;
+    repeated string want_errors = 3;
+}
+
+message CodeGenTestCase {
+    policy.v1.Policy input_policy = 1;
+    bool want_error = 2;
+    string want_rego = 3;
+    int32 want_num_conditions = 4;
+}
+
+

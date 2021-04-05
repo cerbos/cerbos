@@ -1,0 +1,14 @@
+---
+inputPolicy:
+  apiVersion: "cerbos.dev/v1"
+  derived_roles:
+    name: my_derived_roles
+    definitions:
+      - name: direct_manager
+        parentRoles: ["manager"]
+        computation:
+          match:
+            expr:
+              - "$.resource.attr.geography == request.principal.attr.geography"
+
+wantError: true

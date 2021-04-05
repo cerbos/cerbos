@@ -1,0 +1,34 @@
+{
+  "apiVersion":  "cerbos.dev/v1",
+  "principalPolicy":  {
+    "principal":  "donald_duck",
+    "version":  "default",
+    "rules":  [
+      {
+        "resource":  "leave_request",
+        "actions":  [
+          {
+            "action":  "*",
+            "condition":  {
+              "match":  {
+                "expr":  [
+                  "request.resource.attr.dev_record == true"
+                ]
+              }
+            },
+            "effect":  "EFFECT_ALLOW"
+          }
+        ]
+      },
+      {
+        "resource":  "salary_record",
+        "actions":  [
+          {
+            "action":  "*",
+            "effect":  "EFFECT_DENY"
+          }
+        ]
+      }
+    ]
+  }
+}

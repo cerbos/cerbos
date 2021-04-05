@@ -7,7 +7,7 @@ import (
 
 	"github.com/cerbos/cerbos/cmd/compile"
 	"github.com/cerbos/cerbos/cmd/server"
-	"github.com/cerbos/cerbos/pkg/util"
+	"github.com/cerbos/cerbos/internal/util"
 )
 
 func main() {

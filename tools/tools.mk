@@ -19,7 +19,7 @@ VALIDATE_DIR := $(VENDOR_DIR)/validate
 VALIDATE_PROTO := $(VALIDATE_DIR)/validate.proto
 VALIDATE_VERSION := 0.4.1
 
-GEN_DIR := pkg/generated
+GEN_DIR := internal/genpb
 MOCK_DIR := pkg/test/mocks
 
 define BUF_GEN_TEMPLATE

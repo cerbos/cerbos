@@ -4,7 +4,7 @@ include tools/tools.mk
 include hack/dev/dev.mk
 
 .PHONY: all
-all: clean generate lint test build
+all: clean build
 
 .PHONY: clean
 clean:
@@ -40,7 +40,7 @@ coverage:
 	@ hack/scripts/cover.sh
 
 .PHONY: build
-build: $(GORELEASER)
+build: $(GORELEASER) generate lint test
 	@ $(GORELEASER) --config=.goreleaser-dev.yml --snapshot --skip-publish --rm-dist
 
 .PHONY: run

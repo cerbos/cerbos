@@ -1,0 +1,104 @@
+---
+inputPolicy:
+  apiVersion: cerbos.dev/v1
+  resourcePolicy:
+    version: "20210210"
+    importDerivedRoles:
+      - my_derived_roles
+    resource: "hr:leave_request"
+    rules:
+      - actions: ['*']
+        effect: EFFECT_ALLOW
+        roles:
+          - admin
+      - actions: ["create", "edit", "view:*"]
+        effect: EFFECT_ALLOW
+        roles:
+          - hr_operators
+          - legal
+      - actions: ["*", "create", "edit", "view:*"]
+        effect: EFFECT_ALLOW
+        roles:
+          - super_user
+        derivedRoles:
+          - god
+      - actions: ["create", "edit"]
+        derivedRoles:
+          - employee_that_owns_the_record
+        effect: EFFECT_ALLOW
+      - actions: ["view:*"]
+        derivedRoles:
+          - employee_that_owns_the_record
+          - direct_manager
+        effect: EFFECT_ALLOW
+      - actions: ["view:public"]
+        derivedRoles:
+          - any_employee
+        effect: EFFECT_ALLOW
+      - actions: ["approve"]
+        condition:
+          match:
+            expr:
+              - request.resource.attr.status == "PENDING_APPROVAL"
+              - |-
+                "test" in request.resource.attr.geographies
+        derivedRoles:
+          - direct_manager
+        effect: EFFECT_ALLOW
+wantRego: |-
+  package cerbos.resource.hr_leave_request.v20210210
+
+  import data.cerbos.derived_roles.my_derived_roles.derived_roles
+
+  default effect = "deny"
+
+  effect = "allow" {
+      glob.match("*", [], input.action)
+      input.principal.roles[_] == "admin"    
+  }
+
+  effect = "allow" {
+      actions_list := ["create", "edit", "view:*"]
+      action_matches := [a | a := glob.match(actions_list[_], [":"], input.action)]
+      action_matches[_] == true
+      allowed_roles := {"hr_operators", "legal"}
+      allowed_roles[_] == input.principal.roles[_]
+  }
+
+  effect = "allow" {
+      glob.match("*", [], input.action)
+      input.principal.roles[_] == "super_user"
+  }
+
+  effect = "allow" {
+      glob.match("*", [], input.action)
+      derived_roles["god"] == true
+  }
+
+  effect = "allow" {
+      actions_list := ["create", "edit"]
+      action_matches := [a | a := glob.match(actions_list[_], [":"], input.action)]
+      action_matches[_] == true
+      derived_roles["employee_that_owns_the_record"] == true    
+  }
+
+  effect = "allow" {
+    glob.match("view:*", [":"], input.action)
+      allowed_roles := {"employee_that_owns_the_record", "direct_manager"}
+      some dr
+      derived_roles[dr] == true
+      allowed_roles[_] == dr     
+  }
+
+  effect = "allow" {
+      glob.match("view:public", [":"], input.action)
+      derived_roles["any_employee"] == true    
+  }
+
+  effect = "allow" {
+      glob.match("approve", [":"], input.action)
+      derived_roles["direct_manager"] == true    
+      cel_eval(input, "cerbos.resource.hr_leave_request.v20210210", "cond_0")
+  }
+
+wantNumConditions: 1

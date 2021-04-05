@@ -38,14 +38,14 @@ import (
 	"google.golang.org/grpc/reflection"
 	"google.golang.org/grpc/status"
 
-	"github.com/cerbos/cerbos/pkg/config"
-	"github.com/cerbos/cerbos/pkg/engine"
-	svcv1 "github.com/cerbos/cerbos/pkg/generated/svc/v1"
-	"github.com/cerbos/cerbos/pkg/observability/logging"
-	"github.com/cerbos/cerbos/pkg/observability/metrics"
-	"github.com/cerbos/cerbos/pkg/observability/tracing"
-	"github.com/cerbos/cerbos/pkg/storage"
-	"github.com/cerbos/cerbos/pkg/svc"
+	"github.com/cerbos/cerbos/internal/config"
+	"github.com/cerbos/cerbos/internal/engine"
+	svcv1 "github.com/cerbos/cerbos/internal/genpb/svc/v1"
+	"github.com/cerbos/cerbos/internal/observability/logging"
+	"github.com/cerbos/cerbos/internal/observability/metrics"
+	"github.com/cerbos/cerbos/internal/observability/tracing"
+	"github.com/cerbos/cerbos/internal/storage"
+	"github.com/cerbos/cerbos/internal/svc"
 )
 
 type serverArgs struct {
