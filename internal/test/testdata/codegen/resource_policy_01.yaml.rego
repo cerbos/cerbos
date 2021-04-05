@@ -10,6 +10,24 @@ effect = "allow" {
 }
 
 effect = "allow" {
+    actions_list := ["create", "edit", "view:*"]
+    action_matches := [a | a := glob.match(actions_list[_], [":"], input.action)]
+    action_matches[_] == true
+    allowed_roles := {"hr_operators", "legal"}
+    allowed_roles[_] == input.principal.roles[_]
+}
+
+effect = "allow" {
+    glob.match("*", [], input.action)
+    input.principal.roles[_] == "super_user"
+}
+
+effect = "allow" {
+    glob.match("*", [], input.action)
+    derived_roles["god"] == true
+}
+
+effect = "allow" {
     actions_list := ["create", "edit"]
     action_matches := [a | a := glob.match(actions_list[_], [":"], input.action)]
     action_matches[_] == true

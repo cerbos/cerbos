@@ -26,7 +26,7 @@ const (
 	noMatchVal      = `"no_match"`
 )
 
-var ErrCompileError = errors.New("code generation error")
+var ErrCodeGenFailure = errors.New("code generation error")
 
 // CELCompileError holds CEL compilation errors.
 type CELCompileError struct {
@@ -104,7 +104,7 @@ func (rg *RegoGen) AddDerivedRole(dr *policyv1.RoleDef) error {
 
 func (rg *RegoGen) addParentRolesCheck(roleList []string) error {
 	if len(roleList) == 0 {
-		return fmt.Errorf("parentRoles must contain at least one element: %w", ErrCompileError)
+		return fmt.Errorf("parentRoles must contain at least one element: %w", ErrCodeGenFailure)
 	}
 
 	if len(roleList) == 1 {
@@ -129,10 +129,29 @@ func (rg *RegoGen) DefaultEffectNoMatch() {
 }
 
 func (rg *RegoGen) AddResourceRule(rule *policyv1.ResourceRule) error {
+	numRoles := len(rule.Roles)
+	numDerivedRoles := len(rule.DerivedRoles)
+
+	switch {
+	case numRoles > 0 && numDerivedRoles > 0:
+		if err := rg.doAddResourceRule(rule, func() { rg.addRolesCheck(rule.Roles) }); err != nil {
+			return err
+		}
+
+		return rg.doAddResourceRule(rule, func() { rg.addDerivedRolesCheck(rule.DerivedRoles) })
+	case numRoles > 0:
+		return rg.doAddResourceRule(rule, func() { rg.addRolesCheck(rule.Roles) })
+	case numDerivedRoles > 0:
+		return rg.doAddResourceRule(rule, func() { rg.addDerivedRolesCheck(rule.DerivedRoles) })
+	default:
+		return fmt.Errorf("action [%s] does not define any roles or derivedRoles to match: %w", strings.Join(rule.Actions, "|"), ErrCodeGenFailure)
+	}
+}
+
+func (rg *RegoGen) doAddResourceRule(rule *policyv1.ResourceRule, membershipFn func()) error {
 	rg.addEffectRuleHead(rule.Effect)
 	rg.addActionsListMatch(rule.Actions)
-	rg.addDerivedRolesCheck(rule.DerivedRoles)
-	rg.addRolesCheck(rule.Roles)
+	membershipFn()
 	if err := rg.addCondition(fmt.Sprintf("Action [%s]", strings.Join(rule.Actions, "|")), rule.Condition); err != nil {
 		return err
 	}
