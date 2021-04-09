@@ -41,3 +41,6 @@ changelog:
     exclude:
       - '^docs:'
       - '^test:'
+release:
+  extra_files:
+    - glob: ./docs/build/cerbos_docs.zip

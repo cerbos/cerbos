@@ -1,3 +1,5 @@
+include::partial$attributes.adoc[]
+
 = Installation
 
 You can run the application using the binaries or the container image.
@@ -43,35 +45,7 @@ docker pull {app-docker-img}
 
 === Starting the server
 
-The server is configured with a YAML file. 
-
-[source,yaml,linenums]
-----
----
-server:
-  httpListenAddr: ":3592"
-
-storage:
-  driver: "disk" # Valid values are "disk" or "git"
-  disk: # Only required if "driver" is "disk"
-    directory: pkg/test/testdata/store
-    readOnly: true # Set to false if you want to write new policies to disk through the API
-  git: # Only required if the "driver" is "git"
-    protocol: file # Valid values are "file", "ssh", "https"
-    url: file://${HOME}/tmp/cerbos/policies 
-    branch: policies # Branch that should be used as the source. Defaults to "master"
-    subDir: policies # Set this if the policies are stored in a subdirectory
-    checkoutDir: ${HOME}/tmp/cerbos/work # Work directory of the server
-    updatePollInterval: 60s # How often the source git repo should be polled for updates
-    https: # Only required if the "protocol" is "https"
-      username: charithe
-      password: ${GITHUB_TOKEN}
-    ssh: # Only required if the "protocol" is "ssh"
-      user: git
-      privateKeyFile: ${HOME}/.ssh/id_rsa
-----
-
-Start the server by passing the configuration file using the `--config` flag.
+The server is configured with a YAML file that is passed using the `--config` flag. See xref:configuration.adoc[Configuration] for more information about available configuration options.
 
 .Using the binary
 [source,sh,subs="attributes"]

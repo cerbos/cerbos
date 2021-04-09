@@ -38,6 +38,10 @@ jobs:
       - name: Test
         run: make test
 
+      - name: Generate docs
+        uses: ./.github/actions/antora-docs
+        id: docs
+
   golangci:
     name: Lint
     runs-on: ubuntu-latest

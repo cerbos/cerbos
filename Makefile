@@ -1,4 +1,5 @@
 DOCKER := docker
+DOCS_OUT_DIR := docs/build
 
 include tools/tools.mk
 include hack/dev/dev.mk
@@ -10,6 +11,7 @@ all: clean build
 clean:
 	@-rm -rf $(GEN_DIR)
 	@-rm -rf $(MOCK_DIR)
+	@-rm -rf $(DOCS_OUT_DIR)
 
 .PHONY: clean-tools
 clean-tools:
@@ -49,6 +51,6 @@ run:
 
 .PHONY: docs
 docs:
-	 @ $(DOCKER) run --rm -v $(shell pwd)/docs:/documents/ asciidoctor/docker-asciidoctor asciidoctor index.adoc
-	 @ $(DOCKER) run --rm -v $(shell pwd)/docs:/documents/ asciidoctor/docker-asciidoctor asciidoctor-pdf index.adoc
+	@ docs/build.sh
+	@ xdg-open $(DOCS_OUT_DIR)/Cerbos/index.html
 

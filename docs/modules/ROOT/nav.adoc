@@ -1,0 +1,7 @@
+xref:index.adoc[Cerbos]
+
+.Docs
+* xref:introduction.adoc[Introduction]
+* xref:quickstart.adoc[Quickstart]
+* xref:installation.adoc[Installation]
+* xref:configuration.adoc[Configuration]

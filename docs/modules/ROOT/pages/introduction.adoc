@@ -1,8 +1,20 @@
+include::partial$attributes.adoc[]
+
 = Introduction
 
-Marketing speak here.
+Cerbos is typically deployed as a standalone service or a sidecar. The the API can be accessed using REST or gRPC. For added security, Cerbos can serve both APIs on Unix domain sockets as well. The server can be configured to watch a git repository containing Cerbos policies and automatically update itself as new commits are added. 
 
-== Policies
+.Cerbos workflow
+* Author <<intro-cerbos-policies, Cerbos policies>>.
+* Compile and validate the policies using the Cerbos CLI.
+* Submit a pull-request to the policy repo. The policy repo can a central git repository shared by everybody in your organization or a subdirectory in your application itself.
+* Optionaly, let your CI system run the Cerbos compilation stage automatically.
+* Follow your process to push the change to "production".
+* Cerbos server will automatically pull the latest commit from the production branch and update itself. Subsequent requests to the server will use the latest version of the policies.
+
+
+[[intro-cerbos-policies]]
+== Cerbos Policies
 
 There are three kinds of policies.
 
@@ -53,12 +65,12 @@ resourcePolicy:
     - apatr_common_roles <2>
   resource: "album:object"  <3>
   rules:
-    - action: '*' <4>
+    - actions: ['*'] <4>
       effect: EFFECT_ALLOW
       derivedRoles:
         - owner <5>
 
-    - action: view
+    - actions: ['view']
       effect: EFFECT_ALLOW
       roles:
         - user <6>
@@ -67,12 +79,7 @@ resourcePolicy:
           expr:
             - request.resource.attr.public == true
 
-    - action: view
-      effect: EFFECT_ALLOW
-      derivedRoles:
-        - abuse_moderator
-
-    - action: delete
+    - actions: ['view', 'delete']
       effect: EFFECT_ALLOW
       derivedRoles:
         - abuse_moderator
@@ -116,6 +123,9 @@ principalPolicy:
 
 == Request format
 
+
+A typical REST request to the Cerbos API resembles the following.
+
 [source,json,linenums]
 ----
 {
@@ -144,7 +154,7 @@ principalPolicy:
 ----
 <1> Request ID can be anything that uniquely identifies a request
 <2> Action being performed on the resource
-<3> Resource policy version that should be used. Optional.
+<3> Resource policy version that should be used. Optional. 
 <4> Resource name
 <5> Free-form context data about this resource
 <6> ID of the principal performing the action
