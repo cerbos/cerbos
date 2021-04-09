@@ -1,0 +1,32 @@
+include::ROOT:partial$attributes.adoc[]
+
+= Tracing block
+
+Cerbos supports distributed tracing to provide insights into application performance and request lifecycle. To enable tracing, set `sampleProbability` to a value between 0.0 and 1.0. Setting the probability to 1.0 makes Cerbos capture tracing information for all requests and setting it to 0.0 disables capturing any traces. 
+
+The system to export the trace data must be specified using the `exporter` setting. Currently only link:https://www.jaegertracing.io[Jaeger] is supported. 
+
+== Jaeger
+
+.Send trace data to Jaeger exporter
+[source,yaml,linenums]
+----
+tracing:
+  sampleProbability: 0.5
+  exporter: jaeger
+  jaeger: 
+    serviceName: cerbos 
+    agentEndpoint: "localhost:6831" 
+----
+
+.Send trace data to Jaeger collector
+[source,yaml,linenums]
+----
+tracing:
+  sampleProbability: 0.5
+  exporter: jaeger
+  jaeger: 
+    serviceName: cerbos 
+    collectorEndpoint: "http://localhost:14268"
+----
+

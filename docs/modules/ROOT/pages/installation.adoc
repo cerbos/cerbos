@@ -45,7 +45,7 @@ docker pull {app-docker-img}
 
 === Starting the server
 
-The server is configured with a YAML file that is passed using the `--config` flag. See xref:configuration.adoc[Configuration] for more information about available configuration options.
+The server is configured with a YAML file that is passed using the `--config` flag. See xref:configuration:index.adoc[Configuration] for more information about available configuration options.
 
 .Using the binary
 [source,sh,subs="attributes"]

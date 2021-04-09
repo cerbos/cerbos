@@ -1,0 +1,55 @@
+include::ROOT:partial$attributes.adoc[]
+
+[[configuration]]
+= Configuration
+
+The Cerbos server is configured with a YAML file. Start the server by passing the configuration file using the `--config` flag. 
+
+NOTE: Config values can reference environment variables by enclosing them between `${}`. E.g. `$$${HOME}$$`. 
+
+
+.Cerbos configuration file
+[source,yaml,linenums]
+----
+---
+server:
+  httpListenAddr: ":3592" 
+  grpcListenAddr: ":3593"
+  metricsEnabled: true # Set to false to disable the /_cerbos/metrics endpoint
+  tls: # Optional
+    cert: /path/to/certificate
+    key: /path/to/private_key
+    caCert: /path/to/CA_certificate # Optional
+
+engine: # Optional
+  defaultPolicyVersion: "default" # Default policy version to assume if the request does not specify one.
+
+tracing: # Optional
+  sampleProbability: 0.1 # Sampling probability value between 0.0 and 1.0
+  exporter: jaeger # Trace exporter to use. Currently only Jaeger is supported
+  jaeger: # Required only if exporter is "jaeger"
+    serviceName: cerbos # Optional service name to report to Jaeger. Defaults to cerbos.
+    agentEndpoint: "localhost:6831" # Export to Jaeger agent. Takes precedence if both "agentEndpoint" and "collectorEndpoint" are defined. 
+    collectorEndpoint: "http://localhost:14268" # Export to Jaeger collector.
+
+storage:
+  driver: "disk" # Valid values are "disk" or "git"
+  disk: # Only required if "driver" is "disk"
+    directory: pkg/test/testdata/store
+    readOnly: true 
+  git: # Only required if the "driver" is "git"
+    protocol: file # Valid values are "file", "ssh", "https"
+    url: file://${HOME}/tmp/cerbos/policies 
+    branch: policies # Branch that should be used as the source. Defaults to "master"
+    subDir: policies # Set this if the policies are stored in a subdirectory
+    checkoutDir: ${HOME}/tmp/cerbos/work # Work directory of the server
+    updatePollInterval: 60s # How often the source git repo should be polled for updates
+    https: # Only required if the "protocol" is "https"
+      username: cerbos
+      password: ${GITHUB_TOKEN}
+    ssh: # Only required if the "protocol" is "ssh"
+      user: git
+      privateKeyFile: ${HOME}/.ssh/id_rsa
+----
+
+

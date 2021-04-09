@@ -49,7 +49,9 @@ storage:
 ----
 
 
-== Server configuration
+== Server block
+
+=== Listen addresses
 
 By default the server will start an HTTP server on port `3592` and a gRPC server on `3593` that will listen on all available interfaces. You can change these defaults and optionally configure TLS using the `server` block.
 
@@ -69,7 +71,6 @@ server:
   grpcListenAddr: "192.168.0.17:3593"
 ----
 
-
 .Listen on a Unix domain socket
 [source,yaml,linenums]
 ----
@@ -77,6 +78,10 @@ server:
   httpListenAddr: "unix:/var/sock/cerbos.http" 
   grpcListenAddr: "unix:/var/sock/cerbos.grpc"
 ----
+
+=== Metrics 
+
+By default, Prometheus metrics are available from the `/_cerbos/metrics` HTTP endpoint. If you wish to disable metrics reporting, set `metricsEnabled` to `false`.
 
 === Transport layer security
 
@@ -93,3 +98,42 @@ server:
 ----
 
 NOTE: For production use cases that require automatic certificate reloading, workload identities and other advanced features, we recommend running a proxy server such as link:https://www.envoyproxy.io[Envoy], link:https://github.com/ghostunnel/ghostunnel[Ghostunnel] or link:https://traefik.io[Traefik] in front of the Cerbos server. 
+
+
+== Engine block
+
+=== Default policy version
+
+When <<intro-cerbos-policies,authoring Cerbos policies>> you can optionally specify a policy `version`. The purpose of the `version` field is to support use cases such as having different policies for different environments (production, staging etc.) or for gradual rollout of a new version of an application. By default, when a request does not explicitly specify the policy version, the Cerbos engine attempts to find a matching policy that has its version set to `default`. You can change the fallback version by setting the `defaultPolicyVersion`. For example, if you have a Cerbos deployment for your staging environment, you may want to set `defaultPolicyVersion: staging` to ensure that the default policies in effect are the ones versioned as `staging`.
+
+
+== Tracing block
+
+Cerbos supports distributed tracing. To enable tracing, set `sampleProbability` to a value between 0.0 and 1.0. Setting the probability to 1.0 makes Cerbos capture tracing information for all requests and setting it to 0.0 disables capturing any traces. 
+
+The system to export the trace data must be specified using the `exporter` setting. Currently only link:https://www.jaegertracing.io[Jaeger] is supported. 
+
+=== Jaeger
+
+.Send trace data to Jaeger exporter
+[source,yaml,linenums]
+----
+jaeger: 
+  serviceName: cerbos 
+  agentEndpoint: "localhost:6831" 
+----
+
+.Send trace data to Jaeger collector
+[source,yaml,linenums]
+----
+jaeger: 
+  serviceName: cerbos 
+  collectorEndpoint: "http://localhost:14268"
+----
+
+
+== Storage block
+
+The storage section defines how Cerbos accesses the set of access policies to make authorization decisions. The `driver` setting is used to determine the storage driver to use. Currently the supported driver values are `disk` and `git`.
+
+
