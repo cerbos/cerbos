@@ -2,4 +2,9 @@ xref:index.adoc[Cerbos]
 
 .Getting started
 * xref:quickstart.adoc[Quickstart]
-* xref:installation.adoc[Installation]
+* Installation
+** xref:installation/binary.adoc[Binaries]
+** xref:installation/container.adoc[Container]
+** Helm chart
+** CNAB
+* xref:usage.adoc[Usage]

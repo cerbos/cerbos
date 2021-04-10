@@ -12,5 +12,5 @@ VERSION="$1"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 echo "Prepping for release of $VERSION"
-sed -E "s#app\-version: [0-9]+\.[0-9]+\.[0-9]+.*#app-version: $VERSION#" "${SCRIPT_DIR}/../../docs/antora-playbook.yml"
-#git tag "v${VERSION}" -m "v${VERSION}"
+sed -i -E "s#app\-version: \"[0-9]+\.[0-9]+\.[0-9]+.*\"#app-version: \"$VERSION\"#" "${SCRIPT_DIR}/../../docs/antora-playbook.yml"
+git tag "v${VERSION}" -m "v${VERSION}"

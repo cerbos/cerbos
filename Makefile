@@ -52,5 +52,5 @@ run:
 .PHONY: docs
 docs:
 	@ docs/build.sh
-	@ xdg-open $(DOCS_OUT_DIR)/Cerbos/index.html
+	@ xdg-open $(DOCS_OUT_DIR)/cerbos/index.html
 

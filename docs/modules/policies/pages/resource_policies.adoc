@@ -31,10 +31,10 @@ resourcePolicy:
       derivedRoles:
         - abuse_moderator
 ----
-<1> Version of this policy. Policies are uniquely identified by the resource name and version pair. You can have multiple policy versions for the same resource (e.g. production vs. staging). `default` version is special as it is the fallback when no version is specified.
+<1> Version of this policy. Policies are uniquely identified by the resource name and version pair. You can have multiple policy versions for the same resource (e.g. production vs. staging). The version value `default` is special as it is the default fallback when no version is specified in the request.
 <2> Import a set of derived roles.
 <3> Name of the resource to which this policy applies.
-<4> Actions can contain wildcards. Wildcards honour the `:` delimiter. E.g. `a:*:d` would match `a:x:d` but not `a:x`.
+<4> Actions can contain wildcards. Wildcards honour the ``:`` delimiter. E.g. ``a:*:d`` would match ``a:x:d`` but not ``a:x``.
 <5> This rule applies to a derived role.
 <6> Rules can also refer directly to static roles.
 

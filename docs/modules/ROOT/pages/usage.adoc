@@ -1,49 +1,8 @@
 include::partial$attributes.adoc[]
 
-= Installation
+= Usage
 
-You can run the application using the binaries or the container image.
-
-== Binaries
-
-Download the appropriate bundle for your platform from {app-url}/releases/tag/v{app-version}.
-
-For example, to download the binaries for MacOS, issue the following command:
-
-[source,sh,subs="attributes"]
-----
-# Can't cURL yet because the repo is private
-# curl -L -o {app-name}.tar.gz {app-url}/releases/download/v{app-version}/{app-name}_{app-version}_Darwin_x86_64.tar.gz
-tar xvf {app-name}.tar.gz
-chmod +x {app-name}
-----
-
-Add the binary to your `$PATH`.
-
-== Container image
-
-.Logging into the container registry
-****
-
-* Create a Personal Access Token (PAT)
-** Click GitHub profile icon and go to `Settings > Developer Settings > Personal Access Tokens`
-** Create a new token with the `read:packages` scope
-* Use the token to login to container registry +
-[source,sh]
-----
-echo YOUR_PAT | docker login ghcr.io -u YOUR_USERNAME --password-stdin
-----
-****
-
-[source,sh,subs="attributes"]
-----
-docker pull {app-docker-img}
-----
-
-
-== Usage
-
-=== Starting the server
+== Starting the server
 
 The server is configured with a YAML file that is passed using the `--config` flag. See xref:configuration:index.adoc[Configuration] for more information about available configuration options.
 
@@ -62,7 +21,7 @@ docker run -i -t -p 3592:3592 \
     server --config=/config/conf.yaml
 ----
 
-=== Compiling and testing policies
+== Compiling and testing policies
 
 After authoring your policies you should run the compiler over the files to make sure they are valid. If you have policy tests they can be executed at this time as well.
 
