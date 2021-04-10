@@ -5,7 +5,7 @@ include::ROOT:partial$attributes.adoc[]
 [source,yaml,linenums]
 ----
 ---
-apiVersion: cerbos.dev/v1
+apiVersion: api.cerbos.dev/v1
 resourcePolicy:
   version: "default" <1>
   importDerivedRoles:

@@ -23,7 +23,7 @@ Add some policies to the git repository.
 ----
 cat > git-repo/policies/derived_roles_common.yaml <<EOF
 ---
-apiVersion: "cerbos.dev/v1"
+apiVersion: "api.cerbos.dev/v1"
 description: |-
   Common dynamic roles used within the Apatr app
 derived_roles:
@@ -42,7 +42,7 @@ EOF
 ----
 cat > git-repo/policies/resource_album.yaml <<EOF
 ---
-apiVersion: cerbos.dev/v1
+apiVersion: api.cerbos.dev/v1
 resourcePolicy:
   version: "default"
   importDerivedRoles:
@@ -168,7 +168,7 @@ Now let's edit the policy to allow users to view public albums.
 ----
 cat > git-repo/policies/resource_album.yaml <<EOF
 ---
-apiVersion: cerbos.dev/v1
+apiVersion: api.cerbos.dev/v1
 resourcePolicy:
   version: "default"
   importDerivedRoles:

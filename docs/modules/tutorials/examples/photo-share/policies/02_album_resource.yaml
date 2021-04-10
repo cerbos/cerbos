@@ -1,5 +1,5 @@
 ---
-apiVersion: cerbos.dev/v1
+apiVersion: api.cerbos.dev/v1
 resourcePolicy:
   version: "default"
   importDerivedRoles:
