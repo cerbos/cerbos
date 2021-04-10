@@ -5,7 +5,7 @@ include::ROOT:partial$attributes.adoc[]
 [source,yaml,linenums]
 ----
 ---
-apiVersion: "cerbos.dev/v1"
+apiVersion: "api.cerbos.dev/v1"
 principalPolicy:
   principal: daffy_duck <1>
   version: "dev" <2>

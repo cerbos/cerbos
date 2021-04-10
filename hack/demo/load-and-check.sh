@@ -22,7 +22,7 @@ exit 1
 log "Adding derived roles"
 cat <<"EOF" | curl -i -XPUT "$POLICY_URL" --data-binary @-
 ---
-apiVersion: "cerbos.dev/v1"
+apiVersion: "api.cerbos.dev/v1"
 derived_roles:
   name: my_derived_roles
   definitions:
@@ -53,7 +53,7 @@ EOF
 log "Adding resource policy"
 cat <<"EOF" | curl -i -XPUT "$POLICY_URL" --data-binary @-
 ---
-apiVersion: cerbos.dev/v1
+apiVersion: api.cerbos.dev/v1
 resourcePolicy:
   importDerivedRoles:
   - my_derived_roles
@@ -90,7 +90,7 @@ EOF
 log "Adding principal policy"
 cat <<"EOF" | curl -i -XPUT "$POLICY_URL" --data-binary @-
 ---
-apiVersion: "cerbos.dev/v1"
+apiVersion: "api.cerbos.dev/v1"
 principalPolicy:
   principal: donald_duck
   version: "20210210"

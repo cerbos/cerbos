@@ -9,7 +9,7 @@ import "request/v1/request.proto";
 import "validate/validate.proto";
 
 message Policy {
-    string api_version = 1 [(validate.rules).string.const = "cerbos.dev/v1"];
+    string api_version = 1 [(validate.rules).string.const = "api.cerbos.dev/v1"];
     bool disabled = 2;
     string description = 3;
     oneof policy_type {

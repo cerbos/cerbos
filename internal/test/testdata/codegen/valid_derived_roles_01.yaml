@@ -1,6 +1,6 @@
 ---
 inputPolicy:
-  apiVersion: "cerbos.dev/v1"
+  apiVersion: "api.cerbos.dev/v1"
   derived_roles:
     name: my_derived_roles
     definitions:

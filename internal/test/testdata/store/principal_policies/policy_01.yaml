@@ -1,5 +1,5 @@
 ---
-apiVersion: "cerbos.dev/v1"
+apiVersion: "api.cerbos.dev/v1"
 principalPolicy:
   principal: donald_duck
   version: "20210210"

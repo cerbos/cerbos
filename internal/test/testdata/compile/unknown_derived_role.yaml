@@ -4,7 +4,7 @@ wantErrors:
 mainDef: "resource_policies/leave_request_20210210.yaml"
 inputDefs:
   "resource_policies/leave_request_20210210.yaml":
-    apiVersion: cerbos.dev/v1
+    apiVersion: api.cerbos.dev/v1
     resourcePolicy:
       resource: leave_request
       version: "20210210"
@@ -40,7 +40,7 @@ inputDefs:
           effect: EFFECT_ALLOW
 
   "derived_roles/alpha.yaml":
-    apiVersion: "cerbos.dev/v1"
+    apiVersion: "api.cerbos.dev/v1"
     derived_roles:
       name: alpha
       definitions:
@@ -54,7 +54,7 @@ inputDefs:
               input.resource.attr.owner == input.principal.id
 
   "derived_roles/beta.yaml":
-    apiVersion: "cerbos.dev/v1"
+    apiVersion: "api.cerbos.dev/v1"
     derived_roles:
       name: beta
       definitions:
@@ -62,7 +62,7 @@ inputDefs:
           parentRoles: ["employee"]
 
   "derived_roles/gamma.yaml":
-    apiVersion: "cerbos.dev/v1"
+    apiVersion: "api.cerbos.dev/v1"
     derived_roles:
       name: gamma
       definitions:

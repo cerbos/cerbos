@@ -1,6 +1,6 @@
 ---
 inputPolicy:
-  apiVersion: "cerbos.dev/v1"
+  apiVersion: "api.cerbos.dev/v1"
   principalPolicy:
     principal: daffy_duck
     version: "20210210"
