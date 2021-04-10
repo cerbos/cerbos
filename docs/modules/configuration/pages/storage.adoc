@@ -14,7 +14,7 @@ NOTE: The `disk` driver does not support detecting updates to the policy files. 
 [source,yaml,linenums]
 ----
 storage:
-  driver: 
+  driver: disk
   disk: 
     directory: /etc/cerbos/policies
 ----

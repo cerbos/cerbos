@@ -1,5 +1,6 @@
 ---
-name: Cerbos
+name: cerbos
+title: Cerbos
 version: master
 nav:
   - modules/ROOT/nav.adoc

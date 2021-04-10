@@ -4,9 +4,9 @@ include::ROOT:partial$attributes.adoc[]
 
 There are three kinds of Cerbos policies:
 
-Derived roles:: Traditional RBAC roles are usually broad groupings with no context awareness. Derived roles are a way of augmenting those broad roles with contextual data to provide more fine-grained control at runtime. For example, a person with the broad `manager` role can be augmented to `manager_of_scranton_branch` by taking into account the geographic location (or another factor) and giving that derived role bearer extra privileges on resources that belong to the Scranton branch. 
-Resource policies:: Defines rules for actions that can be performed on a given resource. A resource is an application-specific concept that applies to anything that requires access rules. For example, in an HR application, a resource can be as coarse-grained as a full employee record or as fine-grained as a single field in the record. 
-Principal policies:: Defines overrides for a specific user. 
+xref:derived_roles.adoc[Derived roles]:: Traditional RBAC roles are usually broad groupings with no context awareness. Derived roles are a way of augmenting those broad roles with contextual data to provide more fine-grained control at runtime. For example, a person with the broad `manager` role can be augmented to `manager_of_scranton_branch` by taking into account the geographic location (or another factor) and giving that derived role bearer extra privileges on resources that belong to the Scranton branch. 
+xref:resource_policies.adoc[Resource policies]:: Defines rules for actions that can be performed on a given resource. A resource is an application-specific concept that applies to anything that requires access rules. For example, in an HR application, a resource can be as coarse-grained as a full employee record or as fine-grained as a single field in the record. 
+xref:principal_policies.adoc[Principal policies]:: Defines overrides for a specific user. 
 
 
 Policies are evaluated based on the metadata passed in the request to the Cerbos PDP. 
@@ -46,4 +46,34 @@ Policies are evaluated based on the metadata passed in the request to the Cerbos
 <7> Principal policy version. Optional. The server falls back to the xref:configuration:engine.adoc[configured default version] if this is not specified.
 <8> Static roles that are assigned to this principal by your authentication system. Required.
 <9> Free-form context data about this principal. Policy rule conditions are evaluated based on these values.
+
+== Policy authoring tips
+
+* Policies can be in either YAML or JSON formats. Accepted file extensions are `.yml`, `.yaml` or `.json`. Any other extensions will be ignored.
+* The policy header is common for all policy types:
+** `apiVersion`: Required. Must be `cerbos.dev/v1`.
+** `description`: Optional. Description of the policy.
+** `disabled`: Optional. Set to `true` to make the Cerbos engine ignore this policy file.
+* Resource names, actions, and principal names can be hierarchical. Use `:` as the delimiter. E.g. `app:component:resource`.
+* Wildcard matches are allowed on certain fields. Wildcards respect the hierarchy delimiter `:`.
+* When conditions are defined using a `match.expr` block, the each expression line is joined using the `AND` operator. 
++
+[source,yaml]
+----
+condition:
+  match:
+   expr:
+    - request.resource.attr.dev_record == true
+    - request.resource.attr.environment == "STG"
+----
++
+The above condition block is equivalent to the following:
++
+[source,yaml]
+----
+condition:
+  match:
+   expr:
+    - request.resource.attr.dev_record == true && request.resource.attr.environment == "STG"
+----
 

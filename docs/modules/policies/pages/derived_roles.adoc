@@ -13,10 +13,10 @@ derived_roles:
   definitions:
     - name: owner <2>
       parentRoles: ["user"] <3>
-      computation:
+      computation: <4>
         match:
           expr:
-            - request.resource.attr.owner == request.principal.id <4>
+            - request.resource.attr.owner == request.principal.id 
 
     - name: abuse_moderator
       parentRoles: ["moderator"]
@@ -25,8 +25,8 @@ derived_roles:
           expr:
             - request.resource.attr.flagged == true
 ----
-<1> Name to use when importing this set of derived roles
-<2> Descriptive name for this derived role
-<3> The static roles (from the identity provider) to which this derived role applies to
-<4> An (optional) set of expressions that should evaluate to true for this role to activate
+<1> Name to use when importing this set of derived roles.
+<2> Descriptive name for this derived role.
+<3> The static roles (from the identity provider) to which this derived role applies to.
+<4> An (optional) set of expressions that should evaluate to true for this role to activate.
 

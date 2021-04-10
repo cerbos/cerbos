@@ -12,8 +12,8 @@ principalPolicy:
   rules:
     - resource: leave_request <3>
       actions:
-        - action: "*"
-          condition:
+        - action: "*" <4>
+          condition: <5>
             match:
               expr:
                 - "request.resource.attr.dev_record == true"
@@ -24,7 +24,9 @@ principalPolicy:
         - action: "*"
           effect: EFFECT_DENY
 ----
-<1> Principal to whom this policy applies
+<1> Principal to whom this policy applies.
 <2> Version of this policy. Policies are uniquely identified by the principal name and version pair. You can have multiple policy versions for the same principal (e.g. production vs. staging). `default` version is special as it is the fallback when no version is specified.
-<3> Resource to which this override applies
+<3> Resource to which this override applies. Wildcards are supported here.
+<4> Actions that can be performed on the resource. Wildcards are supported here.
+<5> Optional conditions required to match this rule.
 
