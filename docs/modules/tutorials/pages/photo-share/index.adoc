@@ -1,4 +1,4 @@
-:source-highlighter: rouge
+include::ROOT:partial$attributes.adoc[]
 
 [#tutorial-photo-share]
 = Tutorial: Writing policies for a simple photo-sharing service
@@ -17,7 +17,7 @@ docker pull {app-docker-img}
 
 [source,yaml]
 ----
-include::config.yaml[]
+include::example$photo-share/config.yaml[]
 ----
 
 * Create a directory named `policies` to hold the policies. 
@@ -145,7 +145,7 @@ Run the compiler to make sure that the contents of the file are valid.
 
 [source,shell,subs="attributes"]
 ----
-docker run -it -v $(pwd):/photo-share {docker_image} \
+docker run -it -v $(pwd):/photo-share {app-docker-img} \
     compile /photo-share/policies
 ----
 
@@ -164,12 +164,12 @@ resourcePolicy:
     - apatr_common_roles <2>
   resource: "album:object" 
   rules:
-    - action: '*'
+    - actions: ['*']
       effect: EFFECT_ALLOW
       derivedRoles:
         - owner
 
-    - action: view
+    - actions: ['view', 'flag']
       effect: EFFECT_ALLOW
       roles:
         - user
@@ -178,24 +178,10 @@ resourcePolicy:
           expr:
             - request.resource.attr.public == true
 
-    - action: view
+    - actions: ['view', 'delete']
       effect: EFFECT_ALLOW
       derivedRoles:
         - abuse_moderator
-
-    - action: delete
-      effect: EFFECT_ALLOW
-      derivedRoles:
-        - abuse_moderator
-
-    - action: flag
-      effect: EFFECT_ALLOW
-      roles:
-        - user
-      condition:
-        match:
-          expr:
-            - request.resource.attr.public == true
 ----
 <1> You can have multiple policy versions for the same resource (e.g. production vs. staging). If the request does not explicitly specify the version, the `default` policy takes effect.
 <2> Import the roles we defined earlier
@@ -206,14 +192,14 @@ Run the compiler to make sure that the contents of the policies directory are va
 
 [source,shell,subs="attributes"]
 ----
-docker run -it -v $(pwd):/photo-share {docker_image} compile /photo-share/policies
+docker run -it -v $(pwd):/photo-share {app-docker-img} compile /photo-share/policies
 ----
 
 Let's start the server and try out a request.
 
 [source,shell,subs="attributes"]
 ----
-docker run -it -v $(pwd):/photo-share -p 3592:3592 {docker_image} \
+docker run -it -v $(pwd):/photo-share -p 3592:3592 {app-docker-img} \
     server --config=/photo-share/config.yaml
 ----
 
@@ -256,14 +242,14 @@ Create a new directory named `tests` and create a file named `album_object_tests
 
 [source,yaml,linenums]
 ----
-include::tests/album_object_tests.yaml[]
+include::example$photo-share/tests/album_object_tests.yaml[]
 ----
 
 Now run the compiler, pointing it to the `tests` directory.
 
 [source,shell,subs="attributes"]
 ----
-docker run -it -v $(pwd):/photo-share {docker_image} \
+docker run -it -v $(pwd):/photo-share {app-docker-img} \
     compile --tests=/photo-share/tests /photo-share/policies
 ----
 

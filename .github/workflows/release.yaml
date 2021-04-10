@@ -43,6 +43,10 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-go-
 
+      - name: Generate docs
+        uses: ./.github/actions/antora-docs
+        id: docs
+
       - name: GoReleaser
         uses: goreleaser/goreleaser-action@v2
         with:

@@ -1,3 +1,5 @@
+include::partial$attributes.adoc[]
+
 = Quickstart
 
 Create the directory structure. 
@@ -47,7 +49,7 @@ resourcePolicy:
     - common_roles
   resource: "album:object"
   rules:
-    - action: '*'
+    - actions: ['*']
       effect: EFFECT_ALLOW
       derivedRoles:
         - owner
@@ -72,12 +74,11 @@ git -C git-repo commit -m 'First commit'
 
 Create the config file for the server.
 
-[source,sh,subs="attributes"]
+[source,sh,subs="attributes,+macros"]
 ----
-cat > conf.yaml <<EOF
----
+cat $$>$$ conf.yaml $$<<$$EOF
 server:
-  httoListenAddr: ":3592"
+  httpListenAddr: ":3592"
 
 storage:
   driver: "git"
@@ -174,12 +175,12 @@ resourcePolicy:
     - common_roles
   resource: "album:object"
   rules:
-    - action: '*'
+    - actions: ['*']
       effect: EFFECT_ALLOW
       derivedRoles:
         - owner
 
-    - action: view
+    - actions: ['view']
       effect: EFFECT_ALLOW
       roles:
         - user

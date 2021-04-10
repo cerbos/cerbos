@@ -1,8 +1,14 @@
+include::ROOT:partial$attributes.adoc[]
+
 [[configuration]]
 = Configuration
 
-The Cerbos server is configured with a YAML file. Start the server by passing the configuration file using the `--config` flag.
+The Cerbos server is configured with a YAML file. Start the server by passing the configuration file using the `--config` flag. 
 
+NOTE: Config values can reference environment variables by enclosing them between `${}`. E.g. `$$${HOME}$$`. 
+
+
+.Cerbos configuration file
 [source,yaml,linenums]
 ----
 ---
@@ -47,47 +53,3 @@ storage:
 ----
 
 
-== Server configuration
-
-By default the server will start an HTTP server on port `3592` and a gRPC server on `3593` that will listen on all available interfaces. You can change these defaults and optionally configure TLS using the `server` block.
-
-.Default behaviour: listen on all available interfaces
-[source,yaml,linenums]
-----
-server:
-  httpListenAddr: ":3592" 
-  grpcListenAddr: ":3593"
-----
-
-.Listen on a specific interface
-[source,yaml,linenums]
-----
-server:
-  httpListenAddr: "192.168.0.17:3592" 
-  grpcListenAddr: "192.168.0.17:3593"
-----
-
-
-.Listen on a Unix domain socket
-[source,yaml,linenums]
-----
-server:
-  httpListenAddr: "unix:/var/sock/cerbos.http" 
-  grpcListenAddr: "unix:/var/sock/cerbos.grpc"
-----
-
-=== Transport layer security
-
-You can enable transport layer security (TLS) by defining the paths to the certificate and key file in the `TLS` section.
-
-[source,yaml,linenums]
-----
-server:
-  httpListenAddr: ":3592" 
-  grpcListenAddr: ":3593"
-  tls: 
-    cert: /path/to/certificate
-    key: /path/to/private_key
-----
-
-NOTE: For production use cases that require automatic certificate reloading, workload identities and other advanced features, we recommend running a proxy server such as link:https://www.envoyproxy.io[Envoy], link:https://github.com/ghostunnel/ghostunnel[Ghostunnel] or link:https://traefik.io[Traefik] in front of the Cerbos server. 

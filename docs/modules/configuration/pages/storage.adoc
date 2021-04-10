@@ -1,0 +1,80 @@
+include::ROOT:partial$attributes.adoc[]
+
+= Storage block
+
+Cerbos policies can be read from a directory on disk or a git repository. Which storage driver to use is defined by the `driver` setting.
+
+== Disk driver
+
+The disk driver is a way to serve the policies from a directory on the filesystem. Any `.yaml`, `.yml` or `.json` files in the directory tree rooted at the given path will be read and parsed as policies.
+
+NOTE: The `disk` driver does not support detecting updates to the policy files. The server must be restarted to pick up any new changes made to policies after they were loaded.
+
+
+[source,yaml,linenums]
+----
+storage:
+  driver: disk
+  disk: 
+    directory: /etc/cerbos/policies
+----
+
+
+== Git driver
+
+Git is the preferred method of storing Cerbos policies. The server is smart enough to detect when new commits are made to the git repository and refresh its state based on the changes.
+
+* Git repositories can be local (`file` protocol) or remote (`ssh` or `https`). 
+* If no `branch` is specified, the default branch would be the `master` branch. 
+* If no `subDir` is specified, the entire repository would be scanned for policies (`.yaml`, `.yml` or `.json`).
+* The `checkoutDir` is the working directory of the server and must be writable by the server process.
+* If `updatePollInterval` is set to 0, the source repository will not be polled to pick up any new commits.
+* If `operationTimeout` is not specified, the default timeout for git operations is 60 seconds.
+
+
+.Local git repository
+[source,yaml,linenums]
+----
+storage:
+  driver: "git" 
+  git: 
+    protocol: file 
+    url: file://${HOME}/tmp/cerbos/policies 
+    checkoutDir: ${HOME}/tmp/cerbos/work 
+    updatePollInterval: 10s 
+----
+
+.Remote git repository accessed over HTTPS
+[source,yaml,linenums]
+----
+storage:
+  driver: "git" 
+  git:
+    protocol: https
+    url: https://github.com/cerbos/policy-test.git
+    branch: main
+    subDir: policies
+    checkoutDir: ${HOME}/tmp/work/policies
+    updatePollInterval: 60s
+    operationTimeout: 30s
+    https:
+      username: cerbos
+      password: ${GITHUB_TOKEN}
+----
+
+.Remote git repository accessed over SSH
+[source,yaml,linenums]
+----
+storage:
+  driver: "git" 
+  git: 
+    protocol: ssh 
+    url: ssh://github.com:cerbos/policy-test.git
+    branch: main
+    subDir: policies
+    checkoutDir: ${HOME}/tmp/cerbos/work 
+    updatePollInterval: 60s 
+    ssh: 
+      user: git
+      privateKeyFile: ${HOME}/.ssh/id_rsa
+----

@@ -1,0 +1,40 @@
+include::ROOT:partial$attributes.adoc[]
+
+= Resource policies
+
+[source,yaml,linenums]
+----
+---
+apiVersion: cerbos.dev/v1
+resourcePolicy:
+  version: "default" <1>
+  importDerivedRoles:
+    - apatr_common_roles <2>
+  resource: "album:object"  <3>
+  rules:
+    - actions: ['*'] <4>
+      effect: EFFECT_ALLOW
+      derivedRoles:
+        - owner <5>
+
+    - actions: ['view']
+      effect: EFFECT_ALLOW
+      roles:
+        - user <6>
+      condition:
+        match:
+          expr:
+            - request.resource.attr.public == true
+
+    - actions: ['view', 'delete']
+      effect: EFFECT_ALLOW
+      derivedRoles:
+        - abuse_moderator
+----
+<1> Version of this policy. Policies are uniquely identified by the resource name and version pair. You can have multiple policy versions for the same resource (e.g. production vs. staging). The version value `default` is special as it is the default fallback when no version is specified in the request.
+<2> Import a set of derived roles.
+<3> Name of the resource to which this policy applies.
+<4> Actions can contain wildcards. Wildcards honour the ``:`` delimiter. E.g. ``a:*:d`` would match ``a:x:d`` but not ``a:x``.
+<5> This rule applies to a derived role.
+<6> Rules can also refer directly to static roles.
+

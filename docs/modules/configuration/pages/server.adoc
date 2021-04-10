@@ -1,0 +1,55 @@
+include::ROOT:partial$attributes.adoc[]
+
+= Server block
+
+== Listen addresses
+
+By default the server will start an HTTP server on port `3592` and a gRPC server on `3593` that will listen on all available interfaces. 
+
+.Listen on all available interfaces (default)
+[source,yaml,linenums]
+----
+server:
+  httpListenAddr: ":3592" 
+  grpcListenAddr: ":3593"
+----
+
+.Listen on a specific interface
+[source,yaml,linenums]
+----
+server:
+  httpListenAddr: "192.168.0.17:3592" 
+  grpcListenAddr: "192.168.0.17:3593"
+----
+
+.Listen on a Unix domain socket
+[source,yaml,linenums]
+----
+server:
+  httpListenAddr: "unix:/var/sock/cerbos.http" 
+  grpcListenAddr: "unix:/var/sock/cerbos.grpc"
+----
+
+== Metrics 
+
+By default, Prometheus metrics are available to scrape from the `/_cerbos/metrics` HTTP endpoint. If you want to disable metrics reporting, set `metricsEnabled` to `false`.
+
+[source,yaml,linenums]
+----
+server:
+  metricsEnabled: false
+----
+
+== Transport layer security (TLS)
+
+You can enable transport layer security (TLS) by defining the paths to the certificate and key file in the `TLS` section.
+
+[source,yaml,linenums]
+----
+server:
+  tls: 
+    cert: /path/to/certificate
+    key: /path/to/private_key
+----
+
+NOTE: For production use cases that require automatic certificate reloading, workload identities and other advanced features, we recommend running a proxy server such as link:https://www.envoyproxy.io[Envoy], link:https://github.com/ghostunnel/ghostunnel[Ghostunnel] or link:https://traefik.io[Traefik] in front of the Cerbos server. 

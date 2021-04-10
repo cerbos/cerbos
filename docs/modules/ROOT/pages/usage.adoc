@@ -1,0 +1,45 @@
+include::partial$attributes.adoc[]
+
+= Usage
+
+== Starting the server
+
+The server is configured with a YAML file that is passed using the `--config` flag. See xref:configuration:index.adoc[Configuration] for more information about available configuration options.
+
+.Using the binary
+[source,sh,subs="attributes"]
+----
+./{app-name} server --config=/path/to/config.yaml
+----
+
+.Using Docker
+[source,sh,subs="attributes"]
+----
+docker run -i -t -p 3592:3592 \
+    -v /path/to/conf/dir:/config \
+    {app-docker-img} \
+    server --config=/config/conf.yaml
+----
+
+== Compiling and testing policies
+
+After authoring your policies you should run the compiler over the files to make sure they are valid. If you have policy tests they can be executed at this time as well.
+
+.Using the binary
+[source,sh,subs="attributes"]
+----
+./{app-name} compile /path/to/policies/dir
+
+# To run tests, provide the path to the tests directory
+./{app-name} compile --tests=/path/to/tests /path/to/policies/dir
+----
+
+.Using Docker
+[source,sh,subs="attributes"]
+----
+docker run -i -t \
+    -v /path/to/policy/dir:/policies \ 
+    -v /path/to/test/dir:/tests \ 
+    {app-docker-img} \
+    compile --tests=/tests /policies
+----

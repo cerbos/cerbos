@@ -6,12 +6,12 @@ resourcePolicy:
     - apatr_common_roles
   resource: "album:object"
   rules:
-    - action: '*'
+    - actions: ['*']
       effect: EFFECT_ALLOW
       derivedRoles:
         - owner
 
-    - action: view
+    - actions: ['view', 'flag']
       effect: EFFECT_ALLOW
       roles:
         - user
@@ -20,21 +20,7 @@ resourcePolicy:
           expr:
             - request.resource.attr.public == true
 
-    - action: view
+    - actions: ['view', 'delete']
       effect: EFFECT_ALLOW
       derivedRoles:
         - abuse_moderator
-
-    - action: delete
-      effect: EFFECT_ALLOW
-      derivedRoles:
-        - abuse_moderator
-
-    - action: flag
-      effect: EFFECT_ALLOW
-      roles:
-        - user
-      condition:
-        match:
-          expr:
-            - request.resource.attr.public == true

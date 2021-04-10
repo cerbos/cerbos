@@ -1,4 +1,0 @@
-include::introduction.adoc[]
-include::installation.adoc[]
-include::quickstart.adoc[]
-include::configuration.adoc[]

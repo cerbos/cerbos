@@ -1,0 +1,17 @@
+include::partial$attributes.adoc[]
+
+= Install from binary
+
+Download the appropriate bundle for your platform from {app-url}/releases/tag/v{app-version}.
+
+For example, to download the binaries for MacOS, issue the following command:
+
+[source,sh,subs="attributes"]
+----
+# Can't cURL yet because the repo is private
+# curl -L -o {app-name}.tar.gz {app-url}/releases/download/v{app-version}/{app-name}_{app-version}_Darwin_x86_64.tar.gz
+tar xvf {app-name}.tar.gz
+chmod +x {app-name}
+----
+
+Add the binary to your `$PATH`.

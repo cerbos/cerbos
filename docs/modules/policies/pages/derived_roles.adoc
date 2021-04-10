@@ -1,0 +1,32 @@
+include::ROOT:partial$attributes.adoc[]
+
+= Derived roles
+
+[source,yaml,linenums]
+----
+---
+apiVersion: "cerbos.dev/v1"
+description: |-
+  Common dynamic roles used within the Apatr app
+derived_roles:
+  name: apatr_common_roles <1>
+  definitions:
+    - name: owner <2>
+      parentRoles: ["user"] <3>
+      computation: <4>
+        match:
+          expr:
+            - request.resource.attr.owner == request.principal.id 
+
+    - name: abuse_moderator
+      parentRoles: ["moderator"]
+      computation:
+        match:
+          expr:
+            - request.resource.attr.flagged == true
+----
+<1> Name to use when importing this set of derived roles.
+<2> Descriptive name for this derived role.
+<3> The static roles (from the identity provider) to which this derived role applies to.
+<4> An (optional) set of expressions that should evaluate to true for this role to activate.
+
