@@ -54,7 +54,7 @@ func TestServer(t *testing.T) {
 			tlsConf := &tls.Config{InsecureSkipVerify: true} //nolint:gosec
 			testGRPCRequest(t, conf.GRPCListenAddr, grpc.WithTransportCredentials(credentials.NewTLS(tlsConf)))
 			testGRPCRequest(t, conf.HTTPListenAddr, grpc.WithTransportCredentials(credentials.NewTLS(tlsConf))) // Cheeky gRPC on HTTPS port
-			testHTTPRequest(t, fmt.Sprintf("https://%s/v1/check", conf.HTTPListenAddr))
+			testHTTPRequest(t, fmt.Sprintf("https://%s/api/check", conf.HTTPListenAddr))
 		})
 
 		t.Run("uds", func(t *testing.T) {
@@ -93,7 +93,7 @@ func TestServer(t *testing.T) {
 			startServer(ctx, conf, cerbosSvc)
 
 			testGRPCRequest(t, conf.GRPCListenAddr, grpc.WithTransportCredentials(local.NewCredentials()))
-			testHTTPRequest(t, fmt.Sprintf("http://%s/v1/check", conf.HTTPListenAddr))
+			testHTTPRequest(t, fmt.Sprintf("http://%s/api/check", conf.HTTPListenAddr))
 		})
 
 		t.Run("uds", func(t *testing.T) {

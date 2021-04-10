@@ -103,7 +103,7 @@ Send a request as the owner. It should be allowed by the policy.
 
 [source,shell,linenums,highlight=2..20]
 ----
-cat <<EOF | curl --silent "localhost:3592/v1/check" -d @-
+cat <<EOF | curl --silent "localhost:3592/api/check" -d @-
 {
   "requestId":  "test01",
   "action":  "view",
@@ -135,7 +135,7 @@ Send a request as someone else. It should be denied by the policy.
 
 [source,shell,linenums,highlight=2..20]
 ----
-cat <<EOF | curl --silent "localhost:3592/v1/check" -d @-
+cat <<EOF | curl --silent "localhost:3592/api/check" -d @-
 {
   "requestId":  "test02",
   "action":  "view",
@@ -216,7 +216,7 @@ Now send the request again. It should be allowed by the updated policy.
 
 [source,shell,linenums,highlight=2..20]
 ----
-cat <<EOF | curl --silent "localhost:3592/v1/check" -d @-
+cat <<EOF | curl --silent "localhost:3592/api/check" -d @-
 {
   "requestId":  "test03",
   "action":  "view",

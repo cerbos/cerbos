@@ -207,7 +207,7 @@ docker run -it -v $(pwd):/photo-share -p 3592:3592 {app-docker-img} \
 .Alicia trying to view her own album
 [source,shell,linenums,highlight=2..20]
 ----
-cat <<EOF | curl --silent "localhost:3592/v1/check" -d @-
+cat <<EOF | curl --silent "localhost:3592/api/check" -d @-
 {
   "requestId":  "test01",
   "action":  "view",
