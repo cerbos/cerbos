@@ -13,7 +13,7 @@ import "google/protobuf/empty.proto";
 service CerbosService {
     rpc Check(request.v1.CheckRequest) returns (response.v1.CheckResponse) {
         option (google.api.http) = {
-            post: "/v1/check",
+            post: "/api/check",
             body: "*"
         };
     }

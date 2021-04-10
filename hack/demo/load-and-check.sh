@@ -3,7 +3,7 @@
 set -euo pipefail
 
 SERVER=http://localhost:9999
-CHECK_URL="${SERVER}/v1/check"
+CHECK_URL="${SERVER}/api/check"
 POLICY_URL="${SERVER}/v1/admin/policy"
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"

@@ -62,11 +62,11 @@ check-grpc-insecure: protoset $(GRPCURL)
 
 .PHONY: check-http
 check-http:
-	@ curl -i -k https://localhost:$(HTTP_PORT)/v1/check -d '$(REQUEST_JSON)'
+	@ curl -i -k https://localhost:$(HTTP_PORT)/api/check -d '$(REQUEST_JSON)'
 
 .PHONY: check-http-insecure
 check-http-insecure:
-	@ curl -i http://localhost:$(HTTP_PORT)/v1/check -d '$(REQUEST_JSON)'
+	@ curl -i http://localhost:$(HTTP_PORT)/api/check -d '$(REQUEST_JSON)'
 
 .PHONY: perf
 perf: protoset $(GHZ)
