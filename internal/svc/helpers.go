@@ -14,12 +14,14 @@ func ExtractRequestFields(fullMethod string, req interface{}) map[string]interfa
 		}
 
 		return map[string]interface{}{
-			util.AppName: map[string]string{
-				"request.id":                checkReq.RequestId,
-				"request.principal.id":      checkReq.Principal.Id,
-				"request.principal.version": checkReq.Principal.Version,
-				"request.resource.name":     checkReq.Resource.Name,
-				"request.resource.version":  checkReq.Resource.Version,
+			util.AppName: map[string]map[string]string{
+				"request": {
+					"id":                       checkReq.RequestId,
+					"principal.id":             checkReq.Principal.Id,
+					"principal.policy_version": checkReq.Principal.PolicyVersion,
+					"resource.name":            checkReq.Resource.Name,
+					"resource.policy_version":  checkReq.Resource.PolicyVersion,
+				},
 			},
 		}
 	default:

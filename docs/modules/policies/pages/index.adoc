@@ -17,7 +17,7 @@ Policies are evaluated based on the metadata passed in the request to the Cerbos
   "requestId":  "test01", <1>
   "action":  "view", <2>
   "resource":  {
-    "version": "dev", <3>
+    "policyVersion": "dev", <3>
     "name":  "album:object", <4>
     "attr":  { <5>
       "owner":  "alicia",
@@ -29,7 +29,7 @@ Policies are evaluated based on the metadata passed in the request to the Cerbos
   },
   "principal":  {
     "id":  "alicia", <6>
-    "version": "dev", <7>
+    "policyVersion": "dev", <7>
     "roles":  ["user"], <8>
     "attr": { <9>
       "geography": "GB"

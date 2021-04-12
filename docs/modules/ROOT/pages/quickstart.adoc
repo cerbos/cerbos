@@ -108,7 +108,7 @@ cat <<EOF | curl --silent "localhost:3592/api/check" -d @-
   "requestId":  "test01",
   "action":  "view",
   "resource":  {
-    "version": "default",
+    "policyVersion": "default",
     "name":  "album:object",
     "attr":  {
       "owner":  "alicia",
@@ -119,7 +119,7 @@ cat <<EOF | curl --silent "localhost:3592/api/check" -d @-
   },
   "principal":  {
     "id":  "alicia",
-    "version": "default",
+    "policyVersion": "default",
     "roles":  ["user"]
   }
 }
@@ -140,7 +140,7 @@ cat <<EOF | curl --silent "localhost:3592/api/check" -d @-
   "requestId":  "test02",
   "action":  "view",
   "resource":  {
-    "version": "default",
+    "policyVersion": "default",
     "name":  "album:object",
     "attr":  {
       "owner":  "alicia",
@@ -151,7 +151,7 @@ cat <<EOF | curl --silent "localhost:3592/api/check" -d @-
   },
   "principal":  {
     "id":  "bradley",
-    "version": "default",
+    "policyVersion": "default",
     "roles":  ["user"]
   }
 }
@@ -221,7 +221,7 @@ cat <<EOF | curl --silent "localhost:3592/api/check" -d @-
   "requestId":  "test03",
   "action":  "view",
   "resource":  {
-    "version": "default",
+    "policyVersion": "default",
     "name":  "album:object",
     "attr":  {
       "owner":  "alicia",
@@ -232,7 +232,7 @@ cat <<EOF | curl --silent "localhost:3592/api/check" -d @-
   },
   "principal":  {
     "id":  "bradley",
-    "version": "default",
+    "policyVersion": "default",
     "roles":  ["user"]
   }
 }

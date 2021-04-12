@@ -13,8 +13,8 @@ func MkRequest() *requestv1.CheckRequest {
 		RequestId: "test",
 		Action:    "view:public",
 		Resource: &requestv1.Resource{
-			Name:    "leave_request",
-			Version: "20210210",
+			Name:          "leave_request",
+			PolicyVersion: "20210210",
 			Attr: map[string]*structpb.Value{
 				"id":         structpb.NewStringValue("XX125"),
 				"owner":      structpb.NewStringValue("john"),
@@ -24,9 +24,9 @@ func MkRequest() *requestv1.CheckRequest {
 			},
 		},
 		Principal: &requestv1.Principal{
-			Id:      "john",
-			Version: "20210210",
-			Roles:   []string{"employee"},
+			Id:            "john",
+			PolicyVersion: "20210210",
+			Roles:         []string{"employee"},
 			Attr: map[string]*structpb.Value{
 				"geography":  structpb.NewStringValue("GB"),
 				"department": structpb.NewStringValue("marketing"),

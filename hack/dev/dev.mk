@@ -9,7 +9,7 @@ define REQUEST_JSON
   "requestId": "460d1429-9798-4a6f-8505-170193909003",\
   "principal": {\
     "id": "maggie",\
-    "version": "20210210",\
+    "policyVersion": "20210210",\
     "roles": [\
       "employee",\
       "manager"\
@@ -24,7 +24,7 @@ define REQUEST_JSON
   "action": "approve",\
   "resource": {\
     "name": "leave_request",\
-    "version": "20210210",\
+    "policyVersion": "20210210",\
     "attr": {\
       "department": "marketing",\
       "geography": "GB",\

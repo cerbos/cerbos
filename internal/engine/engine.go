@@ -207,18 +207,18 @@ func (engine *Engine) doCheck(ctx context.Context, req *requestv1.CheckRequest) 
 
 func (engine *Engine) getPrincipalPolicyCheck(req *requestv1.CheckRequest) *check {
 	principal := req.Principal.Id
-	version := req.Principal.Version
+	policyVersion := req.Principal.PolicyVersion
 
-	if version == "" {
-		version = engine.conf.DefaultPolicyVersion
+	if policyVersion == "" {
+		policyVersion = engine.conf.DefaultPolicyVersion
 	}
 
-	principalModID := namer.PrincipalPolicyModuleID(principal, version)
+	principalModID := namer.PrincipalPolicyModuleID(principal, policyVersion)
 	if eval := engine.compiler.GetEvaluator(principalModID); eval != nil {
 		return &check{
-			policyName: fmt.Sprintf("%s:%s", principal, version),
+			policyName: fmt.Sprintf("%s:%s", principal, policyVersion),
 			eval:       eval,
-			query:      namer.EffectQueryForPrincipal(principal, version),
+			query:      namer.EffectQueryForPrincipal(principal, policyVersion),
 		}
 	}
 
@@ -227,18 +227,18 @@ func (engine *Engine) getPrincipalPolicyCheck(req *requestv1.CheckRequest) *chec
 
 func (engine *Engine) getResourcePolicyCheck(req *requestv1.CheckRequest) *check {
 	resource := req.Resource.Name
-	version := req.Resource.Version
+	policyVersion := req.Resource.PolicyVersion
 
-	if version == "" {
-		version = engine.conf.DefaultPolicyVersion
+	if policyVersion == "" {
+		policyVersion = engine.conf.DefaultPolicyVersion
 	}
 
-	resourceModID := namer.ResourcePolicyModuleID(resource, version)
+	resourceModID := namer.ResourcePolicyModuleID(resource, policyVersion)
 	if eval := engine.compiler.GetEvaluator(resourceModID); eval != nil {
 		return &check{
-			policyName: fmt.Sprintf("%s:%s", resource, version),
+			policyName: fmt.Sprintf("%s:%s", resource, policyVersion),
 			eval:       eval,
-			query:      namer.EffectQueryForResource(resource, version),
+			query:      namer.EffectQueryForResource(resource, policyVersion),
 		}
 	}
 

@@ -93,7 +93,7 @@ cat <<"EOF" | curl -i -XPUT "$POLICY_URL" --data-binary @-
 apiVersion: "api.cerbos.dev/v1"
 principalPolicy:
   principal: donald_duck
-  version: "20210210"
+  policyVersion: "20210210"
   rules:
     - resource: leave_request
       actions:
@@ -116,7 +116,7 @@ cat <<EOF | curl -i "$CHECK_URL" -d @-
   "requestId":  "test01",
   "resource":  {
     "name":  "leave_request",
-    "version":  "20210210",
+    "policyVersion":  "20210210",
     "attr":  {
       "department":  "marketing",
       "geography":  "GB",
@@ -127,7 +127,7 @@ cat <<EOF | curl -i "$CHECK_URL" -d @-
   },
   "principal":  {
     "id":  "john",
-    "version":  "20210210",
+    "policyVersion":  "20210210",
     "roles":  [
       "employee"
     ],
@@ -147,7 +147,7 @@ cat <<EOF | curl -i "$CHECK_URL" -d @-
   "requestId":  "test02",
   "resource":  {
     "name":  "leave_request",
-    "version":  "20210210",
+    "policyVersion":  "20210210",
     "attr":  {
       "department":  "marketing",
       "geography":  "GB",
@@ -158,7 +158,7 @@ cat <<EOF | curl -i "$CHECK_URL" -d @-
   },
   "principal":  {
     "id":  "john",
-    "version":  "20210210",
+    "policyVersion":  "20210210",
     "roles":  [
       "employee"
     ],
@@ -179,7 +179,7 @@ cat <<EOF | curl -i "$CHECK_URL" -d @-
   "requestId":  "test03",
   "resource":  {
     "name":  "leave_request",
-    "version":  "20210210",
+    "policyVersion":  "20210210",
     "attr":  {
       "department":  "marketing",
       "geography":  "GB",
@@ -191,7 +191,7 @@ cat <<EOF | curl -i "$CHECK_URL" -d @-
   },
   "principal":  {
     "id":  "sally",
-    "version":  "20210210",
+    "policyVersion":  "20210210",
     "roles":  [
       "employee",
       "manager"
@@ -213,7 +213,7 @@ cat <<EOF | curl -i "$CHECK_URL" -d @-
   "requestId":  "test04",
   "resource":  {
     "name":  "leave_request",
-    "version":  "20210210",
+    "policyVersion":  "20210210",
     "attr":  {
       "department":  "marketing",
       "geography":  "GB",
@@ -225,7 +225,7 @@ cat <<EOF | curl -i "$CHECK_URL" -d @-
   },
   "principal":  {
     "id":  "betty",
-    "version":  "20210210",
+    "policyVersion":  "20210210",
     "roles":  [
       "employee",
       "manager"
@@ -248,7 +248,7 @@ cat <<EOF | curl -i "$CHECK_URL" -d @-
   "requestId":  "test05",
   "resource":  {
     "name":  "leave_request",
-    "version":  "20210210",
+    "policyVersion":  "20210210",
     "attr":  {
       "department":  "marketing",
       "dev_record":  true,
@@ -260,7 +260,7 @@ cat <<EOF | curl -i "$CHECK_URL" -d @-
   },
   "principal":  {
     "id":  "donald_duck",
-    "version":  "20210210",
+    "policyVersion":  "20210210",
     "roles":  [
       "employee"
     ],
@@ -281,7 +281,7 @@ cat <<EOF | curl -i "$CHECK_URL" -d @-
   "requestId":  "test06",
   "resource":  {
     "name":  "salary_record",
-    "version":  "20210210",
+    "policyVersion":  "20210210",
     "attr":  {
       "department":  "marketing",
       "dev_record":  true,
@@ -293,7 +293,7 @@ cat <<EOF | curl -i "$CHECK_URL" -d @-
   },
   "principal":  {
     "id":  "donald_duck",
-    "version":  "20210210",
+    "policyVersion":  "20210210",
     "roles":  [
       "employee"
     ],
