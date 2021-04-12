@@ -3,6 +3,8 @@ site:
   title: Cerbos // Documentation
   url: https://docs.cerbos.dev
   robots: allow
+  keys:
+    google_analytics: 'G-K7EZDLXSVN'
 content:
   sources:
     - url: /github/workspace # Default location where GitHub actions mounts the source
