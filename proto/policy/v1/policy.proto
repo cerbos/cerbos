@@ -72,7 +72,17 @@ message Computation {
 }
 
 message Match {
-    repeated string expr = 1 [(validate.rules).repeated = {min_items: 1, items { string { min_len: 1} } }];
+    message ExprList {
+        repeated Match of = 1 [(validate.rules).repeated = { min_items:1 }];
+    }
+        
+    oneof op {
+        option (validate.required) = true;
+        ExprList all = 1;
+        ExprList any = 2;
+        ExprList none = 3;
+        string expr = 4;
+    }
 }
 
 message TestSuite {

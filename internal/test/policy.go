@@ -40,13 +40,7 @@ func (rrb *ResourceRuleBuilder) WithDerivedRoles(roles ...string) *ResourceRuleB
 }
 
 func (rrb *ResourceRuleBuilder) WithMatchExpr(expr ...string) *ResourceRuleBuilder {
-	rrb.rule.Condition = &policyv1.Computation{
-		Computation: &policyv1.Computation_Match{
-			Match: &policyv1.Match{
-				Expr: expr,
-			},
-		},
-	}
+	rrb.rule.Condition = buildAndComputation(expr...)
 
 	return rrb
 }
@@ -103,6 +97,25 @@ func (rpb *ResourcePolicyBuilder) Build() *policyv1.Policy {
 	}
 }
 
+func buildAndComputation(expr ...string) *policyv1.Computation {
+	allExpr := make([]*policyv1.Match, len(expr))
+	for i, e := range expr {
+		allExpr[i] = &policyv1.Match{Op: &policyv1.Match_Expr{Expr: e}}
+	}
+
+	return &policyv1.Computation{
+		Computation: &policyv1.Computation_Match{
+			Match: &policyv1.Match{
+				Op: &policyv1.Match_All{
+					All: &policyv1.Match_ExprList{
+						Of: allExpr,
+					},
+				},
+			},
+		},
+	}
+}
+
 // GenResourcePolicy generates a sample resource policy with some names modified by the NameMod.
 func GenResourcePolicy(mod NameMod) *policyv1.Policy {
 	return &policyv1.Policy{
@@ -138,9 +151,7 @@ func GenResourcePolicy(mod NameMod) *policyv1.Policy {
 						Condition: &policyv1.Computation{
 							Computation: &policyv1.Computation_Match{
 								Match: &policyv1.Match{
-									Expr: []string{
-										`request.resource.attr.status == "PENDING_APPROVAL"`,
-									},
+									Op: &policyv1.Match_Expr{Expr: `request.resource.attr.status == "PENDING_APPROVAL"`},
 								},
 							},
 						},
@@ -173,11 +184,11 @@ func (prb *PrincipalRuleBuilder) DenyAction(action string) *PrincipalRuleBuilder
 }
 
 func (prb *PrincipalRuleBuilder) AllowActionWhenMatch(action string, expr ...string) *PrincipalRuleBuilder {
-	return prb.addAction(action, sharedv1.Effect_EFFECT_ALLOW, &policyv1.Computation{Computation: &policyv1.Computation_Match{Match: &policyv1.Match{Expr: expr}}})
+	return prb.addAction(action, sharedv1.Effect_EFFECT_ALLOW, buildAndComputation(expr...))
 }
 
 func (prb *PrincipalRuleBuilder) DenyActionWhenMatch(action string, expr ...string) *PrincipalRuleBuilder {
-	return prb.addAction(action, sharedv1.Effect_EFFECT_DENY, &policyv1.Computation{Computation: &policyv1.Computation_Match{Match: &policyv1.Match{Expr: expr}}})
+	return prb.addAction(action, sharedv1.Effect_EFFECT_DENY, buildAndComputation(expr...))
 }
 
 func (prb *PrincipalRuleBuilder) AllowActionWhenScript(action, script string) *PrincipalRuleBuilder {
@@ -247,9 +258,7 @@ func GenPrincipalPolicy(mod NameMod) *policyv1.Policy {
 								Condition: &policyv1.Computation{
 									Computation: &policyv1.Computation_Match{
 										Match: &policyv1.Match{
-											Expr: []string{
-												"request.resource.attr.dev_record == true",
-											},
+											Op: &policyv1.Match_Expr{Expr: "request.resource.attr.dev_record == true"},
 										},
 									},
 								},
@@ -286,7 +295,7 @@ func (drb *DerivedRolesBuilder) AddRole(name string, parentRoles ...string) *Der
 }
 
 func (drb *DerivedRolesBuilder) AddRoleWithMatch(name string, parentRoles []string, expr ...string) *DerivedRolesBuilder {
-	return drb.addRoleDef(name, parentRoles, &policyv1.Computation{Computation: &policyv1.Computation_Match{Match: &policyv1.Match{Expr: expr}}})
+	return drb.addRoleDef(name, parentRoles, buildAndComputation(expr...))
 }
 
 func (drb *DerivedRolesBuilder) AddRoleWithScript(name string, parentRoles []string, script string) *DerivedRolesBuilder {
@@ -334,16 +343,10 @@ func GenDerivedRoles(mod NameMod) *policyv1.Policy {
 					{
 						Name:        "direct_manager",
 						ParentRoles: []string{"manager"},
-						Computation: &policyv1.Computation{
-							Computation: &policyv1.Computation_Match{
-								Match: &policyv1.Match{
-									Expr: []string{
-										"request.resource.attr.geography == request.principal.attr.geography",
-										"request.resource.attr.geography == request.principal.attr.managed_geographies",
-									},
-								},
-							},
-						},
+						Computation: buildAndComputation(
+							"request.resource.attr.geography == request.principal.attr.geography",
+							"request.resource.attr.geography == request.principal.attr.managed_geographies",
+						),
 					},
 				},
 			},

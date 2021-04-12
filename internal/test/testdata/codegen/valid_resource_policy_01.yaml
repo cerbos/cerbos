@@ -38,10 +38,11 @@ inputPolicy:
       - actions: ["approve"]
         condition:
           match:
-            expr:
-              - request.resource.attr.status == "PENDING_APPROVAL"
-              - |-
-                "test" in request.resource.attr.geographies
+            all:
+              of:
+                - expr: request.resource.attr.status == "PENDING_APPROVAL"
+                - expr: |-
+                    "test" in request.resource.attr.geographies
         derivedRoles:
           - direct_manager
         effect: EFFECT_ALLOW

@@ -8,7 +8,6 @@ inputPolicy:
         parentRoles: ["manager"]
         computation:
           match:
-            expr:
-              - "$.resource.attr.geography == request.principal.attr.geography"
+            expr: "$.resource.attr.geography == request.principal.attr.geography"
 
 wantError: true
