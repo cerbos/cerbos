@@ -123,15 +123,13 @@ derived_roles:
       parentRoles: ["user"] <3>
       computation:
         match:
-          expr:
-            - request.resource.attr.owner == request.principal.id <4>
+          expr: request.resource.attr.owner == request.principal.id <4>
 
     - name: abuse_moderator
       parentRoles: ["moderator"]
       computation:
         match:
-          expr:
-            - request.resource.attr.flagged == true
+          expr: request.resource.attr.flagged == true
 ----
 <1> Name that we will use to import this set of roles
 <2> Descriptive name for this derived role
@@ -175,8 +173,7 @@ resourcePolicy:
         - user
       condition:
         match:
-          expr:
-            - request.resource.attr.public == true
+          expr: request.resource.attr.public == true
 
     - actions: ['view', 'delete']
       effect: EFFECT_ALLOW

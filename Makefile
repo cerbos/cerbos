@@ -1,5 +1,4 @@
 DOCKER := docker
-DOCS_OUT_DIR := docs/build
 
 include tools/tools.mk
 include hack/dev/dev.mk
@@ -52,5 +51,4 @@ run:
 .PHONY: docs
 docs:
 	@ docs/build.sh
-	@ xdg-open $(DOCS_OUT_DIR)/cerbos/index.html
 

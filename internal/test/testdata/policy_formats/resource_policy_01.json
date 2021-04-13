@@ -36,9 +36,7 @@
         ],
         "condition": {
           "match": {
-            "expr": [
-              "request.resource.attr.status == \"PENDING_APPROVAL\""
-            ]
+            "expr": "request.resource.attr.status == \"PENDING_APPROVAL\""
           }
         },
         "effect": "EFFECT_ALLOW"

@@ -992,21 +992,51 @@ func (m *Match) Validate() error {
 		return nil
 	}
 
-	if len(m.GetExpr()) < 1 {
-		return MatchValidationError{
-			field:  "Expr",
-			reason: "value must contain at least 1 item(s)",
-		}
-	}
+	switch m.Op.(type) {
 
-	for idx, item := range m.GetExpr() {
-		_, _ = idx, item
+	case *Match_All:
 
-		if utf8.RuneCountInString(item) < 1 {
-			return MatchValidationError{
-				field:  fmt.Sprintf("Expr[%v]", idx),
-				reason: "value length must be at least 1 runes",
+		if v, ok := interface{}(m.GetAll()).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return MatchValidationError{
+					field:  "All",
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
 			}
+		}
+
+	case *Match_Any:
+
+		if v, ok := interface{}(m.GetAny()).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return MatchValidationError{
+					field:  "Any",
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	case *Match_None:
+
+		if v, ok := interface{}(m.GetNone()).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return MatchValidationError{
+					field:  "None",
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	case *Match_Expr:
+		// no validation rules for Expr
+
+	default:
+		return MatchValidationError{
+			field:  "Op",
+			reason: "value is required",
 		}
 
 	}
@@ -1363,3 +1393,90 @@ var _PrincipalRule_Action_Effect_InLookup = map[sharedv1.Effect]struct{}{
 	1: {},
 	2: {},
 }
+
+// Validate checks the field values on Match_ExprList with the rules defined in
+// the proto definition for this message. If any rules are violated, an error
+// is returned.
+func (m *Match_ExprList) Validate() error {
+	if m == nil {
+		return nil
+	}
+
+	if len(m.GetOf()) < 1 {
+		return Match_ExprListValidationError{
+			field:  "Of",
+			reason: "value must contain at least 1 item(s)",
+		}
+	}
+
+	for idx, item := range m.GetOf() {
+		_, _ = idx, item
+
+		if v, ok := interface{}(item).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return Match_ExprListValidationError{
+					field:  fmt.Sprintf("Of[%v]", idx),
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	}
+
+	return nil
+}
+
+// Match_ExprListValidationError is the validation error returned by
+// Match_ExprList.Validate if the designated constraints aren't met.
+type Match_ExprListValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e Match_ExprListValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e Match_ExprListValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e Match_ExprListValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e Match_ExprListValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e Match_ExprListValidationError) ErrorName() string { return "Match_ExprListValidationError" }
+
+// Error satisfies the builtin error interface
+func (e Match_ExprListValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sMatch_ExprList.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = Match_ExprListValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = Match_ExprListValidationError{}

@@ -6,9 +6,6 @@ import (
 	"strings"
 
 	"github.com/google/cel-go/cel"
-	"github.com/google/cel-go/checker/decls"
-	"github.com/google/cel-go/ext"
-	"github.com/google/cel-go/parser"
 	"github.com/open-policy-agent/opa/ast"
 
 	policyv1 "github.com/cerbos/cerbos/internal/genpb/policy/v1"
@@ -296,30 +293,4 @@ func (rg *RegoGen) addMatch(parent string, m *policyv1.Match) error {
 	rg.line(CELEvalIdent, `(input, "`, rg.packageName, `", "`, conditionKey, `")`)
 
 	return nil
-}
-
-func generateCELProgram(parent string, m *policyv1.Match) (cel.Program, error) {
-	env, err := cel.NewEnv(
-		cel.Declarations(decls.NewVar("request", decls.NewMapType(decls.String, decls.Dyn))),
-		cel.Macros(parser.AllMacros...),
-		ext.Strings(),
-		ext.Encoders(),
-	)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create CEL environment: %w", err)
-	}
-
-	expr := make([]string, len(m.Expr))
-	for i, e := range m.Expr {
-		expr[i] = fmt.Sprintf("(%s)", e)
-	}
-
-	finalExpr := strings.Join(expr, " && ")
-
-	celAST, issues := env.Compile(finalExpr)
-	if issues != nil && issues.Err() != nil {
-		return nil, &CELCompileError{Parent: parent, Issues: issues}
-	}
-
-	return env.Program(celAST)
 }

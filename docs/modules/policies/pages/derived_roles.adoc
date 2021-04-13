@@ -15,15 +15,13 @@ derived_roles:
       parentRoles: ["user"] <3>
       computation: <4>
         match:
-          expr:
-            - request.resource.attr.owner == request.principal.id 
+          expr: request.resource.attr.owner == request.principal.id 
 
     - name: abuse_moderator
       parentRoles: ["moderator"]
       computation:
         match:
-          expr:
-            - request.resource.attr.flagged == true
+          expr: request.resource.attr.flagged == true
 ----
 <1> Name to use when importing this set of derived roles.
 <2> Descriptive name for this derived role.

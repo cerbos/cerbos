@@ -17,8 +17,7 @@ resourcePolicy:
         - user
       condition:
         match:
-          expr:
-            - request.resource.attr.public == true
+          expr: request.resource.attr.public == true
 
     - actions: ['view', 'delete']
       effect: EFFECT_ALLOW

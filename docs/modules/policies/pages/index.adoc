@@ -56,24 +56,4 @@ Policies are evaluated based on the metadata passed in the request to the Cerbos
 ** `disabled`: Optional. Set to `true` to make the Cerbos engine ignore this policy file.
 * Resource names, actions, and principal names can be hierarchical. Use `:` as the delimiter. E.g. `app:component:resource`.
 * Wildcard matches are allowed on certain fields. Wildcards respect the hierarchy delimiter `:`.
-* When conditions are defined using a `match.expr` block, the each expression line is joined using the `AND` operator. 
-+
-[source,yaml]
-----
-condition:
-  match:
-   expr:
-    - request.resource.attr.dev_record == true
-    - request.resource.attr.environment == "STG"
-----
-+
-The above condition block is equivalent to the following:
-+
-[source,yaml]
-----
-condition:
-  match:
-   expr:
-    - request.resource.attr.dev_record == true && request.resource.attr.environment == "STG"
-----
-
+* See xref:conditions.adoc[Conditions] to learn how to write conditions in policy rules.

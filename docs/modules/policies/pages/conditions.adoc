@@ -1,0 +1,123 @@
+include::ROOT:partial$attributes.adoc[]
+
+= Conditions
+
+A powerful feature of Cerbos policies is the ability to define conditions that are evaluated against the data provided in the request. Conditions can be written in the link:https://github.com/google/cel-spec/blob/master/doc/intro.md[Common Expression Language (CEL)] or link:https://www.openpolicyagent.org/docs/latest/policy-language/[Rego].
+
+Conditions are defined in policies using the `condition` field. CEL conditions are defined under the `match` key and Rego are defined under the `script` key. Only one kind of condition is allowed. You cannot mix both in a single `condition` block.
+
+
+.CEL condition
+[source,yaml,linenums]
+----
+condition:
+  match:
+    all:
+      of:
+        - expr: request.resource.attr.status == "PENDING_APPROVAL"
+        - expr: "GB" in request.resource.attr.geographies
+----
+
+
+.Rego condition
+[source,yaml,linenums]
+----
+condition:
+  script: input.resource.attr.owner == input.principal.id
+----
+
+
+== CEL conditions
+
+* You can access the request object using the special `request` variable. Use dots to access different fields of the request. For example, the expression to get the current principal ID is `request.principal.id`.
+* You can write complex expressions using the helpers provided by the `match` block. Ensure that the final result of evaluating the set of expression always produces a boolean true/false value. 
+
+.Single boolean expression
+[source,yaml,linenums]
+----
+condition:
+  match:
+    expr: matches(request.principal.id, "^dev_.*")
+----
+
+.``all`` operator: all expressions must evaluate to true (logical AND)
+[source,yaml,linenums]
+----
+condition:
+  match:
+    all:
+      of:
+        - expr: request.resource.attr.status == "PENDING_APPROVAL"
+        - expr: "GB" in request.resource.attr.geographies
+        - expr: request.principal.attr.geography == "GB"
+----
+
+.``any`` operator: only one of the expressions has to evaluate to true (logical OR)
+[source,yaml,linenums]
+----
+condition:
+  match:
+    any:
+      of:
+        - expr: request.resource.attr.status == "PENDING_APPROVAL"
+        - expr: "GB" in request.resource.attr.geographies
+        - expr: request.principal.attr.geography == "GB"
+----
+
+
+.``none`` operator: none of the expressions should evaluate to true (logical negation)
+[source,yaml,linenums]
+----
+condition:
+  match:
+    none:
+      of:
+        - expr: request.resource.attr.status == "PENDING_APPROVAL"
+        - expr: "GB" in request.resource.attr.geographies
+        - expr: request.principal.attr.geography == "GB"
+----
+
+
+.Nesting operators
+[source,yaml,linenums]
+----
+condition:
+  match:
+    all:
+      of:
+        - expr: request.resource.attr.status == "DRAFT"
+        - any:
+            of: 
+              - expr: request.resource.attr.dev == true
+              - expr: matches(request.resource.attr.id, "^[98][0-9]+")
+        - none:
+            of:
+              - expr: request.resource.attr.qa == true
+              - expr: request.resource.attr.canary == true
+----
+
+The above nested block is equivalent to the following:
+
+[source,yaml,linenums]
+----
+condition:
+  match:
+    expr: |-
+      (request.resource.attr.status == "DRAFT" && 
+        (request.resource.attr.dev == true || matches(request.resource.attr.id, "^[98][0-9]+")) &&
+        !(request.resource.attr.qa == true || request.resource.attr.canary == true))
+----
+
+== Rego conditions
+
+* You can access the request object using the special `input` variable. Use dots to access different fields of the request. For example, the expression to get the current principal ID is `input.principal.id`.
+* Ensure that the final result of evaluating the Rego script always produces a single boolean true/false value. 
+
+
+[source,yaml,linenums]
+----
+condition:
+  script: |-
+    input.resource.attr.owner == input.principal.id;
+    regex.match("^dev_.*", input.principal.id);
+----

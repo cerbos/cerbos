@@ -10,7 +10,19 @@ inputPolicy:
           - action: "*"
             condition:
               match:
-                expr: "request.resource.attr.dev_record == true"
+                all:
+                  of:
+                    - any:
+                        of:
+                          - expr: request.resource.attr.x == "y"
+                          - expr: request.resource.attr.y == "x"
+                    - none:
+                        of:
+                          - expr: request.resource.attr.a == true
+                          - expr: request.resource.attr.b == true
+                          - expr: request.resource.attr.c == true
+                    - expr: request.resource.attr.p == request.resource.attr.q
+                    - expr: request.resource.attr.dev_record == true
             effect: EFFECT_ALLOW
 
       - resource: salary_record
