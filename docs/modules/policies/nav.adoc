@@ -2,3 +2,4 @@
 * xref:derived_roles.adoc[Derived Roles]
 * xref:resource_policies.adoc[Resource Policies]
 * xref:principal_policies.adoc[Principal Policies]
+* xref:conditions.adoc[Conditions]
