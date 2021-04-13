@@ -6,7 +6,7 @@ inputPolicy:
     definitions:
       - name: direct_manager
         parentRoles: ["manager"]
-        computation:
+        condition:
           match:
             expr: "$.resource.attr.geography == request.principal.attr.geography"
 

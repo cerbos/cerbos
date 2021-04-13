@@ -14,7 +14,7 @@
         "parentRoles": [
           "employee"
         ],
-        "computation": {
+        "condition": {
           "script": "input.resource.attr.owner == input.principal.id"
         }
       },
@@ -29,7 +29,7 @@
         "parentRoles": [
           "manager"
         ],
-        "computation": {
+        "condition": {
           "match": {
             "all": {
               "of": [

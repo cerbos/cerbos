@@ -46,7 +46,7 @@ inputDefs:
 
         - name: employee_that_owns_the_record
           parentRoles: ["employee"]
-          computation:
+          condition:
             script: |-
               resource.attr.owner == input.principal.id
 
@@ -55,7 +55,7 @@ inputDefs:
 
         - name: direct_manager
           parentRoles: ["manager"]
-          computation:
+          condition:
             match:
               all:
                 of:

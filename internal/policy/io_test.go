@@ -176,8 +176,8 @@ func mkResourcePolicy() *policyv1.Policy {
 						Action:       "approve",
 						DerivedRoles: []string{"direct_manager"},
 						Effect:       sharedv1.Effect_EFFECT_ALLOW,
-						Condition: &policyv1.Computation{
-							Computation: &policyv1.Computation_Match{
+						Condition: &policyv1.Condition{
+							Condition: &policyv1.Condition_Match{
 								Match: &policyv1.Match{
 									Expr: []string{
 										`$resource.attr.status == "PENDING_APPROVAL"`,
@@ -206,8 +206,8 @@ func mkPrincipalPolicy() *policyv1.Policy {
 							{
 								Action: "*",
 								Effect: sharedv1.Effect_EFFECT_ALLOW,
-								Condition: &policyv1.Computation{
-									Computation: &policyv1.Computation_Match{
+								Condition: &policyv1.Condition{
+									Condition: &policyv1.Condition_Match{
 										Match: &policyv1.Match{
 											Expr: []string{
 												"$resource.attr.dev_record == true",
@@ -247,8 +247,8 @@ func mkDerivedRoles() *policyv1.Policy {
 					{
 						Name:        "employee_that_owns_the_record",
 						ParentRoles: []string{"employee"},
-						Computation: &policyv1.Computation{
-							Computation: &policyv1.Computation_Script{
+						Condition: &policyv1.Condition{
+							Condition: &policyv1.Condition_Script{
 								Script: "input.resource.attr.owner == input.principal.id",
 							},
 						},
@@ -260,8 +260,8 @@ func mkDerivedRoles() *policyv1.Policy {
 					{
 						Name:        "direct_manager",
 						ParentRoles: []string{"manager"},
-						Computation: &policyv1.Computation{
-							Computation: &policyv1.Computation_Match{
+						Condition: &policyv1.Condition{
+							Condition: &policyv1.Condition_Match{
 								Match: &policyv1.Match{
 									Expr: []string{
 										"$resource.attr.geography == $principal.attr.geography",

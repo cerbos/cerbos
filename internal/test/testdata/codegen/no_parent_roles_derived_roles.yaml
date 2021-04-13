@@ -5,7 +5,7 @@ inputPolicy:
     name: my_derived_roles
     definitions:
       - name: employee_that_owns_the_record
-        computation:
+        condition:
           script: |-
             input.resource.attr.owner == input.principal.id
 

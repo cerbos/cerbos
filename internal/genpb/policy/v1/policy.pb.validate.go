@@ -824,10 +824,10 @@ func (m *RoleDef) Validate() error {
 
 	}
 
-	if v, ok := interface{}(m.GetComputation()).(interface{ Validate() error }); ok {
+	if v, ok := interface{}(m.GetCondition()).(interface{ Validate() error }); ok {
 		if err := v.Validate(); err != nil {
 			return RoleDefValidationError{
-				field:  "Computation",
+				field:  "Condition",
 				reason: "embedded message failed validation",
 				cause:  err,
 			}
@@ -895,21 +895,20 @@ var _RoleDef_Name_Pattern = regexp.MustCompile("^[[:word:]\\-\\.]+$")
 
 var _RoleDef_ParentRoles_Pattern = regexp.MustCompile("^[[:word:]\\-\\.]+$")
 
-// Validate checks the field values on Computation with the rules defined in
-// the proto definition for this message. If any rules are violated, an error
-// is returned.
-func (m *Computation) Validate() error {
+// Validate checks the field values on Condition with the rules defined in the
+// proto definition for this message. If any rules are violated, an error is returned.
+func (m *Condition) Validate() error {
 	if m == nil {
 		return nil
 	}
 
-	switch m.Computation.(type) {
+	switch m.Condition.(type) {
 
-	case *Computation_Match:
+	case *Condition_Match:
 
 		if v, ok := interface{}(m.GetMatch()).(interface{ Validate() error }); ok {
 			if err := v.Validate(); err != nil {
-				return ComputationValidationError{
+				return ConditionValidationError{
 					field:  "Match",
 					reason: "embedded message failed validation",
 					cause:  err,
@@ -917,12 +916,12 @@ func (m *Computation) Validate() error {
 			}
 		}
 
-	case *Computation_Script:
+	case *Condition_Script:
 		// no validation rules for Script
 
 	default:
-		return ComputationValidationError{
-			field:  "Computation",
+		return ConditionValidationError{
+			field:  "Condition",
 			reason: "value is required",
 		}
 
@@ -931,9 +930,9 @@ func (m *Computation) Validate() error {
 	return nil
 }
 
-// ComputationValidationError is the validation error returned by
-// Computation.Validate if the designated constraints aren't met.
-type ComputationValidationError struct {
+// ConditionValidationError is the validation error returned by
+// Condition.Validate if the designated constraints aren't met.
+type ConditionValidationError struct {
 	field  string
 	reason string
 	cause  error
@@ -941,22 +940,22 @@ type ComputationValidationError struct {
 }
 
 // Field function returns field value.
-func (e ComputationValidationError) Field() string { return e.field }
+func (e ConditionValidationError) Field() string { return e.field }
 
 // Reason function returns reason value.
-func (e ComputationValidationError) Reason() string { return e.reason }
+func (e ConditionValidationError) Reason() string { return e.reason }
 
 // Cause function returns cause value.
-func (e ComputationValidationError) Cause() error { return e.cause }
+func (e ConditionValidationError) Cause() error { return e.cause }
 
 // Key function returns key value.
-func (e ComputationValidationError) Key() bool { return e.key }
+func (e ConditionValidationError) Key() bool { return e.key }
 
 // ErrorName returns error name.
-func (e ComputationValidationError) ErrorName() string { return "ComputationValidationError" }
+func (e ConditionValidationError) ErrorName() string { return "ConditionValidationError" }
 
 // Error satisfies the builtin error interface
-func (e ComputationValidationError) Error() string {
+func (e ConditionValidationError) Error() string {
 	cause := ""
 	if e.cause != nil {
 		cause = fmt.Sprintf(" | caused by: %v", e.cause)
@@ -968,14 +967,14 @@ func (e ComputationValidationError) Error() string {
 	}
 
 	return fmt.Sprintf(
-		"invalid %sComputation.%s: %s%s",
+		"invalid %sCondition.%s: %s%s",
 		key,
 		e.field,
 		e.reason,
 		cause)
 }
 
-var _ error = ComputationValidationError{}
+var _ error = ConditionValidationError{}
 
 var _ interface {
 	Field() string
@@ -983,7 +982,7 @@ var _ interface {
 	Key() bool
 	Cause() error
 	ErrorName() string
-} = ComputationValidationError{}
+} = ConditionValidationError{}
 
 // Validate checks the field values on Match with the rules defined in the
 // proto definition for this message. If any rules are violated, an error is returned.

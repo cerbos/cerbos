@@ -34,7 +34,7 @@ derived_roles:
 
     - name: employee_that_owns_the_record
       parentRoles: ["employee"]
-      computation:
+      condition:
         script: |-
           input.resource.attr.owner == input.principal.id
 
@@ -43,7 +43,7 @@ derived_roles:
 
     - name: direct_manager
       parentRoles: ["manager"]
-      computation:
+      condition:
         match:
           expr:
             - "request.resource.attr.geography == request.principal.attr.managed_geographies"

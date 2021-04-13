@@ -90,7 +90,7 @@ func (rg *RegoGen) AddDerivedRole(dr *policyv1.RoleDef) error {
 		return err
 	}
 
-	if err := rg.addCondition(fmt.Sprintf("Derived role %s", dr.Name), dr.Computation); err != nil {
+	if err := rg.addCondition(fmt.Sprintf("Derived role %s", dr.Name), dr.Condition); err != nil {
 		return err
 	}
 
@@ -252,12 +252,12 @@ func (rg *RegoGen) addActionMatch(action string) {
 	}
 }
 
-func (rg *RegoGen) addCondition(parent string, cond *policyv1.Computation) error {
+func (rg *RegoGen) addCondition(parent string, cond *policyv1.Condition) error {
 	if cond != nil {
-		switch comp := cond.Computation.(type) {
-		case *policyv1.Computation_Script:
+		switch comp := cond.Condition.(type) {
+		case *policyv1.Condition_Script:
 			return rg.addScript(parent, comp.Script)
-		case *policyv1.Computation_Match:
+		case *policyv1.Condition_Match:
 			return rg.addMatch(parent, comp.Match)
 		}
 	}
