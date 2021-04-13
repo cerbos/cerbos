@@ -15,8 +15,7 @@ principalPolicy:
         - action: "*" <4>
           condition: <5>
             match:
-              expr:
-                - "request.resource.attr.dev_record == true"
+              expr: "request.resource.attr.dev_record == true"
           effect: EFFECT_ALLOW
 
     - resource: salary_record 

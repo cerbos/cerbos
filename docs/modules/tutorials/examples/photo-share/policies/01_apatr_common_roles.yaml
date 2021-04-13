@@ -9,12 +9,10 @@ derived_roles:
       parentRoles: ["user"]
       computation:
         match:
-          expr:
-            - request.resource.attr.owner == request.principal.id
+          expr: request.resource.attr.owner == request.principal.id
 
     - name: abuse_moderator
       parentRoles: ["moderator"]
       computation:
         match:
-          expr:
-            - request.resource.attr.flagged == true
+          expr: request.resource.attr.flagged == true

@@ -24,6 +24,90 @@ func TestCELGen(t *testing.T) {
 			want: "a || b && c",
 		},
 		{
+			name: "all_single_expr",
+			expr: &policyv1.Match{
+				Op: &policyv1.Match_All{
+					All: &policyv1.Match_ExprList{
+						Of: []*policyv1.Match{
+							{Op: &policyv1.Match_Expr{Expr: "a"}},
+						},
+					},
+				},
+			},
+			want: "(a)",
+		},
+		{
+			name: "all_multiple_expr",
+			expr: &policyv1.Match{
+				Op: &policyv1.Match_All{
+					All: &policyv1.Match_ExprList{
+						Of: []*policyv1.Match{
+							{Op: &policyv1.Match_Expr{Expr: "a"}},
+							{Op: &policyv1.Match_Expr{Expr: "b"}},
+							{Op: &policyv1.Match_Expr{Expr: "c"}},
+						},
+					},
+				},
+			},
+			want: "(a && b && c)",
+		},
+		{
+			name: "any_single_expr",
+			expr: &policyv1.Match{
+				Op: &policyv1.Match_Any{
+					Any: &policyv1.Match_ExprList{
+						Of: []*policyv1.Match{
+							{Op: &policyv1.Match_Expr{Expr: "a"}},
+						},
+					},
+				},
+			},
+			want: "(a)",
+		},
+		{
+			name: "any_multiple_expr",
+			expr: &policyv1.Match{
+				Op: &policyv1.Match_Any{
+					Any: &policyv1.Match_ExprList{
+						Of: []*policyv1.Match{
+							{Op: &policyv1.Match_Expr{Expr: "a"}},
+							{Op: &policyv1.Match_Expr{Expr: "b"}},
+							{Op: &policyv1.Match_Expr{Expr: "c"}},
+						},
+					},
+				},
+			},
+			want: "(a || b || c)",
+		},
+		{
+			name: "none_single_expr",
+			expr: &policyv1.Match{
+				Op: &policyv1.Match_None{
+					None: &policyv1.Match_ExprList{
+						Of: []*policyv1.Match{
+							{Op: &policyv1.Match_Expr{Expr: "a"}},
+						},
+					},
+				},
+			},
+			want: "!(a)",
+		},
+		{
+			name: "none_multiple_expr",
+			expr: &policyv1.Match{
+				Op: &policyv1.Match_None{
+					None: &policyv1.Match_ExprList{
+						Of: []*policyv1.Match{
+							{Op: &policyv1.Match_Expr{Expr: "a"}},
+							{Op: &policyv1.Match_Expr{Expr: "b"}},
+							{Op: &policyv1.Match_Expr{Expr: "c"}},
+						},
+					},
+				},
+			},
+			want: "!(a || b || c)",
+		},
+		{
 			name: "nested",
 			expr: &policyv1.Match{
 				Op: &policyv1.Match_All{
