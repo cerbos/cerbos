@@ -14,13 +14,17 @@ import (
 )
 
 const (
-	CELEvalIdent = `cel_eval`
+	AllowEffectIdent           = "allow"
+	CELEvalIdent               = `cel_eval`
+	DenyEffectIdent            = "deny"
+	EffectIdent                = "effect"
+	EffectiveDerivedRolesIdent = "effective_derived_roles"
+	NoMatchEffectIdent         = "no_match"
 
-	allowVal        = `"allow"`
-	denyVal         = `"deny"`
+	allowVal        = `"` + AllowEffectIdent + `"`
+	denyVal         = `"` + DenyEffectIdent + `"`
 	derivedRolesMap = "derived_roles"
-	effectIdent     = "effect"
-	noMatchVal      = `"no_match"`
+	noMatchVal      = `"` + NoMatchEffectIdent + `"`
 )
 
 var ErrCodeGenFailure = errors.New("code generation error")
@@ -118,11 +122,15 @@ func (rg *RegoGen) addParentRolesCheck(roleList []string) error {
 }
 
 func (rg *RegoGen) DefaultEffectDeny() {
-	rg.line("default ", effectIdent, " = ", denyVal)
+	rg.line("default ", EffectIdent, " = ", denyVal)
 }
 
 func (rg *RegoGen) DefaultEffectNoMatch() {
-	rg.line("default ", effectIdent, " = ", noMatchVal)
+	rg.line("default ", EffectIdent, " = ", noMatchVal)
+}
+
+func (rg *RegoGen) EffectiveDerivedRoles() {
+	rg.line(EffectiveDerivedRolesIdent, " := { dr | ", derivedRolesMap, "[dr] == true }")
 }
 
 func (rg *RegoGen) AddResourceRule(rule *policyv1.ResourceRule) error {
@@ -213,7 +221,7 @@ func (rg *RegoGen) addEffectRuleHead(effect sharedv1.Effect) {
 		effectVal = denyVal
 	}
 
-	rg.line(effectIdent, " = ", effectVal, "{")
+	rg.line(EffectIdent, " = ", effectVal, "{")
 }
 
 func (rg *RegoGen) addResourceMatch(resource string) {
