@@ -29,8 +29,7 @@ inputDefs:
         - actions: ["approve"]
           condition:
             match:
-              expr:
-                - request.resource.attr.status == "PENDING_APPROVAL"
+              expr: request.resource.attr.status == "PENDING_APPROVAL"
           derivedRoles:
             - direct_manager
           effect: EFFECT_ALLOW
@@ -56,6 +55,7 @@ inputDefs:
           parentRoles: ["manager"]
           computation:
             match:
-              expr:
-                - "request.resource.attr.geography == request.principal.attr.geography"
-                - "request.resource.attr.geography == request.principal.attr.managed_geographies"
+              all:
+                of:
+                  - expr: "request.resource.attr.geography == request.principal.attr.geography"
+                  - expr: "request.resource.attr.geography == request.principal.attr.managed_geographies"

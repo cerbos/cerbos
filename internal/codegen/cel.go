@@ -54,23 +54,23 @@ func (cg *celGen) addMatch(m *policyv1.Match) error {
 	case *policyv1.Match_Expr:
 		cg.WriteString(t.Expr)
 	case *policyv1.Match_All:
-		cg.WriteString(" (")
+		cg.WriteString("(")
 		if err := cg.join("&&", t.All.Of); err != nil {
 			return err
 		}
-		cg.WriteString(") ")
+		cg.WriteString(")")
 	case *policyv1.Match_Any:
-		cg.WriteString(" (")
+		cg.WriteString("(")
 		if err := cg.join("||", t.Any.Of); err != nil {
 			return err
 		}
-		cg.WriteString(") ")
+		cg.WriteString(")")
 	case *policyv1.Match_None:
-		cg.WriteString(" !(")
-		if err := cg.join("&&", t.None.Of); err != nil {
+		cg.WriteString("!(")
+		if err := cg.join("||", t.None.Of); err != nil {
 			return err
 		}
-		cg.WriteString(") ")
+		cg.WriteString(")")
 	default:
 		return fmt.Errorf("unknown match operation: %T", t)
 	}

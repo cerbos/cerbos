@@ -28,6 +28,5 @@ resourcePolicy:
       effect: EFFECT_ALLOW
       condition:
         match:
-          expr:
-            - >-
+          expr: >-
               request.resource.attr.status == "PENDING_APPROVAL"
