@@ -31,7 +31,7 @@ derived_roles:
   definitions:
     - name: owner
       parentRoles: ["user"]
-      computation:
+      condition:
         match:
           expr: request.resource.attr.owner == request.principal.id
 EOF

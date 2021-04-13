@@ -40,14 +40,14 @@ func (rrb *ResourceRuleBuilder) WithDerivedRoles(roles ...string) *ResourceRuleB
 }
 
 func (rrb *ResourceRuleBuilder) WithMatchExpr(expr ...string) *ResourceRuleBuilder {
-	rrb.rule.Condition = buildAndComputation(expr...)
+	rrb.rule.Condition = buildAndCondition(expr...)
 
 	return rrb
 }
 
 func (rrb *ResourceRuleBuilder) WithScript(script string) *ResourceRuleBuilder {
-	rrb.rule.Condition = &policyv1.Computation{
-		Computation: &policyv1.Computation_Script{
+	rrb.rule.Condition = &policyv1.Condition{
+		Condition: &policyv1.Condition_Script{
 			Script: script,
 		},
 	}
@@ -97,14 +97,14 @@ func (rpb *ResourcePolicyBuilder) Build() *policyv1.Policy {
 	}
 }
 
-func buildAndComputation(expr ...string) *policyv1.Computation {
+func buildAndCondition(expr ...string) *policyv1.Condition {
 	allExpr := make([]*policyv1.Match, len(expr))
 	for i, e := range expr {
 		allExpr[i] = &policyv1.Match{Op: &policyv1.Match_Expr{Expr: e}}
 	}
 
-	return &policyv1.Computation{
-		Computation: &policyv1.Computation_Match{
+	return &policyv1.Condition{
+		Condition: &policyv1.Condition_Match{
 			Match: &policyv1.Match{
 				Op: &policyv1.Match_All{
 					All: &policyv1.Match_ExprList{
@@ -148,8 +148,8 @@ func GenResourcePolicy(mod NameMod) *policyv1.Policy {
 						Actions:      []string{"approve"},
 						DerivedRoles: []string{"direct_manager"},
 						Effect:       sharedv1.Effect_EFFECT_ALLOW,
-						Condition: &policyv1.Computation{
-							Computation: &policyv1.Computation_Match{
+						Condition: &policyv1.Condition{
+							Condition: &policyv1.Condition_Match{
 								Match: &policyv1.Match{
 									Op: &policyv1.Match_Expr{Expr: `request.resource.attr.status == "PENDING_APPROVAL"`},
 								},
@@ -184,22 +184,22 @@ func (prb *PrincipalRuleBuilder) DenyAction(action string) *PrincipalRuleBuilder
 }
 
 func (prb *PrincipalRuleBuilder) AllowActionWhenMatch(action string, expr ...string) *PrincipalRuleBuilder {
-	return prb.addAction(action, sharedv1.Effect_EFFECT_ALLOW, buildAndComputation(expr...))
+	return prb.addAction(action, sharedv1.Effect_EFFECT_ALLOW, buildAndCondition(expr...))
 }
 
 func (prb *PrincipalRuleBuilder) DenyActionWhenMatch(action string, expr ...string) *PrincipalRuleBuilder {
-	return prb.addAction(action, sharedv1.Effect_EFFECT_DENY, buildAndComputation(expr...))
+	return prb.addAction(action, sharedv1.Effect_EFFECT_DENY, buildAndCondition(expr...))
 }
 
 func (prb *PrincipalRuleBuilder) AllowActionWhenScript(action, script string) *PrincipalRuleBuilder {
-	return prb.addAction(action, sharedv1.Effect_EFFECT_ALLOW, &policyv1.Computation{Computation: &policyv1.Computation_Script{Script: script}})
+	return prb.addAction(action, sharedv1.Effect_EFFECT_ALLOW, &policyv1.Condition{Condition: &policyv1.Condition_Script{Script: script}})
 }
 
 func (prb *PrincipalRuleBuilder) DenyActionWhenScript(action, script string) *PrincipalRuleBuilder {
-	return prb.addAction(action, sharedv1.Effect_EFFECT_DENY, &policyv1.Computation{Computation: &policyv1.Computation_Script{Script: script}})
+	return prb.addAction(action, sharedv1.Effect_EFFECT_DENY, &policyv1.Condition{Condition: &policyv1.Condition_Script{Script: script}})
 }
 
-func (prb *PrincipalRuleBuilder) addAction(action string, effect sharedv1.Effect, comp *policyv1.Computation) *PrincipalRuleBuilder {
+func (prb *PrincipalRuleBuilder) addAction(action string, effect sharedv1.Effect, comp *policyv1.Condition) *PrincipalRuleBuilder {
 	prb.rule.Actions = append(prb.rule.Actions, &policyv1.PrincipalRule_Action{
 		Action:    action,
 		Effect:    effect,
@@ -255,8 +255,8 @@ func GenPrincipalPolicy(mod NameMod) *policyv1.Policy {
 							{
 								Action: "*",
 								Effect: sharedv1.Effect_EFFECT_ALLOW,
-								Condition: &policyv1.Computation{
-									Computation: &policyv1.Computation_Match{
+								Condition: &policyv1.Condition{
+									Condition: &policyv1.Condition_Match{
 										Match: &policyv1.Match{
 											Op: &policyv1.Match_Expr{Expr: "request.resource.attr.dev_record == true"},
 										},
@@ -295,15 +295,15 @@ func (drb *DerivedRolesBuilder) AddRole(name string, parentRoles ...string) *Der
 }
 
 func (drb *DerivedRolesBuilder) AddRoleWithMatch(name string, parentRoles []string, expr ...string) *DerivedRolesBuilder {
-	return drb.addRoleDef(name, parentRoles, buildAndComputation(expr...))
+	return drb.addRoleDef(name, parentRoles, buildAndCondition(expr...))
 }
 
 func (drb *DerivedRolesBuilder) AddRoleWithScript(name string, parentRoles []string, script string) *DerivedRolesBuilder {
-	return drb.addRoleDef(name, parentRoles, &policyv1.Computation{Computation: &policyv1.Computation_Script{Script: script}})
+	return drb.addRoleDef(name, parentRoles, &policyv1.Condition{Condition: &policyv1.Condition_Script{Script: script}})
 }
 
-func (drb *DerivedRolesBuilder) addRoleDef(name string, parentRoles []string, comp *policyv1.Computation) *DerivedRolesBuilder {
-	drb.dr.Definitions = append(drb.dr.Definitions, &policyv1.RoleDef{Name: name, ParentRoles: parentRoles, Computation: comp})
+func (drb *DerivedRolesBuilder) addRoleDef(name string, parentRoles []string, comp *policyv1.Condition) *DerivedRolesBuilder {
+	drb.dr.Definitions = append(drb.dr.Definitions, &policyv1.RoleDef{Name: name, ParentRoles: parentRoles, Condition: comp})
 	return drb
 }
 
@@ -330,8 +330,8 @@ func GenDerivedRoles(mod NameMod) *policyv1.Policy {
 					{
 						Name:        "employee_that_owns_the_record",
 						ParentRoles: []string{"employee"},
-						Computation: &policyv1.Computation{
-							Computation: &policyv1.Computation_Script{
+						Condition: &policyv1.Condition{
+							Condition: &policyv1.Condition_Script{
 								Script: "input.resource.attr.owner == input.principal.id",
 							},
 						},
@@ -343,7 +343,7 @@ func GenDerivedRoles(mod NameMod) *policyv1.Policy {
 					{
 						Name:        "direct_manager",
 						ParentRoles: []string{"manager"},
-						Computation: buildAndComputation(
+						Condition: buildAndCondition(
 							"request.resource.attr.geography == request.principal.attr.geography",
 							"request.resource.attr.geography == request.principal.attr.managed_geographies",
 						),
