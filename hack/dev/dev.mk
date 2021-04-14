@@ -4,39 +4,6 @@ SVC_METHOD := svc.v1.CerbosService/Check
 GRPC_PORT := 3593
 HTTP_PORT := 3592
 
-define REQUEST_JSON
-{\
-  "requestId": "460d1429-9798-4a6f-8505-170193909003",\
-  "principal": {\
-    "id": "maggie",\
-    "policyVersion": "20210210",\
-    "roles": [\
-      "employee",\
-      "manager"\
-    ],\
-    "attr": {\
-      "department": "marketing",\
-      "geography": "GB",\
-      "managed_geographies": "GB",\
-      "team": "design"\
-    }\
-  },\
-  "action": "approve",\
-  "resource": {\
-    "name": "leave_request",\
-    "policyVersion": "20210210",\
-    "attr": {\
-      "department": "marketing",\
-      "geography": "GB",\
-      "id": "XX125",\
-      "owner": "maggie",\
-      "status": "PENDING_APPROVAL",\
-      "team": "design"\
-    }\
-  }\
-}
-endef
-
 $(DEV_DIR)/tls.crt:
 	@  openssl req -x509 -sha256 -nodes -newkey rsa:4096 -days 365 -subj "/CN=cerbos.local" -addext "subjectAltName=DNS:cerbos.local" -keyout $(DEV_DIR)/tls.key -out $(DEV_DIR)/tls.crt
 
@@ -54,23 +21,43 @@ protoset: $(BUF)
 
 .PHONY: check-grpc
 check-grpc: protoset $(GRPCURL)
-	@ $(GRPCURL) -protoset $(PROTOSET) -authority cerbos.local -insecure -d '$(REQUEST_JSON)' localhost:$(GRPC_PORT) $(SVC_METHOD)
+	@ $(foreach REQ_FILE,\
+		$(wildcard $(DEV_DIR)/requests/*),\
+		echo $(REQ_FILE); \
+		$(GRPCURL) -protoset $(PROTOSET) -authority cerbos.local -insecure -d @ localhost:$(GRPC_PORT) $(SVC_METHOD) < $(REQ_FILE);\
+		echo "";)
 
 .PHONY: check-grpc-insecure
 check-grpc-insecure: protoset $(GRPCURL)
-	@ $(GRPCURL) -protoset $(PROTOSET) -plaintext -d '$(REQUEST_JSON)' localhost:$(GRPC_PORT) $(SVC_METHOD)
+	@ $(foreach REQ_FILE,\
+		$(wildcard $(DEV_DIR)/requests/*),\
+		echo $(REQ_FILE); \
+		$(GRPCURL) -protoset $(PROTOSET) -plaintext -d @ localhost:$(GRPC_PORT) $(SVC_METHOD) < $(REQ_FILE);\
+		echo "";)
 
 .PHONY: check-http
 check-http:
-	@ curl -i -k https://localhost:$(HTTP_PORT)/api/check -d '$(REQUEST_JSON)'
+	@ $(foreach REQ_FILE,\
+		$(wildcard $(DEV_DIR)/requests/*),\
+		echo $(REQ_FILE); \
+		curl -i -k https://localhost:$(HTTP_PORT)/api/check -d @$(REQ_FILE);\
+		echo "";)
 
 .PHONY: check-http-insecure
 check-http-insecure:
-	@ curl -i http://localhost:$(HTTP_PORT)/api/check -d '$(REQUEST_JSON)'
+	@ $(foreach REQ_FILE,\
+		$(wildcard $(DEV_DIR)/requests/*),\
+		echo $(REQ_FILE); \
+		curl -i http://localhost:$(HTTP_PORT)/api/check -d @$(REQ_FILE);\
+		echo "";)
 
 .PHONY: perf
 perf: protoset $(GHZ)
-	@ $(GHZ) --protoset $(PROTOSET) --cname=cerbos.local -n 500 --call $(SVC_METHOD) -d '$(REQUEST_JSON)' localhost:$(GRPC_PORT)
+	@ $(foreach REQ_FILE,\
+		$(wildcard $(DEV_DIR)/requests/*),\
+		echo $(REQ_FILE); \
+		$(GHZ) --protoset $(PROTOSET) --cname=cerbos.local -n 500 --call $(SVC_METHOD) -D $(REQ_FILE) localhost:$(GRPC_PORT);\
+		echo "";)
 
 .PHONY: jaeger
 jaeger:
