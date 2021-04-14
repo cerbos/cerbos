@@ -44,6 +44,7 @@ func generateResourcePolicy(p *policyv1.ResourcePolicy) (*CodeGenResult, error) 
 	rg := NewRegoGen(modName, imports...)
 
 	rg.DefaultEffectDeny()
+	rg.EffectiveDerivedRoles()
 
 	for _, rule := range p.Rules {
 		if err := rg.AddResourceRule(rule); err != nil {

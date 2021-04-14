@@ -84,14 +84,14 @@ func DerivedRolesSimpleName(modName string) string {
 	return strings.TrimPrefix(modName, fmt.Sprintf("%s.%s.", ModulePrefix, DerivedRolesPrefix))
 }
 
-// EffectQueryForPrincipal returns the effect query for the given principal and version.
-func EffectQueryForPrincipal(principal, version string) string {
-	return fmt.Sprintf("data.%s.effect", PrincipalPolicyModuleName(principal, version))
+// QueryForPrincipal returns the effect query for the given principal and version.
+func QueryForPrincipal(principal, version string) string {
+	return fmt.Sprintf("data.%s", PrincipalPolicyModuleName(principal, version))
 }
 
-// EffectQueryForResource returns the effect query for the given resource and version.
-func EffectQueryForResource(resource, version string) string {
-	return fmt.Sprintf("data.%s.effect", ResourcePolicyModuleName(resource, version))
+// QueryForResource returns the effect query for the given resource and version.
+func QueryForResource(resource, version string) string {
+	return fmt.Sprintf("data.%s", ResourcePolicyModuleName(resource, version))
 }
 
 func Sanitize(v string) string {

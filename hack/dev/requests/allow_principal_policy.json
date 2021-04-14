@@ -1,0 +1,28 @@
+{
+  "requestId":  "test05",
+  "resource":  {
+    "name":  "leave_request",
+    "policyVersion":  "20210210",
+    "attr":  {
+      "department":  "marketing",
+      "dev_record":  true,
+      "geography":  "GB",
+      "id":  "XX125",
+      "owner":  "john",
+      "team":  "design"
+    }
+  },
+  "principal":  {
+    "id":  "donald_duck",
+    "policyVersion":  "20210210",
+    "roles":  [
+      "employee"
+    ],
+    "attr":  {
+      "department":  "marketing",
+      "geography":  "GB",
+      "team":  "design"
+    }
+  },
+  "action":  "approve"
+}

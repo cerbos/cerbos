@@ -9,7 +9,6 @@ import (
 
 	"github.com/cerbos/cerbos/internal/engine"
 	policyv1 "github.com/cerbos/cerbos/internal/genpb/policy/v1"
-	sharedv1 "github.com/cerbos/cerbos/internal/genpb/shared/v1"
 	"github.com/cerbos/cerbos/internal/util"
 )
 
@@ -125,13 +124,13 @@ func runTestSuite(ctx context.Context, eng *engine.Engine, shouldRun func(string
 			continue
 		}
 
-		if actual != expected {
+		if actual.Effect != expected {
 			testResult.Failed = true
 			failed = true
 		}
 
-		testResult.Expected = sharedv1.Effect_name[int32(expected)]
-		testResult.Actual = sharedv1.Effect_name[int32(actual)]
+		testResult.Expected = expected.String()
+		testResult.Actual = actual.Effect.String()
 
 		sr.Tests = append(sr.Tests, testResult)
 	}

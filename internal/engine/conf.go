@@ -12,7 +12,8 @@ const confKey = "engine"
 var errEmptyDefaultVersion = errors.New("engine.defaultVersion must not be an empty string")
 
 type Conf struct {
-	DefaultPolicyVersion string `yaml:"defaultPolicyVersion"`
+	DefaultPolicyVersion      string `yaml:"defaultPolicyVersion"`
+	IncludeMetadataInResponse bool   `yaml:"includeMetadataInResponse"`
 }
 
 func (c *Conf) Key() string {
@@ -21,6 +22,7 @@ func (c *Conf) Key() string {
 
 func (c *Conf) SetDefaults() {
 	c.DefaultPolicyVersion = namer.DefaultVersion
+	c.IncludeMetadataInResponse = true
 }
 
 func (c *Conf) Validate() error {

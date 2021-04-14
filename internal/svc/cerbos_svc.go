@@ -36,32 +36,31 @@ func NewCerbosService(eng *engine.Engine) *CerbosService {
 func (cs *CerbosService) Check(ctx context.Context, req *requestv1.CheckRequest) (*responsev1.CheckResponse, error) {
 	log := ctxzap.Extract(ctx)
 
-	effect, err := cs.eng.Check(logging.ToContext(ctx, log), req)
+	result, err := cs.eng.Check(logging.ToContext(ctx, log), req)
 	if err != nil {
 		if errors.Is(err, engine.ErrNoPoliciesMatched) {
 			log.Info("No policies matched")
-			return newResponse(req.RequestId, http.StatusUnauthorized, "No policies matched", sharedv1.Effect_EFFECT_DENY), nil
+			return newResponse(req.RequestId, http.StatusUnauthorized, "No policies matched", result), nil
 		}
 
 		log.Error("Policy check failed", zap.Error(err))
 		return nil, status.Errorf(codes.Internal, "Policy execution failed")
 	}
 
-	log.Info("Policy decision made", zap.String("effect", sharedv1.Effect_name[int32(effect)]))
-
-	switch effect {
+	switch result.Effect {
 	case sharedv1.Effect_EFFECT_ALLOW:
-		return newResponse(req.RequestId, http.StatusOK, "Allow", effect), nil
+		return newResponse(req.RequestId, http.StatusOK, "Allow", result), nil
 	default:
-		return newResponse(req.RequestId, http.StatusUnauthorized, "Deny", effect), nil
+		return newResponse(req.RequestId, http.StatusUnauthorized, "Deny", result), nil
 	}
 }
 
-func newResponse(requestID string, code int, msg string, effect sharedv1.Effect) *responsev1.CheckResponse {
+func newResponse(requestID string, code int, msg string, result *engine.CheckResult) *responsev1.CheckResponse {
 	return &responsev1.CheckResponse{
 		RequestId:     requestID,
 		StatusCode:    uint32(code),
 		StatusMessage: msg,
-		Effect:        effect,
+		Effect:        result.Effect,
+		Meta:          result.Meta,
 	}
 }

@@ -53,6 +53,8 @@ wantRego: |-
 
   default effect = "deny"
 
+  effective_derived_roles := {dr | derived_roles[dr] == true}
+
   effect = "allow" {
       glob.match("*", [], input.action)
       input.principal.roles[_] == "admin"    

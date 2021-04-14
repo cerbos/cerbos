@@ -13,10 +13,12 @@ import (
 	"go.opencensus.io/tag"
 	"go.opencensus.io/trace"
 	"google.golang.org/protobuf/encoding/protojson"
+	"google.golang.org/protobuf/types/known/durationpb"
 
 	"github.com/cerbos/cerbos/internal/compile"
 	"github.com/cerbos/cerbos/internal/config"
 	requestv1 "github.com/cerbos/cerbos/internal/genpb/request/v1"
+	responsev1 "github.com/cerbos/cerbos/internal/genpb/response/v1"
 	sharedv1 "github.com/cerbos/cerbos/internal/genpb/shared/v1"
 	"github.com/cerbos/cerbos/internal/namer"
 	"github.com/cerbos/cerbos/internal/observability/logging"
@@ -32,6 +34,38 @@ const (
 	loggerName                   = "engine"
 	maxQueryCacheSizeBytes int64 = 10 * 1024 * 1024 // 10 MiB
 )
+
+type CheckResult struct {
+	Effect sharedv1.Effect
+	Meta   *responsev1.CheckResponseMeta
+}
+
+func newCheckResult(defaultEffect sharedv1.Effect, includeMeta bool) *CheckResult {
+	result := &CheckResult{Effect: defaultEffect}
+	if includeMeta {
+		result.Meta = &responsev1.CheckResponseMeta{}
+	}
+
+	return result
+}
+
+func (cr *CheckResult) setMatchedPolicy(policyName string) {
+	if cr.Meta != nil {
+		cr.Meta.MatchedPolicy = policyName
+	}
+}
+
+func (cr *CheckResult) setEffectiveDerivedRoles(roles []string) {
+	if cr.Meta != nil {
+		cr.Meta.EffectiveDerivedRoles = roles
+	}
+}
+
+func (cr *CheckResult) setEvaluationDuration(duration time.Duration) {
+	if cr.Meta != nil {
+		cr.Meta.EvaluationDuration = durationpb.New(duration)
+	}
+}
 
 type Engine struct {
 	conf       *Conf
@@ -93,16 +127,17 @@ func (engine *Engine) watchNotifications(ctx context.Context) {
 	}
 }
 
-func (engine *Engine) Check(ctx context.Context, req *requestv1.CheckRequest) (sharedv1.Effect, error) {
+func (engine *Engine) Check(ctx context.Context, req *requestv1.CheckRequest) (*CheckResult, error) {
 	return engine.measureCheckLatency(ctx, req)
 }
 
-func (engine *Engine) measureCheckLatency(ctx context.Context, req *requestv1.CheckRequest) (sharedv1.Effect, error) {
+func (engine *Engine) measureCheckLatency(ctx context.Context, req *requestv1.CheckRequest) (*CheckResult, error) {
 	startTime := time.Now()
+	result, err := engine.doCheck(ctx, req)
+	evalDuration := time.Since(startTime)
 
-	effect, err := engine.doCheck(ctx, req)
-
-	latencyMs := float64(time.Since(startTime)) / float64(time.Millisecond)
+	result.setEvaluationDuration(evalDuration)
+	latencyMs := float64(evalDuration) / float64(time.Millisecond)
 
 	status := "policy_matched"
 	if err != nil {
@@ -113,7 +148,7 @@ func (engine *Engine) measureCheckLatency(ctx context.Context, req *requestv1.Ch
 		}
 	}
 
-	decision := sharedv1.Effect_name[int32(effect)]
+	decision := result.Effect.String()
 
 	_ = stats.RecordWithTags(ctx,
 		[]tag.Mutator{
@@ -123,10 +158,10 @@ func (engine *Engine) measureCheckLatency(ctx context.Context, req *requestv1.Ch
 		metrics.EngineDecisionLatency.M(latencyMs),
 	)
 
-	return effect, err
+	return result, err
 }
 
-func (engine *Engine) doCheck(ctx context.Context, req *requestv1.CheckRequest) (sharedv1.Effect, error) {
+func (engine *Engine) doCheck(ctx context.Context, req *requestv1.CheckRequest) (*CheckResult, error) {
 	log := logging.FromContext(ctx).Named(loggerName).Sugar()
 	ctx, span := trace.StartSpan(ctx, "cerbos.dev/engine.Check")
 	defer span.End()
@@ -148,12 +183,14 @@ func (engine *Engine) doCheck(ctx context.Context, req *requestv1.CheckRequest) 
 		count++
 	}
 
+	retVal := newCheckResult(defaultEffect, engine.conf.IncludeMetadataInResponse)
+
 	if count == 0 {
 		log.Warn("No applicable policies for request")
-		span.AddAttributes(trace.StringAttribute("effect", defaultEffect.String()))
+		span.AddAttributes(trace.StringAttribute("effect", defaultEffect.String()), trace.BoolAttribute("policy_matched", false))
 		tracing.MarkFailed(span, trace.StatusCodeNotFound, "No matching policies", ErrNoPoliciesMatched)
 
-		return defaultEffect, ErrNoPoliciesMatched
+		return retVal, ErrNoPoliciesMatched
 	}
 
 	requestJSON, err := protojson.Marshal(req)
@@ -162,7 +199,7 @@ func (engine *Engine) doCheck(ctx context.Context, req *requestv1.CheckRequest) 
 		span.AddAttributes(trace.StringAttribute("effect", defaultEffect.String()))
 		tracing.MarkFailed(span, trace.StatusCodeInvalidArgument, "Failed to marshal request", err)
 
-		return defaultEffect, fmt.Errorf("failed to marshal request: %w", err)
+		return retVal, fmt.Errorf("failed to marshal request: %w", err)
 	}
 
 	input, err := ast.ValueFromReader(bytes.NewReader(requestJSON))
@@ -171,38 +208,41 @@ func (engine *Engine) doCheck(ctx context.Context, req *requestv1.CheckRequest) 
 		span.AddAttributes(trace.StringAttribute("effect", defaultEffect.String()))
 		tracing.MarkFailed(span, trace.StatusCodeInternal, "Failed to convert request", err)
 
-		return defaultEffect, fmt.Errorf("failed to convert request: %w", err)
+		return retVal, fmt.Errorf("failed to convert request: %w", err)
 	}
 
 	for i := 0; i < count; i++ {
 		c := checks[i]
 		log.Debugw("Executing policy", "policy", c.policyName)
 
-		effect, err := c.execute(ctx, engine.queryCache, input)
+		result, err := c.execute(ctx, engine.queryCache, input)
 		if err != nil {
 			log.Errorw("Policy execution failed", "policy", c.policyName, "error", err)
 			span.AddAttributes(trace.StringAttribute("policy", c.policyName), trace.StringAttribute("effect", defaultEffect.String()))
 			tracing.MarkFailed(span, trace.StatusCodeInternal, "Failed to execute policy", err)
 
-			return defaultEffect, fmt.Errorf("failed to execute policy %s: %w", c.policyName, err)
+			return retVal, fmt.Errorf("failed to execute policy %s: %w", c.policyName, err)
 		}
 
-		if effect != sharedv1.Effect_EFFECT_NO_MATCH {
-			log.Debugw("Policy matched", "policy", c.policyName, "effect", sharedv1.Effect_name[int32(effect)])
-			span.Annotate([]trace.Attribute{
-				trace.StringAttribute("effect", effect.String()),
-				trace.StringAttribute("policy", c.policyName),
-			}, "Policy matched")
+		span.AddAttributes(trace.StringAttribute("policy", c.policyName), trace.StringAttribute("effect", result.Effect.String()))
 
-			return effect, nil
+		if result.Effect != sharedv1.Effect_EFFECT_NO_MATCH {
+			log.Infow("Policy matched", "policy", c.policyName, "effect", result.Effect.String())
+			span.AddAttributes(trace.BoolAttribute("policy_matched", true))
+
+			retVal.Effect = result.Effect
+			retVal.setMatchedPolicy(c.policyName)
+			retVal.setEffectiveDerivedRoles(result.EffectiveDerivedRoles)
+
+			return retVal, nil
 		}
 	}
 
 	log.Warn("None of the policies produced a definitive answer")
-	span.AddAttributes(trace.StringAttribute("effect", defaultEffect.String()))
+	span.AddAttributes(trace.StringAttribute("effect", defaultEffect.String()), trace.BoolAttribute("policy_matched", false))
 	tracing.MarkFailed(span, trace.StatusCodeNotFound, "No matching policies", ErrNoPoliciesMatched)
 
-	return defaultEffect, ErrNoPoliciesMatched
+	return retVal, ErrNoPoliciesMatched
 }
 
 func (engine *Engine) getPrincipalPolicyCheck(req *requestv1.CheckRequest) *check {
@@ -218,7 +258,7 @@ func (engine *Engine) getPrincipalPolicyCheck(req *requestv1.CheckRequest) *chec
 		return &check{
 			policyName: fmt.Sprintf("%s:%s", principal, policyVersion),
 			eval:       eval,
-			query:      namer.EffectQueryForPrincipal(principal, policyVersion),
+			query:      namer.QueryForPrincipal(principal, policyVersion),
 		}
 	}
 
@@ -238,7 +278,7 @@ func (engine *Engine) getResourcePolicyCheck(req *requestv1.CheckRequest) *check
 		return &check{
 			policyName: fmt.Sprintf("%s:%s", resource, policyVersion),
 			eval:       eval,
-			query:      namer.EffectQueryForResource(resource, policyVersion),
+			query:      namer.QueryForResource(resource, policyVersion),
 		}
 	}
 
@@ -251,10 +291,10 @@ type check struct {
 	query      string
 }
 
-func (c *check) execute(ctx context.Context, queryCache cache.InterQueryCache, input ast.Value) (effect sharedv1.Effect, err error) {
+func (c *check) execute(ctx context.Context, queryCache cache.InterQueryCache, input ast.Value) (result compile.EvalResult, err error) {
 	ctx, span := trace.StartSpan(ctx, "cerbos.dev/engine.ExecutePolicy")
 	defer func() {
-		span.AddAttributes(trace.StringAttribute("policy", c.policyName), trace.StringAttribute("effect", effect.String()))
+		span.AddAttributes(trace.StringAttribute("policy", c.policyName), trace.StringAttribute("effect", result.Effect.String()))
 		if err != nil {
 			tracing.MarkFailed(span, trace.StatusCodeInternal, "Policy execution failed", err)
 		}

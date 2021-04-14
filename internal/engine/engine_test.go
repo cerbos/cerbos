@@ -28,15 +28,19 @@ func TestEngineCheck(t *testing.T) {
 	require.NoError(t, err)
 
 	testCases := []struct {
-		desc    string
-		request func() *requestv1.CheckRequest
-		want    sharedv1.Effect
-		wantErr bool
+		desc             string
+		request          func() *requestv1.CheckRequest
+		wantEffect       sharedv1.Effect
+		wantPolicy       string
+		wantDerivedRoles []string
+		wantErr          bool
 	}{
 		{
-			desc:    "John views own leave request",
-			request: test.MkRequest,
-			want:    sharedv1.Effect_EFFECT_ALLOW,
+			desc:             "John views own leave request",
+			request:          test.MkRequest,
+			wantEffect:       sharedv1.Effect_EFFECT_ALLOW,
+			wantPolicy:       "leave_request:20210210",
+			wantDerivedRoles: []string{"employee_that_owns_the_record", "any_employee"},
 		},
 		{
 			desc: "John tries to approve his own leave_request",
@@ -47,7 +51,9 @@ func TestEngineCheck(t *testing.T) {
 
 				return req
 			},
-			want: sharedv1.Effect_EFFECT_DENY,
+			wantEffect:       sharedv1.Effect_EFFECT_DENY,
+			wantPolicy:       "leave_request:20210210",
+			wantDerivedRoles: []string{"employee_that_owns_the_record", "any_employee"},
 		},
 		{
 			desc: "John's manager approves leave_request",
@@ -62,7 +68,9 @@ func TestEngineCheck(t *testing.T) {
 
 				return req
 			},
-			want: sharedv1.Effect_EFFECT_ALLOW,
+			wantEffect:       sharedv1.Effect_EFFECT_ALLOW,
+			wantPolicy:       "leave_request:20210210",
+			wantDerivedRoles: []string{"direct_manager", "any_employee"},
 		},
 		{
 			desc: "Some other manager tries to approve leave_request",
@@ -77,7 +85,9 @@ func TestEngineCheck(t *testing.T) {
 
 				return req
 			},
-			want: sharedv1.Effect_EFFECT_DENY,
+			wantEffect:       sharedv1.Effect_EFFECT_DENY,
+			wantPolicy:       "leave_request:20210210",
+			wantDerivedRoles: []string{"any_employee"},
 		},
 		{
 			desc: "Donald Duck approves leave_request that has dev_record attribute [Principal policy override]",
@@ -90,7 +100,8 @@ func TestEngineCheck(t *testing.T) {
 
 				return req
 			},
-			want: sharedv1.Effect_EFFECT_ALLOW,
+			wantEffect: sharedv1.Effect_EFFECT_ALLOW,
+			wantPolicy: "donald_duck:20210210",
 		},
 		{
 			desc: "Donald Duck views leave_request [Principal policy cascades to resource policy]",
@@ -103,7 +114,9 @@ func TestEngineCheck(t *testing.T) {
 
 				return req
 			},
-			want: sharedv1.Effect_EFFECT_ALLOW,
+			wantEffect:       sharedv1.Effect_EFFECT_ALLOW,
+			wantPolicy:       "leave_request:20210210",
+			wantDerivedRoles: []string{"any_employee"},
 		},
 		{
 			desc: "Donald Duck tries to view salary_record [Principal policy override]",
@@ -117,7 +130,8 @@ func TestEngineCheck(t *testing.T) {
 
 				return req
 			},
-			want: sharedv1.Effect_EFFECT_DENY,
+			wantEffect: sharedv1.Effect_EFFECT_DENY,
+			wantPolicy: "donald_duck:20210210",
 		},
 	}
 
@@ -132,7 +146,9 @@ func TestEngineCheck(t *testing.T) {
 				return
 			}
 			require.NoError(t, err)
-			require.Equal(t, tc.want, resp)
+			require.Equal(t, tc.wantEffect, resp.Effect)
+			require.Equal(t, tc.wantPolicy, resp.Meta.MatchedPolicy)
+			require.ElementsMatch(t, tc.wantDerivedRoles, resp.Meta.EffectiveDerivedRoles)
 		})
 	}
 }
@@ -155,13 +171,13 @@ func BenchmarkCheck(b *testing.B) {
 		b.ResetTimer()
 		b.ReportAllocs()
 		for i := 0; i < b.N; i++ {
-			effect, err := eng.Check(ctx, request)
+			result, err := eng.Check(ctx, request)
 			if err != nil {
 				b.Errorf("ERROR: %v", err)
 			}
 
-			if effect != sharedv1.Effect_EFFECT_ALLOW {
-				b.Errorf("Unexpected result: %v", effect)
+			if result.Effect != sharedv1.Effect_EFFECT_ALLOW {
+				b.Errorf("Unexpected result: %v", result.Effect)
 			}
 		}
 	})
@@ -175,13 +191,13 @@ func BenchmarkCheck(b *testing.B) {
 		b.ResetTimer()
 		b.ReportAllocs()
 		for i := 0; i < b.N; i++ {
-			effect, err := eng.Check(ctx, request)
+			result, err := eng.Check(ctx, request)
 			if err != nil {
 				b.Errorf("ERROR: %v", err)
 			}
 
-			if effect != sharedv1.Effect_EFFECT_ALLOW {
-				b.Errorf("Unexpected result: %v", effect)
+			if result.Effect != sharedv1.Effect_EFFECT_ALLOW {
+				b.Errorf("Unexpected result: %v", result.Effect)
 			}
 		}
 	})
@@ -194,13 +210,13 @@ func BenchmarkCheck(b *testing.B) {
 		b.ResetTimer()
 		b.ReportAllocs()
 		for i := 0; i < b.N; i++ {
-			effect, err := eng.Check(ctx, request)
+			result, err := eng.Check(ctx, request)
 			if err != nil {
 				b.Errorf("ERROR: %v", err)
 			}
 
-			if effect != sharedv1.Effect_EFFECT_ALLOW {
-				b.Errorf("Unexpected result: %v", effect)
+			if result.Effect != sharedv1.Effect_EFFECT_ALLOW {
+				b.Errorf("Unexpected result: %v", result.Effect)
 			}
 		}
 	})
@@ -212,13 +228,13 @@ func BenchmarkCheck(b *testing.B) {
 		b.ResetTimer()
 		b.ReportAllocs()
 		for i := 0; i < b.N; i++ {
-			effect, err := eng.Check(ctx, request)
+			result, err := eng.Check(ctx, request)
 			if !errors.Is(err, ErrNoPoliciesMatched) {
 				b.Errorf("ERROR: %v", err)
 			}
 
-			if effect != sharedv1.Effect_EFFECT_DENY {
-				b.Errorf("Unexpected result: %v", effect)
+			if result.Effect != sharedv1.Effect_EFFECT_DENY {
+				b.Errorf("Unexpected result: %v", result.Effect)
 			}
 		}
 	})
