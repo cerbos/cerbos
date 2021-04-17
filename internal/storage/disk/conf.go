@@ -8,4 +8,6 @@ type Conf struct {
 	Directory string `yaml:"directory"`
 	// ReadOnly defines that the server cannot write or update policies on disk.
 	ReadOnly bool `yaml:"readOnly"`
+	// WatchForChanges enables watching the directory for changes.
+	WatchForChanges bool `yaml:"watchForChanges"`
 }

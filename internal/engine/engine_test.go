@@ -21,7 +21,7 @@ func TestEngineCheck(t *testing.T) {
 	ctx, cancelFunc := context.WithCancel(context.Background())
 	defer cancelFunc()
 
-	store, err := disk.NewReadOnlyStore(ctx, dir)
+	store, err := disk.NewReadOnlyStore(ctx, &disk.Conf{Directory: dir})
 	require.NoError(t, err)
 
 	eng, err := New(ctx, store)
@@ -159,7 +159,7 @@ func BenchmarkCheck(b *testing.B) {
 	ctx, cancelFunc := context.WithCancel(context.Background())
 	defer cancelFunc()
 
-	store, err := disk.NewReadOnlyStore(ctx, dir)
+	store, err := disk.NewReadOnlyStore(ctx, &disk.Conf{Directory: dir})
 	require.NoError(b, err)
 
 	eng, err := New(ctx, store)

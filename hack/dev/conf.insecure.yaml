@@ -7,3 +7,4 @@ storage:
   driver: "disk"
   disk:
     directory: internal/test/testdata/store
+    watchForChanges: true

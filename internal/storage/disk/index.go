@@ -68,6 +68,7 @@ type Index interface {
 	Remove(string) (*compile.Incremental, error)
 	RemoveIfSafe(string) (*compile.Incremental, error)
 	Apply(*IndexUpdate) (*compile.Incremental, error)
+	Reload(context.Context) error
 }
 
 type invalidatedModules struct {
@@ -83,6 +84,29 @@ type index struct {
 	fileToModID  map[string]namer.ModuleID
 	dependents   map[namer.ModuleID]map[namer.ModuleID]struct{}
 	dependencies map[namer.ModuleID]map[namer.ModuleID]struct{}
+}
+
+func (idx *index) Reload(ctx context.Context) error {
+	tmpIdx, err := BuildIndex(ctx, idx.fsys, ".")
+	if err != nil {
+		return err
+	}
+
+	newIdx, ok := tmpIdx.(*index)
+	if !ok {
+		return fmt.Errorf("unexpected type for index: %T", tmpIdx)
+	}
+
+	idx.mu.Lock()
+	defer idx.mu.Unlock()
+
+	idx.executables = newIdx.executables
+	idx.modIDToFile = newIdx.modIDToFile
+	idx.fileToModID = newIdx.fileToModID
+	idx.dependents = newIdx.dependents
+	idx.dependencies = newIdx.dependencies
+
+	return nil
 }
 
 func (idx *index) Apply(update *IndexUpdate) (*compile.Incremental, error) {

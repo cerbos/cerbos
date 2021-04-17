@@ -121,7 +121,7 @@ func TestUpdateStore(t *testing.T) {
 		return m
 	}
 
-	notificationChan := make(chan *compile.Incremental, 1)
+	notificationChan := make(chan compile.Notification, 1)
 	store.SetNotificationChannel(notificationChan)
 
 	t.Run("no changes", func(t *testing.T) {
@@ -284,7 +284,7 @@ func requireIndexContains(t *testing.T, store *Store, wantFiles []string) {
 	require.ElementsMatch(t, wantFiles, haveFiles)
 }
 
-func getNotification(t *testing.T, notificationChan <-chan *compile.Incremental) *compile.Incremental {
+func getNotification(t *testing.T, notificationChan <-chan compile.Notification) *compile.Incremental {
 	t.Helper()
 
 	timer := time.NewTimer(10 * time.Second)
@@ -292,7 +292,7 @@ func getNotification(t *testing.T, notificationChan <-chan *compile.Incremental)
 
 	select {
 	case c := <-notificationChan:
-		return c
+		return c.Payload
 	case <-timer.C:
 		return nil
 	}
@@ -494,6 +494,11 @@ type mockIndex struct {
 
 func newMockIndex(index disk.Index) *mockIndex {
 	return &mockIndex{index: index}
+}
+
+func (m *mockIndex) Reload(ctx context.Context) error {
+	m.calls = append(m.calls, mock.Call{Method: "Reload", Arguments: mock.Arguments{ctx}})
+	return m.index.Reload(ctx)
 }
 
 func (m *mockIndex) Add(file string, p *policyv1.Policy) (*compile.Incremental, error) {

@@ -15,7 +15,7 @@ import (
 type Store interface {
 	Driver() string
 	GetAllPolicies(context.Context) <-chan *compile.Unit
-	SetNotificationChannel(chan<- *compile.Incremental)
+	SetNotificationChannel(chan<- compile.Notification)
 }
 
 // WritableStore is a store that supports modifications.
@@ -39,10 +39,10 @@ func New(ctx context.Context) (Store, error) {
 		}
 
 		if conf.Disk.ReadOnly {
-			return disk.NewReadOnlyStore(ctx, conf.Disk.Directory)
+			return disk.NewReadOnlyStore(ctx, conf.Disk)
 		}
 
-		return disk.NewReadWriteStore(ctx, conf.Disk.Directory)
+		return disk.NewReadWriteStore(ctx, conf.Disk)
 	case git.DriverName:
 		if conf.Git == nil {
 			return nil, errors.New("git storage configuration not provided")

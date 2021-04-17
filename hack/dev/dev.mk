@@ -39,16 +39,18 @@ check-grpc-insecure: protoset $(GRPCURL)
 check-http:
 	@ $(foreach REQ_FILE,\
 		$(wildcard $(DEV_DIR)/requests/*),\
+		echo "";\
 		echo $(REQ_FILE); \
-		curl -i -k https://localhost:$(HTTP_PORT)/api/check -d @$(REQ_FILE);\
+		curl -k https://localhost:$(HTTP_PORT)/api/check -d @$(REQ_FILE);\
 		echo "";)
 
 .PHONY: check-http-insecure
 check-http-insecure:
 	@ $(foreach REQ_FILE,\
 		$(wildcard $(DEV_DIR)/requests/*),\
+		echo "";\
 		echo $(REQ_FILE); \
-		curl -i http://localhost:$(HTTP_PORT)/api/check -d @$(REQ_FILE);\
+		curl http://localhost:$(HTTP_PORT)/api/check -d @$(REQ_FILE);\
 		echo "";)
 
 .PHONY: perf

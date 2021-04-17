@@ -17,6 +17,11 @@ import (
 	"github.com/cerbos/cerbos/internal/observability/metrics"
 )
 
+type Notification struct {
+	FullRecompile bool
+	Payload       *Incremental
+}
+
 type Unit struct {
 	ModID       namer.ModuleID
 	Definitions map[string]*policyv1.Policy

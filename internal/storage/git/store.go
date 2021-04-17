@@ -8,7 +8,6 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/go-git/go-git/v5"
@@ -19,6 +18,7 @@ import (
 	"github.com/cerbos/cerbos/internal/compile"
 	policyv1 "github.com/cerbos/cerbos/internal/genpb/policy/v1"
 	"github.com/cerbos/cerbos/internal/policy"
+	"github.com/cerbos/cerbos/internal/storage/common"
 	"github.com/cerbos/cerbos/internal/storage/disk"
 	"github.com/cerbos/cerbos/internal/util"
 )
@@ -26,18 +26,18 @@ import (
 var ErrDirtyState = errors.New("state is dirty")
 
 type Store struct {
-	log        *zap.SugaredLogger
-	conf       *Conf
-	index      disk.Index
-	repo       *git.Repository
-	mu         sync.RWMutex
-	notifyChan chan<- *compile.Incremental
+	log   *zap.SugaredLogger
+	conf  *Conf
+	index disk.Index
+	repo  *git.Repository
+	*common.Notifier
 }
 
 func NewStore(ctx context.Context, conf *Conf) (*Store, error) {
 	s := &Store{
-		log:  zap.S().Named("git.store").With("dir", conf.CheckoutDir),
-		conf: conf,
+		log:      zap.S().Named("git.store").With("dir", conf.CheckoutDir),
+		conf:     conf,
+		Notifier: common.NewNotifier(),
 	}
 
 	if err := s.init(ctx); err != nil {
@@ -54,29 +54,6 @@ func (s *Store) Driver() string {
 
 func (s *Store) GetAllPolicies(ctx context.Context) <-chan *compile.Unit {
 	return s.index.GetAllPolicies(ctx)
-}
-
-func (s *Store) SetNotificationChannel(channel chan<- *compile.Incremental) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-
-	s.notifyChan = channel
-}
-
-func (s *Store) notify(ctx context.Context, change *compile.Incremental) error {
-	s.mu.RLock()
-	notifyChan := s.notifyChan //nolint:ifshort
-	s.mu.RUnlock()
-
-	if notifyChan != nil {
-		select {
-		case <-ctx.Done():
-			return fmt.Errorf("failed to send notification: %w", ctx.Err())
-		case notifyChan <- change:
-		}
-	}
-
-	return nil
 }
 
 func (s *Store) init(ctx context.Context) error {
@@ -379,7 +356,7 @@ func (s *Store) updateIndex(ctx context.Context) error {
 	removeCount := len(change.Remove)
 
 	s.log.Infof("Index updated: Added=%d Removed=%d", addCount, removeCount)
-	return s.notify(ctx, change)
+	return s.NotifyIncrementalUpdate(ctx, change)
 }
 
 func (s *Store) accumulateChange(ce object.ChangeEntry, accFn func(string, *policyv1.Policy)) error {

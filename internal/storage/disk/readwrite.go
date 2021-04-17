@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"sync"
 
 	"github.com/google/renameio"
 	"go.uber.org/zap"
@@ -13,24 +12,36 @@ import (
 	"github.com/cerbos/cerbos/internal/compile"
 	policyv1 "github.com/cerbos/cerbos/internal/genpb/policy/v1"
 	"github.com/cerbos/cerbos/internal/policy"
+	"github.com/cerbos/cerbos/internal/storage/common"
 )
 
 type ReadWriteStore struct {
-	policyDir  string
-	index      Index
-	mu         sync.RWMutex
-	notifyChan chan<- *compile.Incremental
+	*common.Notifier
+	policyDir string
+	index     Index
+	dw        *dirWatch
 }
 
-func NewReadWriteStore(ctx context.Context, policyDir string) (*ReadWriteStore, error) {
-	zap.S().Named("disk.store").Infow("Creating disk store", "root", policyDir)
+func NewReadWriteStore(ctx context.Context, conf *Conf) (*ReadWriteStore, error) {
+	zap.S().Named("disk.store").Infow("Creating disk store", "root", conf.Directory)
 
-	idx, err := BuildIndex(ctx, os.DirFS(policyDir), ".")
+	idx, err := BuildIndex(ctx, os.DirFS(conf.Directory), ".")
 	if err != nil {
 		return nil, err
 	}
 
-	return &ReadWriteStore{policyDir: policyDir, index: idx}, nil
+	rws := &ReadWriteStore{policyDir: conf.Directory, index: idx, Notifier: common.NewNotifier()}
+
+	if conf.WatchForChanges {
+		dw, err := newDirWatch(ctx, conf.Directory, idx, rws.Notifier)
+		if err != nil {
+			return nil, err
+		}
+
+		rws.dw = dw
+	}
+
+	return rws, nil
 }
 
 func (s *ReadWriteStore) Driver() string {
@@ -39,29 +50,6 @@ func (s *ReadWriteStore) Driver() string {
 
 func (s *ReadWriteStore) GetAllPolicies(ctx context.Context) <-chan *compile.Unit {
 	return s.index.GetAllPolicies(ctx)
-}
-
-func (s *ReadWriteStore) SetNotificationChannel(channel chan<- *compile.Incremental) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-
-	s.notifyChan = channel
-}
-
-func (s *ReadWriteStore) notify(ctx context.Context, change *compile.Incremental) error {
-	s.mu.RLock()
-	notifyChan := s.notifyChan //nolint:ifshort
-	s.mu.RUnlock()
-
-	if notifyChan != nil {
-		select {
-		case <-ctx.Done():
-			return fmt.Errorf("failed to send notification: %w", ctx.Err())
-		case notifyChan <- change:
-		}
-	}
-
-	return nil
 }
 
 func (s *ReadWriteStore) AddOrUpdate(ctx context.Context, p *policyv1.Policy) error {
@@ -91,7 +79,7 @@ func (s *ReadWriteStore) AddOrUpdate(ctx context.Context, p *policyv1.Policy) er
 		return err
 	}
 
-	return s.notify(ctx, change)
+	return s.NotifyIncrementalUpdate(ctx, change)
 }
 
 func (s *ReadWriteStore) Remove(ctx context.Context, p *policyv1.Policy) error {
@@ -106,7 +94,7 @@ func (s *ReadWriteStore) Remove(ctx context.Context, p *policyv1.Policy) error {
 		return err
 	}
 
-	return s.notify(ctx, change)
+	return s.NotifyIncrementalUpdate(ctx, change)
 }
 
 func (s *ReadWriteStore) fileNameForPolicy(p *policyv1.Policy) string {
@@ -123,6 +111,7 @@ func (s *ReadWriteStore) fileNameForPolicy(p *policyv1.Policy) string {
 	case *policyv1.Policy_DerivedRoles:
 		return fmt.Sprintf("derived_roles_%s.yaml", pt.DerivedRoles.Name)
 	default:
+		// TODO	(cell) Don't panic
 		panic(fmt.Errorf("unknown policy type %T", pt))
 	}
 }

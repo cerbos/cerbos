@@ -8,9 +8,9 @@ Cerbos policies can be read from a directory on disk or a git repository. Which 
 
 The disk driver is a way to serve the policies from a directory on the filesystem. Any `.yaml`, `.yml` or `.json` files in the directory tree rooted at the given path will be read and parsed as policies.
 
-NOTE: The `disk` driver does not support detecting updates to the policy files. The server must be restarted to pick up any new changes made to policies after they were loaded.
 
 
+.Static fileset with no change detection
 [source,yaml,linenums]
 ----
 storage:
@@ -19,6 +19,17 @@ storage:
     directory: /etc/cerbos/policies
 ----
 
+.Dynamic fileset with change detection
+[source,yaml,linenums]
+----
+storage:
+  driver: disk
+  disk: 
+    directory: /etc/cerbos/policies
+    watchForChanges: true
+----
+
+CAUTION: On some platforms the automatic change detection feature can be inefficient and resource-intensive if the watched directory contains many files or gets updated frequently.
 
 == Git driver
 
@@ -30,6 +41,8 @@ Git is the preferred method of storing Cerbos policies. The server is smart enou
 * The `checkoutDir` is the working directory of the server and must be writable by the server process.
 * If `updatePollInterval` is set to 0, the source repository will not be polled to pick up any new commits.
 * If `operationTimeout` is not specified, the default timeout for git operations is 60 seconds.
+
+CAUTION: If the git repository is remote, setting the `updatePollInterval` to a low value could increase resource consumption in both the client and the server systems. Some managed service providers may even impose rate limits or temporary suspensions on your account if the number of requests is too high. 
 
 
 .Local git repository

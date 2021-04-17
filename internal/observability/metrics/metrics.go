@@ -10,6 +10,8 @@ var (
 	KeyCompileStatus        = tag.MustNewKey("status")
 	KeyEngineDecisionEffect = tag.MustNewKey("effect")
 	KeyEngineDecisionStatus = tag.MustNewKey("status")
+	KeyEngineUpdateType     = tag.MustNewKey("update_type")
+	KeyEngineUpdateStatus   = tag.MustNewKey("update_status")
 )
 
 var (
@@ -36,11 +38,24 @@ var (
 		TagKeys:     []tag.Key{KeyEngineDecisionEffect, KeyEngineDecisionStatus},
 		Aggregation: defaultLatencyDistribution(),
 	}
+
+	EngineUpdateLatency = stats.Float64(
+		"cerbos.dev/engine/update_latency",
+		"Time to apply an update to the engine",
+		stats.UnitMilliseconds,
+	)
+
+	EngineUpdateLatencyView = &view.View{
+		Measure:     EngineUpdateLatency,
+		TagKeys:     []tag.Key{KeyEngineUpdateType, KeyEngineUpdateStatus},
+		Aggregation: defaultLatencyDistribution(),
+	}
 )
 
 var DefaultCerbosViews = []*view.View{
 	CompileDurationView,
 	EngineDecisionLatencyView,
+	EngineUpdateLatencyView,
 }
 
 func defaultLatencyDistribution() *view.Aggregation {
