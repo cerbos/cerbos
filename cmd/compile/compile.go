@@ -58,7 +58,7 @@ func doRun(cmd *cobra.Command, args []string) error {
 	ctx, stopFunc := signal.NotifyContext(context.Background(), os.Interrupt)
 	defer stopFunc()
 
-	store, err := disk.NewReadOnlyStore(ctx, args[0])
+	store, err := disk.NewReadOnlyStore(ctx, &disk.Conf{Directory: args[0]})
 	if err != nil {
 		idxErr := new(disk.IndexBuildError)
 		if errors.As(err, &idxErr) {

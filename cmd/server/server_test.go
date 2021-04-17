@@ -122,7 +122,7 @@ func mkEngine(t *testing.T) *engine.Engine {
 	ctx, cancelFunc := context.WithCancel(context.Background())
 	defer cancelFunc()
 
-	store, err := disk.NewReadOnlyStore(ctx, dir)
+	store, err := disk.NewReadOnlyStore(ctx, &disk.Conf{Directory: dir})
 	require.NoError(t, err)
 
 	eng, err := engine.New(ctx, store)

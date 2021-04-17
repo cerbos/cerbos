@@ -5,6 +5,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"sync"
 	"time"
 
 	"github.com/open-policy-agent/opa/ast"
@@ -70,6 +71,7 @@ func (cr *CheckResult) setEvaluationDuration(duration time.Duration) {
 type Engine struct {
 	conf       *Conf
 	store      storage.Store
+	mu         sync.RWMutex
 	compiler   *compile.Compiler
 	queryCache cache.InterQueryCache
 }
@@ -80,9 +82,24 @@ func New(ctx context.Context, store storage.Store) (*Engine, error) {
 		return nil, err
 	}
 
-	compiler, err := compile.Compile(store.GetAllPolicies(ctx))
+	engine := &Engine{
+		conf:  conf,
+		store: store,
+	}
+
+	if err := engine.reload(ctx); err != nil {
+		return nil, err
+	}
+
+	go engine.watchNotifications(ctx)
+
+	return engine, nil
+}
+
+func (engine *Engine) reload(ctx context.Context) error {
+	compiler, err := compile.Compile(engine.store.GetAllPolicies(ctx))
 	if err != nil {
-		return nil, fmt.Errorf("failed to compile policies: %w", err)
+		return fmt.Errorf("failed to compile policies: %w", err)
 	}
 
 	cacheSize := maxQueryCacheSizeBytes
@@ -92,22 +109,19 @@ func New(ctx context.Context, store storage.Store) (*Engine, error) {
 		},
 	})
 
-	engine := &Engine{
-		conf:       conf,
-		store:      store,
-		compiler:   compiler,
-		queryCache: queryCache,
-	}
+	engine.mu.Lock()
+	defer engine.mu.Unlock()
 
-	go engine.watchNotifications(ctx)
+	engine.compiler = compiler
+	engine.queryCache = queryCache
 
-	return engine, nil
+	return nil
 }
 
 func (engine *Engine) watchNotifications(ctx context.Context) {
 	log := logging.FromContext(ctx).Named(loggerName).Sugar()
 
-	notificationChan := make(chan *compile.Incremental, 32) //nolint:gomnd
+	notificationChan := make(chan compile.Notification, 32) //nolint:gomnd
 	defer close(notificationChan)
 
 	engine.store.SetNotificationChannel(notificationChan)
@@ -118,13 +132,40 @@ func (engine *Engine) watchNotifications(ctx context.Context) {
 			log.Info("Stopping engine update watch")
 			return
 		case change := <-notificationChan:
-			if errs := engine.compiler.Update(change); errs != nil {
-				log.Errorw("Failed to apply incremental update due to compilation error", "error", errs)
+			if change.FullRecompile {
+				log.Debug("Performing a full compilation")
+				if err := measureUpdateLatency("full", func() error { return engine.reload(ctx) }); err != nil {
+					log.Errorw("Failed to reload engine", "error", err)
+				}
 			} else {
-				log.Debug("Incremental update applied")
+				log.Debug("Performing an incremental compilation")
+				if errs := measureUpdateLatency("incremental", func() error { return engine.compiler.Update(change.Payload) }); errs != nil {
+					log.Errorw("Failed to apply incremental update due to compilation error", "error", errs)
+				}
 			}
 		}
 	}
+}
+
+func measureUpdateLatency(updateType string, updateOp func() error) error {
+	startTime := time.Now()
+	err := updateOp()
+	latencyMs := float64(time.Since(startTime)) / float64(time.Millisecond)
+
+	status := "success"
+	if err != nil {
+		status = "failure"
+	}
+
+	_ = stats.RecordWithTags(context.Background(),
+		[]tag.Mutator{
+			tag.Upsert(metrics.KeyEngineUpdateStatus, status),
+			tag.Upsert(metrics.KeyEngineUpdateType, updateType),
+		},
+		metrics.EngineUpdateLatency.M(latencyMs),
+	)
+
+	return err
 }
 
 func (engine *Engine) Check(ctx context.Context, req *requestv1.CheckRequest) (*CheckResult, error) {
@@ -168,24 +209,10 @@ func (engine *Engine) doCheck(ctx context.Context, req *requestv1.CheckRequest) 
 
 	span.AddAttributes(trace.StringAttribute("request_id", req.RequestId))
 
-	var checks [2]*check
-	count := 0
-
-	if pc := engine.getPrincipalPolicyCheck(req); pc != nil {
-		span.Annotate([]trace.Attribute{trace.StringAttribute("principal_policy", pc.policyName)}, "Potential principal policy to evaluate")
-		checks[count] = pc
-		count++
-	}
-
-	if rc := engine.getResourcePolicyCheck(req); rc != nil {
-		span.Annotate([]trace.Attribute{trace.StringAttribute("resource_policy", rc.policyName)}, "Potential resource policy to evaluate")
-		checks[count] = rc
-		count++
-	}
-
+	execCtx := engine.getExecutionCtx(req)
 	retVal := newCheckResult(defaultEffect, engine.conf.IncludeMetadataInResponse)
 
-	if count == 0 {
+	if execCtx.numChecks == 0 {
 		log.Warn("No applicable policies for request")
 		span.AddAttributes(trace.StringAttribute("effect", defaultEffect.String()), trace.BoolAttribute("policy_matched", false))
 		tracing.MarkFailed(span, trace.StatusCodeNotFound, "No matching policies", ErrNoPoliciesMatched)
@@ -211,11 +238,11 @@ func (engine *Engine) doCheck(ctx context.Context, req *requestv1.CheckRequest) 
 		return retVal, fmt.Errorf("failed to convert request: %w", err)
 	}
 
-	for i := 0; i < count; i++ {
-		c := checks[i]
+	for i := 0; i < execCtx.numChecks; i++ {
+		c := execCtx.checks[i]
 		log.Debugw("Executing policy", "policy", c.policyName)
 
-		result, err := c.execute(ctx, engine.queryCache, input)
+		result, err := c.execute(ctx, execCtx.queryCache, input)
 		if err != nil {
 			log.Errorw("Policy execution failed", "policy", c.policyName, "error", err)
 			span.AddAttributes(trace.StringAttribute("policy", c.policyName), trace.StringAttribute("effect", defaultEffect.String()))
@@ -243,6 +270,25 @@ func (engine *Engine) doCheck(ctx context.Context, req *requestv1.CheckRequest) 
 	tracing.MarkFailed(span, trace.StatusCodeNotFound, "No matching policies", ErrNoPoliciesMatched)
 
 	return retVal, ErrNoPoliciesMatched
+}
+
+func (engine *Engine) getExecutionCtx(req *requestv1.CheckRequest) executionCtx {
+	engine.mu.RLock()
+	defer engine.mu.RUnlock()
+
+	ectx := executionCtx{queryCache: engine.queryCache}
+
+	if pc := engine.getPrincipalPolicyCheck(req); pc != nil {
+		ectx.checks[ectx.numChecks] = pc
+		ectx.numChecks++
+	}
+
+	if rc := engine.getResourcePolicyCheck(req); rc != nil {
+		ectx.checks[ectx.numChecks] = rc
+		ectx.numChecks++
+	}
+
+	return ectx
 }
 
 func (engine *Engine) getPrincipalPolicyCheck(req *requestv1.CheckRequest) *check {
@@ -283,6 +329,12 @@ func (engine *Engine) getResourcePolicyCheck(req *requestv1.CheckRequest) *check
 	}
 
 	return nil
+}
+
+type executionCtx struct {
+	numChecks  int
+	checks     [2]*check
+	queryCache cache.InterQueryCache
 }
 
 type check struct {
