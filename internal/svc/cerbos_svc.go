@@ -18,6 +18,8 @@ import (
 	"github.com/cerbos/cerbos/internal/observability/logging"
 )
 
+var _ svcv1.CerbosServiceServer = (*CerbosService)(nil)
+
 // CerbosService implements the policy checking service.
 type CerbosService struct {
 	log *zap.SugaredLogger
@@ -40,7 +42,7 @@ func (cs *CerbosService) Check(ctx context.Context, req *requestv1.CheckRequest)
 	if err != nil {
 		if errors.Is(err, engine.ErrNoPoliciesMatched) {
 			log.Info("No policies matched")
-			return newResponse(req.RequestId, http.StatusUnauthorized, "No policies matched", result), nil
+			return newCheckResponse(req.RequestId, http.StatusUnauthorized, "No policies matched", result), nil
 		}
 
 		log.Error("Policy check failed", zap.Error(err))
@@ -49,13 +51,13 @@ func (cs *CerbosService) Check(ctx context.Context, req *requestv1.CheckRequest)
 
 	switch result.Effect {
 	case sharedv1.Effect_EFFECT_ALLOW:
-		return newResponse(req.RequestId, http.StatusOK, "Allow", result), nil
+		return newCheckResponse(req.RequestId, http.StatusOK, "Allow", result), nil
 	default:
-		return newResponse(req.RequestId, http.StatusUnauthorized, "Deny", result), nil
+		return newCheckResponse(req.RequestId, http.StatusUnauthorized, "Deny", result), nil
 	}
 }
 
-func newResponse(requestID string, code int, msg string, result *engine.CheckResult) *responsev1.CheckResponse {
+func newCheckResponse(requestID string, code int, msg string, result *engine.CheckResult) *responsev1.CheckResponse {
 	return &responsev1.CheckResponse{
 		RequestId:     requestID,
 		StatusCode:    uint32(code),
@@ -63,4 +65,22 @@ func newResponse(requestID string, code int, msg string, result *engine.CheckRes
 		Effect:        result.Effect,
 		Meta:          result.Meta,
 	}
+}
+
+func (cs *CerbosService) CheckResourceBatch(ctx context.Context, req *requestv1.CheckResourceBatchRequest) (*responsev1.CheckResourceBatchResponse, error) {
+	log := ctxzap.Extract(ctx)
+	log.Debug("Processing resource batch", zap.Int("resource_count", len(req.Resource.Instances)))
+
+	result, err := cs.eng.CheckResourceBatch(logging.ToContext(ctx, log), req)
+	if err != nil {
+		if errors.Is(err, engine.ErrNoPoliciesMatched) {
+			log.Info("No policies matched")
+			return result, nil
+		}
+
+		log.Error("Policy check failed", zap.Error(err))
+		return nil, status.Errorf(codes.Internal, "Policy execution failed")
+	}
+
+	return result, nil
 }

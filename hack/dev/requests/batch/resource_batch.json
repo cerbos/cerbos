@@ -1,0 +1,73 @@
+{
+  "requestId":  "test",
+  "actions":  [
+    "view:public",
+    "approve",
+    "create"
+  ],
+  "principal":  {
+    "id":  "donald_duck",
+    "policyVersion":  "20210210",
+    "roles":  [
+      "employee"
+    ],
+    "attr":  {
+      "department":  "marketing",
+      "geography":  "GB",
+      "team":  "design"
+    }
+  },
+  "resource":  {
+    "name":  "leave_request",
+    "policyVersion":  "20210210",
+    "instances":  {
+      "XX125":  {
+        "attr":  {
+          "department":  "marketing",
+          "geography":  "GB",
+          "id":  "XX125",
+          "owner":  "john",
+          "team":  "design"
+        }
+      },
+      "XX150":  {
+        "attr":  {
+          "department":  "marketing",
+          "geography":  "GB",
+          "id":  "XX150",
+          "owner":  "mary",
+          "team":  "design"
+        }
+      },
+      "XX250":  {
+        "attr":  {
+          "department":  "marketing",
+          "geography":  "GB",
+          "id":  "XX250",
+          "owner":  "xenia",
+          "team":  "design"
+        }
+      },
+      "YY100":  {
+        "attr":  {
+          "department":  "marketing",
+          "dev_record":  true,
+          "geography":  "US",
+          "id":  "YY100",
+          "owner":  "zach",
+          "team":  "comms"
+        }
+      },
+      "YY200":  {
+        "attr":  {
+          "department":  "engineering",
+          "dev_record":  true,
+          "geography":  "GB",
+          "id":  "YY200",
+          "owner":  "christa",
+          "team":  "cloud"
+        }
+      }
+    }
+  }
+}

@@ -28,3 +28,19 @@ message Principal {
     map<string, google.protobuf.Value> attr = 4 [(validate.rules).map.no_sparse = true];
 }
 
+message CheckResourceBatchRequest {
+    string request_id = 1;
+    repeated string actions = 2 [(validate.rules).repeated = { unique: true, min_items: 1, items { string { min_len: 1 } } }];
+    Principal principal = 3 [(validate.rules).message.required = true];
+    ResourceBatch resource = 4 [(validate.rules).message.required = true];
+}
+
+message ResourceBatch {
+    string name = 1 [(validate.rules).string = {pattern: "^[[:alpha:]][[:word:]\\@\\.\\-]*(\\:[[:alpha:]][[:word:]\\@\\.\\-]*)*$", min_len: 1}];
+    string policy_version = 2 [(validate.rules).string.pattern = "^[[:word:]]*$"];
+    map<string, Attributes> instances = 3 [(validate.rules).map = {min_pairs: 1, max_pairs: 50, no_sparse: true}];
+}
+
+message Attributes {
+    map<string, google.protobuf.Value> attr = 1 [(validate.rules).map.no_sparse = true];
+}

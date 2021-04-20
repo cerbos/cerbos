@@ -165,7 +165,7 @@ func testGRPCRequest(t *testing.T, addr string, opts ...grpc.DialOption) {
 	ctx, cancelFunc := context.WithTimeout(context.Background(), 1*time.Second)
 	defer cancelFunc()
 
-	resp, err := grpcClient.Check(ctx, test.MkRequest())
+	resp, err := grpcClient.Check(ctx, test.MkCheckRequest())
 
 	require.NoError(t, err, "gRPC request failed")
 	require.Equal(t, sharedv1.Effect_EFFECT_ALLOW, resp.Effect)
@@ -174,7 +174,7 @@ func testGRPCRequest(t *testing.T, addr string, opts ...grpc.DialOption) {
 func testHTTPRequest(t *testing.T, addr string) {
 	t.Helper()
 
-	reqBytes, err := protojson.Marshal(test.MkRequest())
+	reqBytes, err := protojson.Marshal(test.MkCheckRequest())
 	require.NoError(t, err, "Failed to marshal request")
 
 	ctx, cancelFunc := context.WithTimeout(context.Background(), 1*time.Second)

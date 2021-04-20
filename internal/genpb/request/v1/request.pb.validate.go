@@ -392,3 +392,345 @@ var _ interface {
 var _Principal_PolicyVersion_Pattern = regexp.MustCompile("^[[:word:]]*$")
 
 var _Principal_Roles_Pattern = regexp.MustCompile("^[[:word:]\\-\\.]+$")
+
+// Validate checks the field values on CheckResourceBatchRequest with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, an error is returned.
+func (m *CheckResourceBatchRequest) Validate() error {
+	if m == nil {
+		return nil
+	}
+
+	// no validation rules for RequestId
+
+	if len(m.GetActions()) < 1 {
+		return CheckResourceBatchRequestValidationError{
+			field:  "Actions",
+			reason: "value must contain at least 1 item(s)",
+		}
+	}
+
+	_CheckResourceBatchRequest_Actions_Unique := make(map[string]struct{}, len(m.GetActions()))
+
+	for idx, item := range m.GetActions() {
+		_, _ = idx, item
+
+		if _, exists := _CheckResourceBatchRequest_Actions_Unique[item]; exists {
+			return CheckResourceBatchRequestValidationError{
+				field:  fmt.Sprintf("Actions[%v]", idx),
+				reason: "repeated value must contain unique items",
+			}
+		} else {
+			_CheckResourceBatchRequest_Actions_Unique[item] = struct{}{}
+		}
+
+		if utf8.RuneCountInString(item) < 1 {
+			return CheckResourceBatchRequestValidationError{
+				field:  fmt.Sprintf("Actions[%v]", idx),
+				reason: "value length must be at least 1 runes",
+			}
+		}
+
+	}
+
+	if m.GetPrincipal() == nil {
+		return CheckResourceBatchRequestValidationError{
+			field:  "Principal",
+			reason: "value is required",
+		}
+	}
+
+	if v, ok := interface{}(m.GetPrincipal()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return CheckResourceBatchRequestValidationError{
+				field:  "Principal",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if m.GetResource() == nil {
+		return CheckResourceBatchRequestValidationError{
+			field:  "Resource",
+			reason: "value is required",
+		}
+	}
+
+	if v, ok := interface{}(m.GetResource()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return CheckResourceBatchRequestValidationError{
+				field:  "Resource",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	return nil
+}
+
+// CheckResourceBatchRequestValidationError is the validation error returned by
+// CheckResourceBatchRequest.Validate if the designated constraints aren't met.
+type CheckResourceBatchRequestValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e CheckResourceBatchRequestValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e CheckResourceBatchRequestValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e CheckResourceBatchRequestValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e CheckResourceBatchRequestValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e CheckResourceBatchRequestValidationError) ErrorName() string {
+	return "CheckResourceBatchRequestValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e CheckResourceBatchRequestValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sCheckResourceBatchRequest.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = CheckResourceBatchRequestValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = CheckResourceBatchRequestValidationError{}
+
+// Validate checks the field values on ResourceBatch with the rules defined in
+// the proto definition for this message. If any rules are violated, an error
+// is returned.
+func (m *ResourceBatch) Validate() error {
+	if m == nil {
+		return nil
+	}
+
+	if utf8.RuneCountInString(m.GetName()) < 1 {
+		return ResourceBatchValidationError{
+			field:  "Name",
+			reason: "value length must be at least 1 runes",
+		}
+	}
+
+	if !_ResourceBatch_Name_Pattern.MatchString(m.GetName()) {
+		return ResourceBatchValidationError{
+			field:  "Name",
+			reason: "value does not match regex pattern \"^[[:alpha:]][[:word:]\\\\@\\\\.\\\\-]*(\\\\:[[:alpha:]][[:word:]\\\\@\\\\.\\\\-]*)*$\"",
+		}
+	}
+
+	if !_ResourceBatch_PolicyVersion_Pattern.MatchString(m.GetPolicyVersion()) {
+		return ResourceBatchValidationError{
+			field:  "PolicyVersion",
+			reason: "value does not match regex pattern \"^[[:word:]]*$\"",
+		}
+	}
+
+	if l := len(m.GetInstances()); l < 1 || l > 50 {
+		return ResourceBatchValidationError{
+			field:  "Instances",
+			reason: "value must contain between 1 and 50 pairs, inclusive",
+		}
+	}
+
+	for key, val := range m.GetInstances() {
+		_ = val
+
+		if val == nil {
+			return ResourceBatchValidationError{
+				field:  fmt.Sprintf("Instances[%v]", key),
+				reason: "value cannot be sparse, all pairs must be non-nil",
+			}
+		}
+
+		// no validation rules for Instances[key]
+
+		if v, ok := interface{}(val).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return ResourceBatchValidationError{
+					field:  fmt.Sprintf("Instances[%v]", key),
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	}
+
+	return nil
+}
+
+// ResourceBatchValidationError is the validation error returned by
+// ResourceBatch.Validate if the designated constraints aren't met.
+type ResourceBatchValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e ResourceBatchValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e ResourceBatchValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e ResourceBatchValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e ResourceBatchValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e ResourceBatchValidationError) ErrorName() string { return "ResourceBatchValidationError" }
+
+// Error satisfies the builtin error interface
+func (e ResourceBatchValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sResourceBatch.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = ResourceBatchValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = ResourceBatchValidationError{}
+
+var _ResourceBatch_Name_Pattern = regexp.MustCompile("^[[:alpha:]][[:word:]\\@\\.\\-]*(\\:[[:alpha:]][[:word:]\\@\\.\\-]*)*$")
+
+var _ResourceBatch_PolicyVersion_Pattern = regexp.MustCompile("^[[:word:]]*$")
+
+// Validate checks the field values on Attributes with the rules defined in the
+// proto definition for this message. If any rules are violated, an error is returned.
+func (m *Attributes) Validate() error {
+	if m == nil {
+		return nil
+	}
+
+	for key, val := range m.GetAttr() {
+		_ = val
+
+		if val == nil {
+			return AttributesValidationError{
+				field:  fmt.Sprintf("Attr[%v]", key),
+				reason: "value cannot be sparse, all pairs must be non-nil",
+			}
+		}
+
+		// no validation rules for Attr[key]
+
+		if v, ok := interface{}(val).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return AttributesValidationError{
+					field:  fmt.Sprintf("Attr[%v]", key),
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	}
+
+	return nil
+}
+
+// AttributesValidationError is the validation error returned by
+// Attributes.Validate if the designated constraints aren't met.
+type AttributesValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e AttributesValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e AttributesValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e AttributesValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e AttributesValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e AttributesValidationError) ErrorName() string { return "AttributesValidationError" }
+
+// Error satisfies the builtin error interface
+func (e AttributesValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sAttributes.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = AttributesValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = AttributesValidationError{}

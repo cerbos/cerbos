@@ -6,26 +6,21 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/google/go-cmp/cmp"
 	"github.com/stretchr/testify/require"
+	"google.golang.org/protobuf/testing/protocmp"
 	"google.golang.org/protobuf/types/known/structpb"
 
 	requestv1 "github.com/cerbos/cerbos/internal/genpb/request/v1"
+	responsev1 "github.com/cerbos/cerbos/internal/genpb/response/v1"
 	sharedv1 "github.com/cerbos/cerbos/internal/genpb/shared/v1"
 	"github.com/cerbos/cerbos/internal/storage/disk"
 	"github.com/cerbos/cerbos/internal/test"
 )
 
 func TestEngineCheck(t *testing.T) {
-	dir := test.PathToDir(t, "store")
-
-	ctx, cancelFunc := context.WithCancel(context.Background())
+	eng, cancelFunc := mkEngine(t)
 	defer cancelFunc()
-
-	store, err := disk.NewReadOnlyStore(ctx, &disk.Conf{Directory: dir})
-	require.NoError(t, err)
-
-	eng, err := New(ctx, store)
-	require.NoError(t, err)
 
 	testCases := []struct {
 		desc             string
@@ -37,7 +32,7 @@ func TestEngineCheck(t *testing.T) {
 	}{
 		{
 			desc:             "John views own leave request",
-			request:          test.MkRequest,
+			request:          test.MkCheckRequest,
 			wantEffect:       sharedv1.Effect_EFFECT_ALLOW,
 			wantPolicy:       "leave_request:20210210",
 			wantDerivedRoles: []string{"employee_that_owns_the_record", "any_employee"},
@@ -46,7 +41,7 @@ func TestEngineCheck(t *testing.T) {
 			desc: "John tries to approve his own leave_request",
 			request: func() *requestv1.CheckRequest {
 				// John trying to approve his own leave request
-				req := test.MkRequest()
+				req := test.MkCheckRequest()
 				req.Action = "approve"
 
 				return req
@@ -59,7 +54,7 @@ func TestEngineCheck(t *testing.T) {
 			desc: "John's manager approves leave_request",
 			request: func() *requestv1.CheckRequest {
 				// John's manager approving his leave request
-				req := test.MkRequest()
+				req := test.MkCheckRequest()
 				req.Action = "approve"
 				req.Principal.Id = "sally"
 				req.Principal.Roles = []string{"employee", "manager"}
@@ -76,7 +71,7 @@ func TestEngineCheck(t *testing.T) {
 			desc: "Some other manager tries to approve leave_request",
 			request: func() *requestv1.CheckRequest {
 				// Some other manager trying to approve John's leave request
-				req := test.MkRequest()
+				req := test.MkCheckRequest()
 				req.Action = "approve"
 				req.Principal.Id = "betty"
 				req.Principal.Roles = []string{"employee", "manager"}
@@ -93,7 +88,7 @@ func TestEngineCheck(t *testing.T) {
 			desc: "Donald Duck approves leave_request that has dev_record attribute [Principal policy override]",
 			request: func() *requestv1.CheckRequest {
 				// Donald Duck has a principal policy that lets him do anything on leave_request as long as it's a dev record
-				req := test.MkRequest()
+				req := test.MkCheckRequest()
 				req.Action = "approve"
 				req.Principal.Id = "donald_duck"
 				req.Resource.Attr["dev_record"] = structpb.NewBoolValue(true)
@@ -108,7 +103,7 @@ func TestEngineCheck(t *testing.T) {
 			request: func() *requestv1.CheckRequest {
 				// Donald Duck trying to do something on a non-dev record
 				// It should cascade down to resource policy because there's no explicit rule for Donald Duck
-				req := test.MkRequest()
+				req := test.MkCheckRequest()
 				req.Action = "view:public"
 				req.Principal.Id = "donald_duck"
 
@@ -122,7 +117,7 @@ func TestEngineCheck(t *testing.T) {
 			desc: "Donald Duck tries to view salary_record [Principal policy override]",
 			request: func() *requestv1.CheckRequest {
 				// Donald Duck has an explicit deny on salary_record
-				req := test.MkRequest()
+				req := test.MkCheckRequest()
 				req.Action = "view"
 				req.Principal.Id = "donald_duck"
 				req.Resource.Name = "salary_record"
@@ -153,25 +148,123 @@ func TestEngineCheck(t *testing.T) {
 	}
 }
 
-func BenchmarkCheck(b *testing.B) {
-	dir := test.PathToDir(b, "store")
-
-	ctx, cancelFunc := context.WithCancel(context.Background())
+func TestCheckResourceBatch(t *testing.T) {
+	eng, cancelFunc := mkEngine(t)
 	defer cancelFunc()
 
-	store, err := disk.NewReadOnlyStore(ctx, &disk.Conf{Directory: dir})
-	require.NoError(b, err)
+	t.Run("valid", func(t *testing.T) {
+		req := test.MkCheckResourceBatchRequest()
 
-	eng, err := New(ctx, store)
-	require.NoError(b, err)
+		want := &responsev1.CheckResourceBatchResponse{
+			RequestId: "test",
+			ResourceInstances: map[string]*responsev1.ActionEffectList{
+				"XX125": {
+					Actions: map[string]sharedv1.Effect{
+						"view:public": sharedv1.Effect_EFFECT_ALLOW,
+						"approve":     sharedv1.Effect_EFFECT_DENY,
+						"create":      sharedv1.Effect_EFFECT_DENY,
+					},
+				},
+				"XX150": {
+					Actions: map[string]sharedv1.Effect{
+						"view:public": sharedv1.Effect_EFFECT_ALLOW,
+						"approve":     sharedv1.Effect_EFFECT_DENY,
+						"create":      sharedv1.Effect_EFFECT_DENY,
+					},
+				},
+				"XX250": {
+					Actions: map[string]sharedv1.Effect{
+						"view:public": sharedv1.Effect_EFFECT_ALLOW,
+						"approve":     sharedv1.Effect_EFFECT_DENY,
+						"create":      sharedv1.Effect_EFFECT_DENY,
+					},
+				},
+				"YY100": {
+					Actions: map[string]sharedv1.Effect{
+						"view:public": sharedv1.Effect_EFFECT_ALLOW,
+						"approve":     sharedv1.Effect_EFFECT_ALLOW,
+						"create":      sharedv1.Effect_EFFECT_ALLOW,
+					},
+				},
+				"YY200": {
+					Actions: map[string]sharedv1.Effect{
+						"view:public": sharedv1.Effect_EFFECT_ALLOW,
+						"approve":     sharedv1.Effect_EFFECT_ALLOW,
+						"create":      sharedv1.Effect_EFFECT_ALLOW,
+					},
+				},
+			},
+		}
+
+		have, err := eng.CheckResourceBatch(context.Background(), req)
+		require.NoError(t, err)
+		require.Empty(t, cmp.Diff(want, have, protocmp.Transform()))
+	})
+
+	t.Run("no_policy_match", func(t *testing.T) {
+		req := test.MkCheckResourceBatchRequest()
+		req.Principal.Id = "bugs_bunny"
+		req.Resource.Name = "quarterly_report"
+
+		want := &responsev1.CheckResourceBatchResponse{
+			RequestId: "test",
+			ResourceInstances: map[string]*responsev1.ActionEffectList{
+				"XX125": {
+					Actions: map[string]sharedv1.Effect{
+						"view:public": sharedv1.Effect_EFFECT_DENY,
+						"approve":     sharedv1.Effect_EFFECT_DENY,
+						"create":      sharedv1.Effect_EFFECT_DENY,
+					},
+				},
+				"XX150": {
+					Actions: map[string]sharedv1.Effect{
+						"view:public": sharedv1.Effect_EFFECT_DENY,
+						"approve":     sharedv1.Effect_EFFECT_DENY,
+						"create":      sharedv1.Effect_EFFECT_DENY,
+					},
+				},
+				"XX250": {
+					Actions: map[string]sharedv1.Effect{
+						"view:public": sharedv1.Effect_EFFECT_DENY,
+						"approve":     sharedv1.Effect_EFFECT_DENY,
+						"create":      sharedv1.Effect_EFFECT_DENY,
+					},
+				},
+				"YY100": {
+					Actions: map[string]sharedv1.Effect{
+						"view:public": sharedv1.Effect_EFFECT_DENY,
+						"approve":     sharedv1.Effect_EFFECT_DENY,
+						"create":      sharedv1.Effect_EFFECT_DENY,
+					},
+				},
+				"YY200": {
+					Actions: map[string]sharedv1.Effect{
+						"view:public": sharedv1.Effect_EFFECT_DENY,
+						"approve":     sharedv1.Effect_EFFECT_DENY,
+						"create":      sharedv1.Effect_EFFECT_DENY,
+					},
+				},
+			},
+		}
+
+		have, err := eng.CheckResourceBatch(context.Background(), req)
+		require.Error(t, err)
+		require.ErrorIs(t, err, ErrNoPoliciesMatched)
+		require.Empty(t, cmp.Diff(want, have, protocmp.Transform()))
+	})
+}
+
+func BenchmarkCheck(b *testing.B) {
+	eng, cancelFunc := mkEngine(b)
+	defer cancelFunc()
 
 	b.Run("only_resource_policy", func(b *testing.B) {
-		request := test.MkRequest()
+		request := test.MkCheckRequest()
 
 		b.ResetTimer()
 		b.ReportAllocs()
 		for i := 0; i < b.N; i++ {
-			result, err := eng.Check(ctx, request)
+			result, err := eng.Check(context.Background(), request)
 			if err != nil {
 				b.Errorf("ERROR: %v", err)
 			}
@@ -183,7 +276,7 @@ func BenchmarkCheck(b *testing.B) {
 	})
 
 	b.Run("only_principal_policy", func(b *testing.B) {
-		request := test.MkRequest()
+		request := test.MkCheckRequest()
 		request.Action = "approve"
 		request.Principal.Id = "donald_duck"
 		request.Resource.Attr["dev_record"] = structpb.NewBoolValue(true)
@@ -191,7 +284,7 @@ func BenchmarkCheck(b *testing.B) {
 		b.ResetTimer()
 		b.ReportAllocs()
 		for i := 0; i < b.N; i++ {
-			result, err := eng.Check(ctx, request)
+			result, err := eng.Check(context.Background(), request)
 			if err != nil {
 				b.Errorf("ERROR: %v", err)
 			}
@@ -203,14 +296,14 @@ func BenchmarkCheck(b *testing.B) {
 	})
 
 	b.Run("fallback_to_resource_policy", func(b *testing.B) {
-		request := test.MkRequest()
+		request := test.MkCheckRequest()
 		request.Action = "view:public"
 		request.Principal.Id = "donald_duck"
 
 		b.ResetTimer()
 		b.ReportAllocs()
 		for i := 0; i < b.N; i++ {
-			result, err := eng.Check(ctx, request)
+			result, err := eng.Check(context.Background(), request)
 			if err != nil {
 				b.Errorf("ERROR: %v", err)
 			}
@@ -222,13 +315,13 @@ func BenchmarkCheck(b *testing.B) {
 	})
 
 	b.Run("no_match", func(b *testing.B) {
-		request := test.MkRequest()
+		request := test.MkCheckRequest()
 		request.Resource.Name = "unknown"
 
 		b.ResetTimer()
 		b.ReportAllocs()
 		for i := 0; i < b.N; i++ {
-			result, err := eng.Check(ctx, request)
+			result, err := eng.Check(context.Background(), request)
 			if !errors.Is(err, ErrNoPoliciesMatched) {
 				b.Errorf("ERROR: %v", err)
 			}
@@ -238,4 +331,20 @@ func BenchmarkCheck(b *testing.B) {
 			}
 		}
 	})
+}
+
+func mkEngine(tb testing.TB) (*Engine, context.CancelFunc) {
+	tb.Helper()
+
+	dir := test.PathToDir(tb, "store")
+
+	ctx, cancelFunc := context.WithCancel(context.Background())
+
+	store, err := disk.NewReadOnlyStore(ctx, &disk.Conf{Directory: dir})
+	require.NoError(tb, err)
+
+	eng, err := New(ctx, store)
+	require.NoError(tb, err)
+
+	return eng, cancelFunc
 }

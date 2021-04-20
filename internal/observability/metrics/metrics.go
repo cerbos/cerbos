@@ -27,15 +27,27 @@ var (
 		Aggregation: defaultLatencyDistribution(),
 	}
 
-	EngineDecisionLatency = stats.Float64(
-		"cerbos.dev/engine/decision_latency",
+	EngineCheckLatency = stats.Float64(
+		"cerbos.dev/engine/check_latency",
 		"Time to match a request against a policy and provide a decision",
 		stats.UnitMilliseconds,
 	)
 
-	EngineDecisionLatencyView = &view.View{
-		Measure:     EngineDecisionLatency,
+	EngineCheckLatencyView = &view.View{
+		Measure:     EngineCheckLatency,
 		TagKeys:     []tag.Key{KeyEngineDecisionEffect, KeyEngineDecisionStatus},
+		Aggregation: defaultLatencyDistribution(),
+	}
+
+	EngineCheckResourceBatchLatency = stats.Float64(
+		"cerbos.dev/engine/check_resource_batch_latency",
+		"Time to process a batch request",
+		stats.UnitMilliseconds,
+	)
+
+	EngineCheckResourceBatchLatencyView = &view.View{
+		Measure:     EngineCheckResourceBatchLatency,
+		TagKeys:     []tag.Key{KeyEngineDecisionStatus},
 		Aggregation: defaultLatencyDistribution(),
 	}
 
@@ -54,7 +66,8 @@ var (
 
 var DefaultCerbosViews = []*view.View{
 	CompileDurationView,
-	EngineDecisionLatencyView,
+	EngineCheckLatencyView,
+	EngineCheckResourceBatchLatencyView,
 	EngineUpdateLatencyView,
 }
 

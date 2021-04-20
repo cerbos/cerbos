@@ -17,6 +17,13 @@ service CerbosService {
             body: "*"
         };
     }
+
+    rpc CheckResourceBatch(request.v1.CheckResourceBatchRequest) returns (response.v1.CheckResourceBatchResponse) {
+        option (google.api.http) = {
+            post: "/api/batch/check_resources",
+            body: "*"
+        };
+    }
 }
 
 /*

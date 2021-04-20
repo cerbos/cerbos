@@ -201,3 +201,156 @@ var _ interface {
 	Cause() error
 	ErrorName() string
 } = CheckResponseMetaValidationError{}
+
+// Validate checks the field values on CheckResourceBatchResponse with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, an error is returned.
+func (m *CheckResourceBatchResponse) Validate() error {
+	if m == nil {
+		return nil
+	}
+
+	// no validation rules for RequestId
+
+	for key, val := range m.GetResourceInstances() {
+		_ = val
+
+		// no validation rules for ResourceInstances[key]
+
+		if v, ok := interface{}(val).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return CheckResourceBatchResponseValidationError{
+					field:  fmt.Sprintf("ResourceInstances[%v]", key),
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	}
+
+	return nil
+}
+
+// CheckResourceBatchResponseValidationError is the validation error returned
+// by CheckResourceBatchResponse.Validate if the designated constraints aren't met.
+type CheckResourceBatchResponseValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e CheckResourceBatchResponseValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e CheckResourceBatchResponseValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e CheckResourceBatchResponseValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e CheckResourceBatchResponseValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e CheckResourceBatchResponseValidationError) ErrorName() string {
+	return "CheckResourceBatchResponseValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e CheckResourceBatchResponseValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sCheckResourceBatchResponse.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = CheckResourceBatchResponseValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = CheckResourceBatchResponseValidationError{}
+
+// Validate checks the field values on ActionEffectList with the rules defined
+// in the proto definition for this message. If any rules are violated, an
+// error is returned.
+func (m *ActionEffectList) Validate() error {
+	if m == nil {
+		return nil
+	}
+
+	// no validation rules for Actions
+
+	return nil
+}
+
+// ActionEffectListValidationError is the validation error returned by
+// ActionEffectList.Validate if the designated constraints aren't met.
+type ActionEffectListValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e ActionEffectListValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e ActionEffectListValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e ActionEffectListValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e ActionEffectListValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e ActionEffectListValidationError) ErrorName() string { return "ActionEffectListValidationError" }
+
+// Error satisfies the builtin error interface
+func (e ActionEffectListValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sActionEffectList.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = ActionEffectListValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = ActionEffectListValidationError{}

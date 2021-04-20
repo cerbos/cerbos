@@ -16,6 +16,7 @@ import (
 	"contrib.go.opencensus.io/exporter/prometheus"
 	"github.com/google/gops/agent"
 	grpc_zap "github.com/grpc-ecosystem/go-grpc-middleware/logging/zap"
+	grpc_recovery "github.com/grpc-ecosystem/go-grpc-middleware/recovery"
 	grpc_ctxtags "github.com/grpc-ecosystem/go-grpc-middleware/tags"
 	grpc_validator "github.com/grpc-ecosystem/go-grpc-middleware/validator"
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
@@ -343,18 +344,21 @@ func (s *server) startGRPCServer(cerbosSvc *svc.CerbosService, l net.Listener) *
 	// TODO (cell) log payload
 
 	opts := []grpc.ServerOption{
-		grpc.StatsHandler(&ocgrpc.ServerHandler{}),
 		grpc.ChainStreamInterceptor(
+			grpc_ctxtags.StreamServerInterceptor(grpc_ctxtags.WithFieldExtractorForInitialReq(svc.ExtractRequestFields)),
+			grpc_recovery.StreamServerInterceptor(),
 			grpc_ctxtags.StreamServerInterceptor(),
 			grpc_zap.StreamServerInterceptor(log),
 			grpc_validator.StreamServerInterceptor(),
 		),
 		grpc.ChainUnaryInterceptor(
+			grpc_recovery.UnaryServerInterceptor(),
 			grpc_ctxtags.UnaryServerInterceptor(grpc_ctxtags.WithFieldExtractor(svc.ExtractRequestFields)),
 			XForwardedHostUnaryServerInterceptor,
 			grpc_zap.UnaryServerInterceptor(log),
 			grpc_validator.UnaryServerInterceptor(),
 		),
+		grpc.StatsHandler(&ocgrpc.ServerHandler{}),
 	}
 
 	server := grpc.NewServer(opts...)
