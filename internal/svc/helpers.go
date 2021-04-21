@@ -24,6 +24,21 @@ func ExtractRequestFields(fullMethod string, req interface{}) map[string]interfa
 				},
 			},
 		}
+	case "/svc.v1.CerbosService/CheckResourceBatch":
+		batchReq, ok := req.(*requestv1.CheckResourceBatchRequest)
+		if !ok {
+			return nil
+		}
+
+		return map[string]interface{}{
+			util.AppName: map[string]map[string]string{
+				"request": {
+					"id":                       batchReq.RequestId,
+					"principal.id":             batchReq.Principal.Id,
+					"principal.policy_version": batchReq.Principal.PolicyVersion,
+				},
+			},
+		}
 	default:
 		return nil
 	}

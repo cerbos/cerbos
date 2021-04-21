@@ -21,3 +21,11 @@ message CheckResponseMeta {
     google.protobuf.Duration evaluation_duration = 3;
 }
 
+message CheckResourceBatchResponse {
+    string request_id = 1;
+    map<string,ActionEffectList> resource_instances = 2;
+}
+
+message ActionEffectList {
+    map<string,shared.v1.Effect> actions = 1;
+}

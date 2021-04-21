@@ -1,6 +1,7 @@
 package tracing
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
@@ -62,6 +63,10 @@ func mkSampler(probability float64) trace.Sampler {
 
 		return ps(params)
 	}
+}
+
+func StartSpan(ctx context.Context, name string) (context.Context, *trace.Span) {
+	return trace.StartSpan(ctx, fmt.Sprintf("cerbos.dev/%s", name))
 }
 
 func MarkFailed(span *trace.Span, code int32, msg string, err error) {
