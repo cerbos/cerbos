@@ -11,8 +11,7 @@ message CheckRequest {
     string request_id = 1;
     Resource resource = 2 [(validate.rules).message.required = true];
     Principal principal = 3 [(validate.rules).message.required = true];
-    string action = 4 [(validate.rules).string.min_len = 1];
-
+    repeated string actions = 4 [(validate.rules).repeated = { unique: true, items { string { min_len: 1 } } }];
 }
 
 message Resource {

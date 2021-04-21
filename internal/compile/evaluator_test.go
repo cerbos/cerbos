@@ -17,19 +17,17 @@ func TestProcessResultSet(t *testing.T) {
 	testCases := []struct {
 		name      string
 		resultSet rego.ResultSet
-		want      EvalResult
+		want      *EvalResult
 		wantErr   bool
 	}{
 		{
 			name:    "nil result set",
 			wantErr: true,
-			want:    defaultEvalResult,
 		},
 		{
 			name:      "empty result set",
 			resultSet: []rego.Result{},
 			wantErr:   true,
-			want:      defaultEvalResult,
 		},
 		{
 			name: "more than one result",
@@ -38,7 +36,6 @@ func TestProcessResultSet(t *testing.T) {
 				{},
 			},
 			wantErr: true,
-			want:    defaultEvalResult,
 		},
 		{
 			name: "empty expressions",
@@ -48,10 +45,9 @@ func TestProcessResultSet(t *testing.T) {
 				},
 			},
 			wantErr: true,
-			want:    defaultEvalResult,
 		},
 		{
-			name: "no effect",
+			name: "no effects",
 			resultSet: []rego.Result{
 				{
 					Expressions: []*rego.ExpressionValue{
@@ -63,69 +59,45 @@ func TestProcessResultSet(t *testing.T) {
 				},
 			},
 			wantErr: true,
-			want:    defaultEvalResult,
 		},
 		{
-			name: "wrong type for effect",
+			name: "wrong type for effects",
 			resultSet: []rego.Result{
 				{
 					Expressions: []*rego.ExpressionValue{
 						{
-							Value: map[string]interface{}{codegen.EffectIdent: 42},
+							Value: map[string]interface{}{codegen.EffectsIdent: 42},
 							Text:  namer.QueryForPrincipal("x", "default"),
 						},
 					},
 				},
 			},
 			wantErr: true,
-			want:    defaultEvalResult,
 		},
 		{
-			name: "allow effect",
+			name: "valid effects",
 			resultSet: []rego.Result{
 				{
 					Expressions: []*rego.ExpressionValue{
 						{
-							Value: map[string]interface{}{codegen.EffectIdent: codegen.AllowEffectIdent},
-							Text:  namer.QueryForPrincipal("x", "default"),
+							Value: map[string]interface{}{
+								codegen.EffectsIdent: map[string]interface{}{
+									"a": codegen.AllowEffectIdent,
+									"b": codegen.DenyEffectIdent,
+									"c": codegen.NoMatchEffectIdent,
+								},
+							},
+							Text: namer.QueryForPrincipal("x", "default"),
 						},
 					},
 				},
 			},
-			want: EvalResult{
-				Effect: sharedv1.Effect_EFFECT_ALLOW,
-			},
-		},
-		{
-			name: "deny effect",
-			resultSet: []rego.Result{
-				{
-					Expressions: []*rego.ExpressionValue{
-						{
-							Value: map[string]interface{}{codegen.EffectIdent: codegen.DenyEffectIdent},
-							Text:  namer.QueryForPrincipal("x", "default"),
-						},
-					},
+			want: &EvalResult{
+				Effects: map[string]sharedv1.Effect{
+					"a": sharedv1.Effect_EFFECT_ALLOW,
+					"b": sharedv1.Effect_EFFECT_DENY,
+					"c": sharedv1.Effect_EFFECT_NO_MATCH,
 				},
-			},
-			want: EvalResult{
-				Effect: sharedv1.Effect_EFFECT_DENY,
-			},
-		},
-		{
-			name: "no_match effect",
-			resultSet: []rego.Result{
-				{
-					Expressions: []*rego.ExpressionValue{
-						{
-							Value: map[string]interface{}{codegen.EffectIdent: codegen.NoMatchEffectIdent},
-							Text:  namer.QueryForPrincipal("x", "default"),
-						},
-					},
-				},
-			},
-			want: EvalResult{
-				Effect: sharedv1.Effect_EFFECT_NO_MATCH,
 			},
 		},
 		{
@@ -134,15 +106,13 @@ func TestProcessResultSet(t *testing.T) {
 				{
 					Expressions: []*rego.ExpressionValue{
 						{
-							Value: map[string]interface{}{codegen.EffectIdent: "blah"},
+							Value: map[string]interface{}{codegen.EffectsIdent: map[string]interface{}{"a": "blah"}},
 							Text:  namer.QueryForPrincipal("x", "default"),
 						},
 					},
 				},
 			},
-			want: EvalResult{
-				Effect: sharedv1.Effect_EFFECT_DENY,
-			},
+			wantErr: true,
 		},
 		{
 			name: "wrong type for effective derived roles",
@@ -151,7 +121,7 @@ func TestProcessResultSet(t *testing.T) {
 					Expressions: []*rego.ExpressionValue{
 						{
 							Value: map[string]interface{}{
-								codegen.EffectIdent:                codegen.AllowEffectIdent,
+								codegen.EffectsIdent:               map[string]interface{}{"a": codegen.AllowEffectIdent},
 								codegen.EffectiveDerivedRolesIdent: map[string]string{"a": "b"},
 							},
 							Text: namer.QueryForPrincipal("x", "default"),
@@ -160,9 +130,6 @@ func TestProcessResultSet(t *testing.T) {
 				},
 			},
 			wantErr: true,
-			want: EvalResult{
-				Effect: sharedv1.Effect_EFFECT_ALLOW,
-			},
 		},
 		{
 			name: "non string effective derived roles",
@@ -171,7 +138,7 @@ func TestProcessResultSet(t *testing.T) {
 					Expressions: []*rego.ExpressionValue{
 						{
 							Value: map[string]interface{}{
-								codegen.EffectIdent:                codegen.AllowEffectIdent,
+								codegen.EffectsIdent:               map[string]interface{}{"a": codegen.AllowEffectIdent},
 								codegen.EffectiveDerivedRolesIdent: []interface{}{1, 2, 3},
 							},
 							Text: namer.QueryForPrincipal("x", "default"),
@@ -180,9 +147,6 @@ func TestProcessResultSet(t *testing.T) {
 				},
 			},
 			wantErr: true,
-			want: EvalResult{
-				Effect: sharedv1.Effect_EFFECT_ALLOW,
-			},
 		},
 		{
 			name: "empty effective derived roles",
@@ -191,7 +155,7 @@ func TestProcessResultSet(t *testing.T) {
 					Expressions: []*rego.ExpressionValue{
 						{
 							Value: map[string]interface{}{
-								codegen.EffectIdent:                codegen.AllowEffectIdent,
+								codegen.EffectsIdent:               map[string]interface{}{"a": codegen.AllowEffectIdent},
 								codegen.EffectiveDerivedRolesIdent: []interface{}{},
 							},
 							Text: namer.QueryForPrincipal("x", "default"),
@@ -199,8 +163,8 @@ func TestProcessResultSet(t *testing.T) {
 					},
 				},
 			},
-			want: EvalResult{
-				Effect:                sharedv1.Effect_EFFECT_ALLOW,
+			want: &EvalResult{
+				Effects:               map[string]sharedv1.Effect{"a": sharedv1.Effect_EFFECT_ALLOW},
 				EffectiveDerivedRoles: []string{},
 			},
 		},
@@ -211,7 +175,7 @@ func TestProcessResultSet(t *testing.T) {
 					Expressions: []*rego.ExpressionValue{
 						{
 							Value: map[string]interface{}{
-								codegen.EffectIdent:                codegen.AllowEffectIdent,
+								codegen.EffectsIdent:               map[string]interface{}{"a": codegen.AllowEffectIdent},
 								codegen.EffectiveDerivedRolesIdent: []interface{}{"wibble", "wobble", "fubble"},
 							},
 							Text: namer.QueryForPrincipal("x", "default"),
@@ -219,8 +183,8 @@ func TestProcessResultSet(t *testing.T) {
 					},
 				},
 			},
-			want: EvalResult{
-				Effect:                sharedv1.Effect_EFFECT_ALLOW,
+			want: &EvalResult{
+				Effects:               map[string]sharedv1.Effect{"a": sharedv1.Effect_EFFECT_ALLOW},
 				EffectiveDerivedRoles: []string{"wibble", "wobble", "fubble"},
 			},
 		},
@@ -235,7 +199,6 @@ func TestProcessResultSet(t *testing.T) {
 			if tc.wantErr {
 				require.Error(t, err)
 				require.ErrorIs(t, err, ErrUnexpectedResult)
-				require.Equal(t, tc.want, have)
 
 				return
 			}

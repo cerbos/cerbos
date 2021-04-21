@@ -15,7 +15,7 @@ Policies are evaluated based on the metadata passed in the request to the Cerbos
 ----
 {
   "requestId":  "test01", <1>
-  "action":  "view", <2>
+  "actions":  ["view"], <2>
   "resource":  {
     "policyVersion": "dev", <3>
     "name":  "album:object", <4>

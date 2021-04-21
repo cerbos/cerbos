@@ -80,11 +80,27 @@ func (m *CheckRequest) Validate() error {
 		}
 	}
 
-	if utf8.RuneCountInString(m.GetAction()) < 1 {
-		return CheckRequestValidationError{
-			field:  "Action",
-			reason: "value length must be at least 1 runes",
+	_CheckRequest_Actions_Unique := make(map[string]struct{}, len(m.GetActions()))
+
+	for idx, item := range m.GetActions() {
+		_, _ = idx, item
+
+		if _, exists := _CheckRequest_Actions_Unique[item]; exists {
+			return CheckRequestValidationError{
+				field:  fmt.Sprintf("Actions[%v]", idx),
+				reason: "repeated value must contain unique items",
+			}
+		} else {
+			_CheckRequest_Actions_Unique[item] = struct{}{}
 		}
+
+		if utf8.RuneCountInString(item) < 1 {
+			return CheckRequestValidationError{
+				field:  fmt.Sprintf("Actions[%v]", idx),
+				reason: "value length must be at least 1 runes",
+			}
+		}
+
 	}
 
 	return nil
