@@ -4,6 +4,6 @@ deps:
     owner: beta
     repository: googleapis
     branch: main
-    commit: aced890b7e944f9ca174481ad810ca5f
-    digest: b1-guLHfQhGOhlEA-QaPyQLoT-ZVFGJkRkluWgkzPT0ma0=
-    create_time: 2021-03-04T14:52:47.094456Z
+    commit: 74aae54cbbd3455dbcae8b2e30524323
+    digest: b1-qJtbNtMHuTWT6HLhdATE3G-oHWsoR3G6uOucPFI9hEM=
+    create_time: 2021-04-06T11:46:20.69656Z
