@@ -43,14 +43,14 @@ func generateResourcePolicy(p *policyv1.ResourcePolicy) (*CodeGenResult, error) 
 
 	rg := NewRegoGen(modName, imports...)
 
-	rg.DefaultEffectDeny()
-	rg.EffectiveDerivedRoles()
-
 	for _, rule := range p.Rules {
 		if err := rg.AddResourceRule(rule); err != nil {
 			return nil, fmt.Errorf("failed to generate code for rule [%v]: %w", rule, err)
 		}
 	}
+
+	rg.EffectiveDerivedRoles()
+	rg.EffectsComprehension(denyVal)
 
 	return rg.Generate()
 }
@@ -63,13 +63,13 @@ func generatePrincipalPolicy(p *policyv1.PrincipalPolicy) (*CodeGenResult, error
 	modName := namer.PrincipalPolicyModuleName(p.Principal, p.Version)
 	rg := NewRegoGen(modName)
 
-	rg.DefaultEffectNoMatch()
-
 	for _, rule := range p.Rules {
 		if err := rg.AddPrincipalRule(rule); err != nil {
 			return nil, fmt.Errorf("failed to generate code for rule [%v]: %w", rule, err)
 		}
 	}
+
+	rg.EffectsComprehension(noMatchVal)
 
 	return rg.Generate()
 }

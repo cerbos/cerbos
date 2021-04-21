@@ -21,17 +21,24 @@ inputPolicy:
 wantRego: |-
   package cerbos.principal.donald_duck.v20210210
 
-  default effect = "no_match"
-
-  effect = "allow" {
+  cerbos_effect_for(cerbos_action) = "allow" {
       glob.match("leave_request", [":"], input.resource.name)
-      glob.match("*", [], input.action)
-      cel_eval(input, "cerbos.principal.donald_duck.v20210210", "cond_0")
+      glob.match("*", [], cerbos_action)
+      cerbos_cel_eval(input, "cerbos.principal.donald_duck.v20210210", "cond_0")
   }
 
-  effect = "deny" {
+  cerbos_effect_for(cerbos_action) = "deny" {
       glob.match("salary_record", [":"], input.resource.name)
-      glob.match("*", [], input.action)
+      glob.match("*", [], cerbos_action)
+  }
+
+  cerbos_effect_string(cerbos_action) = cerbos_effect {
+    cerbos_effect := cerbos_effect_for(cerbos_action)
+  } else = "no_match"
+
+  cerbos_effects := {cerbos_action: effect |
+      cerbos_action := input.actions[_]
+      effect := cerbos_effect_string(cerbos_action)
   }
 
 wantNumConditions: 1
