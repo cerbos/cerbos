@@ -333,6 +333,61 @@ func BenchmarkCheck(b *testing.B) {
 	})
 }
 
+func BenchmarkSingleRequest(b *testing.B) {
+	eng, cancelFunc := mkEngine(b)
+	defer cancelFunc()
+
+	b.Run("check", func(b *testing.B) {
+		request := test.MkCheckRequest()
+		request.Action = "view:public"
+		request.Principal.Id = "donald_duck"
+
+		b.ResetTimer()
+		b.ReportAllocs()
+		for i := 0; i < b.N; i++ {
+			result, err := eng.Check(context.Background(), request)
+			if err != nil {
+				b.Errorf("ERROR: %v", err)
+			}
+
+			if result.Effect != sharedv1.Effect_EFFECT_ALLOW {
+				b.Errorf("Unexpected result: %v", result.Effect)
+			}
+		}
+	})
+
+	b.Run("checkResourceBatch", func(b *testing.B) {
+		request := test.MkCheckResourceBatchRequest()
+		request.Actions = []string{"view:public"}
+		request.Principal.Id = "donald_duck"
+		request.Resource.Instances = map[string]*requestv1.Attributes{
+			"XX125": {
+				Attr: map[string]*structpb.Value{
+					"id":         structpb.NewStringValue("XX125"),
+					"owner":      structpb.NewStringValue("john"),
+					"geography":  structpb.NewStringValue("GB"),
+					"department": structpb.NewStringValue("marketing"),
+					"team":       structpb.NewStringValue("design"),
+				},
+			},
+		}
+
+		b.ResetTimer()
+		b.ReportAllocs()
+		for i := 0; i < b.N; i++ {
+			result, err := eng.CheckResourceBatch(context.Background(), request)
+			if err != nil {
+				b.Errorf("ERROR: %v", err)
+			}
+
+			effect := result.ResourceInstances["XX125"].Actions["view:public"]
+			if effect != sharedv1.Effect_EFFECT_ALLOW {
+				b.Errorf("Unexpected result: %v", effect)
+			}
+		}
+	})
+}
+
 func mkEngine(tb testing.TB) (*Engine, context.CancelFunc) {
 	tb.Helper()
 

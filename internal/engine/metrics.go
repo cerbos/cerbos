@@ -12,14 +12,20 @@ import (
 	"github.com/cerbos/cerbos/internal/observability/metrics"
 )
 
+const (
+	statusFailure           = "failure"
+	statusNoPoliciesMatched = "no_policies_matched"
+	statusSuccess           = "success"
+)
+
 func measureUpdateLatency(updateType string, updateOp func() error) error {
 	startTime := time.Now()
 	err := updateOp()
 	latencyMs := float64(time.Since(startTime)) / float64(time.Millisecond)
 
-	status := "success"
+	status := statusSuccess
 	if err != nil {
-		status = "failure"
+		status = statusFailure
 	}
 
 	_ = stats.RecordWithTags(context.Background(),
@@ -41,12 +47,12 @@ func measureCheckLatency(checkFn func() (*CheckResult, error)) (*CheckResult, er
 	result.setEvaluationDuration(evalDuration)
 	latencyMs := float64(evalDuration) / float64(time.Millisecond)
 
-	status := "success"
+	status := statusSuccess
 	if err != nil {
 		if errors.Is(err, ErrNoPoliciesMatched) {
-			status = "no_policies_matched"
+			status = statusNoPoliciesMatched
 		} else {
-			status = "failure"
+			status = statusFailure
 		}
 	}
 
@@ -68,12 +74,12 @@ func measureCheckResourceBatchLatency(checkFn func() (*responsev1.CheckResourceB
 	resp, err := checkFn()
 	latencyMs := float64(time.Since(startTime)) / float64(time.Millisecond)
 
-	status := "success"
+	status := statusSuccess
 	if err != nil {
 		if errors.Is(err, ErrNoPoliciesMatched) {
-			status = "no_policies_matched"
+			status = statusNoPoliciesMatched
 		} else {
-			status = "failure"
+			status = statusFailure
 		}
 	}
 

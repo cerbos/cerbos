@@ -61,7 +61,7 @@ check-http:
 		$(wildcard $(DEV_DIR)/requests/batch/*.json),\
 		echo "";\
 		echo $(REQ_FILE); \
-		curl -k https://localhost:$(HTTP_PORT)/api/batch/check_resources -d @$(REQ_FILE);\
+		curl -k https://localhost:$(HTTP_PORT)/api/check_resource_batch -d @$(REQ_FILE);\
 		echo "";)
 
 .PHONY: check-http-insecure
@@ -77,7 +77,7 @@ check-http-insecure:
 		$(wildcard $(DEV_DIR)/requests/batch/*.json),\
 		echo "";\
 		echo $(REQ_FILE); \
-		curl http://localhost:$(HTTP_PORT)/api/batch/check_resources -d @$(REQ_FILE);\
+		curl http://localhost:$(HTTP_PORT)/api/check_resource_batch -d @$(REQ_FILE);\
 		echo "";)
 
 .PHONY: perf

@@ -256,6 +256,7 @@ func (engine *Engine) doCheckResourceBatch(ctx context.Context, req *requestv1.C
 		},
 	}
 
+	// TODO (cell) Parallelize if the batch size is large
 	for resourceKey, resourceAttr := range req.Resource.Instances {
 		for _, action := range req.Actions {
 			ctx, span := tracing.StartSpan(ctx, fmt.Sprintf("engine.BatchCheck/%s", resourceKey))
