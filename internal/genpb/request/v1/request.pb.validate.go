@@ -483,6 +483,8 @@ func (m *CheckResourceBatchRequest) Validate() error {
 		}
 	}
 
+	// no validation rules for IncludeMeta
+
 	return nil
 }
 

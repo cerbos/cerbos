@@ -36,6 +36,95 @@ var (
 // define the regex for a UUID once up-front
 var _test_uuidPattern = regexp.MustCompile("^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$")
 
+// Validate checks the field values on EngineTestCase with the rules defined in
+// the proto definition for this message. If any rules are violated, an error
+// is returned.
+func (m *EngineTestCase) Validate() error {
+	if m == nil {
+		return nil
+	}
+
+	// no validation rules for Description
+
+	if v, ok := interface{}(m.GetInput()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return EngineTestCaseValidationError{
+				field:  "Input",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if v, ok := interface{}(m.GetWantResponse()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return EngineTestCaseValidationError{
+				field:  "WantResponse",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	// no validation rules for WantError
+
+	return nil
+}
+
+// EngineTestCaseValidationError is the validation error returned by
+// EngineTestCase.Validate if the designated constraints aren't met.
+type EngineTestCaseValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e EngineTestCaseValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e EngineTestCaseValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e EngineTestCaseValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e EngineTestCaseValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e EngineTestCaseValidationError) ErrorName() string { return "EngineTestCaseValidationError" }
+
+// Error satisfies the builtin error interface
+func (e EngineTestCaseValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sEngineTestCase.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = EngineTestCaseValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = EngineTestCaseValidationError{}
+
 // Validate checks the field values on CompileTestCase with the rules defined
 // in the proto definition for this message. If any rules are violated, an
 // error is returned.

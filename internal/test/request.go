@@ -63,44 +63,46 @@ func MkCheckResourceBatchRequest() *requestv1.CheckResourceBatchRequest {
 						"team":       structpb.NewStringValue("design"),
 					},
 				},
-				"XX150": {
-					Attr: map[string]*structpb.Value{
-						"id":         structpb.NewStringValue("XX150"),
-						"owner":      structpb.NewStringValue("mary"),
-						"geography":  structpb.NewStringValue("GB"),
-						"department": structpb.NewStringValue("marketing"),
-						"team":       structpb.NewStringValue("design"),
+				/*
+					"XX150": {
+						Attr: map[string]*structpb.Value{
+							"id":         structpb.NewStringValue("XX150"),
+							"owner":      structpb.NewStringValue("mary"),
+							"geography":  structpb.NewStringValue("GB"),
+							"department": structpb.NewStringValue("marketing"),
+							"team":       structpb.NewStringValue("design"),
+						},
 					},
-				},
-				"XX250": {
-					Attr: map[string]*structpb.Value{
-						"id":         structpb.NewStringValue("XX250"),
-						"owner":      structpb.NewStringValue("xenia"),
-						"geography":  structpb.NewStringValue("GB"),
-						"department": structpb.NewStringValue("marketing"),
-						"team":       structpb.NewStringValue("design"),
+					"XX250": {
+						Attr: map[string]*structpb.Value{
+							"id":         structpb.NewStringValue("XX250"),
+							"owner":      structpb.NewStringValue("xenia"),
+							"geography":  structpb.NewStringValue("GB"),
+							"department": structpb.NewStringValue("marketing"),
+							"team":       structpb.NewStringValue("design"),
+						},
 					},
-				},
-				"YY100": {
-					Attr: map[string]*structpb.Value{
-						"id":         structpb.NewStringValue("YY100"),
-						"owner":      structpb.NewStringValue("zach"),
-						"geography":  structpb.NewStringValue("US"),
-						"department": structpb.NewStringValue("marketing"),
-						"team":       structpb.NewStringValue("comms"),
-						"dev_record": structpb.NewBoolValue(true),
+					"YY100": {
+						Attr: map[string]*structpb.Value{
+							"id":         structpb.NewStringValue("YY100"),
+							"owner":      structpb.NewStringValue("zach"),
+							"geography":  structpb.NewStringValue("US"),
+							"department": structpb.NewStringValue("marketing"),
+							"team":       structpb.NewStringValue("comms"),
+							"dev_record": structpb.NewBoolValue(true),
+						},
 					},
-				},
-				"YY200": {
-					Attr: map[string]*structpb.Value{
-						"id":         structpb.NewStringValue("YY200"),
-						"owner":      structpb.NewStringValue("christa"),
-						"geography":  structpb.NewStringValue("GB"),
-						"department": structpb.NewStringValue("engineering"),
-						"team":       structpb.NewStringValue("cloud"),
-						"dev_record": structpb.NewBoolValue(true),
+					"YY200": {
+						Attr: map[string]*structpb.Value{
+							"id":         structpb.NewStringValue("YY200"),
+							"owner":      structpb.NewStringValue("christa"),
+							"geography":  structpb.NewStringValue("GB"),
+							"department": structpb.NewStringValue("engineering"),
+							"team":       structpb.NewStringValue("cloud"),
+							"dev_record": structpb.NewBoolValue(true),
+						},
 					},
-				},
+				*/
 			},
 		},
 	}

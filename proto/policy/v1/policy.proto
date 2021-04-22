@@ -94,10 +94,14 @@ message TestSuite {
 }
 
 message Test {
+    message ActionEffectMap {
+        map<string,shared.v1.Effect> actions = 1;
+    }
+    
     string name = 1 [(validate.rules).string.min_len = 1];
     string description = 2;
     bool skip = 3;
     string skip_reason = 4;
-    request.v1.CheckRequest request = 5 [(validate.rules).message.required = true];
-    shared.v1.Effect expected_effect = 6 [(validate.rules).enum.defined_only = true];
+    request.v1.CheckResourceBatchRequest request = 5 [(validate.rules).message.required = true];
+    map<string, ActionEffectMap> expected = 6;
 }

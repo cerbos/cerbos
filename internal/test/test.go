@@ -79,30 +79,30 @@ type Case struct {
 //     "out": <contents_of_test01.yaml.out>,
 //   }
 // }.
-func LoadTestCases(t *testing.T, subDir string) []Case {
-	t.Helper()
+func LoadTestCases(tb testing.TB, subDir string) []Case {
+	tb.Helper()
 
-	dir := PathToDir(t, subDir)
+	dir := PathToDir(tb, subDir)
 
 	entries, err := filepath.Glob(filepath.Join(dir, "*.yaml"))
-	require.NoError(t, err)
+	require.NoError(tb, err)
 
 	testCases := make([]Case, len(entries))
 
 	for i, entry := range entries {
 		testCases[i] = Case{
 			Name:  strings.TrimSuffix(filepath.Base(entry), filepath.Ext(entry)),
-			Input: readFileContents(t, entry),
+			Input: readFileContents(tb, entry),
 		}
 
 		wantedFiles, err := filepath.Glob(fmt.Sprintf("%s.*", entry))
-		require.NoError(t, err)
+		require.NoError(tb, err)
 
 		testCases[i].Want = make(map[string][]byte, len(wantedFiles))
 
 		for _, wanted := range wantedFiles {
 			key := strings.TrimPrefix(filepath.Ext(wanted), ".")
-			testCases[i].Want[key] = readFileContents(t, wanted)
+			testCases[i].Want[key] = readFileContents(tb, wanted)
 		}
 	}
 
@@ -113,13 +113,13 @@ func LoadTestCases(t *testing.T, subDir string) []Case {
 	return testCases
 }
 
-func readFileContents(t *testing.T, filePath string) []byte {
-	t.Helper()
+func readFileContents(tb testing.TB, filePath string) []byte {
+	tb.Helper()
 
 	if _, err := os.Stat(filePath); err == nil {
 		b, err := os.ReadFile(filePath)
 		if err != nil {
-			t.Errorf("Failed to read %s: %w", filePath, err)
+			tb.Errorf("Failed to read %s: %w", filePath, err)
 			return nil
 		}
 

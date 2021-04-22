@@ -23,12 +23,6 @@ protoset: $(BUF)
 .PHONY: check-grpc
 check-grpc: protoset $(GRPCURL)
 	@ $(foreach REQ_FILE,\
-		$(wildcard $(DEV_DIR)/requests/*.json),\
-		echo $(REQ_FILE); \
-		$(GRPCURL) -protoset $(PROTOSET) -authority cerbos.local -insecure -d @ localhost:$(GRPC_PORT) $(CHECK_METHOD) < $(REQ_FILE);\
-		echo "";)
-
-	@ $(foreach REQ_FILE,\
 		$(wildcard $(DEV_DIR)/requests/batch/*.json),\
 		echo $(REQ_FILE); \
 		$(GRPCURL) -protoset $(PROTOSET) -authority cerbos.local -insecure -d @ localhost:$(GRPC_PORT) $(CHECK_RESOURCE_BATCH_METHOD) < $(REQ_FILE);\
@@ -36,12 +30,6 @@ check-grpc: protoset $(GRPCURL)
 
 .PHONY: check-grpc-insecure
 check-grpc-insecure: protoset $(GRPCURL)
-	@ $(foreach REQ_FILE,\
-		$(wildcard $(DEV_DIR)/requests/*.json),\
-		echo $(REQ_FILE); \
-		$(GRPCURL) -protoset $(PROTOSET) -plaintext -d @ localhost:$(GRPC_PORT) $(CHECK_METHOD) < $(REQ_FILE);\
-		echo "";)
-
 	@ $(foreach REQ_FILE,\
 		$(wildcard $(DEV_DIR)/requests/batch/*.json),\
 		echo $(REQ_FILE); \
@@ -51,41 +39,27 @@ check-grpc-insecure: protoset $(GRPCURL)
 .PHONY: check-http
 check-http:
 	@ $(foreach REQ_FILE,\
-		$(wildcard $(DEV_DIR)/requests/*.json),\
-		echo "";\
-		echo $(REQ_FILE); \
-		curl -k https://localhost:$(HTTP_PORT)/api/check -d @$(REQ_FILE);\
-		echo "";)
-
-	@ $(foreach REQ_FILE,\
 		$(wildcard $(DEV_DIR)/requests/batch/*.json),\
 		echo "";\
 		echo $(REQ_FILE); \
-		curl -k https://localhost:$(HTTP_PORT)/api/check_resource_batch -d @$(REQ_FILE);\
+		curl -k https://localhost:$(HTTP_PORT)/api/check?includeMeta=true -d @$(REQ_FILE);\
 		echo "";)
 
 .PHONY: check-http-insecure
 check-http-insecure:
 	@ $(foreach REQ_FILE,\
-		$(wildcard $(DEV_DIR)/requests/*.json),\
+		$(wildcard $(DEV_DIR)/requests/batch/*.json),\
 		echo "";\
 		echo $(REQ_FILE); \
 		curl http://localhost:$(HTTP_PORT)/api/check -d @$(REQ_FILE);\
 		echo "";)
 
-	@ $(foreach REQ_FILE,\
-		$(wildcard $(DEV_DIR)/requests/batch/*.json),\
-		echo "";\
-		echo $(REQ_FILE); \
-		curl http://localhost:$(HTTP_PORT)/api/check_resource_batch -d @$(REQ_FILE);\
-		echo "";)
-
 .PHONY: perf
 perf: protoset $(GHZ)
 	@ $(foreach REQ_FILE,\
-		$(wildcard $(DEV_DIR)/requests/*.json),\
+		$(wildcard $(DEV_DIR)/requests/batch/*.json),\
 		echo $(REQ_FILE); \
-		$(GHZ) --protoset $(PROTOSET) --cname=cerbos.local -n 500 --call $(CHECK_METHOD) -D $(REQ_FILE) localhost:$(GRPC_PORT);\
+		$(GHZ) --protoset $(PROTOSET) --cname=cerbos.local -n 500 --call $(CHECK_RESOURCE_BATCH_METHOD) -D $(REQ_FILE) localhost:$(GRPC_PORT);\
 		echo "";)
 
 .PHONY: jaeger

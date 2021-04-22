@@ -7,8 +7,11 @@ import (
 	"os"
 	"regexp"
 
+	"github.com/google/go-cmp/cmp"
+
 	"github.com/cerbos/cerbos/internal/engine"
 	policyv1 "github.com/cerbos/cerbos/internal/genpb/policy/v1"
+	sharedv1 "github.com/cerbos/cerbos/internal/genpb/shared/v1"
 	"github.com/cerbos/cerbos/internal/util"
 )
 
@@ -30,12 +33,10 @@ type SuiteResult struct {
 }
 
 type TestResult struct {
-	Name     string `json:"name"`
-	Skipped  bool   `json:"skipped,omitempty"`
-	Failed   bool   `json:"failed,omitempty"`
-	Expected string `json:"expected,omitempty"`
-	Actual   string `json:"actual,omitempty"`
-	Error    string `json:"error,omitempty"`
+	Name    string `json:"name"`
+	Skipped bool   `json:"skipped,omitempty"`
+	Failed  bool   `json:"failed,omitempty"`
+	Error   string `json:"error,omitempty"`
 }
 
 // Verify runs the test suites from the provided directory.
@@ -115,8 +116,7 @@ func runTestSuite(ctx context.Context, eng *engine.Engine, shouldRun func(string
 			continue
 		}
 
-		expected := test.ExpectedEffect
-		actual, err := eng.Check(ctx, test.Request)
+		actual, err := eng.CheckResourceBatch(ctx, test.Request)
 		if err != nil {
 			testResult.Failed = true
 			testResult.Error = err.Error()
@@ -124,13 +124,29 @@ func runTestSuite(ctx context.Context, eng *engine.Engine, shouldRun func(string
 			continue
 		}
 
-		if actual.Effect != expected {
+		if actual == nil {
 			testResult.Failed = true
+			testResult.Error = "Empty response from server"
 			failed = true
+			continue
 		}
 
-		testResult.Expected = expected.String()
-		testResult.Actual = actual.Effect.String()
+		expectedResult := make(map[string]map[string]sharedv1.Effect, len(test.Expected))
+		for key, actionEffect := range test.Expected {
+			expectedResult[key] = actionEffect.Actions
+		}
+
+		actualResult := make(map[string]map[string]sharedv1.Effect, len(actual.ResourceInstances))
+		for key, actionEffect := range actual.ResourceInstances {
+			actualResult[key] = actionEffect.Actions
+		}
+
+		if diff := cmp.Diff(expectedResult, actualResult); diff != "" {
+			testResult.Failed = true
+			testResult.Error = diff
+			failed = true
+			continue
+		}
 
 		sr.Tests = append(sr.Tests, testResult)
 	}

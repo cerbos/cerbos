@@ -6,14 +6,12 @@ import (
 	"errors"
 	"fmt"
 	"sync"
-	"time"
 
 	"github.com/open-policy-agent/opa/ast"
 	"github.com/open-policy-agent/opa/topdown/cache"
 	"go.opencensus.io/trace"
 	"go.uber.org/zap"
 	"google.golang.org/protobuf/encoding/protojson"
-	"google.golang.org/protobuf/types/known/durationpb"
 
 	"github.com/cerbos/cerbos/internal/compile"
 	"github.com/cerbos/cerbos/internal/config"
@@ -33,38 +31,6 @@ const (
 	loggerName                   = "engine"
 	maxQueryCacheSizeBytes int64 = 10 * 1024 * 1024 // 10 MiB
 )
-
-type CheckResult struct {
-	Effect sharedv1.Effect
-	Meta   *responsev1.CheckResponseMeta
-}
-
-func newCheckResult(defaultEffect sharedv1.Effect, includeMeta bool) *CheckResult {
-	result := &CheckResult{Effect: defaultEffect}
-	if includeMeta {
-		result.Meta = &responsev1.CheckResponseMeta{}
-	}
-
-	return result
-}
-
-func (cr *CheckResult) setMatchedPolicy(policyName string) {
-	if cr.Meta != nil {
-		cr.Meta.MatchedPolicy = policyName
-	}
-}
-
-func (cr *CheckResult) setEffectiveDerivedRoles(roles []string) {
-	if cr.Meta != nil {
-		cr.Meta.EffectiveDerivedRoles = roles
-	}
-}
-
-func (cr *CheckResult) setEvaluationDuration(duration time.Duration) {
-	if cr.Meta != nil {
-		cr.Meta.EvaluationDuration = durationpb.New(duration)
-	}
-}
 
 type Engine struct {
 	conf       *Conf
@@ -145,45 +111,6 @@ func (engine *Engine) watchNotifications(ctx context.Context) {
 	}
 }
 
-func (engine *Engine) Check(ctx context.Context, req *requestv1.CheckRequest) (*CheckResult, error) {
-	return measureCheckLatency(func() (*CheckResult, error) { return engine.doCheck(ctx, req) })
-}
-
-func (engine *Engine) doCheck(ctx context.Context, req *requestv1.CheckRequest) (*CheckResult, error) {
-	log := logging.FromContext(ctx).Named(loggerName)
-	ctx, span := tracing.StartSpan(ctx, "engine.Check")
-	defer span.End()
-
-	span.AddAttributes(trace.StringAttribute("request_id", req.RequestId))
-
-	engine.mu.RLock()
-	evalCtx := &evaluationCtx{queryCache: engine.queryCache}
-	evalCtx.addCheck(engine.getPrincipalPolicyCheck(req.Principal.Id, req.Principal.PolicyVersion))
-	evalCtx.addCheck(engine.getResourcePolicyCheck(req.Resource.Name, req.Resource.PolicyVersion))
-	engine.mu.RUnlock()
-
-	retVal := newCheckResult(defaultEffect, engine.conf.IncludeMetadataInResponse)
-
-	if evalCtx.numChecks == 0 {
-		log.Warn("No applicable policies for request")
-		span.AddAttributes(trace.StringAttribute("effect", defaultEffect.String()), trace.BoolAttribute("policy_matched", false))
-		tracing.MarkFailed(span, trace.StatusCodeNotFound, "No matching policies", ErrNoPoliciesMatched)
-
-		return retVal, ErrNoPoliciesMatched
-	}
-
-	input, err := toAST(req)
-	if err != nil {
-		log.Error("Failed to convert request", zap.Error(err))
-		span.AddAttributes(trace.StringAttribute("effect", defaultEffect.String()))
-		tracing.MarkFailed(span, trace.StatusCodeInvalidArgument, "Failed to convert request", err)
-
-		return retVal, fmt.Errorf("failed to convert request: %w", err)
-	}
-
-	return evalCtx.evaluate(logging.ToContext(ctx, log), input, engine.conf.IncludeMetadataInResponse)
-}
-
 func (engine *Engine) getPrincipalPolicyCheck(id, version string) *check {
 	principal, policyVersion, policyKey := engine.policyAttr(id, version)
 	principalModID := namer.PrincipalPolicyModuleID(principal, policyVersion)
@@ -226,10 +153,10 @@ func (engine *Engine) policyAttr(name, version string) (pName, pVersion, pKey st
 }
 
 func (engine *Engine) CheckResourceBatch(ctx context.Context, req *requestv1.CheckResourceBatchRequest) (*responsev1.CheckResourceBatchResponse, error) {
-	return measureCheckResourceBatchLatency(func() (*responsev1.CheckResourceBatchResponse, error) { return engine.doCheckResourceBatch(ctx, req) })
+	return measureCheckResourceBatchLatency(func() (*CheckResponseWrapper, error) { return engine.doCheckResourceBatch(ctx, req) })
 }
 
-func (engine *Engine) doCheckResourceBatch(ctx context.Context, req *requestv1.CheckResourceBatchRequest) (*responsev1.CheckResourceBatchResponse, error) {
+func (engine *Engine) doCheckResourceBatch(ctx context.Context, req *requestv1.CheckResourceBatchRequest) (*CheckResponseWrapper, error) {
 	logger := logging.FromContext(ctx).Named(loggerName)
 	ctx, span := tracing.StartSpan(ctx, "engine.CheckResourceBatch")
 	defer span.End()
@@ -242,10 +169,7 @@ func (engine *Engine) doCheckResourceBatch(ctx context.Context, req *requestv1.C
 	evalCtx.addCheck(engine.getResourcePolicyCheck(req.Resource.Name, req.Resource.PolicyVersion))
 	engine.mu.RUnlock()
 
-	resp := &responsev1.CheckResourceBatchResponse{
-		RequestId:         req.RequestId,
-		ResourceInstances: make(map[string]*responsev1.ActionEffectList, len(req.Resource.Instances)),
-	}
+	resp := newCheckResponseWrapper(req)
 
 	checkReq := &requestv1.CheckRequest{
 		RequestId: req.RequestId,
@@ -258,38 +182,36 @@ func (engine *Engine) doCheckResourceBatch(ctx context.Context, req *requestv1.C
 
 	// TODO (cell) Parallelize if the batch size is large
 	for resourceKey, resourceAttr := range req.Resource.Instances {
-		for _, action := range req.Actions {
-			ctx, span := tracing.StartSpan(ctx, fmt.Sprintf("engine.BatchCheck/%s", resourceKey))
-			span.AddAttributes(trace.StringAttribute("action", action))
+		ctx, span := tracing.StartSpan(ctx, fmt.Sprintf("engine.BatchCheck/%s", resourceKey))
 
-			log := logger.With(zap.String("resource_key", resourceKey), zap.String("action", action))
-
-			if evalCtx.numChecks == 0 {
-				addToResourceBatchResponse(resp, resourceKey, action, defaultEffect)
-				continue
-			}
-
-			checkReq.Resource.Attr = resourceAttr.Attr
-			checkReq.Action = action
-
-			// TODO (cell) Only convert the bits that changed
-			input, err := toAST(checkReq)
-			if err != nil {
-				log.Error("Failed to build context", zap.Error(err))
-				tracing.MarkFailed(span, trace.StatusCodeInvalidArgument, "Failed to build context", err)
-				return nil, err
-			}
-
-			result, err := evalCtx.evaluate(logging.ToContext(ctx, log), input, false)
-			if err != nil {
-				log.Error("Failed to evaluate policies", zap.Error(err))
-				return nil, err
-			}
-
-			addToResourceBatchResponse(resp, resourceKey, action, result.Effect)
-
-			span.End()
+		if evalCtx.numChecks == 0 {
+			resp.addDefaultEffect(resourceKey, req.Actions, "No policy match")
+			continue
 		}
+
+		log := logger.With(zap.String("resource_key", resourceKey))
+
+		checkReq.Resource.Attr = resourceAttr.Attr
+		checkReq.Actions = req.Actions
+
+		input, err := toAST(checkReq)
+		if err != nil {
+			log.Error("Failed to build context", zap.Error(err))
+			tracing.MarkFailed(span, trace.StatusCodeInvalidArgument, "Failed to build context", err)
+
+			return nil, err
+		}
+
+		result, err := evalCtx.evaluate(logging.ToContext(ctx, log), input)
+		if err != nil {
+			log.Error("Failed to evaluate policies", zap.Error(err))
+
+			return nil, err
+		}
+
+		resp.addEvalResult(resourceKey, result)
+
+		span.End()
 	}
 
 	if evalCtx.numChecks == 0 {
@@ -300,20 +222,8 @@ func (engine *Engine) doCheckResourceBatch(ctx context.Context, req *requestv1.C
 	return resp, nil
 }
 
-func addToResourceBatchResponse(resp *responsev1.CheckResourceBatchResponse, key, action string, effect sharedv1.Effect) {
-	effectList, ok := resp.ResourceInstances[key]
-	if !ok {
-		effectList = &responsev1.ActionEffectList{
-			Actions: make(map[string]sharedv1.Effect),
-		}
-		resp.ResourceInstances[key] = effectList
-	}
-
-	effectList.Actions[action] = effect
-}
-
 func toAST(req *requestv1.CheckRequest) (ast.Value, error) {
-	// TODO (cell) Avoid JSON marshal and build the AST by hand
+	// TODO (cell) Replace with codegen.MarshalProtoToRego when it's optimized
 	requestJSON, err := protojson.Marshal(req)
 	if err != nil {
 		return nil, fmt.Errorf("failed to marshal request: %w", err)
@@ -340,44 +250,72 @@ func (ec *evaluationCtx) addCheck(c *check) {
 	}
 }
 
-func (ec *evaluationCtx) evaluate(ctx context.Context, input ast.Value, includeMeta bool) (*CheckResult, error) {
+func (ec *evaluationCtx) evaluate(ctx context.Context, input ast.Value) (*evaluationResult, error) {
 	log := logging.FromContext(ctx).Sugar()
 	ctx, span := tracing.StartSpan(ctx, "engine.Evaluate")
 	defer span.End()
 
-	retVal := newCheckResult(defaultEffect, includeMeta)
+	resp := &evaluationResult{}
 
 	for i := 0; i < ec.numChecks; i++ {
 		c := ec.checks[i]
 
+		span.AddAttributes(trace.StringAttribute("policy", c.policyKey))
+
 		result, err := c.execute(ctx, ec.queryCache, input)
 		if err != nil {
 			log.Errorw("Failed to execute policy", "policy", c.policyKey, "error", err)
-			span.AddAttributes(trace.StringAttribute("policy", c.policyKey), trace.StringAttribute("effect", defaultEffect.String()))
 			tracing.MarkFailed(span, trace.StatusCodeInternal, "Failed to execute policy", err)
 
-			return retVal, fmt.Errorf("failed to execute policy %s: %w", c.policyKey, err)
+			return nil, fmt.Errorf("failed to execute policy %s: %w", c.policyKey, err)
 		}
 
-		span.AddAttributes(trace.StringAttribute("policy", c.policyKey), trace.StringAttribute("effect", result.Effect.String()))
-
-		if result.Effect != sharedv1.Effect_EFFECT_NO_MATCH {
-			log.Infow("Policy match", "policy", c.policyKey, "effect", result.Effect.String())
-			span.AddAttributes(trace.BoolAttribute("policy_matched", true))
-
-			retVal.Effect = result.Effect
-			retVal.setMatchedPolicy(c.policyKey)
-			retVal.setEffectiveDerivedRoles(result.EffectiveDerivedRoles)
-
-			return retVal, nil
+		incomplete := resp.merge(c.policyKey, result)
+		if !incomplete {
+			return resp, nil
 		}
 	}
 
 	log.Info("No policy match")
-	span.AddAttributes(trace.StringAttribute("effect", defaultEffect.String()), trace.BoolAttribute("policy_matched", false))
 	tracing.MarkFailed(span, trace.StatusCodeNotFound, "No matching policies", ErrNoPoliciesMatched)
 
-	return retVal, ErrNoPoliciesMatched
+	return resp, ErrNoPoliciesMatched
+}
+
+type evaluationResult struct {
+	effects               map[string]sharedv1.Effect
+	matchedPolicies       map[string]string
+	effectiveDerivedRoles []string
+}
+
+// merge the results by only updating the actions that have a no_match effect.
+func (er *evaluationResult) merge(policyKey string, res *compile.EvalResult) bool {
+	hasNoMatches := false
+
+	if er.effects == nil {
+		er.effects = make(map[string]sharedv1.Effect, len(res.Effects))
+		er.matchedPolicies = make(map[string]string, len(res.Effects))
+	}
+
+	if len(res.EffectiveDerivedRoles) > 0 {
+		er.effectiveDerivedRoles = append(er.effectiveDerivedRoles, res.EffectiveDerivedRoles...)
+	}
+
+	for action, effect := range res.Effects {
+		// if the action doesn't already exist or if it has a no_match effect, update it.
+		if currEffect, ok := er.effects[action]; !ok || currEffect == sharedv1.Effect_EFFECT_NO_MATCH {
+			er.effects[action] = effect
+
+			// if this effect is a no_match, we still need to traverse the policy hierarchy until we find a definitive answer
+			if effect == sharedv1.Effect_EFFECT_NO_MATCH {
+				hasNoMatches = true
+			} else {
+				er.matchedPolicies[action] = policyKey
+			}
+		}
+	}
+
+	return hasNoMatches
 }
 
 type check struct {
@@ -386,10 +324,9 @@ type check struct {
 	query     string
 }
 
-func (c *check) execute(ctx context.Context, queryCache cache.InterQueryCache, input ast.Value) (result compile.EvalResult, err error) {
+func (c *check) execute(ctx context.Context, queryCache cache.InterQueryCache, input ast.Value) (result *compile.EvalResult, err error) {
 	ctx, span := tracing.StartSpan(ctx, "engine.ExecutePolicy")
 	defer func() {
-		span.AddAttributes(trace.StringAttribute("policy", c.policyKey), trace.StringAttribute("effect", result.Effect.String()))
 		if err != nil {
 			tracing.MarkFailed(span, trace.StatusCodeInternal, "Policy execution failed", err)
 		}

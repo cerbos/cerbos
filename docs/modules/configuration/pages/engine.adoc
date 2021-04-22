@@ -14,13 +14,3 @@ engine:
 ----
 
 
-== Response metadata
-
-By default, the Cerbos engine will include metadata such as the policy that matched, effective derived roles, and execution time in the response. You can disable sending this metadata by setting the `includeMetadataInResponse` field to `false`.
-
-
-[source,yaml,linenums]
-----
-engine:
-  includeMetadataInResponse: false
-----
