@@ -95,6 +95,9 @@ func doVerify(ctx context.Context, fsys fs.FS, eng *engine.Engine, conf Config) 
 	return result, err
 }
 
+// EffectsMatch is a type created to make the diff output nicer.
+type EffectsMatch map[string]map[string]sharedv1.Effect
+
 func runTestSuite(ctx context.Context, eng *engine.Engine, shouldRun func(string) bool, file string, ts *policyv1.TestSuite) (SuiteResult, bool) {
 	failed := false
 
@@ -121,6 +124,7 @@ func runTestSuite(ctx context.Context, eng *engine.Engine, shouldRun func(string
 			testResult.Failed = true
 			testResult.Error = err.Error()
 			failed = true
+			sr.Tests = append(sr.Tests, testResult)
 			continue
 		}
 
@@ -128,15 +132,16 @@ func runTestSuite(ctx context.Context, eng *engine.Engine, shouldRun func(string
 			testResult.Failed = true
 			testResult.Error = "Empty response from server"
 			failed = true
+			sr.Tests = append(sr.Tests, testResult)
 			continue
 		}
 
-		expectedResult := make(map[string]map[string]sharedv1.Effect, len(test.Expected))
+		expectedResult := make(EffectsMatch, len(test.Expected))
 		for key, actionEffect := range test.Expected {
 			expectedResult[key] = actionEffect.Actions
 		}
 
-		actualResult := make(map[string]map[string]sharedv1.Effect, len(actual.ResourceInstances))
+		actualResult := make(EffectsMatch, len(actual.ResourceInstances))
 		for key, actionEffect := range actual.ResourceInstances {
 			actualResult[key] = actionEffect.Actions
 		}
@@ -145,7 +150,6 @@ func runTestSuite(ctx context.Context, eng *engine.Engine, shouldRun func(string
 			testResult.Failed = true
 			testResult.Error = diff
 			failed = true
-			continue
 		}
 
 		sr.Tests = append(sr.Tests, testResult)

@@ -2,103 +2,118 @@
 name: AlbumObjectTestSuite
 description: Tests for verifying the album:object resource policy
 tests:
-  - name: View own private album
+  - name: Alicia tries to view her own private album
     request: {
       "requestId": "test",
-      "action": "view",
-      "resource": {
-        "name": "album:object",
-        "attr": {
-          "owner": "alicia",
-          "id": "XX125",
-          "public": false,
-          "flagged": false
-        }
-      },
+      "actions": ["view"],
       "principal": {
         "id": "alicia",
         "roles": ["user"]
-      }
-    }
-    expectedEffect: EFFECT_ALLOW
-
-  - name: View someone else's private album
-    request: {
-      "requestId": "test",
-      "action": "view",
+      },
       "resource": {
         "name": "album:object",
-        "attr": {
-          "owner": "alicia",
-          "id": "XX125",
-          "public": false,
-          "flagged": false
+        "instances": {
+          "XX125": {
+            "attr": {
+              "owner": "alicia",
+              "id": "XX125",
+              "public": false,
+              "flagged": false
+            }
+          }
         }
-      },
+      }
+    }
+    expected: {
+      "XX125": {
+        "actions": {
+          "view": "EFFECT_ALLOW"
+        }
+      }
+    }
+
+  - name: Bradley tries to view Alicia's private and public albums
+    request: {
+      "requestId": "test",
+      "actions": ["view"],
       "principal": {
         "id": "bradley",
         "roles": ["user"]
-      }
-    }
-    expectedEffect: EFFECT_DENY
-
-  - name: View someone else's public album
-    request: {
-      "requestId": "test",
-      "action": "view",
+      },
       "resource": {
         "name": "album:object",
-        "attr": {
-          "owner": "alicia",
-          "id": "XX225",
-          "public": true,
-          "flagged": false
+        "instances": {
+          "PRIVATE": {
+            "attr": {
+              "owner": "alicia",
+              "id": "XX125",
+              "public": false,
+              "flagged": false
+            }
+          },
+          "PUBLIC": {
+            "attr": {
+              "owner": "alicia",
+              "id": "XX525",
+              "public": true,
+              "flagged": false
+            }
+          }
         }
-      },
-      "principal": {
-        "id": "bradley",
-        "roles": ["user"]
       }
     }
-    expectedEffect: EFFECT_ALLOW
-
-  - name: Moderator trying to delete an unflagged album
-    request: {
-      "requestId": "test",
-      "action": "delete",
-      "resource": {
-        "name": "album:object",
-        "attr": {
-          "owner": "alicia",
-          "id": "XX225",
-          "public": true,
-          "flagged": false
+    expected: {
+      "PRIVATE": {
+        "actions": {
+          "view": "EFFECT_DENY"
         }
       },
-      "principal": {
-        "id": "maria",
-        "roles": ["user", "moderator"]
+      "PUBLIC": {
+        "actions": {
+          "view": "EFFECT_ALLOW"
+        }
       }
     }
-    expectedEffect: EFFECT_DENY
 
-
-  - name: Moderator trying to delete a flagged album
+  - name: Moderator tries to delete a flagged album and an unflagged album
     request: {
       "requestId": "test",
-      "action": "delete",
-      "resource": {
-        "name": "album:object",
-        "attr": {
-          "owner": "alicia",
-          "id": "XX666",
-          "public": true,
-          "flagged": true
-        }
-      },
+      "actions": ["delete"],
       "principal": {
         "id": "maria",
         "roles": ["user", "moderator"]
+      },
+      "resource": {
+        "name": "album:object",
+        "instances": {
+          "UNFLAGGED": {
+            "attr": {
+              "owner": "alicia",
+              "id": "XX525",
+              "public": true,
+              "flagged": false
+            }
+          },
+          "FLAGGED": {
+            "attr": {
+              "owner": "evan",
+              "id": "XX666",
+              "public": true,
+              "flagged": true
+            }
+          }
+        }
       }
     }
-    expectedEffect: EFFECT_ALLOW
+    expected: {
+      "UNFLAGGED": {
+        "actions": {
+          "delete": "EFFECT_DENY"
+        }
+      },
+      "FLAGGED": {
+        "actions": {
+          "delete": "EFFECT_ALLOW"
+        }
+      }
+    }

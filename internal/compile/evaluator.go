@@ -13,8 +13,6 @@ import (
 	sharedv1 "github.com/cerbos/cerbos/internal/genpb/shared/v1"
 )
 
-const defaultEffect = sharedv1.Effect_EFFECT_DENY
-
 type EvalResult struct {
 	Effects               map[string]sharedv1.Effect
 	EffectiveDerivedRoles []string

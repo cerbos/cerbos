@@ -158,6 +158,7 @@ func startServer(ctx context.Context, conf *Conf, cerbosSvc *svc.CerbosService) 
 }
 
 func testGRPCRequest(addr string, opts ...grpc.DialOption) func(*testing.T) {
+	//nolint:thelper
 	return func(t *testing.T) {
 		dialOpts := append(defaultGRPCDialOpts(), opts...)
 
@@ -197,6 +198,7 @@ func testGRPCRequest(addr string, opts ...grpc.DialOption) func(*testing.T) {
 }
 
 func testHTTPRequest(addr string) func(*testing.T) {
+	//nolint:thelper
 	return func(t *testing.T) {
 		customTransport := http.DefaultTransport.(*http.Transport).Clone()
 		customTransport.TLSClientConfig = &tls.Config{InsecureSkipVerify: true} //nolint:gosec
