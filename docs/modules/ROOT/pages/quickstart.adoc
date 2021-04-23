@@ -105,15 +105,19 @@ Send a request as the owner. It should be allowed by the policy.
 cat <<EOF | curl --silent "localhost:3592/api/check" -d @-
 {
   "requestId":  "test01",
-  "action":  "view",
+  "actions":  ["view"],
   "resource":  {
     "policyVersion": "default",
     "name":  "album:object",
-    "attr":  {
-      "owner":  "alicia",
-      "id":  "XX125",
-      "public": true,
-      "flagged": false
+    "instances": {
+      "XX125": {
+        "attr":  {
+          "owner":  "alicia",
+          "id":  "XX125",
+          "public": true,
+          "flagged": false
+        }
+      }
     }
   },
   "principal":  {
@@ -126,7 +130,17 @@ EOF
 ----
 
 ----
-{"requestId":"test01","statusCode":200,"statusMessage":"Allow","effect":"EFFECT_ALLOW"}
+{
+  "requestId": "test01",
+  "resourceInstances": {
+    "XX125": {
+      "actions": {
+        "view": "EFFECT_ALLOW"
+      }
+    }
+  },
+  "meta": null
+}
 ----
 
 
@@ -137,15 +151,19 @@ Send a request as someone else. It should be denied by the policy.
 cat <<EOF | curl --silent "localhost:3592/api/check" -d @-
 {
   "requestId":  "test02",
-  "action":  "view",
+  "actions":  ["view"],
   "resource":  {
     "policyVersion": "default",
     "name":  "album:object",
-    "attr":  {
-      "owner":  "alicia",
-      "id":  "XX125",
-      "public": true,
-      "flagged": false
+    "instances": {
+      "XX125": {
+        "attr":  {
+          "owner":  "alicia",
+          "id":  "XX125",
+          "public": true,
+          "flagged": false
+        }
+      }
     }
   },
   "principal":  {
@@ -158,7 +176,17 @@ EOF
 ----
 
 ----
-{"requestId":"test02","statusCode":401,"statusMessage":"Deny","effect":"EFFECT_DENY"}
+{
+  "requestId": "test02",
+  "resourceInstances": {
+    "XX125": {
+      "actions": {
+        "view": "EFFECT_DENY"
+      }
+    }
+  },
+  "meta": null
+}
 ----
 
 Now let's edit the policy to allow users to view public albums.
@@ -217,15 +245,19 @@ Now send the request again. It should be allowed by the updated policy.
 cat <<EOF | curl --silent "localhost:3592/api/check" -d @-
 {
   "requestId":  "test03",
-  "action":  "view",
+  "actions":  ["view"],
   "resource":  {
     "policyVersion": "default",
     "name":  "album:object",
-    "attr":  {
-      "owner":  "alicia",
-      "id":  "XX125",
-      "public": true,
-      "flagged": false
+    "instances": {
+      "XX125": {
+        "attr":  {
+          "owner":  "alicia",
+          "id":  "XX125",
+          "public": true,
+          "flagged": false
+        }
+      }
     }
   },
   "principal":  {
@@ -238,5 +270,15 @@ EOF
 ----
 
 ----
-{"requestId":"test03","statusCode":200,"statusMessage":"Allow","effect":"EFFECT_ALLOW"}
+{
+  "requestId": "test03",
+  "resourceInstances": {
+    "XX125": {
+      "actions": {
+        "view": "EFFECT_ALLOW"
+      }
+    }
+  },
+  "meta": null
+}
 ----

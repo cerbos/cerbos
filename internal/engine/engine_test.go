@@ -1,391 +1,94 @@
 package engine
 
 import (
+	"bytes"
 	"context"
-	"errors"
-	"fmt"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/testing/protocmp"
-	"google.golang.org/protobuf/types/known/structpb"
 
-	requestv1 "github.com/cerbos/cerbos/internal/genpb/request/v1"
-	responsev1 "github.com/cerbos/cerbos/internal/genpb/response/v1"
-	sharedv1 "github.com/cerbos/cerbos/internal/genpb/shared/v1"
+	cerbosdevv1 "github.com/cerbos/cerbos/internal/genpb/cerbosdev/v1"
 	"github.com/cerbos/cerbos/internal/storage/disk"
 	"github.com/cerbos/cerbos/internal/test"
+	"github.com/cerbos/cerbos/internal/util"
 )
 
-func TestEngineCheck(t *testing.T) {
+// trick compiler into not converting benchmarks into nops.
+var dummy int
+
+func TestEngineCheckResourceBatch(t *testing.T) {
 	eng, cancelFunc := mkEngine(t)
 	defer cancelFunc()
 
-	testCases := []struct {
-		desc             string
-		request          func() *requestv1.CheckRequest
-		wantEffect       sharedv1.Effect
-		wantPolicy       string
-		wantDerivedRoles []string
-		wantErr          bool
-	}{
-		{
-			desc:             "John views own leave request",
-			request:          test.MkCheckRequest,
-			wantEffect:       sharedv1.Effect_EFFECT_ALLOW,
-			wantPolicy:       "leave_request:20210210",
-			wantDerivedRoles: []string{"employee_that_owns_the_record", "any_employee"},
-		},
-		{
-			desc: "John tries to approve his own leave_request",
-			request: func() *requestv1.CheckRequest {
-				// John trying to approve his own leave request
-				req := test.MkCheckRequest()
-				req.Action = "approve"
+	testCases := test.LoadTestCases(t, "engine")
 
-				return req
-			},
-			wantEffect:       sharedv1.Effect_EFFECT_DENY,
-			wantPolicy:       "leave_request:20210210",
-			wantDerivedRoles: []string{"employee_that_owns_the_record", "any_employee"},
-		},
-		{
-			desc: "John's manager approves leave_request",
-			request: func() *requestv1.CheckRequest {
-				// John's manager approving his leave request
-				req := test.MkCheckRequest()
-				req.Action = "approve"
-				req.Principal.Id = "sally"
-				req.Principal.Roles = []string{"employee", "manager"}
-				req.Principal.Attr["managed_geographies"] = structpb.NewStringValue("GB")
-				req.Resource.Attr["status"] = structpb.NewStringValue("PENDING_APPROVAL")
+	for _, tcase := range testCases {
+		tcase := tcase
+		t.Run(tcase.Name, func(t *testing.T) {
+			tc := readTestCase(t, tcase.Input)
 
-				return req
-			},
-			wantEffect:       sharedv1.Effect_EFFECT_ALLOW,
-			wantPolicy:       "leave_request:20210210",
-			wantDerivedRoles: []string{"direct_manager", "any_employee"},
-		},
-		{
-			desc: "Some other manager tries to approve leave_request",
-			request: func() *requestv1.CheckRequest {
-				// Some other manager trying to approve John's leave request
-				req := test.MkCheckRequest()
-				req.Action = "approve"
-				req.Principal.Id = "betty"
-				req.Principal.Roles = []string{"employee", "manager"}
-				req.Principal.Attr["managed_geographies"] = structpb.NewStringValue("FR")
-				req.Resource.Attr["status"] = structpb.NewStringValue("PENDING_APPROVAL")
-
-				return req
-			},
-			wantEffect:       sharedv1.Effect_EFFECT_DENY,
-			wantPolicy:       "leave_request:20210210",
-			wantDerivedRoles: []string{"any_employee"},
-		},
-		{
-			desc: "Donald Duck approves leave_request that has dev_record attribute [Principal policy override]",
-			request: func() *requestv1.CheckRequest {
-				// Donald Duck has a principal policy that lets him do anything on leave_request as long as it's a dev record
-				req := test.MkCheckRequest()
-				req.Action = "approve"
-				req.Principal.Id = "donald_duck"
-				req.Resource.Attr["dev_record"] = structpb.NewBoolValue(true)
-
-				return req
-			},
-			wantEffect: sharedv1.Effect_EFFECT_ALLOW,
-			wantPolicy: "donald_duck:20210210",
-		},
-		{
-			desc: "Donald Duck views leave_request [Principal policy cascades to resource policy]",
-			request: func() *requestv1.CheckRequest {
-				// Donald Duck trying to do something on a non-dev record
-				// It should cascade down to resource policy because there's no explicit rule for Donald Duck
-				req := test.MkCheckRequest()
-				req.Action = "view:public"
-				req.Principal.Id = "donald_duck"
-
-				return req
-			},
-			wantEffect:       sharedv1.Effect_EFFECT_ALLOW,
-			wantPolicy:       "leave_request:20210210",
-			wantDerivedRoles: []string{"any_employee"},
-		},
-		{
-			desc: "Donald Duck tries to view salary_record [Principal policy override]",
-			request: func() *requestv1.CheckRequest {
-				// Donald Duck has an explicit deny on salary_record
-				req := test.MkCheckRequest()
-				req.Action = "view"
-				req.Principal.Id = "donald_duck"
-				req.Resource.Name = "salary_record"
-				req.Resource.Attr["dev_record"] = structpb.NewBoolValue(true)
-
-				return req
-			},
-			wantEffect: sharedv1.Effect_EFFECT_DENY,
-			wantPolicy: "donald_duck:20210210",
-		},
-	}
-
-	for _, tc := range testCases {
-		req := tc.request()
-		name := fmt.Sprintf("principal=%s;resource=%s;action=%s", req.Principal.Id, req.Resource.Name, req.Action)
-		t.Run(name, func(t *testing.T) {
-			t.Log(tc.desc)
-			resp, err := eng.Check(context.Background(), req)
-			if tc.wantErr {
+			have, err := eng.CheckResourceBatch(context.Background(), tc.Input)
+			if tc.WantError {
 				require.Error(t, err)
+			} else {
+				require.NoError(t, err)
+			}
+
+			if tc.WantResponse == nil {
 				return
 			}
-			require.NoError(t, err)
-			require.Equal(t, tc.wantEffect, resp.Effect)
-			require.Equal(t, tc.wantPolicy, resp.Meta.MatchedPolicy)
-			require.ElementsMatch(t, tc.wantDerivedRoles, resp.Meta.EffectiveDerivedRoles)
+
+			require.NotNil(t, have)
+
+			// clear out timing data to make the comparison work
+			if have.Meta != nil {
+				have.Meta.EvaluationDuration = nil
+			}
+
+			require.Empty(t, cmp.Diff(tc.WantResponse, have, protocmp.Transform()))
 		})
 	}
 }
 
-func TestCheckResourceBatch(t *testing.T) {
-	eng, cancelFunc := mkEngine(t)
-	defer cancelFunc()
+func readTestCase(tb testing.TB, data []byte) *cerbosdevv1.EngineTestCase {
+	tb.Helper()
 
-	t.Run("valid", func(t *testing.T) {
-		req := test.MkCheckResourceBatchRequest()
+	tc := &cerbosdevv1.EngineTestCase{}
+	require.NoError(tb, util.ReadJSONOrYAML(bytes.NewReader(data), tc))
 
-		want := &responsev1.CheckResourceBatchResponse{
-			RequestId: "test",
-			ResourceInstances: map[string]*responsev1.ActionEffectList{
-				"XX125": {
-					Actions: map[string]sharedv1.Effect{
-						"view:public": sharedv1.Effect_EFFECT_ALLOW,
-						"approve":     sharedv1.Effect_EFFECT_DENY,
-						"create":      sharedv1.Effect_EFFECT_DENY,
-					},
-				},
-				"XX150": {
-					Actions: map[string]sharedv1.Effect{
-						"view:public": sharedv1.Effect_EFFECT_ALLOW,
-						"approve":     sharedv1.Effect_EFFECT_DENY,
-						"create":      sharedv1.Effect_EFFECT_DENY,
-					},
-				},
-				"XX250": {
-					Actions: map[string]sharedv1.Effect{
-						"view:public": sharedv1.Effect_EFFECT_ALLOW,
-						"approve":     sharedv1.Effect_EFFECT_DENY,
-						"create":      sharedv1.Effect_EFFECT_DENY,
-					},
-				},
-				"YY100": {
-					Actions: map[string]sharedv1.Effect{
-						"view:public": sharedv1.Effect_EFFECT_ALLOW,
-						"approve":     sharedv1.Effect_EFFECT_ALLOW,
-						"create":      sharedv1.Effect_EFFECT_ALLOW,
-					},
-				},
-				"YY200": {
-					Actions: map[string]sharedv1.Effect{
-						"view:public": sharedv1.Effect_EFFECT_ALLOW,
-						"approve":     sharedv1.Effect_EFFECT_ALLOW,
-						"create":      sharedv1.Effect_EFFECT_ALLOW,
-					},
-				},
-			},
-		}
-
-		have, err := eng.CheckResourceBatch(context.Background(), req)
-		require.NoError(t, err)
-		require.Empty(t, cmp.Diff(want, have, protocmp.Transform()))
-	})
-
-	t.Run("no_policy_match", func(t *testing.T) {
-		req := test.MkCheckResourceBatchRequest()
-		req.Principal.Id = "bugs_bunny"
-		req.Resource.Name = "quarterly_report"
-
-		want := &responsev1.CheckResourceBatchResponse{
-			RequestId: "test",
-			ResourceInstances: map[string]*responsev1.ActionEffectList{
-				"XX125": {
-					Actions: map[string]sharedv1.Effect{
-						"view:public": sharedv1.Effect_EFFECT_DENY,
-						"approve":     sharedv1.Effect_EFFECT_DENY,
-						"create":      sharedv1.Effect_EFFECT_DENY,
-					},
-				},
-				"XX150": {
-					Actions: map[string]sharedv1.Effect{
-						"view:public": sharedv1.Effect_EFFECT_DENY,
-						"approve":     sharedv1.Effect_EFFECT_DENY,
-						"create":      sharedv1.Effect_EFFECT_DENY,
-					},
-				},
-				"XX250": {
-					Actions: map[string]sharedv1.Effect{
-						"view:public": sharedv1.Effect_EFFECT_DENY,
-						"approve":     sharedv1.Effect_EFFECT_DENY,
-						"create":      sharedv1.Effect_EFFECT_DENY,
-					},
-				},
-				"YY100": {
-					Actions: map[string]sharedv1.Effect{
-						"view:public": sharedv1.Effect_EFFECT_DENY,
-						"approve":     sharedv1.Effect_EFFECT_DENY,
-						"create":      sharedv1.Effect_EFFECT_DENY,
-					},
-				},
-				"YY200": {
-					Actions: map[string]sharedv1.Effect{
-						"view:public": sharedv1.Effect_EFFECT_DENY,
-						"approve":     sharedv1.Effect_EFFECT_DENY,
-						"create":      sharedv1.Effect_EFFECT_DENY,
-					},
-				},
-			},
-		}
-
-		have, err := eng.CheckResourceBatch(context.Background(), req)
-		require.Error(t, err)
-		require.ErrorIs(t, err, ErrNoPoliciesMatched)
-		require.Empty(t, cmp.Diff(want, have, protocmp.Transform()))
-	})
+	return tc
 }
 
-func BenchmarkCheck(b *testing.B) {
+func BenchmarkCheckResourceBatch(b *testing.B) {
 	eng, cancelFunc := mkEngine(b)
 	defer cancelFunc()
 
-	b.Run("only_resource_policy", func(b *testing.B) {
-		request := test.MkCheckRequest()
+	testCases := test.LoadTestCases(b, "engine")
 
-		b.ResetTimer()
-		b.ReportAllocs()
-		for i := 0; i < b.N; i++ {
-			result, err := eng.Check(context.Background(), request)
-			if err != nil {
-				b.Errorf("ERROR: %v", err)
+	for _, tcase := range testCases {
+		tcase := tcase
+		b.Run(tcase.Name, func(b *testing.B) {
+			tc := readTestCase(b, tcase.Input)
+
+			b.ResetTimer()
+			b.ReportAllocs()
+
+			for i := 0; i < b.N; i++ {
+				have, err := eng.CheckResourceBatch(context.Background(), tc.Input)
+				if tc.WantError {
+					if err == nil {
+						b.Errorf("Expected error but got none")
+					}
+				}
+
+				if tc.WantResponse != nil {
+					dummy += len(have.RequestId)
+				}
 			}
-
-			if result.Effect != sharedv1.Effect_EFFECT_ALLOW {
-				b.Errorf("Unexpected result: %v", result.Effect)
-			}
-		}
-	})
-
-	b.Run("only_principal_policy", func(b *testing.B) {
-		request := test.MkCheckRequest()
-		request.Action = "approve"
-		request.Principal.Id = "donald_duck"
-		request.Resource.Attr["dev_record"] = structpb.NewBoolValue(true)
-
-		b.ResetTimer()
-		b.ReportAllocs()
-		for i := 0; i < b.N; i++ {
-			result, err := eng.Check(context.Background(), request)
-			if err != nil {
-				b.Errorf("ERROR: %v", err)
-			}
-
-			if result.Effect != sharedv1.Effect_EFFECT_ALLOW {
-				b.Errorf("Unexpected result: %v", result.Effect)
-			}
-		}
-	})
-
-	b.Run("fallback_to_resource_policy", func(b *testing.B) {
-		request := test.MkCheckRequest()
-		request.Action = "view:public"
-		request.Principal.Id = "donald_duck"
-
-		b.ResetTimer()
-		b.ReportAllocs()
-		for i := 0; i < b.N; i++ {
-			result, err := eng.Check(context.Background(), request)
-			if err != nil {
-				b.Errorf("ERROR: %v", err)
-			}
-
-			if result.Effect != sharedv1.Effect_EFFECT_ALLOW {
-				b.Errorf("Unexpected result: %v", result.Effect)
-			}
-		}
-	})
-
-	b.Run("no_match", func(b *testing.B) {
-		request := test.MkCheckRequest()
-		request.Resource.Name = "unknown"
-
-		b.ResetTimer()
-		b.ReportAllocs()
-		for i := 0; i < b.N; i++ {
-			result, err := eng.Check(context.Background(), request)
-			if !errors.Is(err, ErrNoPoliciesMatched) {
-				b.Errorf("ERROR: %v", err)
-			}
-
-			if result.Effect != sharedv1.Effect_EFFECT_DENY {
-				b.Errorf("Unexpected result: %v", result.Effect)
-			}
-		}
-	})
-}
-
-func BenchmarkSingleRequest(b *testing.B) {
-	eng, cancelFunc := mkEngine(b)
-	defer cancelFunc()
-
-	b.Run("check", func(b *testing.B) {
-		request := test.MkCheckRequest()
-		request.Action = "view:public"
-		request.Principal.Id = "donald_duck"
-
-		b.ResetTimer()
-		b.ReportAllocs()
-		for i := 0; i < b.N; i++ {
-			result, err := eng.Check(context.Background(), request)
-			if err != nil {
-				b.Errorf("ERROR: %v", err)
-			}
-
-			if result.Effect != sharedv1.Effect_EFFECT_ALLOW {
-				b.Errorf("Unexpected result: %v", result.Effect)
-			}
-		}
-	})
-
-	b.Run("checkResourceBatch", func(b *testing.B) {
-		request := test.MkCheckResourceBatchRequest()
-		request.Actions = []string{"view:public"}
-		request.Principal.Id = "donald_duck"
-		request.Resource.Instances = map[string]*requestv1.Attributes{
-			"XX125": {
-				Attr: map[string]*structpb.Value{
-					"id":         structpb.NewStringValue("XX125"),
-					"owner":      structpb.NewStringValue("john"),
-					"geography":  structpb.NewStringValue("GB"),
-					"department": structpb.NewStringValue("marketing"),
-					"team":       structpb.NewStringValue("design"),
-				},
-			},
-		}
-
-		b.ResetTimer()
-		b.ReportAllocs()
-		for i := 0; i < b.N; i++ {
-			result, err := eng.CheckResourceBatch(context.Background(), request)
-			if err != nil {
-				b.Errorf("ERROR: %v", err)
-			}
-
-			effect := result.ResourceInstances["XX125"].Actions["view:public"]
-			if effect != sharedv1.Effect_EFFECT_ALLOW {
-				b.Errorf("Unexpected result: %v", effect)
-			}
-		}
-	})
+		})
+	}
 }
 
 func mkEngine(tb testing.TB) (*Engine, context.CancelFunc) {

@@ -13,17 +13,13 @@ import (
 	sharedv1 "github.com/cerbos/cerbos/internal/genpb/shared/v1"
 )
 
-const defaultEffect = sharedv1.Effect_EFFECT_DENY
-
-var defaultEvalResult = EvalResult{Effect: defaultEffect}
-
 type EvalResult struct {
-	Effect                sharedv1.Effect
+	Effects               map[string]sharedv1.Effect
 	EffectiveDerivedRoles []string
 }
 
 type Evaluator interface {
-	EvalQuery(ctx context.Context, queryCache cache.InterQueryCache, query string, input ast.Value) (EvalResult, error)
+	EvalQuery(ctx context.Context, queryCache cache.InterQueryCache, query string, input ast.Value) (*EvalResult, error)
 }
 
 type evaluator struct {
@@ -71,7 +67,7 @@ func makeCELEvalImpl(conditionIdx ConditionIndex) rego.Builtin3 {
 	}
 }
 
-func (e *evaluator) EvalQuery(ctx context.Context, queryCache cache.InterQueryCache, query string, input ast.Value) (EvalResult, error) {
+func (e *evaluator) EvalQuery(ctx context.Context, queryCache cache.InterQueryCache, query string, input ast.Value) (*EvalResult, error) {
 	r := rego.New(
 		rego.InterQueryBuiltinCache(queryCache),
 		rego.Function3(codegen.CELEvalFunc, e.celEvalImpl),
@@ -81,49 +77,69 @@ func (e *evaluator) EvalQuery(ctx context.Context, queryCache cache.InterQueryCa
 
 	rs, err := r.Eval(ctx)
 	if err != nil {
-		return defaultEvalResult, fmt.Errorf("query evaluation failed: %w", err)
+		return nil, fmt.Errorf("query evaluation failed: %w", err)
 	}
 
 	return processResultSet(rs)
 }
 
-func processResultSet(rs rego.ResultSet) (EvalResult, error) {
+func processResultSet(rs rego.ResultSet) (*EvalResult, error) {
 	if len(rs) == 0 || len(rs) > 1 || len(rs[0].Expressions) == 0 {
-		return defaultEvalResult, ErrUnexpectedResult
+		return nil, ErrUnexpectedResult
 	}
 
 	res, ok := rs[0].Expressions[0].Value.(map[string]interface{})
 	if !ok {
-		return defaultEvalResult, fmt.Errorf("expected map but got %T: %w", rs[0].Expressions[0].Value, ErrUnexpectedResult)
+		return nil, fmt.Errorf("expected map but got %T: %w", rs[0].Expressions[0].Value, ErrUnexpectedResult)
 	}
 
 	if len(res) == 0 {
-		return defaultEvalResult, fmt.Errorf("empty result: %w", ErrUnexpectedResult)
+		return nil, fmt.Errorf("empty result: %w", ErrUnexpectedResult)
 	}
 
-	effect, err := extractEffect(res)
+	effects, err := extractEffects(res)
 	if err != nil {
-		return defaultEvalResult, err
+		return nil, err
 	}
 
-	evalResult := EvalResult{Effect: effect}
+	evalResult := &EvalResult{Effects: effects}
 	evalResult.EffectiveDerivedRoles, err = extractEffectiveDerivedRoles(res)
 
 	return evalResult, err
 }
 
-func extractEffect(res map[string]interface{}) (sharedv1.Effect, error) {
-	effectVal, ok := res[codegen.EffectIdent]
+func extractEffects(res map[string]interface{}) (map[string]sharedv1.Effect, error) {
+	effectsVal, ok := res[codegen.EffectsIdent]
 	if !ok {
-		return defaultEffect, fmt.Errorf("no effect in result: %w", ErrUnexpectedResult)
+		return nil, fmt.Errorf("no effect in result: %w", ErrUnexpectedResult)
 	}
 
-	effect, ok := effectVal.(string)
+	effects, ok := effectsVal.(map[string]interface{})
 	if !ok {
-		return defaultEffect, fmt.Errorf("unexpected type for effect %T: %w", effectVal, ErrUnexpectedResult)
+		return nil, fmt.Errorf("unexpected type for effects [%T]: %w", effectsVal, ErrUnexpectedResult)
 	}
 
-	switch effect {
+	result := make(map[string]sharedv1.Effect, len(effects))
+
+	for k, v := range effects {
+		eff, err := toEffect(v)
+		if err != nil {
+			return nil, err
+		}
+
+		result[k] = eff
+	}
+
+	return result, nil
+}
+
+func toEffect(v interface{}) (sharedv1.Effect, error) {
+	effectVal, ok := v.(string)
+	if !ok {
+		return sharedv1.Effect_EFFECT_DENY, fmt.Errorf("unexpected type for effect [%T]: %w", v, ErrUnexpectedResult)
+	}
+
+	switch effectVal {
 	case codegen.AllowEffectIdent:
 		return sharedv1.Effect_EFFECT_ALLOW, nil
 	case codegen.DenyEffectIdent:
@@ -131,7 +147,7 @@ func extractEffect(res map[string]interface{}) (sharedv1.Effect, error) {
 	case codegen.NoMatchEffectIdent:
 		return sharedv1.Effect_EFFECT_NO_MATCH, nil
 	default:
-		return sharedv1.Effect_EFFECT_DENY, nil
+		return sharedv1.Effect_EFFECT_DENY, fmt.Errorf("unknown effect value [%s]: %w", effectVal, ErrUnexpectedResult)
 	}
 }
 

@@ -207,15 +207,20 @@ docker run -it -v $(pwd):/photo-share -p 3592:3592 {app-docker-img} \
 cat <<EOF | curl --silent "localhost:3592/api/check" -d @-
 {
   "requestId":  "test01",
-  "action":  "view",
+  "includeMeta": true,
+  "actions":  ["view"],
   "resource":  {
     "policyVersion": "default",
     "name":  "album:object",
-    "attr":  {
-      "owner":  "alicia",
-      "id":  "XX125",
-      "public": false,
-      "flagged": false
+    "instances": {
+      "XX125": {
+        "attr":  {
+          "owner":  "alicia",
+          "id":  "XX125",
+          "public": false,
+          "flagged": false
+        }
+      }
     }
   },
   "principal":  {
@@ -228,7 +233,32 @@ EOF
 ----
 
 ----
-{"requestId":"test01","statusCode":200,"statusMessage":"Allow","effect":"EFFECT_ALLOW"}
+{
+  "requestId": "test01",
+  "resourceInstances": {
+    "XX125": {
+      "actions": {
+        "view": "EFFECT_ALLOW"
+      }
+    }
+  },
+  "meta": {
+    "resourceInstances": {
+      "XX125": {
+        "actions": {
+          "view": {
+            "matchedPolicy": "album:object:default",
+            "error": ""
+          }
+        },
+        "effectiveDerivedRoles": [
+          "owner"
+        ]
+      }
+    },
+    "evaluationDuration": "0.000639087s"
+  }
+}
 ----
 
 It's not practical to start the server and manually make requests every time a policy is updated. So let's write some tests instead.
@@ -252,10 +282,8 @@ docker run -it -v $(pwd):/photo-share {app-docker-img} \
 
 ----
 Test results
-= AlbumObjectTestSuite (album_object_tests.yaml)
-== View own private album [OK]
-== View someone else's private album [OK]
-== View someone else's public album [OK]
-== Moderator trying to delete an unflagged album [OK]
-== Moderator trying to delete a flagged album [OK]
+= AlbumObjectTestSuite (album_object_tests.yaml) 
+== Alicia tries to view her own private album [OK]
+== Bradley tries to view Alicia's private and public albums [OK]
+== Moderator tries to delete a flagged album and an unflagged album [OK]
 ----

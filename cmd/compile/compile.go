@@ -191,12 +191,7 @@ func displayVerificationResult(cmd *cobra.Command, result *verify.Result) error 
 
 			if tr.Failed {
 				cmd.Println(failedTest("[FAILED]"))
-				if tr.Error != "" {
-					cmd.Printf("\tError: %s\n", tr.Error)
-					continue
-				}
-
-				cmd.Printf("\tExpected=%s Actual=%s\n", tr.Expected, tr.Actual)
+				cmd.Printf("\tError: %s\n", tr.Error)
 				continue
 			}
 

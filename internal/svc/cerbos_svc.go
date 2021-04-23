@@ -3,7 +3,6 @@ package svc
 import (
 	"context"
 	"errors"
-	"net/http"
 
 	"github.com/grpc-ecosystem/go-grpc-middleware/logging/zap/ctxzap"
 	"go.uber.org/zap"
@@ -13,7 +12,6 @@ import (
 	"github.com/cerbos/cerbos/internal/engine"
 	requestv1 "github.com/cerbos/cerbos/internal/genpb/request/v1"
 	responsev1 "github.com/cerbos/cerbos/internal/genpb/response/v1"
-	sharedv1 "github.com/cerbos/cerbos/internal/genpb/shared/v1"
 	svcv1 "github.com/cerbos/cerbos/internal/genpb/svc/v1"
 	"github.com/cerbos/cerbos/internal/observability/logging"
 )
@@ -35,41 +33,8 @@ func NewCerbosService(eng *engine.Engine) *CerbosService {
 	}
 }
 
-func (cs *CerbosService) Check(ctx context.Context, req *requestv1.CheckRequest) (*responsev1.CheckResponse, error) {
-	log := ctxzap.Extract(ctx)
-
-	result, err := cs.eng.Check(logging.ToContext(ctx, log), req)
-	if err != nil {
-		if errors.Is(err, engine.ErrNoPoliciesMatched) {
-			log.Info("No policies matched")
-			return newCheckResponse(req.RequestId, http.StatusUnauthorized, "No policies matched", result), nil
-		}
-
-		log.Error("Policy check failed", zap.Error(err))
-		return nil, status.Errorf(codes.Internal, "Policy execution failed")
-	}
-
-	switch result.Effect {
-	case sharedv1.Effect_EFFECT_ALLOW:
-		return newCheckResponse(req.RequestId, http.StatusOK, "Allow", result), nil
-	default:
-		return newCheckResponse(req.RequestId, http.StatusUnauthorized, "Deny", result), nil
-	}
-}
-
-func newCheckResponse(requestID string, code int, msg string, result *engine.CheckResult) *responsev1.CheckResponse {
-	return &responsev1.CheckResponse{
-		RequestId:     requestID,
-		StatusCode:    uint32(code),
-		StatusMessage: msg,
-		Effect:        result.Effect,
-		Meta:          result.Meta,
-	}
-}
-
 func (cs *CerbosService) CheckResourceBatch(ctx context.Context, req *requestv1.CheckResourceBatchRequest) (*responsev1.CheckResourceBatchResponse, error) {
 	log := ctxzap.Extract(ctx)
-	log.Debug("Processing resource batch", zap.Int("resource_count", len(req.Resource.Instances)))
 
 	result, err := cs.eng.CheckResourceBatch(logging.ToContext(ctx, log), req)
 	if err != nil {

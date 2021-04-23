@@ -15,16 +15,19 @@ import (
 
 const (
 	AllowEffectIdent           = "allow"
-	CELEvalIdent               = `cel_eval`
+	CELEvalIdent               = `cerbos_cel_eval`
 	DenyEffectIdent            = "deny"
-	EffectIdent                = "effect"
-	EffectiveDerivedRolesIdent = "effective_derived_roles"
+	EffectsIdent               = "cerbos_effects"
+	EffectiveDerivedRolesIdent = "cerbos_effective_derived_roles"
 	NoMatchEffectIdent         = "no_match"
 
-	allowVal        = `"` + AllowEffectIdent + `"`
-	denyVal         = `"` + DenyEffectIdent + `"`
-	derivedRolesMap = "derived_roles"
-	noMatchVal      = `"` + NoMatchEffectIdent + `"`
+	actionVar         = `cerbos_action`
+	allowVal          = `"` + AllowEffectIdent + `"`
+	denyVal           = `"` + DenyEffectIdent + `"`
+	derivedRolesMap   = "cerbos_derived_roles"
+	effectForIdent    = `cerbos_effect_for`
+	effectStringIdent = `cerbos_effect_string`
+	noMatchVal        = `"` + NoMatchEffectIdent + `"`
 )
 
 var ErrCodeGenFailure = errors.New("code generation error")
@@ -115,18 +118,18 @@ func (rg *RegoGen) addParentRolesCheck(roleList []string) error {
 	}
 
 	rs := strings.Join(roleList, `", "`)
-	rg.line(`parent_roles := { "`, rs, `" }`)
-	rg.line(`input.principal.roles[_] == parent_roles[_]`)
+	rg.line(`cerbos_parent_roles := { "`, rs, `" }`)
+	rg.line(`input.principal.roles[_] == cerbos_parent_roles[_]`)
 
 	return nil
 }
 
 func (rg *RegoGen) DefaultEffectDeny() {
-	rg.line("default ", EffectIdent, " = ", denyVal)
+	rg.line("default ", EffectsIdent, " = ", denyVal)
 }
 
 func (rg *RegoGen) DefaultEffectNoMatch() {
-	rg.line("default ", EffectIdent, " = ", noMatchVal)
+	rg.line("default ", EffectsIdent, " = ", noMatchVal)
 }
 
 func (rg *RegoGen) EffectiveDerivedRoles() {
@@ -172,10 +175,10 @@ func (rg *RegoGen) addDerivedRolesCheck(derivedRoles []string) {
 	}
 
 	if len(derivedRoles) > 1 {
-		rg.line(`allowed_roles := {"`, strings.Join(derivedRoles, `", "`), `"}`)
-		rg.line(`some dr`)
-		rg.line(derivedRolesMap, `[dr] == true`)
-		rg.line(`allowed_roles[_] == dr`)
+		rg.line(`cerbos_allowed_roles := {"`, strings.Join(derivedRoles, `", "`), `"}`)
+		rg.line(`some cerbos_dr`)
+		rg.line(derivedRolesMap, `[cerbos_dr] == true`)
+		rg.line(`cerbos_allowed_roles[_] == cerbos_dr`)
 	} else {
 		rg.line(derivedRolesMap, `["`, derivedRoles[0], `"] == true`)
 	}
@@ -187,8 +190,8 @@ func (rg *RegoGen) addRolesCheck(roles []string) {
 	}
 
 	if len(roles) > 1 {
-		rg.line(`allowed_roles := {"`, strings.Join(roles, `", "`), `"}`)
-		rg.line(`allowed_roles[_] == input.principal.roles[_]`)
+		rg.line(`cerbos_allowed_roles := {"`, strings.Join(roles, `", "`), `"}`)
+		rg.line(`cerbos_allowed_roles[_] == input.principal.roles[_]`)
 
 		return
 	}
@@ -221,7 +224,7 @@ func (rg *RegoGen) addEffectRuleHead(effect sharedv1.Effect) {
 		effectVal = denyVal
 	}
 
-	rg.line(EffectIdent, " = ", effectVal, "{")
+	rg.line(effectForIdent, "(", actionVar, ") = ", effectVal, "{")
 }
 
 func (rg *RegoGen) addResourceMatch(resource string) {
@@ -247,16 +250,16 @@ func (rg *RegoGen) addActionsListMatch(actions []string) {
 	}
 
 	actionsArr := strings.Join(actions, `", "`)
-	rg.line(`actions_list := ["`, actionsArr, `"]`)
-	rg.line(`action_matches := [a | a := glob.match(actions_list[_], [":"], input.action)]`)
-	rg.line(`action_matches[_] == true`)
+	rg.line(`cerbos_actions_list := ["`, actionsArr, `"]`)
+	rg.line(`cerbos_action_matches := [a | a := glob.match(cerbos_actions_list[_], [":"], `, actionVar, `)]`)
+	rg.line(`cerbos_action_matches[_] == true`)
 }
 
 func (rg *RegoGen) addActionMatch(action string) {
 	if action == "*" {
-		rg.line(`glob.match("*", [], input.action)`)
+		rg.line(`glob.match("*", [],`, actionVar, `)`)
 	} else {
-		rg.line(`glob.match("`, action, `", [":"], input.action)`)
+		rg.line(`glob.match("`, action, `", [":"], `, actionVar, `)`)
 	}
 }
 
@@ -301,4 +304,19 @@ func (rg *RegoGen) addMatch(parent string, m *policyv1.Match) error {
 	rg.line(CELEvalIdent, `(input, "`, rg.packageName, `", "`, conditionKey, `")`)
 
 	return nil
+}
+
+func (rg *RegoGen) EffectsComprehension(defaultEffect string) {
+	rg.addEffectStringFunc(defaultEffect)
+	rg.line(EffectsIdent, `:= {`, actionVar, `: effect |`)
+	rg.line(actionVar, `:= input.actions[_]`)
+	rg.line(`effect := `, effectStringIdent, `(`, actionVar, `)`)
+	rg.line(`}`)
+}
+
+func (rg *RegoGen) addEffectStringFunc(defaultEffect string) {
+	rg.line(effectStringIdent, `(`, actionVar, `) = cerbos_effect {`)
+	rg.line(`cerbos_effect := `, effectForIdent, `(`, actionVar, `)`)
+	rg.line(`} else = `, defaultEffect)
+	rg.line()
 }

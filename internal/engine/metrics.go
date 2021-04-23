@@ -39,6 +39,8 @@ func measureUpdateLatency(updateType string, updateOp func() error) error {
 	return err
 }
 
+/*
+
 func measureCheckLatency(checkFn func() (*CheckResult, error)) (*CheckResult, error) {
 	startTime := time.Now()
 	result, err := checkFn()
@@ -68,11 +70,16 @@ func measureCheckLatency(checkFn func() (*CheckResult, error)) (*CheckResult, er
 
 	return result, err
 }
+*/
 
-func measureCheckResourceBatchLatency(checkFn func() (*responsev1.CheckResourceBatchResponse, error)) (*responsev1.CheckResourceBatchResponse, error) {
+func measureCheckResourceBatchLatency(checkFn func() (*CheckResponseWrapper, error)) (*responsev1.CheckResourceBatchResponse, error) {
 	startTime := time.Now()
 	resp, err := checkFn()
-	latencyMs := float64(time.Since(startTime)) / float64(time.Millisecond)
+	evalDuration := time.Since(startTime)
+
+	resp.setEvaluationDuration(evalDuration)
+
+	latencyMs := float64(evalDuration) / float64(time.Millisecond)
 
 	status := statusSuccess
 	if err != nil {
@@ -90,5 +97,5 @@ func measureCheckResourceBatchLatency(checkFn func() (*responsev1.CheckResourceB
 		metrics.EngineCheckResourceBatchLatency.M(latencyMs),
 	)
 
-	return resp, err
+	return resp.CheckResourceBatchResponse, err
 }

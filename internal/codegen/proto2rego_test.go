@@ -114,7 +114,7 @@ func mkProto(tb testing.TB) proto.Message {
 
 	return &requestv1.CheckRequest{
 		RequestId: "test",
-		Action:    "view:public",
+		Actions:   []string{"view:public"},
 		Resource: &requestv1.Resource{
 			Name:          "leave_request",
 			PolicyVersion: "20210210",

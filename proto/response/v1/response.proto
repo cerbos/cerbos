@@ -22,10 +22,27 @@ message CheckResponseMeta {
 }
 
 message CheckResourceBatchResponse {
+    message ActionEffectMap {
+        map<string,shared.v1.Effect> actions = 1;
+    }
+
+    message Meta {
+        message EffectMeta {
+            string matched_policy = 1;
+            string error = 2;
+        }
+            
+        message ActionMeta {
+            map<string, EffectMeta> actions = 1;
+            repeated string effective_derived_roles = 2;
+        }
+
+        map<string,ActionMeta> resource_instances = 1;
+        google.protobuf.Duration evaluation_duration = 2;
+    }
+
     string request_id = 1;
-    map<string,ActionEffectList> resource_instances = 2;
+    map<string,ActionEffectMap> resource_instances = 2;
+    Meta meta = 3;
 }
 
-message ActionEffectList {
-    map<string,shared.v1.Effect> actions = 1;
-}
