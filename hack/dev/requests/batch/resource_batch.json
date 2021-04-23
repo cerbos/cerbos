@@ -1,5 +1,6 @@
 {
   "requestId":  "test",
+  "includeMeta": true,
   "actions":  [
     "view:public",
     "approve",

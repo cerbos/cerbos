@@ -11,6 +11,7 @@ import (
 	"github.com/open-policy-agent/opa/topdown/cache"
 	"go.opencensus.io/trace"
 	"go.uber.org/zap"
+	"golang.org/x/sync/errgroup"
 	"google.golang.org/protobuf/encoding/protojson"
 
 	"github.com/cerbos/cerbos/internal/compile"
@@ -27,9 +28,11 @@ import (
 var ErrNoPoliciesMatched = errors.New("no matching policies")
 
 const (
-	defaultEffect                = sharedv1.Effect_EFFECT_DENY
-	loggerName                   = "engine"
-	maxQueryCacheSizeBytes int64 = 10 * 1024 * 1024 // 10 MiB
+	batchParallelismThreshold       = 5
+	defaultEffect                   = sharedv1.Effect_EFFECT_DENY
+	loggerName                      = "engine"
+	maxGoRoutinesPerRequest         = 16
+	maxQueryCacheSizeBytes    int64 = 10 * 1024 * 1024 // 10 MiB
 )
 
 type Engine struct {
@@ -157,7 +160,6 @@ func (engine *Engine) CheckResourceBatch(ctx context.Context, req *requestv1.Che
 }
 
 func (engine *Engine) doCheckResourceBatch(ctx context.Context, req *requestv1.CheckResourceBatchRequest) (*CheckResponseWrapper, error) {
-	logger := logging.FromContext(ctx).Named(loggerName)
 	ctx, span := tracing.StartSpan(ctx, "engine.CheckResourceBatch")
 	defer span.End()
 
@@ -169,72 +171,20 @@ func (engine *Engine) doCheckResourceBatch(ctx context.Context, req *requestv1.C
 	evalCtx.addCheck(engine.getResourcePolicyCheck(req.Resource.Name, req.Resource.PolicyVersion))
 	engine.mu.RUnlock()
 
-	resp := newCheckResponseWrapper(req)
-
-	checkReq := &requestv1.CheckRequest{
-		RequestId: req.RequestId,
-		Principal: req.Principal,
-		Resource: &requestv1.Resource{
-			Name:          req.Resource.Name,
-			PolicyVersion: req.Resource.PolicyVersion,
-		},
-	}
-
-	// TODO (cell) Parallelize if the batch size is large
-	for resourceKey, resourceAttr := range req.Resource.Instances {
-		ctx, span := tracing.StartSpan(ctx, fmt.Sprintf("engine.BatchCheck/%s", resourceKey))
-
-		if evalCtx.numChecks == 0 {
-			resp.addDefaultEffect(resourceKey, req.Actions, "No policy match")
-			continue
-		}
-
-		log := logger.With(zap.String("resource_key", resourceKey))
-
-		checkReq.Resource.Attr = resourceAttr.Attr
-		checkReq.Actions = req.Actions
-
-		input, err := toAST(checkReq)
-		if err != nil {
-			log.Error("Failed to build context", zap.Error(err))
-			tracing.MarkFailed(span, trace.StatusCodeInvalidArgument, "Failed to build context", err)
-
-			return nil, err
-		}
-
-		result, err := evalCtx.evaluate(logging.ToContext(ctx, log), input)
-		if err != nil {
-			log.Error("Failed to evaluate policies", zap.Error(err))
-
-			return nil, err
-		}
-
-		resp.addEvalResult(resourceKey, result)
-
-		span.End()
-	}
-
+	// if there are no policies, we can short-circuit the check
 	if evalCtx.numChecks == 0 {
+		resp := newCheckResponseWrapper(req)
+
+		for resourceKey := range req.Resource.Instances {
+			resp.addDefaultEffect(resourceKey, req.Actions, "No policy match")
+		}
+
 		tracing.MarkFailed(span, trace.StatusCodeNotFound, "No matching policies", ErrNoPoliciesMatched)
 		return resp, ErrNoPoliciesMatched
 	}
 
-	return resp, nil
-}
-
-func toAST(req *requestv1.CheckRequest) (ast.Value, error) {
-	// TODO (cell) Replace with codegen.MarshalProtoToRego when it's optimized
-	requestJSON, err := protojson.Marshal(req)
-	if err != nil {
-		return nil, fmt.Errorf("failed to marshal request: %w", err)
-	}
-
-	input, err := ast.ValueFromReader(bytes.NewReader(requestJSON))
-	if err != nil {
-		return nil, fmt.Errorf("failed to convert request: %w", err)
-	}
-
-	return input, nil
+	batchExec := newBatchExecutor(req, evalCtx, logging.FromContext(ctx).Named(loggerName))
+	return batchExec.execute(ctx)
 }
 
 type evaluationCtx struct {
@@ -335,4 +285,141 @@ func (c *check) execute(ctx context.Context, queryCache cache.InterQueryCache, i
 	}()
 
 	return c.eval.EvalQuery(ctx, queryCache, c.query, input)
+}
+
+type batchWorkUnit struct {
+	resourceKey  string
+	resourceAttr *requestv1.Attributes
+}
+
+type batchExecutor struct {
+	log     *zap.Logger
+	evalCtx *evaluationCtx
+	req     *requestv1.CheckResourceBatchRequest
+	mu      sync.Mutex
+	resp    *CheckResponseWrapper
+}
+
+func newBatchExecutor(req *requestv1.CheckResourceBatchRequest, evalCtx *evaluationCtx, log *zap.Logger) *batchExecutor {
+	return &batchExecutor{
+		log:     log,
+		evalCtx: evalCtx,
+		req:     req,
+		resp:    newCheckResponseWrapper(req),
+	}
+}
+
+func (be *batchExecutor) execute(ctx context.Context) (*CheckResponseWrapper, error) {
+	if len(be.req.Resource.Instances) >= batchParallelismThreshold {
+		return be.executeParallel(ctx)
+	}
+
+	for resourceKey, resourceAttr := range be.req.Resource.Instances {
+		result, err := be.checkResourceInstance(ctx, resourceKey, resourceAttr)
+		if err != nil {
+			return nil, err
+		}
+
+		be.resp.addEvalResult(resourceKey, result)
+	}
+
+	return be.resp, nil
+}
+
+func (be *batchExecutor) executeParallel(ctx context.Context) (*CheckResponseWrapper, error) {
+	numGoRoutines := len(be.req.Resource.Instances)
+	if numGoRoutines > maxGoRoutinesPerRequest {
+		numGoRoutines = maxGoRoutinesPerRequest
+	}
+
+	inputChan := make(chan batchWorkUnit, numGoRoutines)
+
+	group, ctx := errgroup.WithContext(ctx)
+	for i := 0; i < numGoRoutines; i++ {
+		group.Go(be.doWork(ctx, inputChan))
+	}
+
+	group.Go(func() error {
+		defer close(inputChan)
+		for resourceKey, resourceAttr := range be.req.Resource.Instances {
+			if err := ctx.Err(); err != nil {
+				return err
+			}
+
+			inputChan <- batchWorkUnit{resourceKey: resourceKey, resourceAttr: resourceAttr}
+		}
+
+		return nil
+	})
+
+	if err := group.Wait(); err != nil {
+		return nil, err
+	}
+
+	return be.resp, nil
+}
+
+func (be *batchExecutor) doWork(ctx context.Context, inputChan <-chan batchWorkUnit) func() error {
+	return func() error {
+		for work := range inputChan {
+			result, err := be.checkResourceInstance(ctx, work.resourceKey, work.resourceAttr)
+			if err != nil {
+				return fmt.Errorf("failed to process resource [%s]: %w", work.resourceKey, err)
+			}
+
+			be.mu.Lock()
+			be.resp.addEvalResult(work.resourceKey, result)
+			be.mu.Unlock()
+		}
+
+		return nil
+	}
+}
+
+func (be *batchExecutor) checkResourceInstance(ctx context.Context, resourceKey string, resourceAttr *requestv1.Attributes) (*evaluationResult, error) {
+	ctx, span := tracing.StartSpan(ctx, fmt.Sprintf("engine.BatchCheck/%s", resourceKey))
+	defer span.End()
+
+	checkReq := &requestv1.CheckRequest{
+		RequestId: be.req.RequestId,
+		Principal: be.req.Principal,
+		Actions:   be.req.Actions,
+		Resource: &requestv1.Resource{
+			Name:          be.req.Resource.Name,
+			PolicyVersion: be.req.Resource.PolicyVersion,
+			Attr:          resourceAttr.Attr,
+		},
+	}
+
+	input, err := toAST(checkReq)
+	if err != nil {
+		be.log.Error("Failed to build context", zap.Error(err))
+		tracing.MarkFailed(span, trace.StatusCodeInvalidArgument, "Failed to build context", err)
+
+		return nil, fmt.Errorf("failed to build context: %w", err)
+	}
+
+	result, err := be.evalCtx.evaluate(logging.ToContext(ctx, be.log), input)
+	if err != nil {
+		be.log.Error("Failed to evaluate policies", zap.Error(err))
+
+		return nil, fmt.Errorf("failed to evaluate policies: %w", err)
+	}
+
+	return result, nil
+}
+
+func toAST(req *requestv1.CheckRequest) (ast.Value, error) {
+	// TODO (cell) Replace with codegen.MarshalProtoToRego when it's optimized
+	requestJSON, err := protojson.Marshal(req)
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal request: %w", err)
+	}
+
+	input, err := ast.ValueFromReader(bytes.NewReader(requestJSON))
+	if err != nil {
+		return nil, fmt.Errorf("failed to convert request: %w", err)
+	}
+
+	return input, nil
 }
