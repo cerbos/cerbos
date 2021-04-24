@@ -3,6 +3,7 @@ version: v1beta1
 name: buf.build/cerbos/apis
 deps:
   - "buf.build/beta/googleapis"
+  - "buf.build/grpc-ecosystem/grpc-gateway"
 build:
   roots:
     - _vendor

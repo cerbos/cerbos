@@ -1,0 +1,292 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "Cerbos API",
+    "version": "0.0.0-alpha6",
+    "contact": {
+      "name": "Cerbos authors",
+      "url": "https://cerbos.dev",
+      "email": "info@cerbos.dev"
+    },
+    "license": {
+      "name": "Apache License 2.0",
+      "url": "https://spdx.org/licenses/Apache-2.0.html"
+    }
+  },
+  "tags": [
+    {
+      "name": "CerbosService"
+    }
+  ],
+  "schemes": [
+    "http",
+    "https"
+  ],
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "paths": {
+    "/api/check": {
+      "post": {
+        "operationId": "CerbosService_CheckResourceBatch",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1CheckResourceBatchResponse"
+            }
+          },
+          "404": {
+            "description": "Returned when the resource does not exist.",
+            "schema": {
+              "type": "string",
+              "format": "string"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/v1CheckResourceBatchRequest"
+            }
+          }
+        ],
+        "tags": [
+          "CerbosService"
+        ]
+      }
+    }
+  },
+  "definitions": {
+    "CheckResourceBatchResponseActionEffectMap": {
+      "type": "object",
+      "properties": {
+        "actions": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/v1Effect"
+          }
+        }
+      }
+    },
+    "CheckResourceBatchResponseMeta": {
+      "type": "object",
+      "properties": {
+        "resourceInstances": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/MetaActionMeta"
+          }
+        },
+        "evaluationDuration": {
+          "type": "string"
+        }
+      }
+    },
+    "MetaActionMeta": {
+      "type": "object",
+      "properties": {
+        "actions": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/MetaEffectMeta"
+          }
+        },
+        "effectiveDerivedRoles": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "MetaEffectMeta": {
+      "type": "object",
+      "properties": {
+        "matchedPolicy": {
+          "type": "string"
+        },
+        "error": {
+          "type": "string"
+        }
+      }
+    },
+    "protobufAny": {
+      "type": "object",
+      "properties": {
+        "typeUrl": {
+          "type": "string"
+        },
+        "value": {
+          "type": "string",
+          "format": "byte"
+        }
+      }
+    },
+    "protobufNullValue": {
+      "type": "string",
+      "enum": [
+        "NULL_VALUE"
+      ],
+      "default": "NULL_VALUE",
+      "description": "`NullValue` is a singleton enumeration to represent the null value for the\n`Value` type union.\n\n The JSON representation for `NullValue` is JSON `null`.\n\n - NULL_VALUE: Null value."
+    },
+    "rpcStatus": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "message": {
+          "type": "string"
+        },
+        "details": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/protobufAny"
+          }
+        }
+      }
+    },
+    "v1Attributes": {
+      "type": "object",
+      "properties": {
+        "attr": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "object"
+          }
+        }
+      }
+    },
+    "v1CheckResourceBatchRequest": {
+      "type": "object",
+      "properties": {
+        "requestId": {
+          "type": "string"
+        },
+        "actions": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "required": [
+            "actions"
+          ]
+        },
+        "principal": {
+          "$ref": "#/definitions/v1Principal"
+        },
+        "resource": {
+          "$ref": "#/definitions/v1ResourceBatch"
+        },
+        "includeMeta": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "actions"
+      ]
+    },
+    "v1CheckResourceBatchResponse": {
+      "type": "object",
+      "properties": {
+        "requestId": {
+          "type": "string"
+        },
+        "resourceInstances": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/CheckResourceBatchResponseActionEffectMap"
+          }
+        },
+        "meta": {
+          "$ref": "#/definitions/CheckResourceBatchResponseMeta"
+        }
+      }
+    },
+    "v1Effect": {
+      "type": "string",
+      "enum": [
+        "EFFECT_UNSPECIFIED",
+        "EFFECT_ALLOW",
+        "EFFECT_DENY",
+        "EFFECT_NO_MATCH"
+      ],
+      "default": "EFFECT_UNSPECIFIED"
+    },
+    "v1Principal": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "required": [
+            "id"
+          ]
+        },
+        "policyVersion": {
+          "type": "string"
+        },
+        "roles": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "required": [
+            "roles"
+          ]
+        },
+        "attr": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "object"
+          }
+        }
+      },
+      "required": [
+        "id",
+        "roles"
+      ]
+    },
+    "v1ResourceBatch": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "required": [
+            "name"
+          ]
+        },
+        "policyVersion": {
+          "type": "string"
+        },
+        "instances": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/v1Attributes"
+          },
+          "required": [
+            "instances"
+          ]
+        }
+      },
+      "required": [
+        "name",
+        "instances"
+      ]
+    }
+  }
+}

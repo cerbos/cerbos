@@ -7,3 +7,10 @@ deps:
     commit: 74aae54cbbd3455dbcae8b2e30524323
     digest: b1-qJtbNtMHuTWT6HLhdATE3G-oHWsoR3G6uOucPFI9hEM=
     create_time: 2021-04-06T11:46:20.69656Z
+  - remote: buf.build
+    owner: grpc-ecosystem
+    repository: grpc-gateway
+    branch: main
+    commit: 86ebc0cb352e4f99bc75ed89f3be5d86
+    digest: b1-AcUA_iQHn8x533qMlEWsfKgcY-T6NVPi3IR1_nLhvyA=
+    create_time: 2021-04-22T23:16:17.38885Z

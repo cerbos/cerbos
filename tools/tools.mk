@@ -20,6 +20,7 @@ VALIDATE_PROTO := $(VALIDATE_DIR)/validate.proto
 VALIDATE_VERSION := 0.4.1
 
 GEN_DIR := internal/genpb
+OPENAPI_DIR := schema/openapiv2
 MOCK_DIR := pkg/test/mocks
 
 define BUF_GEN_TEMPLATE
@@ -52,6 +53,11 @@ define BUF_GEN_TEMPLATE
       "opt": "paths=source_relative",\
       "out": "$(GEN_DIR)",\
       "path": "$(PROTOC_GEN_GRPC_GATEWAY)"\
+    },\
+    {\
+      "name": "openapiv2",\
+      "out": "$(OPENAPI_DIR)",\
+      "path": "$(PROTOC_GEN_OPENAPIV2)"\
     },\
   ]\
 }
@@ -90,9 +96,16 @@ $(PROTOC_GEN_GO_GRPC): $(TOOLS_BIN_DIR)
 $(PROTOC_GEN_GRPC_GATEWAY): $(TOOLS_BIN_DIR) 
 	@ GOBIN=$(TOOLS_BIN_DIR) go install github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-grpc-gateway
 
+$(PROTOC_GEN_OPENAPIV2): $(TOOLS_BIN_DIR) 
+	@ GOBIN=$(TOOLS_BIN_DIR) go install github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-openapiv2
+
 $(PROTOC_GEN_VALIDATE): $(TOOLS_BIN_DIR) 
 	@ GOBIN=$(TOOLS_BIN_DIR) go install github.com/envoyproxy/protoc-gen-validate
 
 $(VALIDATE_PROTO):
 	@ mkdir -p $(VALIDATE_DIR)
 	@ curl --silent -Lo $(VALIDATE_PROTO) https://raw.githubusercontent.com/envoyproxy/protoc-gen-validate/v$(VALIDATE_VERSION)/validate/validate.proto 
+
+swagger-editor:
+	@ docker run -it -p 8080:8080 -v $(shell pwd)/$(OPENAPI_DIR):/tmp -e SWAGGER_FILE=/tmp/svc/v1/svc.swagger.json swaggerapi/swagger-editor
+

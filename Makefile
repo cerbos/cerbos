@@ -11,6 +11,7 @@ clean:
 	@-rm -rf $(GEN_DIR)
 	@-rm -rf $(MOCK_DIR)
 	@-rm -rf $(DOCS_OUT_DIR)
+	@-rm -rf $(OPENAPI_DIR)
 
 .PHONY: clean-tools
 clean-tools:
@@ -21,7 +22,7 @@ lint: $(GOLANGCI_LINT)
 	@ $(GOLANGCI_LINT) run --config=.golangci.yaml 
 
 .PHONY: generate
-generate: clean $(BUF) $(PROTOC_GEN_GO) $(PROTOC_GEN_GO_GRPC) $(PROTOC_GEN_GRPC_GATEWAY) $(PROTOC_GEN_VALIDATE) $(VALIDATE_PROTO)
+generate: clean $(BUF) $(PROTOC_GEN_GO) $(PROTOC_GEN_GO_GRPC) $(PROTOC_GEN_GRPC_GATEWAY) $(PROTOC_GEN_OPENAPIV2) $(PROTOC_GEN_VALIDATE) $(VALIDATE_PROTO)
 	@ $(BUF) lint
 	@ # $(BUF) breaking --against '.git#branch=dev'
 	@ $(BUF) generate --template '$(BUF_GEN_TEMPLATE)' .
