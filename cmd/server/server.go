@@ -47,6 +47,7 @@ import (
 	"github.com/cerbos/cerbos/internal/observability/tracing"
 	"github.com/cerbos/cerbos/internal/storage"
 	"github.com/cerbos/cerbos/internal/svc"
+	"github.com/cerbos/cerbos/schema"
 )
 
 type serverArgs struct {
@@ -63,9 +64,10 @@ const (
 	metricsReportingInterval = 15 * time.Second
 	minGRPCConnectTimeout    = 20 * time.Second
 
-	healthEndpoint  = "/_cerbos/health"
-	metricsEndpoint = "/_cerbos/metrics"
-	zpagesEndpoint  = "/_cerbos/debug"
+	healthEndpoint          = "/_cerbos/health"
+	metricsEndpoint         = "/_cerbos/metrics"
+	openapiv2SchemaEndpoint = "/schema/openapiv2"
+	zpagesEndpoint          = "/_cerbos/debug"
 )
 
 func NewCommand() *cobra.Command {
@@ -416,6 +418,7 @@ func (s *server) startHTTPServer(ctx context.Context, l net.Listener, grpcSrv *g
 
 	cerbosMux := http.NewServeMux()
 	cerbosMux.Handle("/", handler)
+	cerbosMux.Handle("/schema/", http.StripPrefix("/schema/", http.FileServer(http.FS(schema.OpenAPIV2))))
 	cerbosMux.HandleFunc(healthEndpoint, s.handleHTTPHealthCheck(grpcConn))
 
 	if s.conf.MetricsEnabled && s.ocExporter != nil {
