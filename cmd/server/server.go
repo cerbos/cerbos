@@ -47,6 +47,7 @@ import (
 	"github.com/cerbos/cerbos/internal/observability/tracing"
 	"github.com/cerbos/cerbos/internal/storage"
 	"github.com/cerbos/cerbos/internal/svc"
+	"github.com/cerbos/cerbos/schema"
 )
 
 type serverArgs struct {
@@ -65,6 +66,7 @@ const (
 
 	healthEndpoint  = "/_cerbos/health"
 	metricsEndpoint = "/_cerbos/metrics"
+	schemaEndpoint  = "/schema/"
 	zpagesEndpoint  = "/_cerbos/debug"
 )
 
@@ -416,6 +418,7 @@ func (s *server) startHTTPServer(ctx context.Context, l net.Listener, grpcSrv *g
 
 	cerbosMux := http.NewServeMux()
 	cerbosMux.Handle("/", handler)
+	cerbosMux.Handle(schemaEndpoint, http.StripPrefix(schemaEndpoint, http.FileServer(http.FS(schema.OpenAPIV2))))
 	cerbosMux.HandleFunc(healthEndpoint, s.handleHTTPHealthCheck(grpcConn))
 
 	if s.conf.MetricsEnabled && s.ocExporter != nil {

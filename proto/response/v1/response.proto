@@ -4,45 +4,92 @@ package response.v1;
 
 option go_package = "github.com/cerbos/cerbos/internal/genpb/response/v1;responsev1";
 
-import "shared/v1/shared.proto";
 import "google/protobuf/duration.proto";
-
-message CheckResponse {
-    string request_id = 1;
-    uint32 status_code = 2;
-    string status_message = 3;
-    shared.v1.Effect effect = 4;
-    CheckResponseMeta meta = 5;
-}
-
-message CheckResponseMeta {
-    string matched_policy = 1;
-    repeated string effective_derived_roles = 2;
-    google.protobuf.Duration evaluation_duration = 3;
-}
+import "google/api/field_behavior.proto";
+import "protoc-gen-openapiv2/options/annotations.proto";
+import "shared/v1/shared.proto";
 
 message CheckResourceBatchResponse {
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
+		json_schema: {
+			description: "Policy evaluation response."
+		}
+    };
+
     message ActionEffectMap {
-        map<string,shared.v1.Effect> actions = 1;
+        map<string,shared.v1.Effect> actions = 1 [
+            (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = { 
+                description: "Mapping of action to effect."
+            } 
+        ];
     }
 
     message Meta {
+        option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
+            json_schema: {
+                description: "Metadata about request evaluation."
+            }
+        };
+
         message EffectMeta {
-            string matched_policy = 1;
-            string error = 2;
+            string matched_policy = 1 [
+                (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = { 
+                    description: "Policy that matched to produce this effect."
+                    example: "\"album:photo:staging\""
+                } 
+            ];
+            string error = 2 [
+                (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = { 
+                    description: "Any errors encountered during processing"
+                } 
+            ];
         }
             
         message ActionMeta {
-            map<string, EffectMeta> actions = 1;
-            repeated string effective_derived_roles = 2;
+            map<string, EffectMeta> actions = 1 [
+                (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = { 
+                    description: "Metadata about the effect calculated for each action on this resource instance."
+                    example: "{\"view:*\":{\"matched_policy\": \"album:photo:staging\"},\"comment\":{\"matched_policy\": \"album:photo:staging\"}}"
+                } 
+            ];
+            repeated string effective_derived_roles = 2 [
+                (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = { 
+                    description: "Derived roles that were effective during policy evaluation."
+                    example: "[\"owner\", \"any_user\"]"
+                } 
+            ];
         }
 
-        map<string,ActionMeta> resource_instances = 1;
-        google.protobuf.Duration evaluation_duration = 2;
+        map<string,ActionMeta> resource_instances = 1 [
+            (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = { 
+                description: "Metadata about resource instance."
+                example: "{\"XX125\": {\"actions\": {\"view:*\":{\"matched_policy\": \"album:photo:staging\"},\"comment\":{\"matched_policy\": \"album:photo:staging\"}}, \"effective_derived_roles\": [\"owner\"]}, \"XX225\": {\"actions\": {\"view:*\":{\"matched_policy\": \"album:photo:staging\"},\"comment\":{\"matched_policy\": \"album:photo:staging\"}, \"effective_derived_roles\": [\"owner\"]}}}"
+            } 
+        ];
+        google.protobuf.Duration evaluation_duration = 2[
+            (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = { 
+                description: "Time taken to evaluate the request."
+                example: "\"0.0012s\""
+            } 
+        ];
     }
 
-    string request_id = 1;
-    map<string,ActionEffectMap> resource_instances = 2;
-    Meta meta = 3;
+    string request_id = 1 [
+        (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = { 
+            description: "Request ID provided in the request."
+            example: "\"c2db17b8-4f9f-4fb1-acfd-9162a02be42b\""
+        } 
+    ];
+    map<string,ActionEffectMap> resource_instances = 2 [
+        (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = { 
+            description: "Results for each resource instance, keyed by the ID supplied in the request"
+            example: "{\"XX125\":{\"actions\":{\"view:*\":\"EFFECT_ALLOW\", \"comment\": \"EFFECT_ALLOW\"}}, \"XX225\":{\"actions\":{\"view:*\":\"EFFECT_DENY\", \"comment\": \"EFFECT_DENY\"}}}"
+        }
+    ];
+    Meta meta = 3 [
+        (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = { 
+            description: "Optional metadata about the request evaluation process"
+        }
+    ];
 }
 

@@ -1,0 +1,411 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "Cerbos API",
+    "version": "0.0.0-alpha6",
+    "contact": {
+      "name": "Cerbos authors",
+      "url": "https://cerbos.dev",
+      "email": "info@cerbos.dev"
+    },
+    "license": {
+      "name": "Apache License 2.0",
+      "url": "https://spdx.org/licenses/Apache-2.0.html"
+    }
+  },
+  "tags": [
+    {
+      "name": "CerbosService"
+    }
+  ],
+  "schemes": [
+    "http",
+    "https"
+  ],
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "paths": {
+    "/api/check": {
+      "post": {
+        "operationId": "CerbosService_CheckResourceBatch",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1CheckResourceBatchResponse"
+            }
+          },
+          "404": {
+            "description": "Returned when the resource does not exist.",
+            "schema": {
+              "type": "string",
+              "format": "string"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/v1CheckResourceBatchRequest"
+            }
+          }
+        ],
+        "tags": [
+          "CerbosService"
+        ]
+      }
+    }
+  },
+  "definitions": {
+    "CheckResourceBatchResponseActionEffectMap": {
+      "type": "object",
+      "properties": {
+        "actions": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/v1Effect"
+          },
+          "description": "Mapping of action to effect."
+        }
+      }
+    },
+    "CheckResourceBatchResponseMeta": {
+      "type": "object",
+      "properties": {
+        "resourceInstances": {
+          "type": "object",
+          "example": {
+            "XX125": {
+              "actions": {
+                "view:*": {
+                  "matched_policy": "album:photo:staging"
+                },
+                "comment": {
+                  "matched_policy": "album:photo:staging"
+                }
+              },
+              "effective_derived_roles": [
+                "owner"
+              ]
+            },
+            "XX225": {
+              "actions": {
+                "view:*": {
+                  "matched_policy": "album:photo:staging"
+                },
+                "comment": {
+                  "matched_policy": "album:photo:staging"
+                },
+                "effective_derived_roles": [
+                  "owner"
+                ]
+              }
+            }
+          },
+          "additionalProperties": {
+            "$ref": "#/definitions/MetaActionMeta"
+          },
+          "description": "Metadata about resource instance."
+        },
+        "evaluationDuration": {
+          "type": "string",
+          "example": "0.0012s",
+          "description": "Time taken to evaluate the request."
+        }
+      },
+      "description": "Metadata about request evaluation."
+    },
+    "MetaActionMeta": {
+      "type": "object",
+      "properties": {
+        "actions": {
+          "type": "object",
+          "example": {
+            "view:*": {
+              "matched_policy": "album:photo:staging"
+            },
+            "comment": {
+              "matched_policy": "album:photo:staging"
+            }
+          },
+          "additionalProperties": {
+            "$ref": "#/definitions/MetaEffectMeta"
+          },
+          "description": "Metadata about the effect calculated for each action on this resource instance."
+        },
+        "effectiveDerivedRoles": {
+          "type": "array",
+          "example": [
+            "owner",
+            "any_user"
+          ],
+          "items": {
+            "type": "string"
+          },
+          "description": "Derived roles that were effective during policy evaluation."
+        }
+      }
+    },
+    "MetaEffectMeta": {
+      "type": "object",
+      "properties": {
+        "matchedPolicy": {
+          "type": "string",
+          "example": "album:photo:staging",
+          "description": "Policy that matched to produce this effect."
+        },
+        "error": {
+          "type": "string",
+          "description": "Any errors encountered during processing"
+        }
+      }
+    },
+    "protobufAny": {
+      "type": "object",
+      "properties": {
+        "typeUrl": {
+          "type": "string"
+        },
+        "value": {
+          "type": "string",
+          "format": "byte"
+        }
+      }
+    },
+    "protobufNullValue": {
+      "type": "string",
+      "enum": [
+        "NULL_VALUE"
+      ],
+      "default": "NULL_VALUE",
+      "description": "`NullValue` is a singleton enumeration to represent the null value for the\n`Value` type union.\n\n The JSON representation for `NullValue` is JSON `null`.\n\n - NULL_VALUE: Null value."
+    },
+    "rpcStatus": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "message": {
+          "type": "string"
+        },
+        "details": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/protobufAny"
+          }
+        }
+      }
+    },
+    "v1Attributes": {
+      "type": "object",
+      "properties": {
+        "attr": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "object"
+          },
+          "description": "Contextual data about this instance that should be used during policy evaluation."
+        }
+      }
+    },
+    "v1CheckResourceBatchRequest": {
+      "type": "object",
+      "properties": {
+        "requestId": {
+          "type": "string",
+          "example": "c2db17b8-4f9f-4fb1-acfd-9162a02be42b",
+          "description": "Optional application-specific ID useful for correlating logs for analysis."
+        },
+        "actions": {
+          "type": "array",
+          "example": [
+            "view:*",
+            "comment"
+          ],
+          "items": {
+            "type": "string"
+          },
+          "description": "List of actions being performed on the resources.",
+          "minItems": 1,
+          "uniqueItems": true,
+          "required": [
+            "actions"
+          ]
+        },
+        "principal": {
+          "$ref": "#/definitions/v1Principal"
+        },
+        "resource": {
+          "$ref": "#/definitions/v1ResourceBatch"
+        },
+        "includeMeta": {
+          "type": "boolean",
+          "description": "Opt to receive request processing metadata in the response."
+        }
+      },
+      "required": [
+        "actions"
+      ]
+    },
+    "v1CheckResourceBatchResponse": {
+      "type": "object",
+      "properties": {
+        "requestId": {
+          "type": "string",
+          "example": "c2db17b8-4f9f-4fb1-acfd-9162a02be42b",
+          "description": "Request ID provided in the request."
+        },
+        "resourceInstances": {
+          "type": "object",
+          "example": {
+            "XX125": {
+              "actions": {
+                "view:*": "EFFECT_ALLOW",
+                "comment": "EFFECT_ALLOW"
+              }
+            },
+            "XX225": {
+              "actions": {
+                "view:*": "EFFECT_DENY",
+                "comment": "EFFECT_DENY"
+              }
+            }
+          },
+          "additionalProperties": {
+            "$ref": "#/definitions/CheckResourceBatchResponseActionEffectMap"
+          },
+          "description": "Results for each resource instance, keyed by the ID supplied in the request"
+        },
+        "meta": {
+          "$ref": "#/definitions/CheckResourceBatchResponseMeta",
+          "description": "Optional metadata about the request evaluation process"
+        }
+      },
+      "description": "Policy evaluation response."
+    },
+    "v1Effect": {
+      "type": "string",
+      "enum": [
+        "EFFECT_UNSPECIFIED",
+        "EFFECT_ALLOW",
+        "EFFECT_DENY",
+        "EFFECT_NO_MATCH"
+      ],
+      "default": "EFFECT_UNSPECIFIED"
+    },
+    "v1Principal": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "example": "bugs_bunny",
+          "description": "ID of the principal",
+          "required": [
+            "id"
+          ]
+        },
+        "policyVersion": {
+          "type": "string",
+          "example": "staging",
+          "description": "The policy version to use to evaluate this request. If not specified, will default to the server-configured default version.",
+          "pattern": "^[[:word:]]*$"
+        },
+        "roles": {
+          "type": "array",
+          "example": [
+            "user"
+          ],
+          "items": {
+            "type": "string"
+          },
+          "description": "Roles assigned to this principal from your identity management system.",
+          "pattern": "^[[:word:]\\-\\.]+$",
+          "minItems": 1,
+          "uniqueItems": true,
+          "required": [
+            "roles"
+          ]
+        },
+        "attr": {
+          "type": "object",
+          "example": {
+            "beta_tester": true
+          },
+          "additionalProperties": {
+            "type": "object"
+          },
+          "description": "Contextual data about this principal that should be used during policy evaluation."
+        }
+      },
+      "description": "A person or application attempting to perform the actions on the set of resources.",
+      "required": [
+        "id",
+        "roles"
+      ]
+    },
+    "v1ResourceBatch": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "example": "album:photo",
+          "description": "Name of the resource type being accessed.",
+          "pattern": "^[[:alpha:]][[:word:]\\@\\.\\-]*(\\:[[:alpha:]][[:word:]\\@\\.\\-]*)*$",
+          "required": [
+            "name"
+          ]
+        },
+        "policyVersion": {
+          "type": "string",
+          "example": "staging",
+          "description": "The policy version to use to evaluate this request. If not specified, will default to the server-configured default version.",
+          "pattern": "^[[:word:]]*$"
+        },
+        "instances": {
+          "type": "object",
+          "example": {
+            "XX125": {
+              "attr": {
+                "owner": "bugs_bunny",
+                "public": false
+              }
+            },
+            "XX225": {
+              "attr": {
+                "owner": "daffy_duck",
+                "public": true
+              }
+            }
+          },
+          "additionalProperties": {
+            "$ref": "#/definitions/v1Attributes"
+          },
+          "description": "Set of resource instances to check. Each instance must be keyed by an application-specific unique identifier.",
+          "minProperties": 1,
+          "required": [
+            "instances"
+          ]
+        }
+      },
+      "required": [
+        "name",
+        "instances"
+      ]
+    }
+  }
+}

@@ -2,6 +2,7 @@ include::partial$attributes.adoc[]
 
 = Quickstart
 
+
 Create the directory structure. 
 
 [source,sh]
@@ -99,6 +100,8 @@ Now start the server.
 ----
 
 Send a request as the owner. It should be allowed by the policy.
+
+NOTE: If you like to use [Postman](https://www.postman.com), [Insomnia](https://insomnia.rest) or any software that supports OpenAPI, the Cerbos OpenAPI definitions can be downloaded by accessing http://localhost:3592{cerbos-openapi-schema}. 
 
 [source,shell,linenums,highlight=2..20]
 ----

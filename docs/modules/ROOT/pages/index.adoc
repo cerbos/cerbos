@@ -1,6 +1,6 @@
 include::partial$attributes.adoc[]
 
-= Painless policy-based authz for cloud-native applications
+= Painless access management for cloud-native applications
 
 Cerbos helps you separate authorization logic from your code. Keeping the authorization logic external to your code has many benefits:
 

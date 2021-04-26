@@ -7,6 +7,38 @@ option go_package = "github.com/cerbos/cerbos/internal/genpb/svc/v1;svcv1";
 import "request/v1/request.proto";
 import "response/v1/response.proto";
 import "google/api/annotations.proto";
+import "protoc-gen-openapiv2/options/annotations.proto";
+
+option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_swagger) = {
+	info: {
+		title: "Cerbos API";
+		version: "0.0.0-alpha6";
+		contact: {
+			name: "Cerbos authors";
+			url: "https://cerbos.dev";
+			email: "info@cerbos.dev";
+		};
+		license: {
+			name: "Apache License 2.0";
+			url: "https://spdx.org/licenses/Apache-2.0.html";
+		};
+	};
+	schemes: HTTP;
+	schemes: HTTPS;
+	consumes: "application/json";
+	produces: "application/json";
+	responses: {
+		key: "404";
+		value: {
+			description: "Returned when the resource does not exist.";
+			schema: {
+				json_schema: {
+					type: STRING;
+				}
+			}
+		}
+	}
+};
 
 service CerbosService {
     rpc CheckResourceBatch(request.v1.CheckResourceBatchRequest) returns (response.v1.CheckResourceBatchResponse) {
@@ -16,4 +48,3 @@ service CerbosService {
         };
     }
 }
-
