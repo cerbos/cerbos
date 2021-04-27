@@ -142,6 +142,7 @@ message ResourceBatch {
         (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = { 
             description: "Set of resource instances to check. Each instance must be keyed by an application-specific unique identifier.",
             min_properties: 1
+            max_properties: 50
             example: "{\"XX125\":{\"attr\":{\"owner\":\"bugs_bunny\", \"public\": false}}, \"XX225\":{\"attr\":{\"owner\":\"daffy_duck\", \"public\": true}}}"
         }
     ];

@@ -1,4 +1,4 @@
 :app-docker-img: ghcr.io/cerbos/cerbos:{app-version}
 :app-url: https://github.com/cerbos/cerbos
 :app-download-page: {app-url}/releases/tag/v{app-version}
-:cerbos-openapi-schema: /schema/openapiv2/svc/v1/svc.swagger.json 
+:cerbos-openapi-schema: /schema/swagger.json 
