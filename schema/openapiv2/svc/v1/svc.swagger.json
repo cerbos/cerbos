@@ -2,9 +2,9 @@
   "swagger": "2.0",
   "info": {
     "title": "Cerbos API",
-    "version": "0.0.0-alpha6",
+    "version": "latest",
     "contact": {
-      "name": "Cerbos authors",
+      "name": "Cerbos",
       "url": "https://cerbos.dev",
       "email": "info@cerbos.dev"
     },
@@ -37,13 +37,6 @@
             "description": "A successful response.",
             "schema": {
               "$ref": "#/definitions/v1CheckResourceBatchResponse"
-            }
-          },
-          "404": {
-            "description": "Returned when the resource does not exist.",
-            "schema": {
-              "type": "string",
-              "format": "string"
             }
           },
           "default": {
@@ -396,6 +389,7 @@
             "$ref": "#/definitions/v1Attributes"
           },
           "description": "Set of resource instances to check. Each instance must be keyed by an application-specific unique identifier.",
+          "maxProperties": 50,
           "minProperties": 1,
           "required": [
             "instances"

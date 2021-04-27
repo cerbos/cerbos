@@ -201,7 +201,7 @@ docker run -it -v $(pwd):/photo-share -p 3592:3592 {app-docker-img} \
 ----
 
 
-NOTE: If you like to use [Postman](https://www.postman.com), [Insomnia](https://insomnia.rest) or any software that supports OpenAPI, the Cerbos OpenAPI definitions can be downloaded by accessing http://localhost:3592{cerbos-openapi-schema}. 
+NOTE: If you like to use link:https://www.postman.com[Postman], link:https://insomnia.rest[Insomnia] or any other software that supports OpenAPI, the Cerbos OpenAPI definitions can be downloaded by accessing http://localhost:3592{cerbos-openapi-schema}. 
 
 
 .Alicia trying to view her own album

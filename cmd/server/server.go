@@ -66,7 +66,7 @@ const (
 
 	healthEndpoint  = "/_cerbos/health"
 	metricsEndpoint = "/_cerbos/metrics"
-	schemaEndpoint  = "/schema/"
+	schemaEndpoint  = "/schema/swagger.json"
 	zpagesEndpoint  = "/_cerbos/debug"
 )
 
@@ -418,7 +418,7 @@ func (s *server) startHTTPServer(ctx context.Context, l net.Listener, grpcSrv *g
 
 	cerbosMux := http.NewServeMux()
 	cerbosMux.Handle("/", handler)
-	cerbosMux.Handle(schemaEndpoint, http.StripPrefix(schemaEndpoint, http.FileServer(http.FS(schema.OpenAPIV2))))
+	cerbosMux.HandleFunc(schemaEndpoint, schema.ServeSvcSwagger)
 	cerbosMux.HandleFunc(healthEndpoint, s.handleHTTPHealthCheck(grpcConn))
 
 	if s.conf.MetricsEnabled && s.ocExporter != nil {

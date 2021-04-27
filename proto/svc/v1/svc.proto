@@ -12,9 +12,9 @@ import "protoc-gen-openapiv2/options/annotations.proto";
 option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_swagger) = {
 	info: {
 		title: "Cerbos API";
-		version: "0.0.0-alpha6";
+		version: "latest";
 		contact: {
-			name: "Cerbos authors";
+			name: "Cerbos";
 			url: "https://cerbos.dev";
 			email: "info@cerbos.dev";
 		};
@@ -27,17 +27,6 @@ option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_swagger) = {
 	schemes: HTTPS;
 	consumes: "application/json";
 	produces: "application/json";
-	responses: {
-		key: "404";
-		value: {
-			description: "Returned when the resource does not exist.";
-			schema: {
-				json_schema: {
-					type: STRING;
-				}
-			}
-		}
-	}
 };
 
 service CerbosService {
