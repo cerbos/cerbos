@@ -16,6 +16,7 @@ server:
   httpListenAddr: ":3592" 
   grpcListenAddr: ":3593"
   metricsEnabled: true # Set to false to disable the /_cerbos/metrics endpoint
+  logRequestPayloads: false # Set to true to log full request and response payloads. Affects performance.
   tls: # Optional
     cert: /path/to/certificate
     key: /path/to/private_key
