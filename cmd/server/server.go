@@ -288,6 +288,7 @@ func (s *server) getTLSConfig() (*tls.Config, error) {
 	if s.conf.TLS == nil || (s.conf.TLS.Cert == "" || s.conf.TLS.Key == "") {
 		return nil, nil
 	}
+	// TODO (cell) Configure TLS with reloadable certificates
 
 	conf := s.conf.TLS
 
@@ -300,7 +301,10 @@ func (s *server) getTLSConfig() (*tls.Config, error) {
 	tlsConfig.Certificates = []tls.Certificate{certificate}
 
 	if conf.CACert != "" {
-		// TODO (cell) Configure TLS with reloadable certificates
+		if _, err := os.Stat(conf.CACert); err != nil {
+			return tlsConfig, nil //nolint:nilerr
+		}
+
 		certPool := x509.NewCertPool()
 		bs, err := os.ReadFile(conf.CACert)
 		if err != nil {

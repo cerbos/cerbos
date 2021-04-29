@@ -11,6 +11,8 @@ xref:principal_policies.adoc[Principal policies]:: Defines overrides for a speci
 
 Policies are evaluated based on the metadata passed in the request to the Cerbos PDP. 
 
+NOTE: The OpenAPI (Swagger) schema for the request can be obtained from a running Cerbos instance by accessing `{cerbos-openapi-schema}`. 
+
 [source,json,linenums]
 ----
 {

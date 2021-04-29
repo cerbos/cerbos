@@ -1,5 +1,6 @@
 bin/
 dist/
+deploy/out/
 docs/build/
 cerbos.protoset
 hack/dev/tls.crt

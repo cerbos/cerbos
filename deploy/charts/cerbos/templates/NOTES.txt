@@ -1,0 +1,17 @@
+You have successfully deployed Cerbos.
+
+You can get started with the API by accessing the Cerbos OpenAPI definitions as follows:
+{{- $scheme := (include "cerbos.httpScheme" .) -}}
+{{- if contains "NodePort" .Values.service.type }}
+  export NODE_PORT=$(kubectl get --namespace {{ .Release.Namespace }} -o jsonpath="{.spec.ports[0].nodePort}" services {{ include "cerbos.fullname" . }})
+  export NODE_IP=$(kubectl get nodes --namespace {{ .Release.Namespace }} -o jsonpath="{.items[0].status.addresses[0].address}")
+  echo {{ $scheme }}://$NODE_IP:$NODE_PORT/schema/swagger.json
+{{- else if contains "LoadBalancer" .Values.service.type }}
+     NOTE: It may take a few minutes for the LoadBalancer IP to be available.
+           You can watch the status of by running 'kubectl get --namespace {{ .Release.Namespace }} svc -w {{ include "cerbos.fullname" . }}'
+  export SERVICE_IP=$(kubectl get svc --namespace {{ .Release.Namespace }} {{ include "cerbos.fullname" . }} --template "{{"{{ range (index .status.loadBalancer.ingress 0) }}{{.}}{{ end }}"}}")
+  echo {{ $scheme }}://$SERVICE_IP:{{ .Values.service.port }}/schema/swagger.json
+{{- else if contains "ClusterIP" .Values.service.type }}
+  echo "Download OpenAPI definition by accesing {{ $scheme }}://127.0.0.1:{{ .Values.service.httpPort }}/schema/swagger.json"
+  kubectl --namespace {{ .Release.Namespace }} port-forward svc/{{ include "cerbos.fullname" . }} {{ .Values.service.httpPort }}
+{{- end }}

@@ -1,0 +1,108 @@
+# Default values for cerbos.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+nameOverride: ""
+fullnameOverride: ""
+
+# Number of Cerbos pods to run
+replicaCount: 1
+
+# Container image details
+image:
+  repository: ghcr.io/cerbos/cerbos
+  pullPolicy: IfNotPresent
+  # Image tag to use. Defaults to the chart appVersion.
+  tag: ""
+
+imagePullSecrets: []
+
+serviceAccount:
+  # Specifies whether a service account should be created
+  create: true
+  # Annotations to add to the service account
+  annotations: {}
+  # The name of the service account to use.
+  # If not set and create is true, a name is generated using the fullname template
+  name: ""
+
+# Annotations to add to the pod.
+podAnnotations: {}
+
+# Security context for the whole pod.
+podSecurityContext: {}
+  # fsGroup: 2000
+
+# Security context for the Cerbos container.
+securityContext: {}
+  # capabilities:
+  #   drop:
+  #   - ALL
+  # readOnlyRootFilesystem: true
+  # runAsNonRoot: true
+  # runAsUser: 1000
+
+# Resource limits for the pod.
+resources: {}
+  # limits:
+  #   cpu: 100m
+  #   memory: 128Mi
+  # requests:
+  #   cpu: 100m
+  #   memory: 128Mi
+
+# Autoscaling configuration.
+autoscaling:
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 100
+  targetCPUUtilizationPercentage: 80
+  # targetMemoryUtilizationPercentage: 80
+
+# Node selector for the pod.
+nodeSelector: {}
+
+# Pod tolerations.
+tolerations: []
+
+# Pod affinity rules.
+affinity: {}
+
+# Volumes to add to the pod.
+volumes: []
+
+# Volume mounts to add to the Cerbos container.
+volumeMounts: []
+
+# Environment variables to add to the pod.
+env: []
+
+# Source environment variables from config maps or secrets.
+envFrom: []
+
+# Cerbos service settings.
+service:
+  type: ClusterIP
+  httpPort: 3592
+  grpcPort: 3593
+
+# Cerbos deployment settings.
+cerbos:
+  # Port to expose the http service on.
+  httpPort: 3592
+  # Port to expose the gRPC service on.
+  grpcPort: 3593
+  # Secret containing the TLS certificate.
+  # Leave empty to disable TLS.
+  # The secret must contain the following keys:
+  #  - tls.crt: Required. Certificate file contents.
+  #  - tls.key: Required. Private key for the certificate.
+  #  - ca.crt: Optional. CA certificate to add to the trust pool.
+  tlsSecretName: ""
+  # Cerbos log level. Valid values are DEBUG, INFO, WARN and ERROR
+  logLevel: INFO
+  # Add Prometheus service discovery annotations to the pod.
+  prometheusPodAnnotationsEnabled: true
+  # Cerbos config file contents.
+  # Some server settings like server.httpListenAddr, server.grpcListenAddr, server.tls will be overwritten by the chart based on values provided above. 
+  config: {}

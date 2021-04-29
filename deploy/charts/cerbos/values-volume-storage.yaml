@@ -1,0 +1,19 @@
+# Illustrates how to mount a volume containing policies to the Cerbos pod.
+
+volumes:
+  - name: cerbos-policies
+    hostPath:
+      path: /data/cerbos-policies
+
+volumeMounts:
+  - name: cerbos-policies
+    mountPath: /policies
+    readOnly: true
+
+cerbos:
+  config:
+    storage:
+      driver: "disk"
+      disk:
+        directory: /policies
+        watchForChanges: true

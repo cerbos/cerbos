@@ -1,0 +1,107 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "cerbos.fullname" . }}
+  labels:
+    {{- include "cerbos.labels" . | nindent 4 }}
+spec:
+  {{- if not .Values.autoscaling.enabled }}
+  replicas: {{ .Values.replicaCount }}
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "cerbos.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "cerbos.selectorLabels" . | nindent 8 }}
+      {{- include "cerbos.podAnnotations" . | nindent 6 }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "cerbos.serviceAccountName" . }}
+      {{- with .Values.podSecurityContext }}
+      securityContext:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: {{ .Chart.Name }}
+          {{- with .Values.securityContext }}
+          securityContext:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          args:
+            - "server"
+            - "--config=/config/config.yaml"
+            - "--log-level={{ .Values.cerbos.logLevel }}"
+          ports:
+            - name: http
+              containerPort: {{ .Values.cerbos.httpPort }}
+            - name: grpc
+              containerPort: {{ .Values.cerbos.grpcPort }}
+          livenessProbe:
+            httpGet:
+              path: /_cerbos/health
+              port: http
+              scheme: {{ include "cerbos.httpScheme" . | upper }}
+          readinessProbe:
+            httpGet:
+              path: /_cerbos/health
+              port: http
+              scheme: {{ include "cerbos.httpScheme" . | upper }}
+          {{- with .Values.resources }}
+          resources:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.env }}
+          env:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.envFrom }}
+          envFrom:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          volumeMounts:
+            - name: config 
+              mountPath: /config
+              readOnly: true
+            - name: work
+              mountPath: /work
+          {{- with .Values.cerbos.tlsSecretName }}
+            - name: certs
+              mountPath: /certs
+              readOnly: true
+          {{- end }}
+          {{- with .Values.volumeMounts }}
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+      volumes:
+        - name: config
+          configMap:
+            name: {{ include "cerbos.fullname" . }}
+        - name: work
+          emptyDir: {}
+      {{- with .Values.cerbos.tlsSecretName }}
+        - name: certs
+          secret: 
+            secretName: {{ . }}
+      {{- end }}
+      {{- with .Values.volumes }}
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
