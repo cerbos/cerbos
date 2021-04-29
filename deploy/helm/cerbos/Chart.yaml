@@ -1,6 +1,0 @@
-apiVersion: v2
-name: cerbos
-description: A Helm chart to deploy the Cerbos PDP
-type: application
-version: "0.0.0-alpha6"
-appVersion: "0.0.0-alpha6"

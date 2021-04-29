@@ -1,0 +1,11 @@
+---
+apiVersion: v2
+name: cerbos
+home: https://cerbos.dev
+description: A Helm chart to deploy the Cerbos policy decision point
+type: application
+maintainers:
+  - name: Cerbos authors
+    email: help+helm@cerbos.dev
+version: "0.0.0-alpha7"
+appVersion: "0.0.0-alpha7"

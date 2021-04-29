@@ -45,3 +45,4 @@ changelog:
 release:
   extra_files:
     - glob: ./docs/build/cerbos_docs.zip
+    - glob: ./deploy/out/*

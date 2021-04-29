@@ -33,6 +33,9 @@ jobs:
       - name: Login to Container Registry
         run:  echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
 
+      - name: Install Helm
+        uses: azure/setup-helm@v1
+
       - uses: actions/cache@v2
         with:
           path: |
@@ -46,6 +49,9 @@ jobs:
       - name: Generate docs
         uses: ./.github/actions/antora-docs
         id: docs
+
+      - name: Package Helm chart
+        run: helm package -d deploy/out deploy/charts/cerbos
 
       - name: GoReleaser
         uses: goreleaser/goreleaser-action@v2

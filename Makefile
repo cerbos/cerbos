@@ -20,7 +20,7 @@ clean-tools:
 .PHONY: lint
 lint: $(GOLANGCI_LINT)
 	@ $(GOLANGCI_LINT) run --config=.golangci.yaml 
-	@ deploy/helm/validate.sh
+	@ deploy/charts/validate.sh
 
 .PHONY: generate
 generate: clean $(BUF) $(PROTOC_GEN_GO) $(PROTOC_GEN_GO_GRPC) $(PROTOC_GEN_GRPC_GATEWAY) $(PROTOC_GEN_OPENAPIV2) $(PROTOC_GEN_VALIDATE) $(VALIDATE_PROTO)

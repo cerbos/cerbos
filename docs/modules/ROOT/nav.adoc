@@ -5,6 +5,5 @@ xref:index.adoc[Cerbos]
 * Installation
 ** xref:installation/binary.adoc[Binaries]
 ** xref:installation/container.adoc[Container]
-** Helm chart
-** CNAB
+** xref:installation/helm.adoc[Helm chart]
 * xref:usage.adoc[Usage]

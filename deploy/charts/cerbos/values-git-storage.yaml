@@ -1,0 +1,33 @@
+# Illustrates how to connect Cerbos to a policy repository hosted on GitHub.
+# Prerequisites:
+# - Create a personal access token (PAT) in GitHub with `repo` permissions (https://docs.github.com/en/github/authenticating-to-github/creating-a-personal-access-token).
+# - Create a Kubernetes secret named `cerbos-github-token`: 
+#      PAT=YOUR_GITHUB_PAT kubectl create secret generic cerbos-github-token --from-literal=GITHUB_TOKEN=$PAT
+
+cerbos:
+  config:
+    # Configure the git storage driver
+    storage:
+      driver: "git"
+      git:
+        protocol: https
+        # Replace with the URL of your GitHub repo.
+        url: https://github.com/cerbos/sample-policies.git
+        # Replace with the branch name of your repo.
+        branch: main
+        # Remove or leave empty if the policies are not stored in a subdirectory.
+        subDir: hr
+        # Path to checkout. By default, /work is a Kubernetes emptyDir volume that is only available for the lifetime of the pod.
+        # If you want the work directory to persist between pod restarts, specify the mount path of a persistent volume here. 
+        checkoutDir: /work
+        # How often the remote repo should be checked for updates.
+        updatePollInterval: 60s
+        # Credentials used to login to the remote GitHub repo. We are using an environment variable mounted from the secret we created earlier. 
+        https:
+          username: ${GITHUB_TOKEN}
+          password: ""
+
+# Create an environment variable from the GitHub PAT stored in a secret. 
+envFrom:
+  - secretRef:
+      name: cerbos-github-token
