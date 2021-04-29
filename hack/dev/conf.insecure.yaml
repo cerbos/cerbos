@@ -2,6 +2,7 @@
 server:
   httpListenAddr: ":3592"
   grpcListenAddr: ":3593"
+  logRequestPayloads: false
 
 storage:
   driver: "disk"

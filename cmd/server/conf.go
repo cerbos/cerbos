@@ -20,6 +20,8 @@ type Conf struct {
 	TLS *TLSConf `yaml:"tls"`
 	// MetricsEnabled defines whether the metrics endpoint is enabled.
 	MetricsEnabled bool `yaml:"metricsEnabled"`
+	// LogRequestPayloads defines whether the request payloads should be logged.
+	LogRequestPayloads bool `yaml:"logRequestPayloads"`
 }
 
 // TLSConf holds TLS configuration.
