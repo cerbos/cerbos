@@ -23,3 +23,8 @@ func XForwardedHostUnaryServerInterceptor(ctx context.Context, req interface{}, 
 
 	return handler(grpc_ctxtags.SetInContext(ctx, tags), req)
 }
+
+// loggingDecider prevents healthcheck requests from being logged.
+func loggingDecider(fullMethodName string, _ error) bool {
+	return fullMethodName != "/grpc.health.v1.Health/Check"
+}
