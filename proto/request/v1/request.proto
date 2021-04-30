@@ -61,7 +61,7 @@ message Principal {
         (google.api.field_behavior) = OPTIONAL,
         (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = { 
             description: "The policy version to use to evaluate this request. If not specified, will default to the server-configured default version."
-            example: "\"staging\""
+            example: "\"default\""
             pattern: "^[[:word:]]*$"
         }
     ];
@@ -79,13 +79,19 @@ message Principal {
     map<string, google.protobuf.Value> attr = 4 [
         (validate.rules).map.no_sparse = true,
         (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = { 
-            description: "Contextual data about this principal that should be used during policy evaluation."
+            description: "Key-value pairs of contextual data about this principal that should be used during policy evaluation."
             example: "{\"beta_tester\": true}"
         }
     ];
 }
 
 message CheckResourceBatchRequest {
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
+		json_schema: {
+			description: "PDP Request"
+		}
+    };
+
     string request_id = 1 [
         (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = { 
             description: "Optional application-specific ID useful for correlating logs for analysis."
@@ -99,7 +105,7 @@ message CheckResourceBatchRequest {
             description: "List of actions being performed on the resources."
             min_items: 1
             unique_items: true
-            example: "[\"view:*\", \"comment\"]"
+            example: "[\"view:public\", \"comment\"]"
         } 
     ];
     Principal principal = 3 [
@@ -118,12 +124,18 @@ message CheckResourceBatchRequest {
 }
 
 message ResourceBatch {
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
+		json_schema: {
+			description: "Set of resources to check"
+		}
+    };
+
     string name = 1 [
         (validate.rules).string = {pattern: "^[[:alpha:]][[:word:]\\@\\.\\-]*(\\:[[:alpha:]][[:word:]\\@\\.\\-]*)*$", min_len: 1}, 
         (google.api.field_behavior) = REQUIRED,
         (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
             description: "Name of the resource type being accessed."
-            example: "\"album:photo\""
+            example: "\"album:object\""
             pattern: "^[[:alpha:]][[:word:]\\@\\.\\-]*(\\:[[:alpha:]][[:word:]\\@\\.\\-]*)*$"
         }
     ];
@@ -133,7 +145,7 @@ message ResourceBatch {
         (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = { 
             description: "The policy version to use to evaluate this request. If not specified, will default to the server-configured default version.",
             pattern: "^[[:word:]]*$"
-            example: "\"staging\""
+            example: "\"default\""
         }
     ];
     map<string, Attributes> instances = 3 [
@@ -143,16 +155,22 @@ message ResourceBatch {
             description: "Set of resource instances to check. Each instance must be keyed by an application-specific unique identifier.",
             min_properties: 1
             max_properties: 50
-            example: "{\"XX125\":{\"attr\":{\"owner\":\"bugs_bunny\", \"public\": false}}, \"XX225\":{\"attr\":{\"owner\":\"daffy_duck\", \"public\": true}}}"
+            example: "{\"XX125\":{\"attr\":{\"owner\":\"bugs_bunny\", \"public\": false, \"flagged\": false}}, \"XX225\":{\"attr\":{\"owner\":\"daffy_duck\", \"public\": true, \"flagged\": false}}}"
         }
     ];
 }
 
 message Attributes {
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
+		json_schema: {
+			description: "Unique identifier for the resource instance."
+		}
+    };
+
     map<string, google.protobuf.Value> attr = 1 [
         (validate.rules).map.no_sparse = true,
         (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = { 
-            description: "Contextual data about this instance that should be used during policy evaluation."
+            description: "Key-value pairs of contextual data about this instance that should be used during policy evaluation."
         }
     ];
 }

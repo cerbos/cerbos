@@ -3,30 +3,54 @@ include::partial$attributes.adoc[]
 = Quickstart
 
 
-Create the directory structure. 
+Create a directory to store the server config and policies.
 
 [source,sh]
 ----
-mkdir -p cerbos-quickstart/{git-repo,work-dir} 
-cd cerbos-quickstart
+mkdir -p cerbos-quickstart/policies
 ----
 
-Create the git repository that will hold our polcies and tests.
+Create the config file for the server.
+
+[source,sh,subs="attributes,+macros"]
+----
+cat $$>$$ cerbos-quickstart/conf.yaml $$<<$$EOF
+server:
+  httpListenAddr: ":3592"
+
+storage:
+  driver: "disk"
+  disk:
+    directory: /quickstart/policies
+    watchForChanges: true
+EOF
+----
+
+Now start the Cerbos server. We are using the container image in this guide but you can follow along using the binary as well. See xref:usage.adoc[usage] for more information.
+
+[source,shell,subs="attributes"]
+----
+docker run --rm --name cerbos -d -v $(pwd)/cerbos-quickstart:/quickstart -p 3592:3592 {app-docker-img} server --config=/quickstart/conf.yaml
+----
+
+Launch a browser and navigate to http://localhost:3592/. You will be presented with a webpage with documentation about the Cerbos API.
+In the example request, the `bugs_bunny` principal is trying to perform two actions (`view:public` and `comment`) on two `album:object` resource instances. The resource instance with the ID `XX125` belongs to `bugs_bunny` and is private (`public` attribute is `false`). The other resource instance with the ID `XX225` belongs to `daffy_duck` and is public.
+
+Click on the btn:[Try] button to try out the example request.
+
+NOTE: If you prefer to use link:https://www.postman.com[Postman], link:https://insomnia.rest[Insomnia] or any other software that supports OpenAPI, you can follow this guide along on those tools by downloading the OpenAPI definitions from http://localhost:3592{cerbos-openapi-schema}. 
+
+image::request_00.png[Request]
+
+The response from the server denies `bugs_bunny` from viewing or commenting on any of the album resources — even the ones that belong to him. This is because currently there no policies defined for the `album:object`.
+
+Let's create a xref:policies:derived_roles.adoc[derived roles] definition that assigns the `owner` dynamic role to a user if the `owner` attribute of the resource they are trying to access is equal to their ID.
 
 [source,sh]
 ----
-mkdir -p git-repo/{policies,tests}
-----
-
-Add some policies to the git repository.
-
-[source,sh]
-----
-cat > git-repo/policies/derived_roles_common.yaml <<EOF
+cat > cerbos-quickstart/policies/derived_roles_common.yaml <<EOF
 ---
 apiVersion: "api.cerbos.dev/v1"
-description: |-
-  Common dynamic roles used within the Apatr app
 derived_roles:
   name: common_roles
   definitions:
@@ -38,9 +62,11 @@ derived_roles:
 EOF
 ----
 
+Let's also create a resource policy that gives ``owner``s full access to their own albums. 
+
 [source,sh]
 ----
-cat > git-repo/policies/resource_album.yaml <<EOF
+cat > cerbos-quickstart/policies/resource_album.yaml <<EOF
 ---
 apiVersion: api.cerbos.dev/v1
 resourcePolicy:
@@ -56,147 +82,15 @@ resourcePolicy:
 EOF
 ----
 
-Run the compiler to make sure that the policies are valid.
+Try the request again. This time `bugs_bunny` should be allowed access to his own album but denied access to the album owned by `daffy_duck`. 
 
-[source,sh,subs="attributes"]
-----
-{app-name} compile git-repo/policies
-----
+image::request_01.png[Request]
 
-Commit the changes.
+Now let's add a rule to the policy to allow users to view public albums.
 
 [source,sh]
 ----
-git -C git-repo init
-git -C git-repo add .
-git -C git-repo commit -m 'First commit'
-----
-
-Create the config file for the server.
-
-[source,sh,subs="attributes,+macros"]
-----
-cat $$>$$ conf.yaml $$<<$$EOF
-server:
-  httpListenAddr: ":3592"
-
-storage:
-  driver: "git"
-  git:
-    protocol: file
-    url: file://$(pwd)/git-repo
-    branch: master
-    subDir: policies
-    checkoutDir: $(pwd)/work-dir
-    updatePollInterval: 10s
-EOF
-----
-
-Now start the server.
-
-[source,sh,subs="attributes"]
-----
-{app-name} server --config=conf.yaml
-----
-
-Send a request as the owner. It should be allowed by the policy.
-
-NOTE: If you like to use link:https://www.postman.com[Postman], link:https://insomnia.rest[Insomnia] or any other software that supports OpenAPI, the Cerbos OpenAPI definitions can be downloaded by accessing http://localhost:3592{cerbos-openapi-schema}. 
-
-[source,shell,linenums,highlight=2..20]
-----
-cat <<EOF | curl --silent "localhost:3592/api/check" -d @-
-{
-  "requestId":  "test01",
-  "actions":  ["view"],
-  "resource":  {
-    "policyVersion": "default",
-    "name":  "album:object",
-    "instances": {
-      "XX125": {
-        "attr":  {
-          "owner":  "alicia",
-          "id":  "XX125",
-          "public": true,
-          "flagged": false
-        }
-      }
-    }
-  },
-  "principal":  {
-    "id":  "alicia",
-    "policyVersion": "default",
-    "roles":  ["user"]
-  }
-}
-EOF
-----
-
-----
-{
-  "requestId": "test01",
-  "resourceInstances": {
-    "XX125": {
-      "actions": {
-        "view": "EFFECT_ALLOW"
-      }
-    }
-  },
-  "meta": null
-}
-----
-
-
-Send a request as someone else. It should be denied by the policy.
-
-[source,shell,linenums,highlight=2..20]
-----
-cat <<EOF | curl --silent "localhost:3592/api/check" -d @-
-{
-  "requestId":  "test02",
-  "actions":  ["view"],
-  "resource":  {
-    "policyVersion": "default",
-    "name":  "album:object",
-    "instances": {
-      "XX125": {
-        "attr":  {
-          "owner":  "alicia",
-          "id":  "XX125",
-          "public": true,
-          "flagged": false
-        }
-      }
-    }
-  },
-  "principal":  {
-    "id":  "bradley",
-    "policyVersion": "default",
-    "roles":  ["user"]
-  }
-}
-EOF
-----
-
-----
-{
-  "requestId": "test02",
-  "resourceInstances": {
-    "XX125": {
-      "actions": {
-        "view": "EFFECT_DENY"
-      }
-    }
-  },
-  "meta": null
-}
-----
-
-Now let's edit the policy to allow users to view public albums.
-
-[source,sh]
-----
-cat > git-repo/policies/resource_album.yaml <<EOF
+cat > cerbos-quickstart/policies/resource_album.yaml <<EOF
 ---
 apiVersion: api.cerbos.dev/v1
 resourcePolicy:
@@ -210,7 +104,7 @@ resourcePolicy:
       derivedRoles:
         - owner
 
-    - actions: ['view']
+    - actions: ['view:public']
       effect: EFFECT_ALLOW
       roles:
         - user
@@ -220,68 +114,17 @@ resourcePolicy:
 EOF
 ----
 
-Compile to make sure the policy is still valid.
+If you try the request again, `bugs_bunny` now has `view:public` access to the album owned by `daffy_duck` but not `comment` access. Can you figure out how to update the policy to give him `comment` access as well?
 
-[source,sh,subs="attributes"]
-----
-{app-name} compile git-repo/policies
-----
+image::request_02.png[Request]
 
-Commit the change.
+Once you are done experimenting, the Cerbos server can be stopped with the following command:
 
-[source,sh]
+[source,shell,subs="attributes"]
 ----
-git -C git-repo commit -am 'Update album policy'
+docker kill cerbos
 ----
 
-After a few seconds, the server should pull the changes from the git repository and update itself. 
 
-----
-Detected repository changes
-Index updated: Added=1 Removed=0
-----
-
-Now send the request again. It should be allowed by the updated policy.
-
-[source,shell,linenums,highlight=2..20]
-----
-cat <<EOF | curl --silent "localhost:3592/api/check" -d @-
-{
-  "requestId":  "test03",
-  "actions":  ["view"],
-  "resource":  {
-    "policyVersion": "default",
-    "name":  "album:object",
-    "instances": {
-      "XX125": {
-        "attr":  {
-          "owner":  "alicia",
-          "id":  "XX125",
-          "public": true,
-          "flagged": false
-        }
-      }
-    }
-  },
-  "principal":  {
-    "id":  "bradley",
-    "policyVersion": "default",
-    "roles":  ["user"]
-  }
-}
-EOF
-----
-
-----
-{
-  "requestId": "test03",
-  "resourceInstances": {
-    "XX125": {
-      "actions": {
-        "view": "EFFECT_ALLOW"
-      }
-    }
-  },
-  "meta": null
-}
-----
+.Where to go from here
+* xref:policies:index.adoc[Read more about Cerbos policies]

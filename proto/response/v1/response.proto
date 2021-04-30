@@ -17,9 +17,14 @@ message CheckResourceBatchResponse {
     };
 
     message ActionEffectMap {
+        option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
+            json_schema: {
+                description: "Unique resource instance ID supplied in the request."
+            }
+        };
         map<string,shared.v1.Effect> actions = 1 [
             (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = { 
-                description: "Mapping of action to effect."
+                description: "Mapping of each action to an effect."
             } 
         ];
     }
@@ -32,13 +37,19 @@ message CheckResourceBatchResponse {
         };
 
         message EffectMeta {
+            option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
+                json_schema: {
+                    description: "Name of the action."
+                }
+            };
             string matched_policy = 1 [
                 (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = { 
                     description: "Policy that matched to produce this effect."
-                    example: "\"album:photo:staging\""
+                    example: "\"album:object:default\""
                 } 
             ];
             string error = 2 [
+                (google.api.field_behavior) = OPTIONAL,
                 (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = { 
                     description: "Any errors encountered during processing"
                 } 
@@ -46,24 +57,29 @@ message CheckResourceBatchResponse {
         }
             
         message ActionMeta {
+            option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
+                json_schema: {
+                    description: "Unique resource instance ID supplied in the request."
+                }
+            };
             map<string, EffectMeta> actions = 1 [
                 (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = { 
                     description: "Metadata about the effect calculated for each action on this resource instance."
-                    example: "{\"view:*\":{\"matched_policy\": \"album:photo:staging\"},\"comment\":{\"matched_policy\": \"album:photo:staging\"}}"
+                    example: "{\"view:*\":{\"matched_policy\": \"album:object:default\"},\"comment\":{\"matched_policy\": \"album:object:default\"}}"
                 } 
             ];
             repeated string effective_derived_roles = 2 [
                 (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = { 
                     description: "Derived roles that were effective during policy evaluation."
-                    example: "[\"owner\", \"any_user\"]"
+                    example: "[\"owner\"]"
                 } 
             ];
         }
 
         map<string,ActionMeta> resource_instances = 1 [
             (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = { 
-                description: "Metadata about resource instance."
-                example: "{\"XX125\": {\"actions\": {\"view:*\":{\"matched_policy\": \"album:photo:staging\"},\"comment\":{\"matched_policy\": \"album:photo:staging\"}}, \"effective_derived_roles\": [\"owner\"]}, \"XX225\": {\"actions\": {\"view:*\":{\"matched_policy\": \"album:photo:staging\"},\"comment\":{\"matched_policy\": \"album:photo:staging\"}, \"effective_derived_roles\": [\"owner\"]}}}"
+                description: "Metadata about resource instances."
+                example: "{\"XX125\": {\"actions\": {\"view:*\":{\"matched_policy\": \"album:object:default\"},\"comment\":{\"matched_policy\": \"album:object:default\"}}, \"effective_derived_roles\": [\"owner\"]}, \"XX225\": {\"actions\": {\"view:*\":{\"matched_policy\": \"album:object:default\"},\"comment\":{\"matched_policy\": \"album:object:default\"}}}}"
             } 
         ];
         google.protobuf.Duration evaluation_duration = 2[

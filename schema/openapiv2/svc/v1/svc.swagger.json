@@ -1,7 +1,7 @@
 {
   "swagger": "2.0",
   "info": {
-    "title": "Cerbos API",
+    "title": "Cerbos",
     "version": "latest",
     "contact": {
       "name": "Cerbos",
@@ -15,11 +15,11 @@
   },
   "tags": [
     {
-      "name": "CerbosService"
+      "name": "CerbosService",
+      "description": "Cerbos Policy Decision Point"
     }
   ],
   "schemes": [
-    "http",
     "https"
   ],
   "consumes": [
@@ -31,6 +31,8 @@
   "paths": {
     "/api/check": {
       "post": {
+        "summary": "Check",
+        "description": "Check whether a principal has permissions to perform the given actions on a set of resource instances.",
         "operationId": "CerbosService_CheckResourceBatch",
         "responses": {
           "200": {
@@ -71,9 +73,10 @@
           "additionalProperties": {
             "$ref": "#/definitions/v1Effect"
           },
-          "description": "Mapping of action to effect."
+          "description": "Mapping of each action to an effect."
         }
-      }
+      },
+      "description": "Unique resource instance ID supplied in the request."
     },
     "CheckResourceBatchResponseMeta": {
       "type": "object",
@@ -84,10 +87,10 @@
             "XX125": {
               "actions": {
                 "view:*": {
-                  "matched_policy": "album:photo:staging"
+                  "matched_policy": "album:object:default"
                 },
                 "comment": {
-                  "matched_policy": "album:photo:staging"
+                  "matched_policy": "album:object:default"
                 }
               },
               "effective_derived_roles": [
@@ -97,21 +100,18 @@
             "XX225": {
               "actions": {
                 "view:*": {
-                  "matched_policy": "album:photo:staging"
+                  "matched_policy": "album:object:default"
                 },
                 "comment": {
-                  "matched_policy": "album:photo:staging"
-                },
-                "effective_derived_roles": [
-                  "owner"
-                ]
+                  "matched_policy": "album:object:default"
+                }
               }
             }
           },
           "additionalProperties": {
             "$ref": "#/definitions/MetaActionMeta"
           },
-          "description": "Metadata about resource instance."
+          "description": "Metadata about resource instances."
         },
         "evaluationDuration": {
           "type": "string",
@@ -128,10 +128,10 @@
           "type": "object",
           "example": {
             "view:*": {
-              "matched_policy": "album:photo:staging"
+              "matched_policy": "album:object:default"
             },
             "comment": {
-              "matched_policy": "album:photo:staging"
+              "matched_policy": "album:object:default"
             }
           },
           "additionalProperties": {
@@ -142,29 +142,30 @@
         "effectiveDerivedRoles": {
           "type": "array",
           "example": [
-            "owner",
-            "any_user"
+            "owner"
           ],
           "items": {
             "type": "string"
           },
           "description": "Derived roles that were effective during policy evaluation."
         }
-      }
+      },
+      "description": "Unique resource instance ID supplied in the request."
     },
     "MetaEffectMeta": {
       "type": "object",
       "properties": {
         "matchedPolicy": {
           "type": "string",
-          "example": "album:photo:staging",
+          "example": "album:object:default",
           "description": "Policy that matched to produce this effect."
         },
         "error": {
           "type": "string",
           "description": "Any errors encountered during processing"
         }
-      }
+      },
+      "description": "Name of the action."
     },
     "protobufAny": {
       "type": "object",
@@ -212,9 +213,10 @@
           "additionalProperties": {
             "type": "object"
           },
-          "description": "Contextual data about this instance that should be used during policy evaluation."
+          "description": "Key-value pairs of contextual data about this instance that should be used during policy evaluation."
         }
-      }
+      },
+      "description": "Unique identifier for the resource instance."
     },
     "v1CheckResourceBatchRequest": {
       "type": "object",
@@ -227,7 +229,7 @@
         "actions": {
           "type": "array",
           "example": [
-            "view:*",
+            "view:public",
             "comment"
           ],
           "items": {
@@ -251,6 +253,7 @@
           "description": "Opt to receive request processing metadata in the response."
         }
       },
+      "description": "PDP Request",
       "required": [
         "actions"
       ]
@@ -314,7 +317,7 @@
         },
         "policyVersion": {
           "type": "string",
-          "example": "staging",
+          "example": "default",
           "description": "The policy version to use to evaluate this request. If not specified, will default to the server-configured default version.",
           "pattern": "^[[:word:]]*$"
         },
@@ -342,7 +345,7 @@
           "additionalProperties": {
             "type": "object"
           },
-          "description": "Contextual data about this principal that should be used during policy evaluation."
+          "description": "Key-value pairs of contextual data about this principal that should be used during policy evaluation."
         }
       },
       "description": "A person or application attempting to perform the actions on the set of resources.",
@@ -356,7 +359,7 @@
       "properties": {
         "name": {
           "type": "string",
-          "example": "album:photo",
+          "example": "album:object",
           "description": "Name of the resource type being accessed.",
           "pattern": "^[[:alpha:]][[:word:]\\@\\.\\-]*(\\:[[:alpha:]][[:word:]\\@\\.\\-]*)*$",
           "required": [
@@ -365,7 +368,7 @@
         },
         "policyVersion": {
           "type": "string",
-          "example": "staging",
+          "example": "default",
           "description": "The policy version to use to evaluate this request. If not specified, will default to the server-configured default version.",
           "pattern": "^[[:word:]]*$"
         },
@@ -375,13 +378,15 @@
             "XX125": {
               "attr": {
                 "owner": "bugs_bunny",
-                "public": false
+                "public": false,
+                "flagged": false
               }
             },
             "XX225": {
               "attr": {
                 "owner": "daffy_duck",
-                "public": true
+                "public": true,
+                "flagged": false
               }
             }
           },
@@ -396,6 +401,7 @@
           ]
         }
       },
+      "description": "Set of resources to check",
       "required": [
         "name",
         "instances"

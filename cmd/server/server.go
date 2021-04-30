@@ -15,6 +15,7 @@ import (
 
 	"contrib.go.opencensus.io/exporter/prometheus"
 	"github.com/google/gops/agent"
+	"github.com/gorilla/mux"
 	grpc_zap "github.com/grpc-ecosystem/go-grpc-middleware/logging/zap"
 	grpc_recovery "github.com/grpc-ecosystem/go-grpc-middleware/recovery"
 	grpc_ctxtags "github.com/grpc-ecosystem/go-grpc-middleware/tags"
@@ -64,6 +65,7 @@ const (
 	metricsReportingInterval = 15 * time.Second
 	minGRPCConnectTimeout    = 20 * time.Second
 
+	apiEndpoint     = "/api"
 	healthEndpoint  = "/_cerbos/health"
 	metricsEndpoint = "/_cerbos/metrics"
 	schemaEndpoint  = "/schema/swagger.json"
@@ -422,20 +424,28 @@ func (s *server) startHTTPServer(ctx context.Context, l net.Listener, grpcSrv *g
 		return nil, fmt.Errorf("failed to register gRPC service: %w", err)
 	}
 
-	handler := &ochttp.Handler{Handler: grpcHandler(grpcSrv, gwmux)}
+	cerbosMux := mux.NewRouter()
+	// handle gRPC requests that come over http
+	cerbosMux.MatcherFunc(func(r *http.Request, _ *mux.RouteMatch) bool {
+		return r.ProtoMajor == 2 && strings.Contains(r.Header.Get("Content-Type"), "application/grpc")
+	}).Handler(&ochttp.Handler{Handler: grpcSrv})
 
-	cerbosMux := http.NewServeMux()
-	cerbosMux.Handle("/", handler)
-	cerbosMux.HandleFunc(schemaEndpoint, schema.ServeSvcSwagger)
-	cerbosMux.HandleFunc(healthEndpoint, s.handleHTTPHealthCheck(grpcConn))
+	cerbosMux.PathPrefix(apiEndpoint).Handler(&ochttp.Handler{Handler: gwmux})
+	cerbosMux.Path(schemaEndpoint).HandlerFunc(schema.ServeSvcSwagger)
+	cerbosMux.Path(healthEndpoint).HandlerFunc(s.handleHTTPHealthCheck(grpcConn))
 
 	if s.conf.MetricsEnabled && s.ocExporter != nil {
-		cerbosMux.Handle(metricsEndpoint, s.ocExporter)
+		cerbosMux.Path(metricsEndpoint).Handler(s.ocExporter)
 	}
 
 	if args.zpagesEnabled {
-		zpages.Handle(cerbosMux, zpagesEndpoint)
+		hm := http.NewServeMux()
+		zpages.Handle(hm, zpagesEndpoint)
+
+		cerbosMux.PathPrefix(zpagesEndpoint).Handler(hm)
 	}
+
+	cerbosMux.HandleFunc("/", schema.ServeUI)
 
 	h := &http.Server{
 		ErrorLog:          zap.NewStdLog(zap.L().Named("http.error")),
@@ -477,16 +487,6 @@ func dialFunc(ctx context.Context, address string) (net.Conn, error) {
 
 	dialer := new(net.Dialer)
 	return dialer.DialContext(ctx, network, addr)
-}
-
-func grpcHandler(grpcSvc *grpc.Server, handler http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.ProtoMajor == 2 && strings.Contains(r.Header.Get("Content-Type"), "application/grpc") {
-			grpcSvc.ServeHTTP(w, r)
-		} else {
-			handler.ServeHTTP(w, r)
-		}
-	})
 }
 
 func (s *server) handleHTTPHealthCheck(conn grpc.ClientConnInterface) http.HandlerFunc {

@@ -11,7 +11,7 @@ import "protoc-gen-openapiv2/options/annotations.proto";
 
 option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_swagger) = {
 	info: {
-		title: "Cerbos API";
+		title: "Cerbos";
 		version: "latest";
 		contact: {
 			name: "Cerbos";
@@ -23,17 +23,24 @@ option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_swagger) = {
 			url: "https://spdx.org/licenses/Apache-2.0.html";
 		};
 	};
-	schemes: HTTP;
 	schemes: HTTPS;
 	consumes: "application/json";
 	produces: "application/json";
 };
 
 service CerbosService {
+	option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_tag) = {
+		description: "Cerbos Policy Decision Point"
+	};
+
     rpc CheckResourceBatch(request.v1.CheckResourceBatchRequest) returns (response.v1.CheckResourceBatchResponse) {
         option (google.api.http) = {
             post: "/api/check",
             body: "*"
+        };
+        option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+            summary: "Check"
+            description: "Check whether a principal has permissions to perform the given actions on a set of resource instances."
         };
     }
 }
