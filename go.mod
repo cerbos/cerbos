@@ -22,6 +22,7 @@ require (
 	github.com/google/gops v0.3.17
 	github.com/google/renameio v1.0.0
 	github.com/goreleaser/goreleaser v0.160.0
+	github.com/gorilla/mux v1.8.0
 	github.com/grpc-ecosystem/go-grpc-middleware v1.2.2
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.3.0
 	github.com/iancoleman/strcase v0.1.3 // indirect

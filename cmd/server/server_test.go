@@ -221,6 +221,8 @@ func testHTTPRequest(addr string) func(*testing.T) {
 				req, err := http.NewRequestWithContext(ctx, http.MethodPost, addr, bytes.NewReader(reqBytes))
 				require.NoError(t, err, "Failed to create request")
 
+				req.Header.Set("Content-Type", "application/json")
+
 				resp, err := c.Do(req)
 				require.NoError(t, err, "HTTP request failed")
 
