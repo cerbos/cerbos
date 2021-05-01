@@ -1,0 +1,141 @@
+---
+# Config map used to configure Cerbos. 
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: cerbos-sidecar-demo
+  labels:
+    app.kubernetes.io/name: cerbos-sidecar-demo
+    app.kubernetes.io/component: cerbos
+    app.kubernetes.io/version: "0.0.1"
+data:
+  "config.yaml": |-
+      server:
+        # Configure Cerbos to listen on a Unix domain socket.
+        httpListenAddr: "unix:/sock/cerbos.sock"
+      storage:
+        driver: disk
+        disk:
+          directory: /policies
+          watchForChanges: false
+---
+# Application deployment with Cerbos as a sidecar.
+# Note that in this example we are simply proxying requests received
+# by the main application (application container) to the Cerbos
+# sidecar (`cerbos` container) for demonstration purposes. In a real
+# production deployment the main application would not expose Cerbos
+# to the outside world at all. It would communicate with the Cerbos
+# sidecar privately to make policy decisions about the actions that
+# it is performing.
+#
+# Bonus: You can re-purpose this example to deploy Cerbos in an
+# environment that requires SPIFFE workload identities and/or
+# regular certificate rotation and access restrictions. See the
+# ghostunnel documentation at https://github.com/ghostunnel/ghostunnel
+# for more information.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cerbos-sidecar-demo
+  labels:
+    app.kubernetes.io/name: cerbos-sidecar-demo
+    app.kubernetes.io/component: cerbos-sidecar-demo
+    app.kubernetes.io/version: "0.0.1"
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: cerbos-sidecar-demo
+      app.kubernetes.io/component: cerbos-sidecar-demo
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: cerbos-sidecar-demo
+        app.kubernetes.io/component: cerbos-sidecar-demo
+    spec:
+      containers:
+        ########################################################################
+        # Application container. Replace with your own application definition. #
+        ########################################################################
+        - name: application
+          image: "ghostunnel/ghostunnel"
+          imagePullPolicy: IfNotPresent
+          args:
+            - "server"
+            - "--listen=:3592"
+            - "--target=unix:/sock/cerbos.sock"
+            - "--cert=/certs/tls.crt"
+            - "--key=/certs/tls.key"
+            - "--disable-authentication"
+          ports:
+            - name: http
+              containerPort: 3592
+          livenessProbe:
+            httpGet:
+              path: /_cerbos/health
+              port: http
+              scheme: HTTPS
+          readinessProbe:
+            httpGet:
+              path: /_cerbos/health
+              port: http
+              scheme: HTTPS
+          volumeMounts:
+            # Mount the shared volume containing the socket
+            - name: sock
+              mountPath: /sock
+            - name: certs
+              mountPath: /certs
+        ##################
+        # Cerbos sidecar #
+        ##################
+        - name: cerbos
+          image: "{app-docker-img}"
+          imagePullPolicy: IfNotPresent
+          args:
+            - "server"
+            - "--config=/config/config.yaml"
+            - "--log-level=INFO"
+          volumeMounts:
+            # Mount the shared volume containing the socket
+            - name: sock
+              mountPath: /sock
+            - name: config
+              mountPath: /config
+              readOnly: true
+            - name: policies
+              mountPath: /policies
+      volumes:
+        # Shared volume containing the socket.
+        - name: sock
+          emptyDir: {}
+        - name: config
+          configMap:
+            name: cerbos-sidecar-demo
+        - name: certs
+          secret:
+            secretName: cerbos-sidecar-demo
+        - name: policies
+          emptyDir: {}
+---
+# Use cert-manager to issue a certificate to the application.
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: cerbos-sidecar-demo
+  labels:
+    app.kubernetes.io/name: cerbos-sidecar-demo
+    app.kubernetes.io/component: cerbos-sidecar-demo
+    app.kubernetes.io/version: "0.0.1"
+spec:
+  isCA: true
+  secretName: cerbos-sidecar-demo
+  dnsNames:
+    - cerbos-sidecar-demo.default.svc.cluster.local
+    - cerbos-sidecar-demo.default.svc
+    - cerbos-sidecar-demo.default
+    - cerbos-sidecar-demo
+  issuerRef:
+    name: selfsigned-cluster-issuer
+    kind: ClusterIssuer
+    group: cert-manager.io
