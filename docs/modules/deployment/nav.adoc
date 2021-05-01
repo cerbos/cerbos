@@ -1,4 +1,4 @@
-.Deployment
+.xref:index.adoc[Deployment patterns]
+- xref:k8s-service.adoc[Kubernetes Service]
+- xref:k8s-sidecar.adoc[Kubernetes Sidecar]
 - Systemd Service
-- Kubernetes Service
-- Kubernetes Sidecar

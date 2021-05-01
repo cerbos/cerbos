@@ -10,12 +10,33 @@ curl -L {app-url}/releases/download/v{app-version}/{app-name}-{app-version}.tgz
 tar xvf {app-name}-{app-version}.tgz
 ----
 
-You can view all the available configuration options by running the following command:
+You can view all the available configuration values for the chart by running the following command:
 
 [source,sh,subs="attributes"]
 ----
 helm show values ./{app-name}
 ----
+
+.Securing Cerbos with TLS
+****
+
+Cerbos endpoints can be secured with TLS by providing a secret containing the certificate and its private key in the link:https://cert-manager.io[cert-manager] format:
+
+`tls.crt`:: Certificate chain. Required.
+`tls.key`:: Private key. Required.
+`ca.crt`:: Trust chain. Optional.
+
+During installation, provide the name of the Kubernetes secret containing the certificates by using the `cerbos.tlsSecretName` value.
+
+[source,sh,subs="attributes"]
+----
+helm install cerbos ./cerbos --set=cerbos.tlsSecretName=my-certificate-secret
+----
+
+If you require advanced features such as automatic certificate reloading, workload identities or mTLS, we recommend deploying a proxy server like link:https://www.envoyproxy.io[Envoy], link:https://github.com/ghostunnel/ghostunnel[Ghostunnel] or link:https://traefik.io[Traefik] as a frontend to the Cerbos server. See the xref:deployment:k8s-sidecar.adoc[Kubernetes sidecar] documentation for an example of deploying Cerbos as a sidecar to Ghostunnel. 
+****
+
+
 
 == Deploy Cerbos configured to read policies from a GitHub repository
 

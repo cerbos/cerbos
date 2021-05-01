@@ -1,0 +1,22 @@
+include::ROOT:partial$attributes.adoc[]
+
+= Cerbos deployment patterns
+
+Cerbos can be deployed as a service or as a sidecar. Which mode to choose depends on your requirements.
+
+== Service model
+
+image::service_deployment.png[Service model]
+
+* Central policy decision point shared by a group of applications.
+* Cerbos can be upgraded independently from the applications — reducing maintenance overhead.
+* In a busy environment, careful capacity planning would be required to ensure that the central Cerbos endpoint does not become a bottleneck.
+
+
+== Sidecar model
+
+image::sidecar_deployment.png[Sidecar model]
+
+* Each application instance gets its own Cerbos instance — ensuring high performance and availability.
+* Upgrades to Cerbos would require a rolling update to all the application instances.
+* Policy updates could take slightly longer to propagate to all the individual application instances — resulting in a period where both the old and new policies are in effect at the same time.

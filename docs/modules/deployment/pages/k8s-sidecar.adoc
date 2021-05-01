@@ -1,0 +1,20 @@
+include::ROOT:partial$attributes.adoc[]
+
+= Deploy Cerbos as a sidecar
+
+The sidecar deployment model might be a preferrable option under the following circumstances:
+
+* You have a self-contained application that does not need to share policies with other applications in your environment.
+* You prefer to ship policy changes as application updates by bundling the two together.
+* You are concerned about network latency.
+
+Cerbos supports serving the API over a Unix domain socket. This allows your application container to securely communicate with the Cerbos service with no network overhead. Because the Cerbos server is only listening over a Unix domain socket, no other applications in your network will be able to communicate with it — thus providing secrecy as a bonus side effect.
+
+The following example illustrates a Kubernetes deployment with Cerbos as a sidecar. 
+
+IMPORTANT: We are using link:https://github.com/ghostunnel/ghostunnel[ghostunnel] as the application container for demonstration purposes only. In a real production deployment the Cerbos endpoint should not be exposed to the network.
+
+[source,yaml,subs="attributes"]
+----
+include::example$cerbos-sidecar-demo.yaml[]
+----
