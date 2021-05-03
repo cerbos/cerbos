@@ -20,6 +20,9 @@ clean-tools:
 .PHONY: lint
 lint: $(GOLANGCI_LINT)
 	@ $(GOLANGCI_LINT) run --config=.golangci.yaml 
+
+.PHONY: lint-helm
+lint-helm:
 	@ deploy/charts/validate.sh
 
 .PHONY: generate
