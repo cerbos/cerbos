@@ -29,4 +29,9 @@ message CodeGenTestCase {
     int32 want_num_conditions = 4;
 }
 
-
+message CelTestCase {
+    policy.v1.Match condition = 1;
+    request.v1.CheckRequest input = 2;
+    bool want = 3;
+    bool want_error = 4;
+}

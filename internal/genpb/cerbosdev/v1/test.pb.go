@@ -229,6 +229,77 @@ func (x *CodeGenTestCase) GetWantNumConditions() int32 {
 	return 0
 }
 
+type CelTestCase struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Condition *v12.Match       `protobuf:"bytes,1,opt,name=condition,proto3" json:"condition,omitempty"`
+	Input     *v1.CheckRequest `protobuf:"bytes,2,opt,name=input,proto3" json:"input,omitempty"`
+	Want      bool             `protobuf:"varint,3,opt,name=want,proto3" json:"want,omitempty"`
+	WantError bool             `protobuf:"varint,4,opt,name=want_error,json=wantError,proto3" json:"want_error,omitempty"`
+}
+
+func (x *CelTestCase) Reset() {
+	*x = CelTestCase{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_cerbosdev_v1_test_proto_msgTypes[3]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *CelTestCase) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CelTestCase) ProtoMessage() {}
+
+func (x *CelTestCase) ProtoReflect() protoreflect.Message {
+	mi := &file_cerbosdev_v1_test_proto_msgTypes[3]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CelTestCase.ProtoReflect.Descriptor instead.
+func (*CelTestCase) Descriptor() ([]byte, []int) {
+	return file_cerbosdev_v1_test_proto_rawDescGZIP(), []int{3}
+}
+
+func (x *CelTestCase) GetCondition() *v12.Match {
+	if x != nil {
+		return x.Condition
+	}
+	return nil
+}
+
+func (x *CelTestCase) GetInput() *v1.CheckRequest {
+	if x != nil {
+		return x.Input
+	}
+	return nil
+}
+
+func (x *CelTestCase) GetWant() bool {
+	if x != nil {
+		return x.Want
+	}
+	return false
+}
+
+func (x *CelTestCase) GetWantError() bool {
+	if x != nil {
+		return x.WantError
+	}
+	return false
+}
+
 var File_cerbosdev_v1_test_proto protoreflect.FileDescriptor
 
 var file_cerbosdev_v1_test_proto_rawDesc = []byte{
@@ -281,11 +352,21 @@ var file_cerbosdev_v1_test_proto_rawDesc = []byte{
 	0x12, 0x2e, 0x0a, 0x13, 0x77, 0x61, 0x6e, 0x74, 0x5f, 0x6e, 0x75, 0x6d, 0x5f, 0x63, 0x6f, 0x6e,
 	0x64, 0x69, 0x74, 0x69, 0x6f, 0x6e, 0x73, 0x18, 0x04, 0x20, 0x01, 0x28, 0x05, 0x52, 0x11, 0x77,
 	0x61, 0x6e, 0x74, 0x4e, 0x75, 0x6d, 0x43, 0x6f, 0x6e, 0x64, 0x69, 0x74, 0x69, 0x6f, 0x6e, 0x73,
-	0x42, 0x42, 0x5a, 0x40, 0x67, 0x69, 0x74, 0x68, 0x75, 0x62, 0x2e, 0x63, 0x6f, 0x6d, 0x2f, 0x63,
-	0x65, 0x72, 0x62, 0x6f, 0x73, 0x2f, 0x63, 0x65, 0x72, 0x62, 0x6f, 0x73, 0x2f, 0x69, 0x6e, 0x74,
-	0x65, 0x72, 0x6e, 0x61, 0x6c, 0x2f, 0x67, 0x65, 0x6e, 0x70, 0x62, 0x2f, 0x63, 0x65, 0x72, 0x62,
-	0x6f, 0x73, 0x64, 0x65, 0x76, 0x2f, 0x76, 0x31, 0x3b, 0x63, 0x65, 0x72, 0x62, 0x6f, 0x73, 0x64,
-	0x65, 0x76, 0x76, 0x31, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
+	0x22, 0xa0, 0x01, 0x0a, 0x0b, 0x43, 0x65, 0x6c, 0x54, 0x65, 0x73, 0x74, 0x43, 0x61, 0x73, 0x65,
+	0x12, 0x2e, 0x0a, 0x09, 0x63, 0x6f, 0x6e, 0x64, 0x69, 0x74, 0x69, 0x6f, 0x6e, 0x18, 0x01, 0x20,
+	0x01, 0x28, 0x0b, 0x32, 0x10, 0x2e, 0x70, 0x6f, 0x6c, 0x69, 0x63, 0x79, 0x2e, 0x76, 0x31, 0x2e,
+	0x4d, 0x61, 0x74, 0x63, 0x68, 0x52, 0x09, 0x63, 0x6f, 0x6e, 0x64, 0x69, 0x74, 0x69, 0x6f, 0x6e,
+	0x12, 0x2e, 0x0a, 0x05, 0x69, 0x6e, 0x70, 0x75, 0x74, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0b, 0x32,
+	0x18, 0x2e, 0x72, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x2e, 0x76, 0x31, 0x2e, 0x43, 0x68, 0x65,
+	0x63, 0x6b, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x52, 0x05, 0x69, 0x6e, 0x70, 0x75, 0x74,
+	0x12, 0x12, 0x0a, 0x04, 0x77, 0x61, 0x6e, 0x74, 0x18, 0x03, 0x20, 0x01, 0x28, 0x08, 0x52, 0x04,
+	0x77, 0x61, 0x6e, 0x74, 0x12, 0x1d, 0x0a, 0x0a, 0x77, 0x61, 0x6e, 0x74, 0x5f, 0x65, 0x72, 0x72,
+	0x6f, 0x72, 0x18, 0x04, 0x20, 0x01, 0x28, 0x08, 0x52, 0x09, 0x77, 0x61, 0x6e, 0x74, 0x45, 0x72,
+	0x72, 0x6f, 0x72, 0x42, 0x42, 0x5a, 0x40, 0x67, 0x69, 0x74, 0x68, 0x75, 0x62, 0x2e, 0x63, 0x6f,
+	0x6d, 0x2f, 0x63, 0x65, 0x72, 0x62, 0x6f, 0x73, 0x2f, 0x63, 0x65, 0x72, 0x62, 0x6f, 0x73, 0x2f,
+	0x69, 0x6e, 0x74, 0x65, 0x72, 0x6e, 0x61, 0x6c, 0x2f, 0x67, 0x65, 0x6e, 0x70, 0x62, 0x2f, 0x63,
+	0x65, 0x72, 0x62, 0x6f, 0x73, 0x64, 0x65, 0x76, 0x2f, 0x76, 0x31, 0x3b, 0x63, 0x65, 0x72, 0x62,
+	0x6f, 0x73, 0x64, 0x65, 0x76, 0x76, 0x31, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
 }
 
 var (
@@ -300,27 +381,32 @@ func file_cerbosdev_v1_test_proto_rawDescGZIP() []byte {
 	return file_cerbosdev_v1_test_proto_rawDescData
 }
 
-var file_cerbosdev_v1_test_proto_msgTypes = make([]protoimpl.MessageInfo, 4)
+var file_cerbosdev_v1_test_proto_msgTypes = make([]protoimpl.MessageInfo, 5)
 var file_cerbosdev_v1_test_proto_goTypes = []interface{}{
 	(*EngineTestCase)(nil),                 // 0: cerbosdev.v1.EngineTestCase
 	(*CompileTestCase)(nil),                // 1: cerbosdev.v1.CompileTestCase
 	(*CodeGenTestCase)(nil),                // 2: cerbosdev.v1.CodeGenTestCase
-	nil,                                    // 3: cerbosdev.v1.CompileTestCase.InputDefsEntry
-	(*v1.CheckResourceBatchRequest)(nil),   // 4: request.v1.CheckResourceBatchRequest
-	(*v11.CheckResourceBatchResponse)(nil), // 5: response.v1.CheckResourceBatchResponse
-	(*v12.Policy)(nil),                     // 6: policy.v1.Policy
+	(*CelTestCase)(nil),                    // 3: cerbosdev.v1.CelTestCase
+	nil,                                    // 4: cerbosdev.v1.CompileTestCase.InputDefsEntry
+	(*v1.CheckResourceBatchRequest)(nil),   // 5: request.v1.CheckResourceBatchRequest
+	(*v11.CheckResourceBatchResponse)(nil), // 6: response.v1.CheckResourceBatchResponse
+	(*v12.Policy)(nil),                     // 7: policy.v1.Policy
+	(*v12.Match)(nil),                      // 8: policy.v1.Match
+	(*v1.CheckRequest)(nil),                // 9: request.v1.CheckRequest
 }
 var file_cerbosdev_v1_test_proto_depIdxs = []int32{
-	4, // 0: cerbosdev.v1.EngineTestCase.input:type_name -> request.v1.CheckResourceBatchRequest
-	5, // 1: cerbosdev.v1.EngineTestCase.want_response:type_name -> response.v1.CheckResourceBatchResponse
-	3, // 2: cerbosdev.v1.CompileTestCase.input_defs:type_name -> cerbosdev.v1.CompileTestCase.InputDefsEntry
-	6, // 3: cerbosdev.v1.CodeGenTestCase.input_policy:type_name -> policy.v1.Policy
-	6, // 4: cerbosdev.v1.CompileTestCase.InputDefsEntry.value:type_name -> policy.v1.Policy
-	5, // [5:5] is the sub-list for method output_type
-	5, // [5:5] is the sub-list for method input_type
-	5, // [5:5] is the sub-list for extension type_name
-	5, // [5:5] is the sub-list for extension extendee
-	0, // [0:5] is the sub-list for field type_name
+	5, // 0: cerbosdev.v1.EngineTestCase.input:type_name -> request.v1.CheckResourceBatchRequest
+	6, // 1: cerbosdev.v1.EngineTestCase.want_response:type_name -> response.v1.CheckResourceBatchResponse
+	4, // 2: cerbosdev.v1.CompileTestCase.input_defs:type_name -> cerbosdev.v1.CompileTestCase.InputDefsEntry
+	7, // 3: cerbosdev.v1.CodeGenTestCase.input_policy:type_name -> policy.v1.Policy
+	8, // 4: cerbosdev.v1.CelTestCase.condition:type_name -> policy.v1.Match
+	9, // 5: cerbosdev.v1.CelTestCase.input:type_name -> request.v1.CheckRequest
+	7, // 6: cerbosdev.v1.CompileTestCase.InputDefsEntry.value:type_name -> policy.v1.Policy
+	7, // [7:7] is the sub-list for method output_type
+	7, // [7:7] is the sub-list for method input_type
+	7, // [7:7] is the sub-list for extension type_name
+	7, // [7:7] is the sub-list for extension extendee
+	0, // [0:7] is the sub-list for field type_name
 }
 
 func init() { file_cerbosdev_v1_test_proto_init() }
@@ -365,6 +451,18 @@ func file_cerbosdev_v1_test_proto_init() {
 				return nil
 			}
 		}
+		file_cerbosdev_v1_test_proto_msgTypes[3].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*CelTestCase); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
 	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
@@ -372,7 +470,7 @@ func file_cerbosdev_v1_test_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_cerbosdev_v1_test_proto_rawDesc,
 			NumEnums:      0,
-			NumMessages:   4,
+			NumMessages:   5,
 			NumExtensions: 0,
 			NumServices:   0,
 		},
