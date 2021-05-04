@@ -12,7 +12,7 @@ import (
 	policyv1 "github.com/cerbos/cerbos/internal/genpb/policy/v1"
 )
 
-func generateCELProgram(parent string, m *policyv1.Match) (cel.Program, error) {
+func GenerateCELProgram(parent string, m *policyv1.Match) (cel.Program, error) {
 	env, err := cel.NewEnv(
 		cel.Declarations(decls.NewVar("request", decls.NewMapType(decls.String, decls.Dyn))),
 		cel.Macros(parser.AllMacros...),

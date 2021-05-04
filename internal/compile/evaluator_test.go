@@ -1,14 +1,20 @@
 package compile
 
 import (
+	"bytes"
 	"testing"
 
+	"github.com/open-policy-agent/opa/ast"
 	"github.com/open-policy-agent/opa/rego"
 	"github.com/stretchr/testify/require"
+	"google.golang.org/protobuf/encoding/protojson"
 
 	"github.com/cerbos/cerbos/internal/codegen"
+	cerbosdevv1 "github.com/cerbos/cerbos/internal/genpb/cerbosdev/v1"
 	sharedv1 "github.com/cerbos/cerbos/internal/genpb/shared/v1"
 	"github.com/cerbos/cerbos/internal/namer"
+	"github.com/cerbos/cerbos/internal/test"
+	"github.com/cerbos/cerbos/internal/util"
 )
 
 func TestProcessResultSet(t *testing.T) {
@@ -207,4 +213,46 @@ func TestProcessResultSet(t *testing.T) {
 			require.Equal(t, tc.want, have)
 		})
 	}
+}
+
+func TestCELEvaluator(t *testing.T) {
+	testCases := test.LoadTestCases(t, "cel_eval")
+
+	for _, tcase := range testCases {
+		tcase := tcase
+		t.Run(tcase.Name, func(t *testing.T) {
+			tc := readCELTestCase(t, tcase.Input)
+			prg, err := codegen.GenerateCELProgram("test", tc.Condition)
+			require.NoError(t, err)
+
+			requestJSON, err := protojson.Marshal(tc.Input)
+			require.NoError(t, err)
+
+			value, err := ast.ValueFromReader(bytes.NewReader(requestJSON))
+			require.NoError(t, err)
+
+			input, err := ast.ValueToInterface(value, nil)
+			require.NoError(t, err)
+
+			ceval := &CELConditionEvaluator{prg: prg}
+			retVal, err := ceval.Eval(input)
+
+			if tc.WantError {
+				require.Error(t, err)
+				return
+			}
+
+			require.NoError(t, err)
+			require.Equal(t, tc.Want, retVal)
+		})
+	}
+}
+
+func readCELTestCase(t *testing.T, data []byte) *cerbosdevv1.CelTestCase {
+	t.Helper()
+
+	tc := &cerbosdevv1.CelTestCase{}
+	require.NoError(t, util.ReadJSONOrYAML(bytes.NewReader(data), tc))
+
+	return tc
 }

@@ -1,0 +1,30 @@
+---
+condition:
+  all:
+    of:
+      - expr: '"mark"+"eting" == "marketing"'
+      - expr: '"mark" > "eting"'
+      - expr: request.principal.attr.department.contains("arket")
+      - expr: request.resource.attr.department.endsWith("ing")
+      - expr: int("42") == 42
+      - expr: request.principal.attr.department.matches("^[mM].*g$")
+      - expr: size(request.principal.attr.department) == 9
+      - expr: request.resource.attr.department.startsWith("mark")
+input: {
+  "requestId": "test",
+  "actions": ["*"],
+  "principal": {
+    "id": "john",
+    "roles": ["employee"],
+    "attr": {
+      "department": "marketing"
+    }
+  },
+  "resource": {
+    "name": "leave_request",
+    "attr": {
+      "department": "marketing"
+    }
+  }
+}
+want: true

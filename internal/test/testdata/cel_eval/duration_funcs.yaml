@@ -1,0 +1,26 @@
+---
+condition:
+  all:
+    of:
+      - expr: duration(request.resource.attr.cooldownPeriod).getSeconds() == 3750
+      - expr: duration(request.resource.attr.cooldownPeriod).getHours() == 1
+      - expr: duration(request.resource.attr.cooldownPeriod).getMilliseconds() == 3750000
+      - expr: duration(request.resource.attr.cooldownPeriod).getMinutes() == 62
+input: {
+  "requestId": "test",
+  "actions": ["*"],
+  "principal": {
+    "id": "john",
+    "roles": ["employee"],
+    "attr": {
+      "department": "marketing"
+    }
+  },
+  "resource": {
+    "name": "leave_request",
+    "attr": {
+      "cooldownPeriod": "3750s"
+    }
+  }
+}
+want: true

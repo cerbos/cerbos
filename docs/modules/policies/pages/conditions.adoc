@@ -4,7 +4,7 @@ include::ROOT:partial$attributes.adoc[]
 
 A powerful feature of Cerbos policies is the ability to define conditions that are evaluated against the data provided in the request. Conditions can be written in the link:https://github.com/google/cel-spec/blob/master/doc/intro.md[Common Expression Language (CEL)] or link:https://www.openpolicyagent.org/docs/latest/policy-language/[Rego].
 
-Conditions are defined in policies using the `condition` field. CEL conditions are defined under the `match` key and Rego are defined under the `script` key. Only one kind of condition is allowed. You cannot mix both in a single `condition` block.
+Conditions are defined in policies using the `condition` field. CEL conditions are defined under the `match` key and Rego conditions are defined under the `script` key. Only one kind of condition is allowed. You cannot mix both in a single `condition` block.
 
 
 .CEL condition
@@ -107,6 +107,155 @@ condition:
         (request.resource.attr.dev == true || matches(request.resource.attr.id, "^[98][0-9]+")) &&
         !(request.resource.attr.qa == true || request.resource.attr.canary == true))
 ----
+
+
+
+=== Operators
+
+NOTE: CEL has many builtin functions and operators. The fully up-to-date list can be found at https://github.com/google/cel-spec/blob/master/doc/langdef.md#list-of-standard-definitions. 
+
+[caption=]
+[%header,cols=".^1m,.^4",grid=rows]
+|===
+| Operator | Description 
+| !        | Logical negation (NOT) 
+| -        | Subtraction/numeric negation 
+| !=       | Unequals
+| %        | Modulo
+| &&       | Logical AND
+| \|\|     | Logical OR
+| *        | Multiplication 
+| +        | Addition/concatenation 
+| /        | Division 
+| <=       | Less than or equal to
+| <        | Less than
+| ==       | Equals
+| >=       | Greater than or equal to
+| >        | Greater than
+| in       | Membership in lists or maps
+|===
+
+
+=== Lists and maps
+
+The code examples in the following table all evaluate to `true` given a principal with the following attributes:
+
+[source,json,linenums]
+----
+...
+"principal": {
+  "name": "elmer_fudd",
+  "attr": {
+    "id": "125",
+    "teams": ["design", "product_marketing", "communications"],
+    "clients": {
+      "acme": {"active": true},
+      "bb inc": {"active": true}
+    }
+  }
+}
+...
+----
+
+[caption=]
+[%header,cols=".^1m,.^2,4m",grid=rows]
+|===
+| Operator/Function | Description | Example 
+| in       | Check whether the given element is contained in the list or map | ("design" in request.principal.attr.teams) && ("acme" in request.principal.attr.clients)
+| []       | Index into a list or a map | request.principal.attr.teams[0] == "design" && request.principal.attr.clients["acme"]["active"] == true
+| size     | Number of elements in a list or map | size(request.principal.attr.teams) == 3 && size(request.principal.attr.clients) == 2 
+|===
+
+
+=== Strings 
+
+The code examples in the table all evaluate to `true` given a resource with the following attributes:
+
+[source,json,linenums]
+----
+...
+"resource": {
+  "name": "leave_request",
+  "attr": {
+    "id": "125",
+    "department": "marketing"
+  }
+}
+...
+----
+
+[caption=]
+[%header,cols=".^1m,.^2,4m",grid=rows]
+|===
+| Function | Description | Example 
+| contains | Check whether a string contains the given substring | request.resource.attr.department.contains("arket")
+| endsWith | Check whether a string has the given suffix | request.resource.attr.department.endsWith("ing")
+| matches  | Check whether a string matches a link:https://github.com/google/re2/wiki/Syntax[RE2] regular expression | request.resource.attr.department.matches("^[mM].*g$")
+| size     | Get the length of the string | size(request.resource.attr.department) == 9  
+| startsWith | Check whether a string has the given prefix | request.resource.attr.department.startsWith("mark")
+|===
+
+
+=== Durations
+
+The code examples in the table all evaluate to `true` given a resource with the following attributes:
+
+[source,json,linenums]
+----
+...
+"resource": {
+  "name": "leave_request",
+  "attr": {
+    "cooldownPeriod": "3750s"
+  }
+}
+...
+----
+
+[caption=]
+[%header,cols=".^1m,.^2,4m",grid=rows]
+|===
+| Function | Description | Example 
+| duration | Convert a string to a duration. The string must contain a valid duration in seconds suffixed by `s`. E.g. `3750s` | duration(request.resource.attr.cooldownPeriod).getSeconds == 3750
+| getHours | Get hours from a timestamp | timestamp(request.resource.attr.cooldownPeriod).getHours() == 1
+| getMilliseconds | Get milliseconds from a timestamp | timestamp(request.resource.attr.lastAccessed).getMilliseconds() == 3750000
+| getMinutes | Get minutes from a timestamp | timestamp(request.resource.attr.lastAccessed).getMinutes() == 62
+| getSeconds | Get seconds from a timestamp | timestamp(request.resource.attr.lastAccessed).getSeconds() == 3750
+|===
+
+=== Timestamps
+
+The code examples in the table all evaluate to `true` given a resource with the following attributes:
+
+[source,json,linenums]
+----
+...
+"resource": {
+  "name": "leave_request",
+  "attr": {
+    "lastAccessed": "2021-04-20T10:00:20.021-05:00"
+  }
+}
+...
+----
+
+[caption=]
+[%header,cols=".^1m,.^2,4m",grid=rows]
+|===
+| Function | Description | Example 
+| timestamp | Convert an RFC3339 formatted string to a timestamp | timestamp(request.resource.attr.lastAccessed).getFullYear() == 2021
+| getDate  | Get day of month from a timestamp | timestamp(request.resource.attr.lastAccessed).getDate() == 20
+| getDayOfMonth | Get day of month from a timestamp. Returns a zero-based value | timestamp(request.resource.attr.lastAccessed).getDayOfMonth() == 19
+| getDayOfWeek | Get day of week from a timestamp. Returns a zero-based value where Sunday is 0 | timestamp(request.resource.attr.lastAccessed).getDayOfWeek() == 2
+| getDayOfYear | Get day of year from a timestamp. Returns a zero-based value | timestamp(request.resource.attr.lastAccessed).getDayOfYear() == 109
+| getFullYear | Get full year from a timestamp | timestamp(request.resource.attr.lastAccessed).getFullYear() == 2021 
+| getHours | Get hours from a timestamp | timestamp(request.resource.attr.lastAccessed).getHours() == 10
+| getMilliseconds | Get milliseconds from a timestamp | timestamp(request.resource.attr.lastAccessed).getMilliseconds() == 21
+| getMinutes | Get minutes from a timestamp | timestamp(request.resource.attr.lastAccessed).getMinutes() == 5
+| getMonth | Get month from a timestamp. Returns a zero-based value where January is 0 | timestamp(request.resource.attr.lastAccessed).getMonth() == 3
+| getSeconds | Get seconds from a timestamp | timestamp(request.resource.attr.lastAccessed).getSeconds() == 20
+|===
+
 
 == Rego conditions
 

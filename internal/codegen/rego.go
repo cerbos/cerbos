@@ -287,7 +287,7 @@ func (rg *RegoGen) addScript(parent, script string) error {
 }
 
 func (rg *RegoGen) addMatch(parent string, m *policyv1.Match) error {
-	prg, err := generateCELProgram(parent, m)
+	prg, err := GenerateCELProgram(parent, m)
 	if err != nil {
 		return err
 	}

@@ -289,3 +289,92 @@ var _ interface {
 	Cause() error
 	ErrorName() string
 } = CodeGenTestCaseValidationError{}
+
+// Validate checks the field values on CelTestCase with the rules defined in
+// the proto definition for this message. If any rules are violated, an error
+// is returned.
+func (m *CelTestCase) Validate() error {
+	if m == nil {
+		return nil
+	}
+
+	if v, ok := interface{}(m.GetCondition()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return CelTestCaseValidationError{
+				field:  "Condition",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if v, ok := interface{}(m.GetInput()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return CelTestCaseValidationError{
+				field:  "Input",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	// no validation rules for Want
+
+	// no validation rules for WantError
+
+	return nil
+}
+
+// CelTestCaseValidationError is the validation error returned by
+// CelTestCase.Validate if the designated constraints aren't met.
+type CelTestCaseValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e CelTestCaseValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e CelTestCaseValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e CelTestCaseValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e CelTestCaseValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e CelTestCaseValidationError) ErrorName() string { return "CelTestCaseValidationError" }
+
+// Error satisfies the builtin error interface
+func (e CelTestCaseValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sCelTestCase.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = CelTestCaseValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = CelTestCaseValidationError{}
