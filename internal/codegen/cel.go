@@ -7,17 +7,26 @@ import (
 	"github.com/google/cel-go/cel"
 	"github.com/google/cel-go/checker/decls"
 	"github.com/google/cel-go/ext"
-	"github.com/google/cel-go/parser"
 
 	policyv1 "github.com/cerbos/cerbos/internal/genpb/policy/v1"
 )
 
+const (
+	CELRequestIdent    = "request"
+	CELResourceAbbrev  = "R"
+	CELPrincipalAbbrev = "P"
+)
+
 func GenerateCELProgram(parent string, m *policyv1.Match) (cel.Program, error) {
 	env, err := cel.NewEnv(
-		cel.Declarations(decls.NewVar("request", decls.NewMapType(decls.String, decls.Dyn))),
-		cel.Macros(parser.AllMacros...),
+		cel.Declarations(
+			decls.NewVar(CELRequestIdent, decls.NewMapType(decls.String, decls.Dyn)),
+			decls.NewVar(CELResourceAbbrev, decls.NewMapType(decls.String, decls.Dyn)),
+			decls.NewVar(CELPrincipalAbbrev, decls.NewMapType(decls.String, decls.Dyn)),
+		),
 		ext.Strings(),
 		ext.Encoders(),
+		CerbosCELLib(),
 	)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create CEL environment: %w", err)

@@ -4,12 +4,35 @@ condition:
     of:
       - expr: '"mark"+"eting" == "marketing"'
       - expr: '"mark" > "eting"'
-      - expr: request.principal.attr.department.contains("arket")
-      - expr: request.resource.attr.department.endsWith("ing")
+      - expr: P.attr.department.contains("arket")
+      - expr: R.attr.department.endsWith("ing")
       - expr: int("42") == 42
-      - expr: request.principal.attr.department.matches("^[mM].*g$")
-      - expr: size(request.principal.attr.department) == 9
-      - expr: request.resource.attr.department.startsWith("mark")
+      - expr: P.attr.department.matches("^[mM].*g$")
+      - expr: size(P.attr.department) == 9
+      - expr: R.attr.department.startsWith("mark")
+      - expr: R.attr.department.charAt(1) == 'a'
+      - expr: R.attr.department.indexOf('a') == 1
+      - expr: R.attr.department.lastIndexOf('g') == 8
+      - expr: |-
+          "MARKETING".lowerAscii() == R.attr.department
+      - expr: |-
+          R.attr.department.replace("market", "engineer") == "engineering"
+      - expr: |-
+          "engineering".replace("e", "a", 1) == "angineering" && "engineering".replace("e", "a", -1) == "anginaaring"
+      - expr: |-
+          "a,b,c,d".split(",")[1] == "b"
+      - expr: |-
+          "a,b,c,d".split(",", 2)[1] == "b,c,d"
+      - expr: |-
+          R.attr.department.substring(4) == "eting" && R.attr.department.substring(4, 6) == "et"
+      - expr: |-
+          "  marketing  ".trim() == "marketing"
+      - expr: |-
+          R.attr.department.upperAscii() == "MARKETING"
+      - expr: |-
+          base64.decode("aGVsbG8=") == bytes("hello")
+      - expr: |-
+          base64.encode(bytes("hello")) == "aGVsbG8="
 input: {
   "requestId": "test",
   "actions": ["*"],

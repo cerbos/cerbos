@@ -1,0 +1,29 @@
+---
+condition:
+  all:
+    of:
+      - expr: |-
+          P.attr.ipv4Address.inIPAddrRange("192.168.0.0/24")
+      - expr: |-
+          P.attr.ipv6Address.inIPAddrRange("2001:db8::/48")
+      - expr: |-
+          timestamp(P.attr.lastLogin).timeSince() > duration("24h")
+input: {
+  "requestId": "test",
+  "actions": ["*"],
+  "principal": {
+    "id": "john",
+    "roles": ["employee"],
+    "attr": {
+      "department": "marketing",
+      "ipv4Address": "192.168.0.5",
+      "ipv6Address": "2001:0db8:0000:0000:0000:0000:1000:0000",
+      "lastLogin": "2021-04-20T10:05:20.021-05:00"
+    }
+  },
+  "resource": {
+    "name": "leave_request",
+    "attr": {}
+  }
+}
+want: true
