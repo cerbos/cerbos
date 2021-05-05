@@ -3,18 +3,29 @@ condition:
   all:
     of:
       - expr: |-
-          "design" in request.principal.attr.teams
+          "design" in P.attr.teams
       - expr: |-
-          "acme" in request.principal.attr.clients
+          "acme" in P.attr.clients
       - expr: |-
-          request.principal.attr.teams[0] == "design"
+          P.attr.teams[0] == "design"
       - expr: |-
-          request.principal.attr.clients["acme"]["active"] == true
+          P.attr.clients["acme"]["active"] == true
       - expr: |-
-          size(request.principal.attr.teams) == 3
+          size(P.attr.teams) == 4
       - expr: |-
-          size(request.principal.attr.clients) == 2
-
+          size(P.attr.clients) == 2
+      - expr: |-
+          has(P.attr.department)
+      - expr: |-
+          P.attr.teams.all(t, size(t) > 3)
+      - expr: |-
+          P.attr.teams.exists(t, t.startsWith("comm"))
+      - expr: |-
+          P.attr.teams.exists_one(t, t.startsWith("comm")) == false
+      - expr: |-
+          "DESIGN" in P.attr.teams.map(t, t.upperAscii())
+      - expr: |-
+          size(P.attr.teams.filter(t, t.matches("^comm"))) == 2
 input: {
   "requestId": "test",
   "actions": ["*"],
@@ -23,7 +34,7 @@ input: {
     "roles": ["employee"],
     "attr": {
       "department": "marketing",
-      "teams": ["design", "communications", "product"],
+      "teams": ["design", "communications", "product", "commercial"],
       "clients": {
         "acme": {"active": true},
         "bb inc": {"active": true}

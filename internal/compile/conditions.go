@@ -6,12 +6,14 @@ import (
 
 	"github.com/google/cel-go/cel"
 
+	"github.com/cerbos/cerbos/internal/codegen"
 	"github.com/cerbos/cerbos/internal/namer"
 )
 
 var (
 	ErrEmptyConditionIndex  = errors.New("empty condition index")
 	ErrNoMatchingConditions = errors.New("no matching conditions")
+	ErrUnexpectedInput      = errors.New("unexpected input")
 	ErrUnexpectedResult     = errors.New("unexpected result")
 )
 
@@ -35,7 +37,43 @@ type CELConditionEvaluator struct {
 }
 
 func (ce *CELConditionEvaluator) Eval(input interface{}) (bool, error) {
-	result, _, err := ce.prg.Eval(map[string]interface{}{"request": input})
+	if input == nil {
+		return false, fmt.Errorf("input should not be nil: %w", ErrUnexpectedInput)
+	}
+
+	req, ok := input.(map[string]interface{})
+	if !ok {
+		return false, fmt.Errorf("unexpected type for input [%T]: %w", input, ErrUnexpectedInput)
+	}
+
+	var abbrevR map[string]interface{}
+	var abbrevP map[string]interface{}
+
+	if resource, ok := req["resource"]; ok {
+		if r, ok := resource.(map[string]interface{}); ok {
+			abbrevR = r
+		} else {
+			return false, fmt.Errorf("unexpected type for 'resource' key in input [%T]: %w", resource, ErrUnexpectedInput)
+		}
+	} else {
+		return false, fmt.Errorf("missing 'resource' key in input: %w", ErrUnexpectedInput)
+	}
+
+	if principal, ok := req["principal"]; ok {
+		if p, ok := principal.(map[string]interface{}); ok {
+			abbrevP = p
+		} else {
+			return false, fmt.Errorf("unexpected type for 'principal' key in input [%T]: %w", principal, ErrUnexpectedInput)
+		}
+	} else {
+		return false, fmt.Errorf("missing 'principal' key in input: %w", ErrUnexpectedInput)
+	}
+
+	result, _, err := ce.prg.Eval(map[string]interface{}{
+		codegen.CELRequestIdent:    input,
+		codegen.CELResourceAbbrev:  abbrevR,
+		codegen.CELPrincipalAbbrev: abbrevP,
+	})
 	if err != nil {
 		return false, err
 	}

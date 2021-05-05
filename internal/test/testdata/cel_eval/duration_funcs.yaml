@@ -2,10 +2,11 @@
 condition:
   all:
     of:
-      - expr: duration(request.resource.attr.cooldownPeriod).getSeconds() == 3750
-      - expr: duration(request.resource.attr.cooldownPeriod).getHours() == 1
-      - expr: duration(request.resource.attr.cooldownPeriod).getMilliseconds() == 3750000
-      - expr: duration(request.resource.attr.cooldownPeriod).getMinutes() == 62
+      - expr: duration(R.attr.cooldownPeriod).getSeconds() == 3750
+      - expr: duration(R.attr.cooldownPeriod).getHours() == 1
+      - expr: duration(R.attr.cooldownPeriod).getMilliseconds() == 3750000
+      - expr: duration(R.attr.cooldownPeriod).getMinutes() == 62
+      - expr: timestamp(R.attr.lastAccessTime) - timestamp(R.attr.lastUpdateTime) < duration("36h") 
 input: {
   "requestId": "test",
   "actions": ["*"],
@@ -19,7 +20,9 @@ input: {
   "resource": {
     "name": "leave_request",
     "attr": {
-      "cooldownPeriod": "3750s"
+      "cooldownPeriod": "3750s",
+      "lastUpdateTime": "2021-05-01T13:34:12.024Z",
+      "lastAccessTime": "2021-05-02T14:24:22.034Z"
     }
   }
 }

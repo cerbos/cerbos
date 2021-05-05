@@ -2,10 +2,7 @@ include::ROOT:partial$attributes.adoc[]
 
 = Conditions
 
-A powerful feature of Cerbos policies is the ability to define conditions that are evaluated against the data provided in the request. Conditions can be written in the link:https://github.com/google/cel-spec/blob/master/doc/intro.md[Common Expression Language (CEL)] or link:https://www.openpolicyagent.org/docs/latest/policy-language/[Rego].
-
-Conditions are defined in policies using the `condition` field. CEL conditions are defined under the `match` key and Rego conditions are defined under the `script` key. Only one kind of condition is allowed. You cannot mix both in a single `condition` block.
-
+A powerful feature of Cerbos policies is the ability to define conditions that are evaluated against the data provided in the request. Conditions are written using the link:https://github.com/google/cel-spec/blob/master/doc/intro.md[Common Expression Language (CEL)].
 
 .CEL condition
 [source,yaml,linenums]
@@ -18,26 +15,20 @@ condition:
         - expr: "GB" in request.resource.attr.geographies
 ----
 
+Within a condition block you have access to three special variables:
 
-.Rego condition
-[source,yaml,linenums]
-----
-condition:
-  script: input.resource.attr.owner == input.principal.id
-----
+`request`:: The entire request object containing data provided about the resource and the principal. Use dots to access nested fields. For example, the expression to get the principal's department attribute is `request.principal.attr.department`.
+`P`:: An alias for `request.principal` for accessing the principal object.
+`R`:: An alias for `request.resource` for accessing the resource object.
 
-
-== CEL conditions
-
-* You can access the request object using the special `request` variable. Use dots to access different fields of the request. For example, the expression to get the current principal ID is `request.principal.id`.
-* You can write complex expressions using the helpers provided by the `match` block. Ensure that the final result of evaluating the set of expression always produces a boolean true/false value. 
+Every condition expression must evaluate to a boolean true/false value. You can combine complex expressions together in a single condition block by using the `all`, `any`, or `none` operators.
 
 .Single boolean expression
 [source,yaml,linenums]
 ----
 condition:
   match:
-    expr: matches(request.principal.id, "^dev_.*")
+    expr: matches(P.id, "^dev_.*")
 ----
 
 .``all`` operator: all expressions must evaluate to true (logical AND)
@@ -47,9 +38,9 @@ condition:
   match:
     all:
       of:
-        - expr: request.resource.attr.status == "PENDING_APPROVAL"
-        - expr: "GB" in request.resource.attr.geographies
-        - expr: request.principal.attr.geography == "GB"
+        - expr: R.attr.status == "PENDING_APPROVAL"
+        - expr: "GB" in R.attr.geographies
+        - expr: P.attr.geography == "GB"
 ----
 
 .``any`` operator: only one of the expressions has to evaluate to true (logical OR)
@@ -59,9 +50,9 @@ condition:
   match:
     any:
       of:
-        - expr: request.resource.attr.status == "PENDING_APPROVAL"
-        - expr: "GB" in request.resource.attr.geographies
-        - expr: request.principal.attr.geography == "GB"
+        - expr: R.attr.status == "PENDING_APPROVAL"
+        - expr: "GB" in R.attr.geographies
+        - expr: P.attr.geography == "GB"
 ----
 
 
@@ -72,9 +63,9 @@ condition:
   match:
     none:
       of:
-        - expr: request.resource.attr.status == "PENDING_APPROVAL"
-        - expr: "GB" in request.resource.attr.geographies
-        - expr: request.principal.attr.geography == "GB"
+        - expr: R.attr.status == "PENDING_APPROVAL"
+        - expr: "GB" in R.attr.geographies
+        - expr: P.attr.geography == "GB"
 ----
 
 
@@ -85,15 +76,15 @@ condition:
   match:
     all:
       of:
-        - expr: request.resource.attr.status == "DRAFT"
+        - expr: R.attr.status == "DRAFT"
         - any:
             of: 
-              - expr: request.resource.attr.dev == true
-              - expr: matches(request.resource.attr.id, "^[98][0-9]+")
+              - expr: R.attr.dev == true
+              - expr: matches(R.attr.id, "^[98][0-9]+")
         - none:
             of:
-              - expr: request.resource.attr.qa == true
-              - expr: request.resource.attr.canary == true
+              - expr: R.attr.qa == true
+              - expr: R.attr.canary == true
 ----
 
 The above nested block is equivalent to the following:
@@ -103,14 +94,14 @@ The above nested block is equivalent to the following:
 condition:
   match:
     expr: |-
-      (request.resource.attr.status == "DRAFT" && 
-        (request.resource.attr.dev == true || matches(request.resource.attr.id, "^[98][0-9]+")) &&
-        !(request.resource.attr.qa == true || request.resource.attr.canary == true))
+      (R.attr.status == "DRAFT" && 
+        (R.attr.dev == true || matches(R.attr.id, "^[98][0-9]+")) &&
+        !(R.attr.qa == true || R.attr.canary == true))
 ----
 
 
 
-=== Operators
+== Operators
 
 NOTE: CEL has many builtin functions and operators. The fully up-to-date list can be found at https://github.com/google/cel-spec/blob/master/doc/langdef.md#list-of-standard-definitions. 
 
@@ -136,18 +127,85 @@ NOTE: CEL has many builtin functions and operators. The fully up-to-date list ca
 |===
 
 
-=== Lists and maps
+== Durations
 
-The code examples in the following table all evaluate to `true` given a principal with the following attributes:
+.Test data
+[source,json,linenums]
+----
+...
+"resource": {
+  "name": "leave_request",
+  "attr": {
+    "cooldownPeriod": "3750s",
+    "lastUpdateTime": "2021-05-01T13:34:12.024Z",
+    "lastAccessed": "2021-05-02T14:24:22.034Z"
+  }
+}
+...
+----
 
+[caption=]
+[%header,cols=".^1m,.^2,4m",grid=rows]
+|===
+| Function | Description | Example 
+| duration | Convert a string to a duration. The string must contain a valid duration suffixed by one of `ns`, `us`, `ms`, `s`, `m` or `h`. E.g. `3750s` | duration(R.attr.cooldownPeriod).getSeconds == 3750
+| getHours | Get hours from a timestamp | timestamp(R.attr.cooldownPeriod).getHours() == 1
+| getMilliseconds | Get milliseconds from a timestamp | timestamp(R.attr.lastAccessed).getMilliseconds() == 3750000
+| getMinutes | Get minutes from a timestamp | timestamp(R.attr.lastAccessed).getMinutes() == 62
+| getSeconds | Get seconds from a timestamp | timestamp(R.attr.lastAccessed).getSeconds() == 3750
+|===
+
+
+.Example: Assert that no more than 36 hours has elapsed between last access time and last update time 
+[source,yaml,linenums]
+----
+timestamp(R.attr.lastAccessed) - timestamp(R.attr.lastUpdateTime) < duration("36h")
+----
+
+.Example: Add a duration to a timestamp
+[source,yaml,linenums]
+----
+timestamp(R.attr.lastAccessed) + duration("24h") == timestamp("2021-05-03T14:24:22.034Z")
+----
+
+== IP Addresses
+
+NOTE: The IP address functions are Cerbos-specific extensions to CEL.
+
+.Test data
 [source,json,linenums]
 ----
 ...
 "principal": {
-  "name": "elmer_fudd",
+  "id": "elmer_fudd",
+  "attr": {
+    "ipv4Address": "192.168.0.10",
+    "ipv6Address": "2001:0db8:0000:0000:0000:0000:1000:0000"
+  }
+}
+...
+----
+
+[caption=]
+[%header,cols=".^1m,.^2,4m",grid=rows]
+|===
+| Function | Description | Example 
+| inIPAddrRange | Check whether the IP address is in the range defined by the CIDR | P.attr.ipv4Address.inIPAddrRange("192.168.0.0/24") && P.attr.ipv6Address.inIPAddrRange("2001:db8::/48")
+|===
+
+
+
+== Lists and maps
+
+.Test data
+[source,json,linenums]
+----
+...
+"principal": {
+  "id": "elmer_fudd",
   "attr": {
     "id": "125",
-    "teams": ["design", "product_marketing", "communications"],
+    "teams": ["design", "product_marketing", "communications", "commercial"],
     "clients": {
       "acme": {"active": true},
       "bb inc": {"active": true}
@@ -161,16 +219,20 @@ The code examples in the following table all evaluate to `true` given a principa
 [%header,cols=".^1m,.^2,4m",grid=rows]
 |===
 | Operator/Function | Description | Example 
-| in       | Check whether the given element is contained in the list or map | ("design" in request.principal.attr.teams) && ("acme" in request.principal.attr.clients)
-| []       | Index into a list or a map | request.principal.attr.teams[0] == "design" && request.principal.attr.clients["acme"]["active"] == true
-| size     | Number of elements in a list or map | size(request.principal.attr.teams) == 3 && size(request.principal.attr.clients) == 2 
+| []       | Index into a list or a map | P.attr.teams[0] == "design" && P.attr.clients["acme"]["active"] == true
+| all      | Check whether all elements in a list match the predicate | P.attr.teams.all(t, size(t) > 3)
+| exists   | Check whether at least one element matching the predicate exists | P.attr.teams.exists(t, t.startsWith("comm"))
+| exists_one | Check that only one element matching the predicate exists | P.attr.teams.exists_one(t, t.startsWith("comm")) == false
+| filter   | Filter a list using the predicate | size(P.attr.teams.filter(t, t.matches("^comm"))) == 2
+| in       | Check whether the given element is contained in the list or map | ("design" in P.attr.teams) && ("acme" in P.attr.clients)
+| map      | Transform each element in a list | "DESIGN" in P.attr.teams.map(t, t.upperAscii())
+| size     | Number of elements in a list or map | size(P.attr.teams) == 4 && size(P.attr.clients) == 2 
 |===
 
 
-=== Strings 
+== Strings 
 
-The code examples in the table all evaluate to `true` given a resource with the following attributes:
-
+.Test data
 [source,json,linenums]
 ----
 ...
@@ -188,45 +250,30 @@ The code examples in the table all evaluate to `true` given a resource with the 
 [%header,cols=".^1m,.^2,4m",grid=rows]
 |===
 | Function | Description | Example 
-| contains | Check whether a string contains the given substring | request.resource.attr.department.contains("arket")
-| endsWith | Check whether a string has the given suffix | request.resource.attr.department.endsWith("ing")
-| matches  | Check whether a string matches a link:https://github.com/google/re2/wiki/Syntax[RE2] regular expression | request.resource.attr.department.matches("^[mM].*g$")
-| size     | Get the length of the string | size(request.resource.attr.department) == 9  
-| startsWith | Check whether a string has the given prefix | request.resource.attr.department.startsWith("mark")
+| base64.encode | Encode as base64 | base64.encode(bytes("hello")) == "aGVsbG8="
+| base64.decode | Decode base64    | base64.decode("aGVsbG8=") == bytes("hello")
+| charAt   | Get the character at given index | R.attr.department.chartAt(1) == 'a'
+| contains | Check whether a string contains the given substring | R.attr.department.contains("arket")
+| endsWith | Check whether a string has the given suffix | R.attr.department.endsWith("ing")
+| indexOf  | Index of the first occurrence of the given character | R.attr.department.indexOf('a') == 1
+| lastIndexOf | Index of the last occurrence of the given character | R.attr.department.lastIndexOf('g') == 8
+| lowerAscii  | Convert ASCII characters to lowercase | "MARKETING".lowerAscii() == R.attr.department
+| matches  | Check whether a string matches a link:https://github.com/google/re2/wiki/Syntax[RE2] regular expression | R.attr.department.matches("^[mM].*g$")
+| replace  | Replace all occurrences of a substring | R.attr.department.replace("market", "engineer") == "engineering"
+| replace  | Replace with limits. Limit 0 replaces nothing, -1 replaces all. | "engineering".replace("e", "a", 1) == "angineering" && "engineering".replace("e", "a", -1) == "anginaaring"
+| size     | Get the length of the string | size(R.attr.department) == 9  
+| split    | Split a string using a delimiter | "a,b,c,d".split(",")[1] == "b"
+| split    | Split a string with limits. Limit 0 returns an empty list, 1 returns a list containing the original string. | "a,b,c,d".split(",", 2)[1] == "b,c,d"
+| startsWith | Check whether a string has the given prefix | R.attr.department.startsWith("mark")
+| substring | Selects a substring from the string | R.attr.department.substring(4) == "eting" && R.attr.department.substring(4, 6) == "et"
+| trim     | Remove whitespace from beginning and end | "  marketing  ".trim() == "marketing"
+| upperAscii | Convert ASCII characters to uppercase | R.attr.department.upperAscii() == "MARKETING"
 |===
 
 
-=== Durations
+== Timestamps
 
-The code examples in the table all evaluate to `true` given a resource with the following attributes:
-
-[source,json,linenums]
-----
-...
-"resource": {
-  "name": "leave_request",
-  "attr": {
-    "cooldownPeriod": "3750s"
-  }
-}
-...
-----
-
-[caption=]
-[%header,cols=".^1m,.^2,4m",grid=rows]
-|===
-| Function | Description | Example 
-| duration | Convert a string to a duration. The string must contain a valid duration in seconds suffixed by `s`. E.g. `3750s` | duration(request.resource.attr.cooldownPeriod).getSeconds == 3750
-| getHours | Get hours from a timestamp | timestamp(request.resource.attr.cooldownPeriod).getHours() == 1
-| getMilliseconds | Get milliseconds from a timestamp | timestamp(request.resource.attr.lastAccessed).getMilliseconds() == 3750000
-| getMinutes | Get minutes from a timestamp | timestamp(request.resource.attr.lastAccessed).getMinutes() == 62
-| getSeconds | Get seconds from a timestamp | timestamp(request.resource.attr.lastAccessed).getSeconds() == 3750
-|===
-
-=== Timestamps
-
-The code examples in the table all evaluate to `true` given a resource with the following attributes:
-
+.Test data
 [source,json,linenums]
 ----
 ...
@@ -243,30 +290,17 @@ The code examples in the table all evaluate to `true` given a resource with the 
 [%header,cols=".^1m,.^2,4m",grid=rows]
 |===
 | Function | Description | Example 
-| timestamp | Convert an RFC3339 formatted string to a timestamp | timestamp(request.resource.attr.lastAccessed).getFullYear() == 2021
-| getDate  | Get day of month from a timestamp | timestamp(request.resource.attr.lastAccessed).getDate() == 20
-| getDayOfMonth | Get day of month from a timestamp. Returns a zero-based value | timestamp(request.resource.attr.lastAccessed).getDayOfMonth() == 19
-| getDayOfWeek | Get day of week from a timestamp. Returns a zero-based value where Sunday is 0 | timestamp(request.resource.attr.lastAccessed).getDayOfWeek() == 2
-| getDayOfYear | Get day of year from a timestamp. Returns a zero-based value | timestamp(request.resource.attr.lastAccessed).getDayOfYear() == 109
-| getFullYear | Get full year from a timestamp | timestamp(request.resource.attr.lastAccessed).getFullYear() == 2021 
-| getHours | Get hours from a timestamp | timestamp(request.resource.attr.lastAccessed).getHours() == 10
-| getMilliseconds | Get milliseconds from a timestamp | timestamp(request.resource.attr.lastAccessed).getMilliseconds() == 21
-| getMinutes | Get minutes from a timestamp | timestamp(request.resource.attr.lastAccessed).getMinutes() == 5
-| getMonth | Get month from a timestamp. Returns a zero-based value where January is 0 | timestamp(request.resource.attr.lastAccessed).getMonth() == 3
-| getSeconds | Get seconds from a timestamp | timestamp(request.resource.attr.lastAccessed).getSeconds() == 20
+| timestamp | Convert an RFC3339 formatted string to a timestamp | timestamp(R.attr.lastAccessed).getFullYear() == 2021
+| getDate  | Get day of month from a timestamp | timestamp(R.attr.lastAccessed).getDate() == 20
+| getDayOfMonth | Get day of month from a timestamp. Returns a zero-based value | timestamp(R.attr.lastAccessed).getDayOfMonth() == 19
+| getDayOfWeek | Get day of week from a timestamp. Returns a zero-based value where Sunday is 0 | timestamp(R.attr.lastAccessed).getDayOfWeek() == 2
+| getDayOfYear | Get day of year from a timestamp. Returns a zero-based value | timestamp(R.attr.lastAccessed).getDayOfYear() == 109
+| getFullYear | Get full year from a timestamp | timestamp(R.attr.lastAccessed).getFullYear() == 2021 
+| getHours | Get hours from a timestamp | timestamp(R.attr.lastAccessed).getHours() == 10
+| getMilliseconds | Get milliseconds from a timestamp | timestamp(R.attr.lastAccessed).getMilliseconds() == 21
+| getMinutes | Get minutes from a timestamp | timestamp(R.attr.lastAccessed).getMinutes() == 5
+| getMonth | Get month from a timestamp. Returns a zero-based value where January is 0 | timestamp(R.attr.lastAccessed).getMonth() == 3
+| getSeconds | Get seconds from a timestamp | timestamp(R.attr.lastAccessed).getSeconds() == 20
+| timeSince | Time elapsed since the given timestamp to current time on the server. This is a Cerbos extension to CEL | timestamp(R.attr.lastAccessed).timeSince() > duration("1h")
 |===
 
-
-== Rego conditions
-
-* You can access the request object using the special `input` variable. Use dots to access different fields of the request. For example, the expression to get the current principal ID is `input.principal.id`.
-* Ensure that the final result of evaluating the Rego script always produces a single boolean true/false value. 
-
-
-[source,yaml,linenums]
-----
-condition:
-  script: |-
-    input.resource.attr.owner == input.principal.id;
-    regex.match("^dev_.*", input.principal.id);
-----
