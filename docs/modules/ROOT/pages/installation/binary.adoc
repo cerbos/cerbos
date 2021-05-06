@@ -16,9 +16,9 @@ Cerbos binaries are available for multiple operating systems and architectures.
 
 You can download the binaries by running the following command. Substitute `<BUNDLE>` with the appropriate value from the above table.
 
-[source,sh,subs="attributes"]
+[source,sh,subs="attributes,macros"]
 ----
-curl -H "X-JFrog-Art-Api:<YOUR_API_KEY>" -L -o {app-name}.tar.gz "{app-binaries-url}/<BUNDLE>"
+curl -H "X-JFrog-Art-Api:$$<$$YOUR_API_KEY$$>$$" -L -o {app-name}.tar.gz "{app-binaries-url}/$$<$$BUNDLE$$>$$"
 tar xvf {app-name}.tar.gz
 chmod +x {app-name}
 ----

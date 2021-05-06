@@ -4,9 +4,9 @@ include::partial$attributes.adoc[]
 
 Download the Helm package:
 
-[source,sh,subs="attributes"]
+[source,sh,subs="attributes,macros"]
 ----
-helm repo add cerbos https://cerbos.jfrog.io/artifactory/charts --username <YOUR_USERNAME> --password <YOUR_API_KEY>
+helm repo add cerbos https://cerbos.jfrog.io/artifactory/charts --username $$<$$YOUR_USERNAME$$>$$ --password $$<$$YOUR_API_KEY$$>$$
 helm repo update
 ----
 
