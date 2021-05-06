@@ -70,7 +70,7 @@ jobs:
         id: docs
 
       - name: Upload docs
-        run: curl -H "X-JFrog-Art-Api:${{ secrets.ARTIFACTORY_API_KEY }}" -T "docs/build/cerbos_docs.zip" "https://cerbos.jfrog.io/artifactory/helm/cerbos_${GITHUB_REF/refs\/tags\//}_docs.zip"
+        run: curl -H "X-JFrog-Art-Api:${{ secrets.ARTIFACTORY_API_KEY }}" -T "docs/build/cerbos_docs.zip" "https://cerbos.jfrog.io/artifactory/binaries/cerbos_${GITHUB_REF/refs\/tags\//}_docs.zip"
 
   releaseHelm:
     name: Release Helm chart

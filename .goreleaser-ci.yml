@@ -52,6 +52,3 @@ changelog:
       - '^chore:'
       - '^docs:'
       - '^test:'
-release:
-  extra_files:
-    - glob: ./docs/build/cerbos_docs.zip
