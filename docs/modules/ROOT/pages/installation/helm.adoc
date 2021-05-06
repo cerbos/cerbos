@@ -6,15 +6,15 @@ Download the Helm package:
 
 [source,sh,subs="attributes"]
 ----
-curl -L {app-url}/releases/download/v{app-version}/{app-name}-{app-version}.tgz
-tar xvf {app-name}-{app-version}.tgz
+helm repo add cerbos https://cerbos.jfrog.io/artifactory/charts --username <YOUR_USERNAME> --password <YOUR_API_KEY>
+helm repo update
 ----
 
 You can view all the available configuration values for the chart by running the following command:
 
 [source,sh,subs="attributes"]
 ----
-helm show values ./{app-name}
+helm show values cerbos/cerbos --version={app-version}
 ----
 
 .Securing Cerbos with TLS
@@ -30,7 +30,7 @@ During installation, provide the name of the Kubernetes secret containing the ce
 
 [source,sh,subs="attributes"]
 ----
-helm install cerbos ./cerbos --set=cerbos.tlsSecretName=my-certificate-secret
+helm install cerbos cerbos/cerbos --version={app-version} --set=cerbos.tlsSecretName=my-certificate-secret
 ----
 
 If you require advanced features such as automatic certificate reloading, workload identities or mTLS, we recommend deploying a proxy server like link:https://www.envoyproxy.io[Envoy], link:https://github.com/ghostunnel/ghostunnel[Ghostunnel] or link:https://traefik.io[Traefik] as a frontend to the Cerbos server. See the xref:deployment:k8s-sidecar.adoc[Kubernetes sidecar] documentation for an example of deploying Cerbos as a sidecar to Ghostunnel. 
@@ -87,7 +87,7 @@ cerbos:
 +
 [source,sh,subs="attributes"]
 ----
-helm install cerbos ./cerbos --values=git-values.yaml
+helm install cerbos cerbos/cerbos --version={app-version} --values=git-values.yaml
 ----
 
 
@@ -127,5 +127,5 @@ cerbos:
 +
 [source,sh,subs="attributes"]
 ----
-helm install cerbos ./cerbos --values=pv-values.yaml
+helm install cerbos cerbos/cerbos --version={app-version} --values=pv-values.yaml
 ----

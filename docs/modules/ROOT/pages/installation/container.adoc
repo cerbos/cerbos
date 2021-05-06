@@ -2,21 +2,8 @@ include::partial$attributes.adoc[]
 
 = Install from container
 
-.Logging into the container registry
-****
-
-* Create a Personal Access Token (PAT)
-** Click GitHub profile icon and go to menu:Settings[Developer Settings > Personal Access Tokens]
-** Create a new token with the `read:packages` scope
-* Use the token to login to container registry 
-+
-[source,sh]
-----
-echo YOUR_PAT | docker login ghcr.io -u YOUR_USERNAME --password-stdin
-----
-****
-
 [source,sh,subs="attributes"]
 ----
+echo YOUR_API_KEY | docker login cerbos.jfrog.io -u YOUR_USERNAME --password-stdin
 docker pull {app-docker-img}
 ----

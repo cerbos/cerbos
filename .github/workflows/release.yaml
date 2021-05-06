@@ -46,10 +46,6 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-go-
 
-      - name: Generate docs
-        uses: ./.github/actions/antora-docs
-        id: docs
-
       - name: GoReleaser
         uses: goreleaser/goreleaser-action@v2
         with:
@@ -59,6 +55,23 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           ARTIFACTORY_PROD_USERNAME: ${{ secrets.ARTIFACTORY_PROD_USERNAME }}
           ARTIFACTORY_PROD_SECRET: ${{ secrets.ARTIFACTORY_PROD_SECRET }}
+
+  releaseDocs:
+    name: Release Documentation
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+
+      - name: Generate docs
+        uses: ./.github/actions/antora-docs
+        id: docs
+
+      - name: Upload docs
+        run: curl -H "X-JFrog-Art-Api:${{ secrets.ARTIFACTORY_API_KEY }}" -T "docs/build/cerbos_docs.zip" "https://cerbos.jfrog.io/artifactory/helm/cerbos_${GITHUB_REF/refs\/tags\//}_docs.zip"
+
   releaseHelm:
     name: Release Helm chart
     runs-on: ubuntu-latest

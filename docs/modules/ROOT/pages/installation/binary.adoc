@@ -2,16 +2,24 @@ include::partial$attributes.adoc[]
 
 = Install from binary
 
-Download the appropriate bundle for your platform from {app-url}/releases/tag/v{app-version}.
+Cerbos binaries are available for multiple operating systems and architectures.
 
-For example, to download the binaries for MacOS, issue the following command:
+[caption=]
+[%header,cols=".^1,.^1,3m",grid=rows]
+|===
+|OS | Arch | Bundle 
+|Linux | x86-64 | {app-name}_{app-version}_Linux_x86_64.tar.gz
+|Linux | arm64 | {app-name}_{app-version}_Linux_arm64.tar.gz
+|MacOS | x86-64 | {app-name}_{app-version}_Darwin_x86_64.tar.gz
+|MacOS | arm64 | {app-name}_{app-version}_Darwin_arm64.tar.gz
+|===
+
+You can download the binaries by running the following command. Substitute `<BUNDLE>` with the appropriate value from the above table.
 
 [source,sh,subs="attributes"]
 ----
-# Can't cURL yet because the repo is private
-# curl -L -o {app-name}.tar.gz {app-url}/releases/download/v{app-version}/{app-name}_{app-version}_Darwin_x86_64.tar.gz
+curl -H "X-JFrog-Art-Api:<YOUR_API_KEY>" -L -o {app-name}.tar.gz "{app-binaries-url}/<BUNDLE>"
 tar xvf {app-name}.tar.gz
 chmod +x {app-name}
 ----
 
-Add the binary to your `$PATH`.
