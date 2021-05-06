@@ -5,8 +5,8 @@ on:
     tags:
       - v*
 jobs:
-  test:
-    name: Release
+  releaseBinaries:
+    name: Release Binaries
     runs-on: ubuntu-latest
     steps:
       - name: Install Go
@@ -30,11 +30,11 @@ jobs:
         id: buildx
         uses: docker/setup-buildx-action@v1
 
-      - name: Login to Container Registry
+      - name: Login to GHCR
         run:  echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
 
-      - name: Install Helm
-        uses: azure/setup-helm@v1
+      - name: Login to Artifactory
+        run:  echo "${{ secrets.ARTIFACTORY_PROD_SECRET }}" | docker login cerbos.jfrog.io -u ${{ secrets.ARTIFACTORY_PROD_USERNAME }} --password-stdin
 
       - uses: actions/cache@v2
         with:
@@ -50,9 +50,6 @@ jobs:
         uses: ./.github/actions/antora-docs
         id: docs
 
-      - name: Package Helm chart
-        run: helm package -d deploy/out deploy/charts/cerbos
-
       - name: GoReleaser
         uses: goreleaser/goreleaser-action@v2
         with:
@@ -60,3 +57,22 @@ jobs:
           args: release --config=.goreleaser-ci.yml --rm-dist
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ARTIFACTORY_PROD_USERNAME: ${{ secrets.ARTIFACTORY_PROD_USERNAME }}
+          ARTIFACTORY_PROD_SECRET: ${{ secrets.ARTIFACTORY_PROD_SECRET }}
+  releaseHelm:
+    name: Release Helm chart
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+
+      - name: Install Helm
+        uses: azure/setup-helm@v1
+
+      - name: Package Helm chart
+        run: helm package -d deploy/out deploy/charts/cerbos
+
+      - name: Upload Helm chart
+        run: CHART=$(ls deploy/out/*.tgz); curl -H "X-JFrog-Art-Api:${{ secrets.ARTIFACTORY_API_KEY }}" -T "$CHART" "https://cerbos.jfrog.io/artifactory/helm/$(basename $CHART)"
