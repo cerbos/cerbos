@@ -1,4 +1,5 @@
-:app-docker-img: ghcr.io/cerbos/cerbos:{app-version}
-:app-url: https://github.com/cerbos/cerbos
-:app-download-page: {app-url}/releases/tag/v{app-version}
+:app-docker-img: cerbos.jfrog.io/containers/cerbos:{app-version}
+:app-github-url: https://github.com/cerbos/cerbos
+:app-github-download-page: {app-github-url}/releases/tag/v{app-version}
+:app-binaries-url: https://cerbos.jfrog.io/artifactory/binaries
 :cerbos-openapi-schema: /schema/swagger.json 

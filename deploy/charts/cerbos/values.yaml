@@ -10,7 +10,7 @@ replicaCount: 1
 
 # Container image details
 image:
-  repository: ghcr.io/cerbos/cerbos
+  repository: cerbos.jfrog.io/containers/cerbos
   pullPolicy: IfNotPresent
   # Image tag to use. Defaults to the chart appVersion.
   tag: ""
