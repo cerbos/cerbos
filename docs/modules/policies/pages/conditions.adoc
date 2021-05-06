@@ -136,9 +136,7 @@ NOTE: CEL has many builtin functions and operators. The fully up-to-date list ca
 "resource": {
   "name": "leave_request",
   "attr": {
-    "cooldownPeriod": "3750s",
-    "lastUpdateTime": "2021-05-01T13:34:12.024Z",
-    "lastAccessed": "2021-05-02T14:24:22.034Z"
+    "cooldownPeriod": "3750s"
   }
 }
 ...
@@ -149,24 +147,13 @@ NOTE: CEL has many builtin functions and operators. The fully up-to-date list ca
 |===
 | Function | Description | Example 
 | duration | Convert a string to a duration. The string must contain a valid duration suffixed by one of `ns`, `us`, `ms`, `s`, `m` or `h`. E.g. `3750s` | duration(R.attr.cooldownPeriod).getSeconds == 3750
-| getHours | Get hours from a timestamp | timestamp(R.attr.cooldownPeriod).getHours() == 1
-| getMilliseconds | Get milliseconds from a timestamp | timestamp(R.attr.lastAccessed).getMilliseconds() == 3750000
-| getMinutes | Get minutes from a timestamp | timestamp(R.attr.lastAccessed).getMinutes() == 62
-| getSeconds | Get seconds from a timestamp | timestamp(R.attr.lastAccessed).getSeconds() == 3750
+| getHours | Get hours from a duration | duration(R.attr.cooldownPeriod).getHours() == 1
+| getMilliseconds | Get milliseconds from a duration | duration(R.attr.cooldownPeriod).getMilliseconds() == 3750000
+| getMinutes | Get minutes from a duration | duration(R.attr.cooldownPeriod).getMinutes() == 62
+| getSeconds | Get seconds from a duration | duration(R.attr.cooldownPeriod).getSeconds() == 3750
 |===
 
 
-.Example: Assert that no more than 36 hours has elapsed between last access time and last update time 
-[source,yaml,linenums]
-----
-timestamp(R.attr.lastAccessed) - timestamp(R.attr.lastUpdateTime) < duration("36h")
-----
-
-.Example: Add a duration to a timestamp
-[source,yaml,linenums]
-----
-timestamp(R.attr.lastAccessed) + duration("24h") == timestamp("2021-05-03T14:24:22.034Z")
-----
 
 == IP Addresses
 
@@ -280,7 +267,8 @@ NOTE: The IP address functions are Cerbos-specific extensions to CEL.
 "resource": {
   "name": "leave_request",
   "attr": {
-    "lastAccessed": "2021-04-20T10:00:20.021-05:00"
+    "lastAccessed": "2021-04-20T10:00:20.021-05:00",
+    "lastUpdateTime": "2021-05-01T13:34:12.024Z",
   }
 }
 ...
@@ -304,3 +292,14 @@ NOTE: The IP address functions are Cerbos-specific extensions to CEL.
 | timeSince | Time elapsed since the given timestamp to current time on the server. This is a Cerbos extension to CEL | timestamp(R.attr.lastAccessed).timeSince() > duration("1h")
 |===
 
+.Example: Assert that more than 36 hours has elapsed between last access time and last update time 
+[source,yaml,linenums]
+----
+timestamp(R.attr.lastUpdateTime) - timestamp(R.attr.lastAccessed) > duration("36h")
+----
+
+.Example: Add a duration to a timestamp
+[source,yaml,linenums]
+----
+timestamp(R.attr.lastUpdateTime) + duration("24h") == timestamp("2021-05-02T13:34:12.024Z")
+----
