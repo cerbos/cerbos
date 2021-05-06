@@ -1,6 +1,8 @@
 include::partial$attributes.adoc[]
 
-= Install from container
+= Run from container
+
+Login to the container registry using the provided username and API key.
 
 [source,sh,subs="attributes"]
 ----
