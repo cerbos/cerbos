@@ -2,7 +2,7 @@ include::partial$attributes.adoc[]
 
 = Install from Helm chart
 
-Download the Helm package:
+Add the Cerbos Helm repository using the username and API key provided to you:
 
 [source,sh,subs="attributes,macros"]
 ----
@@ -16,6 +16,26 @@ You can view all the available configuration values for the chart by running the
 ----
 helm show values cerbos/cerbos --version={app-version}
 ----
+
+[NOTE]
+====
+During the private alpha period, the Cerbos container registry requires authentication to pull the container images referenced in the Helm chart. You need to create a Kubernetes secret containing the credentials and reference them during installation as follows:
+
+Create a Kubernetes secret containing the credentials provided to you.
+
+[source,sh,subs="attributes,macros"]
+----
+kubectl create secret docker-registry cerbos-registry --docker-server={app-container-registry} --docker-username=$$<$$YOUR_USERNAME$$>$$ --docker-password=$$<$$YOUR_API_KEY$$>$$
+----
+
+When installing Cerbos using the Helm chart, append `--set='imagePullSecrets[0].name=cerbos-registry'` to the argument list. For example:
+
+[source,sh,subs="attributes,macros"]
+----
+helm install cerbos cerbos/cerbos --version={app-version} --set='imagePullSecrets[0].name=cerbos-registry'
+----
+
+====
 
 .Securing Cerbos with TLS
 ****
@@ -87,7 +107,7 @@ cerbos:
 +
 [source,sh,subs="attributes"]
 ----
-helm install cerbos cerbos/cerbos --version={app-version} --values=git-values.yaml
+helm install cerbos cerbos/cerbos --version={app-version} --values=git-values.yaml --set='imagePullSecrets[0].name=cerbos-registry'
 ----
 
 
@@ -127,5 +147,5 @@ cerbos:
 +
 [source,sh,subs="attributes"]
 ----
-helm install cerbos cerbos/cerbos --version={app-version} --values=pv-values.yaml
+helm install cerbos cerbos/cerbos --version={app-version} --values=pv-values.yaml --set='imagePullSecrets[0].name=cerbos-registry'
 ----

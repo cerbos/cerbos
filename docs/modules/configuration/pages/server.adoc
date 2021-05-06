@@ -42,7 +42,7 @@ server:
 
 == Payload logging
 
-For debugging or auditing purposes, you can enable request and response payload logging for each request. i
+For debugging or auditing purposes, you can enable request and response payload logging for each request.
 
 CAUTION: Enabling this setting affects server performance and could expose potentially sensitive data contained in the requests to anyone with access to the server logs.
 
