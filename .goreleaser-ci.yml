@@ -16,7 +16,7 @@ archives:
       amd64: x86_64
 dockers:
   - image_templates:
-      - "ghcr.io/cerbos/cerbos:{{ .Version }}-amd64"
+      # - "ghcr.io/cerbos/cerbos:{{ .Version }}-amd64"
       - "cerbos.jfrog.io/containers/cerbos:{{ .Version }}-amd64"
     goarch: amd64
     use_buildx: true
@@ -24,7 +24,7 @@ dockers:
       - "--platform=linux/amd64"
 
   - image_templates:
-      - "ghcr.io/cerbos/cerbos:{{ .Version }}-arm64"
+      # - "ghcr.io/cerbos/cerbos:{{ .Version }}-arm64"
       - "cerbos.jfrog.io/containers/cerbos:{{ .Version }}-arm64"
     goarch: arm64
     use_buildx: true
