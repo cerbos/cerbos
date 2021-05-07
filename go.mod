@@ -58,7 +58,7 @@ require (
 	golang.org/x/sys v0.0.0-20210415045647-66c3f260301c // indirect
 	golang.org/x/term v0.0.0-20210220032956-6a3ed077a48d // indirect
 	google.golang.org/genproto v0.0.0-20210325224202-eed09b1b5210
-	google.golang.org/grpc v1.37.0-dev.0.20210309003715-fce74a94bdff
+	google.golang.org/grpc v1.37.0
 	google.golang.org/grpc/cmd/protoc-gen-go-grpc v1.1.0
 	google.golang.org/protobuf v1.26.0
 	gotest.tools/gotestsum v1.6.3
