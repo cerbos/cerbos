@@ -16,6 +16,13 @@ linters-settings:
   gofumpt:
     extra-rules: true
 
+  goheader:
+    values:
+      const:
+        COMPANY: Zenauth Ltd.
+    template: |-
+      Copyright {{ YEAR-RANGE }} {{ COMPANY }}
+
   nolintlint:
     allow-unused: false
     allow-leading-space: false

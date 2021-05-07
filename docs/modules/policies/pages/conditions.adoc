@@ -136,7 +136,8 @@ NOTE: CEL has many builtin functions and operators. The fully up-to-date list ca
 "resource": {
   "name": "leave_request",
   "attr": {
-    "cooldownPeriod": "3750s"
+    "cooldownPeriod": "3750s",
+    "lastAccessed": "2021-04-20T10:00:20.021-05:00"
   }
 }
 ...
@@ -151,6 +152,7 @@ NOTE: CEL has many builtin functions and operators. The fully up-to-date list ca
 | getMilliseconds | Get milliseconds from a duration | duration(R.attr.cooldownPeriod).getMilliseconds() == 3750000
 | getMinutes | Get minutes from a duration | duration(R.attr.cooldownPeriod).getMinutes() == 62
 | getSeconds | Get seconds from a duration | duration(R.attr.cooldownPeriod).getSeconds() == 3750
+| timeSince | Time elapsed since the given timestamp to current time on the server. This is a Cerbos extension to CEL | timestamp(R.attr.lastAccessed).timeSince() > duration("1h")
 |===
 
 

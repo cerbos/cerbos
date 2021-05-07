@@ -31,12 +31,11 @@ Now start the Cerbos server. We are using the container image in this guide but 
 .Downloading the container image
 ****
 
-Login to the container registry using the provided username and API key.
+You will need to login to the container registry using the username and API key provided to you.
 
 [source,sh,subs="attributes"]
 ----
 echo YOUR_API_KEY | docker login cerbos.jfrog.io -u YOUR_USERNAME --password-stdin
-docker pull {app-docker-img}
 ----
 
 ****

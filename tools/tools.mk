@@ -4,6 +4,7 @@ TOOLS_BIN_DIR := $(abspath $(XDG_CACHE_HOME)/cerbos/bin)
 BUF := $(TOOLS_BIN_DIR)/buf
 GHZ := $(TOOLS_BIN_DIR)/ghz
 GOLANGCI_LINT := $(TOOLS_BIN_DIR)/golangci-lint
+GO_LICENSES := $(TOOLS_BIN_DIR)/go-licenses
 GORELEASER := $(TOOLS_BIN_DIR)/goreleaser
 GOTESTSUM := $(TOOLS_BIN_DIR)/gotestsum
 GRPCURL := $(TOOLS_BIN_DIR)/grpcurl
@@ -71,6 +72,9 @@ $(BUF): $(TOOLS_BIN_DIR)
 
 $(GHZ): $(TOOLS_BIN_DIR) 
 	@ GOBIN=$(TOOLS_BIN_DIR) go install github.com/bojand/ghz/cmd/ghz@latest
+
+$(GO_LICENSES): $(TOOLS_BIN_DIR)
+	@ GOBIN=$(TOOLS_BIN_DIR) go install github.com/google/go-licenses
  
 $(GOLANGCI_LINT): $(TOOLS_BIN_DIR) 
 	@ GOBIN=$(TOOLS_BIN_DIR) go install github.com/golangci/golangci-lint/cmd/golangci-lint

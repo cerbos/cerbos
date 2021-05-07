@@ -1,3 +1,5 @@
+// Copyright 2021 Zenauth Ltd.
+
 package policy_test
 
 import (

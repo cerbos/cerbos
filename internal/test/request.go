@@ -1,3 +1,5 @@
+// Copyright 2021 Zenauth Ltd.
+
 // +build tests
 
 package test
