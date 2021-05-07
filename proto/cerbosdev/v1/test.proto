@@ -1,3 +1,5 @@
+// Copyright 2021 Zenauth Ltd.
+
 syntax = "proto3";
 
 package cerbosdev.v1;

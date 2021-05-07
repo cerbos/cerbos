@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+#
+# Copyright 2021 Zenauth Ltd.
 
 set -euo pipefail
 

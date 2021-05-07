@@ -33,6 +33,10 @@ generate: clean $(BUF) $(PROTOC_GEN_GO) $(PROTOC_GEN_GO_GRPC) $(PROTOC_GEN_GRPC_
 	@ # $(MOCKERY) --quiet --dir=pkg/storage/disk --name="Index" --recursive --output=$(MOCK_DIR)
 	@ go mod tidy
 
+generate-notice: $(GO_LICENSES)
+	@ cat hack/notice_header.txt > NOTICE.txt
+	@ $(GO_LICENSES) csv . | grep -v cerbos | sort -t ',' -k1 | column -t -N Package,URL,Licence -s ',' >> NOTICE.txt
+
 .PHONY: test
 test: $(GOTESTSUM)
 	@ $(GOTESTSUM) -- -tags=tests -cover -race ./...

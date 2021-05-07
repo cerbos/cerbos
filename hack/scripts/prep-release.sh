@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+#
+# Copyright 2021 Zenauth Ltd.
 
 set -euo pipefail
 
@@ -10,6 +12,7 @@ fi
 
 VERSION="$1"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_DIR="$(cd "${SCRIPT_DIR}/../../" && pwd)"
 DOCS_DIR="${SCRIPT_DIR}/../../docs"
 CHARTS_DIR="${SCRIPT_DIR}/../../deploy/charts/cerbos"
 
@@ -20,5 +23,7 @@ sed -i -E "s#app\-version: \"[0-9]+\.[0-9]+\.[0-9]+.*\"#app-version: \"$VERSION\
 # Helm chart version
 sed -i -E "s#appVersion: \"[0-9]+\.[0-9]+\.[0-9]+.*\"#appVersion: \"$VERSION\"#" "${CHARTS_DIR}/Chart.yaml"
 sed -i -E "s#version: \"[0-9]+\.[0-9]+\.[0-9]+.*\"#version: \"$VERSION\"#" "${CHARTS_DIR}/Chart.yaml"
+
+#git -C "$PROJECT_DIR" commit -a -m "chore: Prepare release $VERSION"
 
 #git tag "v${VERSION}" -m "v${VERSION}"
