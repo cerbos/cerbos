@@ -34,7 +34,7 @@ import (
 	"go.uber.org/zap"
 	"golang.org/x/sync/errgroup"
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/channelz/service"
+	"google.golang.org/grpc/admin"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/local"
 	"google.golang.org/grpc/health"
@@ -378,14 +378,19 @@ func (s *server) startGRPCServer(cerbosSvc *svc.CerbosService, l net.Listener) *
 	server := grpc.NewServer(opts...)
 	svcv1.RegisterCerbosServiceServer(server, cerbosSvc)
 	healthpb.RegisterHealthServer(server, s.health)
-
 	reflection.Register(server)
-	service.RegisterChannelzServiceToServer(server)
 
 	s.group.Go(func() error {
 		log.Info(fmt.Sprintf("Starting gRPC server at %s", s.conf.GRPCListenAddr))
-		err := server.Serve(l)
+
+		cleanup, err := admin.Register(server)
 		if err != nil {
+			log.Error("Failed to register gRPC admin interfaces", zap.Error(err))
+			return err
+		}
+		defer cleanup()
+
+		if err := server.Serve(l); err != nil {
 			log.Error("gRPC server failed", zap.Error(err))
 			return err
 		}
