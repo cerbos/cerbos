@@ -29,7 +29,6 @@ message CheckOutput {
     string request_id = 1;
     map<string, ActionEffect> actions = 2;
     repeated string effective_derived_roles = 3;
-    google.protobuf.Duration evaluation_duration = 4; 
 }
 
 message Resource {

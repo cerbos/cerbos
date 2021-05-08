@@ -1,5 +1,5 @@
 ---
-description: "No policy match"
+description: "No metadata"
 inputs: [
   {
     "requestId": "test",
@@ -9,6 +9,7 @@ inputs: [
     ],
     "principal": {
       "id": "john",
+      "policyVersion": "20210210",
       "roles": [
         "employee"
       ],
@@ -20,6 +21,7 @@ inputs: [
     },
     "resource": {
       "name": "leave_request",
+      "policyVersion": "20210210",
       "attr": {
         "department": "marketing",
         "geography": "GB",
@@ -35,12 +37,12 @@ wantOutputs: [
     "requestId": "test",
     "actions": {
       "view:public": {
-        "effect": "EFFECT_DENY",
-        "policy": "NO_MATCH"
+        "effect": "EFFECT_ALLOW",
+        "policy": "leave_request:20210210"
       },
       "approve": {
         "effect": "EFFECT_DENY",
-        "policy": "NO_MATCH"
+        "policy": "leave_request:20210210"
       }
     }
   }

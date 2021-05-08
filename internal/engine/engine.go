@@ -20,7 +20,6 @@ import (
 	"github.com/cerbos/cerbos/internal/config"
 	enginev1 "github.com/cerbos/cerbos/internal/genpb/engine/v1"
 	requestv1 "github.com/cerbos/cerbos/internal/genpb/request/v1"
-	responsev1 "github.com/cerbos/cerbos/internal/genpb/response/v1"
 	sharedv1 "github.com/cerbos/cerbos/internal/genpb/shared/v1"
 	"github.com/cerbos/cerbos/internal/namer"
 	"github.com/cerbos/cerbos/internal/observability/logging"
@@ -36,6 +35,7 @@ const (
 	loggerName                      = "engine"
 	maxGoRoutinesPerRequest         = 16
 	maxQueryCacheSizeBytes    int64 = 10 * 1024 * 1024 // 10 MiB
+	noPolicyMatch                   = "NO_MATCH"
 )
 
 type Engine struct {
@@ -117,8 +117,7 @@ func (engine *Engine) watchNotifications(ctx context.Context) {
 	}
 }
 
-func (engine *Engine) getPrincipalPolicyCheck(id, version string) *check {
-	principal, policyVersion, policyKey := engine.policyAttr(id, version)
+func (engine *Engine) getPrincipalPolicyCheck(principal, policyVersion, policyKey string) *check {
 	principalModID := namer.PrincipalPolicyModuleID(principal, policyVersion)
 
 	if eval := engine.compiler.GetEvaluator(principalModID); eval != nil {
@@ -132,8 +131,7 @@ func (engine *Engine) getPrincipalPolicyCheck(id, version string) *check {
 	return nil
 }
 
-func (engine *Engine) getResourcePolicyCheck(name, version string) *check {
-	resource, policyVersion, policyKey := engine.policyAttr(name, version)
+func (engine *Engine) getResourcePolicyCheck(resource, policyVersion, policyKey string) *check {
 	resourceModID := namer.ResourcePolicyModuleID(resource, policyVersion)
 
 	if eval := engine.compiler.GetEvaluator(resourceModID); eval != nil {
@@ -158,6 +156,124 @@ func (engine *Engine) policyAttr(name, version string) (pName, pVersion, pKey st
 	return pName, pVersion, fmt.Sprintf("%s:%s", pName, pVersion)
 }
 
+func (engine *Engine) Check(ctx context.Context, inputs []*enginev1.CheckInput) ([]*enginev1.CheckOutput, error) {
+	return measureCheckLatency(len(inputs), func() ([]*enginev1.CheckOutput, error) {
+		ctx, span := tracing.StartSpan(ctx, "engine.Check")
+		defer span.End()
+
+		evalContexts := engine.buildEvaluationContexts(inputs)
+
+		outputs := make([]*enginev1.CheckOutput, len(inputs))
+		for i, ec := range evalContexts {
+			o, err := engine.evaluate(ctx, inputs[i], ec)
+			if err != nil {
+				return nil, err
+			}
+
+			outputs[i] = o
+		}
+
+		return outputs, nil
+	})
+}
+
+func (engine *Engine) buildEvaluationContexts(inputs []*enginev1.CheckInput) []*evaluationCtx {
+	principalPolicyChecks := map[string]*check{}
+	resourcePolicyChecks := map[string]*check{}
+	evalContexts := make([]*evaluationCtx, len(inputs))
+
+	engine.mu.RLock()
+	defer engine.mu.RUnlock()
+
+	for i, c := range inputs {
+		evalContexts[i] = &evaluationCtx{queryCache: engine.queryCache}
+
+		// get the principal policy check
+		ppName, ppVersion, ppKey := engine.policyAttr(c.Principal.Id, c.Principal.PolicyVersion)
+		ppCheck, ok := principalPolicyChecks[ppKey]
+		if !ok {
+			ppCheck = engine.getPrincipalPolicyCheck(ppName, ppVersion, ppKey)
+			principalPolicyChecks[ppKey] = ppCheck
+		}
+		evalContexts[i].addCheck(ppCheck)
+
+		// get the resource policy check
+		rpName, rpVersion, rpKey := engine.policyAttr(c.Resource.Name, c.Resource.PolicyVersion)
+		rpCheck, ok := resourcePolicyChecks[rpKey]
+		if !ok {
+			rpCheck = engine.getResourcePolicyCheck(rpName, rpVersion, rpKey)
+			resourcePolicyChecks[rpKey] = rpCheck
+		}
+		evalContexts[i].addCheck(rpCheck)
+	}
+
+	return evalContexts
+}
+
+func (engine *Engine) evaluate(ctx context.Context, input *enginev1.CheckInput, ec *evaluationCtx) (*enginev1.CheckOutput, error) {
+	ctx, span := tracing.StartSpan(ctx, "engine.EvaluateInput")
+	defer span.End()
+
+	span.AddAttributes(trace.StringAttribute("request_id", input.RequestId))
+
+	output := &enginev1.CheckOutput{
+		RequestId: input.RequestId,
+		Actions:   make(map[string]*enginev1.CheckOutput_ActionEffect, len(input.Actions)),
+	}
+
+	// If there are no checks, set the default effect and return.
+	if ec.numChecks == 0 {
+		for _, action := range input.Actions {
+			output.Actions[action] = &enginev1.CheckOutput_ActionEffect{
+				Effect: defaultEffect,
+				Policy: noPolicyMatch,
+			}
+		}
+
+		return output, nil
+	}
+
+	log := logging.FromContext(ctx)
+
+	// convert input to AST
+	inputAST, err := toAST(input)
+	if err != nil {
+		log.Error("Failed to convert input into internal representation", zap.Error(err))
+		tracing.MarkFailed(span, trace.StatusCodeInvalidArgument, "Failed to convert input into internal representation", err)
+
+		return nil, fmt.Errorf("failed to convert input into internal representation: %w", err)
+	}
+
+	// evaluate the policies
+	result, err := ec.evaluate(ctx, inputAST)
+	if err != nil {
+		log.Error("Failed to evaluate policies", zap.Error(err))
+
+		return nil, fmt.Errorf("failed to evaluate policies: %w", err)
+	}
+
+	// update the output
+	for _, action := range input.Actions {
+		output.Actions[action] = &enginev1.CheckOutput_ActionEffect{
+			Effect: defaultEffect,
+			Policy: noPolicyMatch,
+		}
+
+		if effect, ok := result.effects[action]; ok {
+			output.Actions[action].Effect = effect
+		}
+
+		if policyMatch, ok := result.matchedPolicies[action]; ok {
+			output.Actions[action].Policy = policyMatch
+		}
+
+		output.EffectiveDerivedRoles = result.effectiveDerivedRoles
+	}
+
+	return output, nil
+}
+
+/*
 func (engine *Engine) CheckResourceBatch(ctx context.Context, req *requestv1.CheckResourceBatchRequest) (*responsev1.CheckResourceBatchResponse, error) {
 	return measureCheckResourceBatchLatency(func() (*CheckResponseWrapper, error) { return engine.doCheckResourceBatch(ctx, req) })
 }
@@ -189,6 +305,7 @@ func (engine *Engine) doCheckResourceBatch(ctx context.Context, req *requestv1.C
 	batchExec := newBatchExecutor(req, evalCtx, logging.FromContext(ctx).Named(loggerName))
 	return batchExec.execute(ctx)
 }
+*/
 
 type evaluationCtx struct {
 	numChecks  int
@@ -204,9 +321,14 @@ func (ec *evaluationCtx) addCheck(c *check) {
 }
 
 func (ec *evaluationCtx) evaluate(ctx context.Context, input ast.Value) (*evaluationResult, error) {
-	log := logging.FromContext(ctx).Sugar()
 	ctx, span := tracing.StartSpan(ctx, "engine.Evaluate")
 	defer span.End()
+
+	if ec.numChecks == 0 {
+		tracing.MarkFailed(span, trace.StatusCodeNotFound, "No matching policies", ErrNoPoliciesMatched)
+
+		return nil, ErrNoPoliciesMatched
+	}
 
 	resp := &evaluationResult{}
 
@@ -217,7 +339,7 @@ func (ec *evaluationCtx) evaluate(ctx context.Context, input ast.Value) (*evalua
 
 		result, err := c.execute(ctx, ec.queryCache, input)
 		if err != nil {
-			log.Errorw("Failed to execute policy", "policy", c.policyKey, "error", err)
+			logging.FromContext(ctx).Sugar().Errorw("Failed to execute policy", "policy", c.policyKey, "error", err)
 			tracing.MarkFailed(span, trace.StatusCodeInternal, "Failed to execute policy", err)
 
 			return nil, fmt.Errorf("failed to execute policy %s: %w", c.policyKey, err)
@@ -229,7 +351,6 @@ func (ec *evaluationCtx) evaluate(ctx context.Context, input ast.Value) (*evalua
 		}
 	}
 
-	log.Info("No policy match")
 	tracing.MarkFailed(span, trace.StatusCodeNotFound, "No matching policies", ErrNoPoliciesMatched)
 
 	return resp, ErrNoPoliciesMatched

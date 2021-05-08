@@ -14,8 +14,8 @@ import "shared/v1/shared.proto";
 
 message EngineTestCase {
     string description = 1;
-    request.v1.CheckResourceBatchRequest input = 2;
-    response.v1.CheckResourceBatchResponse want_response = 3;
+    repeated engine.v1.CheckInput inputs = 2;
+    repeated engine.v1.CheckOutput want_outputs = 3;
     bool want_error = 4;
 }
 

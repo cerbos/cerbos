@@ -46,24 +46,34 @@ func (m *EngineTestCase) Validate() error {
 
 	// no validation rules for Description
 
-	if v, ok := interface{}(m.GetInput()).(interface{ Validate() error }); ok {
-		if err := v.Validate(); err != nil {
-			return EngineTestCaseValidationError{
-				field:  "Input",
-				reason: "embedded message failed validation",
-				cause:  err,
+	for idx, item := range m.GetInputs() {
+		_, _ = idx, item
+
+		if v, ok := interface{}(item).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return EngineTestCaseValidationError{
+					field:  fmt.Sprintf("Inputs[%v]", idx),
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
 			}
 		}
+
 	}
 
-	if v, ok := interface{}(m.GetWantResponse()).(interface{ Validate() error }); ok {
-		if err := v.Validate(); err != nil {
-			return EngineTestCaseValidationError{
-				field:  "WantResponse",
-				reason: "embedded message failed validation",
-				cause:  err,
+	for idx, item := range m.GetWantOutputs() {
+		_, _ = idx, item
+
+		if v, ok := interface{}(item).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return EngineTestCaseValidationError{
+					field:  fmt.Sprintf("WantOutputs[%v]", idx),
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
 			}
 		}
+
 	}
 
 	// no validation rules for WantError

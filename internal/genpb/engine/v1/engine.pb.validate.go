@@ -190,16 +190,6 @@ func (m *CheckOutput) Validate() error {
 
 	}
 
-	if v, ok := interface{}(m.GetEvaluationDuration()).(interface{ Validate() error }); ok {
-		if err := v.Validate(); err != nil {
-			return CheckOutputValidationError{
-				field:  "EvaluationDuration",
-				reason: "embedded message failed validation",
-				cause:  err,
-			}
-		}
-	}
-
 	return nil
 }
 
