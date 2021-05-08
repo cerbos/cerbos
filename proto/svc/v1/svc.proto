@@ -6,10 +6,10 @@ package svc.v1;
 
 option go_package = "github.com/cerbos/cerbos/internal/genpb/svc/v1;svcv1";
 
-import "request/v1/request.proto";
-import "response/v1/response.proto";
 import "google/api/annotations.proto";
 import "protoc-gen-openapiv2/options/annotations.proto";
+import "request/v1/request.proto";
+import "response/v1/response.proto";
 
 option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_swagger) = {
 	info: {

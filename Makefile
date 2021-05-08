@@ -49,6 +49,10 @@ test-watch: $(GOTESTSUM)
 coverage:
 	@ hack/scripts/cover.sh
 
+.PHONY: compile
+compile:
+	@ go build ./... && go test -tags=tests -run=ignore  ./... > /dev/null
+
 .PHONY: build
 build: $(GORELEASER) generate lint test
 	@ $(GORELEASER) --config=.goreleaser-dev.yml --snapshot --skip-publish --rm-dist

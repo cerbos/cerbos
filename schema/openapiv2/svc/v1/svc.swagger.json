@@ -205,7 +205,7 @@
         }
       }
     },
-    "v1Attributes": {
+    "v1AttributesMap": {
       "type": "object",
       "properties": {
         "attr": {
@@ -391,7 +391,7 @@
             }
           },
           "additionalProperties": {
-            "$ref": "#/definitions/v1Attributes"
+            "$ref": "#/definitions/v1AttributesMap"
           },
           "description": "Set of resource instances to check. Each instance must be keyed by an application-specific unique identifier.",
           "maxProperties": 50,

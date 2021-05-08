@@ -18,6 +18,7 @@ import (
 
 	"github.com/cerbos/cerbos/internal/compile"
 	"github.com/cerbos/cerbos/internal/config"
+	enginev1 "github.com/cerbos/cerbos/internal/genpb/engine/v1"
 	requestv1 "github.com/cerbos/cerbos/internal/genpb/request/v1"
 	responsev1 "github.com/cerbos/cerbos/internal/genpb/response/v1"
 	sharedv1 "github.com/cerbos/cerbos/internal/genpb/shared/v1"
@@ -291,7 +292,7 @@ func (c *check) execute(ctx context.Context, queryCache cache.InterQueryCache, i
 
 type batchWorkUnit struct {
 	resourceKey  string
-	resourceAttr *requestv1.Attributes
+	resourceAttr *requestv1.AttributesMap
 }
 
 type batchExecutor struct {
@@ -378,22 +379,22 @@ func (be *batchExecutor) doWork(ctx context.Context, inputChan <-chan batchWorkU
 	}
 }
 
-func (be *batchExecutor) checkResourceInstance(ctx context.Context, resourceKey string, resourceAttr *requestv1.Attributes) (*evaluationResult, error) {
+func (be *batchExecutor) checkResourceInstance(ctx context.Context, resourceKey string, resourceAttr *requestv1.AttributesMap) (*evaluationResult, error) {
 	ctx, span := tracing.StartSpan(ctx, fmt.Sprintf("engine.BatchCheck/%s", resourceKey))
 	defer span.End()
 
-	checkReq := &requestv1.CheckRequest{
+	checkInput := &enginev1.CheckInput{
 		RequestId: be.req.RequestId,
 		Principal: be.req.Principal,
 		Actions:   be.req.Actions,
-		Resource: &requestv1.Resource{
+		Resource: &enginev1.Resource{
 			Name:          be.req.Resource.Name,
 			PolicyVersion: be.req.Resource.PolicyVersion,
 			Attr:          resourceAttr.Attr,
 		},
 	}
 
-	input, err := toAST(checkReq)
+	input, err := toAST(checkInput)
 	if err != nil {
 		be.log.Error("Failed to build context", zap.Error(err))
 		tracing.MarkFailed(span, trace.StatusCodeInvalidArgument, "Failed to build context", err)
@@ -411,7 +412,7 @@ func (be *batchExecutor) checkResourceInstance(ctx context.Context, resourceKey 
 	return result, nil
 }
 
-func toAST(req *requestv1.CheckRequest) (ast.Value, error) {
+func toAST(req *enginev1.CheckInput) (ast.Value, error) {
 	// TODO (cell) Replace with codegen.MarshalProtoToRego when it's optimized
 	requestJSON, err := protojson.Marshal(req)
 	if err != nil {
