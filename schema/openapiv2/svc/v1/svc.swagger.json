@@ -7,10 +7,6 @@
       "name": "Cerbos",
       "url": "https://cerbos.dev",
       "email": "info@cerbos.dev"
-    },
-    "license": {
-      "name": "Apache License 2.0",
-      "url": "https://spdx.org/licenses/Apache-2.0.html"
     }
   },
   "tags": [
@@ -33,12 +29,12 @@
       "post": {
         "summary": "Check",
         "description": "Check whether a principal has permissions to perform the given actions on a set of resource instances.",
-        "operationId": "CerbosService_CheckResourceBatch",
+        "operationId": "CerbosService_CheckResourceSet",
         "responses": {
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/v1CheckResourceBatchResponse"
+              "$ref": "#/definitions/v1CheckResourceSetResponse"
             }
           },
           "default": {
@@ -54,7 +50,7 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/v1CheckResourceBatchRequest"
+              "$ref": "#/definitions/v1CheckResourceSetRequest"
             }
           }
         ],
@@ -65,7 +61,7 @@
     }
   },
   "definitions": {
-    "CheckResourceBatchResponseActionEffectMap": {
+    "CheckResourceSetResponseActionEffectMap": {
       "type": "object",
       "properties": {
         "actions": {
@@ -78,7 +74,7 @@
       },
       "description": "Unique resource instance ID supplied in the request."
     },
-    "CheckResourceBatchResponseMeta": {
+    "CheckResourceSetResponseMeta": {
       "type": "object",
       "properties": {
         "resourceInstances": {
@@ -112,11 +108,6 @@
             "$ref": "#/definitions/MetaActionMeta"
           },
           "description": "Metadata about resource instances."
-        },
-        "evaluationDuration": {
-          "type": "string",
-          "example": "0.0012s",
-          "description": "Time taken to evaluate the request."
         }
       },
       "description": "Metadata about request evaluation."
@@ -159,10 +150,6 @@
           "type": "string",
           "example": "album:object:default",
           "description": "Policy that matched to produce this effect."
-        },
-        "error": {
-          "type": "string",
-          "description": "Any errors encountered during processing"
         }
       },
       "description": "Name of the action."
@@ -218,7 +205,7 @@
       },
       "description": "Unique identifier for the resource instance."
     },
-    "v1CheckResourceBatchRequest": {
+    "v1CheckResourceSetRequest": {
       "type": "object",
       "properties": {
         "requestId": {
@@ -235,7 +222,7 @@
           "items": {
             "type": "string"
           },
-          "description": "List of actions being performed on the resources.",
+          "description": "List of actions being performed on the set of resources.",
           "minItems": 1,
           "uniqueItems": true,
           "required": [
@@ -246,7 +233,7 @@
           "$ref": "#/definitions/v1Principal"
         },
         "resource": {
-          "$ref": "#/definitions/v1ResourceBatch"
+          "$ref": "#/definitions/v1ResourceSet"
         },
         "includeMeta": {
           "type": "boolean",
@@ -258,7 +245,7 @@
         "actions"
       ]
     },
-    "v1CheckResourceBatchResponse": {
+    "v1CheckResourceSetResponse": {
       "type": "object",
       "properties": {
         "requestId": {
@@ -283,16 +270,16 @@
             }
           },
           "additionalProperties": {
-            "$ref": "#/definitions/CheckResourceBatchResponseActionEffectMap"
+            "$ref": "#/definitions/CheckResourceSetResponseActionEffectMap"
           },
           "description": "Results for each resource instance, keyed by the ID supplied in the request"
         },
         "meta": {
-          "$ref": "#/definitions/CheckResourceBatchResponseMeta",
+          "$ref": "#/definitions/CheckResourceSetResponseMeta",
           "description": "Optional metadata about the request evaluation process"
         }
       },
-      "description": "Policy evaluation response."
+      "description": "Policy evaluation response for a set of resources."
     },
     "v1Effect": {
       "type": "string",
@@ -354,7 +341,7 @@
         "roles"
       ]
     },
-    "v1ResourceBatch": {
+    "v1ResourceSet": {
       "type": "object",
       "properties": {
         "name": {

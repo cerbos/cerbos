@@ -13,8 +13,8 @@ func ExtractRequestFields(fullMethod string, req interface{}) map[string]interfa
 	}
 
 	switch fullMethod {
-	case "/svc.v1.CerbosService/CheckResourceBatch":
-		batchReq, ok := req.(*requestv1.CheckResourceBatchRequest)
+	case "/svc.v1.CerbosService/CheckResourceSet":
+		batchReq, ok := req.(*requestv1.CheckResourceSetRequest)
 		if !ok {
 			return nil
 		}

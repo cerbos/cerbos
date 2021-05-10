@@ -13,13 +13,11 @@ import (
 	"github.com/open-policy-agent/opa/topdown/cache"
 	"go.opencensus.io/trace"
 	"go.uber.org/zap"
-	"golang.org/x/sync/errgroup"
 	"google.golang.org/protobuf/encoding/protojson"
 
 	"github.com/cerbos/cerbos/internal/compile"
 	"github.com/cerbos/cerbos/internal/config"
 	enginev1 "github.com/cerbos/cerbos/internal/genpb/engine/v1"
-	requestv1 "github.com/cerbos/cerbos/internal/genpb/request/v1"
 	sharedv1 "github.com/cerbos/cerbos/internal/genpb/shared/v1"
 	"github.com/cerbos/cerbos/internal/namer"
 	"github.com/cerbos/cerbos/internal/observability/logging"
@@ -30,12 +28,10 @@ import (
 var ErrNoPoliciesMatched = errors.New("no matching policies")
 
 const (
-	batchParallelismThreshold       = 5
-	defaultEffect                   = sharedv1.Effect_EFFECT_DENY
-	loggerName                      = "engine"
-	maxGoRoutinesPerRequest         = 16
-	maxQueryCacheSizeBytes    int64 = 10 * 1024 * 1024 // 10 MiB
-	noPolicyMatch                   = "NO_MATCH"
+	defaultEffect                = sharedv1.Effect_EFFECT_DENY
+	loggerName                   = "engine"
+	maxQueryCacheSizeBytes int64 = 10 * 1024 * 1024 // 10 MiB
+	noPolicyMatch                = "NO_MATCH"
 )
 
 type Engine struct {
@@ -273,40 +269,6 @@ func (engine *Engine) evaluate(ctx context.Context, input *enginev1.CheckInput, 
 	return output, nil
 }
 
-/*
-func (engine *Engine) CheckResourceBatch(ctx context.Context, req *requestv1.CheckResourceBatchRequest) (*responsev1.CheckResourceBatchResponse, error) {
-	return measureCheckResourceBatchLatency(func() (*CheckResponseWrapper, error) { return engine.doCheckResourceBatch(ctx, req) })
-}
-
-func (engine *Engine) doCheckResourceBatch(ctx context.Context, req *requestv1.CheckResourceBatchRequest) (*CheckResponseWrapper, error) {
-	ctx, span := tracing.StartSpan(ctx, "engine.CheckResourceBatch")
-	defer span.End()
-
-	span.AddAttributes(trace.StringAttribute("request_id", req.RequestId))
-
-	engine.mu.RLock()
-	evalCtx := &evaluationCtx{queryCache: engine.queryCache}
-	evalCtx.addCheck(engine.getPrincipalPolicyCheck(req.Principal.Id, req.Principal.PolicyVersion))
-	evalCtx.addCheck(engine.getResourcePolicyCheck(req.Resource.Name, req.Resource.PolicyVersion))
-	engine.mu.RUnlock()
-
-	// if there are no policies, we can short-circuit the check
-	if evalCtx.numChecks == 0 {
-		resp := newCheckResponseWrapper(req)
-
-		for resourceKey := range req.Resource.Instances {
-			resp.addDefaultEffect(resourceKey, req.Actions, "No policy match")
-		}
-
-		tracing.MarkFailed(span, trace.StatusCodeNotFound, "No matching policies", ErrNoPoliciesMatched)
-		return resp, ErrNoPoliciesMatched
-	}
-
-	batchExec := newBatchExecutor(req, evalCtx, logging.FromContext(ctx).Named(loggerName))
-	return batchExec.execute(ctx)
-}
-*/
-
 type evaluationCtx struct {
 	numChecks  int
 	checks     [2]*check
@@ -409,128 +371,6 @@ func (c *check) execute(ctx context.Context, queryCache cache.InterQueryCache, i
 	}()
 
 	return c.eval.EvalQuery(ctx, queryCache, c.query, input)
-}
-
-type batchWorkUnit struct {
-	resourceKey  string
-	resourceAttr *requestv1.AttributesMap
-}
-
-type batchExecutor struct {
-	log     *zap.Logger
-	evalCtx *evaluationCtx
-	req     *requestv1.CheckResourceBatchRequest
-	mu      sync.Mutex
-	resp    *CheckResponseWrapper
-}
-
-func newBatchExecutor(req *requestv1.CheckResourceBatchRequest, evalCtx *evaluationCtx, log *zap.Logger) *batchExecutor {
-	return &batchExecutor{
-		log:     log,
-		evalCtx: evalCtx,
-		req:     req,
-		resp:    newCheckResponseWrapper(req),
-	}
-}
-
-func (be *batchExecutor) execute(ctx context.Context) (*CheckResponseWrapper, error) {
-	if len(be.req.Resource.Instances) >= batchParallelismThreshold {
-		return be.executeParallel(ctx)
-	}
-
-	for resourceKey, resourceAttr := range be.req.Resource.Instances {
-		result, err := be.checkResourceInstance(ctx, resourceKey, resourceAttr)
-		if err != nil {
-			return nil, err
-		}
-
-		be.resp.addEvalResult(resourceKey, result)
-	}
-
-	return be.resp, nil
-}
-
-func (be *batchExecutor) executeParallel(ctx context.Context) (*CheckResponseWrapper, error) {
-	numGoRoutines := len(be.req.Resource.Instances)
-	if numGoRoutines > maxGoRoutinesPerRequest {
-		numGoRoutines = maxGoRoutinesPerRequest
-	}
-
-	inputChan := make(chan batchWorkUnit, numGoRoutines)
-
-	group, ctx := errgroup.WithContext(ctx)
-	for i := 0; i < numGoRoutines; i++ {
-		group.Go(be.doWork(ctx, inputChan))
-	}
-
-	group.Go(func() error {
-		defer close(inputChan)
-		for resourceKey, resourceAttr := range be.req.Resource.Instances {
-			if err := ctx.Err(); err != nil {
-				return err
-			}
-
-			inputChan <- batchWorkUnit{resourceKey: resourceKey, resourceAttr: resourceAttr}
-		}
-
-		return nil
-	})
-
-	if err := group.Wait(); err != nil {
-		return nil, err
-	}
-
-	return be.resp, nil
-}
-
-func (be *batchExecutor) doWork(ctx context.Context, inputChan <-chan batchWorkUnit) func() error {
-	return func() error {
-		for work := range inputChan {
-			result, err := be.checkResourceInstance(ctx, work.resourceKey, work.resourceAttr)
-			if err != nil {
-				return fmt.Errorf("failed to process resource [%s]: %w", work.resourceKey, err)
-			}
-
-			be.mu.Lock()
-			be.resp.addEvalResult(work.resourceKey, result)
-			be.mu.Unlock()
-		}
-
-		return nil
-	}
-}
-
-func (be *batchExecutor) checkResourceInstance(ctx context.Context, resourceKey string, resourceAttr *requestv1.AttributesMap) (*evaluationResult, error) {
-	ctx, span := tracing.StartSpan(ctx, fmt.Sprintf("engine.BatchCheck/%s", resourceKey))
-	defer span.End()
-
-	checkInput := &enginev1.CheckInput{
-		RequestId: be.req.RequestId,
-		Principal: be.req.Principal,
-		Actions:   be.req.Actions,
-		Resource: &enginev1.Resource{
-			Name:          be.req.Resource.Name,
-			PolicyVersion: be.req.Resource.PolicyVersion,
-			Attr:          resourceAttr.Attr,
-		},
-	}
-
-	input, err := toAST(checkInput)
-	if err != nil {
-		be.log.Error("Failed to build context", zap.Error(err))
-		tracing.MarkFailed(span, trace.StatusCodeInvalidArgument, "Failed to build context", err)
-
-		return nil, fmt.Errorf("failed to build context: %w", err)
-	}
-
-	result, err := be.evalCtx.evaluate(logging.ToContext(ctx, be.log), input)
-	if err != nil {
-		be.log.Error("Failed to evaluate policies", zap.Error(err))
-
-		return nil, fmt.Errorf("failed to evaluate policies: %w", err)
-	}
-
-	return result, nil
 }
 
 func toAST(req *enginev1.CheckInput) (ast.Value, error) {

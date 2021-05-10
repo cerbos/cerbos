@@ -12,7 +12,7 @@ import "validate/validate.proto";
 
 option go_package = "github.com/cerbos/cerbos/internal/genpb/request/v1;requestv1";
 
-message CheckResourceBatchRequest {
+message CheckResourceSetRequest {
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
 		json_schema: {
 			description: "PDP Request"
@@ -29,7 +29,7 @@ message CheckResourceBatchRequest {
         (validate.rules).repeated = { unique: true, min_items: 1, items { string { min_len: 1 } } },
         (google.api.field_behavior) = REQUIRED,
         (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = { 
-            description: "List of actions being performed on the resources."
+            description: "List of actions being performed on the set of resources."
             min_items: 1
             unique_items: true
             example: "[\"view:public\", \"comment\"]"
@@ -39,7 +39,7 @@ message CheckResourceBatchRequest {
         (validate.rules).message.required = true, 
         (google.api.field_behavior) = REQUIRED
     ];
-    ResourceBatch resource = 4 [
+    ResourceSet resource = 4 [
         (validate.rules).message.required = true, 
         (google.api.field_behavior) = REQUIRED
     ];
@@ -50,7 +50,7 @@ message CheckResourceBatchRequest {
     ];
 }
 
-message ResourceBatch {
+message ResourceSet {
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
 		json_schema: {
 			description: "Set of resources to check"
@@ -101,3 +101,6 @@ message AttributesMap {
         }
     ];
 }
+
+
+

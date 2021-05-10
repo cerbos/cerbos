@@ -135,6 +135,95 @@ var _ interface {
 	ErrorName() string
 } = EngineTestCaseValidationError{}
 
+// Validate checks the field values on ServerTestCase with the rules defined in
+// the proto definition for this message. If any rules are violated, an error
+// is returned.
+func (m *ServerTestCase) Validate() error {
+	if m == nil {
+		return nil
+	}
+
+	// no validation rules for Description
+
+	if v, ok := interface{}(m.GetInput()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return ServerTestCaseValidationError{
+				field:  "Input",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if v, ok := interface{}(m.GetWantResponse()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return ServerTestCaseValidationError{
+				field:  "WantResponse",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	// no validation rules for WantError
+
+	return nil
+}
+
+// ServerTestCaseValidationError is the validation error returned by
+// ServerTestCase.Validate if the designated constraints aren't met.
+type ServerTestCaseValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e ServerTestCaseValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e ServerTestCaseValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e ServerTestCaseValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e ServerTestCaseValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e ServerTestCaseValidationError) ErrorName() string { return "ServerTestCaseValidationError" }
+
+// Error satisfies the builtin error interface
+func (e ServerTestCaseValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sServerTestCase.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = ServerTestCaseValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = ServerTestCaseValidationError{}
+
 // Validate checks the field values on CompileTestCase with the rules defined
 // in the proto definition for this message. If any rules are violated, an
 // error is returned.

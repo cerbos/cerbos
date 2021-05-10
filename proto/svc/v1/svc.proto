@@ -20,10 +20,6 @@ option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_swagger) = {
 			url: "https://cerbos.dev";
 			email: "info@cerbos.dev";
 		};
-		license: {
-			name: "Apache License 2.0";
-			url: "https://spdx.org/licenses/Apache-2.0.html";
-		};
 	};
 	schemes: HTTPS;
 	consumes: "application/json";
@@ -35,7 +31,7 @@ service CerbosService {
 		description: "Cerbos Policy Decision Point"
 	};
 
-    rpc CheckResourceBatch(request.v1.CheckResourceBatchRequest) returns (response.v1.CheckResourceBatchResponse) {
+    rpc CheckResourceSet(request.v1.CheckResourceSetRequest) returns (response.v1.CheckResourceSetResponse) {
         option (google.api.http) = {
             post: "/api/check",
             body: "*"

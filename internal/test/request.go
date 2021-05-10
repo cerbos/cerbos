@@ -11,8 +11,8 @@ import (
 	requestv1 "github.com/cerbos/cerbos/internal/genpb/request/v1"
 )
 
-func MkCheckResourceBatchRequest() *requestv1.CheckResourceBatchRequest {
-	return &requestv1.CheckResourceBatchRequest{
+func MkCheckResourceSetRequest() *requestv1.CheckResourceSetRequest {
+	return &requestv1.CheckResourceSetRequest{
 		RequestId: "test",
 		Actions:   []string{"view:public", "approve", "create"},
 		Principal: &enginev1.Principal{
@@ -25,7 +25,7 @@ func MkCheckResourceBatchRequest() *requestv1.CheckResourceBatchRequest {
 				"team":       structpb.NewStringValue("design"),
 			},
 		},
-		Resource: &requestv1.ResourceBatch{
+		Resource: &requestv1.ResourceSet{
 			Name:          "leave_request",
 			PolicyVersion: "20210210",
 			Instances: map[string]*requestv1.AttributesMap{

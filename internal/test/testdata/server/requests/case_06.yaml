@@ -48,16 +48,13 @@ wantResponse: {
             "XX125": {
                 "actions": {
                     "view:public": {
-                        "matchedPolicy": "NONE",
-                        "error": "No policy match"
+                        "matchedPolicy": "NO_MATCH"
                     },
                     "approve": {
-                        "matchedPolicy": "NONE",
-                        "error": "No policy match"
+                        "matchedPolicy": "NO_MATCH"
                     }
                 }
             }
         }
     }
 }
-wantError: true

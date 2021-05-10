@@ -11,10 +11,10 @@ import "google/api/field_behavior.proto";
 import "protoc-gen-openapiv2/options/annotations.proto";
 import "shared/v1/shared.proto";
 
-message CheckResourceBatchResponse {
+message CheckResourceSetResponse {
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
 		json_schema: {
-			description: "Policy evaluation response."
+			description: "Policy evaluation response for a set of resources."
 		}
     };
 
@@ -50,12 +50,6 @@ message CheckResourceBatchResponse {
                     example: "\"album:object:default\""
                 } 
             ];
-            string error = 2 [
-                (google.api.field_behavior) = OPTIONAL,
-                (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = { 
-                    description: "Any errors encountered during processing"
-                } 
-            ];
         }
             
         message ActionMeta {
@@ -82,12 +76,6 @@ message CheckResourceBatchResponse {
             (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = { 
                 description: "Metadata about resource instances."
                 example: "{\"XX125\": {\"actions\": {\"view:*\":{\"matched_policy\": \"album:object:default\"},\"comment\":{\"matched_policy\": \"album:object:default\"}}, \"effective_derived_roles\": [\"owner\"]}, \"XX225\": {\"actions\": {\"view:*\":{\"matched_policy\": \"album:object:default\"},\"comment\":{\"matched_policy\": \"album:object:default\"}}}}"
-            } 
-        ];
-        google.protobuf.Duration evaluation_duration = 2[
-            (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = { 
-                description: "Time taken to evaluate the request."
-                example: "\"0.0012s\""
             } 
         ];
     }

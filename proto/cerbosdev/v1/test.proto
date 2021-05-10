@@ -19,6 +19,13 @@ message EngineTestCase {
     bool want_error = 4;
 }
 
+message ServerTestCase {
+    string description = 1;
+    request.v1.CheckResourceSetRequest input = 2;
+    response.v1.CheckResourceSetResponse want_response = 3;
+    bool want_error = 4;
+}
+
 message CompileTestCase {
     string main_def = 1;
     map<string, policy.v1.Policy> input_defs = 2;

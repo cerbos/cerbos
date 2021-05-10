@@ -6,6 +6,7 @@ package policy.v1;
 
 option go_package = "github.com/cerbos/cerbos/internal/genpb/policy/v1;policyv1";
 
+import "engine/v1/engine.proto";
 import "request/v1/request.proto";
 import "shared/v1/shared.proto";
 import "validate/validate.proto";
@@ -104,6 +105,6 @@ message Test {
     string description = 2;
     bool skip = 3;
     string skip_reason = 4;
-    request.v1.CheckResourceBatchRequest request = 5 [(validate.rules).message.required = true];
-    map<string, ActionEffectMap> expected = 6;
+    engine.v1.CheckInput input = 5 [(validate.rules).message.required = true];
+    map<string,shared.v1.Effect> expected = 6;
 }

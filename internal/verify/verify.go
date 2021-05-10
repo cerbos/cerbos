@@ -12,6 +12,7 @@ import (
 	"github.com/google/go-cmp/cmp"
 
 	"github.com/cerbos/cerbos/internal/engine"
+	enginev1 "github.com/cerbos/cerbos/internal/genpb/engine/v1"
 	policyv1 "github.com/cerbos/cerbos/internal/genpb/policy/v1"
 	sharedv1 "github.com/cerbos/cerbos/internal/genpb/shared/v1"
 	"github.com/cerbos/cerbos/internal/util"
@@ -98,7 +99,7 @@ func doVerify(ctx context.Context, fsys fs.FS, eng *engine.Engine, conf Config) 
 }
 
 // EffectsMatch is a type created to make the diff output nicer.
-type EffectsMatch map[string]map[string]sharedv1.Effect
+type EffectsMatch map[string]sharedv1.Effect
 
 func runTestSuite(ctx context.Context, eng *engine.Engine, shouldRun func(string) bool, file string, ts *policyv1.TestSuite) (SuiteResult, bool) {
 	failed := false
@@ -121,7 +122,7 @@ func runTestSuite(ctx context.Context, eng *engine.Engine, shouldRun func(string
 			continue
 		}
 
-		actual, err := eng.CheckResourceBatch(ctx, test.Request)
+		actual, err := eng.Check(ctx, []*enginev1.CheckInput{test.Input})
 		if err != nil {
 			testResult.Failed = true
 			testResult.Error = err.Error()
@@ -130,7 +131,7 @@ func runTestSuite(ctx context.Context, eng *engine.Engine, shouldRun func(string
 			continue
 		}
 
-		if actual == nil {
+		if len(actual) == 0 {
 			testResult.Failed = true
 			testResult.Error = "Empty response from server"
 			failed = true
@@ -138,14 +139,11 @@ func runTestSuite(ctx context.Context, eng *engine.Engine, shouldRun func(string
 			continue
 		}
 
-		expectedResult := make(EffectsMatch, len(test.Expected))
-		for key, actionEffect := range test.Expected {
-			expectedResult[key] = actionEffect.Actions
-		}
+		expectedResult := EffectsMatch(test.Expected)
 
-		actualResult := make(EffectsMatch, len(actual.ResourceInstances))
-		for key, actionEffect := range actual.ResourceInstances {
-			actualResult[key] = actionEffect.Actions
+		actualResult := make(EffectsMatch, len(actual[0].Actions))
+		for key, actionEffect := range actual[0].Actions {
+			actualResult[key] = actionEffect.Effect
 		}
 
 		if diff := cmp.Diff(expectedResult, actualResult); diff != "" {

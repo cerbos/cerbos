@@ -169,7 +169,7 @@ func testGRPCRequest(addr string, opts ...grpc.DialOption) func(*testing.T) {
 
 		grpcClient := svcv1.NewCerbosServiceClient(grpcConn)
 
-		testCases := test.LoadTestCases(t, "engine")
+		testCases := test.LoadTestCases(t, filepath.Join("server", "requests"))
 
 		for _, tcase := range testCases {
 			tcase := tcase
@@ -179,18 +179,11 @@ func testGRPCRequest(addr string, opts ...grpc.DialOption) func(*testing.T) {
 				ctx, cancelFunc := context.WithTimeout(context.Background(), 1*time.Second)
 				defer cancelFunc()
 
-				have, err := grpcClient.CheckResourceBatch(ctx, tc.Input)
+				have, err := grpcClient.CheckResourceSet(ctx, tc.Input)
 				require.NoError(t, err)
 
 				if tc.WantResponse == nil {
 					return
-				}
-
-				require.NotNil(t, have)
-
-				// clear out timing data to make the comparison work
-				if have.Meta != nil {
-					have.Meta.EvaluationDuration = nil
 				}
 
 				require.Empty(t, cmp.Diff(tc.WantResponse, have, protocmp.Transform()))
@@ -207,7 +200,7 @@ func testHTTPRequest(addr string) func(*testing.T) {
 
 		c := &http.Client{Transport: customTransport}
 
-		testCases := test.LoadTestCases(t, "engine")
+		testCases := test.LoadTestCases(t, filepath.Join("server", "requests"))
 
 		for _, tcase := range testCases {
 			tcase := tcase
@@ -243,13 +236,8 @@ func testHTTPRequest(addr string) func(*testing.T) {
 				respBytes, err := io.ReadAll(resp.Body)
 				require.NoError(t, err, "Failed to read response")
 
-				have := &responsev1.CheckResourceBatchResponse{}
+				have := &responsev1.CheckResourceSetResponse{}
 				require.NoError(t, protojson.Unmarshal(respBytes, have), "Failed to unmarshal response")
-
-				// clear out timing data to make the comparison work
-				if have.Meta != nil {
-					have.Meta.EvaluationDuration = nil
-				}
 
 				require.Empty(t, cmp.Diff(tc.WantResponse, have, protocmp.Transform()))
 			})
@@ -257,10 +245,10 @@ func testHTTPRequest(addr string) func(*testing.T) {
 	}
 }
 
-func readTestCase(t *testing.T, data []byte) *cerbosdevv1.EngineTestCase {
+func readTestCase(t *testing.T, data []byte) *cerbosdevv1.ServerTestCase {
 	t.Helper()
 
-	tc := &cerbosdevv1.EngineTestCase{}
+	tc := &cerbosdevv1.ServerTestCase{}
 	require.NoError(t, util.ReadJSONOrYAML(bytes.NewReader(data), tc))
 
 	return tc

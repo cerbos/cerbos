@@ -14,9 +14,8 @@ import (
 )
 
 const (
-	statusFailure           = "failure"
-	statusNoPoliciesMatched = "no_policies_matched"
-	statusSuccess           = "success"
+	statusFailure = "failure"
+	statusSuccess = "success"
 )
 
 func measureUpdateLatency(updateType string, updateOp func() error) error {
@@ -61,33 +60,3 @@ func measureCheckLatency(batchSize int, checkFn func() ([]*enginev1.CheckOutput,
 
 	return result, err
 }
-
-/*
-func measureCheckResourceBatchLatency(checkFn func() (*CheckResponseWrapper, error)) (*responsev1.CheckResourceBatchResponse, error) {
-	startTime := time.Now()
-	resp, err := checkFn()
-	evalDuration := time.Since(startTime)
-
-	resp.setEvaluationDuration(evalDuration)
-
-	latencyMs := float64(evalDuration) / float64(time.Millisecond)
-
-	status := statusSuccess
-	if err != nil {
-		if errors.Is(err, ErrNoPoliciesMatched) {
-			status = statusNoPoliciesMatched
-		} else {
-			status = statusFailure
-		}
-	}
-
-	_ = stats.RecordWithTags(context.Background(),
-		[]tag.Mutator{
-			tag.Upsert(metrics.KeyEngineDecisionStatus, status),
-		},
-		metrics.EngineCheckResourceBatchLatency.M(latencyMs),
-	)
-
-	return resp.CheckResourceBatchResponse, err
-}
-*/

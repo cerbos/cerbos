@@ -3,7 +3,7 @@ name: AlbumObjectTestSuite
 description: Tests for verifying the album:object resource policy
 tests:
   - name: Alicia tries to view her own private album
-    request: {
+    input: {
       "requestId": "test",
       "actions": ["view"],
       "principal": {
@@ -12,28 +12,19 @@ tests:
       },
       "resource": {
         "name": "album:object",
-        "instances": {
-          "XX125": {
-            "attr": {
-              "owner": "alicia",
-              "id": "XX125",
-              "public": false,
-              "flagged": false
-            }
-          }
+        "attr": {
+          "owner": "alicia",
+          "id": "XX125",
+          "public": false,
+          "flagged": false
         }
       }
     }
-    expected: {
-      "XX125": {
-        "actions": {
-          "view": "EFFECT_ALLOW"
-        }
-      }
-    }
+    expected:
+      view: EFFECT_ALLOW
 
-  - name: Bradley tries to view Alicia's private and public albums
-    request: {
+  - name: Bradley tries to view Alicia's private album
+    input: {
       "requestId": "test",
       "actions": ["view"],
       "principal": {
@@ -42,41 +33,40 @@ tests:
       },
       "resource": {
         "name": "album:object",
-        "instances": {
-          "PRIVATE": {
-            "attr": {
-              "owner": "alicia",
-              "id": "XX125",
-              "public": false,
-              "flagged": false
-            }
-          },
-          "PUBLIC": {
-            "attr": {
-              "owner": "alicia",
-              "id": "XX525",
-              "public": true,
-              "flagged": false
-            }
-          }
+        "attr": {
+          "owner": "alicia",
+          "id": "XX125",
+          "public": false,
+          "flagged": false
         }
       }
     }
-    expected: {
-      "PRIVATE": {
-        "actions": {
-          "view": "EFFECT_DENY"
-        }
-      },
-      "PUBLIC": {
-        "actions": {
-          "view": "EFFECT_ALLOW"
-        }
-      }
-    }
+    expected:
+      view: EFFECT_DENY
 
-  - name: Moderator tries to delete a flagged album and an unflagged album
-    request: {
+  - name: Bradley tries to view Alicia's public album
+    input: {
+      "requestId": "test",
+      "actions": ["view"],
+      "principal": {
+        "id": "bradley",
+        "roles": ["user"]
+      },
+      "resource": {
+        "name": "album:object",
+        "attr": {
+          "owner": "alicia",
+          "id": "XX525",
+          "public": true,
+          "flagged": false
+        }
+      }
+    }
+    expected:
+      view: EFFECT_ALLOW
+
+  - name: Moderator tries to delete a flagged album
+    input: {
       "requestId": "test",
       "actions": ["delete"],
       "principal": {
@@ -85,35 +75,34 @@ tests:
       },
       "resource": {
         "name": "album:object",
-        "instances": {
-          "UNFLAGGED": {
-            "attr": {
-              "owner": "alicia",
-              "id": "XX525",
-              "public": true,
-              "flagged": false
-            }
-          },
-          "FLAGGED": {
-            "attr": {
-              "owner": "evan",
-              "id": "XX666",
-              "public": true,
-              "flagged": true
-            }
-          }
+        "attr": {
+          "owner": "evan",
+          "id": "XX666",
+          "public": true,
+          "flagged": true
         }
       }
     }
-    expected: {
-      "UNFLAGGED": {
-        "actions": {
-          "delete": "EFFECT_DENY"
-        }
+    expected:
+      delete: EFFECT_ALLOW
+
+  - name: Moderator tries to delete an unflagged album
+    input: {
+      "requestId": "test",
+      "actions": ["delete"],
+      "principal": {
+        "id": "maria",
+        "roles": ["user", "moderator"]
       },
-      "FLAGGED": {
-        "actions": {
-          "delete": "EFFECT_ALLOW"
+      "resource": {
+        "name": "album:object",
+        "attr": {
+          "owner": "alicia",
+          "id": "XX525",
+          "public": true,
+          "flagged": false
         }
       }
     }
+    expected:
+      delete: EFFECT_DENY

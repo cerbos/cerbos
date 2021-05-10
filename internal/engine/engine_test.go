@@ -20,7 +20,7 @@ import (
 // trick compiler into not converting benchmarks into nops.
 var dummy int
 
-func TestEngineCheckResourceBatch(t *testing.T) {
+func TestCheck(t *testing.T) {
 	eng, cancelFunc := mkEngine(t)
 	defer cancelFunc()
 
@@ -54,7 +54,7 @@ func readTestCase(tb testing.TB, data []byte) *cerbosdevv1.EngineTestCase {
 	return tc
 }
 
-func BenchmarkCheckResourceBatch(b *testing.B) {
+func BenchmarkCheck(b *testing.B) {
 	eng, cancelFunc := mkEngine(b)
 	defer cancelFunc()
 
