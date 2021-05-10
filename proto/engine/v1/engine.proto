@@ -47,6 +47,7 @@ message Resource {
         (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = { 
             description: "The policy version to use to evaluate this request. If not specified, will default to the server-configured default version."
             pattern: "^[[:word:]]*$"
+            example: "\"default\""
         }
     ];
     map<string,google.protobuf.Value> attr = 3 [

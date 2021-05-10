@@ -18,18 +18,6 @@ message CheckResourceSetResponse {
 		}
     };
 
-    message ActionEffectMap {
-        option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
-            json_schema: {
-                description: "Unique resource instance ID supplied in the request."
-            }
-        };
-        map<string,shared.v1.Effect> actions = 1 [
-            (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = { 
-                description: "Mapping of each action to an effect."
-            } 
-        ];
-    }
 
     message Meta {
         option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
@@ -99,3 +87,31 @@ message CheckResourceSetResponse {
     ];
 }
 
+message ActionEffectMap {
+    map<string,shared.v1.Effect> actions = 1 [
+        (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = { 
+            description: "Mapping of each action to an effect."
+        } 
+    ];
+}
+
+message CheckResourceBatchResponse {
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
+		json_schema: {
+			description: "Policy evaluation response for a batch of resources."
+		}
+    };
+
+    string request_id = 1 [
+        (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = { 
+            description: "Request ID provided in the request."
+            example: "\"c2db17b8-4f9f-4fb1-acfd-9162a02be42b\""
+        } 
+    ];
+    repeated ActionEffectMap results = 2 [
+        (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = { 
+            description: "Result for each resource"
+            example: "[{\"actions\":{\"view\":\"EFFECT_ALLOW\"}}]"
+        } 
+    ];
+}

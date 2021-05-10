@@ -20,10 +20,22 @@ message EngineTestCase {
 }
 
 message ServerTestCase {
+    message CheckResourceSetCall {
+        request.v1.CheckResourceSetRequest input = 1;
+        response.v1.CheckResourceSetResponse want_response = 2;
+    }
+
+    message CheckResourceBatchCall {
+        request.v1.CheckResourceBatchRequest input = 1;
+        response.v1.CheckResourceBatchResponse want_response = 2;
+    }
+
     string description = 1;
-    request.v1.CheckResourceSetRequest input = 2;
-    response.v1.CheckResourceSetResponse want_response = 3;
-    bool want_error = 4;
+    bool want_error = 2;
+    oneof call_kind {
+        CheckResourceSetCall check_resource_set = 3;
+        CheckResourceBatchCall check_resource_batch = 4;
+    }
 }
 
 message CompileTestCase {

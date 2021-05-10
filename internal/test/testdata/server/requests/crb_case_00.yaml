@@ -1,0 +1,96 @@
+---
+description: "Mixed batch"
+checkResourceBatch:
+  input: {
+    "requestId": "test",
+    "principal": {
+      "id": "john",
+      "policyVersion": "20210210",
+      "roles": [
+        "employee"
+      ],
+      "attr": {
+        "department": "marketing",
+        "geography": "GB",
+        "team": "design"
+      }
+    },
+    "resources": [
+      {
+        "actions": [
+          "view:public",
+          "approve"
+        ],
+        "resource": {
+          "name": "leave_request",
+          "policyVersion": "20210210",
+          "attr": {
+            "department": "marketing",
+            "geography": "GB",
+            "id": "XX125",
+            "owner": "john",
+            "team": "design"
+          }
+        }
+      },
+      {
+        "actions": [
+          "view:public",
+          "approve"
+        ],
+        "resource": {
+          "name": "leave_request",
+          "policyVersion": "20210210",
+          "attr": {
+            "department": "engineering",
+            "geography": "GB",
+            "id": "YY125",
+            "owner": "jenny",
+            "team": "backend"
+          }
+        }
+      },
+      {
+        "actions": [
+          "view:public",
+          "delete",
+          "edit"
+        ],
+        "resource": {
+          "name": "salary_record",
+          "policyVersion": "20210210",
+          "attr": {
+            "department": "engineering",
+            "geography": "GB",
+            "id": "YY525",
+            "owner": "mark",
+            "team": "backend"
+          }
+        }
+      }
+    ]
+  }
+  wantResponse: {
+    "requestId": "test",
+    "results": [
+      {
+        "actions": {
+          "view:public": "EFFECT_ALLOW",
+          "approve": "EFFECT_DENY"
+        }
+      },
+      {
+        "actions": {
+          "view:public": "EFFECT_ALLOW",
+          "approve": "EFFECT_DENY"
+        }
+      },
+      {
+        "actions": {
+          "view:public": "EFFECT_DENY",
+          "delete": "EFFECT_DENY",
+          "edit": "EFFECT_DENY"
+        }
+      }
+    ]
+  }

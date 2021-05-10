@@ -26,11 +26,12 @@ message CheckResourceSetRequest {
         } 
     ];
     repeated string actions = 2 [
-        (validate.rules).repeated = { unique: true, min_items: 1, items { string { min_len: 1 } } },
+        (validate.rules).repeated = { unique: true, min_items: 1, max_items: 10, items { string { min_len: 1 } } },
         (google.api.field_behavior) = REQUIRED,
         (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = { 
             description: "List of actions being performed on the set of resources."
             min_items: 1
+            max_items: 10
             unique_items: true
             example: "[\"view:public\", \"comment\"]"
         } 
@@ -76,12 +77,12 @@ message ResourceSet {
         }
     ];
     map<string, AttributesMap> instances = 3 [
-        (validate.rules).map = {min_pairs: 1, max_pairs: 50, no_sparse: true}, 
+        (validate.rules).map = {min_pairs: 1, max_pairs: 20, no_sparse: true}, 
         (google.api.field_behavior) = REQUIRED,
         (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = { 
             description: "Set of resource instances to check. Each instance must be keyed by an application-specific unique identifier.",
             min_properties: 1
-            max_properties: 50
+            max_properties: 20
             example: "{\"XX125\":{\"attr\":{\"owner\":\"bugs_bunny\", \"public\": false, \"flagged\": false}}, \"XX225\":{\"attr\":{\"owner\":\"daffy_duck\", \"public\": true, \"flagged\": false}}}"
         }
     ];
@@ -102,5 +103,51 @@ message AttributesMap {
     ];
 }
 
+message CheckResourceBatchRequest {
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
+		json_schema: {
+			description: "PDP Request"
+		}
+    };
 
+    message BatchEntry {
+        repeated string actions = 1 [
+            (validate.rules).repeated = { unique: true, min_items: 1, max_items: 10, items { string { min_len: 1 } } },
+            (google.api.field_behavior) = REQUIRED,
+            (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = { 
+                description: "List of actions being performed on the resource."
+                min_items: 1
+                max_items: 10
+                unique_items: true
+                example: "[\"view:public\", \"comment\"]"
+            } 
+        ];
+        engine.v1.Resource resource = 2 [
+            (validate.rules).message.required = true, 
+            (google.api.field_behavior) = REQUIRED
+        ];
+    }
+
+    string request_id = 1 [
+        (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = { 
+            description: "Optional application-specific ID useful for correlating logs for analysis."
+            example: "\"c2db17b8-4f9f-4fb1-acfd-9162a02be42b\""
+        } 
+    ];
+    engine.v1.Principal principal = 2 [
+        (validate.rules).message.required = true, 
+        (google.api.field_behavior) = REQUIRED
+    ];
+    repeated BatchEntry resources = 3 [
+        (validate.rules).repeated = { min_items: 1, max_items: 20 },
+        (google.api.field_behavior) = REQUIRED,
+        (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = { 
+            description: "List of resources and actions."
+            min_items: 1
+            max_items: 20
+            unique_items: true
+            example: "[{\"actions\":[\"view\",\"comment\"], \"resource\":{\"name\":\"album:object\",\"policyVersion\":\"default\",\"attr\":{\"owner\":\"bugs_bunny\", \"public\": false, \"flagged\": false}}}]"
+        } 
+    ];
+}
 

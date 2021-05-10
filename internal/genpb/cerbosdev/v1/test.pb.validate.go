@@ -145,27 +145,35 @@ func (m *ServerTestCase) Validate() error {
 
 	// no validation rules for Description
 
-	if v, ok := interface{}(m.GetInput()).(interface{ Validate() error }); ok {
-		if err := v.Validate(); err != nil {
-			return ServerTestCaseValidationError{
-				field:  "Input",
-				reason: "embedded message failed validation",
-				cause:  err,
-			}
-		}
-	}
-
-	if v, ok := interface{}(m.GetWantResponse()).(interface{ Validate() error }); ok {
-		if err := v.Validate(); err != nil {
-			return ServerTestCaseValidationError{
-				field:  "WantResponse",
-				reason: "embedded message failed validation",
-				cause:  err,
-			}
-		}
-	}
-
 	// no validation rules for WantError
+
+	switch m.CallKind.(type) {
+
+	case *ServerTestCase_CheckResourceSet:
+
+		if v, ok := interface{}(m.GetCheckResourceSet()).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return ServerTestCaseValidationError{
+					field:  "CheckResourceSet",
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	case *ServerTestCase_CheckResourceBatch:
+
+		if v, ok := interface{}(m.GetCheckResourceBatch()).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return ServerTestCaseValidationError{
+					field:  "CheckResourceBatch",
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	}
 
 	return nil
 }
@@ -477,3 +485,179 @@ var _ interface {
 	Cause() error
 	ErrorName() string
 } = CelTestCaseValidationError{}
+
+// Validate checks the field values on ServerTestCase_CheckResourceSetCall with
+// the rules defined in the proto definition for this message. If any rules
+// are violated, an error is returned.
+func (m *ServerTestCase_CheckResourceSetCall) Validate() error {
+	if m == nil {
+		return nil
+	}
+
+	if v, ok := interface{}(m.GetInput()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return ServerTestCase_CheckResourceSetCallValidationError{
+				field:  "Input",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if v, ok := interface{}(m.GetWantResponse()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return ServerTestCase_CheckResourceSetCallValidationError{
+				field:  "WantResponse",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	return nil
+}
+
+// ServerTestCase_CheckResourceSetCallValidationError is the validation error
+// returned by ServerTestCase_CheckResourceSetCall.Validate if the designated
+// constraints aren't met.
+type ServerTestCase_CheckResourceSetCallValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e ServerTestCase_CheckResourceSetCallValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e ServerTestCase_CheckResourceSetCallValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e ServerTestCase_CheckResourceSetCallValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e ServerTestCase_CheckResourceSetCallValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e ServerTestCase_CheckResourceSetCallValidationError) ErrorName() string {
+	return "ServerTestCase_CheckResourceSetCallValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e ServerTestCase_CheckResourceSetCallValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sServerTestCase_CheckResourceSetCall.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = ServerTestCase_CheckResourceSetCallValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = ServerTestCase_CheckResourceSetCallValidationError{}
+
+// Validate checks the field values on ServerTestCase_CheckResourceBatchCall
+// with the rules defined in the proto definition for this message. If any
+// rules are violated, an error is returned.
+func (m *ServerTestCase_CheckResourceBatchCall) Validate() error {
+	if m == nil {
+		return nil
+	}
+
+	if v, ok := interface{}(m.GetInput()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return ServerTestCase_CheckResourceBatchCallValidationError{
+				field:  "Input",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if v, ok := interface{}(m.GetWantResponse()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return ServerTestCase_CheckResourceBatchCallValidationError{
+				field:  "WantResponse",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	return nil
+}
+
+// ServerTestCase_CheckResourceBatchCallValidationError is the validation error
+// returned by ServerTestCase_CheckResourceBatchCall.Validate if the
+// designated constraints aren't met.
+type ServerTestCase_CheckResourceBatchCallValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e ServerTestCase_CheckResourceBatchCallValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e ServerTestCase_CheckResourceBatchCallValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e ServerTestCase_CheckResourceBatchCallValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e ServerTestCase_CheckResourceBatchCallValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e ServerTestCase_CheckResourceBatchCallValidationError) ErrorName() string {
+	return "ServerTestCase_CheckResourceBatchCallValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e ServerTestCase_CheckResourceBatchCallValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sServerTestCase_CheckResourceBatchCall.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = ServerTestCase_CheckResourceBatchCallValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = ServerTestCase_CheckResourceBatchCallValidationError{}

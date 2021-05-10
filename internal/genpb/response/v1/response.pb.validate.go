@@ -132,10 +132,10 @@ var _ interface {
 	ErrorName() string
 } = CheckResourceSetResponseValidationError{}
 
-// Validate checks the field values on CheckResourceSetResponse_ActionEffectMap
-// with the rules defined in the proto definition for this message. If any
-// rules are violated, an error is returned.
-func (m *CheckResourceSetResponse_ActionEffectMap) Validate() error {
+// Validate checks the field values on ActionEffectMap with the rules defined
+// in the proto definition for this message. If any rules are violated, an
+// error is returned.
+func (m *ActionEffectMap) Validate() error {
 	if m == nil {
 		return nil
 	}
@@ -145,10 +145,9 @@ func (m *CheckResourceSetResponse_ActionEffectMap) Validate() error {
 	return nil
 }
 
-// CheckResourceSetResponse_ActionEffectMapValidationError is the validation
-// error returned by CheckResourceSetResponse_ActionEffectMap.Validate if the
-// designated constraints aren't met.
-type CheckResourceSetResponse_ActionEffectMapValidationError struct {
+// ActionEffectMapValidationError is the validation error returned by
+// ActionEffectMap.Validate if the designated constraints aren't met.
+type ActionEffectMapValidationError struct {
 	field  string
 	reason string
 	cause  error
@@ -156,24 +155,22 @@ type CheckResourceSetResponse_ActionEffectMapValidationError struct {
 }
 
 // Field function returns field value.
-func (e CheckResourceSetResponse_ActionEffectMapValidationError) Field() string { return e.field }
+func (e ActionEffectMapValidationError) Field() string { return e.field }
 
 // Reason function returns reason value.
-func (e CheckResourceSetResponse_ActionEffectMapValidationError) Reason() string { return e.reason }
+func (e ActionEffectMapValidationError) Reason() string { return e.reason }
 
 // Cause function returns cause value.
-func (e CheckResourceSetResponse_ActionEffectMapValidationError) Cause() error { return e.cause }
+func (e ActionEffectMapValidationError) Cause() error { return e.cause }
 
 // Key function returns key value.
-func (e CheckResourceSetResponse_ActionEffectMapValidationError) Key() bool { return e.key }
+func (e ActionEffectMapValidationError) Key() bool { return e.key }
 
 // ErrorName returns error name.
-func (e CheckResourceSetResponse_ActionEffectMapValidationError) ErrorName() string {
-	return "CheckResourceSetResponse_ActionEffectMapValidationError"
-}
+func (e ActionEffectMapValidationError) ErrorName() string { return "ActionEffectMapValidationError" }
 
 // Error satisfies the builtin error interface
-func (e CheckResourceSetResponse_ActionEffectMapValidationError) Error() string {
+func (e ActionEffectMapValidationError) Error() string {
 	cause := ""
 	if e.cause != nil {
 		cause = fmt.Sprintf(" | caused by: %v", e.cause)
@@ -185,14 +182,14 @@ func (e CheckResourceSetResponse_ActionEffectMapValidationError) Error() string 
 	}
 
 	return fmt.Sprintf(
-		"invalid %sCheckResourceSetResponse_ActionEffectMap.%s: %s%s",
+		"invalid %sActionEffectMap.%s: %s%s",
 		key,
 		e.field,
 		e.reason,
 		cause)
 }
 
-var _ error = CheckResourceSetResponse_ActionEffectMapValidationError{}
+var _ error = ActionEffectMapValidationError{}
 
 var _ interface {
 	Field() string
@@ -200,7 +197,91 @@ var _ interface {
 	Key() bool
 	Cause() error
 	ErrorName() string
-} = CheckResourceSetResponse_ActionEffectMapValidationError{}
+} = ActionEffectMapValidationError{}
+
+// Validate checks the field values on CheckResourceBatchResponse with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, an error is returned.
+func (m *CheckResourceBatchResponse) Validate() error {
+	if m == nil {
+		return nil
+	}
+
+	// no validation rules for RequestId
+
+	for idx, item := range m.GetResults() {
+		_, _ = idx, item
+
+		if v, ok := interface{}(item).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return CheckResourceBatchResponseValidationError{
+					field:  fmt.Sprintf("Results[%v]", idx),
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	}
+
+	return nil
+}
+
+// CheckResourceBatchResponseValidationError is the validation error returned
+// by CheckResourceBatchResponse.Validate if the designated constraints aren't met.
+type CheckResourceBatchResponseValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e CheckResourceBatchResponseValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e CheckResourceBatchResponseValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e CheckResourceBatchResponseValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e CheckResourceBatchResponseValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e CheckResourceBatchResponseValidationError) ErrorName() string {
+	return "CheckResourceBatchResponseValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e CheckResourceBatchResponseValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sCheckResourceBatchResponse.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = CheckResourceBatchResponseValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = CheckResourceBatchResponseValidationError{}
 
 // Validate checks the field values on CheckResourceSetResponse_Meta with the
 // rules defined in the proto definition for this message. If any rules are
