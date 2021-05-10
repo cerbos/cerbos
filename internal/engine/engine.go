@@ -194,7 +194,7 @@ func (engine *Engine) buildEvaluationContexts(inputs []*enginev1.CheckInput) []*
 		evalContexts[i].addCheck(ppCheck)
 
 		// get the resource policy check
-		rpName, rpVersion, rpKey := engine.policyAttr(c.Resource.Name, c.Resource.PolicyVersion)
+		rpName, rpVersion, rpKey := engine.policyAttr(c.Resource.Kind, c.Resource.PolicyVersion)
 		rpCheck, ok := resourcePolicyChecks[rpKey]
 		if !ok {
 			rpCheck = engine.getResourcePolicyCheck(rpName, rpVersion, rpKey)

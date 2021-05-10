@@ -118,8 +118,9 @@ func mkProto(tb testing.TB) proto.Message {
 		RequestId: "test",
 		Actions:   []string{"view:public"},
 		Resource: &enginev1.Resource{
-			Name:          "leave_request",
+			Kind:          "leave_request",
 			PolicyVersion: "20210210",
+			Id:            "XX125",
 			Attr:          m,
 		},
 		Principal: &enginev1.Principal{

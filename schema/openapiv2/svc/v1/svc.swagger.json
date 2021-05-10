@@ -287,7 +287,7 @@
                 "comment"
               ],
               "resource": {
-                "name": "album:object",
+                "kind": "album:object",
                 "policyVersion": "default",
                 "attr": {
                   "owner": "bugs_bunny",
@@ -453,6 +453,7 @@
           },
           "description": "Roles assigned to this principal from your identity management system.",
           "pattern": "^[[:word:]\\-\\.]+$",
+          "maxItems": 20,
           "minItems": 1,
           "uniqueItems": true,
           "required": [
@@ -479,13 +480,13 @@
     "v1Resource": {
       "type": "object",
       "properties": {
-        "name": {
+        "kind": {
           "type": "string",
           "example": "album:photo",
-          "description": "Name of the resource type being accessed.",
+          "description": "Name of the resource kind being accessed.",
           "pattern": "^[[:alpha:]][[:word:]\\@\\.\\-]*(\\:[[:alpha:]][[:word:]\\@\\.\\-]*)*$",
           "required": [
-            "name"
+            "kind"
           ]
         },
         "policyVersion": {
@@ -494,28 +495,40 @@
           "description": "The policy version to use to evaluate this request. If not specified, will default to the server-configured default version.",
           "pattern": "^[[:word:]]*$"
         },
+        "id": {
+          "type": "string",
+          "example": "XX125",
+          "description": "ID of the resource instance",
+          "required": [
+            "id"
+          ]
+        },
         "attr": {
           "type": "object",
+          "example": {
+            "owner": "bugs_bunny"
+          },
           "additionalProperties": {
             "type": "object"
           },
-          "description": "Contextual data about this resource that should be used during policy evaluation."
+          "description": "Kay-value pairs of contextual data about this resource that should be used during policy evaluation."
         }
       },
       "required": [
-        "name"
+        "kind",
+        "id"
       ]
     },
     "v1ResourceSet": {
       "type": "object",
       "properties": {
-        "name": {
+        "kind": {
           "type": "string",
           "example": "album:object",
-          "description": "Name of the resource type being accessed.",
+          "description": "Resource kind.",
           "pattern": "^[[:alpha:]][[:word:]\\@\\.\\-]*(\\:[[:alpha:]][[:word:]\\@\\.\\-]*)*$",
           "required": [
-            "name"
+            "kind"
           ]
         },
         "policyVersion": {
@@ -555,7 +568,7 @@
       },
       "description": "Set of resources to check",
       "required": [
-        "name",
+        "kind",
         "instances"
       ]
     }

@@ -179,16 +179,16 @@ func (m *ResourceSet) Validate() error {
 		return nil
 	}
 
-	if utf8.RuneCountInString(m.GetName()) < 1 {
+	if utf8.RuneCountInString(m.GetKind()) < 1 {
 		return ResourceSetValidationError{
-			field:  "Name",
+			field:  "Kind",
 			reason: "value length must be at least 1 runes",
 		}
 	}
 
-	if !_ResourceSet_Name_Pattern.MatchString(m.GetName()) {
+	if !_ResourceSet_Kind_Pattern.MatchString(m.GetKind()) {
 		return ResourceSetValidationError{
-			field:  "Name",
+			field:  "Kind",
 			reason: "value does not match regex pattern \"^[[:alpha:]][[:word:]\\\\@\\\\.\\\\-]*(\\\\:[[:alpha:]][[:word:]\\\\@\\\\.\\\\-]*)*$\"",
 		}
 	}
@@ -288,7 +288,7 @@ var _ interface {
 	ErrorName() string
 } = ResourceSetValidationError{}
 
-var _ResourceSet_Name_Pattern = regexp.MustCompile("^[[:alpha:]][[:word:]\\@\\.\\-]*(\\:[[:alpha:]][[:word:]\\@\\.\\-]*)*$")
+var _ResourceSet_Kind_Pattern = regexp.MustCompile("^[[:alpha:]][[:word:]\\@\\.\\-]*(\\:[[:alpha:]][[:word:]\\@\\.\\-]*)*$")
 
 var _ResourceSet_PolicyVersion_Pattern = regexp.MustCompile("^[[:word:]]*$")
 

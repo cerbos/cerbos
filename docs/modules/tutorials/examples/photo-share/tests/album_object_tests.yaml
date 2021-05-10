@@ -11,7 +11,7 @@ tests:
         "roles": ["user"]
       },
       "resource": {
-        "name": "album:object",
+        "kind": "album:object",
         "attr": {
           "owner": "alicia",
           "id": "XX125",
@@ -32,7 +32,7 @@ tests:
         "roles": ["user"]
       },
       "resource": {
-        "name": "album:object",
+        "kind": "album:object",
         "attr": {
           "owner": "alicia",
           "id": "XX125",
@@ -53,7 +53,7 @@ tests:
         "roles": ["user"]
       },
       "resource": {
-        "name": "album:object",
+        "kind": "album:object",
         "attr": {
           "owner": "alicia",
           "id": "XX525",
@@ -74,7 +74,7 @@ tests:
         "roles": ["user", "moderator"]
       },
       "resource": {
-        "name": "album:object",
+        "kind": "album:object",
         "attr": {
           "owner": "evan",
           "id": "XX666",
@@ -95,7 +95,7 @@ tests:
         "roles": ["user", "moderator"]
       },
       "resource": {
-        "name": "album:object",
+        "kind": "album:object",
         "attr": {
           "owner": "alicia",
           "id": "XX525",

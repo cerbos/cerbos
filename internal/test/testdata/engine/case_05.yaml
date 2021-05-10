@@ -20,8 +20,9 @@ inputs: [
       }
     },
     "resource": {
-      "name": "salary_record",
+      "kind": "salary_record",
       "policyVersion": "20210210",
+      "id": "XX125",
       "attr": {
         "department": "marketing",
         "geography": "GB",

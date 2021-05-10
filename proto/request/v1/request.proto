@@ -58,11 +58,11 @@ message ResourceSet {
 		}
     };
 
-    string name = 1 [
+    string kind = 1 [
         (validate.rules).string = {pattern: "^[[:alpha:]][[:word:]\\@\\.\\-]*(\\:[[:alpha:]][[:word:]\\@\\.\\-]*)*$", min_len: 1}, 
         (google.api.field_behavior) = REQUIRED,
         (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
-            description: "Name of the resource type being accessed."
+            description: "Resource kind."
             example: "\"album:object\""
             pattern: "^[[:alpha:]][[:word:]\\@\\.\\-]*(\\:[[:alpha:]][[:word:]\\@\\.\\-]*)*$"
         }
@@ -146,7 +146,7 @@ message CheckResourceBatchRequest {
             min_items: 1
             max_items: 20
             unique_items: true
-            example: "[{\"actions\":[\"view\",\"comment\"], \"resource\":{\"name\":\"album:object\",\"policyVersion\":\"default\",\"attr\":{\"owner\":\"bugs_bunny\", \"public\": false, \"flagged\": false}}}]"
+            example: "[{\"actions\":[\"view\",\"comment\"], \"resource\":{\"kind\":\"album:object\",\"policyVersion\":\"default\",\"attr\":{\"owner\":\"bugs_bunny\", \"public\": false, \"flagged\": false}}}]"
         } 
     ];
 }

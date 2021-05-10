@@ -44,7 +44,7 @@ input: {
     }
   },
   "resource": {
-    "name": "leave_request",
+    "kind": "leave_request",
     "attr": {
       "department": "marketing"
     }

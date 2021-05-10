@@ -32,11 +32,11 @@ message CheckOutput {
 }
 
 message Resource {
-    string name = 1 [
+    string kind = 1 [
         (validate.rules).string = {pattern: "^[[:alpha:]][[:word:]\\@\\.\\-]*(\\:[[:alpha:]][[:word:]\\@\\.\\-]*)*$", min_len: 1}, 
         (google.api.field_behavior) = REQUIRED,
         (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
-            description: "Name of the resource type being accessed.",
+            description: "Name of the resource kind being accessed.",
             example: "\"album:photo\"",
             pattern: "^[[:alpha:]][[:word:]\\@\\.\\-]*(\\:[[:alpha:]][[:word:]\\@\\.\\-]*)*$"
         }
@@ -50,10 +50,19 @@ message Resource {
             example: "\"default\""
         }
     ];
-    map<string,google.protobuf.Value> attr = 3 [
+    string id = 3 [
+        (validate.rules).string = {min_len: 1}, 
+        (google.api.field_behavior) = REQUIRED,
+        (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = { 
+            description: "ID of the resource instance"
+            example: "\"XX125\""
+        } 
+    ];
+    map<string,google.protobuf.Value> attr = 4 [
         (validate.rules).map.no_sparse = true,
         (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = { 
-            description: "Contextual data about this resource that should be used during policy evaluation."
+            description: "Kay-value pairs of contextual data about this resource that should be used during policy evaluation."
+            example: "{\"owner\": \"bugs_bunny\"}"
         }
     ];
 }
@@ -82,11 +91,12 @@ message Principal {
         }
     ];
     repeated string roles = 3 [
-        (validate.rules).repeated = { unique: true, min_items: 1, items { string { pattern: "^[[:word:]\\-\\.]+$" } } },
+        (validate.rules).repeated = { unique: true, min_items: 1, max_items: 20, items { string { pattern: "^[[:word:]\\-\\.]+$" } } },
         (google.api.field_behavior) = REQUIRED,
         (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = { 
             description: "Roles assigned to this principal from your identity management system."
             min_items: 1
+            max_items: 20
             pattern: "^[[:word:]\\-\\.]+$"
             unique_items: true
             example: "[\"user\"]"

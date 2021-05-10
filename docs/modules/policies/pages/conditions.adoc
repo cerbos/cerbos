@@ -134,7 +134,7 @@ NOTE: CEL has many builtin functions and operators. The fully up-to-date list ca
 ----
 ...
 "resource": {
-  "name": "leave_request",
+  "kind": "leave_request",
   "attr": {
     "cooldownPeriod": "3750s",
     "lastAccessed": "2021-04-20T10:00:20.021-05:00"
@@ -226,7 +226,7 @@ NOTE: The IP address functions are Cerbos-specific extensions to CEL.
 ----
 ...
 "resource": {
-  "name": "leave_request",
+  "kind": "leave_request",
   "attr": {
     "id": "125",
     "department": "marketing"
@@ -267,7 +267,7 @@ NOTE: The IP address functions are Cerbos-specific extensions to CEL.
 ----
 ...
 "resource": {
-  "name": "leave_request",
+  "kind": "leave_request",
   "attr": {
     "lastAccessed": "2021-04-20T10:00:20.021-05:00",
     "lastUpdateTime": "2021-05-01T13:34:12.024Z",

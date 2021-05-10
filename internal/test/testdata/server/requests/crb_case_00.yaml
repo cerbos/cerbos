@@ -22,8 +22,9 @@ checkResourceBatch:
           "approve"
         ],
         "resource": {
-          "name": "leave_request",
+          "kind": "leave_request",
           "policyVersion": "20210210",
+          "id": "XX125",
           "attr": {
             "department": "marketing",
             "geography": "GB",
@@ -39,8 +40,9 @@ checkResourceBatch:
           "approve"
         ],
         "resource": {
-          "name": "leave_request",
+          "kind": "leave_request",
           "policyVersion": "20210210",
+          "id": "YY125",
           "attr": {
             "department": "engineering",
             "geography": "GB",
@@ -57,8 +59,9 @@ checkResourceBatch:
           "edit"
         ],
         "resource": {
-          "name": "salary_record",
+          "kind": "salary_record",
           "policyVersion": "20210210",
+          "id": "YY525",
           "attr": {
             "department": "engineering",
             "geography": "GB",

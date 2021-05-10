@@ -19,7 +19,8 @@ inputs: [
       }
     },
     "resource": {
-      "name": "leave_request",
+      "kind": "leave_request",
+      "id": "XX125",
       "attr": {
         "department": "marketing",
         "geography": "GB",

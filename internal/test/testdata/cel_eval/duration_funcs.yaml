@@ -18,7 +18,7 @@ input: {
     }
   },
   "resource": {
-    "name": "leave_request",
+    "kind": "leave_request",
     "attr": {
       "cooldownPeriod": "3750s",
       "lastUpdateTime": "2021-05-01T13:34:12.024Z",

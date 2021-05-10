@@ -214,7 +214,7 @@ cat <<EOF | curl --silent "localhost:3592/api/check" -d @-
   "actions":  ["view"],
   "resource":  {
     "policyVersion": "default",
-    "name":  "album:object",
+    "kind":  "album:object",
     "instances": {
       "XX125": {
         "attr":  {

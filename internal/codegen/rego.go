@@ -231,9 +231,9 @@ func (rg *RegoGen) addEffectRuleHead(effect sharedv1.Effect) {
 
 func (rg *RegoGen) addResourceMatch(resource string) {
 	if resource == "*" {
-		rg.line(`glob.match("*", [], input.resource.name)`)
+		rg.line(`glob.match("*", [], input.resource.kind)`)
 	} else {
-		rg.line(`glob.match("`, resource, `", [":"], input.resource.name)`)
+		rg.line(`glob.match("`, resource, `", [":"], input.resource.kind)`)
 	}
 }
 

@@ -26,7 +26,7 @@ func MkCheckResourceSetRequest() *requestv1.CheckResourceSetRequest {
 			},
 		},
 		Resource: &requestv1.ResourceSet{
-			Name:          "leave_request",
+			Kind:          "leave_request",
 			PolicyVersion: "20210210",
 			Instances: map[string]*requestv1.AttributesMap{
 				"XX125": {

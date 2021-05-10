@@ -20,7 +20,7 @@ checkResourceSet:
       }
     },
     "resource": {
-      "name": "leave_request",
+      "kind": "leave_request",
       "instances": {
         "XX125": {
           "attr": {

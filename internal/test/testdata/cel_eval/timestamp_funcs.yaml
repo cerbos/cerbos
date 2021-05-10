@@ -25,7 +25,7 @@ input: {
     }
   },
   "resource": {
-    "name": "leave_request",
+    "kind": "leave_request",
     "attr": {
       "lastAccessed": "2021-04-20T10:05:20.021-05:00"
     }

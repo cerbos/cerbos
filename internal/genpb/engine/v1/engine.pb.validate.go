@@ -254,16 +254,16 @@ func (m *Resource) Validate() error {
 		return nil
 	}
 
-	if utf8.RuneCountInString(m.GetName()) < 1 {
+	if utf8.RuneCountInString(m.GetKind()) < 1 {
 		return ResourceValidationError{
-			field:  "Name",
+			field:  "Kind",
 			reason: "value length must be at least 1 runes",
 		}
 	}
 
-	if !_Resource_Name_Pattern.MatchString(m.GetName()) {
+	if !_Resource_Kind_Pattern.MatchString(m.GetKind()) {
 		return ResourceValidationError{
-			field:  "Name",
+			field:  "Kind",
 			reason: "value does not match regex pattern \"^[[:alpha:]][[:word:]\\\\@\\\\.\\\\-]*(\\\\:[[:alpha:]][[:word:]\\\\@\\\\.\\\\-]*)*$\"",
 		}
 	}
@@ -272,6 +272,13 @@ func (m *Resource) Validate() error {
 		return ResourceValidationError{
 			field:  "PolicyVersion",
 			reason: "value does not match regex pattern \"^[[:word:]]*$\"",
+		}
+	}
+
+	if utf8.RuneCountInString(m.GetId()) < 1 {
+		return ResourceValidationError{
+			field:  "Id",
+			reason: "value length must be at least 1 runes",
 		}
 	}
 
@@ -356,7 +363,7 @@ var _ interface {
 	ErrorName() string
 } = ResourceValidationError{}
 
-var _Resource_Name_Pattern = regexp.MustCompile("^[[:alpha:]][[:word:]\\@\\.\\-]*(\\:[[:alpha:]][[:word:]\\@\\.\\-]*)*$")
+var _Resource_Kind_Pattern = regexp.MustCompile("^[[:alpha:]][[:word:]\\@\\.\\-]*(\\:[[:alpha:]][[:word:]\\@\\.\\-]*)*$")
 
 var _Resource_PolicyVersion_Pattern = regexp.MustCompile("^[[:word:]]*$")
 
@@ -381,10 +388,10 @@ func (m *Principal) Validate() error {
 		}
 	}
 
-	if len(m.GetRoles()) < 1 {
+	if l := len(m.GetRoles()); l < 1 || l > 20 {
 		return PrincipalValidationError{
 			field:  "Roles",
-			reason: "value must contain at least 1 item(s)",
+			reason: "value must contain between 1 and 20 items, inclusive",
 		}
 	}
 
