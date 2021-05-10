@@ -242,18 +242,6 @@
         }
       }
     },
-    "v1ActionEffectMap": {
-      "type": "object",
-      "properties": {
-        "actions": {
-          "type": "object",
-          "additionalProperties": {
-            "$ref": "#/definitions/v1Effect"
-          },
-          "description": "Mapping of each action to an effect."
-        }
-      }
-    },
     "v1AttributesMap": {
       "type": "object",
       "properties": {
@@ -289,6 +277,7 @@
               "resource": {
                 "kind": "album:object",
                 "policyVersion": "default",
+                "id": "XX125",
                 "attr": {
                   "owner": "bugs_bunny",
                   "public": false,
@@ -326,18 +315,39 @@
           "type": "array",
           "example": [
             {
+              "resourceId": "XX125",
               "actions": {
                 "view": "EFFECT_ALLOW"
               }
             }
           ],
           "items": {
-            "$ref": "#/definitions/v1ActionEffectMap"
+            "$ref": "#/definitions/v1CheckResourceBatchResponseActionEffectMap"
           },
           "description": "Result for each resource"
         }
       },
       "description": "Policy evaluation response for a batch of resources."
+    },
+    "v1CheckResourceBatchResponseActionEffectMap": {
+      "type": "object",
+      "properties": {
+        "resourceId": {
+          "type": "string",
+          "example": "XX125",
+          "description": "Resource ID"
+        },
+        "actions": {
+          "type": "object",
+          "example": {
+            "view": "EFFECT_ALLOW"
+          },
+          "additionalProperties": {
+            "$ref": "#/definitions/v1Effect"
+          },
+          "description": "Mapping of each action to an effect."
+        }
+      }
     },
     "v1CheckResourceSetRequest": {
       "type": "object",
@@ -405,7 +415,7 @@
             }
           },
           "additionalProperties": {
-            "$ref": "#/definitions/v1ActionEffectMap"
+            "$ref": "#/definitions/v1CheckResourceSetResponseActionEffectMap"
           },
           "description": "Results for each resource instance, keyed by the ID supplied in the request"
         },
@@ -415,6 +425,18 @@
         }
       },
       "description": "Policy evaluation response for a set of resources."
+    },
+    "v1CheckResourceSetResponseActionEffectMap": {
+      "type": "object",
+      "properties": {
+        "actions": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/v1Effect"
+          },
+          "description": "Mapping of each action to an effect."
+        }
+      }
     },
     "v1Effect": {
       "type": "string",

@@ -94,7 +94,7 @@ func (cs *CerbosService) CheckResourceBatch(ctx context.Context, req *requestv1.
 
 	result := &responsev1.CheckResourceBatchResponse{
 		RequestId: req.RequestId,
-		Results:   make([]*responsev1.ActionEffectMap, len(outputs)),
+		Results:   make([]*responsev1.CheckResourceBatchResponse_ActionEffectMap, len(outputs)),
 	}
 
 	for i, out := range outputs {
@@ -103,7 +103,10 @@ func (cs *CerbosService) CheckResourceBatch(ctx context.Context, req *requestv1.
 			aem[action] = actionEffect.Effect
 		}
 
-		result.Results[i] = &responsev1.ActionEffectMap{Actions: aem}
+		result.Results[i] = &responsev1.CheckResourceBatchResponse_ActionEffectMap{
+			ResourceId: inputs[i].Resource.Id,
+			Actions:    aem,
+		}
 	}
 
 	return result, nil

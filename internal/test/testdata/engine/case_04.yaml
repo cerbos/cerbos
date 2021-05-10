@@ -72,6 +72,7 @@ inputs: [
 wantOutputs: [
   {
     "requestId": "test1",
+    "resourceId": "XX125",
     "actions": {
       "approve": {
         "effect": "EFFECT_ALLOW",
@@ -85,6 +86,7 @@ wantOutputs: [
   },
   {
     "requestId": "test2",
+    "resourceId": "XX150",
     "actions": {
       "approve": {
         "effect": "EFFECT_DENY",

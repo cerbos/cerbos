@@ -18,6 +18,13 @@ message CheckResourceSetResponse {
 		}
     };
 
+    message ActionEffectMap {
+        map<string,shared.v1.Effect> actions = 1 [
+            (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = { 
+                description: "Mapping of each action to an effect."
+            } 
+        ];
+    }
 
     message Meta {
         option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
@@ -87,13 +94,6 @@ message CheckResourceSetResponse {
     ];
 }
 
-message ActionEffectMap {
-    map<string,shared.v1.Effect> actions = 1 [
-        (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = { 
-            description: "Mapping of each action to an effect."
-        } 
-    ];
-}
 
 message CheckResourceBatchResponse {
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
@@ -101,6 +101,21 @@ message CheckResourceBatchResponse {
 			description: "Policy evaluation response for a batch of resources."
 		}
     };
+
+    message ActionEffectMap {
+        string resource_id = 1 [
+            (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = { 
+                description: "Resource ID"
+                example: "\"XX125\""
+            } 
+        ];
+        map<string,shared.v1.Effect> actions = 2 [
+            (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = { 
+                description: "Mapping of each action to an effect."
+                example: "{\"view\":\"EFFECT_ALLOW\"}"
+            } 
+        ];
+    }
 
     string request_id = 1 [
         (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = { 
@@ -111,7 +126,7 @@ message CheckResourceBatchResponse {
     repeated ActionEffectMap results = 2 [
         (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = { 
             description: "Result for each resource"
-            example: "[{\"actions\":{\"view\":\"EFFECT_ALLOW\"}}]"
+            example: "[{\"resourceId\":\"XX125\",\"actions\":{\"view\":\"EFFECT_ALLOW\"}}]"
         } 
     ];
 }

@@ -855,6 +855,7 @@ inputs: [
 wantOutputs: [
   {
     "requestId": "test",
+    "resourceId": "XX100",
     "actions": {
       "approve": {
         "effect": "EFFECT_ALLOW",
@@ -868,6 +869,7 @@ wantOutputs: [
   },
   {
     "requestId": "test",
+    "resourceId": "XX100",
     "actions": {
       "approve": {
         "effect": "EFFECT_ALLOW",
@@ -881,6 +883,7 @@ wantOutputs: [
   },
   {
     "requestId": "test",
+    "resourceId": "XX100",
     "actions": {
       "approve": {
         "effect": "EFFECT_ALLOW",
@@ -894,6 +897,7 @@ wantOutputs: [
   },
   {
     "requestId": "test",
+    "resourceId": "XX100",
     "actions": {
       "approve": {
         "effect": "EFFECT_ALLOW",
@@ -907,6 +911,7 @@ wantOutputs: [
   },
   {
     "requestId": "test",
+    "resourceId": "XX100",
     "actions": {
       "approve": {
         "effect": "EFFECT_ALLOW",
@@ -920,6 +925,7 @@ wantOutputs: [
   },
   {
     "requestId": "test",
+    "resourceId": "XX100",
     "actions": {
       "approve": {
         "effect": "EFFECT_ALLOW",
@@ -933,6 +939,7 @@ wantOutputs: [
   },
   {
     "requestId": "test",
+    "resourceId": "XX100",
     "actions": {
       "approve": {
         "effect": "EFFECT_ALLOW",
@@ -946,6 +953,7 @@ wantOutputs: [
   },
   {
     "requestId": "test",
+    "resourceId": "XX100",
     "actions": {
       "approve": {
         "effect": "EFFECT_ALLOW",
@@ -959,6 +967,7 @@ wantOutputs: [
   },
   {
     "requestId": "test",
+    "resourceId": "XX100",
     "actions": {
       "approve": {
         "effect": "EFFECT_ALLOW",
@@ -972,6 +981,7 @@ wantOutputs: [
   },
   {
     "requestId": "test",
+    "resourceId": "XX100",
     "actions": {
       "approve": {
         "effect": "EFFECT_ALLOW",
@@ -985,6 +995,7 @@ wantOutputs: [
   },
   {
     "requestId": "test",
+    "resourceId": "XX100",
     "actions": {
       "approve": {
         "effect": "EFFECT_ALLOW",
@@ -998,6 +1009,7 @@ wantOutputs: [
   },
   {
     "requestId": "test",
+    "resourceId": "XX100",
     "actions": {
       "approve": {
         "effect": "EFFECT_ALLOW",
@@ -1011,6 +1023,7 @@ wantOutputs: [
   },
   {
     "requestId": "test",
+    "resourceId": "XX100",
     "actions": {
       "approve": {
         "effect": "EFFECT_ALLOW",
@@ -1024,6 +1037,7 @@ wantOutputs: [
   },
   {
     "requestId": "test",
+    "resourceId": "XX100",
     "actions": {
       "approve": {
         "effect": "EFFECT_ALLOW",
@@ -1037,6 +1051,7 @@ wantOutputs: [
   },
   {
     "requestId": "test",
+    "resourceId": "XX100",
     "actions": {
       "approve": {
         "effect": "EFFECT_ALLOW",
@@ -1050,6 +1065,7 @@ wantOutputs: [
   },
   {
     "requestId": "test",
+    "resourceId": "XX100",
     "actions": {
       "approve": {
         "effect": "EFFECT_ALLOW",
@@ -1063,6 +1079,7 @@ wantOutputs: [
   },
   {
     "requestId": "test",
+    "resourceId": "XX100",
     "actions": {
       "approve": {
         "effect": "EFFECT_ALLOW",
@@ -1076,6 +1093,7 @@ wantOutputs: [
   },
   {
     "requestId": "test",
+    "resourceId": "XX100",
     "actions": {
       "approve": {
         "effect": "EFFECT_ALLOW",
@@ -1089,6 +1107,7 @@ wantOutputs: [
   },
   {
     "requestId": "test",
+    "resourceId": "XX100",
     "actions": {
       "approve": {
         "effect": "EFFECT_ALLOW",
@@ -1102,6 +1121,7 @@ wantOutputs: [
   },
   {
     "requestId": "test",
+    "resourceId": "XX100",
     "actions": {
       "approve": {
         "effect": "EFFECT_ALLOW",
@@ -1115,6 +1135,7 @@ wantOutputs: [
   },
   {
     "requestId": "test",
+    "resourceId": "XX100",
     "actions": {
       "approve": {
         "effect": "EFFECT_ALLOW",
@@ -1128,6 +1149,7 @@ wantOutputs: [
   },
   {
     "requestId": "test",
+    "resourceId": "XX100",
     "actions": {
       "approve": {
         "effect": "EFFECT_ALLOW",
@@ -1141,6 +1163,7 @@ wantOutputs: [
   },
   {
     "requestId": "test",
+    "resourceId": "XX100",
     "actions": {
       "approve": {
         "effect": "EFFECT_ALLOW",
@@ -1154,6 +1177,7 @@ wantOutputs: [
   },
   {
     "requestId": "test",
+    "resourceId": "XX100",
     "actions": {
       "approve": {
         "effect": "EFFECT_ALLOW",
@@ -1167,6 +1191,7 @@ wantOutputs: [
   },
   {
     "requestId": "test",
+    "resourceId": "XX100",
     "actions": {
       "approve": {
         "effect": "EFFECT_ALLOW",

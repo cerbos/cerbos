@@ -77,18 +77,21 @@ checkResourceBatch:
     "requestId": "test",
     "results": [
       {
+        "resourceId": "XX125",
         "actions": {
           "view:public": "EFFECT_ALLOW",
           "approve": "EFFECT_DENY"
         }
       },
       {
+        "resourceId": "YY125",
         "actions": {
           "view:public": "EFFECT_ALLOW",
           "approve": "EFFECT_DENY"
         }
       },
       {
+        "resourceId": "YY525",
         "actions": {
           "view:public": "EFFECT_DENY",
           "delete": "EFFECT_DENY",

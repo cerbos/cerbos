@@ -37,6 +37,7 @@ inputs: [
 wantOutputs: [
   {
     "requestId": "test",
+    "resourceId": "XX125",
     "actions": {
       "view:public": {
         "effect": "EFFECT_DENY",

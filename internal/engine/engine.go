@@ -210,11 +210,12 @@ func (engine *Engine) evaluate(ctx context.Context, input *enginev1.CheckInput, 
 	ctx, span := tracing.StartSpan(ctx, "engine.EvaluateInput")
 	defer span.End()
 
-	span.AddAttributes(trace.StringAttribute("request_id", input.RequestId))
+	span.AddAttributes(trace.StringAttribute("request_id", input.RequestId), trace.StringAttribute("resource_id", input.Resource.Id))
 
 	output := &enginev1.CheckOutput{
-		RequestId: input.RequestId,
-		Actions:   make(map[string]*enginev1.CheckOutput_ActionEffect, len(input.Actions)),
+		RequestId:  input.RequestId,
+		ResourceId: input.Resource.Id,
+		Actions:    make(map[string]*enginev1.CheckOutput_ActionEffect, len(input.Actions)),
 	}
 
 	// If there are no checks, set the default effect and return.
@@ -262,9 +263,9 @@ func (engine *Engine) evaluate(ctx context.Context, input *enginev1.CheckInput, 
 		if policyMatch, ok := result.matchedPolicies[action]; ok {
 			output.Actions[action].Policy = policyMatch
 		}
-
-		output.EffectiveDerivedRoles = result.effectiveDerivedRoles
 	}
+
+	output.EffectiveDerivedRoles = result.effectiveDerivedRoles
 
 	return output, nil
 }

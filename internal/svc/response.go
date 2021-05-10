@@ -17,7 +17,7 @@ type checkResourceSetResponseBuilder struct {
 func newCheckResourceSetResponseBuilder(req *requestv1.CheckResourceSetRequest) *checkResourceSetResponseBuilder {
 	resp := &responsev1.CheckResourceSetResponse{
 		RequestId:         req.RequestId,
-		ResourceInstances: make(map[string]*responsev1.ActionEffectMap, len(req.Resource.Instances)),
+		ResourceInstances: make(map[string]*responsev1.CheckResourceSetResponse_ActionEffectMap, len(req.Resource.Instances)),
 	}
 
 	if req.IncludeMeta {
@@ -38,7 +38,7 @@ func (resp *checkResourceSetResponseBuilder) addResult(resourceKey string, resul
 		actionsMap[action] = actionEffect.Effect
 	}
 
-	resp.ResourceInstances[resourceKey] = &responsev1.ActionEffectMap{
+	resp.ResourceInstances[resourceKey] = &responsev1.CheckResourceSetResponse_ActionEffectMap{
 		Actions: actionsMap,
 	}
 

@@ -250,16 +250,14 @@ EOF
       "XX125": {
         "actions": {
           "view": {
-            "matchedPolicy": "album:object:default",
-            "error": ""
+            "matchedPolicy": "album:object:default"
           }
         },
         "effectiveDerivedRoles": [
           "owner"
         ]
       }
-    },
-    "evaluationDuration": "0.000639087s"
+    }
   }
 }
 ----

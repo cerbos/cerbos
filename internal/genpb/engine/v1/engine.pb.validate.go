@@ -173,6 +173,8 @@ func (m *CheckOutput) Validate() error {
 
 	// no validation rules for RequestId
 
+	// no validation rules for ResourceId
+
 	for key, val := range m.GetActions() {
 		_ = val
 
