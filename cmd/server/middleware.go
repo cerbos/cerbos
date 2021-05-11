@@ -7,8 +7,12 @@ import (
 	"strings"
 
 	grpc_logging "github.com/grpc-ecosystem/go-grpc-middleware/logging"
+	"github.com/grpc-ecosystem/go-grpc-middleware/logging/zap/ctxzap"
 	grpc_ctxtags "github.com/grpc-ecosystem/go-grpc-middleware/tags"
+	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
 )
 
@@ -38,4 +42,13 @@ func payloadLoggingDecider(conf *Conf) grpc_logging.ServerPayloadLoggingDecider 
 	return func(ctx context.Context, fullMethodName string, servingObject interface{}) bool {
 		return conf.LogRequestPayloads && strings.HasPrefix(fullMethodName, "/svc.v1")
 	}
+}
+
+// messageProducer handles gRPC log messages.
+func messageProducer(ctx context.Context, _ string, level zapcore.Level, code codes.Code, err error, duration zapcore.Field) {
+	ctxzap.Extract(ctx).Check(level, "Handled request").Write(
+		zap.Error(err),
+		zap.String("grpc.code", code.String()),
+		duration,
+	)
 }

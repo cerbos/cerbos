@@ -69,6 +69,7 @@ github.com/xanzy/ssh-agent                                        https://github
 github.com/xeipuuv/gojsonpointer                                  Unknown                                                                                          Unknown
 github.com/xeipuuv/gojsonreference                                Unknown                                                                                          Unknown
 github.com/yashtewari/glob-intersection                           https://github.com/yashtewari/glob-intersection/blob/master/LICENSE                              Apache-2.0
+go.elastic.co/ecszap                                              Unknown                                                                                          Apache-2.0
 golang.org/x/crypto                                               Unknown                                                                                          BSD-3-Clause
 golang.org/x/net                                                  Unknown                                                                                          BSD-3-Clause
 golang.org/x/sync                                                 Unknown                                                                                          BSD-3-Clause
