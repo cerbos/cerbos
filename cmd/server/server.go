@@ -357,19 +357,19 @@ func (s *server) startGRPCServer(cerbosSvc *svc.CerbosService, l net.Listener) *
 
 	opts := []grpc.ServerOption{
 		grpc.ChainStreamInterceptor(
-			grpc_ctxtags.StreamServerInterceptor(grpc_ctxtags.WithFieldExtractorForInitialReq(svc.ExtractRequestFields)),
 			grpc_recovery.StreamServerInterceptor(),
+			grpc_validator.StreamServerInterceptor(),
+			grpc_ctxtags.StreamServerInterceptor(grpc_ctxtags.WithFieldExtractorForInitialReq(svc.ExtractRequestFields)),
 			grpc_ctxtags.StreamServerInterceptor(),
 			grpc_zap.StreamServerInterceptor(log, grpc_zap.WithDecider(loggingDecider)),
-			grpc_validator.StreamServerInterceptor(),
 			grpc_zap.PayloadStreamServerInterceptor(payloadLog, payloadLoggingDecider(s.conf)),
 		),
 		grpc.ChainUnaryInterceptor(
 			grpc_recovery.UnaryServerInterceptor(),
+			grpc_validator.UnaryServerInterceptor(),
 			grpc_ctxtags.UnaryServerInterceptor(grpc_ctxtags.WithFieldExtractor(svc.ExtractRequestFields)),
 			XForwardedHostUnaryServerInterceptor,
 			grpc_zap.UnaryServerInterceptor(log, grpc_zap.WithDecider(loggingDecider)),
-			grpc_validator.UnaryServerInterceptor(),
 			grpc_zap.PayloadUnaryServerInterceptor(payloadLog, payloadLoggingDecider(s.conf)),
 		),
 		grpc.StatsHandler(&ocgrpc.ServerHandler{}),

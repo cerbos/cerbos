@@ -196,6 +196,7 @@ func testGRPCRequest(addr string, opts ...grpc.DialOption) func(*testing.T) {
 
 				if tc.WantError {
 					require.Error(t, err)
+					return
 				}
 
 				require.NoError(t, err)
@@ -257,6 +258,11 @@ func testHTTPRequest(server string) func(*testing.T) {
 						resp.Body.Close()
 					}
 				}()
+
+				if tc.WantError {
+					require.NotEqual(t, http.StatusOK, resp.StatusCode)
+					return
+				}
 
 				require.Equal(t, http.StatusOK, resp.StatusCode)
 
