@@ -19,7 +19,7 @@
     }
   },
   "resource":  {
-    "name":  "leave_request",
+    "kind":  "leave_request",
     "policyVersion":  "20210210",
     "instances":  {
       "XX125":  {

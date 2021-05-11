@@ -1,0 +1,61 @@
+---
+description: "No policy match"
+checkResourceSet:
+  input: {
+    "requestId": "test",
+    "includeMeta": true,
+    "actions": [
+      "view:public",
+      "approve"
+    ],
+    "principal": {
+      "id": "john",
+      "roles": [
+        "employee"
+      ],
+      "attr": {
+        "department": "marketing",
+        "geography": "GB",
+        "team": "design"
+      }
+    },
+    "resource": {
+      "kind": "leave_request",
+      "instances": {
+        "XX125": {
+          "attr": {
+            "department": "marketing",
+            "geography": "GB",
+            "id": "XX125",
+            "owner": "john",
+            "team": "design"
+          }
+        }
+      }
+    }
+  }
+  wantResponse: {
+    "requestId": "test",
+    "resourceInstances": {
+      "XX125": {
+        "actions": {
+          "view:public": "EFFECT_DENY",
+          "approve": "EFFECT_DENY"
+        }
+      }
+    },
+    "meta": {
+      "resourceInstances": {
+        "XX125": {
+          "actions": {
+            "view:public": {
+              "matchedPolicy": "NO_MATCH"
+            },
+            "approve": {
+              "matchedPolicy": "NO_MATCH"
+            }
+          }
+        }
+      }
+    }
+  }

@@ -15,7 +15,7 @@ import (
 	"google.golang.org/protobuf/types/known/structpb"
 
 	"github.com/cerbos/cerbos/internal/codegen"
-	requestv1 "github.com/cerbos/cerbos/internal/genpb/request/v1"
+	enginev1 "github.com/cerbos/cerbos/internal/genpb/engine/v1"
 )
 
 var dummy ast.Value
@@ -114,15 +114,16 @@ func mkProto(tb testing.TB) proto.Message {
 	m["mapVal"], err = structpb.NewValue(map[string]interface{}{"x": 12, "y": []interface{}{1, 2, 3}})
 	require.NoError(tb, err)
 
-	return &requestv1.CheckRequest{
+	return &enginev1.CheckInput{
 		RequestId: "test",
 		Actions:   []string{"view:public"},
-		Resource: &requestv1.Resource{
-			Name:          "leave_request",
+		Resource: &enginev1.Resource{
+			Kind:          "leave_request",
 			PolicyVersion: "20210210",
+			Id:            "XX125",
 			Attr:          m,
 		},
-		Principal: &requestv1.Principal{
+		Principal: &enginev1.Principal{
 			Id:            "john",
 			PolicyVersion: "20210210",
 			Roles:         []string{"employee"},

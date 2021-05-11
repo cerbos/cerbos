@@ -1,84 +1,98 @@
 ---
 description: "A different manager tries to approve a draft leave request and a pending-approval leave request"
-input: {
-    "requestId": "test",
-    "includeMeta": true,
+inputs: [
+  {
+    "requestId": "test1",
     "actions": [
-        "approve",
+      "approve"
     ],
     "principal": {
-        "id": "betty",
-        "policyVersion": "20210210",
-        "roles": [
-            "employee",
-            "manager"
-        ],
-        "attr": {
-            "department": "marketing",
-            "geography": "FR",
-            "team": "design",
-            "managed_geographies": "FR"
-        }
+      "id": "betty",
+      "policyVersion": "20210210",
+      "roles": [
+        "employee",
+        "manager"
+      ],
+      "attr": {
+        "department": "marketing",
+        "geography": "FR",
+        "team": "design",
+        "managed_geographies": "FR"
+      }
     },
     "resource": {
-        "name": "leave_request",
-        "policyVersion": "20210210",
-        "instances": {
-            "XX125": {
-                "attr": {
-                    "department": "marketing",
-                    "geography": "GB",
-                    "id": "XX125",
-                    "owner": "john",
-                    "team": "design",
-                    "status": "PENDING_APPROVAL"
-                }
-            },
-            "XX150": {
-                "attr": {
-                    "department": "marketing",
-                    "geography": "GB",
-                    "id": "XX150",
-                    "owner": "john",
-                    "team": "design",
-                    "status": "DRAFT"
-                }
-            }
-        }
+      "kind": "leave_request",
+      "policyVersion": "20210210",
+      "id": "XX125",
+      "attr": {
+        "department": "marketing",
+        "geography": "GB",
+        "id": "XX125",
+        "owner": "john",
+        "team": "design",
+        "status": "PENDING_APPROVAL"
+      }
     }
-}
-wantResponse: {
-    "requestId": "test",
-    "resourceInstances": {
-        "XX125": {
-            "actions": {
-                "approve": "EFFECT_DENY"
-            }
-        },
-        "XX150": {
-            "actions": {
-                "approve": "EFFECT_DENY"
-            }
-        }
+  },
+  {
+    "requestId": "test2",
+    "actions": [
+      "approve"
+    ],
+    "principal": {
+      "id": "betty",
+      "policyVersion": "20210210",
+      "roles": [
+        "employee",
+        "manager"
+      ],
+      "attr": {
+        "department": "marketing",
+        "geography": "FR",
+        "team": "design",
+        "managed_geographies": "FR"
+      }
     },
-    "meta": {
-        "resourceInstances": {
-            "XX125": {
-                "actions": {
-                    "approve": {
-                        "matchedPolicy": "leave_request:20210210"
-                    }
-                },
-                "effectiveDerivedRoles": ["any_employee"]
-            },
-            "XX150": {
-                "actions": {
-                    "approve": {
-                        "matchedPolicy": "leave_request:20210210"
-                    }
-                },
-                "effectiveDerivedRoles": ["any_employee"]
-            }
-        }
+    "resource": {
+      "kind": "leave_request",
+      "policyVersion": "20210210",
+      "id": "XX150",
+      "attr": {
+        "department": "marketing",
+        "geography": "GB",
+        "id": "XX150",
+        "owner": "john",
+        "team": "design",
+        "status": "DRAFT"
+      }
     }
-}
+  }
+]
+wantOutputs: [
+  {
+    "requestId": "test1",
+    "resourceId": "XX125",
+    "actions": {
+      "approve": {
+        "effect": "EFFECT_DENY",
+        "policy": "leave_request:20210210"
+      }
+    },
+    "effectiveDerivedRoles": [
+      "any_employee"
+    ]
+  },
+  {
+    "requestId": "test2",
+    "resourceId": "XX150",
+    "actions": {
+      "approve": {
+        "effect": "EFFECT_DENY",
+        "policy": "leave_request:20210210"
+      }
+    },
+    "effectiveDerivedRoles": [
+      "any_employee"
+    ]
+  }
+]

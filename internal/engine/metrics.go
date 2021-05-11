@@ -4,20 +4,18 @@ package engine
 
 import (
 	"context"
-	"errors"
 	"time"
 
 	"go.opencensus.io/stats"
 	"go.opencensus.io/tag"
 
-	responsev1 "github.com/cerbos/cerbos/internal/genpb/response/v1"
+	enginev1 "github.com/cerbos/cerbos/internal/genpb/engine/v1"
 	"github.com/cerbos/cerbos/internal/observability/metrics"
 )
 
 const (
-	statusFailure           = "failure"
-	statusNoPoliciesMatched = "no_policies_matched"
-	statusSuccess           = "success"
+	statusFailure = "failure"
+	statusSuccess = "success"
 )
 
 func measureUpdateLatency(updateType string, updateOp func() error) error {
@@ -41,63 +39,24 @@ func measureUpdateLatency(updateType string, updateOp func() error) error {
 	return err
 }
 
-/*
-
-func measureCheckLatency(checkFn func() (*CheckResult, error)) (*CheckResult, error) {
+func measureCheckLatency(batchSize int, checkFn func() ([]*enginev1.CheckOutput, error)) ([]*enginev1.CheckOutput, error) {
 	startTime := time.Now()
 	result, err := checkFn()
-	evalDuration := time.Since(startTime)
 
-	result.setEvaluationDuration(evalDuration)
-	latencyMs := float64(evalDuration) / float64(time.Millisecond)
+	latencyMs := float64(time.Since(startTime)) / float64(time.Millisecond)
 
 	status := statusSuccess
 	if err != nil {
-		if errors.Is(err, ErrNoPoliciesMatched) {
-			status = statusNoPoliciesMatched
-		} else {
-			status = statusFailure
-		}
+		status = statusFailure
 	}
-
-	decision := result.Effect.String()
 
 	_ = stats.RecordWithTags(context.Background(),
 		[]tag.Mutator{
 			tag.Upsert(metrics.KeyEngineDecisionStatus, status),
-			tag.Upsert(metrics.KeyEngineDecisionEffect, decision),
 		},
 		metrics.EngineCheckLatency.M(latencyMs),
+		metrics.EngineCheckBatchSize.M(int64(batchSize)),
 	)
 
 	return result, err
-}
-*/
-
-func measureCheckResourceBatchLatency(checkFn func() (*CheckResponseWrapper, error)) (*responsev1.CheckResourceBatchResponse, error) {
-	startTime := time.Now()
-	resp, err := checkFn()
-	evalDuration := time.Since(startTime)
-
-	resp.setEvaluationDuration(evalDuration)
-
-	latencyMs := float64(evalDuration) / float64(time.Millisecond)
-
-	status := statusSuccess
-	if err != nil {
-		if errors.Is(err, ErrNoPoliciesMatched) {
-			status = statusNoPoliciesMatched
-		} else {
-			status = statusFailure
-		}
-	}
-
-	_ = stats.RecordWithTags(context.Background(),
-		[]tag.Mutator{
-			tag.Upsert(metrics.KeyEngineDecisionStatus, status),
-		},
-		metrics.EngineCheckResourceBatchLatency.M(latencyMs),
-	)
-
-	return resp.CheckResourceBatchResponse, err
 }

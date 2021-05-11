@@ -1,59 +1,48 @@
 ---
 description: "Explicit deny from Donald Duck principal policy"
-input: {
+inputs: [
+  {
     "requestId": "test",
-    "includeMeta": true,
     "actions": [
-        "view:public"
+      "view:public"
     ],
     "principal": {
-        "id": "donald_duck",
-        "policyVersion": "20210210",
-        "roles": [
-            "employee",
-        ],
-        "attr": {
-            "department": "marketing",
-            "geography": "GB",
-            "team": "design",
-            "managed_geographies": "GB"
-        }
+      "id": "donald_duck",
+      "policyVersion": "20210210",
+      "roles": [
+        "employee"
+      ],
+      "attr": {
+        "department": "marketing",
+        "geography": "GB",
+        "team": "design",
+        "managed_geographies": "GB"
+      }
     },
     "resource": {
-        "name": "salary_record",
-        "policyVersion": "20210210",
-        "instances": {
-            "XX125": {
-                "attr": {
-                    "department": "marketing",
-                    "geography": "GB",
-                    "id": "XX125",
-                    "owner": "john",
-                    "team": "design",
-                    "dev_record": true
-                }
-            }
-        }
+      "kind": "salary_record",
+      "policyVersion": "20210210",
+      "id": "XX125",
+      "attr": {
+        "department": "marketing",
+        "geography": "GB",
+        "id": "XX125",
+        "owner": "john",
+        "team": "design",
+        "dev_record": true
+      }
     }
-}
-wantResponse: {
+  }
+]
+wantOutputs: [
+  {
     "requestId": "test",
-    "resourceInstances": {
-        "XX125": {
-            "actions": {
-                "view:public": "EFFECT_DENY",
-            }
-        }
-    },
-    "meta": {
-        "resourceInstances": {
-            "XX125": {
-                "actions": {
-                    "view:public": {
-                        "matchedPolicy": "donald_duck:20210210"
-                    }
-                }
-            }
-        }
+    "resourceId": "XX125",
+    "actions": {
+      "view:public": {
+        "effect": "EFFECT_DENY",
+        "policy": "donald_duck:20210210"
+      }
     }
-}
+  }
+]

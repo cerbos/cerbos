@@ -4,6 +4,7 @@ syntax = "proto3";
 
 package request.v1;
 
+import "engine/v1/engine.proto";
 import "google/protobuf/struct.proto";
 import "google/api/field_behavior.proto";
 import "protoc-gen-openapiv2/options/annotations.proto";
@@ -11,83 +12,7 @@ import "validate/validate.proto";
 
 option go_package = "github.com/cerbos/cerbos/internal/genpb/request/v1;requestv1";
 
-message CheckRequest {
-    string request_id = 1; 
-    Resource resource = 2 [(validate.rules).message.required = true, (google.api.field_behavior) = REQUIRED];
-    Principal principal = 3 [(validate.rules).message.required = true, (google.api.field_behavior) = REQUIRED];
-    repeated string actions = 4 [(validate.rules).repeated = { unique: true, items { string { min_len: 1 } } }, (google.api.field_behavior) = REQUIRED];
-}
-
-message Resource {
-    string name = 1 [
-        (validate.rules).string = {pattern: "^[[:alpha:]][[:word:]\\@\\.\\-]*(\\:[[:alpha:]][[:word:]\\@\\.\\-]*)*$", min_len: 1}, 
-        (google.api.field_behavior) = REQUIRED,
-        (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
-            description: "Name of the resource type being accessed.",
-            example: "\"album:photo\"",
-            pattern: "^[[:alpha:]][[:word:]\\@\\.\\-]*(\\:[[:alpha:]][[:word:]\\@\\.\\-]*)*$"
-        }
-    ];
-    string policy_version = 2 [
-        (validate.rules).string.pattern = "^[[:word:]]*$",
-        (google.api.field_behavior) = OPTIONAL,
-        (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = { 
-            description: "The policy version to use to evaluate this request. If not specified, will default to the server-configured default version."
-            pattern: "^[[:word:]]*$"
-        }
-    ];
-    map<string,google.protobuf.Value> attr = 3 [
-        (validate.rules).map.no_sparse = true,
-        (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = { 
-            description: "Contextual data about this resource that should be used during policy evaluation."
-        }
-    ];
-}
-
-message Principal {
-    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
-		json_schema: {
-			description: "A person or application attempting to perform the actions on the set of resources."
-		}
-    };
-    string id = 1 [
-        (validate.rules).string = {min_len: 1}, 
-        (google.api.field_behavior) = REQUIRED,
-        (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = { 
-            description: "ID of the principal"
-            example: "\"bugs_bunny\""
-        } 
-    ];
-    string policy_version = 2 [
-        (validate.rules).string.pattern = "^[[:word:]]*$",
-        (google.api.field_behavior) = OPTIONAL,
-        (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = { 
-            description: "The policy version to use to evaluate this request. If not specified, will default to the server-configured default version."
-            example: "\"default\""
-            pattern: "^[[:word:]]*$"
-        }
-    ];
-    repeated string roles = 3 [
-        (validate.rules).repeated = { unique: true, min_items: 1, items { string { pattern: "^[[:word:]\\-\\.]+$" } } },
-        (google.api.field_behavior) = REQUIRED,
-        (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = { 
-            description: "Roles assigned to this principal from your identity management system."
-            min_items: 1
-            pattern: "^[[:word:]\\-\\.]+$"
-            unique_items: true
-            example: "[\"user\"]"
-        }
-    ];
-    map<string, google.protobuf.Value> attr = 4 [
-        (validate.rules).map.no_sparse = true,
-        (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = { 
-            description: "Key-value pairs of contextual data about this principal that should be used during policy evaluation."
-            example: "{\"beta_tester\": true}"
-        }
-    ];
-}
-
-message CheckResourceBatchRequest {
+message CheckResourceSetRequest {
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
 		json_schema: {
 			description: "PDP Request"
@@ -101,20 +26,21 @@ message CheckResourceBatchRequest {
         } 
     ];
     repeated string actions = 2 [
-        (validate.rules).repeated = { unique: true, min_items: 1, items { string { min_len: 1 } } },
+        (validate.rules).repeated = { unique: true, min_items: 1, max_items: 10, items { string { min_len: 1 } } },
         (google.api.field_behavior) = REQUIRED,
         (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = { 
-            description: "List of actions being performed on the resources."
+            description: "List of actions being performed on the set of resources."
             min_items: 1
+            max_items: 10
             unique_items: true
             example: "[\"view:public\", \"comment\"]"
         } 
     ];
-    Principal principal = 3 [
+    engine.v1.Principal principal = 3 [
         (validate.rules).message.required = true, 
         (google.api.field_behavior) = REQUIRED
     ];
-    ResourceBatch resource = 4 [
+    ResourceSet resource = 4 [
         (validate.rules).message.required = true, 
         (google.api.field_behavior) = REQUIRED
     ];
@@ -125,18 +51,18 @@ message CheckResourceBatchRequest {
     ];
 }
 
-message ResourceBatch {
+message ResourceSet {
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
 		json_schema: {
 			description: "Set of resources to check"
 		}
     };
 
-    string name = 1 [
+    string kind = 1 [
         (validate.rules).string = {pattern: "^[[:alpha:]][[:word:]\\@\\.\\-]*(\\:[[:alpha:]][[:word:]\\@\\.\\-]*)*$", min_len: 1}, 
         (google.api.field_behavior) = REQUIRED,
         (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
-            description: "Name of the resource type being accessed."
+            description: "Resource kind."
             example: "\"album:object\""
             pattern: "^[[:alpha:]][[:word:]\\@\\.\\-]*(\\:[[:alpha:]][[:word:]\\@\\.\\-]*)*$"
         }
@@ -150,19 +76,19 @@ message ResourceBatch {
             example: "\"default\""
         }
     ];
-    map<string, Attributes> instances = 3 [
-        (validate.rules).map = {min_pairs: 1, max_pairs: 50, no_sparse: true}, 
+    map<string, AttributesMap> instances = 3 [
+        (validate.rules).map = {min_pairs: 1, max_pairs: 20, no_sparse: true}, 
         (google.api.field_behavior) = REQUIRED,
         (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = { 
             description: "Set of resource instances to check. Each instance must be keyed by an application-specific unique identifier.",
             min_properties: 1
-            max_properties: 50
+            max_properties: 20
             example: "{\"XX125\":{\"attr\":{\"owner\":\"bugs_bunny\", \"public\": false, \"flagged\": false}}, \"XX225\":{\"attr\":{\"owner\":\"daffy_duck\", \"public\": true, \"flagged\": false}}}"
         }
     ];
 }
 
-message Attributes {
+message AttributesMap {
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
 		json_schema: {
 			description: "Unique identifier for the resource instance."
@@ -176,3 +102,52 @@ message Attributes {
         }
     ];
 }
+
+message CheckResourceBatchRequest {
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
+		json_schema: {
+			description: "PDP Request"
+		}
+    };
+
+    message BatchEntry {
+        repeated string actions = 1 [
+            (validate.rules).repeated = { unique: true, min_items: 1, max_items: 10, items { string { min_len: 1 } } },
+            (google.api.field_behavior) = REQUIRED,
+            (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = { 
+                description: "List of actions being performed on the resource."
+                min_items: 1
+                max_items: 10
+                unique_items: true
+                example: "[\"view:public\", \"comment\"]"
+            } 
+        ];
+        engine.v1.Resource resource = 2 [
+            (validate.rules).message.required = true, 
+            (google.api.field_behavior) = REQUIRED
+        ];
+    }
+
+    string request_id = 1 [
+        (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = { 
+            description: "Optional application-specific ID useful for correlating logs for analysis."
+            example: "\"c2db17b8-4f9f-4fb1-acfd-9162a02be42b\""
+        } 
+    ];
+    engine.v1.Principal principal = 2 [
+        (validate.rules).message.required = true, 
+        (google.api.field_behavior) = REQUIRED
+    ];
+    repeated BatchEntry resources = 3 [
+        (validate.rules).repeated = { min_items: 1, max_items: 20 },
+        (google.api.field_behavior) = REQUIRED,
+        (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = { 
+            description: "List of resources and actions."
+            min_items: 1
+            max_items: 20
+            unique_items: true
+            example: "[{\"actions\":[\"view\",\"comment\"], \"resource\":{\"kind\":\"album:object\",\"policyVersion\":\"default\",\"id\":\"XX125\",\"attr\":{\"owner\":\"bugs_bunny\", \"public\": false, \"flagged\": false}}}]"
+        } 
+    ];
+}
+

@@ -1,0 +1,19 @@
+---
+description: "Empty resources list"
+wantError: true
+checkResourceBatch:
+  input: {
+    "requestId": "test",
+    "principal": {
+      "id": "john",
+      "policyVersion": "20210210",
+      "roles": [
+        "employee"
+      ],
+      "attr": {
+        "department": "marketing",
+        "geography": "GB",
+        "team": "design"
+      }
+    }
+  }

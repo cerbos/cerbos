@@ -20,7 +20,7 @@ import (
 // trick compiler into not converting benchmarks into nops.
 var dummy int
 
-func TestEngineCheckResourceBatch(t *testing.T) {
+func TestCheck(t *testing.T) {
 	eng, cancelFunc := mkEngine(t)
 	defer cancelFunc()
 
@@ -31,25 +31,16 @@ func TestEngineCheckResourceBatch(t *testing.T) {
 		t.Run(tcase.Name, func(t *testing.T) {
 			tc := readTestCase(t, tcase.Input)
 
-			have, err := eng.CheckResourceBatch(context.Background(), tc.Input)
+			haveOutputs, err := eng.Check(context.Background(), tc.Inputs)
 			if tc.WantError {
 				require.Error(t, err)
 			} else {
 				require.NoError(t, err)
 			}
 
-			if tc.WantResponse == nil {
-				return
+			for i, have := range haveOutputs {
+				require.Empty(t, cmp.Diff(tc.WantOutputs[i], have, protocmp.Transform()))
 			}
-
-			require.NotNil(t, have)
-
-			// clear out timing data to make the comparison work
-			if have.Meta != nil {
-				have.Meta.EvaluationDuration = nil
-			}
-
-			require.Empty(t, cmp.Diff(tc.WantResponse, have, protocmp.Transform()))
 		})
 	}
 }
@@ -63,7 +54,7 @@ func readTestCase(tb testing.TB, data []byte) *cerbosdevv1.EngineTestCase {
 	return tc
 }
 
-func BenchmarkCheckResourceBatch(b *testing.B) {
+func BenchmarkCheck(b *testing.B) {
 	eng, cancelFunc := mkEngine(b)
 	defer cancelFunc()
 
@@ -78,16 +69,14 @@ func BenchmarkCheckResourceBatch(b *testing.B) {
 			b.ReportAllocs()
 
 			for i := 0; i < b.N; i++ {
-				have, err := eng.CheckResourceBatch(context.Background(), tc.Input)
+				have, err := eng.Check(context.Background(), tc.Inputs)
 				if tc.WantError {
 					if err == nil {
 						b.Errorf("Expected error but got none")
 					}
 				}
 
-				if tc.WantResponse != nil {
-					dummy += len(have.RequestId)
-				}
+				dummy += len(have)
 			}
 		})
 	}

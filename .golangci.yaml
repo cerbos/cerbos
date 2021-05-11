@@ -67,7 +67,6 @@ linters:
     - tparallel
     - unconvert
     - unparam
-    - wastedassign
     - whitespace
   disable:
     - cyclop
@@ -92,6 +91,7 @@ linters:
     - paralleltest
     - stylecheck
     - testpackage
+    - wastedassign
     - wrapcheck
     - wsl
 

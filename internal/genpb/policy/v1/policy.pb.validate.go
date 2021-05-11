@@ -1214,39 +1214,24 @@ func (m *Test) Validate() error {
 
 	// no validation rules for SkipReason
 
-	if m.GetRequest() == nil {
+	if m.GetInput() == nil {
 		return TestValidationError{
-			field:  "Request",
+			field:  "Input",
 			reason: "value is required",
 		}
 	}
 
-	if v, ok := interface{}(m.GetRequest()).(interface{ Validate() error }); ok {
+	if v, ok := interface{}(m.GetInput()).(interface{ Validate() error }); ok {
 		if err := v.Validate(); err != nil {
 			return TestValidationError{
-				field:  "Request",
+				field:  "Input",
 				reason: "embedded message failed validation",
 				cause:  err,
 			}
 		}
 	}
 
-	for key, val := range m.GetExpected() {
-		_ = val
-
-		// no validation rules for Expected[key]
-
-		if v, ok := interface{}(val).(interface{ Validate() error }); ok {
-			if err := v.Validate(); err != nil {
-				return TestValidationError{
-					field:  fmt.Sprintf("Expected[%v]", key),
-					reason: "embedded message failed validation",
-					cause:  err,
-				}
-			}
-		}
-
-	}
+	// no validation rules for Expected
 
 	return nil
 }

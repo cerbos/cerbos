@@ -20,7 +20,7 @@ NOTE: View the latest documentation and example requests by accessing a running 
   "actions":  ["view"], <2>
   "resource":  {
     "policyVersion": "dev", <3>
-    "name":  "album:object", <4>
+    "kind":  "album:object", <4>
     "instances": { <5>
       "XX125": { <6>
         "attr":  { <7>
@@ -47,7 +47,7 @@ NOTE: View the latest documentation and example requests by accessing a running 
 <1> Request ID can be anything that uniquely identifies a request.
 <2> Actions being performed on the resource instances. Required.
 <3> Resource policy version. Optional. The server falls back to the xref:configuration:engine.adoc[configured default version] if this is not specified.
-<4> Resource name. Required. This name is used to determine the resource policy to evaluate. 
+<4> Resource kind. Required. This value is used to determine the resource policy to evaluate. 
 <5> Container for the set of resource instances to check. You can check access to multiple resource instances in a single request by adding them under this field. 
 <6> A unique identifier for a resource instance. This identifier will be used in the response to indicate the result of the policy evaluation.
 <7> Free-form context data about this resource instance. Policy rule conditions are evaluated based on these values.

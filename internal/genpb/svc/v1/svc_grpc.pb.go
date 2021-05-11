@@ -20,6 +20,7 @@ const _ = grpc.SupportPackageIsVersion7
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type CerbosServiceClient interface {
+	CheckResourceSet(ctx context.Context, in *v1.CheckResourceSetRequest, opts ...grpc.CallOption) (*v11.CheckResourceSetResponse, error)
 	CheckResourceBatch(ctx context.Context, in *v1.CheckResourceBatchRequest, opts ...grpc.CallOption) (*v11.CheckResourceBatchResponse, error)
 }
 
@@ -29,6 +30,15 @@ type cerbosServiceClient struct {
 
 func NewCerbosServiceClient(cc grpc.ClientConnInterface) CerbosServiceClient {
 	return &cerbosServiceClient{cc}
+}
+
+func (c *cerbosServiceClient) CheckResourceSet(ctx context.Context, in *v1.CheckResourceSetRequest, opts ...grpc.CallOption) (*v11.CheckResourceSetResponse, error) {
+	out := new(v11.CheckResourceSetResponse)
+	err := c.cc.Invoke(ctx, "/svc.v1.CerbosService/CheckResourceSet", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
 }
 
 func (c *cerbosServiceClient) CheckResourceBatch(ctx context.Context, in *v1.CheckResourceBatchRequest, opts ...grpc.CallOption) (*v11.CheckResourceBatchResponse, error) {
@@ -44,6 +54,7 @@ func (c *cerbosServiceClient) CheckResourceBatch(ctx context.Context, in *v1.Che
 // All implementations must embed UnimplementedCerbosServiceServer
 // for forward compatibility
 type CerbosServiceServer interface {
+	CheckResourceSet(context.Context, *v1.CheckResourceSetRequest) (*v11.CheckResourceSetResponse, error)
 	CheckResourceBatch(context.Context, *v1.CheckResourceBatchRequest) (*v11.CheckResourceBatchResponse, error)
 	mustEmbedUnimplementedCerbosServiceServer()
 }
@@ -52,6 +63,9 @@ type CerbosServiceServer interface {
 type UnimplementedCerbosServiceServer struct {
 }
 
+func (UnimplementedCerbosServiceServer) CheckResourceSet(context.Context, *v1.CheckResourceSetRequest) (*v11.CheckResourceSetResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CheckResourceSet not implemented")
+}
 func (UnimplementedCerbosServiceServer) CheckResourceBatch(context.Context, *v1.CheckResourceBatchRequest) (*v11.CheckResourceBatchResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CheckResourceBatch not implemented")
 }
@@ -66,6 +80,24 @@ type UnsafeCerbosServiceServer interface {
 
 func RegisterCerbosServiceServer(s grpc.ServiceRegistrar, srv CerbosServiceServer) {
 	s.RegisterService(&CerbosService_ServiceDesc, srv)
+}
+
+func _CerbosService_CheckResourceSet_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(v1.CheckResourceSetRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CerbosServiceServer).CheckResourceSet(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/svc.v1.CerbosService/CheckResourceSet",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CerbosServiceServer).CheckResourceSet(ctx, req.(*v1.CheckResourceSetRequest))
+	}
+	return interceptor(ctx, in, info, handler)
 }
 
 func _CerbosService_CheckResourceBatch_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
@@ -93,6 +125,10 @@ var CerbosService_ServiceDesc = grpc.ServiceDesc{
 	ServiceName: "svc.v1.CerbosService",
 	HandlerType: (*CerbosServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "CheckResourceSet",
+			Handler:    _CerbosService_CheckResourceSet_Handler,
+		},
 		{
 			MethodName: "CheckResourceBatch",
 			Handler:    _CerbosService_CheckResourceBatch_Handler,

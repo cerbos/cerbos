@@ -7,10 +7,6 @@
       "name": "Cerbos",
       "url": "https://cerbos.dev",
       "email": "info@cerbos.dev"
-    },
-    "license": {
-      "name": "Apache License 2.0",
-      "url": "https://spdx.org/licenses/Apache-2.0.html"
     }
   },
   "tags": [
@@ -33,6 +29,40 @@
       "post": {
         "summary": "Check",
         "description": "Check whether a principal has permissions to perform the given actions on a set of resource instances.",
+        "operationId": "CerbosService_CheckResourceSet",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1CheckResourceSetResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/v1CheckResourceSetRequest"
+            }
+          }
+        ],
+        "tags": [
+          "CerbosService"
+        ]
+      }
+    },
+    "/api/x/check_resource_batch": {
+      "post": {
+        "summary": "Check resource batch",
+        "description": "[Experimental] Check a principal's permissions to a batch of heterogeneous resources and actions.",
         "operationId": "CerbosService_CheckResourceBatch",
         "responses": {
           "200": {
@@ -60,25 +90,41 @@
         ],
         "tags": [
           "CerbosService"
-        ]
+        ],
+        "x-cerbos-experimental": true
       }
     }
   },
   "definitions": {
-    "CheckResourceBatchResponseActionEffectMap": {
+    "CheckResourceBatchRequestBatchEntry": {
       "type": "object",
       "properties": {
         "actions": {
-          "type": "object",
-          "additionalProperties": {
-            "$ref": "#/definitions/v1Effect"
+          "type": "array",
+          "example": [
+            "view:public",
+            "comment"
+          ],
+          "items": {
+            "type": "string"
           },
-          "description": "Mapping of each action to an effect."
+          "description": "List of actions being performed on the resource.",
+          "maxItems": 10,
+          "minItems": 1,
+          "uniqueItems": true,
+          "required": [
+            "actions"
+          ]
+        },
+        "resource": {
+          "$ref": "#/definitions/v1Resource"
         }
       },
-      "description": "Unique resource instance ID supplied in the request."
+      "required": [
+        "actions"
+      ]
     },
-    "CheckResourceBatchResponseMeta": {
+    "CheckResourceSetResponseMeta": {
       "type": "object",
       "properties": {
         "resourceInstances": {
@@ -112,11 +158,6 @@
             "$ref": "#/definitions/MetaActionMeta"
           },
           "description": "Metadata about resource instances."
-        },
-        "evaluationDuration": {
-          "type": "string",
-          "example": "0.0012s",
-          "description": "Time taken to evaluate the request."
         }
       },
       "description": "Metadata about request evaluation."
@@ -159,10 +200,6 @@
           "type": "string",
           "example": "album:object:default",
           "description": "Policy that matched to produce this effect."
-        },
-        "error": {
-          "type": "string",
-          "description": "Any errors encountered during processing"
         }
       },
       "description": "Name of the action."
@@ -205,7 +242,7 @@
         }
       }
     },
-    "v1Attributes": {
+    "v1AttributesMap": {
       "type": "object",
       "properties": {
         "attr": {
@@ -226,6 +263,100 @@
           "example": "c2db17b8-4f9f-4fb1-acfd-9162a02be42b",
           "description": "Optional application-specific ID useful for correlating logs for analysis."
         },
+        "principal": {
+          "$ref": "#/definitions/v1Principal"
+        },
+        "resources": {
+          "type": "array",
+          "example": [
+            {
+              "actions": [
+                "view",
+                "comment"
+              ],
+              "resource": {
+                "kind": "album:object",
+                "policyVersion": "default",
+                "id": "XX125",
+                "attr": {
+                  "owner": "bugs_bunny",
+                  "public": false,
+                  "flagged": false
+                }
+              }
+            }
+          ],
+          "items": {
+            "$ref": "#/definitions/CheckResourceBatchRequestBatchEntry"
+          },
+          "description": "List of resources and actions.",
+          "maxItems": 20,
+          "minItems": 1,
+          "uniqueItems": true,
+          "required": [
+            "resources"
+          ]
+        }
+      },
+      "description": "PDP Request",
+      "required": [
+        "resources"
+      ]
+    },
+    "v1CheckResourceBatchResponse": {
+      "type": "object",
+      "properties": {
+        "requestId": {
+          "type": "string",
+          "example": "c2db17b8-4f9f-4fb1-acfd-9162a02be42b",
+          "description": "Request ID provided in the request."
+        },
+        "results": {
+          "type": "array",
+          "example": [
+            {
+              "resourceId": "XX125",
+              "actions": {
+                "view": "EFFECT_ALLOW"
+              }
+            }
+          ],
+          "items": {
+            "$ref": "#/definitions/v1CheckResourceBatchResponseActionEffectMap"
+          },
+          "description": "Result for each resource"
+        }
+      },
+      "description": "Policy evaluation response for a batch of resources."
+    },
+    "v1CheckResourceBatchResponseActionEffectMap": {
+      "type": "object",
+      "properties": {
+        "resourceId": {
+          "type": "string",
+          "example": "XX125",
+          "description": "Resource ID"
+        },
+        "actions": {
+          "type": "object",
+          "example": {
+            "view": "EFFECT_ALLOW"
+          },
+          "additionalProperties": {
+            "$ref": "#/definitions/v1Effect"
+          },
+          "description": "Mapping of each action to an effect."
+        }
+      }
+    },
+    "v1CheckResourceSetRequest": {
+      "type": "object",
+      "properties": {
+        "requestId": {
+          "type": "string",
+          "example": "c2db17b8-4f9f-4fb1-acfd-9162a02be42b",
+          "description": "Optional application-specific ID useful for correlating logs for analysis."
+        },
         "actions": {
           "type": "array",
           "example": [
@@ -235,7 +366,8 @@
           "items": {
             "type": "string"
           },
-          "description": "List of actions being performed on the resources.",
+          "description": "List of actions being performed on the set of resources.",
+          "maxItems": 10,
           "minItems": 1,
           "uniqueItems": true,
           "required": [
@@ -246,7 +378,7 @@
           "$ref": "#/definitions/v1Principal"
         },
         "resource": {
-          "$ref": "#/definitions/v1ResourceBatch"
+          "$ref": "#/definitions/v1ResourceSet"
         },
         "includeMeta": {
           "type": "boolean",
@@ -258,7 +390,7 @@
         "actions"
       ]
     },
-    "v1CheckResourceBatchResponse": {
+    "v1CheckResourceSetResponse": {
       "type": "object",
       "properties": {
         "requestId": {
@@ -283,16 +415,28 @@
             }
           },
           "additionalProperties": {
-            "$ref": "#/definitions/CheckResourceBatchResponseActionEffectMap"
+            "$ref": "#/definitions/v1CheckResourceSetResponseActionEffectMap"
           },
           "description": "Results for each resource instance, keyed by the ID supplied in the request"
         },
         "meta": {
-          "$ref": "#/definitions/CheckResourceBatchResponseMeta",
+          "$ref": "#/definitions/CheckResourceSetResponseMeta",
           "description": "Optional metadata about the request evaluation process"
         }
       },
-      "description": "Policy evaluation response."
+      "description": "Policy evaluation response for a set of resources."
+    },
+    "v1CheckResourceSetResponseActionEffectMap": {
+      "type": "object",
+      "properties": {
+        "actions": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/v1Effect"
+          },
+          "description": "Mapping of each action to an effect."
+        }
+      }
     },
     "v1Effect": {
       "type": "string",
@@ -331,6 +475,7 @@
           },
           "description": "Roles assigned to this principal from your identity management system.",
           "pattern": "^[[:word:]\\-\\.]+$",
+          "maxItems": 20,
           "minItems": 1,
           "uniqueItems": true,
           "required": [
@@ -354,16 +499,58 @@
         "roles"
       ]
     },
-    "v1ResourceBatch": {
+    "v1Resource": {
       "type": "object",
       "properties": {
-        "name": {
+        "kind": {
           "type": "string",
-          "example": "album:object",
-          "description": "Name of the resource type being accessed.",
+          "example": "album:photo",
+          "description": "Name of the resource kind being accessed.",
           "pattern": "^[[:alpha:]][[:word:]\\@\\.\\-]*(\\:[[:alpha:]][[:word:]\\@\\.\\-]*)*$",
           "required": [
-            "name"
+            "kind"
+          ]
+        },
+        "policyVersion": {
+          "type": "string",
+          "example": "default",
+          "description": "The policy version to use to evaluate this request. If not specified, will default to the server-configured default version.",
+          "pattern": "^[[:word:]]*$"
+        },
+        "id": {
+          "type": "string",
+          "example": "XX125",
+          "description": "ID of the resource instance",
+          "required": [
+            "id"
+          ]
+        },
+        "attr": {
+          "type": "object",
+          "example": {
+            "owner": "bugs_bunny"
+          },
+          "additionalProperties": {
+            "type": "object"
+          },
+          "description": "Kay-value pairs of contextual data about this resource that should be used during policy evaluation."
+        }
+      },
+      "required": [
+        "kind",
+        "id"
+      ]
+    },
+    "v1ResourceSet": {
+      "type": "object",
+      "properties": {
+        "kind": {
+          "type": "string",
+          "example": "album:object",
+          "description": "Resource kind.",
+          "pattern": "^[[:alpha:]][[:word:]\\@\\.\\-]*(\\:[[:alpha:]][[:word:]\\@\\.\\-]*)*$",
+          "required": [
+            "kind"
           ]
         },
         "policyVersion": {
@@ -391,10 +578,10 @@
             }
           },
           "additionalProperties": {
-            "$ref": "#/definitions/v1Attributes"
+            "$ref": "#/definitions/v1AttributesMap"
           },
           "description": "Set of resource instances to check. Each instance must be keyed by an application-specific unique identifier.",
-          "maxProperties": 50,
+          "maxProperties": 20,
           "minProperties": 1,
           "required": [
             "instances"
@@ -403,7 +590,7 @@
       },
       "description": "Set of resources to check",
       "required": [
-        "name",
+        "kind",
         "instances"
       ]
     }

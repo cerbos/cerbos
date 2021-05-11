@@ -1,84 +1,100 @@
 ---
 description: "John's direct manager tries to approve a draft leave request and a pending-approval leave request"
-input: {
-    "requestId": "test",
-    "includeMeta": true,
+inputs: [
+  {
+    "requestId": "test1",
     "actions": [
-        "approve",
+      "approve"
     ],
     "principal": {
-        "id": "sally",
-        "policyVersion": "20210210",
-        "roles": [
-            "employee",
-            "manager"
-        ],
-        "attr": {
-            "department": "marketing",
-            "geography": "GB",
-            "team": "design",
-            "managed_geographies": "GB"
-        }
+      "id": "sally",
+      "policyVersion": "20210210",
+      "roles": [
+        "employee",
+        "manager"
+      ],
+      "attr": {
+        "department": "marketing",
+        "geography": "GB",
+        "team": "design",
+        "managed_geographies": "GB"
+      }
     },
     "resource": {
-        "name": "leave_request",
-        "policyVersion": "20210210",
-        "instances": {
-            "XX125": {
-                "attr": {
-                    "department": "marketing",
-                    "geography": "GB",
-                    "id": "XX125",
-                    "owner": "john",
-                    "team": "design",
-                    "status": "PENDING_APPROVAL"
-                }
-            },
-            "XX150": {
-                "attr": {
-                    "department": "marketing",
-                    "geography": "GB",
-                    "id": "XX150",
-                    "owner": "john",
-                    "team": "design",
-                    "status": "DRAFT"
-                }
-            }
-        }
+      "kind": "leave_request",
+      "policyVersion": "20210210",
+      "id": "XX125",
+      "attr": {
+        "department": "marketing",
+        "geography": "GB",
+        "id": "XX125",
+        "owner": "john",
+        "team": "design",
+        "status": "PENDING_APPROVAL"
+      }
     }
-}
-wantResponse: {
-    "requestId": "test",
-    "resourceInstances": {
-        "XX125": {
-            "actions": {
-                "approve": "EFFECT_ALLOW"
-            }
-        },
-        "XX150": {
-            "actions": {
-                "approve": "EFFECT_DENY"
-            }
-        }
+  },
+  {
+    "requestId": "test2",
+    "actions": [
+      "approve"
+    ],
+    "principal": {
+      "id": "sally",
+      "policyVersion": "20210210",
+      "roles": [
+        "employee",
+        "manager"
+      ],
+      "attr": {
+        "department": "marketing",
+        "geography": "GB",
+        "team": "design",
+        "managed_geographies": "GB"
+      }
     },
-    "meta": {
-        "resourceInstances": {
-            "XX125": {
-                "actions": {
-                    "approve": {
-                        "matchedPolicy": "leave_request:20210210"
-                    }
-                },
-                "effectiveDerivedRoles": ["any_employee", "direct_manager"]
-            },
-            "XX150": {
-                "actions": {
-                    "approve": {
-                        "matchedPolicy": "leave_request:20210210"
-                    }
-                },
-                "effectiveDerivedRoles": ["any_employee", "direct_manager"]
-            }
-        }
+    "resource": {
+      "kind": "leave_request",
+      "policyVersion": "20210210",
+      "id": "XX150",
+      "attr": {
+        "department": "marketing",
+        "geography": "GB",
+        "id": "XX150",
+        "owner": "john",
+        "team": "design",
+        "status": "DRAFT"
+      }
     }
-}
+  }
+]
+wantOutputs: [
+  {
+    "requestId": "test1",
+    "resourceId": "XX125",
+    "actions": {
+      "approve": {
+        "effect": "EFFECT_ALLOW",
+        "policy": "leave_request:20210210"
+      }
+    },
+    "effectiveDerivedRoles": [
+      "any_employee",
+      "direct_manager"
+    ]
+  },
+  {
+    "requestId": "test2",
+    "resourceId": "XX150",
+    "actions": {
+      "approve": {
+        "effect": "EFFECT_DENY",
+        "policy": "leave_request:20210210"
+      }
+    },
+    "effectiveDerivedRoles": [
+      "any_employee",
+      "direct_manager"
+    ]
+  }
+]

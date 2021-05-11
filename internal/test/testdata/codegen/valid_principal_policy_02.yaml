@@ -17,7 +17,7 @@ wantRego: |-
   package cerbos.principal.daffy_duck.v20210210
 
   cerbos_effect_for(cerbos_action) = "allow" {
-      glob.match("*", [], input.resource.name)
+      glob.match("*", [], input.resource.kind)
       glob.match("*", [], cerbos_action)
       cerbos_cel_eval(input, "cerbos.principal.daffy_duck.v20210210", "cond_0")
   }

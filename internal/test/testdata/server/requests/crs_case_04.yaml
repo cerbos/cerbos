@@ -1,0 +1,93 @@
+---
+description: "Donald Duck tries to view and approve a production leave request and a dev leave request"
+checkResourceSet:
+  input: {
+    "requestId": "test",
+    "includeMeta": true,
+    "actions": [
+      "approve",
+      "view:public"
+    ],
+    "principal": {
+      "id": "donald_duck",
+      "policyVersion": "20210210",
+      "roles": [
+        "employee",
+      ],
+      "attr": {
+        "department": "marketing",
+        "geography": "GB",
+        "team": "design",
+        "managed_geographies": "GB"
+      }
+    },
+    "resource": {
+      "kind": "leave_request",
+      "policyVersion": "20210210",
+      "instances": {
+        "XX125": {
+          "attr": {
+            "department": "marketing",
+            "geography": "GB",
+            "id": "XX125",
+            "owner": "john",
+            "team": "design",
+            "status": "PENDING_APPROVAL",
+            "dev_record": true
+          }
+        },
+        "XX150": {
+          "attr": {
+            "department": "marketing",
+            "geography": "GB",
+            "id": "XX150",
+            "owner": "john",
+            "team": "design",
+            "status": "PENDING_APPROVAL"
+          }
+        }
+      }
+    }
+  }
+  wantResponse: {
+    "requestId": "test",
+    "resourceInstances": {
+      "XX125": {
+        "actions": {
+          "approve": "EFFECT_ALLOW",
+          "view:public": "EFFECT_ALLOW",
+        }
+      },
+      "XX150": {
+        "actions": {
+          "approve": "EFFECT_DENY",
+          "view:public": "EFFECT_ALLOW",
+        }
+      }
+    },
+    "meta": {
+      "resourceInstances": {
+        "XX125": {
+          "actions": {
+            "approve": {
+              "matchedPolicy": "donald_duck:20210210"
+            },
+            "view:public": {
+              "matchedPolicy": "donald_duck:20210210"
+            }
+          },
+        },
+        "XX150": {
+          "actions": {
+            "approve": {
+              "matchedPolicy": "leave_request:20210210"
+            },
+            "view:public": {
+              "matchedPolicy": "leave_request:20210210"
+            }
+          },
+          "effectiveDerivedRoles": ["any_employee"]
+        }
+      }
+    }
+  }

@@ -20,6 +20,7 @@ import (
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/local"
 	"google.golang.org/protobuf/encoding/protojson"
+	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/testing/protocmp"
 
 	"github.com/cerbos/cerbos/internal/engine"
@@ -60,7 +61,7 @@ func TestServer(t *testing.T) {
 
 			t.Run("grpc", testGRPCRequest(conf.GRPCListenAddr, grpc.WithTransportCredentials(credentials.NewTLS(tlsConf))))
 			t.Run("grpc_over_http", testGRPCRequest(conf.HTTPListenAddr, grpc.WithTransportCredentials(credentials.NewTLS(tlsConf))))
-			t.Run("http", testHTTPRequest(fmt.Sprintf("https://%s/api/check", conf.HTTPListenAddr)))
+			t.Run("http", testHTTPRequest(fmt.Sprintf("https://%s", conf.HTTPListenAddr)))
 		})
 
 		t.Run("uds", func(t *testing.T) {
@@ -100,7 +101,7 @@ func TestServer(t *testing.T) {
 			startServer(ctx, conf, cerbosSvc)
 
 			t.Run("grpc", testGRPCRequest(conf.GRPCListenAddr, grpc.WithTransportCredentials(local.NewCredentials())))
-			t.Run("http", testHTTPRequest(fmt.Sprintf("http://%s/api/check", conf.HTTPListenAddr)))
+			t.Run("http", testHTTPRequest(fmt.Sprintf("http://%s", conf.HTTPListenAddr)))
 		})
 
 		t.Run("uds", func(t *testing.T) {
@@ -169,37 +170,43 @@ func testGRPCRequest(addr string, opts ...grpc.DialOption) func(*testing.T) {
 
 		grpcClient := svcv1.NewCerbosServiceClient(grpcConn)
 
-		testCases := test.LoadTestCases(t, "engine")
+		testCases := test.LoadTestCases(t, filepath.Join("server", "requests"))
 
 		for _, tcase := range testCases {
 			tcase := tcase
 			t.Run(tcase.Name, func(t *testing.T) {
 				tc := readTestCase(t, tcase.Input)
 
-				ctx, cancelFunc := context.WithTimeout(context.Background(), 1*time.Second)
+				var have, want proto.Message
+				var err error
+
+				ctx, cancelFunc := context.WithTimeout(context.Background(), 5*time.Second)
 				defer cancelFunc()
 
-				have, err := grpcClient.CheckResourceBatch(ctx, tc.Input)
-				require.NoError(t, err)
+				switch call := tc.CallKind.(type) {
+				case *cerbosdevv1.ServerTestCase_CheckResourceSet:
+					want = call.CheckResourceSet.WantResponse
+					have, err = grpcClient.CheckResourceSet(ctx, call.CheckResourceSet.Input)
+				case *cerbosdevv1.ServerTestCase_CheckResourceBatch:
+					want = call.CheckResourceBatch.WantResponse
+					have, err = grpcClient.CheckResourceBatch(ctx, call.CheckResourceBatch.Input)
+				default:
+					t.Fatalf("Unknown call type: %T", call)
+				}
 
-				if tc.WantResponse == nil {
+				if tc.WantError {
+					require.Error(t, err)
 					return
 				}
 
-				require.NotNil(t, have)
-
-				// clear out timing data to make the comparison work
-				if have.Meta != nil {
-					have.Meta.EvaluationDuration = nil
-				}
-
-				require.Empty(t, cmp.Diff(tc.WantResponse, have, protocmp.Transform()))
+				require.NoError(t, err)
+				require.Empty(t, cmp.Diff(want, have, protocmp.Transform()))
 			})
 		}
 	}
 }
 
-func testHTTPRequest(addr string) func(*testing.T) {
+func testHTTPRequest(server string) func(*testing.T) {
 	//nolint:thelper
 	return func(t *testing.T) {
 		customTransport := http.DefaultTransport.(*http.Transport).Clone()
@@ -207,14 +214,32 @@ func testHTTPRequest(addr string) func(*testing.T) {
 
 		c := &http.Client{Transport: customTransport}
 
-		testCases := test.LoadTestCases(t, "engine")
+		testCases := test.LoadTestCases(t, filepath.Join("server", "requests"))
 
 		for _, tcase := range testCases {
 			tcase := tcase
 			t.Run(tcase.Name, func(t *testing.T) {
 				tc := readTestCase(t, tcase.Input)
 
-				reqBytes, err := protojson.Marshal(tc.Input)
+				var input, have, want proto.Message
+				var addr string
+
+				switch call := tc.CallKind.(type) {
+				case *cerbosdevv1.ServerTestCase_CheckResourceSet:
+					addr = fmt.Sprintf("%s/api/check", server)
+					input = call.CheckResourceSet.Input
+					want = call.CheckResourceSet.WantResponse
+					have = &responsev1.CheckResourceSetResponse{}
+				case *cerbosdevv1.ServerTestCase_CheckResourceBatch:
+					addr = fmt.Sprintf("%s/api/x/check_resource_batch", server)
+					input = call.CheckResourceBatch.Input
+					want = call.CheckResourceBatch.WantResponse
+					have = &responsev1.CheckResourceBatchResponse{}
+				default:
+					t.Fatalf("Unknown call type: %T", call)
+				}
+
+				reqBytes, err := protojson.Marshal(input)
 				require.NoError(t, err, "Failed to marshal request")
 
 				ctx, cancelFunc := context.WithTimeout(context.Background(), 1*time.Second)
@@ -234,33 +259,27 @@ func testHTTPRequest(addr string) func(*testing.T) {
 					}
 				}()
 
-				require.Equal(t, http.StatusOK, resp.StatusCode)
-
-				if tc.WantResponse == nil {
+				if tc.WantError {
+					require.NotEqual(t, http.StatusOK, resp.StatusCode)
 					return
 				}
+
+				require.Equal(t, http.StatusOK, resp.StatusCode)
 
 				respBytes, err := io.ReadAll(resp.Body)
 				require.NoError(t, err, "Failed to read response")
 
-				have := &responsev1.CheckResourceBatchResponse{}
 				require.NoError(t, protojson.Unmarshal(respBytes, have), "Failed to unmarshal response")
-
-				// clear out timing data to make the comparison work
-				if have.Meta != nil {
-					have.Meta.EvaluationDuration = nil
-				}
-
-				require.Empty(t, cmp.Diff(tc.WantResponse, have, protocmp.Transform()))
+				require.Empty(t, cmp.Diff(want, have, protocmp.Transform()))
 			})
 		}
 	}
 }
 
-func readTestCase(t *testing.T, data []byte) *cerbosdevv1.EngineTestCase {
+func readTestCase(t *testing.T, data []byte) *cerbosdevv1.ServerTestCase {
 	t.Helper()
 
-	tc := &cerbosdevv1.EngineTestCase{}
+	tc := &cerbosdevv1.ServerTestCase{}
 	require.NoError(t, util.ReadJSONOrYAML(bytes.NewReader(data), tc))
 
 	return tc

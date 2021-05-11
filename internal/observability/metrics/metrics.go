@@ -10,7 +10,6 @@ import (
 
 var (
 	KeyCompileStatus        = tag.MustNewKey("status")
-	KeyEngineDecisionEffect = tag.MustNewKey("effect")
 	KeyEngineDecisionStatus = tag.MustNewKey("status")
 	KeyEngineUpdateType     = tag.MustNewKey("update_type")
 	KeyEngineUpdateStatus   = tag.MustNewKey("update_status")
@@ -37,20 +36,19 @@ var (
 
 	EngineCheckLatencyView = &view.View{
 		Measure:     EngineCheckLatency,
-		TagKeys:     []tag.Key{KeyEngineDecisionEffect, KeyEngineDecisionStatus},
+		TagKeys:     []tag.Key{KeyEngineDecisionStatus},
 		Aggregation: defaultLatencyDistribution(),
 	}
 
-	EngineCheckResourceBatchLatency = stats.Float64(
-		"cerbos.dev/engine/check_resource_batch_latency",
-		"Time to process a batch request",
-		stats.UnitMilliseconds,
+	EngineCheckBatchSize = stats.Int64(
+		"cerbos.dev/engine/check_batch_size",
+		"Batch size distribution of check requests",
+		stats.UnitDimensionless,
 	)
 
-	EngineCheckResourceBatchLatencyView = &view.View{
-		Measure:     EngineCheckResourceBatchLatency,
-		TagKeys:     []tag.Key{KeyEngineDecisionStatus},
-		Aggregation: defaultLatencyDistribution(),
+	EngineCheckBatchSizeView = &view.View{
+		Measure:     EngineCheckBatchSize,
+		Aggregation: view.Distribution(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 14, 16, 18, 20, 25, 30, 35, 40, 45, 50),
 	}
 
 	EngineUpdateLatency = stats.Float64(
@@ -69,7 +67,7 @@ var (
 var DefaultCerbosViews = []*view.View{
 	CompileDurationView,
 	EngineCheckLatencyView,
-	EngineCheckResourceBatchLatencyView,
+	EngineCheckBatchSizeView,
 	EngineUpdateLatencyView,
 }
 

@@ -1,63 +1,49 @@
 ---
 description: "No policy match"
-input: {
+inputs: [
+  {
     "requestId": "test",
-    "includeMeta": true,
     "actions": [
-        "view:public",
-        "approve"
+      "view:public",
+      "approve"
     ],
     "principal": {
-        "id": "john",
-        "roles": [
-            "employee"
-        ],
-        "attr": {
-            "department": "marketing",
-            "geography": "GB",
-            "team": "design"
-        }
+      "id": "john",
+      "roles": [
+        "employee"
+      ],
+      "attr": {
+        "department": "marketing",
+        "geography": "GB",
+        "team": "design"
+      }
     },
     "resource": {
-        "name": "leave_request",
-        "instances": {
-            "XX125": {
-                "attr": {
-                    "department": "marketing",
-                    "geography": "GB",
-                    "id": "XX125",
-                    "owner": "john",
-                    "team": "design"
-                }
-            }
-        }
+      "kind": "leave_request",
+      "id": "XX125",
+      "attr": {
+        "department": "marketing",
+        "geography": "GB",
+        "id": "XX125",
+        "owner": "john",
+        "team": "design"
+      }
     }
-}
-wantResponse: {
+  }
+]
+wantOutputs: [
+  {
     "requestId": "test",
-    "resourceInstances": {
-        "XX125": {
-            "actions": {
-                "view:public": "EFFECT_DENY",
-                "approve": "EFFECT_DENY"
-            }
-        }
-    },
-    "meta": {
-        "resourceInstances": {
-            "XX125": {
-                "actions": {
-                    "view:public": {
-                        "matchedPolicy": "NONE",
-                        "error": "No policy match"
-                    },
-                    "approve": {
-                        "matchedPolicy": "NONE",
-                        "error": "No policy match"
-                    }
-                }
-            }
-        }
+    "resourceId": "XX125",
+    "actions": {
+      "view:public": {
+        "effect": "EFFECT_DENY",
+        "policy": "NO_MATCH"
+      },
+      "approve": {
+        "effect": "EFFECT_DENY",
+        "policy": "NO_MATCH"
+      }
     }
-}
-wantError: true
+  }
+]

@@ -65,7 +65,7 @@ cat <<EOF | curl --silent "localhost:3592/api/check" -d @-
   "requestId":  "test01",
   "actions":  ["view"],
   "resource":  {
-    "name":  "album:object",
+    "kind":  "album:object",
     "instances": {
       "XX125": {
         "attr":  {

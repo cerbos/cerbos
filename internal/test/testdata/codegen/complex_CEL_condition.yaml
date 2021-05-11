@@ -34,13 +34,13 @@ wantRego: |-
   package cerbos.principal.donald_duck.v20210210
 
   cerbos_effect_for(cerbos_action) = "allow" {
-      glob.match("leave_request", [":"], input.resource.name)
+      glob.match("leave_request", [":"], input.resource.kind)
       glob.match("*", [], cerbos_action)
       cerbos_cel_eval(input, "cerbos.principal.donald_duck.v20210210", "cond_0")
   }
 
   cerbos_effect_for(cerbos_action) = "deny" {
-      glob.match("salary_record", [":"], input.resource.name)
+      glob.match("salary_record", [":"], input.resource.kind)
       glob.match("*", [], cerbos_action)
   }
 

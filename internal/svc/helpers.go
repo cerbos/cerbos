@@ -8,9 +8,13 @@ import (
 )
 
 func ExtractRequestFields(fullMethod string, req interface{}) map[string]interface{} {
+	if req == nil {
+		return nil
+	}
+
 	switch fullMethod {
-	case "/svc.v1.CerbosService/Check":
-		checkReq, ok := req.(*requestv1.CheckRequest)
+	case "/svc.v1.CerbosService/CheckResourceSet":
+		batchReq, ok := req.(*requestv1.CheckResourceSetRequest)
 		if !ok {
 			return nil
 		}
@@ -18,14 +22,13 @@ func ExtractRequestFields(fullMethod string, req interface{}) map[string]interfa
 		return map[string]interface{}{
 			util.AppName: map[string]map[string]string{
 				"request": {
-					"id":                       checkReq.RequestId,
-					"principal.id":             checkReq.Principal.Id,
-					"principal.policy_version": checkReq.Principal.PolicyVersion,
-					"resource.name":            checkReq.Resource.Name,
-					"resource.policy_version":  checkReq.Resource.PolicyVersion,
+					"id":                       batchReq.RequestId,
+					"principal.id":             batchReq.Principal.Id,
+					"principal.policy_version": batchReq.Principal.PolicyVersion,
 				},
 			},
 		}
+
 	case "/svc.v1.CerbosService/CheckResourceBatch":
 		batchReq, ok := req.(*requestv1.CheckResourceBatchRequest)
 		if !ok {
