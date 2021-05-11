@@ -25,6 +25,7 @@ import (
 	"github.com/cerbos/cerbos/internal/storage"
 )
 
+// ErrNoPoliciesMatched indicates that no policies were matched.
 var ErrNoPoliciesMatched = errors.New("no matching policies")
 
 const (

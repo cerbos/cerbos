@@ -25,6 +25,7 @@ import (
 	"github.com/cerbos/cerbos/internal/util"
 )
 
+// ErrDirtyState indicates that the git store is dirty.
 var ErrDirtyState = errors.New("state is dirty")
 
 type Store struct {

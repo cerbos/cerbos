@@ -28,6 +28,60 @@ linters-settings:
     allow-leading-space: false
     require-specific: true
 
+  revive:
+    rules:
+      - name: atomic
+      - name: blank-imports
+      - name: bool-literal-in-expr
+      - name: call-to-gc
+      - name: confusing-naming
+      - name: confusing-results
+      - name: constant-logical-expr
+      - name: context-as-argument
+      - name: context-keys-type
+      - name: deep-exit
+      - name: defer
+      - name: dot-imports
+      - name: duplicated-imports
+      # - name: early-return
+      - name: empty-block
+      - name: empty-lines
+      - name: error-naming
+      - name: error-return
+      - name: error-strings
+      - name: errorf
+      # - name: exported
+      - name: flag-parameter
+      - name: get-return
+      - name: identical-branches
+      - name: if-return
+      - name: increment-decrement
+      - name: indent-error-flow
+      - name: imports-blacklist
+      # - name: import-shadowing
+      - name: modifies-parameter
+      - name: modifies-value-receiver
+      - name: package-comments
+      - name: range
+      - name: range-val-in-closure
+      - name: range-val-address
+      - name: receiver-naming
+      - name: redefines-builtin-id
+      - name: string-of-int
+      - name: struct-tag
+      - name: superfluous-else
+      - name: time-naming
+      - name: var-naming
+      - name: var-declaration
+      - name: unconditional-recursion
+      - name: unexported-naming
+      - name: unexported-return
+      # - name: unhandled-error
+      - name: unnecessary-stmt
+      - name: unreachable-code
+      #- name: unused-parameter
+      #- name: unused-receiver
+      - name: waitgroup-by-value
 
 linters:
   enable:

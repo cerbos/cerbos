@@ -20,11 +20,16 @@ import (
 )
 
 var (
-	ErrDuplicatePolicy     = errors.New("duplicate policy definitions")
-	ErrFileHasDependents   = errors.New("file has dependents")
+	// ErrDuplicatePolicy signals that there are duplicate policy definitions.
+	ErrDuplicatePolicy = errors.New("duplicate policy definitions")
+	// ErrFileHasDependents signals that the given file cannot be deleted because it has dependents.
+	ErrFileHasDependents = errors.New("file has dependents")
+	// ErrMissingDependencies signals that there are missing dependencies.
 	ErrMissingDependencies = errors.New("missing dependencies")
-	ErrUnknownModule       = errors.New("unknown module")
-	ErrQuarantined         = errors.New("quarantined")
+	// ErrUnknownModule signals that the module is not in the module index.
+	ErrUnknownModule = errors.New("unknown module")
+	// ErrQuarantined signals that the module is quarantined.
+	ErrQuarantined = errors.New("quarantined")
 )
 
 type IndexUpdate struct {
@@ -323,7 +328,7 @@ func (idx *index) Remove(file string) (*compile.Incremental, error) {
 	return &compile.Incremental{Remove: invalidated.remove}, nil
 }
 
-func (idx *index) doRemove(file string, safely bool) (*invalidatedModules, error) {
+func (idx *index) doRemove(file string, safely bool) (*invalidatedModules, error) { //nolint:revive
 	idx.mu.Lock()
 	defer idx.mu.Unlock()
 
