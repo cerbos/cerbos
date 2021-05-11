@@ -7,7 +7,9 @@ import (
 	"os"
 	"strings"
 
+	grpc_zap "github.com/grpc-ecosystem/go-grpc-middleware/logging/zap"
 	"github.com/mattn/go-isatty"
+	"go.elastic.co/ecszap"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 
@@ -55,17 +57,12 @@ func doInitLogging(level string) {
 	consoleErrors := zapcore.Lock(os.Stderr)
 	consoleInfo := zapcore.Lock(os.Stdout)
 
-	encoderConf := zap.NewDevelopmentEncoderConfig()
-	encoderConf.EncodeLevel = zapcore.CapitalColorLevelEncoder
-
+	encoderConf := ecszap.NewDefaultEncoderConfig().ToZapCoreEncoderConfig()
 	var consoleEncoder zapcore.Encoder
+
 	if !isatty.IsTerminal(os.Stdout.Fd()) {
-		encoderConf := zap.NewProductionEncoderConfig()
-		encoderConf.MessageKey = "message"
-		encoderConf.EncodeTime = zapcore.TimeEncoder(zapcore.ISO8601TimeEncoder)
 		consoleEncoder = zapcore.NewJSONEncoder(encoderConf)
 	} else {
-		encoderConf := zap.NewDevelopmentEncoderConfig()
 		encoderConf.EncodeLevel = zapcore.CapitalColorLevelEncoder
 		consoleEncoder = zapcore.NewConsoleEncoder(encoderConf)
 	}
@@ -82,8 +79,15 @@ func doInitLogging(level string) {
 
 	zap.ReplaceGlobals(logger.Named(util.AppName))
 	zap.RedirectStdLog(logger.Named("stdlog"))
+
+	grpc_zap.ReplaceGrpcLoggerV2(logger.Named("grpc").WithOptions(
+		zap.IncreaseLevel(zap.LevelEnablerFunc(func(lvl zapcore.Level) bool {
+			return lvl > zapcore.ErrorLevel
+		}))),
+	)
 }
 
+// FromContext returns the logger from the context if one exists. Otherwise it returns a new logger.
 func FromContext(ctx context.Context) *zap.Logger {
 	log, ok := ctx.Value(ctxLogKey).(*zap.Logger)
 	if !ok || log == nil {
@@ -93,6 +97,7 @@ func FromContext(ctx context.Context) *zap.Logger {
 	return log
 }
 
+// ToContext adds a logger to the context.
 func ToContext(ctx context.Context, log *zap.Logger) context.Context {
 	return context.WithValue(ctx, ctxLogKey, log)
 }

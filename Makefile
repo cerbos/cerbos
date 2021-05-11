@@ -53,6 +53,9 @@ coverage:
 compile:
 	@ go build ./... && go test -tags=tests -run=ignore  ./... > /dev/null
 
+.PHONY: pre-commit
+pre-commit: lint-helm build generate-notice
+
 .PHONY: build
 build: $(GORELEASER) generate lint test
 	@ $(GORELEASER) --config=.goreleaser-dev.yml --snapshot --skip-publish --rm-dist

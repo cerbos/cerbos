@@ -14,34 +14,30 @@ func ExtractRequestFields(fullMethod string, req interface{}) map[string]interfa
 
 	switch fullMethod {
 	case "/svc.v1.CerbosService/CheckResourceSet":
-		batchReq, ok := req.(*requestv1.CheckResourceSetRequest)
+		crsReq, ok := req.(*requestv1.CheckResourceSetRequest)
 		if !ok {
 			return nil
 		}
 
 		return map[string]interface{}{
-			util.AppName: map[string]map[string]string{
-				"request": {
-					"id":                       batchReq.RequestId,
-					"principal.id":             batchReq.Principal.Id,
-					"principal.policy_version": batchReq.Principal.PolicyVersion,
-				},
+			util.AppName: map[string]string{
+				"request.id":               crsReq.RequestId,
+				"principal.id":             crsReq.Principal.Id,
+				"principal.policy_version": crsReq.Principal.PolicyVersion,
 			},
 		}
 
 	case "/svc.v1.CerbosService/CheckResourceBatch":
-		batchReq, ok := req.(*requestv1.CheckResourceBatchRequest)
+		crbReq, ok := req.(*requestv1.CheckResourceBatchRequest)
 		if !ok {
 			return nil
 		}
 
 		return map[string]interface{}{
-			util.AppName: map[string]map[string]string{
-				"request": {
-					"id":                       batchReq.RequestId,
-					"principal.id":             batchReq.Principal.Id,
-					"principal.policy_version": batchReq.Principal.PolicyVersion,
-				},
+			util.AppName: map[string]string{
+				"request.id":               crbReq.RequestId,
+				"principal.id":             crbReq.Principal.Id,
+				"principal.policy_version": crbReq.Principal.PolicyVersion,
 			},
 		}
 	default:
