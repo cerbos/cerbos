@@ -13,6 +13,7 @@ import (
 type Kind int
 
 const (
+	// ResourceKind points to a resource policy.
 	ResourceKind Kind = iota
 	PrincipalKind
 	DerivedRolesKind

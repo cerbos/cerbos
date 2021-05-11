@@ -19,6 +19,7 @@ import (
 )
 
 const (
+	// DriverName is the name of the storage driver.
 	DriverName = "git"
 
 	defaultOperationTimeout = 60 * time.Second

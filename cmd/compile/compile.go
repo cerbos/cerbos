@@ -21,6 +21,7 @@ import (
 )
 
 var (
+	// ErrFailed is the error returned when compilation fails.
 	ErrFailed = errors.New("failed to compile")
 
 	header         = color.New(color.FgHiWhite, color.Bold).SprintFunc()

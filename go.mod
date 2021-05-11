@@ -14,9 +14,8 @@ require (
 	github.com/fullstorydev/grpcurl v1.8.0
 	github.com/ghodss/yaml v1.0.0
 	github.com/go-git/go-git/v5 v5.2.0
-	github.com/gogo/protobuf v1.3.1 // indirect
 	github.com/golang/protobuf v1.5.2
-	github.com/golangci/golangci-lint v1.38.0
+	github.com/golangci/golangci-lint v1.40.0
 	github.com/google/cel-go v0.7.2
 	github.com/google/go-cmp v0.5.5
 	github.com/google/go-licenses v0.0.0-20210329231322-ce1d9163b77d
@@ -32,7 +31,6 @@ require (
 	github.com/mattn/go-isatty v0.0.12
 	github.com/mattn/go-runewidth v0.0.12 // indirect
 	github.com/mitchellh/mapstructure v1.4.1 // indirect
-	github.com/olekukonko/tablewriter v0.0.5 // indirect
 	github.com/open-policy-agent/opa v0.27.1
 	github.com/prometheus/client_golang v1.10.0
 	github.com/prometheus/common v0.20.0 // indirect
@@ -40,7 +38,6 @@ require (
 	github.com/rivo/uniseg v0.2.0 // indirect
 	github.com/rjeczalik/notify v0.9.3-0.20201210012515-e2a77dcc14cf
 	github.com/rs/zerolog v1.20.0 // indirect
-	github.com/sirupsen/logrus v1.8.1 // indirect
 	github.com/spf13/afero v1.5.1 // indirect
 	github.com/spf13/cobra v1.1.3
 	github.com/stretchr/testify v1.7.0
@@ -51,8 +48,6 @@ require (
 	go.uber.org/config v1.4.0
 	go.uber.org/multierr v1.6.0
 	go.uber.org/zap v1.16.0
-	golang.org/x/crypto v0.0.0-20210220033148-5ea612d1eb83 // indirect
-	golang.org/x/mod v0.4.2 // indirect
 	golang.org/x/net v0.0.0-20210410081132-afb366fc7cd1 // indirect
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
 	golang.org/x/sys v0.0.0-20210415045647-66c3f260301c // indirect
