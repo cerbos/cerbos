@@ -7,7 +7,10 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"math/rand"
+	"net/http"
 	"sync"
+	"sync/atomic"
 
 	"github.com/open-policy-agent/opa/ast"
 	"github.com/open-policy-agent/opa/topdown/cache"
@@ -33,14 +36,34 @@ const (
 	loggerName                   = "engine"
 	maxQueryCacheSizeBytes int64 = 10 * 1024 * 1024 // 10 MiB
 	noPolicyMatch                = "NO_MATCH"
+	numWorkers                   = 16
+	parallelismThreshold         = 3
+	workerResetJitter            = 1 << 4
+	workerResetThreshold         = 1 << 16
 )
 
+type workOut struct {
+	index  int
+	result *enginev1.CheckOutput
+	err    error
+}
+
+type workIn struct {
+	index int
+	ctx   context.Context
+	input *enginev1.CheckInput
+	ec    *evaluationCtx
+	out   chan<- workOut
+}
+
 type Engine struct {
-	conf       *Conf
-	store      storage.Store
-	mu         sync.RWMutex
-	compiler   *compile.Compiler
-	queryCache cache.InterQueryCache
+	conf        *Conf
+	store       storage.Store
+	workerIndex uint64
+	workerPool  []chan<- workIn
+	mu          sync.RWMutex
+	compiler    *compile.Compiler
+	queryCache  cache.InterQueryCache
 }
 
 func New(ctx context.Context, store storage.Store) (*Engine, error) {
@@ -50,12 +73,19 @@ func New(ctx context.Context, store storage.Store) (*Engine, error) {
 	}
 
 	engine := &Engine{
-		conf:  conf,
-		store: store,
+		conf:       conf,
+		store:      store,
+		workerPool: make([]chan<- workIn, numWorkers),
 	}
 
 	if err := engine.reload(ctx); err != nil {
 		return nil, err
+	}
+
+	for i := 0; i < numWorkers; i++ {
+		inputChan := make(chan workIn, 1)
+		engine.workerPool[i] = inputChan
+		go engine.startWorker(ctx, i, inputChan)
 	}
 
 	go engine.watchNotifications(ctx)
@@ -83,6 +113,46 @@ func (engine *Engine) reload(ctx context.Context) error {
 	engine.queryCache = queryCache
 
 	return nil
+}
+
+func (engine *Engine) startWorker(ctx context.Context, num int, inputChan <-chan workIn) {
+	// Keep each goroutine around for a period of time and then recycle them to reclaim the stack space.
+	// See https://adtac.in/2021/04/23/note-on-worker-pools-in-go.html
+	log := zap.L().Named(loggerName).With(zap.Int("worker", num))
+	log.Debug("Starting worker")
+
+	threshold := workerResetThreshold + rand.Intn(workerResetJitter) //nolint:gosec
+	for i := 0; i < threshold; i++ {
+		select {
+		case <-ctx.Done():
+			log.Debug("Stopping worker due to context cancellation")
+			return
+		case work, ok := <-inputChan:
+			if !ok {
+				log.Debug("Stopping worker due to channel closure")
+				return
+			}
+
+			result, err := engine.evaluate(work.ctx, work.input, work.ec)
+			work.out <- workOut{index: work.index, result: result, err: err}
+		}
+	}
+
+	// restart to clear the stack
+	log.Debug("Restarting worker")
+	go engine.startWorker(ctx, num, inputChan)
+}
+
+func (engine *Engine) submitWork(ctx context.Context, work workIn) error {
+	for {
+		index := int(atomic.AddUint64(&engine.workerIndex, 1) % numWorkers)
+		select {
+		case engine.workerPool[index] <- work:
+			return nil
+		case <-ctx.Done():
+			return ctx.Err()
+		}
+	}
 }
 
 func (engine *Engine) watchNotifications(ctx context.Context) {
@@ -159,15 +229,42 @@ func (engine *Engine) Check(ctx context.Context, inputs []*enginev1.CheckInput) 
 		defer span.End()
 
 		evalContexts := engine.buildEvaluationContexts(inputs)
-
 		outputs := make([]*enginev1.CheckOutput, len(inputs))
-		for i, ec := range evalContexts {
-			o, err := engine.evaluate(ctx, inputs[i], ec)
-			if err != nil {
-				return nil, err
+
+		// if the number of inputs is less than the threshold, do a serial execution as it is usually faster.
+		if len(inputs) <= parallelismThreshold {
+			for i, ec := range evalContexts {
+				o, err := engine.evaluate(ctx, inputs[i], ec)
+				if err != nil {
+					return nil, err
+				}
+
+				outputs[i] = o
 			}
 
-			outputs[i] = o
+			return outputs, nil
+		}
+
+		// evaluate in parallel
+		collector := make(chan workOut, len(inputs))
+
+		for i, ec := range evalContexts {
+			if err := engine.submitWork(ctx, workIn{index: i, ctx: ctx, input: inputs[i], ec: ec, out: collector}); err != nil {
+				return nil, err
+			}
+		}
+
+		for i := 0; i < len(evalContexts); i++ {
+			select {
+			case <-ctx.Done():
+				return nil, ctx.Err()
+			case wo := <-collector:
+				if wo.err != nil {
+					return nil, wo.err
+				}
+
+				outputs[wo.index] = wo.result
+			}
 		}
 
 		return outputs, nil
@@ -212,6 +309,11 @@ func (engine *Engine) evaluate(ctx context.Context, input *enginev1.CheckInput, 
 	defer span.End()
 
 	span.AddAttributes(trace.StringAttribute("request_id", input.RequestId), trace.StringAttribute("resource_id", input.Resource.Id))
+
+	if err := ctx.Err(); err != nil {
+		tracing.MarkFailed(span, http.StatusRequestTimeout, "Context cancelled", err)
+		return nil, err
+	}
 
 	output := &enginev1.CheckOutput{
 		RequestId:  input.RequestId,

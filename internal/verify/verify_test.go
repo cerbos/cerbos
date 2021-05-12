@@ -15,7 +15,8 @@ import (
 )
 
 func TestVerify(t *testing.T) {
-	eng := mkEngine(t)
+	eng, cancelFunc := mkEngine(t)
+	defer cancelFunc()
 
 	conf := verify.Config{
 		TestsDir: test.PathToDir(t, "verify"),
@@ -27,13 +28,12 @@ func TestVerify(t *testing.T) {
 	require.False(t, result.Failed)
 }
 
-func mkEngine(t *testing.T) *engine.Engine {
+func mkEngine(t *testing.T) (*engine.Engine, context.CancelFunc) {
 	t.Helper()
 
 	dir := test.PathToDir(t, "store")
 
 	ctx, cancelFunc := context.WithCancel(context.Background())
-	defer cancelFunc()
 
 	store, err := disk.NewReadOnlyStore(ctx, &disk.Conf{Directory: dir})
 	require.NoError(t, err)
@@ -41,5 +41,5 @@ func mkEngine(t *testing.T) *engine.Engine {
 	eng, err := engine.New(ctx, store)
 	require.NoError(t, err)
 
-	return eng
+	return eng, cancelFunc
 }

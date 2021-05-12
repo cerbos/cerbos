@@ -36,7 +36,9 @@ import (
 func TestServer(t *testing.T) {
 	test.SkipIfGHActions(t) // TODO (cell) Servers don't work inside GH Actions for some reason.
 
-	eng := mkEngine(t)
+	eng, cancelFunc := mkEngine(t)
+	defer cancelFunc()
+
 	cerbosSvc := svc.NewCerbosService(eng)
 
 	t.Run("with_tls", func(t *testing.T) {
@@ -122,13 +124,12 @@ func TestServer(t *testing.T) {
 	})
 }
 
-func mkEngine(t *testing.T) *engine.Engine {
+func mkEngine(t *testing.T) (*engine.Engine, context.CancelFunc) {
 	t.Helper()
 
 	dir := test.PathToDir(t, "store")
 
 	ctx, cancelFunc := context.WithCancel(context.Background())
-	defer cancelFunc()
 
 	store, err := disk.NewReadOnlyStore(ctx, &disk.Conf{Directory: dir})
 	require.NoError(t, err)
@@ -136,7 +137,7 @@ func mkEngine(t *testing.T) *engine.Engine {
 	eng, err := engine.New(ctx, store)
 	require.NoError(t, err)
 
-	return eng
+	return eng, cancelFunc
 }
 
 func getFreeListenAddr(t *testing.T) string {
