@@ -35,7 +35,7 @@ You will need to login to the container registry using the username and API key 
 
 [source,sh,subs="attributes"]
 ----
-echo YOUR_API_KEY | docker login cerbos.jfrog.io -u YOUR_USERNAME --password-stdin
+echo YOUR_API_KEY | docker login {app-container-registry} -u YOUR_USERNAME --password-stdin
 ----
 
 ****
