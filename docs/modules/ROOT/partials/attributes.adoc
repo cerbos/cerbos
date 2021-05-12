@@ -1,4 +1,4 @@
-:app-container-registry: cerbos.jfrog.io 
+:app-container-registry: pkg.cerbos.dev
 :app-docker-img: {app-container-registry}/containers/cerbos:{app-version}
 :app-github-url: https://github.com/cerbos/cerbos
 :app-github-download-page: {app-github-url}/releases/tag/v{app-version}
