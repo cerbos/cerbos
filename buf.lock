@@ -4,13 +4,20 @@ deps:
     owner: beta
     repository: googleapis
     branch: main
-    commit: 74aae54cbbd3455dbcae8b2e30524323
-    digest: b1-qJtbNtMHuTWT6HLhdATE3G-oHWsoR3G6uOucPFI9hEM=
-    create_time: 2021-04-06T11:46:20.69656Z
+    commit: 2e73676eef8642dfba4ed782b7c8d6fe
+    digest: b1-vB11w98W2vFtEP4Veknm56Pi6DU6MpOuocESiOzvbqw=
+    create_time: 2021-04-26T14:55:30.644663Z
+  - remote: buf.build
+    owner: beta
+    repository: protoc-gen-validate
+    branch: main
+    commit: 3cad65fc486c46c2b30b8b6e1e25f1d5
+    digest: b1-2jXe4lM1oODjIukjnWZ6p8VmYmpkyuhHnW9X5WaSxhc=
+    create_time: 2021-04-26T14:55:41.529001Z
   - remote: buf.build
     owner: grpc-ecosystem
     repository: grpc-gateway
     branch: main
-    commit: 86ebc0cb352e4f99bc75ed89f3be5d86
-    digest: b1-AcUA_iQHn8x533qMlEWsfKgcY-T6NVPi3IR1_nLhvyA=
-    create_time: 2021-04-22T23:16:17.38885Z
+    commit: d19475fa22444a289c46af009acce62c
+    digest: b1-_zhDPyr_Ctc1QRAKuad6_0xvoyPd6QaB22ldm9gzS0Q=
+    create_time: 2021-04-26T15:19:26.742789Z

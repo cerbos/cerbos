@@ -20,19 +20,19 @@ protoset: $(BUF)
 	@ $(BUF) build -o $(PROTOSET)
 
 .PHONY: check-grpc
-check-grpc: protoset $(GRPCURL)
+check-grpc: $(GRPCURL)
 	@ $(foreach REQ_FILE,\
 		$(wildcard $(DEV_DIR)/requests/batch/*.json),\
 		echo $(REQ_FILE); \
-		$(GRPCURL) -protoset $(PROTOSET) -authority cerbos.local -insecure -d @ localhost:$(GRPC_PORT) $(CHECK_RESOURCE_SET_METHOD) < $(REQ_FILE);\
+		$(GRPCURL) -authority cerbos.local -insecure -d @ localhost:$(GRPC_PORT) $(CHECK_RESOURCE_SET_METHOD) < $(REQ_FILE);\
 		echo "";)
 
 .PHONY: check-grpc-insecure
-check-grpc-insecure: protoset $(GRPCURL)
+check-grpc-insecure: $(GRPCURL)
 	@ $(foreach REQ_FILE,\
 		$(wildcard $(DEV_DIR)/requests/batch/*.json),\
 		echo $(REQ_FILE); \
-		$(GRPCURL) -protoset $(PROTOSET) -plaintext -d @ localhost:$(GRPC_PORT) $(CHECK_RESOURCE_SET_METHOD) < $(REQ_FILE);\
+		$(GRPCURL) -plaintext -d @ localhost:$(GRPC_PORT) $(CHECK_RESOURCE_SET_METHOD) < $(REQ_FILE);\
 		echo "";)
 
 .PHONY: check-http
@@ -54,11 +54,11 @@ check-http-insecure:
 		echo "";)
 
 .PHONY: perf
-perf: protoset $(GHZ)
+perf: $(GHZ)
 	@ $(foreach REQ_FILE,\
 		$(wildcard $(DEV_DIR)/requests/batch/*.json),\
 		echo $(REQ_FILE); \
-		$(GHZ) --protoset $(PROTOSET) --cname=cerbos.local -n 500 --call $(CHECK_RESOURCE_SET_METHOD) -D $(REQ_FILE) localhost:$(GRPC_PORT);\
+		$(GHZ) --cname=cerbos.local -n 500 --call $(CHECK_RESOURCE_SET_METHOD) -D $(REQ_FILE) localhost:$(GRPC_PORT);\
 		echo "";)
 
 .PHONY: jaeger
