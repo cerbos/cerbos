@@ -4,6 +4,7 @@ title: Cerbos
 version: master
 nav:
   - modules/ROOT/nav.adoc
+  - modules/api/nav.adoc
   - modules/policies/nav.adoc
   - modules/configuration/nav.adoc
   - modules/deployment/nav.adoc

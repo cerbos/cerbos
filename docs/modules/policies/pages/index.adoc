@@ -9,53 +9,11 @@ xref:resource_policies.adoc[Resource policies]:: Defines rules for actions that 
 xref:principal_policies.adoc[Principal policies]:: Defines overrides for a specific user. 
 
 
-Policies are evaluated based on the metadata passed in the request to the Cerbos PDP. 
+
+Policies are evaluated based on the metadata passed in the request to the Cerbos PDP. See xref:api:index.adoc[Cerbos API] for more information.
 
 NOTE: View the latest documentation and example requests by accessing a running Cerbos instance using a browser (e.g. http://localhost:3592/). The OpenAPI (Swagger) schema can be obtained by accessing `{cerbos-openapi-schema}` as well. 
 
-[source,json,linenums]
-----
-{
-  "requestId":  "test01", <1>
-  "actions":  ["view"], <2>
-  "resource":  {
-    "policyVersion": "dev", <3>
-    "kind":  "album:object", <4>
-    "instances": { <5>
-      "XX125": { <6>
-        "attr":  { <7>
-          "owner":  "alicia",
-          "id":  "XX125",
-          "public": false,
-          "tags": ["x", "y"],
-          "flagged": false
-        }
-      }
-    }
-  },
-  "principal":  {
-    "id":  "alicia", <8>
-    "policyVersion": "dev", <9>
-    "roles":  ["user"], <10>
-    "attr": { <11>
-      "geography": "GB"
-    }
-  },
-  "includeMeta": true <12>
-}
-----
-<1> Request ID can be anything that uniquely identifies a request.
-<2> Actions being performed on the resource instances. Required.
-<3> Resource policy version. Optional. The server falls back to the xref:configuration:engine.adoc[configured default version] if this is not specified.
-<4> Resource kind. Required. This value is used to determine the resource policy to evaluate. 
-<5> Container for the set of resource instances to check. You can check access to multiple resource instances in a single request by adding them under this field. 
-<6> A unique identifier for a resource instance. This identifier will be used in the response to indicate the result of the policy evaluation.
-<7> Free-form context data about this resource instance. Policy rule conditions are evaluated based on these values.
-<8> ID of the principal performing the actions. Required.
-<9> Principal policy version. Optional. The server falls back to the xref:configuration:engine.adoc[configured default version] if this is not specified.
-<10> Static roles that are assigned to this principal by your identity management system. Required.
-<11> Free-form context data about this principal. Policy rule conditions are evaluated based on these values.
-<12> An optional flag to signal that the response should include metadata about policy evaluation. Useful for debugging.
 
 == Policy authoring tips
 

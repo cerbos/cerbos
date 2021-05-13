@@ -1,0 +1,73 @@
+include::ROOT:partial$attributes.adoc[]
+
+= Compiling policies
+
+You can use the Cerbos compiler to make sure that your policies are valid before pushing them to a production Cerbos instance. We recommend setting up a git hook or a CI step to run the Cerbos compiler before you push any policy changes to production.
+
+[source,sh,subs="attributes"]
+----
+docker run -i -t -v /path/to/policy/dir:/policies {app-docker-img} compile /policies
+----
+
+
+== Testing policies
+
+You can write optional tests for policies and run them as part of the compilation stage to make sure that the policies do exactly what you expect.
+
+Tests are defined using the familiar YAML format as well. Make sure that your tests are in separate directory from the policies to avoid confusion. We recommend storing them in a top-level directory named `tests`.
+
+.Test suite definition
+[source,yaml]
+----
+---
+name: AlbumObjectTestSuite <1>
+description: Tests for verifying the album:object resource policy <2>
+tests: <3>
+  - name: Alicia tries to view her own private album <4>
+    input: { <5>
+      "requestId": "test",
+      "actions": ["view"],
+      "principal": {
+        "id": "alicia",
+        "roles": ["user"]
+      },
+      "resource": {
+        "kind": "album:object",
+        "attr": {
+          "owner": "alicia",
+          "id": "XX125",
+          "public": false,
+          "flagged": false
+        }
+      }
+    }
+    expected: <6>
+      view: EFFECT_ALLOW
+----
+<1> Name of the test suite
+<2> Description of the test suite
+<3> List of tests in this suite
+<4> Name of the test
+<5> Input to the policy engine
+<6> Expected outcome for each of the actions defined in the input
+
+
+To run the tests, provide the path to the tests directory using the `--tests` flag.
+
+[source,sh,subs="attributes"]
+----
+docker run -i -t \
+    -v /path/to/policy/dir:/policies \
+    -v /path/to/test/dir:/tests \
+    {app-docker-img} compile --tests=/tests /policies
+----
+
+----
+Test results
+= AlbumObjectTestSuite (album_object_tests.yaml)
+== Alicia tries to view her own private album [OK]
+== Bradley tries to view Alicia's private album [OK]
+== Bradley tries to view Alicia's public album [OK]
+== Moderator tries to delete a flagged album [OK]
+== Moderator tries to delete an unflagged album [OK]
+----

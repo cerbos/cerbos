@@ -60,10 +60,6 @@ pre-commit: lint-helm build generate-notice
 build: $(GORELEASER) generate lint test
 	@ $(GORELEASER) --config=.goreleaser-dev.yml --snapshot --skip-publish --rm-dist
 
-.PHONY: run
-run:
-	@ go run main.go server --config=conf.default.yaml
-
 .PHONY: docs
 docs:
 	@ docs/build.sh

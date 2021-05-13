@@ -3,27 +3,11 @@ include::partial$attributes.adoc[]
 = Quickstart
 
 
-Create a directory to store the server config and policies.
+Create a directory to store the policies.
 
 [source,sh]
 ----
 mkdir -p cerbos-quickstart/policies
-----
-
-Create the config file for the server.
-
-[source,sh,subs="attributes,+macros"]
-----
-cat $$>$$ cerbos-quickstart/conf.yaml $$<<$$EOF
-server:
-  httpListenAddr: ":3592"
-
-storage:
-  driver: "disk"
-  disk:
-    directory: /quickstart/policies
-    watchForChanges: true
-EOF
 ----
 
 Now start the Cerbos server. We are using the container image in this guide but you can follow along using the binary as well. See xref:installation/binary.adoc[installation instructions] for more information.
@@ -42,7 +26,7 @@ echo YOUR_API_KEY | docker login {app-container-registry} -u YOUR_USERNAME --pas
 
 [source,shell,subs="attributes"]
 ----
-docker run --rm --name cerbos -d -v $(pwd)/cerbos-quickstart:/quickstart -p 3592:3592 {app-docker-img} server --config=/quickstart/conf.yaml
+docker run --rm --name cerbos -d -v $(pwd)/cerbos-quickstart/policies:/policies -p 3592:3592 {app-docker-img} 
 ----
 
 Launch a browser and navigate to http://localhost:3592/. You will be presented with a webpage with documentation about the Cerbos API.
