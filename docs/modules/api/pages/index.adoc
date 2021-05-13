@@ -1,0 +1,153 @@
+include::ROOT:partial$attributes.adoc[]
+
+= The Cerbos API
+
+The main API endpoint for making policy decisions is the `/api/check` REST endpoint (`svc.v1.CheckResourceSet` RPC in the gRPC API). You can view the latest API documentation from a running Cerbos instance by accessing the root directory of the HTTP endpoint using a browser.
+
+[source,sh,subs="attributes"]
+----
+echo YOUR_API_KEY | docker login {app-container-registry} -u YOUR_USERNAME --password-stdin
+docker run --rm --name cerbos -p 3592:3592 {app-docker-img} 
+----
+
+Navigate to link:http://localhost:3592/[] using your browser to explore the Cerbos API documentation.
+
+== Request and response formats
+
+.Request
+[source,json,linenums]
+----
+{
+  "requestId":  "test01", <1>
+  "actions":  ["view"], <2>
+  "resource":  {
+    "policyVersion": "dev", <3>
+    "kind":  "album:object", <4>
+    "instances": { <5>
+      "XX125": { <6>
+        "attr":  { <7>
+          "owner":  "alicia",
+          "id":  "XX125",
+          "public": false,
+          "tags": ["x", "y"],
+          "flagged": false
+        }
+      }
+    }
+  },
+  "principal":  {
+    "id":  "alicia", <8>
+    "policyVersion": "dev", <9>
+    "roles":  ["user"], <10>
+    "attr": { <11>
+      "geography": "GB"
+    }
+  },
+  "includeMeta": true <12>
+}
+----
+<1> Request ID can be anything that uniquely identifies a request.
+<2> Actions being performed on the resource instances. Required.
+<3> Resource policy version. Optional. The server falls back to the xref:configuration:engine.adoc[configured default version] if this is not specified.
+<4> Resource kind. Required. This value is used to determine the resource policy to evaluate. 
+<5> Container for the set of resource instances to check. You can check access to multiple resource instances in a single request by adding them under this field. 
+<6> A unique identifier for a resource instance. This identifier will be used in the response to indicate the result of the policy evaluation.
+<7> Free-form context data about this resource instance. Policy rule conditions are evaluated based on these values.
+<8> ID of the principal performing the actions. Required.
+<9> Principal policy version. Optional. The server falls back to the xref:configuration:engine.adoc[configured default version] if this is not specified.
+<10> Static roles that are assigned to this principal by your identity management system. Required.
+<11> Free-form context data about this principal. Policy rule conditions are evaluated based on these values.
+<12> An optional flag to signal that the response should include metadata about policy evaluation. Useful for debugging.
+
+
+.Response
+[source,json,linenums]
+----
+{
+  "requestId": "test01", <1>
+  "resourceInstances": {
+    "XX125": { <2>
+      "actions": {
+        "view": "EFFECT_ALLOW" <3>
+      }
+    }
+  },
+  "meta": { <4>
+    "resourceInstances": {
+      "XX125": {
+        "actions": {
+          "view": {
+            "matchedPolicy": "album:object:default" <5>
+          }
+        },
+        "effectiveDerivedRoles": [ <6>
+          "owner"
+        ]
+      }
+    }
+  }
+}
+----
+<1> The request ID received from the request. Helpful for correlating logs.
+<2> Unique ID of the resource.
+<3> Policy decision for each action on the resource.
+<4> Optional metadata about request evaluation.
+<5> The policy that matched to make the decision for the given action.
+<6> Derived roles that were activated.
+
+
+
+.Using curl to access the API
+[source,sh,linenums]
+----
+cat <<EOF | curl --silent "localhost:3592/api/check" -d @-
+{
+  "requestId":  "test01",
+  "includeMeta": true,
+  "actions":  ["view"],
+  "resource":  {
+    "policyVersion": "default",
+    "kind":  "album:object",
+    "instances": {
+      "XX125": {
+        "attr":  {
+          "owner":  "alicia",
+          "id":  "XX125",
+          "public": false,
+          "flagged": false
+        }
+      }
+    }
+  },
+  "principal":  {
+    "id":  "alicia",
+    "policyVersion": "default",
+    "roles":  ["user"]
+  }
+}
+EOF
+----
+
+
+== Generating API clients
+
+The Cerbos OpenAPI specification can be obtained from a running Cerbos instance by accessing link:http://localhost:3592{cerbos-openapi-schema}[].
+
+There are many tools available to generate clients from an OpenAPI specification. https://openapi.tools/#sdk is a good resource for finding a tool suitable for your preferred language. link:https://openapi-generator.tech[OpenAPI Generator] has link:https://openapi-generator.tech/docs/generators#client-generators[support for many popular programming languages and frameworks].
+
+=== Example: Generating a Java client using OpenAPI Generator
+
+This is an example of using the popular link:https://openapi-generator.tech[OpenAPI Generator] service to generate a Java client API.
+
+.Download the Cerbos OpenAPI specification
+[source,sh,subs="attributes"]
+----
+curl -Lo swagger.json http://localhost:3592{cerbos-openapi-schema}
+----
+
+.Run the OpenAPI Generator
+[source,sh,subs="attributes"]
+----
+docker run --rm -v $(pwd):/oas openapitools/openapi-generator-cli generate -i /oas/swagger.json -g java -o /oas/java
+----
+

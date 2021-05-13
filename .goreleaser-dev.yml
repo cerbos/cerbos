@@ -17,6 +17,8 @@ dockers:
   - image_templates:
       - "ghcr.io/cerbos/cerbos:latest"
       - "ghcr.io/cerbos/cerbos:{{ .Version }}"
+    extra_files:
+      - conf.default.yaml
 checksum:
   disable: true
 changelog:

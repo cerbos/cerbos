@@ -1,6 +1,6 @@
 ---
 server:
-  httpListenAddr: ":9999"
+  httpListenAddr: ":3592"
   grpcListenAddr: ":3593"
 
 engine:
@@ -9,11 +9,5 @@ engine:
 storage:
   driver: "disk"
   disk:
-    directory: internal/test/testdata/store
-  git:
-    protocol: file
-    url: file://${HOME}/tmp/ava/source
-    branch: policies
-    subDir: policies
-    checkoutDir: ${HOME}/tmp/ava/work
-    updatePollInterval: 60s
+    directory: /policies
+    watchForChanges: true
