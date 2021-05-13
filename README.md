@@ -60,7 +60,7 @@ resourcePolicy:
 **API request**
 
 ```sh
-cat <<EOF | curl --silent "localhost:3592/api/check" -d @-
+cat <<EOF | curl --silent "http://localhost:3592/api/check?pretty" -d @-
 {
   "requestId":  "test01",
   "actions":  ["view"],

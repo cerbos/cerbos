@@ -207,7 +207,7 @@ NOTE: If you like to use link:https://www.postman.com[Postman], link:https://ins
 .Alicia trying to view her own album
 [source,shell,linenums,highlight=2..20]
 ----
-cat <<EOF | curl --silent "localhost:3592/api/check" -d @-
+cat <<EOF | curl --silent "http://localhost:3592/api/check?pretty" -d @-
 {
   "requestId":  "test01",
   "includeMeta": true,

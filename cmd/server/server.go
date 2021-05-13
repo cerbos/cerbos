@@ -41,6 +41,7 @@ import (
 	healthpb "google.golang.org/grpc/health/grpc_health_v1"
 	"google.golang.org/grpc/reflection"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/encoding/protojson"
 
 	"github.com/cerbos/cerbos/internal/config"
 	"github.com/cerbos/cerbos/internal/engine"
@@ -407,7 +408,10 @@ func (s *server) startGRPCServer(cerbosSvc *svc.CerbosService, l net.Listener) *
 func (s *server) startHTTPServer(ctx context.Context, l net.Listener, grpcSrv *grpc.Server) (*http.Server, error) {
 	log := zap.S().Named("http")
 
-	gwmux := runtime.NewServeMux()
+	gwmux := runtime.NewServeMux(runtime.WithMarshalerOption("application/json+pretty", &runtime.JSONPb{
+		MarshalOptions:   protojson.MarshalOptions{Indent: "  "},
+		UnmarshalOptions: protojson.UnmarshalOptions{DiscardUnknown: true},
+	}))
 
 	opts := defaultGRPCDialOpts()
 
@@ -439,7 +443,7 @@ func (s *server) startHTTPServer(ctx context.Context, l net.Listener, grpcSrv *g
 		return r.ProtoMajor == 2 && strings.Contains(r.Header.Get("Content-Type"), "application/grpc")
 	}).Handler(&ochttp.Handler{Handler: grpcSrv})
 
-	cerbosMux.PathPrefix(apiEndpoint).Handler(&ochttp.Handler{Handler: gwmux})
+	cerbosMux.PathPrefix(apiEndpoint).Handler(&ochttp.Handler{Handler: prettyJSON(gwmux)})
 	cerbosMux.Path(schemaEndpoint).HandlerFunc(schema.ServeSvcSwagger)
 	cerbosMux.Path(healthEndpoint).HandlerFunc(s.handleHTTPHealthCheck(grpcConn))
 

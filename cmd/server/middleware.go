@@ -4,6 +4,7 @@ package server
 
 import (
 	"context"
+	"net/http"
 	"strings"
 
 	grpc_logging "github.com/grpc-ecosystem/go-grpc-middleware/logging"
@@ -51,4 +52,14 @@ func messageProducer(ctx context.Context, _ string, level zapcore.Level, code co
 		zap.String("grpc.code", code.String()),
 		duration,
 	)
+}
+
+// prettyJSON instructs grpc-gateway to output pretty JSON when the query parameter is present.
+func prettyJSON(h http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if _, ok := r.URL.Query()["pretty"]; ok {
+			r.Header.Set("Accept", "application/json+pretty")
+		}
+		h.ServeHTTP(w, r)
+	})
 }

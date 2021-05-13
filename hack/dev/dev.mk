@@ -41,7 +41,7 @@ check-http:
 		$(wildcard $(DEV_DIR)/requests/batch/*.json),\
 		echo "";\
 		echo $(REQ_FILE); \
-		curl -k https://localhost:$(HTTP_PORT)/api/check?includeMeta=true -d @$(REQ_FILE);\
+		curl -k https://localhost:$(HTTP_PORT)/api/check?pretty -d @$(REQ_FILE);\
 		echo "";)
 
 .PHONY: check-http-insecure
@@ -50,7 +50,7 @@ check-http-insecure:
 		$(wildcard $(DEV_DIR)/requests/batch/*.json),\
 		echo "";\
 		echo $(REQ_FILE); \
-		curl http://localhost:$(HTTP_PORT)/api/check -d @$(REQ_FILE);\
+		curl http://localhost:$(HTTP_PORT)/api/check?pretty -d @$(REQ_FILE);\
 		echo "";)
 
 .PHONY: perf
