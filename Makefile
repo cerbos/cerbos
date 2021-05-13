@@ -26,7 +26,7 @@ lint-helm:
 	@ deploy/charts/validate.sh
 
 .PHONY: generate
-generate: clean $(BUF) $(PROTOC_GEN_GO) $(PROTOC_GEN_GO_GRPC) $(PROTOC_GEN_GRPC_GATEWAY) $(PROTOC_GEN_OPENAPIV2) $(PROTOC_GEN_VALIDATE) $(VALIDATE_PROTO)
+generate: clean proto-gen-deps
 	@ $(BUF) lint
 	@ # $(BUF) breaking --against '.git#branch=dev'
 	@ $(BUF) generate --template '$(BUF_GEN_TEMPLATE)' .
