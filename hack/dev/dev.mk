@@ -1,5 +1,5 @@
 DEV_DIR := hack/dev
-PROTOSET := cerbos.protoset
+PROTOSET := cerbos.bin
 CHECK_RESOURCE_SET_METHOD := svc.v1.CerbosService/CheckResourceSet
 GRPC_PORT := 3593
 HTTP_PORT := 3592

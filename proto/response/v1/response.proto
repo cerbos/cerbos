@@ -5,6 +5,7 @@ syntax = "proto3";
 package response.v1;
 
 option go_package = "github.com/cerbos/cerbos/internal/genpb/response/v1;responsev1";
+option java_package = "dev.cerbos.api.v1.response";
 
 import "google/protobuf/duration.proto";
 import "google/api/field_behavior.proto";

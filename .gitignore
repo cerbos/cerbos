@@ -2,6 +2,6 @@ bin/
 dist/
 deploy/out/
 docs/build/
-cerbos.protoset
+cerbos.bin
 hack/dev/tls.crt
 hack/dev/tls.key

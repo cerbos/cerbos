@@ -12,6 +12,7 @@ import "shared/v1/shared.proto";
 import "validate/validate.proto";
 
 option go_package = "github.com/cerbos/cerbos/internal/genpb/engine/v1;enginev1";
+option java_package = "dev.cerbos.api.v1.engine";
 
 message CheckInput {
     string request_id = 1; 
