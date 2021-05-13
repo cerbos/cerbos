@@ -2,15 +2,19 @@ include::ROOT:partial$attributes.adoc[]
 
 = The Cerbos API
 
-The main API endpoint for making policy decisions is the `/api/check` REST endpoint (`svc.v1.CheckResourceSet` RPC in the gRPC API). You can view the latest API documentation from a running Cerbos instance by accessing the root directory of the HTTP endpoint using a browser.
+The main API endpoint for making policy decisions is the `/api/check` REST endpoint (`svc.v1.CerbosService/CheckResourceSet` RPC in the gRPC API). You can view the latest API documentation from a running Cerbos instance by accessing the root directory of the HTTP endpoint using a browser.
 
 [source,sh,subs="attributes"]
 ----
-echo YOUR_API_KEY | docker login {app-container-registry} -u YOUR_USERNAME --password-stdin
-docker run --rm --name cerbos -p 3592:3592 {app-docker-img} 
+docker run --rm --name cerbos -p 3592:3592 -p 3593:3593 {app-docker-img} 
 ----
 
 Navigate to link:http://localhost:3592/[] using your browser to explore the Cerbos API documentation.
+
+Alternatively, you can explore the API using the following methods as well:
+
+* Using an OpenAPI-compatible software like link:https://www.postman.com[Postman] or link:https://insomnia.rest[Insomnia] to explore the Cerbos OpenAPI spec available at http://localhost:3592{cerbos-openapi-schema}.
+* Using link:https://github.com/fullstorydev/grpcurl[grpcurl] or any other tool that supports link:https://github.com/grpc/grpc/blob/master/doc/server-reflection.md[gRPC server reflection] API to explore the gRPC API exposed on port 3593.
 
 == Request and response formats
 
@@ -97,7 +101,9 @@ Navigate to link:http://localhost:3592/[] using your browser to explore the Cerb
 
 
 
-.Using curl to access the API
+=== Using curl to access the REST API
+
+
 [source,sh,linenums]
 ----
 cat <<EOF | curl --silent "localhost:3592/api/check?pretty" -d @-
@@ -128,15 +134,49 @@ cat <<EOF | curl --silent "localhost:3592/api/check?pretty" -d @-
 EOF
 ----
 
+=== Using grpcurl to access the gRPC API
+
+[source,sh,linenums]
+----
+cat <<EOF | grpcurl -plaintext -d @ localhost:3593 svc.v1.CerbosService/CheckResourceSet
+{
+  "requestId":  "test01",
+  "includeMeta": true,
+  "actions":  ["view"],
+  "resource":  {
+    "policyVersion": "default",
+    "kind":  "album:object",
+    "instances": {
+      "XX125": {
+        "attr":  {
+          "owner":  "alicia",
+          "id":  "XX125",
+          "public": false,
+          "flagged": false
+        }
+      }
+    }
+  },
+  "principal":  {
+    "id":  "alicia",
+    "policyVersion": "default",
+    "roles":  ["user"]
+  }
+}
+----
+
 
 == Generating API clients
 
 The Cerbos OpenAPI specification can be obtained from a running Cerbos instance by accessing link:http://localhost:3592{cerbos-openapi-schema}[].
 
-There are many tools available to generate clients from an OpenAPI specification. https://openapi.tools/#sdk is a good resource for finding a tool suitable for your preferred language. In particular, link:https://openapi-generator.tech[OpenAPI Generator] has link:https://openapi-generator.tech/docs/generators#client-generators[support for many popular programming languages and frameworks].
+There are many tools available to generate clients from an OpenAPI specification. https://openapi.tools/#sdk is a good resource for finding a tool suitable for your preferred language. 
 
 
 === Example: Generating a Java client using OpenAPI Generator
+
+NOTE: link:https://openapi-generator.tech[OpenAPI Generator] has link:https://openapi-generator.tech/docs/generators#client-generators[support for many popular programming languages and frameworks]. Please consult the documentation to find the client generation instructions for your favourite language.
+
 
 This is an example of using the popular link:https://openapi-generator.tech[OpenAPI Generator] service to generate a Java client API.
 
