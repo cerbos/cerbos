@@ -153,9 +153,9 @@ func getFreeListenAddr(t *testing.T) string {
 }
 
 func startServer(ctx context.Context, conf *Conf, cerbosSvc *svc.CerbosService) {
-	s := newServer(conf)
+	s := NewServer(conf)
 	go func() {
-		if err := s.start(ctx, cerbosSvc); err != nil {
+		if err := s.Start(ctx, cerbosSvc, false); err != nil {
 			panic(err)
 		}
 	}()

@@ -11,8 +11,8 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/cerbos/cerbos/cmd/server"
 	"github.com/cerbos/cerbos/internal/config"
+	"github.com/cerbos/cerbos/internal/server"
 )
 
 var errTestValidate = errors.New("validation error")
