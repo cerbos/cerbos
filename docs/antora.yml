@@ -8,5 +8,4 @@ nav:
   - modules/policies/nav.adoc
   - modules/configuration/nav.adoc
   - modules/deployment/nav.adoc
-  - modules/integrations/nav.adoc
   - modules/tutorials/nav.adoc
