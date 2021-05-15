@@ -7,7 +7,9 @@ import (
 	"fmt"
 	"net"
 	"path/filepath"
+	"runtime"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/require"
 
@@ -45,12 +47,10 @@ func TestClient(t *testing.T) {
 
 			startServer(ctx, conf, cerbosSvc)
 
-			clientConf := &client.Config{
-				Address:       conf.GRPCListenAddr,
-				TLSSkipVerify: true,
-			}
+			c, err := client.New(conf.GRPCListenAddr, client.WithTLSInsecure())
+			require.NoError(t, err)
 
-			t.Run("grpc", testGRPCClient(clientConf))
+			t.Run("grpc", testGRPCClient(c))
 		})
 
 		t.Run("uds", func(t *testing.T) {
@@ -70,12 +70,10 @@ func TestClient(t *testing.T) {
 
 			startServer(ctx, conf, cerbosSvc)
 
-			clientConf := &client.Config{
-				Address:       conf.GRPCListenAddr,
-				TLSSkipVerify: true,
-			}
+			c, err := client.New(conf.GRPCListenAddr, client.WithTLSInsecure())
+			require.NoError(t, err)
 
-			t.Run("grpc", testGRPCClient(clientConf))
+			t.Run("grpc", testGRPCClient(c))
 		})
 	})
 
@@ -91,12 +89,10 @@ func TestClient(t *testing.T) {
 
 			startServer(ctx, conf, cerbosSvc)
 
-			clientConf := &client.Config{
-				Address:   conf.GRPCListenAddr,
-				Plaintext: true,
-			}
+			c, err := client.New(conf.GRPCListenAddr, client.WithPlaintext())
+			require.NoError(t, err)
 
-			t.Run("grpc", testGRPCClient(clientConf))
+			t.Run("grpc", testGRPCClient(c))
 		})
 
 		t.Run("uds", func(t *testing.T) {
@@ -112,18 +108,74 @@ func TestClient(t *testing.T) {
 
 			startServer(ctx, conf, cerbosSvc)
 
-			clientConf := &client.Config{
-				Address:   conf.GRPCListenAddr,
-				Plaintext: true,
-			}
+			c, err := client.New(conf.GRPCListenAddr, client.WithPlaintext())
+			require.NoError(t, err)
 
-			t.Run("grpc", testGRPCClient(clientConf))
+			t.Run("grpc", testGRPCClient(c))
 		})
 	})
 }
 
-func testGRPCClient(conf *client.Config) func(*testing.T) {
+func testGRPCClient(c client.Client) func(*testing.T) {
 	return func(t *testing.T) { //nolint:thelper
+		t.Run("CheckResourceSet", func(t *testing.T) {
+			ctx, cancelFunc := context.WithTimeout(context.Background(), 10*time.Second)
+			defer cancelFunc()
+
+			have, err := c.CheckResourceSet(
+				ctx,
+				client.NewPrincipal("john").
+					WithRoles("employee").
+					WithPolicyVersion("20210210").
+					WithAttributes(map[string]interface{}{
+						"department": "marketing",
+						"geography":  "GB",
+						"team":       "design",
+					}),
+				client.NewResourceSet("leave_request").
+					WithPolicyVersion("20210210").
+					WithResourceInstance("XX125", map[string]interface{}{
+						"department": "marketing",
+						"geography":  "GB",
+						"id":         "XX125",
+						"owner":      "john",
+						"team":       "design",
+					}),
+				"view:public", "approve")
+
+			require.NoError(t, err)
+			require.True(t, have.IsAllowed("XX125", "view:public"))
+			require.False(t, have.IsAllowed("XX125", "approve"))
+		})
+
+		t.Run("IsAllowed", func(t *testing.T) {
+			ctx, cancelFunc := context.WithTimeout(context.Background(), 10*time.Second)
+			defer cancelFunc()
+
+			have, err := c.IsAllowed(
+				ctx,
+				client.NewPrincipal("john").
+					WithRoles("employee").
+					WithPolicyVersion("20210210").
+					WithAttributes(map[string]interface{}{
+						"department": "marketing",
+						"geography":  "GB",
+						"team":       "design",
+					}),
+				client.NewResource("leave_request", "XX125").
+					WithPolicyVersion("20210210").
+					WithAttributes(map[string]interface{}{
+						"department": "marketing",
+						"geography":  "GB",
+						"id":         "XX125",
+						"owner":      "john",
+						"team":       "design",
+					}),
+				"view:public")
+
+			require.NoError(t, err)
+			require.True(t, have)
+		})
 	}
 }
 
@@ -162,4 +214,5 @@ func startServer(ctx context.Context, conf *server.Conf, cerbosSvc *svc.CerbosSe
 			panic(err)
 		}
 	}()
+	runtime.Gosched()
 }

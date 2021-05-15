@@ -95,7 +95,7 @@ func createCerbosService(ctx context.Context) (*svc.CerbosService, error) {
 	return svc.NewCerbosService(eng), nil
 }
 
-type server struct {
+type Server struct {
 	conf       *Conf
 	cancelFunc context.CancelFunc
 	group      *errgroup.Group
@@ -103,12 +103,12 @@ type server struct {
 	ocExporter *prometheus.Exporter
 }
 
-func NewServer(conf *Conf) *server {
+func NewServer(conf *Conf) *Server {
 	ctx, cancelFunc := context.WithCancel(context.Background())
 
 	group, _ := errgroup.WithContext(ctx)
 
-	return &server{
+	return &Server{
 		conf:       conf,
 		cancelFunc: cancelFunc,
 		group:      group,
@@ -116,7 +116,7 @@ func NewServer(conf *Conf) *server {
 	}
 }
 
-func (s *server) Start(ctx context.Context, cerbosSvc *svc.CerbosService, zpagesEnabled bool) error {
+func (s *Server) Start(ctx context.Context, cerbosSvc *svc.CerbosService, zpagesEnabled bool) error {
 	defer s.cancelFunc()
 
 	log := zap.S().Named("server")
@@ -197,7 +197,7 @@ func (s *server) Start(ctx context.Context, cerbosSvc *svc.CerbosService, zpages
 	return nil
 }
 
-func (s *server) createListener(listenAddr string) (net.Listener, error) {
+func (s *Server) createListener(listenAddr string) (net.Listener, error) {
 	l, err := parseAndOpen(listenAddr)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create listener at '%s': %w", listenAddr, err)
@@ -215,7 +215,7 @@ func (s *server) createListener(listenAddr string) (net.Listener, error) {
 	return l, nil
 }
 
-func (s *server) getTLSConfig() (*tls.Config, error) {
+func (s *Server) getTLSConfig() (*tls.Config, error) {
 	if s.conf.TLS == nil || (s.conf.TLS.Cert == "" || s.conf.TLS.Key == "") {
 		return nil, nil
 	}
@@ -254,7 +254,7 @@ func (s *server) getTLSConfig() (*tls.Config, error) {
 	return tlsConfig, nil
 }
 
-func (s *server) startGRPCServer(cerbosSvc *svc.CerbosService, l net.Listener) *grpc.Server {
+func (s *Server) startGRPCServer(cerbosSvc *svc.CerbosService, l net.Listener) *grpc.Server {
 	log := zap.L().Named("grpc")
 	payloadLog := zap.L().Named("payload")
 
@@ -311,7 +311,7 @@ func (s *server) startGRPCServer(cerbosSvc *svc.CerbosService, l net.Listener) *
 	return server
 }
 
-func (s *server) startHTTPServer(ctx context.Context, l net.Listener, grpcSrv *grpc.Server, zpagesEnabled bool) (*http.Server, error) {
+func (s *Server) startHTTPServer(ctx context.Context, l net.Listener, grpcSrv *grpc.Server, zpagesEnabled bool) (*http.Server, error) { //nolint:revive
 	log := zap.S().Named("http")
 
 	gwmux := runtime.NewServeMux(runtime.WithMarshalerOption("application/json+pretty", &runtime.JSONPb{
@@ -397,7 +397,7 @@ func defaultGRPCDialOpts() []grpc.DialOption {
 	}
 }
 
-func (s *server) handleHTTPHealthCheck(conn grpc.ClientConnInterface) http.HandlerFunc {
+func (s *Server) handleHTTPHealthCheck(conn grpc.ClientConnInterface) http.HandlerFunc {
 	healthClient := healthpb.NewHealthClient(conn)
 	return func(w http.ResponseWriter, r *http.Request) {
 		resp, err := healthClient.Check(r.Context(), &healthpb.HealthCheckRequest{})

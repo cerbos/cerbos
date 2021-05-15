@@ -52,7 +52,7 @@ func (p *Principal) WithAttributes(attr map[string]interface{}) *Principal {
 	for k, v := range attr {
 		pbVal, err := structpb.NewValue(v)
 		if err != nil {
-			multierr.Append(p.err, fmt.Errorf("invalid attribute value for '%s': %w", k, err))
+			p.err = multierr.Append(p.err, fmt.Errorf("invalid attribute value for '%s': %w", k, err))
 			continue
 		}
 		p.Attr[k] = pbVal
@@ -70,7 +70,7 @@ func (p *Principal) WithAttr(key string, value interface{}) *Principal {
 
 	pbVal, err := structpb.NewValue(value)
 	if err != nil {
-		multierr.Append(p.err, fmt.Errorf("invalid attribute value for '%s': %w", key, err))
+		p.err = multierr.Append(p.err, fmt.Errorf("invalid attribute value for '%s': %w", key, err))
 		return p
 	}
 
@@ -81,6 +81,65 @@ func (p *Principal) WithAttr(key string, value interface{}) *Principal {
 // Err returns any errors accumulated during the construction of the principal.
 func (p *Principal) Err() error {
 	return p.err
+}
+
+// Resource is a single resource.
+type Resource struct {
+	*enginev1.Resource
+	err error
+}
+
+// NewResource creates a new instance of a resource.
+func NewResource(kind, id string) *Resource {
+	return &Resource{
+		Resource: &enginev1.Resource{Kind: kind, Id: id},
+	}
+}
+
+// WithPolicyVersion sets the policy version for this resource.
+func (r *Resource) WithPolicyVersion(policyVersion string) *Resource {
+	r.PolicyVersion = policyVersion
+	return r
+}
+
+// WithAttributes merges the given attributes to the resource's existing attributes.
+func (r *Resource) WithAttributes(attr map[string]interface{}) *Resource {
+	if r.Attr == nil {
+		r.Attr = make(map[string]*structpb.Value, len(attr))
+	}
+
+	for k, v := range attr {
+		pbVal, err := structpb.NewValue(v)
+		if err != nil {
+			r.err = multierr.Append(r.err, fmt.Errorf("invalid attribute value for '%s': %w", k, err))
+			continue
+		}
+		r.Attr[k] = pbVal
+	}
+
+	return r
+}
+
+// WithAttr adds a new attribute to the resource.
+// It will overwrite any existing attribute having the same key.
+func (r *Resource) WithAttr(key string, value interface{}) *Resource {
+	if r.Attr == nil {
+		r.Attr = make(map[string]*structpb.Value)
+	}
+
+	pbVal, err := structpb.NewValue(value)
+	if err != nil {
+		r.err = multierr.Append(r.err, fmt.Errorf("invalid attribute value for '%s': %w", key, err))
+		return r
+	}
+
+	r.Attr[key] = pbVal
+	return r
+}
+
+// Err returns any errors accumulated during the construction of the resource.
+func (r *Resource) Err() error {
+	return r.err
 }
 
 // ResourceSet is a container for a set of resources.
@@ -112,7 +171,7 @@ func (rs *ResourceSet) WithResourceInstance(id string, attr map[string]interface
 	for k, v := range attr {
 		pbVal, err := structpb.NewValue(v)
 		if err != nil {
-			multierr.Append(rs.err, fmt.Errorf("invalid attribute value for '%s': %w", k, err))
+			rs.err = multierr.Append(rs.err, fmt.Errorf("invalid attribute value for '%s': %w", k, err))
 			continue
 		}
 		pbAttr[k] = pbVal

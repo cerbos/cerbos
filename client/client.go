@@ -8,6 +8,7 @@ import (
 	"crypto/x509"
 	"errors"
 	"fmt"
+	"os"
 	"time"
 
 	"github.com/google/uuid"
@@ -17,56 +18,140 @@ import (
 	"google.golang.org/grpc/credentials/local"
 
 	requestv1 "github.com/cerbos/cerbos/internal/genpb/request/v1"
+	sharedv1 "github.com/cerbos/cerbos/internal/genpb/shared/v1"
 	svcv1 "github.com/cerbos/cerbos/internal/genpb/svc/v1"
 	"github.com/cerbos/cerbos/internal/util"
 )
 
 // Client provides access to the Cerbos API.
 type Client interface {
+	IsAllowed(context.Context, *Principal, *Resource, string) (bool, error)
 	CheckResourceSet(context.Context, *Principal, *ResourceSet, ...string) (*CheckResourceSetResponse, error)
 }
 
-// Config for the client.
-type Config struct {
-	// Address is the server address to connect to. Supports gRPC naming conventions (https://github.com/grpc/grpc/blob/master/doc/naming.md).
-	Address string
-	// Plaintext indicates that this client should connect over h2c.
-	Plaintext bool
-	// TLSAuthority overrides the remote server authority if it is different from what is provided in the address.
-	TLSAuthority string
-	// TLSSkipVerify enables skipping TLS certificate verification.
-	TLSSkipVerify bool
-	// TLSCACert is the CA certificate chain to use for certificate verification.
-	TLSCACert []byte
-	// TLSClientCert is the TLS client certificate to use to authenticate to the remote server.
-	TLSClientCert *tls.Certificate
-	// ConnectTimeout is the time to wait before giving up on connecting to the remote server.
-	ConnectTimeout time.Duration
-	// Max retries is the number of retries to perform per RPC.
-	MaxRetries uint
-	// RetryTimeout is the timeout per retry attempt.
-	RetryTimeout time.Duration
+type config struct {
+	address        string
+	plaintext      bool
+	tlsAuthority   string
+	tlsInsecure    bool
+	tlsCACert      string
+	tlsClientCert  string
+	tlsClientKey   string
+	connectTimeout time.Duration
+	maxRetries     uint
+	retryTimeout   time.Duration
+}
+
+type ClientOpt func(*config)
+
+// WithPlaintext configures the client to connect over h2c.
+func WithPlaintext() ClientOpt {
+	return func(c *config) {
+		c.plaintext = true
+	}
+}
+
+// WithTLSAuthority overrides the remote server authority if it is different from what is provided in the address.
+func WithTLSAuthority(authority string) ClientOpt {
+	return func(c *config) {
+		c.tlsAuthority = authority
+	}
+}
+
+// WithTLSInsecure enables skipping TLS certificate verification.
+func WithTLSInsecure() ClientOpt {
+	return func(c *config) {
+		c.tlsInsecure = true
+	}
+}
+
+// WithTLSCACert sets the CA certificate chain to use for certificate verification.
+func WithTLSCACert(certPath string) ClientOpt {
+	return func(c *config) {
+		c.tlsCACert = certPath
+	}
+}
+
+// WithTLSClientCert sets the client certificate to use to authenticate to the server.
+func WithTLSClientCert(cert, key string) ClientOpt {
+	return func(c *config) {
+		c.tlsClientCert = cert
+		c.tlsClientKey = key
+	}
+}
+
+// WithConnectTimeout sets the connection establishment timeout.
+func WithConnectTimeout(timeout time.Duration) ClientOpt {
+	return func(c *config) {
+		c.connectTimeout = timeout
+	}
+}
+
+// WithMaxRetries sets the maximum number of retries per call.
+func WithMaxRetries(retries uint) ClientOpt {
+	return func(c *config) {
+		c.maxRetries = retries
+	}
+}
+
+// WithRetryTimeout sets the timeout per retry attempt.
+func WithRetryTimeout(timeout time.Duration) ClientOpt {
+	return func(c *config) {
+		c.retryTimeout = timeout
+	}
 }
 
 // New creates a new Cerbos client.
-func New(conf *Config) (Client, error) {
-	dialOpts := []grpc.DialOption{
-		grpc.WithConnectParams(grpc.ConnectParams{MinConnectTimeout: conf.ConnectTimeout}),
-		grpc.WithChainStreamInterceptor(
-			grpc_retry.StreamClientInterceptor(
-				grpc_retry.WithMax(conf.MaxRetries),
-				grpc_retry.WithPerRetryTimeout(conf.RetryTimeout),
-			),
-		),
-		grpc.WithChainUnaryInterceptor(
-			grpc_retry.UnaryClientInterceptor(
-				grpc_retry.WithMax(conf.MaxRetries),
-				grpc_retry.WithPerRetryTimeout(conf.RetryTimeout),
-			),
-		),
+func New(address string, opts ...ClientOpt) (Client, error) {
+	conf := config{
+		address:        address,
+		connectTimeout: 30 * time.Second, //nolint:gomnd
+		maxRetries:     3,                //nolint:gomnd
+		retryTimeout:   2 * time.Second,  //nolint:gomnd
 	}
 
-	if conf.Plaintext {
+	for _, o := range opts {
+		o(&conf)
+	}
+
+	dialOpts, err := mkDialOpts(conf)
+	if err != nil {
+		return nil, err
+	}
+
+	grpcConn, err := grpc.Dial(conf.address, dialOpts...)
+	if err != nil {
+		return nil, fmt.Errorf("failed to dial gRPC: %w", err)
+	}
+
+	return &grpcClient{stub: svcv1.NewCerbosServiceClient(grpcConn)}, nil
+}
+
+func mkDialOpts(conf config) ([]grpc.DialOption, error) {
+	var dialOpts []grpc.DialOption
+
+	if conf.connectTimeout > 0 {
+		dialOpts = append(dialOpts, grpc.WithConnectParams(grpc.ConnectParams{MinConnectTimeout: conf.connectTimeout}))
+	}
+
+	if conf.maxRetries > 0 && conf.retryTimeout > 0 {
+		dialOpts = append(dialOpts,
+			grpc.WithChainStreamInterceptor(
+				grpc_retry.StreamClientInterceptor(
+					grpc_retry.WithMax(conf.maxRetries),
+					grpc_retry.WithPerRetryTimeout(conf.retryTimeout),
+				),
+			),
+			grpc.WithChainUnaryInterceptor(
+				grpc_retry.UnaryClientInterceptor(
+					grpc_retry.WithMax(conf.maxRetries),
+					grpc_retry.WithPerRetryTimeout(conf.retryTimeout),
+				),
+			),
+		)
+	}
+
+	if conf.plaintext {
 		dialOpts = append(dialOpts, grpc.WithTransportCredentials(local.NewCredentials()))
 	} else {
 		tlsConf, err := mkTLSConfig(conf)
@@ -75,41 +160,42 @@ func New(conf *Config) (Client, error) {
 		}
 
 		dialOpts = append(dialOpts, grpc.WithTransportCredentials(credentials.NewTLS(tlsConf)))
-		if conf.TLSAuthority != "" {
-			dialOpts = append(dialOpts, grpc.WithAuthority(conf.TLSAuthority))
+		if conf.tlsAuthority != "" {
+			dialOpts = append(dialOpts, grpc.WithAuthority(conf.tlsAuthority))
 		}
 	}
 
-	ctx, cancelFunc := context.WithTimeout(context.Background(), conf.ConnectTimeout)
-	defer cancelFunc()
-
-	grpcConn, err := grpc.DialContext(ctx, conf.Address, dialOpts...)
-	if err != nil {
-		return nil, fmt.Errorf("failed to dial gRPC: %w", err)
-	}
-
-	return &grpcClient{stub: svcv1.NewCerbosServiceClient(grpcConn)}, nil
+	return dialOpts, nil
 }
 
-func mkTLSConfig(conf *Config) (*tls.Config, error) {
+func mkTLSConfig(conf config) (*tls.Config, error) {
 	tlsConf := util.DefaultTLSConfig()
 
-	if conf.TLSSkipVerify {
+	if conf.tlsInsecure {
 		tlsConf.InsecureSkipVerify = true
 	}
 
-	if len(conf.TLSCACert) > 0 {
+	if conf.tlsCACert != "" {
+		bs, err := os.ReadFile(conf.tlsCACert)
+		if err != nil {
+			return nil, fmt.Errorf("failed to load CA certificate from %s: %w", conf.tlsCACert, err)
+		}
+
 		certPool := x509.NewCertPool()
-		ok := certPool.AppendCertsFromPEM(conf.TLSCACert)
+		ok := certPool.AppendCertsFromPEM(bs)
 		if !ok {
-			return nil, errors.New("failed to append certificates to the pool")
+			return nil, errors.New("failed to append CA certificates to the pool")
 		}
 
 		tlsConf.RootCAs = certPool
 	}
 
-	if conf.TLSClientCert != nil {
-		tlsConf.Certificates = []tls.Certificate{*conf.TLSClientCert}
+	if conf.tlsClientCert != "" && conf.tlsClientKey != "" {
+		certificate, err := tls.LoadX509KeyPair(conf.tlsClientCert, conf.tlsClientKey)
+		if err != nil {
+			return nil, fmt.Errorf("failed to load client certificate and key from [%s, %s]: %w", conf.tlsClientCert, conf.tlsClientKey, err)
+		}
+		tlsConf.Certificates = []tls.Certificate{certificate}
 	}
 
 	return tlsConf, nil
@@ -150,6 +236,40 @@ func (gc *grpcClient) CheckResourceSet(ctx context.Context, principal *Principal
 	}
 
 	return &CheckResourceSetResponse{CheckResourceSetResponse: result}, nil
+}
+
+func (gc *grpcClient) IsAllowed(ctx context.Context, principal *Principal, resource *Resource, action string) (bool, error) {
+	if err := isValid(principal); err != nil {
+		return false, fmt.Errorf("invalid principal: %w", err)
+	}
+
+	if err := isValid(resource); err != nil {
+		return false, fmt.Errorf("invalid resource: %w", err)
+	}
+
+	reqID, err := uuid.NewRandom()
+	if err != nil {
+		return false, fmt.Errorf("failed to generate request ID: %w", err)
+	}
+
+	req := &requestv1.CheckResourceBatchRequest{
+		RequestId: reqID.String(),
+		Principal: principal.Principal,
+		Resources: []*requestv1.CheckResourceBatchRequest_BatchEntry{
+			{Actions: []string{action}, Resource: resource.Resource},
+		},
+	}
+
+	result, err := gc.stub.CheckResourceBatch(ctx, req)
+	if err != nil {
+		return false, fmt.Errorf("request failed: %w", err)
+	}
+
+	if len(result.Results) == 0 {
+		return false, fmt.Errorf("unexpected response from server")
+	}
+
+	return result.Results[0].Actions[action] == sharedv1.Effect_EFFECT_ALLOW, nil
 }
 
 func isValid(obj interface {

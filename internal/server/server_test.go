@@ -11,6 +11,7 @@ import (
 	"net"
 	"net/http"
 	"path/filepath"
+	"runtime"
 	"testing"
 	"time"
 
@@ -159,6 +160,7 @@ func startServer(ctx context.Context, conf *Conf, cerbosSvc *svc.CerbosService) 
 			panic(err)
 		}
 	}()
+	runtime.Gosched()
 }
 
 func testGRPCRequest(addr string, opts ...grpc.DialOption) func(*testing.T) {
