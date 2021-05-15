@@ -20,6 +20,7 @@ require (
 	github.com/google/go-licenses v0.0.0-20210329231322-ce1d9163b77d
 	github.com/google/gops v0.3.17
 	github.com/google/renameio v1.0.0
+	github.com/google/uuid v1.2.0
 	github.com/goreleaser/goreleaser v0.160.0
 	github.com/gorilla/mux v1.8.0
 	github.com/grpc-ecosystem/go-grpc-middleware v1.3.0

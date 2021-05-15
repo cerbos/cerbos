@@ -4,6 +4,8 @@ package server
 
 import (
 	"fmt"
+
+	"github.com/cerbos/cerbos/internal/util"
 )
 
 const (
@@ -47,11 +49,11 @@ func (c *Conf) SetDefaults() {
 }
 
 func (c *Conf) Validate() error {
-	if _, _, err := parseListenAddress(c.HTTPListenAddr); err != nil {
+	if _, _, err := util.ParseListenAddress(c.HTTPListenAddr); err != nil {
 		return fmt.Errorf("invalid httpListenAddr '%s': %w", c.HTTPListenAddr, err)
 	}
 
-	if _, _, err := parseListenAddress(c.GRPCListenAddr); err != nil {
+	if _, _, err := util.ParseListenAddress(c.GRPCListenAddr); err != nil {
 		return fmt.Errorf("invalid grpcListenAddr '%s': %w", c.GRPCListenAddr, err)
 	}
 
