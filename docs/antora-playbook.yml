@@ -14,7 +14,7 @@ content:
 asciidoc:
   attributes:
     app-name: "cerbos"
-    app-version: "0.0.1-rc1"
+    app-version: "0.0.1-rc2"
     experimental: true
     page-pagination: true
 ui:
