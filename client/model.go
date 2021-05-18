@@ -4,6 +4,7 @@ package client
 
 import (
 	"fmt"
+	"reflect"
 
 	"go.uber.org/multierr"
 	"google.golang.org/protobuf/encoding/protojson"
@@ -50,7 +51,7 @@ func (p *Principal) WithAttributes(attr map[string]interface{}) *Principal {
 	}
 
 	for k, v := range attr {
-		pbVal, err := structpb.NewValue(v)
+		pbVal, err := toStructPB(v)
 		if err != nil {
 			p.err = multierr.Append(p.err, fmt.Errorf("invalid attribute value for '%s': %w", k, err))
 			continue
@@ -68,7 +69,7 @@ func (p *Principal) WithAttr(key string, value interface{}) *Principal {
 		p.Attr = make(map[string]*structpb.Value)
 	}
 
-	pbVal, err := structpb.NewValue(value)
+	pbVal, err := toStructPB(value)
 	if err != nil {
 		p.err = multierr.Append(p.err, fmt.Errorf("invalid attribute value for '%s': %w", key, err))
 		return p
@@ -109,7 +110,7 @@ func (r *Resource) WithAttributes(attr map[string]interface{}) *Resource {
 	}
 
 	for k, v := range attr {
-		pbVal, err := structpb.NewValue(v)
+		pbVal, err := toStructPB(v)
 		if err != nil {
 			r.err = multierr.Append(r.err, fmt.Errorf("invalid attribute value for '%s': %w", k, err))
 			continue
@@ -127,7 +128,7 @@ func (r *Resource) WithAttr(key string, value interface{}) *Resource {
 		r.Attr = make(map[string]*structpb.Value)
 	}
 
-	pbVal, err := structpb.NewValue(value)
+	pbVal, err := toStructPB(value)
 	if err != nil {
 		r.err = multierr.Append(r.err, fmt.Errorf("invalid attribute value for '%s': %w", key, err))
 		return r
@@ -208,4 +209,26 @@ func (crsr *CheckResourceSetResponse) IsAllowed(resourceID, action string) bool 
 
 func (crsr *CheckResourceSetResponse) String() string {
 	return protojson.Format(crsr.CheckResourceSetResponse)
+}
+
+func toStructPB(v interface{}) (*structpb.Value, error) {
+	val, err := structpb.NewValue(v)
+	if err == nil {
+		return val, nil
+	}
+
+	vv := reflect.ValueOf(v)
+	switch vv.Kind() {
+	case reflect.Array, reflect.Slice:
+		arr := make([]interface{}, vv.Len())
+		for i := 0; i < vv.Len(); i++ {
+			el := vv.Index(i)
+			// TODO: (cell) Recurse
+			arr[i] = el.Interface()
+		}
+
+		return structpb.NewValue(arr)
+	default:
+		return nil, err
+	}
 }

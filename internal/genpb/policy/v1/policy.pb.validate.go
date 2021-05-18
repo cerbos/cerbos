@@ -178,7 +178,7 @@ func (m *ResourcePolicy) Validate() error {
 	if !_ResourcePolicy_Resource_Pattern.MatchString(m.GetResource()) {
 		return ResourcePolicyValidationError{
 			field:  "Resource",
-			reason: "value does not match regex pattern \"^[[:alpha:]][[:word:]\\\\@\\\\.\\\\-]*(\\\\:[[:alpha:]][[:word:]\\\\@\\\\.\\\\-]*)*$\"",
+			reason: "value does not match regex pattern \"^[[:alpha:]][[:word:]\\\\@\\\\.\\\\-/]*(\\\\:[[:alpha:]][[:word:]\\\\@\\\\.\\\\-/]*)*$\"",
 		}
 	}
 
@@ -291,7 +291,7 @@ var _ interface {
 	ErrorName() string
 } = ResourcePolicyValidationError{}
 
-var _ResourcePolicy_Resource_Pattern = regexp.MustCompile("^[[:alpha:]][[:word:]\\@\\.\\-]*(\\:[[:alpha:]][[:word:]\\@\\.\\-]*)*$")
+var _ResourcePolicy_Resource_Pattern = regexp.MustCompile("^[[:alpha:]][[:word:]\\@\\.\\-/]*(\\:[[:alpha:]][[:word:]\\@\\.\\-/]*)*$")
 
 var _ResourcePolicy_Version_Pattern = regexp.MustCompile("^[[:word:]]+$")
 
@@ -587,7 +587,7 @@ func (m *PrincipalRule) Validate() error {
 	if !_PrincipalRule_Resource_Pattern.MatchString(m.GetResource()) {
 		return PrincipalRuleValidationError{
 			field:  "Resource",
-			reason: "value does not match regex pattern \"^[[:alpha:]][[:word:]\\\\@\\\\.\\\\-]*(\\\\:[[:alpha:]][[:word:]\\\\@\\\\.\\\\-]*)*$\"",
+			reason: "value does not match regex pattern \"^[[:alpha:]][[:word:]\\\\@\\\\.\\\\-/]*(\\\\:[[:alpha:]][[:word:]\\\\@\\\\.\\\\-/]*)*$\"",
 		}
 	}
 
@@ -670,7 +670,7 @@ var _ interface {
 	ErrorName() string
 } = PrincipalRuleValidationError{}
 
-var _PrincipalRule_Resource_Pattern = regexp.MustCompile("^[[:alpha:]][[:word:]\\@\\.\\-]*(\\:[[:alpha:]][[:word:]\\@\\.\\-]*)*$")
+var _PrincipalRule_Resource_Pattern = regexp.MustCompile("^[[:alpha:]][[:word:]\\@\\.\\-/]*(\\:[[:alpha:]][[:word:]\\@\\.\\-/]*)*$")
 
 // Validate checks the field values on DerivedRoles with the rules defined in
 // the proto definition for this message. If any rules are violated, an error
