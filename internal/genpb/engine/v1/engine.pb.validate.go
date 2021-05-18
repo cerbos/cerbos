@@ -263,7 +263,7 @@ func (m *Resource) Validate() error {
 	if !_Resource_Kind_Pattern.MatchString(m.GetKind()) {
 		return ResourceValidationError{
 			field:  "Kind",
-			reason: "value does not match regex pattern \"^[[:alpha:]][[:word:]\\\\@\\\\.\\\\-]*(\\\\:[[:alpha:]][[:word:]\\\\@\\\\.\\\\-]*)*$\"",
+			reason: "value does not match regex pattern \"^[[:alpha:]][[:word:]\\\\@\\\\.\\\\-/]*(\\\\:[[:alpha:]][[:word:]\\\\@\\\\.\\\\-/]*)*$\"",
 		}
 	}
 
@@ -362,7 +362,7 @@ var _ interface {
 	ErrorName() string
 } = ResourceValidationError{}
 
-var _Resource_Kind_Pattern = regexp.MustCompile("^[[:alpha:]][[:word:]\\@\\.\\-]*(\\:[[:alpha:]][[:word:]\\@\\.\\-]*)*$")
+var _Resource_Kind_Pattern = regexp.MustCompile("^[[:alpha:]][[:word:]\\@\\.\\-/]*(\\:[[:alpha:]][[:word:]\\@\\.\\-/]*)*$")
 
 var _Resource_PolicyVersion_Pattern = regexp.MustCompile("^[[:word:]]*$")
 

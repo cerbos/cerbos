@@ -35,7 +35,7 @@ message CheckOutput {
 
 message Resource {
     string kind = 1 [
-        (validate.rules).string = {pattern: "^[[:alpha:]][[:word:]\\@\\.\\-]*(\\:[[:alpha:]][[:word:]\\@\\.\\-]*)*$", min_len: 1}, 
+        (validate.rules).string = {pattern: "^[[:alpha:]][[:word:]\\@\\.\\-/]*(\\:[[:alpha:]][[:word:]\\@\\.\\-/]*)*$", min_len: 1}, 
         (google.api.field_behavior) = REQUIRED,
         (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
             description: "Name of the resource kind being accessed.",
