@@ -424,10 +424,15 @@ func parseAndOpen(listenAddr string) (net.Listener, error) {
 	}
 
 	if network == "unix" {
+		if err := os.RemoveAll(addr); err != nil {
+			return nil, err
+		}
+
 		listener, err := net.Listen(network, addr)
 		if err != nil {
 			return nil, err
 		}
+
 		listener.(*net.UnixListener).SetUnlinkOnClose(true)
 		return listener, nil
 	}

@@ -218,7 +218,7 @@ func toStructPB(v interface{}) (*structpb.Value, error) {
 	}
 
 	vv := reflect.ValueOf(v)
-	switch vv.Kind() {
+	switch vv.Kind() { //nolint:exhaustive
 	case reflect.Array, reflect.Slice:
 		arr := make([]interface{}, vv.Len())
 		for i := 0; i < vv.Len(); i++ {
@@ -228,7 +228,18 @@ func toStructPB(v interface{}) (*structpb.Value, error) {
 		}
 
 		return structpb.NewValue(arr)
-	default:
-		return nil, err
+	case reflect.Map:
+		if vv.Type().Key().Kind() == reflect.String {
+			m := make(map[string]interface{})
+
+			iter := vv.MapRange()
+			for iter.Next() {
+				m[iter.Key().String()] = iter.Value().Interface()
+			}
+
+			return structpb.NewValue(m)
+		}
 	}
+
+	return nil, err
 }
