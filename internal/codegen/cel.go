@@ -21,6 +21,7 @@ const (
 
 func GenerateCELProgram(parent string, m *policyv1.Match) (cel.Program, error) {
 	env, err := cel.NewEnv(
+		cel.CustomTypeAdapter(NewCustomCELTypeAdapter()),
 		cel.Declarations(
 			decls.NewVar(CELRequestIdent, decls.NewMapType(decls.String, decls.Dyn)),
 			decls.NewVar(CELResourceAbbrev, decls.NewMapType(decls.String, decls.Dyn)),

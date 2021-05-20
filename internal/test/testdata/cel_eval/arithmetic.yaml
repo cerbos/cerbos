@@ -1,0 +1,30 @@
+---
+condition:
+  all:
+    of:
+      - expr: R.attr.intVal1 - R.attr.intVal2 == -40
+      - expr: R.attr.floatVal2 - R.attr.floatVal1 == 5.0
+      - expr: double(R.attr.intVal1 / R.attr.intVal2) < 0.25
+      - expr: >- 
+          (R.attr.intVal1 < R.attr.intVal2) ? double(R.attr.intVal2 - R.attr.intVal1) / double(R.attr.intVal1) < 0.4 : double(R.attr.intVal1 - R.attr.intVal2) / double(R.attr.intVal1) < 0.4
+input: {
+  "requestId": "test",
+  "actions": ["*"],
+  "principal": {
+    "id": "john",
+    "roles": ["employee"],
+    "attr": {
+      "department": "marketing"
+    }
+  },
+  "resource": {
+    "kind": "leave_request",
+    "attr": {
+      "intVal1": 110,
+      "intVal2": 150,
+      "floatVal1": 25.5,
+      "floatVal2": 30.5
+    }
+  }
+}
+want: true

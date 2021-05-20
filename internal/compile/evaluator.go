@@ -25,14 +25,12 @@ type Evaluator interface {
 }
 
 type evaluator struct {
-	log         *zap.SugaredLogger
 	compiler    *ast.Compiler
 	celEvalImpl rego.Builtin3
 }
 
 func newEvaluator(compiler *ast.Compiler, conditionIdx ConditionIndex) *evaluator {
 	return &evaluator{
-		log:         zap.S().Named("evaluator"),
 		compiler:    compiler,
 		celEvalImpl: makeCELEvalImpl(conditionIdx),
 	}
@@ -60,10 +58,16 @@ func makeCELEvalImpl(conditionIdx ConditionIndex) rego.Builtin3 {
 			return nil, err
 		}
 
+		log := celLog.With(zap.String("module", string(mod)), zap.String("condition", string(cond)))
+		log.Debug("Evaluating condition")
+
 		result, err := evaluator.Eval(req)
 		if err != nil {
+			log.Error("Failed to evaluate", zap.Error(err))
 			return nil, err
 		}
+
+		log.Debug("Condition result", zap.Bool("result", result))
 
 		return ast.BooleanTerm(result), nil
 	}
