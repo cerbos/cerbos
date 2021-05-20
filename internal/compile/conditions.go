@@ -7,6 +7,7 @@ import (
 	"fmt"
 
 	"github.com/google/cel-go/cel"
+	"go.uber.org/zap"
 
 	"github.com/cerbos/cerbos/internal/codegen"
 	"github.com/cerbos/cerbos/internal/namer"
@@ -17,6 +18,8 @@ var (
 	ErrNoMatchingConditions = errors.New("no matching conditions")
 	ErrUnexpectedInput      = errors.New("unexpected input")
 	ErrUnexpectedResult     = errors.New("unexpected result")
+
+	celLog = zap.L().Named("cel")
 )
 
 type ConditionMap map[string]ConditionEvaluator
@@ -77,18 +80,22 @@ func (ce *CELConditionEvaluator) Eval(input interface{}) (bool, error) {
 		codegen.CELPrincipalAbbrev: abbrevP,
 	})
 	if err != nil {
+		celLog.Warn("Condition evaluation failed", zap.Error(err))
 		return false, err
 	}
 
 	if result == nil || result.Value() == nil {
+		celLog.Warn("Unexpected result from condition evaluation")
 		return false, ErrUnexpectedResult
 	}
 
 	v, ok := result.Value().(bool)
 	if !ok {
+		celLog.Warn("Condition returned non-boolean result", zap.Any("result", result.Value()))
 		return false, fmt.Errorf("unexpected result from condition evaluation: %v", result.Value())
 	}
 
+	celLog.Debug("Condition result", zap.Bool("result", v))
 	return v, nil
 }
 
