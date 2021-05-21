@@ -53,6 +53,8 @@ changelog:
   sort: asc
   filters:
     exclude:
+      - '^ci:'
       - '^chore:'
+      - '^chore(deps):'
       - '^docs:'
       - '^test:'

@@ -19,6 +19,8 @@ CHARTS_DIR="${SCRIPT_DIR}/../../deploy/charts/cerbos"
 echo "Prepping for release of $VERSION"
 # Docs version
 sed -i -E "s#app\-version: \"[0-9]+\.[0-9]+\.[0-9]+.*\"#app-version: \"$VERSION\"#" "${DOCS_DIR}/antora-playbook.yml"
+sed -i -E "s#app\-version: \"[0-9]+\.[0-9]+\.[0-9]+.*\"#app-version: \"$VERSION\"#" "${DOCS_DIR}/dev-antora-playbook.yml"
+sed -i -E "s#display_version: \"[0-9]+\.[0-9]+\.[0-9]+.*\"#display_version: \"$VERSION\"#" "${DOCS_DIR}/antora.yml"
 
 # Helm chart version
 sed -i -E "s#appVersion: \"[0-9]+\.[0-9]+\.[0-9]+.*\"#appVersion: \"$VERSION\"#" "${CHARTS_DIR}/Chart.yaml"
