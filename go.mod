@@ -13,7 +13,7 @@ require (
 	github.com/fsnotify/fsnotify v1.4.9
 	github.com/fullstorydev/grpcurl v1.8.0
 	github.com/ghodss/yaml v1.0.0
-	github.com/go-git/go-git/v5 v5.2.0
+	github.com/go-git/go-git/v5 v5.3.0
 	github.com/golangci/golangci-lint v1.40.0
 	github.com/google/cel-go v0.7.2
 	github.com/google/go-cmp v0.5.5
