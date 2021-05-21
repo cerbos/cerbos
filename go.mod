@@ -5,7 +5,7 @@ go 1.16
 require (
 	contrib.go.opencensus.io/exporter/jaeger v0.2.1
 	contrib.go.opencensus.io/exporter/prometheus v0.3.0
-	github.com/bufbuild/buf v0.40.0
+	github.com/bufbuild/buf v0.42.1
 	github.com/bytecodealliance/wasmtime-go v0.26.0 // indirect
 	github.com/cespare/xxhash v1.1.0
 	github.com/envoyproxy/protoc-gen-validate v0.6.1
@@ -47,12 +47,10 @@ require (
 	go.opencensus.io v0.23.0
 	go.uber.org/automaxprocs v1.4.0
 	go.uber.org/config v1.4.0
-	go.uber.org/multierr v1.6.0
+	go.uber.org/multierr v1.7.0
 	go.uber.org/zap v1.16.0
 	golang.org/x/lint v0.0.0-20210508222113-6edffad5e616 // indirect
-	golang.org/x/net v0.0.0-20210510120150-4163338589ed // indirect
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
-	golang.org/x/sys v0.0.0-20210511113859-b0526f3d8744 // indirect
 	golang.org/x/term v0.0.0-20210220032956-6a3ed077a48d // indirect
 	golang.org/x/tools v0.1.1 // indirect
 	google.golang.org/genproto v0.0.0-20210510173355-fb37daa5cd7a
