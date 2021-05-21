@@ -4,11 +4,9 @@ on:
   push:
     branches:
       - main
-      - dev
   pull_request:
     branches:
       - main
-      - dev
 jobs:
   test:
     name: Test
@@ -35,8 +33,26 @@ jobs:
       - name: Generate
         run: make generate
 
+      - name: Check repo status
+        run: |-
+          REPO_STATUS="$(git status --porcelain)"
+          if [[ ! -z $REPO_STATUS ]]; then
+            echo "Uncommitted changes detected"
+            echo "$REPO_STATUS"
+            exit 1
+          fi
+
       - name: Test
         run: make test
+
+  docs:
+    name: Build docs
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
 
       - name: Generate docs
         uses: ./.github/actions/antora-docs
