@@ -7,8 +7,8 @@ site:
     google_analytics: 'G-K7EZDLXSVN'
 content:
   sources:
-    - url: ./../
-      branches: ['main']
+    - url: /github/workspace # Default location where GitHub actions mounts the source
+      branches: ['HEAD']
       edit_url: 'https://github.com/cerbos/cerbos/tree/{refname}/{path}'
       start_path: docs
 asciidoc:
