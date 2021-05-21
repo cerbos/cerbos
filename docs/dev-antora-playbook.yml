@@ -3,6 +3,7 @@ site:
   title: Cerbos // Documentation
   url: https://docs.cerbos.dev
   robots: allow
+  start_page: cerbos:ROOT:index.adoc
   keys:
     google_analytics: 'G-K7EZDLXSVN'
 content:
