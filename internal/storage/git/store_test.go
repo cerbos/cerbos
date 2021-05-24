@@ -67,8 +67,7 @@ func TestNewStore(t *testing.T) {
 
 		// checkout the master branch of the source git repo
 		_, err := git.PlainClone(checkoutDir, false, &git.CloneOptions{
-			URL:   fmt.Sprintf("file://%s", sourceGitDir),
-			Depth: 1,
+			URL: fmt.Sprintf("file://%s", sourceGitDir),
 		})
 		require.NoError(t, err, "Failed to clone repo")
 

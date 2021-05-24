@@ -54,7 +54,6 @@ changelog:
   filters:
     exclude:
       - '^ci:'
-      - '^chore:'
-      - '^chore(deps):'
+      - '^chore'
       - '^docs:'
       - '^test:'
