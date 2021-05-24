@@ -14,7 +14,7 @@ require (
 	github.com/fullstorydev/grpcurl v1.8.1
 	github.com/ghodss/yaml v1.0.0
 	github.com/go-git/go-git/v5 v5.3.0
-	github.com/golangci/golangci-lint v1.40.0
+	github.com/golangci/golangci-lint v1.40.1
 	github.com/google/cel-go v0.7.3
 	github.com/google/go-cmp v0.5.5
 	github.com/google/go-licenses v0.0.0-20210329231322-ce1d9163b77d
@@ -52,7 +52,6 @@ require (
 	golang.org/x/lint v0.0.0-20210508222113-6edffad5e616 // indirect
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
 	golang.org/x/term v0.0.0-20210220032956-6a3ed077a48d // indirect
-	golang.org/x/tools v0.1.1 // indirect
 	google.golang.org/genproto v0.0.0-20210510173355-fb37daa5cd7a
 	google.golang.org/grpc v1.37.0
 	google.golang.org/grpc/cmd/protoc-gen-go-grpc v1.1.0
