@@ -60,3 +60,12 @@ service CerbosService {
         };
     }
 }
+
+service CerbosPlaygroundService {
+    rpc Playground(request.v1.PlaygroundRequest) returns (response.v1.PlaygroundResponse) {
+        option (google.api.http) = {
+            post: "/api/playground",
+            body: "*"
+        };
+    }
+}

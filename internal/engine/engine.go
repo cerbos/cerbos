@@ -93,6 +93,25 @@ func New(ctx context.Context, store storage.Store) (*Engine, error) {
 	return engine, nil
 }
 
+// NewEphemeral creates an engine without the worker pool and notification watcher.
+func NewEphemeral(ctx context.Context, store storage.Store) (*Engine, error) {
+	conf := &Conf{}
+	if err := config.GetSection(conf); err != nil {
+		return nil, err
+	}
+
+	engine := &Engine{
+		conf:  conf,
+		store: store,
+	}
+
+	if err := engine.reload(ctx); err != nil {
+		return nil, err
+	}
+
+	return engine, nil
+}
+
 func (engine *Engine) reload(ctx context.Context) error {
 	compiler, err := compile.Compile(engine.store.GetAllPolicies(ctx))
 	if err != nil {
@@ -232,7 +251,8 @@ func (engine *Engine) Check(ctx context.Context, inputs []*enginev1.CheckInput) 
 		outputs := make([]*enginev1.CheckOutput, len(inputs))
 
 		// if the number of inputs is less than the threshold, do a serial execution as it is usually faster.
-		if len(inputs) <= parallelismThreshold {
+		// ditto if the worker pool is not initialized
+		if len(inputs) <= parallelismThreshold || len(engine.workerPool) == 0 {
 			for i, ec := range evalContexts {
 				o, err := engine.evaluate(ctx, inputs[i], ec)
 				if err != nil {

@@ -71,7 +71,7 @@ func doRun(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("failed to open directory %s: %w", args[0], err)
 	}
 
-	eng, err := engine.New(ctx, store)
+	eng, err := engine.NewEphemeral(ctx, store)
 	if err != nil {
 		compErr := new(compile.ErrorList)
 		if errors.As(err, compErr) {

@@ -286,6 +286,11 @@ func (s *Server) startGRPCServer(cerbosSvc *svc.CerbosService, l net.Listener) *
 
 	server := grpc.NewServer(opts...)
 	svcv1.RegisterCerbosServiceServer(server, cerbosSvc)
+	if s.conf.PlaygroundEnabled {
+		log.Info("Starting playground service")
+		svcv1.RegisterCerbosPlaygroundServiceServer(server, svc.NewCerbosPlaygroundService())
+	}
+
 	healthpb.RegisterHealthServer(server, s.health)
 	reflection.Register(server)
 
@@ -314,10 +319,13 @@ func (s *Server) startGRPCServer(cerbosSvc *svc.CerbosService, l net.Listener) *
 func (s *Server) startHTTPServer(ctx context.Context, l net.Listener, grpcSrv *grpc.Server, zpagesEnabled bool) (*http.Server, error) { //nolint:revive
 	log := zap.S().Named("http")
 
-	gwmux := runtime.NewServeMux(runtime.WithMarshalerOption("application/json+pretty", &runtime.JSONPb{
-		MarshalOptions:   protojson.MarshalOptions{Indent: "  "},
-		UnmarshalOptions: protojson.UnmarshalOptions{DiscardUnknown: true},
-	}))
+	gwmux := runtime.NewServeMux(
+		runtime.WithForwardResponseOption(customHTTPResponseCode),
+		runtime.WithMarshalerOption("application/json+pretty", &runtime.JSONPb{
+			MarshalOptions:   protojson.MarshalOptions{Indent: "  "},
+			UnmarshalOptions: protojson.UnmarshalOptions{DiscardUnknown: true},
+		}),
+	)
 
 	opts := defaultGRPCDialOpts()
 
@@ -341,6 +349,12 @@ func (s *Server) startHTTPServer(ctx context.Context, l net.Listener, grpcSrv *g
 	if err := svcv1.RegisterCerbosServiceHandler(ctx, gwmux, grpcConn); err != nil {
 		log.Errorw("Failed to register gRPC gateway", "error", err)
 		return nil, fmt.Errorf("failed to register gRPC service: %w", err)
+	}
+
+	if s.conf.PlaygroundEnabled {
+		if err := svcv1.RegisterCerbosPlaygroundServiceHandler(ctx, gwmux, grpcConn); err != nil {
+			log.Errorw("Continuing without playground due to registration error", "error", err)
+		}
 	}
 
 	cerbosMux := mux.NewRouter()

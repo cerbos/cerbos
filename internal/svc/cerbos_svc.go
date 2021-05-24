@@ -23,14 +23,12 @@ var _ svcv1.CerbosServiceServer = (*CerbosService)(nil)
 
 // CerbosService implements the policy checking service.
 type CerbosService struct {
-	log *zap.SugaredLogger
 	eng *engine.Engine
 	*svcv1.UnimplementedCerbosServiceServer
 }
 
 func NewCerbosService(eng *engine.Engine) *CerbosService {
 	return &CerbosService{
-		log:                              zap.S().Named("check.svc"),
 		eng:                              eng,
 		UnimplementedCerbosServiceServer: &svcv1.UnimplementedCerbosServiceServer{},
 	}
