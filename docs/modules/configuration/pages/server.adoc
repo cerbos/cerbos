@@ -65,3 +65,14 @@ server:
 ----
 
 NOTE: For production use cases that require automatic certificate reloading, workload identities and other advanced features, we recommend running a proxy server such as link:https://www.envoyproxy.io[Envoy], link:https://github.com/ghostunnel/ghostunnel[Ghostunnel] or link:https://traefik.io[Traefik] in front of the Cerbos server. 
+
+
+== Enable Playground
+
+The Cerbos playground API is disabled by default. To enable it, set `playgroundEnabled` to `true`.
+
+[source,yaml,linenums]
+----
+server:
+  playgroundEnabled: true
+----

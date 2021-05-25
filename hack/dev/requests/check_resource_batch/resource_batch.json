@@ -1,0 +1,55 @@
+{
+  "requestId": "test",
+  "principal": {
+    "id": "donald_duck",
+    "policyVersion": "20210210",
+    "roles": [
+      "employee"
+    ],
+    "attr": {
+      "department": "marketing",
+      "geography": "GB",
+      "team": "design"
+    }
+  },
+  "resources": [
+    {
+      "actions": [
+        "view:public",
+        "approve",
+        "create"
+      ],
+      "resource": {
+        "kind": "leave_request",
+        "policyVersion": "20210210",
+        "id": "XX125",
+        "attr": {
+          "department": "marketing",
+          "geography": "GB",
+          "id": "XX125",
+          "owner": "john",
+          "team": "design"
+        }
+      }
+    },
+    {
+      "actions": [
+        "view:public",
+        "approve",
+        "create"
+      ],
+      "resource": {
+        "kind": "leave_request",
+        "policyVersion": "20210210",
+        "id": "XX150",
+        "attr": {
+          "department": "marketing",
+          "geography": "GB",
+          "id": "XX125",
+          "owner": "mary",
+          "team": "design"
+        }
+      }
+    }
+  ]
+}

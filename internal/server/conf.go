@@ -26,6 +26,8 @@ type Conf struct {
 	MetricsEnabled bool `yaml:"metricsEnabled"`
 	// LogRequestPayloads defines whether the request payloads should be logged.
 	LogRequestPayloads bool `yaml:"logRequestPayloads"`
+	// PlaygroundEnabled defines whether the playground API is enabled.
+	PlaygroundEnabled bool `yaml:"playgroundEnabled"`
 }
 
 // TLSConf holds TLS configuration.

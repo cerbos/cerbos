@@ -40,6 +40,19 @@ func ExtractRequestFields(fullMethod string, req interface{}) map[string]interfa
 				"principal.policy_version": crbReq.Principal.PolicyVersion,
 			},
 		}
+
+	case "/svc.v1.CerbosPlaygroundService/Playground":
+		pgReq, ok := req.(*requestv1.PlaygroundRequest)
+		if !ok {
+			return nil
+		}
+
+		return map[string]interface{}{
+			util.AppName: map[string]string{
+				"playground.id": pgReq.PlaygroundId,
+			},
+		}
+
 	default:
 		return nil
 	}

@@ -486,6 +486,161 @@ var _ interface {
 	ErrorName() string
 } = CheckResourceBatchRequestValidationError{}
 
+// Validate checks the field values on PlaygroundRequest with the rules defined
+// in the proto definition for this message. If any rules are violated, an
+// error is returned.
+func (m *PlaygroundRequest) Validate() error {
+	if m == nil {
+		return nil
+	}
+
+	// no validation rules for PlaygroundId
+
+	if l := len(m.GetPolicyFiles()); l < 1 || l > 10 {
+		return PlaygroundRequestValidationError{
+			field:  "PolicyFiles",
+			reason: "value must contain between 1 and 10 items, inclusive",
+		}
+	}
+
+	for idx, item := range m.GetPolicyFiles() {
+		_, _ = idx, item
+
+		if v, ok := interface{}(item).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return PlaygroundRequestValidationError{
+					field:  fmt.Sprintf("PolicyFiles[%v]", idx),
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	}
+
+	if m.GetPrincipal() == nil {
+		return PlaygroundRequestValidationError{
+			field:  "Principal",
+			reason: "value is required",
+		}
+	}
+
+	if v, ok := interface{}(m.GetPrincipal()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return PlaygroundRequestValidationError{
+				field:  "Principal",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if m.GetResource() == nil {
+		return PlaygroundRequestValidationError{
+			field:  "Resource",
+			reason: "value is required",
+		}
+	}
+
+	if v, ok := interface{}(m.GetResource()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return PlaygroundRequestValidationError{
+				field:  "Resource",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if l := len(m.GetActions()); l < 1 || l > 10 {
+		return PlaygroundRequestValidationError{
+			field:  "Actions",
+			reason: "value must contain between 1 and 10 items, inclusive",
+		}
+	}
+
+	_PlaygroundRequest_Actions_Unique := make(map[string]struct{}, len(m.GetActions()))
+
+	for idx, item := range m.GetActions() {
+		_, _ = idx, item
+
+		if _, exists := _PlaygroundRequest_Actions_Unique[item]; exists {
+			return PlaygroundRequestValidationError{
+				field:  fmt.Sprintf("Actions[%v]", idx),
+				reason: "repeated value must contain unique items",
+			}
+		} else {
+			_PlaygroundRequest_Actions_Unique[item] = struct{}{}
+		}
+
+		if utf8.RuneCountInString(item) < 1 {
+			return PlaygroundRequestValidationError{
+				field:  fmt.Sprintf("Actions[%v]", idx),
+				reason: "value length must be at least 1 runes",
+			}
+		}
+
+	}
+
+	return nil
+}
+
+// PlaygroundRequestValidationError is the validation error returned by
+// PlaygroundRequest.Validate if the designated constraints aren't met.
+type PlaygroundRequestValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e PlaygroundRequestValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e PlaygroundRequestValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e PlaygroundRequestValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e PlaygroundRequestValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e PlaygroundRequestValidationError) ErrorName() string {
+	return "PlaygroundRequestValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e PlaygroundRequestValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sPlaygroundRequest.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = PlaygroundRequestValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = PlaygroundRequestValidationError{}
+
 // Validate checks the field values on CheckResourceBatchRequest_BatchEntry
 // with the rules defined in the proto definition for this message. If any
 // rules are violated, an error is returned.
@@ -600,3 +755,85 @@ var _ interface {
 	Cause() error
 	ErrorName() string
 } = CheckResourceBatchRequest_BatchEntryValidationError{}
+
+// Validate checks the field values on PlaygroundRequest_PolicyFile with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, an error is returned.
+func (m *PlaygroundRequest_PolicyFile) Validate() error {
+	if m == nil {
+		return nil
+	}
+
+	if utf8.RuneCountInString(m.GetFileName()) < 1 {
+		return PlaygroundRequest_PolicyFileValidationError{
+			field:  "FileName",
+			reason: "value length must be at least 1 runes",
+		}
+	}
+
+	if l := len(m.GetContents()); l < 1 || l > 1048576 {
+		return PlaygroundRequest_PolicyFileValidationError{
+			field:  "Contents",
+			reason: "value length must be between 1 and 1048576 bytes, inclusive",
+		}
+	}
+
+	return nil
+}
+
+// PlaygroundRequest_PolicyFileValidationError is the validation error returned
+// by PlaygroundRequest_PolicyFile.Validate if the designated constraints
+// aren't met.
+type PlaygroundRequest_PolicyFileValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e PlaygroundRequest_PolicyFileValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e PlaygroundRequest_PolicyFileValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e PlaygroundRequest_PolicyFileValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e PlaygroundRequest_PolicyFileValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e PlaygroundRequest_PolicyFileValidationError) ErrorName() string {
+	return "PlaygroundRequest_PolicyFileValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e PlaygroundRequest_PolicyFileValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sPlaygroundRequest_PolicyFile.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = PlaygroundRequest_PolicyFileValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = PlaygroundRequest_PolicyFileValidationError{}

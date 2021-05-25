@@ -13,6 +13,9 @@
     {
       "name": "CerbosService",
       "description": "Cerbos Policy Decision Point"
+    },
+    {
+      "name": "CerbosPlaygroundService"
     }
   ],
   "schemes": [
@@ -56,6 +59,38 @@
         ],
         "tags": [
           "CerbosService"
+        ]
+      }
+    },
+    "/api/playground": {
+      "post": {
+        "operationId": "CerbosPlaygroundService_Playground",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1PlaygroundResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/v1PlaygroundRequest"
+            }
+          }
+        ],
+        "tags": [
+          "CerbosPlaygroundService"
         ]
       }
     },
@@ -203,6 +238,81 @@
         }
       },
       "description": "Name of the action."
+    },
+    "PlaygroundRequestPolicyFile": {
+      "type": "object",
+      "properties": {
+        "fileName": {
+          "type": "string",
+          "required": [
+            "file_name"
+          ]
+        },
+        "contents": {
+          "type": "string",
+          "format": "byte",
+          "required": [
+            "contents"
+          ]
+        }
+      },
+      "required": [
+        "fileName",
+        "contents"
+      ]
+    },
+    "PlaygroundResponseError": {
+      "type": "object",
+      "properties": {
+        "file": {
+          "type": "string"
+        },
+        "error": {
+          "type": "string"
+        }
+      }
+    },
+    "PlaygroundResponseErrorList": {
+      "type": "object",
+      "properties": {
+        "errors": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/PlaygroundResponseError"
+          }
+        }
+      }
+    },
+    "PlaygroundResponseEvalResult": {
+      "type": "object",
+      "properties": {
+        "action": {
+          "type": "string"
+        },
+        "effect": {
+          "$ref": "#/definitions/v1Effect"
+        },
+        "policy": {
+          "type": "string"
+        },
+        "effectiveDerivedRoles": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "PlaygroundResponseEvalResultList": {
+      "type": "object",
+      "properties": {
+        "results": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/PlaygroundResponseEvalResult"
+          }
+        }
+      }
     },
     "protobufAny": {
       "type": "object",
@@ -447,6 +557,65 @@
         "EFFECT_NO_MATCH"
       ],
       "default": "EFFECT_UNSPECIFIED"
+    },
+    "v1PlaygroundRequest": {
+      "type": "object",
+      "properties": {
+        "playgroundId": {
+          "type": "string"
+        },
+        "policyFiles": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/PlaygroundRequestPolicyFile"
+          },
+          "description": "List of policy files.",
+          "maxItems": 10,
+          "minItems": 1,
+          "required": [
+            "policy_files"
+          ]
+        },
+        "principal": {
+          "$ref": "#/definitions/v1Principal"
+        },
+        "resource": {
+          "$ref": "#/definitions/v1Resource"
+        },
+        "actions": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "List of actions being performed on the resource.",
+          "maxItems": 10,
+          "minItems": 1,
+          "uniqueItems": true,
+          "required": [
+            "actions"
+          ]
+        }
+      },
+      "description": "Playground request",
+      "required": [
+        "policyFiles",
+        "actions"
+      ]
+    },
+    "v1PlaygroundResponse": {
+      "type": "object",
+      "properties": {
+        "playgroundId": {
+          "type": "string"
+        },
+        "failure": {
+          "$ref": "#/definitions/PlaygroundResponseErrorList"
+        },
+        "success": {
+          "$ref": "#/definitions/PlaygroundResponseEvalResultList"
+        }
+      },
+      "description": "Playground response"
     },
     "v1Principal": {
       "type": "object",
