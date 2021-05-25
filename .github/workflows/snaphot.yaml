@@ -1,5 +1,5 @@
 ---
-name: CI
+name: Snapshots
 on:
   push:
     branches:
@@ -64,8 +64,8 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Push dev image
-        run: docker push ghcr.io/cerbos/cerbos:dev
+      - name: Push dev images
+        run: docker push ghcr.io/cerbos/cerbos:dev-amd64 && docker push ghcr.io/cerbos/cerbos:dev-arm64
 
   docs:
     name: Build docs
