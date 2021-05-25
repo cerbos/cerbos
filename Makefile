@@ -30,7 +30,6 @@ generate: clean proto-gen-deps
 	@ $(BUF) lint
 	@ # $(BUF) breaking --against '.git#branch=dev'
 	@ $(BUF) generate --template '$(BUF_GEN_TEMPLATE)' .
-	@ # $(MOCKERY) --quiet --dir=pkg/storage/disk --name="Index" --recursive --output=$(MOCK_DIR)
 	@ go mod tidy
 
 generate-notice: $(GO_LICENSES)

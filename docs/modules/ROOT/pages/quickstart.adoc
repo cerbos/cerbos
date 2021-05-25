@@ -29,8 +29,9 @@ echo YOUR_API_KEY | docker login {app-container-registry} -u YOUR_USERNAME --pas
 docker run --rm --name cerbos -d -v $(pwd)/cerbos-quickstart/policies:/policies -p 3592:3592 {app-docker-img} 
 ----
 
-Launch a browser and navigate to http://localhost:3592/. You will be presented with a webpage with documentation about the Cerbos API.
-In the example request, the `bugs_bunny` principal is trying to perform two actions (`view:public` and `comment`) on two `album:object` resource instances. The resource instance with the ID `XX125` belongs to `bugs_bunny` and is private (`public` attribute is `false`). The other resource instance with the ID `XX225` belongs to `daffy_duck` and is public.
+Launch a browser and navigate to http://localhost:3592/. You will be presented with a webpage with documentation about the Cerbos API. Click on the `/api/check` endpoint to follow the rest of this quickstart guide.
+
+Click on btn:[Example] tab to view an example of a request you can make to Cerbos. In the example, the `bugs_bunny` principal is trying to perform two actions (`view:public` and `comment`) on two `album:object` resource instances. The resource instance with the ID `XX125` belongs to `bugs_bunny` and is private (`public` attribute is `false`). The other resource instance with the ID `XX225` belongs to `daffy_duck` and is public.
 
 Click on the btn:[Try] button to try out the example request.
 

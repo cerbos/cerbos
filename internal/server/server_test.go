@@ -53,6 +53,7 @@ func TestServer(t *testing.T) {
 					Cert: filepath.Join(testdataDir, "tls.crt"),
 					Key:  filepath.Join(testdataDir, "tls.key"),
 				},
+				PlaygroundEnabled: true,
 			}
 
 			ctx, cancelFunc := context.WithCancel(context.Background())
@@ -77,6 +78,7 @@ func TestServer(t *testing.T) {
 					Cert: filepath.Join(testdataDir, "tls.crt"),
 					Key:  filepath.Join(testdataDir, "tls.key"),
 				},
+				PlaygroundEnabled: true,
 			}
 
 			ctx, cancelFunc := context.WithCancel(context.Background())
@@ -94,8 +96,9 @@ func TestServer(t *testing.T) {
 	t.Run("without_tls", func(t *testing.T) {
 		t.Run("tcp", func(t *testing.T) {
 			conf := &Conf{
-				HTTPListenAddr: getFreeListenAddr(t),
-				GRPCListenAddr: getFreeListenAddr(t),
+				HTTPListenAddr:    getFreeListenAddr(t),
+				GRPCListenAddr:    getFreeListenAddr(t),
+				PlaygroundEnabled: true,
 			}
 
 			ctx, cancelFunc := context.WithCancel(context.Background())
@@ -111,8 +114,9 @@ func TestServer(t *testing.T) {
 			tempDir := t.TempDir()
 
 			conf := &Conf{
-				HTTPListenAddr: fmt.Sprintf("unix:%s", filepath.Join(tempDir, "http.sock")),
-				GRPCListenAddr: fmt.Sprintf("unix:%s", filepath.Join(tempDir, "grpc.sock")),
+				HTTPListenAddr:    fmt.Sprintf("unix:%s", filepath.Join(tempDir, "http.sock")),
+				GRPCListenAddr:    fmt.Sprintf("unix:%s", filepath.Join(tempDir, "grpc.sock")),
+				PlaygroundEnabled: true,
 			}
 
 			ctx, cancelFunc := context.WithCancel(context.Background())
@@ -171,7 +175,8 @@ func testGRPCRequest(addr string, opts ...grpc.DialOption) func(*testing.T) {
 		grpcConn, err := grpc.Dial(addr, dialOpts...)
 		require.NoError(t, err, "Failed to dial gRPC server")
 
-		grpcClient := svcv1.NewCerbosServiceClient(grpcConn)
+		cerbosClient := svcv1.NewCerbosServiceClient(grpcConn)
+		playgroundClient := svcv1.NewCerbosPlaygroundServiceClient(grpcConn)
 
 		testCases := test.LoadTestCases(t, filepath.Join("server", "requests"))
 
@@ -189,10 +194,13 @@ func testGRPCRequest(addr string, opts ...grpc.DialOption) func(*testing.T) {
 				switch call := tc.CallKind.(type) {
 				case *cerbosdevv1.ServerTestCase_CheckResourceSet:
 					want = call.CheckResourceSet.WantResponse
-					have, err = grpcClient.CheckResourceSet(ctx, call.CheckResourceSet.Input)
+					have, err = cerbosClient.CheckResourceSet(ctx, call.CheckResourceSet.Input)
 				case *cerbosdevv1.ServerTestCase_CheckResourceBatch:
 					want = call.CheckResourceBatch.WantResponse
-					have, err = grpcClient.CheckResourceBatch(ctx, call.CheckResourceBatch.Input)
+					have, err = cerbosClient.CheckResourceBatch(ctx, call.CheckResourceBatch.Input)
+				case *cerbosdevv1.ServerTestCase_Playground:
+					want = call.Playground.WantResponse
+					have, err = playgroundClient.Playground(ctx, call.Playground.Input)
 				default:
 					t.Fatalf("Unknown call type: %T", call)
 				}
@@ -203,7 +211,7 @@ func testGRPCRequest(addr string, opts ...grpc.DialOption) func(*testing.T) {
 				}
 
 				require.NoError(t, err)
-				require.Empty(t, cmp.Diff(want, have, protocmp.Transform()))
+				compareProto(t, want, have)
 			})
 		}
 	}
@@ -238,6 +246,11 @@ func testHTTPRequest(server string) func(*testing.T) {
 					input = call.CheckResourceBatch.Input
 					want = call.CheckResourceBatch.WantResponse
 					have = &responsev1.CheckResourceBatchResponse{}
+				case *cerbosdevv1.ServerTestCase_Playground:
+					addr = fmt.Sprintf("%s/api/playground", server)
+					input = call.Playground.Input
+					want = call.Playground.WantResponse
+					have = &responsev1.PlaygroundResponse{}
 				default:
 					t.Fatalf("Unknown call type: %T", call)
 				}
@@ -267,13 +280,13 @@ func testHTTPRequest(server string) func(*testing.T) {
 					return
 				}
 
-				require.Equal(t, http.StatusOK, resp.StatusCode)
+				// require.Equal(t, http.StatusOK, resp.StatusCode)
 
 				respBytes, err := io.ReadAll(resp.Body)
 				require.NoError(t, err, "Failed to read response")
 
 				require.NoError(t, protojson.Unmarshal(respBytes, have), "Failed to unmarshal response")
-				require.Empty(t, cmp.Diff(want, have, protocmp.Transform()))
+				compareProto(t, want, have)
 			})
 		}
 	}
@@ -286,4 +299,26 @@ func readTestCase(t *testing.T, data []byte) *cerbosdevv1.ServerTestCase {
 	require.NoError(t, util.ReadJSONOrYAML(bytes.NewReader(data), tc))
 
 	return tc
+}
+
+func compareProto(t *testing.T, want, have interface{}) {
+	t.Helper()
+
+	require.Empty(t, cmp.Diff(want, have,
+		protocmp.Transform(),
+		protocmp.SortRepeated(cmpPlaygroundEvalResult),
+		protocmp.SortRepeated(cmpPlaygroundError),
+	))
+}
+
+func cmpPlaygroundEvalResult(a, b *responsev1.PlaygroundResponse_EvalResult) bool {
+	return a.Action < b.Action
+}
+
+func cmpPlaygroundError(a, b *responsev1.PlaygroundResponse_Error) bool {
+	if a.File == b.File {
+		return a.Error < b.Error
+	}
+
+	return a.File < b.File
 }
