@@ -6,6 +6,7 @@ builds:
       - darwin
     goarch:
       - amd64
+    mod_timestamp: '{{ .CommitTimestamp }}'
     ldflags:
       - -s -w -X github.com/cerbos/cerbos/internal/util.Version={{.Version}} -X github.com/cerbos/cerbos/internal/util.commit={{.Commit}} -X github.com/cerbos/cerbos/internal/util.BuildDate={{.Date}}  
 archives:

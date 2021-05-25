@@ -7,6 +7,9 @@ builds:
     goarch:
       - amd64
       - arm64
+    mod_timestamp: '{{ .CommitTimestamp }}'
+    flags:
+      - -trimpath
     ldflags:
       - -s -w -X github.com/cerbos/cerbos/internal/util.Version={{.Version}} -X github.com/cerbos/cerbos/internal/util.commit={{.Commit}} -X github.com/cerbos/cerbos/internal/util.BuildDate={{.Date}}  
 archives:
@@ -20,22 +23,38 @@ dockers:
       - "cerbos.jfrog.io/containers/cerbos:{{ .Version }}-amd64"
     goarch: amd64
     use_buildx: true
-    build_flag_templates:
-      - "--platform=linux/amd64"
     extra_files:
       - conf.default.yaml
+    build_flag_templates:
+      - "--pull"
+      - "--label=org.opencontainers.image.created={{.Date}}"
+      - "--label=org.opencontainers.image.name={{.ProjectName}}"
+      - "--label=org.opencontainers.image.revision={{.FullCommit}}"
+      - "--label=org.opencontainers.image.version={{.Version}}"
+      - "--label=org.opencontainers.image.source={{.GitURL}}"
+      - "--platform=linux/amd64"
 
   - image_templates:
       - "ghcr.io/cerbos/cerbos:{{ .Version }}-arm64"
       - "cerbos.jfrog.io/containers/cerbos:{{ .Version }}-arm64"
     goarch: arm64
     use_buildx: true
-    build_flag_templates:
-      - "--platform=linux/arm64"
     extra_files:
       - conf.default.yaml
+    build_flag_templates:
+      - "--pull"
+      - "--label=org.opencontainers.image.created={{.Date}}"
+      - "--label=org.opencontainers.image.name={{.ProjectName}}"
+      - "--label=org.opencontainers.image.revision={{.FullCommit}}"
+      - "--label=org.opencontainers.image.version={{.Version}}"
+      - "--label=org.opencontainers.image.source={{.GitURL}}"
+      - "--platform=linux/arm64"
 docker_manifests:
   - name_template: "ghcr.io/cerbos/cerbos:{{ .Version }}"
+    image_templates:
+      - "ghcr.io/cerbos/cerbos:{{ .Version }}-amd64"
+      - "ghcr.io/cerbos/cerbos:{{ .Version }}-arm64"
+  - name_template: "ghcr.io/cerbos/cerbos:dev"
     image_templates:
       - "ghcr.io/cerbos/cerbos:{{ .Version }}-amd64"
       - "ghcr.io/cerbos/cerbos:{{ .Version }}-arm64"
