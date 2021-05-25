@@ -16,6 +16,8 @@ import (
 	"unicode/utf8"
 
 	"google.golang.org/protobuf/types/known/anypb"
+
+	sharedv1 "github.com/cerbos/cerbos/internal/genpb/shared/v1"
 )
 
 // ensure the imports are used
@@ -31,6 +33,8 @@ var (
 	_ = (*url.URL)(nil)
 	_ = (*mail.Address)(nil)
 	_ = anypb.Any{}
+
+	_ = sharedv1.Effect(0)
 )
 
 // Validate checks the field values on CheckResourceSetResponse with the rules
@@ -212,6 +216,103 @@ var _ interface {
 	Cause() error
 	ErrorName() string
 } = CheckResourceBatchResponseValidationError{}
+
+// Validate checks the field values on PlaygroundResponse with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, an error is returned.
+func (m *PlaygroundResponse) Validate() error {
+	if m == nil {
+		return nil
+	}
+
+	// no validation rules for PlaygroundId
+
+	switch m.Outcome.(type) {
+
+	case *PlaygroundResponse_Failure:
+
+		if v, ok := interface{}(m.GetFailure()).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return PlaygroundResponseValidationError{
+					field:  "Failure",
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	case *PlaygroundResponse_Success:
+
+		if v, ok := interface{}(m.GetSuccess()).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return PlaygroundResponseValidationError{
+					field:  "Success",
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	}
+
+	return nil
+}
+
+// PlaygroundResponseValidationError is the validation error returned by
+// PlaygroundResponse.Validate if the designated constraints aren't met.
+type PlaygroundResponseValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e PlaygroundResponseValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e PlaygroundResponseValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e PlaygroundResponseValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e PlaygroundResponseValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e PlaygroundResponseValidationError) ErrorName() string {
+	return "PlaygroundResponseValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e PlaygroundResponseValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sPlaygroundResponse.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = PlaygroundResponseValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = PlaygroundResponseValidationError{}
 
 // Validate checks the field values on CheckResourceSetResponse_ActionEffectMap
 // with the rules defined in the proto definition for this message. If any
@@ -594,3 +695,314 @@ var _ interface {
 	Cause() error
 	ErrorName() string
 } = CheckResourceBatchResponse_ActionEffectMapValidationError{}
+
+// Validate checks the field values on PlaygroundResponse_Error with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, an error is returned.
+func (m *PlaygroundResponse_Error) Validate() error {
+	if m == nil {
+		return nil
+	}
+
+	// no validation rules for File
+
+	// no validation rules for Error
+
+	return nil
+}
+
+// PlaygroundResponse_ErrorValidationError is the validation error returned by
+// PlaygroundResponse_Error.Validate if the designated constraints aren't met.
+type PlaygroundResponse_ErrorValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e PlaygroundResponse_ErrorValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e PlaygroundResponse_ErrorValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e PlaygroundResponse_ErrorValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e PlaygroundResponse_ErrorValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e PlaygroundResponse_ErrorValidationError) ErrorName() string {
+	return "PlaygroundResponse_ErrorValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e PlaygroundResponse_ErrorValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sPlaygroundResponse_Error.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = PlaygroundResponse_ErrorValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = PlaygroundResponse_ErrorValidationError{}
+
+// Validate checks the field values on PlaygroundResponse_ErrorList with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, an error is returned.
+func (m *PlaygroundResponse_ErrorList) Validate() error {
+	if m == nil {
+		return nil
+	}
+
+	for idx, item := range m.GetErrors() {
+		_, _ = idx, item
+
+		if v, ok := interface{}(item).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return PlaygroundResponse_ErrorListValidationError{
+					field:  fmt.Sprintf("Errors[%v]", idx),
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	}
+
+	return nil
+}
+
+// PlaygroundResponse_ErrorListValidationError is the validation error returned
+// by PlaygroundResponse_ErrorList.Validate if the designated constraints
+// aren't met.
+type PlaygroundResponse_ErrorListValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e PlaygroundResponse_ErrorListValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e PlaygroundResponse_ErrorListValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e PlaygroundResponse_ErrorListValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e PlaygroundResponse_ErrorListValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e PlaygroundResponse_ErrorListValidationError) ErrorName() string {
+	return "PlaygroundResponse_ErrorListValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e PlaygroundResponse_ErrorListValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sPlaygroundResponse_ErrorList.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = PlaygroundResponse_ErrorListValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = PlaygroundResponse_ErrorListValidationError{}
+
+// Validate checks the field values on PlaygroundResponse_EvalResult with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, an error is returned.
+func (m *PlaygroundResponse_EvalResult) Validate() error {
+	if m == nil {
+		return nil
+	}
+
+	// no validation rules for Action
+
+	// no validation rules for Effect
+
+	// no validation rules for Policy
+
+	return nil
+}
+
+// PlaygroundResponse_EvalResultValidationError is the validation error
+// returned by PlaygroundResponse_EvalResult.Validate if the designated
+// constraints aren't met.
+type PlaygroundResponse_EvalResultValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e PlaygroundResponse_EvalResultValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e PlaygroundResponse_EvalResultValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e PlaygroundResponse_EvalResultValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e PlaygroundResponse_EvalResultValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e PlaygroundResponse_EvalResultValidationError) ErrorName() string {
+	return "PlaygroundResponse_EvalResultValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e PlaygroundResponse_EvalResultValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sPlaygroundResponse_EvalResult.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = PlaygroundResponse_EvalResultValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = PlaygroundResponse_EvalResultValidationError{}
+
+// Validate checks the field values on PlaygroundResponse_EvalResultList with
+// the rules defined in the proto definition for this message. If any rules
+// are violated, an error is returned.
+func (m *PlaygroundResponse_EvalResultList) Validate() error {
+	if m == nil {
+		return nil
+	}
+
+	for idx, item := range m.GetResults() {
+		_, _ = idx, item
+
+		if v, ok := interface{}(item).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return PlaygroundResponse_EvalResultListValidationError{
+					field:  fmt.Sprintf("Results[%v]", idx),
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	}
+
+	return nil
+}
+
+// PlaygroundResponse_EvalResultListValidationError is the validation error
+// returned by PlaygroundResponse_EvalResultList.Validate if the designated
+// constraints aren't met.
+type PlaygroundResponse_EvalResultListValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e PlaygroundResponse_EvalResultListValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e PlaygroundResponse_EvalResultListValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e PlaygroundResponse_EvalResultListValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e PlaygroundResponse_EvalResultListValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e PlaygroundResponse_EvalResultListValidationError) ErrorName() string {
+	return "PlaygroundResponse_EvalResultListValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e PlaygroundResponse_EvalResultListValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sPlaygroundResponse_EvalResultList.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = PlaygroundResponse_EvalResultListValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = PlaygroundResponse_EvalResultListValidationError{}

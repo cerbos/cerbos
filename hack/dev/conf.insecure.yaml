@@ -3,6 +3,7 @@ server:
   httpListenAddr: ":3592"
   grpcListenAddr: ":3593"
   logRequestPayloads: false
+  playgroundEnabled: true
 
 storage:
   driver: "disk"

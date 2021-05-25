@@ -8,7 +8,6 @@ GO_LICENSES := $(TOOLS_BIN_DIR)/go-licenses
 GORELEASER := $(TOOLS_BIN_DIR)/goreleaser
 GOTESTSUM := $(TOOLS_BIN_DIR)/gotestsum
 GRPCURL := $(TOOLS_BIN_DIR)/grpcurl
-MOCKERY := $(TOOLS_BIN_DIR)/mockery
 PROTOC_GEN_GO := $(TOOLS_BIN_DIR)/protoc-gen-go
 PROTOC_GEN_GO_GRPC := $(TOOLS_BIN_DIR)/protoc-gen-go-grpc
 PROTOC_GEN_GRPC_GATEWAY := $(TOOLS_BIN_DIR)/protoc-gen-grpc-gateway
@@ -83,9 +82,6 @@ $(GOTESTSUM): $(TOOLS_BIN_DIR)
 $(GRPCURL): $(TOOLS_BIN_DIR) 
 	@ GOBIN=$(TOOLS_BIN_DIR) go install github.com/fullstorydev/grpcurl/cmd/grpcurl
 
-$(MOCKERY): $(TOOLS_BIN_DIR)
-	@ GOBIN=$(TOOLS_BIN_DIR) go install github.com/vektra/mockery/v2
-
 $(PROTOC_GEN_GO): $(TOOLS_BIN_DIR) 
 	@ GOBIN=$(TOOLS_BIN_DIR) go install google.golang.org/protobuf/cmd/protoc-gen-go
 
@@ -106,4 +102,3 @@ proto-gen-deps: $(BUF) $(PROTOC_GEN_GO) $(PROTOC_GEN_GO_GRPC) $(PROTOC_GEN_GRPC_
 
 swagger-editor:
 	@ docker run -it -p 8080:8080 -v $(shell pwd)/$(OPENAPI_DIR):/tmp -e SWAGGER_FILE=/tmp/svc/v1/svc.swagger.json swaggerapi/swagger-editor
-

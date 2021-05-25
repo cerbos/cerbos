@@ -3,6 +3,7 @@ server:
   httpListenAddr: ":3592"
   grpcListenAddr: ":3593"
   logRequestPayloads: false
+  playgroundEnabled: true
   tls:
     cert: hack/dev/tls.crt
     key: hack/dev/tls.key

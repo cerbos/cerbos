@@ -131,3 +131,38 @@ message CheckResourceBatchResponse {
         } 
     ];
 }
+
+
+message PlaygroundResponse {
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
+		json_schema: {
+			description: "Playground response"
+		}
+    };
+    
+    message Error {
+        string file = 1;
+        string error = 2;
+    }
+
+    message ErrorList {
+        repeated Error errors = 1;
+    }
+
+    message EvalResult {
+        string action = 1;
+        shared.v1.Effect effect = 2;
+        string policy = 3;
+        repeated string effective_derived_roles = 4;
+    }
+
+    message EvalResultList {
+        repeated EvalResult results = 1;
+    }
+
+    string playground_id = 1;
+    oneof outcome {
+        ErrorList failure = 2;
+        EvalResultList success = 3;
+    }
+}
