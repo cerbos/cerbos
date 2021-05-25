@@ -21,6 +21,7 @@ dockers:
   - image_templates:
       - "ghcr.io/cerbos/cerbos:{{ .Version }}-amd64"
       - "cerbos.jfrog.io/containers/cerbos:{{ .Version }}-amd64"
+      - "ghcr.io/cerbos/cerbos:dev-amd64"
     goarch: amd64
     use_buildx: true
     extra_files:
@@ -37,6 +38,7 @@ dockers:
   - image_templates:
       - "ghcr.io/cerbos/cerbos:{{ .Version }}-arm64"
       - "cerbos.jfrog.io/containers/cerbos:{{ .Version }}-arm64"
+      - "ghcr.io/cerbos/cerbos:dev-arm64"
     goarch: arm64
     use_buildx: true
     extra_files:
@@ -54,14 +56,14 @@ docker_manifests:
     image_templates:
       - "ghcr.io/cerbos/cerbos:{{ .Version }}-amd64"
       - "ghcr.io/cerbos/cerbos:{{ .Version }}-arm64"
-  - name_template: "ghcr.io/cerbos/cerbos:dev"
-    image_templates:
-      - "ghcr.io/cerbos/cerbos:{{ .Version }}-amd64"
-      - "ghcr.io/cerbos/cerbos:{{ .Version }}-arm64"
   - name_template: "cerbos.jfrog.io/containers/cerbos:{{ .Version }}"
     image_templates:
       - "cerbos.jfrog.io/containers/cerbos:{{ .Version }}-amd64"
       - "cerbos.jfrog.io/containers/cerbos:{{ .Version }}-arm64"
+  - name_template: "ghcr.io/cerbos/cerbos:dev"
+    image_templates:
+      - "ghcr.io/cerbos/cerbos:dev-amd64"
+      - "ghcr.io/cerbos/cerbos:dev-arm64"
 artifactories:
   - name: prod
     mode: archive
