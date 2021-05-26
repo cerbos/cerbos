@@ -31,7 +31,7 @@ type Validator interface {
 }
 
 // Load loads the config file at the given path.
-func Load(confFile string) error {
+func Load(confFile string, overrides map[string]interface{}) error {
 	finfo, err := os.Stat(confFile)
 	if err != nil {
 		return fmt.Errorf("failed to stat %s: %w", confFile, err)
@@ -41,7 +41,7 @@ func Load(confFile string) error {
 		return fmt.Errorf("config file path is a directory: %s", confFile)
 	}
 
-	provider, err := config.NewYAML(config.File(confFile), config.Expand(os.LookupEnv))
+	provider, err := config.NewYAML(config.File(confFile), config.Static(overrides), config.Expand(os.LookupEnv))
 	if err != nil {
 		return fmt.Errorf("failed to create config provider: %w", err)
 	}
@@ -52,8 +52,8 @@ func Load(confFile string) error {
 }
 
 // LoadAndWatch automatically reloads configuration if the config file changes.
-func LoadAndWatch(ctx context.Context, confFile string) error {
-	if err := Load(confFile); err != nil {
+func LoadAndWatch(ctx context.Context, confFile string, overrides map[string]interface{}) error {
+	if err := Load(confFile, overrides); err != nil {
 		return err
 	}
 
@@ -88,7 +88,7 @@ func LoadAndWatch(ctx context.Context, confFile string) error {
 				case event.Op&fsnotify.Create == fsnotify.Create:
 					fallthrough
 				case event.Op&fsnotify.Write == fsnotify.Write:
-					if err := Load(confFile); err != nil {
+					if err := Load(confFile, overrides); err != nil {
 						log.Warnw("Failed to reload config file", "error", err)
 					} else {
 						log.Info("Config file reloaded")
