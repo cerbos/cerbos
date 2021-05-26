@@ -4,6 +4,7 @@ package server
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"os/signal"
 
@@ -11,6 +12,7 @@ import (
 	"github.com/spf13/cobra"
 	"go.uber.org/automaxprocs/maxprocs"
 	"go.uber.org/zap"
+	"helm.sh/helm/v3/pkg/strvals"
 
 	"github.com/cerbos/cerbos/internal/config"
 	"github.com/cerbos/cerbos/internal/observability/logging"
@@ -20,8 +22,9 @@ import (
 
 type serverArgs struct {
 	configFile      string
-	logLevel        string
+	configOverrides []string
 	debugListenAddr string
+	logLevel        string
 	zpagesEnabled   bool
 }
 
@@ -36,8 +39,9 @@ func NewCommand() *cobra.Command {
 	}
 
 	cmd.Flags().StringVar(&args.configFile, "config", "", "Path to config file")
-	cmd.Flags().StringVar(&args.logLevel, "log-level", "INFO", "Log level")
+	cmd.Flags().StringSliceVar(&args.configOverrides, "set", nil, "Config overrides")
 	cmd.Flags().StringVar(&args.debugListenAddr, "debug-listen-addr", "", "Address to start the gops listener")
+	cmd.Flags().StringVar(&args.logLevel, "log-level", "INFO", "Log level")
 	cmd.Flags().BoolVar(&args.zpagesEnabled, "zpages-enabled", false, "Enable zpages for debugging")
 
 	_ = cmd.Flags().MarkHidden("zpages-enabled")
@@ -66,8 +70,16 @@ func doRun(_ *cobra.Command, _ []string) error {
 	ctx, stopFunc := signal.NotifyContext(context.Background(), os.Interrupt)
 	defer stopFunc()
 
+	// load any config overrides
+	confOverrides := map[string]interface{}{}
+	for _, override := range args.configOverrides {
+		if err := strvals.ParseInto(override, confOverrides); err != nil {
+			return fmt.Errorf("failed to parse config override [%s]: %w", override, err)
+		}
+	}
+
 	// load configuration
-	if err := config.Load(args.configFile); err != nil {
+	if err := config.Load(args.configFile, confOverrides); err != nil {
 		return err
 	}
 
