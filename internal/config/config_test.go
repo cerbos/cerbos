@@ -46,7 +46,7 @@ type TLS struct {
 }
 
 func TestLoad(t *testing.T) {
-	require.NoError(t, config.Load(filepath.Join("testdata", "test_load.yaml")))
+	require.NoError(t, config.Load(filepath.Join("testdata", "test_load.yaml"), nil))
 
 	t.Run("get_single_value", func(t *testing.T) {
 		var haveCert string
@@ -74,8 +74,46 @@ func TestLoad(t *testing.T) {
 	})
 }
 
+func TestOverride(t *testing.T) {
+	overrides := map[string]interface{}{
+		"server": map[string]interface{}{
+			"listenAddr": ":6666",
+			"tls": map[string]interface{}{
+				"certificate": "newCert",
+			},
+		},
+	}
+
+	require.NoError(t, config.Load(filepath.Join("testdata", "test_load.yaml"), overrides))
+
+	t.Run("get_single_value", func(t *testing.T) {
+		var haveCert string
+		require.NoError(t, config.Get("server.tls.certificate", &haveCert))
+		require.Equal(t, "newCert", haveCert)
+	})
+
+	t.Run("get_tree_with_env_var_interpolation", func(t *testing.T) {
+		wantServer := Server{
+			DataDir:    fmt.Sprintf("%s/tmp", os.Getenv("HOME")),
+			ListenAddr: ":6666",
+			TLS: &TLS{
+				Certificate: "newCert",
+				Key:         "key",
+			},
+		}
+
+		var haveServer1 Server
+		require.NoError(t, config.Get("server", &haveServer1))
+		require.Equal(t, wantServer, haveServer1)
+
+		var haveServer2 Server
+		require.NoError(t, config.GetSection(&haveServer2))
+		require.Equal(t, wantServer, haveServer2)
+	})
+}
+
 func TestDefaults(t *testing.T) {
-	require.NoError(t, config.Load(filepath.Join("testdata", "test_defaults.yaml")))
+	require.NoError(t, config.Load(filepath.Join("testdata", "test_defaults.yaml"), nil))
 
 	wantServer := Server{
 		DataDir:    "/tmp/data",
@@ -88,7 +126,7 @@ func TestDefaults(t *testing.T) {
 }
 
 func TestValidate(t *testing.T) {
-	require.NoError(t, config.Load(filepath.Join("testdata", "test_validate.yaml")))
+	require.NoError(t, config.Load(filepath.Join("testdata", "test_validate.yaml"), nil))
 
 	var haveServer Server
 	err := config.Get("server", &haveServer)
@@ -98,7 +136,7 @@ func TestValidate(t *testing.T) {
 
 func TestCerbosConfig(t *testing.T) {
 	t.Run("valid_server_conf", func(t *testing.T) {
-		require.NoError(t, config.Load(filepath.Join("testdata", "valid_server_conf.yaml")))
+		require.NoError(t, config.Load(filepath.Join("testdata", "valid_server_conf.yaml"), nil))
 		var serverConf server.Conf
 		require.NoError(t, config.Get("server", &serverConf))
 		require.Equal(t, ":3592", serverConf.HTTPListenAddr)
@@ -106,7 +144,7 @@ func TestCerbosConfig(t *testing.T) {
 	})
 
 	t.Run("invalid_server_listen_addr", func(t *testing.T) {
-		require.NoError(t, config.Load(filepath.Join("testdata", "invalid_server_listen_addr.yaml")))
+		require.NoError(t, config.Load(filepath.Join("testdata", "invalid_server_listen_addr.yaml"), nil))
 		var serverConf server.Conf
 		require.Error(t, config.Get("server", &serverConf))
 	})

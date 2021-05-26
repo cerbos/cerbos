@@ -36,12 +36,10 @@ require (
 	github.com/rcrowley/go-metrics v0.0.0-20201227073835-cf1acfcdf475 // indirect
 	github.com/rivo/uniseg v0.2.0 // indirect
 	github.com/rjeczalik/notify v0.9.3-0.20201210012515-e2a77dcc14cf
-	github.com/rs/zerolog v1.20.0 // indirect
 	github.com/spf13/afero v1.6.0
 	github.com/spf13/cobra v1.1.3
 	github.com/stretchr/testify v1.7.0
 	github.com/tidwall/sjson v1.1.6
-	github.com/vektra/mockery/v2 v2.6.0
 	go.elastic.co/ecszap v1.0.0
 	go.opencensus.io v0.23.0
 	go.uber.org/automaxprocs v1.4.0
@@ -56,4 +54,9 @@ require (
 	google.golang.org/grpc/cmd/protoc-gen-go-grpc v1.1.0
 	google.golang.org/protobuf v1.26.0
 	gotest.tools/gotestsum v1.6.4
+	helm.sh/helm/v3 v3.5.4
 )
+
+replace github.com/docker/distribution => github.com/docker/distribution v0.0.0-20191216044856-a8371794149d
+
+replace github.com/docker/docker => github.com/docker/docker v17.12.0-ce-rc1.0.20200618181300-9dc6525e6118+incompatible

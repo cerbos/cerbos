@@ -4,12 +4,12 @@ include::partial$attributes.adoc[]
 
 == Starting the server
 
-The server is configured with a YAML file that is passed using the `--config` flag. See xref:configuration:index.adoc[Configuration] for more information about available configuration options.
+The server is configured with a YAML file that is passed using the `--config` flag. Values in the configuration file can be overridden from the command-line by the `--set` flag — which can be used multiple times. See xref:configuration:index.adoc[Configuration] for more information about available configuration options. 
 
 .Using the binary
 [source,sh,subs="attributes"]
 ----
-./{app-name} server --config=/path/to/config.yaml
+./{app-name} server --config=/path/to/config.yaml --set=server.httpListenAddr=:3592 
 ----
 
 .Using Docker
@@ -18,7 +18,7 @@ The server is configured with a YAML file that is passed using the `--config` fl
 docker run -i -t -p 3592:3592 \
     -v /path/to/conf/dir:/config \
     {app-docker-img} \
-    server --config=/config/conf.yaml
+    server --config=/config/conf.yaml --set=server.httpListenAddr=:3592
 ----
 
 == Compiling and testing policies

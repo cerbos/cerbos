@@ -3,7 +3,13 @@ include::ROOT:partial$attributes.adoc[]
 [[configuration]]
 = Configuration
 
-The Cerbos server is configured with a YAML file. Start the server by passing the configuration file using the `--config` flag. 
+The Cerbos server is configured with a YAML file. Start the server by passing the configuration file using the `--config` flag. The values defined in the file can be overridden from the command-line by using the `--set` flag. The `--set` flag can be used multiple times. For example, to override `server.httpListenAddr` and `engine.defaultPolicyVersion`, the `--set` flag can be used as follows:
+
+
+[source,sh,subs="attributes"]
+----
+./{app-name} server --config=/path/to/config.yaml --set=server.httpListenAddr=:3592 --set=engine.defaultPolicyVersion=staging
+----
 
 NOTE: Config values can reference environment variables by enclosing them between `${}`. E.g. `$$${HOME}$$`. 
 
@@ -17,6 +23,7 @@ server:
   grpcListenAddr: ":3593"
   metricsEnabled: true # Set to false to disable the /_cerbos/metrics endpoint
   logRequestPayloads: false # Set to true to log full request and response payloads. Affects performance.
+  playgroundEnabled: false # Set to true to enable the playground API.
   tls: # Optional
     cert: /path/to/certificate
     key: /path/to/private_key
@@ -37,7 +44,7 @@ storage:
   driver: "disk" # Valid values are "disk" or "git"
   disk: # Only required if "driver" is "disk"
     directory: pkg/test/testdata/store
-    readOnly: true 
+    watchForChanges: false 
   git: # Only required if the "driver" is "git"
     protocol: file # Valid values are "file", "ssh", "https"
     url: file://${HOME}/tmp/cerbos/policies 
