@@ -3,6 +3,7 @@
 package namer
 
 import (
+	"database/sql/driver"
 	"fmt"
 	"regexp"
 	"strings"
@@ -22,9 +23,26 @@ const (
 	DefaultVersion = "default"
 )
 
-// ModuleID is a short ID to identify modules.
+// ModuleID is a unique identifier for modules.
 type ModuleID struct {
 	hash uint64
+}
+
+func (m ModuleID) Value() (driver.Value, error) {
+	return m.hash, nil
+}
+
+func (m *ModuleID) Scan(src interface{}) error {
+	switch v := src.(type) {
+	case uint64:
+		m.hash = v
+		return nil
+	case int64:
+		m.hash = uint64(v)
+		return nil
+	default:
+		return fmt.Errorf("unexpected type for module ID: %T", src)
+	}
 }
 
 // GenModuleID generates a short ID for the module.
