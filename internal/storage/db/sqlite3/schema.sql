@@ -1,3 +1,5 @@
+PRAGMA foreign_keys = ON;
+
 -- name: policy
 CREATE TABLE IF NOT EXISTS policy (
     id UNSIGNED BIG INT NOT NULL PRIMARY KEY, 
@@ -14,7 +16,7 @@ CREATE TABLE IF NOT EXISTS policy_dependency (
     policy_id UNSIGNED BIG INT,
     dependency_id UNSIGNED BIG INT,
     PRIMARY KEY (policy_id, dependency_id),
-    FOREIGN KEY (policy_id) REFERENCES policies(id)
+    FOREIGN KEY (policy_id) REFERENCES policy(id) ON DELETE CASCADE
 );
 
 -- name: policy_revision
@@ -33,21 +35,21 @@ CREATE TABLE IF NOT EXISTS policy_revision (
 
 
 -- name: policy_on_insert
-CREATE TRIGGER policy_on_insert AFTER INSERT ON policy 
+CREATE TRIGGER IF NOT EXISTS policy_on_insert AFTER INSERT ON policy 
 BEGIN
     INSERT INTO policy_revision(action, id, kind, name, version, description, disabled, definition)
     VALUES("INSERT", new.id, new.kind, new.name, new.version, new.description, new.disabled, new.definition);
 END;
 
 -- name: policy_on_update
-CREATE TRIGGER policy_on_update AFTER UPDATE ON policy 
+CREATE TRIGGER IF NOT EXISTS policy_on_update AFTER UPDATE ON policy 
 BEGIN
     INSERT INTO policy_revision(action, id, kind, name, version, description, disabled, definition)
     VALUES("UPDATE", new.id, new.kind, new.name, new.version, new.description, new.disabled, new.definition);
 END;
 
 -- name: policy_on_delete
-CREATE TRIGGER policy_on_delete AFTER DELETE ON policy 
+CREATE TRIGGER IF NOT EXISTS policy_on_delete AFTER DELETE ON policy 
 BEGIN
     INSERT INTO policy_revision(action, id, kind, name, version, description, disabled, definition)
     VALUES("DELETE", old.id, old.kind, old.name, old.version, old.description, old.disabled, old.definition);

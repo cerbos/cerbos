@@ -11,5 +11,6 @@ import (
 
 type Store interface {
 	AddOrUpdate(context.Context, ...policy.Wrapper) error
+	Delete(context.Context, ...namer.ModuleID) error
 	GetPolicyUnit(context.Context, namer.ModuleID) (*policy.Unit, error)
 }

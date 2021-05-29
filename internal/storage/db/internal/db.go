@@ -4,11 +4,9 @@ package internal
 
 import (
 	"context"
-	"database/sql"
 	"fmt"
 
 	"github.com/doug-martin/goqu/v9"
-	"go.uber.org/multierr"
 	"go.uber.org/zap"
 
 	"github.com/cerbos/cerbos/internal/namer"
@@ -17,7 +15,13 @@ import (
 )
 
 func NewDBStorage(db *goqu.Database) (db.Store, error) {
-	db.Logger(zap.NewStdLog(zap.L().Named("db")))
+	log, err := zap.NewStdLogAt(zap.L().Named("db"), zap.DebugLevel)
+	if err != nil {
+		return nil, err
+	}
+
+	db.Logger(log)
+
 	return &DBStorage{db: db}, nil
 }
 
@@ -26,7 +30,7 @@ type DBStorage struct {
 }
 
 func (s *DBStorage) AddOrUpdate(ctx context.Context, policies ...policy.Wrapper) error {
-	return s.doTx(ctx, func(tx *goqu.TxDatabase) error {
+	return s.db.WithTx(func(tx *goqu.TxDatabase) error {
 		for _, p := range policies {
 			policyRecord := Policy{
 				ID:          p.ID,
@@ -74,25 +78,21 @@ func (s *DBStorage) AddOrUpdate(ctx context.Context, policies ...policy.Wrapper)
 }
 
 func (s *DBStorage) GetPolicyUnit(ctx context.Context, id namer.ModuleID) (*policy.Unit, error) {
-	// SELECT p2.id, p2.definition FROM policy p1
-	// LEFT JOIN policy_dependency pd ON (pd.policy_id = p1.id)
-	// INNER JOIN policy p2 ON (pd.dependency_id = p2.id AND p2.disabled = false)
-	// WHERE p1.id = ?
-	depsQuery := s.db.From(goqu.T(PolicyTbl).As("p1")).
-		LeftJoin(
+	// SELECT p.id, p.definition FROM policy p
+	// JOIN policy_dependency pd ON (pd.dependency_id = p.id)
+	// WHERE pd.policy_id = ? AND p.disabled = false
+	depsQuery := s.db.From(goqu.T(PolicyTbl).As("p")).
+		Join(
 			goqu.T(PolicyDepTbl).As("pd"),
-			goqu.On(goqu.C(PolicyDepTblPolicyIDCol).Table("pd").Eq(goqu.C(PolicyTblIDCol).Table("p1"))),
+			goqu.On(goqu.C(PolicyDepTblDepIDCol).Table("pd").Eq(goqu.C(PolicyTblIDCol).Table("p"))),
 		).
-		InnerJoin(
-			goqu.T(PolicyTbl).As("p2"),
-			goqu.On(
-				goqu.And(
-					goqu.C(PolicyDepTblDepIDCol).Table("pd").Eq(goqu.C(PolicyTblIDCol).Table("p2")),
-					goqu.C(PolicyTblDisabledCol).Table("p2").Eq(false),
-				),
+		Where(
+			goqu.And(
+				goqu.C(PolicyDepTblPolicyIDCol).Table("pd").Eq(id),
+				goqu.C(PolicyTblDisabledCol).Table("p").Eq(false),
 			),
 		).
-		Select(goqu.C(PolicyTblIDCol).Table("p2"), goqu.C(PolicyTblDefinitionCol).Table("p2"))
+		Select(goqu.C(PolicyTblIDCol).Table("p"), goqu.C(PolicyTblDefinitionCol).Table("p"))
 
 	// SELECT id, definition FROM policy WHERE id = ? AND disabled = false UNION ALL <deps_query>
 	policiesQuery := s.db.From(PolicyTbl).
@@ -127,15 +127,21 @@ func (s *DBStorage) GetPolicyUnit(ctx context.Context, id namer.ModuleID) (*poli
 	return unit, nil
 }
 
-func (s *DBStorage) doTx(ctx context.Context, work func(tx *goqu.TxDatabase) error) error {
-	tx, err := s.db.BeginTx(ctx, &sql.TxOptions{Isolation: sql.LevelReadCommitted})
-	if err != nil {
-		return fmt.Errorf("failed to start transaction: %w", err)
+func (s *DBStorage) Delete(ctx context.Context, ids ...namer.ModuleID) error {
+	if len(ids) == 1 {
+		_, err := s.db.Delete(PolicyTbl).Prepared(true).
+			Where(goqu.C(PolicyTblIDCol).Eq(ids[0])).
+			Executor().ExecContext(ctx)
+		return err
 	}
 
-	if err := work(tx); err != nil {
-		return multierr.Append(err, tx.Rollback())
+	idList := make([]interface{}, len(ids))
+	for i, id := range ids {
+		idList[i] = id
 	}
+	_, err := s.db.Delete(PolicyTbl).Prepared(true).
+		Where(goqu.C(PolicyTblIDCol).In(idList...)).
+		Executor().ExecContext(ctx)
 
-	return tx.Tx.Commit()
+	return err
 }

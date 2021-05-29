@@ -9,11 +9,11 @@ import (
 
 	"github.com/doug-martin/goqu/v9"
 
-	// import sqlite3 dialect
+	// import sqlite3 dialect.
 	_ "github.com/doug-martin/goqu/v9/dialect/sqlite3"
 	"github.com/jmoiron/sqlx"
 
-	// import sqlite3 driver
+	// import sqlite3 driver.
 	_ "github.com/mattn/go-sqlite3"
 
 	"github.com/cerbos/cerbos/internal/storage/db"
