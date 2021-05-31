@@ -13,7 +13,7 @@ import (
 	"github.com/cerbos/cerbos/internal/namer"
 )
 
-func GenerateCode(p *policyv1.Policy) (*CodeGenResult, error) {
+func GenerateCode(p *policyv1.Policy) (*Result, error) {
 	switch pt := p.PolicyType.(type) {
 	case *policyv1.Policy_ResourcePolicy:
 		return generateResourcePolicy(pt.ResourcePolicy)
@@ -26,7 +26,7 @@ func GenerateCode(p *policyv1.Policy) (*CodeGenResult, error) {
 	}
 }
 
-func generateResourcePolicy(p *policyv1.ResourcePolicy) (*CodeGenResult, error) {
+func generateResourcePolicy(p *policyv1.ResourcePolicy) (*Result, error) {
 	modName := namer.ResourcePolicyModuleName(p.Resource, p.Version)
 
 	var imports []string
@@ -55,7 +55,7 @@ func derivedRolesImportName(imp string) string {
 	return fmt.Sprintf("data.%s.%s", namer.DerivedRolesModuleName(imp), derivedRolesMap)
 }
 
-func generatePrincipalPolicy(p *policyv1.PrincipalPolicy) (*CodeGenResult, error) {
+func generatePrincipalPolicy(p *policyv1.PrincipalPolicy) (*Result, error) {
 	modName := namer.PrincipalPolicyModuleName(p.Principal, p.Version)
 	rg := NewRegoGen(modName)
 
@@ -70,7 +70,7 @@ func generatePrincipalPolicy(p *policyv1.PrincipalPolicy) (*CodeGenResult, error
 	return rg.Generate()
 }
 
-func generateDerivedRoles(dr *policyv1.DerivedRoles) (*CodeGenResult, error) {
+func generateDerivedRoles(dr *policyv1.DerivedRoles) (*Result, error) {
 	modName := namer.DerivedRolesModuleName(dr.Name)
 	rg := NewRegoGen(modName)
 
@@ -83,14 +83,14 @@ func generateDerivedRoles(dr *policyv1.DerivedRoles) (*CodeGenResult, error) {
 	return rg.Generate()
 }
 
-type CodeGenResult struct {
+type Result struct {
 	ModName    string
 	ModID      namer.ModuleID
 	Module     *ast.Module
 	Conditions map[string]*CELCondition
 }
 
-func (cgr *CodeGenResult) ToRepr() (*policyv1.GeneratedPolicy, error) {
+func (cgr *Result) ToRepr() (*policyv1.GeneratedPolicy, error) {
 	gp := &policyv1.GeneratedPolicy{Fqn: cgr.ModName}
 
 	code, err := format.Ast(cgr.Module)
@@ -115,8 +115,8 @@ func (cgr *CodeGenResult) ToRepr() (*policyv1.GeneratedPolicy, error) {
 	return gp, nil
 }
 
-func CodeGenResultFromRepr(repr *policyv1.GeneratedPolicy) (*CodeGenResult, error) {
-	r := &CodeGenResult{
+func CodeGenResultFromRepr(repr *policyv1.GeneratedPolicy) (*Result, error) {
+	r := &Result{
 		ModName: repr.Fqn,
 		ModID:   namer.GenModuleIDFromName(repr.Fqn),
 	}

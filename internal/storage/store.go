@@ -4,29 +4,53 @@ package storage
 
 import (
 	"context"
-	"errors"
-	"fmt"
 
-	"github.com/cerbos/cerbos/internal/compile"
-	policyv1 "github.com/cerbos/cerbos/internal/genpb/policy/v1"
-	"github.com/cerbos/cerbos/internal/storage/disk"
-	"github.com/cerbos/cerbos/internal/storage/git"
+	"github.com/cerbos/cerbos/internal/namer"
+	"github.com/cerbos/cerbos/internal/policy"
 )
 
 // Store is the common interface implemented by storage backends.
 type Store interface {
+	// Driver is the name of the storage backend implementation.
 	Driver() string
-	GetAllPolicies(context.Context) <-chan *compile.Unit
-	SetNotificationChannel(chan<- compile.Notification)
+	// Subscribe adds a subscriber to listen for storage notifications.
+	Subscribe(Subscriber)
+	// Unsubscribe removes a subscriber.
+	Unsubscribe(Subscriber)
+	// GetCompilationUnits gets the compilation units for the given module IDs.
+	GetCompilationUnits(context.Context, ...namer.ModuleID) (map[namer.ModuleID]*policy.CompilationUnit, error)
+	// Shutdown performs a clean shutdown of the store.
+	Shutdown() error
 }
 
-// WritableStore is a store that supports modifications.
-type WritableStore interface {
+// MutableStore is a store that allows mutations.
+type MutableStore interface {
 	Store
-	AddOrUpdate(context.Context, *policyv1.Policy) error
-	Remove(context.Context, *policyv1.Policy) error
+	AddOrUpdate(context.Context, ...policy.Wrapper) error
+	Delete(context.Context, ...namer.ModuleID) error
 }
 
+// EventKind identifies the kind of storage event such as addition or deletion.
+type EventKind int
+
+const (
+	EventAddOrUpdatePolicy EventKind = iota
+	EventDeletePolicy
+)
+
+// Event is an event detected by the storage layer.
+type Event struct {
+	Kind        EventKind
+	PolicyModID namer.ModuleID
+}
+
+// Subscriber is the interface implemented by storage subscribers.
+type Subscriber interface {
+	SubscriberID() string
+	OnStorageEvent(...Event)
+}
+
+/*
 // New creates a new store based on the config.
 func New(ctx context.Context) (Store, error) {
 	conf, err := getStorageConf()
@@ -55,3 +79,4 @@ func New(ctx context.Context) (Store, error) {
 		return nil, fmt.Errorf("unknown storage driver: %s", conf.Driver)
 	}
 }
+*/

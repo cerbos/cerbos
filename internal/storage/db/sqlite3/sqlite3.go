@@ -16,18 +16,22 @@ import (
 	// import sqlite3 driver.
 	_ "github.com/mattn/go-sqlite3"
 
-	"github.com/cerbos/cerbos/internal/storage/db"
+	"github.com/cerbos/cerbos/internal/storage"
 	"github.com/cerbos/cerbos/internal/storage/db/internal"
 )
 
+const DriverName = "sqlite3"
+
 //go:embed schema.sql
 var schema string
+
+var _ storage.MutableStore = (*Store)(nil)
 
 type Conf struct {
 	DSN string `yaml:"dsn"`
 }
 
-func New(ctx context.Context, conf *Conf) (db.Store, error) {
+func New(ctx context.Context, conf *Conf) (*Store, error) {
 	db, err := sqlx.Connect("sqlite3", conf.DSN)
 	if err != nil {
 		return nil, fmt.Errorf("failed to open database: %w", err)
@@ -37,5 +41,18 @@ func New(ctx context.Context, conf *Conf) (db.Store, error) {
 		return nil, fmt.Errorf("failed to create schema: %w", err)
 	}
 
-	return internal.NewDBStorage(goqu.New("sqlite3", db))
+	storage, err := internal.NewDBStorage(goqu.New("sqlite3", db))
+	if err != nil {
+		return nil, err
+	}
+
+	return &Store{DBStorage: storage}, nil
+}
+
+type Store struct {
+	*internal.DBStorage
+}
+
+func (s *Store) Driver() string {
+	return DriverName
 }

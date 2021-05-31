@@ -78,13 +78,13 @@ func (rg *RegoGen) line(ss ...string) {
 	rg.WriteString("\n")
 }
 
-func (rg *RegoGen) Generate() (*CodeGenResult, error) {
+func (rg *RegoGen) Generate() (*Result, error) {
 	mod, err := ast.ParseModule("", rg.String())
 	if err != nil {
 		return nil, err
 	}
 
-	return &CodeGenResult{
+	return &Result{
 		ModName:    rg.packageName,
 		ModID:      namer.GenModuleIDFromName(rg.packageName),
 		Module:     mod,

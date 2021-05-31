@@ -13,10 +13,11 @@ import (
 	policyv1 "github.com/cerbos/cerbos/internal/genpb/policy/v1"
 	"github.com/cerbos/cerbos/internal/namer"
 	"github.com/cerbos/cerbos/internal/policy"
+	"github.com/cerbos/cerbos/internal/storage"
 	"github.com/cerbos/cerbos/internal/storage/db"
 )
 
-func NewDBStorage(db *goqu.Database) (db.Store, error) {
+func NewDBStorage(db *goqu.Database) (*DBStorage, error) {
 	log, err := zap.NewStdLogAt(zap.L().Named("db"), zap.DebugLevel)
 	if err != nil {
 		return nil, err
@@ -24,16 +25,21 @@ func NewDBStorage(db *goqu.Database) (db.Store, error) {
 
 	db.Logger(log)
 
-	return &DBStorage{db: db}, nil
+	return &DBStorage{
+		db:                  db,
+		SubscriptionManager: storage.NewSubscriptionManager(),
+	}, nil
 }
 
 type DBStorage struct {
 	db *goqu.Database
+	*storage.SubscriptionManager
 }
 
 func (s *DBStorage) AddOrUpdate(ctx context.Context, policies ...policy.Wrapper) error {
-	return s.db.WithTx(func(tx *goqu.TxDatabase) error {
-		for _, p := range policies {
+	events := make([]storage.Event, len(policies))
+	err := s.db.WithTx(func(tx *goqu.TxDatabase) error {
+		for i, p := range policies {
 			codegenResult, err := codegen.GenerateCode(p.Policy)
 			if err != nil {
 				return fmt.Errorf("failed to generate code for %s: %w", p.Name, err)
@@ -84,10 +90,18 @@ func (s *DBStorage) AddOrUpdate(ctx context.Context, policies ...policy.Wrapper)
 					return fmt.Errorf("failed to insert dependencies of %s: %w", p.FQN, err)
 				}
 			}
+
+			events[i] = storage.Event{Kind: storage.EventAddOrUpdatePolicy, PolicyModID: p.ID}
 		}
 
 		return nil
 	})
+	if err != nil {
+		return err
+	}
+
+	s.NotifySubscribers(events...)
+	return nil
 }
 
 func (s *DBStorage) GetCompilationUnits(ctx context.Context, ids ...namer.ModuleID) (map[namer.ModuleID]*policy.CompilationUnit, error) {
@@ -162,16 +176,28 @@ func (s *DBStorage) Delete(ctx context.Context, ids ...namer.ModuleID) error {
 		_, err := s.db.Delete(PolicyTbl).Prepared(true).
 			Where(goqu.C(PolicyTblIDCol).Eq(ids[0])).
 			Executor().ExecContext(ctx)
-		return err
+		if err != nil {
+			return err
+		}
+
+		s.NotifySubscribers(storage.Event{Kind: storage.EventDeletePolicy, PolicyModID: ids[0]})
+		return nil
 	}
 
 	idList := make([]interface{}, len(ids))
+	events := make([]storage.Event, len(ids))
+
 	for i, id := range ids {
 		idList[i] = id
+		events[i] = storage.Event{Kind: storage.EventDeletePolicy, PolicyModID: id}
 	}
 	_, err := s.db.Delete(PolicyTbl).Prepared(true).
 		Where(goqu.C(PolicyTblIDCol).In(idList...)).
 		Executor().ExecContext(ctx)
+	if err != nil {
+		return err
+	}
 
-	return err
+	s.NotifySubscribers(events...)
+	return nil
 }
