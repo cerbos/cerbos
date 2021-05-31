@@ -53,7 +53,7 @@ type RegoGen struct {
 	packageName string
 	*strings.Builder
 	condCount  uint
-	conditions map[string]cel.Program
+	conditions map[string]*CELCondition
 }
 
 func NewRegoGen(packageName string, imports ...string) *RegoGen {
@@ -289,7 +289,7 @@ func (rg *RegoGen) addScript(parent, script string) error {
 }
 
 func (rg *RegoGen) addMatch(parent string, m *policyv1.Match) error {
-	prg, err := GenerateCELProgram(parent, m)
+	cond, err := GenerateCELCondition(parent, m)
 	if err != nil {
 		return err
 	}
@@ -298,10 +298,10 @@ func (rg *RegoGen) addMatch(parent string, m *policyv1.Match) error {
 	rg.condCount++
 
 	if rg.conditions == nil {
-		rg.conditions = make(map[string]cel.Program)
+		rg.conditions = make(map[string]*CELCondition)
 	}
 
-	rg.conditions[conditionKey] = prg
+	rg.conditions[conditionKey] = cond
 
 	rg.line(CELEvalIdent, `(input, "`, rg.packageName, `", "`, conditionKey, `")`)
 

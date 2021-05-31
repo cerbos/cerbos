@@ -107,7 +107,10 @@ func compilePolicy(p *Unit) (*evaluator, ErrorList) {
 				conditionIdx = make(ConditionIndex)
 			}
 
-			conditionIdx[result.ModID] = NewConditionMap(result.Conditions)
+			conditionIdx[result.ModID], err = NewConditionMap(result.Conditions)
+			if err != nil {
+				errors = append(errors, newCodeGenErrors(file, err)...)
+			}
 		}
 	}
 

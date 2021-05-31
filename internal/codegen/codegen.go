@@ -5,19 +5,13 @@ package codegen
 import (
 	"fmt"
 
-	"github.com/google/cel-go/cel"
 	"github.com/open-policy-agent/opa/ast"
+	"github.com/open-policy-agent/opa/format"
+	exprpb "google.golang.org/genproto/googleapis/api/expr/v1alpha1"
 
 	policyv1 "github.com/cerbos/cerbos/internal/genpb/policy/v1"
 	"github.com/cerbos/cerbos/internal/namer"
 )
-
-type CodeGenResult struct {
-	ModName    string
-	ModID      namer.ModuleID
-	Module     *ast.Module
-	Conditions map[string]cel.Program
-}
 
 func GenerateCode(p *policyv1.Policy) (*CodeGenResult, error) {
 	switch pt := p.PolicyType.(type) {
@@ -87,4 +81,59 @@ func generateDerivedRoles(dr *policyv1.DerivedRoles) (*CodeGenResult, error) {
 	}
 
 	return rg.Generate()
+}
+
+type CodeGenResult struct {
+	ModName    string
+	ModID      namer.ModuleID
+	Module     *ast.Module
+	Conditions map[string]*CELCondition
+}
+
+func (cgr *CodeGenResult) ToRepr() (*policyv1.GeneratedPolicy, error) {
+	gp := &policyv1.GeneratedPolicy{Fqn: cgr.ModName}
+
+	code, err := format.Ast(cgr.Module)
+	if err != nil {
+		return nil, fmt.Errorf("failed to format generated code: %w", err)
+	}
+
+	gp.Code = code
+
+	if len(cgr.Conditions) > 0 {
+		gp.CelConditions = make(map[string]*exprpb.CheckedExpr, len(cgr.Conditions))
+		for k, c := range cgr.Conditions {
+			expr, err := c.CheckedExpr()
+			if err != nil {
+				return nil, fmt.Errorf("failed to convert condition %s: %w", k, err)
+			}
+
+			gp.CelConditions[k] = expr
+		}
+	}
+
+	return gp, nil
+}
+
+func CodeGenResultFromRepr(repr *policyv1.GeneratedPolicy) (*CodeGenResult, error) {
+	r := &CodeGenResult{
+		ModName: repr.Fqn,
+		ModID:   namer.GenModuleIDFromName(repr.Fqn),
+	}
+
+	m, err := ast.ParseModule("", string(repr.Code))
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse generated code: %w", err)
+	}
+
+	r.Module = m
+
+	if len(repr.CelConditions) > 0 {
+		r.Conditions = make(map[string]*CELCondition, len(repr.CelConditions))
+		for k, expr := range repr.CelConditions {
+			r.Conditions[k] = CELConditionFromCheckedExpr(expr)
+		}
+	}
+
+	return r, nil
 }

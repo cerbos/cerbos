@@ -224,7 +224,10 @@ func TestCELEvaluator(t *testing.T) {
 		tcase := tcase
 		t.Run(tcase.Name, func(t *testing.T) {
 			tc := readCELTestCase(t, tcase.Input)
-			prg, err := codegen.GenerateCELProgram("test", tc.Condition)
+			cgr, err := codegen.GenerateCELCondition("test", tc.Condition)
+			require.NoError(t, err)
+
+			prg, err := cgr.Program()
 			require.NoError(t, err)
 
 			requestJSON, err := protojson.Marshal(tc.Input)
