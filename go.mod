@@ -16,7 +16,7 @@ require (
 	github.com/go-git/go-git/v5 v5.4.0
 	github.com/golangci/golangci-lint v1.40.1
 	github.com/google/cel-go v0.7.3
-	github.com/google/go-cmp v0.5.5
+	github.com/google/go-cmp v0.5.6
 	github.com/google/go-licenses v0.0.0-20210329231322-ce1d9163b77d
 	github.com/google/gops v0.3.18
 	github.com/google/renameio v1.0.0
