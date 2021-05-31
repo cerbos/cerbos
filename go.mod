@@ -8,7 +8,7 @@ require (
 	github.com/bufbuild/buf v0.42.1
 	github.com/cespare/xxhash v1.1.0
 	github.com/envoyproxy/protoc-gen-validate v0.6.1
-	github.com/fatih/color v1.11.0
+	github.com/fatih/color v1.12.0
 	github.com/fsnotify/fsnotify v1.4.9
 	github.com/fullstorydev/grpcurl v1.8.1
 	github.com/ghodss/yaml v1.0.0
