@@ -116,7 +116,7 @@ func Wrap(p *policyv1.Policy) Wrapper {
 	return w
 }
 
-type Unit struct {
-	Policy       Wrapper
-	Dependencies []Wrapper
+type CompilationUnit struct {
+	ModID       namer.ModuleID
+	Definitions map[namer.ModuleID]*policyv1.GeneratedPolicy
 }

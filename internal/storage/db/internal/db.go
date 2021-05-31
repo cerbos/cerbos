@@ -9,6 +9,8 @@ import (
 	"github.com/doug-martin/goqu/v9"
 	"go.uber.org/zap"
 
+	"github.com/cerbos/cerbos/internal/codegen"
+	policyv1 "github.com/cerbos/cerbos/internal/genpb/policy/v1"
 	"github.com/cerbos/cerbos/internal/namer"
 	"github.com/cerbos/cerbos/internal/policy"
 	"github.com/cerbos/cerbos/internal/storage/db"
@@ -32,6 +34,16 @@ type DBStorage struct {
 func (s *DBStorage) AddOrUpdate(ctx context.Context, policies ...policy.Wrapper) error {
 	return s.db.WithTx(func(tx *goqu.TxDatabase) error {
 		for _, p := range policies {
+			codegenResult, err := codegen.GenerateCode(p.Policy)
+			if err != nil {
+				return fmt.Errorf("failed to generate code for %s: %w", p.Name, err)
+			}
+
+			genPolicy, err := codegenResult.ToRepr()
+			if err != nil {
+				return fmt.Errorf("failed to convert generated code of %s to representation: %w", p.Name, err)
+			}
+
 			policyRecord := Policy{
 				ID:          p.ID,
 				Kind:        p.Kind,
@@ -40,6 +52,7 @@ func (s *DBStorage) AddOrUpdate(ctx context.Context, policies ...policy.Wrapper)
 				Description: p.Description,
 				Disabled:    p.Disabled,
 				Definition:  PolicyDefWrapper{Policy: p.Policy},
+				Generated:   GeneratedPolicyWrapper{GeneratedPolicy: genPolicy},
 			}
 
 			// try to upsert this policy record
@@ -77,54 +90,71 @@ func (s *DBStorage) AddOrUpdate(ctx context.Context, policies ...policy.Wrapper)
 	})
 }
 
-func (s *DBStorage) GetPolicyUnit(ctx context.Context, id namer.ModuleID) (*policy.Unit, error) {
-	// SELECT p.id, p.definition FROM policy p
-	// JOIN policy_dependency pd ON (pd.dependency_id = p.id)
-	// WHERE pd.policy_id = ? AND p.disabled = false
-	depsQuery := s.db.From(goqu.T(PolicyTbl).As("p")).
+func (s *DBStorage) GetCompilationUnits(ctx context.Context, ids ...namer.ModuleID) (map[namer.ModuleID]*policy.CompilationUnit, error) {
+	// SELECT pd.policy_id as parent, p.id, p.generated
+	// FROM policy_dependency pd
+	// JOIN policy p ON (pd.dependency_id = p.id)
+	// WHERE pd.policy_id IN (?) AND p.disabled = false
+	depsQuery := s.db.Select(
+		goqu.C(PolicyDepTblPolicyIDCol).Table("pd").As("parent"),
+		goqu.C(PolicyTblIDCol).Table("p"),
+		goqu.C(PolicyTblGeneratedCol).Table("p")).
+		From(goqu.T(PolicyDepTbl).As("pd")).
 		Join(
-			goqu.T(PolicyDepTbl).As("pd"),
+			goqu.T(PolicyTbl).As("p"),
 			goqu.On(goqu.C(PolicyDepTblDepIDCol).Table("pd").Eq(goqu.C(PolicyTblIDCol).Table("p"))),
 		).
 		Where(
 			goqu.And(
-				goqu.C(PolicyDepTblPolicyIDCol).Table("pd").Eq(id),
+				goqu.C(PolicyDepTblPolicyIDCol).Table("pd").In(ids),
 				goqu.C(PolicyTblDisabledCol).Table("p").Eq(false),
 			),
-		).
-		Select(goqu.C(PolicyTblIDCol).Table("p"), goqu.C(PolicyTblDefinitionCol).Table("p"))
+		)
 
-	// SELECT id, definition FROM policy WHERE id = ? AND disabled = false UNION ALL <deps_query>
-	policiesQuery := s.db.From(PolicyTbl).
-		Select(goqu.C(PolicyTblIDCol), goqu.C(PolicyTblDefinitionCol)).
+	// SELECT id as parent, id, generated
+	// FROM policy WHERE id IN ? AND disabled = false
+	// UNION ALL <deps_query>
+	// ORDER BY parent
+	policiesQuery := s.db.Select(
+		goqu.C(PolicyTblIDCol).As("parent"),
+		goqu.C(PolicyTblIDCol), goqu.C(PolicyTblGeneratedCol)).
+		From(PolicyTbl).
 		Where(
 			goqu.And(
-				goqu.I(PolicyTblIDCol).Eq(id),
+				goqu.I(PolicyTblIDCol).In(ids),
 				goqu.I(PolicyTblDisabledCol).Eq(false),
 			),
 		).
-		UnionAll(depsQuery)
+		UnionAll(depsQuery).
+		Order(goqu.C("parent").Asc())
 
 	var results []struct {
-		ID         namer.ModuleID
-		Definition PolicyDefWrapper
+		Parent    namer.ModuleID
+		ID        namer.ModuleID
+		Generated GeneratedPolicyWrapper
 	}
 
 	if err := policiesQuery.Executor().ScanStructsContext(ctx, &results); err != nil {
 		return nil, fmt.Errorf("failed to get policy unit: %w", err)
 	}
 
-	unit := &policy.Unit{}
-	for _, p := range results {
-		if p.ID == id {
-			unit.Policy = policy.Wrap(p.Definition.Policy)
-			continue
-		}
-
-		unit.Dependencies = append(unit.Dependencies, policy.Wrap(p.Definition.Policy))
+	if len(results) == 0 {
+		return nil, db.ErrNoResults
 	}
 
-	return unit, nil
+	units := make(map[namer.ModuleID]*policy.CompilationUnit, len(ids))
+
+	for _, p := range results {
+		unit, ok := units[p.Parent]
+		if !ok {
+			unit = &policy.CompilationUnit{ModID: p.Parent, Definitions: make(map[namer.ModuleID]*policyv1.GeneratedPolicy)}
+			units[p.Parent] = unit
+		}
+
+		unit.Definitions[p.ID] = p.Generated.GeneratedPolicy
+	}
+
+	return units, nil
 }
 
 func (s *DBStorage) Delete(ctx context.Context, ids ...namer.ModuleID) error {
