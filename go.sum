@@ -168,8 +168,9 @@ github.com/ProtonMail/go-crypto v0.0.0-20210428141323-04723f9f07d7 h1:YoJbenK9C6
 github.com/ProtonMail/go-crypto v0.0.0-20210428141323-04723f9f07d7/go.mod h1:z4/9nQmJSSwwds7ejkxaJwO37dru3geImFUdJlaLzQo=
 github.com/ProtonMail/go-mime v0.0.0-20190923161245-9b5a4261663a h1:W6RrgN/sTxg1msqzFFb+G80MFmpjMw61IU+slm+wln4=
 github.com/ProtonMail/go-mime v0.0.0-20190923161245-9b5a4261663a/go.mod h1:NYt+V3/4rEeDuaev/zw1zCq8uqVEuPHzDPo3OZrlGJ4=
-github.com/ProtonMail/gopenpgp/v2 v2.1.8 h1:yK8uIOh6Epa6Q/wdEs9mmV8fJinzBurJ7vn4U3kbE/8=
 github.com/ProtonMail/gopenpgp/v2 v2.1.8/go.mod h1:mjMvRMlOlBhNuaa3z0xOmEgAkba/Mu1Z8uWwYj4/6Ws=
+github.com/ProtonMail/gopenpgp/v2 v2.1.9 h1:MdvkFBP8ldOHYOoaVct9LO+Zv5rl6VdeN1QurntRmkc=
+github.com/ProtonMail/gopenpgp/v2 v2.1.9/go.mod h1:CHIXesUdnPxIxtJTg2P/cxoA0cvUwIBpZIS8SsY82QA=
 github.com/PuerkitoBio/purell v1.1.1/go.mod h1:c11w/QuzBsJSee3cPx9rAFu61PvFxuPbtSwDGJws/X0=
 github.com/PuerkitoBio/urlesc v0.0.0-20170810143723-de5bf2ad4578/go.mod h1:uGdkoq3SwY9Y+13GIhn11/XLaGBb4BfwItxLd5jeuXE=
 github.com/Shopify/logrus-bugsnag v0.0.0-20171204204709-577dee27f20d/go.mod h1:HI8ITrYtUY+O+ZhtlqUnD8+KwNPOyugEhfP9fdUIaEQ=
