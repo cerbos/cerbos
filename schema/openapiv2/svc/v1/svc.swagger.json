@@ -62,14 +62,14 @@
         ]
       }
     },
-    "/api/playground": {
+    "/api/playground/evaluate": {
       "post": {
-        "operationId": "CerbosPlaygroundService_Playground",
+        "operationId": "CerbosPlaygroundService_PlaygroundEvaluate",
         "responses": {
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/v1PlaygroundResponse"
+              "$ref": "#/definitions/v1PlaygroundEvaluateResponse"
             }
           },
           "default": {
@@ -85,7 +85,39 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/v1PlaygroundRequest"
+              "$ref": "#/definitions/v1PlaygroundEvaluateRequest"
+            }
+          }
+        ],
+        "tags": [
+          "CerbosPlaygroundService"
+        ]
+      }
+    },
+    "/api/playground/validate": {
+      "post": {
+        "operationId": "CerbosPlaygroundService_PlaygroundValidate",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1PlaygroundValidateResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/v1PlaygroundValidateRequest"
             }
           }
         ],
@@ -239,51 +271,7 @@
       },
       "description": "Name of the action."
     },
-    "PlaygroundRequestPolicyFile": {
-      "type": "object",
-      "properties": {
-        "fileName": {
-          "type": "string",
-          "required": [
-            "file_name"
-          ]
-        },
-        "contents": {
-          "type": "string",
-          "format": "byte",
-          "required": [
-            "contents"
-          ]
-        }
-      },
-      "required": [
-        "fileName",
-        "contents"
-      ]
-    },
-    "PlaygroundResponseError": {
-      "type": "object",
-      "properties": {
-        "file": {
-          "type": "string"
-        },
-        "error": {
-          "type": "string"
-        }
-      }
-    },
-    "PlaygroundResponseErrorList": {
-      "type": "object",
-      "properties": {
-        "errors": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/PlaygroundResponseError"
-          }
-        }
-      }
-    },
-    "PlaygroundResponseEvalResult": {
+    "PlaygroundEvaluateResponseEvalResult": {
       "type": "object",
       "properties": {
         "action": {
@@ -303,14 +291,25 @@
         }
       }
     },
-    "PlaygroundResponseEvalResultList": {
+    "PlaygroundEvaluateResponseEvalResultList": {
       "type": "object",
       "properties": {
         "results": {
           "type": "array",
           "items": {
-            "$ref": "#/definitions/PlaygroundResponseEvalResult"
+            "$ref": "#/definitions/PlaygroundEvaluateResponseEvalResult"
           }
+        }
+      }
+    },
+    "PlaygroundFailureError": {
+      "type": "object",
+      "properties": {
+        "file": {
+          "type": "string"
+        },
+        "error": {
+          "type": "string"
         }
       }
     },
@@ -558,7 +557,7 @@
       ],
       "default": "EFFECT_UNSPECIFIED"
     },
-    "v1PlaygroundRequest": {
+    "v1PlaygroundEvaluateRequest": {
       "type": "object",
       "properties": {
         "playgroundId": {
@@ -567,7 +566,7 @@
         "policyFiles": {
           "type": "array",
           "items": {
-            "$ref": "#/definitions/PlaygroundRequestPolicyFile"
+            "$ref": "#/definitions/v1PolicyFile"
           },
           "description": "List of policy files.",
           "maxItems": 10,
@@ -596,26 +595,99 @@
           ]
         }
       },
-      "description": "Playground request",
+      "description": "Playground evaluate request",
       "required": [
         "policyFiles",
         "actions"
       ]
     },
-    "v1PlaygroundResponse": {
+    "v1PlaygroundEvaluateResponse": {
       "type": "object",
       "properties": {
         "playgroundId": {
           "type": "string"
         },
         "failure": {
-          "$ref": "#/definitions/PlaygroundResponseErrorList"
+          "$ref": "#/definitions/v1PlaygroundFailure"
         },
         "success": {
-          "$ref": "#/definitions/PlaygroundResponseEvalResultList"
+          "$ref": "#/definitions/PlaygroundEvaluateResponseEvalResultList"
+        }
+      },
+      "description": "Playground evaluate response"
+    },
+    "v1PlaygroundFailure": {
+      "type": "object",
+      "properties": {
+        "errors": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/PlaygroundFailureError"
+          }
         }
       },
       "description": "Playground response"
+    },
+    "v1PlaygroundValidateRequest": {
+      "type": "object",
+      "properties": {
+        "playgroundId": {
+          "type": "string"
+        },
+        "policyFiles": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/v1PolicyFile"
+          },
+          "description": "List of policy files.",
+          "maxItems": 10,
+          "minItems": 1,
+          "required": [
+            "policy_files"
+          ]
+        }
+      },
+      "description": "Playground validate request",
+      "required": [
+        "policyFiles"
+      ]
+    },
+    "v1PlaygroundValidateResponse": {
+      "type": "object",
+      "properties": {
+        "playgroundId": {
+          "type": "string"
+        },
+        "failure": {
+          "$ref": "#/definitions/v1PlaygroundFailure"
+        },
+        "success": {
+          "properties": {}
+        }
+      },
+      "description": "Playground validate response"
+    },
+    "v1PolicyFile": {
+      "type": "object",
+      "properties": {
+        "fileName": {
+          "type": "string",
+          "required": [
+            "file_name"
+          ]
+        },
+        "contents": {
+          "type": "string",
+          "format": "byte",
+          "required": [
+            "contents"
+          ]
+        }
+      },
+      "required": [
+        "fileName",
+        "contents"
+      ]
     },
     "v1Principal": {
       "type": "object",

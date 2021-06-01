@@ -8,6 +8,7 @@ option go_package = "github.com/cerbos/cerbos/internal/genpb/response/v1;respons
 option java_package = "dev.cerbos.api.v1.response";
 
 import "google/protobuf/duration.proto";
+import "google/protobuf/empty.proto";
 import "google/api/field_behavior.proto";
 import "protoc-gen-openapiv2/options/annotations.proto";
 import "shared/v1/shared.proto";
@@ -132,8 +133,7 @@ message CheckResourceBatchResponse {
     ];
 }
 
-
-message PlaygroundResponse {
+message PlaygroundFailure {
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
 		json_schema: {
 			description: "Playground response"
@@ -145,10 +145,31 @@ message PlaygroundResponse {
         string error = 2;
     }
 
-    message ErrorList {
-        repeated Error errors = 1;
-    }
+    repeated Error errors = 1;
+}
 
+message PlaygroundValidateResponse {
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
+		json_schema: {
+			description: "Playground validate response"
+		}
+    };
+
+    string playground_id = 1;
+
+    oneof outcome {
+        PlaygroundFailure failure = 2;
+        google.protobuf.Empty success = 3;
+    }
+}
+
+message PlaygroundEvaluateResponse {
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
+		json_schema: {
+			description: "Playground evaluate response"
+		}
+    };
+    
     message EvalResult {
         string action = 1;
         shared.v1.Effect effect = 2;
@@ -162,7 +183,7 @@ message PlaygroundResponse {
 
     string playground_id = 1;
     oneof outcome {
-        ErrorList failure = 2;
+        PlaygroundFailure failure = 2;
         EvalResultList success = 3;
     }
 }
