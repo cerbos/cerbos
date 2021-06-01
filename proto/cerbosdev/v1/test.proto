@@ -30,9 +30,14 @@ message ServerTestCase {
         response.v1.CheckResourceBatchResponse want_response = 2;
     }
 
-    message PlaygroundCall {
-        request.v1.PlaygroundRequest input = 1;
-        response.v1.PlaygroundResponse want_response = 2;
+    message PlaygroundValidateCall {
+        request.v1.PlaygroundValidateRequest input = 1;
+        response.v1.PlaygroundValidateResponse want_response = 2;
+    }
+
+    message PlaygroundEvaluateCall {
+        request.v1.PlaygroundEvaluateRequest input = 1;
+        response.v1.PlaygroundEvaluateResponse want_response = 2;
     }
 
     string description = 1;
@@ -40,7 +45,8 @@ message ServerTestCase {
     oneof call_kind {
         CheckResourceSetCall check_resource_set = 3;
         CheckResourceBatchCall check_resource_batch = 4;
-        PlaygroundCall playground = 5;
+        PlaygroundValidateCall playground_validate = 5;
+        PlaygroundEvaluateCall playground_evaluate = 6;
     }
 }
 

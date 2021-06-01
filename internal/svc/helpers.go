@@ -41,8 +41,20 @@ func ExtractRequestFields(fullMethod string, req interface{}) map[string]interfa
 			},
 		}
 
-	case "/svc.v1.CerbosPlaygroundService/Playground":
-		pgReq, ok := req.(*requestv1.PlaygroundRequest)
+	case "/svc.v1.CerbosPlaygroundService/PlaygroundValidate":
+		pgReq, ok := req.(*requestv1.PlaygroundValidateRequest)
+		if !ok {
+			return nil
+		}
+
+		return map[string]interface{}{
+			util.AppName: map[string]string{
+				"playground.id": pgReq.PlaygroundId,
+			},
+		}
+
+	case "/svc.v1.CerbosPlaygroundService/PlaygroundEvaluate":
+		pgReq, ok := req.(*requestv1.PlaygroundEvaluateRequest)
 		if !ok {
 			return nil
 		}

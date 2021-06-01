@@ -33,9 +33,15 @@ check-grpc: $(GRPCURL)
 		echo "";)
 
 	@ $(foreach REQ_FILE,\
-		$(wildcard $(DEV_DIR)/requests/playground/*.json),\
+		$(wildcard $(DEV_DIR)/requests/playground_validate/*.json),\
 		echo $(REQ_FILE); \
-		$(GRPCURL) -authority cerbos.local -insecure -d @ localhost:$(GRPC_PORT) svc.v1.CerbosPlaygroundService/Playground < $(REQ_FILE);\
+		$(GRPCURL) -authority cerbos.local -insecure -d @ localhost:$(GRPC_PORT) svc.v1.CerbosPlaygroundService/PlaygroundValidate < $(REQ_FILE);\
+		echo "";)
+
+	@ $(foreach REQ_FILE,\
+		$(wildcard $(DEV_DIR)/requests/playground_evaluate/*.json),\
+		echo $(REQ_FILE); \
+		$(GRPCURL) -authority cerbos.local -insecure -d @ localhost:$(GRPC_PORT) svc.v1.CerbosPlaygroundService/PlaygroundEvaluate < $(REQ_FILE);\
 		echo "";)
 
 .PHONY: check-grpc-insecure
@@ -53,9 +59,15 @@ check-grpc-insecure: $(GRPCURL)
 		echo "";)
 
 	@ $(foreach REQ_FILE,\
-		$(wildcard $(DEV_DIR)/requests/playground/*.json),\
+		$(wildcard $(DEV_DIR)/requests/playground_valildate/*.json),\
 		echo $(REQ_FILE); \
-		$(GRPCURL) -plaintext -d @ localhost:$(GRPC_PORT) svc.v1.CerbosPlaygroundService/Playground < $(REQ_FILE);\
+		$(GRPCURL) -plaintext -d @ localhost:$(GRPC_PORT) svc.v1.CerbosPlaygroundService/PlaygroundValidate < $(REQ_FILE);\
+		echo "";)
+
+	@ $(foreach REQ_FILE,\
+		$(wildcard $(DEV_DIR)/requests/playground_evaluate/*.json),\
+		echo $(REQ_FILE); \
+		$(GRPCURL) -plaintext -d @ localhost:$(GRPC_PORT) svc.v1.CerbosPlaygroundService/PlaygroundEvaluate < $(REQ_FILE);\
 		echo "";)
 
 .PHONY: check-http
@@ -75,10 +87,17 @@ check-http:
 		echo "";)
 
 	@ $(foreach REQ_FILE,\
-		$(wildcard $(DEV_DIR)/requests/playground/*.json),\
+		$(wildcard $(DEV_DIR)/requests/playground_validate/*.json),\
 		echo "";\
 		echo $(REQ_FILE); \
-		curl -k https://localhost:$(HTTP_PORT)/api/playground?pretty -d @$(REQ_FILE);\
+		curl -k https://localhost:$(HTTP_PORT)/api/playground/validate?pretty -d @$(REQ_FILE);\
+		echo "";)
+
+	@ $(foreach REQ_FILE,\
+		$(wildcard $(DEV_DIR)/requests/playground_evaluate/*.json),\
+		echo "";\
+		echo $(REQ_FILE); \
+		curl -k https://localhost:$(HTTP_PORT)/api/playground/evaluate?pretty -d @$(REQ_FILE);\
 		echo "";)
 
 .PHONY: check-http-insecure
@@ -98,10 +117,17 @@ check-http-insecure:
 		echo "";)
 
 	@ $(foreach REQ_FILE,\
-		$(wildcard $(DEV_DIR)/requests/playground/*.json),\
+		$(wildcard $(DEV_DIR)/requests/playground/validate/*.json),\
 		echo "";\
 		echo $(REQ_FILE); \
-		curl http://localhost:$(HTTP_PORT)/api/playground?pretty -d @$(REQ_FILE);\
+		curl http://localhost:$(HTTP_PORT)/api/playground/validate?pretty -d @$(REQ_FILE);\
+		echo "";)
+
+	@ $(foreach REQ_FILE,\
+		$(wildcard $(DEV_DIR)/requests/playground/evaluate/*.json),\
+		echo "";\
+		echo $(REQ_FILE); \
+		curl http://localhost:$(HTTP_PORT)/api/playground/evaluate?pretty -d @$(REQ_FILE);\
 		echo "";)
 
 .PHONY: perf

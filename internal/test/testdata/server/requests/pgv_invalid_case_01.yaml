@@ -1,6 +1,6 @@
 ---
 description: "Corrupt policy data"
-playground:
+playgroundValidate:
   input: {
     "playgroundId": "test",
     "policyFiles": [
@@ -12,20 +12,7 @@ playground:
         "fileName": "resource.yaml",
         "contents": "rubbish"
       }
-    ],
-    "actions": ["view", "delete"],
-    "principal": {
-      "id": "eduardo",
-      "roles": ["user"]
-    },
-    "resource": {
-      "kind": "album:object",
-      "id": "XX125",
-      "attr": {
-        "owner": "alicia",
-        "public": false
-      }
-    }
+    ]
   }
   wantResponse: {
     "playgroundId": "test",

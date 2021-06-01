@@ -1,6 +1,6 @@
 ---
 description: "Missing derived roles definition"
-playground:
+playgroundEvaluate:
   input: {
     "playgroundId": "test",
     "policyFiles": [
