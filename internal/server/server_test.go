@@ -198,9 +198,12 @@ func testGRPCRequest(addr string, opts ...grpc.DialOption) func(*testing.T) {
 				case *cerbosdevv1.ServerTestCase_CheckResourceBatch:
 					want = call.CheckResourceBatch.WantResponse
 					have, err = cerbosClient.CheckResourceBatch(ctx, call.CheckResourceBatch.Input)
-				case *cerbosdevv1.ServerTestCase_Playground:
-					want = call.Playground.WantResponse
-					have, err = playgroundClient.Playground(ctx, call.Playground.Input)
+				case *cerbosdevv1.ServerTestCase_PlaygroundValidate:
+					want = call.PlaygroundValidate.WantResponse
+					have, err = playgroundClient.PlaygroundValidate(ctx, call.PlaygroundValidate.Input)
+				case *cerbosdevv1.ServerTestCase_PlaygroundEvaluate:
+					want = call.PlaygroundEvaluate.WantResponse
+					have, err = playgroundClient.PlaygroundEvaluate(ctx, call.PlaygroundEvaluate.Input)
 				default:
 					t.Fatalf("Unknown call type: %T", call)
 				}
@@ -246,11 +249,16 @@ func testHTTPRequest(server string) func(*testing.T) {
 					input = call.CheckResourceBatch.Input
 					want = call.CheckResourceBatch.WantResponse
 					have = &responsev1.CheckResourceBatchResponse{}
-				case *cerbosdevv1.ServerTestCase_Playground:
-					addr = fmt.Sprintf("%s/api/playground", server)
-					input = call.Playground.Input
-					want = call.Playground.WantResponse
-					have = &responsev1.PlaygroundResponse{}
+				case *cerbosdevv1.ServerTestCase_PlaygroundValidate:
+					addr = fmt.Sprintf("%s/api/playground/validate", server)
+					input = call.PlaygroundValidate.Input
+					want = call.PlaygroundValidate.WantResponse
+					have = &responsev1.PlaygroundValidateResponse{}
+				case *cerbosdevv1.ServerTestCase_PlaygroundEvaluate:
+					addr = fmt.Sprintf("%s/api/playground/evaluate", server)
+					input = call.PlaygroundEvaluate.Input
+					want = call.PlaygroundEvaluate.WantResponse
+					have = &responsev1.PlaygroundEvaluateResponse{}
 				default:
 					t.Fatalf("Unknown call type: %T", call)
 				}
@@ -311,11 +319,11 @@ func compareProto(t *testing.T, want, have interface{}) {
 	))
 }
 
-func cmpPlaygroundEvalResult(a, b *responsev1.PlaygroundResponse_EvalResult) bool {
+func cmpPlaygroundEvalResult(a, b *responsev1.PlaygroundEvaluateResponse_EvalResult) bool {
 	return a.Action < b.Action
 }
 
-func cmpPlaygroundError(a, b *responsev1.PlaygroundResponse_Error) bool {
+func cmpPlaygroundError(a, b *responsev1.PlaygroundFailure_Error) bool {
 	if a.File == b.File {
 		return a.Error < b.Error
 	}

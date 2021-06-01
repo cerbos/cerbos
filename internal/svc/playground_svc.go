@@ -15,6 +15,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/types/known/emptypb"
 
 	"github.com/cerbos/cerbos/internal/compile"
 	"github.com/cerbos/cerbos/internal/engine"
@@ -41,40 +42,52 @@ func NewCerbosPlaygroundService() *CerbosPlaygroundService {
 	}
 }
 
-func (cs *CerbosPlaygroundService) Playground(ctx context.Context, req *requestv1.PlaygroundRequest) (*responsev1.PlaygroundResponse, error) {
+func (cs *CerbosPlaygroundService) PlaygroundValidate(ctx context.Context, req *requestv1.PlaygroundValidateRequest) (*responsev1.PlaygroundValidateResponse, error) {
 	log := ctxzap.Extract(ctx).Named("playground")
 
 	procCtx, cancelFunc := context.WithTimeout(ctx, playgroundRequestTimeout)
 	defer cancelFunc()
 
-	fs := afero.NewMemMapFs()
-	for _, pf := range req.PolicyFiles {
-		if err := afero.WriteFile(fs, pf.FileName, pf.Contents, 0644); err != nil {
-			log.Error("Failed to create in-mem policy file", zap.String("policy_file", pf.FileName), zap.Error(err))
-			return nil, status.Errorf(codes.Internal, "failed to create policy file %s", pf.FileName)
-		}
+	_, fail, err := doCompile(procCtx, log, req.PolicyFiles)
+	if err != nil {
+		return nil, err
 	}
 
-	store, err := mem.NewStore(procCtx, fs)
-	if err != nil {
-		idxErr := new(disk.IndexBuildError)
-		if errors.As(err, &idxErr) {
-			return processLintErrors(ctx, req.PlaygroundId, idxErr)
-		}
-
-		log.Error("Failed to create mem store", zap.Error(err))
-		return nil, status.Errorf(codes.Internal, "failed to create mem store")
+	if fail != nil {
+		return &responsev1.PlaygroundValidateResponse{
+			PlaygroundId: req.PlaygroundId,
+			Outcome: &responsev1.PlaygroundValidateResponse_Failure{
+				Failure: fail,
+			},
+		}, nil
 	}
 
-	eng, err := engine.NewEphemeral(procCtx, store)
-	if err != nil {
-		compErr := new(compile.ErrorList)
-		if errors.As(err, compErr) {
-			return processCompileErrors(ctx, req.PlaygroundId, *compErr)
-		}
+	return &responsev1.PlaygroundValidateResponse{
+		PlaygroundId: req.PlaygroundId,
+		Outcome: &responsev1.PlaygroundValidateResponse_Success{
+			Success: &emptypb.Empty{},
+		},
+	}, nil
+}
 
-		log.Error("Failed to create engine", zap.Error(err))
-		return nil, status.Errorf(codes.Internal, "failed to create engine")
+func (cs *CerbosPlaygroundService) PlaygroundEvaluate(ctx context.Context, req *requestv1.PlaygroundEvaluateRequest) (*responsev1.PlaygroundEvaluateResponse, error) {
+	log := ctxzap.Extract(ctx).Named("playground")
+
+	procCtx, cancelFunc := context.WithTimeout(ctx, playgroundRequestTimeout)
+	defer cancelFunc()
+
+	eng, fail, err := doCompile(procCtx, log, req.PolicyFiles)
+	if err != nil {
+		return nil, err
+	}
+
+	if fail != nil {
+		return &responsev1.PlaygroundEvaluateResponse{
+			PlaygroundId: req.PlaygroundId,
+			Outcome: &responsev1.PlaygroundEvaluateResponse_Failure{
+				Failure: fail,
+			},
+		}, nil
 	}
 
 	inputs := []*enginev1.CheckInput{
@@ -95,32 +108,68 @@ func (cs *CerbosPlaygroundService) Playground(ctx context.Context, req *requestv
 	return processEngineOutput(ctx, req.PlaygroundId, output)
 }
 
-func processLintErrors(ctx context.Context, playgroundID string, errs *disk.IndexBuildError) (*responsev1.PlaygroundResponse, error) {
-	var errors []*responsev1.PlaygroundResponse_Error //nolint:prealloc
+func doCompile(ctx context.Context, log *zap.Logger, files []*requestv1.PolicyFile) (*engine.Engine, *responsev1.PlaygroundFailure, error) {
+	fs := afero.NewMemMapFs()
+	for _, pf := range files {
+		if err := afero.WriteFile(fs, pf.FileName, pf.Contents, 0644); err != nil {
+			log.Error("Failed to create in-mem policy file", zap.String("policy_file", pf.FileName), zap.Error(err))
+			return nil, nil, status.Errorf(codes.Internal, "failed to create policy file %s", pf.FileName)
+		}
+	}
+
+	store, err := mem.NewStore(ctx, fs)
+	if err != nil {
+		idxErr := new(disk.IndexBuildError)
+		if errors.As(err, &idxErr) {
+			pf := processLintErrors(ctx, idxErr)
+			return nil, pf, nil
+		}
+
+		log.Error("Failed to create mem store", zap.Error(err))
+		return nil, nil, status.Errorf(codes.Internal, "failed to create mem store")
+	}
+
+	eng, err := engine.NewEphemeral(ctx, store)
+	if err != nil {
+		compErr := new(compile.ErrorList)
+		if errors.As(err, compErr) {
+			pf := processCompileErrors(ctx, *compErr)
+			return nil, pf, nil
+		}
+
+		log.Error("Failed to create engine", zap.Error(err))
+		return nil, nil, status.Errorf(codes.Internal, "failed to create engine")
+	}
+
+	return eng, nil, nil
+}
+
+func processLintErrors(ctx context.Context, errs *disk.IndexBuildError) *responsev1.PlaygroundFailure {
+	var errors []*responsev1.PlaygroundFailure_Error //nolint:prealloc
 
 	for _, dd := range errs.DuplicateDefs {
-		errors = append(errors, &responsev1.PlaygroundResponse_Error{
+		errors = append(errors, &responsev1.PlaygroundFailure_Error{
 			File:  dd.File,
 			Error: fmt.Sprintf("%s is a duplicate of %s", dd.File, dd.OtherFile),
 		})
 	}
 
 	for _, mi := range errs.MissingImports {
-		errors = append(errors, &responsev1.PlaygroundResponse_Error{
+		errors = append(errors, &responsev1.PlaygroundFailure_Error{
 			File:  mi.ImportingFile,
 			Error: mi.Desc,
 		})
 	}
 
 	for _, lf := range errs.LoadFailures {
-		errors = append(errors, &responsev1.PlaygroundResponse_Error{
+		errors = append(errors, &responsev1.PlaygroundFailure_Error{
 			File:  lf.File,
 			Error: fmt.Sprintf("Failed to read: %s", lf.Err.Error()),
 		})
 	}
 
 	for _, d := range errs.Disabled {
-		errors = append(errors, &responsev1.PlaygroundResponse_Error{
+		errors = append(errors, &responsev1.PlaygroundFailure_Error{
 			File:  d,
 			Error: "Disabled policy",
 		})
@@ -128,19 +177,14 @@ func processLintErrors(ctx context.Context, playgroundID string, errs *disk.Inde
 
 	_ = grpc.SendHeader(ctx, metadata.Pairs("x-http-code", "400"))
 
-	return &responsev1.PlaygroundResponse{
-		PlaygroundId: playgroundID,
-		Outcome: &responsev1.PlaygroundResponse_Failure{
-			Failure: &responsev1.PlaygroundResponse_ErrorList{Errors: errors},
-		},
-	}, nil
+	return &responsev1.PlaygroundFailure{Errors: errors}
 }
 
-func processCompileErrors(ctx context.Context, playgroundID string, errs compile.ErrorList) (*responsev1.PlaygroundResponse, error) {
-	errors := make([]*responsev1.PlaygroundResponse_Error, len(errs))
+func processCompileErrors(ctx context.Context, errs compile.ErrorList) *responsev1.PlaygroundFailure {
+	errors := make([]*responsev1.PlaygroundFailure_Error, len(errs))
 
 	for i, err := range errs {
-		errors[i] = &responsev1.PlaygroundResponse_Error{
+		errors[i] = &responsev1.PlaygroundFailure_Error{
 			File:  err.File,
 			Error: fmt.Sprintf("%s (%s)", err.Description, err.Err.Error()),
 		}
@@ -148,23 +192,18 @@ func processCompileErrors(ctx context.Context, playgroundID string, errs compile
 
 	_ = grpc.SendHeader(ctx, metadata.Pairs("x-http-code", "400"))
 
-	return &responsev1.PlaygroundResponse{
-		PlaygroundId: playgroundID,
-		Outcome: &responsev1.PlaygroundResponse_Failure{
-			Failure: &responsev1.PlaygroundResponse_ErrorList{Errors: errors},
-		},
-	}, nil
+	return &responsev1.PlaygroundFailure{Errors: errors}
 }
 
-func processEngineOutput(_ context.Context, playgroundID string, outputs []*enginev1.CheckOutput) (*responsev1.PlaygroundResponse, error) {
+func processEngineOutput(_ context.Context, playgroundID string, outputs []*enginev1.CheckOutput) (*responsev1.PlaygroundEvaluateResponse, error) {
 	if len(outputs) != 1 {
 		return nil, status.Errorf(codes.Internal, "Unexpected engine output")
 	}
 
-	results := make([]*responsev1.PlaygroundResponse_EvalResult, 0, len(outputs[0].Actions))
+	results := make([]*responsev1.PlaygroundEvaluateResponse_EvalResult, 0, len(outputs[0].Actions))
 
 	for action, effect := range outputs[0].Actions {
-		results = append(results, &responsev1.PlaygroundResponse_EvalResult{
+		results = append(results, &responsev1.PlaygroundEvaluateResponse_EvalResult{
 			Action:                action,
 			Effect:                effect.Effect,
 			Policy:                effect.Policy,
@@ -172,10 +211,10 @@ func processEngineOutput(_ context.Context, playgroundID string, outputs []*engi
 		})
 	}
 
-	return &responsev1.PlaygroundResponse{
+	return &responsev1.PlaygroundEvaluateResponse{
 		PlaygroundId: playgroundID,
-		Outcome: &responsev1.PlaygroundResponse_Success{
-			Success: &responsev1.PlaygroundResponse_EvalResultList{Results: results},
+		Outcome: &responsev1.PlaygroundEvaluateResponse_Success{
+			Success: &responsev1.PlaygroundEvaluateResponse_EvalResultList{Results: results},
 		},
 	}, nil
 }
