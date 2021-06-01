@@ -62,9 +62,16 @@ service CerbosService {
 }
 
 service CerbosPlaygroundService {
-    rpc Playground(request.v1.PlaygroundRequest) returns (response.v1.PlaygroundResponse) {
+    rpc PlaygroundValidate(request.v1.PlaygroundValidateRequest) returns (response.v1.PlaygroundValidateResponse) {
         option (google.api.http) = {
-            post: "/api/playground",
+            post: "/api/playground/validate",
+            body: "*"
+        };
+    }
+
+    rpc PlaygroundEvaluate(request.v1.PlaygroundEvaluateRequest) returns (response.v1.PlaygroundEvaluateResponse) {
+        option (google.api.http) = {
+            post: "/api/playground/evaluate",
             body: "*"
         };
     }

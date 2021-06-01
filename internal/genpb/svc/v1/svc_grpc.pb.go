@@ -142,7 +142,8 @@ var CerbosService_ServiceDesc = grpc.ServiceDesc{
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type CerbosPlaygroundServiceClient interface {
-	Playground(ctx context.Context, in *v1.PlaygroundRequest, opts ...grpc.CallOption) (*v11.PlaygroundResponse, error)
+	PlaygroundValidate(ctx context.Context, in *v1.PlaygroundValidateRequest, opts ...grpc.CallOption) (*v11.PlaygroundValidateResponse, error)
+	PlaygroundEvaluate(ctx context.Context, in *v1.PlaygroundEvaluateRequest, opts ...grpc.CallOption) (*v11.PlaygroundEvaluateResponse, error)
 }
 
 type cerbosPlaygroundServiceClient struct {
@@ -153,9 +154,18 @@ func NewCerbosPlaygroundServiceClient(cc grpc.ClientConnInterface) CerbosPlaygro
 	return &cerbosPlaygroundServiceClient{cc}
 }
 
-func (c *cerbosPlaygroundServiceClient) Playground(ctx context.Context, in *v1.PlaygroundRequest, opts ...grpc.CallOption) (*v11.PlaygroundResponse, error) {
-	out := new(v11.PlaygroundResponse)
-	err := c.cc.Invoke(ctx, "/svc.v1.CerbosPlaygroundService/Playground", in, out, opts...)
+func (c *cerbosPlaygroundServiceClient) PlaygroundValidate(ctx context.Context, in *v1.PlaygroundValidateRequest, opts ...grpc.CallOption) (*v11.PlaygroundValidateResponse, error) {
+	out := new(v11.PlaygroundValidateResponse)
+	err := c.cc.Invoke(ctx, "/svc.v1.CerbosPlaygroundService/PlaygroundValidate", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *cerbosPlaygroundServiceClient) PlaygroundEvaluate(ctx context.Context, in *v1.PlaygroundEvaluateRequest, opts ...grpc.CallOption) (*v11.PlaygroundEvaluateResponse, error) {
+	out := new(v11.PlaygroundEvaluateResponse)
+	err := c.cc.Invoke(ctx, "/svc.v1.CerbosPlaygroundService/PlaygroundEvaluate", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -166,7 +176,8 @@ func (c *cerbosPlaygroundServiceClient) Playground(ctx context.Context, in *v1.P
 // All implementations must embed UnimplementedCerbosPlaygroundServiceServer
 // for forward compatibility
 type CerbosPlaygroundServiceServer interface {
-	Playground(context.Context, *v1.PlaygroundRequest) (*v11.PlaygroundResponse, error)
+	PlaygroundValidate(context.Context, *v1.PlaygroundValidateRequest) (*v11.PlaygroundValidateResponse, error)
+	PlaygroundEvaluate(context.Context, *v1.PlaygroundEvaluateRequest) (*v11.PlaygroundEvaluateResponse, error)
 	mustEmbedUnimplementedCerbosPlaygroundServiceServer()
 }
 
@@ -174,8 +185,11 @@ type CerbosPlaygroundServiceServer interface {
 type UnimplementedCerbosPlaygroundServiceServer struct {
 }
 
-func (UnimplementedCerbosPlaygroundServiceServer) Playground(context.Context, *v1.PlaygroundRequest) (*v11.PlaygroundResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method Playground not implemented")
+func (UnimplementedCerbosPlaygroundServiceServer) PlaygroundValidate(context.Context, *v1.PlaygroundValidateRequest) (*v11.PlaygroundValidateResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method PlaygroundValidate not implemented")
+}
+func (UnimplementedCerbosPlaygroundServiceServer) PlaygroundEvaluate(context.Context, *v1.PlaygroundEvaluateRequest) (*v11.PlaygroundEvaluateResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method PlaygroundEvaluate not implemented")
 }
 func (UnimplementedCerbosPlaygroundServiceServer) mustEmbedUnimplementedCerbosPlaygroundServiceServer() {
 }
@@ -191,20 +205,38 @@ func RegisterCerbosPlaygroundServiceServer(s grpc.ServiceRegistrar, srv CerbosPl
 	s.RegisterService(&CerbosPlaygroundService_ServiceDesc, srv)
 }
 
-func _CerbosPlaygroundService_Playground_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(v1.PlaygroundRequest)
+func _CerbosPlaygroundService_PlaygroundValidate_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(v1.PlaygroundValidateRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(CerbosPlaygroundServiceServer).Playground(ctx, in)
+		return srv.(CerbosPlaygroundServiceServer).PlaygroundValidate(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/svc.v1.CerbosPlaygroundService/Playground",
+		FullMethod: "/svc.v1.CerbosPlaygroundService/PlaygroundValidate",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(CerbosPlaygroundServiceServer).Playground(ctx, req.(*v1.PlaygroundRequest))
+		return srv.(CerbosPlaygroundServiceServer).PlaygroundValidate(ctx, req.(*v1.PlaygroundValidateRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _CerbosPlaygroundService_PlaygroundEvaluate_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(v1.PlaygroundEvaluateRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CerbosPlaygroundServiceServer).PlaygroundEvaluate(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/svc.v1.CerbosPlaygroundService/PlaygroundEvaluate",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CerbosPlaygroundServiceServer).PlaygroundEvaluate(ctx, req.(*v1.PlaygroundEvaluateRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -217,8 +249,12 @@ var CerbosPlaygroundService_ServiceDesc = grpc.ServiceDesc{
 	HandlerType: (*CerbosPlaygroundServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "Playground",
-			Handler:    _CerbosPlaygroundService_Playground_Handler,
+			MethodName: "PlaygroundValidate",
+			Handler:    _CerbosPlaygroundService_PlaygroundValidate_Handler,
+		},
+		{
+			MethodName: "PlaygroundEvaluate",
+			Handler:    _CerbosPlaygroundService_PlaygroundEvaluate_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

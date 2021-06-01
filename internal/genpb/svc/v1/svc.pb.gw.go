@@ -100,8 +100,8 @@ func local_request_CerbosService_CheckResourceBatch_0(ctx context.Context, marsh
 
 }
 
-func request_CerbosPlaygroundService_Playground_0(ctx context.Context, marshaler runtime.Marshaler, client CerbosPlaygroundServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq requestv1.PlaygroundRequest
+func request_CerbosPlaygroundService_PlaygroundValidate_0(ctx context.Context, marshaler runtime.Marshaler, client CerbosPlaygroundServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var protoReq requestv1.PlaygroundValidateRequest
 	var metadata runtime.ServerMetadata
 
 	newReader, berr := utilities.IOReaderFactory(req.Body)
@@ -112,13 +112,13 @@ func request_CerbosPlaygroundService_Playground_0(ctx context.Context, marshaler
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 
-	msg, err := client.Playground(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
+	msg, err := client.PlaygroundValidate(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
 	return msg, metadata, err
 
 }
 
-func local_request_CerbosPlaygroundService_Playground_0(ctx context.Context, marshaler runtime.Marshaler, server CerbosPlaygroundServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq requestv1.PlaygroundRequest
+func local_request_CerbosPlaygroundService_PlaygroundValidate_0(ctx context.Context, marshaler runtime.Marshaler, server CerbosPlaygroundServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var protoReq requestv1.PlaygroundValidateRequest
 	var metadata runtime.ServerMetadata
 
 	newReader, berr := utilities.IOReaderFactory(req.Body)
@@ -129,7 +129,41 @@ func local_request_CerbosPlaygroundService_Playground_0(ctx context.Context, mar
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 
-	msg, err := server.Playground(ctx, &protoReq)
+	msg, err := server.PlaygroundValidate(ctx, &protoReq)
+	return msg, metadata, err
+
+}
+
+func request_CerbosPlaygroundService_PlaygroundEvaluate_0(ctx context.Context, marshaler runtime.Marshaler, client CerbosPlaygroundServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var protoReq requestv1.PlaygroundEvaluateRequest
+	var metadata runtime.ServerMetadata
+
+	newReader, berr := utilities.IOReaderFactory(req.Body)
+	if berr != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", berr)
+	}
+	if err := marshaler.NewDecoder(newReader()).Decode(&protoReq); err != nil && err != io.EOF {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+
+	msg, err := client.PlaygroundEvaluate(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
+	return msg, metadata, err
+
+}
+
+func local_request_CerbosPlaygroundService_PlaygroundEvaluate_0(ctx context.Context, marshaler runtime.Marshaler, server CerbosPlaygroundServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var protoReq requestv1.PlaygroundEvaluateRequest
+	var metadata runtime.ServerMetadata
+
+	newReader, berr := utilities.IOReaderFactory(req.Body)
+	if berr != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", berr)
+	}
+	if err := marshaler.NewDecoder(newReader()).Decode(&protoReq); err != nil && err != io.EOF {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+
+	msg, err := server.PlaygroundEvaluate(ctx, &protoReq)
 	return msg, metadata, err
 
 }
@@ -195,18 +229,18 @@ func RegisterCerbosServiceHandlerServer(ctx context.Context, mux *runtime.ServeM
 // Note that using this registration option will cause many gRPC library features to stop working. Consider using RegisterCerbosPlaygroundServiceHandlerFromEndpoint instead.
 func RegisterCerbosPlaygroundServiceHandlerServer(ctx context.Context, mux *runtime.ServeMux, server CerbosPlaygroundServiceServer) error {
 
-	mux.Handle("POST", pattern_CerbosPlaygroundService_Playground_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("POST", pattern_CerbosPlaygroundService_PlaygroundValidate_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/svc.v1.CerbosPlaygroundService/Playground")
+		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/svc.v1.CerbosPlaygroundService/PlaygroundValidate")
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := local_request_CerbosPlaygroundService_Playground_0(rctx, inboundMarshaler, server, req, pathParams)
+		resp, md, err := local_request_CerbosPlaygroundService_PlaygroundValidate_0(rctx, inboundMarshaler, server, req, pathParams)
 		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
@@ -214,7 +248,30 @@ func RegisterCerbosPlaygroundServiceHandlerServer(ctx context.Context, mux *runt
 			return
 		}
 
-		forward_CerbosPlaygroundService_Playground_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+		forward_CerbosPlaygroundService_PlaygroundValidate_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+
+	})
+
+	mux.Handle("POST", pattern_CerbosPlaygroundService_PlaygroundEvaluate_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+		ctx, cancel := context.WithCancel(req.Context())
+		defer cancel()
+		var stream runtime.ServerTransportStream
+		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
+		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
+		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/svc.v1.CerbosPlaygroundService/PlaygroundEvaluate")
+		if err != nil {
+			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
+			return
+		}
+		resp, md, err := local_request_CerbosPlaygroundService_PlaygroundEvaluate_0(rctx, inboundMarshaler, server, req, pathParams)
+		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
+		ctx = runtime.NewServerMetadataContext(ctx, md)
+		if err != nil {
+			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
+			return
+		}
+
+		forward_CerbosPlaygroundService_PlaygroundEvaluate_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
@@ -352,23 +409,43 @@ func RegisterCerbosPlaygroundServiceHandler(ctx context.Context, mux *runtime.Se
 // "CerbosPlaygroundServiceClient" to call the correct interceptors.
 func RegisterCerbosPlaygroundServiceHandlerClient(ctx context.Context, mux *runtime.ServeMux, client CerbosPlaygroundServiceClient) error {
 
-	mux.Handle("POST", pattern_CerbosPlaygroundService_Playground_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("POST", pattern_CerbosPlaygroundService_PlaygroundValidate_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/svc.v1.CerbosPlaygroundService/Playground")
+		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/svc.v1.CerbosPlaygroundService/PlaygroundValidate")
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := request_CerbosPlaygroundService_Playground_0(rctx, inboundMarshaler, client, req, pathParams)
+		resp, md, err := request_CerbosPlaygroundService_PlaygroundValidate_0(rctx, inboundMarshaler, client, req, pathParams)
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
 
-		forward_CerbosPlaygroundService_Playground_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+		forward_CerbosPlaygroundService_PlaygroundValidate_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+
+	})
+
+	mux.Handle("POST", pattern_CerbosPlaygroundService_PlaygroundEvaluate_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+		ctx, cancel := context.WithCancel(req.Context())
+		defer cancel()
+		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
+		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/svc.v1.CerbosPlaygroundService/PlaygroundEvaluate")
+		if err != nil {
+			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
+			return
+		}
+		resp, md, err := request_CerbosPlaygroundService_PlaygroundEvaluate_0(rctx, inboundMarshaler, client, req, pathParams)
+		ctx = runtime.NewServerMetadataContext(ctx, md)
+		if err != nil {
+			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
+			return
+		}
+
+		forward_CerbosPlaygroundService_PlaygroundEvaluate_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
@@ -376,9 +453,13 @@ func RegisterCerbosPlaygroundServiceHandlerClient(ctx context.Context, mux *runt
 }
 
 var (
-	pattern_CerbosPlaygroundService_Playground_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"api", "playground"}, ""))
+	pattern_CerbosPlaygroundService_PlaygroundValidate_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"api", "playground", "validate"}, ""))
+
+	pattern_CerbosPlaygroundService_PlaygroundEvaluate_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"api", "playground", "evaluate"}, ""))
 )
 
 var (
-	forward_CerbosPlaygroundService_Playground_0 = runtime.ForwardResponseMessage
+	forward_CerbosPlaygroundService_PlaygroundValidate_0 = runtime.ForwardResponseMessage
+
+	forward_CerbosPlaygroundService_PlaygroundEvaluate_0 = runtime.ForwardResponseMessage
 )

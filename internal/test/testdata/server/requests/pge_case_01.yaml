@@ -1,6 +1,6 @@
 ---
-description: "Valid playground"
-playground:
+description: "Valid Request"
+playgroundEvaluate:
   input: {
     "playgroundId": "test",
     "policyFiles": [

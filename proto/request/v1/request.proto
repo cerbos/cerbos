@@ -153,24 +153,45 @@ message CheckResourceBatchRequest {
     ];
 }
 
-message PlaygroundRequest {
+
+message PolicyFile {
+    string file_name = 1 [
+        (validate.rules).string.min_len = 1,
+        (google.api.field_behavior) = REQUIRED
+    ];
+
+    bytes contents = 2 [
+        (validate.rules).bytes = {min_len: 1, max_len: 1048576},
+        (google.api.field_behavior) = REQUIRED
+    ];
+}
+
+message PlaygroundValidateRequest {
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
 		json_schema: {
-			description: "Playground request"
+			description: "Playground validate request"
 		}
     };
 
-    message PolicyFile {
-        string file_name = 1 [
-            (validate.rules).string.min_len = 1,
-            (google.api.field_behavior) = REQUIRED
-        ];
+    string playground_id = 1;
 
-        bytes contents = 2 [
-            (validate.rules).bytes = {min_len: 1, max_len: 1048576},
-            (google.api.field_behavior) = REQUIRED
-        ];
-    }
+    repeated PolicyFile policy_files = 2 [
+        (validate.rules).repeated = { min_items: 1, max_items: 10 },
+        (google.api.field_behavior) = REQUIRED,
+        (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = { 
+            description: "List of policy files."
+            min_items: 1
+            max_items: 10
+        } 
+    ];
+}
+
+message PlaygroundEvaluateRequest {
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
+		json_schema: {
+			description: "Playground evaluate request"
+		}
+    };
 
     string playground_id = 1;
 
@@ -205,3 +226,4 @@ message PlaygroundRequest {
         } 
     ];
 }
+
