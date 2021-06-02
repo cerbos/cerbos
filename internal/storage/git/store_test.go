@@ -528,12 +528,12 @@ func (m *mockIndex) GetFiles() []string {
 	return m.idx.GetFiles()
 }
 
-func (m *mockIndex) AddOrUpdate(entry index.Entry) error {
+func (m *mockIndex) AddOrUpdate(entry index.Entry) (storage.Event, error) {
 	m.calls = append(m.calls, mock.Call{Method: "AddOrUpdate", Arguments: mock.Arguments{entry}})
 	return m.idx.AddOrUpdate(entry)
 }
 
-func (m *mockIndex) Delete(entry index.Entry) error {
+func (m *mockIndex) Delete(entry index.Entry) (storage.Event, error) {
 	m.calls = append(m.calls, mock.Call{Method: "Delete", Arguments: mock.Arguments{entry}})
 	return m.idx.Delete(entry)
 }

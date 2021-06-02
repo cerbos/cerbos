@@ -73,6 +73,7 @@ type EventKind int
 const (
 	EventAddOrUpdatePolicy EventKind = iota
 	EventDeletePolicy
+	EventNop
 )
 
 // Event is an event detected by the storage layer.

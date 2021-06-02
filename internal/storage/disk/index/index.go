@@ -11,6 +11,7 @@ import (
 	policyv1 "github.com/cerbos/cerbos/internal/genpb/policy/v1"
 	"github.com/cerbos/cerbos/internal/namer"
 	"github.com/cerbos/cerbos/internal/policy"
+	"github.com/cerbos/cerbos/internal/storage"
 )
 
 var (
@@ -34,8 +35,8 @@ type Entry struct {
 type Index interface {
 	GetCompilationUnits(...namer.ModuleID) (map[namer.ModuleID]*policy.CompilationUnit, error)
 	GetDependents(...namer.ModuleID) (map[namer.ModuleID][]namer.ModuleID, error)
-	AddOrUpdate(Entry) error
-	Delete(Entry) error
+	AddOrUpdate(Entry) (storage.Event, error)
+	Delete(Entry) (storage.Event, error)
 	GetFiles() []string
 	Clear() error
 }
@@ -131,15 +132,17 @@ func (idx *index) GetDependents(ids ...namer.ModuleID) (map[namer.ModuleID][]nam
 	return results, nil
 }
 
-func (idx *index) AddOrUpdate(entry Entry) (err error) {
+func (idx *index) AddOrUpdate(entry Entry) (evt storage.Event, err error) {
 	modID := entry.Policy.ID
+
+	evt = storage.NewEvent(storage.EventAddOrUpdatePolicy, modID)
 
 	idx.mu.Lock()
 	defer idx.mu.Unlock()
 
 	// Is this is a duplicate of another file?
 	if otherFile, ok := idx.modIDToFile[modID]; ok && otherFile != entry.File {
-		return fmt.Errorf("policy is already defined in %s: %w", otherFile, ErrDuplicatePolicy)
+		return evt, fmt.Errorf("policy is already defined in %s: %w", otherFile, ErrDuplicatePolicy)
 	}
 
 	// if this is an existing file, clear its state first
@@ -169,7 +172,7 @@ func (idx *index) AddOrUpdate(entry Entry) (err error) {
 		idx.addDep(modID, dep)
 	}
 
-	return idx.cache.put(entry.Policy)
+	return evt, idx.cache.put(entry.Policy)
 }
 
 func (idx *index) addDep(child, parent namer.ModuleID) {
@@ -186,15 +189,17 @@ func (idx *index) addDep(child, parent namer.ModuleID) {
 	idx.dependents[parent][child] = struct{}{}
 }
 
-func (idx *index) Delete(entry Entry) error {
+func (idx *index) Delete(entry Entry) (storage.Event, error) {
 	idx.mu.Lock()
 	defer idx.mu.Unlock()
 
 	modID, ok := idx.fileToModID[entry.File]
 	if !ok {
 		// nothing to do because we don't have that file in the index.
-		return nil
+		return storage.Event{Kind: storage.EventNop}, nil
 	}
+
+	evt := storage.NewEvent(storage.EventDeletePolicy, modID)
 
 	// go through the dependencies and remove self from the dependents list for each dependency.
 	if deps, ok := idx.dependencies[modID]; ok {
@@ -210,7 +215,7 @@ func (idx *index) Delete(entry Entry) error {
 	delete(idx.dependencies, modID)
 	delete(idx.executables, modID)
 
-	return idx.cache.delete(modID)
+	return evt, idx.cache.delete(modID)
 }
 
 func (idx *index) Clear() error {

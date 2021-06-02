@@ -39,7 +39,14 @@ func NewStore(ctx context.Context, conf *Conf) (*Store, error) {
 		return nil, err
 	}
 
-	return &Store{idx: idx, SubscriptionManager: storage.NewSubscriptionManager(ctx)}, nil
+	s := &Store{idx: idx, SubscriptionManager: storage.NewSubscriptionManager(ctx)}
+	if conf.WatchForChanges {
+		if err := watchDir(ctx, conf.Directory, s.idx, s.SubscriptionManager); err != nil {
+			return nil, err
+		}
+	}
+
+	return s, nil
 }
 
 func (s *Store) Driver() string {

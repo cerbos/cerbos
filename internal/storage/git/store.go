@@ -339,19 +339,19 @@ func (s *Store) updateIndex(ctx context.Context) error {
 		s.log.Debugw("Processing change", "change", c)
 		switch {
 		case c.From.Name == "" && s.inPolicyDir(c.To.Name): // File created
-			if err := s.applyIndexUpdate(c.To, storage.EventAddOrUpdatePolicy, s.idx.AddOrUpdate); err != nil {
+			if err := s.applyIndexUpdate(c.To, storage.EventAddOrUpdatePolicy); err != nil {
 				return err
 			}
 		case c.To.Name == "" && s.inPolicyDir(c.From.Name): // File deleted
-			if err := s.applyIndexUpdate(c.From, storage.EventDeletePolicy, s.idx.Delete); err != nil {
+			if err := s.applyIndexUpdate(c.From, storage.EventDeletePolicy); err != nil {
 				return err
 			}
 		case s.inPolicyDir(c.From.Name) && !s.inPolicyDir(c.To.Name): // File moved out of policy dir
-			if err := s.applyIndexUpdate(c.From, storage.EventDeletePolicy, s.idx.Delete); err != nil {
+			if err := s.applyIndexUpdate(c.From, storage.EventDeletePolicy); err != nil {
 				return err
 			}
 		case s.inPolicyDir(c.To.Name): // file moved in or modified
-			if err := s.applyIndexUpdate(c.To, storage.EventAddOrUpdatePolicy, s.idx.AddOrUpdate); err != nil {
+			if err := s.applyIndexUpdate(c.To, storage.EventAddOrUpdatePolicy); err != nil {
 				return err
 			}
 		default:
@@ -363,27 +363,33 @@ func (s *Store) updateIndex(ctx context.Context) error {
 	return nil
 }
 
-func (s *Store) applyIndexUpdate(ce object.ChangeEntry, eventKind storage.EventKind, idxFn func(index.Entry) error) error {
+func (s *Store) applyIndexUpdate(ce object.ChangeEntry, eventKind storage.EventKind) error {
 	if !util.IsSupportedFileType(ce.Name) {
 		s.log.Infow("Ignoring unsupported file type", "path", ce.Name)
 		return nil
 	}
 
-	s.log.Debugw("Reading policy", "path", ce.Name)
-	p, err := s.readPolicyFromBlob(ce.TreeEntry.Hash)
+	idxFn := s.idx.Delete
+	entry := index.Entry{File: ce.Name}
+
+	if eventKind == storage.EventAddOrUpdatePolicy {
+		s.log.Debugw("Reading policy", "path", ce.Name)
+		p, err := s.readPolicyFromBlob(ce.TreeEntry.Hash)
+		if err != nil {
+			s.log.Errorw("Failed to read policy", "path", ce.Name, "error", err)
+			return err
+		}
+
+		idxFn = s.idx.AddOrUpdate
+		entry.Policy = policy.Wrap(p)
+	}
+
+	evt, err := idxFn(entry)
 	if err != nil {
-		s.log.Errorw("Failed to read policy", "path", ce.Name, "error", err)
 		return err
 	}
 
-	wp := policy.Wrap(p)
-	entry := index.Entry{File: ce.Name, Policy: wp}
-
-	if err := idxFn(entry); err != nil {
-		return err
-	}
-
-	s.NotifySubscribers(storage.NewEvent(eventKind, wp.ID))
+	s.NotifySubscribers(evt)
 	return nil
 }
 
