@@ -19,14 +19,20 @@ const (
 	DerivedRolesKind
 )
 
+const (
+	ResourceKindStr     = "RESOURCE"
+	PrincipalKindStr    = "PRINCIPAL"
+	DerivedRolesKindStr = "DERIVED_ROLES"
+)
+
 func (k Kind) String() string {
 	switch k {
 	case ResourceKind:
-		return "RESOURCE"
+		return ResourceKindStr
 	case PrincipalKind:
-		return "PRINCIPAL"
+		return PrincipalKindStr
 	case DerivedRolesKind:
-		return "DERIVED_ROLES"
+		return DerivedRolesKindStr
 	default:
 		panic(fmt.Errorf("unknown policy kind %d", k))
 	}

@@ -6,6 +6,7 @@ import (
 	"database/sql/driver"
 	"fmt"
 	"regexp"
+	"strconv"
 	"strings"
 
 	"github.com/cespare/xxhash"
@@ -43,6 +44,10 @@ func (m *ModuleID) Scan(src interface{}) error {
 	default:
 		return fmt.Errorf("unexpected type for module ID: %T", src)
 	}
+}
+
+func (m *ModuleID) String() string {
+	return strconv.FormatUint(m.hash, 10)
 }
 
 // GenModuleID generates a short ID for the module.

@@ -13,6 +13,7 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/cerbos/cerbos/internal/storage/common"
+	"github.com/cerbos/cerbos/internal/storage/disk/index"
 	"github.com/cerbos/cerbos/internal/util"
 )
 
@@ -25,10 +26,10 @@ const (
 	reloadTimeout  = 60 * time.Second
 )
 
-func newDirWatch(ctx context.Context, dir string, index Index, notifier *common.Notifier) (*dirWatch, error) {
+func newDirWatch(ctx context.Context, dir string, idx index.Index, notifier *common.Notifier) (*dirWatch, error) {
 	dw := &dirWatch{
 		log:       zap.S().Named("dir.watch").With("dir", dir),
-		index:     index,
+		idx:       idx,
 		watchChan: make(chan notify.EventInfo, 8), //nolint:gomnd
 		Notifier:  notifier,
 	}
@@ -45,7 +46,7 @@ func newDirWatch(ctx context.Context, dir string, index Index, notifier *common.
 type dirWatch struct {
 	log       *zap.SugaredLogger
 	watchChan chan notify.EventInfo
-	index     Index
+	idx       index.Index
 	*common.Notifier
 	mu            sync.RWMutex
 	eventsSeen    bool
@@ -115,14 +116,16 @@ func (dw *dirWatch) triggerUpdate() {
 }
 
 func (dw *dirWatch) reloadIndex() error {
-	ctx, cancelFunc := context.WithTimeout(context.Background(), reloadTimeout)
-	defer cancelFunc()
+	/*
+		ctx, cancelFunc := context.WithTimeout(context.Background(), reloadTimeout)
+		defer cancelFunc()
 
-	dw.log.Debug("Reloading index")
-	if err := dw.index.Reload(ctx); err != nil {
-		return err
-	}
+		dw.log.Debug("Reloading index")
+		if err := dw.index.Reload(ctx); err != nil {
+			return err
+		}
 
-	dw.log.Info("Index reloaded")
+		dw.log.Info("Index reloaded")
+	*/
 	return nil
 }

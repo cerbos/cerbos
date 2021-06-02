@@ -17,7 +17,7 @@ import (
 	"github.com/cerbos/cerbos/internal/storage/db"
 )
 
-func NewDBStorage(db *goqu.Database) (*DBStorage, error) {
+func NewDBStorage(ctx context.Context, db *goqu.Database) (*DBStorage, error) {
 	log, err := zap.NewStdLogAt(zap.L().Named("db"), zap.DebugLevel)
 	if err != nil {
 		return nil, err
@@ -27,7 +27,7 @@ func NewDBStorage(db *goqu.Database) (*DBStorage, error) {
 
 	return &DBStorage{
 		db:                  db,
-		SubscriptionManager: storage.NewSubscriptionManager(),
+		SubscriptionManager: storage.NewSubscriptionManager(ctx),
 	}, nil
 }
 
@@ -91,7 +91,7 @@ func (s *DBStorage) AddOrUpdate(ctx context.Context, policies ...policy.Wrapper)
 				}
 			}
 
-			events[i] = storage.Event{Kind: storage.EventAddOrUpdatePolicy, PolicyModID: p.ID}
+			events[i] = storage.Event{Kind: storage.EventAddOrUpdatePolicy, PolicyID: p.ID}
 		}
 
 		return nil
@@ -142,33 +142,75 @@ func (s *DBStorage) GetCompilationUnits(ctx context.Context, ids ...namer.Module
 		UnionAll(depsQuery).
 		Order(goqu.C("parent").Asc())
 
-	var results []struct {
-		Parent    namer.ModuleID
-		ID        namer.ModuleID
-		Generated GeneratedPolicyWrapper
+	results, err := policiesQuery.Executor().ScannerContext(ctx)
+	if err != nil {
+		return nil, err
 	}
 
-	if err := policiesQuery.Executor().ScanStructsContext(ctx, &results); err != nil {
-		return nil, fmt.Errorf("failed to get policy unit: %w", err)
+	defer results.Close()
+
+	units := make(map[namer.ModuleID]*policy.CompilationUnit)
+	for results.Next() {
+		var row struct {
+			Parent    namer.ModuleID
+			ID        namer.ModuleID
+			Generated GeneratedPolicyWrapper
+		}
+
+		if err := results.ScanStruct(&row); err != nil {
+			return nil, err
+		}
+
+		unit, ok := units[row.Parent]
+		if !ok {
+			unit = &policy.CompilationUnit{ModID: row.Parent, Definitions: make(map[namer.ModuleID]*policyv1.GeneratedPolicy)}
+			units[row.Parent] = unit
+		}
+
+		unit.Definitions[row.ID] = row.Generated.GeneratedPolicy
 	}
 
-	if len(results) == 0 {
+	if len(units) == 0 {
 		return nil, db.ErrNoResults
 	}
 
-	units := make(map[namer.ModuleID]*policy.CompilationUnit, len(ids))
+	return units, nil
+}
 
-	for _, p := range results {
-		unit, ok := units[p.Parent]
-		if !ok {
-			unit = &policy.CompilationUnit{ModID: p.Parent, Definitions: make(map[namer.ModuleID]*policyv1.GeneratedPolicy)}
-			units[p.Parent] = unit
-		}
+func (s *DBStorage) GetDependents(ctx context.Context, ids ...namer.ModuleID) (map[namer.ModuleID][]namer.ModuleID, error) {
+	// SELECT dependency_id, policy_id
+	// FROM policy_dependency
+	// WHERE dependency_id IN (?)
+	// ORDER BY dependency_id
+	query := s.db.Select(
+		goqu.C(PolicyDepTblDepIDCol),
+		goqu.C(PolicyDepTblPolicyIDCol),
+	).
+		From(PolicyDepTbl).
+		Where(goqu.C(PolicyDepTblDepIDCol).In(ids)).
+		Order(goqu.C(PolicyDepTblDepIDCol).Asc())
 
-		unit.Definitions[p.ID] = p.Generated.GeneratedPolicy
+	results, err := query.Executor().ScannerContext(ctx)
+	if err != nil {
+		return nil, err
 	}
 
-	return units, nil
+	defer results.Close()
+
+	out := make(map[namer.ModuleID][]namer.ModuleID)
+
+	for results.Next() {
+		var rec PolicyDependency
+		if err := results.ScanStruct(&rec); err != nil {
+			return nil, err
+		}
+
+		deps := out[rec.DependencyID]
+		deps = append(deps, rec.PolicyID)
+		out[rec.DependencyID] = deps
+	}
+
+	return out, nil
 }
 
 func (s *DBStorage) Delete(ctx context.Context, ids ...namer.ModuleID) error {
@@ -180,7 +222,7 @@ func (s *DBStorage) Delete(ctx context.Context, ids ...namer.ModuleID) error {
 			return err
 		}
 
-		s.NotifySubscribers(storage.Event{Kind: storage.EventDeletePolicy, PolicyModID: ids[0]})
+		s.NotifySubscribers(storage.Event{Kind: storage.EventDeletePolicy, PolicyID: ids[0]})
 		return nil
 	}
 
@@ -189,7 +231,7 @@ func (s *DBStorage) Delete(ctx context.Context, ids ...namer.ModuleID) error {
 
 	for i, id := range ids {
 		idList[i] = id
-		events[i] = storage.Event{Kind: storage.EventDeletePolicy, PolicyModID: id}
+		events[i] = storage.Event{Kind: storage.EventDeletePolicy, PolicyID: id}
 	}
 	_, err := s.db.Delete(PolicyTbl).Prepared(true).
 		Where(goqu.C(PolicyTblIDCol).In(idList...)).

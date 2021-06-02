@@ -8,6 +8,8 @@ import (
 	"math/rand"
 	"os"
 	"path/filepath"
+	"runtime"
+	"sync"
 	"testing"
 	"time"
 
@@ -20,8 +22,10 @@ import (
 	"github.com/cerbos/cerbos/internal/compile"
 	policyv1 "github.com/cerbos/cerbos/internal/genpb/policy/v1"
 	sharedv1 "github.com/cerbos/cerbos/internal/genpb/shared/v1"
+	"github.com/cerbos/cerbos/internal/namer"
 	"github.com/cerbos/cerbos/internal/policy"
-	"github.com/cerbos/cerbos/internal/storage/disk"
+	"github.com/cerbos/cerbos/internal/storage"
+	"github.com/cerbos/cerbos/internal/storage/disk/index"
 	"github.com/cerbos/cerbos/internal/test"
 )
 
@@ -42,7 +46,7 @@ func TestNewStore(t *testing.T) {
 	// the checkout directory does not exist so the remote repo will be cloned.
 	t.Run("directory does not exist", func(t *testing.T) {
 		checkoutDir := filepath.Join(t.TempDir(), "clone")
-		conf := mkConf(sourceGitDir, checkoutDir)
+		conf := mkConf(t, sourceGitDir, checkoutDir)
 
 		store, err := NewStore(context.Background(), conf)
 		require.NoError(t, err)
@@ -53,7 +57,7 @@ func TestNewStore(t *testing.T) {
 	// the checkout directory is empty so the remote repo will be cloned.
 	t.Run("directory is empty", func(t *testing.T) {
 		checkoutDir := t.TempDir()
-		conf := mkConf(sourceGitDir, checkoutDir)
+		conf := mkConf(t, sourceGitDir, checkoutDir)
 
 		store, err := NewStore(context.Background(), conf)
 		require.NoError(t, err)
@@ -71,7 +75,7 @@ func TestNewStore(t *testing.T) {
 		})
 		require.NoError(t, err, "Failed to clone repo")
 
-		conf := mkConf(sourceGitDir, checkoutDir)
+		conf := mkConf(t, sourceGitDir, checkoutDir)
 
 		store, err := NewStore(context.Background(), conf)
 		require.NoError(t, err)
@@ -88,7 +92,7 @@ func TestNewStore(t *testing.T) {
 			require.NoError(t, os.WriteFile(file, []byte("some data"), 0o600))
 		}
 
-		conf := mkConf(sourceGitDir, checkoutDir)
+		conf := mkConf(t, sourceGitDir, checkoutDir)
 
 		store, err := NewStore(context.Background(), conf)
 		require.Nil(t, store)
@@ -110,29 +114,30 @@ func TestUpdateStore(t *testing.T) {
 
 	_ = createGitRepo(t, sourceGitDir, numPolicySets)
 
-	conf := mkConf(sourceGitDir, checkoutDir)
+	conf := mkConf(t, sourceGitDir, checkoutDir)
 	store, err := NewStore(context.Background(), conf)
 	require.NoError(t, err)
 
-	index := store.index
+	index := store.idx
 
 	setupMock := func() *mockIndex {
 		m := newMockIndex(index)
-		store.index = m
+		store.idx = m
 		return m
 	}
 
-	notificationChan := make(chan compile.Notification, 1)
-	store.SetNotificationChannel(notificationChan)
-
 	t.Run("no changes", func(t *testing.T) {
 		mockIdx := setupMock()
+		checkEvents := subscribe(store)
+
 		require.NoError(t, store.updateIndex(context.Background()))
 		require.Len(t, mockIdx.calls, 0)
+		checkEvents(t)
 	})
 
 	t.Run("modify policy", func(t *testing.T) {
 		mockIdx := setupMock()
+		checkEvents := subscribe(store)
 		pset := genPolicySet(rng.Intn(numPolicySets))
 
 		require.NoError(t, commitToGitRepo(sourceGitDir, "Modify policy", func(wt *git.Worktree) error {
@@ -145,17 +150,20 @@ func TestUpdateStore(t *testing.T) {
 
 		require.NoError(t, store.updateIndex(context.Background()))
 
-		require.True(t, mockIdx.Called("Apply", mock.Anything))
-		require.Len(t, mockIdx.calls, 1)
+		require.True(t, mockIdx.Called("AddOrUpdate", mock.Anything))
+		require.Len(t, mockIdx.calls, 3)
 
-		notice := getNotification(t, notificationChan)
-		require.NotNil(t, notice)
-		require.Len(t, notice.AddOrUpdate, 3)
-		require.Len(t, notice.Remove, 0)
+		wantEvents := make([]storage.Event, 0, len(pset))
+		for _, p := range pset {
+			wantEvents = append(wantEvents, storage.Event{Kind: storage.EventAddOrUpdatePolicy, PolicyID: namer.GenModuleID(p)})
+		}
+
+		checkEvents(t, wantEvents...)
 	})
 
 	t.Run("add policy", func(t *testing.T) {
 		mockIdx := setupMock()
+		checkEvents := subscribe(store)
 		pset := genPolicySet(numPolicySets)
 
 		require.NoError(t, commitToGitRepo(sourceGitDir, "Add policy", func(wt *git.Worktree) error {
@@ -169,17 +177,20 @@ func TestUpdateStore(t *testing.T) {
 
 		require.NoError(t, store.updateIndex(context.Background()))
 
-		require.True(t, mockIdx.Called("Apply", mock.Anything))
-		require.Len(t, mockIdx.calls, 1)
+		require.True(t, mockIdx.Called("AddOrUpdate", mock.Anything))
+		require.Len(t, mockIdx.calls, 3)
 
-		notice := getNotification(t, notificationChan)
-		require.NotNil(t, notice)
-		require.Len(t, notice.AddOrUpdate, 3)
-		require.Len(t, notice.Remove, 0)
+		wantEvents := make([]storage.Event, 0, len(pset))
+		for _, p := range pset {
+			wantEvents = append(wantEvents, storage.Event{Kind: storage.EventAddOrUpdatePolicy, PolicyID: namer.GenModuleID(p)})
+		}
+
+		checkEvents(t, wantEvents...)
 	})
 
 	t.Run("add policy to ignored dir", func(t *testing.T) {
 		mockIdx := setupMock()
+		checkEvents := subscribe(store)
 		pset := genPolicySet(numPolicySets)
 
 		require.NoError(t, commitToGitRepo(sourceGitDir, "Add ignored policy", func(wt *git.Worktree) error {
@@ -198,10 +209,12 @@ func TestUpdateStore(t *testing.T) {
 
 		require.NoError(t, store.updateIndex(context.Background()))
 		require.Len(t, mockIdx.calls, 0)
+		checkEvents(t)
 	})
 
 	t.Run("delete policy", func(t *testing.T) {
 		mockIdx := setupMock()
+		checkEvents := subscribe(store)
 		pset := genPolicySet(rng.Intn(numPolicySets))
 
 		require.NoError(t, commitToGitRepo(sourceGitDir, "Delete policy", func(wt *git.Worktree) error {
@@ -217,17 +230,20 @@ func TestUpdateStore(t *testing.T) {
 
 		require.NoError(t, store.updateIndex(context.Background()))
 
-		require.True(t, mockIdx.Called("Apply", mock.Anything))
-		require.Len(t, mockIdx.calls, 1)
+		require.True(t, mockIdx.Called("Delete", mock.Anything))
+		require.Len(t, mockIdx.calls, 3)
 
-		notice := getNotification(t, notificationChan)
-		require.NotNil(t, notice)
-		require.Len(t, notice.AddOrUpdate, 0)
-		require.Len(t, notice.Remove, 3)
+		wantEvents := make([]storage.Event, 0, len(pset))
+		for _, p := range pset {
+			wantEvents = append(wantEvents, storage.Event{Kind: storage.EventDeletePolicy, PolicyID: namer.GenModuleID(p)})
+		}
+
+		checkEvents(t, wantEvents...)
 	})
 
 	t.Run("move policy out of policy dir", func(t *testing.T) {
 		mockIdx := setupMock()
+		checkEvents := subscribe(store)
 		pset := genPolicySet(rng.Intn(numPolicySets))
 
 		require.NoError(t, commitToGitRepo(sourceGitDir, "Move policy out", func(wt *git.Worktree) error {
@@ -244,17 +260,20 @@ func TestUpdateStore(t *testing.T) {
 
 		require.NoError(t, store.updateIndex(context.Background()))
 
-		require.True(t, mockIdx.Called("Apply", mock.Anything))
-		require.Len(t, mockIdx.calls, 1)
+		require.True(t, mockIdx.Called("Delete", mock.Anything))
+		require.Len(t, mockIdx.calls, 3)
 
-		notice := getNotification(t, notificationChan)
-		require.NotNil(t, notice)
-		require.Len(t, notice.AddOrUpdate, 0)
-		require.Len(t, notice.Remove, 3)
+		wantEvents := make([]storage.Event, 0, len(pset))
+		for _, p := range pset {
+			wantEvents = append(wantEvents, storage.Event{Kind: storage.EventDeletePolicy, PolicyID: namer.GenModuleID(p)})
+		}
+
+		checkEvents(t, wantEvents...)
 	})
 
 	t.Run("ignore unsupported file", func(t *testing.T) {
 		mockIdx := setupMock()
+		checkEvents := subscribe(store)
 		require.NoError(t, commitToGitRepo(sourceGitDir, "Add unsupported file", func(wt *git.Worktree) error {
 			fp := filepath.Join(sourceGitDir, policyDir, "file1.txt")
 			if err := os.WriteFile(fp, []byte("something"), 0o600); err != nil {
@@ -268,20 +287,14 @@ func TestUpdateStore(t *testing.T) {
 
 		require.NoError(t, store.updateIndex(context.Background()))
 		require.Len(t, mockIdx.calls, 0)
+		checkEvents(t)
 	})
 }
 
 func requireIndexContains(t *testing.T, store *Store, wantFiles []string) {
 	t.Helper()
 
-	var haveFiles []string
-	for p := range store.GetAllPolicies(context.Background()) {
-		require.NoError(t, p.Err, "Policy returned by the store has an error")
-		for _, f := range p.ModToFile {
-			haveFiles = append(haveFiles, f)
-		}
-	}
-
+	haveFiles := store.idx.GetFiles()
 	require.ElementsMatch(t, wantFiles, haveFiles)
 }
 
@@ -299,13 +312,16 @@ func getNotification(t *testing.T, notificationChan <-chan compile.Notification)
 	}
 }
 
-func mkConf(gitRepo, checkoutDir string) *Conf {
+func mkConf(t *testing.T, gitRepo, checkoutDir string) *Conf {
+	t.Helper()
+
 	return &Conf{
 		Protocol:    "file",
 		URL:         fmt.Sprintf("file://%s", gitRepo),
 		CheckoutDir: checkoutDir,
 		Branch:      "policies",
 		SubDir:      "policies",
+		ScratchDir:  t.TempDir(),
 	}
 }
 
@@ -489,47 +505,42 @@ func modifyPolicy(p *policyv1.Policy) *policyv1.Policy {
 }
 
 type mockIndex struct {
-	index disk.Index
+	idx   index.Index
 	calls []mock.Call
 }
 
-func newMockIndex(index disk.Index) *mockIndex {
-	return &mockIndex{index: index}
+func newMockIndex(idx index.Index) *mockIndex {
+	return &mockIndex{idx: idx}
 }
 
-func (m *mockIndex) Reload(ctx context.Context) error {
-	m.calls = append(m.calls, mock.Call{Method: "Reload", Arguments: mock.Arguments{ctx}})
-	return m.index.Reload(ctx)
+func (m *mockIndex) GetCompilationUnits(ids ...namer.ModuleID) (map[namer.ModuleID]*policy.CompilationUnit, error) {
+	m.calls = append(m.calls, mock.Call{Method: "GetCompilationUnits", Arguments: mock.Arguments{ids}})
+	return m.idx.GetCompilationUnits(ids...)
 }
 
-func (m *mockIndex) Add(file string, p *policyv1.Policy) (*compile.Incremental, error) {
-	m.calls = append(m.calls, mock.Call{Method: "Add", Arguments: mock.Arguments{file, p}})
-	return m.index.Add(file, p)
+func (m *mockIndex) GetDependents(ids ...namer.ModuleID) (map[namer.ModuleID][]namer.ModuleID, error) {
+	m.calls = append(m.calls, mock.Call{Method: "GetDependents", Arguments: mock.Arguments{ids}})
+	return m.idx.GetDependents(ids...)
 }
 
-func (m *mockIndex) Remove(file string) (*compile.Incremental, error) {
-	m.calls = append(m.calls, mock.Call{Method: "Remove", Arguments: mock.Arguments{file}})
-	return m.index.Remove(file)
+func (m *mockIndex) GetFiles() []string {
+	m.calls = append(m.calls, mock.Call{Method: "GetFiles"})
+	return m.idx.GetFiles()
 }
 
-func (m *mockIndex) RemoveIfSafe(file string) (*compile.Incremental, error) {
-	m.calls = append(m.calls, mock.Call{Method: "RemoveIfSafe", Arguments: mock.Arguments{file}})
-	return m.index.RemoveIfSafe(file)
+func (m *mockIndex) AddOrUpdate(entry index.Entry) error {
+	m.calls = append(m.calls, mock.Call{Method: "AddOrUpdate", Arguments: mock.Arguments{entry}})
+	return m.idx.AddOrUpdate(entry)
 }
 
-func (m *mockIndex) FilenameFor(p *policyv1.Policy) string {
-	m.calls = append(m.calls, mock.Call{Method: "FilenameFor", Arguments: mock.Arguments{p}})
-	return m.index.FilenameFor(p)
+func (m *mockIndex) Delete(entry index.Entry) error {
+	m.calls = append(m.calls, mock.Call{Method: "Delete", Arguments: mock.Arguments{entry}})
+	return m.idx.Delete(entry)
 }
 
-func (m *mockIndex) GetAllPolicies(ctx context.Context) <-chan *compile.Unit {
-	m.calls = append(m.calls, mock.Call{Method: "GetAllPolicies", Arguments: mock.Arguments{ctx}})
-	return m.index.GetAllPolicies(ctx)
-}
-
-func (m *mockIndex) Apply(updates *disk.IndexUpdate) (*compile.Incremental, error) {
-	m.calls = append(m.calls, mock.Call{Method: "Apply", Arguments: mock.Arguments{updates}})
-	return m.index.Apply(updates)
+func (m *mockIndex) Clear() error {
+	m.calls = append(m.calls, mock.Call{Method: "Clear"})
+	return m.idx.Clear()
 }
 
 func (m *mockIndex) Called(methodName string, expected ...interface{}) bool {
@@ -543,4 +554,53 @@ func (m *mockIndex) Called(methodName string, expected ...interface{}) bool {
 	}
 
 	return false
+}
+
+func subscribe(store *Store) func(*testing.T, ...storage.Event) {
+	sub := &subscriber{}
+	store.Subscribe(sub)
+
+	return func(t *testing.T, wantEvents ...storage.Event) {
+		t.Helper()
+
+		runtime.Gosched()
+
+		haveEvents := sub.Events()
+		store.Unsubscribe(sub)
+
+		require.ElementsMatch(t, wantEvents, haveEvents)
+	}
+}
+
+type subscriber struct {
+	mu     sync.RWMutex
+	events []storage.Event
+}
+
+func (s *subscriber) SubscriberID() string {
+	return "test"
+}
+
+func (s *subscriber) OnStorageEvent(evt ...storage.Event) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	s.events = append(s.events, evt...)
+}
+
+func (s *subscriber) Events() []storage.Event {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
+	events := make([]storage.Event, len(s.events))
+	copy(events, s.events)
+
+	return events
+}
+
+func (s *subscriber) Clear() {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	s.events = nil
 }

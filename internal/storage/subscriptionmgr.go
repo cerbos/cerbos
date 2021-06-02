@@ -2,7 +2,14 @@
 
 package storage
 
-import "sync"
+import (
+	"context"
+	"runtime"
+	"sync"
+	"testing"
+
+	"github.com/stretchr/testify/require"
+)
 
 const eventBufferSize = 16
 
@@ -13,20 +20,29 @@ type SubscriptionManager struct {
 	subscribers map[string]Subscriber
 }
 
-func NewSubscriptionManager() *SubscriptionManager {
+func NewSubscriptionManager(ctx context.Context) *SubscriptionManager {
 	sm := &SubscriptionManager{
 		eventChan:   make(chan Event, eventBufferSize),
 		subscribers: make(map[string]Subscriber),
 	}
 
-	go sm.handleEvents()
+	go sm.handleEvents(ctx)
 
 	return sm
 }
 
-func (sm *SubscriptionManager) handleEvents() {
-	for evt := range sm.eventChan {
-		sm.distributeEvent(evt)
+func (sm *SubscriptionManager) handleEvents(ctx context.Context) {
+	for {
+		select {
+		case <-ctx.Done():
+			sm.shutdown()
+			return
+		case evt, ok := <-sm.eventChan:
+			if !ok {
+				return
+			}
+			sm.distributeEvent(evt)
+		}
 	}
 }
 
@@ -43,7 +59,9 @@ func (sm *SubscriptionManager) distributeEvent(evt Event) {
 // Notify sends the events to all subscribers.
 func (sm *SubscriptionManager) NotifySubscribers(events ...Event) {
 	for _, evt := range events {
-		sm.eventChan <- evt
+		select {
+		case sm.eventChan <- evt:
+		}
 	}
 }
 
@@ -61,7 +79,56 @@ func (sm *SubscriptionManager) Unsubscribe(s Subscriber) {
 	delete(sm.subscribers, s.SubscriberID())
 }
 
-func (sm *SubscriptionManager) Shutdown() error {
+func (sm *SubscriptionManager) shutdown() {
 	sm.once.Do(func() { close(sm.eventChan) })
-	return nil
+}
+
+// TestSubscription is a helper to test subscriptions.
+func TestSubscription(store Store) func(*testing.T, ...Event) {
+	sub := &subscriber{}
+	store.Subscribe(sub)
+
+	return func(t *testing.T, wantEvents ...Event) {
+		t.Helper()
+
+		runtime.Gosched()
+
+		haveEvents := sub.Events()
+		store.Unsubscribe(sub)
+
+		require.ElementsMatch(t, wantEvents, haveEvents)
+	}
+}
+
+type subscriber struct {
+	mu     sync.RWMutex
+	events []Event
+}
+
+func (s *subscriber) SubscriberID() string {
+	return "test"
+}
+
+func (s *subscriber) OnStorageEvent(evt ...Event) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	s.events = append(s.events, evt...)
+}
+
+func (s *subscriber) Events() []Event {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
+	events := make([]Event, len(s.events))
+	copy(events, s.events)
+
+	return events
+}
+
+func (s *subscriber) Clear() {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	s.events = nil
 }

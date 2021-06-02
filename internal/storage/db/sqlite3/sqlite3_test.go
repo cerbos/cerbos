@@ -5,18 +5,21 @@ package sqlite3_test
 import (
 	"context"
 	"testing"
-	"time"
 
 	"github.com/stretchr/testify/require"
 
 	"github.com/cerbos/cerbos/internal/policy"
+	"github.com/cerbos/cerbos/internal/storage"
 	"github.com/cerbos/cerbos/internal/storage/db"
 	"github.com/cerbos/cerbos/internal/storage/db/sqlite3"
 	"github.com/cerbos/cerbos/internal/test"
 )
 
 func TestSQLite(t *testing.T) {
-	store, err := sqlite3.New(context.Background(), &sqlite3.Conf{DSN: ":memory:?_fk=true"})
+	ctx, cancelFunc := context.WithCancel(context.Background())
+	defer cancelFunc()
+
+	store, err := sqlite3.New(ctx, &sqlite3.Conf{DSN: ":memory:?_fk=true"})
 	require.NoError(t, err)
 
 	rp := policy.Wrap(test.GenResourcePolicy(test.NoMod()))
@@ -25,72 +28,102 @@ func TestSQLite(t *testing.T) {
 	rpx := policy.Wrap(test.GenResourcePolicy(test.PrefixAndSuffix("x", "x")))
 	drx := policy.Wrap(test.GenDerivedRoles(test.PrefixAndSuffix("x", "x")))
 
-	t.Run("addAndRetrieve", func(t *testing.T) {
-		ctx, cancelFunc := context.WithTimeout(context.Background(), 10*time.Second)
-		defer cancelFunc()
-
+	t.Run("add", func(t *testing.T) {
+		checkEvents := storage.TestSubscription(store)
 		require.NoError(t, store.AddOrUpdate(ctx, rp, pp, dr, rpx, drx))
 
-		t.Run("unit_with_deps", func(t *testing.T) {
-			have, err := store.GetCompilationUnits(ctx, rp.ID)
-			require.NoError(t, err)
-			require.Len(t, have, 1)
-			require.Contains(t, have, rp.ID)
+		wantEvents := []storage.Event{
+			{Kind: storage.EventAddOrUpdatePolicy, PolicyID: rp.ID},
+			{Kind: storage.EventAddOrUpdatePolicy, PolicyID: pp.ID},
+			{Kind: storage.EventAddOrUpdatePolicy, PolicyID: dr.ID},
+			{Kind: storage.EventAddOrUpdatePolicy, PolicyID: rpx.ID},
+			{Kind: storage.EventAddOrUpdatePolicy, PolicyID: drx.ID},
+		}
+		checkEvents(t, wantEvents...)
+	})
 
-			haveRec := have[rp.ID]
-			require.Equal(t, rp.ID, haveRec.ModID)
-			require.Len(t, haveRec.Definitions, 2)
+	t.Run("get_compilation_unit_with_deps", func(t *testing.T) {
+		have, err := store.GetCompilationUnits(ctx, rp.ID)
+		require.NoError(t, err)
+		require.Len(t, have, 1)
+		require.Contains(t, have, rp.ID)
 
-			require.Contains(t, haveRec.Definitions, rp.ID)
-			require.Equal(t, rp.FQN, haveRec.Definitions[rp.ID].Fqn)
+		haveRec := have[rp.ID]
+		require.Equal(t, rp.ID, haveRec.ModID)
+		require.Len(t, haveRec.Definitions, 2)
 
-			require.Contains(t, haveRec.Definitions, dr.ID)
-			require.Equal(t, dr.FQN, haveRec.Definitions[dr.ID].Fqn)
-		})
+		require.Contains(t, haveRec.Definitions, rp.ID)
+		require.Equal(t, rp.FQN, haveRec.Definitions[rp.ID].Fqn)
 
-		t.Run("unit_without_deps", func(t *testing.T) {
-			have, err := store.GetCompilationUnits(ctx, pp.ID)
-			require.NoError(t, err)
-			require.Len(t, have, 1)
-			require.Contains(t, have, pp.ID)
+		require.Contains(t, haveRec.Definitions, dr.ID)
+		require.Equal(t, dr.FQN, haveRec.Definitions[dr.ID].Fqn)
+	})
 
-			haveRec := have[pp.ID]
-			require.Equal(t, pp.ID, haveRec.ModID)
-			require.Len(t, haveRec.Definitions, 1)
+	t.Run("get_compilation_unit_without_deps", func(t *testing.T) {
+		have, err := store.GetCompilationUnits(ctx, pp.ID)
+		require.NoError(t, err)
+		require.Len(t, have, 1)
+		require.Contains(t, have, pp.ID)
 
-			require.Contains(t, haveRec.Definitions, pp.ID)
-			require.Equal(t, pp.FQN, haveRec.Definitions[pp.ID].Fqn)
-		})
+		haveRec := have[pp.ID]
+		require.Equal(t, pp.ID, haveRec.ModID)
+		require.Len(t, haveRec.Definitions, 1)
 
-		t.Run("multiple_units", func(t *testing.T) {
-			have, err := store.GetCompilationUnits(ctx, rp.ID, pp.ID)
-			require.NoError(t, err)
-			require.Len(t, have, 2)
-			require.Contains(t, have, rp.ID)
-			require.Contains(t, have, pp.ID)
+		require.Contains(t, haveRec.Definitions, pp.ID)
+		require.Equal(t, pp.FQN, haveRec.Definitions[pp.ID].Fqn)
+	})
 
-			haveRP := have[rp.ID]
-			require.Equal(t, rp.ID, haveRP.ModID)
-			require.Len(t, haveRP.Definitions, 2)
+	t.Run("get_multiple_compilation_units", func(t *testing.T) {
+		have, err := store.GetCompilationUnits(ctx, rp.ID, pp.ID)
+		require.NoError(t, err)
+		require.Len(t, have, 2)
+		require.Contains(t, have, rp.ID)
+		require.Contains(t, have, pp.ID)
 
-			require.Contains(t, haveRP.Definitions, rp.ID)
-			require.Equal(t, rp.FQN, haveRP.Definitions[rp.ID].Fqn)
+		haveRP := have[rp.ID]
+		require.Equal(t, rp.ID, haveRP.ModID)
+		require.Len(t, haveRP.Definitions, 2)
 
-			require.Contains(t, haveRP.Definitions, dr.ID)
-			require.Equal(t, dr.FQN, haveRP.Definitions[dr.ID].Fqn)
+		require.Contains(t, haveRP.Definitions, rp.ID)
+		require.Equal(t, rp.FQN, haveRP.Definitions[rp.ID].Fqn)
 
-			havePP := have[pp.ID]
-			require.Equal(t, pp.ID, havePP.ModID)
-			require.Len(t, havePP.Definitions, 1)
+		require.Contains(t, haveRP.Definitions, dr.ID)
+		require.Equal(t, dr.FQN, haveRP.Definitions[dr.ID].Fqn)
 
-			require.Contains(t, havePP.Definitions, pp.ID)
-			require.Equal(t, pp.FQN, havePP.Definitions[pp.ID].Fqn)
-		})
+		havePP := have[pp.ID]
+		require.Equal(t, pp.ID, havePP.ModID)
+		require.Len(t, havePP.Definitions, 1)
 
-		t.Run("non_existent_record", func(t *testing.T) {
-			p := policy.Wrap(test.GenResourcePolicy(test.PrefixAndSuffix("y", "y")))
-			_, err := store.GetCompilationUnits(ctx, p.ID)
-			require.ErrorIs(t, err, db.ErrNoResults)
-		})
+		require.Contains(t, havePP.Definitions, pp.ID)
+		require.Equal(t, pp.FQN, havePP.Definitions[pp.ID].Fqn)
+	})
+
+	t.Run("get_non_existent_compilation_unit", func(t *testing.T) {
+		p := policy.Wrap(test.GenResourcePolicy(test.PrefixAndSuffix("y", "y")))
+		_, err := store.GetCompilationUnits(ctx, p.ID)
+		require.ErrorIs(t, err, db.ErrNoResults)
+	})
+
+	t.Run("get_dependents", func(t *testing.T) {
+		have, err := store.GetDependents(ctx, dr.ID)
+		require.NoError(t, err)
+
+		require.Len(t, have, 1)
+		require.Contains(t, have, dr.ID)
+
+		require.Len(t, have[dr.ID], 1)
+		require.Contains(t, have[dr.ID], rp.ID)
+	})
+
+	t.Run("delete", func(t *testing.T) {
+		checkEvents := storage.TestSubscription(store)
+
+		err := store.Delete(ctx, rpx.ID)
+		require.NoError(t, err)
+
+		_, err = store.GetCompilationUnits(ctx, rpx.ID)
+		require.ErrorIs(t, err, db.ErrNoResults)
+
+		checkEvents(t, storage.Event{Kind: storage.EventDeletePolicy, PolicyID: rpx.ID})
 	})
 }

@@ -4,10 +4,47 @@ package storage
 
 import (
 	"context"
+	"fmt"
+	"sync"
 
+	"github.com/cerbos/cerbos/internal/config"
 	"github.com/cerbos/cerbos/internal/namer"
 	"github.com/cerbos/cerbos/internal/policy"
 )
+
+var (
+	driversMu sync.RWMutex
+	drivers   = map[string]Constructor{}
+)
+
+// Constructor is a constructor function for a storage driver.
+type Constructor func(context.Context) (Store, error)
+
+// RegisterDriver registers a storage driver.
+func RegisterDriver(name string, cons Constructor) {
+	driversMu.Lock()
+	defer driversMu.Unlock()
+
+	drivers[name] = cons
+}
+
+// New returns a storage driver implementation based on the configured driver.
+func New(ctx context.Context) (Store, error) {
+	conf := &Conf{}
+	if err := config.GetSection(conf); err != nil {
+		return nil, fmt.Errorf("failed to read storage configuration: %w", err)
+	}
+
+	driversMu.RLock()
+	cons, ok := drivers[conf.Driver]
+	driversMu.RUnlock()
+
+	if !ok {
+		return nil, fmt.Errorf("unknown storage driver [%s]", conf.Driver)
+	}
+
+	return cons(ctx)
+}
 
 // Store is the common interface implemented by storage backends.
 type Store interface {
@@ -19,8 +56,8 @@ type Store interface {
 	Unsubscribe(Subscriber)
 	// GetCompilationUnits gets the compilation units for the given module IDs.
 	GetCompilationUnits(context.Context, ...namer.ModuleID) (map[namer.ModuleID]*policy.CompilationUnit, error)
-	// Shutdown performs a clean shutdown of the store.
-	Shutdown() error
+	// GetDependents returns the dependents of the given modules.
+	GetDependents(context.Context, ...namer.ModuleID) (map[namer.ModuleID][]namer.ModuleID, error)
 }
 
 // MutableStore is a store that allows mutations.
@@ -40,8 +77,13 @@ const (
 
 // Event is an event detected by the storage layer.
 type Event struct {
-	Kind        EventKind
-	PolicyModID namer.ModuleID
+	Kind     EventKind
+	PolicyID namer.ModuleID
+}
+
+// NewEvent creates a new storage event.
+func NewEvent(kind EventKind, policyID namer.ModuleID) Event {
+	return Event{Kind: kind, PolicyID: policyID}
 }
 
 // Subscriber is the interface implemented by storage subscribers.

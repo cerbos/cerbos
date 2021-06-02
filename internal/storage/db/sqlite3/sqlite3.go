@@ -16,6 +16,7 @@ import (
 	// import sqlite3 driver.
 	_ "github.com/mattn/go-sqlite3"
 
+	"github.com/cerbos/cerbos/internal/config"
 	"github.com/cerbos/cerbos/internal/storage"
 	"github.com/cerbos/cerbos/internal/storage/db/internal"
 )
@@ -27,8 +28,15 @@ var schema string
 
 var _ storage.MutableStore = (*Store)(nil)
 
-type Conf struct {
-	DSN string `yaml:"dsn"`
+func init() {
+	storage.RegisterDriver(DriverName, func(ctx context.Context) (storage.Store, error) {
+		conf := &Conf{}
+		if err := config.GetSection(conf); err != nil {
+			return nil, err
+		}
+
+		return New(ctx, conf)
+	})
 }
 
 func New(ctx context.Context, conf *Conf) (*Store, error) {
@@ -41,7 +49,7 @@ func New(ctx context.Context, conf *Conf) (*Store, error) {
 		return nil, fmt.Errorf("failed to create schema: %w", err)
 	}
 
-	storage, err := internal.NewDBStorage(goqu.New("sqlite3", db))
+	storage, err := internal.NewDBStorage(ctx, goqu.New("sqlite3", db))
 	if err != nil {
 		return nil, err
 	}

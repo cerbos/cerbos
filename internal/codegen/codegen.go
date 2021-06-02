@@ -13,6 +13,16 @@ import (
 	"github.com/cerbos/cerbos/internal/namer"
 )
 
+// GenerateRepr generates code for the given policy and returns the serializable representation of it.
+func GenerateRepr(p *policyv1.Policy) (*policyv1.GeneratedPolicy, error) {
+	res, err := GenerateCode(p)
+	if err != nil {
+		return nil, err
+	}
+
+	return res.ToRepr()
+}
+
 func GenerateCode(p *policyv1.Policy) (*Result, error) {
 	switch pt := p.PolicyType.(type) {
 	case *policyv1.Policy_ResourcePolicy:

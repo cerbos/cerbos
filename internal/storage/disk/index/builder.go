@@ -1,6 +1,6 @@
 // Copyright 2021 Zenauth Ltd.
 
-package disk
+package index
 
 import (
 	"context"
@@ -8,23 +8,26 @@ import (
 	"fmt"
 	"io/fs"
 
+	"github.com/spf13/afero"
+
 	policyv1 "github.com/cerbos/cerbos/internal/genpb/policy/v1"
 	"github.com/cerbos/cerbos/internal/namer"
 	"github.com/cerbos/cerbos/internal/policy"
 	"github.com/cerbos/cerbos/internal/util"
 )
 
-// IndexBuildError is an error type that contains details about the failures encountered during the index build.
-type IndexBuildError struct {
-	Disabled       []string        `json:"disabled"`
-	DuplicateDefs  []DuplicateDef  `json:"duplicateDefs"`
-	LoadFailures   []LoadFailure   `json:"loadFailures"`
-	MissingImports []MissingImport `json:"missingImports"`
+// BuildError is an error type that contains details about the failures encountered during the index build.
+type BuildError struct {
+	Disabled        []string         `json:"disabled"`
+	DuplicateDefs   []DuplicateDef   `json:"duplicateDefs"`
+	LoadFailures    []LoadFailure    `json:"loadFailures"`
+	CodegenFailures []CodegenFailure `json:"codegenFailures"`
+	MissingImports  []MissingImport  `json:"missingImports"`
 }
 
-func (ibe *IndexBuildError) Error() string {
-	return fmt.Sprintf("failed to build index: missing imports=%d, duplicate definitions=%d, load failures=%d",
-		len(ibe.MissingImports), len(ibe.DuplicateDefs), len(ibe.LoadFailures))
+func (ibe *BuildError) Error() string {
+	return fmt.Sprintf("failed to build index: missing imports=%d, duplicate definitions=%d, load failures=%d, codegen failures=%d",
+		len(ibe.MissingImports), len(ibe.DuplicateDefs), len(ibe.LoadFailures), len(ibe.CodegenFailures))
 }
 
 // MissingImport describes an import that wasn't found.
@@ -49,15 +52,67 @@ func (lf LoadFailure) MarshalJSON() ([]byte, error) {
 	return json.Marshal(map[string]string{"file": lf.File, "error": lf.Err.Error()})
 }
 
-// BuildIndex builds an index from the policy files stored in a directory.
-func BuildIndex(ctx context.Context, fsys fs.FS, rootDir string) (Index, error) {
-	if err := checkValidDir(fsys, rootDir); err != nil {
+// CodegenFailure describes a failure to generate a policy.
+type CodegenFailure struct {
+	File string
+	Err  error
+}
+
+func (cf CodegenFailure) MarshalJSON() ([]byte, error) {
+	return json.Marshal(map[string]string{"file": cf.File, "error": cf.Err.Error()})
+}
+
+type buildOptions struct {
+	rootDir   string
+	compile   bool
+	scratchFS afero.Fs
+}
+
+type BuildOpt func(*buildOptions)
+
+func WithRootDir(rootDir string) BuildOpt {
+	return func(o *buildOptions) {
+		o.rootDir = rootDir
+	}
+}
+
+func WithCompile() BuildOpt {
+	return func(o *buildOptions) {
+		o.compile = true
+	}
+}
+
+func WithDiskCache(dir string) BuildOpt {
+	return func(o *buildOptions) {
+		o.scratchFS = afero.NewBasePathFs(afero.NewOsFs(), dir)
+	}
+}
+
+func WithMemoryCache() BuildOpt {
+	return func(o *buildOptions) {
+		o.scratchFS = afero.NewMemMapFs()
+	}
+}
+
+// Build builds an index from the policy files stored in a directory.
+func Build(ctx context.Context, fsys fs.FS, opts ...BuildOpt) (Index, error) {
+	o := buildOptions{rootDir: "."}
+	for _, optFn := range opts {
+		optFn(&o)
+	}
+
+	if err := checkValidDir(fsys, o.rootDir); err != nil {
 		return nil, err
 	}
 
-	ib := newIndexBuilder()
+	cache, err := newCodegenCache(o.scratchFS)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create cache: %w", err)
+	}
 
-	err := fs.WalkDir(fsys, rootDir, func(path string, d fs.DirEntry, err error) error {
+	ib := newIndexBuilder(cache)
+
+	err = fs.WalkDir(fsys, o.rootDir, func(path string, d fs.DirEntry, err error) error {
 		if err := ctx.Err(); err != nil {
 			return err
 		}
@@ -85,7 +140,7 @@ func BuildIndex(ctx context.Context, fsys fs.FS, rootDir string) (Index, error) 
 			return nil
 		}
 
-		ib.addPolicy(path, p)
+		ib.addPolicy(path, policy.Wrap(p))
 
 		return nil
 	})
@@ -97,19 +152,22 @@ func BuildIndex(ctx context.Context, fsys fs.FS, rootDir string) (Index, error) 
 }
 
 type indexBuilder struct {
-	executables  map[namer.ModuleID]struct{}
-	modIDToFile  map[namer.ModuleID]string
-	fileToModID  map[string]namer.ModuleID
-	dependents   map[namer.ModuleID]map[namer.ModuleID]struct{}
-	dependencies map[namer.ModuleID]map[namer.ModuleID]struct{}
-	missing      map[namer.ModuleID][]MissingImport
-	duplicates   []DuplicateDef
-	loadFailures []LoadFailure
-	disabled     []string
+	cache           *codegenCache
+	executables     map[namer.ModuleID]struct{}
+	modIDToFile     map[namer.ModuleID]string
+	fileToModID     map[string]namer.ModuleID
+	dependents      map[namer.ModuleID]map[namer.ModuleID]struct{}
+	dependencies    map[namer.ModuleID]map[namer.ModuleID]struct{}
+	missing         map[namer.ModuleID][]MissingImport
+	duplicates      []DuplicateDef
+	loadFailures    []LoadFailure
+	codegenFailures []CodegenFailure
+	disabled        []string
 }
 
-func newIndexBuilder() *indexBuilder {
+func newIndexBuilder(cache *codegenCache) *indexBuilder {
 	return &indexBuilder{
+		cache:        cache,
 		executables:  make(map[namer.ModuleID]struct{}),
 		modIDToFile:  make(map[namer.ModuleID]string),
 		fileToModID:  make(map[string]namer.ModuleID),
@@ -123,15 +181,17 @@ func (idx *indexBuilder) addLoadFailure(file string, err error) {
 	idx.loadFailures = append(idx.loadFailures, LoadFailure{File: file, Err: err})
 }
 
+func (idx *indexBuilder) addCodeGenFailure(file string, err error) {
+	idx.codegenFailures = append(idx.codegenFailures, CodegenFailure{File: file, Err: err})
+}
+
 func (idx *indexBuilder) addDisabled(file string) {
 	idx.disabled = append(idx.disabled, file)
 }
 
-func (idx *indexBuilder) addPolicy(file string, p *policyv1.Policy) {
-	modID := namer.GenModuleID(p)
-
+func (idx *indexBuilder) addPolicy(file string, p policy.Wrapper) {
 	// Is this is a duplicate of another file?
-	if otherFile, ok := idx.modIDToFile[modID]; ok && (otherFile != file) {
+	if otherFile, ok := idx.modIDToFile[p.ID]; ok && (otherFile != file) {
 		idx.duplicates = append(idx.duplicates, DuplicateDef{
 			File:      file,
 			OtherFile: otherFile,
@@ -140,17 +200,23 @@ func (idx *indexBuilder) addPolicy(file string, p *policyv1.Policy) {
 		return
 	}
 
-	idx.fileToModID[file] = modID
-	idx.modIDToFile[modID] = file
-	delete(idx.missing, modID)
-
-	if policy.GetKind(p) != policy.DerivedRolesKind {
-		idx.executables[modID] = struct{}{}
+	if err := idx.cache.put(p); err != nil {
+		idx.addCodeGenFailure(file, err)
+		return
 	}
 
-	for _, dep := range policy.Dependencies(p) {
+	idx.fileToModID[file] = p.ID
+	idx.modIDToFile[p.ID] = file
+	delete(idx.missing, p.ID)
+
+	if p.Kind != policy.DerivedRolesKindStr {
+		idx.executables[p.ID] = struct{}{}
+	}
+
+	for _, dep := range policy.Dependencies(p.Policy) {
 		depID := namer.GenModuleIDFromName(dep)
-		idx.addDep(modID, depID)
+
+		idx.addDep(p.ID, depID)
 
 		// the dependent may not have been loaded by the indexer yet because it's still walking the directory.
 		if _, exists := idx.modIDToFile[depID]; !exists {
@@ -177,11 +243,13 @@ func (idx *indexBuilder) addDep(child, parent namer.ModuleID) {
 }
 
 func (idx *indexBuilder) build(fsys fs.FS) (*index, error) {
-	if len(idx.missing) > 0 || len(idx.duplicates) > 0 || len(idx.loadFailures) > 0 {
-		err := &IndexBuildError{
-			Disabled:      idx.disabled,
-			DuplicateDefs: idx.duplicates,
-			LoadFailures:  idx.loadFailures,
+	nErr := len(idx.missing) + len(idx.duplicates) + len(idx.loadFailures) + len(idx.codegenFailures)
+	if nErr > 0 {
+		err := &BuildError{
+			Disabled:        idx.disabled,
+			DuplicateDefs:   idx.duplicates,
+			LoadFailures:    idx.loadFailures,
+			CodegenFailures: idx.codegenFailures,
 		}
 
 		for _, missing := range idx.missing {
@@ -193,6 +261,7 @@ func (idx *indexBuilder) build(fsys fs.FS) (*index, error) {
 
 	return &index{
 		fsys:         fsys,
+		cache:        idx.cache,
 		executables:  idx.executables,
 		modIDToFile:  idx.modIDToFile,
 		fileToModID:  idx.fileToModID,

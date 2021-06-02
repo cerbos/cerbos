@@ -1,6 +1,6 @@
 // Copyright 2021 Zenauth Ltd.
 
-package disk
+package index
 
 import (
 	"context"
@@ -16,12 +16,14 @@ import (
 func TestBuildIndex(t *testing.T) {
 	dir := test.PathToDir(t, "store")
 
-	idx, err := BuildIndex(context.Background(), os.DirFS(dir), ".")
+	idx, err := Build(context.Background(), os.DirFS(dir), WithMemoryCache())
 	require.NoError(t, err)
 	require.NotNil(t, idx)
 
 	idxImpl, ok := idx.(*index)
 	require.True(t, ok)
+
+	defer idx.Clear()
 
 	data := idxImpl.Inspect()
 	require.Len(t, data, 3)
