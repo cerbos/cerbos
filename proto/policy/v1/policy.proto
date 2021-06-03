@@ -17,12 +17,18 @@ message Policy {
     string api_version = 1 [(validate.rules).string.const = "api.cerbos.dev/v1"];
     bool disabled = 2;
     string description = 3;
+    Metadata metadata = 4; 
     oneof policy_type {
         option (validate.required) = true;
-        ResourcePolicy resource_policy = 4;
-        PrincipalPolicy principal_policy = 5;
-        DerivedRoles derived_roles = 6;
+        ResourcePolicy resource_policy = 5;
+        PrincipalPolicy principal_policy = 6;
+        DerivedRoles derived_roles = 7;
     }
+}
+
+message Metadata {
+    string source_file = 1;
+    map<string,string> annotations = 2;
 }
 
 message ResourcePolicy {

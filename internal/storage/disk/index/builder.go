@@ -5,8 +5,10 @@ package index
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io/fs"
+	"os"
 
 	"github.com/spf13/afero"
 
@@ -84,6 +86,9 @@ func WithCompile() BuildOpt {
 
 func WithDiskCache(dir string) BuildOpt {
 	return func(o *buildOptions) {
+		if _, err := os.Stat(dir); errors.Is(err, os.ErrNotExist) {
+			return
+		}
 		o.scratchFS = afero.NewBasePathFs(afero.NewOsFs(), dir)
 	}
 }

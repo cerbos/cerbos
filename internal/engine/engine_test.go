@@ -11,6 +11,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/testing/protocmp"
 
+	"github.com/cerbos/cerbos/internal/compile"
 	cerbosdevv1 "github.com/cerbos/cerbos/internal/genpb/cerbosdev/v1"
 	"github.com/cerbos/cerbos/internal/storage/disk"
 	"github.com/cerbos/cerbos/internal/test"
@@ -89,10 +90,12 @@ func mkEngine(tb testing.TB) (*Engine, context.CancelFunc) {
 
 	ctx, cancelFunc := context.WithCancel(context.Background())
 
-	store, err := disk.NewReadOnlyStore(ctx, &disk.Conf{Directory: dir})
+	store, err := disk.NewStore(ctx, &disk.Conf{Directory: dir})
 	require.NoError(tb, err)
 
-	eng, err := New(ctx, store)
+	compiler := compile.NewCompiler(ctx, store)
+
+	eng, err := New(ctx, compiler)
 	require.NoError(tb, err)
 
 	return eng, cancelFunc

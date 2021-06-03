@@ -78,30 +78,67 @@ func (idx *index) GetCompilationUnits(ids ...namer.ModuleID) (map[namer.ModuleID
 			continue
 		}
 
-		pol, err := idx.cache.get(id)
+		p, err := idx.loadPolicy(id)
 		if err != nil {
 			return nil, err
 		}
 
-		cu := &policy.CompilationUnit{ModID: id, Definitions: map[namer.ModuleID]*policyv1.GeneratedPolicy{id: pol}}
+		cu := &policy.CompilationUnit{
+			ModID:       id,
+			Definitions: map[namer.ModuleID]*policyv1.Policy{id: p},
+		}
+
 		result[id] = cu
 
+		// get the generated code if it exists
+		gp, err := idx.cache.get(id)
+		if err == nil {
+			cu.AddGenerated(id, gp)
+		}
+
+		// load the dependencies
 		deps, ok := idx.dependencies[id]
 		if !ok {
 			continue
 		}
 
 		for dep := range deps {
-			pol, err := idx.cache.get(dep)
+			p, err := idx.loadPolicy(dep)
 			if err != nil {
 				return nil, err
 			}
 
-			cu.Definitions[dep] = pol
+			cu.AddDefinition(dep, p)
+
+			gp, err := idx.cache.get(dep)
+			if err == nil {
+				cu.AddGenerated(dep, gp)
+			}
 		}
 	}
 
 	return result, nil
+}
+
+func (idx *index) loadPolicy(id namer.ModuleID) (*policyv1.Policy, error) {
+	fileName, ok := idx.modIDToFile[id]
+	if !ok {
+		return nil, fmt.Errorf("policy not found [%s]", id.String())
+	}
+
+	f, err := idx.fsys.Open(fileName)
+	if err != nil {
+		return nil, err
+	}
+
+	defer f.Close()
+
+	p, err := policy.ReadPolicy(f)
+	if err != nil {
+		return nil, err
+	}
+
+	return policy.WithMetadata(p, fileName, nil), nil
 }
 
 func (idx *index) GetDependents(ids ...namer.ModuleID) (map[namer.ModuleID][]namer.ModuleID, error) {

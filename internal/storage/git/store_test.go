@@ -19,7 +19,6 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
-	"github.com/cerbos/cerbos/internal/compile"
 	policyv1 "github.com/cerbos/cerbos/internal/genpb/policy/v1"
 	sharedv1 "github.com/cerbos/cerbos/internal/genpb/shared/v1"
 	"github.com/cerbos/cerbos/internal/namer"
@@ -296,20 +295,6 @@ func requireIndexContains(t *testing.T, store *Store, wantFiles []string) {
 
 	haveFiles := store.idx.GetFiles()
 	require.ElementsMatch(t, wantFiles, haveFiles)
-}
-
-func getNotification(t *testing.T, notificationChan <-chan compile.Notification) *compile.Incremental {
-	t.Helper()
-
-	timer := time.NewTimer(10 * time.Second)
-	defer timer.Stop()
-
-	select {
-	case c := <-notificationChan:
-		return c.Payload
-	case <-timer.C:
-		return nil
-	}
 }
 
 func mkConf(t *testing.T, gitRepo, checkoutDir string) *Conf {

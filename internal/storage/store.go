@@ -4,6 +4,7 @@ package storage
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"sync"
 
@@ -16,6 +17,8 @@ var (
 	driversMu sync.RWMutex
 	drivers   = map[string]Constructor{}
 )
+
+var ErrNoMatchingPolicy = errors.New("no matching policy")
 
 // Constructor is a constructor function for a storage driver.
 type Constructor func(context.Context) (Store, error)

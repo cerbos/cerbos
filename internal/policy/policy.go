@@ -72,6 +72,31 @@ func Dependencies(p *policyv1.Policy) []string {
 	}
 }
 
+// WithMetadata adds metadata to the policy.
+func WithMetadata(p *policyv1.Policy, source string, annotations map[string]string) *policyv1.Policy {
+	if p.Metadata == nil {
+		p.Metadata = &policyv1.Metadata{}
+	}
+
+	p.Metadata.SourceFile = source
+	p.Metadata.Annotations = annotations
+
+	return p
+}
+
+// GetSourceFile gets the source file name from metadata if it exists.
+func GetSourceFile(p *policyv1.Policy) string {
+	if p == nil {
+		return "unknown<nil>"
+	}
+
+	if p.Metadata != nil && p.Metadata.SourceFile != "" {
+		return p.Metadata.SourceFile
+	}
+
+	return fmt.Sprintf("unknown<%s>", namer.ModuleName(p))
+}
+
 // Wrapper is a convenience layer over the policy definition.
 type Wrapper struct {
 	ID           namer.ModuleID
@@ -124,5 +149,26 @@ func Wrap(p *policyv1.Policy) Wrapper {
 
 type CompilationUnit struct {
 	ModID       namer.ModuleID
-	Definitions map[namer.ModuleID]*policyv1.GeneratedPolicy
+	Definitions map[namer.ModuleID]*policyv1.Policy
+	Generated   map[namer.ModuleID]*policyv1.GeneratedPolicy
+}
+
+func (cu *CompilationUnit) AddDefinition(id namer.ModuleID, p *policyv1.Policy) {
+	if cu.Definitions == nil {
+		cu.Definitions = make(map[namer.ModuleID]*policyv1.Policy)
+	}
+
+	cu.Definitions[id] = p
+}
+
+func (cu *CompilationUnit) AddGenerated(id namer.ModuleID, p *policyv1.GeneratedPolicy) {
+	if cu.Generated == nil {
+		cu.Generated = make(map[namer.ModuleID]*policyv1.GeneratedPolicy)
+	}
+
+	cu.Generated[id] = p
+}
+
+func (cu *CompilationUnit) MainSourceFile() string {
+	return GetSourceFile(cu.Definitions[cu.ModID])
 }

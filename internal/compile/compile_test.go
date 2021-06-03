@@ -5,19 +5,17 @@ package compile_test
 import (
 	"bytes"
 	"errors"
-	"fmt"
 	"math/rand"
 	"testing"
 	"time"
-	"unsafe"
 
 	"github.com/stretchr/testify/require"
 
+	"github.com/cerbos/cerbos/internal/codegen"
 	"github.com/cerbos/cerbos/internal/compile"
 	cerbosdevv1 "github.com/cerbos/cerbos/internal/genpb/cerbosdev/v1"
-	policyv1 "github.com/cerbos/cerbos/internal/genpb/policy/v1"
-	sharedv1 "github.com/cerbos/cerbos/internal/genpb/shared/v1"
 	"github.com/cerbos/cerbos/internal/namer"
+	"github.com/cerbos/cerbos/internal/policy"
 	"github.com/cerbos/cerbos/internal/test"
 	"github.com/cerbos/cerbos/internal/util"
 )
@@ -39,9 +37,8 @@ func TestCompile(t *testing.T) {
 		t.Run(tcase.Name, func(t *testing.T) {
 			tc := readTestCase(t, tcase.Input)
 
-			inputChan := mkInputChan(t, tc)
-
-			haveRes, haveErr := compile.Compile(inputChan)
+			cu := mkCompilationUnit(t, tc)
+			haveRes, haveErr := compile.Compile(cu)
 			if len(tc.WantErrors) > 0 {
 				errList := new(compile.ErrorList)
 				require.True(t, errors.As(haveErr, errList))
@@ -68,6 +65,29 @@ func readTestCase(t *testing.T, data []byte) *cerbosdevv1.CompileTestCase {
 	return tc
 }
 
+func mkCompilationUnit(t *testing.T, tc *cerbosdevv1.CompileTestCase) *policy.CompilationUnit {
+	t.Helper()
+
+	cu := &policy.CompilationUnit{}
+
+	for fileName, pol := range tc.InputDefs {
+		modID := namer.GenModuleID(pol)
+
+		if fileName == tc.MainDef {
+			cu.ModID = modID
+		}
+
+		cu.AddDefinition(modID, policy.WithMetadata(pol, fileName, nil))
+
+		if gp, err := codegen.GenerateRepr(pol); err == nil {
+			cu.AddGenerated(modID, gp)
+		}
+	}
+
+	return cu
+}
+
+/*
 func mkInputChan(t *testing.T, tc *cerbosdevv1.CompileTestCase) chan *compile.Unit {
 	t.Helper()
 
@@ -194,3 +214,4 @@ func mkRandomStr(n int) string {
 
 	return *(*string)(unsafe.Pointer(&b))
 }
+*/

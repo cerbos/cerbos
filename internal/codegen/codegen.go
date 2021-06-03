@@ -20,7 +20,12 @@ func GenerateRepr(p *policyv1.Policy) (*policyv1.GeneratedPolicy, error) {
 		return nil, err
 	}
 
-	return res.ToRepr()
+	repr, err := res.ToRepr()
+	if err != nil {
+		return nil, err
+	}
+
+	return repr, nil
 }
 
 func GenerateCode(p *policyv1.Policy) (*Result, error) {

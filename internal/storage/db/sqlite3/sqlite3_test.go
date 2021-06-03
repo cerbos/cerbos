@@ -6,11 +6,12 @@ import (
 	"context"
 	"testing"
 
+	"github.com/google/go-cmp/cmp"
 	"github.com/stretchr/testify/require"
+	"google.golang.org/protobuf/testing/protocmp"
 
 	"github.com/cerbos/cerbos/internal/policy"
 	"github.com/cerbos/cerbos/internal/storage"
-	"github.com/cerbos/cerbos/internal/storage/db"
 	"github.com/cerbos/cerbos/internal/storage/db/sqlite3"
 	"github.com/cerbos/cerbos/internal/test"
 )
@@ -51,12 +52,15 @@ func TestSQLite(t *testing.T) {
 		haveRec := have[rp.ID]
 		require.Equal(t, rp.ID, haveRec.ModID)
 		require.Len(t, haveRec.Definitions, 2)
+		require.Len(t, haveRec.Generated, 2)
 
 		require.Contains(t, haveRec.Definitions, rp.ID)
-		require.Equal(t, rp.FQN, haveRec.Definitions[rp.ID].Fqn)
+		require.Empty(t, cmp.Diff(rp, haveRec.Definitions[rp.ID], protocmp.Transform()))
+		require.Equal(t, rp.FQN, haveRec.Generated[rp.ID].Fqn)
 
 		require.Contains(t, haveRec.Definitions, dr.ID)
-		require.Equal(t, dr.FQN, haveRec.Definitions[dr.ID].Fqn)
+		require.Empty(t, cmp.Diff(dr, haveRec.Definitions[dr.ID], protocmp.Transform()))
+		require.Equal(t, dr.FQN, haveRec.Generated[dr.ID].Fqn)
 	})
 
 	t.Run("get_compilation_unit_without_deps", func(t *testing.T) {
@@ -70,7 +74,8 @@ func TestSQLite(t *testing.T) {
 		require.Len(t, haveRec.Definitions, 1)
 
 		require.Contains(t, haveRec.Definitions, pp.ID)
-		require.Equal(t, pp.FQN, haveRec.Definitions[pp.ID].Fqn)
+		require.Empty(t, cmp.Diff(pp, haveRec.Definitions[pp.ID], protocmp.Transform()))
+		require.Equal(t, pp.FQN, haveRec.Generated[pp.ID].Fqn)
 	})
 
 	t.Run("get_multiple_compilation_units", func(t *testing.T) {
@@ -85,23 +90,27 @@ func TestSQLite(t *testing.T) {
 		require.Len(t, haveRP.Definitions, 2)
 
 		require.Contains(t, haveRP.Definitions, rp.ID)
-		require.Equal(t, rp.FQN, haveRP.Definitions[rp.ID].Fqn)
+		require.Empty(t, cmp.Diff(rp, haveRP.Definitions[rp.ID], protocmp.Transform()))
+		require.Equal(t, rp.FQN, haveRP.Generated[rp.ID].Fqn)
 
 		require.Contains(t, haveRP.Definitions, dr.ID)
-		require.Equal(t, dr.FQN, haveRP.Definitions[dr.ID].Fqn)
+		require.Empty(t, cmp.Diff(dr, haveRP.Definitions[dr.ID], protocmp.Transform()))
+		require.Equal(t, dr.FQN, haveRP.Generated[dr.ID].Fqn)
 
 		havePP := have[pp.ID]
 		require.Equal(t, pp.ID, havePP.ModID)
 		require.Len(t, havePP.Definitions, 1)
 
 		require.Contains(t, havePP.Definitions, pp.ID)
-		require.Equal(t, pp.FQN, havePP.Definitions[pp.ID].Fqn)
+		require.Empty(t, cmp.Diff(pp, havePP.Definitions[pp.ID], protocmp.Transform()))
+		require.Equal(t, pp.FQN, havePP.Generated[pp.ID].Fqn)
 	})
 
 	t.Run("get_non_existent_compilation_unit", func(t *testing.T) {
 		p := policy.Wrap(test.GenResourcePolicy(test.PrefixAndSuffix("y", "y")))
-		_, err := store.GetCompilationUnits(ctx, p.ID)
-		require.ErrorIs(t, err, db.ErrNoResults)
+		have, err := store.GetCompilationUnits(ctx, p.ID)
+		require.NoError(t, err)
+		require.Empty(t, have)
 	})
 
 	t.Run("get_dependents", func(t *testing.T) {
@@ -121,8 +130,9 @@ func TestSQLite(t *testing.T) {
 		err := store.Delete(ctx, rpx.ID)
 		require.NoError(t, err)
 
-		_, err = store.GetCompilationUnits(ctx, rpx.ID)
-		require.ErrorIs(t, err, db.ErrNoResults)
+		have, err := store.GetCompilationUnits(ctx, rpx.ID)
+		require.NoError(t, err)
+		require.Empty(t, have)
 
 		checkEvents(t, storage.Event{Kind: storage.EventDeletePolicy, PolicyID: rpx.ID})
 	})
