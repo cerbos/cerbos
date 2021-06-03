@@ -523,6 +523,11 @@ func (m *mockIndex) Delete(entry index.Entry) (storage.Event, error) {
 	return m.idx.Delete(entry)
 }
 
+func (m *mockIndex) GetAllCompilationUnits(ctx context.Context) <-chan *policy.CompilationUnit {
+	m.calls = append(m.calls, mock.Call{Method: "GetAllCompilationUnits", Arguments: mock.Arguments{ctx}})
+	return m.idx.GetAllCompilationUnits(ctx)
+}
+
 func (m *mockIndex) Clear() error {
 	m.calls = append(m.calls, mock.Call{Method: "Clear"})
 	return m.idx.Clear()

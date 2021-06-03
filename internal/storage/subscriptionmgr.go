@@ -70,6 +70,10 @@ func (sm *SubscriptionManager) NotifySubscribers(events ...Event) {
 }
 
 func (sm *SubscriptionManager) Subscribe(s Subscriber) {
+	if sm == nil {
+		return
+	}
+
 	sm.mu.Lock()
 	defer sm.mu.Unlock()
 
@@ -77,6 +81,10 @@ func (sm *SubscriptionManager) Subscribe(s Subscriber) {
 }
 
 func (sm *SubscriptionManager) Unsubscribe(s Subscriber) {
+	if sm == nil {
+		return
+	}
+
 	sm.mu.Lock()
 	defer sm.mu.Unlock()
 
@@ -95,9 +103,15 @@ func TestSubscription(store Store) func(*testing.T, ...Event) {
 	return func(t *testing.T, wantEvents ...Event) {
 		t.Helper()
 
-		runtime.Gosched()
+		var haveEvents []Event
+		for tries := 0; tries < 3; tries++ {
+			runtime.Gosched()
 
-		haveEvents := sub.Events()
+			haveEvents = sub.Events()
+			if len(haveEvents) == len(wantEvents) {
+				break
+			}
+		}
 		store.Unsubscribe(sub)
 
 		require.ElementsMatch(t, wantEvents, haveEvents)

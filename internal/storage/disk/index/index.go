@@ -3,6 +3,7 @@
 package index
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"io/fs"
@@ -38,6 +39,7 @@ type Index interface {
 	AddOrUpdate(Entry) (storage.Event, error)
 	Delete(Entry) (storage.Event, error)
 	GetFiles() []string
+	GetAllCompilationUnits(context.Context) <-chan *policy.CompilationUnit
 	Clear() error
 }
 
@@ -253,6 +255,47 @@ func (idx *index) Delete(entry Entry) (storage.Event, error) {
 	delete(idx.executables, modID)
 
 	return evt, idx.cache.delete(modID)
+}
+
+func (idx *index) GetAllCompilationUnits(ctx context.Context) <-chan *policy.CompilationUnit {
+	outChan := make(chan *policy.CompilationUnit, 1)
+
+	idx.mu.RLock()
+	toCompile := make([]namer.ModuleID, 0, len(idx.executables))
+	for modID := range idx.modIDToFile {
+		if _, ok := idx.executables[modID]; ok {
+			toCompile = append(toCompile, modID)
+			continue
+		}
+
+		// is this a policy that is referenced by another one? If so, it will be implicitly compiled.
+		if dependents, ok := idx.dependents[modID]; ok && len(dependents) > 0 {
+			continue
+		}
+
+		// No implicit compilation for this policy so add it to the list
+		toCompile = append(toCompile, modID)
+	}
+	idx.mu.RUnlock()
+
+	go func() {
+		defer close(outChan)
+
+		for _, modID := range toCompile {
+			unit, err := idx.GetCompilationUnits(modID)
+			if err != nil {
+				continue
+			}
+
+			select {
+			case <-ctx.Done():
+				return
+			case outChan <- unit[modID]:
+			}
+		}
+	}()
+
+	return outChan
 }
 
 func (idx *index) Clear() error {

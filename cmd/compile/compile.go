@@ -17,6 +17,7 @@ import (
 	"github.com/cerbos/cerbos/internal/compile"
 	"github.com/cerbos/cerbos/internal/engine"
 	"github.com/cerbos/cerbos/internal/storage/disk"
+	"github.com/cerbos/cerbos/internal/storage/disk/index"
 	"github.com/cerbos/cerbos/internal/verify"
 )
 
@@ -61,9 +62,9 @@ func doRun(cmd *cobra.Command, args []string) error {
 	ctx, stopFunc := signal.NotifyContext(context.Background(), os.Interrupt)
 	defer stopFunc()
 
-	store, err := disk.NewReadOnlyStore(ctx, &disk.Conf{Directory: args[0]})
+	idx, err := index.Build(ctx, os.DirFS(args[0]), index.WithMemoryCache())
 	if err != nil {
-		idxErr := new(disk.IndexBuildError)
+		idxErr := new(index.BuildError)
 		if errors.As(err, &idxErr) {
 			return displayLintErrors(cmd, idxErr)
 		}
@@ -71,8 +72,7 @@ func doRun(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("failed to open directory %s: %w", args[0], err)
 	}
 
-	eng, err := engine.NewEphemeral(ctx, store)
-	if err != nil {
+	if err := compile.BatchCompile(idx.GetAllCompilationUnits(ctx)); err != nil {
 		compErr := new(compile.ErrorList)
 		if errors.As(err, compErr) {
 			return displayCompileErrors(cmd, *compErr)
@@ -82,6 +82,12 @@ func doRun(cmd *cobra.Command, args []string) error {
 	}
 
 	if verifyConf.TestsDir != "" {
+		compiler := compile.NewCompiler(ctx, disk.NewFromIndex(idx))
+		eng, err := engine.New(ctx, compiler)
+		if err != nil {
+			return fmt.Errorf("failed to create engine: %w", err)
+		}
+
 		result, err := verify.Verify(ctx, eng, verifyConf)
 		if err != nil {
 			return fmt.Errorf("failed to run tests: %w", err)
@@ -93,10 +99,10 @@ func doRun(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-func displayLintErrors(cmd *cobra.Command, errs *disk.IndexBuildError) error {
+func displayLintErrors(cmd *cobra.Command, errs *index.BuildError) error {
 	switch strings.ToLower(format) {
 	case formatJSON:
-		if err := outputJSON(cmd, map[string]*disk.IndexBuildError{"lintErrors": errs}); err != nil {
+		if err := outputJSON(cmd, map[string]*index.BuildError{"lintErrors": errs}); err != nil {
 			return err
 		}
 
@@ -125,6 +131,14 @@ func displayLintErrors(cmd *cobra.Command, errs *disk.IndexBuildError) error {
 		cmd.Println(header("Load failures"))
 		for _, lf := range errs.LoadFailures {
 			cmd.Printf("%s: %s\n", fileName(lf.File), errorMsg(lf.Err.Error()))
+		}
+		cmd.Println()
+	}
+
+	if len(errs.CodegenFailures) > 0 {
+		cmd.Println(header("Code generation failures"))
+		for _, cf := range errs.CodegenFailures {
+			cmd.Printf("%s: %s\n", fileName(cf.File), errorMsg(cf.Err.Error()))
 		}
 		cmd.Println()
 	}

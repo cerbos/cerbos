@@ -4,6 +4,7 @@ package compile
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 	"sync"
@@ -26,6 +27,23 @@ const (
 	storeFetchTimeout = 2 * time.Second
 	updateQueueSize   = 32
 )
+
+func BatchCompile(queue <-chan *policy.CompilationUnit) error {
+	var errs ErrorList
+
+	for unit := range queue {
+		if _, err := Compile(unit); err != nil {
+			errList := new(ErrorList)
+			if errors.As(err, errList) {
+				errs = append(errs, (*errList)...)
+			} else {
+				errs = append(errs, newError(unit.MainSourceFile(), err, "Compiler error"))
+			}
+		}
+	}
+
+	return errs.ErrOrNil()
+}
 
 func Compile(unit *policy.CompilationUnit) (Evaluator, error) {
 	if err := checkForAmbiguousOrUnknownDerivedRoles(unit); err != nil {
@@ -266,51 +284,6 @@ func (c *Compiler) GetEvaluator(ctx context.Context, modID namer.ModuleID) (Eval
 	return eval, nil
 }
 
-/*
-func Compile(pchan <-chan *Unit) (*Compiler, error) {
-	c := &Compiler{evaluators: make(map[namer.ModuleID]*evaluator)}
-
-	var errors ErrorList
-
-	for p := range pchan {
-		if p.Err != nil {
-			errors = append(errors, newError("NA", p.Err, "Invalid policy set"))
-			continue
-		}
-
-		eval, err := measureCompileDuration(p)
-		if err.ErrOrNil() != nil {
-			errors = append(errors, err...)
-			continue
-		}
-
-		c.evaluators[p.ModID] = eval
-	}
-
-	return c, errors.ErrOrNil()
-}
-
-func (c *Compiler) measureCompileDuration(cu *policy.CompilationUnit) ErrorList {
-	startTime := time.Now()
-	err := c.doCompile(cu)
-	durationMs := float64(time.Since(startTime)) / float64(time.Millisecond)
-
-	status := "success"
-	if err != nil {
-		status = "failure"
-	}
-
-	_ = stats.RecordWithTags(
-		context.Background(),
-		[]tag.Mutator{tag.Upsert(metrics.KeyCompileStatus, status)},
-		metrics.CompileDuration.M(durationMs),
-	)
-
-	return err
-}.
-
-*/
-
 func checkForAmbiguousOrUnknownDerivedRoles(p *policy.CompilationUnit) ErrorList {
 	root := p.Definitions[p.ModID]
 	rp, ok := root.PolicyType.(*policyv1.Policy_ResourcePolicy)
@@ -364,37 +337,3 @@ func checkForAmbiguousOrUnknownDerivedRoles(p *policy.CompilationUnit) ErrorList
 
 	return errors
 }
-
-/*
-func (c *Compiler) Update(inc *Incremental) error {
-	var errors ErrorList
-
-	evaluators := make(map[namer.ModuleID]*evaluator)
-	for _, p := range inc.AddOrUpdate {
-		eval, errs := measureCompileDuration(p)
-		if len(errs) > 0 {
-			errors = append(errors, errs...)
-			continue
-		}
-
-		evaluators[p.ModID] = eval
-	}
-
-	if err := errors.ErrOrNil(); err != nil {
-		return err
-	}
-
-	c.mu.Lock()
-	defer c.mu.Unlock()
-
-	for modID, eval := range evaluators {
-		c.evaluators[modID] = eval
-	}
-
-	for modID := range inc.Remove {
-		delete(c.evaluators, modID)
-	}
-
-	return nil
-}
-*/

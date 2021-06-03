@@ -3,17 +3,26 @@
 package index
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
+	"errors"
+	"io"
+	"io/fs"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
+	"github.com/spf13/afero"
 	"github.com/stretchr/testify/require"
 
+	cerbosdevv1 "github.com/cerbos/cerbos/internal/genpb/cerbosdev/v1"
 	"github.com/cerbos/cerbos/internal/test"
+	"github.com/cerbos/cerbos/internal/util"
 )
 
-func TestBuildIndex(t *testing.T) {
+func TestBuildIndexWithDisk(t *testing.T) {
 	dir := test.PathToDir(t, "store")
 
 	idx, err := Build(context.Background(), os.DirFS(dir), WithMemoryCache())
@@ -23,7 +32,7 @@ func TestBuildIndex(t *testing.T) {
 	idxImpl, ok := idx.(*index)
 	require.True(t, ok)
 
-	defer idx.Clear()
+	defer idx.Clear() //nolint:errcheck
 
 	data := idxImpl.Inspect()
 	require.Len(t, data, 3)
@@ -45,4 +54,67 @@ func TestBuildIndex(t *testing.T) {
 	require.Empty(t, data[dr].Dependencies)
 	require.Len(t, data[dr].References, 1)
 	require.Contains(t, data[dr].References, rp)
+}
+
+func TestBuildIndex(t *testing.T) {
+	testCases := test.LoadTestCases(t, "index")
+
+	for _, tcase := range testCases {
+		tcase := tcase
+		t.Run(tcase.Name, func(t *testing.T) {
+			tc := readTestCase(t, tcase.Input)
+			fs := toFS(t, tc)
+
+			_, haveErr := Build(context.Background(), fs, WithMemoryCache())
+			if tc.WantErrJson != "" {
+				errList := new(BuildError)
+				require.True(t, errors.As(haveErr, &errList))
+
+				/*
+					encoder := json.NewEncoder(os.Stdout)
+					encoder.SetIndent("", "  ")
+					encoder.Encode(errList)
+				*/
+
+				haveErrJSON, err := json.Marshal(errList)
+				require.NoError(t, err)
+
+				require.JSONEq(t, tc.WantErrJson, string(haveErrJSON))
+			} else if tc.WantErr != "" {
+				require.EqualError(t, haveErr, tc.WantErr)
+			} else {
+				require.NoError(t, haveErr)
+			}
+		})
+	}
+}
+
+func readTestCase(t *testing.T, data []byte) *cerbosdevv1.IndexBuilderTestCase {
+	t.Helper()
+
+	tc := &cerbosdevv1.IndexBuilderTestCase{}
+	require.NoError(t, util.ReadJSONOrYAML(bytes.NewReader(data), tc))
+
+	return tc
+}
+
+func toFS(t *testing.T, tc *cerbosdevv1.IndexBuilderTestCase) fs.FS {
+	t.Helper()
+
+	fs := afero.NewMemMapFs()
+
+	for file, data := range tc.Files {
+		dir := filepath.Dir(file)
+		require.NoError(t, fs.MkdirAll(dir, 0764))
+
+		f, err := fs.Create(file)
+		require.NoError(t, err)
+
+		_, err = io.Copy(f, strings.NewReader(data))
+		require.NoError(t, err)
+
+		require.NoError(t, f.Close())
+	}
+
+	return afero.NewIOFS(fs)
 }

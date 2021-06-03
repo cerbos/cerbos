@@ -23,9 +23,7 @@ const (
 	// cooldownPeriod is the amount of time to wait before triggering a notification to update.
 	// This is necessary because many file update events can fire even for a seemingly simple operation on a file.
 	// We want the system to settle down before performing an expensive update operation.
-	cooldownPeriod = 3 * time.Second
-	notifyTimeout  = 2 * time.Second
-	reloadTimeout  = 60 * time.Second
+	cooldownPeriod = 2 * time.Second
 )
 
 func watchDir(ctx context.Context, dir string, idx index.Index, sub *storage.SubscriptionManager) error {
