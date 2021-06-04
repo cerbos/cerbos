@@ -9,6 +9,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/gorilla/handlers"
 	grpc_logging "github.com/grpc-ecosystem/go-grpc-middleware/logging"
 	"github.com/grpc-ecosystem/go-grpc-middleware/logging/zap/ctxzap"
 	grpc_ctxtags "github.com/grpc-ecosystem/go-grpc-middleware/tags"
@@ -87,4 +88,28 @@ func customHTTPResponseCode(ctx context.Context, w http.ResponseWriter, _ proto.
 	}
 
 	return nil
+}
+
+func withCORS(conf *Conf, handler http.Handler) http.Handler {
+	if conf.CORS.Disabled {
+		return handler
+	}
+
+	var opts []handlers.CORSOption
+	if len(conf.CORS.AllowedOrigins) > 0 {
+		opts = append(opts, handlers.AllowedOrigins(conf.CORS.AllowedOrigins))
+	} else {
+		opts = append(opts, handlers.AllowedOrigins([]string{"*"}))
+	}
+
+	if len(conf.CORS.AllowedHeaders) > 0 {
+		opts = append(opts, handlers.AllowedHeaders(conf.CORS.AllowedHeaders))
+	}
+
+	return handlers.CORS(opts...)(handler)
+}
+
+func withRequestLogging(handler http.Handler) http.Handler {
+	log := zap.NewStdLog(zap.L().Named("http"))
+	return handlers.CombinedLoggingHandler(log.Writer(), handler)
 }

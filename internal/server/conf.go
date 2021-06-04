@@ -4,6 +4,7 @@ package server
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/cerbos/cerbos/internal/util"
 )
@@ -22,6 +23,8 @@ type Conf struct {
 	GRPCListenAddr string `yaml:"grpcListenAddr"`
 	// TLS defines the TLS configuration for the server.
 	TLS *TLSConf `yaml:"tls"`
+	// CORS defines the CORS configuration for the server.
+	CORS CORSConf `yaml:"cors"`
 	// MetricsEnabled defines whether the metrics endpoint is enabled.
 	MetricsEnabled bool `yaml:"metricsEnabled"`
 	// LogRequestPayloads defines whether the request payloads should be logged.
@@ -38,6 +41,17 @@ type TLSConf struct {
 	Key string `yaml:"key"`
 	//	CACert is the path to the optional CA certificate for verifying client requests.
 	CACert string `yaml:"caCert"`
+}
+
+type CORSConf struct {
+	// Disabled sets whether CORS is disabled.
+	Disabled bool `yaml:"enabled"`
+	// AllowedOrigins is the contents of the allowed-origins header.
+	AllowedOrigins []string `yaml:"allowedOrigins"`
+	// AllowedHeaders is the contents of the allowed-headers header.
+	AllowedHeaders []string `yaml:"allowedHeaders"`
+	// MaxAge is the max age of the CORS preflight check.kk
+	MaxAge time.Duration `yaml:"maxAge"`
 }
 
 func (c *Conf) Key() string {

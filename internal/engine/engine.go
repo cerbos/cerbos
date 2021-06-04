@@ -63,6 +63,27 @@ type Engine struct {
 }
 
 func New(ctx context.Context, compiler *compile.Compiler) (*Engine, error) {
+	engine, err := newEngine(ctx, compiler)
+	if err != nil {
+		return nil, err
+	}
+
+	engine.workerPool = make([]chan<- workIn, numWorkers)
+
+	for i := 0; i < numWorkers; i++ {
+		inputChan := make(chan workIn, 1)
+		engine.workerPool[i] = inputChan
+		go engine.startWorker(ctx, i, inputChan)
+	}
+
+	return engine, nil
+}
+
+func NewEphemeral(ctx context.Context, compiler *compile.Compiler) (*Engine, error) {
+	return newEngine(ctx, compiler)
+}
+
+func newEngine(_ context.Context, compiler *compile.Compiler) (*Engine, error) {
 	conf := &Conf{}
 	if err := config.GetSection(conf); err != nil {
 		return nil, err
@@ -79,13 +100,6 @@ func New(ctx context.Context, compiler *compile.Compiler) (*Engine, error) {
 		conf:       conf,
 		compiler:   compiler,
 		queryCache: queryCache,
-		workerPool: make([]chan<- workIn, numWorkers),
-	}
-
-	for i := 0; i < numWorkers; i++ {
-		inputChan := make(chan workIn, 1)
-		engine.workerPool[i] = inputChan
-		go engine.startWorker(ctx, i, inputChan)
 	}
 
 	return engine, nil
