@@ -18,6 +18,7 @@ github.com/cespare/xxhash/v2                                      https://github
 github.com/davecgh/go-spew/spew                                   https://github.com/davecgh/go-spew/blob/master/spew/LICENSE                                      ISC
 github.com/envoyproxy/protoc-gen-validate/validate                https://github.com/envoyproxy/protoc-gen-validate/blob/master/validate/LICENSE                   Apache-2.0
 github.com/fatih/color                                            https://github.com/fatih/color/blob/master/LICENSE.md                                            MIT
+github.com/felixge/httpsnoop                                      https://github.com/felixge/httpsnoop/blob/master/LICENSE.txt                                     MIT
 github.com/fsnotify/fsnotify                                      https://github.com/fsnotify/fsnotify/blob/master/LICENSE                                         BSD-3-Clause
 github.com/ghodss/yaml                                            https://github.com/ghodss/yaml/blob/master/LICENSE                                               MIT
 github.com/gobwas/glob                                            https://github.com/gobwas/glob/blob/master/LICENSE                                               MIT
@@ -26,6 +27,7 @@ github.com/golang/protobuf                                        https://github
 github.com/google/cel-go                                          https://github.com/google/cel-go/blob/master/LICENSE                                             Apache-2.0
 github.com/google/go-cmp/cmp                                      https://github.com/google/go-cmp/blob/master/cmp/LICENSE                                         BSD-3-Clause
 github.com/google/gops                                            https://github.com/google/gops/blob/master/LICENSE                                               BSD-3-Clause
+github.com/gorilla/handlers                                       https://github.com/gorilla/handlers/blob/master/LICENSE                                          BSD-2-Clause
 github.com/gorilla/mux                                            https://github.com/gorilla/mux/blob/master/LICENSE                                               BSD-3-Clause
 github.com/grpc-ecosystem/go-grpc-middleware                      https://github.com/grpc-ecosystem/go-grpc-middleware/blob/master/LICENSE                         Apache-2.0
 github.com/grpc-ecosystem/grpc-gateway/v2                         https://github.com/grpc-ecosystem/grpc-gateway/blob/master/v2/LICENSE.txt                        BSD-3-Clause
