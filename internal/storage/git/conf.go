@@ -15,13 +15,12 @@ import (
 	"github.com/go-git/go-git/v5/plumbing/transport/ssh"
 	"go.uber.org/multierr"
 
+	"github.com/cerbos/cerbos/internal/storage"
 	"github.com/cerbos/cerbos/internal/util"
 )
 
 const (
-	// DriverName is the name of the storage driver.
-	DriverName = "git"
-
+	confKey                 = storage.ConfKey + ".git"
 	defaultOperationTimeout = 60 * time.Second
 )
 
@@ -37,6 +36,8 @@ type Conf struct {
 	SubDir string `yaml:"subDir,omitempty"`
 	// CheckoutDir is the local path to checkout the Git repo to.
 	CheckoutDir string `yaml:"checkoutDir"`
+	// ScratchDir is the directory to use for holding temporary data.
+	ScratchDir string `yaml:"scratchDir"`
 	// SSH holds auth details for the SSH protocol.
 	SSH *SSHAuth `yaml:"ssh,omitempty"`
 	// HTTPS holds auth details for the HTTPS protocol.
@@ -86,6 +87,10 @@ func (ha *HTTPSAuth) Auth() (transport.AuthMethod, error) {
 	return &http.BasicAuth{Username: ha.Username, Password: ha.Password}, nil
 }
 
+func (conf *Conf) Key() string {
+	return confKey
+}
+
 func (conf *Conf) Validate() error {
 	var errs []error
 
@@ -113,6 +118,10 @@ func (conf *Conf) Validate() error {
 	}
 
 	return nil
+}
+
+func (conf *Conf) SetDefaults() {
+	conf.ScratchDir = os.TempDir()
 }
 
 func (conf *Conf) getBranch() string {

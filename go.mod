@@ -8,6 +8,7 @@ require (
 	github.com/ProtonMail/gopenpgp/v2 v2.1.9 // indirect
 	github.com/bufbuild/buf v0.42.1
 	github.com/cespare/xxhash v1.1.0
+	github.com/doug-martin/goqu/v9 v9.13.0
 	github.com/envoyproxy/protoc-gen-validate v0.6.1
 	github.com/fatih/color v1.12.0
 	github.com/fsnotify/fsnotify v1.4.9
@@ -19,17 +20,18 @@ require (
 	github.com/google/go-cmp v0.5.6
 	github.com/google/go-licenses v0.0.0-20210329231322-ce1d9163b77d
 	github.com/google/gops v0.3.18
-	github.com/google/renameio v1.0.1
 	github.com/google/uuid v1.2.0
 	github.com/goreleaser/goreleaser v0.166.2
 	github.com/gorilla/mux v1.8.0
 	github.com/grpc-ecosystem/go-grpc-middleware v1.3.0
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.4.0
 	github.com/iancoleman/strcase v0.1.3 // indirect
+	github.com/jmoiron/sqlx v1.3.4
 	github.com/kavu/go_reuseport v1.5.0
 	github.com/lyft/protoc-gen-star v0.5.3 // indirect
 	github.com/mattn/go-isatty v0.0.12
 	github.com/mattn/go-runewidth v0.0.12 // indirect
+	github.com/mattn/go-sqlite3 v1.14.7
 	github.com/open-policy-agent/opa v0.28.0
 	github.com/prometheus/client_golang v1.10.0
 	github.com/prometheus/common v0.20.0 // indirect

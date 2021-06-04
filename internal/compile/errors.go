@@ -21,6 +21,7 @@ var (
 	ErrImportNotFound       = errors.New("import not found")
 	ErrInvalidImport        = errors.New("invalid import")
 	ErrInvalidMatchExpr     = errors.New("invalid match expression")
+	ErrNoEvaluator          = errors.New("no evaluator available")
 	ErrUnknownDerivedRole   = errors.New("unknown derived role")
 )
 
@@ -103,7 +104,11 @@ func newCodeGenErrors(file string, err error) ErrorList {
 	regoErrs := new(ast.Errors) //nolint:ifshort
 	if errors.As(err, regoErrs) {
 		for _, re := range *regoErrs {
-			errs = append(errs, newError(file, ErrCompileError, fmt.Sprintf("%s: %s", re.Code, re.Message)))
+			fileName := file
+			if re.Location != nil && re.Location.File != "" {
+				fileName = re.Location.File
+			}
+			errs = append(errs, newError(fileName, ErrCompileError, fmt.Sprintf("%s: %s", re.Code, re.Message)))
 		}
 
 		return errs

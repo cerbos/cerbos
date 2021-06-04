@@ -57,6 +57,16 @@ func (m *Policy) Validate() error {
 
 	// no validation rules for Description
 
+	if v, ok := interface{}(m.GetMetadata()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return PolicyValidationError{
+				field:  "Metadata",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
 	switch m.PolicyType.(type) {
 
 	case *Policy_ResourcePolicy:
@@ -159,6 +169,74 @@ var _ interface {
 	Cause() error
 	ErrorName() string
 } = PolicyValidationError{}
+
+// Validate checks the field values on Metadata with the rules defined in the
+// proto definition for this message. If any rules are violated, an error is returned.
+func (m *Metadata) Validate() error {
+	if m == nil {
+		return nil
+	}
+
+	// no validation rules for SourceFile
+
+	// no validation rules for Annotations
+
+	return nil
+}
+
+// MetadataValidationError is the validation error returned by
+// Metadata.Validate if the designated constraints aren't met.
+type MetadataValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e MetadataValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e MetadataValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e MetadataValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e MetadataValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e MetadataValidationError) ErrorName() string { return "MetadataValidationError" }
+
+// Error satisfies the builtin error interface
+func (e MetadataValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sMetadata.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = MetadataValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = MetadataValidationError{}
 
 // Validate checks the field values on ResourcePolicy with the rules defined in
 // the proto definition for this message. If any rules are violated, an error
@@ -1286,6 +1364,92 @@ var _ interface {
 	Cause() error
 	ErrorName() string
 } = TestValidationError{}
+
+// Validate checks the field values on GeneratedPolicy with the rules defined
+// in the proto definition for this message. If any rules are violated, an
+// error is returned.
+func (m *GeneratedPolicy) Validate() error {
+	if m == nil {
+		return nil
+	}
+
+	// no validation rules for Fqn
+
+	for key, val := range m.GetCelConditions() {
+		_ = val
+
+		// no validation rules for CelConditions[key]
+
+		if v, ok := interface{}(val).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return GeneratedPolicyValidationError{
+					field:  fmt.Sprintf("CelConditions[%v]", key),
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	}
+
+	// no validation rules for Code
+
+	return nil
+}
+
+// GeneratedPolicyValidationError is the validation error returned by
+// GeneratedPolicy.Validate if the designated constraints aren't met.
+type GeneratedPolicyValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e GeneratedPolicyValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e GeneratedPolicyValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e GeneratedPolicyValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e GeneratedPolicyValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e GeneratedPolicyValidationError) ErrorName() string { return "GeneratedPolicyValidationError" }
+
+// Error satisfies the builtin error interface
+func (e GeneratedPolicyValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sGeneratedPolicy.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = GeneratedPolicyValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = GeneratedPolicyValidationError{}
 
 // Validate checks the field values on PrincipalRule_Action with the rules
 // defined in the proto definition for this message. If any rules are

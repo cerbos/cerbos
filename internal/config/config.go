@@ -6,6 +6,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
 	"os"
 	"sync"
 
@@ -41,7 +42,20 @@ func Load(confFile string, overrides map[string]interface{}) error {
 		return fmt.Errorf("config file path is a directory: %s", confFile)
 	}
 
-	provider, err := config.NewYAML(config.File(confFile), config.Static(overrides), config.Expand(os.LookupEnv))
+	return doLoad(config.File(confFile), config.Static(overrides))
+}
+
+func LoadReader(reader io.Reader) error {
+	return doLoad(config.Source(reader))
+}
+
+func LoadMap(m map[string]interface{}) error {
+	return doLoad(config.Static(m))
+}
+
+func doLoad(sources ...config.YAMLOption) error {
+	opts := append(sources, config.Expand(os.LookupEnv), config.Permissive()) //nolint:gocritic
+	provider, err := config.NewYAML(opts...)
 	if err != nil {
 		return fmt.Errorf("failed to create config provider: %w", err)
 	}

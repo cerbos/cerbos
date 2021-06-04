@@ -1,0 +1,25 @@
+---
+wantErrJson: |-
+  {
+    "disabled": null,
+    "duplicateDefs": null,
+    "loadFailures": [
+      {
+        "error": "failed to unmarshal JSON: proto: (line 1:2): unknown field \"key\"",
+        "file": "principal.json"
+      },
+      {
+        "error": "failed to unmarshal JSON: proto: (line 1:2): unknown field \"some\"",
+        "file": "resource.yaml"
+      }
+    ],
+    "codegenFailures": null,
+    "missingImports": null
+  }
+files:
+  "resource.yaml": |-
+    ---
+    some: key
+
+  "principal.json": |-
+    {"key": "value"}

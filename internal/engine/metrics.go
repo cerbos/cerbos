@@ -18,27 +18,6 @@ const (
 	statusSuccess = "success"
 )
 
-func measureUpdateLatency(updateType string, updateOp func() error) error {
-	startTime := time.Now()
-	err := updateOp()
-	latencyMs := float64(time.Since(startTime)) / float64(time.Millisecond)
-
-	status := statusSuccess
-	if err != nil {
-		status = statusFailure
-	}
-
-	_ = stats.RecordWithTags(context.Background(),
-		[]tag.Mutator{
-			tag.Upsert(metrics.KeyEngineUpdateStatus, status),
-			tag.Upsert(metrics.KeyEngineUpdateType, updateType),
-		},
-		metrics.EngineUpdateLatency.M(latencyMs),
-	)
-
-	return err
-}
-
 func measureCheckLatency(batchSize int, checkFn func() ([]*enginev1.CheckOutput, error)) ([]*enginev1.CheckOutput, error) {
 	startTime := time.Now()
 	result, err := checkFn()

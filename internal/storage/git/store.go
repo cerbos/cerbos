@@ -17,30 +17,43 @@ import (
 	"github.com/go-git/go-git/v5/plumbing/object"
 	"go.uber.org/zap"
 
-	"github.com/cerbos/cerbos/internal/compile"
+	"github.com/cerbos/cerbos/internal/config"
 	policyv1 "github.com/cerbos/cerbos/internal/genpb/policy/v1"
+	"github.com/cerbos/cerbos/internal/namer"
 	"github.com/cerbos/cerbos/internal/policy"
-	"github.com/cerbos/cerbos/internal/storage/common"
-	"github.com/cerbos/cerbos/internal/storage/disk"
+	"github.com/cerbos/cerbos/internal/storage"
+	"github.com/cerbos/cerbos/internal/storage/disk/index"
 	"github.com/cerbos/cerbos/internal/util"
 )
 
-// ErrDirtyState indicates that the git store is dirty.
-var ErrDirtyState = errors.New("state is dirty")
+const DriverName = "git"
+
+var _ storage.Store = (*Store)(nil)
+
+func init() {
+	storage.RegisterDriver(DriverName, func(ctx context.Context) (storage.Store, error) {
+		conf := &Conf{}
+		if err := config.GetSection(conf); err != nil {
+			return nil, err
+		}
+
+		return NewStore(ctx, conf)
+	})
+}
 
 type Store struct {
-	log   *zap.SugaredLogger
-	conf  *Conf
-	index disk.Index
-	repo  *git.Repository
-	*common.Notifier
+	log  *zap.SugaredLogger
+	conf *Conf
+	idx  index.Index
+	repo *git.Repository
+	*storage.SubscriptionManager
 }
 
 func NewStore(ctx context.Context, conf *Conf) (*Store, error) {
 	s := &Store{
-		log:      zap.S().Named("git.store").With("dir", conf.CheckoutDir),
-		conf:     conf,
-		Notifier: common.NewNotifier(),
+		log:                 zap.S().Named("git.store").With("dir", conf.CheckoutDir),
+		conf:                conf,
+		SubscriptionManager: storage.NewSubscriptionManager(ctx),
 	}
 
 	if err := s.init(ctx); err != nil {
@@ -49,14 +62,6 @@ func NewStore(ctx context.Context, conf *Conf) (*Store, error) {
 	}
 
 	return s, nil
-}
-
-func (s *Store) Driver() string {
-	return DriverName
-}
-
-func (s *Store) GetAllPolicies(ctx context.Context) <-chan *compile.Unit {
-	return s.index.GetAllPolicies(ctx)
 }
 
 func (s *Store) init(ctx context.Context) error {
@@ -113,6 +118,18 @@ func (s *Store) init(ctx context.Context) error {
 	return loadAndStartPoller()
 }
 
+func (s *Store) Driver() string {
+	return DriverName
+}
+
+func (s *Store) GetCompilationUnits(_ context.Context, ids ...namer.ModuleID) (map[namer.ModuleID]*policy.CompilationUnit, error) {
+	return s.idx.GetCompilationUnits(ids...)
+}
+
+func (s *Store) GetDependents(_ context.Context, ids ...namer.ModuleID) (map[namer.ModuleID][]namer.ModuleID, error) {
+	return s.idx.GetDependents(ids...)
+}
+
 func isEmptyDir(dir string) (bool, error) {
 	d, err := os.Open(dir)
 	if err != nil {
@@ -164,12 +181,12 @@ func (s *Store) loadAll(ctx context.Context) error {
 		policyDir = s.conf.SubDir
 	}
 
-	idx, err := disk.BuildIndex(ctx, os.DirFS(s.conf.CheckoutDir), policyDir)
+	idx, err := index.Build(ctx, os.DirFS(s.conf.CheckoutDir), index.WithRootDir(policyDir), index.WithDiskCache(s.conf.ScratchDir))
 	if err != nil {
 		return err
 	}
 
-	s.index = idx
+	s.idx = idx
 
 	return nil
 }
@@ -318,25 +335,23 @@ func (s *Store) updateIndex(ctx context.Context) error {
 
 	s.log.Infow("Detected repository changes")
 
-	updates := disk.NewIndexUpdate()
-
 	for _, c := range changes {
 		s.log.Debugw("Processing change", "change", c)
 		switch {
 		case c.From.Name == "" && s.inPolicyDir(c.To.Name): // File created
-			if err := s.accumulateChange(c.To, updates.Add); err != nil {
+			if err := s.applyIndexUpdate(c.To, storage.EventAddOrUpdatePolicy); err != nil {
 				return err
 			}
 		case c.To.Name == "" && s.inPolicyDir(c.From.Name): // File deleted
-			if err := s.accumulateChange(c.From, updates.Remove); err != nil {
+			if err := s.applyIndexUpdate(c.From, storage.EventDeletePolicy); err != nil {
 				return err
 			}
 		case s.inPolicyDir(c.From.Name) && !s.inPolicyDir(c.To.Name): // File moved out of policy dir
-			if err := s.accumulateChange(c.From, updates.Remove); err != nil {
+			if err := s.applyIndexUpdate(c.From, storage.EventDeletePolicy); err != nil {
 				return err
 			}
 		case s.inPolicyDir(c.To.Name): // file moved in or modified
-			if err := s.accumulateChange(c.To, updates.Add); err != nil {
+			if err := s.applyIndexUpdate(c.To, storage.EventAddOrUpdatePolicy); err != nil {
 				return err
 			}
 		default:
@@ -344,39 +359,37 @@ func (s *Store) updateIndex(ctx context.Context) error {
 		}
 	}
 
-	if updates.IsEmpty() {
-		s.log.Info("No changes to registry")
-		return nil
-	}
-
-	change, err := s.index.Apply(updates)
-	if err != nil {
-		s.log.Errorw("Failed to apply changes to index", "error", err)
-		return err
-	}
-
-	addCount := len(change.AddOrUpdate)
-	removeCount := len(change.Remove)
-
-	s.log.Infof("Index updated: Added=%d Removed=%d", addCount, removeCount)
-	return s.NotifyIncrementalUpdate(ctx, change)
+	s.log.Info("Index updated")
+	return nil
 }
 
-func (s *Store) accumulateChange(ce object.ChangeEntry, accFn func(string, *policyv1.Policy)) error {
+func (s *Store) applyIndexUpdate(ce object.ChangeEntry, eventKind storage.EventKind) error {
 	if !util.IsSupportedFileType(ce.Name) {
 		s.log.Infow("Ignoring unsupported file type", "path", ce.Name)
 		return nil
 	}
 
-	s.log.Debugw("Reading policy", "path", ce.Name)
-	p, err := s.readPolicyFromBlob(ce.TreeEntry.Hash)
+	idxFn := s.idx.Delete
+	entry := index.Entry{File: ce.Name}
+
+	if eventKind == storage.EventAddOrUpdatePolicy {
+		s.log.Debugw("Reading policy", "path", ce.Name)
+		p, err := s.readPolicyFromBlob(ce.TreeEntry.Hash)
+		if err != nil {
+			s.log.Errorw("Failed to read policy", "path", ce.Name, "error", err)
+			return err
+		}
+
+		idxFn = s.idx.AddOrUpdate
+		entry.Policy = policy.Wrap(p)
+	}
+
+	evt, err := idxFn(entry)
 	if err != nil {
-		s.log.Errorw("Failed to read policy", "path", ce.Name, "error", err)
 		return err
 	}
 
-	accFn(ce.Name, p)
-
+	s.NotifySubscribers(evt)
 	return nil
 }
 
