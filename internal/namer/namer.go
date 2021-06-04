@@ -3,8 +3,10 @@
 package namer
 
 import (
+	"database/sql/driver"
 	"fmt"
 	"regexp"
+	"strconv"
 	"strings"
 
 	"github.com/cespare/xxhash"
@@ -15,16 +17,37 @@ import (
 var invalidIdentiferChars = regexp.MustCompile(`[^\w\.]+`)
 
 const (
-	ModulePrefix            = "cerbos"
-	DerivedRolesPrefix      = "derived_roles"
-	PrincipalPoliciesPrefix = "principal"
-	ResourcePoliciesPrefix  = "resource"
-	DefaultVersion          = "default"
+	DerivedRolesPrefix      = "cerbos.derived_roles"
+	PrincipalPoliciesPrefix = "cerbos.principal"
+	ResourcePoliciesPrefix  = "cerbos.resource"
+
+	DefaultVersion = "default"
 )
 
-// ModuleID is a short ID to identify modules.
+// ModuleID is a unique identifier for modules.
 type ModuleID struct {
 	hash uint64
+}
+
+func (m ModuleID) Value() (driver.Value, error) {
+	return m.hash, nil
+}
+
+func (m *ModuleID) Scan(src interface{}) error {
+	switch v := src.(type) {
+	case uint64:
+		m.hash = v
+		return nil
+	case int64:
+		m.hash = uint64(v)
+		return nil
+	default:
+		return fmt.Errorf("unexpected type for module ID: %T", src)
+	}
+}
+
+func (m *ModuleID) String() string {
+	return strconv.FormatUint(m.hash, 10)
 }
 
 // GenModuleID generates a short ID for the module.
@@ -53,7 +76,7 @@ func ModuleName(p *policyv1.Policy) string {
 
 // ResourcePolicyModuleName returns the module name for the resource policy with given resource and version.
 func ResourcePolicyModuleName(resource, version string) string {
-	return fmt.Sprintf("%s.%s.%s.v%s", ModulePrefix, ResourcePoliciesPrefix, Sanitize(resource), Sanitize(version))
+	return fmt.Sprintf("%s.%s.v%s", ResourcePoliciesPrefix, Sanitize(resource), Sanitize(version))
 }
 
 // ResourcePolicyModuleID returns the module ID for the resource policy with given resource and version.
@@ -63,7 +86,7 @@ func ResourcePolicyModuleID(resource, version string) ModuleID {
 
 // PrincipalPolicyModuleName returns the module name for the principal policy with given principal and version.
 func PrincipalPolicyModuleName(principal, version string) string {
-	return fmt.Sprintf("%s.%s.%s.v%s", ModulePrefix, PrincipalPoliciesPrefix, Sanitize(principal), Sanitize(version))
+	return fmt.Sprintf("%s.%s.v%s", PrincipalPoliciesPrefix, Sanitize(principal), Sanitize(version))
 }
 
 // PrincipalPolicyModuleID returns the module ID for the principal policy with given principal and version.
@@ -73,7 +96,7 @@ func PrincipalPolicyModuleID(principal, version string) ModuleID {
 
 // DerivedRolesModuleName returns the module name for the given derived roles set.
 func DerivedRolesModuleName(roleSetName string) string {
-	return fmt.Sprintf("%s.%s.%s", ModulePrefix, DerivedRolesPrefix, Sanitize(roleSetName))
+	return fmt.Sprintf("%s.%s", DerivedRolesPrefix, Sanitize(roleSetName))
 }
 
 // DerivedRolesModuleID returns the module ID for the given derived roles set.
@@ -83,7 +106,7 @@ func DerivedRolesModuleID(roleSetName string) ModuleID {
 
 // DerivedRolesSimpleName extracts the simple name from a derived roles module name.
 func DerivedRolesSimpleName(modName string) string {
-	return strings.TrimPrefix(modName, fmt.Sprintf("%s.%s.", ModulePrefix, DerivedRolesPrefix))
+	return strings.TrimPrefix(modName, DerivedRolesPrefix+".")
 }
 
 // QueryForPrincipal returns the effect query for the given principal and version.

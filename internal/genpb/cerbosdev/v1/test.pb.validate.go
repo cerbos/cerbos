@@ -253,6 +253,79 @@ var _ interface {
 	ErrorName() string
 } = ServerTestCaseValidationError{}
 
+// Validate checks the field values on IndexBuilderTestCase with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, an error is returned.
+func (m *IndexBuilderTestCase) Validate() error {
+	if m == nil {
+		return nil
+	}
+
+	// no validation rules for Files
+
+	// no validation rules for WantErrJson
+
+	// no validation rules for WantErr
+
+	return nil
+}
+
+// IndexBuilderTestCaseValidationError is the validation error returned by
+// IndexBuilderTestCase.Validate if the designated constraints aren't met.
+type IndexBuilderTestCaseValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e IndexBuilderTestCaseValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e IndexBuilderTestCaseValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e IndexBuilderTestCaseValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e IndexBuilderTestCaseValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e IndexBuilderTestCaseValidationError) ErrorName() string {
+	return "IndexBuilderTestCaseValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e IndexBuilderTestCaseValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sIndexBuilderTestCase.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = IndexBuilderTestCaseValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = IndexBuilderTestCaseValidationError{}
+
 // Validate checks the field values on CompileTestCase with the rules defined
 // in the proto definition for this message. If any rules are violated, an
 // error is returned.

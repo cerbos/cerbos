@@ -1,0 +1,28 @@
+---
+wantErrJson: |-
+  {
+    "loadFailures": [
+      {
+        "error": "invalid Policy.DerivedRoles: embedded message failed validation | caused by: invalid DerivedRoles.Definitions: value must contain at least 1 item(s)",
+        "file": "derived.yaml"
+      },
+      {
+        "error": "invalid Policy.PolicyType: value is required",
+        "file": "resource.yaml"
+      }
+    ],
+    "disabled": null,
+    "duplicateDefs": null,
+    "codegenFailures": null,
+    "missingImports": null
+  }
+files:
+  "resource.yaml": |-
+    ---
+    apiVersion: api.cerbos.dev/v1
+
+  "derived.yaml": |-
+    ---
+    apiVersion: "api.cerbos.dev/v1"
+    derived_roles:
+      name: my_derived_roles

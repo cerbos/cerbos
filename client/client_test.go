@@ -14,6 +14,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/cerbos/cerbos/client"
+	"github.com/cerbos/cerbos/internal/compile"
 	"github.com/cerbos/cerbos/internal/engine"
 	"github.com/cerbos/cerbos/internal/server"
 	"github.com/cerbos/cerbos/internal/storage/disk"
@@ -186,10 +187,10 @@ func mkEngine(t *testing.T) (*engine.Engine, context.CancelFunc) {
 
 	ctx, cancelFunc := context.WithCancel(context.Background())
 
-	store, err := disk.NewReadOnlyStore(ctx, &disk.Conf{Directory: dir})
+	store, err := disk.NewStore(ctx, &disk.Conf{Directory: dir, ScratchDir: t.TempDir()})
 	require.NoError(t, err)
 
-	eng, err := engine.New(ctx, store)
+	eng, err := engine.New(ctx, compile.NewCompiler(ctx, store))
 	require.NoError(t, err)
 
 	return eng, cancelFunc

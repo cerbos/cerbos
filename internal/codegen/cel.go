@@ -9,6 +9,7 @@ import (
 	"github.com/google/cel-go/cel"
 	"github.com/google/cel-go/checker/decls"
 	"github.com/google/cel-go/ext"
+	exprpb "google.golang.org/genproto/googleapis/api/expr/v1alpha1"
 
 	policyv1 "github.com/cerbos/cerbos/internal/genpb/policy/v1"
 )
@@ -19,8 +20,74 @@ const (
 	CELPrincipalAbbrev = "P"
 )
 
-func GenerateCELProgram(parent string, m *policyv1.Match) (cel.Program, error) {
-	env, err := cel.NewEnv(
+var celHelper *CELHelper
+
+func init() {
+	ch, err := NewCELHelper()
+	if err != nil {
+		panic(fmt.Errorf("failed to initialize CEL helper: %w", err))
+	}
+
+	celHelper = ch
+}
+
+func GenerateCELCondition(parent string, m *policyv1.Match) (*CELCondition, error) {
+	return celHelper.GenerateCELCondition(parent, m)
+}
+
+func CELConditionFromCheckedExpr(expr *exprpb.CheckedExpr) *CELCondition {
+	return celHelper.CELConditionFromCheckedExpr(expr)
+}
+
+type CELHelper struct {
+	env *cel.Env
+}
+
+func NewCELHelper() (*CELHelper, error) {
+	env, err := newCELEnv()
+	if err != nil {
+		return nil, err
+	}
+
+	return &CELHelper{env: env}, nil
+}
+
+func (ch *CELHelper) GenerateCELCondition(parent string, m *policyv1.Match) (*CELCondition, error) {
+	celExpr, err := generateMatchCode(m)
+	if err != nil {
+		return nil, err
+	}
+
+	celAST, issues := ch.env.Compile(celExpr)
+	if issues != nil && issues.Err() != nil {
+		return nil, &CELCompileError{Parent: parent, Issues: issues}
+	}
+
+	return &CELCondition{env: ch.env, ast: celAST}, nil
+}
+
+func (ch *CELHelper) CELConditionFromCheckedExpr(expr *exprpb.CheckedExpr) *CELCondition {
+	return &CELCondition{
+		env: ch.env,
+		ast: cel.CheckedExprToAst(expr),
+	}
+}
+
+type CELCondition struct {
+	env *cel.Env
+	ast *cel.Ast
+}
+
+func (cc *CELCondition) Program() (cel.Program, error) {
+	return cc.env.Program(cc.ast)
+}
+
+func (cc *CELCondition) CheckedExpr() (*exprpb.CheckedExpr, error) {
+	return cel.AstToCheckedExpr(cc.ast)
+}
+
+func newCELEnv() (*cel.Env, error) {
+	return cel.NewEnv(
 		cel.CustomTypeAdapter(NewCustomCELTypeAdapter()),
 		cel.Declarations(
 			decls.NewVar(CELRequestIdent, decls.NewMapType(decls.String, decls.Dyn)),
@@ -31,21 +98,6 @@ func GenerateCELProgram(parent string, m *policyv1.Match) (cel.Program, error) {
 		ext.Encoders(),
 		CerbosCELLib(),
 	)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create CEL environment: %w", err)
-	}
-
-	celExpr, err := generateMatchCode(m)
-	if err != nil {
-		return nil, err
-	}
-
-	celAST, issues := env.Compile(celExpr)
-	if issues != nil && issues.Err() != nil {
-		return nil, &CELCompileError{Parent: parent, Issues: issues}
-	}
-
-	return env.Program(celAST)
 }
 
 func generateMatchCode(m *policyv1.Match) (string, error) {

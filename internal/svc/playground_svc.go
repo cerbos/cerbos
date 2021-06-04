@@ -24,7 +24,7 @@ import (
 	responsev1 "github.com/cerbos/cerbos/internal/genpb/response/v1"
 	svcv1 "github.com/cerbos/cerbos/internal/genpb/svc/v1"
 	"github.com/cerbos/cerbos/internal/storage/disk"
-	"github.com/cerbos/cerbos/internal/storage/mem"
+	"github.com/cerbos/cerbos/internal/storage/disk/index"
 )
 
 const playgroundRequestTimeout = 60 * time.Second
@@ -76,7 +76,7 @@ func (cs *CerbosPlaygroundService) PlaygroundEvaluate(ctx context.Context, req *
 	procCtx, cancelFunc := context.WithTimeout(ctx, playgroundRequestTimeout)
 	defer cancelFunc()
 
-	eng, fail, err := doCompile(procCtx, log, req.PolicyFiles)
+	idx, fail, err := doCompile(procCtx, log, req.PolicyFiles)
 	if err != nil {
 		return nil, err
 	}
@@ -88,6 +88,12 @@ func (cs *CerbosPlaygroundService) PlaygroundEvaluate(ctx context.Context, req *
 				Failure: fail,
 			},
 		}, nil
+	}
+
+	eng, err := engine.New(ctx, compile.NewCompiler(ctx, disk.NewFromIndex(idx)))
+	if err != nil {
+		log.Error("Failed to create engine", zap.Error(err))
+		return nil, status.Errorf(codes.Internal, "failed to create engine")
 	}
 
 	inputs := []*enginev1.CheckInput{
@@ -108,43 +114,46 @@ func (cs *CerbosPlaygroundService) PlaygroundEvaluate(ctx context.Context, req *
 	return processEngineOutput(ctx, req.PlaygroundId, output)
 }
 
-func doCompile(ctx context.Context, log *zap.Logger, files []*requestv1.PolicyFile) (*engine.Engine, *responsev1.PlaygroundFailure, error) {
-	fs := afero.NewMemMapFs()
-	for _, pf := range files {
-		if err := afero.WriteFile(fs, pf.FileName, pf.Contents, 0644); err != nil {
-			log.Error("Failed to create in-mem policy file", zap.String("policy_file", pf.FileName), zap.Error(err))
-			return nil, nil, status.Errorf(codes.Internal, "failed to create policy file %s", pf.FileName)
-		}
-	}
-
-	store, err := mem.NewStore(ctx, fs)
+func doCompile(ctx context.Context, log *zap.Logger, files []*requestv1.PolicyFile) (index.Index, *responsev1.PlaygroundFailure, error) {
+	idx, err := buildIndex(ctx, log, files)
 	if err != nil {
-		idxErr := new(disk.IndexBuildError)
+		idxErr := new(index.BuildError)
 		if errors.As(err, &idxErr) {
 			pf := processLintErrors(ctx, idxErr)
 			return nil, pf, nil
 		}
 
-		log.Error("Failed to create mem store", zap.Error(err))
-		return nil, nil, status.Errorf(codes.Internal, "failed to create mem store")
+		log.Error("Failed to create index", zap.Error(err))
+		return nil, nil, status.Errorf(codes.Internal, "failed to create index")
 	}
 
-	eng, err := engine.NewEphemeral(ctx, store)
-	if err != nil {
+	if err := compile.BatchCompile(idx.GetAllCompilationUnits(ctx)); err != nil {
 		compErr := new(compile.ErrorList)
 		if errors.As(err, compErr) {
 			pf := processCompileErrors(ctx, *compErr)
 			return nil, pf, nil
 		}
 
-		log.Error("Failed to create engine", zap.Error(err))
-		return nil, nil, status.Errorf(codes.Internal, "failed to create engine")
+		log.Error("Failed to compile", zap.Error(err))
+		return nil, nil, status.Errorf(codes.Internal, "failed to compile")
 	}
 
-	return eng, nil, nil
+	return idx, nil, nil
 }
 
-func processLintErrors(ctx context.Context, errs *disk.IndexBuildError) *responsev1.PlaygroundFailure {
+func buildIndex(ctx context.Context, log *zap.Logger, files []*requestv1.PolicyFile) (index.Index, error) {
+	fs := afero.NewMemMapFs()
+	for _, pf := range files {
+		if err := afero.WriteFile(fs, pf.FileName, pf.Contents, 0644); err != nil {
+			log.Error("Failed to create in-mem policy file", zap.String("policy_file", pf.FileName), zap.Error(err))
+			return nil, status.Errorf(codes.Internal, "failed to create policy file %s", pf.FileName)
+		}
+	}
+
+	return index.Build(ctx, afero.NewIOFS(fs), index.WithMemoryCache())
+}
+
+func processLintErrors(ctx context.Context, errs *index.BuildError) *responsev1.PlaygroundFailure {
 	var errors []*responsev1.PlaygroundFailure_Error //nolint:prealloc
 
 	for _, dd := range errs.DuplicateDefs {
@@ -165,6 +174,13 @@ func processLintErrors(ctx context.Context, errs *disk.IndexBuildError) *respons
 		errors = append(errors, &responsev1.PlaygroundFailure_Error{
 			File:  lf.File,
 			Error: fmt.Sprintf("Failed to read: %s", lf.Err.Error()),
+		})
+	}
+
+	for _, cf := range errs.CodegenFailures {
+		errors = append(errors, &responsev1.PlaygroundFailure_Error{
+			File:  cf.File,
+			Error: fmt.Sprintf("Failed to generate code: %s", cf.Err.Error()),
 		})
 	}
 

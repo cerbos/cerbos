@@ -24,13 +24,34 @@ var (
 
 type ConditionMap map[string]ConditionEvaluator
 
-func NewConditionMap(prgs map[string]cel.Program) ConditionMap {
-	cm := make(ConditionMap, len(prgs))
-	for k, p := range prgs {
+/*
+func NewConditionMap(conds map[string]*exprpb.CheckedExpr) (ConditionMap, error) {
+	cm := make(ConditionMap, len(conds))
+	for k, expr := range conds {
+		celPrg, err := codegen.CELConditionFromCheckedExpr(expr).Program()
+		if err != nil {
+			return nil, fmt.Errorf("failed to hydrate CEL program [%s]:%w", k, err)
+		}
+
+		cm[k] = &CELConditionEvaluator{prg: celPrg}
+	}
+
+	return cm, nil
+}
+*/
+
+func NewConditionMap(conds map[string]*codegen.CELCondition) (ConditionMap, error) {
+	cm := make(ConditionMap, len(conds))
+	for k, c := range conds {
+		p, err := c.Program()
+		if err != nil {
+			return nil, fmt.Errorf("failed to generate CEL program for %s: %w", k, err)
+		}
+
 		cm[k] = &CELConditionEvaluator{prg: p}
 	}
 
-	return cm
+	return cm, nil
 }
 
 type ConditionEvaluator interface {

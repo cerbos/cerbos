@@ -1,0 +1,94 @@
+---
+wantErrJson: |-
+  {
+    "disabled": null,
+    "duplicateDefs": [
+      {
+        "file": "derived2.yaml",
+        "otherFile": "derived1.yaml"
+      }
+    ],
+    "loadFailures": null,
+    "codegenFailures": null,
+    "missingImports": null
+  }
+files:
+  "derived1.yaml": |-
+    ---
+    apiVersion: "api.cerbos.dev/v1"
+    derived_roles:
+      name: my_derived_roles
+      definitions:
+        - name: admin
+          parentRoles: ["admin"]
+
+        - name: tester
+          parentRoles: ["dev", "qa"]
+
+        - name: employee_that_owns_the_record
+          parentRoles: ["employee"]
+          condition:
+            script: |-
+              input.resource.attr.owner == input.principal.id
+
+        - name: any_employee
+          parentRoles: ["employee"]
+
+        - name: direct_manager
+          parentRoles: ["manager"]
+          condition:
+            match:
+              all:
+                of:
+                  - expr: "request.resource.attr.geography == request.principal.attr.geography"
+                  - expr: "request.resource.attr.geography == request.principal.attr.managed_geographies"
+
+  "derived2.yaml": |-
+    ---
+    apiVersion: "api.cerbos.dev/v1"
+    derived_roles:
+      name: my_derived_roles
+      definitions:
+        - name: admin
+          parentRoles: ["admin"]
+
+        - name: tester
+          parentRoles: ["dev", "qa"]
+
+        - name: employee_that_owns_the_record
+          parentRoles: ["employee"]
+          condition:
+            script: |-
+              input.resource.attr.owner == input.principal.id
+
+        - name: any_employee
+          parentRoles: ["employee"]
+
+        - name: direct_manager
+          parentRoles: ["manager"]
+          condition:
+            match:
+              all:
+                of:
+                  - expr: "request.resource.attr.geography == request.principal.attr.geography"
+                  - expr: "request.resource.attr.geography == request.principal.attr.managed_geographies"
+
+  "principal.yaml": |-
+    ---
+    apiVersion: "api.cerbos.dev/v1"
+    principalPolicy:
+      principal: donald_duck
+      version: "20210210"
+      rules:
+        - resource: leave_request
+          actions:
+            - action: "*"
+              condition:
+                match:
+                  expr: "request.resource.attr.dev_record == true"
+              effect: EFFECT_ALLOW
+
+        - resource: salary_record
+          actions:
+            - action: "*"
+              effect: EFFECT_DENY

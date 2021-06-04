@@ -40,6 +40,7 @@ import (
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/encoding/protojson"
 
+	"github.com/cerbos/cerbos/internal/compile"
 	"github.com/cerbos/cerbos/internal/config"
 	"github.com/cerbos/cerbos/internal/engine"
 	svcv1 "github.com/cerbos/cerbos/internal/genpb/svc/v1"
@@ -87,7 +88,7 @@ func createCerbosService(ctx context.Context) (*svc.CerbosService, error) {
 	}
 
 	// create engine
-	eng, err := engine.New(ctx, store)
+	eng, err := engine.New(ctx, compile.NewCompiler(ctx, store))
 	if err != nil {
 		return nil, fmt.Errorf("failed to create engine: %w", err)
 	}

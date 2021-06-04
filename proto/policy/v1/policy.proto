@@ -8,6 +8,7 @@ option go_package = "github.com/cerbos/cerbos/internal/genpb/policy/v1;policyv1"
 option java_package = "dev.cerbos.api.v1.policy";
 
 import "engine/v1/engine.proto";
+import "google/api/expr/v1alpha1/checked.proto";
 import "request/v1/request.proto";
 import "shared/v1/shared.proto";
 import "validate/validate.proto";
@@ -16,12 +17,18 @@ message Policy {
     string api_version = 1 [(validate.rules).string.const = "api.cerbos.dev/v1"];
     bool disabled = 2;
     string description = 3;
+    Metadata metadata = 4; 
     oneof policy_type {
         option (validate.required) = true;
-        ResourcePolicy resource_policy = 4;
-        PrincipalPolicy principal_policy = 5;
-        DerivedRoles derived_roles = 6;
+        ResourcePolicy resource_policy = 5;
+        PrincipalPolicy principal_policy = 6;
+        DerivedRoles derived_roles = 7;
     }
+}
+
+message Metadata {
+    string source_file = 1;
+    map<string,string> annotations = 2;
 }
 
 message ResourcePolicy {
@@ -108,4 +115,10 @@ message Test {
     string skip_reason = 4;
     engine.v1.CheckInput input = 5 [(validate.rules).message.required = true];
     map<string,shared.v1.Effect> expected = 6;
+}
+
+message GeneratedPolicy {
+    string fqn = 1;
+    map<string, google.api.expr.v1alpha1.CheckedExpr> cel_conditions = 2;
+    bytes code = 3;
 }

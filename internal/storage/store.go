@@ -6,27 +6,97 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"sync"
 
-	"github.com/cerbos/cerbos/internal/compile"
-	policyv1 "github.com/cerbos/cerbos/internal/genpb/policy/v1"
-	"github.com/cerbos/cerbos/internal/storage/disk"
-	"github.com/cerbos/cerbos/internal/storage/git"
+	"github.com/cerbos/cerbos/internal/config"
+	"github.com/cerbos/cerbos/internal/namer"
+	"github.com/cerbos/cerbos/internal/policy"
 )
+
+var (
+	driversMu sync.RWMutex
+	drivers   = map[string]Constructor{}
+)
+
+var ErrNoMatchingPolicy = errors.New("no matching policy")
+
+// Constructor is a constructor function for a storage driver.
+type Constructor func(context.Context) (Store, error)
+
+// RegisterDriver registers a storage driver.
+func RegisterDriver(name string, cons Constructor) {
+	driversMu.Lock()
+	defer driversMu.Unlock()
+
+	drivers[name] = cons
+}
+
+// New returns a storage driver implementation based on the configured driver.
+func New(ctx context.Context) (Store, error) {
+	conf := &Conf{}
+	if err := config.GetSection(conf); err != nil {
+		return nil, fmt.Errorf("failed to read storage configuration: %w", err)
+	}
+
+	driversMu.RLock()
+	cons, ok := drivers[conf.Driver]
+	driversMu.RUnlock()
+
+	if !ok {
+		return nil, fmt.Errorf("unknown storage driver [%s]", conf.Driver)
+	}
+
+	return cons(ctx)
+}
 
 // Store is the common interface implemented by storage backends.
 type Store interface {
+	// Driver is the name of the storage backend implementation.
 	Driver() string
-	GetAllPolicies(context.Context) <-chan *compile.Unit
-	SetNotificationChannel(chan<- compile.Notification)
+	// Subscribe adds a subscriber to listen for storage notifications.
+	Subscribe(Subscriber)
+	// Unsubscribe removes a subscriber.
+	Unsubscribe(Subscriber)
+	// GetCompilationUnits gets the compilation units for the given module IDs.
+	GetCompilationUnits(context.Context, ...namer.ModuleID) (map[namer.ModuleID]*policy.CompilationUnit, error)
+	// GetDependents returns the dependents of the given modules.
+	GetDependents(context.Context, ...namer.ModuleID) (map[namer.ModuleID][]namer.ModuleID, error)
 }
 
-// WritableStore is a store that supports modifications.
-type WritableStore interface {
+// MutableStore is a store that allows mutations.
+type MutableStore interface {
 	Store
-	AddOrUpdate(context.Context, *policyv1.Policy) error
-	Remove(context.Context, *policyv1.Policy) error
+	AddOrUpdate(context.Context, ...policy.Wrapper) error
+	Delete(context.Context, ...namer.ModuleID) error
 }
 
+// EventKind identifies the kind of storage event such as addition or deletion.
+type EventKind int
+
+const (
+	EventAddOrUpdatePolicy EventKind = iota
+	EventDeletePolicy
+	EventNop
+)
+
+// Event is an event detected by the storage layer.
+type Event struct {
+	Kind     EventKind
+	PolicyID namer.ModuleID
+}
+
+// NewEvent creates a new storage event.
+func NewEvent(kind EventKind, policyID namer.ModuleID) Event {
+	return Event{Kind: kind, PolicyID: policyID}
+}
+
+// Subscriber is the interface implemented by storage subscribers.
+type Subscriber interface {
+	SubscriberID() string
+	OnStorageEvent(...Event)
+}
+
+/*
 // New creates a new store based on the config.
 func New(ctx context.Context) (Store, error) {
 	conf, err := getStorageConf()
@@ -55,3 +125,4 @@ func New(ctx context.Context) (Store, error) {
 		return nil, fmt.Errorf("unknown storage driver: %s", conf.Driver)
 	}
 }
+*/

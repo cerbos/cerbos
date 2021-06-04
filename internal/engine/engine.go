@@ -9,7 +9,6 @@ import (
 	"fmt"
 	"math/rand"
 	"net/http"
-	"sync"
 	"sync/atomic"
 
 	"github.com/open-policy-agent/opa/ast"
@@ -25,7 +24,6 @@ import (
 	"github.com/cerbos/cerbos/internal/namer"
 	"github.com/cerbos/cerbos/internal/observability/logging"
 	"github.com/cerbos/cerbos/internal/observability/tracing"
-	"github.com/cerbos/cerbos/internal/storage"
 )
 
 // ErrNoPoliciesMatched indicates that no policies were matched.
@@ -58,64 +56,16 @@ type workIn struct {
 
 type Engine struct {
 	conf        *Conf
-	store       storage.Store
 	workerIndex uint64
 	workerPool  []chan<- workIn
-	mu          sync.RWMutex
 	compiler    *compile.Compiler
 	queryCache  cache.InterQueryCache
 }
 
-func New(ctx context.Context, store storage.Store) (*Engine, error) {
+func New(ctx context.Context, compiler *compile.Compiler) (*Engine, error) {
 	conf := &Conf{}
 	if err := config.GetSection(conf); err != nil {
 		return nil, err
-	}
-
-	engine := &Engine{
-		conf:       conf,
-		store:      store,
-		workerPool: make([]chan<- workIn, numWorkers),
-	}
-
-	if err := engine.reload(ctx); err != nil {
-		return nil, err
-	}
-
-	for i := 0; i < numWorkers; i++ {
-		inputChan := make(chan workIn, 1)
-		engine.workerPool[i] = inputChan
-		go engine.startWorker(ctx, i, inputChan)
-	}
-
-	go engine.watchNotifications(ctx)
-
-	return engine, nil
-}
-
-// NewEphemeral creates an engine without the worker pool and notification watcher.
-func NewEphemeral(ctx context.Context, store storage.Store) (*Engine, error) {
-	conf := &Conf{}
-	if err := config.GetSection(conf); err != nil {
-		return nil, err
-	}
-
-	engine := &Engine{
-		conf:  conf,
-		store: store,
-	}
-
-	if err := engine.reload(ctx); err != nil {
-		return nil, err
-	}
-
-	return engine, nil
-}
-
-func (engine *Engine) reload(ctx context.Context) error {
-	compiler, err := compile.Compile(engine.store.GetAllPolicies(ctx))
-	if err != nil {
-		return fmt.Errorf("failed to compile policies: %w", err)
 	}
 
 	cacheSize := maxQueryCacheSizeBytes
@@ -125,13 +75,20 @@ func (engine *Engine) reload(ctx context.Context) error {
 		},
 	})
 
-	engine.mu.Lock()
-	defer engine.mu.Unlock()
+	engine := &Engine{
+		conf:       conf,
+		compiler:   compiler,
+		queryCache: queryCache,
+		workerPool: make([]chan<- workIn, numWorkers),
+	}
 
-	engine.compiler = compiler
-	engine.queryCache = queryCache
+	for i := 0; i < numWorkers; i++ {
+		inputChan := make(chan workIn, 1)
+		engine.workerPool[i] = inputChan
+		go engine.startWorker(ctx, i, inputChan)
+	}
 
-	return nil
+	return engine, nil
 }
 
 func (engine *Engine) startWorker(ctx context.Context, num int, inputChan <-chan workIn) {
@@ -174,61 +131,42 @@ func (engine *Engine) submitWork(ctx context.Context, work workIn) error {
 	}
 }
 
-func (engine *Engine) watchNotifications(ctx context.Context) {
-	log := logging.FromContext(ctx).Named(loggerName).Sugar()
-
-	notificationChan := make(chan compile.Notification, 32) //nolint:gomnd
-	defer close(notificationChan)
-
-	engine.store.SetNotificationChannel(notificationChan)
-
-	for {
-		select {
-		case <-ctx.Done():
-			log.Info("Stopping engine update watch")
-			return
-		case change := <-notificationChan:
-			if change.FullRecompile {
-				log.Debug("Performing a full compilation")
-				if err := measureUpdateLatency("full", func() error { return engine.reload(ctx) }); err != nil {
-					log.Errorw("Failed to reload engine", "error", err)
-				}
-			} else {
-				log.Debug("Performing an incremental compilation")
-				if errs := measureUpdateLatency("incremental", func() error { return engine.compiler.Update(change.Payload) }); errs != nil {
-					log.Errorw("Failed to apply incremental update due to compilation error", "error", errs)
-				}
-			}
-		}
-	}
-}
-
-func (engine *Engine) getPrincipalPolicyCheck(principal, policyVersion, policyKey string) *check {
+func (engine *Engine) getPrincipalPolicyCheck(ctx context.Context, principal, policyVersion, policyKey string) (*check, error) {
 	principalModID := namer.PrincipalPolicyModuleID(principal, policyVersion)
 
-	if eval := engine.compiler.GetEvaluator(principalModID); eval != nil {
+	eval, err := engine.compiler.GetEvaluator(ctx, principalModID)
+	if err != nil {
+		return nil, err
+	}
+
+	if eval != nil {
 		return &check{
 			policyKey: policyKey,
 			eval:      eval,
 			query:     namer.QueryForPrincipal(principal, policyVersion),
-		}
+		}, nil
 	}
 
-	return nil
+	return nil, nil
 }
 
-func (engine *Engine) getResourcePolicyCheck(resource, policyVersion, policyKey string) *check {
+func (engine *Engine) getResourcePolicyCheck(ctx context.Context, resource, policyVersion, policyKey string) (*check, error) {
 	resourceModID := namer.ResourcePolicyModuleID(resource, policyVersion)
 
-	if eval := engine.compiler.GetEvaluator(resourceModID); eval != nil {
+	eval, err := engine.compiler.GetEvaluator(ctx, resourceModID)
+	if err != nil {
+		return nil, err
+	}
+
+	if eval != nil {
 		return &check{
 			policyKey: policyKey,
 			eval:      eval,
 			query:     namer.QueryForResource(resource, policyVersion),
-		}
+		}, nil
 	}
 
-	return nil
+	return nil, nil
 }
 
 func (engine *Engine) policyAttr(name, version string) (pName, pVersion, pKey string) {
@@ -247,7 +185,11 @@ func (engine *Engine) Check(ctx context.Context, inputs []*enginev1.CheckInput) 
 		ctx, span := tracing.StartSpan(ctx, "engine.Check")
 		defer span.End()
 
-		evalContexts := engine.buildEvaluationContexts(inputs)
+		evalContexts, err := engine.buildEvaluationContexts(ctx, inputs)
+		if err != nil {
+			return nil, err
+		}
+
 		outputs := make([]*enginev1.CheckOutput, len(inputs))
 
 		// if the number of inputs is less than the threshold, do a serial execution as it is usually faster.
@@ -291,13 +233,10 @@ func (engine *Engine) Check(ctx context.Context, inputs []*enginev1.CheckInput) 
 	})
 }
 
-func (engine *Engine) buildEvaluationContexts(inputs []*enginev1.CheckInput) []*evaluationCtx {
+func (engine *Engine) buildEvaluationContexts(ctx context.Context, inputs []*enginev1.CheckInput) ([]*evaluationCtx, error) {
 	principalPolicyChecks := map[string]*check{}
 	resourcePolicyChecks := map[string]*check{}
 	evalContexts := make([]*evaluationCtx, len(inputs))
-
-	engine.mu.RLock()
-	defer engine.mu.RUnlock()
 
 	for i, c := range inputs {
 		evalContexts[i] = &evaluationCtx{queryCache: engine.queryCache}
@@ -306,7 +245,11 @@ func (engine *Engine) buildEvaluationContexts(inputs []*enginev1.CheckInput) []*
 		ppName, ppVersion, ppKey := engine.policyAttr(c.Principal.Id, c.Principal.PolicyVersion)
 		ppCheck, ok := principalPolicyChecks[ppKey]
 		if !ok {
-			ppCheck = engine.getPrincipalPolicyCheck(ppName, ppVersion, ppKey)
+			pc, err := engine.getPrincipalPolicyCheck(ctx, ppName, ppVersion, ppKey)
+			if err != nil {
+				return nil, fmt.Errorf("failed to get check for [%s]: %w", ppKey, err)
+			}
+			ppCheck = pc
 			principalPolicyChecks[ppKey] = ppCheck
 		}
 		evalContexts[i].addCheck(ppCheck)
@@ -315,13 +258,17 @@ func (engine *Engine) buildEvaluationContexts(inputs []*enginev1.CheckInput) []*
 		rpName, rpVersion, rpKey := engine.policyAttr(c.Resource.Kind, c.Resource.PolicyVersion)
 		rpCheck, ok := resourcePolicyChecks[rpKey]
 		if !ok {
-			rpCheck = engine.getResourcePolicyCheck(rpName, rpVersion, rpKey)
+			rc, err := engine.getResourcePolicyCheck(ctx, rpName, rpVersion, rpKey)
+			if err != nil {
+				return nil, fmt.Errorf("failed to get check for [%s]: %w", rpKey, err)
+			}
+			rpCheck = rc
 			resourcePolicyChecks[rpKey] = rpCheck
 		}
 		evalContexts[i].addCheck(rpCheck)
 	}
 
-	return evalContexts
+	return evalContexts, nil
 }
 
 func (engine *Engine) evaluate(ctx context.Context, input *enginev1.CheckInput, ec *evaluationCtx) (*enginev1.CheckOutput, error) {

@@ -4,7 +4,9 @@ package disk
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"os"
 	"path/filepath"
 	"sync"
 	"time"
@@ -12,7 +14,8 @@ import (
 	"github.com/rjeczalik/notify"
 	"go.uber.org/zap"
 
-	"github.com/cerbos/cerbos/internal/storage/common"
+	"github.com/cerbos/cerbos/internal/storage"
+	"github.com/cerbos/cerbos/internal/storage/disk/index"
 	"github.com/cerbos/cerbos/internal/util"
 )
 
@@ -20,35 +23,34 @@ const (
 	// cooldownPeriod is the amount of time to wait before triggering a notification to update.
 	// This is necessary because many file update events can fire even for a seemingly simple operation on a file.
 	// We want the system to settle down before performing an expensive update operation.
-	cooldownPeriod = 3 * time.Second
-	notifyTimeout  = 2 * time.Second
-	reloadTimeout  = 60 * time.Second
+	cooldownPeriod = 2 * time.Second
 )
 
-func newDirWatch(ctx context.Context, dir string, index Index, notifier *common.Notifier) (*dirWatch, error) {
+func watchDir(ctx context.Context, dir string, idx index.Index, sub *storage.SubscriptionManager) error {
 	dw := &dirWatch{
-		log:       zap.S().Named("dir.watch").With("dir", dir),
-		index:     index,
-		watchChan: make(chan notify.EventInfo, 8), //nolint:gomnd
-		Notifier:  notifier,
+		log:                 zap.S().Named("dir.watch").With("dir", dir),
+		idx:                 idx,
+		SubscriptionManager: sub,
+		eventBatch:          make(map[string]struct{}),
+		watchChan:           make(chan notify.EventInfo, 8), //nolint:gomnd
 	}
 
 	if err := notify.Watch(filepath.Join(dir, "..."), dw.watchChan, notify.All); err != nil {
-		return nil, fmt.Errorf("failed to watch directory %s: %w", dir, err)
+		return fmt.Errorf("failed to watch directory %s: %w", dir, err)
 	}
 
 	go dw.handleEvents(ctx)
 
-	return dw, nil
+	return nil
 }
 
 type dirWatch struct {
 	log       *zap.SugaredLogger
 	watchChan chan notify.EventInfo
-	index     Index
-	*common.Notifier
+	idx       index.Index
+	*storage.SubscriptionManager
 	mu            sync.RWMutex
-	eventsSeen    bool
+	eventBatch    map[string]struct{}
 	lastEventTime time.Time
 }
 
@@ -78,7 +80,7 @@ func (dw *dirWatch) handleEvents(ctx context.Context) {
 func (dw *dirWatch) processEvent(evtInfo notify.EventInfo) {
 	if util.IsSupportedFileType(evtInfo.Path()) {
 		dw.mu.Lock()
-		dw.eventsSeen = true
+		dw.eventBatch[evtInfo.Path()] = struct{}{}
 		dw.lastEventTime = time.Now()
 		dw.mu.Unlock()
 	}
@@ -86,43 +88,43 @@ func (dw *dirWatch) processEvent(evtInfo notify.EventInfo) {
 
 func (dw *dirWatch) triggerUpdate() {
 	dw.mu.RLock()
-	shouldUpdate := dw.eventsSeen && (time.Since(dw.lastEventTime) > cooldownPeriod)
+	shouldUpdate := len(dw.eventBatch) > 0 && (time.Since(dw.lastEventTime) > cooldownPeriod)
 	dw.mu.RUnlock()
 
+	//nolint:nestif
 	if shouldUpdate {
 		dw.mu.Lock()
-		proceed := dw.eventsSeen && (time.Since(dw.lastEventTime) > cooldownPeriod)
+		proceed := len(dw.eventBatch) > 0 && (time.Since(dw.lastEventTime) > cooldownPeriod)
 		if !proceed {
 			dw.mu.Unlock()
 			return
 		}
 
-		dw.eventsSeen = false
+		batch := dw.eventBatch
+		dw.eventBatch = make(map[string]struct{})
 		dw.mu.Unlock()
 
-		if err := dw.reloadIndex(); err != nil {
-			dw.log.Errorw("Failed to reload index", "error", err)
-			return
-		}
+		for f := range batch {
+			if _, err := os.Stat(f); errors.Is(err, os.ErrNotExist) {
+				dw.log.Debugw("Detected file removal", "file", f)
+				evt, err := dw.idx.Delete(index.Entry{File: f})
+				if err != nil {
+					dw.log.Warnw("Failed to remove file from index", "file", f, "error", err)
+					continue
+				}
 
-		ctx, cancelFunc := context.WithTimeout(context.Background(), notifyTimeout)
-		defer cancelFunc()
+				dw.NotifySubscribers(evt)
+				continue
+			}
 
-		if err := dw.NotifyFullUpdate(ctx); err != nil {
-			dw.log.Warnw("Failed to send update notification: %w", err)
+			dw.log.Debugw("Detected file update", "file", f)
+			evt, err := dw.idx.AddOrUpdate(index.Entry{File: f})
+			if err != nil {
+				dw.log.Warnw("Failed to add file to index", "file", f, "error", err)
+				continue
+			}
+
+			dw.NotifySubscribers(evt)
 		}
 	}
-}
-
-func (dw *dirWatch) reloadIndex() error {
-	ctx, cancelFunc := context.WithTimeout(context.Background(), reloadTimeout)
-	defer cancelFunc()
-
-	dw.log.Debug("Reloading index")
-	if err := dw.index.Reload(ctx); err != nil {
-		return err
-	}
-
-	dw.log.Info("Index reloaded")
-	return nil
 }

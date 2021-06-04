@@ -50,6 +50,12 @@ message ServerTestCase {
     }
 }
 
+message IndexBuilderTestCase {
+    map<string, string> files = 1;
+    string want_err_json = 2;
+    string want_err = 3;
+}
+
 message CompileTestCase {
     string main_def = 1;
     map<string, policy.v1.Policy> input_defs = 2;
