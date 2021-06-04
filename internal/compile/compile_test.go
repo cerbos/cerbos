@@ -5,6 +5,8 @@ package compile_test
 import (
 	"bytes"
 	"errors"
+	"fmt"
+	"math/rand"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -12,6 +14,7 @@ import (
 	"github.com/cerbos/cerbos/internal/codegen"
 	"github.com/cerbos/cerbos/internal/compile"
 	cerbosdevv1 "github.com/cerbos/cerbos/internal/genpb/cerbosdev/v1"
+	sharedv1 "github.com/cerbos/cerbos/internal/genpb/shared/v1"
 	"github.com/cerbos/cerbos/internal/namer"
 	"github.com/cerbos/cerbos/internal/policy"
 	"github.com/cerbos/cerbos/internal/test"
@@ -76,69 +79,32 @@ func mkCompilationUnit(t *testing.T, tc *cerbosdevv1.CompileTestCase) *policy.Co
 	return cu
 }
 
-/*
-func mkInputChan(t *testing.T, tc *cerbosdevv1.CompileTestCase) chan *compile.Unit {
-	t.Helper()
-
-	p := &compile.Unit{
-		Definitions: tc.InputDefs,
-		ModToFile:   make(map[namer.ModuleID]string, len(tc.InputDefs)),
-	}
-
-	for fileName, pol := range tc.InputDefs {
-		modID := namer.GenModuleID(pol)
-		p.ModToFile[modID] = fileName
-
-		if fileName == tc.MainDef {
-			p.ModID = modID
-		}
-	}
-
-	inputChan := make(chan *compile.Unit, 1)
-	inputChan <- p
-	close(inputChan)
-
-	return inputChan
-}
-
 func BenchmarkCompile(b *testing.B) {
-	cases := make([]*compile.Unit, b.N)
+	cases := make([]*policy.CompilationUnit, b.N)
 	for i := 0; i < b.N; i++ {
-		cases[i] = mkUnit()
+		cases[i] = generateCompilationUnit()
 	}
 
-	b.ReportAllocs()
 	b.ResetTimer()
+	b.ReportAllocs()
 
 	for i := 0; i < b.N; i++ {
 		c := cases[i]
-		compileChan := make(chan *compile.Unit, 1)
-		compileChan <- c
-		close(compileChan)
-
-		compiler, err := compile.Compile(compileChan)
+		_, err := compile.Compile(c)
 		if err != nil {
 			b.Errorf("ERROR compile error: %v", err)
-		}
-
-		if eval := compiler.GetEvaluator(c.ModID); eval == nil {
-			b.Errorf("ERROR: Evaluator is nil")
 		}
 	}
 }
 
-func mkUnit() *compile.Unit {
+func generateCompilationUnit() *policy.CompilationUnit {
 	numDerivedRolesFiles := 10
 	numDerivedRolesPerFile := 10
 
 	x := rand.Intn(100000) //nolint:gosec
 	resource := fmt.Sprintf("resource_%d", x)
-	rpName := fmt.Sprintf("%s_default", resource)
 
-	pc := &compile.Unit{
-		Definitions: make(map[string]*policyv1.Policy),
-		ModToFile:   make(map[namer.ModuleID]string),
-	}
+	cu := &policy.CompilationUnit{}
 
 	rp := test.NewResourcePolicyBuilder(resource, "default")
 	for i := 0; i < numDerivedRolesFiles; i++ {
@@ -147,23 +113,38 @@ func mkUnit() *compile.Unit {
 
 		dr := test.NewDerivedRolesBuilder(drName)
 		for j := 0; j < numDerivedRolesPerFile; j++ {
-			name := mkRandomStr(8)
+			name := test.RandomStr(8)
 			dr = dr.AddRoleWithMatch(name, mkRandomRoleNames(5), mkMatchExpr(5)...)
 			rr = rr.WithDerivedRoles(name)
 		}
 
 		drPol := dr.Build()
-		pc.Definitions[drName] = drPol
-		pc.ModToFile[namer.GenModuleID(drPol)] = drName
+
+		drGen, err := codegen.GenerateRepr(drPol)
+		if err != nil {
+			panic(err)
+		}
+
+		drID := namer.GenModuleID(drPol)
+		cu.AddDefinition(drID, drPol)
+		cu.AddGenerated(drID, drGen)
+
 		rp = rp.WithDerivedRolesImports(drName).WithRules(rr.Build())
 	}
 
 	rpPol := rp.Build()
-	pc.Definitions[rpName] = rpPol
-	pc.ModToFile[namer.GenModuleID(rpPol)] = rpName
-	pc.ModID = namer.GenModuleID(rpPol)
 
-	return pc
+	rpGen, err := codegen.GenerateRepr(rpPol)
+	if err != nil {
+		panic(err)
+	}
+
+	rpID := namer.GenModuleID(rpPol)
+	cu.ModID = rpID
+	cu.AddDefinition(rpID, rpPol)
+	cu.AddGenerated(rpID, rpGen)
+
+	return cu
 }
 
 func mkMatchExpr(n int) []string {
@@ -178,10 +159,8 @@ func mkMatchExpr(n int) []string {
 func mkRandomRoleNames(n int) []string {
 	roles := make([]string, n)
 	for i := 0; i < n; i++ {
-		roles[i] = mkRandomStr(5)
+		roles[i] = test.RandomStr(5)
 	}
 
 	return roles
 }
-
-*/

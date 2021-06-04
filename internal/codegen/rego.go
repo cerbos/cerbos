@@ -41,7 +41,12 @@ type CELCompileError struct {
 }
 
 func (cce *CELCompileError) Error() string {
-	return cce.Issues.String()
+	errList := make([]string, len(cce.Issues.Errors()))
+	for i, ce := range cce.Issues.Errors() {
+		errList[i] = fmt.Sprintf("Invalid match expression: %s", ce.Message)
+	}
+
+	return strings.Join(errList, ",")
 }
 
 func (cce *CELCompileError) Unwrap() error {

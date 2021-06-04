@@ -150,7 +150,7 @@ func Build(ctx context.Context, fsys fs.FS, opts ...BuildOpt) (Index, error) {
 			return nil
 		}
 
-		ib.addPolicy(path, policy.Wrap(p))
+		ib.addPolicy(path, policy.Wrap(policy.WithMetadata(p, path, nil)))
 
 		return nil
 	})

@@ -66,12 +66,15 @@ func TestBuildIndex(t *testing.T) {
 			fs := toFS(t, tc)
 
 			_, haveErr := Build(context.Background(), fs, WithMemoryCache())
-			if tc.WantErrJson != "" {
+			switch {
+			case tc.WantErrJson != "":
 				errList := new(BuildError)
 				require.True(t, errors.As(haveErr, &errList))
 
 				/*
-					encoder := json.NewEncoder(os.Stdout)
+					f, _ := os.Create(fmt.Sprintf("/home/cell/tmp/%s.json", tcase.Name))
+					defer f.Close()
+					encoder := json.NewEncoder(f)
 					encoder.SetIndent("", "  ")
 					encoder.Encode(errList)
 				*/
@@ -80,9 +83,9 @@ func TestBuildIndex(t *testing.T) {
 				require.NoError(t, err)
 
 				require.JSONEq(t, tc.WantErrJson, string(haveErrJSON))
-			} else if tc.WantErr != "" {
+			case tc.WantErr != "":
 				require.EqualError(t, haveErr, tc.WantErr)
-			} else {
+			default:
 				require.NoError(t, haveErr)
 			}
 		})

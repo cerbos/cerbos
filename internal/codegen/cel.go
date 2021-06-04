@@ -100,27 +100,6 @@ func newCELEnv() (*cel.Env, error) {
 	)
 }
 
-/*
-func GenerateCELProgram(parent string, m *policyv1.Match) (cel.Program, error) {
-	env, err := newCELEnv()
-	if err != nil {
-		return nil, fmt.Errorf("failed to create CEL environment: %w", err)
-	}
-
-	celExpr, err := generateMatchCode(m)
-	if err != nil {
-		return nil, err
-	}
-
-	celAST, issues := env.Compile(celExpr)
-	if issues != nil && issues.Err() != nil {
-		return nil, &CELCompileError{Parent: parent, Issues: issues}
-	}
-
-	return env.Program(celAST)
-}
-*/
-
 func generateMatchCode(m *policyv1.Match) (string, error) {
 	cg := &celGen{Builder: new(strings.Builder)}
 	if err := cg.addMatch(m); err != nil {

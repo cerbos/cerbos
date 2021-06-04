@@ -51,7 +51,7 @@ func (sm *SubscriptionManager) distributeEvent(evt Event) {
 	defer sm.mu.RUnlock()
 
 	for _, sub := range sm.subscribers {
-		// TODO (cell) Handle stragglers
+		// TODO(cell) Use work pool to notify multiple subscribers in parallel.
 		sub.OnStorageEvent(evt)
 	}
 }
@@ -63,9 +63,8 @@ func (sm *SubscriptionManager) NotifySubscribers(events ...Event) {
 			continue
 		}
 
-		select {
-		case sm.eventChan <- evt:
-		}
+		// TODO(cell) drop event if not published within a reasonable time period.
+		sm.eventChan <- evt
 	}
 }
 
