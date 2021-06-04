@@ -67,6 +67,21 @@ server:
 NOTE: For production use cases that require automatic certificate reloading, workload identities and other advanced features, we recommend running a proxy server such as link:https://www.envoyproxy.io[Envoy], link:https://github.com/ghostunnel/ghostunnel[Ghostunnel] or link:https://traefik.io[Traefik] in front of the Cerbos server. 
 
 
+== CORS
+
+By default, link:https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS[CORS] is enabled on the HTTP service with all origins allowed. You can disable CORS by setting `server.cors.disabled` to `true`. You can also restrict the list of allowed origins and headers by setting `server.cors.allowedOrigins` and `server.cors.allowedHeaders` respectively.
+
+[source,yaml,linenums]
+----
+server:
+  cors:
+    allowedOrigins:
+      - example.com
+      - example.org
+    allowedHeaders:
+      - X-CUSTOM
+----
+
 == Enable Playground
 
 The Cerbos playground API is disabled by default. To enable it, set `playgroundEnabled` to `true`.

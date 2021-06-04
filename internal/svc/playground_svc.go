@@ -90,7 +90,7 @@ func (cs *CerbosPlaygroundService) PlaygroundEvaluate(ctx context.Context, req *
 		}, nil
 	}
 
-	eng, err := engine.New(ctx, compile.NewCompiler(ctx, disk.NewFromIndex(idx)))
+	eng, err := engine.NewEphemeral(ctx, compile.NewCompiler(ctx, disk.NewFromIndex(idx)))
 	if err != nil {
 		log.Error("Failed to create engine", zap.Error(err))
 		return nil, status.Errorf(codes.Internal, "failed to create engine")

@@ -28,6 +28,10 @@ server:
     cert: /path/to/certificate
     key: /path/to/private_key
     caCert: /path/to/CA_certificate # Optional
+  cors: # Optional
+    disabled: false
+    allowedOrigins: ['*']
+    allowedHeaders: []
 
 engine: # Optional
   defaultPolicyVersion: "default" # Default policy version to assume if the request does not specify one.
