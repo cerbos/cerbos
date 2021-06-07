@@ -7,6 +7,7 @@ package test
 import (
 	"fmt"
 	"io"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -86,14 +87,33 @@ func LoadTestCases(tb testing.TB, subDir string) []Case {
 
 	dir := PathToDir(tb, subDir)
 
-	entries, err := filepath.Glob(filepath.Join(dir, "*.yaml"))
+	var entries []string
+	err := filepath.WalkDir(dir, func(path string, d fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+
+		if d.IsDir() {
+			return nil
+		}
+
+		if filepath.Ext(path) == ".yaml" {
+			entries = append(entries, path)
+		}
+
+		return nil
+	})
+
 	require.NoError(tb, err)
 
 	testCases := make([]Case, len(entries))
 
 	for i, entry := range entries {
+		name, err := filepath.Rel(dir, strings.TrimSuffix(entry, filepath.Ext(entry)))
+		require.NoError(tb, err)
+
 		testCases[i] = Case{
-			Name:  strings.TrimSuffix(filepath.Base(entry), filepath.Ext(entry)),
+			Name:  name,
 			Input: readFileContents(tb, entry),
 		}
 

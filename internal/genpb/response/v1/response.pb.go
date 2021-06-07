@@ -368,6 +368,53 @@ func (*PlaygroundEvaluateResponse_Failure) isPlaygroundEvaluateResponse_Outcome(
 
 func (*PlaygroundEvaluateResponse_Success) isPlaygroundEvaluateResponse_Outcome() {}
 
+type AddOrUpdatePolicyResponse struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Success *emptypb.Empty `protobuf:"bytes,1,opt,name=success,proto3" json:"success,omitempty"`
+}
+
+func (x *AddOrUpdatePolicyResponse) Reset() {
+	*x = AddOrUpdatePolicyResponse{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_response_v1_response_proto_msgTypes[5]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *AddOrUpdatePolicyResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*AddOrUpdatePolicyResponse) ProtoMessage() {}
+
+func (x *AddOrUpdatePolicyResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_response_v1_response_proto_msgTypes[5]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use AddOrUpdatePolicyResponse.ProtoReflect.Descriptor instead.
+func (*AddOrUpdatePolicyResponse) Descriptor() ([]byte, []int) {
+	return file_response_v1_response_proto_rawDescGZIP(), []int{5}
+}
+
+func (x *AddOrUpdatePolicyResponse) GetSuccess() *emptypb.Empty {
+	if x != nil {
+		return x.Success
+	}
+	return nil
+}
+
 type CheckResourceSetResponse_ActionEffectMap struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -379,7 +426,7 @@ type CheckResourceSetResponse_ActionEffectMap struct {
 func (x *CheckResourceSetResponse_ActionEffectMap) Reset() {
 	*x = CheckResourceSetResponse_ActionEffectMap{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_response_v1_response_proto_msgTypes[5]
+		mi := &file_response_v1_response_proto_msgTypes[6]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -392,7 +439,7 @@ func (x *CheckResourceSetResponse_ActionEffectMap) String() string {
 func (*CheckResourceSetResponse_ActionEffectMap) ProtoMessage() {}
 
 func (x *CheckResourceSetResponse_ActionEffectMap) ProtoReflect() protoreflect.Message {
-	mi := &file_response_v1_response_proto_msgTypes[5]
+	mi := &file_response_v1_response_proto_msgTypes[6]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -426,7 +473,7 @@ type CheckResourceSetResponse_Meta struct {
 func (x *CheckResourceSetResponse_Meta) Reset() {
 	*x = CheckResourceSetResponse_Meta{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_response_v1_response_proto_msgTypes[6]
+		mi := &file_response_v1_response_proto_msgTypes[7]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -439,7 +486,7 @@ func (x *CheckResourceSetResponse_Meta) String() string {
 func (*CheckResourceSetResponse_Meta) ProtoMessage() {}
 
 func (x *CheckResourceSetResponse_Meta) ProtoReflect() protoreflect.Message {
-	mi := &file_response_v1_response_proto_msgTypes[6]
+	mi := &file_response_v1_response_proto_msgTypes[7]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -473,7 +520,7 @@ type CheckResourceSetResponse_Meta_EffectMeta struct {
 func (x *CheckResourceSetResponse_Meta_EffectMeta) Reset() {
 	*x = CheckResourceSetResponse_Meta_EffectMeta{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_response_v1_response_proto_msgTypes[9]
+		mi := &file_response_v1_response_proto_msgTypes[10]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -486,7 +533,7 @@ func (x *CheckResourceSetResponse_Meta_EffectMeta) String() string {
 func (*CheckResourceSetResponse_Meta_EffectMeta) ProtoMessage() {}
 
 func (x *CheckResourceSetResponse_Meta_EffectMeta) ProtoReflect() protoreflect.Message {
-	mi := &file_response_v1_response_proto_msgTypes[9]
+	mi := &file_response_v1_response_proto_msgTypes[10]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -521,7 +568,7 @@ type CheckResourceSetResponse_Meta_ActionMeta struct {
 func (x *CheckResourceSetResponse_Meta_ActionMeta) Reset() {
 	*x = CheckResourceSetResponse_Meta_ActionMeta{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_response_v1_response_proto_msgTypes[10]
+		mi := &file_response_v1_response_proto_msgTypes[11]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -534,7 +581,7 @@ func (x *CheckResourceSetResponse_Meta_ActionMeta) String() string {
 func (*CheckResourceSetResponse_Meta_ActionMeta) ProtoMessage() {}
 
 func (x *CheckResourceSetResponse_Meta_ActionMeta) ProtoReflect() protoreflect.Message {
-	mi := &file_response_v1_response_proto_msgTypes[10]
+	mi := &file_response_v1_response_proto_msgTypes[11]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -576,7 +623,7 @@ type CheckResourceBatchResponse_ActionEffectMap struct {
 func (x *CheckResourceBatchResponse_ActionEffectMap) Reset() {
 	*x = CheckResourceBatchResponse_ActionEffectMap{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_response_v1_response_proto_msgTypes[13]
+		mi := &file_response_v1_response_proto_msgTypes[14]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -589,7 +636,7 @@ func (x *CheckResourceBatchResponse_ActionEffectMap) String() string {
 func (*CheckResourceBatchResponse_ActionEffectMap) ProtoMessage() {}
 
 func (x *CheckResourceBatchResponse_ActionEffectMap) ProtoReflect() protoreflect.Message {
-	mi := &file_response_v1_response_proto_msgTypes[13]
+	mi := &file_response_v1_response_proto_msgTypes[14]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -631,7 +678,7 @@ type PlaygroundFailure_Error struct {
 func (x *PlaygroundFailure_Error) Reset() {
 	*x = PlaygroundFailure_Error{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_response_v1_response_proto_msgTypes[15]
+		mi := &file_response_v1_response_proto_msgTypes[16]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -644,7 +691,7 @@ func (x *PlaygroundFailure_Error) String() string {
 func (*PlaygroundFailure_Error) ProtoMessage() {}
 
 func (x *PlaygroundFailure_Error) ProtoReflect() protoreflect.Message {
-	mi := &file_response_v1_response_proto_msgTypes[15]
+	mi := &file_response_v1_response_proto_msgTypes[16]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -688,7 +735,7 @@ type PlaygroundEvaluateResponse_EvalResult struct {
 func (x *PlaygroundEvaluateResponse_EvalResult) Reset() {
 	*x = PlaygroundEvaluateResponse_EvalResult{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_response_v1_response_proto_msgTypes[16]
+		mi := &file_response_v1_response_proto_msgTypes[17]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -701,7 +748,7 @@ func (x *PlaygroundEvaluateResponse_EvalResult) String() string {
 func (*PlaygroundEvaluateResponse_EvalResult) ProtoMessage() {}
 
 func (x *PlaygroundEvaluateResponse_EvalResult) ProtoReflect() protoreflect.Message {
-	mi := &file_response_v1_response_proto_msgTypes[16]
+	mi := &file_response_v1_response_proto_msgTypes[17]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -756,7 +803,7 @@ type PlaygroundEvaluateResponse_EvalResultList struct {
 func (x *PlaygroundEvaluateResponse_EvalResultList) Reset() {
 	*x = PlaygroundEvaluateResponse_EvalResultList{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_response_v1_response_proto_msgTypes[17]
+		mi := &file_response_v1_response_proto_msgTypes[18]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -769,7 +816,7 @@ func (x *PlaygroundEvaluateResponse_EvalResultList) String() string {
 func (*PlaygroundEvaluateResponse_EvalResultList) ProtoMessage() {}
 
 func (x *PlaygroundEvaluateResponse_EvalResultList) ProtoReflect() protoreflect.Message {
-	mi := &file_response_v1_response_proto_msgTypes[17]
+	mi := &file_response_v1_response_proto_msgTypes[18]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1061,13 +1108,20 @@ var file_response_v1_response_proto_rawDesc = []byte{
 	0x6c, 0x74, 0x73, 0x3a, 0x23, 0x92, 0x41, 0x20, 0x0a, 0x1e, 0x32, 0x1c, 0x50, 0x6c, 0x61, 0x79,
 	0x67, 0x72, 0x6f, 0x75, 0x6e, 0x64, 0x20, 0x65, 0x76, 0x61, 0x6c, 0x75, 0x61, 0x74, 0x65, 0x20,
 	0x72, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x42, 0x09, 0x0a, 0x07, 0x6f, 0x75, 0x74, 0x63,
-	0x6f, 0x6d, 0x65, 0x42, 0x5c, 0x0a, 0x1a, 0x64, 0x65, 0x76, 0x2e, 0x63, 0x65, 0x72, 0x62, 0x6f,
-	0x73, 0x2e, 0x61, 0x70, 0x69, 0x2e, 0x76, 0x31, 0x2e, 0x72, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73,
-	0x65, 0x5a, 0x3e, 0x67, 0x69, 0x74, 0x68, 0x75, 0x62, 0x2e, 0x63, 0x6f, 0x6d, 0x2f, 0x63, 0x65,
-	0x72, 0x62, 0x6f, 0x73, 0x2f, 0x63, 0x65, 0x72, 0x62, 0x6f, 0x73, 0x2f, 0x69, 0x6e, 0x74, 0x65,
-	0x72, 0x6e, 0x61, 0x6c, 0x2f, 0x67, 0x65, 0x6e, 0x70, 0x62, 0x2f, 0x72, 0x65, 0x73, 0x70, 0x6f,
-	0x6e, 0x73, 0x65, 0x2f, 0x76, 0x31, 0x3b, 0x72, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x76,
-	0x31, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
+	0x6f, 0x6d, 0x65, 0x22, 0x70, 0x0a, 0x19, 0x41, 0x64, 0x64, 0x4f, 0x72, 0x55, 0x70, 0x64, 0x61,
+	0x74, 0x65, 0x50, 0x6f, 0x6c, 0x69, 0x63, 0x79, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65,
+	0x12, 0x30, 0x0a, 0x07, 0x73, 0x75, 0x63, 0x63, 0x65, 0x73, 0x73, 0x18, 0x01, 0x20, 0x01, 0x28,
+	0x0b, 0x32, 0x16, 0x2e, 0x67, 0x6f, 0x6f, 0x67, 0x6c, 0x65, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f,
+	0x62, 0x75, 0x66, 0x2e, 0x45, 0x6d, 0x70, 0x74, 0x79, 0x52, 0x07, 0x73, 0x75, 0x63, 0x63, 0x65,
+	0x73, 0x73, 0x3a, 0x21, 0x92, 0x41, 0x1e, 0x0a, 0x1c, 0x32, 0x1a, 0x41, 0x64, 0x64, 0x2f, 0x75,
+	0x70, 0x64, 0x61, 0x74, 0x65, 0x20, 0x70, 0x6f, 0x6c, 0x69, 0x63, 0x79, 0x20, 0x72, 0x65, 0x73,
+	0x70, 0x6f, 0x6e, 0x73, 0x65, 0x42, 0x5c, 0x0a, 0x1a, 0x64, 0x65, 0x76, 0x2e, 0x63, 0x65, 0x72,
+	0x62, 0x6f, 0x73, 0x2e, 0x61, 0x70, 0x69, 0x2e, 0x76, 0x31, 0x2e, 0x72, 0x65, 0x73, 0x70, 0x6f,
+	0x6e, 0x73, 0x65, 0x5a, 0x3e, 0x67, 0x69, 0x74, 0x68, 0x75, 0x62, 0x2e, 0x63, 0x6f, 0x6d, 0x2f,
+	0x63, 0x65, 0x72, 0x62, 0x6f, 0x73, 0x2f, 0x63, 0x65, 0x72, 0x62, 0x6f, 0x73, 0x2f, 0x69, 0x6e,
+	0x74, 0x65, 0x72, 0x6e, 0x61, 0x6c, 0x2f, 0x67, 0x65, 0x6e, 0x70, 0x62, 0x2f, 0x72, 0x65, 0x73,
+	0x70, 0x6f, 0x6e, 0x73, 0x65, 0x2f, 0x76, 0x31, 0x3b, 0x72, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73,
+	0x65, 0x76, 0x31, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
 }
 
 var (
@@ -1082,54 +1136,56 @@ func file_response_v1_response_proto_rawDescGZIP() []byte {
 	return file_response_v1_response_proto_rawDescData
 }
 
-var file_response_v1_response_proto_msgTypes = make([]protoimpl.MessageInfo, 18)
+var file_response_v1_response_proto_msgTypes = make([]protoimpl.MessageInfo, 19)
 var file_response_v1_response_proto_goTypes = []interface{}{
 	(*CheckResourceSetResponse)(nil),                 // 0: response.v1.CheckResourceSetResponse
 	(*CheckResourceBatchResponse)(nil),               // 1: response.v1.CheckResourceBatchResponse
 	(*PlaygroundFailure)(nil),                        // 2: response.v1.PlaygroundFailure
 	(*PlaygroundValidateResponse)(nil),               // 3: response.v1.PlaygroundValidateResponse
 	(*PlaygroundEvaluateResponse)(nil),               // 4: response.v1.PlaygroundEvaluateResponse
-	(*CheckResourceSetResponse_ActionEffectMap)(nil), // 5: response.v1.CheckResourceSetResponse.ActionEffectMap
-	(*CheckResourceSetResponse_Meta)(nil),            // 6: response.v1.CheckResourceSetResponse.Meta
-	nil,                                              // 7: response.v1.CheckResourceSetResponse.ResourceInstancesEntry
-	nil,                                              // 8: response.v1.CheckResourceSetResponse.ActionEffectMap.ActionsEntry
-	(*CheckResourceSetResponse_Meta_EffectMeta)(nil), // 9: response.v1.CheckResourceSetResponse.Meta.EffectMeta
-	(*CheckResourceSetResponse_Meta_ActionMeta)(nil), // 10: response.v1.CheckResourceSetResponse.Meta.ActionMeta
-	nil, // 11: response.v1.CheckResourceSetResponse.Meta.ResourceInstancesEntry
-	nil, // 12: response.v1.CheckResourceSetResponse.Meta.ActionMeta.ActionsEntry
-	(*CheckResourceBatchResponse_ActionEffectMap)(nil), // 13: response.v1.CheckResourceBatchResponse.ActionEffectMap
-	nil,                             // 14: response.v1.CheckResourceBatchResponse.ActionEffectMap.ActionsEntry
-	(*PlaygroundFailure_Error)(nil), // 15: response.v1.PlaygroundFailure.Error
-	(*PlaygroundEvaluateResponse_EvalResult)(nil),     // 16: response.v1.PlaygroundEvaluateResponse.EvalResult
-	(*PlaygroundEvaluateResponse_EvalResultList)(nil), // 17: response.v1.PlaygroundEvaluateResponse.EvalResultList
-	(*emptypb.Empty)(nil),                             // 18: google.protobuf.Empty
-	(v1.Effect)(0),                                    // 19: shared.v1.Effect
+	(*AddOrUpdatePolicyResponse)(nil),                // 5: response.v1.AddOrUpdatePolicyResponse
+	(*CheckResourceSetResponse_ActionEffectMap)(nil), // 6: response.v1.CheckResourceSetResponse.ActionEffectMap
+	(*CheckResourceSetResponse_Meta)(nil),            // 7: response.v1.CheckResourceSetResponse.Meta
+	nil,                                              // 8: response.v1.CheckResourceSetResponse.ResourceInstancesEntry
+	nil,                                              // 9: response.v1.CheckResourceSetResponse.ActionEffectMap.ActionsEntry
+	(*CheckResourceSetResponse_Meta_EffectMeta)(nil), // 10: response.v1.CheckResourceSetResponse.Meta.EffectMeta
+	(*CheckResourceSetResponse_Meta_ActionMeta)(nil), // 11: response.v1.CheckResourceSetResponse.Meta.ActionMeta
+	nil, // 12: response.v1.CheckResourceSetResponse.Meta.ResourceInstancesEntry
+	nil, // 13: response.v1.CheckResourceSetResponse.Meta.ActionMeta.ActionsEntry
+	(*CheckResourceBatchResponse_ActionEffectMap)(nil), // 14: response.v1.CheckResourceBatchResponse.ActionEffectMap
+	nil,                             // 15: response.v1.CheckResourceBatchResponse.ActionEffectMap.ActionsEntry
+	(*PlaygroundFailure_Error)(nil), // 16: response.v1.PlaygroundFailure.Error
+	(*PlaygroundEvaluateResponse_EvalResult)(nil),     // 17: response.v1.PlaygroundEvaluateResponse.EvalResult
+	(*PlaygroundEvaluateResponse_EvalResultList)(nil), // 18: response.v1.PlaygroundEvaluateResponse.EvalResultList
+	(*emptypb.Empty)(nil),                             // 19: google.protobuf.Empty
+	(v1.Effect)(0),                                    // 20: shared.v1.Effect
 }
 var file_response_v1_response_proto_depIdxs = []int32{
-	7,  // 0: response.v1.CheckResourceSetResponse.resource_instances:type_name -> response.v1.CheckResourceSetResponse.ResourceInstancesEntry
-	6,  // 1: response.v1.CheckResourceSetResponse.meta:type_name -> response.v1.CheckResourceSetResponse.Meta
-	13, // 2: response.v1.CheckResourceBatchResponse.results:type_name -> response.v1.CheckResourceBatchResponse.ActionEffectMap
-	15, // 3: response.v1.PlaygroundFailure.errors:type_name -> response.v1.PlaygroundFailure.Error
+	8,  // 0: response.v1.CheckResourceSetResponse.resource_instances:type_name -> response.v1.CheckResourceSetResponse.ResourceInstancesEntry
+	7,  // 1: response.v1.CheckResourceSetResponse.meta:type_name -> response.v1.CheckResourceSetResponse.Meta
+	14, // 2: response.v1.CheckResourceBatchResponse.results:type_name -> response.v1.CheckResourceBatchResponse.ActionEffectMap
+	16, // 3: response.v1.PlaygroundFailure.errors:type_name -> response.v1.PlaygroundFailure.Error
 	2,  // 4: response.v1.PlaygroundValidateResponse.failure:type_name -> response.v1.PlaygroundFailure
-	18, // 5: response.v1.PlaygroundValidateResponse.success:type_name -> google.protobuf.Empty
+	19, // 5: response.v1.PlaygroundValidateResponse.success:type_name -> google.protobuf.Empty
 	2,  // 6: response.v1.PlaygroundEvaluateResponse.failure:type_name -> response.v1.PlaygroundFailure
-	17, // 7: response.v1.PlaygroundEvaluateResponse.success:type_name -> response.v1.PlaygroundEvaluateResponse.EvalResultList
-	8,  // 8: response.v1.CheckResourceSetResponse.ActionEffectMap.actions:type_name -> response.v1.CheckResourceSetResponse.ActionEffectMap.ActionsEntry
-	11, // 9: response.v1.CheckResourceSetResponse.Meta.resource_instances:type_name -> response.v1.CheckResourceSetResponse.Meta.ResourceInstancesEntry
-	5,  // 10: response.v1.CheckResourceSetResponse.ResourceInstancesEntry.value:type_name -> response.v1.CheckResourceSetResponse.ActionEffectMap
-	19, // 11: response.v1.CheckResourceSetResponse.ActionEffectMap.ActionsEntry.value:type_name -> shared.v1.Effect
-	12, // 12: response.v1.CheckResourceSetResponse.Meta.ActionMeta.actions:type_name -> response.v1.CheckResourceSetResponse.Meta.ActionMeta.ActionsEntry
-	10, // 13: response.v1.CheckResourceSetResponse.Meta.ResourceInstancesEntry.value:type_name -> response.v1.CheckResourceSetResponse.Meta.ActionMeta
-	9,  // 14: response.v1.CheckResourceSetResponse.Meta.ActionMeta.ActionsEntry.value:type_name -> response.v1.CheckResourceSetResponse.Meta.EffectMeta
-	14, // 15: response.v1.CheckResourceBatchResponse.ActionEffectMap.actions:type_name -> response.v1.CheckResourceBatchResponse.ActionEffectMap.ActionsEntry
-	19, // 16: response.v1.CheckResourceBatchResponse.ActionEffectMap.ActionsEntry.value:type_name -> shared.v1.Effect
-	19, // 17: response.v1.PlaygroundEvaluateResponse.EvalResult.effect:type_name -> shared.v1.Effect
-	16, // 18: response.v1.PlaygroundEvaluateResponse.EvalResultList.results:type_name -> response.v1.PlaygroundEvaluateResponse.EvalResult
-	19, // [19:19] is the sub-list for method output_type
-	19, // [19:19] is the sub-list for method input_type
-	19, // [19:19] is the sub-list for extension type_name
-	19, // [19:19] is the sub-list for extension extendee
-	0,  // [0:19] is the sub-list for field type_name
+	18, // 7: response.v1.PlaygroundEvaluateResponse.success:type_name -> response.v1.PlaygroundEvaluateResponse.EvalResultList
+	19, // 8: response.v1.AddOrUpdatePolicyResponse.success:type_name -> google.protobuf.Empty
+	9,  // 9: response.v1.CheckResourceSetResponse.ActionEffectMap.actions:type_name -> response.v1.CheckResourceSetResponse.ActionEffectMap.ActionsEntry
+	12, // 10: response.v1.CheckResourceSetResponse.Meta.resource_instances:type_name -> response.v1.CheckResourceSetResponse.Meta.ResourceInstancesEntry
+	6,  // 11: response.v1.CheckResourceSetResponse.ResourceInstancesEntry.value:type_name -> response.v1.CheckResourceSetResponse.ActionEffectMap
+	20, // 12: response.v1.CheckResourceSetResponse.ActionEffectMap.ActionsEntry.value:type_name -> shared.v1.Effect
+	13, // 13: response.v1.CheckResourceSetResponse.Meta.ActionMeta.actions:type_name -> response.v1.CheckResourceSetResponse.Meta.ActionMeta.ActionsEntry
+	11, // 14: response.v1.CheckResourceSetResponse.Meta.ResourceInstancesEntry.value:type_name -> response.v1.CheckResourceSetResponse.Meta.ActionMeta
+	10, // 15: response.v1.CheckResourceSetResponse.Meta.ActionMeta.ActionsEntry.value:type_name -> response.v1.CheckResourceSetResponse.Meta.EffectMeta
+	15, // 16: response.v1.CheckResourceBatchResponse.ActionEffectMap.actions:type_name -> response.v1.CheckResourceBatchResponse.ActionEffectMap.ActionsEntry
+	20, // 17: response.v1.CheckResourceBatchResponse.ActionEffectMap.ActionsEntry.value:type_name -> shared.v1.Effect
+	20, // 18: response.v1.PlaygroundEvaluateResponse.EvalResult.effect:type_name -> shared.v1.Effect
+	17, // 19: response.v1.PlaygroundEvaluateResponse.EvalResultList.results:type_name -> response.v1.PlaygroundEvaluateResponse.EvalResult
+	20, // [20:20] is the sub-list for method output_type
+	20, // [20:20] is the sub-list for method input_type
+	20, // [20:20] is the sub-list for extension type_name
+	20, // [20:20] is the sub-list for extension extendee
+	0,  // [0:20] is the sub-list for field type_name
 }
 
 func init() { file_response_v1_response_proto_init() }
@@ -1199,7 +1255,7 @@ func file_response_v1_response_proto_init() {
 			}
 		}
 		file_response_v1_response_proto_msgTypes[5].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*CheckResourceSetResponse_ActionEffectMap); i {
+			switch v := v.(*AddOrUpdatePolicyResponse); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -1211,6 +1267,18 @@ func file_response_v1_response_proto_init() {
 			}
 		}
 		file_response_v1_response_proto_msgTypes[6].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*CheckResourceSetResponse_ActionEffectMap); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_response_v1_response_proto_msgTypes[7].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*CheckResourceSetResponse_Meta); i {
 			case 0:
 				return &v.state
@@ -1222,7 +1290,7 @@ func file_response_v1_response_proto_init() {
 				return nil
 			}
 		}
-		file_response_v1_response_proto_msgTypes[9].Exporter = func(v interface{}, i int) interface{} {
+		file_response_v1_response_proto_msgTypes[10].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*CheckResourceSetResponse_Meta_EffectMeta); i {
 			case 0:
 				return &v.state
@@ -1234,7 +1302,7 @@ func file_response_v1_response_proto_init() {
 				return nil
 			}
 		}
-		file_response_v1_response_proto_msgTypes[10].Exporter = func(v interface{}, i int) interface{} {
+		file_response_v1_response_proto_msgTypes[11].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*CheckResourceSetResponse_Meta_ActionMeta); i {
 			case 0:
 				return &v.state
@@ -1246,7 +1314,7 @@ func file_response_v1_response_proto_init() {
 				return nil
 			}
 		}
-		file_response_v1_response_proto_msgTypes[13].Exporter = func(v interface{}, i int) interface{} {
+		file_response_v1_response_proto_msgTypes[14].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*CheckResourceBatchResponse_ActionEffectMap); i {
 			case 0:
 				return &v.state
@@ -1258,7 +1326,7 @@ func file_response_v1_response_proto_init() {
 				return nil
 			}
 		}
-		file_response_v1_response_proto_msgTypes[15].Exporter = func(v interface{}, i int) interface{} {
+		file_response_v1_response_proto_msgTypes[16].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*PlaygroundFailure_Error); i {
 			case 0:
 				return &v.state
@@ -1270,7 +1338,7 @@ func file_response_v1_response_proto_init() {
 				return nil
 			}
 		}
-		file_response_v1_response_proto_msgTypes[16].Exporter = func(v interface{}, i int) interface{} {
+		file_response_v1_response_proto_msgTypes[17].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*PlaygroundEvaluateResponse_EvalResult); i {
 			case 0:
 				return &v.state
@@ -1282,7 +1350,7 @@ func file_response_v1_response_proto_init() {
 				return nil
 			}
 		}
-		file_response_v1_response_proto_msgTypes[17].Exporter = func(v interface{}, i int) interface{} {
+		file_response_v1_response_proto_msgTypes[18].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*PlaygroundEvaluateResponse_EvalResultList); i {
 			case 0:
 				return &v.state
@@ -1309,7 +1377,7 @@ func file_response_v1_response_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_response_v1_response_proto_rawDesc,
 			NumEnums:      0,
-			NumMessages:   18,
+			NumMessages:   19,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

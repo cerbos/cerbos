@@ -31,6 +31,8 @@ type Conf struct {
 	LogRequestPayloads bool `yaml:"logRequestPayloads"`
 	// PlaygroundEnabled defines whether the playground API is enabled.
 	PlaygroundEnabled bool `yaml:"playgroundEnabled"`
+	// AdminAPI defines the admin API configuration.
+	AdminAPI AdminAPIConf `yaml:"adminAPI"`
 }
 
 // TLSConf holds TLS configuration.
@@ -52,6 +54,11 @@ type CORSConf struct {
 	AllowedHeaders []string `yaml:"allowedHeaders"`
 	// MaxAge is the max age of the CORS preflight check.kk
 	MaxAge time.Duration `yaml:"maxAge"`
+}
+
+type AdminAPIConf struct {
+	// Enabled defines whether the admin API is enabled.
+	Enabled bool `yaml:"enabled"`
 }
 
 func (c *Conf) Key() string {

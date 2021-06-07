@@ -29,8 +29,9 @@ import (
 	cerbosdevv1 "github.com/cerbos/cerbos/internal/genpb/cerbosdev/v1"
 	responsev1 "github.com/cerbos/cerbos/internal/genpb/response/v1"
 	svcv1 "github.com/cerbos/cerbos/internal/genpb/svc/v1"
+	"github.com/cerbos/cerbos/internal/storage"
+	"github.com/cerbos/cerbos/internal/storage/db/sqlite3"
 	"github.com/cerbos/cerbos/internal/storage/disk"
-	"github.com/cerbos/cerbos/internal/svc"
 	"github.com/cerbos/cerbos/internal/test"
 	"github.com/cerbos/cerbos/internal/util"
 )
@@ -38,10 +39,17 @@ import (
 func TestServer(t *testing.T) {
 	test.SkipIfGHActions(t) // TODO (cell) Servers don't work inside GH Actions for some reason.
 
-	eng, cancelFunc := mkEngine(t)
+	dir := test.PathToDir(t, "store")
+	ctx, cancelFunc := context.WithCancel(context.Background())
 	defer cancelFunc()
 
-	cerbosSvc := svc.NewCerbosService(eng)
+	store, err := disk.NewStore(ctx, &disk.Conf{Directory: dir, ScratchDir: t.TempDir()})
+	require.NoError(t, err)
+
+	eng, err := engine.New(ctx, compile.NewCompiler(ctx, store))
+	require.NoError(t, err)
+
+	testCases := loadTestCases(t, "checks", "playground")
 
 	t.Run("with_tls", func(t *testing.T) {
 		testdataDir := test.PathToDir(t, "server")
@@ -60,13 +68,13 @@ func TestServer(t *testing.T) {
 			ctx, cancelFunc := context.WithCancel(context.Background())
 			defer cancelFunc()
 
-			startServer(ctx, conf, cerbosSvc)
+			startServer(ctx, conf, store, eng)
 
 			tlsConf := &tls.Config{InsecureSkipVerify: true} //nolint:gosec
 
-			t.Run("grpc", testGRPCRequest(conf.GRPCListenAddr, grpc.WithTransportCredentials(credentials.NewTLS(tlsConf))))
-			t.Run("grpc_over_http", testGRPCRequest(conf.HTTPListenAddr, grpc.WithTransportCredentials(credentials.NewTLS(tlsConf))))
-			t.Run("http", testHTTPRequest(fmt.Sprintf("https://%s", conf.HTTPListenAddr)))
+			t.Run("grpc", testGRPCRequests(testCases, conf.GRPCListenAddr, grpc.WithTransportCredentials(credentials.NewTLS(tlsConf))))
+			t.Run("grpc_over_http", testGRPCRequests(testCases, conf.HTTPListenAddr, grpc.WithTransportCredentials(credentials.NewTLS(tlsConf))))
+			t.Run("http", testHTTPRequests(testCases, fmt.Sprintf("https://%s", conf.HTTPListenAddr)))
 		})
 
 		t.Run("uds", func(t *testing.T) {
@@ -85,12 +93,12 @@ func TestServer(t *testing.T) {
 			ctx, cancelFunc := context.WithCancel(context.Background())
 			defer cancelFunc()
 
-			startServer(ctx, conf, cerbosSvc)
+			startServer(ctx, conf, store, eng)
 
 			tlsConf := &tls.Config{InsecureSkipVerify: true} //nolint:gosec
 
-			t.Run("grpc", testGRPCRequest(conf.GRPCListenAddr, grpc.WithTransportCredentials(credentials.NewTLS(tlsConf))))
-			t.Run("grpc_over_http", testGRPCRequest(conf.HTTPListenAddr, grpc.WithTransportCredentials(credentials.NewTLS(tlsConf))))
+			t.Run("grpc", testGRPCRequests(testCases, conf.GRPCListenAddr, grpc.WithTransportCredentials(credentials.NewTLS(tlsConf))))
+			t.Run("grpc_over_http", testGRPCRequests(testCases, conf.HTTPListenAddr, grpc.WithTransportCredentials(credentials.NewTLS(tlsConf))))
 		})
 	})
 
@@ -105,10 +113,10 @@ func TestServer(t *testing.T) {
 			ctx, cancelFunc := context.WithCancel(context.Background())
 			defer cancelFunc()
 
-			startServer(ctx, conf, cerbosSvc)
+			startServer(ctx, conf, store, eng)
 
-			t.Run("grpc", testGRPCRequest(conf.GRPCListenAddr, grpc.WithTransportCredentials(local.NewCredentials())))
-			t.Run("http", testHTTPRequest(fmt.Sprintf("http://%s", conf.HTTPListenAddr)))
+			t.Run("grpc", testGRPCRequests(testCases, conf.GRPCListenAddr, grpc.WithTransportCredentials(local.NewCredentials())))
+			t.Run("http", testHTTPRequests(testCases, fmt.Sprintf("http://%s", conf.HTTPListenAddr)))
 		})
 
 		t.Run("uds", func(t *testing.T) {
@@ -123,27 +131,44 @@ func TestServer(t *testing.T) {
 			ctx, cancelFunc := context.WithCancel(context.Background())
 			defer cancelFunc()
 
-			startServer(ctx, conf, cerbosSvc)
+			startServer(ctx, conf, store, eng)
 
-			t.Run("grpc", testGRPCRequest(conf.GRPCListenAddr, grpc.WithTransportCredentials(local.NewCredentials())))
+			t.Run("grpc", testGRPCRequests(testCases, conf.GRPCListenAddr, grpc.WithTransportCredentials(local.NewCredentials())))
 		})
 	})
 }
 
-func mkEngine(t *testing.T) (*engine.Engine, context.CancelFunc) {
-	t.Helper()
-
-	dir := test.PathToDir(t, "store")
+func TestAdminService(t *testing.T) {
+	test.SkipIfGHActions(t) // TODO (cell) Servers don't work inside GH Actions for some reason.
 
 	ctx, cancelFunc := context.WithCancel(context.Background())
+	defer cancelFunc()
 
-	store, err := disk.NewStore(ctx, &disk.Conf{Directory: dir, ScratchDir: t.TempDir()})
+	// store, err := sqlite3.NewStore(ctx, &sqlite3.Conf{DSN: ":memory:?_fk=true"})
+	store, err := sqlite3.NewStore(ctx, &sqlite3.Conf{DSN: fmt.Sprintf("%s?_fk=true", filepath.Join(t.TempDir(), "cerbos.db"))})
 	require.NoError(t, err)
 
 	eng, err := engine.New(ctx, compile.NewCompiler(ctx, store))
 	require.NoError(t, err)
 
-	return eng, cancelFunc
+	testdataDir := test.PathToDir(t, "server")
+	conf := &Conf{
+		HTTPListenAddr: getFreeListenAddr(t),
+		GRPCListenAddr: getFreeListenAddr(t),
+		TLS: &TLSConf{
+			Cert: filepath.Join(testdataDir, "tls.crt"),
+			Key:  filepath.Join(testdataDir, "tls.key"),
+		},
+		AdminAPI: AdminAPIConf{Enabled: true},
+	}
+
+	startServer(ctx, conf, store, eng)
+
+	testCases := loadTestCases(t, "admin", "checks")
+
+	tlsConf := &tls.Config{InsecureSkipVerify: true} //nolint:gosec
+	t.Run("grpc", testGRPCRequests(testCases, conf.GRPCListenAddr, grpc.WithTransportCredentials(credentials.NewTLS(tlsConf))))
+	t.Run("http", testHTTPRequests(testCases, fmt.Sprintf("https://%s", conf.HTTPListenAddr)))
 }
 
 func getFreeListenAddr(t *testing.T) string {
@@ -158,154 +183,195 @@ func getFreeListenAddr(t *testing.T) string {
 	return addr
 }
 
-func startServer(ctx context.Context, conf *Conf, cerbosSvc *svc.CerbosService) {
+func startServer(ctx context.Context, conf *Conf, store storage.Store, eng *engine.Engine) {
 	s := NewServer(conf)
 	go func() {
-		if err := s.Start(ctx, cerbosSvc, false); err != nil {
+		if err := s.Start(ctx, store, eng, false); err != nil {
 			panic(err)
 		}
 	}()
 	runtime.Gosched()
 }
 
-func testGRPCRequest(addr string, opts ...grpc.DialOption) func(*testing.T) {
+func testGRPCRequests(testCases []*cerbosdevv1.ServerTestCase, addr string, opts ...grpc.DialOption) func(*testing.T) {
 	//nolint:thelper
 	return func(t *testing.T) {
-		dialOpts := append(defaultGRPCDialOpts(), opts...)
-
-		grpcConn, err := grpc.Dial(addr, dialOpts...)
-		require.NoError(t, err, "Failed to dial gRPC server")
-
-		cerbosClient := svcv1.NewCerbosServiceClient(grpcConn)
-		playgroundClient := svcv1.NewCerbosPlaygroundServiceClient(grpcConn)
-
-		testCases := test.LoadTestCases(t, filepath.Join("server", "requests"))
-
-		for _, tcase := range testCases {
-			tcase := tcase
-			t.Run(tcase.Name, func(t *testing.T) {
-				tc := readTestCase(t, tcase.Input)
-
-				var have, want proto.Message
-				var err error
-
-				ctx, cancelFunc := context.WithTimeout(context.Background(), 5*time.Second)
-				defer cancelFunc()
-
-				switch call := tc.CallKind.(type) {
-				case *cerbosdevv1.ServerTestCase_CheckResourceSet:
-					want = call.CheckResourceSet.WantResponse
-					have, err = cerbosClient.CheckResourceSet(ctx, call.CheckResourceSet.Input)
-				case *cerbosdevv1.ServerTestCase_CheckResourceBatch:
-					want = call.CheckResourceBatch.WantResponse
-					have, err = cerbosClient.CheckResourceBatch(ctx, call.CheckResourceBatch.Input)
-				case *cerbosdevv1.ServerTestCase_PlaygroundValidate:
-					want = call.PlaygroundValidate.WantResponse
-					have, err = playgroundClient.PlaygroundValidate(ctx, call.PlaygroundValidate.Input)
-				case *cerbosdevv1.ServerTestCase_PlaygroundEvaluate:
-					want = call.PlaygroundEvaluate.WantResponse
-					have, err = playgroundClient.PlaygroundEvaluate(ctx, call.PlaygroundEvaluate.Input)
-				default:
-					t.Fatalf("Unknown call type: %T", call)
-				}
-
-				if tc.WantError {
-					require.Error(t, err)
-					return
-				}
-
-				require.NoError(t, err)
-				compareProto(t, want, have)
-			})
+		grpcConn := mkGRPCConn(t, addr, opts...)
+		for _, tc := range testCases {
+			t.Run(tc.Name, executeGRPCTestCase(grpcConn, tc))
 		}
 	}
 }
 
-func testHTTPRequest(server string) func(*testing.T) {
+func mkGRPCConn(t *testing.T, addr string, opts ...grpc.DialOption) *grpc.ClientConn {
+	t.Helper()
+
+	dialOpts := append(defaultGRPCDialOpts(), opts...)
+
+	grpcConn, err := grpc.Dial(addr, dialOpts...)
+	require.NoError(t, err, "Failed to dial gRPC server")
+
+	return grpcConn
+}
+
+func executeGRPCTestCase(grpcConn *grpc.ClientConn, tc *cerbosdevv1.ServerTestCase) func(*testing.T) {
 	//nolint:thelper
 	return func(t *testing.T) {
-		customTransport := http.DefaultTransport.(*http.Transport).Clone()
-		customTransport.TLSClientConfig = &tls.Config{InsecureSkipVerify: true} //nolint:gosec
+		var have, want proto.Message
+		var err error
 
-		c := &http.Client{Transport: customTransport}
+		ctx, cancelFunc := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancelFunc()
 
-		testCases := test.LoadTestCases(t, filepath.Join("server", "requests"))
+		switch call := tc.CallKind.(type) {
+		case *cerbosdevv1.ServerTestCase_CheckResourceSet:
+			cerbosClient := svcv1.NewCerbosServiceClient(grpcConn)
+			want = call.CheckResourceSet.WantResponse
+			have, err = cerbosClient.CheckResourceSet(ctx, call.CheckResourceSet.Input)
+		case *cerbosdevv1.ServerTestCase_CheckResourceBatch:
+			cerbosClient := svcv1.NewCerbosServiceClient(grpcConn)
+			want = call.CheckResourceBatch.WantResponse
+			have, err = cerbosClient.CheckResourceBatch(ctx, call.CheckResourceBatch.Input)
+		case *cerbosdevv1.ServerTestCase_PlaygroundValidate:
+			playgroundClient := svcv1.NewCerbosPlaygroundServiceClient(grpcConn)
+			want = call.PlaygroundValidate.WantResponse
+			have, err = playgroundClient.PlaygroundValidate(ctx, call.PlaygroundValidate.Input)
+		case *cerbosdevv1.ServerTestCase_PlaygroundEvaluate:
+			playgroundClient := svcv1.NewCerbosPlaygroundServiceClient(grpcConn)
+			want = call.PlaygroundEvaluate.WantResponse
+			have, err = playgroundClient.PlaygroundEvaluate(ctx, call.PlaygroundEvaluate.Input)
+		case *cerbosdevv1.ServerTestCase_AdminAddOrUpdatePolicy:
+			adminClient := svcv1.NewCerbosAdminServiceClient(grpcConn)
+			want = call.AdminAddOrUpdatePolicy.WantResponse
+			have, err = adminClient.AddOrUpdatePolicy(ctx, call.AdminAddOrUpdatePolicy.Input)
+		default:
+			t.Fatalf("Unknown call type: %T", call)
+		}
 
-		for _, tcase := range testCases {
-			tcase := tcase
-			t.Run(tcase.Name, func(t *testing.T) {
-				tc := readTestCase(t, tcase.Input)
+		if tc.WantError {
+			require.Error(t, err)
+			return
+		}
 
-				var input, have, want proto.Message
-				var addr string
+		require.NoError(t, err)
+		compareProto(t, want, have)
+	}
+}
 
-				switch call := tc.CallKind.(type) {
-				case *cerbosdevv1.ServerTestCase_CheckResourceSet:
-					addr = fmt.Sprintf("%s/api/check", server)
-					input = call.CheckResourceSet.Input
-					want = call.CheckResourceSet.WantResponse
-					have = &responsev1.CheckResourceSetResponse{}
-				case *cerbosdevv1.ServerTestCase_CheckResourceBatch:
-					addr = fmt.Sprintf("%s/api/x/check_resource_batch", server)
-					input = call.CheckResourceBatch.Input
-					want = call.CheckResourceBatch.WantResponse
-					have = &responsev1.CheckResourceBatchResponse{}
-				case *cerbosdevv1.ServerTestCase_PlaygroundValidate:
-					addr = fmt.Sprintf("%s/api/playground/validate", server)
-					input = call.PlaygroundValidate.Input
-					want = call.PlaygroundValidate.WantResponse
-					have = &responsev1.PlaygroundValidateResponse{}
-				case *cerbosdevv1.ServerTestCase_PlaygroundEvaluate:
-					addr = fmt.Sprintf("%s/api/playground/evaluate", server)
-					input = call.PlaygroundEvaluate.Input
-					want = call.PlaygroundEvaluate.WantResponse
-					have = &responsev1.PlaygroundEvaluateResponse{}
-				default:
-					t.Fatalf("Unknown call type: %T", call)
-				}
-
-				reqBytes, err := protojson.Marshal(input)
-				require.NoError(t, err, "Failed to marshal request")
-
-				ctx, cancelFunc := context.WithTimeout(context.Background(), 1*time.Second)
-				defer cancelFunc()
-
-				req, err := http.NewRequestWithContext(ctx, http.MethodPost, addr, bytes.NewReader(reqBytes))
-				require.NoError(t, err, "Failed to create request")
-
-				req.Header.Set("Content-Type", "application/json")
-
-				resp, err := c.Do(req)
-				require.NoError(t, err, "HTTP request failed")
-
-				defer func() {
-					if resp.Body != nil {
-						resp.Body.Close()
-					}
-				}()
-
-				if tc.WantError {
-					require.NotEqual(t, http.StatusOK, resp.StatusCode)
-					return
-				}
-
-				// require.Equal(t, http.StatusOK, resp.StatusCode)
-
-				respBytes, err := io.ReadAll(resp.Body)
-				require.NoError(t, err, "Failed to read response")
-
-				require.NoError(t, protojson.Unmarshal(respBytes, have), "Failed to unmarshal response")
-				compareProto(t, want, have)
-			})
+func testHTTPRequests(testCases []*cerbosdevv1.ServerTestCase, hostAddr string) func(*testing.T) {
+	//nolint:thelper
+	return func(t *testing.T) {
+		c := mkHTTPClient(t)
+		for _, tc := range testCases {
+			t.Run(tc.Name, executeHTTPTestCase(c, hostAddr, tc))
 		}
 	}
 }
 
-func readTestCase(t *testing.T, data []byte) *cerbosdevv1.ServerTestCase {
+func mkHTTPClient(t *testing.T) *http.Client {
+	t.Helper()
+
+	customTransport := http.DefaultTransport.(*http.Transport).Clone()
+	customTransport.TLSClientConfig = &tls.Config{InsecureSkipVerify: true} //nolint:gosec
+
+	return &http.Client{Transport: customTransport}
+}
+
+func executeHTTPTestCase(c *http.Client, hostAddr string, tc *cerbosdevv1.ServerTestCase) func(*testing.T) {
+	//nolint:thelper
+	return func(t *testing.T) {
+		var input, have, want proto.Message
+		var addr string
+
+		switch call := tc.CallKind.(type) {
+		case *cerbosdevv1.ServerTestCase_CheckResourceSet:
+			addr = fmt.Sprintf("%s/api/check", hostAddr)
+			input = call.CheckResourceSet.Input
+			want = call.CheckResourceSet.WantResponse
+			have = &responsev1.CheckResourceSetResponse{}
+		case *cerbosdevv1.ServerTestCase_CheckResourceBatch:
+			addr = fmt.Sprintf("%s/api/x/check_resource_batch", hostAddr)
+			input = call.CheckResourceBatch.Input
+			want = call.CheckResourceBatch.WantResponse
+			have = &responsev1.CheckResourceBatchResponse{}
+		case *cerbosdevv1.ServerTestCase_PlaygroundValidate:
+			addr = fmt.Sprintf("%s/api/playground/validate", hostAddr)
+			input = call.PlaygroundValidate.Input
+			want = call.PlaygroundValidate.WantResponse
+			have = &responsev1.PlaygroundValidateResponse{}
+		case *cerbosdevv1.ServerTestCase_PlaygroundEvaluate:
+			addr = fmt.Sprintf("%s/api/playground/evaluate", hostAddr)
+			input = call.PlaygroundEvaluate.Input
+			want = call.PlaygroundEvaluate.WantResponse
+			have = &responsev1.PlaygroundEvaluateResponse{}
+		case *cerbosdevv1.ServerTestCase_AdminAddOrUpdatePolicy:
+			addr = fmt.Sprintf("%s/api/admin/policy", hostAddr)
+			input = call.AdminAddOrUpdatePolicy.Input
+			want = call.AdminAddOrUpdatePolicy.WantResponse
+			have = &responsev1.AddOrUpdatePolicyResponse{}
+		default:
+			t.Fatalf("Unknown call type: %T", call)
+		}
+
+		reqBytes, err := protojson.Marshal(input)
+		require.NoError(t, err, "Failed to marshal request")
+
+		ctx, cancelFunc := context.WithTimeout(context.Background(), 1*time.Second)
+		defer cancelFunc()
+
+		req, err := http.NewRequestWithContext(ctx, http.MethodPost, addr, bytes.NewReader(reqBytes))
+		require.NoError(t, err, "Failed to create request")
+
+		req.Header.Set("Content-Type", "application/json")
+
+		resp, err := c.Do(req)
+		require.NoError(t, err, "HTTP request failed")
+
+		defer func() {
+			if resp.Body != nil {
+				resp.Body.Close()
+			}
+		}()
+
+		if tc.WantError {
+			require.NotEqual(t, http.StatusOK, resp.StatusCode)
+			return
+		}
+
+		// require.Equal(t, http.StatusOK, resp.StatusCode)
+
+		respBytes, err := io.ReadAll(resp.Body)
+		require.NoError(t, err, "Failed to read response")
+
+		require.NoError(t, protojson.Unmarshal(respBytes, have), "Failed to unmarshal response [%s]", string(respBytes))
+		compareProto(t, want, have)
+	}
+}
+
+func loadTestCases(t *testing.T, dirs ...string) []*cerbosdevv1.ServerTestCase {
+	t.Helper()
+	var testCases []*cerbosdevv1.ServerTestCase
+
+	for _, dir := range dirs {
+		cases := test.LoadTestCases(t, filepath.Join("server", dir))
+		for _, c := range cases {
+			tc := readTestCase(t, c.Name, c.Input)
+			testCases = append(testCases, tc)
+		}
+	}
+
+	return testCases
+}
+
+func readTestCase(t *testing.T, name string, data []byte) *cerbosdevv1.ServerTestCase {
 	t.Helper()
 
 	tc := &cerbosdevv1.ServerTestCase{}
 	require.NoError(t, util.ReadJSONOrYAML(bytes.NewReader(data), tc))
+
+	if tc.Name == "" {
+		tc.Name = name
+	}
 
 	return tc
 }

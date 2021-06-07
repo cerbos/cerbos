@@ -1,0 +1,152 @@
+---
+description: "Add a batch"
+adminAddOrUpdatePolicy:
+  input: {
+    "policies": [
+      {
+        "apiVersion": "api.cerbos.dev/v1",
+        "derived_roles": {
+          "name": "my_derived_roles",
+          "definitions": [
+            {
+              "name": "admin",
+              "parentRoles": [
+                "admin"
+              ]
+            },
+            {
+              "name": "employee_that_owns_the_record",
+              "parentRoles": [
+                "employee"
+              ],
+              "condition": {
+                "script": "input.resource.attr.owner == input.principal.id"
+              }
+            },
+            {
+              "name": "any_employee",
+              "parentRoles": [
+                "employee"
+              ]
+            },
+            {
+              "name": "direct_manager",
+              "parentRoles": [
+                "manager"
+              ],
+              "condition": {
+                "match": {
+                  "all": {
+                    "of": [
+                      {
+                        "expr": "request.resource.attr.geography == request.principal.attr.geography"
+                      },
+                      {
+                        "expr": "request.resource.attr.geography == request.principal.attr.managed_geographies"
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          ]
+        }
+      },
+      {
+        "apiVersion": "api.cerbos.dev/v1",
+        "resourcePolicy": {
+          "resource": "leave_request",
+          "version": "20210210",
+          "importDerivedRoles": [
+            "my_derived_roles"
+          ],
+          "rules": [
+            {
+              "actions": [
+                "*"
+              ],
+              "roles": [
+                "admin"
+              ],
+              "effect": "EFFECT_ALLOW"
+            },
+            {
+              "actions": [
+                "create"
+              ],
+              "derivedRoles": [
+                "employee_that_owns_the_record"
+              ],
+              "effect": "EFFECT_ALLOW"
+            },
+            {
+              "actions": [
+                "view:*"
+              ],
+              "derivedRoles": [
+                "employee_that_owns_the_record",
+                "direct_manager"
+              ],
+              "effect": "EFFECT_ALLOW"
+            },
+            {
+              "actions": [
+                "view:public"
+              ],
+              "derivedRoles": [
+                "any_employee"
+              ],
+              "effect": "EFFECT_ALLOW"
+            },
+            {
+              "actions": [
+                "approve"
+              ],
+              "derivedRoles": [
+                "direct_manager"
+              ],
+              "condition": {
+                "match": {
+                  "expr": "request.resource.attr.status == \"PENDING_APPROVAL\""
+                }
+              },
+              "effect": "EFFECT_ALLOW"
+            }
+          ]
+        }
+      },
+      {
+        "apiVersion": "api.cerbos.dev/v1",
+        "principalPolicy": {
+          "principal": "donald_duck",
+          "version": "20210210",
+          "rules": [
+            {
+              "resource": "leave_request",
+              "actions": [
+                {
+                  "action": "*",
+                  "condition": {
+                    "match": {
+                      "expr": "request.resource.attr.dev_record == true"
+                    }
+                  },
+                  "effect": "EFFECT_ALLOW"
+                }
+              ]
+            },
+            {
+              "resource": "salary_record",
+              "actions": [
+                {
+                  "action": "*",
+                  "effect": "EFFECT_DENY"
+                }
+              ]
+            }
+          ]
+        }
+      }
+    ]
+  }
+  wantResponse: {"success":{}}

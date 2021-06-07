@@ -17,6 +17,7 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 
 	"github.com/cerbos/cerbos/internal/config"
+	"github.com/cerbos/cerbos/internal/observability/logging"
 	"github.com/cerbos/cerbos/internal/storage"
 	"github.com/cerbos/cerbos/internal/storage/db/internal"
 )
@@ -35,11 +36,14 @@ func init() {
 			return nil, err
 		}
 
-		return New(ctx, conf)
+		return NewStore(ctx, conf)
 	})
 }
 
-func New(ctx context.Context, conf *Conf) (*Store, error) {
+func NewStore(ctx context.Context, conf *Conf) (*Store, error) {
+	log := logging.FromContext(ctx).Named("sqlite3")
+	log.Info("Initializing sqlite3 storage")
+
 	db, err := sqlx.Connect("sqlite3", conf.DSN)
 	if err != nil {
 		return nil, fmt.Errorf("failed to open database: %w", err)

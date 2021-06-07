@@ -187,3 +187,13 @@ message PlaygroundEvaluateResponse {
         EvalResultList success = 3;
     }
 }
+
+message AddOrUpdatePolicyResponse {
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
+		json_schema: {
+			description: "Add/update policy response"
+		}
+    };
+
+    google.protobuf.Empty success = 1;
+}

@@ -61,6 +61,26 @@ service CerbosService {
     }
 }
 
+service CerbosAdminService {
+	option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_tag) = {
+		description: "Cerbos administration service"
+	};
+
+    rpc AddOrUpdatePolicy(request.v1.AddOrUpdatePolicyRequest) returns (response.v1.AddOrUpdatePolicyResponse) {
+        option (google.api.http) = {
+            post: "/api/admin/policy",
+            body: "*",
+            additional_bindings: {
+                put: "/api/admin/policy",
+                body: "*"
+            }
+        };
+        option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+            summary: "Add or update policies"
+        };
+    }
+}
+
 service CerbosPlaygroundService {
     rpc PlaygroundValidate(request.v1.PlaygroundValidateRequest) returns (response.v1.PlaygroundValidateResponse) {
         option (google.api.http) = {

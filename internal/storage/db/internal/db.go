@@ -5,6 +5,7 @@ package internal
 import (
 	"context"
 	"fmt"
+	"os"
 
 	"github.com/doug-martin/goqu/v9"
 	"go.uber.org/zap"
@@ -16,12 +17,14 @@ import (
 )
 
 func NewDBStorage(ctx context.Context, db *goqu.Database) (*DBStorage, error) {
-	log, err := zap.NewStdLogAt(zap.L().Named("db"), zap.DebugLevel)
-	if err != nil {
-		return nil, err
-	}
+	if _, ok := os.LookupEnv("CERBOS_DEBUG_DB"); ok {
+		log, err := zap.NewStdLogAt(zap.L().Named("db"), zap.DebugLevel)
+		if err != nil {
+			return nil, err
+		}
 
-	db.Logger(log)
+		db.Logger(log)
+	}
 
 	return &DBStorage{
 		db:                  db,
