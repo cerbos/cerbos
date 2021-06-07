@@ -6,7 +6,7 @@ require (
 	contrib.go.opencensus.io/exporter/jaeger v0.2.1
 	contrib.go.opencensus.io/exporter/prometheus v0.3.0
 	github.com/ProtonMail/gopenpgp/v2 v2.1.9 // indirect
-	github.com/bufbuild/buf v0.42.1
+	github.com/bufbuild/buf v0.43.2
 	github.com/cespare/xxhash v1.1.0
 	github.com/doug-martin/goqu/v9 v9.13.0
 	github.com/envoyproxy/protoc-gen-validate v0.6.1
@@ -48,14 +48,14 @@ require (
 	go.uber.org/automaxprocs v1.4.0
 	go.uber.org/config v1.4.0
 	go.uber.org/multierr v1.7.0
-	go.uber.org/zap v1.16.0
+	go.uber.org/zap v1.17.0
 	golang.org/x/lint v0.0.0-20210508222113-6edffad5e616 // indirect
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
 	golang.org/x/term v0.0.0-20210220032956-6a3ed077a48d // indirect
-	google.golang.org/genproto v0.0.0-20210524142926-3e3a6030be83
-	google.golang.org/grpc v1.38.0
+	google.golang.org/genproto v0.0.0-20210524171403-669157292da3
+	google.golang.org/grpc v1.39.0-dev.0.20210519181852-3dd75a6888ce
 	google.golang.org/grpc/cmd/protoc-gen-go-grpc v1.1.0
-	google.golang.org/protobuf v1.26.0
+	google.golang.org/protobuf v1.26.1-0.20210520194023-50a85913fbce
 	gotest.tools/gotestsum v1.6.4
 	helm.sh/helm/v3 v3.5.4
 )
