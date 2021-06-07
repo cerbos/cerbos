@@ -82,7 +82,10 @@ func TestBuildIndex(t *testing.T) {
 				haveErrJSON, err := json.Marshal(errList)
 				require.NoError(t, err)
 
-				require.JSONEq(t, tc.WantErrJson, string(haveErrJSON))
+				haveErrJSONStr := string(bytes.ReplaceAll(haveErrJSON, []byte{0xc2, 0xa0}, []byte{0x20}))
+				wantErrJSONStr := strings.ReplaceAll(tc.WantErrJson, "\u00a0", " ")
+
+				require.JSONEq(t, wantErrJSONStr, haveErrJSONStr)
 			case tc.WantErr != "":
 				require.EqualError(t, haveErr, tc.WantErr)
 			default:

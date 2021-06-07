@@ -6,7 +6,7 @@ wantErrJson: |-
     "loadFailures": null,
     "codegenFailures": [
       {
-        "error": "resource.yaml: Failed to generate code for rule [{\"actions\":[\"approve\"], \"derivedRoles\":[\"direct_manager\"], \"condition\":{\"match\":{\"expr\":\"xxxx || request.resource.attr.status == \\\"PENDING_APPROVAL\\\"\"}}, \"effect\":\"EFFECT_ALLOW\"}] [Invalid match expression: undeclared reference to 'xxxx' (in container '')]",
+        "error": "resource.yaml: Failed to generate code for rule #5 [Invalid match expression: undeclared reference to 'xxxx' (in container '')]",
         "file": "resource.yaml"
       }
     ],
