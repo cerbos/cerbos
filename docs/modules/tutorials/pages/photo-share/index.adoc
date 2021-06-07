@@ -6,7 +6,7 @@ include::ROOT:partial$attributes.adoc[]
 .Getting started
 ****
 
-* We will use Docker to run the server and the compiler. 
+* We will use Docker to run the server and the compiler.
 
 [source,shell,subs="attributes"]
 ----
@@ -20,7 +20,7 @@ docker pull {app-docker-img}
 include::example$photo-share/config.yaml[]
 ----
 
-* Create a directory named `policies` to hold the policies. 
+* Create a directory named `policies` to hold the policies.
 
 ****
 
@@ -38,7 +38,7 @@ Apatr also employs a team of moderators to investigate complaints and remove any
 Apatr’s identity provider allows defining roles for users. The roles currently defined in this system are:
 
 * `moderator`: Member of the moderator team
-* `user`: Authenticated users 
+* `user`: Authenticated users
 
 
 == Resources and actions
@@ -58,44 +58,44 @@ In the Apatr application, the most obvious resource hierarchy is the following:
 [%header,cols=".^1,.^1,1,2",grid=rows]
 |===
 | Resource | Action | Allowed role | Condition
-.8+s| album:object 
-m| create 
-m| user 
-| 
+.8+s| album:object
+m| create
+m| user
+|
 
 .2+m| delete
 m| user
-a| 
+a|
 * If user owns the album
 
 m| moderator
-a| 
+a|
 * If the album is flagged as inappropriate
 
 m| share
 m| user
-a| 
+a|
 * If user owns the album
 
 m| unshare
 m| user
-a| 
+a|
 * If user owns the album
 
 .2+m| view
 m| user
 a|
-* If user owns the album 
+* If user owns the album
 * If the album is public
 
 m| moderator
-a| 
+a|
 * If the album is flagged as inappropriate
 * If the album is public
 
-m| flag 
+m| flag
 m| user
-a| 
+a|
 * If the album is public
 
 |===
@@ -150,7 +150,7 @@ docker run -it -v $(pwd):/photo-share {app-docker-img} \
 
 == Resource policies
 
-Let's write a resource policy for the `album:object` resource. 
+Let's write a resource policy for the `album:object` resource.
 
 [source,yaml,linenums]
 ----
@@ -160,7 +160,7 @@ resourcePolicy:
   version: "default" <1>
   importDerivedRoles:
     - apatr_common_roles <2>
-  resource: "album:object" 
+  resource: "album:object"
   rules:
     - actions: ['*']
       effect: EFFECT_ALLOW
@@ -201,7 +201,7 @@ docker run -it -v $(pwd):/photo-share -p 3592:3592 {app-docker-img} \
 ----
 
 
-NOTE: If you like to use link:https://www.postman.com[Postman], link:https://insomnia.rest[Insomnia] or any other software that supports OpenAPI, the Cerbos OpenAPI definitions can be downloaded by accessing http://localhost:3592{cerbos-openapi-schema}. 
+NOTE: If you like to use link:https://www.postman.com[Postman], link:https://insomnia.rest[Insomnia] or any other software that supports OpenAPI, the Cerbos OpenAPI definitions can be downloaded by accessing http://localhost:3592{cerbos-openapi-schema}.
 
 
 .Alicia trying to view her own album
@@ -211,6 +211,11 @@ cat <<EOF | curl --silent "http://localhost:3592/api/check?pretty" -d @-
 {
   "requestId":  "test01",
   "includeMeta": true,
+  "principal":  {
+    "id":  "alicia",
+    "policyVersion": "default",
+    "roles":  ["user"]
+  },
   "actions":  ["view"],
   "resource":  {
     "policyVersion": "default",
@@ -225,11 +230,6 @@ cat <<EOF | curl --silent "http://localhost:3592/api/check?pretty" -d @-
         }
       }
     }
-  },
-  "principal":  {
-    "id":  "alicia",
-    "policyVersion": "default",
-    "roles":  ["user"]
   }
 }
 EOF
@@ -283,7 +283,7 @@ docker run -it -v $(pwd):/photo-share {app-docker-img} \
 
 ----
 Test results
-= AlbumObjectTestSuite (album_object_tests.yaml) 
+= AlbumObjectTestSuite (album_object_tests.yaml)
 == Alicia tries to view her own private album [OK]
 == Bradley tries to view Alicia's private and public albums [OK]
 == Moderator tries to delete a flagged album and an unflagged album [OK]
