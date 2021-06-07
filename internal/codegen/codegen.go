@@ -10,8 +10,6 @@ import (
 	"github.com/open-policy-agent/opa/ast"
 	"github.com/open-policy-agent/opa/format"
 	exprpb "google.golang.org/genproto/googleapis/api/expr/v1alpha1"
-	"google.golang.org/protobuf/encoding/protojson"
-	"google.golang.org/protobuf/proto"
 
 	policyv1 "github.com/cerbos/cerbos/internal/genpb/policy/v1"
 	"github.com/cerbos/cerbos/internal/namer"
@@ -59,9 +57,9 @@ func generateResourcePolicy(parent *policyv1.Policy, p *policyv1.ResourcePolicy)
 
 	rg := NewRegoGen(modName, imports...)
 
-	for _, rule := range p.Rules {
+	for i, rule := range p.Rules {
 		if err := rg.AddResourceRule(rule); err != nil {
-			return nil, newRuleGenErr(parent, rule, err)
+			return nil, newRuleGenErr(parent, i+1, err)
 			// return nil, fmt.Errorf("failed to generate code for rule [%v]: %w", rule, err)
 		}
 	}
@@ -80,9 +78,9 @@ func generatePrincipalPolicy(parent *policyv1.Policy, p *policyv1.PrincipalPolic
 	modName := namer.PrincipalPolicyModuleName(p.Principal, p.Version)
 	rg := NewRegoGen(modName)
 
-	for _, rule := range p.Rules {
+	for i, rule := range p.Rules {
 		if err := rg.AddPrincipalRule(rule); err != nil {
-			return nil, newRuleGenErr(parent, rule, err)
+			return nil, newRuleGenErr(parent, i+1, err)
 			// return nil, fmt.Errorf("failed to generate code for rule [%v]: %w", rule, err)
 		}
 	}
@@ -196,20 +194,7 @@ func newErr(file, desc string, err error) Error {
 	return Error{File: file, Description: desc, Err: err}
 }
 
-func newRuleGenErr(p *policyv1.Policy, rule proto.Message, err error) Error {
+func newRuleGenErr(p *policyv1.Policy, ruleNum int, err error) Error {
 	file := policy.GetSourceFile(p)
-	return newErr(file, fmt.Sprintf("Failed to generate code for rule [%s]", ruleJSON(rule)), err)
-}
-
-func ruleJSON(rule proto.Message) string {
-	if rule == nil {
-		return "<nil>"
-	}
-
-	ruleJSON, err := protojson.Marshal(rule)
-	if err != nil {
-		return "<err>"
-	}
-
-	return string(ruleJSON)
+	return newErr(file, fmt.Sprintf("Failed to generate code for rule #%d", ruleNum), err)
 }
