@@ -15,6 +15,10 @@
       "description": "Cerbos Policy Decision Point"
     },
     {
+      "name": "CerbosAdminService",
+      "description": "Cerbos administration service"
+    },
+    {
       "name": "CerbosPlaygroundService"
     }
   ],
@@ -28,6 +32,80 @@
     "application/json"
   ],
   "paths": {
+    "/admin/policy": {
+      "post": {
+        "summary": "Add or update policies",
+        "operationId": "CerbosAdminService_AddOrUpdatePolicy",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1AddOrUpdatePolicyResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/v1AddOrUpdatePolicyRequest"
+            }
+          }
+        ],
+        "tags": [
+          "CerbosAdminService"
+        ],
+        "security": [
+          {
+            "BasicAuth": []
+          }
+        ]
+      },
+      "put": {
+        "summary": "Add or update policies",
+        "operationId": "CerbosAdminService_AddOrUpdatePolicy2",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1AddOrUpdatePolicyResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/v1AddOrUpdatePolicyRequest"
+            }
+          }
+        ],
+        "tags": [
+          "CerbosAdminService"
+        ],
+        "security": [
+          {
+            "BasicAuth": []
+          }
+        ]
+      }
+    },
     "/api/check": {
       "post": {
         "summary": "Check",
@@ -229,6 +307,17 @@
       },
       "description": "Metadata about request evaluation."
     },
+    "MatchExprList": {
+      "type": "object",
+      "properties": {
+        "of": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/v1Match"
+          }
+        }
+      }
+    },
     "MetaActionMeta": {
       "type": "object",
       "properties": {
@@ -313,6 +402,20 @@
         }
       }
     },
+    "PrincipalRuleAction": {
+      "type": "object",
+      "properties": {
+        "action": {
+          "type": "string"
+        },
+        "condition": {
+          "$ref": "#/definitions/v1Condition"
+        },
+        "effect": {
+          "$ref": "#/definitions/v1Effect"
+        }
+      }
+    },
     "protobufAny": {
       "type": "object",
       "properties": {
@@ -350,6 +453,36 @@
           }
         }
       }
+    },
+    "v1AddOrUpdatePolicyRequest": {
+      "type": "object",
+      "properties": {
+        "policies": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/v1Policy"
+          },
+          "description": "List of policies.",
+          "maxItems": 10,
+          "minItems": 1,
+          "required": [
+            "policies"
+          ]
+        }
+      },
+      "description": "Add/update policy request",
+      "required": [
+        "policies"
+      ]
+    },
+    "v1AddOrUpdatePolicyResponse": {
+      "type": "object",
+      "properties": {
+        "success": {
+          "properties": {}
+        }
+      },
+      "description": "Add/update policy response"
     },
     "v1AttributesMap": {
       "type": "object",
@@ -547,6 +680,31 @@
         }
       }
     },
+    "v1Condition": {
+      "type": "object",
+      "properties": {
+        "match": {
+          "$ref": "#/definitions/v1Match"
+        },
+        "script": {
+          "type": "string"
+        }
+      }
+    },
+    "v1DerivedRoles": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "definitions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/v1RoleDef"
+          }
+        }
+      }
+    },
     "v1Effect": {
       "type": "string",
       "enum": [
@@ -556,6 +714,37 @@
         "EFFECT_NO_MATCH"
       ],
       "default": "EFFECT_UNSPECIFIED"
+    },
+    "v1Match": {
+      "type": "object",
+      "properties": {
+        "all": {
+          "$ref": "#/definitions/MatchExprList"
+        },
+        "any": {
+          "$ref": "#/definitions/MatchExprList"
+        },
+        "none": {
+          "$ref": "#/definitions/MatchExprList"
+        },
+        "expr": {
+          "type": "string"
+        }
+      }
+    },
+    "v1Metadata": {
+      "type": "object",
+      "properties": {
+        "sourceFile": {
+          "type": "string"
+        },
+        "annotations": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        }
+      }
     },
     "v1PlaygroundEvaluateRequest": {
       "type": "object",
@@ -667,6 +856,32 @@
       },
       "description": "Playground validate response"
     },
+    "v1Policy": {
+      "type": "object",
+      "properties": {
+        "apiVersion": {
+          "type": "string"
+        },
+        "disabled": {
+          "type": "boolean"
+        },
+        "description": {
+          "type": "string"
+        },
+        "metadata": {
+          "$ref": "#/definitions/v1Metadata"
+        },
+        "resourcePolicy": {
+          "$ref": "#/definitions/v1ResourcePolicy"
+        },
+        "principalPolicy": {
+          "$ref": "#/definitions/v1PrincipalPolicy"
+        },
+        "derivedRoles": {
+          "$ref": "#/definitions/v1DerivedRoles"
+        }
+      }
+    },
     "v1PolicyFile": {
       "type": "object",
       "properties": {
@@ -740,6 +955,37 @@
         "roles"
       ]
     },
+    "v1PrincipalPolicy": {
+      "type": "object",
+      "properties": {
+        "principal": {
+          "type": "string"
+        },
+        "version": {
+          "type": "string"
+        },
+        "rules": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/v1PrincipalRule"
+          }
+        }
+      }
+    },
+    "v1PrincipalRule": {
+      "type": "object",
+      "properties": {
+        "resource": {
+          "type": "string"
+        },
+        "actions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/PrincipalRuleAction"
+          }
+        }
+      }
+    },
     "v1Resource": {
       "type": "object",
       "properties": {
@@ -781,6 +1027,58 @@
         "kind",
         "id"
       ]
+    },
+    "v1ResourcePolicy": {
+      "type": "object",
+      "properties": {
+        "resource": {
+          "type": "string"
+        },
+        "version": {
+          "type": "string"
+        },
+        "importDerivedRoles": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "rules": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/v1ResourceRule"
+          }
+        }
+      }
+    },
+    "v1ResourceRule": {
+      "type": "object",
+      "properties": {
+        "actions": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "derivedRoles": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "roles": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "condition": {
+          "$ref": "#/definitions/v1Condition"
+        },
+        "effect": {
+          "$ref": "#/definitions/v1Effect"
+        }
+      }
     },
     "v1ResourceSet": {
       "type": "object",
@@ -834,6 +1132,28 @@
         "kind",
         "instances"
       ]
+    },
+    "v1RoleDef": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "parentRoles": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "condition": {
+          "$ref": "#/definitions/v1Condition"
+        }
+      }
+    }
+  },
+  "securityDefinitions": {
+    "BasicAuth": {
+      "type": "basic"
     }
   }
 }

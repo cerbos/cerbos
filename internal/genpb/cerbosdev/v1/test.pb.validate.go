@@ -140,6 +140,8 @@ func (m *ServerTestCase) Validate() error {
 		return nil
 	}
 
+	// no validation rules for Name
+
 	// no validation rules for Description
 
 	// no validation rules for WantError
@@ -188,6 +190,18 @@ func (m *ServerTestCase) Validate() error {
 			if err := v.Validate(); err != nil {
 				return ServerTestCaseValidationError{
 					field:  "PlaygroundEvaluate",
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	case *ServerTestCase_AdminAddOrUpdatePolicy:
+
+		if v, ok := interface{}(m.GetAdminAddOrUpdatePolicy()).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return ServerTestCaseValidationError{
+					field:  "AdminAddOrUpdatePolicy",
 					reason: "embedded message failed validation",
 					cause:  err,
 				}
@@ -931,3 +945,91 @@ var _ interface {
 	Cause() error
 	ErrorName() string
 } = ServerTestCase_PlaygroundEvaluateCallValidationError{}
+
+// Validate checks the field values on
+// ServerTestCase_AdminAddOrUpdatePolicyCall with the rules defined in the
+// proto definition for this message. If any rules are violated, an error is returned.
+func (m *ServerTestCase_AdminAddOrUpdatePolicyCall) Validate() error {
+	if m == nil {
+		return nil
+	}
+
+	if v, ok := interface{}(m.GetInput()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return ServerTestCase_AdminAddOrUpdatePolicyCallValidationError{
+				field:  "Input",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if v, ok := interface{}(m.GetWantResponse()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return ServerTestCase_AdminAddOrUpdatePolicyCallValidationError{
+				field:  "WantResponse",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	return nil
+}
+
+// ServerTestCase_AdminAddOrUpdatePolicyCallValidationError is the validation
+// error returned by ServerTestCase_AdminAddOrUpdatePolicyCall.Validate if the
+// designated constraints aren't met.
+type ServerTestCase_AdminAddOrUpdatePolicyCallValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e ServerTestCase_AdminAddOrUpdatePolicyCallValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e ServerTestCase_AdminAddOrUpdatePolicyCallValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e ServerTestCase_AdminAddOrUpdatePolicyCallValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e ServerTestCase_AdminAddOrUpdatePolicyCallValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e ServerTestCase_AdminAddOrUpdatePolicyCallValidationError) ErrorName() string {
+	return "ServerTestCase_AdminAddOrUpdatePolicyCallValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e ServerTestCase_AdminAddOrUpdatePolicyCallValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sServerTestCase_AdminAddOrUpdatePolicyCall.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = ServerTestCase_AdminAddOrUpdatePolicyCallValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = ServerTestCase_AdminAddOrUpdatePolicyCallValidationError{}

@@ -46,6 +46,15 @@ import (
 	svcv1 "github.com/cerbos/cerbos/internal/genpb/svc/v1"
 	"github.com/cerbos/cerbos/internal/observability/metrics"
 	"github.com/cerbos/cerbos/internal/storage"
+
+	// Import sqlite3 to register the storage driver.
+	_ "github.com/cerbos/cerbos/internal/storage/db/sqlite3"
+
+	// Import disk to register the storage driver.
+	_ "github.com/cerbos/cerbos/internal/storage/disk"
+
+	// Import git to register the storage driver.
+	_ "github.com/cerbos/cerbos/internal/storage/git"
 	"github.com/cerbos/cerbos/internal/svc"
 	"github.com/cerbos/cerbos/internal/util"
 	"github.com/cerbos/cerbos/schema"
@@ -57,6 +66,7 @@ const (
 	metricsReportingInterval = 15 * time.Second
 	minGRPCConnectTimeout    = 20 * time.Second
 
+	adminEndpoint   = "/admin"
 	apiEndpoint     = "/api"
 	healthEndpoint  = "/_cerbos/health"
 	metricsEndpoint = "/_cerbos/metrics"
@@ -65,35 +75,26 @@ const (
 )
 
 func Start(ctx context.Context, zpagesEnabled bool) error {
-	// create Cerbos service
-	cerbosSvc, err := createCerbosService(ctx)
-	if err != nil {
-		return err
-	}
-
+	// get configuration
 	conf := &Conf{}
 	if err := config.GetSection(conf); err != nil {
 		return err
 	}
 
-	s := NewServer(conf)
-	return s.Start(ctx, cerbosSvc, zpagesEnabled)
-}
-
-func createCerbosService(ctx context.Context) (*svc.CerbosService, error) {
 	// create store
 	store, err := storage.New(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create store: %w", err)
+		return fmt.Errorf("failed to create store: %w", err)
 	}
 
 	// create engine
 	eng, err := engine.New(ctx, compile.NewCompiler(ctx, store))
 	if err != nil {
-		return nil, fmt.Errorf("failed to create engine: %w", err)
+		return fmt.Errorf("failed to create engine: %w", err)
 	}
 
-	return svc.NewCerbosService(eng), nil
+	s := NewServer(conf)
+	return s.Start(ctx, store, eng, zpagesEnabled)
 }
 
 type Server struct {
@@ -117,15 +118,15 @@ func NewServer(conf *Conf) *Server {
 	}
 }
 
-func (s *Server) Start(ctx context.Context, cerbosSvc *svc.CerbosService, zpagesEnabled bool) error {
+func (s *Server) Start(ctx context.Context, store storage.Store, eng *engine.Engine, zpagesEnabled bool) error {
 	defer s.cancelFunc()
 
-	log := zap.S().Named("server")
+	log := zap.L().Named("server")
 
 	if s.conf.MetricsEnabled {
 		ocExporter, err := initOCPromExporter()
 		if err != nil {
-			log.Errorw("Failed to initialize Prometheus exporter", "error", err)
+			log.Error("Failed to initialize Prometheus exporter", zap.Error(err))
 			return err
 		}
 
@@ -145,21 +146,22 @@ func (s *Server) Start(ctx context.Context, cerbosSvc *svc.CerbosService, zpages
 	// create listeners
 	grpcL, err := s.createListener(s.conf.GRPCListenAddr)
 	if err != nil {
-		log.Errorw("Failed to create gRPC listener", "error", err)
+		log.Error("Failed to create gRPC listener", zap.Error(err))
 		return err
 	}
 
 	httpL, err := s.createListener(s.conf.HTTPListenAddr)
 	if err != nil {
-		log.Errorw("Failed to create HTTP listener", "error", err)
+		log.Error("Failed to create HTTP listener", zap.Error(err))
 		return err
 	}
 
-	grpcServer := s.startGRPCServer(cerbosSvc, grpcL)
+	// start servers
+	grpcServer := s.startGRPCServer(grpcL, store, eng)
 
 	httpServer, err := s.startHTTPServer(ctx, httpL, grpcServer, zpagesEnabled)
 	if err != nil {
-		log.Errorw("Failed to start HTTP server", "error", err)
+		log.Error("Failed to start HTTP server", zap.Error(err))
 		return err
 	}
 
@@ -178,7 +180,7 @@ func (s *Server) Start(ctx context.Context, cerbosSvc *svc.CerbosService, zpages
 		defer cancelFunc()
 
 		if err := httpServer.Shutdown(shutdownCtx); err != nil {
-			log.Errorw("Failed to cleanly shutdown HTTP server", "error", err)
+			log.Error("Failed to cleanly shutdown HTTP server", zap.Error(err))
 		}
 
 		log.Info("Shutdown complete")
@@ -191,7 +193,7 @@ func (s *Server) Start(ctx context.Context, cerbosSvc *svc.CerbosService, zpages
 			return nil
 		}
 
-		log.Errorw("Stopping server due to error", "error", err)
+		log.Error("Stopping server due to error", zap.Error(err))
 		return err
 	}
 
@@ -255,38 +257,19 @@ func (s *Server) getTLSConfig() (*tls.Config, error) {
 	return tlsConfig, nil
 }
 
-func (s *Server) startGRPCServer(cerbosSvc *svc.CerbosService, l net.Listener) *grpc.Server {
+func (s *Server) startGRPCServer(l net.Listener, store storage.Store, eng *engine.Engine) *grpc.Server {
 	log := zap.L().Named("grpc")
-	payloadLog := zap.L().Named("payload")
+	server := s.mkGRPCServer(log)
 
-	opts := []grpc.ServerOption{
-		grpc.ChainStreamInterceptor(
-			grpc_recovery.StreamServerInterceptor(),
-			grpc_validator.StreamServerInterceptor(),
-			grpc_ctxtags.StreamServerInterceptor(grpc_ctxtags.WithFieldExtractorForInitialReq(svc.ExtractRequestFields)),
-			grpc_zap.StreamServerInterceptor(log,
-				grpc_zap.WithDecider(loggingDecider),
-				grpc_zap.WithMessageProducer(messageProducer),
-			),
-			grpc_zap.PayloadStreamServerInterceptor(payloadLog, payloadLoggingDecider(s.conf)),
-		),
-		grpc.ChainUnaryInterceptor(
-			grpc_recovery.UnaryServerInterceptor(),
-			grpc_validator.UnaryServerInterceptor(),
-			grpc_ctxtags.UnaryServerInterceptor(grpc_ctxtags.WithFieldExtractor(svc.ExtractRequestFields)),
-			XForwardedHostUnaryServerInterceptor,
-			grpc_zap.UnaryServerInterceptor(log,
-				grpc_zap.WithDecider(loggingDecider),
-				grpc_zap.WithMessageProducer(messageProducer),
-			),
-			grpc_zap.PayloadUnaryServerInterceptor(payloadLog, payloadLoggingDecider(s.conf)),
-		),
-		grpc.StatsHandler(&ocgrpc.ServerHandler{}),
-		grpc.KeepaliveParams(keepalive.ServerParameters{MaxConnectionAge: maxConnectionAge}),
+	cerbosSvc := svc.NewCerbosService(eng)
+	svcv1.RegisterCerbosServiceServer(server, cerbosSvc)
+
+	if s.conf.AdminAPI.Enabled {
+		log.Info("Starting admin service")
+		creds := s.conf.AdminAPI.AdminCredentials
+		svcv1.RegisterCerbosAdminServiceServer(server, svc.NewCerbosAdminService(store, creds.Username, creds.PasswordHash))
 	}
 
-	server := grpc.NewServer(opts...)
-	svcv1.RegisterCerbosServiceServer(server, cerbosSvc)
 	if s.conf.PlaygroundEnabled {
 		log.Info("Starting playground service")
 		svcv1.RegisterCerbosPlaygroundServiceServer(server, svc.NewCerbosPlaygroundService())
@@ -315,6 +298,38 @@ func (s *Server) startGRPCServer(cerbosSvc *svc.CerbosService, l net.Listener) *
 	})
 
 	return server
+}
+
+func (s *Server) mkGRPCServer(log *zap.Logger) *grpc.Server {
+	payloadLog := zap.L().Named("payload")
+
+	opts := []grpc.ServerOption{
+		grpc.ChainStreamInterceptor(
+			grpc_recovery.StreamServerInterceptor(),
+			grpc_validator.StreamServerInterceptor(),
+			grpc_ctxtags.StreamServerInterceptor(grpc_ctxtags.WithFieldExtractorForInitialReq(svc.ExtractRequestFields)),
+			grpc_zap.StreamServerInterceptor(log,
+				grpc_zap.WithDecider(loggingDecider),
+				grpc_zap.WithMessageProducer(messageProducer),
+			),
+			grpc_zap.PayloadStreamServerInterceptor(payloadLog, payloadLoggingDecider(s.conf)),
+		),
+		grpc.ChainUnaryInterceptor(
+			grpc_recovery.UnaryServerInterceptor(),
+			grpc_validator.UnaryServerInterceptor(),
+			grpc_ctxtags.UnaryServerInterceptor(grpc_ctxtags.WithFieldExtractor(svc.ExtractRequestFields)),
+			XForwardedHostUnaryServerInterceptor,
+			grpc_zap.UnaryServerInterceptor(log,
+				grpc_zap.WithDecider(loggingDecider),
+				grpc_zap.WithMessageProducer(messageProducer),
+			),
+			grpc_zap.PayloadUnaryServerInterceptor(payloadLog, payloadLoggingDecider(s.conf)),
+		),
+		grpc.StatsHandler(&ocgrpc.ServerHandler{}),
+		grpc.KeepaliveParams(keepalive.ServerParameters{MaxConnectionAge: maxConnectionAge}),
+	}
+
+	return grpc.NewServer(opts...)
 }
 
 func (s *Server) startHTTPServer(ctx context.Context, l net.Listener, grpcSrv *grpc.Server, zpagesEnabled bool) (*http.Server, error) { //nolint:revive
@@ -348,8 +363,15 @@ func (s *Server) startHTTPServer(ctx context.Context, l net.Listener, grpcSrv *g
 	}
 
 	if err := svcv1.RegisterCerbosServiceHandler(ctx, gwmux, grpcConn); err != nil {
-		log.Errorw("Failed to register gRPC gateway", "error", err)
-		return nil, fmt.Errorf("failed to register gRPC service: %w", err)
+		log.Errorw("Failed to register Cerbos HTTP service", "error", err)
+		return nil, fmt.Errorf("failed to register Cerbos HTTP service: %w", err)
+	}
+
+	if s.conf.AdminAPI.Enabled {
+		if err := svcv1.RegisterCerbosAdminServiceHandler(ctx, gwmux, grpcConn); err != nil {
+			log.Errorw("Failed to register Cerbos admin HTTP service", "error", err)
+			return nil, fmt.Errorf("failed to register Cerbos admin HTTP service: %w", err)
+		}
 	}
 
 	if s.conf.PlaygroundEnabled {
@@ -364,6 +386,7 @@ func (s *Server) startHTTPServer(ctx context.Context, l net.Listener, grpcSrv *g
 		return r.ProtoMajor == 2 && strings.Contains(r.Header.Get("Content-Type"), "application/grpc")
 	}).Handler(&ochttp.Handler{Handler: grpcSrv})
 
+	cerbosMux.PathPrefix(adminEndpoint).Handler(&ochttp.Handler{Handler: prettyJSON(gwmux)})
 	cerbosMux.PathPrefix(apiEndpoint).Handler(&ochttp.Handler{Handler: prettyJSON(gwmux)})
 	cerbosMux.Path(schemaEndpoint).HandlerFunc(schema.ServeSvcSwagger)
 	cerbosMux.Path(healthEndpoint).HandlerFunc(s.handleHTTPHealthCheck(grpcConn))
