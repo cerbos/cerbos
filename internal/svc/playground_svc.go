@@ -6,14 +6,13 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net/http"
 	"time"
 
 	"github.com/grpc-ecosystem/go-grpc-middleware/logging/zap/ctxzap"
 	"github.com/spf13/afero"
 	"go.uber.org/zap"
-	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/emptypb"
 
@@ -191,7 +190,7 @@ func processLintErrors(ctx context.Context, errs *index.BuildError) *responsev1.
 		})
 	}
 
-	_ = grpc.SendHeader(ctx, metadata.Pairs("x-http-code", "400"))
+	SetHTTPStatusCode(ctx, http.StatusBadRequest)
 
 	return &responsev1.PlaygroundFailure{Errors: errors}
 }
@@ -206,7 +205,7 @@ func processCompileErrors(ctx context.Context, errs compile.ErrorList) *response
 		}
 	}
 
-	_ = grpc.SendHeader(ctx, metadata.Pairs("x-http-code", "400"))
+	SetHTTPStatusCode(ctx, http.StatusBadRequest)
 
 	return &responsev1.PlaygroundFailure{Errors: errors}
 }

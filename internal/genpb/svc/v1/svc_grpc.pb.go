@@ -138,6 +138,92 @@ var CerbosService_ServiceDesc = grpc.ServiceDesc{
 	Metadata: "svc/v1/svc.proto",
 }
 
+// CerbosAdminServiceClient is the client API for CerbosAdminService service.
+//
+// For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
+type CerbosAdminServiceClient interface {
+	AddOrUpdatePolicy(ctx context.Context, in *v1.AddOrUpdatePolicyRequest, opts ...grpc.CallOption) (*v11.AddOrUpdatePolicyResponse, error)
+}
+
+type cerbosAdminServiceClient struct {
+	cc grpc.ClientConnInterface
+}
+
+func NewCerbosAdminServiceClient(cc grpc.ClientConnInterface) CerbosAdminServiceClient {
+	return &cerbosAdminServiceClient{cc}
+}
+
+func (c *cerbosAdminServiceClient) AddOrUpdatePolicy(ctx context.Context, in *v1.AddOrUpdatePolicyRequest, opts ...grpc.CallOption) (*v11.AddOrUpdatePolicyResponse, error) {
+	out := new(v11.AddOrUpdatePolicyResponse)
+	err := c.cc.Invoke(ctx, "/svc.v1.CerbosAdminService/AddOrUpdatePolicy", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// CerbosAdminServiceServer is the server API for CerbosAdminService service.
+// All implementations must embed UnimplementedCerbosAdminServiceServer
+// for forward compatibility
+type CerbosAdminServiceServer interface {
+	AddOrUpdatePolicy(context.Context, *v1.AddOrUpdatePolicyRequest) (*v11.AddOrUpdatePolicyResponse, error)
+	mustEmbedUnimplementedCerbosAdminServiceServer()
+}
+
+// UnimplementedCerbosAdminServiceServer must be embedded to have forward compatible implementations.
+type UnimplementedCerbosAdminServiceServer struct {
+}
+
+func (UnimplementedCerbosAdminServiceServer) AddOrUpdatePolicy(context.Context, *v1.AddOrUpdatePolicyRequest) (*v11.AddOrUpdatePolicyResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method AddOrUpdatePolicy not implemented")
+}
+func (UnimplementedCerbosAdminServiceServer) mustEmbedUnimplementedCerbosAdminServiceServer() {}
+
+// UnsafeCerbosAdminServiceServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to CerbosAdminServiceServer will
+// result in compilation errors.
+type UnsafeCerbosAdminServiceServer interface {
+	mustEmbedUnimplementedCerbosAdminServiceServer()
+}
+
+func RegisterCerbosAdminServiceServer(s grpc.ServiceRegistrar, srv CerbosAdminServiceServer) {
+	s.RegisterService(&CerbosAdminService_ServiceDesc, srv)
+}
+
+func _CerbosAdminService_AddOrUpdatePolicy_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(v1.AddOrUpdatePolicyRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CerbosAdminServiceServer).AddOrUpdatePolicy(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/svc.v1.CerbosAdminService/AddOrUpdatePolicy",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CerbosAdminServiceServer).AddOrUpdatePolicy(ctx, req.(*v1.AddOrUpdatePolicyRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+// CerbosAdminService_ServiceDesc is the grpc.ServiceDesc for CerbosAdminService service.
+// It's only intended for direct use with grpc.RegisterService,
+// and not to be introspected or modified (even as a copy)
+var CerbosAdminService_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "svc.v1.CerbosAdminService",
+	HandlerType: (*CerbosAdminServiceServer)(nil),
+	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "AddOrUpdatePolicy",
+			Handler:    _CerbosAdminService_AddOrUpdatePolicy_Handler,
+		},
+	},
+	Streams:  []grpc.StreamDesc{},
+	Metadata: "svc/v1/svc.proto",
+}
+
 // CerbosPlaygroundServiceClient is the client API for CerbosPlaygroundService service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.

@@ -32,6 +32,11 @@ server:
     disabled: false
     allowedOrigins: ['*']
     allowedHeaders: []
+  adminAPI:
+    enabled: true
+    adminCredentials:
+      username: cerbos
+      passwordHash: $2y$10$6v.PIn0zJ1xFdIDPlX3yheDZHM2iXI8CSKT5a3d35djtOxnOATxFi
 
 engine: # Optional
   defaultPolicyVersion: "default" # Default policy version to assume if the request does not specify one.
@@ -45,7 +50,7 @@ tracing: # Optional
     collectorEndpoint: "http://localhost:14268" # Export to Jaeger collector.
 
 storage:
-  driver: "disk" # Valid values are "disk" or "git"
+  driver: "disk" # Valid values are "disk", "git" or "sqlite3"
   disk: # Only required if "driver" is "disk"
     directory: pkg/test/testdata/store
     watchForChanges: false 
@@ -64,6 +69,8 @@ storage:
     ssh: # Only required if the "protocol" is "ssh"
       user: git
       privateKeyFile: ${HOME}/.ssh/id_rsa
+  sqlite3: # Only required if the "driver" is "sqlite3"
+    dsn: ":memory:?_fk=true"
 ----
 
 
