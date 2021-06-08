@@ -6,6 +6,7 @@ import (
 	"bytes"
 	"context"
 	"crypto/tls"
+	"encoding/base64"
 	"fmt"
 	"io"
 	"net"
@@ -35,6 +36,23 @@ import (
 	"github.com/cerbos/cerbos/internal/test"
 	"github.com/cerbos/cerbos/internal/util"
 )
+
+type authCreds struct {
+	username string
+	password string
+}
+
+func (ac authCreds) GetRequestMetadata(ctx context.Context, in ...string) (map[string]string, error) {
+	auth := ac.username + ":" + ac.password
+	enc := base64.StdEncoding.EncodeToString([]byte(auth))
+	return map[string]string{
+		"authorization": "Basic " + enc,
+	}, nil
+}
+
+func (authCreds) RequireTransportSecurity() bool {
+	return true
+}
 
 func TestServer(t *testing.T) {
 	test.SkipIfGHActions(t) // TODO (cell) Servers don't work inside GH Actions for some reason.
@@ -74,7 +92,7 @@ func TestServer(t *testing.T) {
 
 			t.Run("grpc", testGRPCRequests(testCases, conf.GRPCListenAddr, grpc.WithTransportCredentials(credentials.NewTLS(tlsConf))))
 			t.Run("grpc_over_http", testGRPCRequests(testCases, conf.HTTPListenAddr, grpc.WithTransportCredentials(credentials.NewTLS(tlsConf))))
-			t.Run("http", testHTTPRequests(testCases, fmt.Sprintf("https://%s", conf.HTTPListenAddr)))
+			t.Run("http", testHTTPRequests(testCases, fmt.Sprintf("https://%s", conf.HTTPListenAddr), nil))
 		})
 
 		t.Run("uds", func(t *testing.T) {
@@ -116,7 +134,7 @@ func TestServer(t *testing.T) {
 			startServer(ctx, conf, store, eng)
 
 			t.Run("grpc", testGRPCRequests(testCases, conf.GRPCListenAddr, grpc.WithTransportCredentials(local.NewCredentials())))
-			t.Run("http", testHTTPRequests(testCases, fmt.Sprintf("http://%s", conf.HTTPListenAddr)))
+			t.Run("http", testHTTPRequests(testCases, fmt.Sprintf("http://%s", conf.HTTPListenAddr), nil))
 		})
 
 		t.Run("uds", func(t *testing.T) {
@@ -159,16 +177,23 @@ func TestAdminService(t *testing.T) {
 			Cert: filepath.Join(testdataDir, "tls.crt"),
 			Key:  filepath.Join(testdataDir, "tls.key"),
 		},
-		AdminAPI: AdminAPIConf{Enabled: true},
+		AdminAPI: AdminAPIConf{
+			Enabled: true,
+			AdminCredentials: &AdminCredentialsConf{
+				Username:     "cerbos",
+				PasswordHash: "$2y$10$yOdMOoQq6g7s.ogYRBDG3e2JyJFCyncpOEmkEyV.mNGKNyg68uPZS",
+			},
+		},
 	}
 
 	startServer(ctx, conf, store, eng)
 
 	testCases := loadTestCases(t, "admin", "checks")
+	creds := &authCreds{username: "cerbos", password: "cerbosAdmin"}
 
 	tlsConf := &tls.Config{InsecureSkipVerify: true} //nolint:gosec
-	t.Run("grpc", testGRPCRequests(testCases, conf.GRPCListenAddr, grpc.WithTransportCredentials(credentials.NewTLS(tlsConf))))
-	t.Run("http", testHTTPRequests(testCases, fmt.Sprintf("https://%s", conf.HTTPListenAddr)))
+	t.Run("grpc", testGRPCRequests(testCases, conf.GRPCListenAddr, grpc.WithPerRPCCredentials(creds), grpc.WithTransportCredentials(credentials.NewTLS(tlsConf))))
+	t.Run("http", testHTTPRequests(testCases, fmt.Sprintf("https://%s", conf.HTTPListenAddr), creds))
 }
 
 func getFreeListenAddr(t *testing.T) string {
@@ -258,12 +283,12 @@ func executeGRPCTestCase(grpcConn *grpc.ClientConn, tc *cerbosdevv1.ServerTestCa
 	}
 }
 
-func testHTTPRequests(testCases []*cerbosdevv1.ServerTestCase, hostAddr string) func(*testing.T) {
+func testHTTPRequests(testCases []*cerbosdevv1.ServerTestCase, hostAddr string, creds *authCreds) func(*testing.T) {
 	//nolint:thelper
 	return func(t *testing.T) {
 		c := mkHTTPClient(t)
 		for _, tc := range testCases {
-			t.Run(tc.Name, executeHTTPTestCase(c, hostAddr, tc))
+			t.Run(tc.Name, executeHTTPTestCase(c, hostAddr, creds, tc))
 		}
 	}
 }
@@ -277,7 +302,7 @@ func mkHTTPClient(t *testing.T) *http.Client {
 	return &http.Client{Transport: customTransport}
 }
 
-func executeHTTPTestCase(c *http.Client, hostAddr string, tc *cerbosdevv1.ServerTestCase) func(*testing.T) {
+func executeHTTPTestCase(c *http.Client, hostAddr string, creds *authCreds, tc *cerbosdevv1.ServerTestCase) func(*testing.T) {
 	//nolint:thelper
 	return func(t *testing.T) {
 		var input, have, want proto.Message
@@ -305,7 +330,7 @@ func executeHTTPTestCase(c *http.Client, hostAddr string, tc *cerbosdevv1.Server
 			want = call.PlaygroundEvaluate.WantResponse
 			have = &responsev1.PlaygroundEvaluateResponse{}
 		case *cerbosdevv1.ServerTestCase_AdminAddOrUpdatePolicy:
-			addr = fmt.Sprintf("%s/api/admin/policy", hostAddr)
+			addr = fmt.Sprintf("%s/admin/policy", hostAddr)
 			input = call.AdminAddOrUpdatePolicy.Input
 			want = call.AdminAddOrUpdatePolicy.WantResponse
 			have = &responsev1.AddOrUpdatePolicyResponse{}
@@ -316,11 +341,15 @@ func executeHTTPTestCase(c *http.Client, hostAddr string, tc *cerbosdevv1.Server
 		reqBytes, err := protojson.Marshal(input)
 		require.NoError(t, err, "Failed to marshal request")
 
-		ctx, cancelFunc := context.WithTimeout(context.Background(), 1*time.Second)
+		ctx, cancelFunc := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancelFunc()
 
 		req, err := http.NewRequestWithContext(ctx, http.MethodPost, addr, bytes.NewReader(reqBytes))
 		require.NoError(t, err, "Failed to create request")
+
+		if creds != nil {
+			req.SetBasicAuth(creds.username, creds.password)
+		}
 
 		req.Header.Set("Content-Type", "application/json")
 

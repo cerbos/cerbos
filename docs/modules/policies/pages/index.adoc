@@ -22,6 +22,8 @@ NOTE: View the latest documentation and example requests by accessing a running 
 ** `apiVersion`: Required. Must be `api.cerbos.dev/v1`.
 ** `description`: Optional. Description of the policy.
 ** `disabled`: Optional. Set to `true` to make the Cerbos engine ignore this policy file.
+** `metadata.sourceFile`: Optional. Set to the source of the policy data for auditing purposes.
+** `metadata.annotations`: Optional. Key-value pairs of strings holding free-form data for auditing purposes.
 * Resource names, actions, and principal names can be hierarchical. Use `:` as the delimiter. E.g. `app:component:resource`.
 * Wildcard matches are allowed on certain fields. Wildcards respect the hierarchy delimiter `:`.
 * See xref:conditions.adoc[Conditions] to learn how to write conditions in policy rules.

@@ -66,6 +66,7 @@ const (
 	metricsReportingInterval = 15 * time.Second
 	minGRPCConnectTimeout    = 20 * time.Second
 
+	adminEndpoint   = "/admin"
 	apiEndpoint     = "/api"
 	healthEndpoint  = "/_cerbos/health"
 	metricsEndpoint = "/_cerbos/metrics"
@@ -265,7 +266,8 @@ func (s *Server) startGRPCServer(l net.Listener, store storage.Store, eng *engin
 
 	if s.conf.AdminAPI.Enabled {
 		log.Info("Starting admin service")
-		svcv1.RegisterCerbosAdminServiceServer(server, svc.NewCerbosAdminService(store))
+		creds := s.conf.AdminAPI.AdminCredentials
+		svcv1.RegisterCerbosAdminServiceServer(server, svc.NewCerbosAdminService(store, creds.Username, creds.PasswordHash))
 	}
 
 	if s.conf.PlaygroundEnabled {
@@ -384,6 +386,7 @@ func (s *Server) startHTTPServer(ctx context.Context, l net.Listener, grpcSrv *g
 		return r.ProtoMajor == 2 && strings.Contains(r.Header.Get("Content-Type"), "application/grpc")
 	}).Handler(&ochttp.Handler{Handler: grpcSrv})
 
+	cerbosMux.PathPrefix(adminEndpoint).Handler(&ochttp.Handler{Handler: prettyJSON(gwmux)})
 	cerbosMux.PathPrefix(apiEndpoint).Handler(&ochttp.Handler{Handler: prettyJSON(gwmux)})
 	cerbosMux.Path(schemaEndpoint).HandlerFunc(schema.ServeSvcSwagger)
 	cerbosMux.Path(healthEndpoint).HandlerFunc(s.handleHTTPHealthCheck(grpcConn))

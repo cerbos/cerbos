@@ -25,6 +25,14 @@ option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_swagger) = {
 	schemes: HTTPS;
 	consumes: "application/json";
 	produces: "application/json";
+    security_definitions: {
+	    security: {
+			key: "BasicAuth";
+			value: {
+				type: TYPE_BASIC;
+			}
+		}
+    };
 };
 
 service CerbosService {
@@ -68,15 +76,21 @@ service CerbosAdminService {
 
     rpc AddOrUpdatePolicy(request.v1.AddOrUpdatePolicyRequest) returns (response.v1.AddOrUpdatePolicyResponse) {
         option (google.api.http) = {
-            post: "/api/admin/policy",
+            post: "/admin/policy",
             body: "*",
             additional_bindings: {
-                put: "/api/admin/policy",
+                put: "/admin/policy",
                 body: "*"
             }
         };
         option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
-            summary: "Add or update policies"
+            summary: "Add or update policies",
+            security: {
+                security_requirement: {
+                    key: "BasicAuth";
+                    value: {};
+                }    
+            }
         };
     }
 }

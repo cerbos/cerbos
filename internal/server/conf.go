@@ -59,6 +59,15 @@ type CORSConf struct {
 type AdminAPIConf struct {
 	// Enabled defines whether the admin API is enabled.
 	Enabled bool `yaml:"enabled"`
+	// AdminCredentials defines the admin user credentials.
+	AdminCredentials *AdminCredentialsConf `yaml:"adminCredentials"`
+}
+
+type AdminCredentialsConf struct {
+	// Username is the hardcoded username to use for authentication.
+	Username string `yaml:"username"`
+	// PasswordHash is the bcrypt hash of the password to use for authentication.
+	PasswordHash string `yaml:"passwordHash"`
 }
 
 func (c *Conf) Key() string {
@@ -69,6 +78,12 @@ func (c *Conf) SetDefaults() {
 	c.HTTPListenAddr = defaultHTTPListenAddr
 	c.GRPCListenAddr = defaultGRPCListenAddr
 	c.MetricsEnabled = true
+	if c.AdminAPI.AdminCredentials == nil {
+		c.AdminAPI.AdminCredentials = &AdminCredentialsConf{
+			Username:     "cerbos",
+			PasswordHash: "$2y$10$VlPwcwpgcGZ5KjTaN1Pzk.vpFiQVG6F2cSWzQa9RtrNo3IacbzsEi", // cerbosAdmin
+		}
+	}
 }
 
 func (c *Conf) Validate() error {
