@@ -163,19 +163,21 @@ func extractEffectiveDerivedRoles(res map[string]interface{}) ([]string, error) 
 		return nil, nil
 	}
 
-	effectiveDR, ok := effectiveDRVal.([]interface{})
-	if !ok {
+	switch effectiveDR := effectiveDRVal.(type) {
+	case []interface{}:
+		roles := make([]string, len(effectiveDR))
+
+		for i, dr := range effectiveDR {
+			roles[i], ok = dr.(string)
+			if !ok {
+				return nil, fmt.Errorf("unexpected type for derived role %T: %w", dr, ErrUnexpectedResult)
+			}
+		}
+
+		return roles, nil
+	case map[string]interface{}:
+		return nil, nil
+	default:
 		return nil, fmt.Errorf("unexpected type for effective derived roles %T: %w", effectiveDRVal, ErrUnexpectedResult)
 	}
-
-	roles := make([]string, len(effectiveDR))
-
-	for i, dr := range effectiveDR {
-		roles[i], ok = dr.(string)
-		if !ok {
-			return nil, fmt.Errorf("unexpected type for derived role %T: %w", dr, ErrUnexpectedResult)
-		}
-	}
-
-	return roles, nil
 }

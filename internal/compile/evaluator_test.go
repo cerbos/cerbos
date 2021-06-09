@@ -164,7 +164,7 @@ func TestProcessResultSet(t *testing.T) {
 						{
 							Value: map[string]interface{}{
 								codegen.EffectsIdent:               map[string]interface{}{"a": codegen.AllowEffectIdent},
-								codegen.EffectiveDerivedRolesIdent: []interface{}{},
+								codegen.EffectiveDerivedRolesIdent: map[string]interface{}{},
 							},
 							Text: namer.QueryForPrincipal("x", "default"),
 						},
@@ -173,7 +173,7 @@ func TestProcessResultSet(t *testing.T) {
 			},
 			want: &EvalResult{
 				Effects:               map[string]sharedv1.Effect{"a": sharedv1.Effect_EFFECT_ALLOW},
-				EffectiveDerivedRoles: []string{},
+				EffectiveDerivedRoles: nil,
 			},
 		},
 		{

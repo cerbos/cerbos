@@ -9,6 +9,7 @@ import (
 	"github.com/fatih/color"
 	"github.com/open-policy-agent/opa/ast"
 	"github.com/open-policy-agent/opa/format"
+	"go.uber.org/multierr"
 	exprpb "google.golang.org/genproto/googleapis/api/expr/v1alpha1"
 
 	policyv1 "github.com/cerbos/cerbos/internal/genpb/policy/v1"
@@ -53,6 +54,8 @@ func generateResourcePolicy(parent *policyv1.Policy, p *policyv1.ResourcePolicy)
 		for i, imp := range p.ImportDerivedRoles {
 			imports[i] = derivedRolesImportName(imp)
 		}
+	} else if err := checkNoDerivedRolesAreUsed(p); err != nil {
+		return nil, newErr(policy.GetSourceFile(parent), "Policy uses derived roles without importing any", err)
 	}
 
 	rg := NewRegoGen(modName, imports...)
@@ -64,10 +67,23 @@ func generateResourcePolicy(parent *policyv1.Policy, p *policyv1.ResourcePolicy)
 		}
 	}
 
-	rg.EffectiveDerivedRoles()
+	rg.EffectiveDerivedRoles(len(p.ImportDerivedRoles) > 0)
 	rg.EffectsComprehension(denyVal)
 
 	return rg.Generate()
+}
+
+func checkNoDerivedRolesAreUsed(rp *policyv1.ResourcePolicy) error {
+	var err error
+	if len(rp.ImportDerivedRoles) == 0 {
+		for i, r := range rp.Rules {
+			if len(r.DerivedRoles) > 0 {
+				err = multierr.Append(err, fmt.Errorf("rule #%d uses derived roles but none are imported", i))
+			}
+		}
+	}
+
+	return err
 }
 
 func derivedRolesImportName(imp string) string {
