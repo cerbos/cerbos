@@ -85,6 +85,22 @@ type Event struct {
 	PolicyID namer.ModuleID
 }
 
+func (evt Event) String() string {
+	kind := ""
+	switch evt.Kind {
+	case EventAddOrUpdatePolicy:
+		kind = "ADD/UPDATE"
+	case EventDeletePolicy:
+		kind = "DELETE"
+	case EventNop:
+		kind = "NOP"
+	default:
+		kind = "UNKNOWN"
+	}
+
+	return fmt.Sprintf("%s [%s]", kind, evt.PolicyID.String())
+}
+
 // NewEvent creates a new storage event.
 func NewEvent(kind EventKind, policyID namer.ModuleID) Event {
 	return Event{Kind: kind, PolicyID: policyID}
@@ -95,34 +111,3 @@ type Subscriber interface {
 	SubscriberID() string
 	OnStorageEvent(...Event)
 }
-
-/*
-// New creates a new store based on the config.
-func New(ctx context.Context) (Store, error) {
-	conf, err := getStorageConf()
-	if err != nil {
-		return nil, fmt.Errorf("failed to read storage config: %w", err)
-	}
-
-	switch conf.Driver {
-	case disk.DriverName:
-		if conf.Disk == nil {
-			return nil, errors.New("disk storage configuration not provided")
-		}
-
-		if conf.Disk.ReadOnly {
-			return disk.NewReadOnlyStore(ctx, conf.Disk)
-		}
-
-		return disk.NewReadWriteStore(ctx, conf.Disk)
-	case git.DriverName:
-		if conf.Git == nil {
-			return nil, errors.New("git storage configuration not provided")
-		}
-
-		return git.NewStore(ctx, conf.Git)
-	default:
-		return nil, fmt.Errorf("unknown storage driver: %s", conf.Driver)
-	}
-}
-*/

@@ -9,13 +9,13 @@ site:
 content:
   sources:
     - url: ./../
-      branches: ['main']
+      branches: [HEAD]
       edit_url: 'https://github.com/cerbos/cerbos/tree/{refname}/{path}'
       start_path: docs
 asciidoc:
   attributes:
     app-name: "cerbos"
-    app-version: "0.0.2-alpha.1"
+    app-version: "0.0.2-alpha.2"
     experimental: true
     page-pagination: true
 ui:

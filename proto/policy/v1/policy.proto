@@ -9,7 +9,6 @@ option java_package = "dev.cerbos.api.v1.policy";
 
 import "engine/v1/engine.proto";
 import "google/api/expr/v1alpha1/checked.proto";
-import "request/v1/request.proto";
 import "shared/v1/shared.proto";
 import "validate/validate.proto";
 

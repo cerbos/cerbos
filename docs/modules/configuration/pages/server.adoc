@@ -82,6 +82,36 @@ server:
       - X-CUSTOM
 ----
 
+
+[#admin-api]
+== Enable Admin API
+
+The xref:api:admin_api.adoc[Cerbos Admin API] provides administration functions such as adding or updating policies (if the underlying storage engine supports it) to the running Cerbos instance. It is disabled by default.
+
+Authentication is mandatory for the Admin API. See xref:api:admin_api.adoc[Cerbos Admin API documentation] for more details. 
+
+IMPORTANT: TLS should be enabled to ensure that credentials are transmitted securely over the network. We also highly recommend changing the default username and password when deploying Cerbos.
+
+[source,yaml,linenums]
+----
+server:
+  adminAPI:
+    enabled: true
+    adminCredentials:
+      username: cerbos
+      passwordHash: $2y$10$6v.PIn0zJ1xFdIDPlX3yheDZHM2iXI8CSKT5a3d35djtOxnOATxFi
+----
+
+=== Generating a password hash
+
+Cerbos expects the password to be hashed with bcrypt. This can be achieved using the `htpasswd` utility available on most operating systems.
+
+[source, sh]
+----
+echo "cerbosAdmin" | htpasswd -niBC 10 cerbos | cut -d ':' -f 2
+----
+
+
 == Enable Playground
 
 The Cerbos playground API is disabled by default. To enable it, set `playgroundEnabled` to `true`.

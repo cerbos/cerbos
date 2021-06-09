@@ -3,6 +3,12 @@
 package svc
 
 import (
+	"context"
+	"strconv"
+
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/metadata"
+
 	requestv1 "github.com/cerbos/cerbos/internal/genpb/request/v1"
 	"github.com/cerbos/cerbos/internal/util"
 )
@@ -68,4 +74,8 @@ func ExtractRequestFields(fullMethod string, req interface{}) map[string]interfa
 	default:
 		return nil
 	}
+}
+
+func SetHTTPStatusCode(ctx context.Context, code int) {
+	_ = grpc.SendHeader(ctx, metadata.Pairs("x-http-code", strconv.Itoa(code)))
 }
