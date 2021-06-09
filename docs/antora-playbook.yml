@@ -9,7 +9,7 @@ site:
 content:
   sources:
     - url: ./../
-      branches: ['main']
+      branches: [HEAD]
       edit_url: 'https://github.com/cerbos/cerbos/tree/{refname}/{path}'
       start_path: docs
 asciidoc:
