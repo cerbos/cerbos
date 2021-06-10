@@ -7,5 +7,5 @@ type: application
 maintainers:
   - name: Cerbos authors
     email: help+helm@cerbos.dev
-version: "0.0.2-alpha.2"
-appVersion: "0.0.2-alpha.2"
+version: "0.0.2-alpha.3"
+appVersion: "0.0.2-alpha.3"
