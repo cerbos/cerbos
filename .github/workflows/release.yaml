@@ -72,6 +72,9 @@ jobs:
       - name: Upload docs
         run: curl -H "X-JFrog-Art-Api:${{ secrets.ARTIFACTORY_API_KEY }}" -T "docs/build/cerbos_docs.zip" "https://cerbos.jfrog.io/artifactory/binaries/cerbos_${GITHUB_REF/refs\/tags\//}_docs.zip"
 
+      - name: Trigger Netlify deploy
+        run: curl -X POST -d '{}' "https://api.netlify.com/build_hooks/${{ secrets.NETLIFY_TOKEN }}?trigger_title=Release+${GITHUB_REF/refs\/tags\//}"
+
   releaseHelm:
     name: Release Helm chart
     runs-on: ubuntu-latest
