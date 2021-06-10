@@ -1,4 +1,3 @@
 [build]
   base = "docs"
   publish = "build"
-  command = "npm i -g @antora/cli@2.3 @antora/site-generator-default@2.3 && antora generate --to-dir build antora-playbook.yml"
