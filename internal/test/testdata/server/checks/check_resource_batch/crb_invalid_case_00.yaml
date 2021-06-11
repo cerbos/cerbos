@@ -1,5 +1,8 @@
 ---
 description: "Missing principal"
+wantStatus:
+  httpStatusCode: 400
+  grpcStatusCode: 3
 wantError: true
 checkResourceBatch:
   input: {

@@ -1,5 +1,8 @@
 ---
 description: "Add a batch"
+wantStatus:
+  httpStatusCode: 200
+  grpcStatusCode: 0
 adminAddOrUpdatePolicy:
   input: {
     "policies": [

@@ -43,12 +43,12 @@ func (s *DBStorage) AddOrUpdate(ctx context.Context, policies ...policy.Wrapper)
 		for i, p := range policies {
 			codegenResult, err := codegen.GenerateCode(p.Policy)
 			if err != nil {
-				return fmt.Errorf("failed to generate code for %s: %w", p.Name, err)
+				return storage.NewInvalidPolicyError(err, "failed to generate code for %s", p.Name)
 			}
 
 			genPolicy, err := codegenResult.ToRepr()
 			if err != nil {
-				return fmt.Errorf("failed to convert generated code of %s to representation: %w", p.Name, err)
+				return storage.NewInvalidPolicyError(err, "failed to serialize %s", p.Name)
 			}
 
 			policyRecord := Policy{

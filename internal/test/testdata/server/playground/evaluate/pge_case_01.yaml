@@ -1,5 +1,8 @@
 ---
 description: "Valid Request"
+wantStatus:
+  httpStatusCode: 200
+  grpcStatusCode: 0
 playgroundEvaluate:
   input: {
     "playgroundId": "test",

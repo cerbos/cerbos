@@ -1,0 +1,14 @@
+---
+description: "Incomplete policy"
+wantError: true
+wantStatus:
+  httpStatusCode: 400
+  grpcStatusCode: 3
+adminAddOrUpdatePolicy:
+  input: {
+    "policies": [
+      {
+        "apiVersion": "api.cerbos.dev/v1",
+      },
+    ]
+  }

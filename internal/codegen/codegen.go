@@ -63,7 +63,6 @@ func generateResourcePolicy(parent *policyv1.Policy, p *policyv1.ResourcePolicy)
 	for i, rule := range p.Rules {
 		if err := rg.AddResourceRule(rule); err != nil {
 			return nil, newRuleGenErr(parent, i+1, err)
-			// return nil, fmt.Errorf("failed to generate code for rule [%v]: %w", rule, err)
 		}
 	}
 
@@ -97,7 +96,6 @@ func generatePrincipalPolicy(parent *policyv1.Policy, p *policyv1.PrincipalPolic
 	for i, rule := range p.Rules {
 		if err := rg.AddPrincipalRule(rule); err != nil {
 			return nil, newRuleGenErr(parent, i+1, err)
-			// return nil, fmt.Errorf("failed to generate code for rule [%v]: %w", rule, err)
 		}
 	}
 
@@ -113,7 +111,6 @@ func generateDerivedRoles(parent *policyv1.Policy, dr *policyv1.DerivedRoles) (*
 	for _, rd := range dr.Definitions {
 		if err := rg.AddDerivedRole(rd); err != nil {
 			return nil, newErr(policy.GetSourceFile(parent), fmt.Sprintf("Failed to generate code for derived role [%s]", rd.Name), err)
-			// return nil, fmt.Errorf("failed to generate code for derived role definition [%s]: %w", rd.Name, err)
 		}
 	}
 

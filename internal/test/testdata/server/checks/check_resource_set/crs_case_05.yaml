@@ -1,5 +1,8 @@
 ---
 description: "Explicit deny from Donald Duck principal policy"
+wantStatus:
+  httpStatusCode: 200
+  grpcStatusCode: 0
 checkResourceSet:
   input: {
     "requestId": "test",
