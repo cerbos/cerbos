@@ -33,7 +33,6 @@ require (
 	github.com/lyft/protoc-gen-star v0.5.3 // indirect
 	github.com/mattn/go-isatty v0.0.12
 	github.com/mattn/go-runewidth v0.0.12 // indirect
-	github.com/mattn/go-sqlite3 v1.14.7
 	github.com/open-policy-agent/opa v0.29.4
 	github.com/prometheus/client_golang v1.10.0
 	github.com/prometheus/common v0.20.0 // indirect
@@ -60,6 +59,7 @@ require (
 	google.golang.org/protobuf v1.26.1-0.20210520194023-50a85913fbce
 	gotest.tools/gotestsum v1.6.4
 	helm.sh/helm/v3 v3.5.4
+	modernc.org/sqlite v1.10.8
 )
 
 replace github.com/docker/distribution => github.com/docker/distribution v0.0.0-20191216044856-a8371794149d

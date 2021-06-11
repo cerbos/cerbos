@@ -12,10 +12,10 @@ import (
 	// import sqlite3 dialect.
 	_ "github.com/doug-martin/goqu/v9/dialect/sqlite3"
 	"github.com/jmoiron/sqlx"
+	"go.uber.org/zap"
 
 	// import sqlite3 driver.
-	_ "github.com/mattn/go-sqlite3"
-	"go.uber.org/zap"
+	_ "modernc.org/sqlite"
 
 	"github.com/cerbos/cerbos/internal/config"
 	"github.com/cerbos/cerbos/internal/observability/logging"
@@ -45,7 +45,7 @@ func NewStore(ctx context.Context, conf *Conf) (*Store, error) {
 	log := logging.FromContext(ctx).Named("sqlite3")
 	log.Info("Initializing sqlite3 storage", zap.String("DSN", conf.DSN))
 
-	db, err := sqlx.Connect("sqlite3", conf.DSN)
+	db, err := sqlx.Connect("sqlite", conf.DSN)
 	if err != nil {
 		return nil, fmt.Errorf("failed to open database: %w", err)
 	}

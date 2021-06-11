@@ -96,9 +96,9 @@ storage:
 ----
 
 [#sqlite3]
-== Sqlite3 Driver
+== SQLite3 Driver
 
-Cerbos has experimental support for using sqlite3 as a policy repository. Currently this is the only storage driver that can be used in conjunction with the xref:server.adoc#admin-api[Admin API] to add or update policies via an API call.
+Cerbos has experimental support for using SQLite3 as a policy repository. Currently this is the only storage driver that can be used in conjunction with the xref:server.adoc#admin-api[Admin API] to add or update policies via an API call.
 
 .In-memory ephemeral database
 [source,yaml,linenums]
