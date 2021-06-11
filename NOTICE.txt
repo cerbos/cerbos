@@ -13,6 +13,7 @@ github.com/alecthomas/template                                    https://github
 github.com/alecthomas/units                                       https://github.com/alecthomas/units/blob/master/COPYING                                          MIT
 github.com/antlr/antlr4/runtime/Go/antlr                          https://github.com/antlr/antlr4/blob/master/runtime/Go/antlr/LICENSE.txt                         MIT
 github.com/beorn7/perks/quantile                                  https://github.com/beorn7/perks/blob/master/quantile/LICENSE                                     MIT
+github.com/bluele/gcache                                          https://github.com/bluele/gcache/blob/master/LICENSE                                             MIT
 github.com/cespare/xxhash                                         https://github.com/cespare/xxhash/blob/master/LICENSE.txt                                        MIT
 github.com/cespare/xxhash/v2                                      https://github.com/cespare/xxhash/blob/master/v2/LICENSE.txt                                     MIT
 github.com/davecgh/go-spew/spew                                   https://github.com/davecgh/go-spew/blob/master/spew/LICENSE                                      ISC

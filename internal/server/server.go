@@ -88,7 +88,7 @@ func Start(ctx context.Context, zpagesEnabled bool) error {
 	}
 
 	// create engine
-	eng, err := engine.New(ctx, compile.NewCompiler(ctx, store))
+	eng, err := engine.New(ctx, compile.NewManager(ctx, store))
 	if err != nil {
 		return fmt.Errorf("failed to create engine: %w", err)
 	}

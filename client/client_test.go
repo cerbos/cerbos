@@ -32,7 +32,7 @@ func TestClient(t *testing.T) {
 	store, err := disk.NewStore(ctx, &disk.Conf{Directory: dir, ScratchDir: t.TempDir()})
 	require.NoError(t, err)
 
-	eng, err := engine.New(ctx, compile.NewCompiler(ctx, store))
+	eng, err := engine.New(ctx, compile.NewManager(ctx, store))
 	require.NoError(t, err)
 
 	t.Run("with_tls", func(t *testing.T) {
