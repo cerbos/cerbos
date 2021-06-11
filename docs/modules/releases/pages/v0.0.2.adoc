@@ -1,0 +1,39 @@
+include::ROOT:partial$attributes.adoc[]
+
+[#v0.0.2]
+= Cerbos v0.0.2
+
+== Highlights
+
+Admin API preview:: The new xref:api:admin_api.adoc[Admin API] allows the Cerbos PDP to receive dynamic policy updates via the API when the underlying storage engine supports mutability. (Currently only the `sqlite3` driver supports mutability.). The Admin API has to be enabled explicitly from the configuration file and requires HTTP Basic authentication to access it. Other authentication methods will be supported in the future.
+SQLite3 storage engine:: This release adds experimental support for link:https://www.sqlite.org/index.html[SQLite3] as a xref:configuration:storage.adoc#sqlite3[storage engine]. This work lays the foundation for supporting other dynamic data sources as policy repositories. 
+Configuration override flags:: All Cerbos configuration values can now be overridden using command line flags. This enables quick experimentation without requiring changes to the config file. For example, the new Admin API and the `sqlite3` driver can be tried out by running the following:
++
+[source,sh]
+----
+docker run -i -t pkg.cerbos.dev/containers/cerbos:0.0.2 server --config=/conf.default.yaml \
+    --set=server.adminAPI.enabled=true \
+    --set=storage.driver=sqlite3 \
+    --set=storage.sqlite3.dsn=':memory:'
+----
+
+== Changelog
+
+44 commits since v0.0.1. 166 files changed, 12527 insertions(+), 2755 deletions(-)
+
+=== Features
+
+* Introduce Admin API (link:https://github.com/cerbos/cerbos/issues/135[#135])
+* Playground API (link:https://github.com/cerbos/cerbos/issues/118[#118])
+
+=== Enhancements
+
+* Add CORS support (link:https://github.com/cerbos/cerbos/issues/128[#128])
+* Config override from flags (link:https://github.com/cerbos/cerbos/issues/121[#121])
+* Allow slashes in resource names (link:https://github.com/cerbos/cerbos/issues/98[#98])
+
+=== Bug fixes
+
+* Handle the case with no derived role imports (link:https://github.com/cerbos/cerbos/issues/140[#140])
+* Fix number handling in conditions (link:https://github.com/cerbos/cerbos/issues/101[#101])
+

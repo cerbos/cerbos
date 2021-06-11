@@ -1,0 +1,2 @@
+.Release Notes
+* xref:v0.0.2.adoc[v0.0.2]
