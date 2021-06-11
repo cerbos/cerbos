@@ -58,12 +58,12 @@ type Engine struct {
 	conf        *Conf
 	workerIndex uint64
 	workerPool  []chan<- workIn
-	compiler    *compile.Compiler
+	compileMgr  *compile.Manager
 	queryCache  cache.InterQueryCache
 }
 
-func New(ctx context.Context, compiler *compile.Compiler) (*Engine, error) {
-	engine, err := newEngine(ctx, compiler)
+func New(ctx context.Context, compileMgr *compile.Manager) (*Engine, error) {
+	engine, err := newEngine(ctx, compileMgr)
 	if err != nil {
 		return nil, err
 	}
@@ -79,11 +79,11 @@ func New(ctx context.Context, compiler *compile.Compiler) (*Engine, error) {
 	return engine, nil
 }
 
-func NewEphemeral(ctx context.Context, compiler *compile.Compiler) (*Engine, error) {
-	return newEngine(ctx, compiler)
+func NewEphemeral(ctx context.Context, compileMgr *compile.Manager) (*Engine, error) {
+	return newEngine(ctx, compileMgr)
 }
 
-func newEngine(_ context.Context, compiler *compile.Compiler) (*Engine, error) {
+func newEngine(_ context.Context, compileMgr *compile.Manager) (*Engine, error) {
 	conf := &Conf{}
 	if err := config.GetSection(conf); err != nil {
 		return nil, err
@@ -98,7 +98,7 @@ func newEngine(_ context.Context, compiler *compile.Compiler) (*Engine, error) {
 
 	engine := &Engine{
 		conf:       conf,
-		compiler:   compiler,
+		compileMgr: compileMgr,
 		queryCache: queryCache,
 	}
 
@@ -148,7 +148,7 @@ func (engine *Engine) submitWork(ctx context.Context, work workIn) error {
 func (engine *Engine) getPrincipalPolicyCheck(ctx context.Context, principal, policyVersion, policyKey string) (*check, error) {
 	principalModID := namer.PrincipalPolicyModuleID(principal, policyVersion)
 
-	eval, err := engine.compiler.GetEvaluator(ctx, principalModID)
+	eval, err := engine.compileMgr.GetEvaluator(ctx, principalModID)
 	if err != nil {
 		return nil, err
 	}
@@ -167,7 +167,7 @@ func (engine *Engine) getPrincipalPolicyCheck(ctx context.Context, principal, po
 func (engine *Engine) getResourcePolicyCheck(ctx context.Context, resource, policyVersion, policyKey string) (*check, error) {
 	resourceModID := namer.ResourcePolicyModuleID(resource, policyVersion)
 
-	eval, err := engine.compiler.GetEvaluator(ctx, resourceModID)
+	eval, err := engine.compileMgr.GetEvaluator(ctx, resourceModID)
 	if err != nil {
 		return nil, err
 	}

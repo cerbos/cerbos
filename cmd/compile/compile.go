@@ -82,7 +82,7 @@ func doRun(cmd *cobra.Command, args []string) error {
 	}
 
 	if verifyConf.TestsDir != "" {
-		compiler := compile.NewCompiler(ctx, disk.NewFromIndex(idx))
+		compiler := compile.NewManager(ctx, disk.NewFromIndex(idx))
 		eng, err := engine.NewEphemeral(ctx, compiler)
 		if err != nil {
 			return fmt.Errorf("failed to create engine: %w", err)
