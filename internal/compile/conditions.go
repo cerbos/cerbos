@@ -8,6 +8,7 @@ import (
 
 	"github.com/google/cel-go/cel"
 	"go.uber.org/zap"
+	exprpb "google.golang.org/genproto/googleapis/api/expr/v1alpha1"
 
 	"github.com/cerbos/cerbos/internal/codegen"
 	"github.com/cerbos/cerbos/internal/namer"
@@ -24,8 +25,11 @@ var (
 
 type ConditionMap map[string]ConditionEvaluator
 
-/*
-func NewConditionMap(conds map[string]*exprpb.CheckedExpr) (ConditionMap, error) {
+func NewConditionMapFromRepr(conds map[string]*exprpb.CheckedExpr) (ConditionMap, error) {
+	if len(conds) == 0 {
+		return nil, nil
+	}
+
 	cm := make(ConditionMap, len(conds))
 	for k, expr := range conds {
 		celPrg, err := codegen.CELConditionFromCheckedExpr(expr).Program()
@@ -38,7 +42,6 @@ func NewConditionMap(conds map[string]*exprpb.CheckedExpr) (ConditionMap, error)
 
 	return cm, nil
 }
-*/
 
 func NewConditionMap(conds map[string]*codegen.CELCondition) (ConditionMap, error) {
 	cm := make(ConditionMap, len(conds))

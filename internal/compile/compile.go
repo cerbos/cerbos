@@ -69,40 +69,68 @@ func hydrate(unit *policy.CompilationUnit) (map[string]*ast.Module, ConditionInd
 
 	for modID, def := range unit.Definitions {
 		srcFile := policy.GetSourceFile(def)
-		var cgResult *codegen.Result
+		var mod *ast.Module
+		var cm ConditionMap
+		var err error
 
-		genCode, ok := unit.Generated[modID]
-		if !ok {
-			res, err := codegen.GenerateCode(def)
+		// use generated code if it exists -- which should be faster.
+		if gp, ok := unit.Generated[modID]; ok {
+			mod, cm, err = hydrateGeneratedPolicy(srcFile, gp)
 			if err != nil {
-				return nil, nil, newCodeGenErrors(srcFile, err)
+				// try to generate the code from source
+				mod, cm, err = generateCode(srcFile, def)
 			}
-			cgResult = res
 		} else {
-			res, err := codegen.CodeGenResultFromRepr(genCode)
-			if err != nil {
-				return nil, nil, newCodeGenErrors(srcFile, err)
-			}
-			cgResult = res
+			mod, cm, err = generateCode(srcFile, def)
 		}
 
-		modules[srcFile] = cgResult.Module
+		if err != nil {
+			return nil, nil, err
+		}
 
-		if len(cgResult.Conditions) > 0 {
+		modules[srcFile] = mod
+		if cm != nil {
 			if conditionIdx == nil {
 				conditionIdx = NewConditionIndex()
 			}
 
-			cm, err := NewConditionMap(cgResult.Conditions)
-			if err != nil {
-				return nil, nil, err
-			}
-
-			conditionIdx.Add(cgResult.ModName, cm)
+			conditionIdx[modID] = cm
 		}
 	}
 
 	return modules, conditionIdx, nil
+}
+
+func hydrateGeneratedPolicy(srcFile string, gp *policyv1.GeneratedPolicy) (*ast.Module, ConditionMap, error) {
+	m, err := ast.ParseModule(srcFile, string(gp.Code))
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to parse generated code: %w", err)
+	}
+
+	cm, err := NewConditionMapFromRepr(gp.CelConditions)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return m, cm, nil
+}
+
+func generateCode(srcFile string, p *policyv1.Policy) (*ast.Module, ConditionMap, error) {
+	res, err := codegen.GenerateCode(p)
+	if err != nil {
+		return nil, nil, newCodeGenErrors(srcFile, err)
+	}
+
+	var cm ConditionMap
+
+	if len(res.Conditions) > 0 {
+		cm, err = NewConditionMap(res.Conditions)
+		if err != nil {
+			return nil, nil, err
+		}
+	}
+
+	return res.Module, cm, nil
 }
 
 type Compiler struct {
