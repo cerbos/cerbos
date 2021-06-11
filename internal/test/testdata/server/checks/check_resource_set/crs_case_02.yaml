@@ -1,5 +1,8 @@
 ---
 description: "John's direct manager tries to approve a draft leave request and a pending-approval leave request"
+wantStatus:
+  httpStatusCode: 200
+  grpcStatusCode: 0
 checkResourceSet:
   input: {
     "requestId": "test",

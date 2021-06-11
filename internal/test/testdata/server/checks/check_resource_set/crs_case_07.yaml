@@ -1,5 +1,8 @@
 ---
 description: "Donald Duck tries to view and approve a load of leave requests"
+wantStatus:
+  httpStatusCode: 200
+  grpcStatusCode: 0
 checkResourceSet:
   input: {
     "requestId": "test",

@@ -1,0 +1,39 @@
+---
+description: "Invalid condition"
+wantError: true
+wantStatus:
+  httpStatusCode: 400
+  grpcStatusCode: 3
+adminAddOrUpdatePolicy:
+  input: {
+    "policies": [
+      {
+        "apiVersion": "api.cerbos.dev/v1",
+        "derived_roles": {
+          "name": "my_derived_roles",
+          "definitions": [
+            {
+              "name": "direct_manager",
+              "parentRoles": [
+                "manager"
+              ],
+              "condition": {
+                "match": {
+                  "all": {
+                    "of": [
+                      {
+                        "expr": "X.resource.attr.geography == request.principal.attr.geography"
+                      },
+                      {
+                        "expr": "X.resource.attr.geography == request.principal.attr.managed_geographies"
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          ]
+        }
+      }
+    ]
+  }

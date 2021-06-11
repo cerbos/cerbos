@@ -6,6 +6,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/base64"
+	"errors"
 	"strings"
 
 	"github.com/grpc-ecosystem/go-grpc-middleware/logging/zap/ctxzap"
@@ -71,6 +72,10 @@ func (cas *CerbosAdminService) AddOrUpdatePolicy(ctx context.Context, req *reque
 
 	if err := cas.store.AddOrUpdate(ctx, policies...); err != nil {
 		log.Error("Failed to add/update policies", zap.Error(err))
+		invalidPolicyErr := new(storage.InvalidPolicyError)
+		if errors.As(err, invalidPolicyErr) {
+			return nil, status.Errorf(codes.InvalidArgument, "Invalid policy: %v", invalidPolicyErr.Message)
+		}
 		return nil, status.Error(codes.Internal, "Failed to add/update policies")
 	}
 

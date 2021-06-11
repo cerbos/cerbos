@@ -21,6 +21,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/local"
+	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/testing/protocmp"
@@ -273,6 +274,11 @@ func executeGRPCTestCase(grpcConn *grpc.ClientConn, tc *cerbosdevv1.ServerTestCa
 			t.Fatalf("Unknown call type: %T", call)
 		}
 
+		if tc.WantStatus != nil {
+			code := status.Code(err)
+			require.EqualValues(t, tc.WantStatus.GrpcStatusCode, code)
+		}
+
 		if tc.WantError {
 			require.Error(t, err)
 			return
@@ -362,12 +368,14 @@ func executeHTTPTestCase(c *http.Client, hostAddr string, creds *authCreds, tc *
 			}
 		}()
 
+		if tc.WantStatus != nil {
+			require.EqualValues(t, tc.WantStatus.HttpStatusCode, resp.StatusCode)
+		}
+
 		if tc.WantError {
 			require.NotEqual(t, http.StatusOK, resp.StatusCode)
 			return
 		}
-
-		// require.Equal(t, http.StatusOK, resp.StatusCode)
 
 		respBytes, err := io.ReadAll(resp.Body)
 		require.NoError(t, err, "Failed to read response")

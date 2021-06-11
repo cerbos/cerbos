@@ -4,7 +4,6 @@ package storage
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"sync"
 
@@ -18,7 +17,23 @@ var (
 	drivers   = map[string]Constructor{}
 )
 
-var ErrNoMatchingPolicy = errors.New("no matching policy")
+// InvalidPolicyError is a custom error to signal that a policy is invalid.
+type InvalidPolicyError struct {
+	Message string
+	Err     error
+}
+
+func (ipe InvalidPolicyError) Error() string {
+	return fmt.Sprintf("%s: %v", ipe.Message, ipe.Err)
+}
+
+func (ipe InvalidPolicyError) Unwrap() error {
+	return ipe.Err
+}
+
+func NewInvalidPolicyError(err error, msg string, args ...interface{}) InvalidPolicyError {
+	return InvalidPolicyError{Message: fmt.Sprintf(msg, args...), Err: err}
+}
 
 // Constructor is a constructor function for a storage driver.
 type Constructor func(context.Context) (Store, error)

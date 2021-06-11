@@ -1,5 +1,8 @@
 ---
 description: "Corrupt policy data"
+wantStatus:
+  httpStatusCode: 400
+  grpcStatusCode: 0
 playgroundEvaluate:
   input: {
     "playgroundId": "test",
