@@ -31,7 +31,7 @@ require (
 	github.com/jmoiron/sqlx v1.3.4
 	github.com/kavu/go_reuseport v1.5.0
 	github.com/lyft/protoc-gen-star v0.5.3 // indirect
-	github.com/mattn/go-isatty v0.0.12
+	github.com/mattn/go-isatty v0.0.13
 	github.com/mattn/go-runewidth v0.0.12 // indirect
 	github.com/open-policy-agent/opa v0.29.4
 	github.com/prometheus/client_golang v1.10.0
