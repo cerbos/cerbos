@@ -34,8 +34,7 @@ require (
 	github.com/mattn/go-isatty v0.0.13
 	github.com/mattn/go-runewidth v0.0.12 // indirect
 	github.com/open-policy-agent/opa v0.29.4
-	github.com/prometheus/client_golang v1.10.0
-	github.com/prometheus/common v0.20.0 // indirect
+	github.com/prometheus/client_golang v1.11.0
 	github.com/rcrowley/go-metrics v0.0.0-20201227073835-cf1acfcdf475 // indirect
 	github.com/rivo/uniseg v0.2.0 // indirect
 	github.com/rjeczalik/notify v0.9.3-0.20201210012515-e2a77dcc14cf
