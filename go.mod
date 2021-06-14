@@ -52,13 +52,12 @@ require (
 	golang.org/x/crypto v0.0.0-20210513164829-c07d793c2f9a
 	golang.org/x/lint v0.0.0-20210508222113-6edffad5e616 // indirect
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
-	golang.org/x/term v0.0.0-20210220032956-6a3ed077a48d // indirect
 	google.golang.org/genproto v0.0.0-20210524171403-669157292da3
 	google.golang.org/grpc v1.39.0-dev.0.20210519181852-3dd75a6888ce
 	google.golang.org/grpc/cmd/protoc-gen-go-grpc v1.1.0
 	google.golang.org/protobuf v1.26.1-0.20210520194023-50a85913fbce
 	gotest.tools/gotestsum v1.6.4
-	helm.sh/helm/v3 v3.5.4
+	helm.sh/helm/v3 v3.6.0
 	modernc.org/sqlite v1.10.8
 )
 
