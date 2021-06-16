@@ -4,6 +4,7 @@ package compile
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/open-policy-agent/opa/ast"
@@ -15,6 +16,8 @@ import (
 	sharedv1 "github.com/cerbos/cerbos/internal/genpb/shared/v1"
 )
 
+var ErrPolicyNotExecutable = errors.New("policy not executable")
+
 type EvalResult struct {
 	Effects               map[string]sharedv1.Effect
 	EffectiveDerivedRoles []string
@@ -24,11 +27,21 @@ type Evaluator interface {
 	Eval(ctx context.Context, queryCache cache.InterQueryCache, input ast.Value) (*EvalResult, error)
 }
 
+type noopEvaluator struct{}
+
+func (noopEvaluator) Eval(ctx context.Context, queryCache cache.InterQueryCache, input ast.Value) (*EvalResult, error) {
+	return nil, ErrPolicyNotExecutable
+}
+
 type evaluator struct {
 	query rego.PreparedEvalQuery
 }
 
-func newEvaluator(compiler *ast.Compiler, conditionIdx ConditionIndex, queryStr string) (*evaluator, error) {
+func newEvaluator(compiler *ast.Compiler, conditionIdx ConditionIndex, queryStr string) (Evaluator, error) {
+	if queryStr == "" {
+		return noopEvaluator{}, nil
+	}
+
 	celEvalImpl := makeCELEvalImpl(conditionIdx)
 
 	query, err := rego.New(
