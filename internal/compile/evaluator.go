@@ -21,19 +21,26 @@ type EvalResult struct {
 }
 
 type Evaluator interface {
-	EvalQuery(ctx context.Context, queryCache cache.InterQueryCache, query string, input ast.Value) (*EvalResult, error)
+	Eval(ctx context.Context, queryCache cache.InterQueryCache, input ast.Value) (*EvalResult, error)
 }
 
 type evaluator struct {
-	compiler    *ast.Compiler
-	celEvalImpl rego.Builtin3
+	query rego.PreparedEvalQuery
 }
 
-func newEvaluator(compiler *ast.Compiler, conditionIdx ConditionIndex) *evaluator {
-	return &evaluator{
-		compiler:    compiler,
-		celEvalImpl: makeCELEvalImpl(conditionIdx),
+func newEvaluator(compiler *ast.Compiler, conditionIdx ConditionIndex, queryStr string) (*evaluator, error) {
+	celEvalImpl := makeCELEvalImpl(conditionIdx)
+
+	query, err := rego.New(
+		rego.Function3(codegen.CELEvalFunc, celEvalImpl),
+		rego.Compiler(compiler),
+		rego.Query(queryStr),
+	).PrepareForEval(context.TODO())
+	if err != nil {
+		return nil, fmt.Errorf("failed to prepare query [%s]: %w", queryStr, err)
 	}
+
+	return &evaluator{query: query}, nil
 }
 
 func makeCELEvalImpl(conditionIdx ConditionIndex) rego.Builtin3 {
@@ -73,15 +80,8 @@ func makeCELEvalImpl(conditionIdx ConditionIndex) rego.Builtin3 {
 	}
 }
 
-func (e *evaluator) EvalQuery(ctx context.Context, queryCache cache.InterQueryCache, query string, input ast.Value) (*EvalResult, error) {
-	r := rego.New(
-		rego.InterQueryBuiltinCache(queryCache),
-		rego.Function3(codegen.CELEvalFunc, e.celEvalImpl),
-		rego.Compiler(e.compiler),
-		rego.ParsedInput(input),
-		rego.Query(query))
-
-	rs, err := r.Eval(ctx)
+func (e *evaluator) Eval(ctx context.Context, queryCache cache.InterQueryCache, input ast.Value) (*EvalResult, error) {
+	rs, err := e.query.Eval(ctx, rego.EvalParsedInput(input), rego.EvalInterQueryBuiltinCache(queryCache))
 	if err != nil {
 		return nil, fmt.Errorf("query evaluation failed: %w", err)
 	}

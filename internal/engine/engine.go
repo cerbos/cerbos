@@ -157,7 +157,6 @@ func (engine *Engine) getPrincipalPolicyCheck(ctx context.Context, principal, po
 		return &check{
 			policyKey: policyKey,
 			eval:      eval,
-			query:     namer.QueryForPrincipal(principal, policyVersion),
 		}, nil
 	}
 
@@ -176,7 +175,6 @@ func (engine *Engine) getResourcePolicyCheck(ctx context.Context, resource, poli
 		return &check{
 			policyKey: policyKey,
 			eval:      eval,
-			query:     namer.QueryForResource(resource, policyVersion),
 		}, nil
 	}
 
@@ -291,11 +289,6 @@ func (engine *Engine) evaluate(ctx context.Context, input *enginev1.CheckInput, 
 
 	span.AddAttributes(trace.StringAttribute("request_id", input.RequestId), trace.StringAttribute("resource_id", input.Resource.Id))
 
-	if err := ctx.Err(); err != nil {
-		tracing.MarkFailed(span, http.StatusRequestTimeout, "Context cancelled", err)
-		return nil, err
-	}
-
 	output := &enginev1.CheckOutput{
 		RequestId:  input.RequestId,
 		ResourceId: input.Resource.Id,
@@ -312,6 +305,12 @@ func (engine *Engine) evaluate(ctx context.Context, input *enginev1.CheckInput, 
 		}
 
 		return output, nil
+	}
+
+	// exit early if the context is cancelled
+	if err := ctx.Err(); err != nil {
+		tracing.MarkFailed(span, http.StatusRequestTimeout, "Context cancelled", err)
+		return nil, err
 	}
 
 	log := logging.FromContext(ctx)
@@ -442,7 +441,6 @@ func (er *evaluationResult) merge(policyKey string, res *compile.EvalResult) boo
 type check struct {
 	policyKey string
 	eval      compile.Evaluator
-	query     string
 }
 
 func (c *check) execute(ctx context.Context, queryCache cache.InterQueryCache, input ast.Value) (result *compile.EvalResult, err error) {
@@ -455,7 +453,7 @@ func (c *check) execute(ctx context.Context, queryCache cache.InterQueryCache, i
 		span.End()
 	}()
 
-	return c.eval.EvalQuery(ctx, queryCache, c.query, input)
+	return c.eval.Eval(ctx, queryCache, input)
 }
 
 func toAST(req *enginev1.CheckInput) (ast.Value, error) {
