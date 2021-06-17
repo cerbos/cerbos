@@ -47,7 +47,7 @@ func (m *ModuleID) Scan(src interface{}) error {
 }
 
 func (m *ModuleID) String() string {
-	return strconv.FormatUint(m.hash, 10)
+	return strconv.FormatUint(m.hash, 10) //nolint:gomnd
 }
 
 // GenModuleID generates a short ID for the module.
