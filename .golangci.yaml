@@ -158,3 +158,4 @@ issues:
     - path: _test\.go
       linters:
         - goconst
+        - gomnd

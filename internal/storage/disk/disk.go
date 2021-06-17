@@ -41,7 +41,7 @@ func NewStore(ctx context.Context, conf *Conf) (*Store, error) {
 
 	s := &Store{idx: idx, SubscriptionManager: storage.NewSubscriptionManager(ctx)}
 	if conf.WatchForChanges {
-		if err := watchDir(ctx, conf.Directory, s.idx, s.SubscriptionManager); err != nil {
+		if err := watchDir(ctx, conf.Directory, s.idx, s.SubscriptionManager, defaultCooldownPeriod); err != nil {
 			return nil, err
 		}
 	}

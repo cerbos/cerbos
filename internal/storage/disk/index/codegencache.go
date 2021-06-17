@@ -27,7 +27,7 @@ func newCodegenCache(fsys afero.Fs) (*codegenCache, error) {
 		fsys = afero.NewBasePathFs(afero.NewOsFs(), os.TempDir())
 	}
 
-	if err := fsys.MkdirAll(codegenCacheDir, 0744); err != nil {
+	if err := fsys.MkdirAll(codegenCacheDir, 0744); err != nil { //nolint:gomnd
 		return nil, fmt.Errorf("failed to create work directory: %w", err)
 	}
 

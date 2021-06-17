@@ -163,7 +163,6 @@ func TestAdminService(t *testing.T) {
 	ctx, cancelFunc := context.WithCancel(context.Background())
 	defer cancelFunc()
 
-	// store, err := sqlite3.NewStore(ctx, &sqlite3.Conf{DSN: ":memory:?_fk=true"})
 	store, err := sqlite3.NewStore(ctx, &sqlite3.Conf{DSN: fmt.Sprintf("%s?_fk=true", filepath.Join(t.TempDir(), "cerbos.db"))})
 	require.NoError(t, err)
 

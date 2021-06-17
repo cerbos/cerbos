@@ -16,7 +16,7 @@ require (
 	github.com/fullstorydev/grpcurl v1.8.1
 	github.com/ghodss/yaml v1.0.0
 	github.com/go-git/go-git/v5 v5.4.2
-	github.com/golangci/golangci-lint v1.40.1
+	github.com/golangci/golangci-lint v1.41.0
 	github.com/google/cel-go v0.7.3
 	github.com/google/go-cmp v0.5.6
 	github.com/google/go-licenses v0.0.0-20210329231322-ce1d9163b77d
@@ -42,6 +42,7 @@ require (
 	github.com/spf13/cobra v1.1.3
 	github.com/stretchr/testify v1.7.0
 	github.com/tidwall/sjson v1.1.6
+	github.com/vektra/mockery/v2 v2.8.0
 	go.elastic.co/ecszap v1.0.0
 	go.opencensus.io v0.23.0
 	go.uber.org/automaxprocs v1.4.0

@@ -18,6 +18,8 @@ import (
 	"github.com/stretchr/testify/require"
 
 	cerbosdevv1 "github.com/cerbos/cerbos/internal/genpb/cerbosdev/v1"
+	"github.com/cerbos/cerbos/internal/policy"
+	"github.com/cerbos/cerbos/internal/storage"
 	"github.com/cerbos/cerbos/internal/test"
 	"github.com/cerbos/cerbos/internal/util"
 )
@@ -34,30 +36,50 @@ func TestBuildIndexWithDisk(t *testing.T) {
 
 	defer idx.Clear() //nolint:errcheck
 
-	data := idxImpl.Inspect()
-	require.Len(t, data, 4)
+	t.Run("check_contents", func(t *testing.T) {
+		data := idxImpl.Inspect()
+		require.Len(t, data, 4)
 
-	rp1 := filepath.Join("resource_policies", "policy_01.yaml")
-	rp2 := filepath.Join("resource_policies", "policy_02.yaml")
-	pp := filepath.Join("principal_policies", "policy_01.yaml")
-	dr := filepath.Join("derived_roles", "derived_roles_01.yaml")
+		rp1 := filepath.Join("resource_policies", "policy_01.yaml")
+		rp2 := filepath.Join("resource_policies", "policy_02.yaml")
+		pp := filepath.Join("principal_policies", "policy_01.yaml")
+		dr := filepath.Join("derived_roles", "derived_roles_01.yaml")
 
-	require.Contains(t, data, rp1)
-	require.Len(t, data[rp1].Dependencies, 1)
-	require.Contains(t, data[rp1].Dependencies, dr)
-	require.Empty(t, data[rp1].References)
+		require.Contains(t, data, rp1)
+		require.Len(t, data[rp1].Dependencies, 1)
+		require.Contains(t, data[rp1].Dependencies, dr)
+		require.Empty(t, data[rp1].References)
 
-	require.Contains(t, data, rp2)
-	require.Len(t, data[rp2].Dependencies, 0)
+		require.Contains(t, data, rp2)
+		require.Len(t, data[rp2].Dependencies, 0)
 
-	require.Contains(t, data, pp)
-	require.Empty(t, data[pp].Dependencies)
-	require.Empty(t, data[pp].References)
+		require.Contains(t, data, pp)
+		require.Empty(t, data[pp].Dependencies)
+		require.Empty(t, data[pp].References)
 
-	require.Contains(t, data, dr)
-	require.Empty(t, data[dr].Dependencies)
-	require.Len(t, data[dr].References, 1)
-	require.Contains(t, data[dr].References, rp1)
+		require.Contains(t, data, dr)
+		require.Empty(t, data[dr].Dependencies)
+		require.Len(t, data[dr].References, 1)
+		require.Contains(t, data[dr].References, rp1)
+	})
+
+	t.Run("add_empty", func(t *testing.T) {
+		_, err := idx.AddOrUpdate(Entry{})
+		require.ErrorIs(t, err, ErrInvalidEntry)
+	})
+
+	t.Run("add_new", func(t *testing.T) {
+		rp := policy.Wrap(test.GenResourcePolicy(test.PrefixAndSuffix("x", "x")))
+		path := "x.yaml"
+
+		evt, err := idx.AddOrUpdate(Entry{File: path, Policy: rp})
+		require.NoError(t, err)
+		require.Equal(t, rp.ID, evt.PolicyID)
+		require.Equal(t, storage.EventAddOrUpdatePolicy, evt.Kind)
+
+		data := idxImpl.Inspect()
+		require.Contains(t, data, path)
+	})
 }
 
 func TestBuildIndex(t *testing.T) {
@@ -74,14 +96,6 @@ func TestBuildIndex(t *testing.T) {
 			case tc.WantErrJson != "":
 				errList := new(BuildError)
 				require.True(t, errors.As(haveErr, &errList))
-
-				/*
-					f, _ := os.Create(fmt.Sprintf("/home/cell/tmp/%s.json", tcase.Name))
-					defer f.Close()
-					encoder := json.NewEncoder(f)
-					encoder.SetIndent("", "  ")
-					encoder.Encode(errList)
-				*/
 
 				haveErrJSON, err := json.Marshal(errList)
 				require.NoError(t, err)
