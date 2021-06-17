@@ -8,8 +8,6 @@ import (
 	"math/rand"
 	"os"
 	"path/filepath"
-	"runtime"
-	"sync"
 	"testing"
 	"time"
 
@@ -127,7 +125,7 @@ func TestUpdateStore(t *testing.T) {
 
 	t.Run("no changes", func(t *testing.T) {
 		mockIdx := setupMock()
-		checkEvents := subscribe(store)
+		checkEvents := storage.TestSubscription(store)
 
 		require.NoError(t, store.updateIndex(context.Background()))
 		require.Len(t, mockIdx.calls, 0)
@@ -136,7 +134,7 @@ func TestUpdateStore(t *testing.T) {
 
 	t.Run("modify policy", func(t *testing.T) {
 		mockIdx := setupMock()
-		checkEvents := subscribe(store)
+		checkEvents := storage.TestSubscription(store)
 		pset := genPolicySet(rng.Intn(numPolicySets))
 
 		require.NoError(t, commitToGitRepo(sourceGitDir, "Modify policy", func(wt *git.Worktree) error {
@@ -162,7 +160,7 @@ func TestUpdateStore(t *testing.T) {
 
 	t.Run("add policy", func(t *testing.T) {
 		mockIdx := setupMock()
-		checkEvents := subscribe(store)
+		checkEvents := storage.TestSubscription(store)
 		pset := genPolicySet(numPolicySets)
 
 		require.NoError(t, commitToGitRepo(sourceGitDir, "Add policy", func(wt *git.Worktree) error {
@@ -189,7 +187,7 @@ func TestUpdateStore(t *testing.T) {
 
 	t.Run("add policy to ignored dir", func(t *testing.T) {
 		mockIdx := setupMock()
-		checkEvents := subscribe(store)
+		checkEvents := storage.TestSubscription(store)
 		pset := genPolicySet(numPolicySets)
 
 		require.NoError(t, commitToGitRepo(sourceGitDir, "Add ignored policy", func(wt *git.Worktree) error {
@@ -213,7 +211,7 @@ func TestUpdateStore(t *testing.T) {
 
 	t.Run("delete policy", func(t *testing.T) {
 		mockIdx := setupMock()
-		checkEvents := subscribe(store)
+		checkEvents := storage.TestSubscription(store)
 		pset := genPolicySet(rng.Intn(numPolicySets))
 
 		require.NoError(t, commitToGitRepo(sourceGitDir, "Delete policy", func(wt *git.Worktree) error {
@@ -242,7 +240,7 @@ func TestUpdateStore(t *testing.T) {
 
 	t.Run("move policy out of policy dir", func(t *testing.T) {
 		mockIdx := setupMock()
-		checkEvents := subscribe(store)
+		checkEvents := storage.TestSubscription(store)
 		pset := genPolicySet(rng.Intn(numPolicySets))
 
 		require.NoError(t, commitToGitRepo(sourceGitDir, "Move policy out", func(wt *git.Worktree) error {
@@ -272,7 +270,7 @@ func TestUpdateStore(t *testing.T) {
 
 	t.Run("ignore unsupported file", func(t *testing.T) {
 		mockIdx := setupMock()
-		checkEvents := subscribe(store)
+		checkEvents := storage.TestSubscription(store)
 		require.NoError(t, commitToGitRepo(sourceGitDir, "Add unsupported file", func(wt *git.Worktree) error {
 			fp := filepath.Join(sourceGitDir, policyDir, "file1.txt")
 			if err := os.WriteFile(fp, []byte("something"), 0o600); err != nil {
@@ -544,53 +542,4 @@ func (m *mockIndex) Called(methodName string, expected ...interface{}) bool {
 	}
 
 	return false
-}
-
-func subscribe(store *Store) func(*testing.T, ...storage.Event) {
-	sub := &subscriber{}
-	store.Subscribe(sub)
-
-	return func(t *testing.T, wantEvents ...storage.Event) {
-		t.Helper()
-
-		runtime.Gosched()
-
-		haveEvents := sub.Events()
-		store.Unsubscribe(sub)
-
-		require.ElementsMatch(t, wantEvents, haveEvents)
-	}
-}
-
-type subscriber struct {
-	mu     sync.RWMutex
-	events []storage.Event
-}
-
-func (s *subscriber) SubscriberID() string {
-	return "test"
-}
-
-func (s *subscriber) OnStorageEvent(evt ...storage.Event) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-
-	s.events = append(s.events, evt...)
-}
-
-func (s *subscriber) Events() []storage.Event {
-	s.mu.RLock()
-	defer s.mu.RUnlock()
-
-	events := make([]storage.Event, len(s.events))
-	copy(events, s.events)
-
-	return events
-}
-
-func (s *subscriber) Clear() {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-
-	s.events = nil
 }

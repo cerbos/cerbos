@@ -18,14 +18,8 @@ import (
 var (
 	// ErrDuplicatePolicy signals that there are duplicate policy definitions.
 	ErrDuplicatePolicy = errors.New("duplicate policy definitions")
-	// ErrFileHasDependents signals that the given file cannot be deleted because it has dependents.
-	ErrFileHasDependents = errors.New("file has dependents")
-	// ErrMissingDependencies signals that there are missing dependencies.
-	ErrMissingDependencies = errors.New("missing dependencies")
-	// ErrUnknownModule signals that the module is not in the module index.
-	ErrUnknownModule = errors.New("unknown module")
-	// ErrQuarantined signals that the module is quarantined.
-	ErrQuarantined = errors.New("quarantined")
+	// ErrInvalidEntry signals that the index entry is invalid.
+	ErrInvalidEntry = errors.New("invalid index entry")
 )
 
 type Entry struct {
@@ -172,6 +166,10 @@ func (idx *index) GetDependents(ids ...namer.ModuleID) (map[namer.ModuleID][]nam
 }
 
 func (idx *index) AddOrUpdate(entry Entry) (evt storage.Event, err error) {
+	if entry.Policy.Policy == nil {
+		return storage.Event{Kind: storage.EventNop}, ErrInvalidEntry
+	}
+
 	modID := entry.Policy.ID
 
 	evt = storage.NewEvent(storage.EventAddOrUpdatePolicy, modID)

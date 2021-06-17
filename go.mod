@@ -42,6 +42,7 @@ require (
 	github.com/spf13/cobra v1.1.3
 	github.com/stretchr/testify v1.7.0
 	github.com/tidwall/sjson v1.1.6
+	github.com/vektra/mockery/v2 v2.8.0
 	go.elastic.co/ecszap v1.0.0
 	go.opencensus.io v0.23.0
 	go.uber.org/automaxprocs v1.4.0
