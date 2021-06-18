@@ -45,7 +45,7 @@ func Compile(unit *policy.CompilationUnit) (Evaluator, error) {
 
 	modules, conditionIdx, err := hydrate(unit)
 	if err != nil {
-		return nil, err
+		return nil, newError(unit.MainSourceFile(), err, "Failed to generate code")
 	}
 
 	regoCompiler := codegen.NewRegoCompiler()
@@ -53,7 +53,12 @@ func Compile(unit *policy.CompilationUnit) (Evaluator, error) {
 		return nil, newCodeGenErrors(unit.MainSourceFile(), regoCompiler.Errors)
 	}
 
-	return newEvaluator(regoCompiler, conditionIdx), nil
+	eval, err := newEvaluator(regoCompiler, conditionIdx, unit.Query())
+	if err != nil {
+		return nil, newError(unit.MainSourceFile(), err, "Failed to prepare evaluator")
+	}
+
+	return eval, nil
 }
 
 func checkForAmbiguousOrUnknownDerivedRoles(p *policy.CompilationUnit) ErrorList {

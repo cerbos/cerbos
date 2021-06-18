@@ -147,6 +147,9 @@ func Wrap(p *policyv1.Policy) Wrapper {
 	return w
 }
 
+// CompilationUnit is the set of policies that need to be compiled together.
+// For example, if a resource policy named R imports derived roles named D, the compilation unit will contain
+// both R and D with the ModID field pointing to R because it is the main policy.
 type CompilationUnit struct {
 	ModID       namer.ModuleID
 	Definitions map[namer.ModuleID]*policyv1.Policy
@@ -171,4 +174,20 @@ func (cu *CompilationUnit) AddGenerated(id namer.ModuleID, p *policyv1.Generated
 
 func (cu *CompilationUnit) MainSourceFile() string {
 	return GetSourceFile(cu.Definitions[cu.ModID])
+}
+
+// Query returns the query that is expected to be evaluated from this policy set.
+func (cu *CompilationUnit) Query() string {
+	main := cu.Definitions[cu.ModID]
+
+	switch pt := main.PolicyType.(type) {
+	case *policyv1.Policy_ResourcePolicy:
+		return namer.QueryForResource(pt.ResourcePolicy.Resource, pt.ResourcePolicy.Version)
+	case *policyv1.Policy_PrincipalPolicy:
+		return namer.QueryForPrincipal(pt.PrincipalPolicy.Principal, pt.PrincipalPolicy.Version)
+	case *policyv1.Policy_DerivedRoles:
+		return ""
+	default:
+		panic(fmt.Errorf("unknown policy type %T", pt))
+	}
 }
