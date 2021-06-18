@@ -54,7 +54,7 @@ checkResourceSet:
         "XX125": {
           "actions": {
             "view:public": {
-              "matchedPolicy": "donald_duck:20210210"
+              "matchedPolicy": "principal.donald_duck.v20210210"
             }
           }
         }

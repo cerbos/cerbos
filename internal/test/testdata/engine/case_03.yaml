@@ -75,7 +75,7 @@ wantOutputs: [
     "actions": {
       "approve": {
         "effect": "EFFECT_DENY",
-        "policy": "leave_request:20210210"
+        "policy": "resource.leave_request.v20210210"
       }
     },
     "effectiveDerivedRoles": [
@@ -88,7 +88,7 @@ wantOutputs: [
     "actions": {
       "approve": {
         "effect": "EFFECT_DENY",
-        "policy": "leave_request:20210210"
+        "policy": "resource.leave_request.v20210210"
       }
     },
     "effectiveDerivedRoles": [
