@@ -64,6 +64,7 @@ jobs:
         uses: actions/checkout@v2
         with:
           fetch-depth: 0
+          lfs: true
 
       - name: Generate docs
         uses: ./.github/actions/antora-docs
