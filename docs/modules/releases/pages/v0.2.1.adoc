@@ -1,0 +1,22 @@
+include::ROOT:partial$attributes.adoc[]
+
+[#v0.2.1]
+= Cerbos v0.2.1
+
+We have changed our versioning scheme to facilitate faster releases. Version 0.2.1 follows 0.0.2 and is a patch release to fix a bug in the 0.0.2 release. Going forward, until we reach GA (1.0.0) the "minor" version number will be incremented for significant changes such as new features and enhancements and the "patch" version number will be incremented for bug fixes or documentation updates. We will try our best to not introduce any breaking changes between minor version changes but it might be unavoidable during our journey to GA. Those will be clearly documented in the release notes. 
+
+== Highlights
+
+This is a patch release. For the full list of features included in this build, see xref:v0.0.2.adoc[v0.0.2 release notes].
+
+Directory watcher bug:: Fixed a crash in the `disk` storage driver when the directory watcher was enabled (`watchForChanges` set to `true`).
+Performance improvement:: Policy evaluation time and resource consumption have been improved as part of the ongoing performance improvement work. 
+
+== Changelog
+
+6 commits since v0.0.2. 31 files changed, 987 insertions(+), 298 deletions(-)
+
+=== Bug fixes
+
+* Fix nil deref while handling changed files (link:https://github.com/cerbos/cerbos/pull/157[#157])
+
