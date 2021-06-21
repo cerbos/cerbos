@@ -149,7 +149,7 @@ func (cgr *Result) ToRepr() (*policyv1.GeneratedPolicy, error) {
 	return gp, nil
 }
 
-func CodeGenResultFromRepr(repr *policyv1.GeneratedPolicy) (*Result, error) {
+func ResultFromRepr(repr *policyv1.GeneratedPolicy) (*Result, error) {
 	r := &Result{
 		ModName: repr.Fqn,
 		ModID:   namer.GenModuleIDFromName(repr.Fqn),

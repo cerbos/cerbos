@@ -19,7 +19,7 @@ var ErrConfigNotLoaded = errors.New("config not loaded")
 
 var conf = &configHolder{}
 
-type ConfigSection interface {
+type Section interface {
 	Key() string
 }
 
@@ -133,7 +133,7 @@ func Get(key string, out interface{}) error {
 }
 
 // GetSection populates a config section.
-func GetSection(section ConfigSection) error {
+func GetSection(section Section) error {
 	return conf.Get(section.Key(), section)
 }
 

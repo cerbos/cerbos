@@ -139,7 +139,7 @@ func (rg *RegoGen) DefaultEffectNoMatch() {
 	rg.line("default ", EffectsIdent, " = ", noMatchVal)
 }
 
-func (rg *RegoGen) EffectiveDerivedRoles(hasImports bool) { //nolint:revive
+func (rg *RegoGen) EffectiveDerivedRoles(hasImports bool) {
 	if hasImports {
 		rg.line(EffectiveDerivedRolesIdent, " := { dr | ", derivedRolesMap, "[dr] == true }")
 	} else {

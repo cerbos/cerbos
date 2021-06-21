@@ -333,7 +333,7 @@ func (s *Server) mkGRPCServer(log *zap.Logger) *grpc.Server {
 	return grpc.NewServer(opts...)
 }
 
-func (s *Server) startHTTPServer(ctx context.Context, l net.Listener, grpcSrv *grpc.Server, zpagesEnabled bool) (*http.Server, error) { //nolint:revive
+func (s *Server) startHTTPServer(ctx context.Context, l net.Listener, grpcSrv *grpc.Server, zpagesEnabled bool) (*http.Server, error) {
 	log := zap.S().Named("http")
 
 	gwmux := runtime.NewServeMux(
