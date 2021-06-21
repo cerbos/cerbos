@@ -5,7 +5,6 @@ go 1.16
 require (
 	contrib.go.opencensus.io/exporter/jaeger v0.2.1
 	contrib.go.opencensus.io/exporter/prometheus v0.3.0
-	github.com/ProtonMail/gopenpgp/v2 v2.1.9 // indirect
 	github.com/bluele/gcache v0.0.2
 	github.com/bufbuild/buf v0.43.2
 	github.com/cespare/xxhash v1.1.0
@@ -16,7 +15,7 @@ require (
 	github.com/fullstorydev/grpcurl v1.8.1
 	github.com/ghodss/yaml v1.0.0
 	github.com/go-git/go-git/v5 v5.4.2
-	github.com/golangci/golangci-lint v1.41.0
+	github.com/golangci/golangci-lint v1.41.1
 	github.com/google/cel-go v0.7.3
 	github.com/google/go-cmp v0.5.6
 	github.com/google/go-licenses v0.0.0-20210329231322-ce1d9163b77d
@@ -32,11 +31,9 @@ require (
 	github.com/kavu/go_reuseport v1.5.0
 	github.com/lyft/protoc-gen-star v0.5.3 // indirect
 	github.com/mattn/go-isatty v0.0.13
-	github.com/mattn/go-runewidth v0.0.12 // indirect
 	github.com/open-policy-agent/opa v0.29.4
 	github.com/prometheus/client_golang v1.11.0
 	github.com/rcrowley/go-metrics v0.0.0-20201227073835-cf1acfcdf475 // indirect
-	github.com/rivo/uniseg v0.2.0 // indirect
 	github.com/rjeczalik/notify v0.9.3-0.20201210012515-e2a77dcc14cf
 	github.com/spf13/afero v1.6.0
 	github.com/spf13/cobra v1.1.3
