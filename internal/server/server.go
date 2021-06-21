@@ -45,6 +45,7 @@ import (
 	"github.com/cerbos/cerbos/internal/engine"
 	svcv1 "github.com/cerbos/cerbos/internal/genpb/svc/v1"
 	"github.com/cerbos/cerbos/internal/observability/metrics"
+	"github.com/cerbos/cerbos/internal/observability/tracing"
 	"github.com/cerbos/cerbos/internal/storage"
 
 	// Import sqlite3 to register the storage driver.
@@ -325,7 +326,7 @@ func (s *Server) mkGRPCServer(log *zap.Logger) *grpc.Server {
 			),
 			grpc_zap.PayloadUnaryServerInterceptor(payloadLog, payloadLoggingDecider(s.conf)),
 		),
-		grpc.StatsHandler(&ocgrpc.ServerHandler{}),
+		grpc.StatsHandler(&ocgrpc.ServerHandler{StartOptions: tracing.StartOptions()}),
 		grpc.KeepaliveParams(keepalive.ServerParameters{MaxConnectionAge: maxConnectionAge}),
 	}
 
@@ -386,8 +387,8 @@ func (s *Server) startHTTPServer(ctx context.Context, l net.Listener, grpcSrv *g
 		return r.ProtoMajor == 2 && strings.Contains(r.Header.Get("Content-Type"), "application/grpc")
 	}).Handler(&ochttp.Handler{Handler: grpcSrv})
 
-	cerbosMux.PathPrefix(adminEndpoint).Handler(&ochttp.Handler{Handler: prettyJSON(gwmux)})
-	cerbosMux.PathPrefix(apiEndpoint).Handler(&ochttp.Handler{Handler: prettyJSON(gwmux)})
+	cerbosMux.PathPrefix(adminEndpoint).Handler(&ochttp.Handler{Handler: prettyJSON(gwmux), StartOptions: tracing.StartOptions()})
+	cerbosMux.PathPrefix(apiEndpoint).Handler(&ochttp.Handler{Handler: prettyJSON(gwmux), StartOptions: tracing.StartOptions()})
 	cerbosMux.Path(schemaEndpoint).HandlerFunc(schema.ServeSvcSwagger)
 	cerbosMux.Path(healthEndpoint).HandlerFunc(s.handleHTTPHealthCheck(grpcConn))
 
