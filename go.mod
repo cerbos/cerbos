@@ -22,7 +22,7 @@ require (
 	github.com/google/go-licenses v0.0.0-20210329231322-ce1d9163b77d
 	github.com/google/gops v0.3.18
 	github.com/google/uuid v1.2.0
-	github.com/goreleaser/goreleaser v0.169.0
+	github.com/goreleaser/goreleaser v0.171.0
 	github.com/gorilla/handlers v1.5.1
 	github.com/gorilla/mux v1.8.0
 	github.com/grpc-ecosystem/go-grpc-middleware v1.3.0
