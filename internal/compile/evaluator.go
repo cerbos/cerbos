@@ -10,11 +10,13 @@ import (
 	"github.com/open-policy-agent/opa/ast"
 	"github.com/open-policy-agent/opa/rego"
 	"github.com/open-policy-agent/opa/topdown/cache"
+	"go.opencensus.io/trace"
 	"go.uber.org/zap"
 
 	"github.com/cerbos/cerbos/internal/codegen"
 	sharedv1 "github.com/cerbos/cerbos/internal/genpb/shared/v1"
 	"github.com/cerbos/cerbos/internal/observability/logging"
+	"github.com/cerbos/cerbos/internal/observability/tracing"
 	"github.com/cerbos/cerbos/internal/policy"
 )
 
@@ -99,8 +101,12 @@ func makeCELEvalImpl(conditionIdx ConditionIndex) rego.Builtin3 {
 }
 
 func (e *evaluator) Eval(ctx context.Context, queryCache cache.InterQueryCache, input ast.Value) (*EvalResult, error) {
+	ctx, span := tracing.StartSpan(ctx, "Policy/"+e.policyKey)
+	defer span.End()
+
 	rs, err := e.query.Eval(ctx, rego.EvalParsedInput(input), rego.EvalInterQueryBuiltinCache(queryCache))
 	if err != nil {
+		tracing.MarkFailed(span, trace.StatusCodeInternal, "Policy evaluation failed", err)
 		logging.FromContext(ctx).Named("evaluator").Error("Failed to evaluate policy", zap.String("policy", e.policyKey), zap.Error(err))
 		return nil, fmt.Errorf("query evaluation failed [%s]: %w", e.policyKey, err)
 	}
