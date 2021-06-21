@@ -34,8 +34,8 @@ const (
 	loggerName                   = "engine"
 	maxQueryCacheSizeBytes int64 = 10 * 1024 * 1024 // 10 MiB
 	noPolicyMatch                = "NO_MATCH"
-	numWorkers                   = 16
-	parallelismThreshold         = 3
+	parallelismThreshold         = 2
+	workerQueueSize              = 4
 	workerResetJitter            = 1 << 4
 	workerResetThreshold         = 1 << 16
 )
@@ -54,12 +54,14 @@ func New(ctx context.Context, compileMgr *compile.Manager) (*Engine, error) {
 		return nil, err
 	}
 
-	engine.workerPool = make([]chan<- workIn, numWorkers)
+	if numWorkers := engine.conf.NumWorkers; numWorkers > 0 {
+		engine.workerPool = make([]chan<- workIn, numWorkers)
 
-	for i := 0; i < numWorkers; i++ {
-		inputChan := make(chan workIn, 1)
-		engine.workerPool[i] = inputChan
-		go engine.startWorker(ctx, i, inputChan)
+		for i := 0; i < int(numWorkers); i++ {
+			inputChan := make(chan workIn, workerQueueSize)
+			engine.workerPool[i] = inputChan
+			go engine.startWorker(ctx, i, inputChan)
+		}
 	}
 
 	return engine, nil
@@ -120,6 +122,7 @@ func (engine *Engine) startWorker(ctx context.Context, num int, inputChan <-chan
 }
 
 func (engine *Engine) submitWork(ctx context.Context, work workIn) error {
+	numWorkers := uint64(engine.conf.NumWorkers)
 	for {
 		index := int(atomic.AddUint64(&engine.workerIndex, 1) % numWorkers)
 		select {
@@ -138,7 +141,7 @@ func (engine *Engine) Check(ctx context.Context, inputs []*enginev1.CheckInput) 
 
 		// if the number of inputs is less than the threshold, do a serial execution as it is usually faster.
 		// ditto if the worker pool is not initialized
-		if len(inputs) <= parallelismThreshold || len(engine.workerPool) == 0 {
+		if len(inputs) < parallelismThreshold || len(engine.workerPool) == 0 {
 			return engine.checkSerial(ctx, inputs)
 		}
 
