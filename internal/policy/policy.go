@@ -191,3 +191,8 @@ func (cu *CompilationUnit) Query() string {
 		panic(fmt.Errorf("unknown policy type %T", pt))
 	}
 }
+
+// Key returns the human readable identifier for the main module.
+func (cu *CompilationUnit) Key() string {
+	return namer.PolicyKey(cu.Definitions[cu.ModID])
+}

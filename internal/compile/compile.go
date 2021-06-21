@@ -53,7 +53,7 @@ func Compile(unit *policy.CompilationUnit) (Evaluator, error) {
 		return nil, newCodeGenErrors(unit.MainSourceFile(), regoCompiler.Errors)
 	}
 
-	eval, err := newEvaluator(regoCompiler, conditionIdx, unit.Query())
+	eval, err := newEvaluator(unit, regoCompiler, conditionIdx)
 	if err != nil {
 		return nil, newError(unit.MainSourceFile(), err, "Failed to prepare evaluator")
 	}

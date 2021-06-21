@@ -1,5 +1,5 @@
 ---
-description: "No metadata"
+description: "Different policy version"
 inputs: [
   {
     "requestId": "test",
@@ -40,11 +40,11 @@ wantOutputs: [
     "actions": {
       "view:public": {
         "effect": "EFFECT_ALLOW",
-        "policy": "leave_request:staging"
+        "policy": "resource.leave_request.vstaging"
       },
       "approve": {
         "effect": "EFFECT_DENY",
-        "policy": "leave_request:staging"
+        "policy": "resource.leave_request.vstaging"
       }
     },
     "effectiveDerivedRoles": [

@@ -74,6 +74,11 @@ func ModuleName(p *policyv1.Policy) string {
 	}
 }
 
+// PolicyKey returns a human-friendly identifier that can be used to refer to the policy in logs and other outputs.
+func PolicyKey(p *policyv1.Policy) string {
+	return strings.TrimPrefix(ModuleName(p), "cerbos.")
+}
+
 // ResourcePolicyModuleName returns the module name for the resource policy with given resource and version.
 func ResourcePolicyModuleName(resource, version string) string {
 	return fmt.Sprintf("%s.%s.v%s", ResourcePoliciesPrefix, Sanitize(resource), Sanitize(version))

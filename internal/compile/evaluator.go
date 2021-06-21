@@ -14,11 +14,14 @@ import (
 
 	"github.com/cerbos/cerbos/internal/codegen"
 	sharedv1 "github.com/cerbos/cerbos/internal/genpb/shared/v1"
+	"github.com/cerbos/cerbos/internal/observability/logging"
+	"github.com/cerbos/cerbos/internal/policy"
 )
 
 var ErrPolicyNotExecutable = errors.New("policy not executable")
 
 type EvalResult struct {
+	PolicyKey             string
 	Effects               map[string]sharedv1.Effect
 	EffectiveDerivedRoles []string
 }
@@ -34,10 +37,12 @@ func (noopEvaluator) Eval(ctx context.Context, queryCache cache.InterQueryCache,
 }
 
 type evaluator struct {
-	query rego.PreparedEvalQuery
+	policyKey string
+	query     rego.PreparedEvalQuery
 }
 
-func newEvaluator(compiler *ast.Compiler, conditionIdx ConditionIndex, queryStr string) (Evaluator, error) {
+func newEvaluator(unit *policy.CompilationUnit, compiler *ast.Compiler, conditionIdx ConditionIndex) (Evaluator, error) {
+	queryStr := unit.Query()
 	if queryStr == "" {
 		return noopEvaluator{}, nil
 	}
@@ -53,7 +58,7 @@ func newEvaluator(compiler *ast.Compiler, conditionIdx ConditionIndex, queryStr 
 		return nil, fmt.Errorf("failed to prepare query [%s]: %w", queryStr, err)
 	}
 
-	return &evaluator{query: query}, nil
+	return &evaluator{policyKey: unit.Key(), query: query}, nil
 }
 
 func makeCELEvalImpl(conditionIdx ConditionIndex) rego.Builtin3 {
@@ -96,13 +101,14 @@ func makeCELEvalImpl(conditionIdx ConditionIndex) rego.Builtin3 {
 func (e *evaluator) Eval(ctx context.Context, queryCache cache.InterQueryCache, input ast.Value) (*EvalResult, error) {
 	rs, err := e.query.Eval(ctx, rego.EvalParsedInput(input), rego.EvalInterQueryBuiltinCache(queryCache))
 	if err != nil {
-		return nil, fmt.Errorf("query evaluation failed: %w", err)
+		logging.FromContext(ctx).Named("evaluator").Error("Failed to evaluate policy", zap.String("policy", e.policyKey), zap.Error(err))
+		return nil, fmt.Errorf("query evaluation failed [%s]: %w", e.policyKey, err)
 	}
 
-	return processResultSet(rs)
+	return processResultSet(e.policyKey, rs)
 }
 
-func processResultSet(rs rego.ResultSet) (*EvalResult, error) {
+func processResultSet(policyKey string, rs rego.ResultSet) (*EvalResult, error) {
 	if len(rs) == 0 || len(rs) > 1 || len(rs[0].Expressions) == 0 {
 		return nil, ErrUnexpectedResult
 	}
@@ -121,7 +127,7 @@ func processResultSet(rs rego.ResultSet) (*EvalResult, error) {
 		return nil, err
 	}
 
-	evalResult := &EvalResult{Effects: effects}
+	evalResult := &EvalResult{PolicyKey: policyKey, Effects: effects}
 	evalResult.EffectiveDerivedRoles, err = extractEffectiveDerivedRoles(res)
 
 	return evalResult, err

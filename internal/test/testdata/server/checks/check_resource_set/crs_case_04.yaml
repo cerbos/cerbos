@@ -73,20 +73,20 @@ checkResourceSet:
         "XX125": {
           "actions": {
             "approve": {
-              "matchedPolicy": "donald_duck:20210210"
+              "matchedPolicy": "principal.donald_duck.v20210210"
             },
             "view:public": {
-              "matchedPolicy": "donald_duck:20210210"
+              "matchedPolicy": "principal.donald_duck.v20210210"
             }
           },
         },
         "XX150": {
           "actions": {
             "approve": {
-              "matchedPolicy": "leave_request:20210210"
+              "matchedPolicy": "resource.leave_request.v20210210"
             },
             "view:public": {
-              "matchedPolicy": "leave_request:20210210"
+              "matchedPolicy": "resource.leave_request.v20210210"
             }
           },
           "effectiveDerivedRoles": ["any_employee"]

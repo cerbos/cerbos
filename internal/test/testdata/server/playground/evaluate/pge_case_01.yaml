@@ -37,12 +37,12 @@ playgroundEvaluate:
         {
           "action": "view",
           "effect": "EFFECT_DENY",
-          "policy": "album:object:default"
+          "policy": "resource.album_object.vdefault"
         },
         {
           "action": "delete",
           "effect": "EFFECT_DENY",
-          "policy": "album:object:default"
+          "policy": "resource.album_object.vdefault"
         }
       ]
     }
