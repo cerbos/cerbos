@@ -6,8 +6,6 @@ import (
 	"bytes"
 	"io"
 
-	"google.golang.org/protobuf/proto"
-
 	policyv1 "github.com/cerbos/cerbos/internal/genpb/policy/v1"
 	"github.com/cerbos/cerbos/internal/util"
 )
@@ -29,12 +27,13 @@ func WritePolicy(dest io.Writer, p *policyv1.Policy) error {
 
 // WriteGeneratedPolicy writes a generated policy to the destination.
 func WriteGeneratedPolicy(dest io.Writer, p *policyv1.GeneratedPolicy) error {
-	out, err := proto.Marshal(p)
+	out, err := p.MarshalVT()
 	if err != nil {
 		return err
 	}
 
-	_, err = io.Copy(dest, bytes.NewBuffer(out))
+	var buf [128]byte
+	_, err = io.CopyBuffer(dest, bytes.NewBuffer(out), buf[:])
 	return err
 }
 
@@ -45,7 +44,7 @@ func ReadGeneratedPolicy(src io.Reader) (*policyv1.GeneratedPolicy, error) {
 	}
 
 	gp := &policyv1.GeneratedPolicy{}
-	if err := proto.Unmarshal(in, gp); err != nil {
+	if err := gp.UnmarshalVT(in); err != nil {
 		return nil, err
 	}
 

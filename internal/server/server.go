@@ -33,6 +33,9 @@ import (
 	"google.golang.org/grpc/admin"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/local"
+
+	// Import the default grpc encoding to ensure that it gets replaced by VT.
+	_ "google.golang.org/grpc/encoding/proto"
 	"google.golang.org/grpc/health"
 	healthpb "google.golang.org/grpc/health/grpc_health_v1"
 	"google.golang.org/grpc/keepalive"
