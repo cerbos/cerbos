@@ -52,6 +52,7 @@ github.com/open-policy-agent/opa                                  https://github
 github.com/open-policy-agent/opa/internal/jwx                     https://github.com/open-policy-agent/opa/blob/master/internal/jwx/LICENSE                        MIT
 github.com/open-policy-agent/opa/internal/semver                  https://github.com/open-policy-agent/opa/blob/master/internal/semver/LICENSE                     Apache-2.0
 github.com/pkg/errors                                             https://github.com/pkg/errors/blob/master/LICENSE                                                BSD-2-Clause
+github.com/planetscale/vtprotobuf/codec/grpc                      https://github.com/planetscale/vtprotobuf/blob/master/codec/grpc/LICENSE                         BSD-3-Clause
 github.com/pmezard/go-difflib/difflib                             https://github.com/pmezard/go-difflib/blob/master/difflib/LICENSE                                BSD-3-Clause
 github.com/prometheus/client_golang/prometheus                    https://github.com/prometheus/client_golang/blob/master/prometheus/LICENSE                       Apache-2.0
 github.com/prometheus/client_model/go                             https://github.com/prometheus/client_model/blob/master/go/LICENSE                                Apache-2.0
