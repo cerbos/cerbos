@@ -6,6 +6,7 @@ package svc.v1;
 
 option go_package = "github.com/cerbos/cerbos/internal/genpb/svc/v1;svcv1";
 option java_package = "dev.cerbos.api.v1.svc";
+option csharp_namespace = "Cerbos.Api.V1.Svc";
 
 import "google/api/annotations.proto";
 import "protoc-gen-openapiv2/options/annotations.proto";
