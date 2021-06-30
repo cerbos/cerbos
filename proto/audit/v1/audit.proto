@@ -1,0 +1,48 @@
+// Copyright 2021 Zenauth Ltd.
+
+syntax = "proto3";
+
+package audit.v1;
+
+option go_package = "github.com/cerbos/cerbos/internal/genpb/audit/v1;auditv1";
+option java_package = "dev.cerbos.api.v1.audit";
+option csharp_namespace = "Cerbos.Api.V1.Audit";
+
+import "google/protobuf/timestamp.proto";
+import "engine/v1/engine.proto";
+
+
+message AccessLogEntry {
+    bytes call_id = 1;
+    google.protobuf.Timestamp timestamp = 2;
+    Address peer = 3;
+    repeated Metadata meta = 4;
+    string method = 5;
+    int32 status_code = 6;
+    bytes request_payload = 7;
+    bytes response_payload = 8;
+}
+
+message DecisionLogEntry {
+    bytes call_id = 1;
+    google.protobuf.Timestamp timestamp = 2;
+    repeated engine.v1.CheckInput inputs = 3;
+    repeated engine.v1.CheckOutput outputs = 4;
+}
+
+message Metadata {
+    string key = 1;
+    string value = 2;
+}
+
+message Address {
+    enum Type {
+        TYPE_UNSPECIFIED = 0;
+        TYPE_IPV4 = 1;
+        TYPE_IPV6 = 2;
+    };
+    Type type = 1;
+    string address = 2;
+}
+
+

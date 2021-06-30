@@ -1,21 +1,20 @@
 // Copyright 2021 Zenauth Ltd.
 
-package badgerdb
+package local
 
 import (
 	"bytes"
 	"context"
 	"errors"
 	"fmt"
-	"runtime"
 	"sync"
 	"time"
 
 	badgerv3 "github.com/dgraph-io/badger/v3"
 	"go.uber.org/zap"
 
-	"github.com/cerbos/cerbos/internal/decisionlog/common"
-	decisionlogv1 "github.com/cerbos/cerbos/internal/genpb/decisionlog/v1"
+	"github.com/cerbos/cerbos/internal/audit"
+	"github.com/cerbos/cerbos/internal/config"
 )
 
 const (
@@ -27,13 +26,31 @@ const (
 	keyTSEnd   = 10
 )
 
-var prefix = []byte("audt")
+var (
+	accessLogPrefix   = []byte("aacc")
+	decisionLogPrefix = []byte("adec")
+)
+
+func init() {
+	audit.RegisterBackend("local", func(_ context.Context) (audit.Log, error) {
+		return New()
+	})
+}
+
+// New reads the configuration and returns a new instance of the Log.
+func New() (*Log, error) {
+	conf := &Conf{}
+	if err := config.GetSection(conf); err != nil {
+		return nil, fmt.Errorf("failed to read configuration: %w", err)
+	}
+
+	return NewLog(conf)
+}
 
 // Log implements the decisionlog interface with Badger as the backing store.
 type Log struct {
 	logger   *zap.Logger
 	db       *badgerv3.DB
-	ulidGen  *common.ULIDGen
 	buffer   chan *badgerv3.Entry
 	wg       sync.WaitGroup
 	stopOnce sync.Once
@@ -70,7 +87,6 @@ func NewLog(conf *Conf) (*Log, error) {
 	l := &Log{
 		logger:   logger,
 		db:       db,
-		ulidGen:  common.NewULIDGen(uint64(runtime.NumCPU()), time.Now().UnixNano()),
 		buffer:   make(chan *badgerv3.Entry, bufferSize),
 		stopChan: make(chan struct{}),
 		ttl:      ttl,
@@ -157,24 +173,39 @@ func (l *Log) gc(gcInterval time.Duration) {
 	go l.gc(gcInterval)
 }
 
-func (l *Log) Add(ctx context.Context, record *decisionlogv1.Decision) error {
-	value, err := record.MarshalVT()
+func (l *Log) WriteAccessLogEntry(ctx context.Context, record audit.AccessLogEntryMaker) error {
+	rec, err := record()
+	if err != nil {
+		return err
+	}
+
+	value, err := rec.MarshalVT()
 	if err != nil {
 		return fmt.Errorf("failed to marshal data: %w", err)
 	}
 
-	var ts time.Time
-	if record.RequestTime != nil {
-		ts = record.RequestTime.AsTime()
-	} else {
-		ts = time.Now()
-	}
+	key := genKey(accessLogPrefix, rec.CallId)
 
-	key, err := l.genKey(ts)
+	return l.write(ctx, key, value)
+}
+
+func (l *Log) WriteDecisionLogEntry(ctx context.Context, record audit.DecisionLogEntryMaker) error {
+	rec, err := record()
 	if err != nil {
-		return fmt.Errorf("failed to generate ULID: %w", err)
+		return err
 	}
 
+	value, err := rec.MarshalVT()
+	if err != nil {
+		return fmt.Errorf("failed to marshal data: %w", err)
+	}
+
+	key := genKey(decisionLogPrefix, rec.CallId)
+
+	return l.write(ctx, key, value)
+}
+
+func (l *Log) write(ctx context.Context, key, value []byte) error {
 	select {
 	case l.buffer <- badgerv3.NewEntry(key, value).WithTTL(l.ttl):
 		return nil
@@ -183,6 +214,111 @@ func (l *Log) Add(ctx context.Context, record *decisionlogv1.Decision) error {
 	}
 }
 
+func (l *Log) LastNAccessLogEntries(ctx context.Context, n uint) audit.AccessLogIterator {
+	c := newAccessLogEntryCollector()
+	go l.listLastN(ctx, accessLogPrefix, n, c)
+
+	return c
+}
+
+func (l *Log) LastNDecisionLogEntries(ctx context.Context, n uint) audit.DecisionLogIterator {
+	c := newDecisionLogEntryCollector()
+	go l.listLastN(ctx, decisionLogPrefix, n, c)
+
+	return c
+}
+
+func (l *Log) listLastN(ctx context.Context, prefix []byte, n uint, c collector) {
+	err := l.db.View(func(txn *badgerv3.Txn) error {
+		opts := badgerv3.DefaultIteratorOptions
+		opts.Reverse = true
+
+		it := txn.NewIterator(opts)
+		defer it.Close()
+
+		key := maxScanKeyForPrefix(prefix)
+
+		counter := uint(0)
+		for it.Seek(key); it.ValidForPrefix(prefix); it.Next() {
+			if err := ctx.Err(); err != nil {
+				return err
+			}
+
+			rec := it.Item()
+			if err := rec.Value(c.add); err != nil {
+				return err
+			}
+
+			counter++
+			if counter >= n {
+				return nil
+			}
+		}
+
+		return nil
+	})
+
+	c.done(err)
+}
+
+func (l *Log) AccessLogEntriesBetween(ctx context.Context, fromTS, toTS time.Time) audit.AccessLogIterator {
+	c := newAccessLogEntryCollector()
+	go l.listBetweenTimestamps(ctx, accessLogPrefix, fromTS, toTS, c)
+
+	return c
+}
+
+func (l *Log) DecisionLogEntriesBetween(ctx context.Context, fromTS, toTS time.Time) audit.DecisionLogIterator {
+	c := newDecisionLogEntryCollector()
+	go l.listBetweenTimestamps(ctx, decisionLogPrefix, fromTS, toTS, c)
+
+	return c
+}
+
+func (l *Log) listBetweenTimestamps(ctx context.Context, prefix []byte, fromTS, toTS time.Time, c collector) {
+	start, err := minScanKeyForTime(prefix, fromTS)
+	if err != nil {
+		c.done(err)
+		return
+	}
+
+	end, err := maxScanKeyForTime(prefix, toTS)
+	if err != nil {
+		c.done(err)
+		return
+	}
+
+	err = l.db.View(func(txn *badgerv3.Txn) error {
+		opts := badgerv3.DefaultIteratorOptions
+
+		it := txn.NewIterator(opts)
+		defer it.Close()
+
+		for it.Seek(start); it.Valid(); it.Next() {
+			if err := ctx.Err(); err != nil {
+				return err
+			}
+
+			rec := it.Item()
+			key := rec.Key()
+
+			// stop when we have reached a key larger than the end key
+			if bytes.Compare(key, end) >= 0 {
+				return nil
+			}
+
+			if err := rec.Value(c.add); err != nil {
+				return err
+			}
+		}
+
+		return nil
+	})
+
+	c.done(err)
+}
+
+/*
 func (l *Log) ListLastN(ctx context.Context, n uint) (<-chan common.LogEntry, error) {
 	results := make(chan common.LogEntry, 1)
 	go func() {
@@ -293,30 +429,43 @@ func (l *Log) ListBetweenTimestamps(ctx context.Context, fromTS, toTS time.Time)
 
 	return results, nil
 }
+*/
 
-func (l *Log) genKey(ts time.Time) ([]byte, error) {
-	ulid, err := l.ulidGen.NewForTime(ts)
+func (l *Log) Close() {
+	l.stopOnce.Do(func() {
+		close(l.stopChan)
+		l.wg.Wait()
+		l.db.Close()
+	})
+}
+
+func genKey(prefix, id []byte) []byte {
+	var key [keyLen]byte
+	copy(key[:keyTSStart], prefix)
+	copy(key[keyTSStart:], id)
+
+	return key[:]
+}
+
+func genKeyForTime(prefix []byte, ts time.Time) ([]byte, error) {
+	id, err := audit.NewIDForTime(ts)
 	if err != nil {
 		return nil, err
 	}
 
-	var key [keyLen]byte
-	copy(key[:keyTSStart], prefix)
-	copy(key[keyTSStart:], ulid[:])
-
-	return key[:], nil
+	return genKey(prefix, id[:]), nil
 }
 
-func (l *Log) minScanKey(ts time.Time) ([]byte, error) {
-	return l.scanKey(ts, 0x00) //nolint:gomnd
+func minScanKeyForTime(prefix []byte, ts time.Time) ([]byte, error) {
+	return scanKeyForTime(prefix, ts, 0x00) //nolint:gomnd
 }
 
-func (l *Log) maxScanKey(ts time.Time) ([]byte, error) {
-	return l.scanKey(ts, 0xFF) //nolint:gomnd
+func maxScanKeyForTime(prefix []byte, ts time.Time) ([]byte, error) {
+	return scanKeyForTime(prefix, ts, 0xFF) //nolint:gomnd
 }
 
-func (l *Log) scanKey(ts time.Time, randFiller byte) ([]byte, error) {
-	key, err := l.genKey(ts)
+func scanKeyForTime(prefix []byte, ts time.Time, randFiller byte) ([]byte, error) {
+	key, err := genKeyForTime(prefix, ts)
 	if err != nil {
 		return nil, err
 	}
@@ -328,12 +477,19 @@ func (l *Log) scanKey(ts time.Time, randFiller byte) ([]byte, error) {
 	return key, nil
 }
 
-func (l *Log) Close() {
-	l.stopOnce.Do(func() {
-		close(l.stopChan)
-		l.wg.Wait()
-		l.db.Close()
-	})
+func maxScanKeyForPrefix(prefix []byte) []byte {
+	return scanKeyForPrefix(prefix, 0xFF) //nolint:gomnd
+}
+
+func scanKeyForPrefix(prefix []byte, filler byte) []byte {
+	var key [keyLen]byte
+	copy(key[:keyTSStart], prefix)
+
+	for i := keyTSStart; i < keyLen; i++ {
+		key[i] = filler
+	}
+
+	return key[:]
 }
 
 type zapLogger struct {

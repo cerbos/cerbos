@@ -1,7 +1,7 @@
 {
   "swagger": "2.0",
   "info": {
-    "title": "decisionlog/v1/decisionlog.proto",
+    "title": "audit/v1/audit.proto",
     "version": "version not set"
   },
   "consumes": [

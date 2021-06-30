@@ -1,16 +1,18 @@
 // Copyright 2021 Zenauth Ltd.
 
-package badgerdb
+package local
 
 import (
 	"errors"
 	"fmt"
 	"strings"
 	"time"
+
+	"github.com/cerbos/cerbos/internal/audit"
 )
 
 const (
-	confKey = "badgerdb"
+	confKey = audit.ConfKey + ".local"
 
 	defaultBufferSize             = 16
 	defaultFlushInterval          = 60 * time.Second
@@ -36,9 +38,9 @@ type Conf struct {
 
 type AdvancedConf struct {
 	BufferSize             uint          `yaml:"bufferSize"`
+	MaxPendingTransactions uint          `yaml:"maxPendingTransactions"`
 	FlushInterval          time.Duration `yaml:"flushInterval"`
 	GCInterval             time.Duration `yaml:"gcInterval"`
-	MaxPendingTransactions uint          `yaml:"maxPendingTransactions"`
 }
 
 func (c *Conf) Key() string {
