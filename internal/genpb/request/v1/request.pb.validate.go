@@ -810,6 +810,95 @@ var _ interface {
 	ErrorName() string
 } = PlaygroundEvaluateRequestValidationError{}
 
+// Validate checks the field values on AddOrUpdatePolicyRequest with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, an error is returned.
+func (m *AddOrUpdatePolicyRequest) Validate() error {
+	if m == nil {
+		return nil
+	}
+
+	if l := len(m.GetPolicies()); l < 1 || l > 10 {
+		return AddOrUpdatePolicyRequestValidationError{
+			field:  "Policies",
+			reason: "value must contain between 1 and 10 items, inclusive",
+		}
+	}
+
+	for idx, item := range m.GetPolicies() {
+		_, _ = idx, item
+
+		if v, ok := interface{}(item).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return AddOrUpdatePolicyRequestValidationError{
+					field:  fmt.Sprintf("Policies[%v]", idx),
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	}
+
+	return nil
+}
+
+// AddOrUpdatePolicyRequestValidationError is the validation error returned by
+// AddOrUpdatePolicyRequest.Validate if the designated constraints aren't met.
+type AddOrUpdatePolicyRequestValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e AddOrUpdatePolicyRequestValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e AddOrUpdatePolicyRequestValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e AddOrUpdatePolicyRequestValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e AddOrUpdatePolicyRequestValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e AddOrUpdatePolicyRequestValidationError) ErrorName() string {
+	return "AddOrUpdatePolicyRequestValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e AddOrUpdatePolicyRequestValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sAddOrUpdatePolicyRequest.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = AddOrUpdatePolicyRequestValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = AddOrUpdatePolicyRequestValidationError{}
+
 // Validate checks the field values on CheckResourceBatchRequest_BatchEntry
 // with the rules defined in the proto definition for this message. If any
 // rules are violated, an error is returned.

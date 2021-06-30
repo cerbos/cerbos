@@ -2,7 +2,7 @@
 name: cerbos
 title: Cerbos
 version: master
-display_version: "0.0.2-alpha.1"
+display_version: "0.2.1"
 nav:
   - modules/ROOT/nav.adoc
   - modules/api/nav.adoc
@@ -10,3 +10,4 @@ nav:
   - modules/configuration/nav.adoc
   - modules/deployment/nav.adoc
   - modules/tutorials/nav.adoc
+  - modules/releases/nav.adoc

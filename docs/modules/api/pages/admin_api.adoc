@@ -1,0 +1,62 @@
+include::ROOT:partial$attributes.adoc[]
+
+= The Cerbos Admin API
+
+The Admin API is an optional component of the Cerbos PDP that must be enabled by setting the `server.adminAPI.enabled` to `true` in the configuration. (See xref:configuration:server.adoc#admin-api[Admin API configuration] for details).  
+
+Authentication is mandatory for the Admin API. Currently only basic authentication with a single admin user is supported. If no credentials are configured using the xref:configuration:server.adoc#admin-api[configuration], the default username and password is `cerbos` and `cerbosAdmin`. 
+
+IMPORTANT: Always change the default credentials and enable TLS for the endpoint when enabling the Admin API. See xref:configuration:server.adoc[Server configuration] for more information.  
+
+== Add/update policies [`/admin/policy`]
+
+NOTE: This endpoint requires a mutable storage driver such as xref:configuration:storage.adoc#sqlite3[sqlite3] to be configured.
+
+.Request
+[source,json,linenums]
+----
+{
+  "policies": [ <1>
+    {
+      "apiVersion": "api.cerbos.dev/v1",
+      "principalPolicy": {
+        "principal": "donald_duck",
+        "version": "20210210",
+        "rules": [
+          {
+            "resource": "leave_request",
+            "actions": [
+              {
+                "action": "*",
+                "condition": {
+                  "match": {
+                    "expr": "request.resource.attr.dev_record == true"
+                  }
+                },
+                "effect": "EFFECT_ALLOW"
+              }
+            ]
+          },
+          {
+            "resource": "salary_record",
+            "actions": [
+              {
+                "action": "*",
+                "effect": "EFFECT_DENY"
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}
+----
+<1> List of policy definitions
+
+
+.Response
+[source,json,linenums]
+----
+{"success":{}}
+----

@@ -6,14 +6,13 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net/http"
 	"time"
 
 	"github.com/grpc-ecosystem/go-grpc-middleware/logging/zap/ctxzap"
 	"github.com/spf13/afero"
 	"go.uber.org/zap"
-	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/emptypb"
 
@@ -90,7 +89,7 @@ func (cs *CerbosPlaygroundService) PlaygroundEvaluate(ctx context.Context, req *
 		}, nil
 	}
 
-	eng, err := engine.NewEphemeral(ctx, compile.NewCompiler(ctx, disk.NewFromIndex(idx)))
+	eng, err := engine.NewEphemeral(ctx, compile.NewManager(ctx, disk.NewFromIndex(idx)))
 	if err != nil {
 		log.Error("Failed to create engine", zap.Error(err))
 		return nil, status.Errorf(codes.Internal, "failed to create engine")
@@ -144,7 +143,7 @@ func doCompile(ctx context.Context, log *zap.Logger, files []*requestv1.PolicyFi
 func buildIndex(ctx context.Context, log *zap.Logger, files []*requestv1.PolicyFile) (index.Index, error) {
 	fs := afero.NewMemMapFs()
 	for _, pf := range files {
-		if err := afero.WriteFile(fs, pf.FileName, pf.Contents, 0644); err != nil {
+		if err := afero.WriteFile(fs, pf.FileName, pf.Contents, 0644); err != nil { //nolint:gomnd
 			log.Error("Failed to create in-mem policy file", zap.String("policy_file", pf.FileName), zap.Error(err))
 			return nil, status.Errorf(codes.Internal, "failed to create policy file %s", pf.FileName)
 		}
@@ -191,7 +190,7 @@ func processLintErrors(ctx context.Context, errs *index.BuildError) *responsev1.
 		})
 	}
 
-	_ = grpc.SendHeader(ctx, metadata.Pairs("x-http-code", "400"))
+	SetHTTPStatusCode(ctx, http.StatusBadRequest)
 
 	return &responsev1.PlaygroundFailure{Errors: errors}
 }
@@ -206,7 +205,7 @@ func processCompileErrors(ctx context.Context, errs compile.ErrorList) *response
 		}
 	}
 
-	_ = grpc.SendHeader(ctx, metadata.Pairs("x-http-code", "400"))
+	SetHTTPStatusCode(ctx, http.StatusBadRequest)
 
 	return &responsev1.PlaygroundFailure{Errors: errors}
 }

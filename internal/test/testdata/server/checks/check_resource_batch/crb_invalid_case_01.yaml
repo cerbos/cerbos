@@ -1,0 +1,38 @@
+---
+description: "Empty actions"
+wantStatus:
+  httpStatusCode: 400
+  grpcStatusCode: 3
+wantError: true
+checkResourceBatch:
+  input: {
+    "requestId": "test",
+    "principal": {
+      "id": "john",
+      "policyVersion": "20210210",
+      "roles": [
+        "employee"
+      ],
+      "attr": {
+        "department": "marketing",
+        "geography": "GB",
+        "team": "design"
+      }
+    },
+    "resources": [
+      {
+        "resource": {
+          "kind": "leave_request",
+          "policyVersion": "20210210",
+          "id": "XX125",
+          "attr": {
+            "department": "marketing",
+            "geography": "GB",
+            "id": "XX125",
+            "owner": "john",
+            "team": "design"
+          }
+        }
+      }
+    ]
+  }

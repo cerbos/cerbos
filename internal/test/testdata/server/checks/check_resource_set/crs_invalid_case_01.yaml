@@ -1,0 +1,40 @@
+---
+description: "Missing resource kind"
+wantStatus:
+  httpStatusCode: 400
+  grpcStatusCode: 3
+wantError: true
+checkResourceSet:
+  input: {
+    "requestId": "test",
+    "actions": [
+      "view:public",
+      "approve"
+    ],
+    "principal": {
+      "id": "john",
+      "policyVersion": "20210210",
+      "roles": [
+        "employee"
+      ],
+      "attr": {
+        "department": "marketing",
+        "geography": "GB",
+        "team": "design"
+      }
+    },
+    "resource": {
+      "policyVersion": "20210210",
+      "instances": {
+        "XX125": {
+          "attr": {
+            "department": "marketing",
+            "geography": "GB",
+            "id": "XX125",
+            "owner": "john",
+            "team": "design"
+          }
+        }
+      }
+    }
+  }

@@ -6,7 +6,7 @@ wantErrJson: |-
     "loadFailures": null,
     "codegenFailures": [
       {
-        "error": "resource.yaml: Failed to generate code for rule #5 [Invalid match expression: undeclared reference to 'xxxx' (in container '')]",
+        "error": "resource.yaml: Failed to generate code for rule #1 [Invalid match expression: undeclared reference to 'xxxx' (in container '')]",
         "file": "resource.yaml"
       }
     ],
@@ -21,28 +21,11 @@ files:
     resourcePolicy:
       resource: leave_request
       rules:
-      - actions: ['*']
-        effect: EFFECT_ALLOW
-        roles:
-        - admin
-      - actions: ["create"]
-        derivedRoles:
-        - employee_that_owns_the_record
-        effect: EFFECT_ALLOW
-      - actions: ["view:*"]
-        derivedRoles:
-        - employee_that_owns_the_record
-        - direct_manager
-        effect: EFFECT_ALLOW
-      - actions: ["view:public"]
-        derivedRoles:
-        - any_employee
-        effect: EFFECT_ALLOW
       - actions: ["approve"]
         condition:
           match:
             expr: xxxx || request.resource.attr.status == "PENDING_APPROVAL"
-        derivedRoles:
+        roles:
         - direct_manager
         effect: EFFECT_ALLOW
       version: "20210210"

@@ -5,6 +5,7 @@ package internal
 import (
 	"context"
 	"fmt"
+	"os"
 
 	"github.com/doug-martin/goqu/v9"
 	"go.uber.org/zap"
@@ -16,12 +17,14 @@ import (
 )
 
 func NewDBStorage(ctx context.Context, db *goqu.Database) (*DBStorage, error) {
-	log, err := zap.NewStdLogAt(zap.L().Named("db"), zap.DebugLevel)
-	if err != nil {
-		return nil, err
-	}
+	if _, ok := os.LookupEnv("CERBOS_DEBUG_DB"); ok {
+		log, err := zap.NewStdLogAt(zap.L().Named("db"), zap.DebugLevel)
+		if err != nil {
+			return nil, err
+		}
 
-	db.Logger(log)
+		db.Logger(log)
+	}
 
 	return &DBStorage{
 		db:                  db,
@@ -40,12 +43,12 @@ func (s *DBStorage) AddOrUpdate(ctx context.Context, policies ...policy.Wrapper)
 		for i, p := range policies {
 			codegenResult, err := codegen.GenerateCode(p.Policy)
 			if err != nil {
-				return fmt.Errorf("failed to generate code for %s: %w", p.Name, err)
+				return storage.NewInvalidPolicyError(err, "failed to generate code for %s", p.Name)
 			}
 
 			genPolicy, err := codegenResult.ToRepr()
 			if err != nil {
-				return fmt.Errorf("failed to convert generated code of %s to representation: %w", p.Name, err)
+				return storage.NewInvalidPolicyError(err, "failed to serialize %s", p.Name)
 			}
 
 			policyRecord := Policy{

@@ -139,8 +139,12 @@ func (rg *RegoGen) DefaultEffectNoMatch() {
 	rg.line("default ", EffectsIdent, " = ", noMatchVal)
 }
 
-func (rg *RegoGen) EffectiveDerivedRoles() {
-	rg.line(EffectiveDerivedRolesIdent, " := { dr | ", derivedRolesMap, "[dr] == true }")
+func (rg *RegoGen) EffectiveDerivedRoles(hasImports bool) {
+	if hasImports {
+		rg.line(EffectiveDerivedRolesIdent, " := { dr | ", derivedRolesMap, "[dr] == true }")
+	} else {
+		rg.line(EffectiveDerivedRolesIdent, " := {  }")
+	}
 }
 
 func (rg *RegoGen) AddResourceRule(rule *policyv1.ResourceRule) error {

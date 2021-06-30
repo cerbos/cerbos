@@ -93,7 +93,7 @@ func mkEngine(tb testing.TB) (*Engine, context.CancelFunc) {
 	store, err := disk.NewStore(ctx, &disk.Conf{Directory: dir})
 	require.NoError(tb, err)
 
-	compiler := compile.NewCompiler(ctx, store)
+	compiler := compile.NewManager(ctx, store)
 
 	eng, err := New(ctx, compiler)
 	require.NoError(tb, err)

@@ -126,15 +126,15 @@ func (enc regoEncoder) marshalSingular(val protoreflect.Value, fd protoreflect.F
 	case protoreflect.StringKind:
 		return ast.StringTerm(val.String()), nil
 	case protoreflect.Int32Kind, protoreflect.Sint32Kind, protoreflect.Sfixed32Kind:
-		intVal := strconv.FormatInt(val.Int(), 10)
+		intVal := strconv.FormatInt(val.Int(), 10) //nolint:gomnd
 		return ast.NumberTerm(json.Number(intVal)), nil
 	case protoreflect.Uint32Kind, protoreflect.Fixed32Kind:
-		uintVal := strconv.FormatUint(val.Uint(), 10)
+		uintVal := strconv.FormatUint(val.Uint(), 10) //nolint:gomnd
 		return ast.NumberTerm(json.Number(uintVal)), nil
 	case protoreflect.Int64Kind, protoreflect.Sint64Kind, protoreflect.Uint64Kind, protoreflect.Sfixed64Kind, protoreflect.Fixed64Kind:
 		return ast.NumberTerm(json.Number(val.String())), nil
 	case protoreflect.FloatKind, protoreflect.DoubleKind:
-		floatVal := strconv.FormatFloat(val.Float(), 'e', -1, 64)
+		floatVal := strconv.FormatFloat(val.Float(), 'e', -1, 64) //nolint:gomnd
 		return ast.NumberTerm(json.Number(floatVal)), nil
 	case protoreflect.BytesKind:
 		return ast.StringTerm(base64.StdEncoding.EncodeToString(val.Bytes())), nil

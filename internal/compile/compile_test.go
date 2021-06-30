@@ -98,7 +98,7 @@ func BenchmarkCompile(b *testing.B) {
 }
 
 func generateCompilationUnit() *policy.CompilationUnit {
-	numDerivedRolesFiles := 10
+	numDerivedRolesFiles := 2
 	numDerivedRolesPerFile := 10
 
 	x := rand.Intn(100000) //nolint:gosec

@@ -40,13 +40,26 @@ message ServerTestCase {
         response.v1.PlaygroundEvaluateResponse want_response = 2;
     }
 
-    string description = 1;
-    bool want_error = 2;
+    message AdminAddOrUpdatePolicyCall {
+        request.v1.AddOrUpdatePolicyRequest input = 1;
+        response.v1.AddOrUpdatePolicyResponse want_response = 2;
+    }
+
+    message Status {
+        uint32 http_status_code = 1;
+        uint32 grpc_status_code = 2;
+    }
+
+    string name = 1;
+    string description = 2;
+    bool want_error = 3;
+    Status want_status = 4;
     oneof call_kind {
-        CheckResourceSetCall check_resource_set = 3;
-        CheckResourceBatchCall check_resource_batch = 4;
-        PlaygroundValidateCall playground_validate = 5;
-        PlaygroundEvaluateCall playground_evaluate = 6;
+        CheckResourceSetCall check_resource_set = 5;
+        CheckResourceBatchCall check_resource_batch = 6;
+        PlaygroundValidateCall playground_validate = 7;
+        PlaygroundEvaluateCall playground_evaluate = 8;
+        AdminAddOrUpdatePolicyCall admin_add_or_update_policy = 9;
     }
 }
 

@@ -493,6 +493,83 @@ var _ interface {
 	ErrorName() string
 } = PlaygroundEvaluateResponseValidationError{}
 
+// Validate checks the field values on AddOrUpdatePolicyResponse with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, an error is returned.
+func (m *AddOrUpdatePolicyResponse) Validate() error {
+	if m == nil {
+		return nil
+	}
+
+	if v, ok := interface{}(m.GetSuccess()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return AddOrUpdatePolicyResponseValidationError{
+				field:  "Success",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	return nil
+}
+
+// AddOrUpdatePolicyResponseValidationError is the validation error returned by
+// AddOrUpdatePolicyResponse.Validate if the designated constraints aren't met.
+type AddOrUpdatePolicyResponseValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e AddOrUpdatePolicyResponseValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e AddOrUpdatePolicyResponseValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e AddOrUpdatePolicyResponseValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e AddOrUpdatePolicyResponseValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e AddOrUpdatePolicyResponseValidationError) ErrorName() string {
+	return "AddOrUpdatePolicyResponseValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e AddOrUpdatePolicyResponseValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sAddOrUpdatePolicyResponse.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = AddOrUpdatePolicyResponseValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = AddOrUpdatePolicyResponseValidationError{}
+
 // Validate checks the field values on CheckResourceSetResponse_ActionEffectMap
 // with the rules defined in the proto definition for this message. If any
 // rules are violated, an error is returned.

@@ -5,6 +5,9 @@ include::partial$attributes.adoc[]
 Cerbos helps you super-charge your authorization implementation by writing context-aware access control policies for your application resources. Author access rules using an intuitive YAML configuration language, use your Git-ops infrastructure to test and deploy them and, make simple API requests to the Cerbos PDP to evaluate the policies and make dynamic access decisions.
 
 
+image::how_cerbos_works.png[How Cerbos works]
+
+
 Iterate quickly:: Instantly update your access policies without re-compiling or re-deploying your application. Let your product owner tweak access policies on their own while you focus on more interesting work. 
 Increase visibility:: The traditional practice of weaving authorization logic into application code effectively obscures the logic and complicates the source code. Documentation is notoriously difficult to keep up-to-date as the system evolves — inevitably requiring a code spelunking session to answer questions or update the documentation. This is often tedious, error-prone and requires valuable developer time. The simple policy-as-configuration approach provided by Cerbos helps even non-developers easily understand the authorization logic of the system. Best of all, it is always guaranteed to be up-to-date. 
 Don't repeat yourself:: In modern microservice environments it is quite common to share some resources between different services developed by different teams (e.g. a bank account in a banking system). These services could even be developed using different programming languages. Cerbos provides a language-agnostic API to share common access control policies between these disparate services — ensuring instant consistency without the need to coordinate development and deployment efforts across many teams.
@@ -20,4 +23,6 @@ Cerbos Policy Decision Point (PDP) is built for modern, containerised microservi
 * Compile the policies and run tests using the Cerbos CLI.
 * Follow your standard development process to push the changes to production. (E.g. create pull request, run CI tests, get approval and merge to prod branch)
 * Cerbos will automatically pull the latest commits from the production branch and update the policies in place without requiring a restart. Your changes are now rolled out! 
+
+
 

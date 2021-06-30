@@ -94,3 +94,26 @@ storage:
       user: git
       privateKeyFile: ${HOME}/.ssh/id_rsa
 ----
+
+[#sqlite3]
+== SQLite3 Driver
+
+Cerbos has experimental support for using SQLite3 as a policy repository. Currently this is the only storage driver that can be used in conjunction with the xref:server.adoc#admin-api[Admin API] to add or update policies via an API call.
+
+.In-memory ephemeral database
+[source,yaml,linenums]
+----
+storage:
+  driver: "sqlite3"
+  sqlite3:
+    dsn: ":memory:"
+----
+
+.On-disk persistent database
+[source,yaml,linenums]
+----
+storage:
+  driver: "sqlite3"
+  sqlite3:
+    dsn: "file:/tmp/cerbos.sqlite?mode=rwc&cache=shared&_fk=true"
+----

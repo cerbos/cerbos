@@ -40,11 +40,11 @@ wantOutputs: [
     "actions": {
       "view:public": {
         "effect": "EFFECT_ALLOW",
-        "policy": "leave_request:20210210"
+        "policy": "resource.leave_request.v20210210"
       },
       "approve": {
         "effect": "EFFECT_DENY",
-        "policy": "leave_request:20210210"
+        "policy": "resource.leave_request.v20210210"
       }
     },
     "effectiveDerivedRoles": [

@@ -5,3 +5,6 @@ docs/build/
 cerbos.bin
 hack/dev/tls.crt
 hack/dev/tls.key
+
+# Local Netlify folder
+.netlify

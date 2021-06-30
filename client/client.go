@@ -42,38 +42,38 @@ type config struct {
 	retryTimeout   time.Duration
 }
 
-type ClientOpt func(*config)
+type Opt func(*config)
 
 // WithPlaintext configures the client to connect over h2c.
-func WithPlaintext() ClientOpt {
+func WithPlaintext() Opt {
 	return func(c *config) {
 		c.plaintext = true
 	}
 }
 
 // WithTLSAuthority overrides the remote server authority if it is different from what is provided in the address.
-func WithTLSAuthority(authority string) ClientOpt {
+func WithTLSAuthority(authority string) Opt {
 	return func(c *config) {
 		c.tlsAuthority = authority
 	}
 }
 
 // WithTLSInsecure enables skipping TLS certificate verification.
-func WithTLSInsecure() ClientOpt {
+func WithTLSInsecure() Opt {
 	return func(c *config) {
 		c.tlsInsecure = true
 	}
 }
 
 // WithTLSCACert sets the CA certificate chain to use for certificate verification.
-func WithTLSCACert(certPath string) ClientOpt {
+func WithTLSCACert(certPath string) Opt {
 	return func(c *config) {
 		c.tlsCACert = certPath
 	}
 }
 
 // WithTLSClientCert sets the client certificate to use to authenticate to the server.
-func WithTLSClientCert(cert, key string) ClientOpt {
+func WithTLSClientCert(cert, key string) Opt {
 	return func(c *config) {
 		c.tlsClientCert = cert
 		c.tlsClientKey = key
@@ -81,28 +81,28 @@ func WithTLSClientCert(cert, key string) ClientOpt {
 }
 
 // WithConnectTimeout sets the connection establishment timeout.
-func WithConnectTimeout(timeout time.Duration) ClientOpt {
+func WithConnectTimeout(timeout time.Duration) Opt {
 	return func(c *config) {
 		c.connectTimeout = timeout
 	}
 }
 
 // WithMaxRetries sets the maximum number of retries per call.
-func WithMaxRetries(retries uint) ClientOpt {
+func WithMaxRetries(retries uint) Opt {
 	return func(c *config) {
 		c.maxRetries = retries
 	}
 }
 
 // WithRetryTimeout sets the timeout per retry attempt.
-func WithRetryTimeout(timeout time.Duration) ClientOpt {
+func WithRetryTimeout(timeout time.Duration) Opt {
 	return func(c *config) {
 		c.retryTimeout = timeout
 	}
 }
 
 // New creates a new Cerbos client.
-func New(address string, opts ...ClientOpt) (Client, error) {
+func New(address string, opts ...Opt) (Client, error) {
 	conf := config{
 		address:        address,
 		connectTimeout: 30 * time.Second, //nolint:gomnd

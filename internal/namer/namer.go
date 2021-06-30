@@ -47,7 +47,7 @@ func (m *ModuleID) Scan(src interface{}) error {
 }
 
 func (m *ModuleID) String() string {
-	return strconv.FormatUint(m.hash, 10)
+	return strconv.FormatUint(m.hash, 10) //nolint:gomnd
 }
 
 // GenModuleID generates a short ID for the module.
@@ -72,6 +72,11 @@ func ModuleName(p *policyv1.Policy) string {
 	default:
 		panic(fmt.Errorf("unknown policy type %T", pt))
 	}
+}
+
+// PolicyKey returns a human-friendly identifier that can be used to refer to the policy in logs and other outputs.
+func PolicyKey(p *policyv1.Policy) string {
+	return strings.TrimPrefix(ModuleName(p), "cerbos.")
 }
 
 // ResourcePolicyModuleName returns the module name for the resource policy with given resource and version.

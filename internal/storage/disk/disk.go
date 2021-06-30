@@ -4,7 +4,9 @@ package disk
 
 import (
 	"context"
+	"fmt"
 	"os"
+	"path/filepath"
 
 	"github.com/cerbos/cerbos/internal/config"
 	"github.com/cerbos/cerbos/internal/namer"
@@ -34,14 +36,19 @@ type Store struct {
 }
 
 func NewStore(ctx context.Context, conf *Conf) (*Store, error) {
-	idx, err := index.Build(ctx, os.DirFS(conf.Directory), index.WithDiskCache(conf.ScratchDir))
+	dir, err := filepath.Abs(conf.Directory)
+	if err != nil {
+		return nil, fmt.Errorf("failed to determine absolute path of directory [%s]: %w", conf.Directory, err)
+	}
+
+	idx, err := index.Build(ctx, os.DirFS(dir), index.WithDiskCache(conf.ScratchDir))
 	if err != nil {
 		return nil, err
 	}
 
 	s := &Store{idx: idx, SubscriptionManager: storage.NewSubscriptionManager(ctx)}
 	if conf.WatchForChanges {
-		if err := watchDir(ctx, conf.Directory, s.idx, s.SubscriptionManager); err != nil {
+		if err := watchDir(ctx, dir, s.idx, s.SubscriptionManager, defaultCooldownPeriod); err != nil {
 			return nil, err
 		}
 	}

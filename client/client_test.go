@@ -17,18 +17,23 @@ import (
 	"github.com/cerbos/cerbos/internal/compile"
 	"github.com/cerbos/cerbos/internal/engine"
 	"github.com/cerbos/cerbos/internal/server"
+	"github.com/cerbos/cerbos/internal/storage"
 	"github.com/cerbos/cerbos/internal/storage/disk"
-	"github.com/cerbos/cerbos/internal/svc"
 	"github.com/cerbos/cerbos/internal/test"
 )
 
 func TestClient(t *testing.T) {
 	test.SkipIfGHActions(t) // TODO (cell) Servers don't work inside GH Actions for some reason.
 
-	eng, cancelFunc := mkEngine(t)
+	dir := test.PathToDir(t, "store")
+	ctx, cancelFunc := context.WithCancel(context.Background())
 	defer cancelFunc()
 
-	cerbosSvc := svc.NewCerbosService(eng)
+	store, err := disk.NewStore(ctx, &disk.Conf{Directory: dir, ScratchDir: t.TempDir()})
+	require.NoError(t, err)
+
+	eng, err := engine.New(ctx, compile.NewManager(ctx, store))
+	require.NoError(t, err)
 
 	t.Run("with_tls", func(t *testing.T) {
 		testdataDir := test.PathToDir(t, "server")
@@ -46,7 +51,7 @@ func TestClient(t *testing.T) {
 			ctx, cancelFunc := context.WithCancel(context.Background())
 			defer cancelFunc()
 
-			startServer(ctx, conf, cerbosSvc)
+			startServer(ctx, conf, store, eng)
 
 			c, err := client.New(conf.GRPCListenAddr, client.WithTLSInsecure())
 			require.NoError(t, err)
@@ -69,7 +74,7 @@ func TestClient(t *testing.T) {
 			ctx, cancelFunc := context.WithCancel(context.Background())
 			defer cancelFunc()
 
-			startServer(ctx, conf, cerbosSvc)
+			startServer(ctx, conf, store, eng)
 
 			c, err := client.New(conf.GRPCListenAddr, client.WithTLSInsecure())
 			require.NoError(t, err)
@@ -88,7 +93,7 @@ func TestClient(t *testing.T) {
 			ctx, cancelFunc := context.WithCancel(context.Background())
 			defer cancelFunc()
 
-			startServer(ctx, conf, cerbosSvc)
+			startServer(ctx, conf, store, eng)
 
 			c, err := client.New(conf.GRPCListenAddr, client.WithPlaintext())
 			require.NoError(t, err)
@@ -107,7 +112,7 @@ func TestClient(t *testing.T) {
 			ctx, cancelFunc := context.WithCancel(context.Background())
 			defer cancelFunc()
 
-			startServer(ctx, conf, cerbosSvc)
+			startServer(ctx, conf, store, eng)
 
 			c, err := client.New(conf.GRPCListenAddr, client.WithPlaintext())
 			require.NoError(t, err)
@@ -180,22 +185,6 @@ func testGRPCClient(c client.Client) func(*testing.T) {
 	}
 }
 
-func mkEngine(t *testing.T) (*engine.Engine, context.CancelFunc) {
-	t.Helper()
-
-	dir := test.PathToDir(t, "store")
-
-	ctx, cancelFunc := context.WithCancel(context.Background())
-
-	store, err := disk.NewStore(ctx, &disk.Conf{Directory: dir, ScratchDir: t.TempDir()})
-	require.NoError(t, err)
-
-	eng, err := engine.New(ctx, compile.NewCompiler(ctx, store))
-	require.NoError(t, err)
-
-	return eng, cancelFunc
-}
-
 func getFreeListenAddr(t *testing.T) string {
 	t.Helper()
 
@@ -208,10 +197,10 @@ func getFreeListenAddr(t *testing.T) string {
 	return addr
 }
 
-func startServer(ctx context.Context, conf *server.Conf, cerbosSvc *svc.CerbosService) {
+func startServer(ctx context.Context, conf *server.Conf, store storage.Store, eng *engine.Engine) {
 	s := server.NewServer(conf)
 	go func() {
-		if err := s.Start(ctx, cerbosSvc, false); err != nil {
+		if err := s.Start(ctx, store, eng, false); err != nil {
 			panic(err)
 		}
 	}()

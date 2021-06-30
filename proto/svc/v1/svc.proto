@@ -6,6 +6,7 @@ package svc.v1;
 
 option go_package = "github.com/cerbos/cerbos/internal/genpb/svc/v1;svcv1";
 option java_package = "dev.cerbos.api.v1.svc";
+option csharp_namespace = "Cerbos.Api.V1.Svc";
 
 import "google/api/annotations.proto";
 import "protoc-gen-openapiv2/options/annotations.proto";
@@ -25,6 +26,14 @@ option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_swagger) = {
 	schemes: HTTPS;
 	consumes: "application/json";
 	produces: "application/json";
+    security_definitions: {
+	    security: {
+			key: "BasicAuth";
+			value: {
+				type: TYPE_BASIC;
+			}
+		}
+    };
 };
 
 service CerbosService {
@@ -56,6 +65,32 @@ service CerbosService {
                 value: {
                     bool_value: true;
                 }
+            }
+        };
+    }
+}
+
+service CerbosAdminService {
+	option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_tag) = {
+		description: "Cerbos administration service"
+	};
+
+    rpc AddOrUpdatePolicy(request.v1.AddOrUpdatePolicyRequest) returns (response.v1.AddOrUpdatePolicyResponse) {
+        option (google.api.http) = {
+            post: "/admin/policy",
+            body: "*",
+            additional_bindings: {
+                put: "/admin/policy",
+                body: "*"
+            }
+        };
+        option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+            summary: "Add or update policies",
+            security: {
+                security_requirement: {
+                    key: "BasicAuth";
+                    value: {};
+                }    
             }
         };
     }

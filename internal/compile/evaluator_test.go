@@ -101,6 +101,7 @@ func TestProcessResultSet(t *testing.T) {
 				},
 			},
 			want: &EvalResult{
+				PolicyKey: "test",
 				Effects: map[string]sharedv1.Effect{
 					"a": sharedv1.Effect_EFFECT_ALLOW,
 					"b": sharedv1.Effect_EFFECT_DENY,
@@ -164,7 +165,7 @@ func TestProcessResultSet(t *testing.T) {
 						{
 							Value: map[string]interface{}{
 								codegen.EffectsIdent:               map[string]interface{}{"a": codegen.AllowEffectIdent},
-								codegen.EffectiveDerivedRolesIdent: []interface{}{},
+								codegen.EffectiveDerivedRolesIdent: map[string]interface{}{},
 							},
 							Text: namer.QueryForPrincipal("x", "default"),
 						},
@@ -172,8 +173,9 @@ func TestProcessResultSet(t *testing.T) {
 				},
 			},
 			want: &EvalResult{
+				PolicyKey:             "test",
 				Effects:               map[string]sharedv1.Effect{"a": sharedv1.Effect_EFFECT_ALLOW},
-				EffectiveDerivedRoles: []string{},
+				EffectiveDerivedRoles: nil,
 			},
 		},
 		{
@@ -192,6 +194,7 @@ func TestProcessResultSet(t *testing.T) {
 				},
 			},
 			want: &EvalResult{
+				PolicyKey:             "test",
 				Effects:               map[string]sharedv1.Effect{"a": sharedv1.Effect_EFFECT_ALLOW},
 				EffectiveDerivedRoles: []string{"wibble", "wobble", "fubble"},
 			},
@@ -203,7 +206,7 @@ func TestProcessResultSet(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			have, err := processResultSet(tc.resultSet)
+			have, err := processResultSet("test", tc.resultSet)
 			if tc.wantErr {
 				require.Error(t, err)
 				require.ErrorIs(t, err, ErrUnexpectedResult)

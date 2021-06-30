@@ -2,6 +2,7 @@ DEV_DIR := hack/dev
 PROTOSET := cerbos.bin
 GRPC_PORT := 3593
 HTTP_PORT := 3592
+PERF_DURATION := 2m
 
 $(DEV_DIR)/tls.crt:
 	@  openssl req -x509 -sha256 -nodes -newkey rsa:4096 -days 365 -subj "/CN=cerbos.local" -addext "subjectAltName=DNS:cerbos.local" -keyout $(DEV_DIR)/tls.key -out $(DEV_DIR)/tls.crt
@@ -9,6 +10,10 @@ $(DEV_DIR)/tls.crt:
 .PHONY: dev-server
 dev-server: $(DEV_DIR)/tls.crt
 	@ go run main.go server --log-level=DEBUG --debug-listen-addr=":6666" --zpages-enabled --config=$(DEV_DIR)/conf.secure.yaml
+
+.PHONY: perf-server
+perf-server: $(DEV_DIR)/tls.crt
+	@ go run main.go server --log-level=ERROR --debug-listen-addr=":6666" --zpages-enabled --config=$(DEV_DIR)/conf.secure.yaml --set=tracing.sampleProbability=0 --set=storage.disk.watchForChanges=false
 
 .PHONY: dev-server-insecure
 dev-server-insecure:
@@ -117,14 +122,14 @@ check-http-insecure:
 		echo "";)
 
 	@ $(foreach REQ_FILE,\
-		$(wildcard $(DEV_DIR)/requests/playground/validate/*.json),\
+		$(wildcard $(DEV_DIR)/requests/playground_validate/*.json),\
 		echo "";\
 		echo $(REQ_FILE); \
 		curl http://localhost:$(HTTP_PORT)/api/playground/validate?pretty -d @$(REQ_FILE);\
 		echo "";)
 
 	@ $(foreach REQ_FILE,\
-		$(wildcard $(DEV_DIR)/requests/playground/evaluate/*.json),\
+		$(wildcard $(DEV_DIR)/requests/playground_evaluate/*.json),\
 		echo "";\
 		echo $(REQ_FILE); \
 		curl http://localhost:$(HTTP_PORT)/api/playground/evaluate?pretty -d @$(REQ_FILE);\
@@ -135,13 +140,25 @@ perf: $(GHZ)
 	@ $(foreach REQ_FILE,\
 		$(wildcard $(DEV_DIR)/requests/check_resource_set/*.json),\
 		echo $(REQ_FILE); \
-		$(GHZ) --cname=cerbos.local --skipTLS -n 500 --call svc.v1.CerbosService/CheckResourceSet -D $(REQ_FILE) localhost:$(GRPC_PORT);\
+		$(GHZ) --cname=cerbos.local --skipTLS \
+			--concurrency-start=10 \
+			--concurrency-end=100 \
+			--concurrency-step=5 \
+			--concurrency-schedule=line \
+			--duration=$(PERF_DURATION) \
+			--call svc.v1.CerbosService/CheckResourceSet -D $(REQ_FILE) localhost:$(GRPC_PORT);\
 		echo "";)
 
 	@ $(foreach REQ_FILE,\
 		$(wildcard $(DEV_DIR)/requests/check_resource_batch/*.json),\
 		echo $(REQ_FILE); \
-		$(GHZ) --cname=cerbos.local --skipTLS -n 500 --call svc.v1.CerbosService/CheckResourceBatch -D $(REQ_FILE) localhost:$(GRPC_PORT);\
+		$(GHZ) --cname=cerbos.local --skipTLS \
+			--concurrency-start=10 \
+			--concurrency-end=100 \
+			--concurrency-step=5 \
+			--concurrency-schedule=line \
+			--duration=$(PERF_DURATION) \
+			--call svc.v1.CerbosService/CheckResourceBatch -D $(REQ_FILE) localhost:$(GRPC_PORT);\
 		echo "";)
 
 .PHONY: jaeger

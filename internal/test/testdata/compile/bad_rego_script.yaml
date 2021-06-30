@@ -1,7 +1,7 @@
 ---
 wantErrors:
-  - "resource_policies/leave_request_20210210.yaml: [compile error] rego_unsafe_var_error: var resource is unsafe"
   - "resource_policies/leave_request_20210210.yaml: [compile error] rego_unsafe_var_error: var wibble is unsafe"
+  - "derived_roles/my_derived_roles.yaml: [compile error] rego_unsafe_var_error: var resource is unsafe"
 mainDef: "resource_policies/leave_request_20210210.yaml"
 inputDefs:
   "resource_policies/leave_request_20210210.yaml":

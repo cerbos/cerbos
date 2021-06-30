@@ -1,0 +1,51 @@
+---
+description: "No metadata"
+wantStatus:
+  httpStatusCode: 200
+  grpcStatusCode: 0
+checkResourceSet:
+  input: {
+    "requestId": "test",
+    "actions": [
+      "view:public",
+      "approve"
+    ],
+    "principal": {
+      "id": "john",
+      "policyVersion": "20210210",
+      "roles": [
+        "employee"
+      ],
+      "attr": {
+        "department": "marketing",
+        "geography": "GB",
+        "team": "design"
+      }
+    },
+    "resource": {
+      "kind": "leave_request",
+      "policyVersion": "20210210",
+      "instances": {
+        "XX125": {
+          "attr": {
+            "department": "marketing",
+            "geography": "GB",
+            "id": "XX125",
+            "owner": "john",
+            "team": "design"
+          }
+        }
+      }
+    }
+  }
+  wantResponse: {
+    "requestId": "test",
+    "resourceInstances": {
+      "XX125": {
+        "actions": {
+          "view:public": "EFFECT_ALLOW",
+          "approve": "EFFECT_DENY"
+        }
+      }
+    }
+  }

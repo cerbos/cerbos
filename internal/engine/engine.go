@@ -34,56 +34,44 @@ const (
 	loggerName                   = "engine"
 	maxQueryCacheSizeBytes int64 = 10 * 1024 * 1024 // 10 MiB
 	noPolicyMatch                = "NO_MATCH"
-	numWorkers                   = 16
-	parallelismThreshold         = 3
+	parallelismThreshold         = 2
+	workerQueueSize              = 4
 	workerResetJitter            = 1 << 4
 	workerResetThreshold         = 1 << 16
 )
-
-type workOut struct {
-	index  int
-	result *enginev1.CheckOutput
-	err    error
-}
-
-type workIn struct {
-	index int
-	ctx   context.Context
-	input *enginev1.CheckInput
-	ec    *evaluationCtx
-	out   chan<- workOut
-}
 
 type Engine struct {
 	conf        *Conf
 	workerIndex uint64
 	workerPool  []chan<- workIn
-	compiler    *compile.Compiler
+	compileMgr  *compile.Manager
 	queryCache  cache.InterQueryCache
 }
 
-func New(ctx context.Context, compiler *compile.Compiler) (*Engine, error) {
-	engine, err := newEngine(ctx, compiler)
+func New(ctx context.Context, compileMgr *compile.Manager) (*Engine, error) {
+	engine, err := newEngine(compileMgr)
 	if err != nil {
 		return nil, err
 	}
 
-	engine.workerPool = make([]chan<- workIn, numWorkers)
+	if numWorkers := engine.conf.NumWorkers; numWorkers > 0 {
+		engine.workerPool = make([]chan<- workIn, numWorkers)
 
-	for i := 0; i < numWorkers; i++ {
-		inputChan := make(chan workIn, 1)
-		engine.workerPool[i] = inputChan
-		go engine.startWorker(ctx, i, inputChan)
+		for i := 0; i < int(numWorkers); i++ {
+			inputChan := make(chan workIn, workerQueueSize)
+			engine.workerPool[i] = inputChan
+			go engine.startWorker(ctx, i, inputChan)
+		}
 	}
 
 	return engine, nil
 }
 
-func NewEphemeral(ctx context.Context, compiler *compile.Compiler) (*Engine, error) {
-	return newEngine(ctx, compiler)
+func NewEphemeral(ctx context.Context, compileMgr *compile.Manager) (*Engine, error) {
+	return newEngine(compileMgr)
 }
 
-func newEngine(_ context.Context, compiler *compile.Compiler) (*Engine, error) {
+func newEngine(compileMgr *compile.Manager) (*Engine, error) {
 	conf := &Conf{}
 	if err := config.GetSection(conf); err != nil {
 		return nil, err
@@ -98,7 +86,7 @@ func newEngine(_ context.Context, compiler *compile.Compiler) (*Engine, error) {
 
 	engine := &Engine{
 		conf:       conf,
-		compiler:   compiler,
+		compileMgr: compileMgr,
 		queryCache: queryCache,
 	}
 
@@ -123,7 +111,7 @@ func (engine *Engine) startWorker(ctx context.Context, num int, inputChan <-chan
 				return
 			}
 
-			result, err := engine.evaluate(work.ctx, work.input, work.ec)
+			result, err := engine.evaluate(work.ctx, work.input)
 			work.out <- workOut{index: work.index, result: result, err: err}
 		}
 	}
@@ -134,6 +122,7 @@ func (engine *Engine) startWorker(ctx context.Context, num int, inputChan <-chan
 }
 
 func (engine *Engine) submitWork(ctx context.Context, work workIn) error {
+	numWorkers := uint64(engine.conf.NumWorkers)
 	for {
 		index := int(atomic.AddUint64(&engine.workerIndex, 1) % numWorkers)
 		select {
@@ -145,154 +134,76 @@ func (engine *Engine) submitWork(ctx context.Context, work workIn) error {
 	}
 }
 
-func (engine *Engine) getPrincipalPolicyCheck(ctx context.Context, principal, policyVersion, policyKey string) (*check, error) {
-	principalModID := namer.PrincipalPolicyModuleID(principal, policyVersion)
-
-	eval, err := engine.compiler.GetEvaluator(ctx, principalModID)
-	if err != nil {
-		return nil, err
-	}
-
-	if eval != nil {
-		return &check{
-			policyKey: policyKey,
-			eval:      eval,
-			query:     namer.QueryForPrincipal(principal, policyVersion),
-		}, nil
-	}
-
-	return nil, nil
-}
-
-func (engine *Engine) getResourcePolicyCheck(ctx context.Context, resource, policyVersion, policyKey string) (*check, error) {
-	resourceModID := namer.ResourcePolicyModuleID(resource, policyVersion)
-
-	eval, err := engine.compiler.GetEvaluator(ctx, resourceModID)
-	if err != nil {
-		return nil, err
-	}
-
-	if eval != nil {
-		return &check{
-			policyKey: policyKey,
-			eval:      eval,
-			query:     namer.QueryForResource(resource, policyVersion),
-		}, nil
-	}
-
-	return nil, nil
-}
-
-func (engine *Engine) policyAttr(name, version string) (pName, pVersion, pKey string) {
-	pName = name
-	pVersion = version
-
-	if version == "" {
-		pVersion = engine.conf.DefaultPolicyVersion
-	}
-
-	return pName, pVersion, fmt.Sprintf("%s:%s", pName, pVersion)
-}
-
 func (engine *Engine) Check(ctx context.Context, inputs []*enginev1.CheckInput) ([]*enginev1.CheckOutput, error) {
 	return measureCheckLatency(len(inputs), func() ([]*enginev1.CheckOutput, error) {
 		ctx, span := tracing.StartSpan(ctx, "engine.Check")
 		defer span.End()
 
-		evalContexts, err := engine.buildEvaluationContexts(ctx, inputs)
+		// if the number of inputs is less than the threshold, do a serial execution as it is usually faster.
+		// ditto if the worker pool is not initialized
+		if len(inputs) < parallelismThreshold || len(engine.workerPool) == 0 {
+			return engine.checkSerial(ctx, inputs)
+		}
+
+		return engine.checkParallel(ctx, inputs)
+	})
+}
+
+func (engine *Engine) checkSerial(ctx context.Context, inputs []*enginev1.CheckInput) ([]*enginev1.CheckOutput, error) {
+	outputs := make([]*enginev1.CheckOutput, len(inputs))
+
+	for i, input := range inputs {
+		o, err := engine.evaluate(ctx, input)
 		if err != nil {
 			return nil, err
 		}
 
-		outputs := make([]*enginev1.CheckOutput, len(inputs))
-
-		// if the number of inputs is less than the threshold, do a serial execution as it is usually faster.
-		// ditto if the worker pool is not initialized
-		if len(inputs) <= parallelismThreshold || len(engine.workerPool) == 0 {
-			for i, ec := range evalContexts {
-				o, err := engine.evaluate(ctx, inputs[i], ec)
-				if err != nil {
-					return nil, err
-				}
-
-				outputs[i] = o
-			}
-
-			return outputs, nil
-		}
-
-		// evaluate in parallel
-		collector := make(chan workOut, len(inputs))
-
-		for i, ec := range evalContexts {
-			if err := engine.submitWork(ctx, workIn{index: i, ctx: ctx, input: inputs[i], ec: ec, out: collector}); err != nil {
-				return nil, err
-			}
-		}
-
-		for i := 0; i < len(evalContexts); i++ {
-			select {
-			case <-ctx.Done():
-				return nil, ctx.Err()
-			case wo := <-collector:
-				if wo.err != nil {
-					return nil, wo.err
-				}
-
-				outputs[wo.index] = wo.result
-			}
-		}
-
-		return outputs, nil
-	})
-}
-
-func (engine *Engine) buildEvaluationContexts(ctx context.Context, inputs []*enginev1.CheckInput) ([]*evaluationCtx, error) {
-	principalPolicyChecks := map[string]*check{}
-	resourcePolicyChecks := map[string]*check{}
-	evalContexts := make([]*evaluationCtx, len(inputs))
-
-	for i, c := range inputs {
-		evalContexts[i] = &evaluationCtx{queryCache: engine.queryCache}
-
-		// get the principal policy check
-		ppName, ppVersion, ppKey := engine.policyAttr(c.Principal.Id, c.Principal.PolicyVersion)
-		ppCheck, ok := principalPolicyChecks[ppKey]
-		if !ok {
-			pc, err := engine.getPrincipalPolicyCheck(ctx, ppName, ppVersion, ppKey)
-			if err != nil {
-				return nil, fmt.Errorf("failed to get check for [%s]: %w", ppKey, err)
-			}
-			ppCheck = pc
-			principalPolicyChecks[ppKey] = ppCheck
-		}
-		evalContexts[i].addCheck(ppCheck)
-
-		// get the resource policy check
-		rpName, rpVersion, rpKey := engine.policyAttr(c.Resource.Kind, c.Resource.PolicyVersion)
-		rpCheck, ok := resourcePolicyChecks[rpKey]
-		if !ok {
-			rc, err := engine.getResourcePolicyCheck(ctx, rpName, rpVersion, rpKey)
-			if err != nil {
-				return nil, fmt.Errorf("failed to get check for [%s]: %w", rpKey, err)
-			}
-			rpCheck = rc
-			resourcePolicyChecks[rpKey] = rpCheck
-		}
-		evalContexts[i].addCheck(rpCheck)
+		outputs[i] = o
 	}
 
-	return evalContexts, nil
+	return outputs, nil
 }
 
-func (engine *Engine) evaluate(ctx context.Context, input *enginev1.CheckInput, ec *evaluationCtx) (*enginev1.CheckOutput, error) {
+func (engine *Engine) checkParallel(ctx context.Context, inputs []*enginev1.CheckInput) ([]*enginev1.CheckOutput, error) {
+	outputs := make([]*enginev1.CheckOutput, len(inputs))
+	collector := make(chan workOut, len(inputs))
+
+	for i, input := range inputs {
+		if err := engine.submitWork(ctx, workIn{index: i, ctx: ctx, input: input, out: collector}); err != nil {
+			return nil, err
+		}
+	}
+
+	for i := 0; i < len(inputs); i++ {
+		select {
+		case <-ctx.Done():
+			return nil, ctx.Err()
+		case wo := <-collector:
+			if wo.err != nil {
+				return nil, wo.err
+			}
+
+			outputs[wo.index] = wo.result
+		}
+	}
+
+	return outputs, nil
+}
+
+func (engine *Engine) evaluate(ctx context.Context, input *enginev1.CheckInput) (*enginev1.CheckOutput, error) {
 	ctx, span := tracing.StartSpan(ctx, "engine.EvaluateInput")
 	defer span.End()
 
 	span.AddAttributes(trace.StringAttribute("request_id", input.RequestId), trace.StringAttribute("resource_id", input.Resource.Id))
 
+	// exit early if the context is cancelled
 	if err := ctx.Err(); err != nil {
 		tracing.MarkFailed(span, http.StatusRequestTimeout, "Context cancelled", err)
+		return nil, err
+	}
+
+	ec, err := engine.buildEvaluationCtx(ctx, input)
+	if err != nil {
 		return nil, err
 	}
 
@@ -314,12 +225,10 @@ func (engine *Engine) evaluate(ctx context.Context, input *enginev1.CheckInput, 
 		return output, nil
 	}
 
-	log := logging.FromContext(ctx)
-
 	// convert input to AST
 	inputAST, err := toAST(input)
 	if err != nil {
-		log.Error("Failed to convert input into internal representation", zap.Error(err))
+		logging.FromContext(ctx).Error("Failed to convert input into internal representation", zap.Error(err))
 		tracing.MarkFailed(span, trace.StatusCodeInvalidArgument, "Failed to convert input into internal representation", err)
 
 		return nil, fmt.Errorf("failed to convert input into internal representation: %w", err)
@@ -328,7 +237,7 @@ func (engine *Engine) evaluate(ctx context.Context, input *enginev1.CheckInput, 
 	// evaluate the policies
 	result, err := ec.evaluate(ctx, inputAST)
 	if err != nil {
-		log.Error("Failed to evaluate policies", zap.Error(err))
+		logging.FromContext(ctx).Error("Failed to evaluate policies", zap.Error(err))
 
 		return nil, fmt.Errorf("failed to evaluate policies: %w", err)
 	}
@@ -354,15 +263,58 @@ func (engine *Engine) evaluate(ctx context.Context, input *enginev1.CheckInput, 
 	return output, nil
 }
 
+func (engine *Engine) buildEvaluationCtx(ctx context.Context, input *enginev1.CheckInput) (*evaluationCtx, error) {
+	ec := &evaluationCtx{queryCache: engine.queryCache}
+
+	// get the principal policy check
+	ppName, ppVersion := engine.policyAttr(input.Principal.Id, input.Principal.PolicyVersion)
+	ppCheck, err := engine.getPrincipalPolicyEvaluator(ctx, ppName, ppVersion)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get check for [%s.%s]: %w", ppName, ppVersion, err)
+	}
+	ec.addCheck(ppCheck)
+
+	// get the resource policy check
+	rpName, rpVersion := engine.policyAttr(input.Resource.Kind, input.Resource.PolicyVersion)
+	rpCheck, err := engine.getResourcePolicyEvaluator(ctx, rpName, rpVersion)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get check for [%s.%s]: %w", rpName, rpVersion, err)
+	}
+	ec.addCheck(rpCheck)
+
+	return ec, nil
+}
+
+func (engine *Engine) getPrincipalPolicyEvaluator(ctx context.Context, principal, policyVersion string) (compile.Evaluator, error) {
+	principalModID := namer.PrincipalPolicyModuleID(principal, policyVersion)
+	return engine.compileMgr.GetEvaluator(ctx, principalModID)
+}
+
+func (engine *Engine) getResourcePolicyEvaluator(ctx context.Context, resource, policyVersion string) (compile.Evaluator, error) {
+	resourceModID := namer.ResourcePolicyModuleID(resource, policyVersion)
+	return engine.compileMgr.GetEvaluator(ctx, resourceModID)
+}
+
+func (engine *Engine) policyAttr(name, version string) (pName, pVersion string) {
+	pName = name
+	pVersion = version
+
+	if version == "" {
+		pVersion = engine.conf.DefaultPolicyVersion
+	}
+
+	return pName, pVersion
+}
+
 type evaluationCtx struct {
 	numChecks  int
-	checks     [2]*check
+	checks     [2]compile.Evaluator
 	queryCache cache.InterQueryCache
 }
 
-func (ec *evaluationCtx) addCheck(c *check) {
-	if c != nil {
-		ec.checks[ec.numChecks] = c
+func (ec *evaluationCtx) addCheck(eval compile.Evaluator) {
+	if eval != nil {
+		ec.checks[ec.numChecks] = eval
 		ec.numChecks++
 	}
 }
@@ -382,17 +334,15 @@ func (ec *evaluationCtx) evaluate(ctx context.Context, input ast.Value) (*evalua
 	for i := 0; i < ec.numChecks; i++ {
 		c := ec.checks[i]
 
-		span.AddAttributes(trace.StringAttribute("policy", c.policyKey))
-
-		result, err := c.execute(ctx, ec.queryCache, input)
+		result, err := c.Eval(ctx, ec.queryCache, input)
 		if err != nil {
-			logging.FromContext(ctx).Sugar().Errorw("Failed to execute policy", "policy", c.policyKey, "error", err)
+			logging.FromContext(ctx).Error("Failed to evaluate policy", zap.Error(err))
 			tracing.MarkFailed(span, trace.StatusCodeInternal, "Failed to execute policy", err)
 
-			return nil, fmt.Errorf("failed to execute policy %s: %w", c.policyKey, err)
+			return nil, fmt.Errorf("failed to execute policy: %w", err)
 		}
 
-		incomplete := resp.merge(c.policyKey, result)
+		incomplete := resp.merge(result)
 		if !incomplete {
 			return resp, nil
 		}
@@ -410,7 +360,7 @@ type evaluationResult struct {
 }
 
 // merge the results by only updating the actions that have a no_match effect.
-func (er *evaluationResult) merge(policyKey string, res *compile.EvalResult) bool {
+func (er *evaluationResult) merge(res *compile.EvalResult) bool {
 	hasNoMatches := false
 
 	if er.effects == nil {
@@ -431,31 +381,12 @@ func (er *evaluationResult) merge(policyKey string, res *compile.EvalResult) boo
 			if effect == sharedv1.Effect_EFFECT_NO_MATCH {
 				hasNoMatches = true
 			} else {
-				er.matchedPolicies[action] = policyKey
+				er.matchedPolicies[action] = res.PolicyKey
 			}
 		}
 	}
 
 	return hasNoMatches
-}
-
-type check struct {
-	policyKey string
-	eval      compile.Evaluator
-	query     string
-}
-
-func (c *check) execute(ctx context.Context, queryCache cache.InterQueryCache, input ast.Value) (result *compile.EvalResult, err error) {
-	ctx, span := tracing.StartSpan(ctx, "engine.ExecutePolicy")
-	defer func() {
-		if err != nil {
-			tracing.MarkFailed(span, trace.StatusCodeInternal, "Policy execution failed", err)
-		}
-
-		span.End()
-	}()
-
-	return c.eval.EvalQuery(ctx, queryCache, c.query, input)
 }
 
 func toAST(req *enginev1.CheckInput) (ast.Value, error) {
@@ -471,4 +402,17 @@ func toAST(req *enginev1.CheckInput) (ast.Value, error) {
 	}
 
 	return input, nil
+}
+
+type workOut struct {
+	index  int
+	result *enginev1.CheckOutput
+	err    error
+}
+
+type workIn struct {
+	index int
+	ctx   context.Context
+	input *enginev1.CheckInput
+	out   chan<- workOut
 }

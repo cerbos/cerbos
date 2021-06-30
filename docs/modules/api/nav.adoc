@@ -1,2 +1,3 @@
 .Cerbos API
 * xref:index.adoc[Using the API]
+* xref:admin_api.adoc[Admin API]
