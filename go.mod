@@ -5,6 +5,7 @@ go 1.16
 require (
 	contrib.go.opencensus.io/exporter/jaeger v0.2.1
 	contrib.go.opencensus.io/exporter/prometheus v0.3.0
+	github.com/ProtonMail/gopenpgp/v2 v2.2.0 // indirect
 	github.com/bluele/gcache v0.0.2
 	github.com/bufbuild/buf v0.43.2
 	github.com/cespare/xxhash v1.1.0
