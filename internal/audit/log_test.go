@@ -71,4 +71,8 @@ func TestNopLog(t *testing.T) {
 		require.Nil(t, rec)
 		require.ErrorIs(t, err, audit.ErrIteratorClosed)
 	})
+
+	t.Run("close", func(t *testing.T) {
+		log.Close()
+	})
 }

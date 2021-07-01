@@ -38,6 +38,11 @@ func XForwardedHostUnaryServerInterceptor(ctx context.Context, req interface{}, 
 	return handler(grpc_ctxtags.SetInContext(ctx, tags), req)
 }
 
+// accessLogExclude decides which methods to exclude from being logged to the access log.
+func accessLogExclude(method string) bool {
+	return strings.HasPrefix(method, "/grpc.")
+}
+
 // loggingDecider prevents healthcheck requests from being logged.
 func loggingDecider(fullMethodName string, _ error) bool {
 	return fullMethodName != "/grpc.health.v1.Health/Check"

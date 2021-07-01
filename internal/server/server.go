@@ -43,6 +43,10 @@ import (
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/encoding/protojson"
 
+	"github.com/cerbos/cerbos/internal/audit"
+
+	// Import to register the Badger audit log backend.
+	_ "github.com/cerbos/cerbos/internal/audit/local"
 	"github.com/cerbos/cerbos/internal/compile"
 	"github.com/cerbos/cerbos/internal/config"
 	"github.com/cerbos/cerbos/internal/engine"
@@ -85,6 +89,12 @@ func Start(ctx context.Context, zpagesEnabled bool) error {
 		return err
 	}
 
+	// create audit log
+	auditLog, err := audit.NewLog(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to create audit log: %w", err)
+	}
+
 	// create store
 	store, err := storage.New(ctx)
 	if err != nil {
@@ -92,13 +102,13 @@ func Start(ctx context.Context, zpagesEnabled bool) error {
 	}
 
 	// create engine
-	eng, err := engine.New(ctx, compile.NewManager(ctx, store))
+	eng, err := engine.New(ctx, compile.NewManager(ctx, store), auditLog)
 	if err != nil {
 		return fmt.Errorf("failed to create engine: %w", err)
 	}
 
 	s := NewServer(conf)
-	return s.Start(ctx, store, eng, zpagesEnabled)
+	return s.Start(ctx, store, eng, auditLog, zpagesEnabled)
 }
 
 type Server struct {
@@ -122,7 +132,7 @@ func NewServer(conf *Conf) *Server {
 	}
 }
 
-func (s *Server) Start(ctx context.Context, store storage.Store, eng *engine.Engine, zpagesEnabled bool) error {
+func (s *Server) Start(ctx context.Context, store storage.Store, eng *engine.Engine, auditLog audit.Log, zpagesEnabled bool) error {
 	defer s.cancelFunc()
 
 	log := zap.L().Named("server")
@@ -161,7 +171,7 @@ func (s *Server) Start(ctx context.Context, store storage.Store, eng *engine.Eng
 	}
 
 	// start servers
-	grpcServer := s.startGRPCServer(grpcL, store, eng)
+	grpcServer := s.startGRPCServer(grpcL, store, eng, auditLog)
 
 	httpServer, err := s.startHTTPServer(ctx, httpL, grpcServer, zpagesEnabled)
 	if err != nil {
@@ -186,6 +196,9 @@ func (s *Server) Start(ctx context.Context, store storage.Store, eng *engine.Eng
 		if err := httpServer.Shutdown(shutdownCtx); err != nil {
 			log.Error("Failed to cleanly shutdown HTTP server", zap.Error(err))
 		}
+
+		log.Debug("Shutting down the audit log")
+		auditLog.Close()
 
 		log.Info("Shutdown complete")
 		return ctx.Err()
@@ -261,9 +274,9 @@ func (s *Server) getTLSConfig() (*tls.Config, error) {
 	return tlsConfig, nil
 }
 
-func (s *Server) startGRPCServer(l net.Listener, store storage.Store, eng *engine.Engine) *grpc.Server {
+func (s *Server) startGRPCServer(l net.Listener, store storage.Store, eng *engine.Engine, auditLog audit.Log) *grpc.Server {
 	log := zap.L().Named("grpc")
-	server := s.mkGRPCServer(log)
+	server := s.mkGRPCServer(log, auditLog)
 
 	cerbosSvc := svc.NewCerbosService(eng)
 	svcv1.RegisterCerbosServiceServer(server, cerbosSvc)
@@ -304,7 +317,7 @@ func (s *Server) startGRPCServer(l net.Listener, store storage.Store, eng *engin
 	return server
 }
 
-func (s *Server) mkGRPCServer(log *zap.Logger) *grpc.Server {
+func (s *Server) mkGRPCServer(log *zap.Logger, auditLog audit.Log) *grpc.Server {
 	payloadLog := zap.L().Named("payload")
 
 	opts := []grpc.ServerOption{
@@ -328,6 +341,7 @@ func (s *Server) mkGRPCServer(log *zap.Logger) *grpc.Server {
 				grpc_zap.WithMessageProducer(messageProducer),
 			),
 			grpc_zap.PayloadUnaryServerInterceptor(payloadLog, payloadLoggingDecider(s.conf)),
+			audit.NewUnaryInterceptor(auditLog, accessLogExclude),
 		),
 		grpc.StatsHandler(&ocgrpc.ServerHandler{StartOptions: tracing.StartOptions()}),
 		grpc.KeepaliveParams(keepalive.ServerParameters{MaxConnectionAge: maxConnectionAge}),

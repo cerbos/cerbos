@@ -4,12 +4,59 @@ package audit
 
 import (
 	"context"
+	"time"
 
+	"github.com/grpc-ecosystem/go-grpc-middleware/logging/zap/ctxzap"
+	"go.uber.org/zap"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/metadata"
+	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/types/known/timestamppb"
+
+	auditv1 "github.com/cerbos/cerbos/internal/genpb/audit/v1"
 )
 
-func NewUnaryInterceptor(log Log) grpc.UnaryServerInterceptor {
+type ExcludeMethod func(string) bool
+
+func NewUnaryInterceptor(log Log, exclude ExcludeMethod) grpc.UnaryServerInterceptor {
 	return func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
-		return handler(ctx, req)
+		if exclude(info.FullMethod) {
+			return handler(ctx, req)
+		}
+
+		ts := time.Now()
+		callID, err := NewID()
+		if err != nil {
+			ctxzap.Extract(ctx).Warn("Failed to generate call ID", zap.Error(err))
+			return handler(ctx, req)
+		}
+
+		resp, err := handler(NewContextWithCallID(ctx, callID), req)
+
+		if logErr := log.WriteAccessLogEntry(ctx, func() (*auditv1.AccessLogEntry, error) {
+			entry := &auditv1.AccessLogEntry{
+				CallId:     callID[:],
+				Timestamp:  timestamppb.New(ts),
+				Peer:       PeerFromContext(ctx),
+				Method:     info.FullMethod,
+				StatusCode: uint32(status.Code(err)),
+			}
+
+			md, ok := metadata.FromIncomingContext(ctx)
+			if ok {
+				entry.Metadata = make(map[string]*auditv1.MetaValues, len(md))
+				i := 0
+				for key, values := range md {
+					entry.Metadata[key] = &auditv1.MetaValues{Values: values}
+					i++
+				}
+			}
+
+			return entry, nil
+		}); logErr != nil {
+			ctxzap.Extract(ctx).Warn("Failed to write access log entry", zap.Error(logErr))
+		}
+
+		return resp, err
 	}
 }

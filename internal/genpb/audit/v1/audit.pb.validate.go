@@ -63,13 +63,15 @@ func (m *AccessLogEntry) Validate() error {
 		}
 	}
 
-	for idx, item := range m.GetMeta() {
-		_, _ = idx, item
+	for key, val := range m.GetMetadata() {
+		_ = val
 
-		if v, ok := interface{}(item).(interface{ Validate() error }); ok {
+		// no validation rules for Metadata[key]
+
+		if v, ok := interface{}(val).(interface{ Validate() error }); ok {
 			if err := v.Validate(); err != nil {
 				return AccessLogEntryValidationError{
-					field:  fmt.Sprintf("Meta[%v]", idx),
+					field:  fmt.Sprintf("Metadata[%v]", key),
 					reason: "embedded message failed validation",
 					cause:  err,
 				}
@@ -81,10 +83,6 @@ func (m *AccessLogEntry) Validate() error {
 	// no validation rules for Method
 
 	// no validation rules for StatusCode
-
-	// no validation rules for RequestPayload
-
-	// no validation rules for ResponsePayload
 
 	return nil
 }
@@ -163,6 +161,16 @@ func (m *DecisionLogEntry) Validate() error {
 		}
 	}
 
+	if v, ok := interface{}(m.GetPeer()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return DecisionLogEntryValidationError{
+				field:  "Peer",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
 	for idx, item := range m.GetInputs() {
 		_, _ = idx, item
 
@@ -192,6 +200,8 @@ func (m *DecisionLogEntry) Validate() error {
 		}
 
 	}
+
+	// no validation rules for Error
 
 	return nil
 }
@@ -250,23 +260,19 @@ var _ interface {
 	ErrorName() string
 } = DecisionLogEntryValidationError{}
 
-// Validate checks the field values on Metadata with the rules defined in the
+// Validate checks the field values on MetaValues with the rules defined in the
 // proto definition for this message. If any rules are violated, an error is returned.
-func (m *Metadata) Validate() error {
+func (m *MetaValues) Validate() error {
 	if m == nil {
 		return nil
 	}
 
-	// no validation rules for Key
-
-	// no validation rules for Value
-
 	return nil
 }
 
-// MetadataValidationError is the validation error returned by
-// Metadata.Validate if the designated constraints aren't met.
-type MetadataValidationError struct {
+// MetaValuesValidationError is the validation error returned by
+// MetaValues.Validate if the designated constraints aren't met.
+type MetaValuesValidationError struct {
 	field  string
 	reason string
 	cause  error
@@ -274,22 +280,22 @@ type MetadataValidationError struct {
 }
 
 // Field function returns field value.
-func (e MetadataValidationError) Field() string { return e.field }
+func (e MetaValuesValidationError) Field() string { return e.field }
 
 // Reason function returns reason value.
-func (e MetadataValidationError) Reason() string { return e.reason }
+func (e MetaValuesValidationError) Reason() string { return e.reason }
 
 // Cause function returns cause value.
-func (e MetadataValidationError) Cause() error { return e.cause }
+func (e MetaValuesValidationError) Cause() error { return e.cause }
 
 // Key function returns key value.
-func (e MetadataValidationError) Key() bool { return e.key }
+func (e MetaValuesValidationError) Key() bool { return e.key }
 
 // ErrorName returns error name.
-func (e MetadataValidationError) ErrorName() string { return "MetadataValidationError" }
+func (e MetaValuesValidationError) ErrorName() string { return "MetaValuesValidationError" }
 
 // Error satisfies the builtin error interface
-func (e MetadataValidationError) Error() string {
+func (e MetaValuesValidationError) Error() string {
 	cause := ""
 	if e.cause != nil {
 		cause = fmt.Sprintf(" | caused by: %v", e.cause)
@@ -301,14 +307,14 @@ func (e MetadataValidationError) Error() string {
 	}
 
 	return fmt.Sprintf(
-		"invalid %sMetadata.%s: %s%s",
+		"invalid %sMetaValues.%s: %s%s",
 		key,
 		e.field,
 		e.reason,
 		cause)
 }
 
-var _ error = MetadataValidationError{}
+var _ error = MetaValuesValidationError{}
 
 var _ interface {
 	Field() string
@@ -316,25 +322,25 @@ var _ interface {
 	Key() bool
 	Cause() error
 	ErrorName() string
-} = MetadataValidationError{}
+} = MetaValuesValidationError{}
 
-// Validate checks the field values on Address with the rules defined in the
-// proto definition for this message. If any rules are violated, an error is returned.
-func (m *Address) Validate() error {
+// Validate checks the field values on Peer with the rules defined in the proto
+// definition for this message. If any rules are violated, an error is returned.
+func (m *Peer) Validate() error {
 	if m == nil {
 		return nil
 	}
-
-	// no validation rules for Type
 
 	// no validation rules for Address
 
+	// no validation rules for AuthInfo
+
 	return nil
 }
 
-// AddressValidationError is the validation error returned by Address.Validate
-// if the designated constraints aren't met.
-type AddressValidationError struct {
+// PeerValidationError is the validation error returned by Peer.Validate if the
+// designated constraints aren't met.
+type PeerValidationError struct {
 	field  string
 	reason string
 	cause  error
@@ -342,22 +348,22 @@ type AddressValidationError struct {
 }
 
 // Field function returns field value.
-func (e AddressValidationError) Field() string { return e.field }
+func (e PeerValidationError) Field() string { return e.field }
 
 // Reason function returns reason value.
-func (e AddressValidationError) Reason() string { return e.reason }
+func (e PeerValidationError) Reason() string { return e.reason }
 
 // Cause function returns cause value.
-func (e AddressValidationError) Cause() error { return e.cause }
+func (e PeerValidationError) Cause() error { return e.cause }
 
 // Key function returns key value.
-func (e AddressValidationError) Key() bool { return e.key }
+func (e PeerValidationError) Key() bool { return e.key }
 
 // ErrorName returns error name.
-func (e AddressValidationError) ErrorName() string { return "AddressValidationError" }
+func (e PeerValidationError) ErrorName() string { return "PeerValidationError" }
 
 // Error satisfies the builtin error interface
-func (e AddressValidationError) Error() string {
+func (e PeerValidationError) Error() string {
 	cause := ""
 	if e.cause != nil {
 		cause = fmt.Sprintf(" | caused by: %v", e.cause)
@@ -369,14 +375,14 @@ func (e AddressValidationError) Error() string {
 	}
 
 	return fmt.Sprintf(
-		"invalid %sAddress.%s: %s%s",
+		"invalid %sPeer.%s: %s%s",
 		key,
 		e.field,
 		e.reason,
 		cause)
 }
 
-var _ error = AddressValidationError{}
+var _ error = PeerValidationError{}
 
 var _ interface {
 	Field() string
@@ -384,4 +390,4 @@ var _ interface {
 	Key() bool
 	Cause() error
 	ErrorName() string
-} = AddressValidationError{}
+} = PeerValidationError{}

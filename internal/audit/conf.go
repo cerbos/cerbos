@@ -8,7 +8,7 @@ const (
 
 type Conf struct {
 	Enabled             bool   `yaml:"enabled"`
-	Backend             string `yaml:"driver"`
+	Backend             string `yaml:"backend"`
 	AccessLogsEnabled   bool   `yaml:"accessLogsEnabled"`
 	DecisionLogsEnabled bool   `yaml:"decisionLogsEnabled"`
 }

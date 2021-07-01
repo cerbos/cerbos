@@ -143,7 +143,9 @@ func (lw *logWrapper) DecisionLogEntriesBetween(ctx context.Context, from, to ti
 }
 
 func (lw *logWrapper) Close() {
-	lw.backend.Close()
+	if lw.backend != nil {
+		lw.backend.Close()
+	}
 }
 
 // nopAccessLogIterator implements an AccessLogIterator that always returns nothing.

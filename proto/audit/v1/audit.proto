@@ -15,34 +15,28 @@ import "engine/v1/engine.proto";
 message AccessLogEntry {
     bytes call_id = 1;
     google.protobuf.Timestamp timestamp = 2;
-    Address peer = 3;
-    repeated Metadata meta = 4;
+    Peer peer = 3;
+    map<string,MetaValues> metadata = 4;
     string method = 5;
-    int32 status_code = 6;
-    bytes request_payload = 7;
-    bytes response_payload = 8;
+    uint32 status_code = 6;
 }
 
 message DecisionLogEntry {
     bytes call_id = 1;
     google.protobuf.Timestamp timestamp = 2;
-    repeated engine.v1.CheckInput inputs = 3;
-    repeated engine.v1.CheckOutput outputs = 4;
+    Peer peer = 3;
+    repeated engine.v1.CheckInput inputs = 4;
+    repeated engine.v1.CheckOutput outputs = 5;
+    string error = 6;
 }
 
-message Metadata {
-    string key = 1;
-    string value = 2;
+message MetaValues {
+    repeated string values = 1;
 }
 
-message Address {
-    enum Type {
-        TYPE_UNSPECIFIED = 0;
-        TYPE_IPV4 = 1;
-        TYPE_IPV6 = 2;
-    };
-    Type type = 1;
-    string address = 2;
+message Peer {
+    string address = 1;
+    string auth_info = 2;
 }
 
 

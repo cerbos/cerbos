@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/require"
+	"golang.org/x/sync/errgroup"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/cerbos/cerbos/internal/audit"
@@ -22,8 +23,6 @@ import (
 
 const numRecords = 250_000
 
-var payload [2048]byte
-
 func TestBadgerLog(t *testing.T) {
 	if testing.Short() {
 		t.SkipNow()
@@ -33,8 +32,8 @@ func TestBadgerLog(t *testing.T) {
 		StoragePath:     t.TempDir(),
 		RetentionPeriod: 24 * time.Hour,
 		Advanced: &local.AdvancedConf{
-			MaxPendingTransactions: 32,
-			FlushInterval:          1 * time.Second,
+			MaxBatchSize:  32,
+			FlushInterval: 1 * time.Second,
 		},
 	}
 
@@ -69,8 +68,8 @@ func TestBadgerLog(t *testing.T) {
 				break
 			}
 
-			require.Len(t, rec.Meta, 1)
-			require.Equal(t, strconv.Itoa(numRecords-counter), rec.Meta[0].Value)
+			require.Len(t, rec.Metadata, 1)
+			require.Equal(t, strconv.Itoa(numRecords-counter-1), rec.Metadata["Num"].Values[0])
 
 			counter++
 		}
@@ -95,7 +94,7 @@ func TestBadgerLog(t *testing.T) {
 			}
 
 			require.Len(t, rec.Inputs, 1)
-			require.Equal(t, strconv.Itoa(numRecords-counter), rec.Inputs[0].RequestId)
+			require.Equal(t, strconv.Itoa(numRecords-counter-1), rec.Inputs[0].RequestId)
 
 			counter++
 		}
@@ -161,13 +160,46 @@ func TestBadgerLog(t *testing.T) {
 func loadData(t *testing.T, db *local.Log, startDate time.Time) {
 	t.Helper()
 
-	for i := 1; i <= numRecords; i++ {
-		ts := startDate.Add(time.Duration(i) * time.Second)
-		id, err := audit.NewIDForTime(ts)
-		require.NoError(t, err)
-		require.NoError(t, db.WriteAccessLogEntry(context.Background(), mkAccessLogEntry(t, id, i, ts)))
-		require.NoError(t, db.WriteDecisionLogEntry(context.Background(), mkDecisionLogEntry(t, id, i, ts)))
+	ch := make(chan int, 100)
+	g, ctx := errgroup.WithContext(context.Background())
+
+	for i := 0; i < 100; i++ {
+		g.Go(func() error {
+			for x := range ch {
+				ts := startDate.Add(time.Duration(x) * time.Second)
+				id, err := audit.NewIDForTime(ts)
+				if err != nil {
+					return err
+				}
+
+				if err := db.WriteAccessLogEntry(ctx, mkAccessLogEntry(t, id, x, ts)); err != nil {
+					return err
+				}
+
+				if err := db.WriteDecisionLogEntry(ctx, mkDecisionLogEntry(t, id, x, ts)); err != nil {
+					return err
+				}
+			}
+
+			return nil
+		})
 	}
+
+	g.Go(func() error {
+		defer close(ch)
+
+		for i := 0; i < numRecords; i++ {
+			if err := ctx.Err(); err != nil {
+				return err
+			}
+
+			ch <- i
+		}
+
+		return nil
+	})
+
+	require.NoError(t, g.Wait())
 }
 
 func mkAccessLogEntry(t *testing.T, id audit.ID, i int, ts time.Time) audit.AccessLogEntryMaker {
@@ -177,16 +209,11 @@ func mkAccessLogEntry(t *testing.T, id audit.ID, i int, ts time.Time) audit.Acce
 		return &auditv1.AccessLogEntry{
 			CallId:    id[:],
 			Timestamp: timestamppb.New(ts),
-			Peer: &auditv1.Address{
-				Type:    auditv1.Address_TYPE_IPV4,
+			Peer: &auditv1.Peer{
 				Address: "1.1.1.1",
 			},
-			Meta: []*auditv1.Metadata{
-				{Key: "Num", Value: strconv.Itoa(i)},
-			},
-			Method:          "/svc.v1.CerbosService/Check",
-			RequestPayload:  payload[:],
-			ResponsePayload: payload[:],
+			Metadata: map[string]*auditv1.MetaValues{"Num": {Values: []string{strconv.Itoa(i)}}},
+			Method:   "/svc.v1.CerbosService/Check",
 		}, nil
 	}
 }

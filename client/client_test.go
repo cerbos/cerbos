@@ -14,6 +14,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/cerbos/cerbos/client"
+	"github.com/cerbos/cerbos/internal/audit"
 	"github.com/cerbos/cerbos/internal/compile"
 	"github.com/cerbos/cerbos/internal/engine"
 	"github.com/cerbos/cerbos/internal/server"
@@ -29,10 +30,12 @@ func TestClient(t *testing.T) {
 	ctx, cancelFunc := context.WithCancel(context.Background())
 	defer cancelFunc()
 
+	auditLog := audit.NewNopLog()
+
 	store, err := disk.NewStore(ctx, &disk.Conf{Directory: dir, ScratchDir: t.TempDir()})
 	require.NoError(t, err)
 
-	eng, err := engine.New(ctx, compile.NewManager(ctx, store))
+	eng, err := engine.New(ctx, compile.NewManager(ctx, store), auditLog)
 	require.NoError(t, err)
 
 	t.Run("with_tls", func(t *testing.T) {
@@ -51,7 +54,7 @@ func TestClient(t *testing.T) {
 			ctx, cancelFunc := context.WithCancel(context.Background())
 			defer cancelFunc()
 
-			startServer(ctx, conf, store, eng)
+			startServer(ctx, conf, store, eng, auditLog)
 
 			c, err := client.New(conf.GRPCListenAddr, client.WithTLSInsecure())
 			require.NoError(t, err)
@@ -74,7 +77,7 @@ func TestClient(t *testing.T) {
 			ctx, cancelFunc := context.WithCancel(context.Background())
 			defer cancelFunc()
 
-			startServer(ctx, conf, store, eng)
+			startServer(ctx, conf, store, eng, auditLog)
 
 			c, err := client.New(conf.GRPCListenAddr, client.WithTLSInsecure())
 			require.NoError(t, err)
@@ -93,7 +96,7 @@ func TestClient(t *testing.T) {
 			ctx, cancelFunc := context.WithCancel(context.Background())
 			defer cancelFunc()
 
-			startServer(ctx, conf, store, eng)
+			startServer(ctx, conf, store, eng, auditLog)
 
 			c, err := client.New(conf.GRPCListenAddr, client.WithPlaintext())
 			require.NoError(t, err)
@@ -112,7 +115,7 @@ func TestClient(t *testing.T) {
 			ctx, cancelFunc := context.WithCancel(context.Background())
 			defer cancelFunc()
 
-			startServer(ctx, conf, store, eng)
+			startServer(ctx, conf, store, eng, auditLog)
 
 			c, err := client.New(conf.GRPCListenAddr, client.WithPlaintext())
 			require.NoError(t, err)
@@ -197,10 +200,10 @@ func getFreeListenAddr(t *testing.T) string {
 	return addr
 }
 
-func startServer(ctx context.Context, conf *server.Conf, store storage.Store, eng *engine.Engine) {
+func startServer(ctx context.Context, conf *server.Conf, store storage.Store, eng *engine.Engine, auditLog audit.Log) {
 	s := server.NewServer(conf)
 	go func() {
-		if err := s.Start(ctx, store, eng, false); err != nil {
+		if err := s.Start(ctx, store, eng, auditLog, false); err != nil {
 			panic(err)
 		}
 	}()

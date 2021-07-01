@@ -5,6 +5,13 @@ server:
   logRequestPayloads: false
   playgroundEnabled: true
 
+audit:
+  enabled: true
+  backend: "local"
+  local:
+    storagePath: /tmp/cerbos_auditlog
+
+
 storage:
   driver: "disk"
   disk:

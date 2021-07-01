@@ -218,7 +218,7 @@ func toStructPB(v interface{}) (*structpb.Value, error) {
 	}
 
 	vv := reflect.ValueOf(v)
-	switch vv.Kind() { 
+	switch vv.Kind() {
 	case reflect.Array, reflect.Slice:
 		arr := make([]interface{}, vv.Len())
 		for i := 0; i < vv.Len(); i++ {
@@ -239,6 +239,8 @@ func toStructPB(v interface{}) (*structpb.Value, error) {
 
 			return structpb.NewValue(m)
 		}
+	default:
+		return nil, err
 	}
 
 	return nil, err

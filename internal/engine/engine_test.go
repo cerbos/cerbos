@@ -11,6 +11,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/testing/protocmp"
 
+	"github.com/cerbos/cerbos/internal/audit"
 	"github.com/cerbos/cerbos/internal/compile"
 	cerbosdevv1 "github.com/cerbos/cerbos/internal/genpb/cerbosdev/v1"
 	"github.com/cerbos/cerbos/internal/storage/disk"
@@ -95,7 +96,7 @@ func mkEngine(tb testing.TB) (*Engine, context.CancelFunc) {
 
 	compiler := compile.NewManager(ctx, store)
 
-	eng, err := New(ctx, compiler)
+	eng, err := New(ctx, compiler, audit.NewNopLog())
 	require.NoError(tb, err)
 
 	return eng, cancelFunc

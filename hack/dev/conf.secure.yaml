@@ -8,6 +8,12 @@ server:
     cert: hack/dev/tls.crt
     key: hack/dev/tls.key
 
+audit:
+  enabled: true
+  backend: "local"
+  local:
+    storagePath: /tmp/cerbos_auditlog
+
 tracing:
   sampleProbability: 1.0
   exporter: jaeger

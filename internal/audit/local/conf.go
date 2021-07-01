@@ -14,11 +14,11 @@ import (
 const (
 	confKey = audit.ConfKey + ".local"
 
-	defaultBufferSize             = 16
-	defaultFlushInterval          = 60 * time.Second
-	defaultMaxPendingTransactions = 16
-	defaultGCInterval             = 15 * time.Minute
-	defaultRetentionPeriod        = (7 * 24) * time.Hour //nolint:gomnd
+	defaultBufferSize      = 16
+	defaultFlushInterval   = 60 * time.Second
+	defaultMaxBatchSize    = 16
+	defaultGCInterval      = 15 * time.Minute
+	defaultRetentionPeriod = (7 * 24) * time.Hour //nolint:gomnd
 
 	minFlushInterval   = 5 * time.Second
 	minRetentionPeriod = 1 * time.Hour
@@ -26,8 +26,8 @@ const (
 )
 
 var (
-	errEmptyStoragePath              = errors.New("storagePath should not be empty")
-	errInvalidMaxPendingTransactions = errors.New("maxPendingTransactions must be at least 1")
+	errEmptyStoragePath    = errors.New("storagePath should not be empty")
+	errInvalidMaxBatchSize = errors.New("maxBatchSize must be at least 1")
 )
 
 type Conf struct {
@@ -37,10 +37,10 @@ type Conf struct {
 }
 
 type AdvancedConf struct {
-	BufferSize             uint          `yaml:"bufferSize"`
-	MaxPendingTransactions uint          `yaml:"maxPendingTransactions"`
-	FlushInterval          time.Duration `yaml:"flushInterval"`
-	GCInterval             time.Duration `yaml:"gcInterval"`
+	BufferSize    uint          `yaml:"bufferSize"`
+	MaxBatchSize  uint          `yaml:"maxBatchSize"`
+	FlushInterval time.Duration `yaml:"flushInterval"`
+	GCInterval    time.Duration `yaml:"gcInterval"`
 }
 
 func (c *Conf) Key() string {
@@ -61,8 +61,8 @@ func (c *Conf) Validate() error {
 	}
 
 	if c.Advanced != nil {
-		if c.Advanced.MaxPendingTransactions < 1 {
-			return errInvalidMaxPendingTransactions
+		if c.Advanced.MaxBatchSize < 1 {
+			return errInvalidMaxBatchSize
 		}
 
 		if c.Advanced.FlushInterval < minFlushInterval {

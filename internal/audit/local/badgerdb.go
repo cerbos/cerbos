@@ -12,6 +12,7 @@ import (
 
 	badgerv3 "github.com/dgraph-io/badger/v3"
 	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 
 	"github.com/cerbos/cerbos/internal/audit"
 	"github.com/cerbos/cerbos/internal/config"
@@ -59,26 +60,26 @@ type Log struct {
 }
 
 func NewLog(conf *Conf) (*Log, error) {
-	logger := zap.L().Named("decisionlog[badger]")
+	logger := zap.L().Named("auditlog").With(zap.String("backend", "local"))
 	opts := badgerv3.DefaultOptions(conf.StoragePath)
 	opts = opts.WithCompactL0OnClose(true)
 	opts = opts.WithMetricsEnabled(false)
-	opts = opts.WithLoggingLevel(badgerv3.WARNING)
-	opts = opts.WithLogger(zapLogger{SugaredLogger: logger.With(zap.String("component", "engine")).Sugar()})
+	opts = opts.WithLogger(newDBLogger(logger))
 
+	logger.Info("Initializing audit log", zap.String("path", conf.StoragePath))
 	db, err := badgerv3.Open(opts)
 	if err != nil {
 		return nil, fmt.Errorf("failed to open database: %w", err)
 	}
 
-	maxPendingTransactions := defaultMaxPendingTransactions
+	maxBatchSize := defaultMaxBatchSize
 	flushInterval := defaultFlushInterval
 	bufferSize := defaultBufferSize
 	gcInterval := defaultGCInterval
 	ttl := conf.RetentionPeriod
 
 	if conf.Advanced != nil {
-		maxPendingTransactions = int(conf.Advanced.MaxPendingTransactions)
+		maxBatchSize = int(conf.Advanced.MaxBatchSize)
 		flushInterval = conf.Advanced.FlushInterval
 		bufferSize = int(conf.Advanced.BufferSize)
 		gcInterval = conf.Advanced.GCInterval
@@ -93,7 +94,7 @@ func NewLog(conf *Conf) (*Log, error) {
 	}
 
 	l.wg.Add(1)
-	go l.batchWriter(maxPendingTransactions, flushInterval)
+	go l.batchWriter(maxBatchSize, flushInterval)
 
 	if gcInterval > 0 {
 		l.wg.Add(1)
@@ -103,49 +104,38 @@ func NewLog(conf *Conf) (*Log, error) {
 	return l, nil
 }
 
-func (l *Log) batchWriter(maxPendingTransactions int, flushInterval time.Duration) {
+func (l *Log) batchWriter(maxBatchSize int, flushInterval time.Duration) {
 	ticker := time.NewTicker(flushInterval)
 	defer ticker.Stop()
 
-	batch := l.db.NewWriteBatch()
-	defer batch.Cancel()
-
-	batch.SetMaxPendingTxns(maxPendingTransactions)
-
+	batch := newBatcher(l.db, maxBatchSize)
 	logger := l.logger.With(zap.String("component", "batcher"))
-
-	flush := func() {
-		logger.Debug("Flushing batch")
-		if err := batch.Flush(); err != nil {
-			logger.Error("Failed to flush batch", zap.Error(err))
-		}
-	}
 
 	for i := 0; i < goroutineResetThreshold; i++ {
 		select {
 		case <-l.stopChan:
-			flush()
+			batch.flush()
 			l.wg.Done()
 			return
 		case entry, ok := <-l.buffer:
 			if !ok {
-				flush()
+				batch.flush()
 				l.wg.Done()
 				return
 			}
 
-			if err := batch.SetEntry(entry); err != nil {
+			if err := batch.add(entry); err != nil {
 				logger.Warn("Failed to add entry to batch", zap.Error(err))
 				continue
 			}
 		case <-ticker.C:
-			flush()
+			batch.flush()
 		}
 	}
 
-	flush()
+	batch.flush()
 	// restart the goroutine with a fresh stack
-	go l.batchWriter(maxPendingTransactions, flushInterval)
+	go l.batchWriter(maxBatchSize, flushInterval)
 }
 
 func (l *Log) gc(gcInterval time.Duration) {
@@ -318,119 +308,6 @@ func (l *Log) listBetweenTimestamps(ctx context.Context, prefix []byte, fromTS, 
 	c.done(err)
 }
 
-/*
-func (l *Log) ListLastN(ctx context.Context, n uint) (<-chan common.LogEntry, error) {
-	results := make(chan common.LogEntry, 1)
-	go func() {
-		defer close(results)
-
-		err := l.db.View(func(txn *badgerv3.Txn) error {
-			opts := badgerv3.DefaultIteratorOptions
-			opts.Reverse = true
-
-			it := txn.NewIterator(opts)
-			defer it.Close()
-
-			counter := uint(0)
-			for it.Rewind(); it.Valid(); it.Next() {
-				if err := ctx.Err(); err != nil {
-					return err
-				}
-
-				rec := it.Item()
-				err := rec.Value(func(v []byte) error {
-					d := &decisionlogv1.Decision{}
-					if err := d.UnmarshalVT(v); err != nil {
-						results <- common.LogEntry{Err: err}
-						return err
-					}
-
-					results <- common.LogEntry{Decision: d}
-					return nil
-				})
-				if err != nil {
-					return err
-				}
-
-				counter++
-				if counter >= n {
-					return nil
-				}
-			}
-
-			return nil
-		})
-
-		if err != nil && !errors.Is(err, context.Canceled) {
-			l.logger.Warn("Failed to list last N records", zap.Error(err), zap.Uint("n", n))
-		}
-	}()
-
-	return results, nil
-}
-
-func (l *Log) ListBetweenTimestamps(ctx context.Context, fromTS, toTS time.Time) (<-chan common.LogEntry, error) {
-	start, err := l.minScanKey(fromTS)
-	if err != nil {
-		return nil, err
-	}
-
-	end, err := l.maxScanKey(toTS)
-	if err != nil {
-		return nil, err
-	}
-
-	results := make(chan common.LogEntry, 1)
-
-	go func() {
-		defer close(results)
-
-		err := l.db.View(func(txn *badgerv3.Txn) error {
-			opts := badgerv3.DefaultIteratorOptions
-
-			it := txn.NewIterator(opts)
-			defer it.Close()
-
-			for it.Seek(start); it.Valid(); it.Next() {
-				if err := ctx.Err(); err != nil {
-					return err
-				}
-
-				rec := it.Item()
-				key := rec.Key()
-
-				// stop when we have reached a key larger than the end key
-				if bytes.Compare(key, end) >= 0 {
-					return nil
-				}
-
-				err := rec.Value(func(v []byte) error {
-					d := &decisionlogv1.Decision{}
-					if err := d.UnmarshalVT(v); err != nil {
-						results <- common.LogEntry{Err: err}
-						return err
-					}
-
-					results <- common.LogEntry{Decision: d}
-					return nil
-				})
-				if err != nil {
-					return err
-				}
-			}
-
-			return nil
-		})
-
-		if err != nil && !errors.Is(err, context.Canceled) {
-			l.logger.Warn("Failed to list records between timestamps", zap.Error(err))
-		}
-	}()
-
-	return results, nil
-}
-*/
-
 func (l *Log) Close() {
 	l.stopOnce.Do(func() {
 		close(l.stopChan)
@@ -490,6 +367,67 @@ func scanKeyForPrefix(prefix []byte, filler byte) []byte {
 	}
 
 	return key[:]
+}
+
+type batcher struct {
+	db      *badgerv3.DB
+	batch   []*badgerv3.Entry
+	maxSize int
+	ptr     int
+}
+
+func newBatcher(db *badgerv3.DB, maxSize int) *batcher {
+	return &batcher{
+		db:      db,
+		batch:   make([]*badgerv3.Entry, maxSize),
+		maxSize: maxSize,
+	}
+}
+
+func (b *batcher) add(entry *badgerv3.Entry) error {
+	b.batch[b.ptr] = entry
+	b.ptr++
+
+	if b.ptr >= b.maxSize {
+		return b.flush()
+	}
+
+	return nil
+}
+
+func (b *batcher) flush() error {
+	wb := b.db.NewWriteBatch()
+	defer func() {
+		b.ptr = 0
+		wb.Cancel()
+	}()
+
+	for i := 0; i < b.ptr; i++ {
+		entry := b.batch[i]
+		if entry == nil {
+			continue
+		}
+
+		if err := wb.SetEntry(entry); err != nil {
+			if errors.Is(err, badgerv3.ErrDiscardedTxn) {
+				wb = b.db.NewWriteBatch()
+				_ = wb.SetEntry(entry)
+			} else {
+				return err
+			}
+		}
+		b.batch[i] = nil
+	}
+
+	return wb.Flush()
+}
+
+func newDBLogger(logger *zap.Logger) badgerv3.Logger {
+	l := logger.Named("badger").WithOptions(zap.IncreaseLevel(zap.LevelEnablerFunc(func(lvl zapcore.Level) bool {
+		return lvl > zapcore.WarnLevel
+	})))
+
+	return zapLogger{SugaredLogger: l.Sugar()}
 }
 
 type zapLogger struct {
