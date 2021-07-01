@@ -3,6 +3,8 @@ Cerbos: Painless access management for cloud-native applications
 
 Cerbos helps you super-charge your authorization implementation by writing context-aware access control policies for your application resources. Author access rules using an intuitive YAML configuration language, use your Git-ops infrastructure to test and deploy them and, make simple API requests to the Cerbos PDP to evaluate the policies and make dynamic access decisions.
 
+See https://docs.cerbos.dev for full Cerbos documentation.
+
 Example
 ------
 
@@ -85,7 +87,6 @@ cat <<EOF | curl --silent "http://localhost:3592/api/check?pretty" -d @-
 EOF
 ```
 
-See https://cerbos.dev/docs/cerbos/index.html for more information about Cerbos.
 
 
 
