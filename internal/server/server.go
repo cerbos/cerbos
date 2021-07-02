@@ -201,15 +201,11 @@ func (s *Server) Start(ctx context.Context, store storage.Store, eng *engine.Eng
 		auditLog.Close()
 
 		log.Info("Shutdown complete")
-		return ctx.Err()
+		return nil
 	})
 
 	err = s.group.Wait()
 	if err != nil {
-		if errors.Is(err, context.Canceled) {
-			return nil
-		}
-
 		log.Error("Stopping server due to error", zap.Error(err))
 		return err
 	}
@@ -284,7 +280,7 @@ func (s *Server) startGRPCServer(l net.Listener, store storage.Store, eng *engin
 	if s.conf.AdminAPI.Enabled {
 		log.Info("Starting admin service")
 		creds := s.conf.AdminAPI.AdminCredentials
-		svcv1.RegisterCerbosAdminServiceServer(server, svc.NewCerbosAdminService(store, creds.Username, creds.PasswordHash))
+		svcv1.RegisterCerbosAdminServiceServer(server, svc.NewCerbosAdminService(store, auditLog, creds.Username, creds.PasswordHash))
 	}
 
 	if s.conf.PlaygroundEnabled {

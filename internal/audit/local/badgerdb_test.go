@@ -31,7 +31,7 @@ func TestBadgerLog(t *testing.T) {
 	conf := &local.Conf{
 		StoragePath:     t.TempDir(),
 		RetentionPeriod: 24 * time.Hour,
-		Advanced: &local.AdvancedConf{
+		Advanced: local.AdvancedConf{
 			MaxBatchSize:  32,
 			FlushInterval: 1 * time.Second,
 		},

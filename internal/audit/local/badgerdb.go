@@ -72,18 +72,11 @@ func NewLog(conf *Conf) (*Log, error) {
 		return nil, fmt.Errorf("failed to open database: %w", err)
 	}
 
-	maxBatchSize := defaultMaxBatchSize
-	flushInterval := defaultFlushInterval
-	bufferSize := defaultBufferSize
-	gcInterval := defaultGCInterval
+	bufferSize := int(conf.Advanced.BufferSize)
+	flushInterval := conf.Advanced.FlushInterval
+	gcInterval := conf.Advanced.GCInterval
+	maxBatchSize := int(conf.Advanced.MaxBatchSize)
 	ttl := conf.RetentionPeriod
-
-	if conf.Advanced != nil {
-		maxBatchSize = int(conf.Advanced.MaxBatchSize)
-		flushInterval = conf.Advanced.FlushInterval
-		bufferSize = int(conf.Advanced.BufferSize)
-		gcInterval = conf.Advanced.GCInterval
-	}
 
 	l := &Log{
 		logger:   logger,

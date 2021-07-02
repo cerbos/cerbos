@@ -35,7 +35,6 @@ var ErrNoPoliciesMatched = errors.New("no matching policies")
 
 const (
 	defaultEffect                = sharedv1.Effect_EFFECT_DENY
-	loggerName                   = "engine"
 	maxQueryCacheSizeBytes int64 = 10 * 1024 * 1024 // 10 MiB
 	noPolicyMatch                = "NO_MATCH"
 	parallelismThreshold         = 2
@@ -102,18 +101,14 @@ func newEngine(compileMgr *compile.Manager, auditLog audit.Log) (*Engine, error)
 func (engine *Engine) startWorker(ctx context.Context, num int, inputChan <-chan workIn) {
 	// Keep each goroutine around for a period of time and then recycle them to reclaim the stack space.
 	// See https://adtac.in/2021/04/23/note-on-worker-pools-in-go.html
-	log := zap.L().Named(loggerName).With(zap.Int("worker", num))
-	log.Debug("Starting worker")
 
 	threshold := workerResetThreshold + rand.Intn(workerResetJitter) //nolint:gosec
 	for i := 0; i < threshold; i++ {
 		select {
 		case <-ctx.Done():
-			log.Debug("Stopping worker due to context cancellation")
 			return
 		case work, ok := <-inputChan:
 			if !ok {
-				log.Debug("Stopping worker due to channel closure")
 				return
 			}
 
@@ -123,7 +118,6 @@ func (engine *Engine) startWorker(ctx context.Context, num int, inputChan <-chan
 	}
 
 	// restart to clear the stack
-	log.Debug("Restarting worker")
 	go engine.startWorker(ctx, num, inputChan)
 }
 

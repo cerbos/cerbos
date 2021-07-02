@@ -94,6 +94,8 @@ service CerbosAdminService {
             }
         };
     }
+
+    rpc ListAuditLogEntries(request.v1.ListAuditLogEntriesRequest) returns (stream response.v1.ListAuditLogEntriesResponse) {}
 }
 
 service CerbosPlaygroundService {

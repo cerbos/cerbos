@@ -37,6 +37,8 @@ message MetaValues {
 message Peer {
     string address = 1;
     string auth_info = 2;
+    string user_agent = 3;
+    string forwarded_for = 4;
 }
 
 

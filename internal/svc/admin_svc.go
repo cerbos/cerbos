@@ -17,6 +17,7 @@ import (
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/emptypb"
 
+	"github.com/cerbos/cerbos/internal/audit"
 	requestv1 "github.com/cerbos/cerbos/internal/genpb/request/v1"
 	responsev1 "github.com/cerbos/cerbos/internal/genpb/response/v1"
 	svcv1 "github.com/cerbos/cerbos/internal/genpb/svc/v1"
@@ -34,13 +35,15 @@ var (
 // CerbosAdminService implements the Cerbos administration service.
 type CerbosAdminService struct {
 	store           storage.MutableStore
+	auditLog        audit.Log
 	adminUser       string
 	adminPasswdHash []byte
 	*svcv1.UnimplementedCerbosAdminServiceServer
 }
 
-func NewCerbosAdminService(store storage.Store, adminUser, adminPasswdHash string) *CerbosAdminService {
+func NewCerbosAdminService(store storage.Store, auditLog audit.Log, adminUser, adminPasswdHash string) *CerbosAdminService {
 	svc := &CerbosAdminService{
+		auditLog:                              auditLog,
 		adminUser:                             adminUser,
 		adminPasswdHash:                       []byte(adminPasswdHash),
 		UnimplementedCerbosAdminServiceServer: &svcv1.UnimplementedCerbosAdminServiceServer{},
@@ -82,6 +85,95 @@ func (cas *CerbosAdminService) AddOrUpdatePolicy(ctx context.Context, req *reque
 	return &responsev1.AddOrUpdatePolicyResponse{Success: &emptypb.Empty{}}, nil
 }
 
+func (cas *CerbosAdminService) ListAuditLogEntries(req *requestv1.ListAuditLogEntriesRequest, stream svcv1.CerbosAdminService_ListAuditLogEntriesServer) error {
+	ctx := stream.Context()
+
+	if err := cas.checkCredentials(ctx); err != nil {
+		return err
+	}
+
+	logStream, err := cas.getAuditLogStream(ctx, req)
+	if err != nil {
+		return err
+	}
+
+	for {
+		if err := ctx.Err(); err != nil {
+			return err
+		}
+
+		rec, err := logStream()
+		if err != nil {
+			if errors.Is(err, audit.ErrIteratorClosed) {
+				return nil
+			}
+
+			ctxzap.Extract(ctx).Error("Error from log iterator", zap.Error(err))
+			return status.Error(codes.Internal, "Iterator failure")
+		}
+
+		if err := stream.Send(rec); err != nil {
+			ctxzap.Extract(ctx).Error("Error writing to stream", zap.Error(err))
+			return err
+		}
+	}
+}
+
+func (cas *CerbosAdminService) getAuditLogStream(ctx context.Context, req *requestv1.ListAuditLogEntriesRequest) (auditLogStream, error) {
+	switch req.Kind {
+	case requestv1.ListAuditLogEntriesRequest_KIND_ACCESS:
+		switch f := req.Filter.(type) {
+		case *requestv1.ListAuditLogEntriesRequest_LastN:
+			return mkAccessLogStream(cas.auditLog.LastNAccessLogEntries(ctx, uint(f.LastN))), nil
+		case *requestv1.ListAuditLogEntriesRequest_Between:
+			return mkAccessLogStream(cas.auditLog.AccessLogEntriesBetween(ctx, f.Between.Start.AsTime(), f.Between.End.AsTime())), nil
+		}
+	case requestv1.ListAuditLogEntriesRequest_KIND_DECISION:
+		switch f := req.Filter.(type) {
+		case *requestv1.ListAuditLogEntriesRequest_LastN:
+			return mkDecisionLogStream(cas.auditLog.LastNDecisionLogEntries(ctx, uint(f.LastN))), nil
+		case *requestv1.ListAuditLogEntriesRequest_Between:
+			return mkDecisionLogStream(cas.auditLog.DecisionLogEntriesBetween(ctx, f.Between.Start.AsTime(), f.Between.End.AsTime())), nil
+		}
+	default:
+		return nil, status.Error(codes.InvalidArgument, "Unknown log stream kind")
+	}
+
+	return nil, status.Error(codes.InvalidArgument, "Unknown filter")
+}
+
+type auditLogStream func() (*responsev1.ListAuditLogEntriesResponse, error)
+
+func mkAccessLogStream(it audit.AccessLogIterator) auditLogStream {
+	return func() (*responsev1.ListAuditLogEntriesResponse, error) {
+		rec, err := it.Next()
+		if err != nil {
+			return nil, err
+		}
+
+		return &responsev1.ListAuditLogEntriesResponse{
+			Entry: &responsev1.ListAuditLogEntriesResponse_AccessLogEntry{
+				AccessLogEntry: rec,
+			},
+		}, nil
+	}
+}
+
+func mkDecisionLogStream(it audit.DecisionLogIterator) auditLogStream {
+	return func() (*responsev1.ListAuditLogEntriesResponse, error) {
+		rec, err := it.Next()
+		if err != nil {
+			return nil, err
+		}
+
+		return &responsev1.ListAuditLogEntriesResponse{
+			Entry: &responsev1.ListAuditLogEntriesResponse_DecisionLogEntry{
+				DecisionLogEntry: rec,
+			},
+		}, nil
+	}
+}
+
 func (cas *CerbosAdminService) checkCredentials(ctx context.Context) error {
 	md, ok := metadata.FromIncomingContext(ctx)
 	if !ok {
@@ -103,7 +195,7 @@ func (cas *CerbosAdminService) checkCredentials(ctx context.Context) error {
 		return status.Error(codes.Unauthenticated, "failed to decode credentials")
 	}
 
-	parts := bytes.Split(decoded, authSep)
+	parts := bytes.Split(bytes.TrimSpace(decoded), authSep)
 	if len(parts) != 2 { //nolint:gomnd
 		return status.Error(codes.Unauthenticated, "invalid credentials")
 	}
@@ -113,7 +205,7 @@ func (cas *CerbosAdminService) checkCredentials(ctx context.Context) error {
 	}
 
 	if err := bcrypt.CompareHashAndPassword(cas.adminPasswdHash, parts[1]); err != nil {
-		return status.Error(codes.Unauthenticated, "invalid credentials")
+		return status.Error(codes.Unauthenticated, "incorrect credentials")
 	}
 
 	return nil

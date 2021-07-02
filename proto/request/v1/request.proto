@@ -10,6 +10,7 @@ option csharp_namespace = "Cerbos.Api.V1.Request";
 
 import "engine/v1/engine.proto";
 import "google/protobuf/struct.proto";
+import "google/protobuf/timestamp.proto";
 import "google/api/field_behavior.proto";
 import "policy/v1/policy.proto";
 import "protoc-gen-openapiv2/options/annotations.proto";
@@ -244,5 +245,37 @@ message AddOrUpdatePolicyRequest {
             max_items: 10
         } 
     ];
+}
+
+message ListAuditLogEntriesRequest {
+    enum Kind {
+        KIND_UNSPECIFIED = 0;
+        KIND_ACCESS = 1;
+        KIND_DECISION = 2;
+    }
+
+    message TimeRange {
+        google.protobuf.Timestamp start = 1 [
+            (validate.rules).timestamp = {
+                required: true,
+                lt_now: true,
+            },
+            (google.api.field_behavior) = REQUIRED
+        ];
+        google.protobuf.Timestamp end = 2 [
+            (validate.rules).timestamp = {
+                required: true,
+                lt_now: true,
+            },
+            (google.api.field_behavior) = REQUIRED
+        ];
+    }
+
+    Kind kind = 1 [(validate.rules).enum = {in: [1,2]}];
+    oneof filter {
+        option (validate.required) = true;
+        uint32 last_n = 2 [(validate.rules).uint32.lte = 500];
+        TimeRange between = 3;
+    }
 }
 

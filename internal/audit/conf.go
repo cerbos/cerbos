@@ -18,5 +18,6 @@ func (c *Conf) Key() string {
 }
 
 func (c *Conf) SetDefaults() {
+	c.AccessLogsEnabled = true
 	c.DecisionLogsEnabled = true
 }

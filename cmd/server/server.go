@@ -67,6 +67,7 @@ func doRun(_ *cobra.Command, _ []string) error {
 
 	if args.debugListenAddr != "" {
 		startDebugListener(args.debugListenAddr)
+		defer agent.Close()
 	}
 
 	ctx, stopFunc := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
@@ -99,7 +100,7 @@ func startDebugListener(listenAddr string) {
 
 	err := agent.Listen(agent.Options{
 		Addr:                   listenAddr,
-		ShutdownCleanup:        true,
+		ShutdownCleanup:        false,
 		ReuseSocketAddrAndPort: true,
 	})
 	if err != nil {

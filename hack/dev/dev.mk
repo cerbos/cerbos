@@ -23,6 +23,14 @@ dev-server-insecure:
 protoset: $(BUF)
 	@ $(BUF) build -o $(PROTOSET)
 
+.PHONY: view-access-logs
+view-access-logs: $(GRPCURL)
+	@ $(GRPCURL) -authority cerbos.local -insecure -rpc-header 'authorization: Basic Y2VyYm9zOmNlcmJvc0FkbWluCg==' -d '{"kind":"KIND_ACCESS","lastN": 10}' localhost:$(GRPC_PORT) svc.v1.CerbosAdminService/ListAuditLogEntries
+
+.PHONY: view-decision-logs
+view-decision-logs: $(GRPCURL)
+	@ $(GRPCURL) -authority cerbos.local -insecure -rpc-header 'authorization: Basic Y2VyYm9zOmNlcmJvc0FkbWluCg==' -d '{"kind":"KIND_DECISION","lastN": 10}' localhost:$(GRPC_PORT) svc.v1.CerbosAdminService/ListAuditLogEntries
+
 .PHONY: check-grpc
 check-grpc: $(GRPCURL)
 	@ $(foreach REQ_FILE,\

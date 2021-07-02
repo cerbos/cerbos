@@ -899,6 +899,116 @@ var _ interface {
 	ErrorName() string
 } = AddOrUpdatePolicyRequestValidationError{}
 
+// Validate checks the field values on ListAuditLogEntriesRequest with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, an error is returned.
+func (m *ListAuditLogEntriesRequest) Validate() error {
+	if m == nil {
+		return nil
+	}
+
+	if _, ok := _ListAuditLogEntriesRequest_Kind_InLookup[m.GetKind()]; !ok {
+		return ListAuditLogEntriesRequestValidationError{
+			field:  "Kind",
+			reason: "value must be in list [1 2]",
+		}
+	}
+
+	switch m.Filter.(type) {
+
+	case *ListAuditLogEntriesRequest_LastN:
+
+		if m.GetLastN() > 500 {
+			return ListAuditLogEntriesRequestValidationError{
+				field:  "LastN",
+				reason: "value must be less than or equal to 500",
+			}
+		}
+
+	case *ListAuditLogEntriesRequest_Between:
+
+		if v, ok := interface{}(m.GetBetween()).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return ListAuditLogEntriesRequestValidationError{
+					field:  "Between",
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	default:
+		return ListAuditLogEntriesRequestValidationError{
+			field:  "Filter",
+			reason: "value is required",
+		}
+
+	}
+
+	return nil
+}
+
+// ListAuditLogEntriesRequestValidationError is the validation error returned
+// by ListAuditLogEntriesRequest.Validate if the designated constraints aren't met.
+type ListAuditLogEntriesRequestValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e ListAuditLogEntriesRequestValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e ListAuditLogEntriesRequestValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e ListAuditLogEntriesRequestValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e ListAuditLogEntriesRequestValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e ListAuditLogEntriesRequestValidationError) ErrorName() string {
+	return "ListAuditLogEntriesRequestValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e ListAuditLogEntriesRequestValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sListAuditLogEntriesRequest.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = ListAuditLogEntriesRequestValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = ListAuditLogEntriesRequestValidationError{}
+
+var _ListAuditLogEntriesRequest_Kind_InLookup = map[ListAuditLogEntriesRequest_Kind]struct{}{
+	1: {},
+	2: {},
+}
+
 // Validate checks the field values on CheckResourceBatchRequest_BatchEntry
 // with the rules defined in the proto definition for this message. If any
 // rules are violated, an error is returned.
@@ -1013,3 +1123,127 @@ var _ interface {
 	Cause() error
 	ErrorName() string
 } = CheckResourceBatchRequest_BatchEntryValidationError{}
+
+// Validate checks the field values on ListAuditLogEntriesRequest_TimeRange
+// with the rules defined in the proto definition for this message. If any
+// rules are violated, an error is returned.
+func (m *ListAuditLogEntriesRequest_TimeRange) Validate() error {
+	if m == nil {
+		return nil
+	}
+
+	if m.GetStart() == nil {
+		return ListAuditLogEntriesRequest_TimeRangeValidationError{
+			field:  "Start",
+			reason: "value is required",
+		}
+	}
+
+	if t := m.GetStart(); t != nil {
+		ts, err := t.AsTime(), t.CheckValid()
+		if err != nil {
+			return ListAuditLogEntriesRequest_TimeRangeValidationError{
+				field:  "Start",
+				reason: "value is not a valid timestamp",
+				cause:  err,
+			}
+		}
+
+		now := time.Now()
+
+		if ts.Sub(now) >= 0 {
+			return ListAuditLogEntriesRequest_TimeRangeValidationError{
+				field:  "Start",
+				reason: "value must be less than now",
+			}
+		}
+
+	}
+
+	if m.GetEnd() == nil {
+		return ListAuditLogEntriesRequest_TimeRangeValidationError{
+			field:  "End",
+			reason: "value is required",
+		}
+	}
+
+	if t := m.GetEnd(); t != nil {
+		ts, err := t.AsTime(), t.CheckValid()
+		if err != nil {
+			return ListAuditLogEntriesRequest_TimeRangeValidationError{
+				field:  "End",
+				reason: "value is not a valid timestamp",
+				cause:  err,
+			}
+		}
+
+		now := time.Now()
+
+		if ts.Sub(now) >= 0 {
+			return ListAuditLogEntriesRequest_TimeRangeValidationError{
+				field:  "End",
+				reason: "value must be less than now",
+			}
+		}
+
+	}
+
+	return nil
+}
+
+// ListAuditLogEntriesRequest_TimeRangeValidationError is the validation error
+// returned by ListAuditLogEntriesRequest_TimeRange.Validate if the designated
+// constraints aren't met.
+type ListAuditLogEntriesRequest_TimeRangeValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e ListAuditLogEntriesRequest_TimeRangeValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e ListAuditLogEntriesRequest_TimeRangeValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e ListAuditLogEntriesRequest_TimeRangeValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e ListAuditLogEntriesRequest_TimeRangeValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e ListAuditLogEntriesRequest_TimeRangeValidationError) ErrorName() string {
+	return "ListAuditLogEntriesRequest_TimeRangeValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e ListAuditLogEntriesRequest_TimeRangeValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sListAuditLogEntriesRequest_TimeRange.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = ListAuditLogEntriesRequest_TimeRangeValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = ListAuditLogEntriesRequest_TimeRangeValidationError{}

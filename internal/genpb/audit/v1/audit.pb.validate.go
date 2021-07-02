@@ -335,6 +335,10 @@ func (m *Peer) Validate() error {
 
 	// no validation rules for AuthInfo
 
+	// no validation rules for UserAgent
+
+	// no validation rules for ForwardedFor
+
 	return nil
 }
 

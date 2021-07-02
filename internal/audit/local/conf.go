@@ -15,7 +15,7 @@ const (
 	confKey = audit.ConfKey + ".local"
 
 	defaultBufferSize      = 16
-	defaultFlushInterval   = 60 * time.Second
+	defaultFlushInterval   = 30 * time.Second
 	defaultMaxBatchSize    = 16
 	defaultGCInterval      = 15 * time.Minute
 	defaultRetentionPeriod = (7 * 24) * time.Hour //nolint:gomnd
@@ -27,13 +27,14 @@ const (
 
 var (
 	errEmptyStoragePath    = errors.New("storagePath should not be empty")
+	errInvalidBufferSize   = errors.New("bufferSize must be at least 1")
 	errInvalidMaxBatchSize = errors.New("maxBatchSize must be at least 1")
 )
 
 type Conf struct {
 	StoragePath     string        `yaml:"storagePath"`
 	RetentionPeriod time.Duration `yaml:"retentionPeriod"`
-	Advanced        *AdvancedConf `yaml:"advanced"`
+	Advanced        AdvancedConf  `yaml:"advanced"`
 }
 
 type AdvancedConf struct {
@@ -49,6 +50,10 @@ func (c *Conf) Key() string {
 
 func (c *Conf) SetDefaults() {
 	c.RetentionPeriod = defaultRetentionPeriod
+	c.Advanced.BufferSize = defaultBufferSize
+	c.Advanced.MaxBatchSize = defaultMaxBatchSize
+	c.Advanced.FlushInterval = defaultFlushInterval
+	c.Advanced.GCInterval = defaultGCInterval
 }
 
 func (c *Conf) Validate() error {
@@ -60,14 +65,16 @@ func (c *Conf) Validate() error {
 		return fmt.Errorf("retentionPeriod must be between %s and %s", minRetentionPeriod, maxRetentionPeriod)
 	}
 
-	if c.Advanced != nil {
-		if c.Advanced.MaxBatchSize < 1 {
-			return errInvalidMaxBatchSize
-		}
+	if c.Advanced.BufferSize < 1 {
+		return errInvalidBufferSize
+	}
 
-		if c.Advanced.FlushInterval < minFlushInterval {
-			return fmt.Errorf("flushInterval must be at least %s", minFlushInterval)
-		}
+	if c.Advanced.MaxBatchSize < 1 {
+		return errInvalidMaxBatchSize
+	}
+
+	if c.Advanced.FlushInterval < minFlushInterval {
+		return fmt.Errorf("flushInterval must be at least %s", minFlushInterval)
 	}
 
 	return nil

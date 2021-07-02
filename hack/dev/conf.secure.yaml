@@ -4,15 +4,21 @@ server:
   grpcListenAddr: ":3593"
   logRequestPayloads: false
   playgroundEnabled: true
+  adminAPI:
+    enabled: true
   tls:
     cert: hack/dev/tls.crt
     key: hack/dev/tls.key
 
 audit:
   enabled: true
+  accessLogsEnabled: true
+  decisionLogsEnabled: true
   backend: "local"
   local:
     storagePath: /tmp/cerbos_auditlog
+    advanced:
+      flushInterval: 5s
 
 tracing:
   sampleProbability: 1.0
