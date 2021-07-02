@@ -2,4 +2,5 @@
 * xref:engine.adoc[Engine]
 * xref:server.adoc[Server]
 * xref:storage.adoc[Storage]
+* xref:audit.adoc[Audit]
 * xref:tracing.adoc[Tracing]
