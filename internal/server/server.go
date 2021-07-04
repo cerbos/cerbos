@@ -418,7 +418,7 @@ func (s *Server) startHTTPServer(ctx context.Context, l net.Listener, grpcSrv *g
 
 	cerbosMux.HandleFunc("/", schema.ServeUI)
 
-	httpHandler := withRequestLogging(withCORS(s.conf, cerbosMux))
+	httpHandler := withCORS(s.conf, cerbosMux)
 
 	h := &http.Server{
 		ErrorLog:          zap.NewStdLog(zap.L().Named("http.error")),
