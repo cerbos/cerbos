@@ -32,6 +32,81 @@
     "application/json"
   ],
   "paths": {
+    "/admin/auditlog/list/{kind}": {
+      "get": {
+        "summary": "List audit log entries",
+        "operationId": "CerbosAdminService_ListAuditLogEntries",
+        "responses": {
+          "200": {
+            "description": "A successful response.(streaming responses)",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "result": {
+                  "$ref": "#/definitions/v1ListAuditLogEntriesResponse"
+                },
+                "error": {
+                  "$ref": "#/definitions/rpcStatus"
+                }
+              },
+              "title": "Stream result of v1ListAuditLogEntriesResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "kind",
+            "description": "Kind of log entry",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "enum": [
+              "KIND_UNSPECIFIED",
+              "KIND_ACCESS",
+              "KIND_DECISION"
+            ]
+          },
+          {
+            "name": "lastN",
+            "description": "Last N entries.",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "between.start",
+            "description": "Start date in ISO 8601 format.",
+            "in": "query",
+            "required": true,
+            "type": "string",
+            "format": "date-time"
+          },
+          {
+            "name": "between.end",
+            "description": "End date in ISO 8601 format.",
+            "in": "query",
+            "required": true,
+            "type": "string",
+            "format": "date-time"
+          }
+        ],
+        "tags": [
+          "CerbosAdminService"
+        ],
+        "security": [
+          {
+            "BasicAuth": []
+          }
+        ]
+      }
+    },
     "/admin/policy": {
       "post": {
         "summary": "Add or update policies",
@@ -333,6 +408,8 @@
         "start": {
           "type": "string",
           "format": "date-time",
+          "example": "2021-07-05T07:27:01+00:00",
+          "description": "Start date in ISO 8601 format.",
           "required": [
             "start"
           ]
@@ -340,11 +417,14 @@
         "end": {
           "type": "string",
           "format": "date-time",
+          "example": "2021-07-05T07:27:01+00:00",
+          "description": "End date in ISO 8601 format.",
           "required": [
             "end"
           ]
         }
       },
+      "description": "Entries between a time range.",
       "required": [
         "start",
         "end"
@@ -501,8 +581,7 @@
       "type": "object",
       "properties": {
         "callId": {
-          "type": "string",
-          "format": "byte"
+          "type": "string"
         },
         "timestamp": {
           "type": "string",
@@ -816,8 +895,7 @@
       "type": "object",
       "properties": {
         "callId": {
-          "type": "string",
-          "format": "byte"
+          "type": "string"
         },
         "timestamp": {
           "type": "string",
@@ -876,7 +954,8 @@
         "decisionLogEntry": {
           "$ref": "#/definitions/v1DecisionLogEntry"
         }
-      }
+      },
+      "description": "Audit log stream."
     },
     "v1Match": {
       "type": "object",

@@ -13,7 +13,7 @@ import "engine/v1/engine.proto";
 
 
 message AccessLogEntry {
-    bytes call_id = 1;
+    string call_id = 1;
     google.protobuf.Timestamp timestamp = 2;
     Peer peer = 3;
     map<string,MetaValues> metadata = 4;
@@ -22,7 +22,7 @@ message AccessLogEntry {
 }
 
 message DecisionLogEntry {
-    bytes call_id = 1;
+    string call_id = 1;
     google.protobuf.Timestamp timestamp = 2;
     Peer peer = 3;
     repeated engine.v1.CheckInput inputs = 4;

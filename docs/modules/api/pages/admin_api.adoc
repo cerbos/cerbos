@@ -60,3 +60,28 @@ NOTE: This endpoint requires a mutable storage driver such as xref:configuration
 ----
 {"success":{}}
 ----
+
+== List audit log entries [`/admin/auditlog/list`]
+
+When xref:configuration:audit.adoc[audit logging is enabled] you can view the audit log entries using this API endpoint.
+
+There are two kinds of audit logs:
+
+`KIND_ACCESS`:: Captured Cerbos API access logs. These records are only available if `accessLogsEnabled` is set to `true` in the  xref:configuration:audit.adoc[configuration]. 
+`KIND_DECISION`:: Decision logs captured by the engine. These records are only available if `decisionLogsEnabled` is set to `true` in the  xref:configuration:audit.adoc[configuration]. 
+
+
+You can view the last N entries (`lastN`) or the entries captured between a specific time period (`between.start` and `between.end`). When specifying timestamps, they must be formatted as ISO 8601 timestamps.
+
+.View last 5 decision log entries
+[source,shell]
+----
+curl -u cerbos:cerbosAdmin 'https://localhost:3592/admin/auditlog/list/KIND_DECISION?lastN=5
+----
+
+
+.View access log entries between midnight 2021-07-01 and midnight 2021-07-02
+[source,shell]
+----
+curl -u cerbos:cerbosAdmin 'https://localhost:3592/admin/auditlog/list/KIND_ACCESS?between.start=2021-07-01T00:00:00Z&between.end=2021-07-02T00:00:00Z'
+----

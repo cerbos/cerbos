@@ -167,7 +167,12 @@ func (l *Log) WriteAccessLogEntry(ctx context.Context, record audit.AccessLogEnt
 		return fmt.Errorf("failed to marshal data: %w", err)
 	}
 
-	key := genKey(accessLogPrefix, rec.CallId)
+	callID, err := audit.ID(rec.CallId).Repr()
+	if err != nil {
+		return fmt.Errorf("invalid call ID: %w", err)
+	}
+
+	key := genKey(accessLogPrefix, callID)
 
 	return l.write(ctx, key, value)
 }
@@ -183,7 +188,12 @@ func (l *Log) WriteDecisionLogEntry(ctx context.Context, record audit.DecisionLo
 		return fmt.Errorf("failed to marshal data: %w", err)
 	}
 
-	key := genKey(decisionLogPrefix, rec.CallId)
+	callID, err := audit.ID(rec.CallId).Repr()
+	if err != nil {
+		return fmt.Errorf("invalid call ID: %w", err)
+	}
+
+	key := genKey(decisionLogPrefix, callID)
 
 	return l.write(ctx, key, value)
 }
@@ -309,10 +319,10 @@ func (l *Log) Close() {
 	})
 }
 
-func genKey(prefix, id []byte) []byte {
+func genKey(prefix []byte, id audit.IDBytes) []byte {
 	var key [keyLen]byte
 	copy(key[:keyTSStart], prefix)
-	copy(key[keyTSStart:], id)
+	copy(key[keyTSStart:], id[:])
 
 	return key[:]
 }
@@ -323,7 +333,12 @@ func genKeyForTime(prefix []byte, ts time.Time) ([]byte, error) {
 		return nil, err
 	}
 
-	return genKey(prefix, id[:]), nil
+	idBytes, err := id.Repr()
+	if err != nil {
+		return nil, err
+	}
+
+	return genKey(prefix, idBytes), nil
 }
 
 func minScanKeyForTime(prefix []byte, ts time.Time) ([]byte, error) {

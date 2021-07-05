@@ -113,8 +113,3 @@ func withCORS(conf *Conf, handler http.Handler) http.Handler {
 
 	return handlers.CORS(opts...)(handler)
 }
-
-func withRequestLogging(handler http.Handler) http.Handler {
-	log := zap.NewStdLog(zap.L().Named("http"))
-	return handlers.CombinedLoggingHandler(log.Writer(), handler)
-}

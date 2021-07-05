@@ -6,6 +6,7 @@ import (
 	"context"
 	"strings"
 
+	grpc_ctxtags "github.com/grpc-ecosystem/go-grpc-middleware/tags"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/peer"
 
@@ -21,24 +22,24 @@ const (
 
 type callIDCtxKeyType struct{}
 
-var (
-	callIDCtxKey = callIDCtxKeyType{}
-	zeroID       = ID([16]byte{})
-)
+var callIDCtxKey = callIDCtxKeyType{}
 
 func NewContextWithCallID(ctx context.Context, id ID) context.Context {
-	return context.WithValue(ctx, callIDCtxKey, id)
+	tags := grpc_ctxtags.Extract(ctx).Set("cerbos.call_id", string(id))
+	tagCtx := grpc_ctxtags.SetInContext(ctx, tags)
+
+	return context.WithValue(tagCtx, callIDCtxKey, id)
 }
 
 func CallIDFromContext(ctx context.Context) (ID, bool) {
 	idVal := ctx.Value(callIDCtxKey)
 	if idVal == nil {
-		return zeroID, false
+		return "", false
 	}
 
 	id, ok := idVal.(ID)
 	if !ok {
-		return zeroID, false
+		return "", false
 	}
 
 	return id, true

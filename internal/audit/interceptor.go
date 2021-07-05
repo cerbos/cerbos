@@ -16,6 +16,10 @@ import (
 	auditv1 "github.com/cerbos/cerbos/internal/genpb/audit/v1"
 )
 
+var excludeMetadataKeys = map[string]struct{}{
+	"grpc-trace-bin": {},
+}
+
 type ExcludeMethod func(string) bool
 
 func NewUnaryInterceptor(log Log, exclude ExcludeMethod) grpc.UnaryServerInterceptor {
@@ -35,7 +39,7 @@ func NewUnaryInterceptor(log Log, exclude ExcludeMethod) grpc.UnaryServerInterce
 
 		if logErr := log.WriteAccessLogEntry(ctx, func() (*auditv1.AccessLogEntry, error) {
 			entry := &auditv1.AccessLogEntry{
-				CallId:     callID[:],
+				CallId:     string(callID),
 				Timestamp:  timestamppb.New(ts),
 				Peer:       PeerFromContext(ctx),
 				Method:     info.FullMethod,
@@ -45,10 +49,10 @@ func NewUnaryInterceptor(log Log, exclude ExcludeMethod) grpc.UnaryServerInterce
 			md, ok := metadata.FromIncomingContext(ctx)
 			if ok {
 				entry.Metadata = make(map[string]*auditv1.MetaValues, len(md))
-				i := 0
 				for key, values := range md {
-					entry.Metadata[key] = &auditv1.MetaValues{Values: values}
-					i++
+					if _, ok := excludeMetadataKeys[key]; !ok {
+						entry.Metadata[key] = &auditv1.MetaValues{Values: values}
+					}
 				}
 			}
 

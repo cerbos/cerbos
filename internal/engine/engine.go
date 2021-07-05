@@ -163,7 +163,7 @@ func (engine *Engine) logDecision(ctx context.Context, inputs []*enginev1.CheckI
 		}
 
 		entry := &auditv1.DecisionLogEntry{
-			CallId:    callID[:],
+			CallId:    string(callID),
 			Timestamp: timestamppb.New(time.Now()),
 			Peer:      audit.PeerFromContext(ctx),
 			Inputs:    inputs,

@@ -36,7 +36,7 @@ func BenchmarkIDGen(b *testing.B) {
 }
 
 func TestIDGen(t *testing.T) {
-	ids := make(map[string]struct{}, 1_000_000)
+	ids := make(map[audit.ID]struct{}, 1_000_000)
 	out := make(chan audit.ID, 8)
 
 	var wg sync.WaitGroup
@@ -60,12 +60,11 @@ func TestIDGen(t *testing.T) {
 	}()
 
 	for id := range out {
-		idStr := id.String()
-		if _, ok := ids[idStr]; ok {
-			t.Fatalf("Collision: %s", idStr)
+		if _, ok := ids[id]; ok {
+			t.Fatalf("Collision: %s", id)
 		}
 
-		ids[idStr] = struct{}{}
+		ids[id] = struct{}{}
 	}
 
 	if len(ids) != 1_000_000 {

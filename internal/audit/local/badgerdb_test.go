@@ -207,7 +207,7 @@ func mkAccessLogEntry(t *testing.T, id audit.ID, i int, ts time.Time) audit.Acce
 
 	return func() (*auditv1.AccessLogEntry, error) {
 		return &auditv1.AccessLogEntry{
-			CallId:    id[:],
+			CallId:    string(id),
 			Timestamp: timestamppb.New(ts),
 			Peer: &auditv1.Peer{
 				Address: "1.1.1.1",
@@ -223,7 +223,7 @@ func mkDecisionLogEntry(t *testing.T, id audit.ID, i int, ts time.Time) audit.De
 
 	return func() (*auditv1.DecisionLogEntry, error) {
 		return &auditv1.DecisionLogEntry{
-			CallId:    id[:],
+			CallId:    string(id),
 			Timestamp: timestamppb.New(ts),
 			Inputs: []*enginev1.CheckInput{
 				{

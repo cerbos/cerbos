@@ -201,6 +201,12 @@ message AddOrUpdatePolicyResponse {
 }
 
 message ListAuditLogEntriesResponse {
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
+		json_schema: {
+			description: "Audit log stream."
+		}
+    };
+
     oneof entry {
         audit.v1.AccessLogEntry access_log_entry = 1;
         audit.v1.DecisionLogEntry decision_log_entry = 2;

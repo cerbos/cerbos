@@ -15,6 +15,20 @@ import (
 
 var idGen = NewIDGen(uint64(runtime.NumCPU()), time.Now().UnixNano())
 
+type (
+	ID      string
+	IDBytes = ulid.ULID
+)
+
+func (id ID) Repr() (IDBytes, error) {
+	return ulid.ParseStrict(string(id))
+}
+
+// FromRepr converts the byte representation to a string ID.
+func FromRepr(id IDBytes) ID {
+	return ID(id.String())
+}
+
 // NewID generates a new ULID using the current time.
 func NewID() (ID, error) {
 	return idGen.New()
@@ -29,8 +43,6 @@ func NewIDForTime(ts time.Time) (ID, error) {
 func NewIDForTS(ts uint64) (ID, error) {
 	return idGen.NewForTS(ts)
 }
-
-type ID = ulid.ULID
 
 // IDGen is a generator for ULIDs without the monotonicity guarantee.
 // Monotonicity adds overhead that we don't really need because approximate order
@@ -58,7 +70,12 @@ func (ug *IDGen) NewForTime(ts time.Time) (ID, error) {
 // NewForTS generates a new ULID for the given timestamp.
 func (ug *IDGen) NewForTS(ts uint64) (ID, error) {
 	entropy := ug.randPool.get()
-	return ulid.New(ts, entropy)
+	idBytes, err := ulid.New(ts, entropy)
+	if err != nil {
+		return "", err
+	}
+
+	return FromRepr(idBytes), nil
 }
 
 // randPool is a pool of rand objects used to produce random bytes for ID generation.
