@@ -28,14 +28,24 @@ func XForwardedHostUnaryServerInterceptor(ctx context.Context, req interface{}, 
 		return handler(ctx, req)
 	}
 
+	headers := make(map[string]interface{}, 2) //nolint:gomnd
+
 	xfh, ok := md["x-forwarded-host"]
-	if !ok {
-		return handler(ctx, req)
+	if ok {
+		headers["x_forwarded_host"] = xfh
 	}
 
-	tags := grpc_ctxtags.Extract(ctx).Set("http.x_forwarded_host", xfh)
+	xff, ok := md["x-forwarded-for"]
+	if ok {
+		headers["x_forwarded_for"] = xff
+	}
 
-	return handler(grpc_ctxtags.SetInContext(ctx, tags), req)
+	if len(headers) > 0 {
+		tags := grpc_ctxtags.Extract(ctx).Set("http", headers)
+		return handler(grpc_ctxtags.SetInContext(ctx, tags), req)
+	}
+
+	return handler(ctx, req)
 }
 
 // accessLogExclude decides which methods to exclude from being logged to the access log.

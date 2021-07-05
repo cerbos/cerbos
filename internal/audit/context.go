@@ -11,6 +11,7 @@ import (
 	"google.golang.org/grpc/peer"
 
 	auditv1 "github.com/cerbos/cerbos/internal/genpb/audit/v1"
+	"github.com/cerbos/cerbos/internal/util"
 )
 
 const (
@@ -18,6 +19,7 @@ const (
 	grpcGWUserAgentKey = "grpcgateway-user-agent"
 	userAgentKey       = "user-agent"
 	xffKey             = "x-forwarded-for"
+	callIDTagKey       = "call_id"
 )
 
 type callIDCtxKeyType struct{}
@@ -25,8 +27,8 @@ type callIDCtxKeyType struct{}
 var callIDCtxKey = callIDCtxKeyType{}
 
 func NewContextWithCallID(ctx context.Context, id ID) context.Context {
-	tags := grpc_ctxtags.Extract(ctx).Set("cerbos.call_id", string(id))
-	tagCtx := grpc_ctxtags.SetInContext(ctx, tags)
+	tags := grpc_ctxtags.Extract(ctx)
+	tagCtx := grpc_ctxtags.SetInContext(ctx, tags.Set(util.AppName, map[string]interface{}{callIDTagKey: id}))
 
 	return context.WithValue(tagCtx, callIDCtxKey, id)
 }
