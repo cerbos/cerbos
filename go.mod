@@ -57,7 +57,7 @@ require (
 	google.golang.org/protobuf v1.26.1-0.20210520194023-50a85913fbce
 	gotest.tools/gotestsum v1.6.4
 	helm.sh/helm/v3 v3.6.2
-	modernc.org/sqlite v1.11.1
+	modernc.org/sqlite v1.11.2
 )
 
 replace github.com/docker/distribution => github.com/docker/distribution v0.0.0-20191216044856-a8371794149d
