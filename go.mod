@@ -32,7 +32,7 @@ require (
 	github.com/kavu/go_reuseport v1.5.0
 	github.com/lyft/protoc-gen-star v0.5.3 // indirect
 	github.com/mattn/go-isatty v0.0.13
-	github.com/open-policy-agent/opa v0.29.4
+	github.com/open-policy-agent/opa v0.30.1
 	github.com/planetscale/vtprotobuf v0.0.0-20210616093554-9236f7c7b8ca
 	github.com/prometheus/client_golang v1.11.0
 	github.com/rcrowley/go-metrics v0.0.0-20201227073835-cf1acfcdf475 // indirect
