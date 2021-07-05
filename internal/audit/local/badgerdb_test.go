@@ -10,8 +10,10 @@ import (
 	"testing"
 	"time"
 
+	"github.com/google/go-cmp/cmp"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/sync/errgroup"
+	"google.golang.org/protobuf/testing/protocmp"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/cerbos/cerbos/internal/audit"
@@ -154,6 +156,30 @@ func TestBadgerLog(t *testing.T) {
 		}
 
 		require.Equal(t, 100_001, counter)
+	})
+
+	t.Run("accessLogEntryByID", func(t *testing.T) {
+		it := db.LastNAccessLogEntries(context.Background(), 1)
+		wantRecord, err := it.Next()
+		require.NoError(t, err)
+
+		it = db.AccessLogEntryByID(context.Background(), audit.ID(wantRecord.CallId))
+		haveRecord, err := it.Next()
+		require.NoError(t, err)
+
+		require.Empty(t, cmp.Diff(wantRecord, haveRecord, protocmp.Transform()))
+	})
+
+	t.Run("decisionLogEntryByID", func(t *testing.T) {
+		it := db.LastNDecisionLogEntries(context.Background(), 1)
+		wantRecord, err := it.Next()
+		require.NoError(t, err)
+
+		it = db.DecisionLogEntryByID(context.Background(), audit.ID(wantRecord.CallId))
+		haveRecord, err := it.Next()
+		require.NoError(t, err)
+
+		require.Empty(t, cmp.Diff(wantRecord, haveRecord, protocmp.Transform()))
 	})
 }
 

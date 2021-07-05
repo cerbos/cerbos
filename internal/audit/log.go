@@ -27,6 +27,8 @@ type Log interface {
 	LastNDecisionLogEntries(context.Context, uint) DecisionLogIterator
 	AccessLogEntriesBetween(context.Context, time.Time, time.Time) AccessLogIterator
 	DecisionLogEntriesBetween(context.Context, time.Time, time.Time) DecisionLogIterator
+	AccessLogEntryByID(context.Context, ID) AccessLogIterator
+	DecisionLogEntryByID(context.Context, ID) DecisionLogIterator
 	Close()
 }
 
@@ -140,6 +142,22 @@ func (lw *logWrapper) DecisionLogEntriesBetween(ctx context.Context, from, to ti
 	}
 
 	return lw.backend.DecisionLogEntriesBetween(ctx, from, to)
+}
+
+func (lw *logWrapper) AccessLogEntryByID(ctx context.Context, id ID) AccessLogIterator {
+	if !lw.conf.AccessLogsEnabled {
+		return nopAccessLogIterator{}
+	}
+
+	return lw.backend.AccessLogEntryByID(ctx, id)
+}
+
+func (lw *logWrapper) DecisionLogEntryByID(ctx context.Context, id ID) DecisionLogIterator {
+	if !lw.conf.DecisionLogsEnabled {
+		return nopDecisionLogIterator{}
+	}
+
+	return lw.backend.DecisionLogEntryByID(ctx, id)
 }
 
 func (lw *logWrapper) Close() {

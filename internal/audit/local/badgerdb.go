@@ -311,6 +311,47 @@ func (l *Log) listBetweenTimestamps(ctx context.Context, prefix []byte, fromTS, 
 	c.done(err)
 }
 
+func (l *Log) AccessLogEntryByID(ctx context.Context, id audit.ID) audit.AccessLogIterator {
+	c := newAccessLogEntryCollector()
+	l.getByID(ctx, accessLogPrefix, id, c)
+	return c
+}
+
+func (l *Log) DecisionLogEntryByID(ctx context.Context, id audit.ID) audit.DecisionLogIterator {
+	c := newDecisionLogEntryCollector()
+	l.getByID(ctx, decisionLogPrefix, id, c)
+	return c
+}
+
+func (l *Log) getByID(ctx context.Context, prefix []byte, id audit.ID, c collector) {
+	if err := ctx.Err(); err != nil {
+		c.done(err)
+		return
+	}
+
+	idBytes, err := id.Repr()
+	if err != nil {
+		c.done(err)
+		return
+	}
+
+	key := genKey(prefix, idBytes)
+	err = l.db.View(func(txn *badgerv3.Txn) error {
+		item, err := txn.Get(key)
+		if err != nil {
+			if errors.Is(err, badgerv3.ErrKeyNotFound) {
+				return audit.ErrIteratorClosed
+			}
+
+			return err
+		}
+
+		return item.Value(c.add)
+	})
+
+	c.done(err)
+}
+
 func (l *Log) Close() {
 	l.stopOnce.Do(func() {
 		close(l.stopChan)

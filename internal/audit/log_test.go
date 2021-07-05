@@ -72,6 +72,24 @@ func TestNopLog(t *testing.T) {
 		require.ErrorIs(t, err, audit.ErrIteratorClosed)
 	})
 
+	t.Run("accessLogEntryByID", func(t *testing.T) {
+		it := log.AccessLogEntryByID(context.Background(), "01F9V33PSMJ3Z52CS6JPPWCYRZ")
+		require.NotNil(t, it)
+
+		rec, err := it.Next()
+		require.Nil(t, rec)
+		require.ErrorIs(t, err, audit.ErrIteratorClosed)
+	})
+
+	t.Run("decisionLogEntryByID", func(t *testing.T) {
+		it := log.DecisionLogEntryByID(context.Background(), "01F9V33PSMJ3Z52CS6JPPWCYRZ")
+		require.NotNil(t, it)
+
+		rec, err := it.Next()
+		require.Nil(t, rec)
+		require.ErrorIs(t, err, audit.ErrIteratorClosed)
+	})
+
 	t.Run("close", func(t *testing.T) {
 		log.Close()
 	})

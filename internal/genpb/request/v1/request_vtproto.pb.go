@@ -807,6 +807,20 @@ func (m *ListAuditLogEntriesRequest_Between) MarshalToSizedBufferVT(dAtA []byte)
 	}
 	return len(dAtA) - i, nil
 }
+func (m *ListAuditLogEntriesRequest_ByCallId) MarshalToVT(dAtA []byte) (int, error) {
+	size := m.SizeVT()
+	return m.MarshalToSizedBufferVT(dAtA[:size])
+}
+
+func (m *ListAuditLogEntriesRequest_ByCallId) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	i -= len(m.ByCallId)
+	copy(dAtA[i:], m.ByCallId)
+	i = encodeVarint(dAtA, i, uint64(len(m.ByCallId)))
+	i--
+	dAtA[i] = 0x22
+	return len(dAtA) - i, nil
+}
 func encodeVarint(dAtA []byte, offset int, v uint64) int {
 	offset -= sov(v)
 	base := offset
@@ -1164,6 +1178,16 @@ func (m *ListAuditLogEntriesRequest_Between) SizeVT() (n int) {
 		l = m.Between.SizeVT()
 		n += 1 + l + sov(uint64(l))
 	}
+	return n
+}
+func (m *ListAuditLogEntriesRequest_ByCallId) SizeVT() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = len(m.ByCallId)
+	n += 1 + l + sov(uint64(l))
 	return n
 }
 
@@ -2919,6 +2943,38 @@ func (m *ListAuditLogEntriesRequest) UnmarshalVT(dAtA []byte) error {
 				}
 				m.Filter = &ListAuditLogEntriesRequest_Between{v}
 			}
+			iNdEx = postIndex
+		case 4:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field ByCallId", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLength
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLength
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Filter = &ListAuditLogEntriesRequest_ByCallId{string(dAtA[iNdEx:postIndex])}
 			iNdEx = postIndex
 		default:
 			iNdEx = preIndex

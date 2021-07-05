@@ -95,6 +95,13 @@
             "required": true,
             "type": "string",
             "format": "date-time"
+          },
+          {
+            "name": "byCallId",
+            "description": "By Call ID",
+            "in": "query",
+            "required": false,
+            "type": "string"
           }
         ],
         "tags": [

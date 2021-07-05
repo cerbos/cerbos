@@ -937,6 +937,15 @@ func (m *ListAuditLogEntriesRequest) Validate() error {
 			}
 		}
 
+	case *ListAuditLogEntriesRequest_ByCallId:
+
+		if !_ListAuditLogEntriesRequest_ByCallId_Pattern.MatchString(m.GetByCallId()) {
+			return ListAuditLogEntriesRequestValidationError{
+				field:  "ByCallId",
+				reason: "value does not match regex pattern \"^[0123456789ABCDEFGHJKMNPQRSTVWXYZ]{26}$\"",
+			}
+		}
+
 	default:
 		return ListAuditLogEntriesRequestValidationError{
 			field:  "Filter",
@@ -1008,6 +1017,8 @@ var _ListAuditLogEntriesRequest_Kind_InLookup = map[ListAuditLogEntriesRequest_K
 	1: {},
 	2: {},
 }
+
+var _ListAuditLogEntriesRequest_ByCallId_Pattern = regexp.MustCompile("^[0123456789ABCDEFGHJKMNPQRSTVWXYZ]{26}$")
 
 // Validate checks the field values on CheckResourceBatchRequest_BatchEntry
 // with the rules defined in the proto definition for this message. If any

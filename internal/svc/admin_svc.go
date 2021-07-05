@@ -127,6 +127,8 @@ func (cas *CerbosAdminService) getAuditLogStream(ctx context.Context, req *reque
 			return mkAccessLogStream(cas.auditLog.LastNAccessLogEntries(ctx, uint(f.LastN))), nil
 		case *requestv1.ListAuditLogEntriesRequest_Between:
 			return mkAccessLogStream(cas.auditLog.AccessLogEntriesBetween(ctx, f.Between.Start.AsTime(), f.Between.End.AsTime())), nil
+		case *requestv1.ListAuditLogEntriesRequest_ByCallId:
+			return mkAccessLogStream(cas.auditLog.AccessLogEntryByID(ctx, audit.ID(f.ByCallId))), nil
 		}
 	case requestv1.ListAuditLogEntriesRequest_KIND_DECISION:
 		switch f := req.Filter.(type) {
@@ -134,6 +136,8 @@ func (cas *CerbosAdminService) getAuditLogStream(ctx context.Context, req *reque
 			return mkDecisionLogStream(cas.auditLog.LastNDecisionLogEntries(ctx, uint(f.LastN))), nil
 		case *requestv1.ListAuditLogEntriesRequest_Between:
 			return mkDecisionLogStream(cas.auditLog.DecisionLogEntriesBetween(ctx, f.Between.Start.AsTime(), f.Between.End.AsTime())), nil
+		case *requestv1.ListAuditLogEntriesRequest_ByCallId:
+			return mkDecisionLogStream(cas.auditLog.DecisionLogEntryByID(ctx, audit.ID(f.ByCallId))), nil
 		}
 	default:
 		return nil, status.Error(codes.InvalidArgument, "Unknown log stream kind")
