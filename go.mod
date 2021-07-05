@@ -56,7 +56,7 @@ require (
 	google.golang.org/grpc/cmd/protoc-gen-go-grpc v1.1.0
 	google.golang.org/protobuf v1.26.1-0.20210520194023-50a85913fbce
 	gotest.tools/gotestsum v1.6.4
-	helm.sh/helm/v3 v3.6.1
+	helm.sh/helm/v3 v3.6.2
 	modernc.org/sqlite v1.11.1
 )
 
