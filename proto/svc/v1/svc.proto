@@ -94,6 +94,21 @@ service CerbosAdminService {
             }
         };
     }
+
+    rpc ListAuditLogEntries(request.v1.ListAuditLogEntriesRequest) returns (stream response.v1.ListAuditLogEntriesResponse) {
+        option (google.api.http) = {
+            get: "/admin/auditlog/list/{kind}",
+        };
+        option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+            summary: "List audit log entries",
+            security: {
+                security_requirement: {
+                    key: "BasicAuth";
+                    value: {};
+                }    
+            }
+        };
+    }
 }
 
 service CerbosPlaygroundService {

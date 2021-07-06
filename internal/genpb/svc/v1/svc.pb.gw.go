@@ -168,6 +168,54 @@ func local_request_CerbosAdminService_AddOrUpdatePolicy_1(ctx context.Context, m
 
 }
 
+var (
+	filter_CerbosAdminService_ListAuditLogEntries_0 = &utilities.DoubleArray{Encoding: map[string]int{"kind": 0}, Base: []int{1, 1, 0}, Check: []int{0, 1, 2}}
+)
+
+func request_CerbosAdminService_ListAuditLogEntries_0(ctx context.Context, marshaler runtime.Marshaler, client CerbosAdminServiceClient, req *http.Request, pathParams map[string]string) (CerbosAdminService_ListAuditLogEntriesClient, runtime.ServerMetadata, error) {
+	var protoReq requestv1.ListAuditLogEntriesRequest
+	var metadata runtime.ServerMetadata
+
+	var (
+		val string
+		e   int32
+		ok  bool
+		err error
+		_   = err
+	)
+
+	val, ok = pathParams["kind"]
+	if !ok {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "kind")
+	}
+
+	e, err = runtime.Enum(val, requestv1.ListAuditLogEntriesRequest_Kind_value)
+	if err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "kind", err)
+	}
+
+	protoReq.Kind = requestv1.ListAuditLogEntriesRequest_Kind(e)
+
+	if err := req.ParseForm(); err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_CerbosAdminService_ListAuditLogEntries_0); err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+
+	stream, err := client.ListAuditLogEntries(ctx, &protoReq)
+	if err != nil {
+		return nil, metadata, err
+	}
+	header, err := stream.Header()
+	if err != nil {
+		return nil, metadata, err
+	}
+	metadata.HeaderMD = header
+	return stream, metadata, nil
+
+}
+
 func request_CerbosPlaygroundService_PlaygroundValidate_0(ctx context.Context, marshaler runtime.Marshaler, client CerbosPlaygroundServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var protoReq requestv1.PlaygroundValidateRequest
 	var metadata runtime.ServerMetadata
@@ -341,6 +389,13 @@ func RegisterCerbosAdminServiceHandlerServer(ctx context.Context, mux *runtime.S
 
 		forward_CerbosAdminService_AddOrUpdatePolicy_1(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
+	})
+
+	mux.Handle("GET", pattern_CerbosAdminService_ListAuditLogEntries_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+		err := status.Error(codes.Unimplemented, "streaming calls are not yet supported in the in-process transport")
+		_, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
+		runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
+		return
 	})
 
 	return nil
@@ -572,6 +627,26 @@ func RegisterCerbosAdminServiceHandlerClient(ctx context.Context, mux *runtime.S
 
 	})
 
+	mux.Handle("GET", pattern_CerbosAdminService_ListAuditLogEntries_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+		ctx, cancel := context.WithCancel(req.Context())
+		defer cancel()
+		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
+		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/svc.v1.CerbosAdminService/ListAuditLogEntries")
+		if err != nil {
+			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
+			return
+		}
+		resp, md, err := request_CerbosAdminService_ListAuditLogEntries_0(rctx, inboundMarshaler, client, req, pathParams)
+		ctx = runtime.NewServerMetadataContext(ctx, md)
+		if err != nil {
+			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
+			return
+		}
+
+		forward_CerbosAdminService_ListAuditLogEntries_0(ctx, mux, outboundMarshaler, w, req, func() (proto.Message, error) { return resp.Recv() }, mux.GetForwardResponseOptions()...)
+
+	})
+
 	return nil
 }
 
@@ -579,12 +654,16 @@ var (
 	pattern_CerbosAdminService_AddOrUpdatePolicy_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"admin", "policy"}, ""))
 
 	pattern_CerbosAdminService_AddOrUpdatePolicy_1 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"admin", "policy"}, ""))
+
+	pattern_CerbosAdminService_ListAuditLogEntries_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3}, []string{"admin", "auditlog", "list", "kind"}, ""))
 )
 
 var (
 	forward_CerbosAdminService_AddOrUpdatePolicy_0 = runtime.ForwardResponseMessage
 
 	forward_CerbosAdminService_AddOrUpdatePolicy_1 = runtime.ForwardResponseMessage
+
+	forward_CerbosAdminService_ListAuditLogEntries_0 = runtime.ForwardResponseStream
 )
 
 // RegisterCerbosPlaygroundServiceHandlerFromEndpoint is same as RegisterCerbosPlaygroundServiceHandler but

@@ -11,6 +11,8 @@ import (
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/testing/protocmp"
 
+	"github.com/cerbos/cerbos/internal/audit"
+	"github.com/cerbos/cerbos/internal/audit/local"
 	"github.com/cerbos/cerbos/internal/compile"
 	cerbosdevv1 "github.com/cerbos/cerbos/internal/genpb/cerbosdev/v1"
 	"github.com/cerbos/cerbos/internal/storage/disk"
@@ -22,7 +24,7 @@ import (
 var dummy int
 
 func TestCheck(t *testing.T) {
-	eng, cancelFunc := mkEngine(t)
+	eng, cancelFunc := mkEngine(t, false)
 	defer cancelFunc()
 
 	testCases := test.LoadTestCases(t, "engine")
@@ -56,10 +58,25 @@ func readTestCase(tb testing.TB, data []byte) *cerbosdevv1.EngineTestCase {
 }
 
 func BenchmarkCheck(b *testing.B) {
-	eng, cancelFunc := mkEngine(b)
-	defer cancelFunc()
-
 	testCases := test.LoadTestCases(b, "engine")
+
+	b.Run("nop_decision_logger", func(b *testing.B) {
+		eng, cancelFunc := mkEngine(b, false)
+		defer cancelFunc()
+
+		runBenchmarks(b, eng, testCases)
+	})
+
+	b.Run("badger_decision_logger", func(b *testing.B) {
+		eng, cancelFunc := mkEngine(b, true)
+		defer cancelFunc()
+
+		runBenchmarks(b, eng, testCases)
+	})
+}
+
+func runBenchmarks(b *testing.B, eng *Engine, testCases []test.Case) {
+	b.Helper()
 
 	for _, tcase := range testCases {
 		tcase := tcase
@@ -83,7 +100,7 @@ func BenchmarkCheck(b *testing.B) {
 	}
 }
 
-func mkEngine(tb testing.TB) (*Engine, context.CancelFunc) {
+func mkEngine(tb testing.TB, enableAuditLog bool) (*Engine, context.CancelFunc) {
 	tb.Helper()
 
 	dir := test.PathToDir(tb, "store")
@@ -95,7 +112,20 @@ func mkEngine(tb testing.TB) (*Engine, context.CancelFunc) {
 
 	compiler := compile.NewManager(ctx, store)
 
-	eng, err := New(ctx, compiler)
+	var auditLog audit.Log
+	if enableAuditLog {
+		conf := &local.Conf{
+			StoragePath: tb.TempDir(),
+		}
+		conf.SetDefaults()
+
+		auditLog, err = local.NewLog(conf)
+		require.NoError(tb, err)
+	} else {
+		auditLog = audit.NewNopLog()
+	}
+
+	eng, err := New(ctx, compiler, auditLog)
 	require.NoError(tb, err)
 
 	return eng, cancelFunc

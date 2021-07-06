@@ -32,6 +32,88 @@
     "application/json"
   ],
   "paths": {
+    "/admin/auditlog/list/{kind}": {
+      "get": {
+        "summary": "List audit log entries",
+        "operationId": "CerbosAdminService_ListAuditLogEntries",
+        "responses": {
+          "200": {
+            "description": "A successful response.(streaming responses)",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "result": {
+                  "$ref": "#/definitions/v1ListAuditLogEntriesResponse"
+                },
+                "error": {
+                  "$ref": "#/definitions/rpcStatus"
+                }
+              },
+              "title": "Stream result of v1ListAuditLogEntriesResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "kind",
+            "description": "Kind of log entry",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "enum": [
+              "KIND_UNSPECIFIED",
+              "KIND_ACCESS",
+              "KIND_DECISION"
+            ]
+          },
+          {
+            "name": "lastN",
+            "description": "Last N entries.",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "between.start",
+            "description": "Start date in ISO 8601 format.",
+            "in": "query",
+            "required": true,
+            "type": "string",
+            "format": "date-time"
+          },
+          {
+            "name": "between.end",
+            "description": "End date in ISO 8601 format.",
+            "in": "query",
+            "required": true,
+            "type": "string",
+            "format": "date-time"
+          },
+          {
+            "name": "byCallId",
+            "description": "By Call ID",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "CerbosAdminService"
+        ],
+        "security": [
+          {
+            "BasicAuth": []
+          }
+        ]
+      }
+    },
     "/admin/policy": {
       "post": {
         "summary": "Add or update policies",
@@ -241,6 +323,17 @@
     }
   },
   "definitions": {
+    "CheckOutputActionEffect": {
+      "type": "object",
+      "properties": {
+        "effect": {
+          "$ref": "#/definitions/v1Effect"
+        },
+        "policy": {
+          "type": "string"
+        }
+      }
+    },
     "CheckResourceBatchRequestBatchEntry": {
       "type": "object",
       "properties": {
@@ -306,6 +399,43 @@
         }
       },
       "description": "Metadata about request evaluation."
+    },
+    "ListAuditLogEntriesRequestKind": {
+      "type": "string",
+      "enum": [
+        "KIND_UNSPECIFIED",
+        "KIND_ACCESS",
+        "KIND_DECISION"
+      ],
+      "default": "KIND_UNSPECIFIED"
+    },
+    "ListAuditLogEntriesRequestTimeRange": {
+      "type": "object",
+      "properties": {
+        "start": {
+          "type": "string",
+          "format": "date-time",
+          "example": "2021-07-05T07:27:01+00:00",
+          "description": "Start date in ISO 8601 format.",
+          "required": [
+            "start"
+          ]
+        },
+        "end": {
+          "type": "string",
+          "format": "date-time",
+          "example": "2021-07-05T07:27:01+00:00",
+          "description": "End date in ISO 8601 format.",
+          "required": [
+            "end"
+          ]
+        }
+      },
+      "description": "Entries between a time range.",
+      "required": [
+        "start",
+        "end"
+      ]
     },
     "MatchExprList": {
       "type": "object",
@@ -454,6 +584,34 @@
         }
       }
     },
+    "v1AccessLogEntry": {
+      "type": "object",
+      "properties": {
+        "callId": {
+          "type": "string"
+        },
+        "timestamp": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "peer": {
+          "$ref": "#/definitions/v1Peer"
+        },
+        "metadata": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/v1MetaValues"
+          }
+        },
+        "method": {
+          "type": "string"
+        },
+        "statusCode": {
+          "type": "integer",
+          "format": "int64"
+        }
+      }
+    },
     "v1AddOrUpdatePolicyRequest": {
       "type": "object",
       "properties": {
@@ -496,6 +654,55 @@
         }
       },
       "description": "Unique identifier for the resource instance."
+    },
+    "v1CheckInput": {
+      "type": "object",
+      "properties": {
+        "requestId": {
+          "type": "string"
+        },
+        "resource": {
+          "$ref": "#/definitions/v1Resource"
+        },
+        "principal": {
+          "$ref": "#/definitions/v1Principal"
+        },
+        "actions": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "required": [
+            "actions"
+          ]
+        }
+      },
+      "required": [
+        "actions"
+      ]
+    },
+    "v1CheckOutput": {
+      "type": "object",
+      "properties": {
+        "requestId": {
+          "type": "string"
+        },
+        "resourceId": {
+          "type": "string"
+        },
+        "actions": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/CheckOutputActionEffect"
+          }
+        },
+        "effectiveDerivedRoles": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
     },
     "v1CheckResourceBatchRequest": {
       "type": "object",
@@ -691,6 +898,36 @@
         }
       }
     },
+    "v1DecisionLogEntry": {
+      "type": "object",
+      "properties": {
+        "callId": {
+          "type": "string"
+        },
+        "timestamp": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "peer": {
+          "$ref": "#/definitions/v1Peer"
+        },
+        "inputs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/v1CheckInput"
+          }
+        },
+        "outputs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/v1CheckOutput"
+          }
+        },
+        "error": {
+          "type": "string"
+        }
+      }
+    },
     "v1DerivedRoles": {
       "type": "object",
       "properties": {
@@ -715,6 +952,18 @@
       ],
       "default": "EFFECT_UNSPECIFIED"
     },
+    "v1ListAuditLogEntriesResponse": {
+      "type": "object",
+      "properties": {
+        "accessLogEntry": {
+          "$ref": "#/definitions/v1AccessLogEntry"
+        },
+        "decisionLogEntry": {
+          "$ref": "#/definitions/v1DecisionLogEntry"
+        }
+      },
+      "description": "Audit log stream."
+    },
     "v1Match": {
       "type": "object",
       "properties": {
@@ -732,6 +981,17 @@
         }
       }
     },
+    "v1MetaValues": {
+      "type": "object",
+      "properties": {
+        "values": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
     "v1Metadata": {
       "type": "object",
       "properties": {
@@ -743,6 +1003,23 @@
           "additionalProperties": {
             "type": "string"
           }
+        }
+      }
+    },
+    "v1Peer": {
+      "type": "object",
+      "properties": {
+        "address": {
+          "type": "string"
+        },
+        "authInfo": {
+          "type": "string"
+        },
+        "userAgent": {
+          "type": "string"
+        },
+        "forwardedFor": {
+          "type": "string"
         }
       }
     },

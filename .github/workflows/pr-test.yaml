@@ -40,7 +40,7 @@ jobs:
           fi
 
       - name: Test
-        run: make test
+        run: make test-all
 
   docs:
     name: Build docs

@@ -1,0 +1,33 @@
+# Illustrates how to deploy Cerbos with an SQLite3 backend and audit logs. 
+
+cerbos:
+  config:
+    # Configure the SQLite3 storage driver
+    storage:
+      driver: "sqlite3"
+      sqlite3:
+        dsn: "file:/data/cerbos.sqlite?mode=rwc&_fk=true"  
+    # Configure audit logging
+    audit:
+      enabled: true
+      accessLogsEnabled: true
+      decisionLogsEnabled: true
+      backend: local
+      local: 
+        storagePath: /audit/cerbos
+
+# Create volumes to hold the SQLite3 database and the audit log. 
+# Note that this example uses emptyDir volumes that lose data when the pod or node is killed.
+# Use persistent volumes in production to preserve the data between pod restarts. 
+
+volumes:
+  - name: cerbos-policies
+    emptyDir: {}
+  - name: cerbos-auditlog
+    emptyDir: {}
+
+volumeMounts:
+  - name: cerbos-policies
+    mountPath: /data
+  - name: cerbos-auditlog
+    mountPath: /audit

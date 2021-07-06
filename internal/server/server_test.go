@@ -26,6 +26,7 @@ import (
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/testing/protocmp"
 
+	"github.com/cerbos/cerbos/internal/audit"
 	"github.com/cerbos/cerbos/internal/compile"
 	"github.com/cerbos/cerbos/internal/engine"
 	cerbosdevv1 "github.com/cerbos/cerbos/internal/genpb/cerbosdev/v1"
@@ -62,10 +63,12 @@ func TestServer(t *testing.T) {
 	ctx, cancelFunc := context.WithCancel(context.Background())
 	defer cancelFunc()
 
+	auditLog := audit.NewNopLog()
+
 	store, err := disk.NewStore(ctx, &disk.Conf{Directory: dir, ScratchDir: t.TempDir()})
 	require.NoError(t, err)
 
-	eng, err := engine.New(ctx, compile.NewManager(ctx, store))
+	eng, err := engine.New(ctx, compile.NewManager(ctx, store), auditLog)
 	require.NoError(t, err)
 
 	testCases := loadTestCases(t, "checks", "playground")
@@ -87,7 +90,7 @@ func TestServer(t *testing.T) {
 			ctx, cancelFunc := context.WithCancel(context.Background())
 			defer cancelFunc()
 
-			startServer(ctx, conf, store, eng)
+			startServer(ctx, conf, store, eng, auditLog)
 
 			tlsConf := &tls.Config{InsecureSkipVerify: true} //nolint:gosec
 
@@ -112,7 +115,7 @@ func TestServer(t *testing.T) {
 			ctx, cancelFunc := context.WithCancel(context.Background())
 			defer cancelFunc()
 
-			startServer(ctx, conf, store, eng)
+			startServer(ctx, conf, store, eng, auditLog)
 
 			tlsConf := &tls.Config{InsecureSkipVerify: true} //nolint:gosec
 
@@ -132,7 +135,7 @@ func TestServer(t *testing.T) {
 			ctx, cancelFunc := context.WithCancel(context.Background())
 			defer cancelFunc()
 
-			startServer(ctx, conf, store, eng)
+			startServer(ctx, conf, store, eng, auditLog)
 
 			t.Run("grpc", testGRPCRequests(testCases, conf.GRPCListenAddr, grpc.WithTransportCredentials(local.NewCredentials())))
 			t.Run("http", testHTTPRequests(testCases, fmt.Sprintf("http://%s", conf.HTTPListenAddr), nil))
@@ -150,7 +153,7 @@ func TestServer(t *testing.T) {
 			ctx, cancelFunc := context.WithCancel(context.Background())
 			defer cancelFunc()
 
-			startServer(ctx, conf, store, eng)
+			startServer(ctx, conf, store, eng, auditLog)
 
 			t.Run("grpc", testGRPCRequests(testCases, conf.GRPCListenAddr, grpc.WithTransportCredentials(local.NewCredentials())))
 		})
@@ -163,10 +166,12 @@ func TestAdminService(t *testing.T) {
 	ctx, cancelFunc := context.WithCancel(context.Background())
 	defer cancelFunc()
 
+	auditLog := audit.NewNopLog()
+
 	store, err := sqlite3.NewStore(ctx, &sqlite3.Conf{DSN: fmt.Sprintf("%s?_fk=true", filepath.Join(t.TempDir(), "cerbos.db"))})
 	require.NoError(t, err)
 
-	eng, err := engine.New(ctx, compile.NewManager(ctx, store))
+	eng, err := engine.New(ctx, compile.NewManager(ctx, store), auditLog)
 	require.NoError(t, err)
 
 	testdataDir := test.PathToDir(t, "server")
@@ -186,7 +191,7 @@ func TestAdminService(t *testing.T) {
 		},
 	}
 
-	startServer(ctx, conf, store, eng)
+	startServer(ctx, conf, store, eng, auditLog)
 
 	testCases := loadTestCases(t, "admin", "checks")
 	creds := &authCreds{username: "cerbos", password: "cerbosAdmin"}
@@ -208,10 +213,10 @@ func getFreeListenAddr(t *testing.T) string {
 	return addr
 }
 
-func startServer(ctx context.Context, conf *Conf, store storage.Store, eng *engine.Engine) {
+func startServer(ctx context.Context, conf *Conf, store storage.Store, eng *engine.Engine, auditLog audit.Log) {
 	s := NewServer(conf)
 	go func() {
-		if err := s.Start(ctx, store, eng, false); err != nil {
+		if err := s.Start(ctx, store, eng, auditLog, false); err != nil {
 			panic(err)
 		}
 	}()

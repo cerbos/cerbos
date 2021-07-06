@@ -1,0 +1,45 @@
+include::ROOT:partial$attributes.adoc[]
+
+= Audit block
+
+The `audit` block configures the audit logging settings for the Cerbos instance. Audit logs capture access records and decisions made by the engine along with the associated context data.
+
+
+Log storage is handled by different backends. In the free version, only the `local` backend is supported.
+
+NOTE: Audit logging has some overhead in terms of resource usage (disk IO, CPU and memory). This overhead is usually negligible unless Cerbos is running in a resource-constrained environment. If resources are scarce or if you are expecting heavy traffic, disabling audit logging might have a positive impact on performance. 
+
+
+[source,yaml,linenums]
+----
+audit: 
+  enabled: true # Set to false to completely disable audit logging.
+  accessLogsEnabled: true # Log API access attempts
+  decisionLogsEnabled: true # Log policy decisions
+  backend: local # Audit backend to use. 
+  local: # Configuration for the local audit backend
+    storagePath: /path/to/dir # Path to store the data
+    retentionPeriod: 168h # Records older than this will be automatically deleted
+----
+
+
+== Local backend
+
+The `local` backend uses an embedded key-value store to save audit records. The default settings should be sufficient for many use cases. Advanced users can fine-tune these settings using the `advanced` section.
+
+
+[source,yaml,linenums]
+----
+audit: 
+  enabled: true 
+  backend: local 
+  local: 
+    storagePath: /path/to/dir 
+    retentionPeriod: 168h 
+    advanced:
+      bufferSize: 16 # Size of the memory buffer. Increasing this will use more memory and the chances of losing data during a crash. 
+      maxBatchSize: 16 # Write batch size. If your records are small, increasing this will reduce disk IO. 
+      flushInterval: 30s # Time to keep records in memory before committing. 
+      gcInterval: 15m # How often the garbage collector runs to remove old entries from the log. 
+----
+

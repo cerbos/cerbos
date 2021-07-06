@@ -10,15 +10,19 @@ import (
 	"math/rand"
 	"net/http"
 	"sync/atomic"
+	"time"
 
 	"github.com/open-policy-agent/opa/ast"
 	"github.com/open-policy-agent/opa/topdown/cache"
 	"go.opencensus.io/trace"
 	"go.uber.org/zap"
 	"google.golang.org/protobuf/encoding/protojson"
+	"google.golang.org/protobuf/types/known/timestamppb"
 
+	"github.com/cerbos/cerbos/internal/audit"
 	"github.com/cerbos/cerbos/internal/compile"
 	"github.com/cerbos/cerbos/internal/config"
+	auditv1 "github.com/cerbos/cerbos/internal/genpb/audit/v1"
 	enginev1 "github.com/cerbos/cerbos/internal/genpb/engine/v1"
 	sharedv1 "github.com/cerbos/cerbos/internal/genpb/shared/v1"
 	"github.com/cerbos/cerbos/internal/namer"
@@ -31,7 +35,6 @@ var ErrNoPoliciesMatched = errors.New("no matching policies")
 
 const (
 	defaultEffect                = sharedv1.Effect_EFFECT_DENY
-	loggerName                   = "engine"
 	maxQueryCacheSizeBytes int64 = 10 * 1024 * 1024 // 10 MiB
 	noPolicyMatch                = "NO_MATCH"
 	parallelismThreshold         = 2
@@ -46,10 +49,11 @@ type Engine struct {
 	workerPool  []chan<- workIn
 	compileMgr  *compile.Manager
 	queryCache  cache.InterQueryCache
+	auditLog    audit.Log
 }
 
-func New(ctx context.Context, compileMgr *compile.Manager) (*Engine, error) {
-	engine, err := newEngine(compileMgr)
+func New(ctx context.Context, compileMgr *compile.Manager, auditLog audit.Log) (*Engine, error) {
+	engine, err := newEngine(compileMgr, auditLog)
 	if err != nil {
 		return nil, err
 	}
@@ -68,10 +72,10 @@ func New(ctx context.Context, compileMgr *compile.Manager) (*Engine, error) {
 }
 
 func NewEphemeral(ctx context.Context, compileMgr *compile.Manager) (*Engine, error) {
-	return newEngine(compileMgr)
+	return newEngine(compileMgr, audit.NewNopLog())
 }
 
-func newEngine(compileMgr *compile.Manager) (*Engine, error) {
+func newEngine(compileMgr *compile.Manager, auditLog audit.Log) (*Engine, error) {
 	conf := &Conf{}
 	if err := config.GetSection(conf); err != nil {
 		return nil, err
@@ -88,6 +92,7 @@ func newEngine(compileMgr *compile.Manager) (*Engine, error) {
 		conf:       conf,
 		compileMgr: compileMgr,
 		queryCache: queryCache,
+		auditLog:   auditLog,
 	}
 
 	return engine, nil
@@ -96,18 +101,14 @@ func newEngine(compileMgr *compile.Manager) (*Engine, error) {
 func (engine *Engine) startWorker(ctx context.Context, num int, inputChan <-chan workIn) {
 	// Keep each goroutine around for a period of time and then recycle them to reclaim the stack space.
 	// See https://adtac.in/2021/04/23/note-on-worker-pools-in-go.html
-	log := zap.L().Named(loggerName).With(zap.Int("worker", num))
-	log.Debug("Starting worker")
 
 	threshold := workerResetThreshold + rand.Intn(workerResetJitter) //nolint:gosec
 	for i := 0; i < threshold; i++ {
 		select {
 		case <-ctx.Done():
-			log.Debug("Stopping worker due to context cancellation")
 			return
 		case work, ok := <-inputChan:
 			if !ok {
-				log.Debug("Stopping worker due to channel closure")
 				return
 			}
 
@@ -117,7 +118,6 @@ func (engine *Engine) startWorker(ctx context.Context, num int, inputChan <-chan
 	}
 
 	// restart to clear the stack
-	log.Debug("Restarting worker")
 	go engine.startWorker(ctx, num, inputChan)
 }
 
@@ -135,7 +135,7 @@ func (engine *Engine) submitWork(ctx context.Context, work workIn) error {
 }
 
 func (engine *Engine) Check(ctx context.Context, inputs []*enginev1.CheckInput) ([]*enginev1.CheckOutput, error) {
-	return measureCheckLatency(len(inputs), func() ([]*enginev1.CheckOutput, error) {
+	outputs, err := measureCheckLatency(len(inputs), func() ([]*enginev1.CheckOutput, error) {
 		ctx, span := tracing.StartSpan(ctx, "engine.Check")
 		defer span.End()
 
@@ -147,6 +147,39 @@ func (engine *Engine) Check(ctx context.Context, inputs []*enginev1.CheckInput) 
 
 		return engine.checkParallel(ctx, inputs)
 	})
+
+	return engine.logDecision(ctx, inputs, outputs, err)
+}
+
+func (engine *Engine) logDecision(ctx context.Context, inputs []*enginev1.CheckInput, outputs []*enginev1.CheckOutput, checkErr error) ([]*enginev1.CheckOutput, error) {
+	if err := engine.auditLog.WriteDecisionLogEntry(ctx, func() (*auditv1.DecisionLogEntry, error) {
+		callID, ok := audit.CallIDFromContext(ctx)
+		if !ok {
+			var err error
+			callID, err = audit.NewID()
+			if err != nil {
+				return nil, err
+			}
+		}
+
+		entry := &auditv1.DecisionLogEntry{
+			CallId:    string(callID),
+			Timestamp: timestamppb.New(time.Now()),
+			Peer:      audit.PeerFromContext(ctx),
+			Inputs:    inputs,
+			Outputs:   outputs,
+		}
+
+		if checkErr != nil {
+			entry.Error = checkErr.Error()
+		}
+
+		return entry, nil
+	}); err != nil {
+		logging.FromContext(ctx).Warn("Failed to log decision", zap.Error(err))
+	}
+
+	return outputs, checkErr
 }
 
 func (engine *Engine) checkSerial(ctx context.Context, inputs []*enginev1.CheckInput) ([]*enginev1.CheckOutput, error) {

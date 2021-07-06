@@ -1,0 +1,44 @@
+// Copyright 2021 Zenauth Ltd.
+
+syntax = "proto3";
+
+package audit.v1;
+
+option go_package = "github.com/cerbos/cerbos/internal/genpb/audit/v1;auditv1";
+option java_package = "dev.cerbos.api.v1.audit";
+option csharp_namespace = "Cerbos.Api.V1.Audit";
+
+import "google/protobuf/timestamp.proto";
+import "engine/v1/engine.proto";
+
+
+message AccessLogEntry {
+    string call_id = 1;
+    google.protobuf.Timestamp timestamp = 2;
+    Peer peer = 3;
+    map<string,MetaValues> metadata = 4;
+    string method = 5;
+    uint32 status_code = 6;
+}
+
+message DecisionLogEntry {
+    string call_id = 1;
+    google.protobuf.Timestamp timestamp = 2;
+    Peer peer = 3;
+    repeated engine.v1.CheckInput inputs = 4;
+    repeated engine.v1.CheckOutput outputs = 5;
+    string error = 6;
+}
+
+message MetaValues {
+    repeated string values = 1;
+}
+
+message Peer {
+    string address = 1;
+    string auth_info = 2;
+    string user_agent = 3;
+    string forwarded_for = 4;
+}
+
+

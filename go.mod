@@ -9,6 +9,7 @@ require (
 	github.com/bluele/gcache v0.0.2
 	github.com/bufbuild/buf v0.43.2
 	github.com/cespare/xxhash v1.1.0
+	github.com/dgraph-io/badger/v3 v3.2103.0
 	github.com/doug-martin/goqu/v9 v9.13.0
 	github.com/envoyproxy/protoc-gen-validate v0.6.1
 	github.com/fatih/color v1.12.0
@@ -32,6 +33,7 @@ require (
 	github.com/kavu/go_reuseport v1.5.0
 	github.com/lyft/protoc-gen-star v0.5.3 // indirect
 	github.com/mattn/go-isatty v0.0.13
+	github.com/oklog/ulid/v2 v2.0.2
 	github.com/open-policy-agent/opa v0.29.4
 	github.com/planetscale/vtprotobuf v0.0.0-20210616093554-9236f7c7b8ca
 	github.com/prometheus/client_golang v1.11.0
