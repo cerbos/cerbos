@@ -222,6 +222,40 @@
         ]
       }
     },
+    "/api/check_resource_batch": {
+      "post": {
+        "summary": "Check resource batch",
+        "description": "Check a principal's permissions to a batch of heterogeneous resources and actions.",
+        "operationId": "CerbosService_CheckResourceBatch",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1CheckResourceBatchResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/v1CheckResourceBatchRequest"
+            }
+          }
+        ],
+        "tags": [
+          "CerbosService"
+        ]
+      }
+    },
     "/api/playground/evaluate": {
       "post": {
         "operationId": "CerbosPlaygroundService_PlaygroundEvaluate",
@@ -284,41 +318,6 @@
         "tags": [
           "CerbosPlaygroundService"
         ]
-      }
-    },
-    "/api/x/check_resource_batch": {
-      "post": {
-        "summary": "Check resource batch",
-        "description": "[Experimental] Check a principal's permissions to a batch of heterogeneous resources and actions.",
-        "operationId": "CerbosService_CheckResourceBatch",
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "$ref": "#/definitions/v1CheckResourceBatchResponse"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/rpcStatus"
-            }
-          }
-        },
-        "parameters": [
-          {
-            "name": "body",
-            "in": "body",
-            "required": true,
-            "schema": {
-              "$ref": "#/definitions/v1CheckResourceBatchRequest"
-            }
-          }
-        ],
-        "tags": [
-          "CerbosService"
-        ],
-        "x-cerbos-experimental": true
       }
     }
   },

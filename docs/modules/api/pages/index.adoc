@@ -18,6 +18,8 @@ Alternatively, you can explore the API using the following methods as well:
 
 == Request and response formats
 
+=== `CheckResourceSet` (`/api/check`)
+
 .Request
 [source,json,linenums]
 ----
@@ -99,7 +101,99 @@ Alternatively, you can explore the API using the following methods as well:
 <5> The policy that matched to make the decision for the given action.
 <6> Derived roles that were activated.
 
+=== `CheckResourceBatch` (`/api/check_resource_batch`)
 
+Unlike `CheckResourceSet` -- which checks access to resource instances of the _same_ kind, `CheckResourceBatch` allows checking access to multiple heterogeneous resource instances.  
+
+.Request
+[source,json,linenums]
+----
+{
+  "requestId": "test",
+  "principal": {
+    "id": "donald_duck",
+    "policyVersion": "20210210",
+    "roles": [
+      "employee"
+    ],
+    "attr": {
+      "department": "marketing",
+      "geography": "GB",
+      "team": "design"
+    }
+  },
+  "resources": [
+    {
+      "actions": [
+        "view:public",
+        "approve",
+        "create"
+      ],
+      "resource": {
+        "kind": "leave_request",
+        "policyVersion": "20210210",
+        "id": "XX125",
+        "attr": {
+          "department": "marketing",
+          "geography": "GB",
+          "id": "XX125",
+          "owner": "john",
+          "team": "design"
+        }
+      }
+    },
+    {
+      "actions": [
+        "view:public",
+        "approve",
+        "create"
+      ],
+      "resource": {
+        "kind": "leave_request",
+        "policyVersion": "20210210",
+        "id": "XX150",
+        "attr": {
+          "department": "marketing",
+          "geography": "GB",
+          "id": "XX125",
+          "owner": "mary",
+          "team": "design"
+        }
+      }
+    }
+  ]
+}
+----
+
+
+.Response
+[source,json,linenums]
+----
+{
+  "requestId":  "test",
+  "results":  [
+    {
+      "resourceId":  "XX125",
+      "actions":  {
+        "approve":  "EFFECT_DENY",
+        "create":  "EFFECT_DENY",
+        "view:public":  "EFFECT_ALLOW"
+      }
+    },
+    {
+      "resourceId":  "XX150",
+      "actions":  {
+        "approve":  "EFFECT_DENY",
+        "create":  "EFFECT_DENY",
+        "view:public":  "EFFECT_ALLOW"
+      }
+    }
+  ]
+}
+----
+
+
+== Accessing the API
 
 === Using curl to access the REST API
 

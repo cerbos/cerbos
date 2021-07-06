@@ -54,18 +54,12 @@ service CerbosService {
 
     rpc CheckResourceBatch(request.v1.CheckResourceBatchRequest) returns (response.v1.CheckResourceBatchResponse) {
         option (google.api.http) = {
-            post: "/api/x/check_resource_batch",
+            post: "/api/check_resource_batch",
             body: "*"
         };
         option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
             summary: "Check resource batch"
-            description: "[Experimental] Check a principal's permissions to a batch of heterogeneous resources and actions."
-            extensions: {
-                key: "x-cerbos-experimental";
-                value: {
-                    bool_value: true;
-                }
-            }
+            description: "Check a principal's permissions to a batch of heterogeneous resources and actions."
         };
     }
 }
