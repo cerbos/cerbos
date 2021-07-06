@@ -9,8 +9,6 @@ Third-party dependencies used by the Cerbos project:
 Package                                                           URL                                                                                              Licence
 contrib.go.opencensus.io/exporter/jaeger                          Unknown                                                                                          Apache-2.0
 contrib.go.opencensus.io/exporter/prometheus                      Unknown                                                                                          Apache-2.0
-github.com/alecthomas/template                                    https://github.com/alecthomas/template/blob/master/LICENSE                                       BSD-3-Clause
-github.com/alecthomas/units                                       https://github.com/alecthomas/units/blob/master/COPYING                                          MIT
 github.com/antlr/antlr4/runtime/Go/antlr                          https://github.com/antlr/antlr4/blob/master/runtime/Go/antlr/LICENSE.txt                         MIT
 github.com/beorn7/perks/quantile                                  https://github.com/beorn7/perks/blob/master/quantile/LICENSE                                     MIT
 github.com/bluele/gcache                                          https://github.com/bluele/gcache/blob/master/LICENSE                                             MIT
@@ -34,9 +32,11 @@ github.com/go-git/gcfg                                            https://github
 github.com/go-git/go-billy/v5                                     https://github.com/go-git/go-billy/blob/master/v5/LICENSE                                        Apache-2.0
 github.com/go-git/go-git/v5                                       https://github.com/go-git/go-git/blob/master/v5/LICENSE                                          Apache-2.0
 github.com/gogo/protobuf/proto                                    https://github.com/gogo/protobuf/blob/master/proto/LICENSE                                       BSD-3-Clause
+github.com/go-kit/log                                             https://github.com/go-kit/log/blob/master/LICENSE                                                MIT
 github.com/golang/groupcache/lru                                  https://github.com/golang/groupcache/blob/master/lru/LICENSE                                     Apache-2.0
 github.com/golang/protobuf                                        https://github.com/golang/protobuf/blob/master/LICENSE                                           BSD-3-Clause
 github.com/golang/snappy                                          https://github.com/golang/snappy/blob/master/LICENSE                                             BSD-3-Clause
+github.com/go-logfmt/logfmt                                       https://github.com/go-logfmt/logfmt/blob/master/LICENSE                                          MIT
 github.com/google/cel-go                                          https://github.com/google/cel-go/blob/master/LICENSE                                             Apache-2.0
 github.com/google/flatbuffers/go                                  https://github.com/google/flatbuffers/blob/master/go/LICENSE.txt                                 Apache-2.0
 github.com/google/go-cmp/cmp                                      https://github.com/google/go-cmp/blob/master/cmp/LICENSE                                         BSD-3-Clause
@@ -45,7 +45,6 @@ github.com/gorilla/handlers                                       https://github
 github.com/gorilla/mux                                            https://github.com/gorilla/mux/blob/master/LICENSE                                               BSD-3-Clause
 github.com/grpc-ecosystem/go-grpc-middleware                      https://github.com/grpc-ecosystem/go-grpc-middleware/blob/master/LICENSE                         Apache-2.0
 github.com/grpc-ecosystem/grpc-gateway/v2                         https://github.com/grpc-ecosystem/grpc-gateway/blob/master/v2/LICENSE.txt                        BSD-3-Clause
-github.com/hashicorp/golang-lru                                   https://github.com/hashicorp/golang-lru/blob/master/LICENSE                                      MPL-2.0
 github.com/imdario/mergo                                          https://github.com/imdario/mergo/blob/master/LICENSE                                             BSD-3-Clause
 github.com/jbenet/go-context/io                                   https://github.com/jbenet/go-context/blob/master/io/LICENSE                                      MIT
 github.com/jmoiron/sqlx                                           https://github.com/jmoiron/sqlx/blob/master/LICENSE                                              MIT
@@ -74,7 +73,6 @@ github.com/rcrowley/go-metrics                                    https://github
 github.com/remyoudompheng/bigfft                                  https://github.com/remyoudompheng/bigfft/blob/master/LICENSE                                     BSD-3-Clause
 github.com/rjeczalik/notify                                       https://github.com/rjeczalik/notify/blob/master/LICENSE                                          MIT
 github.com/sergi/go-diff/diffmatchpatch                           https://github.com/sergi/go-diff/blob/master/diffmatchpatch/LICENSE                              MIT
-github.com/sirupsen/logrus                                        https://github.com/sirupsen/logrus/blob/master/LICENSE                                           MIT
 github.com/spf13/afero                                            https://github.com/spf13/afero/blob/master/LICENSE.txt                                           Apache-2.0
 github.com/spf13/cobra                                            https://github.com/spf13/cobra/blob/master/LICENSE.txt                                           Apache-2.0
 github.com/spf13/pflag                                            https://github.com/spf13/pflag/blob/master/LICENSE                                               BSD-3-Clause
@@ -100,7 +98,6 @@ google.golang.org/genproto                                        Unknown       
 google.golang.org/grpc                                            Unknown                                                                                          Apache-2.0
 google.golang.org/protobuf                                        Unknown                                                                                          BSD-3-Clause
 go.opencensus.io                                                  Unknown                                                                                          Apache-2.0
-gopkg.in/alecthomas/kingpin.v2                                    Unknown                                                                                          MIT
 gopkg.in/warnings.v0                                              Unknown                                                                                          BSD-2-Clause
 gopkg.in/yaml.v2                                                  Unknown                                                                                          Apache-2.0
 gopkg.in/yaml.v3                                                  Unknown                                                                                          MIT
