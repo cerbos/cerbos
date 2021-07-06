@@ -96,7 +96,7 @@ check-http:
 		$(wildcard $(DEV_DIR)/requests/check_resource_batch/*.json),\
 		echo "";\
 		echo $(REQ_FILE); \
-		curl -k https://localhost:$(HTTP_PORT)/api/x/check_resource_batch?pretty -d @$(REQ_FILE);\
+		curl -k https://localhost:$(HTTP_PORT)/api/check_resource_batch?pretty -d @$(REQ_FILE);\
 		echo "";)
 
 	@ $(foreach REQ_FILE,\
@@ -126,7 +126,7 @@ check-http-insecure:
 		$(wildcard $(DEV_DIR)/requests/check_resource_batch/*.json),\
 		echo "";\
 		echo $(REQ_FILE); \
-		curl http://localhost:$(HTTP_PORT)/api/x/check_resource_batch?pretty -d @$(REQ_FILE);\
+		curl http://localhost:$(HTTP_PORT)/api/check_resource_batch?pretty -d @$(REQ_FILE);\
 		echo "";)
 
 	@ $(foreach REQ_FILE,\

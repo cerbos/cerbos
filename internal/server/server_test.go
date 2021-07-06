@@ -325,7 +325,7 @@ func executeHTTPTestCase(c *http.Client, hostAddr string, creds *authCreds, tc *
 			want = call.CheckResourceSet.WantResponse
 			have = &responsev1.CheckResourceSetResponse{}
 		case *cerbosdevv1.ServerTestCase_CheckResourceBatch:
-			addr = fmt.Sprintf("%s/api/x/check_resource_batch", hostAddr)
+			addr = fmt.Sprintf("%s/api/check_resource_batch", hostAddr)
 			input = call.CheckResourceBatch.Input
 			want = call.CheckResourceBatch.WantResponse
 			have = &responsev1.CheckResourceBatchResponse{}

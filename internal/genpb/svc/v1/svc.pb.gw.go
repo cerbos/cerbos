@@ -540,7 +540,7 @@ func RegisterCerbosServiceHandlerClient(ctx context.Context, mux *runtime.ServeM
 var (
 	pattern_CerbosService_CheckResourceSet_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"api", "check"}, ""))
 
-	pattern_CerbosService_CheckResourceBatch_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"api", "x", "check_resource_batch"}, ""))
+	pattern_CerbosService_CheckResourceBatch_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"api", "check_resource_batch"}, ""))
 )
 
 var (
