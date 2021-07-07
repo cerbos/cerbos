@@ -8,8 +8,6 @@ import (
 	"math/rand"
 	"os"
 	"path/filepath"
-	"runtime"
-	"sync"
 	"testing"
 	"time"
 
@@ -26,6 +24,7 @@ import (
 	"github.com/cerbos/cerbos/internal/storage"
 	"github.com/cerbos/cerbos/internal/storage/disk/index"
 	"github.com/cerbos/cerbos/internal/test"
+	"github.com/cerbos/cerbos/internal/test/mocks"
 )
 
 const (
@@ -117,26 +116,35 @@ func TestUpdateStore(t *testing.T) {
 	store, err := NewStore(context.Background(), conf)
 	require.NoError(t, err)
 
-	index := store.idx
+	idx := store.idx
 
-	setupMock := func() *mockIndex {
-		m := newMockIndex(index)
+	setupMock := func() *mocks.Index {
+		m := &mocks.Index{}
 		store.idx = m
 		return m
 	}
 
 	t.Run("no changes", func(t *testing.T) {
 		mockIdx := setupMock()
-		checkEvents := subscribe(store)
+		checkEvents := storage.TestSubscription(store)
 
 		require.NoError(t, store.updateIndex(context.Background()))
-		require.Len(t, mockIdx.calls, 0)
+		mockIdx.AssertExpectations(t)
 		checkEvents(t)
 	})
 
 	t.Run("modify policy", func(t *testing.T) {
 		mockIdx := setupMock()
-		checkEvents := subscribe(store)
+		mockIdx.On("AddOrUpdate", mock.MatchedBy(anyIndexEntry)).Return(func(entry index.Entry) storage.Event {
+			evt, err := idx.AddOrUpdate(entry)
+			if err != nil {
+				panic(err)
+			}
+
+			return evt
+		}, nil)
+
+		checkEvents := storage.TestSubscription(store)
 		pset := genPolicySet(rng.Intn(numPolicySets))
 
 		require.NoError(t, commitToGitRepo(sourceGitDir, "Modify policy", func(wt *git.Worktree) error {
@@ -148,9 +156,8 @@ func TestUpdateStore(t *testing.T) {
 		}))
 
 		require.NoError(t, store.updateIndex(context.Background()))
-
-		require.True(t, mockIdx.Called("AddOrUpdate", mock.Anything))
-		require.Len(t, mockIdx.calls, 3)
+		mockIdx.AssertExpectations(t)
+		mockIdx.AssertNumberOfCalls(t, "AddOrUpdate", len(pset))
 
 		wantEvents := make([]storage.Event, 0, len(pset))
 		for _, p := range pset {
@@ -162,7 +169,16 @@ func TestUpdateStore(t *testing.T) {
 
 	t.Run("add policy", func(t *testing.T) {
 		mockIdx := setupMock()
-		checkEvents := subscribe(store)
+		mockIdx.On("AddOrUpdate", mock.MatchedBy(anyIndexEntry)).Return(func(entry index.Entry) storage.Event {
+			evt, err := idx.AddOrUpdate(entry)
+			if err != nil {
+				panic(err)
+			}
+
+			return evt
+		}, nil)
+
+		checkEvents := storage.TestSubscription(store)
 		pset := genPolicySet(numPolicySets)
 
 		require.NoError(t, commitToGitRepo(sourceGitDir, "Add policy", func(wt *git.Worktree) error {
@@ -176,8 +192,8 @@ func TestUpdateStore(t *testing.T) {
 
 		require.NoError(t, store.updateIndex(context.Background()))
 
-		require.True(t, mockIdx.Called("AddOrUpdate", mock.Anything))
-		require.Len(t, mockIdx.calls, 3)
+		mockIdx.AssertExpectations(t)
+		mockIdx.AssertNumberOfCalls(t, "AddOrUpdate", len(pset))
 
 		wantEvents := make([]storage.Event, 0, len(pset))
 		for _, p := range pset {
@@ -189,7 +205,7 @@ func TestUpdateStore(t *testing.T) {
 
 	t.Run("add policy to ignored dir", func(t *testing.T) {
 		mockIdx := setupMock()
-		checkEvents := subscribe(store)
+		checkEvents := storage.TestSubscription(store)
 		pset := genPolicySet(numPolicySets)
 
 		require.NoError(t, commitToGitRepo(sourceGitDir, "Add ignored policy", func(wt *git.Worktree) error {
@@ -207,13 +223,23 @@ func TestUpdateStore(t *testing.T) {
 		}))
 
 		require.NoError(t, store.updateIndex(context.Background()))
-		require.Len(t, mockIdx.calls, 0)
+		mockIdx.AssertExpectations(t)
+		mockIdx.AssertNotCalled(t, "AddOrUpdate", mock.MatchedBy(anyIndexEntry))
 		checkEvents(t)
 	})
 
 	t.Run("delete policy", func(t *testing.T) {
 		mockIdx := setupMock()
-		checkEvents := subscribe(store)
+		mockIdx.On("Delete", mock.MatchedBy(anyIndexEntry)).Return(func(entry index.Entry) storage.Event {
+			evt, err := idx.Delete(entry)
+			if err != nil {
+				panic(err)
+			}
+
+			return evt
+		}, nil)
+
+		checkEvents := storage.TestSubscription(store)
 		pset := genPolicySet(rng.Intn(numPolicySets))
 
 		require.NoError(t, commitToGitRepo(sourceGitDir, "Delete policy", func(wt *git.Worktree) error {
@@ -228,9 +254,8 @@ func TestUpdateStore(t *testing.T) {
 		}))
 
 		require.NoError(t, store.updateIndex(context.Background()))
-
-		require.True(t, mockIdx.Called("Delete", mock.Anything))
-		require.Len(t, mockIdx.calls, 3)
+		mockIdx.AssertExpectations(t)
+		mockIdx.AssertNumberOfCalls(t, "Delete", len(pset))
 
 		wantEvents := make([]storage.Event, 0, len(pset))
 		for _, p := range pset {
@@ -242,7 +267,16 @@ func TestUpdateStore(t *testing.T) {
 
 	t.Run("move policy out of policy dir", func(t *testing.T) {
 		mockIdx := setupMock()
-		checkEvents := subscribe(store)
+		mockIdx.On("Delete", mock.MatchedBy(anyIndexEntry)).Return(func(entry index.Entry) storage.Event {
+			evt, err := idx.Delete(entry)
+			if err != nil {
+				panic(err)
+			}
+
+			return evt
+		}, nil)
+
+		checkEvents := storage.TestSubscription(store)
 		pset := genPolicySet(rng.Intn(numPolicySets))
 
 		require.NoError(t, commitToGitRepo(sourceGitDir, "Move policy out", func(wt *git.Worktree) error {
@@ -258,9 +292,8 @@ func TestUpdateStore(t *testing.T) {
 		}))
 
 		require.NoError(t, store.updateIndex(context.Background()))
-
-		require.True(t, mockIdx.Called("Delete", mock.Anything))
-		require.Len(t, mockIdx.calls, 3)
+		mockIdx.AssertExpectations(t)
+		mockIdx.AssertNumberOfCalls(t, "Delete", len(pset))
 
 		wantEvents := make([]storage.Event, 0, len(pset))
 		for _, p := range pset {
@@ -272,7 +305,7 @@ func TestUpdateStore(t *testing.T) {
 
 	t.Run("ignore unsupported file", func(t *testing.T) {
 		mockIdx := setupMock()
-		checkEvents := subscribe(store)
+		checkEvents := storage.TestSubscription(store)
 		require.NoError(t, commitToGitRepo(sourceGitDir, "Add unsupported file", func(wt *git.Worktree) error {
 			fp := filepath.Join(sourceGitDir, policyDir, "file1.txt")
 			if err := os.WriteFile(fp, []byte("something"), 0o600); err != nil {
@@ -285,10 +318,13 @@ func TestUpdateStore(t *testing.T) {
 		}))
 
 		require.NoError(t, store.updateIndex(context.Background()))
-		require.Len(t, mockIdx.calls, 0)
+		mockIdx.AssertExpectations(t)
+		mockIdx.AssertNotCalled(t, "Delete", mock.MatchedBy(anyIndexEntry))
 		checkEvents(t)
 	})
 }
+
+func anyIndexEntry(_ index.Entry) bool { return true }
 
 func requireIndexContains(t *testing.T, store *Store, wantFiles []string) {
 	t.Helper()
@@ -487,110 +523,4 @@ func modifyPolicy(p *policyv1.Policy) *policyv1.Policy {
 	default:
 		return p
 	}
-}
-
-type mockIndex struct {
-	idx   index.Index
-	calls []mock.Call
-}
-
-func newMockIndex(idx index.Index) *mockIndex {
-	return &mockIndex{idx: idx}
-}
-
-func (m *mockIndex) GetCompilationUnits(ids ...namer.ModuleID) (map[namer.ModuleID]*policy.CompilationUnit, error) {
-	m.calls = append(m.calls, mock.Call{Method: "GetCompilationUnits", Arguments: mock.Arguments{ids}})
-	return m.idx.GetCompilationUnits(ids...)
-}
-
-func (m *mockIndex) GetDependents(ids ...namer.ModuleID) (map[namer.ModuleID][]namer.ModuleID, error) {
-	m.calls = append(m.calls, mock.Call{Method: "GetDependents", Arguments: mock.Arguments{ids}})
-	return m.idx.GetDependents(ids...)
-}
-
-func (m *mockIndex) GetFiles() []string {
-	m.calls = append(m.calls, mock.Call{Method: "GetFiles"})
-	return m.idx.GetFiles()
-}
-
-func (m *mockIndex) AddOrUpdate(entry index.Entry) (storage.Event, error) {
-	m.calls = append(m.calls, mock.Call{Method: "AddOrUpdate", Arguments: mock.Arguments{entry}})
-	return m.idx.AddOrUpdate(entry)
-}
-
-func (m *mockIndex) Delete(entry index.Entry) (storage.Event, error) {
-	m.calls = append(m.calls, mock.Call{Method: "Delete", Arguments: mock.Arguments{entry}})
-	return m.idx.Delete(entry)
-}
-
-func (m *mockIndex) GetAllCompilationUnits(ctx context.Context) <-chan *policy.CompilationUnit {
-	m.calls = append(m.calls, mock.Call{Method: "GetAllCompilationUnits", Arguments: mock.Arguments{ctx}})
-	return m.idx.GetAllCompilationUnits(ctx)
-}
-
-func (m *mockIndex) Clear() error {
-	m.calls = append(m.calls, mock.Call{Method: "Clear"})
-	return m.idx.Clear()
-}
-
-func (m *mockIndex) Called(methodName string, expected ...interface{}) bool {
-	for _, call := range m.calls {
-		if call.Method == methodName {
-			_, differences := mock.Arguments(expected).Diff(call.Arguments)
-			if differences == 0 {
-				return true
-			}
-		}
-	}
-
-	return false
-}
-
-func subscribe(store *Store) func(*testing.T, ...storage.Event) {
-	sub := &subscriber{}
-	store.Subscribe(sub)
-
-	return func(t *testing.T, wantEvents ...storage.Event) {
-		t.Helper()
-
-		runtime.Gosched()
-
-		haveEvents := sub.Events()
-		store.Unsubscribe(sub)
-
-		require.ElementsMatch(t, wantEvents, haveEvents)
-	}
-}
-
-type subscriber struct {
-	mu     sync.RWMutex
-	events []storage.Event
-}
-
-func (s *subscriber) SubscriberID() string {
-	return "test"
-}
-
-func (s *subscriber) OnStorageEvent(evt ...storage.Event) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-
-	s.events = append(s.events, evt...)
-}
-
-func (s *subscriber) Events() []storage.Event {
-	s.mu.RLock()
-	defer s.mu.RUnlock()
-
-	events := make([]storage.Event, len(s.events))
-	copy(events, s.events)
-
-	return events
-}
-
-func (s *subscriber) Clear() {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-
-	s.events = nil
 }

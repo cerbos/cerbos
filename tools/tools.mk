@@ -8,15 +8,17 @@ GO_LICENSES := $(TOOLS_BIN_DIR)/go-licenses
 GORELEASER := $(TOOLS_BIN_DIR)/goreleaser
 GOTESTSUM := $(TOOLS_BIN_DIR)/gotestsum
 GRPCURL := $(TOOLS_BIN_DIR)/grpcurl
+MOCKERY := $(TOOLS_BIN_DIR)/mockery
 PROTOC_GEN_GO := $(TOOLS_BIN_DIR)/protoc-gen-go
 PROTOC_GEN_GO_GRPC := $(TOOLS_BIN_DIR)/protoc-gen-go-grpc
+PROTOC_GEN_GO_VTPROTO := $(TOOLS_BIN_DIR)/protoc-gen-go-vtproto
 PROTOC_GEN_GRPC_GATEWAY := $(TOOLS_BIN_DIR)/protoc-gen-grpc-gateway
 PROTOC_GEN_OPENAPIV2 := $(TOOLS_BIN_DIR)/protoc-gen-openapiv2
 PROTOC_GEN_VALIDATE := $(TOOLS_BIN_DIR)/protoc-gen-validate
 
 GEN_DIR := internal/genpb
 OPENAPI_DIR := schema/openapiv2
-MOCK_DIR := pkg/test/mocks
+MOCK_DIR := internal/test/mocks
 
 define BUF_GEN_TEMPLATE
 {\
@@ -27,6 +29,15 @@ define BUF_GEN_TEMPLATE
       "out": "$(GEN_DIR)",\
       "opt": "paths=source_relative",\
       "path": "$(PROTOC_GEN_GO)"\
+    },\
+    {\
+      "name": "vtproto",\
+      "out": "$(GEN_DIR)",\
+      "opt": [\
+	    "paths=source_relative",\
+	  	"features=marshal+unmarshal+size"\
+	  ],\
+      "path": "$(PROTOC_GEN_GO_VTPROTO)"\
     },\
     {\
       "name": "validate",\
@@ -82,11 +93,17 @@ $(GOTESTSUM): $(TOOLS_BIN_DIR)
 $(GRPCURL): $(TOOLS_BIN_DIR) 
 	@ GOBIN=$(TOOLS_BIN_DIR) go install github.com/fullstorydev/grpcurl/cmd/grpcurl
 
+$(MOCKERY): $(TOOLS_BIN_DIR)
+	@ GOBIN=$(TOOLS_BIN_DIR) go install github.com/vektra/mockery/v2/
+
 $(PROTOC_GEN_GO): $(TOOLS_BIN_DIR) 
 	@ GOBIN=$(TOOLS_BIN_DIR) go install google.golang.org/protobuf/cmd/protoc-gen-go
 
 $(PROTOC_GEN_GO_GRPC): $(TOOLS_BIN_DIR) 
 	@ GOBIN=$(TOOLS_BIN_DIR) go install google.golang.org/grpc/cmd/protoc-gen-go-grpc
+
+$(PROTOC_GEN_GO_VTPROTO): $(TOOLS_BIN_DIR) 
+	@ GOBIN=$(TOOLS_BIN_DIR) go install github.com/planetscale/vtprotobuf/cmd/protoc-gen-go-vtproto
 
 $(PROTOC_GEN_GRPC_GATEWAY): $(TOOLS_BIN_DIR) 
 	@ GOBIN=$(TOOLS_BIN_DIR) go install github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-grpc-gateway
@@ -98,7 +115,7 @@ $(PROTOC_GEN_VALIDATE): $(TOOLS_BIN_DIR)
 	@ GOBIN=$(TOOLS_BIN_DIR) go install github.com/envoyproxy/protoc-gen-validate
 
 .PHONY: proto-gen-deps
-proto-gen-deps: $(BUF) $(PROTOC_GEN_GO) $(PROTOC_GEN_GO_GRPC) $(PROTOC_GEN_GRPC_GATEWAY) $(PROTOC_GEN_OPENAPIV2) $(PROTOC_GEN_VALIDATE)
+proto-gen-deps: $(BUF) $(PROTOC_GEN_GO) $(PROTOC_GEN_GO_VTPROTO) $(PROTOC_GEN_GO_GRPC) $(PROTOC_GEN_GRPC_GATEWAY) $(PROTOC_GEN_OPENAPIV2) $(PROTOC_GEN_VALIDATE)
 
 swagger-editor:
 	@ docker run -it -p 8080:8080 -v $(shell pwd)/$(OPENAPI_DIR):/tmp -e SWAGGER_FILE=/tmp/svc/v1/svc.swagger.json swaggerapi/swagger-editor

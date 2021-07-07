@@ -1,5 +1,8 @@
 ---
 description: "Missing derived roles definition"
+wantStatus:
+  httpStatusCode: 400
+  grpcStatusCode: 0
 playgroundEvaluate:
   input: {
     "playgroundId": "test",

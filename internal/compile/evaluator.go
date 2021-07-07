@@ -4,36 +4,63 @@ package compile
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/open-policy-agent/opa/ast"
 	"github.com/open-policy-agent/opa/rego"
 	"github.com/open-policy-agent/opa/topdown/cache"
+	"go.opencensus.io/trace"
 	"go.uber.org/zap"
 
 	"github.com/cerbos/cerbos/internal/codegen"
 	sharedv1 "github.com/cerbos/cerbos/internal/genpb/shared/v1"
+	"github.com/cerbos/cerbos/internal/observability/logging"
+	"github.com/cerbos/cerbos/internal/observability/tracing"
+	"github.com/cerbos/cerbos/internal/policy"
 )
 
+var ErrPolicyNotExecutable = errors.New("policy not executable")
+
 type EvalResult struct {
+	PolicyKey             string
 	Effects               map[string]sharedv1.Effect
 	EffectiveDerivedRoles []string
 }
 
 type Evaluator interface {
-	EvalQuery(ctx context.Context, queryCache cache.InterQueryCache, query string, input ast.Value) (*EvalResult, error)
+	Eval(ctx context.Context, queryCache cache.InterQueryCache, input ast.Value) (*EvalResult, error)
+}
+
+type noopEvaluator struct{}
+
+func (noopEvaluator) Eval(ctx context.Context, queryCache cache.InterQueryCache, input ast.Value) (*EvalResult, error) {
+	return nil, ErrPolicyNotExecutable
 }
 
 type evaluator struct {
-	compiler    *ast.Compiler
-	celEvalImpl rego.Builtin3
+	policyKey string
+	query     rego.PreparedEvalQuery
 }
 
-func newEvaluator(compiler *ast.Compiler, conditionIdx ConditionIndex) *evaluator {
-	return &evaluator{
-		compiler:    compiler,
-		celEvalImpl: makeCELEvalImpl(conditionIdx),
+func newEvaluator(unit *policy.CompilationUnit, compiler *ast.Compiler, conditionIdx ConditionIndex) (Evaluator, error) {
+	queryStr := unit.Query()
+	if queryStr == "" {
+		return noopEvaluator{}, nil
 	}
+
+	celEvalImpl := makeCELEvalImpl(conditionIdx)
+
+	query, err := rego.New(
+		rego.Function3(codegen.CELEvalFunc, celEvalImpl),
+		rego.Compiler(compiler),
+		rego.Query(queryStr),
+	).PrepareForEval(context.TODO())
+	if err != nil {
+		return nil, fmt.Errorf("failed to prepare query [%s]: %w", queryStr, err)
+	}
+
+	return &evaluator{policyKey: unit.Key(), query: query}, nil
 }
 
 func makeCELEvalImpl(conditionIdx ConditionIndex) rego.Builtin3 {
@@ -73,23 +100,21 @@ func makeCELEvalImpl(conditionIdx ConditionIndex) rego.Builtin3 {
 	}
 }
 
-func (e *evaluator) EvalQuery(ctx context.Context, queryCache cache.InterQueryCache, query string, input ast.Value) (*EvalResult, error) {
-	r := rego.New(
-		rego.InterQueryBuiltinCache(queryCache),
-		rego.Function3(codegen.CELEvalFunc, e.celEvalImpl),
-		rego.Compiler(e.compiler),
-		rego.ParsedInput(input),
-		rego.Query(query))
+func (e *evaluator) Eval(ctx context.Context, queryCache cache.InterQueryCache, input ast.Value) (*EvalResult, error) {
+	ctx, span := tracing.StartSpan(ctx, "Policy/"+e.policyKey)
+	defer span.End()
 
-	rs, err := r.Eval(ctx)
+	rs, err := e.query.Eval(ctx, rego.EvalParsedInput(input), rego.EvalInterQueryBuiltinCache(queryCache))
 	if err != nil {
-		return nil, fmt.Errorf("query evaluation failed: %w", err)
+		tracing.MarkFailed(span, trace.StatusCodeInternal, "Policy evaluation failed", err)
+		logging.FromContext(ctx).Named("evaluator").Error("Failed to evaluate policy", zap.String("policy", e.policyKey), zap.Error(err))
+		return nil, fmt.Errorf("query evaluation failed [%s]: %w", e.policyKey, err)
 	}
 
-	return processResultSet(rs)
+	return processResultSet(e.policyKey, rs)
 }
 
-func processResultSet(rs rego.ResultSet) (*EvalResult, error) {
+func processResultSet(policyKey string, rs rego.ResultSet) (*EvalResult, error) {
 	if len(rs) == 0 || len(rs) > 1 || len(rs[0].Expressions) == 0 {
 		return nil, ErrUnexpectedResult
 	}
@@ -108,7 +133,7 @@ func processResultSet(rs rego.ResultSet) (*EvalResult, error) {
 		return nil, err
 	}
 
-	evalResult := &EvalResult{Effects: effects}
+	evalResult := &EvalResult{PolicyKey: policyKey, Effects: effects}
 	evalResult.EffectiveDerivedRoles, err = extractEffectiveDerivedRoles(res)
 
 	return evalResult, err
@@ -163,19 +188,21 @@ func extractEffectiveDerivedRoles(res map[string]interface{}) ([]string, error) 
 		return nil, nil
 	}
 
-	effectiveDR, ok := effectiveDRVal.([]interface{})
-	if !ok {
+	switch effectiveDR := effectiveDRVal.(type) {
+	case []interface{}:
+		roles := make([]string, len(effectiveDR))
+
+		for i, dr := range effectiveDR {
+			roles[i], ok = dr.(string)
+			if !ok {
+				return nil, fmt.Errorf("unexpected type for derived role %T: %w", dr, ErrUnexpectedResult)
+			}
+		}
+
+		return roles, nil
+	case map[string]interface{}:
+		return nil, nil
+	default:
 		return nil, fmt.Errorf("unexpected type for effective derived roles %T: %w", effectiveDRVal, ErrUnexpectedResult)
 	}
-
-	roles := make([]string, len(effectiveDR))
-
-	for i, dr := range effectiveDR {
-		roles[i], ok = dr.(string)
-		if !ok {
-			return nil, fmt.Errorf("unexpected type for derived role %T: %w", dr, ErrUnexpectedResult)
-		}
-	}
-
-	return roles, nil
 }

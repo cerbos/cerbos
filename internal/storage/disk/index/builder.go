@@ -140,7 +140,7 @@ func Build(ctx context.Context, fsys fs.FS, opts ...BuildOpt) (Index, error) {
 			return nil
 		}
 
-		if err := p.Validate(); err != nil {
+		if err := policy.Validate(p); err != nil {
 			ib.addLoadFailure(path, err)
 			return nil
 		}

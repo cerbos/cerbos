@@ -9,6 +9,7 @@ import (
 	"github.com/fatih/color"
 	"github.com/open-policy-agent/opa/ast"
 	"github.com/open-policy-agent/opa/format"
+	"go.uber.org/multierr"
 	exprpb "google.golang.org/genproto/googleapis/api/expr/v1alpha1"
 
 	policyv1 "github.com/cerbos/cerbos/internal/genpb/policy/v1"
@@ -53,6 +54,8 @@ func generateResourcePolicy(parent *policyv1.Policy, p *policyv1.ResourcePolicy)
 		for i, imp := range p.ImportDerivedRoles {
 			imports[i] = derivedRolesImportName(imp)
 		}
+	} else if err := checkNoDerivedRolesAreUsed(p); err != nil {
+		return nil, newErr(policy.GetSourceFile(parent), "Policy uses derived roles without importing any", err)
 	}
 
 	rg := NewRegoGen(modName, imports...)
@@ -60,14 +63,26 @@ func generateResourcePolicy(parent *policyv1.Policy, p *policyv1.ResourcePolicy)
 	for i, rule := range p.Rules {
 		if err := rg.AddResourceRule(rule); err != nil {
 			return nil, newRuleGenErr(parent, i+1, err)
-			// return nil, fmt.Errorf("failed to generate code for rule [%v]: %w", rule, err)
 		}
 	}
 
-	rg.EffectiveDerivedRoles()
+	rg.EffectiveDerivedRoles(len(p.ImportDerivedRoles) > 0)
 	rg.EffectsComprehension(denyVal)
 
 	return rg.Generate()
+}
+
+func checkNoDerivedRolesAreUsed(rp *policyv1.ResourcePolicy) error {
+	var err error
+	if len(rp.ImportDerivedRoles) == 0 {
+		for i, r := range rp.Rules {
+			if len(r.DerivedRoles) > 0 {
+				err = multierr.Append(err, fmt.Errorf("rule #%d uses derived roles but none are imported", i))
+			}
+		}
+	}
+
+	return err
 }
 
 func derivedRolesImportName(imp string) string {
@@ -81,7 +96,6 @@ func generatePrincipalPolicy(parent *policyv1.Policy, p *policyv1.PrincipalPolic
 	for i, rule := range p.Rules {
 		if err := rg.AddPrincipalRule(rule); err != nil {
 			return nil, newRuleGenErr(parent, i+1, err)
-			// return nil, fmt.Errorf("failed to generate code for rule [%v]: %w", rule, err)
 		}
 	}
 
@@ -97,7 +111,6 @@ func generateDerivedRoles(parent *policyv1.Policy, dr *policyv1.DerivedRoles) (*
 	for _, rd := range dr.Definitions {
 		if err := rg.AddDerivedRole(rd); err != nil {
 			return nil, newErr(policy.GetSourceFile(parent), fmt.Sprintf("Failed to generate code for derived role [%s]", rd.Name), err)
-			// return nil, fmt.Errorf("failed to generate code for derived role definition [%s]: %w", rd.Name, err)
 		}
 	}
 
@@ -136,7 +149,7 @@ func (cgr *Result) ToRepr() (*policyv1.GeneratedPolicy, error) {
 	return gp, nil
 }
 
-func CodeGenResultFromRepr(repr *policyv1.GeneratedPolicy) (*Result, error) {
+func ResultFromRepr(repr *policyv1.GeneratedPolicy) (*Result, error) {
 	r := &Result{
 		ModName: repr.Fqn,
 		ModID:   namer.GenModuleIDFromName(repr.Fqn),

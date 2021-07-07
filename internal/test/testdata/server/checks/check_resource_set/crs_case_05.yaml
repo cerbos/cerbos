@@ -1,5 +1,8 @@
 ---
 description: "Explicit deny from Donald Duck principal policy"
+wantStatus:
+  httpStatusCode: 200
+  grpcStatusCode: 0
 checkResourceSet:
   input: {
     "requestId": "test",
@@ -51,7 +54,7 @@ checkResourceSet:
         "XX125": {
           "actions": {
             "view:public": {
-              "matchedPolicy": "donald_duck:20210210"
+              "matchedPolicy": "principal.donald_duck.v20210210"
             }
           }
         }

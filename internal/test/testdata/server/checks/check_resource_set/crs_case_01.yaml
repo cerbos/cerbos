@@ -1,5 +1,8 @@
 ---
 description: "John tries to view and approve his own leave request"
+wantStatus:
+  httpStatusCode: 200
+  grpcStatusCode: 0
 checkResourceSet:
   input: {
     "requestId": "test",
@@ -51,10 +54,10 @@ checkResourceSet:
         "XX125": {
           "actions": {
             "view:public": {
-              "matchedPolicy": "leave_request:20210210"
+              "matchedPolicy": "resource.leave_request.v20210210"
             },
             "approve": {
-              "matchedPolicy": "leave_request:20210210"
+              "matchedPolicy": "resource.leave_request.v20210210"
             }
           },
           "effectiveDerivedRoles": ["employee_that_owns_the_record", "any_employee"]

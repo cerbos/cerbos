@@ -1,5 +1,8 @@
 ---
 description: "Mixed batch"
+wantStatus:
+  httpStatusCode: 200
+  grpcStatusCode: 0
 checkResourceBatch:
   input: {
     "requestId": "test",

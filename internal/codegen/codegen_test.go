@@ -109,7 +109,7 @@ func TestCodeGenResultConversion(t *testing.T) {
 			}
 
 			// convert back from proto
-			have, err := codegen.CodeGenResultFromRepr(repr)
+			have, err := codegen.ResultFromRepr(repr)
 			require.NoError(t, err)
 			require.Equal(t, result.ModName, have.ModName)
 			require.Equal(t, result.ModID, have.ModID)

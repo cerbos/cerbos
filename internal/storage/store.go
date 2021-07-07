@@ -4,7 +4,6 @@ package storage
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"sync"
 
@@ -18,7 +17,23 @@ var (
 	drivers   = map[string]Constructor{}
 )
 
-var ErrNoMatchingPolicy = errors.New("no matching policy")
+// InvalidPolicyError is a custom error to signal that a policy is invalid.
+type InvalidPolicyError struct {
+	Message string
+	Err     error
+}
+
+func (ipe InvalidPolicyError) Error() string {
+	return fmt.Sprintf("%s: %v", ipe.Message, ipe.Err)
+}
+
+func (ipe InvalidPolicyError) Unwrap() error {
+	return ipe.Err
+}
+
+func NewInvalidPolicyError(err error, msg string, args ...interface{}) InvalidPolicyError {
+	return InvalidPolicyError{Message: fmt.Sprintf(msg, args...), Err: err}
+}
 
 // Constructor is a constructor function for a storage driver.
 type Constructor func(context.Context) (Store, error)
@@ -51,12 +66,9 @@ func New(ctx context.Context) (Store, error) {
 
 // Store is the common interface implemented by storage backends.
 type Store interface {
+	Subscribable
 	// Driver is the name of the storage backend implementation.
 	Driver() string
-	// Subscribe adds a subscriber to listen for storage notifications.
-	Subscribe(Subscriber)
-	// Unsubscribe removes a subscriber.
-	Unsubscribe(Subscriber)
 	// GetCompilationUnits gets the compilation units for the given module IDs.
 	GetCompilationUnits(context.Context, ...namer.ModuleID) (map[namer.ModuleID]*policy.CompilationUnit, error)
 	// GetDependents returns the dependents of the given modules.
@@ -68,6 +80,20 @@ type MutableStore interface {
 	Store
 	AddOrUpdate(context.Context, ...policy.Wrapper) error
 	Delete(context.Context, ...namer.ModuleID) error
+}
+
+// Subscribable is an interface for managing subscriptions to storage events.
+type Subscribable interface {
+	// Subscribe adds a subscriber to listen for storage notifications.
+	Subscribe(Subscriber)
+	// Unsubscribe removes a subscriber.
+	Unsubscribe(Subscriber)
+}
+
+// Subscriber is the interface implemented by storage subscribers.
+type Subscriber interface {
+	SubscriberID() string
+	OnStorageEvent(...Event)
 }
 
 // EventKind identifies the kind of storage event such as addition or deletion.
@@ -104,10 +130,4 @@ func (evt Event) String() string {
 // NewEvent creates a new storage event.
 func NewEvent(kind EventKind, policyID namer.ModuleID) Event {
 	return Event{Kind: kind, PolicyID: policyID}
-}
-
-// Subscriber is the interface implemented by storage subscribers.
-type Subscriber interface {
-	SubscriberID() string
-	OnStorageEvent(...Event)
 }

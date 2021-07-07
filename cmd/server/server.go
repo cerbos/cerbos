@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"os"
 	"os/signal"
+	"syscall"
 
 	"github.com/google/gops/agent"
 	"github.com/spf13/cobra"
@@ -53,6 +54,7 @@ func NewCommand() *cobra.Command {
 
 func doRun(_ *cobra.Command, _ []string) error {
 	logging.InitLogging(args.logLevel)
+	defer zap.L().Sync() //nolint:errcheck
 
 	log := zap.S().Named("server")
 
@@ -65,9 +67,10 @@ func doRun(_ *cobra.Command, _ []string) error {
 
 	if args.debugListenAddr != "" {
 		startDebugListener(args.debugListenAddr)
+		defer agent.Close()
 	}
 
-	ctx, stopFunc := signal.NotifyContext(context.Background(), os.Interrupt)
+	ctx, stopFunc := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stopFunc()
 
 	// load any config overrides
@@ -97,7 +100,7 @@ func startDebugListener(listenAddr string) {
 
 	err := agent.Listen(agent.Options{
 		Addr:                   listenAddr,
-		ShutdownCleanup:        true,
+		ShutdownCleanup:        false,
 		ReuseSocketAddrAndPort: true,
 	})
 	if err != nil {

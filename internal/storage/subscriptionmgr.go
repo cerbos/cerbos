@@ -7,6 +7,7 @@ import (
 	"runtime"
 	"sync"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/require"
 )
@@ -95,9 +96,9 @@ func (sm *SubscriptionManager) shutdown() {
 }
 
 // TestSubscription is a helper to test subscriptions.
-func TestSubscription(store Store) func(*testing.T, ...Event) {
+func TestSubscription(s Subscribable) func(*testing.T, ...Event) {
 	sub := &subscriber{}
-	store.Subscribe(sub)
+	s.Subscribe(sub)
 
 	return func(t *testing.T, wantEvents ...Event) {
 		t.Helper()
@@ -110,8 +111,10 @@ func TestSubscription(store Store) func(*testing.T, ...Event) {
 			if len(haveEvents) == len(wantEvents) {
 				break
 			}
+
+			time.Sleep(5 * time.Millisecond) //nolint:gomnd
 		}
-		store.Unsubscribe(sub)
+		s.Unsubscribe(sub)
 
 		require.ElementsMatch(t, wantEvents, haveEvents)
 	}

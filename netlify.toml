@@ -1,0 +1,3 @@
+[build]
+  base = "docs"
+  publish = "build"

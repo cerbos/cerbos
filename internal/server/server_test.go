@@ -21,10 +21,12 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/local"
+	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/testing/protocmp"
 
+	"github.com/cerbos/cerbos/internal/audit"
 	"github.com/cerbos/cerbos/internal/compile"
 	"github.com/cerbos/cerbos/internal/engine"
 	cerbosdevv1 "github.com/cerbos/cerbos/internal/genpb/cerbosdev/v1"
@@ -61,10 +63,12 @@ func TestServer(t *testing.T) {
 	ctx, cancelFunc := context.WithCancel(context.Background())
 	defer cancelFunc()
 
+	auditLog := audit.NewNopLog()
+
 	store, err := disk.NewStore(ctx, &disk.Conf{Directory: dir, ScratchDir: t.TempDir()})
 	require.NoError(t, err)
 
-	eng, err := engine.New(ctx, compile.NewCompiler(ctx, store))
+	eng, err := engine.New(ctx, compile.NewManager(ctx, store), auditLog)
 	require.NoError(t, err)
 
 	testCases := loadTestCases(t, "checks", "playground")
@@ -86,7 +90,7 @@ func TestServer(t *testing.T) {
 			ctx, cancelFunc := context.WithCancel(context.Background())
 			defer cancelFunc()
 
-			startServer(ctx, conf, store, eng)
+			startServer(ctx, conf, store, eng, auditLog)
 
 			tlsConf := &tls.Config{InsecureSkipVerify: true} //nolint:gosec
 
@@ -111,7 +115,7 @@ func TestServer(t *testing.T) {
 			ctx, cancelFunc := context.WithCancel(context.Background())
 			defer cancelFunc()
 
-			startServer(ctx, conf, store, eng)
+			startServer(ctx, conf, store, eng, auditLog)
 
 			tlsConf := &tls.Config{InsecureSkipVerify: true} //nolint:gosec
 
@@ -131,7 +135,7 @@ func TestServer(t *testing.T) {
 			ctx, cancelFunc := context.WithCancel(context.Background())
 			defer cancelFunc()
 
-			startServer(ctx, conf, store, eng)
+			startServer(ctx, conf, store, eng, auditLog)
 
 			t.Run("grpc", testGRPCRequests(testCases, conf.GRPCListenAddr, grpc.WithTransportCredentials(local.NewCredentials())))
 			t.Run("http", testHTTPRequests(testCases, fmt.Sprintf("http://%s", conf.HTTPListenAddr), nil))
@@ -149,7 +153,7 @@ func TestServer(t *testing.T) {
 			ctx, cancelFunc := context.WithCancel(context.Background())
 			defer cancelFunc()
 
-			startServer(ctx, conf, store, eng)
+			startServer(ctx, conf, store, eng, auditLog)
 
 			t.Run("grpc", testGRPCRequests(testCases, conf.GRPCListenAddr, grpc.WithTransportCredentials(local.NewCredentials())))
 		})
@@ -162,11 +166,12 @@ func TestAdminService(t *testing.T) {
 	ctx, cancelFunc := context.WithCancel(context.Background())
 	defer cancelFunc()
 
-	// store, err := sqlite3.NewStore(ctx, &sqlite3.Conf{DSN: ":memory:?_fk=true"})
+	auditLog := audit.NewNopLog()
+
 	store, err := sqlite3.NewStore(ctx, &sqlite3.Conf{DSN: fmt.Sprintf("%s?_fk=true", filepath.Join(t.TempDir(), "cerbos.db"))})
 	require.NoError(t, err)
 
-	eng, err := engine.New(ctx, compile.NewCompiler(ctx, store))
+	eng, err := engine.New(ctx, compile.NewManager(ctx, store), auditLog)
 	require.NoError(t, err)
 
 	testdataDir := test.PathToDir(t, "server")
@@ -186,7 +191,7 @@ func TestAdminService(t *testing.T) {
 		},
 	}
 
-	startServer(ctx, conf, store, eng)
+	startServer(ctx, conf, store, eng, auditLog)
 
 	testCases := loadTestCases(t, "admin", "checks")
 	creds := &authCreds{username: "cerbos", password: "cerbosAdmin"}
@@ -208,10 +213,10 @@ func getFreeListenAddr(t *testing.T) string {
 	return addr
 }
 
-func startServer(ctx context.Context, conf *Conf, store storage.Store, eng *engine.Engine) {
+func startServer(ctx context.Context, conf *Conf, store storage.Store, eng *engine.Engine, auditLog audit.Log) {
 	s := NewServer(conf)
 	go func() {
-		if err := s.Start(ctx, store, eng, false); err != nil {
+		if err := s.Start(ctx, store, eng, auditLog, false); err != nil {
 			panic(err)
 		}
 	}()
@@ -273,6 +278,11 @@ func executeGRPCTestCase(grpcConn *grpc.ClientConn, tc *cerbosdevv1.ServerTestCa
 			t.Fatalf("Unknown call type: %T", call)
 		}
 
+		if tc.WantStatus != nil {
+			code := status.Code(err)
+			require.EqualValues(t, tc.WantStatus.GrpcStatusCode, code)
+		}
+
 		if tc.WantError {
 			require.Error(t, err)
 			return
@@ -315,7 +325,7 @@ func executeHTTPTestCase(c *http.Client, hostAddr string, creds *authCreds, tc *
 			want = call.CheckResourceSet.WantResponse
 			have = &responsev1.CheckResourceSetResponse{}
 		case *cerbosdevv1.ServerTestCase_CheckResourceBatch:
-			addr = fmt.Sprintf("%s/api/x/check_resource_batch", hostAddr)
+			addr = fmt.Sprintf("%s/api/check_resource_batch", hostAddr)
 			input = call.CheckResourceBatch.Input
 			want = call.CheckResourceBatch.WantResponse
 			have = &responsev1.CheckResourceBatchResponse{}
@@ -362,12 +372,14 @@ func executeHTTPTestCase(c *http.Client, hostAddr string, creds *authCreds, tc *
 			}
 		}()
 
+		if tc.WantStatus != nil {
+			require.EqualValues(t, tc.WantStatus.HttpStatusCode, resp.StatusCode)
+		}
+
 		if tc.WantError {
 			require.NotEqual(t, http.StatusOK, resp.StatusCode)
 			return
 		}
-
-		// require.Equal(t, http.StatusOK, resp.StatusCode)
 
 		respBytes, err := io.ReadAll(resp.Body)
 		require.NoError(t, err, "Failed to read response")

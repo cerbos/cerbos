@@ -14,9 +14,10 @@ import (
 	"github.com/cerbos/cerbos/internal/util"
 )
 
+var conf Conf
+
 func Init() error {
-	conf := &Conf{}
-	if err := config.GetSection(conf); err != nil {
+	if err := config.GetSection(&conf); err != nil {
 		return fmt.Errorf("failed to load tracing config: %w", err)
 	}
 
@@ -46,7 +47,7 @@ func Init() error {
 			return fmt.Errorf("failed to create Jaeger exporter: %w", err)
 		}
 
-		trace.ApplyConfig(trace.Config{DefaultSampler: mkSampler(conf.SampleProbability)})
+		trace.ApplyConfig(trace.Config{DefaultSampler: trace.ProbabilitySampler(conf.SampleProbability)})
 		trace.RegisterExporter(exporter)
 
 		return nil
@@ -55,15 +56,35 @@ func Init() error {
 	return nil
 }
 
+// StartOptions returns the options for tracing http and gRPC calls.
+func StartOptions() trace.StartOptions {
+	opt := trace.StartOptions{
+		SpanKind: trace.SpanKindServer,
+	}
+
+	if conf.Exporter == "" || conf.SampleProbability == 0.0 {
+		opt.Sampler = trace.NeverSample()
+	} else {
+		opt.Sampler = mkSampler(conf.SampleProbability)
+	}
+
+	return opt
+}
+
 func mkSampler(probability float64) trace.Sampler {
 	ps := trace.ProbabilitySampler(probability)
 
 	return func(params trace.SamplingParameters) trace.SamplingDecision {
-		if strings.HasPrefix(params.Name, "grpc.health") {
+		switch {
+		case strings.HasPrefix(params.Name, "grpc."):
 			return trace.SamplingDecision{Sample: false}
+		case strings.HasPrefix(params.Name, "svc.v1.CerbosPlaygroundService."):
+			return trace.SamplingDecision{Sample: false}
+		case strings.HasPrefix(params.Name, "/api/playground/"):
+			return trace.SamplingDecision{Sample: false}
+		default:
+			return ps(params)
 		}
-
-		return ps(params)
 	}
 }
 

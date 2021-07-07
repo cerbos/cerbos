@@ -1,4 +1,5 @@
 DOCKER := docker
+MOCK_INTERFACES := '(Index|Store)'
 
 include tools/tools.mk
 include hack/dev/dev.mk
@@ -26,19 +27,27 @@ lint-helm:
 	@ deploy/charts/validate.sh
 
 .PHONY: generate
-generate: clean proto-gen-deps
+generate: clean proto-gen-deps $(MOCKERY)
 	@ $(BUF) lint
 	@ # $(BUF) breaking --against '.git#branch=dev'
 	@ $(BUF) generate --template '$(BUF_GEN_TEMPLATE)' .
+	@ $(MOCKERY) --recursive --quiet --name=$(MOCK_INTERFACES) --output $(MOCK_DIR) --boilerplate-file=hack/copyright_header.txt
 	@ go mod tidy
 
 generate-notice: $(GO_LICENSES)
 	@ cat hack/notice_header.txt > NOTICE.txt
 	@ $(GO_LICENSES) csv . | grep -v cerbos | sort -t ',' -k1 | column -t -N Package,URL,Licence -s ',' >> NOTICE.txt
 
+.PHONY: test-all
+test-all: test test-race
+
 .PHONY: test
 test: $(GOTESTSUM)
-	@ $(GOTESTSUM) -- -tags=tests -cover -race ./...
+	@ $(GOTESTSUM) -- -tags=tests -cover ./...
+
+.PHONY: test-race
+test-race: $(GOTESTSUM)
+	@ $(GOTESTSUM) -- -tags=tests -race ./...
 
 .PHONY: test-watch
 test-watch: $(GOTESTSUM)

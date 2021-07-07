@@ -33,6 +33,9 @@ import (
 	"google.golang.org/grpc/admin"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/local"
+
+	// Import the default grpc encoding to ensure that it gets replaced by VT.
+	_ "google.golang.org/grpc/encoding/proto"
 	"google.golang.org/grpc/health"
 	healthpb "google.golang.org/grpc/health/grpc_health_v1"
 	"google.golang.org/grpc/keepalive"
@@ -40,11 +43,16 @@ import (
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/encoding/protojson"
 
+	"github.com/cerbos/cerbos/internal/audit"
+
+	// Import to register the Badger audit log backend.
+	_ "github.com/cerbos/cerbos/internal/audit/local"
 	"github.com/cerbos/cerbos/internal/compile"
 	"github.com/cerbos/cerbos/internal/config"
 	"github.com/cerbos/cerbos/internal/engine"
 	svcv1 "github.com/cerbos/cerbos/internal/genpb/svc/v1"
 	"github.com/cerbos/cerbos/internal/observability/metrics"
+	"github.com/cerbos/cerbos/internal/observability/tracing"
 	"github.com/cerbos/cerbos/internal/storage"
 
 	// Import sqlite3 to register the storage driver.
@@ -81,6 +89,12 @@ func Start(ctx context.Context, zpagesEnabled bool) error {
 		return err
 	}
 
+	// create audit log
+	auditLog, err := audit.NewLog(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to create audit log: %w", err)
+	}
+
 	// create store
 	store, err := storage.New(ctx)
 	if err != nil {
@@ -88,13 +102,13 @@ func Start(ctx context.Context, zpagesEnabled bool) error {
 	}
 
 	// create engine
-	eng, err := engine.New(ctx, compile.NewCompiler(ctx, store))
+	eng, err := engine.New(ctx, compile.NewManager(ctx, store), auditLog)
 	if err != nil {
 		return fmt.Errorf("failed to create engine: %w", err)
 	}
 
 	s := NewServer(conf)
-	return s.Start(ctx, store, eng, zpagesEnabled)
+	return s.Start(ctx, store, eng, auditLog, zpagesEnabled)
 }
 
 type Server struct {
@@ -118,7 +132,7 @@ func NewServer(conf *Conf) *Server {
 	}
 }
 
-func (s *Server) Start(ctx context.Context, store storage.Store, eng *engine.Engine, zpagesEnabled bool) error {
+func (s *Server) Start(ctx context.Context, store storage.Store, eng *engine.Engine, auditLog audit.Log, zpagesEnabled bool) error {
 	defer s.cancelFunc()
 
 	log := zap.L().Named("server")
@@ -157,7 +171,7 @@ func (s *Server) Start(ctx context.Context, store storage.Store, eng *engine.Eng
 	}
 
 	// start servers
-	grpcServer := s.startGRPCServer(grpcL, store, eng)
+	grpcServer := s.startGRPCServer(grpcL, store, eng, auditLog)
 
 	httpServer, err := s.startHTTPServer(ctx, httpL, grpcServer, zpagesEnabled)
 	if err != nil {
@@ -183,16 +197,15 @@ func (s *Server) Start(ctx context.Context, store storage.Store, eng *engine.Eng
 			log.Error("Failed to cleanly shutdown HTTP server", zap.Error(err))
 		}
 
+		log.Debug("Shutting down the audit log")
+		auditLog.Close()
+
 		log.Info("Shutdown complete")
-		return ctx.Err()
+		return nil
 	})
 
 	err = s.group.Wait()
 	if err != nil {
-		if errors.Is(err, context.Canceled) {
-			return nil
-		}
-
 		log.Error("Stopping server due to error", zap.Error(err))
 		return err
 	}
@@ -257,9 +270,9 @@ func (s *Server) getTLSConfig() (*tls.Config, error) {
 	return tlsConfig, nil
 }
 
-func (s *Server) startGRPCServer(l net.Listener, store storage.Store, eng *engine.Engine) *grpc.Server {
+func (s *Server) startGRPCServer(l net.Listener, store storage.Store, eng *engine.Engine, auditLog audit.Log) *grpc.Server {
 	log := zap.L().Named("grpc")
-	server := s.mkGRPCServer(log)
+	server := s.mkGRPCServer(log, auditLog)
 
 	cerbosSvc := svc.NewCerbosService(eng)
 	svcv1.RegisterCerbosServiceServer(server, cerbosSvc)
@@ -267,7 +280,7 @@ func (s *Server) startGRPCServer(l net.Listener, store storage.Store, eng *engin
 	if s.conf.AdminAPI.Enabled {
 		log.Info("Starting admin service")
 		creds := s.conf.AdminAPI.AdminCredentials
-		svcv1.RegisterCerbosAdminServiceServer(server, svc.NewCerbosAdminService(store, creds.Username, creds.PasswordHash))
+		svcv1.RegisterCerbosAdminServiceServer(server, svc.NewCerbosAdminService(store, auditLog, creds.Username, creds.PasswordHash))
 	}
 
 	if s.conf.PlaygroundEnabled {
@@ -300,7 +313,7 @@ func (s *Server) startGRPCServer(l net.Listener, store storage.Store, eng *engin
 	return server
 }
 
-func (s *Server) mkGRPCServer(log *zap.Logger) *grpc.Server {
+func (s *Server) mkGRPCServer(log *zap.Logger, auditLog audit.Log) *grpc.Server {
 	payloadLog := zap.L().Named("payload")
 
 	opts := []grpc.ServerOption{
@@ -324,15 +337,16 @@ func (s *Server) mkGRPCServer(log *zap.Logger) *grpc.Server {
 				grpc_zap.WithMessageProducer(messageProducer),
 			),
 			grpc_zap.PayloadUnaryServerInterceptor(payloadLog, payloadLoggingDecider(s.conf)),
+			audit.NewUnaryInterceptor(auditLog, accessLogExclude),
 		),
-		grpc.StatsHandler(&ocgrpc.ServerHandler{}),
+		grpc.StatsHandler(&ocgrpc.ServerHandler{StartOptions: tracing.StartOptions()}),
 		grpc.KeepaliveParams(keepalive.ServerParameters{MaxConnectionAge: maxConnectionAge}),
 	}
 
 	return grpc.NewServer(opts...)
 }
 
-func (s *Server) startHTTPServer(ctx context.Context, l net.Listener, grpcSrv *grpc.Server, zpagesEnabled bool) (*http.Server, error) { //nolint:revive
+func (s *Server) startHTTPServer(ctx context.Context, l net.Listener, grpcSrv *grpc.Server, zpagesEnabled bool) (*http.Server, error) {
 	log := zap.S().Named("http")
 
 	gwmux := runtime.NewServeMux(
@@ -386,8 +400,8 @@ func (s *Server) startHTTPServer(ctx context.Context, l net.Listener, grpcSrv *g
 		return r.ProtoMajor == 2 && strings.Contains(r.Header.Get("Content-Type"), "application/grpc")
 	}).Handler(&ochttp.Handler{Handler: grpcSrv})
 
-	cerbosMux.PathPrefix(adminEndpoint).Handler(&ochttp.Handler{Handler: prettyJSON(gwmux)})
-	cerbosMux.PathPrefix(apiEndpoint).Handler(&ochttp.Handler{Handler: prettyJSON(gwmux)})
+	cerbosMux.PathPrefix(adminEndpoint).Handler(&ochttp.Handler{Handler: prettyJSON(gwmux), StartOptions: tracing.StartOptions()})
+	cerbosMux.PathPrefix(apiEndpoint).Handler(&ochttp.Handler{Handler: prettyJSON(gwmux), StartOptions: tracing.StartOptions()})
 	cerbosMux.Path(schemaEndpoint).HandlerFunc(schema.ServeSvcSwagger)
 	cerbosMux.Path(healthEndpoint).HandlerFunc(s.handleHTTPHealthCheck(grpcConn))
 
@@ -404,7 +418,7 @@ func (s *Server) startHTTPServer(ctx context.Context, l net.Listener, grpcSrv *g
 
 	cerbosMux.HandleFunc("/", schema.ServeUI)
 
-	httpHandler := withRequestLogging(withCORS(s.conf, cerbosMux))
+	httpHandler := withCORS(s.conf, cerbosMux)
 
 	h := &http.Server{
 		ErrorLog:          zap.NewStdLog(zap.L().Named("http.error")),

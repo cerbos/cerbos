@@ -4,6 +4,7 @@ package engine
 
 import (
 	"errors"
+	"runtime"
 	"strings"
 
 	"github.com/cerbos/cerbos/internal/namer"
@@ -15,6 +16,7 @@ var errEmptyDefaultVersion = errors.New("engine.defaultVersion must not be an em
 
 type Conf struct {
 	DefaultPolicyVersion string `yaml:"defaultPolicyVersion"`
+	NumWorkers           uint   `yaml:"numWorkers"`
 }
 
 func (c *Conf) Key() string {
@@ -23,6 +25,7 @@ func (c *Conf) Key() string {
 
 func (c *Conf) SetDefaults() {
 	c.DefaultPolicyVersion = namer.DefaultVersion
+	c.NumWorkers = uint(runtime.NumCPU() + 4) //nolint:gomnd
 }
 
 func (c *Conf) Validate() error {

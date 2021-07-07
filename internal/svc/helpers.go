@@ -10,7 +10,12 @@ import (
 	"google.golang.org/grpc/metadata"
 
 	requestv1 "github.com/cerbos/cerbos/internal/genpb/request/v1"
-	"github.com/cerbos/cerbos/internal/util"
+)
+
+const (
+	metaTagKey         = "meta"
+	requestIDTagKey    = "request_id"
+	playgroundIDTagKey = "playground_id"
 )
 
 func ExtractRequestFields(fullMethod string, req interface{}) map[string]interface{} {
@@ -21,54 +26,42 @@ func ExtractRequestFields(fullMethod string, req interface{}) map[string]interfa
 	switch fullMethod {
 	case "/svc.v1.CerbosService/CheckResourceSet":
 		crsReq, ok := req.(*requestv1.CheckResourceSetRequest)
-		if !ok {
+		if !ok || crsReq.RequestId == "" {
 			return nil
 		}
 
 		return map[string]interface{}{
-			util.AppName: map[string]string{
-				"request.id":               crsReq.RequestId,
-				"principal.id":             crsReq.Principal.Id,
-				"principal.policy_version": crsReq.Principal.PolicyVersion,
-			},
+			metaTagKey: map[string]string{requestIDTagKey: crsReq.RequestId},
 		}
 
 	case "/svc.v1.CerbosService/CheckResourceBatch":
 		crbReq, ok := req.(*requestv1.CheckResourceBatchRequest)
-		if !ok {
+		if !ok || crbReq.RequestId == "" {
 			return nil
 		}
 
 		return map[string]interface{}{
-			util.AppName: map[string]string{
-				"request.id":               crbReq.RequestId,
-				"principal.id":             crbReq.Principal.Id,
-				"principal.policy_version": crbReq.Principal.PolicyVersion,
-			},
+			metaTagKey: map[string]string{requestIDTagKey: crbReq.RequestId},
 		}
 
 	case "/svc.v1.CerbosPlaygroundService/PlaygroundValidate":
 		pgReq, ok := req.(*requestv1.PlaygroundValidateRequest)
-		if !ok {
+		if !ok || pgReq.PlaygroundId == "" {
 			return nil
 		}
 
 		return map[string]interface{}{
-			util.AppName: map[string]string{
-				"playground.id": pgReq.PlaygroundId,
-			},
+			metaTagKey: map[string]string{playgroundIDTagKey: pgReq.PlaygroundId},
 		}
 
 	case "/svc.v1.CerbosPlaygroundService/PlaygroundEvaluate":
 		pgReq, ok := req.(*requestv1.PlaygroundEvaluateRequest)
-		if !ok {
+		if !ok || pgReq.PlaygroundId == "" {
 			return nil
 		}
 
 		return map[string]interface{}{
-			util.AppName: map[string]string{
-				"playground.id": pgReq.PlaygroundId,
-			},
+			metaTagKey: map[string]string{playgroundIDTagKey: pgReq.PlaygroundId},
 		}
 
 	default:

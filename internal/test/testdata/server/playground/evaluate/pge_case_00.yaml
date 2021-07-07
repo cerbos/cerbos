@@ -1,5 +1,8 @@
 ---
 description: "Valid request"
+wantStatus:
+  httpStatusCode: 200
+  grpcStatusCode: 0
 playgroundEvaluate:
   input: {
     "playgroundId": "test",
@@ -34,7 +37,7 @@ playgroundEvaluate:
         {
           "action": "view",
           "effect": "EFFECT_ALLOW",
-          "policy": "album:object:default",
+          "policy": "resource.album_object.vdefault",
           "effectiveDerivedRoles": [
             "owner"
           ]
@@ -42,7 +45,7 @@ playgroundEvaluate:
         {
           "action": "delete",
           "effect": "EFFECT_ALLOW",
-          "policy": "album:object:default",
+          "policy": "resource.album_object.vdefault",
           "effectiveDerivedRoles": [
             "owner"
           ]

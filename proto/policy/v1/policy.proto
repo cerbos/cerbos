@@ -6,6 +6,7 @@ package policy.v1;
 
 option go_package = "github.com/cerbos/cerbos/internal/genpb/policy/v1;policyv1";
 option java_package = "dev.cerbos.api.v1.policy";
+option csharp_namespace = "Cerbos.Api.V1.Policy";
 
 import "engine/v1/engine.proto";
 import "google/api/expr/v1alpha1/checked.proto";

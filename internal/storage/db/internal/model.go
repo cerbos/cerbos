@@ -6,8 +6,6 @@ import (
 	"database/sql/driver"
 	"fmt"
 
-	"google.golang.org/protobuf/proto"
-
 	policyv1 "github.com/cerbos/cerbos/internal/genpb/policy/v1"
 	"github.com/cerbos/cerbos/internal/namer"
 )
@@ -45,7 +43,7 @@ type PolicyDefWrapper struct {
 }
 
 func (pdw PolicyDefWrapper) Value() (driver.Value, error) {
-	return proto.Marshal(pdw.Policy)
+	return pdw.Policy.MarshalVT()
 }
 
 func (pdw *PolicyDefWrapper) Scan(src interface{}) error {
@@ -62,7 +60,7 @@ func (pdw *PolicyDefWrapper) Scan(src interface{}) error {
 	}
 
 	pdw.Policy = &policyv1.Policy{}
-	if err := proto.Unmarshal(source, pdw.Policy); err != nil {
+	if err := pdw.Policy.UnmarshalVT(source); err != nil {
 		return fmt.Errorf("failed to unmarshal policy definition: %w", err)
 	}
 
@@ -74,7 +72,7 @@ type GeneratedPolicyWrapper struct {
 }
 
 func (gpw GeneratedPolicyWrapper) Value() (driver.Value, error) {
-	return proto.Marshal(gpw.GeneratedPolicy)
+	return gpw.GeneratedPolicy.MarshalVT()
 }
 
 func (gpw *GeneratedPolicyWrapper) Scan(src interface{}) error {
@@ -91,7 +89,7 @@ func (gpw *GeneratedPolicyWrapper) Scan(src interface{}) error {
 	}
 
 	gpw.GeneratedPolicy = &policyv1.GeneratedPolicy{}
-	if err := proto.Unmarshal(source, gpw.GeneratedPolicy); err != nil {
+	if err := gpw.GeneratedPolicy.UnmarshalVT(source); err != nil {
 		return fmt.Errorf("failed to unmarshal generated policy: %w", err)
 	}
 

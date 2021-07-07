@@ -1,5 +1,8 @@
 ---
 description: "No policy match"
+wantStatus:
+  httpStatusCode: 200
+  grpcStatusCode: 0
 checkResourceSet:
   input: {
     "requestId": "test",

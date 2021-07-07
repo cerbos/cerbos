@@ -143,6 +143,7 @@ var CerbosService_ServiceDesc = grpc.ServiceDesc{
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type CerbosAdminServiceClient interface {
 	AddOrUpdatePolicy(ctx context.Context, in *v1.AddOrUpdatePolicyRequest, opts ...grpc.CallOption) (*v11.AddOrUpdatePolicyResponse, error)
+	ListAuditLogEntries(ctx context.Context, in *v1.ListAuditLogEntriesRequest, opts ...grpc.CallOption) (CerbosAdminService_ListAuditLogEntriesClient, error)
 }
 
 type cerbosAdminServiceClient struct {
@@ -162,11 +163,44 @@ func (c *cerbosAdminServiceClient) AddOrUpdatePolicy(ctx context.Context, in *v1
 	return out, nil
 }
 
+func (c *cerbosAdminServiceClient) ListAuditLogEntries(ctx context.Context, in *v1.ListAuditLogEntriesRequest, opts ...grpc.CallOption) (CerbosAdminService_ListAuditLogEntriesClient, error) {
+	stream, err := c.cc.NewStream(ctx, &CerbosAdminService_ServiceDesc.Streams[0], "/svc.v1.CerbosAdminService/ListAuditLogEntries", opts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &cerbosAdminServiceListAuditLogEntriesClient{stream}
+	if err := x.ClientStream.SendMsg(in); err != nil {
+		return nil, err
+	}
+	if err := x.ClientStream.CloseSend(); err != nil {
+		return nil, err
+	}
+	return x, nil
+}
+
+type CerbosAdminService_ListAuditLogEntriesClient interface {
+	Recv() (*v11.ListAuditLogEntriesResponse, error)
+	grpc.ClientStream
+}
+
+type cerbosAdminServiceListAuditLogEntriesClient struct {
+	grpc.ClientStream
+}
+
+func (x *cerbosAdminServiceListAuditLogEntriesClient) Recv() (*v11.ListAuditLogEntriesResponse, error) {
+	m := new(v11.ListAuditLogEntriesResponse)
+	if err := x.ClientStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
 // CerbosAdminServiceServer is the server API for CerbosAdminService service.
 // All implementations must embed UnimplementedCerbosAdminServiceServer
 // for forward compatibility
 type CerbosAdminServiceServer interface {
 	AddOrUpdatePolicy(context.Context, *v1.AddOrUpdatePolicyRequest) (*v11.AddOrUpdatePolicyResponse, error)
+	ListAuditLogEntries(*v1.ListAuditLogEntriesRequest, CerbosAdminService_ListAuditLogEntriesServer) error
 	mustEmbedUnimplementedCerbosAdminServiceServer()
 }
 
@@ -176,6 +210,9 @@ type UnimplementedCerbosAdminServiceServer struct {
 
 func (UnimplementedCerbosAdminServiceServer) AddOrUpdatePolicy(context.Context, *v1.AddOrUpdatePolicyRequest) (*v11.AddOrUpdatePolicyResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method AddOrUpdatePolicy not implemented")
+}
+func (UnimplementedCerbosAdminServiceServer) ListAuditLogEntries(*v1.ListAuditLogEntriesRequest, CerbosAdminService_ListAuditLogEntriesServer) error {
+	return status.Errorf(codes.Unimplemented, "method ListAuditLogEntries not implemented")
 }
 func (UnimplementedCerbosAdminServiceServer) mustEmbedUnimplementedCerbosAdminServiceServer() {}
 
@@ -208,6 +245,27 @@ func _CerbosAdminService_AddOrUpdatePolicy_Handler(srv interface{}, ctx context.
 	return interceptor(ctx, in, info, handler)
 }
 
+func _CerbosAdminService_ListAuditLogEntries_Handler(srv interface{}, stream grpc.ServerStream) error {
+	m := new(v1.ListAuditLogEntriesRequest)
+	if err := stream.RecvMsg(m); err != nil {
+		return err
+	}
+	return srv.(CerbosAdminServiceServer).ListAuditLogEntries(m, &cerbosAdminServiceListAuditLogEntriesServer{stream})
+}
+
+type CerbosAdminService_ListAuditLogEntriesServer interface {
+	Send(*v11.ListAuditLogEntriesResponse) error
+	grpc.ServerStream
+}
+
+type cerbosAdminServiceListAuditLogEntriesServer struct {
+	grpc.ServerStream
+}
+
+func (x *cerbosAdminServiceListAuditLogEntriesServer) Send(m *v11.ListAuditLogEntriesResponse) error {
+	return x.ServerStream.SendMsg(m)
+}
+
 // CerbosAdminService_ServiceDesc is the grpc.ServiceDesc for CerbosAdminService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -220,7 +278,13 @@ var CerbosAdminService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _CerbosAdminService_AddOrUpdatePolicy_Handler,
 		},
 	},
-	Streams:  []grpc.StreamDesc{},
+	Streams: []grpc.StreamDesc{
+		{
+			StreamName:    "ListAuditLogEntries",
+			Handler:       _CerbosAdminService_ListAuditLogEntries_Handler,
+			ServerStreams: true,
+		},
+	},
 	Metadata: "svc/v1/svc.proto",
 }
 

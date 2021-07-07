@@ -4,16 +4,17 @@ syntax = "proto3";
 
 package request.v1;
 
+option go_package = "github.com/cerbos/cerbos/internal/genpb/request/v1;requestv1";
+option java_package = "dev.cerbos.api.v1.request";
+option csharp_namespace = "Cerbos.Api.V1.Request";
+
 import "engine/v1/engine.proto";
 import "google/protobuf/struct.proto";
+import "google/protobuf/timestamp.proto";
 import "google/api/field_behavior.proto";
 import "policy/v1/policy.proto";
 import "protoc-gen-openapiv2/options/annotations.proto";
 import "validate/validate.proto";
-
-option go_package = "github.com/cerbos/cerbos/internal/genpb/request/v1;requestv1";
-option java_package = "dev.cerbos.api.v1.request";
-
 
 message CheckResourceSetRequest {
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
@@ -244,5 +245,71 @@ message AddOrUpdatePolicyRequest {
             max_items: 10
         } 
     ];
+}
+
+message ListAuditLogEntriesRequest {
+    enum Kind {
+        KIND_UNSPECIFIED = 0;
+        KIND_ACCESS = 1;
+        KIND_DECISION = 2;
+    }
+
+    message TimeRange {
+        option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
+            json_schema: {
+                description: "Entries between a time range."
+            }
+        };
+
+        google.protobuf.Timestamp start = 1 [
+            (validate.rules).timestamp = {
+                required: true,
+                lt_now: true,
+            },
+            (google.api.field_behavior) = REQUIRED,
+            (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = { 
+                description: "Start date in ISO 8601 format."
+                example: "\"2021-07-05T07:27:01+00:00\""
+            } 
+        ];
+        google.protobuf.Timestamp end = 2 [
+            (validate.rules).timestamp = {
+                required: true,
+                lt_now: true,
+            },
+            (google.api.field_behavior) = REQUIRED,
+            (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = { 
+                description: "End date in ISO 8601 format."
+                example: "\"2021-07-05T07:27:01+00:00\""
+            } 
+        ];
+    }
+
+    Kind kind = 1 [
+        (validate.rules).enum = {in: [1,2]},
+        (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = { 
+            description: "Kind of log entry"
+            enum: ["KIND_ACCESS", "KIND_DECISION"]
+        } 
+    ];
+    oneof filter {
+        option (validate.required) = true;
+        uint32 last_n = 2 [
+            (validate.rules).uint32.lte = 500,
+            (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = { 
+                description: "Last N entries."
+                minimum: 1
+                maximum: 500
+            } 
+        ];
+        TimeRange between = 3;
+        string by_call_id = 4 [
+            (validate.rules).string = {pattern: "^[0123456789ABCDEFGHJKMNPQRSTVWXYZ]{26}$"},
+            (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = { 
+                description: "By Call ID"
+                pattern: "^[0123456789ABCDEFGHJKMNPQRSTVWXYZ]{26}$"
+            } 
+        ];
+    }
 }
 

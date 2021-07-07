@@ -4,15 +4,16 @@ syntax = "proto3";
 
 package engine.v1;
 
+option go_package = "github.com/cerbos/cerbos/internal/genpb/engine/v1;enginev1";
+option java_package = "dev.cerbos.api.v1.engine";
+option csharp_namespace = "Cerbos.Api.V1.Engine";
+
 import "google/api/field_behavior.proto";
 import "google/protobuf/duration.proto";
 import "google/protobuf/struct.proto";
 import "protoc-gen-openapiv2/options/annotations.proto";
 import "shared/v1/shared.proto";
 import "validate/validate.proto";
-
-option go_package = "github.com/cerbos/cerbos/internal/genpb/engine/v1;enginev1";
-option java_package = "dev.cerbos.api.v1.engine";
 
 message CheckInput {
     string request_id = 1; 
