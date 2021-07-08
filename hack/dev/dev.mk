@@ -25,11 +25,11 @@ protoset: $(BUF)
 
 .PHONY: view-access-logs
 view-access-logs: $(GRPCURL)
-	@ $(GRPCURL) -authority cerbos.local -insecure -rpc-header 'authorization: Basic Y2VyYm9zOmNlcmJvc0FkbWluCg==' -d '{"kind":"KIND_ACCESS","lastN": 10}' localhost:$(GRPC_PORT) svc.v1.CerbosAdminService/ListAuditLogEntries
+	@ $(GRPCURL) -authority cerbos.local -insecure -rpc-header 'authorization: Basic Y2VyYm9zOmNlcmJvc0FkbWluCg==' -d '{"kind":"KIND_ACCESS","tail": 10}' localhost:$(GRPC_PORT) svc.v1.CerbosAdminService/ListAuditLogEntries
 
 .PHONY: view-decision-logs
 view-decision-logs: $(GRPCURL)
-	@ $(GRPCURL) -authority cerbos.local -insecure -rpc-header 'authorization: Basic Y2VyYm9zOmNlcmJvc0FkbWluCg==' -d '{"kind":"KIND_DECISION","lastN": 10}' localhost:$(GRPC_PORT) svc.v1.CerbosAdminService/ListAuditLogEntries
+	@ $(GRPCURL) -authority cerbos.local -insecure -rpc-header 'authorization: Basic Y2VyYm9zOmNlcmJvc0FkbWluCg==' -d '{"kind":"KIND_DECISION","tail": 10}' localhost:$(GRPC_PORT) svc.v1.CerbosAdminService/ListAuditLogEntries
 
 .PHONY: check-grpc
 check-grpc: $(GRPCURL)

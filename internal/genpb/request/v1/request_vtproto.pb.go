@@ -10,6 +10,7 @@ import (
 	v11 "github.com/cerbos/cerbos/internal/genpb/policy/v1"
 	proto "google.golang.org/protobuf/proto"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
+	durationpb "google.golang.org/protobuf/types/known/durationpb"
 	structpb "google.golang.org/protobuf/types/known/structpb"
 	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
 	io "io"
@@ -776,14 +777,14 @@ func (m *ListAuditLogEntriesRequest) MarshalToSizedBufferVT(dAtA []byte) (int, e
 	return len(dAtA) - i, nil
 }
 
-func (m *ListAuditLogEntriesRequest_LastN) MarshalToVT(dAtA []byte) (int, error) {
+func (m *ListAuditLogEntriesRequest_Tail) MarshalToVT(dAtA []byte) (int, error) {
 	size := m.SizeVT()
 	return m.MarshalToSizedBufferVT(dAtA[:size])
 }
 
-func (m *ListAuditLogEntriesRequest_LastN) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
+func (m *ListAuditLogEntriesRequest_Tail) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 	i := len(dAtA)
-	i = encodeVarint(dAtA, i, uint64(m.LastN))
+	i = encodeVarint(dAtA, i, uint64(m.Tail))
 	i--
 	dAtA[i] = 0x10
 	return len(dAtA) - i, nil
@@ -807,18 +808,49 @@ func (m *ListAuditLogEntriesRequest_Between) MarshalToSizedBufferVT(dAtA []byte)
 	}
 	return len(dAtA) - i, nil
 }
-func (m *ListAuditLogEntriesRequest_ByCallId) MarshalToVT(dAtA []byte) (int, error) {
+func (m *ListAuditLogEntriesRequest_Since) MarshalToVT(dAtA []byte) (int, error) {
 	size := m.SizeVT()
 	return m.MarshalToSizedBufferVT(dAtA[:size])
 }
 
-func (m *ListAuditLogEntriesRequest_ByCallId) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
+func (m *ListAuditLogEntriesRequest_Since) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 	i := len(dAtA)
-	i -= len(m.ByCallId)
-	copy(dAtA[i:], m.ByCallId)
-	i = encodeVarint(dAtA, i, uint64(len(m.ByCallId)))
+	if m.Since != nil {
+		if marshalto, ok := interface{}(m.Since).(interface {
+			MarshalToSizedBufferVT([]byte) (int, error)
+		}); ok {
+			size, err := marshalto.MarshalToSizedBufferVT(dAtA[:i])
+			if err != nil {
+				return 0, err
+			}
+			i -= size
+			i = encodeVarint(dAtA, i, uint64(size))
+		} else {
+			encoded, err := proto.Marshal(m.Since)
+			if err != nil {
+				return 0, err
+			}
+			i -= len(encoded)
+			copy(dAtA[i:], encoded)
+			i = encodeVarint(dAtA, i, uint64(len(encoded)))
+		}
+		i--
+		dAtA[i] = 0x22
+	}
+	return len(dAtA) - i, nil
+}
+func (m *ListAuditLogEntriesRequest_Lookup) MarshalToVT(dAtA []byte) (int, error) {
+	size := m.SizeVT()
+	return m.MarshalToSizedBufferVT(dAtA[:size])
+}
+
+func (m *ListAuditLogEntriesRequest_Lookup) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	i -= len(m.Lookup)
+	copy(dAtA[i:], m.Lookup)
+	i = encodeVarint(dAtA, i, uint64(len(m.Lookup)))
 	i--
-	dAtA[i] = 0x22
+	dAtA[i] = 0x2a
 	return len(dAtA) - i, nil
 }
 func encodeVarint(dAtA []byte, offset int, v uint64) int {
@@ -1159,13 +1191,13 @@ func (m *ListAuditLogEntriesRequest) SizeVT() (n int) {
 	return n
 }
 
-func (m *ListAuditLogEntriesRequest_LastN) SizeVT() (n int) {
+func (m *ListAuditLogEntriesRequest_Tail) SizeVT() (n int) {
 	if m == nil {
 		return 0
 	}
 	var l int
 	_ = l
-	n += 1 + sov(uint64(m.LastN))
+	n += 1 + sov(uint64(m.Tail))
 	return n
 }
 func (m *ListAuditLogEntriesRequest_Between) SizeVT() (n int) {
@@ -1180,13 +1212,31 @@ func (m *ListAuditLogEntriesRequest_Between) SizeVT() (n int) {
 	}
 	return n
 }
-func (m *ListAuditLogEntriesRequest_ByCallId) SizeVT() (n int) {
+func (m *ListAuditLogEntriesRequest_Since) SizeVT() (n int) {
 	if m == nil {
 		return 0
 	}
 	var l int
 	_ = l
-	l = len(m.ByCallId)
+	if m.Since != nil {
+		if size, ok := interface{}(m.Since).(interface {
+			SizeVT() int
+		}); ok {
+			l = size.SizeVT()
+		} else {
+			l = proto.Size(m.Since)
+		}
+		n += 1 + l + sov(uint64(l))
+	}
+	return n
+}
+func (m *ListAuditLogEntriesRequest_Lookup) SizeVT() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = len(m.Lookup)
 	n += 1 + l + sov(uint64(l))
 	return n
 }
@@ -2885,7 +2935,7 @@ func (m *ListAuditLogEntriesRequest) UnmarshalVT(dAtA []byte) error {
 			}
 		case 2:
 			if wireType != 0 {
-				return fmt.Errorf("proto: wrong wireType = %d for field LastN", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field Tail", wireType)
 			}
 			var v uint32
 			for shift := uint(0); ; shift += 7 {
@@ -2902,7 +2952,7 @@ func (m *ListAuditLogEntriesRequest) UnmarshalVT(dAtA []byte) error {
 					break
 				}
 			}
-			m.Filter = &ListAuditLogEntriesRequest_LastN{v}
+			m.Filter = &ListAuditLogEntriesRequest_Tail{v}
 		case 3:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field Between", wireType)
@@ -2946,7 +2996,64 @@ func (m *ListAuditLogEntriesRequest) UnmarshalVT(dAtA []byte) error {
 			iNdEx = postIndex
 		case 4:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field ByCallId", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field Since", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLength
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLength
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if oneof, ok := m.Filter.(*ListAuditLogEntriesRequest_Since); ok {
+				if unmarshal, ok := interface{}(oneof.Since).(interface {
+					UnmarshalVT([]byte) error
+				}); ok {
+					if err := unmarshal.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
+						return err
+					}
+				} else {
+					if err := proto.Unmarshal(dAtA[iNdEx:postIndex], oneof.Since); err != nil {
+						return err
+					}
+				}
+			} else {
+				v := &durationpb.Duration{}
+				if unmarshal, ok := interface{}(v).(interface {
+					UnmarshalVT([]byte) error
+				}); ok {
+					if err := unmarshal.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
+						return err
+					}
+				} else {
+					if err := proto.Unmarshal(dAtA[iNdEx:postIndex], v); err != nil {
+						return err
+					}
+				}
+				m.Filter = &ListAuditLogEntriesRequest_Since{v}
+			}
+			iNdEx = postIndex
+		case 5:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Lookup", wireType)
 			}
 			var stringLen uint64
 			for shift := uint(0); ; shift += 7 {
@@ -2974,7 +3081,7 @@ func (m *ListAuditLogEntriesRequest) UnmarshalVT(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.Filter = &ListAuditLogEntriesRequest_ByCallId{string(dAtA[iNdEx:postIndex])}
+			m.Filter = &ListAuditLogEntriesRequest_Lookup{string(dAtA[iNdEx:postIndex])}
 			iNdEx = postIndex
 		default:
 			iNdEx = preIndex

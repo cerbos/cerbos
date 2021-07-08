@@ -6,6 +6,7 @@ require (
 	contrib.go.opencensus.io/exporter/jaeger v0.2.1
 	contrib.go.opencensus.io/exporter/prometheus v0.3.0
 	github.com/ProtonMail/gopenpgp/v2 v2.2.0 // indirect
+	github.com/alecthomas/chroma v0.9.2
 	github.com/bluele/gcache v0.0.2
 	github.com/bufbuild/buf v0.43.2
 	github.com/cespare/xxhash v1.1.0
@@ -30,6 +31,7 @@ require (
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.4.0
 	github.com/iancoleman/strcase v0.1.3 // indirect
 	github.com/jmoiron/sqlx v1.3.4
+	github.com/jwalton/gchalk v1.0.3
 	github.com/kavu/go_reuseport v1.5.0
 	github.com/lyft/protoc-gen-star v0.5.3 // indirect
 	github.com/mattn/go-isatty v0.0.13

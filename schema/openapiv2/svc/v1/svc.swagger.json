@@ -73,7 +73,7 @@
             ]
           },
           {
-            "name": "lastN",
+            "name": "tail",
             "description": "Last N entries.",
             "in": "query",
             "required": false,
@@ -97,7 +97,14 @@
             "format": "date-time"
           },
           {
-            "name": "byCallId",
+            "name": "since",
+            "description": "Entries since N hours/minutes ago",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "lookup",
             "description": "By Call ID",
             "in": "query",
             "required": false,
