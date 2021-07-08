@@ -19,6 +19,8 @@ import (
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/local"
 
+	"github.com/cerbos/cerbos/cmd/ctl/audit"
+	"github.com/cerbos/cerbos/cmd/ctl/decisions"
 	svcv1 "github.com/cerbos/cerbos/internal/genpb/svc/v1"
 	"github.com/cerbos/cerbos/internal/util"
 )
@@ -60,7 +62,7 @@ func NewCommand() *cobra.Command {
 	cmd.PersistentFlags().BoolVar(&connConf.insecure, "insecure", false, "Skip validating server certificate")
 	cmd.PersistentFlags().BoolVar(&connConf.plaintext, "plaintext", false, "Use plaintext protocol without TLS")
 
-	cmd.AddCommand(newAuditCmd())
+	cmd.AddCommand(audit.NewAuditCmd(createAdminClient), decisions.NewDecisionsCmd(createAdminClient))
 
 	return cmd
 }
