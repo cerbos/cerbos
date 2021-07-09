@@ -8,7 +8,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"sync"
+	"strings"
 	"time"
 
 	"github.com/alecthomas/chroma"
@@ -25,12 +25,11 @@ import (
 	auditv1 "github.com/cerbos/cerbos/internal/genpb/audit/v1"
 	requestv1 "github.com/cerbos/cerbos/internal/genpb/request/v1"
 	responsev1 "github.com/cerbos/cerbos/internal/genpb/response/v1"
+	sharedv1 "github.com/cerbos/cerbos/internal/genpb/shared/v1"
 	svcv1 "github.com/cerbos/cerbos/internal/genpb/svc/v1"
 )
 
-const batchSize = 20
-
-var auditFilterFlags = audit.NewAuditFilterDef()
+var auditFilterFlags = audit.NewFilterDef()
 
 type clientGenFunc func() (svcv1.CerbosAdminServiceClient, error)
 
@@ -101,18 +100,18 @@ type decisionsUI struct {
 }
 
 type browserPanel struct {
-	mu           sync.RWMutex
-	entries      []*auditv1.DecisionLogEntry
 	entriesTable *tview.Table
 	jsonView     *tview.TextView
-	info         *tview.TextView
+	focusOrder   []tview.Primitive
 }
 
 type detailsPanel struct {
-	inputsList    *tview.List
-	principalView *tview.TextView
-	resourceView  *tview.TextView
-	actionsTable  *tview.Table
+	inputsList       *tview.List
+	principalView    *tview.TextView
+	resourceView     *tview.TextView
+	actionsTable     *tview.Table
+	derivedRolesView *tview.TextView
+	focusOrder       []tview.Primitive
 }
 
 func mkUI(entries []*auditv1.DecisionLogEntry) *decisionsUI {
@@ -146,35 +145,22 @@ func mkBrowserPanel(ui *decisionsUI, entries []*auditv1.DecisionLogEntry) {
 			SetFixed(1, 0).
 			SetBorders(false).
 			SetSeparator(tview.Borders.Vertical).
-			SetSelectable(true, false).
-			SetDoneFunc(func(key tcell.Key) {
-				if key == tcell.KeyTab {
-					ui.app.SetFocus(ui.browser.jsonView)
-					ui.browser.jsonView.SetBorderAttributes(tcell.AttrBold).SetBorderColor(tcell.ColorYellow)
-					ui.browser.entriesTable.SetBorderAttributes(tcell.AttrNone).SetBorderColor(tcell.ColorDefault)
-				}
-			}),
-		jsonView: tview.NewTextView().
-			SetDynamicColors(true).
-			SetDoneFunc(func(key tcell.Key) {
-				if key == tcell.KeyTab {
-					ui.app.SetFocus(ui.browser.entriesTable)
-					ui.browser.entriesTable.SetBorderAttributes(tcell.AttrBold).SetBorderColor(tcell.ColorYellow)
-					ui.browser.jsonView.SetBorderAttributes(tcell.AttrNone).SetBorderColor(tcell.ColorDefault)
-				}
-			}),
+			SetSelectable(true, false),
+		jsonView: tview.NewTextView().SetDynamicColors(true),
 	}
 
-	ui.browser.entriesTable.SetBorder(true)
-	ui.browser.jsonView.SetBorder(true)
+	ui.browser.focusOrder = []tview.Primitive{
+		ui.browser.entriesTable,
+		ui.browser.jsonView,
+	}
+
+	ui.browser.entriesTable.SetBorder(true).SetTitle("| Decisions |")
+	ui.browser.jsonView.SetBorder(true).SetTitle("| Data |")
 
 	populateEntriesTable(ui, entries)
 
-	ui.browser.info = tview.NewTextView().
-		SetDynamicColors(true).
-		SetWrap(false)
-
-	fmt.Fprintf(ui.browser.info, `[darkcyan]⭾[white] Switch between panes  [darkcyan]↑↓[white] Scroll  [darkcyan]⏎[white] View details  [darkcyan]q[white] Exit`)
+	info := tview.NewTextView().SetDynamicColors(true).SetWrap(false)
+	fmt.Fprintf(info, "%s  %s  %s", keyDesc("⭾", "Switch between panes"), keyDesc("⏎", "View details"), keyDesc("Q", "Exit"))
 
 	layout := tview.NewGrid().
 		SetColumns(-1, -1).
@@ -182,26 +168,55 @@ func mkBrowserPanel(ui *decisionsUI, entries []*auditv1.DecisionLogEntry) {
 		SetBorders(false).
 		AddItem(ui.browser.entriesTable, 0, 0, 1, 1, 0, 0, true).
 		AddItem(ui.browser.jsonView, 0, 1, 1, 1, 0, 0, false).
-		AddItem(ui.browser.info, 1, 0, 1, 2, 1, 1, false)
+		AddItem(info, 1, 0, 1, 2, 1, 1, false)
+
+	layout.SetInputCapture(func(key *tcell.EventKey) *tcell.EventKey {
+		switch key.Key() {
+		case tcell.KeyTab:
+			ui.app.SetFocus(ui.browser.switchFocus(false))
+			return nil
+		case tcell.KeyBacktab:
+			ui.app.SetFocus(ui.browser.switchFocus(true))
+			return nil
+		case tcell.KeyEsc:
+			ui.app.Stop()
+			return nil
+		case tcell.KeyEnter:
+			if ui.browser.jsonView.HasFocus() {
+				row, col := ui.browser.entriesTable.GetSelection()
+				ui.entrySelectedFunc(row, col)
+				return nil
+			}
+			return key
+		default:
+			return key
+		}
+	})
 
 	ui.tabs.AddPage(browserKey, layout, true, true)
 }
 
 //nolint:gomnd
 func populateEntriesTable(ui *decisionsUI, entries []*auditv1.DecisionLogEntry) {
-	ui.browser.entriesTable.SetCell(0, 0, tview.NewTableCell("ID").SetAlign(tview.AlignCenter).SetAttributes(tcell.AttrBold))
+	ui.browser.entriesTable.SetCell(0, 0, tview.NewTableCell("Call ID").SetAlign(tview.AlignCenter).SetAttributes(tcell.AttrBold))
 	ui.browser.entriesTable.SetCell(0, 1, tview.NewTableCell("Timestamp").SetAlign(tview.AlignCenter).SetAttributes(tcell.AttrBold))
-	ui.browser.entriesTable.SetCell(0, 2, tview.NewTableCell("Address").SetAlign(tview.AlignCenter).SetAttributes(tcell.AttrBold))
-	ui.browser.entriesTable.SetCell(0, 3, tview.NewTableCell("User Agent").SetAlign(tview.AlignCenter).SetAttributes(tcell.AttrBold))
-	ui.browser.entriesTable.SetCell(0, 4, tview.NewTableCell("Forwarded For").SetAlign(tview.AlignCenter).SetAttributes(tcell.AttrBold))
+	ui.browser.entriesTable.SetCell(0, 2, tview.NewTableCell("Request ID").SetAlign(tview.AlignCenter).SetAttributes(tcell.AttrBold))
+	ui.browser.entriesTable.SetCell(0, 3, tview.NewTableCell("Address").SetAlign(tview.AlignCenter).SetAttributes(tcell.AttrBold))
+	ui.browser.entriesTable.SetCell(0, 4, tview.NewTableCell("User Agent").SetAlign(tview.AlignCenter).SetAttributes(tcell.AttrBold))
+	ui.browser.entriesTable.SetCell(0, 5, tview.NewTableCell("Forwarded For").SetAlign(tview.AlignCenter).SetAttributes(tcell.AttrBold))
 
 	rowIndex := 1
 	for _, entry := range entries {
 		ui.browser.entriesTable.SetCell(rowIndex, 0, tview.NewTableCell(entry.CallId).SetReference(entry))
 		ui.browser.entriesTable.SetCell(rowIndex, 1, tview.NewTableCell(entry.Timestamp.AsTime().Format(time.RFC3339)))
-		ui.browser.entriesTable.SetCell(rowIndex, 2, tview.NewTableCell(entry.Peer.Address))
-		ui.browser.entriesTable.SetCell(rowIndex, 3, tview.NewTableCell(entry.Peer.UserAgent))
-		ui.browser.entriesTable.SetCell(rowIndex, 4, tview.NewTableCell(entry.Peer.ForwardedFor))
+		if len(entry.Inputs) > 0 {
+			ui.browser.entriesTable.SetCell(rowIndex, 2, tview.NewTableCell(entry.Inputs[0].RequestId))
+		} else {
+			ui.browser.entriesTable.SetCell(rowIndex, 2, tview.NewTableCell("-"))
+		}
+		ui.browser.entriesTable.SetCell(rowIndex, 3, tview.NewTableCell(entry.Peer.Address))
+		ui.browser.entriesTable.SetCell(rowIndex, 4, tview.NewTableCell(entry.Peer.UserAgent))
+		ui.browser.entriesTable.SetCell(rowIndex, 5, tview.NewTableCell(entry.Peer.ForwardedFor))
 		rowIndex++
 	}
 
@@ -216,6 +231,8 @@ func populateEntriesTable(ui *decisionsUI, entries []*auditv1.DecisionLogEntry) 
 			printer.write(tview.ANSIWriter(ui.browser.jsonView), entry)
 		}
 	})
+
+	ui.browser.entriesTable.SetSelectedFunc(ui.entrySelectedFunc)
 }
 
 //nolint:gomnd
@@ -224,22 +241,193 @@ func mkDetailsPanel(ui *decisionsUI) {
 		inputsList:    tview.NewList(),
 		principalView: tview.NewTextView().SetDynamicColors(true),
 		resourceView:  tview.NewTextView().SetDynamicColors(true),
-		actionsTable:  tview.NewTable(),
+		actionsTable:  tview.NewTable().SetFixed(1, 0).SetBorders(true),
+		derivedRolesView: tview.NewTextView().
+			SetDynamicColors(true).
+			SetWrap(false).
+			SetTextAlign(tview.AlignCenter).
+			SetTextColor(tcell.ColorSeaGreen),
 	}
 
+	ui.details.focusOrder = []tview.Primitive{
+		ui.details.inputsList,
+		ui.details.principalView,
+		ui.details.resourceView,
+		ui.details.actionsTable,
+	}
+
+	ui.details.inputsList.SetBorder(true).SetTitle(fmt.Sprintf("| %stems |", keyCode("I")))
+	ui.details.actionsTable.SetBorder(true).SetTitle(fmt.Sprintf("| %sctions |", keyCode("A")))
+	ui.details.principalView.SetBorder(true).SetTitle(fmt.Sprintf("| %srincipal |", keyCode("P")))
+	ui.details.resourceView.SetBorder(true).SetTitle(fmt.Sprintf("| %sesource |", keyCode("R")))
+	ui.details.derivedRolesView.SetBorder(true).SetTitle("| Effective Derived Roles |")
+
+	info := tview.NewTextView().SetDynamicColors(true).SetWrap(false)
+	fmt.Fprintf(info, "%s  %s  %s", keyDesc("⭾", "Switch between panes"), keyDesc("ESC", "Back"), keyDesc("Q", "Exit"))
+
 	layout := tview.NewFlex().
-		AddItem(ui.details.inputsList, 0, 1, true).
+		SetDirection(tview.FlexRow).
 		AddItem(tview.NewFlex().
-			SetDirection(tview.FlexRow).
-			AddItem(ui.details.principalView, 0, 2, false).
-			AddItem(ui.details.resourceView, 0, 2, false).
-			AddItem(ui.details.actionsTable, 0, 1, false), 0, 1, false)
+			AddItem(ui.details.inputsList, 0, 1, true).
+			AddItem(tview.NewFlex().
+				SetDirection(tview.FlexRow).
+				AddItem(tview.NewFlex().
+					AddItem(ui.details.principalView, 0, 1, true).
+					AddItem(ui.details.resourceView, 0, 1, false), 0, 2, true).
+				AddItem(ui.details.actionsTable, 0, 1, false).
+				AddItem(ui.details.derivedRolesView, 3, 0, false), 0, 4, false), 0, 1, true).
+		AddItem(info, 1, 0, false)
+
+	layout.SetInputCapture(func(key *tcell.EventKey) *tcell.EventKey {
+		switch key.Key() {
+		case tcell.KeyTab:
+			ui.app.SetFocus(ui.details.switchFocus(false))
+			return nil
+		case tcell.KeyBacktab:
+			ui.app.SetFocus(ui.details.switchFocus(true))
+			return nil
+		case tcell.KeyEsc:
+			ui.tabs.SwitchToPage(browserKey)
+			return nil
+		case tcell.KeyRune:
+			switch key.Rune() {
+			case 'p', 'P':
+				ui.app.SetFocus(ui.details.principalView)
+				return nil
+			case 'r', 'R':
+				ui.app.SetFocus(ui.details.resourceView)
+				return nil
+			case 'a', 'A':
+				ui.app.SetFocus(ui.details.actionsTable)
+				return nil
+			case 'i', 'I':
+				ui.app.SetFocus(ui.details.inputsList)
+				return nil
+			default:
+				return key
+			}
+		default:
+			return key
+		}
+	})
 
 	ui.tabs.AddPage(detailsKey, layout, true, false)
 }
 
 func (d *decisionsUI) Start() error {
 	return d.app.EnableMouse(true).Run()
+}
+
+func (d *decisionsUI) entrySelectedFunc(row, _ int) {
+	col := d.browser.entriesTable.GetCell(row, 0)
+	entryRef := col.GetReference()
+
+	if entry, ok := entryRef.(*auditv1.DecisionLogEntry); ok {
+		d.showDetailsPanel(entry)
+	}
+}
+
+//nolint:gomnd
+func (d *decisionsUI) showDetailsPanel(entry *auditv1.DecisionLogEntry) {
+	d.details.inputsList.Clear()
+
+	printer := newPrettyJSON()
+	for i, inp := range entry.Inputs {
+		text := fmt.Sprintf("%d. %s|%s|%s", i+1, inp.Principal.Id, inp.Resource.Kind, inp.Resource.Id)
+		d.details.inputsList.AddItem(text, "", 0, nil)
+	}
+
+	d.details.inputsList.SetChangedFunc(func(index int, _, _ string, _ rune) {
+		inp := entry.Inputs[index]
+
+		d.details.principalView.Clear()
+		printer.write(tview.ANSIWriter(d.details.principalView), inp.Principal)
+
+		d.details.resourceView.Clear()
+		printer.write(tview.ANSIWriter(d.details.resourceView), inp.Resource)
+
+		output := entry.Outputs[index]
+		d.details.actionsTable.Clear()
+
+		d.details.actionsTable.SetCell(0, 0, tview.NewTableCell(""))
+		d.details.actionsTable.SetCell(0, 1, tview.NewTableCell("Action").
+			SetAttributes(tcell.AttrBold).
+			SetAlign(tview.AlignCenter).
+			SetExpansion(2))
+		d.details.actionsTable.SetCell(0, 2, tview.NewTableCell("Effect").
+			SetAttributes(tcell.AttrBold).
+			SetAlign(tview.AlignCenter).
+			SetExpansion(1))
+		d.details.actionsTable.SetCell(0, 3, tview.NewTableCell("Policy").
+			SetAttributes(tcell.AttrBold).
+			SetAlign(tview.AlignCenter).
+			SetExpansion(4))
+
+		row := 1
+		for action, actionMeta := range output.Actions {
+			icon := "  ✖  "
+			fgColour := tcell.ColorRed
+			if actionMeta.Effect == sharedv1.Effect_EFFECT_ALLOW {
+				icon = "  ✔  "
+				fgColour = tcell.ColorGreen
+			}
+
+			d.details.actionsTable.SetCell(row, 0, tview.NewTableCell(icon).
+				SetAlign(tview.AlignCenter).
+				SetAttributes(tcell.AttrBold).
+				SetTextColor(fgColour))
+			d.details.actionsTable.SetCell(row, 1, tview.NewTableCell(action))
+			d.details.actionsTable.SetCell(row, 2, tview.NewTableCell(actionMeta.Effect.String()))
+			d.details.actionsTable.SetCell(row, 3, tview.NewTableCell(actionMeta.Policy))
+			row++
+		}
+
+		d.details.derivedRolesView.Clear()
+		fmt.Fprint(d.details.derivedRolesView, strings.Join(output.EffectiveDerivedRoles, ","))
+	})
+
+	d.details.inputsList.SetCurrentItem(0)
+
+	d.tabs.SwitchToPage(detailsKey)
+}
+
+func (bp *browserPanel) switchFocus(backward bool) tview.Primitive {
+	return switchFocus(bp.focusOrder, backward)
+}
+
+func (dp *detailsPanel) switchFocus(backward bool) tview.Primitive {
+	return switchFocus(dp.focusOrder, backward)
+}
+
+func switchFocus(items []tview.Primitive, backward bool) tview.Primitive {
+	for i, p := range items {
+		if !p.HasFocus() {
+			continue
+		}
+
+		if backward {
+			i--
+		} else {
+			i++
+		}
+
+		idx := i % len(items)
+		if idx < 0 {
+			return items[len(items)+idx]
+		}
+
+		return items[idx]
+	}
+
+	return items[0]
+}
+
+func keyCode(key string) string {
+	return fmt.Sprintf("[darkcyan::b]%s[-:-:-]", key)
+}
+
+func keyDesc(key, desc string) string {
+	return fmt.Sprintf("%s %s", keyCode(key), desc)
 }
 
 type prettyJSON struct {
@@ -267,11 +455,11 @@ func (p *prettyJSON) write(out io.Writer, msg proto.Message) {
 
 	iterator, err := p.lexer.Tokenise(nil, protojson.Format(msg))
 	if err != nil {
-		w.WriteString(fmt.Sprintf("Error tokenising JSON: %v", err))
+		_, _ = w.WriteString(fmt.Sprintf("Error tokenising JSON: %v", err))
 		return
 	}
 
 	if err := p.formatter.Format(w, p.style, iterator); err != nil {
-		w.WriteString(fmt.Sprintf("Error printing JSON: %v", err))
+		_, _ = w.WriteString(fmt.Sprintf("Error printing JSON: %v", err))
 	}
 }

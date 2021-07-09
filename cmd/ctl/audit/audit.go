@@ -32,7 +32,7 @@ var (
 		raw  bool
 	}
 
-	auditFilterFlags = NewAuditFilterDef()
+	auditFilterFlags = NewFilterDef()
 	newline          = []byte("\n")
 )
 

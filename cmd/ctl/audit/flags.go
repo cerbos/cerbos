@@ -18,18 +18,18 @@ import (
 
 var errMoreThanOneFilter = errors.New("more than one filter specified: choose from either `tail`, `between`, `since` or `lookup`")
 
-type AuditFilterDef struct {
+type FilterDef struct {
 	tail    uint16
 	between timerangeFlag
 	since   time.Duration
 	lookup  string
 }
 
-func NewAuditFilterDef() *AuditFilterDef {
-	return &AuditFilterDef{}
+func NewFilterDef() *FilterDef {
+	return &FilterDef{}
 }
 
-func (afd *AuditFilterDef) FlagSet() *pflag.FlagSet {
+func (afd *FilterDef) FlagSet() *pflag.FlagSet {
 	fs := pflag.NewFlagSet("filters", pflag.ExitOnError)
 	fs.Uint16Var(&afd.tail, "tail", 0, "View last N entries")
 	fs.Var(&afd.between, "between", "View entries between two timestamps")
@@ -39,7 +39,7 @@ func (afd *AuditFilterDef) FlagSet() *pflag.FlagSet {
 	return fs
 }
 
-func (afd *AuditFilterDef) Validate() error {
+func (afd *FilterDef) Validate() error {
 	filterCount := 0
 	if afd.tail > 0 {
 		filterCount++
@@ -64,7 +64,7 @@ func (afd *AuditFilterDef) Validate() error {
 	return nil
 }
 
-func (afd *AuditFilterDef) BuildRequest(kind requestv1.ListAuditLogEntriesRequest_Kind) *requestv1.ListAuditLogEntriesRequest {
+func (afd *FilterDef) BuildRequest(kind requestv1.ListAuditLogEntriesRequest_Kind) *requestv1.ListAuditLogEntriesRequest {
 	req := &requestv1.ListAuditLogEntriesRequest{Kind: kind}
 
 	switch {

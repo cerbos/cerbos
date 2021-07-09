@@ -29,6 +29,8 @@ github.com/envoyproxy/protoc-gen-validate/validate                https://github
 github.com/fatih/color                                            https://github.com/fatih/color/blob/master/LICENSE.md                                            MIT
 github.com/felixge/httpsnoop                                      https://github.com/felixge/httpsnoop/blob/master/LICENSE.txt                                     MIT
 github.com/fsnotify/fsnotify                                      https://github.com/fsnotify/fsnotify/blob/master/LICENSE                                         BSD-3-Clause
+github.com/gdamore/encoding                                       https://github.com/gdamore/encoding/blob/master/LICENSE                                          Apache-2.0
+github.com/gdamore/tcell/v2                                       https://github.com/gdamore/tcell/blob/master/v2/LICENSE                                          Apache-2.0
 github.com/ghodss/yaml                                            https://github.com/ghodss/yaml/blob/master/LICENSE                                               MIT
 github.com/gobwas/glob                                            https://github.com/gobwas/glob/blob/master/LICENSE                                               MIT
 github.com/go-git/gcfg                                            https://github.com/go-git/gcfg/blob/master/LICENSE                                               BSD-3-Clause
@@ -57,8 +59,10 @@ github.com/jwalton/go-supportscolor                               https://github
 github.com/jwalton/go-supportscolor/pkg/hasFlag                   https://github.com/jwalton/go-supportscolor/blob/master/pkg/hasFlag/LICENSE                      MIT
 github.com/kavu/go_reuseport                                      https://github.com/kavu/go_reuseport/blob/master/LICENSE                                         MIT
 github.com/kevinburke/ssh_config                                  https://github.com/kevinburke/ssh_config/blob/master/LICENSE                                     MIT
+github.com/lucasb-eyer/go-colorful                                https://github.com/lucasb-eyer/go-colorful/blob/master/LICENSE                                   MIT
 github.com/mattn/go-colorable                                     https://github.com/mattn/go-colorable/blob/master/LICENSE                                        MIT
 github.com/mattn/go-isatty                                        https://github.com/mattn/go-isatty/blob/master/LICENSE                                           MIT
+github.com/mattn/go-runewidth                                     https://github.com/mattn/go-runewidth/blob/master/LICENSE                                        MIT
 github.com/matttproud/golang_protobuf_extensions/pbutil           https://github.com/matttproud/golang_protobuf_extensions/blob/master/pbutil/LICENSE              Apache-2.0
 github.com/mitchellh/go-homedir                                   https://github.com/mitchellh/go-homedir/blob/master/LICENSE                                      MIT
 github.com/oklog/ulid/v2                                          https://github.com/oklog/ulid/blob/master/v2/LICENSE                                             Apache-2.0
@@ -78,6 +82,8 @@ github.com/prometheus/statsd_exporter/pkg/mapper                  https://github
 github.com/ProtonMail/go-crypto                                   https://github.com/ProtonMail/go-crypto/blob/master/LICENSE                                      BSD-3-Clause
 github.com/rcrowley/go-metrics                                    https://github.com/rcrowley/go-metrics/blob/master/LICENSE                                       BSD-2-Clause-FreeBSD
 github.com/remyoudompheng/bigfft                                  https://github.com/remyoudompheng/bigfft/blob/master/LICENSE                                     BSD-3-Clause
+github.com/rivo/tview                                             https://github.com/rivo/tview/blob/master/LICENSE.txt                                            MIT
+github.com/rivo/uniseg                                            https://github.com/rivo/uniseg/blob/master/LICENSE.txt                                           MIT
 github.com/rjeczalik/notify                                       https://github.com/rjeczalik/notify/blob/master/LICENSE                                          MIT
 github.com/sergi/go-diff/diffmatchpatch                           https://github.com/sergi/go-diff/blob/master/diffmatchpatch/LICENSE                              MIT
 github.com/spf13/afero                                            https://github.com/spf13/afero/blob/master/LICENSE.txt                                           Apache-2.0
