@@ -36,12 +36,39 @@ var (
 	newline          = []byte("\n")
 )
 
+var longDesc = `View audit logs.
+Requires audit logging to be enabled on the server. Supports several ways of filtering the data.
+
+tail: View the last N records
+between: View records captured between two timestamps. The timestamps must be formatted as ISO-8601
+since: View records from X hours/minutes/seconds ago to now. Unit suffixes are: h=hours, m=minutes s=seconds
+lookup: View a specific record using the Cerbos Call ID`
+
+var exampleDesc = `
+# View the last 10 access logs 
+cerbos ctl audit --kind=access --tail=10
+
+# View the decision logs from midnight 2021-07-01 to midnight 2021-07-02
+cerbos ctl audit --kind=decision --between=2021-07-01T00:00:00Z,2021-07-02T00:00:00Z
+
+# View the decision logs from midnight 2021-07-01 to now
+cerbos ctl audit --kind=decision --between=2021-07-01T00:00:00Z
+
+# View the access logs from 3 hours ago to now as newline-delimited JSON
+cerbos ctl audit --kind=access --since=3h --raw
+
+# View a specific access log entry by call ID
+cerbos ctl audit --kind=access --lookup=01F9Y5MFYTX7Y87A30CTJ2FB0S
+`
+
 type clientGenFunc func() (svcv1.CerbosAdminServiceClient, error)
 
 func NewAuditCmd(clientGen clientGenFunc) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "audit",
 		Short:   "View audit logs",
+		Long:    longDesc,
+		Example: exampleDesc,
 		PreRunE: checkAuditFlags,
 		RunE:    runAuditCmd(clientGen),
 	}

@@ -16,7 +16,7 @@ import (
 func main() {
 	cmd := &cobra.Command{
 		Use:           util.AppName,
-		Short:         "Access management made easy",
+		Short:         "Painless access controls for cloud-native applications",
 		Version:       util.Version,
 		SilenceUsage:  true,
 		SilenceErrors: true,

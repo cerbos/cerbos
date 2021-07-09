@@ -46,10 +46,33 @@ var (
 	errInvalidCredentials = errors.New("invalid credentials: username and password must be non-empty strings")
 )
 
+var longDesc = `Cerbos instance administration commands
+The Cerbos Admin API must be enabled in order for these commands to work.
+The Admin API requires credentials. They can be provided using environment
+variables or command-line arguments. 
+
+Environment variables
+
+CERBOS_SERVER: gRPC address of the Cerbos server
+CERBOS_USERNAME: Admin username
+CERBOS_PASSWORD: Admin password
+
+Alternatively, command-line flags can be used to provide the server address and credentials. 
+When both environment variables and command-line flags are provided, the flags take precedence.`
+
+var exampleDesc = `
+# Connect to a TLS enabled server while skipping certificate verification and launch the decisions viewer
+cerbos ctl --server=localhost:3593 --username=user --password=password --insecure decisions
+
+# Connect to a non-TLS server and launch the decisions viewer
+cerbos ctl --server=localhost:3593 --username=user --password=password --plaintext decisions`
+
 func NewCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:               "ctl",
 		Short:             "Cerbos control",
+		Long:              longDesc,
+		Example:           exampleDesc,
 		PersistentPreRunE: checkConnConf,
 	}
 

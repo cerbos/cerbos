@@ -61,6 +61,10 @@ func (afd *FilterDef) Validate() error {
 		return errMoreThanOneFilter
 	}
 
+	if filterCount == 0 {
+		afd.tail = 30
+	}
+
 	return nil
 }
 

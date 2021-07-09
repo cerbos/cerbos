@@ -31,12 +31,39 @@ import (
 
 var auditFilterFlags = audit.NewFilterDef()
 
+var longDesc = `Interactive decision log viewer.
+Requires audit logging to be enabled on the server. Supports several ways of filtering the data.
+
+tail: View the last N records
+between: View records captured between two timestamps. The timestamps must be formatted as ISO-8601
+since: View records from X hours/minutes/seconds ago to now. Unit suffixes are: h=hours, m=minutes s=seconds
+lookup: View a specific record using the Cerbos Call ID`
+
+var exampleDesc = `
+# View the last 10 records
+cerbos ctl decisions --tail=10
+
+# View the logs from midnight 2021-07-01 to midnight 2021-07-02
+cerbos ctl decisions --between=2021-07-01T00:00:00Z,2021-07-02T00:00:00Z
+
+# View the logs from midnight 2021-07-01 to now
+cerbos ctl decisions --between=2021-07-01T00:00:00Z
+
+# View the logs from 3 hours ago to now
+cerbos ctl decisions --since=3h --raw
+
+# View a specific log entry by call ID
+cerbos ctl decisions--lookup=01F9Y5MFYTX7Y87A30CTJ2FB0S
+`
+
 type clientGenFunc func() (svcv1.CerbosAdminServiceClient, error)
 
 func NewDecisionsCmd(clientGen clientGenFunc) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "decisions",
-		Short:   "Explore Cerbos engine decision logs",
+		Short:   "Interactive decision log viewer",
+		Long:    longDesc,
+		Example: exampleDesc,
 		PreRunE: checkDecisionsFlags,
 		RunE:    runDecisionsCmd(clientGen),
 	}
@@ -315,7 +342,7 @@ func mkDetailsPanel(ui *decisionsUI) {
 }
 
 func (d *decisionsUI) Start() error {
-	return d.app.EnableMouse(true).Run()
+	return d.app.Run()
 }
 
 func (d *decisionsUI) entrySelectedFunc(row, _ int) {
@@ -337,7 +364,7 @@ func (d *decisionsUI) showDetailsPanel(entry *auditv1.DecisionLogEntry) {
 		d.details.inputsList.AddItem(text, "", 0, nil)
 	}
 
-	d.details.inputsList.SetChangedFunc(func(index int, _, _ string, _ rune) {
+	changedFunc := func(index int, _, _ string, _ rune) {
 		inp := entry.Inputs[index]
 
 		d.details.principalView.Clear()
@@ -384,9 +411,10 @@ func (d *decisionsUI) showDetailsPanel(entry *auditv1.DecisionLogEntry) {
 
 		d.details.derivedRolesView.Clear()
 		fmt.Fprint(d.details.derivedRolesView, strings.Join(output.EffectiveDerivedRoles, ","))
-	})
+	}
 
-	d.details.inputsList.SetCurrentItem(0)
+	d.details.inputsList.SetChangedFunc(changedFunc)
+	changedFunc(0, "", "", 0)
 
 	d.tabs.SwitchToPage(detailsKey)
 }
