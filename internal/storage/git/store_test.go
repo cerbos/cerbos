@@ -17,8 +17,8 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
-	policyv1 "github.com/cerbos/cerbos/internal/genpb/policy/v1"
-	sharedv1 "github.com/cerbos/cerbos/internal/genpb/shared/v1"
+	effectv1 "github.com/cerbos/cerbos/api/genpb/cerbos/effect/v1"
+	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
 	"github.com/cerbos/cerbos/internal/namer"
 	"github.com/cerbos/cerbos/internal/policy"
 	"github.com/cerbos/cerbos/internal/storage"
@@ -497,7 +497,7 @@ func modifyPolicy(p *policyv1.Policy) *policyv1.Policy {
 		pt.ResourcePolicy.Rules = append(pt.ResourcePolicy.Rules, &policyv1.ResourceRule{
 			Actions: []string{"some_action"},
 			Roles:   []string{"admin"},
-			Effect:  sharedv1.Effect_EFFECT_ALLOW,
+			Effect:  effectv1.Effect_EFFECT_ALLOW,
 		})
 
 		return p
@@ -507,7 +507,7 @@ func modifyPolicy(p *policyv1.Policy) *policyv1.Policy {
 			Actions: []*policyv1.PrincipalRule_Action{
 				{
 					Action: "*",
-					Effect: sharedv1.Effect_EFFECT_DENY,
+					Effect: effectv1.Effect_EFFECT_DENY,
 				},
 			},
 		})

@@ -9,7 +9,7 @@ $(DEV_DIR)/tls.crt:
 
 .PHONY: dev-server
 dev-server: $(DEV_DIR)/tls.crt
-	@ go run main.go server --log-level=DEBUG --debug-listen-addr=":6666" --zpages-enabled --config=$(DEV_DIR)/conf.secure.yaml
+	@ go run main.go server --log-level=DEBUG --debug-listen-addr=":6666" --zpages-enabled --config=$(DEV_DIR)/conf.secure.yaml 
 
 .PHONY: perf-server
 perf-server: $(DEV_DIR)/tls.crt
@@ -25,36 +25,36 @@ protoset: $(BUF)
 
 .PHONY: view-access-logs
 view-access-logs: $(GRPCURL)
-	@ $(GRPCURL) -authority cerbos.local -insecure -rpc-header 'authorization: Basic Y2VyYm9zOmNlcmJvc0FkbWluCg==' -d '{"kind":"KIND_ACCESS","tail": 10}' localhost:$(GRPC_PORT) svc.v1.CerbosAdminService/ListAuditLogEntries
+	@ $(GRPCURL) -authority cerbos.local -insecure -rpc-header 'authorization: Basic Y2VyYm9zOmNlcmJvc0FkbWluCg==' -d '{"kind":"KIND_ACCESS","tail": 10}' localhost:$(GRPC_PORT) cerbos.svc.v1.CerbosAdminService/ListAuditLogEntries
 
 .PHONY: view-decision-logs
 view-decision-logs: $(GRPCURL)
-	@ $(GRPCURL) -authority cerbos.local -insecure -rpc-header 'authorization: Basic Y2VyYm9zOmNlcmJvc0FkbWluCg==' -d '{"kind":"KIND_DECISION","tail": 10}' localhost:$(GRPC_PORT) svc.v1.CerbosAdminService/ListAuditLogEntries
+	@ $(GRPCURL) -authority cerbos.local -insecure -rpc-header 'authorization: Basic Y2VyYm9zOmNlcmJvc0FkbWluCg==' -d '{"kind":"KIND_DECISION","tail": 10}' localhost:$(GRPC_PORT) cerbos.svc.v1.CerbosAdminService/ListAuditLogEntries
 
 .PHONY: check-grpc
 check-grpc: $(GRPCURL)
 	@ $(foreach REQ_FILE,\
 		$(wildcard $(DEV_DIR)/requests/check_resource_set/*.json),\
 		echo $(REQ_FILE); \
-		$(GRPCURL) -authority cerbos.local -insecure -d @ localhost:$(GRPC_PORT) svc.v1.CerbosService/CheckResourceSet < $(REQ_FILE);\
+		$(GRPCURL) -authority cerbos.local -insecure -d @ localhost:$(GRPC_PORT) cerbos.svc.v1.CerbosService/CheckResourceSet < $(REQ_FILE);\
 		echo "";)
 
 	@ $(foreach REQ_FILE,\
 		$(wildcard $(DEV_DIR)/requests/check_resource_batch/*.json),\
 		echo $(REQ_FILE); \
-		$(GRPCURL) -authority cerbos.local -insecure -d @ localhost:$(GRPC_PORT) svc.v1.CerbosService/CheckResourceBatch < $(REQ_FILE);\
+		$(GRPCURL) -authority cerbos.local -insecure -d @ localhost:$(GRPC_PORT) cerbos.svc.v1.CerbosService/CheckResourceBatch < $(REQ_FILE);\
 		echo "";)
 
 	@ $(foreach REQ_FILE,\
 		$(wildcard $(DEV_DIR)/requests/playground_validate/*.json),\
 		echo $(REQ_FILE); \
-		$(GRPCURL) -authority cerbos.local -insecure -d @ localhost:$(GRPC_PORT) svc.v1.CerbosPlaygroundService/PlaygroundValidate < $(REQ_FILE);\
+		$(GRPCURL) -authority cerbos.local -insecure -d @ localhost:$(GRPC_PORT) cerbos.svc.v1.CerbosPlaygroundService/PlaygroundValidate < $(REQ_FILE);\
 		echo "";)
 
 	@ $(foreach REQ_FILE,\
 		$(wildcard $(DEV_DIR)/requests/playground_evaluate/*.json),\
 		echo $(REQ_FILE); \
-		$(GRPCURL) -authority cerbos.local -insecure -d @ localhost:$(GRPC_PORT) svc.v1.CerbosPlaygroundService/PlaygroundEvaluate < $(REQ_FILE);\
+		$(GRPCURL) -authority cerbos.local -insecure -d @ localhost:$(GRPC_PORT) cerbos.svc.v1.CerbosPlaygroundService/PlaygroundEvaluate < $(REQ_FILE);\
 		echo "";)
 
 .PHONY: check-grpc-insecure
@@ -62,25 +62,25 @@ check-grpc-insecure: $(GRPCURL)
 	@ $(foreach REQ_FILE,\
 		$(wildcard $(DEV_DIR)/requests/check_resource_set/*.json),\
 		echo $(REQ_FILE); \
-		$(GRPCURL) -plaintext -d @ localhost:$(GRPC_PORT) svc.v1.CerbosService/CheckResourceSet < $(REQ_FILE);\
+		$(GRPCURL) -plaintext -d @ localhost:$(GRPC_PORT) cerbos.svc.v1.CerbosService/CheckResourceSet < $(REQ_FILE);\
 		echo "";)
 
 	@ $(foreach REQ_FILE,\
 		$(wildcard $(DEV_DIR)/requests/check_resource_batch/*.json),\
 		echo $(REQ_FILE); \
-		$(GRPCURL) -plaintext -d @ localhost:$(GRPC_PORT) svc.v1.CerbosService/CheckResourceBatch < $(REQ_FILE);\
+		$(GRPCURL) -plaintext -d @ localhost:$(GRPC_PORT) cerbos.svc.v1.CerbosService/CheckResourceBatch < $(REQ_FILE);\
 		echo "";)
 
 	@ $(foreach REQ_FILE,\
 		$(wildcard $(DEV_DIR)/requests/playground_valildate/*.json),\
 		echo $(REQ_FILE); \
-		$(GRPCURL) -plaintext -d @ localhost:$(GRPC_PORT) svc.v1.CerbosPlaygroundService/PlaygroundValidate < $(REQ_FILE);\
+		$(GRPCURL) -plaintext -d @ localhost:$(GRPC_PORT) cerbos.svc.v1.CerbosPlaygroundService/PlaygroundValidate < $(REQ_FILE);\
 		echo "";)
 
 	@ $(foreach REQ_FILE,\
 		$(wildcard $(DEV_DIR)/requests/playground_evaluate/*.json),\
 		echo $(REQ_FILE); \
-		$(GRPCURL) -plaintext -d @ localhost:$(GRPC_PORT) svc.v1.CerbosPlaygroundService/PlaygroundEvaluate < $(REQ_FILE);\
+		$(GRPCURL) -plaintext -d @ localhost:$(GRPC_PORT) cerbos.svc.v1.CerbosPlaygroundService/PlaygroundEvaluate < $(REQ_FILE);\
 		echo "";)
 
 .PHONY: check-http
@@ -154,7 +154,7 @@ perf: $(GHZ)
 			--concurrency-step=5 \
 			--concurrency-schedule=line \
 			--duration=$(PERF_DURATION) \
-			--call svc.v1.CerbosService/CheckResourceSet -D $(REQ_FILE) localhost:$(GRPC_PORT);\
+			--call cerbos.svc.v1.CerbosService/CheckResourceSet -D $(REQ_FILE) localhost:$(GRPC_PORT);\
 		echo "";)
 
 	@ $(foreach REQ_FILE,\
@@ -166,7 +166,7 @@ perf: $(GHZ)
 			--concurrency-step=5 \
 			--concurrency-schedule=line \
 			--duration=$(PERF_DURATION) \
-			--call svc.v1.CerbosService/CheckResourceBatch -D $(REQ_FILE) localhost:$(GRPC_PORT);\
+			--call cerbos.svc.v1.CerbosService/CheckResourceBatch -D $(REQ_FILE) localhost:$(GRPC_PORT);\
 		echo "";)
 
 .PHONY: jaeger

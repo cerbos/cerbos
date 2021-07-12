@@ -3,10 +3,10 @@
 package svc
 
 import (
-	enginev1 "github.com/cerbos/cerbos/internal/genpb/engine/v1"
-	requestv1 "github.com/cerbos/cerbos/internal/genpb/request/v1"
-	responsev1 "github.com/cerbos/cerbos/internal/genpb/response/v1"
-	sharedv1 "github.com/cerbos/cerbos/internal/genpb/shared/v1"
+	effectv1 "github.com/cerbos/cerbos/api/genpb/cerbos/effect/v1"
+	enginev1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
+	requestv1 "github.com/cerbos/cerbos/api/genpb/cerbos/request/v1"
+	responsev1 "github.com/cerbos/cerbos/api/genpb/cerbos/response/v1"
 )
 
 type checkResourceSetResponseBuilder struct {
@@ -33,7 +33,7 @@ func newCheckResourceSetResponseBuilder(req *requestv1.CheckResourceSetRequest) 
 }
 
 func (resp *checkResourceSetResponseBuilder) addResult(resourceKey string, result *enginev1.CheckOutput) {
-	actionsMap := make(map[string]sharedv1.Effect, len(result.Actions))
+	actionsMap := make(map[string]effectv1.Effect, len(result.Actions))
 	for action, actionEffect := range result.Actions {
 		actionsMap[action] = actionEffect.Effect
 	}

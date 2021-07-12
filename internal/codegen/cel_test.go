@@ -7,7 +7,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	policyv1 "github.com/cerbos/cerbos/internal/genpb/policy/v1"
+	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
 )
 
 func TestCELGen(t *testing.T) {

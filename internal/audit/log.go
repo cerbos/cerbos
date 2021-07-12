@@ -9,8 +9,8 @@ import (
 	"sync"
 	"time"
 
+	auditv1 "github.com/cerbos/cerbos/api/genpb/cerbos/audit/v1"
 	"github.com/cerbos/cerbos/internal/config"
-	auditv1 "github.com/cerbos/cerbos/internal/genpb/audit/v1"
 )
 
 var (

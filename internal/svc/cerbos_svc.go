@@ -10,12 +10,12 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
+	effectv1 "github.com/cerbos/cerbos/api/genpb/cerbos/effect/v1"
+	enginev1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
+	requestv1 "github.com/cerbos/cerbos/api/genpb/cerbos/request/v1"
+	responsev1 "github.com/cerbos/cerbos/api/genpb/cerbos/response/v1"
+	svcv1 "github.com/cerbos/cerbos/api/genpb/cerbos/svc/v1"
 	"github.com/cerbos/cerbos/internal/engine"
-	enginev1 "github.com/cerbos/cerbos/internal/genpb/engine/v1"
-	requestv1 "github.com/cerbos/cerbos/internal/genpb/request/v1"
-	responsev1 "github.com/cerbos/cerbos/internal/genpb/response/v1"
-	sharedv1 "github.com/cerbos/cerbos/internal/genpb/shared/v1"
-	svcv1 "github.com/cerbos/cerbos/internal/genpb/svc/v1"
 	"github.com/cerbos/cerbos/internal/observability/logging"
 )
 
@@ -96,7 +96,7 @@ func (cs *CerbosService) CheckResourceBatch(ctx context.Context, req *requestv1.
 	}
 
 	for i, out := range outputs {
-		aem := make(map[string]sharedv1.Effect, len(out.Actions))
+		aem := make(map[string]effectv1.Effect, len(out.Actions))
 		for action, actionEffect := range out.Actions {
 			aem[action] = actionEffect.Effect
 		}

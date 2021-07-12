@@ -17,9 +17,9 @@ import (
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/local"
 
-	requestv1 "github.com/cerbos/cerbos/internal/genpb/request/v1"
-	sharedv1 "github.com/cerbos/cerbos/internal/genpb/shared/v1"
-	svcv1 "github.com/cerbos/cerbos/internal/genpb/svc/v1"
+	effectv1 "github.com/cerbos/cerbos/api/genpb/cerbos/effect/v1"
+	requestv1 "github.com/cerbos/cerbos/api/genpb/cerbos/request/v1"
+	svcv1 "github.com/cerbos/cerbos/api/genpb/cerbos/svc/v1"
 	"github.com/cerbos/cerbos/internal/util"
 )
 
@@ -269,7 +269,7 @@ func (gc *grpcClient) IsAllowed(ctx context.Context, principal *Principal, resou
 		return false, fmt.Errorf("unexpected response from server")
 	}
 
-	return result.Results[0].Actions[action] == sharedv1.Effect_EFFECT_ALLOW, nil
+	return result.Results[0].Actions[action] == effectv1.Effect_EFFECT_ALLOW, nil
 }
 
 func isValid(obj interface {

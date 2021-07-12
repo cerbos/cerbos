@@ -21,12 +21,12 @@ import (
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"
 
+	auditv1 "github.com/cerbos/cerbos/api/genpb/cerbos/audit/v1"
+	effectv1 "github.com/cerbos/cerbos/api/genpb/cerbos/effect/v1"
+	requestv1 "github.com/cerbos/cerbos/api/genpb/cerbos/request/v1"
+	responsev1 "github.com/cerbos/cerbos/api/genpb/cerbos/response/v1"
+	svcv1 "github.com/cerbos/cerbos/api/genpb/cerbos/svc/v1"
 	"github.com/cerbos/cerbos/cmd/ctl/audit"
-	auditv1 "github.com/cerbos/cerbos/internal/genpb/audit/v1"
-	requestv1 "github.com/cerbos/cerbos/internal/genpb/request/v1"
-	responsev1 "github.com/cerbos/cerbos/internal/genpb/response/v1"
-	sharedv1 "github.com/cerbos/cerbos/internal/genpb/shared/v1"
-	svcv1 "github.com/cerbos/cerbos/internal/genpb/svc/v1"
 )
 
 var auditFilterFlags = audit.NewFilterDef()
@@ -394,7 +394,7 @@ func (d *decisionsUI) showDetailsPanel(entry *auditv1.DecisionLogEntry) {
 		for action, actionMeta := range output.Actions {
 			icon := "  ✖  "
 			fgColour := tcell.ColorRed
-			if actionMeta.Effect == sharedv1.Effect_EFFECT_ALLOW {
+			if actionMeta.Effect == effectv1.Effect_EFFECT_ALLOW {
 				icon = "  ✔  "
 				fgColour = tcell.ColorGreen
 			}

@@ -78,7 +78,9 @@ func mkSampler(probability float64) trace.Sampler {
 		switch {
 		case strings.HasPrefix(params.Name, "grpc."):
 			return trace.SamplingDecision{Sample: false}
-		case strings.HasPrefix(params.Name, "svc.v1.CerbosPlaygroundService."):
+		case strings.HasPrefix(params.Name, "cerbos.svc.v1.CerbosPlaygroundService."):
+			return trace.SamplingDecision{Sample: false}
+		case strings.HasPrefix(params.Name, "cerbos.svc.v1.CerbosAdminService."):
 			return trace.SamplingDecision{Sample: false}
 		case strings.HasPrefix(params.Name, "/api/playground/"):
 			return trace.SamplingDecision{Sample: false}

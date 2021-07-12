@@ -16,11 +16,11 @@ import (
 	"google.golang.org/protobuf/testing/protocmp"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
+	auditv1 "github.com/cerbos/cerbos/api/genpb/cerbos/audit/v1"
+	effectv1 "github.com/cerbos/cerbos/api/genpb/cerbos/effect/v1"
+	enginev1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
 	"github.com/cerbos/cerbos/internal/audit"
 	"github.com/cerbos/cerbos/internal/audit/local"
-	auditv1 "github.com/cerbos/cerbos/internal/genpb/audit/v1"
-	enginev1 "github.com/cerbos/cerbos/internal/genpb/engine/v1"
-	sharedv1 "github.com/cerbos/cerbos/internal/genpb/shared/v1"
 )
 
 const numRecords = 250_000
@@ -239,7 +239,7 @@ func mkAccessLogEntry(t *testing.T, id audit.ID, i int, ts time.Time) audit.Acce
 				Address: "1.1.1.1",
 			},
 			Metadata: map[string]*auditv1.MetaValues{"Num": {Values: []string{strconv.Itoa(i)}}},
-			Method:   "/svc.v1.CerbosService/Check",
+			Method:   "/cerbos.svc.v1.CerbosService/Check",
 		}, nil
 	}
 }
@@ -270,8 +270,8 @@ func mkDecisionLogEntry(t *testing.T, id audit.ID, i int, ts time.Time) audit.De
 					RequestId:  strconv.Itoa(i),
 					ResourceId: "test",
 					Actions: map[string]*enginev1.CheckOutput_ActionEffect{
-						"a1": {Effect: sharedv1.Effect_EFFECT_ALLOW, Policy: "resource.test.v1"},
-						"a2": {Effect: sharedv1.Effect_EFFECT_ALLOW, Policy: "resource.test.v1"},
+						"a1": {Effect: effectv1.Effect_EFFECT_ALLOW, Policy: "resource.test.v1"},
+						"a2": {Effect: effectv1.Effect_EFFECT_ALLOW, Policy: "resource.test.v1"},
 					},
 				},
 			},

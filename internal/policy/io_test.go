@@ -12,7 +12,7 @@ import (
 	"google.golang.org/protobuf/reflect/protoreflect"
 	"google.golang.org/protobuf/testing/protocmp"
 
-	policyv1 "github.com/cerbos/cerbos/internal/genpb/policy/v1"
+	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
 	"github.com/cerbos/cerbos/internal/policy"
 	"github.com/cerbos/cerbos/internal/test"
 )
@@ -159,25 +159,25 @@ func mkResourcePolicy() *policyv1.Policy {
 					{
 						Action: "*",
 						Roles:  []string{"admin"},
-						Effect: sharedv1.Effect_EFFECT_ALLOW,
+						Effect: effectv1.Effect_EFFECT_ALLOW,
 					},
 
 					{
 						Action:       "create",
 						DerivedRoles: []string{"employee_that_owns_the_record"},
-						Effect:       sharedv1.Effect_EFFECT_ALLOW,
+						Effect:       effectv1.Effect_EFFECT_ALLOW,
 					},
 
 					{
 						Action:       "view:*",
 						DerivedRoles: []string{"employee_that_owns_the_record", "direct_manager"},
-						Effect:       sharedv1.Effect_EFFECT_ALLOW,
+						Effect:       effectv1.Effect_EFFECT_ALLOW,
 					},
 
 					{
 						Action:       "approve",
 						DerivedRoles: []string{"direct_manager"},
-						Effect:       sharedv1.Effect_EFFECT_ALLOW,
+						Effect:       effectv1.Effect_EFFECT_ALLOW,
 						Condition: &policyv1.Condition{
 							Condition: &policyv1.Condition_Match{
 								Match: &policyv1.Match{
@@ -207,7 +207,7 @@ func mkPrincipalPolicy() *policyv1.Policy {
 						Actions: []*policyv1.PrincipalRule_Action{
 							{
 								Action: "*",
-								Effect: sharedv1.Effect_EFFECT_ALLOW,
+								Effect: effectv1.Effect_EFFECT_ALLOW,
 								Condition: &policyv1.Condition{
 									Condition: &policyv1.Condition_Match{
 										Match: &policyv1.Match{
@@ -225,7 +225,7 @@ func mkPrincipalPolicy() *policyv1.Policy {
 						Actions: []*policyv1.PrincipalRule_Action{
 							{
 								Action: "*",
-								Effect: sharedv1.Effect_EFFECT_DENY,
+								Effect: effectv1.Effect_EFFECT_DENY,
 							},
 						},
 					},
