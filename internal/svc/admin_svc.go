@@ -8,6 +8,7 @@ import (
 	"encoding/base64"
 	"errors"
 	"strings"
+	"time"
 
 	"github.com/grpc-ecosystem/go-grpc-middleware/logging/zap/ctxzap"
 	"go.uber.org/zap"
@@ -123,21 +124,25 @@ func (cas *CerbosAdminService) getAuditLogStream(ctx context.Context, req *reque
 	switch req.Kind {
 	case requestv1.ListAuditLogEntriesRequest_KIND_ACCESS:
 		switch f := req.Filter.(type) {
-		case *requestv1.ListAuditLogEntriesRequest_LastN:
-			return mkAccessLogStream(cas.auditLog.LastNAccessLogEntries(ctx, uint(f.LastN))), nil
+		case *requestv1.ListAuditLogEntriesRequest_Tail:
+			return mkAccessLogStream(cas.auditLog.LastNAccessLogEntries(ctx, uint(f.Tail))), nil
 		case *requestv1.ListAuditLogEntriesRequest_Between:
 			return mkAccessLogStream(cas.auditLog.AccessLogEntriesBetween(ctx, f.Between.Start.AsTime(), f.Between.End.AsTime())), nil
-		case *requestv1.ListAuditLogEntriesRequest_ByCallId:
-			return mkAccessLogStream(cas.auditLog.AccessLogEntryByID(ctx, audit.ID(f.ByCallId))), nil
+		case *requestv1.ListAuditLogEntriesRequest_Since:
+			return mkAccessLogStream(cas.auditLog.AccessLogEntriesBetween(ctx, time.Now().Add(-f.Since.AsDuration()), time.Now())), nil
+		case *requestv1.ListAuditLogEntriesRequest_Lookup:
+			return mkAccessLogStream(cas.auditLog.AccessLogEntryByID(ctx, audit.ID(f.Lookup))), nil
 		}
 	case requestv1.ListAuditLogEntriesRequest_KIND_DECISION:
 		switch f := req.Filter.(type) {
-		case *requestv1.ListAuditLogEntriesRequest_LastN:
-			return mkDecisionLogStream(cas.auditLog.LastNDecisionLogEntries(ctx, uint(f.LastN))), nil
+		case *requestv1.ListAuditLogEntriesRequest_Tail:
+			return mkDecisionLogStream(cas.auditLog.LastNDecisionLogEntries(ctx, uint(f.Tail))), nil
 		case *requestv1.ListAuditLogEntriesRequest_Between:
 			return mkDecisionLogStream(cas.auditLog.DecisionLogEntriesBetween(ctx, f.Between.Start.AsTime(), f.Between.End.AsTime())), nil
-		case *requestv1.ListAuditLogEntriesRequest_ByCallId:
-			return mkDecisionLogStream(cas.auditLog.DecisionLogEntryByID(ctx, audit.ID(f.ByCallId))), nil
+		case *requestv1.ListAuditLogEntriesRequest_Since:
+			return mkDecisionLogStream(cas.auditLog.DecisionLogEntriesBetween(ctx, time.Now().Add(-f.Since.AsDuration()), time.Now())), nil
+		case *requestv1.ListAuditLogEntriesRequest_Lookup:
+			return mkDecisionLogStream(cas.auditLog.DecisionLogEntryByID(ctx, audit.ID(f.Lookup))), nil
 		}
 	default:
 		return nil, status.Error(codes.InvalidArgument, "Unknown log stream kind")

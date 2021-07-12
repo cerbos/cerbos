@@ -916,12 +916,12 @@ func (m *ListAuditLogEntriesRequest) Validate() error {
 
 	switch m.Filter.(type) {
 
-	case *ListAuditLogEntriesRequest_LastN:
+	case *ListAuditLogEntriesRequest_Tail:
 
-		if m.GetLastN() > 500 {
+		if m.GetTail() > 1000 {
 			return ListAuditLogEntriesRequestValidationError{
-				field:  "LastN",
-				reason: "value must be less than or equal to 500",
+				field:  "Tail",
+				reason: "value must be less than or equal to 1000",
 			}
 		}
 
@@ -937,11 +937,23 @@ func (m *ListAuditLogEntriesRequest) Validate() error {
 			}
 		}
 
-	case *ListAuditLogEntriesRequest_ByCallId:
+	case *ListAuditLogEntriesRequest_Since:
 
-		if !_ListAuditLogEntriesRequest_ByCallId_Pattern.MatchString(m.GetByCallId()) {
+		if v, ok := interface{}(m.GetSince()).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return ListAuditLogEntriesRequestValidationError{
+					field:  "Since",
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	case *ListAuditLogEntriesRequest_Lookup:
+
+		if !_ListAuditLogEntriesRequest_Lookup_Pattern.MatchString(m.GetLookup()) {
 			return ListAuditLogEntriesRequestValidationError{
-				field:  "ByCallId",
+				field:  "Lookup",
 				reason: "value does not match regex pattern \"^[0123456789ABCDEFGHJKMNPQRSTVWXYZ]{26}$\"",
 			}
 		}
@@ -1018,7 +1030,7 @@ var _ListAuditLogEntriesRequest_Kind_InLookup = map[ListAuditLogEntriesRequest_K
 	2: {},
 }
 
-var _ListAuditLogEntriesRequest_ByCallId_Pattern = regexp.MustCompile("^[0123456789ABCDEFGHJKMNPQRSTVWXYZ]{26}$")
+var _ListAuditLogEntriesRequest_Lookup_Pattern = regexp.MustCompile("^[0123456789ABCDEFGHJKMNPQRSTVWXYZ]{26}$")
 
 // Validate checks the field values on CheckResourceBatchRequest_BatchEntry
 // with the rules defined in the proto definition for this message. If any

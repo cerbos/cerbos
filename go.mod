@@ -6,6 +6,7 @@ require (
 	contrib.go.opencensus.io/exporter/jaeger v0.2.1
 	contrib.go.opencensus.io/exporter/prometheus v0.3.0
 	github.com/ProtonMail/gopenpgp/v2 v2.2.0 // indirect
+	github.com/alecthomas/chroma v0.9.2
 	github.com/bluele/gcache v0.0.2
 	github.com/bufbuild/buf v0.43.2
 	github.com/cespare/xxhash v1.1.0
@@ -15,6 +16,7 @@ require (
 	github.com/fatih/color v1.12.0
 	github.com/fsnotify/fsnotify v1.4.9
 	github.com/fullstorydev/grpcurl v1.8.1
+	github.com/gdamore/tcell/v2 v2.3.3
 	github.com/ghodss/yaml v1.0.0
 	github.com/go-git/go-git/v5 v5.4.2
 	github.com/golangci/golangci-lint v1.41.1
@@ -30,6 +32,7 @@ require (
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.4.0
 	github.com/iancoleman/strcase v0.1.3 // indirect
 	github.com/jmoiron/sqlx v1.3.4
+	github.com/jwalton/gchalk v1.0.3
 	github.com/kavu/go_reuseport v1.5.0
 	github.com/lyft/protoc-gen-star v0.5.3 // indirect
 	github.com/mattn/go-isatty v0.0.13
@@ -42,9 +45,11 @@ require (
 	github.com/prometheus/procfs v0.7.0 // indirect
 	github.com/prometheus/statsd_exporter v0.21.0 // indirect
 	github.com/rcrowley/go-metrics v0.0.0-20201227073835-cf1acfcdf475 // indirect
+	github.com/rivo/tview v0.0.0-20210624165335-29d673af0ce2
 	github.com/rjeczalik/notify v0.9.3-0.20201210012515-e2a77dcc14cf
 	github.com/spf13/afero v1.6.0
 	github.com/spf13/cobra v1.2.1
+	github.com/spf13/pflag v1.0.5
 	github.com/stretchr/testify v1.7.0
 	github.com/tidwall/sjson v1.1.7
 	github.com/vektra/mockery/v2 v2.9.0

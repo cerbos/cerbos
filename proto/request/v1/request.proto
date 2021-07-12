@@ -9,6 +9,7 @@ option java_package = "dev.cerbos.api.v1.request";
 option csharp_namespace = "Cerbos.Api.V1.Request";
 
 import "engine/v1/engine.proto";
+import "google/protobuf/duration.proto";
 import "google/protobuf/struct.proto";
 import "google/protobuf/timestamp.proto";
 import "google/api/field_behavior.proto";
@@ -294,16 +295,21 @@ message ListAuditLogEntriesRequest {
     ];
     oneof filter {
         option (validate.required) = true;
-        uint32 last_n = 2 [
-            (validate.rules).uint32.lte = 500,
+        uint32 tail = 2 [
+            (validate.rules).uint32.lte = 1000,
             (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = { 
                 description: "Last N entries."
                 minimum: 1
-                maximum: 500
+                maximum: 1000
             } 
         ];
         TimeRange between = 3;
-        string by_call_id = 4 [
+        google.protobuf.Duration since = 4 [
+            (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = { 
+                description: "Entries since N hours/minutes ago"
+            } 
+        ];
+        string lookup = 5 [
             (validate.rules).string = {pattern: "^[0123456789ABCDEFGHJKMNPQRSTVWXYZ]{26}$"},
             (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = { 
                 description: "By Call ID"
