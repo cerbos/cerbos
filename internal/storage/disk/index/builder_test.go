@@ -17,7 +17,7 @@ import (
 	"github.com/spf13/afero"
 	"github.com/stretchr/testify/require"
 
-	cerbosdevv1 "github.com/cerbos/cerbos/internal/genpb/cerbosdev/v1"
+	privatev1 "github.com/cerbos/cerbos/api/genpb/cerbos/private/v1"
 	"github.com/cerbos/cerbos/internal/policy"
 	"github.com/cerbos/cerbos/internal/storage"
 	"github.com/cerbos/cerbos/internal/test"
@@ -113,16 +113,16 @@ func TestBuildIndex(t *testing.T) {
 	}
 }
 
-func readTestCase(t *testing.T, data []byte) *cerbosdevv1.IndexBuilderTestCase {
+func readTestCase(t *testing.T, data []byte) *privatev1.IndexBuilderTestCase {
 	t.Helper()
 
-	tc := &cerbosdevv1.IndexBuilderTestCase{}
+	tc := &privatev1.IndexBuilderTestCase{}
 	require.NoError(t, util.ReadJSONOrYAML(bytes.NewReader(data), tc))
 
 	return tc
 }
 
-func toFS(t *testing.T, tc *cerbosdevv1.IndexBuilderTestCase) fs.FS {
+func toFS(t *testing.T, tc *privatev1.IndexBuilderTestCase) fs.FS {
 	t.Helper()
 
 	fs := afero.NewMemMapFs()

@@ -16,12 +16,12 @@ import (
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/emptypb"
 
+	enginev1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
+	requestv1 "github.com/cerbos/cerbos/api/genpb/cerbos/request/v1"
+	responsev1 "github.com/cerbos/cerbos/api/genpb/cerbos/response/v1"
+	svcv1 "github.com/cerbos/cerbos/api/genpb/cerbos/svc/v1"
 	"github.com/cerbos/cerbos/internal/compile"
 	"github.com/cerbos/cerbos/internal/engine"
-	enginev1 "github.com/cerbos/cerbos/internal/genpb/engine/v1"
-	requestv1 "github.com/cerbos/cerbos/internal/genpb/request/v1"
-	responsev1 "github.com/cerbos/cerbos/internal/genpb/response/v1"
-	svcv1 "github.com/cerbos/cerbos/internal/genpb/svc/v1"
 	"github.com/cerbos/cerbos/internal/storage/disk"
 	"github.com/cerbos/cerbos/internal/storage/disk/index"
 )

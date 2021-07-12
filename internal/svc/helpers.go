@@ -9,7 +9,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
 
-	requestv1 "github.com/cerbos/cerbos/internal/genpb/request/v1"
+	requestv1 "github.com/cerbos/cerbos/api/genpb/cerbos/request/v1"
 )
 
 const (
@@ -24,7 +24,7 @@ func ExtractRequestFields(fullMethod string, req interface{}) map[string]interfa
 	}
 
 	switch fullMethod {
-	case "/svc.v1.CerbosService/CheckResourceSet":
+	case "/cerbos.vc.v1.CerbosService/CheckResourceSet":
 		crsReq, ok := req.(*requestv1.CheckResourceSetRequest)
 		if !ok || crsReq.RequestId == "" {
 			return nil
@@ -34,7 +34,7 @@ func ExtractRequestFields(fullMethod string, req interface{}) map[string]interfa
 			metaTagKey: map[string]string{requestIDTagKey: crsReq.RequestId},
 		}
 
-	case "/svc.v1.CerbosService/CheckResourceBatch":
+	case "/cerbos.svc.v1.CerbosService/CheckResourceBatch":
 		crbReq, ok := req.(*requestv1.CheckResourceBatchRequest)
 		if !ok || crbReq.RequestId == "" {
 			return nil
@@ -44,7 +44,7 @@ func ExtractRequestFields(fullMethod string, req interface{}) map[string]interfa
 			metaTagKey: map[string]string{requestIDTagKey: crbReq.RequestId},
 		}
 
-	case "/svc.v1.CerbosPlaygroundService/PlaygroundValidate":
+	case "/cerbos.svc.v1.CerbosPlaygroundService/PlaygroundValidate":
 		pgReq, ok := req.(*requestv1.PlaygroundValidateRequest)
 		if !ok || pgReq.PlaygroundId == "" {
 			return nil
@@ -54,7 +54,7 @@ func ExtractRequestFields(fullMethod string, req interface{}) map[string]interfa
 			metaTagKey: map[string]string{playgroundIDTagKey: pgReq.PlaygroundId},
 		}
 
-	case "/svc.v1.CerbosPlaygroundService/PlaygroundEvaluate":
+	case "/cerbos.svc.v1.CerbosPlaygroundService/PlaygroundEvaluate":
 		pgReq, ok := req.(*requestv1.PlaygroundEvaluateRequest)
 		if !ok || pgReq.PlaygroundId == "" {
 			return nil

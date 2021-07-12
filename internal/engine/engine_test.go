@@ -11,10 +11,10 @@ import (
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/testing/protocmp"
 
+	privatev1 "github.com/cerbos/cerbos/api/genpb/cerbos/private/v1"
 	"github.com/cerbos/cerbos/internal/audit"
 	"github.com/cerbos/cerbos/internal/audit/local"
 	"github.com/cerbos/cerbos/internal/compile"
-	cerbosdevv1 "github.com/cerbos/cerbos/internal/genpb/cerbosdev/v1"
 	"github.com/cerbos/cerbos/internal/storage/disk"
 	"github.com/cerbos/cerbos/internal/test"
 	"github.com/cerbos/cerbos/internal/util"
@@ -48,10 +48,10 @@ func TestCheck(t *testing.T) {
 	}
 }
 
-func readTestCase(tb testing.TB, data []byte) *cerbosdevv1.EngineTestCase {
+func readTestCase(tb testing.TB, data []byte) *privatev1.EngineTestCase {
 	tb.Helper()
 
-	tc := &cerbosdevv1.EngineTestCase{}
+	tc := &privatev1.EngineTestCase{}
 	require.NoError(tb, util.ReadJSONOrYAML(bytes.NewReader(data), tc))
 
 	return tc

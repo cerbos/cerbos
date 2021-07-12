@@ -2,7 +2,7 @@ include::ROOT:partial$attributes.adoc[]
 
 = The Cerbos API
 
-The main API endpoint for making policy decisions is the `/api/check` REST endpoint (`svc.v1.CerbosService/CheckResourceSet` RPC in the gRPC API). You can view the latest API documentation from a running Cerbos instance by accessing the root directory of the HTTP endpoint using a browser.
+The main API endpoint for making policy decisions is the `/api/check` REST endpoint (`cerbos.svc.v1.CerbosService/CheckResourceSet` RPC in the gRPC API). You can view the latest API documentation from a running Cerbos instance by accessing the root directory of the HTTP endpoint using a browser.
 
 [source,sh,subs="attributes"]
 ----
@@ -232,7 +232,7 @@ EOF
 
 [source,sh,linenums]
 ----
-cat <<EOF | grpcurl -plaintext -d @ localhost:3593 svc.v1.CerbosService/CheckResourceSet
+cat <<EOF | grpcurl -plaintext -d @ localhost:3593 cerbos.svc.v1.CerbosService/CheckResourceSet
 {
   "requestId":  "test01",
   "includeMeta": true,

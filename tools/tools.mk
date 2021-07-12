@@ -16,7 +16,7 @@ PROTOC_GEN_GRPC_GATEWAY := $(TOOLS_BIN_DIR)/protoc-gen-grpc-gateway
 PROTOC_GEN_OPENAPIV2 := $(TOOLS_BIN_DIR)/protoc-gen-openapiv2
 PROTOC_GEN_VALIDATE := $(TOOLS_BIN_DIR)/protoc-gen-validate
 
-GEN_DIR := internal/genpb
+GEN_DIR := api/genpb
 OPENAPI_DIR := schema/openapiv2
 MOCK_DIR := internal/test/mocks
 

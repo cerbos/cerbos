@@ -7,8 +7,8 @@ package test
 import (
 	"google.golang.org/protobuf/types/known/structpb"
 
-	enginev1 "github.com/cerbos/cerbos/internal/genpb/engine/v1"
-	requestv1 "github.com/cerbos/cerbos/internal/genpb/request/v1"
+	enginev1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
+	requestv1 "github.com/cerbos/cerbos/api/genpb/cerbos/request/v1"
 )
 
 func MkCheckResourceSetRequest() *requestv1.CheckResourceSetRequest {

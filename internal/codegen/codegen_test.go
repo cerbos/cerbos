@@ -11,9 +11,9 @@ import (
 	"github.com/open-policy-agent/opa/format"
 	"github.com/stretchr/testify/require"
 
+	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
+	privatev1 "github.com/cerbos/cerbos/api/genpb/cerbos/private/v1"
 	"github.com/cerbos/cerbos/internal/codegen"
-	cerbosdevv1 "github.com/cerbos/cerbos/internal/genpb/cerbosdev/v1"
-	policyv1 "github.com/cerbos/cerbos/internal/genpb/policy/v1"
 	"github.com/cerbos/cerbos/internal/test"
 	"github.com/cerbos/cerbos/internal/util"
 )
@@ -44,10 +44,10 @@ func TestGenerateCode(t *testing.T) {
 	}
 }
 
-func readTestCase(t *testing.T, data []byte) *cerbosdevv1.CodeGenTestCase {
+func readTestCase(t *testing.T, data []byte) *privatev1.CodeGenTestCase {
 	t.Helper()
 
-	tc := &cerbosdevv1.CodeGenTestCase{}
+	tc := &privatev1.CodeGenTestCase{}
 	require.NoError(t, util.ReadJSONOrYAML(bytes.NewReader(data), tc))
 
 	return tc

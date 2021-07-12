@@ -11,9 +11,9 @@ import (
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/encoding/protojson"
 
+	effectv1 "github.com/cerbos/cerbos/api/genpb/cerbos/effect/v1"
+	privatev1 "github.com/cerbos/cerbos/api/genpb/cerbos/private/v1"
 	"github.com/cerbos/cerbos/internal/codegen"
-	cerbosdevv1 "github.com/cerbos/cerbos/internal/genpb/cerbosdev/v1"
-	sharedv1 "github.com/cerbos/cerbos/internal/genpb/shared/v1"
 	"github.com/cerbos/cerbos/internal/namer"
 	"github.com/cerbos/cerbos/internal/test"
 	"github.com/cerbos/cerbos/internal/util"
@@ -102,10 +102,10 @@ func TestProcessResultSet(t *testing.T) {
 			},
 			want: &EvalResult{
 				PolicyKey: "test",
-				Effects: map[string]sharedv1.Effect{
-					"a": sharedv1.Effect_EFFECT_ALLOW,
-					"b": sharedv1.Effect_EFFECT_DENY,
-					"c": sharedv1.Effect_EFFECT_NO_MATCH,
+				Effects: map[string]effectv1.Effect{
+					"a": effectv1.Effect_EFFECT_ALLOW,
+					"b": effectv1.Effect_EFFECT_DENY,
+					"c": effectv1.Effect_EFFECT_NO_MATCH,
 				},
 			},
 		},
@@ -174,7 +174,7 @@ func TestProcessResultSet(t *testing.T) {
 			},
 			want: &EvalResult{
 				PolicyKey:             "test",
-				Effects:               map[string]sharedv1.Effect{"a": sharedv1.Effect_EFFECT_ALLOW},
+				Effects:               map[string]effectv1.Effect{"a": effectv1.Effect_EFFECT_ALLOW},
 				EffectiveDerivedRoles: nil,
 			},
 		},
@@ -195,7 +195,7 @@ func TestProcessResultSet(t *testing.T) {
 			},
 			want: &EvalResult{
 				PolicyKey:             "test",
-				Effects:               map[string]sharedv1.Effect{"a": sharedv1.Effect_EFFECT_ALLOW},
+				Effects:               map[string]effectv1.Effect{"a": effectv1.Effect_EFFECT_ALLOW},
 				EffectiveDerivedRoles: []string{"wibble", "wobble", "fubble"},
 			},
 		},
@@ -256,10 +256,10 @@ func TestCELEvaluator(t *testing.T) {
 	}
 }
 
-func readCELTestCase(t *testing.T, data []byte) *cerbosdevv1.CelTestCase {
+func readCELTestCase(t *testing.T, data []byte) *privatev1.CelTestCase {
 	t.Helper()
 
-	tc := &cerbosdevv1.CelTestCase{}
+	tc := &privatev1.CelTestCase{}
 	require.NoError(t, util.ReadJSONOrYAML(bytes.NewReader(data), tc))
 
 	return tc

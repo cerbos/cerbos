@@ -11,10 +11,10 @@ import (
 
 	"github.com/stretchr/testify/require"
 
+	effectv1 "github.com/cerbos/cerbos/api/genpb/cerbos/effect/v1"
+	privatev1 "github.com/cerbos/cerbos/api/genpb/cerbos/private/v1"
 	"github.com/cerbos/cerbos/internal/codegen"
 	"github.com/cerbos/cerbos/internal/compile"
-	cerbosdevv1 "github.com/cerbos/cerbos/internal/genpb/cerbosdev/v1"
-	sharedv1 "github.com/cerbos/cerbos/internal/genpb/shared/v1"
 	"github.com/cerbos/cerbos/internal/namer"
 	"github.com/cerbos/cerbos/internal/policy"
 	"github.com/cerbos/cerbos/internal/test"
@@ -48,16 +48,16 @@ func TestCompile(t *testing.T) {
 	}
 }
 
-func readTestCase(t *testing.T, data []byte) *cerbosdevv1.CompileTestCase {
+func readTestCase(t *testing.T, data []byte) *privatev1.CompileTestCase {
 	t.Helper()
 
-	tc := &cerbosdevv1.CompileTestCase{}
+	tc := &privatev1.CompileTestCase{}
 	require.NoError(t, util.ReadJSONOrYAML(bytes.NewReader(data), tc))
 
 	return tc
 }
 
-func mkCompilationUnit(t *testing.T, tc *cerbosdevv1.CompileTestCase) *policy.CompilationUnit {
+func mkCompilationUnit(t *testing.T, tc *privatev1.CompileTestCase) *policy.CompilationUnit {
 	t.Helper()
 
 	cu := &policy.CompilationUnit{}
@@ -109,7 +109,7 @@ func generateCompilationUnit() *policy.CompilationUnit {
 	rp := test.NewResourcePolicyBuilder(resource, "default")
 	for i := 0; i < numDerivedRolesFiles; i++ {
 		drName := fmt.Sprintf("derived_%02d", i)
-		rr := test.NewResourceRule(fmt.Sprintf("action_%d", i)).WithEffect(sharedv1.Effect_EFFECT_ALLOW).WithMatchExpr(mkMatchExpr(3)...)
+		rr := test.NewResourceRule(fmt.Sprintf("action_%d", i)).WithEffect(effectv1.Effect_EFFECT_ALLOW).WithMatchExpr(mkMatchExpr(3)...)
 
 		dr := test.NewDerivedRolesBuilder(drName)
 		for j := 0; j < numDerivedRolesPerFile; j++ {

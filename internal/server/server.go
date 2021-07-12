@@ -43,6 +43,7 @@ import (
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/encoding/protojson"
 
+	svcv1 "github.com/cerbos/cerbos/api/genpb/cerbos/svc/v1"
 	"github.com/cerbos/cerbos/internal/audit"
 
 	// Import to register the Badger audit log backend.
@@ -50,7 +51,6 @@ import (
 	"github.com/cerbos/cerbos/internal/compile"
 	"github.com/cerbos/cerbos/internal/config"
 	"github.com/cerbos/cerbos/internal/engine"
-	svcv1 "github.com/cerbos/cerbos/internal/genpb/svc/v1"
 	"github.com/cerbos/cerbos/internal/observability/metrics"
 	"github.com/cerbos/cerbos/internal/observability/tracing"
 	"github.com/cerbos/cerbos/internal/storage"

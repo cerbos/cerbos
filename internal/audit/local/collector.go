@@ -5,8 +5,8 @@ package local
 import (
 	"sync"
 
+	auditv1 "github.com/cerbos/cerbos/api/genpb/cerbos/audit/v1"
 	"github.com/cerbos/cerbos/internal/audit"
-	auditv1 "github.com/cerbos/cerbos/internal/genpb/audit/v1"
 )
 
 type collector interface {

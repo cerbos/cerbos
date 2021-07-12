@@ -6,7 +6,7 @@ import (
 	"database/sql/driver"
 	"fmt"
 
-	policyv1 "github.com/cerbos/cerbos/internal/genpb/policy/v1"
+	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
 	"github.com/cerbos/cerbos/internal/namer"
 )
 
