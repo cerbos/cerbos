@@ -31,10 +31,23 @@ type serverArgs struct {
 
 var args = serverArgs{}
 
+var longDesc = `Starts the Cerbos PDP.
+The config flag is required. Configuration values can be overridden by using the set flag.
+`
+
+var exampleDesc = `
+# Start the server 
+cerbos server --config=/path/to/config.yaml
+
+# Start the server with the Admin API enabled and the 'sqlite' storage driver
+cerbos server --config=/path/to/config.yaml --set=server.adminAPI.enabled=true --set=storage.driver=sqlite3 --set=storage.sqlite3.dsn=':memory:'`
+
 func NewCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:          "server",
-		Short:        "Start server",
+		Short:        "Start the Cerbos server",
+		Long:         longDesc,
+		Example:      exampleDesc,
 		RunE:         doRun,
 		SilenceUsage: true,
 	}

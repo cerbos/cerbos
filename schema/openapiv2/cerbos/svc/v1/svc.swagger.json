@@ -1,0 +1,1442 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "Cerbos",
+    "version": "latest",
+    "contact": {
+      "name": "Cerbos",
+      "url": "https://cerbos.dev",
+      "email": "info@cerbos.dev"
+    }
+  },
+  "tags": [
+    {
+      "name": "CerbosService",
+      "description": "Cerbos Policy Decision Point"
+    },
+    {
+      "name": "CerbosAdminService",
+      "description": "Cerbos administration service"
+    },
+    {
+      "name": "CerbosPlaygroundService"
+    }
+  ],
+  "schemes": [
+    "https"
+  ],
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "paths": {
+    "/admin/auditlog/list/{kind}": {
+      "get": {
+        "summary": "List audit log entries",
+        "operationId": "CerbosAdminService_ListAuditLogEntries",
+        "responses": {
+          "200": {
+            "description": "A successful response.(streaming responses)",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "result": {
+                  "$ref": "#/definitions/v1ListAuditLogEntriesResponse"
+                },
+                "error": {
+                  "$ref": "#/definitions/rpcStatus"
+                }
+              },
+              "title": "Stream result of v1ListAuditLogEntriesResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "kind",
+            "description": "Kind of log entry",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "enum": [
+              "KIND_UNSPECIFIED",
+              "KIND_ACCESS",
+              "KIND_DECISION"
+            ]
+          },
+          {
+            "name": "tail",
+            "description": "Last N entries.",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "between.start",
+            "description": "Start date in ISO 8601 format.",
+            "in": "query",
+            "required": true,
+            "type": "string",
+            "format": "date-time"
+          },
+          {
+            "name": "between.end",
+            "description": "End date in ISO 8601 format.",
+            "in": "query",
+            "required": true,
+            "type": "string",
+            "format": "date-time"
+          },
+          {
+            "name": "since",
+            "description": "Entries since N hours/minutes ago",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "lookup",
+            "description": "By Call ID",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "CerbosAdminService"
+        ],
+        "security": [
+          {
+            "BasicAuth": []
+          }
+        ]
+      }
+    },
+    "/admin/policy": {
+      "post": {
+        "summary": "Add or update policies",
+        "operationId": "CerbosAdminService_AddOrUpdatePolicy",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1AddOrUpdatePolicyResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/v1AddOrUpdatePolicyRequest"
+            }
+          }
+        ],
+        "tags": [
+          "CerbosAdminService"
+        ],
+        "security": [
+          {
+            "BasicAuth": []
+          }
+        ]
+      },
+      "put": {
+        "summary": "Add or update policies",
+        "operationId": "CerbosAdminService_AddOrUpdatePolicy2",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1AddOrUpdatePolicyResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/v1AddOrUpdatePolicyRequest"
+            }
+          }
+        ],
+        "tags": [
+          "CerbosAdminService"
+        ],
+        "security": [
+          {
+            "BasicAuth": []
+          }
+        ]
+      }
+    },
+    "/api/check": {
+      "post": {
+        "summary": "Check",
+        "description": "Check whether a principal has permissions to perform the given actions on a set of resource instances.",
+        "operationId": "CerbosService_CheckResourceSet",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1CheckResourceSetResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/v1CheckResourceSetRequest"
+            }
+          }
+        ],
+        "tags": [
+          "CerbosService"
+        ]
+      }
+    },
+    "/api/check_resource_batch": {
+      "post": {
+        "summary": "Check resource batch",
+        "description": "Check a principal's permissions to a batch of heterogeneous resources and actions.",
+        "operationId": "CerbosService_CheckResourceBatch",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1CheckResourceBatchResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/v1CheckResourceBatchRequest"
+            }
+          }
+        ],
+        "tags": [
+          "CerbosService"
+        ]
+      }
+    },
+    "/api/playground/evaluate": {
+      "post": {
+        "operationId": "CerbosPlaygroundService_PlaygroundEvaluate",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1PlaygroundEvaluateResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/v1PlaygroundEvaluateRequest"
+            }
+          }
+        ],
+        "tags": [
+          "CerbosPlaygroundService"
+        ]
+      }
+    },
+    "/api/playground/validate": {
+      "post": {
+        "operationId": "CerbosPlaygroundService_PlaygroundValidate",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1PlaygroundValidateResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/v1PlaygroundValidateRequest"
+            }
+          }
+        ],
+        "tags": [
+          "CerbosPlaygroundService"
+        ]
+      }
+    }
+  },
+  "definitions": {
+    "CheckOutputActionEffect": {
+      "type": "object",
+      "properties": {
+        "effect": {
+          "$ref": "#/definitions/v1Effect"
+        },
+        "policy": {
+          "type": "string"
+        }
+      }
+    },
+    "CheckResourceBatchRequestBatchEntry": {
+      "type": "object",
+      "properties": {
+        "actions": {
+          "type": "array",
+          "example": [
+            "view:public",
+            "comment"
+          ],
+          "items": {
+            "type": "string"
+          },
+          "description": "List of actions being performed on the resource.",
+          "maxItems": 10,
+          "minItems": 1,
+          "uniqueItems": true,
+          "required": [
+            "actions"
+          ]
+        },
+        "resource": {
+          "$ref": "#/definitions/v1Resource"
+        }
+      },
+      "required": [
+        "actions"
+      ]
+    },
+    "CheckResourceSetResponseMeta": {
+      "type": "object",
+      "properties": {
+        "resourceInstances": {
+          "type": "object",
+          "example": {
+            "XX125": {
+              "actions": {
+                "view:*": {
+                  "matched_policy": "album:object:default"
+                },
+                "comment": {
+                  "matched_policy": "album:object:default"
+                }
+              },
+              "effective_derived_roles": [
+                "owner"
+              ]
+            },
+            "XX225": {
+              "actions": {
+                "view:*": {
+                  "matched_policy": "album:object:default"
+                },
+                "comment": {
+                  "matched_policy": "album:object:default"
+                }
+              }
+            }
+          },
+          "additionalProperties": {
+            "$ref": "#/definitions/MetaActionMeta"
+          },
+          "description": "Metadata about resource instances."
+        }
+      },
+      "description": "Metadata about request evaluation."
+    },
+    "ListAuditLogEntriesRequestKind": {
+      "type": "string",
+      "enum": [
+        "KIND_UNSPECIFIED",
+        "KIND_ACCESS",
+        "KIND_DECISION"
+      ],
+      "default": "KIND_UNSPECIFIED"
+    },
+    "ListAuditLogEntriesRequestTimeRange": {
+      "type": "object",
+      "properties": {
+        "start": {
+          "type": "string",
+          "format": "date-time",
+          "example": "2021-07-05T07:27:01+00:00",
+          "description": "Start date in ISO 8601 format.",
+          "required": [
+            "start"
+          ]
+        },
+        "end": {
+          "type": "string",
+          "format": "date-time",
+          "example": "2021-07-05T07:27:01+00:00",
+          "description": "End date in ISO 8601 format.",
+          "required": [
+            "end"
+          ]
+        }
+      },
+      "description": "Entries between a time range.",
+      "required": [
+        "start",
+        "end"
+      ]
+    },
+    "MatchExprList": {
+      "type": "object",
+      "properties": {
+        "of": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/v1Match"
+          }
+        }
+      }
+    },
+    "MetaActionMeta": {
+      "type": "object",
+      "properties": {
+        "actions": {
+          "type": "object",
+          "example": {
+            "view:*": {
+              "matched_policy": "album:object:default"
+            },
+            "comment": {
+              "matched_policy": "album:object:default"
+            }
+          },
+          "additionalProperties": {
+            "$ref": "#/definitions/MetaEffectMeta"
+          },
+          "description": "Metadata about the effect calculated for each action on this resource instance."
+        },
+        "effectiveDerivedRoles": {
+          "type": "array",
+          "example": [
+            "owner"
+          ],
+          "items": {
+            "type": "string"
+          },
+          "description": "Derived roles that were effective during policy evaluation."
+        }
+      },
+      "description": "Unique resource instance ID supplied in the request."
+    },
+    "MetaEffectMeta": {
+      "type": "object",
+      "properties": {
+        "matchedPolicy": {
+          "type": "string",
+          "example": "album:object:default",
+          "description": "Policy that matched to produce this effect."
+        }
+      },
+      "description": "Name of the action."
+    },
+    "PlaygroundEvaluateResponseEvalResult": {
+      "type": "object",
+      "properties": {
+        "action": {
+          "type": "string"
+        },
+        "effect": {
+          "$ref": "#/definitions/v1Effect"
+        },
+        "policy": {
+          "type": "string"
+        },
+        "effectiveDerivedRoles": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "PlaygroundEvaluateResponseEvalResultList": {
+      "type": "object",
+      "properties": {
+        "results": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/PlaygroundEvaluateResponseEvalResult"
+          }
+        }
+      }
+    },
+    "PlaygroundFailureError": {
+      "type": "object",
+      "properties": {
+        "file": {
+          "type": "string"
+        },
+        "error": {
+          "type": "string"
+        }
+      }
+    },
+    "PrincipalRuleAction": {
+      "type": "object",
+      "properties": {
+        "action": {
+          "type": "string"
+        },
+        "condition": {
+          "$ref": "#/definitions/v1Condition"
+        },
+        "effect": {
+          "$ref": "#/definitions/v1Effect"
+        }
+      }
+    },
+    "protobufAny": {
+      "type": "object",
+      "properties": {
+        "typeUrl": {
+          "type": "string"
+        },
+        "value": {
+          "type": "string",
+          "format": "byte"
+        }
+      }
+    },
+    "protobufNullValue": {
+      "type": "string",
+      "enum": [
+        "NULL_VALUE"
+      ],
+      "default": "NULL_VALUE",
+      "description": "`NullValue` is a singleton enumeration to represent the null value for the\n`Value` type union.\n\n The JSON representation for `NullValue` is JSON `null`.\n\n - NULL_VALUE: Null value."
+    },
+    "rpcStatus": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "message": {
+          "type": "string"
+        },
+        "details": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/protobufAny"
+          }
+        }
+      }
+    },
+    "v1AccessLogEntry": {
+      "type": "object",
+      "properties": {
+        "callId": {
+          "type": "string"
+        },
+        "timestamp": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "peer": {
+          "$ref": "#/definitions/v1Peer"
+        },
+        "metadata": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/v1MetaValues"
+          }
+        },
+        "method": {
+          "type": "string"
+        },
+        "statusCode": {
+          "type": "integer",
+          "format": "int64"
+        }
+      }
+    },
+    "v1AddOrUpdatePolicyRequest": {
+      "type": "object",
+      "properties": {
+        "policies": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/v1Policy"
+          },
+          "description": "List of policies.",
+          "maxItems": 10,
+          "minItems": 1,
+          "required": [
+            "policies"
+          ]
+        }
+      },
+      "description": "Add/update policy request",
+      "required": [
+        "policies"
+      ]
+    },
+    "v1AddOrUpdatePolicyResponse": {
+      "type": "object",
+      "properties": {
+        "success": {
+          "properties": {}
+        }
+      },
+      "description": "Add/update policy response"
+    },
+    "v1AttributesMap": {
+      "type": "object",
+      "properties": {
+        "attr": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "object"
+          },
+          "description": "Key-value pairs of contextual data about this instance that should be used during policy evaluation."
+        }
+      },
+      "description": "Unique identifier for the resource instance."
+    },
+    "v1CheckInput": {
+      "type": "object",
+      "properties": {
+        "requestId": {
+          "type": "string"
+        },
+        "resource": {
+          "$ref": "#/definitions/v1Resource"
+        },
+        "principal": {
+          "$ref": "#/definitions/v1Principal"
+        },
+        "actions": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "required": [
+            "actions"
+          ]
+        }
+      },
+      "required": [
+        "actions"
+      ]
+    },
+    "v1CheckOutput": {
+      "type": "object",
+      "properties": {
+        "requestId": {
+          "type": "string"
+        },
+        "resourceId": {
+          "type": "string"
+        },
+        "actions": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/CheckOutputActionEffect"
+          }
+        },
+        "effectiveDerivedRoles": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "v1CheckResourceBatchRequest": {
+      "type": "object",
+      "properties": {
+        "requestId": {
+          "type": "string",
+          "example": "c2db17b8-4f9f-4fb1-acfd-9162a02be42b",
+          "description": "Optional application-specific ID useful for correlating logs for analysis."
+        },
+        "principal": {
+          "$ref": "#/definitions/v1Principal"
+        },
+        "resources": {
+          "type": "array",
+          "example": [
+            {
+              "actions": [
+                "view",
+                "comment"
+              ],
+              "resource": {
+                "kind": "album:object",
+                "policyVersion": "default",
+                "id": "XX125",
+                "attr": {
+                  "owner": "bugs_bunny",
+                  "public": false,
+                  "flagged": false
+                }
+              }
+            }
+          ],
+          "items": {
+            "$ref": "#/definitions/CheckResourceBatchRequestBatchEntry"
+          },
+          "description": "List of resources and actions.",
+          "maxItems": 20,
+          "minItems": 1,
+          "uniqueItems": true,
+          "required": [
+            "resources"
+          ]
+        }
+      },
+      "description": "PDP Request",
+      "required": [
+        "resources"
+      ]
+    },
+    "v1CheckResourceBatchResponse": {
+      "type": "object",
+      "properties": {
+        "requestId": {
+          "type": "string",
+          "example": "c2db17b8-4f9f-4fb1-acfd-9162a02be42b",
+          "description": "Request ID provided in the request."
+        },
+        "results": {
+          "type": "array",
+          "example": [
+            {
+              "resourceId": "XX125",
+              "actions": {
+                "view": "EFFECT_ALLOW"
+              }
+            }
+          ],
+          "items": {
+            "$ref": "#/definitions/v1CheckResourceBatchResponseActionEffectMap"
+          },
+          "description": "Result for each resource"
+        }
+      },
+      "description": "Policy evaluation response for a batch of resources."
+    },
+    "v1CheckResourceBatchResponseActionEffectMap": {
+      "type": "object",
+      "properties": {
+        "resourceId": {
+          "type": "string",
+          "example": "XX125",
+          "description": "Resource ID"
+        },
+        "actions": {
+          "type": "object",
+          "example": {
+            "view": "EFFECT_ALLOW"
+          },
+          "additionalProperties": {
+            "$ref": "#/definitions/v1Effect"
+          },
+          "description": "Mapping of each action to an effect."
+        }
+      }
+    },
+    "v1CheckResourceSetRequest": {
+      "type": "object",
+      "properties": {
+        "requestId": {
+          "type": "string",
+          "example": "c2db17b8-4f9f-4fb1-acfd-9162a02be42b",
+          "description": "Optional application-specific ID useful for correlating logs for analysis."
+        },
+        "actions": {
+          "type": "array",
+          "example": [
+            "view:public",
+            "comment"
+          ],
+          "items": {
+            "type": "string"
+          },
+          "description": "List of actions being performed on the set of resources.",
+          "maxItems": 10,
+          "minItems": 1,
+          "uniqueItems": true,
+          "required": [
+            "actions"
+          ]
+        },
+        "principal": {
+          "$ref": "#/definitions/v1Principal"
+        },
+        "resource": {
+          "$ref": "#/definitions/v1ResourceSet"
+        },
+        "includeMeta": {
+          "type": "boolean",
+          "description": "Opt to receive request processing metadata in the response."
+        }
+      },
+      "description": "PDP Request",
+      "required": [
+        "actions"
+      ]
+    },
+    "v1CheckResourceSetResponse": {
+      "type": "object",
+      "properties": {
+        "requestId": {
+          "type": "string",
+          "example": "c2db17b8-4f9f-4fb1-acfd-9162a02be42b",
+          "description": "Request ID provided in the request."
+        },
+        "resourceInstances": {
+          "type": "object",
+          "example": {
+            "XX125": {
+              "actions": {
+                "view:*": "EFFECT_ALLOW",
+                "comment": "EFFECT_ALLOW"
+              }
+            },
+            "XX225": {
+              "actions": {
+                "view:*": "EFFECT_DENY",
+                "comment": "EFFECT_DENY"
+              }
+            }
+          },
+          "additionalProperties": {
+            "$ref": "#/definitions/v1CheckResourceSetResponseActionEffectMap"
+          },
+          "description": "Results for each resource instance, keyed by the ID supplied in the request"
+        },
+        "meta": {
+          "$ref": "#/definitions/CheckResourceSetResponseMeta",
+          "description": "Optional metadata about the request evaluation process"
+        }
+      },
+      "description": "Policy evaluation response for a set of resources."
+    },
+    "v1CheckResourceSetResponseActionEffectMap": {
+      "type": "object",
+      "properties": {
+        "actions": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/v1Effect"
+          },
+          "description": "Mapping of each action to an effect."
+        }
+      }
+    },
+    "v1Condition": {
+      "type": "object",
+      "properties": {
+        "match": {
+          "$ref": "#/definitions/v1Match"
+        },
+        "script": {
+          "type": "string"
+        }
+      }
+    },
+    "v1DecisionLogEntry": {
+      "type": "object",
+      "properties": {
+        "callId": {
+          "type": "string"
+        },
+        "timestamp": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "peer": {
+          "$ref": "#/definitions/v1Peer"
+        },
+        "inputs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/v1CheckInput"
+          }
+        },
+        "outputs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/v1CheckOutput"
+          }
+        },
+        "error": {
+          "type": "string"
+        }
+      }
+    },
+    "v1DerivedRoles": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "definitions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/v1RoleDef"
+          }
+        }
+      }
+    },
+    "v1Effect": {
+      "type": "string",
+      "enum": [
+        "EFFECT_UNSPECIFIED",
+        "EFFECT_ALLOW",
+        "EFFECT_DENY",
+        "EFFECT_NO_MATCH"
+      ],
+      "default": "EFFECT_UNSPECIFIED"
+    },
+    "v1ListAuditLogEntriesResponse": {
+      "type": "object",
+      "properties": {
+        "accessLogEntry": {
+          "$ref": "#/definitions/v1AccessLogEntry"
+        },
+        "decisionLogEntry": {
+          "$ref": "#/definitions/v1DecisionLogEntry"
+        }
+      },
+      "description": "Audit log stream."
+    },
+    "v1Match": {
+      "type": "object",
+      "properties": {
+        "all": {
+          "$ref": "#/definitions/MatchExprList"
+        },
+        "any": {
+          "$ref": "#/definitions/MatchExprList"
+        },
+        "none": {
+          "$ref": "#/definitions/MatchExprList"
+        },
+        "expr": {
+          "type": "string"
+        }
+      }
+    },
+    "v1MetaValues": {
+      "type": "object",
+      "properties": {
+        "values": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "v1Metadata": {
+      "type": "object",
+      "properties": {
+        "sourceFile": {
+          "type": "string"
+        },
+        "annotations": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "v1Peer": {
+      "type": "object",
+      "properties": {
+        "address": {
+          "type": "string"
+        },
+        "authInfo": {
+          "type": "string"
+        },
+        "userAgent": {
+          "type": "string"
+        },
+        "forwardedFor": {
+          "type": "string"
+        }
+      }
+    },
+    "v1PlaygroundEvaluateRequest": {
+      "type": "object",
+      "properties": {
+        "playgroundId": {
+          "type": "string"
+        },
+        "policyFiles": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/v1PolicyFile"
+          },
+          "description": "List of policy files.",
+          "maxItems": 10,
+          "minItems": 1,
+          "required": [
+            "policy_files"
+          ]
+        },
+        "principal": {
+          "$ref": "#/definitions/v1Principal"
+        },
+        "resource": {
+          "$ref": "#/definitions/v1Resource"
+        },
+        "actions": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "List of actions being performed on the resource.",
+          "maxItems": 10,
+          "minItems": 1,
+          "uniqueItems": true,
+          "required": [
+            "actions"
+          ]
+        }
+      },
+      "description": "Playground evaluate request",
+      "required": [
+        "policyFiles",
+        "actions"
+      ]
+    },
+    "v1PlaygroundEvaluateResponse": {
+      "type": "object",
+      "properties": {
+        "playgroundId": {
+          "type": "string"
+        },
+        "failure": {
+          "$ref": "#/definitions/v1PlaygroundFailure"
+        },
+        "success": {
+          "$ref": "#/definitions/PlaygroundEvaluateResponseEvalResultList"
+        }
+      },
+      "description": "Playground evaluate response"
+    },
+    "v1PlaygroundFailure": {
+      "type": "object",
+      "properties": {
+        "errors": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/PlaygroundFailureError"
+          }
+        }
+      },
+      "description": "Playground response"
+    },
+    "v1PlaygroundValidateRequest": {
+      "type": "object",
+      "properties": {
+        "playgroundId": {
+          "type": "string"
+        },
+        "policyFiles": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/v1PolicyFile"
+          },
+          "description": "List of policy files.",
+          "maxItems": 10,
+          "minItems": 1,
+          "required": [
+            "policy_files"
+          ]
+        }
+      },
+      "description": "Playground validate request",
+      "required": [
+        "policyFiles"
+      ]
+    },
+    "v1PlaygroundValidateResponse": {
+      "type": "object",
+      "properties": {
+        "playgroundId": {
+          "type": "string"
+        },
+        "failure": {
+          "$ref": "#/definitions/v1PlaygroundFailure"
+        },
+        "success": {
+          "properties": {}
+        }
+      },
+      "description": "Playground validate response"
+    },
+    "v1Policy": {
+      "type": "object",
+      "properties": {
+        "apiVersion": {
+          "type": "string"
+        },
+        "disabled": {
+          "type": "boolean"
+        },
+        "description": {
+          "type": "string"
+        },
+        "metadata": {
+          "$ref": "#/definitions/v1Metadata"
+        },
+        "resourcePolicy": {
+          "$ref": "#/definitions/v1ResourcePolicy"
+        },
+        "principalPolicy": {
+          "$ref": "#/definitions/v1PrincipalPolicy"
+        },
+        "derivedRoles": {
+          "$ref": "#/definitions/v1DerivedRoles"
+        }
+      }
+    },
+    "v1PolicyFile": {
+      "type": "object",
+      "properties": {
+        "fileName": {
+          "type": "string",
+          "required": [
+            "file_name"
+          ]
+        },
+        "contents": {
+          "type": "string",
+          "format": "byte",
+          "required": [
+            "contents"
+          ]
+        }
+      },
+      "required": [
+        "fileName",
+        "contents"
+      ]
+    },
+    "v1Principal": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "example": "bugs_bunny",
+          "description": "ID of the principal",
+          "required": [
+            "id"
+          ]
+        },
+        "policyVersion": {
+          "type": "string",
+          "example": "default",
+          "description": "The policy version to use to evaluate this request. If not specified, will default to the server-configured default version.",
+          "pattern": "^[[:word:]]*$"
+        },
+        "roles": {
+          "type": "array",
+          "example": [
+            "user"
+          ],
+          "items": {
+            "type": "string"
+          },
+          "description": "Roles assigned to this principal from your identity management system.",
+          "pattern": "^[[:word:]\\-\\.]+$",
+          "maxItems": 20,
+          "minItems": 1,
+          "uniqueItems": true,
+          "required": [
+            "roles"
+          ]
+        },
+        "attr": {
+          "type": "object",
+          "example": {
+            "beta_tester": true
+          },
+          "additionalProperties": {
+            "type": "object"
+          },
+          "description": "Key-value pairs of contextual data about this principal that should be used during policy evaluation."
+        }
+      },
+      "description": "A person or application attempting to perform the actions on the set of resources.",
+      "required": [
+        "id",
+        "roles"
+      ]
+    },
+    "v1PrincipalPolicy": {
+      "type": "object",
+      "properties": {
+        "principal": {
+          "type": "string"
+        },
+        "version": {
+          "type": "string"
+        },
+        "rules": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/v1PrincipalRule"
+          }
+        }
+      }
+    },
+    "v1PrincipalRule": {
+      "type": "object",
+      "properties": {
+        "resource": {
+          "type": "string"
+        },
+        "actions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/PrincipalRuleAction"
+          }
+        }
+      }
+    },
+    "v1Resource": {
+      "type": "object",
+      "properties": {
+        "kind": {
+          "type": "string",
+          "example": "album:photo",
+          "description": "Name of the resource kind being accessed.",
+          "pattern": "^[[:alpha:]][[:word:]\\@\\.\\-]*(\\:[[:alpha:]][[:word:]\\@\\.\\-]*)*$",
+          "required": [
+            "kind"
+          ]
+        },
+        "policyVersion": {
+          "type": "string",
+          "example": "default",
+          "description": "The policy version to use to evaluate this request. If not specified, will default to the server-configured default version.",
+          "pattern": "^[[:word:]]*$"
+        },
+        "id": {
+          "type": "string",
+          "example": "XX125",
+          "description": "ID of the resource instance",
+          "required": [
+            "id"
+          ]
+        },
+        "attr": {
+          "type": "object",
+          "example": {
+            "owner": "bugs_bunny"
+          },
+          "additionalProperties": {
+            "type": "object"
+          },
+          "description": "Kay-value pairs of contextual data about this resource that should be used during policy evaluation."
+        }
+      },
+      "required": [
+        "kind",
+        "id"
+      ]
+    },
+    "v1ResourcePolicy": {
+      "type": "object",
+      "properties": {
+        "resource": {
+          "type": "string"
+        },
+        "version": {
+          "type": "string"
+        },
+        "importDerivedRoles": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "rules": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/v1ResourceRule"
+          }
+        }
+      }
+    },
+    "v1ResourceRule": {
+      "type": "object",
+      "properties": {
+        "actions": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "derivedRoles": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "roles": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "condition": {
+          "$ref": "#/definitions/v1Condition"
+        },
+        "effect": {
+          "$ref": "#/definitions/v1Effect"
+        }
+      }
+    },
+    "v1ResourceSet": {
+      "type": "object",
+      "properties": {
+        "kind": {
+          "type": "string",
+          "example": "album:object",
+          "description": "Resource kind.",
+          "pattern": "^[[:alpha:]][[:word:]\\@\\.\\-]*(\\:[[:alpha:]][[:word:]\\@\\.\\-]*)*$",
+          "required": [
+            "kind"
+          ]
+        },
+        "policyVersion": {
+          "type": "string",
+          "example": "default",
+          "description": "The policy version to use to evaluate this request. If not specified, will default to the server-configured default version.",
+          "pattern": "^[[:word:]]*$"
+        },
+        "instances": {
+          "type": "object",
+          "example": {
+            "XX125": {
+              "attr": {
+                "owner": "bugs_bunny",
+                "public": false,
+                "flagged": false
+              }
+            },
+            "XX225": {
+              "attr": {
+                "owner": "daffy_duck",
+                "public": true,
+                "flagged": false
+              }
+            }
+          },
+          "additionalProperties": {
+            "$ref": "#/definitions/v1AttributesMap"
+          },
+          "description": "Set of resource instances to check. Each instance must be keyed by an application-specific unique identifier.",
+          "maxProperties": 20,
+          "minProperties": 1,
+          "required": [
+            "instances"
+          ]
+        }
+      },
+      "description": "Set of resources to check",
+      "required": [
+        "kind",
+        "instances"
+      ]
+    },
+    "v1RoleDef": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "parentRoles": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "condition": {
+          "$ref": "#/definitions/v1Condition"
+        }
+      }
+    }
+  },
+  "securityDefinitions": {
+    "BasicAuth": {
+      "type": "basic"
+    }
+  }
+}

@@ -14,7 +14,7 @@ import (
 	"github.com/cerbos/cerbos/internal/util"
 )
 
-//go:embed openapiv2/svc/v1/svc.swagger.json
+//go:embed openapiv2/cerbos/svc/v1/svc.swagger.json
 var svcSwaggerRaw []byte
 
 //go:embed assets/ui.html

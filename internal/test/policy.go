@@ -7,8 +7,8 @@ package test
 import (
 	"fmt"
 
-	policyv1 "github.com/cerbos/cerbos/internal/genpb/policy/v1"
-	sharedv1 "github.com/cerbos/cerbos/internal/genpb/shared/v1"
+	effectv1 "github.com/cerbos/cerbos/api/genpb/cerbos/effect/v1"
+	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
 )
 
 type NameMod func(string) string
@@ -26,7 +26,7 @@ func NewResourceRule(actions ...string) *ResourceRuleBuilder {
 	return &ResourceRuleBuilder{
 		rule: &policyv1.ResourceRule{
 			Actions: actions,
-			Effect:  sharedv1.Effect_EFFECT_ALLOW,
+			Effect:  effectv1.Effect_EFFECT_ALLOW,
 		},
 	}
 }
@@ -57,7 +57,7 @@ func (rrb *ResourceRuleBuilder) WithScript(script string) *ResourceRuleBuilder {
 	return rrb
 }
 
-func (rrb *ResourceRuleBuilder) WithEffect(effect sharedv1.Effect) *ResourceRuleBuilder {
+func (rrb *ResourceRuleBuilder) WithEffect(effect effectv1.Effect) *ResourceRuleBuilder {
 	rrb.rule.Effect = effect
 	return rrb
 }
@@ -131,25 +131,25 @@ func GenResourcePolicy(mod NameMod) *policyv1.Policy {
 					{
 						Actions: []string{"*"},
 						Roles:   []string{"admin"},
-						Effect:  sharedv1.Effect_EFFECT_ALLOW,
+						Effect:  effectv1.Effect_EFFECT_ALLOW,
 					},
 
 					{
 						Actions:      []string{"create"},
 						DerivedRoles: []string{"employee_that_owns_the_record"},
-						Effect:       sharedv1.Effect_EFFECT_ALLOW,
+						Effect:       effectv1.Effect_EFFECT_ALLOW,
 					},
 
 					{
 						Actions:      []string{"view:*"},
 						DerivedRoles: []string{"employee_that_owns_the_record", "direct_manager"},
-						Effect:       sharedv1.Effect_EFFECT_ALLOW,
+						Effect:       effectv1.Effect_EFFECT_ALLOW,
 					},
 
 					{
 						Actions:      []string{"approve"},
 						DerivedRoles: []string{"direct_manager"},
-						Effect:       sharedv1.Effect_EFFECT_ALLOW,
+						Effect:       effectv1.Effect_EFFECT_ALLOW,
 						Condition: &policyv1.Condition{
 							Condition: &policyv1.Condition_Match{
 								Match: &policyv1.Match{
@@ -178,30 +178,30 @@ func NewPrincipalRuleBuilder(resource string) *PrincipalRuleBuilder {
 }
 
 func (prb *PrincipalRuleBuilder) AllowAction(action string) *PrincipalRuleBuilder {
-	return prb.addAction(action, sharedv1.Effect_EFFECT_ALLOW, nil)
+	return prb.addAction(action, effectv1.Effect_EFFECT_ALLOW, nil)
 }
 
 func (prb *PrincipalRuleBuilder) DenyAction(action string) *PrincipalRuleBuilder {
-	return prb.addAction(action, sharedv1.Effect_EFFECT_DENY, nil)
+	return prb.addAction(action, effectv1.Effect_EFFECT_DENY, nil)
 }
 
 func (prb *PrincipalRuleBuilder) AllowActionWhenMatch(action string, expr ...string) *PrincipalRuleBuilder {
-	return prb.addAction(action, sharedv1.Effect_EFFECT_ALLOW, buildAndCondition(expr...))
+	return prb.addAction(action, effectv1.Effect_EFFECT_ALLOW, buildAndCondition(expr...))
 }
 
 func (prb *PrincipalRuleBuilder) DenyActionWhenMatch(action string, expr ...string) *PrincipalRuleBuilder {
-	return prb.addAction(action, sharedv1.Effect_EFFECT_DENY, buildAndCondition(expr...))
+	return prb.addAction(action, effectv1.Effect_EFFECT_DENY, buildAndCondition(expr...))
 }
 
 func (prb *PrincipalRuleBuilder) AllowActionWhenScript(action, script string) *PrincipalRuleBuilder {
-	return prb.addAction(action, sharedv1.Effect_EFFECT_ALLOW, &policyv1.Condition{Condition: &policyv1.Condition_Script{Script: script}})
+	return prb.addAction(action, effectv1.Effect_EFFECT_ALLOW, &policyv1.Condition{Condition: &policyv1.Condition_Script{Script: script}})
 }
 
 func (prb *PrincipalRuleBuilder) DenyActionWhenScript(action, script string) *PrincipalRuleBuilder {
-	return prb.addAction(action, sharedv1.Effect_EFFECT_DENY, &policyv1.Condition{Condition: &policyv1.Condition_Script{Script: script}})
+	return prb.addAction(action, effectv1.Effect_EFFECT_DENY, &policyv1.Condition{Condition: &policyv1.Condition_Script{Script: script}})
 }
 
-func (prb *PrincipalRuleBuilder) addAction(action string, effect sharedv1.Effect, comp *policyv1.Condition) *PrincipalRuleBuilder {
+func (prb *PrincipalRuleBuilder) addAction(action string, effect effectv1.Effect, comp *policyv1.Condition) *PrincipalRuleBuilder {
 	prb.rule.Actions = append(prb.rule.Actions, &policyv1.PrincipalRule_Action{
 		Action:    action,
 		Effect:    effect,
@@ -256,7 +256,7 @@ func GenPrincipalPolicy(mod NameMod) *policyv1.Policy {
 						Actions: []*policyv1.PrincipalRule_Action{
 							{
 								Action: "*",
-								Effect: sharedv1.Effect_EFFECT_ALLOW,
+								Effect: effectv1.Effect_EFFECT_ALLOW,
 								Condition: &policyv1.Condition{
 									Condition: &policyv1.Condition_Match{
 										Match: &policyv1.Match{
@@ -272,7 +272,7 @@ func GenPrincipalPolicy(mod NameMod) *policyv1.Policy {
 						Actions: []*policyv1.PrincipalRule_Action{
 							{
 								Action: "*",
-								Effect: sharedv1.Effect_EFFECT_DENY,
+								Effect: effectv1.Effect_EFFECT_DENY,
 							},
 						},
 					},

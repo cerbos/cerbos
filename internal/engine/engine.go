@@ -19,12 +19,12 @@ import (
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
+	auditv1 "github.com/cerbos/cerbos/api/genpb/cerbos/audit/v1"
+	effectv1 "github.com/cerbos/cerbos/api/genpb/cerbos/effect/v1"
+	enginev1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
 	"github.com/cerbos/cerbos/internal/audit"
 	"github.com/cerbos/cerbos/internal/compile"
 	"github.com/cerbos/cerbos/internal/config"
-	auditv1 "github.com/cerbos/cerbos/internal/genpb/audit/v1"
-	enginev1 "github.com/cerbos/cerbos/internal/genpb/engine/v1"
-	sharedv1 "github.com/cerbos/cerbos/internal/genpb/shared/v1"
 	"github.com/cerbos/cerbos/internal/namer"
 	"github.com/cerbos/cerbos/internal/observability/logging"
 	"github.com/cerbos/cerbos/internal/observability/tracing"
@@ -34,7 +34,7 @@ import (
 var ErrNoPoliciesMatched = errors.New("no matching policies")
 
 const (
-	defaultEffect                = sharedv1.Effect_EFFECT_DENY
+	defaultEffect                = effectv1.Effect_EFFECT_DENY
 	maxQueryCacheSizeBytes int64 = 10 * 1024 * 1024 // 10 MiB
 	noPolicyMatch                = "NO_MATCH"
 	parallelismThreshold         = 2
@@ -387,7 +387,7 @@ func (ec *evaluationCtx) evaluate(ctx context.Context, input ast.Value) (*evalua
 }
 
 type evaluationResult struct {
-	effects               map[string]sharedv1.Effect
+	effects               map[string]effectv1.Effect
 	matchedPolicies       map[string]string
 	effectiveDerivedRoles []string
 }
@@ -397,7 +397,7 @@ func (er *evaluationResult) merge(res *compile.EvalResult) bool {
 	hasNoMatches := false
 
 	if er.effects == nil {
-		er.effects = make(map[string]sharedv1.Effect, len(res.Effects))
+		er.effects = make(map[string]effectv1.Effect, len(res.Effects))
 		er.matchedPolicies = make(map[string]string, len(res.Effects))
 	}
 
@@ -407,11 +407,11 @@ func (er *evaluationResult) merge(res *compile.EvalResult) bool {
 
 	for action, effect := range res.Effects {
 		// if the action doesn't already exist or if it has a no_match effect, update it.
-		if currEffect, ok := er.effects[action]; !ok || currEffect == sharedv1.Effect_EFFECT_NO_MATCH {
+		if currEffect, ok := er.effects[action]; !ok || currEffect == effectv1.Effect_EFFECT_NO_MATCH {
 			er.effects[action] = effect
 
 			// if this effect is a no_match, we still need to traverse the policy hierarchy until we find a definitive answer
-			if effect == sharedv1.Effect_EFFECT_NO_MATCH {
+			if effect == effectv1.Effect_EFFECT_NO_MATCH {
 				hasNoMatches = true
 			} else {
 				er.matchedPolicies[action] = res.PolicyKey

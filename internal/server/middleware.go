@@ -61,7 +61,7 @@ func loggingDecider(fullMethodName string, _ error) bool {
 // payloadLoggingDecider decides whether to log request payloads.
 func payloadLoggingDecider(conf *Conf) grpc_logging.ServerPayloadLoggingDecider {
 	return func(ctx context.Context, fullMethodName string, servingObject interface{}) bool {
-		return conf.LogRequestPayloads && strings.HasPrefix(fullMethodName, "/svc.v1")
+		return conf.LogRequestPayloads && strings.HasPrefix(fullMethodName, "/cerbos.svc.v1")
 	}
 }
 

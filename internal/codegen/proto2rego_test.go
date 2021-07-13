@@ -14,8 +14,8 @@ import (
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/structpb"
 
+	enginev1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
 	"github.com/cerbos/cerbos/internal/codegen"
-	enginev1 "github.com/cerbos/cerbos/internal/genpb/engine/v1"
 )
 
 var dummy ast.Value

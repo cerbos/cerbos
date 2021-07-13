@@ -70,16 +70,27 @@ There are two kinds of audit logs:
 `KIND_ACCESS`:: Captured Cerbos API access logs. These records are only available if `accessLogsEnabled` is set to `true` in the  xref:configuration:audit.adoc[configuration]. 
 `KIND_DECISION`:: Decision logs captured by the engine. These records are only available if `decisionLogsEnabled` is set to `true` in the  xref:configuration:audit.adoc[configuration]. 
 
+Supported filters are:
 
-You can view the last N entries (`lastN`),  entries captured between a specific time period (`between.start` and `between.end`), or a specific entry (`byCallId`). When specifying timestamps, they must be formatted as ISO 8601 timestamps.
+`tail`:: View the last N entries
+`between`:: View entries captured between two timestamps. The time range is specified by providing two ISO-8601 timestamps using the `between.start` and `between.end` query parameters.
+`since`:: View entries captured since N hours/minutes/seconds ago
+`lookup`:: View a specific entry by call ID
+
 
 .View last 5 decision log entries
 [source,shell]
 ----
 curl -k -u cerbos:cerbosAdmin \
-    'https://localhost:3592/admin/auditlog/list/KIND_DECISION?lastN=5
+    'https://localhost:3592/admin/auditlog/list/KIND_DECISION?tail=5
 ----
 
+.View decision logs from 2 hours ago up to now
+[source,shell]
+----
+curl -k -u cerbos:cerbosAdmin \
+    'https://localhost:3592/admin/auditlog/list/KIND_DECISION?since=2h
+----
 
 .View access log entries between midnight 2021-07-01 and midnight 2021-07-02
 [source,shell]
@@ -88,9 +99,9 @@ curl -k -u cerbos:cerbosAdmin \
     'https://localhost:3592/admin/auditlog/list/KIND_ACCESS?between.start=2021-07-01T00:00:00Z&between.end=2021-07-02T00:00:00Z'
 ----
 
-.View specific decision log entry
+.View specific access log entry
 [source,shell]
 ----
 curl -k -u cerbos:cerbosAdmin \
-    'https://localhost:3592/admin/auditlog/list/KIND_DECISION?byCallId=01F9VS1N77S83MTSBBX44GYSJ6'
+    'https://localhost:3592/admin/auditlog/list/KIND_ACCESS?lookup=01F9VS1N77S83MTSBBX44GYSJ6'
 ----

@@ -13,8 +13,8 @@ import (
 	"go.opencensus.io/trace"
 	"go.uber.org/zap"
 
+	effectv1 "github.com/cerbos/cerbos/api/genpb/cerbos/effect/v1"
 	"github.com/cerbos/cerbos/internal/codegen"
-	sharedv1 "github.com/cerbos/cerbos/internal/genpb/shared/v1"
 	"github.com/cerbos/cerbos/internal/observability/logging"
 	"github.com/cerbos/cerbos/internal/observability/tracing"
 	"github.com/cerbos/cerbos/internal/policy"
@@ -24,7 +24,7 @@ var ErrPolicyNotExecutable = errors.New("policy not executable")
 
 type EvalResult struct {
 	PolicyKey             string
-	Effects               map[string]sharedv1.Effect
+	Effects               map[string]effectv1.Effect
 	EffectiveDerivedRoles []string
 }
 
@@ -139,7 +139,7 @@ func processResultSet(policyKey string, rs rego.ResultSet) (*EvalResult, error) 
 	return evalResult, err
 }
 
-func extractEffects(res map[string]interface{}) (map[string]sharedv1.Effect, error) {
+func extractEffects(res map[string]interface{}) (map[string]effectv1.Effect, error) {
 	effectsVal, ok := res[codegen.EffectsIdent]
 	if !ok {
 		return nil, fmt.Errorf("no effect in result: %w", ErrUnexpectedResult)
@@ -150,7 +150,7 @@ func extractEffects(res map[string]interface{}) (map[string]sharedv1.Effect, err
 		return nil, fmt.Errorf("unexpected type for effects [%T]: %w", effectsVal, ErrUnexpectedResult)
 	}
 
-	result := make(map[string]sharedv1.Effect, len(effects))
+	result := make(map[string]effectv1.Effect, len(effects))
 
 	for k, v := range effects {
 		eff, err := toEffect(v)
@@ -164,21 +164,21 @@ func extractEffects(res map[string]interface{}) (map[string]sharedv1.Effect, err
 	return result, nil
 }
 
-func toEffect(v interface{}) (sharedv1.Effect, error) {
+func toEffect(v interface{}) (effectv1.Effect, error) {
 	effectVal, ok := v.(string)
 	if !ok {
-		return sharedv1.Effect_EFFECT_DENY, fmt.Errorf("unexpected type for effect [%T]: %w", v, ErrUnexpectedResult)
+		return effectv1.Effect_EFFECT_DENY, fmt.Errorf("unexpected type for effect [%T]: %w", v, ErrUnexpectedResult)
 	}
 
 	switch effectVal {
 	case codegen.AllowEffectIdent:
-		return sharedv1.Effect_EFFECT_ALLOW, nil
+		return effectv1.Effect_EFFECT_ALLOW, nil
 	case codegen.DenyEffectIdent:
-		return sharedv1.Effect_EFFECT_DENY, nil
+		return effectv1.Effect_EFFECT_DENY, nil
 	case codegen.NoMatchEffectIdent:
-		return sharedv1.Effect_EFFECT_NO_MATCH, nil
+		return effectv1.Effect_EFFECT_NO_MATCH, nil
 	default:
-		return sharedv1.Effect_EFFECT_DENY, fmt.Errorf("unknown effect value [%s]: %w", effectVal, ErrUnexpectedResult)
+		return effectv1.Effect_EFFECT_DENY, fmt.Errorf("unknown effect value [%s]: %w", effectVal, ErrUnexpectedResult)
 	}
 }
 

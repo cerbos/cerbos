@@ -10,8 +10,8 @@ import (
 	"github.com/google/cel-go/cel"
 	"github.com/open-policy-agent/opa/ast"
 
-	policyv1 "github.com/cerbos/cerbos/internal/genpb/policy/v1"
-	sharedv1 "github.com/cerbos/cerbos/internal/genpb/shared/v1"
+	effectv1 "github.com/cerbos/cerbos/api/genpb/cerbos/effect/v1"
+	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
 	"github.com/cerbos/cerbos/internal/namer"
 )
 
@@ -225,11 +225,11 @@ func (rg *RegoGen) AddPrincipalRule(rule *policyv1.PrincipalRule) error {
 	return nil
 }
 
-func (rg *RegoGen) addEffectRuleHead(effect sharedv1.Effect) {
+func (rg *RegoGen) addEffectRuleHead(effect effectv1.Effect) {
 	var effectVal string
 
 	switch effect {
-	case sharedv1.Effect_EFFECT_ALLOW:
+	case effectv1.Effect_EFFECT_ALLOW:
 		effectVal = allowVal
 	default:
 		effectVal = denyVal

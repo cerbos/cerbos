@@ -9,7 +9,7 @@ import (
 	"go.opencensus.io/stats"
 	"go.opencensus.io/tag"
 
-	enginev1 "github.com/cerbos/cerbos/internal/genpb/engine/v1"
+	enginev1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
 	"github.com/cerbos/cerbos/internal/observability/metrics"
 )
 

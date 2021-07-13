@@ -1,0 +1,41 @@
+include::ROOT:partial$attributes.adoc[]
+
+= Cerbos CLI
+
+In addition to the PDP server, the Cerbos executable contains several other utilities that can be invoked by passing different command-line arguments. You can view the available commands by invoking Cerbos with the `--help` flag.
+
+
+.Using the binary
+[source,sh,subs="attributes"]
+----
+./{app-name} --help
+----
+
+.Using the container
+[source,sh,subs="attributes"]
+----
+docker run -i -t {app-docker-img} --help 
+----
+
+
+[source,sh]
+----
+Painless access controls for cloud-native applications
+
+Usage:
+  cerbos [command]
+
+Available Commands:
+  compile     Compile the policy files found in the directory
+  completion  generate the autocompletion script for the specified shell
+  ctl         Cerbos control
+  help        Help about any command
+  server      Start server
+
+Flags:
+  -h, --help      help for cerbos
+  -v, --version   version for cerbos
+
+Use "cerbos [command] --help" for more information about a command.
+----
+

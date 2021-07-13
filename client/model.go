@@ -10,10 +10,10 @@ import (
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/types/known/structpb"
 
-	enginev1 "github.com/cerbos/cerbos/internal/genpb/engine/v1"
-	requestv1 "github.com/cerbos/cerbos/internal/genpb/request/v1"
-	responsev1 "github.com/cerbos/cerbos/internal/genpb/response/v1"
-	sharedv1 "github.com/cerbos/cerbos/internal/genpb/shared/v1"
+	effectv1 "github.com/cerbos/cerbos/api/genpb/cerbos/effect/v1"
+	enginev1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
+	requestv1 "github.com/cerbos/cerbos/api/genpb/cerbos/request/v1"
+	responsev1 "github.com/cerbos/cerbos/api/genpb/cerbos/response/v1"
 )
 
 // Principal is a container for principal data.
@@ -204,7 +204,7 @@ func (crsr *CheckResourceSetResponse) IsAllowed(resourceID, action string) bool 
 		return false
 	}
 
-	return effect == sharedv1.Effect_EFFECT_ALLOW
+	return effect == effectv1.Effect_EFFECT_ALLOW
 }
 
 func (crsr *CheckResourceSetResponse) String() string {

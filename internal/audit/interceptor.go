@@ -13,7 +13,7 @@ import (
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	auditv1 "github.com/cerbos/cerbos/internal/genpb/audit/v1"
+	auditv1 "github.com/cerbos/cerbos/api/genpb/cerbos/audit/v1"
 )
 
 var excludeMetadataKeys = map[string]struct{}{

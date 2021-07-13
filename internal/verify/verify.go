@@ -11,10 +11,10 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 
+	effectv1 "github.com/cerbos/cerbos/api/genpb/cerbos/effect/v1"
+	enginev1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
+	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
 	"github.com/cerbos/cerbos/internal/engine"
-	enginev1 "github.com/cerbos/cerbos/internal/genpb/engine/v1"
-	policyv1 "github.com/cerbos/cerbos/internal/genpb/policy/v1"
-	sharedv1 "github.com/cerbos/cerbos/internal/genpb/shared/v1"
 	"github.com/cerbos/cerbos/internal/util"
 )
 
@@ -99,7 +99,7 @@ func doVerify(ctx context.Context, fsys fs.FS, eng *engine.Engine, conf Config) 
 }
 
 // EffectsMatch is a type created to make the diff output nicer.
-type EffectsMatch map[string]sharedv1.Effect
+type EffectsMatch map[string]effectv1.Effect
 
 func runTestSuite(ctx context.Context, eng *engine.Engine, shouldRun func(string) bool, file string, ts *policyv1.TestSuite) (SuiteResult, bool) {
 	failed := false

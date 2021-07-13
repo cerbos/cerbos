@@ -11,7 +11,7 @@ import (
 
 	"github.com/cespare/xxhash"
 
-	policyv1 "github.com/cerbos/cerbos/internal/genpb/policy/v1"
+	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
 )
 
 var invalidIdentiferChars = regexp.MustCompile(`[^\w\.]+`)

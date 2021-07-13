@@ -26,12 +26,12 @@ import (
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/testing/protocmp"
 
+	privatev1 "github.com/cerbos/cerbos/api/genpb/cerbos/private/v1"
+	responsev1 "github.com/cerbos/cerbos/api/genpb/cerbos/response/v1"
+	svcv1 "github.com/cerbos/cerbos/api/genpb/cerbos/svc/v1"
 	"github.com/cerbos/cerbos/internal/audit"
 	"github.com/cerbos/cerbos/internal/compile"
 	"github.com/cerbos/cerbos/internal/engine"
-	cerbosdevv1 "github.com/cerbos/cerbos/internal/genpb/cerbosdev/v1"
-	responsev1 "github.com/cerbos/cerbos/internal/genpb/response/v1"
-	svcv1 "github.com/cerbos/cerbos/internal/genpb/svc/v1"
 	"github.com/cerbos/cerbos/internal/storage"
 	"github.com/cerbos/cerbos/internal/storage/db/sqlite3"
 	"github.com/cerbos/cerbos/internal/storage/disk"
@@ -223,7 +223,7 @@ func startServer(ctx context.Context, conf *Conf, store storage.Store, eng *engi
 	runtime.Gosched()
 }
 
-func testGRPCRequests(testCases []*cerbosdevv1.ServerTestCase, addr string, opts ...grpc.DialOption) func(*testing.T) {
+func testGRPCRequests(testCases []*privatev1.ServerTestCase, addr string, opts ...grpc.DialOption) func(*testing.T) {
 	//nolint:thelper
 	return func(t *testing.T) {
 		grpcConn := mkGRPCConn(t, addr, opts...)
@@ -244,7 +244,7 @@ func mkGRPCConn(t *testing.T, addr string, opts ...grpc.DialOption) *grpc.Client
 	return grpcConn
 }
 
-func executeGRPCTestCase(grpcConn *grpc.ClientConn, tc *cerbosdevv1.ServerTestCase) func(*testing.T) {
+func executeGRPCTestCase(grpcConn *grpc.ClientConn, tc *privatev1.ServerTestCase) func(*testing.T) {
 	//nolint:thelper
 	return func(t *testing.T) {
 		var have, want proto.Message
@@ -254,23 +254,23 @@ func executeGRPCTestCase(grpcConn *grpc.ClientConn, tc *cerbosdevv1.ServerTestCa
 		defer cancelFunc()
 
 		switch call := tc.CallKind.(type) {
-		case *cerbosdevv1.ServerTestCase_CheckResourceSet:
+		case *privatev1.ServerTestCase_CheckResourceSet:
 			cerbosClient := svcv1.NewCerbosServiceClient(grpcConn)
 			want = call.CheckResourceSet.WantResponse
 			have, err = cerbosClient.CheckResourceSet(ctx, call.CheckResourceSet.Input)
-		case *cerbosdevv1.ServerTestCase_CheckResourceBatch:
+		case *privatev1.ServerTestCase_CheckResourceBatch:
 			cerbosClient := svcv1.NewCerbosServiceClient(grpcConn)
 			want = call.CheckResourceBatch.WantResponse
 			have, err = cerbosClient.CheckResourceBatch(ctx, call.CheckResourceBatch.Input)
-		case *cerbosdevv1.ServerTestCase_PlaygroundValidate:
+		case *privatev1.ServerTestCase_PlaygroundValidate:
 			playgroundClient := svcv1.NewCerbosPlaygroundServiceClient(grpcConn)
 			want = call.PlaygroundValidate.WantResponse
 			have, err = playgroundClient.PlaygroundValidate(ctx, call.PlaygroundValidate.Input)
-		case *cerbosdevv1.ServerTestCase_PlaygroundEvaluate:
+		case *privatev1.ServerTestCase_PlaygroundEvaluate:
 			playgroundClient := svcv1.NewCerbosPlaygroundServiceClient(grpcConn)
 			want = call.PlaygroundEvaluate.WantResponse
 			have, err = playgroundClient.PlaygroundEvaluate(ctx, call.PlaygroundEvaluate.Input)
-		case *cerbosdevv1.ServerTestCase_AdminAddOrUpdatePolicy:
+		case *privatev1.ServerTestCase_AdminAddOrUpdatePolicy:
 			adminClient := svcv1.NewCerbosAdminServiceClient(grpcConn)
 			want = call.AdminAddOrUpdatePolicy.WantResponse
 			have, err = adminClient.AddOrUpdatePolicy(ctx, call.AdminAddOrUpdatePolicy.Input)
@@ -293,7 +293,7 @@ func executeGRPCTestCase(grpcConn *grpc.ClientConn, tc *cerbosdevv1.ServerTestCa
 	}
 }
 
-func testHTTPRequests(testCases []*cerbosdevv1.ServerTestCase, hostAddr string, creds *authCreds) func(*testing.T) {
+func testHTTPRequests(testCases []*privatev1.ServerTestCase, hostAddr string, creds *authCreds) func(*testing.T) {
 	//nolint:thelper
 	return func(t *testing.T) {
 		c := mkHTTPClient(t)
@@ -312,34 +312,34 @@ func mkHTTPClient(t *testing.T) *http.Client {
 	return &http.Client{Transport: customTransport}
 }
 
-func executeHTTPTestCase(c *http.Client, hostAddr string, creds *authCreds, tc *cerbosdevv1.ServerTestCase) func(*testing.T) {
+func executeHTTPTestCase(c *http.Client, hostAddr string, creds *authCreds, tc *privatev1.ServerTestCase) func(*testing.T) {
 	//nolint:thelper
 	return func(t *testing.T) {
 		var input, have, want proto.Message
 		var addr string
 
 		switch call := tc.CallKind.(type) {
-		case *cerbosdevv1.ServerTestCase_CheckResourceSet:
+		case *privatev1.ServerTestCase_CheckResourceSet:
 			addr = fmt.Sprintf("%s/api/check", hostAddr)
 			input = call.CheckResourceSet.Input
 			want = call.CheckResourceSet.WantResponse
 			have = &responsev1.CheckResourceSetResponse{}
-		case *cerbosdevv1.ServerTestCase_CheckResourceBatch:
+		case *privatev1.ServerTestCase_CheckResourceBatch:
 			addr = fmt.Sprintf("%s/api/check_resource_batch", hostAddr)
 			input = call.CheckResourceBatch.Input
 			want = call.CheckResourceBatch.WantResponse
 			have = &responsev1.CheckResourceBatchResponse{}
-		case *cerbosdevv1.ServerTestCase_PlaygroundValidate:
+		case *privatev1.ServerTestCase_PlaygroundValidate:
 			addr = fmt.Sprintf("%s/api/playground/validate", hostAddr)
 			input = call.PlaygroundValidate.Input
 			want = call.PlaygroundValidate.WantResponse
 			have = &responsev1.PlaygroundValidateResponse{}
-		case *cerbosdevv1.ServerTestCase_PlaygroundEvaluate:
+		case *privatev1.ServerTestCase_PlaygroundEvaluate:
 			addr = fmt.Sprintf("%s/api/playground/evaluate", hostAddr)
 			input = call.PlaygroundEvaluate.Input
 			want = call.PlaygroundEvaluate.WantResponse
 			have = &responsev1.PlaygroundEvaluateResponse{}
-		case *cerbosdevv1.ServerTestCase_AdminAddOrUpdatePolicy:
+		case *privatev1.ServerTestCase_AdminAddOrUpdatePolicy:
 			addr = fmt.Sprintf("%s/admin/policy", hostAddr)
 			input = call.AdminAddOrUpdatePolicy.Input
 			want = call.AdminAddOrUpdatePolicy.WantResponse
@@ -389,9 +389,9 @@ func executeHTTPTestCase(c *http.Client, hostAddr string, creds *authCreds, tc *
 	}
 }
 
-func loadTestCases(t *testing.T, dirs ...string) []*cerbosdevv1.ServerTestCase {
+func loadTestCases(t *testing.T, dirs ...string) []*privatev1.ServerTestCase {
 	t.Helper()
-	var testCases []*cerbosdevv1.ServerTestCase
+	var testCases []*privatev1.ServerTestCase
 
 	for _, dir := range dirs {
 		cases := test.LoadTestCases(t, filepath.Join("server", dir))
@@ -404,10 +404,10 @@ func loadTestCases(t *testing.T, dirs ...string) []*cerbosdevv1.ServerTestCase {
 	return testCases
 }
 
-func readTestCase(t *testing.T, name string, data []byte) *cerbosdevv1.ServerTestCase {
+func readTestCase(t *testing.T, name string, data []byte) *privatev1.ServerTestCase {
 	t.Helper()
 
-	tc := &cerbosdevv1.ServerTestCase{}
+	tc := &privatev1.ServerTestCase{}
 	require.NoError(t, util.ReadJSONOrYAML(bytes.NewReader(data), tc))
 
 	if tc.Name == "" {
