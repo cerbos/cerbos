@@ -25,8 +25,12 @@ import (
 
 // Client provides access to the Cerbos API.
 type Client interface {
+	// IsAllowed checks access to a single resource by a principal and returns true if access is granted.
 	IsAllowed(context.Context, *Principal, *Resource, string) (bool, error)
+	// CheckResourceSet checks access to a set of resources of the same kind.
 	CheckResourceSet(context.Context, *Principal, *ResourceSet, ...string) (*CheckResourceSetResponse, error)
+	// CheckResourceBatch checks access to a batch of resources of different kinds.
+	CheckResourceBatch(context.Context, *Principal, *ResourceBatch) (*CheckResourceBatchResponse, error)
 }
 
 type config struct {
@@ -103,6 +107,15 @@ func WithRetryTimeout(timeout time.Duration) Opt {
 
 // New creates a new Cerbos client.
 func New(address string, opts ...Opt) (Client, error) {
+	grpcConn, err := mkConn(address, opts...)
+	if err != nil {
+		return nil, err
+	}
+
+	return &grpcClient{stub: svcv1.NewCerbosServiceClient(grpcConn)}, nil
+}
+
+func mkConn(address string, opts ...Opt) (*grpc.ClientConn, error) {
 	conf := config{
 		address:        address,
 		connectTimeout: 30 * time.Second, //nolint:gomnd
@@ -124,7 +137,7 @@ func New(address string, opts ...Opt) (Client, error) {
 		return nil, fmt.Errorf("failed to dial gRPC: %w", err)
 	}
 
-	return &grpcClient{stub: svcv1.NewCerbosServiceClient(grpcConn)}, nil
+	return grpcConn, nil
 }
 
 func mkDialOpts(conf config) ([]grpc.DialOption, error) {
@@ -236,6 +249,34 @@ func (gc *grpcClient) CheckResourceSet(ctx context.Context, principal *Principal
 	}
 
 	return &CheckResourceSetResponse{CheckResourceSetResponse: result}, nil
+}
+
+func (gc *grpcClient) CheckResourceBatch(ctx context.Context, principal *Principal, resourceBatch *ResourceBatch) (*CheckResourceBatchResponse, error) {
+	if err := isValid(principal); err != nil {
+		return nil, fmt.Errorf("invalid principal: %w", err)
+	}
+
+	if err := isValid(resourceBatch); err != nil {
+		return nil, fmt.Errorf("invalid resource batch; %w", err)
+	}
+
+	reqID, err := uuid.NewRandom()
+	if err != nil {
+		return nil, fmt.Errorf("failed to generate request ID: %w", err)
+	}
+
+	req := &requestv1.CheckResourceBatchRequest{
+		RequestId: reqID.String(),
+		Principal: principal.Principal,
+		Resources: resourceBatch.batch,
+	}
+
+	result, err := gc.stub.CheckResourceBatch(ctx, req)
+	if err != nil {
+		return nil, fmt.Errorf("request failed: %w", err)
+	}
+
+	return &CheckResourceBatchResponse{CheckResourceBatchResponse: result}, nil
 }
 
 func (gc *grpcClient) IsAllowed(ctx context.Context, principal *Principal, resource *Resource, action string) (bool, error) {

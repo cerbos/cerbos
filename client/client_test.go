@@ -157,6 +157,59 @@ func testGRPCClient(c client.Client) func(*testing.T) {
 			require.False(t, have.IsAllowed("XX125", "approve"))
 		})
 
+		t.Run("CheckResourceBatch", func(t *testing.T) {
+			ctx, cancelFunc := context.WithTimeout(context.Background(), 10*time.Second)
+			defer cancelFunc()
+
+			have, err := c.CheckResourceBatch(
+				ctx,
+				client.NewPrincipal("john").
+					WithRoles("employee").
+					WithPolicyVersion("20210210").
+					WithAttributes(map[string]interface{}{
+						"department": "marketing",
+						"geography":  "GB",
+						"team":       "design",
+					}),
+				client.NewResourceBatch().
+					Add(client.
+						NewResource("leave_request", "XX125").
+						WithPolicyVersion("20210210").
+						WithAttributes(map[string]interface{}{
+							"department": "marketing",
+							"geography":  "GB",
+							"id":         "XX125",
+							"owner":      "john",
+							"team":       "design",
+						}), "view:public").
+					Add(client.
+						NewResource("leave_request", "XX125").
+						WithPolicyVersion("20210210").
+						WithAttributes(map[string]interface{}{
+							"department": "marketing",
+							"geography":  "GB",
+							"id":         "XX125",
+							"owner":      "john",
+							"team":       "design",
+						}), "approve").
+					Add(client.
+						NewResource("leave_request", "XX225").
+						WithPolicyVersion("20210210").
+						WithAttributes(map[string]interface{}{
+							"department": "engineering",
+							"geography":  "GB",
+							"id":         "XX225",
+							"owner":      "mary",
+							"team":       "frontend",
+						}), "approve"),
+			)
+
+			require.NoError(t, err)
+			require.True(t, have.IsAllowed("XX125", "view:public"))
+			require.False(t, have.IsAllowed("XX125", "approve"))
+			require.False(t, have.IsAllowed("XX225", "approve"))
+		})
+
 		t.Run("IsAllowed", func(t *testing.T) {
 			ctx, cancelFunc := context.WithTimeout(context.Background(), 10*time.Second)
 			defer cancelFunc()
