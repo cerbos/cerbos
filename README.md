@@ -13,7 +13,7 @@ Example
 ```yaml
 ---
 apiVersion: "api.cerbos.dev/v1"
-derived_roles:
+derivedRoles:
   name: common_roles
   definitions:
     - name: owner
