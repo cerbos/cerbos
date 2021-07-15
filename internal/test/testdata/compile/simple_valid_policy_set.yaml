@@ -36,7 +36,7 @@ inputDefs:
 
   "derived_roles/my_derived_roles.yaml":
     apiVersion: "api.cerbos.dev/v1"
-    derived_roles:
+    derivedRoles:
       name: my_derived_roles
       definitions:
         - name: tester

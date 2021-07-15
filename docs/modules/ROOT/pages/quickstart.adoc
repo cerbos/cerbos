@@ -48,7 +48,7 @@ Let's create a xref:policies:derived_roles.adoc[derived roles] definition that a
 cat > cerbos-quickstart/policies/derived_roles_common.yaml <<EOF
 ---
 apiVersion: "api.cerbos.dev/v1"
-derived_roles:
+derivedRoles:
   name: common_roles
   definitions:
     - name: owner

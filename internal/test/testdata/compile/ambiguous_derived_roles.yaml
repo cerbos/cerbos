@@ -40,7 +40,7 @@ inputDefs:
 
   "derived_roles/alpha.yaml":
     apiVersion: "api.cerbos.dev/v1"
-    derived_roles:
+    derivedRoles:
       name: alpha
       definitions:
         - name: tester
@@ -54,7 +54,7 @@ inputDefs:
 
   "derived_roles/beta.yaml":
     apiVersion: "api.cerbos.dev/v1"
-    derived_roles:
+    derivedRoles:
       name: beta
       definitions:
         - name: tester
@@ -65,7 +65,7 @@ inputDefs:
 
   "derived_roles/gamma.yaml":
     apiVersion: "api.cerbos.dev/v1"
-    derived_roles:
+    derivedRoles:
       name: gamma
       definitions:
         - name: any_employee
