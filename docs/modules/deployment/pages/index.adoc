@@ -6,7 +6,7 @@ Cerbos can be deployed as a service or as a sidecar. Which mode to choose depend
 
 == Service model
 
-image::service_deployment.png[Service model, 40%, margin-left="300px"]
+image:service_deployment.png[alt="Service model",role="center-img"]
 
 * Central policy decision point shared by a group of applications.
 * Cerbos can be upgraded independently from the applications — reducing maintenance overhead.
@@ -15,7 +15,7 @@ image::service_deployment.png[Service model, 40%, margin-left="300px"]
 
 == Sidecar model
 
-image::sidecar_deployment.png[Sidecar model, 50%, margin-left="300px"]
+image:sidecar_deployment.png[Sidecar model,role="center-img"]
 
 * Each application instance gets its own Cerbos instance — ensuring high performance and availability.
 * Upgrades to Cerbos would require a rolling update to all the application instances.
