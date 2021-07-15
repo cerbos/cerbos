@@ -10,9 +10,11 @@ import (
 )
 
 const (
-	confKey               = "server"
-	defaultHTTPListenAddr = ":3592"
-	defaultGRPCListenAddr = ":3593"
+	confKey                  = "server"
+	defaultHTTPListenAddr    = ":3592"
+	defaultGRPCListenAddr    = ":3593"
+	defaultAdminUsername     = "cerbos"
+	defaultAdminPasswordHash = "$2y$10$VlPwcwpgcGZ5KjTaN1Pzk.vpFiQVG6F2cSWzQa9RtrNo3IacbzsEi" //nolint:gosec
 )
 
 // Conf holds configuration pertaining to the server.
@@ -70,6 +72,14 @@ type AdminCredentialsConf struct {
 	PasswordHash string `yaml:"passwordHash"`
 }
 
+func (a *AdminCredentialsConf) isUnsafe() bool {
+	if a == nil {
+		return false
+	}
+
+	return a.Username == defaultAdminUsername || a.PasswordHash == defaultAdminPasswordHash
+}
+
 func (c *Conf) Key() string {
 	return confKey
 }
@@ -80,8 +90,8 @@ func (c *Conf) SetDefaults() {
 	c.MetricsEnabled = true
 	if c.AdminAPI.AdminCredentials == nil {
 		c.AdminAPI.AdminCredentials = &AdminCredentialsConf{
-			Username:     "cerbos",
-			PasswordHash: "$2y$10$VlPwcwpgcGZ5KjTaN1Pzk.vpFiQVG6F2cSWzQa9RtrNo3IacbzsEi", // cerbosAdmin
+			Username:     defaultAdminUsername,
+			PasswordHash: defaultAdminPasswordHash,
 		}
 	}
 }

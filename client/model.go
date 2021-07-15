@@ -385,6 +385,7 @@ func toStructPB(v interface{}) (*structpb.Value, error) {
 // PolicySet is a container for a set of policies.
 type PolicySet struct {
 	policies []*policyv1.Policy
+	err      error
 }
 
 // NewPolicySet creates a new policy set.
@@ -393,10 +394,11 @@ func NewPolicySet() *PolicySet {
 }
 
 // AddPolicyFromFile adds a policy from the given file to the set.
-func (ps *PolicySet) AddPolicyFromFile(file string) error {
+func (ps *PolicySet) AddPolicyFromFile(file string) *PolicySet {
 	f, err := os.Open(file)
 	if err != nil {
-		return err
+		ps.err = multierr.Append(ps.err, fmt.Errorf("failed to add policy from file '%s': %w", file, err))
+		return ps
 	}
 
 	defer f.Close()
@@ -404,10 +406,11 @@ func (ps *PolicySet) AddPolicyFromFile(file string) error {
 }
 
 // AddPolicyFromReader adds a policy from the given reader to the set.
-func (ps *PolicySet) AddPolicyFromReader(r io.Reader) error {
+func (ps *PolicySet) AddPolicyFromReader(r io.Reader) *PolicySet {
 	p, err := policy.ReadPolicy(r)
 	if err != nil {
-		return err
+		ps.err = multierr.Append(ps.err, fmt.Errorf("failed to add policy from reader: %w", err))
+		return ps
 	}
 
 	ps.policies = append(ps.policies, p)
@@ -415,36 +418,48 @@ func (ps *PolicySet) AddPolicyFromReader(r io.Reader) error {
 }
 
 // AddResourcePolicies adds the given resource policies to the set.
-func (ps *PolicySet) AddResourcePolicies(policies ...*ResourcePolicy) error {
+func (ps *PolicySet) AddResourcePolicies(policies ...*ResourcePolicy) *PolicySet {
 	for _, p := range policies {
+		if p == nil {
+			continue
+		}
+
 		if err := ps.add(p); err != nil {
-			return err
+			ps.err = multierr.Append(ps.err, fmt.Errorf("failed to add resource policy [%s:%s]: %w", p.p.Resource, p.p.Version, err))
 		}
 	}
 
-	return nil
+	return ps
 }
 
 // AddPrincipalPolicies adds the given principal policies to the set.
-func (ps *PolicySet) AddPrincipalPolicies(policies ...*PrincipalPolicy) error {
+func (ps *PolicySet) AddPrincipalPolicies(policies ...*PrincipalPolicy) *PolicySet {
 	for _, p := range policies {
+		if p == nil {
+			continue
+		}
+
 		if err := ps.add(p); err != nil {
-			return err
+			ps.err = multierr.Append(ps.err, fmt.Errorf("failed to add principal policy [%s:%s]: %w", p.pp.Principal, p.pp.Version, err))
 		}
 	}
 
-	return nil
+	return ps
 }
 
 // AddDerivedRoles adds the given derived roles to the set.
-func (ps *PolicySet) AddDerivedRoles(policies ...*DerivedRoles) error {
+func (ps *PolicySet) AddDerivedRoles(policies ...*DerivedRoles) *PolicySet {
 	for _, p := range policies {
+		if p == nil {
+			continue
+		}
+
 		if err := ps.add(p); err != nil {
-			return err
+			ps.err = multierr.Append(ps.err, fmt.Errorf("failed to add derived roles [%s]: %w", p.dr.Name, err))
 		}
 	}
 
-	return nil
+	return ps
 }
 
 func (ps *PolicySet) add(b interface {
@@ -456,6 +471,24 @@ func (ps *PolicySet) add(b interface {
 	}
 
 	ps.policies = append(ps.policies, p)
+	return nil
+}
+
+// Err returns the errors accumulated during the construction of the policy set.
+func (ps *PolicySet) Err() error {
+	return ps.err
+}
+
+// Validate checks whether the policy set is valid.
+func (ps *PolicySet) Validate() error {
+	if ps.err != nil {
+		return ps.err
+	}
+
+	if len(ps.policies) == 0 {
+		return errors.New("empty policy set")
+	}
+
 	return nil
 }
 
@@ -756,7 +789,7 @@ func MatchExpr(expr string) match {
 	return matchExpr(expr)
 }
 
-// MatchAllOf  matches all of the expressions (logical AND)
+// MatchAllOf  matches all of the expressions (logical AND).
 func MatchAllOf(m ...match) match {
 	return matchList{
 		list: m,
@@ -766,7 +799,7 @@ func MatchAllOf(m ...match) match {
 	}
 }
 
-// MatchAnyOf  matches any of the expressions (logical OR)
+// MatchAnyOf  matches any of the expressions (logical OR).
 func MatchAnyOf(m ...match) match {
 	return matchList{
 		list: m,
@@ -776,7 +809,7 @@ func MatchAnyOf(m ...match) match {
 	}
 }
 
-// MatchNoneOf  matches none of the expressions (logical NOT)
+// MatchNoneOf  matches none of the expressions (logical NOT).
 func MatchNoneOf(m ...match) match {
 	return matchList{
 		list: m,
