@@ -106,6 +106,9 @@ cerbos ctl audit --kind=access --lookup=01F9Y5MFYTX7Y87A30CTJ2FB0S
 
 This command starts an interactive text user interface to view and analyze the decision records captured by the Cerbos server. It accepts the same xref:#audit-filters[filter flags] as the `audit` command.
 
+
+image:decisions-tui.png[alt="Decisions",role="center-img"]
+
 - kbd:[tab] Switch focus to different panes in the UI
 - kbd:[esc] Close window (or exit if you are in the main screen)
 - kbd:[q] Exit
