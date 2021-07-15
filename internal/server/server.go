@@ -280,6 +280,9 @@ func (s *Server) startGRPCServer(l net.Listener, store storage.Store, eng *engin
 	if s.conf.AdminAPI.Enabled {
 		log.Info("Starting admin service")
 		creds := s.conf.AdminAPI.AdminCredentials
+		if creds.isUnsafe() {
+			log.Warn("[SECURITY RISK] Admin API uses default credentials which are unsafe for production use. Please change the credentials by updating the configuration file.")
+		}
 		svcv1.RegisterCerbosAdminServiceServer(server, svc.NewCerbosAdminService(store, auditLog, creds.Username, creds.PasswordHash))
 	}
 
