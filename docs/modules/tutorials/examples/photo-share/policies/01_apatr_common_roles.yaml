@@ -2,7 +2,7 @@
 apiVersion: "api.cerbos.dev/v1"
 description: |-
   Common dynamic roles used within the Apatr app
-derived_roles:
+derivedRoles:
   name: apatr_common_roles
   definitions:
     - name: owner
