@@ -16,6 +16,24 @@ Alternatively, you can explore the API using the following methods as well:
 * Using an OpenAPI-compatible software like link:https://www.postman.com[Postman] or link:https://insomnia.rest[Insomnia] to explore the Cerbos OpenAPI spec available at http://localhost:3592{cerbos-openapi-schema}.
 * Using link:https://github.com/fullstorydev/grpcurl[grpcurl] or any other tool that supports link:https://github.com/grpc/grpc/blob/master/doc/server-reflection.md[gRPC server reflection] API to explore the gRPC API exposed on port 3593.
 
+== Client SDKs
+
+=== Available
+
+image:nodejs.svg[alt="NodeJS",width=40,height=40,link="https://github.com/cerbos/cerbos-sdk-node"]
+
+=== Coming soon
+
+image:csharp.svg[alt="C#",opts="interactive",width=40,height=40]  image:go.svg[alt="Go",opts="interactive",width=40,height=40]  image:java.svg[alt="Java",opts="interactive",width=40,height=40]  image:python.svg[alt="Python",opts="interactive",width=40,height=40]  image:ruby.svg[alt="Ruby",opts="interactive",width=40,height=40]  image:rust.svg[alt="Rust",opts="interactive",width=40,height=40]
+
+
+== Demos
+
+* link:https://github.com/cerbos/demo-python[Application (Python)]
+* link:https://github.com/cerbos/demo-graphql[GraphQL Service (NodeJS)]
+* link:https://github.com/cerbos/demo-rest[REST Service (Go)]
+
+
 == Request and response formats
 
 === `CheckResourceSet` (`/api/check`)
