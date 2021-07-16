@@ -33,6 +33,13 @@ image:csharp.svg[alt="C#",opts="interactive",width=40,height=40]  image:go.svg[a
 * link:https://github.com/cerbos/demo-graphql[GraphQL Service (NodeJS)]
 * link:https://github.com/cerbos/demo-rest[REST Service (Go)]
 
+.Get help
+****
+
+* link:http://go.cerbos.io/slack[Join the Cerbos community on Slack]
+* mailto:help@cerbos.dev[Email us at help@cerbos.dev]
+
+****
 
 == Request and response formats
 

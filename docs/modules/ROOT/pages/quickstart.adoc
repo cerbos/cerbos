@@ -123,5 +123,12 @@ docker kill cerbos
 ----
 
 
-.Where to go from here
+.Next steps
+****
+
 * xref:policies:index.adoc[Read more about Cerbos policies]
+* link:http://go.cerbos.io/slack[Join the Cerbos community on Slack]
+* mailto:help@cerbos.dev[Ask us anything via help@cerbos.dev]
+* link:https://cerbos.dev[Visit the Cerbos website]
+
+****
