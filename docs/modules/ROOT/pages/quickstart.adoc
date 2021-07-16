@@ -15,11 +15,11 @@ Now start the Cerbos server. We are using the container image in this guide but 
 .Downloading the container image
 ****
 
-You will need to login to the container registry using the username and API key provided to you.
+During the early access period you will need to login to the container registry using the provided Cerbos key.
 
 [source,sh,subs="attributes"]
 ----
-echo YOUR_API_KEY | docker login {app-container-registry} -u YOUR_USERNAME --password-stdin
+echo CERBOS_KEY | docker login {app-container-registry} -u cerbos-ea --password-stdin
 ----
 
 ****

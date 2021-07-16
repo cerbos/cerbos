@@ -2,11 +2,11 @@ include::partial$attributes.adoc[]
 
 = Install from Helm chart
 
-Add the Cerbos Helm repository using the username and API key provided to you:
+Add the Cerbos Helm repository using the Cerbos key provided to you:
 
 [source,sh,subs="attributes,macros"]
 ----
-helm repo add cerbos https://cerbos.jfrog.io/artifactory/charts --username $$<$$YOUR_USERNAME$$>$$ --password $$<$$YOUR_API_KEY$$>$$
+helm repo add cerbos https://cerbos.jfrog.io/artifactory/charts --username cerbos-ea --password $$<$$CERBOS_KEY$$>$$
 helm repo update
 ----
 
@@ -25,7 +25,7 @@ Create a Kubernetes secret containing the credentials provided to you.
 
 [source,sh,subs="attributes,macros"]
 ----
-kubectl create secret docker-registry cerbos-registry --docker-server={app-container-registry} --docker-username=$$<$$YOUR_USERNAME$$>$$ --docker-password=$$<$$YOUR_API_KEY$$>$$
+kubectl create secret docker-registry cerbos-registry --docker-server={app-container-registry} --docker-username=cerbos-ea --docker-password=$$<$$CERBOS_KEY$$>$$
 ----
 
 When installing Cerbos using the Helm chart, append `--set='imagePullSecrets[0].name=cerbos-registry'` to the argument list. For example:
