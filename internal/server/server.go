@@ -274,8 +274,12 @@ func (s *Server) startGRPCServer(l net.Listener, store storage.Store, eng *engin
 	log := zap.L().Named("grpc")
 	server := s.mkGRPCServer(log, auditLog)
 
+	healthpb.RegisterHealthServer(server, s.health)
+	reflection.Register(server)
+
 	cerbosSvc := svc.NewCerbosService(eng)
 	svcv1.RegisterCerbosServiceServer(server, cerbosSvc)
+	s.health.SetServingStatus(svcv1.CerbosService_ServiceDesc.ServiceName, healthpb.HealthCheckResponse_SERVING)
 
 	if s.conf.AdminAPI.Enabled {
 		log.Info("Starting admin service")
@@ -284,15 +288,14 @@ func (s *Server) startGRPCServer(l net.Listener, store storage.Store, eng *engin
 			log.Warn("[SECURITY RISK] Admin API uses default credentials which are unsafe for production use. Please change the credentials by updating the configuration file.")
 		}
 		svcv1.RegisterCerbosAdminServiceServer(server, svc.NewCerbosAdminService(store, auditLog, creds.Username, creds.PasswordHash))
+		s.health.SetServingStatus(svcv1.CerbosAdminService_ServiceDesc.ServiceName, healthpb.HealthCheckResponse_SERVING)
 	}
 
 	if s.conf.PlaygroundEnabled {
 		log.Info("Starting playground service")
 		svcv1.RegisterCerbosPlaygroundServiceServer(server, svc.NewCerbosPlaygroundService())
+		s.health.SetServingStatus(svcv1.CerbosPlaygroundService_ServiceDesc.ServiceName, healthpb.HealthCheckResponse_SERVING)
 	}
-
-	healthpb.RegisterHealthServer(server, s.health)
-	reflection.Register(server)
 
 	s.group.Go(func() error {
 		log.Info(fmt.Sprintf("Starting gRPC server at %s", s.conf.GRPCListenAddr))
@@ -360,23 +363,9 @@ func (s *Server) startHTTPServer(ctx context.Context, l net.Listener, grpcSrv *g
 		}),
 	)
 
-	opts := defaultGRPCDialOpts()
-
-	tlsConf, err := s.getTLSConfig()
+	grpcConn, err := s.mkGRPCConn(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create TLS config: %w", err)
-	}
-
-	if tlsConf != nil {
-		tlsConf.InsecureSkipVerify = true // we are connecting as localhost which would differ from what the cert is issued for.
-		opts = append(opts, grpc.WithTransportCredentials(credentials.NewTLS(tlsConf)))
-	} else {
-		opts = append(opts, grpc.WithTransportCredentials(local.NewCredentials()))
-	}
-
-	grpcConn, err := grpc.DialContext(ctx, s.conf.GRPCListenAddr, opts...)
-	if err != nil {
-		return nil, fmt.Errorf("failed to dial gRPC: %w", err)
+		return nil, err
 	}
 
 	if err := svcv1.RegisterCerbosServiceHandler(ctx, gwmux, grpcConn); err != nil {
@@ -471,6 +460,29 @@ func (s *Server) handleHTTPHealthCheck(conn grpc.ClientConnInterface) http.Handl
 			http.Error(w, resp.Status.String(), http.StatusServiceUnavailable)
 		}
 	}
+}
+
+func (s *Server) mkGRPCConn(ctx context.Context) (*grpc.ClientConn, error) {
+	opts := defaultGRPCDialOpts()
+
+	tlsConf, err := s.getTLSConfig()
+	if err != nil {
+		return nil, fmt.Errorf("failed to create TLS config: %w", err)
+	}
+
+	if tlsConf != nil {
+		tlsConf.InsecureSkipVerify = true // we are connecting as localhost which would differ from what the cert is issued for.
+		opts = append(opts, grpc.WithTransportCredentials(credentials.NewTLS(tlsConf)))
+	} else {
+		opts = append(opts, grpc.WithTransportCredentials(local.NewCredentials()))
+	}
+
+	grpcConn, err := grpc.DialContext(ctx, s.conf.GRPCListenAddr, opts...)
+	if err != nil {
+		return nil, fmt.Errorf("failed to dial gRPC: %w", err)
+	}
+
+	return grpcConn, nil
 }
 
 // inspired by https://github.com/ghostunnel/ghostunnel/blob/6e58c75c8762fe371c1134e89dd55033a6d577a4/socket/net.go#L100
