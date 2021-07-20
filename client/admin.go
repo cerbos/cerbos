@@ -28,6 +28,7 @@ func NewAdminClient(address string, opts ...Opt) (AdminClient, error) {
 	return NewAdminClientWithCredentials(address, "", "", opts...)
 }
 
+// NewAdminClientWithCredentials creates a new admin client using credentials explicitly passed as arguments.
 func NewAdminClientWithCredentials(address, username, password string, opts ...Opt) (AdminClient, error) {
 	target, user, pass, err := loadBasicAuthData(osEnvironment{}, address, username, password)
 	if err != nil {

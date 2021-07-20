@@ -4,6 +4,7 @@ package testutil_test
 
 import (
 	"context"
+	"fmt"
 	"path/filepath"
 	"testing"
 	"time"
@@ -56,31 +57,50 @@ func TestStartServer(t *testing.T) {
 	tlsKey := filepath.Join(certDir, "tls.key")
 
 	policyDir := test.PathToDir(t, "store")
+	tempDir := t.TempDir()
 
-	s, err := testutil.StartCerbosServer(testutil.WithPolicyRepositoryDirectory(policyDir), testutil.WithTLSCertAndKey(tlsCert, tlsKey))
-	require.NoError(t, err)
-
-	defer s.Stop()
-
-	check := func() (bool, error) {
+	check := func(s *testutil.ServerInfo) (bool, error) {
 		ctx, cancelFunc := context.WithTimeout(context.Background(), 1*time.Second)
 		defer cancelFunc()
 		return s.IsReady(ctx)
 	}
 
-	var ready bool
-	for i := 0; i < 5; i++ {
-		ready, err = check()
-		if ready {
-			break
-		}
-
-		if i < 4 {
-			sleepTime := time.Duration(100*(i+1)) * time.Millisecond
-			time.Sleep(sleepTime)
-		}
+	testCases := []struct {
+		name string
+		opt  testutil.ServerOpt
+	}{
+		{name: "None"},
+		{name: "TLS", opt: testutil.WithTLSCertAndKey(tlsCert, tlsKey)},
+		{name: "Policy Dir", opt: testutil.WithPolicyRepositoryDirectory(policyDir)},
+		{name: "Policy DB", opt: testutil.WithPolicyRepositoryDatabase("sqlite3", ":memory:")},
+		{name: "UDS gRPC", opt: testutil.WithGRPCListenAddr(fmt.Sprintf("unix:%s", filepath.Join(tempDir, "grpc.sock")))},
+		{name: "UDS HTTP", opt: testutil.WithHTTPListenAddr(fmt.Sprintf("unix:%s", filepath.Join(tempDir, "http.sock")))},
+		{name: "Admin API", opt: testutil.WithAdminAPI("test", "test")},
 	}
 
-	require.NoError(t, err)
-	require.True(t, ready)
+	for _, tc := range testCases {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			s, err := testutil.StartCerbosServer(tc.opt)
+			require.NoError(t, err)
+
+			defer s.Stop() //nolint:errcheck
+
+			var ready bool
+			for i := 0; i < 5; i++ {
+				ready, err = check(s)
+				if ready {
+					break
+				}
+
+				if i < 4 {
+					sleepTime := time.Duration(100*(i+1)) * time.Millisecond
+					time.Sleep(sleepTime)
+				}
+			}
+
+			require.NoError(t, err)
+			require.True(t, ready)
+		})
+	}
 }

@@ -274,8 +274,12 @@ func (s *Server) startGRPCServer(l net.Listener, store storage.Store, eng *engin
 	log := zap.L().Named("grpc")
 	server := s.mkGRPCServer(log, auditLog)
 
+	healthpb.RegisterHealthServer(server, s.health)
+	reflection.Register(server)
+
 	cerbosSvc := svc.NewCerbosService(eng)
 	svcv1.RegisterCerbosServiceServer(server, cerbosSvc)
+	s.health.SetServingStatus(svcv1.CerbosService_ServiceDesc.ServiceName, healthpb.HealthCheckResponse_SERVING)
 
 	if s.conf.AdminAPI.Enabled {
 		log.Info("Starting admin service")
@@ -284,15 +288,14 @@ func (s *Server) startGRPCServer(l net.Listener, store storage.Store, eng *engin
 			log.Warn("[SECURITY RISK] Admin API uses default credentials which are unsafe for production use. Please change the credentials by updating the configuration file.")
 		}
 		svcv1.RegisterCerbosAdminServiceServer(server, svc.NewCerbosAdminService(store, auditLog, creds.Username, creds.PasswordHash))
+		s.health.SetServingStatus(svcv1.CerbosAdminService_ServiceDesc.ServiceName, healthpb.HealthCheckResponse_SERVING)
 	}
 
 	if s.conf.PlaygroundEnabled {
 		log.Info("Starting playground service")
 		svcv1.RegisterCerbosPlaygroundServiceServer(server, svc.NewCerbosPlaygroundService())
+		s.health.SetServingStatus(svcv1.CerbosPlaygroundService_ServiceDesc.ServiceName, healthpb.HealthCheckResponse_SERVING)
 	}
-
-	healthpb.RegisterHealthServer(server, s.health)
-	reflection.Register(server)
 
 	s.group.Go(func() error {
 		log.Info(fmt.Sprintf("Starting gRPC server at %s", s.conf.GRPCListenAddr))

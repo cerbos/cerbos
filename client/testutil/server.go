@@ -1,5 +1,6 @@
 // Copyright 2021 Zenauth Ltd.
 
+// Package testutil provides testing utilities such as functions to start a Cerbos server and tear it down.
 package testutil
 
 import (
@@ -11,7 +12,9 @@ import (
 	"net"
 	"os"
 	"runtime"
+	"time"
 
+	grpc_retry "github.com/grpc-ecosystem/go-grpc-middleware/retry"
 	"golang.org/x/crypto/bcrypt"
 	"golang.org/x/sync/errgroup"
 	"google.golang.org/grpc"
@@ -19,6 +22,7 @@ import (
 	"google.golang.org/grpc/credentials/local"
 	healthpb "google.golang.org/grpc/health/grpc_health_v1"
 
+	svcv1 "github.com/cerbos/cerbos/api/genpb/cerbos/svc/v1"
 	"github.com/cerbos/cerbos/internal/audit"
 	"github.com/cerbos/cerbos/internal/compile"
 	"github.com/cerbos/cerbos/internal/engine"
@@ -27,6 +31,12 @@ import (
 	"github.com/cerbos/cerbos/internal/storage/db/sqlite3"
 	"github.com/cerbos/cerbos/internal/storage/disk"
 	"github.com/cerbos/cerbos/internal/util"
+)
+
+const (
+	minConnectTimeout = 10 * time.Second
+	maxRetries        = 3
+	retryTimeout      = 2 * time.Second
 )
 
 type ServerOpt func(*serverOpt)
@@ -155,7 +165,23 @@ func (so *serverOpt) setDefaultsAndValidate() error {
 }
 
 func (so *serverOpt) mkGRPCConn(ctx context.Context) (grpc.ClientConnInterface, error) {
-	var dialOpts []grpc.DialOption
+	dialOpts := []grpc.DialOption{
+		grpc.WithConnectParams(grpc.ConnectParams{MinConnectTimeout: minConnectTimeout}),
+		grpc.WithChainStreamInterceptor(
+			grpc_retry.StreamClientInterceptor(
+				grpc_retry.WithMax(maxRetries),
+				grpc_retry.WithPerRetryTimeout(retryTimeout),
+			),
+		),
+		grpc.WithChainUnaryInterceptor(
+			grpc_retry.UnaryClientInterceptor(
+				grpc_retry.WithMax(maxRetries),
+				grpc_retry.WithPerRetryTimeout(retryTimeout),
+			),
+		),
+	}
+
+	//nolint:nestif
 	if conf := so.serverConf.TLS; conf != nil {
 		certificate, err := tls.LoadX509KeyPair(conf.Cert, conf.Key)
 		if err != nil {
@@ -201,10 +227,16 @@ func getFreeListenAddr() (string, error) {
 	return addr, lis.Close()
 }
 
+// StartCerbosServer starts a new Cerbos server that can be used for testing a client integration locally with test data.
+// If no options are passed, the server will be started with the http and gRPC endpoints available on a random free port
+// and the storage backend configured to use an in-memory database. Use the methods on the returned ServerInfo object to
+// find the listening addresses and stop the server when tests are done.
 func StartCerbosServer(opts ...ServerOpt) (*ServerInfo, error) {
 	sopt := &serverOpt{serverConf: &server.Conf{}}
 	for _, o := range opts {
-		o(sopt)
+		if o != nil {
+			o(sopt)
+		}
 	}
 
 	if err := sopt.setDefaultsAndValidate(); err != nil {
@@ -278,7 +310,7 @@ func (s *ServerInfo) IsReady(ctx context.Context) (bool, error) {
 	}
 
 	hc := healthpb.NewHealthClient(conn)
-	resp, err := hc.Check(ctx, &healthpb.HealthCheckRequest{})
+	resp, err := hc.Check(ctx, &healthpb.HealthCheckRequest{Service: svcv1.CerbosService_ServiceDesc.ServiceName})
 	if err != nil {
 		return false, err
 	}

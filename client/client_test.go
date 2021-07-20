@@ -50,7 +50,7 @@ func TestClient(t *testing.T) {
 				s, err := testutil.StartCerbosServer(mkServerOpts(t, tc.tls)...)
 				require.NoError(t, err)
 
-				defer s.Stop()
+				defer s.Stop() //nolint:errcheck
 
 				ac, err := client.NewAdminClientWithCredentials(s.GRPCAddr(), adminUsername, adminPassword, tc.opts...)
 				require.NoError(t, err)
@@ -73,7 +73,7 @@ func TestClient(t *testing.T) {
 				s, err := testutil.StartCerbosServer(serverOpts...)
 				require.NoError(t, err)
 
-				defer s.Stop()
+				defer s.Stop() //nolint:errcheck
 
 				ac, err := client.NewAdminClientWithCredentials(s.GRPCAddr(), adminUsername, adminPassword, tc.opts...)
 				require.NoError(t, err)
