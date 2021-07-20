@@ -29,7 +29,7 @@ lint-helm:
 .PHONY: generate
 generate: clean proto-gen-deps $(MOCKERY)
 	@ $(BUF) lint
-	@ $(BUF) breaking --against '.git#branch=main'
+	#@ $(BUF) breaking --against '.git#branch=main'
 	@ $(BUF) generate --template '$(BUF_GEN_TEMPLATE)' .
 	@ $(MOCKERY) --recursive --quiet --name=$(MOCK_INTERFACES) --output $(MOCK_DIR) --boilerplate-file=hack/copyright_header.txt
 	@ go mod tidy
