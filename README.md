@@ -4,7 +4,7 @@
   <img src="https://github.com/cerbos/cerbos/blob/main/docs/supplemental-ui/logo.png?raw=true" alt="Cerbos"/>
 </p>
 
-Painless access management for cloud-native applications
+Painless access control for cloud-native applications
 ========================================================
 
 Cerbos helps you super-charge your authorization implementation by writing context-aware access control policies for your application resources. Author access rules using an intuitive YAML configuration language, use your Git-ops infrastructure to test and deploy them and, make simple API requests to the Cerbos PDP to evaluate the policies and make dynamic access decisions.
@@ -116,3 +116,16 @@ EOF
 }
 ```
 
+Client SDKs
+-----------
+
+- [Go](client/README.md)
+- [NodeJS](https://github.com/cerbos/cerbos-sdk-node)
+
+More Information
+----------------
+
+* [Cerbos website](https://cerbos.dev)
+* [Cerbos docs](https://docs.cerbos.dev)
+* [Demo repositories on GitHub](https://github.com/cerbos)
+* [Slack community](http://go.cerbos.io/slack)
