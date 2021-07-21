@@ -116,3 +116,16 @@ EOF
 }
 ```
 
+Client SDKs
+-----------
+
+- [Go](client/README.md)
+- [NodeJS](https://github.com/cerbos/cerbos-sdk-node)
+
+More Information
+----------------
+
+* [Cerbos website](https://cerbos.dev)
+* [Cerbos docs](https://docs.cerbos.dev)
+* [Demo repositories on GitHub](https://github.com/cerbos)
+* [Slack community](http://go.cerbos.io/slack)
