@@ -1,21 +1,20 @@
 // Copyright 2021 Zenauth Ltd.
 
-package sqlite3
+package postgres
 
 import (
 	"context"
-	_ "embed"
 	"fmt"
 
 	"github.com/doug-martin/goqu/v9"
 
-	// import sqlite3 dialect.
-	_ "github.com/doug-martin/goqu/v9/dialect/sqlite3"
+	// Import the postgres dialect.
+	_ "github.com/doug-martin/goqu/v9/dialect/postgres"
+	"github.com/jackc/pgx/v4"
+	"github.com/jackc/pgx/v4/log/zapadapter"
+	"github.com/jackc/pgx/v4/stdlib"
 	"github.com/jmoiron/sqlx"
 	"go.uber.org/zap"
-
-	// import sqlite3 driver.
-	_ "modernc.org/sqlite"
 
 	"github.com/cerbos/cerbos/internal/config"
 	"github.com/cerbos/cerbos/internal/observability/logging"
@@ -23,10 +22,7 @@ import (
 	"github.com/cerbos/cerbos/internal/storage/db/internal"
 )
 
-const DriverName = "sqlite3"
-
-//go:embed schema.sql
-var schema string
+const DriverName = "postgres"
 
 var _ storage.MutableStore = (*Store)(nil)
 
@@ -42,19 +38,26 @@ func init() {
 }
 
 func NewStore(ctx context.Context, conf *Conf) (*Store, error) {
-	log := logging.FromContext(ctx).Named("sqlite3")
-	log.Info("Initializing sqlite3 storage", zap.String("DSN", conf.DSN))
+	log := logging.FromContext(ctx).Named("postgres")
 
-	db, err := sqlx.Connect("sqlite", conf.DSN)
+	pgConf, err := pgx.ParseConfig(conf.URL)
+	if err != nil {
+		log.Error("Failed to parse Postgres connection URL", zap.Error(err))
+		return nil, err
+	}
+
+	pgConf.Logger = zapadapter.NewLogger(log)
+	pgConf.LogLevel = pgx.LogLevelWarn
+
+	log.Info("Initializing Postgres storage", zap.String("host", pgConf.Host), zap.String("database", pgConf.Database))
+
+	connStr := stdlib.RegisterConnConfig(pgConf)
+	db, err := sqlx.Connect("pgx", connStr)
 	if err != nil {
 		return nil, fmt.Errorf("failed to open database: %w", err)
 	}
 
-	if _, err := db.ExecContext(ctx, schema, nil); err != nil {
-		return nil, fmt.Errorf("failed to create schema: %w", err)
-	}
-
-	storage, err := internal.NewDBStorage(ctx, goqu.New("sqlite3", db))
+	storage, err := internal.NewDBStorage(ctx, goqu.New("postgres", db))
 	if err != nil {
 		return nil, err
 	}

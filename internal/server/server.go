@@ -55,6 +55,9 @@ import (
 	"github.com/cerbos/cerbos/internal/observability/tracing"
 	"github.com/cerbos/cerbos/internal/storage"
 
+	// Import postgres to register the storage driver.
+	_ "github.com/cerbos/cerbos/internal/storage/db/postgres"
+
 	// Import sqlite3 to register the storage driver.
 	_ "github.com/cerbos/cerbos/internal/storage/db/sqlite3"
 

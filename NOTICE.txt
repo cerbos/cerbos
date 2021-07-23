@@ -51,6 +51,14 @@ github.com/gorilla/mux                                            https://github
 github.com/grpc-ecosystem/go-grpc-middleware                      https://github.com/grpc-ecosystem/go-grpc-middleware/blob/master/LICENSE                         Apache-2.0
 github.com/grpc-ecosystem/grpc-gateway/v2                         https://github.com/grpc-ecosystem/grpc-gateway/blob/master/v2/LICENSE.txt                        BSD-3-Clause
 github.com/imdario/mergo                                          https://github.com/imdario/mergo/blob/master/LICENSE                                             BSD-3-Clause
+github.com/jackc/chunkreader/v2                                   https://github.com/jackc/chunkreader/blob/master/v2/LICENSE                                      MIT
+github.com/jackc/pgconn                                           https://github.com/jackc/pgconn/blob/master/LICENSE                                              MIT
+github.com/jackc/pgio                                             https://github.com/jackc/pgio/blob/master/LICENSE                                                MIT
+github.com/jackc/pgpassfile                                       https://github.com/jackc/pgpassfile/blob/master/LICENSE                                          MIT
+github.com/jackc/pgproto3/v2                                      https://github.com/jackc/pgproto3/blob/master/v2/LICENSE                                         MIT
+github.com/jackc/pgservicefile                                    https://github.com/jackc/pgservicefile/blob/master/LICENSE                                       MIT
+github.com/jackc/pgtype                                           https://github.com/jackc/pgtype/blob/master/LICENSE                                              MIT
+github.com/jackc/pgx/v4                                           https://github.com/jackc/pgx/blob/master/v4/LICENSE                                              MIT
 github.com/jbenet/go-context/io                                   https://github.com/jbenet/go-context/blob/master/io/LICENSE                                      MIT
 github.com/jmoiron/sqlx                                           https://github.com/jmoiron/sqlx/blob/master/LICENSE                                              MIT
 github.com/jwalton/gchalk                                         https://github.com/jwalton/gchalk/blob/master/LICENSE                                            MIT
