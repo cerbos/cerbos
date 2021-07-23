@@ -5,6 +5,7 @@ package util
 import (
 	"crypto/tls"
 	"net"
+	"strconv"
 	"strings"
 )
 
@@ -45,4 +46,29 @@ func DefaultTLSConfig() *tls.Config {
 		},
 		NextProtos: []string{"h2"},
 	}
+}
+
+func GetFreeListenAddr() (string, error) {
+	lis, err := net.Listen("tcp", "localhost:0")
+	if err != nil {
+		return "", err
+	}
+
+	addr := lis.Addr().String()
+
+	return addr, lis.Close()
+}
+
+func GetFreePort() (int, error) {
+	addr, err := GetFreeListenAddr()
+	if err != nil {
+		return 0, err
+	}
+
+	_, p, err := net.SplitHostPort(addr)
+	if err != nil {
+		return 0, err
+	}
+
+	return strconv.Atoi(p)
 }

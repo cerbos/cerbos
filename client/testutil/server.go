@@ -9,7 +9,6 @@ import (
 	"crypto/x509"
 	"errors"
 	"fmt"
-	"net"
 	"os"
 	"runtime"
 	"time"
@@ -126,7 +125,7 @@ type serverOpt struct {
 
 func (so *serverOpt) setDefaultsAndValidate() error {
 	if so.serverConf.HTTPListenAddr == "" {
-		addr, err := getFreeListenAddr()
+		addr, err := util.GetFreeListenAddr()
 		if err != nil {
 			return fmt.Errorf("failed to find free listen address: %w", err)
 		}
@@ -134,7 +133,7 @@ func (so *serverOpt) setDefaultsAndValidate() error {
 	}
 
 	if so.serverConf.GRPCListenAddr == "" {
-		addr, err := getFreeListenAddr()
+		addr, err := util.GetFreeListenAddr()
 		if err != nil {
 			return fmt.Errorf("failed to find free listen address: %w", err)
 		}
@@ -214,17 +213,6 @@ func (so *serverOpt) mkGRPCConn(ctx context.Context) (grpc.ClientConnInterface, 
 	}
 
 	return grpc.DialContext(ctx, so.serverConf.GRPCListenAddr, dialOpts...)
-}
-
-func getFreeListenAddr() (string, error) {
-	lis, err := net.Listen("tcp", "localhost:0")
-	if err != nil {
-		return "", err
-	}
-
-	addr := lis.Addr().String()
-
-	return addr, lis.Close()
 }
 
 // StartCerbosServer starts a new Cerbos server that can be used for testing a client integration locally with test data.

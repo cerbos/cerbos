@@ -1,0 +1,1 @@
+../../../../internal/storage/db/postgres/schema.sql

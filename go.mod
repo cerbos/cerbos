@@ -14,6 +14,7 @@ require (
 	github.com/doug-martin/goqu/v9 v9.13.0
 	github.com/envoyproxy/protoc-gen-validate v0.6.1
 	github.com/fatih/color v1.12.0
+	github.com/fergusstrange/embedded-postgres v1.7.0
 	github.com/fsnotify/fsnotify v1.4.9
 	github.com/fullstorydev/grpcurl v1.8.1
 	github.com/gdamore/tcell/v2 v2.3.3
@@ -31,6 +32,7 @@ require (
 	github.com/grpc-ecosystem/go-grpc-middleware v1.3.0
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.4.0
 	github.com/iancoleman/strcase v0.1.3 // indirect
+	github.com/jackc/pgx/v4 v4.12.0
 	github.com/jdxcode/netrc v0.0.0-20210204082910-926c7f70242a
 	github.com/jmoiron/sqlx v1.3.4
 	github.com/jwalton/gchalk v1.0.3
@@ -60,7 +62,7 @@ require (
 	go.uber.org/config v1.4.0
 	go.uber.org/multierr v1.7.0
 	go.uber.org/zap v1.18.1
-	golang.org/x/crypto v0.0.0-20210513164829-c07d793c2f9a
+	golang.org/x/crypto v0.0.0-20210616213533-5ff15b29337e
 	golang.org/x/net v0.0.0-20210614182718-04defd469f4e // indirect
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
 	golang.org/x/sys v0.0.0-20210630005230-0f9fa26af87c // indirect

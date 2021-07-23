@@ -16,7 +16,15 @@ import (
 	"github.com/cerbos/cerbos/internal/storage"
 )
 
-func NewDBStorage(ctx context.Context, db *goqu.Database) (*DBStorage, error) {
+type DBStorage interface {
+	storage.Subscribable
+	AddOrUpdate(ctx context.Context, policies ...policy.Wrapper) error
+	GetCompilationUnits(ctx context.Context, ids ...namer.ModuleID) (map[namer.ModuleID]*policy.CompilationUnit, error)
+	GetDependents(ctx context.Context, ids ...namer.ModuleID) (map[namer.ModuleID][]namer.ModuleID, error)
+	Delete(ctx context.Context, ids ...namer.ModuleID) error
+}
+
+func NewDBStorage(ctx context.Context, db *goqu.Database) (DBStorage, error) {
 	if _, ok := os.LookupEnv("CERBOS_DEBUG_DB"); ok {
 		log, err := zap.NewStdLogAt(zap.L().Named("db"), zap.DebugLevel)
 		if err != nil {
@@ -26,18 +34,18 @@ func NewDBStorage(ctx context.Context, db *goqu.Database) (*DBStorage, error) {
 		db.Logger(log)
 	}
 
-	return &DBStorage{
+	return &dbStorage{
 		db:                  db,
 		SubscriptionManager: storage.NewSubscriptionManager(ctx),
 	}, nil
 }
 
-type DBStorage struct {
+type dbStorage struct {
 	db *goqu.Database
 	*storage.SubscriptionManager
 }
 
-func (s *DBStorage) AddOrUpdate(ctx context.Context, policies ...policy.Wrapper) error {
+func (s *dbStorage) AddOrUpdate(ctx context.Context, policies ...policy.Wrapper) error {
 	events := make([]storage.Event, len(policies))
 	err := s.db.WithTx(func(tx *goqu.TxDatabase) error {
 		for i, p := range policies {
@@ -105,7 +113,7 @@ func (s *DBStorage) AddOrUpdate(ctx context.Context, policies ...policy.Wrapper)
 	return nil
 }
 
-func (s *DBStorage) GetCompilationUnits(ctx context.Context, ids ...namer.ModuleID) (map[namer.ModuleID]*policy.CompilationUnit, error) {
+func (s *dbStorage) GetCompilationUnits(ctx context.Context, ids ...namer.ModuleID) (map[namer.ModuleID]*policy.CompilationUnit, error) {
 	// SELECT pd.policy_id as parent, p.id, p.definition, p.generated
 	// FROM policy_dependency pd
 	// JOIN policy p ON (pd.dependency_id = p.id)
@@ -179,7 +187,7 @@ func (s *DBStorage) GetCompilationUnits(ctx context.Context, ids ...namer.Module
 	return units, nil
 }
 
-func (s *DBStorage) GetDependents(ctx context.Context, ids ...namer.ModuleID) (map[namer.ModuleID][]namer.ModuleID, error) {
+func (s *dbStorage) GetDependents(ctx context.Context, ids ...namer.ModuleID) (map[namer.ModuleID][]namer.ModuleID, error) {
 	// SELECT dependency_id, policy_id
 	// FROM policy_dependency
 	// WHERE dependency_id IN (?)
@@ -215,7 +223,7 @@ func (s *DBStorage) GetDependents(ctx context.Context, ids ...namer.ModuleID) (m
 	return out, nil
 }
 
-func (s *DBStorage) Delete(ctx context.Context, ids ...namer.ModuleID) error {
+func (s *dbStorage) Delete(ctx context.Context, ids ...namer.ModuleID) error {
 	if len(ids) == 1 {
 		_, err := s.db.Delete(PolicyTbl).Prepared(true).
 			Where(goqu.C(PolicyTblIDCol).Eq(ids[0])).

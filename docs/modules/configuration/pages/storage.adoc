@@ -98,7 +98,7 @@ storage:
 [#sqlite3]
 == SQLite3 Driver
 
-Cerbos has experimental support for using SQLite3 as a policy repository. Currently this is the only storage driver that can be used in conjunction with the xref:server.adoc#admin-api[Admin API] to add or update policies via an API call.
+The SQLite3 storage backend is one of the dynamic stores that supports adding or updating policies at runtime through the xref:server.adoc#admin-api[Admin API].
 
 .In-memory ephemeral database
 [source,yaml,linenums]
@@ -117,3 +117,32 @@ storage:
   sqlite3:
     dsn: "file:/tmp/cerbos.sqlite?mode=rwc&cache=shared&_fk=true"
 ----
+
+[#postgres]
+== Postgres Driver
+
+The Postgres storage backend is one of the dynamic stores that supports adding or updating policies at runtime through the xref:server.adoc#admin-api[Admin API]. 
+
+NOTE: Unlike the SQLite3 driver, the tables and other database objects are not created automatically by the Cerbos Postgres driver. This is to minimize the privileges the Cerbos instance has on the Postgres installation. You must create the required tables using the provided script before configuring Cerbos to connect to the database.
+
+The driver configuration expects the connection details to be provided as connection URL. See link:https://www.postgresql.org/docs/current/libpq-connect.html#LIBPQ-CONNSTRING[Postgres connstring documentation] for more information. Use the `search_path` parameter to point to the schema containing the Cerbos tables.
+
+[source,yaml,linenums]
+----
+storage:
+  driver: "postgres"
+  postgres:
+    url: "postgres://${PG_USER}:${PG_PASSWORD}@localhost:5432/postgres?sslmode=disable&search_path=cerbos"
+----
+
+
+=== Database object definitions 
+
+You can customise the script below to suit your environment. Make sure to specify a strong password for the `cerbos_user` user. 
+
+[source,sql,linenums]
+----
+include::example$postgres_schema.sql[]
+----
+
+
