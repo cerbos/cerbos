@@ -1,9 +1,13 @@
 ---
 run:
-  timeout: 120s
+  timeout: 300s
   skip-dirs:
-    - internal/genpb
+    - api
+    - deploy
+    - docs
+    - hack
     - internal/test/mocks
+    - schema
   build-tags:
     - tests
 
