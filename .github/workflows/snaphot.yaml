@@ -87,3 +87,4 @@ jobs:
         uses: golangci/golangci-lint-action@v2
         with:
           version: latest
+          args: '--config=.golangci.yaml -v'
