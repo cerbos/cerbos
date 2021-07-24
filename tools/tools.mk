@@ -1,10 +1,12 @@
 XDG_CACHE_HOME ?= $(HOME)/.cache
 TOOLS_BIN_DIR := $(abspath $(XDG_CACHE_HOME)/cerbos/bin)
+TOOLS_MOD := tools/go.mod
 
 BUF := $(TOOLS_BIN_DIR)/buf
 GHZ := $(TOOLS_BIN_DIR)/ghz
 GOLANGCI_LINT := $(TOOLS_BIN_DIR)/golangci-lint
 GO_LICENSES := $(TOOLS_BIN_DIR)/go-licenses
+GO_LICENCE_DETECTOR := $(TOOLS_BIN_DIR)/go-licence-detector
 GORELEASER := $(TOOLS_BIN_DIR)/goreleaser
 GOTESTSUM := $(TOOLS_BIN_DIR)/gotestsum
 GRPCURL := $(TOOLS_BIN_DIR)/grpcurl
@@ -73,46 +75,49 @@ $(TOOLS_BIN_DIR):
 	@ mkdir -p $(TOOLS_BIN_DIR)
 
 $(BUF): $(TOOLS_BIN_DIR) 
-	@ GOBIN=$(TOOLS_BIN_DIR) go install github.com/bufbuild/buf/cmd/buf
+	@ GOBIN=$(TOOLS_BIN_DIR) go install -modfile=$(TOOLS_MOD) github.com/bufbuild/buf/cmd/buf
 
 $(GHZ): $(TOOLS_BIN_DIR) 
-	@ GOBIN=$(TOOLS_BIN_DIR) go install github.com/bojand/ghz/cmd/ghz@latest
+	@ GOBIN=$(TOOLS_BIN_DIR) go install -modfile=$(TOOLS_MOD) github.com/bojand/ghz/cmd/ghz@latest
 
 $(GO_LICENSES): $(TOOLS_BIN_DIR)
-	@ GOBIN=$(TOOLS_BIN_DIR) go install github.com/google/go-licenses
+	@ GOBIN=$(TOOLS_BIN_DIR) go install -modfile=$(TOOLS_MOD) github.com/google/go-licenses
+
+$(GO_LICENCE_DETECTOR): $(TOOLS_BIN_DIR)
+	@ GOBIN=$(TOOLS_BIN_DIR) go install -modfile=$(TOOLS_MOD) go.elastic.co/go-licence-detector
  
 $(GOLANGCI_LINT): $(TOOLS_BIN_DIR) 
-	@ GOBIN=$(TOOLS_BIN_DIR) go install github.com/golangci/golangci-lint/cmd/golangci-lint
+	@ GOBIN=$(TOOLS_BIN_DIR) go install -modfile=$(TOOLS_MOD) github.com/golangci/golangci-lint/cmd/golangci-lint
 
 $(GORELEASER): $(TOOLS_BIN_DIR) 
-	@ GOBIN=$(TOOLS_BIN_DIR) go install github.com/goreleaser/goreleaser
+	@ GOBIN=$(TOOLS_BIN_DIR) go install -modfile=$(TOOLS_MOD) github.com/goreleaser/goreleaser
 
 $(GOTESTSUM): $(TOOLS_BIN_DIR) 
-	@ GOBIN=$(TOOLS_BIN_DIR) go install gotest.tools/gotestsum
+	@ GOBIN=$(TOOLS_BIN_DIR) go install -modfile=$(TOOLS_MOD) gotest.tools/gotestsum
 
 $(GRPCURL): $(TOOLS_BIN_DIR) 
-	@ GOBIN=$(TOOLS_BIN_DIR) go install github.com/fullstorydev/grpcurl/cmd/grpcurl
+	@ GOBIN=$(TOOLS_BIN_DIR) go install -modfile=$(TOOLS_MOD) github.com/fullstorydev/grpcurl/cmd/grpcurl
 
 $(MOCKERY): $(TOOLS_BIN_DIR)
-	@ GOBIN=$(TOOLS_BIN_DIR) go install github.com/vektra/mockery/v2/
+	@ GOBIN=$(TOOLS_BIN_DIR) go install -modfile=$(TOOLS_MOD) github.com/vektra/mockery/v2/
 
 $(PROTOC_GEN_GO): $(TOOLS_BIN_DIR) 
-	@ GOBIN=$(TOOLS_BIN_DIR) go install google.golang.org/protobuf/cmd/protoc-gen-go
+	@ GOBIN=$(TOOLS_BIN_DIR) go install -modfile=$(TOOLS_MOD) google.golang.org/protobuf/cmd/protoc-gen-go
 
 $(PROTOC_GEN_GO_GRPC): $(TOOLS_BIN_DIR) 
-	@ GOBIN=$(TOOLS_BIN_DIR) go install google.golang.org/grpc/cmd/protoc-gen-go-grpc
+	@ GOBIN=$(TOOLS_BIN_DIR) go install -modfile=$(TOOLS_MOD) google.golang.org/grpc/cmd/protoc-gen-go-grpc
 
 $(PROTOC_GEN_GO_VTPROTO): $(TOOLS_BIN_DIR) 
-	@ GOBIN=$(TOOLS_BIN_DIR) go install github.com/planetscale/vtprotobuf/cmd/protoc-gen-go-vtproto
+	@ GOBIN=$(TOOLS_BIN_DIR) go install -modfile=$(TOOLS_MOD) github.com/planetscale/vtprotobuf/cmd/protoc-gen-go-vtproto
 
 $(PROTOC_GEN_GRPC_GATEWAY): $(TOOLS_BIN_DIR) 
-	@ GOBIN=$(TOOLS_BIN_DIR) go install github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-grpc-gateway
+	@ GOBIN=$(TOOLS_BIN_DIR) go install -modfile=$(TOOLS_MOD) github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-grpc-gateway
 
 $(PROTOC_GEN_OPENAPIV2): $(TOOLS_BIN_DIR) 
-	@ GOBIN=$(TOOLS_BIN_DIR) go install github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-openapiv2
+	@ GOBIN=$(TOOLS_BIN_DIR) go install -modfile=$(TOOLS_MOD) github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-openapiv2
 
 $(PROTOC_GEN_VALIDATE): $(TOOLS_BIN_DIR) 
-	@ GOBIN=$(TOOLS_BIN_DIR) go install github.com/envoyproxy/protoc-gen-validate
+	@ GOBIN=$(TOOLS_BIN_DIR) go install -modfile=$(TOOLS_MOD) github.com/envoyproxy/protoc-gen-validate
 
 .PHONY: proto-gen-deps
 proto-gen-deps: $(BUF) $(PROTOC_GEN_GO) $(PROTOC_GEN_GO_VTPROTO) $(PROTOC_GEN_GO_GRPC) $(PROTOC_GEN_GRPC_GATEWAY) $(PROTOC_GEN_OPENAPIV2) $(PROTOC_GEN_VALIDATE)

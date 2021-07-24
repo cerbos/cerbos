@@ -29,14 +29,18 @@ lint-helm:
 .PHONY: generate
 generate: clean proto-gen-deps $(MOCKERY)
 	@ $(BUF) lint
-	#@ $(BUF) breaking --against '.git#branch=main'
+	@ #$(BUF) breaking --against '.git#branch=main'
 	@ $(BUF) generate --template '$(BUF_GEN_TEMPLATE)' .
 	@ $(MOCKERY) --recursive --quiet --name=$(MOCK_INTERFACES) --output $(MOCK_DIR) --boilerplate-file=hack/copyright_header.txt
 	@ go mod tidy
 
-generate-notice: $(GO_LICENSES)
-	@ cat hack/notice_header.txt > NOTICE.txt
-	@ $(GO_LICENSES) csv . | grep -v cerbos | sort -t ',' -k1 | column -t -N Package,URL,Licence -s ',' >> NOTICE.txt
+generate-notice: $(GO_LICENCE_DETECTOR)
+	@ go mod download
+	@ go list -m -json all | $(GO_LICENCE_DETECTOR) -includeIndirect \
+		-noticeTemplate=hack/notice/templates/NOTICE.txt.tmpl \
+		-overrides=hack/notice/overrides/overrides.json \
+		-rules=hack/notice/rules.json \
+		-noticeOut=NOTICE.txt
 
 .PHONY: test-all
 test-all: test test-race
