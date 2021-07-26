@@ -3,6 +3,12 @@ Contributing to Cerbos
 
 Thank you for your interest in Cerbos. We welcome contributions from the community. Please note that we have a [code of conduct](CODE_OF_CONDUCT.md) that must be followed when interacting with this project. In addition, please read the guidelines below to ensure that your contributions have a better chance of being accepted.
 
+- [Submitting pull requests](#submitting-pull-requests)
+    - [Code changes](#submitting-pull-requests-for-code-changes)
+    - [Documentation changes](#submitting-pull-requests-for-documentation-changes)
+- [Developing Cerbos](#developing-cerbos)
+- [Getting help](#getting-help)
+
 Submitting pull requests
 ------------------------
 
@@ -33,7 +39,7 @@ Submitting pull requests
     SPDX-License-Identifier: Apache-2.0
     ```
 - Add tests to cover the functionality you are adding or modifying.
-- Add new documentation or update existing content to ensure that the documentation stays consistent with the change you are introducing. See [below](### Submitting pull requests for documentation changes) for tips on writing documentation.
+- Add new documentation or update existing content to ensure that the documentation stays consistent with the change you are introducing. See [below](#submitting-pull-requests-for-documentation-changes) for tips on writing documentation.
 - Avoid introducing new dependencies if possible. All dependencies must have an appropriate open source licence (Apache-2.0, BSD, MIT).
 - Make sure your code is `gofmt`ed. Run `make lint` and fix any warnings produced by the linter. 
 - Sign-off your commits to provide a [DCO](https://developercertificate.org). You can do this by adding the `-s` flag to your `git commit` command.
