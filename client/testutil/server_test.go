@@ -29,10 +29,6 @@ func TestStartServerInvalidOptions(t *testing.T) {
 			opts: []testutil.ServerOpt{testutil.WithTLSCertAndKey("test.crt", "")},
 		},
 		{
-			name: "Unsupported database driver",
-			opts: []testutil.ServerOpt{testutil.WithPolicyRepositoryDatabase("cockroachdb", "dsn")},
-		},
-		{
 			name: "Both repository dir and database specified",
 			opts: []testutil.ServerOpt{
 				testutil.WithPolicyRepositoryDatabase("sqlite3", ":memory:"),

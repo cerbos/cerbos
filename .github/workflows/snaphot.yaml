@@ -46,7 +46,7 @@ jobs:
         run: |-
           REPO_STATUS="$(git status --porcelain)"
           if [[ ! -z $REPO_STATUS ]]; then
-            echo "Uncommitted changes detected"
+            echo "::error::Uncommitted changes detected"
             echo "$REPO_STATUS"
             exit 1
           fi
@@ -64,27 +64,3 @@ jobs:
 
       - name: Push dev images
         run: docker push ghcr.io/cerbos/cerbos:dev-amd64 && docker push ghcr.io/cerbos/cerbos:dev-arm64
-
-  docs:
-    name: Build docs
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v2
-        with:
-          fetch-depth: 0
-
-      - name: Generate docs
-        uses: ./.github/actions/antora-docs
-        id: docs
-
-  golangci:
-    name: Lint
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-      - name: golangci-lint
-        uses: golangci/golangci-lint-action@v2
-        with:
-          version: latest
-          args: '--config=.golangci.yaml -v'

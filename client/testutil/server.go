@@ -27,6 +27,7 @@ import (
 	"github.com/cerbos/cerbos/internal/engine"
 	"github.com/cerbos/cerbos/internal/server"
 	"github.com/cerbos/cerbos/internal/storage"
+	"github.com/cerbos/cerbos/internal/storage/db/postgres"
 	"github.com/cerbos/cerbos/internal/storage/db/sqlite3"
 	"github.com/cerbos/cerbos/internal/storage/disk"
 	"github.com/cerbos/cerbos/internal/util"
@@ -150,14 +151,10 @@ func (so *serverOpt) setDefaultsAndValidate() error {
 		return errors.New("only one of PolicyRepositoryDirectory or PolicyRepositoryDatabase is allowed")
 	}
 
-	if so.policyRepoDBDriver != "" && so.policyRepoDBDriver != "sqlite3" {
-		return fmt.Errorf("unsupported database driver: %s", so.policyRepoDBDriver)
-	}
-
 	// if none is specified, default to in-mem db.
 	if so.policyRepoDir == "" && so.policyRepoDBConnStr == "" {
 		so.policyRepoDBDriver = "sqlite3"
-		so.policyRepoDBConnStr = ":memory:?_fk=true"
+		so.policyRepoDBConnStr = ":memory:"
 	}
 
 	return nil
@@ -246,7 +243,14 @@ func startServer(ctx context.Context, g *errgroup.Group, sopt *serverOpt) (err e
 	if sopt.policyRepoDir != "" {
 		store, err = disk.NewStore(ctx, &disk.Conf{Directory: sopt.policyRepoDir})
 	} else {
-		store, err = sqlite3.NewStore(ctx, &sqlite3.Conf{DSN: sopt.policyRepoDBConnStr})
+		switch sopt.policyRepoDBDriver {
+		case sqlite3.DriverName:
+			store, err = sqlite3.NewStore(ctx, &sqlite3.Conf{DSN: sopt.policyRepoDBConnStr})
+		case postgres.DriverName:
+			store, err = postgres.NewStore(ctx, &postgres.Conf{URL: sopt.policyRepoDBConnStr})
+		default:
+			err = fmt.Errorf("unknown database driver: %s", sopt.policyRepoDBDriver)
+		}
 	}
 
 	if err != nil {
