@@ -1,4 +1,5 @@
 // Copyright 2021 Zenauth Ltd.
+// SPDX-License-Identifier: Apache-2.0
 
 // Package client provides a client implementation to interact with a Cerbos instance and check access policies.
 package client

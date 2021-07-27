@@ -1,4 +1,5 @@
 // Copyright 2021 Zenauth Ltd.
+// SPDX-License-Identifier: Apache-2.0
 
 // Package testutil provides testing utilities such as functions to start a Cerbos server and tear it down.
 package testutil
