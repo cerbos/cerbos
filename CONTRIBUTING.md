@@ -77,7 +77,7 @@ Getting Help
 ------------
 
 - [Read the documentation](https://docs.cerbos.dev)
-- Start a conversation on [GitHub discussions](https://github.com/cerbos/cerbos/discussions) or [raise an issue](https://github.com/cerbos/cerbos/issues).
+- Post a question in the [discussion forum](https://github.com/cerbos/cerbos/discussions)
 - Join our [Slack community](http://go.cerbos.io/slack)
 - Email us at help@cerbos.dev
 - Visit our website at https://cerbos.dev
