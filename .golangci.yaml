@@ -27,6 +27,7 @@ linters-settings:
         COMPANY: Zenauth Ltd.
     template: |-
       Copyright {{ YEAR-RANGE }} {{ COMPANY }}
+      SPDX-License-Identifier: Apache-2.0
 
   nolintlint:
     allow-unused: false
