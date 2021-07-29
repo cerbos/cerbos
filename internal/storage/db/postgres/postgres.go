@@ -58,6 +58,8 @@ func NewStore(ctx context.Context, conf *Conf) (*Store, error) {
 		return nil, fmt.Errorf("failed to open database: %w", err)
 	}
 
+	conf.ConnPool.Configure(db)
+
 	storage, err := internal.NewDBStorage(ctx, goqu.New("postgres", db))
 	if err != nil {
 		return nil, err

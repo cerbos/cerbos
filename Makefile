@@ -54,7 +54,7 @@ deps:
 	@ go mod tidy
 
 .PHONY: test-all
-test-all: test test-race
+test-all: test-race test-integration
 
 .PHONY: test
 test: $(GOTESTSUM)
@@ -64,9 +64,9 @@ test: $(GOTESTSUM)
 test-race: $(GOTESTSUM)
 	@ $(GOTESTSUM) -- -tags=tests -race ./...
 
-.PHONY: test-watch
-test-watch: $(GOTESTSUM)
-	@ $(GOTESTSUM) --watch -- -tags=tests -cover -race ./...
+.PHONY: integration-test
+integration-test: $(GOTESTSUM)
+	@ $(GOTESTSUM) -- -tags=tests,integration -cover ./...
 
 .PHONY: coverage
 coverage:

@@ -1,8 +1,0 @@
-Copyright 2021 Zenauth Ltd.
-
-This product includes software developed by The Apache Software Foundation (http://www.apache.org/).
-
-Third-party dependencies used by the Cerbos project:
-
-
-

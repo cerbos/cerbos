@@ -11,7 +11,7 @@ require (
 	github.com/census-instrumentation/opencensus-proto v0.3.0 // indirect
 	github.com/cespare/xxhash v1.1.0
 	github.com/dgraph-io/badger/v3 v3.2103.0
-	github.com/doug-martin/goqu/v9 v9.13.0
+	github.com/doug-martin/goqu/v9 v9.14.0
 	github.com/envoyproxy/protoc-gen-validate v0.6.1
 	github.com/fatih/color v1.12.0
 	github.com/fergusstrange/embedded-postgres v1.7.0
@@ -19,6 +19,7 @@ require (
 	github.com/gdamore/tcell/v2 v2.3.3
 	github.com/ghodss/yaml v1.0.0
 	github.com/go-git/go-git/v5 v5.4.2
+	github.com/go-sql-driver/mysql v1.6.0
 	github.com/google/cel-go v0.7.3
 	github.com/google/go-cmp v0.5.6
 	github.com/google/gops v0.3.18
@@ -40,6 +41,7 @@ require (
 	github.com/mattn/go-runewidth v0.0.13 // indirect
 	github.com/oklog/ulid/v2 v2.0.2
 	github.com/open-policy-agent/opa v0.30.1
+	github.com/ory/dockertest/v3 v3.7.0
 	github.com/planetscale/vtprotobuf v0.0.0-20210616093554-9236f7c7b8ca
 	github.com/prometheus/client_golang v1.11.0
 	github.com/prometheus/common v0.29.0 // indirect
