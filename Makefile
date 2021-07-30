@@ -64,8 +64,8 @@ test: $(GOTESTSUM)
 test-race: $(GOTESTSUM)
 	@ $(GOTESTSUM) -- -tags=tests -race ./...
 
-.PHONY: integration-test
-integration-test: $(GOTESTSUM)
+.PHONY: test-integration
+test-integration: $(GOTESTSUM)
 	@ $(GOTESTSUM) -- -tags=tests,integration -cover ./...
 
 .PHONY: coverage
