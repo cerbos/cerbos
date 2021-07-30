@@ -29,8 +29,13 @@ const (
 )
 
 func watchDir(ctx context.Context, dir string, idx index.Index, sub *storage.SubscriptionManager, cooldownPeriod time.Duration) error {
+	resolved, err := filepath.EvalSymlinks(dir)
+	if err != nil {
+		return fmt.Errorf("could not resolve %s: %w", dir, err)
+	}
+
 	dw := &dirWatch{
-		dir:                 dir,
+		dir:                 resolved,
 		log:                 zap.S().Named("dir.watch").With("dir", dir),
 		idx:                 idx,
 		SubscriptionManager: sub,

@@ -58,7 +58,7 @@ func TestDirWatch(t *testing.T) {
 		case <-time.After(timeOut): // Wait time for events to be published.
 			require.Fail(t, "timed out waiting for the entry")
 		case have := <-haveEntries:
-			require.Equal(t, "policy.yaml", filepath.Base(have.File))
+			require.Equal(t, "policy.yaml", have.File)
 		}
 
 		// Check expectations
@@ -103,7 +103,7 @@ func TestDirWatch(t *testing.T) {
 		case <-time.After(timeOut): // Wait time for events to be published.
 			require.Fail(t, "timed out waiting for the entry")
 		case have := <-haveEntries:
-			require.Equal(t, "policy.yaml", filepath.Base(have.File))
+			require.Equal(t, "policy.yaml", have.File)
 		}
 
 		// Check expectations
