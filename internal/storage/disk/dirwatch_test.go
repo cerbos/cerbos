@@ -23,7 +23,7 @@ import (
 
 const (
 	cooldownPeriod = 30 * time.Millisecond
-	sleepTime      = 100 * time.Millisecond
+	timeOut        = 1000 * time.Millisecond
 )
 
 func TestDirWatch(t *testing.T) {
@@ -55,15 +55,15 @@ func TestDirWatch(t *testing.T) {
 		touch(t, filepath.Join(dir, "test.txt"))
 		writePolicy(t, filepath.Join(dir, "policy.yaml"), rp.Policy)
 
-		// Wait for events to be published. This is kind of brittle but better than nothing.
-		time.Sleep(sleepTime)
+		select {
+		case <-time.After(timeOut): // Wait time for events to be published.
+			require.Fail(t, "timed out waiting for the entry")
+		case have := <-haveEntries:
+			require.Equal(t, "policy.yaml", have.File)
+		}
 
 		// Check expectations
 		mockIdx.AssertExpectations(t)
-
-		require.Len(t, haveEntries, 1)
-		have := <-haveEntries
-		require.Equal(t, "policy.yaml", have.File)
 
 		wantEvent := storage.Event{Kind: storage.EventAddOrUpdatePolicy, PolicyID: rp.ID}
 		checkEvents(t, wantEvent)
@@ -100,15 +100,15 @@ func TestDirWatch(t *testing.T) {
 		require.NoError(t, os.Remove(policyFile))
 		require.NoError(t, os.Remove(textFile))
 
-		// Wait for events to be published. This is kind of brittle but better than nothing.
-		time.Sleep(sleepTime)
+		select {
+		case <-time.After(timeOut): // Wait time for events to be published.
+			require.Fail(t, "timed out waiting for the entry")
+		case have := <-haveEntries:
+			require.Equal(t, "policy.yaml", have.File)
+		}
 
 		// Check expectations
 		mockIdx.AssertExpectations(t)
-
-		require.Len(t, haveEntries, 1)
-		have := <-haveEntries
-		require.Equal(t, "policy.yaml", have.File)
 
 		wantEvent := storage.Event{Kind: storage.EventDeletePolicy}
 		checkEvents(t, wantEvent)
