@@ -67,7 +67,7 @@ func TestConf(t *testing.T) {
 			name: "With Server public key",
 			conf: &Conf{
 				DSN:          "user:password@tcp(localhost:3306)/db?interpolateParams=true&serverPubKey=mykey",
-				ServerPubKey: map[string]ServerPubKeyConf{"mykey": {PubKey: "testdata/server_public_key.pem"}},
+				ServerPubKey: map[string]string{"mykey": "testdata/server_public_key.pem"},
 			},
 			want: "user:password@tcp(localhost:3306)/db?interpolateParams=true&serverPubKey=mykey",
 		},
@@ -75,7 +75,7 @@ func TestConf(t *testing.T) {
 			name: "Undefined Server public key",
 			conf: &Conf{
 				DSN:          "user:password@tcp(localhost:3306)/db?interpolateParams=true&serverPubKey=somekey",
-				ServerPubKey: map[string]ServerPubKeyConf{"mykey": {PubKey: "testdata/server_public_key.pem"}},
+				ServerPubKey: map[string]string{"mykey": "testdata/server_public_key.pem"},
 			},
 			wantErr: true,
 		},
@@ -83,7 +83,7 @@ func TestConf(t *testing.T) {
 			name: "Missing Server public key",
 			conf: &Conf{
 				DSN:          "user:password@tcp(localhost:3306)/db?interpolateParams=true&serverPubKey=mykey",
-				ServerPubKey: map[string]ServerPubKeyConf{"mykey": {PubKey: "testdata/somekey.pem"}},
+				ServerPubKey: map[string]string{"mykey": "testdata/somekey.pem"},
 			},
 			wantErr: true,
 		},
@@ -91,7 +91,7 @@ func TestConf(t *testing.T) {
 			name: "With TLS and server public key",
 			conf: &Conf{
 				DSN:          "user:password@tcp(localhost:3306)/db?interpolateParams=true&tls=mytls&serverPubKey=mykey",
-				ServerPubKey: map[string]ServerPubKeyConf{"mykey": {PubKey: "testdata/server_public_key.pem"}},
+				ServerPubKey: map[string]string{"mykey": "testdata/server_public_key.pem"},
 				TLS: map[string]TLSConf{
 					"mytls": {
 						CACert: "testdata/CerbosTestCA.crt",

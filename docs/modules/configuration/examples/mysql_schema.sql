@@ -1,0 +1,1 @@
+../../../../internal/storage/db/mysql/schema.sql
