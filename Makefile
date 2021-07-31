@@ -87,3 +87,6 @@ build: $(GORELEASER) generate lint test
 docs:
 	@ docs/build.sh
 
+.PHONY: install
+install:
+	@ go install
