@@ -258,7 +258,10 @@ func startServer(ctx context.Context, g *errgroup.Group, sopt *serverOpt) (err e
 		return err
 	}
 
-	auditLog := audit.NewNopLog()
+	auditLog, err := audit.NewLog(ctx)
+	if err != nil {
+		return err
+	}
 	eng, err := engine.New(ctx, compile.NewManager(ctx, store), auditLog)
 	if err != nil {
 		return err

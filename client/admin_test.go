@@ -10,11 +10,12 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/require"
+
 	"github.com/cerbos/cerbos/client"
 	"github.com/cerbos/cerbos/client/testutil"
 	"github.com/cerbos/cerbos/internal/audit"
 	"github.com/cerbos/cerbos/internal/audit/local"
-	"github.com/stretchr/testify/require"
 )
 
 func TestAccessLogs(t *testing.T) {

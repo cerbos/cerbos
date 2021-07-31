@@ -75,7 +75,7 @@ func (c *GrpcAdminClient) AddOrUpdatePolicy(ctx context.Context, policies *Polic
 	return nil
 }
 
-// AuditLogOptions is used to filter audit logs
+// AuditLogOptions is used to filter audit logs.
 type AuditLogOptions struct {
 	Tail      uint16
 	StartTime time.Time
@@ -88,7 +88,7 @@ type logSet struct {
 	decisionLogs []*auditv1.DecisionLogEntry
 }
 
-// AccessLogs returns audit logs of the access type entries
+// AccessLogs returns audit logs of the access type entries.
 func (c *GrpcAdminClient) AccessLogs(ctx context.Context, opts AuditLogOptions) ([]*auditv1.AccessLogEntry, error) {
 	logs, err := c.auditLogs(ctx, requestv1.ListAuditLogEntriesRequest_KIND_ACCESS, opts)
 	if err != nil {
@@ -98,7 +98,7 @@ func (c *GrpcAdminClient) AccessLogs(ctx context.Context, opts AuditLogOptions) 
 	return logs.accessLogs, nil
 }
 
-// DecisionLogs returns decision logs of the decision type entries
+// DecisionLogs returns decision logs of the decision type entries.
 func (c *GrpcAdminClient) DecisionLogs(ctx context.Context, opts AuditLogOptions) ([]*auditv1.DecisionLogEntry, error) {
 	logs, err := c.auditLogs(ctx, requestv1.ListAuditLogEntriesRequest_KIND_DECISION, opts)
 	if err != nil {
@@ -139,14 +139,12 @@ func (c *GrpcAdminClient) auditLogs(ctx context.Context, kind requestv1.ListAudi
 		entry, err := resp.Recv()
 		if err != nil {
 			if errors.Is(err, io.EOF) {
-				fmt.Println("entries... done")
 				return entries, nil
 			}
 
 			return nil, err
 		}
 
-		fmt.Println("adding entry")
 		switch kind {
 		case requestv1.ListAuditLogEntriesRequest_KIND_ACCESS:
 			entries.accessLogs = append(entries.accessLogs, entry.GetAccessLogEntry())
