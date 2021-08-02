@@ -1,9 +1,23 @@
-Cerbos: Painless access management for cloud-native applications
-================================================================
+[![made-with-Go](https://img.shields.io/badge/Made%20with-Go-1f425f.svg)](http://golang.org)  [![Contributor Covenant](https://img.shields.io/badge/Contributor%20Covenant-2.0-4baaaa.svg)](CODE_OF_CONDUCT.md)  [![Snapshots](https://github.com/cerbos/cerbos/actions/workflows/snaphot.yaml/badge.svg)](https://github.com/cerbos/cerbos/actions/workflows/snaphot.yaml)
+ 
+<p align="center">
+  <img src="https://github.com/cerbos/cerbos/blob/main/docs/supplemental-ui/logo.png?raw=true" alt="Cerbos"/>
+</p>
+
+Painless access control for cloud-native applications
+========================================================
 
 Cerbos helps you super-charge your authorization implementation by writing context-aware access control policies for your application resources. Author access rules using an intuitive YAML configuration language, use your Git-ops infrastructure to test and deploy them and, make simple API requests to the Cerbos PDP to evaluate the policies and make dynamic access decisions.
 
 See https://docs.cerbos.dev for full Cerbos documentation.
+
+How it works
+------------
+
+<p align="center">
+  <img src="https://github.com/cerbos/cerbos/blob/main/docs/modules/ROOT/assets/images/how_cerbos_works.png?raw=true" alt="Cerbos"/>
+</p>
+
 
 Example
 ------
@@ -13,7 +27,7 @@ Example
 ```yaml
 ---
 apiVersion: "api.cerbos.dev/v1"
-derived_roles:
+derivedRoles:
   name: common_roles
   definitions:
     - name: owner
@@ -87,6 +101,31 @@ cat <<EOF | curl --silent "http://localhost:3592/api/check?pretty" -d @-
 EOF
 ```
 
+**API response**
 
+```json
+{
+  "requestId": "test01",
+  "resourceInstances": {
+    "XX125": {
+      "actions": {
+        "view": "EFFECT_ALLOW"
+      }
+    }
+  }
+}
+```
 
+Client SDKs
+-----------
 
+- [Go](client/README.md)
+- [NodeJS](https://github.com/cerbos/cerbos-sdk-node)
+
+More Information
+----------------
+
+* [Cerbos website](https://cerbos.dev)
+* [Cerbos docs](https://docs.cerbos.dev)
+* [Demo repositories on GitHub](https://github.com/cerbos)
+* [Slack community](http://go.cerbos.io/slack)

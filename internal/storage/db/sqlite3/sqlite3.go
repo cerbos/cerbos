@@ -1,4 +1,5 @@
 // Copyright 2021 Zenauth Ltd.
+// SPDX-License-Identifier: Apache-2.0
 
 package sqlite3
 
@@ -63,7 +64,7 @@ func NewStore(ctx context.Context, conf *Conf) (*Store, error) {
 }
 
 type Store struct {
-	*internal.DBStorage
+	internal.DBStorage
 }
 
 func (s *Store) Driver() string {

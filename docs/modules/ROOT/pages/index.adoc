@@ -1,11 +1,11 @@
 include::partial$attributes.adoc[]
 
-= Painless access management for cloud-native applications
+= Painless access control for cloud-native applications
 
 Cerbos helps you super-charge your authorization implementation by writing context-aware access control policies for your application resources. Author access rules using an intuitive YAML configuration language, use your Git-ops infrastructure to test and deploy them and, make simple API requests to the Cerbos PDP to evaluate the policies and make dynamic access decisions.
 
 
-image::how_cerbos_works.png[How Cerbos works]
+image:how_cerbos_works.png[alt="How Cerbos works",role="center-img",width=85%,height=85%]
 
 
 Iterate quickly:: Instantly update your access policies without re-compiling or re-deploying your application. Let your product owner tweak access policies on their own while you focus on more interesting work. 

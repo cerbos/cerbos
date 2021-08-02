@@ -1,128 +1,137 @@
 // Copyright 2021 Zenauth Ltd.
+// SPDX-License-Identifier: Apache-2.0
 
 package client_test
 
 import (
 	"context"
 	"fmt"
-	"net"
+	"io/fs"
 	"path/filepath"
-	"runtime"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/require"
 
 	"github.com/cerbos/cerbos/client"
-	"github.com/cerbos/cerbos/internal/audit"
-	"github.com/cerbos/cerbos/internal/compile"
-	"github.com/cerbos/cerbos/internal/engine"
-	"github.com/cerbos/cerbos/internal/server"
-	"github.com/cerbos/cerbos/internal/storage"
-	"github.com/cerbos/cerbos/internal/storage/disk"
+	"github.com/cerbos/cerbos/client/testutil"
 	"github.com/cerbos/cerbos/internal/test"
+	"github.com/cerbos/cerbos/internal/util"
+)
+
+const (
+	adminUsername = "cerbos"
+	adminPassword = "cerbosAdmin"
 )
 
 func TestClient(t *testing.T) {
 	test.SkipIfGHActions(t) // TODO (cell) Servers don't work inside GH Actions for some reason.
 
-	dir := test.PathToDir(t, "store")
-	ctx, cancelFunc := context.WithCancel(context.Background())
-	defer cancelFunc()
+	testCases := []struct {
+		name string
+		tls  bool
+		opts []client.Opt
+	}{
+		{
+			name: "with_tls",
+			tls:  true,
+			opts: []client.Opt{client.WithTLSInsecure()},
+		},
+		{
+			name: "without_tls",
+			tls:  false,
+			opts: []client.Opt{client.WithPlaintext()},
+		},
+	}
 
-	auditLog := audit.NewNopLog()
+	for _, tc := range testCases {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			t.Run("tcp", func(t *testing.T) {
+				s, err := testutil.StartCerbosServer(mkServerOpts(t, tc.tls)...)
+				require.NoError(t, err)
 
-	store, err := disk.NewStore(ctx, &disk.Conf{Directory: dir, ScratchDir: t.TempDir()})
-	require.NoError(t, err)
+				defer s.Stop() //nolint:errcheck
 
-	eng, err := engine.New(ctx, compile.NewManager(ctx, store), auditLog)
-	require.NoError(t, err)
+				ac, err := client.NewAdminClientWithCredentials(s.GRPCAddr(), adminUsername, adminPassword, tc.opts...)
+				require.NoError(t, err)
 
-	t.Run("with_tls", func(t *testing.T) {
-		testdataDir := test.PathToDir(t, "server")
+				loadPolicies(t, ac)
 
-		t.Run("tcp", func(t *testing.T) {
-			conf := &server.Conf{
-				HTTPListenAddr: getFreeListenAddr(t),
-				GRPCListenAddr: getFreeListenAddr(t),
-				TLS: &server.TLSConf{
-					Cert: filepath.Join(testdataDir, "tls.crt"),
-					Key:  filepath.Join(testdataDir, "tls.key"),
-				},
-			}
+				c, err := client.New(s.GRPCAddr(), tc.opts...)
+				require.NoError(t, err)
 
-			ctx, cancelFunc := context.WithCancel(context.Background())
-			defer cancelFunc()
+				t.Run("grpc", testGRPCClient(c))
+			})
 
-			startServer(ctx, conf, store, eng, auditLog)
+			t.Run("uds", func(t *testing.T) {
+				serverOpts := mkServerOpts(t, tc.tls)
+				tempDir := t.TempDir()
+				serverOpts = append(serverOpts,
+					testutil.WithHTTPListenAddr(fmt.Sprintf("unix:%s", filepath.Join(tempDir, "http.sock"))),
+					testutil.WithGRPCListenAddr(fmt.Sprintf("unix:%s", filepath.Join(tempDir, "grpc.sock"))),
+				)
+				s, err := testutil.StartCerbosServer(serverOpts...)
+				require.NoError(t, err)
 
-			c, err := client.New(conf.GRPCListenAddr, client.WithTLSInsecure())
-			require.NoError(t, err)
+				defer s.Stop() //nolint:errcheck
 
-			t.Run("grpc", testGRPCClient(c))
+				ac, err := client.NewAdminClientWithCredentials(s.GRPCAddr(), adminUsername, adminPassword, tc.opts...)
+				require.NoError(t, err)
+
+				loadPolicies(t, ac)
+
+				c, err := client.New(s.GRPCAddr(), tc.opts...)
+				require.NoError(t, err)
+
+				t.Run("grpc", testGRPCClient(c))
+			})
 		})
+	}
+}
 
-		t.Run("uds", func(t *testing.T) {
-			tempDir := t.TempDir()
+func mkServerOpts(t *testing.T, withTLS bool) []testutil.ServerOpt {
+	t.Helper()
 
-			conf := &server.Conf{
-				HTTPListenAddr: fmt.Sprintf("unix:%s", filepath.Join(tempDir, "http.sock")),
-				GRPCListenAddr: fmt.Sprintf("unix:%s", filepath.Join(tempDir, "grpc.sock")),
-				TLS: &server.TLSConf{
-					Cert: filepath.Join(testdataDir, "tls.crt"),
-					Key:  filepath.Join(testdataDir, "tls.key"),
-				},
-			}
+	serverOpts := []testutil.ServerOpt{
+		testutil.WithPolicyRepositoryDatabase("sqlite3", fmt.Sprintf("%s?_fk=true", filepath.Join(t.TempDir(), "cerbos.db"))),
+		testutil.WithAdminAPI(adminUsername, adminPassword),
+	}
 
-			ctx, cancelFunc := context.WithCancel(context.Background())
-			defer cancelFunc()
+	if withTLS {
+		certDir := test.PathToDir(t, "server")
+		tlsCert := filepath.Join(certDir, "tls.crt")
+		tlsKey := filepath.Join(certDir, "tls.key")
+		serverOpts = append(serverOpts, testutil.WithTLSCertAndKey(tlsCert, tlsKey))
+	}
 
-			startServer(ctx, conf, store, eng, auditLog)
+	return serverOpts
+}
 
-			c, err := client.New(conf.GRPCListenAddr, client.WithTLSInsecure())
-			require.NoError(t, err)
+func loadPolicies(t *testing.T, ac client.AdminClient) {
+	t.Helper()
 
-			t.Run("grpc", testGRPCClient(c))
-		})
+	ps := client.NewPolicySet()
+	testdataDir := test.PathToDir(t, "store")
+	err := filepath.WalkDir(testdataDir, func(path string, d fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+
+		if d.IsDir() {
+			return nil
+		}
+
+		if !util.IsSupportedFileType(d.Name()) {
+			return nil
+		}
+
+		ps.AddPolicyFromFile(path)
+		return ps.Err()
 	})
 
-	t.Run("without_tls", func(t *testing.T) {
-		t.Run("tcp", func(t *testing.T) {
-			conf := &server.Conf{
-				HTTPListenAddr: getFreeListenAddr(t),
-				GRPCListenAddr: getFreeListenAddr(t),
-			}
-
-			ctx, cancelFunc := context.WithCancel(context.Background())
-			defer cancelFunc()
-
-			startServer(ctx, conf, store, eng, auditLog)
-
-			c, err := client.New(conf.GRPCListenAddr, client.WithPlaintext())
-			require.NoError(t, err)
-
-			t.Run("grpc", testGRPCClient(c))
-		})
-
-		t.Run("uds", func(t *testing.T) {
-			tempDir := t.TempDir()
-
-			conf := &server.Conf{
-				HTTPListenAddr: fmt.Sprintf("unix:%s", filepath.Join(tempDir, "http.sock")),
-				GRPCListenAddr: fmt.Sprintf("unix:%s", filepath.Join(tempDir, "grpc.sock")),
-			}
-
-			ctx, cancelFunc := context.WithCancel(context.Background())
-			defer cancelFunc()
-
-			startServer(ctx, conf, store, eng, auditLog)
-
-			c, err := client.New(conf.GRPCListenAddr, client.WithPlaintext())
-			require.NoError(t, err)
-
-			t.Run("grpc", testGRPCClient(c))
-		})
-	})
+	require.NoError(t, err)
+	require.NoError(t, ac.AddOrUpdatePolicy(context.Background(), ps))
 }
 
 func testGRPCClient(c client.Client) func(*testing.T) {
@@ -143,7 +152,7 @@ func testGRPCClient(c client.Client) func(*testing.T) {
 					}),
 				client.NewResourceSet("leave_request").
 					WithPolicyVersion("20210210").
-					WithResourceInstance("XX125", map[string]interface{}{
+					AddResourceInstance("XX125", map[string]interface{}{
 						"department": "marketing",
 						"geography":  "GB",
 						"id":         "XX125",
@@ -155,6 +164,59 @@ func testGRPCClient(c client.Client) func(*testing.T) {
 			require.NoError(t, err)
 			require.True(t, have.IsAllowed("XX125", "view:public"))
 			require.False(t, have.IsAllowed("XX125", "approve"))
+		})
+
+		t.Run("CheckResourceBatch", func(t *testing.T) {
+			ctx, cancelFunc := context.WithTimeout(context.Background(), 10*time.Second)
+			defer cancelFunc()
+
+			have, err := c.CheckResourceBatch(
+				ctx,
+				client.NewPrincipal("john").
+					WithRoles("employee").
+					WithPolicyVersion("20210210").
+					WithAttributes(map[string]interface{}{
+						"department": "marketing",
+						"geography":  "GB",
+						"team":       "design",
+					}),
+				client.NewResourceBatch().
+					Add(client.
+						NewResource("leave_request", "XX125").
+						WithPolicyVersion("20210210").
+						WithAttributes(map[string]interface{}{
+							"department": "marketing",
+							"geography":  "GB",
+							"id":         "XX125",
+							"owner":      "john",
+							"team":       "design",
+						}), "view:public").
+					Add(client.
+						NewResource("leave_request", "XX125").
+						WithPolicyVersion("20210210").
+						WithAttributes(map[string]interface{}{
+							"department": "marketing",
+							"geography":  "GB",
+							"id":         "XX125",
+							"owner":      "john",
+							"team":       "design",
+						}), "approve").
+					Add(client.
+						NewResource("leave_request", "XX225").
+						WithPolicyVersion("20210210").
+						WithAttributes(map[string]interface{}{
+							"department": "engineering",
+							"geography":  "GB",
+							"id":         "XX225",
+							"owner":      "mary",
+							"team":       "frontend",
+						}), "approve"),
+			)
+
+			require.NoError(t, err)
+			require.True(t, have.IsAllowed("XX125", "view:public"))
+			require.False(t, have.IsAllowed("XX125", "approve"))
+			require.False(t, have.IsAllowed("XX225", "approve"))
 		})
 
 		t.Run("IsAllowed", func(t *testing.T) {
@@ -186,26 +248,4 @@ func testGRPCClient(c client.Client) func(*testing.T) {
 			require.True(t, have)
 		})
 	}
-}
-
-func getFreeListenAddr(t *testing.T) string {
-	t.Helper()
-
-	lis, err := net.Listen("tcp", "localhost:0")
-	require.NoError(t, err, "Failed to create listener")
-
-	addr := lis.Addr().String()
-	lis.Close()
-
-	return addr
-}
-
-func startServer(ctx context.Context, conf *server.Conf, store storage.Store, eng *engine.Engine, auditLog audit.Log) {
-	s := server.NewServer(conf)
-	go func() {
-		if err := s.Start(ctx, store, eng, auditLog, false); err != nil {
-			panic(err)
-		}
-	}()
-	runtime.Gosched()
 }

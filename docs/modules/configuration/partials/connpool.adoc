@@ -1,0 +1,11 @@
+Cerbos uses a connection pool when connecting to a database. You can configure the connection pool settings by adding a `connPool` section to the driver configuration.
+
+Available options are:
+
+`maxLifeTime`:: The maximum length of time a connection can be reused for. This is useful when your database enforces a maximum lifetime on connections or if you have a load balancer in front of your database to spread the load.
+`maxIdleTime`:: How long a connection should be idle for before it is closed. Useful if you want to cleanup idle connections quickly.
+`maxOpen`:: Maximum number of connections that can be open at any given time (including idle connections).
+`maxIdle`:: Maximum number of idle connections that can be open at any given time.
+
+CAUTION: Connection pool settings can have a significant impact on the performance of Cerbos and your database server. Make sure you fully understand the implications of updating these settings before making any changes.
+

@@ -1,9 +1,13 @@
 ---
 run:
-  timeout: 120s
+  timeout: 300s
   skip-dirs:
-    - internal/genpb
+    - api
+    - deploy
+    - docs
+    - hack
     - internal/test/mocks
+    - schema
   build-tags:
     - tests
 
@@ -23,6 +27,7 @@ linters-settings:
         COMPANY: Zenauth Ltd.
     template: |-
       Copyright {{ YEAR-RANGE }} {{ COMPANY }}
+      SPDX-License-Identifier: Apache-2.0
 
   nolintlint:
     allow-unused: false

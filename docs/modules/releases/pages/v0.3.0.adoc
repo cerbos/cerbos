@@ -1,0 +1,33 @@
+include::ROOT:partial$attributes.adoc[]
+
+[#v0.3.0]
+= Cerbos v0.3.0
+
+== Highlights
+
+Audit logs:: This release adds audit log capture and analysis capabilities to Cerbos instances. When xref:configuration:audit.adoc[audit logs are enabled], each Cerbos instance captures and stores the incoming requests and decisions made by the engine along with metadata such as the policies that contributed to the decisions. These can be viewed and analysed later using the xref:api:admin_api.doc[Admin API] or the xref:cli:ctl.adoc[`cerbos ctl`] CLI utilities.
++
+The `cerbos ctl decisions` command provides a handy TUI for exploring the decisions made by a Cerbos instance. You can also access the raw log data using the `cerbos ctl audit` command.
++
+image:decisions-tui.png[alt="Decisions",role="center-img"]
+
+API promotion:: The experimental `CheckResourceBatch` API is now promoted to stable status. It allows you to check access to a heterogeneous batch of resources in the same API request.
+
+
+== Changelog
+
+34 commits since v0.2.1. 208 files changed, 31297 insertions(+), 5301 deletions(-)
+
+=== Bug fixes
+
+* Handle relative paths correctly in the directory watcher (link:https://github.com/cerbos/cerbos/pull/179[#179])
+
+=== Features
+
+* Audit log capture (link:https://github.com/cerbos/cerbos/pull/185[#185])
+* Audit logs CLI (link:https://github.com/cerbos/cerbos/pull/194[#194])
+
+=== Enhancements
+
+* Promote `CheckResourceBatch` API to top level (link:https://github.com/cerbos/cerbos/pull/190[#190])
+* Add Admin API support to Go client (link:https://github.com/cerbos/cerbos/pull/200[#200])

@@ -8,7 +8,7 @@ adminAddOrUpdatePolicy:
     "policies": [
       {
         "apiVersion": "api.cerbos.dev/v1",
-        "derived_roles": {
+        "derivedRoles": {
           "name": "my_derived_roles",
           "definitions": [
             {

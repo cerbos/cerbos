@@ -1,0 +1,15 @@
+.navbar {
+    background-color: #ffb901 !important;
+}
+
+.footer {
+    background-color: #ffb901 !important;
+}
+
+.center-img {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+

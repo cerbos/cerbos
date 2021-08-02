@@ -1,4 +1,5 @@
 // Copyright 2021 Zenauth Ltd.
+// SPDX-License-Identifier: Apache-2.0
 
 package ctl
 
@@ -48,8 +49,8 @@ var (
 
 var longDesc = `Cerbos instance administration commands
 The Cerbos Admin API must be enabled in order for these commands to work.
-The Admin API requires credentials. They can be provided using environment
-variables or command-line arguments. 
+The Admin API requires credentials. They can be provided using a netrc file, 
+environment variables or command-line arguments. 
 
 Environment variables
 
@@ -57,8 +58,8 @@ CERBOS_SERVER: gRPC address of the Cerbos server
 CERBOS_USERNAME: Admin username
 CERBOS_PASSWORD: Admin password
 
-Alternatively, command-line flags can be used to provide the server address and credentials. 
-When both environment variables and command-line flags are provided, the flags take precedence.`
+When more than one method is used to provide credentials, the precedence from lowest to 
+highest is: netrc < environment < command line.`
 
 var exampleDesc = `
 # Connect to a TLS enabled server while skipping certificate verification and launch the decisions viewer

@@ -8,3 +8,6 @@ hack/dev/tls.key
 
 # Local Netlify folder
 .netlify
+
+# Editor files
+.vscode

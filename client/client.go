@@ -1,5 +1,7 @@
 // Copyright 2021 Zenauth Ltd.
+// SPDX-License-Identifier: Apache-2.0
 
+// Package client provides a client implementation to interact with a Cerbos instance and check access policies.
 package client
 
 import (
@@ -25,8 +27,12 @@ import (
 
 // Client provides access to the Cerbos API.
 type Client interface {
+	// IsAllowed checks access to a single resource by a principal and returns true if access is granted.
 	IsAllowed(context.Context, *Principal, *Resource, string) (bool, error)
+	// CheckResourceSet checks access to a set of resources of the same kind.
 	CheckResourceSet(context.Context, *Principal, *ResourceSet, ...string) (*CheckResourceSetResponse, error)
+	// CheckResourceBatch checks access to a batch of resources of different kinds.
+	CheckResourceBatch(context.Context, *Principal, *ResourceBatch) (*CheckResourceBatchResponse, error)
 }
 
 type config struct {
@@ -40,6 +46,7 @@ type config struct {
 	connectTimeout time.Duration
 	maxRetries     uint
 	retryTimeout   time.Duration
+	userAgent      string
 }
 
 type Opt func(*config)
@@ -101,34 +108,51 @@ func WithRetryTimeout(timeout time.Duration) Opt {
 	}
 }
 
+// WithUserAgent sets the user agent string.
+func WithUserAgent(ua string) Opt {
+	return func(c *config) {
+		c.userAgent = ua
+	}
+}
+
 // New creates a new Cerbos client.
 func New(address string, opts ...Opt) (Client, error) {
-	conf := config{
-		address:        address,
-		connectTimeout: 30 * time.Second, //nolint:gomnd
-		maxRetries:     3,                //nolint:gomnd
-		retryTimeout:   2 * time.Second,  //nolint:gomnd
-	}
-
-	for _, o := range opts {
-		o(&conf)
-	}
-
-	dialOpts, err := mkDialOpts(conf)
+	grpcConn, _, err := mkConn(address, opts...)
 	if err != nil {
 		return nil, err
-	}
-
-	grpcConn, err := grpc.Dial(conf.address, dialOpts...)
-	if err != nil {
-		return nil, fmt.Errorf("failed to dial gRPC: %w", err)
 	}
 
 	return &grpcClient{stub: svcv1.NewCerbosServiceClient(grpcConn)}, nil
 }
 
-func mkDialOpts(conf config) ([]grpc.DialOption, error) {
-	var dialOpts []grpc.DialOption
+func mkConn(address string, opts ...Opt) (*grpc.ClientConn, *config, error) {
+	conf := &config{
+		address:        address,
+		connectTimeout: 30 * time.Second, //nolint:gomnd
+		maxRetries:     3,                //nolint:gomnd
+		retryTimeout:   2 * time.Second,  //nolint:gomnd
+		userAgent:      fmt.Sprintf("cerbos-client/%s", util.Version),
+	}
+
+	for _, o := range opts {
+		o(conf)
+	}
+
+	dialOpts, err := mkDialOpts(conf)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	grpcConn, err := grpc.Dial(conf.address, dialOpts...)
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to dial gRPC: %w", err)
+	}
+
+	return grpcConn, conf, nil
+}
+
+func mkDialOpts(conf *config) ([]grpc.DialOption, error) {
+	dialOpts := []grpc.DialOption{grpc.WithUserAgent(conf.userAgent)}
 
 	if conf.connectTimeout > 0 {
 		dialOpts = append(dialOpts, grpc.WithConnectParams(grpc.ConnectParams{MinConnectTimeout: conf.connectTimeout}))
@@ -168,7 +192,7 @@ func mkDialOpts(conf config) ([]grpc.DialOption, error) {
 	return dialOpts, nil
 }
 
-func mkTLSConfig(conf config) (*tls.Config, error) {
+func mkTLSConfig(conf *config) (*tls.Config, error) {
 	tlsConf := util.DefaultTLSConfig()
 
 	if conf.tlsInsecure {
@@ -226,8 +250,8 @@ func (gc *grpcClient) CheckResourceSet(ctx context.Context, principal *Principal
 	req := &requestv1.CheckResourceSetRequest{
 		RequestId: reqID.String(),
 		Actions:   actions,
-		Principal: principal.Principal,
-		Resource:  resourceSet.ResourceSet,
+		Principal: principal.p,
+		Resource:  resourceSet.rs,
 	}
 
 	result, err := gc.stub.CheckResourceSet(ctx, req)
@@ -236,6 +260,34 @@ func (gc *grpcClient) CheckResourceSet(ctx context.Context, principal *Principal
 	}
 
 	return &CheckResourceSetResponse{CheckResourceSetResponse: result}, nil
+}
+
+func (gc *grpcClient) CheckResourceBatch(ctx context.Context, principal *Principal, resourceBatch *ResourceBatch) (*CheckResourceBatchResponse, error) {
+	if err := isValid(principal); err != nil {
+		return nil, fmt.Errorf("invalid principal: %w", err)
+	}
+
+	if err := isValid(resourceBatch); err != nil {
+		return nil, fmt.Errorf("invalid resource batch; %w", err)
+	}
+
+	reqID, err := uuid.NewRandom()
+	if err != nil {
+		return nil, fmt.Errorf("failed to generate request ID: %w", err)
+	}
+
+	req := &requestv1.CheckResourceBatchRequest{
+		RequestId: reqID.String(),
+		Principal: principal.p,
+		Resources: resourceBatch.batch,
+	}
+
+	result, err := gc.stub.CheckResourceBatch(ctx, req)
+	if err != nil {
+		return nil, fmt.Errorf("request failed: %w", err)
+	}
+
+	return &CheckResourceBatchResponse{CheckResourceBatchResponse: result}, nil
 }
 
 func (gc *grpcClient) IsAllowed(ctx context.Context, principal *Principal, resource *Resource, action string) (bool, error) {
@@ -254,9 +306,9 @@ func (gc *grpcClient) IsAllowed(ctx context.Context, principal *Principal, resou
 
 	req := &requestv1.CheckResourceBatchRequest{
 		RequestId: reqID.String(),
-		Principal: principal.Principal,
+		Principal: principal.p,
 		Resources: []*requestv1.CheckResourceBatchRequest_BatchEntry{
-			{Actions: []string{action}, Resource: resource.Resource},
+			{Actions: []string{action}, Resource: resource.r},
 		},
 	}
 

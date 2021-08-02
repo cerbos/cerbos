@@ -15,11 +15,11 @@ Now start the Cerbos server. We are using the container image in this guide but 
 .Downloading the container image
 ****
 
-You will need to login to the container registry using the username and API key provided to you.
+During the early access period you will need to login to the container registry using the provided Cerbos key.
 
 [source,sh,subs="attributes"]
 ----
-echo YOUR_API_KEY | docker login {app-container-registry} -u YOUR_USERNAME --password-stdin
+echo CERBOS_KEY | docker login {app-container-registry} -u cerbos-ea --password-stdin
 ----
 
 ****
@@ -48,7 +48,7 @@ Let's create a xref:policies:derived_roles.adoc[derived roles] definition that a
 cat > cerbos-quickstart/policies/derived_roles_common.yaml <<EOF
 ---
 apiVersion: "api.cerbos.dev/v1"
-derived_roles:
+derivedRoles:
   name: common_roles
   definitions:
     - name: owner
@@ -123,5 +123,12 @@ docker kill cerbos
 ----
 
 
-.Where to go from here
+.Next steps
+****
+
 * xref:policies:index.adoc[Read more about Cerbos policies]
+* link:http://go.cerbos.io/slack[Join the Cerbos community on Slack]
+* mailto:help@cerbos.dev[Ask us anything via help@cerbos.dev]
+* link:https://cerbos.dev[Visit the Cerbos website]
+
+****

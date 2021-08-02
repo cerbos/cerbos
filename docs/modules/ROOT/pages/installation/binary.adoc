@@ -18,7 +18,7 @@ You can download the binaries by running the following command. Substitute `<BUN
 
 [source,sh,subs="attributes,macros"]
 ----
-curl -H "X-JFrog-Art-Api:$$<$$YOUR_API_KEY$$>$$" -L -o {app-name}.tar.gz "{app-binaries-url}/$$<$$BUNDLE$$>$$"
+curl -H "X-JFrog-Art-Api:$$<$$CERBOS_KEY$$>$$" -L -o {app-name}.tar.gz "{app-binaries-url}/$$<$$BUNDLE$$>$$"
 tar xvf {app-name}.tar.gz
 chmod +x {app-name}
 ----

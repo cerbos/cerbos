@@ -32,7 +32,7 @@ jobs:
         run: |-
           REPO_STATUS="$(git status --porcelain)"
           if [[ ! -z $REPO_STATUS ]]; then
-            echo "Uncommitted changes detected"
+            echo "::error::Uncommitted changes detected"
             echo "$REPO_STATUS"
             exit 1
           fi
@@ -62,3 +62,20 @@ jobs:
         uses: golangci/golangci-lint-action@v2
         with:
           version: latest
+          args: '--config=.golangci.yaml -v'
+
+  buf:
+    name: Proto check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Setup Buf
+        uses: bufbuild/buf-setup-action@v0.3.1
+
+      - name: Lint protos
+        uses: bufbuild/buf-lint-action@v0.3.0
+
+      - uses: bufbuild/buf-breaking-action@v0.4.0
+        with:
+          against: 'https://github.com/cerbos/cerbos.git#branch=main'
