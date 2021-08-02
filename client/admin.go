@@ -6,7 +6,6 @@ package client
 import (
 	"context"
 	"errors"
-	"fmt"
 	"io"
 	"time"
 
@@ -21,8 +20,8 @@ import (
 
 type AdminClient interface {
 	AddOrUpdatePolicy(context.Context, *PolicySet) error
-	AccessLogs(ctx context.Context, opts AuditLogOptions) ([]*auditv1.AccessLogEntry, error)
-	DecisionLogs(ctx context.Context, opts AuditLogOptions) ([]*auditv1.DecisionLogEntry, error)
+	AccessLogs(ctx context.Context, opts AuditLogOptions) (<-chan *AccessLogEntry, error)
+	DecisionLogs(ctx context.Context, opts AuditLogOptions) (<-chan *DecisionLogEntry, error)
 }
 
 // NewAdminClient creates a new admin client.
@@ -83,32 +82,76 @@ type AuditLogOptions struct {
 	Lookup    string
 }
 
-type logSet struct {
-	accessLogs   []*auditv1.AccessLogEntry
-	decisionLogs []*auditv1.DecisionLogEntry
+type AccessLogEntry struct {
+	Log *auditv1.AccessLogEntry
+	Err error
+}
+
+type DecisionLogEntry struct {
+	Log *auditv1.DecisionLogEntry
+	Err error
 }
 
 // AccessLogs returns audit logs of the access type entries.
-func (c *GrpcAdminClient) AccessLogs(ctx context.Context, opts AuditLogOptions) ([]*auditv1.AccessLogEntry, error) {
-	logs, err := c.auditLogs(ctx, requestv1.ListAuditLogEntriesRequest_KIND_ACCESS, opts)
+func (c *GrpcAdminClient) AccessLogs(ctx context.Context, opts AuditLogOptions) (<-chan *AccessLogEntry, error) {
+	resp, err := c.auditLogs(ctx, requestv1.ListAuditLogEntriesRequest_KIND_ACCESS, opts)
 	if err != nil {
 		return nil, err
 	}
 
-	return logs.accessLogs, nil
+	entries := make(chan *AccessLogEntry)
+
+	go func() {
+		defer close(entries)
+
+		for {
+			entry, err := resp.Recv()
+			if err != nil {
+				if errors.Is(err, io.EOF) {
+					return
+				}
+
+				entries <- &AccessLogEntry{Err: err}
+				return
+			}
+
+			entries <- &AccessLogEntry{Log: entry.GetAccessLogEntry()}
+		}
+	}()
+
+	return entries, nil
 }
 
 // DecisionLogs returns decision logs of the decision type entries.
-func (c *GrpcAdminClient) DecisionLogs(ctx context.Context, opts AuditLogOptions) ([]*auditv1.DecisionLogEntry, error) {
-	logs, err := c.auditLogs(ctx, requestv1.ListAuditLogEntriesRequest_KIND_DECISION, opts)
+func (c *GrpcAdminClient) DecisionLogs(ctx context.Context, opts AuditLogOptions) (<-chan *DecisionLogEntry, error) {
+	resp, err := c.auditLogs(ctx, requestv1.ListAuditLogEntriesRequest_KIND_DECISION, opts)
 	if err != nil {
 		return nil, err
 	}
 
-	return logs.decisionLogs, nil
+	entries := make(chan *DecisionLogEntry)
+
+	go func() {
+		defer close(entries)
+
+		for {
+			entry, err := resp.Recv()
+			if err != nil {
+				if errors.Is(err, io.EOF) {
+					return
+				}
+				entries <- &DecisionLogEntry{Err: err}
+				return
+			}
+
+			entries <- &DecisionLogEntry{Log: entry.GetDecisionLogEntry()}
+		}
+	}()
+
+	return entries, nil
 }
 
-func (c *GrpcAdminClient) auditLogs(ctx context.Context, kind requestv1.ListAuditLogEntriesRequest_Kind, opts AuditLogOptions) (*logSet, error) {
+func (c *GrpcAdminClient) auditLogs(ctx context.Context, kind requestv1.ListAuditLogEntriesRequest_Kind, opts AuditLogOptions) (svcv1.CerbosAdminService_ListAuditLogEntriesClient, error) {
 	req := &requestv1.ListAuditLogEntriesRequest{Kind: kind}
 
 	switch {
@@ -125,33 +168,14 @@ func (c *GrpcAdminClient) auditLogs(ctx context.Context, kind requestv1.ListAudi
 		req.Filter = &requestv1.ListAuditLogEntriesRequest_Lookup{Lookup: opts.Lookup}
 	}
 
+	if err := req.Validate(); err != nil {
+		return nil, err
+	}
+
 	resp, err := c.client.ListAuditLogEntries(ctx, req, grpc.PerRPCCredentials(c.creds))
 	if err != nil {
 		return nil, err
 	}
 
-	entries := &logSet{
-		accessLogs:   make([]*auditv1.AccessLogEntry, 0),
-		decisionLogs: make([]*auditv1.DecisionLogEntry, 0),
-	}
-
-	for {
-		entry, err := resp.Recv()
-		if err != nil {
-			if errors.Is(err, io.EOF) {
-				return entries, nil
-			}
-
-			return nil, err
-		}
-
-		switch kind {
-		case requestv1.ListAuditLogEntriesRequest_KIND_ACCESS:
-			entries.accessLogs = append(entries.accessLogs, entry.GetAccessLogEntry())
-		case requestv1.ListAuditLogEntriesRequest_KIND_DECISION:
-			entries.decisionLogs = append(entries.decisionLogs, entry.GetDecisionLogEntry())
-		default:
-			return nil, fmt.Errorf("unsupported audit log entry kind: %s", kind)
-		}
-	}
+	return resp, nil
 }

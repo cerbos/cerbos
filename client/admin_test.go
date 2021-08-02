@@ -65,12 +65,33 @@ func TestAccessLogs(t *testing.T) {
 
 	require.NoError(t, err)
 
-	logs, err := ac.DecisionLogs(context.Background(), client.AuditLogOptions{
+	decisionLogs, err := ac.DecisionLogs(context.Background(), client.AuditLogOptions{
 		StartTime: time.Now().Add(time.Duration(-10) * time.Minute),
 		EndTime:   time.Now(),
 	})
 	require.NoError(t, err)
-	if len(logs) == 0 {
-		t.Skip("test is skipped, logs could not be received")
+
+	select {
+	case log, ok := <-decisionLogs:
+		if ok {
+			require.NoError(t, log.Err)
+		}
+	case <-time.After(time.Second):
+		require.Fail(t, "timeout waiting for logs")
+	}
+
+	accessLogs, err := ac.AccessLogs(context.Background(), client.AuditLogOptions{
+		StartTime: time.Now().Add(time.Duration(-10) * time.Minute),
+		EndTime:   time.Now(),
+	})
+	require.NoError(t, err)
+
+	select {
+	case log, ok := <-accessLogs:
+		if ok {
+			require.NoError(t, log.Err)
+		}
+	case <-time.After(time.Second):
+		require.Fail(t, "timeout waiting for logs")
 	}
 }
