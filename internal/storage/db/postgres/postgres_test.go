@@ -8,6 +8,7 @@ import (
 	_ "embed"
 	"fmt"
 	"testing"
+	"time"
 
 	embeddedpostgres "github.com/fergusstrange/embedded-postgres"
 	"github.com/jackc/pgx/v4"
@@ -41,7 +42,15 @@ func TestPostgres(t *testing.T) {
 	defer cancelFunc()
 
 	connURL := fmt.Sprintf("postgres://cerbos_user:changeme@localhost:%d/postgres?sslmode=disable&search_path=cerbos", port)
-	store, err := postgres.NewStore(ctx, &postgres.Conf{URL: connURL})
+	store, err := postgres.NewStore(ctx, &postgres.Conf{
+		URL: connURL,
+		ConnPool: &internal.ConnPoolConf{
+			MaxLifetime: 1 * time.Minute,
+			MaxIdleTime: 45 * time.Second,
+			MaxOpen:     4,
+			MaxIdle:     1,
+		},
+	})
 	require.NoError(t, err)
 
 	t.Run("suite", internal.TestSuite(store))

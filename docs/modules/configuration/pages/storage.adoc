@@ -127,6 +127,9 @@ NOTE: Unlike the SQLite3 driver, the tables and other database objects are not c
 
 The driver configuration expects the connection details to be provided as connection URL. See link:https://www.postgresql.org/docs/current/libpq-connect.html#LIBPQ-CONNSTRING[Postgres connstring documentation] for more information. Use the `search_path` parameter to point to the schema containing the Cerbos tables.
 
+You can use environment variable references in the URL to avoid storing credentials as part of the Cerbos configuration file.
+
+.Using Postgres as a storage backend for Cerbos
 [source,yaml,linenums]
 ----
 storage:
@@ -134,6 +137,24 @@ storage:
   postgres:
     url: "postgres://${PG_USER}:${PG_PASSWORD}@localhost:5432/postgres?sslmode=disable&search_path=cerbos"
 ----
+
+=== Connection pool
+
+include::partial$connpool.adoc[]
+
+[source,yaml,linenums]
+----
+storage:
+  driver: "postgres"
+  postgres:
+    url: "postgres://${PG_USER}:${PG_PASSWORD}@localhost:5432/postgres?sslmode=disable&search_path=cerbos"
+    connPool: 
+      maxLifeTime: 5m
+      maxIdleTime: 3m
+      maxOpen: 10
+      maxIdle: 5
+----
+
 
 
 === Database object definitions 
@@ -146,3 +167,84 @@ include::example$postgres_schema.sql[]
 ----
 
 
+[#mysql]
+== MySQL Driver
+
+The MySQL storage backend is one of the dynamic stores that supports adding or updating policies at runtime through the xref:server.adoc#admin-api[Admin API]. 
+
+NOTE: Unlike the SQLite3 driver, the tables and other database objects are not created automatically by the Cerbos MySQL driver. This is to minimize the privileges the Cerbos instance has on the MySQL installation. You must create the required tables using the provided script before configuring Cerbos to connect to the database.
+
+The driver configuration expects the connection details to be provided as a DSN in the following form: 
+
+----
+[username[:password]@][protocol[(address)]]/dbname[?param1=value1&...&paramN=valueN]
+----
+
+See https://github.com/go-sql-driver/mysql#dsn-data-source-name for the list of supported parameters.
+
+You can use environment variable references in the URL to avoid storing credentials as part of the Cerbos configuration file.
+
+.Using MySQL as a storage backend for Cerbos
+[source,yaml,linenums]
+----
+storage:
+  driver: "mysql"
+  mysql:
+    dsn: "${MYSQL_USER}:${MYSQL_PASSWORD}@tcp(localhost:3306)/cerbos"
+----
+
+=== Secure connections 
+
+If your MySQL server requires TLS or if you want to use RSA key pair-based password exchange, you can configure those settings as follows:
+
+.TLS certificates
+[source,yaml,linenums]
+----
+storage:
+  driver: "mysql"
+  mysql:
+    dsn: "${MYSQL_USER}:${MYSQL_PASSWORD}@tcp(localhost:3306)/cerbos?tls=mysecuretls"
+    tls:
+      mysecuretls:
+        caCert: /path/to/ca_certificate.crt
+        cert: /path/to/certificate.crt
+        key: /path/to/private.key
+----
+
+.Server public key
+[source,yaml,linenums]
+----
+storage:
+  driver: "mysql"
+  mysql:
+    dsn: "${MYSQL_USER}:${MYSQL_PASSWORD}@tcp(localhost:3306)/cerbos?serverPubKey=mypubkey"
+    serverPubKey:
+      mypubkey: /path/to/server_public_key.pem
+----
+
+
+=== Connection pool
+
+include::partial$connpool.adoc[]
+
+[source,yaml,linenums]
+----
+storage:
+  driver: "mysql"
+  mysql:
+    dsn: "${MYSQL_USER}:${MYSQL_PASSWORD}@tcp(localhost:3306)/cerbos"
+    connPool: 
+      maxLifeTime: 5m
+      maxIdleTime: 3m
+      maxOpen: 10
+      maxIdle: 5
+----
+
+=== Database object definitions 
+
+You can customise the script below to suit your environment. Make sure to specify a strong password for the `cerbos_user` user. 
+
+[source,sql,linenums]
+----
+include::example$mysql_schema.sql[]
+----
