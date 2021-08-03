@@ -2,7 +2,7 @@ include::ROOT:partial$attributes.adoc[]
 
 = Storage block
 
-Cerbos policies can be read from a directory on disk or a git repository. Which storage driver to use is defined by the `driver` setting.
+Cerbos supports multiple backends for storing policies. Which storage driver to use is defined by the `driver` setting.
 
 == Disk driver
 
