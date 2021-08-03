@@ -18,7 +18,7 @@ import (
 	"github.com/cerbos/cerbos/internal/audit/local"
 )
 
-func TestAccessLogs(t *testing.T) {
+func TestAuditLogs(t *testing.T) {
 	serverOpts := mkServerOpts(t, false)
 	tempDir := t.TempDir()
 	serverOpts = append(serverOpts,
