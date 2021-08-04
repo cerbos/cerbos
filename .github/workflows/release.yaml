@@ -54,6 +54,22 @@ jobs:
           ARTIFACTORY_PROD_USERNAME: ${{ secrets.ARTIFACTORY_PROD_USERNAME }}
           ARTIFACTORY_PROD_SECRET: ${{ secrets.ARTIFACTORY_PROD_SECRET }}
 
+  releaseProtos:
+    name: Release Protobufs
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Setup Buf
+        uses: bufbuild/buf-setup-action@v0.3.1
+
+      - name: Push to BSR 
+        uses: bufbuild/buf-push-action@v0.2.0
+        with:
+          branch: releases
+          buf_token: ${{ secrets.BUF_TOKEN }}
+
+
   releaseDocs:
     name: Release Documentation
     runs-on: ubuntu-latest
