@@ -5,7 +5,7 @@
 set -euo pipefail
 
 
-if [[ $# -ne 1 ]]; then
+if [[ $# -ne 2 ]]; then
     echo "Usage: $0 <version-to-release> <next-version>"
     exit 2
 fi
