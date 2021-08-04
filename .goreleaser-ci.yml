@@ -23,7 +23,7 @@ dockers:
       - "cerbos.jfrog.io/containers/cerbos:{{ .Version }}-amd64"
       - "ghcr.io/cerbos/cerbos:dev-amd64"
     goarch: amd64
-    use_buildx: true
+    use: buildx
     extra_files:
       - conf.default.yaml
     build_flag_templates:
@@ -40,7 +40,7 @@ dockers:
       - "cerbos.jfrog.io/containers/cerbos:{{ .Version }}-arm64"
       - "ghcr.io/cerbos/cerbos:dev-arm64"
     goarch: arm64
-    use_buildx: true
+    use: buildx
     extra_files:
       - conf.default.yaml
     build_flag_templates:

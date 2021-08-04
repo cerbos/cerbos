@@ -20,11 +20,11 @@ Alternatively, you can explore the API using the following methods as well:
 
 === Available
 
-image:nodejs.svg[alt="NodeJS",width=40,height=40,link="https://github.com/cerbos/cerbos-sdk-node"]
+image:go.svg[alt="Go",opts="interactive",width=40,height=40,link="https://pkg.go.dev/github.com/cerbos/cerbos/client"] image:nodejs.svg[alt="NodeJS",opts="interactive",width=40,height=40,link="https://github.com/cerbos/cerbos-sdk-node"]
 
 === Coming soon
 
-image:csharp.svg[alt="C#",opts="interactive",width=40,height=40]  image:go.svg[alt="Go",opts="interactive",width=40,height=40]  image:java.svg[alt="Java",opts="interactive",width=40,height=40]  image:python.svg[alt="Python",opts="interactive",width=40,height=40]  image:ruby.svg[alt="Ruby",opts="interactive",width=40,height=40]  image:rust.svg[alt="Rust",opts="interactive",width=40,height=40]
+image:csharp.svg[alt="C#",opts="interactive",width=40,height=40] image:java.svg[alt="Java",opts="interactive",width=40,height=40]  image:python.svg[alt="Python",opts="interactive",width=40,height=40]  image:ruby.svg[alt="Ruby",opts="interactive",width=40,height=40]  image:rust.svg[alt="Rust",opts="interactive",width=40,height=40]
 
 
 == Demos
@@ -287,27 +287,55 @@ cat <<EOF | grpcurl -plaintext -d @ localhost:3593 cerbos.svc.v1.CerbosService/C
 
 == Generating API clients
 
-The Cerbos OpenAPI specification can be obtained from a running Cerbos instance by accessing link:http://localhost:3592{cerbos-openapi-schema}[].
+The Cerbos OpenAPI specification can be obtained from a running Cerbos instance by accessing link:http://localhost:3592{cerbos-openapi-schema}[]. Cerbos gRPC API definitions are published to the link:https://buf.build/cerbos/cerbos-api[Buf schema registry (BSR)] and can be easily added to your project if you use the link:https://docs.buf.build[Buf build system for protobufs].
+
+=== REST 
 
 There are many tools available to generate clients from an OpenAPI specification. https://openapi.tools/#sdk is a good resource for finding a tool suitable for your preferred language. 
 
 
-=== Example: Generating a Java client using OpenAPI Generator
+==== Example: Generating a Java client using OpenAPI Generator
 
 NOTE: link:https://openapi-generator.tech[OpenAPI Generator] has link:https://openapi-generator.tech/docs/generators#client-generators[support for many popular programming languages and frameworks]. Please consult the documentation to find the client generation instructions for your favourite language.
 
 
 This is an example of using the popular link:https://openapi-generator.tech[OpenAPI Generator] service to generate a Java client API.
 
-.Download the Cerbos OpenAPI specification
+* Download the Cerbos OpenAPI specification
++
 [source,sh,subs="attributes"]
 ----
 curl -Lo swagger.json http://localhost:3592{cerbos-openapi-schema}
 ----
-
-.Run the OpenAPI Generator
++
+* Run the OpenAPI Generator
++
 [source,sh,subs="attributes"]
 ----
 docker run --rm -v $(pwd):/oas openapitools/openapi-generator-cli generate -i /oas/swagger.json -g java -o /oas/java
 ----
+
+=== gRPC
+
+You can access the Cerbos protobuf definitions from the link:https://github.com/cerbos/cerbos/tree/main/api/cerbos[Cerbos source tree]. However, the easiest way to generate client code for your preferred language is to use the link:https://docs.buf.build[Buf build tool] to obtain the published API definitions from the link:https://buf.build/cerbos/cerbos-api[Buf schema registry (BSR)].
+
+* Run `buf mod init` and edit the generated `buf.yaml` file to add the following dependency declaration:
++ 
+[source,yaml]
+----
+version: v1
+deps:
+  - "buf.build/cerbos/cerbos-api"
+----
++
+* Download the API definitions with dependencies to the `proto` directory.
++
+[source,sh]
+----
+mkdir proto
+buf mod update
+buf export -o proto
+----
++
+* You can now use link:https://docs.buf.build/generate-usage[`buf generate`] or `protoc` to generate code using the protobufs available in the `proto` directory.
 
