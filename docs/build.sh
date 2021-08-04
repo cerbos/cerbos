@@ -10,6 +10,8 @@ WORKSPACE="/github/workspace"
 
 docker run -v "$SOURCE_DIR":"$WORKSPACE":Z --rm -t docker.io/antora/antora:latest antora --stacktrace "${WORKSPACE}/docs/antora-playbook.yml"
 
+VERSION=$(awk '/^version:/ {print $2}' "${SCRIPT_DIR}/antora.yml" | tr -d '"')
+
 UNAME=$(uname -s)
 OPEN_CMD=xdg-open
 
@@ -17,4 +19,4 @@ if [[ "$UNAME" == "Darwin" ]]; then
     OPEN_CMD=open
 fi
 
-$OPEN_CMD ${SCRIPT_DIR}/build/cerbos/index.html
+$OPEN_CMD ${SCRIPT_DIR}/build/cerbos/${VERSION}/index.html
