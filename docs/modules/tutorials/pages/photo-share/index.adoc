@@ -285,6 +285,8 @@ docker run -it -v $(pwd):/photo-share {app-docker-img} \
 Test results
 = AlbumObjectTestSuite (album_object_tests.yaml)
 == Alicia tries to view her own private album [OK]
-== Bradley tries to view Alicia's private and public albums [OK]
-== Moderator tries to delete a flagged album and an unflagged album [OK]
+== Bradley tries to view Alicia's private album [OK]
+== Bradley tries to view Alicia's public album [OK]
+== Moderator tries to delete a flagged album [OK]
+== Moderator tries to delete an unflagged album [OK]
 ----
