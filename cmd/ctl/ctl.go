@@ -1,7 +1,7 @@
 // Copyright 2021 Zenauth Ltd.
 // SPDX-License-Identifier: Apache-2.0
 
-package ctl
+package main
 
 import (
 	"context"
@@ -63,17 +63,20 @@ highest is: netrc < environment < command line.`
 
 var exampleDesc = `
 # Connect to a TLS enabled server while skipping certificate verification and launch the decisions viewer
-cerbos ctl --server=localhost:3593 --username=user --password=password --insecure decisions
+cerbosctl --server=localhost:3593 --username=user --password=password --insecure decisions
 
 # Connect to a non-TLS server and launch the decisions viewer
-cerbos ctl --server=localhost:3593 --username=user --password=password --plaintext decisions`
+cerbosctl --server=localhost:3593 --username=user --password=password --plaintext decisions`
 
-func NewCommand() *cobra.Command {
+func main() {
 	cmd := &cobra.Command{
-		Use:               "ctl",
-		Short:             "Cerbos control",
+		Use:               "cerbosctl",
+		Short:             "A remmote control tool for Cerbos",
+		Version:           util.Version,
 		Long:              longDesc,
 		Example:           exampleDesc,
+		SilenceUsage:      true,
+		SilenceErrors:     true,
 		PersistentPreRunE: checkConnConf,
 	}
 
@@ -88,7 +91,12 @@ func NewCommand() *cobra.Command {
 
 	cmd.AddCommand(audit.NewAuditCmd(createAdminClient), decisions.NewDecisionsCmd(createAdminClient))
 
-	return cmd
+	cmd.AddCommand(audit.NewAuditCmd(createAdminClient), decisions.NewDecisionsCmd(createAdminClient))
+
+	if err := cmd.Execute(); err != nil {
+		cmd.PrintErrf("ERROR: %v\n", err)
+		os.Exit(1)
+	}
 }
 
 func checkConnConf(_ *cobra.Command, _ []string) error {

@@ -9,7 +9,6 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/cerbos/cerbos/cmd/compile"
-	"github.com/cerbos/cerbos/cmd/ctl"
 	"github.com/cerbos/cerbos/cmd/server"
 	"github.com/cerbos/cerbos/internal/util"
 )
@@ -23,7 +22,7 @@ func main() {
 		SilenceErrors: true,
 	}
 
-	cmd.AddCommand(server.NewCommand(), compile.NewCommand(), ctl.NewCommand())
+	cmd.AddCommand(server.NewCommand(), compile.NewCommand())
 	if err := cmd.Execute(); err != nil {
 		cmd.PrintErrf("ERROR: %v\n", err)
 		os.Exit(1)
