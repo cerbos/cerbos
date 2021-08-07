@@ -25,6 +25,7 @@ import (
 	"github.com/cerbos/cerbos/internal/audit"
 	"github.com/cerbos/cerbos/internal/policy"
 	"github.com/cerbos/cerbos/internal/storage"
+	"github.com/cerbos/cerbos/internal/util"
 )
 
 var _ svcv1.CerbosAdminServiceServer = (*CerbosAdminService)(nil)
@@ -119,6 +120,12 @@ func (cas *CerbosAdminService) ListAuditLogEntries(req *requestv1.ListAuditLogEn
 			return err
 		}
 	}
+}
+
+func (cas *CerbosAdminService) ServerStatus(ctx context.Context, req *requestv1.ServerStatusRequest) (*responsev1.ServerStatusResponse, error) {
+	return &responsev1.ServerStatusResponse{
+		Version: util.Version,
+	}, nil
 }
 
 func (cas *CerbosAdminService) getAuditLogStream(ctx context.Context, req *requestv1.ListAuditLogEntriesRequest) (auditLogStream, error) {

@@ -195,6 +195,30 @@
         ]
       }
     },
+    "/admin/status": {
+      "get": {
+        "summary": "Get server status",
+        "description": "Get information about the server e.g. server version",
+        "operationId": "CerbosAdminService_ServerStatus",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1ServerStatusResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "tags": [
+          "CerbosAdminService"
+        ]
+      }
+    },
     "/api/check": {
       "post": {
         "summary": "Check",
@@ -1432,6 +1456,15 @@
           "$ref": "#/definitions/v1Condition"
         }
       }
+    },
+    "v1ServerStatusResponse": {
+      "type": "object",
+      "properties": {
+        "version": {
+          "type": "string"
+        }
+      },
+      "description": "Server status response"
     }
   },
   "securityDefinitions": {

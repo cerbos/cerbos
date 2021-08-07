@@ -666,6 +666,75 @@ var _ interface {
 	ErrorName() string
 } = ListAuditLogEntriesResponseValidationError{}
 
+// Validate checks the field values on ServerStatusResponse with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, an error is returned.
+func (m *ServerStatusResponse) Validate() error {
+	if m == nil {
+		return nil
+	}
+
+	// no validation rules for Version
+
+	return nil
+}
+
+// ServerStatusResponseValidationError is the validation error returned by
+// ServerStatusResponse.Validate if the designated constraints aren't met.
+type ServerStatusResponseValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e ServerStatusResponseValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e ServerStatusResponseValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e ServerStatusResponseValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e ServerStatusResponseValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e ServerStatusResponseValidationError) ErrorName() string {
+	return "ServerStatusResponseValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e ServerStatusResponseValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sServerStatusResponse.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = ServerStatusResponseValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = ServerStatusResponseValidationError{}
+
 // Validate checks the field values on CheckResourceSetResponse_ActionEffectMap
 // with the rules defined in the proto definition for this message. If any
 // rules are violated, an error is returned.

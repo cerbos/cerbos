@@ -144,6 +144,7 @@ var CerbosService_ServiceDesc = grpc.ServiceDesc{
 type CerbosAdminServiceClient interface {
 	AddOrUpdatePolicy(ctx context.Context, in *v1.AddOrUpdatePolicyRequest, opts ...grpc.CallOption) (*v11.AddOrUpdatePolicyResponse, error)
 	ListAuditLogEntries(ctx context.Context, in *v1.ListAuditLogEntriesRequest, opts ...grpc.CallOption) (CerbosAdminService_ListAuditLogEntriesClient, error)
+	ServerStatus(ctx context.Context, in *v1.ServerStatusRequest, opts ...grpc.CallOption) (*v11.ServerStatusResponse, error)
 }
 
 type cerbosAdminServiceClient struct {
@@ -195,12 +196,22 @@ func (x *cerbosAdminServiceListAuditLogEntriesClient) Recv() (*v11.ListAuditLogE
 	return m, nil
 }
 
+func (c *cerbosAdminServiceClient) ServerStatus(ctx context.Context, in *v1.ServerStatusRequest, opts ...grpc.CallOption) (*v11.ServerStatusResponse, error) {
+	out := new(v11.ServerStatusResponse)
+	err := c.cc.Invoke(ctx, "/cerbos.svc.v1.CerbosAdminService/ServerStatus", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // CerbosAdminServiceServer is the server API for CerbosAdminService service.
 // All implementations must embed UnimplementedCerbosAdminServiceServer
 // for forward compatibility
 type CerbosAdminServiceServer interface {
 	AddOrUpdatePolicy(context.Context, *v1.AddOrUpdatePolicyRequest) (*v11.AddOrUpdatePolicyResponse, error)
 	ListAuditLogEntries(*v1.ListAuditLogEntriesRequest, CerbosAdminService_ListAuditLogEntriesServer) error
+	ServerStatus(context.Context, *v1.ServerStatusRequest) (*v11.ServerStatusResponse, error)
 	mustEmbedUnimplementedCerbosAdminServiceServer()
 }
 
@@ -213,6 +224,9 @@ func (UnimplementedCerbosAdminServiceServer) AddOrUpdatePolicy(context.Context, 
 }
 func (UnimplementedCerbosAdminServiceServer) ListAuditLogEntries(*v1.ListAuditLogEntriesRequest, CerbosAdminService_ListAuditLogEntriesServer) error {
 	return status.Errorf(codes.Unimplemented, "method ListAuditLogEntries not implemented")
+}
+func (UnimplementedCerbosAdminServiceServer) ServerStatus(context.Context, *v1.ServerStatusRequest) (*v11.ServerStatusResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ServerStatus not implemented")
 }
 func (UnimplementedCerbosAdminServiceServer) mustEmbedUnimplementedCerbosAdminServiceServer() {}
 
@@ -266,6 +280,24 @@ func (x *cerbosAdminServiceListAuditLogEntriesServer) Send(m *v11.ListAuditLogEn
 	return x.ServerStream.SendMsg(m)
 }
 
+func _CerbosAdminService_ServerStatus_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(v1.ServerStatusRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CerbosAdminServiceServer).ServerStatus(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/cerbos.svc.v1.CerbosAdminService/ServerStatus",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CerbosAdminServiceServer).ServerStatus(ctx, req.(*v1.ServerStatusRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // CerbosAdminService_ServiceDesc is the grpc.ServiceDesc for CerbosAdminService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -276,6 +308,10 @@ var CerbosAdminService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "AddOrUpdatePolicy",
 			Handler:    _CerbosAdminService_AddOrUpdatePolicy_Handler,
+		},
+		{
+			MethodName: "ServerStatus",
+			Handler:    _CerbosAdminService_ServerStatus_Handler,
 		},
 	},
 	Streams: []grpc.StreamDesc{

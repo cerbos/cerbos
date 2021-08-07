@@ -213,3 +213,13 @@ message ListAuditLogEntriesResponse {
         cerbos.audit.v1.DecisionLogEntry decision_log_entry = 2;
     }
 }
+
+message ServerStatusResponse {
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
+		json_schema: {
+			description: "Server status response"
+		}
+    };
+
+    string version = 1;
+}

@@ -104,6 +104,16 @@ service CerbosAdminService {
             }
         };
     }
+
+    rpc ServerStatus(cerbos.request.v1.ServerStatusRequest) returns (cerbos.response.v1.ServerStatusResponse) {
+        option (google.api.http) = {
+            get: "/admin/status"
+        };
+        option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+            summary: "Get server status"
+            description: "Get information about the server e.g. server version"
+        };
+    }
 }
 
 service CerbosPlaygroundService {
