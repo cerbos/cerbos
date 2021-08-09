@@ -853,7 +853,7 @@ func (m *ListAuditLogEntriesRequest_Lookup) MarshalToSizedBufferVT(dAtA []byte) 
 	dAtA[i] = 0x2a
 	return len(dAtA) - i, nil
 }
-func (m *ServerStatusRequest) MarshalVT() (dAtA []byte, err error) {
+func (m *ServerInfoRequest) MarshalVT() (dAtA []byte, err error) {
 	if m == nil {
 		return nil, nil
 	}
@@ -866,12 +866,12 @@ func (m *ServerStatusRequest) MarshalVT() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *ServerStatusRequest) MarshalToVT(dAtA []byte) (int, error) {
+func (m *ServerInfoRequest) MarshalToVT(dAtA []byte) (int, error) {
 	size := m.SizeVT()
 	return m.MarshalToSizedBufferVT(dAtA[:size])
 }
 
-func (m *ServerStatusRequest) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
+func (m *ServerInfoRequest) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 	if m == nil {
 		return 0, nil
 	}
@@ -1273,7 +1273,7 @@ func (m *ListAuditLogEntriesRequest_Lookup) SizeVT() (n int) {
 	n += 1 + l + sov(uint64(l))
 	return n
 }
-func (m *ServerStatusRequest) SizeVT() (n int) {
+func (m *ServerInfoRequest) SizeVT() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -3149,7 +3149,7 @@ func (m *ListAuditLogEntriesRequest) UnmarshalVT(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *ServerStatusRequest) UnmarshalVT(dAtA []byte) error {
+func (m *ServerInfoRequest) UnmarshalVT(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -3172,10 +3172,10 @@ func (m *ServerStatusRequest) UnmarshalVT(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: ServerStatusRequest: wiretype end group for non-group")
+			return fmt.Errorf("proto: ServerInfoRequest: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: ServerStatusRequest: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: ServerInfoRequest: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		default:

@@ -214,12 +214,14 @@ message ListAuditLogEntriesResponse {
     }
 }
 
-message ServerStatusResponse {
+message ServerInfoResponse {
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
 		json_schema: {
-			description: "Server status response"
+			description: "Server info response"
 		}
     };
 
     string version = 1;
+    string commit = 2;
+    string build_date = 3;
 }

@@ -199,12 +199,12 @@
       "get": {
         "summary": "Get server status",
         "description": "Get information about the server e.g. server version",
-        "operationId": "CerbosAdminService_ServerStatus",
+        "operationId": "CerbosAdminService_ServerInfo",
         "responses": {
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/v1ServerStatusResponse"
+              "$ref": "#/definitions/v1ServerInfoResponse"
             }
           },
           "default": {
@@ -1457,14 +1457,20 @@
         }
       }
     },
-    "v1ServerStatusResponse": {
+    "v1ServerInfoResponse": {
       "type": "object",
       "properties": {
         "version": {
           "type": "string"
+        },
+        "commit": {
+          "type": "string"
+        },
+        "buildDate": {
+          "type": "string"
         }
       },
-      "description": "Server status response"
+      "description": "Server info response"
     }
   },
   "securityDefinitions": {

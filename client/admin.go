@@ -15,8 +15,8 @@ import (
 
 type AdminClient interface {
 	AddOrUpdatePolicy(context.Context, *PolicySet) error
-	// ServerStatus returns the server status
-	ServerStatus(ctx context.Context) (*ServerStatus, error)
+	// ServerInfo returns the server status
+	ServerInfo(ctx context.Context) (*ServerInfo, error)
 }
 
 // NewAdminClient creates a new admin client.
@@ -69,12 +69,12 @@ func (gac *grpcAdminClient) AddOrUpdatePolicy(ctx context.Context, policies *Pol
 	return nil
 }
 
-func (gac *grpcAdminClient) ServerStatus(ctx context.Context) (*ServerStatus, error) {
-	resp, err := gac.client.ServerStatus(ctx, &requestv1.ServerStatusRequest{})
+func (gac *grpcAdminClient) ServerInfo(ctx context.Context) (*ServerInfo, error) {
+	resp, err := gac.client.ServerInfo(ctx, &requestv1.ServerInfoRequest{})
 	if err != nil {
 		return nil, err
 	}
-	return &ServerStatus{
-		ServerStatusResponse: resp,
+	return &ServerInfo{
+		ServerInfoResponse: resp,
 	}, nil
 }

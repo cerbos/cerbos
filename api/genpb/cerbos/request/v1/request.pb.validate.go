@@ -1032,10 +1032,10 @@ var _ListAuditLogEntriesRequest_Kind_InLookup = map[ListAuditLogEntriesRequest_K
 
 var _ListAuditLogEntriesRequest_Lookup_Pattern = regexp.MustCompile("^[0123456789ABCDEFGHJKMNPQRSTVWXYZ]{26}$")
 
-// Validate checks the field values on ServerStatusRequest with the rules
-// defined in the proto definition for this message. If any rules are
-// violated, an error is returned.
-func (m *ServerStatusRequest) Validate() error {
+// Validate checks the field values on ServerInfoRequest with the rules defined
+// in the proto definition for this message. If any rules are violated, an
+// error is returned.
+func (m *ServerInfoRequest) Validate() error {
 	if m == nil {
 		return nil
 	}
@@ -1043,9 +1043,9 @@ func (m *ServerStatusRequest) Validate() error {
 	return nil
 }
 
-// ServerStatusRequestValidationError is the validation error returned by
-// ServerStatusRequest.Validate if the designated constraints aren't met.
-type ServerStatusRequestValidationError struct {
+// ServerInfoRequestValidationError is the validation error returned by
+// ServerInfoRequest.Validate if the designated constraints aren't met.
+type ServerInfoRequestValidationError struct {
 	field  string
 	reason string
 	cause  error
@@ -1053,24 +1053,24 @@ type ServerStatusRequestValidationError struct {
 }
 
 // Field function returns field value.
-func (e ServerStatusRequestValidationError) Field() string { return e.field }
+func (e ServerInfoRequestValidationError) Field() string { return e.field }
 
 // Reason function returns reason value.
-func (e ServerStatusRequestValidationError) Reason() string { return e.reason }
+func (e ServerInfoRequestValidationError) Reason() string { return e.reason }
 
 // Cause function returns cause value.
-func (e ServerStatusRequestValidationError) Cause() error { return e.cause }
+func (e ServerInfoRequestValidationError) Cause() error { return e.cause }
 
 // Key function returns key value.
-func (e ServerStatusRequestValidationError) Key() bool { return e.key }
+func (e ServerInfoRequestValidationError) Key() bool { return e.key }
 
 // ErrorName returns error name.
-func (e ServerStatusRequestValidationError) ErrorName() string {
-	return "ServerStatusRequestValidationError"
+func (e ServerInfoRequestValidationError) ErrorName() string {
+	return "ServerInfoRequestValidationError"
 }
 
 // Error satisfies the builtin error interface
-func (e ServerStatusRequestValidationError) Error() string {
+func (e ServerInfoRequestValidationError) Error() string {
 	cause := ""
 	if e.cause != nil {
 		cause = fmt.Sprintf(" | caused by: %v", e.cause)
@@ -1082,14 +1082,14 @@ func (e ServerStatusRequestValidationError) Error() string {
 	}
 
 	return fmt.Sprintf(
-		"invalid %sServerStatusRequest.%s: %s%s",
+		"invalid %sServerInfoRequest.%s: %s%s",
 		key,
 		e.field,
 		e.reason,
 		cause)
 }
 
-var _ error = ServerStatusRequestValidationError{}
+var _ error = ServerInfoRequestValidationError{}
 
 var _ interface {
 	Field() string
@@ -1097,7 +1097,7 @@ var _ interface {
 	Key() bool
 	Cause() error
 	ErrorName() string
-} = ServerStatusRequestValidationError{}
+} = ServerInfoRequestValidationError{}
 
 // Validate checks the field values on CheckResourceBatchRequest_BatchEntry
 // with the rules defined in the proto definition for this message. If any

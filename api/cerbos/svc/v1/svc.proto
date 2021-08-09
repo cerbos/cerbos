@@ -105,7 +105,7 @@ service CerbosAdminService {
         };
     }
 
-    rpc ServerStatus(cerbos.request.v1.ServerStatusRequest) returns (cerbos.response.v1.ServerStatusResponse) {
+    rpc ServerInfo(cerbos.request.v1.ServerInfoRequest) returns (cerbos.response.v1.ServerInfoResponse) {
         option (google.api.http) = {
             get: "/admin/status"
         };

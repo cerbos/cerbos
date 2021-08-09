@@ -666,22 +666,26 @@ var _ interface {
 	ErrorName() string
 } = ListAuditLogEntriesResponseValidationError{}
 
-// Validate checks the field values on ServerStatusResponse with the rules
+// Validate checks the field values on ServerInfoResponse with the rules
 // defined in the proto definition for this message. If any rules are
 // violated, an error is returned.
-func (m *ServerStatusResponse) Validate() error {
+func (m *ServerInfoResponse) Validate() error {
 	if m == nil {
 		return nil
 	}
 
 	// no validation rules for Version
 
+	// no validation rules for Commit
+
+	// no validation rules for BuildDate
+
 	return nil
 }
 
-// ServerStatusResponseValidationError is the validation error returned by
-// ServerStatusResponse.Validate if the designated constraints aren't met.
-type ServerStatusResponseValidationError struct {
+// ServerInfoResponseValidationError is the validation error returned by
+// ServerInfoResponse.Validate if the designated constraints aren't met.
+type ServerInfoResponseValidationError struct {
 	field  string
 	reason string
 	cause  error
@@ -689,24 +693,24 @@ type ServerStatusResponseValidationError struct {
 }
 
 // Field function returns field value.
-func (e ServerStatusResponseValidationError) Field() string { return e.field }
+func (e ServerInfoResponseValidationError) Field() string { return e.field }
 
 // Reason function returns reason value.
-func (e ServerStatusResponseValidationError) Reason() string { return e.reason }
+func (e ServerInfoResponseValidationError) Reason() string { return e.reason }
 
 // Cause function returns cause value.
-func (e ServerStatusResponseValidationError) Cause() error { return e.cause }
+func (e ServerInfoResponseValidationError) Cause() error { return e.cause }
 
 // Key function returns key value.
-func (e ServerStatusResponseValidationError) Key() bool { return e.key }
+func (e ServerInfoResponseValidationError) Key() bool { return e.key }
 
 // ErrorName returns error name.
-func (e ServerStatusResponseValidationError) ErrorName() string {
-	return "ServerStatusResponseValidationError"
+func (e ServerInfoResponseValidationError) ErrorName() string {
+	return "ServerInfoResponseValidationError"
 }
 
 // Error satisfies the builtin error interface
-func (e ServerStatusResponseValidationError) Error() string {
+func (e ServerInfoResponseValidationError) Error() string {
 	cause := ""
 	if e.cause != nil {
 		cause = fmt.Sprintf(" | caused by: %v", e.cause)
@@ -718,14 +722,14 @@ func (e ServerStatusResponseValidationError) Error() string {
 	}
 
 	return fmt.Sprintf(
-		"invalid %sServerStatusResponse.%s: %s%s",
+		"invalid %sServerInfoResponse.%s: %s%s",
 		key,
 		e.field,
 		e.reason,
 		cause)
 }
 
-var _ error = ServerStatusResponseValidationError{}
+var _ error = ServerInfoResponseValidationError{}
 
 var _ interface {
 	Field() string
@@ -733,7 +737,7 @@ var _ interface {
 	Key() bool
 	Cause() error
 	ErrorName() string
-} = ServerStatusResponseValidationError{}
+} = ServerInfoResponseValidationError{}
 
 // Validate checks the field values on CheckResourceSetResponse_ActionEffectMap
 // with the rules defined in the proto definition for this message. If any

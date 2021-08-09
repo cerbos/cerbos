@@ -122,9 +122,11 @@ func (cas *CerbosAdminService) ListAuditLogEntries(req *requestv1.ListAuditLogEn
 	}
 }
 
-func (cas *CerbosAdminService) ServerStatus(ctx context.Context, req *requestv1.ServerStatusRequest) (*responsev1.ServerStatusResponse, error) {
-	return &responsev1.ServerStatusResponse{
-		Version: util.Version,
+func (cas *CerbosAdminService) ServerInfo(ctx context.Context, req *requestv1.ServerInfoRequest) (*responsev1.ServerInfoResponse, error) {
+	return &responsev1.ServerInfoResponse{
+		Version:   util.Version,
+		Commit:    util.Commit,
+		BuildDate: util.BuildDate,
 	}, nil
 }
 

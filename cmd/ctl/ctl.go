@@ -23,6 +23,7 @@ import (
 	svcv1 "github.com/cerbos/cerbos/api/genpb/cerbos/svc/v1"
 	"github.com/cerbos/cerbos/cmd/ctl/audit"
 	"github.com/cerbos/cerbos/cmd/ctl/decisions"
+	"github.com/cerbos/cerbos/cmd/ctl/version"
 	"github.com/cerbos/cerbos/internal/util"
 )
 
@@ -72,7 +73,7 @@ func main() {
 	cmd := &cobra.Command{
 		Use:               "cerbosctl",
 		Short:             "A remmote control tool for Cerbos",
-		Version:           util.Version,
+		Version:           fmt.Sprintf("%s; commit sha: %s, build date: %s", util.Version, util.Commit, util.BuildDate),
 		Long:              longDesc,
 		Example:           exampleDesc,
 		SilenceUsage:      true,
@@ -89,9 +90,7 @@ func main() {
 	cmd.PersistentFlags().BoolVar(&connConf.insecure, "insecure", false, "Skip validating server certificate")
 	cmd.PersistentFlags().BoolVar(&connConf.plaintext, "plaintext", false, "Use plaintext protocol without TLS")
 
-	cmd.AddCommand(audit.NewAuditCmd(createAdminClient), decisions.NewDecisionsCmd(createAdminClient))
-
-	cmd.AddCommand(audit.NewAuditCmd(createAdminClient), decisions.NewDecisionsCmd(createAdminClient))
+	cmd.AddCommand(audit.NewAuditCmd(createAdminClient), decisions.NewDecisionsCmd(createAdminClient), version.NewVersionCmd(createAdminClient))
 
 	if err := cmd.Execute(); err != nil {
 		cmd.PrintErrf("ERROR: %v\n", err)

@@ -320,10 +320,10 @@ message ListAuditLogEntriesRequest {
     }
 }
 
-message ServerStatusRequest {
+message ServerInfoRequest {
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
 		json_schema: {
-			description: "Server status request"
+			description: "Server info request"
 		}
     };
 }

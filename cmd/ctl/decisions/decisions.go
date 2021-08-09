@@ -28,7 +28,6 @@ import (
 	responsev1 "github.com/cerbos/cerbos/api/genpb/cerbos/response/v1"
 	svcv1 "github.com/cerbos/cerbos/api/genpb/cerbos/svc/v1"
 	"github.com/cerbos/cerbos/cmd/ctl/audit"
-	"github.com/cerbos/cerbos/internal/util"
 )
 
 var auditFilterFlags = audit.NewFilterDef()
@@ -84,15 +83,6 @@ func runDecisionsCmd(clientGen clientGenFunc) func(*cobra.Command, []string) err
 		client, err := clientGen()
 		if err != nil {
 			return err
-		}
-
-		r, err := client.ServerStatus(context.Background(), &requestv1.ServerStatusRequest{})
-		if err != nil {
-			return err
-		}
-
-		if r.Version != util.Version {
-			return fmt.Errorf("server version and client version does not match: server: %s, client: %s", r.Version, util.Version)
 		}
 
 		req := auditFilterFlags.BuildRequest(requestv1.ListAuditLogEntriesRequest_KIND_DECISION)
