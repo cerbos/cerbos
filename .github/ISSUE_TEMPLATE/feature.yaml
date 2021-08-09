@@ -1,7 +1,7 @@
 name: ⭐️ Feature Request
 description: Request a feature
 title: "<title>"
-labels: [enhancement, performance, chore, feature]
+labels: [feature, triage]
 body:
 - type: checkboxes
   attributes:
@@ -18,8 +18,8 @@ body:
     required: true
 - type: textarea
   attributes:
-    label: How to solve this
-    description: If you have any ideas that how we may solve the problem, feel free to add here.
+    label: What would the ideal solution look like to you?
+    description: Describe how you would expect the feature to work if it is implemented.
   validations:
     required: false
 - type: textarea

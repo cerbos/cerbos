@@ -1,7 +1,7 @@
 name: 🐞 Bug
 description: File a bug/issue
 title: "<title>"
-labels: [bug, performance, ci]
+labels: [bug, triage]
 body:
 - type: checkboxes
   attributes:
