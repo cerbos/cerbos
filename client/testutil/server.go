@@ -22,7 +22,6 @@ import (
 	"google.golang.org/grpc/credentials/local"
 	healthpb "google.golang.org/grpc/health/grpc_health_v1"
 
-	auditv1 "github.com/cerbos/cerbos/api/genpb/cerbos/audit/v1"
 	svcv1 "github.com/cerbos/cerbos/api/genpb/cerbos/svc/v1"
 	"github.com/cerbos/cerbos/internal/audit"
 	"github.com/cerbos/cerbos/internal/compile"
@@ -118,32 +117,12 @@ func WithDefaultPolicyVersion(version string) ServerOpt {
 	}
 }
 
-// WithAudit enables test version of the audit engine in the cerbos server.
-// this engine will have a single log entry for each type.
-func WithAudit() ServerOpt {
-	return func(so *serverOpt) {
-		so.auditEngine = &auditLog{
-			accessLogIterator: &accessLogIterator{
-				logs: []*auditv1.AccessLogEntry{{
-					CallId: "access-logs-test",
-				}},
-			},
-			decisionLogIterator: &decisionLogIterator{
-				logs: []*auditv1.DecisionLogEntry{{
-					CallId: "decision-logs-test",
-				}},
-			},
-		}
-	}
-}
-
 type serverOpt struct {
 	serverConf           *server.Conf
 	defaultPolicyVersion string
 	policyRepoDir        string
 	policyRepoDBDriver   string
 	policyRepoDBConnStr  string
-	auditEngine          *auditLog
 }
 
 func (so *serverOpt) setDefaultsAndValidate() error {
@@ -280,10 +259,6 @@ func startServer(ctx context.Context, g *errgroup.Group, sopt *serverOpt) (err e
 	}
 
 	auditLog := audit.NewNopLog()
-	if sopt.auditEngine != nil {
-		auditLog = sopt.auditEngine
-	}
-
 	eng, err := engine.New(ctx, compile.NewManager(ctx, store), auditLog)
 	if err != nil {
 		return err
@@ -339,81 +314,4 @@ func (s *ServerInfo) IsReady(ctx context.Context) (bool, error) {
 	default:
 		return false, nil
 	}
-}
-
-type auditLog struct {
-	accessLogIterator   *accessLogIterator
-	decisionLogIterator *decisionLogIterator
-}
-
-func (l *auditLog) WriteAccessLogEntry(_ context.Context, record audit.AccessLogEntryMaker) error {
-	return nil
-}
-
-func (l *auditLog) WriteDecisionLogEntry(_ context.Context, record audit.DecisionLogEntryMaker) error {
-	return nil
-}
-
-func (l *auditLog) LastNAccessLogEntries(context.Context, uint) audit.AccessLogIterator {
-	return l.accessLogIterator
-}
-
-func (l *auditLog) LastNDecisionLogEntries(context.Context, uint) audit.DecisionLogIterator {
-	return l.decisionLogIterator
-}
-
-func (l *auditLog) AccessLogEntriesBetween(c context.Context, start, end time.Time) audit.AccessLogIterator {
-	if start.Unix() > end.Unix() {
-		return &accessLogErrorIterator{}
-	}
-	return l.accessLogIterator
-}
-
-func (l *auditLog) DecisionLogEntriesBetween(context.Context, time.Time, time.Time) audit.DecisionLogIterator {
-	return l.decisionLogIterator
-}
-
-func (l *auditLog) AccessLogEntryByID(context.Context, audit.ID) audit.AccessLogIterator {
-	return l.accessLogIterator
-}
-
-func (l *auditLog) DecisionLogEntryByID(context.Context, audit.ID) audit.DecisionLogIterator {
-	return l.decisionLogIterator
-}
-func (l *auditLog) Close() {}
-
-type accessLogIterator struct {
-	logs []*auditv1.AccessLogEntry
-}
-
-func (n *accessLogIterator) Next() (*auditv1.AccessLogEntry, error) {
-	if len(n.logs) == 0 {
-		return nil, audit.ErrIteratorClosed
-	}
-
-	var entry *auditv1.AccessLogEntry
-	entry, n.logs = n.logs[len(n.logs)-1], n.logs[:len(n.logs)-1]
-
-	return entry, nil
-}
-
-type decisionLogIterator struct {
-	logs []*auditv1.DecisionLogEntry
-}
-
-func (n *decisionLogIterator) Next() (*auditv1.DecisionLogEntry, error) {
-	if len(n.logs) == 0 {
-		return nil, audit.ErrIteratorClosed
-	}
-
-	var entry *auditv1.DecisionLogEntry
-	entry, n.logs = n.logs[len(n.logs)-1], n.logs[:len(n.logs)-1]
-
-	return entry, nil
-}
-
-type accessLogErrorIterator struct{}
-
-func (n *accessLogErrorIterator) Next() (*auditv1.AccessLogEntry, error) {
-	return nil, errors.New("start time needs to be before end time")
 }
