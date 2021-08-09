@@ -21,9 +21,10 @@ import (
 	"google.golang.org/grpc/credentials/local"
 
 	svcv1 "github.com/cerbos/cerbos/api/genpb/cerbos/svc/v1"
-	"github.com/cerbos/cerbos/cmd/ctl/audit"
-	"github.com/cerbos/cerbos/cmd/ctl/decisions"
-	"github.com/cerbos/cerbos/cmd/ctl/version"
+	"github.com/cerbos/cerbos/client"
+	"github.com/cerbos/cerbos/cmd/cerbosctl/audit"
+	"github.com/cerbos/cerbos/cmd/cerbosctl/decisions"
+	"github.com/cerbos/cerbos/cmd/cerbosctl/version"
 	"github.com/cerbos/cerbos/internal/util"
 )
 
@@ -90,7 +91,7 @@ func main() {
 	cmd.PersistentFlags().BoolVar(&connConf.insecure, "insecure", false, "Skip validating server certificate")
 	cmd.PersistentFlags().BoolVar(&connConf.plaintext, "plaintext", false, "Use plaintext protocol without TLS")
 
-	cmd.AddCommand(audit.NewAuditCmd(createAdminClient), decisions.NewDecisionsCmd(createAdminClient), version.NewVersionCmd(createAdminClient))
+	cmd.AddCommand(audit.NewAuditCmd(createAdminClient), decisions.NewDecisionsCmd(createAdminClient), version.NewVersionCmd(withClient))
 
 	if err := cmd.Execute(); err != nil {
 		cmd.PrintErrf("ERROR: %v\n", err)
@@ -214,4 +215,33 @@ func (ac basicAuthCredentials) GetRequestMetadata(ctx context.Context, in ...str
 
 func (basicAuthCredentials) RequireTransportSecurity() bool {
 	return false
+}
+
+func withClient(fn func(c client.Client, cmd *cobra.Command, args []string) error) func(cmd *cobra.Command, args []string) error {
+	return func(cmd *cobra.Command, args []string) error {
+		if connConf.username == "" || connConf.password == "" {
+			return errInvalidCredentials
+		}
+
+		opts := make([]client.Opt, 0)
+		if connConf.plaintext {
+			opts = append(opts, client.WithPlaintext())
+		}
+		if connConf.insecure {
+			opts = append(opts, client.WithTLSInsecure())
+		}
+		if cert := connConf.caCert; cert != "" {
+			opts = append(opts, client.WithTLSCACert(cert))
+		}
+		if cert := connConf.tlsClientCert; cert != "" {
+			opts = append(opts, client.WithTLSClientCert(cert, connConf.tlsClientKey))
+		}
+
+		ac, err := client.New(connConf.serverAddr, opts...)
+		if err != nil {
+			return fmt.Errorf("could not create admin client: %w", err)
+		}
+
+		return fn(ac, cmd, args)
+	}
 }

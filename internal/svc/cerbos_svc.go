@@ -18,6 +18,7 @@ import (
 	svcv1 "github.com/cerbos/cerbos/api/genpb/cerbos/svc/v1"
 	"github.com/cerbos/cerbos/internal/engine"
 	"github.com/cerbos/cerbos/internal/observability/logging"
+	"github.com/cerbos/cerbos/internal/util"
 )
 
 var _ svcv1.CerbosServiceServer = (*CerbosService)(nil)
@@ -109,4 +110,12 @@ func (cs *CerbosService) CheckResourceBatch(ctx context.Context, req *requestv1.
 	}
 
 	return result, nil
+}
+
+func (CerbosService) ServerInfo(ctx context.Context, req *requestv1.ServerInfoRequest) (*responsev1.ServerInfoResponse, error) {
+	return &responsev1.ServerInfoResponse{
+		Version:   util.Version,
+		Commit:    util.Commit,
+		BuildDate: util.BuildDate,
+	}, nil
 }

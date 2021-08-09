@@ -8,8 +8,8 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/cerbos/cerbos/cmd/compile"
-	"github.com/cerbos/cerbos/cmd/server"
+	"github.com/cerbos/cerbos/cmd/cerbos/compile"
+	"github.com/cerbos/cerbos/cmd/cerbos/server"
 	"github.com/cerbos/cerbos/internal/util"
 )
 

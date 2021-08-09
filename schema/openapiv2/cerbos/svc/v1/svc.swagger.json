@@ -195,30 +195,6 @@
         ]
       }
     },
-    "/admin/status": {
-      "get": {
-        "summary": "Get server status",
-        "description": "Get information about the server e.g. server version",
-        "operationId": "CerbosAdminService_ServerInfo",
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "$ref": "#/definitions/v1ServerInfoResponse"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/rpcStatus"
-            }
-          }
-        },
-        "tags": [
-          "CerbosAdminService"
-        ]
-      }
-    },
     "/api/check": {
       "post": {
         "summary": "Check",
@@ -348,6 +324,30 @@
         ],
         "tags": [
           "CerbosPlaygroundService"
+        ]
+      }
+    },
+    "/api/status": {
+      "get": {
+        "summary": "Get server status",
+        "description": "Get information about the server e.g. server version",
+        "operationId": "CerbosService_ServerInfo",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1ServerInfoResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "tags": [
+          "CerbosService"
         ]
       }
     }

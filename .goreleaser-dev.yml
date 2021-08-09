@@ -13,7 +13,7 @@ builds:
     mod_timestamp: '{{ .CommitTimestamp }}'
     ldflags:
       - -s -w -X github.com/cerbos/cerbos/internal/util.Version={{.Version}} -X github.com/cerbos/cerbos/internal/util.commit={{.Commit}} -X github.com/cerbos/cerbos/internal/util.BuildDate={{.Date}}  
-  - main: ./cmd/ctl
+  - main: ./cmd/cerbosctl
     binary: cerbosctl
     id: "cerbosctl"
     env:
