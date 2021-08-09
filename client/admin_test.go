@@ -77,6 +77,7 @@ func TestAuditLogs(t *testing.T) {
 		if ok {
 			require.NoError(t, log.Err)
 		}
+		require.Equal(t, "decision-logs-test", log.Log.CallId)
 	case <-time.After(time.Second):
 		require.Fail(t, "timeout waiting for logs")
 	}
@@ -92,6 +93,23 @@ func TestAuditLogs(t *testing.T) {
 	case log, ok := <-accessLogs:
 		if ok {
 			require.NoError(t, log.Err)
+		}
+		require.Equal(t, "access-logs-test", log.Log.CallId)
+	case <-time.After(defaultFlushInterval):
+		require.Fail(t, "timeout waiting for logs")
+	}
+
+	// we test the error path here
+	accessLogs, err = ac.AccessLogs(context.Background(), client.AuditLogOptions{
+		EndTime:   time.Now().Add(time.Duration(-10) * time.Minute),
+		StartTime: time.Now(),
+	})
+	require.NoError(t, err)
+
+	select {
+	case log, ok := <-accessLogs:
+		if ok {
+			require.Error(t, log.Err)
 		}
 	case <-time.After(defaultFlushInterval):
 		require.Fail(t, "timeout waiting for logs")
