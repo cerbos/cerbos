@@ -16,7 +16,7 @@ import (
 
 type withClient func(fn func(c client.Client, cmd *cobra.Command, args []string) error) func(cmd *cobra.Command, args []string) error
 
-// NewVersionCmd creates the command for version information
+// NewVersionCmd creates the command for version information.
 func NewVersionCmd(fn withClient) *cobra.Command {
 	return &cobra.Command{
 		Use:   "version",

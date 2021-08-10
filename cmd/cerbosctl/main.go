@@ -219,10 +219,6 @@ func (basicAuthCredentials) RequireTransportSecurity() bool {
 
 func withClient(fn func(c client.Client, cmd *cobra.Command, args []string) error) func(cmd *cobra.Command, args []string) error {
 	return func(cmd *cobra.Command, args []string) error {
-		if connConf.username == "" || connConf.password == "" {
-			return errInvalidCredentials
-		}
-
 		opts := make([]client.Opt, 0)
 		if connConf.plaintext {
 			opts = append(opts, client.WithPlaintext())
