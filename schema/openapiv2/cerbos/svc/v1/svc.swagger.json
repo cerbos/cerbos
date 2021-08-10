@@ -327,9 +327,9 @@
         ]
       }
     },
-    "/api/status": {
+    "/api/server_info": {
       "get": {
-        "summary": "Get server status",
+        "summary": "Get server information",
         "description": "Get information about the server e.g. server version",
         "operationId": "CerbosService_ServerInfo",
         "responses": {

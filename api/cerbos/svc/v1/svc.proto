@@ -66,10 +66,10 @@ service CerbosService {
 
     rpc ServerInfo(cerbos.request.v1.ServerInfoRequest) returns (cerbos.response.v1.ServerInfoResponse) {
         option (google.api.http) = {
-            get: "/api/status"
+            get: "/api/server_info"
         };
         option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
-            summary: "Get server status"
+            summary: "Get server information"
             description: "Get information about the server e.g. server version"
         };
     }
