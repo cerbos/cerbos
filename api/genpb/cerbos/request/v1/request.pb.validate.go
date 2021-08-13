@@ -1032,6 +1032,73 @@ var _ListAuditLogEntriesRequest_Kind_InLookup = map[ListAuditLogEntriesRequest_K
 
 var _ListAuditLogEntriesRequest_Lookup_Pattern = regexp.MustCompile("^[0123456789ABCDEFGHJKMNPQRSTVWXYZ]{26}$")
 
+// Validate checks the field values on ServerInfoRequest with the rules defined
+// in the proto definition for this message. If any rules are violated, an
+// error is returned.
+func (m *ServerInfoRequest) Validate() error {
+	if m == nil {
+		return nil
+	}
+
+	return nil
+}
+
+// ServerInfoRequestValidationError is the validation error returned by
+// ServerInfoRequest.Validate if the designated constraints aren't met.
+type ServerInfoRequestValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e ServerInfoRequestValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e ServerInfoRequestValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e ServerInfoRequestValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e ServerInfoRequestValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e ServerInfoRequestValidationError) ErrorName() string {
+	return "ServerInfoRequestValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e ServerInfoRequestValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sServerInfoRequest.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = ServerInfoRequestValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = ServerInfoRequestValidationError{}
+
 // Validate checks the field values on CheckResourceBatchRequest_BatchEntry
 // with the rules defined in the proto definition for this message. If any
 // rules are violated, an error is returned.

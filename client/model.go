@@ -844,3 +844,7 @@ func (ml matchList) build() *policyv1.Match {
 
 	return ml.cons(exprList)
 }
+
+type ServerInfo struct {
+	*responsev1.ServerInfoResponse
+}

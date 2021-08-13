@@ -27,7 +27,7 @@ import (
 	requestv1 "github.com/cerbos/cerbos/api/genpb/cerbos/request/v1"
 	responsev1 "github.com/cerbos/cerbos/api/genpb/cerbos/response/v1"
 	svcv1 "github.com/cerbos/cerbos/api/genpb/cerbos/svc/v1"
-	"github.com/cerbos/cerbos/cmd/ctl/audit"
+	"github.com/cerbos/cerbos/cmd/cerbosctl/audit"
 )
 
 var auditFilterFlags = audit.NewFilterDef()

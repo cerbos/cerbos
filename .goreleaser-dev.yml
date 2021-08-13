@@ -1,12 +1,29 @@
 builds:
-  - env:
+  - main: ./cmd/cerbos
+    binary: cerbos
+    id: "cerbos"
+    env:
       - CGO_ENABLED=0
     goos:
       - linux
       - darwin
     goarch:
       - amd64
+      - arm64
     mod_timestamp: '{{ .CommitTimestamp }}'
+    ldflags:
+      - -s -w -X github.com/cerbos/cerbos/internal/util.Version={{.Version}} -X github.com/cerbos/cerbos/internal/util.commit={{.Commit}} -X github.com/cerbos/cerbos/internal/util.BuildDate={{.Date}}  
+  - main: ./cmd/cerbosctl
+    binary: cerbosctl
+    id: "cerbosctl"
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+      - darwin
+    goarch:
+      - amd64
+      - arm64
     ldflags:
       - -s -w -X github.com/cerbos/cerbos/internal/util.Version={{.Version}} -X github.com/cerbos/cerbos/internal/util.commit={{.Commit}} -X github.com/cerbos/cerbos/internal/util.BuildDate={{.Date}}  
 archives:

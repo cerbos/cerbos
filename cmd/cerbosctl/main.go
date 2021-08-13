@@ -1,7 +1,7 @@
 // Copyright 2021 Zenauth Ltd.
 // SPDX-License-Identifier: Apache-2.0
 
-package ctl
+package main
 
 import (
 	"context"
@@ -21,8 +21,10 @@ import (
 	"google.golang.org/grpc/credentials/local"
 
 	svcv1 "github.com/cerbos/cerbos/api/genpb/cerbos/svc/v1"
-	"github.com/cerbos/cerbos/cmd/ctl/audit"
-	"github.com/cerbos/cerbos/cmd/ctl/decisions"
+	"github.com/cerbos/cerbos/client"
+	"github.com/cerbos/cerbos/cmd/cerbosctl/audit"
+	"github.com/cerbos/cerbos/cmd/cerbosctl/decisions"
+	"github.com/cerbos/cerbos/cmd/cerbosctl/version"
 	"github.com/cerbos/cerbos/internal/util"
 )
 
@@ -63,17 +65,20 @@ highest is: netrc < environment < command line.`
 
 var exampleDesc = `
 # Connect to a TLS enabled server while skipping certificate verification and launch the decisions viewer
-cerbos ctl --server=localhost:3593 --username=user --password=password --insecure decisions
+cerbosctl --server=localhost:3593 --username=user --password=password --insecure decisions
 
 # Connect to a non-TLS server and launch the decisions viewer
-cerbos ctl --server=localhost:3593 --username=user --password=password --plaintext decisions`
+cerbosctl --server=localhost:3593 --username=user --password=password --plaintext decisions`
 
-func NewCommand() *cobra.Command {
+func main() {
 	cmd := &cobra.Command{
-		Use:               "ctl",
-		Short:             "Cerbos control",
+		Use:               "cerbosctl",
+		Short:             "A remote control tool for Cerbos",
+		Version:           fmt.Sprintf("%s; commit sha: %s, build date: %s", util.Version, util.Commit, util.BuildDate),
 		Long:              longDesc,
 		Example:           exampleDesc,
+		SilenceUsage:      true,
+		SilenceErrors:     true,
 		PersistentPreRunE: checkConnConf,
 	}
 
@@ -86,9 +91,12 @@ func NewCommand() *cobra.Command {
 	cmd.PersistentFlags().BoolVar(&connConf.insecure, "insecure", false, "Skip validating server certificate")
 	cmd.PersistentFlags().BoolVar(&connConf.plaintext, "plaintext", false, "Use plaintext protocol without TLS")
 
-	cmd.AddCommand(audit.NewAuditCmd(createAdminClient), decisions.NewDecisionsCmd(createAdminClient))
+	cmd.AddCommand(audit.NewAuditCmd(createAdminClient), decisions.NewDecisionsCmd(createAdminClient), version.NewVersionCmd(withClient))
 
-	return cmd
+	if err := cmd.Execute(); err != nil {
+		cmd.PrintErrf("ERROR: %v\n", err)
+		os.Exit(1)
+	}
 }
 
 func checkConnConf(_ *cobra.Command, _ []string) error {
@@ -207,4 +215,29 @@ func (ac basicAuthCredentials) GetRequestMetadata(ctx context.Context, in ...str
 
 func (basicAuthCredentials) RequireTransportSecurity() bool {
 	return false
+}
+
+func withClient(fn func(c client.Client, cmd *cobra.Command, args []string) error) func(cmd *cobra.Command, args []string) error {
+	return func(cmd *cobra.Command, args []string) error {
+		opts := make([]client.Opt, 0)
+		if connConf.plaintext {
+			opts = append(opts, client.WithPlaintext())
+		}
+		if connConf.insecure {
+			opts = append(opts, client.WithTLSInsecure())
+		}
+		if cert := connConf.caCert; cert != "" {
+			opts = append(opts, client.WithTLSCACert(cert))
+		}
+		if cert := connConf.tlsClientCert; cert != "" {
+			opts = append(opts, client.WithTLSClientCert(cert, connConf.tlsClientKey))
+		}
+
+		ac, err := client.New(connConf.serverAddr, opts...)
+		if err != nil {
+			return fmt.Errorf("could not create admin client: %w", err)
+		}
+
+		return fn(ac, cmd, args)
+	}
 }

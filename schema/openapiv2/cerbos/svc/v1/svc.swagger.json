@@ -326,6 +326,30 @@
           "CerbosPlaygroundService"
         ]
       }
+    },
+    "/api/server_info": {
+      "get": {
+        "summary": "Get server information",
+        "description": "Get information about the server e.g. server version",
+        "operationId": "CerbosService_ServerInfo",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1ServerInfoResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "tags": [
+          "CerbosService"
+        ]
+      }
     }
   },
   "definitions": {
@@ -1432,6 +1456,21 @@
           "$ref": "#/definitions/v1Condition"
         }
       }
+    },
+    "v1ServerInfoResponse": {
+      "type": "object",
+      "properties": {
+        "version": {
+          "type": "string"
+        },
+        "commit": {
+          "type": "string"
+        },
+        "buildDate": {
+          "type": "string"
+        }
+      },
+      "description": "Server info response"
     }
   },
   "securityDefinitions": {
