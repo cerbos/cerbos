@@ -73,7 +73,7 @@ cerbosctl --server=localhost:3593 --username=user --password=password --plaintex
 func main() {
 	cmd := &cobra.Command{
 		Use:               "cerbosctl",
-		Short:             "A remmote control tool for Cerbos",
+		Short:             "A remote control tool for Cerbos",
 		Version:           fmt.Sprintf("%s; commit sha: %s, build date: %s", util.Version, util.Commit, util.BuildDate),
 		Long:              longDesc,
 		Example:           exampleDesc,
