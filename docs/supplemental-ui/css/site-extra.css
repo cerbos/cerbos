@@ -12,4 +12,20 @@
     justify-content: center;
 }
 
+#search-input {
+  color: #333;
+  font-family: inherit;
+  font-size: 0.95rem;
+  width: 150px;
+  border: 1px solid #dbdbdb;
+  border-radius: 0.1em;
+  line-height: 1.5;
+  padding: 0 0.25em;
+}
+
+@media screen and (min-width: 769px) {
+  #search-input {
+    width: 200px;
+  }
+}
 
