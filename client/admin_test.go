@@ -1,72 +1,123 @@
 // Copyright 2021 Zenauth Ltd.
 // SPDX-License-Identifier: Apache-2.0
 
-package client_test
+package client
 
 import (
 	"context"
-	"fmt"
-	"path/filepath"
+	"errors"
+	"io"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/require"
+	"google.golang.org/grpc"
 
-	"github.com/cerbos/cerbos/client"
-	"github.com/cerbos/cerbos/client/testutil"
-	"github.com/cerbos/cerbos/internal/audit"
-	"github.com/cerbos/cerbos/internal/audit/local"
+	auditv1 "github.com/cerbos/cerbos/api/genpb/cerbos/audit/v1"
+	responsev1 "github.com/cerbos/cerbos/api/genpb/cerbos/response/v1"
+	svcv1 "github.com/cerbos/cerbos/api/genpb/cerbos/svc/v1"
 )
 
-func TestAuditLogs(t *testing.T) {
-	serverOpts := mkServerOpts(t, false)
-	tempDir := t.TempDir()
-	serverOpts = append(serverOpts,
-		testutil.WithHTTPListenAddr(fmt.Sprintf("unix:%s", filepath.Join(tempDir, "http.sock"))),
-		testutil.WithGRPCListenAddr(fmt.Sprintf("unix:%s", filepath.Join(tempDir, "grpc.sock"))),
-	)
-	s, err := testutil.StartCerbosServer(serverOpts...)
-	require.NoError(t, err)
-
-	audit.RegisterBackend("local", func(_ context.Context) (audit.Log, error) {
-		return local.New()
-	})
-
-	defer s.Stop() //nolint:errcheck
-
-	ac, err := client.NewAdminClientWithCredentials(s.GRPCAddr(), adminUsername, adminPassword, client.WithPlaintext())
-	require.NoError(t, err)
-
-	loadPolicies(t, ac)
-
-	decisionLogs, err := ac.DecisionLogs(context.Background(), client.AuditLogOptions{
-		StartTime: time.Now().Add(time.Duration(-10) * time.Minute),
-		EndTime:   time.Now(),
-	})
-	require.NoError(t, err)
-	defaultFlushInterval := 30 * time.Second
-
-	select {
-	case log, ok := <-decisionLogs:
-		if ok {
-			require.NoError(t, log.Err)
-		}
-	case <-time.After(defaultFlushInterval):
-		require.Fail(t, "timeout waiting for logs")
+func TestCollectLogs(t *testing.T) {
+	type ticker struct {
+		tick <-chan time.Time
+		tock <-chan time.Time
 	}
 
-	accessLogs, err := ac.AccessLogs(context.Background(), client.AuditLogOptions{
-		StartTime: time.Now().Add(time.Duration(-10) * time.Minute),
-		EndTime:   time.Now(),
-	})
-	require.NoError(t, err)
-
-	select {
-	case log, ok := <-accessLogs:
-		if ok {
-			require.NoError(t, log.Err)
+	newTicker := func() ticker {
+		return ticker{
+			tick: time.After(50 * time.Millisecond),
+			tock: time.After(60 * time.Millisecond),
 		}
-	case <-time.After(defaultFlushInterval):
-		require.Fail(t, "timeout waiting for logs")
 	}
+
+	t.Run("access logs", func(t *testing.T) {
+		clock := newTicker()
+		receiver := func() (*responsev1.ListAuditLogEntriesResponse, error) {
+			select {
+			case <-clock.tick:
+				return &responsev1.ListAuditLogEntriesResponse{Entry: &responsev1.ListAuditLogEntriesResponse_AccessLogEntry{
+					AccessLogEntry: &auditv1.AccessLogEntry{CallId: "test"},
+				}}, nil
+			case <-clock.tock:
+				return nil, io.EOF
+			}
+		}
+
+		accesses := make(chan *AccessLogEntry)
+		err := collectLogs(receiver, accesses)
+		require.NoError(t, err)
+
+		access := <-accesses
+		require.Equal(t, "test", access.Log.CallId)
+		require.Empty(t, accesses)
+	})
+
+	t.Run("decision logs", func(t *testing.T) {
+		clock := newTicker()
+		receiver := func() (*responsev1.ListAuditLogEntriesResponse, error) {
+			select {
+			case <-clock.tick:
+				return &responsev1.ListAuditLogEntriesResponse{Entry: &responsev1.ListAuditLogEntriesResponse_DecisionLogEntry{
+					DecisionLogEntry: &auditv1.DecisionLogEntry{CallId: "test"},
+				}}, nil
+			case <-clock.tock:
+				return nil, io.EOF
+			}
+		}
+
+		decisions := make(chan *DecisionLogEntry)
+		err := collectLogs(receiver, decisions)
+		require.NoError(t, err)
+
+		decision := <-decisions
+		require.Equal(t, "test", decision.Log.CallId)
+		require.Empty(t, decisions)
+	})
+
+	t.Run("invalid types", func(t *testing.T) {
+		receiver := func() (*responsev1.ListAuditLogEntriesResponse, error) { return nil, io.EOF }
+
+		err := collectLogs(receiver, "decisions")
+		require.Error(t, err)
+
+		err = collectLogs(receiver, make(chan string))
+		require.Error(t, err)
+	})
+
+	t.Run("error from receiver", func(t *testing.T) {
+		receiver := func() (*responsev1.ListAuditLogEntriesResponse, error) { return nil, errors.New("test-error") }
+		decisions := make(chan *DecisionLogEntry)
+
+		err := collectLogs(receiver, decisions)
+		require.NoError(t, err)
+
+		decision := <-decisions
+		require.Nil(t, decision.Log)
+		require.Error(t, decision.Err)
+	})
+}
+
+func TestDecisionLogs(t *testing.T) {
+	t.Run("should fail on invalid log options", func(t *testing.T) {
+		c := GrpcAdminClient{client: svcv1.NewCerbosAdminServiceClient(&grpc.ClientConn{})}
+
+		_, err := c.DecisionLogs(context.Background(), AuditLogOptions{
+			Tail: 10000,
+		})
+
+		require.Error(t, err)
+	})
+}
+
+func TestAccessLogs(t *testing.T) {
+	t.Run("should fail on invalid log options", func(t *testing.T) {
+		c := GrpcAdminClient{client: svcv1.NewCerbosAdminServiceClient(&grpc.ClientConn{})}
+
+		_, err := c.AccessLogs(context.Background(), AuditLogOptions{
+			Tail: 10000,
+		})
+
+		require.Error(t, err)
+	})
 }

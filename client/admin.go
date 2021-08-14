@@ -7,12 +7,14 @@ import (
 	"context"
 	"errors"
 	"io"
+	"reflect"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	requestv1 "github.com/cerbos/cerbos/api/genpb/cerbos/request/v1"
+	responsev1 "github.com/cerbos/cerbos/api/genpb/cerbos/response/v1"
 	svcv1 "github.com/cerbos/cerbos/api/genpb/cerbos/svc/v1"
 )
 
@@ -73,6 +75,60 @@ func (c *GrpcAdminClient) AddOrUpdatePolicy(ctx context.Context, policies *Polic
 	return nil
 }
 
+type recvFn func() (*responsev1.ListAuditLogEntriesResponse, error)
+
+// collectLogs collects logs from the receiver function and passes to the channel
+// it will return an error if the channel type is not accepted.
+func collectLogs(receiver recvFn, channel interface{}) error {
+	if reflect.TypeOf(channel).Kind() != reflect.Chan {
+		return errors.New("no channel type provided")
+	}
+
+	var accessLogs chan *AccessLogEntry
+	var decisionLogs chan *DecisionLogEntry
+
+	ifc := reflect.ValueOf(channel).Interface()
+	switch ch := ifc.(type) {
+	case chan *AccessLogEntry:
+		accessLogs = ch
+	case chan *DecisionLogEntry:
+		decisionLogs = ch
+	default:
+		return errors.New("could not cast to correct type of channel")
+	}
+
+	go func() {
+		if accessLogs != nil {
+			defer close(accessLogs)
+		} else if decisionLogs != nil {
+			defer close(decisionLogs)
+		}
+
+		for {
+			entry, err := receiver()
+			if err != nil {
+				if errors.Is(err, io.EOF) {
+					return
+				}
+
+				if accessLogs != nil {
+					accessLogs <- &AccessLogEntry{Err: err}
+					return
+				}
+				decisionLogs <- &DecisionLogEntry{Err: err}
+				return
+			}
+			if accessLogs != nil {
+				accessLogs <- &AccessLogEntry{Log: entry.GetAccessLogEntry()}
+				continue
+			}
+			decisionLogs <- &DecisionLogEntry{Log: entry.GetDecisionLogEntry()}
+		}
+	}()
+
+	return nil
+}
+
 // AccessLogs returns audit logs of the access type entries.
 func (c *GrpcAdminClient) AccessLogs(ctx context.Context, opts AuditLogOptions) (<-chan *AccessLogEntry, error) {
 	resp, err := c.auditLogs(ctx, requestv1.ListAuditLogEntriesRequest_KIND_ACCESS, opts)
@@ -82,23 +138,10 @@ func (c *GrpcAdminClient) AccessLogs(ctx context.Context, opts AuditLogOptions) 
 
 	entries := make(chan *AccessLogEntry)
 
-	go func() {
-		defer close(entries)
-
-		for {
-			entry, err := resp.Recv()
-			if err != nil {
-				if errors.Is(err, io.EOF) {
-					return
-				}
-
-				entries <- &AccessLogEntry{Err: err}
-				return
-			}
-
-			entries <- &AccessLogEntry{Log: entry.GetAccessLogEntry()}
-		}
-	}()
+	err = collectLogs(resp.Recv, entries)
+	if err != nil {
+		return nil, err
+	}
 
 	return entries, nil
 }
@@ -112,22 +155,10 @@ func (c *GrpcAdminClient) DecisionLogs(ctx context.Context, opts AuditLogOptions
 
 	entries := make(chan *DecisionLogEntry)
 
-	go func() {
-		defer close(entries)
-
-		for {
-			entry, err := resp.Recv()
-			if err != nil {
-				if errors.Is(err, io.EOF) {
-					return
-				}
-				entries <- &DecisionLogEntry{Err: err}
-				return
-			}
-
-			entries <- &DecisionLogEntry{Log: entry.GetDecisionLogEntry()}
-		}
-	}()
+	err = collectLogs(resp.Recv, entries)
+	if err != nil {
+		return nil, err
+	}
 
 	return entries, nil
 }

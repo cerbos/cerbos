@@ -226,7 +226,7 @@ func withAdminClient(fn func(c client.AdminClient, cmd *cobra.Command, args []st
 
 		ac, err := client.NewAdminClientWithCredentials(connConf.serverAddr, connConf.username, connConf.password, opts...)
 		if err != nil {
-			return fmt.Errorf("could not create admin client: %w", err)
+			return fmt.Errorf("could not create the admin client: %w", err)
 		}
 
 		return fn(ac, cmd, args)
@@ -239,7 +239,7 @@ func withClient(fn func(c client.Client, cmd *cobra.Command, args []string) erro
 
 		ac, err := client.New(connConf.serverAddr, opts...)
 		if err != nil {
-			return fmt.Errorf("could not create admin client: %w", err)
+			return fmt.Errorf("could not create the client: %w", err)
 		}
 
 		return fn(ac, cmd, args)
