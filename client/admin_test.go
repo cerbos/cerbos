@@ -24,6 +24,7 @@ func TestAuditLogs(t *testing.T) {
 	serverOpts = append(serverOpts,
 		testutil.WithHTTPListenAddr(fmt.Sprintf("unix:%s", filepath.Join(tempDir, "http.sock"))),
 		testutil.WithGRPCListenAddr(fmt.Sprintf("unix:%s", filepath.Join(tempDir, "grpc.sock"))),
+		testutil.WithAudit(),
 	)
 	s, err := testutil.StartCerbosServer(serverOpts...)
 	require.NoError(t, err)
@@ -85,13 +86,14 @@ func TestAuditLogs(t *testing.T) {
 		EndTime:   time.Now(),
 	})
 	require.NoError(t, err)
+	defaultFlushInterval := 30 * time.Second
 
 	select {
 	case log, ok := <-accessLogs:
 		if ok {
 			require.NoError(t, log.Err)
 		}
-	case <-time.After(time.Second):
+	case <-time.After(defaultFlushInterval):
 		require.Fail(t, "timeout waiting for logs")
 	}
 }

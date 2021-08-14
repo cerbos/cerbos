@@ -35,7 +35,7 @@ func NewAdminClient(address string, opts ...Opt) (AdminClient, error) {
 }
 
 // NewAdminClientWithCredentials creates a new admin client using credentials explicitly passed as arguments.
-func NewAdminClientWithCredentials(address, username, password string, opts ...Opt) (*GrpcAdminClient, error) {
+func NewAdminClientWithCredentials(address, username, password string, opts ...Opt) (AdminClient, error) {
 	// TODO: handle this in call site
 	target, user, pass, err := loadBasicAuthData(osEnvironment{}, address, username, password)
 	if err != nil {

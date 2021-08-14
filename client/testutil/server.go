@@ -117,12 +117,20 @@ func WithDefaultPolicyVersion(version string) ServerOpt {
 	}
 }
 
+// WithAudit enables audit engine in the cerbos server.
+func WithAudit() ServerOpt {
+	return func(so *serverOpt) {
+		so.auditEngineEnabled = true
+	}
+}
+
 type serverOpt struct {
 	serverConf           *server.Conf
 	defaultPolicyVersion string
 	policyRepoDir        string
 	policyRepoDBDriver   string
 	policyRepoDBConnStr  string
+	auditEngineEnabled   bool
 }
 
 func (so *serverOpt) setDefaultsAndValidate() error {
@@ -258,10 +266,13 @@ func startServer(ctx context.Context, g *errgroup.Group, sopt *serverOpt) (err e
 		return err
 	}
 
-	auditLog, err := audit.NewLog(ctx)
-	if err != nil {
-		return err
+	auditLog := audit.NewNopLog()
+	if sopt.auditEngineEnabled {
+		if auditLog, err = audit.NewLog(ctx); err != nil {
+			return err
+		}
 	}
+
 	eng, err := engine.New(ctx, compile.NewManager(ctx, store), auditLog)
 	if err != nil {
 		return err
