@@ -6,10 +6,10 @@ package audit
 import (
 	"bufio"
 	"context"
-	"errors"
 	"fmt"
 	"io"
 	"strings"
+	"time"
 
 	"github.com/alecthomas/chroma"
 	"github.com/alecthomas/chroma/formatters"
@@ -20,9 +20,9 @@ import (
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"
 
+	auditv1 "github.com/cerbos/cerbos/api/genpb/cerbos/audit/v1"
 	requestv1 "github.com/cerbos/cerbos/api/genpb/cerbos/request/v1"
-	responsev1 "github.com/cerbos/cerbos/api/genpb/cerbos/response/v1"
-	svcv1 "github.com/cerbos/cerbos/api/genpb/cerbos/svc/v1"
+	"github.com/cerbos/cerbos/client"
 )
 
 const dashLen = 54
@@ -62,16 +62,16 @@ cerbos ctl audit --kind=access --since=3h --raw
 cerbos ctl audit --kind=access --lookup=01F9Y5MFYTX7Y87A30CTJ2FB0S
 `
 
-type clientGenFunc func() (svcv1.CerbosAdminServiceClient, error)
+type withClient func(fn func(c client.AdminClient, cmd *cobra.Command, args []string) error) func(cmd *cobra.Command, args []string) error
 
-func NewAuditCmd(clientGen clientGenFunc) *cobra.Command {
+func NewAuditCmd(fn withClient) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "audit",
 		Short:   "View audit logs",
 		Long:    longDesc,
 		Example: exampleDesc,
 		PreRunE: checkAuditFlags,
-		RunE:    runAuditCmd(clientGen),
+		RunE:    fn(runAuditCmdF),
 	}
 
 	cmd.Flags().Var(&auditFlags.kind, "kind", "Kind of log entry ('access' or 'decision')")
@@ -82,60 +82,95 @@ func NewAuditCmd(clientGen clientGenFunc) *cobra.Command {
 }
 
 func checkAuditFlags(_ *cobra.Command, _ []string) error {
-	if err := auditFilterFlags.Validate(); err != nil {
-		return err
-	}
+	return auditFilterFlags.Validate()
+}
 
-	if auditFlags.kind.Kind() == requestv1.ListAuditLogEntriesRequest_KIND_UNSPECIFIED {
-		auditFlags.kind = kindFlag(requestv1.ListAuditLogEntriesRequest_KIND_DECISION)
+func runAuditCmdF(c client.AdminClient, cmd *cobra.Command, _ []string) error {
+	var writer auditLogWriter
+	if auditFlags.raw {
+		writer = newRawAuditLogWriter(cmd.OutOrStdout())
+	} else {
+		writer = newRichAuditLogWriter(cmd.OutOrStdout())
+	}
+	defer writer.flush()
+
+	switch kind := auditFlags.kind.Kind(); kind {
+	case requestv1.ListAuditLogEntriesRequest_KIND_DECISION, requestv1.ListAuditLogEntriesRequest_KIND_UNSPECIFIED:
+		decisionLogs, err := c.DecisionLogs(context.Background(), genAuditLogOptions(auditFilterFlags))
+		if err != nil {
+			return fmt.Errorf("could not get decision logs: %w", err)
+		}
+
+		if err = streamDecisionLogsToWriter(writer, decisionLogs); err != nil {
+			return fmt.Errorf("could not write decision logs: %w", err)
+		}
+	case requestv1.ListAuditLogEntriesRequest_KIND_ACCESS:
+		accessLogs, err := c.AccessLogs(context.Background(), genAuditLogOptions(auditFilterFlags))
+		if err != nil {
+			return fmt.Errorf("could not get access logs: %w", err)
+		}
+
+		if err = streamAccessLogsToWriter(writer, accessLogs); err != nil {
+			return fmt.Errorf("could not write access logs: %w", err)
+		}
 	}
 
 	return nil
 }
 
-func runAuditCmd(clientGen clientGenFunc) func(*cobra.Command, []string) error {
-	return func(cmd *cobra.Command, _ []string) error {
-		client, err := clientGen()
-		if err != nil {
-			return err
+func genAuditLogOptions(filter *FilterDef) client.AuditLogOptions {
+	switch {
+	case filter.tail > 0:
+		return client.AuditLogOptions{
+			Tail: uint32(filter.tail),
 		}
-
-		req := auditFilterFlags.BuildRequest(auditFlags.kind.Kind())
-		resp, err := client.ListAuditLogEntries(context.Background(), req)
-		if err != nil {
-			return err
+	case filter.between.isSet():
+		return client.AuditLogOptions{
+			StartTime: filter.between.tsVals[0].AsTime(),
+			EndTime:   filter.between.tsVals[1].AsTime(),
 		}
-
-		out := cmd.OutOrStdout()
-
-		var writer auditLogWriter
-		if auditFlags.raw {
-			writer = newRawAuditLogWriter(out)
-		} else {
-			writer = newRichAuditLogWriter(out)
+	case filter.since > 0:
+		return client.AuditLogOptions{
+			StartTime: time.Now().Add(time.Duration(-1) * filter.since),
+			EndTime:   time.Now(),
 		}
-
-		defer writer.flush()
-
-		for {
-			entry, err := resp.Recv()
-			if err != nil {
-				if errors.Is(err, io.EOF) {
-					return nil
-				}
-
-				return err
-			}
-
-			if err := writer.write(entry); err != nil {
-				return err
-			}
+	case filter.lookup != "":
+		return client.AuditLogOptions{
+			Lookup: filter.lookup,
 		}
+	default:
+		return client.AuditLogOptions{}
 	}
 }
 
+func streamAccessLogsToWriter(writer auditLogWriter, entries <-chan *client.AccessLogEntry) error {
+	for e := range entries {
+		if err := e.Err; err != nil {
+			return fmt.Errorf("error while receiving access logs: %w", err)
+		}
+		if err := writer.write(e.Log); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func streamDecisionLogsToWriter(writer auditLogWriter, entries <-chan *client.DecisionLogEntry) error {
+	for e := range entries {
+		if err := e.Err; err != nil {
+			return fmt.Errorf("error while receiving decision logs: %w", err)
+		}
+		if err := writer.write(e.Log); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
 type auditLogWriter interface {
-	write(*responsev1.ListAuditLogEntriesResponse) error
+	write(proto.Message) error
 	flush()
 }
 
@@ -147,13 +182,12 @@ type rawAuditLogWriter struct {
 	out io.Writer
 }
 
-func (r *rawAuditLogWriter) write(entry *responsev1.ListAuditLogEntriesResponse) error {
-	e := extractEntry(entry)
-	if e == nil {
+func (r *rawAuditLogWriter) write(entry proto.Message) error {
+	if entry == nil {
 		return nil
 	}
 
-	outBytes, err := protojson.Marshal(e)
+	outBytes, err := protojson.Marshal(entry)
 	if err != nil {
 		return err
 	}
@@ -199,14 +233,14 @@ func newRichAuditLogWriter(out io.Writer) *richAuditLogWriter {
 	}
 }
 
-func (r *richAuditLogWriter) write(entry *responsev1.ListAuditLogEntriesResponse) error {
-	switch e := entry.Entry.(type) {
-	case *responsev1.ListAuditLogEntriesResponse_AccessLogEntry:
-		r.header(fmt.Sprintf("%s %s", e.AccessLogEntry.CallId, strings.Repeat("┈", dashLen)))
-		return r.formattedJSON(e.AccessLogEntry)
-	case *responsev1.ListAuditLogEntriesResponse_DecisionLogEntry:
-		r.header(fmt.Sprintf("%s %s", e.DecisionLogEntry.CallId, strings.Repeat("┈", dashLen)))
-		return r.formattedJSON(e.DecisionLogEntry)
+func (r *richAuditLogWriter) write(entry proto.Message) error {
+	switch e := entry.(type) {
+	case *auditv1.AccessLogEntry:
+		r.header(fmt.Sprintf("%s %s", e.CallId, strings.Repeat("┈", dashLen)))
+		return r.formattedJSON(e)
+	case *auditv1.DecisionLogEntry:
+		r.header(fmt.Sprintf("%s %s", e.CallId, strings.Repeat("┈", dashLen)))
+		return r.formattedJSON(e)
 	default:
 		return nil
 	}
@@ -234,15 +268,4 @@ func (r *richAuditLogWriter) formattedJSON(msg proto.Message) error {
 
 func (r *richAuditLogWriter) flush() {
 	_ = r.out.Flush()
-}
-
-func extractEntry(entry *responsev1.ListAuditLogEntriesResponse) proto.Message {
-	switch e := entry.Entry.(type) {
-	case *responsev1.ListAuditLogEntriesResponse_AccessLogEntry:
-		return e.AccessLogEntry
-	case *responsev1.ListAuditLogEntriesResponse_DecisionLogEntry:
-		return e.DecisionLogEntry
-	default:
-		return nil
-	}
 }

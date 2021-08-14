@@ -7,13 +7,11 @@ import (
 	"context"
 	"errors"
 	"io"
-	"time"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	auditv1 "github.com/cerbos/cerbos/api/genpb/cerbos/audit/v1"
 	requestv1 "github.com/cerbos/cerbos/api/genpb/cerbos/request/v1"
 	svcv1 "github.com/cerbos/cerbos/api/genpb/cerbos/svc/v1"
 )
@@ -37,7 +35,8 @@ func NewAdminClient(address string, opts ...Opt) (AdminClient, error) {
 }
 
 // NewAdminClientWithCredentials creates a new admin client using credentials explicitly passed as arguments.
-func NewAdminClientWithCredentials(address, username, password string, opts ...Opt) (AdminClient, error) {
+func NewAdminClientWithCredentials(address, username, password string, opts ...Opt) (*GrpcAdminClient, error) {
+	// TODO: handle this in call site
 	target, user, pass, err := loadBasicAuthData(osEnvironment{}, address, username, password)
 	if err != nil {
 		return nil, err
@@ -72,24 +71,6 @@ func (c *GrpcAdminClient) AddOrUpdatePolicy(ctx context.Context, policies *Polic
 	}
 
 	return nil
-}
-
-// AuditLogOptions is used to filter audit logs.
-type AuditLogOptions struct {
-	Tail      uint16
-	StartTime time.Time
-	EndTime   time.Time
-	Lookup    string
-}
-
-type AccessLogEntry struct {
-	Log *auditv1.AccessLogEntry
-	Err error
-}
-
-type DecisionLogEntry struct {
-	Log *auditv1.DecisionLogEntry
-	Err error
 }
 
 // AccessLogs returns audit logs of the access type entries.
@@ -156,7 +137,7 @@ func (c *GrpcAdminClient) auditLogs(ctx context.Context, kind requestv1.ListAudi
 
 	switch {
 	case opts.Tail > 0:
-		req.Filter = &requestv1.ListAuditLogEntriesRequest_Tail{Tail: uint32(opts.Tail)}
+		req.Filter = &requestv1.ListAuditLogEntriesRequest_Tail{Tail: opts.Tail}
 	case !opts.StartTime.IsZero() && !opts.EndTime.IsZero():
 		req.Filter = &requestv1.ListAuditLogEntriesRequest_Between{
 			Between: &requestv1.ListAuditLogEntriesRequest_TimeRange{
