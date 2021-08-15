@@ -327,3 +327,16 @@ message ServerInfoRequest {
 		}
     };
 }
+
+message LoginRequest {
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
+		json_schema: {
+			description: "Login request"
+		}
+    };
+
+    string username = 1;
+    string password = 2;
+}
+
+  

@@ -131,3 +131,20 @@ service CerbosPlaygroundService {
         };
     }
 }
+
+service CerbosAuthService {
+	option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_tag) = {
+		description: "Cerbos authentication service"
+	};
+
+    rpc Login(cerbos.request.v1.LoginRequest) returns (cerbos.response.v1.LoginResponse) {
+        option (google.api.http) = {
+            post: "/auth/login",
+            body: "*"
+        };
+        option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+            summary: "Login to the server"
+            description: "Authenticates with the server and return the autorization token."
+        };
+    };
+}

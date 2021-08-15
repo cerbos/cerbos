@@ -23,6 +23,7 @@ import (
 	svcv1 "github.com/cerbos/cerbos/api/genpb/cerbos/svc/v1"
 	"github.com/cerbos/cerbos/client"
 	"github.com/cerbos/cerbos/cmd/cerbosctl/audit"
+	"github.com/cerbos/cerbos/cmd/cerbosctl/auth"
 	"github.com/cerbos/cerbos/cmd/cerbosctl/decisions"
 	"github.com/cerbos/cerbos/cmd/cerbosctl/version"
 	"github.com/cerbos/cerbos/internal/util"
@@ -32,6 +33,7 @@ type connectConf struct {
 	serverAddr    string
 	username      string
 	password      string
+	token         string
 	caCert        string
 	tlsClientCert string
 	tlsClientKey  string
@@ -85,6 +87,7 @@ func main() {
 	cmd.PersistentFlags().StringVar(&connConf.serverAddr, "server", "", "Address of the Cerbos server")
 	cmd.PersistentFlags().StringVar(&connConf.username, "username", "", "Admin username")
 	cmd.PersistentFlags().StringVar(&connConf.password, "password", "", "Admin password")
+	cmd.PersistentFlags().StringVar(&connConf.token, "token", "", "Authorization token")
 	cmd.PersistentFlags().StringVar(&connConf.caCert, "ca-cert", "", "Path to the CA certificate for verifying server identity")
 	cmd.PersistentFlags().StringVar(&connConf.tlsClientCert, "client-cert", "", "Path to the TLS client certificate")
 	cmd.PersistentFlags().StringVar(&connConf.tlsClientKey, "client-key", "", "Path to the TLS client key")
@@ -92,6 +95,11 @@ func main() {
 	cmd.PersistentFlags().BoolVar(&connConf.plaintext, "plaintext", false, "Use plaintext protocol without TLS")
 
 	cmd.AddCommand(audit.NewAuditCmd(createAdminClient), decisions.NewDecisionsCmd(createAdminClient), version.NewVersionCmd(withClient))
+	cmd.AddCommand(&cobra.Command{
+		Use:   "login",
+		Short: "Login to Cerbos service with credentials",
+		RunE:  runLoginCmdF,
+	})
 
 	if err := cmd.Execute(); err != nil {
 		cmd.PrintErrf("ERROR: %v\n", err)
@@ -233,11 +241,59 @@ func withClient(fn func(c client.Client, cmd *cobra.Command, args []string) erro
 			opts = append(opts, client.WithTLSClientCert(cert, connConf.tlsClientKey))
 		}
 
-		ac, err := client.New(connConf.serverAddr, opts...)
-		if err != nil {
-			return fmt.Errorf("could not create admin client: %w", err)
+		var ac client.Client
+		var err error
+		switch {
+		case connConf.username != "" && connConf.password != "":
+			ac, err = client.NewClientWithCredentials(connConf.serverAddr, connConf.username, connConf.password, opts...)
+			if err != nil {
+				return fmt.Errorf("could not create client: %w", err)
+			}
+		case connConf.token != "":
+			ac, err = client.New(connConf.serverAddr, append(opts, client.WithJWT(connConf.token))...)
+			if err != nil {
+				return fmt.Errorf("could not create client: %w", err)
+			}
+		default:
+			token, err := auth.GetToken()
+			if err != nil {
+				return fmt.Errorf("nothing to authenticate: %w", err)
+			}
+
+			ac, err = client.New(connConf.serverAddr, append(opts, client.WithJWT(token))...)
+			if err != nil {
+				return fmt.Errorf("could not create client: %w", err)
+			}
 		}
 
 		return fn(ac, cmd, args)
 	}
+}
+
+func runLoginCmdF(cmd *cobra.Command, _ []string) error {
+	opts := make([]client.Opt, 0)
+	if connConf.plaintext {
+		opts = append(opts, client.WithPlaintext())
+	}
+	if connConf.insecure {
+		opts = append(opts, client.WithTLSInsecure())
+	}
+	if cert := connConf.caCert; cert != "" {
+		opts = append(opts, client.WithTLSCACert(cert))
+	}
+	if cert := connConf.tlsClientCert; cert != "" {
+		opts = append(opts, client.WithTLSClientCert(cert, connConf.tlsClientKey))
+	}
+
+	tok, err := client.Login(context.Background(), connConf.serverAddr, connConf.username, connConf.password, opts...)
+	if err != nil {
+		return err
+	}
+
+	if err := auth.SaveToken(tok); err != nil {
+		return err
+	}
+
+	cmd.Println("authentication successful")
+	return nil
 }

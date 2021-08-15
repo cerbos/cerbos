@@ -20,6 +20,7 @@ require (
 	github.com/ghodss/yaml v1.0.0
 	github.com/go-git/go-git/v5 v5.4.2
 	github.com/go-sql-driver/mysql v1.6.0
+	github.com/golang-jwt/jwt/v4 v4.0.0
 	github.com/google/cel-go v0.7.3
 	github.com/google/go-cmp v0.5.6
 	github.com/google/gops v0.3.18

@@ -446,3 +446,89 @@ var CerbosPlaygroundService_ServiceDesc = grpc.ServiceDesc{
 	Streams:  []grpc.StreamDesc{},
 	Metadata: "cerbos/svc/v1/svc.proto",
 }
+
+// CerbosAuthServiceClient is the client API for CerbosAuthService service.
+//
+// For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
+type CerbosAuthServiceClient interface {
+	Login(ctx context.Context, in *v1.LoginRequest, opts ...grpc.CallOption) (*v11.LoginResponse, error)
+}
+
+type cerbosAuthServiceClient struct {
+	cc grpc.ClientConnInterface
+}
+
+func NewCerbosAuthServiceClient(cc grpc.ClientConnInterface) CerbosAuthServiceClient {
+	return &cerbosAuthServiceClient{cc}
+}
+
+func (c *cerbosAuthServiceClient) Login(ctx context.Context, in *v1.LoginRequest, opts ...grpc.CallOption) (*v11.LoginResponse, error) {
+	out := new(v11.LoginResponse)
+	err := c.cc.Invoke(ctx, "/cerbos.svc.v1.CerbosAuthService/Login", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// CerbosAuthServiceServer is the server API for CerbosAuthService service.
+// All implementations must embed UnimplementedCerbosAuthServiceServer
+// for forward compatibility
+type CerbosAuthServiceServer interface {
+	Login(context.Context, *v1.LoginRequest) (*v11.LoginResponse, error)
+	mustEmbedUnimplementedCerbosAuthServiceServer()
+}
+
+// UnimplementedCerbosAuthServiceServer must be embedded to have forward compatible implementations.
+type UnimplementedCerbosAuthServiceServer struct {
+}
+
+func (UnimplementedCerbosAuthServiceServer) Login(context.Context, *v1.LoginRequest) (*v11.LoginResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Login not implemented")
+}
+func (UnimplementedCerbosAuthServiceServer) mustEmbedUnimplementedCerbosAuthServiceServer() {}
+
+// UnsafeCerbosAuthServiceServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to CerbosAuthServiceServer will
+// result in compilation errors.
+type UnsafeCerbosAuthServiceServer interface {
+	mustEmbedUnimplementedCerbosAuthServiceServer()
+}
+
+func RegisterCerbosAuthServiceServer(s grpc.ServiceRegistrar, srv CerbosAuthServiceServer) {
+	s.RegisterService(&CerbosAuthService_ServiceDesc, srv)
+}
+
+func _CerbosAuthService_Login_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(v1.LoginRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CerbosAuthServiceServer).Login(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/cerbos.svc.v1.CerbosAuthService/Login",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CerbosAuthServiceServer).Login(ctx, req.(*v1.LoginRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+// CerbosAuthService_ServiceDesc is the grpc.ServiceDesc for CerbosAuthService service.
+// It's only intended for direct use with grpc.RegisterService,
+// and not to be introspected or modified (even as a copy)
+var CerbosAuthService_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "cerbos.svc.v1.CerbosAuthService",
+	HandlerType: (*CerbosAuthServiceServer)(nil),
+	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "Login",
+			Handler:    _CerbosAuthService_Login_Handler,
+		},
+	},
+	Streams:  []grpc.StreamDesc{},
+	Metadata: "cerbos/svc/v1/svc.proto",
+}

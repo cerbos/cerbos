@@ -180,3 +180,26 @@ func (ba basicAuthCredentials) GetRequestMetadata(ctx context.Context, uri ...st
 func (ba basicAuthCredentials) RequireTransportSecurity() bool {
 	return ba.requireTLS
 }
+
+type jwt struct {
+	headerVal  string
+	requireTLS bool
+}
+
+// newJWT creates a new grpc PerRPCCredentials object that uses jwt.
+func newJWT(token string) jwt {
+	return jwt{headerVal: "Bearer " + token, requireTLS: true}
+}
+
+// Insecure relaxes the TLS requirement for using the credential.
+func (t jwt) Insecure() jwt {
+	return jwt{headerVal: t.headerVal, requireTLS: false}
+}
+
+func (t jwt) GetRequestMetadata(ctx context.Context, uri ...string) (map[string]string, error) {
+	return map[string]string{authorizationHeader: t.headerVal}, nil
+}
+
+func (t jwt) RequireTransportSecurity() bool {
+	return t.requireTLS
+}

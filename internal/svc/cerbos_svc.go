@@ -26,18 +26,24 @@ var _ svcv1.CerbosServiceServer = (*CerbosService)(nil)
 // CerbosService implements the policy checking service.
 type CerbosService struct {
 	eng *engine.Engine
+	cc  CredentialChecker
 	*svcv1.UnimplementedCerbosServiceServer
 }
 
-func NewCerbosService(eng *engine.Engine) *CerbosService {
+func NewCerbosService(eng *engine.Engine, credentialChecker CredentialChecker) *CerbosService {
 	return &CerbosService{
 		eng:                              eng,
+		cc:                               credentialChecker,
 		UnimplementedCerbosServiceServer: &svcv1.UnimplementedCerbosServiceServer{},
 	}
 }
 
 func (cs *CerbosService) CheckResourceSet(ctx context.Context, req *requestv1.CheckResourceSetRequest) (*responsev1.CheckResourceSetResponse, error) {
 	log := ctxzap.Extract(ctx)
+
+	if err := cs.cc.CheckCredentials(ctx, "user"); err != nil {
+		return nil, err
+	}
 
 	inputs := make([]*enginev1.CheckInput, len(req.Resource.Instances))
 	idxToKey := make([]string, len(req.Resource.Instances))
@@ -76,6 +82,10 @@ func (cs *CerbosService) CheckResourceSet(ctx context.Context, req *requestv1.Ch
 func (cs *CerbosService) CheckResourceBatch(ctx context.Context, req *requestv1.CheckResourceBatchRequest) (*responsev1.CheckResourceBatchResponse, error) {
 	log := ctxzap.Extract(ctx)
 
+	if err := cs.cc.CheckCredentials(ctx, "user"); err != nil {
+		return nil, err
+	}
+
 	inputs := make([]*enginev1.CheckInput, len(req.Resources))
 	for i, res := range req.Resources {
 		inputs[i] = &enginev1.CheckInput{
@@ -112,7 +122,11 @@ func (cs *CerbosService) CheckResourceBatch(ctx context.Context, req *requestv1.
 	return result, nil
 }
 
-func (CerbosService) ServerInfo(ctx context.Context, req *requestv1.ServerInfoRequest) (*responsev1.ServerInfoResponse, error) {
+func (cs CerbosService) ServerInfo(ctx context.Context, req *requestv1.ServerInfoRequest) (*responsev1.ServerInfoResponse, error) {
+	if err := cs.cc.CheckCredentials(ctx, ""); err != nil {
+		return nil, err
+	}
+
 	return &responsev1.ServerInfoResponse{
 		Version:   util.Version,
 		Commit:    util.Commit,

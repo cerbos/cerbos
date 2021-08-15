@@ -4,18 +4,13 @@
 package svc
 
 import (
-	"bytes"
 	"context"
-	"encoding/base64"
 	"errors"
-	"strings"
 	"time"
 
 	"github.com/grpc-ecosystem/go-grpc-middleware/logging/zap/ctxzap"
 	"go.uber.org/zap"
-	"golang.org/x/crypto/bcrypt"
 	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/emptypb"
 
@@ -23,31 +18,25 @@ import (
 	responsev1 "github.com/cerbos/cerbos/api/genpb/cerbos/response/v1"
 	svcv1 "github.com/cerbos/cerbos/api/genpb/cerbos/svc/v1"
 	"github.com/cerbos/cerbos/internal/audit"
+	"github.com/cerbos/cerbos/internal/auth"
 	"github.com/cerbos/cerbos/internal/policy"
 	"github.com/cerbos/cerbos/internal/storage"
 )
 
 var _ svcv1.CerbosAdminServiceServer = (*CerbosAdminService)(nil)
 
-var (
-	errAuthRequired = status.Error(codes.Unauthenticated, "authentication required")
-	authSep         = []byte(":")
-)
-
 // CerbosAdminService implements the Cerbos administration service.
 type CerbosAdminService struct {
-	store           storage.MutableStore
-	auditLog        audit.Log
-	adminUser       string
-	adminPasswdHash []byte
+	store    storage.MutableStore
+	auditLog audit.Log
+	cc       CredentialChecker
 	*svcv1.UnimplementedCerbosAdminServiceServer
 }
 
-func NewCerbosAdminService(store storage.Store, auditLog audit.Log, adminUser, adminPasswdHash string) *CerbosAdminService {
+func NewCerbosAdminService(store storage.Store, auditLog audit.Log, credentialChecker CredentialChecker) *CerbosAdminService {
 	svc := &CerbosAdminService{
 		auditLog:                              auditLog,
-		adminUser:                             adminUser,
-		adminPasswdHash:                       []byte(adminPasswdHash),
+		cc:                                    credentialChecker,
 		UnimplementedCerbosAdminServiceServer: &svcv1.UnimplementedCerbosAdminServiceServer{},
 	}
 
@@ -60,7 +49,7 @@ func NewCerbosAdminService(store storage.Store, auditLog audit.Log, adminUser, a
 }
 
 func (cas *CerbosAdminService) AddOrUpdatePolicy(ctx context.Context, req *requestv1.AddOrUpdatePolicyRequest) (*responsev1.AddOrUpdatePolicyResponse, error) {
-	if err := cas.checkCredentials(ctx); err != nil {
+	if err := cas.cc.CheckCredentials(ctx, auth.AdminRole); err != nil {
 		return nil, err
 	}
 
@@ -90,7 +79,7 @@ func (cas *CerbosAdminService) AddOrUpdatePolicy(ctx context.Context, req *reque
 func (cas *CerbosAdminService) ListAuditLogEntries(req *requestv1.ListAuditLogEntriesRequest, stream svcv1.CerbosAdminService_ListAuditLogEntriesServer) error {
 	ctx := stream.Context()
 
-	if err := cas.checkCredentials(ctx); err != nil {
+	if err := cas.cc.CheckCredentials(ctx, auth.AdminRole); err != nil {
 		return err
 	}
 
@@ -182,41 +171,4 @@ func mkDecisionLogStream(it audit.DecisionLogIterator) auditLogStream {
 			},
 		}, nil
 	}
-}
-
-func (cas *CerbosAdminService) checkCredentials(ctx context.Context) error {
-	md, ok := metadata.FromIncomingContext(ctx)
-	if !ok {
-		return errAuthRequired
-	}
-
-	header, ok := md["authorization"]
-	if !ok || len(header) == 0 {
-		return errAuthRequired
-	}
-
-	if !strings.HasPrefix(header[0], "Basic") {
-		return status.Error(codes.Unauthenticated, "unsupported authentication method")
-	}
-
-	encoded := strings.TrimSpace(strings.TrimPrefix(header[0], "Basic"))
-	decoded, err := base64.StdEncoding.DecodeString(encoded)
-	if err != nil {
-		return status.Error(codes.Unauthenticated, "failed to decode credentials")
-	}
-
-	parts := bytes.Split(bytes.TrimSpace(decoded), authSep)
-	if len(parts) != 2 { //nolint:gomnd
-		return status.Error(codes.Unauthenticated, "invalid credentials")
-	}
-
-	if !bytes.Equal(parts[0], []byte(cas.adminUser)) {
-		return status.Error(codes.Unauthenticated, "incorrect credentials")
-	}
-
-	if err := bcrypt.CompareHashAndPassword(cas.adminPasswdHash, parts[1]); err != nil {
-		return status.Error(codes.Unauthenticated, "incorrect credentials")
-	}
-
-	return nil
 }

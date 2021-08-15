@@ -4,11 +4,13 @@
 package server
 
 import (
+	"bufio"
 	"context"
 	"crypto/tls"
 	"crypto/x509"
 	"errors"
 	"fmt"
+	"io/ioutil"
 	"net"
 	"net/http"
 	"os"
@@ -29,6 +31,7 @@ import (
 	"go.opencensus.io/stats/view"
 	"go.opencensus.io/zpages"
 	"go.uber.org/zap"
+	"golang.org/x/crypto/bcrypt"
 	"golang.org/x/sync/errgroup"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/admin"
@@ -49,6 +52,7 @@ import (
 
 	// Import to register the Badger audit log backend.
 	_ "github.com/cerbos/cerbos/internal/audit/local"
+	"github.com/cerbos/cerbos/internal/auth"
 	"github.com/cerbos/cerbos/internal/compile"
 	"github.com/cerbos/cerbos/internal/config"
 	"github.com/cerbos/cerbos/internal/engine"
@@ -124,6 +128,9 @@ type Server struct {
 	group      *errgroup.Group
 	health     *health.Server
 	ocExporter *prometheus.Exporter
+
+	userStore  auth.UserStore
+	jwtHandler auth.JWTManager
 }
 
 func NewServer(conf *Conf) *Server {
@@ -136,6 +143,7 @@ func NewServer(conf *Conf) *Server {
 		cancelFunc: cancelFunc,
 		group:      group,
 		health:     health.NewServer(),
+		userStore:  auth.NewUserStore(),
 	}
 }
 
@@ -174,6 +182,11 @@ func (s *Server) Start(ctx context.Context, store storage.Store, eng *engine.Eng
 	httpL, err := s.createListener(s.conf.HTTPListenAddr)
 	if err != nil {
 		log.Error("Failed to create HTTP listener", zap.Error(err))
+		return err
+	}
+
+	if err := s.configureAuth(); err != nil {
+		log.Error("Could not configure authentication", zap.Error(err))
 		return err
 	}
 
@@ -284,7 +297,10 @@ func (s *Server) startGRPCServer(l net.Listener, store storage.Store, eng *engin
 	healthpb.RegisterHealthServer(server, s.health)
 	reflection.Register(server)
 
-	cerbosSvc := svc.NewCerbosService(eng)
+	authsvc := svc.NewCerbosAuthService(s, s.jwtHandler)
+	svcv1.RegisterCerbosAuthServiceServer(server, authsvc)
+
+	cerbosSvc := svc.NewCerbosService(eng, s)
 	svcv1.RegisterCerbosServiceServer(server, cerbosSvc)
 	s.health.SetServingStatus(svcv1.CerbosService_ServiceDesc.ServiceName, healthpb.HealthCheckResponse_SERVING)
 
@@ -294,7 +310,7 @@ func (s *Server) startGRPCServer(l net.Listener, store storage.Store, eng *engin
 		if creds.isUnsafe() {
 			log.Warn("[SECURITY RISK] Admin API uses default credentials which are unsafe for production use. Please change the credentials by updating the configuration file.")
 		}
-		svcv1.RegisterCerbosAdminServiceServer(server, svc.NewCerbosAdminService(store, auditLog, creds.Username, creds.PasswordHash))
+		svcv1.RegisterCerbosAdminServiceServer(server, svc.NewCerbosAdminService(store, auditLog, s))
 		s.health.SetServingStatus(svcv1.CerbosAdminService_ServiceDesc.ServiceName, healthpb.HealthCheckResponse_SERVING)
 	}
 
@@ -324,6 +340,86 @@ func (s *Server) startGRPCServer(l net.Listener, store storage.Store, eng *engin
 	})
 
 	return server
+}
+
+// Authenticate is the implementation of svc.Authenticator interface.
+func (s *Server) Authenticate(username, password string) error {
+	user, err := s.userStore.Get(username)
+	if err != nil {
+		return err
+	}
+
+	if err := bcrypt.CompareHashAndPassword(user.Password, []byte(password)); err != nil {
+		return fmt.Errorf("incorrect credentials: %w", err)
+	}
+
+	return nil
+}
+
+func (s *Server) configureAuth() error {
+	if s.conf.AdminAPI.Enabled {
+		if err := s.userStore.Save(&auth.User{
+			Username: s.conf.AdminAPI.AdminCredentials.Username,
+			Password: []byte(s.conf.AdminAPI.AdminCredentials.PasswordHash),
+			Role:     auth.AdminRole,
+		}); err != nil {
+			return err
+		}
+	}
+
+	if fp := s.conf.UserAPI.PasswordFile; fp != "" {
+		f, err := os.Open(fp)
+		if err != nil {
+			return err
+		}
+		defer f.Close()
+
+		scanner := bufio.NewScanner(f)
+		//nolint:gomnd
+		for scanner.Scan() {
+			line := scanner.Text()
+			sp := strings.SplitN(line, ":", 2)
+			if len(sp) != 2 {
+				return errors.New("invalid password file")
+			}
+			err = s.userStore.Save(&auth.User{
+				Username: sp[0],
+				Password: []byte(sp[1]),
+				Role:     auth.UserRole,
+			})
+			if err != nil {
+				return err
+			}
+		}
+	}
+
+	if fp := s.conf.UserAPI.JWTSecretFile; fp != "" {
+		f, err := os.Open(fp)
+		if err != nil {
+			return err
+		}
+		defer f.Close()
+
+		b, err := ioutil.ReadAll(f)
+		if err != nil {
+			return err
+		}
+
+		s.jwtHandler = auth.NewJWTManager(b, 24*time.Hour) //nolint:gomnd
+	} else if s.conf.UserAPI.EnableAuth {
+		return fmt.Errorf("jwt secret file is not provided")
+	}
+
+	return nil
+}
+
+// CheckCredentials is the implementation of svc.CredentialChecker interface.
+func (s *Server) CheckCredentials(ctx context.Context, requiredRole auth.Role) error {
+	if requiredRole == auth.UserRole && !s.conf.UserAPI.EnableAuth {
+		return nil
+	}
+
+	return auth.CheckCredentials(ctx, s.userStore, s.jwtHandler, requiredRole)
 }
 
 func (s *Server) mkGRPCServer(log *zap.Logger, auditLog audit.Log) *grpc.Server {

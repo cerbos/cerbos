@@ -36,6 +36,8 @@ type Conf struct {
 	PlaygroundEnabled bool `yaml:"playgroundEnabled"`
 	// AdminAPI defines the admin API configuration.
 	AdminAPI AdminAPIConf `yaml:"adminAPI"`
+	// UserAPI contains configuration for user authentications.
+	UserAPI UserAPIConf `yaml:"userAPI"`
 }
 
 // TLSConf holds TLS configuration.
@@ -71,6 +73,18 @@ type AdminCredentialsConf struct {
 	Username string `yaml:"username"`
 	// PasswordHash is the bcrypt hash of the password to use for authentication.
 	PasswordHash string `yaml:"passwordHash"`
+}
+
+type UserAPIConf struct {
+	// EnabledAuth defines whether the user API requires authentication.
+	EnableAuth bool `yaml:"enableAuth"`
+	// JWTSecretFile contains the secret key to be used for signing jwt tokens.
+	// If the file is not set, server is not going to enable jwt authorization.
+	JWTSecretFile string `yaml:"jwtSecretFile"`
+	// PasswordFile contains usernames and password hashes which are the bcrypt
+	// hash of the passwords to use for authentication. If the file is not set,
+	// server is not going to use authentication for Cerbos service client.
+	PasswordFile string `yaml:"passwordFile"`
 }
 
 func (a *AdminCredentialsConf) isUnsafe() bool {

@@ -20,6 +20,10 @@
     },
     {
       "name": "CerbosPlaygroundService"
+    },
+    {
+      "name": "CerbosAuthService",
+      "description": "Cerbos authentication service"
     }
   ],
   "schemes": [
@@ -348,6 +352,40 @@
         },
         "tags": [
           "CerbosService"
+        ]
+      }
+    },
+    "/auth/login": {
+      "post": {
+        "summary": "Login to the server",
+        "description": "Authenticates with the server and return the autorization token.",
+        "operationId": "CerbosAuthService_Login",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1LoginResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/v1LoginRequest"
+            }
+          }
+        ],
+        "tags": [
+          "CerbosAuthService"
         ]
       }
     }
@@ -993,6 +1031,27 @@
         }
       },
       "description": "Audit log stream."
+    },
+    "v1LoginRequest": {
+      "type": "object",
+      "properties": {
+        "username": {
+          "type": "string"
+        },
+        "password": {
+          "type": "string"
+        }
+      },
+      "description": "Login request"
+    },
+    "v1LoginResponse": {
+      "type": "object",
+      "properties": {
+        "token": {
+          "type": "string"
+        }
+      },
+      "description": "Login response"
     },
     "v1Match": {
       "type": "object",

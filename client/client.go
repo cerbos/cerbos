@@ -39,6 +39,7 @@ type Client interface {
 
 type config struct {
 	address        string
+	token          string
 	plaintext      bool
 	tlsAuthority   string
 	tlsInsecure    bool
@@ -117,8 +118,43 @@ func WithUserAgent(ua string) Opt {
 	}
 }
 
+// WithJWT sets the JWT.
+func WithJWT(token string) Opt {
+	return func(c *config) {
+		c.token = token
+	}
+}
+
 // New creates a new Cerbos client.
 func New(address string, opts ...Opt) (Client, error) {
+	grpcConn, _, err := mkConn(address, opts...)
+	if err != nil {
+		return nil, err
+	}
+
+	return &grpcClient{stub: svcv1.NewCerbosServiceClient(grpcConn)}, nil
+}
+
+// NewClientWithCredentials creates a new client with credentials.
+func NewClientWithCredentials(address, username, password string, opts ...Opt) (Client, error) {
+	grpcConn, _, err := mkConn(address, opts...)
+	if err != nil {
+		return nil, err
+	}
+
+	auth := svcv1.NewCerbosAuthServiceClient(grpcConn)
+	resp, err := auth.Login(context.Background(), &requestv1.LoginRequest{Username: username, Password: password})
+	if err != nil {
+		return nil, err
+	}
+	grpcConn.Close()
+
+	return NewClientWithToken(address, resp.Token, opts...)
+}
+
+// NewClientWithToken creates a new client with a JWT.
+func NewClientWithToken(address, token string, opts ...Opt) (Client, error) {
+	opts = append(opts, WithJWT(token))
 	grpcConn, _, err := mkConn(address, opts...)
 	if err != nil {
 		return nil, err
@@ -154,7 +190,9 @@ func mkConn(address string, opts ...Opt) (*grpc.ClientConn, *config, error) {
 }
 
 func mkDialOpts(conf *config) ([]grpc.DialOption, error) {
-	dialOpts := []grpc.DialOption{grpc.WithUserAgent(conf.userAgent)}
+	dialOpts := []grpc.DialOption{
+		grpc.WithUserAgent(conf.userAgent),
+	}
 
 	if conf.connectTimeout > 0 {
 		dialOpts = append(dialOpts, grpc.WithConnectParams(grpc.ConnectParams{MinConnectTimeout: conf.connectTimeout}))
@@ -175,6 +213,15 @@ func mkDialOpts(conf *config) ([]grpc.DialOption, error) {
 				),
 			),
 		)
+	}
+
+	if conf.token != "" {
+		token := newJWT(conf.token)
+		if conf.plaintext {
+			token = token.Insecure()
+		}
+
+		dialOpts = append(dialOpts, grpc.WithPerRPCCredentials(token))
 	}
 
 	if conf.plaintext {
@@ -345,4 +392,23 @@ func (gc *grpcClient) ServerInfo(ctx context.Context) (*ServerInfo, error) {
 	return &ServerInfo{
 		ServerInfoResponse: resp,
 	}, nil
+}
+
+// Authenticates with the server and returns jwt authorization token.
+func Login(ctx context.Context, address, username, password string, opts ...Opt) (string, error) {
+	grpcConn, _, err := mkConn(address, opts...)
+	if err != nil {
+		return "", err
+	}
+
+	auth := svcv1.NewCerbosAuthServiceClient(grpcConn)
+	resp, err := auth.Login(ctx, &requestv1.LoginRequest{
+		Username: username,
+		Password: password,
+	})
+	if err != nil {
+		return "", err
+	}
+
+	return resp.Token, nil
 }
