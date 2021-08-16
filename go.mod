@@ -28,7 +28,7 @@ require (
 	github.com/gorilla/mux v1.8.0
 	github.com/grpc-ecosystem/go-grpc-middleware v1.3.0
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.5.0
-	github.com/jackc/pgx/v4 v4.12.0
+	github.com/jackc/pgx/v4 v4.13.0
 	github.com/jdxcode/netrc v0.0.0-20210204082910-926c7f70242a
 	github.com/jmoiron/sqlx v1.3.4
 	github.com/jwalton/gchalk v1.1.0
@@ -62,7 +62,7 @@ require (
 	go.uber.org/config v1.4.0
 	go.uber.org/multierr v1.7.0
 	go.uber.org/zap v1.19.0
-	golang.org/x/crypto v0.0.0-20210616213533-5ff15b29337e
+	golang.org/x/crypto v0.0.0-20210711020723-a769d52b0f97
 	golang.org/x/net v0.0.0-20210614182718-04defd469f4e // indirect
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
 	google.golang.org/api v0.46.0 // indirect
