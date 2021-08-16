@@ -2167,11 +2167,11 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 --------------------------------------------------------------------------------
 Module  : github.com/google/gops
-Version : v0.3.18
-Time    : 2021-04-17T20:14:45Z
+Version : v0.3.19
+Time    : 2021-07-01T10:01:38Z
 Licence : BSD-3-Clause
 
-Contents of probable licence file $GOMODCACHE/github.com/google/gops@v0.3.18/LICENSE:
+Contents of probable licence file $GOMODCACHE/github.com/google/gops@v0.3.19/LICENSE:
 
 Copyright (c) 2016 The Go Authors. All rights reserved.
 
@@ -45119,11 +45119,11 @@ DEALINGS IN THE SOFTWARE.
 
 --------------------------------------------------------------------------------
 Module  : github.com/shirou/gopsutil/v3
-Version : v3.21.2
-Time    : 2021-03-01T11:50:23Z
+Version : v3.21.5
+Time    : 2021-06-01T07:28:17Z
 Licence : BSD-3-Clause
 
-Contents of probable licence file $GOMODCACHE/github.com/shirou/gopsutil/v3@v3.21.2/LICENSE:
+Contents of probable licence file $GOMODCACHE/github.com/shirou/gopsutil/v3@v3.21.5/LICENSE:
 
 gopsutil is distributed under BSD license reproduced below.
 
@@ -46923,11 +46923,11 @@ SOFTWARE.
 
 --------------------------------------------------------------------------------
 Module  : github.com/xlab/treeprint
-Version : v1.0.0
-Time    : 2020-01-17T18:53:34Z
+Version : v1.1.0
+Time    : 2021-01-31T14:21:50Z
 Licence : MIT
 
-Contents of probable licence file $GOMODCACHE/github.com/xlab/treeprint@v1.0.0/LICENSE:
+Contents of probable licence file $GOMODCACHE/github.com/xlab/treeprint@v1.1.0/LICENSE:
 
 The MIT License (MIT)
 Copyright © 2016 Maxim Kupriianov <max@kc.vc>
