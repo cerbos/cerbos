@@ -710,11 +710,11 @@ Contents of probable licence file $GOMODCACHE/github.com/dgraph-io/badger/v3@v3.
 
 --------------------------------------------------------------------------------
 Module  : github.com/doug-martin/goqu/v9
-Version : v9.14.0
-Time    : 2021-07-27T21:37:04Z
+Version : v9.15.1
+Time    : 2021-08-03T04:57:58Z
 Licence : MIT
 
-Contents of probable licence file $GOMODCACHE/github.com/doug-martin/goqu/v9@v9.14.0/LICENSE:
+Contents of probable licence file $GOMODCACHE/github.com/doug-martin/goqu/v9@v9.15.1/LICENSE:
 
 MIT License
 
@@ -5218,11 +5218,11 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 --------------------------------------------------------------------------------
 Module  : helm.sh/helm/v3
-Version : v3.6.2
-Time    : 2021-06-29T15:08:03Z
+Version : v3.6.3
+Time    : 2021-07-14T17:25:00Z
 Licence : Apache-2.0
 
-Contents of probable licence file $GOMODCACHE/helm.sh/helm/v3@v3.6.2/LICENSE:
+Contents of probable licence file $GOMODCACHE/helm.sh/helm/v3@v3.6.3/LICENSE:
 
 
                                  Apache License
