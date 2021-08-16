@@ -2557,11 +2557,11 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 --------------------------------------------------------------------------------
 Module  : github.com/jackc/pgx/v4
-Version : v4.12.0
-Time    : 2021-07-10T15:06:00Z
+Version : v4.13.0
+Time    : 2021-07-24T15:59:24Z
 Licence : MIT
 
-Contents of probable licence file $GOMODCACHE/github.com/jackc/pgx/v4@v4.12.0/LICENSE:
+Contents of probable licence file $GOMODCACHE/github.com/jackc/pgx/v4@v4.13.0/LICENSE:
 
 Copyright (c) 2013-2021 Jack Christensen
 
@@ -4683,11 +4683,11 @@ THE SOFTWARE.
 
 --------------------------------------------------------------------------------
 Module  : golang.org/x/crypto
-Version : v0.0.0-20210616213533-5ff15b29337e
-Time    : 2021-06-16T21:35:33Z
+Version : v0.0.0-20210711020723-a769d52b0f97
+Time    : 2021-07-11T02:07:23Z
 Licence : BSD-3-Clause
 
-Contents of probable licence file $GOMODCACHE/golang.org/x/crypto@v0.0.0-20210616213533-5ff15b29337e/LICENSE:
+Contents of probable licence file $GOMODCACHE/golang.org/x/crypto@v0.0.0-20210711020723-a769d52b0f97/LICENSE:
 
 Copyright (c) 2009 The Go Authors. All rights reserved.
 
@@ -34120,11 +34120,11 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 --------------------------------------------------------------------------------
 Module  : github.com/jackc/pgconn
-Version : v1.9.0
-Time    : 2021-07-10T14:54:39Z
+Version : v1.10.0
+Time    : 2021-07-24T15:52:26Z
 Licence : MIT
 
-Contents of probable licence file $GOMODCACHE/github.com/jackc/pgconn@v1.9.0/LICENSE:
+Contents of probable licence file $GOMODCACHE/github.com/jackc/pgconn@v1.10.0/LICENSE:
 
 Copyright (c) 2019-2021 Jack Christensen
 
@@ -34184,11 +34184,11 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 --------------------------------------------------------------------------------
 Module  : github.com/jackc/pgmock
-Version : v0.0.0-20201204152224-4fe30f7445fd
-Time    : 2020-12-04T15:22:24Z
+Version : v0.0.0-20210724152146-4ad1a8207f65
+Time    : 2021-07-24T15:21:46Z
 Licence : MIT
 
-Contents of probable licence file $GOMODCACHE/github.com/jackc/pgmock@v0.0.0-20201204152224-4fe30f7445fd/LICENSE:
+Contents of probable licence file $GOMODCACHE/github.com/jackc/pgmock@v0.0.0-20210724152146-4ad1a8207f65/LICENSE:
 
 The MIT License (MIT)
 
@@ -34343,11 +34343,11 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 --------------------------------------------------------------------------------
 Module  : github.com/jackc/pgtype
-Version : v1.8.0
-Time    : 2021-07-10T14:58:12Z
+Version : v1.8.1
+Time    : 2021-07-24T15:50:22Z
 Licence : MIT
 
-Contents of probable licence file $GOMODCACHE/github.com/jackc/pgtype@v1.8.0/LICENSE:
+Contents of probable licence file $GOMODCACHE/github.com/jackc/pgtype@v1.8.1/LICENSE:
 
 Copyright (c) 2013-2021 Jack Christensen
 
