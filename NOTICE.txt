@@ -1052,11 +1052,11 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 --------------------------------------------------------------------------------
 Module  : github.com/gdamore/tcell/v2
-Version : v2.3.3
-Time    : 2021-05-19T06:17:00Z
+Version : v2.4.0
+Time    : 2021-07-17T18:11:35Z
 Licence : Apache-2.0
 
-Contents of probable licence file $GOMODCACHE/github.com/gdamore/tcell/v2@v2.3.3/LICENSE:
+Contents of probable licence file $GOMODCACHE/github.com/gdamore/tcell/v2@v2.4.0/LICENSE:
 
 
                                  Apache License
