@@ -23,7 +23,7 @@ require (
 	github.com/google/cel-go v0.7.3
 	github.com/google/go-cmp v0.5.6
 	github.com/google/gops v0.3.18
-	github.com/google/uuid v1.2.0
+	github.com/google/uuid v1.3.0
 	github.com/gorilla/handlers v1.5.1
 	github.com/gorilla/mux v1.8.0
 	github.com/grpc-ecosystem/go-grpc-middleware v1.3.0
