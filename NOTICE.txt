@@ -2653,11 +2653,11 @@ Contents of probable licence file $GOMODCACHE/github.com/jmoiron/sqlx@v1.3.4/LIC
 
 --------------------------------------------------------------------------------
 Module  : github.com/jwalton/gchalk
-Version : v1.0.3
-Time    : 2021-03-20T15:31:49Z
+Version : v1.1.0
+Time    : 2021-08-04T00:22:35Z
 Licence : MIT
 
-Contents of probable licence file $GOMODCACHE/github.com/jwalton/gchalk@v1.0.3/LICENSE:
+Contents of probable licence file $GOMODCACHE/github.com/jwalton/gchalk@v1.1.0/LICENSE:
 
 MIT License
 
@@ -5218,11 +5218,11 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 --------------------------------------------------------------------------------
 Module  : helm.sh/helm/v3
-Version : v3.6.2
-Time    : 2021-06-29T15:08:03Z
+Version : v3.6.3
+Time    : 2021-07-14T17:25:00Z
 Licence : Apache-2.0
 
-Contents of probable licence file $GOMODCACHE/helm.sh/helm/v3@v3.6.2/LICENSE:
+Contents of probable licence file $GOMODCACHE/helm.sh/helm/v3@v3.6.3/LICENSE:
 
 
                                  Apache License
