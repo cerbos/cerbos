@@ -11,7 +11,7 @@ require (
 	github.com/census-instrumentation/opencensus-proto v0.3.0 // indirect
 	github.com/cespare/xxhash v1.1.0
 	github.com/dgraph-io/badger/v3 v3.2103.0
-	github.com/doug-martin/goqu/v9 v9.14.0
+	github.com/doug-martin/goqu/v9 v9.15.1
 	github.com/envoyproxy/protoc-gen-validate v0.6.1
 	github.com/fatih/color v1.12.0
 	github.com/fergusstrange/embedded-postgres v1.7.0
@@ -71,7 +71,7 @@ require (
 	google.golang.org/genproto v0.0.0-20210617175327-b9e0b3197ced
 	google.golang.org/grpc v1.39.0-dev.0.20210519181852-3dd75a6888ce
 	google.golang.org/protobuf v1.27.1
-	helm.sh/helm/v3 v3.6.2
+	helm.sh/helm/v3 v3.6.3
 	modernc.org/sqlite v1.11.2
 )
 
