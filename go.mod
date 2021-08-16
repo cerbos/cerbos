@@ -70,7 +70,7 @@ require (
 	google.golang.org/grpc v1.39.0-dev.0.20210519181852-3dd75a6888ce
 	google.golang.org/protobuf v1.27.1
 	helm.sh/helm/v3 v3.6.3
-	modernc.org/sqlite v1.11.2
+	modernc.org/sqlite v1.12.0
 )
 
 replace github.com/docker/distribution => github.com/docker/distribution v0.0.0-20191216044856-a8371794149d

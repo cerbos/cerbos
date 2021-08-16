@@ -5430,11 +5430,11 @@ Contents of probable licence file $GOMODCACHE/helm.sh/helm/v3@v3.6.3/LICENSE:
 
 --------------------------------------------------------------------------------
 Module  : modernc.org/sqlite
-Version : v1.11.2
-Time    : 2021-07-02T11:45:34Z
+Version : v1.12.0
+Time    : 2021-07-23T20:43:02Z
 Licence : BSD-3-Clause
 
-Contents of probable licence file $GOMODCACHE/modernc.org/sqlite@v1.11.2/LICENSE:
+Contents of probable licence file $GOMODCACHE/modernc.org/sqlite@v1.12.0/LICENSE:
 
 Copyright (c) 2017 The Sqlite Authors. All rights reserved.
 
@@ -36532,11 +36532,11 @@ SOFTWARE.
 
 --------------------------------------------------------------------------------
 Module  : github.com/mattn/go-sqlite3
-Version : v1.14.7
-Time    : 2021-04-14T15:14:26Z
+Version : v1.14.8
+Time    : 2021-07-15T13:31:14Z
 Licence : MIT
 
-Contents of probable licence file $GOMODCACHE/github.com/mattn/go-sqlite3@v1.14.7/LICENSE:
+Contents of probable licence file $GOMODCACHE/github.com/mattn/go-sqlite3@v1.14.8/LICENSE:
 
 The MIT License (MIT)
 
@@ -54299,11 +54299,11 @@ THE SOFTWARE.
 
 --------------------------------------------------------------------------------
 Module  : modernc.org/cc/v3
-Version : v3.33.6
-Time    : 2021-06-19T19:02:57Z
+Version : v3.33.7
+Time    : 2021-06-29T19:21:50Z
 Licence : BSD-2-Clause
 
-Contents of probable licence file $GOMODCACHE/modernc.org/cc/v3@v3.33.6/LICENSE:
+Contents of probable licence file $GOMODCACHE/modernc.org/cc/v3@v3.33.7/LICENSE:
 
 Copyright (c) 2017 The CC Authors. All rights reserved.
 
@@ -54336,11 +54336,11 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 --------------------------------------------------------------------------------
 Module  : modernc.org/ccgo/v3
-Version : v3.9.5
-Time    : 2021-06-19T19:38:43Z
+Version : v3.9.6
+Time    : 2021-07-04T16:10:11Z
 Licence : BSD-2-Clause
 
-Contents of probable licence file $GOMODCACHE/modernc.org/ccgo/v3@v3.9.5/LICENSE:
+Contents of probable licence file $GOMODCACHE/modernc.org/ccgo/v3@v3.9.6/LICENSE:
 
 Copyright (c) 2017 The CCGO Authors. All rights reserved.
 
@@ -54447,11 +54447,11 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 --------------------------------------------------------------------------------
 Module  : modernc.org/mathutil
-Version : v1.4.0
-Time    : 2021-05-23T19:46:47Z
+Version : v1.4.1
+Time    : 2021-06-21T11:55:40Z
 Licence : BSD-2-Clause
 
-Contents of probable licence file $GOMODCACHE/modernc.org/mathutil@v1.4.0/LICENSE:
+Contents of probable licence file $GOMODCACHE/modernc.org/mathutil@v1.4.1/LICENSE:
 
 Copyright (c) 2014 The mathutil Authors. All rights reserved.
 
