@@ -23,7 +23,7 @@ require (
 	github.com/google/cel-go v0.7.3
 	github.com/google/go-cmp v0.5.6
 	github.com/google/gops v0.3.18
-	github.com/google/uuid v1.2.0
+	github.com/google/uuid v1.3.0
 	github.com/gorilla/handlers v1.5.1
 	github.com/gorilla/mux v1.8.0
 	github.com/grpc-ecosystem/go-grpc-middleware v1.3.0
@@ -62,7 +62,7 @@ require (
 	go.uber.org/automaxprocs v1.4.0
 	go.uber.org/config v1.4.0
 	go.uber.org/multierr v1.7.0
-	go.uber.org/zap v1.18.1
+	go.uber.org/zap v1.19.0
 	golang.org/x/crypto v0.0.0-20210616213533-5ff15b29337e
 	golang.org/x/net v0.0.0-20210614182718-04defd469f4e // indirect
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
