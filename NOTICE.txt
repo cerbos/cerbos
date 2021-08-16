@@ -2204,11 +2204,11 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 --------------------------------------------------------------------------------
 Module  : github.com/google/uuid
-Version : v1.2.0
-Time    : 2021-01-22T18:20:15Z
+Version : v1.3.0
+Time    : 2021-07-12T22:33:52Z
 Licence : BSD-3-Clause
 
-Contents of probable licence file $GOMODCACHE/github.com/google/uuid@v1.2.0/LICENSE:
+Contents of probable licence file $GOMODCACHE/github.com/google/uuid@v1.3.0/LICENSE:
 
 Copyright (c) 2009,2014 Google Inc. All rights reserved.
 
@@ -4654,11 +4654,11 @@ THE SOFTWARE.
 
 --------------------------------------------------------------------------------
 Module  : go.uber.org/zap
-Version : v1.18.1
-Time    : 2021-06-28T19:13:07Z
+Version : v1.19.0
+Time    : 2021-08-09T16:35:44Z
 Licence : MIT
 
-Contents of probable licence file $GOMODCACHE/go.uber.org/zap@v1.18.1/LICENSE.txt:
+Contents of probable licence file $GOMODCACHE/go.uber.org/zap@v1.19.0/LICENSE.txt:
 
 Copyright (c) 2016-2017 Uber Technologies, Inc.
 
