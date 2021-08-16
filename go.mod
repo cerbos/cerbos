@@ -71,7 +71,7 @@ require (
 	google.golang.org/genproto v0.0.0-20210617175327-b9e0b3197ced
 	google.golang.org/grpc v1.39.0-dev.0.20210519181852-3dd75a6888ce
 	google.golang.org/protobuf v1.27.1
-	helm.sh/helm/v3 v3.6.2
+	helm.sh/helm/v3 v3.6.3
 	modernc.org/sqlite v1.11.2
 )
 
