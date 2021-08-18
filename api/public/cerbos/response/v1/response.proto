@@ -11,9 +11,7 @@ option csharp_namespace = "Cerbos.Api.V1.Response";
 
 import "cerbos/audit/v1/audit.proto";
 import "cerbos/effect/v1/effect.proto";
-import "google/protobuf/duration.proto";
 import "google/protobuf/empty.proto";
-import "google/api/field_behavior.proto";
 import "protoc-gen-openapiv2/options/annotations.proto";
 
 message CheckResourceSetResponse {

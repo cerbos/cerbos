@@ -10,7 +10,6 @@ option java_package = "dev.cerbos.api.v1.engine";
 option csharp_namespace = "Cerbos.Api.V1.Engine";
 
 import "google/api/field_behavior.proto";
-import "google/protobuf/duration.proto";
 import "google/protobuf/struct.proto";
 import "protoc-gen-openapiv2/options/annotations.proto";
 import "cerbos/effect/v1/effect.proto";
