@@ -24,7 +24,7 @@ MOCK_DIR := internal/test/mocks
 
 define BUF_GEN_TEMPLATE
 {\
-  "version": "v1beta1",\
+  "version": "v1",\
   "plugins": [\
     {\
       "name": "go",\

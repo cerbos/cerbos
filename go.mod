@@ -76,7 +76,7 @@ require (
 require (
 	github.com/Azure/go-ansiterm v0.0.0-20170929234023-d6e3b3328b78 // indirect
 	github.com/DataDog/zstd v1.4.1 // indirect
-	github.com/Microsoft/go-winio v0.4.16 // indirect
+	github.com/Microsoft/go-winio v0.4.17 // indirect
 	github.com/Nvveen/Gotty v0.0.0-20120604004816-cd527374f1e5 // indirect
 	github.com/OneOfOne/xxhash v1.2.8 // indirect
 	github.com/acomagu/bufpipe v1.0.3 // indirect
@@ -86,8 +86,8 @@ require (
 	github.com/bytecodealliance/wasmtime-go v0.28.0 // indirect
 	github.com/cenkalti/backoff/v4 v4.1.0 // indirect
 	github.com/cespare/xxhash/v2 v2.1.1 // indirect
-	github.com/containerd/containerd v1.4.4 // indirect
-	github.com/containerd/continuity v0.0.0-20201208142359-180525291bb7 // indirect
+	github.com/containerd/containerd v1.5.5 // indirect
+	github.com/containerd/continuity v0.1.0 // indirect
 	github.com/danwakefield/fnmatch v0.0.0-20160403171240-cbb64ac3d964 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/dgraph-io/ristretto v0.0.4-0.20210309073149-3836124cdc5a // indirect
@@ -137,7 +137,7 @@ require (
 	github.com/nwaples/rardecode v1.1.0 // indirect
 	github.com/opencontainers/go-digest v1.0.0 // indirect
 	github.com/opencontainers/image-spec v1.0.1 // indirect
-	github.com/opencontainers/runc v1.0.0-rc9 // indirect
+	github.com/opencontainers/runc v1.0.1 // indirect
 	github.com/pierrec/lz4/v4 v4.0.3 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect

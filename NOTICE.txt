@@ -5607,11 +5607,11 @@ THE SOFTWARE.
 
 --------------------------------------------------------------------------------
 Module  : github.com/Microsoft/go-winio
-Version : v0.4.16
-Time    : 2020-11-30T16:25:21Z
+Version : v0.4.17
+Time    : 2021-03-24T22:44:01Z
 Licence : MIT
 
-Contents of probable licence file $GOMODCACHE/github.com/!microsoft/go-winio@v0.4.16/LICENSE:
+Contents of probable licence file $GOMODCACHE/github.com/!microsoft/go-winio@v0.4.17/LICENSE:
 
 The MIT License (MIT)
 
@@ -7203,11 +7203,11 @@ Apache License
 
 --------------------------------------------------------------------------------
 Module  : github.com/containerd/containerd
-Version : v1.4.4
-Time    : 2021-03-05T05:45:55Z
+Version : v1.5.5
+Time    : 2021-07-29T17:02:27Z
 Licence : Apache-2.0
 
-Contents of probable licence file $GOMODCACHE/github.com/containerd/containerd@v1.4.4/LICENSE:
+Contents of probable licence file $GOMODCACHE/github.com/containerd/containerd@v1.5.5/LICENSE:
 
 
                                  Apache License
@@ -7404,11 +7404,11 @@ Contents of probable licence file $GOMODCACHE/github.com/containerd/containerd@v
 
 --------------------------------------------------------------------------------
 Module  : github.com/containerd/continuity
-Version : v0.0.0-20201208142359-180525291bb7
-Time    : 2020-12-08T14:23:59Z
+Version : v0.1.0
+Time    : 2021-04-17T04:23:58Z
 Licence : Apache-2.0
 
-Contents of probable licence file $GOMODCACHE/github.com/containerd/continuity@v0.0.0-20201208142359-180525291bb7/LICENSE:
+Contents of probable licence file $GOMODCACHE/github.com/containerd/continuity@v0.1.0/LICENSE:
 
 
                                  Apache License
@@ -13381,11 +13381,11 @@ Contents of probable licence file $GOMODCACHE/github.com/opencontainers/image-sp
 
 --------------------------------------------------------------------------------
 Module  : github.com/opencontainers/runc
-Version : v1.0.0-rc9
-Time    : 2019-09-30T16:36:09Z
+Version : v1.0.1
+Time    : 2021-07-16T04:39:19Z
 Licence : Apache-2.0
 
-Contents of probable licence file $GOMODCACHE/github.com/opencontainers/runc@v1.0.0-rc9/LICENSE:
+Contents of probable licence file $GOMODCACHE/github.com/opencontainers/runc@v1.0.1/LICENSE:
 
 
                                  Apache License
