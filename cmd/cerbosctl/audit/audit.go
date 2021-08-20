@@ -19,6 +19,7 @@ import (
 	"github.com/spf13/cobra"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"
+	"google.golang.org/protobuf/reflect/protoreflect"
 
 	auditv1 "github.com/cerbos/cerbos/api/genpb/cerbos/audit/v1"
 	requestv1 "github.com/cerbos/cerbos/api/genpb/cerbos/request/v1"
@@ -94,27 +95,23 @@ func runAuditCmdF(c client.AdminClient, cmd *cobra.Command, _ []string) error {
 	}
 	defer writer.flush()
 
+	logOptions := genAuditLogOptions(auditFilterFlags)
+
 	switch kind := auditFlags.kind.Kind(); kind {
 	case requestv1.ListAuditLogEntriesRequest_KIND_DECISION, requestv1.ListAuditLogEntriesRequest_KIND_UNSPECIFIED:
-		decisionLogs, err := c.DecisionLogs(context.Background(), genAuditLogOptions(auditFilterFlags))
-		if err != nil {
-			return fmt.Errorf("could not get decision logs: %w", err)
-		}
-
-		if err = streamDecisionLogsToWriter(writer, decisionLogs); err != nil {
-			return fmt.Errorf("could not write decision logs: %w", err)
-		}
+		logOptions.Type = client.AccessLogs
 	case requestv1.ListAuditLogEntriesRequest_KIND_ACCESS:
-		accessLogs, err := c.AccessLogs(context.Background(), genAuditLogOptions(auditFilterFlags))
-		if err != nil {
-			return fmt.Errorf("could not get access logs: %w", err)
-		}
-
-		if err = streamAccessLogsToWriter(writer, accessLogs); err != nil {
-			return fmt.Errorf("could not write access logs: %w", err)
-		}
+		logOptions.Type = client.DecisionLogs
 	}
 
+	logs, err := c.AuditLogs(context.Background(), logOptions)
+	if err != nil {
+		return fmt.Errorf("could not get decision logs: %w", err)
+	}
+
+	if err = streamLogsToWriter(writer, logs); err != nil {
+		return fmt.Errorf("could not write decision logs: %w", err)
+	}
 	return nil
 }
 
@@ -143,25 +140,20 @@ func genAuditLogOptions(filter *FilterDef) client.AuditLogOptions {
 	}
 }
 
-func streamAccessLogsToWriter(writer auditLogWriter, entries <-chan *client.AccessLogEntry) error {
-	for e := range entries {
-		if err := e.Err; err != nil {
-			return fmt.Errorf("error while receiving access logs: %w", err)
-		}
-		if err := writer.write(e.Log); err != nil {
-			return err
-		}
-	}
-
-	return nil
-}
-
-func streamDecisionLogsToWriter(writer auditLogWriter, entries <-chan *client.DecisionLogEntry) error {
+func streamLogsToWriter(writer auditLogWriter, entries <-chan *client.AuditLogEntry) error {
 	for e := range entries {
 		if err := e.Err; err != nil {
 			return fmt.Errorf("error while receiving decision logs: %w", err)
 		}
-		if err := writer.write(e.Log); err != nil {
+
+		var log protoreflect.ProtoMessage
+		if al := e.AccessLog(); e != nil {
+			log = al
+		} else {
+			log = e.DecisionLog()
+		}
+
+		if err := writer.write(log); err != nil {
 			return err
 		}
 	}

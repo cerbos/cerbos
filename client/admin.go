@@ -7,7 +7,6 @@ import (
 	"context"
 	"errors"
 	"io"
-	"reflect"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
@@ -20,8 +19,7 @@ import (
 
 type AdminClient interface {
 	AddOrUpdatePolicy(context.Context, *PolicySet) error
-	AccessLogs(ctx context.Context, opts AuditLogOptions) (<-chan *AccessLogEntry, error)
-	DecisionLogs(ctx context.Context, opts AuditLogOptions) (<-chan *DecisionLogEntry, error)
+	AuditLogs(ctx context.Context, opts AuditLogOptions) (<-chan *AuditLogEntry, error)
 }
 
 // NewAdminClient creates a new admin client.
@@ -79,30 +77,11 @@ type recvFn func() (*responsev1.ListAuditLogEntriesResponse, error)
 
 // collectLogs collects logs from the receiver function and passes to the channel
 // it will return an error if the channel type is not accepted.
-func collectLogs(receiver recvFn, channel interface{}) error {
-	if reflect.TypeOf(channel).Kind() != reflect.Chan {
-		return errors.New("no channel type provided")
-	}
-
-	var accessLogs chan *AccessLogEntry
-	var decisionLogs chan *DecisionLogEntry
-
-	ifc := reflect.ValueOf(channel).Interface()
-	switch ch := ifc.(type) {
-	case chan *AccessLogEntry:
-		accessLogs = ch
-	case chan *DecisionLogEntry:
-		decisionLogs = ch
-	default:
-		return errors.New("could not cast to correct type of channel")
-	}
+func collectLogs(receiver recvFn) (<-chan *AuditLogEntry, error) {
+	ch := make(chan *AuditLogEntry)
 
 	go func() {
-		if accessLogs != nil {
-			defer close(accessLogs)
-		} else if decisionLogs != nil {
-			defer close(decisionLogs)
-		}
+		defer close(ch)
 
 		for {
 			entry, err := receiver()
@@ -111,60 +90,39 @@ func collectLogs(receiver recvFn, channel interface{}) error {
 					return
 				}
 
-				if accessLogs != nil {
-					accessLogs <- &AccessLogEntry{Err: err}
-					return
-				}
-				decisionLogs <- &DecisionLogEntry{Err: err}
+				ch <- &AuditLogEntry{Err: err}
 				return
 			}
-			if accessLogs != nil {
-				accessLogs <- &AccessLogEntry{Log: entry.GetAccessLogEntry()}
-				continue
+
+			ch <- &AuditLogEntry{
+				accessLog:   entry.GetAccessLogEntry(),
+				decisionLog: entry.GetDecisionLogEntry(),
 			}
-			decisionLogs <- &DecisionLogEntry{Log: entry.GetDecisionLogEntry()}
 		}
 	}()
 
-	return nil
+	return ch, nil
 }
 
-// AccessLogs returns audit logs of the access type entries.
-func (c *GrpcAdminClient) AccessLogs(ctx context.Context, opts AuditLogOptions) (<-chan *AccessLogEntry, error) {
-	resp, err := c.auditLogs(ctx, requestv1.ListAuditLogEntriesRequest_KIND_ACCESS, opts)
+func (c *GrpcAdminClient) AuditLogs(ctx context.Context, opts AuditLogOptions) (<-chan *AuditLogEntry, error) {
+	resp, err := c.auditLogs(ctx, opts)
 	if err != nil {
 		return nil, err
 	}
 
-	entries := make(chan *AccessLogEntry)
-
-	err = collectLogs(resp.Recv, entries)
-	if err != nil {
-		return nil, err
-	}
-
-	return entries, nil
+	return collectLogs(resp.Recv)
 }
 
-// DecisionLogs returns decision logs of the decision type entries.
-func (c *GrpcAdminClient) DecisionLogs(ctx context.Context, opts AuditLogOptions) (<-chan *DecisionLogEntry, error) {
-	resp, err := c.auditLogs(ctx, requestv1.ListAuditLogEntriesRequest_KIND_DECISION, opts)
-	if err != nil {
-		return nil, err
+func (c *GrpcAdminClient) auditLogs(ctx context.Context, opts AuditLogOptions) (svcv1.CerbosAdminService_ListAuditLogEntriesClient, error) {
+	var req *requestv1.ListAuditLogEntriesRequest
+	switch opts.Type {
+	case AccessLogs:
+		req = &requestv1.ListAuditLogEntriesRequest{Kind: requestv1.ListAuditLogEntriesRequest_KIND_ACCESS}
+	case DecisionLogs:
+		req = &requestv1.ListAuditLogEntriesRequest{Kind: requestv1.ListAuditLogEntriesRequest_KIND_DECISION}
+	default:
+		return nil, errors.New("incorrect audit log type")
 	}
-
-	entries := make(chan *DecisionLogEntry)
-
-	err = collectLogs(resp.Recv, entries)
-	if err != nil {
-		return nil, err
-	}
-
-	return entries, nil
-}
-
-func (c *GrpcAdminClient) auditLogs(ctx context.Context, kind requestv1.ListAuditLogEntriesRequest_Kind, opts AuditLogOptions) (svcv1.CerbosAdminService_ListAuditLogEntriesClient, error) {
-	req := &requestv1.ListAuditLogEntriesRequest{Kind: kind}
 
 	switch {
 	case opts.Tail > 0:

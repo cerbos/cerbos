@@ -851,20 +851,32 @@ type ServerInfo struct {
 	*responsev1.ServerInfoResponse
 }
 
+type AuditLogType uint8
+
+const (
+	AccessLogs AuditLogType = iota
+	DecisionLogs
+)
+
 // AuditLogOptions is used to filter audit logs.
 type AuditLogOptions struct {
+	Type      AuditLogType
 	Tail      uint32
 	StartTime time.Time
 	EndTime   time.Time
 	Lookup    string
 }
 
-type AccessLogEntry struct {
-	Log *auditv1.AccessLogEntry
-	Err error
+type AuditLogEntry struct {
+	accessLog   *auditv1.AccessLogEntry
+	decisionLog *auditv1.DecisionLogEntry
+	Err         error
 }
 
-type DecisionLogEntry struct {
-	Log *auditv1.DecisionLogEntry
-	Err error
+func (e *AuditLogEntry) AccessLog() *auditv1.AccessLogEntry {
+	return e.accessLog
+}
+
+func (e *AuditLogEntry) DecisionLog() *auditv1.DecisionLogEntry {
+	return e.decisionLog
 }
