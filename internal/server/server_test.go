@@ -271,6 +271,10 @@ func executeGRPCTestCase(grpcConn *grpc.ClientConn, tc *privatev1.ServerTestCase
 			playgroundClient := svcv1.NewCerbosPlaygroundServiceClient(grpcConn)
 			want = call.PlaygroundEvaluate.WantResponse
 			have, err = playgroundClient.PlaygroundEvaluate(ctx, call.PlaygroundEvaluate.Input)
+		case *privatev1.ServerTestCase_PlaygroundProxy:
+			playgroundClient := svcv1.NewCerbosPlaygroundServiceClient(grpcConn)
+			want = call.PlaygroundProxy.WantResponse
+			have, err = playgroundClient.PlaygroundProxy(ctx, call.PlaygroundProxy.Input)
 		case *privatev1.ServerTestCase_AdminAddOrUpdatePolicy:
 			adminClient := svcv1.NewCerbosAdminServiceClient(grpcConn)
 			want = call.AdminAddOrUpdatePolicy.WantResponse
@@ -340,6 +344,11 @@ func executeHTTPTestCase(c *http.Client, hostAddr string, creds *authCreds, tc *
 			input = call.PlaygroundEvaluate.Input
 			want = call.PlaygroundEvaluate.WantResponse
 			have = &responsev1.PlaygroundEvaluateResponse{}
+		case *privatev1.ServerTestCase_PlaygroundProxy:
+			addr = fmt.Sprintf("%s/api/playground/proxy", hostAddr)
+			input = call.PlaygroundProxy.Input
+			want = call.PlaygroundProxy.WantResponse
+			have = &responsev1.PlaygroundProxyResponse{}
 		case *privatev1.ServerTestCase_AdminAddOrUpdatePolicy:
 			addr = fmt.Sprintf("%s/admin/policy", hostAddr)
 			input = call.AdminAddOrUpdatePolicy.Input

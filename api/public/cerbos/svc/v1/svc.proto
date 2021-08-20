@@ -130,4 +130,11 @@ service CerbosPlaygroundService {
             body: "*"
         };
     }
+
+    rpc PlaygroundProxy(cerbos.request.v1.PlaygroundProxyRequest) returns (cerbos.response.v1.PlaygroundProxyResponse) {
+        option (google.api.http) = {
+            post: "/api/playground/proxy",
+            body: "*"
+        };
+    }
 }
