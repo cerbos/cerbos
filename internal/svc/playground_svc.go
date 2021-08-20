@@ -114,6 +114,64 @@ func (cs *CerbosPlaygroundService) PlaygroundEvaluate(ctx context.Context, req *
 	return processEngineOutput(ctx, req.PlaygroundId, output)
 }
 
+func (cs *CerbosPlaygroundService) PlaygroundProxy(ctx context.Context, req *requestv1.PlaygroundProxyRequest) (*responsev1.PlaygroundProxyResponse, error) {
+	log := ctxzap.Extract(ctx).Named("playground")
+
+	procCtx, cancelFunc := context.WithTimeout(ctx, playgroundRequestTimeout)
+	defer cancelFunc()
+
+	idx, fail, err := doCompile(procCtx, log, req.PolicyFiles)
+	if err != nil {
+		return nil, err
+	}
+
+	if fail != nil {
+		return &responsev1.PlaygroundProxyResponse{
+			PlaygroundId: req.PlaygroundId,
+			Outcome: &responsev1.PlaygroundProxyResponse_Failure{
+				Failure: fail,
+			},
+		}, nil
+	}
+
+	eng, err := engine.NewEphemeral(ctx, compile.NewManager(ctx, disk.NewFromIndex(idx)))
+	if err != nil {
+		log.Error("Failed to create engine", zap.Error(err))
+		return nil, status.Error(codes.Internal, "failed to create engine")
+	}
+
+	cerbosSvc := NewCerbosService(eng)
+	switch proxyReq := req.ProxyRequest.(type) {
+	case *requestv1.PlaygroundProxyRequest_CheckResourceSet:
+		resp, err := cerbosSvc.CheckResourceSet(ctx, proxyReq.CheckResourceSet)
+		if err != nil {
+			return nil, err
+		}
+
+		return &responsev1.PlaygroundProxyResponse{
+			PlaygroundId: req.PlaygroundId,
+			Outcome: &responsev1.PlaygroundProxyResponse_CheckResourceSet{
+				CheckResourceSet: resp,
+			},
+		}, nil
+	case *requestv1.PlaygroundProxyRequest_CheckResourceBatch:
+		resp, err := cerbosSvc.CheckResourceBatch(ctx, proxyReq.CheckResourceBatch)
+		if err != nil {
+			return nil, err
+		}
+
+		return &responsev1.PlaygroundProxyResponse{
+			PlaygroundId: req.PlaygroundId,
+			Outcome: &responsev1.PlaygroundProxyResponse_CheckResourceBatch{
+				CheckResourceBatch: resp,
+			},
+		}, nil
+	default:
+		log.Error(fmt.Sprintf("Unhandled playground proxy request type %T", proxyReq))
+		return nil, status.Error(codes.Unimplemented, "unknown request type")
+	}
+}
+
 func doCompile(ctx context.Context, log *zap.Logger, files []*requestv1.PolicyFile) (index.Index, *responsev1.PlaygroundFailure, error) {
 	idx, err := buildIndex(ctx, log, files)
 	if err != nil {

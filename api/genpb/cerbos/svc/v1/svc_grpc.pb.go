@@ -330,6 +330,7 @@ var CerbosAdminService_ServiceDesc = grpc.ServiceDesc{
 type CerbosPlaygroundServiceClient interface {
 	PlaygroundValidate(ctx context.Context, in *v1.PlaygroundValidateRequest, opts ...grpc.CallOption) (*v11.PlaygroundValidateResponse, error)
 	PlaygroundEvaluate(ctx context.Context, in *v1.PlaygroundEvaluateRequest, opts ...grpc.CallOption) (*v11.PlaygroundEvaluateResponse, error)
+	PlaygroundProxy(ctx context.Context, in *v1.PlaygroundProxyRequest, opts ...grpc.CallOption) (*v11.PlaygroundProxyResponse, error)
 }
 
 type cerbosPlaygroundServiceClient struct {
@@ -358,12 +359,22 @@ func (c *cerbosPlaygroundServiceClient) PlaygroundEvaluate(ctx context.Context, 
 	return out, nil
 }
 
+func (c *cerbosPlaygroundServiceClient) PlaygroundProxy(ctx context.Context, in *v1.PlaygroundProxyRequest, opts ...grpc.CallOption) (*v11.PlaygroundProxyResponse, error) {
+	out := new(v11.PlaygroundProxyResponse)
+	err := c.cc.Invoke(ctx, "/cerbos.svc.v1.CerbosPlaygroundService/PlaygroundProxy", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // CerbosPlaygroundServiceServer is the server API for CerbosPlaygroundService service.
 // All implementations must embed UnimplementedCerbosPlaygroundServiceServer
 // for forward compatibility
 type CerbosPlaygroundServiceServer interface {
 	PlaygroundValidate(context.Context, *v1.PlaygroundValidateRequest) (*v11.PlaygroundValidateResponse, error)
 	PlaygroundEvaluate(context.Context, *v1.PlaygroundEvaluateRequest) (*v11.PlaygroundEvaluateResponse, error)
+	PlaygroundProxy(context.Context, *v1.PlaygroundProxyRequest) (*v11.PlaygroundProxyResponse, error)
 	mustEmbedUnimplementedCerbosPlaygroundServiceServer()
 }
 
@@ -376,6 +387,9 @@ func (UnimplementedCerbosPlaygroundServiceServer) PlaygroundValidate(context.Con
 }
 func (UnimplementedCerbosPlaygroundServiceServer) PlaygroundEvaluate(context.Context, *v1.PlaygroundEvaluateRequest) (*v11.PlaygroundEvaluateResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method PlaygroundEvaluate not implemented")
+}
+func (UnimplementedCerbosPlaygroundServiceServer) PlaygroundProxy(context.Context, *v1.PlaygroundProxyRequest) (*v11.PlaygroundProxyResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method PlaygroundProxy not implemented")
 }
 func (UnimplementedCerbosPlaygroundServiceServer) mustEmbedUnimplementedCerbosPlaygroundServiceServer() {
 }
@@ -427,6 +441,24 @@ func _CerbosPlaygroundService_PlaygroundEvaluate_Handler(srv interface{}, ctx co
 	return interceptor(ctx, in, info, handler)
 }
 
+func _CerbosPlaygroundService_PlaygroundProxy_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(v1.PlaygroundProxyRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CerbosPlaygroundServiceServer).PlaygroundProxy(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/cerbos.svc.v1.CerbosPlaygroundService/PlaygroundProxy",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CerbosPlaygroundServiceServer).PlaygroundProxy(ctx, req.(*v1.PlaygroundProxyRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // CerbosPlaygroundService_ServiceDesc is the grpc.ServiceDesc for CerbosPlaygroundService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -441,6 +473,10 @@ var CerbosPlaygroundService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "PlaygroundEvaluate",
 			Handler:    _CerbosPlaygroundService_PlaygroundEvaluate_Handler,
+		},
+		{
+			MethodName: "PlaygroundProxy",
+			Handler:    _CerbosPlaygroundService_PlaygroundProxy_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

@@ -295,6 +295,38 @@
         ]
       }
     },
+    "/api/playground/proxy": {
+      "post": {
+        "operationId": "CerbosPlaygroundService_PlaygroundProxy",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1PlaygroundProxyResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/v1PlaygroundProxyRequest"
+            }
+          }
+        ],
+        "tags": [
+          "CerbosPlaygroundService"
+        ]
+      }
+    },
     "/api/playground/validate": {
       "post": {
         "operationId": "CerbosPlaygroundService_PlaygroundValidate",
@@ -1123,6 +1155,54 @@
         }
       },
       "description": "Playground response"
+    },
+    "v1PlaygroundProxyRequest": {
+      "type": "object",
+      "properties": {
+        "playgroundId": {
+          "type": "string"
+        },
+        "policyFiles": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/v1PolicyFile"
+          },
+          "description": "List of policy files.",
+          "maxItems": 10,
+          "minItems": 1,
+          "required": [
+            "policy_files"
+          ]
+        },
+        "checkResourceSet": {
+          "$ref": "#/definitions/v1CheckResourceSetRequest"
+        },
+        "checkResourceBatch": {
+          "$ref": "#/definitions/v1CheckResourceBatchRequest"
+        }
+      },
+      "description": "Playground proxy request",
+      "required": [
+        "policyFiles"
+      ]
+    },
+    "v1PlaygroundProxyResponse": {
+      "type": "object",
+      "properties": {
+        "playgroundId": {
+          "type": "string"
+        },
+        "failure": {
+          "$ref": "#/definitions/v1PlaygroundFailure"
+        },
+        "checkResourceSet": {
+          "$ref": "#/definitions/v1CheckResourceSetResponse"
+        },
+        "checkResourceBatch": {
+          "$ref": "#/definitions/v1CheckResourceBatchResponse"
+        }
+      },
+      "description": "Playground proxy response"
     },
     "v1PlaygroundValidateRequest": {
       "type": "object",

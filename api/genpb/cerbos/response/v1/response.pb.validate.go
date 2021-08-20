@@ -493,6 +493,115 @@ var _ interface {
 	ErrorName() string
 } = PlaygroundEvaluateResponseValidationError{}
 
+// Validate checks the field values on PlaygroundProxyResponse with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, an error is returned.
+func (m *PlaygroundProxyResponse) Validate() error {
+	if m == nil {
+		return nil
+	}
+
+	// no validation rules for PlaygroundId
+
+	switch m.Outcome.(type) {
+
+	case *PlaygroundProxyResponse_Failure:
+
+		if v, ok := interface{}(m.GetFailure()).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return PlaygroundProxyResponseValidationError{
+					field:  "Failure",
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	case *PlaygroundProxyResponse_CheckResourceSet:
+
+		if v, ok := interface{}(m.GetCheckResourceSet()).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return PlaygroundProxyResponseValidationError{
+					field:  "CheckResourceSet",
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	case *PlaygroundProxyResponse_CheckResourceBatch:
+
+		if v, ok := interface{}(m.GetCheckResourceBatch()).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return PlaygroundProxyResponseValidationError{
+					field:  "CheckResourceBatch",
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	}
+
+	return nil
+}
+
+// PlaygroundProxyResponseValidationError is the validation error returned by
+// PlaygroundProxyResponse.Validate if the designated constraints aren't met.
+type PlaygroundProxyResponseValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e PlaygroundProxyResponseValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e PlaygroundProxyResponseValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e PlaygroundProxyResponseValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e PlaygroundProxyResponseValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e PlaygroundProxyResponseValidationError) ErrorName() string {
+	return "PlaygroundProxyResponseValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e PlaygroundProxyResponseValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sPlaygroundProxyResponse.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = PlaygroundProxyResponseValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = PlaygroundProxyResponseValidationError{}
+
 // Validate checks the field values on AddOrUpdatePolicyResponse with the rules
 // defined in the proto definition for this message. If any rules are
 // violated, an error is returned.
