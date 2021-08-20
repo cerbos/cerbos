@@ -10,7 +10,7 @@ require (
 	github.com/bluele/gcache v0.0.2
 	github.com/census-instrumentation/opencensus-proto v0.3.0 // indirect
 	github.com/cespare/xxhash v1.1.0
-	github.com/dgraph-io/badger/v3 v3.2103.0
+	github.com/dgraph-io/badger/v3 v3.2103.1
 	github.com/doug-martin/goqu/v9 v9.15.1
 	github.com/envoyproxy/protoc-gen-validate v0.6.1
 	github.com/fatih/color v1.12.0
@@ -34,7 +34,7 @@ require (
 	github.com/jwalton/gchalk v1.1.0
 	github.com/kavu/go_reuseport v1.5.0
 	github.com/kevinburke/ssh_config v1.1.0 // indirect
-	github.com/klauspost/compress v1.12.3 // indirect
+	github.com/klauspost/compress v1.13.4 // indirect
 	github.com/klauspost/pgzip v1.2.5 // indirect
 	github.com/matryer/is v1.4.0 // indirect
 	github.com/mattn/go-isatty v0.0.13
@@ -75,7 +75,6 @@ require (
 
 require (
 	github.com/Azure/go-ansiterm v0.0.0-20170929234023-d6e3b3328b78 // indirect
-	github.com/DataDog/zstd v1.4.1 // indirect
 	github.com/Microsoft/go-winio v0.4.17 // indirect
 	github.com/Nvveen/Gotty v0.0.0-20120604004816-cd527374f1e5 // indirect
 	github.com/OneOfOne/xxhash v1.2.8 // indirect
@@ -90,7 +89,7 @@ require (
 	github.com/containerd/continuity v0.1.0 // indirect
 	github.com/danwakefield/fnmatch v0.0.0-20160403171240-cbb64ac3d964 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
-	github.com/dgraph-io/ristretto v0.0.4-0.20210309073149-3836124cdc5a // indirect
+	github.com/dgraph-io/ristretto v0.1.0 // indirect
 	github.com/dlclark/regexp2 v1.4.0 // indirect
 	github.com/docker/cli v20.10.7+incompatible // indirect
 	github.com/docker/distribution v2.7.1+incompatible // indirect
@@ -108,10 +107,11 @@ require (
 	github.com/go-logfmt/logfmt v0.5.0 // indirect
 	github.com/gobwas/glob v0.2.3 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
+	github.com/golang/glog v1.0.0 // indirect
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
-	github.com/golang/snappy v0.0.3 // indirect
-	github.com/google/flatbuffers v1.12.0 // indirect
+	github.com/golang/snappy v0.0.4 // indirect
+	github.com/google/flatbuffers v2.0.0+incompatible // indirect
 	github.com/google/shlex v0.0.0-20191202100458-e7afc7fbc510 // indirect
 	github.com/imdario/mergo v0.3.12 // indirect
 	github.com/inconshreveable/mousetrap v1.0.0 // indirect
