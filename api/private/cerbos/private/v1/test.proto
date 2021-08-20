@@ -11,7 +11,6 @@ import "cerbos/engine/v1/engine.proto";
 import "cerbos/policy/v1/policy.proto";
 import "cerbos/request/v1/request.proto";
 import "cerbos/response/v1/response.proto";
-import "cerbos/effect/v1/effect.proto";
 
 message EngineTestCase {
     string description = 1;
