@@ -524,11 +524,11 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 --------------------------------------------------------------------------------
 Module  : github.com/dgraph-io/badger/v3
-Version : v3.2103.0
-Time    : 2021-06-03T06:17:49Z
+Version : v3.2103.1
+Time    : 2021-07-08T10:19:07Z
 Licence : Apache-2.0
 
-Contents of probable licence file $GOMODCACHE/github.com/dgraph-io/badger/v3@v3.2103.0/LICENSE:
+Contents of probable licence file $GOMODCACHE/github.com/dgraph-io/badger/v3@v3.2103.1/LICENSE:
 
                                  Apache License
                            Version 2.0, January 2004
@@ -5540,43 +5540,6 @@ EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
 --------------------------------------------------------------------------------
-Module  : github.com/DataDog/zstd
-Version : v1.4.1
-Time    : 2019-07-23T08:46:23Z
-Licence : BSD-3-Clause
-
-Contents of probable licence file $GOMODCACHE/github.com/!data!dog/zstd@v1.4.1/LICENSE:
-
-Simplified BSD License
-
-Copyright (c) 2016, Datadog <info@datadoghq.com>
-All rights reserved.
-
-Redistribution and use in source and binary forms, with or without
-modification, are permitted provided that the following conditions are met:
-
-    * Redistributions of source code must retain the above copyright notice,
-      this list of conditions and the following disclaimer.
-    * Redistributions in binary form must reproduce the above copyright notice,
-      this list of conditions and the following disclaimer in the documentation
-      and/or other materials provided with the distribution.
-    * Neither the name of the copyright holder nor the names of its contributors
-      may be used to endorse or promote products derived from this software
-      without specific prior written permission.
-
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
-AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE
-FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
-DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
-SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
-CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
-OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
-
---------------------------------------------------------------------------------
 Module  : github.com/Masterminds/semver/v3
 Version : v3.1.1
 Time    : 2020-11-23T17:02:18Z
@@ -7696,11 +7659,11 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 --------------------------------------------------------------------------------
 Module  : github.com/dgraph-io/ristretto
-Version : v0.0.4-0.20210309073149-3836124cdc5a
-Time    : 2021-03-09T07:31:49Z
+Version : v0.1.0
+Time    : 2021-06-03T11:28:46Z
 Licence : Apache-2.0
 
-Contents of probable licence file $GOMODCACHE/github.com/dgraph-io/ristretto@v0.0.4-0.20210309073149-3836124cdc5a/LICENSE:
+Contents of probable licence file $GOMODCACHE/github.com/dgraph-io/ristretto@v0.1.0/LICENSE:
 
                                  Apache License
                            Version 2.0, January 2004
@@ -10263,11 +10226,11 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 --------------------------------------------------------------------------------
 Module  : github.com/golang/glog
-Version : v0.0.0-20210429001901-424d2337a529
-Time    : 2021-04-29T00:19:01Z
+Version : v1.0.0
+Time    : 2021-08-20T11:53:15Z
 Licence : Apache-2.0
 
-Contents of probable licence file $GOMODCACHE/github.com/golang/glog@v0.0.0-20210429001901-424d2337a529/LICENSE:
+Contents of probable licence file $GOMODCACHE/github.com/golang/glog@v1.0.0/LICENSE:
 
 Apache License
 Version 2.0, January 2004
@@ -10703,11 +10666,11 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 --------------------------------------------------------------------------------
 Module  : github.com/golang/snappy
-Version : v0.0.3
-Time    : 2020-11-03T22:46:00Z
+Version : v0.0.4
+Time    : 2021-06-08T04:05:37Z
 Licence : BSD-3-Clause
 
-Contents of probable licence file $GOMODCACHE/github.com/golang/snappy@v0.0.3/LICENSE:
+Contents of probable licence file $GOMODCACHE/github.com/golang/snappy@v0.0.4/LICENSE:
 
 Copyright (c) 2011 The Snappy-Go Authors. All rights reserved.
 
@@ -10740,11 +10703,11 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 --------------------------------------------------------------------------------
 Module  : github.com/google/flatbuffers
-Version : v1.12.0
-Time    : 2020-03-12T21:45:27Z
+Version : v2.0.0+incompatible
+Time    : 2021-05-10T18:45:16Z
 Licence : Apache-2.0
 
-Contents of probable licence file $GOMODCACHE/github.com/google/flatbuffers@v1.12.0/LICENSE.txt:
+Contents of probable licence file $GOMODCACHE/github.com/google/flatbuffers@v2.0.0+incompatible/LICENSE.txt:
 
 
                                  Apache License
@@ -11733,11 +11696,11 @@ SOFTWARE.
 
 --------------------------------------------------------------------------------
 Module  : github.com/klauspost/compress
-Version : v1.12.3
-Time    : 2021-05-21T10:52:28Z
+Version : v1.13.4
+Time    : 2021-08-12T09:29:12Z
 Licence : BSD-3-Clause
 
-Contents of probable licence file $GOMODCACHE/github.com/klauspost/compress@v1.12.3/LICENSE:
+Contents of probable licence file $GOMODCACHE/github.com/klauspost/compress@v1.13.4/LICENSE:
 
 Copyright (c) 2012 The Go Authors. All rights reserved.
 Copyright (c) 2019 Klaus Post. All rights reserved.

@@ -189,6 +189,21 @@ message PlaygroundEvaluateResponse {
     }
 }
 
+message PlaygroundProxyResponse {
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
+		json_schema: {
+			description: "Playground proxy response"
+		}
+    };
+    
+    string playground_id = 1;
+    oneof outcome {
+        PlaygroundFailure failure = 2;
+        CheckResourceSetResponse check_resource_set = 3;
+        CheckResourceBatchResponse check_resource_batch = 4;
+    }
+}
+
 message AddOrUpdatePolicyResponse {
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
 		json_schema: {
