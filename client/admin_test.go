@@ -19,15 +19,10 @@ import (
 
 func TestCollectLogs(t *testing.T) {
 	t.Run("access logs", func(t *testing.T) {
-		i := 0
 		receiver := func() (*responsev1.ListAuditLogEntriesResponse, error) {
-			for ; i < 1; i++ {
-				return &responsev1.ListAuditLogEntriesResponse{Entry: &responsev1.ListAuditLogEntriesResponse_AccessLogEntry{
-					AccessLogEntry: &auditv1.AccessLogEntry{CallId: "test"},
-				}}, nil
-			}
-
-			return nil, io.EOF
+			return &responsev1.ListAuditLogEntriesResponse{Entry: &responsev1.ListAuditLogEntriesResponse_AccessLogEntry{
+				AccessLogEntry: &auditv1.AccessLogEntry{CallId: "test"},
+			}}, nil
 		}
 
 		logs, err := collectLogs(receiver)
@@ -55,9 +50,9 @@ func TestCollectLogs(t *testing.T) {
 		require.NoError(t, err)
 
 		log := <-logs
-		require.Nil(t, log.AccessLog())
-		require.Nil(t, log.DecisionLog())
-		require.Error(t, log.Err)
+		al, err := log.AccessLog()
+		require.Nil(t, al)
+		require.Error(t, err)
 	})
 }
 

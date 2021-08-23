@@ -90,7 +90,7 @@ func collectLogs(receiver recvFn) (<-chan *AuditLogEntry, error) {
 					return
 				}
 
-				ch <- &AuditLogEntry{Err: err}
+				ch <- &AuditLogEntry{err: err}
 				return
 			}
 

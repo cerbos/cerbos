@@ -89,4 +89,5 @@ docs:
 
 .PHONY: install
 install:
-	@ go install
+	@ go install ./cmd/cerbos
+	@ go install ./cmd/cerbosctl

@@ -870,13 +870,13 @@ type AuditLogOptions struct {
 type AuditLogEntry struct {
 	accessLog   *auditv1.AccessLogEntry
 	decisionLog *auditv1.DecisionLogEntry
-	Err         error
+	err         error
 }
 
-func (e *AuditLogEntry) AccessLog() *auditv1.AccessLogEntry {
-	return e.accessLog
+func (e *AuditLogEntry) AccessLog() (*auditv1.AccessLogEntry, error) {
+	return e.accessLog, e.err
 }
 
-func (e *AuditLogEntry) DecisionLog() *auditv1.DecisionLogEntry {
-	return e.decisionLog
+func (e *AuditLogEntry) DecisionLog() (*auditv1.DecisionLogEntry, error) {
+	return e.decisionLog, e.err
 }

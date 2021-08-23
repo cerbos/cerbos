@@ -19,7 +19,6 @@ import (
 	"github.com/spf13/cobra"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"
-	"google.golang.org/protobuf/reflect/protoreflect"
 
 	auditv1 "github.com/cerbos/cerbos/api/genpb/cerbos/audit/v1"
 	requestv1 "github.com/cerbos/cerbos/api/genpb/cerbos/request/v1"
@@ -142,18 +141,19 @@ func genAuditLogOptions(filter *FilterDef) client.AuditLogOptions {
 
 func streamLogsToWriter(writer auditLogWriter, entries <-chan *client.AuditLogEntry) error {
 	for e := range entries {
-		if err := e.Err; err != nil {
+		aLog, err := e.AccessLog()
+		if err != nil {
+			return fmt.Errorf("error while receiving access logs: %w", err)
+		}
+		if err := writer.write(aLog); err != nil {
+			return err
+		}
+
+		dLog, err := e.DecisionLog()
+		if err != nil {
 			return fmt.Errorf("error while receiving decision logs: %w", err)
 		}
-
-		var log protoreflect.ProtoMessage
-		if al := e.AccessLog(); e != nil {
-			log = al
-		} else {
-			log = e.DecisionLog()
-		}
-
-		if err := writer.write(log); err != nil {
+		if err := writer.write(dLog); err != nil {
 			return err
 		}
 	}
@@ -226,6 +226,10 @@ func newRichAuditLogWriter(out io.Writer) *richAuditLogWriter {
 }
 
 func (r *richAuditLogWriter) write(entry proto.Message) error {
+	if entry == nil {
+		return nil
+	}
+
 	switch e := entry.(type) {
 	case *auditv1.AccessLogEntry:
 		r.header(fmt.Sprintf("%s %s", e.CallId, strings.Repeat("┈", dashLen)))
