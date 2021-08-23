@@ -91,7 +91,7 @@ func main() {
 	cmd.PersistentFlags().BoolVar(&connConf.insecure, "insecure", false, "Skip validating server certificate")
 	cmd.PersistentFlags().BoolVar(&connConf.plaintext, "plaintext", false, "Use plaintext protocol without TLS")
 
-	cmd.AddCommand(audit.NewAuditCmd(createAdminClient), decisions.NewDecisionsCmd(createAdminClient), version.NewVersionCmd(withClient))
+	cmd.AddCommand(audit.NewAuditCmd(withAdminClient), decisions.NewDecisionsCmd(createAdminClient), version.NewVersionCmd(withClient))
 
 	if err := cmd.Execute(); err != nil {
 		cmd.PrintErrf("ERROR: %v\n", err)
@@ -217,27 +217,49 @@ func (basicAuthCredentials) RequireTransportSecurity() bool {
 	return false
 }
 
-func withClient(fn func(c client.Client, cmd *cobra.Command, args []string) error) func(cmd *cobra.Command, args []string) error {
+func withAdminClient(fn func(c client.AdminClient, cmd *cobra.Command, args []string) error) func(cmd *cobra.Command, args []string) error {
 	return func(cmd *cobra.Command, args []string) error {
-		opts := make([]client.Opt, 0)
-		if connConf.plaintext {
-			opts = append(opts, client.WithPlaintext())
+		if connConf.username == "" || connConf.password == "" {
+			return errInvalidCredentials
 		}
-		if connConf.insecure {
-			opts = append(opts, client.WithTLSInsecure())
-		}
-		if cert := connConf.caCert; cert != "" {
-			opts = append(opts, client.WithTLSCACert(cert))
-		}
-		if cert := connConf.tlsClientCert; cert != "" {
-			opts = append(opts, client.WithTLSClientCert(cert, connConf.tlsClientKey))
-		}
+		opts := connConf.toClientOpts()
 
-		ac, err := client.New(connConf.serverAddr, opts...)
+		ac, err := client.NewAdminClientWithCredentials(connConf.serverAddr, connConf.username, connConf.password, opts...)
 		if err != nil {
-			return fmt.Errorf("could not create admin client: %w", err)
+			return fmt.Errorf("could not create the admin client: %w", err)
 		}
 
 		return fn(ac, cmd, args)
 	}
+}
+
+func withClient(fn func(c client.Client, cmd *cobra.Command, args []string) error) func(cmd *cobra.Command, args []string) error {
+	return func(cmd *cobra.Command, args []string) error {
+		opts := connConf.toClientOpts()
+
+		ac, err := client.New(connConf.serverAddr, opts...)
+		if err != nil {
+			return fmt.Errorf("could not create the client: %w", err)
+		}
+
+		return fn(ac, cmd, args)
+	}
+}
+
+func (c connectConf) toClientOpts() []client.Opt {
+	opts := make([]client.Opt, 0)
+	if c.plaintext {
+		opts = append(opts, client.WithPlaintext())
+	}
+	if c.insecure {
+		opts = append(opts, client.WithTLSInsecure())
+	}
+	if cert := c.caCert; cert != "" {
+		opts = append(opts, client.WithTLSCACert(cert))
+	}
+	if cert := c.tlsClientCert; cert != "" {
+		opts = append(opts, client.WithTLSClientCert(cert, c.tlsClientKey))
+	}
+
+	return opts
 }

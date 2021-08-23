@@ -10,11 +10,13 @@ import (
 	"os"
 	"reflect"
 	"sync"
+	"time"
 
 	"go.uber.org/multierr"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/types/known/structpb"
 
+	auditv1 "github.com/cerbos/cerbos/api/genpb/cerbos/audit/v1"
 	effectv1 "github.com/cerbos/cerbos/api/genpb/cerbos/effect/v1"
 	enginev1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
@@ -847,4 +849,34 @@ func (ml matchList) build() *policyv1.Match {
 
 type ServerInfo struct {
 	*responsev1.ServerInfoResponse
+}
+
+type AuditLogType uint8
+
+const (
+	AccessLogs AuditLogType = iota
+	DecisionLogs
+)
+
+// AuditLogOptions is used to filter audit logs.
+type AuditLogOptions struct {
+	Type      AuditLogType
+	Tail      uint32
+	StartTime time.Time
+	EndTime   time.Time
+	Lookup    string
+}
+
+type AuditLogEntry struct {
+	accessLog   *auditv1.AccessLogEntry
+	decisionLog *auditv1.DecisionLogEntry
+	err         error
+}
+
+func (e *AuditLogEntry) AccessLog() (*auditv1.AccessLogEntry, error) {
+	return e.accessLog, e.err
+}
+
+func (e *AuditLogEntry) DecisionLog() (*auditv1.DecisionLogEntry, error) {
+	return e.decisionLog, e.err
 }
