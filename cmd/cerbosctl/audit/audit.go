@@ -149,6 +149,7 @@ func streamLogsToWriter(writer auditLogWriter, entries <-chan *client.AuditLogEn
 			if err := writer.write(aLog); err != nil {
 				return err
 			}
+			continue
 		}
 
 		dLog, err := e.DecisionLog()
