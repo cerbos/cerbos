@@ -145,16 +145,20 @@ func streamLogsToWriter(writer auditLogWriter, entries <-chan *client.AuditLogEn
 		if err != nil {
 			return fmt.Errorf("error while receiving access logs: %w", err)
 		}
-		if err := writer.write(aLog); err != nil {
-			return err
+		if aLog != nil {
+			if err := writer.write(aLog); err != nil {
+				return err
+			}
 		}
 
 		dLog, err := e.DecisionLog()
 		if err != nil {
 			return fmt.Errorf("error while receiving decision logs: %w", err)
 		}
-		if err := writer.write(dLog); err != nil {
-			return err
+		if dLog != nil {
+			if err := writer.write(dLog); err != nil {
+				return err
+			}
 		}
 	}
 
@@ -175,10 +179,6 @@ type rawAuditLogWriter struct {
 }
 
 func (r *rawAuditLogWriter) write(entry proto.Message) error {
-	if entry == nil {
-		return nil
-	}
-
 	outBytes, err := protojson.Marshal(entry)
 	if err != nil {
 		return err
@@ -226,10 +226,6 @@ func newRichAuditLogWriter(out io.Writer) *richAuditLogWriter {
 }
 
 func (r *richAuditLogWriter) write(entry proto.Message) error {
-	if entry == nil {
-		return nil
-	}
-
 	switch e := entry.(type) {
 	case *auditv1.AccessLogEntry:
 		r.header(fmt.Sprintf("%s %s", e.CallId, strings.Repeat("┈", dashLen)))
