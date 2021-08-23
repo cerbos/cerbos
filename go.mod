@@ -14,7 +14,7 @@ require (
 	github.com/doug-martin/goqu/v9 v9.15.1
 	github.com/envoyproxy/protoc-gen-validate v0.6.1
 	github.com/fatih/color v1.12.0
-	github.com/fergusstrange/embedded-postgres v1.7.0
+	github.com/fergusstrange/embedded-postgres v1.8.0
 	github.com/fsnotify/fsnotify v1.4.9
 	github.com/gdamore/tcell/v2 v2.4.0
 	github.com/ghodss/yaml v1.0.0
