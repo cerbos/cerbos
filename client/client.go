@@ -33,6 +33,8 @@ type Client interface {
 	CheckResourceSet(context.Context, *Principal, *ResourceSet, ...string) (*CheckResourceSetResponse, error)
 	// CheckResourceBatch checks access to a batch of resources of different kinds.
 	CheckResourceBatch(context.Context, *Principal, *ResourceBatch) (*CheckResourceBatchResponse, error)
+	// ServerInfo retrieves server information
+	ServerInfo(context.Context) (*ServerInfo, error)
 }
 
 type config struct {
@@ -333,4 +335,14 @@ func isValid(obj interface {
 	}
 
 	return obj.Validate()
+}
+
+func (gc *grpcClient) ServerInfo(ctx context.Context) (*ServerInfo, error) {
+	resp, err := gc.stub.ServerInfo(ctx, &requestv1.ServerInfoRequest{})
+	if err != nil {
+		return nil, err
+	}
+	return &ServerInfo{
+		ServerInfoResponse: resp,
+	}, nil
 }

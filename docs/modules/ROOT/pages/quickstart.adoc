@@ -12,18 +12,6 @@ mkdir -p cerbos-quickstart/policies
 
 Now start the Cerbos server. We are using the container image in this guide but you can follow along using the binary as well. See xref:installation/binary.adoc[installation instructions] for more information.
 
-.Downloading the container image
-****
-
-During the early access period you will need to login to the container registry using the provided Cerbos key.
-
-[source,sh,subs="attributes"]
-----
-echo CERBOS_KEY | docker login {app-container-registry} -u cerbos-ea --password-stdin
-----
-
-****
-
 [source,shell,subs="attributes"]
 ----
 docker run --rm --name cerbos -d -v $(pwd)/cerbos-quickstart/policies:/policies -p 3592:3592 {app-docker-img} 

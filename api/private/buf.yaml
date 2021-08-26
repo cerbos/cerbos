@@ -1,0 +1,9 @@
+---
+version: v1
+name: buf.build/cerbos/cerbos-private
+deps:
+  - "buf.build/cerbos/cerbos-api"
+
+lint:
+  use:
+    - DEFAULT

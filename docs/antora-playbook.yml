@@ -12,10 +12,12 @@ content:
       branches: [HEAD]
       edit_url: 'https://github.com/cerbos/cerbos/tree/{refname}/{path}'
       start_path: docs
+urls:
+  redirect_facility: netlify
 asciidoc:
   attributes:
     app-name: "cerbos"
-    app-version: "0.3.0"
+    app-version: "0.6.0"
     experimental: true
     page-pagination: true
 ui:

@@ -1,5 +1,8 @@
 builds:
-  - env:
+  - main: ./cmd/cerbos
+    binary: cerbos
+    id: "cerbos"
+    env:
       - CGO_ENABLED=0
     goos:
       - linux
@@ -8,6 +11,21 @@ builds:
       - amd64
       - arm64
     mod_timestamp: '{{ .CommitTimestamp }}'
+    flags:
+      - -trimpath
+    ldflags:
+      - -s -w -X github.com/cerbos/cerbos/internal/util.Version={{.Version}} -X github.com/cerbos/cerbos/internal/util.commit={{.Commit}} -X github.com/cerbos/cerbos/internal/util.BuildDate={{.Date}}  
+  - main: ./cmd/cerbosctl
+    binary: cerbosctl
+    id: "cerbosctl"
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+      - darwin
+    goarch:
+      - amd64
+      - arm64
     flags:
       - -trimpath
     ldflags:
@@ -23,7 +41,7 @@ dockers:
       - "cerbos.jfrog.io/containers/cerbos:{{ .Version }}-amd64"
       - "ghcr.io/cerbos/cerbos:dev-amd64"
     goarch: amd64
-    use_buildx: true
+    use: buildx
     extra_files:
       - conf.default.yaml
     build_flag_templates:
@@ -40,7 +58,7 @@ dockers:
       - "cerbos.jfrog.io/containers/cerbos:{{ .Version }}-arm64"
       - "ghcr.io/cerbos/cerbos:dev-arm64"
     goarch: arm64
-    use_buildx: true
+    use: buildx
     extra_files:
       - conf.default.yaml
     build_flag_templates:

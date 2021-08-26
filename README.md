@@ -1,4 +1,4 @@
-[![made-with-Go](https://img.shields.io/badge/Made%20with-Go-1f425f.svg)](http://golang.org)  [![Contributor Covenant](https://img.shields.io/badge/Contributor%20Covenant-2.0-4baaaa.svg)](CODE_OF_CONDUCT.md)  [![Snapshots](https://github.com/cerbos/cerbos/actions/workflows/snaphot.yaml/badge.svg)](https://github.com/cerbos/cerbos/actions/workflows/snaphot.yaml)
+![GitHub release (latest SemVer)](https://img.shields.io/github/v/release/cerbos/cerbos?color=green&logo=github&sort=semver) [![Go Reference](https://pkg.go.dev/badge/github.com/cerbos/cerbos/client.svg)](https://pkg.go.dev/github.com/cerbos/cerbos/client)  [![Contributor Covenant](https://img.shields.io/badge/Contributor%20Covenant-2.0-4baaaa.svg)](CODE_OF_CONDUCT.md)  [![Snapshots](https://github.com/cerbos/cerbos/actions/workflows/snaphot.yaml/badge.svg)](https://github.com/cerbos/cerbos/actions/workflows/snaphot.yaml)
  
 <p align="center">
   <img src="https://github.com/cerbos/cerbos/blob/main/docs/supplemental-ui/logo.png?raw=true" alt="Cerbos"/>
@@ -10,6 +10,21 @@ Painless access control for cloud-native applications
 Cerbos helps you super-charge your authorization implementation by writing context-aware access control policies for your application resources. Author access rules using an intuitive YAML configuration language, use your Git-ops infrastructure to test and deploy them and, make simple API requests to the Cerbos PDP to evaluate the policies and make dynamic access decisions.
 
 See https://docs.cerbos.dev for full Cerbos documentation.
+
+Try Cerbos
+------------
+
+* [Install server binaries](https://docs.cerbos.dev/cerbos/installation/binary.html)
+* [Run server from a Docker container](https://docs.cerbos.dev/cerbos/installation/container.html)
+* [Install server from Helm chart](https://docs.cerbos.dev/cerbos/installation/helm.html)
+* [Get client libraries](#client-sdks)
+
+Contribute
+------------
+
+Cerbos is written with [Go](https://go.dev) and it's dead easy to compile by yourself. You can clone the repository and start hacking right away.
+* [Contribution Guidelines](CONTRIBUTING.md)
+* [Slack community](http://go.cerbos.io/slack)
 
 How it works
 ------------
@@ -128,4 +143,3 @@ More Information
 * [Cerbos website](https://cerbos.dev)
 * [Cerbos docs](https://docs.cerbos.dev)
 * [Demo repositories on GitHub](https://github.com/cerbos)
-* [Slack community](http://go.cerbos.io/slack)

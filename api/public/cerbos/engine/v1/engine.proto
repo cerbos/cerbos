@@ -1,0 +1,116 @@
+// Copyright 2021 Zenauth Ltd.
+// SPDX-License-Identifier: Apache-2.0
+
+syntax = "proto3";
+
+package cerbos.engine.v1;
+
+option go_package = "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1;enginev1";
+option java_package = "dev.cerbos.api.v1.engine";
+option csharp_namespace = "Cerbos.Api.V1.Engine";
+
+import "google/api/field_behavior.proto";
+import "google/protobuf/struct.proto";
+import "protoc-gen-openapiv2/options/annotations.proto";
+import "cerbos/effect/v1/effect.proto";
+import "validate/validate.proto";
+
+message CheckInput {
+    string request_id = 1; 
+    Resource resource = 2 [(validate.rules).message.required = true, (google.api.field_behavior) = REQUIRED];
+    Principal principal = 3 [(validate.rules).message.required = true, (google.api.field_behavior) = REQUIRED];
+    repeated string actions = 4 [(validate.rules).repeated = { unique: true, items { string { min_len: 1 } } }, (google.api.field_behavior) = REQUIRED];
+}
+
+message CheckOutput {
+    message ActionEffect {
+        cerbos.effect.v1.Effect effect = 1;
+        string policy = 2;
+    }
+
+    string request_id = 1;
+    string resource_id = 2;
+    map<string, ActionEffect> actions = 3;
+    repeated string effective_derived_roles = 4;
+}
+
+message Resource {
+    string kind = 1 [
+        (validate.rules).string = {pattern: "^[[:alpha:]][[:word:]\\@\\.\\-/]*(\\:[[:alpha:]][[:word:]\\@\\.\\-/]*)*$", min_len: 1}, 
+        (google.api.field_behavior) = REQUIRED,
+        (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+            description: "Name of the resource kind being accessed.",
+            example: "\"album:photo\"",
+            pattern: "^[[:alpha:]][[:word:]\\@\\.\\-]*(\\:[[:alpha:]][[:word:]\\@\\.\\-]*)*$"
+        }
+    ];
+    string policy_version = 2 [
+        (validate.rules).string.pattern = "^[[:word:]]*$",
+        (google.api.field_behavior) = OPTIONAL,
+        (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = { 
+            description: "The policy version to use to evaluate this request. If not specified, will default to the server-configured default version."
+            pattern: "^[[:word:]]*$"
+            example: "\"default\""
+        }
+    ];
+    string id = 3 [
+        (validate.rules).string = {min_len: 1}, 
+        (google.api.field_behavior) = REQUIRED,
+        (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = { 
+            description: "ID of the resource instance"
+            example: "\"XX125\""
+        } 
+    ];
+    map<string,google.protobuf.Value> attr = 4 [
+        (validate.rules).map.no_sparse = true,
+        (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = { 
+            description: "Kay-value pairs of contextual data about this resource that should be used during policy evaluation."
+            example: "{\"owner\": \"bugs_bunny\"}"
+        }
+    ];
+}
+
+message Principal {
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
+		json_schema: {
+			description: "A person or application attempting to perform the actions on the set of resources."
+		}
+    };
+    string id = 1 [
+        (validate.rules).string = {min_len: 1}, 
+        (google.api.field_behavior) = REQUIRED,
+        (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = { 
+            description: "ID of the principal"
+            example: "\"bugs_bunny\""
+        } 
+    ];
+    string policy_version = 2 [
+        (validate.rules).string.pattern = "^[[:word:]]*$",
+        (google.api.field_behavior) = OPTIONAL,
+        (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = { 
+            description: "The policy version to use to evaluate this request. If not specified, will default to the server-configured default version."
+            example: "\"default\""
+            pattern: "^[[:word:]]*$"
+        }
+    ];
+    repeated string roles = 3 [
+        (validate.rules).repeated = { unique: true, min_items: 1, max_items: 20, items { string { pattern: "^[[:word:]\\-\\.]+$" } } },
+        (google.api.field_behavior) = REQUIRED,
+        (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = { 
+            description: "Roles assigned to this principal from your identity management system."
+            min_items: 1
+            max_items: 20
+            pattern: "^[[:word:]\\-\\.]+$"
+            unique_items: true
+            example: "[\"user\"]"
+        }
+    ];
+    map<string, google.protobuf.Value> attr = 4 [
+        (validate.rules).map.no_sparse = true,
+        (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = { 
+            description: "Key-value pairs of contextual data about this principal that should be used during policy evaluation."
+            example: "{\"beta_tester\": true}"
+        }
+    ];
+}
+

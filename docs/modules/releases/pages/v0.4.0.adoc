@@ -1,0 +1,41 @@
+include::ROOT:partial$attributes.adoc[]
+
+[#v0.4.0]
+= Cerbos v0.4.0
+
+This release mainly focused on opening up the Cerbos code to the community. 
+
+== Highlights
+
+Testing support in the Go SDK:: The Go client library now supports starting a Cerbos server in code to test your integration. You can now run fully automated integration tests to verify how your access rules are enforced by the Cerbos PDP.
++
+[source,go]
+----
+s, err := testutil.StartCerbosServer(testutil.WithPolicyRepositoryDatabase("sqlite3", ":memory:"))
+if err != nil {
+    log.Fatalf("Failed to start Cerbos server: %v", err)
+}
+
+defer s.Stop()
+
+c, err := client.New(s.GRPCAddr(), client.WithPlaintext())
+if err != nil {
+    log.Fatalf("Failed to create Cerbos client: %v", err)
+}
+
+// tests
+----
+
+MySQL support:: You can now configure Cerbos to read policies from a MySQL database. 
+
+== Changelog
+
+12 commits since v0.3.0. 182 files changed, 61042 insertions(+), 1251 deletions(-)
+
+=== Features
+
+* Testing support for Go SDK (link:https://github.com/cerbos/cerbos/pull/208[#208])
+
+=== Enhancements
+
+* Add MySQL storage driver (link:https://github.com/cerbos/cerbos/pull/208[#222])

@@ -2,11 +2,8 @@ include::partial$attributes.adoc[]
 
 = Run from container
 
-Login to the container registry using the Cerbos key.
-
 [source,sh,subs="attributes"]
 ----
-echo CERBOS_KEY | docker login {app-container-registry} -u cerbos-ea --password-stdin
 docker run --rm --name cerbos -p 3592:3592 {app-docker-img} 
 ----
 

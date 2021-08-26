@@ -5,26 +5,40 @@
 set -euo pipefail
 
 
-if [[ $# -ne 1 ]]; then
-    echo "Usage: $0 <version-to-release>"
+if [[ $# -ne 2 ]]; then
+    echo "Usage: $0 <version-to-release> <next-version>"
     exit 2
 fi
 
 VERSION="$1"
+NEXT_VERSION="$2"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_DIR="$(cd "${SCRIPT_DIR}/../../" && pwd)"
 DOCS_DIR="${SCRIPT_DIR}/../../docs"
 CHARTS_DIR="${SCRIPT_DIR}/../../deploy/charts/cerbos"
 
-echo "Prepping for release of $VERSION"
-# Docs version
-sed -i -E "s#app\-version: \"[0-9]+\.[0-9]+\.[0-9]+.*\"#app-version: \"$VERSION\"#" "${DOCS_DIR}/antora-playbook.yml"
-sed -i -E "s#display_version: \"[0-9]+\.[0-9]+\.[0-9]+.*\"#display_version: \"$VERSION\"#" "${DOCS_DIR}/antora.yml"
+update_version() {
+    local VER="$1"
 
-# Helm chart version
-sed -i -E "s#appVersion: \"[0-9]+\.[0-9]+\.[0-9]+.*\"#appVersion: \"$VERSION\"#" "${CHARTS_DIR}/Chart.yaml"
-sed -i -E "s#version: \"[0-9]+\.[0-9]+\.[0-9]+.*\"#version: \"$VERSION\"#" "${CHARTS_DIR}/Chart.yaml"
+    echo "Setting version to $VER"
 
-#git -C "$PROJECT_DIR" commit -a -m "chore: Prepare release $VERSION"
+    # Docs version
+    sed -i -E "s#app\-version: \"[0-9]+\.[0-9]+\.[0-9]+.*\"#app-version: \"$VER\"#" "${DOCS_DIR}/antora-playbook.yml"
+    sed -i -E "s#^version: \"[0-9]+\.[0-9]+\.[0-9]+.*\"#version: \"$VER\"#" "${DOCS_DIR}/antora.yml"
+    sed -i -E "/^prerelease:/d" "${DOCS_DIR}/antora.yml"
 
-#git tag "v${VERSION}" -m "v${VERSION}"
+    # Helm chart version
+    sed -i -E "s#appVersion: \"[0-9]+\.[0-9]+\.[0-9]+.*\"#appVersion: \"$VER\"#" "${CHARTS_DIR}/Chart.yaml"
+    sed -i -E "s#version: \"[0-9]+\.[0-9]+\.[0-9]+.*\"#version: \"$VER\"#" "${CHARTS_DIR}/Chart.yaml"
+}
+
+
+# Set release version and tag
+update_version $VERSION
+git -C "$PROJECT_DIR" commit -s -a -m "chore(release): Prepare release $VERSION"
+git tag "v${VERSION}" -m "v${VERSION}"
+
+# Set next version
+update_version $NEXT_VERSION
+sed -i -E "/^version:/a prerelease: true" "${DOCS_DIR}/antora.yml"
+git -C "$PROJECT_DIR" commit -s -a -m "chore(version): Bump version to $NEXT_VERSION"
