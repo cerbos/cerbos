@@ -94,7 +94,7 @@ func runAuditCmdF(c client.AdminClient, cmd *cobra.Command, _ []string) error {
 	}
 	defer writer.flush()
 
-	logOptions := genAuditLogOptions(auditFilterFlags)
+	logOptions := GenAuditLogOptions(auditFilterFlags)
 
 	switch kind := auditFlags.kind.Kind(); kind {
 	case requestv1.ListAuditLogEntriesRequest_KIND_DECISION, requestv1.ListAuditLogEntriesRequest_KIND_UNSPECIFIED:
@@ -114,7 +114,7 @@ func runAuditCmdF(c client.AdminClient, cmd *cobra.Command, _ []string) error {
 	return nil
 }
 
-func genAuditLogOptions(filter *FilterDef) client.AuditLogOptions {
+func GenAuditLogOptions(filter *FilterDef) client.AuditLogOptions {
 	switch {
 	case filter.tail > 0:
 		return client.AuditLogOptions{
