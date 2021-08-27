@@ -17,14 +17,15 @@ import (
 )
 
 const (
-	authorizationHeader = "authorization"
-	usernameEnvVar      = "CERBOS_USERNAME"
-	passwordEnvVar      = "CERBOS_PASSWORD"
-	serverEnvVar        = "CERBOS_SERVER"
-	netrcFile           = ".netrc"
-	netrcEnvVar         = "NETRC"
-	netrcUserKey        = "login"
-	netrcPassKey        = "password"
+	authorizationHeader      = "authorization"
+	playgroundInstanceHeader = "playground-instance"
+	usernameEnvVar           = "CERBOS_USERNAME"
+	passwordEnvVar           = "CERBOS_PASSWORD"
+	serverEnvVar             = "CERBOS_SERVER"
+	netrcFile                = ".netrc"
+	netrcEnvVar              = "NETRC"
+	netrcUserKey             = "login"
+	netrcPassKey             = "password"
 )
 
 var (
@@ -179,4 +180,20 @@ func (ba basicAuthCredentials) GetRequestMetadata(ctx context.Context, uri ...st
 
 func (ba basicAuthCredentials) RequireTransportSecurity() bool {
 	return ba.requireTLS
+}
+
+type playgroundInstanceCredentials struct {
+	instance string
+}
+
+func newPlaygroundInstanceCredentials(instance string) playgroundInstanceCredentials {
+	return playgroundInstanceCredentials{instance: instance}
+}
+
+func (pic playgroundInstanceCredentials) GetRequestMetadata(_ context.Context, _ ...string) (map[string]string, error) {
+	return map[string]string{playgroundInstanceHeader: pic.instance}, nil
+}
+
+func (playgroundInstanceCredentials) RequireTransportSecurity() bool {
+	return false
 }
