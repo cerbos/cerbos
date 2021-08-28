@@ -24,10 +24,10 @@ import (
 	auditv1 "github.com/cerbos/cerbos/api/genpb/cerbos/audit/v1"
 	effectv1 "github.com/cerbos/cerbos/api/genpb/cerbos/effect/v1"
 	"github.com/cerbos/cerbos/client"
-	"github.com/cerbos/cerbos/cmd/cerbosctl/audit"
+	"github.com/cerbos/cerbos/cmd/cerbosctl/commands"
 )
 
-var auditFilterFlags = audit.NewFilterDef()
+var auditFilterFlags = commands.NewFilterDef()
 
 var longDesc = `Interactive decision log viewer.
 Requires audit logging to be enabled on the server. Supports several ways of filtering the data.
@@ -39,24 +39,22 @@ lookup: View a specific record using the Cerbos Call ID`
 
 var exampleDesc = `
 # View the last 10 records
-cerbos ctl decisions --tail=10
+cerbosctl decisions --tail=10
 
 # View the logs from midnight 2021-07-01 to midnight 2021-07-02
-cerbos ctl decisions --between=2021-07-01T00:00:00Z,2021-07-02T00:00:00Z
+cerbosctl decisions --between=2021-07-01T00:00:00Z,2021-07-02T00:00:00Z
 
 # View the logs from midnight 2021-07-01 to now
-cerbos ctl decisions --between=2021-07-01T00:00:00Z
+cerbosctl decisions --between=2021-07-01T00:00:00Z
 
 # View the logs from 3 hours ago to now
-cerbos ctl decisions --since=3h --raw
+cerbosctl decisions --since=3h --raw
 
 # View a specific log entry by call ID
-cerbos ctl decisions--lookup=01F9Y5MFYTX7Y87A30CTJ2FB0S
+cerbosctl decisions--lookup=01F9Y5MFYTX7Y87A30CTJ2FB0S
 `
 
-type withClient func(fn func(c client.AdminClient, cmd *cobra.Command, args []string) error) func(cmd *cobra.Command, args []string) error
-
-func NewDecisionsCmd(fn withClient) *cobra.Command {
+func NewDecisionsCmd(fn commands.WithClient) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "decisions",
 		Short:   "Interactive decision log viewer",
@@ -76,7 +74,7 @@ func checkDecisionsFlags(_ *cobra.Command, _ []string) error {
 }
 
 func runDecisionsCmd(c client.AdminClient, _ *cobra.Command, _ []string) error {
-	logOptions := audit.GenAuditLogOptions(auditFilterFlags)
+	logOptions := commands.GenAuditLogOptions(auditFilterFlags)
 	logOptions.Type = client.DecisionLogs
 
 	entries, err := c.AuditLogs(context.Background(), logOptions)

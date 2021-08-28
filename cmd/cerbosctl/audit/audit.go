@@ -9,7 +9,6 @@ import (
 	"fmt"
 	"io"
 	"strings"
-	"time"
 
 	"github.com/alecthomas/chroma"
 	"github.com/alecthomas/chroma/formatters"
@@ -23,17 +22,18 @@ import (
 	auditv1 "github.com/cerbos/cerbos/api/genpb/cerbos/audit/v1"
 	requestv1 "github.com/cerbos/cerbos/api/genpb/cerbos/request/v1"
 	"github.com/cerbos/cerbos/client"
+	"github.com/cerbos/cerbos/cmd/cerbosctl/commands"
 )
 
 const dashLen = 54
 
 var (
 	auditFlags struct {
-		kind kindFlag
+		kind commands.KindFlag
 		raw  bool
 	}
 
-	auditFilterFlags = NewFilterDef()
+	auditFilterFlags = commands.NewFilterDef()
 	newline          = []byte("\n")
 )
 
@@ -47,24 +47,22 @@ lookup: View a specific record using the Cerbos Call ID`
 
 var exampleDesc = `
 # View the last 10 access logs 
-cerbos ctl audit --kind=access --tail=10
+cerbosctl audit --kind=access --tail=10
 
 # View the decision logs from midnight 2021-07-01 to midnight 2021-07-02
-cerbos ctl audit --kind=decision --between=2021-07-01T00:00:00Z,2021-07-02T00:00:00Z
+cerbosctl audit --kind=decision --between=2021-07-01T00:00:00Z,2021-07-02T00:00:00Z
 
 # View the decision logs from midnight 2021-07-01 to now
-cerbos ctl audit --kind=decision --between=2021-07-01T00:00:00Z
+cerbosctl audit --kind=decision --between=2021-07-01T00:00:00Z
 
 # View the access logs from 3 hours ago to now as newline-delimited JSON
-cerbos ctl audit --kind=access --since=3h --raw
+cerbosctl audit --kind=access --since=3h --raw
 
 # View a specific access log entry by call ID
-cerbos ctl audit --kind=access --lookup=01F9Y5MFYTX7Y87A30CTJ2FB0S
+cerbosctl audit --kind=access --lookup=01F9Y5MFYTX7Y87A30CTJ2FB0S
 `
 
-type withClient func(fn func(c client.AdminClient, cmd *cobra.Command, args []string) error) func(cmd *cobra.Command, args []string) error
-
-func NewAuditCmd(fn withClient) *cobra.Command {
+func NewAuditCmd(fn commands.WithClient) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "audit",
 		Short:   "View audit logs",
@@ -94,7 +92,7 @@ func runAuditCmdF(c client.AdminClient, cmd *cobra.Command, _ []string) error {
 	}
 	defer writer.flush()
 
-	logOptions := GenAuditLogOptions(auditFilterFlags)
+	logOptions := commands.GenAuditLogOptions(auditFilterFlags)
 
 	switch kind := auditFlags.kind.Kind(); kind {
 	case requestv1.ListAuditLogEntriesRequest_KIND_DECISION, requestv1.ListAuditLogEntriesRequest_KIND_UNSPECIFIED:
@@ -112,31 +110,6 @@ func runAuditCmdF(c client.AdminClient, cmd *cobra.Command, _ []string) error {
 		return fmt.Errorf("could not write decision logs: %w", err)
 	}
 	return nil
-}
-
-func GenAuditLogOptions(filter *FilterDef) client.AuditLogOptions {
-	switch {
-	case filter.tail > 0:
-		return client.AuditLogOptions{
-			Tail: uint32(filter.tail),
-		}
-	case filter.between.isSet():
-		return client.AuditLogOptions{
-			StartTime: filter.between.tsVals[0].AsTime(),
-			EndTime:   filter.between.tsVals[1].AsTime(),
-		}
-	case filter.since > 0:
-		return client.AuditLogOptions{
-			StartTime: time.Now().Add(time.Duration(-1) * filter.since),
-			EndTime:   time.Now(),
-		}
-	case filter.lookup != "":
-		return client.AuditLogOptions{
-			Lookup: filter.lookup,
-		}
-	default:
-		return client.AuditLogOptions{}
-	}
 }
 
 func streamLogsToWriter(writer auditLogWriter, entries <-chan *client.AuditLogEntry) error {

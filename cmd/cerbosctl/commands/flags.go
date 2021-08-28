@@ -1,7 +1,7 @@
 // Copyright 2021 Zenauth Ltd.
 // SPDX-License-Identifier: Apache-2.0
 
-package audit
+package commands
 
 import (
 	"encoding/csv"
@@ -11,10 +11,10 @@ import (
 	"time"
 
 	"github.com/spf13/pflag"
-	"google.golang.org/protobuf/types/known/durationpb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	requestv1 "github.com/cerbos/cerbos/api/genpb/cerbos/request/v1"
+	"github.com/cerbos/cerbos/client"
 )
 
 var errMoreThanOneFilter = errors.New("more than one filter specified: choose from either `tail`, `between`, `since` or `lookup`")
@@ -69,53 +69,31 @@ func (afd *FilterDef) Validate() error {
 	return nil
 }
 
-func (afd *FilterDef) BuildRequest(kind requestv1.ListAuditLogEntriesRequest_Kind) *requestv1.ListAuditLogEntriesRequest {
-	req := &requestv1.ListAuditLogEntriesRequest{Kind: kind}
+type KindFlag requestv1.ListAuditLogEntriesRequest_Kind
 
-	switch {
-	case afd.tail > 0:
-		req.Filter = &requestv1.ListAuditLogEntriesRequest_Tail{Tail: uint32(afd.tail)}
-	case afd.between.isSet():
-		req.Filter = &requestv1.ListAuditLogEntriesRequest_Between{
-			Between: &requestv1.ListAuditLogEntriesRequest_TimeRange{
-				Start: afd.between.tsVals[0],
-				End:   afd.between.tsVals[1],
-			},
-		}
-	case afd.since > 0:
-		req.Filter = &requestv1.ListAuditLogEntriesRequest_Since{Since: durationpb.New(afd.since)}
-	case afd.lookup != "":
-		req.Filter = &requestv1.ListAuditLogEntriesRequest_Lookup{Lookup: afd.lookup}
-	}
-
-	return req
-}
-
-type kindFlag requestv1.ListAuditLogEntriesRequest_Kind
-
-func (kf kindFlag) Kind() requestv1.ListAuditLogEntriesRequest_Kind {
+func (kf KindFlag) Kind() requestv1.ListAuditLogEntriesRequest_Kind {
 	return requestv1.ListAuditLogEntriesRequest_Kind(kf)
 }
 
-func (kf kindFlag) String() string {
+func (kf KindFlag) String() string {
 	return "decision"
 }
 
-func (kf *kindFlag) Set(v string) error {
+func (kf *KindFlag) Set(v string) error {
 	switch strings.ToLower(v) {
 	case "access":
-		*kf = kindFlag(requestv1.ListAuditLogEntriesRequest_KIND_ACCESS)
+		*kf = KindFlag(requestv1.ListAuditLogEntriesRequest_KIND_ACCESS)
 		return nil
 	case "decision":
-		*kf = kindFlag(requestv1.ListAuditLogEntriesRequest_KIND_DECISION)
+		*kf = KindFlag(requestv1.ListAuditLogEntriesRequest_KIND_DECISION)
 		return nil
 	default:
 		return fmt.Errorf("unknown kind [%s]: valid values are 'access' or 'decision'", v)
 	}
 }
 
-func (kf kindFlag) Type() string {
-	return "kindFlag"
+func (kf KindFlag) Type() string {
+	return "KindFlag"
 }
 
 type timerangeFlag struct {
@@ -161,4 +139,29 @@ func (tf *timerangeFlag) Set(v string) error {
 
 func (tf timerangeFlag) Type() string {
 	return "timerangeFlag"
+}
+
+func GenAuditLogOptions(filter *FilterDef) client.AuditLogOptions {
+	switch {
+	case filter.tail > 0:
+		return client.AuditLogOptions{
+			Tail: uint32(filter.tail),
+		}
+	case filter.between.isSet():
+		return client.AuditLogOptions{
+			StartTime: filter.between.tsVals[0].AsTime(),
+			EndTime:   filter.between.tsVals[1].AsTime(),
+		}
+	case filter.since > 0:
+		return client.AuditLogOptions{
+			StartTime: time.Now().Add(time.Duration(-1) * filter.since),
+			EndTime:   time.Now(),
+		}
+	case filter.lookup != "":
+		return client.AuditLogOptions{
+			Lookup: filter.lookup,
+		}
+	default:
+		return client.AuditLogOptions{}
+	}
 }
