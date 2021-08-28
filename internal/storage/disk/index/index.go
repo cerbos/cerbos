@@ -36,6 +36,7 @@ type Index interface {
 	GetFiles() []string
 	GetAllCompilationUnits(context.Context) <-chan *policy.CompilationUnit
 	Clear() error
+	GetPolicies(context.Context) ([]*policy.Wrapper, error)
 }
 
 type index struct {
@@ -335,4 +336,31 @@ func (idx *index) Inspect() map[string]Meta {
 	}
 
 	return entries
+}
+
+func (idx *index) GetPolicies(ctx context.Context) ([]*policy.Wrapper, error) {
+	idx.mu.RLock()
+	defer idx.mu.RUnlock()
+
+	entries := make([]*policy.Wrapper, 0)
+	for file, modID := range idx.fileToModID {
+		pol, err := idx.loadPolicy(modID)
+		if err != nil {
+			return entries, err
+		}
+
+		deps := idx.dependencies[modID]
+		pdeps := make([]namer.ModuleID, 0)
+		for n := range deps {
+			pdeps = append(pdeps, n)
+		}
+		entries = append(entries, &policy.Wrapper{
+			ID:           modID,
+			Dependencies: pdeps,
+			Policy:       pol,
+			Name:         file,
+		})
+	}
+
+	return entries, nil
 }

@@ -11,6 +11,7 @@ option csharp_namespace = "Cerbos.Api.V1.Response";
 
 import "cerbos/audit/v1/audit.proto";
 import "cerbos/effect/v1/effect.proto";
+import "cerbos/policy/v1/policy.proto";
 import "google/protobuf/empty.proto";
 import "protoc-gen-openapiv2/options/annotations.proto";
 
@@ -237,4 +238,15 @@ message ServerInfoResponse {
     string version = 1;
     string commit = 2;
     string build_date = 3;
+}
+
+
+message ListPoliciesResponse {
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
+		json_schema: {
+			description: "List of active policies"
+		}
+    };
+
+    repeated cerbos.policy.v1.Policy policies = 1;
 }

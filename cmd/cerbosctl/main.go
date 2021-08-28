@@ -24,6 +24,7 @@ import (
 	"github.com/cerbos/cerbos/client"
 	"github.com/cerbos/cerbos/cmd/cerbosctl/audit"
 	"github.com/cerbos/cerbos/cmd/cerbosctl/decisions"
+	"github.com/cerbos/cerbos/cmd/cerbosctl/list"
 	"github.com/cerbos/cerbos/cmd/cerbosctl/version"
 	"github.com/cerbos/cerbos/internal/util"
 )
@@ -91,7 +92,7 @@ func main() {
 	cmd.PersistentFlags().BoolVar(&connConf.insecure, "insecure", false, "Skip validating server certificate")
 	cmd.PersistentFlags().BoolVar(&connConf.plaintext, "plaintext", false, "Use plaintext protocol without TLS")
 
-	cmd.AddCommand(audit.NewAuditCmd(withAdminClient), decisions.NewDecisionsCmd(createAdminClient), version.NewVersionCmd(withClient))
+	cmd.AddCommand(audit.NewAuditCmd(withAdminClient), decisions.NewDecisionsCmd(createAdminClient), version.NewVersionCmd(withClient), list.NewListCmd(withAdminClient))
 
 	if err := cmd.Execute(); err != nil {
 		cmd.PrintErrf("ERROR: %v\n", err)

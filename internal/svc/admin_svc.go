@@ -19,6 +19,7 @@ import (
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/emptypb"
 
+	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
 	requestv1 "github.com/cerbos/cerbos/api/genpb/cerbos/request/v1"
 	responsev1 "github.com/cerbos/cerbos/api/genpb/cerbos/response/v1"
 	svcv1 "github.com/cerbos/cerbos/api/genpb/cerbos/svc/v1"
@@ -36,7 +37,7 @@ var (
 
 // CerbosAdminService implements the Cerbos administration service.
 type CerbosAdminService struct {
-	store           storage.MutableStore
+	store           storage.Store
 	auditLog        audit.Log
 	adminUser       string
 	adminPasswdHash []byte
@@ -49,12 +50,13 @@ func NewCerbosAdminService(store storage.Store, auditLog audit.Log, adminUser, a
 		adminUser:                             adminUser,
 		adminPasswdHash:                       []byte(adminPasswdHash),
 		UnimplementedCerbosAdminServiceServer: &svcv1.UnimplementedCerbosAdminServiceServer{},
+		store:                                 store,
 	}
 
-	ms, ok := store.(storage.MutableStore)
-	if ok {
-		svc.store = ms
-	}
+	// ms, ok := store.(storage.MutableStore)
+	// if ok {
+	// 	svc.store = ms
+	// }
 
 	return svc
 }
@@ -65,17 +67,21 @@ func (cas *CerbosAdminService) AddOrUpdatePolicy(ctx context.Context, req *reque
 	}
 
 	log := ctxzap.Extract(ctx)
-	if cas.store == nil {
-		log.Warn("Ignoring call because the store is not mutable")
+	ms, ok := cas.store.(storage.MutableStore)
+	if !ok {
 		return nil, status.Error(codes.Unimplemented, "Configured store is not mutable")
 	}
+	// if cas.store == nil {
+	// 	log.Warn("Ignoring call because the store is not mutable")
+	// 	return nil, status.Error(codes.Unimplemented, "Configured store is not mutable")
+	// }
 
 	policies := make([]policy.Wrapper, len(req.Policies))
 	for i, p := range req.Policies {
 		policies[i] = policy.Wrap(p)
 	}
 
-	if err := cas.store.AddOrUpdate(ctx, policies...); err != nil {
+	if err := ms.AddOrUpdate(ctx, policies...); err != nil {
 		log.Error("Failed to add/update policies", zap.Error(err))
 		invalidPolicyErr := new(storage.InvalidPolicyError)
 		if errors.As(err, invalidPolicyErr) {
@@ -119,6 +125,26 @@ func (cas *CerbosAdminService) ListAuditLogEntries(req *requestv1.ListAuditLogEn
 			return err
 		}
 	}
+}
+
+func (cas *CerbosAdminService) ListPolicies(ctx context.Context, req *requestv1.ListPoliciesRequest) (*responsev1.ListPoliciesResponse, error) {
+	policies := make([]*policyv1.Policy, 0)
+	if cas.store == nil {
+		return nil, status.Error(codes.Unimplemented, "Configured store is not mutable")
+	}
+
+	units, err := cas.store.GetPolicies(context.Background(), storage.PolicyFilter{})
+	if err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+
+	for _, pl := range units {
+		policies = append(policies, pl.Policy)
+	}
+
+	return &responsev1.ListPoliciesResponse{
+		Policies: policies,
+	}, nil
 }
 
 func (cas *CerbosAdminService) getAuditLogStream(ctx context.Context, req *requestv1.ListAuditLogEntriesRequest) (auditLogStream, error) {

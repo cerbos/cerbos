@@ -23,6 +23,7 @@ type DBStorage interface {
 	GetCompilationUnits(ctx context.Context, ids ...namer.ModuleID) (map[namer.ModuleID]*policy.CompilationUnit, error)
 	GetDependents(ctx context.Context, ids ...namer.ModuleID) (map[namer.ModuleID][]namer.ModuleID, error)
 	Delete(ctx context.Context, ids ...namer.ModuleID) error
+	GetPolicies(ctx context.Context, filter storage.PolicyFilter) ([]*policy.Wrapper, error)
 }
 
 func NewDBStorage(ctx context.Context, db *goqu.Database) (DBStorage, error) {
@@ -253,4 +254,8 @@ func (s *dbStorage) Delete(ctx context.Context, ids ...namer.ModuleID) error {
 
 	s.NotifySubscribers(events...)
 	return nil
+}
+
+func (s *dbStorage) GetPolicies(context.Context, storage.PolicyFilter) ([]*policy.Wrapper, error) {
+	return nil, nil
 }

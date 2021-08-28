@@ -131,6 +131,10 @@ func (s *Store) GetDependents(_ context.Context, ids ...namer.ModuleID) (map[nam
 	return s.idx.GetDependents(ids...)
 }
 
+func (s *Store) GetPolicies(context.Context, storage.PolicyFilter) ([]*policy.Wrapper, error) {
+	return nil, nil
+}
+
 func isEmptyDir(dir string) (bool, error) {
 	d, err := os.Open(dir)
 	if err != nil {

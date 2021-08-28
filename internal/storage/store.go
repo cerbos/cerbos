@@ -74,6 +74,8 @@ type Store interface {
 	GetCompilationUnits(context.Context, ...namer.ModuleID) (map[namer.ModuleID]*policy.CompilationUnit, error)
 	// GetDependents returns the dependents of the given modules.
 	GetDependents(context.Context, ...namer.ModuleID) (map[namer.ModuleID][]namer.ModuleID, error)
+	// GetPolicies returns the policies recorded in the store.
+	GetPolicies(context.Context, PolicyFilter) ([]*policy.Wrapper, error)
 }
 
 // MutableStore is a store that allows mutations.
@@ -132,3 +134,5 @@ func (evt Event) String() string {
 func NewEvent(kind EventKind, policyID namer.ModuleID) Event {
 	return Event{Kind: kind, PolicyID: policyID}
 }
+
+type PolicyFilter struct{}
