@@ -11,6 +11,7 @@ import (
 	"strings"
 
 	"github.com/spf13/cobra"
+	"gopkg.in/yaml.v2"
 
 	"github.com/cerbos/cerbos/client"
 )
@@ -28,6 +29,7 @@ func NewListCmd(fn withClient) *cobra.Command {
 	cmd.Flags().String("kind", "RESOURCE", "filter policy by kind")
 	cmd.Flags().String("description", "", "filter policy by description")
 	cmd.Flags().Bool("disabled", false, "retrieves disabled policies")
+	cmd.Flags().String("format", "yaml", "output format")
 
 	return cmd
 }
@@ -37,6 +39,7 @@ func runListCmdF(c client.AdminClient, cmd *cobra.Command, _ []string) error {
 	desc, _ := cmd.Flags().GetString("description")
 	kind, _ := cmd.Flags().GetString("kind")
 	disabled, _ := cmd.Flags().GetBool("disabled")
+	format, _ := cmd.Flags().GetString("format")
 
 	var policyKind client.PolicyKind
 	switch strings.ToUpper(kind) {
@@ -61,10 +64,20 @@ func runListCmdF(c client.AdminClient, cmd *cobra.Command, _ []string) error {
 	}
 
 	for _, policy := range policies {
-		b, err := json.MarshalIndent(policy, "", "  ")
+		var b []byte
+		var err error
+		switch format {
+		case "json":
+			b, err = json.MarshalIndent(policy, "", "  ")
+		case "yaml":
+			b, err = yaml.Marshal(policy)
+		default:
+			return fmt.Errorf("unsupported output format: %q", format)
+		}
 		if err != nil {
 			return err
 		}
+
 		fmt.Fprintf(os.Stdout, "%s\n", b)
 	}
 
