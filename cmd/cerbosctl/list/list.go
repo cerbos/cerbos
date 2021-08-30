@@ -5,8 +5,9 @@ package list
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
-	"log"
+	"os"
 	"strings"
 
 	"github.com/spf13/cobra"
@@ -60,7 +61,11 @@ func runListCmdF(c client.AdminClient, cmd *cobra.Command, _ []string) error {
 	}
 
 	for _, policy := range policies {
-		log.Printf("%s\n", policy.String())
+		b, err := json.MarshalIndent(policy, "", "  ")
+		if err != nil {
+			return err
+		}
+		fmt.Fprintf(os.Stdout, "%s\n", b)
 	}
 
 	return nil
