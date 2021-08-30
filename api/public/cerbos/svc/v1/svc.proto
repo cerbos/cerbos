@@ -120,7 +120,7 @@ service CerbosAdminService {
             get: "/admin/policy/list",
         };
         option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
-            summary: "List active policies",
+            summary: "List policies",
             security: {
                 security_requirement: {
                     key: "BasicAuth";

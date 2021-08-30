@@ -21,7 +21,7 @@ import (
 type AdminClient interface {
 	AddOrUpdatePolicy(context.Context, *PolicySet) error
 	AuditLogs(ctx context.Context, opts AuditLogOptions) (<-chan *AuditLogEntry, error)
-	ListPolicies(ctx context.Context) ([]*policyv1.Policy, error)
+	ListPolicies(ctx context.Context, filter PolicyFilter) ([]*policyv1.Policy, error)
 }
 
 // NewAdminClient creates a new admin client.
@@ -152,8 +152,13 @@ func (c *GrpcAdminClient) auditLogs(ctx context.Context, opts AuditLogOptions) (
 	return resp, nil
 }
 
-func (c *GrpcAdminClient) ListPolicies(ctx context.Context) ([]*policyv1.Policy, error) {
-	pc, err := c.client.ListPolicies(ctx, &requestv1.ListPoliciesRequest{})
+func (c *GrpcAdminClient) ListPolicies(ctx context.Context, filter PolicyFilter) ([]*policyv1.Policy, error) {
+	pc, err := c.client.ListPolicies(ctx, &requestv1.ListPoliciesRequest{
+		Kind:                requestv1.ListPoliciesRequest_Kind(filter.Kind),
+		ContainsName:        filter.ContainsName,
+		ContainsDescription: filter.ContainsDescription,
+		Disabled:            filter.Disabled,
+	})
 	if err != nil {
 		return nil, err
 	}

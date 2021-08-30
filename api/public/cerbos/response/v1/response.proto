@@ -244,7 +244,7 @@ message ServerInfoResponse {
 message ListPoliciesResponse {
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
 		json_schema: {
-			description: "List of active policies"
+			description: "List of policies stored in the Cerbos server"
 		}
     };
 

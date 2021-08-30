@@ -8,6 +8,7 @@ import (
 	"errors"
 	"fmt"
 	"io/fs"
+	"strings"
 	"sync"
 
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
@@ -36,7 +37,7 @@ type Index interface {
 	GetFiles() []string
 	GetAllCompilationUnits(context.Context) <-chan *policy.CompilationUnit
 	Clear() error
-	GetPolicies(context.Context) ([]*policy.Wrapper, error)
+	GetPolicies(context.Context, storage.PolicyFilter) ([]*policy.Wrapper, error)
 }
 
 type index struct {
@@ -338,10 +339,11 @@ func (idx *index) Inspect() map[string]Meta {
 	return entries
 }
 
-func (idx *index) GetPolicies(ctx context.Context) ([]*policy.Wrapper, error) {
+func (idx *index) GetPolicies(ctx context.Context, filter storage.PolicyFilter) ([]*policy.Wrapper, error) {
 	idx.mu.RLock()
 	defer idx.mu.RUnlock()
 
+	filteredEntries := make(map[namer.ModuleID]*policy.Wrapper)
 	entries := make([]*policy.Wrapper, 0)
 	for file, modID := range idx.fileToModID {
 		pol, err := idx.loadPolicy(modID)
@@ -349,18 +351,34 @@ func (idx *index) GetPolicies(ctx context.Context) ([]*policy.Wrapper, error) {
 			return entries, err
 		}
 
-		deps := idx.dependencies[modID]
-		pdeps := make([]namer.ModuleID, 0)
-		for n := range deps {
-			pdeps = append(pdeps, n)
+		wp := policy.Wrap(pol)
+		if !filterPolicy(file, &wp, &filter) {
+			continue
 		}
-		entries = append(entries, &policy.Wrapper{
-			ID:           modID,
-			Dependencies: pdeps,
-			Policy:       pol,
-			Name:         file,
-		})
+
+		filteredEntries[modID] = &wp
+	}
+
+	for _, pw := range filteredEntries {
+		entries = append(entries, pw)
 	}
 
 	return entries, nil
+}
+
+func filterPolicy(name string, pol *policy.Wrapper, filter *storage.PolicyFilter) bool {
+	if filter.ContainsDescription != "" && !strings.Contains(pol.Description, filter.ContainsDescription) {
+		return false
+	}
+
+	if filter.ContainsName != "" && !strings.Contains(name, filter.ContainsName) {
+		return false
+	}
+
+	if filter.Disabled != pol.Disabled {
+		return false
+	}
+
+	kind := policy.GetKind(pol.Policy)
+	return kind == filter.Kind
 }

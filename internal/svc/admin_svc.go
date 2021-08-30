@@ -8,6 +8,7 @@ import (
 	"context"
 	"encoding/base64"
 	"errors"
+	"fmt"
 	"strings"
 	"time"
 
@@ -53,11 +54,6 @@ func NewCerbosAdminService(store storage.Store, auditLog audit.Log, adminUser, a
 		store:                                 store,
 	}
 
-	// ms, ok := store.(storage.MutableStore)
-	// if ok {
-	// 	svc.store = ms
-	// }
-
 	return svc
 }
 
@@ -66,21 +62,17 @@ func (cas *CerbosAdminService) AddOrUpdatePolicy(ctx context.Context, req *reque
 		return nil, err
 	}
 
-	log := ctxzap.Extract(ctx)
 	ms, ok := cas.store.(storage.MutableStore)
 	if !ok {
 		return nil, status.Error(codes.Unimplemented, "Configured store is not mutable")
 	}
-	// if cas.store == nil {
-	// 	log.Warn("Ignoring call because the store is not mutable")
-	// 	return nil, status.Error(codes.Unimplemented, "Configured store is not mutable")
-	// }
 
 	policies := make([]policy.Wrapper, len(req.Policies))
 	for i, p := range req.Policies {
 		policies[i] = policy.Wrap(p)
 	}
 
+	log := ctxzap.Extract(ctx)
 	if err := ms.AddOrUpdate(ctx, policies...); err != nil {
 		log.Error("Failed to add/update policies", zap.Error(err))
 		invalidPolicyErr := new(storage.InvalidPolicyError)
@@ -128,16 +120,21 @@ func (cas *CerbosAdminService) ListAuditLogEntries(req *requestv1.ListAuditLogEn
 }
 
 func (cas *CerbosAdminService) ListPolicies(ctx context.Context, req *requestv1.ListPoliciesRequest) (*responsev1.ListPoliciesResponse, error) {
-	policies := make([]*policyv1.Policy, 0)
 	if cas.store == nil {
-		return nil, status.Error(codes.Unimplemented, "Configured store is not mutable")
+		return nil, status.Error(codes.NotFound, "store is not configured")
 	}
 
-	units, err := cas.store.GetPolicies(context.Background(), storage.PolicyFilter{})
+	units, err := cas.store.GetPolicies(context.Background(), storage.PolicyFilter{
+		ContainsName:        req.ContainsName,
+		Kind:                policy.Kind(req.Kind),
+		ContainsDescription: req.ContainsDescription,
+		Disabled:            req.Disabled,
+	})
 	if err != nil {
-		return nil, status.Error(codes.Internal, err.Error())
+		return nil, status.Error(codes.Internal, fmt.Sprintf("could not get policies: %s", err.Error()))
 	}
 
+	policies := make([]*policyv1.Policy, 0)
 	for _, pl := range units {
 		policies = append(policies, pl.Policy)
 	}

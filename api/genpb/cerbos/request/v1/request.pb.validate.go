@@ -1232,6 +1232,19 @@ func (m *ListPoliciesRequest) Validate() error {
 		return nil
 	}
 
+	if _, ok := _ListPoliciesRequest_Kind_InLookup[m.GetKind()]; !ok {
+		return ListPoliciesRequestValidationError{
+			field:  "Kind",
+			reason: "value must be in list [0 1 2]",
+		}
+	}
+
+	// no validation rules for ContainsName
+
+	// no validation rules for ContainsDescription
+
+	// no validation rules for Disabled
+
 	return nil
 }
 
@@ -1290,6 +1303,12 @@ var _ interface {
 	Cause() error
 	ErrorName() string
 } = ListPoliciesRequestValidationError{}
+
+var _ListPoliciesRequest_Kind_InLookup = map[ListPoliciesRequest_Kind]struct{}{
+	0: {},
+	1: {},
+	2: {},
+}
 
 // Validate checks the field values on CheckResourceBatchRequest_BatchEntry
 // with the rules defined in the proto definition for this message. If any

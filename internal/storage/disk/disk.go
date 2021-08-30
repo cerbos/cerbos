@@ -74,5 +74,5 @@ func (s *Store) GetDependents(_ context.Context, ids ...namer.ModuleID) (map[nam
 }
 
 func (s *Store) GetPolicies(ctx context.Context, filter storage.PolicyFilter) ([]*policy.Wrapper, error) {
-	return s.idx.GetPolicies(ctx)
+	return s.idx.GetPolicies(ctx, filter)
 }

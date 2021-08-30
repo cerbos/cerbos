@@ -880,3 +880,18 @@ func (e *AuditLogEntry) AccessLog() (*auditv1.AccessLogEntry, error) {
 func (e *AuditLogEntry) DecisionLog() (*auditv1.DecisionLogEntry, error) {
 	return e.decisionLog, e.err
 }
+
+type PolicyKind uint8
+
+const (
+	ResourcePolicyKind PolicyKind = iota
+	PrincipalPolicyKind
+	DerivedRolesPolicyKind
+)
+
+type PolicyFilter struct {
+	ContainsName        string
+	ContainsDescription string
+	Kind                PolicyKind
+	Disabled            bool
+}

@@ -127,6 +127,26 @@ func TestSuite(store DBStorage) func(*testing.T) {
 			require.Contains(t, have[dr.ID], rp.ID)
 		})
 
+		t.Run("get_policies", func(t *testing.T) {
+			policies, err := store.GetPolicies(ctx, storage.PolicyFilter{Kind: policy.ResourceKind})
+			require.NoError(t, err)
+			require.NotEmpty(t, policies)
+
+			policies, err = store.GetPolicies(ctx, storage.PolicyFilter{ContainsName: "gibberish"})
+			require.NoError(t, err)
+			require.Empty(t, policies)
+
+			policies, err = store.GetPolicies(ctx, storage.PolicyFilter{ContainsName: "leave_request"})
+			require.NoError(t, err)
+			require.NotEmpty(t, policies)
+			require.Equal(t, "leave_request", policies[0].Name)
+
+			policies, err = store.GetPolicies(ctx, storage.PolicyFilter{Kind: policy.PrincipalKind})
+			require.NoError(t, err)
+			require.NotEmpty(t, policies)
+			require.Equal(t, "PRINCIPAL", policies[0].Kind)
+		})
+
 		t.Run("delete", func(t *testing.T) {
 			checkEvents := storage.TestSubscription(store)
 

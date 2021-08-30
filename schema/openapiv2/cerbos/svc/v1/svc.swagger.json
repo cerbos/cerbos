@@ -197,7 +197,7 @@
     },
     "/admin/policy/list": {
       "get": {
-        "summary": "List active policies",
+        "summary": "List policies",
         "operationId": "CerbosAdminService_ListPolicies",
         "responses": {
           "200": {
@@ -213,6 +213,39 @@
             }
           }
         },
+        "parameters": [
+          {
+            "name": "kind",
+            "description": "Kind of policy",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "enum": [
+              "KIND_RESOURCE",
+              "KIND_PRINCIPAL",
+              "KIND_DERIVED"
+            ],
+            "default": "KIND_RESOURCE"
+          },
+          {
+            "name": "containsName",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "containsDescription",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "disabled",
+            "in": "query",
+            "required": false,
+            "type": "boolean"
+          }
+        ],
         "tags": [
           "CerbosAdminService"
         ],
@@ -489,15 +522,6 @@
         }
       },
       "description": "Metadata about request evaluation."
-    },
-    "ListAuditLogEntriesRequestKind": {
-      "type": "string",
-      "enum": [
-        "KIND_UNSPECIFIED",
-        "KIND_ACCESS",
-        "KIND_DECISION"
-      ],
-      "default": "KIND_UNSPECIFIED"
     },
     "ListAuditLogEntriesRequestTimeRange": {
       "type": "object",
@@ -1042,6 +1066,15 @@
       ],
       "default": "EFFECT_UNSPECIFIED"
     },
+    "v1ListAuditLogEntriesRequestKind": {
+      "type": "string",
+      "enum": [
+        "KIND_UNSPECIFIED",
+        "KIND_ACCESS",
+        "KIND_DECISION"
+      ],
+      "default": "KIND_UNSPECIFIED"
+    },
     "v1ListAuditLogEntriesResponse": {
       "type": "object",
       "properties": {
@@ -1054,6 +1087,15 @@
       },
       "description": "Audit log stream."
     },
+    "v1ListPoliciesRequestKind": {
+      "type": "string",
+      "enum": [
+        "KIND_RESOURCE",
+        "KIND_PRINCIPAL",
+        "KIND_DERIVED"
+      ],
+      "default": "KIND_RESOURCE"
+    },
     "v1ListPoliciesResponse": {
       "type": "object",
       "properties": {
@@ -1064,7 +1106,7 @@
           }
         }
       },
-      "description": "List of active policies"
+      "description": "List of policies stored in the Cerbos server"
     },
     "v1Match": {
       "type": "object",

@@ -5,7 +5,9 @@ package list
 
 import (
 	"context"
+	"fmt"
 	"log"
+	"strings"
 
 	"github.com/spf13/cobra"
 
@@ -21,11 +23,38 @@ func NewListCmd(fn withClient) *cobra.Command {
 		RunE:  fn(runListCmdF),
 	}
 
+	cmd.Flags().String("name", "", "filter policy by name")
+	cmd.Flags().String("kind", "RESOURCE", "filter policy by kind")
+	cmd.Flags().String("description", "", "filter policy by description")
+	cmd.Flags().Bool("disabled", false, "retrieves disabled policies")
+
 	return cmd
 }
 
-func runListCmdF(c client.AdminClient, _ *cobra.Command, _ []string) error {
-	policies, err := c.ListPolicies(context.Background())
+func runListCmdF(c client.AdminClient, cmd *cobra.Command, _ []string) error {
+	name, _ := cmd.Flags().GetString("name")
+	desc, _ := cmd.Flags().GetString("description")
+	kind, _ := cmd.Flags().GetString("kind")
+	disabled, _ := cmd.Flags().GetBool("disabled")
+
+	var policyKind client.PolicyKind
+	switch strings.ToUpper(kind) {
+	case "RESOURCE":
+		policyKind = client.ResourcePolicyKind
+	case "PRINCIPAL":
+		policyKind = client.PrincipalPolicyKind
+	case "DERIVED_ROLES":
+		policyKind = client.DerivedRolesPolicyKind
+	default:
+		return fmt.Errorf("unknown policy type: %s", kind)
+	}
+
+	policies, err := c.ListPolicies(context.Background(), client.PolicyFilter{
+		ContainsName:        name,
+		ContainsDescription: desc,
+		Kind:                policyKind,
+		Disabled:            disabled,
+	})
 	if err != nil {
 		return err
 	}

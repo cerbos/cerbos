@@ -355,6 +355,24 @@ message ServerInfoRequest {
 }
 
 message ListPoliciesRequest {
+    enum Kind {
+        KIND_RESOURCE = 0;
+        KIND_PRINCIPAL = 1;
+        KIND_DERIVED = 2;
+    }
+
+    Kind kind = 1 [
+        (validate.rules).enum = {in: [0,1,2]},
+        (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = { 
+            description: "Kind of policy"
+            enum: ["KIND_RESOURCE", "KIND_PRINCIPAL", "KIND_DERIVED"]
+        } 
+    ];
+
+    string contains_name = 2;
+    string contains_description = 3;
+    bool disabled = 4;
+
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
 		json_schema: {
 			description: "List policies request"
