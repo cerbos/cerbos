@@ -1235,7 +1235,7 @@ func (m *ListPoliciesRequest) Validate() error {
 	if _, ok := _ListPoliciesRequest_Kind_InLookup[m.GetKind()]; !ok {
 		return ListPoliciesRequestValidationError{
 			field:  "Kind",
-			reason: "value must be in list [0 1 2]",
+			reason: "value must be in list [1 2 3]",
 		}
 	}
 
@@ -1305,9 +1305,9 @@ var _ interface {
 } = ListPoliciesRequestValidationError{}
 
 var _ListPoliciesRequest_Kind_InLookup = map[ListPoliciesRequest_Kind]struct{}{
-	0: {},
 	1: {},
 	2: {},
+	3: {},
 }
 
 // Validate checks the field values on CheckResourceBatchRequest_BatchEntry

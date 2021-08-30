@@ -884,7 +884,7 @@ func (e *AuditLogEntry) DecisionLog() (*auditv1.DecisionLogEntry, error) {
 type PolicyKind uint8
 
 const (
-	ResourcePolicyKind PolicyKind = iota
+	ResourcePolicyKind PolicyKind = iota + 1
 	PrincipalPolicyKind
 	DerivedRolesPolicyKind
 )

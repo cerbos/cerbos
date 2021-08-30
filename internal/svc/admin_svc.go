@@ -124,9 +124,21 @@ func (cas *CerbosAdminService) ListPolicies(ctx context.Context, req *requestv1.
 		return nil, status.Error(codes.NotFound, "store is not configured")
 	}
 
+	var policyKind policy.Kind
+	switch req.Kind {
+	case requestv1.ListPoliciesRequest_KIND_RESOURCE:
+		policyKind = policy.ResourceKind
+	case requestv1.ListPoliciesRequest_KIND_PRINCIPAL:
+		policyKind = policy.PrincipalKind
+	case requestv1.ListPoliciesRequest_KIND_DERIVED:
+		policyKind = policy.DerivedRolesKind
+	default:
+		return nil, fmt.Errorf("unknown policy type: %d", req.Kind)
+	}
+
 	units, err := cas.store.GetPolicies(context.Background(), storage.PolicyFilter{
 		ContainsName:        req.ContainsName,
-		Kind:                policy.Kind(req.Kind),
+		Kind:                policyKind,
 		ContainsDescription: req.ContainsDescription,
 		Disabled:            req.Disabled,
 	})

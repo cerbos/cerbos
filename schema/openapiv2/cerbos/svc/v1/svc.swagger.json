@@ -221,11 +221,12 @@
             "required": false,
             "type": "string",
             "enum": [
+              "KIND_UNSPECIFIED",
               "KIND_RESOURCE",
               "KIND_PRINCIPAL",
               "KIND_DERIVED"
             ],
-            "default": "KIND_RESOURCE"
+            "default": "KIND_UNSPECIFIED"
           },
           {
             "name": "containsName",
@@ -1090,11 +1091,12 @@
     "v1ListPoliciesRequestKind": {
       "type": "string",
       "enum": [
+        "KIND_UNSPECIFIED",
         "KIND_RESOURCE",
         "KIND_PRINCIPAL",
         "KIND_DERIVED"
       ],
-      "default": "KIND_RESOURCE"
+      "default": "KIND_UNSPECIFIED"
     },
     "v1ListPoliciesResponse": {
       "type": "object",
