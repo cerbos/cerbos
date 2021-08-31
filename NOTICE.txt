@@ -1014,11 +1014,11 @@ SOFTWARE.
 
 --------------------------------------------------------------------------------
 Module  : github.com/fsnotify/fsnotify
-Version : v1.5.0
-Time    : 2021-08-18T22:48:34Z
+Version : v1.5.1
+Time    : 2021-08-24T19:33:57Z
 Licence : BSD-3-Clause
 
-Contents of probable licence file $GOMODCACHE/github.com/fsnotify/fsnotify@v1.5.0/LICENSE:
+Contents of probable licence file $GOMODCACHE/github.com/fsnotify/fsnotify@v1.5.1/LICENSE:
 
 Copyright (c) 2012 The Go Authors. All rights reserved.
 Copyright (c) 2012-2019 fsnotify Authors. All rights reserved.
