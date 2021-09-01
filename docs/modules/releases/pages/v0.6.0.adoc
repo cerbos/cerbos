@@ -1,0 +1,27 @@
+include::ROOT:partial$attributes.adoc[]
+
+[#v0.6.0]
+= Cerbos v0.6.0
+
+== Changelog
+
+=== Features
+
+* Add playground support to SDK (link:https://github.com/cerbos/cerbos/pull/264[#264])
+
+=== Enhancements
+
+* Support h2c (link:https://github.com/cerbos/cerbos/pull/270[#270])
+
+=== Documentation
+
+* Doco image update (link:https://github.com/cerbos/cerbos/pull/263[#263])
+* Add link to Java SDK (link:https://github.com/cerbos/cerbos/pull/271[#271])
+
+=== Chores
+
+* Bump version to 0.6.0
+* Bump github.com/fsnotify/fsnotify from 1.5.0 to 1.5.1 (link:https://github.com/cerbos/cerbos/pull/266[#266])
+* Bump github.com/doug-martin/goqu/v9 from 9.15.1 to 9.16.0 (link:https://github.com/cerbos/cerbos/pull/267[#267])
+* Bump contrib.go.opencensus.io/exporter/prometheus from 0.3.0 to 0.4.0 (link:https://github.com/cerbos/cerbos/pull/268[#268])
+
