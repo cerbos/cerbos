@@ -139,6 +139,7 @@ func TestServer(t *testing.T) {
 			startServer(ctx, conf, store, eng, auditLog)
 
 			t.Run("grpc", testGRPCRequests(testCases, conf.GRPCListenAddr, grpc.WithTransportCredentials(local.NewCredentials())))
+			t.Run("h2c", testGRPCRequests(testCases, conf.HTTPListenAddr, grpc.WithTransportCredentials(local.NewCredentials())))
 			t.Run("http", testHTTPRequests(testCases, fmt.Sprintf("http://%s", conf.HTTPListenAddr), nil))
 		})
 
