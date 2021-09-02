@@ -20,11 +20,11 @@ Alternatively, you can explore the API using the following methods as well:
 
 === Available
 
-image:go.svg[alt="Go",opts="interactive",width=40,height=40,link="https://pkg.go.dev/github.com/cerbos/cerbos/client"] image:nodejs.svg[alt="NodeJS",opts="interactive",width=40,height=40,link="https://github.com/cerbos/cerbos-sdk-node"]
+image:go.svg[alt="Go",opts="interactive",width=40,height=40,link="https://pkg.go.dev/github.com/cerbos/cerbos/client"] image:java.svg[alt="Java",opts="interactive",width=40,height=40,link="https://github.com/cerbos/cerbos-sdk-java"] image:nodejs.svg[alt="NodeJS",opts="interactive",width=40,height=40,link="https://github.com/cerbos/cerbos-sdk-node"]
 
 === Coming soon
 
-image:csharp.svg[alt="C#",opts="interactive",width=40,height=40] image:java.svg[alt="Java",opts="interactive",width=40,height=40]  image:python.svg[alt="Python",opts="interactive",width=40,height=40]  image:ruby.svg[alt="Ruby",opts="interactive",width=40,height=40]  image:rust.svg[alt="Rust",opts="interactive",width=40,height=40]
+image:csharp.svg[alt="C#",opts="interactive",width=40,height=40]  image:python.svg[alt="Python",opts="interactive",width=40,height=40]  image:ruby.svg[alt="Ruby",opts="interactive",width=40,height=40]  image:rust.svg[alt="Rust",opts="interactive",width=40,height=40]
 
 
 == Demos

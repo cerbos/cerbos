@@ -22,6 +22,7 @@ import (
 const (
 	adminUsername = "cerbos"
 	adminPassword = "cerbosAdmin"
+	timeout       = 15 * time.Second
 )
 
 func TestClient(t *testing.T) {
@@ -58,10 +59,25 @@ func TestClient(t *testing.T) {
 
 				loadPolicies(t, ac)
 
-				c, err := client.New(s.GRPCAddr(), tc.opts...)
-				require.NoError(t, err)
+				ports := []struct {
+					name string
+					addr string
+				}{
+					{
+						name: "grpc",
+						addr: s.GRPCAddr(),
+					},
+					{
+						name: "http",
+						addr: s.HTTPAddr(),
+					},
+				}
+				for _, port := range ports {
+					c, err := client.New(port.addr, tc.opts...)
+					require.NoError(t, err)
 
-				t.Run("grpc", testGRPCClient(c))
+					t.Run(port.name, testGRPCClient(c))
+				}
 			})
 
 			t.Run("uds", func(t *testing.T) {
@@ -137,7 +153,7 @@ func loadPolicies(t *testing.T, ac client.AdminClient) {
 func testGRPCClient(c client.Client) func(*testing.T) {
 	return func(t *testing.T) { //nolint:thelper
 		t.Run("CheckResourceSet", func(t *testing.T) {
-			ctx, cancelFunc := context.WithTimeout(context.Background(), 10*time.Second)
+			ctx, cancelFunc := context.WithTimeout(context.Background(), timeout)
 			defer cancelFunc()
 
 			have, err := c.CheckResourceSet(
@@ -167,7 +183,7 @@ func testGRPCClient(c client.Client) func(*testing.T) {
 		})
 
 		t.Run("CheckResourceBatch", func(t *testing.T) {
-			ctx, cancelFunc := context.WithTimeout(context.Background(), 10*time.Second)
+			ctx, cancelFunc := context.WithTimeout(context.Background(), timeout)
 			defer cancelFunc()
 
 			have, err := c.CheckResourceBatch(
@@ -220,7 +236,7 @@ func testGRPCClient(c client.Client) func(*testing.T) {
 		})
 
 		t.Run("IsAllowed", func(t *testing.T) {
-			ctx, cancelFunc := context.WithTimeout(context.Background(), 10*time.Second)
+			ctx, cancelFunc := context.WithTimeout(context.Background(), timeout)
 			defer cancelFunc()
 
 			have, err := c.IsAllowed(

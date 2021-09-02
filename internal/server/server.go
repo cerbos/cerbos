@@ -29,6 +29,8 @@ import (
 	"go.opencensus.io/stats/view"
 	"go.opencensus.io/zpages"
 	"go.uber.org/zap"
+	"golang.org/x/net/http2"
+	"golang.org/x/net/http2/h2c"
 	"golang.org/x/sync/errgroup"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/admin"
@@ -421,7 +423,7 @@ func (s *Server) startHTTPServer(ctx context.Context, l net.Listener, grpcSrv *g
 
 	h := &http.Server{
 		ErrorLog:          zap.NewStdLog(zap.L().Named("http.error")),
-		Handler:           httpHandler,
+		Handler:           h2c.NewHandler(httpHandler, &http2.Server{}),
 		ReadHeaderTimeout: defaultTimeout,
 		ReadTimeout:       defaultTimeout,
 		WriteTimeout:      defaultTimeout,

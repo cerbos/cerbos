@@ -221,11 +221,11 @@ Contents of probable licence file $GOMODCACHE/contrib.go.opencensus.io/exporter/
 
 --------------------------------------------------------------------------------
 Module  : contrib.go.opencensus.io/exporter/prometheus
-Version : v0.3.0
-Time    : 2021-03-09T17:40:04Z
+Version : v0.4.0
+Time    : 2021-06-21T16:58:11Z
 Licence : Apache-2.0
 
-Contents of probable licence file $GOMODCACHE/contrib.go.opencensus.io/exporter/prometheus@v0.3.0/LICENSE:
+Contents of probable licence file $GOMODCACHE/contrib.go.opencensus.io/exporter/prometheus@v0.4.0/LICENSE:
 
                                  Apache License
                            Version 2.0, January 2004
@@ -710,11 +710,11 @@ Contents of probable licence file $GOMODCACHE/github.com/dgraph-io/badger/v3@v3.
 
 --------------------------------------------------------------------------------
 Module  : github.com/doug-martin/goqu/v9
-Version : v9.15.1
-Time    : 2021-08-03T04:57:58Z
+Version : v9.16.0
+Time    : 2021-08-28T05:41:15Z
 Licence : MIT
 
-Contents of probable licence file $GOMODCACHE/github.com/doug-martin/goqu/v9@v9.15.1/LICENSE:
+Contents of probable licence file $GOMODCACHE/github.com/doug-martin/goqu/v9@v9.16.0/LICENSE:
 
 MIT License
 
@@ -1014,11 +1014,11 @@ SOFTWARE.
 
 --------------------------------------------------------------------------------
 Module  : github.com/fsnotify/fsnotify
-Version : v1.5.0
-Time    : 2021-08-18T22:48:34Z
+Version : v1.5.1
+Time    : 2021-08-24T19:33:57Z
 Licence : BSD-3-Clause
 
-Contents of probable licence file $GOMODCACHE/github.com/fsnotify/fsnotify@v1.5.0/LICENSE:
+Contents of probable licence file $GOMODCACHE/github.com/fsnotify/fsnotify@v1.5.1/LICENSE:
 
 Copyright (c) 2012 The Go Authors. All rights reserved.
 Copyright (c) 2012-2019 fsnotify Authors. All rights reserved.
@@ -4688,6 +4688,43 @@ Time    : 2021-07-11T02:07:23Z
 Licence : BSD-3-Clause
 
 Contents of probable licence file $GOMODCACHE/golang.org/x/crypto@v0.0.0-20210711020723-a769d52b0f97/LICENSE:
+
+Copyright (c) 2009 The Go Authors. All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are
+met:
+
+   * Redistributions of source code must retain the above copyright
+notice, this list of conditions and the following disclaimer.
+   * Redistributions in binary form must reproduce the above
+copyright notice, this list of conditions and the following disclaimer
+in the documentation and/or other materials provided with the
+distribution.
+   * Neither the name of Google Inc. nor the names of its
+contributors may be used to endorse or promote products derived from
+this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+"AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+
+--------------------------------------------------------------------------------
+Module  : golang.org/x/net
+Version : v0.0.0-20210614182718-04defd469f4e
+Time    : 2021-06-14T18:27:18Z
+Licence : BSD-3-Clause
+
+Contents of probable licence file $GOMODCACHE/golang.org/x/net@v0.0.0-20210614182718-04defd469f4e/LICENSE:
 
 Copyright (c) 2009 The Go Authors. All rights reserved.
 
@@ -15769,43 +15806,6 @@ Time    : 2021-03-09T22:22:12Z
 Licence : BSD-3-Clause
 
 Contents of probable licence file $GOMODCACHE/golang.org/x/mod@v0.4.2/LICENSE:
-
-Copyright (c) 2009 The Go Authors. All rights reserved.
-
-Redistribution and use in source and binary forms, with or without
-modification, are permitted provided that the following conditions are
-met:
-
-   * Redistributions of source code must retain the above copyright
-notice, this list of conditions and the following disclaimer.
-   * Redistributions in binary form must reproduce the above
-copyright notice, this list of conditions and the following disclaimer
-in the documentation and/or other materials provided with the
-distribution.
-   * Neither the name of Google Inc. nor the names of its
-contributors may be used to endorse or promote products derived from
-this software without specific prior written permission.
-
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-"AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
-A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
-OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
-SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
-LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
-THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
-
---------------------------------------------------------------------------------
-Module  : golang.org/x/net
-Version : v0.0.0-20210614182718-04defd469f4e
-Time    : 2021-06-14T18:27:18Z
-Licence : BSD-3-Clause
-
-Contents of probable licence file $GOMODCACHE/golang.org/x/net@v0.0.0-20210614182718-04defd469f4e/LICENSE:
 
 Copyright (c) 2009 The Go Authors. All rights reserved.
 

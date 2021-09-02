@@ -117,6 +117,13 @@ func WithDefaultPolicyVersion(version string) ServerOpt {
 	}
 }
 
+// WithPlaygroundAPI enables the Playground API. Defaults to disabled.
+func WithPlaygroundAPI() ServerOpt {
+	return func(so *serverOpt) {
+		so.serverConf.PlaygroundEnabled = true
+	}
+}
+
 type serverOpt struct {
 	serverConf           *server.Conf
 	defaultPolicyVersion string

@@ -4,18 +4,18 @@ go 1.17
 
 require (
 	contrib.go.opencensus.io/exporter/jaeger v0.2.1
-	contrib.go.opencensus.io/exporter/prometheus v0.3.0
+	contrib.go.opencensus.io/exporter/prometheus v0.4.0
 	github.com/ProtonMail/go-crypto v0.0.0-20210512092938-c05353c2d58c // indirect
 	github.com/alecthomas/chroma v0.9.2
 	github.com/bluele/gcache v0.0.2
 	github.com/census-instrumentation/opencensus-proto v0.3.0 // indirect
 	github.com/cespare/xxhash v1.1.0
 	github.com/dgraph-io/badger/v3 v3.2103.1
-	github.com/doug-martin/goqu/v9 v9.15.1
+	github.com/doug-martin/goqu/v9 v9.16.0
 	github.com/envoyproxy/protoc-gen-validate v0.6.1
 	github.com/fatih/color v1.12.0
 	github.com/fergusstrange/embedded-postgres v1.9.0
-	github.com/fsnotify/fsnotify v1.5.0
+	github.com/fsnotify/fsnotify v1.5.1
 	github.com/gdamore/tcell/v2 v2.4.0
 	github.com/ghodss/yaml v1.0.0
 	github.com/go-git/go-git/v5 v5.4.2
@@ -63,7 +63,7 @@ require (
 	go.uber.org/multierr v1.7.0
 	go.uber.org/zap v1.19.0
 	golang.org/x/crypto v0.0.0-20210711020723-a769d52b0f97
-	golang.org/x/net v0.0.0-20210614182718-04defd469f4e // indirect
+	golang.org/x/net v0.0.0-20210614182718-04defd469f4e
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
 	google.golang.org/api v0.46.0 // indirect
 	google.golang.org/genproto v0.0.0-20210617175327-b9e0b3197ced
