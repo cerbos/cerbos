@@ -38,17 +38,18 @@ type Client interface {
 }
 
 type config struct {
-	address        string
-	plaintext      bool
-	tlsAuthority   string
-	tlsInsecure    bool
-	tlsCACert      string
-	tlsClientCert  string
-	tlsClientKey   string
-	connectTimeout time.Duration
-	maxRetries     uint
-	retryTimeout   time.Duration
-	userAgent      string
+	address            string
+	plaintext          bool
+	tlsAuthority       string
+	tlsInsecure        bool
+	tlsCACert          string
+	tlsClientCert      string
+	tlsClientKey       string
+	connectTimeout     time.Duration
+	maxRetries         uint
+	retryTimeout       time.Duration
+	userAgent          string
+	playgroundInstance string
 }
 
 type Opt func(*config)
@@ -114,6 +115,15 @@ func WithRetryTimeout(timeout time.Duration) Opt {
 func WithUserAgent(ua string) Opt {
 	return func(c *config) {
 		c.userAgent = ua
+	}
+}
+
+// WithPlaygroundInstance sets the Cerbos playground instance to use as the source of policies.
+// Note that Playground instances are for demonstration purposes only and do not provide any
+// performance or availability guarantees.
+func WithPlaygroundInstance(instance string) Opt {
+	return func(c *config) {
+		c.playgroundInstance = instance
 	}
 }
 
@@ -189,6 +199,10 @@ func mkDialOpts(conf *config) ([]grpc.DialOption, error) {
 		if conf.tlsAuthority != "" {
 			dialOpts = append(dialOpts, grpc.WithAuthority(conf.tlsAuthority))
 		}
+	}
+
+	if conf.playgroundInstance != "" {
+		dialOpts = append(dialOpts, grpc.WithPerRPCCredentials(newPlaygroundInstanceCredentials(conf.playgroundInstance)))
 	}
 
 	return dialOpts, nil
