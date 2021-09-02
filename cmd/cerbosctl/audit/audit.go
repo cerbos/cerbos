@@ -22,18 +22,18 @@ import (
 	auditv1 "github.com/cerbos/cerbos/api/genpb/cerbos/audit/v1"
 	requestv1 "github.com/cerbos/cerbos/api/genpb/cerbos/request/v1"
 	"github.com/cerbos/cerbos/client"
-	"github.com/cerbos/cerbos/cmd/cerbosctl/commands"
+	"github.com/cerbos/cerbos/cmd/cerbosctl/internal"
 )
 
 const dashLen = 54
 
 var (
 	auditFlags struct {
-		kind commands.KindFlag
+		kind internal.KindFlag
 		raw  bool
 	}
 
-	auditFilterFlags = commands.NewFilterDef()
+	auditFilterFlags = internal.NewFilterDef()
 	newline          = []byte("\n")
 )
 
@@ -62,7 +62,7 @@ cerbosctl audit --kind=access --since=3h --raw
 cerbosctl audit --kind=access --lookup=01F9Y5MFYTX7Y87A30CTJ2FB0S
 `
 
-func NewAuditCmd(fn commands.WithClient) *cobra.Command {
+func NewAuditCmd(fn internal.WithClient) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "audit",
 		Short:   "View audit logs",
@@ -92,7 +92,7 @@ func runAuditCmdF(c client.AdminClient, cmd *cobra.Command, _ []string) error {
 	}
 	defer writer.flush()
 
-	logOptions := commands.GenAuditLogOptions(auditFilterFlags)
+	logOptions := internal.GenAuditLogOptions(auditFilterFlags)
 
 	switch kind := auditFlags.kind.Kind(); kind {
 	case requestv1.ListAuditLogEntriesRequest_KIND_DECISION, requestv1.ListAuditLogEntriesRequest_KIND_UNSPECIFIED:

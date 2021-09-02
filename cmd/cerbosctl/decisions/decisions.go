@@ -24,10 +24,10 @@ import (
 	auditv1 "github.com/cerbos/cerbos/api/genpb/cerbos/audit/v1"
 	effectv1 "github.com/cerbos/cerbos/api/genpb/cerbos/effect/v1"
 	"github.com/cerbos/cerbos/client"
-	"github.com/cerbos/cerbos/cmd/cerbosctl/commands"
+	"github.com/cerbos/cerbos/cmd/cerbosctl/internal"
 )
 
-var auditFilterFlags = commands.NewFilterDef()
+var auditFilterFlags = internal.NewFilterDef()
 
 var longDesc = `Interactive decision log viewer.
 Requires audit logging to be enabled on the server. Supports several ways of filtering the data.
@@ -54,7 +54,7 @@ cerbosctl decisions --since=3h --raw
 cerbosctl decisions--lookup=01F9Y5MFYTX7Y87A30CTJ2FB0S
 `
 
-func NewDecisionsCmd(fn commands.WithClient) *cobra.Command {
+func NewDecisionsCmd(fn internal.WithClient) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "decisions",
 		Short:   "Interactive decision log viewer",
@@ -74,7 +74,7 @@ func checkDecisionsFlags(_ *cobra.Command, _ []string) error {
 }
 
 func runDecisionsCmd(c client.AdminClient, _ *cobra.Command, _ []string) error {
-	logOptions := commands.GenAuditLogOptions(auditFilterFlags)
+	logOptions := internal.GenAuditLogOptions(auditFilterFlags)
 	logOptions.Type = client.DecisionLogs
 
 	entries, err := c.AuditLogs(context.Background(), logOptions)
