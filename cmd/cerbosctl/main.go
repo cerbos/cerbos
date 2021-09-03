@@ -4,23 +4,13 @@
 package main
 
 import (
-	"context"
-	"crypto/tls"
-	"crypto/x509"
-	"encoding/base64"
 	"errors"
 	"fmt"
 	"os"
 	"strings"
-	"time"
 
-	grpc_retry "github.com/grpc-ecosystem/go-grpc-middleware/retry"
 	"github.com/spf13/cobra"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials"
-	"google.golang.org/grpc/credentials/local"
 
-	svcv1 "github.com/cerbos/cerbos/api/genpb/cerbos/svc/v1"
 	"github.com/cerbos/cerbos/client"
 	"github.com/cerbos/cerbos/cmd/cerbosctl/audit"
 	"github.com/cerbos/cerbos/cmd/cerbosctl/decisions"
@@ -39,11 +29,6 @@ type connectConf struct {
 	insecure      bool
 	plaintext     bool
 }
-
-const (
-	maxRetries   = 3
-	retryTimeout = 10 * time.Second
-)
 
 var (
 	connConf              = connectConf{}
@@ -92,7 +77,7 @@ func main() {
 	cmd.PersistentFlags().BoolVar(&connConf.insecure, "insecure", false, "Skip validating server certificate")
 	cmd.PersistentFlags().BoolVar(&connConf.plaintext, "plaintext", false, "Use plaintext protocol without TLS")
 
-	cmd.AddCommand(audit.NewAuditCmd(withAdminClient), decisions.NewDecisionsCmd(createAdminClient), version.NewVersionCmd(withClient), list.NewListCmd(withAdminClient))
+	cmd.AddCommand(audit.NewAuditCmd(withAdminClient), decisions.NewDecisionsCmd(withAdminClient), version.NewVersionCmd(withClient), list.NewListCmd(withAdminClient))
 
 	if err := cmd.Execute(); err != nil {
 		cmd.PrintErrf("ERROR: %v\n", err)
@@ -122,100 +107,6 @@ func coalesceWithEnv(val, envVar string) string {
 	}
 
 	return val
-}
-
-func createAdminClient() (svcv1.CerbosAdminServiceClient, error) {
-	if connConf.username == "" || connConf.password == "" {
-		return nil, errInvalidCredentials
-	}
-
-	dialOpts := []grpc.DialOption{
-		grpc.WithChainStreamInterceptor(
-			grpc_retry.StreamClientInterceptor(
-				grpc_retry.WithMax(maxRetries),
-				grpc_retry.WithPerRetryTimeout(retryTimeout),
-			),
-		),
-		grpc.WithChainUnaryInterceptor(
-			grpc_retry.UnaryClientInterceptor(
-				grpc_retry.WithMax(maxRetries),
-				grpc_retry.WithPerRetryTimeout(retryTimeout),
-			),
-		),
-		grpc.WithPerRPCCredentials(newBasicAuthCredentials(connConf.username, connConf.password)),
-	}
-
-	if connConf.plaintext {
-		dialOpts = append(dialOpts, grpc.WithTransportCredentials(local.NewCredentials()))
-	} else {
-		tlsConf, err := mkTLSConfig(connConf)
-		if err != nil {
-			return nil, fmt.Errorf("failed to create TLS config: %w", err)
-		}
-
-		dialOpts = append(dialOpts, grpc.WithTransportCredentials(credentials.NewTLS(tlsConf)))
-	}
-
-	grpcConn, err := grpc.Dial(connConf.serverAddr, dialOpts...)
-	if err != nil {
-		return nil, fmt.Errorf("failed to dial gRPC: %w", err)
-	}
-
-	return svcv1.NewCerbosAdminServiceClient(grpcConn), nil
-}
-
-func mkTLSConfig(conf connectConf) (*tls.Config, error) {
-	tlsConf := util.DefaultTLSConfig()
-
-	if conf.insecure {
-		tlsConf.InsecureSkipVerify = true
-	}
-
-	if conf.caCert != "" {
-		bs, err := os.ReadFile(conf.caCert)
-		if err != nil {
-			return nil, fmt.Errorf("failed to load CA certificate from %s: %w", conf.caCert, err)
-		}
-
-		certPool := x509.NewCertPool()
-		ok := certPool.AppendCertsFromPEM(bs)
-		if !ok {
-			return nil, errors.New("failed to append CA certificates to the pool")
-		}
-
-		tlsConf.RootCAs = certPool
-	}
-
-	if conf.tlsClientCert != "" && conf.tlsClientKey != "" {
-		certificate, err := tls.LoadX509KeyPair(conf.tlsClientCert, conf.tlsClientKey)
-		if err != nil {
-			return nil, fmt.Errorf("failed to load client certificate and key from [%s, %s]: %w", conf.tlsClientCert, conf.tlsClientKey, err)
-		}
-		tlsConf.Certificates = []tls.Certificate{certificate}
-	}
-
-	return tlsConf, nil
-}
-
-func newBasicAuthCredentials(username, password string) basicAuthCredentials {
-	return basicAuthCredentials{username: username, password: password}
-}
-
-type basicAuthCredentials struct {
-	username string
-	password string
-}
-
-func (ac basicAuthCredentials) GetRequestMetadata(ctx context.Context, in ...string) (map[string]string, error) {
-	auth := ac.username + ":" + ac.password
-	enc := base64.StdEncoding.EncodeToString([]byte(auth))
-	return map[string]string{
-		"authorization": "Basic " + enc,
-	}, nil
-}
-
-func (basicAuthCredentials) RequireTransportSecurity() bool {
-	return false
 }
 
 func withAdminClient(fn func(c client.AdminClient, cmd *cobra.Command, args []string) error) func(cmd *cobra.Command, args []string) error {

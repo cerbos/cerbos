@@ -6,7 +6,6 @@ package decisions
 import (
 	"bufio"
 	"context"
-	"errors"
 	"fmt"
 	"io"
 	"strings"
@@ -24,13 +23,11 @@ import (
 
 	auditv1 "github.com/cerbos/cerbos/api/genpb/cerbos/audit/v1"
 	effectv1 "github.com/cerbos/cerbos/api/genpb/cerbos/effect/v1"
-	requestv1 "github.com/cerbos/cerbos/api/genpb/cerbos/request/v1"
-	responsev1 "github.com/cerbos/cerbos/api/genpb/cerbos/response/v1"
-	svcv1 "github.com/cerbos/cerbos/api/genpb/cerbos/svc/v1"
-	"github.com/cerbos/cerbos/cmd/cerbosctl/audit"
+	"github.com/cerbos/cerbos/client"
+	"github.com/cerbos/cerbos/cmd/cerbosctl/internal"
 )
 
-var auditFilterFlags = audit.NewFilterDef()
+var auditFilterFlags = internal.NewFilterDef()
 
 var longDesc = `Interactive decision log viewer.
 Requires audit logging to be enabled on the server. Supports several ways of filtering the data.
@@ -42,31 +39,29 @@ lookup: View a specific record using the Cerbos Call ID`
 
 var exampleDesc = `
 # View the last 10 records
-cerbos ctl decisions --tail=10
+cerbosctl decisions --tail=10
 
 # View the logs from midnight 2021-07-01 to midnight 2021-07-02
-cerbos ctl decisions --between=2021-07-01T00:00:00Z,2021-07-02T00:00:00Z
+cerbosctl decisions --between=2021-07-01T00:00:00Z,2021-07-02T00:00:00Z
 
 # View the logs from midnight 2021-07-01 to now
-cerbos ctl decisions --between=2021-07-01T00:00:00Z
+cerbosctl decisions --between=2021-07-01T00:00:00Z
 
 # View the logs from 3 hours ago to now
-cerbos ctl decisions --since=3h --raw
+cerbosctl decisions --since=3h --raw
 
 # View a specific log entry by call ID
-cerbos ctl decisions--lookup=01F9Y5MFYTX7Y87A30CTJ2FB0S
+cerbosctl decisions--lookup=01F9Y5MFYTX7Y87A30CTJ2FB0S
 `
 
-type clientGenFunc func() (svcv1.CerbosAdminServiceClient, error)
-
-func NewDecisionsCmd(clientGen clientGenFunc) *cobra.Command {
+func NewDecisionsCmd(fn internal.WithClient) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "decisions",
 		Short:   "Interactive decision log viewer",
 		Long:    longDesc,
 		Example: exampleDesc,
 		PreRunE: checkDecisionsFlags,
-		RunE:    runDecisionsCmd(clientGen),
+		RunE:    fn(runDecisionsCmd),
 	}
 
 	cmd.Flags().AddFlagSet(auditFilterFlags.FlagSet())
@@ -78,41 +73,27 @@ func checkDecisionsFlags(_ *cobra.Command, _ []string) error {
 	return auditFilterFlags.Validate()
 }
 
-func runDecisionsCmd(clientGen clientGenFunc) func(*cobra.Command, []string) error {
-	return func(cmd *cobra.Command, _ []string) error {
-		client, err := clientGen()
-		if err != nil {
-			return err
-		}
+func runDecisionsCmd(c client.AdminClient, _ *cobra.Command, _ []string) error {
+	logOptions := internal.GenAuditLogOptions(auditFilterFlags)
+	logOptions.Type = client.DecisionLogs
 
-		req := auditFilterFlags.BuildRequest(requestv1.ListAuditLogEntriesRequest_KIND_DECISION)
-		resp, err := client.ListAuditLogEntries(context.Background(), req)
-		if err != nil {
-			return err
-		}
-
-		var entries []*auditv1.DecisionLogEntry
-		for {
-			entry, err := resp.Recv()
-			if err != nil {
-				if errors.Is(err, io.EOF) {
-					break
-				}
-
-				return err
-			}
-
-			decisionEntry, ok := entry.Entry.(*responsev1.ListAuditLogEntriesResponse_DecisionLogEntry)
-			if !ok {
-				continue
-			}
-
-			entries = append(entries, decisionEntry.DecisionLogEntry)
-		}
-
-		ui := mkUI(entries)
-		return ui.Start()
+	entries, err := c.AuditLogs(context.Background(), logOptions)
+	if err != nil {
+		return err
 	}
+
+	decisions := make([]*auditv1.DecisionLogEntry, 0)
+	for entry := range entries {
+		decisionEntry, err := entry.DecisionLog()
+		if err != nil {
+			return err
+		}
+
+		decisions = append(decisions, decisionEntry)
+	}
+
+	ui := mkUI(decisions)
+	return ui.Start()
 }
 
 const (

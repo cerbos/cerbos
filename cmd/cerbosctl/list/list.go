@@ -17,11 +17,10 @@ import (
 
 	policy "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
 	"github.com/cerbos/cerbos/client"
+	"github.com/cerbos/cerbos/cmd/cerbosctl/internal"
 )
 
-type withClient func(fn func(c client.AdminClient, cmd *cobra.Command, args []string) error) func(cmd *cobra.Command, args []string) error
-
-func NewListCmd(fn withClient) *cobra.Command {
+func NewListCmd(fn internal.WithClient) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "list",
 		Short: "List active policies",
@@ -105,6 +104,7 @@ func renderTable(policies []*policy.Policy) error {
 	return nil
 }
 
+// policyPrintables creates values according to {"NAME", "KIND", "DEPENDENCIES", "VERSION"}
 func policyPrintables(p *policy.Policy) []interface{} {
 	switch pt := p.PolicyType.(type) {
 	case *policy.Policy_ResourcePolicy:
@@ -114,6 +114,6 @@ func policyPrintables(p *policy.Policy) []interface{} {
 	case *policy.Policy_DerivedRoles:
 		return []interface{}{pt.DerivedRoles.Name, "DERIVED_ROLES", "-", "-"}
 	default:
-		return []interface{}{"-", "-", "-"}
+		return []interface{}{"-", "-", "-", "-"}
 	}
 }
