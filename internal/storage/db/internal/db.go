@@ -9,6 +9,7 @@ import (
 	"os"
 
 	"github.com/doug-martin/goqu/v9"
+	"github.com/doug-martin/goqu/v9/exp"
 	"go.uber.org/zap"
 
 	"github.com/cerbos/cerbos/internal/codegen"
@@ -257,12 +258,16 @@ func (s *dbStorage) Delete(ctx context.Context, ids ...namer.ModuleID) error {
 }
 
 func (s *dbStorage) GetPolicies(ctx context.Context, filter storage.PolicyFilter) ([]*policy.Wrapper, error) {
-	res, err := s.db.From(PolicyTbl).Where(
+	expressions := []exp.Expression{
 		goqu.C("name").Like(fmt.Sprintf("%%%s%%", filter.ContainsName)),
 		goqu.C("description").Like(fmt.Sprintf("%%%s%%", filter.ContainsDescription)),
-		goqu.C("kind").Eq(filter.Kind.String()),
 		goqu.C("disabled").Eq(filter.Disabled),
-	).Executor().ScannerContext(ctx)
+	}
+	if filter.Kind != "" {
+		expressions = append(expressions, goqu.C("kind").Eq(filter.Kind))
+	}
+
+	res, err := s.db.From(PolicyTbl).Where(expressions...).Executor().ScannerContext(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("could not execute %q query: %w", "GetPolicies", err)
 	}

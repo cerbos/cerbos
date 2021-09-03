@@ -137,7 +137,7 @@ func NewEvent(kind EventKind, policyID namer.ModuleID) Event {
 
 type PolicyFilter struct {
 	ContainsName        string
-	Kind                policy.Kind
+	Kind                string // empty string means all kinds
 	ContainsDescription string
 	Disabled            bool
 	// TODO: add more fields along the way. We can expand the filter by including

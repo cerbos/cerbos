@@ -379,6 +379,10 @@ func filterPolicy(name string, pol *policy.Wrapper, filter *storage.PolicyFilter
 		return false
 	}
 
-	kind := policy.GetKind(pol.Policy)
-	return kind == filter.Kind
+	if filter.Kind != "" {
+		kind := policy.GetKind(pol.Policy).String()
+		return kind == filter.Kind
+	}
+
+	return true
 }

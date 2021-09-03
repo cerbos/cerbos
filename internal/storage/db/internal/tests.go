@@ -128,7 +128,7 @@ func TestSuite(store DBStorage) func(*testing.T) {
 		})
 
 		t.Run("get_policies", func(t *testing.T) {
-			policies, err := store.GetPolicies(ctx, storage.PolicyFilter{Kind: policy.ResourceKind})
+			policies, err := store.GetPolicies(ctx, storage.PolicyFilter{Kind: policy.ResourceKind.String()})
 			require.NoError(t, err)
 			require.NotEmpty(t, policies)
 
@@ -141,7 +141,7 @@ func TestSuite(store DBStorage) func(*testing.T) {
 			require.NotEmpty(t, policies)
 			require.Equal(t, "leave_request", policies[0].Name)
 
-			policies, err = store.GetPolicies(ctx, storage.PolicyFilter{Kind: policy.PrincipalKind})
+			policies, err = store.GetPolicies(ctx, storage.PolicyFilter{Kind: policy.PrincipalKind.String()})
 			require.NoError(t, err)
 			require.NotEmpty(t, policies)
 			require.Equal(t, "PRINCIPAL", policies[0].Kind)

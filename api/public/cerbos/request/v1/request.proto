@@ -363,10 +363,10 @@ message ListPoliciesRequest {
     }
 
     Kind kind = 1 [
-        (validate.rules).enum = {in: [1,2,3]},
+        (validate.rules).enum = {in: [0,1,2,3]},
         (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = { 
             description: "Kind of policy"
-            enum: ["KIND_RESOURCE", "KIND_PRINCIPAL", "KIND_DERIVED"]
+            enum: ["KIND_UNSPECIFIED", "KIND_RESOURCE", "KIND_PRINCIPAL", "KIND_DERIVED"]
         }
     ];
 

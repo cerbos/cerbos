@@ -10,9 +10,12 @@ import (
 	"os"
 	"strings"
 
+	"github.com/fatih/color"
+	"github.com/rodaine/table"
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v2"
 
+	policy "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
 	"github.com/cerbos/cerbos/client"
 )
 
@@ -26,10 +29,10 @@ func NewListCmd(fn withClient) *cobra.Command {
 	}
 
 	cmd.Flags().String("name", "", "filter policy by name")
-	cmd.Flags().String("kind", "RESOURCE", "filter policy by kind")
+	cmd.Flags().String("kind", "", "filter policy by kind")
 	cmd.Flags().String("description", "", "filter policy by description")
 	cmd.Flags().Bool("disabled", false, "retrieves disabled policies")
-	cmd.Flags().String("format", "yaml", "output format")
+	cmd.Flags().String("format", "", "output format")
 
 	return cmd
 }
@@ -41,26 +44,29 @@ func runListCmdF(c client.AdminClient, cmd *cobra.Command, _ []string) error {
 	disabled, _ := cmd.Flags().GetBool("disabled")
 	format, _ := cmd.Flags().GetString("format")
 
-	var policyKind client.PolicyKind
-	switch strings.ToUpper(kind) {
-	case "RESOURCE":
-		policyKind = client.ResourcePolicyKind
-	case "PRINCIPAL":
-		policyKind = client.PrincipalPolicyKind
-	case "DERIVED_ROLES":
-		policyKind = client.DerivedRolesPolicyKind
-	default:
-		return fmt.Errorf("unknown policy type: %s", kind)
-	}
-
-	policies, err := c.ListPolicies(context.Background(), client.PolicyFilter{
+	filter := client.PolicyFilter{
 		ContainsName:        name,
 		ContainsDescription: desc,
-		Kind:                policyKind,
 		Disabled:            disabled,
-	})
+	}
+
+	switch strings.ToUpper(kind) {
+	case "RESOURCE":
+		filter.Kind = client.ResourcePolicyKind
+	case "PRINCIPAL":
+		filter.Kind = client.PrincipalPolicyKind
+	case "DERIVED_ROLES":
+		filter.Kind = client.DerivedRolesPolicyKind
+	}
+
+	policies, err := c.ListPolicies(context.Background(), filter)
 	if err != nil {
 		return err
+	}
+
+	if format == "" {
+		renderTable(policies)
+		return nil
 	}
 
 	for _, policy := range policies {
@@ -82,4 +88,32 @@ func runListCmdF(c client.AdminClient, cmd *cobra.Command, _ []string) error {
 	}
 
 	return nil
+}
+
+func renderTable(policies []*policy.Policy) error {
+	headerFmt := color.New(color.FgGreen, color.Underline).SprintfFunc()
+
+	tbl := table.New("NAME", "KIND", "DEPENDENCIES", "VERSION")
+	tbl.WithHeaderFormatter(headerFmt)
+
+	for _, p := range policies {
+		tbl.AddRow(policyPrintables(p)...)
+	}
+
+	tbl.Print()
+
+	return nil
+}
+
+func policyPrintables(p *policy.Policy) []interface{} {
+	switch pt := p.PolicyType.(type) {
+	case *policy.Policy_ResourcePolicy:
+		return []interface{}{pt.ResourcePolicy.Resource, "RESOURCE", strings.Join(pt.ResourcePolicy.ImportDerivedRoles, ", "), pt.ResourcePolicy.Version}
+	case *policy.Policy_PrincipalPolicy:
+		return []interface{}{pt.PrincipalPolicy.Principal, "PRINCIPAL", "-", pt.PrincipalPolicy.Version}
+	case *policy.Policy_DerivedRoles:
+		return []interface{}{pt.DerivedRoles.Name, "DERIVED_ROLES", "-", "-"}
+	default:
+		return []interface{}{"-", "-", "-"}
+	}
 }
