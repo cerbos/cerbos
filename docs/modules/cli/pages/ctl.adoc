@@ -1,8 +1,8 @@
 include::ROOT:partial$attributes.adoc[]
 
-= `ctl` Command
+= `cerbosctl` Command
 
-The `ctl` command is the entrypoint for Cerbos administration utilities. It requires the xref:configuration:server.adoc#admin-api[Admin API to be enabled] on the Cerbos server.
+The `cerbosctl` command is the entrypoint for Cerbos administration utilities. It requires the xref:configuration:server.adoc#admin-api[Admin API to be enabled] on the Cerbos server.
 
 The server address to connect to and the credentials to authenticate can be provided through environment variables or as arguments to the command.
 
@@ -23,15 +23,15 @@ Alternatively, command-line flags can be used to provide the server address and 
 When both environment variables and command-line flags are provided, the flags take precedence.
 
 Usage:
-  cerbos ctl [command]
+  cerbosctl [command]
 
 Examples:
 
 # Connect to a TLS enabled server while skipping certificate verification and launch the decisions viewer
-cerbos ctl --server=localhost:3593 --username=user --password=password --insecure decisions
+cerbosctl --server=localhost:3593 --username=user --password=password --insecure decisions
 
 # Connect to a non-TLS server and launch the decisions viewer
-cerbos ctl --server=localhost:3593 --username=user --password=password --plaintext decisions
+cerbosctl --server=localhost:3593 --username=user --password=password --plaintext decisions
 
 Available Commands:
   audit       View audit logs
@@ -48,7 +48,7 @@ Flags:
       --server string        Address of the Cerbos server
       --username string      Admin username
 
-Use "cerbos ctl [command] --help" for more information about a command.
+Use "cerbosctl [command] --help" for more information about a command.
 ----
 
 
@@ -74,31 +74,31 @@ lookup:: Get a specific record by ID. (e.g. `--lookup=01F9Y5MFYTX7Y87A30CTJ2FB0S
 .View the last 10 access logs
 [source,sh]
 ----
-cerbos ctl audit --kind=access --tail=10
+cerbosctl audit --kind=access --tail=10
 ----
 
 .View the decision logs from midnight 2021-07-01 to midnight 2021-07-02
 [source,sh]
 ----
-cerbos ctl audit --kind=decision --between=2021-07-01T00:00:00Z,2021-07-02T00:00:00Z
+cerbosctl audit --kind=decision --between=2021-07-01T00:00:00Z,2021-07-02T00:00:00Z
 ----
 
 .View the decision logs from midnight 2021-07-01 to now
 [source,sh]
 ----
-cerbos ctl audit --kind=decision --between=2021-07-01T00:00:00Z
+cerbosctl audit --kind=decision --between=2021-07-01T00:00:00Z
 ----
 
 .View the access logs from 3 hours ago to now as newline-delimited JSON
 [source,sh]
 ----
-cerbos ctl audit --kind=access --since=3h --raw
+cerbosctl audit --kind=access --since=3h --raw
 ----
 
 .View a specific access log entry by call ID
 [source,sh]
 ----
-cerbos ctl audit --kind=access --lookup=01F9Y5MFYTX7Y87A30CTJ2FB0S
+cerbosctl audit --kind=access --lookup=01F9Y5MFYTX7Y87A30CTJ2FB0S
 ----
 
 
@@ -119,5 +119,5 @@ Use the arrow keys (or Vim keys kbd:[h], kbd:[j], kbd:[k], kbd:[l]) to scroll ho
 .Start analyzing the last 20 decision records
 [source,sh]
 ----
-cerbos ctl decisions --tail=20
+cerbosctl decisions --tail=20
 ----
