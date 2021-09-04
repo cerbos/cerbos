@@ -6,6 +6,7 @@ package client
 import (
 	"context"
 	"errors"
+	"fmt"
 	"io"
 
 	"google.golang.org/grpc"
@@ -153,11 +154,18 @@ func (c *GrpcAdminClient) auditLogs(ctx context.Context, opts AuditLogOptions) (
 }
 
 func (c *GrpcAdminClient) ListPolicies(ctx context.Context, filter PolicyFilter) ([]*policyv1.Policy, error) {
+	if err := filter.Validate(); err != nil {
+		return nil, fmt.Errorf("could not validate filter: %w", err)
+	}
+
 	pc, err := c.client.ListPolicies(ctx, &requestv1.ListPoliciesRequest{
-		Kind:                requestv1.ListPoliciesRequest_Kind(filter.Kind),
-		ContainsName:        filter.ContainsName,
-		ContainsDescription: filter.ContainsDescription,
-		Disabled:            filter.Disabled,
+		Kind:        requestv1.ListPoliciesRequest_Kind(filter.Kind),
+		Resource:    filter.Resource,
+		Principal:   filter.Principal,
+		Name:        filter.Name,
+		Version:     filter.Version,
+		Description: filter.Description,
+		Disabled:    filter.Disabled,
 	})
 	if err != nil {
 		return nil, err

@@ -1239,9 +1239,15 @@ func (m *ListPoliciesRequest) Validate() error {
 		}
 	}
 
-	// no validation rules for ContainsName
+	// no validation rules for Resource
 
-	// no validation rules for ContainsDescription
+	// no validation rules for Principal
+
+	// no validation rules for Name
+
+	// no validation rules for Version
+
+	// no validation rules for Description
 
 	// no validation rules for Disabled
 

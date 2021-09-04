@@ -369,10 +369,15 @@ message ListPoliciesRequest {
             enum: ["KIND_UNSPECIFIED", "KIND_RESOURCE", "KIND_PRINCIPAL", "KIND_DERIVED"]
         }
     ];
+    
+    string resource = 2;
+    string principal = 3;
+    string name = 4;
 
-    string contains_name = 2;
-    string contains_description = 3;
-    bool disabled = 4;
+    string version = 5;
+    string description = 6;
+
+    bool disabled = 7;
 
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
 		json_schema: {

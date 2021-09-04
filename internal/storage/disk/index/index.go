@@ -11,6 +11,7 @@ import (
 	"path/filepath"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/djherbis/times"
 
@@ -362,10 +363,10 @@ func (idx *index) GetPolicies(ctx context.Context, filter storage.PolicyFilter) 
 		if pol.Metadata.Annotations == nil {
 			pol.Metadata.Annotations = make(map[string]string)
 		}
-		pol.Metadata.Annotations["createAt"] = fi.BirthTime().String()
+		pol.Metadata.Annotations["createAt"] = fi.BirthTime().Format(time.RFC3339)
 
 		wp := policy.Wrap(pol)
-		if !filterPolicy(file, &wp, &filter) {
+		if !filterPolicy(&wp, &filter) {
 			continue
 		}
 
@@ -379,22 +380,36 @@ func (idx *index) GetPolicies(ctx context.Context, filter storage.PolicyFilter) 
 	return entries, nil
 }
 
-func filterPolicy(name string, pol *policy.Wrapper, filter *storage.PolicyFilter) bool {
-	if filter.ContainsDescription != "" && !strings.Contains(pol.Description, filter.ContainsDescription) {
+func filterPolicy(pol *policy.Wrapper, filter *storage.PolicyFilter) bool {
+	if filter.Kind != "" {
+		kind := policy.GetKind(pol.Policy).String()
+		if kind != filter.Kind {
+			return false
+		}
+	}
+
+	if filter.Kind == policy.ResourceKind.String() && filter.Resource != "" && !strings.Contains(pol.GetResourcePolicy().Resource, filter.Resource) {
 		return false
 	}
 
-	if filter.ContainsName != "" && !strings.Contains(name, filter.ContainsName) {
+	if filter.Kind == policy.PrincipalKind.String() && filter.Principal != "" && !strings.Contains(pol.GetPrincipalPolicy().Principal, filter.Principal) {
+		return false
+	}
+
+	if filter.Kind == policy.DerivedRolesKind.String() && filter.Name != "" && !strings.Contains(pol.GetDerivedRoles().Name, filter.Name) {
+		return false
+	}
+
+	if filter.Version != "" && !strings.Contains(pol.Version, filter.Version) {
+		return false
+	}
+
+	if filter.Description != "" && !strings.Contains(pol.Description, filter.Description) {
 		return false
 	}
 
 	if filter.Disabled != pol.Disabled {
 		return false
-	}
-
-	if filter.Kind != "" {
-		kind := policy.GetKind(pol.Policy).String()
-		return kind == filter.Kind
 	}
 
 	return true

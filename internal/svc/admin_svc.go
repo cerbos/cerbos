@@ -135,12 +135,21 @@ func (cas *CerbosAdminService) ListPolicies(ctx context.Context, req *requestv1.
 	default: // do nothing
 	}
 
-	units, err := cas.store.GetPolicies(context.Background(), storage.PolicyFilter{
-		ContainsName:        req.ContainsName,
-		Kind:                policyKind,
-		ContainsDescription: req.ContainsDescription,
-		Disabled:            req.Disabled,
-	})
+	filter := storage.PolicyFilter{
+		Kind:        policyKind,
+		Resource:    req.Resource,
+		Principal:   req.Principal,
+		Name:        req.Name,
+		Version:     req.Version,
+		Description: req.Description,
+		Disabled:    req.Disabled,
+	}
+
+	if err := filter.Validate(); err != nil {
+		return nil, status.Error(codes.InvalidArgument, fmt.Sprintf("could not validate filter: %s", err.Error()))
+	}
+
+	units, err := cas.store.GetPolicies(context.Background(), filter)
 	if err != nil {
 		return nil, status.Error(codes.Internal, fmt.Sprintf("could not get policies: %s", err.Error()))
 	}

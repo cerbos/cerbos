@@ -260,11 +260,23 @@ func (s *dbStorage) Delete(ctx context.Context, ids ...namer.ModuleID) error {
 }
 
 func (s *dbStorage) GetPolicies(ctx context.Context, filter storage.PolicyFilter) ([]*policy.Wrapper, error) {
-	expressions := []exp.Expression{
-		goqu.C("name").Like(fmt.Sprintf("%%%s%%", filter.ContainsName)),
-		goqu.C("description").Like(fmt.Sprintf("%%%s%%", filter.ContainsDescription)),
+	var expressions []exp.Expression
+	switch filter.Kind {
+	case policy.ResourceKind.String():
+		expressions = append(expressions, goqu.C("name").Like(fmt.Sprintf("%%%s%%", filter.Resource)))
+	case policy.PrincipalKind.String():
+		expressions = append(expressions, goqu.C("name").Like(fmt.Sprintf("%%%s%%", filter.Principal)))
+	case policy.DerivedRolesKind.String():
+		expressions = append(expressions, goqu.C("name").Like(fmt.Sprintf("%%%s%%", filter.Name)))
+	}
+
+	commonExpressions := []exp.Expression{
+		goqu.C("version").Like(fmt.Sprintf("%%%s%%", filter.Version)),
+		goqu.C("description").Like(fmt.Sprintf("%%%s%%", filter.Description)),
 		goqu.C("disabled").Eq(filter.Disabled),
 	}
+	expressions = append(expressions, commonExpressions...)
+
 	if filter.Kind != "" {
 		expressions = append(expressions, goqu.C("kind").Eq(filter.Kind))
 	}

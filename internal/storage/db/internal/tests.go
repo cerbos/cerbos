@@ -129,27 +129,43 @@ func TestSuite(store DBStorage) func(*testing.T) {
 		})
 
 		t.Run("get_policies", func(t *testing.T) {
-			policies, err := store.GetPolicies(ctx, storage.PolicyFilter{Kind: policy.ResourceKind.String()})
-			require.NoError(t, err)
-			require.NotEmpty(t, policies)
+			t.Run("should be able to get results filtered by kind", func(t *testing.T) {
+				policies, err := store.GetPolicies(ctx, storage.PolicyFilter{Kind: policy.ResourceKind.String()})
+				require.NoError(t, err)
+				require.NotEmpty(t, policies)
+			})
 
-			policies, err = store.GetPolicies(ctx, storage.PolicyFilter{ContainsName: "gibberish"})
-			require.NoError(t, err)
-			require.Empty(t, policies)
+			t.Run("should be able to filter by resource", func(t *testing.T) {
+				policies, err := store.GetPolicies(ctx, storage.PolicyFilter{Resource: "gibberish", Kind: policy.ResourceKind.String()})
+				require.NoError(t, err)
+				require.Empty(t, policies)
+			})
 
-			policies, err = store.GetPolicies(ctx, storage.PolicyFilter{ContainsName: "leave_request"})
-			require.NoError(t, err)
-			require.NotEmpty(t, policies)
-			require.Equal(t, "leave_request", policies[0].Name)
+			t.Run("should be able to filter by name", func(t *testing.T) {
+				policies, err := store.GetPolicies(ctx, storage.PolicyFilter{Name: "my_derived_roles", Kind: policy.DerivedRolesKind.String()})
+				require.NoError(t, err)
+				require.NotEmpty(t, policies)
+				require.Equal(t, "my_derived_roles", policies[0].Name)
+				require.Equal(t, "DERIVED_ROLES", policies[0].Kind)
+			})
 
-			policies, err = store.GetPolicies(ctx, storage.PolicyFilter{Kind: policy.PrincipalKind.String()})
-			require.NoError(t, err)
-			require.NotEmpty(t, policies)
-			require.Equal(t, "PRINCIPAL", policies[0].Kind)
+			t.Run("should be able to get results filtered by policy kind", func(t *testing.T) {
+				policies, err := store.GetPolicies(ctx, storage.PolicyFilter{Kind: policy.PrincipalKind.String()})
+				require.NoError(t, err)
+				require.NotEmpty(t, policies)
+				require.Equal(t, "PRINCIPAL", policies[0].Kind)
+			})
 
-			require.NotNil(t, policies[0].Policy.Metadata)
-			_, err = time.Parse(time.RFC3339, policies[0].Policy.Metadata.Annotations["createAt"])
-			require.NoError(t, err)
+			t.Run("policies should have creation time in their metadata", func(t *testing.T) {
+				policies, err := store.GetPolicies(ctx, storage.PolicyFilter{})
+				require.NoError(t, err)
+				require.NotEmpty(t, policies)
+
+				require.NotNil(t, policies[0].Policy.Metadata)
+				createAt, err := time.Parse(time.RFC3339, policies[0].Policy.Metadata.Annotations["createAt"])
+				require.NoError(t, err)
+				require.NotZero(t, createAt)
+			})
 		})
 
 		t.Run("delete", func(t *testing.T) {

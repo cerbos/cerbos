@@ -136,10 +136,30 @@ func NewEvent(kind EventKind, policyID namer.ModuleID) Event {
 }
 
 type PolicyFilter struct {
-	ContainsName        string
-	Kind                string // empty string means all kinds
-	ContainsDescription string
-	Disabled            bool
-	// TODO: add more fields along the way. We can expand the filter by including
-	// more values eg. multiple kinds for a more sophisticated filter.
+	Kind string // empty string means all kinds
+
+	Resource  string
+	Principal string
+	Name      string
+
+	Version     string
+	Description string
+
+	Disabled bool
+}
+
+func (f *PolicyFilter) Validate() error {
+	if f.Resource != "" && f.Kind != policy.ResourceKind.String() {
+		return fmt.Errorf("%q key is a valid filter field for only %s policy", "resource", "resource")
+	}
+
+	if f.Principal != "" && f.Kind != policy.PrincipalKind.String() {
+		return fmt.Errorf("%q key is a valid filter field for only %s policy", "principal", "principal")
+	}
+
+	if f.Name != "" && f.Kind != policy.DerivedRolesKind.String() {
+		return fmt.Errorf("%q is a valid filter field for only %s policy", "name", "derived_roles")
+	}
+
+	return nil
 }

@@ -229,13 +229,31 @@
             "default": "KIND_UNSPECIFIED"
           },
           {
-            "name": "containsName",
+            "name": "resource",
             "in": "query",
             "required": false,
             "type": "string"
           },
           {
-            "name": "containsDescription",
+            "name": "principal",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "name",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "version",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "description",
             "in": "query",
             "required": false,
             "type": "string"

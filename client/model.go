@@ -890,8 +890,30 @@ const (
 )
 
 type PolicyFilter struct {
-	ContainsName        string
-	ContainsDescription string
-	Kind                PolicyKind
-	Disabled            bool
+	Kind PolicyKind
+
+	Resource  string
+	Principal string
+	Name      string
+
+	Version     string
+	Description string
+
+	Disabled bool
+}
+
+func (f *PolicyFilter) Validate() error {
+	if f.Resource != "" && f.Kind != ResourcePolicyKind {
+		return fmt.Errorf("%q key is a valid filter field for only %s policy kind", "resource", "resource")
+	}
+
+	if f.Principal != "" && f.Kind != PrincipalPolicyKind {
+		return fmt.Errorf("%q key is a valid filter field for only %s policy kind", "principal", "principal")
+	}
+
+	if f.Name != "" && f.Kind != DerivedRolesPolicyKind {
+		return fmt.Errorf("%q is a valid filter field for only %s policy kind", "name", "derived_roles")
+	}
+
+	return nil
 }
