@@ -142,10 +142,10 @@ func TestSuite(store DBStorage) func(*testing.T) {
 			})
 
 			t.Run("should be able to filter by name", func(t *testing.T) {
-				policies, err := store.GetPolicies(ctx, storage.PolicyFilter{Name: "my_derived_roles", Kind: policy.DerivedRolesKind.String()})
+				policies, err := store.GetPolicies(ctx, storage.PolicyFilter{Name: "x_my", Kind: policy.DerivedRolesKind.String()})
 				require.NoError(t, err)
 				require.NotEmpty(t, policies)
-				require.Equal(t, "my_derived_roles", policies[0].Name)
+				require.Equal(t, "x_my_derived_roles_x", policies[0].Name)
 				require.Equal(t, "DERIVED_ROLES", policies[0].Kind)
 			})
 
