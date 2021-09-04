@@ -8,8 +8,11 @@ import (
 	"errors"
 	"fmt"
 	"io/fs"
+	"path/filepath"
 	"strings"
 	"sync"
+
+	"github.com/djherbis/times"
 
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
 	"github.com/cerbos/cerbos/internal/namer"
@@ -41,6 +44,7 @@ type Index interface {
 }
 
 type index struct {
+	dir          string
 	fsys         fs.FS
 	cache        *codegenCache
 	mu           sync.RWMutex
@@ -350,6 +354,15 @@ func (idx *index) GetPolicies(ctx context.Context, filter storage.PolicyFilter) 
 		if err != nil {
 			return entries, err
 		}
+
+		fi, err := times.Stat(filepath.Join(idx.dir, file))
+		if err != nil {
+			return nil, fmt.Errorf("could not stat file: %w", err)
+		}
+		if pol.Metadata.Annotations == nil {
+			pol.Metadata.Annotations = make(map[string]string)
+		}
+		pol.Metadata.Annotations["createAt"] = fi.BirthTime().String()
 
 		wp := policy.Wrap(pol)
 		if !filterPolicy(file, &wp, &filter) {

@@ -7,6 +7,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"os"
 	"strings"
 
@@ -60,59 +61,60 @@ func runListCmdF(c client.AdminClient, cmd *cobra.Command, _ []string) error {
 
 	policies, err := c.ListPolicies(context.Background(), filter)
 	if err != nil {
-		return err
+		return fmt.Errorf("error while requesting policy list: %w", err)
 	}
 
-	if format == "" {
-		renderTable(policies)
-		return nil
-	}
-
-	for _, policy := range policies {
-		var b []byte
-		var err error
-		switch format {
-		case "json":
-			b, err = json.MarshalIndent(policy, "", "  ")
-		case "yaml":
-			b, err = yaml.Marshal(policy)
-		default:
-			return fmt.Errorf("unsupported output format: %q", format)
-		}
-		if err != nil {
-			return err
-		}
-
-		fmt.Fprintf(os.Stdout, "%s\n", b)
+	if err = printPolicies(os.Stdout, policies, format); err != nil {
+		return fmt.Errorf("could not print policies: %w", err)
 	}
 
 	return nil
 }
 
-func renderTable(policies []*policy.Policy) error {
-	headerFmt := color.New(color.FgGreen, color.Underline).SprintfFunc()
+func printPolicies(w io.Writer, policies []*policy.Policy, format string) error {
+	switch format {
+	case "json":
+		for _, policy := range policies {
+			b, err := json.MarshalIndent(policy, "", "  ")
+			if err != nil {
+				return err
+			}
+			fmt.Fprintf(w, "%s\n", b)
+		}
+	case "yaml":
+		for _, policy := range policies {
+			b, err := yaml.Marshal(policy)
+			if err != nil {
+				return err
+			}
+			fmt.Fprintf(w, "%s\n", b)
+		}
+	default:
+		headerFmt := color.New(color.FgGreen, color.Underline).SprintfFunc()
 
-	tbl := table.New("NAME", "KIND", "DEPENDENCIES", "VERSION")
-	tbl.WithHeaderFormatter(headerFmt)
+		tbl := table.New("NAME", "KIND", "DEPENDENCIES", "CREATED")
+		tbl.WithWriter(w)
+		tbl.WithHeaderFormatter(headerFmt)
 
-	for _, p := range policies {
-		tbl.AddRow(policyPrintables(p)...)
+		for _, p := range policies {
+			tbl.AddRow(policyPrintables(p)...)
+		}
+
+		tbl.Print()
 	}
-
-	tbl.Print()
 
 	return nil
 }
 
-// policyPrintables creates values according to {"NAME", "KIND", "DEPENDENCIES", "VERSION"}
+// policyPrintables creates values according to {"NAME", "KIND", "DEPENDENCIES", "CREATED"}.
 func policyPrintables(p *policy.Policy) []interface{} {
 	switch pt := p.PolicyType.(type) {
 	case *policy.Policy_ResourcePolicy:
-		return []interface{}{pt.ResourcePolicy.Resource, "RESOURCE", strings.Join(pt.ResourcePolicy.ImportDerivedRoles, ", "), pt.ResourcePolicy.Version}
+		return []interface{}{pt.ResourcePolicy.Resource, "RESOURCE", strings.Join(pt.ResourcePolicy.ImportDerivedRoles, ", "), p.Metadata.Annotations["createAt"]}
 	case *policy.Policy_PrincipalPolicy:
-		return []interface{}{pt.PrincipalPolicy.Principal, "PRINCIPAL", "-", pt.PrincipalPolicy.Version}
+		return []interface{}{pt.PrincipalPolicy.Principal, "PRINCIPAL", "-", pt.PrincipalPolicy.Version, p.Metadata.Annotations["createAt"]}
 	case *policy.Policy_DerivedRoles:
-		return []interface{}{pt.DerivedRoles.Name, "DERIVED_ROLES", "-", "-"}
+		return []interface{}{pt.DerivedRoles.Name, "DERIVED_ROLES", "-", p.Metadata.Annotations["createAt"]}
 	default:
 		return []interface{}{"-", "-", "-", "-"}
 	}

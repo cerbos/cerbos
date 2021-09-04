@@ -42,7 +42,7 @@ func NewStore(ctx context.Context, conf *Conf) (*Store, error) {
 		return nil, fmt.Errorf("failed to determine absolute path of directory [%s]: %w", conf.Directory, err)
 	}
 
-	idx, err := index.Build(ctx, os.DirFS(dir), index.WithDiskCache(conf.ScratchDir))
+	idx, err := index.Build(ctx, os.DirFS(dir), dir, index.WithDiskCache(conf.ScratchDir))
 	if err != nil {
 		return nil, err
 	}

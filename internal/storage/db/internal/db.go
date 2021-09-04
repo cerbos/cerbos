@@ -7,11 +7,13 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"time"
 
 	"github.com/doug-martin/goqu/v9"
 	"github.com/doug-martin/goqu/v9/exp"
 	"go.uber.org/zap"
 
+	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
 	"github.com/cerbos/cerbos/internal/codegen"
 	"github.com/cerbos/cerbos/internal/namer"
 	"github.com/cerbos/cerbos/internal/policy"
@@ -271,17 +273,37 @@ func (s *dbStorage) GetPolicies(ctx context.Context, filter storage.PolicyFilter
 	if err != nil {
 		return nil, fmt.Errorf("could not execute %q query: %w", "GetPolicies", err)
 	}
-	defer res.Close()
 
-	policies := make([]*policy.Wrapper, 0)
+	records := make([]*Policy, 0)
 	for res.Next() {
 		var rec Policy
 		if err := res.ScanStruct(&rec); err != nil {
+			_ = res.Close()
 			return nil, fmt.Errorf("could not scan row: %w", err)
 		}
 
-		p := policy.Wrap(rec.Definition.Policy)
+		records = append(records, &rec)
+	}
 
+	if err := res.Close(); err != nil {
+		return nil, fmt.Errorf("could not close scanner: %w", err)
+	}
+
+	policies := make([]*policy.Wrapper, 0)
+	for _, rec := range records {
+		var rev PolicyRevision
+		if ok, err := s.db.From("policy_revision").Where(goqu.C("id").Eq(rec.ID), goqu.C("action").Eq("INSERT")).Executor().ScanStruct(&rev); err != nil {
+			return nil, fmt.Errorf("could not get creation date for %s: %w", rec.ID.String(), err)
+		} else if ok {
+			if rec.Definition.Policy.Metadata == nil { // add metadata if not initialized
+				rec.Definition.Policy.Metadata = &policyv1.Metadata{
+					Annotations: make(map[string]string),
+				}
+			}
+			rec.Definition.Policy.Metadata.Annotations["createAt"] = rev.Timestamp.Format(time.RFC3339)
+		}
+
+		p := policy.Wrap(rec.Definition.Policy)
 		policies = append(policies, &p)
 	}
 

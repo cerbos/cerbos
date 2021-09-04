@@ -101,7 +101,7 @@ func WithMemoryCache() BuildOpt {
 }
 
 // Build builds an index from the policy files stored in a directory.
-func Build(ctx context.Context, fsys fs.FS, opts ...BuildOpt) (Index, error) {
+func Build(ctx context.Context, fsys fs.FS, dir string, opts ...BuildOpt) (Index, error) {
 	o := buildOptions{rootDir: "."}
 	for _, optFn := range opts {
 		optFn(&o)
@@ -159,7 +159,7 @@ func Build(ctx context.Context, fsys fs.FS, opts ...BuildOpt) (Index, error) {
 		return nil, err
 	}
 
-	return ib.build(fsys)
+	return ib.build(fsys, dir)
 }
 
 type indexBuilder struct {
@@ -253,7 +253,7 @@ func (idx *indexBuilder) addDep(child, parent namer.ModuleID) {
 	idx.dependents[parent][child] = struct{}{}
 }
 
-func (idx *indexBuilder) build(fsys fs.FS) (*index, error) {
+func (idx *indexBuilder) build(fsys fs.FS, dir string) (*index, error) {
 	nErr := len(idx.missing) + len(idx.duplicates) + len(idx.loadFailures) + len(idx.codegenFailures)
 	if nErr > 0 {
 		err := &BuildError{
@@ -271,6 +271,7 @@ func (idx *indexBuilder) build(fsys fs.FS) (*index, error) {
 	}
 
 	return &index{
+		dir:          dir,
 		fsys:         fsys,
 		cache:        idx.cache,
 		executables:  idx.executables,

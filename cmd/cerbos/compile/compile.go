@@ -63,7 +63,7 @@ func doRun(cmd *cobra.Command, args []string) error {
 	ctx, stopFunc := signal.NotifyContext(context.Background(), os.Interrupt)
 	defer stopFunc()
 
-	idx, err := index.Build(ctx, os.DirFS(args[0]), index.WithMemoryCache())
+	idx, err := index.Build(ctx, os.DirFS(args[0]), args[0], index.WithMemoryCache())
 	if err != nil {
 		idxErr := new(index.BuildError)
 		if errors.As(err, &idxErr) {

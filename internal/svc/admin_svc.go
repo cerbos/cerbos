@@ -132,6 +132,7 @@ func (cas *CerbosAdminService) ListPolicies(ctx context.Context, req *requestv1.
 		policyKind = policy.PrincipalKind.String()
 	case requestv1.ListPoliciesRequest_KIND_DERIVED:
 		policyKind = policy.DerivedRolesKind.String()
+	default: // do nothing
 	}
 
 	units, err := cas.store.GetPolicies(context.Background(), storage.PolicyFilter{
