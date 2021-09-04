@@ -14,8 +14,8 @@ import (
 	"github.com/cerbos/cerbos/client"
 	"github.com/cerbos/cerbos/cmd/cerbosctl/audit"
 	"github.com/cerbos/cerbos/cmd/cerbosctl/decisions"
+	"github.com/cerbos/cerbos/cmd/cerbosctl/internal"
 	"github.com/cerbos/cerbos/cmd/cerbosctl/version"
-	"github.com/cerbos/cerbos/internal/util"
 )
 
 type connectConf struct {
@@ -59,7 +59,7 @@ func main() {
 	cmd := &cobra.Command{
 		Use:               "cerbosctl",
 		Short:             "A remote control tool for Cerbos",
-		Version:           fmt.Sprintf("%s; commit sha: %s, build date: %s", util.Version, util.Commit, util.BuildDate),
+		Version:           fmt.Sprintf("%s; commit sha: %s, build date: %s", internal.Version, internal.Commit, internal.BuildDate),
 		Long:              longDesc,
 		Example:           exampleDesc,
 		SilenceUsage:      true,
