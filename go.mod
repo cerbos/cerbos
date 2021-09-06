@@ -82,6 +82,7 @@ require (
 	github.com/andybalholm/brotli v1.0.0 // indirect
 	github.com/antlr/antlr4 v0.0.0-20200503195918-621b933c7a7f // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
+	github.com/bytecodealliance/wasmtime-go v0.28.0 // indirect
 	github.com/cenkalti/backoff/v4 v4.1.0 // indirect
 	github.com/cespare/xxhash/v2 v2.1.1 // indirect
 	github.com/containerd/containerd v1.5.5 // indirect
