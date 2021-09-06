@@ -12,13 +12,17 @@ import (
 	"github.com/google/cel-go/checker/decls"
 	"github.com/google/cel-go/common/types"
 	"github.com/google/cel-go/common/types/ref"
+	"github.com/google/cel-go/common/types/traits"
 	"github.com/google/cel-go/interpreter/functions"
 	exprpb "google.golang.org/genproto/googleapis/api/expr/v1alpha1"
 )
 
 const (
-	inIPAddrRangeFn = "inIPAddrRange"
-	timeSinceFn     = "timeSince"
+	inIPAddrRangeFn   = "inIPAddrRange"
+	timeSinceFn       = "timeSince"
+	intersectFn       = "intersect"
+	hasIntersectionFn = "has_intersection"
+	isSubsetFn        = "is_subset"
 )
 
 // CerbosCELLib returns the custom CEL functions provided by Cerbos.
@@ -29,6 +33,8 @@ func CerbosCELLib() cel.EnvOption {
 type cerbosLib struct{}
 
 func (clib cerbosLib) CompileOptions() []cel.EnvOption {
+	listType := decls.NewListType(decls.NewTypeParamType("A"))
+
 	return []cel.EnvOption{
 		cel.Declarations(
 			decls.NewFunction(inIPAddrRangeFn,
@@ -46,6 +52,29 @@ func (clib cerbosLib) CompileOptions() []cel.EnvOption {
 					decls.Duration,
 				),
 			),
+
+			decls.NewFunction(isSubsetFn,
+				decls.NewParameterizedInstanceOverload(
+					isSubsetFn,
+					[]*exprpb.Type{listType, listType},
+					decls.Bool,
+					[]string{"A"},
+				),
+			),
+
+			decls.NewFunction("has_intersection",
+				decls.NewParameterizedOverload(
+					hasIntersectionFn,
+					[]*exprpb.Type{listType, listType},
+					decls.Bool,
+					[]string{"A"})),
+
+			decls.NewFunction("intersect",
+				decls.NewParameterizedOverload(
+					intersectFn,
+					[]*exprpb.Type{listType, listType},
+					listType,
+					[]string{"A"})),
 		),
 	}
 }
@@ -67,8 +96,97 @@ func (clib cerbosLib) ProgramOptions() []cel.ProgramOption {
 				Operator: fmt.Sprintf("%s_timestamp", timeSinceFn),
 				Unary:    callInTimestampOutDuration(clib.timeSinceFunc),
 			},
+
+			&functions.Overload{
+				Operator: hasIntersectionFn,
+				Binary:   hasIntersection,
+			},
+
+			&functions.Overload{
+				Operator: intersectFn,
+				Binary:   intersect,
+			},
+
+			&functions.Overload{
+				Operator: isSubsetFn,
+				Binary:   isSubset,
+			},
 		),
 	}
+}
+
+func isSubset(lhs, rhs ref.Val) ref.Val {
+	a, ok := lhs.(traits.Lister)
+	if !ok {
+		return types.ValOrErr(a, "no such overload")
+	}
+
+	b, ok := rhs.(traits.Lister)
+	if !ok {
+		return types.ValOrErr(b, "no such overload")
+	}
+
+	for ai := a.Iterator(); ai.HasNext() == types.True; {
+		va := ai.Next()
+		found := false
+		for bi := b.Iterator(); !found && bi.HasNext() == types.True; {
+			vb := bi.Next()
+			if va.Equal(vb) == types.True {
+				found = true
+			}
+		}
+		if !found {
+			return types.False
+		}
+	}
+
+	return types.True
+}
+
+func hasIntersection(lhs, rhs ref.Val) ref.Val {
+	a, ok := lhs.(traits.Lister)
+	if !ok {
+		return types.ValOrErr(a, "no such overload")
+	}
+
+	b, ok := rhs.(traits.Lister)
+	if !ok {
+		return types.ValOrErr(b, "no such overload")
+	}
+	result := types.False
+	for ai := a.Iterator(); ai.HasNext() == types.True; {
+		va := ai.Next()
+		for bi := b.Iterator(); bi.HasNext() == types.True; {
+			vb := bi.Next()
+			if va.Equal(vb) == types.True {
+				return types.True
+			}
+		}
+	}
+	return result
+}
+
+func intersect(lhs, rhs ref.Val) ref.Val {
+	a, ok := lhs.(traits.Lister)
+	if !ok {
+		return types.ValOrErr(a, "no such overload")
+	}
+
+	b, ok := rhs.(traits.Lister)
+	if !ok {
+		return types.ValOrErr(b, "no such overload")
+	}
+	items := make([]ref.Val, 0)
+	for ai := a.Iterator(); ai.HasNext() == types.True; {
+		va := ai.Next()
+		for bi := b.Iterator(); bi.HasNext() == types.True; {
+			vb := bi.Next()
+			if va.Equal(vb) == types.True {
+				items = append(items, va)
+			}
+		}
+	}
+	return types.NewRefValList(types.DefaultTypeAdapter, items)
 }
 
 func (clib cerbosLib) inIPAddrRangeFunc(ipAddrVal, cidrVal string) (bool, error) {
