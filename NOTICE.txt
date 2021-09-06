@@ -4115,11 +4115,11 @@ SOFTWARE.
 
 --------------------------------------------------------------------------------
 Module  : github.com/tidwall/sjson
-Version : v1.1.7
-Time    : 2021-06-17T23:13:56Z
+Version : v1.2.1
+Time    : 2021-09-04T15:00:45Z
 Licence : MIT
 
-Contents of probable licence file $GOMODCACHE/github.com/tidwall/sjson@v1.1.7/LICENSE:
+Contents of probable licence file $GOMODCACHE/github.com/tidwall/sjson@v1.2.1/LICENSE:
 
 The MIT License (MIT)
 
@@ -15154,11 +15154,11 @@ SOFTWARE.
 
 --------------------------------------------------------------------------------
 Module  : github.com/tidwall/gjson
-Version : v1.8.0
-Time    : 2021-05-14T15:53:58Z
+Version : v1.9.0
+Time    : 2021-09-01T14:25:06Z
 Licence : MIT
 
-Contents of probable licence file $GOMODCACHE/github.com/tidwall/gjson@v1.8.0/LICENSE:
+Contents of probable licence file $GOMODCACHE/github.com/tidwall/gjson@v1.9.0/LICENSE:
 
 The MIT License (MIT)
 
@@ -15214,11 +15214,11 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 --------------------------------------------------------------------------------
 Module  : github.com/tidwall/pretty
-Version : v1.1.0
-Time    : 2021-02-23T22:17:51Z
+Version : v1.2.0
+Time    : 2021-06-07T21:17:57Z
 Licence : MIT
 
-Contents of probable licence file $GOMODCACHE/github.com/tidwall/pretty@v1.1.0/LICENSE:
+Contents of probable licence file $GOMODCACHE/github.com/tidwall/pretty@v1.2.0/LICENSE:
 
 The MIT License (MIT)
 
