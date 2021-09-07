@@ -176,7 +176,8 @@ func intersect(lhs, rhs ref.Val) ref.Val {
 	if !ok {
 		return types.ValOrErr(b, "no such overload")
 	}
-	items := make([]ref.Val, 0)
+
+	var items []ref.Val
 	for ai := a.Iterator(); ai.HasNext() == types.True; {
 		va := ai.Next()
 		for bi := b.Iterator(); bi.HasNext() == types.True; {
