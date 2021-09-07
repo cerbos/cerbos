@@ -7,9 +7,6 @@ include hack/dev/dev.mk
 VERSION := $(shell git describe --abbrev=0)
 COMMIT_SHA := $(shell git rev-parse HEAD)
 BUILD_DATE := $(shell date -u +"%Y-%m-%dT%H:%M:%SZ")
-LDFLAGSCTL += -X "github.com/cerbos/cerbos/cmd/cerbosctl/internal.Version=$(VERSION)"
-LDFLAGSCTL += -X "github.com/cerbos/cerbos/cmd/cerbosctl/internal.Commit=$(COMMIT_SHA)"
-LDFLAGSCTL += -X "github.com/cerbos/cerbos/cmd/cerbosctl/internal.BuildDate=$(BUILD_DATE)"
 
 LDFLAGS += -X "github.com/cerbos/cerbos/internal/util.Version=$(VERSION)"
 LDFLAGS += -X "github.com/cerbos/cerbos/internal/util.Commit=$(COMMIT_SHA)"
@@ -118,7 +115,7 @@ install-cerbosctl:
 	@ if [ -x "$$(command -v cerbosctl)" ]; then \
 		echo "cerbosctl is already installed, do you want to re-install it? [y/N] " && read ans; \
 			if [ $$ans = y ] || [ $$ans = Y ]  ; then \
-				go install -ldflags '$(LDFLAGSCTL)' ./cmd/cerbosctl; \
+				go install -ldflags '$(LDFLAGS)' ./cmd/cerbosctl; \
 			else \
 				echo "aborting install"; \
 			exit -1; \

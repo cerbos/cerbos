@@ -29,7 +29,7 @@ builds:
     flags:
       - -trimpath
     ldflags:
-      - -s -w -X github.com/cerbos/cerbos/cmd/cerbosctl/internal.Version={{.Version}} -X github.com/cerbos/cerbos/cmd/cerbosctl/internal.commit={{.Commit}} -X github.com/cerbos/cerbos/cmd/cerbosctl/internal.BuildDate={{.Date}}  
+      - -s -w -X github.com/cerbos/cerbos/internal/util.Version={{.Version}} -X github.com/cerbos/cerbos/internal/util.commit={{.Commit}} -X github.com/cerbos/cerbos/internal/util.BuildDate={{.Date}}  
 archives:
   - replacements:
       darwin: Darwin

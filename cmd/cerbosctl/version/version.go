@@ -11,7 +11,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/cerbos/cerbos/client"
-	"github.com/cerbos/cerbos/cmd/cerbosctl/internal"
+	"github.com/cerbos/cerbos/internal/util"
 )
 
 type withClient func(fn func(c client.Client, cmd *cobra.Command, args []string) error) func(cmd *cobra.Command, args []string) error
@@ -31,7 +31,7 @@ func runVersionCmdF(c client.Client, _ *cobra.Command, _ []string) error {
 		return err
 	}
 
-	fmt.Fprintf(os.Stdout, "Client version %s; commit sha: %s, build date: %s\n", internal.Version, internal.Commit, internal.BuildDate)
+	fmt.Fprintf(os.Stdout, "Client version %s; commit sha: %s, build date: %s\n", util.Version, util.Commit, util.BuildDate)
 	fmt.Fprintf(os.Stdout, "Server version %s; commit sha: %s, build date: %s\n", r.Version, r.Commit, r.BuildDate)
 
 	return nil
