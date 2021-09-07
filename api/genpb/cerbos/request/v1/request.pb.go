@@ -80,55 +80,55 @@ func (ListAuditLogEntriesRequest_Kind) EnumDescriptor() ([]byte, []int) {
 	return file_cerbos_request_v1_request_proto_rawDescGZIP(), []int{9, 0}
 }
 
-type ListPoliciesRequest_Kind int32
+type ListPoliciesRequest_PolicyKind int32
 
 const (
-	ListPoliciesRequest_KIND_UNSPECIFIED ListPoliciesRequest_Kind = 0
-	ListPoliciesRequest_KIND_RESOURCE    ListPoliciesRequest_Kind = 1
-	ListPoliciesRequest_KIND_PRINCIPAL   ListPoliciesRequest_Kind = 2
-	ListPoliciesRequest_KIND_DERIVED     ListPoliciesRequest_Kind = 3
+	ListPoliciesRequest_POLICY_KIND_UNSPECIFIED   ListPoliciesRequest_PolicyKind = 0
+	ListPoliciesRequest_POLICY_KIND_RESOURCE      ListPoliciesRequest_PolicyKind = 1
+	ListPoliciesRequest_POLICY_KIND_PRINCIPAL     ListPoliciesRequest_PolicyKind = 2
+	ListPoliciesRequest_POLICY_KIND_DERIVED_ROLES ListPoliciesRequest_PolicyKind = 3
 )
 
-// Enum value maps for ListPoliciesRequest_Kind.
+// Enum value maps for ListPoliciesRequest_PolicyKind.
 var (
-	ListPoliciesRequest_Kind_name = map[int32]string{
-		0: "KIND_UNSPECIFIED",
-		1: "KIND_RESOURCE",
-		2: "KIND_PRINCIPAL",
-		3: "KIND_DERIVED",
+	ListPoliciesRequest_PolicyKind_name = map[int32]string{
+		0: "POLICY_KIND_UNSPECIFIED",
+		1: "POLICY_KIND_RESOURCE",
+		2: "POLICY_KIND_PRINCIPAL",
+		3: "POLICY_KIND_DERIVED_ROLES",
 	}
-	ListPoliciesRequest_Kind_value = map[string]int32{
-		"KIND_UNSPECIFIED": 0,
-		"KIND_RESOURCE":    1,
-		"KIND_PRINCIPAL":   2,
-		"KIND_DERIVED":     3,
+	ListPoliciesRequest_PolicyKind_value = map[string]int32{
+		"POLICY_KIND_UNSPECIFIED":   0,
+		"POLICY_KIND_RESOURCE":      1,
+		"POLICY_KIND_PRINCIPAL":     2,
+		"POLICY_KIND_DERIVED_ROLES": 3,
 	}
 )
 
-func (x ListPoliciesRequest_Kind) Enum() *ListPoliciesRequest_Kind {
-	p := new(ListPoliciesRequest_Kind)
+func (x ListPoliciesRequest_PolicyKind) Enum() *ListPoliciesRequest_PolicyKind {
+	p := new(ListPoliciesRequest_PolicyKind)
 	*p = x
 	return p
 }
 
-func (x ListPoliciesRequest_Kind) String() string {
+func (x ListPoliciesRequest_PolicyKind) String() string {
 	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
 }
 
-func (ListPoliciesRequest_Kind) Descriptor() protoreflect.EnumDescriptor {
+func (ListPoliciesRequest_PolicyKind) Descriptor() protoreflect.EnumDescriptor {
 	return file_cerbos_request_v1_request_proto_enumTypes[1].Descriptor()
 }
 
-func (ListPoliciesRequest_Kind) Type() protoreflect.EnumType {
+func (ListPoliciesRequest_PolicyKind) Type() protoreflect.EnumType {
 	return &file_cerbos_request_v1_request_proto_enumTypes[1]
 }
 
-func (x ListPoliciesRequest_Kind) Number() protoreflect.EnumNumber {
+func (x ListPoliciesRequest_PolicyKind) Number() protoreflect.EnumNumber {
 	return protoreflect.EnumNumber(x)
 }
 
-// Deprecated: Use ListPoliciesRequest_Kind.Descriptor instead.
-func (ListPoliciesRequest_Kind) EnumDescriptor() ([]byte, []int) {
+// Deprecated: Use ListPoliciesRequest_PolicyKind.Descriptor instead.
+func (ListPoliciesRequest_PolicyKind) EnumDescriptor() ([]byte, []int) {
 	return file_cerbos_request_v1_request_proto_rawDescGZIP(), []int{11, 0}
 }
 
@@ -875,13 +875,7 @@ type ListPoliciesRequest struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Kind        ListPoliciesRequest_Kind `protobuf:"varint,1,opt,name=kind,proto3,enum=cerbos.request.v1.ListPoliciesRequest_Kind" json:"kind,omitempty"`
-	Resource    string                   `protobuf:"bytes,2,opt,name=resource,proto3" json:"resource,omitempty"`
-	Principal   string                   `protobuf:"bytes,3,opt,name=principal,proto3" json:"principal,omitempty"`
-	Name        string                   `protobuf:"bytes,4,opt,name=name,proto3" json:"name,omitempty"`
-	Version     string                   `protobuf:"bytes,5,opt,name=version,proto3" json:"version,omitempty"`
-	Description string                   `protobuf:"bytes,6,opt,name=description,proto3" json:"description,omitempty"`
-	Disabled    bool                     `protobuf:"varint,7,opt,name=disabled,proto3" json:"disabled,omitempty"`
+	Filters []*ListPoliciesRequest_Filter `protobuf:"bytes,1,rep,name=filters,proto3" json:"filters,omitempty"`
 }
 
 func (x *ListPoliciesRequest) Reset() {
@@ -916,53 +910,11 @@ func (*ListPoliciesRequest) Descriptor() ([]byte, []int) {
 	return file_cerbos_request_v1_request_proto_rawDescGZIP(), []int{11}
 }
 
-func (x *ListPoliciesRequest) GetKind() ListPoliciesRequest_Kind {
+func (x *ListPoliciesRequest) GetFilters() []*ListPoliciesRequest_Filter {
 	if x != nil {
-		return x.Kind
+		return x.Filters
 	}
-	return ListPoliciesRequest_KIND_UNSPECIFIED
-}
-
-func (x *ListPoliciesRequest) GetResource() string {
-	if x != nil {
-		return x.Resource
-	}
-	return ""
-}
-
-func (x *ListPoliciesRequest) GetPrincipal() string {
-	if x != nil {
-		return x.Principal
-	}
-	return ""
-}
-
-func (x *ListPoliciesRequest) GetName() string {
-	if x != nil {
-		return x.Name
-	}
-	return ""
-}
-
-func (x *ListPoliciesRequest) GetVersion() string {
-	if x != nil {
-		return x.Version
-	}
-	return ""
-}
-
-func (x *ListPoliciesRequest) GetDescription() string {
-	if x != nil {
-		return x.Description
-	}
-	return ""
-}
-
-func (x *ListPoliciesRequest) GetDisabled() bool {
-	if x != nil {
-		return x.Disabled
-	}
-	return false
+	return nil
 }
 
 type CheckResourceBatchRequest_BatchEntry struct {
@@ -1074,6 +1026,208 @@ func (x *ListAuditLogEntriesRequest_TimeRange) GetEnd() *timestamppb.Timestamp {
 	}
 	return nil
 }
+
+type ListPoliciesRequest_IDFilter struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	// Types that are assignable to Id:
+	//	*ListPoliciesRequest_IDFilter_ResourceName
+	//	*ListPoliciesRequest_IDFilter_PrincipalName
+	//	*ListPoliciesRequest_IDFilter_DerivedRolesName
+	Id isListPoliciesRequest_IDFilter_Id `protobuf_oneof:"id"`
+}
+
+func (x *ListPoliciesRequest_IDFilter) Reset() {
+	*x = ListPoliciesRequest_IDFilter{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_cerbos_request_v1_request_proto_msgTypes[16]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *ListPoliciesRequest_IDFilter) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListPoliciesRequest_IDFilter) ProtoMessage() {}
+
+func (x *ListPoliciesRequest_IDFilter) ProtoReflect() protoreflect.Message {
+	mi := &file_cerbos_request_v1_request_proto_msgTypes[16]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListPoliciesRequest_IDFilter.ProtoReflect.Descriptor instead.
+func (*ListPoliciesRequest_IDFilter) Descriptor() ([]byte, []int) {
+	return file_cerbos_request_v1_request_proto_rawDescGZIP(), []int{11, 0}
+}
+
+func (m *ListPoliciesRequest_IDFilter) GetId() isListPoliciesRequest_IDFilter_Id {
+	if m != nil {
+		return m.Id
+	}
+	return nil
+}
+
+func (x *ListPoliciesRequest_IDFilter) GetResourceName() string {
+	if x, ok := x.GetId().(*ListPoliciesRequest_IDFilter_ResourceName); ok {
+		return x.ResourceName
+	}
+	return ""
+}
+
+func (x *ListPoliciesRequest_IDFilter) GetPrincipalName() string {
+	if x, ok := x.GetId().(*ListPoliciesRequest_IDFilter_PrincipalName); ok {
+		return x.PrincipalName
+	}
+	return ""
+}
+
+func (x *ListPoliciesRequest_IDFilter) GetDerivedRolesName() string {
+	if x, ok := x.GetId().(*ListPoliciesRequest_IDFilter_DerivedRolesName); ok {
+		return x.DerivedRolesName
+	}
+	return ""
+}
+
+type isListPoliciesRequest_IDFilter_Id interface {
+	isListPoliciesRequest_IDFilter_Id()
+}
+
+type ListPoliciesRequest_IDFilter_ResourceName struct {
+	ResourceName string `protobuf:"bytes,1,opt,name=resource_name,json=resourceName,proto3,oneof"`
+}
+
+type ListPoliciesRequest_IDFilter_PrincipalName struct {
+	PrincipalName string `protobuf:"bytes,2,opt,name=principal_name,json=principalName,proto3,oneof"`
+}
+
+type ListPoliciesRequest_IDFilter_DerivedRolesName struct {
+	DerivedRolesName string `protobuf:"bytes,3,opt,name=derived_roles_name,json=derivedRolesName,proto3,oneof"`
+}
+
+func (*ListPoliciesRequest_IDFilter_ResourceName) isListPoliciesRequest_IDFilter_Id() {}
+
+func (*ListPoliciesRequest_IDFilter_PrincipalName) isListPoliciesRequest_IDFilter_Id() {}
+
+func (*ListPoliciesRequest_IDFilter_DerivedRolesName) isListPoliciesRequest_IDFilter_Id() {}
+
+type ListPoliciesRequest_Filter struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	// Types that are assignable to Filter:
+	//	*ListPoliciesRequest_Filter_Kind
+	//	*ListPoliciesRequest_Filter_Id
+	//	*ListPoliciesRequest_Filter_Version
+	//	*ListPoliciesRequest_Filter_Description
+	Filter isListPoliciesRequest_Filter_Filter `protobuf_oneof:"filter"`
+}
+
+func (x *ListPoliciesRequest_Filter) Reset() {
+	*x = ListPoliciesRequest_Filter{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_cerbos_request_v1_request_proto_msgTypes[17]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *ListPoliciesRequest_Filter) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListPoliciesRequest_Filter) ProtoMessage() {}
+
+func (x *ListPoliciesRequest_Filter) ProtoReflect() protoreflect.Message {
+	mi := &file_cerbos_request_v1_request_proto_msgTypes[17]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListPoliciesRequest_Filter.ProtoReflect.Descriptor instead.
+func (*ListPoliciesRequest_Filter) Descriptor() ([]byte, []int) {
+	return file_cerbos_request_v1_request_proto_rawDescGZIP(), []int{11, 1}
+}
+
+func (m *ListPoliciesRequest_Filter) GetFilter() isListPoliciesRequest_Filter_Filter {
+	if m != nil {
+		return m.Filter
+	}
+	return nil
+}
+
+func (x *ListPoliciesRequest_Filter) GetKind() ListPoliciesRequest_PolicyKind {
+	if x, ok := x.GetFilter().(*ListPoliciesRequest_Filter_Kind); ok {
+		return x.Kind
+	}
+	return ListPoliciesRequest_POLICY_KIND_UNSPECIFIED
+}
+
+func (x *ListPoliciesRequest_Filter) GetId() *ListPoliciesRequest_IDFilter {
+	if x, ok := x.GetFilter().(*ListPoliciesRequest_Filter_Id); ok {
+		return x.Id
+	}
+	return nil
+}
+
+func (x *ListPoliciesRequest_Filter) GetVersion() string {
+	if x, ok := x.GetFilter().(*ListPoliciesRequest_Filter_Version); ok {
+		return x.Version
+	}
+	return ""
+}
+
+func (x *ListPoliciesRequest_Filter) GetDescription() string {
+	if x, ok := x.GetFilter().(*ListPoliciesRequest_Filter_Description); ok {
+		return x.Description
+	}
+	return ""
+}
+
+type isListPoliciesRequest_Filter_Filter interface {
+	isListPoliciesRequest_Filter_Filter()
+}
+
+type ListPoliciesRequest_Filter_Kind struct {
+	Kind ListPoliciesRequest_PolicyKind `protobuf:"varint,1,opt,name=kind,proto3,enum=cerbos.request.v1.ListPoliciesRequest_PolicyKind,oneof"`
+}
+
+type ListPoliciesRequest_Filter_Id struct {
+	Id *ListPoliciesRequest_IDFilter `protobuf:"bytes,2,opt,name=id,proto3,oneof"`
+}
+
+type ListPoliciesRequest_Filter_Version struct {
+	Version string `protobuf:"bytes,3,opt,name=version,proto3,oneof"`
+}
+
+type ListPoliciesRequest_Filter_Description struct {
+	Description string `protobuf:"bytes,4,opt,name=description,proto3,oneof"`
+}
+
+func (*ListPoliciesRequest_Filter_Kind) isListPoliciesRequest_Filter_Filter() {}
+
+func (*ListPoliciesRequest_Filter_Id) isListPoliciesRequest_Filter_Filter() {}
+
+func (*ListPoliciesRequest_Filter_Version) isListPoliciesRequest_Filter_Filter() {}
+
+func (*ListPoliciesRequest_Filter_Description) isListPoliciesRequest_Filter_Filter() {}
 
 var File_cerbos_request_v1_request_proto protoreflect.FileDescriptor
 
@@ -1414,44 +1568,60 @@ var file_cerbos_request_v1_request_proto_rawDesc = []byte{
 	0x2f, 0x0a, 0x11, 0x53, 0x65, 0x72, 0x76, 0x65, 0x72, 0x49, 0x6e, 0x66, 0x6f, 0x52, 0x65, 0x71,
 	0x75, 0x65, 0x73, 0x74, 0x3a, 0x1a, 0x92, 0x41, 0x17, 0x0a, 0x15, 0x32, 0x13, 0x53, 0x65, 0x72,
 	0x76, 0x65, 0x72, 0x20, 0x69, 0x6e, 0x66, 0x6f, 0x20, 0x72, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74,
-	0x22, 0xd8, 0x03, 0x0a, 0x13, 0x4c, 0x69, 0x73, 0x74, 0x50, 0x6f, 0x6c, 0x69, 0x63, 0x69, 0x65,
-	0x73, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0xa5, 0x01, 0x0a, 0x04, 0x6b, 0x69, 0x6e,
-	0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0e, 0x32, 0x2b, 0x2e, 0x63, 0x65, 0x72, 0x62, 0x6f, 0x73,
-	0x2e, 0x72, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x2e, 0x76, 0x31, 0x2e, 0x4c, 0x69, 0x73, 0x74,
-	0x50, 0x6f, 0x6c, 0x69, 0x63, 0x69, 0x65, 0x73, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x2e,
-	0x4b, 0x69, 0x6e, 0x64, 0x42, 0x64, 0x92, 0x41, 0x53, 0x32, 0x0e, 0x4b, 0x69, 0x6e, 0x64, 0x20,
-	0x6f, 0x66, 0x20, 0x70, 0x6f, 0x6c, 0x69, 0x63, 0x79, 0xf2, 0x02, 0x10, 0x4b, 0x49, 0x4e, 0x44,
-	0x5f, 0x55, 0x4e, 0x53, 0x50, 0x45, 0x43, 0x49, 0x46, 0x49, 0x45, 0x44, 0xf2, 0x02, 0x0d, 0x4b,
-	0x49, 0x4e, 0x44, 0x5f, 0x52, 0x45, 0x53, 0x4f, 0x55, 0x52, 0x43, 0x45, 0xf2, 0x02, 0x0e, 0x4b,
-	0x49, 0x4e, 0x44, 0x5f, 0x50, 0x52, 0x49, 0x4e, 0x43, 0x49, 0x50, 0x41, 0x4c, 0xf2, 0x02, 0x0c,
-	0x4b, 0x49, 0x4e, 0x44, 0x5f, 0x44, 0x45, 0x52, 0x49, 0x56, 0x45, 0x44, 0xfa, 0x42, 0x0b, 0x82,
-	0x01, 0x08, 0x18, 0x00, 0x18, 0x01, 0x18, 0x02, 0x18, 0x03, 0x52, 0x04, 0x6b, 0x69, 0x6e, 0x64,
-	0x12, 0x1a, 0x0a, 0x08, 0x72, 0x65, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x18, 0x02, 0x20, 0x01,
-	0x28, 0x09, 0x52, 0x08, 0x72, 0x65, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x12, 0x1c, 0x0a, 0x09,
-	0x70, 0x72, 0x69, 0x6e, 0x63, 0x69, 0x70, 0x61, 0x6c, 0x18, 0x03, 0x20, 0x01, 0x28, 0x09, 0x52,
-	0x09, 0x70, 0x72, 0x69, 0x6e, 0x63, 0x69, 0x70, 0x61, 0x6c, 0x12, 0x12, 0x0a, 0x04, 0x6e, 0x61,
-	0x6d, 0x65, 0x18, 0x04, 0x20, 0x01, 0x28, 0x09, 0x52, 0x04, 0x6e, 0x61, 0x6d, 0x65, 0x12, 0x18,
-	0x0a, 0x07, 0x76, 0x65, 0x72, 0x73, 0x69, 0x6f, 0x6e, 0x18, 0x05, 0x20, 0x01, 0x28, 0x09, 0x52,
-	0x07, 0x76, 0x65, 0x72, 0x73, 0x69, 0x6f, 0x6e, 0x12, 0x20, 0x0a, 0x0b, 0x64, 0x65, 0x73, 0x63,
-	0x72, 0x69, 0x70, 0x74, 0x69, 0x6f, 0x6e, 0x18, 0x06, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0b, 0x64,
-	0x65, 0x73, 0x63, 0x72, 0x69, 0x70, 0x74, 0x69, 0x6f, 0x6e, 0x12, 0x1a, 0x0a, 0x08, 0x64, 0x69,
-	0x73, 0x61, 0x62, 0x6c, 0x65, 0x64, 0x18, 0x07, 0x20, 0x01, 0x28, 0x08, 0x52, 0x08, 0x64, 0x69,
-	0x73, 0x61, 0x62, 0x6c, 0x65, 0x64, 0x22, 0x55, 0x0a, 0x04, 0x4b, 0x69, 0x6e, 0x64, 0x12, 0x14,
-	0x0a, 0x10, 0x4b, 0x49, 0x4e, 0x44, 0x5f, 0x55, 0x4e, 0x53, 0x50, 0x45, 0x43, 0x49, 0x46, 0x49,
-	0x45, 0x44, 0x10, 0x00, 0x12, 0x11, 0x0a, 0x0d, 0x4b, 0x49, 0x4e, 0x44, 0x5f, 0x52, 0x45, 0x53,
-	0x4f, 0x55, 0x52, 0x43, 0x45, 0x10, 0x01, 0x12, 0x12, 0x0a, 0x0e, 0x4b, 0x49, 0x4e, 0x44, 0x5f,
-	0x50, 0x52, 0x49, 0x4e, 0x43, 0x49, 0x50, 0x41, 0x4c, 0x10, 0x02, 0x12, 0x10, 0x0a, 0x0c, 0x4b,
-	0x49, 0x4e, 0x44, 0x5f, 0x44, 0x45, 0x52, 0x49, 0x56, 0x45, 0x44, 0x10, 0x03, 0x3a, 0x1c, 0x92,
-	0x41, 0x19, 0x0a, 0x17, 0x32, 0x15, 0x4c, 0x69, 0x73, 0x74, 0x20, 0x70, 0x6f, 0x6c, 0x69, 0x63,
-	0x69, 0x65, 0x73, 0x20, 0x72, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x42, 0x73, 0x0a, 0x19, 0x64,
-	0x65, 0x76, 0x2e, 0x63, 0x65, 0x72, 0x62, 0x6f, 0x73, 0x2e, 0x61, 0x70, 0x69, 0x2e, 0x76, 0x31,
-	0x2e, 0x72, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x5a, 0x3e, 0x67, 0x69, 0x74, 0x68, 0x75, 0x62,
-	0x2e, 0x63, 0x6f, 0x6d, 0x2f, 0x63, 0x65, 0x72, 0x62, 0x6f, 0x73, 0x2f, 0x63, 0x65, 0x72, 0x62,
-	0x6f, 0x73, 0x2f, 0x61, 0x70, 0x69, 0x2f, 0x67, 0x65, 0x6e, 0x70, 0x62, 0x2f, 0x63, 0x65, 0x72,
-	0x62, 0x6f, 0x73, 0x2f, 0x72, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x2f, 0x76, 0x31, 0x3b, 0x72,
-	0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x76, 0x31, 0xaa, 0x02, 0x15, 0x43, 0x65, 0x72, 0x62, 0x6f,
-	0x73, 0x2e, 0x41, 0x70, 0x69, 0x2e, 0x56, 0x31, 0x2e, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74,
-	0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
+	0x22, 0xd6, 0x05, 0x0a, 0x13, 0x4c, 0x69, 0x73, 0x74, 0x50, 0x6f, 0x6c, 0x69, 0x63, 0x69, 0x65,
+	0x73, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x47, 0x0a, 0x07, 0x66, 0x69, 0x6c, 0x74,
+	0x65, 0x72, 0x73, 0x18, 0x01, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x2d, 0x2e, 0x63, 0x65, 0x72, 0x62,
+	0x6f, 0x73, 0x2e, 0x72, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x2e, 0x76, 0x31, 0x2e, 0x4c, 0x69,
+	0x73, 0x74, 0x50, 0x6f, 0x6c, 0x69, 0x63, 0x69, 0x65, 0x73, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73,
+	0x74, 0x2e, 0x46, 0x69, 0x6c, 0x74, 0x65, 0x72, 0x52, 0x07, 0x66, 0x69, 0x6c, 0x74, 0x65, 0x72,
+	0x73, 0x1a, 0x90, 0x01, 0x0a, 0x08, 0x49, 0x44, 0x46, 0x69, 0x6c, 0x74, 0x65, 0x72, 0x12, 0x25,
+	0x0a, 0x0d, 0x72, 0x65, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x5f, 0x6e, 0x61, 0x6d, 0x65, 0x18,
+	0x01, 0x20, 0x01, 0x28, 0x09, 0x48, 0x00, 0x52, 0x0c, 0x72, 0x65, 0x73, 0x6f, 0x75, 0x72, 0x63,
+	0x65, 0x4e, 0x61, 0x6d, 0x65, 0x12, 0x27, 0x0a, 0x0e, 0x70, 0x72, 0x69, 0x6e, 0x63, 0x69, 0x70,
+	0x61, 0x6c, 0x5f, 0x6e, 0x61, 0x6d, 0x65, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x48, 0x00, 0x52,
+	0x0d, 0x70, 0x72, 0x69, 0x6e, 0x63, 0x69, 0x70, 0x61, 0x6c, 0x4e, 0x61, 0x6d, 0x65, 0x12, 0x2e,
+	0x0a, 0x12, 0x64, 0x65, 0x72, 0x69, 0x76, 0x65, 0x64, 0x5f, 0x72, 0x6f, 0x6c, 0x65, 0x73, 0x5f,
+	0x6e, 0x61, 0x6d, 0x65, 0x18, 0x03, 0x20, 0x01, 0x28, 0x09, 0x48, 0x00, 0x52, 0x10, 0x64, 0x65,
+	0x72, 0x69, 0x76, 0x65, 0x64, 0x52, 0x6f, 0x6c, 0x65, 0x73, 0x4e, 0x61, 0x6d, 0x65, 0x42, 0x04,
+	0x0a, 0x02, 0x69, 0x64, 0x1a, 0xc5, 0x02, 0x0a, 0x06, 0x46, 0x69, 0x6c, 0x74, 0x65, 0x72, 0x12,
+	0xad, 0x01, 0x0a, 0x04, 0x6b, 0x69, 0x6e, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0e, 0x32, 0x31,
+	0x2e, 0x63, 0x65, 0x72, 0x62, 0x6f, 0x73, 0x2e, 0x72, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x2e,
+	0x76, 0x31, 0x2e, 0x4c, 0x69, 0x73, 0x74, 0x50, 0x6f, 0x6c, 0x69, 0x63, 0x69, 0x65, 0x73, 0x52,
+	0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x2e, 0x50, 0x6f, 0x6c, 0x69, 0x63, 0x79, 0x4b, 0x69, 0x6e,
+	0x64, 0x42, 0x64, 0x92, 0x41, 0x53, 0x32, 0x0e, 0x4b, 0x69, 0x6e, 0x64, 0x20, 0x6f, 0x66, 0x20,
+	0x70, 0x6f, 0x6c, 0x69, 0x63, 0x79, 0xf2, 0x02, 0x10, 0x4b, 0x49, 0x4e, 0x44, 0x5f, 0x55, 0x4e,
+	0x53, 0x50, 0x45, 0x43, 0x49, 0x46, 0x49, 0x45, 0x44, 0xf2, 0x02, 0x0d, 0x4b, 0x49, 0x4e, 0x44,
+	0x5f, 0x52, 0x45, 0x53, 0x4f, 0x55, 0x52, 0x43, 0x45, 0xf2, 0x02, 0x0e, 0x4b, 0x49, 0x4e, 0x44,
+	0x5f, 0x50, 0x52, 0x49, 0x4e, 0x43, 0x49, 0x50, 0x41, 0x4c, 0xf2, 0x02, 0x0c, 0x4b, 0x49, 0x4e,
+	0x44, 0x5f, 0x44, 0x45, 0x52, 0x49, 0x56, 0x45, 0x44, 0xfa, 0x42, 0x0b, 0x82, 0x01, 0x08, 0x18,
+	0x00, 0x18, 0x01, 0x18, 0x02, 0x18, 0x03, 0x48, 0x00, 0x52, 0x04, 0x6b, 0x69, 0x6e, 0x64, 0x12,
+	0x41, 0x0a, 0x02, 0x69, 0x64, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x2f, 0x2e, 0x63, 0x65,
+	0x72, 0x62, 0x6f, 0x73, 0x2e, 0x72, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x2e, 0x76, 0x31, 0x2e,
+	0x4c, 0x69, 0x73, 0x74, 0x50, 0x6f, 0x6c, 0x69, 0x63, 0x69, 0x65, 0x73, 0x52, 0x65, 0x71, 0x75,
+	0x65, 0x73, 0x74, 0x2e, 0x49, 0x44, 0x46, 0x69, 0x6c, 0x74, 0x65, 0x72, 0x48, 0x00, 0x52, 0x02,
+	0x69, 0x64, 0x12, 0x1a, 0x0a, 0x07, 0x76, 0x65, 0x72, 0x73, 0x69, 0x6f, 0x6e, 0x18, 0x03, 0x20,
+	0x01, 0x28, 0x09, 0x48, 0x00, 0x52, 0x07, 0x76, 0x65, 0x72, 0x73, 0x69, 0x6f, 0x6e, 0x12, 0x22,
+	0x0a, 0x0b, 0x64, 0x65, 0x73, 0x63, 0x72, 0x69, 0x70, 0x74, 0x69, 0x6f, 0x6e, 0x18, 0x04, 0x20,
+	0x01, 0x28, 0x09, 0x48, 0x00, 0x52, 0x0b, 0x64, 0x65, 0x73, 0x63, 0x72, 0x69, 0x70, 0x74, 0x69,
+	0x6f, 0x6e, 0x42, 0x08, 0x0a, 0x06, 0x66, 0x69, 0x6c, 0x74, 0x65, 0x72, 0x22, 0x7d, 0x0a, 0x0a,
+	0x50, 0x6f, 0x6c, 0x69, 0x63, 0x79, 0x4b, 0x69, 0x6e, 0x64, 0x12, 0x1b, 0x0a, 0x17, 0x50, 0x4f,
+	0x4c, 0x49, 0x43, 0x59, 0x5f, 0x4b, 0x49, 0x4e, 0x44, 0x5f, 0x55, 0x4e, 0x53, 0x50, 0x45, 0x43,
+	0x49, 0x46, 0x49, 0x45, 0x44, 0x10, 0x00, 0x12, 0x18, 0x0a, 0x14, 0x50, 0x4f, 0x4c, 0x49, 0x43,
+	0x59, 0x5f, 0x4b, 0x49, 0x4e, 0x44, 0x5f, 0x52, 0x45, 0x53, 0x4f, 0x55, 0x52, 0x43, 0x45, 0x10,
+	0x01, 0x12, 0x19, 0x0a, 0x15, 0x50, 0x4f, 0x4c, 0x49, 0x43, 0x59, 0x5f, 0x4b, 0x49, 0x4e, 0x44,
+	0x5f, 0x50, 0x52, 0x49, 0x4e, 0x43, 0x49, 0x50, 0x41, 0x4c, 0x10, 0x02, 0x12, 0x1d, 0x0a, 0x19,
+	0x50, 0x4f, 0x4c, 0x49, 0x43, 0x59, 0x5f, 0x4b, 0x49, 0x4e, 0x44, 0x5f, 0x44, 0x45, 0x52, 0x49,
+	0x56, 0x45, 0x44, 0x5f, 0x52, 0x4f, 0x4c, 0x45, 0x53, 0x10, 0x03, 0x3a, 0x1c, 0x92, 0x41, 0x19,
+	0x0a, 0x17, 0x32, 0x15, 0x4c, 0x69, 0x73, 0x74, 0x20, 0x70, 0x6f, 0x6c, 0x69, 0x63, 0x69, 0x65,
+	0x73, 0x20, 0x72, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x42, 0x73, 0x0a, 0x19, 0x64, 0x65, 0x76,
+	0x2e, 0x63, 0x65, 0x72, 0x62, 0x6f, 0x73, 0x2e, 0x61, 0x70, 0x69, 0x2e, 0x76, 0x31, 0x2e, 0x72,
+	0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x5a, 0x3e, 0x67, 0x69, 0x74, 0x68, 0x75, 0x62, 0x2e, 0x63,
+	0x6f, 0x6d, 0x2f, 0x63, 0x65, 0x72, 0x62, 0x6f, 0x73, 0x2f, 0x63, 0x65, 0x72, 0x62, 0x6f, 0x73,
+	0x2f, 0x61, 0x70, 0x69, 0x2f, 0x67, 0x65, 0x6e, 0x70, 0x62, 0x2f, 0x63, 0x65, 0x72, 0x62, 0x6f,
+	0x73, 0x2f, 0x72, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x2f, 0x76, 0x31, 0x3b, 0x72, 0x65, 0x71,
+	0x75, 0x65, 0x73, 0x74, 0x76, 0x31, 0xaa, 0x02, 0x15, 0x43, 0x65, 0x72, 0x62, 0x6f, 0x73, 0x2e,
+	0x41, 0x70, 0x69, 0x2e, 0x56, 0x31, 0x2e, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x62, 0x06,
+	0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
 }
 
 var (
@@ -1467,10 +1637,10 @@ func file_cerbos_request_v1_request_proto_rawDescGZIP() []byte {
 }
 
 var file_cerbos_request_v1_request_proto_enumTypes = make([]protoimpl.EnumInfo, 2)
-var file_cerbos_request_v1_request_proto_msgTypes = make([]protoimpl.MessageInfo, 16)
+var file_cerbos_request_v1_request_proto_msgTypes = make([]protoimpl.MessageInfo, 18)
 var file_cerbos_request_v1_request_proto_goTypes = []interface{}{
 	(ListAuditLogEntriesRequest_Kind)(0),         // 0: cerbos.request.v1.ListAuditLogEntriesRequest.Kind
-	(ListPoliciesRequest_Kind)(0),                // 1: cerbos.request.v1.ListPoliciesRequest.Kind
+	(ListPoliciesRequest_PolicyKind)(0),          // 1: cerbos.request.v1.ListPoliciesRequest.PolicyKind
 	(*CheckResourceSetRequest)(nil),              // 2: cerbos.request.v1.CheckResourceSetRequest
 	(*ResourceSet)(nil),                          // 3: cerbos.request.v1.ResourceSet
 	(*AttributesMap)(nil),                        // 4: cerbos.request.v1.AttributesMap
@@ -1487,42 +1657,46 @@ var file_cerbos_request_v1_request_proto_goTypes = []interface{}{
 	nil,                                          // 15: cerbos.request.v1.AttributesMap.AttrEntry
 	(*CheckResourceBatchRequest_BatchEntry)(nil), // 16: cerbos.request.v1.CheckResourceBatchRequest.BatchEntry
 	(*ListAuditLogEntriesRequest_TimeRange)(nil), // 17: cerbos.request.v1.ListAuditLogEntriesRequest.TimeRange
-	(*v1.Principal)(nil),                         // 18: cerbos.engine.v1.Principal
-	(*v1.Resource)(nil),                          // 19: cerbos.engine.v1.Resource
-	(*v11.Policy)(nil),                           // 20: cerbos.policy.v1.Policy
-	(*durationpb.Duration)(nil),                  // 21: google.protobuf.Duration
-	(*structpb.Value)(nil),                       // 22: google.protobuf.Value
-	(*timestamppb.Timestamp)(nil),                // 23: google.protobuf.Timestamp
+	(*ListPoliciesRequest_IDFilter)(nil),         // 18: cerbos.request.v1.ListPoliciesRequest.IDFilter
+	(*ListPoliciesRequest_Filter)(nil),           // 19: cerbos.request.v1.ListPoliciesRequest.Filter
+	(*v1.Principal)(nil),                         // 20: cerbos.engine.v1.Principal
+	(*v1.Resource)(nil),                          // 21: cerbos.engine.v1.Resource
+	(*v11.Policy)(nil),                           // 22: cerbos.policy.v1.Policy
+	(*durationpb.Duration)(nil),                  // 23: google.protobuf.Duration
+	(*structpb.Value)(nil),                       // 24: google.protobuf.Value
+	(*timestamppb.Timestamp)(nil),                // 25: google.protobuf.Timestamp
 }
 var file_cerbos_request_v1_request_proto_depIdxs = []int32{
-	18, // 0: cerbos.request.v1.CheckResourceSetRequest.principal:type_name -> cerbos.engine.v1.Principal
+	20, // 0: cerbos.request.v1.CheckResourceSetRequest.principal:type_name -> cerbos.engine.v1.Principal
 	3,  // 1: cerbos.request.v1.CheckResourceSetRequest.resource:type_name -> cerbos.request.v1.ResourceSet
 	14, // 2: cerbos.request.v1.ResourceSet.instances:type_name -> cerbos.request.v1.ResourceSet.InstancesEntry
 	15, // 3: cerbos.request.v1.AttributesMap.attr:type_name -> cerbos.request.v1.AttributesMap.AttrEntry
-	18, // 4: cerbos.request.v1.CheckResourceBatchRequest.principal:type_name -> cerbos.engine.v1.Principal
+	20, // 4: cerbos.request.v1.CheckResourceBatchRequest.principal:type_name -> cerbos.engine.v1.Principal
 	16, // 5: cerbos.request.v1.CheckResourceBatchRequest.resources:type_name -> cerbos.request.v1.CheckResourceBatchRequest.BatchEntry
 	6,  // 6: cerbos.request.v1.PlaygroundValidateRequest.policy_files:type_name -> cerbos.request.v1.PolicyFile
 	6,  // 7: cerbos.request.v1.PlaygroundEvaluateRequest.policy_files:type_name -> cerbos.request.v1.PolicyFile
-	18, // 8: cerbos.request.v1.PlaygroundEvaluateRequest.principal:type_name -> cerbos.engine.v1.Principal
-	19, // 9: cerbos.request.v1.PlaygroundEvaluateRequest.resource:type_name -> cerbos.engine.v1.Resource
+	20, // 8: cerbos.request.v1.PlaygroundEvaluateRequest.principal:type_name -> cerbos.engine.v1.Principal
+	21, // 9: cerbos.request.v1.PlaygroundEvaluateRequest.resource:type_name -> cerbos.engine.v1.Resource
 	6,  // 10: cerbos.request.v1.PlaygroundProxyRequest.policy_files:type_name -> cerbos.request.v1.PolicyFile
 	2,  // 11: cerbos.request.v1.PlaygroundProxyRequest.check_resource_set:type_name -> cerbos.request.v1.CheckResourceSetRequest
 	5,  // 12: cerbos.request.v1.PlaygroundProxyRequest.check_resource_batch:type_name -> cerbos.request.v1.CheckResourceBatchRequest
-	20, // 13: cerbos.request.v1.AddOrUpdatePolicyRequest.policies:type_name -> cerbos.policy.v1.Policy
+	22, // 13: cerbos.request.v1.AddOrUpdatePolicyRequest.policies:type_name -> cerbos.policy.v1.Policy
 	0,  // 14: cerbos.request.v1.ListAuditLogEntriesRequest.kind:type_name -> cerbos.request.v1.ListAuditLogEntriesRequest.Kind
 	17, // 15: cerbos.request.v1.ListAuditLogEntriesRequest.between:type_name -> cerbos.request.v1.ListAuditLogEntriesRequest.TimeRange
-	21, // 16: cerbos.request.v1.ListAuditLogEntriesRequest.since:type_name -> google.protobuf.Duration
-	1,  // 17: cerbos.request.v1.ListPoliciesRequest.kind:type_name -> cerbos.request.v1.ListPoliciesRequest.Kind
+	23, // 16: cerbos.request.v1.ListAuditLogEntriesRequest.since:type_name -> google.protobuf.Duration
+	19, // 17: cerbos.request.v1.ListPoliciesRequest.filters:type_name -> cerbos.request.v1.ListPoliciesRequest.Filter
 	4,  // 18: cerbos.request.v1.ResourceSet.InstancesEntry.value:type_name -> cerbos.request.v1.AttributesMap
-	22, // 19: cerbos.request.v1.AttributesMap.AttrEntry.value:type_name -> google.protobuf.Value
-	19, // 20: cerbos.request.v1.CheckResourceBatchRequest.BatchEntry.resource:type_name -> cerbos.engine.v1.Resource
-	23, // 21: cerbos.request.v1.ListAuditLogEntriesRequest.TimeRange.start:type_name -> google.protobuf.Timestamp
-	23, // 22: cerbos.request.v1.ListAuditLogEntriesRequest.TimeRange.end:type_name -> google.protobuf.Timestamp
-	23, // [23:23] is the sub-list for method output_type
-	23, // [23:23] is the sub-list for method input_type
-	23, // [23:23] is the sub-list for extension type_name
-	23, // [23:23] is the sub-list for extension extendee
-	0,  // [0:23] is the sub-list for field type_name
+	24, // 19: cerbos.request.v1.AttributesMap.AttrEntry.value:type_name -> google.protobuf.Value
+	21, // 20: cerbos.request.v1.CheckResourceBatchRequest.BatchEntry.resource:type_name -> cerbos.engine.v1.Resource
+	25, // 21: cerbos.request.v1.ListAuditLogEntriesRequest.TimeRange.start:type_name -> google.protobuf.Timestamp
+	25, // 22: cerbos.request.v1.ListAuditLogEntriesRequest.TimeRange.end:type_name -> google.protobuf.Timestamp
+	1,  // 23: cerbos.request.v1.ListPoliciesRequest.Filter.kind:type_name -> cerbos.request.v1.ListPoliciesRequest.PolicyKind
+	18, // 24: cerbos.request.v1.ListPoliciesRequest.Filter.id:type_name -> cerbos.request.v1.ListPoliciesRequest.IDFilter
+	25, // [25:25] is the sub-list for method output_type
+	25, // [25:25] is the sub-list for method input_type
+	25, // [25:25] is the sub-list for extension type_name
+	25, // [25:25] is the sub-list for extension extendee
+	0,  // [0:25] is the sub-list for field type_name
 }
 
 func init() { file_cerbos_request_v1_request_proto_init() }
@@ -1699,6 +1873,30 @@ func file_cerbos_request_v1_request_proto_init() {
 				return nil
 			}
 		}
+		file_cerbos_request_v1_request_proto_msgTypes[16].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*ListPoliciesRequest_IDFilter); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_cerbos_request_v1_request_proto_msgTypes[17].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*ListPoliciesRequest_Filter); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
 	}
 	file_cerbos_request_v1_request_proto_msgTypes[7].OneofWrappers = []interface{}{
 		(*PlaygroundProxyRequest_CheckResourceSet)(nil),
@@ -1710,13 +1908,24 @@ func file_cerbos_request_v1_request_proto_init() {
 		(*ListAuditLogEntriesRequest_Since)(nil),
 		(*ListAuditLogEntriesRequest_Lookup)(nil),
 	}
+	file_cerbos_request_v1_request_proto_msgTypes[16].OneofWrappers = []interface{}{
+		(*ListPoliciesRequest_IDFilter_ResourceName)(nil),
+		(*ListPoliciesRequest_IDFilter_PrincipalName)(nil),
+		(*ListPoliciesRequest_IDFilter_DerivedRolesName)(nil),
+	}
+	file_cerbos_request_v1_request_proto_msgTypes[17].OneofWrappers = []interface{}{
+		(*ListPoliciesRequest_Filter_Kind)(nil),
+		(*ListPoliciesRequest_Filter_Id)(nil),
+		(*ListPoliciesRequest_Filter_Version)(nil),
+		(*ListPoliciesRequest_Filter_Description)(nil),
+	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_cerbos_request_v1_request_proto_rawDesc,
 			NumEnums:      2,
-			NumMessages:   16,
+			NumMessages:   18,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

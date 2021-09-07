@@ -124,25 +124,43 @@ func (cas *CerbosAdminService) ListPolicies(ctx context.Context, req *requestv1.
 		return nil, status.Error(codes.NotFound, "store is not configured")
 	}
 
-	var policyKind string
-	switch req.Kind {
-	case requestv1.ListPoliciesRequest_KIND_RESOURCE:
-		policyKind = policy.ResourceKind.String()
-	case requestv1.ListPoliciesRequest_KIND_PRINCIPAL:
-		policyKind = policy.PrincipalKind.String()
-	case requestv1.ListPoliciesRequest_KIND_DERIVED:
-		policyKind = policy.DerivedRolesKind.String()
-	default: // do nothing
+	filter := storage.PolicyFilter{
+		Kinds: make(map[string]interface{}),
 	}
 
-	filter := storage.PolicyFilter{
-		Kind:        policyKind,
-		Resource:    req.Resource,
-		Principal:   req.Principal,
-		Name:        req.Name,
-		Version:     req.Version,
-		Description: req.Description,
-		Disabled:    req.Disabled,
+	for _, f := range req.Filters {
+		switch t := f.Filter.(type) {
+		case *requestv1.ListPoliciesRequest_Filter_Kind:
+			switch t.Kind {
+			case requestv1.ListPoliciesRequest_POLICY_KIND_RESOURCE:
+				filter.Kinds[policy.ResourceKindStr] = struct{}{}
+			case requestv1.ListPoliciesRequest_POLICY_KIND_PRINCIPAL:
+				filter.Kinds[policy.PrincipalKindStr] = struct{}{}
+			case requestv1.ListPoliciesRequest_POLICY_KIND_DERIVED_ROLES:
+				filter.Kinds[policy.DerivedRolesKindStr] = struct{}{}
+			default: // do nothing
+			}
+		case *requestv1.ListPoliciesRequest_Filter_Id:
+			switch id := t.Id.Id.(type) {
+			case *requestv1.ListPoliciesRequest_IDFilter_ResourceName:
+				filter.ResourceName = id.ResourceName
+			case *requestv1.ListPoliciesRequest_IDFilter_PrincipalName:
+				filter.PrincipalName = id.PrincipalName
+			case *requestv1.ListPoliciesRequest_IDFilter_DerivedRolesName:
+				filter.DerivedRolesName = id.DerivedRolesName
+			}
+		case *requestv1.ListPoliciesRequest_Filter_Description:
+			filter.Description = t.Description
+		case *requestv1.ListPoliciesRequest_Filter_Version:
+			filter.Version = t.Version
+		}
+	}
+
+	// no kind specified, include all kinds
+	if len(filter.Kinds) == 0 {
+		filter.Kinds[policy.ResourceKindStr] = struct{}{}
+		filter.Kinds[policy.PrincipalKindStr] = struct{}{}
+		filter.Kinds[policy.DerivedRolesKindStr] = struct{}{}
 	}
 
 	if err := filter.Validate(); err != nil {

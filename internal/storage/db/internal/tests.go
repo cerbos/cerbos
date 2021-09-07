@@ -9,7 +9,6 @@ package internal
 import (
 	"context"
 	"testing"
-	"time"
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/stretchr/testify/require"
@@ -130,19 +129,27 @@ func TestSuite(store DBStorage) func(*testing.T) {
 
 		t.Run("get_policies", func(t *testing.T) {
 			t.Run("should be able to get results filtered by kind", func(t *testing.T) {
-				policies, err := store.GetPolicies(ctx, storage.PolicyFilter{Kind: policy.ResourceKind.String()})
+				km := make(map[string]interface{})
+				km[policy.ResourceKindStr] = struct{}{}
+				policies, err := store.GetPolicies(ctx, storage.PolicyFilter{
+					Kinds: km,
+				})
 				require.NoError(t, err)
 				require.NotEmpty(t, policies)
 			})
 
 			t.Run("should be able to filter by resource", func(t *testing.T) {
-				policies, err := store.GetPolicies(ctx, storage.PolicyFilter{Resource: "gibberish", Kind: policy.ResourceKind.String()})
+				km := make(map[string]interface{})
+				km[policy.ResourceKindStr] = struct{}{}
+				policies, err := store.GetPolicies(ctx, storage.PolicyFilter{ResourceName: "gibberish", Kinds: km})
 				require.NoError(t, err)
 				require.Empty(t, policies)
 			})
 
 			t.Run("should be able to filter by name", func(t *testing.T) {
-				policies, err := store.GetPolicies(ctx, storage.PolicyFilter{Name: "x_my", Kind: policy.DerivedRolesKind.String()})
+				km := make(map[string]interface{})
+				km[policy.DerivedRolesKindStr] = struct{}{}
+				policies, err := store.GetPolicies(ctx, storage.PolicyFilter{DerivedRolesName: "x_my", Kinds: km})
 				require.NoError(t, err)
 				require.NotEmpty(t, policies)
 				require.Equal(t, "x_my_derived_roles_x", policies[0].Name)
@@ -150,21 +157,12 @@ func TestSuite(store DBStorage) func(*testing.T) {
 			})
 
 			t.Run("should be able to get results filtered by policy kind", func(t *testing.T) {
-				policies, err := store.GetPolicies(ctx, storage.PolicyFilter{Kind: policy.PrincipalKind.String()})
+				km := make(map[string]interface{})
+				km[policy.PrincipalKindStr] = struct{}{}
+				policies, err := store.GetPolicies(ctx, storage.PolicyFilter{Kinds: km})
 				require.NoError(t, err)
 				require.NotEmpty(t, policies)
 				require.Equal(t, "PRINCIPAL", policies[0].Kind)
-			})
-
-			t.Run("policies should have creation time in their metadata", func(t *testing.T) {
-				policies, err := store.GetPolicies(ctx, storage.PolicyFilter{})
-				require.NoError(t, err)
-				require.NotEmpty(t, policies)
-
-				require.NotNil(t, policies[0].Policy.Metadata)
-				createAt, err := time.Parse(time.RFC3339, policies[0].Policy.Metadata.Annotations["createAt"])
-				require.NoError(t, err)
-				require.NotZero(t, createAt)
 			})
 		})
 

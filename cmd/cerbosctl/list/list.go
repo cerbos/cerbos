@@ -10,7 +10,6 @@ import (
 	"io"
 	"os"
 	"strings"
-	"time"
 
 	"github.com/fatih/color"
 	"github.com/rodaine/table"
@@ -46,30 +45,37 @@ func runListCmdF(c client.AdminClient, cmd *cobra.Command, _ []string) error {
 	resource, _ := cmd.Flags().GetString("resource")
 	principal, _ := cmd.Flags().GetString("principal")
 	name, _ := cmd.Flags().GetString("name")
-	version, _ := cmd.Flags().GetString("version")
 	desc, _ := cmd.Flags().GetString("description")
-	disabled, _ := cmd.Flags().GetBool("disabled")
 	format, _ := cmd.Flags().GetString("format")
+	version, _ := cmd.Flags().GetString("version")
 
-	filter := client.PolicyFilter{
-		Resource:    resource,
-		Principal:   principal,
-		Name:        name,
-		Description: desc,
-		Disabled:    disabled,
-		Version:     version,
+	var opts []client.FilterOpt
+	if desc != "" {
+		opts = append(opts, client.WithDescription(desc))
+	}
+	if resource != "" {
+		opts = append(opts, client.WithResourceName(resource))
+	}
+	if principal != "" {
+		opts = append(opts, client.WithPrincipalName(principal))
+	}
+	if name != "" {
+		opts = append(opts, client.WithDerivedRolesName(name))
+	}
+	if version != "" {
+		opts = append(opts, client.WithVersion(version))
 	}
 
-	switch strings.ToUpper(kind) {
-	case "RESOURCE":
-		filter.Kind = client.ResourcePolicyKind
-	case "PRINCIPAL":
-		filter.Kind = client.PrincipalPolicyKind
-	case "DERIVED_ROLES":
-		filter.Kind = client.DerivedRolesPolicyKind
+	switch strings.ToLower(kind) {
+	case "resource":
+		opts = append(opts, client.WithKind(client.ResourcePolicyKind))
+	case "principal":
+		opts = append(opts, client.WithKind(client.PrincipalPolicyKind))
+	case "derive_roles":
+		opts = append(opts, client.WithKind(client.DerivedRolesPolicyKind))
 	}
 
-	policies, err := c.ListPolicies(context.Background(), filter)
+	policies, err := c.ListPolicies(context.Background(), opts...)
 	if err != nil {
 		return fmt.Errorf("error while requesting policy list: %w", err)
 	}
@@ -102,7 +108,7 @@ func printPolicies(w io.Writer, policies []*policy.Policy, format string) error 
 	default:
 		headerFmt := color.New(color.FgGreen, color.Underline).SprintfFunc()
 
-		tbl := table.New("NAME", "KIND", "DEPENDENCIES", "CREATED")
+		tbl := table.New("NAME", "KIND", "DEPENDENCIES")
 		tbl.WithWriter(w)
 		tbl.WithHeaderFormatter(headerFmt)
 
@@ -116,19 +122,16 @@ func printPolicies(w io.Writer, policies []*policy.Policy, format string) error 
 	return nil
 }
 
-// policyPrintables creates values according to {"NAME", "KIND", "DEPENDENCIES", "CREATED"}.
+// policyPrintables creates values according to {"NAME", "KIND", "DEPENDENCIES"}.
 func policyPrintables(p *policy.Policy) []interface{} {
-	createAtStr := p.Metadata.Annotations["createAt"]
-	createAt, _ := time.Parse(time.RFC3339, createAtStr)
-	createAtStr = createAt.Format("2006-01-02 15:04:05")
 	switch pt := p.PolicyType.(type) {
 	case *policy.Policy_ResourcePolicy:
-		return []interface{}{pt.ResourcePolicy.Resource, "RESOURCE", strings.Join(pt.ResourcePolicy.ImportDerivedRoles, ", "), createAtStr}
+		return []interface{}{pt.ResourcePolicy.Resource, "RESOURCE", strings.Join(pt.ResourcePolicy.ImportDerivedRoles, ", ")}
 	case *policy.Policy_PrincipalPolicy:
-		return []interface{}{pt.PrincipalPolicy.Principal, "PRINCIPAL", "-", pt.PrincipalPolicy.Version, createAtStr}
+		return []interface{}{pt.PrincipalPolicy.Principal, "PRINCIPAL", "-", pt.PrincipalPolicy.Version}
 	case *policy.Policy_DerivedRoles:
-		return []interface{}{pt.DerivedRoles.Name, "DERIVED_ROLES", "-", createAtStr}
+		return []interface{}{pt.DerivedRoles.Name, "DERIVED_ROLES", "-"}
 	default:
-		return []interface{}{"-", "-", "-", "-"}
+		return []interface{}{"-", "-", "-"}
 	}
 }

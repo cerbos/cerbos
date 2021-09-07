@@ -889,31 +889,81 @@ const (
 	DerivedRolesPolicyKind
 )
 
-type PolicyFilter struct {
-	Kind PolicyKind
-
-	Resource  string
-	Principal string
-	Name      string
-
-	Version     string
-	Description string
-
-	Disabled bool
+type policyFilter struct {
+	filters []*requestv1.ListPoliciesRequest_Filter
 }
 
-func (f *PolicyFilter) Validate() error {
-	if f.Resource != "" && f.Kind != ResourcePolicyKind {
-		return fmt.Errorf("%q key is a valid filter field for only %s policy kind", "resource", "resource")
-	}
+type FilterOpt func(*policyFilter)
 
-	if f.Principal != "" && f.Kind != PrincipalPolicyKind {
-		return fmt.Errorf("%q key is a valid filter field for only %s policy kind", "principal", "principal")
+// WithKind.
+func WithKind(k PolicyKind) FilterOpt {
+	return func(pf *policyFilter) {
+		pf.filters = append(pf.filters, &requestv1.ListPoliciesRequest_Filter{
+			Filter: &requestv1.ListPoliciesRequest_Filter_Kind{
+				Kind: requestv1.ListPoliciesRequest_PolicyKind(k),
+			},
+		})
 	}
+}
 
-	if f.Name != "" && f.Kind != DerivedRolesPolicyKind {
-		return fmt.Errorf("%q is a valid filter field for only %s policy kind", "name", "derived_roles")
+func WithDescription(d string) FilterOpt {
+	return func(pf *policyFilter) {
+		pf.filters = append(pf.filters, &requestv1.ListPoliciesRequest_Filter{
+			Filter: &requestv1.ListPoliciesRequest_Filter_Description{
+				Description: d,
+			},
+		})
 	}
+}
 
-	return nil
+func WithResourceName(n string) FilterOpt {
+	return func(pf *policyFilter) {
+		pf.filters = append(pf.filters, &requestv1.ListPoliciesRequest_Filter{
+			Filter: &requestv1.ListPoliciesRequest_Filter_Id{
+				Id: &requestv1.ListPoliciesRequest_IDFilter{
+					Id: &requestv1.ListPoliciesRequest_IDFilter_ResourceName{
+						ResourceName: n,
+					},
+				},
+			},
+		})
+	}
+}
+
+func WithPrincipalName(n string) FilterOpt {
+	return func(pf *policyFilter) {
+		pf.filters = append(pf.filters, &requestv1.ListPoliciesRequest_Filter{
+			Filter: &requestv1.ListPoliciesRequest_Filter_Id{
+				Id: &requestv1.ListPoliciesRequest_IDFilter{
+					Id: &requestv1.ListPoliciesRequest_IDFilter_PrincipalName{
+						PrincipalName: n,
+					},
+				},
+			},
+		})
+	}
+}
+
+func WithDerivedRolesName(n string) FilterOpt {
+	return func(pf *policyFilter) {
+		pf.filters = append(pf.filters, &requestv1.ListPoliciesRequest_Filter{
+			Filter: &requestv1.ListPoliciesRequest_Filter_Id{
+				Id: &requestv1.ListPoliciesRequest_IDFilter{
+					Id: &requestv1.ListPoliciesRequest_IDFilter_DerivedRolesName{
+						DerivedRolesName: n,
+					},
+				},
+			},
+		})
+	}
+}
+
+func WithVersion(v string) FilterOpt {
+	return func(pf *policyFilter) {
+		pf.filters = append(pf.filters, &requestv1.ListPoliciesRequest_Filter{
+			Filter: &requestv1.ListPoliciesRequest_Filter_Version{
+				Version: v,
+			},
+		})
+	}
 }

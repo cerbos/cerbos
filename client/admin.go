@@ -22,7 +22,7 @@ import (
 type AdminClient interface {
 	AddOrUpdatePolicy(context.Context, *PolicySet) error
 	AuditLogs(ctx context.Context, opts AuditLogOptions) (<-chan *AuditLogEntry, error)
-	ListPolicies(ctx context.Context, filter PolicyFilter) ([]*policyv1.Policy, error)
+	ListPolicies(ctx context.Context, opts ...FilterOpt) ([]*policyv1.Policy, error)
 }
 
 // NewAdminClient creates a new admin client.
@@ -153,22 +153,22 @@ func (c *GrpcAdminClient) auditLogs(ctx context.Context, opts AuditLogOptions) (
 	return resp, nil
 }
 
-func (c *GrpcAdminClient) ListPolicies(ctx context.Context, filter PolicyFilter) ([]*policyv1.Policy, error) {
-	if err := filter.Validate(); err != nil {
-		return nil, fmt.Errorf("could not validate filter: %w", err)
+func (c *GrpcAdminClient) ListPolicies(ctx context.Context, opts ...FilterOpt) ([]*policyv1.Policy, error) {
+	filter := &policyFilter{
+		filters: make([]*requestv1.ListPoliciesRequest_Filter, 0),
+	}
+	for _, opt := range opts {
+		opt(filter)
 	}
 
-	pc, err := c.client.ListPolicies(ctx, &requestv1.ListPoliciesRequest{
-		Kind:        requestv1.ListPoliciesRequest_Kind(filter.Kind),
-		Resource:    filter.Resource,
-		Principal:   filter.Principal,
-		Name:        filter.Name,
-		Version:     filter.Version,
-		Description: filter.Description,
-		Disabled:    filter.Disabled,
-	})
+	req := &requestv1.ListPoliciesRequest{Filters: filter.filters}
+	if err := req.Validate(); err != nil {
+		return nil, fmt.Errorf("could not validate list policies request: %w", err)
+	}
+
+	pc, err := c.client.ListPolicies(ctx, req)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("could not list policies: %w", err)
 	}
 
 	return pc.Policies, nil

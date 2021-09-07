@@ -136,28 +136,26 @@ func NewEvent(kind EventKind, policyID namer.ModuleID) Event {
 }
 
 type PolicyFilter struct {
-	Kind string // empty string means all kinds
+	Kinds map[string]interface{}
 
-	Resource  string
-	Principal string
-	Name      string
+	ResourceName     string
+	PrincipalName    string
+	DerivedRolesName string
 
 	Version     string
 	Description string
-
-	Disabled bool
 }
 
 func (f *PolicyFilter) Validate() error {
-	if f.Resource != "" && f.Kind != policy.ResourceKind.String() {
+	if _, ok := f.Kinds[policy.ResourceKindStr]; f.ResourceName != "" && !ok {
 		return fmt.Errorf("%q key is a valid filter field for only %s policy", "resource", "resource")
 	}
 
-	if f.Principal != "" && f.Kind != policy.PrincipalKind.String() {
+	if _, ok := f.Kinds[policy.PrincipalKindStr]; f.PrincipalName != "" && !ok {
 		return fmt.Errorf("%q key is a valid filter field for only %s policy", "principal", "principal")
 	}
 
-	if f.Name != "" && f.Kind != policy.DerivedRolesKind.String() {
+	if _, ok := f.Kinds[policy.DerivedRolesKindStr]; f.DerivedRolesName != "" && !ok {
 		return fmt.Errorf("%q is a valid filter field for only %s policy", "name", "derived_roles")
 	}
 

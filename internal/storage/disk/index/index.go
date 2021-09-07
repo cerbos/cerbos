@@ -8,12 +8,8 @@ import (
 	"errors"
 	"fmt"
 	"io/fs"
-	"path/filepath"
 	"strings"
 	"sync"
-	"time"
-
-	"github.com/djherbis/times"
 
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
 	"github.com/cerbos/cerbos/internal/namer"
@@ -45,7 +41,6 @@ type Index interface {
 }
 
 type index struct {
-	dir          string
 	fsys         fs.FS
 	cache        *codegenCache
 	mu           sync.RWMutex
@@ -350,20 +345,11 @@ func (idx *index) GetPolicies(ctx context.Context, filter storage.PolicyFilter) 
 
 	filteredEntries := make(map[namer.ModuleID]*policy.Wrapper)
 	entries := make([]*policy.Wrapper, 0)
-	for file, modID := range idx.fileToModID {
+	for _, modID := range idx.fileToModID {
 		pol, err := idx.loadPolicy(modID)
 		if err != nil {
 			return entries, err
 		}
-
-		fi, err := times.Stat(filepath.Join(idx.dir, file))
-		if err != nil {
-			return nil, fmt.Errorf("could not stat file: %w", err)
-		}
-		if pol.Metadata.Annotations == nil {
-			pol.Metadata.Annotations = make(map[string]string)
-		}
-		pol.Metadata.Annotations["createAt"] = fi.BirthTime().Format(time.RFC3339)
 
 		wp := policy.Wrap(pol)
 		if !filterPolicy(&wp, &filter) {
@@ -381,34 +367,32 @@ func (idx *index) GetPolicies(ctx context.Context, filter storage.PolicyFilter) 
 }
 
 func filterPolicy(pol *policy.Wrapper, filter *storage.PolicyFilter) bool {
-	if filter.Kind != "" {
-		kind := policy.GetKind(pol.Policy).String()
-		if kind != filter.Kind {
+	if _, ok := filter.Kinds[pol.Kind]; !ok {
+		return false
+	}
+
+	switch pol.Policy.PolicyType.(type) {
+	case *policyv1.Policy_ResourcePolicy:
+		if filter.ResourceName != "" && !strings.Contains(pol.GetResourcePolicy().Resource, filter.ResourceName) {
+			return false
+		}
+		if filter.Version != "" && !strings.Contains(pol.Version, filter.Version) {
+			return false
+		}
+	case *policyv1.Policy_PrincipalPolicy:
+		if filter.PrincipalName != "" && !strings.Contains(pol.GetPrincipalPolicy().Principal, filter.PrincipalName) {
+			return false
+		}
+		if filter.Version != "" && !strings.Contains(pol.Version, filter.Version) {
+			return false
+		}
+	case *policyv1.Policy_DerivedRoles:
+		if filter.DerivedRolesName != "" && !strings.Contains(pol.GetDerivedRoles().Name, filter.DerivedRolesName) {
 			return false
 		}
 	}
 
-	if filter.Kind == policy.ResourceKind.String() && filter.Resource != "" && !strings.Contains(pol.GetResourcePolicy().Resource, filter.Resource) {
-		return false
-	}
-
-	if filter.Kind == policy.PrincipalKind.String() && filter.Principal != "" && !strings.Contains(pol.GetPrincipalPolicy().Principal, filter.Principal) {
-		return false
-	}
-
-	if filter.Kind == policy.DerivedRolesKind.String() && filter.Name != "" && !strings.Contains(pol.GetDerivedRoles().Name, filter.Name) {
-		return false
-	}
-
-	if filter.Version != "" && !strings.Contains(pol.Version, filter.Version) {
-		return false
-	}
-
 	if filter.Description != "" && !strings.Contains(pol.Description, filter.Description) {
-		return false
-	}
-
-	if filter.Disabled != pol.Disabled {
 		return false
 	}
 

@@ -186,7 +186,7 @@ func (s *Store) loadAll(ctx context.Context) error {
 		policyDir = s.conf.SubDir
 	}
 
-	idx, err := index.Build(ctx, os.DirFS(s.conf.CheckoutDir), s.conf.CheckoutDir, index.WithRootDir(policyDir), index.WithDiskCache(s.conf.ScratchDir))
+	idx, err := index.Build(ctx, os.DirFS(s.conf.CheckoutDir), index.WithRootDir(policyDir), index.WithDiskCache(s.conf.ScratchDir))
 	if err != nil {
 		return err
 	}

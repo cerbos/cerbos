@@ -1232,24 +1232,20 @@ func (m *ListPoliciesRequest) Validate() error {
 		return nil
 	}
 
-	if _, ok := _ListPoliciesRequest_Kind_InLookup[m.GetKind()]; !ok {
-		return ListPoliciesRequestValidationError{
-			field:  "Kind",
-			reason: "value must be in list [0 1 2 3]",
+	for idx, item := range m.GetFilters() {
+		_, _ = idx, item
+
+		if v, ok := interface{}(item).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return ListPoliciesRequestValidationError{
+					field:  fmt.Sprintf("Filters[%v]", idx),
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
 		}
+
 	}
-
-	// no validation rules for Resource
-
-	// no validation rules for Principal
-
-	// no validation rules for Name
-
-	// no validation rules for Version
-
-	// no validation rules for Description
-
-	// no validation rules for Disabled
 
 	return nil
 }
@@ -1309,13 +1305,6 @@ var _ interface {
 	Cause() error
 	ErrorName() string
 } = ListPoliciesRequestValidationError{}
-
-var _ListPoliciesRequest_Kind_InLookup = map[ListPoliciesRequest_Kind]struct{}{
-	0: {},
-	1: {},
-	2: {},
-	3: {},
-}
 
 // Validate checks the field values on CheckResourceBatchRequest_BatchEntry
 // with the rules defined in the proto definition for this message. If any
@@ -1555,3 +1544,189 @@ var _ interface {
 	Cause() error
 	ErrorName() string
 } = ListAuditLogEntriesRequest_TimeRangeValidationError{}
+
+// Validate checks the field values on ListPoliciesRequest_IDFilter with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, an error is returned.
+func (m *ListPoliciesRequest_IDFilter) Validate() error {
+	if m == nil {
+		return nil
+	}
+
+	switch m.Id.(type) {
+
+	case *ListPoliciesRequest_IDFilter_ResourceName:
+		// no validation rules for ResourceName
+
+	case *ListPoliciesRequest_IDFilter_PrincipalName:
+		// no validation rules for PrincipalName
+
+	case *ListPoliciesRequest_IDFilter_DerivedRolesName:
+		// no validation rules for DerivedRolesName
+
+	}
+
+	return nil
+}
+
+// ListPoliciesRequest_IDFilterValidationError is the validation error returned
+// by ListPoliciesRequest_IDFilter.Validate if the designated constraints
+// aren't met.
+type ListPoliciesRequest_IDFilterValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e ListPoliciesRequest_IDFilterValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e ListPoliciesRequest_IDFilterValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e ListPoliciesRequest_IDFilterValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e ListPoliciesRequest_IDFilterValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e ListPoliciesRequest_IDFilterValidationError) ErrorName() string {
+	return "ListPoliciesRequest_IDFilterValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e ListPoliciesRequest_IDFilterValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sListPoliciesRequest_IDFilter.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = ListPoliciesRequest_IDFilterValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = ListPoliciesRequest_IDFilterValidationError{}
+
+// Validate checks the field values on ListPoliciesRequest_Filter with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, an error is returned.
+func (m *ListPoliciesRequest_Filter) Validate() error {
+	if m == nil {
+		return nil
+	}
+
+	switch m.Filter.(type) {
+
+	case *ListPoliciesRequest_Filter_Kind:
+
+		if _, ok := _ListPoliciesRequest_Filter_Kind_InLookup[m.GetKind()]; !ok {
+			return ListPoliciesRequest_FilterValidationError{
+				field:  "Kind",
+				reason: "value must be in list [0 1 2 3]",
+			}
+		}
+
+	case *ListPoliciesRequest_Filter_Id:
+
+		if v, ok := interface{}(m.GetId()).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return ListPoliciesRequest_FilterValidationError{
+					field:  "Id",
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	case *ListPoliciesRequest_Filter_Version:
+		// no validation rules for Version
+
+	case *ListPoliciesRequest_Filter_Description:
+		// no validation rules for Description
+
+	}
+
+	return nil
+}
+
+// ListPoliciesRequest_FilterValidationError is the validation error returned
+// by ListPoliciesRequest_Filter.Validate if the designated constraints aren't met.
+type ListPoliciesRequest_FilterValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e ListPoliciesRequest_FilterValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e ListPoliciesRequest_FilterValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e ListPoliciesRequest_FilterValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e ListPoliciesRequest_FilterValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e ListPoliciesRequest_FilterValidationError) ErrorName() string {
+	return "ListPoliciesRequest_FilterValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e ListPoliciesRequest_FilterValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sListPoliciesRequest_Filter.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = ListPoliciesRequest_FilterValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = ListPoliciesRequest_FilterValidationError{}
+
+var _ListPoliciesRequest_Filter_Kind_InLookup = map[ListPoliciesRequest_PolicyKind]struct{}{
+	0: {},
+	1: {},
+	2: {},
+	3: {},
+}
