@@ -38,7 +38,7 @@ func NewListCmd(fn internal.WithClient) *cobra.Command {
 func runListCmdF(c client.AdminClient, cmd *cobra.Command, _ []string) error {
 	opts, err := internal.GenListPoliciesFilterOptions(listPoliciesFlags)
 	if err != nil {
-		return fmt.Errorf("error while requesting policy list: %w", err)
+		return fmt.Errorf("error generating list options: %w", err)
 	}
 
 	policies, err := c.ListPolicies(context.Background(), opts...)
