@@ -23,6 +23,7 @@ const (
 	intersectFn       = "intersect"
 	hasIntersectionFn = "has_intersection"
 	isSubsetFn        = "is_subset"
+	exceptFn          = "except"
 )
 
 // CerbosCELLib returns the custom CEL functions provided by Cerbos.
@@ -50,6 +51,15 @@ func (clib cerbosLib) CompileOptions() []cel.EnvOption {
 					fmt.Sprintf("%s_timestamp", timeSinceFn),
 					[]*exprpb.Type{decls.Timestamp},
 					decls.Duration,
+				),
+			),
+
+			decls.NewFunction(exceptFn,
+				decls.NewParameterizedInstanceOverload(
+					exceptFn,
+					[]*exprpb.Type{listType, listType},
+					listType,
+					[]string{"A"},
 				),
 			),
 
@@ -111,10 +121,46 @@ func (clib cerbosLib) ProgramOptions() []cel.ProgramOption {
 				Operator: isSubsetFn,
 				Binary:   isSubset,
 			},
+
+			&functions.Overload{
+				Operator: exceptFn,
+				Binary:   exceptList,
+			},
 		),
 	}
 }
 
+// exceptList implements difference lhs-rhs returning
+// items in lhs (list) that are not members of rhs (list).
+func exceptList(lhs, rhs ref.Val) ref.Val {
+	a, ok := lhs.(traits.Lister)
+	if !ok {
+		return types.ValOrErr(a, "no such overload")
+	}
+
+	b, ok := rhs.(traits.Lister)
+	if !ok {
+		return types.ValOrErr(b, "no such overload")
+	}
+
+	var items []ref.Val
+	for ai := a.Iterator(); ai.HasNext() == types.True; {
+		va := ai.Next()
+		found := false
+		for bi := b.Iterator(); !found && bi.HasNext() == types.True; {
+			vb := bi.Next()
+			if va.Equal(vb) == types.True {
+				found = true
+			}
+		}
+		if !found {
+			items = append(items, va)
+		}
+	}
+	return types.NewRefValList(types.DefaultTypeAdapter, items)
+}
+
+// isSubset returns true value if lhs (list) is a subset of rhs (list).
 func isSubset(lhs, rhs ref.Val) ref.Val {
 	a, ok := lhs.(traits.Lister)
 	if !ok {

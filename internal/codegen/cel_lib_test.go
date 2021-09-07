@@ -35,6 +35,13 @@ func TestCerbosLib(t *testing.T) {
 		{expr: `["1","2"].is_subset(["1","2","3"])`},
 		{expr: `[1,1].is_subset([1])`},
 		{expr: `[].is_subset([1])`},
+		{expr: `[].except([1]) == []`},
+		{expr: `[1].except([]) == [1]`},
+		{expr: `[].except([]) == []`},
+		{expr: `[1].except([1]) == []`},
+		{expr: `[1].except([1,2,3]) == []`},
+		{expr: `[1,3,5].except([2,4]) == [1,3,5]`},
+		{expr: `[1,3,5].except([5,3]) == [1]`},
 	}
 	env, err := cel.NewEnv(codegen.CerbosCELLib())
 	require.NoError(t, err)
