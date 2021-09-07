@@ -33,7 +33,7 @@ var (
 		raw  bool
 	}
 
-	auditFilterFlags = internal.NewFilterDef()
+	auditFilterFlags = internal.NewAuditLogFilterDef()
 	newline          = []byte("\n")
 )
 

@@ -27,7 +27,7 @@ import (
 	"github.com/cerbos/cerbos/cmd/cerbosctl/internal"
 )
 
-var auditFilterFlags = internal.NewFilterDef()
+var auditFilterFlags = internal.NewAuditLogFilterDef()
 
 var longDesc = `Interactive decision log viewer.
 Requires audit logging to be enabled on the server. Supports several ways of filtering the data.
