@@ -231,6 +231,7 @@ func intersect(lhs, rhs ref.Val) ref.Val {
 			vb := bi.Next()
 			if va.Equal(vb) == types.True {
 				items = append(items, va)
+				break
 			}
 		}
 	}
