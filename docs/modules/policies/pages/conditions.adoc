@@ -214,8 +214,12 @@ NOTE: The IP address functions are Cerbos-specific extensions to CEL.
 | exists_one | Check that only one element matching the predicate exists | P.attr.teams.exists_one(t, t.startsWith("comm")) == false
 | filter   | Filter a list using the predicate | size(P.attr.teams.filter(t, t.matches("^comm"))) == 2
 | in       | Check whether the given element is contained in the list or map | ("design" in P.attr.teams) && ("acme" in P.attr.clients)
+| is_subset| Checks whether the list is a subset of another list | ["design", "engineering"].is_subset(P.attr.teams)
+| intersect| Produces the set intersection of two lists | intersect(["design", "engineering"], P.attr.teams)
+| has_intersection| Checks whether the lists have at least one common element | has_intersection(["design", "engineering"], P.attr.teams)
+| except | Produces the set difference of two lists | P.attr.teams.except(["design", "engineering"])
 | map      | Transform each element in a list | "DESIGN" in P.attr.teams.map(t, t.upperAscii())
-| size     | Number of elements in a list or map | size(P.attr.teams) == 4 && size(P.attr.clients) == 2 
+| size     | Number of elements in a list or map | size(P.attr.teams) == 4 && size(P.attr.clients) == 2
 |===
 
 
