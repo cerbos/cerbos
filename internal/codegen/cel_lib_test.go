@@ -42,6 +42,7 @@ func TestCerbosLib(t *testing.T) {
 		{expr: `[1].except([1,2,3]) == []`},
 		{expr: `[1,3,5].except([2,4]) == [1,3,5]`},
 		{expr: `[1,3,5].except([5,3]) == [1]`},
+		{expr: `[1,2,3] + [3,5] == [1,2,3,3,5]`},
 	}
 	env, err := cel.NewEnv(codegen.CerbosCELLib())
 	require.NoError(t, err)

@@ -218,6 +218,7 @@ NOTE: The IP address functions are Cerbos-specific extensions to CEL.
 | intersect| Produces the set intersection of two lists | intersect(["design", "engineering"], P.attr.teams)
 | has_intersection| Checks whether the lists have at least one common element | has_intersection(["design", "engineering"], P.attr.teams)
 | except | Produces the set difference of two lists | P.attr.teams.except(["design", "engineering"])
+| + | Concatenates lists | P.attr.teams + ["design", "engineering"]
 | map      | Transform each element in a list | "DESIGN" in P.attr.teams.map(t, t.upperAscii())
 | size     | Number of elements in a list or map | size(P.attr.teams) == 4 && size(P.attr.clients) == 2
 |===
