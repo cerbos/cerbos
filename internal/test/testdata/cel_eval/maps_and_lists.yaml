@@ -26,6 +26,16 @@ condition:
           "DESIGN" in P.attr.teams.map(t, t.upperAscii())
       - expr: |-
           size(P.attr.teams.filter(t, t.matches("^comm"))) == 2
+      - expr: |-
+          P.attr.teams + ["design", "engineering"] == ["design", "communications", "product", "commercial", "design", "engineering"]
+      - expr: |-
+          has_intersection(["design", "engineering"], P.attr.teams)
+      - expr: |-
+          intersect(["design", "engineering"], P.attr.teams) == ["design"]
+      - expr: |-
+          ["design", "engineering"].is_subset(P.attr.teams) == false
+      - expr: |-
+          P.attr.teams.except(["design", "engineering"]) == ["communications", "product", "commercial"]
 input: {
   "requestId": "test",
   "actions": ["*"],
