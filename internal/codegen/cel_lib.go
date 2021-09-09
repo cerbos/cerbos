@@ -216,8 +216,8 @@ const minListLengthToConvert = 3
 func convertToMap(b traits.Lister) map[ref.Val]struct{} {
 	var m map[ref.Val]struct{}
 	if item := b.Get(types.IntZero); !types.IsError(item) && hashable(item.Type()) {
-		size := b.Size().(types.Int)
-		if size <= minListLengthToConvert {
+		size, ok := b.Size().(types.Int)
+		if !ok || size <= minListLengthToConvert {
 			return nil
 		}
 		m = make(map[ref.Val]struct{}, size)

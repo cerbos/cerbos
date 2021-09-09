@@ -77,6 +77,7 @@ func prepareProgram(tb testing.TB, expr string) cel.Program {
 	tb.Helper()
 	is := require.New(tb)
 	env, err := cel.NewEnv(codegen.CerbosCELLib())
+	is.NoError(err)
 	ast, issues := env.Compile(expr)
 	is.NoError(issues.Err())
 
@@ -114,6 +115,7 @@ func BenchmarkIntersect5(b *testing.B) {
 }
 
 func benchmarkIntersect(b *testing.B, size int) {
+	b.Helper()
 	expr := generateExpr(size)
 	prg := prepareProgram(b, expr)
 	b.ResetTimer()
