@@ -224,6 +224,9 @@ func intersect(lhs, rhs ref.Val) ref.Val {
 		return types.ValOrErr(b, "no such overload")
 	}
 
+	if item := a.Get(types.IntZero); !types.IsError(item) && item.Type() == types.StringType {
+		return intersectStrings(a, b)
+	}
 	var items []ref.Val
 	for ai := a.Iterator(); ai.HasNext() == types.True; {
 		va := ai.Next()
@@ -235,6 +238,41 @@ func intersect(lhs, rhs ref.Val) ref.Val {
 			}
 		}
 	}
+	return types.NewRefValList(types.DefaultTypeAdapter, items)
+}
+
+func intersectStrings(lhs, rhs traits.Lister) ref.Val {
+	size, ok := lhs.Size().(types.Int)
+	if !ok {
+		return types.NoSuchOverloadErr()
+	}
+	if size.Compare(rhs.Size()) == types.IntNegOne {
+		lhs, rhs = rhs, lhs // lhs is the longest list
+	}
+
+	// convert the longest list to a map
+	m := make(map[types.String]struct{}, size)
+	for i := lhs.Iterator(); i.HasNext() == types.True; {
+		item := i.Next()
+		s, ok := item.(types.String)
+		if !ok {
+			return types.NoSuchOverloadErr()
+		}
+		m[s] = struct{}{}
+	}
+
+	var items []ref.Val
+	for i := rhs.Iterator(); i.HasNext() == types.True; {
+		item := i.Next()
+		s, ok := item.(types.String)
+		if !ok {
+			return types.NoSuchOverloadErr()
+		}
+		if _, ok = m[s]; ok {
+			items = append(items, item)
+		}
+	}
+
 	return types.NewRefValList(types.DefaultTypeAdapter, items)
 }
 

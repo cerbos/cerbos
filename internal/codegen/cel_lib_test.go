@@ -86,12 +86,12 @@ func prepareProgram(tb testing.TB, expr string) cel.Program {
 func generateExpr(size int) string {
 	lhs := make([]string, size)
 	for i := 0; i < size; i++ {
-		lhs[i] = fmt.Sprintf("%05d", i)
+		lhs[i] = fmt.Sprintf("'%05d'", i)
 	}
 	rhs := make([]string, size)
 	copy(rhs, lhs)
 	rand.Seed(time.Now().UnixNano())
-	rand.Shuffle(len(rhs), func(i, j int) { rhs[i], rhs[j] = rhs[j], rhs[j] })
+	rand.Shuffle(len(rhs), func(i, j int) { rhs[i], rhs[j] = rhs[j], rhs[i] })
 	return fmt.Sprintf("intersect([%s], [%s])", strings.Join(lhs, ","), strings.Join(rhs, ","))
 }
 
