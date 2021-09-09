@@ -12,13 +12,18 @@ import (
 	"github.com/google/cel-go/checker/decls"
 	"github.com/google/cel-go/common/types"
 	"github.com/google/cel-go/common/types/ref"
+	"github.com/google/cel-go/common/types/traits"
 	"github.com/google/cel-go/interpreter/functions"
 	exprpb "google.golang.org/genproto/googleapis/api/expr/v1alpha1"
 )
 
 const (
-	inIPAddrRangeFn = "inIPAddrRange"
-	timeSinceFn     = "timeSince"
+	inIPAddrRangeFn   = "inIPAddrRange"
+	timeSinceFn       = "timeSince"
+	intersectFn       = "intersect"
+	hasIntersectionFn = "has_intersection"
+	isSubsetFn        = "is_subset"
+	exceptFn          = "except"
 )
 
 // CerbosCELLib returns the custom CEL functions provided by Cerbos.
@@ -29,6 +34,8 @@ func CerbosCELLib() cel.EnvOption {
 type cerbosLib struct{}
 
 func (clib cerbosLib) CompileOptions() []cel.EnvOption {
+	listType := decls.NewListType(decls.NewTypeParamType("A"))
+
 	return []cel.EnvOption{
 		cel.Declarations(
 			decls.NewFunction(inIPAddrRangeFn,
@@ -46,6 +53,38 @@ func (clib cerbosLib) CompileOptions() []cel.EnvOption {
 					decls.Duration,
 				),
 			),
+
+			decls.NewFunction(exceptFn,
+				decls.NewParameterizedInstanceOverload(
+					exceptFn,
+					[]*exprpb.Type{listType, listType},
+					listType,
+					[]string{"A"},
+				),
+			),
+
+			decls.NewFunction(isSubsetFn,
+				decls.NewParameterizedInstanceOverload(
+					isSubsetFn,
+					[]*exprpb.Type{listType, listType},
+					decls.Bool,
+					[]string{"A"},
+				),
+			),
+
+			decls.NewFunction("has_intersection",
+				decls.NewParameterizedOverload(
+					hasIntersectionFn,
+					[]*exprpb.Type{listType, listType},
+					decls.Bool,
+					[]string{"A"})),
+
+			decls.NewFunction("intersect",
+				decls.NewParameterizedOverload(
+					intersectFn,
+					[]*exprpb.Type{listType, listType},
+					listType,
+					[]string{"A"})),
 		),
 	}
 }
@@ -67,8 +106,197 @@ func (clib cerbosLib) ProgramOptions() []cel.ProgramOption {
 				Operator: fmt.Sprintf("%s_timestamp", timeSinceFn),
 				Unary:    callInTimestampOutDuration(clib.timeSinceFunc),
 			},
+
+			&functions.Overload{
+				Operator: hasIntersectionFn,
+				Binary:   hasIntersection,
+			},
+
+			&functions.Overload{
+				Operator: intersectFn,
+				Binary:   intersect,
+			},
+
+			&functions.Overload{
+				Operator: isSubsetFn,
+				Binary:   isSubset,
+			},
+
+			&functions.Overload{
+				Operator: exceptFn,
+				Binary:   exceptList,
+			},
 		),
 	}
+}
+
+// hashable checks whether the type is hashable, i.e. can be used in a Go map.
+func hashable(t ref.Type) bool {
+	return t == types.StringType ||
+		t == types.IntType ||
+		t == types.DoubleType ||
+		t == types.DurationType ||
+		t == types.TimestampType ||
+		t == types.UintType
+}
+
+// exceptList implements difference lhs-rhs returning
+// items in lhs (list) that are not members of rhs (list).
+func exceptList(lhs, rhs ref.Val) ref.Val {
+	a, ok := lhs.(traits.Lister)
+	if !ok {
+		return types.ValOrErr(a, "no such overload")
+	}
+
+	b, ok := rhs.(traits.Lister)
+	if !ok {
+		return types.ValOrErr(b, "no such overload")
+	}
+
+	m := convertToMap(b)
+
+	var items []ref.Val
+	for ai := a.Iterator(); ai.HasNext() == types.True; {
+		va := ai.Next()
+		var found bool
+		if m != nil {
+			_, found = m[va]
+		} else {
+			found = find(b.Iterator(), va)
+		}
+		if !found {
+			items = append(items, va)
+		}
+	}
+	return types.NewRefValList(types.DefaultTypeAdapter, items)
+}
+
+// isSubset returns true value if lhs (list) is a subset of rhs (list).
+func isSubset(lhs, rhs ref.Val) ref.Val {
+	a, ok := lhs.(traits.Lister)
+	if !ok {
+		return types.ValOrErr(a, "no such overload")
+	}
+
+	b, ok := rhs.(traits.Lister)
+	if !ok {
+		return types.ValOrErr(b, "no such overload")
+	}
+
+	m := convertToMap(b)
+
+	for ai := a.Iterator(); ai.HasNext() == types.True; {
+		va := ai.Next()
+		if m != nil {
+			if _, ok := m[va]; !ok {
+				return types.False
+			}
+		} else {
+			if !find(b.Iterator(), va) {
+				return types.False
+			}
+		}
+	}
+
+	return types.True
+}
+
+func find(i traits.Iterator, item ref.Val) bool {
+	for i.HasNext() == types.True {
+		current := i.Next()
+		if item.Equal(current) == types.True {
+			return true
+		}
+	}
+	return false
+}
+
+const minListLengthToConvert = 3
+
+func convertToMap(b traits.Lister) map[ref.Val]struct{} {
+	var m map[ref.Val]struct{}
+	if item := b.Get(types.IntZero); !types.IsError(item) && hashable(item.Type()) {
+		size, ok := b.Size().(types.Int)
+		if !ok || size <= minListLengthToConvert {
+			return nil
+		}
+		m = make(map[ref.Val]struct{}, size)
+
+		for i := b.Iterator(); i.HasNext() == types.True; {
+			item := i.Next()
+			if !hashable(item.Type()) {
+				m = nil
+				break
+			}
+			m[item] = struct{}{}
+		}
+	}
+	return m
+}
+
+func hasIntersection(lhs, rhs ref.Val) ref.Val {
+	a, ok := lhs.(traits.Lister)
+	if !ok {
+		return types.ValOrErr(a, "no such overload")
+	}
+
+	b, ok := rhs.(traits.Lister)
+	if !ok {
+		return types.ValOrErr(b, "no such overload")
+	}
+
+	if a.Size().(types.Int).Compare(b.Size()) == types.IntOne {
+		a, b = b, a // b is the longest list
+	}
+	m := convertToMap(b)
+
+	for ai := a.Iterator(); ai.HasNext() == types.True; {
+		va := ai.Next()
+
+		var found bool
+		if m != nil {
+			_, found = m[va]
+		} else {
+			found = find(b.Iterator(), va)
+		}
+
+		if found {
+			return types.True
+		}
+	}
+
+	return types.False
+}
+
+func intersect(lhs, rhs ref.Val) ref.Val {
+	a, ok := lhs.(traits.Lister)
+	if !ok {
+		return types.ValOrErr(a, "no such overload")
+	}
+
+	b, ok := rhs.(traits.Lister)
+	if !ok {
+		return types.ValOrErr(b, "no such overload")
+	}
+
+	if a.Size().(types.Int).Compare(b.Size()) == types.IntOne {
+		a, b = b, a // b is the longest list
+	}
+	m := convertToMap(b)
+	var items []ref.Val
+	for ai := a.Iterator(); ai.HasNext() == types.True; {
+		va := ai.Next()
+		if m != nil {
+			if _, ok := m[va]; ok {
+				items = append(items, va)
+			}
+		} else {
+			if find(b.Iterator(), va) {
+				items = append(items, va)
+			}
+		}
+	}
+	return types.NewRefValList(types.DefaultTypeAdapter, items)
 }
 
 func (clib cerbosLib) inIPAddrRangeFunc(ipAddrVal, cidrVal string) (bool, error) {

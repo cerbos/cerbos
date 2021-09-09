@@ -194,7 +194,7 @@ NOTE: The IP address functions are Cerbos-specific extensions to CEL.
   "id": "elmer_fudd",
   "attr": {
     "id": "125",
-    "teams": ["design", "product_marketing", "communications", "commercial"],
+    "teams": ["design", "communications", "product", "commercial"],
     "clients": {
       "acme": {"active": true},
       "bb inc": {"active": true}
@@ -208,14 +208,19 @@ NOTE: The IP address functions are Cerbos-specific extensions to CEL.
 [%header,cols=".^1m,.^2,4m",grid=rows]
 |===
 | Operator/Function | Description | Example 
+| + | Concatenates lists | P.attr.teams + ["design", "engineering"]
 | []       | Index into a list or a map | P.attr.teams[0] == "design" && P.attr.clients["acme"]["active"] == true
 | all      | Check whether all elements in a list match the predicate | P.attr.teams.all(t, size(t) > 3)
+| except | Produces the set difference of two lists | P.attr.teams.except(["design", "engineering"]) == ["communications", "product", "commercial"]
 | exists   | Check whether at least one element matching the predicate exists | P.attr.teams.exists(t, t.startsWith("comm"))
 | exists_one | Check that only one element matching the predicate exists | P.attr.teams.exists_one(t, t.startsWith("comm")) == false
 | filter   | Filter a list using the predicate | size(P.attr.teams.filter(t, t.matches("^comm"))) == 2
+| has_intersection| Checks whether the lists have at least one common element | has_intersection(["design", "engineering"], P.attr.teams)
 | in       | Check whether the given element is contained in the list or map | ("design" in P.attr.teams) && ("acme" in P.attr.clients)
+| intersect| Produces the set intersection of two lists | intersect(["design", "engineering"], P.attr.teams) == ["design"]
+| is_subset| Checks whether the list is a subset of another list | ["design", "engineering"].is_subset(P.attr.teams) == false
 | map      | Transform each element in a list | "DESIGN" in P.attr.teams.map(t, t.upperAscii())
-| size     | Number of elements in a list or map | size(P.attr.teams) == 4 && size(P.attr.clients) == 2 
+| size     | Number of elements in a list or map | size(P.attr.teams) == 4 && size(P.attr.clients) == 2
 |===
 
 
