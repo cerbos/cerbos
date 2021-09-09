@@ -4,7 +4,6 @@
 package codegen
 
 import (
-	"errors"
 	"fmt"
 	"net"
 	"time"
@@ -133,7 +132,12 @@ func (clib cerbosLib) ProgramOptions() []cel.ProgramOption {
 
 // hashable checks whether the type is hashable, i.e. can be used in a Go map.
 func hashable(t ref.Type) bool {
-	return t == types.StringType || t == types.IntType || t == types.DoubleType || t == types.DurationType || t == types.TimestampType || t == types.UintType
+	return t == types.StringType ||
+		t == types.IntType ||
+		t == types.DoubleType ||
+		t == types.DurationType ||
+		t == types.TimestampType ||
+		t == types.UintType
 }
 
 // exceptList implements difference lhs-rhs returning
@@ -149,15 +153,16 @@ func exceptList(lhs, rhs ref.Val) ref.Val {
 		return types.ValOrErr(b, "no such overload")
 	}
 
+	m := convertToMap(b)
+
 	var items []ref.Val
 	for ai := a.Iterator(); ai.HasNext() == types.True; {
 		va := ai.Next()
-		found := false
-		for bi := b.Iterator(); !found && bi.HasNext() == types.True; {
-			vb := bi.Next()
-			if va.Equal(vb) == types.True {
-				found = true
-			}
+		var found bool
+		if m != nil {
+			_, found = m[va]
+		} else {
+			found = find(b.Iterator(), va)
 		}
 		if !found {
 			items = append(items, va)
@@ -178,13 +183,43 @@ func isSubset(lhs, rhs ref.Val) ref.Val {
 		return types.ValOrErr(b, "no such overload")
 	}
 
+	m := convertToMap(b)
+
+	for ai := a.Iterator(); ai.HasNext() == types.True; {
+		va := ai.Next()
+		if m != nil {
+			if _, ok := m[va]; !ok {
+				return types.False
+			}
+		} else {
+			if !find(b.Iterator(), va) {
+				return types.False
+			}
+		}
+	}
+
+	return types.True
+}
+
+func find(i traits.Iterator, item ref.Val) bool {
+	for i.HasNext() == types.True {
+		current := i.Next()
+		if item.Equal(current) == types.True {
+			return true
+		}
+	}
+	return false
+}
+
+const minListLengthToConvert = 3
+
+func convertToMap(b traits.Lister) map[ref.Val]struct{} {
 	var m map[ref.Val]struct{}
 	if item := b.Get(types.IntZero); !types.IsError(item) && hashable(item.Type()) {
-		size, ok := b.Size().(types.Int)
-		if !ok {
-			return types.NoSuchOverloadErr()
+		size := b.Size().(types.Int)
+		if size <= minListLengthToConvert {
+			return nil
 		}
-
 		m = make(map[ref.Val]struct{}, size)
 
 		for i := b.Iterator(); i.HasNext() == types.True; {
@@ -196,28 +231,7 @@ func isSubset(lhs, rhs ref.Val) ref.Val {
 			m[item] = struct{}{}
 		}
 	}
-
-	for ai := a.Iterator(); ai.HasNext() == types.True; {
-		va := ai.Next()
-		if m != nil {
-			if _, ok := m[va]; !ok {
-				return types.False
-			}
-		} else {
-			found := false
-			for bi := b.Iterator(); !found && bi.HasNext() == types.True; {
-				vb := bi.Next()
-				if va.Equal(vb) == types.True {
-					found = true
-				}
-			}
-			if !found {
-				return types.False
-			}
-		}
-	}
-
-	return types.True
+	return m
 }
 
 func hasIntersection(lhs, rhs ref.Val) ref.Val {
@@ -231,13 +245,23 @@ func hasIntersection(lhs, rhs ref.Val) ref.Val {
 		return types.ValOrErr(b, "no such overload")
 	}
 
+	if a.Size().(types.Int).Compare(b.Size()) == types.IntOne {
+		a, b = b, a // b is the longest list
+	}
+	m := convertToMap(b)
+
 	for ai := a.Iterator(); ai.HasNext() == types.True; {
 		va := ai.Next()
-		for bi := b.Iterator(); bi.HasNext() == types.True; {
-			vb := bi.Next()
-			if va.Equal(vb) == types.True {
-				return types.True
-			}
+
+		var found bool
+		if m != nil {
+			_, found = m[va]
+		} else {
+			found = find(b.Iterator(), va)
+		}
+
+		if found {
+			return types.True
 		}
 	}
 
@@ -255,60 +279,24 @@ func intersect(lhs, rhs ref.Val) ref.Val {
 		return types.ValOrErr(b, "no such overload")
 	}
 
-	if item := a.Get(types.IntZero); !types.IsError(item) && hashable(item.Type()) {
-		result, err := intersectHashable(a, b)
-		if err == nil {
-			return result
-		}
+	if a.Size().(types.Int).Compare(b.Size()) == types.IntOne {
+		a, b = b, a // b is the longest list
 	}
-
+	m := convertToMap(b)
 	var items []ref.Val
 	for ai := a.Iterator(); ai.HasNext() == types.True; {
 		va := ai.Next()
-		for bi := b.Iterator(); bi.HasNext() == types.True; {
-			vb := bi.Next()
-			if va.Equal(vb) == types.True {
+		if m != nil {
+			if _, ok := m[va]; ok {
 				items = append(items, va)
-				break
+			}
+		} else {
+			if find(b.Iterator(), va) {
+				items = append(items, va)
 			}
 		}
 	}
 	return types.NewRefValList(types.DefaultTypeAdapter, items)
-}
-
-var noHashErr = errors.New("can't get a hash of the type")
-
-func intersectHashable(lhs, rhs traits.Lister) (ref.Val, error) {
-	size, ok := lhs.Size().(types.Int)
-	if !ok {
-		return types.NoSuchOverloadErr(), nil
-	}
-	if size.Compare(rhs.Size()) == types.IntNegOne {
-		lhs, rhs = rhs, lhs // lhs is the longest list
-	}
-
-	// convert the longest list to a map
-	m := make(map[ref.Val]struct{}, size)
-	for i := lhs.Iterator(); i.HasNext() == types.True; {
-		item := i.Next()
-		if !hashable(item.Type()) {
-			return nil, fmt.Errorf("%w: %s", noHashErr, item.Type().TypeName())
-		}
-		m[item] = struct{}{}
-	}
-
-	var items []ref.Val
-	for i := rhs.Iterator(); i.HasNext() == types.True; {
-		item := i.Next()
-		if !hashable(item.Type()) {
-			return nil, fmt.Errorf("%w: %s", noHashErr, item.Type().TypeName())
-		}
-		if _, ok = m[item]; ok {
-			items = append(items, item)
-		}
-	}
-
-	return types.NewRefValList(types.DefaultTypeAdapter, items), nil
 }
 
 func (clib cerbosLib) inIPAddrRangeFunc(ipAddrVal, cidrVal string) (bool, error) {
