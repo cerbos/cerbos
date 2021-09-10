@@ -893,9 +893,11 @@ type policyFilter struct {
 	filters []*requestv1.ListPoliciesRequest_Filter
 }
 
+// FilterOpt is used to specify search terms for ListPolicies method.
 type FilterOpt func(*policyFilter)
 
-// WithKind.
+// WithKind is used for requesting specific types of policies. If it's not set
+// it will be implicitly considered as all types are requested.
 func WithKind(k PolicyKind) FilterOpt {
 	return func(pf *policyFilter) {
 		pf.filters = append(pf.filters, &requestv1.ListPoliciesRequest_Filter{
@@ -906,6 +908,8 @@ func WithKind(k PolicyKind) FilterOpt {
 	}
 }
 
+// WithDescription adds a filter for description. The provided value will be
+// searched among the descriptions.
 func WithDescription(d string) FilterOpt {
 	return func(pf *policyFilter) {
 		pf.filters = append(pf.filters, &requestv1.ListPoliciesRequest_Filter{
@@ -916,6 +920,8 @@ func WithDescription(d string) FilterOpt {
 	}
 }
 
+// WithResourceName is an ID filter for resource policies. This filter will be
+// applied only to resource policies.
 func WithResourceName(n string) FilterOpt {
 	return func(pf *policyFilter) {
 		pf.filters = append(pf.filters, &requestv1.ListPoliciesRequest_Filter{
@@ -930,6 +936,8 @@ func WithResourceName(n string) FilterOpt {
 	}
 }
 
+// WithPrincipalName is an ID filter for principal policies. This filter will be
+// applied only to principal policies.
 func WithPrincipalName(n string) FilterOpt {
 	return func(pf *policyFilter) {
 		pf.filters = append(pf.filters, &requestv1.ListPoliciesRequest_Filter{
@@ -944,6 +952,8 @@ func WithPrincipalName(n string) FilterOpt {
 	}
 }
 
+// WithDerivedRolesName is an ID filter for derived roles policies. This filter will be
+// applied only to derived roles policies.
 func WithDerivedRolesName(n string) FilterOpt {
 	return func(pf *policyFilter) {
 		pf.filters = append(pf.filters, &requestv1.ListPoliciesRequest_Filter{
@@ -958,6 +968,7 @@ func WithDerivedRolesName(n string) FilterOpt {
 	}
 }
 
+// WithVersion adds a filter for policy versions.
 func WithVersion(v string) FilterOpt {
 	return func(pf *policyFilter) {
 		pf.filters = append(pf.filters, &requestv1.ListPoliciesRequest_Filter{
