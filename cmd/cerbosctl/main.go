@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"runtime/debug"
 	"strings"
 
 	"github.com/spf13/cobra"
@@ -14,6 +15,7 @@ import (
 	"github.com/cerbos/cerbos/client"
 	"github.com/cerbos/cerbos/cmd/cerbosctl/audit"
 	"github.com/cerbos/cerbos/cmd/cerbosctl/decisions"
+	"github.com/cerbos/cerbos/cmd/cerbosctl/internal"
 	"github.com/cerbos/cerbos/cmd/cerbosctl/version"
 	"github.com/cerbos/cerbos/internal/util"
 )
@@ -77,6 +79,16 @@ func main() {
 	cmd.PersistentFlags().BoolVar(&connConf.plaintext, "plaintext", false, "Use plaintext protocol without TLS")
 
 	cmd.AddCommand(audit.NewAuditCmd(withAdminClient), decisions.NewDecisionsCmd(withAdminClient), version.NewVersionCmd(withClient))
+
+	defer func() {
+		if x := recover(); x != nil {
+			cmd.PrintErrln(internal.FeedbackMsg)
+			cmd.PrintErrln(internal.FeedbackLink + "\n")
+			cmd.PrintErrln(string(debug.Stack()))
+
+			os.Exit(1)
+		}
+	}()
 
 	if err := cmd.Execute(); err != nil {
 		cmd.PrintErrf("ERROR: %v\n", err)
