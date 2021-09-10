@@ -968,7 +968,8 @@ func WithDerivedRolesName(n string) FilterOpt {
 	}
 }
 
-// WithVersion adds a filter for policy versions.
+// WithVersion adds a filter for policy versions. This filter is only applicable
+// for resource and principal policies.
 func WithVersion(v string) FilterOpt {
 	return func(pf *policyFilter) {
 		pf.filters = append(pf.filters, &requestv1.ListPoliciesRequest_Filter{

@@ -182,6 +182,7 @@ func TestListPolicies(t *testing.T) {
 		policies, err := ac.ListPolicies(context.Background(), opts...)
 
 		require.NoError(t, err)
+		require.NotEmpty(t, policies)
 		require.IsType(t, &policyv1.Policy_PrincipalPolicy{}, policies[0].PolicyType)
 	})
 }

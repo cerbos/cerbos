@@ -22,6 +22,8 @@ import (
 type AdminClient interface {
 	AddOrUpdatePolicy(context.Context, *PolicySet) error
 	AuditLogs(ctx context.Context, opts AuditLogOptions) (<-chan *AuditLogEntry, error)
+	// ListPolicies retrieves the policies on the Cerbos server. The list can
+	// narrowed down with the filter options.
 	ListPolicies(ctx context.Context, opts ...FilterOpt) ([]*policyv1.Policy, error)
 }
 
