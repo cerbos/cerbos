@@ -4,6 +4,14 @@ MOCK_INTERFACES := '(Index|Store)'
 include tools/tools.mk
 include hack/dev/dev.mk
 
+VERSION := $(shell git describe --abbrev=0)
+COMMIT_SHA := $(shell git rev-parse HEAD)
+BUILD_DATE := $(shell date -u +"%Y-%m-%dT%H:%M:%SZ")
+
+LDFLAGS += -X "github.com/cerbos/cerbos/internal/util.Version=$(VERSION)"
+LDFLAGS += -X "github.com/cerbos/cerbos/internal/util.Commit=$(COMMIT_SHA)"
+LDFLAGS += -X "github.com/cerbos/cerbos/internal/util.BuildDate=$(BUILD_DATE)"
+
 .PHONY: all
 all: clean build
 
@@ -88,6 +96,28 @@ docs:
 	@ docs/build.sh
 
 .PHONY: install
-install:
-	@ go install ./cmd/cerbos
-	@ go install ./cmd/cerbosctl
+install: install-cerbos install-cerbosctl
+
+.PHONY: install-cerbos
+install-cerbos:
+	@ if [ -x "$$(command -v cerbos)" ]; then \
+		echo "cerbos is already installed, do you want to re-install it? [y/N] " && read ans; \
+			if [ $$ans = y ] || [ $$ans = Y ]  ; then \
+				go install -ldflags '$(LDFLAGS)' ./cmd/cerbos; \
+			else \
+				echo "aborting install"; \
+			exit -1; \
+		fi; \
+	fi; \
+
+.PHONY: install-cerbosctl
+install-cerbosctl:
+	@ if [ -x "$$(command -v cerbosctl)" ]; then \
+		echo "cerbosctl is already installed, do you want to re-install it? [y/N] " && read ans; \
+			if [ $$ans = y ] || [ $$ans = Y ]  ; then \
+				go install -ldflags '$(LDFLAGS)' ./cmd/cerbosctl; \
+			else \
+				echo "aborting install"; \
+			exit -1; \
+		fi; \
+	fi; \

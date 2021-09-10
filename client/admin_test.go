@@ -137,7 +137,6 @@ func TestListPolicies(t *testing.T) {
 		opts = append(opts, WithKind(DerivedRolesPolicyKind))
 
 		policies, err := ac.ListPolicies(context.Background(), opts...)
-
 		require.NoError(t, err)
 		require.NotEmpty(t, policies)
 		require.IsType(t, &policyv1.Policy_DerivedRoles{}, policies[0].PolicyType)
@@ -148,9 +147,9 @@ func TestListPolicies(t *testing.T) {
 		opts = append(opts, WithVersion("20210210"), WithKind(PrincipalPolicyKind), WithKind(ResourcePolicyKind))
 
 		policies, err := ac.ListPolicies(context.Background(), opts...)
-
 		require.NoError(t, err)
 		require.NotEmpty(t, policies)
+
 		for _, pol := range policies {
 			switch p := pol.PolicyType.(type) {
 			case *policyv1.Policy_ResourcePolicy:
@@ -169,7 +168,6 @@ func TestListPolicies(t *testing.T) {
 		opts = append(opts, WithKind(PrincipalPolicyKind))
 
 		_, err := ac.ListPolicies(context.Background(), opts...)
-
 		require.Error(t, err)
 	})
 
@@ -180,7 +178,6 @@ func TestListPolicies(t *testing.T) {
 		opts = append(opts, WithKind(PrincipalPolicyKind))
 
 		policies, err := ac.ListPolicies(context.Background(), opts...)
-
 		require.NoError(t, err)
 		require.NotEmpty(t, policies)
 		require.IsType(t, &policyv1.Policy_PrincipalPolicy{}, policies[0].PolicyType)
