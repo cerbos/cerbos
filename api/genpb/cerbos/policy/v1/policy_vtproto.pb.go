@@ -906,6 +906,30 @@ func (m *TestSuite) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 		i -= len(m.unknownFields)
 		copy(dAtA[i:], m.unknownFields)
 	}
+	if len(m.Principals) > 0 {
+		for iNdEx := len(m.Principals) - 1; iNdEx >= 0; iNdEx-- {
+			if marshalto, ok := interface{}(m.Principals[iNdEx]).(interface {
+				MarshalToSizedBufferVT([]byte) (int, error)
+			}); ok {
+				size, err := marshalto.MarshalToSizedBufferVT(dAtA[:i])
+				if err != nil {
+					return 0, err
+				}
+				i -= size
+				i = encodeVarint(dAtA, i, uint64(size))
+			} else {
+				encoded, err := proto.Marshal(m.Principals[iNdEx])
+				if err != nil {
+					return 0, err
+				}
+				i -= len(encoded)
+				copy(dAtA[i:], encoded)
+				i = encodeVarint(dAtA, i, uint64(len(encoded)))
+			}
+			i--
+			dAtA[i] = 0x32
+		}
+	}
 	if len(m.Tests) > 0 {
 		for iNdEx := len(m.Tests) - 1; iNdEx >= 0; iNdEx-- {
 			size, err := m.Tests[iNdEx].MarshalToSizedBufferVT(dAtA[:i])
@@ -1615,6 +1639,18 @@ func (m *TestSuite) SizeVT() (n int) {
 	if len(m.Tests) > 0 {
 		for _, e := range m.Tests {
 			l = e.SizeVT()
+			n += 1 + l + sov(uint64(l))
+		}
+	}
+	if len(m.Principals) > 0 {
+		for _, e := range m.Principals {
+			if size, ok := interface{}(e).(interface {
+				SizeVT() int
+			}); ok {
+				l = size.SizeVT()
+			} else {
+				l = proto.Size(e)
+			}
 			n += 1 + l + sov(uint64(l))
 		}
 	}
@@ -3885,6 +3921,48 @@ func (m *TestSuite) UnmarshalVT(dAtA []byte) error {
 			m.Tests = append(m.Tests, &Test{})
 			if err := m.Tests[len(m.Tests)-1].UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
 				return err
+			}
+			iNdEx = postIndex
+		case 6:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Principals", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLength
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLength
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Principals = append(m.Principals, &v11.Principal{})
+			if unmarshal, ok := interface{}(m.Principals[len(m.Principals)-1]).(interface {
+				UnmarshalVT([]byte) error
+			}); ok {
+				if err := unmarshal.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
+					return err
+				}
+			} else {
+				if err := proto.Unmarshal(dAtA[iNdEx:postIndex], m.Principals[len(m.Principals)-1]); err != nil {
+					return err
+				}
 			}
 			iNdEx = postIndex
 		default:

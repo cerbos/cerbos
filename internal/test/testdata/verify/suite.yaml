@@ -1,26 +1,25 @@
 ---
 name: TestSuite
 description: Tests for verifying something
+principals:
+  - &john
+    id: john
+    policyVersion: '20210210'
+    roles:
+      - employee
+    attr:
+      department: marketing
+      geography: GB
+      team: design
 tests:
   - name: Alicia tries to view her own private album
     input: {
       "requestId": "test",
       "actions": [
-        "view:public",
-        "approve"
+          "view:public",
+          "approve"
       ],
-      "principal": {
-        "id": "john",
-        "policyVersion": "20210210",
-        "roles": [
-          "employee"
-        ],
-        "attr": {
-          "department": "marketing",
-          "geography": "GB",
-          "team": "design"
-        }
-      },
+      "principal": *john,
       "resource": {
         "kind": "leave_request",
         "policyVersion": "20210210",

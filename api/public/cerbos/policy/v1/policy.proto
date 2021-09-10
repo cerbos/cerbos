@@ -103,6 +103,7 @@ message TestSuite {
     bool skip = 3;
     string skip_reason = 4;
     repeated Test tests = 5 [(validate.rules).repeated.min_items = 1];
+    repeated cerbos.engine.v1.Principal principals = 6;
 }
 
 message Test {
