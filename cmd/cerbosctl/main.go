@@ -92,7 +92,7 @@ func main() {
 
 	if err := cmd.Execute(); err != nil {
 		cmd.PrintErrf("ERROR: %v\n", err)
-		os.Exit(1)
+		os.Exit(1) //nolint:gocritic
 	}
 }
 
