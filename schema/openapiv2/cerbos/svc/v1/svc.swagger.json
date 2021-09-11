@@ -527,54 +527,6 @@
         "end"
       ]
     },
-    "ListPoliciesRequestFilter": {
-      "type": "object",
-      "properties": {
-        "kind": {
-          "$ref": "#/definitions/ListPoliciesRequestPolicyKind",
-          "enum": [
-            "KIND_UNSPECIFIED",
-            "KIND_RESOURCE",
-            "KIND_PRINCIPAL",
-            "KIND_DERIVED"
-          ],
-          "description": "Kind of policy"
-        },
-        "id": {
-          "$ref": "#/definitions/ListPoliciesRequestIDFilter"
-        },
-        "version": {
-          "type": "string"
-        },
-        "description": {
-          "type": "string"
-        }
-      }
-    },
-    "ListPoliciesRequestIDFilter": {
-      "type": "object",
-      "properties": {
-        "resourceName": {
-          "type": "string"
-        },
-        "principalName": {
-          "type": "string"
-        },
-        "derivedRolesName": {
-          "type": "string"
-        }
-      }
-    },
-    "ListPoliciesRequestPolicyKind": {
-      "type": "string",
-      "enum": [
-        "POLICY_KIND_UNSPECIFIED",
-        "POLICY_KIND_RESOURCE",
-        "POLICY_KIND_PRINCIPAL",
-        "POLICY_KIND_DERIVED_ROLES"
-      ],
-      "default": "POLICY_KIND_UNSPECIFIED"
-    },
     "MatchExprList": {
       "type": "object",
       "properties": {

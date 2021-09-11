@@ -355,38 +355,6 @@ message ServerInfoRequest {
 }
 
 message ListPoliciesRequest { 
-    enum PolicyKind {
-        POLICY_KIND_UNSPECIFIED = 0;
-        POLICY_KIND_RESOURCE = 1;
-        POLICY_KIND_PRINCIPAL = 2;
-        POLICY_KIND_DERIVED_ROLES = 3;
-    }
-
-    message IDFilter {
-        oneof id {
-            string resource_name = 1;
-            string principal_name = 2;
-            string derived_roles_name = 3;
-        }
-    }
-
-    message Filter {
-        oneof filter {
-            PolicyKind kind = 1 [
-                (validate.rules).enum = {in: [0,1,2,3]},
-                (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = { 
-                    description: "Kind of policy"
-                    enum: ["KIND_UNSPECIFIED", "KIND_RESOURCE", "KIND_PRINCIPAL", "KIND_DERIVED"]
-                }
-            ];
-            IDFilter id = 2;
-            string version = 3;
-            string description = 4;
-       }
-    }
-
-    repeated Filter filters = 1;
-
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
 		json_schema: {
 			description: "List policies request"

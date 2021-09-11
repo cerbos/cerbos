@@ -342,20 +342,15 @@ func (idx *index) GetPolicies(ctx context.Context) ([]*policy.Wrapper, error) {
 	idx.mu.RLock()
 	defer idx.mu.RUnlock()
 
-	filteredEntries := make(map[namer.ModuleID]*policy.Wrapper)
 	entries := make([]*policy.Wrapper, 0)
 	for _, modID := range idx.fileToModID {
 		pol, err := idx.loadPolicy(modID)
 		if err != nil {
-			return entries, err
+			return nil, err
 		}
 
 		wp := policy.Wrap(pol)
-		filteredEntries[modID] = &wp
-	}
-
-	for _, pw := range filteredEntries {
-		entries = append(entries, pw)
+		entries = append(entries, &wp)
 	}
 
 	return entries, nil

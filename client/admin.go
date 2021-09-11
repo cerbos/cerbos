@@ -155,15 +155,8 @@ func (c *GrpcAdminClient) auditLogs(ctx context.Context, opts AuditLogOptions) (
 	return resp, nil
 }
 
-func (c *GrpcAdminClient) ListPolicies(ctx context.Context, opts ...FilterOpt) ([]*policyv1.Policy, error) {
-	filter := &policyFilter{
-		filters: make([]*requestv1.ListPoliciesRequest_Filter, 0),
-	}
-	for _, opt := range opts {
-		opt(filter)
-	}
-
-	req := &requestv1.ListPoliciesRequest{Filters: filter.filters}
+func (c *GrpcAdminClient) ListPolicies(ctx context.Context, _ ...FilterOpt) ([]*policyv1.Policy, error) {
+	req := &requestv1.ListPoliciesRequest{}
 	if err := req.Validate(); err != nil {
 		return nil, fmt.Errorf("could not validate list policies request: %w", err)
 	}

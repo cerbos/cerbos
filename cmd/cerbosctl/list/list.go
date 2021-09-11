@@ -5,20 +5,19 @@ package list
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"io"
-	"os"
 	"strings"
 
 	"github.com/fatih/color"
 	"github.com/rodaine/table"
 	"github.com/spf13/cobra"
-	"gopkg.in/yaml.v2"
+	"google.golang.org/protobuf/encoding/protojson"
 
 	policy "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
 	"github.com/cerbos/cerbos/client"
 	"github.com/cerbos/cerbos/cmd/cerbosctl/internal"
+	"github.com/cerbos/cerbos/internal/util"
 )
 
 var listPoliciesFlags = internal.NewListPoliciesFilterDef()
@@ -46,7 +45,7 @@ func runListCmdF(c client.AdminClient, cmd *cobra.Command, _ []string) error {
 		return fmt.Errorf("error while requesting policy list: %w", err)
 	}
 
-	if err = printPolicies(os.Stdout, policies, listPoliciesFlags.OutputFormat()); err != nil {
+	if err = printPolicies(cmd.OutOrStdout(), policies, listPoliciesFlags.OutputFormat()); err != nil {
 		return fmt.Errorf("could not print policies: %w", err)
 	}
 
@@ -57,19 +56,19 @@ func printPolicies(w io.Writer, policies []*policy.Policy, format string) error 
 	switch format {
 	case "json":
 		for _, policy := range policies {
-			b, err := json.MarshalIndent(policy, "", "  ")
+			b, err := protojson.Marshal(policy)
 			if err != nil {
-				return err
+				return fmt.Errorf("could not marshal policy: %w", err)
 			}
 			fmt.Fprintf(w, "%s\n", b)
 		}
 	case "yaml":
 		for _, policy := range policies {
-			b, err := yaml.Marshal(policy)
+			err := util.WriteYAML(w, policy)
 			if err != nil {
-				return err
+				return fmt.Errorf("could not write policy: %w", err)
 			}
-			fmt.Fprintf(w, "%s\n", b)
+			fmt.Fprintln(w, "---")
 		}
 	default:
 		headerFmt := color.New(color.FgGreen, color.Underline).SprintfFunc()

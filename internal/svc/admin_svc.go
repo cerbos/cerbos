@@ -128,63 +128,13 @@ func (cas *CerbosAdminService) ListPolicies(ctx context.Context, req *requestv1.
 		return nil, status.Error(codes.NotFound, "store is not configured")
 	}
 
-	filter := storage.PolicyFilter{
-		Kinds: make(map[string]interface{}),
-	}
-
-	for _, f := range req.Filters {
-		switch t := f.Filter.(type) {
-		case *requestv1.ListPoliciesRequest_Filter_Kind:
-			switch t.Kind {
-			case requestv1.ListPoliciesRequest_POLICY_KIND_RESOURCE:
-				filter.Kinds[policy.ResourceKindStr] = struct{}{}
-			case requestv1.ListPoliciesRequest_POLICY_KIND_PRINCIPAL:
-				filter.Kinds[policy.PrincipalKindStr] = struct{}{}
-			case requestv1.ListPoliciesRequest_POLICY_KIND_DERIVED_ROLES:
-				filter.Kinds[policy.DerivedRolesKindStr] = struct{}{}
-			default: // do nothing
-			}
-		case *requestv1.ListPoliciesRequest_Filter_Id:
-			switch id := t.Id.Id.(type) {
-			case *requestv1.ListPoliciesRequest_IDFilter_ResourceName:
-				filter.ResourceName = id.ResourceName
-			case *requestv1.ListPoliciesRequest_IDFilter_PrincipalName:
-				filter.PrincipalName = id.PrincipalName
-			case *requestv1.ListPoliciesRequest_IDFilter_DerivedRolesName:
-				filter.DerivedRolesName = id.DerivedRolesName
-			}
-		case *requestv1.ListPoliciesRequest_Filter_Description:
-			filter.Description = t.Description
-		case *requestv1.ListPoliciesRequest_Filter_Version:
-			filter.Version = t.Version
-		}
-	}
-
-	// no kind specified, include all kinds
-	if len(filter.Kinds) == 0 {
-		filter.Kinds[policy.ResourceKindStr] = struct{}{}
-		filter.Kinds[policy.PrincipalKindStr] = struct{}{}
-		filter.Kinds[policy.DerivedRolesKindStr] = struct{}{}
-	}
-
-	if err := filter.Validate(); err != nil {
-		return nil, status.Error(codes.InvalidArgument, fmt.Sprintf("could not validate filter: %s", err.Error()))
-	}
-
 	units, err := cas.store.GetPolicies(context.Background())
 	if err != nil {
 		return nil, status.Error(codes.Internal, fmt.Sprintf("could not get policies: %s", err.Error()))
 	}
 
-	var filtered []*policy.Wrapper
-	for i := range units {
-		if filterPolicy(units[i], &filter) {
-			filtered = append(filtered, units[i])
-		}
-	}
-
 	policies := make([]*policyv1.Policy, 0)
-	for _, pl := range filtered {
+	for _, pl := range units {
 		policies = append(policies, pl.Policy)
 	}
 
@@ -291,37 +241,4 @@ func (cas *CerbosAdminService) checkCredentials(ctx context.Context) error {
 	}
 
 	return nil
-}
-
-func filterPolicy(pol *policy.Wrapper, filter *storage.PolicyFilter) bool {
-	if _, ok := filter.Kinds[pol.Kind]; !ok {
-		return false
-	}
-
-	switch pol.Policy.PolicyType.(type) {
-	case *policyv1.Policy_ResourcePolicy:
-		if filter.ResourceName != "" && !strings.Contains(pol.GetResourcePolicy().Resource, filter.ResourceName) {
-			return false
-		}
-		if filter.Version != "" && !strings.Contains(pol.Version, filter.Version) {
-			return false
-		}
-	case *policyv1.Policy_PrincipalPolicy:
-		if filter.PrincipalName != "" && !strings.Contains(pol.GetPrincipalPolicy().Principal, filter.PrincipalName) {
-			return false
-		}
-		if filter.Version != "" && !strings.Contains(pol.Version, filter.Version) {
-			return false
-		}
-	case *policyv1.Policy_DerivedRoles:
-		if filter.DerivedRolesName != "" && !strings.Contains(pol.GetDerivedRoles().Name, filter.DerivedRolesName) {
-			return false
-		}
-	}
-
-	if filter.Description != "" && !strings.Contains(pol.Description, filter.Description) {
-		return false
-	}
-
-	return true
 }

@@ -134,30 +134,3 @@ func (evt Event) String() string {
 func NewEvent(kind EventKind, policyID namer.ModuleID) Event {
 	return Event{Kind: kind, PolicyID: policyID}
 }
-
-type PolicyFilter struct {
-	Kinds map[string]interface{}
-
-	ResourceName     string
-	PrincipalName    string
-	DerivedRolesName string
-
-	Version     string
-	Description string
-}
-
-func (f *PolicyFilter) Validate() error {
-	if _, ok := f.Kinds[policy.ResourceKindStr]; f.ResourceName != "" && !ok {
-		return fmt.Errorf("%q key is a valid filter field for only %s policy", "resource", "resource")
-	}
-
-	if _, ok := f.Kinds[policy.PrincipalKindStr]; f.PrincipalName != "" && !ok {
-		return fmt.Errorf("%q key is a valid filter field for only %s policy", "principal", "principal")
-	}
-
-	if _, ok := f.Kinds[policy.DerivedRolesKindStr]; f.DerivedRolesName != "" && !ok {
-		return fmt.Errorf("%q is a valid filter field for only %s policy", "name", "derived_roles")
-	}
-
-	return nil
-}

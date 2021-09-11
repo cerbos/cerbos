@@ -70,7 +70,6 @@ require (
 	google.golang.org/genproto v0.0.0-20210617175327-b9e0b3197ced
 	google.golang.org/grpc v1.39.0-dev.0.20210519181852-3dd75a6888ce
 	google.golang.org/protobuf v1.27.1
-	gopkg.in/yaml.v2 v2.4.0
 	helm.sh/helm/v3 v3.6.3
 	modernc.org/sqlite v1.12.0
 )
@@ -168,6 +167,7 @@ require (
 	golang.org/x/tools v0.1.3 // indirect
 	golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1 // indirect
 	gopkg.in/warnings.v0 v0.1.2 // indirect
+	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b // indirect
 	lukechampine.com/uint128 v1.1.1 // indirect
 	modernc.org/cc/v3 v3.33.7 // indirect

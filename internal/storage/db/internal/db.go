@@ -263,7 +263,7 @@ func (s *dbStorage) GetPolicies(ctx context.Context) ([]*policy.Wrapper, error) 
 	}
 	defer res.Close()
 
-	policies := make([]*policy.Wrapper, 0)
+	var policies []*policy.Wrapper
 	for res.Next() {
 		var rec Policy
 		if err := res.ScanStruct(&rec); err != nil {
