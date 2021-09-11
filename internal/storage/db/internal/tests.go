@@ -128,41 +128,10 @@ func TestSuite(store DBStorage) func(*testing.T) {
 		})
 
 		t.Run("get_policies", func(t *testing.T) {
-			t.Run("should be able to get results filtered by kind", func(t *testing.T) {
-				km := make(map[string]interface{})
-				km[policy.ResourceKindStr] = struct{}{}
-				policies, err := store.GetPolicies(ctx, storage.PolicyFilter{
-					Kinds: km,
-				})
+			t.Run("should be able to get policies", func(t *testing.T) {
+				policies, err := store.GetPolicies(ctx)
 				require.NoError(t, err)
 				require.NotEmpty(t, policies)
-			})
-
-			t.Run("should be able to filter by resource", func(t *testing.T) {
-				km := make(map[string]interface{})
-				km[policy.ResourceKindStr] = struct{}{}
-				policies, err := store.GetPolicies(ctx, storage.PolicyFilter{ResourceName: "gibberish", Kinds: km})
-				require.NoError(t, err)
-				require.Empty(t, policies)
-			})
-
-			t.Run("should be able to filter by name", func(t *testing.T) {
-				km := make(map[string]interface{})
-				km[policy.DerivedRolesKindStr] = struct{}{}
-				policies, err := store.GetPolicies(ctx, storage.PolicyFilter{DerivedRolesName: "x_my", Kinds: km})
-				require.NoError(t, err)
-				require.NotEmpty(t, policies)
-				require.Equal(t, "x_my_derived_roles_x", policies[0].Name)
-				require.Equal(t, "DERIVED_ROLES", policies[0].Kind)
-			})
-
-			t.Run("should be able to get results filtered by policy kind", func(t *testing.T) {
-				km := make(map[string]interface{})
-				km[policy.PrincipalKindStr] = struct{}{}
-				policies, err := store.GetPolicies(ctx, storage.PolicyFilter{Kinds: km})
-				require.NoError(t, err)
-				require.NotEmpty(t, policies)
-				require.Equal(t, "PRINCIPAL", policies[0].Kind)
 			})
 		})
 

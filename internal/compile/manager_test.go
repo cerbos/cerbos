@@ -286,8 +286,8 @@ func (ms *MockStore) Delete(ctx context.Context, ids ...namer.ModuleID) error {
 	return args.Error(0)
 }
 
-func (ms *MockStore) GetPolicies(ctx context.Context, filter storage.PolicyFilter) ([]*policy.Wrapper, error) {
-	args := ms.MethodCalled("GetPolicies", ctx, filter)
+func (ms *MockStore) GetPolicies(ctx context.Context) ([]*policy.Wrapper, error) {
+	args := ms.MethodCalled("GetPolicies", ctx)
 	if res := args.Get(0); res == nil {
 		return nil, args.Error(0)
 	}

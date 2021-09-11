@@ -9,7 +9,6 @@ import (
 	"os"
 
 	"github.com/doug-martin/goqu/v9"
-	"github.com/doug-martin/goqu/v9/exp"
 	"go.uber.org/zap"
 
 	"github.com/cerbos/cerbos/internal/codegen"
@@ -24,7 +23,7 @@ type DBStorage interface {
 	GetCompilationUnits(ctx context.Context, ids ...namer.ModuleID) (map[namer.ModuleID]*policy.CompilationUnit, error)
 	GetDependents(ctx context.Context, ids ...namer.ModuleID) (map[namer.ModuleID][]namer.ModuleID, error)
 	Delete(ctx context.Context, ids ...namer.ModuleID) error
-	GetPolicies(ctx context.Context, filter storage.PolicyFilter) ([]*policy.Wrapper, error)
+	GetPolicies(ctx context.Context) ([]*policy.Wrapper, error)
 }
 
 func NewDBStorage(ctx context.Context, db *goqu.Database) (DBStorage, error) {
@@ -257,34 +256,8 @@ func (s *dbStorage) Delete(ctx context.Context, ids ...namer.ModuleID) error {
 	return nil
 }
 
-func (s *dbStorage) GetPolicies(ctx context.Context, filter storage.PolicyFilter) ([]*policy.Wrapper, error) {
-	var kindExps []exp.Expression
-	if _, ok := filter.Kinds[policy.ResourceKindStr]; ok {
-		kindExps = append(kindExps,
-			goqu.And(goqu.C("kind").Eq(policy.ResourceKindStr),
-				goqu.C("name").Like(fmt.Sprintf("%%%s%%", filter.ResourceName)),
-				goqu.C("version").Like(fmt.Sprintf("%%%s%%", filter.Version)),
-			))
-	}
-	if _, ok := filter.Kinds[policy.PrincipalKindStr]; ok {
-		kindExps = append(kindExps,
-			goqu.And(goqu.C("kind").Eq(policy.PrincipalKindStr),
-				goqu.C("name").Like(fmt.Sprintf("%%%s%%", filter.PrincipalName)),
-				goqu.C("version").Like(fmt.Sprintf("%%%s%%", filter.Version)),
-			))
-	}
-	if _, ok := filter.Kinds[policy.DerivedRolesKindStr]; ok {
-		kindExps = append(kindExps, goqu.And(goqu.C("kind").Eq(policy.DerivedRolesKindStr), goqu.C("name").Like(fmt.Sprintf("%%%s%%", filter.DerivedRolesName))))
-	}
-
-	var expressions []exp.Expression
-	commonExpressions := []exp.Expression{
-		goqu.Or(kindExps...),
-		goqu.C("description").Like(fmt.Sprintf("%%%s%%", filter.Description)),
-	}
-	expressions = append(expressions, commonExpressions...)
-
-	res, err := s.db.From(PolicyTbl).Where(expressions...).Executor().ScannerContext(ctx)
+func (s *dbStorage) GetPolicies(ctx context.Context) ([]*policy.Wrapper, error) {
+	res, err := s.db.From(PolicyTbl).Executor().ScannerContext(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("could not execute %q query: %w", "GetPolicies", err)
 	}

@@ -131,8 +131,8 @@ func (s *Store) GetDependents(_ context.Context, ids ...namer.ModuleID) (map[nam
 	return s.idx.GetDependents(ids...)
 }
 
-func (s *Store) GetPolicies(ctx context.Context, filter storage.PolicyFilter) ([]*policy.Wrapper, error) {
-	return s.idx.GetPolicies(ctx, filter)
+func (s *Store) GetPolicies(ctx context.Context) ([]*policy.Wrapper, error) {
+	return s.idx.GetPolicies(ctx)
 }
 
 func isEmptyDir(dir string) (bool, error) {

@@ -75,7 +75,7 @@ type Store interface {
 	// GetDependents returns the dependents of the given modules.
 	GetDependents(context.Context, ...namer.ModuleID) (map[namer.ModuleID][]namer.ModuleID, error)
 	// GetPolicies returns the policies recorded in the store.
-	GetPolicies(context.Context, PolicyFilter) ([]*policy.Wrapper, error)
+	GetPolicies(context.Context) ([]*policy.Wrapper, error)
 }
 
 // MutableStore is a store that allows mutations.

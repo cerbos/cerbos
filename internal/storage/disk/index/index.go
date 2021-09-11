@@ -8,7 +8,6 @@ import (
 	"errors"
 	"fmt"
 	"io/fs"
-	"strings"
 	"sync"
 
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
@@ -37,7 +36,7 @@ type Index interface {
 	GetFiles() []string
 	GetAllCompilationUnits(context.Context) <-chan *policy.CompilationUnit
 	Clear() error
-	GetPolicies(context.Context, storage.PolicyFilter) ([]*policy.Wrapper, error)
+	GetPolicies(context.Context) ([]*policy.Wrapper, error)
 }
 
 type index struct {
@@ -339,7 +338,7 @@ func (idx *index) Inspect() map[string]Meta {
 	return entries
 }
 
-func (idx *index) GetPolicies(ctx context.Context, filter storage.PolicyFilter) ([]*policy.Wrapper, error) {
+func (idx *index) GetPolicies(ctx context.Context) ([]*policy.Wrapper, error) {
 	idx.mu.RLock()
 	defer idx.mu.RUnlock()
 
@@ -352,10 +351,6 @@ func (idx *index) GetPolicies(ctx context.Context, filter storage.PolicyFilter) 
 		}
 
 		wp := policy.Wrap(pol)
-		if !filterPolicy(&wp, &filter) {
-			continue
-		}
-
 		filteredEntries[modID] = &wp
 	}
 
@@ -364,37 +359,4 @@ func (idx *index) GetPolicies(ctx context.Context, filter storage.PolicyFilter) 
 	}
 
 	return entries, nil
-}
-
-func filterPolicy(pol *policy.Wrapper, filter *storage.PolicyFilter) bool {
-	if _, ok := filter.Kinds[pol.Kind]; !ok {
-		return false
-	}
-
-	switch pol.Policy.PolicyType.(type) {
-	case *policyv1.Policy_ResourcePolicy:
-		if filter.ResourceName != "" && !strings.Contains(pol.GetResourcePolicy().Resource, filter.ResourceName) {
-			return false
-		}
-		if filter.Version != "" && !strings.Contains(pol.Version, filter.Version) {
-			return false
-		}
-	case *policyv1.Policy_PrincipalPolicy:
-		if filter.PrincipalName != "" && !strings.Contains(pol.GetPrincipalPolicy().Principal, filter.PrincipalName) {
-			return false
-		}
-		if filter.Version != "" && !strings.Contains(pol.Version, filter.Version) {
-			return false
-		}
-	case *policyv1.Policy_DerivedRoles:
-		if filter.DerivedRolesName != "" && !strings.Contains(pol.GetDerivedRoles().Name, filter.DerivedRolesName) {
-			return false
-		}
-	}
-
-	if filter.Description != "" && !strings.Contains(pol.Description, filter.Description) {
-		return false
-	}
-
-	return true
 }

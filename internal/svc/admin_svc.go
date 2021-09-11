@@ -171,13 +171,20 @@ func (cas *CerbosAdminService) ListPolicies(ctx context.Context, req *requestv1.
 		return nil, status.Error(codes.InvalidArgument, fmt.Sprintf("could not validate filter: %s", err.Error()))
 	}
 
-	units, err := cas.store.GetPolicies(context.Background(), filter)
+	units, err := cas.store.GetPolicies(context.Background())
 	if err != nil {
 		return nil, status.Error(codes.Internal, fmt.Sprintf("could not get policies: %s", err.Error()))
 	}
 
+	var filtered []*policy.Wrapper
+	for i := range units {
+		if filterPolicy(units[i], &filter) {
+			filtered = append(filtered, units[i])
+		}
+	}
+
 	policies := make([]*policyv1.Policy, 0)
-	for _, pl := range units {
+	for _, pl := range filtered {
 		policies = append(policies, pl.Policy)
 	}
 
@@ -284,4 +291,37 @@ func (cas *CerbosAdminService) checkCredentials(ctx context.Context) error {
 	}
 
 	return nil
+}
+
+func filterPolicy(pol *policy.Wrapper, filter *storage.PolicyFilter) bool {
+	if _, ok := filter.Kinds[pol.Kind]; !ok {
+		return false
+	}
+
+	switch pol.Policy.PolicyType.(type) {
+	case *policyv1.Policy_ResourcePolicy:
+		if filter.ResourceName != "" && !strings.Contains(pol.GetResourcePolicy().Resource, filter.ResourceName) {
+			return false
+		}
+		if filter.Version != "" && !strings.Contains(pol.Version, filter.Version) {
+			return false
+		}
+	case *policyv1.Policy_PrincipalPolicy:
+		if filter.PrincipalName != "" && !strings.Contains(pol.GetPrincipalPolicy().Principal, filter.PrincipalName) {
+			return false
+		}
+		if filter.Version != "" && !strings.Contains(pol.Version, filter.Version) {
+			return false
+		}
+	case *policyv1.Policy_DerivedRoles:
+		if filter.DerivedRolesName != "" && !strings.Contains(pol.GetDerivedRoles().Name, filter.DerivedRolesName) {
+			return false
+		}
+	}
+
+	if filter.Description != "" && !strings.Contains(pol.Description, filter.Description) {
+		return false
+	}
+
+	return true
 }
