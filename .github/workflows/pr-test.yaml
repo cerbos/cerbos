@@ -71,7 +71,7 @@ jobs:
       - uses: actions/checkout@v2
 
       - name: Setup Buf
-        uses: bufbuild/buf-setup-action@v0.3.1
+        uses: bufbuild/buf-setup-action@v0.4.0
 
       - name: Lint protos
         uses: bufbuild/buf-lint-action@v0.3.0
