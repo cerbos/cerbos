@@ -5467,11 +5467,11 @@ Contents of probable licence file $GOMODCACHE/helm.sh/helm/v3@v3.6.3/LICENSE:
 
 --------------------------------------------------------------------------------
 Module  : modernc.org/sqlite
-Version : v1.12.0
-Time    : 2021-07-23T20:43:02Z
+Version : v1.13.0
+Time    : 2021-09-07T14:47:43Z
 Licence : BSD-3-Clause
 
-Contents of probable licence file $GOMODCACHE/modernc.org/sqlite@v1.12.0/LICENSE:
+Contents of probable licence file $GOMODCACHE/modernc.org/sqlite@v1.13.0/LICENSE:
 
 Copyright (c) 2017 The Sqlite Authors. All rights reserved.
 
@@ -16739,11 +16739,11 @@ THE SOFTWARE.
 
 --------------------------------------------------------------------------------
 Module  : modernc.org/cc/v3
-Version : v3.33.7
-Time    : 2021-06-29T19:21:50Z
+Version : v3.34.0
+Time    : 2021-09-02T10:54:53Z
 Licence : BSD-2-Clause
 
-Contents of probable licence file $GOMODCACHE/modernc.org/cc/v3@v3.33.7/LICENSE:
+Contents of probable licence file $GOMODCACHE/modernc.org/cc/v3@v3.34.0/LICENSE:
 
 Copyright (c) 2017 The CC Authors. All rights reserved.
 
@@ -16776,11 +16776,11 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 --------------------------------------------------------------------------------
 Module  : modernc.org/ccgo/v3
-Version : v3.9.6
-Time    : 2021-07-04T16:10:11Z
+Version : v3.11.2
+Time    : 2021-09-06T14:03:16Z
 Licence : BSD-2-Clause
 
-Contents of probable licence file $GOMODCACHE/modernc.org/ccgo/v3@v3.9.6/LICENSE:
+Contents of probable licence file $GOMODCACHE/modernc.org/ccgo/v3@v3.11.2/LICENSE:
 
 Copyright (c) 2017 The CCGO Authors. All rights reserved.
 
@@ -16850,13 +16850,13 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 --------------------------------------------------------------------------------
 Module  : modernc.org/libc
-Version : v1.9.11
-Time    : 2021-06-20T12:28:49Z
+Version : v1.11.3
+Time    : 2021-09-06T13:58:17Z
 Licence : BSD-2-Clause
 
-Contents of probable licence file $GOMODCACHE/modernc.org/libc@v1.9.11/LICENSE:
+Contents of probable licence file $GOMODCACHE/modernc.org/libc@v1.11.3/LICENSE:
 
-Copyright (c) 2017 The CRT Authors. All rights reserved.
+Copyright (c) 2017 The Libc Authors. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are
@@ -16924,11 +16924,11 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 --------------------------------------------------------------------------------
 Module  : modernc.org/memory
-Version : v1.0.4
-Time    : 2020-11-23T15:58:33Z
+Version : v1.0.5
+Time    : 2021-07-03T19:22:23Z
 Licence : BSD-2-Clause
 
-Contents of probable licence file $GOMODCACHE/modernc.org/memory@v1.0.4/LICENSE:
+Contents of probable licence file $GOMODCACHE/modernc.org/memory@v1.0.5/LICENSE:
 
 Copyright (c) 2017 The Memory Authors. All rights reserved.
 
@@ -17035,11 +17035,11 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 --------------------------------------------------------------------------------
 Module  : modernc.org/tcl
-Version : v1.5.5
-Time    : 2021-06-20T12:58:45Z
+Version : v1.5.9
+Time    : 2021-09-06T14:18:11Z
 Licence : BSD-3-Clause
 
-Contents of probable licence file $GOMODCACHE/modernc.org/tcl@v1.5.5/LICENSE:
+Contents of probable licence file $GOMODCACHE/modernc.org/tcl@v1.5.9/LICENSE:
 
 Copyright (c) 2020 The Tcl Authors. All rights reserved.
 
@@ -17108,11 +17108,11 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 --------------------------------------------------------------------------------
 Module  : modernc.org/z
-Version : v1.0.1
-Time    : 2021-03-08T12:39:20Z
+Version : v1.1.2
+Time    : 2021-09-06T14:14:21Z
 Licence : BSD-3-Clause
 
-Contents of probable licence file $GOMODCACHE/modernc.org/z@v1.0.1/LICENSE:
+Contents of probable licence file $GOMODCACHE/modernc.org/z@v1.1.2/LICENSE:
 
 Copyright notice:
 
