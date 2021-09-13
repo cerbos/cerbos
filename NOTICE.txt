@@ -4654,11 +4654,11 @@ THE SOFTWARE.
 
 --------------------------------------------------------------------------------
 Module  : go.uber.org/zap
-Version : v1.19.0
-Time    : 2021-08-09T16:35:44Z
+Version : v1.19.1
+Time    : 2021-09-08T21:32:28Z
 Licence : MIT
 
-Contents of probable licence file $GOMODCACHE/go.uber.org/zap@v1.19.0/LICENSE.txt:
+Contents of probable licence file $GOMODCACHE/go.uber.org/zap@v1.19.1/LICENSE.txt:
 
 Copyright (c) 2016-2017 Uber Technologies, Inc.
 
@@ -15995,11 +15995,11 @@ THE SOFTWARE.
 
 --------------------------------------------------------------------------------
 Module  : go.uber.org/goleak
-Version : v1.1.10
-Time    : 2020-07-21T18:42:16Z
+Version : v1.1.11-0.20210813005559-691160354723
+Time    : 2021-08-13T00:55:59Z
 Licence : MIT
 
-Contents of probable licence file $GOMODCACHE/go.uber.org/goleak@v1.1.10/LICENSE:
+Contents of probable licence file $GOMODCACHE/go.uber.org/goleak@v1.1.11-0.20210813005559-691160354723/LICENSE:
 
 The MIT License (MIT)
 
