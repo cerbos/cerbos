@@ -2167,11 +2167,11 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 --------------------------------------------------------------------------------
 Module  : github.com/google/gops
-Version : v0.3.19
-Time    : 2021-07-01T10:01:38Z
+Version : v0.3.20
+Time    : 2021-09-03T07:57:33Z
 Licence : BSD-3-Clause
 
-Contents of probable licence file $GOMODCACHE/github.com/google/gops@v0.3.19/LICENSE:
+Contents of probable licence file $GOMODCACHE/github.com/google/gops@v0.3.20/LICENSE:
 
 Copyright (c) 2016 The Go Authors. All rights reserved.
 
@@ -16100,11 +16100,11 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 --------------------------------------------------------------------------------
 Module  : golang.org/x/sys
-Version : v0.0.0-20210823070655-63515b42dcdf
-Time    : 2021-08-23T07:06:55Z
+Version : v0.0.0-20210902050250-f475640dd07b
+Time    : 2021-09-02T05:02:50Z
 Licence : BSD-3-Clause
 
-Contents of probable licence file $GOMODCACHE/golang.org/x/sys@v0.0.0-20210823070655-63515b42dcdf/LICENSE:
+Contents of probable licence file $GOMODCACHE/golang.org/x/sys@v0.0.0-20210902050250-f475640dd07b/LICENSE:
 
 Copyright (c) 2009 The Go Authors. All rights reserved.
 
