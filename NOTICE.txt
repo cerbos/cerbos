@@ -2713,11 +2713,11 @@ SOFTWARE.
 
 --------------------------------------------------------------------------------
 Module  : github.com/mattn/go-isatty
-Version : v0.0.13
-Time    : 2021-05-26T14:20:38Z
+Version : v0.0.14
+Time    : 2021-08-29T14:41:14Z
 Licence : MIT
 
-Contents of probable licence file $GOMODCACHE/github.com/mattn/go-isatty@v0.0.13/LICENSE:
+Contents of probable licence file $GOMODCACHE/github.com/mattn/go-isatty@v0.0.14/LICENSE:
 
 Copyright (c) Yasuhiro MATSUMOTO <mattn.jp@gmail.com>
 
