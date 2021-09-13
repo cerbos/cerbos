@@ -22,7 +22,7 @@ require (
 	github.com/go-sql-driver/mysql v1.6.0
 	github.com/google/cel-go v0.7.3
 	github.com/google/go-cmp v0.5.6
-	github.com/google/gops v0.3.19
+	github.com/google/gops v0.3.20
 	github.com/google/uuid v1.3.0
 	github.com/gorilla/handlers v1.5.1
 	github.com/gorilla/mux v1.8.0
@@ -160,7 +160,7 @@ require (
 	go.uber.org/atomic v1.7.0 // indirect
 	golang.org/x/lint v0.0.0-20210508222113-6edffad5e616 // indirect
 	golang.org/x/mod v0.4.2 // indirect
-	golang.org/x/sys v0.0.0-20210823070655-63515b42dcdf // indirect
+	golang.org/x/sys v0.0.0-20210902050250-f475640dd07b // indirect
 	golang.org/x/term v0.0.0-20210220032956-6a3ed077a48d // indirect
 	golang.org/x/text v0.3.6 // indirect
 	golang.org/x/tools v0.1.3 // indirect
