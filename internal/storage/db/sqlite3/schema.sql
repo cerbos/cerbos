@@ -22,7 +22,7 @@ CREATE TABLE IF NOT EXISTS policy_dependency (
 
 -- name: policy_revision
 CREATE TABLE IF NOT EXISTS policy_revision (
-    revision_id INTEGER AUTO INCREMENT PRIMARY KEY,
+    revision_id INTEGER PRIMARY KEY AUTOINCREMENT,
     action VARCHAR(64),
     id UNSIGNED BIG INT,
     kind VARCHAR(128),

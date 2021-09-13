@@ -137,6 +137,29 @@ func (_m *MutableStore) GetDependents(_a0 context.Context, _a1 ...namer.ModuleID
 	return r0, r1
 }
 
+// GetPolicies provides a mock function with given fields: _a0
+func (_m *MutableStore) GetPolicies(_a0 context.Context) ([]*policy.Wrapper, error) {
+	ret := _m.Called(_a0)
+
+	var r0 []*policy.Wrapper
+	if rf, ok := ret.Get(0).(func(context.Context) []*policy.Wrapper); ok {
+		r0 = rf(_a0)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]*policy.Wrapper)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(context.Context) error); ok {
+		r1 = rf(_a0)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // Subscribe provides a mock function with given fields: _a0
 func (_m *MutableStore) Subscribe(_a0 storage.Subscriber) {
 	_m.Called(_a0)

@@ -17,4 +17,5 @@ type Store interface {
 	AddOrUpdate(context.Context, ...policy.Wrapper) error
 	Delete(context.Context, ...namer.ModuleID) error
 	GetCompilationUnits(context.Context, ...namer.ModuleID) (map[namer.ModuleID]*policy.CompilationUnit, error)
+	GetPolicies(context.Context) ([]*policy.Wrapper, error)
 }

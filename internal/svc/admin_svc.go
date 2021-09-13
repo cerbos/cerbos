@@ -8,6 +8,7 @@ import (
 	"context"
 	"encoding/base64"
 	"errors"
+	"fmt"
 	"strings"
 	"time"
 
@@ -19,6 +20,7 @@ import (
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/emptypb"
 
+	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
 	requestv1 "github.com/cerbos/cerbos/api/genpb/cerbos/request/v1"
 	responsev1 "github.com/cerbos/cerbos/api/genpb/cerbos/response/v1"
 	svcv1 "github.com/cerbos/cerbos/api/genpb/cerbos/svc/v1"
@@ -36,7 +38,7 @@ var (
 
 // CerbosAdminService implements the Cerbos administration service.
 type CerbosAdminService struct {
-	store           storage.MutableStore
+	store           storage.Store
 	auditLog        audit.Log
 	adminUser       string
 	adminPasswdHash []byte
@@ -49,11 +51,7 @@ func NewCerbosAdminService(store storage.Store, auditLog audit.Log, adminUser, a
 		adminUser:                             adminUser,
 		adminPasswdHash:                       []byte(adminPasswdHash),
 		UnimplementedCerbosAdminServiceServer: &svcv1.UnimplementedCerbosAdminServiceServer{},
-	}
-
-	ms, ok := store.(storage.MutableStore)
-	if ok {
-		svc.store = ms
+		store:                                 store,
 	}
 
 	return svc
@@ -64,9 +62,8 @@ func (cas *CerbosAdminService) AddOrUpdatePolicy(ctx context.Context, req *reque
 		return nil, err
 	}
 
-	log := ctxzap.Extract(ctx)
-	if cas.store == nil {
-		log.Warn("Ignoring call because the store is not mutable")
+	ms, ok := cas.store.(storage.MutableStore)
+	if !ok {
 		return nil, status.Error(codes.Unimplemented, "Configured store is not mutable")
 	}
 
@@ -75,7 +72,8 @@ func (cas *CerbosAdminService) AddOrUpdatePolicy(ctx context.Context, req *reque
 		policies[i] = policy.Wrap(p)
 	}
 
-	if err := cas.store.AddOrUpdate(ctx, policies...); err != nil {
+	log := ctxzap.Extract(ctx)
+	if err := ms.AddOrUpdate(ctx, policies...); err != nil {
 		log.Error("Failed to add/update policies", zap.Error(err))
 		invalidPolicyErr := new(storage.InvalidPolicyError)
 		if errors.As(err, invalidPolicyErr) {
@@ -119,6 +117,30 @@ func (cas *CerbosAdminService) ListAuditLogEntries(req *requestv1.ListAuditLogEn
 			return err
 		}
 	}
+}
+
+func (cas *CerbosAdminService) ListPolicies(ctx context.Context, req *requestv1.ListPoliciesRequest) (*responsev1.ListPoliciesResponse, error) {
+	if err := cas.checkCredentials(ctx); err != nil {
+		return nil, err
+	}
+
+	if cas.store == nil {
+		return nil, status.Error(codes.NotFound, "store is not configured")
+	}
+
+	units, err := cas.store.GetPolicies(context.Background())
+	if err != nil {
+		return nil, status.Error(codes.Internal, fmt.Sprintf("could not get policies: %s", err.Error()))
+	}
+
+	policies := make([]*policyv1.Policy, 0, len(units))
+	for _, pl := range units {
+		policies = append(policies, pl.Policy)
+	}
+
+	return &responsev1.ListPoliciesResponse{
+		Policies: policies,
+	}, nil
 }
 
 func (cas *CerbosAdminService) getAuditLogStream(ctx context.Context, req *requestv1.ListAuditLogEntriesRequest) (auditLogStream, error) {

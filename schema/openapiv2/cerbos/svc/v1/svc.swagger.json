@@ -195,6 +195,34 @@
         ]
       }
     },
+    "/admin/policy/list": {
+      "get": {
+        "summary": "List policies",
+        "operationId": "CerbosAdminService_ListPolicies",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1ListPoliciesResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "tags": [
+          "CerbosAdminService"
+        ],
+        "security": [
+          {
+            "BasicAuth": []
+          }
+        ]
+      }
+    },
     "/api/check": {
       "post": {
         "summary": "Check",
@@ -1025,6 +1053,18 @@
         }
       },
       "description": "Audit log stream."
+    },
+    "v1ListPoliciesResponse": {
+      "type": "object",
+      "properties": {
+        "policies": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/v1Policy"
+          }
+        }
+      },
+      "description": "List of policies stored in the Cerbos server"
     },
     "v1Match": {
       "type": "object",

@@ -285,3 +285,11 @@ func (ms *MockStore) Delete(ctx context.Context, ids ...namer.ModuleID) error {
 	args := ms.MethodCalled("Delete", ctx, ids)
 	return args.Error(0)
 }
+
+func (ms *MockStore) GetPolicies(ctx context.Context) ([]*policy.Wrapper, error) {
+	args := ms.MethodCalled("GetPolicies", ctx)
+	if res := args.Get(0); res == nil {
+		return nil, args.Error(0)
+	}
+	return args.Get(0).([]*policy.Wrapper), args.Error(0)
+}

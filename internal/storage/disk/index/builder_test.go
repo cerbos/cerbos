@@ -130,7 +130,7 @@ func toFS(t *testing.T, tc *privatev1.IndexBuilderTestCase) fs.FS {
 
 	for file, data := range tc.Files {
 		dir := filepath.Dir(file)
-		require.NoError(t, fs.MkdirAll(dir, 0764))
+		require.NoError(t, fs.MkdirAll(dir, 0o764))
 
 		f, err := fs.Create(file)
 		require.NoError(t, err)

@@ -127,6 +127,14 @@ func TestSuite(store DBStorage) func(*testing.T) {
 			require.Contains(t, have[dr.ID], rp.ID)
 		})
 
+		t.Run("get_policies", func(t *testing.T) {
+			t.Run("should be able to get policies", func(t *testing.T) {
+				policies, err := store.GetPolicies(ctx)
+				require.NoError(t, err)
+				require.NotEmpty(t, policies)
+			})
+		})
+
 		t.Run("delete", func(t *testing.T) {
 			checkEvents := storage.TestSubscription(store)
 

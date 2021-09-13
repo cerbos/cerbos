@@ -6,6 +6,7 @@ package internal
 import (
 	"database/sql/driver"
 	"fmt"
+	"time"
 
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
 	"github.com/cerbos/cerbos/internal/namer"
@@ -95,4 +96,17 @@ func (gpw *GeneratedPolicyWrapper) Scan(src interface{}) error {
 	}
 
 	return nil
+}
+
+type PolicyRevision struct {
+	RevisionID  int64 `db:"revision_id"`
+	ID          namer.ModuleID
+	Kind        string
+	Name        string
+	Version     string
+	Description string
+	Action      string
+	Disabled    bool
+	Definition  PolicyDefWrapper
+	Timestamp   time.Time `db:"update_timestamp"`
 }

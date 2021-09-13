@@ -19,18 +19,18 @@ import (
 
 var errMoreThanOneFilter = errors.New("more than one filter specified: choose from either `tail`, `between`, `since` or `lookup`")
 
-type FilterDef struct {
+type AuditLogFilterDef struct {
 	tail    uint16
 	between timerangeFlag
 	since   time.Duration
 	lookup  string
 }
 
-func NewFilterDef() *FilterDef {
-	return &FilterDef{}
+func NewAuditLogFilterDef() *AuditLogFilterDef {
+	return &AuditLogFilterDef{}
 }
 
-func (afd *FilterDef) FlagSet() *pflag.FlagSet {
+func (afd *AuditLogFilterDef) FlagSet() *pflag.FlagSet {
 	fs := pflag.NewFlagSet("filters", pflag.ExitOnError)
 	fs.Uint16Var(&afd.tail, "tail", 0, "View last N entries")
 	fs.Var(&afd.between, "between", "View entries between two timestamps")
@@ -40,7 +40,7 @@ func (afd *FilterDef) FlagSet() *pflag.FlagSet {
 	return fs
 }
 
-func (afd *FilterDef) Validate() error {
+func (afd *AuditLogFilterDef) Validate() error {
 	filterCount := 0
 	if afd.tail > 0 {
 		filterCount++
@@ -141,7 +141,7 @@ func (tf timerangeFlag) Type() string {
 	return "timerangeFlag"
 }
 
-func GenAuditLogOptions(filter *FilterDef) client.AuditLogOptions {
+func GenAuditLogOptions(filter *AuditLogFilterDef) client.AuditLogOptions {
 	switch {
 	case filter.tail > 0:
 		return client.AuditLogOptions{
@@ -164,4 +164,22 @@ func GenAuditLogOptions(filter *FilterDef) client.AuditLogOptions {
 	default:
 		return client.AuditLogOptions{}
 	}
+}
+
+type ListPoliciesFilterDef struct {
+	format string
+}
+
+func NewListPoliciesFilterDef() *ListPoliciesFilterDef {
+	return &ListPoliciesFilterDef{}
+}
+
+func (lpfd *ListPoliciesFilterDef) FlagSet() *pflag.FlagSet {
+	fs := pflag.NewFlagSet("filters", pflag.ExitOnError)
+	fs.StringVar(&lpfd.format, "format", "", "Output format for the policies; json, yaml formats are supported (leave empty for pretty output)")
+	return fs
+}
+
+func (lpfd *ListPoliciesFilterDef) OutputFormat() string {
+	return lpfd.format
 }

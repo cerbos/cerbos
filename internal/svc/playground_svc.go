@@ -202,7 +202,7 @@ func doCompile(ctx context.Context, log *zap.Logger, files []*requestv1.PolicyFi
 func buildIndex(ctx context.Context, log *zap.Logger, files []*requestv1.PolicyFile) (index.Index, error) {
 	fs := afero.NewMemMapFs()
 	for _, pf := range files {
-		if err := afero.WriteFile(fs, pf.FileName, pf.Contents, 0644); err != nil { //nolint:gomnd
+		if err := afero.WriteFile(fs, pf.FileName, pf.Contents, 0o644); err != nil { //nolint:gomnd
 			log.Error("Failed to create in-mem policy file", zap.String("policy_file", pf.FileName), zap.Error(err))
 			return nil, status.Errorf(codes.Internal, "failed to create policy file %s", pf.FileName)
 		}

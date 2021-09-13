@@ -23,6 +23,7 @@ type DBStorage interface {
 	GetCompilationUnits(ctx context.Context, ids ...namer.ModuleID) (map[namer.ModuleID]*policy.CompilationUnit, error)
 	GetDependents(ctx context.Context, ids ...namer.ModuleID) (map[namer.ModuleID][]namer.ModuleID, error)
 	Delete(ctx context.Context, ids ...namer.ModuleID) error
+	GetPolicies(ctx context.Context) ([]*policy.Wrapper, error)
 }
 
 func NewDBStorage(ctx context.Context, db *goqu.Database) (DBStorage, error) {
@@ -253,4 +254,25 @@ func (s *dbStorage) Delete(ctx context.Context, ids ...namer.ModuleID) error {
 
 	s.NotifySubscribers(events...)
 	return nil
+}
+
+func (s *dbStorage) GetPolicies(ctx context.Context) ([]*policy.Wrapper, error) {
+	res, err := s.db.From(PolicyTbl).Executor().ScannerContext(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("could not execute %q query: %w", "GetPolicies", err)
+	}
+	defer res.Close()
+
+	var policies []*policy.Wrapper
+	for res.Next() {
+		var rec Policy
+		if err := res.ScanStruct(&rec); err != nil {
+			return nil, fmt.Errorf("could not scan row: %w", err)
+		}
+
+		p := policy.Wrap(rec.Definition.Policy)
+		policies = append(policies, &p)
+	}
+
+	return policies, nil
 }

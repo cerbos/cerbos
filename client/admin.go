@@ -6,12 +6,14 @@ package client
 import (
 	"context"
 	"errors"
+	"fmt"
 	"io"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
+	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
 	requestv1 "github.com/cerbos/cerbos/api/genpb/cerbos/request/v1"
 	responsev1 "github.com/cerbos/cerbos/api/genpb/cerbos/response/v1"
 	svcv1 "github.com/cerbos/cerbos/api/genpb/cerbos/svc/v1"
@@ -20,6 +22,8 @@ import (
 type AdminClient interface {
 	AddOrUpdatePolicy(context.Context, *PolicySet) error
 	AuditLogs(ctx context.Context, opts AuditLogOptions) (<-chan *AuditLogEntry, error)
+	// ListPolicies retrieves the policies on the Cerbos server.
+	ListPolicies(ctx context.Context) ([]*policyv1.Policy, error)
 }
 
 // NewAdminClient creates a new admin client.
@@ -148,4 +152,18 @@ func (c *GrpcAdminClient) auditLogs(ctx context.Context, opts AuditLogOptions) (
 	}
 
 	return resp, nil
+}
+
+func (c *GrpcAdminClient) ListPolicies(ctx context.Context) ([]*policyv1.Policy, error) {
+	req := &requestv1.ListPoliciesRequest{}
+	if err := req.Validate(); err != nil {
+		return nil, fmt.Errorf("could not validate list policies request: %w", err)
+	}
+
+	pc, err := c.client.ListPolicies(ctx, req, grpc.PerRPCCredentials(c.creds))
+	if err != nil {
+		return nil, fmt.Errorf("could not list policies: %w", err)
+	}
+
+	return pc.Policies, nil
 }
