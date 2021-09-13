@@ -880,14 +880,3 @@ func (e *AuditLogEntry) AccessLog() (*auditv1.AccessLogEntry, error) {
 func (e *AuditLogEntry) DecisionLog() (*auditv1.DecisionLogEntry, error) {
 	return e.decisionLog, e.err
 }
-
-type PolicyKind uint8
-
-const (
-	ResourcePolicyKind PolicyKind = iota + 1
-	PrincipalPolicyKind
-	DerivedRolesPolicyKind
-)
-
-// FilterOpt is used to specify search terms for ListPolicies method.
-type FilterOpt func()

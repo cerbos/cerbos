@@ -7,6 +7,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"sort"
 	"strings"
 
 	"github.com/fatih/color"
@@ -35,12 +36,7 @@ func NewListCmd(fn internal.WithClient) *cobra.Command {
 }
 
 func runListCmdF(c client.AdminClient, cmd *cobra.Command, _ []string) error {
-	opts, err := internal.GenListPoliciesFilterOptions(listPoliciesFlags)
-	if err != nil {
-		return fmt.Errorf("error generating list options: %w", err)
-	}
-
-	policies, err := c.ListPolicies(context.Background(), opts...)
+	policies, err := c.ListPolicies(context.Background())
 	if err != nil {
 		return fmt.Errorf("error while requesting policy list: %w", err)
 	}
@@ -73,10 +69,11 @@ func printPolicies(w io.Writer, policies []*policy.Policy, format string) error 
 	default:
 		headerFmt := color.New(color.FgGreen, color.Underline).SprintfFunc()
 
-		tbl := table.New("NAME", "KIND", "DEPENDENCIES")
+		tbl := table.New("NAME", "KIND", "DEPENDENCIES", "VERSION")
 		tbl.WithWriter(w)
 		tbl.WithHeaderFormatter(headerFmt)
 
+		sort.Sort(alphabetical(policies))
 		for _, p := range policies {
 			tbl.AddRow(policyPrintables(p)...)
 		}
@@ -91,12 +88,35 @@ func printPolicies(w io.Writer, policies []*policy.Policy, format string) error 
 func policyPrintables(p *policy.Policy) []interface{} {
 	switch pt := p.PolicyType.(type) {
 	case *policy.Policy_ResourcePolicy:
-		return []interface{}{pt.ResourcePolicy.Resource, "RESOURCE", strings.Join(pt.ResourcePolicy.ImportDerivedRoles, ", ")}
+		return []interface{}{getPolicyName(p), "RESOURCE", strings.Join(pt.ResourcePolicy.ImportDerivedRoles, ", "), pt.ResourcePolicy.Version}
 	case *policy.Policy_PrincipalPolicy:
-		return []interface{}{pt.PrincipalPolicy.Principal, "PRINCIPAL", "-", pt.PrincipalPolicy.Version}
+		return []interface{}{getPolicyName(p), "PRINCIPAL", "-", pt.PrincipalPolicy.Version}
 	case *policy.Policy_DerivedRoles:
-		return []interface{}{pt.DerivedRoles.Name, "DERIVED_ROLES", "-"}
+		return []interface{}{getPolicyName(p), "DERIVED_ROLES", "-", "-"}
 	default:
-		return []interface{}{"-", "-", "-"}
+		return []interface{}{"-"}
+	}
+}
+
+type alphabetical []*policy.Policy
+
+func (s alphabetical) Len() int { return len(s) }
+
+func (s alphabetical) Swap(i, j int) { s[i], s[j] = s[j], s[i] }
+
+func (s alphabetical) Less(i, j int) bool {
+	return getPolicyName(s[i]) < getPolicyName(s[j])
+}
+
+func getPolicyName(p *policy.Policy) string {
+	switch pt := p.PolicyType.(type) {
+	case *policy.Policy_ResourcePolicy:
+		return pt.ResourcePolicy.Resource
+	case *policy.Policy_PrincipalPolicy:
+		return pt.PrincipalPolicy.Principal
+	case *policy.Policy_DerivedRoles:
+		return pt.DerivedRoles.Name
+	default:
+		return "-"
 	}
 }

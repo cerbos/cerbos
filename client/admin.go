@@ -22,9 +22,8 @@ import (
 type AdminClient interface {
 	AddOrUpdatePolicy(context.Context, *PolicySet) error
 	AuditLogs(ctx context.Context, opts AuditLogOptions) (<-chan *AuditLogEntry, error)
-	// ListPolicies retrieves the policies on the Cerbos server. The list can
-	// narrowed down with the filter options.
-	ListPolicies(ctx context.Context, opts ...FilterOpt) ([]*policyv1.Policy, error)
+	// ListPolicies retrieves the policies on the Cerbos server.
+	ListPolicies(ctx context.Context) ([]*policyv1.Policy, error)
 }
 
 // NewAdminClient creates a new admin client.
@@ -155,7 +154,7 @@ func (c *GrpcAdminClient) auditLogs(ctx context.Context, opts AuditLogOptions) (
 	return resp, nil
 }
 
-func (c *GrpcAdminClient) ListPolicies(ctx context.Context, _ ...FilterOpt) ([]*policyv1.Policy, error) {
+func (c *GrpcAdminClient) ListPolicies(ctx context.Context) ([]*policyv1.Policy, error) {
 	req := &requestv1.ListPoliciesRequest{}
 	if err := req.Validate(); err != nil {
 		return nil, fmt.Errorf("could not validate list policies request: %w", err)

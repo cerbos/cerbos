@@ -180,11 +180,6 @@ func (lpfd *ListPoliciesFilterDef) FlagSet() *pflag.FlagSet {
 	return fs
 }
 
-func GenListPoliciesFilterOptions(lpfd *ListPoliciesFilterDef) ([]client.FilterOpt, error) {
-	var opts []client.FilterOpt
-	return opts, nil
-}
-
 func (lpfd *ListPoliciesFilterDef) OutputFormat() string {
 	return lpfd.format
 }

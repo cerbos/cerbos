@@ -133,7 +133,7 @@ func (cas *CerbosAdminService) ListPolicies(ctx context.Context, req *requestv1.
 		return nil, status.Error(codes.Internal, fmt.Sprintf("could not get policies: %s", err.Error()))
 	}
 
-	policies := make([]*policyv1.Policy, 0)
+	policies := make([]*policyv1.Policy, 0, len(units))
 	for _, pl := range units {
 		policies = append(policies, pl.Policy)
 	}
