@@ -14,7 +14,7 @@ import (
 
 var supportedFileTypes = map[string]struct{}{".yaml": {}, ".yml": {}, ".json": {}}
 
-// IsSuppportedFileType returns true if the given file has a supported file extension.
+// IsSupportedFileType returns true if the given file has a supported file extension.
 func IsSupportedFileType(fileName string) bool {
 	ext := strings.ToLower(filepath.Ext(fileName))
 	_, exists := supportedFileTypes[ext]
