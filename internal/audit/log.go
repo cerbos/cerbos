@@ -87,7 +87,7 @@ func NewLog(ctx context.Context) (Log, error) {
 
 // NewNopLog returns an audit log that does nothing.
 func NewNopLog() Log {
-	conf := &Conf{Enabled: false, AccessLogsEnabled: false, DecisionLogsEnabled: false}
+	conf := &Conf{confHolder: confHolder{Enabled: false, AccessLogsEnabled: false, DecisionLogsEnabled: false}}
 	return &logWrapper{conf: conf}
 }
 
