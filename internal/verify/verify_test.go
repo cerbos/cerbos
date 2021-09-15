@@ -18,8 +18,7 @@ import (
 )
 
 func TestVerify(t *testing.T) {
-	eng, cancelFunc := mkEngine(t)
-	defer cancelFunc()
+	eng := mkEngine(t)
 
 	conf := verify.Config{
 		TestsDir: test.PathToDir(t, "verify"),
@@ -29,18 +28,18 @@ func TestVerify(t *testing.T) {
 	result, err := verify.Verify(context.Background(), eng, conf)
 	is := require.New(t)
 	is.NoError(err)
-	t.Logf("%+v", result)
 	is.NotZero(len(result.Results), "test results")
 	is.False(result.Results[0].Skipped)
 	is.False(result.Failed)
 }
 
-func mkEngine(t *testing.T) (*engine.Engine, context.CancelFunc) {
+func mkEngine(t *testing.T) *engine.Engine {
 	t.Helper()
 
 	dir := test.PathToDir(t, "store")
 
 	ctx, cancelFunc := context.WithCancel(context.Background())
+	t.Cleanup(cancelFunc)
 
 	store, err := disk.NewStore(ctx, &disk.Conf{Directory: dir, ScratchDir: t.TempDir()})
 	require.NoError(t, err)
@@ -48,5 +47,5 @@ func mkEngine(t *testing.T) (*engine.Engine, context.CancelFunc) {
 	eng, err := engine.New(ctx, compile.NewManager(ctx, store), audit.NewNopLog())
 	require.NoError(t, err)
 
-	return eng, cancelFunc
+	return eng
 }
