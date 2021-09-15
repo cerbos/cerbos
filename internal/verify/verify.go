@@ -5,6 +5,7 @@ package verify
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
 	"github.com/cerbos/cerbos/internal/engine"
@@ -38,6 +39,8 @@ type TestResult struct {
 	Failed  bool   `json:"failed,omitempty"`
 	Error   string `json:"error,omitempty"`
 }
+
+var ErrTestFixtureNotFound = errors.New("test fixture not found")
 
 // Verify runs the test suites from the provided directory.
 func Verify(ctx context.Context, eng *engine.Engine, conf Config) (*Result, error) {
@@ -95,6 +98,9 @@ func doVerify(ctx context.Context, fsys fs.FS, eng *engine.Engine, conf Config) 
 			} else if util.IsSupportedTestFile(d1.Name()) {
 				testFiles = append(testFiles, d1)
 			}
+		}
+		if len(testFiles) > 0 && testFixture == nil {
+			return fmt.Errorf("path %q:%w", path, ErrTestFixtureNotFound)
 		}
 
 		for _, d1 := range testFiles {

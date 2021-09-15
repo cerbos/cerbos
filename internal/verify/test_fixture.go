@@ -2,6 +2,8 @@ package verify
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	effectv1 "github.com/cerbos/cerbos/api/genpb/cerbos/effect/v1"
 	v1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
@@ -66,7 +68,16 @@ func (t *testFixture) runTestSuite(ctx context.Context, eng *engine.Engine, shou
 		sr.Skipped = true
 		return sr, failed
 	}
-	tests := t.getTests(ts)
+	tests, err := t.getTests(ts)
+	if err != nil {
+		sr.Tests = []TestResult{{
+			Name:    "Failed to load the test suite",
+			Skipped: false,
+			Failed:  true,
+			Error:   err.Error(),
+		}}
+		return sr, failed
+	}
 	for _, test := range tests {
 		if err := ctx.Err(); err != nil {
 			return sr, failed
@@ -117,6 +128,36 @@ func (t *testFixture) runTestSuite(ctx context.Context, eng *engine.Engine, shou
 	return sr, failed
 }
 
-func (t *testFixture) getTests(ts *policyv1.TestSuite) []*policyv1.Test {
-	panic("not implemented")
+var ErrPrincipalNotFound = errors.New("principal not found")
+var ErrResourceNotFound = errors.New("resource not found")
+
+func (t *testFixture) getTests(ts *policyv1.TestSuite) (tests []*policyv1.Test, err error) {
+	for _, table := range ts.Tests {
+		for _, expected := range table.Expected {
+			principal, ok := t.principals[expected.Principal]
+			if !ok {
+				return nil, fmt.Errorf("%w:%q", ErrPrincipalNotFound, expected.Principal)
+			}
+			resource, ok := t.resources[table.Input.Resource]
+			if !ok {
+				return nil, fmt.Errorf("%w:%q", ErrResourceNotFound, table.Input.Resource)
+			}
+			test := &policyv1.Test{
+				Name:        table.Name,
+				Description: table.Description,
+				Skip:        table.Skip,
+				SkipReason:  table.SkipReason,
+				Input: &v1.CheckInput{
+					RequestId: table.Input.RequestId,
+					Resource:  resource,
+					Principal: principal,
+					Actions:   table.Input.Actions,
+				},
+				Expected: expected.Actions,
+			}
+			tests = append(tests, test)
+		}
+	}
+
+	return tests, nil
 }
