@@ -27,8 +27,12 @@ func TestVerify(t *testing.T) {
 
 	// TODO: (cell) add more test cases
 	result, err := verify.Verify(context.Background(), eng, conf)
-	require.NoError(t, err)
-	require.False(t, result.Failed)
+	is := require.New(t)
+	is.NoError(err)
+	t.Logf("%+v", result)
+	is.NotZero(len(result.Results), "test results")
+	is.False(result.Results[0].Skipped)
+	is.False(result.Failed)
 }
 
 func mkEngine(t *testing.T) (*engine.Engine, context.CancelFunc) {
