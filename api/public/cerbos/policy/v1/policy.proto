@@ -9,6 +9,7 @@ option go_package = "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1;policyv
 option java_package = "dev.cerbos.api.v1.policy";
 option csharp_namespace = "Cerbos.Api.V1.Policy";
 
+import "google/api/field_behavior.proto";
 import "cerbos/engine/v1/engine.proto";
 import "cerbos/effect/v1/effect.proto";
 import "google/api/expr/v1alpha1/checked.proto";
@@ -96,20 +97,40 @@ message Match {
         string expr = 4;
     }
 }
-
+message TestFixture {
+    message Principals {
+        map<string, cerbos.engine.v1.Principal> principals = 1;
+    }
+    message Resources {
+        map<string, cerbos.engine.v1.Resource> resources = 1;
+    }
+}
 message TestSuite {
     string name = 1 [(validate.rules).string.min_len = 1];
     string description = 2;
     bool skip = 3;
     string skip_reason = 4;
-    repeated Test tests = 5 [(validate.rules).repeated.min_items = 1];
+    repeated TestTable tests = 5 [(validate.rules).repeated.min_items = 1];
+}
+
+message TestTable {
+    string name = 1 [(validate.rules).string.min_len = 1];
+    string description = 2;
+    bool skip = 3;
+    string skip_reason = 4;
+    message CheckInput {string request_id = 1;
+        string resource = 2 [(google.api.field_behavior) = REQUIRED];
+        repeated string actions = 3 [(validate.rules).repeated = { unique: true, items { string { min_len: 1 } } }, (google.api.field_behavior) = REQUIRED];
+    }
+    CheckInput input = 5 [(validate.rules).message.required = true, (google.api.field_behavior) = REQUIRED];
+    message ExpectedItem {
+        string principal = 1[(google.api.field_behavior) = REQUIRED];
+        map<string,cerbos.effect.v1.Effect> actions = 2; // Validation rules?
+    }
+    repeated ExpectedItem expected = 6 [(validate.rules).repeated.min_items = 1, (google.api.field_behavior) = REQUIRED];
 }
 
 message Test {
-    message ActionEffectMap {
-        map<string,cerbos.effect.v1.Effect> actions = 1;
-    }
-    
     string name = 1 [(validate.rules).string.min_len = 1];
     string description = 2;
     bool skip = 3;

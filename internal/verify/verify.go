@@ -6,17 +6,16 @@ package verify
 import (
 	"context"
 	"fmt"
-	"io/fs"
-	"os"
-	"regexp"
-
-	"github.com/google/go-cmp/cmp"
-
 	effectv1 "github.com/cerbos/cerbos/api/genpb/cerbos/effect/v1"
 	enginev1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
 	"github.com/cerbos/cerbos/internal/engine"
 	"github.com/cerbos/cerbos/internal/util"
+	"github.com/google/go-cmp/cmp"
+	"io/fs"
+	"os"
+	"path/filepath"
+	"regexp"
 )
 
 type Config struct {
@@ -64,7 +63,6 @@ func doVerify(ctx context.Context, fsys fs.FS, eng *engine.Engine, conf Config) 
 	}
 
 	result := &Result{}
-
 	err := fs.WalkDir(fsys, ".", func(path string, d fs.DirEntry, err error) error {
 		if err := ctx.Err(); err != nil {
 			return err
@@ -74,23 +72,42 @@ func doVerify(ctx context.Context, fsys fs.FS, eng *engine.Engine, conf Config) 
 			return err
 		}
 
-		if d.IsDir() {
+		if !d.IsDir() { // have own logic to process files
 			return nil
 		}
 
-		if !util.IsSupportedFileType(d.Name()) {
-			return nil
+		if d.Name() == "testdata" {
+			return fs.SkipDir
 		}
 
-		ts := &policyv1.TestSuite{}
-		if err := util.LoadFromJSONOrYAML(fsys, path, ts); err != nil {
+		dirs, err := fs.ReadDir(fsys, path)
+		if err != nil {
 			return err
 		}
 
-		suiteResult, failed := runTestSuite(ctx, eng, shouldRun, path, ts)
-		result.Results = append(result.Results, suiteResult)
-		if failed {
-			result.Failed = true
+		testFiles := make([]fs.DirEntry, 0)
+		for _, d1 := range dirs {
+			if d1.IsDir() {
+				if d1.Name() == "testdata" {
+					// load test fixture
+				}
+			} else if util.IsSupportedTestFile(d1.Name()) {
+				testFiles = append(testFiles, d1)
+			}
+		}
+
+		for _, d1 := range testFiles {
+			ts := &policyv1.TestSuite{}
+			path1 := filepath.Join(path, d1.Name())
+			if err := util.LoadFromJSONOrYAML(fsys, path1, ts); err != nil {
+				return err
+			}
+
+			suiteResult, failed := runTestSuite(ctx, eng, shouldRun, path1, ts)
+			result.Results = append(result.Results, suiteResult)
+			if failed {
+				result.Failed = true
+			}
 		}
 
 		return nil

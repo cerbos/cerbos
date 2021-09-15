@@ -14,12 +14,27 @@ import (
 
 var supportedFileTypes = map[string]struct{}{".yaml": {}, ".yml": {}, ".json": {}}
 
-// IsSupportedFileType returns true if the given file has a supported file extension.
-func IsSupportedFileType(fileName string) bool {
+// IsSupportedTestFile return true if the given file is a supported test file name, i.e. "*_test.{yaml,yml,json}".
+func IsSupportedTestFile(fileName string) bool {
+	if ext, ok := IsSupportedFileTypeExt(fileName); ok {
+		f := strings.ToLower(fileName)
+		return strings.HasSuffix(f[:len(f)-len(ext)], "_test")
+	}
+	return false
+}
+
+// IsSupportedFileTypeExt returns true and a file extension if the given file has a supported file extension.
+func IsSupportedFileTypeExt(fileName string) (string, bool) {
 	ext := strings.ToLower(filepath.Ext(fileName))
 	_, exists := supportedFileTypes[ext]
 
-	return exists
+	return ext, exists
+}
+
+// IsSupportedFileType returns true if the given file has a supported file extension.
+func IsSupportedFileType(fileName string) bool {
+	_, ok := IsSupportedFileTypeExt(fileName)
+	return ok
 }
 
 // LoadFromJSONOrYAML reads a JSON or YAML encoded protobuf from the given path.
