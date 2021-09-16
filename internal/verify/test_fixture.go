@@ -143,7 +143,7 @@ func (t *testFixture) getTests(ts *policyv1.TestSuite) (tests []*policyv1.Test, 
 				return nil, fmt.Errorf("%w:%q", ErrResourceNotFound, table.Input.Resource)
 			}
 			test := &policyv1.Test{
-				Name:        table.Name,
+				Name:        fmt.Sprintf("%q by principal %q", table.Name, expected.Principal),
 				Description: table.Description,
 				Skip:        table.Skip,
 				SkipReason:  table.SkipReason,
