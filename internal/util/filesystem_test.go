@@ -17,10 +17,12 @@ func TestIsSupportedTestFile(t *testing.T) {
 		{"e_test.yml", true},
 		{"e_test.yaml", true},
 		{"e_test.json", true},
+		{"_test.json", true},
 		// Unsupported files
 		{"e_test.yl", false},
 		{"e_test", false},
 		{"e_bar.yaml", false},
+		{".yaml", false},
 	}
 	for _, tt := range tests {
 		t.Run(tt.fileName, func(t *testing.T) {
