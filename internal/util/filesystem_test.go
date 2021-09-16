@@ -1,3 +1,6 @@
+// Copyright 2021 Zenauth Ltd.
+// SPDX-License-Identifier: Apache-2.0
+
 package util
 
 import (
@@ -9,7 +12,7 @@ import (
 func TestIsSupportedTestFile(t *testing.T) {
 	tests := []struct {
 		fileName string
-		want bool
+		want     bool
 	}{
 		{"e_test.yml", true},
 		{"e_test.yaml", true},
@@ -37,8 +40,8 @@ func TestOpenOneOfSupportedFiles(t *testing.T) {
 	fsys["testdata/d.csv"] = file
 
 	tests := []struct {
-		fileName    string
-		wantErr bool
+		fileName string
+		wantErr  bool
 	}{
 		{"a", false},
 		{"b", false},

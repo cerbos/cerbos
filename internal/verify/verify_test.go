@@ -55,6 +55,7 @@ principals:
       << : *harry_attr
       managed_geographies: "GB"
 `
+
 const resources = `
 ---
 resources:
@@ -75,6 +76,7 @@ resources:
       << : *leave_request_attr
       status: PENDING_APPROVAL
 `
+
 const tables = `
 ---
 name: TestSuite
@@ -120,6 +122,7 @@ tests:
           approve: EFFECT_ALLOW
 
 `
+
 func Test_doVerify(t *testing.T) {
 	eng := mkEngine(t)
 

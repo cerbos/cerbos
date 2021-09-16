@@ -1,15 +1,20 @@
+// Copyright 2021 Zenauth Ltd.
+// SPDX-License-Identifier: Apache-2.0
+
 package verify
 
 import (
-	effectv1 "github.com/cerbos/cerbos/api/genpb/cerbos/effect/v1"
-	v1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
-	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
+	"testing"
+	"testing/fstest"
+
 	"github.com/google/go-cmp/cmp"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/testing/protocmp"
 	structpb "google.golang.org/protobuf/types/known/structpb"
-	"testing"
-	"testing/fstest"
+
+	effectv1 "github.com/cerbos/cerbos/api/genpb/cerbos/effect/v1"
+	v1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
+	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
 )
 
 const principals = `
@@ -78,13 +83,13 @@ func Test_testFixture_getTests(t *testing.T) {
 			"harry_leave_request": harryLeaveRequest,
 		},
 	}
-	requestId := "requestId"
+	requestID := "requestID"
 	name := "harry leave request"
 	actions := []string{"view", "approve"}
 	table := &policyv1.TestTable{
 		Name: name,
 		Input: &policyv1.TestTable_CheckInput{
-			RequestId: requestId,
+			RequestId: requestID,
 			Resource:  harryLeaveRequest.Id,
 			Actions:   actions,
 		},
@@ -106,26 +111,27 @@ func Test_testFixture_getTests(t *testing.T) {
 		},
 	}
 	ts := &policyv1.TestSuite{Tests: []*policyv1.TestTable{table}}
-	expectedTests := []*policyv1.Test{{
-		Name: name,
-		Input: &v1.CheckInput{
-			RequestId: requestId,
-			Resource:  harryLeaveRequest,
-			Principal: harry,
-			Actions:   actions,
+	expectedTests := []*policyv1.Test{
+		{
+			Name: formatTestName(name, harry.Id),
+			Input: &v1.CheckInput{
+				RequestId: requestID,
+				Resource:  harryLeaveRequest,
+				Principal: harry,
+				Actions:   actions,
+			},
+			Expected: table.Expected[0].Actions,
 		},
-		Expected: table.Expected[0].Actions,
-	},
-	{
-		Name: name,
-		Input: &v1.CheckInput{
-			RequestId: requestId,
-			Resource:  harryLeaveRequest,
-			Principal: maggie,
-			Actions:   actions,
+		{
+			Name: formatTestName(name, maggie.Id),
+			Input: &v1.CheckInput{
+				RequestId: requestID,
+				Resource:  harryLeaveRequest,
+				Principal: maggie,
+				Actions:   actions,
+			},
+			Expected: table.Expected[1].Actions,
 		},
-		Expected: table.Expected[1].Actions,
-	},
 	}
 	got, err := tf.getTests(ts)
 	require.NoError(t, err)

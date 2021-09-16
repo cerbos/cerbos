@@ -1,17 +1,22 @@
+// Copyright 2021 Zenauth Ltd.
+// SPDX-License-Identifier: Apache-2.0
+
 package verify
 
 import (
 	"context"
 	"errors"
 	"fmt"
+	"io/fs"
+	"path/filepath"
+
+	"github.com/google/go-cmp/cmp"
+
 	effectv1 "github.com/cerbos/cerbos/api/genpb/cerbos/effect/v1"
 	v1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
 	"github.com/cerbos/cerbos/internal/engine"
 	"github.com/cerbos/cerbos/internal/util"
-	"github.com/google/go-cmp/cmp"
-	"io/fs"
-	"path/filepath"
 )
 
 type testFixture struct {
@@ -128,8 +133,14 @@ func (t *testFixture) runTestSuite(ctx context.Context, eng *engine.Engine, shou
 	return sr, failed
 }
 
-var ErrPrincipalNotFound = errors.New("principal not found")
-var ErrResourceNotFound = errors.New("resource not found")
+var (
+	ErrPrincipalNotFound = errors.New("principal not found")
+	ErrResourceNotFound  = errors.New("resource not found")
+)
+
+func formatTestName(tableTestName, principal string) string {
+	return fmt.Sprintf("%q by principal %q", tableTestName, principal)
+}
 
 func (t *testFixture) getTests(ts *policyv1.TestSuite) (tests []*policyv1.Test, err error) {
 	for _, table := range ts.Tests {
@@ -143,7 +154,7 @@ func (t *testFixture) getTests(ts *policyv1.TestSuite) (tests []*policyv1.Test, 
 				return nil, fmt.Errorf("%w:%q", ErrResourceNotFound, table.Input.Resource)
 			}
 			test := &policyv1.Test{
-				Name:        fmt.Sprintf("%q by principal %q", table.Name, expected.Principal),
+				Name:        formatTestName(table.Name, expected.Principal),
 				Description: table.Description,
 				Skip:        table.Skip,
 				SkipReason:  table.SkipReason,

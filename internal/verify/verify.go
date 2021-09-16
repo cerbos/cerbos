@@ -7,13 +7,14 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
-	"github.com/cerbos/cerbos/internal/engine"
-	"github.com/cerbos/cerbos/internal/util"
 	"io/fs"
 	"os"
 	"path/filepath"
 	"regexp"
+
+	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
+	"github.com/cerbos/cerbos/internal/engine"
+	"github.com/cerbos/cerbos/internal/util"
 )
 
 type Config struct {
