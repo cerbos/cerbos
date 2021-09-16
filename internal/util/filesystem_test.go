@@ -4,6 +4,7 @@
 package util
 
 import (
+	"github.com/stretchr/testify/require"
 	"path/filepath"
 	"testing"
 	"testing/fstest"
@@ -53,12 +54,13 @@ func TestOpenOneOfSupportedFiles(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.fileName, func(t *testing.T) {
 			file, err := OpenOneOfSupportedFiles(fsys, filepath.Join("testdata", tt.fileName))
-			if (err != nil) != tt.wantErr {
-				t.Errorf("OpenOneOfSupportedFiles() error = %v, wantErr %v", err, tt.wantErr)
-				return
-			}
 			if err == nil {
 				file.Close()
+			}
+			if tt.wantErr {
+				require.Error(t, err)
+			} else {
+				require.NoError(t, err)
 			}
 		})
 	}
