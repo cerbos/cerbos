@@ -127,14 +127,19 @@ func Test_doVerify(t *testing.T) {
 	eng := mkEngine(t)
 
 	fsys := make(fstest.MapFS)
-	fsys["testdata/principals.yaml"] = &fstest.MapFile{Data: []byte(verifyPrinciples)}
-	fsys["testdata/resources.yaml"] = &fstest.MapFile{Data: []byte(resources)}
-	fsys["leave_request_test.yaml"] = &fstest.MapFile{Data: []byte(tables)}
+	for _, dir := range []string{"a", "b", "c"} {
+		fsys[dir + "/testdata/principals.yaml"] = &fstest.MapFile{Data: []byte(verifyPrinciples)}
+		fsys[dir + "/testdata/resources.yaml"] = &fstest.MapFile{Data: []byte(resources)}
+		fsys[dir + "/leave_request_test.yaml"] = &fstest.MapFile{Data: []byte(tables)}
+	}
 
 	result, err := doVerify(context.Background(), fsys, eng, Config{})
 	is := require.New(t)
 	is.NoError(err)
-	is.NotZero(result.Results)
+	is.Len(result.Results, 3)
+	for i := 0; i < len(result.Results); i++ {
+		is.Len(result.Results[i].Tests, 2*2) // 2 principals * 2 resources
+	}
 	is.False(result.Failed, "%+v", result.Results)
 }
 
