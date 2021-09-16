@@ -118,7 +118,8 @@ message TestTable {
     string description = 2;
     bool skip = 3;
     string skip_reason = 4;
-    message CheckInput {string request_id = 1;
+    message CheckInput {
+        string request_id = 1;
         string resource = 2 [(google.api.field_behavior) = REQUIRED];
         repeated string actions = 3 [(validate.rules).repeated = { unique: true, items { string { min_len: 1 } } }, (google.api.field_behavior) = REQUIRED];
     }
