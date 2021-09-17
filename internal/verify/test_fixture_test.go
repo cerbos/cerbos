@@ -30,7 +30,7 @@ principals:
       team: design
 `
 	fsys := make(fstest.MapFS)
-	fsys["a/"+TestDataDirectory+"/principals.yaml"] = &fstest.MapFile{Data: []byte(principals)}
+	fsys["a/"+TestDataDirectory+"/principals.yaml"] = newMapFile(principals)
 
 	tests := []struct {
 		name    string
