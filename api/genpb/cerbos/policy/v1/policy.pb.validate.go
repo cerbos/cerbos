@@ -1991,9 +1991,19 @@ func (m *TestTable_CheckInput) Validate() error {
 		return nil
 	}
 
-	// no validation rules for RequestId
+	if utf8.RuneCountInString(m.GetRequestId()) < 1 {
+		return TestTable_CheckInputValidationError{
+			field:  "RequestId",
+			reason: "value length must be at least 1 runes",
+		}
+	}
 
-	// no validation rules for Resource
+	if utf8.RuneCountInString(m.GetResource()) < 1 {
+		return TestTable_CheckInputValidationError{
+			field:  "Resource",
+			reason: "value length must be at least 1 runes",
+		}
+	}
 
 	_TestTable_CheckInput_Actions_Unique := make(map[string]struct{}, len(m.GetActions()))
 
@@ -2085,9 +2095,19 @@ func (m *TestTable_ExpectedItem) Validate() error {
 		return nil
 	}
 
-	// no validation rules for Principal
+	if utf8.RuneCountInString(m.GetPrincipal()) < 1 {
+		return TestTable_ExpectedItemValidationError{
+			field:  "Principal",
+			reason: "value length must be at least 1 runes",
+		}
+	}
 
-	// no validation rules for Actions
+	if len(m.GetActions()) < 1 {
+		return TestTable_ExpectedItemValidationError{
+			field:  "Actions",
+			reason: "value must contain at least 1 pair(s)",
+		}
+	}
 
 	return nil
 }
