@@ -83,7 +83,7 @@ func (tf *testFixture) runTestSuite(ctx context.Context, eng *engine.Engine, sho
 	if err != nil {
 		failed = true
 		sr.Tests = []TestResult{{
-			Name:    "Failed to load the test suite",
+			Name:    &TestName{TableTestName: "Failed to load the test suite"},
 			Skipped: false,
 			Failed:  true,
 			Error:   err.Error(),
@@ -95,8 +95,8 @@ func (tf *testFixture) runTestSuite(ctx context.Context, eng *engine.Engine, sho
 			return sr, failed
 		}
 
-		testResult := TestResult{Name: test.Name}
-		if test.Skip || !shouldRun(test.Name) {
+		testResult := TestResult{Name: &TestName{TableTestName: test.Name.TestTableName, PrincipalKey: test.Name.PrincipalKey}}
+		if test.Skip || !shouldRun(test.Name.TestTableName) {
 			testResult.Skipped = true
 			sr.Tests = append(sr.Tests, testResult)
 			continue
@@ -145,10 +145,6 @@ var (
 	ErrResourceNotFound  = errors.New("resource not found")
 )
 
-func formatTestName(tableTestName, principal string) string {
-	return fmt.Sprintf("'%s' by principal '%s'", tableTestName, principal)
-}
-
 func (tf *testFixture) lookupResource(k string) (*v1.Resource, bool) {
 	if tf == nil {
 		return nil, false
@@ -183,7 +179,7 @@ func (tf *testFixture) getTests(ts *policyv1.TestSuite) (tests []*policyv1.Test,
 				}
 			}
 			test := &policyv1.Test{
-				Name:        formatTestName(table.Name, expected.Principal),
+				Name:        &policyv1.Test_TestName{TestTableName: table.Name, PrincipalKey: expected.Principal},
 				Description: table.Description,
 				Skip:        table.Skip,
 				SkipReason:  table.SkipReason,

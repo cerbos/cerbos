@@ -201,7 +201,7 @@ func displayVerificationResult(cmd *cobra.Command, result *verify.Result) error 
 
 		cmd.Println()
 		for _, tr := range sr.Tests {
-			cmd.Printf("== %s ", testName(tr.Name))
+			cmd.Printf("== %s ", testName(tr.Name.String()))
 			if tr.Skipped {
 				cmd.Println(skippedTest("[SKIPPED]"))
 				continue

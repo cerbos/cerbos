@@ -134,7 +134,11 @@ message TestTable {
 }
 
 message Test {
-    string name = 1 [(validate.rules).string.min_len = 1];
+    message TestName {
+        string test_table_name = 1[(validate.rules).string.min_len = 1];
+        string principal_key = 2[(validate.rules).string.min_len = 1];
+    }
+    TestName name = 1 [(validate.rules).message.required = true];
     string description = 2;
     bool skip = 3;
     string skip_reason = 4;

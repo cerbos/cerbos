@@ -112,7 +112,7 @@ func Test_testFixture_getTests(t *testing.T) {
 	ts := &policyv1.TestSuite{Tests: []*policyv1.TestTable{table}}
 	expectedTests := []*policyv1.Test{
 		{
-			Name: formatTestName(name, harry.Id),
+			Name: &policyv1.Test_TestName{TestTableName: name, PrincipalKey: harry.Id},
 			Input: &v1.CheckInput{
 				RequestId: requestID,
 				Resource:  harryLeaveRequest,
@@ -122,7 +122,7 @@ func Test_testFixture_getTests(t *testing.T) {
 			Expected: table.Expected[0].Actions,
 		},
 		{
-			Name: formatTestName(name, maggie.Id),
+			Name: &policyv1.Test_TestName{TestTableName: name, PrincipalKey: maggie.Id},
 			Input: &v1.CheckInput{
 				RequestId: requestID,
 				Resource:  harryLeaveRequest,

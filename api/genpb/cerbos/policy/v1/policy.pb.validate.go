@@ -1491,10 +1491,20 @@ func (m *Test) Validate() error {
 		return nil
 	}
 
-	if utf8.RuneCountInString(m.GetName()) < 1 {
+	if m.GetName() == nil {
 		return TestValidationError{
 			field:  "Name",
-			reason: "value length must be at least 1 runes",
+			reason: "value is required",
+		}
+	}
+
+	if v, ok := interface{}(m.GetName()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return TestValidationError{
+				field:  "Name",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
 		}
 	}
 
@@ -2196,3 +2206,82 @@ var _ interface {
 	Cause() error
 	ErrorName() string
 } = TestTable_ExpectedItemValidationError{}
+
+// Validate checks the field values on Test_TestName with the rules defined in
+// the proto definition for this message. If any rules are violated, an error
+// is returned.
+func (m *Test_TestName) Validate() error {
+	if m == nil {
+		return nil
+	}
+
+	if utf8.RuneCountInString(m.GetTestTableName()) < 1 {
+		return Test_TestNameValidationError{
+			field:  "TestTableName",
+			reason: "value length must be at least 1 runes",
+		}
+	}
+
+	if utf8.RuneCountInString(m.GetPrincipalKey()) < 1 {
+		return Test_TestNameValidationError{
+			field:  "PrincipalKey",
+			reason: "value length must be at least 1 runes",
+		}
+	}
+
+	return nil
+}
+
+// Test_TestNameValidationError is the validation error returned by
+// Test_TestName.Validate if the designated constraints aren't met.
+type Test_TestNameValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e Test_TestNameValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e Test_TestNameValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e Test_TestNameValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e Test_TestNameValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e Test_TestNameValidationError) ErrorName() string { return "Test_TestNameValidationError" }
+
+// Error satisfies the builtin error interface
+func (e Test_TestNameValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sTest_TestName.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = Test_TestNameValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = Test_TestNameValidationError{}

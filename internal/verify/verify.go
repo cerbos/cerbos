@@ -34,11 +34,20 @@ type SuiteResult struct {
 	Tests   []TestResult `json:"tests"`
 }
 
+type TestName struct {
+	TableTestName string `json:"name"`
+	PrincipalKey  string `json:"principal"`
+}
+
+func (r TestName) String() string {
+	return fmt.Sprintf("'%s' by principal '%s'", r.TableTestName, r.PrincipalKey)
+}
+
 type TestResult struct {
-	Name    string `json:"name"`
-	Skipped bool   `json:"skipped,omitempty"`
-	Failed  bool   `json:"failed"`
-	Error   string `json:"error,omitempty"`
+	Name    *TestName `json:"name"`
+	Skipped bool      `json:"skipped,omitempty"`
+	Failed  bool      `json:"failed"`
+	Error   string    `json:"error,omitempty"`
 }
 
 var ErrTestFixtureNotFound = errors.New("test fixture not found")
