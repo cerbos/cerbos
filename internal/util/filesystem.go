@@ -51,13 +51,25 @@ func LoadFromJSONOrYAML(fsys fs.FS, path string, dest proto.Message) error {
 
 // OpenOneOfSupportedFiles attempts to open a fileName adding supported extensions.
 func OpenOneOfSupportedFiles(fsys fs.FS, fileName string) (fs.File, error) {
-	var err error
-	var file fs.File
-	for ext := range supportedFileTypes {
-		file, err = fsys.Open(fileName + ext)
-		if err == nil {
-			return file, nil
+	matches, err := fs.Glob(fsys, fileName + ".*")
+	if err != nil {
+		return nil, err
+	}
+	var filepath string
+	for _, match := range matches {
+		if IsSupportedFileType(match) {
+			filepath = match
+			break
 		}
 	}
-	return nil, err
+	if filepath == "" {
+		return nil, nil
+	}
+
+	file, err := fsys.Open(filepath)
+	if err != nil {
+		return nil, err
+	}
+
+	return file, nil
 }

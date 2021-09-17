@@ -45,22 +45,31 @@ func TestOpenOneOfSupportedFiles(t *testing.T) {
 	tests := []struct {
 		fileName string
 		wantErr  bool
+		notExist bool
 	}{
-		{"a", false},
-		{"b", false},
-		{"c", false},
-		{"d", true},
+		{"a", false, false},
+		{"b", false, false},
+		{"c", false, false},
+		{"d", false, true},
+		{"not_exist", false, true},
 	}
 	for _, tt := range tests {
 		t.Run(tt.fileName, func(t *testing.T) {
+			is := require.New(t)
 			file, err := OpenOneOfSupportedFiles(fsys, filepath.Join("testdata", tt.fileName))
-			if err == nil {
+			if err == nil && file != nil {
 				file.Close()
 			}
 			if tt.wantErr {
-				require.Error(t, err)
+				is.Error(err)
+				is.Nil(file)
 			} else {
-				require.NoError(t, err)
+				is.NoError(err)
+			}
+			if tt.notExist {
+				is.Nil(file)
+			} else {
+				is.NotNil(file)
 			}
 		})
 	}

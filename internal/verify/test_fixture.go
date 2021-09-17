@@ -7,10 +7,9 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/google/go-cmp/cmp"
 	"io/fs"
 	"path/filepath"
-
-	"github.com/google/go-cmp/cmp"
 
 	effectv1 "github.com/cerbos/cerbos/api/genpb/cerbos/effect/v1"
 	v1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
@@ -23,6 +22,10 @@ type testFixture struct {
 	principals map[string]*v1.Principal
 	resources  map[string]*v1.Resource
 }
+const (
+	PrincipalsFileName = "principals"
+	ResourcesFileName  = "resources"
+)
 
 func loadTestFixture(fsys fs.FS, path string) (tf *testFixture, err error) {
 	tf = new(testFixture)
@@ -39,8 +42,8 @@ func loadTestFixture(fsys fs.FS, path string) (tf *testFixture, err error) {
 
 func loadResources(fsys fs.FS, path string) (map[string]*v1.Resource, error) {
 	pb := &policyv1.TestFixture_Resources{}
-	file, err := util.OpenOneOfSupportedFiles(fsys, filepath.Join(path, "resources"))
-	if err != nil {
+	file, err := util.OpenOneOfSupportedFiles(fsys, filepath.Join(path, ResourcesFileName))
+	if err != nil || file == nil {
 		return nil, err
 	}
 	defer file.Close()
@@ -53,8 +56,8 @@ func loadResources(fsys fs.FS, path string) (map[string]*v1.Resource, error) {
 
 func loadPrincipals(fsys fs.FS, path string) (map[string]*v1.Principal, error) {
 	pb := &policyv1.TestFixture_Principals{}
-	file, err := util.OpenOneOfSupportedFiles(fsys, filepath.Join(path, "principals"))
-	if err != nil {
+	file, err := util.OpenOneOfSupportedFiles(fsys, filepath.Join(path, PrincipalsFileName))
+	if err != nil || file == nil {
 		return nil, err
 	}
 	defer file.Close()
