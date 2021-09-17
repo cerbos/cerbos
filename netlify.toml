@@ -1,3 +1,9 @@
 [build]
   base = "docs"
   publish = "build"
+
+[[redirects]]
+from = "/cerbos/latest/*"
+to = "/cerbos/0.6.0/:splat"
+status = 302
+force = true

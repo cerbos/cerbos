@@ -35,6 +35,7 @@ update_version() {
 
 # Set release version and tag
 update_version $VERSION
+sed -i -E "s#to = \"/cerbos/[0-9]+\.[0-9]+\.[0-9]+.*/:splat\"#to = \"/cerbos/${VERSION}/:splat\"#g" "${PROJECT_DIR}/netlify.toml"
 git -C "$PROJECT_DIR" commit -s -a -m "chore(release): Prepare release $VERSION"
 git tag "v${VERSION}" -m "v${VERSION}"
 
