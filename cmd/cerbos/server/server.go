@@ -97,6 +97,7 @@ func doRun(_ *cobra.Command, _ []string) error {
 
 	// load configuration
 	if err := config.Load(args.configFile, confOverrides); err != nil {
+		log.Errorw("Failed to load configuration", "error", err)
 		return err
 	}
 

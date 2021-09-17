@@ -55,7 +55,7 @@ func LoadMap(m map[string]interface{}) error {
 }
 
 func doLoad(sources ...config.YAMLOption) error {
-	opts := append(sources, config.Expand(os.LookupEnv), config.Permissive()) //nolint:gocritic
+	opts := append(sources, config.Expand(os.LookupEnv)) //nolint:gocritic
 	provider, err := config.NewYAML(opts...)
 	if err != nil {
 		return fmt.Errorf("failed to create config provider: %w", err)
