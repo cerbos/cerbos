@@ -130,12 +130,12 @@ tests:
 
 func genTable(t *testing.T, embedResources, embedPrincipals bool) string {
 	t.Helper()
-	trimSpaceYAML := func (s string) string { // Removes all lines until a first root-level key
+	trimSpaceYAML := func(s string) string { // Removes all lines until a first root-level key
 		lines := strings.Split(s, "\n")
 		i := 0
-		for ;i < len(lines); i++ {
+		for ; i < len(lines); i++ {
 			s := strings.TrimSpace(lines[i])
-			if 	s != "" && s != "---" {
+			if s != "" && s != "---" {
 				break
 			}
 		}
@@ -144,7 +144,7 @@ func genTable(t *testing.T, embedResources, embedPrincipals bool) string {
 	ts, err := template.New("table").Parse(testSuiteTemplate)
 	require.NoError(t, err)
 
-	data := struct{Principals, Resources string}{}
+	data := struct{ Principals, Resources string }{}
 	if embedPrincipals {
 		data.Principals = trimSpaceYAML(principals)
 	}
@@ -153,11 +153,12 @@ func genTable(t *testing.T, embedResources, embedPrincipals bool) string {
 	}
 
 	var sb strings.Builder
-	ts.Execute(&sb, data)
+	err = ts.Execute(&sb, data)
+	require.NoError(t, err)
 	return sb.String()
 }
 
-func newMapFile (s string) *fstest.MapFile {
+func newMapFile(s string) *fstest.MapFile {
 	return &fstest.MapFile{Data: []byte(s)}
 }
 
@@ -168,10 +169,10 @@ func Test_doVerify(t *testing.T) {
 			t.Run(fmt.Sprintf("ebedded principals = %v, embedded resources = %v", embedPrincipals, embedResources), func(t *testing.T) {
 				fsys := make(fstest.MapFS)
 				if !embedResources {
-					fsys[filepath.Join(TestDataDirectory, ResourcesFileName) + ".yaml"] = newMapFile(resources)
+					fsys[filepath.Join(TestDataDirectory, ResourcesFileName)+".yaml"] = newMapFile(resources)
 				}
 				if !embedPrincipals {
-					fsys[filepath.Join(TestDataDirectory, PrincipalsFileName) + ".yaml"] = newMapFile(principals)
+					fsys[filepath.Join(TestDataDirectory, PrincipalsFileName)+".yaml"] = newMapFile(principals)
 				}
 				table := genTable(t, embedResources, embedPrincipals)
 				fsys["leave_request_test.yaml"] = newMapFile(table)
@@ -189,9 +190,9 @@ func Test_doVerify(t *testing.T) {
 		ts := genTable(t, false, false)
 		for _, dir := range []string{"a", "b", "c"} {
 			d := filepath.Join(dir, TestDataDirectory)
-			fsys[d + "/principals.yaml"] = &fstest.MapFile{Data: []byte(principals)}
-			fsys[d + "/resources.yaml"] = &fstest.MapFile{Data: []byte(resources)}
-			fsys[dir + "/leave_request_test.yaml"] = &fstest.MapFile{Data: []byte(ts)}
+			fsys[d+"/principals.yaml"] = newMapFile(principals)
+			fsys[d+"/resources.yaml"] = newMapFile(resources)
+			fsys[dir+"/leave_request_test.yaml"] = newMapFile(ts)
 		}
 
 		result, err := doVerify(context.Background(), fsys, eng, Config{})

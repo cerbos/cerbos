@@ -10,7 +10,7 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/testing/protocmp"
-	structpb "google.golang.org/protobuf/types/known/structpb"
+	"google.golang.org/protobuf/types/known/structpb"
 
 	effectv1 "github.com/cerbos/cerbos/api/genpb/cerbos/effect/v1"
 	v1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
@@ -30,7 +30,7 @@ principals:
       team: design
 `
 	fsys := make(fstest.MapFS)
-	fsys["a/" + TestDataDirectory + "/principals.yaml"] = &fstest.MapFile{Data: []byte(principals)}
+	fsys["a/"+TestDataDirectory+"/principals.yaml"] = &fstest.MapFile{Data: []byte(principals)}
 
 	tests := []struct {
 		name    string

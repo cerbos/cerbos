@@ -4,10 +4,11 @@
 package util
 
 import (
-	"github.com/stretchr/testify/require"
 	"path/filepath"
 	"testing"
 	"testing/fstest"
+
+	"github.com/stretchr/testify/require"
 )
 
 func TestIsSupportedTestFile(t *testing.T) {
