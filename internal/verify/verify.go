@@ -100,9 +100,6 @@ func doVerify(ctx context.Context, fsys fs.FS, eng *engine.Engine, conf Config) 
 				testFiles = append(testFiles, d1)
 			}
 		}
-		if len(testFiles) > 0 && testFixture == nil {
-			return fmt.Errorf("path %q:%w", path, ErrTestFixtureNotFound)
-		}
 
 		for _, d1 := range testFiles {
 			ts := &policyv1.TestSuite{}

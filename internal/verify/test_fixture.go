@@ -22,10 +22,11 @@ type testFixture struct {
 	principals map[string]*v1.Principal
 	resources  map[string]*v1.Resource
 }
+
 const (
 	PrincipalsFileName = "principals"
 	ResourcesFileName  = "resources"
-	TestDataDirectory = "testdata" // contains test fixture files like principals.yaml and resources.yaml
+	TestDataDirectory  = "testdata" // contains test fixture files like principals.yaml and resources.yaml
 )
 
 func loadTestFixture(fsys fs.FS, path string) (tf *testFixture, err error) {
@@ -69,7 +70,7 @@ func loadPrincipals(fsys fs.FS, path string) (map[string]*v1.Principal, error) {
 	return pb.Principals, nil
 }
 
-func (t *testFixture) runTestSuite(ctx context.Context, eng *engine.Engine, shouldRun func(string) bool, file string, ts *policyv1.TestSuite) (SuiteResult, bool) {
+func (tf *testFixture) runTestSuite(ctx context.Context, eng *engine.Engine, shouldRun func(string) bool, file string, ts *policyv1.TestSuite) (SuiteResult, bool) {
 	failed := false
 
 	sr := SuiteResult{File: file, Suite: ts.Name}
@@ -77,8 +78,9 @@ func (t *testFixture) runTestSuite(ctx context.Context, eng *engine.Engine, shou
 		sr.Skipped = true
 		return sr, failed
 	}
-	tests, err := t.getTests(ts)
+	tests, err := tf.getTests(ts)
 	if err != nil {
+		failed = true
 		sr.Tests = []TestResult{{
 			Name:    "Failed to load the test suite",
 			Skipped: false,
@@ -146,16 +148,38 @@ func formatTestName(tableTestName, principal string) string {
 	return fmt.Sprintf("%q by principal %q", tableTestName, principal)
 }
 
-func (t *testFixture) getTests(ts *policyv1.TestSuite) (tests []*policyv1.Test, err error) {
+func (tf *testFixture) lookupResource(k string) (*v1.Resource, bool) {
+	if tf == nil {
+		return nil, false
+	}
+	v, ok := tf.resources[k]
+	return v, ok
+}
+
+func (tf *testFixture) lookupPrincipal(k string) (*v1.Principal, bool) {
+	if tf == nil {
+		return nil, false
+	}
+	v, ok := tf.principals[k]
+	return v, ok
+}
+
+func (tf *testFixture) getTests(ts *policyv1.TestSuite) (tests []*policyv1.Test, err error) {
 	for _, table := range ts.Tests {
 		for _, expected := range table.Expected {
-			principal, ok := t.principals[expected.Principal]
+			principal, ok := ts.Principals[expected.Principal]
 			if !ok {
-				return nil, fmt.Errorf("%w:%q", ErrPrincipalNotFound, expected.Principal)
+				principal, ok = tf.lookupPrincipal(expected.Principal)
+				if !ok {
+					return nil, fmt.Errorf("%w:%q", ErrPrincipalNotFound, expected.Principal)
+				}
 			}
-			resource, ok := t.resources[table.Input.Resource]
+			resource, ok := ts.Resources[table.Input.Resource]
 			if !ok {
-				return nil, fmt.Errorf("%w:%q", ErrResourceNotFound, table.Input.Resource)
+				resource, ok = tf.lookupResource(table.Input.Resource)
+				if !ok {
+					return nil, fmt.Errorf("%w:%q", ErrResourceNotFound, table.Input.Resource)
+				}
 			}
 			test := &policyv1.Test{
 				Name:        formatTestName(table.Name, expected.Principal),

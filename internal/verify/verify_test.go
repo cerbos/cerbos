@@ -5,9 +5,12 @@ package verify
 
 import (
 	"context"
+	"fmt"
 	"path/filepath"
+	"strings"
 	"testing"
 	"testing/fstest"
+	"text/template"
 
 	"github.com/stretchr/testify/require"
 
@@ -34,7 +37,7 @@ func TestVerify(t *testing.T) {
 	is.False(result.Failed)
 }
 
-const verifyPrinciples = `
+const principals = `
 ---
 principals:
   harry:
@@ -78,7 +81,7 @@ resources:
       status: PENDING_APPROVAL
 `
 
-const tables = `
+const testSuiteTemplate = `
 ---
 name: TestSuite
 description: Tests for verifying something
@@ -121,28 +124,85 @@ tests:
           create: EFFECT_DENY
           "view:public": EFFECT_ALLOW
           approve: EFFECT_ALLOW
-
+{{.Principals}}
+{{.Resources}}
 `
+
+func genTable(t *testing.T, embedResources, embedPrincipals bool) string {
+	t.Helper()
+	trimSpaceYAML := func (s string) string { // Removes all lines until a first root-level key
+		lines := strings.Split(s, "\n")
+		i := 0
+		for ;i < len(lines); i++ {
+			s := strings.TrimSpace(lines[i])
+			if 	s != "" && s != "---" {
+				break
+			}
+		}
+		return strings.Join(lines[i:], "\n")
+	}
+	ts, err := template.New("table").Parse(testSuiteTemplate)
+	require.NoError(t, err)
+
+	data := struct{Principals, Resources string}{}
+	if embedPrincipals {
+		data.Principals = trimSpaceYAML(principals)
+	}
+	if embedResources {
+		data.Resources = trimSpaceYAML(resources)
+	}
+
+	var sb strings.Builder
+	ts.Execute(&sb, data)
+	return sb.String()
+}
+
+func newMapFile (s string) *fstest.MapFile {
+	return &fstest.MapFile{Data: []byte(s)}
+}
 
 func Test_doVerify(t *testing.T) {
 	eng := mkEngine(t)
-
-	fsys := make(fstest.MapFS)
-	for _, dir := range []string{"a", "b", "c"} {
-		d := filepath.Join(dir, TestDataDirectory)
-		fsys[d + "/principals.yaml"] = &fstest.MapFile{Data: []byte(verifyPrinciples)}
-		fsys[d + "/resources.yaml"] = &fstest.MapFile{Data: []byte(resources)}
-		fsys[dir + "/leave_request_test.yaml"] = &fstest.MapFile{Data: []byte(tables)}
+	for _, embedPrincipals := range []bool{true, false} {
+		for _, embedResources := range []bool{true, false} {
+			t.Run(fmt.Sprintf("ebedded principals = %v, embedded resources = %v", embedPrincipals, embedResources), func(t *testing.T) {
+				fsys := make(fstest.MapFS)
+				if !embedResources {
+					fsys[filepath.Join(TestDataDirectory, ResourcesFileName) + ".yaml"] = newMapFile(resources)
+				}
+				if !embedPrincipals {
+					fsys[filepath.Join(TestDataDirectory, PrincipalsFileName) + ".yaml"] = newMapFile(principals)
+				}
+				table := genTable(t, embedResources, embedPrincipals)
+				fsys["leave_request_test.yaml"] = newMapFile(table)
+				result, err := doVerify(context.Background(), fsys, eng, Config{})
+				is := require.New(t)
+				is.NoError(err)
+				is.Len(result.Results, 1)
+				is.False(result.Results[0].Skipped)
+				is.False(result.Failed, "%+v", result.Results)
+			})
+		}
 	}
+	t.Run("Several subdirectories with test fixtures", func(t *testing.T) {
+		fsys := make(fstest.MapFS)
+		ts := genTable(t, false, false)
+		for _, dir := range []string{"a", "b", "c"} {
+			d := filepath.Join(dir, TestDataDirectory)
+			fsys[d + "/principals.yaml"] = &fstest.MapFile{Data: []byte(principals)}
+			fsys[d + "/resources.yaml"] = &fstest.MapFile{Data: []byte(resources)}
+			fsys[dir + "/leave_request_test.yaml"] = &fstest.MapFile{Data: []byte(ts)}
+		}
 
-	result, err := doVerify(context.Background(), fsys, eng, Config{})
-	is := require.New(t)
-	is.NoError(err)
-	is.Len(result.Results, 3)
-	for i := 0; i < len(result.Results); i++ {
-		is.Len(result.Results[i].Tests, 2*2) // 2 principals * 2 resources
-	}
-	is.False(result.Failed, "%+v", result.Results)
+		result, err := doVerify(context.Background(), fsys, eng, Config{})
+		is := require.New(t)
+		is.NoError(err)
+		is.Len(result.Results, 3)
+		for i := 0; i < len(result.Results); i++ {
+			is.Len(result.Results[i].Tests, 2*2) // 2 principals * 2 resources
+		}
+		is.False(result.Failed, "%+v", result.Results)
+	})
 }
 
 func mkEngine(t *testing.T) *engine.Engine {

@@ -111,6 +111,8 @@ message TestSuite {
     bool skip = 3;
     string skip_reason = 4;
     repeated TestTable tests = 5 [(validate.rules).repeated.min_items = 1];
+    map<string, cerbos.engine.v1.Principal> principals = 6;
+    map<string, cerbos.engine.v1.Resource> resources = 7;
 }
 
 message TestTable {
@@ -126,7 +128,7 @@ message TestTable {
     CheckInput input = 5 [(validate.rules).message.required = true, (google.api.field_behavior) = REQUIRED];
     message ExpectedItem {
         string principal = 1 [(validate.rules).string.min_len = 1, (google.api.field_behavior) = REQUIRED];
-        map<string, cerbos.effect.v1.Effect> actions = 2[(validate.rules).map = {min_pairs: 1}, (google.api.field_behavior) = REQUIRED]; // Validation rules?
+        map<string, cerbos.effect.v1.Effect> actions = 2[(validate.rules).map = {min_pairs: 1}, (google.api.field_behavior) = REQUIRED];
     }
     repeated ExpectedItem expected = 6 [(validate.rules).repeated.min_items = 1, (google.api.field_behavior) = REQUIRED];
 }

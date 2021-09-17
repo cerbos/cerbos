@@ -17,7 +17,8 @@ import (
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
 )
 
-const principals = `
+func Test_loadPrincipals(t *testing.T) {
+	const principals = `
 principals:
   harry:
     id: harry
@@ -28,8 +29,6 @@ principals:
       geography: GB
       team: design
 `
-
-func Test_loadPrincipals(t *testing.T) {
 	fsys := make(fstest.MapFS)
 	fsys["a/" + TestDataDirectory + "/principals.yaml"] = &fstest.MapFile{Data: []byte(principals)}
 

@@ -1277,6 +1277,40 @@ func (m *TestSuite) Validate() error {
 
 	}
 
+	for key, val := range m.GetPrincipals() {
+		_ = val
+
+		// no validation rules for Principals[key]
+
+		if v, ok := interface{}(val).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return TestSuiteValidationError{
+					field:  fmt.Sprintf("Principals[%v]", key),
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	}
+
+	for key, val := range m.GetResources() {
+		_ = val
+
+		// no validation rules for Resources[key]
+
+		if v, ok := interface{}(val).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return TestSuiteValidationError{
+					field:  fmt.Sprintf("Resources[%v]", key),
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	}
+
 	return nil
 }
 
