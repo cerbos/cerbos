@@ -77,7 +77,7 @@ func doVerify(ctx context.Context, fsys fs.FS, eng *engine.Engine, conf Config) 
 			return nil
 		}
 
-		if d.Name() == "testdata" {
+		if d.Name() == TestDataDirectory {
 			return fs.SkipDir
 		}
 
@@ -90,7 +90,7 @@ func doVerify(ctx context.Context, fsys fs.FS, eng *engine.Engine, conf Config) 
 		var testFixture *testFixture
 		for _, d1 := range dirs {
 			if d1.IsDir() {
-				if d1.Name() == "testdata" {
+				if d1.Name() == TestDataDirectory {
 					testFixture, err = loadTestFixture(fsys, filepath.Join(path, d1.Name()))
 					if err != nil {
 						return err

@@ -5,6 +5,7 @@ package verify
 
 import (
 	"context"
+	"path/filepath"
 	"testing"
 	"testing/fstest"
 
@@ -128,8 +129,9 @@ func Test_doVerify(t *testing.T) {
 
 	fsys := make(fstest.MapFS)
 	for _, dir := range []string{"a", "b", "c"} {
-		fsys[dir + "/testdata/principals.yaml"] = &fstest.MapFile{Data: []byte(verifyPrinciples)}
-		fsys[dir + "/testdata/resources.yaml"] = &fstest.MapFile{Data: []byte(resources)}
+		d := filepath.Join(dir, TestDataDirectory)
+		fsys[d + "/principals.yaml"] = &fstest.MapFile{Data: []byte(verifyPrinciples)}
+		fsys[d + "/resources.yaml"] = &fstest.MapFile{Data: []byte(resources)}
 		fsys[dir + "/leave_request_test.yaml"] = &fstest.MapFile{Data: []byte(tables)}
 	}
 

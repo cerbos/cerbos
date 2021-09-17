@@ -31,7 +31,7 @@ principals:
 
 func Test_loadPrincipals(t *testing.T) {
 	fsys := make(fstest.MapFS)
-	fsys["a/testdata/principals.yaml"] = &fstest.MapFile{Data: []byte(principals)}
+	fsys["a/" + TestDataDirectory + "/principals.yaml"] = &fstest.MapFile{Data: []byte(principals)}
 
 	tests := []struct {
 		name    string
@@ -39,7 +39,7 @@ func Test_loadPrincipals(t *testing.T) {
 		wantErr bool
 	}{
 		{
-			name: "a/testdata",
+			name: "a/" + TestDataDirectory,
 			want: map[string]*v1.Principal{
 				"harry": {
 					Id:    "harry",

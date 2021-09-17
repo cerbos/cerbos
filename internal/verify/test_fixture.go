@@ -25,6 +25,7 @@ type testFixture struct {
 const (
 	PrincipalsFileName = "principals"
 	ResourcesFileName  = "resources"
+	TestDataDirectory = "testdata" // contains test fixture files like principals.yaml and resources.yaml
 )
 
 func loadTestFixture(fsys fs.FS, path string) (tf *testFixture, err error) {
