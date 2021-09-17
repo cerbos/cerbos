@@ -37,7 +37,7 @@ type SuiteResult struct {
 type TestResult struct {
 	Name    string `json:"name"`
 	Skipped bool   `json:"skipped,omitempty"`
-	Failed  bool   `json:"failed,omitempty"`
+	Failed  bool   `json:"failed"`
 	Error   string `json:"error,omitempty"`
 }
 
