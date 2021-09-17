@@ -146,7 +146,7 @@ var (
 )
 
 func formatTestName(tableTestName, principal string) string {
-	return fmt.Sprintf("%q by principal %q", tableTestName, principal)
+	return fmt.Sprintf("'%s' by principal '%s'", tableTestName, principal)
 }
 
 func (tf *testFixture) lookupResource(k string) (*v1.Resource, bool) {
