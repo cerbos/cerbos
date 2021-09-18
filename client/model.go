@@ -880,3 +880,32 @@ func (e *AuditLogEntry) AccessLog() (*auditv1.AccessLogEntry, error) {
 func (e *AuditLogEntry) DecisionLog() (*auditv1.DecisionLogEntry, error) {
 	return e.decisionLog, e.err
 }
+
+type policyFilter struct {
+	filters []*requestv1.ListPoliciesRequest_Filter
+}
+
+// FilterOpt is used to specify search terms for ListPolicies method.
+type FilterOpt func(*policyFilter)
+
+// FieldEquals adds a exact match filter for the field.
+func FieldEquals(path, value string) FilterOpt {
+	return func(pf *policyFilter) {
+		pf.filters = append(pf.filters, &requestv1.ListPoliciesRequest_Filter{
+			Type:      requestv1.ListPoliciesRequest_MATCH_TYPE_EXACT,
+			FieldPath: path,
+			Value:     value,
+		})
+	}
+}
+
+// FieldEquals adds a wildcard match filter for the field.
+func FieldMatches(path, value string) FilterOpt {
+	return func(pf *policyFilter) {
+		pf.filters = append(pf.filters, &requestv1.ListPoliciesRequest_Filter{
+			Type:      requestv1.ListPoliciesRequest_MATCH_TYPE_WILDCARD,
+			FieldPath: path,
+			Value:     value,
+		})
+	}
+}

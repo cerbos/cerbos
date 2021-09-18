@@ -527,6 +527,29 @@
         "end"
       ]
     },
+    "ListPoliciesRequestFilter": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "$ref": "#/definitions/ListPoliciesRequestMatchType"
+        },
+        "fieldPath": {
+          "type": "string"
+        },
+        "value": {
+          "type": "string"
+        }
+      }
+    },
+    "ListPoliciesRequestMatchType": {
+      "type": "string",
+      "enum": [
+        "MATCH_TYPE_UNSPECIFIED",
+        "MATCH_TYPE_EXACT",
+        "MATCH_TYPE_WILDCARD"
+      ],
+      "default": "MATCH_TYPE_UNSPECIFIED"
+    },
     "MatchExprList": {
       "type": "object",
       "properties": {

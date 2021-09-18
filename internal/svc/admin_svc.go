@@ -13,11 +13,13 @@ import (
 	"time"
 
 	"github.com/grpc-ecosystem/go-grpc-middleware/logging/zap/ctxzap"
+	"github.com/tidwall/gjson"
 	"go.uber.org/zap"
 	"golang.org/x/crypto/bcrypt"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/types/known/emptypb"
 
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
@@ -134,8 +136,31 @@ func (cas *CerbosAdminService) ListPolicies(ctx context.Context, req *requestv1.
 	}
 
 	policies := make([]*policyv1.Policy, 0, len(units))
-	for _, pl := range units {
-		policies = append(policies, pl.Policy)
+	for _, filter := range req.Filters {
+		for _, unit := range units {
+			b, err := protojson.Marshal(unit)
+			if err != nil {
+				return nil, status.Error(codes.Internal, fmt.Sprintf("could not marshal policy: %s", err))
+			}
+			value := gjson.Get(string(b), filter.FieldPath)
+			switch filter.Type {
+			case requestv1.ListPoliciesRequest_MATCH_TYPE_EXACT:
+				if value.String() == filter.Value {
+					policies = append(policies, unit.Policy)
+				}
+			case requestv1.ListPoliciesRequest_MATCH_TYPE_WILDCARD:
+				if strings.Contains(value.String(), filter.Value) {
+					policies = append(policies, unit.Policy)
+				}
+			default:
+				return nil, status.Error(codes.InvalidArgument, "invalid filter type")
+			}
+		}
+	}
+	if len(req.Filters) == 0 {
+		for _, unit := range units {
+			policies = append(policies, unit.Policy)
+		}
 	}
 
 	return &responsev1.ListPoliciesResponse{
