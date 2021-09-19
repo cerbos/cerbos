@@ -14,7 +14,7 @@ docker run -i -t -v /path/to/policy/dir:/policies {app-docker-img} compile /poli
 
 You can write optional tests for policies and run them as part of the compilation stage to make sure that the policies do exactly what you expect.
 
-Tests are defined using the familiar YAML format as well. Make sure that your tests are in separate directory from the policies to avoid confusion. We recommend storing them in a top-level directory named `tests`. A test file must have `_test` suffix in their name and one of the following file extensions: 'yaml', 'yml', or 'json'. For example, `album_test.yml`.
+Tests are defined using the familiar YAML format as well. Make sure that your tests are in separate directory from the policies to avoid confusion. We recommend storing them in a top-level directory named `tests`. A test file must have `_test` suffix in the name and one of the following file extensions: 'yaml', 'yml', or 'json'. For example, `album_test.yml`.
 
 .Test suite definition
 [source,yaml]
@@ -63,7 +63,7 @@ tests: <5>
 <5> List of tests in this suite
 <6> Name of the test
 <7> Input to the policy engine
-<6> List of outcome expected for a specified principal and a given action.
+<8> List of outcome expected for a specified principal and a given action.
 
 It is possible to share principals and resources between
 test suites stored in the same directory. Create a `testdata` directory in the directory with your test suite files, then put shared resources and principals to `testdata\resources.yml` and `testdata\principals.yml` respectively (`yaml` and `json` extensions are also supported).
