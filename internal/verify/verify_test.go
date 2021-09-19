@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"path/filepath"
 	"strings"
+	"sync"
 	"testing"
 	"testing/fstest"
 	"text/template"
@@ -37,7 +38,8 @@ func TestVerify(t *testing.T) {
 	is.False(result.Failed)
 }
 
-const principals = `
+const (
+principals = `
 ---
 principals:
   harry:
@@ -59,8 +61,7 @@ principals:
       << : *harry_attr
       managed_geographies: "GB"
 `
-
-const resources = `
+resources = `
 ---
 resources:
   draft_leave_request: &leave_request
@@ -80,8 +81,7 @@ resources:
       << : *leave_request_attr
       status: PENDING_APPROVAL
 `
-
-const testSuiteTemplate = `
+testSuiteTemplate = `
 ---
 name: TestSuite
 description: Tests for verifying something
@@ -127,6 +127,12 @@ tests:
 {{.Principals}}
 {{.Resources}}
 `
+)
+
+var (
+	ts *template.Template
+	initTemplate sync.Once
+)
 
 func genTable(t *testing.T, embedResources, embedPrincipals bool) string {
 	t.Helper()
@@ -141,8 +147,13 @@ func genTable(t *testing.T, embedResources, embedPrincipals bool) string {
 		}
 		return strings.Join(lines[i:], "\n")
 	}
-	ts, err := template.New("table").Parse(testSuiteTemplate)
-	require.NoError(t, err)
+
+	initTemplate.Do(func() {
+		var err error
+		ts, err = template.New("suite").Parse(testSuiteTemplate)
+		require.NoError(t, err)
+	})
+	require.NotNil(t, ts)
 
 	data := struct{ Principals, Resources string }{}
 	if embedPrincipals {
@@ -153,7 +164,7 @@ func genTable(t *testing.T, embedResources, embedPrincipals bool) string {
 	}
 
 	var sb strings.Builder
-	err = ts.Execute(&sb, data)
+	err := ts.Execute(&sb, data)
 	require.NoError(t, err)
 	return sb.String()
 }
