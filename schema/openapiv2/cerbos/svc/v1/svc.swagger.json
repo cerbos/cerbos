@@ -636,6 +636,32 @@
         }
       }
     },
+    "enginev1CheckInput": {
+      "type": "object",
+      "properties": {
+        "requestId": {
+          "type": "string"
+        },
+        "resource": {
+          "$ref": "#/definitions/v1Resource"
+        },
+        "principal": {
+          "$ref": "#/definitions/v1Principal"
+        },
+        "actions": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "required": [
+            "actions"
+          ]
+        }
+      },
+      "required": [
+        "actions"
+      ]
+    },
     "protobufAny": {
       "type": "object",
       "properties": {
@@ -744,32 +770,6 @@
         }
       },
       "description": "Unique identifier for the resource instance."
-    },
-    "v1CheckInput": {
-      "type": "object",
-      "properties": {
-        "requestId": {
-          "type": "string"
-        },
-        "resource": {
-          "$ref": "#/definitions/v1Resource"
-        },
-        "principal": {
-          "$ref": "#/definitions/v1Principal"
-        },
-        "actions": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          },
-          "required": [
-            "actions"
-          ]
-        }
-      },
-      "required": [
-        "actions"
-      ]
     },
     "v1CheckOutput": {
       "type": "object",
@@ -1004,7 +1004,7 @@
         "inputs": {
           "type": "array",
           "items": {
-            "$ref": "#/definitions/v1CheckInput"
+            "$ref": "#/definitions/enginev1CheckInput"
           }
         },
         "outputs": {

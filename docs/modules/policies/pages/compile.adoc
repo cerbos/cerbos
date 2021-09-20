@@ -14,7 +14,7 @@ docker run -i -t -v /path/to/policy/dir:/policies {app-docker-img} compile /poli
 
 You can write optional tests for policies and run them as part of the compilation stage to make sure that the policies do exactly what you expect.
 
-Tests are defined using the familiar YAML format as well. Make sure that your tests are in separate directory from the policies to avoid confusion. We recommend storing them in a top-level directory named `tests`.
+Tests are defined using the familiar YAML format as well. Make sure that your tests are in separate directory from the policies to avoid confusion. We recommend storing them in a top-level directory named `tests`. A test file must have `_test` suffix in the name and one of the following file extensions: 'yaml', 'yml', or 'json'. For example, `album_test.yml`.
 
 .Test suite definition
 [source,yaml]
@@ -22,35 +22,81 @@ Tests are defined using the familiar YAML format as well. Make sure that your te
 ---
 name: AlbumObjectTestSuite <1>
 description: Tests for verifying the album:object resource policy <2>
-tests: <3>
-  - name: Alicia tries to view her own private album <4>
-    input: { <5>
+resources: <3>
+  alicia_album:
+    kind: "album:object",
+    attr:
+      owner: aliciaID,
+      id: XX125,
+      public: false,
+      flagged: false
+principals: <4>
+  bradley:
+    id: bradleyID
+    roles:
+      - user
+  alicia:
+    id: aliciaID
+    roles:
+      - user
+tests: <5>
+  - name: Alicia tries to view her own private album <6>
+    input: { <7>
       "requestId": "test",
-      "actions": ["view"],
-      "principal": {
-        "id": "alicia",
-        "roles": ["user"]
-      },
-      "resource": {
-        "kind": "album:object",
-        "attr": {
-          "owner": "alicia",
-          "id": "XX125",
-          "public": false,
-          "flagged": false
-        }
-      }
+      "actions": ["view", "delete"],
+      "resource": "alicia_album"
     }
-    expected: <6>
-      view: EFFECT_ALLOW
+    expected: <8>
+      - principal: alicia
+        actions:
+          view: EFFECT_ALLOW
+          delete: EFFECT_ALLOW
+      - principal: bradley
+        actions:
+          view: EFFECT_DENY
+          delete: EFFECT_DENY
 ----
 <1> Name of the test suite
 <2> Description of the test suite
-<3> List of tests in this suite
-<4> Name of the test
-<5> Input to the policy engine
-<6> Expected outcome for each of the actions defined in the input
+<3> Map of resources. A key is a string that can be used to refer to the associated resource
+<4> Map of principals. A key is a string that can be used to refer to the associated principal
+<5> List of tests in this suite
+<6> Name of the test
+<7> Input to the policy engine
+<8> List of outcomes expected for a specified principal and a given action.
 
+It is possible to share principals and resources between
+test suites stored in the same directory. Create a `testdata` directory in the directory containing your test suite files, then define shared resources and principals in `testdata\resources.yml` and `testdata\principals.yml` respectively (`yaml` and `json` extensions are also supported).
+
+.An example of `testdata\principals.yml`
+[source,yaml]
+----
+---
+principals:
+  john:
+    id: johnID
+    roles:
+      - user
+      - moderator
+
+----
+
+.An example of `testdata\resources.yml`
+[source,yaml]
+----
+---
+resources:
+  alicia_album:
+    kind: "album:object",
+    attr:
+      owner: aliciaID,
+      id: XX125,
+      public: false,
+      flagged: false
+----
+
+To reduce repeat syntax and extend existing data nodes in your YAML file you can use YAML anchors/aliases along with overrides/extensions.
+For detailed information, please refer to https://www.educative.io/blog/advanced-yaml-syntax-cheatsheet#anchors[YAML Anchors and Aliases].
 
 To run the tests, provide the path to the tests directory using the `--tests` flag.
 
