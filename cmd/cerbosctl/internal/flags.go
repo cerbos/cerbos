@@ -169,6 +169,7 @@ func GenAuditLogOptions(filter *AuditLogFilterDef) client.AuditLogOptions {
 type ListPoliciesFilterDef struct {
 	fieldEq    []string
 	fieldMatch []string
+	jsonPath   bool
 	format     string
 }
 
@@ -180,6 +181,7 @@ func (lpfd *ListPoliciesFilterDef) FlagSet() *pflag.FlagSet {
 	fs := pflag.NewFlagSet("filters", pflag.ExitOnError)
 	fs.StringArrayVar(&lpfd.fieldEq, "field-eq", []string{}, "Filter a field with exact match")
 	fs.StringArrayVar(&lpfd.fieldMatch, "field-match", []string{}, "Filter a field with wildcard match")
+	fs.BoolVar(&lpfd.jsonPath, "json-path", false, "Use JSONPath expressions for filtering")
 	fs.StringVar(&lpfd.format, "format", "", "Output format for the policies; json, yaml formats are supported (leave empty for pretty output)")
 	return fs
 }
@@ -195,7 +197,7 @@ func GenListPoliciesFilterOptions(lpfd *ListPoliciesFilterDef) ([]client.FilterO
 		if len(s) != 2 { //nolint:gomnd
 			return nil, fmt.Errorf("could not parse filter: %s", k)
 		}
-		opts = append(opts, client.FieldEquals(s[0], s[1]))
+		opts = append(opts, client.FieldEquals(s[0], s[1], lpfd.jsonPath))
 	}
 
 	for _, k := range lpfd.fieldMatch {
@@ -203,7 +205,7 @@ func GenListPoliciesFilterOptions(lpfd *ListPoliciesFilterDef) ([]client.FilterO
 		if len(s) != 2 { //nolint:gomnd
 			return nil, fmt.Errorf("could not parse filter: %s", k)
 		}
-		opts = append(opts, client.FieldMatches(s[0], s[1]))
+		opts = append(opts, client.FieldMatches(s[0], s[1], lpfd.jsonPath))
 	}
 
 	return opts, nil

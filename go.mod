@@ -5,6 +5,7 @@ go 1.17
 require (
 	contrib.go.opencensus.io/exporter/jaeger v0.2.1
 	contrib.go.opencensus.io/exporter/prometheus v0.4.0
+	github.com/PaesslerAG/jsonpath v0.1.1
 	github.com/ProtonMail/go-crypto v0.0.0-20210512092938-c05353c2d58c // indirect
 	github.com/alecthomas/chroma v0.9.2
 	github.com/bluele/gcache v0.0.2
@@ -55,7 +56,6 @@ require (
 	github.com/spf13/cobra v1.2.1
 	github.com/spf13/pflag v1.0.5
 	github.com/stretchr/testify v1.7.0
-	github.com/tidwall/gjson v1.9.1
 	github.com/tidwall/sjson v1.2.1
 	github.com/ulikunitz/xz v0.5.10 // indirect
 	go.elastic.co/ecszap v1.0.0
@@ -81,6 +81,7 @@ require (
 	github.com/Microsoft/go-winio v0.4.17 // indirect
 	github.com/Nvveen/Gotty v0.0.0-20120604004816-cd527374f1e5 // indirect
 	github.com/OneOfOne/xxhash v1.2.8 // indirect
+	github.com/PaesslerAG/gval v1.0.0 // indirect
 	github.com/acomagu/bufpipe v1.0.3 // indirect
 	github.com/andybalholm/brotli v1.0.0 // indirect
 	github.com/antlr/antlr4 v0.0.0-20200503195918-621b933c7a7f // indirect
@@ -150,6 +151,7 @@ require (
 	github.com/sirupsen/logrus v1.8.1 // indirect
 	github.com/stoewer/go-strcase v1.2.0 // indirect
 	github.com/stretchr/objx v0.2.0 // indirect
+	github.com/tidwall/gjson v1.9.1 // indirect
 	github.com/tidwall/match v1.0.3 // indirect
 	github.com/tidwall/pretty v1.2.0 // indirect
 	github.com/uber/jaeger-client-go v2.25.0+incompatible // indirect

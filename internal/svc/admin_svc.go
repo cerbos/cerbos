@@ -7,11 +7,13 @@ import (
 	"bytes"
 	"context"
 	"encoding/base64"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"strings"
 	"time"
 
+	"github.com/PaesslerAG/jsonpath"
 	"github.com/grpc-ecosystem/go-grpc-middleware/logging/zap/ctxzap"
 	"github.com/tidwall/gjson"
 	"go.uber.org/zap"
@@ -138,18 +140,35 @@ func (cas *CerbosAdminService) ListPolicies(ctx context.Context, req *requestv1.
 	policies := make([]*policyv1.Policy, 0, len(units))
 	for _, filter := range req.Filters {
 		for _, unit := range units {
-			b, err := protojson.Marshal(unit)
+			b, err := protojson.Marshal(unit.Policy)
 			if err != nil {
 				return nil, status.Error(codes.Internal, fmt.Sprintf("could not marshal policy: %s", err))
 			}
-			value := gjson.Get(string(b), filter.FieldPath)
+
+			var value string
+			if filter.JsonPath {
+				var v map[string]interface{} // jsonpath lib explicitly requires this type
+				err = json.Unmarshal(b, &v)
+				if err != nil {
+					return nil, status.Error(codes.Internal, fmt.Sprintf("could not unmarshal policy: %s", err))
+				}
+				val, err := jsonpath.Get(filter.FieldPath, v)
+				if err != nil {
+					return nil, status.Error(codes.Internal, fmt.Sprintf("could not query policy: %s", err))
+				}
+				value = fmt.Sprintf("%s", val)
+			} else {
+				val := gjson.Get(string(b), filter.FieldPath)
+				value = val.String()
+			}
+
 			switch filter.Type {
 			case requestv1.ListPoliciesRequest_MATCH_TYPE_EXACT:
-				if value.String() == filter.Value {
+				if value == filter.Value {
 					policies = append(policies, unit.Policy)
 				}
 			case requestv1.ListPoliciesRequest_MATCH_TYPE_WILDCARD:
-				if strings.Contains(value.String(), filter.Value) {
+				if strings.Contains(value, filter.Value) {
 					policies = append(policies, unit.Policy)
 				}
 			default:

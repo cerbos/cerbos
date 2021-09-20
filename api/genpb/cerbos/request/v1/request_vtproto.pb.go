@@ -1018,6 +1018,16 @@ func (m *ListPoliciesRequest_Filter) MarshalToSizedBufferVT(dAtA []byte) (int, e
 		i -= len(m.unknownFields)
 		copy(dAtA[i:], m.unknownFields)
 	}
+	if m.JsonPath {
+		i--
+		if m.JsonPath {
+			dAtA[i] = 1
+		} else {
+			dAtA[i] = 0
+		}
+		i--
+		dAtA[i] = 0x20
+	}
 	if len(m.Value) > 0 {
 		i -= len(m.Value)
 		copy(dAtA[i:], m.Value)
@@ -1549,6 +1559,9 @@ func (m *ListPoliciesRequest_Filter) SizeVT() (n int) {
 	l = len(m.Value)
 	if l > 0 {
 		n += 1 + l + sov(uint64(l))
+	}
+	if m.JsonPath {
+		n += 2
 	}
 	if m.unknownFields != nil {
 		n += len(m.unknownFields)
@@ -3800,6 +3813,26 @@ func (m *ListPoliciesRequest_Filter) UnmarshalVT(dAtA []byte) error {
 			}
 			m.Value = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
+		case 4:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field JsonPath", wireType)
+			}
+			var v int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				v |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			m.JsonPath = bool(v != 0)
 		default:
 			iNdEx = preIndex
 			skippy, err := skip(dAtA[iNdEx:])

@@ -538,6 +538,9 @@
         },
         "value": {
           "type": "string"
+        },
+        "jsonPath": {
+          "type": "boolean"
         }
       }
     },
