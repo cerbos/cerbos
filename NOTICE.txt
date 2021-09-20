@@ -983,11 +983,11 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 --------------------------------------------------------------------------------
 Module  : github.com/fergusstrange/embedded-postgres
-Version : v1.9.0
-Time    : 2021-08-22T09:39:48Z
+Version : v1.10.0
+Time    : 2021-09-16T12:02:09Z
 Licence : MIT
 
-Contents of probable licence file $GOMODCACHE/github.com/fergusstrange/embedded-postgres@v1.9.0/LICENSE:
+Contents of probable licence file $GOMODCACHE/github.com/fergusstrange/embedded-postgres@v1.10.0/LICENSE:
 
 MIT License
 
