@@ -63,7 +63,7 @@ tests: <5>
 <5> List of tests in this suite
 <6> Name of the test
 <7> Input to the policy engine
-<8> List of outcome expected for a specified principal and a given action.
+<8> List of outcomes expected for a specified principal and a given action.
 
 It is possible to share principals and resources between
 test suites stored in the same directory. Create a `testdata` directory in the directory containing your test suite files, then define shared resources and principals in `testdata\resources.yml` and `testdata\principals.yml` respectively (`yaml` and `json` extensions are also supported).
