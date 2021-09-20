@@ -20,7 +20,7 @@ require (
 	github.com/ghodss/yaml v1.0.0
 	github.com/go-git/go-git/v5 v5.4.2
 	github.com/go-sql-driver/mysql v1.6.0
-	github.com/google/cel-go v0.7.3
+	github.com/google/cel-go v0.8.0
 	github.com/google/go-cmp v0.5.6
 	github.com/google/gops v0.3.20
 	github.com/google/uuid v1.3.0
@@ -164,7 +164,7 @@ require (
 	golang.org/x/mod v0.4.2 // indirect
 	golang.org/x/sys v0.0.0-20210902050250-f475640dd07b // indirect
 	golang.org/x/term v0.0.0-20210220032956-6a3ed077a48d // indirect
-	golang.org/x/text v0.3.6 // indirect
+	golang.org/x/text v0.3.7 // indirect
 	golang.org/x/tools v0.1.5 // indirect
 	golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1 // indirect
 	gopkg.in/warnings.v0 v0.1.2 // indirect
