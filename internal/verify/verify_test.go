@@ -39,7 +39,7 @@ func TestVerify(t *testing.T) {
 }
 
 const (
-principals = `
+	principals = `
 ---
 principals:
   harry:
@@ -61,7 +61,7 @@ principals:
       << : *harry_attr
       managed_geographies: "GB"
 `
-resources = `
+	resources = `
 ---
 resources:
   draft_leave_request: &leave_request
@@ -81,7 +81,7 @@ resources:
       << : *leave_request_attr
       status: PENDING_APPROVAL
 `
-testSuiteTemplate = `
+	testSuiteTemplate = `
 ---
 name: TestSuite
 description: Tests for verifying something
@@ -130,7 +130,7 @@ tests:
 )
 
 var (
-	ts *template.Template
+	ts           *template.Template
 	initTemplate sync.Once
 )
 
