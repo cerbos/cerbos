@@ -250,7 +250,7 @@ EOF
       "XX125": {
         "actions": {
           "view": {
-            "matchedPolicy": "album:object:default"
+            "matchedPolicy": "resource.album_object.vdefault"
           }
         },
         "effectiveDerivedRoles": [
@@ -266,11 +266,11 @@ It's not practical to start the server and manually make requests every time a p
 
 === Writing tests to verify behaviour
 
-Create a new directory named `tests` and create a file named `album_object_tests.yaml` with the following contents.
+Create a new directory named `tests` and create a file named `album_object_test.yaml` with the following contents.
 
 [source,yaml,linenums]
 ----
-include::example$photo-share/tests/album_object_tests.yaml[]
+include::example$photo-share/tests/album_object_test.yaml[]
 ----
 
 Now run the compiler, pointing it to the `tests` directory.
@@ -283,10 +283,31 @@ docker run -it -v $(pwd):/photo-share {app-docker-img} \
 
 ----
 Test results
-= AlbumObjectTestSuite (album_object_tests.yaml)
-== Alicia tries to view her own private album [OK]
-== Bradley tries to view Alicia's private album [OK]
-== Bradley tries to view Alicia's public album [OK]
-== Moderator tries to delete a flagged album [OK]
-== Moderator tries to delete an unflagged album [OK]
+= AlbumObjectTestSuite (album_object_test.yaml)
+== 'View private album' by principal 'alicia' [OK]
+== 'View private album' by principal 'bradley' [OK]
+== 'View private album' by principal 'maria' [OK]
+== 'View public album' by principal 'alicia' [OK]
+== 'View public album' by principal 'bradley' [OK]
+== 'View public album' by principal 'maria' [OK]
+== 'Delete unflagged album' by principal 'alicia' [OK]
+== 'Delete unflagged album' by principal 'bradley' [OK]
+== 'Delete unflagged album' by principal 'maria' [OK]
+== 'Delete flagged album' by principal 'alicia' [OK]
+== 'Delete flagged album' by principal 'bradley' [OK]
+== 'Delete flagged album' by principal 'maria' [OK]
 ----
+
+[NOTE]
+====
+You can produce machine-readable output from the `test` command by using the `--format=json` flag.
+
+[source,shell,subs="attributes"]
+----
+docker run -it -v $(pwd):/photo-share {app-docker-img} \
+    compile --tests=/photo-share/tests --format=json /photo-share/policies
+----
+
+See xref:policies:compile.adoc[Policy validation and testing] documentation for more information. 
+
+====

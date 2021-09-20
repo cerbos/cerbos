@@ -3,4 +3,4 @@
 * xref:resource_policies.adoc[Resource Policies]
 * xref:principal_policies.adoc[Principal Policies]
 * xref:conditions.adoc[Conditions]
-* xref:compile.adoc[Compiling and testing]
+* xref:compile.adoc[Validating and testing]
