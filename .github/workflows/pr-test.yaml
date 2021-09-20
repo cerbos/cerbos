@@ -76,6 +76,6 @@ jobs:
       - name: Lint protos
         uses: bufbuild/buf-lint-action@v0.3.0
 
-      - uses: bufbuild/buf-breaking-action@v0.4.0
+      - uses: bufbuild/buf-breaking-action@v1.0.0
         with:
           against: 'https://github.com/cerbos/cerbos.git#branch=main'
