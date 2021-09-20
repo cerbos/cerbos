@@ -80,7 +80,7 @@ principals:
       - moderator
 ----
 
-To run the tests, provide the path to the tests' directory using the `--tests` flag.
+To run the tests, provide the path to the tests directory using the `--tests` flag.
 
 [source,sh,subs="attributes"]
 ----
