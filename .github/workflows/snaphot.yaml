@@ -70,7 +70,7 @@ jobs:
         run: docker push ghcr.io/cerbos/cerbos:dev-amd64 && docker push ghcr.io/cerbos/cerbos:dev-arm64
 
       - name: Setup Buf
-        uses: bufbuild/buf-setup-action@v0.4.0
+        uses: bufbuild/buf-setup-action@v0.5.0
 
       - name: Push to BSR 
         uses: bufbuild/buf-push-action@v0.3.0
