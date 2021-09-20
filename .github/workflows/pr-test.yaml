@@ -74,7 +74,7 @@ jobs:
         uses: bufbuild/buf-setup-action@v0.5.0
 
       - name: Lint protos
-        uses: bufbuild/buf-lint-action@v0.3.0
+        uses: bufbuild/buf-lint-action@v1.0.0
 
       - uses: bufbuild/buf-breaking-action@v1.0.0
         with:
