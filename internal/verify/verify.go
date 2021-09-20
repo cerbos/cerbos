@@ -72,7 +72,9 @@ func doVerify(ctx context.Context, fsys fs.FS, eng *engine.Engine, conf Config) 
 		shouldRun = func(name string) bool { return runRegex.MatchString(name) }
 	}
 
-	result := &Result{}
+	var suiteDefs []string
+	fixtureDefs := make(map[string]struct{})
+
 	err := fs.WalkDir(fsys, ".", func(path string, d fs.DirEntry, err error) error {
 		if err := ctx.Err(); err != nil {
 			return err
@@ -82,50 +84,80 @@ func doVerify(ctx context.Context, fsys fs.FS, eng *engine.Engine, conf Config) 
 			return err
 		}
 
-		if !d.IsDir() { // have own logic to process files
+		if d.IsDir() {
+			if d.Name() == TestDataDirectory {
+				fixtureDefs[path] = struct{}{}
+				return fs.SkipDir
+			}
+
 			return nil
 		}
 
-		if d.Name() == TestDataDirectory {
-			return fs.SkipDir
-		}
-
-		dirs, err := fs.ReadDir(fsys, path)
-		if err != nil {
-			return err
-		}
-
-		testFiles := make([]fs.DirEntry, 0)
-		var testFixture *testFixture
-		for _, d1 := range dirs {
-			if d1.IsDir() {
-				if d1.Name() == TestDataDirectory {
-					testFixture, err = loadTestFixture(fsys, filepath.Join(path, d1.Name()))
-					if err != nil {
-						return err
-					}
-				}
-			} else if util.IsSupportedTestFile(d1.Name()) {
-				testFiles = append(testFiles, d1)
-			}
-		}
-
-		for _, d1 := range testFiles {
-			ts := &policyv1.TestSuite{}
-			path1 := filepath.Join(path, d1.Name())
-			if err := util.LoadFromJSONOrYAML(fsys, path1, ts); err != nil {
-				return err
-			}
-
-			suiteResult, failed := testFixture.runTestSuite(ctx, eng, shouldRun, path1, ts)
-			result.Results = append(result.Results, suiteResult)
-			if failed {
-				result.Failed = true
-			}
+		if util.IsSupportedTestFile(path) {
+			suiteDefs = append(suiteDefs, path)
 		}
 
 		return nil
 	})
+
+	fixtures := make(map[string]*testFixture, len(fixtureDefs))
+
+	getFixture := func(path string) (*testFixture, error) {
+		f, ok := fixtures[path]
+		if ok {
+			return f, nil
+		}
+
+		if _, exists := fixtureDefs[path]; exists {
+			f, err := loadTestFixture(fsys, path)
+			if err != nil {
+				return nil, err
+			}
+
+			fixtures[path] = f
+			return f, nil
+		}
+
+		return nil, nil
+	}
+
+	result := &Result{}
+
+	for _, sd := range suiteDefs {
+		suite := &policyv1.TestSuite{}
+		if err := util.LoadFromJSONOrYAML(fsys, sd, suite); err != nil {
+			result.Results = append(result.Results, SuiteResult{
+				File:    sd,
+				Suite:   fmt.Sprintf("UNKNOWN: failed to load test suite: %v", err),
+				Skipped: true,
+			})
+			continue
+		}
+
+		fixtureDir := filepath.Join(filepath.Dir(sd), TestDataDirectory)
+		fixture, err := getFixture(fixtureDir)
+		if err != nil {
+			result.Results = append(result.Results, SuiteResult{
+				File:  sd,
+				Suite: suite.Name,
+				Tests: []TestResult{
+					{
+						Name:   TestName{TableTestName: "*", PrincipalKey: "*"},
+						Failed: true,
+						Error:  fmt.Sprintf("failed to load test fixtures from %s: %v", fixtureDir, err),
+					},
+				},
+			})
+			result.Failed = true
+			continue
+		}
+
+		suiteResult, failed := fixture.runTestSuite(ctx, eng, shouldRun, sd, suite)
+		result.Results = append(result.Results, suiteResult)
+		if failed {
+			result.Failed = true
+		}
+	}
 
 	return result, err
 }

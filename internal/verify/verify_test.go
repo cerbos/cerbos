@@ -24,18 +24,68 @@ import (
 
 func TestVerify(t *testing.T) {
 	eng := mkEngine(t)
-
-	conf := Config{
-		TestsDir: test.PathToDir(t, "verify"),
+	runSuite := func(dir string) (*Result, error) {
+		conf := Config{TestsDir: test.PathToDir(t, filepath.Join("verify", dir))}
+		return Verify(context.Background(), eng, conf)
 	}
 
-	// TODO: (cell) add more test cases
-	result, err := Verify(context.Background(), eng, conf)
-	is := require.New(t)
-	is.NoError(err)
-	is.NotZero(len(result.Results), "test results")
-	is.False(result.Results[0].Skipped)
-	is.False(result.Failed)
+	t.Run("valid", func(t *testing.T) {
+		result, err := runSuite("valid")
+		is := require.New(t)
+		is.NoError(err)
+		is.False(result.Failed)
+		is.Len(result.Results, 2)
+
+		for _, sr := range result.Results {
+			switch sr.File {
+			case "empty_test.yaml":
+				is.False(sr.Skipped)
+				is.Empty(sr.Tests)
+			case "suite_test.yaml":
+				is.False(sr.Skipped)
+				is.Len(sr.Tests, 1)
+				is.False(sr.Tests[0].Skipped)
+				is.False(sr.Tests[0].Failed)
+				is.Empty(sr.Tests[0].Error)
+			}
+		}
+	})
+
+	t.Run("invalid_fixture", func(t *testing.T) {
+		result, err := runSuite("invalid_fixture")
+		is := require.New(t)
+		is.NoError(err)
+		is.True(result.Failed)
+		is.Len(result.Results, 1)
+
+		is.Len(result.Results[0].Tests, 1)
+		is.True(result.Results[0].Tests[0].Failed)
+		is.NotEmpty(result.Results[0].Tests[0].Error)
+	})
+
+	t.Run("invalid_test", func(t *testing.T) {
+		result, err := runSuite("invalid_test")
+
+		is := require.New(t)
+		is.NoError(err)
+		is.False(result.Failed)
+		is.Len(result.Results, 2)
+
+		for _, sr := range result.Results {
+			switch sr.File {
+			case "invalid_test.yaml":
+				is.True(sr.Skipped)
+				is.True(strings.HasPrefix(sr.Suite, "UNKNOWN: failed to load test suite"))
+				is.Empty(sr.Tests)
+			case "suite_test.yaml":
+				is.False(sr.Skipped)
+				is.Len(sr.Tests, 1)
+				is.False(sr.Tests[0].Skipped)
+				is.False(sr.Tests[0].Failed)
+				is.Empty(sr.Tests[0].Error)
+			}
+		}
+	})
 }
 
 const (
