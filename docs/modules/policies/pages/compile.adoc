@@ -78,7 +78,25 @@ principals:
     roles:
       - user
       - moderator
+
 ----
+
+.An example of `testdata\resources.yml`
+[source,yaml]
+----
+---
+resources:
+  alicia_album:
+    kind: "album:object",
+    attr:
+      owner: aliciaID,
+      id: XX125,
+      public: false,
+      flagged: false
+----
+
+To reduce repeat syntax and extend existing data nodes in your YAML file you can use YAML anchors/aliases along with overrides/extensions.
+For detailed information, please refer to https://www.educative.io/blog/advanced-yaml-syntax-cheatsheet#anchors[YAML Anchors and Aliases].
 
 To run the tests, provide the path to the tests directory using the `--tests` flag.
 
