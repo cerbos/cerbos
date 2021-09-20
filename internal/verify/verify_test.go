@@ -39,7 +39,8 @@ func TestVerify(t *testing.T) {
 }
 
 const (
-	principals = `
+	fauxPrincipals = `{"principals":{"harry":{"id":"harry","roles":["user"]}}}`
+	principals     = `
 ---
 principals:
   harry:
@@ -61,7 +62,8 @@ principals:
       << : *harry_attr
       managed_geographies: "GB"
 `
-	resources = `
+	fauxResources = `{"resources":{"draft_leave_request":{"id": "xx11", "kind": "leave_request"}}}`
+	resources     = `
 ---
 resources:
   draft_leave_request: &leave_request
@@ -175,17 +177,28 @@ func newMapFile(s string) *fstest.MapFile {
 
 func Test_doVerify(t *testing.T) {
 	eng := mkEngine(t)
-	for _, embedPrincipals := range []bool{true, false} {
-		for _, embedResources := range []bool{true, false} {
-			t.Run(fmt.Sprintf("ebedded principals = %v, embedded resources = %v", embedPrincipals, embedResources), func(t *testing.T) {
+	const (
+		embedded = iota
+		external
+		mixed
+	)
+	options := []int{embedded, external, mixed}
+	optionTitles := map[int]string{embedded: "EMBEDDED", external: "EXTERNAL", mixed: "MIXED"}
+	for _, optionPrincipals := range options {
+		for _, optionResources := range options {
+			t.Run(fmt.Sprintf("principals = %v, resources = %v", optionTitles[optionPrincipals], optionTitles[optionResources]), func(t *testing.T) {
 				fsys := make(fstest.MapFS)
-				if !embedResources {
+				if optionResources == external {
 					fsys[filepath.Join(TestDataDirectory, ResourcesFileName)+".yaml"] = newMapFile(resources)
+				} else if optionResources == mixed {
+					fsys[filepath.Join(TestDataDirectory, ResourcesFileName)+".json"] = newMapFile(fauxResources)
 				}
-				if !embedPrincipals {
+				if optionPrincipals == external {
 					fsys[filepath.Join(TestDataDirectory, PrincipalsFileName)+".yaml"] = newMapFile(principals)
+				} else if optionPrincipals == mixed {
+					fsys[filepath.Join(TestDataDirectory, PrincipalsFileName)+".json"] = newMapFile(fauxPrincipals)
 				}
-				table := genTable(t, embedResources, embedPrincipals)
+				table := genTable(t, optionResources != external, optionPrincipals != external)
 				fsys["leave_request_test.yaml"] = newMapFile(table)
 				result, err := doVerify(context.Background(), fsys, eng, Config{})
 				is := require.New(t)
@@ -196,6 +209,34 @@ func Test_doVerify(t *testing.T) {
 			})
 		}
 	}
+	t.Run("Should fail for faux principals", func(t *testing.T) {
+		fsys := make(fstest.MapFS)
+		fsys[filepath.Join(TestDataDirectory, ResourcesFileName)+".yaml"] = newMapFile(resources)
+		fsys[filepath.Join(TestDataDirectory, PrincipalsFileName)+".json"] = newMapFile(fauxPrincipals)
+
+		table := genTable(t, false, false)
+		fsys["leave_request_test.yaml"] = newMapFile(table)
+		result, err := doVerify(context.Background(), fsys, eng, Config{})
+		is := require.New(t)
+		is.NoError(err)
+		is.Len(result.Results, 1)
+		is.False(result.Results[0].Skipped)
+		is.True(result.Failed)
+	})
+	t.Run("Should fail for faux resources", func(t *testing.T) {
+		fsys := make(fstest.MapFS)
+		fsys[filepath.Join(TestDataDirectory, ResourcesFileName)+".json"] = newMapFile(fauxResources)
+		fsys[filepath.Join(TestDataDirectory, PrincipalsFileName)+".yaml"] = newMapFile(principals)
+
+		table := genTable(t, false, false)
+		fsys["leave_request_test.yaml"] = newMapFile(table)
+		result, err := doVerify(context.Background(), fsys, eng, Config{})
+		is := require.New(t)
+		is.NoError(err)
+		is.Len(result.Results, 1)
+		is.False(result.Results[0].Skipped)
+		is.True(result.Failed)
+	})
 	t.Run("Several subdirectories with test fixtures", func(t *testing.T) {
 		fsys := make(fstest.MapFS)
 		ts := genTable(t, false, false)

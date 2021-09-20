@@ -83,7 +83,7 @@ func (tf *testFixture) runTestSuite(ctx context.Context, eng *engine.Engine, sho
 	if err != nil {
 		failed = true
 		sr.Tests = []TestResult{{
-			Name:    &TestName{TableTestName: "Failed to load the test suite"},
+			Name:    TestName{TableTestName: "Failed to load the test suite"},
 			Skipped: false,
 			Failed:  true,
 			Error:   err.Error(),
@@ -95,7 +95,7 @@ func (tf *testFixture) runTestSuite(ctx context.Context, eng *engine.Engine, sho
 			return sr, failed
 		}
 
-		testResult := TestResult{Name: &TestName{TableTestName: test.Name.TestTableName, PrincipalKey: test.Name.PrincipalKey}}
+		testResult := TestResult{Name: TestName{TableTestName: test.Name.TestTableName, PrincipalKey: test.Name.PrincipalKey}}
 		if test.Skip || !shouldRun(test.Name.TestTableName) {
 			testResult.Skipped = true
 			sr.Tests = append(sr.Tests, testResult)

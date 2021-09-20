@@ -44,10 +44,10 @@ func (r TestName) String() string {
 }
 
 type TestResult struct {
-	Name    *TestName `json:"case"`
-	Skipped bool      `json:"skipped,omitempty"`
-	Failed  bool      `json:"failed"`
-	Error   string    `json:"error,omitempty"`
+	Name    TestName `json:"case"`
+	Skipped bool     `json:"skipped,omitempty"`
+	Failed  bool     `json:"failed"`
+	Error   string   `json:"error,omitempty"`
 }
 
 var ErrTestFixtureNotFound = errors.New("test fixture not found")
