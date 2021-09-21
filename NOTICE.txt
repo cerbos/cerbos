@@ -5697,11 +5697,11 @@ Contents of probable licence file $GOMODCACHE/helm.sh/helm/v3@v3.7.0/LICENSE:
 
 --------------------------------------------------------------------------------
 Module  : modernc.org/sqlite
-Version : v1.13.0
-Time    : 2021-09-07T14:47:43Z
+Version : v1.13.1
+Time    : 2021-09-17T10:38:44Z
 Licence : BSD-3-Clause
 
-Contents of probable licence file $GOMODCACHE/modernc.org/sqlite@v1.13.0/LICENSE:
+Contents of probable licence file $GOMODCACHE/modernc.org/sqlite@v1.13.1/LICENSE:
 
 Copyright (c) 2017 The Sqlite Authors. All rights reserved.
 
