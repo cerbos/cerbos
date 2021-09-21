@@ -92,11 +92,10 @@ principals: <4>
       - user
 tests: <5>
   - name: Alicia tries to view her own private album <6>
-    input: { <7>
-      "requestId": "test",
-      "actions": ["view", "delete"],
-      "resource": "alicia_album"
-    }
+    input: <7>
+      requestId: "test"
+      actions: ["view", "delete"]
+      resource: "alicia_album"
     expected: <8>
       - principal: alicia
         actions:
@@ -225,6 +224,8 @@ resources:
 
 ====
 
+=== Running tests
+
 To run the tests, provide the path to the tests directory using the `--tests` flag.
 
 [source,sh,subs="attributes"]
@@ -235,14 +236,39 @@ docker run -i -t \
     {app-docker-img} compile --tests=/tests /policies
 ----
 
+
 Machine readable output can be produced by passing `--format=json` flag to the command.
 
+
+By default, all discovered tests are run. To run just some of the tests, provide a regular expression that matches the test using the `--run` flag.
+
+.Example: Running only tests that contain 'Delete' in the name
 [source,sh,subs="attributes"]
 ----
 docker run -i -t \
     -v /path/to/policy/dir:/policies \
     -v /path/to/test/dir:/tests \
-    {app-docker-img} compile --tests=/tests --format=json /policies
+    {app-docker-img} compile --tests=/tests --run=Delete /policies
 ----
 
+You can also skip entire suites or individual tests in a suite by adding `skip: true` to the test definition.
 
+.Example: Skipping a test
+[source,yaml]
+----
+---
+name: AlbumObjectTestSuite
+description: Tests for verifying the album:object resource policy
+tests:
+  - name: View private album
+    skip: true
+    skipReason: "Policy under review"
+    input:
+      requestId: "test01"
+      actions: ["view"]
+      resource: alicia_private_album
+    expected:
+      - principal: alicia
+        actions:
+          view: EFFECT_ALLOW
+----
