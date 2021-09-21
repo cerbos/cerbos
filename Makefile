@@ -59,7 +59,7 @@ generate-notice: $(GO_LICENCE_DETECTOR)
 
 .PHONY: deps
 deps:
-	@ go mod tidy
+	@ go mod tidy -compat=1.17
 
 .PHONY: test-all
 test-all: test-race test-integration

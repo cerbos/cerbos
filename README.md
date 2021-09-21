@@ -14,9 +14,9 @@ See https://docs.cerbos.dev for full Cerbos documentation.
 Try Cerbos
 ------------
 
-* [Install server binaries](https://docs.cerbos.dev/cerbos/installation/binary.html)
-* [Run server from a Docker container](https://docs.cerbos.dev/cerbos/installation/container.html)
-* [Install server from Helm chart](https://docs.cerbos.dev/cerbos/installation/helm.html)
+* [Install server binaries](https://docs.cerbos.dev/cerbos/latest/installation/binary.html)
+* [Run server from a Docker container](https://docs.cerbos.dev/cerbos/latest/installation/container.html)
+* [Install server from Helm chart](https://docs.cerbos.dev/cerbos/latest/installation/helm.html)
 * [Get client libraries](#client-sdks)
 
 Contribute
@@ -135,6 +135,7 @@ Client SDKs
 -----------
 
 - [Go](client/README.md)
+- [Java](https://github.com/cerbos/cerbos-sdk-java)
 - [NodeJS](https://github.com/cerbos/cerbos-sdk-node)
 
 More Information
