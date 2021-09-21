@@ -889,25 +889,23 @@ type policyFilter struct {
 type FilterOpt func(*policyFilter)
 
 // FieldEquals adds a exact match filter for the field.
-func FieldEquals(path, value string, jsonPath bool) FilterOpt {
+func FieldEquals(path, value string) FilterOpt {
 	return func(pf *policyFilter) {
 		pf.filters = append(pf.filters, &requestv1.ListPoliciesRequest_Filter{
 			Type:      requestv1.ListPoliciesRequest_MATCH_TYPE_EXACT,
 			FieldPath: path,
 			Value:     value,
-			JsonPath:  jsonPath,
 		})
 	}
 }
 
 // FieldEquals adds a wildcard match filter for the field.
-func FieldMatches(path, value string, jsonPath bool) FilterOpt {
+func FieldMatches(path, value string) FilterOpt {
 	return func(pf *policyFilter) {
 		pf.filters = append(pf.filters, &requestv1.ListPoliciesRequest_Filter{
 			Type:      requestv1.ListPoliciesRequest_MATCH_TYPE_WILDCARD,
 			FieldPath: path,
 			Value:     value,
-			JsonPath:  jsonPath,
 		})
 	}
 }

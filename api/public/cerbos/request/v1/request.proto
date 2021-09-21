@@ -365,7 +365,6 @@ message ListPoliciesRequest {
         MatchType type = 1;
         string field_path = 2;
         string value = 3;
-        bool json_path = 4;
     }
 
     repeated Filter filters = 1;

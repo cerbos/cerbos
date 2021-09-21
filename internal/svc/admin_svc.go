@@ -7,7 +7,6 @@ import (
 	"bytes"
 	"context"
 	"encoding/base64"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"strings"
@@ -15,13 +14,11 @@ import (
 
 	"github.com/PaesslerAG/jsonpath"
 	"github.com/grpc-ecosystem/go-grpc-middleware/logging/zap/ctxzap"
-	"github.com/tidwall/gjson"
 	"go.uber.org/zap"
 	"golang.org/x/crypto/bcrypt"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
-	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/types/known/emptypb"
 
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
@@ -137,49 +134,50 @@ func (cas *CerbosAdminService) ListPolicies(ctx context.Context, req *requestv1.
 		return nil, status.Error(codes.Internal, fmt.Sprintf("could not get policies: %s", err.Error()))
 	}
 
-	policies := make([]*policyv1.Policy, 0, len(units))
+	pMap := make(map[int]*policyv1.Policy)
+	for i, unit := range units {
+		pMap[i] = unit.Policy
+	}
+
 	for _, filter := range req.Filters {
-		for _, unit := range units {
-			b, err := protojson.Marshal(unit.Policy)
+		for i, p := range pMap {
+			v, err := protoMessageToStringMap(p)
 			if err != nil {
-				return nil, status.Error(codes.Internal, fmt.Sprintf("could not marshal policy: %s", err))
+				return nil, status.Error(codes.Internal, fmt.Sprintf("could not parse policy: %s", err))
 			}
 
-			var value string
-			if filter.JsonPath {
-				var v map[string]interface{} // jsonpath lib explicitly requires this type
-				err = json.Unmarshal(b, &v)
-				if err != nil {
-					return nil, status.Error(codes.Internal, fmt.Sprintf("could not unmarshal policy: %s", err))
+			val, err := jsonpath.Get(filter.FieldPath, v)
+			if err != nil {
+				// the lib throws an error if the key is not found, we continue here.
+				// but we need to return errors for the cases like syntax errors
+				if strings.HasPrefix(err.Error(), "unknown key") {
+					delete(pMap, i)
+					continue
 				}
-				val, err := jsonpath.Get(filter.FieldPath, v)
-				if err != nil {
-					return nil, status.Error(codes.Internal, fmt.Sprintf("could not query policy: %s", err))
-				}
-				value = fmt.Sprintf("%s", val)
-			} else {
-				val := gjson.Get(string(b), filter.FieldPath)
-				value = val.String()
+				return nil, status.Error(codes.Internal, fmt.Sprintf("could not query policy: %s", err))
 			}
+			value := getStringValue(val)
 
 			switch filter.Type {
 			case requestv1.ListPoliciesRequest_MATCH_TYPE_EXACT:
 				if value == filter.Value {
-					policies = append(policies, unit.Policy)
+					continue
 				}
+				delete(pMap, i)
 			case requestv1.ListPoliciesRequest_MATCH_TYPE_WILDCARD:
 				if strings.Contains(value, filter.Value) {
-					policies = append(policies, unit.Policy)
+					continue
 				}
+				delete(pMap, i)
 			default:
 				return nil, status.Error(codes.InvalidArgument, "invalid filter type")
 			}
 		}
 	}
-	if len(req.Filters) == 0 {
-		for _, unit := range units {
-			policies = append(policies, unit.Policy)
-		}
+
+	policies := make([]*policyv1.Policy, 0, len(pMap))
+	for _, p := range pMap {
+		policies = append(policies, p)
 	}
 
 	return &responsev1.ListPoliciesResponse{
