@@ -2943,11 +2943,11 @@ Contents of probable licence file $GOMODCACHE/github.com/oklog/ulid/v2@v2.0.2/LI
 
 --------------------------------------------------------------------------------
 Module  : github.com/open-policy-agent/opa
-Version : v0.32.0
-Time    : 2021-08-31T18:37:01Z
+Version : v0.32.1
+Time    : 2021-09-20T16:31:13Z
 Licence : Apache-2.0
 
-Contents of probable licence file $GOMODCACHE/github.com/open-policy-agent/opa@v0.32.0/LICENSE:
+Contents of probable licence file $GOMODCACHE/github.com/open-policy-agent/opa@v0.32.1/LICENSE:
 
                                  Apache License
                            Version 2.0, January 2004
