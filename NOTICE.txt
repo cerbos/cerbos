@@ -4134,11 +4134,11 @@ SOFTWARE.
 
 --------------------------------------------------------------------------------
 Module  : github.com/tidwall/sjson
-Version : v1.2.1
-Time    : 2021-09-04T15:00:45Z
+Version : v1.2.2
+Time    : 2021-09-15T12:40:01Z
 Licence : MIT
 
-Contents of probable licence file $GOMODCACHE/github.com/tidwall/sjson@v1.2.1/LICENSE:
+Contents of probable licence file $GOMODCACHE/github.com/tidwall/sjson@v1.2.2/LICENSE:
 
 The MIT License (MIT)
 
@@ -15033,11 +15033,11 @@ SOFTWARE.
 
 --------------------------------------------------------------------------------
 Module  : github.com/tidwall/gjson
-Version : v1.9.0
-Time    : 2021-09-01T14:25:06Z
+Version : v1.9.1
+Time    : 2021-09-15T12:37:28Z
 Licence : MIT
 
-Contents of probable licence file $GOMODCACHE/github.com/tidwall/gjson@v1.9.0/LICENSE:
+Contents of probable licence file $GOMODCACHE/github.com/tidwall/gjson@v1.9.1/LICENSE:
 
 The MIT License (MIT)
 
