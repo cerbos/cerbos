@@ -17,6 +17,7 @@ import (
 	"github.com/cerbos/cerbos/internal/namer"
 	"github.com/cerbos/cerbos/internal/policy"
 	"github.com/cerbos/cerbos/internal/util"
+	"github.com/cerbos/cerbos/internal/verify"
 )
 
 // BuildError is an error type that contains details about the failures encountered during the index build.
@@ -128,10 +129,18 @@ func Build(ctx context.Context, fsys fs.FS, opts ...BuildOpt) (Index, error) {
 		}
 
 		if d.IsDir() {
+			if d.Name() == verify.TestDataDirectory {
+				return fs.SkipDir
+			}
+
 			return nil
 		}
 
 		if !util.IsSupportedFileType(d.Name()) {
+			return nil
+		}
+
+		if util.IsSupportedTestFile(d.Name()) {
 			return nil
 		}
 
