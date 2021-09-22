@@ -362,9 +362,23 @@ message ListPoliciesRequest {
     }
 
     message Filter {
-        MatchType type = 1;
-        string field_path = 2;
-        string value = 3;
+        MatchType type = 1 [
+            (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = { 
+                description: "Kind of filter"
+                enum: ["MATCH_TYPE_EXACT", "MATCH_TYPE_WILDCARD"]
+            }
+        ];
+        string field_path = 2 [
+            (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+                description: "Should be a JSONPath expression to be able to query fields."
+                example: "\"$.resourcePolicy.resource\""
+            }
+        ];
+        string value = 3 [
+            (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = { 
+                description: "The value compared against"
+            }
+        ];
     }
 
     repeated Filter filters = 1;

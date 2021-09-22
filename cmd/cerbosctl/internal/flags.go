@@ -178,8 +178,8 @@ func NewListPoliciesFilterDef() *ListPoliciesFilterDef {
 
 func (lpfd *ListPoliciesFilterDef) FlagSet() *pflag.FlagSet {
 	fs := pflag.NewFlagSet("filters", pflag.ExitOnError)
-	fs.StringArrayVar(&lpfd.fieldEq, "field-eq", []string{}, "Filter a field with exact match")
-	fs.StringArrayVar(&lpfd.fieldMatch, "field-match", []string{}, "Filter a field with wildcard match")
+	fs.StringArrayVar(&lpfd.fieldEq, "field-eq", []string{}, "Filter a field with an exact match")
+	fs.StringArrayVar(&lpfd.fieldMatch, "field-match", []string{}, "Filter a field with a regex match")
 	fs.StringVar(&lpfd.format, "format", "", "Output format for the policies; json, yaml formats are supported (leave empty for pretty output)")
 	return fs
 }

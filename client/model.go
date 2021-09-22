@@ -899,7 +899,7 @@ func FieldEquals(path, value string) FilterOpt {
 	}
 }
 
-// FieldEquals adds a wildcard match filter for the field.
+// FieldEquals adds a regex match filter for the field.
 func FieldMatches(path, value string) FilterOpt {
 	return func(pf *policyFilter) {
 		pf.filters = append(pf.filters, &requestv1.ListPoliciesRequest_Filter{

@@ -531,13 +531,21 @@
       "type": "object",
       "properties": {
         "type": {
-          "$ref": "#/definitions/ListPoliciesRequestMatchType"
+          "$ref": "#/definitions/ListPoliciesRequestMatchType",
+          "enum": [
+            "MATCH_TYPE_EXACT",
+            "MATCH_TYPE_WILDCARD"
+          ],
+          "description": "Kind of filter"
         },
         "fieldPath": {
-          "type": "string"
+          "type": "string",
+          "example": "$.resourcePolicy.resource",
+          "description": "Should be a JSONPath expression to be able to query fields."
         },
         "value": {
-          "type": "string"
+          "type": "string",
+          "description": "The value compared against"
         }
       }
     },

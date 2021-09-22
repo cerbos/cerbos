@@ -9,6 +9,7 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
+	"regexp"
 	"strings"
 	"time"
 
@@ -134,19 +135,35 @@ func (cas *CerbosAdminService) ListPolicies(ctx context.Context, req *requestv1.
 		return nil, status.Error(codes.Internal, fmt.Sprintf("could not get policies: %s", err.Error()))
 	}
 
+	if len(req.Filters) == 0 {
+		policies := make([]*policyv1.Policy, 0, len(units))
+		for _, unit := range units {
+			policies = append(policies, unit.Policy)
+		}
+
+		return &responsev1.ListPoliciesResponse{
+			Policies: policies,
+		}, nil
+	}
+
 	pMap := make(map[int]*policyv1.Policy)
 	for i, unit := range units {
 		pMap[i] = unit.Policy
 	}
 
+	sMap := make(map[int]map[string]interface{})
+	rMap := make(map[string]*regexp.Regexp)
 	for _, filter := range req.Filters {
-		for i, p := range pMap {
-			v, err := protoMessageToStringMap(p)
-			if err != nil {
-				return nil, status.Error(codes.Internal, fmt.Sprintf("could not parse policy: %s", err))
+		for i := range pMap {
+			if _, ok := sMap[i]; !ok {
+				v, err := protoMessageToStringMap(pMap[i])
+				if err != nil {
+					return nil, status.Error(codes.Internal, fmt.Sprintf("could not parse policy: %s", err))
+				}
+				sMap[i] = v
 			}
 
-			val, err := jsonpath.Get(filter.FieldPath, v)
+			val, err := jsonpath.Get(filter.FieldPath, sMap[i])
 			if err != nil {
 				// the lib throws an error if the key is not found, we continue here.
 				// but we need to return errors for the cases like syntax errors
@@ -165,7 +182,16 @@ func (cas *CerbosAdminService) ListPolicies(ctx context.Context, req *requestv1.
 				}
 				delete(pMap, i)
 			case requestv1.ListPoliciesRequest_MATCH_TYPE_WILDCARD:
-				if strings.Contains(value, filter.Value) {
+				exp := filter.Value
+				if _, ok := rMap[exp]; !ok {
+					r, err := regexp.Compile(exp)
+					if err != nil {
+						return nil, status.Error(codes.InvalidArgument, fmt.Sprintf("could not compile regex: %s", err))
+					}
+					rMap[exp] = r
+				}
+
+				if rMap[exp].MatchString(value) {
 					continue
 				}
 				delete(pMap, i)
