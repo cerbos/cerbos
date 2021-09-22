@@ -1,0 +1,56 @@
+
+include::ROOT:partial$attributes.adoc[]
+
+[#v0.7.0]
+= Cerbos v0.7.0
+
+== Highlights
+
+Improved policy testing framework:: In this release we have overhauled the policy testing framework to make it more ergonomic. Reusable test fixtures can be defined inline in a test suite or in a dedicated `testdata` directory to be shared between different suites. This is one of the rare occasions in which we have decided to introduce a breaking change because it adds enough value to justify it. You will need to make minor changes to existing test suites to make them work with this release. See xref:0.7.0@cerbos:policies:compile.adoc[] for more details.
+New set functions:: You can perform set intersection (`intersect`, `has_intersection`) and check for subsets (`is_subset`) in policy condition blocks using the new functions introduced in this release. 
+Strict configuration:: To help catch typos and other potential sources of misconfiguration, Cerbos configuration is now parsed much more strictly. Unknown configuration keys will prevent the Cerbos server from starting up.
+Admin API improvements:: Preliminary support for listing policies has been added to the Admin API. This an area of active development and further improvements such as filtering, sorting and pagination will be added in future releases. 
+
+
+== Changelog
+
+=== Enhancements
+
+* Add version info while using make install (link:https://github.com/cerbos/cerbos/pull/276[#276])
+* Adds CEL helper list functions  (link:https://github.com/cerbos/cerbos/pull/280[#280])
+* List policies endpoint added to Admin API (link:https://github.com/cerbos/cerbos/pull/269[#269])
+* Strict configuration (link:https://github.com/cerbos/cerbos/pull/293[#293])
+* Add support for test fixtures (link:https://github.com/cerbos/cerbos/pull/294[#294])
+* Ignore invalid test suites (link:https://github.com/cerbos/cerbos/pull/309[#309])
+
+=== Documentation
+
+* Update references to cerbosctl (link:https://github.com/cerbos/cerbos/pull/275[#275])
+* Add favicon to docs site (link:https://github.com/cerbos/cerbos/pull/292[#292])
+* Preserve older versions (link:https://github.com/cerbos/cerbos/pull/296[#296])
+* Update tutorial tests and other improvements (link:https://github.com/cerbos/cerbos/pull/308[#308])
+
+=== Chores
+
+* Bump version to 0.7.0
+* Use admin client in decisions subcommand (link:https://github.com/cerbos/cerbos/pull/265[#265])
+* Bump github.com/open-policy-agent/opa from 0.31.0 to 0.32.0 (link:https://github.com/cerbos/cerbos/pull/277[#277])
+* Bump github.com/tidwall/sjson from 1.1.7 to 1.2.1 (link:https://github.com/cerbos/cerbos/pull/278[#278])
+* Bump bufbuild/buf-setup-action from 0.3.1 to 0.4.0 (link:https://github.com/cerbos/cerbos/pull/286[#286])
+* Bump github.com/grpc-ecosystem/grpc-gateway/v2 from 2.5.0 to 2.6.0 (link:https://github.com/cerbos/cerbos/pull/287[#287])
+* Bump github.com/google/gops from 0.3.19 to 0.3.20 (link:https://github.com/cerbos/cerbos/pull/288[#288])
+* Bump go.uber.org/zap from 1.19.0 to 1.19.1 (link:https://github.com/cerbos/cerbos/pull/289[#289])
+* Bump modernc.org/sqlite from 1.12.0 to 1.13.0 (link:https://github.com/cerbos/cerbos/pull/290[#290])
+* Bump github.com/mattn/go-isatty from 0.0.13 to 0.0.14 (link:https://github.com/cerbos/cerbos/pull/291[#291])
+* Bump bufbuild/buf-setup-action from 0.4.0 to 0.5.0 (link:https://github.com/cerbos/cerbos/pull/300[#300])
+* Bump bufbuild/buf-breaking-action from 0.4.0 to 1.0.0 (link:https://github.com/cerbos/cerbos/pull/301[#301])
+* Bump bufbuild/buf-push-action from 0.3.0 to 1.0.0 (link:https://github.com/cerbos/cerbos/pull/302[#302])
+* Bump bufbuild/buf-lint-action from 0.3.0 to 1.0.0 (link:https://github.com/cerbos/cerbos/pull/303[#303])
+* Bump helm.sh/helm/v3 from 3.6.3 to 3.7.0 (link:https://github.com/cerbos/cerbos/pull/304[#304])
+* Bump github.com/fergusstrange/embedded-postgres from 1.9.0 to 1.10.0 (link:https://github.com/cerbos/cerbos/pull/306[#306])
+* Bump github.com/google/cel-go from 0.7.3 to 0.8.0 (link:https://github.com/cerbos/cerbos/pull/310[#310])
+* Bump github.com/tidwall/sjson from 1.2.1 to 1.2.2 (link:https://github.com/cerbos/cerbos/pull/305[#305])
+* Bump modernc.org/sqlite from 1.13.0 to 1.13.1 (link:https://github.com/cerbos/cerbos/pull/311[#311])
+* Bump github.com/open-policy-agent/opa from 0.32.0 to 0.32.1 (link:https://github.com/cerbos/cerbos/pull/312[#312])
+* Publish docs on commit to trunk (link:https://github.com/cerbos/cerbos/pull/314[#314])
+
