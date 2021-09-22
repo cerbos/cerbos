@@ -32,15 +32,23 @@ update_version() {
     sed -i -E "s#version: \"[0-9]+\.[0-9]+\.[0-9]+.*\"#version: \"$VER\"#" "${CHARTS_DIR}/Chart.yaml"
 }
 
+set_branch() {
+    local BRANCH="$1"
+    sed -i -E "s#branches:.*#branches: [${BRANCH}]#g" "${DOCS_DIR}/antora-playbook.yml"
+}
 
 # Set release version and tag
 update_version $VERSION
+# Set Antora branch to main
+set_branch "main"
 # Commit changes and tag release
 git -C "$PROJECT_DIR" commit -s -a -m "chore(release): Prepare release $VERSION"
 git tag "v${VERSION}" -m "v${VERSION}"
 
 # Set next version
 update_version $NEXT_VERSION
+# Set Antora branch to HEAD (author mode)
+set_branch "HEAD"
 # Mark it as a pre-release
 sed -i -E "/^version:/a prerelease: -prerelease" "${DOCS_DIR}/antora.yml"
 # Commit changes
