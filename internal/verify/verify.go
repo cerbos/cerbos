@@ -85,7 +85,7 @@ func doVerify(ctx context.Context, fsys fs.FS, eng *engine.Engine, conf Config) 
 		}
 
 		if d.IsDir() {
-			if d.Name() == TestDataDirectory {
+			if d.Name() == util.TestDataDirectory {
 				fixtureDefs[path] = struct{}{}
 				return fs.SkipDir
 			}
@@ -134,7 +134,7 @@ func doVerify(ctx context.Context, fsys fs.FS, eng *engine.Engine, conf Config) 
 			continue
 		}
 
-		fixtureDir := filepath.Join(filepath.Dir(sd), TestDataDirectory)
+		fixtureDir := filepath.Join(filepath.Dir(sd), util.TestDataDirectory)
 		fixture, err := getFixture(fixtureDir)
 		if err != nil {
 			result.Results = append(result.Results, SuiteResult{

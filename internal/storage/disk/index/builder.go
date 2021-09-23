@@ -128,10 +128,18 @@ func Build(ctx context.Context, fsys fs.FS, opts ...BuildOpt) (Index, error) {
 		}
 
 		if d.IsDir() {
+			if d.Name() == util.TestDataDirectory {
+				return fs.SkipDir
+			}
+
 			return nil
 		}
 
 		if !util.IsSupportedFileType(d.Name()) {
+			return nil
+		}
+
+		if util.IsSupportedTestFile(d.Name()) {
 			return nil
 		}
 

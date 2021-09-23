@@ -20,6 +20,7 @@ import (
 	"github.com/cerbos/cerbos/internal/engine"
 	"github.com/cerbos/cerbos/internal/storage/disk"
 	"github.com/cerbos/cerbos/internal/test"
+	"github.com/cerbos/cerbos/internal/util"
 )
 
 func TestVerify(t *testing.T) {
@@ -239,14 +240,14 @@ func Test_doVerify(t *testing.T) {
 			t.Run(fmt.Sprintf("principals = %v, resources = %v", optionTitles[optionPrincipals], optionTitles[optionResources]), func(t *testing.T) {
 				fsys := make(fstest.MapFS)
 				if optionResources == external {
-					fsys[filepath.Join(TestDataDirectory, ResourcesFileName)+".yaml"] = newMapFile(resources)
+					fsys[filepath.Join(util.TestDataDirectory, ResourcesFileName)+".yaml"] = newMapFile(resources)
 				} else if optionResources == mixed {
-					fsys[filepath.Join(TestDataDirectory, ResourcesFileName)+".json"] = newMapFile(fauxResources)
+					fsys[filepath.Join(util.TestDataDirectory, ResourcesFileName)+".json"] = newMapFile(fauxResources)
 				}
 				if optionPrincipals == external {
-					fsys[filepath.Join(TestDataDirectory, PrincipalsFileName)+".yaml"] = newMapFile(principals)
+					fsys[filepath.Join(util.TestDataDirectory, PrincipalsFileName)+".yaml"] = newMapFile(principals)
 				} else if optionPrincipals == mixed {
-					fsys[filepath.Join(TestDataDirectory, PrincipalsFileName)+".json"] = newMapFile(fauxPrincipals)
+					fsys[filepath.Join(util.TestDataDirectory, PrincipalsFileName)+".json"] = newMapFile(fauxPrincipals)
 				}
 				table := genTable(t, optionResources != external, optionPrincipals != external)
 				fsys["leave_request_test.yaml"] = newMapFile(table)
@@ -261,8 +262,8 @@ func Test_doVerify(t *testing.T) {
 	}
 	t.Run("Should fail for faux principals", func(t *testing.T) {
 		fsys := make(fstest.MapFS)
-		fsys[filepath.Join(TestDataDirectory, ResourcesFileName)+".yaml"] = newMapFile(resources)
-		fsys[filepath.Join(TestDataDirectory, PrincipalsFileName)+".json"] = newMapFile(fauxPrincipals)
+		fsys[filepath.Join(util.TestDataDirectory, ResourcesFileName)+".yaml"] = newMapFile(resources)
+		fsys[filepath.Join(util.TestDataDirectory, PrincipalsFileName)+".json"] = newMapFile(fauxPrincipals)
 
 		table := genTable(t, false, false)
 		fsys["leave_request_test.yaml"] = newMapFile(table)
@@ -275,8 +276,8 @@ func Test_doVerify(t *testing.T) {
 	})
 	t.Run("Should fail for faux resources", func(t *testing.T) {
 		fsys := make(fstest.MapFS)
-		fsys[filepath.Join(TestDataDirectory, ResourcesFileName)+".json"] = newMapFile(fauxResources)
-		fsys[filepath.Join(TestDataDirectory, PrincipalsFileName)+".yaml"] = newMapFile(principals)
+		fsys[filepath.Join(util.TestDataDirectory, ResourcesFileName)+".json"] = newMapFile(fauxResources)
+		fsys[filepath.Join(util.TestDataDirectory, PrincipalsFileName)+".yaml"] = newMapFile(principals)
 
 		table := genTable(t, false, false)
 		fsys["leave_request_test.yaml"] = newMapFile(table)
@@ -291,7 +292,7 @@ func Test_doVerify(t *testing.T) {
 		fsys := make(fstest.MapFS)
 		ts := genTable(t, false, false)
 		for _, dir := range []string{"a", "b", "c"} {
-			d := filepath.Join(dir, TestDataDirectory)
+			d := filepath.Join(dir, util.TestDataDirectory)
 			fsys[d+"/principals.yaml"] = newMapFile(principals)
 			fsys[d+"/resources.yaml"] = newMapFile(resources)
 			fsys[dir+"/leave_request_test.yaml"] = newMapFile(ts)
