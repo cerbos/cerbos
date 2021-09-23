@@ -527,6 +527,37 @@
         "end"
       ]
     },
+    "ListPoliciesRequestFilter": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "$ref": "#/definitions/ListPoliciesRequestMatchType",
+          "enum": [
+            "MATCH_TYPE_EXACT",
+            "MATCH_TYPE_WILDCARD"
+          ],
+          "description": "Kind of filter"
+        },
+        "fieldPath": {
+          "type": "string",
+          "example": "$.resourcePolicy.resource",
+          "description": "JSONPath expression describing the field to match"
+        },
+        "value": {
+          "type": "string",
+          "description": "The value to compare"
+        }
+      }
+    },
+    "ListPoliciesRequestMatchType": {
+      "type": "string",
+      "enum": [
+        "MATCH_TYPE_UNSPECIFIED",
+        "MATCH_TYPE_EXACT",
+        "MATCH_TYPE_WILDCARD"
+      ],
+      "default": "MATCH_TYPE_UNSPECIFIED"
+    },
     "MatchExprList": {
       "type": "object",
       "properties": {

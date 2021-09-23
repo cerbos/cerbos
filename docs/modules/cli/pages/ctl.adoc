@@ -36,6 +36,8 @@ cerbosctl --server=localhost:3593 --username=user --password=password --plaintex
 Available Commands:
   audit       View audit logs
   decisions   Explore Cerbos engine decision logs
+  list        List active policies
+  version     Display client and server versions
 
 Flags:
       --ca-cert string       Path to the CA certificate for verifying server identity
@@ -121,3 +123,32 @@ Use the arrow keys (or Vim keys kbd:[h], kbd:[j], kbd:[k], kbd:[l]) to scroll ho
 ----
 cerbosctl decisions --tail=20
 ----
+
+
+== `list`
+
+This command lists the policies available in the configured policy repository. The list can be filtered by specifying one or more pairs of field selectors and match values as command line arguments. Field selectors are expected to be valid JSONPath expressions describing policy fields.
+See link:https://tools.ietf.org/id/draft-goessner-dispatch-jsonpath-00.html#table-1[specification] for more information about JSONPath.
+
+Use `--field-eq` to perform an exact match and `--field-match` to perform a regular expression match.
+
+.List resource policies where the `version` field is exactly `20210210`
+----
+cerbosctl list --field-eq='$.resourcePolicy.version=20210210'
+----
+
+.List any policy where `version` is exactly `20210210`
+----
+cerbosctl list --field-eq='$.*.version=20210210'
+----
+
+.List resource policies where the `resource` field contains `leave`
+----
+cerbosctl list --field-match='$.resourcePolicy.resource=leave'
+----
+
+.List resource policies with a numeric version
+----
+cerbosctl list --field-match='$.resourcePolicy.version=\d+'
+----
+

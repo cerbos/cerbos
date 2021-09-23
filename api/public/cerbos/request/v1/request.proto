@@ -355,6 +355,33 @@ message ServerInfoRequest {
 }
 
 message ListPoliciesRequest { 
+    enum MatchType {
+        MATCH_TYPE_UNSPECIFIED = 0;
+        MATCH_TYPE_EXACT = 1;
+        MATCH_TYPE_WILDCARD = 2;
+    }
+
+    message Filter {
+        MatchType type = 1 [
+            (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = { 
+                description: "Kind of filter"
+                enum: ["MATCH_TYPE_EXACT", "MATCH_TYPE_WILDCARD"]
+            }
+        ];
+        string field_path = 2 [
+            (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+                description: "JSONPath expression describing the field to match"
+                example: "\"$.resourcePolicy.resource\""
+            }
+        ];
+        string value = 3 [
+            (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = { 
+                description: "The value to compare"
+            }
+        ];
+    }
+
+    repeated Filter filters = 1;
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
 		json_schema: {
 			description: "List policies request"
