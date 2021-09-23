@@ -164,7 +164,7 @@ func (rg *RegoGen) AddResourceRule(rule *policyv1.ResourceRule) error {
 	case numDerivedRoles > 0:
 		return rg.doAddResourceRule(rule, func() { rg.addDerivedRolesCheck(rule.DerivedRoles) })
 	default:
-		return fmt.Errorf("action [%s] does not define any roles or derivedRoles to match: %w", strings.Join(rule.Actions, "|"), ErrCodeGenFailure)
+		return fmt.Errorf("at least one role or derived role must be specified: %w", ErrCodeGenFailure)
 	}
 }
 
@@ -172,7 +172,7 @@ func (rg *RegoGen) doAddResourceRule(rule *policyv1.ResourceRule, membershipFn f
 	rg.addEffectRuleHead(rule.Effect)
 	rg.addActionsListMatch(rule.Actions)
 	membershipFn()
-	if err := rg.addCondition(fmt.Sprintf("Action [%s]", strings.Join(rule.Actions, "|")), rule.Condition); err != nil {
+	if err := rg.addCondition(rule.Name, rule.Condition); err != nil {
 		return err
 	}
 
@@ -212,11 +212,15 @@ func (rg *RegoGen) addRolesCheck(roles []string) {
 }
 
 func (rg *RegoGen) AddPrincipalRule(rule *policyv1.PrincipalRule) error {
-	for _, action := range rule.Actions {
+	for i, action := range rule.Actions {
+		if action.Name == "" {
+			action.Name = fmt.Sprintf("%s-rule-%03d", rule.Resource, i+1)
+		}
+
 		rg.addEffectRuleHead(action.Effect)
 		rg.addResourceMatch(rule.Resource)
 		rg.addActionMatch(action.Action)
-		if err := rg.addCondition(fmt.Sprintf("Action [%s]", action.Action), action.Condition); err != nil {
+		if err := rg.addCondition(action.Name, action.Condition); err != nil {
 			return err
 		}
 

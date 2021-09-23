@@ -62,8 +62,12 @@ func generateResourcePolicy(parent *policyv1.Policy, p *policyv1.ResourcePolicy)
 	rg := NewRegoGen(modName, imports...)
 
 	for i, rule := range p.Rules {
+		if rule.Name == "" {
+			rule.Name = fmt.Sprintf("rule-%03d", i+1)
+		}
+
 		if err := rg.AddResourceRule(rule); err != nil {
-			return nil, newRuleGenErr(parent, i+1, err)
+			return nil, newRuleGenErr(parent, i+1, rule.Name, err)
 		}
 	}
 
@@ -96,7 +100,7 @@ func generatePrincipalPolicy(parent *policyv1.Policy, p *policyv1.PrincipalPolic
 
 	for i, rule := range p.Rules {
 		if err := rg.AddPrincipalRule(rule); err != nil {
-			return nil, newRuleGenErr(parent, i+1, err)
+			return nil, newRuleGenErr(parent, i+1, rule.Resource, err)
 		}
 	}
 
@@ -208,7 +212,7 @@ func newErr(file, desc string, err error) Error {
 	return Error{File: file, Description: desc, Err: err}
 }
 
-func newRuleGenErr(p *policyv1.Policy, ruleNum int, err error) Error {
+func newRuleGenErr(p *policyv1.Policy, ruleNum int, ruleName string, err error) Error {
 	file := policy.GetSourceFile(p)
-	return newErr(file, fmt.Sprintf("Failed to generate code for rule #%d", ruleNum), err)
+	return newErr(file, fmt.Sprintf("Failed to generate code for rule '%s' (#%d)", ruleName, ruleNum), err)
 }
