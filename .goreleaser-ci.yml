@@ -88,6 +88,13 @@ artifactories:
     target: https://cerbos.jfrog.io/artifactory/binaries
 checksum:
   name_template: 'checksums.txt'
+release:
+  header: |-
+    Cerbos {{ .Version }}
+    ---------------------
+    
+    View the full release notes at https://docs.cerbos.dev/cerbos/latest/releases/v{{ .Version }}.html 
+
 changelog:
   sort: asc
   filters:

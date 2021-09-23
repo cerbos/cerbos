@@ -15,6 +15,7 @@ import (
 	effectv1 "github.com/cerbos/cerbos/api/genpb/cerbos/effect/v1"
 	v1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
+	"github.com/cerbos/cerbos/internal/util"
 )
 
 func Test_loadPrincipals(t *testing.T) {
@@ -30,7 +31,7 @@ principals:
       team: design
 `
 	fsys := make(fstest.MapFS)
-	fsys["a/"+TestDataDirectory+"/principals.yaml"] = newMapFile(principals)
+	fsys["a/"+util.TestDataDirectory+"/principals.yaml"] = newMapFile(principals)
 
 	tests := []struct {
 		name    string
@@ -38,7 +39,7 @@ principals:
 		wantErr bool
 	}{
 		{
-			name: "a/" + TestDataDirectory,
+			name: "a/" + util.TestDataDirectory,
 			want: map[string]*v1.Principal{
 				"harry": {
 					Id:    "harry",

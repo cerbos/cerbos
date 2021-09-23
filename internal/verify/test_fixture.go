@@ -27,7 +27,6 @@ type testFixture struct {
 const (
 	PrincipalsFileName = "principals"
 	ResourcesFileName  = "resources"
-	TestDataDirectory  = "testdata" // contains test fixture files like principals.yaml and resources.yaml
 )
 
 func loadTestFixture(fsys fs.FS, path string) (tf *testFixture, err error) {
@@ -75,7 +74,7 @@ func (tf *testFixture) runTestSuite(ctx context.Context, eng *engine.Engine, sho
 	failed := false
 
 	sr := SuiteResult{File: file, Suite: ts.Name}
-	if ts.Skip || !shouldRun(ts.Name) {
+	if ts.Skip {
 		sr.Skipped = true
 		return sr, failed
 	}
@@ -96,7 +95,7 @@ func (tf *testFixture) runTestSuite(ctx context.Context, eng *engine.Engine, sho
 		}
 
 		testResult := TestResult{Name: TestName{TableTestName: test.Name.TestTableName, PrincipalKey: test.Name.PrincipalKey}}
-		if test.Skip || !shouldRun(test.Name.TestTableName) {
+		if test.Skip || !shouldRun(fmt.Sprintf("%s/%s", ts.Name, test.Name.String())) {
 			testResult.Skipped = true
 			sr.Tests = append(sr.Tests, testResult)
 			continue
