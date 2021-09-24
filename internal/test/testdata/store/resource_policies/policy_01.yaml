@@ -9,6 +9,7 @@ resourcePolicy:
     effect: EFFECT_ALLOW
     roles:
     - admin
+    name: wildcard
   - actions: ["create"]
     derivedRoles:
     - employee_that_owns_the_record
@@ -22,6 +23,7 @@ resourcePolicy:
     derivedRoles:
     - any_employee
     effect: EFFECT_ALLOW
+    name: public-view
   - actions: ["approve"]
     condition:
       match:

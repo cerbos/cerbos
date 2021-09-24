@@ -1,0 +1,116 @@
+---
+wantErrJson: |-
+  {
+    "disabled": null,
+    "duplicateDefs": null,
+    "loadFailures": [
+      {
+        "error": "derived role definition #2 has the same name as definition #1: 'admin'",
+        "file": "derived.yaml"
+      },
+      {
+        "error": "action rule #2 for resource leave_request has the same name as action rule #1: 'myrule'",
+        "file": "principal.yaml"
+      },
+      {
+        "error": "rule #2 has the same name as rule #1: 'myrule'; rule #3 has the same name as rule #1: 'myrule'",
+        "file": "resource.yaml"
+      }
+    ],
+    "codegenFailures": null,
+    "missingImports": null
+  }
+files:
+  "test.txt": |-
+    this is some text
+  "resource.yaml": |-
+    ---
+    apiVersion: api.cerbos.dev/v1
+    resourcePolicy:
+      importDerivedRoles:
+      - my_derived_roles
+      resource: leave_request
+      rules:
+      - actions: ['*']
+        effect: EFFECT_ALLOW
+        roles:
+        - admin
+        name: myrule
+      - actions: ["create"]
+        derivedRoles:
+        - employee_that_owns_the_record
+        effect: EFFECT_ALLOW
+        name: myrule
+      - actions: ["view:*"]
+        derivedRoles:
+        - employee_that_owns_the_record
+        - direct_manager
+        effect: EFFECT_ALLOW
+        name: myrule
+      - actions: ["view:public"]
+        derivedRoles:
+        - any_employee
+        effect: EFFECT_ALLOW
+      - actions: ["approve"]
+        condition:
+          match:
+            expr: request.resource.attr.status == "PENDING_APPROVAL"
+        derivedRoles:
+        - direct_manager
+        effect: EFFECT_ALLOW
+      version: "20210210"
+
+  "derived.yaml": |-
+    ---
+    apiVersion: "api.cerbos.dev/v1"
+    derivedRoles:
+      name: my_derived_roles
+      definitions:
+        - name: admin
+          parentRoles: ["admin"]
+
+        - name: admin
+          parentRoles: ["dev", "qa"]
+
+        - name: employee_that_owns_the_record
+          parentRoles: ["employee"]
+          condition:
+            script: |-
+              input.resource.attr.owner == input.principal.id
+
+        - name: any_employee
+          parentRoles: ["employee"]
+
+        - name: direct_manager
+          parentRoles: ["manager"]
+          condition:
+            match:
+              all:
+                of:
+                  - expr: "request.resource.attr.geography == request.principal.attr.geography"
+                  - expr: "request.resource.attr.geography == request.principal.attr.managed_geographies"
+
+  "principal.yaml": |-
+    ---
+    apiVersion: "api.cerbos.dev/v1"
+    principalPolicy:
+      principal: donald_duck
+      version: "20210210"
+      rules:
+        - resource: leave_request
+          actions:
+            - action: "*"
+              condition:
+                match:
+                  expr: "request.resource.attr.dev_record == true"
+              effect: EFFECT_ALLOW
+              name: myrule
+
+            - action: "view"
+              effect: EFFECT_ALLOW
+              name: myrule
+
+        - resource: salary_record
+          actions:
+            - action: "*"
+              effect: EFFECT_DENY

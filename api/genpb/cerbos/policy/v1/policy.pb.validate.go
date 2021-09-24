@@ -469,6 +469,13 @@ func (m *ResourceRule) Validate() error {
 		}
 	}
 
+	if !_ResourceRule_Name_Pattern.MatchString(m.GetName()) {
+		return ResourceRuleValidationError{
+			field:  "Name",
+			reason: "value does not match regex pattern \"^([[:alpha:]][[:word:]\\\\@\\\\.\\\\-]*)*$\"",
+		}
+	}
+
 	return nil
 }
 
@@ -534,6 +541,8 @@ var _ResourceRule_Effect_InLookup = map[effectv1.Effect]struct{}{
 	1: {},
 	2: {},
 }
+
+var _ResourceRule_Name_Pattern = regexp.MustCompile("^([[:alpha:]][[:word:]\\@\\.\\-]*)*$")
 
 // Validate checks the field values on PrincipalPolicy with the rules defined
 // in the proto definition for this message. If any rules are violated, an
@@ -1708,6 +1717,13 @@ func (m *PrincipalRule_Action) Validate() error {
 		}
 	}
 
+	if !_PrincipalRule_Action_Name_Pattern.MatchString(m.GetName()) {
+		return PrincipalRule_ActionValidationError{
+			field:  "Name",
+			reason: "value does not match regex pattern \"^([[:alpha:]][[:word:]\\\\@\\\\.\\\\-]*)*$\"",
+		}
+	}
+
 	return nil
 }
 
@@ -1771,6 +1787,8 @@ var _PrincipalRule_Action_Effect_InLookup = map[effectv1.Effect]struct{}{
 	1: {},
 	2: {},
 }
+
+var _PrincipalRule_Action_Name_Pattern = regexp.MustCompile("^([[:alpha:]][[:word:]\\@\\.\\-]*)*$")
 
 // Validate checks the field values on Match_ExprList with the rules defined in
 // the proto definition for this message. If any rules are violated, an error

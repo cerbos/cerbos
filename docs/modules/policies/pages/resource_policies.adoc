@@ -25,7 +25,8 @@ resourcePolicy:
         match:
           expr: request.resource.attr.public == true
 
-    - actions: ['view', 'delete']
+    - name: moderator_rule <7>
+      actions: ['view', 'delete']
       effect: EFFECT_ALLOW
       derivedRoles:
         - abuse_moderator
@@ -36,4 +37,5 @@ resourcePolicy:
 <4> Actions can contain wildcards. Wildcards honour the ``:`` delimiter. E.g. ``a:*:d`` would match ``a:x:d`` but not ``a:x``.
 <5> This rule applies to a derived role.
 <6> Rules can also refer directly to static roles.
+<7> Optional name for the rule.
 

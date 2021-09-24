@@ -11,6 +11,7 @@ principalPolicy:
             match:
               expr: "request.resource.attr.dev_record == true"
           effect: EFFECT_ALLOW
+          name: dev_admin
 
     - resource: salary_record
       actions:

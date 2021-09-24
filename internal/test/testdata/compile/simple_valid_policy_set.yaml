@@ -13,6 +13,7 @@ inputDefs:
           effect: EFFECT_ALLOW
           roles:
             - admin
+          name: wildcard
         - actions: ["create"]
           derivedRoles:
             - employee_that_owns_the_record

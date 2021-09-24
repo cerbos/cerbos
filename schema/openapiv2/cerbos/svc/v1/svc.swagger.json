@@ -664,6 +664,9 @@
         },
         "effect": {
           "$ref": "#/definitions/v1Effect"
+        },
+        "name": {
+          "type": "string"
         }
       }
     },
@@ -1535,6 +1538,9 @@
         },
         "effect": {
           "$ref": "#/definitions/v1Effect"
+        },
+        "name": {
+          "type": "string"
         }
       }
     },
