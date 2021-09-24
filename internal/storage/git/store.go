@@ -13,6 +13,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/djherbis/times"
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-git/go-git/v5/plumbing/object"
@@ -132,7 +133,24 @@ func (s *Store) GetDependents(_ context.Context, ids ...namer.ModuleID) (map[nam
 }
 
 func (s *Store) GetPolicies(ctx context.Context) ([]*policy.Wrapper, error) {
-	return s.idx.GetPolicies(ctx)
+	policies, err := s.idx.GetPolicies(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, p := range policies {
+		fi, err := times.Stat(filepath.Join(s.conf.SubDir, p.Metadata.SourceFile))
+		if err != nil {
+			return nil, fmt.Errorf("could not stat file: %w", err)
+		}
+
+		if p.Policy.Metadata.Annotations == nil {
+			p.Policy.Metadata.Annotations = make(map[string]string)
+		}
+		p.Policy.Metadata.Annotations["created_at"] = fi.BirthTime().Format(time.RFC3339)
+	}
+
+	return policies, nil
 }
 
 func isEmptyDir(dir string) (bool, error) {

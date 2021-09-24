@@ -9,6 +9,7 @@ package internal
 import (
 	"context"
 	"testing"
+	"time"
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/stretchr/testify/require"
@@ -132,6 +133,10 @@ func TestSuite(store DBStorage) func(*testing.T) {
 				policies, err := store.GetPolicies(ctx)
 				require.NoError(t, err)
 				require.NotEmpty(t, policies)
+
+				require.NotNil(t, policies[0].Policy.Metadata)
+				_, err = time.Parse(time.RFC3339, policies[0].Policy.Metadata.Annotations["created_at"])
+				require.NoError(t, err)
 			})
 		})
 

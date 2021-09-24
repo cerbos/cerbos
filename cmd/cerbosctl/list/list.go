@@ -73,7 +73,7 @@ func printPolicies(w io.Writer, policies []*policy.Policy, format string) error 
 	default:
 		headerFmt := color.New(color.FgGreen, color.Underline).SprintfFunc()
 
-		tbl := table.New("NAME", "KIND", "DEPENDENCIES", "VERSION")
+		tbl := table.New("NAME", "KIND", "DEPENDENCIES", "VERSION", "CREATED")
 		tbl.WithWriter(w)
 		tbl.WithHeaderFormatter(headerFmt)
 
@@ -88,15 +88,20 @@ func printPolicies(w io.Writer, policies []*policy.Policy, format string) error 
 	return nil
 }
 
-// policyPrintables creates values according to {"NAME", "KIND", "DEPENDENCIES"}.
+// policyPrintables creates values according to {"NAME", "KIND", "DEPENDENCIES", "VERSION", "CREATED"}.
 func policyPrintables(p *policy.Policy) []interface{} {
+	creation := "-"
+	if d, ok := p.Metadata.Annotations["created_at"]; ok {
+		creation = d
+	}
+
 	switch pt := p.PolicyType.(type) {
 	case *policy.Policy_ResourcePolicy:
-		return []interface{}{getPolicyName(p), "RESOURCE", strings.Join(pt.ResourcePolicy.ImportDerivedRoles, ", "), pt.ResourcePolicy.Version}
+		return []interface{}{getPolicyName(p), "RESOURCE", strings.Join(pt.ResourcePolicy.ImportDerivedRoles, ", "), pt.ResourcePolicy.Version, creation}
 	case *policy.Policy_PrincipalPolicy:
-		return []interface{}{getPolicyName(p), "PRINCIPAL", "-", pt.PrincipalPolicy.Version}
+		return []interface{}{getPolicyName(p), "PRINCIPAL", "-", pt.PrincipalPolicy.Version, creation}
 	case *policy.Policy_DerivedRoles:
-		return []interface{}{getPolicyName(p), "DERIVED_ROLES", "-", "-"}
+		return []interface{}{getPolicyName(p), "DERIVED_ROLES", "-", "-", creation}
 	default:
 		return []interface{}{"-"}
 	}

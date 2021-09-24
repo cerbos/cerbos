@@ -8,6 +8,9 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"time"
+
+	"github.com/djherbis/times"
 
 	"github.com/cerbos/cerbos/internal/config"
 	"github.com/cerbos/cerbos/internal/namer"
@@ -32,7 +35,8 @@ func init() {
 }
 
 type Store struct {
-	idx index.Index
+	config *Conf
+	idx    index.Index
 	*storage.SubscriptionManager
 }
 
@@ -47,7 +51,8 @@ func NewStore(ctx context.Context, conf *Conf) (*Store, error) {
 		return nil, err
 	}
 
-	s := &Store{idx: idx, SubscriptionManager: storage.NewSubscriptionManager(ctx)}
+	c := *conf
+	s := &Store{idx: idx, SubscriptionManager: storage.NewSubscriptionManager(ctx), config: &c}
 	if conf.WatchForChanges {
 		if err := watchDir(ctx, dir, s.idx, s.SubscriptionManager, defaultCooldownPeriod); err != nil {
 			return nil, err
@@ -74,5 +79,26 @@ func (s *Store) GetDependents(_ context.Context, ids ...namer.ModuleID) (map[nam
 }
 
 func (s *Store) GetPolicies(ctx context.Context) ([]*policy.Wrapper, error) {
-	return s.idx.GetPolicies(ctx)
+	policies, err := s.idx.GetPolicies(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	if s.config.Directory == "" {
+		return policies, nil
+	}
+
+	for _, p := range policies {
+		fi, err := times.Stat(filepath.Join(s.config.Directory, p.Metadata.SourceFile))
+		if err != nil {
+			return nil, fmt.Errorf("could not stat file: %w", err)
+		}
+
+		if p.Policy.Metadata.Annotations == nil {
+			p.Policy.Metadata.Annotations = make(map[string]string)
+		}
+		p.Policy.Metadata.Annotations["created_at"] = fi.BirthTime().Format(time.RFC3339)
+	}
+
+	return policies, nil
 }

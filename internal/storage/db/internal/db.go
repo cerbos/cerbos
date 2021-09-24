@@ -7,10 +7,12 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"time"
 
 	"github.com/doug-martin/goqu/v9"
 	"go.uber.org/zap"
 
+	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
 	"github.com/cerbos/cerbos/internal/codegen"
 	"github.com/cerbos/cerbos/internal/namer"
 	"github.com/cerbos/cerbos/internal/policy"
@@ -257,17 +259,23 @@ func (s *dbStorage) Delete(ctx context.Context, ids ...namer.ModuleID) error {
 }
 
 func (s *dbStorage) GetPolicies(ctx context.Context) ([]*policy.Wrapper, error) {
-	res, err := s.db.From(PolicyTbl).Executor().ScannerContext(ctx)
+	records, err := s.getPolicies(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("could not execute %q query: %w", "GetPolicies", err)
+		return nil, err
 	}
-	defer res.Close()
 
-	var policies []*policy.Wrapper
-	for res.Next() {
-		var rec Policy
-		if err := res.ScanStruct(&rec); err != nil {
-			return nil, fmt.Errorf("could not scan row: %w", err)
+	policies := make([]*policy.Wrapper, 0, len(records))
+	for _, rec := range records {
+		var rev PolicyRevision
+		if ok, err := s.db.From("policy_revision").Where(goqu.C("id").Eq(rec.ID), goqu.C("action").Eq("INSERT")).Executor().ScanStruct(&rev); err != nil {
+			return nil, fmt.Errorf("could not get creation date for %s: %w", rec.ID.String(), err)
+		} else if ok {
+			if rec.Definition.Policy.Metadata == nil { // add metadata if not initialized
+				rec.Definition.Policy.Metadata = &policyv1.Metadata{
+					Annotations: make(map[string]string),
+				}
+			}
+			rec.Definition.Policy.Metadata.Annotations["created_at"] = rev.Timestamp.Format(time.RFC3339)
 		}
 
 		p := policy.Wrap(rec.Definition.Policy)
@@ -275,4 +283,24 @@ func (s *dbStorage) GetPolicies(ctx context.Context) ([]*policy.Wrapper, error) 
 	}
 
 	return policies, nil
+}
+
+func (s *dbStorage) getPolicies(ctx context.Context) ([]*Policy, error) {
+	res, err := s.db.From(PolicyTbl).Executor().ScannerContext(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("could not execute %q query: %w", "getPolicies", err)
+	}
+	defer res.Close()
+
+	var records []*Policy
+	for res.Next() {
+		var rec Policy
+		if err := res.ScanStruct(&rec); err != nil {
+			return nil, fmt.Errorf("could not scan row: %w", err)
+		}
+
+		records = append(records, &rec)
+	}
+
+	return records, nil
 }
