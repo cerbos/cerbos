@@ -221,7 +221,7 @@ func (rg *RegoGen) AddPrincipalRule(rule *policyv1.PrincipalRule) error {
 		rg.addResourceMatch(rule.Resource)
 		rg.addActionMatch(action.Action)
 		if err := rg.addCondition(action.Name, action.Condition); err != nil {
-			return err
+			return fmt.Errorf("failed to generate code for condition block of '%s': %w", action.Name, err)
 		}
 
 		rg.line("}")

@@ -6,6 +6,10 @@ wantErrJson: |-
     "loadFailures": null,
     "codegenFailures": [
       {
+        "error": "principal.yaml: Failed to generate code for rule associated with resource 'leave_request' (#1) [failed to generate code for condition block of 'leave_request-rule-001': Invalid match expression: undeclared reference to 'XX' (in container '')]",
+        "file": "principal.yaml"
+      },
+      {
         "error": "resource.yaml: Failed to generate code for rule 'approve_rule' (#1) [at least one role or derived role must be specified: code generation error]",
         "file": "resource.yaml"
       }
@@ -38,7 +42,7 @@ files:
             - action: "*"
               condition:
                 match:
-                  expr: "request.resource.attr.dev_record == true"
+                  expr: "XX || request.resource.attr.dev_record == true"
               effect: EFFECT_ALLOW
 
         - resource: salary_record
