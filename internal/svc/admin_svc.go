@@ -10,6 +10,7 @@ import (
 	"errors"
 	"fmt"
 	"regexp"
+	"sort"
 	"strings"
 	"time"
 
@@ -141,8 +142,15 @@ func (cas *CerbosAdminService) ListPolicies(ctx context.Context, req *requestv1.
 			policies = append(policies, unit.Policy)
 		}
 
+		sorted := &alphabetical{
+			sortType: byVersion,
+			reverse:  false,
+			items:    policies,
+		}
+		sort.Sort(sorted)
+
 		return &responsev1.ListPoliciesResponse{
-			Policies: policies,
+			Policies: sorted.items,
 		}, nil
 	}
 
