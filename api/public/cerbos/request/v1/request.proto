@@ -381,7 +381,25 @@ message ListPoliciesRequest {
         ];
     }
 
+    enum SortTarget {
+        SORT_TARGET_UNSPECIFIED = 0;
+        SORT_TARGET_NAME = 1;
+        SORT_TARGET_VERSION = 2;
+    }
+
+    message SortOptions {
+        bool descending = 1;
+        SortTarget target = 2 [
+            (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+            description: "The field going to be sorted against"
+                enum: ["SORT_TARGET_NAME", "SORT_TARGET_VERSION"]
+            }
+        ];
+    }
+
     repeated Filter filters = 1;
+    SortOptions sort_options = 2;
+
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
 		json_schema: {
 			description: "List policies request"

@@ -169,6 +169,8 @@ func GenAuditLogOptions(filter *AuditLogFilterDef) client.AuditLogOptions {
 type ListPoliciesFilterDef struct {
 	fieldEq    []string
 	fieldMatch []string
+	sortAsc    string
+	sortDesc   string
 	format     string
 }
 
@@ -180,6 +182,8 @@ func (lpfd *ListPoliciesFilterDef) FlagSet() *pflag.FlagSet {
 	fs := pflag.NewFlagSet("filters", pflag.ExitOnError)
 	fs.StringArrayVar(&lpfd.fieldEq, "field-eq", []string{}, "Filter a field with an exact match")
 	fs.StringArrayVar(&lpfd.fieldMatch, "field-match", []string{}, "Filter a field with a regex match")
+	fs.StringVar(&lpfd.sortAsc, "sort-asc", "", "Sort the output by ascending order (available sorting targets: name, version)")
+	fs.StringVar(&lpfd.sortDesc, "sort-desc", "", "Sort the output by descending order (available sorting targets: name, version)")
 	fs.StringVar(&lpfd.format, "format", "", "Output format for the policies; json, yaml formats are supported (leave empty for pretty output)")
 	return fs
 }
@@ -188,14 +192,14 @@ func (lpfd *ListPoliciesFilterDef) OutputFormat() string {
 	return lpfd.format
 }
 
-func GenListPoliciesFilterOptions(lpfd *ListPoliciesFilterDef) ([]client.FilterOpt, error) {
-	opts := make([]client.FilterOpt, 0, len(lpfd.fieldEq)+len(lpfd.fieldMatch))
+func GenListPoliciesFilterOptions(lpfd *ListPoliciesFilterDef) ([]client.ListOpt, error) {
+	opts := make([]client.ListOpt, 0, len(lpfd.fieldEq)+len(lpfd.fieldMatch))
 	for _, k := range lpfd.fieldEq {
 		s := strings.Split(k, "=")
 		if len(s) != 2 { //nolint:gomnd
 			return nil, fmt.Errorf("could not parse filter: %s", k)
 		}
-		opts = append(opts, client.FieldEquals(s[0], s[1]))
+		opts = append(opts, client.FieldEqualsFilter(s[0], s[1]))
 	}
 
 	for _, k := range lpfd.fieldMatch {
@@ -203,8 +207,44 @@ func GenListPoliciesFilterOptions(lpfd *ListPoliciesFilterDef) ([]client.FilterO
 		if len(s) != 2 { //nolint:gomnd
 			return nil, fmt.Errorf("could not parse filter: %s", k)
 		}
-		opts = append(opts, client.FieldMatches(s[0], s[1]))
+		opts = append(opts, client.FieldMatchesFilter(s[0], s[1]))
 	}
 
+	sort, err := getSortingOption(lpfd.sortAsc, lpfd.sortDesc)
+	if err != nil {
+		return nil, fmt.Errorf("could not generate sorting option: %w", err)
+	}
+	opts = append(opts, sort)
+
 	return opts, nil
+}
+
+func getSortingOption(ascTarget, descTarget string) (client.ListOpt, error) {
+	var sortFn func(client.ListPoliciesSortingType) client.ListOpt
+	var sortAgainst string
+	switch {
+	case ascTarget != "" && descTarget == "":
+		sortAgainst = ascTarget
+		sortFn = client.SortAsc
+	case descTarget != "" && ascTarget == "":
+		sortAgainst = descTarget
+		sortFn = client.SortDesc
+	case descTarget == "" && ascTarget == "":
+		sortAgainst = "name"
+		sortFn = client.SortAsc
+	default:
+		return nil, errors.New("only one sorting option needs to be provided")
+	}
+
+	var t client.ListPoliciesSortingType
+	switch target := strings.ToLower(sortAgainst); target {
+	case "name":
+		t = client.SortByName
+	case "version":
+		t = client.SortByVersion
+	default:
+		return nil, fmt.Errorf("invalid sorting target: %s", sortAgainst)
+	}
+
+	return sortFn(t), nil
 }

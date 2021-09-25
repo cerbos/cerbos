@@ -213,6 +213,27 @@
             }
           }
         },
+        "parameters": [
+          {
+            "name": "sortOptions.descending",
+            "in": "query",
+            "required": false,
+            "type": "boolean"
+          },
+          {
+            "name": "sortOptions.target",
+            "description": "The field going to be sorted against",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "enum": [
+              "SORT_TARGET_UNSPECIFIED",
+              "SORT_TARGET_NAME",
+              "SORT_TARGET_VERSION"
+            ],
+            "default": "SORT_TARGET_UNSPECIFIED"
+          }
+        ],
         "tags": [
           "CerbosAdminService"
         ],
@@ -557,6 +578,31 @@
         "MATCH_TYPE_WILDCARD"
       ],
       "default": "MATCH_TYPE_UNSPECIFIED"
+    },
+    "ListPoliciesRequestSortOptions": {
+      "type": "object",
+      "properties": {
+        "descending": {
+          "type": "boolean"
+        },
+        "target": {
+          "$ref": "#/definitions/ListPoliciesRequestSortTarget",
+          "enum": [
+            "SORT_TARGET_NAME",
+            "SORT_TARGET_VERSION"
+          ],
+          "description": "The field going to be sorted against"
+        }
+      }
+    },
+    "ListPoliciesRequestSortTarget": {
+      "type": "string",
+      "enum": [
+        "SORT_TARGET_UNSPECIFIED",
+        "SORT_TARGET_NAME",
+        "SORT_TARGET_VERSION"
+      ],
+      "default": "SORT_TARGET_UNSPECIFIED"
     },
     "MatchExprList": {
       "type": "object",
