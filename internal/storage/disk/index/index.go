@@ -258,8 +258,6 @@ func (idx *index) Delete(entry Entry) (storage.Event, error) {
 }
 
 func (idx *index) GetAllCompilationUnits(ctx context.Context) <-chan *policy.CompilationUnit {
-	outChan := make(chan *policy.CompilationUnit, 1)
-
 	idx.mu.RLock()
 	toCompile := make([]namer.ModuleID, 0, len(idx.executables))
 	for modID := range idx.modIDToFile {
@@ -278,6 +276,7 @@ func (idx *index) GetAllCompilationUnits(ctx context.Context) <-chan *policy.Com
 	}
 	idx.mu.RUnlock()
 
+	outChan := make(chan *policy.CompilationUnit, 1)
 	go func() {
 		defer close(outChan)
 
@@ -312,18 +311,18 @@ func (idx *index) Clear() error {
 	return idx.cache.clear()
 }
 
-type Meta struct {
+type meta struct {
 	Dependencies []string
 	References   []string
 }
 
-func (idx *index) Inspect() map[string]Meta {
+func (idx *index) Inspect() map[string]meta {
 	idx.mu.RLock()
 	defer idx.mu.RUnlock()
 
-	entries := make(map[string]Meta, len(idx.fileToModID))
+	entries := make(map[string]meta, len(idx.fileToModID))
 	for file, modID := range idx.fileToModID {
-		m := Meta{}
+		m := meta{}
 		for dep := range idx.dependencies[modID] {
 			m.Dependencies = append(m.Dependencies, idx.modIDToFile[dep])
 		}
@@ -338,7 +337,7 @@ func (idx *index) Inspect() map[string]Meta {
 	return entries
 }
 
-func (idx *index) GetPolicies(ctx context.Context) ([]*policy.Wrapper, error) {
+func (idx *index) GetPolicies(_ context.Context) ([]*policy.Wrapper, error) {
 	idx.mu.RLock()
 	defer idx.mu.RUnlock()
 
