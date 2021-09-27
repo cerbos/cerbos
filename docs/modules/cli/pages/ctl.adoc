@@ -128,7 +128,7 @@ cerbosctl decisions --tail=20
 == `list`
 
 This command lists the policies available in the configured policy repository. The list can be filtered by specifying one or more pairs of field selectors and match values as command line arguments. Field selectors are expected to be valid JSONPath expressions describing policy fields.
-See link:https://tools.ietf.org/id/draft-goessner-dispatch-jsonpath-00.html#table-1[specification] for more information about JSONPath.
+See link:https://tools.ietf.org/id/draft-goessner-dispatch-jsonpath-00.html#table-1[specification] for more information about JSONPath. The output is sorted by name by default.
 
 Use `--field-eq` to perform an exact match and `--field-match` to perform a regular expression match.
 
@@ -150,5 +150,15 @@ cerbosctl list --field-match='$.resourcePolicy.resource=leave'
 .List resource policies with a numeric version
 ----
 cerbosctl list --field-match='$.resourcePolicy.version=\d+'
+----
+
+.List policies sorted by version
+----
+cerbosctl list --sort version
+----
+
+.List policies sorted by version in descending order
+----
+cerbosctl list --sort-desc version
 ----
 
