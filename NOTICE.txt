@@ -3176,11 +3176,11 @@ Contents of probable licence file $GOMODCACHE/github.com/open-policy-agent/opa@v
 
 --------------------------------------------------------------------------------
 Module  : github.com/ory/dockertest/v3
-Version : v3.7.0
-Time    : 2021-06-18T11:59:13Z
+Version : v3.8.0
+Time    : 2021-09-21T05:35:10Z
 Licence : Apache-2.0
 
-Contents of probable licence file $GOMODCACHE/github.com/ory/dockertest/v3@v3.7.0/LICENSE:
+Contents of probable licence file $GOMODCACHE/github.com/ory/dockertest/v3@v3.8.0/LICENSE:
 
                                  Apache License
                            Version 2.0, January 2004
@@ -5887,11 +5887,11 @@ THE SOFTWARE.
 
 --------------------------------------------------------------------------------
 Module  : github.com/Microsoft/go-winio
-Version : v0.4.17
-Time    : 2021-03-24T22:44:01Z
+Version : v0.5.0
+Time    : 2021-04-22T22:01:04Z
 Licence : MIT
 
-Contents of probable licence file $GOMODCACHE/github.com/!microsoft/go-winio@v0.4.17/LICENSE:
+Contents of probable licence file $GOMODCACHE/github.com/!microsoft/go-winio@v0.5.0/LICENSE:
 
 The MIT License (MIT)
 
@@ -6777,11 +6777,11 @@ Software.
 
 --------------------------------------------------------------------------------
 Module  : github.com/cenkalti/backoff/v4
-Version : v4.1.0
-Time    : 2020-10-08T10:13:30Z
+Version : v4.1.1
+Time    : 2021-05-31T01:50:55Z
 Licence : MIT
 
-Contents of probable licence file $GOMODCACHE/github.com/cenkalti/backoff/v4@v4.1.0/LICENSE:
+Contents of probable licence file $GOMODCACHE/github.com/cenkalti/backoff/v4@v4.1.1/LICENSE:
 
 The MIT License (MIT)
 
@@ -8215,11 +8215,11 @@ SOFTWARE.
 
 --------------------------------------------------------------------------------
 Module  : github.com/docker/cli
-Version : v20.10.7+incompatible
-Time    : 2021-05-31T09:40:07Z
+Version : v20.10.8+incompatible
+Time    : 2021-07-29T13:55:47Z
 Licence : Apache-2.0
 
-Contents of probable licence file $GOMODCACHE/github.com/docker/cli@v20.10.7+incompatible/LICENSE:
+Contents of probable licence file $GOMODCACHE/github.com/docker/cli@v20.10.8+incompatible/LICENSE:
 
 
                                  Apache License
@@ -13602,11 +13602,11 @@ Contents of probable licence file $GOMODCACHE/github.com/opencontainers/image-sp
 
 --------------------------------------------------------------------------------
 Module  : github.com/opencontainers/runc
-Version : v1.0.1
-Time    : 2021-07-16T04:39:19Z
+Version : v1.0.2
+Time    : 2021-08-20T07:24:11Z
 Licence : Apache-2.0
 
-Contents of probable licence file $GOMODCACHE/github.com/opencontainers/runc@v1.0.1/LICENSE:
+Contents of probable licence file $GOMODCACHE/github.com/opencontainers/runc@v1.0.2/LICENSE:
 
 
                                  Apache License
