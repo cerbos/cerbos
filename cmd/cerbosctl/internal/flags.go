@@ -170,7 +170,7 @@ type ListPoliciesFilterDef struct {
 	fieldEq    []string
 	fieldMatch []string
 	sort       string
-	sortDesc   string
+	sortDesc   bool
 	format     string
 }
 
@@ -182,8 +182,8 @@ func (lpfd *ListPoliciesFilterDef) FlagSet() *pflag.FlagSet {
 	fs := pflag.NewFlagSet("filters", pflag.ExitOnError)
 	fs.StringArrayVar(&lpfd.fieldEq, "field-eq", []string{}, "Filter a field with an exact match")
 	fs.StringArrayVar(&lpfd.fieldMatch, "field-match", []string{}, "Filter a field with a regex match")
-	fs.StringVar(&lpfd.sort, "sort", "", "Sort the output by ascending order (available sorting targets: name, version)")
-	fs.StringVar(&lpfd.sortDesc, "sort-desc", "", "Sort the output by descending order (available sorting targets: name, version)")
+	fs.StringVar(&lpfd.sort, "sort", "name", "Sort policies by ascending order (available fields for sorting: name, version)")
+	fs.BoolVar(&lpfd.sortDesc, "sort-desc", false, "Sort policies by descending order")
 	fs.StringVar(&lpfd.format, "format", "", "Output format for the policies; json, yaml formats are supported (leave empty for pretty output)")
 	return fs
 }
@@ -219,32 +219,16 @@ func GenListPoliciesFilterOptions(lpfd *ListPoliciesFilterDef) ([]client.ListOpt
 	return opts, nil
 }
 
-func getSortingOption(ascTarget, descTarget string) (client.ListOpt, error) {
-	var sortFn func(client.ListPoliciesSortingType) client.ListOpt
-	var sortAgainst string
-	switch {
-	case ascTarget != "" && descTarget == "":
-		sortAgainst = ascTarget
-		sortFn = client.Sort
-	case descTarget != "" && ascTarget == "":
-		sortAgainst = descTarget
-		sortFn = client.SortDesc
-	case descTarget == "" && ascTarget == "":
-		sortAgainst = "name"
-		sortFn = client.Sort
-	default:
-		return nil, errors.New("only one sorting option needs to be provided")
-	}
-
+func getSortingOption(sortBy string, desc bool) (client.ListOpt, error) {
 	var t client.ListPoliciesSortingType
-	switch target := strings.ToLower(sortAgainst); target {
+	switch target := strings.ToLower(sortBy); target {
 	case "name":
 		t = client.SortByName
 	case "version":
 		t = client.SortByVersion
 	default:
-		return nil, fmt.Errorf("invalid sorting target: %s", sortAgainst)
+		return nil, fmt.Errorf("invalid sorting target: %s", sortBy)
 	}
 
-	return sortFn(t), nil
+	return client.Sort(t, desc), nil
 }

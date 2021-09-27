@@ -159,6 +159,6 @@ cerbosctl list --sort version
 
 .List policies sorted by version in descending order
 ----
-cerbosctl list --sort-desc version
+cerbosctl list --sort version --sort-desc
 ----
 
