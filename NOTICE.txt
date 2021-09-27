@@ -974,11 +974,11 @@ Contents of probable licence file $GOMODCACHE/github.com/envoyproxy/protoc-gen-v
 
 --------------------------------------------------------------------------------
 Module  : github.com/fatih/color
-Version : v1.12.0
-Time    : 2021-05-24T09:58:38Z
+Version : v1.13.0
+Time    : 2021-09-21T18:52:55Z
 Licence : MIT
 
-Contents of probable licence file $GOMODCACHE/github.com/fatih/color@v1.12.0/LICENSE.md:
+Contents of probable licence file $GOMODCACHE/github.com/fatih/color@v1.13.0/LICENSE.md:
 
 The MIT License (MIT)
 
@@ -12569,11 +12569,11 @@ SOFTWARE.
 
 --------------------------------------------------------------------------------
 Module  : github.com/mattn/go-colorable
-Version : v0.1.8
-Time    : 2020-10-03T12:20:15Z
+Version : v0.1.9
+Time    : 2021-09-20T16:49:15Z
 Licence : MIT
 
-Contents of probable licence file $GOMODCACHE/github.com/mattn/go-colorable@v0.1.8/LICENSE:
+Contents of probable licence file $GOMODCACHE/github.com/mattn/go-colorable@v0.1.9/LICENSE:
 
 The MIT License (MIT)
 
