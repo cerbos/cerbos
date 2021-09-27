@@ -137,3 +137,21 @@ func QueryForResource(resource, version string) string {
 func Sanitize(v string) string {
 	return invalidIdentiferChars.ReplaceAllLiteralString(v, "_")
 }
+
+// ResourceRuleName returns the name of the given resource rule.
+func ResourceRuleName(rule *policyv1.ResourceRule, idx int) string {
+	if rule.Name != "" {
+		return rule.Name
+	}
+
+	return fmt.Sprintf("rule-%03d", idx)
+}
+
+// PrincipalResourceActionRuleName returns the name for an action rule defined for a particular resource.
+func PrincipalResourceActionRuleName(rule *policyv1.PrincipalRule_Action, resource string, idx int) string {
+	if rule.Name != "" {
+		return rule.Name
+	}
+
+	return fmt.Sprintf("%s_rule-%03d", resource, idx)
+}

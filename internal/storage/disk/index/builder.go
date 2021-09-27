@@ -111,14 +111,9 @@ func Build(ctx context.Context, fsys fs.FS, opts ...BuildOpt) (Index, error) {
 		return nil, err
 	}
 
-	cache, err := newCodegenCache(o.scratchFS)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create cache: %w", err)
-	}
+	ib := newIndexBuilder()
 
-	ib := newIndexBuilder(cache)
-
-	err = fs.WalkDir(fsys, o.rootDir, func(path string, d fs.DirEntry, err error) error {
+	err := fs.WalkDir(fsys, o.rootDir, func(path string, d fs.DirEntry, err error) error {
 		if err := ctx.Err(); err != nil {
 			return err
 		}
@@ -171,7 +166,6 @@ func Build(ctx context.Context, fsys fs.FS, opts ...BuildOpt) (Index, error) {
 }
 
 type indexBuilder struct {
-	cache           *codegenCache
 	executables     map[namer.ModuleID]struct{}
 	modIDToFile     map[namer.ModuleID]string
 	fileToModID     map[string]namer.ModuleID
@@ -184,9 +178,8 @@ type indexBuilder struct {
 	disabled        []string
 }
 
-func newIndexBuilder(cache *codegenCache) *indexBuilder {
+func newIndexBuilder() *indexBuilder {
 	return &indexBuilder{
-		cache:        cache,
 		executables:  make(map[namer.ModuleID]struct{}),
 		modIDToFile:  make(map[namer.ModuleID]string),
 		fileToModID:  make(map[string]namer.ModuleID),
@@ -216,11 +209,6 @@ func (idx *indexBuilder) addPolicy(file string, p policy.Wrapper) {
 			OtherFile: otherFile,
 		})
 
-		return
-	}
-
-	if err := idx.cache.put(p); err != nil {
-		idx.addCodeGenFailure(file, err)
 		return
 	}
 
@@ -280,7 +268,6 @@ func (idx *indexBuilder) build(fsys fs.FS) (*index, error) {
 
 	return &index{
 		fsys:         fsys,
-		cache:        idx.cache,
 		executables:  idx.executables,
 		modIDToFile:  idx.modIDToFile,
 		fileToModID:  idx.fileToModID,

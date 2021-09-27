@@ -66,9 +66,7 @@ func generateResourcePolicy(parent *policyv1.Policy, p *policyv1.ResourcePolicy)
 		rg.AddGlobals(parent.Globals)
 	}
 	for i, rule := range p.Rules {
-		if rule.Name == "" {
-			rule.Name = fmt.Sprintf("rule-%03d", i+1)
-		}
+		rule.Name = namer.ResourceRuleName(rule, i+1)
 
 		if err := rg.AddResourceRule(rule); err != nil {
 			return nil, newResourceRuleGenErr(parent, i+1, rule.Name, err)

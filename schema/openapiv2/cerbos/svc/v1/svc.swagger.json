@@ -1503,6 +1503,9 @@
           "items": {
             "$ref": "#/definitions/v1PrincipalRule"
           }
+        },
+        "scope": {
+          "type": "string"
         }
       }
     },
@@ -1582,6 +1585,9 @@
           "items": {
             "$ref": "#/definitions/v1ResourceRule"
           }
+        },
+        "scope": {
+          "type": "string"
         }
       }
     },

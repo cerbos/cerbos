@@ -154,7 +154,6 @@ func Wrap(p *policyv1.Policy) Wrapper {
 type CompilationUnit struct {
 	ModID       namer.ModuleID
 	Definitions map[namer.ModuleID]*policyv1.Policy
-	Generated   map[namer.ModuleID]*policyv1.GeneratedPolicy
 }
 
 func (cu *CompilationUnit) AddDefinition(id namer.ModuleID, p *policyv1.Policy) {
@@ -165,16 +164,12 @@ func (cu *CompilationUnit) AddDefinition(id namer.ModuleID, p *policyv1.Policy) 
 	cu.Definitions[id] = p
 }
 
-func (cu *CompilationUnit) AddGenerated(id namer.ModuleID, p *policyv1.GeneratedPolicy) {
-	if cu.Generated == nil {
-		cu.Generated = make(map[namer.ModuleID]*policyv1.GeneratedPolicy)
-	}
-
-	cu.Generated[id] = p
-}
-
 func (cu *CompilationUnit) MainSourceFile() string {
 	return GetSourceFile(cu.Definitions[cu.ModID])
+}
+
+func (cu *CompilationUnit) MainPolicy() *policyv1.Policy {
+	return cu.Definitions[cu.ModID]
 }
 
 // Query returns the query that is expected to be evaluated from this policy set.

@@ -46,9 +46,17 @@ func validateResourcePolicy(rp *policyv1.ResourcePolicy) (err error) {
 }
 
 func validatePrincipalPolicy(rp *policyv1.PrincipalPolicy) (err error) {
-	for _, resourceRules := range rp.Rules {
+	resourceNames := make(map[string]int, len(rp.Rules))
+	for i, resourceRules := range rp.Rules {
+		if idx, exists := resourceNames[resourceRules.Resource]; exists {
+			err = multierr.Append(err,
+				fmt.Errorf("duplicate definition of resource '%s' at #%d (previous definition at #%d)", resourceRules.Resource, i+1, idx))
+		} else {
+			resourceNames[resourceRules.Resource] = i + 1
+		}
+
 		ruleNames := make(map[string]int, len(resourceRules.Actions))
-		for i, actionRule := range resourceRules.Actions {
+		for j, actionRule := range resourceRules.Actions {
 			if actionRule.Name == "" {
 				continue
 			}
@@ -56,9 +64,9 @@ func validatePrincipalPolicy(rp *policyv1.PrincipalPolicy) (err error) {
 			if idx, exists := ruleNames[actionRule.Name]; exists {
 				err = multierr.Append(err,
 					fmt.Errorf("action rule #%d for resource %s has the same name as action rule #%d: '%s'",
-						i+1, resourceRules.Resource, idx, actionRule.Name))
+						j+1, resourceRules.Resource, idx, actionRule.Name))
 			} else {
-				ruleNames[actionRule.Name] = i + 1
+				ruleNames[actionRule.Name] = j + 1
 			}
 		}
 	}

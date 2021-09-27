@@ -51,3 +51,28 @@ func ReadGeneratedPolicy(src io.Reader) (*policyv1.GeneratedPolicy, error) {
 
 	return gp, nil
 }
+
+func WriteBinaryPolicy(dest io.Writer, p *policyv1.Policy) error {
+	out, err := p.MarshalVT()
+	if err != nil {
+		return err
+	}
+
+	var buf [128]byte
+	_, err = io.CopyBuffer(dest, bytes.NewBuffer(out), buf[:])
+	return err
+}
+
+func ReadBinaryPolicy(src io.Reader) (*policyv1.Policy, error) {
+	in, err := io.ReadAll(src)
+	if err != nil {
+		return nil, err
+	}
+
+	p := &policyv1.Policy{}
+	if err := p.UnmarshalVT(in); err != nil {
+		return nil, err
+	}
+
+	return p, nil
+}

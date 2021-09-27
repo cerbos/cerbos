@@ -1,8 +1,6 @@
 ---
 wantErrors:
-  - "principal_policies/donald_duck_20210210.yaml: [invalid match expression] Invalid match expression in 'leave_request-rule-001': Syntax error: token recognition error at: '^'"
-  - "principal_policies/donald_duck_20210210.yaml: [invalid match expression] Invalid match expression in 'leave_request-rule-001': Syntax error: token recognition error at: '^'"
-  - "principal_policies/donald_duck_20210210.yaml: [invalid match expression] Invalid match expression in 'leave_request-rule-001': Syntax error: extraneous input 'true' expecting <EOF>"
+  - "principal_policies/donald_duck_20210210.yaml: Failed to compile condition for rule 'leave_request_rule-001' (#2) of resource 'leave_request' (Invalid match expression: Syntax error: token recognition error at: '^',Invalid match expression: Syntax error: token recognition error at: '^',Invalid match expression: Syntax error: extraneous input 'true' expecting <EOF>)"
 mainDef: "principal_policies/donald_duck_20210210.yaml"
 inputDefs:
   "principal_policies/donald_duck_20210210.yaml":
