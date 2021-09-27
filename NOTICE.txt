@@ -5046,11 +5046,11 @@ Contents of probable licence file $GOMODCACHE/google.golang.org/genproto@v0.0.0-
 
 --------------------------------------------------------------------------------
 Module  : google.golang.org/grpc
-Version : v1.40.0
-Time    : 2021-08-12T00:10:42Z
+Version : v1.41.0
+Time    : 2021-09-23T18:09:09Z
 Licence : Apache-2.0
 
-Contents of probable licence file $GOMODCACHE/google.golang.org/grpc@v1.40.0/LICENSE:
+Contents of probable licence file $GOMODCACHE/google.golang.org/grpc@v1.41.0/LICENSE:
 
 
                                  Apache License
@@ -7051,11 +7051,11 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 --------------------------------------------------------------------------------
 Module  : github.com/cncf/xds/go
-Version : v0.0.0-20210312221358-fbca930ec8ed
-Time    : 2021-03-12T22:13:58Z
+Version : v0.0.0-20210805033703-aa0b78936158
+Time    : 2021-08-05T03:37:03Z
 Licence : Apache-2.0
 
-Contents of probable licence file $GOMODCACHE/github.com/cncf/xds/go@v0.0.0-20210312221358-fbca930ec8ed/LICENSE:
+Contents of probable licence file $GOMODCACHE/github.com/cncf/xds/go@v0.0.0-20210805033703-aa0b78936158/LICENSE:
 
                                  Apache License
                            Version 2.0, January 2004
@@ -9347,11 +9347,11 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 --------------------------------------------------------------------------------
 Module  : github.com/envoyproxy/go-control-plane
-Version : v0.9.9-0.20210512163311-63b5d3c536b0
-Time    : 2021-05-12T16:33:11Z
+Version : v0.9.10-0.20210907150352-cf90f659a021
+Time    : 2021-09-07T15:03:52Z
 Licence : Apache-2.0
 
-Contents of probable licence file $GOMODCACHE/github.com/envoyproxy/go-control-plane@v0.9.9-0.20210512163311-63b5d3c536b0/LICENSE:
+Contents of probable licence file $GOMODCACHE/github.com/envoyproxy/go-control-plane@v0.9.10-0.20210907150352-cf90f659a021/LICENSE:
 
                                  Apache License
                            Version 2.0, January 2004
