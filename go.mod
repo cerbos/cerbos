@@ -14,7 +14,7 @@ require (
 	github.com/dgraph-io/badger/v3 v3.2103.1
 	github.com/doug-martin/goqu/v9 v9.16.0
 	github.com/envoyproxy/protoc-gen-validate v0.6.1
-	github.com/fatih/color v1.12.0
+	github.com/fatih/color v1.13.0
 	github.com/fergusstrange/embedded-postgres v1.10.0
 	github.com/fsnotify/fsnotify v1.5.1
 	github.com/gdamore/tcell/v2 v2.4.0
@@ -131,7 +131,7 @@ require (
 	github.com/lib/pq v1.10.2 // indirect
 	github.com/lucasb-eyer/go-colorful v1.2.0 // indirect
 	github.com/magefile/mage v1.9.0 // indirect
-	github.com/mattn/go-colorable v0.1.8 // indirect
+	github.com/mattn/go-colorable v0.1.9 // indirect
 	github.com/matttproud/golang_protobuf_extensions v1.0.2-0.20181231171920-c182affec369 // indirect
 	github.com/mholt/archiver/v3 v3.5.0 // indirect
 	github.com/mitchellh/go-homedir v1.1.0 // indirect
