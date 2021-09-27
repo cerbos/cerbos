@@ -167,9 +167,13 @@ func (c *GrpcAdminClient) ListPolicies(ctx context.Context, opts ...ListOpt) ([]
 	}
 
 	if listOptions.sortingOptions != nil {
+		order := requestv1.ListPoliciesRequest_SortOptions_ORDER_ASCENDING
+		if listOptions.sortingOptions.descending {
+			order = requestv1.ListPoliciesRequest_SortOptions_ORDER_DESCENDING
+		}
 		req.SortOptions = &requestv1.ListPoliciesRequest_SortOptions{
-			Descending: listOptions.sortingOptions.descending,
-			Target:     requestv1.ListPoliciesRequest_SortTarget(listOptions.sortingOptions.field),
+			Order:  order,
+			Column: requestv1.ListPoliciesRequest_SortOptions_Column(listOptions.sortingOptions.field),
 		}
 	}
 

@@ -381,18 +381,30 @@ message ListPoliciesRequest {
         ];
     }
 
-    enum SortTarget {
-        SORT_TARGET_UNSPECIFIED = 0;
-        SORT_TARGET_NAME = 1;
-        SORT_TARGET_VERSION = 2;
-    }
-
     message SortOptions {
-        bool descending = 1;
-        SortTarget target = 2 [
+        enum Column {
+            COLUMN_UNSPECIFIED = 0;
+            COLUMN_NAME = 1;
+            COLUMN_VERSION = 2;
+        }
+        
+        enum Order {
+            ORDER_UNSPECIFIED = 0;
+            ORDER_ASCENDING = 1;
+            ORDER_DESCENDING = 2;
+        }
+        
+        Column column = 1 [
             (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
-            description: "The field going to be sorted against"
-                enum: ["SORT_TARGET_NAME", "SORT_TARGET_VERSION"]
+                description: "Sort column"
+                enum: ["COLUMN_NAME", "COLUMN_VERSION"]
+            }
+        ];
+
+        Order order = 2 [
+            (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = { 
+                description: "Sort order"
+                enum: ["ORDER_ASCENDING", "ORDER_DESCENDING"]
             }
         ];
     }

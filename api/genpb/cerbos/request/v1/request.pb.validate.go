@@ -1636,9 +1636,9 @@ func (m *ListPoliciesRequest_SortOptions) Validate() error {
 		return nil
 	}
 
-	// no validation rules for Descending
+	// no validation rules for Column
 
-	// no validation rules for Target
+	// no validation rules for Order
 
 	return nil
 }

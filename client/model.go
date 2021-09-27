@@ -923,7 +923,8 @@ func FieldMatchesFilter(path, value string) ListOpt {
 	}
 }
 
-func SortAsc(field ListPoliciesSortingType) ListOpt {
+// Sort enables sorting the policies by ascending order with given field.
+func Sort(field ListPoliciesSortingType) ListOpt {
 	return func(pf *policyListOptions) {
 		pf.sortingOptions = &sortingOptions{
 			field: field,
@@ -931,6 +932,7 @@ func SortAsc(field ListPoliciesSortingType) ListOpt {
 	}
 }
 
+// SortDesc enables sorting the policies by descending order with given field.
 func SortDesc(field ListPoliciesSortingType) ListOpt {
 	return func(pf *policyListOptions) {
 		pf.sortingOptions = &sortingOptions{

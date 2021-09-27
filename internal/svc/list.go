@@ -97,14 +97,14 @@ func sortPolicies(sortOptions *requestv1.ListPoliciesRequest_SortOptions, polici
 
 	var data sort.Interface
 
-	switch sortOptions.Target {
-	case requestv1.ListPoliciesRequest_SORT_TARGET_VERSION:
+	switch sortOptions.Column {
+	case requestv1.ListPoliciesRequest_SortOptions_COLUMN_VERSION:
 		data = versionOrder(policies)
 	default:
 		data = nameOrder(policies)
 	}
 
-	if sortOptions.Descending {
+	if sortOptions.Order == requestv1.ListPoliciesRequest_SortOptions_ORDER_DESCENDING {
 		sort.Sort(sort.Reverse(data))
 	} else {
 		sort.Sort(data)

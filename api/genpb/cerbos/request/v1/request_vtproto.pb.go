@@ -1070,18 +1070,13 @@ func (m *ListPoliciesRequest_SortOptions) MarshalToSizedBufferVT(dAtA []byte) (i
 		i -= len(m.unknownFields)
 		copy(dAtA[i:], m.unknownFields)
 	}
-	if m.Target != 0 {
-		i = encodeVarint(dAtA, i, uint64(m.Target))
+	if m.Order != 0 {
+		i = encodeVarint(dAtA, i, uint64(m.Order))
 		i--
 		dAtA[i] = 0x10
 	}
-	if m.Descending {
-		i--
-		if m.Descending {
-			dAtA[i] = 1
-		} else {
-			dAtA[i] = 0
-		}
+	if m.Column != 0 {
+		i = encodeVarint(dAtA, i, uint64(m.Column))
 		i--
 		dAtA[i] = 0x8
 	}
@@ -1620,11 +1615,11 @@ func (m *ListPoliciesRequest_SortOptions) SizeVT() (n int) {
 	}
 	var l int
 	_ = l
-	if m.Descending {
-		n += 2
+	if m.Column != 0 {
+		n += 1 + sov(uint64(m.Column))
 	}
-	if m.Target != 0 {
-		n += 1 + sov(uint64(m.Target))
+	if m.Order != 0 {
+		n += 1 + sov(uint64(m.Order))
 	}
 	if m.unknownFields != nil {
 		n += len(m.unknownFields)
@@ -3933,9 +3928,9 @@ func (m *ListPoliciesRequest_SortOptions) UnmarshalVT(dAtA []byte) error {
 		switch fieldNum {
 		case 1:
 			if wireType != 0 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Descending", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field Column", wireType)
 			}
-			var v int
+			m.Column = 0
 			for shift := uint(0); ; shift += 7 {
 				if shift >= 64 {
 					return ErrIntOverflow
@@ -3945,17 +3940,16 @@ func (m *ListPoliciesRequest_SortOptions) UnmarshalVT(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				v |= int(b&0x7F) << shift
+				m.Column |= ListPoliciesRequest_SortOptions_Column(b&0x7F) << shift
 				if b < 0x80 {
 					break
 				}
 			}
-			m.Descending = bool(v != 0)
 		case 2:
 			if wireType != 0 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Target", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field Order", wireType)
 			}
-			m.Target = 0
+			m.Order = 0
 			for shift := uint(0); ; shift += 7 {
 				if shift >= 64 {
 					return ErrIntOverflow
@@ -3965,7 +3959,7 @@ func (m *ListPoliciesRequest_SortOptions) UnmarshalVT(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				m.Target |= ListPoliciesRequest_SortTarget(b&0x7F) << shift
+				m.Order |= ListPoliciesRequest_SortOptions_Order(b&0x7F) << shift
 				if b < 0x80 {
 					break
 				}
