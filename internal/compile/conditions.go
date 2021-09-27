@@ -26,19 +26,20 @@ var (
 
 type ConditionMap map[string]ConditionEvaluator
 
-func NewConditionMapFromRepr(conds map[string]*exprpb.CheckedExpr) (ConditionMap, error) {
+func NewConditionMapFromRepr(conds map[string]*exprpb.CheckedExpr, aliases map[string]string) (ConditionMap, error) {
 	if len(conds) == 0 {
 		return nil, nil
 	}
 
 	cm := make(ConditionMap, len(conds))
 	for k, expr := range conds {
-		celPrg, err := codegen.CELConditionFromCheckedExpr(expr).Program()
+		c := codegen.CELConditionFromCheckedExpr(expr)
+		celPrg, err := c.Program()
 		if err != nil {
 			return nil, fmt.Errorf("failed to hydrate CEL program [%s]:%w", k, err)
 		}
 
-		cm[k] = &CELConditionEvaluator{prg: celPrg}
+		cm[k] = &CELConditionEvaluator{prg: celPrg, aliases: aliases, c: c}
 	}
 
 	return cm, nil
