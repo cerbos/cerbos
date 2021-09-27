@@ -60,6 +60,7 @@ type RegoGen struct {
 	*strings.Builder
 	condCount  uint
 	conditions map[string]*CELCondition
+	aliases    map[string]string // CEL variables
 }
 
 func NewRegoGen(packageName string, imports ...string) *RegoGen {
@@ -311,7 +312,7 @@ func (rg *RegoGen) addScript(parent, script string) error {
 }
 
 func (rg *RegoGen) addMatch(parent string, m *policyv1.Match) error {
-	cond, err := GenerateCELCondition(parent, m)
+	cond, err := GenerateCELCondition(parent, m, rg.aliases)
 	if err != nil {
 		return err
 	}
@@ -343,4 +344,8 @@ func (rg *RegoGen) addEffectStringFunc(defaultEffect string) {
 	rg.line(`cerbos_effect := `, effectForIdent, `(`, actionVar, `)`)
 	rg.line(`} else = `, defaultEffect)
 	rg.line()
+}
+
+func (rg *RegoGen) AddAliases(aliases map[string]string) {
+	rg.aliases = aliases
 }

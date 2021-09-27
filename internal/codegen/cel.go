@@ -32,8 +32,8 @@ func init() {
 	celHelper = ch
 }
 
-func GenerateCELCondition(parent string, m *policyv1.Match) (*CELCondition, error) {
-	return celHelper.GenerateCELCondition(parent, m)
+func GenerateCELCondition(parent string, m *policyv1.Match, aliases map[string]string) (*CELCondition, error) {
+	return celHelper.GenerateCELCondition(parent, m, aliases)
 }
 
 func CELConditionFromCheckedExpr(expr *exprpb.CheckedExpr) *CELCondition {
@@ -45,7 +45,7 @@ type CELHelper struct {
 }
 
 func NewCELHelper() (*CELHelper, error) {
-	env, err := newCELEnv()
+	env, err := cel.NewEnv(newCELEnvOptions()...)
 	if err != nil {
 		return nil, err
 	}
@@ -53,13 +53,28 @@ func NewCELHelper() (*CELHelper, error) {
 	return &CELHelper{env: env}, nil
 }
 
-func (ch *CELHelper) GenerateCELCondition(parent string, m *policyv1.Match) (*CELCondition, error) {
+func (ch *CELHelper) GenerateCELCondition(parent string, m *policyv1.Match, aliases map[string]string) (*CELCondition, error) {
 	celExpr, err := generateMatchCode(m)
 	if err != nil {
 		return nil, err
 	}
 
-	celAST, issues := ch.env.Compile(celExpr)
+	env := ch.env
+	if len(aliases) > 0 {
+		stdenv := env
+		vars := make([]*exprpb.Decl, 0, len(aliases))
+		for alias, def := range aliases {
+			vars = append(vars, decls.NewVar(alias, decls.Dyn))
+			_, issues := stdenv.Compile(def)
+			if issues != nil && issues.Err() != nil {
+				return nil, &CELCompileError{Parent: parent, Issues: issues}
+			}
+		}
+		opts := append([]cel.EnvOption{cel.Declarations(vars...)}, newCELEnvOptions()...)
+		env, err = cel.NewEnv(opts...)
+	}
+
+	celAST, issues := env.Compile(celExpr)
 	if issues != nil && issues.Err() != nil {
 		return nil, &CELCompileError{Parent: parent, Issues: issues}
 	}
@@ -87,8 +102,8 @@ func (cc *CELCondition) CheckedExpr() (*exprpb.CheckedExpr, error) {
 	return cel.AstToCheckedExpr(cc.ast)
 }
 
-func newCELEnv() (*cel.Env, error) {
-	return cel.NewEnv(
+func newCELEnvOptions() []cel.EnvOption {
+	return []cel.EnvOption {
 		cel.CustomTypeAdapter(NewCustomCELTypeAdapter()),
 		cel.Declarations(
 			decls.NewVar(CELRequestIdent, decls.NewMapType(decls.String, decls.Dyn)),
@@ -98,7 +113,7 @@ func newCELEnv() (*cel.Env, error) {
 		ext.Strings(),
 		ext.Encoders(),
 		CerbosCELLib(),
-	)
+	}
 }
 
 func generateMatchCode(m *policyv1.Match) (string, error) {

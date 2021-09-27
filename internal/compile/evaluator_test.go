@@ -228,7 +228,7 @@ func TestCELEvaluator(t *testing.T) {
 		tcase := tcase
 		t.Run(tcase.Name, func(t *testing.T) {
 			tc := readCELTestCase(t, tcase.Input)
-			cgr, err := codegen.GenerateCELCondition("test", tc.Condition)
+			cgr, err := codegen.GenerateCELCondition("test", tc.Condition, nil)
 			require.NoError(t, err)
 
 			prg, err := cgr.Program()

@@ -61,6 +61,9 @@ func generateResourcePolicy(parent *policyv1.Policy, p *policyv1.ResourcePolicy)
 
 	rg := NewRegoGen(modName, imports...)
 
+	if len(p.Aliases) > 0 {
+		rg.AddAliases(p.Aliases)
+	}
 	for i, rule := range p.Rules {
 		if rule.Name == "" {
 			rule.Name = fmt.Sprintf("rule-%03d", i+1)

@@ -6,6 +6,8 @@ inputPolicy:
     importDerivedRoles:
       - my_derived_roles
     resource: "hr:leave_request"
+    aliases:
+      status: ("PENDING_APPROVAL")
     rules:
       - actions: ['*']
         effect: EFFECT_ALLOW
@@ -40,7 +42,7 @@ inputPolicy:
           match:
             all:
               of:
-                - expr: request.resource.attr.status == "PENDING_APPROVAL"
+                - expr: request.resource.attr.status == status
                 - expr: |-
                     "test" in request.resource.attr.geographies
         derivedRoles:
