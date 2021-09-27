@@ -38,6 +38,7 @@ message ResourcePolicy {
     string version = 2 [(validate.rules).string.pattern = "^[[:word:]]+$"];
     repeated string import_derived_roles = 3 [(validate.rules).repeated = {unique: true, items {string {pattern: "^[[:word:]\\-\\.]+$"}}}];
     repeated ResourceRule rules = 4 [(validate.rules).repeated.min_items = 1];
+    map<string, string> aliases = 5;
 }
 
 message ResourceRule {

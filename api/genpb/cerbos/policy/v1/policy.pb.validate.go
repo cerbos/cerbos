@@ -312,6 +312,8 @@ func (m *ResourcePolicy) Validate() error {
 
 	}
 
+	// no validation rules for Aliases
+
 	return nil
 }
 
