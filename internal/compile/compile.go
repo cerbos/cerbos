@@ -132,15 +132,15 @@ func hydrate(unit *policy.CompilationUnit) (map[string]*ast.Module, ConditionInd
 		var err error
 
 		// use generated code if it exists -- which should be faster.
-		if gp, ok := unit.Generated[modID]; ok {
-			mod, cm, err = hydrateGeneratedPolicy(srcFile, gp)
-			if err != nil {
-				// try to generate the code from source
-				mod, cm, err = generateCode(srcFile, def)
-			}
-		} else {
-			mod, cm, err = generateCode(srcFile, def)
-		}
+		//if gp, ok := unit.Generated[modID]; ok {
+		//	mod, cm, err = hydrateGeneratedPolicy(srcFile, gp)
+		//	if err != nil {
+		//		// try to generate the code from source
+		//		mod, cm, err = generateCode(srcFile, def)
+		//	}
+		//} else {
+		mod, cm, err = generateCode(srcFile, def)
+		//}
 
 		if err != nil {
 			return nil, nil, err
@@ -182,7 +182,11 @@ func generateCode(srcFile string, p *policyv1.Policy) (*ast.Module, ConditionMap
 	var cm ConditionMap
 
 	if len(res.Conditions) > 0 {
-		cm, err = NewConditionMap(res.Conditions)
+		var aliases map[string]string
+		if rp, ok := p.PolicyType.(*policyv1.Policy_ResourcePolicy); ok {
+			aliases = rp.ResourcePolicy.Aliases
+		}
+		cm, err = NewConditionMap(res.Conditions, aliases)
 		if err != nil {
 			return nil, nil, err
 		}

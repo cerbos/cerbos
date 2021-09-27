@@ -307,6 +307,20 @@ func Test_doVerify(t *testing.T) {
 		}
 		is.False(result.Failed, "%+v", result.Results)
 	})
+	t.Run("Simple test", func(t *testing.T) {
+		fsys := make(fstest.MapFS)
+		ts := genTable(t, false, false)
+		fsys[filepath.Join(TestDataDirectory, ResourcesFileName)+".yaml"] = newMapFile(resources)
+		fsys[filepath.Join(TestDataDirectory, PrincipalsFileName)+".yaml"] = newMapFile(principals)
+		fsys["leave_request_test.yaml"] = newMapFile(ts)
+
+		result, err := doVerify(context.Background(), fsys, eng, Config{})
+		is := require.New(t)
+		is.NoError(err)
+		is.Len(result.Results, 1)
+		is.False(result.Results[0].Skipped)
+		is.False(result.Failed, "%+v", result.Results)
+	})
 }
 
 func mkEngine(t *testing.T) *engine.Engine {

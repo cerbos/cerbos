@@ -6,8 +6,8 @@ package compile
 import (
 	"errors"
 	"fmt"
-
 	"github.com/google/cel-go/cel"
+	"github.com/google/cel-go/checker/decls"
 	"go.uber.org/zap"
 	exprpb "google.golang.org/genproto/googleapis/api/expr/v1alpha1"
 
@@ -44,7 +44,7 @@ func NewConditionMapFromRepr(conds map[string]*exprpb.CheckedExpr) (ConditionMap
 	return cm, nil
 }
 
-func NewConditionMap(conds map[string]*codegen.CELCondition) (ConditionMap, error) {
+func NewConditionMap(conds map[string]*codegen.CELCondition, aliases map[string]string) (ConditionMap, error) {
 	cm := make(ConditionMap, len(conds))
 	for k, c := range conds {
 		p, err := c.Program()
@@ -52,7 +52,7 @@ func NewConditionMap(conds map[string]*codegen.CELCondition) (ConditionMap, erro
 			return nil, fmt.Errorf("failed to generate CEL program for %s: %w", k, err)
 		}
 
-		cm[k] = &CELConditionEvaluator{prg: p}
+		cm[k] = &CELConditionEvaluator{prg: p, aliases: aliases, c: c}
 	}
 
 	return cm, nil
@@ -63,13 +63,16 @@ type ConditionEvaluator interface {
 }
 
 type CELConditionEvaluator struct {
-	prg cel.Program
+	prg     cel.Program
+	aliases map[string]string
+	c       *codegen.CELCondition
 }
 
 func (ce *CELConditionEvaluator) Eval(input interface{}) (bool, error) {
 	if input == nil {
 		return false, fmt.Errorf("input should not be nil: %w", ErrUnexpectedInput)
 	}
+
 
 	req, ok := input.(map[string]interface{})
 	if !ok {
@@ -99,16 +102,47 @@ func (ce *CELConditionEvaluator) Eval(input interface{}) (bool, error) {
 		return false, fmt.Errorf("missing 'principal' key in input: %w", ErrUnexpectedInput)
 	}
 
-	result, _, err := ce.prg.Eval(map[string]interface{}{
+	stdvars:= map[string]interface{}{
 		codegen.CELRequestIdent:    input,
 		codegen.CELResourceAbbrev:  abbrevR,
 		codegen.CELPrincipalAbbrev: abbrevP,
-	})
+	}
+
+	prg := ce.prg
+	if ce.aliases != nil {
+		aliases := ce.aliases
+		vals := make(map[string]interface{}, len(aliases))
+		stdenv, _ := cel.NewEnv(codegen.NewCELEnvOptions()...)
+		vars := make([]*exprpb.Decl, 0, len(aliases))
+		for alias, def := range aliases {
+			vars = append(vars, decls.NewVar(alias, decls.Dyn))
+			ast, issues := stdenv.Compile(def)
+			if issues != nil && issues.Err() != nil {
+				return false, issues.Err()
+			}
+			prg, err := stdenv.Program(ast)
+			if err != nil {
+				return false, err
+			}
+			vals[alias], _, _ = prg.Eval(stdvars)
+		}
+
+		for k, v := range vals {
+			stdvars[k] = v
+		}
+
+		var err error
+		prg, err = ce.c.ProgramWithVars(vars)
+		if err != nil {
+		    return false, err
+		}
+	}
+
+	result, _, err := prg.Eval(stdvars)
 	if err != nil {
 		celLog.Warn("Condition evaluation failed", zap.Error(err))
 		return false, err
 	}
-
 	if result == nil || result.Value() == nil {
 		celLog.Warn("Unexpected result from condition evaluation")
 		return false, ErrUnexpectedResult

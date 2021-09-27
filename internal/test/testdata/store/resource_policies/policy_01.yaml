@@ -5,6 +5,8 @@ resourcePolicy:
   - alpha
   - beta
   resource: leave_request
+  aliases:
+    pending_approval: ("PENDING_APPROVAL")
   rules:
   - actions: ['*']
     effect: EFFECT_ALLOW
@@ -28,7 +30,7 @@ resourcePolicy:
   - actions: ["approve"]
     condition:
       match:
-        expr: request.resource.attr.status == "PENDING_APPROVAL"
+        expr: request.resource.attr.status == pending_approval
     derivedRoles:
     - direct_manager
     effect: EFFECT_ALLOW
