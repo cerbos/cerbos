@@ -259,17 +259,8 @@ func (engine *Engine) evaluate(ctx context.Context, input *enginev1.CheckInput) 
 		return output, nil
 	}
 
-	// convert input to AST
-	inputAST, err := toAST(input)
-	if err != nil {
-		logging.FromContext(ctx).Error("Failed to convert input into internal representation", zap.Error(err))
-		tracing.MarkFailed(span, trace.StatusCodeInvalidArgument, "Failed to convert input into internal representation", err)
-
-		return nil, fmt.Errorf("failed to convert input into internal representation: %w", err)
-	}
-
 	// evaluate the policies
-	result, err := ec.evaluate(ctx, inputAST)
+	result, err := ec.evaluate(ctx, input)
 	if err != nil {
 		logging.FromContext(ctx).Error("Failed to evaluate policies", zap.Error(err))
 
@@ -298,7 +289,7 @@ func (engine *Engine) evaluate(ctx context.Context, input *enginev1.CheckInput) 
 }
 
 func (engine *Engine) buildEvaluationCtx(ctx context.Context, input *enginev1.CheckInput) (*evaluationCtx, error) {
-	ec := &evaluationCtx{queryCache: engine.queryCache}
+	ec := &evaluationCtx{}
 
 	// get the principal policy check
 	ppName, ppVersion := engine.policyAttr(input.Principal.Id, input.Principal.PolicyVersion)
@@ -319,14 +310,32 @@ func (engine *Engine) buildEvaluationCtx(ctx context.Context, input *enginev1.Ch
 	return ec, nil
 }
 
-func (engine *Engine) getPrincipalPolicyEvaluator(ctx context.Context, principal, policyVersion string) (compile.Evaluator, error) {
+func (engine *Engine) getPrincipalPolicyEvaluator(ctx context.Context, principal, policyVersion string) (Evaluator, error) {
 	principalModID := namer.PrincipalPolicyModuleID(principal, policyVersion)
-	return engine.compileMgr.GetEvaluator(ctx, principalModID)
+	rps, err := engine.compileMgr.Get(ctx, principalModID)
+	if err != nil {
+		return nil, err
+	}
+
+	if rps == nil {
+		return nil, nil
+	}
+
+	return NewEvaluator(rps), nil
 }
 
-func (engine *Engine) getResourcePolicyEvaluator(ctx context.Context, resource, policyVersion string) (compile.Evaluator, error) {
+func (engine *Engine) getResourcePolicyEvaluator(ctx context.Context, resource, policyVersion string) (Evaluator, error) {
 	resourceModID := namer.ResourcePolicyModuleID(resource, policyVersion)
-	return engine.compileMgr.GetEvaluator(ctx, resourceModID)
+	rps, err := engine.compileMgr.Get(ctx, resourceModID)
+	if err != nil {
+		return nil, err
+	}
+
+	if rps == nil {
+		return nil, nil
+	}
+
+	return NewEvaluator(rps), nil
 }
 
 func (engine *Engine) policyAttr(name, version string) (pName, pVersion string) {
@@ -341,19 +350,18 @@ func (engine *Engine) policyAttr(name, version string) (pName, pVersion string) 
 }
 
 type evaluationCtx struct {
-	numChecks  int
-	checks     [2]compile.Evaluator
-	queryCache cache.InterQueryCache
+	numChecks int
+	checks    [2]Evaluator
 }
 
-func (ec *evaluationCtx) addCheck(eval compile.Evaluator) {
+func (ec *evaluationCtx) addCheck(eval Evaluator) {
 	if eval != nil {
 		ec.checks[ec.numChecks] = eval
 		ec.numChecks++
 	}
 }
 
-func (ec *evaluationCtx) evaluate(ctx context.Context, input ast.Value) (*evaluationResult, error) {
+func (ec *evaluationCtx) evaluate(ctx context.Context, input *enginev1.CheckInput) (*evaluationResult, error) {
 	ctx, span := tracing.StartSpan(ctx, "engine.Evaluate")
 	defer span.End()
 
@@ -368,7 +376,7 @@ func (ec *evaluationCtx) evaluate(ctx context.Context, input ast.Value) (*evalua
 	for i := 0; i < ec.numChecks; i++ {
 		c := ec.checks[i]
 
-		result, err := c.Eval(ctx, ec.queryCache, input)
+		result, err := c.Evaluate(ctx, input)
 		if err != nil {
 			logging.FromContext(ctx).Error("Failed to evaluate policy", zap.Error(err))
 			tracing.MarkFailed(span, trace.StatusCodeInternal, "Failed to execute policy", err)
@@ -394,7 +402,7 @@ type evaluationResult struct {
 }
 
 // merge the results by only updating the actions that have a no_match effect.
-func (er *evaluationResult) merge(res *compile.EvalResult) bool {
+func (er *evaluationResult) merge(res *EvalResult) bool {
 	hasNoMatches := false
 
 	if er.effects == nil {

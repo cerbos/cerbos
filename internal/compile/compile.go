@@ -6,7 +6,6 @@ package compile
 import (
 	"fmt"
 	"strings"
-	"time"
 
 	exprpb "google.golang.org/genproto/googleapis/api/expr/v1alpha1"
 	"google.golang.org/protobuf/types/known/emptypb"
@@ -16,11 +15,6 @@ import (
 	"github.com/cerbos/cerbos/internal/codegen"
 	"github.com/cerbos/cerbos/internal/namer"
 	"github.com/cerbos/cerbos/internal/policy"
-)
-
-const (
-	storeFetchTimeout = 2 * time.Second
-	updateQueueSize   = 32
 )
 
 var emptyVal = &emptypb.Empty{}
