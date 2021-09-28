@@ -111,6 +111,8 @@ func (ce *CELConditionEvaluator) Eval(input interface{}) (bool, error) {
 
 	prg := ce.prg
 	if ce.aliases != nil {
+		// Calculate aliases values using std vars
+		// then add calculated values to std vars and calculate expression
 		aliases := ce.aliases
 		vals := make(map[string]interface{}, len(aliases))
 		stdenv, _ := cel.NewEnv(codegen.NewCELEnvOptions()...)
