@@ -7,6 +7,8 @@ resourcePolicy:
   resource: leave_request
   aliases:
     pending_approval: ("PENDING_APPROVAL")
+    principal_location: |-
+      (P.attr.ip_address.inIPAddrRange("10.20.0.0/16") ? "GB" : "")
   rules:
   - actions: ['*']
     effect: EFFECT_ALLOW
@@ -31,6 +33,13 @@ resourcePolicy:
     condition:
       match:
         expr: request.resource.attr.status == pending_approval
+    derivedRoles:
+      - direct_manager
+    effect: EFFECT_ALLOW
+  - actions: ["delete"]
+    condition:
+      match:
+        expr: request.resource.attr.geography == principal_location
     derivedRoles:
     - direct_manager
     effect: EFFECT_ALLOW

@@ -6,6 +6,7 @@ package verify
 import (
 	"context"
 	"fmt"
+	"github.com/stretchr/testify/assert"
 	"path/filepath"
 	"strings"
 	"sync"
@@ -32,10 +33,10 @@ func TestVerify(t *testing.T) {
 
 	t.Run("valid", func(t *testing.T) {
 		result, err := runSuite("valid")
-		is := require.New(t)
-		is.NoError(err)
-		is.False(result.Failed)
-		is.Len(result.Results, 2)
+		require.NoError(t, err)
+		require.Len(t, result.Results, 3)
+
+		is := assert.New(t)
 
 		for _, sr := range result.Results {
 			switch sr.File {
@@ -48,6 +49,14 @@ func TestVerify(t *testing.T) {
 				is.False(sr.Tests[0].Skipped)
 				is.False(sr.Tests[0].Failed)
 				is.Empty(sr.Tests[0].Error)
+			case "udf_test.yaml":
+				is.False(sr.Skipped)
+				is.Len(sr.Tests, 2)
+				for i := 0; i < 2; i++ {
+					is.False(sr.Tests[i].Skipped)
+					is.False(sr.Tests[i].Failed)
+					is.Empty(sr.Tests[i].Error, sr.Tests[i])
+				}
 			}
 		}
 	})
