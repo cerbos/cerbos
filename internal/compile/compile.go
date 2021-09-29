@@ -131,7 +131,7 @@ func hydrate(unit *policy.CompilationUnit) (map[string]*ast.Module, ConditionInd
 		var cm ConditionMap
 		var err error
 
-		//use generated code if it exists -- which should be faster.
+		// use generated code if it exists -- which should be faster.
 		if gp, ok := unit.Generated[modID]; ok {
 			mod, cm, err = hydrateGeneratedPolicy(srcFile, gp, getPolicyAliases(def))
 			if err != nil {

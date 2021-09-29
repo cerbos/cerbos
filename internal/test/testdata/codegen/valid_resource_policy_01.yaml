@@ -6,7 +6,7 @@ inputPolicy:
     importDerivedRoles:
       - my_derived_roles
     resource: "hr:leave_request"
-    aliases:
+    globals:
       status: ("PENDING_APPROVAL")
     rules:
       - actions: ['*']

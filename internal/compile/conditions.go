@@ -6,6 +6,7 @@ package compile
 import (
 	"errors"
 	"fmt"
+
 	"github.com/google/cel-go/cel"
 	"github.com/google/cel-go/checker/decls"
 	"go.uber.org/zap"
@@ -74,7 +75,6 @@ func (ce *CELConditionEvaluator) Eval(input interface{}) (bool, error) {
 		return false, fmt.Errorf("input should not be nil: %w", ErrUnexpectedInput)
 	}
 
-
 	req, ok := input.(map[string]interface{})
 	if !ok {
 		return false, fmt.Errorf("unexpected type for input [%T]: %w", input, ErrUnexpectedInput)
@@ -103,7 +103,7 @@ func (ce *CELConditionEvaluator) Eval(input interface{}) (bool, error) {
 		return false, fmt.Errorf("missing 'principal' key in input: %w", ErrUnexpectedInput)
 	}
 
-	stdvars:= map[string]interface{}{
+	stdvars := map[string]interface{}{
 		codegen.CELRequestIdent:    input,
 		codegen.CELResourceAbbrev:  abbrevR,
 		codegen.CELPrincipalAbbrev: abbrevP,
@@ -137,7 +137,7 @@ func (ce *CELConditionEvaluator) Eval(input interface{}) (bool, error) {
 		var err error
 		prg, err = ce.c.ProgramWithVars(vars)
 		if err != nil {
-		    return false, err
+			return false, err
 		}
 	}
 

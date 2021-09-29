@@ -5,7 +5,7 @@ resourcePolicy:
   - alpha
   - beta
   resource: leave_request
-  aliases:
+  globals:
     pending_approval: ("PENDING_APPROVAL")
     principal_location: |-
       (P.attr.ip_address.inIPAddrRange("10.20.0.0/16") ? "GB" : "")

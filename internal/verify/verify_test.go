@@ -6,7 +6,6 @@ package verify
 import (
 	"context"
 	"fmt"
-	"github.com/stretchr/testify/assert"
 	"path/filepath"
 	"strings"
 	"sync"
@@ -14,6 +13,7 @@ import (
 	"testing/fstest"
 	"text/template"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/cerbos/cerbos/internal/audit"

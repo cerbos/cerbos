@@ -72,6 +72,9 @@ func (ch *CELHelper) GenerateCELCondition(parent string, m *policyv1.Match, glob
 		}
 		opts := append([]cel.EnvOption{cel.Declarations(vars...)}, NewCELEnvOptions()...)
 		env, err = cel.NewEnv(opts...)
+		if err != nil {
+		    return nil, err
+		}
 	}
 
 	celAST, issues := env.Compile(celExpr)
@@ -98,10 +101,11 @@ func (cc *CELCondition) ProgramWithVars(vars []*exprpb.Decl) (cel.Program, error
 	opts := append([]cel.EnvOption{cel.Declarations(vars...)}, NewCELEnvOptions()...)
 	env, err := cel.NewEnv(opts...)
 	if err != nil {
-	    return nil, err
+		return nil, err
 	}
 	return env.Program(cc.ast)
 }
+
 func (cc *CELCondition) Program() (cel.Program, error) {
 	return cc.env.Program(cc.ast)
 }
@@ -111,7 +115,7 @@ func (cc *CELCondition) CheckedExpr() (*exprpb.CheckedExpr, error) {
 }
 
 func NewCELEnvOptions() []cel.EnvOption {
-	return []cel.EnvOption {
+	return []cel.EnvOption{
 		cel.CustomTypeAdapter(NewCustomCELTypeAdapter()),
 		cel.Declarations(
 			decls.NewVar(CELRequestIdent, decls.NewMapType(decls.String, decls.Dyn)),
