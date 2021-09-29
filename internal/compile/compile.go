@@ -176,7 +176,7 @@ func hydrateGeneratedPolicy(srcFile string, gp *policyv1.GeneratedPolicy, global
 func getPolicyAliases(p *policyv1.Policy) map[string]string {
 	var globals map[string]string
 	if rp, ok := p.PolicyType.(*policyv1.Policy_ResourcePolicy); ok {
-		globals = rp.ResourcePolicy.Aliases
+		globals = rp.ResourcePolicy.Globals
 	}
 	return globals
 }

@@ -1510,7 +1510,7 @@
             "$ref": "#/definitions/v1ResourceRule"
           }
         },
-        "aliases": {
+        "globals": {
           "type": "object",
           "additionalProperties": {
             "type": "string"

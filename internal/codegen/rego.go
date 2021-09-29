@@ -346,6 +346,6 @@ func (rg *RegoGen) addEffectStringFunc(defaultEffect string) {
 	rg.line()
 }
 
-func (rg *RegoGen) AddAliases(globals map[string]string) {
+func (rg *RegoGen) AddGlobals(globals map[string]string) {
 	rg.globals = globals
 }

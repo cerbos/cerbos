@@ -312,7 +312,7 @@ func (m *ResourcePolicy) Validate() error {
 
 	}
 
-	// no validation rules for Aliases
+	// no validation rules for Globals
 
 	return nil
 }

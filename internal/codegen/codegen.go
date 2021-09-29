@@ -61,8 +61,8 @@ func generateResourcePolicy(parent *policyv1.Policy, p *policyv1.ResourcePolicy)
 
 	rg := NewRegoGen(modName, imports...)
 
-	if len(p.Aliases) > 0 {
-		rg.AddAliases(p.Aliases)
+	if len(p.Globals) > 0 {
+		rg.AddGlobals(p.Globals)
 	}
 	for i, rule := range p.Rules {
 		if rule.Name == "" {
