@@ -28,7 +28,6 @@ const (
 var (
 	hierarchyType = types.NewTypeValue(hierarchyTypeName,
 		traits.IndexerType,
-		traits.IteratorType,
 		traits.SizerType,
 		traits.ReceiverType)
 
