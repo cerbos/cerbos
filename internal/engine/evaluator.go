@@ -7,6 +7,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 
 	"go.uber.org/zap"
 	exprpb "google.golang.org/genproto/googleapis/api/expr/v1alpha1"
@@ -63,7 +64,7 @@ func (rpe *resourcePolicyEvaluator) Evaluate(ctx context.Context, input *enginev
 	logger := logging.FromContext(ctx).Named("evaluator").With(zap.String("policy", rpe.policy.Meta.Fqn))
 
 	result := EvalResult{
-		PolicyKey: rpe.policy.Meta.Fqn,
+		PolicyKey: strings.TrimPrefix(rpe.policy.Meta.Fqn, "cerbos."),
 		Effects:   make(map[string]effectv1.Effect, len(input.Actions)),
 	}
 
@@ -135,7 +136,7 @@ func (ppe *principalPolicyEvaluator) Evaluate(ctx context.Context, input *engine
 	logger := logging.FromContext(ctx).Named("evaluator").With(zap.String("policy", ppe.policy.Meta.Fqn))
 
 	result := EvalResult{
-		PolicyKey: ppe.policy.Meta.Fqn,
+		PolicyKey: strings.TrimPrefix(ppe.policy.Meta.Fqn, "cerbos."),
 		Effects:   make(map[string]effectv1.Effect, len(input.Actions)),
 	}
 
