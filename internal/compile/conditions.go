@@ -26,7 +26,7 @@ var (
 
 type ConditionMap map[string]ConditionEvaluator
 
-func NewConditionMapFromRepr(conds map[string]*exprpb.CheckedExpr, aliases map[string]string) (ConditionMap, error) {
+func NewConditionMapFromRepr(conds map[string]*exprpb.CheckedExpr, globals map[string]string) (ConditionMap, error) {
 	if len(conds) == 0 {
 		return nil, nil
 	}
@@ -39,13 +39,13 @@ func NewConditionMapFromRepr(conds map[string]*exprpb.CheckedExpr, aliases map[s
 			return nil, fmt.Errorf("failed to hydrate CEL program [%s]:%w", k, err)
 		}
 
-		cm[k] = &CELConditionEvaluator{prg: celPrg, aliases: aliases, c: c}
+		cm[k] = &CELConditionEvaluator{prg: celPrg, globals: globals, c: c}
 	}
 
 	return cm, nil
 }
 
-func NewConditionMap(conds map[string]*codegen.CELCondition, aliases map[string]string) (ConditionMap, error) {
+func NewConditionMap(conds map[string]*codegen.CELCondition, globals map[string]string) (ConditionMap, error) {
 	cm := make(ConditionMap, len(conds))
 	for k, c := range conds {
 		p, err := c.Program()
@@ -53,7 +53,7 @@ func NewConditionMap(conds map[string]*codegen.CELCondition, aliases map[string]
 			return nil, fmt.Errorf("failed to generate CEL program for %s: %w", k, err)
 		}
 
-		cm[k] = &CELConditionEvaluator{prg: p, aliases: aliases, c: c}
+		cm[k] = &CELConditionEvaluator{prg: p, globals: globals, c: c}
 	}
 
 	return cm, nil
@@ -65,7 +65,7 @@ type ConditionEvaluator interface {
 
 type CELConditionEvaluator struct {
 	prg     cel.Program
-	aliases map[string]string
+	globals map[string]string
 	c       *codegen.CELCondition
 }
 
@@ -110,14 +110,14 @@ func (ce *CELConditionEvaluator) Eval(input interface{}) (bool, error) {
 	}
 
 	prg := ce.prg
-	if ce.aliases != nil {
-		// Calculate aliases values using std vars
+	if ce.globals != nil {
+		// Calculate globals values using std vars
 		// then add calculated values to std vars and calculate expression
-		aliases := ce.aliases
-		vals := make(map[string]interface{}, len(aliases))
+		globals := ce.globals
+		vals := make(map[string]interface{}, len(globals))
 		stdenv, _ := cel.NewEnv(codegen.NewCELEnvOptions()...)
-		vars := make([]*exprpb.Decl, 0, len(aliases))
-		for alias, def := range aliases {
+		vars := make([]*exprpb.Decl, 0, len(globals))
+		for alias, def := range globals {
 			vars = append(vars, decls.NewVar(alias, decls.Dyn))
 			ast, issues := stdenv.Compile(def)
 			if issues != nil && issues.Err() != nil {

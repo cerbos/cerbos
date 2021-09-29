@@ -32,8 +32,8 @@ func init() {
 	celHelper = ch
 }
 
-func GenerateCELCondition(parent string, m *policyv1.Match, aliases map[string]string) (*CELCondition, error) {
-	return celHelper.GenerateCELCondition(parent, m, aliases)
+func GenerateCELCondition(parent string, m *policyv1.Match, globals map[string]string) (*CELCondition, error) {
+	return celHelper.GenerateCELCondition(parent, m, globals)
 }
 
 func CELConditionFromCheckedExpr(expr *exprpb.CheckedExpr) *CELCondition {
@@ -53,17 +53,17 @@ func NewCELHelper() (*CELHelper, error) {
 	return &CELHelper{env: env}, nil
 }
 
-func (ch *CELHelper) GenerateCELCondition(parent string, m *policyv1.Match, aliases map[string]string) (*CELCondition, error) {
+func (ch *CELHelper) GenerateCELCondition(parent string, m *policyv1.Match, globals map[string]string) (*CELCondition, error) {
 	celExpr, err := generateMatchCode(m)
 	if err != nil {
 		return nil, err
 	}
 
 	env := ch.env
-	if len(aliases) > 0 {
+	if len(globals) > 0 {
 		stdenv := env
-		vars := make([]*exprpb.Decl, 0, len(aliases))
-		for alias, def := range aliases {
+		vars := make([]*exprpb.Decl, 0, len(globals))
+		for alias, def := range globals {
 			vars = append(vars, decls.NewVar(alias, decls.Dyn))
 			_, issues := stdenv.Compile(def)
 			if issues != nil && issues.Err() != nil {

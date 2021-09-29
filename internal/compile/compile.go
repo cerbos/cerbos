@@ -159,13 +159,13 @@ func hydrate(unit *policy.CompilationUnit) (map[string]*ast.Module, ConditionInd
 	return modules, conditionIdx, nil
 }
 
-func hydrateGeneratedPolicy(srcFile string, gp *policyv1.GeneratedPolicy, aliases map[string]string) (*ast.Module, ConditionMap, error) {
+func hydrateGeneratedPolicy(srcFile string, gp *policyv1.GeneratedPolicy, globals map[string]string) (*ast.Module, ConditionMap, error) {
 	m, err := ast.ParseModule(srcFile, string(gp.Code))
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to parse generated code: %w", err)
 	}
 
-	cm, err := NewConditionMapFromRepr(gp.CelConditions, aliases)
+	cm, err := NewConditionMapFromRepr(gp.CelConditions, globals)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -174,11 +174,11 @@ func hydrateGeneratedPolicy(srcFile string, gp *policyv1.GeneratedPolicy, aliase
 }
 
 func getPolicyAliases(p *policyv1.Policy) map[string]string {
-	var aliases map[string]string
+	var globals map[string]string
 	if rp, ok := p.PolicyType.(*policyv1.Policy_ResourcePolicy); ok {
-		aliases = rp.ResourcePolicy.Aliases
+		globals = rp.ResourcePolicy.Aliases
 	}
-	return aliases
+	return globals
 }
 
 func generateCode(srcFile string, p *policyv1.Policy) (*ast.Module, ConditionMap, error) {
