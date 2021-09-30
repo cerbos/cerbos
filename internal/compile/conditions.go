@@ -6,6 +6,7 @@ package compile
 import (
 	"errors"
 	"fmt"
+
 	"github.com/google/cel-go/cel"
 	"github.com/google/cel-go/common/types/ref"
 	"go.uber.org/zap"
@@ -110,32 +111,9 @@ func (ce *CELConditionEvaluator) Eval(input interface{}) (bool, error) {
 
 	prg := ce.prg
 	if ce.globals != nil {
-		// Calculate globals values using std vars
-		// then add calculated values to std vars and calculate expression
-		values := make(map[string]ref.Val, len(ce.globals))
-		stdenv, err := cel.NewEnv(codegen.NewCELEnvOptions()...)
+		values, err := ce.evaluateGlobals(stdvars)
 		if err != nil {
 			return false, err
-		}
-		for name, def := range ce.globals {
-			//TODO: Should we analyse condition expression to see if we even need to evaluate this def?
-			ast, issues := stdenv.Compile(def)
-			if issues != nil && issues.Err() != nil {
-				celLog.Warn("Global variable compilation failed", zap.Error(err))
-				return false, issues.Err()
-			}
-			prg, err := stdenv.Program(ast)
-			if err != nil {
-				celLog.Warn("Global variable AST generation failed", zap.Error(err))
-				return false, err
-			}
-			var val ref.Val
-			val, _, err = prg.Eval(stdvars)
-			if err != nil {
-				celLog.Warn("Global variable evaluation failed", zap.String(codegen.CELGlobalsIdent, name), zap.Error(err))
-			} else {
-				values[name] = val
-			}
 		}
 		stdvars[codegen.CELGlobalsIdent] = values
 
@@ -163,6 +141,38 @@ func (ce *CELConditionEvaluator) Eval(input interface{}) (bool, error) {
 
 	celLog.Debug("Condition result", zap.Bool("result", v))
 	return v, nil
+}
+
+// evaluateGlobals evaluates global values using std vars
+// then add calculated values to std vars and calculate expression.
+func (ce *CELConditionEvaluator) evaluateGlobals(stdvars map[string]interface{}) (map[string]ref.Val, error) {
+	values := make(map[string]ref.Val, len(ce.globals))
+	stdenv, err := cel.NewEnv(codegen.NewCELEnvOptions()...)
+	if err != nil {
+		return nil, err
+	}
+	for name, def := range ce.globals {
+		// TODO: Should we analyse condition expression to see if we even need to evaluate this def?
+		ast, issues := stdenv.Compile(def)
+		if issues != nil && issues.Err() != nil {
+			celLog.Warn("Global variable compilation failed", zap.Error(err))
+			return nil, issues.Err()
+		}
+		prg, err := stdenv.Program(ast)
+		if err != nil {
+			celLog.Warn("Global variable AST generation failed", zap.String(codegen.CELGlobalsIdent, name), zap.Error(err))
+			return nil, err
+		}
+		var val ref.Val
+		val, _, err = prg.Eval(stdvars)
+		if err != nil {
+			celLog.Warn("Global variable evaluation failed", zap.String(codegen.CELGlobalsIdent, name), zap.Error(err))
+		} else {
+			values[name] = val
+		}
+	}
+
+	return values, nil
 }
 
 type ConditionIndex map[namer.ModuleID]ConditionMap
