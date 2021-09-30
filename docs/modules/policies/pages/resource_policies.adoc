@@ -39,3 +39,34 @@ resourcePolicy:
 <6> Rules can also refer directly to static roles.
 <7> Optional name for the rule.
 
+== Another example
+[source,yaml,linenums]
+----
+---
+apiVersion: api.cerbos.dev/v1
+resourcePolicy:
+  importDerivedRoles:
+  - my_derived_roles
+  resource: leave_request
+  globals: <1>
+    pending_approval: ("PENDING_APPROVAL")
+    principal_location: |-
+      (P.attr.ip_address.inIPAddrRange("10.20.0.0/16") ? "GB" : "")
+  rules:
+  - actions: ["approve"]
+    condition:
+      match:
+        expr: request.resource.attr.status == globals.pending_approval
+    derivedRoles:
+      - direct_manager
+    effect: EFFECT_ALLOW
+  - actions: ["delete"]
+    condition:
+      match:
+        expr: request.resource.attr.geography == globals.principal_location
+    derivedRoles:
+    - direct_manager
+    effect: EFFECT_ALLOW
+----
+<1> This resource policy includes global variables section. Each variable is evaluated before evaluating any rule condition.
+A variable expression can contain anything that condition expression can have.
