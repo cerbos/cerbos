@@ -4,7 +4,9 @@ inputPolicy:
   resourcePolicy:
     version: "20210210"
     importDerivedRoles:
-      - my_derived_roles
+      - alpha
+      - beta
+      - gamma
     resource: "hr:leave_request"
     rules:
       - actions: ['*']
@@ -49,7 +51,7 @@ inputPolicy:
 wantRego: |-
   package cerbos.resource.hr_leave_request.v20210210
 
-  cerbos_derived_roles = data.cerbos.derived_roles.my_derived_roles.cerbos_derived_roles
+  cerbos_derived_roles = object.union(data.cerbos.derived_roles.alpha.cerbos_derived_roles, object.union(data.cerbos.derived_roles.beta.cerbos_derived_roles, data.cerbos.derived_roles.gamma.cerbos_derived_roles))
 
   cerbos_effect_for(cerbos_action) = "allow" {
       glob.match("*", [], cerbos_action)
