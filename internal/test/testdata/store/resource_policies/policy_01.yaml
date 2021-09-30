@@ -2,7 +2,8 @@
 apiVersion: api.cerbos.dev/v1
 resourcePolicy:
   importDerivedRoles:
-  - my_derived_roles
+  - alpha
+  - beta
   resource: leave_request
   rules:
   - actions: ['*']

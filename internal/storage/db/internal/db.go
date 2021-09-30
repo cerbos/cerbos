@@ -91,13 +91,15 @@ func (s *dbStorage) AddOrUpdate(ctx context.Context, policies ...policy.Wrapper)
 				}
 
 				// insert the new dependency records
-				depInsert := tx.Insert(PolicyDepTbl).Prepared(true)
-
-				for _, d := range p.Dependencies {
-					depInsert = depInsert.Rows(PolicyDependency{PolicyID: p.ID, DependencyID: d})
+				depRows := make([]interface{}, len(p.Dependencies))
+				for i, d := range p.Dependencies {
+					depRows[i] = PolicyDependency{PolicyID: p.ID, DependencyID: d}
 				}
 
-				if _, err := depInsert.Executor().ExecContext(ctx); err != nil {
+				if _, err := tx.Insert(PolicyDepTbl).
+					Prepared(true).
+					Rows(depRows...).
+					Executor().ExecContext(ctx); err != nil {
 					return fmt.Errorf("failed to insert dependencies of %s: %w", p.FQN, err)
 				}
 			}
