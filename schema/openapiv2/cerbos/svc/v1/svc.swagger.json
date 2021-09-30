@@ -1340,6 +1340,12 @@
         },
         "derivedRoles": {
           "$ref": "#/definitions/v1DerivedRoles"
+        },
+        "globals": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
         }
       }
     },
@@ -1508,12 +1514,6 @@
           "type": "array",
           "items": {
             "$ref": "#/definitions/v1ResourceRule"
-          }
-        },
-        "globals": {
-          "type": "object",
-          "additionalProperties": {
-            "type": "string"
           }
         }
       }

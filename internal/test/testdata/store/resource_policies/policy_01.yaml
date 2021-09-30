@@ -1,14 +1,14 @@
 ---
 apiVersion: api.cerbos.dev/v1
+globals:
+  pending_approval: ("PENDING_APPROVAL")
+  principal_location: |-
+    (P.attr.ip_address.inIPAddrRange("10.20.0.0/16") ? "GB" : "")
 resourcePolicy:
   importDerivedRoles:
   - alpha
   - beta
   resource: leave_request
-  globals:
-    pending_approval: ("PENDING_APPROVAL")
-    principal_location: |-
-      (P.attr.ip_address.inIPAddrRange("10.20.0.0/16") ? "GB" : "")
   rules:
   - actions: ['*']
     effect: EFFECT_ALLOW

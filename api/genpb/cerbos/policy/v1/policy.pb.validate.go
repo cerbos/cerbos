@@ -67,6 +67,8 @@ func (m *Policy) Validate() error {
 		}
 	}
 
+	// no validation rules for Globals
+
 	switch m.PolicyType.(type) {
 
 	case *Policy_ResourcePolicy:
@@ -311,8 +313,6 @@ func (m *ResourcePolicy) Validate() error {
 		}
 
 	}
-
-	// no validation rules for Globals
 
 	return nil
 }

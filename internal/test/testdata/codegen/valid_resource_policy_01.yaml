@@ -1,13 +1,13 @@
 ---
 inputPolicy:
   apiVersion: api.cerbos.dev/v1
+  globals:
+    status: ("PENDING_APPROVAL")
   resourcePolicy:
     version: "20210210"
     importDerivedRoles:
-      - my_derived_roles
+        - my_derived_roles
     resource: "hr:leave_request"
-    globals:
-      status: ("PENDING_APPROVAL")
     rules:
       - actions: ['*']
         effect: EFFECT_ALLOW
