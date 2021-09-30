@@ -411,7 +411,9 @@ func (er *evaluationResult) merge(res *EvalResult) bool {
 	}
 
 	if len(res.EffectiveDerivedRoles) > 0 {
-		er.effectiveDerivedRoles = append(er.effectiveDerivedRoles, res.EffectiveDerivedRoles...)
+		for edr := range res.EffectiveDerivedRoles {
+			er.effectiveDerivedRoles = append(er.effectiveDerivedRoles, edr)
+		}
 	}
 
 	for action, effect := range res.Effects {

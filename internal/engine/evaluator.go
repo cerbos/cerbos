@@ -7,7 +7,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"strings"
 
 	"go.uber.org/zap"
 	exprpb "google.golang.org/genproto/googleapis/api/expr/v1alpha1"
@@ -17,6 +16,7 @@ import (
 	enginev1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
 	runtimev1 "github.com/cerbos/cerbos/api/genpb/cerbos/runtime/v1"
 	"github.com/cerbos/cerbos/internal/codegen"
+	"github.com/cerbos/cerbos/internal/namer"
 	"github.com/cerbos/cerbos/internal/observability/logging"
 )
 
@@ -28,7 +28,40 @@ var (
 type EvalResult struct {
 	PolicyKey             string
 	Effects               map[string]effectv1.Effect
-	EffectiveDerivedRoles []string
+	EffectiveDerivedRoles map[string]struct{}
+}
+
+func newEvalResult(policyKey string, actions []string) *EvalResult {
+	return &EvalResult{
+		PolicyKey: policyKey,
+		Effects:   make(map[string]effectv1.Effect, len(actions)),
+	}
+}
+
+// setEffect sets the effect for an action. DENY always takes precedence.
+func (er *EvalResult) setEffect(action string, effect effectv1.Effect) {
+	if effect == effectv1.Effect_EFFECT_DENY {
+		er.Effects[action] = effect
+		return
+	}
+
+	current, ok := er.Effects[action]
+	if !ok {
+		er.Effects[action] = effect
+		return
+	}
+
+	if current != effectv1.Effect_EFFECT_DENY {
+		er.Effects[action] = effect
+	}
+}
+
+func (er *EvalResult) setDefaultEffect(actions []string, effect effectv1.Effect) {
+	for _, a := range actions {
+		if _, ok := er.Effects[a]; !ok {
+			er.Effects[a] = effect
+		}
+	}
 }
 
 type evalOptions struct{}
@@ -62,13 +95,7 @@ type resourcePolicyEvaluator struct {
 
 func (rpe *resourcePolicyEvaluator) Evaluate(ctx context.Context, input *enginev1.CheckInput, options ...EvalOpt) (*EvalResult, error) {
 	logger := logging.FromContext(ctx).Named("evaluator").With(zap.String("policy", rpe.policy.Meta.Fqn))
-
-	result := EvalResult{
-		PolicyKey: strings.TrimPrefix(rpe.policy.Meta.Fqn, "cerbos."),
-		Effects:   make(map[string]effectv1.Effect, len(input.Actions)),
-	}
-
-	actionsToCheck := toSet(input.Actions)
+	result := newEvalResult(namer.PolicyKeyFromModuleName(rpe.policy.Meta.Fqn), input.Actions)
 	effectiveRoles := toSet(input.Principal.Roles)
 
 	for _, p := range rpe.policy.Policies {
@@ -83,49 +110,44 @@ func (rpe *resourcePolicyEvaluator) Evaluate(ctx context.Context, input *enginev
 
 			ok, err := satisfiesCondition(dr.Condition, input)
 			if err != nil {
-				log.Error("Failed to evaluate condition of derived role", zap.String("derived_role", drName), zap.Error(err))
-				return nil, fmt.Errorf("failed to check condition of derived role '%s': %w", drName, err)
+				log.Debug("Failed to evaluate condition of derived role", zap.String("derived_role", drName), zap.Error(err))
+				continue
 			}
 
 			if ok {
 				effectiveDerivedRoles[drName] = struct{}{}
-				result.EffectiveDerivedRoles = append(result.EffectiveDerivedRoles, drName)
 			}
 		}
+
+		result.EffectiveDerivedRoles = effectiveDerivedRoles
 
 		// evaluate each rule until all actions have a result
 		for _, rule := range p.Rules {
-			matchingActions := globSetIntersection(rule.Actions, actionsToCheck)
-			for action := range matchingActions {
-				if !setIntersects(rule.Roles, effectiveRoles) && !setIntersects(rule.DerivedRoles, effectiveDerivedRoles) {
-					continue
-				}
-
-				ok, err := satisfiesCondition(rule.Condition, input)
-				if err != nil {
-					log.Error("Failed to evaluate condition of rule", zap.String("rule", rule.Name), zap.Error(err))
-					return nil, fmt.Errorf("failed to check condition of rule '%s': %w", rule.Name, err)
-				}
-
-				if ok {
-					log.Debug("Resolved effect for action", zap.String("rule", rule.Name), zap.String("action", action), zap.Stringer("effect", rule.Effect))
-					result.Effects[action] = rule.Effect
-					delete(actionsToCheck, action)
-				}
+			if !setIntersects(rule.Roles, effectiveRoles) && !setIntersects(rule.DerivedRoles, effectiveDerivedRoles) {
+				continue
 			}
 
-			if len(actionsToCheck) == 0 {
-				return &result, nil
+			for actionGlob := range rule.Actions {
+				matchedActions := globMatch(actionGlob, input.Actions)
+				for _, action := range matchedActions {
+					ok, err := satisfiesCondition(rule.Condition, input)
+					if err != nil {
+						log.Debug("Failed to evaluate condition of rule", zap.String("rule", rule.Name), zap.Error(err))
+						continue
+					}
+
+					if ok {
+						result.setEffect(action, rule.Effect)
+					}
+				}
 			}
 		}
 	}
 
-	for action := range actionsToCheck {
-		logger.Debug("Setting default deny effect for action", zap.String("action", action))
-		result.Effects[action] = effectv1.Effect_EFFECT_DENY
-	}
+	// set the default effect for actions that were not matched
+	result.setDefaultEffect(input.Actions, effectv1.Effect_EFFECT_DENY)
 
-	return &result, nil
+	return result, nil
 }
 
 type principalPolicyEvaluator struct {
@@ -134,68 +156,35 @@ type principalPolicyEvaluator struct {
 
 func (ppe *principalPolicyEvaluator) Evaluate(ctx context.Context, input *enginev1.CheckInput, options ...EvalOpt) (*EvalResult, error) {
 	logger := logging.FromContext(ctx).Named("evaluator").With(zap.String("policy", ppe.policy.Meta.Fqn))
-
-	result := EvalResult{
-		PolicyKey: strings.TrimPrefix(ppe.policy.Meta.Fqn, "cerbos."),
-		Effects:   make(map[string]effectv1.Effect, len(input.Actions)),
-	}
-
-	actionsToCheck := toSet(input.Actions)
+	result := newEvalResult(namer.PolicyKeyFromModuleName(ppe.policy.Meta.Fqn), input.Actions)
 
 	for _, p := range ppe.policy.Policies {
-		rules, ok := p.ResourceRules[input.Resource.Kind]
-		if !ok {
-			for resource, resourceRules := range p.ResourceRules {
-				if globs.matches(resource, input.Resource.Kind) {
-					rules = resourceRules
-					break
-				}
-			}
-
-			if rules == nil {
-				continue
-			}
-		}
-
-		log := logger.With(zap.Strings("scope", p.Scope))
-
-		for actionGlob, rule := range rules.ActionRules {
-			var action string
-			for a := range actionsToCheck {
-				if globs.matches(actionGlob, a) {
-					action = a
-					break
-				}
-			}
-
-			if action == "" {
+		for resource, resourceRules := range p.ResourceRules {
+			if !globs.matches(resource, input.Resource.Kind) {
 				continue
 			}
 
-			ok, err := satisfiesCondition(rule.Condition, input)
-			if err != nil {
-				log.Error("Failed to evaluate condition of rule", zap.String("rule", rule.Name), zap.Error(err))
-				return nil, fmt.Errorf("failed to check condition of rule '%s': %w", rule.Name, err)
-			}
+			log := logger.With(zap.Strings("scope", p.Scope), zap.String("resource_rule", resource))
 
-			if ok {
-				log.Debug("Resolved effect for action", zap.String("rule", rule.Name), zap.String("action", action), zap.Stringer("effect", rule.Effect))
-				result.Effects[action] = rule.Effect
-				delete(actionsToCheck, action)
-			}
+			for actionGlob, rule := range resourceRules.ActionRules {
+				matchedActions := globMatch(actionGlob, input.Actions)
+				for _, action := range matchedActions {
+					ok, err := satisfiesCondition(rule.Condition, input)
+					if err != nil {
+						log.Debug("Failed to evaluate condition of rule", zap.String("rule", rule.Name), zap.Error(err))
+						continue
+					}
 
-			if len(actionsToCheck) == 0 {
-				return &result, nil
+					if ok {
+						result.Effects[action] = rule.Effect
+					}
+				}
 			}
 		}
 	}
 
-	for action := range actionsToCheck {
-		logger.Debug("Setting default no_match effect for action", zap.String("action", action))
-		result.Effects[action] = effectv1.Effect_EFFECT_NO_MATCH
-	}
-
-	return &result, nil
+	result.setDefaultEffect(input.Actions, effectv1.Effect_EFFECT_NO_MATCH)
+	return result, nil
 }
 
 func satisfiesCondition(cond *exprpb.CheckedExpr, input *enginev1.CheckInput) (bool, error) {
@@ -254,20 +243,6 @@ func setIntersection(s1 protoSet, s2 stringSet) stringSet {
 	return r
 }
 
-func globSetIntersection(s1 protoSet, s2 stringSet) stringSet {
-	r := stringSet{}
-
-	for v1 := range s1 {
-		for v2 := range s2 {
-			if globs.matches(v1, v2) {
-				r[v2] = struct{}{}
-			}
-		}
-	}
-
-	return r
-}
-
 func setIntersects(s1 protoSet, s2 stringSet) bool {
 	for v := range s2 {
 		if _, ok := s1[v]; ok {
@@ -278,14 +253,20 @@ func setIntersects(s1 protoSet, s2 stringSet) bool {
 	return false
 }
 
-func globSetIntersects(s1 protoSet, s2 stringSet) bool {
-	for v1 := range s1 {
-		for v2 := range s2 {
-			if globs.matches(v1, v2) {
-				return true
-			}
+func globMatch(g string, values []string) []string {
+	globExp := g
+	// for backward compatibility, consider single * as **
+	if globExp == "*" {
+		globExp = "**"
+	}
+
+	var out []string
+
+	for _, v := range values {
+		if globs.matches(globExp, v) {
+			out = append(out, v)
 		}
 	}
 
-	return false
+	return out
 }

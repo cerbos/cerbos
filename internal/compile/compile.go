@@ -259,6 +259,13 @@ func compileResourceRule(modCtx *moduleCtx, rule *policyv1.ResourceRule) *runtim
 		}
 	}
 
+	if len(rule.Actions) > 0 {
+		cr.Actions = make(map[string]*emptypb.Empty, len(rule.Actions))
+		for _, a := range rule.Actions {
+			cr.Actions[a] = emptyVal
+		}
+	}
+
 	return cr
 }
 
