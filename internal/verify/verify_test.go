@@ -319,8 +319,8 @@ func Test_doVerify(t *testing.T) {
 	t.Run("Simple test", func(t *testing.T) {
 		fsys := make(fstest.MapFS)
 		ts := genTable(t, false, false)
-		fsys[filepath.Join(TestDataDirectory, ResourcesFileName)+".yaml"] = newMapFile(resources)
-		fsys[filepath.Join(TestDataDirectory, PrincipalsFileName)+".yaml"] = newMapFile(principals)
+		fsys[filepath.Join(util.TestDataDirectory, ResourcesFileName)+".yaml"] = newMapFile(resources)
+		fsys[filepath.Join(util.TestDataDirectory, PrincipalsFileName)+".yaml"] = newMapFile(principals)
 		fsys["leave_request_test.yaml"] = newMapFile(ts)
 
 		result, err := doVerify(context.Background(), fsys, eng, Config{})
