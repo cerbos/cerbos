@@ -6,9 +6,8 @@ package compile
 import (
 	"errors"
 	"fmt"
-
 	"github.com/google/cel-go/cel"
-	"github.com/google/cel-go/checker/decls"
+	"github.com/google/cel-go/common/types/ref"
 	"go.uber.org/zap"
 	exprpb "google.golang.org/genproto/googleapis/api/expr/v1alpha1"
 
@@ -113,29 +112,34 @@ func (ce *CELConditionEvaluator) Eval(input interface{}) (bool, error) {
 	if ce.globals != nil {
 		// Calculate globals values using std vars
 		// then add calculated values to std vars and calculate expression
-		globals := ce.globals
-		vals := make(map[string]interface{}, len(globals))
-		stdenv, _ := cel.NewEnv(codegen.NewCELEnvOptions()...)
-		vars := make([]*exprpb.Decl, 0, len(globals))
-		for alias, def := range globals {
-			vars = append(vars, decls.NewVar(alias, decls.Dyn))
+		values := make(map[string]ref.Val, len(ce.globals))
+		stdenv, err := cel.NewEnv(codegen.NewCELEnvOptions()...)
+		if err != nil {
+			return false, err
+		}
+		for name, def := range ce.globals {
+			//TODO: Should we analyse condition expression to see if we even need to evaluate this def?
 			ast, issues := stdenv.Compile(def)
 			if issues != nil && issues.Err() != nil {
+				celLog.Warn("Global variable compilation failed", zap.Error(err))
 				return false, issues.Err()
 			}
 			prg, err := stdenv.Program(ast)
 			if err != nil {
+				celLog.Warn("Global variable AST generation failed", zap.Error(err))
 				return false, err
 			}
-			vals[alias], _, _ = prg.Eval(stdvars)
+			var val ref.Val
+			val, _, err = prg.Eval(stdvars)
+			if err != nil {
+				celLog.Warn("Global variable evaluation failed", zap.String(codegen.CELGlobalsIdent, name), zap.Error(err))
+			} else {
+				values[name] = val
+			}
 		}
+		stdvars[codegen.CELGlobalsIdent] = values
 
-		for k, v := range vals {
-			stdvars[k] = v
-		}
-
-		var err error
-		prg, err = ce.c.ProgramWithVars(vars)
+		prg, err = ce.c.Program(codegen.GlobalsDeclaration)
 		if err != nil {
 			return false, err
 		}

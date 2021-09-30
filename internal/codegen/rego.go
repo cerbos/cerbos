@@ -312,7 +312,7 @@ func (rg *RegoGen) addScript(parent, script string) error {
 }
 
 func (rg *RegoGen) addMatch(parent string, m *policyv1.Match) error {
-	cond, err := GenerateCELCondition(parent, m, rg.globals)
+	cond, err := GenerateCELCondition(parent, m)
 	if err != nil {
 		return err
 	}

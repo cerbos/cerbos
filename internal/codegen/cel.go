@@ -19,9 +19,12 @@ const (
 	CELRequestIdent    = "request"
 	CELResourceAbbrev  = "R"
 	CELPrincipalAbbrev = "P"
+	CELGlobalsIdent    = "globals"
 )
 
 var celHelper *CELHelper
+
+var GlobalsDeclaration = decls.NewVar(CELGlobalsIdent, decls.NewMapType(decls.String, decls.Dyn))
 
 func init() {
 	ch, err := NewCELHelper()
@@ -32,8 +35,8 @@ func init() {
 	celHelper = ch
 }
 
-func GenerateCELCondition(parent string, m *policyv1.Match, globals map[string]string) (*CELCondition, error) {
-	return celHelper.GenerateCELCondition(parent, m, globals)
+func GenerateCELCondition(parent string, m *policyv1.Match) (*CELCondition, error) {
+	return celHelper.GenerateCELCondition(parent, m)
 }
 
 func CELConditionFromCheckedExpr(expr *exprpb.CheckedExpr) *CELCondition {
@@ -53,31 +56,12 @@ func NewCELHelper() (*CELHelper, error) {
 	return &CELHelper{env: env}, nil
 }
 
-func (ch *CELHelper) GenerateCELCondition(parent string, m *policyv1.Match, globals map[string]string) (*CELCondition, error) {
+func (ch *CELHelper) GenerateCELCondition(parent string, m *policyv1.Match) (*CELCondition, error) {
 	celExpr, err := generateMatchCode(m)
 	if err != nil {
 		return nil, err
 	}
-
-	env := ch.env
-	if len(globals) > 0 {
-		stdenv := env
-		vars := make([]*exprpb.Decl, 0, len(globals))
-		for alias, def := range globals {
-			vars = append(vars, decls.NewVar(alias, decls.Dyn))
-			_, issues := stdenv.Compile(def)
-			if issues != nil && issues.Err() != nil {
-				return nil, &CELCompileError{Parent: parent, Issues: issues}
-			}
-		}
-		opts := append([]cel.EnvOption{cel.Declarations(vars...)}, NewCELEnvOptions()...)
-		env, err = cel.NewEnv(opts...)
-		if err != nil {
-		    return nil, err
-		}
-	}
-
-	celAST, issues := env.Compile(celExpr)
+	celAST, issues := ch.env.Compile(celExpr)
 	if issues != nil && issues.Err() != nil {
 		return nil, &CELCompileError{Parent: parent, Issues: issues}
 	}
@@ -97,17 +81,16 @@ type CELCondition struct {
 	ast *cel.Ast
 }
 
-func (cc *CELCondition) ProgramWithVars(vars []*exprpb.Decl) (cel.Program, error) {
+func (cc *CELCondition) Program(vars ...*exprpb.Decl) (cel.Program, error) {
+	if len(vars) == 0 {
+		return cc.env.Program(cc.ast)
+	}
 	opts := append([]cel.EnvOption{cel.Declarations(vars...)}, NewCELEnvOptions()...)
 	env, err := cel.NewEnv(opts...)
 	if err != nil {
 		return nil, err
 	}
 	return env.Program(cc.ast)
-}
-
-func (cc *CELCondition) Program() (cel.Program, error) {
-	return cc.env.Program(cc.ast)
 }
 
 func (cc *CELCondition) CheckedExpr() (*exprpb.CheckedExpr, error) {
@@ -121,6 +104,7 @@ func NewCELEnvOptions() []cel.EnvOption {
 			decls.NewVar(CELRequestIdent, decls.NewMapType(decls.String, decls.Dyn)),
 			decls.NewVar(CELResourceAbbrev, decls.NewMapType(decls.String, decls.Dyn)),
 			decls.NewVar(CELPrincipalAbbrev, decls.NewMapType(decls.String, decls.Dyn)),
+			GlobalsDeclaration,
 		),
 		ext.Strings(),
 		ext.Encoders(),

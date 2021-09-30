@@ -32,14 +32,14 @@ resourcePolicy:
   - actions: ["approve"]
     condition:
       match:
-        expr: request.resource.attr.status == pending_approval
+        expr: request.resource.attr.status == globals.pending_approval
     derivedRoles:
       - direct_manager
     effect: EFFECT_ALLOW
   - actions: ["delete"]
     condition:
       match:
-        expr: request.resource.attr.geography == principal_location
+        expr: request.resource.attr.geography == globals.principal_location
     derivedRoles:
     - direct_manager
     effect: EFFECT_ALLOW

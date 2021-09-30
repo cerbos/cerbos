@@ -42,7 +42,7 @@ inputPolicy:
           match:
             all:
               of:
-                - expr: request.resource.attr.status == status
+                - expr: request.resource.attr.status == globals.status
                 - expr: |-
                     "test" in request.resource.attr.geographies
         derivedRoles:
