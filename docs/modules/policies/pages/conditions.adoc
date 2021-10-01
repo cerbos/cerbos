@@ -99,7 +99,9 @@ condition:
         !(R.attr.qa == true || R.attr.canary == true))
 ----
 
-
+== Globals
+If your policy repeats the same expression in multiple conditions, you can declare it in the globals section of a policy and refer in the conditions to avoid a repeat.
+Please refer to xref:principal_policies.adoc[Principal policies] for a complete example.
 
 == Operators
 
