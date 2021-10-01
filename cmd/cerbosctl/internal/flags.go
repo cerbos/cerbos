@@ -220,6 +220,11 @@ func GenListPoliciesFilterOptions(lpfd *ListPoliciesFilterDef) ([]client.ListOpt
 }
 
 func getSortingOption(sortBy string, desc bool) (client.ListOpt, error) {
+	sortFn := client.SortAscending
+	if desc {
+		sortFn = client.SortDescending
+	}
+
 	var t client.ListPoliciesSortingType
 	switch target := strings.ToLower(sortBy); target {
 	case "name":
@@ -230,5 +235,5 @@ func getSortingOption(sortBy string, desc bool) (client.ListOpt, error) {
 		return nil, fmt.Errorf("invalid sorting target: %s", sortBy)
 	}
 
-	return client.Sort(t, desc), nil
+	return sortFn(t), nil
 }

@@ -118,7 +118,12 @@ func (s nameOrder) Len() int { return len(s) }
 func (s nameOrder) Swap(i, j int) { s[i], s[j] = s[j], s[i] }
 
 func (s nameOrder) Less(i, j int) bool {
-	return getPolicyName(s[i]) < getPolicyName(s[j])
+	in, jn := getPolicyName(s[i]), getPolicyName(s[j])
+	if in == jn {
+		return getPolicyVersion(s[i]) < getPolicyVersion(s[j])
+	}
+
+	return in < jn
 }
 
 type versionOrder []*policyv1.Policy
@@ -128,7 +133,12 @@ func (s versionOrder) Len() int { return len(s) }
 func (s versionOrder) Swap(i, j int) { s[i], s[j] = s[j], s[i] }
 
 func (s versionOrder) Less(i, j int) bool {
-	return getPolicyVersion(s[i]) < getPolicyVersion(s[j])
+	iv, jv := getPolicyVersion(s[i]), getPolicyVersion(s[j])
+	if iv == jv {
+		return getPolicyName(s[i]) < getPolicyName(s[j])
+	}
+
+	return iv < jv
 }
 
 func getPolicyName(p *policyv1.Policy) string {
