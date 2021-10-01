@@ -147,18 +147,14 @@ func (ce *CELConditionEvaluator) Eval(input interface{}) (bool, error) {
 // then add calculated values to std vars and calculate expression.
 func (ce *CELConditionEvaluator) evaluateGlobals(stdvars map[string]interface{}) (map[string]ref.Val, error) {
 	values := make(map[string]ref.Val, len(ce.globals))
-	stdenv, err := cel.NewEnv(codegen.NewCELEnvOptions()...)
-	if err != nil {
-		return nil, err
-	}
 	for name, def := range ce.globals {
 		// TODO: Should we analyse condition expression to see if we even need to evaluate this def?
-		ast, issues := stdenv.Compile(def)
+		ast, issues := codegen.StdEnv.Compile(def)
 		if issues != nil && issues.Err() != nil {
-			celLog.Warn("Global variable compilation failed", zap.Error(err))
+			celLog.Warn("Global variable compilation failed", zap.Error(issues.Err()))
 			return nil, issues.Err()
 		}
-		prg, err := stdenv.Program(ast)
+		prg, err := codegen.StdEnv.Program(ast)
 		if err != nil {
 			celLog.Warn("Global variable AST generation failed", zap.String(codegen.CELGlobalsIdent, name), zap.Error(err))
 			return nil, err

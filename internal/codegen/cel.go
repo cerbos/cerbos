@@ -26,10 +26,16 @@ var celHelper *CELHelper
 
 var GlobalsDeclaration = decls.NewVar(CELGlobalsIdent, decls.NewMapType(decls.String, decls.Dyn))
 
+var StdEnv *cel.Env
 func init() {
 	ch, err := NewCELHelper()
 	if err != nil {
 		panic(fmt.Errorf("failed to initialize CEL helper: %w", err))
+	}
+
+	StdEnv, err = cel.NewEnv(NewCELEnvOptions()...)
+	if err != nil {
+		panic(fmt.Errorf("failed to initialize standard CEL environment: %w", err))
 	}
 
 	celHelper = ch
@@ -85,11 +91,11 @@ func (cc *CELCondition) Program(vars ...*exprpb.Decl) (cel.Program, error) {
 	if len(vars) == 0 {
 		return cc.env.Program(cc.ast)
 	}
-	opts := append([]cel.EnvOption{cel.Declarations(vars...)}, NewCELEnvOptions()...)
-	env, err := cel.NewEnv(opts...)
+	env, err := cc.env.Extend(cel.Declarations(vars...))
 	if err != nil {
 		return nil, err
 	}
+
 	return env.Program(cc.ast)
 }
 
