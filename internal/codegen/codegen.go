@@ -14,6 +14,7 @@ import (
 	exprpb "google.golang.org/genproto/googleapis/api/expr/v1alpha1"
 
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
+	"github.com/cerbos/cerbos/internal/conditions"
 	"github.com/cerbos/cerbos/internal/namer"
 	"github.com/cerbos/cerbos/internal/policy"
 )
@@ -129,7 +130,7 @@ type Result struct {
 	ModName    string
 	ModID      namer.ModuleID
 	Module     *ast.Module
-	Conditions map[string]*CELCondition
+	Conditions map[string]*conditions.CELCondition
 }
 
 func (cgr *Result) ToRepr() (*policyv1.GeneratedPolicy, error) {
@@ -171,7 +172,7 @@ func ResultFromRepr(repr *policyv1.GeneratedPolicy) (*Result, error) {
 	r.Module = m
 
 	if len(repr.CelConditions) > 0 {
-		r.Conditions = make(map[string]*CELCondition, len(repr.CelConditions))
+		r.Conditions = make(map[string]*conditions.CELCondition, len(repr.CelConditions))
 		for k, expr := range repr.CelConditions {
 			r.Conditions[k] = CELConditionFromCheckedExpr(expr)
 		}

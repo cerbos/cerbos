@@ -1,7 +1,7 @@
 // Copyright 2021 Zenauth Ltd.
 // SPDX-License-Identifier: Apache-2.0
 
-package codegen_test
+package conditions_test
 
 import (
 	"fmt"
@@ -13,7 +13,7 @@ import (
 	"github.com/google/cel-go/cel"
 	"github.com/stretchr/testify/require"
 
-	"github.com/cerbos/cerbos/internal/codegen"
+	"github.com/cerbos/cerbos/internal/conditions"
 )
 
 func TestCerbosLib(t *testing.T) {
@@ -71,7 +71,7 @@ func TestCerbosLib(t *testing.T) {
 		{expr: `hierarchy("a.b.c").siblingOf(hierarchy("x.b.d")) == false`},
 		{expr: `hierarchy("a.b.c.d").siblingOf(hierarchy("a.b.d")) == false`},
 	}
-	env, err := cel.NewEnv(codegen.CerbosCELLib())
+	env, err := cel.NewEnv(conditions.CerbosCELLib())
 	require.NoError(t, err)
 
 	for _, tc := range testCases {
@@ -97,7 +97,7 @@ func TestCerbosLib(t *testing.T) {
 func prepareProgram(tb testing.TB, expr string) cel.Program {
 	tb.Helper()
 	is := require.New(tb)
-	env, err := cel.NewEnv(codegen.CerbosCELLib())
+	env, err := cel.NewEnv(conditions.CerbosCELLib())
 	is.NoError(err)
 	ast, issues := env.Compile(expr)
 	is.NoError(issues.Err())

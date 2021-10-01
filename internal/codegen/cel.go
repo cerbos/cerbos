@@ -8,25 +8,13 @@ import (
 	"strings"
 
 	"github.com/google/cel-go/cel"
-	"github.com/google/cel-go/checker/decls"
-	"github.com/google/cel-go/ext"
 	exprpb "google.golang.org/genproto/googleapis/api/expr/v1alpha1"
 
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
-)
-
-const (
-	CELRequestIdent    = "request"
-	CELResourceAbbrev  = "R"
-	CELPrincipalAbbrev = "P"
-	CELGlobalsIdent    = "globals"
+	"github.com/cerbos/cerbos/internal/conditions"
 )
 
 var celHelper *CELHelper
-
-var GlobalsDeclaration = decls.NewVar(CELGlobalsIdent, decls.NewMapType(decls.String, decls.Dyn))
-
-var StdEnv *cel.Env
 
 func init() {
 	ch, err := NewCELHelper()
@@ -34,19 +22,14 @@ func init() {
 		panic(fmt.Errorf("failed to initialize CEL helper: %w", err))
 	}
 
-	StdEnv, err = cel.NewEnv(NewCELEnvOptions()...)
-	if err != nil {
-		panic(fmt.Errorf("failed to initialize standard CEL environment: %w", err))
-	}
-
 	celHelper = ch
 }
 
-func GenerateCELCondition(parent string, m *policyv1.Match) (*CELCondition, error) {
+func GenerateCELCondition(parent string, m *policyv1.Match) (*conditions.CELCondition, error) {
 	return celHelper.GenerateCELCondition(parent, m)
 }
 
-func CELConditionFromCheckedExpr(expr *exprpb.CheckedExpr) *CELCondition {
+func CELConditionFromCheckedExpr(expr *exprpb.CheckedExpr) *conditions.CELCondition {
 	return celHelper.CELConditionFromCheckedExpr(expr)
 }
 
@@ -55,7 +38,7 @@ type CELHelper struct {
 }
 
 func NewCELHelper() (*CELHelper, error) {
-	env, err := cel.NewEnv(NewCELEnvOptions()...)
+	env, err := conditions.NewCELEnv()
 	if err != nil {
 		return nil, err
 	}
@@ -63,7 +46,7 @@ func NewCELHelper() (*CELHelper, error) {
 	return &CELHelper{env: env}, nil
 }
 
-func (ch *CELHelper) GenerateCELCondition(parent string, m *policyv1.Match) (*CELCondition, error) {
+func (ch *CELHelper) GenerateCELCondition(parent string, m *policyv1.Match) (*conditions.CELCondition, error) {
 	celExpr, err := generateMatchCode(m)
 	if err != nil {
 		return nil, err
@@ -73,50 +56,11 @@ func (ch *CELHelper) GenerateCELCondition(parent string, m *policyv1.Match) (*CE
 		return nil, &CELCompileError{Parent: parent, Issues: issues}
 	}
 
-	return &CELCondition{env: ch.env, ast: celAST}, nil
+	return conditions.NewCELCondition(ch.env, celAST), nil
 }
 
-func (ch *CELHelper) CELConditionFromCheckedExpr(expr *exprpb.CheckedExpr) *CELCondition {
-	return &CELCondition{
-		env: ch.env,
-		ast: cel.CheckedExprToAst(expr),
-	}
-}
-
-type CELCondition struct {
-	env *cel.Env
-	ast *cel.Ast
-}
-
-func (cc *CELCondition) Program(vars ...*exprpb.Decl) (cel.Program, error) {
-	if len(vars) == 0 {
-		return cc.env.Program(cc.ast)
-	}
-	env, err := cc.env.Extend(cel.Declarations(vars...))
-	if err != nil {
-		return nil, err
-	}
-
-	return env.Program(cc.ast)
-}
-
-func (cc *CELCondition) CheckedExpr() (*exprpb.CheckedExpr, error) {
-	return cel.AstToCheckedExpr(cc.ast)
-}
-
-func NewCELEnvOptions() []cel.EnvOption {
-	return []cel.EnvOption{
-		cel.CustomTypeAdapter(NewCustomCELTypeAdapter()),
-		cel.Declarations(
-			decls.NewVar(CELRequestIdent, decls.NewMapType(decls.String, decls.Dyn)),
-			decls.NewVar(CELResourceAbbrev, decls.NewMapType(decls.String, decls.Dyn)),
-			decls.NewVar(CELPrincipalAbbrev, decls.NewMapType(decls.String, decls.Dyn)),
-			GlobalsDeclaration,
-		),
-		ext.Strings(),
-		ext.Encoders(),
-		CerbosCELLib(),
-	}
+func (ch *CELHelper) CELConditionFromCheckedExpr(expr *exprpb.CheckedExpr) *conditions.CELCondition {
+	return conditions.NewCELCondition(ch.env, cel.CheckedExprToAst(expr))
 }
 
 func generateMatchCode(m *policyv1.Match) (string, error) {

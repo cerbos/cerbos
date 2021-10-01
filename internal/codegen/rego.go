@@ -13,6 +13,7 @@ import (
 
 	effectv1 "github.com/cerbos/cerbos/api/genpb/cerbos/effect/v1"
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
+	"github.com/cerbos/cerbos/internal/conditions"
 	"github.com/cerbos/cerbos/internal/namer"
 )
 
@@ -59,7 +60,7 @@ type RegoGen struct {
 	packageName string
 	*strings.Builder
 	condCount  uint
-	conditions map[string]*CELCondition
+	conditions map[string]*conditions.CELCondition
 	globals    map[string]string // CEL variables
 }
 
@@ -321,7 +322,7 @@ func (rg *RegoGen) addMatch(parent string, m *policyv1.Match) error {
 	rg.condCount++
 
 	if rg.conditions == nil {
-		rg.conditions = make(map[string]*CELCondition)
+		rg.conditions = make(map[string]*conditions.CELCondition)
 	}
 
 	rg.conditions[conditionKey] = cond
