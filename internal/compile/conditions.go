@@ -8,6 +8,7 @@ import (
 	"fmt"
 
 	"github.com/google/cel-go/cel"
+	"github.com/google/cel-go/common/types/ref"
 	"go.uber.org/zap"
 	exprpb "google.golang.org/genproto/googleapis/api/expr/v1alpha1"
 
@@ -26,25 +27,26 @@ var (
 
 type ConditionMap map[string]ConditionEvaluator
 
-func NewConditionMapFromRepr(conds map[string]*exprpb.CheckedExpr) (ConditionMap, error) {
+func NewConditionMapFromRepr(conds map[string]*exprpb.CheckedExpr, globals map[string]string) (ConditionMap, error) {
 	if len(conds) == 0 {
 		return nil, nil
 	}
 
 	cm := make(ConditionMap, len(conds))
 	for k, expr := range conds {
-		celPrg, err := codegen.CELConditionFromCheckedExpr(expr).Program()
+		c := codegen.CELConditionFromCheckedExpr(expr)
+		celPrg, err := c.Program()
 		if err != nil {
 			return nil, fmt.Errorf("failed to hydrate CEL program [%s]:%w", k, err)
 		}
 
-		cm[k] = &CELConditionEvaluator{prg: celPrg}
+		cm[k] = &CELConditionEvaluator{prg: celPrg, globals: globals, c: c}
 	}
 
 	return cm, nil
 }
 
-func NewConditionMap(conds map[string]*codegen.CELCondition) (ConditionMap, error) {
+func NewConditionMap(conds map[string]*codegen.CELCondition, globals map[string]string) (ConditionMap, error) {
 	cm := make(ConditionMap, len(conds))
 	for k, c := range conds {
 		p, err := c.Program()
@@ -52,7 +54,7 @@ func NewConditionMap(conds map[string]*codegen.CELCondition) (ConditionMap, erro
 			return nil, fmt.Errorf("failed to generate CEL program for %s: %w", k, err)
 		}
 
-		cm[k] = &CELConditionEvaluator{prg: p}
+		cm[k] = &CELConditionEvaluator{prg: p, globals: globals, c: c}
 	}
 
 	return cm, nil
@@ -63,7 +65,9 @@ type ConditionEvaluator interface {
 }
 
 type CELConditionEvaluator struct {
-	prg cel.Program
+	prg     cel.Program
+	globals map[string]string
+	c       *codegen.CELCondition
 }
 
 func (ce *CELConditionEvaluator) Eval(input interface{}) (bool, error) {
@@ -99,16 +103,31 @@ func (ce *CELConditionEvaluator) Eval(input interface{}) (bool, error) {
 		return false, fmt.Errorf("missing 'principal' key in input: %w", ErrUnexpectedInput)
 	}
 
-	result, _, err := ce.prg.Eval(map[string]interface{}{
+	stdvars := map[string]interface{}{
 		codegen.CELRequestIdent:    input,
 		codegen.CELResourceAbbrev:  abbrevR,
 		codegen.CELPrincipalAbbrev: abbrevP,
-	})
+	}
+
+	prg := ce.prg
+	if ce.globals != nil {
+		values, err := ce.evaluateGlobals(stdvars)
+		if err != nil {
+			return false, err
+		}
+		stdvars[codegen.CELGlobalsIdent] = values
+
+		prg, err = ce.c.Program(codegen.GlobalsDeclaration)
+		if err != nil {
+			return false, err
+		}
+	}
+
+	result, _, err := prg.Eval(stdvars)
 	if err != nil {
 		celLog.Warn("Condition evaluation failed", zap.Error(err))
 		return false, err
 	}
-
 	if result == nil || result.Value() == nil {
 		celLog.Warn("Unexpected result from condition evaluation")
 		return false, ErrUnexpectedResult
@@ -122,6 +141,34 @@ func (ce *CELConditionEvaluator) Eval(input interface{}) (bool, error) {
 
 	celLog.Debug("Condition result", zap.Bool("result", v))
 	return v, nil
+}
+
+// evaluateGlobals evaluates global values using std vars
+// then add calculated values to std vars and calculate expression.
+func (ce *CELConditionEvaluator) evaluateGlobals(stdvars map[string]interface{}) (map[string]ref.Val, error) {
+	values := make(map[string]ref.Val, len(ce.globals))
+	for name, def := range ce.globals {
+		// TODO: Should we analyse condition expression to see if we even need to evaluate this def?
+		ast, issues := codegen.StdEnv.Compile(def)
+		if issues != nil && issues.Err() != nil {
+			celLog.Warn("Global variable compilation failed", zap.Error(issues.Err()))
+			return nil, issues.Err()
+		}
+		prg, err := codegen.StdEnv.Program(ast)
+		if err != nil {
+			celLog.Warn("Global variable AST generation failed", zap.String(codegen.CELGlobalsIdent, name), zap.Error(err))
+			return nil, err
+		}
+		var val ref.Val
+		val, _, err = prg.Eval(stdvars)
+		if err != nil {
+			celLog.Warn("Global variable evaluation failed", zap.String(codegen.CELGlobalsIdent, name), zap.Error(err))
+		} else {
+			values[name] = val
+		}
+	}
+
+	return values, nil
 }
 
 type ConditionIndex map[namer.ModuleID]ConditionMap

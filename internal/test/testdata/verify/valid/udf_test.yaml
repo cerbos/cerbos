@@ -1,0 +1,22 @@
+---
+name: TestSuite
+description: Tests for verifying something
+tests:
+  - name: John and his leave request
+    input:
+      requestId: "test"
+      actions:
+        - "delete"
+        - "approve"
+      resource: "pending_leave_request"
+    expected:
+      -
+        principal: bev
+        actions:
+          "delete": "EFFECT_ALLOW"
+          "approve": "EFFECT_ALLOW"
+      -
+        principal: matt
+        actions:
+          "delete": "EFFECT_DENY"
+          "approve": "EFFECT_ALLOW"

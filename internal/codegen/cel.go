@@ -19,14 +19,24 @@ const (
 	CELRequestIdent    = "request"
 	CELResourceAbbrev  = "R"
 	CELPrincipalAbbrev = "P"
+	CELGlobalsIdent    = "globals"
 )
 
 var celHelper *CELHelper
+
+var GlobalsDeclaration = decls.NewVar(CELGlobalsIdent, decls.NewMapType(decls.String, decls.Dyn))
+
+var StdEnv *cel.Env
 
 func init() {
 	ch, err := NewCELHelper()
 	if err != nil {
 		panic(fmt.Errorf("failed to initialize CEL helper: %w", err))
+	}
+
+	StdEnv, err = cel.NewEnv(NewCELEnvOptions()...)
+	if err != nil {
+		panic(fmt.Errorf("failed to initialize standard CEL environment: %w", err))
 	}
 
 	celHelper = ch
@@ -45,7 +55,7 @@ type CELHelper struct {
 }
 
 func NewCELHelper() (*CELHelper, error) {
-	env, err := newCELEnv()
+	env, err := cel.NewEnv(NewCELEnvOptions()...)
 	if err != nil {
 		return nil, err
 	}
@@ -58,7 +68,6 @@ func (ch *CELHelper) GenerateCELCondition(parent string, m *policyv1.Match) (*CE
 	if err != nil {
 		return nil, err
 	}
-
 	celAST, issues := ch.env.Compile(celExpr)
 	if issues != nil && issues.Err() != nil {
 		return nil, &CELCompileError{Parent: parent, Issues: issues}
@@ -79,26 +88,35 @@ type CELCondition struct {
 	ast *cel.Ast
 }
 
-func (cc *CELCondition) Program() (cel.Program, error) {
-	return cc.env.Program(cc.ast)
+func (cc *CELCondition) Program(vars ...*exprpb.Decl) (cel.Program, error) {
+	if len(vars) == 0 {
+		return cc.env.Program(cc.ast)
+	}
+	env, err := cc.env.Extend(cel.Declarations(vars...))
+	if err != nil {
+		return nil, err
+	}
+
+	return env.Program(cc.ast)
 }
 
 func (cc *CELCondition) CheckedExpr() (*exprpb.CheckedExpr, error) {
 	return cel.AstToCheckedExpr(cc.ast)
 }
 
-func newCELEnv() (*cel.Env, error) {
-	return cel.NewEnv(
+func NewCELEnvOptions() []cel.EnvOption {
+	return []cel.EnvOption{
 		cel.CustomTypeAdapter(NewCustomCELTypeAdapter()),
 		cel.Declarations(
 			decls.NewVar(CELRequestIdent, decls.NewMapType(decls.String, decls.Dyn)),
 			decls.NewVar(CELResourceAbbrev, decls.NewMapType(decls.String, decls.Dyn)),
 			decls.NewVar(CELPrincipalAbbrev, decls.NewMapType(decls.String, decls.Dyn)),
+			GlobalsDeclaration,
 		),
 		ext.Strings(),
 		ext.Encoders(),
 		CerbosCELLib(),
-	)
+	}
 }
 
 func generateMatchCode(m *policyv1.Match) (string, error) {

@@ -60,6 +60,7 @@ type RegoGen struct {
 	*strings.Builder
 	condCount  uint
 	conditions map[string]*CELCondition
+	globals    map[string]string // CEL variables
 }
 
 func NewRegoGen(packageName string, imports ...string) *RegoGen {
@@ -69,11 +70,19 @@ func NewRegoGen(packageName string, imports ...string) *RegoGen {
 	}
 
 	rg.line("package ", packageName)
-	for _, imp := range imports {
-		rg.line("import ", imp)
+	if len(imports) > 0 {
+		rg.line(derivedRolesMap, "=", mergeDerivedRoles(imports))
 	}
 
 	return rg
+}
+
+func mergeDerivedRoles(imports []string) string {
+	if len(imports) == 1 {
+		return imports[0]
+	}
+
+	return fmt.Sprintf("object.union(%s, %s)", imports[0], mergeDerivedRoles(imports[1:]))
 }
 
 func (rg *RegoGen) line(ss ...string) {
@@ -335,4 +344,8 @@ func (rg *RegoGen) addEffectStringFunc(defaultEffect string) {
 	rg.line(`cerbos_effect := `, effectForIdent, `(`, actionVar, `)`)
 	rg.line(`} else = `, defaultEffect)
 	rg.line()
+}
+
+func (rg *RegoGen) AddGlobals(globals map[string]string) {
+	rg.globals = globals
 }

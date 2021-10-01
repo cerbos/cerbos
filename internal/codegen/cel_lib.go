@@ -6,10 +6,13 @@ package codegen
 import (
 	"fmt"
 	"net"
+	"strings"
 	"time"
 
 	"github.com/google/cel-go/cel"
 	"github.com/google/cel-go/checker/decls"
+	"github.com/google/cel-go/common/operators"
+	"github.com/google/cel-go/common/overloads"
 	"github.com/google/cel-go/common/types"
 	"github.com/google/cel-go/common/types/ref"
 	"github.com/google/cel-go/common/types/traits"
@@ -18,12 +21,13 @@ import (
 )
 
 const (
-	inIPAddrRangeFn   = "inIPAddrRange"
-	timeSinceFn       = "timeSince"
-	intersectFn       = "intersect"
-	hasIntersectionFn = "has_intersection"
-	isSubsetFn        = "is_subset"
 	exceptFn          = "except"
+	hasIntersectionFn = "has_intersection"
+	hierarchyFn       = "hierarchy"
+	inIPAddrRangeFn   = "inIPAddrRange"
+	intersectFn       = "intersect"
+	isSubsetFn        = "is_subset"
+	timeSinceFn       = "timeSince"
 )
 
 // CerbosCELLib returns the custom CEL functions provided by Cerbos.
@@ -72,20 +76,85 @@ func (clib cerbosLib) CompileOptions() []cel.EnvOption {
 				),
 			),
 
-			decls.NewFunction("has_intersection",
+			decls.NewFunction(hasIntersectionFn,
 				decls.NewParameterizedOverload(
 					hasIntersectionFn,
 					[]*exprpb.Type{listType, listType},
 					decls.Bool,
 					[]string{"A"})),
 
-			decls.NewFunction("intersect",
+			decls.NewFunction(intersectFn,
 				decls.NewParameterizedOverload(
 					intersectFn,
 					[]*exprpb.Type{listType, listType},
 					listType,
 					[]string{"A"})),
+
+			// hierarchy functions
+			decls.NewFunction(hierarchyFn,
+				decls.NewOverload(hierarchyFn,
+					[]*exprpb.Type{decls.String},
+					hierarchyTypeExpr,
+				),
+			),
+
+			decls.NewFunction(overloadAncestorOf,
+				decls.NewInstanceOverload(overloadAncestorOf,
+					[]*exprpb.Type{hierarchyTypeExpr, hierarchyTypeExpr},
+					decls.Bool,
+				),
+			),
+
+			decls.NewFunction(overloadCommonAncestors,
+				decls.NewInstanceOverload(overloadCommonAncestors,
+					[]*exprpb.Type{hierarchyTypeExpr, hierarchyTypeExpr},
+					hierarchyTypeExpr,
+				),
+			),
+
+			decls.NewFunction(overloadDescendentOf,
+				decls.NewInstanceOverload(overloadDescendentOf,
+					[]*exprpb.Type{hierarchyTypeExpr, hierarchyTypeExpr},
+					decls.Bool,
+				),
+			),
+
+			decls.NewFunction(overloadImmediateChildOf,
+				decls.NewInstanceOverload(overloadImmediateChildOf,
+					[]*exprpb.Type{hierarchyTypeExpr, hierarchyTypeExpr},
+					decls.Bool,
+				),
+			),
+
+			decls.NewFunction(overloadImmediateParentOf,
+				decls.NewInstanceOverload(overloadImmediateParentOf,
+					[]*exprpb.Type{hierarchyTypeExpr, hierarchyTypeExpr},
+					decls.Bool,
+				),
+			),
+
+			decls.NewFunction(overloadSiblingOf,
+				decls.NewInstanceOverload(overloadSiblingOf,
+					[]*exprpb.Type{hierarchyTypeExpr, hierarchyTypeExpr},
+					decls.Bool,
+				),
+			),
+
+			decls.NewFunction(overloads.Size,
+				decls.NewInstanceOverload(fmt.Sprintf("%s_size", hierarchyFn),
+					[]*exprpb.Type{hierarchyTypeExpr},
+					decls.Int,
+				),
+			),
+
+			decls.NewFunction(operators.Index,
+				decls.NewOverload(fmt.Sprintf("%s_index", hierarchyFn),
+					[]*exprpb.Type{hierarchyTypeExpr, decls.Int},
+					decls.String,
+				),
+			),
 		),
+		cel.Types(hierarchyType),
 	}
 }
 
@@ -125,6 +194,20 @@ func (clib cerbosLib) ProgramOptions() []cel.ProgramOption {
 			&functions.Overload{
 				Operator: exceptFn,
 				Binary:   exceptList,
+			},
+
+			&functions.Overload{
+				Operator: hierarchyFn,
+				Unary: func(v ref.Val) ref.Val {
+					switch hv := v.(type) {
+					case Hierarchy:
+						return hv
+					case types.String:
+						return Hierarchy(strings.Split(string(hv), hierarchyDelim))
+					default:
+						return types.MaybeNoSuchOverloadErr(v)
+					}
+				},
 			},
 		),
 	}

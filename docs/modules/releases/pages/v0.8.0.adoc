@@ -1,0 +1,43 @@
+include::ROOT:partial$attributes.adoc[]
+
+[#v0.8.0]
+= Cerbos v0.8.0
+
+== Highlights
+
+This is a quick release to fix a bug with derived role imports where only the last imported role set was available during policy execution.
+
+There are a few ergonomics improvements bundled with this release as well.
+
+Hierarchy functions:: An extension to CEL that makes working with hierarchy representations in policy conditions easier. You can now write policy rules that inspect attributes describing the positions where your resources and principals belong to in a hierarchy. See xref:0.8.0@cerbos:policies:conditions.adoc#hierarchies[hierarchy documentation] for details.
+Globals in conditions:: You can define common CEL expressions in the new `globals` section of a policy and refer to them in conditions. This enables code reuse and easier updates to business logic with reduced opportunities for making mistakes. Please note that this feature is still unstable and will be stabilised in a future release.    
+Name policy rules:: When authoring policies, you can name individual policy rules using the optional `name` field. This aids the Cerbos engine to produce better error messages and also helps you improve your own documentation and communication efforts by being able to identify and refer to individual rules by name.
+Filter policy list:: When listing policies using the Admin API or the `cerbosctl` utility, you can filter the list based on values of policy fields. 
+Intermingle tests with policies:: Policy test files no longer need to be in a separate directory from the policy definitions. If you prefer to keep the tests closer to the policy they are testing, it is now possible to do so.  
+
+== Changelog
+
+=== Bugs
+
+* Preserve all imported derived roles during execution (link:https://github.com/cerbos/cerbos/pull/330[#330])
+
+=== Enhancements
+
+* Allow intermingling of tests with policies (link:https://github.com/cerbos/cerbos/pull/316[#316])
+* Add filter options to the list policies method of the admin API (link:https://github.com/cerbos/cerbos/pull/313[#313])
+* Allow policy rules to be named (link:https://github.com/cerbos/cerbos/pull/318[#318])
+* Functions for working with hierarchies (link:https://github.com/cerbos/cerbos/pull/327[#327])
+* User defined vars (link:https://github.com/cerbos/cerbos/pull/325[#325])
+
+=== Documentation
+
+* Document how to obtain gRPC stubs (link:https://github.com/cerbos/cerbos/pull/326[#326])
+
+=== Chores
+
+* Bump version to 0.8.0
+* Toggle docs author mode during release (link:https://github.com/cerbos/cerbos/pull/317[#317])
+* Bump google.golang.org/grpc from 1.40.0 to 1.41.0 (link:https://github.com/cerbos/cerbos/pull/322[#322])
+* Bump github.com/fatih/color from 1.12.0 to 1.13.0 (link:https://github.com/cerbos/cerbos/pull/323[#323])
+* Bump github.com/ory/dockertest/v3 from 3.7.0 to 3.8.0 (link:https://github.com/cerbos/cerbos/pull/324[#324])
+
