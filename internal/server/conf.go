@@ -50,7 +50,7 @@ type TLSConf struct {
 
 type CORSConf struct {
 	// Disabled sets whether CORS is disabled.
-	Disabled bool `yaml:"enabled"`
+	Disabled bool `yaml:"disabled"`
 	// AllowedOrigins is the contents of the allowed-origins header.
 	AllowedOrigins []string `yaml:"allowedOrigins"`
 	// AllowedHeaders is the contents of the allowed-headers header.
