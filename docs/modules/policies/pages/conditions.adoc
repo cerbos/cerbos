@@ -156,6 +156,7 @@ NOTE: CEL has many builtin functions and operators. The fully up-to-date list ca
 |===
 
 
+[#hierarchies]
 == Hierarchies
 
 NOTE: The hierarchy functions are Cerbos-specific extensions to CEL.
