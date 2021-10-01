@@ -213,6 +213,34 @@
             }
           }
         },
+        "parameters": [
+          {
+            "name": "sortOptions.column",
+            "description": "Sort column",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "enum": [
+              "COLUMN_UNSPECIFIED",
+              "COLUMN_NAME",
+              "COLUMN_VERSION"
+            ],
+            "default": "COLUMN_UNSPECIFIED"
+          },
+          {
+            "name": "sortOptions.order",
+            "description": "Sort order",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "enum": [
+              "ORDER_UNSPECIFIED",
+              "ORDER_ASCENDING",
+              "ORDER_DESCENDING"
+            ],
+            "default": "ORDER_UNSPECIFIED"
+          }
+        ],
         "tags": [
           "CerbosAdminService"
         ],
@@ -558,6 +586,27 @@
       ],
       "default": "MATCH_TYPE_UNSPECIFIED"
     },
+    "ListPoliciesRequestSortOptions": {
+      "type": "object",
+      "properties": {
+        "column": {
+          "$ref": "#/definitions/SortOptionsColumn",
+          "enum": [
+            "COLUMN_NAME",
+            "COLUMN_VERSION"
+          ],
+          "description": "Sort column"
+        },
+        "order": {
+          "$ref": "#/definitions/SortOptionsOrder",
+          "enum": [
+            "ORDER_ASCENDING",
+            "ORDER_DESCENDING"
+          ],
+          "description": "Sort order"
+        }
+      }
+    },
     "MatchExprList": {
       "type": "object",
       "properties": {
@@ -669,6 +718,24 @@
           "type": "string"
         }
       }
+    },
+    "SortOptionsColumn": {
+      "type": "string",
+      "enum": [
+        "COLUMN_UNSPECIFIED",
+        "COLUMN_NAME",
+        "COLUMN_VERSION"
+      ],
+      "default": "COLUMN_UNSPECIFIED"
+    },
+    "SortOptionsOrder": {
+      "type": "string",
+      "enum": [
+        "ORDER_UNSPECIFIED",
+        "ORDER_ASCENDING",
+        "ORDER_DESCENDING"
+      ],
+      "default": "ORDER_UNSPECIFIED"
     },
     "enginev1CheckInput": {
       "type": "object",

@@ -381,7 +381,37 @@ message ListPoliciesRequest {
         ];
     }
 
+    message SortOptions {
+        enum Column {
+            COLUMN_UNSPECIFIED = 0;
+            COLUMN_NAME = 1;
+            COLUMN_VERSION = 2;
+        }
+        
+        enum Order {
+            ORDER_UNSPECIFIED = 0;
+            ORDER_ASCENDING = 1;
+            ORDER_DESCENDING = 2;
+        }
+        
+        Column column = 1 [
+            (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+                description: "Sort column"
+                enum: ["COLUMN_NAME", "COLUMN_VERSION"]
+            }
+        ];
+
+        Order order = 2 [
+            (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = { 
+                description: "Sort order"
+                enum: ["ORDER_ASCENDING", "ORDER_DESCENDING"]
+            }
+        ];
+    }
+
     repeated Filter filters = 1;
+    SortOptions sort_options = 2;
+
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
 		json_schema: {
 			description: "List policies request"
