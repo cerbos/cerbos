@@ -101,8 +101,41 @@ condition:
 
 == Globals
 If your policy repeats the same expression in multiple conditions, you can declare it in the globals section of a policy and refer in the conditions to avoid a repeat.
-Please refer to xref:principal_policies.adoc[Principal policies] for a complete example.
 
+[source,yaml,linenums]
+----
+---
+apiVersion: "api.cerbos.dev/v1"
+globals:
+  is_dev_record: request.resource.attr.dev_record == true
+principalPolicy:
+  principal: daffy_duck
+  version: "dev"
+  rules:
+    - resource: leave_request
+      actions:
+        - name: dev_record_wildcard
+          action: "*"
+          condition:
+            match:
+              expr: globals.is_dev_record
+          effect: EFFECT_ALLOW
+    - resource: employee_profile
+      actions:
+        - name: view_employee_profile
+          action: "*"
+          condition:
+            match:
+              all:
+                of:
+                  - expr: globals.is_dev_record
+                  - expr: request.resource.attr.public == true
+          effect: EFFECT_ALLOW
+    - resource: salary_record
+      actions:
+        - action: "*"
+          effect: EFFECT_DENY
+----
 == Operators
 
 NOTE: CEL has many builtin functions and operators. The fully up-to-date list can be found at https://github.com/google/cel-spec/blob/master/doc/langdef.md#list-of-standard-definitions. 
