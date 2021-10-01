@@ -27,6 +27,7 @@ var celHelper *CELHelper
 var GlobalsDeclaration = decls.NewVar(CELGlobalsIdent, decls.NewMapType(decls.String, decls.Dyn))
 
 var StdEnv *cel.Env
+
 func init() {
 	ch, err := NewCELHelper()
 	if err != nil {
