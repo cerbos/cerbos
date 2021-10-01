@@ -133,7 +133,7 @@ func hydrate(unit *policy.CompilationUnit) (map[string]*ast.Module, ConditionInd
 
 		// use generated code if it exists -- which should be faster.
 		if gp, ok := unit.Generated[modID]; ok {
-			mod, cm, err = hydrateGeneratedPolicy(srcFile, gp)
+			mod, cm, err = hydrateGeneratedPolicy(srcFile, gp, def.Globals)
 			if err != nil {
 				// try to generate the code from source
 				mod, cm, err = generateCode(srcFile, def)
@@ -159,13 +159,13 @@ func hydrate(unit *policy.CompilationUnit) (map[string]*ast.Module, ConditionInd
 	return modules, conditionIdx, nil
 }
 
-func hydrateGeneratedPolicy(srcFile string, gp *policyv1.GeneratedPolicy) (*ast.Module, ConditionMap, error) {
+func hydrateGeneratedPolicy(srcFile string, gp *policyv1.GeneratedPolicy, globals map[string]string) (*ast.Module, ConditionMap, error) {
 	m, err := ast.ParseModule(srcFile, string(gp.Code))
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to parse generated code: %w", err)
 	}
 
-	cm, err := NewConditionMapFromRepr(gp.CelConditions)
+	cm, err := NewConditionMapFromRepr(gp.CelConditions, globals)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -182,7 +182,7 @@ func generateCode(srcFile string, p *policyv1.Policy) (*ast.Module, ConditionMap
 	var cm ConditionMap
 
 	if len(res.Conditions) > 0 {
-		cm, err = NewConditionMap(res.Conditions)
+		cm, err = NewConditionMap(res.Conditions, p.Globals)
 		if err != nil {
 			return nil, nil, err
 		}

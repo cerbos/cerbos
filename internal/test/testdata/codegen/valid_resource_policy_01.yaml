@@ -1,10 +1,12 @@
 ---
 inputPolicy:
   apiVersion: api.cerbos.dev/v1
+  globals:
+    status: ("PENDING_APPROVAL")
   resourcePolicy:
     version: "20210210"
     importDerivedRoles:
-      - my_derived_roles
+        - my_derived_roles
     resource: "hr:leave_request"
     rules:
       - actions: ['*']
@@ -40,7 +42,7 @@ inputPolicy:
           match:
             all:
               of:
-                - expr: request.resource.attr.status == "PENDING_APPROVAL"
+                - expr: request.resource.attr.status == globals.status
                 - expr: |-
                     "test" in request.resource.attr.geographies
         derivedRoles:

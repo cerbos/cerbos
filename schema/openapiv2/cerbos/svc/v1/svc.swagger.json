@@ -1340,6 +1340,12 @@
         },
         "derivedRoles": {
           "$ref": "#/definitions/v1DerivedRoles"
+        },
+        "globals": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
         }
       }
     },

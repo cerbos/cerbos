@@ -13,6 +13,7 @@ import (
 	"testing/fstest"
 	"text/template"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/cerbos/cerbos/internal/audit"
@@ -32,10 +33,10 @@ func TestVerify(t *testing.T) {
 
 	t.Run("valid", func(t *testing.T) {
 		result, err := runSuite("valid")
-		is := require.New(t)
-		is.NoError(err)
-		is.False(result.Failed)
-		is.Len(result.Results, 2)
+		require.NoError(t, err)
+		require.Len(t, result.Results, 3)
+
+		is := assert.New(t)
 
 		for _, sr := range result.Results {
 			switch sr.File {
@@ -48,6 +49,14 @@ func TestVerify(t *testing.T) {
 				is.False(sr.Tests[0].Skipped)
 				is.False(sr.Tests[0].Failed)
 				is.Empty(sr.Tests[0].Error)
+			case "udf_test.yaml":
+				is.False(sr.Skipped)
+				is.Len(sr.Tests, 2)
+				for i := 0; i < 2; i++ {
+					is.False(sr.Tests[i].Skipped)
+					is.False(sr.Tests[i].Failed)
+					is.Empty(sr.Tests[i].Error, sr.Tests[i])
+				}
 			}
 		}
 	})
@@ -305,6 +314,20 @@ func Test_doVerify(t *testing.T) {
 		for i := 0; i < len(result.Results); i++ {
 			is.Len(result.Results[i].Tests, 2*2) // 2 principals * 2 resources
 		}
+		is.False(result.Failed, "%+v", result.Results)
+	})
+	t.Run("Simple test", func(t *testing.T) {
+		fsys := make(fstest.MapFS)
+		ts := genTable(t, false, false)
+		fsys[filepath.Join(util.TestDataDirectory, ResourcesFileName)+".yaml"] = newMapFile(resources)
+		fsys[filepath.Join(util.TestDataDirectory, PrincipalsFileName)+".yaml"] = newMapFile(principals)
+		fsys["leave_request_test.yaml"] = newMapFile(ts)
+
+		result, err := doVerify(context.Background(), fsys, eng, Config{})
+		is := require.New(t)
+		is.NoError(err)
+		is.Len(result.Results, 1)
+		is.False(result.Results[0].Skipped)
 		is.False(result.Failed, "%+v", result.Results)
 	})
 }

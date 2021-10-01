@@ -1,5 +1,9 @@
 ---
 apiVersion: api.cerbos.dev/v1
+globals:
+  pending_approval: ("PENDING_APPROVAL")
+  principal_location: |-
+    (P.attr.ip_address.inIPAddrRange("10.20.0.0/16") ? "GB" : "")
 resourcePolicy:
   importDerivedRoles:
   - alpha
@@ -28,7 +32,14 @@ resourcePolicy:
   - actions: ["approve"]
     condition:
       match:
-        expr: request.resource.attr.status == "PENDING_APPROVAL"
+        expr: request.resource.attr.status == globals.pending_approval
+    derivedRoles:
+      - direct_manager
+    effect: EFFECT_ALLOW
+  - actions: ["delete"]
+    condition:
+      match:
+        expr: request.resource.attr.geography == globals.principal_location
     derivedRoles:
     - direct_manager
     effect: EFFECT_ALLOW

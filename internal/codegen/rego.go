@@ -60,6 +60,7 @@ type RegoGen struct {
 	*strings.Builder
 	condCount  uint
 	conditions map[string]*CELCondition
+	globals    map[string]string // CEL variables
 }
 
 func NewRegoGen(packageName string, imports ...string) *RegoGen {
@@ -343,4 +344,8 @@ func (rg *RegoGen) addEffectStringFunc(defaultEffect string) {
 	rg.line(`cerbos_effect := `, effectForIdent, `(`, actionVar, `)`)
 	rg.line(`} else = `, defaultEffect)
 	rg.line()
+}
+
+func (rg *RegoGen) AddGlobals(globals map[string]string) {
+	rg.globals = globals
 }
