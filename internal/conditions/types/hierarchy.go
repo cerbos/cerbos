@@ -1,7 +1,7 @@
 // Copyright 2021 Zenauth Ltd.
 // SPDX-License-Identifier: Apache-2.0
 
-package codegen
+package types
 
 import (
 	"fmt"
@@ -9,13 +9,18 @@ import (
 	"strings"
 
 	"github.com/google/cel-go/checker/decls"
+	"github.com/google/cel-go/common/operators"
+	"github.com/google/cel-go/common/overloads"
 	"github.com/google/cel-go/common/types"
 	"github.com/google/cel-go/common/types/ref"
 	"github.com/google/cel-go/common/types/traits"
+	"github.com/google/cel-go/interpreter/functions"
+	exprpb "google.golang.org/genproto/googleapis/api/expr/v1alpha1"
 )
 
 const (
 	hierarchyDelim            = "."
+	hierarchyFn               = "hierarchy"
 	hierarchyTypeName         = "cerbos.lib.hierarchy"
 	overloadAncestorOf        = "ancestorOf"
 	overloadCommonAncestors   = "commonAncestors"
@@ -26,10 +31,89 @@ const (
 )
 
 var (
-	hierarchyType = types.NewTypeValue(hierarchyTypeName,
+	HierarchyType = types.NewTypeValue(hierarchyTypeName,
 		traits.IndexerType,
 		traits.SizerType,
 		traits.ReceiverType)
+
+	HierarchyDeclrations = []*exprpb.Decl{
+		decls.NewFunction(hierarchyFn,
+			decls.NewOverload(hierarchyFn,
+				[]*exprpb.Type{decls.String},
+				hierarchyTypeExpr,
+			),
+		),
+
+		decls.NewFunction(overloadAncestorOf,
+			decls.NewInstanceOverload(overloadAncestorOf,
+				[]*exprpb.Type{hierarchyTypeExpr, hierarchyTypeExpr},
+				decls.Bool,
+			),
+		),
+
+		decls.NewFunction(overloadCommonAncestors,
+			decls.NewInstanceOverload(overloadCommonAncestors,
+				[]*exprpb.Type{hierarchyTypeExpr, hierarchyTypeExpr},
+				hierarchyTypeExpr,
+			),
+		),
+
+		decls.NewFunction(overloadDescendentOf,
+			decls.NewInstanceOverload(overloadDescendentOf,
+				[]*exprpb.Type{hierarchyTypeExpr, hierarchyTypeExpr},
+				decls.Bool,
+			),
+		),
+
+		decls.NewFunction(overloadImmediateChildOf,
+			decls.NewInstanceOverload(overloadImmediateChildOf,
+				[]*exprpb.Type{hierarchyTypeExpr, hierarchyTypeExpr},
+				decls.Bool,
+			),
+		),
+
+		decls.NewFunction(overloadImmediateParentOf,
+			decls.NewInstanceOverload(overloadImmediateParentOf,
+				[]*exprpb.Type{hierarchyTypeExpr, hierarchyTypeExpr},
+				decls.Bool,
+			),
+		),
+
+		decls.NewFunction(overloadSiblingOf,
+			decls.NewInstanceOverload(overloadSiblingOf,
+				[]*exprpb.Type{hierarchyTypeExpr, hierarchyTypeExpr},
+				decls.Bool,
+			),
+		),
+
+		decls.NewFunction(overloads.Size,
+			decls.NewInstanceOverload(fmt.Sprintf("%s_size", hierarchyFn),
+				[]*exprpb.Type{hierarchyTypeExpr},
+				decls.Int,
+			),
+		),
+
+		decls.NewFunction(operators.Index,
+			decls.NewOverload(fmt.Sprintf("%s_index", hierarchyFn),
+				[]*exprpb.Type{hierarchyTypeExpr, decls.Int},
+				decls.String,
+			),
+		),
+	}
+
+	HierarchyOverload = &functions.Overload{
+		Operator: hierarchyFn,
+		Unary: func(v ref.Val) ref.Val {
+			switch hv := v.(type) {
+			case Hierarchy:
+				return hv
+			case types.String:
+				return Hierarchy(strings.Split(string(hv), hierarchyDelim))
+			default:
+				return types.MaybeNoSuchOverloadErr(v)
+			}
+		},
+	}
 
 	hierarchyTypeExpr = decls.NewAbstractType(hierarchyTypeName)
 
@@ -72,15 +156,15 @@ func (h Hierarchy) ConvertToType(typeVal ref.Type) ref.Val {
 	case types.StringType:
 		return types.String(strings.Join(h, hierarchyDelim))
 	case types.TypeType:
-		return hierarchyType
+		return HierarchyType
 	}
 
-	return types.NewErr("type conversion error from '%s' to '%s'", hierarchyType, typeVal)
+	return types.NewErr("type conversion error from '%s' to '%s'", HierarchyType, typeVal)
 }
 
 // Type implements ref.Val.Type.
 func (h Hierarchy) Type() ref.Type {
-	return hierarchyType
+	return HierarchyType
 }
 
 // Value implements ref.Val.Value.

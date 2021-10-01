@@ -13,6 +13,7 @@ import (
 	exprpb "google.golang.org/genproto/googleapis/api/expr/v1alpha1"
 
 	"github.com/cerbos/cerbos/internal/codegen"
+	"github.com/cerbos/cerbos/internal/conditions"
 	"github.com/cerbos/cerbos/internal/namer"
 )
 
@@ -46,7 +47,7 @@ func NewConditionMapFromRepr(conds map[string]*exprpb.CheckedExpr, globals map[s
 	return cm, nil
 }
 
-func NewConditionMap(conds map[string]*codegen.CELCondition, globals map[string]string) (ConditionMap, error) {
+func NewConditionMap(conds map[string]*conditions.CELCondition, globals map[string]string) (ConditionMap, error) {
 	cm := make(ConditionMap, len(conds))
 	for k, c := range conds {
 		p, err := c.Program()
@@ -67,7 +68,7 @@ type ConditionEvaluator interface {
 type CELConditionEvaluator struct {
 	prg     cel.Program
 	globals map[string]string
-	c       *codegen.CELCondition
+	c       *conditions.CELCondition
 }
 
 func (ce *CELConditionEvaluator) Eval(input interface{}) (bool, error) {
@@ -104,9 +105,9 @@ func (ce *CELConditionEvaluator) Eval(input interface{}) (bool, error) {
 	}
 
 	stdvars := map[string]interface{}{
-		codegen.CELRequestIdent:    input,
-		codegen.CELResourceAbbrev:  abbrevR,
-		codegen.CELPrincipalAbbrev: abbrevP,
+		conditions.CELRequestIdent:    input,
+		conditions.CELResourceAbbrev:  abbrevR,
+		conditions.CELPrincipalAbbrev: abbrevP,
 	}
 
 	prg := ce.prg
@@ -115,9 +116,9 @@ func (ce *CELConditionEvaluator) Eval(input interface{}) (bool, error) {
 		if err != nil {
 			return false, err
 		}
-		stdvars[codegen.CELGlobalsIdent] = values
+		stdvars[conditions.CELGlobalsIdent] = values
 
-		prg, err = ce.c.Program(codegen.GlobalsDeclaration)
+		prg, err = ce.c.Program(conditions.GlobalsDeclaration)
 		if err != nil {
 			return false, err
 		}
@@ -149,20 +150,20 @@ func (ce *CELConditionEvaluator) evaluateGlobals(stdvars map[string]interface{})
 	values := make(map[string]ref.Val, len(ce.globals))
 	for name, def := range ce.globals {
 		// TODO: Should we analyse condition expression to see if we even need to evaluate this def?
-		ast, issues := codegen.StdEnv.Compile(def)
+		ast, issues := conditions.StdEnv.Compile(def)
 		if issues != nil && issues.Err() != nil {
 			celLog.Warn("Global variable compilation failed", zap.Error(issues.Err()))
 			return nil, issues.Err()
 		}
-		prg, err := codegen.StdEnv.Program(ast)
+		prg, err := conditions.StdEnv.Program(ast)
 		if err != nil {
-			celLog.Warn("Global variable AST generation failed", zap.String(codegen.CELGlobalsIdent, name), zap.Error(err))
+			celLog.Warn("Global variable AST generation failed", zap.String(conditions.CELGlobalsIdent, name), zap.Error(err))
 			return nil, err
 		}
 		var val ref.Val
 		val, _, err = prg.Eval(stdvars)
 		if err != nil {
-			celLog.Warn("Global variable evaluation failed", zap.String(codegen.CELGlobalsIdent, name), zap.Error(err))
+			celLog.Warn("Global variable evaluation failed", zap.String(conditions.CELGlobalsIdent, name), zap.Error(err))
 		} else {
 			values[name] = val
 		}

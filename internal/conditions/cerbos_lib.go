@@ -1,29 +1,27 @@
 // Copyright 2021 Zenauth Ltd.
 // SPDX-License-Identifier: Apache-2.0
 
-package codegen
+package conditions
 
 import (
 	"fmt"
 	"net"
-	"strings"
 	"time"
 
 	"github.com/google/cel-go/cel"
 	"github.com/google/cel-go/checker/decls"
-	"github.com/google/cel-go/common/operators"
-	"github.com/google/cel-go/common/overloads"
 	"github.com/google/cel-go/common/types"
 	"github.com/google/cel-go/common/types/ref"
 	"github.com/google/cel-go/common/types/traits"
 	"github.com/google/cel-go/interpreter/functions"
 	exprpb "google.golang.org/genproto/googleapis/api/expr/v1alpha1"
+
+	customtypes "github.com/cerbos/cerbos/internal/conditions/types"
 )
 
 const (
 	exceptFn          = "except"
 	hasIntersectionFn = "has_intersection"
-	hierarchyFn       = "hierarchy"
 	inIPAddrRangeFn   = "inIPAddrRange"
 	intersectFn       = "intersect"
 	isSubsetFn        = "is_subset"
@@ -40,121 +38,61 @@ type cerbosLib struct{}
 func (clib cerbosLib) CompileOptions() []cel.EnvOption {
 	listType := decls.NewListType(decls.NewTypeParamType("A"))
 
-	return []cel.EnvOption{
-		cel.Declarations(
-			decls.NewFunction(inIPAddrRangeFn,
-				decls.NewInstanceOverload(
-					fmt.Sprintf("%s_string", inIPAddrRangeFn),
-					[]*exprpb.Type{decls.String, decls.String},
-					decls.Bool,
-				),
-			),
-
-			decls.NewFunction(timeSinceFn,
-				decls.NewInstanceOverload(
-					fmt.Sprintf("%s_timestamp", timeSinceFn),
-					[]*exprpb.Type{decls.Timestamp},
-					decls.Duration,
-				),
-			),
-
-			decls.NewFunction(exceptFn,
-				decls.NewParameterizedInstanceOverload(
-					exceptFn,
-					[]*exprpb.Type{listType, listType},
-					listType,
-					[]string{"A"},
-				),
-			),
-
-			decls.NewFunction(isSubsetFn,
-				decls.NewParameterizedInstanceOverload(
-					isSubsetFn,
-					[]*exprpb.Type{listType, listType},
-					decls.Bool,
-					[]string{"A"},
-				),
-			),
-
-			decls.NewFunction(hasIntersectionFn,
-				decls.NewParameterizedOverload(
-					hasIntersectionFn,
-					[]*exprpb.Type{listType, listType},
-					decls.Bool,
-					[]string{"A"})),
-
-			decls.NewFunction(intersectFn,
-				decls.NewParameterizedOverload(
-					intersectFn,
-					[]*exprpb.Type{listType, listType},
-					listType,
-					[]string{"A"})),
-
-			// hierarchy functions
-			decls.NewFunction(hierarchyFn,
-				decls.NewOverload(hierarchyFn,
-					[]*exprpb.Type{decls.String},
-					hierarchyTypeExpr,
-				),
-			),
-
-			decls.NewFunction(overloadAncestorOf,
-				decls.NewInstanceOverload(overloadAncestorOf,
-					[]*exprpb.Type{hierarchyTypeExpr, hierarchyTypeExpr},
-					decls.Bool,
-				),
-			),
-
-			decls.NewFunction(overloadCommonAncestors,
-				decls.NewInstanceOverload(overloadCommonAncestors,
-					[]*exprpb.Type{hierarchyTypeExpr, hierarchyTypeExpr},
-					hierarchyTypeExpr,
-				),
-			),
-
-			decls.NewFunction(overloadDescendentOf,
-				decls.NewInstanceOverload(overloadDescendentOf,
-					[]*exprpb.Type{hierarchyTypeExpr, hierarchyTypeExpr},
-					decls.Bool,
-				),
-			),
-
-			decls.NewFunction(overloadImmediateChildOf,
-				decls.NewInstanceOverload(overloadImmediateChildOf,
-					[]*exprpb.Type{hierarchyTypeExpr, hierarchyTypeExpr},
-					decls.Bool,
-				),
-			),
-
-			decls.NewFunction(overloadImmediateParentOf,
-				decls.NewInstanceOverload(overloadImmediateParentOf,
-					[]*exprpb.Type{hierarchyTypeExpr, hierarchyTypeExpr},
-					decls.Bool,
-				),
-			),
-
-			decls.NewFunction(overloadSiblingOf,
-				decls.NewInstanceOverload(overloadSiblingOf,
-					[]*exprpb.Type{hierarchyTypeExpr, hierarchyTypeExpr},
-					decls.Bool,
-				),
-			),
-
-			decls.NewFunction(overloads.Size,
-				decls.NewInstanceOverload(fmt.Sprintf("%s_size", hierarchyFn),
-					[]*exprpb.Type{hierarchyTypeExpr},
-					decls.Int,
-				),
-			),
-
-			decls.NewFunction(operators.Index,
-				decls.NewOverload(fmt.Sprintf("%s_index", hierarchyFn),
-					[]*exprpb.Type{hierarchyTypeExpr, decls.Int},
-					decls.String,
-				),
+	decls := []*exprpb.Decl{
+		decls.NewFunction(inIPAddrRangeFn,
+			decls.NewInstanceOverload(
+				fmt.Sprintf("%s_string", inIPAddrRangeFn),
+				[]*exprpb.Type{decls.String, decls.String},
+				decls.Bool,
 			),
 		),
-		cel.Types(hierarchyType),
+
+		decls.NewFunction(timeSinceFn,
+			decls.NewInstanceOverload(
+				fmt.Sprintf("%s_timestamp", timeSinceFn),
+				[]*exprpb.Type{decls.Timestamp},
+				decls.Duration,
+			),
+		),
+
+		decls.NewFunction(exceptFn,
+			decls.NewParameterizedInstanceOverload(
+				exceptFn,
+				[]*exprpb.Type{listType, listType},
+				listType,
+				[]string{"A"},
+			),
+		),
+
+		decls.NewFunction(isSubsetFn,
+			decls.NewParameterizedInstanceOverload(
+				isSubsetFn,
+				[]*exprpb.Type{listType, listType},
+				decls.Bool,
+				[]string{"A"},
+			),
+		),
+
+		decls.NewFunction(hasIntersectionFn,
+			decls.NewParameterizedOverload(
+				hasIntersectionFn,
+				[]*exprpb.Type{listType, listType},
+				decls.Bool,
+				[]string{"A"})),
+
+		decls.NewFunction(intersectFn,
+			decls.NewParameterizedOverload(
+				intersectFn,
+				[]*exprpb.Type{listType, listType},
+				listType,
+				[]string{"A"})),
+	}
+
+	decls = append(decls, customtypes.HierarchyDeclrations...)
+
+	return []cel.EnvOption{
+		cel.Declarations(decls...),
+		cel.Types(customtypes.HierarchyType),
 	}
 }
 
@@ -196,19 +134,7 @@ func (clib cerbosLib) ProgramOptions() []cel.ProgramOption {
 				Binary:   exceptList,
 			},
 
-			&functions.Overload{
-				Operator: hierarchyFn,
-				Unary: func(v ref.Val) ref.Val {
-					switch hv := v.(type) {
-					case Hierarchy:
-						return hv
-					case types.String:
-						return Hierarchy(strings.Split(string(hv), hierarchyDelim))
-					default:
-						return types.MaybeNoSuchOverloadErr(v)
-					}
-				},
-			},
+			customtypes.HierarchyOverload,
 		),
 	}
 }
