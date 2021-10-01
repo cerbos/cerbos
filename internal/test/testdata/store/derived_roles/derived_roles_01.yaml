@@ -1,7 +1,5 @@
 ---
 apiVersion: "api.cerbos.dev/v1"
-globals:
-  same_geography: request.resource.attr.geography == request.principal.attr.geography
 derivedRoles:
   name: alpha
   definitions:
@@ -16,15 +14,3 @@ derivedRoles:
       condition:
         script: |-
           input.resource.attr.owner == input.principal.id
-
-    - name: any_employee
-      parentRoles: ["employee"]
-
-    - name: direct_manager
-      parentRoles: ["manager"]
-      condition:
-        match:
-          all:
-            of:
-              - expr: globals.same_geography
-              - expr: request.resource.attr.geography == request.principal.attr.managed_geographies
