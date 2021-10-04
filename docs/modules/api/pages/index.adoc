@@ -325,7 +325,7 @@ You can access the Cerbos protobuf definitions from the link:https://github.com/
 
 * You can now use link:https://docs.buf.build/generate-usage[`buf generate`] or `protoc` to generate code using the protobufs available in the `proto` directory.
 
-* If you don't want to download protobufs and then to generate code using `buf` or `protoc`, you can use the link:https://github.com/cerbos/grpc-tools[Cerbos grpc-tools docker image] to easily generate code for languages like Java, NodeJS, Python, C# etc.
+* If you don't want to download protobufs and then to generate code using `buf` or `protoc`, you can use the link:https://github.com/cerbos/grpc-tools[Cerbos grpc-tools container] to easily generate code for languages like Java, NodeJS, Python, C# etc.
 
 
 
