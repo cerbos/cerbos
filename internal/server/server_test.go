@@ -433,6 +433,7 @@ func compareProto(t *testing.T, want, have interface{}) {
 
 	require.Empty(t, cmp.Diff(want, have,
 		protocmp.Transform(),
+		protocmp.SortRepeatedFields(&responsev1.CheckResourceSetResponse_Meta_ActionMeta{}, "effective_derived_roles"),
 		protocmp.SortRepeated(cmpPlaygroundEvalResult),
 		protocmp.SortRepeated(cmpPlaygroundError),
 	))
