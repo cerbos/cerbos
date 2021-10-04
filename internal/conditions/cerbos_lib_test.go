@@ -51,6 +51,9 @@ func TestCerbosLib(t *testing.T) {
 		{expr: `[1,2,3] + [3,5] == [1,2,3,3,5]`},
 		{expr: `hierarchy("a.b.c.d") == hierarchy("a.b.c.d")`},
 		{expr: `hierarchy("a.b.c.d") != hierarchy("a.b.c.d.e")`},
+		{expr: `hierarchy("a:b:c:d", ":") == hierarchy("a.b.c.d")`},
+		{expr: `hierarchy("aFOObFOOcFOOd", "FOO") == hierarchy("a.b.c.d")`},
+		{expr: `hierarchy(["a","b","c","d"]) == hierarchy("a.b.c.d")`},
 		{expr: `hierarchy("a.b.c.d").size() == 4`},
 		{expr: `hierarchy("a.b.c.d")[2] == "c"`},
 		{expr: `hierarchy("a.b").ancestorOf(hierarchy("a.b.c.d.e"))`},
@@ -70,6 +73,10 @@ func TestCerbosLib(t *testing.T) {
 		{expr: `hierarchy("a.b.c").siblingOf(hierarchy("a.b.d"))`},
 		{expr: `hierarchy("a.b.c").siblingOf(hierarchy("x.b.d")) == false`},
 		{expr: `hierarchy("a.b.c.d").siblingOf(hierarchy("a.b.d")) == false`},
+		{expr: `hierarchy("a.b.c.d").overlaps(hierarchy("a.b.c.d")) == true`},
+		{expr: `hierarchy("a.b.c.d").overlaps(hierarchy("a.b.c")) == true`},
+		{expr: `hierarchy("a.b").overlaps(hierarchy("a.b.c.d")) == true`},
+		{expr: `hierarchy("a.b.x").overlaps(hierarchy("a.b.c.d")) == false`},
 	}
 	env, err := cel.NewEnv(conditions.CerbosCELLib())
 	require.NoError(t, err)
