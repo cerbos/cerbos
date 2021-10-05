@@ -24,7 +24,7 @@ import (
 	"github.com/cerbos/cerbos/internal/compile"
 	"github.com/cerbos/cerbos/internal/engine"
 	"github.com/cerbos/cerbos/internal/storage/disk"
-	"github.com/cerbos/cerbos/internal/storage/disk/index"
+	"github.com/cerbos/cerbos/internal/storage/index"
 )
 
 const playgroundRequestTimeout = 60 * time.Second
