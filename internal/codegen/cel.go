@@ -79,7 +79,9 @@ type celGen struct {
 func (cg *celGen) addMatch(m *policyv1.Match) error {
 	switch t := m.Op.(type) {
 	case *policyv1.Match_Expr:
+		cg.WriteString("(")
 		cg.WriteString(t.Expr)
+		cg.WriteString(")")
 	case *policyv1.Match_All:
 		cg.WriteString("(")
 		if err := cg.join("&&", t.All.Of); err != nil {

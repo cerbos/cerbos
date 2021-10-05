@@ -24,7 +24,7 @@ func TestCELGen(t *testing.T) {
 					Expr: "a || b && c",
 				},
 			},
-			want: "a || b && c",
+			want: "(a || b && c)",
 		},
 		{
 			name: "all_single_expr",
@@ -37,7 +37,7 @@ func TestCELGen(t *testing.T) {
 					},
 				},
 			},
-			want: "(a)",
+			want: "((a))",
 		},
 		{
 			name: "all_multiple_expr",
@@ -52,7 +52,7 @@ func TestCELGen(t *testing.T) {
 					},
 				},
 			},
-			want: "(a && b && c)",
+			want: "((a) && (b) && (c))",
 		},
 		{
 			name: "any_single_expr",
@@ -65,7 +65,7 @@ func TestCELGen(t *testing.T) {
 					},
 				},
 			},
-			want: "(a)",
+			want: "((a))",
 		},
 		{
 			name: "any_multiple_expr",
@@ -80,7 +80,7 @@ func TestCELGen(t *testing.T) {
 					},
 				},
 			},
-			want: "(a || b || c)",
+			want: "((a) || (b) || (c))",
 		},
 		{
 			name: "none_single_expr",
@@ -93,7 +93,7 @@ func TestCELGen(t *testing.T) {
 					},
 				},
 			},
-			want: "!(a)",
+			want: "!((a))",
 		},
 		{
 			name: "none_multiple_expr",
@@ -108,7 +108,7 @@ func TestCELGen(t *testing.T) {
 					},
 				},
 			},
-			want: "!(a || b || c)",
+			want: "!((a) || (b) || (c))",
 		},
 		{
 			name: "nested",
@@ -143,7 +143,7 @@ func TestCELGen(t *testing.T) {
 					},
 				},
 			},
-			want: "((x || y) && !(p || q || r) && a && b)",
+			want: "(((x) || (y)) && !((p) || (q) || (r)) && (a) && (b))",
 		},
 	}
 
