@@ -61,7 +61,7 @@ type RegoGen struct {
 	*strings.Builder
 	condCount  uint
 	conditions map[string]*conditions.CELCondition
-	variables    map[string]string // CEL variables
+	variables  map[string]string // CEL variables
 }
 
 func NewRegoGen(packageName string, imports ...string) *RegoGen {

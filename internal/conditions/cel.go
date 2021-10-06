@@ -19,7 +19,7 @@ const (
 	CELResourceAbbrev  = "R"
 	CELPrincipalAbbrev = "P"
 	CELVariablesIdent  = "variables"
-	CELVariablesAbbrev  = "V"
+	CELVariablesAbbrev = "V"
 )
 
 var (
