@@ -32,7 +32,7 @@ resourcePolicy:
   - actions: ["approve"]
     condition:
       match:
-        expr: request.resource.attr.status == variables.pending_approval
+        expr: request.resource.attr.status == V.pending_approval
     derivedRoles:
       - direct_manager
     effect: EFFECT_ALLOW

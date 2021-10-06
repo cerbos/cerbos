@@ -6,7 +6,7 @@ include::ROOT:partial$attributes.adoc[]
 ----
 ---
 apiVersion: api.cerbos.dev/v1
-globals: <1>
+variables: <1>
   is_corporate_network: |-
     P.attr.ip_address.inIPAddrRange("10.20.0.0/16")
 resourcePolicy:
@@ -33,11 +33,11 @@ resourcePolicy:
       effect: EFFECT_ALLOW
       condition:
         match:
-          expr: globals.is_corporate_network
+          expr: V.is_corporate_network
       derivedRoles:
         - abuse_moderator
 ----
-<1> Optional global variables section. Each variable is evaluated before any rule condition.
+<1> Optional variables section. Each variable is evaluated before any rule condition.
 A variable expression can contain anything that condition expression can have.
 <2> Version of this policy. Policies are uniquely identified by the resource name and version pair. You can have multiple policy versions for the same resource (e.g. production vs. staging). The version value `default` is special as it is the default fallback when no version is specified in the request.
 <3> Import a set of derived roles.

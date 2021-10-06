@@ -14,5 +14,5 @@ derivedRoles:
         match:
           all:
             of:
-              - expr: variables.same_geography
+              - expr: V.same_geography
               - expr: request.resource.attr.geography == request.principal.attr.managed_geographies
