@@ -148,8 +148,9 @@ func (ce *CELConditionEvaluator) Eval(input interface{}) (bool, error) {
 	if ce.varsPrgs != nil {
 		values := ce.evaluateVariables(stdvars)
 		stdvars[conditions.CELVariablesIdent] = values
+		stdvars[conditions.CELVariablesAbbrev] = values
 
-		prg, err = ce.c.Program(conditions.VariablesDeclaration)
+		prg, err = ce.c.Program(conditions.VariablesDeclaration, conditions.VariablesAbbrevDeclaration)
 		if err != nil {
 			return false, err
 		}
