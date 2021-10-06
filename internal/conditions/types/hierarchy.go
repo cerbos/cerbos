@@ -27,6 +27,7 @@ const (
 	overloadDescendentOf      = "descendentOf"
 	overloadImmediateChildOf  = "immediateChildOf"
 	overloadImmediateParentOf = "immediateParentOf"
+	overloadOverlaps          = "overlaps"
 	overloadSiblingOf         = "siblingOf"
 )
 
@@ -38,8 +39,16 @@ var (
 
 	HierarchyDeclrations = []*exprpb.Decl{
 		decls.NewFunction(hierarchyFn,
-			decls.NewOverload(hierarchyFn,
+			decls.NewOverload(fmt.Sprintf("%s_string", hierarchyFn),
 				[]*exprpb.Type{decls.String},
+				hierarchyTypeExpr,
+			),
+			decls.NewOverload(fmt.Sprintf("%s_string_string", hierarchyFn),
+				[]*exprpb.Type{decls.String, decls.String},
+				hierarchyTypeExpr,
+			),
+			decls.NewOverload(fmt.Sprintf("%s_stringarray", hierarchyFn),
+				[]*exprpb.Type{decls.NewListType(decls.String)},
 				hierarchyTypeExpr,
 			),
 		),
@@ -79,6 +88,13 @@ var (
 			),
 		),
 
+		decls.NewFunction(overloadOverlaps,
+			decls.NewInstanceOverload(overloadOverlaps,
+				[]*exprpb.Type{hierarchyTypeExpr, hierarchyTypeExpr},
+				decls.Bool,
+			),
+		),
+
 		decls.NewFunction(overloadSiblingOf,
 			decls.NewInstanceOverload(overloadSiblingOf,
 				[]*exprpb.Type{hierarchyTypeExpr, hierarchyTypeExpr},
@@ -109,9 +125,34 @@ var (
 				return hv
 			case types.String:
 				return Hierarchy(strings.Split(string(hv), hierarchyDelim))
+			case traits.Lister:
+				hieraEls, err := hv.ConvertToNative(reflect.SliceOf(reflect.TypeOf("")))
+				if err != nil {
+					return types.NewErr("failed to convert list to string slice: %v", err)
+				}
+
+				h, ok := hieraEls.([]string)
+				if !ok {
+					return types.NewErr("expected string slice but got %T", hieraEls)
+				}
+
+				return Hierarchy(h)
 			default:
 				return types.MaybeNoSuchOverloadErr(v)
 			}
+		},
+		Binary: func(v, delim ref.Val) ref.Val {
+			vStr, ok := v.(types.String)
+			if !ok {
+				return types.NoSuchOverloadErr()
+			}
+
+			delimStr, ok := delim.(types.String)
+			if !ok {
+				return types.NoSuchOverloadErr()
+			}
+
+			return Hierarchy(strings.Split(string(vStr), string(delimStr)))
 		},
 	}
 
@@ -123,6 +164,7 @@ var (
 		overloadDescendentOf:      hierarchyDescendentOf,
 		overloadImmediateChildOf:  hierarchyImmediateChildOf,
 		overloadImmediateParentOf: hierarchyImmediateParentOf,
+		overloadOverlaps:          hierarchyOverlaps,
 		overloadSiblingOf:         hierarchySiblingOf,
 	}
 )
@@ -319,6 +361,27 @@ func hierarchySiblingOf(h Hierarchy, path ref.Val) ref.Val {
 
 	for i := 0; i < len(h)-1; i++ {
 		if h[i] != otherHierarchy[i] {
+			return types.Bool(false)
+		}
+	}
+
+	return types.Bool(true)
+}
+
+func hierarchyOverlaps(h Hierarchy, path ref.Val) ref.Val {
+	otherHierarchy, err := toHierarchy(path)
+	if err != nil {
+		return err
+	}
+
+	shortList := h
+	longList := otherHierarchy
+	if len(otherHierarchy) < len(h) {
+		longList, shortList = h, otherHierarchy
+	}
+
+	for i, s := range shortList {
+		if longList[i] != s {
 			return types.Bool(false)
 		}
 	}
