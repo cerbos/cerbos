@@ -4834,11 +4834,11 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 --------------------------------------------------------------------------------
 Module  : google.golang.org/genproto
-Version : v0.0.0-20210903162649-d08c68adba83
-Time    : 2021-09-03T16:26:49Z
+Version : v0.0.0-20211001223012-bfb93cce50d9
+Time    : 2021-10-01T22:30:12Z
 Licence : Apache-2.0
 
-Contents of probable licence file $GOMODCACHE/google.golang.org/genproto@v0.0.0-20210903162649-d08c68adba83/LICENSE:
+Contents of probable licence file $GOMODCACHE/google.golang.org/genproto@v0.0.0-20211001223012-bfb93cce50d9/LICENSE:
 
 
                                  Apache License
@@ -7474,11 +7474,11 @@ Apache License
 
 --------------------------------------------------------------------------------
 Module  : github.com/containerd/containerd
-Version : v1.5.5
-Time    : 2021-07-29T17:02:27Z
+Version : v1.5.7
+Time    : 2021-10-04T15:24:47Z
 Licence : Apache-2.0
 
-Contents of probable licence file $GOMODCACHE/github.com/containerd/containerd@v1.5.5/LICENSE:
+Contents of probable licence file $GOMODCACHE/github.com/containerd/containerd@v1.5.7/LICENSE:
 
 
                                  Apache License
@@ -7675,11 +7675,11 @@ Contents of probable licence file $GOMODCACHE/github.com/containerd/containerd@v
 
 --------------------------------------------------------------------------------
 Module  : github.com/containerd/continuity
-Version : v0.1.0
-Time    : 2021-04-17T04:23:58Z
+Version : v0.2.0
+Time    : 2021-09-14T15:36:40Z
 Licence : Apache-2.0
 
-Contents of probable licence file $GOMODCACHE/github.com/containerd/continuity@v0.1.0/LICENSE:
+Contents of probable licence file $GOMODCACHE/github.com/containerd/continuity@v0.2.0/LICENSE:
 
 
                                  Apache License
@@ -11901,11 +11901,11 @@ SOFTWARE.
 
 --------------------------------------------------------------------------------
 Module  : github.com/klauspost/compress
-Version : v1.13.5
-Time    : 2021-08-30T08:57:58Z
+Version : v1.13.6
+Time    : 2021-09-06T11:32:19Z
 Licence : Apache-2.0
 
-Contents of probable licence file $GOMODCACHE/github.com/klauspost/compress@v1.13.5/LICENSE:
+Contents of probable licence file $GOMODCACHE/github.com/klauspost/compress@v1.13.6/LICENSE:
 
 Copyright (c) 2012 The Go Authors. All rights reserved.
 Copyright (c) 2019 Klaus Post. All rights reserved.
@@ -12199,6 +12199,18 @@ DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
 THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+-----------------
+
+Files: s2/cmd/internal/filepathx/*
+
+Copyright 2016 The filepathx Authors
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 
 --------------------------------------------------------------------------------
