@@ -1,6 +1,6 @@
 ---
 apiVersion: "api.cerbos.dev/v1"
-globals:
+variables:
   is_dev_record: request.resource.attr.dev_record == true
 principalPolicy:
   principal: donald_duck
@@ -11,7 +11,7 @@ principalPolicy:
         - action: "*"
           condition:
             match:
-              expr: globals.is_dev_record
+              expr: variables.is_dev_record
           effect: EFFECT_ALLOW
           name: dev_admin
 

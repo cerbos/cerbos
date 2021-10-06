@@ -18,11 +18,11 @@ const (
 	CELRequestIdent    = "request"
 	CELResourceAbbrev  = "R"
 	CELPrincipalAbbrev = "P"
-	CELGlobalsIdent    = "globals"
+	CELVariablesIdent    = "variables"
 )
 
 var (
-	GlobalsDeclaration = decls.NewVar(CELGlobalsIdent, decls.NewMapType(decls.String, decls.Dyn))
+	VariablesDeclaration = decls.NewVar(CELVariablesIdent, decls.NewMapType(decls.String, decls.Dyn))
 	StdEnv             *cel.Env
 )
 
@@ -45,7 +45,7 @@ func newCELEnvOptions() []cel.EnvOption {
 			decls.NewVar(CELRequestIdent, decls.NewMapType(decls.String, decls.Dyn)),
 			decls.NewVar(CELResourceAbbrev, decls.NewMapType(decls.String, decls.Dyn)),
 			decls.NewVar(CELPrincipalAbbrev, decls.NewMapType(decls.String, decls.Dyn)),
-			GlobalsDeclaration,
+			VariablesDeclaration,
 		),
 		ext.Strings(),
 		ext.Encoders(),
