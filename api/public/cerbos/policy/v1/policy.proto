@@ -102,6 +102,7 @@ message Match {
         string expr = 4;
     }
 }
+
 message TestFixture {
     message Principals {
         map<string, cerbos.engine.v1.Principal> principals = 1;
@@ -110,6 +111,7 @@ message TestFixture {
         map<string, cerbos.engine.v1.Resource> resources = 1;
     }
 }
+
 message TestSuite {
     string name = 1 [(validate.rules).string.min_len = 1];
     string description = 2;

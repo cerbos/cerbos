@@ -4,11 +4,9 @@
 package compile
 
 import (
-	"errors"
 	"fmt"
 
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
-	"github.com/cerbos/cerbos/internal/codegen"
 	"github.com/cerbos/cerbos/internal/namer"
 	"github.com/cerbos/cerbos/internal/policy"
 )
@@ -55,19 +53,6 @@ func (mc *moduleCtx) addErr(err error) {
 	mc.errors.Add(err)
 }
 
-func (mc *moduleCtx) addErrWithDesc(err error, description string) {
-	mc.errors.Add(newError(mc.sourceFile, description, err))
-}
-
-func (mc *moduleCtx) addCodegenErr(err error) {
-	celErr := &codegen.CELCompileError{}
-	if errors.As(err, &celErr) {
-		for _, ce := range celErr.Issues.Errors() {
-			mc.addErrWithDesc(ErrInvalidMatchExpr, fmt.Sprintf("%s @ %s", ce.Message, celErr.Parent))
-		}
-
-		return
-	}
-
-	mc.addErr(err)
+func (mc *moduleCtx) addErrWithDesc(err error, description string, params ...interface{}) {
+	mc.errors.Add(newError(mc.sourceFile, fmt.Sprintf(description, params...), err))
 }

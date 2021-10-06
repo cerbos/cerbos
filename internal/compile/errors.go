@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/fatih/color"
+	"github.com/google/cel-go/cel"
 )
 
 var (
@@ -107,4 +108,27 @@ func (e *Error) Unwrap() error {
 
 func newError(file, desc string, err error) *Error {
 	return &Error{File: file, Err: err, Description: desc}
+}
+
+// CELCompileError holds CEL compilation errors.
+type CELCompileError struct {
+	expr   string
+	issues *cel.Issues
+}
+
+func newCELCompileError(expr string, issues *cel.Issues) *CELCompileError {
+	return &CELCompileError{expr: expr, issues: issues}
+}
+
+func (cce *CELCompileError) Error() string {
+	errList := make([]string, len(cce.issues.Errors()))
+	for i, ce := range cce.issues.Errors() {
+		errList[i] = ce.Message
+	}
+
+	return fmt.Sprintf("failed to compile `%s` [%s]", cce.expr, strings.Join(errList, ", "))
+}
+
+func (cce *CELCompileError) Unwrap() error {
+	return cce.issues.Err()
 }

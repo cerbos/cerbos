@@ -46,14 +46,15 @@ message RunnableResourcePolicySet {
             map<string, google.protobuf.Empty> actions = 2;
             map<string, google.protobuf.Empty> derived_roles = 3;
             map<string, google.protobuf.Empty> roles = 4;
-            google.api.expr.v1alpha1.CheckedExpr condition = 5;
+            Condition condition = 5;
             cerbos.effect.v1.Effect effect = 6; 
         }
 
 
         repeated string scope = 1;
         map<string, RunnableDerivedRole> derived_roles = 2;
-        repeated Rule rules = 3;
+        map<string, Expr> variables = 3;
+        repeated Rule rules = 4;
     }
 
     Metadata meta = 1;
@@ -63,7 +64,8 @@ message RunnableResourcePolicySet {
 message RunnableDerivedRole {
     string name = 1;
     map<string, google.protobuf.Empty> parent_roles = 2;
-    google.api.expr.v1alpha1.CheckedExpr condition = 3;
+    map<string, Expr> variables = 3;
+    Condition condition = 4;
 }
 
 message RunnableDerivedRolesSet {
@@ -87,7 +89,7 @@ message RunnablePrincipalPolicySet {
     message Policy {
         message ActionRule {
             string name = 1;
-            google.api.expr.v1alpha1.CheckedExpr condition = 2;
+            Condition condition = 2;
             cerbos.effect.v1.Effect effect = 3;
         }
 
@@ -96,9 +98,28 @@ message RunnablePrincipalPolicySet {
         }
 
         repeated string scope = 1;
-        map<string, ResourceRules> resource_rules = 2;
+        map<string, Expr> variables = 2;
+        map<string, ResourceRules> resource_rules = 3;
     }
 
     Metadata meta = 1;
     repeated Policy policies = 2;
+}
+
+message Expr {
+    string original = 1;
+    google.api.expr.v1alpha1.CheckedExpr checked = 2;
+}
+
+message Condition {
+    message ExprList {
+        repeated Condition expr = 1;
+    }
+
+    oneof op {
+        ExprList all = 1;
+        ExprList any = 2;
+        ExprList none = 3;
+        Expr expr = 4;
+    }
 }

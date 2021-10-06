@@ -7,7 +7,10 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 
+	"github.com/google/cel-go/cel"
+	"go.uber.org/multierr"
 	"go.uber.org/zap"
 	exprpb "google.golang.org/genproto/googleapis/api/expr/v1alpha1"
 	"google.golang.org/protobuf/types/known/emptypb"
@@ -15,7 +18,7 @@ import (
 	effectv1 "github.com/cerbos/cerbos/api/genpb/cerbos/effect/v1"
 	enginev1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
 	runtimev1 "github.com/cerbos/cerbos/api/genpb/cerbos/runtime/v1"
-	"github.com/cerbos/cerbos/internal/codegen"
+	"github.com/cerbos/cerbos/internal/conditions"
 	"github.com/cerbos/cerbos/internal/namer"
 	"github.com/cerbos/cerbos/internal/observability/logging"
 )
@@ -101,22 +104,51 @@ func (rpe *resourcePolicyEvaluator) Evaluate(ctx context.Context, input *enginev
 	for _, p := range rpe.policy.Policies {
 		log := logger.With(zap.Strings("scope", p.Scope))
 
+		// evaluate the variables of this policy
+		variables, err := evaluateVariables(log, p.Variables, input)
+		if err != nil {
+			log.Error("Failed to evaluate variables", zap.Error(err))
+			return nil, fmt.Errorf("failed to evaluate variables: %w", err)
+		}
+
 		// calculate the set of effective derived roles
 		effectiveDerivedRoles := stringSet{}
 		for drName, dr := range p.DerivedRoles {
 			if !setIntersects(dr.ParentRoles, effectiveRoles) {
+				log.Debug("Derived role not activated", zap.String("derived_role", drName), zap.String("cause", "no matching roles"))
 				continue
 			}
 
-			ok, err := satisfiesCondition(dr.Condition, input)
+			// evaluate variables of this derived roles set
+			drVariables, err := evaluateVariables(log, dr.Variables, input)
 			if err != nil {
-				log.Debug("Failed to evaluate condition of derived role", zap.String("derived_role", drName), zap.Error(err))
+				log.Debug("Derived role not activated",
+					zap.String("derived_role", drName),
+					zap.String("cause", "error evaluating derived role variables"),
+					zap.Error(err))
+				// TODO(cell) Identify "undefined vars" errors and skip only those instead of everything.
 				continue
 			}
 
-			if ok {
-				effectiveDerivedRoles[drName] = struct{}{}
+			ok, err := satisfiesCondition(log, dr.Condition, drVariables, input)
+			if err != nil {
+				log.Debug("Derived role not activated",
+					zap.String("derived_role", drName),
+					zap.String("cause", "error evaluating condition"),
+					zap.Error(err))
+				// TODO(cell) Identify "undefined vars" errors and skip only those instead of everything.
+				continue
 			}
+
+			if !ok {
+				log.Debug("Derived role not activated",
+					zap.String("derived_role", drName),
+					zap.String("cause", "condition not satisfied"))
+				continue
+			}
+
+			effectiveDerivedRoles[drName] = struct{}{}
+			log.Debug("Derived role activated", zap.String("derived_role", drName))
 		}
 
 		result.EffectiveDerivedRoles = effectiveDerivedRoles
@@ -124,21 +156,38 @@ func (rpe *resourcePolicyEvaluator) Evaluate(ctx context.Context, input *enginev
 		// evaluate each rule until all actions have a result
 		for _, rule := range p.Rules {
 			if !setIntersects(rule.Roles, effectiveRoles) && !setIntersects(rule.DerivedRoles, effectiveDerivedRoles) {
+				log.Debug("Rule not activated",
+					zap.String("rule", rule.Name),
+					zap.String("cause", "no matching roles"))
 				continue
 			}
 
 			for actionGlob := range rule.Actions {
 				matchedActions := globMatch(actionGlob, input.Actions)
 				for _, action := range matchedActions {
-					ok, err := satisfiesCondition(rule.Condition, input)
+					ok, err := satisfiesCondition(log, rule.Condition, variables, input)
 					if err != nil {
-						log.Debug("Failed to evaluate condition of rule", zap.String("rule", rule.Name), zap.Error(err))
+						log.Debug("Rule not activated",
+							zap.String("rule", rule.Name),
+							zap.String("action", action),
+							zap.String("cause", "error evaluating condition"),
+							zap.Error(err))
 						continue
 					}
 
-					if ok {
-						result.setEffect(action, rule.Effect)
+					if !ok {
+						log.Debug("Rule not activated",
+							zap.String("rule", rule.Name),
+							zap.String("action", action),
+							zap.String("cause", "condition not satisfied"))
+						continue
 					}
+
+					result.setEffect(action, rule.Effect)
+					log.Debug("Rule activated",
+						zap.String("rule", rule.Name),
+						zap.String("action", action),
+						zap.Stringer("effect", rule.Effect))
 				}
 			}
 		}
@@ -159,25 +208,48 @@ func (ppe *principalPolicyEvaluator) Evaluate(ctx context.Context, input *engine
 	result := newEvalResult(namer.PolicyKeyFromModuleName(ppe.policy.Meta.Fqn), input.Actions)
 
 	for _, p := range ppe.policy.Policies {
+		log := logger.With(zap.Strings("scope", p.Scope))
+
+		// evaluate the variables of this policy
+		variables, err := evaluateVariables(log, p.Variables, input)
+		if err != nil {
+			log.Error("Failed to evaluate variables", zap.Error(err))
+			return nil, fmt.Errorf("failed to evaluate variables: %w", err)
+		}
+
 		for resource, resourceRules := range p.ResourceRules {
 			if !globs.matches(resource, input.Resource.Kind) {
 				continue
 			}
 
-			log := logger.With(zap.Strings("scope", p.Scope), zap.String("resource_rule", resource))
-
 			for actionGlob, rule := range resourceRules.ActionRules {
 				matchedActions := globMatch(actionGlob, input.Actions)
 				for _, action := range matchedActions {
-					ok, err := satisfiesCondition(rule.Condition, input)
+					ok, err := satisfiesCondition(log, rule.Condition, variables, input)
 					if err != nil {
-						log.Debug("Failed to evaluate condition of rule", zap.String("rule", rule.Name), zap.Error(err))
+						log.Debug("Rule not activated",
+							zap.String("resource", resource),
+							zap.String("rule", rule.Name),
+							zap.String("action", action),
+							zap.String("cause", "error evaluating condition"),
+							zap.Error(err))
 						continue
 					}
 
-					if ok {
-						result.Effects[action] = rule.Effect
+					if !ok {
+						log.Debug("Rule not activated",
+							zap.String("resource", resource),
+							zap.String("rule", rule.Name),
+							zap.String("action", action),
+							zap.String("cause", "condition not satisfied"))
+						continue
 					}
+					result.Effects[action] = rule.Effect
+					log.Debug("Rule activated",
+						zap.String("resource", resource),
+						zap.String("rule", rule.Name),
+						zap.String("action", action),
+						zap.Stringer("effect", rule.Effect))
 				}
 			}
 		}
@@ -187,35 +259,144 @@ func (ppe *principalPolicyEvaluator) Evaluate(ctx context.Context, input *engine
 	return result, nil
 }
 
-func satisfiesCondition(cond *exprpb.CheckedExpr, input *enginev1.CheckInput) (bool, error) {
+func evaluateVariables(log *zap.Logger, variables map[string]*runtimev1.Expr, input *enginev1.CheckInput) (map[string]interface{}, error) {
+	var errs error
+	evalVars := make(map[string]interface{}, len(variables))
+	for varName, varExpr := range variables {
+		val, err := evaluateCELExpr(varExpr.Checked, evalVars, input)
+		if err != nil {
+			log.Debug("Variable evaluation failed",
+				zap.String("variable", varName),
+				zap.String("expression", varExpr.Original),
+				zap.Error(err))
+			errs = multierr.Append(errs, fmt.Errorf("error evaluating `%s := %s`: %w", varName, varExpr.Original, err))
+			continue
+		}
+
+		evalVars[varName] = val
+		log.Debug("Variable evaluated",
+			zap.String("variable", varName),
+			zap.String("expression", varExpr.Original),
+			zap.Any("value", val))
+	}
+
+	return evalVars, errs
+}
+
+func satisfiesCondition(log *zap.Logger, cond *runtimev1.Condition, variables map[string]interface{}, input *enginev1.CheckInput) (bool, error) {
 	if cond == nil {
 		return true, nil
 	}
 
-	prg, err := codegen.CELConditionFromCheckedExpr(cond).Program()
+	switch t := cond.Op.(type) {
+	case *runtimev1.Condition_Expr:
+		val, err := evaluateBoolCELExpr(t.Expr.Checked, variables, input)
+		if err != nil {
+			log.Debug("Failed to evaluate condition expression",
+				zap.String("expression", t.Expr.Original),
+				zap.Error(err))
+
+			return false, fmt.Errorf("failed to evaluate `%s`: %w", t.Expr.Original, err)
+		}
+
+		log.Debug("Evaluated condition expression",
+			zap.String("expression", t.Expr.Original),
+			zap.Bool("value", val))
+
+		return val, nil
+	case *runtimev1.Condition_All:
+		log.Debug("Evaluating ALL")
+		for _, expr := range t.All.Expr {
+			val, err := satisfiesCondition(log, expr, variables, input)
+			if err != nil {
+				log.Debug("Short-circuiting ALL due to error", zap.Error(err))
+				return false, err
+			}
+
+			if !val {
+				log.Debug("Short-circuiting ALL due to false value")
+				return false, nil
+			}
+		}
+
+		return true, nil
+	case *runtimev1.Condition_Any:
+		log.Debug("Evaluating ANY")
+		for _, expr := range t.Any.Expr {
+			val, err := satisfiesCondition(log, expr, variables, input)
+			if err != nil {
+				log.Debug("Short-circuiting ANY due to error", zap.Error(err))
+				return false, err
+			}
+
+			if val {
+				log.Debug("Short-circuiting ANY due to false value")
+				return true, nil
+			}
+		}
+
+		return false, nil
+	case *runtimev1.Condition_None:
+		log.Debug("Evaluating NONE")
+		for _, expr := range t.None.Expr {
+			val, err := satisfiesCondition(log, expr, variables, input)
+			if err != nil {
+				log.Debug("Short-circuiting NONE due to error", zap.Error(err))
+				return false, err
+			}
+
+			if val {
+				log.Debug("Short-circuiting NONE due to false value")
+				return false, nil
+			}
+		}
+
+		return true, nil
+	default:
+		return false, fmt.Errorf("unknown op type %T", t)
+	}
+}
+
+func evaluateBoolCELExpr(expr *exprpb.CheckedExpr, variables map[string]interface{}, input *enginev1.CheckInput) (bool, error) {
+	val, err := evaluateCELExpr(expr, variables, input)
 	if err != nil {
-		return false, fmt.Errorf("failed to convert checked expression to CEL program: %w", err)
+		return false, err
 	}
 
-	result, _, err := prg.Eval(map[string]interface{}{
-		codegen.CELRequestIdent:    input,
-		codegen.CELResourceAbbrev:  input.Resource,
-		codegen.CELPrincipalAbbrev: input.Principal,
-	})
-	if err != nil {
-		return false, fmt.Errorf("CEL evaluation failed: %w", err)
-	}
-
-	if result == nil || result.Value() == nil {
+	boolVal, ok := val.(bool)
+	if !ok {
 		return false, ErrUnexpectedResult
 	}
 
-	v, ok := result.Value().(bool)
-	if !ok {
-		return false, fmt.Errorf("unexpected result from condition evaluation: %v", result.Value())
+	return boolVal, nil
+}
+
+func evaluateCELExpr(expr *exprpb.CheckedExpr, variables map[string]interface{}, input *enginev1.CheckInput) (interface{}, error) {
+	if expr == nil {
+		return nil, nil
 	}
 
-	return v, nil
+	prg, err := conditions.StdEnv.Program(cel.CheckedExprToAst(expr))
+	if err != nil {
+		return nil, err
+	}
+
+	result, _, err := prg.Eval(map[string]interface{}{
+		conditions.CELRequestIdent:    input,
+		conditions.CELResourceAbbrev:  input.Resource,
+		conditions.CELPrincipalAbbrev: input.Principal,
+		conditions.CELGlobalsIdent:    variables,
+	})
+	if err != nil {
+		// ignore expressions that access non-existent keys
+		if strings.Contains(err.Error(), "no such key") {
+			return nil, nil
+		}
+
+		return nil, err
+	}
+
+	return result.Value(), nil
 }
 
 type protoSet map[string]*emptypb.Empty

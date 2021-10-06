@@ -267,6 +267,23 @@ func (m *RunnableDerivedRole) Validate() error {
 
 	}
 
+	for key, val := range m.GetVariables() {
+		_ = val
+
+		// no validation rules for Variables[key]
+
+		if v, ok := interface{}(val).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return RunnableDerivedRoleValidationError{
+					field:  fmt.Sprintf("Variables[%v]", key),
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	}
+
 	if v, ok := interface{}(m.GetCondition()).(interface{ Validate() error }); ok {
 		if err := v.Validate(); err != nil {
 			return RunnableDerivedRoleValidationError{
@@ -522,6 +539,198 @@ var _ interface {
 	ErrorName() string
 } = RunnablePrincipalPolicySetValidationError{}
 
+// Validate checks the field values on Expr with the rules defined in the proto
+// definition for this message. If any rules are violated, an error is returned.
+func (m *Expr) Validate() error {
+	if m == nil {
+		return nil
+	}
+
+	// no validation rules for Original
+
+	if v, ok := interface{}(m.GetChecked()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return ExprValidationError{
+				field:  "Checked",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	return nil
+}
+
+// ExprValidationError is the validation error returned by Expr.Validate if the
+// designated constraints aren't met.
+type ExprValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e ExprValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e ExprValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e ExprValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e ExprValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e ExprValidationError) ErrorName() string { return "ExprValidationError" }
+
+// Error satisfies the builtin error interface
+func (e ExprValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sExpr.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = ExprValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = ExprValidationError{}
+
+// Validate checks the field values on Condition with the rules defined in the
+// proto definition for this message. If any rules are violated, an error is returned.
+func (m *Condition) Validate() error {
+	if m == nil {
+		return nil
+	}
+
+	switch m.Op.(type) {
+
+	case *Condition_All:
+
+		if v, ok := interface{}(m.GetAll()).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return ConditionValidationError{
+					field:  "All",
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	case *Condition_Any:
+
+		if v, ok := interface{}(m.GetAny()).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return ConditionValidationError{
+					field:  "Any",
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	case *Condition_None:
+
+		if v, ok := interface{}(m.GetNone()).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return ConditionValidationError{
+					field:  "None",
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	case *Condition_Expr:
+
+		if v, ok := interface{}(m.GetExpr()).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return ConditionValidationError{
+					field:  "Expr",
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	}
+
+	return nil
+}
+
+// ConditionValidationError is the validation error returned by
+// Condition.Validate if the designated constraints aren't met.
+type ConditionValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e ConditionValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e ConditionValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e ConditionValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e ConditionValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e ConditionValidationError) ErrorName() string { return "ConditionValidationError" }
+
+// Error satisfies the builtin error interface
+func (e ConditionValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sCondition.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = ConditionValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = ConditionValidationError{}
+
 // Validate checks the field values on RunnableResourcePolicySet_Metadata with
 // the rules defined in the proto definition for this message. If any rules
 // are violated, an error is returned.
@@ -613,6 +822,23 @@ func (m *RunnableResourcePolicySet_Policy) Validate() error {
 			if err := v.Validate(); err != nil {
 				return RunnableResourcePolicySet_PolicyValidationError{
 					field:  fmt.Sprintf("DerivedRoles[%v]", key),
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	}
+
+	for key, val := range m.GetVariables() {
+		_ = val
+
+		// no validation rules for Variables[key]
+
+		if v, ok := interface{}(val).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return RunnableResourcePolicySet_PolicyValidationError{
+					field:  fmt.Sprintf("Variables[%v]", key),
 					reason: "embedded message failed validation",
 					cause:  err,
 				}
@@ -981,6 +1207,23 @@ func (m *RunnablePrincipalPolicySet_Policy) Validate() error {
 		return nil
 	}
 
+	for key, val := range m.GetVariables() {
+		_ = val
+
+		// no validation rules for Variables[key]
+
+		if v, ok := interface{}(val).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return RunnablePrincipalPolicySet_PolicyValidationError{
+					field:  fmt.Sprintf("Variables[%v]", key),
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	}
+
 	for key, val := range m.GetResourceRules() {
 		_ = val
 
@@ -1231,3 +1474,85 @@ var _ interface {
 	Cause() error
 	ErrorName() string
 } = RunnablePrincipalPolicySet_Policy_ResourceRulesValidationError{}
+
+// Validate checks the field values on Condition_ExprList with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, an error is returned.
+func (m *Condition_ExprList) Validate() error {
+	if m == nil {
+		return nil
+	}
+
+	for idx, item := range m.GetExpr() {
+		_, _ = idx, item
+
+		if v, ok := interface{}(item).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return Condition_ExprListValidationError{
+					field:  fmt.Sprintf("Expr[%v]", idx),
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	}
+
+	return nil
+}
+
+// Condition_ExprListValidationError is the validation error returned by
+// Condition_ExprList.Validate if the designated constraints aren't met.
+type Condition_ExprListValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e Condition_ExprListValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e Condition_ExprListValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e Condition_ExprListValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e Condition_ExprListValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e Condition_ExprListValidationError) ErrorName() string {
+	return "Condition_ExprListValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e Condition_ExprListValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sCondition_ExprList.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = Condition_ExprListValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = Condition_ExprListValidationError{}

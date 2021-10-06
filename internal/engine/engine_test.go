@@ -10,9 +10,11 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/stretchr/testify/require"
+	"go.uber.org/zap"
 	"google.golang.org/protobuf/testing/protocmp"
 
 	enginev1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
+	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
 	privatev1 "github.com/cerbos/cerbos/api/genpb/cerbos/private/v1"
 	"github.com/cerbos/cerbos/internal/audit"
 	"github.com/cerbos/cerbos/internal/audit/local"
@@ -131,4 +133,36 @@ func mkEngine(tb testing.TB, enableAuditLog bool) (*Engine, context.CancelFunc) 
 	require.NoError(tb, err)
 
 	return eng, cancelFunc
+}
+
+func TestSatisfiesCondition(t *testing.T) {
+	testCases := test.LoadTestCases(t, "cel_eval")
+
+	for _, tcase := range testCases {
+		tcase := tcase
+		t.Run(tcase.Name, func(t *testing.T) {
+			tc := readCELTestCase(t, tcase.Input)
+			cond, err := compile.Condition(&policyv1.Condition{Condition: &policyv1.Condition_Match{Match: tc.Condition}})
+			require.NoError(t, err)
+
+			retVal, err := satisfiesCondition(zap.L(), cond, nil, tc.Input)
+
+			if tc.WantError {
+				require.Error(t, err)
+				return
+			}
+
+			require.NoError(t, err)
+			require.Equal(t, tc.Want, retVal)
+		})
+	}
+}
+
+func readCELTestCase(t *testing.T, data []byte) *privatev1.CelTestCase {
+	t.Helper()
+
+	tc := &privatev1.CelTestCase{}
+	require.NoError(t, util.ReadJSONOrYAML(bytes.NewReader(data), tc))
+
+	return tc
 }

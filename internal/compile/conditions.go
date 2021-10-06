@@ -4,227 +4,89 @@
 package compile
 
 import (
-	"errors"
 	"fmt"
 
 	"github.com/google/cel-go/cel"
-	"github.com/google/cel-go/common/types/ref"
-	"go.uber.org/zap"
 	exprpb "google.golang.org/genproto/googleapis/api/expr/v1alpha1"
 
-	"github.com/cerbos/cerbos/internal/codegen"
+	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
+	runtimev1 "github.com/cerbos/cerbos/api/genpb/cerbos/runtime/v1"
 	"github.com/cerbos/cerbos/internal/conditions"
-	"github.com/cerbos/cerbos/internal/namer"
 )
 
-var (
-	ErrEmptyConditionIndex  = errors.New("empty condition index")
-	ErrNoMatchingConditions = errors.New("no matching conditions")
-	ErrUnexpectedInput      = errors.New("unexpected input")
-	ErrUnexpectedResult     = errors.New("unexpected result")
+func Condition(cond *policyv1.Condition) (*runtimev1.Condition, error) {
+	mc := &moduleCtx{unitCtx: &unitCtx{errors: new(ErrorList)}, fqn: "adhoc", sourceFile: "adhoc"}
+	cc := compileCondition(mc, "unknown", cond)
+	return cc, mc.error()
+}
 
-	celLog = zap.L().Named("cel")
-)
-
-type ConditionMap map[string]ConditionEvaluator
-
-func NewConditionMapFromRepr(conds map[string]*exprpb.CheckedExpr, globals map[string]string) (ConditionMap, error) {
-	if len(conds) == 0 {
-		return nil, nil
+func compileVariables(modCtx *moduleCtx, variables map[string]string) map[string]*runtimev1.Expr {
+	if len(variables) == 0 {
+		return nil
 	}
 
-	globalPrgs, err := buildGlobalPrgs(globals)
+	compiled := make(map[string]*runtimev1.Expr, len(variables))
+	for v, expr := range variables {
+		checked := compileCELExpr(modCtx, fmt.Sprintf("variable `%s`", v), expr)
+		compiled[v] = &runtimev1.Expr{Original: expr, Checked: checked}
+	}
+
+	return compiled
+}
+
+func compileCondition(modCtx *moduleCtx, parent string, cond *policyv1.Condition) *runtimev1.Condition {
+	if cond == nil {
+		return nil
+	}
+
+	return compileMatch(modCtx, parent, cond.GetMatch())
+}
+
+func compileMatch(modCtx *moduleCtx, parent string, match *policyv1.Match) *runtimev1.Condition {
+	if match == nil {
+		return nil
+	}
+
+	switch t := match.Op.(type) {
+	case *policyv1.Match_Expr:
+		checkedExpr := compileCELExpr(modCtx, parent, t.Expr)
+		return &runtimev1.Condition{Op: &runtimev1.Condition_Expr{Expr: &runtimev1.Expr{Original: t.Expr, Checked: checkedExpr}}}
+	case *policyv1.Match_All:
+		exprList := compileMatchList(modCtx, parent, t.All.Of)
+		return &runtimev1.Condition{Op: &runtimev1.Condition_All{All: exprList}}
+	case *policyv1.Match_Any:
+		exprList := compileMatchList(modCtx, parent, t.Any.Of)
+		return &runtimev1.Condition{Op: &runtimev1.Condition_Any{Any: exprList}}
+	case *policyv1.Match_None:
+		exprList := compileMatchList(modCtx, parent, t.None.Of)
+		return &runtimev1.Condition{Op: &runtimev1.Condition_None{None: exprList}}
+	default:
+		modCtx.addErr(fmt.Errorf("unknown match operation in %s: %T", parent, t))
+		return nil
+	}
+}
+
+func compileCELExpr(modCtx *moduleCtx, parent, expr string) *exprpb.CheckedExpr {
+	celAST, issues := conditions.StdEnv.Compile(expr)
+	if issues != nil && issues.Err() != nil {
+		modCtx.addErrWithDesc(newCELCompileError(expr, issues), "Invalid expression in %s", parent)
+		return nil
+	}
+
+	checkedExpr, err := cel.AstToCheckedExpr(celAST)
 	if err != nil {
-		return nil, err
+		modCtx.addErrWithDesc(err, "Failed to convert AST of `%s` in %s", expr, parent)
+		return nil
 	}
 
-	cm := make(ConditionMap, len(conds))
-	for k, expr := range conds {
-		c := codegen.CELConditionFromCheckedExpr(expr)
-		celPrg, err := c.Program()
-		if err != nil {
-			return nil, fmt.Errorf("failed to hydrate CEL program [%s]:%w", k, err)
-		}
-
-		cm[k] = &CELConditionEvaluator{prg: celPrg, globalPrgs: globalPrgs, c: c}
-	}
-
-	return cm, nil
+	return checkedExpr
 }
 
-func NewConditionMap(conds map[string]*conditions.CELCondition, globals map[string]string) (ConditionMap, error) {
-	globalPrgs, err := buildGlobalPrgs(globals)
-	if err != nil {
-		return nil, err
+func compileMatchList(modCtx *moduleCtx, parent string, matches []*policyv1.Match) *runtimev1.Condition_ExprList {
+	exprList := make([]*runtimev1.Condition, len(matches))
+	for i, m := range matches {
+		exprList[i] = compileMatch(modCtx, parent, m)
 	}
 
-	cm := make(ConditionMap, len(conds))
-	for k, c := range conds {
-		p, err := c.Program()
-		if err != nil {
-			return nil, fmt.Errorf("failed to generate CEL program for %s: %w", k, err)
-		}
-
-		cm[k] = &CELConditionEvaluator{prg: p, globalPrgs: globalPrgs, c: c}
-	}
-
-	return cm, nil
-}
-
-func buildGlobalPrgs(globals map[string]string) (map[string]cel.Program, error) {
-	if globals == nil {
-		return nil, nil
-	}
-	var err error
-	globalPrgs := make(map[string]cel.Program, len(globals))
-
-	for name, def := range globals {
-		ast, issues := conditions.StdEnv.Compile(def)
-		if issues != nil && issues.Err() != nil {
-			celLog.Warn("Global variable compilation failed", zap.Error(issues.Err()))
-			return nil, issues.Err()
-		}
-		globalPrgs[name], err = conditions.StdEnv.Program(ast)
-		if err != nil {
-			celLog.Warn("Global variable AST generation failed", zap.String(conditions.CELGlobalsIdent, name), zap.Error(err))
-			return nil, err
-		}
-	}
-
-	return globalPrgs, nil
-}
-
-type ConditionEvaluator interface {
-	Eval(input interface{}) (bool, error)
-}
-
-type CELConditionEvaluator struct {
-	prg        cel.Program
-	globalPrgs map[string]cel.Program
-	c          *conditions.CELCondition
-}
-
-func (ce *CELConditionEvaluator) Eval(input interface{}) (bool, error) {
-	if input == nil {
-		return false, fmt.Errorf("input should not be nil: %w", ErrUnexpectedInput)
-	}
-
-	req, ok := input.(map[string]interface{})
-	if !ok {
-		return false, fmt.Errorf("unexpected type for input [%T]: %w", input, ErrUnexpectedInput)
-	}
-
-	var abbrevR map[string]interface{}
-	var abbrevP map[string]interface{}
-
-	if resource, ok := req["resource"]; ok {
-		if r, ok := resource.(map[string]interface{}); ok {
-			abbrevR = r
-		} else {
-			return false, fmt.Errorf("unexpected type for 'resource' key in input [%T]: %w", resource, ErrUnexpectedInput)
-		}
-	} else {
-		return false, fmt.Errorf("missing 'resource' key in input: %w", ErrUnexpectedInput)
-	}
-
-	if principal, ok := req["principal"]; ok {
-		if p, ok := principal.(map[string]interface{}); ok {
-			abbrevP = p
-		} else {
-			return false, fmt.Errorf("unexpected type for 'principal' key in input [%T]: %w", principal, ErrUnexpectedInput)
-		}
-	} else {
-		return false, fmt.Errorf("missing 'principal' key in input: %w", ErrUnexpectedInput)
-	}
-
-	stdvars := map[string]interface{}{
-		conditions.CELRequestIdent:    input,
-		conditions.CELResourceAbbrev:  abbrevR,
-		conditions.CELPrincipalAbbrev: abbrevP,
-	}
-
-	prg := ce.prg
-	var err error
-	if ce.globalPrgs != nil {
-		values := ce.evaluateGlobals(stdvars)
-		stdvars[conditions.CELGlobalsIdent] = values
-
-		prg, err = ce.c.Program(conditions.GlobalsDeclaration)
-		if err != nil {
-			return false, err
-		}
-	}
-
-	result, _, err := prg.Eval(stdvars)
-	if err != nil {
-		celLog.Warn("Condition evaluation failed", zap.Error(err))
-		return false, err
-	}
-	if result == nil || result.Value() == nil {
-		celLog.Warn("Unexpected result from condition evaluation")
-		return false, ErrUnexpectedResult
-	}
-
-	v, ok := result.Value().(bool)
-	if !ok {
-		celLog.Warn("Condition returned non-boolean result", zap.Any("result", result.Value()))
-		return false, fmt.Errorf("unexpected result from condition evaluation: %v", result.Value())
-	}
-
-	celLog.Debug("Condition result", zap.Bool("result", v))
-	return v, nil
-}
-
-// evaluateGlobals evaluates global values using std vars
-// then add calculated values to std vars and calculate expression.
-func (ce *CELConditionEvaluator) evaluateGlobals(stdvars map[string]interface{}) map[string]ref.Val {
-	values := make(map[string]ref.Val, len(ce.globalPrgs))
-	for name, prg := range ce.globalPrgs {
-		// TODO: Should we evaluate condition expression to see if we even need to evaluate this program?
-		val, _, err := prg.Eval(stdvars)
-		if err != nil {
-			celLog.Warn("Global variable evaluation failed", zap.String(conditions.CELGlobalsIdent, name), zap.Error(err))
-		} else {
-			values[name] = val
-		}
-	}
-
-	return values
-}
-
-type ConditionIndex map[namer.ModuleID]ConditionMap
-
-func NewConditionIndex() ConditionIndex {
-	return make(ConditionIndex)
-}
-
-func (ci ConditionIndex) AddConditionEvaluator(modName, key string, condEval ConditionEvaluator) {
-	modID := namer.GenModuleIDFromName(modName)
-	if _, ok := ci[modID]; !ok {
-		ci[modID] = make(ConditionMap)
-	}
-
-	ci[modID][key] = condEval
-}
-
-func (ci ConditionIndex) Add(modName string, condMap ConditionMap) {
-	ci[namer.GenModuleIDFromName(modName)] = condMap
-}
-
-func (ci ConditionIndex) GetConditionEvaluator(modName, key string) (ConditionEvaluator, error) {
-	if ci == nil {
-		return nil, ErrEmptyConditionIndex
-	}
-
-	conds, ok := ci[namer.GenModuleIDFromName(modName)]
-	if !ok {
-		return nil, fmt.Errorf("no conditions found for module %s: %w", modName, ErrNoMatchingConditions)
-	}
-
-	eval, ok := conds[key]
-	if !ok {
-		return nil, fmt.Errorf("no condition found matching key %s: %w", key, ErrNoMatchingConditions)
-	}
-
-	return eval, nil
+	return &runtimev1.Condition_ExprList{Expr: exprList}
 }

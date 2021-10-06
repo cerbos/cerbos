@@ -4,7 +4,6 @@
 package engine
 
 import (
-	"bytes"
 	"context"
 	"errors"
 	"fmt"
@@ -13,11 +12,8 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/open-policy-agent/opa/ast"
-	"github.com/open-policy-agent/opa/topdown/cache"
 	"go.opencensus.io/trace"
 	"go.uber.org/zap"
-	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	auditv1 "github.com/cerbos/cerbos/api/genpb/cerbos/audit/v1"
@@ -35,13 +31,12 @@ import (
 var ErrNoPoliciesMatched = errors.New("no matching policies")
 
 const (
-	defaultEffect                = effectv1.Effect_EFFECT_DENY
-	maxQueryCacheSizeBytes int64 = 10 * 1024 * 1024 // 10 MiB
-	noPolicyMatch                = "NO_MATCH"
-	parallelismThreshold         = 2
-	workerQueueSize              = 4
-	workerResetJitter            = 1 << 4
-	workerResetThreshold         = 1 << 16
+	defaultEffect        = effectv1.Effect_EFFECT_DENY
+	noPolicyMatch        = "NO_MATCH"
+	parallelismThreshold = 2
+	workerQueueSize      = 4
+	workerResetJitter    = 1 << 4
+	workerResetThreshold = 1 << 16
 )
 
 type Engine struct {
@@ -49,7 +44,6 @@ type Engine struct {
 	workerIndex uint64
 	workerPool  []chan<- workIn
 	compileMgr  *compile.Manager
-	queryCache  cache.InterQueryCache
 	auditLog    audit.Log
 }
 
@@ -82,17 +76,9 @@ func newEngine(compileMgr *compile.Manager, auditLog audit.Log) (*Engine, error)
 		return nil, err
 	}
 
-	cacheSize := maxQueryCacheSizeBytes
-	queryCache := cache.NewInterQueryCache(&cache.Config{
-		InterQueryBuiltinCache: cache.InterQueryBuiltinCacheConfig{
-			MaxSizeBytes: &cacheSize,
-		},
-	})
-
 	engine := &Engine{
 		conf:       conf,
 		compileMgr: compileMgr,
-		queryCache: queryCache,
 		auditLog:   auditLog,
 	}
 
@@ -431,21 +417,6 @@ func (er *evaluationResult) merge(res *EvalResult) bool {
 	}
 
 	return hasNoMatches
-}
-
-func toAST(req *enginev1.CheckInput) (ast.Value, error) {
-	// TODO (cell) Replace with codegen.MarshalProtoToRego when it's optimized
-	requestJSON, err := protojson.Marshal(req)
-	if err != nil {
-		return nil, fmt.Errorf("failed to marshal request: %w", err)
-	}
-
-	input, err := ast.ValueFromReader(bytes.NewReader(requestJSON))
-	if err != nil {
-		return nil, fmt.Errorf("failed to convert request: %w", err)
-	}
-
-	return input, nil
 }
 
 type workOut struct {

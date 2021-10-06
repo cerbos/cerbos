@@ -7,12 +7,10 @@ import (
 	"fmt"
 	"strings"
 
-	exprpb "google.golang.org/genproto/googleapis/api/expr/v1alpha1"
 	"google.golang.org/protobuf/types/known/emptypb"
 
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
 	runtimev1 "github.com/cerbos/cerbos/api/genpb/cerbos/runtime/v1"
-	"github.com/cerbos/cerbos/internal/codegen"
 	"github.com/cerbos/cerbos/internal/namer"
 	"github.com/cerbos/cerbos/internal/policy"
 )
@@ -59,6 +57,7 @@ func compileResourcePolicy(modCtx *moduleCtx, rp *policyv1.ResourcePolicy) *runt
 		DerivedRoles: referencedRoles,
 		Scope:        strings.Split(rp.Scope, "."),
 		Rules:        make([]*runtimev1.RunnableResourcePolicySet_Policy_Rule, len(rp.Rules)),
+		Variables:    compileVariables(modCtx, modCtx.def.Globals),
 	}
 
 	for i, rule := range rp.Rules {
@@ -100,7 +99,7 @@ func compileImportedDerivedRoles(modCtx *moduleCtx, rp *policyv1.ResourcePolicy)
 
 		drModCtx := modCtx.moduleCtx(impID)
 		if drModCtx == nil {
-			modCtx.addErrWithDesc(ErrImportNotFound, fmt.Sprintf("Import '%s' cannot be found", imp))
+			modCtx.addErrWithDesc(ErrImportNotFound, "Import '%s' cannot be found", imp)
 			continue
 		}
 
@@ -156,12 +155,11 @@ func compileImportedDerivedRoles(modCtx *moduleCtx, rp *policyv1.ResourcePolicy)
 	}
 
 	for ur := range unknownRoles {
-		modCtx.addErrWithDesc(ErrUnknownDerivedRole, fmt.Sprintf("Derived role '%s' is not defined in any imports", ur))
+		modCtx.addErrWithDesc(ErrUnknownDerivedRole, "Derived role '%s' is not defined in any imports", ur)
 	}
 
 	for ar, impList := range ambiguousRoles {
-		modCtx.addErrWithDesc(ErrAmbiguousDerivedRole,
-			fmt.Sprintf("Derived role '%s' is defined in more than one import: [%s]", ar, impList))
+		modCtx.addErrWithDesc(ErrAmbiguousDerivedRole, "Derived role '%s' is defined in more than one import: [%s]", ar, impList)
 	}
 
 	return referencedRoles, modCtx.error()
@@ -186,62 +184,34 @@ func doCompileDerivedRoles(modCtx *moduleCtx, dr *policyv1.DerivedRoles) *runtim
 		DerivedRoles: make(map[string]*runtimev1.RunnableDerivedRole, len(dr.Definitions)),
 	}
 
+	variables := compileVariables(modCtx, modCtx.def.Globals)
+
 	for i, def := range dr.Definitions {
 		rdr := &runtimev1.RunnableDerivedRole{
 			Name:        def.Name,
 			ParentRoles: make(map[string]*emptypb.Empty, len(def.ParentRoles)),
+			Variables:   variables,
 		}
 
 		for _, pr := range def.ParentRoles {
 			rdr.ParentRoles[pr] = emptyVal
 		}
 
-		drName := fmt.Sprintf("derived role '%s' (#%d)", def.Name, i)
-		cond, err := compileCondition(drName, def.Condition)
-		if err != nil {
-			modCtx.addErrWithDesc(err, fmt.Sprintf("Failed to compile condition for %s", drName))
-			continue
-		}
-
-		rdr.Condition = cond
+		rdr.Condition = compileCondition(modCtx, fmt.Sprintf("derived role '%s' (#%d)", def.Name, i), def.Condition)
 		compiled.DerivedRoles[def.Name] = rdr
 	}
 
 	return compiled
 }
 
-func compileCondition(parent string, cond *policyv1.Condition) (*exprpb.CheckedExpr, error) {
-	if cond == nil {
-		return nil, nil
-	}
-
-	match := cond.GetMatch()
-	if match == nil {
-		return nil, nil
-	}
-
-	celCond, err := codegen.GenerateCELCondition(parent, match)
-	if err != nil {
-		return nil, err
-	}
-
-	return celCond.CheckedExpr()
-}
-
 func compileResourceRule(modCtx *moduleCtx, rule *policyv1.ResourceRule) *runtimev1.RunnableResourcePolicySet_Policy_Rule {
 	if len(rule.DerivedRoles) == 0 && len(rule.Roles) == 0 {
-		modCtx.addErrWithDesc(ErrInvalidResourceRule, fmt.Sprintf("Rule '%s' does not specify any roles or derived roles to be matched", rule.Name))
-	}
-
-	cond, err := compileCondition(rule.Name, rule.Condition)
-	if err != nil {
-		modCtx.addErrWithDesc(err, fmt.Sprintf("Failed to compile condition for resource rule '%s'", rule.Name))
-		return nil
+		modCtx.addErrWithDesc(ErrInvalidResourceRule, "Rule '%s' does not specify any roles or derived roles to be matched", rule.Name)
 	}
 
 	cr := &runtimev1.RunnableResourcePolicySet_Policy_Rule{
 		Name:      rule.Name,
-		Condition: cond,
+		Condition: compileCondition(modCtx, fmt.Sprintf("resource rule '%s'", rule.Name), rule.Condition),
 		Effect:    rule.Effect,
 	}
 
@@ -273,6 +243,7 @@ func compilePrincipalPolicy(modCtx *moduleCtx, pp *policyv1.PrincipalPolicy) *ru
 	rpp := &runtimev1.RunnablePrincipalPolicySet_Policy{
 		Scope:         strings.Split(pp.Scope, "."),
 		ResourceRules: make(map[string]*runtimev1.RunnablePrincipalPolicySet_Policy_ResourceRules, len(pp.Rules)),
+		Variables:     compileVariables(modCtx, modCtx.def.Globals),
 	}
 
 	for _, rule := range pp.Rules {
@@ -283,17 +254,11 @@ func compilePrincipalPolicy(modCtx *moduleCtx, pp *policyv1.PrincipalPolicy) *ru
 		for i, action := range rule.Actions {
 			action.Name = namer.PrincipalResourceActionRuleName(action, rule.Resource, i+1)
 
-			cond, err := compileCondition(action.Name, action.Condition)
-			if err != nil {
-				modCtx.addErrWithDesc(err,
-					fmt.Sprintf("Failed to compile condition for rule '%s' (#%d) of resource '%s'", action.Name, 1+1, rule.Resource))
-				continue
-			}
-
+			ruleName := fmt.Sprintf("rule '%s' (#%d) of resource '%s'", action.Name, i+1, rule.Resource)
 			rr.ActionRules[action.Action] = &runtimev1.RunnablePrincipalPolicySet_Policy_ActionRule{
 				Name:      action.Name,
 				Effect:    action.Effect,
-				Condition: cond,
+				Condition: compileCondition(modCtx, ruleName, action.Condition),
 			}
 		}
 
@@ -314,75 +279,3 @@ func compilePrincipalPolicy(modCtx *moduleCtx, pp *policyv1.PrincipalPolicy) *ru
 		},
 	}
 }
-
-/*
-func hydrate(unit *policy.CompilationUnit) (map[string]*ast.Module, ConditionIndex, error) {
-	var conditionIdx ConditionIndex
-	modules := make(map[string]*ast.Module, len(unit.Definitions))
-
-	for modID, def := range unit.Definitions {
-		srcFile := policy.GetSourceFile(def)
-		var mod *ast.Module
-		var cm ConditionMap
-		var err error
-
-		// use generated code if it exists -- which should be faster.
-		if gp, ok := unit.Generated[modID]; ok {
-			mod, cm, err = hydrateGeneratedPolicy(srcFile, gp, def.Globals)
-			if err != nil {
-				// try to generate the code from source
-				mod, cm, err = generateCode(srcFile, def)
-			}
-		} else {
-			mod, cm, err = generateCode(srcFile, def)
-		}
-
-		if err != nil {
-			return nil, nil, err
-		}
-
-		modules[srcFile] = mod
-		if cm != nil {
-			if conditionIdx == nil {
-				conditionIdx = NewConditionIndex()
-			}
-
-			conditionIdx[modID] = cm
-		}
-	}
-
-	return modules, conditionIdx, nil
-}
-
-func hydrateGeneratedPolicy(srcFile string, gp *policyv1.GeneratedPolicy, globals map[string]string) (*ast.Module, ConditionMap, error) {
-	m, err := ast.ParseModule(srcFile, string(gp.Code))
-	if err != nil {
-		return nil, nil, fmt.Errorf("failed to parse generated code: %w", err)
-	}
-
-	cm, err := NewConditionMapFromRepr(gp.CelConditions, globals)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	return m, cm, nil
-}
-
-func generateCode(srcFile string, p *policyv1.Policy) (*ast.Module, ConditionMap, error) {
-	res, err := codegen.GenerateCode(p)
-	if err != nil {
-		return nil, nil, newCodeGenErrors(srcFile, err)
-	}
-
-	var cm ConditionMap
-
-	if len(res.Conditions) > 0 {
-		cm, err = NewConditionMap(res.Conditions, p.Globals)
-		if err != nil {
-			return nil, nil, err
-		}
-	}
-
-	return res.Module, cm, nil
-}
-*/

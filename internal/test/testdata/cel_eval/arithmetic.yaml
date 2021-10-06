@@ -2,9 +2,9 @@
 condition:
   all:
     of:
-      - expr: R.attr.intVal1 - R.attr.intVal2 == -40
+      - expr: int(R.attr.intVal1) - int(R.attr.intVal2) == -40
       - expr: R.attr.floatVal2 - R.attr.floatVal1 == 5.0
-      - expr: double(R.attr.intVal1 / R.attr.intVal2) < 0.25
+      - expr: double(R.attr.intVal1 / R.attr.intVal2) < 0.75
       - expr: >- 
           (R.attr.intVal1 < R.attr.intVal2) ? double(R.attr.intVal2 - R.attr.intVal1) / double(R.attr.intVal1) < 0.4 : double(R.attr.intVal1 - R.attr.intVal2) / double(R.attr.intVal1) < 0.4
 input: {
