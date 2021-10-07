@@ -153,8 +153,3 @@ message Test {
     map<string, cerbos.effect.v1.Effect> expected = 6;
 }
 
-message GeneratedPolicy {
-    string fqn = 1;
-    map<string, google.api.expr.v1alpha1.CheckedExpr> cel_conditions = 2;
-    bytes code = 3;
-}

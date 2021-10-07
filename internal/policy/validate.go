@@ -31,6 +31,17 @@ func Validate(p *policyv1.Policy) error {
 func validateResourcePolicy(rp *policyv1.ResourcePolicy) (err error) {
 	ruleNames := make(map[string]int, len(rp.Rules))
 	for i, rule := range rp.Rules {
+		ruleName := rule.Name
+		if ruleName == "" {
+			ruleName = fmt.Sprintf("#%d", i+1)
+		}
+
+		// check for rule without any roles or derived roles defined
+		if len(rule.Roles) == 0 && len(rule.DerivedRoles) == 0 {
+			err = multierr.Append(err, fmt.Errorf("rule %s does not specify any roles or derived roles to match", ruleName))
+		}
+
+		// check for name clashes
 		if rule.Name == "" {
 			continue
 		}
@@ -77,10 +88,16 @@ func validatePrincipalPolicy(rp *policyv1.PrincipalPolicy) (err error) {
 func validateDerivedRoles(dr *policyv1.DerivedRoles) (err error) {
 	roleNames := make(map[string]int, len(dr.Definitions))
 	for i, rd := range dr.Definitions {
+		// Check for name clashes
 		if idx, exists := roleNames[rd.Name]; exists {
 			err = multierr.Append(err, fmt.Errorf("derived role definition #%d has the same name as definition #%d: '%s'", i+1, idx, rd.Name))
 		} else {
 			roleNames[rd.Name] = i + 1
+		}
+
+		// Check for rules without any parent roles
+		if len(rd.ParentRoles) == 0 {
+			err = multierr.Append(err, fmt.Errorf("derived role definition '%s' does not specify any parent roles to match", rd.Name))
 		}
 	}
 

@@ -15,7 +15,7 @@ import (
 )
 
 func Condition(cond *policyv1.Condition) (*runtimev1.Condition, error) {
-	mc := &moduleCtx{unitCtx: &unitCtx{errors: new(ErrorList)}, fqn: "adhoc", sourceFile: "adhoc"}
+	mc := &moduleCtx{unitCtx: &unitCtx{errors: new(ErrorList)}, fqn: "UNKNOWN", sourceFile: "UNKNOWN"}
 	cc := compileCondition(mc, "unknown", cond)
 	return cc, mc.error()
 }

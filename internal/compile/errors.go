@@ -14,15 +14,10 @@ import (
 )
 
 var (
-	ErrAmbiguousDerivedRole = errors.New("ambiguous derived role")
-	ErrCodeGenFailure       = errors.New("code generation failure")
-	ErrCompileError         = errors.New("compile error")
-	ErrImportNotFound       = errors.New("import not found")
-	ErrInvalidImport        = errors.New("invalid import")
-	ErrInvalidMatchExpr     = errors.New("invalid match expression")
-	ErrInvalidResourceRule  = errors.New("invalid resource rule")
-	ErrNoEvaluator          = errors.New("no evaluator available")
-	ErrUnknownDerivedRole   = errors.New("unknown derived role")
+	errAmbiguousDerivedRole = errors.New("ambiguous derived role")
+	errImportNotFound       = errors.New("import not found")
+	errInvalidResourceRule  = errors.New("invalid resource rule")
+	errUnknownDerivedRole   = errors.New("unknown derived role")
 )
 
 type ErrorList []*Error

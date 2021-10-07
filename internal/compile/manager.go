@@ -186,7 +186,7 @@ func (c *Manager) Get(ctx context.Context, modID namer.ModuleID) (*runtimev1.Run
 	for mID, cu := range compileUnits {
 		rps, err := c.compile(cu)
 		if err != nil {
-			return nil, fmt.Errorf("failed to compile module %w", err)
+			return nil, PolicyCompilationErr{underlying: err}
 		}
 
 		if mID == modID {
@@ -195,4 +195,16 @@ func (c *Manager) Get(ctx context.Context, modID namer.ModuleID) (*runtimev1.Run
 	}
 
 	return retVal, nil
+}
+
+type PolicyCompilationErr struct {
+	underlying error
+}
+
+func (pce PolicyCompilationErr) Error() string {
+	return fmt.Sprintf("policy compilation error: %v", pce.underlying)
+}
+
+func (pce PolicyCompilationErr) Unwrap() error {
+	return pce.underlying
 }

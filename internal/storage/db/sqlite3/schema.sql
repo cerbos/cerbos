@@ -8,8 +8,7 @@ CREATE TABLE IF NOT EXISTS policy (
     version VARCHAR(128) NOT NULL,
     description TEXT,
     disabled BOOLEAN default false,
-    definition BLOB,
-    generated BLOB
+    definition BLOB
 );
 
 -- name: policy_dependency

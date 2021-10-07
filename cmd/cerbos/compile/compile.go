@@ -136,14 +136,6 @@ func displayLintErrors(cmd *cobra.Command, errs *index.BuildError) error {
 		cmd.Println()
 	}
 
-	if len(errs.CodegenFailures) > 0 {
-		cmd.Println(header("Code generation failures"))
-		for _, cf := range errs.CodegenFailures {
-			cmd.Printf("%s: %s\n", fileName(cf.File), errorMsg(cf.Err.Error()))
-		}
-		cmd.Println()
-	}
-
 	if len(errs.Disabled) > 0 {
 		cmd.Println(header("Disabled policies"))
 		for _, d := range errs.Disabled {

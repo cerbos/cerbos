@@ -17,7 +17,6 @@ const (
 	PolicyTblIDCol         = "id"
 	PolicyTblDefinitionCol = "definition"
 	PolicyTblDisabledCol   = "disabled"
-	PolicyTblGeneratedCol  = "generated"
 
 	PolicyDepTbl            = "policy_dependency"
 	PolicyDepTblPolicyIDCol = "policy_id"
@@ -32,7 +31,6 @@ type Policy struct {
 	Description string
 	Disabled    bool
 	Definition  PolicyDefWrapper
-	Generated   GeneratedPolicyWrapper
 }
 
 type PolicyDependency struct {
@@ -64,35 +62,6 @@ func (pdw *PolicyDefWrapper) Scan(src interface{}) error {
 	pdw.Policy = &policyv1.Policy{}
 	if err := pdw.Policy.UnmarshalVT(source); err != nil {
 		return fmt.Errorf("failed to unmarshal policy definition: %w", err)
-	}
-
-	return nil
-}
-
-type GeneratedPolicyWrapper struct {
-	*policyv1.GeneratedPolicy
-}
-
-func (gpw GeneratedPolicyWrapper) Value() (driver.Value, error) {
-	return gpw.GeneratedPolicy.MarshalVT()
-}
-
-func (gpw *GeneratedPolicyWrapper) Scan(src interface{}) error {
-	var source []byte
-	switch t := src.(type) {
-	case nil:
-		return nil
-	case string:
-		source = []byte(t)
-	case []byte:
-		source = t
-	default:
-		return fmt.Errorf("unexpected type for generated policy: %T", src)
-	}
-
-	gpw.GeneratedPolicy = &policyv1.GeneratedPolicy{}
-	if err := gpw.GeneratedPolicy.UnmarshalVT(source); err != nil {
-		return fmt.Errorf("failed to unmarshal generated policy: %w", err)
 	}
 
 	return nil

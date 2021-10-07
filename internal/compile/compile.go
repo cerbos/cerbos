@@ -99,7 +99,7 @@ func compileImportedDerivedRoles(modCtx *moduleCtx, rp *policyv1.ResourcePolicy)
 
 		drModCtx := modCtx.moduleCtx(impID)
 		if drModCtx == nil {
-			modCtx.addErrWithDesc(ErrImportNotFound, "Import '%s' cannot be found", imp)
+			modCtx.addErrWithDesc(errImportNotFound, "Import '%s' cannot be found", imp)
 			continue
 		}
 
@@ -155,11 +155,11 @@ func compileImportedDerivedRoles(modCtx *moduleCtx, rp *policyv1.ResourcePolicy)
 	}
 
 	for ur := range unknownRoles {
-		modCtx.addErrWithDesc(ErrUnknownDerivedRole, "Derived role '%s' is not defined in any imports", ur)
+		modCtx.addErrWithDesc(errUnknownDerivedRole, "Derived role '%s' is not defined in any imports", ur)
 	}
 
 	for ar, impList := range ambiguousRoles {
-		modCtx.addErrWithDesc(ErrAmbiguousDerivedRole, "Derived role '%s' is defined in more than one import: [%s]", ar, impList)
+		modCtx.addErrWithDesc(errAmbiguousDerivedRole, "Derived role '%s' is defined in more than one import: [%s]", ar, impList)
 	}
 
 	return referencedRoles, modCtx.error()
@@ -206,7 +206,7 @@ func doCompileDerivedRoles(modCtx *moduleCtx, dr *policyv1.DerivedRoles) *runtim
 
 func compileResourceRule(modCtx *moduleCtx, rule *policyv1.ResourceRule) *runtimev1.RunnableResourcePolicySet_Policy_Rule {
 	if len(rule.DerivedRoles) == 0 && len(rule.Roles) == 0 {
-		modCtx.addErrWithDesc(ErrInvalidResourceRule, "Rule '%s' does not specify any roles or derived roles to be matched", rule.Name)
+		modCtx.addErrWithDesc(errInvalidResourceRule, "Rule '%s' does not specify any roles or derived roles to be matched", rule.Name)
 	}
 
 	cr := &runtimev1.RunnableResourcePolicySet_Policy_Rule{

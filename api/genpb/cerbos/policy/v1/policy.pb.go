@@ -14,7 +14,7 @@ import (
 	v11 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
 	_ "github.com/envoyproxy/protoc-gen-validate/validate"
 	_ "google.golang.org/genproto/googleapis/api/annotations"
-	v1alpha1 "google.golang.org/genproto/googleapis/api/expr/v1alpha1"
+	_ "google.golang.org/genproto/googleapis/api/expr/v1alpha1"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	reflect "reflect"
@@ -1122,69 +1122,6 @@ func (x *Test) GetExpected() map[string]v1.Effect {
 	return nil
 }
 
-type GeneratedPolicy struct {
-	state         protoimpl.MessageState
-	sizeCache     protoimpl.SizeCache
-	unknownFields protoimpl.UnknownFields
-
-	Fqn           string                           `protobuf:"bytes,1,opt,name=fqn,proto3" json:"fqn,omitempty"`
-	CelConditions map[string]*v1alpha1.CheckedExpr `protobuf:"bytes,2,rep,name=cel_conditions,json=celConditions,proto3" json:"cel_conditions,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
-	Code          []byte                           `protobuf:"bytes,3,opt,name=code,proto3" json:"code,omitempty"`
-}
-
-func (x *GeneratedPolicy) Reset() {
-	*x = GeneratedPolicy{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_cerbos_policy_v1_policy_proto_msgTypes[14]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
-}
-
-func (x *GeneratedPolicy) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*GeneratedPolicy) ProtoMessage() {}
-
-func (x *GeneratedPolicy) ProtoReflect() protoreflect.Message {
-	mi := &file_cerbos_policy_v1_policy_proto_msgTypes[14]
-	if protoimpl.UnsafeEnabled && x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use GeneratedPolicy.ProtoReflect.Descriptor instead.
-func (*GeneratedPolicy) Descriptor() ([]byte, []int) {
-	return file_cerbos_policy_v1_policy_proto_rawDescGZIP(), []int{14}
-}
-
-func (x *GeneratedPolicy) GetFqn() string {
-	if x != nil {
-		return x.Fqn
-	}
-	return ""
-}
-
-func (x *GeneratedPolicy) GetCelConditions() map[string]*v1alpha1.CheckedExpr {
-	if x != nil {
-		return x.CelConditions
-	}
-	return nil
-}
-
-func (x *GeneratedPolicy) GetCode() []byte {
-	if x != nil {
-		return x.Code
-	}
-	return nil
-}
-
 type PrincipalRule_Action struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -1199,7 +1136,7 @@ type PrincipalRule_Action struct {
 func (x *PrincipalRule_Action) Reset() {
 	*x = PrincipalRule_Action{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_cerbos_policy_v1_policy_proto_msgTypes[17]
+		mi := &file_cerbos_policy_v1_policy_proto_msgTypes[16]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1212,7 +1149,7 @@ func (x *PrincipalRule_Action) String() string {
 func (*PrincipalRule_Action) ProtoMessage() {}
 
 func (x *PrincipalRule_Action) ProtoReflect() protoreflect.Message {
-	mi := &file_cerbos_policy_v1_policy_proto_msgTypes[17]
+	mi := &file_cerbos_policy_v1_policy_proto_msgTypes[16]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1267,7 +1204,7 @@ type Match_ExprList struct {
 func (x *Match_ExprList) Reset() {
 	*x = Match_ExprList{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_cerbos_policy_v1_policy_proto_msgTypes[18]
+		mi := &file_cerbos_policy_v1_policy_proto_msgTypes[17]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1280,7 +1217,7 @@ func (x *Match_ExprList) String() string {
 func (*Match_ExprList) ProtoMessage() {}
 
 func (x *Match_ExprList) ProtoReflect() protoreflect.Message {
-	mi := &file_cerbos_policy_v1_policy_proto_msgTypes[18]
+	mi := &file_cerbos_policy_v1_policy_proto_msgTypes[17]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1314,7 +1251,7 @@ type TestFixture_Principals struct {
 func (x *TestFixture_Principals) Reset() {
 	*x = TestFixture_Principals{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_cerbos_policy_v1_policy_proto_msgTypes[19]
+		mi := &file_cerbos_policy_v1_policy_proto_msgTypes[18]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1327,7 +1264,7 @@ func (x *TestFixture_Principals) String() string {
 func (*TestFixture_Principals) ProtoMessage() {}
 
 func (x *TestFixture_Principals) ProtoReflect() protoreflect.Message {
-	mi := &file_cerbos_policy_v1_policy_proto_msgTypes[19]
+	mi := &file_cerbos_policy_v1_policy_proto_msgTypes[18]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1361,7 +1298,7 @@ type TestFixture_Resources struct {
 func (x *TestFixture_Resources) Reset() {
 	*x = TestFixture_Resources{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_cerbos_policy_v1_policy_proto_msgTypes[20]
+		mi := &file_cerbos_policy_v1_policy_proto_msgTypes[19]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1374,7 +1311,7 @@ func (x *TestFixture_Resources) String() string {
 func (*TestFixture_Resources) ProtoMessage() {}
 
 func (x *TestFixture_Resources) ProtoReflect() protoreflect.Message {
-	mi := &file_cerbos_policy_v1_policy_proto_msgTypes[20]
+	mi := &file_cerbos_policy_v1_policy_proto_msgTypes[19]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1410,7 +1347,7 @@ type TestTable_CheckInput struct {
 func (x *TestTable_CheckInput) Reset() {
 	*x = TestTable_CheckInput{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_cerbos_policy_v1_policy_proto_msgTypes[25]
+		mi := &file_cerbos_policy_v1_policy_proto_msgTypes[24]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1423,7 +1360,7 @@ func (x *TestTable_CheckInput) String() string {
 func (*TestTable_CheckInput) ProtoMessage() {}
 
 func (x *TestTable_CheckInput) ProtoReflect() protoreflect.Message {
-	mi := &file_cerbos_policy_v1_policy_proto_msgTypes[25]
+	mi := &file_cerbos_policy_v1_policy_proto_msgTypes[24]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1472,7 +1409,7 @@ type TestTable_ExpectedItem struct {
 func (x *TestTable_ExpectedItem) Reset() {
 	*x = TestTable_ExpectedItem{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_cerbos_policy_v1_policy_proto_msgTypes[26]
+		mi := &file_cerbos_policy_v1_policy_proto_msgTypes[25]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1485,7 +1422,7 @@ func (x *TestTable_ExpectedItem) String() string {
 func (*TestTable_ExpectedItem) ProtoMessage() {}
 
 func (x *TestTable_ExpectedItem) ProtoReflect() protoreflect.Message {
-	mi := &file_cerbos_policy_v1_policy_proto_msgTypes[26]
+	mi := &file_cerbos_policy_v1_policy_proto_msgTypes[25]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1527,7 +1464,7 @@ type Test_TestName struct {
 func (x *Test_TestName) Reset() {
 	*x = Test_TestName{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_cerbos_policy_v1_policy_proto_msgTypes[28]
+		mi := &file_cerbos_policy_v1_policy_proto_msgTypes[27]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1540,7 +1477,7 @@ func (x *Test_TestName) String() string {
 func (*Test_TestName) ProtoMessage() {}
 
 func (x *Test_TestName) ProtoReflect() protoreflect.Message {
-	mi := &file_cerbos_policy_v1_policy_proto_msgTypes[28]
+	mi := &file_cerbos_policy_v1_policy_proto_msgTypes[27]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1901,22 +1838,6 @@ var file_cerbos_policy_v1_policy_proto_rawDesc = []byte{
 	0x6b, 0x65, 0x79, 0x12, 0x2e, 0x0a, 0x05, 0x76, 0x61, 0x6c, 0x75, 0x65, 0x18, 0x02, 0x20, 0x01,
 	0x28, 0x0e, 0x32, 0x18, 0x2e, 0x63, 0x65, 0x72, 0x62, 0x6f, 0x73, 0x2e, 0x65, 0x66, 0x66, 0x65,
 	0x63, 0x74, 0x2e, 0x76, 0x31, 0x2e, 0x45, 0x66, 0x66, 0x65, 0x63, 0x74, 0x52, 0x05, 0x76, 0x61,
-	0x6c, 0x75, 0x65, 0x3a, 0x02, 0x38, 0x01, 0x22, 0xfd, 0x01, 0x0a, 0x0f, 0x47, 0x65, 0x6e, 0x65,
-	0x72, 0x61, 0x74, 0x65, 0x64, 0x50, 0x6f, 0x6c, 0x69, 0x63, 0x79, 0x12, 0x10, 0x0a, 0x03, 0x66,
-	0x71, 0x6e, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x03, 0x66, 0x71, 0x6e, 0x12, 0x5b, 0x0a,
-	0x0e, 0x63, 0x65, 0x6c, 0x5f, 0x63, 0x6f, 0x6e, 0x64, 0x69, 0x74, 0x69, 0x6f, 0x6e, 0x73, 0x18,
-	0x02, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x34, 0x2e, 0x63, 0x65, 0x72, 0x62, 0x6f, 0x73, 0x2e, 0x70,
-	0x6f, 0x6c, 0x69, 0x63, 0x79, 0x2e, 0x76, 0x31, 0x2e, 0x47, 0x65, 0x6e, 0x65, 0x72, 0x61, 0x74,
-	0x65, 0x64, 0x50, 0x6f, 0x6c, 0x69, 0x63, 0x79, 0x2e, 0x43, 0x65, 0x6c, 0x43, 0x6f, 0x6e, 0x64,
-	0x69, 0x74, 0x69, 0x6f, 0x6e, 0x73, 0x45, 0x6e, 0x74, 0x72, 0x79, 0x52, 0x0d, 0x63, 0x65, 0x6c,
-	0x43, 0x6f, 0x6e, 0x64, 0x69, 0x74, 0x69, 0x6f, 0x6e, 0x73, 0x12, 0x12, 0x0a, 0x04, 0x63, 0x6f,
-	0x64, 0x65, 0x18, 0x03, 0x20, 0x01, 0x28, 0x0c, 0x52, 0x04, 0x63, 0x6f, 0x64, 0x65, 0x1a, 0x67,
-	0x0a, 0x12, 0x43, 0x65, 0x6c, 0x43, 0x6f, 0x6e, 0x64, 0x69, 0x74, 0x69, 0x6f, 0x6e, 0x73, 0x45,
-	0x6e, 0x74, 0x72, 0x79, 0x12, 0x10, 0x0a, 0x03, 0x6b, 0x65, 0x79, 0x18, 0x01, 0x20, 0x01, 0x28,
-	0x09, 0x52, 0x03, 0x6b, 0x65, 0x79, 0x12, 0x3b, 0x0a, 0x05, 0x76, 0x61, 0x6c, 0x75, 0x65, 0x18,
-	0x02, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x25, 0x2e, 0x67, 0x6f, 0x6f, 0x67, 0x6c, 0x65, 0x2e, 0x61,
-	0x70, 0x69, 0x2e, 0x65, 0x78, 0x70, 0x72, 0x2e, 0x76, 0x31, 0x61, 0x6c, 0x70, 0x68, 0x61, 0x31,
-	0x2e, 0x43, 0x68, 0x65, 0x63, 0x6b, 0x65, 0x64, 0x45, 0x78, 0x70, 0x72, 0x52, 0x05, 0x76, 0x61,
 	0x6c, 0x75, 0x65, 0x3a, 0x02, 0x38, 0x01, 0x42, 0x6f, 0x0a, 0x18, 0x64, 0x65, 0x76, 0x2e, 0x63,
 	0x65, 0x72, 0x62, 0x6f, 0x73, 0x2e, 0x61, 0x70, 0x69, 0x2e, 0x76, 0x31, 0x2e, 0x70, 0x6f, 0x6c,
 	0x69, 0x63, 0x79, 0x5a, 0x3c, 0x67, 0x69, 0x74, 0x68, 0x75, 0x62, 0x2e, 0x63, 0x6f, 0x6d, 0x2f,
@@ -1939,7 +1860,7 @@ func file_cerbos_policy_v1_policy_proto_rawDescGZIP() []byte {
 	return file_cerbos_policy_v1_policy_proto_rawDescData
 }
 
-var file_cerbos_policy_v1_policy_proto_msgTypes = make([]protoimpl.MessageInfo, 31)
+var file_cerbos_policy_v1_policy_proto_msgTypes = make([]protoimpl.MessageInfo, 29)
 var file_cerbos_policy_v1_policy_proto_goTypes = []interface{}{
 	(*Policy)(nil),                 // 0: cerbos.policy.v1.Policy
 	(*Metadata)(nil),               // 1: cerbos.policy.v1.Metadata
@@ -1955,74 +1876,69 @@ var file_cerbos_policy_v1_policy_proto_goTypes = []interface{}{
 	(*TestSuite)(nil),              // 11: cerbos.policy.v1.TestSuite
 	(*TestTable)(nil),              // 12: cerbos.policy.v1.TestTable
 	(*Test)(nil),                   // 13: cerbos.policy.v1.Test
-	(*GeneratedPolicy)(nil),        // 14: cerbos.policy.v1.GeneratedPolicy
-	nil,                            // 15: cerbos.policy.v1.Policy.GlobalsEntry
-	nil,                            // 16: cerbos.policy.v1.Metadata.AnnotationsEntry
-	(*PrincipalRule_Action)(nil),   // 17: cerbos.policy.v1.PrincipalRule.Action
-	(*Match_ExprList)(nil),         // 18: cerbos.policy.v1.Match.ExprList
-	(*TestFixture_Principals)(nil), // 19: cerbos.policy.v1.TestFixture.Principals
-	(*TestFixture_Resources)(nil),  // 20: cerbos.policy.v1.TestFixture.Resources
-	nil,                            // 21: cerbos.policy.v1.TestFixture.Principals.PrincipalsEntry
-	nil,                            // 22: cerbos.policy.v1.TestFixture.Resources.ResourcesEntry
-	nil,                            // 23: cerbos.policy.v1.TestSuite.PrincipalsEntry
-	nil,                            // 24: cerbos.policy.v1.TestSuite.ResourcesEntry
-	(*TestTable_CheckInput)(nil),   // 25: cerbos.policy.v1.TestTable.CheckInput
-	(*TestTable_ExpectedItem)(nil), // 26: cerbos.policy.v1.TestTable.ExpectedItem
-	nil,                            // 27: cerbos.policy.v1.TestTable.ExpectedItem.ActionsEntry
-	(*Test_TestName)(nil),          // 28: cerbos.policy.v1.Test.TestName
-	nil,                            // 29: cerbos.policy.v1.Test.ExpectedEntry
-	nil,                            // 30: cerbos.policy.v1.GeneratedPolicy.CelConditionsEntry
-	(v1.Effect)(0),                 // 31: cerbos.effect.v1.Effect
-	(*v11.CheckInput)(nil),         // 32: cerbos.engine.v1.CheckInput
-	(*v11.Principal)(nil),          // 33: cerbos.engine.v1.Principal
-	(*v11.Resource)(nil),           // 34: cerbos.engine.v1.Resource
-	(*v1alpha1.CheckedExpr)(nil),   // 35: google.api.expr.v1alpha1.CheckedExpr
+	nil,                            // 14: cerbos.policy.v1.Policy.GlobalsEntry
+	nil,                            // 15: cerbos.policy.v1.Metadata.AnnotationsEntry
+	(*PrincipalRule_Action)(nil),   // 16: cerbos.policy.v1.PrincipalRule.Action
+	(*Match_ExprList)(nil),         // 17: cerbos.policy.v1.Match.ExprList
+	(*TestFixture_Principals)(nil), // 18: cerbos.policy.v1.TestFixture.Principals
+	(*TestFixture_Resources)(nil),  // 19: cerbos.policy.v1.TestFixture.Resources
+	nil,                            // 20: cerbos.policy.v1.TestFixture.Principals.PrincipalsEntry
+	nil,                            // 21: cerbos.policy.v1.TestFixture.Resources.ResourcesEntry
+	nil,                            // 22: cerbos.policy.v1.TestSuite.PrincipalsEntry
+	nil,                            // 23: cerbos.policy.v1.TestSuite.ResourcesEntry
+	(*TestTable_CheckInput)(nil),   // 24: cerbos.policy.v1.TestTable.CheckInput
+	(*TestTable_ExpectedItem)(nil), // 25: cerbos.policy.v1.TestTable.ExpectedItem
+	nil,                            // 26: cerbos.policy.v1.TestTable.ExpectedItem.ActionsEntry
+	(*Test_TestName)(nil),          // 27: cerbos.policy.v1.Test.TestName
+	nil,                            // 28: cerbos.policy.v1.Test.ExpectedEntry
+	(v1.Effect)(0),                 // 29: cerbos.effect.v1.Effect
+	(*v11.CheckInput)(nil),         // 30: cerbos.engine.v1.CheckInput
+	(*v11.Principal)(nil),          // 31: cerbos.engine.v1.Principal
+	(*v11.Resource)(nil),           // 32: cerbos.engine.v1.Resource
 }
 var file_cerbos_policy_v1_policy_proto_depIdxs = []int32{
 	1,  // 0: cerbos.policy.v1.Policy.metadata:type_name -> cerbos.policy.v1.Metadata
 	2,  // 1: cerbos.policy.v1.Policy.resource_policy:type_name -> cerbos.policy.v1.ResourcePolicy
 	4,  // 2: cerbos.policy.v1.Policy.principal_policy:type_name -> cerbos.policy.v1.PrincipalPolicy
 	6,  // 3: cerbos.policy.v1.Policy.derived_roles:type_name -> cerbos.policy.v1.DerivedRoles
-	15, // 4: cerbos.policy.v1.Policy.globals:type_name -> cerbos.policy.v1.Policy.GlobalsEntry
-	16, // 5: cerbos.policy.v1.Metadata.annotations:type_name -> cerbos.policy.v1.Metadata.AnnotationsEntry
+	14, // 4: cerbos.policy.v1.Policy.globals:type_name -> cerbos.policy.v1.Policy.GlobalsEntry
+	15, // 5: cerbos.policy.v1.Metadata.annotations:type_name -> cerbos.policy.v1.Metadata.AnnotationsEntry
 	3,  // 6: cerbos.policy.v1.ResourcePolicy.rules:type_name -> cerbos.policy.v1.ResourceRule
 	8,  // 7: cerbos.policy.v1.ResourceRule.condition:type_name -> cerbos.policy.v1.Condition
-	31, // 8: cerbos.policy.v1.ResourceRule.effect:type_name -> cerbos.effect.v1.Effect
+	29, // 8: cerbos.policy.v1.ResourceRule.effect:type_name -> cerbos.effect.v1.Effect
 	5,  // 9: cerbos.policy.v1.PrincipalPolicy.rules:type_name -> cerbos.policy.v1.PrincipalRule
-	17, // 10: cerbos.policy.v1.PrincipalRule.actions:type_name -> cerbos.policy.v1.PrincipalRule.Action
+	16, // 10: cerbos.policy.v1.PrincipalRule.actions:type_name -> cerbos.policy.v1.PrincipalRule.Action
 	7,  // 11: cerbos.policy.v1.DerivedRoles.definitions:type_name -> cerbos.policy.v1.RoleDef
 	8,  // 12: cerbos.policy.v1.RoleDef.condition:type_name -> cerbos.policy.v1.Condition
 	9,  // 13: cerbos.policy.v1.Condition.match:type_name -> cerbos.policy.v1.Match
-	18, // 14: cerbos.policy.v1.Match.all:type_name -> cerbos.policy.v1.Match.ExprList
-	18, // 15: cerbos.policy.v1.Match.any:type_name -> cerbos.policy.v1.Match.ExprList
-	18, // 16: cerbos.policy.v1.Match.none:type_name -> cerbos.policy.v1.Match.ExprList
+	17, // 14: cerbos.policy.v1.Match.all:type_name -> cerbos.policy.v1.Match.ExprList
+	17, // 15: cerbos.policy.v1.Match.any:type_name -> cerbos.policy.v1.Match.ExprList
+	17, // 16: cerbos.policy.v1.Match.none:type_name -> cerbos.policy.v1.Match.ExprList
 	12, // 17: cerbos.policy.v1.TestSuite.tests:type_name -> cerbos.policy.v1.TestTable
-	23, // 18: cerbos.policy.v1.TestSuite.principals:type_name -> cerbos.policy.v1.TestSuite.PrincipalsEntry
-	24, // 19: cerbos.policy.v1.TestSuite.resources:type_name -> cerbos.policy.v1.TestSuite.ResourcesEntry
-	25, // 20: cerbos.policy.v1.TestTable.input:type_name -> cerbos.policy.v1.TestTable.CheckInput
-	26, // 21: cerbos.policy.v1.TestTable.expected:type_name -> cerbos.policy.v1.TestTable.ExpectedItem
-	28, // 22: cerbos.policy.v1.Test.name:type_name -> cerbos.policy.v1.Test.TestName
-	32, // 23: cerbos.policy.v1.Test.input:type_name -> cerbos.engine.v1.CheckInput
-	29, // 24: cerbos.policy.v1.Test.expected:type_name -> cerbos.policy.v1.Test.ExpectedEntry
-	30, // 25: cerbos.policy.v1.GeneratedPolicy.cel_conditions:type_name -> cerbos.policy.v1.GeneratedPolicy.CelConditionsEntry
-	8,  // 26: cerbos.policy.v1.PrincipalRule.Action.condition:type_name -> cerbos.policy.v1.Condition
-	31, // 27: cerbos.policy.v1.PrincipalRule.Action.effect:type_name -> cerbos.effect.v1.Effect
-	9,  // 28: cerbos.policy.v1.Match.ExprList.of:type_name -> cerbos.policy.v1.Match
-	21, // 29: cerbos.policy.v1.TestFixture.Principals.principals:type_name -> cerbos.policy.v1.TestFixture.Principals.PrincipalsEntry
-	22, // 30: cerbos.policy.v1.TestFixture.Resources.resources:type_name -> cerbos.policy.v1.TestFixture.Resources.ResourcesEntry
-	33, // 31: cerbos.policy.v1.TestFixture.Principals.PrincipalsEntry.value:type_name -> cerbos.engine.v1.Principal
-	34, // 32: cerbos.policy.v1.TestFixture.Resources.ResourcesEntry.value:type_name -> cerbos.engine.v1.Resource
-	33, // 33: cerbos.policy.v1.TestSuite.PrincipalsEntry.value:type_name -> cerbos.engine.v1.Principal
-	34, // 34: cerbos.policy.v1.TestSuite.ResourcesEntry.value:type_name -> cerbos.engine.v1.Resource
-	27, // 35: cerbos.policy.v1.TestTable.ExpectedItem.actions:type_name -> cerbos.policy.v1.TestTable.ExpectedItem.ActionsEntry
-	31, // 36: cerbos.policy.v1.TestTable.ExpectedItem.ActionsEntry.value:type_name -> cerbos.effect.v1.Effect
-	31, // 37: cerbos.policy.v1.Test.ExpectedEntry.value:type_name -> cerbos.effect.v1.Effect
-	35, // 38: cerbos.policy.v1.GeneratedPolicy.CelConditionsEntry.value:type_name -> google.api.expr.v1alpha1.CheckedExpr
-	39, // [39:39] is the sub-list for method output_type
-	39, // [39:39] is the sub-list for method input_type
-	39, // [39:39] is the sub-list for extension type_name
-	39, // [39:39] is the sub-list for extension extendee
-	0,  // [0:39] is the sub-list for field type_name
+	22, // 18: cerbos.policy.v1.TestSuite.principals:type_name -> cerbos.policy.v1.TestSuite.PrincipalsEntry
+	23, // 19: cerbos.policy.v1.TestSuite.resources:type_name -> cerbos.policy.v1.TestSuite.ResourcesEntry
+	24, // 20: cerbos.policy.v1.TestTable.input:type_name -> cerbos.policy.v1.TestTable.CheckInput
+	25, // 21: cerbos.policy.v1.TestTable.expected:type_name -> cerbos.policy.v1.TestTable.ExpectedItem
+	27, // 22: cerbos.policy.v1.Test.name:type_name -> cerbos.policy.v1.Test.TestName
+	30, // 23: cerbos.policy.v1.Test.input:type_name -> cerbos.engine.v1.CheckInput
+	28, // 24: cerbos.policy.v1.Test.expected:type_name -> cerbos.policy.v1.Test.ExpectedEntry
+	8,  // 25: cerbos.policy.v1.PrincipalRule.Action.condition:type_name -> cerbos.policy.v1.Condition
+	29, // 26: cerbos.policy.v1.PrincipalRule.Action.effect:type_name -> cerbos.effect.v1.Effect
+	9,  // 27: cerbos.policy.v1.Match.ExprList.of:type_name -> cerbos.policy.v1.Match
+	20, // 28: cerbos.policy.v1.TestFixture.Principals.principals:type_name -> cerbos.policy.v1.TestFixture.Principals.PrincipalsEntry
+	21, // 29: cerbos.policy.v1.TestFixture.Resources.resources:type_name -> cerbos.policy.v1.TestFixture.Resources.ResourcesEntry
+	31, // 30: cerbos.policy.v1.TestFixture.Principals.PrincipalsEntry.value:type_name -> cerbos.engine.v1.Principal
+	32, // 31: cerbos.policy.v1.TestFixture.Resources.ResourcesEntry.value:type_name -> cerbos.engine.v1.Resource
+	31, // 32: cerbos.policy.v1.TestSuite.PrincipalsEntry.value:type_name -> cerbos.engine.v1.Principal
+	32, // 33: cerbos.policy.v1.TestSuite.ResourcesEntry.value:type_name -> cerbos.engine.v1.Resource
+	26, // 34: cerbos.policy.v1.TestTable.ExpectedItem.actions:type_name -> cerbos.policy.v1.TestTable.ExpectedItem.ActionsEntry
+	29, // 35: cerbos.policy.v1.TestTable.ExpectedItem.ActionsEntry.value:type_name -> cerbos.effect.v1.Effect
+	29, // 36: cerbos.policy.v1.Test.ExpectedEntry.value:type_name -> cerbos.effect.v1.Effect
+	37, // [37:37] is the sub-list for method output_type
+	37, // [37:37] is the sub-list for method input_type
+	37, // [37:37] is the sub-list for extension type_name
+	37, // [37:37] is the sub-list for extension extendee
+	0,  // [0:37] is the sub-list for field type_name
 }
 
 func init() { file_cerbos_policy_v1_policy_proto_init() }
@@ -2199,19 +2115,7 @@ func file_cerbos_policy_v1_policy_proto_init() {
 				return nil
 			}
 		}
-		file_cerbos_policy_v1_policy_proto_msgTypes[14].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*GeneratedPolicy); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_cerbos_policy_v1_policy_proto_msgTypes[17].Exporter = func(v interface{}, i int) interface{} {
+		file_cerbos_policy_v1_policy_proto_msgTypes[16].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*PrincipalRule_Action); i {
 			case 0:
 				return &v.state
@@ -2223,7 +2127,7 @@ func file_cerbos_policy_v1_policy_proto_init() {
 				return nil
 			}
 		}
-		file_cerbos_policy_v1_policy_proto_msgTypes[18].Exporter = func(v interface{}, i int) interface{} {
+		file_cerbos_policy_v1_policy_proto_msgTypes[17].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*Match_ExprList); i {
 			case 0:
 				return &v.state
@@ -2235,7 +2139,7 @@ func file_cerbos_policy_v1_policy_proto_init() {
 				return nil
 			}
 		}
-		file_cerbos_policy_v1_policy_proto_msgTypes[19].Exporter = func(v interface{}, i int) interface{} {
+		file_cerbos_policy_v1_policy_proto_msgTypes[18].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*TestFixture_Principals); i {
 			case 0:
 				return &v.state
@@ -2247,7 +2151,7 @@ func file_cerbos_policy_v1_policy_proto_init() {
 				return nil
 			}
 		}
-		file_cerbos_policy_v1_policy_proto_msgTypes[20].Exporter = func(v interface{}, i int) interface{} {
+		file_cerbos_policy_v1_policy_proto_msgTypes[19].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*TestFixture_Resources); i {
 			case 0:
 				return &v.state
@@ -2259,7 +2163,7 @@ func file_cerbos_policy_v1_policy_proto_init() {
 				return nil
 			}
 		}
-		file_cerbos_policy_v1_policy_proto_msgTypes[25].Exporter = func(v interface{}, i int) interface{} {
+		file_cerbos_policy_v1_policy_proto_msgTypes[24].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*TestTable_CheckInput); i {
 			case 0:
 				return &v.state
@@ -2271,7 +2175,7 @@ func file_cerbos_policy_v1_policy_proto_init() {
 				return nil
 			}
 		}
-		file_cerbos_policy_v1_policy_proto_msgTypes[26].Exporter = func(v interface{}, i int) interface{} {
+		file_cerbos_policy_v1_policy_proto_msgTypes[25].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*TestTable_ExpectedItem); i {
 			case 0:
 				return &v.state
@@ -2283,7 +2187,7 @@ func file_cerbos_policy_v1_policy_proto_init() {
 				return nil
 			}
 		}
-		file_cerbos_policy_v1_policy_proto_msgTypes[28].Exporter = func(v interface{}, i int) interface{} {
+		file_cerbos_policy_v1_policy_proto_msgTypes[27].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*Test_TestName); i {
 			case 0:
 				return &v.state
@@ -2317,7 +2221,7 @@ func file_cerbos_policy_v1_policy_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_cerbos_policy_v1_policy_proto_rawDesc,
 			NumEnums:      0,
-			NumMessages:   31,
+			NumMessages:   29,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

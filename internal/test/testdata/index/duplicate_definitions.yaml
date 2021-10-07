@@ -9,7 +9,6 @@ wantErrJson: |-
       }
     ],
     "loadFailures": null,
-    "codegenFailures": null,
     "missingImports": null
   }
 files:

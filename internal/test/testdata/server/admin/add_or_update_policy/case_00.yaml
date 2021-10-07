@@ -23,7 +23,9 @@ adminAddOrUpdatePolicy:
                 "employee"
               ],
               "condition": {
-                "script": "input.resource.attr.owner == input.principal.id"
+                "match": {
+                  "expr": "R.attr.owner == P.id"
+                }
               }
             },
             {

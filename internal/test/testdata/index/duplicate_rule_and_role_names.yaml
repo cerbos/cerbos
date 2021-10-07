@@ -17,7 +17,6 @@ wantErrJson: |-
         "file": "resource.yaml"
       }
     ],
-    "codegenFailures": null,
     "missingImports": null
   }
 files:
