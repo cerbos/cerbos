@@ -11,19 +11,21 @@ import (
 	"github.com/google/cel-go/ext"
 	exprpb "google.golang.org/genproto/googleapis/api/expr/v1alpha1"
 
-	enginev1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
+	customtypes "github.com/cerbos/cerbos/internal/conditions/types"
 )
 
 const (
 	CELRequestIdent    = "request"
 	CELResourceAbbrev  = "R"
 	CELPrincipalAbbrev = "P"
-	CELGlobalsIdent    = "globals"
+	CELVariablesIdent  = "variables"
+	CELVariablesAbbrev = "V"
 )
 
 var (
-	GlobalsDeclaration = decls.NewVar(CELGlobalsIdent, decls.NewMapType(decls.String, decls.Dyn))
-	StdEnv             *cel.Env
+	VariablesDeclaration       = decls.NewVar(CELVariablesIdent, decls.NewMapType(decls.String, decls.Dyn))
+	VariablesAbbrevDeclaration = decls.NewVar(CELVariablesAbbrev, decls.NewMapType(decls.String, decls.Dyn))
+	StdEnv                     *cel.Env
 )
 
 func init() {
@@ -45,7 +47,8 @@ func newCELEnvOptions() []cel.EnvOption {
 			decls.NewVar(CELRequestIdent, decls.NewObjectType("cerbos.engine.v1.CheckInput")),
 			decls.NewVar(CELResourceAbbrev, decls.NewObjectType("cerbos.engine.v1.Resource")),
 			decls.NewVar(CELPrincipalAbbrev, decls.NewObjectType("cerbos.engine.v1.Principal")),
-			GlobalsDeclaration,
+			VariablesDeclaration,
+			VariablesAbbrevDeclaration,
 		),
 		ext.Strings(),
 		ext.Encoders(),

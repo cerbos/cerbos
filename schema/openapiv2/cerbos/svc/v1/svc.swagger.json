@@ -1408,7 +1408,7 @@
         "derivedRoles": {
           "$ref": "#/definitions/v1DerivedRoles"
         },
-        "globals": {
+        "variables": {
           "type": "object",
           "additionalProperties": {
             "type": "string"

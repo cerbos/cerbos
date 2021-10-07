@@ -51,9 +51,9 @@ func (m *Policy) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 		i -= len(m.unknownFields)
 		copy(dAtA[i:], m.unknownFields)
 	}
-	if len(m.Globals) > 0 {
-		for k := range m.Globals {
-			v := m.Globals[k]
+	if len(m.Variables) > 0 {
+		for k := range m.Variables {
+			v := m.Variables[k]
 			baseI := i
 			i -= len(v)
 			copy(dAtA[i:], v)
@@ -1620,8 +1620,8 @@ func (m *Policy) SizeVT() (n int) {
 	if vtmsg, ok := m.PolicyType.(interface{ SizeVT() int }); ok {
 		n += vtmsg.SizeVT()
 	}
-	if len(m.Globals) > 0 {
-		for k, v := range m.Globals {
+	if len(m.Variables) > 0 {
+		for k, v := range m.Variables {
 			_ = k
 			_ = v
 			mapEntrySize := 1 + len(k) + sov(uint64(len(k))) + 1 + len(v) + sov(uint64(len(v)))
@@ -2591,7 +2591,7 @@ func (m *Policy) UnmarshalVT(dAtA []byte) error {
 			iNdEx = postIndex
 		case 8:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Globals", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field Variables", wireType)
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
@@ -2618,8 +2618,8 @@ func (m *Policy) UnmarshalVT(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			if m.Globals == nil {
-				m.Globals = make(map[string]string)
+			if m.Variables == nil {
+				m.Variables = make(map[string]string)
 			}
 			var mapkey string
 			var mapvalue string
@@ -2714,7 +2714,7 @@ func (m *Policy) UnmarshalVT(dAtA []byte) error {
 					iNdEx += skippy
 				}
 			}
-			m.Globals[mapkey] = mapvalue
+			m.Variables[mapkey] = mapvalue
 			iNdEx = postIndex
 		default:
 			iNdEx = preIndex

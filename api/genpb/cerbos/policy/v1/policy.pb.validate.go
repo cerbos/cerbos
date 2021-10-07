@@ -67,7 +67,7 @@ func (m *Policy) Validate() error {
 		}
 	}
 
-	// no validation rules for Globals
+	// no validation rules for Variables
 
 	switch m.PolicyType.(type) {
 

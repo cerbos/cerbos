@@ -1,7 +1,7 @@
 ---
 inputPolicy:
   apiVersion: api.cerbos.dev/v1
-  globals:
+  variables:
     status: ("PENDING_APPROVAL")
   resourcePolicy:
     version: "20210210"
@@ -42,7 +42,7 @@ inputPolicy:
           match:
             all:
               of:
-                - expr: request.resource.attr.status == globals.status
+                - expr: request.resource.attr.status == variables.status
                 - expr: |-
                     "test" in request.resource.attr.geographies
         derivedRoles:
