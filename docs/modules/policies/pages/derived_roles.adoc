@@ -8,7 +8,7 @@ include::ROOT:partial$attributes.adoc[]
 apiVersion: "api.cerbos.dev/v1"
 description: |-
   Common dynamic roles used within the Apatr app
-globals: <1>
+variables: <1>
   flagged_resource: request.resource.attr.flagged
 derivedRoles:
   name: apatr_common_roles <2>
@@ -23,9 +23,9 @@ derivedRoles:
       parentRoles: ["moderator"]
       condition:
         match:
-          expr: globals.flagged_resource == true
+          expr: V.flagged_resource == true
 ----
-<1> Optional global variables section. Each variable is evaluated before any rule condition.
+<1> Optional variables section. Each variable is evaluated before any rule condition.
 A variable expression can contain anything that condition expression can have.
 <2> Name to use when importing this set of derived roles.
 <3> Descriptive name for this derived role.

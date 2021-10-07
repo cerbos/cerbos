@@ -1,6 +1,6 @@
 ---
 apiVersion: "api.cerbos.dev/v1"
-globals:
+variables:
   same_geography: request.resource.attr.geography == request.principal.attr.geography
 derivedRoles:
   name: beta
@@ -14,5 +14,5 @@ derivedRoles:
         match:
           all:
             of:
-              - expr: globals.same_geography
+              - expr: V.same_geography
               - expr: request.resource.attr.geography == request.principal.attr.managed_geographies

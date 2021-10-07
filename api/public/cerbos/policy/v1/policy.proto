@@ -26,7 +26,7 @@ message Policy {
         PrincipalPolicy principal_policy = 6;
         DerivedRoles derived_roles = 7;
     }
-    map<string, string> globals = 8;
+    map<string, string> variables = 8;
 }
 
 message Metadata {

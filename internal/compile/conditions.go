@@ -28,12 +28,12 @@ var (
 
 type ConditionMap map[string]ConditionEvaluator
 
-func NewConditionMapFromRepr(conds map[string]*exprpb.CheckedExpr, globals map[string]string) (ConditionMap, error) {
+func NewConditionMapFromRepr(conds map[string]*exprpb.CheckedExpr, variables map[string]string) (ConditionMap, error) {
 	if len(conds) == 0 {
 		return nil, nil
 	}
 
-	globalPrgs, err := buildGlobalPrgs(globals)
+	varsPrgs, err := buildVarsPrgs(variables)
 	if err != nil {
 		return nil, err
 	}
@@ -46,14 +46,14 @@ func NewConditionMapFromRepr(conds map[string]*exprpb.CheckedExpr, globals map[s
 			return nil, fmt.Errorf("failed to hydrate CEL program [%s]:%w", k, err)
 		}
 
-		cm[k] = &CELConditionEvaluator{prg: celPrg, globalPrgs: globalPrgs, c: c}
+		cm[k] = &CELConditionEvaluator{prg: celPrg, varsPrgs: varsPrgs, c: c}
 	}
 
 	return cm, nil
 }
 
-func NewConditionMap(conds map[string]*conditions.CELCondition, globals map[string]string) (ConditionMap, error) {
-	globalPrgs, err := buildGlobalPrgs(globals)
+func NewConditionMap(conds map[string]*conditions.CELCondition, variables map[string]string) (ConditionMap, error) {
+	varsPrgs, err := buildVarsPrgs(variables)
 	if err != nil {
 		return nil, err
 	}
@@ -65,28 +65,28 @@ func NewConditionMap(conds map[string]*conditions.CELCondition, globals map[stri
 			return nil, fmt.Errorf("failed to generate CEL program for %s: %w", k, err)
 		}
 
-		cm[k] = &CELConditionEvaluator{prg: p, globalPrgs: globalPrgs, c: c}
+		cm[k] = &CELConditionEvaluator{prg: p, varsPrgs: varsPrgs, c: c}
 	}
 
 	return cm, nil
 }
 
-func buildGlobalPrgs(globals map[string]string) (map[string]cel.Program, error) {
-	if globals == nil {
+func buildVarsPrgs(variables map[string]string) (map[string]cel.Program, error) {
+	if variables == nil {
 		return nil, nil
 	}
 	var err error
-	globalPrgs := make(map[string]cel.Program, len(globals))
+	globalPrgs := make(map[string]cel.Program, len(variables))
 
-	for name, def := range globals {
+	for name, def := range variables {
 		ast, issues := conditions.StdEnv.Compile(def)
 		if issues != nil && issues.Err() != nil {
-			celLog.Warn("Global variable compilation failed", zap.Error(issues.Err()))
+			celLog.Warn("Policy variable compilation failed", zap.Error(issues.Err()))
 			return nil, issues.Err()
 		}
 		globalPrgs[name], err = conditions.StdEnv.Program(ast)
 		if err != nil {
-			celLog.Warn("Global variable AST generation failed", zap.String(conditions.CELGlobalsIdent, name), zap.Error(err))
+			celLog.Warn("Policy variable AST generation failed", zap.String(conditions.CELVariablesIdent, name), zap.Error(err))
 			return nil, err
 		}
 	}
@@ -99,9 +99,9 @@ type ConditionEvaluator interface {
 }
 
 type CELConditionEvaluator struct {
-	prg        cel.Program
-	globalPrgs map[string]cel.Program
-	c          *conditions.CELCondition
+	prg      cel.Program
+	varsPrgs map[string]cel.Program
+	c        *conditions.CELCondition
 }
 
 func (ce *CELConditionEvaluator) Eval(input interface{}) (bool, error) {
@@ -145,11 +145,12 @@ func (ce *CELConditionEvaluator) Eval(input interface{}) (bool, error) {
 
 	prg := ce.prg
 	var err error
-	if ce.globalPrgs != nil {
-		values := ce.evaluateGlobals(stdvars)
-		stdvars[conditions.CELGlobalsIdent] = values
+	if ce.varsPrgs != nil {
+		values := ce.evaluateVariables(stdvars)
+		stdvars[conditions.CELVariablesIdent] = values
+		stdvars[conditions.CELVariablesAbbrev] = values
 
-		prg, err = ce.c.Program(conditions.GlobalsDeclaration)
+		prg, err = ce.c.Program(conditions.VariablesDeclaration, conditions.VariablesAbbrevDeclaration)
 		if err != nil {
 			return false, err
 		}
@@ -175,15 +176,15 @@ func (ce *CELConditionEvaluator) Eval(input interface{}) (bool, error) {
 	return v, nil
 }
 
-// evaluateGlobals evaluates global values using std vars
+// evaluateVariables evaluates global values using std vars
 // then add calculated values to std vars and calculate expression.
-func (ce *CELConditionEvaluator) evaluateGlobals(stdvars map[string]interface{}) map[string]ref.Val {
-	values := make(map[string]ref.Val, len(ce.globalPrgs))
-	for name, prg := range ce.globalPrgs {
+func (ce *CELConditionEvaluator) evaluateVariables(stdvars map[string]interface{}) map[string]ref.Val {
+	values := make(map[string]ref.Val, len(ce.varsPrgs))
+	for name, prg := range ce.varsPrgs {
 		// TODO: Should we evaluate condition expression to see if we even need to evaluate this program?
 		val, _, err := prg.Eval(stdvars)
 		if err != nil {
-			celLog.Warn("Global variable evaluation failed", zap.String(conditions.CELGlobalsIdent, name), zap.Error(err))
+			celLog.Warn("Policy variable evaluation failed", zap.String(conditions.CELVariablesIdent, name), zap.Error(err))
 		} else {
 			values[name] = val
 		}
