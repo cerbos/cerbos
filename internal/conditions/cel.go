@@ -11,7 +11,7 @@ import (
 	"github.com/google/cel-go/ext"
 	exprpb "google.golang.org/genproto/googleapis/api/expr/v1alpha1"
 
-	customtypes "github.com/cerbos/cerbos/internal/conditions/types"
+	enginev1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
 )
 
 const (
@@ -22,11 +22,7 @@ const (
 	CELVariablesAbbrev = "V"
 )
 
-var (
-	VariablesDeclaration       = decls.NewVar(CELVariablesIdent, decls.NewMapType(decls.String, decls.Dyn))
-	VariablesAbbrevDeclaration = decls.NewVar(CELVariablesAbbrev, decls.NewMapType(decls.String, decls.Dyn))
-	StdEnv                     *cel.Env
-)
+var StdEnv *cel.Env
 
 func init() {
 	var err error
@@ -47,8 +43,8 @@ func newCELEnvOptions() []cel.EnvOption {
 			decls.NewVar(CELRequestIdent, decls.NewObjectType("cerbos.engine.v1.CheckInput")),
 			decls.NewVar(CELResourceAbbrev, decls.NewObjectType("cerbos.engine.v1.Resource")),
 			decls.NewVar(CELPrincipalAbbrev, decls.NewObjectType("cerbos.engine.v1.Principal")),
-			VariablesDeclaration,
-			VariablesAbbrevDeclaration,
+			decls.NewVar(CELVariablesIdent, decls.NewMapType(decls.String, decls.Dyn)),
+			decls.NewVar(CELVariablesAbbrev, decls.NewMapType(decls.String, decls.Dyn)),
 		),
 		ext.Strings(),
 		ext.Encoders(),

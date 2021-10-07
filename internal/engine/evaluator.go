@@ -385,7 +385,8 @@ func evaluateCELExpr(expr *exprpb.CheckedExpr, variables map[string]interface{},
 		conditions.CELRequestIdent:    input,
 		conditions.CELResourceAbbrev:  input.Resource,
 		conditions.CELPrincipalAbbrev: input.Principal,
-		conditions.CELGlobalsIdent:    variables,
+		conditions.CELVariablesIdent:  variables,
+		conditions.CELVariablesAbbrev: variables,
 	})
 	if err != nil {
 		// ignore expressions that access non-existent keys

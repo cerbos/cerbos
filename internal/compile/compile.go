@@ -57,7 +57,7 @@ func compileResourcePolicy(modCtx *moduleCtx, rp *policyv1.ResourcePolicy) *runt
 		DerivedRoles: referencedRoles,
 		Scope:        strings.Split(rp.Scope, "."),
 		Rules:        make([]*runtimev1.RunnableResourcePolicySet_Policy_Rule, len(rp.Rules)),
-		Variables:    compileVariables(modCtx, modCtx.def.Globals),
+		Variables:    compileVariables(modCtx, modCtx.def.Variables),
 	}
 
 	for i, rule := range rp.Rules {
@@ -184,7 +184,7 @@ func doCompileDerivedRoles(modCtx *moduleCtx, dr *policyv1.DerivedRoles) *runtim
 		DerivedRoles: make(map[string]*runtimev1.RunnableDerivedRole, len(dr.Definitions)),
 	}
 
-	variables := compileVariables(modCtx, modCtx.def.Globals)
+	variables := compileVariables(modCtx, modCtx.def.Variables)
 
 	for i, def := range dr.Definitions {
 		rdr := &runtimev1.RunnableDerivedRole{
@@ -243,7 +243,7 @@ func compilePrincipalPolicy(modCtx *moduleCtx, pp *policyv1.PrincipalPolicy) *ru
 	rpp := &runtimev1.RunnablePrincipalPolicySet_Policy{
 		Scope:         strings.Split(pp.Scope, "."),
 		ResourceRules: make(map[string]*runtimev1.RunnablePrincipalPolicySet_Policy_ResourceRules, len(pp.Rules)),
-		Variables:     compileVariables(modCtx, modCtx.def.Globals),
+		Variables:     compileVariables(modCtx, modCtx.def.Variables),
 	}
 
 	for _, rule := range pp.Rules {
