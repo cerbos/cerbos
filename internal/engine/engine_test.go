@@ -10,7 +10,6 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/stretchr/testify/require"
-	"go.uber.org/zap"
 	"google.golang.org/protobuf/testing/protocmp"
 
 	enginev1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
@@ -145,7 +144,8 @@ func TestSatisfiesCondition(t *testing.T) {
 			cond, err := compile.Condition(&policyv1.Condition{Condition: &policyv1.Condition_Match{Match: tc.Condition}})
 			require.NoError(t, err)
 
-			retVal, err := satisfiesCondition(zap.L(), cond, nil, tc.Input)
+			tracer := NewTracer(false)
+			retVal, err := satisfiesCondition(tracer.Trace(cnCondition), cond, nil, tc.Input)
 
 			if tc.WantError {
 				require.Error(t, err)

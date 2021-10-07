@@ -211,7 +211,7 @@ func (engine *Engine) checkParallel(ctx context.Context, inputs []*enginev1.Chec
 }
 
 func (engine *Engine) evaluate(ctx context.Context, input *enginev1.CheckInput) (*enginev1.CheckOutput, error) {
-	ctx, span := tracing.StartSpan(ctx, "engine.EvaluateInput")
+	ctx, span := tracing.StartSpan(ctx, "engine.Evaluate")
 	defer span.End()
 
 	span.AddAttributes(trace.StringAttribute("request_id", input.RequestId), trace.StringAttribute("resource_id", input.Resource.Id))
@@ -348,7 +348,7 @@ func (ec *evaluationCtx) addCheck(eval Evaluator) {
 }
 
 func (ec *evaluationCtx) evaluate(ctx context.Context, input *enginev1.CheckInput) (*evaluationResult, error) {
-	ctx, span := tracing.StartSpan(ctx, "engine.Evaluate")
+	ctx, span := tracing.StartSpan(ctx, "engine.EvalCtxEvaluate")
 	defer span.End()
 
 	if ec.numChecks == 0 {

@@ -10,8 +10,8 @@ import (
 	"strings"
 
 	"github.com/google/cel-go/cel"
+	"go.opencensus.io/trace"
 	"go.uber.org/multierr"
-	"go.uber.org/zap"
 	exprpb "google.golang.org/genproto/googleapis/api/expr/v1alpha1"
 	"google.golang.org/protobuf/types/known/emptypb"
 
@@ -20,7 +20,7 @@ import (
 	runtimev1 "github.com/cerbos/cerbos/api/genpb/cerbos/runtime/v1"
 	"github.com/cerbos/cerbos/internal/conditions"
 	"github.com/cerbos/cerbos/internal/namer"
-	"github.com/cerbos/cerbos/internal/observability/logging"
+	"github.com/cerbos/cerbos/internal/observability/tracing"
 )
 
 var (
@@ -67,9 +67,27 @@ func (er *EvalResult) setDefaultEffect(actions []string, effect effectv1.Effect)
 	}
 }
 
-type evalOptions struct{}
+type evalOptions struct {
+	trace bool
+}
 
 type EvalOpt func(o *evalOptions)
+
+// WithTrace enables tracing evaluation.
+func WithTrace() EvalOpt {
+	return func(eo *evalOptions) {
+		eo.trace = true
+	}
+}
+
+func getEvalOptions(options []EvalOpt) *evalOptions {
+	evalOpt := &evalOptions{}
+	for _, opt := range options {
+		opt(evalOpt)
+	}
+
+	return evalOpt
+}
 
 type Evaluator interface {
 	Evaluate(context.Context, *enginev1.CheckInput, ...EvalOpt) (*EvalResult, error)
@@ -97,97 +115,85 @@ type resourcePolicyEvaluator struct {
 }
 
 func (rpe *resourcePolicyEvaluator) Evaluate(ctx context.Context, input *enginev1.CheckInput, options ...EvalOpt) (*EvalResult, error) {
-	logger := logging.FromContext(ctx).Named("evaluator").With(zap.String("policy", rpe.policy.Meta.Fqn))
+	ctx, span := tracing.StartSpan(ctx, "resource_policy.Evaluate")
+	defer span.End()
+
+	span.AddAttributes(trace.StringAttribute("policy", rpe.policy.Meta.Fqn))
+
+	evalOpt := getEvalOptions(options)
+	tracer := NewTracer(evalOpt.trace)
+	defer tracer.LogOutput(ctx)
+
 	result := newEvalResult(namer.PolicyKeyFromModuleName(rpe.policy.Meta.Fqn), input.Actions)
 	effectiveRoles := toSet(input.Principal.Roles)
 
 	for _, p := range rpe.policy.Policies {
-		log := logger.With(zap.Strings("scope", p.Scope))
+		tctx := tracer.Trace(cnPolicy(rpe.policy.Meta.Fqn, p.Scope))
 
 		// evaluate the variables of this policy
-		variables, err := evaluateVariables(log, p.Variables, input)
+		variables, err := evaluateVariables(tctx.Trace(cnVariables), p.Variables, input)
 		if err != nil {
-			log.Error("Failed to evaluate variables", zap.Error(err))
+			tctx.Error(err, "Failed to evaluate variables")
 			return nil, fmt.Errorf("failed to evaluate variables: %w", err)
 		}
 
 		// calculate the set of effective derived roles
 		effectiveDerivedRoles := stringSet{}
 		for drName, dr := range p.DerivedRoles {
+			dctx := tctx.Trace(cnDerivedRole(drName))
 			if !setIntersects(dr.ParentRoles, effectiveRoles) {
-				log.Debug("Derived role not activated", zap.String("derived_role", drName), zap.String("cause", "no matching roles"))
+				dctx.Skip("Roles did not match")
 				continue
 			}
 
 			// evaluate variables of this derived roles set
-			drVariables, err := evaluateVariables(log, dr.Variables, input)
+			drVariables, err := evaluateVariables(dctx.Trace(cnVariables), dr.Variables, input)
 			if err != nil {
-				log.Debug("Derived role not activated",
-					zap.String("derived_role", drName),
-					zap.String("cause", "error evaluating derived role variables"),
-					zap.Error(err))
-				// TODO(cell) Identify "undefined vars" errors and skip only those instead of everything.
+				dctx.SkipErr(err)
 				continue
 			}
 
-			ok, err := satisfiesCondition(log, dr.Condition, drVariables, input)
+			ok, err := satisfiesCondition(dctx.Trace(cnCondition), dr.Condition, drVariables, input)
 			if err != nil {
-				log.Debug("Derived role not activated",
-					zap.String("derived_role", drName),
-					zap.String("cause", "error evaluating condition"),
-					zap.Error(err))
-				// TODO(cell) Identify "undefined vars" errors and skip only those instead of everything.
+				dctx.SkipErr(err)
 				continue
 			}
 
 			if !ok {
-				log.Debug("Derived role not activated",
-					zap.String("derived_role", drName),
-					zap.String("cause", "condition not satisfied"))
+				dctx.Skip("condition not satisfied")
 				continue
 			}
 
 			effectiveDerivedRoles[drName] = struct{}{}
-			log.Debug("Derived role activated", zap.String("derived_role", drName))
+			dctx.Activate("condition satisfied")
 		}
 
 		result.EffectiveDerivedRoles = effectiveDerivedRoles
 
 		// evaluate each rule until all actions have a result
 		for _, rule := range p.Rules {
+			rctx := tctx.Trace(cnRule(rule.Name))
 			if !setIntersects(rule.Roles, effectiveRoles) && !setIntersects(rule.DerivedRoles, effectiveDerivedRoles) {
-				log.Debug("Rule not activated",
-					zap.String("rule", rule.Name),
-					zap.String("cause", "no matching roles"))
+				rctx.Skip("no matching roles or derived roles")
 				continue
 			}
 
 			for actionGlob := range rule.Actions {
 				matchedActions := globMatch(actionGlob, input.Actions)
 				for _, action := range matchedActions {
-					ok, err := satisfiesCondition(log, rule.Condition, variables, input)
+					ok, err := satisfiesCondition(rctx.Trace(cnAction(action)), rule.Condition, variables, input)
 					if err != nil {
-						log.Debug("Rule not activated",
-							zap.String("rule", rule.Name),
-							zap.String("action", action),
-							zap.String("cause", "error evaluating condition"),
-							zap.Error(err))
+						rctx.SkipErr(err)
 						continue
 					}
 
 					if !ok {
-						log.Debug("Rule not activated",
-							zap.String("rule", rule.Name),
-							zap.String("action", action),
-							zap.String("cause", "condition not satisfied"))
+						rctx.Skip("condition not satisfied")
 						continue
 					}
 
 					result.setEffect(action, rule.Effect)
-					log.Debug("Rule activated",
-						zap.String("rule", rule.Name),
-						zap.String("action", action),
-						zap.Stringer("effect", rule.Effect))
+					rctx.Activate("condition satisfied")
 				}
 			}
 		}
@@ -204,52 +210,48 @@ type principalPolicyEvaluator struct {
 }
 
 func (ppe *principalPolicyEvaluator) Evaluate(ctx context.Context, input *enginev1.CheckInput, options ...EvalOpt) (*EvalResult, error) {
-	logger := logging.FromContext(ctx).Named("evaluator").With(zap.String("policy", ppe.policy.Meta.Fqn))
+	ctx, span := tracing.StartSpan(ctx, "principal_policy.Evaluate")
+	defer span.End()
+
+	span.AddAttributes(trace.StringAttribute("policy", ppe.policy.Meta.Fqn))
+
+	evalOpt := getEvalOptions(options)
+	tracer := NewTracer(evalOpt.trace)
 	result := newEvalResult(namer.PolicyKeyFromModuleName(ppe.policy.Meta.Fqn), input.Actions)
 
 	for _, p := range ppe.policy.Policies {
-		log := logger.With(zap.Strings("scope", p.Scope))
+		tctx := tracer.Trace(cnPolicy(ppe.policy.Meta.Fqn, p.Scope))
 
 		// evaluate the variables of this policy
-		variables, err := evaluateVariables(log, p.Variables, input)
+		variables, err := evaluateVariables(tctx.Trace(cnVariables), p.Variables, input)
 		if err != nil {
-			log.Error("Failed to evaluate variables", zap.Error(err))
+			tctx.Error(err, "Failed to evaluate variables")
 			return nil, fmt.Errorf("failed to evaluate variables: %w", err)
 		}
 
 		for resource, resourceRules := range p.ResourceRules {
+			rctx := tracer.Trace(cnResource(resource))
 			if !globs.matches(resource, input.Resource.Kind) {
+				rctx.Skip("Did not match input resource kind")
 				continue
 			}
 
 			for actionGlob, rule := range resourceRules.ActionRules {
 				matchedActions := globMatch(actionGlob, input.Actions)
 				for _, action := range matchedActions {
-					ok, err := satisfiesCondition(log, rule.Condition, variables, input)
+					actx := rctx.Trace(cnAction(action))
+					ok, err := satisfiesCondition(actx.Trace(cnCondition), rule.Condition, variables, input)
 					if err != nil {
-						log.Debug("Rule not activated",
-							zap.String("resource", resource),
-							zap.String("rule", rule.Name),
-							zap.String("action", action),
-							zap.String("cause", "error evaluating condition"),
-							zap.Error(err))
+						actx.SkipErr(err)
 						continue
 					}
 
 					if !ok {
-						log.Debug("Rule not activated",
-							zap.String("resource", resource),
-							zap.String("rule", rule.Name),
-							zap.String("action", action),
-							zap.String("cause", "condition not satisfied"))
+						actx.Skip("Condition not satisfied")
 						continue
 					}
 					result.Effects[action] = rule.Effect
-					log.Debug("Rule activated",
-						zap.String("resource", resource),
-						zap.String("rule", rule.Name),
-						zap.String("action", action),
-						zap.Stringer("effect", rule.Effect))
+					actx.Activate(rule.Effect.String())
 				}
 			}
 		}
@@ -259,98 +261,92 @@ func (ppe *principalPolicyEvaluator) Evaluate(ctx context.Context, input *engine
 	return result, nil
 }
 
-func evaluateVariables(log *zap.Logger, variables map[string]*runtimev1.Expr, input *enginev1.CheckInput) (map[string]interface{}, error) {
+func evaluateVariables(tctx TraceContext, variables map[string]*runtimev1.Expr, input *enginev1.CheckInput) (map[string]interface{}, error) {
 	var errs error
 	evalVars := make(map[string]interface{}, len(variables))
 	for varName, varExpr := range variables {
+		vctx := tctx.Trace(cnVariableExpr(varName, varExpr.Original))
 		val, err := evaluateCELExpr(varExpr.Checked, evalVars, input)
 		if err != nil {
-			log.Debug("Variable evaluation failed",
-				zap.String("variable", varName),
-				zap.String("expression", varExpr.Original),
-				zap.Error(err))
+			vctx.Error(err, "Failed to evaluate variable")
 			errs = multierr.Append(errs, fmt.Errorf("error evaluating `%s := %s`: %w", varName, varExpr.Original, err))
 			continue
 		}
 
 		evalVars[varName] = val
-		log.Debug("Variable evaluated",
-			zap.String("variable", varName),
-			zap.String("expression", varExpr.Original),
-			zap.Any("value", val))
+		vctx.Info("%s := %v", varName, val)
 	}
 
 	return evalVars, errs
 }
 
-func satisfiesCondition(log *zap.Logger, cond *runtimev1.Condition, variables map[string]interface{}, input *enginev1.CheckInput) (bool, error) {
+func satisfiesCondition(tctx TraceContext, cond *runtimev1.Condition, variables map[string]interface{}, input *enginev1.CheckInput) (bool, error) {
 	if cond == nil {
+		tctx.Info("Result = true")
 		return true, nil
 	}
 
 	switch t := cond.Op.(type) {
 	case *runtimev1.Condition_Expr:
+		ectx := tctx.Trace(cnCondExpr(t.Expr.Original))
 		val, err := evaluateBoolCELExpr(t.Expr.Checked, variables, input)
 		if err != nil {
-			log.Debug("Failed to evaluate condition expression",
-				zap.String("expression", t.Expr.Original),
-				zap.Error(err))
-
+			ectx.Error(err, "Result = false")
 			return false, fmt.Errorf("failed to evaluate `%s`: %w", t.Expr.Original, err)
 		}
 
-		log.Debug("Evaluated condition expression",
-			zap.String("expression", t.Expr.Original),
-			zap.Bool("value", val))
-
+		ectx.Info("Result = %v", val)
 		return val, nil
 	case *runtimev1.Condition_All:
-		log.Debug("Evaluating ALL")
-		for _, expr := range t.All.Expr {
-			val, err := satisfiesCondition(log, expr, variables, input)
+		actx := tctx.Trace(cnCondAll)
+		for i, expr := range t.All.Expr {
+			val, err := satisfiesCondition(actx.Trace(cnCondN(i)), expr, variables, input)
 			if err != nil {
-				log.Debug("Short-circuiting ALL due to error", zap.Error(err))
+				actx.Error(err, "Result = false (short-circuited)")
 				return false, err
 			}
 
 			if !val {
-				log.Debug("Short-circuiting ALL due to false value")
+				actx.Info("Result = false (short-circuited)")
 				return false, nil
 			}
 		}
 
+		actx.Info("Result == true")
 		return true, nil
 	case *runtimev1.Condition_Any:
-		log.Debug("Evaluating ANY")
-		for _, expr := range t.Any.Expr {
-			val, err := satisfiesCondition(log, expr, variables, input)
+		actx := tctx.Trace(cnCondAny)
+		for i, expr := range t.Any.Expr {
+			val, err := satisfiesCondition(actx.Trace(cnCondN(i)), expr, variables, input)
 			if err != nil {
-				log.Debug("Short-circuiting ANY due to error", zap.Error(err))
+				actx.Error(err, "Result = false (short-circuited)")
 				return false, err
 			}
 
 			if val {
-				log.Debug("Short-circuiting ANY due to false value")
+				actx.Info("Result = true (short-circuited)")
 				return true, nil
 			}
 		}
 
+		actx.Info("Result = false")
 		return false, nil
 	case *runtimev1.Condition_None:
-		log.Debug("Evaluating NONE")
-		for _, expr := range t.None.Expr {
-			val, err := satisfiesCondition(log, expr, variables, input)
+		actx := tctx.Trace(cnCondNone)
+		for i, expr := range t.None.Expr {
+			val, err := satisfiesCondition(actx.Trace(cnCondN(i)), expr, variables, input)
 			if err != nil {
-				log.Debug("Short-circuiting NONE due to error", zap.Error(err))
+				actx.Error(err, "Result = false (short-circuited)")
 				return false, err
 			}
 
 			if val {
-				log.Debug("Short-circuiting NONE due to false value")
+				actx.Info("Result = false (short-circuited)")
 				return false, nil
 			}
 		}
 
+		actx.Info("Result = true")
 		return true, nil
 	default:
 		return false, fmt.Errorf("unknown op type %T", t)

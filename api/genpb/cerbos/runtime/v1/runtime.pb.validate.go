@@ -731,6 +731,86 @@ var _ interface {
 	ErrorName() string
 } = ConditionValidationError{}
 
+// Validate checks the field values on ExecutionTrace with the rules defined in
+// the proto definition for this message. If any rules are violated, an error
+// is returned.
+func (m *ExecutionTrace) Validate() error {
+	if m == nil {
+		return nil
+	}
+
+	for idx, item := range m.GetLogEntries() {
+		_, _ = idx, item
+
+		if v, ok := interface{}(item).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return ExecutionTraceValidationError{
+					field:  fmt.Sprintf("LogEntries[%v]", idx),
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	}
+
+	return nil
+}
+
+// ExecutionTraceValidationError is the validation error returned by
+// ExecutionTrace.Validate if the designated constraints aren't met.
+type ExecutionTraceValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e ExecutionTraceValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e ExecutionTraceValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e ExecutionTraceValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e ExecutionTraceValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e ExecutionTraceValidationError) ErrorName() string { return "ExecutionTraceValidationError" }
+
+// Error satisfies the builtin error interface
+func (e ExecutionTraceValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sExecutionTrace.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = ExecutionTraceValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = ExecutionTraceValidationError{}
+
 // Validate checks the field values on RunnableResourcePolicySet_Metadata with
 // the rules defined in the proto definition for this message. If any rules
 // are violated, an error is returned.
@@ -1556,3 +1636,78 @@ var _ interface {
 	Cause() error
 	ErrorName() string
 } = Condition_ExprListValidationError{}
+
+// Validate checks the field values on ExecutionTrace_LogEntry with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, an error is returned.
+func (m *ExecutionTrace_LogEntry) Validate() error {
+	if m == nil {
+		return nil
+	}
+
+	// no validation rules for Component
+
+	// no validation rules for Level
+
+	// no validation rules for Msg
+
+	// no validation rules for Error
+
+	return nil
+}
+
+// ExecutionTrace_LogEntryValidationError is the validation error returned by
+// ExecutionTrace_LogEntry.Validate if the designated constraints aren't met.
+type ExecutionTrace_LogEntryValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e ExecutionTrace_LogEntryValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e ExecutionTrace_LogEntryValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e ExecutionTrace_LogEntryValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e ExecutionTrace_LogEntryValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e ExecutionTrace_LogEntryValidationError) ErrorName() string {
+	return "ExecutionTrace_LogEntryValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e ExecutionTrace_LogEntryValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sExecutionTrace_LogEntry.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = ExecutionTrace_LogEntryValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = ExecutionTrace_LogEntryValidationError{}
