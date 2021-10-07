@@ -119,7 +119,7 @@ principalPolicy:
           action: "*"
           condition:
             match:
-              expr: V.is_dev_record
+              expr: variables.is_dev_record
           effect: EFFECT_ALLOW
     - resource: employee_profile
       actions:
