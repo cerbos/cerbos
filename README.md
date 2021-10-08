@@ -138,6 +138,12 @@ Client SDKs
 - [Java](https://github.com/cerbos/cerbos-sdk-java)
 - [NodeJS](https://github.com/cerbos/cerbos-sdk-node)
 
+
+Stargazers
+-----------
+[![Stargazers repo roster for cerbos/cerbos](https://reporoster.com/stars/cerbos/cerbos)](https://github.com/cerbos/cerbos)
+
+
 More Information
 ----------------
 
