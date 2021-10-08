@@ -1,0 +1,22 @@
+---
+apiVersion: "api.cerbos.dev/v1"
+resourcePolicy:
+  version: "default"
+  importDerivedRoles:
+    - buyer_derived_roles
+  resource: purchase_order
+  rules:
+    - actions: ["*"]
+      effect: EFFECT_ALLOW
+      roles:
+        - support
+        - admin
+
+    - actions:
+        - create
+        - view
+        - update
+        - delete
+      effect: EFFECT_ALLOW
+      derivedRoles:
+        - buyer
