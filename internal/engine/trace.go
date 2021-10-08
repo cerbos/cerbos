@@ -4,192 +4,132 @@
 package engine
 
 import (
-	"bytes"
-	"context"
 	"fmt"
-	"strings"
 
-	runtimev1 "github.com/cerbos/cerbos/api/genpb/cerbos/runtime/v1"
-	"github.com/cerbos/cerbos/internal/observability/logging"
+	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
+
+	effectv1 "github.com/cerbos/cerbos/api/genpb/cerbos/effect/v1"
 )
 
-type Tracer interface {
-	Trace(componentName) TraceContext
-	LogOutput(context.Context)
+const (
+	traceCondition = "condition"
+	traceCondAll   = "conditionAll"
+	traceCondAny   = "conditionAny"
+	traceCondNone  = "conditionNone"
+	traceVariables = "variables"
+)
+
+// KV is a function that returns a key-value pair.
+type KV func() (string, string)
+
+// KVError produces a KV for an error.
+func KVError(err error) KV {
+	return func() (string, string) { return "error", err.Error() }
 }
 
-func NewTracer(enabled bool) Tracer {
-	if enabled {
-		return &tracer{trace: &runtimev1.ExecutionTrace{}}
+// KVMsg produces a KV for a free-form message.
+func KVMsg(msg string, params ...interface{}) KV {
+	return func() (string, string) { return "message", fmt.Sprintf(msg, params...) }
+}
+
+// KVSkip produces a KV for skipping evaluation.
+func KVSkip() KV {
+	return func() (string, string) { return "activated", "false" }
+}
+
+// KVActivated produces a KV for component activation.
+func KVActivated() KV {
+	return func() (string, string) { return "activated", "true" }
+}
+
+// KVEffect produces a KV for setting default effect.
+func KVEffect(effect effectv1.Effect) KV {
+	return func() (string, string) { return "effect", effect.String() }
+}
+
+// TraceSink is the interface for sinks that receive trace events from the engine.
+type TraceSink interface {
+	Enabled() bool
+	WriteEvent(component []string, data ...KV)
+}
+
+// NoopTraceSink implements a sink that does nothing.
+type NoopTraceSink struct{}
+
+func (NoopTraceSink) Enabled() bool { return false }
+
+func (NoopTraceSink) WriteEvent(component []string, data ...KV) {}
+
+// ZapTraceSink implements TraceSink using a Zap logger.
+type ZapTraceSink struct {
+	log *zap.Logger
+}
+
+func NewZapTraceSink(log *zap.Logger) *ZapTraceSink {
+	return &ZapTraceSink{log: log}
+}
+
+func (zts *ZapTraceSink) Enabled() bool {
+	return zts.log.Core().Enabled(zapcore.DebugLevel)
+}
+
+func (zts *ZapTraceSink) WriteEvent(component []string, data ...KV) {
+	if ce := zts.log.With(zap.Strings("component", component)).Check(zapcore.DebugLevel, "Trace event"); ce != nil {
+		f := make([]zapcore.Field, len(data))
+		for i, kv := range data {
+			k, v := kv()
+			f[i] = zap.String(k, v)
+		}
+		ce.Write(f...)
 	}
-	return noopTracer{}
 }
-
-type noopTracer struct{}
-
-func (noopTracer) Trace(_ componentName) TraceContext {
-	return noopTraceCtx{}
-}
-
-func (noopTracer) LogOutput(_ context.Context) {}
 
 type tracer struct {
-	trace *runtimev1.ExecutionTrace
+	enabled bool
+	sink    TraceSink
 }
 
-func (t *tracer) Trace(name componentName) TraceContext {
-	return &traceCtx{parent: t, component: name()}
+func newTracer(sink TraceSink) *tracer {
+	return &tracer{enabled: sink.Enabled(), sink: sink}
 }
 
-func (t *tracer) addLogEntry(entry *runtimev1.ExecutionTrace_LogEntry) {
-	t.trace.LogEntries = append(t.trace.LogEntries, entry)
-}
-
-func (t *tracer) LogOutput(ctx context.Context) {
-	buf := new(bytes.Buffer)
-	for _, entry := range t.trace.LogEntries {
-		level := "I"
-		switch entry.Level {
-		case runtimev1.ExecutionTrace_LOG_LEVEL_DEBUG:
-			level = "D"
-		case runtimev1.ExecutionTrace_LOG_LEVEL_INFO:
-			level = "I"
-		case runtimev1.ExecutionTrace_LOG_LEVEL_WARN:
-			level = "W"
-		case runtimev1.ExecutionTrace_LOG_LEVEL_ERROR:
-			level = "E"
-		}
-
-		if entry.Error != "" {
-			fmt.Fprintf(buf, "%s [%s] => %s (%s)\n", level, entry.Component, entry.Msg, entry.Error)
-		} else {
-			fmt.Fprintf(buf, "%s [%s] => %s\n", level, entry.Component, entry.Msg)
-		}
+func (t *tracer) beginTrace(nameFormat string, params ...interface{}) *traceContext {
+	if !t.enabled {
+		return noopTraceCtx
 	}
 
-	logging.FromContext(ctx).Info(buf.String())
+	return &traceContext{enabled: true, component: []string{fmt.Sprintf(nameFormat, params...)}, sink: t.sink}
 }
 
-type TraceContext interface {
-	Trace(name componentName) TraceContext
-	Activate(cause string)
-	Skip(cause string)
-	SkipErr(err error)
-	Debug(msg string, param ...interface{})
-	Info(msg string, param ...interface{})
-	Warn(msg string, param ...interface{})
-	Error(err error, msg string, param ...interface{})
+type traceContext struct {
+	enabled   bool
+	component []string
+	sink      TraceSink
 }
 
-type noopTraceCtx struct{}
+var noopTraceCtx = &traceContext{enabled: false}
 
-func (noopTraceCtx) Trace(name componentName) TraceContext {
-	return noopTraceCtx{}
-}
-
-func (noopTraceCtx) Activate(_ string) {}
-
-func (noopTraceCtx) Skip(_ string) {}
-
-func (noopTraceCtx) SkipErr(_ error) {}
-
-func (noopTraceCtx) Debug(_ string, _ ...interface{}) {}
-
-func (noopTraceCtx) Info(_ string, _ ...interface{}) {}
-
-func (noopTraceCtx) Warn(_ string, _ ...interface{}) {}
-
-func (noopTraceCtx) Error(_ error, _ string, _ ...interface{}) {}
-
-type traceCtx struct {
-	parent    *tracer
-	component string
-}
-
-func (tc *traceCtx) Trace(name componentName) TraceContext {
-	return &traceCtx{parent: tc.parent, component: fmt.Sprintf("%s>%s", tc.component, name())}
-}
-
-func (tc *traceCtx) Activate(cause string) {
-	tc.Info("[ACTIVATED] %s", cause)
-}
-
-func (tc *traceCtx) Skip(cause string) {
-	tc.Info("[SKIP] %s", cause)
-}
-
-func (tc *traceCtx) SkipErr(err error) {
-	tc.Info("[SKIP] ERROR: %v", err)
-}
-
-func (tc *traceCtx) Debug(msg string, param ...interface{}) {
-	tc.parent.addLogEntry(&runtimev1.ExecutionTrace_LogEntry{
-		Component: tc.component,
-		Level:     runtimev1.ExecutionTrace_LOG_LEVEL_DEBUG,
-		Msg:       fmt.Sprintf(msg, param...),
-	})
-}
-
-func (tc *traceCtx) Info(msg string, param ...interface{}) {
-	tc.parent.addLogEntry(&runtimev1.ExecutionTrace_LogEntry{
-		Component: tc.component,
-		Level:     runtimev1.ExecutionTrace_LOG_LEVEL_INFO,
-		Msg:       fmt.Sprintf(msg, param...),
-	})
-}
-
-func (tc *traceCtx) Warn(msg string, param ...interface{}) {
-	tc.parent.addLogEntry(&runtimev1.ExecutionTrace_LogEntry{
-		Component: tc.component,
-		Level:     runtimev1.ExecutionTrace_LOG_LEVEL_WARN,
-		Msg:       fmt.Sprintf(msg, param...),
-	})
-}
-
-func (tc *traceCtx) Error(err error, msg string, param ...interface{}) {
-	tc.parent.addLogEntry(&runtimev1.ExecutionTrace_LogEntry{
-		Component: tc.component,
-		Level:     runtimev1.ExecutionTrace_LOG_LEVEL_ERROR,
-		Msg:       fmt.Sprintf(msg, param...),
-		Error:     err.Error(),
-	})
-}
-
-type componentName func() string
-
-var (
-	cnVariables componentName = func() string { return "variables" }
-	cnCondition componentName = func() string { return "condition" }
-	cnCondAll   componentName = func() string { return "condition_all" }
-	cnCondAny   componentName = func() string { return "condition_any" }
-	cnCondNone  componentName = func() string { return "condition_none" }
-)
-
-func cnPolicy(fqn string, scope []string) componentName {
-	return func() string {
-		if len(scope) > 0 {
-			return fmt.Sprintf("policy=%s scope=%s", fqn, strings.Join(scope, "."))
-		}
-		return fmt.Sprintf("policy=%s", fqn)
+func (tc *traceContext) beginTrace(nameFormat string, params ...interface{}) *traceContext {
+	if !tc.enabled {
+		return noopTraceCtx
 	}
+
+	return &traceContext{enabled: true, component: join(tc.component, fmt.Sprintf(nameFormat, params...)), sink: tc.sink}
 }
 
-func cnDerivedRole(dr string) componentName { return kvStr("derived_role", dr) }
+func (tc *traceContext) writeEvent(data ...KV) {
+	if !tc.enabled {
+		return
+	}
 
-func cnRule(name string) componentName { return kvStr("rule", name) }
-
-func cnAction(name string) componentName { return kvStr("action", name) }
-
-func cnResource(name string) componentName { return kvStr("resource", name) }
-
-func cnVariableExpr(name, expr string) componentName {
-	return func() string { return fmt.Sprintf("var=%s expr=`%s`", name, expr) }
+	tc.sink.WriteEvent(tc.component, data...)
 }
 
-func cnCondExpr(expr string) componentName { return kvStr("expr", expr) }
+func join(a []string, b string) []string {
+	c := make([]string, len(a)+1)
+	copy(c, a)
+	c[len(a)] = b
 
-func cnCondN(i int) componentName { return func() string { return fmt.Sprintf("expr#%02d", i+1) } }
-
-func kvStr(key, value string) componentName {
-	return func() string { return fmt.Sprintf("%s=%s", key, value) }
+	return c
 }

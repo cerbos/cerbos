@@ -39,6 +39,29 @@ const (
 	workerResetThreshold = 1 << 16
 )
 
+type checkOptions struct {
+	tracer *tracer
+}
+
+func newCheckOptions(opts ...CheckOpt) *checkOptions {
+	co := &checkOptions{tracer: newTracer(NoopTraceSink{})}
+	for _, opt := range opts {
+		opt(co)
+	}
+
+	return co
+}
+
+// CheckOpt defines options for engine Check calls.
+type CheckOpt func(*checkOptions)
+
+// WithZapTraceSink sets an engine tracer with Zap set as the sink.
+func WithZapTraceSink(log *zap.Logger) CheckOpt {
+	return func(co *checkOptions) {
+		co.tracer = newTracer(NewZapTraceSink(log))
+	}
+}
+
 type Engine struct {
 	conf        *Conf
 	workerIndex uint64
@@ -99,7 +122,7 @@ func (engine *Engine) startWorker(ctx context.Context, num int, inputChan <-chan
 				return
 			}
 
-			result, err := engine.evaluate(work.ctx, work.input)
+			result, err := engine.evaluate(work.ctx, work.input, work.checkOpts)
 			work.out <- workOut{index: work.index, result: result, err: err}
 		}
 	}
@@ -121,18 +144,20 @@ func (engine *Engine) submitWork(ctx context.Context, work workIn) error {
 	}
 }
 
-func (engine *Engine) Check(ctx context.Context, inputs []*enginev1.CheckInput) ([]*enginev1.CheckOutput, error) {
+func (engine *Engine) Check(ctx context.Context, inputs []*enginev1.CheckInput, opts ...CheckOpt) ([]*enginev1.CheckOutput, error) {
 	outputs, err := measureCheckLatency(len(inputs), func() ([]*enginev1.CheckOutput, error) {
 		ctx, span := tracing.StartSpan(ctx, "engine.Check")
 		defer span.End()
 
+		checkOpts := newCheckOptions(opts...)
+
 		// if the number of inputs is less than the threshold, do a serial execution as it is usually faster.
 		// ditto if the worker pool is not initialized
 		if len(inputs) < parallelismThreshold || len(engine.workerPool) == 0 {
-			return engine.checkSerial(ctx, inputs)
+			return engine.checkSerial(ctx, inputs, checkOpts)
 		}
 
-		return engine.checkParallel(ctx, inputs)
+		return engine.checkParallel(ctx, inputs, checkOpts)
 	})
 
 	return engine.logDecision(ctx, inputs, outputs, err)
@@ -169,11 +194,11 @@ func (engine *Engine) logDecision(ctx context.Context, inputs []*enginev1.CheckI
 	return outputs, checkErr
 }
 
-func (engine *Engine) checkSerial(ctx context.Context, inputs []*enginev1.CheckInput) ([]*enginev1.CheckOutput, error) {
+func (engine *Engine) checkSerial(ctx context.Context, inputs []*enginev1.CheckInput, checkOpts *checkOptions) ([]*enginev1.CheckOutput, error) {
 	outputs := make([]*enginev1.CheckOutput, len(inputs))
 
 	for i, input := range inputs {
-		o, err := engine.evaluate(ctx, input)
+		o, err := engine.evaluate(ctx, input, checkOpts)
 		if err != nil {
 			return nil, err
 		}
@@ -184,12 +209,12 @@ func (engine *Engine) checkSerial(ctx context.Context, inputs []*enginev1.CheckI
 	return outputs, nil
 }
 
-func (engine *Engine) checkParallel(ctx context.Context, inputs []*enginev1.CheckInput) ([]*enginev1.CheckOutput, error) {
+func (engine *Engine) checkParallel(ctx context.Context, inputs []*enginev1.CheckInput, checkOpts *checkOptions) ([]*enginev1.CheckOutput, error) {
 	outputs := make([]*enginev1.CheckOutput, len(inputs))
 	collector := make(chan workOut, len(inputs))
 
 	for i, input := range inputs {
-		if err := engine.submitWork(ctx, workIn{index: i, ctx: ctx, input: input, out: collector}); err != nil {
+		if err := engine.submitWork(ctx, workIn{index: i, ctx: ctx, input: input, out: collector, checkOpts: checkOpts}); err != nil {
 			return nil, err
 		}
 	}
@@ -210,7 +235,7 @@ func (engine *Engine) checkParallel(ctx context.Context, inputs []*enginev1.Chec
 	return outputs, nil
 }
 
-func (engine *Engine) evaluate(ctx context.Context, input *enginev1.CheckInput) (*enginev1.CheckOutput, error) {
+func (engine *Engine) evaluate(ctx context.Context, input *enginev1.CheckInput, checkOpts *checkOptions) (*enginev1.CheckOutput, error) {
 	ctx, span := tracing.StartSpan(ctx, "engine.Evaluate")
 	defer span.End()
 
@@ -222,7 +247,7 @@ func (engine *Engine) evaluate(ctx context.Context, input *enginev1.CheckInput) 
 		return nil, err
 	}
 
-	ec, err := engine.buildEvaluationCtx(ctx, input)
+	ec, err := engine.buildEvaluationCtx(ctx, input, checkOpts)
 	if err != nil {
 		return nil, err
 	}
@@ -274,12 +299,12 @@ func (engine *Engine) evaluate(ctx context.Context, input *enginev1.CheckInput) 
 	return output, nil
 }
 
-func (engine *Engine) buildEvaluationCtx(ctx context.Context, input *enginev1.CheckInput) (*evaluationCtx, error) {
+func (engine *Engine) buildEvaluationCtx(ctx context.Context, input *enginev1.CheckInput, checkOpts *checkOptions) (*evaluationCtx, error) {
 	ec := &evaluationCtx{}
 
 	// get the principal policy check
 	ppName, ppVersion := engine.policyAttr(input.Principal.Id, input.Principal.PolicyVersion)
-	ppCheck, err := engine.getPrincipalPolicyEvaluator(ctx, ppName, ppVersion)
+	ppCheck, err := engine.getPrincipalPolicyEvaluator(ctx, ppName, ppVersion, checkOpts)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get check for [%s.%s]: %w", ppName, ppVersion, err)
 	}
@@ -287,7 +312,7 @@ func (engine *Engine) buildEvaluationCtx(ctx context.Context, input *enginev1.Ch
 
 	// get the resource policy check
 	rpName, rpVersion := engine.policyAttr(input.Resource.Kind, input.Resource.PolicyVersion)
-	rpCheck, err := engine.getResourcePolicyEvaluator(ctx, rpName, rpVersion)
+	rpCheck, err := engine.getResourcePolicyEvaluator(ctx, rpName, rpVersion, checkOpts)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get check for [%s.%s]: %w", rpName, rpVersion, err)
 	}
@@ -296,7 +321,7 @@ func (engine *Engine) buildEvaluationCtx(ctx context.Context, input *enginev1.Ch
 	return ec, nil
 }
 
-func (engine *Engine) getPrincipalPolicyEvaluator(ctx context.Context, principal, policyVersion string) (Evaluator, error) {
+func (engine *Engine) getPrincipalPolicyEvaluator(ctx context.Context, principal, policyVersion string, checkOpts *checkOptions) (Evaluator, error) {
 	principalModID := namer.PrincipalPolicyModuleID(principal, policyVersion)
 	rps, err := engine.compileMgr.Get(ctx, principalModID)
 	if err != nil {
@@ -307,10 +332,10 @@ func (engine *Engine) getPrincipalPolicyEvaluator(ctx context.Context, principal
 		return nil, nil
 	}
 
-	return NewEvaluator(rps), nil
+	return NewEvaluator(rps, checkOpts.tracer), nil
 }
 
-func (engine *Engine) getResourcePolicyEvaluator(ctx context.Context, resource, policyVersion string) (Evaluator, error) {
+func (engine *Engine) getResourcePolicyEvaluator(ctx context.Context, resource, policyVersion string, checkOpts *checkOptions) (Evaluator, error) {
 	resourceModID := namer.ResourcePolicyModuleID(resource, policyVersion)
 	rps, err := engine.compileMgr.Get(ctx, resourceModID)
 	if err != nil {
@@ -321,7 +346,7 @@ func (engine *Engine) getResourcePolicyEvaluator(ctx context.Context, resource, 
 		return nil, nil
 	}
 
-	return NewEvaluator(rps), nil
+	return NewEvaluator(rps, checkOpts.tracer), nil
 }
 
 func (engine *Engine) policyAttr(name, version string) (pName, pVersion string) {
@@ -426,8 +451,9 @@ type workOut struct {
 }
 
 type workIn struct {
-	index int
-	ctx   context.Context
-	input *enginev1.CheckInput
-	out   chan<- workOut
+	index     int
+	ctx       context.Context
+	input     *enginev1.CheckInput
+	checkOpts *checkOptions
+	out       chan<- workOut
 }

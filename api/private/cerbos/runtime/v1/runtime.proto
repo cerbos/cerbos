@@ -10,6 +10,7 @@ option go_package = "github.com/cerbos/cerbos/api/genpb/cerbos/runtime/v1;runtim
 import "cerbos/effect/v1/effect.proto";
 import "google/api/expr/v1alpha1/checked.proto";
 import "google/protobuf/empty.proto";
+import "google/protobuf/struct.proto";
 
 message RunnablePolicySet {
     string fqn = 1;
@@ -125,21 +126,12 @@ message Condition {
 }
 
 message ExecutionTrace {
-    enum LogLevel {
-        LOG_LEVEL_UNSPECIFIED = 0;
-        LOG_LEVEL_DEBUG = 1;
-        LOG_LEVEL_INFO = 2;
-        LOG_LEVEL_WARN = 3;
-        LOG_LEVEL_ERROR = 4;
+    message Entry {
+        repeated string path = 1;
+        string msg = 2;
+        map<string, google.protobuf.Value> metadata = 3;
     }
 
-    message LogEntry {
-        string component = 1;
-        LogLevel level = 2;
-        string msg = 3;
-        string error = 4;
-    }
-
-
-    repeated LogEntry log_entries = 1;
+    string root_component = 1;
+    repeated Entry trace_entries = 2;
 }

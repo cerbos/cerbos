@@ -739,13 +739,15 @@ func (m *ExecutionTrace) Validate() error {
 		return nil
 	}
 
-	for idx, item := range m.GetLogEntries() {
+	// no validation rules for RootComponent
+
+	for idx, item := range m.GetTraceEntries() {
 		_, _ = idx, item
 
 		if v, ok := interface{}(item).(interface{ Validate() error }); ok {
 			if err := v.Validate(); err != nil {
 				return ExecutionTraceValidationError{
-					field:  fmt.Sprintf("LogEntries[%v]", idx),
+					field:  fmt.Sprintf("TraceEntries[%v]", idx),
 					reason: "embedded message failed validation",
 					cause:  err,
 				}
@@ -1637,28 +1639,39 @@ var _ interface {
 	ErrorName() string
 } = Condition_ExprListValidationError{}
 
-// Validate checks the field values on ExecutionTrace_LogEntry with the rules
+// Validate checks the field values on ExecutionTrace_Entry with the rules
 // defined in the proto definition for this message. If any rules are
 // violated, an error is returned.
-func (m *ExecutionTrace_LogEntry) Validate() error {
+func (m *ExecutionTrace_Entry) Validate() error {
 	if m == nil {
 		return nil
 	}
 
-	// no validation rules for Component
-
-	// no validation rules for Level
-
 	// no validation rules for Msg
 
-	// no validation rules for Error
+	for key, val := range m.GetMetadata() {
+		_ = val
+
+		// no validation rules for Metadata[key]
+
+		if v, ok := interface{}(val).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return ExecutionTrace_EntryValidationError{
+					field:  fmt.Sprintf("Metadata[%v]", key),
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	}
 
 	return nil
 }
 
-// ExecutionTrace_LogEntryValidationError is the validation error returned by
-// ExecutionTrace_LogEntry.Validate if the designated constraints aren't met.
-type ExecutionTrace_LogEntryValidationError struct {
+// ExecutionTrace_EntryValidationError is the validation error returned by
+// ExecutionTrace_Entry.Validate if the designated constraints aren't met.
+type ExecutionTrace_EntryValidationError struct {
 	field  string
 	reason string
 	cause  error
@@ -1666,24 +1679,24 @@ type ExecutionTrace_LogEntryValidationError struct {
 }
 
 // Field function returns field value.
-func (e ExecutionTrace_LogEntryValidationError) Field() string { return e.field }
+func (e ExecutionTrace_EntryValidationError) Field() string { return e.field }
 
 // Reason function returns reason value.
-func (e ExecutionTrace_LogEntryValidationError) Reason() string { return e.reason }
+func (e ExecutionTrace_EntryValidationError) Reason() string { return e.reason }
 
 // Cause function returns cause value.
-func (e ExecutionTrace_LogEntryValidationError) Cause() error { return e.cause }
+func (e ExecutionTrace_EntryValidationError) Cause() error { return e.cause }
 
 // Key function returns key value.
-func (e ExecutionTrace_LogEntryValidationError) Key() bool { return e.key }
+func (e ExecutionTrace_EntryValidationError) Key() bool { return e.key }
 
 // ErrorName returns error name.
-func (e ExecutionTrace_LogEntryValidationError) ErrorName() string {
-	return "ExecutionTrace_LogEntryValidationError"
+func (e ExecutionTrace_EntryValidationError) ErrorName() string {
+	return "ExecutionTrace_EntryValidationError"
 }
 
 // Error satisfies the builtin error interface
-func (e ExecutionTrace_LogEntryValidationError) Error() string {
+func (e ExecutionTrace_EntryValidationError) Error() string {
 	cause := ""
 	if e.cause != nil {
 		cause = fmt.Sprintf(" | caused by: %v", e.cause)
@@ -1695,14 +1708,14 @@ func (e ExecutionTrace_LogEntryValidationError) Error() string {
 	}
 
 	return fmt.Sprintf(
-		"invalid %sExecutionTrace_LogEntry.%s: %s%s",
+		"invalid %sExecutionTrace_Entry.%s: %s%s",
 		key,
 		e.field,
 		e.reason,
 		cause)
 }
 
-var _ error = ExecutionTrace_LogEntryValidationError{}
+var _ error = ExecutionTrace_EntryValidationError{}
 
 var _ interface {
 	Field() string
@@ -1710,4 +1723,4 @@ var _ interface {
 	Key() bool
 	Cause() error
 	ErrorName() string
-} = ExecutionTrace_LogEntryValidationError{}
+} = ExecutionTrace_EntryValidationError{}

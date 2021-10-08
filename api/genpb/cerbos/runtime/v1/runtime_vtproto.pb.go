@@ -11,6 +11,7 @@ import (
 	proto "google.golang.org/protobuf/proto"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	emptypb "google.golang.org/protobuf/types/known/emptypb"
+	structpb "google.golang.org/protobuf/types/known/structpb"
 	io "io"
 	bits "math/bits"
 )
@@ -1239,7 +1240,7 @@ func (m *Condition_Expr) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 	}
 	return len(dAtA) - i, nil
 }
-func (m *ExecutionTrace_LogEntry) MarshalVT() (dAtA []byte, err error) {
+func (m *ExecutionTrace_Entry) MarshalVT() (dAtA []byte, err error) {
 	if m == nil {
 		return nil, nil
 	}
@@ -1252,12 +1253,12 @@ func (m *ExecutionTrace_LogEntry) MarshalVT() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *ExecutionTrace_LogEntry) MarshalToVT(dAtA []byte) (int, error) {
+func (m *ExecutionTrace_Entry) MarshalToVT(dAtA []byte) (int, error) {
 	size := m.SizeVT()
 	return m.MarshalToSizedBufferVT(dAtA[:size])
 }
 
-func (m *ExecutionTrace_LogEntry) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
+func (m *ExecutionTrace_Entry) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 	if m == nil {
 		return 0, nil
 	}
@@ -1269,31 +1270,55 @@ func (m *ExecutionTrace_LogEntry) MarshalToSizedBufferVT(dAtA []byte) (int, erro
 		i -= len(m.unknownFields)
 		copy(dAtA[i:], m.unknownFields)
 	}
-	if len(m.Error) > 0 {
-		i -= len(m.Error)
-		copy(dAtA[i:], m.Error)
-		i = encodeVarint(dAtA, i, uint64(len(m.Error)))
-		i--
-		dAtA[i] = 0x22
+	if len(m.Metadata) > 0 {
+		for k := range m.Metadata {
+			v := m.Metadata[k]
+			baseI := i
+			if marshalto, ok := interface{}(v).(interface {
+				MarshalToSizedBufferVT([]byte) (int, error)
+			}); ok {
+				size, err := marshalto.MarshalToSizedBufferVT(dAtA[:i])
+				if err != nil {
+					return 0, err
+				}
+				i -= size
+				i = encodeVarint(dAtA, i, uint64(size))
+			} else {
+				encoded, err := proto.Marshal(v)
+				if err != nil {
+					return 0, err
+				}
+				i -= len(encoded)
+				copy(dAtA[i:], encoded)
+				i = encodeVarint(dAtA, i, uint64(len(encoded)))
+			}
+			i--
+			dAtA[i] = 0x12
+			i -= len(k)
+			copy(dAtA[i:], k)
+			i = encodeVarint(dAtA, i, uint64(len(k)))
+			i--
+			dAtA[i] = 0xa
+			i = encodeVarint(dAtA, i, uint64(baseI-i))
+			i--
+			dAtA[i] = 0x1a
+		}
 	}
 	if len(m.Msg) > 0 {
 		i -= len(m.Msg)
 		copy(dAtA[i:], m.Msg)
 		i = encodeVarint(dAtA, i, uint64(len(m.Msg)))
 		i--
-		dAtA[i] = 0x1a
+		dAtA[i] = 0x12
 	}
-	if m.Level != 0 {
-		i = encodeVarint(dAtA, i, uint64(m.Level))
-		i--
-		dAtA[i] = 0x10
-	}
-	if len(m.Component) > 0 {
-		i -= len(m.Component)
-		copy(dAtA[i:], m.Component)
-		i = encodeVarint(dAtA, i, uint64(len(m.Component)))
-		i--
-		dAtA[i] = 0xa
+	if len(m.Path) > 0 {
+		for iNdEx := len(m.Path) - 1; iNdEx >= 0; iNdEx-- {
+			i -= len(m.Path[iNdEx])
+			copy(dAtA[i:], m.Path[iNdEx])
+			i = encodeVarint(dAtA, i, uint64(len(m.Path[iNdEx])))
+			i--
+			dAtA[i] = 0xa
+		}
 	}
 	return len(dAtA) - i, nil
 }
@@ -1328,17 +1353,24 @@ func (m *ExecutionTrace) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 		i -= len(m.unknownFields)
 		copy(dAtA[i:], m.unknownFields)
 	}
-	if len(m.LogEntries) > 0 {
-		for iNdEx := len(m.LogEntries) - 1; iNdEx >= 0; iNdEx-- {
-			size, err := m.LogEntries[iNdEx].MarshalToSizedBufferVT(dAtA[:i])
+	if len(m.TraceEntries) > 0 {
+		for iNdEx := len(m.TraceEntries) - 1; iNdEx >= 0; iNdEx-- {
+			size, err := m.TraceEntries[iNdEx].MarshalToSizedBufferVT(dAtA[:i])
 			if err != nil {
 				return 0, err
 			}
 			i -= size
 			i = encodeVarint(dAtA, i, uint64(size))
 			i--
-			dAtA[i] = 0xa
+			dAtA[i] = 0x12
 		}
+	}
+	if len(m.RootComponent) > 0 {
+		i -= len(m.RootComponent)
+		copy(dAtA[i:], m.RootComponent)
+		i = encodeVarint(dAtA, i, uint64(len(m.RootComponent)))
+		i--
+		dAtA[i] = 0xa
 	}
 	return len(dAtA) - i, nil
 }
@@ -1927,26 +1959,40 @@ func (m *Condition_Expr) SizeVT() (n int) {
 	}
 	return n
 }
-func (m *ExecutionTrace_LogEntry) SizeVT() (n int) {
+func (m *ExecutionTrace_Entry) SizeVT() (n int) {
 	if m == nil {
 		return 0
 	}
 	var l int
 	_ = l
-	l = len(m.Component)
-	if l > 0 {
-		n += 1 + l + sov(uint64(l))
-	}
-	if m.Level != 0 {
-		n += 1 + sov(uint64(m.Level))
+	if len(m.Path) > 0 {
+		for _, s := range m.Path {
+			l = len(s)
+			n += 1 + l + sov(uint64(l))
+		}
 	}
 	l = len(m.Msg)
 	if l > 0 {
 		n += 1 + l + sov(uint64(l))
 	}
-	l = len(m.Error)
-	if l > 0 {
-		n += 1 + l + sov(uint64(l))
+	if len(m.Metadata) > 0 {
+		for k, v := range m.Metadata {
+			_ = k
+			_ = v
+			l = 0
+			if v != nil {
+				if size, ok := interface{}(v).(interface {
+					SizeVT() int
+				}); ok {
+					l = size.SizeVT()
+				} else {
+					l = proto.Size(v)
+				}
+			}
+			l += 1 + sov(uint64(l))
+			mapEntrySize := 1 + len(k) + sov(uint64(len(k))) + l
+			n += mapEntrySize + 1 + sov(uint64(mapEntrySize))
+		}
 	}
 	if m.unknownFields != nil {
 		n += len(m.unknownFields)
@@ -1960,8 +2006,12 @@ func (m *ExecutionTrace) SizeVT() (n int) {
 	}
 	var l int
 	_ = l
-	if len(m.LogEntries) > 0 {
-		for _, e := range m.LogEntries {
+	l = len(m.RootComponent)
+	if l > 0 {
+		n += 1 + l + sov(uint64(l))
+	}
+	if len(m.TraceEntries) > 0 {
+		for _, e := range m.TraceEntries {
 			l = e.SizeVT()
 			n += 1 + l + sov(uint64(l))
 		}
@@ -5414,7 +5464,7 @@ func (m *Condition) UnmarshalVT(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *ExecutionTrace_LogEntry) UnmarshalVT(dAtA []byte) error {
+func (m *ExecutionTrace_Entry) UnmarshalVT(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -5437,15 +5487,15 @@ func (m *ExecutionTrace_LogEntry) UnmarshalVT(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: ExecutionTrace_LogEntry: wiretype end group for non-group")
+			return fmt.Errorf("proto: ExecutionTrace_Entry: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: ExecutionTrace_LogEntry: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: ExecutionTrace_Entry: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Component", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field Path", wireType)
 			}
 			var stringLen uint64
 			for shift := uint(0); ; shift += 7 {
@@ -5473,28 +5523,9 @@ func (m *ExecutionTrace_LogEntry) UnmarshalVT(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.Component = string(dAtA[iNdEx:postIndex])
+			m.Path = append(m.Path, string(dAtA[iNdEx:postIndex]))
 			iNdEx = postIndex
 		case 2:
-			if wireType != 0 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Level", wireType)
-			}
-			m.Level = 0
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflow
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				m.Level |= ExecutionTrace_LogLevel(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-		case 3:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field Msg", wireType)
 			}
@@ -5526,11 +5557,11 @@ func (m *ExecutionTrace_LogEntry) UnmarshalVT(dAtA []byte) error {
 			}
 			m.Msg = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
-		case 4:
+		case 3:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Error", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field Metadata", wireType)
 			}
-			var stringLen uint64
+			var msglen int
 			for shift := uint(0); ; shift += 7 {
 				if shift >= 64 {
 					return ErrIntOverflow
@@ -5540,23 +5571,128 @@ func (m *ExecutionTrace_LogEntry) UnmarshalVT(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
+				msglen |= int(b&0x7F) << shift
 				if b < 0x80 {
 					break
 				}
 			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
+			if msglen < 0 {
 				return ErrInvalidLength
 			}
-			postIndex := iNdEx + intStringLen
+			postIndex := iNdEx + msglen
 			if postIndex < 0 {
 				return ErrInvalidLength
 			}
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.Error = string(dAtA[iNdEx:postIndex])
+			if m.Metadata == nil {
+				m.Metadata = make(map[string]*structpb.Value)
+			}
+			var mapkey string
+			var mapvalue *structpb.Value
+			for iNdEx < postIndex {
+				entryPreIndex := iNdEx
+				var wire uint64
+				for shift := uint(0); ; shift += 7 {
+					if shift >= 64 {
+						return ErrIntOverflow
+					}
+					if iNdEx >= l {
+						return io.ErrUnexpectedEOF
+					}
+					b := dAtA[iNdEx]
+					iNdEx++
+					wire |= uint64(b&0x7F) << shift
+					if b < 0x80 {
+						break
+					}
+				}
+				fieldNum := int32(wire >> 3)
+				if fieldNum == 1 {
+					var stringLenmapkey uint64
+					for shift := uint(0); ; shift += 7 {
+						if shift >= 64 {
+							return ErrIntOverflow
+						}
+						if iNdEx >= l {
+							return io.ErrUnexpectedEOF
+						}
+						b := dAtA[iNdEx]
+						iNdEx++
+						stringLenmapkey |= uint64(b&0x7F) << shift
+						if b < 0x80 {
+							break
+						}
+					}
+					intStringLenmapkey := int(stringLenmapkey)
+					if intStringLenmapkey < 0 {
+						return ErrInvalidLength
+					}
+					postStringIndexmapkey := iNdEx + intStringLenmapkey
+					if postStringIndexmapkey < 0 {
+						return ErrInvalidLength
+					}
+					if postStringIndexmapkey > l {
+						return io.ErrUnexpectedEOF
+					}
+					mapkey = string(dAtA[iNdEx:postStringIndexmapkey])
+					iNdEx = postStringIndexmapkey
+				} else if fieldNum == 2 {
+					var mapmsglen int
+					for shift := uint(0); ; shift += 7 {
+						if shift >= 64 {
+							return ErrIntOverflow
+						}
+						if iNdEx >= l {
+							return io.ErrUnexpectedEOF
+						}
+						b := dAtA[iNdEx]
+						iNdEx++
+						mapmsglen |= int(b&0x7F) << shift
+						if b < 0x80 {
+							break
+						}
+					}
+					if mapmsglen < 0 {
+						return ErrInvalidLength
+					}
+					postmsgIndex := iNdEx + mapmsglen
+					if postmsgIndex < 0 {
+						return ErrInvalidLength
+					}
+					if postmsgIndex > l {
+						return io.ErrUnexpectedEOF
+					}
+					mapvalue = &structpb.Value{}
+					if unmarshal, ok := interface{}(mapvalue).(interface {
+						UnmarshalVT([]byte) error
+					}); ok {
+						if err := unmarshal.UnmarshalVT(dAtA[iNdEx:postmsgIndex]); err != nil {
+							return err
+						}
+					} else {
+						if err := proto.Unmarshal(dAtA[iNdEx:postmsgIndex], mapvalue); err != nil {
+							return err
+						}
+					}
+					iNdEx = postmsgIndex
+				} else {
+					iNdEx = entryPreIndex
+					skippy, err := skip(dAtA[iNdEx:])
+					if err != nil {
+						return err
+					}
+					if (skippy < 0) || (iNdEx+skippy) < 0 {
+						return ErrInvalidLength
+					}
+					if (iNdEx + skippy) > postIndex {
+						return io.ErrUnexpectedEOF
+					}
+					iNdEx += skippy
+				}
+			}
+			m.Metadata[mapkey] = mapvalue
 			iNdEx = postIndex
 		default:
 			iNdEx = preIndex
@@ -5611,7 +5747,39 @@ func (m *ExecutionTrace) UnmarshalVT(dAtA []byte) error {
 		switch fieldNum {
 		case 1:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field LogEntries", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field RootComponent", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLength
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLength
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.RootComponent = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field TraceEntries", wireType)
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
@@ -5638,8 +5806,8 @@ func (m *ExecutionTrace) UnmarshalVT(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.LogEntries = append(m.LogEntries, &ExecutionTrace_LogEntry{})
-			if err := m.LogEntries[len(m.LogEntries)-1].UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
+			m.TraceEntries = append(m.TraceEntries, &ExecutionTrace_Entry{})
+			if err := m.TraceEntries[len(m.TraceEntries)-1].UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
 			iNdEx = postIndex

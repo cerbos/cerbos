@@ -10,6 +10,7 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/stretchr/testify/require"
+	"go.uber.org/zap"
 	"google.golang.org/protobuf/testing/protocmp"
 
 	enginev1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
@@ -31,13 +32,14 @@ func TestCheck(t *testing.T) {
 	defer cancelFunc()
 
 	testCases := test.LoadTestCases(t, "engine")
+	logger := zap.L().Named("tracer")
 
 	for _, tcase := range testCases {
 		tcase := tcase
 		t.Run(tcase.Name, func(t *testing.T) {
 			tc := readTestCase(t, tcase.Input)
 
-			haveOutputs, err := eng.Check(context.Background(), tc.Inputs)
+			haveOutputs, err := eng.Check(context.Background(), tc.Inputs, WithZapTraceSink(logger))
 			if tc.WantError {
 				require.Error(t, err)
 			} else {
@@ -136,6 +138,7 @@ func mkEngine(tb testing.TB, enableAuditLog bool) (*Engine, context.CancelFunc) 
 
 func TestSatisfiesCondition(t *testing.T) {
 	testCases := test.LoadTestCases(t, "cel_eval")
+	logger := zap.L().Named("tracer")
 
 	for _, tcase := range testCases {
 		tcase := tcase
@@ -144,8 +147,8 @@ func TestSatisfiesCondition(t *testing.T) {
 			cond, err := compile.Condition(&policyv1.Condition{Condition: &policyv1.Condition_Match{Match: tc.Condition}})
 			require.NoError(t, err)
 
-			tracer := NewTracer(false)
-			retVal, err := satisfiesCondition(tracer.Trace(cnCondition), cond, nil, tc.Input)
+			tcr := newTracer(NewZapTraceSink(logger))
+			retVal, err := satisfiesCondition(tcr.beginTrace(traceCondition), cond, nil, tc.Input)
 
 			if tc.WantError {
 				require.Error(t, err)

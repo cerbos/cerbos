@@ -28,77 +28,16 @@ var (
 	ErrUnexpectedResult    = errors.New("unexpected result")
 )
 
-type EvalResult struct {
-	PolicyKey             string
-	Effects               map[string]effectv1.Effect
-	EffectiveDerivedRoles map[string]struct{}
-}
-
-func newEvalResult(policyKey string, actions []string) *EvalResult {
-	return &EvalResult{
-		PolicyKey: policyKey,
-		Effects:   make(map[string]effectv1.Effect, len(actions)),
-	}
-}
-
-// setEffect sets the effect for an action. DENY always takes precedence.
-func (er *EvalResult) setEffect(action string, effect effectv1.Effect) {
-	if effect == effectv1.Effect_EFFECT_DENY {
-		er.Effects[action] = effect
-		return
-	}
-
-	current, ok := er.Effects[action]
-	if !ok {
-		er.Effects[action] = effect
-		return
-	}
-
-	if current != effectv1.Effect_EFFECT_DENY {
-		er.Effects[action] = effect
-	}
-}
-
-func (er *EvalResult) setDefaultEffect(actions []string, effect effectv1.Effect) {
-	for _, a := range actions {
-		if _, ok := er.Effects[a]; !ok {
-			er.Effects[a] = effect
-		}
-	}
-}
-
-type evalOptions struct {
-	trace bool
-}
-
-type EvalOpt func(o *evalOptions)
-
-// WithTrace enables tracing evaluation.
-func WithTrace() EvalOpt {
-	return func(eo *evalOptions) {
-		eo.trace = true
-	}
-}
-
-func getEvalOptions(options []EvalOpt) *evalOptions {
-	evalOpt := &evalOptions{}
-	for _, opt := range options {
-		opt(evalOpt)
-	}
-
-	return evalOpt
-}
-
 type Evaluator interface {
-	Evaluate(context.Context, *enginev1.CheckInput, ...EvalOpt) (*EvalResult, error)
+	Evaluate(context.Context, *enginev1.CheckInput) (*EvalResult, error)
 }
 
-func NewEvaluator(rps *runtimev1.RunnablePolicySet) Evaluator {
+func NewEvaluator(rps *runtimev1.RunnablePolicySet, t *tracer) Evaluator {
 	switch rp := rps.PolicySet.(type) {
 	case *runtimev1.RunnablePolicySet_ResourcePolicy:
-		return &resourcePolicyEvaluator{policy: rp.ResourcePolicy}
+		return &resourcePolicyEvaluator{policy: rp.ResourcePolicy, tracer: t}
 	case *runtimev1.RunnablePolicySet_PrincipalPolicy:
-		return &principalPolicyEvaluator{policy: rp.PrincipalPolicy}
+		return &principalPolicyEvaluator{policy: rp.PrincipalPolicy, tracer: t}
 	default:
 		return noopEvaluator{}
 	}
@@ -106,250 +45,244 @@ func NewEvaluator(rps *runtimev1.RunnablePolicySet) Evaluator {
 
 type noopEvaluator struct{}
 
-func (noopEvaluator) Evaluate(_ context.Context, _ *enginev1.CheckInput, _ ...EvalOpt) (*EvalResult, error) {
+func (noopEvaluator) Evaluate(_ context.Context, _ *enginev1.CheckInput) (*EvalResult, error) {
 	return nil, ErrPolicyNotExecutable
 }
 
 type resourcePolicyEvaluator struct {
 	policy *runtimev1.RunnableResourcePolicySet
+	*tracer
 }
 
-func (rpe *resourcePolicyEvaluator) Evaluate(ctx context.Context, input *enginev1.CheckInput, options ...EvalOpt) (*EvalResult, error) {
+func (rpe *resourcePolicyEvaluator) Evaluate(ctx context.Context, input *enginev1.CheckInput) (*EvalResult, error) {
 	ctx, span := tracing.StartSpan(ctx, "resource_policy.Evaluate")
-	defer span.End()
-
 	span.AddAttributes(trace.StringAttribute("policy", rpe.policy.Meta.Fqn))
-
-	evalOpt := getEvalOptions(options)
-	tracer := NewTracer(evalOpt.trace)
-	defer tracer.LogOutput(ctx)
+	defer span.End()
 
 	result := newEvalResult(namer.PolicyKeyFromModuleName(rpe.policy.Meta.Fqn), input.Actions)
 	effectiveRoles := toSet(input.Principal.Roles)
 
+	tctx := rpe.beginTrace("policy=%s", rpe.policy.Meta.Fqn)
 	for _, p := range rpe.policy.Policies {
-		tctx := tracer.Trace(cnPolicy(rpe.policy.Meta.Fqn, p.Scope))
-
 		// evaluate the variables of this policy
-		variables, err := evaluateVariables(tctx.Trace(cnVariables), p.Variables, input)
+		variables, err := evaluateVariables(tctx.beginTrace(traceVariables), p.Variables, input)
 		if err != nil {
-			tctx.Error(err, "Failed to evaluate variables")
+			tctx.writeEvent(KVMsg("Failed to evaluate variables"), KVError(err))
 			return nil, fmt.Errorf("failed to evaluate variables: %w", err)
 		}
 
 		// calculate the set of effective derived roles
 		effectiveDerivedRoles := stringSet{}
 		for drName, dr := range p.DerivedRoles {
-			dctx := tctx.Trace(cnDerivedRole(drName))
+			dctx := tctx.beginTrace("derived_role=%s", drName)
 			if !setIntersects(dr.ParentRoles, effectiveRoles) {
-				dctx.Skip("Roles did not match")
+				dctx.writeEvent(KVSkip(), KVMsg("No matching roles"))
 				continue
 			}
 
 			// evaluate variables of this derived roles set
-			drVariables, err := evaluateVariables(dctx.Trace(cnVariables), dr.Variables, input)
+			drVariables, err := evaluateVariables(dctx.beginTrace(traceVariables), dr.Variables, input)
 			if err != nil {
-				dctx.SkipErr(err)
+				dctx.writeEvent(KVSkip(), KVMsg("Error evaluating variables"), KVError(err))
 				continue
 			}
 
-			ok, err := satisfiesCondition(dctx.Trace(cnCondition), dr.Condition, drVariables, input)
+			ok, err := satisfiesCondition(dctx.beginTrace(traceCondition), dr.Condition, drVariables, input)
 			if err != nil {
-				dctx.SkipErr(err)
+				dctx.writeEvent(KVSkip(), KVMsg("Error evaluating condition"), KVError(err))
 				continue
 			}
 
 			if !ok {
-				dctx.Skip("condition not satisfied")
+				dctx.writeEvent(KVSkip(), KVMsg("Condition not satisfied"))
 				continue
 			}
 
 			effectiveDerivedRoles[drName] = struct{}{}
-			dctx.Activate("condition satisfied")
+			dctx.writeEvent(KVActivated())
 		}
 
 		result.EffectiveDerivedRoles = effectiveDerivedRoles
 
 		// evaluate each rule until all actions have a result
 		for _, rule := range p.Rules {
-			rctx := tctx.Trace(cnRule(rule.Name))
+			rctx := tctx.beginTrace("rule=%s", rule.Name)
 			if !setIntersects(rule.Roles, effectiveRoles) && !setIntersects(rule.DerivedRoles, effectiveDerivedRoles) {
-				rctx.Skip("no matching roles or derived roles")
+				rctx.writeEvent(KVSkip(), KVMsg("No matching roles or derived roles"))
 				continue
 			}
 
 			for actionGlob := range rule.Actions {
 				matchedActions := globMatch(actionGlob, input.Actions)
 				for _, action := range matchedActions {
-					ok, err := satisfiesCondition(rctx.Trace(cnAction(action)), rule.Condition, variables, input)
+					ok, err := satisfiesCondition(rctx.beginTrace("action=%s", action), rule.Condition, variables, input)
 					if err != nil {
-						rctx.SkipErr(err)
+						rctx.writeEvent(KVSkip(), KVMsg("Error evaluating condition"), KVError(err))
 						continue
 					}
 
 					if !ok {
-						rctx.Skip("condition not satisfied")
+						rctx.writeEvent(KVSkip(), KVMsg("condition not satisfied"))
 						continue
 					}
 
 					result.setEffect(action, rule.Effect)
-					rctx.Activate("condition satisfied")
+					rctx.writeEvent(KVActivated(), KVEffect(rule.Effect))
 				}
 			}
 		}
 	}
 
 	// set the default effect for actions that were not matched
-	result.setDefaultEffect(input.Actions, effectv1.Effect_EFFECT_DENY)
+	result.setDefaultEffect(tctx, input.Actions, effectv1.Effect_EFFECT_DENY)
 
 	return result, nil
 }
 
 type principalPolicyEvaluator struct {
 	policy *runtimev1.RunnablePrincipalPolicySet
+	*tracer
 }
 
-func (ppe *principalPolicyEvaluator) Evaluate(ctx context.Context, input *enginev1.CheckInput, options ...EvalOpt) (*EvalResult, error) {
+func (ppe *principalPolicyEvaluator) Evaluate(ctx context.Context, input *enginev1.CheckInput) (*EvalResult, error) {
 	ctx, span := tracing.StartSpan(ctx, "principal_policy.Evaluate")
+	span.AddAttributes(trace.StringAttribute("policy", ppe.policy.Meta.Fqn))
 	defer span.End()
 
-	span.AddAttributes(trace.StringAttribute("policy", ppe.policy.Meta.Fqn))
-
-	evalOpt := getEvalOptions(options)
-	tracer := NewTracer(evalOpt.trace)
 	result := newEvalResult(namer.PolicyKeyFromModuleName(ppe.policy.Meta.Fqn), input.Actions)
 
+	tctx := ppe.beginTrace("policy=%s", ppe.policy.Meta.Fqn)
 	for _, p := range ppe.policy.Policies {
-		tctx := tracer.Trace(cnPolicy(ppe.policy.Meta.Fqn, p.Scope))
-
 		// evaluate the variables of this policy
-		variables, err := evaluateVariables(tctx.Trace(cnVariables), p.Variables, input)
+		variables, err := evaluateVariables(tctx.beginTrace(traceVariables), p.Variables, input)
 		if err != nil {
-			tctx.Error(err, "Failed to evaluate variables")
+			tctx.writeEvent(KVMsg("Failed to evaluate variables"), KVError(err))
 			return nil, fmt.Errorf("failed to evaluate variables: %w", err)
 		}
 
 		for resource, resourceRules := range p.ResourceRules {
-			rctx := tracer.Trace(cnResource(resource))
+			rctx := tctx.beginTrace("resource=%s", resource)
 			if !globs.matches(resource, input.Resource.Kind) {
-				rctx.Skip("Did not match input resource kind")
+				rctx.writeEvent(KVSkip(), KVMsg("Did not match input resource kind"))
 				continue
 			}
 
 			for actionGlob, rule := range resourceRules.ActionRules {
 				matchedActions := globMatch(actionGlob, input.Actions)
 				for _, action := range matchedActions {
-					actx := rctx.Trace(cnAction(action))
-					ok, err := satisfiesCondition(actx.Trace(cnCondition), rule.Condition, variables, input)
+					actx := rctx.beginTrace("action=%s", action)
+					ok, err := satisfiesCondition(actx.beginTrace(traceCondition), rule.Condition, variables, input)
 					if err != nil {
-						actx.SkipErr(err)
+						actx.writeEvent(KVSkip(), KVMsg("Error evaluating condition"), KVError(err))
 						continue
 					}
 
 					if !ok {
-						actx.Skip("Condition not satisfied")
+						actx.writeEvent(KVSkip(), KVMsg("condition not satisfied"))
 						continue
 					}
 					result.Effects[action] = rule.Effect
-					actx.Activate(rule.Effect.String())
+					actx.writeEvent(KVActivated(), KVEffect(rule.Effect))
 				}
 			}
 		}
 	}
 
-	result.setDefaultEffect(input.Actions, effectv1.Effect_EFFECT_NO_MATCH)
+	result.setDefaultEffect(tctx, input.Actions, effectv1.Effect_EFFECT_NO_MATCH)
 	return result, nil
 }
 
-func evaluateVariables(tctx TraceContext, variables map[string]*runtimev1.Expr, input *enginev1.CheckInput) (map[string]interface{}, error) {
+func evaluateVariables(tctx *traceContext, variables map[string]*runtimev1.Expr, input *enginev1.CheckInput) (map[string]interface{}, error) {
 	var errs error
 	evalVars := make(map[string]interface{}, len(variables))
 	for varName, varExpr := range variables {
-		vctx := tctx.Trace(cnVariableExpr(varName, varExpr.Original))
+		vctx := tctx.beginTrace("variable=%s (%s)", varName, varExpr.Original)
 		val, err := evaluateCELExpr(varExpr.Checked, evalVars, input)
 		if err != nil {
-			vctx.Error(err, "Failed to evaluate variable")
+			vctx.writeEvent(KVSkip(), KVError(err), KVMsg("Failed to evaluate variable"))
 			errs = multierr.Append(errs, fmt.Errorf("error evaluating `%s := %s`: %w", varName, varExpr.Original, err))
 			continue
 		}
 
 		evalVars[varName] = val
-		vctx.Info("%s := %v", varName, val)
+		vctx.writeEvent(KVActivated(), KVMsg("%s := %v", varName, val))
 	}
 
 	return evalVars, errs
 }
 
-func satisfiesCondition(tctx TraceContext, cond *runtimev1.Condition, variables map[string]interface{}, input *enginev1.CheckInput) (bool, error) {
+func satisfiesCondition(tctx *traceContext, cond *runtimev1.Condition, variables map[string]interface{}, input *enginev1.CheckInput) (bool, error) {
 	if cond == nil {
-		tctx.Info("Result = true")
+		tctx.writeEvent(KVActivated(), KVMsg("Result=true"))
 		return true, nil
 	}
 
 	switch t := cond.Op.(type) {
 	case *runtimev1.Condition_Expr:
-		ectx := tctx.Trace(cnCondExpr(t.Expr.Original))
+		ectx := tctx.beginTrace("expr=`%s`", t.Expr.Original)
 		val, err := evaluateBoolCELExpr(t.Expr.Checked, variables, input)
 		if err != nil {
-			ectx.Error(err, "Result = false")
+			ectx.writeEvent(KVError(err), KVMsg("Result=false"))
 			return false, fmt.Errorf("failed to evaluate `%s`: %w", t.Expr.Original, err)
 		}
 
-		ectx.Info("Result = %v", val)
+		ectx.writeEvent(KVMsg("Result=%t", val))
 		return val, nil
 	case *runtimev1.Condition_All:
-		actx := tctx.Trace(cnCondAll)
+		actx := tctx.beginTrace(traceCondAll)
 		for i, expr := range t.All.Expr {
-			val, err := satisfiesCondition(actx.Trace(cnCondN(i)), expr, variables, input)
+			val, err := satisfiesCondition(actx.beginTrace("branch=%02d", i), expr, variables, input)
 			if err != nil {
-				actx.Error(err, "Result = false (short-circuited)")
+				actx.writeEvent(KVError(err), KVMsg("Result=false (short-circuited by error)"))
 				return false, err
 			}
 
 			if !val {
-				actx.Info("Result = false (short-circuited)")
+				actx.writeEvent(KVMsg("Result=false (short-circuited by false value from branch)"))
 				return false, nil
 			}
 		}
 
-		actx.Info("Result == true")
+		actx.writeEvent(KVMsg("Result=true"))
 		return true, nil
 	case *runtimev1.Condition_Any:
-		actx := tctx.Trace(cnCondAny)
+		actx := tctx.beginTrace(traceCondAny)
 		for i, expr := range t.Any.Expr {
-			val, err := satisfiesCondition(actx.Trace(cnCondN(i)), expr, variables, input)
+			val, err := satisfiesCondition(actx.beginTrace("branch=%02d", i), expr, variables, input)
 			if err != nil {
-				actx.Error(err, "Result = false (short-circuited)")
+				actx.writeEvent(KVError(err), KVMsg("Result=false (short-circuited by error)"))
 				return false, err
 			}
 
 			if val {
-				actx.Info("Result = true (short-circuited)")
+				actx.writeEvent(KVMsg("Result=true (short-circuited by true value from branch)"))
 				return true, nil
 			}
 		}
 
-		actx.Info("Result = false")
+		actx.writeEvent(KVMsg("Result=false"))
 		return false, nil
 	case *runtimev1.Condition_None:
-		actx := tctx.Trace(cnCondNone)
+		actx := tctx.beginTrace(traceCondNone)
 		for i, expr := range t.None.Expr {
-			val, err := satisfiesCondition(actx.Trace(cnCondN(i)), expr, variables, input)
+			val, err := satisfiesCondition(actx.beginTrace("branch=%02d", i), expr, variables, input)
 			if err != nil {
-				actx.Error(err, "Result = false (short-circuited)")
+				actx.writeEvent(KVError(err), KVMsg("Result=false (short-circuited by error)"))
 				return false, err
 			}
 
 			if val {
-				actx.Info("Result = false (short-circuited)")
+				actx.writeEvent(KVMsg("Result=false (short-circuited by true value from branch)"))
 				return false, nil
 			}
 		}
 
-		actx.Info("Result = true")
+		actx.writeEvent(KVMsg("Result=true"))
 		return true, nil
 	default:
-		return false, fmt.Errorf("unknown op type %T", t)
+		err := fmt.Errorf("unknown op type %T", t)
+		tctx.writeEvent(KVError(err), KVMsg("Result=false (short-circuited by error)"))
+		return false, err
 	}
 }
 
@@ -447,4 +380,44 @@ func globMatch(g string, values []string) []string {
 	}
 
 	return out
+}
+
+type EvalResult struct {
+	PolicyKey             string
+	Effects               map[string]effectv1.Effect
+	EffectiveDerivedRoles map[string]struct{}
+}
+
+func newEvalResult(policyKey string, actions []string) *EvalResult {
+	return &EvalResult{
+		PolicyKey: policyKey,
+		Effects:   make(map[string]effectv1.Effect, len(actions)),
+	}
+}
+
+// setEffect sets the effect for an action. DENY always takes precedence.
+func (er *EvalResult) setEffect(action string, effect effectv1.Effect) {
+	if effect == effectv1.Effect_EFFECT_DENY {
+		er.Effects[action] = effect
+		return
+	}
+
+	current, ok := er.Effects[action]
+	if !ok {
+		er.Effects[action] = effect
+		return
+	}
+
+	if current != effectv1.Effect_EFFECT_DENY {
+		er.Effects[action] = effect
+	}
+}
+
+func (er *EvalResult) setDefaultEffect(tctx *traceContext, actions []string, effect effectv1.Effect) {
+	for _, a := range actions {
+		if _, ok := er.Effects[a]; !ok {
+			er.Effects[a] = effect
+			tctx.beginTrace("action=%s", a).writeEvent(KVEffect(effect), KVMsg("Default effect"))
+		}
+	}
 }
