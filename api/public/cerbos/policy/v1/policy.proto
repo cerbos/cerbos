@@ -7,7 +7,6 @@ package cerbos.policy.v1;
 
 import "cerbos/effect/v1/effect.proto";
 import "cerbos/engine/v1/engine.proto";
-import "google/api/expr/v1alpha1/checked.proto";
 import "google/api/field_behavior.proto";
 import "validate/validate.proto";
 

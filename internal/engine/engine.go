@@ -7,6 +7,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
 	"math/rand"
 	"net/http"
 	"sync/atomic"
@@ -59,6 +60,13 @@ type CheckOpt func(*checkOptions)
 func WithZapTraceSink(log *zap.Logger) CheckOpt {
 	return func(co *checkOptions) {
 		co.tracer = newTracer(NewZapTraceSink(log))
+	}
+}
+
+// WithWriterTraceSink sets an engine tracer with an io.Writer as the sink.
+func WithWriterTraceSink(w io.Writer) CheckOpt {
+	return func(co *checkOptions) {
+		co.tracer = newTracer(NewWriterTraceSink(w))
 	}
 }
 

@@ -9,7 +9,7 @@ import (
 	"go.uber.org/zap"
 )
 
-var globs = &globCache{cache: gcache.New(1024).ARC().Build()}
+var globs = &globCache{cache: gcache.New(1024).ARC().Build()} //nolint:gomnd
 
 type globCache struct {
 	cache gcache.Cache
@@ -18,8 +18,9 @@ type globCache struct {
 func (gc *globCache) matches(globExpr, val string) bool {
 	cachedGlob, err := gc.cache.GetIFPresent(globExpr)
 	if err == nil && cachedGlob != nil {
-		g := cachedGlob.(glob.Glob)
-		return g.Match(val)
+		if g, ok := cachedGlob.(glob.Glob); ok {
+			return g.Match(val)
+		}
 	}
 
 	g, err := glob.Compile(globExpr, ':')
@@ -28,6 +29,6 @@ func (gc *globCache) matches(globExpr, val string) bool {
 		return false
 	}
 
-	gc.cache.Set(globExpr, g)
+	_ = gc.cache.Set(globExpr, g)
 	return g.Match(val)
 }

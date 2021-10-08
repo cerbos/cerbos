@@ -4,7 +4,12 @@
 package engine
 
 import (
+	"bytes"
 	"fmt"
+	"io"
+	"strconv"
+	"strings"
+	"sync"
 
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
@@ -13,11 +18,25 @@ import (
 )
 
 const (
-	traceCondition = "condition"
-	traceCondAll   = "conditionAll"
-	traceCondAny   = "conditionAny"
-	traceCondNone  = "conditionNone"
-	traceVariables = "variables"
+	actionComponent      = "action=%s"
+	condAllComponent     = "conditionAll"
+	condAnyComponent     = "conditionAny"
+	condNoneComponent    = "conditionNone"
+	conditionComponent   = "condition"
+	derivedRoleComponent = "derivedRole=%s"
+	exprComponent        = "expr=`%s`"
+	nthCondComponent     = "cond-%02d"
+	policyComponent      = "policy=%s"
+	resourceComponent    = "resource=%s"
+	ruleComponent        = "rule=%s"
+	varComponent         = "%s:=%s"
+	variablesComponent   = "variables"
+
+	ActivatedKey = "activated"
+	EffectKey    = "effect"
+	ErrorKey     = "error"
+	MessageKey   = "message"
+	ResultKey    = "result"
 )
 
 // KV is a function that returns a key-value pair.
@@ -25,27 +44,32 @@ type KV func() (string, string)
 
 // KVError produces a KV for an error.
 func KVError(err error) KV {
-	return func() (string, string) { return "error", err.Error() }
+	return func() (string, string) { return ErrorKey, err.Error() }
 }
 
 // KVMsg produces a KV for a free-form message.
 func KVMsg(msg string, params ...interface{}) KV {
-	return func() (string, string) { return "message", fmt.Sprintf(msg, params...) }
+	return func() (string, string) { return MessageKey, fmt.Sprintf(msg, params...) }
 }
 
 // KVSkip produces a KV for skipping evaluation.
 func KVSkip() KV {
-	return func() (string, string) { return "activated", "false" }
+	return func() (string, string) { return ActivatedKey, "false" }
 }
 
 // KVActivated produces a KV for component activation.
 func KVActivated() KV {
-	return func() (string, string) { return "activated", "true" }
+	return func() (string, string) { return ActivatedKey, "true" }
 }
 
 // KVEffect produces a KV for setting default effect.
 func KVEffect(effect effectv1.Effect) KV {
-	return func() (string, string) { return "effect", effect.String() }
+	return func() (string, string) { return EffectKey, effect.String() }
+}
+
+// KVResult produces a KV for a condition result.
+func KVResult(result bool) KV {
+	return func() (string, string) { return ResultKey, strconv.FormatBool(result) }
 }
 
 // TraceSink is the interface for sinks that receive trace events from the engine.
@@ -83,6 +107,34 @@ func (zts *ZapTraceSink) WriteEvent(component []string, data ...KV) {
 		}
 		ce.Write(f...)
 	}
+}
+
+// WriterTraceSink implements TraceSink using an io.Writer.
+type WriterTraceSink struct {
+	mu sync.Mutex
+	w  io.Writer
+}
+
+func NewWriterTraceSink(w io.Writer) *WriterTraceSink {
+	return &WriterTraceSink{w: w}
+}
+
+func (wts *WriterTraceSink) Enabled() bool {
+	return true
+}
+
+func (wts *WriterTraceSink) WriteEvent(component []string, data ...KV) {
+	buf := new(bytes.Buffer)
+	fmt.Fprintln(buf, strings.Join(component, " > "))
+	for _, kv := range data {
+		k, v := kv()
+		fmt.Fprintf(buf, "\t%s -> %s\n", k, v)
+	}
+	fmt.Fprintln(buf)
+
+	wts.mu.Lock()
+	_, _ = io.Copy(wts.w, buf)
+	wts.mu.Unlock()
 }
 
 type tracer struct {

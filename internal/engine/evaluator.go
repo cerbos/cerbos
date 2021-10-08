@@ -55,17 +55,17 @@ type resourcePolicyEvaluator struct {
 }
 
 func (rpe *resourcePolicyEvaluator) Evaluate(ctx context.Context, input *enginev1.CheckInput) (*EvalResult, error) {
-	ctx, span := tracing.StartSpan(ctx, "resource_policy.Evaluate")
+	_, span := tracing.StartSpan(ctx, "resource_policy.Evaluate")
 	span.AddAttributes(trace.StringAttribute("policy", rpe.policy.Meta.Fqn))
 	defer span.End()
 
 	result := newEvalResult(namer.PolicyKeyFromModuleName(rpe.policy.Meta.Fqn), input.Actions)
 	effectiveRoles := toSet(input.Principal.Roles)
 
-	tctx := rpe.beginTrace("policy=%s", rpe.policy.Meta.Fqn)
+	tctx := rpe.beginTrace(policyComponent, rpe.policy.Meta.Fqn)
 	for _, p := range rpe.policy.Policies {
 		// evaluate the variables of this policy
-		variables, err := evaluateVariables(tctx.beginTrace(traceVariables), p.Variables, input)
+		variables, err := evaluateVariables(tctx.beginTrace(variablesComponent), p.Variables, input)
 		if err != nil {
 			tctx.writeEvent(KVMsg("Failed to evaluate variables"), KVError(err))
 			return nil, fmt.Errorf("failed to evaluate variables: %w", err)
@@ -74,20 +74,20 @@ func (rpe *resourcePolicyEvaluator) Evaluate(ctx context.Context, input *enginev
 		// calculate the set of effective derived roles
 		effectiveDerivedRoles := stringSet{}
 		for drName, dr := range p.DerivedRoles {
-			dctx := tctx.beginTrace("derived_role=%s", drName)
+			dctx := tctx.beginTrace(derivedRoleComponent, drName)
 			if !setIntersects(dr.ParentRoles, effectiveRoles) {
 				dctx.writeEvent(KVSkip(), KVMsg("No matching roles"))
 				continue
 			}
 
 			// evaluate variables of this derived roles set
-			drVariables, err := evaluateVariables(dctx.beginTrace(traceVariables), dr.Variables, input)
+			drVariables, err := evaluateVariables(dctx.beginTrace(variablesComponent), dr.Variables, input)
 			if err != nil {
 				dctx.writeEvent(KVSkip(), KVMsg("Error evaluating variables"), KVError(err))
 				continue
 			}
 
-			ok, err := satisfiesCondition(dctx.beginTrace(traceCondition), dr.Condition, drVariables, input)
+			ok, err := satisfiesCondition(dctx.beginTrace(conditionComponent), dr.Condition, drVariables, input)
 			if err != nil {
 				dctx.writeEvent(KVSkip(), KVMsg("Error evaluating condition"), KVError(err))
 				continue
@@ -106,7 +106,7 @@ func (rpe *resourcePolicyEvaluator) Evaluate(ctx context.Context, input *enginev
 
 		// evaluate each rule until all actions have a result
 		for _, rule := range p.Rules {
-			rctx := tctx.beginTrace("rule=%s", rule.Name)
+			rctx := tctx.beginTrace(ruleComponent, rule.Name)
 			if !setIntersects(rule.Roles, effectiveRoles) && !setIntersects(rule.DerivedRoles, effectiveDerivedRoles) {
 				rctx.writeEvent(KVSkip(), KVMsg("No matching roles or derived roles"))
 				continue
@@ -115,19 +115,20 @@ func (rpe *resourcePolicyEvaluator) Evaluate(ctx context.Context, input *enginev
 			for actionGlob := range rule.Actions {
 				matchedActions := globMatch(actionGlob, input.Actions)
 				for _, action := range matchedActions {
-					ok, err := satisfiesCondition(rctx.beginTrace("action=%s", action), rule.Condition, variables, input)
+					actx := rctx.beginTrace(actionComponent, action)
+					ok, err := satisfiesCondition(actx.beginTrace(conditionComponent), rule.Condition, variables, input)
 					if err != nil {
-						rctx.writeEvent(KVSkip(), KVMsg("Error evaluating condition"), KVError(err))
+						actx.writeEvent(KVSkip(), KVMsg("Error evaluating condition"), KVError(err))
 						continue
 					}
 
 					if !ok {
-						rctx.writeEvent(KVSkip(), KVMsg("condition not satisfied"))
+						actx.writeEvent(KVSkip(), KVMsg("condition not satisfied"))
 						continue
 					}
 
 					result.setEffect(action, rule.Effect)
-					rctx.writeEvent(KVActivated(), KVEffect(rule.Effect))
+					actx.writeEvent(KVActivated(), KVEffect(rule.Effect))
 				}
 			}
 		}
@@ -145,23 +146,23 @@ type principalPolicyEvaluator struct {
 }
 
 func (ppe *principalPolicyEvaluator) Evaluate(ctx context.Context, input *enginev1.CheckInput) (*EvalResult, error) {
-	ctx, span := tracing.StartSpan(ctx, "principal_policy.Evaluate")
+	_, span := tracing.StartSpan(ctx, "principal_policy.Evaluate")
 	span.AddAttributes(trace.StringAttribute("policy", ppe.policy.Meta.Fqn))
 	defer span.End()
 
 	result := newEvalResult(namer.PolicyKeyFromModuleName(ppe.policy.Meta.Fqn), input.Actions)
 
-	tctx := ppe.beginTrace("policy=%s", ppe.policy.Meta.Fqn)
+	tctx := ppe.beginTrace(policyComponent, ppe.policy.Meta.Fqn)
 	for _, p := range ppe.policy.Policies {
 		// evaluate the variables of this policy
-		variables, err := evaluateVariables(tctx.beginTrace(traceVariables), p.Variables, input)
+		variables, err := evaluateVariables(tctx.beginTrace(variablesComponent), p.Variables, input)
 		if err != nil {
 			tctx.writeEvent(KVMsg("Failed to evaluate variables"), KVError(err))
 			return nil, fmt.Errorf("failed to evaluate variables: %w", err)
 		}
 
 		for resource, resourceRules := range p.ResourceRules {
-			rctx := tctx.beginTrace("resource=%s", resource)
+			rctx := tctx.beginTrace(resourceComponent, resource)
 			if !globs.matches(resource, input.Resource.Kind) {
 				rctx.writeEvent(KVSkip(), KVMsg("Did not match input resource kind"))
 				continue
@@ -170,8 +171,8 @@ func (ppe *principalPolicyEvaluator) Evaluate(ctx context.Context, input *engine
 			for actionGlob, rule := range resourceRules.ActionRules {
 				matchedActions := globMatch(actionGlob, input.Actions)
 				for _, action := range matchedActions {
-					actx := rctx.beginTrace("action=%s", action)
-					ok, err := satisfiesCondition(actx.beginTrace(traceCondition), rule.Condition, variables, input)
+					actx := rctx.beginTrace(actionComponent, action)
+					ok, err := satisfiesCondition(actx.beginTrace(conditionComponent), rule.Condition, variables, input)
 					if err != nil {
 						actx.writeEvent(KVSkip(), KVMsg("Error evaluating condition"), KVError(err))
 						continue
@@ -196,7 +197,7 @@ func evaluateVariables(tctx *traceContext, variables map[string]*runtimev1.Expr,
 	var errs error
 	evalVars := make(map[string]interface{}, len(variables))
 	for varName, varExpr := range variables {
-		vctx := tctx.beginTrace("variable=%s (%s)", varName, varExpr.Original)
+		vctx := tctx.beginTrace(varComponent, varName, varExpr.Original)
 		val, err := evaluateCELExpr(varExpr.Checked, evalVars, input)
 		if err != nil {
 			vctx.writeEvent(KVSkip(), KVError(err), KVMsg("Failed to evaluate variable"))
@@ -213,75 +214,75 @@ func evaluateVariables(tctx *traceContext, variables map[string]*runtimev1.Expr,
 
 func satisfiesCondition(tctx *traceContext, cond *runtimev1.Condition, variables map[string]interface{}, input *enginev1.CheckInput) (bool, error) {
 	if cond == nil {
-		tctx.writeEvent(KVActivated(), KVMsg("Result=true"))
+		tctx.writeEvent(KVActivated(), KVResult(true))
 		return true, nil
 	}
 
 	switch t := cond.Op.(type) {
 	case *runtimev1.Condition_Expr:
-		ectx := tctx.beginTrace("expr=`%s`", t.Expr.Original)
+		ectx := tctx.beginTrace(exprComponent, t.Expr.Original)
 		val, err := evaluateBoolCELExpr(t.Expr.Checked, variables, input)
 		if err != nil {
-			ectx.writeEvent(KVError(err), KVMsg("Result=false"))
+			ectx.writeEvent(KVError(err), KVResult(false))
 			return false, fmt.Errorf("failed to evaluate `%s`: %w", t.Expr.Original, err)
 		}
 
-		ectx.writeEvent(KVMsg("Result=%t", val))
+		ectx.writeEvent(KVResult(val))
 		return val, nil
 	case *runtimev1.Condition_All:
-		actx := tctx.beginTrace(traceCondAll)
+		actx := tctx.beginTrace(condAllComponent)
 		for i, expr := range t.All.Expr {
-			val, err := satisfiesCondition(actx.beginTrace("branch=%02d", i), expr, variables, input)
+			val, err := satisfiesCondition(actx.beginTrace(nthCondComponent, i), expr, variables, input)
 			if err != nil {
-				actx.writeEvent(KVError(err), KVMsg("Result=false (short-circuited by error)"))
+				actx.writeEvent(KVError(err), KVResult(false), KVMsg("Short-circuited"))
 				return false, err
 			}
 
 			if !val {
-				actx.writeEvent(KVMsg("Result=false (short-circuited by false value from branch)"))
+				actx.writeEvent(KVResult(false), KVMsg("Short-circuited"))
 				return false, nil
 			}
 		}
 
-		actx.writeEvent(KVMsg("Result=true"))
+		actx.writeEvent(KVResult(true))
 		return true, nil
 	case *runtimev1.Condition_Any:
-		actx := tctx.beginTrace(traceCondAny)
+		actx := tctx.beginTrace(condAnyComponent)
 		for i, expr := range t.Any.Expr {
-			val, err := satisfiesCondition(actx.beginTrace("branch=%02d", i), expr, variables, input)
+			val, err := satisfiesCondition(actx.beginTrace(nthCondComponent, i), expr, variables, input)
 			if err != nil {
-				actx.writeEvent(KVError(err), KVMsg("Result=false (short-circuited by error)"))
+				actx.writeEvent(KVError(err), KVResult(false), KVMsg("Short-circuited"))
 				return false, err
 			}
 
 			if val {
-				actx.writeEvent(KVMsg("Result=true (short-circuited by true value from branch)"))
+				actx.writeEvent(KVResult(true), KVMsg("Short-circuited"))
 				return true, nil
 			}
 		}
 
-		actx.writeEvent(KVMsg("Result=false"))
+		actx.writeEvent(KVResult(false))
 		return false, nil
 	case *runtimev1.Condition_None:
-		actx := tctx.beginTrace(traceCondNone)
+		actx := tctx.beginTrace(condNoneComponent)
 		for i, expr := range t.None.Expr {
-			val, err := satisfiesCondition(actx.beginTrace("branch=%02d", i), expr, variables, input)
+			val, err := satisfiesCondition(actx.beginTrace(nthCondComponent, i), expr, variables, input)
 			if err != nil {
-				actx.writeEvent(KVError(err), KVMsg("Result=false (short-circuited by error)"))
+				actx.writeEvent(KVError(err), KVResult(false), KVMsg("Short-circuited"))
 				return false, err
 			}
 
 			if val {
-				actx.writeEvent(KVMsg("Result=false (short-circuited by true value from branch)"))
+				actx.writeEvent(KVResult(false), KVMsg("Short-circuited"))
 				return false, nil
 			}
 		}
 
-		actx.writeEvent(KVMsg("Result=true"))
+		actx.writeEvent(KVResult(true))
 		return true, nil
 	default:
 		err := fmt.Errorf("unknown op type %T", t)
-		tctx.writeEvent(KVError(err), KVMsg("Result=false (short-circuited by error)"))
+		tctx.writeEvent(KVError(err), KVResult(false), KVMsg("Unknown op type"))
 		return false, err
 	}
 }
@@ -340,18 +341,6 @@ func toSet(values []string) stringSet {
 	}
 
 	return s
-}
-
-func setIntersection(s1 protoSet, s2 stringSet) stringSet {
-	r := stringSet{}
-
-	for v := range s2 {
-		if _, ok := s1[v]; ok {
-			r[v] = struct{}{}
-		}
-	}
-
-	return r
 }
 
 func setIntersects(s1 protoSet, s2 stringSet) bool {
@@ -417,7 +406,7 @@ func (er *EvalResult) setDefaultEffect(tctx *traceContext, actions []string, eff
 	for _, a := range actions {
 		if _, ok := er.Effects[a]; !ok {
 			er.Effects[a] = effect
-			tctx.beginTrace("action=%s", a).writeEvent(KVEffect(effect), KVMsg("Default effect"))
+			tctx.beginTrace(actionComponent, a).writeEvent(KVEffect(effect), KVMsg("Default effect"))
 		}
 	}
 }
