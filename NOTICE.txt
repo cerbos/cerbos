@@ -545,11 +545,11 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 --------------------------------------------------------------------------------
 Module  : github.com/dgraph-io/badger/v3
-Version : v3.2103.1
-Time    : 2021-07-08T10:19:07Z
+Version : v3.2103.2
+Time    : 2021-10-07T07:45:23Z
 Licence : Apache-2.0
 
-Contents of probable licence file $GOMODCACHE/github.com/dgraph-io/badger/v3@v3.2103.1/LICENSE:
+Contents of probable licence file $GOMODCACHE/github.com/dgraph-io/badger/v3@v3.2103.2/LICENSE:
 
                                  Apache License
                            Version 2.0, January 2004
