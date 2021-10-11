@@ -11,8 +11,8 @@ require (
 	github.com/bluele/gcache v0.0.2
 	github.com/census-instrumentation/opencensus-proto v0.3.0 // indirect
 	github.com/cespare/xxhash v1.1.0
-	github.com/dgraph-io/badger/v3 v3.2103.1
-	github.com/doug-martin/goqu/v9 v9.17.0
+	github.com/dgraph-io/badger/v3 v3.2103.2
+	github.com/doug-martin/goqu/v9 v9.16.0
 	github.com/envoyproxy/protoc-gen-validate v0.6.1
 	github.com/fatih/color v1.13.0
 	github.com/fergusstrange/embedded-postgres v1.11.0
@@ -23,7 +23,7 @@ require (
 	github.com/go-sql-driver/mysql v1.6.0
 	github.com/google/cel-go v0.8.0
 	github.com/google/go-cmp v0.5.6
-	github.com/google/gops v0.3.21
+	github.com/google/gops v0.3.20
 	github.com/google/uuid v1.3.0
 	github.com/gorilla/handlers v1.5.1
 	github.com/gorilla/mux v1.8.0
@@ -32,7 +32,7 @@ require (
 	github.com/jackc/pgx/v4 v4.13.0
 	github.com/jdxcode/netrc v0.0.0-20210204082910-926c7f70242a
 	github.com/jmoiron/sqlx v1.3.4
-	github.com/jwalton/gchalk v1.1.1
+	github.com/jwalton/gchalk v1.1.0
 	github.com/kavu/go_reuseport v1.5.0
 	github.com/kevinburke/ssh_config v1.1.0 // indirect
 	github.com/klauspost/compress v1.13.6 // indirect
@@ -41,7 +41,7 @@ require (
 	github.com/mattn/go-isatty v0.0.14
 	github.com/mattn/go-runewidth v0.0.13 // indirect
 	github.com/oklog/ulid/v2 v2.0.2
-	github.com/open-policy-agent/opa v0.33.1
+	github.com/open-policy-agent/opa v0.33.0
 	github.com/ory/dockertest/v3 v3.8.0
 	github.com/planetscale/vtprotobuf v0.0.0-20210616093554-9236f7c7b8ca
 	github.com/prometheus/client_golang v1.11.0
