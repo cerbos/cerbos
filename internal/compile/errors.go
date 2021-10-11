@@ -17,6 +17,8 @@ var (
 	errAmbiguousDerivedRole = errors.New("ambiguous derived role")
 	errImportNotFound       = errors.New("import not found")
 	errInvalidResourceRule  = errors.New("invalid resource rule")
+	errScriptsUnsupported   = errors.New("scripts in conditions are no longer supported")
+	errUnexpectedErr        = errors.New("unexpected error")
 	errUnknownDerivedRole   = errors.New("unknown derived role")
 )
 

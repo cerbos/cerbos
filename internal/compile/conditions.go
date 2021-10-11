@@ -39,7 +39,13 @@ func compileCondition(modCtx *moduleCtx, parent string, cond *policyv1.Condition
 		return nil
 	}
 
-	return compileMatch(modCtx, parent, cond.GetMatch())
+	switch c := cond.Condition.(type) {
+	case *policyv1.Condition_Match:
+		return compileMatch(modCtx, parent, c.Match)
+	default:
+		modCtx.addErrWithDesc(errScriptsUnsupported, "Unsupported feature in %s", parent)
+		return nil
+	}
 }
 
 func compileMatch(modCtx *moduleCtx, parent string, match *policyv1.Match) *runtimev1.Condition {
@@ -61,7 +67,7 @@ func compileMatch(modCtx *moduleCtx, parent string, match *policyv1.Match) *runt
 		exprList := compileMatchList(modCtx, parent, t.None.Of)
 		return &runtimev1.Condition{Op: &runtimev1.Condition_None{None: exprList}}
 	default:
-		modCtx.addErr(fmt.Errorf("unknown match operation in %s: %T", parent, t))
+		modCtx.addErrWithDesc(errUnexpectedErr, "Unknown match operation in %s: %T", parent, t)
 		return nil
 	}
 }

@@ -105,7 +105,7 @@ func compileImportedDerivedRoles(modCtx *moduleCtx, rp *policyv1.ResourcePolicy)
 
 		dr, ok := drModCtx.def.PolicyType.(*policyv1.Policy_DerivedRoles)
 		if !ok {
-			modCtx.addErr(fmt.Errorf("unexpected error: module '%s' is not a derived roles definition", impID.String()))
+			modCtx.addErrWithDesc(errUnexpectedErr, "Module '%s' is not a derived roles definition", impID.String())
 			continue
 		}
 
