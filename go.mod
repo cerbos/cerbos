@@ -32,7 +32,7 @@ require (
 	github.com/jackc/pgx/v4 v4.13.0
 	github.com/jdxcode/netrc v0.0.0-20210204082910-926c7f70242a
 	github.com/jmoiron/sqlx v1.3.4
-	github.com/jwalton/gchalk v1.1.0
+	github.com/jwalton/gchalk v1.1.1
 	github.com/kavu/go_reuseport v1.5.0
 	github.com/kevinburke/ssh_config v1.1.0 // indirect
 	github.com/klauspost/compress v1.13.6 // indirect
