@@ -41,7 +41,7 @@ require (
 	github.com/mattn/go-isatty v0.0.14
 	github.com/mattn/go-runewidth v0.0.13 // indirect
 	github.com/oklog/ulid/v2 v2.0.2
-	github.com/open-policy-agent/opa v0.33.0
+	github.com/open-policy-agent/opa v0.33.1
 	github.com/ory/dockertest/v3 v3.8.0
 	github.com/planetscale/vtprotobuf v0.0.0-20210616093554-9236f7c7b8ca
 	github.com/prometheus/client_golang v1.11.0
