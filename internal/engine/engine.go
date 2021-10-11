@@ -10,6 +10,7 @@ import (
 	"io"
 	"math/rand"
 	"net/http"
+	"os"
 	"sync/atomic"
 	"time"
 
@@ -40,12 +41,19 @@ const (
 	workerResetThreshold = 1 << 16
 )
 
+var defaultTracer = newTracer(NoopTraceSink{})
+
 type checkOptions struct {
 	tracer *tracer
 }
 
-func newCheckOptions(opts ...CheckOpt) *checkOptions {
-	co := &checkOptions{tracer: newTracer(NoopTraceSink{})}
+func newCheckOptions(ctx context.Context, opts ...CheckOpt) *checkOptions {
+	tracer := defaultTracer
+	if debugEnabled, ok := os.LookupEnv("CERBOS_ENGINE_DEBUG"); ok && debugEnabled != "false" {
+		tracer = newTracer(NewZapTraceSink(logging.FromContext(ctx).Named("tracer")))
+	}
+
+	co := &checkOptions{tracer: tracer}
 	for _, opt := range opts {
 		opt(co)
 	}
@@ -157,7 +165,7 @@ func (engine *Engine) Check(ctx context.Context, inputs []*enginev1.CheckInput, 
 		ctx, span := tracing.StartSpan(ctx, "engine.Check")
 		defer span.End()
 
-		checkOpts := newCheckOptions(opts...)
+		checkOpts := newCheckOptions(ctx, opts...)
 
 		// if the number of inputs is less than the threshold, do a serial execution as it is usually faster.
 		// ditto if the worker pool is not initialized
