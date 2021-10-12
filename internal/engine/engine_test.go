@@ -66,14 +66,14 @@ func readTestCase(tb testing.TB, data []byte) *privatev1.EngineTestCase {
 func BenchmarkCheck(b *testing.B) {
 	testCases := test.LoadTestCases(b, "engine")
 
-	b.Run("nop_decision_logger", func(b *testing.B) {
+	b.Run("noop_decision_logger", func(b *testing.B) {
 		eng, cancelFunc := mkEngine(b, false)
 		defer cancelFunc()
 
 		runBenchmarks(b, eng, testCases)
 	})
 
-	b.Run("badger_decision_logger", func(b *testing.B) {
+	b.Run("local_decision_logger", func(b *testing.B) {
 		eng, cancelFunc := mkEngine(b, true)
 		defer cancelFunc()
 
