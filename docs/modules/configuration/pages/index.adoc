@@ -11,9 +11,36 @@ The Cerbos server is configured with a YAML file. Start the server by passing th
 ./{app-name} server --config=/path/to/config.yaml --set=server.httpListenAddr=:3592 --set=engine.defaultPolicyVersion=staging
 ----
 
-NOTE: Config values can reference environment variables by enclosing them between `${}`. E.g. `$$${HOME}$$`. 
+NOTE: Config values can reference environment variables by enclosing them between `${}`. E.g. `$$${HOME}$$`.
+
+There are two configuration examples below, please pick one and use the configuration with Cerbos server.
+
+Basic configuration allows having a Cerbos server set up quickly to experiment with policies.
+
+Advanced configuration is better for creating a configuration for the production scenarios.
+
+== Basic Configuration
+.Cerbos configuration file
+[source,yaml,linenums]
+----
+---
+server:
+  httpListenAddr: ":3592"
+  grpcListenAddr: ":3593"
+  metricsEnabled: true # Set to false to disable the /_cerbos/metrics endpoint
+  logRequestPayloads: false # Set to true to log full request and response payloads. Affects performance.
+  playgroundEnabled: false # Set to true to enable the playground API.
+
+storage:
+  driver: "disk" # Valid values are "disk", "git" or "sqlite3"
+  disk: # Only required if "driver" is "disk"
+    directory: pkg/test/testdata/store # Directory to store policies
+    watchForChanges: false
+    scratchDir: /tmp/cerbos # Directory to use for caching generated code
+----
 
 
+== Advanced Configuration
 .Cerbos configuration file
 [source,yaml,linenums]
 ----
@@ -44,7 +71,7 @@ engine: # Optional
 storage:
   driver: "disk" # Valid values are "disk", "git" or "sqlite3"
   disk: # Only required if "driver" is "disk"
-    directory: pkg/test/testdata/store
+    directory: pkg/test/testdata/store # Directory to store policies
     watchForChanges: false 
     scratchDir: /tmp/cerbos # Directory to use for caching generated code
   git: # Only required if the "driver" is "git"
