@@ -150,3 +150,7 @@ More Information
 * [Cerbos website](https://cerbos.dev)
 * [Cerbos docs](https://docs.cerbos.dev)
 * [Demo repositories on GitHub](https://github.com/cerbos)
+
+Stay in touch
+
+If you want to lear about the lastest update, please subscribe to our [newsletter](https://cerbos.dev/subscribe)
