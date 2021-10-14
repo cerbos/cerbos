@@ -39,13 +39,15 @@ func TestBuildIndexWithDisk(t *testing.T) {
 
 	t.Run("check_contents", func(t *testing.T) {
 		data := idxImpl.Inspect()
-		require.Len(t, data, 5)
+		require.Len(t, data, 7)
 
 		rp1 := filepath.Join("resource_policies", "policy_01.yaml")
 		rp2 := filepath.Join("resource_policies", "policy_02.yaml")
+		rp3 := filepath.Join("resource_policies", "policy_03.yaml")
 		pp := filepath.Join("principal_policies", "policy_01.yaml")
 		dr1 := filepath.Join("derived_roles", "derived_roles_01.yaml")
 		dr2 := filepath.Join("derived_roles", "derived_roles_02.yaml")
+		dr3 := filepath.Join("derived_roles", "derived_roles_03.yaml")
 
 		require.Contains(t, data, rp1)
 		require.Len(t, data[rp1].Dependencies, 2)
@@ -54,6 +56,11 @@ func TestBuildIndexWithDisk(t *testing.T) {
 
 		require.Contains(t, data, rp2)
 		require.Len(t, data[rp2].Dependencies, 0)
+
+		require.Contains(t, data, rp3)
+		require.Len(t, data[rp3].Dependencies, 1)
+		require.Contains(t, data[rp3].Dependencies, dr3)
+		require.Empty(t, data[rp3].References)
 
 		require.Contains(t, data, pp)
 		require.Empty(t, data[pp].Dependencies)
@@ -68,6 +75,11 @@ func TestBuildIndexWithDisk(t *testing.T) {
 		require.Empty(t, data[dr2].Dependencies)
 		require.Len(t, data[dr2].References, 1)
 		require.Contains(t, data[dr2].References, rp1)
+
+		require.Contains(t, data, dr3)
+		require.Empty(t, data[dr3].Dependencies)
+		require.Len(t, data[dr3].References, 1)
+		require.Contains(t, data[dr3].References, rp3)
 	})
 
 	t.Run("add_empty", func(t *testing.T) {

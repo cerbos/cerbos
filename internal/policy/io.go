@@ -26,8 +26,8 @@ func WritePolicy(dest io.Writer, p *policyv1.Policy) error {
 	return util.WriteYAML(dest, p)
 }
 
-// WriteGeneratedPolicy writes a generated policy to the destination.
-func WriteGeneratedPolicy(dest io.Writer, p *policyv1.GeneratedPolicy) error {
+// WriteBinaryPolicy writes a policy as binary (protobuf encoding).
+func WriteBinaryPolicy(dest io.Writer, p *policyv1.Policy) error {
 	out, err := p.MarshalVT()
 	if err != nil {
 		return err
@@ -38,16 +38,17 @@ func WriteGeneratedPolicy(dest io.Writer, p *policyv1.GeneratedPolicy) error {
 	return err
 }
 
-func ReadGeneratedPolicy(src io.Reader) (*policyv1.GeneratedPolicy, error) {
+// ReadBinaryPolicy reads a policy from binary (protobuf encoding).
+func ReadBinaryPolicy(src io.Reader) (*policyv1.Policy, error) {
 	in, err := io.ReadAll(src)
 	if err != nil {
 		return nil, err
 	}
 
-	gp := &policyv1.GeneratedPolicy{}
-	if err := gp.UnmarshalVT(in); err != nil {
+	p := &policyv1.Policy{}
+	if err := p.UnmarshalVT(in); err != nil {
 		return nil, err
 	}
 
-	return gp, nil
+	return p, nil
 }

@@ -41,7 +41,6 @@ type Index interface {
 
 type index struct {
 	fsys         fs.FS
-	cache        *codegenCache
 	mu           sync.RWMutex
 	executables  map[namer.ModuleID]struct{}
 	modIDToFile  map[namer.ModuleID]string
@@ -88,12 +87,6 @@ func (idx *index) GetCompilationUnits(ids ...namer.ModuleID) (map[namer.ModuleID
 
 		result[id] = cu
 
-		// get the generated code if it exists
-		gp, err := idx.cache.get(id)
-		if err == nil {
-			cu.AddGenerated(id, gp)
-		}
-
 		// load the dependencies
 		deps, ok := idx.dependencies[id]
 		if !ok {
@@ -107,11 +100,6 @@ func (idx *index) GetCompilationUnits(ids ...namer.ModuleID) (map[namer.ModuleID
 			}
 
 			cu.AddDefinition(dep, p)
-
-			gp, err := idx.cache.get(dep)
-			if err == nil {
-				cu.AddGenerated(dep, gp)
-			}
 		}
 	}
 
@@ -211,7 +199,7 @@ func (idx *index) AddOrUpdate(entry Entry) (evt storage.Event, err error) {
 		idx.addDep(modID, dep)
 	}
 
-	return evt, idx.cache.put(entry.Policy)
+	return evt, nil
 }
 
 func (idx *index) addDep(child, parent namer.ModuleID) {
@@ -254,7 +242,7 @@ func (idx *index) Delete(entry Entry) (storage.Event, error) {
 	delete(idx.dependencies, modID)
 	delete(idx.executables, modID)
 
-	return evt, idx.cache.delete(modID)
+	return evt, nil
 }
 
 func (idx *index) GetAllCompilationUnits(ctx context.Context) <-chan *policy.CompilationUnit {
@@ -308,7 +296,7 @@ func (idx *index) Clear() error {
 	idx.dependents = nil
 	idx.dependencies = nil
 
-	return idx.cache.clear()
+	return nil
 }
 
 type meta struct {

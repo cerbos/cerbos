@@ -11,7 +11,6 @@ import (
 	"github.com/doug-martin/goqu/v9"
 	"go.uber.org/zap"
 
-	"github.com/cerbos/cerbos/internal/codegen"
 	"github.com/cerbos/cerbos/internal/namer"
 	"github.com/cerbos/cerbos/internal/policy"
 	"github.com/cerbos/cerbos/internal/storage"
@@ -51,16 +50,6 @@ func (s *dbStorage) AddOrUpdate(ctx context.Context, policies ...policy.Wrapper)
 	events := make([]storage.Event, len(policies))
 	err := s.db.WithTx(func(tx *goqu.TxDatabase) error {
 		for i, p := range policies {
-			codegenResult, err := codegen.GenerateCode(p.Policy)
-			if err != nil {
-				return storage.NewInvalidPolicyError(err, "failed to generate code for %s", p.Name)
-			}
-
-			genPolicy, err := codegenResult.ToRepr()
-			if err != nil {
-				return storage.NewInvalidPolicyError(err, "failed to serialize %s", p.Name)
-			}
-
 			policyRecord := Policy{
 				ID:          p.ID,
 				Kind:        p.Kind,
@@ -69,7 +58,6 @@ func (s *dbStorage) AddOrUpdate(ctx context.Context, policies ...policy.Wrapper)
 				Description: p.Description,
 				Disabled:    p.Disabled,
 				Definition:  PolicyDefWrapper{Policy: p.Policy},
-				Generated:   GeneratedPolicyWrapper{GeneratedPolicy: genPolicy},
 			}
 
 			// try to upsert this policy record
@@ -118,15 +106,14 @@ func (s *dbStorage) AddOrUpdate(ctx context.Context, policies ...policy.Wrapper)
 }
 
 func (s *dbStorage) GetCompilationUnits(ctx context.Context, ids ...namer.ModuleID) (map[namer.ModuleID]*policy.CompilationUnit, error) {
-	// SELECT pd.policy_id as parent, p.id, p.definition, p.generated
+	// SELECT pd.policy_id as parent, p.id, p.definition
 	// FROM policy_dependency pd
 	// JOIN policy p ON (pd.dependency_id = p.id)
 	// WHERE pd.policy_id IN (?) AND p.disabled = false
 	depsQuery := s.db.Select(
 		goqu.C(PolicyDepTblPolicyIDCol).Table("pd").As("parent"),
 		goqu.C(PolicyTblIDCol).Table("p"),
-		goqu.C(PolicyTblDefinitionCol).Table("p"),
-		goqu.C(PolicyTblGeneratedCol).Table("p")).
+		goqu.C(PolicyTblDefinitionCol).Table("p")).
 		From(goqu.T(PolicyDepTbl).As("pd")).
 		Join(
 			goqu.T(PolicyTbl).As("p"),
@@ -139,15 +126,14 @@ func (s *dbStorage) GetCompilationUnits(ctx context.Context, ids ...namer.Module
 			),
 		)
 
-	// SELECT id as parent, id,definition, generated
+	// SELECT id as parent, id,definition
 	// FROM policy WHERE id IN ? AND disabled = false
 	// UNION ALL <deps_query>
 	// ORDER BY parent
 	policiesQuery := s.db.Select(
 		goqu.C(PolicyTblIDCol).As("parent"),
 		goqu.C(PolicyTblIDCol),
-		goqu.C(PolicyTblDefinitionCol),
-		goqu.C(PolicyTblGeneratedCol)).
+		goqu.C(PolicyTblDefinitionCol)).
 		From(PolicyTbl).
 		Where(
 			goqu.And(
@@ -171,7 +157,6 @@ func (s *dbStorage) GetCompilationUnits(ctx context.Context, ids ...namer.Module
 			Parent     namer.ModuleID
 			ID         namer.ModuleID
 			Definition PolicyDefWrapper
-			Generated  GeneratedPolicyWrapper
 		}
 
 		if err := results.ScanStruct(&row); err != nil {
@@ -185,7 +170,6 @@ func (s *dbStorage) GetCompilationUnits(ctx context.Context, ids ...namer.Module
 		}
 
 		unit.AddDefinition(row.ID, row.Definition.Policy)
-		unit.AddGenerated(row.ID, row.Generated.GeneratedPolicy)
 	}
 
 	return units, nil

@@ -12,5 +12,5 @@ derivedRoles:
     - name: employee_that_owns_the_record
       parentRoles: ["employee"]
       condition:
-        script: |-
-          input.resource.attr.owner == input.principal.id
+        match:
+          expr: R.attr.owner == P.id

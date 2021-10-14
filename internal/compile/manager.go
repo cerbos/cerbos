@@ -13,6 +13,7 @@ import (
 	"go.opencensus.io/tag"
 	"go.uber.org/zap"
 
+	runtimev1 "github.com/cerbos/cerbos/api/genpb/cerbos/runtime/v1"
 	"github.com/cerbos/cerbos/internal/namer"
 	"github.com/cerbos/cerbos/internal/observability/metrics"
 	"github.com/cerbos/cerbos/internal/policy"
@@ -22,6 +23,8 @@ import (
 const (
 	maxCacheSize          = 128
 	negativeCacheEntryTTL = 10 * time.Second
+	storeFetchTimeout     = 2 * time.Second
+	updateQueueSize       = 32
 )
 
 type Manager struct {
@@ -129,13 +132,13 @@ func (c *Manager) getDependents(modID namer.ModuleID) ([]namer.ModuleID, error) 
 	return nil, nil
 }
 
-func (c *Manager) compile(unit *policy.CompilationUnit) (Evaluator, error) {
+func (c *Manager) compile(unit *policy.CompilationUnit) (*runtimev1.RunnablePolicySet, error) {
 	startTime := time.Now()
-	eval, err := Compile(unit)
+	rps, err := Compile(unit)
 	durationMs := float64(time.Since(startTime)) / float64(time.Millisecond)
 
-	if err == nil && eval != nil {
-		_ = c.cache.Set(unit.ModID, eval)
+	if err == nil && rps != nil {
+		_ = c.cache.Set(unit.ModID, rps)
 	}
 
 	status := "success"
@@ -149,23 +152,23 @@ func (c *Manager) compile(unit *policy.CompilationUnit) (Evaluator, error) {
 		metrics.CompileDuration.M(durationMs),
 	)
 
-	return eval, err
+	return rps, err
 }
 
 func (c *Manager) evict(modID namer.ModuleID) {
 	c.cache.Remove(modID)
 }
 
-func (c *Manager) GetEvaluator(ctx context.Context, modID namer.ModuleID) (Evaluator, error) {
-	eval, err := c.cache.GetIFPresent(modID)
+func (c *Manager) Get(ctx context.Context, modID namer.ModuleID) (*runtimev1.RunnablePolicySet, error) {
+	rps, err := c.cache.GetIFPresent(modID)
 	if err == nil {
 		// If the value is nil, it indicates a negative cache entry (see below)
 		// Essentially, we tried to find this evaluator before and it wasn't found.
 		// We don't want to hit the store over and over again because we know it doesn't exist.
-		if eval == nil {
+		if rps == nil {
 			return nil, nil
 		}
-		return eval.(Evaluator), nil
+		return rps.(*runtimev1.RunnablePolicySet), nil
 	}
 
 	compileUnits, err := c.store.GetCompilationUnits(ctx, modID)
@@ -179,17 +182,29 @@ func (c *Manager) GetEvaluator(ctx context.Context, modID namer.ModuleID) (Evalu
 		return nil, nil
 	}
 
-	var retVal Evaluator
+	var retVal *runtimev1.RunnablePolicySet
 	for mID, cu := range compileUnits {
-		eval, err := c.compile(cu)
+		rps, err := c.compile(cu)
 		if err != nil {
-			return nil, fmt.Errorf("failed to compile module %w", err)
+			return nil, PolicyCompilationErr{underlying: err}
 		}
 
 		if mID == modID {
-			retVal = eval
+			retVal = rps
 		}
 	}
 
 	return retVal, nil
+}
+
+type PolicyCompilationErr struct {
+	underlying error
+}
+
+func (pce PolicyCompilationErr) Error() string {
+	return fmt.Sprintf("policy compilation error: %v", pce.underlying)
+}
+
+func (pce PolicyCompilationErr) Unwrap() error {
+	return pce.underlying
 }

@@ -235,13 +235,6 @@ func processLintErrors(ctx context.Context, errs *index.BuildError) *responsev1.
 		})
 	}
 
-	for _, cf := range errs.CodegenFailures {
-		errors = append(errors, &responsev1.PlaygroundFailure_Error{
-			File:  cf.File,
-			Error: fmt.Sprintf("Failed to generate code: %s", cf.Err.Error()),
-		})
-	}
-
 	for _, d := range errs.Disabled {
 		errors = append(errors, &responsev1.PlaygroundFailure_Error{
 			File:  d,

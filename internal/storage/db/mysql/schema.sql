@@ -9,8 +9,7 @@ CREATE TABLE IF NOT EXISTS policy (
     version VARCHAR(128) NOT NULL,
     description TEXT,
     disabled BOOLEAN default false,
-    definition BLOB,
-    `generated` BLOB);
+    definition BLOB);
 
 CREATE TABLE IF NOT EXISTS policy_dependency (
     policy_id BIGINT NOT NULL,

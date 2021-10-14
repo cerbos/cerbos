@@ -9,9 +9,8 @@ import (
 	"github.com/google/cel-go/cel"
 	"github.com/google/cel-go/checker/decls"
 	"github.com/google/cel-go/ext"
-	exprpb "google.golang.org/genproto/googleapis/api/expr/v1alpha1"
 
-	customtypes "github.com/cerbos/cerbos/internal/conditions/types"
+	enginev1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
 )
 
 const (
@@ -22,11 +21,7 @@ const (
 	CELVariablesAbbrev = "V"
 )
 
-var (
-	VariablesDeclaration       = decls.NewVar(CELVariablesIdent, decls.NewMapType(decls.String, decls.Dyn))
-	VariablesAbbrevDeclaration = decls.NewVar(CELVariablesAbbrev, decls.NewMapType(decls.String, decls.Dyn))
-	StdEnv                     *cel.Env
-)
+var StdEnv *cel.Env
 
 func init() {
 	var err error
@@ -42,41 +37,16 @@ func NewCELEnv() (*cel.Env, error) {
 
 func newCELEnvOptions() []cel.EnvOption {
 	return []cel.EnvOption{
-		cel.CustomTypeAdapter(customtypes.NewCustomCELTypeAdapter()),
+		cel.Types(&enginev1.CheckInput{}, &enginev1.Principal{}, &enginev1.Resource{}),
 		cel.Declarations(
-			decls.NewVar(CELRequestIdent, decls.NewMapType(decls.String, decls.Dyn)),
-			decls.NewVar(CELResourceAbbrev, decls.NewMapType(decls.String, decls.Dyn)),
-			decls.NewVar(CELPrincipalAbbrev, decls.NewMapType(decls.String, decls.Dyn)),
-			VariablesDeclaration,
-			VariablesAbbrevDeclaration,
+			decls.NewVar(CELRequestIdent, decls.NewObjectType("cerbos.engine.v1.CheckInput")),
+			decls.NewVar(CELResourceAbbrev, decls.NewObjectType("cerbos.engine.v1.Resource")),
+			decls.NewVar(CELPrincipalAbbrev, decls.NewObjectType("cerbos.engine.v1.Principal")),
+			decls.NewVar(CELVariablesIdent, decls.NewMapType(decls.String, decls.Dyn)),
+			decls.NewVar(CELVariablesAbbrev, decls.NewMapType(decls.String, decls.Dyn)),
 		),
 		ext.Strings(),
 		ext.Encoders(),
 		CerbosCELLib(),
 	}
-}
-
-type CELCondition struct {
-	env *cel.Env
-	ast *cel.Ast
-}
-
-func NewCELCondition(env *cel.Env, ast *cel.Ast) *CELCondition {
-	return &CELCondition{env: env, ast: ast}
-}
-
-func (cc *CELCondition) Program(vars ...*exprpb.Decl) (cel.Program, error) {
-	if len(vars) == 0 {
-		return cc.env.Program(cc.ast)
-	}
-	env, err := cc.env.Extend(cel.Declarations(vars...))
-	if err != nil {
-		return nil, err
-	}
-
-	return env.Program(cc.ast)
-}
-
-func (cc *CELCondition) CheckedExpr() (*exprpb.CheckedExpr, error) {
-	return cel.AstToCheckedExpr(cc.ast)
 }

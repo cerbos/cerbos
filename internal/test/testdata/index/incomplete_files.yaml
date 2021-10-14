@@ -13,7 +13,6 @@ wantErrJson: |-
     ],
     "disabled": null,
     "duplicateDefs": null,
-    "codegenFailures": null,
     "missingImports": null
   }
 files:

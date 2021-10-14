@@ -5,6 +5,7 @@ package svc
 
 import (
 	"context"
+	"errors"
 
 	"github.com/grpc-ecosystem/go-grpc-middleware/logging/zap/ctxzap"
 	"go.uber.org/zap"
@@ -16,6 +17,7 @@ import (
 	requestv1 "github.com/cerbos/cerbos/api/genpb/cerbos/request/v1"
 	responsev1 "github.com/cerbos/cerbos/api/genpb/cerbos/response/v1"
 	svcv1 "github.com/cerbos/cerbos/api/genpb/cerbos/svc/v1"
+	"github.com/cerbos/cerbos/internal/compile"
 	"github.com/cerbos/cerbos/internal/engine"
 	"github.com/cerbos/cerbos/internal/observability/logging"
 	"github.com/cerbos/cerbos/internal/util"
@@ -62,6 +64,9 @@ func (cs *CerbosService) CheckResourceSet(ctx context.Context, req *requestv1.Ch
 	outputs, err := cs.eng.Check(logging.ToContext(ctx, log), inputs)
 	if err != nil {
 		log.Error("Policy check failed", zap.Error(err))
+		if errors.As(err, &compile.PolicyCompilationErr{}) {
+			return nil, status.Errorf(codes.FailedPrecondition, "Check failed due to invalid policy")
+		}
 		return nil, status.Errorf(codes.Internal, "Policy check failed")
 	}
 
