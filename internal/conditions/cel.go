@@ -9,7 +9,6 @@ import (
 	"github.com/google/cel-go/cel"
 	"github.com/google/cel-go/checker/decls"
 	"github.com/google/cel-go/ext"
-	exprpb "google.golang.org/genproto/googleapis/api/expr/v1alpha1"
 
 	enginev1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
 )
@@ -50,29 +49,4 @@ func newCELEnvOptions() []cel.EnvOption {
 		ext.Encoders(),
 		CerbosCELLib(),
 	}
-}
-
-type CELCondition struct {
-	env *cel.Env
-	ast *cel.Ast
-}
-
-func NewCELCondition(env *cel.Env, ast *cel.Ast) *CELCondition {
-	return &CELCondition{env: env, ast: ast}
-}
-
-func (cc *CELCondition) Program(vars ...*exprpb.Decl) (cel.Program, error) {
-	if len(vars) == 0 {
-		return cc.env.Program(cc.ast)
-	}
-	env, err := cc.env.Extend(cel.Declarations(vars...))
-	if err != nil {
-		return nil, err
-	}
-
-	return env.Program(cc.ast)
-}
-
-func (cc *CELCondition) CheckedExpr() (*exprpb.CheckedExpr, error) {
-	return cel.AstToCheckedExpr(cc.ast)
 }
