@@ -62,23 +62,23 @@ func (m *ModuleID) String() string {
 
 // GenModuleID generates a short ID for the module.
 func GenModuleID(p *policyv1.Policy) ModuleID {
-	return GenModuleIDFromName(ModuleName(p))
+	return GenModuleIDFromFQN(FQN(p))
 }
 
-// GenModuleIDFromName generates a short ID for the given module name.
-func GenModuleIDFromName(name string) ModuleID {
+// GenModuleIDFromFQN generates a short ID for the given module name.
+func GenModuleIDFromFQN(name string) ModuleID {
 	return ModuleID{hash: xxhash.Sum64String(name)}
 }
 
-// ModuleName returns the name of the module that will be generated for the given policy.
-func ModuleName(p *policyv1.Policy) string {
+// FQN returns the fully-qualified name of the policy.
+func FQN(p *policyv1.Policy) string {
 	switch pt := p.PolicyType.(type) {
 	case *policyv1.Policy_ResourcePolicy:
-		return ResourcePolicyModuleName(pt.ResourcePolicy.Resource, pt.ResourcePolicy.Version)
+		return ResourcePolicyFQN(pt.ResourcePolicy.Resource, pt.ResourcePolicy.Version)
 	case *policyv1.Policy_PrincipalPolicy:
-		return PrincipalPolicyModuleName(pt.PrincipalPolicy.Principal, pt.PrincipalPolicy.Version)
+		return PrincipalPolicyFQN(pt.PrincipalPolicy.Principal, pt.PrincipalPolicy.Version)
 	case *policyv1.Policy_DerivedRoles:
-		return DerivedRolesModuleName(pt.DerivedRoles.Name)
+		return DerivedRolesFQN(pt.DerivedRoles.Name)
 	default:
 		panic(fmt.Errorf("unknown policy type %T", pt))
 	}
@@ -86,59 +86,50 @@ func ModuleName(p *policyv1.Policy) string {
 
 // PolicyKey returns a human-friendly identifier that can be used to refer to the policy in logs and other outputs.
 func PolicyKey(p *policyv1.Policy) string {
-	return PolicyKeyFromModuleName(ModuleName(p))
+	return PolicyKeyFromFQN(FQN(p))
 }
 
-// PolicyKeyFromModuleName returns a policy key from the module name.
-func PolicyKeyFromModuleName(m string) string {
+// PolicyKeyFromFQN returns a policy key from the module name.
+func PolicyKeyFromFQN(m string) string {
 	return strings.TrimPrefix(m, "cerbos.")
 }
 
-// ResourcePolicyModuleName returns the module name for the resource policy with given resource and version.
-func ResourcePolicyModuleName(resource, version string) string {
+// ResourcePolicyFQN returns the fully-qualified name for the resource policy with given resource and version.
+func ResourcePolicyFQN(resource, version string) string {
 	return fmt.Sprintf("%s.%s.v%s", ResourcePoliciesPrefix, Sanitize(resource), Sanitize(version))
 }
 
 // ResourcePolicyModuleID returns the module ID for the resource policy with given resource and version.
 func ResourcePolicyModuleID(resource, version string) ModuleID {
-	return GenModuleIDFromName(ResourcePolicyModuleName(resource, version))
+	return GenModuleIDFromFQN(ResourcePolicyFQN(resource, version))
 }
 
-// PrincipalPolicyModuleName returns the module name for the principal policy with given principal and version.
-func PrincipalPolicyModuleName(principal, version string) string {
+// PrincipalPolicyFQN returns the fully-qualified module name for the principal policy with given principal and version.
+func PrincipalPolicyFQN(principal, version string) string {
 	return fmt.Sprintf("%s.%s.v%s", PrincipalPoliciesPrefix, Sanitize(principal), Sanitize(version))
 }
 
 // PrincipalPolicyModuleID returns the module ID for the principal policy with given principal and version.
 func PrincipalPolicyModuleID(principal, version string) ModuleID {
-	return GenModuleIDFromName(PrincipalPolicyModuleName(principal, version))
+	return GenModuleIDFromFQN(PrincipalPolicyFQN(principal, version))
 }
 
-// DerivedRolesModuleName returns the module name for the given derived roles set.
-func DerivedRolesModuleName(roleSetName string) string {
+// DerivedRolesFQN returns the fully-qualified module name for the given derived roles set.
+func DerivedRolesFQN(roleSetName string) string {
 	return fmt.Sprintf("%s.%s", DerivedRolesPrefix, Sanitize(roleSetName))
 }
 
 // DerivedRolesModuleID returns the module ID for the given derived roles set.
 func DerivedRolesModuleID(roleSetName string) ModuleID {
-	return GenModuleIDFromName(DerivedRolesModuleName(roleSetName))
+	return GenModuleIDFromFQN(DerivedRolesFQN(roleSetName))
 }
 
-// DerivedRolesSimpleName extracts the simple name from a derived roles module name.
-func DerivedRolesSimpleName(modName string) string {
-	return strings.TrimPrefix(modName, DerivedRolesPrefix+".")
+// DerivedRolesSimpleName extracts the simple name from a derived roles FQN.
+func DerivedRolesSimpleName(fqn string) string {
+	return strings.TrimPrefix(fqn, DerivedRolesPrefix+".")
 }
 
-// QueryForPrincipal returns the effect query for the given principal and version.
-func QueryForPrincipal(principal, version string) string {
-	return fmt.Sprintf("data.%s", PrincipalPolicyModuleName(principal, version))
-}
-
-// QueryForResource returns the effect query for the given resource and version.
-func QueryForResource(resource, version string) string {
-	return fmt.Sprintf("data.%s", ResourcePolicyModuleName(resource, version))
-}
-
+// Sanitize replaces special characters in the string with underscores.
 func Sanitize(v string) string {
 	return invalidIdentiferChars.ReplaceAllLiteralString(v, "_")
 }

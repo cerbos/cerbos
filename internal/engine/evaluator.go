@@ -59,7 +59,7 @@ func (rpe *resourcePolicyEvaluator) Evaluate(ctx context.Context, input *enginev
 	span.AddAttributes(trace.StringAttribute("policy", rpe.policy.Meta.Fqn))
 	defer span.End()
 
-	result := newEvalResult(namer.PolicyKeyFromModuleName(rpe.policy.Meta.Fqn), input.Actions)
+	result := newEvalResult(namer.PolicyKeyFromFQN(rpe.policy.Meta.Fqn), input.Actions)
 	effectiveRoles := toSet(input.Principal.Roles)
 
 	tctx := rpe.beginTrace(policyComponent, rpe.policy.Meta.Fqn)
@@ -150,7 +150,7 @@ func (ppe *principalPolicyEvaluator) Evaluate(ctx context.Context, input *engine
 	span.AddAttributes(trace.StringAttribute("policy", ppe.policy.Meta.Fqn))
 	defer span.End()
 
-	result := newEvalResult(namer.PolicyKeyFromModuleName(ppe.policy.Meta.Fqn), input.Actions)
+	result := newEvalResult(namer.PolicyKeyFromFQN(ppe.policy.Meta.Fqn), input.Actions)
 
 	tctx := ppe.beginTrace(policyComponent, ppe.policy.Meta.Fqn)
 	for _, p := range ppe.policy.Policies {

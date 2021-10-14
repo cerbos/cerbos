@@ -95,7 +95,7 @@ func compileImportedDerivedRoles(modCtx *moduleCtx, rp *policyv1.ResourcePolicy)
 	roleImports := make(map[string][]derivedRoleInfo)
 
 	for _, imp := range rp.ImportDerivedRoles {
-		impID := namer.GenModuleIDFromName(namer.DerivedRolesModuleName(imp))
+		impID := namer.GenModuleIDFromFQN(namer.DerivedRolesFQN(imp))
 
 		drModCtx := modCtx.moduleCtx(impID)
 		if drModCtx == nil {

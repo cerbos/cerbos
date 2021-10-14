@@ -33,7 +33,7 @@ func (uc *unitCtx) moduleCtx(id namer.ModuleID) *moduleCtx {
 	return &moduleCtx{
 		unitCtx:    uc,
 		def:        def,
-		fqn:        namer.ModuleName(def),
+		fqn:        namer.FQN(def),
 		sourceFile: policy.GetSourceFile(def),
 	}
 }

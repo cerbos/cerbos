@@ -198,7 +198,7 @@ func (idx *indexBuilder) addPolicy(file string, p policy.Wrapper) {
 	}
 
 	for _, dep := range policy.Dependencies(p.Policy) {
-		depID := namer.GenModuleIDFromName(dep)
+		depID := namer.GenModuleIDFromFQN(dep)
 
 		idx.addDep(p.ID, depID)
 
