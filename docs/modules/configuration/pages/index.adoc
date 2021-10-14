@@ -5,7 +5,6 @@ include::ROOT:partial$attributes.adoc[]
 
 The Cerbos server is configured with a YAML file. Start the server by passing the configuration file using the `--config` flag. The values defined in the file can be overridden from the command-line by using the `--set` flag. The `--set` flag can be used multiple times. For example, to override `server.httpListenAddr` and `engine.defaultPolicyVersion`, the `--set` flag can be used as follows:
 
-
 [source,sh,subs="attributes"]
 ----
 ./{app-name} server --config=/path/to/config.yaml --set=server.httpListenAddr=:3592 --set=engine.defaultPolicyVersion=staging
@@ -13,13 +12,29 @@ The Cerbos server is configured with a YAML file. Start the server by passing th
 
 NOTE: Config values can reference environment variables by enclosing them between `${}`. E.g. `$$${HOME}$$`.
 
-There are two configuration examples below, please pick one and use the configuration with Cerbos server.
+Following are the examples of how to provide the configuration file to run Cerbos server in container and as binary;
+[source,sh,subs="attributes"]
+----
+docker run --rm --name cerbos -d -v path/to/policies:/policies -p 3592:3592 {app-docker-img} server --config=/path/to/conf.yaml
+----
 
-Basic configuration allows having a Cerbos server set up quickly to experiment with policies.
+[source,sh,subs="attributes"]
+----
+./{app-name} server --config=/path/to/config.yaml --set=server.httpListenAddr=:3592 --set=engine.defaultPolicyVersion=staging
+----
 
-Advanced configuration is better for creating a configuration for the production scenarios.
+Minimal configuration is enough to experiment and test features, while a full configuration possibly required to
+configure for the production environment.
 
-== Basic Configuration
+== Minimal Configuration
+As currently Cerbos server may run in a container and as binary, the minimal configuration to run them are different.
+
+The container does not require any configuration to start as it already has a default configuration included in the
+image.
+
+The binary requires a configuration file to be specified and at least one storage driver to be configured to run.
+
+=== Binary
 .Cerbos configuration file
 [source,yaml,linenums]
 ----
@@ -27,20 +42,43 @@ Advanced configuration is better for creating a configuration for the production
 server:
   httpListenAddr: ":3592"
   grpcListenAddr: ":3593"
-  metricsEnabled: true # Set to false to disable the /_cerbos/metrics endpoint
-  logRequestPayloads: false # Set to true to log full request and response payloads. Affects performance.
-  playgroundEnabled: false # Set to true to enable the playground API.
 
 storage:
-  driver: "disk" # Valid values are "disk", "git" or "sqlite3"
-  disk: # Only required if "driver" is "disk"
-    directory: pkg/test/testdata/store # Directory to store policies
-    watchForChanges: false
-    scratchDir: /tmp/cerbos # Directory to use for caching generated code
+  driver: "disk"
+  disk:
+    directory: /policies # Directory to store policies
+    watchForChanges: true
 ----
 
+=== Container
+The default configuration included in the Cerbos image looks like the following;
 
-== Advanced Configuration
+.Cerbos configuration file
+[source,yaml,linenums]
+----
+---
+server:
+  httpListenAddr: ":3592"
+  grpcListenAddr: ":3593"
+
+engine:
+  defaultPolicyVersion: "default"
+
+storage:
+  driver: "disk"
+  disk:
+    directory: /policies
+    watchForChanges: true
+----
+
+As it is already the minimal configuration to run the Cerbos server, there is no need to provide any configuration.
+
+== Full Configuration
+Minimal configuration may not cover every scenario for the production environments. Full configuration example has every
+configurable parameter listed.
+
+Some of these fields may not be clear until using Cerbos in an test environment or Playground.
+
 .Cerbos configuration file
 [source,yaml,linenums]
 ----
@@ -52,31 +90,33 @@ server:
   logRequestPayloads: false # Set to true to log full request and response payloads. Affects performance.
   playgroundEnabled: false # Set to true to enable the playground API.
   tls: # Optional
-    cert: /path/to/certificate
-    key: /path/to/private_key
-    caCert: /path/to/CA_certificate # Optional
+    cert: /path/to/certificate # Path to the TLS certificate file.
+    key: /path/to/private_key # Path to the TLS private key file.
+    caCert: /path/to/CA_certificate # Path to the optional CA certificate for verifying client requests.
   cors: # Optional
     disabled: false
-    allowedOrigins: ['*']
-    allowedHeaders: []
+    allowedOrigins: ['*'] # The contents of the allowed-origins header.
+    allowedHeaders: ['*'] # The contents of the allowed-headers header
+    maxAge: 10s # The max age of the CORS preflight check.
   adminAPI:
-    enabled: true
-    adminCredentials:
+    enabled: true # Defines whether the admin API is enabled.
+    adminCredentials: # Defines the admin user credentials.
       username: cerbos
       passwordHash: $2y$10$6v.PIn0zJ1xFdIDPlX3yheDZHM2iXI8CSKT5a3d35djtOxnOATxFi
 
 engine: # Optional
   defaultPolicyVersion: "default" # Default policy version to assume if the request does not specify one.
+  numWorkers: 16
 
 storage:
   driver: "disk" # Valid values are "disk", "git" or "sqlite3"
   disk: # Only required if "driver" is "disk"
     directory: pkg/test/testdata/store # Directory to store policies
-    watchForChanges: false 
+    watchForChanges: false  # Enables watching the directory for changes.
     scratchDir: /tmp/cerbos # Directory to use for caching generated code
   git: # Only required if the "driver" is "git"
     protocol: file # Valid values are "file", "ssh", "https"
-    url: file://${HOME}/tmp/cerbos/policies 
+    url: file://${HOME}/tmp/cerbos/policies # the URL to the Git repo.
     branch: policies # Branch that should be used as the source. Defaults to "master"
     subDir: policies # Set this if the policies are stored in a subdirectory
     checkoutDir: ${HOME}/tmp/cerbos/work # Work directory of the server
@@ -88,8 +128,31 @@ storage:
     ssh: # Only required if the "protocol" is "ssh"
       user: git
       privateKeyFile: ${HOME}/.ssh/id_rsa
+      # password: pw # the password to the SSH private key.
   sqlite3: # Only required if the "driver" is "sqlite3"
     dsn: ":memory:?_fk=true"
+    # dsn: "cerbos.db?_fk=true"
+  postgres: # Only required if the "driver" is "postgres"
+    url: "postgres://user:password@localhost:port/db"
+    connPool:
+      maxLifeTime: 60m
+      maxIdleTime: 45s
+      maxOpen: 4
+      maxIdle: 1
+  mysql: # Only required if the "driver" is "mysql"
+    dsn: "user:password@tcp(localhost:3306)/db?interpolateParams=true"
+    connPool:
+      maxLifeTime: 60m
+      maxIdleTime: 45s
+      maxOpen: 4
+      maxIdle: 1
+    tls:
+      mytls:
+        cert: /path/to/certificate # Path to the TLS certificate file.
+        key: /path/to/private_key # Path to the TLS private key file.
+        caCert: /path/to/CA_certificate # Path to the optional CA certificate for verifying client requests.
+    serverPubKey:
+      mykey: testdata/server_public_key.pem
 
 tracing: # Optional
   sampleProbability: 0.1 # Sampling probability value between 0.0 and 1.0
@@ -107,6 +170,11 @@ audit: # Optional
   local: # Configuration for the local audit backend
     storagePath: /path/to/dir # Path to store the data
     retentionPeriod: 168h # How long to keep records for
+    advanced:
+      bufferSize: 256
+      maxBatchSize: 32
+      flushInterval: 1s
+      gcInterval: 60s
 ----
 
 
