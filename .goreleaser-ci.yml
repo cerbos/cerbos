@@ -1,3 +1,5 @@
+gomod:
+  proxy: true
 builds:
   - main: ./cmd/cerbos
     binary: cerbos
@@ -10,11 +12,14 @@ builds:
     goarch:
       - amd64
       - arm64
+    goarm:
+      - 6
+      - 7
     mod_timestamp: '{{ .CommitTimestamp }}'
     flags:
       - -trimpath
     ldflags:
-      - -s -w -X github.com/cerbos/cerbos/internal/util.Version={{.Version}} -X github.com/cerbos/cerbos/internal/util.commit={{.Commit}} -X github.com/cerbos/cerbos/internal/util.BuildDate={{.Date}}  
+      - -s -w -X github.com/cerbos/cerbos/internal/util.Version={{.Version}} -X github.com/cerbos/cerbos/internal/util.Commit={{.FullCommit}} -X github.com/cerbos/cerbos/internal/util.BuildDate={{.Date}}  
   - main: ./cmd/cerbosctl
     binary: cerbosctl
     id: "cerbosctl"
@@ -26,10 +31,21 @@ builds:
     goarch:
       - amd64
       - arm64
+    goarm:
+      - 6
+      - 7
+    mod_timestamp: '{{ .CommitTimestamp }}'
     flags:
       - -trimpath
     ldflags:
-      - -s -w -X github.com/cerbos/cerbos/internal/util.Version={{.Version}} -X github.com/cerbos/cerbos/internal/util.commit={{.Commit}} -X github.com/cerbos/cerbos/internal/util.BuildDate={{.Date}}  
+      - -s -w -X github.com/cerbos/cerbos/internal/util.Version={{.Version}} -X github.com/cerbos/cerbos/internal/util.Commit={{.FullCommit}} -X github.com/cerbos/cerbos/internal/util.BuildDate={{.Date}}  
+universal_binaries:
+  - id: "cerbos"
+    replace: false
+    name_template: "cerbos"
+  - id: "cerbosctl"
+    replace: false
+    name_template: "cerbosctl"
 archives:
   - replacements:
       darwin: Darwin
