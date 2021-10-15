@@ -441,6 +441,26 @@
     }
   },
   "definitions": {
+    "AuxDataJWT": {
+      "type": "object",
+      "properties": {
+        "token": {
+          "type": "string",
+          "description": "JWT from the original request",
+          "required": [
+            "token"
+          ]
+        },
+        "keySetId": {
+          "type": "string",
+          "description": "Key ID to use when decoding the token (defined in the Cerbos server configuration)"
+        }
+      },
+      "description": "JWT from the original request",
+      "required": [
+        "token"
+      ]
+    },
     "CheckOutputActionEffect": {
       "type": "object",
       "properties": {
@@ -737,6 +757,27 @@
       ],
       "default": "ORDER_UNSPECIFIED"
     },
+    "cerbosenginev1AuxData": {
+      "type": "object",
+      "properties": {
+        "jwt": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "object"
+          }
+        }
+      },
+      "description": "Structured auxiliary data"
+    },
+    "cerbosrequestv1AuxData": {
+      "type": "object",
+      "properties": {
+        "jwt": {
+          "$ref": "#/definitions/AuxDataJWT"
+        }
+      },
+      "description": "Structured auxiliary data useful for evaluating the request"
+    },
     "enginev1CheckInput": {
       "type": "object",
       "properties": {
@@ -757,6 +798,9 @@
           "required": [
             "actions"
           ]
+        },
+        "auxData": {
+          "$ref": "#/definitions/cerbosenginev1AuxData"
         }
       },
       "required": [
@@ -936,6 +980,9 @@
           "required": [
             "resources"
           ]
+        },
+        "auxData": {
+          "$ref": "#/definitions/cerbosrequestv1AuxData"
         }
       },
       "description": "PDP Request",
@@ -1023,6 +1070,9 @@
         "includeMeta": {
           "type": "boolean",
           "description": "Opt to receive request processing metadata in the response."
+        },
+        "auxData": {
+          "$ref": "#/definitions/cerbosrequestv1AuxData"
         }
       },
       "description": "PDP Request",

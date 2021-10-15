@@ -20,6 +20,7 @@ message CheckInput {
     Resource resource = 2 [(validate.rules).message.required = true, (google.api.field_behavior) = REQUIRED];
     Principal principal = 3 [(validate.rules).message.required = true, (google.api.field_behavior) = REQUIRED];
     repeated string actions = 4 [(validate.rules).repeated = { unique: true, items { string { min_len: 1 } } }, (google.api.field_behavior) = REQUIRED];
+    AuxData aux_data = 5;
 }
 
 message CheckOutput {
@@ -114,3 +115,12 @@ message Principal {
     ];
 }
 
+message AuxData {
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
+		json_schema: {
+			description: "Structured auxiliary data"
+		}
+    };
+
+    map<string, google.protobuf.Value> jwt = 1;
+}
