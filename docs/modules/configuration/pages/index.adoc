@@ -12,30 +12,16 @@ The Cerbos server is configured with a YAML file. Start the server by passing th
 
 NOTE: Config values can reference environment variables by enclosing them between `${}`. E.g. `$$${HOME}$$`.
 
-Following are the examples of how to provide the configuration file to run Cerbos server in container and as binary;
-[source,sh,subs="attributes"]
-----
-docker run --rm --name cerbos -d -v path/to/policies:/policies -p 3592:3592 {app-docker-img} server --config=/path/to/conf.yaml
-----
 
 [source,sh,subs="attributes"]
 ----
 ./{app-name} server --config=/path/to/config.yaml --set=server.httpListenAddr=:3592 --set=engine.defaultPolicyVersion=staging
 ----
 
-Minimal configuration is enough to experiment and test features, while a full configuration possibly required to
-configure for the production environment.
 
 == Minimal Configuration
-As currently Cerbos server may run in a container and as binary, the minimal configuration to run them are different.
-
-The container does not require any configuration to start as it already has a default configuration included in the
-image.
-
-The binary requires a configuration file to be specified and at least one storage driver to be configured to run.
-
-=== Binary
-.Cerbos configuration file
+At a minimum, Cerbos requires a storage driver to be configured in order to start. You must provide a configuration file when starting the Cerbos binary. The Cerbos container ships with a default configuration that has a `disk` driver configured to  look for policies mounted at `/policies`.
+.Default configuration file shipped in the container
 [source,yaml,linenums]
 ----
 ---
@@ -46,38 +32,13 @@ server:
 storage:
   driver: "disk"
   disk:
-    directory: /policies # Directory to store policies
+    directory: /policies 
     watchForChanges: true
 ----
 
-=== Container
-The default configuration included in the Cerbos image looks like the following;
-
-.Cerbos configuration file
-[source,yaml,linenums]
-----
----
-server:
-  httpListenAddr: ":3592"
-  grpcListenAddr: ":3593"
-
-engine:
-  defaultPolicyVersion: "default"
-
-storage:
-  driver: "disk"
-  disk:
-    directory: /policies
-    watchForChanges: true
-----
-
-As it is already the minimal configuration to run the Cerbos server, there is no need to provide any configuration.
 
 == Full Configuration
-Minimal configuration may not cover every scenario for the production environments. Full configuration example has every
-configurable parameter listed.
-
-Some of these fields may not be clear until using Cerbos in an test environment or Playground.
+Cerbos has many configuration options that are either optional or has reasonable defaults built-in. The following section describes all user-configurable options and their defaults.
 
 .Cerbos configuration file
 [source,yaml,linenums]
@@ -96,7 +57,7 @@ server:
   cors: # Optional
     disabled: false
     allowedOrigins: ['*'] # The contents of the allowed-origins header.
-    allowedHeaders: ['*'] # The contents of the allowed-headers header
+    allowedHeaders: ['content-type', 'access-control-allow-origin'] # The contents of the allowed-headers header
     maxAge: 10s # The max age of the CORS preflight check.
   adminAPI:
     enabled: true # Defines whether the admin API is enabled.
@@ -106,7 +67,6 @@ server:
 
 engine: # Optional
   defaultPolicyVersion: "default" # Default policy version to assume if the request does not specify one.
-  numWorkers: 16 # The number of workers working in parallel.
 
 storage:
   driver: "disk" # Valid values are "disk", "git" or "sqlite3"
@@ -122,16 +82,15 @@ storage:
     checkoutDir: ${HOME}/tmp/cerbos/work # Work directory of the server
     updatePollInterval: 60s # How often the source git repo should be polled for updates
     scratchDir: /tmp/cerbos # Directory to use for caching generated code
-    https: # Only required if the "protocol" is "https" and it consists auth details for the HTTPS protocol.
+    https: # Only required if the "protocol" is "https" 
       username: cerbos # The username to use for authentication.
       password: ${GITHUB_TOKEN} # The password (or token) to use for authentication.
-    ssh: # Only required if the "protocol" is "ssh" and it consists auth details for the SSH protocol.
+    ssh: # Only required if the "protocol" is "ssh" 
       user: git # The git user. Defaults to git.
       privateKeyFile: ${HOME}/.ssh/id_rsa # the path to the SSH private key file.
       # password: pw # the password to the SSH private key.
   sqlite3: # Only required if the "driver" is "sqlite3"
     dsn: ":memory:?_fk=true" # Data source name
-    # dsn: "cerbos.db?_fk=true" # Data source name
   postgres: # Only required if the "driver" is "postgres"
     url: "postgres://user:password@localhost:port/db"
     connPool: # common SQL connection pool settings.
