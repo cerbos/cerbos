@@ -2704,11 +2704,11 @@ Contents of probable licence file $GOMODCACHE/github.com/jmoiron/sqlx@v1.3.4/LIC
 
 --------------------------------------------------------------------------------
 Module  : github.com/jwalton/gchalk
-Version : v1.1.0
-Time    : 2021-08-04T00:22:35Z
+Version : v1.2.1
+Time    : 2021-10-12T14:26:21Z
 Licence : MIT
 
-Contents of probable licence file $GOMODCACHE/github.com/jwalton/gchalk@v1.1.0/LICENSE:
+Contents of probable licence file $GOMODCACHE/github.com/jwalton/gchalk@v1.2.1/LICENSE:
 
 MIT License
 
@@ -11301,11 +11301,11 @@ THE SOFTWARE.
 
 --------------------------------------------------------------------------------
 Module  : github.com/jwalton/go-supportscolor
-Version : v1.0.0
-Time    : 2021-02-23T04:53:22Z
+Version : v1.1.0
+Time    : 2021-10-06T16:59:06Z
 Licence : MIT
 
-Contents of probable licence file $GOMODCACHE/github.com/jwalton/go-supportscolor@v1.0.0/LICENSE:
+Contents of probable licence file $GOMODCACHE/github.com/jwalton/go-supportscolor@v1.1.0/LICENSE:
 
 MIT License
 
@@ -15304,11 +15304,11 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 --------------------------------------------------------------------------------
 Module  : golang.org/x/sys
-Version : v0.0.0-20210902050250-f475640dd07b
-Time    : 2021-09-02T05:02:50Z
+Version : v0.0.0-20211004093028-2c5d950f24ef
+Time    : 2021-10-04T09:30:28Z
 Licence : BSD-3-Clause
 
-Contents of probable licence file $GOMODCACHE/golang.org/x/sys@v0.0.0-20210902050250-f475640dd07b/LICENSE:
+Contents of probable licence file $GOMODCACHE/golang.org/x/sys@v0.0.0-20211004093028-2c5d950f24ef/LICENSE:
 
 Copyright (c) 2009 The Go Authors. All rights reserved.
 
@@ -15341,11 +15341,11 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 --------------------------------------------------------------------------------
 Module  : golang.org/x/term
-Version : v0.0.0-20210220032956-6a3ed077a48d
-Time    : 2021-02-20T03:29:56Z
+Version : v0.0.0-20210927222741-03fcf44c2211
+Time    : 2021-09-27T22:27:41Z
 Licence : BSD-3-Clause
 
-Contents of probable licence file $GOMODCACHE/golang.org/x/term@v0.0.0-20210220032956-6a3ed077a48d/LICENSE:
+Contents of probable licence file $GOMODCACHE/golang.org/x/term@v0.0.0-20210927222741-03fcf44c2211/LICENSE:
 
 Copyright (c) 2009 The Go Authors. All rights reserved.
 
