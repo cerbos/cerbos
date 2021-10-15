@@ -84,8 +84,8 @@ Some of these fields may not be clear until using Cerbos in an test environment 
 ----
 ---
 server:
-  httpListenAddr: ":3592" 
-  grpcListenAddr: ":3593"
+  httpListenAddr: ":3592" # The dedicated HTTP address to listen.
+  grpcListenAddr: ":3593" # The dedicated HTTP address to listen.
   metricsEnabled: true # Set to false to disable the /_cerbos/metrics endpoint
   logRequestPayloads: false # Set to true to log full request and response payloads. Affects performance.
   playgroundEnabled: false # Set to true to enable the playground API.
@@ -101,12 +101,12 @@ server:
   adminAPI:
     enabled: true # Defines whether the admin API is enabled.
     adminCredentials: # Defines the admin user credentials.
-      username: cerbos
-      passwordHash: $2y$10$6v.PIn0zJ1xFdIDPlX3yheDZHM2iXI8CSKT5a3d35djtOxnOATxFi
+      username: cerbos # The hardcoded username to use for authentication.
+      passwordHash: $2y$10$6v.PIn0zJ1xFdIDPlX3yheDZHM2iXI8CSKT5a3d35djtOxnOATxFi # The bcrypt hash of the password to use for authentication.
 
 engine: # Optional
   defaultPolicyVersion: "default" # Default policy version to assume if the request does not specify one.
-  numWorkers: 16
+  numWorkers: 16 # The number of workers working in parallel.
 
 storage:
   driver: "disk" # Valid values are "disk", "git" or "sqlite3"
@@ -122,26 +122,26 @@ storage:
     checkoutDir: ${HOME}/tmp/cerbos/work # Work directory of the server
     updatePollInterval: 60s # How often the source git repo should be polled for updates
     scratchDir: /tmp/cerbos # Directory to use for caching generated code
-    https: # Only required if the "protocol" is "https"
-      username: cerbos
-      password: ${GITHUB_TOKEN}
-    ssh: # Only required if the "protocol" is "ssh"
-      user: git
-      privateKeyFile: ${HOME}/.ssh/id_rsa
+    https: # Only required if the "protocol" is "https" and it consists auth details for the HTTPS protocol.
+      username: cerbos # The username to use for authentication.
+      password: ${GITHUB_TOKEN} # The password (or token) to use for authentication.
+    ssh: # Only required if the "protocol" is "ssh" and it consists auth details for the SSH protocol.
+      user: git # The git user. Defaults to git.
+      privateKeyFile: ${HOME}/.ssh/id_rsa # the path to the SSH private key file.
       # password: pw # the password to the SSH private key.
   sqlite3: # Only required if the "driver" is "sqlite3"
-    dsn: ":memory:?_fk=true"
-    # dsn: "cerbos.db?_fk=true"
+    dsn: ":memory:?_fk=true" # Data source name
+    # dsn: "cerbos.db?_fk=true" # Data source name
   postgres: # Only required if the "driver" is "postgres"
     url: "postgres://user:password@localhost:port/db"
-    connPool:
+    connPool: # common SQL connection pool settings.
       maxLifeTime: 60m
       maxIdleTime: 45s
       maxOpen: 4
       maxIdle: 1
   mysql: # Only required if the "driver" is "mysql"
-    dsn: "user:password@tcp(localhost:3306)/db?interpolateParams=true"
-    connPool:
+    dsn: "user:password@tcp(localhost:3306)/db?interpolateParams=true" # Data source name
+    connPool: # common SQL connection pool settings.
       maxLifeTime: 60m
       maxIdleTime: 45s
       maxOpen: 4
