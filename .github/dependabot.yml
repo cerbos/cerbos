@@ -10,6 +10,15 @@ updates:
       - "ci"
       - "bots"
 
+  - package-ecosystem: "gomod"
+    directory: "/tools"
+    schedule:
+      interval: "weekly"
+    labels:
+      - "chore"
+      - "ci"
+      - "bots"
+
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
