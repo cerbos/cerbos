@@ -5324,11 +5324,11 @@ Contents of probable licence file $GOMODCACHE/gopkg.in/yaml.v2@v2.4.0/LICENSE:
 
 --------------------------------------------------------------------------------
 Module  : helm.sh/helm/v3
-Version : v3.7.0
-Time    : 2021-09-09T17:16:22Z
+Version : v3.7.1
+Time    : 2021-10-13T19:54:50Z
 Licence : Apache-2.0
 
-Contents of probable licence file $GOMODCACHE/helm.sh/helm/v3@v3.7.0/LICENSE:
+Contents of probable licence file $GOMODCACHE/helm.sh/helm/v3@v3.7.1/LICENSE:
 
 
                                  Apache License
