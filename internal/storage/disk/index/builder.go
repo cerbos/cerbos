@@ -6,12 +6,8 @@ package index
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io/fs"
-	"os"
-
-	"github.com/spf13/afero"
 
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
 	"github.com/cerbos/cerbos/internal/namer"
@@ -55,8 +51,7 @@ func (lf LoadFailure) MarshalJSON() ([]byte, error) {
 }
 
 type buildOptions struct {
-	rootDir   string
-	scratchFS afero.Fs
+	rootDir string
 }
 
 type BuildOpt func(*buildOptions)
@@ -64,21 +59,6 @@ type BuildOpt func(*buildOptions)
 func WithRootDir(rootDir string) BuildOpt {
 	return func(o *buildOptions) {
 		o.rootDir = rootDir
-	}
-}
-
-func WithDiskCache(dir string) BuildOpt {
-	return func(o *buildOptions) {
-		if _, err := os.Stat(dir); errors.Is(err, os.ErrNotExist) {
-			return
-		}
-		o.scratchFS = afero.NewBasePathFs(afero.NewOsFs(), dir)
-	}
-}
-
-func WithMemoryCache() BuildOpt {
-	return func(o *buildOptions) {
-		o.scratchFS = afero.NewMemMapFs()
 	}
 }
 

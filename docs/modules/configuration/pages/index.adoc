@@ -73,7 +73,6 @@ storage:
   disk: # Only required if "driver" is "disk"
     directory: pkg/test/testdata/store # Directory to store policies
     watchForChanges: false  # Enables watching the directory for changes.
-    scratchDir: /tmp/cerbos # Directory to use for caching generated code
   git: # Only required if the "driver" is "git"
     protocol: file # Valid values are "file", "ssh", "https"
     url: file://${HOME}/tmp/cerbos/policies # the URL to the Git repo.
@@ -81,8 +80,7 @@ storage:
     subDir: policies # Set this if the policies are stored in a subdirectory
     checkoutDir: ${HOME}/tmp/cerbos/work # Work directory of the server
     updatePollInterval: 60s # How often the source git repo should be polled for updates
-    scratchDir: /tmp/cerbos # Directory to use for caching generated code
-    https: # Only required if the "protocol" is "https" 
+    https: # Only required if the "protocol" is "https"
       username: cerbos # The username to use for authentication.
       password: ${GITHUB_TOKEN} # The password (or token) to use for authentication.
     ssh: # Only required if the "protocol" is "ssh" 

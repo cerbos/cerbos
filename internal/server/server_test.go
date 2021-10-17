@@ -66,7 +66,7 @@ func TestServer(t *testing.T) {
 
 	auditLog := audit.NewNopLog()
 
-	store, err := disk.NewStore(ctx, &disk.Conf{Directory: dir, ScratchDir: t.TempDir()})
+	store, err := disk.NewStore(ctx, &disk.Conf{Directory: dir})
 	require.NoError(t, err)
 
 	eng, err := engine.New(ctx, compile.NewManager(ctx, store), auditLog)

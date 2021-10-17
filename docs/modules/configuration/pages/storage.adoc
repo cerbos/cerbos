@@ -17,7 +17,6 @@ storage:
   driver: disk
   disk: 
     directory: /etc/cerbos/policies
-    scratchDir: /tmp/cerbos
 ----
 
 .Dynamic fileset with change detection
@@ -28,7 +27,6 @@ storage:
   disk: 
     directory: /etc/cerbos/policies
     watchForChanges: true
-    scratchDir: /tmp/cerbos
 ----
 
 CAUTION: On some platforms the automatic change detection feature can be inefficient and resource-intensive if the watched directory contains many files or gets updated frequently.
@@ -57,7 +55,6 @@ storage:
     url: file://${HOME}/tmp/cerbos/policies 
     checkoutDir: ${HOME}/tmp/cerbos/work 
     updatePollInterval: 10s 
-    scratchDir: /tmp/cerbos
 ----
 
 .Remote git repository accessed over HTTPS

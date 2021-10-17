@@ -340,7 +340,7 @@ func mkEngine(t *testing.T) *engine.Engine {
 	ctx, cancelFunc := context.WithCancel(context.Background())
 	t.Cleanup(cancelFunc)
 
-	store, err := disk.NewStore(ctx, &disk.Conf{Directory: dir, ScratchDir: t.TempDir()})
+	store, err := disk.NewStore(ctx, &disk.Conf{Directory: dir})
 	require.NoError(t, err)
 
 	eng, err := engine.New(ctx, compile.NewManager(ctx, store), audit.NewNopLog())

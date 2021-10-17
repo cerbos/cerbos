@@ -20,7 +20,6 @@ cerbos:
         # Path to checkout. By default, /work is a Kubernetes emptyDir volume that is only available for the lifetime of the pod.
         # If you want the work directory to persist between pod restarts, specify the mount path of a persistent volume here. 
         checkoutDir: /work
-        scratchDir: /scratch
         # How often the remote repo should be checked for updates.
         updatePollInterval: 60s
         # Credentials used to login to the remote GitHub repo. We are using an environment variable mounted from the secret we created earlier. 
@@ -32,12 +31,3 @@ cerbos:
 envFrom:
   - secretRef:
       name: cerbos-github-token
-
-
-volumes:
-  - name: cerbos-scratch
-    emptyDir: {}
-
-volumeMounts:
-  - name: cerbos-scratch
-    mountPath: /scratch

@@ -28,7 +28,7 @@ import (
 func TestBuildIndexWithDisk(t *testing.T) {
 	dir := test.PathToDir(t, "store")
 
-	idx, err := Build(context.Background(), os.DirFS(dir), WithMemoryCache())
+	idx, err := Build(context.Background(), os.DirFS(dir))
 	require.NoError(t, err)
 	require.NotNil(t, idx)
 
@@ -110,7 +110,7 @@ func TestBuildIndex(t *testing.T) {
 			tc := readTestCase(t, tcase.Input)
 			fs := toFS(t, tc)
 
-			_, haveErr := Build(context.Background(), fs, WithMemoryCache())
+			_, haveErr := Build(context.Background(), fs)
 			switch {
 			case tc.WantErrJson != "":
 				errList := new(BuildError)

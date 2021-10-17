@@ -5,16 +5,10 @@ volumes:
     hostPath:
       path: /data/cerbos-policies
 
-  - name: cerbos-scratch
-    emptyDir: {}
-
 volumeMounts:
   - name: cerbos-policies
     mountPath: /policies
     readOnly: true
-
-  - name: cerbos-scratch
-    mountPath: /scratch
 
 cerbos:
   config:
@@ -23,4 +17,3 @@ cerbos:
       disk:
         directory: /policies
         watchForChanges: true
-        scratchDir: /scratch
