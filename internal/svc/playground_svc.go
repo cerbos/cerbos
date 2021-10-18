@@ -208,7 +208,7 @@ func buildIndex(ctx context.Context, log *zap.Logger, files []*requestv1.PolicyF
 		}
 	}
 
-	return index.Build(ctx, afero.NewIOFS(fs), index.WithMemoryCache())
+	return index.Build(ctx, afero.NewIOFS(fs))
 }
 
 func processLintErrors(ctx context.Context, errs *index.BuildError) *responsev1.PlaygroundFailure {

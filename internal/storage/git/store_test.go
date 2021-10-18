@@ -351,7 +351,6 @@ func mkConf(t *testing.T, gitRepo, checkoutDir string) *Conf {
 		CheckoutDir: checkoutDir,
 		Branch:      "policies",
 		SubDir:      "policies",
-		ScratchDir:  t.TempDir(),
 	}
 }
 
