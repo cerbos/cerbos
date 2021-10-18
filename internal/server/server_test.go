@@ -10,6 +10,7 @@ import (
 	"encoding/base64"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"net"
 	"net/http"
 	"path/filepath"
@@ -28,6 +29,7 @@ import (
 	"google.golang.org/protobuf/testing/protocmp"
 
 	privatev1 "github.com/cerbos/cerbos/api/genpb/cerbos/private/v1"
+	v1 "github.com/cerbos/cerbos/api/genpb/cerbos/request/v1"
 	responsev1 "github.com/cerbos/cerbos/api/genpb/cerbos/response/v1"
 	svcv1 "github.com/cerbos/cerbos/api/genpb/cerbos/svc/v1"
 	"github.com/cerbos/cerbos/internal/audit"
@@ -246,6 +248,35 @@ func mkGRPCConn(t *testing.T, addr string, opts ...grpc.DialOption) *grpc.Client
 	return grpcConn
 }
 
+func resolvePolicyReferencesForTestCases(tc *privatev1.ServerTestCase) error {
+	var policyFiles []*v1.PolicyFile
+
+	switch call := tc.CallKind.(type) {
+	case *privatev1.ServerTestCase_PlaygroundValidate:
+		policyFiles = call.PlaygroundValidate.Input.PolicyFiles
+	case *privatev1.ServerTestCase_PlaygroundEvaluate:
+		policyFiles = call.PlaygroundEvaluate.Input.PolicyFiles
+	case *privatev1.ServerTestCase_PlaygroundProxy:
+		policyFiles = call.PlaygroundProxy.Input.PolicyFiles
+	default:
+		return nil
+	}
+
+	for _, policyFile := range policyFiles {
+		if policyFile.Contents == nil || len(policyFile.Contents) == 0 {
+			path := filepath.Join(tc.PathToDir, test.PathPolicies, policyFile.FileName)
+			policyFileBytes, err := ioutil.ReadFile(path)
+			if err != nil {
+				return fmt.Errorf("failed to read from source: %w", err)
+			}
+
+			policyFile.Contents = policyFileBytes
+		}
+	}
+
+	return nil
+}
+
 func executeGRPCTestCase(grpcConn *grpc.ClientConn, tc *privatev1.ServerTestCase) func(*testing.T) {
 	//nolint:thelper
 	return func(t *testing.T) {
@@ -254,6 +285,11 @@ func executeGRPCTestCase(grpcConn *grpc.ClientConn, tc *privatev1.ServerTestCase
 
 		ctx, cancelFunc := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancelFunc()
+
+		err = resolvePolicyReferencesForTestCases(tc)
+		if err != nil {
+			t.Fatalf(err.Error())
+		}
 
 		switch call := tc.CallKind.(type) {
 		case *privatev1.ServerTestCase_CheckResourceSet:
@@ -407,7 +443,7 @@ func loadTestCases(t *testing.T, dirs ...string) []*privatev1.ServerTestCase {
 	for _, dir := range dirs {
 		cases := test.LoadTestCases(t, filepath.Join("server", dir))
 		for _, c := range cases {
-			tc := readTestCase(t, c.Name, c.Input)
+			tc := readTestCase(t, c.Name, c.Input, c.PathToDir)
 			testCases = append(testCases, tc)
 		}
 	}
@@ -415,7 +451,7 @@ func loadTestCases(t *testing.T, dirs ...string) []*privatev1.ServerTestCase {
 	return testCases
 }
 
-func readTestCase(t *testing.T, name string, data []byte) *privatev1.ServerTestCase {
+func readTestCase(t *testing.T, name string, data []byte, pathToDir string) *privatev1.ServerTestCase {
 	t.Helper()
 
 	tc := &privatev1.ServerTestCase{}
@@ -424,6 +460,8 @@ func readTestCase(t *testing.T, name string, data []byte) *privatev1.ServerTestC
 	if tc.Name == "" {
 		tc.Name = name
 	}
+
+	tc.PathToDir = pathToDir
 
 	return tc
 }
