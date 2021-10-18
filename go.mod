@@ -7,12 +7,11 @@ require (
 	contrib.go.opencensus.io/exporter/prometheus v0.4.0
 	github.com/PaesslerAG/jsonpath v0.1.1
 	github.com/ProtonMail/go-crypto v0.0.0-20210512092938-c05353c2d58c // indirect
-	github.com/alecthomas/chroma v0.9.2
-	github.com/aws/aws-sdk-go v1.40.34
+	github.com/alecthomas/chroma v0.9.4
 	github.com/bluele/gcache v0.0.2
 	github.com/cespare/xxhash v1.1.0
 	github.com/dgraph-io/badger/v3 v3.2103.2
-	github.com/doug-martin/goqu/v9 v9.16.0
+	github.com/doug-martin/goqu/v9 v9.17.0
 	github.com/envoyproxy/protoc-gen-validate v0.6.1
 	github.com/fatih/color v1.13.0
 	github.com/fergusstrange/embedded-postgres v1.11.0
@@ -24,7 +23,7 @@ require (
 	github.com/gobwas/glob v0.2.3
 	github.com/google/cel-go v0.8.0
 	github.com/google/go-cmp v0.5.6
-	github.com/google/gops v0.3.20
+	github.com/google/gops v0.3.21
 	github.com/google/uuid v1.3.0
 	github.com/gorilla/handlers v1.5.1
 	github.com/gorilla/mux v1.8.0
@@ -33,16 +32,14 @@ require (
 	github.com/jackc/pgx/v4 v4.13.0
 	github.com/jdxcode/netrc v0.0.0-20210204082910-926c7f70242a
 	github.com/jmoiron/sqlx v1.3.4
-	github.com/jwalton/gchalk v1.1.0
+	github.com/jwalton/gchalk v1.2.1
 	github.com/kavu/go_reuseport v1.5.0
 	github.com/kevinburke/ssh_config v1.1.0 // indirect
 	github.com/klauspost/compress v1.13.6 // indirect
 	github.com/klauspost/pgzip v1.2.5 // indirect
-	github.com/lestrrat-go/jwx v1.2.7
 	github.com/matryer/is v1.4.0 // indirect
 	github.com/mattn/go-isatty v0.0.14
 	github.com/mattn/go-runewidth v0.0.13 // indirect
-	github.com/minio/minio-go/v7 v7.0.15
 	github.com/oklog/ulid/v2 v2.0.2
 	github.com/ory/dockertest/v3 v3.8.0
 	github.com/planetscale/vtprotobuf v0.0.0-20210616093554-9236f7c7b8ca
@@ -65,7 +62,6 @@ require (
 	go.uber.org/config v1.4.0
 	go.uber.org/multierr v1.7.0
 	go.uber.org/zap v1.19.1
-	gocloud.dev v0.24.0
 	golang.org/x/crypto v0.0.0-20210817164053-32db794688a5
 	golang.org/x/net v0.0.0-20210825183410-e898025ed96a
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
@@ -74,8 +70,15 @@ require (
 	google.golang.org/grpc v1.41.0
 	google.golang.org/protobuf v1.27.1
 	gopkg.in/yaml.v2 v2.4.0
-	helm.sh/helm/v3 v3.7.0
+	helm.sh/helm/v3 v3.7.1
 	modernc.org/sqlite v1.13.1
+)
+
+require (
+	github.com/aws/aws-sdk-go v1.40.34
+	github.com/lestrrat-go/jwx v1.2.7
+	github.com/minio/minio-go/v7 v7.0.14
+	gocloud.dev v0.24.0
 )
 
 require (
@@ -89,21 +92,20 @@ require (
 	github.com/acomagu/bufpipe v1.0.3 // indirect
 	github.com/andybalholm/brotli v1.0.0 // indirect
 	github.com/antlr/antlr4 v0.0.0-20200503195918-621b933c7a7f // indirect
-	github.com/aws/aws-sdk-go-v2 v1.9.0 // indirect
-	github.com/aws/aws-sdk-go-v2/config v1.7.0 // indirect
-	github.com/aws/aws-sdk-go-v2/credentials v1.4.0 // indirect
-	github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.5.0 // indirect
-	github.com/aws/aws-sdk-go-v2/internal/ini v1.2.2 // indirect
-	github.com/aws/aws-sdk-go-v2/service/internal/presigned-url v1.3.0 // indirect
-	github.com/aws/aws-sdk-go-v2/service/sso v1.4.0 // indirect
-	github.com/aws/aws-sdk-go-v2/service/sts v1.7.0 // indirect
+	github.com/aws/aws-sdk-go-v2 v1.9.1 // indirect
+	github.com/aws/aws-sdk-go-v2/config v1.8.2 // indirect
+	github.com/aws/aws-sdk-go-v2/credentials v1.4.2 // indirect
+	github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.5.1 // indirect
+	github.com/aws/aws-sdk-go-v2/internal/ini v1.2.3 // indirect
+	github.com/aws/aws-sdk-go-v2/service/internal/presigned-url v1.3.1 // indirect
+	github.com/aws/aws-sdk-go-v2/service/sso v1.4.1 // indirect
+	github.com/aws/aws-sdk-go-v2/service/sts v1.7.1 // indirect
 	github.com/aws/smithy-go v1.8.0 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/cenkalti/backoff/v4 v4.1.1 // indirect
 	github.com/cespare/xxhash/v2 v2.1.2 // indirect
 	github.com/containerd/containerd v1.5.7 // indirect
 	github.com/containerd/continuity v0.2.0 // indirect
-	github.com/danwakefield/fnmatch v0.0.0-20160403171240-cbb64ac3d964 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/decred/dcrd/dcrec/secp256k1/v4 v4.0.0-20210816181553-5444fa50b93d // indirect
 	github.com/dgraph-io/ristretto v0.1.0 // indirect
@@ -145,7 +147,7 @@ require (
 	github.com/jbenet/go-context v0.0.0-20150711004518-d14ea06fba99 // indirect
 	github.com/jmespath/go-jmespath v0.4.0 // indirect
 	github.com/json-iterator/go v1.1.11 // indirect
-	github.com/jwalton/go-supportscolor v1.0.0 // indirect
+	github.com/jwalton/go-supportscolor v1.1.0 // indirect
 	github.com/kballard/go-shellquote v0.0.0-20180428030007-95032a82bc51 // indirect
 	github.com/klauspost/cpuid v1.3.1 // indirect
 	github.com/lestrrat-go/backoff/v2 v2.0.8 // indirect
@@ -194,8 +196,8 @@ require (
 	golang.org/x/lint v0.0.0-20210508222113-6edffad5e616 // indirect
 	golang.org/x/mod v0.5.0 // indirect
 	golang.org/x/oauth2 v0.0.0-20210819190943-2bc19b11175f // indirect
-	golang.org/x/sys v0.0.0-20210902050250-f475640dd07b // indirect
-	golang.org/x/term v0.0.0-20210220032956-6a3ed077a48d // indirect
+	golang.org/x/sys v0.0.0-20211004093028-2c5d950f24ef // indirect
+	golang.org/x/term v0.0.0-20210927222741-03fcf44c2211 // indirect
 	golang.org/x/text v0.3.7 // indirect
 	golang.org/x/tools v0.1.5 // indirect
 	golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1 // indirect
