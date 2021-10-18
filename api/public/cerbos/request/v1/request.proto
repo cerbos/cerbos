@@ -262,6 +262,8 @@ message PlaygroundEvaluateRequest {
             unique_items: true
         } 
     ];
+
+    AuxData aux_data = 6;
 }
 
 message PlaygroundProxyRequest {

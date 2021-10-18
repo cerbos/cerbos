@@ -24,6 +24,7 @@ import (
 
 	svcv1 "github.com/cerbos/cerbos/api/genpb/cerbos/svc/v1"
 	"github.com/cerbos/cerbos/internal/audit"
+	"github.com/cerbos/cerbos/internal/auxdata"
 	"github.com/cerbos/cerbos/internal/compile"
 	"github.com/cerbos/cerbos/internal/engine"
 	"github.com/cerbos/cerbos/internal/server"
@@ -266,14 +267,16 @@ func startServer(ctx context.Context, g *errgroup.Group, sopt *serverOpt) (err e
 	}
 
 	auditLog := audit.NewNopLog()
+	auxData := auxdata.NewWithoutVerification(ctx)
+
 	eng, err := engine.New(ctx, compile.NewManager(ctx, store), auditLog)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to create engine: %w", err)
 	}
 
 	s := server.NewServer(sopt.serverConf)
 	g.Go(func() error {
-		return s.Start(ctx, store, eng, auditLog, false)
+		return s.Start(ctx, server.Param{Store: store, Engine: eng, AuditLog: auditLog, AuxData: auxData})
 	})
 	runtime.Gosched()
 

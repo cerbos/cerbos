@@ -845,6 +845,16 @@ func (m *PlaygroundEvaluateRequest) Validate() error {
 
 	}
 
+	if v, ok := interface{}(m.GetAuxData()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return PlaygroundEvaluateRequestValidationError{
+				field:  "AuxData",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
 	return nil
 }
 

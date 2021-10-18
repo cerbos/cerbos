@@ -16,6 +16,7 @@ import (
 
 	requestv1 "github.com/cerbos/cerbos/api/genpb/cerbos/request/v1"
 	"github.com/cerbos/cerbos/internal/observability/logging"
+	"github.com/cerbos/cerbos/internal/observability/tracing"
 	"github.com/cerbos/cerbos/internal/util"
 )
 
@@ -26,6 +27,7 @@ var (
 
 type jwtHelper struct {
 	keySets map[string]keySet
+	verify  bool
 }
 
 func newJWTHelper(ctx context.Context, conf *JWTConf) *jwtHelper {
@@ -33,7 +35,7 @@ func newJWTHelper(ctx context.Context, conf *JWTConf) *jwtHelper {
 		return nil
 	}
 
-	jh := &jwtHelper{keySets: make(map[string]keySet, len(conf.KeySets))}
+	jh := &jwtHelper{keySets: make(map[string]keySet, len(conf.KeySets)), verify: !conf.DisableVerification}
 
 	for _, ks := range conf.KeySets {
 		ks := ks
@@ -48,8 +50,24 @@ func newJWTHelper(ctx context.Context, conf *JWTConf) *jwtHelper {
 	return jh
 }
 
-func (j *jwtHelper) parseAndVerify(ctx context.Context, auxJWT *requestv1.AuxData_JWT) (map[string]*structpb.Value, error) {
+func (j *jwtHelper) extract(ctx context.Context, auxJWT *requestv1.AuxData_JWT) (map[string]*structpb.Value, error) {
 	if auxJWT == nil || auxJWT.Token == "" {
+		return nil, nil
+	}
+
+	ctx, span := tracing.StartSpan(ctx, "aux_data.ExtractJWT")
+	defer span.End()
+
+	parseOpts, err := j.parseOptions(ctx, auxJWT)
+	if err != nil {
+		return nil, err
+	}
+
+	return j.doExtract(ctx, auxJWT, parseOpts)
+}
+
+func (j *jwtHelper) parseOptions(ctx context.Context, auxJWT *requestv1.AuxData_JWT) ([]jwt.ParseOption, error) {
+	if !j.verify {
 		return nil, nil
 	}
 
@@ -77,7 +95,11 @@ func (j *jwtHelper) parseAndVerify(ctx context.Context, auxJWT *requestv1.AuxDat
 		return nil, fmt.Errorf("failed to retrieve keyset: %w", err)
 	}
 
-	token, err := jwt.ParseString(auxJWT.Token, jwt.WithKeySet(jwks), jwt.WithValidate(true))
+	return []jwt.ParseOption{jwt.WithKeySet(jwks), jwt.WithValidate(true)}, nil
+}
+
+func (j *jwtHelper) doExtract(ctx context.Context, auxJWT *requestv1.AuxData_JWT, parseOpts []jwt.ParseOption) (map[string]*structpb.Value, error) {
+	token, err := jwt.ParseString(auxJWT.Token, parseOpts...)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse JWT: %w", err)
 	}

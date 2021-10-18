@@ -9,6 +9,7 @@ import (
 	enginev1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
 	requestv1 "github.com/cerbos/cerbos/api/genpb/cerbos/request/v1"
 	"github.com/cerbos/cerbos/internal/config"
+	"github.com/cerbos/cerbos/internal/observability/tracing"
 )
 
 type AuxData struct {
@@ -28,12 +29,20 @@ func NewFromConf(ctx context.Context, conf *Conf) *AuxData {
 	return &AuxData{jwt: newJWTHelper(ctx, conf.JWT)}
 }
 
-func (ad *AuxData) Validate(ctx context.Context, adProto *requestv1.AuxData) (*enginev1.AuxData, error) {
+func NewWithoutVerification(ctx context.Context) *AuxData {
+	return &AuxData{jwt: newJWTHelper(ctx, &JWTConf{DisableVerification: true})}
+}
+
+// Extract auxiliary data and convert to format expected by the engine.
+func (ad *AuxData) Extract(ctx context.Context, adProto *requestv1.AuxData) (*enginev1.AuxData, error) {
+	ctx, span := tracing.StartSpan(ctx, "aux_data.Extract")
+	defer span.End()
+
 	if adProto == nil {
 		return nil, nil
 	}
 
-	jwtPB, err := ad.jwt.parseAndVerify(ctx, adProto.Jwt)
+	jwtPB, err := ad.jwt.extract(ctx, adProto.Jwt)
 	if err != nil {
 		return nil, err
 	}

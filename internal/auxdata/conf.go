@@ -20,6 +20,8 @@ type Conf struct {
 type JWTConf struct {
 	// KeySets is the list of keysets to be used to verify tokens.
 	KeySets []JWTKeySet `yaml:"keySets"`
+	// DisableVerification disables JWT verification.
+	DisableVerification bool `yaml:"disableVerification"`
 }
 
 type JWTKeySet struct {
@@ -52,40 +54,42 @@ func (c *Conf) Key() string {
 }
 
 func (c *Conf) Validate() (errs error) {
-	if c.JWT != nil {
-		idSet := make(map[string]struct{}, len(c.JWT.KeySets))
-		for _, ks := range c.JWT.KeySets {
-			if _, ok := idSet[ks.ID]; ok {
-				errs = multierr.Append(errs, fmt.Errorf("duplicate keyset id '%s'", ks.ID))
+	if c.JWT == nil {
+		return nil
+	}
+
+	idSet := make(map[string]struct{}, len(c.JWT.KeySets))
+	for _, ks := range c.JWT.KeySets {
+		if _, ok := idSet[ks.ID]; ok {
+			errs = multierr.Append(errs, fmt.Errorf("duplicate keyset id '%s'", ks.ID))
+			continue
+		}
+
+		idSet[ks.ID] = struct{}{}
+
+		if ks.Remote == nil && ks.Local == nil {
+			errs = multierr.Append(errs, fmt.Errorf("keyset '%s': should have one of `local` or `remote` defined", ks.ID))
+			continue
+		}
+
+		if ks.Remote != nil && ks.Local != nil {
+			errs = multierr.Append(errs, fmt.Errorf("keyset '%s': only one of `local` or `remote` should be defined", ks.ID))
+			continue
+		}
+
+		if ks.Remote != nil && ks.Remote.URL == "" {
+			errs = multierr.Append(errs, fmt.Errorf("keyset '%s': remote URL is empty", ks.ID))
+			continue
+		}
+
+		if l := ks.Local; l != nil {
+			if l.Data == "" && l.File == "" {
+				errs = multierr.Append(errs, fmt.Errorf("keyset '%s': at least one of 'local.data' or 'local.file' must be defined", ks.ID))
 				continue
 			}
 
-			idSet[ks.ID] = struct{}{}
-
-			if ks.Remote == nil && ks.Local == nil {
-				errs = multierr.Append(errs, fmt.Errorf("keyset '%s': should have one of `local` or `remote` defined", ks.ID))
-				continue
-			}
-
-			if ks.Remote != nil && ks.Local != nil {
-				errs = multierr.Append(errs, fmt.Errorf("keyset '%s': only one of `local` or `remote` should be defined", ks.ID))
-				continue
-			}
-
-			if ks.Remote != nil && ks.Remote.URL == "" {
-				errs = multierr.Append(errs, fmt.Errorf("keyset '%s': remote URL is empty", ks.ID))
-				continue
-			}
-
-			if l := ks.Local; l != nil {
-				if l.Data == "" && l.File == "" {
-					errs = multierr.Append(errs, fmt.Errorf("keyset '%s': at least one of 'local.data' or 'local.file' must be defined", ks.ID))
-					continue
-				}
-
-				if l.Data != "" && l.File != "" {
-					errs = multierr.Append(errs, fmt.Errorf("keyset '%s': only one of 'loca.data' or 'local.file' must be defined", ks.ID))
-				}
+			if l.Data != "" && l.File != "" {
+				errs = multierr.Append(errs, fmt.Errorf("keyset '%s': only one of 'loca.data' or 'local.file' must be defined", ks.ID))
 			}
 		}
 	}

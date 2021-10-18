@@ -1312,6 +1312,9 @@
           "required": [
             "actions"
           ]
+        },
+        "auxData": {
+          "$ref": "#/definitions/cerbosrequestv1AuxData"
         }
       },
       "description": "Playground evaluate request",
