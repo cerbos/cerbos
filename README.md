@@ -154,4 +154,4 @@ More Information
 Stay in touch
 ----------------
 
-If you want to lear about the lastest update, please subscribe to our [newsletter](https://cerbos.dev/subscribe)
+If you want to learn about the latest updates, please subscribe to our [newsletter](https://cerbos.dev/subscribe)
