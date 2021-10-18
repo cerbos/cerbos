@@ -500,10 +500,10 @@ func (m *PolicyFile) Validate() error {
 		}
 	}
 
-	if l := len(m.GetContents()); l < 1 || l > 1048576 {
+	if len(m.GetContents()) > 1048576 {
 		return PolicyFileValidationError{
 			field:  "Contents",
-			reason: "value length must be between 1 and 1048576 bytes, inclusive",
+			reason: "value length must be at most 1048576 bytes",
 		}
 	}
 

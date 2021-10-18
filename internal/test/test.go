@@ -24,6 +24,10 @@ import (
 	"github.com/cerbos/cerbos/internal/policy"
 )
 
+const (
+	PathPolicies = "_policies"
+)
+
 func init() {
 	if logLevel := os.Getenv("CERBOS_TEST_LOG_LEVEL"); logLevel != "" {
 		logging.InitLogging(logLevel)
@@ -64,9 +68,10 @@ func PathToDir(tb testing.TB, dir string) string {
 }
 
 type Case struct {
-	Name  string
-	Input []byte
-	Want  map[string][]byte
+	Name      string
+	PathToDir string
+	Input     []byte
+	Want      map[string][]byte
 }
 
 // LoadTestCases loads groups of test files from the given path.
@@ -95,7 +100,7 @@ func LoadTestCases(tb testing.TB, subDir string) []Case {
 			return err
 		}
 
-		if d.IsDir() {
+		if d.IsDir() || strings.Contains(path, PathPolicies) {
 			return nil
 		}
 
@@ -114,9 +119,12 @@ func LoadTestCases(tb testing.TB, subDir string) []Case {
 		name, err := filepath.Rel(dir, strings.TrimSuffix(entry, filepath.Ext(entry)))
 		require.NoError(tb, err)
 
+		testFolderName := strings.Split(name, "/")[0]
+
 		testCases[i] = Case{
-			Name:  name,
-			Input: readFileContents(tb, entry),
+			Name:      name,
+			Input:     readFileContents(tb, entry),
+			PathToDir: filepath.Join(dir, testFolderName),
 		}
 
 		wantedFiles, err := filepath.Glob(fmt.Sprintf("%s.*", entry))

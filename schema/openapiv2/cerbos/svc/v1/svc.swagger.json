@@ -1427,15 +1427,11 @@
         },
         "contents": {
           "type": "string",
-          "format": "byte",
-          "required": [
-            "contents"
-          ]
+          "format": "byte"
         }
       },
       "required": [
-        "fileName",
-        "contents"
+        "fileName"
       ]
     },
     "v1Principal": {
