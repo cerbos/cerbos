@@ -35,12 +35,12 @@ func NewWithoutVerification(ctx context.Context) *AuxData {
 
 // Extract auxiliary data and convert to format expected by the engine.
 func (ad *AuxData) Extract(ctx context.Context, adProto *requestv1.AuxData) (*enginev1.AuxData, error) {
-	ctx, span := tracing.StartSpan(ctx, "aux_data.Extract")
-	defer span.End()
-
 	if adProto == nil {
 		return nil, nil
 	}
+
+	ctx, span := tracing.StartSpan(ctx, "aux_data.Extract")
+	defer span.End()
 
 	jwtPB, err := ad.jwt.extract(ctx, adProto.Jwt)
 	if err != nil {
