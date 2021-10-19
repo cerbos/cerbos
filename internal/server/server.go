@@ -58,6 +58,9 @@ import (
 	"github.com/cerbos/cerbos/internal/observability/tracing"
 	"github.com/cerbos/cerbos/internal/storage"
 
+	// Import cloud to register the storage driver.
+	_ "github.com/cerbos/cerbos/internal/storage/blob"
+
 	// Import mysql to register the storage driver.
 	_ "github.com/cerbos/cerbos/internal/storage/db/mysql"
 

@@ -23,7 +23,7 @@ import (
 	"github.com/cerbos/cerbos/internal/namer"
 	"github.com/cerbos/cerbos/internal/policy"
 	"github.com/cerbos/cerbos/internal/storage"
-	"github.com/cerbos/cerbos/internal/storage/disk/index"
+	"github.com/cerbos/cerbos/internal/storage/index"
 	"github.com/cerbos/cerbos/internal/test"
 	"github.com/cerbos/cerbos/internal/test/mocks"
 )
@@ -351,7 +351,6 @@ func mkConf(t *testing.T, gitRepo, checkoutDir string) *Conf {
 		CheckoutDir: checkoutDir,
 		Branch:      "policies",
 		SubDir:      "policies",
-		ScratchDir:  t.TempDir(),
 	}
 }
 

@@ -24,7 +24,7 @@ import (
 	"github.com/cerbos/cerbos/internal/compile"
 	"github.com/cerbos/cerbos/internal/engine"
 	"github.com/cerbos/cerbos/internal/storage/disk"
-	"github.com/cerbos/cerbos/internal/storage/disk/index"
+	"github.com/cerbos/cerbos/internal/storage/index"
 )
 
 const playgroundRequestTimeout = 60 * time.Second
@@ -208,7 +208,7 @@ func buildIndex(ctx context.Context, log *zap.Logger, files []*requestv1.PolicyF
 		}
 	}
 
-	return index.Build(ctx, afero.NewIOFS(fs), index.WithMemoryCache())
+	return index.Build(ctx, afero.NewIOFS(fs))
 }
 
 func processLintErrors(ctx context.Context, errs *index.BuildError) *responsev1.PlaygroundFailure {

@@ -4,8 +4,6 @@
 package disk
 
 import (
-	"os"
-
 	"github.com/cerbos/cerbos/internal/storage"
 )
 
@@ -17,14 +15,10 @@ type Conf struct {
 	Directory string `yaml:"directory"`
 	// WatchForChanges enables watching the directory for changes.
 	WatchForChanges bool `yaml:"watchForChanges"`
-	// ScratchDir is the directory to use for holding temporary data.
+	// [DEPRECATED] ScratchDir is the directory to use for holding temporary data.
 	ScratchDir string `yaml:"scratchDir"`
 }
 
 func (conf *Conf) Key() string {
 	return confKey
-}
-
-func (conf *Conf) SetDefaults() {
-	conf.ScratchDir = os.TempDir()
 }

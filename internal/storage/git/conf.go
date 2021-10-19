@@ -37,7 +37,7 @@ type Conf struct {
 	SubDir string `yaml:"subDir,omitempty"`
 	// CheckoutDir is the local path to checkout the Git repo to.
 	CheckoutDir string `yaml:"checkoutDir"`
-	// ScratchDir is the directory to use for holding temporary data.
+	// [DEPRECATED] ScratchDir is the directory to use for holding temporary data.
 	ScratchDir string `yaml:"scratchDir"`
 	// SSH holds auth details for the SSH protocol.
 	SSH *SSHAuth `yaml:"ssh,omitempty"`
@@ -119,10 +119,6 @@ func (conf *Conf) Validate() error {
 	}
 
 	return nil
-}
-
-func (conf *Conf) SetDefaults() {
-	conf.ScratchDir = os.TempDir()
 }
 
 func (conf *Conf) getBranch() string {

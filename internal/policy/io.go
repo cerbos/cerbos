@@ -5,11 +5,24 @@ package policy
 
 import (
 	"bytes"
+	"fmt"
 	"io"
+	"io/fs"
 
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
 	"github.com/cerbos/cerbos/internal/util"
 )
+
+func ReadPolicyFromFile(fsys fs.FS, path string) (*policyv1.Policy, error) {
+	f, err := fsys.Open(path)
+	if err != nil {
+		return nil, fmt.Errorf("failed to open %s: %w", path, err)
+	}
+
+	defer f.Close()
+
+	return ReadPolicy(f)
+}
 
 // ReadPolicy reads a policy from the given reader.
 func ReadPolicy(src io.Reader) (*policyv1.Policy, error) {

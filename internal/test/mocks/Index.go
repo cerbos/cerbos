@@ -8,7 +8,7 @@ package mocks
 import (
 	context "context"
 
-	index "github.com/cerbos/cerbos/internal/storage/disk/index"
+	index "github.com/cerbos/cerbos/internal/storage/index"
 	mock "github.com/stretchr/testify/mock"
 
 	namer "github.com/cerbos/cerbos/internal/namer"

@@ -18,7 +18,7 @@ import (
 	"github.com/cerbos/cerbos/internal/compile"
 	"github.com/cerbos/cerbos/internal/engine"
 	"github.com/cerbos/cerbos/internal/storage/disk"
-	"github.com/cerbos/cerbos/internal/storage/disk/index"
+	"github.com/cerbos/cerbos/internal/storage/index"
 	"github.com/cerbos/cerbos/internal/verify"
 )
 
@@ -63,7 +63,7 @@ func doRun(cmd *cobra.Command, args []string) error {
 	ctx, stopFunc := signal.NotifyContext(context.Background(), os.Interrupt)
 	defer stopFunc()
 
-	idx, err := index.Build(ctx, os.DirFS(args[0]), index.WithMemoryCache())
+	idx, err := index.Build(ctx, os.DirFS(args[0]))
 	if err != nil {
 		idxErr := new(index.BuildError)
 		if errors.As(err, &idxErr) {
