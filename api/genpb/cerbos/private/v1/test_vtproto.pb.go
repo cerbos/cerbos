@@ -656,13 +656,6 @@ func (m *ServerTestCase) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 		i -= len(m.unknownFields)
 		copy(dAtA[i:], m.unknownFields)
 	}
-	if len(m.PathToDir) > 0 {
-		i -= len(m.PathToDir)
-		copy(dAtA[i:], m.PathToDir)
-		i = encodeVarint(dAtA, i, uint64(len(m.PathToDir)))
-		i--
-		dAtA[i] = 0x5a
-	}
 	if vtmsg, ok := m.CallKind.(interface {
 		MarshalToVT([]byte) (int, error)
 		SizeVT() int
@@ -1436,10 +1429,6 @@ func (m *ServerTestCase) SizeVT() (n int) {
 	}
 	if vtmsg, ok := m.CallKind.(interface{ SizeVT() int }); ok {
 		n += vtmsg.SizeVT()
-	}
-	l = len(m.PathToDir)
-	if l > 0 {
-		n += 1 + l + sov(uint64(l))
 	}
 	if m.unknownFields != nil {
 		n += len(m.unknownFields)
@@ -3168,38 +3157,6 @@ func (m *ServerTestCase) UnmarshalVT(dAtA []byte) error {
 				}
 				m.CallKind = &ServerTestCase_PlaygroundProxy{v}
 			}
-			iNdEx = postIndex
-		case 11:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field PathToDir", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflow
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return ErrInvalidLength
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex < 0 {
-				return ErrInvalidLength
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.PathToDir = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
 		default:
 			iNdEx = preIndex

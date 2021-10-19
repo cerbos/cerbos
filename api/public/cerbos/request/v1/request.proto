@@ -165,7 +165,8 @@ message PolicyFile {
     ];
 
     bytes contents = 2 [
-        (validate.rules).bytes = {max_len: 1048576}
+        (validate.rules).bytes = {min_len: 1, max_len: 1048576},
+        (google.api.field_behavior) = REQUIRED
     ];
 }
 
