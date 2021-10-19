@@ -21,7 +21,7 @@ playgroundProxy:
       },
       {
         "fileName": "policy_02.yaml",
-        "contents": "{{ .Files.Get `store/principal_policies/policy_02.yaml` | base64encode }}",
+        "contents": "{{ .Files.Get `store/principal_policies/policy_01.yaml` | base64encode }}",
       }
     ],
     "checkResourceSet": {
