@@ -9,7 +9,7 @@ playgroundValidate:
     "policyFiles": [
       {
         "fileName": "resource.yaml",
-        "contents": "LS0tCmFwaVZlcnNpb246IGFwaS5jZXJib3MuZGV2L3YxCnJlc291cmNlUG9saWN5OgogIHZlcnNpb246ICJkZWZhdWx0IgogIGltcG9ydERlcml2ZWRSb2xlczoKICAgIC0gYXBhdHJfY29tbW9uX3JvbGVzCiAgcmVzb3VyY2U6ICJhbGJ1bTpvYmplY3QiCiAgcnVsZXM6CiAgICAtIGFjdGlvbnM6IFsnKiddCiAgICAgIGVmZmVjdDogRUZGRUNUX0FMTE9XCiAgICAgIGRlcml2ZWRSb2xlczoKICAgICAgICAtIG93bmVyCgogICAgLSBhY3Rpb25zOiBbJ3ZpZXcnLCAnZmxhZyddCiAgICAgIGVmZmVjdDogRUZGRUNUX0FMTE9XCiAgICAgIHJvbGVzOgogICAgICAgIC0gdXNlcgogICAgICBjb25kaXRpb246CiAgICAgICAgbWF0Y2g6CiAgICAgICAgICBleHByOiByZXF1ZXN0LnJlc291cmNlLmF0dHIucHVibGljID09IHRydWUKCiAgICAtIGFjdGlvbnM6IFsndmlldycsICdkZWxldGUnXQogICAgICBlZmZlY3Q6IEVGRkVDVF9BTExPVwogICAgICBkZXJpdmVkUm9sZXM6CiAgICAgICAgLSBhYnVzZV9tb2RlcmF0b3IK"
+        "contents": "{{ .Files.Get `store/resource_policies/policy_04.yaml` | base64encode }}",
       }
     ]
   }
