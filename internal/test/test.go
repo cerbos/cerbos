@@ -7,6 +7,7 @@
 package test
 
 import (
+	"bytes"
 	"fmt"
 	"io"
 	"io/fs"
@@ -16,16 +17,13 @@ import (
 	"sort"
 	"strings"
 	"testing"
+	"text/template"
 
 	"github.com/stretchr/testify/require"
 
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
 	"github.com/cerbos/cerbos/internal/observability/logging"
 	"github.com/cerbos/cerbos/internal/policy"
-)
-
-const (
-	PathPolicies = "_policies"
 )
 
 func init() {
@@ -68,10 +66,9 @@ func PathToDir(tb testing.TB, dir string) string {
 }
 
 type Case struct {
-	Name      string
-	PathToDir string
-	Input     []byte
-	Want      map[string][]byte
+	Name  string
+	Input []byte
+	Want  map[string][]byte
 }
 
 // LoadTestCases loads groups of test files from the given path.
@@ -100,7 +97,7 @@ func LoadTestCases(tb testing.TB, subDir string) []Case {
 			return err
 		}
 
-		if d.IsDir() || strings.Contains(path, PathPolicies) {
+		if d.IsDir() {
 			return nil
 		}
 
@@ -119,13 +116,20 @@ func LoadTestCases(tb testing.TB, subDir string) []Case {
 		name, err := filepath.Rel(dir, strings.TrimSuffix(entry, filepath.Ext(entry)))
 		require.NoError(tb, err)
 
-		testFolderName := strings.Split(name, "/")[0]
-
 		testCases[i] = Case{
-			Name:      name,
-			Input:     readFileContents(tb, entry),
-			PathToDir: filepath.Join(dir, testFolderName),
+			Name:  name,
+			Input: readFileContents(tb, entry),
 		}
+
+		tmpl, err := template.New(entry).Funcs(GetTemplateUtilityFunctions()).Parse(string(testCases[i].Input))
+		require.NoError(tb, err)
+
+		var output bytes.Buffer
+
+		err = tmpl.Execute(&output, GetTemplateFunctions(tb))
+		require.NoError(tb, err)
+
+		testCases[i].Input = output.Bytes()
 
 		wantedFiles, err := filepath.Glob(fmt.Sprintf("%s.*", entry))
 		require.NoError(tb, err)

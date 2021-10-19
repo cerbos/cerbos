@@ -67,7 +67,6 @@ message ServerTestCase {
         AdminAddOrUpdatePolicyCall admin_add_or_update_policy = 9;
         PlaygroundProxyCall playground_proxy = 10;
     }
-    string path_to_dir = 11;
 }
 
 message IndexBuilderTestCase {

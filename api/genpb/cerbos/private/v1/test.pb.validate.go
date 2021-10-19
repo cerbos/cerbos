@@ -156,8 +156,6 @@ func (m *ServerTestCase) Validate() error {
 		}
 	}
 
-	// no validation rules for PathToDir
-
 	switch m.CallKind.(type) {
 
 	case *ServerTestCase_CheckResourceSet:
