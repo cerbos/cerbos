@@ -5,6 +5,7 @@ package util
 
 import (
 	"reflect"
+	"time"
 
 	"google.golang.org/protobuf/types/known/structpb"
 )
@@ -13,6 +14,10 @@ func ToStructPB(v interface{}) (*structpb.Value, error) {
 	val, err := structpb.NewValue(v)
 	if err == nil {
 		return val, nil
+	}
+
+	if t, ok := v.(time.Time); ok {
+		return structpb.NewStringValue(t.Format(time.RFC3339)), nil
 	}
 
 	vv := reflect.ValueOf(v)

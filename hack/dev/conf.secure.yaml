@@ -10,6 +10,13 @@ server:
     cert: hack/dev/tls.crt
     key: hack/dev/tls.key
 
+auxData:
+  jwt:
+    keySets:
+      - id: default
+        local:
+          file: internal/test/testdata/auxdata/verify_key.jwk
+
 audit:
   enabled: true
   accessLogsEnabled: true

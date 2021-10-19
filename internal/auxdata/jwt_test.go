@@ -46,7 +46,7 @@ func TestKeySet(t *testing.T) {
 				PEM:  isPEM,
 			}
 
-			lks := newLocalKeySet(context.Background(), conf)
+			lks := newLocalKeySet(conf)
 			ks, err := lks.keySet(context.Background())
 			require.NoError(t, err)
 			require.NotNil(t, ks)
@@ -63,7 +63,7 @@ func TestKeySet(t *testing.T) {
 				PEM:  isPEM,
 			}
 
-			lks := newLocalKeySet(context.Background(), conf)
+			lks := newLocalKeySet(conf)
 			ks, err := lks.keySet(context.Background())
 			require.NoError(t, err)
 			require.NotNil(t, ks)
@@ -80,7 +80,7 @@ func TestKeySet(t *testing.T) {
 				ctx, cancelFn := context.WithTimeout(context.Background(), 1*time.Second)
 				defer cancelFn()
 
-				rks := newRemoteKeySet(ctx, conf)
+				rks := newRemoteKeySet(jwk.NewAutoRefresh(ctx), conf)
 				ks, err := rks.keySet(ctx)
 
 				require.NoError(t, err)
@@ -136,13 +136,14 @@ func TestExtract_MultipleKeySets(t *testing.T) {
 	t.Cleanup(cancelFn)
 
 	jh := newJWTHelper(ctx, conf)
+	expiry := time.Now().Add(1 * time.Hour)
 
 	tokens := []struct {
 		token string
 		valid bool
 	}{
 		{
-			token: mkSignedToken(t, time.Now().Add(1*time.Hour)),
+			token: mkSignedToken(t, expiry),
 			valid: true,
 		},
 		{
@@ -151,7 +152,7 @@ func TestExtract_MultipleKeySets(t *testing.T) {
 		},
 	}
 
-	want := mkExpectedTokenData(t)
+	want := mkExpectedTokenData(t, expiry)
 
 	for _, token := range tokens {
 		tok := token
@@ -226,13 +227,14 @@ func TestExtract_SingleKeySet(t *testing.T) {
 	t.Cleanup(cancelFn)
 
 	jh := newJWTHelper(ctx, conf)
+	expiry := time.Now().Add(1 * time.Hour)
 
 	tokens := []struct {
 		token string
 		valid bool
 	}{
 		{
-			token: mkSignedToken(t, time.Now().Add(1*time.Hour)),
+			token: mkSignedToken(t, expiry),
 			valid: true,
 		},
 		{
@@ -241,7 +243,7 @@ func TestExtract_SingleKeySet(t *testing.T) {
 		},
 	}
 
-	want := mkExpectedTokenData(t)
+	want := mkExpectedTokenData(t, expiry)
 
 	for _, token := range tokens {
 		tok := token
@@ -264,6 +266,44 @@ func TestExtract_SingleKeySet(t *testing.T) {
 			require.NoError(t, err)
 			require.NotNil(t, have)
 			require.Empty(t, cmp.Diff(want, have, protocmp.Transform()))
+		})
+	}
+}
+
+func TestExtract_NoKeySets(t *testing.T) {
+	ctx, cancelFn := context.WithCancel(context.Background())
+	t.Cleanup(cancelFn)
+
+	jh := newJWTHelper(ctx, nil)
+
+	tokens := []struct {
+		token string
+		valid bool
+	}{
+		{
+			token: mkSignedToken(t, time.Now().Add(1*time.Hour)),
+			valid: true,
+		},
+		{
+			token: mkSignedToken(t, time.Now().Add(-1*time.Hour)),
+			valid: false,
+		},
+	}
+
+	for _, token := range tokens {
+		tok := token
+		validOrInvalid := "invalid"
+		if tok.valid {
+			validOrInvalid = "valid"
+		}
+
+		t.Run(validOrInvalid, func(t *testing.T) {
+			input := &requestv1.AuxData_JWT{
+				Token: tok.token,
+			}
+
+			_, err := jh.extract(context.Background(), input)
+			require.Error(t, err)
 		})
 	}
 }
@@ -292,7 +332,7 @@ func mkSignedToken(t *testing.T, expiry time.Time) string {
 	return string(tokenBytes)
 }
 
-func mkExpectedTokenData(t *testing.T) map[string]*structpb.Value {
+func mkExpectedTokenData(t *testing.T, expiry time.Time) map[string]*structpb.Value {
 	t.Helper()
 
 	wantAud, err := structpb.NewList([]interface{}{"cerbos-jwt-tests"})
@@ -307,6 +347,7 @@ func mkExpectedTokenData(t *testing.T) map[string]*structpb.Value {
 	return map[string]*structpb.Value{
 		"iss":          structpb.NewStringValue("cerbos-test-suite"),
 		"aud":          structpb.NewListValue(wantAud),
+		"exp":          structpb.NewStringValue(expiry.UTC().Format(time.RFC3339)),
 		"customString": structpb.NewStringValue("foobar"),
 		"customInt":    structpb.NewNumberValue(42),
 		"customArray":  structpb.NewListValue(wantArray),

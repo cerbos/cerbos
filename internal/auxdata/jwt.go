@@ -31,19 +31,45 @@ type jwtHelper struct {
 }
 
 func newJWTHelper(ctx context.Context, conf *JWTConf) *jwtHelper {
+	jh := &jwtHelper{verify: true}
+
 	if conf == nil {
-		return nil
+		return jh
 	}
 
-	jh := &jwtHelper{keySets: make(map[string]keySet, len(conf.KeySets)), verify: !conf.DisableVerification}
+	jh.verify = !conf.DisableVerification
 
-	for _, ks := range conf.KeySets {
-		ks := ks
-		switch {
-		case ks.Remote != nil:
-			jh.keySets[ks.ID] = newRemoteKeySet(ctx, ks.Remote)
-		case ks.Local != nil:
-			jh.keySets[ks.ID] = newLocalKeySet(ctx, ks.Local)
+	if jh.verify {
+		jh.keySets = make(map[string]keySet, len(conf.KeySets))
+
+		var autoRefresh *jwk.AutoRefresh
+		for _, ks := range conf.KeySets {
+			ks := ks
+			switch {
+			case ks.Remote != nil:
+				if autoRefresh == nil {
+					autoRefresh = jwk.NewAutoRefresh(ctx)
+				}
+				jh.keySets[ks.ID] = newRemoteKeySet(autoRefresh, ks.Remote)
+			case ks.Local != nil:
+				jh.keySets[ks.ID] = newLocalKeySet(ks.Local)
+			}
+		}
+
+		if autoRefresh != nil {
+			errChan := make(chan jwk.AutoRefreshError, 1)
+			autoRefresh.ErrorSink(errChan)
+			go func() {
+				log := logging.FromContext(ctx).Named("auxdata")
+				for {
+					select {
+					case <-ctx.Done():
+						return
+					case err := <-errChan:
+						log.Warn("Error refreshing keyset", zap.String("url", err.URL), zap.Error(err.Error))
+					}
+				}
+			}()
 		}
 	}
 
@@ -136,8 +162,7 @@ type remoteKeySet struct {
 	url string
 }
 
-func newRemoteKeySet(ctx context.Context, src *RemoteSource) *remoteKeySet {
-	ar := jwk.NewAutoRefresh(ctx)
+func newRemoteKeySet(ar *jwk.AutoRefresh, src *RemoteSource) *remoteKeySet {
 	if src.RefreshInterval > 0 {
 		ar.Configure(src.URL, jwk.WithRefreshInterval(src.RefreshInterval))
 	} else {
@@ -154,7 +179,7 @@ func (rks *remoteKeySet) keySet(ctx context.Context) (jwk.Set, error) {
 // localKeySet represents a keyset defined manually through the configuration.
 type localKeySet func(context.Context) (jwk.Set, error)
 
-func newLocalKeySet(_ context.Context, src *LocalSource) localKeySet {
+func newLocalKeySet(src *LocalSource) localKeySet {
 	if src.Data != "" {
 		kbytes, err := base64.StdEncoding.DecodeString(src.Data)
 		if err != nil {
