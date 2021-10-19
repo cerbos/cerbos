@@ -87,6 +87,13 @@ storage:
       user: git # The git user. Defaults to git.
       privateKeyFile: ${HOME}/.ssh/id_rsa # the path to the SSH private key file.
       # password: pw # the password to the SSH private key.
+  blob: # Only required if the "driver" is "blob"
+    bucket: "s3://my-bucket-name?region=us-east-2" # the URL of the bucket
+    prefix: policies # Set this if the policies are stored in a bucket subdirectory
+    workDir: ${HOME}/tmp/cerbos/work # Directory to store policies
+    updatePollInterval: 15s # how often the bucket should be polled for updates. Defaults to 0, which disables polling.
+    requestTimeout: 10s # HTTP request timeout. Defaults to 5s.
+    downloadTimeout: 30s # Timeout to download all requested policies.
   sqlite3: # Only required if the "driver" is "sqlite3"
     dsn: ":memory:?_fk=true" # Data source name
   postgres: # Only required if the "driver" is "postgres"
