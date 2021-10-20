@@ -943,11 +943,11 @@ Contents of probable licence file $GOMODCACHE/github.com/dgraph-io/badger/v3@v3.
 
 --------------------------------------------------------------------------------
 Module  : github.com/doug-martin/goqu/v9
-Version : v9.17.0
-Time    : 2021-10-06T21:28:44Z
+Version : v9.18.0
+Time    : 2021-10-16T21:42:53Z
 Licence : MIT
 
-Contents of probable licence file $GOMODCACHE/github.com/doug-martin/goqu/v9@v9.17.0/LICENSE:
+Contents of probable licence file $GOMODCACHE/github.com/doug-martin/goqu/v9@v9.18.0/LICENSE:
 
 MIT License
 
