@@ -453,11 +453,11 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 
 --------------------------------------------------------------------------------
 Module  : github.com/alecthomas/chroma
-Version : v0.9.2
-Time    : 2021-06-15T02:56:00Z
+Version : v0.9.4
+Time    : 2021-10-16T21:46:20Z
 Licence : MIT
 
-Contents of probable licence file $GOMODCACHE/github.com/alecthomas/chroma@v0.9.2/COPYING:
+Contents of probable licence file $GOMODCACHE/github.com/alecthomas/chroma@v0.9.4/COPYING:
 
 Copyright (C) 2017 Alec Thomas
 
@@ -943,11 +943,11 @@ Contents of probable licence file $GOMODCACHE/github.com/dgraph-io/badger/v3@v3.
 
 --------------------------------------------------------------------------------
 Module  : github.com/doug-martin/goqu/v9
-Version : v9.16.0
-Time    : 2021-08-28T05:41:15Z
+Version : v9.17.0
+Time    : 2021-10-06T21:28:44Z
 Licence : MIT
 
-Contents of probable licence file $GOMODCACHE/github.com/doug-martin/goqu/v9@v9.16.0/LICENSE:
+Contents of probable licence file $GOMODCACHE/github.com/doug-martin/goqu/v9@v9.17.0/LICENSE:
 
 MIT License
 
@@ -2430,11 +2430,11 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 --------------------------------------------------------------------------------
 Module  : github.com/google/gops
-Version : v0.3.20
-Time    : 2021-09-03T07:57:33Z
+Version : v0.3.21
+Time    : 2021-10-08T16:51:17Z
 Licence : BSD-3-Clause
 
-Contents of probable licence file $GOMODCACHE/github.com/google/gops@v0.3.20/LICENSE:
+Contents of probable licence file $GOMODCACHE/github.com/google/gops@v0.3.21/LICENSE:
 
 Copyright (c) 2016 The Go Authors. All rights reserved.
 
@@ -2916,11 +2916,11 @@ Contents of probable licence file $GOMODCACHE/github.com/jmoiron/sqlx@v1.3.4/LIC
 
 --------------------------------------------------------------------------------
 Module  : github.com/jwalton/gchalk
-Version : v1.1.0
-Time    : 2021-08-04T00:22:35Z
+Version : v1.2.1
+Time    : 2021-10-12T14:26:21Z
 Licence : MIT
 
-Contents of probable licence file $GOMODCACHE/github.com/jwalton/gchalk@v1.1.0/LICENSE:
+Contents of probable licence file $GOMODCACHE/github.com/jwalton/gchalk@v1.2.1/LICENSE:
 
 MIT License
 
@@ -3027,11 +3027,11 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 
 --------------------------------------------------------------------------------
 Module  : github.com/minio/minio-go/v7
-Version : v7.0.15
-Time    : 2021-10-18T18:22:29Z
+Version : v7.0.14
+Time    : 2021-09-14T16:58:38Z
 Licence : Apache-2.0
 
-Contents of probable licence file $GOMODCACHE/github.com/minio/minio-go/v7@v7.0.15/LICENSE:
+Contents of probable licence file $GOMODCACHE/github.com/minio/minio-go/v7@v7.0.14/LICENSE:
 
 
                                  Apache License
@@ -5992,11 +5992,11 @@ Contents of probable licence file $GOMODCACHE/gopkg.in/yaml.v2@v2.4.0/LICENSE:
 
 --------------------------------------------------------------------------------
 Module  : helm.sh/helm/v3
-Version : v3.7.0
-Time    : 2021-09-09T17:16:22Z
+Version : v3.7.1
+Time    : 2021-10-13T19:54:50Z
 Licence : Apache-2.0
 
-Contents of probable licence file $GOMODCACHE/helm.sh/helm/v3@v3.7.0/LICENSE:
+Contents of probable licence file $GOMODCACHE/helm.sh/helm/v3@v3.7.1/LICENSE:
 
 
                                  Apache License
@@ -7211,99 +7211,6 @@ SOFTWARE.
 
 
 --------------------------------------------------------------------------------
-Module  : github.com/alecthomas/assert
-Version : v0.0.0-20170929043011-405dbfeb8e38
-Time    : 2017-09-29T04:30:11Z
-Licence : MIT
-
-Contents of probable licence file $GOMODCACHE/github.com/alecthomas/assert@v0.0.0-20170929043011-405dbfeb8e38/LICENCE.txt:
-
-Copyright (c) 2012 - 2013 Mat Ryer and Tyler Bunnell
-
-Please consider promoting this project if you find it useful.
-
-Permission is hereby granted, free of charge, to any person obtaining a copy of
-this software and associated documentation files (the "Software"), to deal in
-the Software without restriction, including without limitation the rights to
-use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies
-of the Software, and to permit persons to whom the Software is furnished to do
-so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
-
-
---------------------------------------------------------------------------------
-Module  : github.com/alecthomas/colour
-Version : v0.0.0-20160524082231-60882d9e2721
-Time    : 2016-05-24T08:22:31Z
-Licence : MIT
-
-Contents of probable licence file $GOMODCACHE/github.com/alecthomas/colour@v0.0.0-20160524082231-60882d9e2721/COPYING:
-
-The MIT License (MIT)
-
-Copyright (c) 2016 Alec Thomas
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
-
-
---------------------------------------------------------------------------------
-Module  : github.com/alecthomas/repr
-Version : v0.0.0-20180818092828-117648cd9897
-Time    : 2018-08-18T09:28:28Z
-Licence : MIT
-
-Contents of probable licence file $GOMODCACHE/github.com/alecthomas/repr@v0.0.0-20180818092828-117648cd9897/COPYING:
-
-The MIT License (MIT)
-
-Copyright (c) 2016 Alec Thomas
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
-
-
---------------------------------------------------------------------------------
 Module  : github.com/andybalholm/brotli
 Version : v1.0.0
 Time    : 2019-08-21T15:13:43Z
@@ -7456,11 +7363,11 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 --------------------------------------------------------------------------------
 Module  : github.com/aws/aws-sdk-go-v2
-Version : v1.9.0
-Time    : 2021-08-27T22:42:09Z
+Version : v1.9.1
+Time    : 2021-09-17T22:07:00Z
 Licence : Apache-2.0
 
-Contents of probable licence file $GOMODCACHE/github.com/aws/aws-sdk-go-v2@v1.9.0/LICENSE.txt:
+Contents of probable licence file $GOMODCACHE/github.com/aws/aws-sdk-go-v2@v1.9.1/LICENSE.txt:
 
 
                                  Apache License
@@ -7668,11 +7575,11 @@ Contents of probable licence file $GOMODCACHE/github.com/aws/aws-sdk-go-v2@v1.9.
 
 --------------------------------------------------------------------------------
 Module  : github.com/aws/aws-sdk-go-v2/config
-Version : v1.7.0
-Time    : 2021-08-27T22:42:09Z
+Version : v1.8.2
+Time    : 2021-09-17T22:07:00Z
 Licence : Apache-2.0
 
-Contents of probable licence file $GOMODCACHE/github.com/aws/aws-sdk-go-v2/config@v1.7.0/LICENSE.txt:
+Contents of probable licence file $GOMODCACHE/github.com/aws/aws-sdk-go-v2/config@v1.8.2/LICENSE.txt:
 
 
                                  Apache License
@@ -7880,11 +7787,11 @@ Contents of probable licence file $GOMODCACHE/github.com/aws/aws-sdk-go-v2/confi
 
 --------------------------------------------------------------------------------
 Module  : github.com/aws/aws-sdk-go-v2/credentials
-Version : v1.4.0
-Time    : 2021-08-27T22:42:09Z
+Version : v1.4.2
+Time    : 2021-09-17T22:07:00Z
 Licence : Apache-2.0
 
-Contents of probable licence file $GOMODCACHE/github.com/aws/aws-sdk-go-v2/credentials@v1.4.0/LICENSE.txt:
+Contents of probable licence file $GOMODCACHE/github.com/aws/aws-sdk-go-v2/credentials@v1.4.2/LICENSE.txt:
 
 
                                  Apache License
@@ -8092,11 +7999,11 @@ Contents of probable licence file $GOMODCACHE/github.com/aws/aws-sdk-go-v2/crede
 
 --------------------------------------------------------------------------------
 Module  : github.com/aws/aws-sdk-go-v2/feature/ec2/imds
-Version : v1.5.0
-Time    : 2021-08-27T22:42:09Z
+Version : v1.5.1
+Time    : 2021-09-17T22:07:00Z
 Licence : Apache-2.0
 
-Contents of probable licence file $GOMODCACHE/github.com/aws/aws-sdk-go-v2/feature/ec2/imds@v1.5.0/LICENSE.txt:
+Contents of probable licence file $GOMODCACHE/github.com/aws/aws-sdk-go-v2/feature/ec2/imds@v1.5.1/LICENSE.txt:
 
 
                                  Apache License
@@ -8304,11 +8211,11 @@ Contents of probable licence file $GOMODCACHE/github.com/aws/aws-sdk-go-v2/featu
 
 --------------------------------------------------------------------------------
 Module  : github.com/aws/aws-sdk-go-v2/internal/ini
-Version : v1.2.2
-Time    : 2021-08-27T22:42:09Z
+Version : v1.2.3
+Time    : 2021-09-17T22:07:00Z
 Licence : Apache-2.0
 
-Contents of probable licence file $GOMODCACHE/github.com/aws/aws-sdk-go-v2/internal/ini@v1.2.2/LICENSE.txt:
+Contents of probable licence file $GOMODCACHE/github.com/aws/aws-sdk-go-v2/internal/ini@v1.2.3/LICENSE.txt:
 
 
                                  Apache License
@@ -8516,11 +8423,11 @@ Contents of probable licence file $GOMODCACHE/github.com/aws/aws-sdk-go-v2/inter
 
 --------------------------------------------------------------------------------
 Module  : github.com/aws/aws-sdk-go-v2/service/internal/presigned-url
-Version : v1.3.0
-Time    : 2021-08-27T22:42:09Z
+Version : v1.3.1
+Time    : 2021-09-17T22:07:00Z
 Licence : Apache-2.0
 
-Contents of probable licence file $GOMODCACHE/github.com/aws/aws-sdk-go-v2/service/internal/presigned-url@v1.3.0/LICENSE.txt:
+Contents of probable licence file $GOMODCACHE/github.com/aws/aws-sdk-go-v2/service/internal/presigned-url@v1.3.1/LICENSE.txt:
 
 
                                  Apache License
@@ -8728,11 +8635,11 @@ Contents of probable licence file $GOMODCACHE/github.com/aws/aws-sdk-go-v2/servi
 
 --------------------------------------------------------------------------------
 Module  : github.com/aws/aws-sdk-go-v2/service/sso
-Version : v1.4.0
-Time    : 2021-08-27T22:42:09Z
+Version : v1.4.1
+Time    : 2021-09-17T22:07:00Z
 Licence : Apache-2.0
 
-Contents of probable licence file $GOMODCACHE/github.com/aws/aws-sdk-go-v2/service/sso@v1.4.0/LICENSE.txt:
+Contents of probable licence file $GOMODCACHE/github.com/aws/aws-sdk-go-v2/service/sso@v1.4.1/LICENSE.txt:
 
 
                                  Apache License
@@ -8940,11 +8847,11 @@ Contents of probable licence file $GOMODCACHE/github.com/aws/aws-sdk-go-v2/servi
 
 --------------------------------------------------------------------------------
 Module  : github.com/aws/aws-sdk-go-v2/service/sts
-Version : v1.7.0
-Time    : 2021-08-27T22:42:09Z
+Version : v1.7.1
+Time    : 2021-09-17T22:07:00Z
 Licence : Apache-2.0
 
-Contents of probable licence file $GOMODCACHE/github.com/aws/aws-sdk-go-v2/service/sts@v1.7.0/LICENSE.txt:
+Contents of probable licence file $GOMODCACHE/github.com/aws/aws-sdk-go-v2/service/sts@v1.7.1/LICENSE.txt:
 
 
                                  Apache License
@@ -10526,39 +10433,6 @@ OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR
 OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
 OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-
-
---------------------------------------------------------------------------------
-Module  : github.com/danwakefield/fnmatch
-Version : v0.0.0-20160403171240-cbb64ac3d964
-Time    : 2016-04-03T17:12:40Z
-Licence : BSD-2-Clause
-
-Contents of probable licence file $GOMODCACHE/github.com/danwakefield/fnmatch@v0.0.0-20160403171240-cbb64ac3d964/LICENSE:
-
-Copyright (c) 2016, Daniel Wakefield
-All rights reserved.
-
-Redistribution and use in source and binary forms, with or without
-modification, are permitted provided that the following conditions are met:
-
-* Redistributions of source code must retain the above copyright notice, this
-  list of conditions and the following disclaimer.
-
-* Redistributions in binary form must reproduce the above copyright notice,
-  this list of conditions and the following disclaimer in the documentation
-  and/or other materials provided with the distribution.
-
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
-AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
-FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
-DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
-SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
-CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
-OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
 --------------------------------------------------------------------------------
@@ -15636,11 +15510,11 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 --------------------------------------------------------------------------------
 Module  : github.com/jwalton/go-supportscolor
-Version : v1.0.0
-Time    : 2021-02-23T04:53:22Z
+Version : v1.1.0
+Time    : 2021-10-06T16:59:06Z
 Licence : MIT
 
-Contents of probable licence file $GOMODCACHE/github.com/jwalton/go-supportscolor@v1.0.0/LICENSE:
+Contents of probable licence file $GOMODCACHE/github.com/jwalton/go-supportscolor@v1.1.0/LICENSE:
 
 MIT License
 
@@ -20837,11 +20711,11 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 --------------------------------------------------------------------------------
 Module  : golang.org/x/sys
-Version : v0.0.0-20210902050250-f475640dd07b
-Time    : 2021-09-02T05:02:50Z
+Version : v0.0.0-20211004093028-2c5d950f24ef
+Time    : 2021-10-04T09:30:28Z
 Licence : BSD-3-Clause
 
-Contents of probable licence file $GOMODCACHE/golang.org/x/sys@v0.0.0-20210902050250-f475640dd07b/LICENSE:
+Contents of probable licence file $GOMODCACHE/golang.org/x/sys@v0.0.0-20211004093028-2c5d950f24ef/LICENSE:
 
 Copyright (c) 2009 The Go Authors. All rights reserved.
 
@@ -20874,11 +20748,11 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 --------------------------------------------------------------------------------
 Module  : golang.org/x/term
-Version : v0.0.0-20210220032956-6a3ed077a48d
-Time    : 2021-02-20T03:29:56Z
+Version : v0.0.0-20210927222741-03fcf44c2211
+Time    : 2021-09-27T22:27:41Z
 Licence : BSD-3-Clause
 
-Contents of probable licence file $GOMODCACHE/golang.org/x/term@v0.0.0-20210220032956-6a3ed077a48d/LICENSE:
+Contents of probable licence file $GOMODCACHE/golang.org/x/term@v0.0.0-20210927222741-03fcf44c2211/LICENSE:
 
 Copyright (c) 2009 The Go Authors. All rights reserved.
 
