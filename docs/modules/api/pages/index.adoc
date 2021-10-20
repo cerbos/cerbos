@@ -74,7 +74,13 @@ image:csharp.svg[alt="C#",opts="interactive",width=40,height=40]  image:python.s
       "geography": "GB"
     }
   },
-  "includeMeta": true <12>
+  "includeMeta": true, <12>
+  "auxData": { <13>
+    "jwt": {
+        "token": "xxx.yyy.zzz", <14>
+        "keySetId": "ks1" <15>
+    }
+  }
 }
 ----
 <1> Request ID can be anything that uniquely identifies a request.
@@ -89,6 +95,9 @@ image:csharp.svg[alt="C#",opts="interactive",width=40,height=40]  image:python.s
 <10> Static roles that are assigned to this principal by your identity management system. Required.
 <11> Free-form context data about this principal. Policy rule conditions are evaluated based on these values.
 <12> An optional flag to signal that the response should include metadata about policy evaluation. Useful for debugging.
+<13> Optional section for providing auxiliary data.
+<14> JWT to use as an auxiliary data source. 
+<15> ID of the keyset to use to verify the JWT. Optional if only a single xref:configuration:auxdata.adoc[keyset is configured].
 
 
 .Response
@@ -186,7 +195,13 @@ Unlike `CheckResourceSet` -- which checks access to resource instances of the _s
         }
       }
     }
-  ]
+  ],
+  "auxData": { 
+    "jwt": {
+        "token": "xxx.yyy.zzz", 
+        "keySetId": "ks1" 
+    }
+  }
 }
 ----
 

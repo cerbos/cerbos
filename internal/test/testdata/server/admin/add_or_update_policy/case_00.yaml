@@ -116,6 +116,25 @@ adminAddOrUpdatePolicy:
                 }
               },
               "effect": "EFFECT_ALLOW"
+            },
+            {
+              "actions": [
+                "defer"
+              ],
+              "roles": [
+                "employee"
+              ],
+              "condition": {
+                "match": {
+                  "all": {
+                    "of": [
+                      {"expr": "\"cerbos-jwt-tests\" in request.aux_data.jwt.aud"},
+                      {"expr": "\"A\" in request.aux_data.jwt.customArray"}
+                    ]
+                  }
+                }
+              },
+              "effect": "EFFECT_ALLOW"
             }
           ]
         }

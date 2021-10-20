@@ -5,6 +5,13 @@ server:
   logRequestPayloads: false
   playgroundEnabled: true
 
+auxData:
+  jwt:
+    keySets:
+      - id: default
+        local:
+          file: internal/test/testdata/auxdata/verify_key.jwk
+
 audit:
   enabled: true
   backend: "local"

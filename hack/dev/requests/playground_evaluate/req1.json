@@ -1,26 +1,36 @@
 {
-    "playgroundId": "test",
-    "policyFiles": [
-        {
-            "fileName": "common_roles.yaml",
-            "contents": "LS0tCmFwaVZlcnNpb246ICJhcGkuY2VyYm9zLmRldi92MSIKZGVzY3JpcHRpb246IHwtCiAgQ29tbW9uIGR5bmFtaWMgcm9sZXMgdXNlZCB3aXRoaW4gdGhlIEFwYXRyIGFwcApkZXJpdmVkX3JvbGVzOgogIG5hbWU6IGFwYXRyX2NvbW1vbl9yb2xlcwogIGRlZmluaXRpb25zOgogICAgLSBuYW1lOiBvd25lcgogICAgICBwYXJlbnRSb2xlczogWyJ1c2VyIl0KICAgICAgY29uZGl0aW9uOgogICAgICAgIG1hdGNoOgogICAgICAgICAgZXhwcjogcmVxdWVzdC5yZXNvdXJjZS5hdHRyLm93bmVyID09IHJlcXVlc3QucHJpbmNpcGFsLmlkCgogICAgLSBuYW1lOiBhYnVzZV9tb2RlcmF0b3IKICAgICAgcGFyZW50Um9sZXM6IFsibW9kZXJhdG9yIl0KICAgICAgY29uZGl0aW9uOgogICAgICAgIG1hdGNoOgogICAgICAgICAgZXhwcjogcmVxdWVzdC5yZXNvdXJjZS5hdHRyLmZsYWdnZWQgPT0gdHJ1ZQo="
-        },
-        {
-            "fileName": "resource.yaml",
-            "contents": "LS0tCmFwaVZlcnNpb246IGFwaS5jZXJib3MuZGV2L3YxCnJlc291cmNlUG9saWN5OgogIHZlcnNpb246ICJkZWZhdWx0IgogIGltcG9ydERlcml2ZWRSb2xlczoKICAgIC0gYXBhdHJfY29tbW9uX3JvbGVzCiAgcmVzb3VyY2U6ICJhbGJ1bTpvYmplY3QiCiAgcnVsZXM6CiAgICAtIGFjdGlvbnM6IFsnKiddCiAgICAgIGVmZmVjdDogRUZGRUNUX0FMTE9XCiAgICAgIGRlcml2ZWRSb2xlczoKICAgICAgICAtIG93bmVyCgogICAgLSBhY3Rpb25zOiBbJ3ZpZXcnLCAnZmxhZyddCiAgICAgIGVmZmVjdDogRUZGRUNUX0FMTE9XCiAgICAgIHJvbGVzOgogICAgICAgIC0gdXNlcgogICAgICBjb25kaXRpb246CiAgICAgICAgbWF0Y2g6CiAgICAgICAgICBleHByOiByZXF1ZXN0LnJlc291cmNlLmF0dHIucHVibGljID09IHRydWUKCiAgICAtIGFjdGlvbnM6IFsndmlldycsICdkZWxldGUnXQogICAgICBlZmZlY3Q6IEVGRkVDVF9BTExPVwogICAgICBkZXJpdmVkUm9sZXM6CiAgICAgICAgLSBhYnVzZV9tb2RlcmF0b3IK"
-        }
-    ],
-    "actions": ["view", "delete"],
-    "principal": {
-        "id": "alicia",
-        "roles": ["user"]
+  "playgroundId": "test",
+  "policyFiles": [
+    {
+      "fileName": "common_roles.yaml",
+      "contents": "LS0tCmFwaVZlcnNpb246ICJhcGkuY2VyYm9zLmRldi92MSIKZGVzY3JpcHRpb246IHwtCiAgQ29tbW9uIGR5bmFtaWMgcm9sZXMgdXNlZCB3aXRoaW4gdGhlIEFwYXRyIGFwcApkZXJpdmVkX3JvbGVzOgogIG5hbWU6IGFwYXRyX2NvbW1vbl9yb2xlcwogIGRlZmluaXRpb25zOgogICAgLSBuYW1lOiBvd25lcgogICAgICBwYXJlbnRSb2xlczogWyJ1c2VyIl0KICAgICAgY29uZGl0aW9uOgogICAgICAgIG1hdGNoOgogICAgICAgICAgZXhwcjogcmVxdWVzdC5yZXNvdXJjZS5hdHRyLm93bmVyID09IHJlcXVlc3QucHJpbmNpcGFsLmlkCgogICAgLSBuYW1lOiBhYnVzZV9tb2RlcmF0b3IKICAgICAgcGFyZW50Um9sZXM6IFsibW9kZXJhdG9yIl0KICAgICAgY29uZGl0aW9uOgogICAgICAgIG1hdGNoOgogICAgICAgICAgZXhwcjogcmVxdWVzdC5yZXNvdXJjZS5hdHRyLmZsYWdnZWQgPT0gdHJ1ZQo="
     },
-    "resource": {
-        "kind": "album:object",
-        "id": "XX125",
-        "attr": {
-            "owner": "alicia",
-            "public": false
-        }
+    {
+      "fileName": "resource.yaml",
+      "contents": "LS0tCmFwaVZlcnNpb246IGFwaS5jZXJib3MuZGV2L3YxCnJlc291cmNlUG9saWN5OgogIHZlcnNpb246ICJkZWZhdWx0IgogIGltcG9ydERlcml2ZWRSb2xlczoKICAgIC0gYXBhdHJfY29tbW9uX3JvbGVzCiAgcmVzb3VyY2U6ICJhbGJ1bTpvYmplY3QiCiAgcnVsZXM6CiAgICAtIGFjdGlvbnM6IFsnKiddCiAgICAgIGVmZmVjdDogRUZGRUNUX0FMTE9XCiAgICAgIGRlcml2ZWRSb2xlczoKICAgICAgICAtIG93bmVyCgogICAgLSBhY3Rpb25zOiBbJ3ZpZXcnLCAnZmxhZyddCiAgICAgIGVmZmVjdDogRUZGRUNUX0FMTE9XCiAgICAgIHJvbGVzOgogICAgICAgIC0gdXNlcgogICAgICBjb25kaXRpb246CiAgICAgICAgbWF0Y2g6CiAgICAgICAgICBleHByOiByZXF1ZXN0LnJlc291cmNlLmF0dHIucHVibGljID09IHRydWUKCiAgICAtIGFjdGlvbnM6IFsndmlldycsICdkZWxldGUnXQogICAgICBlZmZlY3Q6IEVGRkVDVF9BTExPVwogICAgICBkZXJpdmVkUm9sZXM6CiAgICAgICAgLSBhYnVzZV9tb2RlcmF0b3IK"
     }
+  ],
+  "actions": [
+    "view",
+    "delete"
+  ],
+  "principal": {
+    "id": "alicia",
+    "roles": [
+      "user"
+    ]
+  },
+  "resource": {
+    "kind": "album:object",
+    "id": "XX125",
+    "attr": {
+      "owner": "alicia",
+      "public": false
+    }
+  },
+  "auxData": {
+    "jwt": {
+      "token": "eyJhbGciOiJFUzM4NCIsImtpZCI6IjE5TGZaYXRFZGc4M1lOYzVyMjNndU1KcXJuND0iLCJ0eXAiOiJKV1QifQ.eyJhdWQiOlsiY2VyYm9zLWp3dC10ZXN0cyJdLCJjdXN0b21BcnJheSI6WyJBIiwiQiIsIkMiXSwiY3VzdG9tSW50Ijo0MiwiY3VzdG9tTWFwIjp7IkEiOiJBQSIsIkIiOiJCQiIsIkMiOiJDQyJ9LCJjdXN0b21TdHJpbmciOiJmb29iYXIiLCJleHAiOjE5NDk5MzQwMzksImlzcyI6ImNlcmJvcy10ZXN0LXN1aXRlIn0.WN_tOScSpd_EI-P5EI1YlagxEgExSfBjAtcrgcF6lyWj1lGpR_GKx9goZEp2p_t5AVWXN_bjz_sMUmJdJa4cVd55Qm1miR-FKu6oNRHnSEWdMFmnArwPw-YDJWfylLFX"
+    }
+  }
 }
