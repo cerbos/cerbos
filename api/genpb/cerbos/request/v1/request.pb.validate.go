@@ -1741,7 +1741,12 @@ func (m *ListPoliciesRequest_Filter) Validate() error {
 		return nil
 	}
 
-	// no validation rules for Type
+	if _, ok := _ListPoliciesRequest_Filter_Type_InLookup[m.GetType()]; !ok {
+		return ListPoliciesRequest_FilterValidationError{
+			field:  "Type",
+			reason: "value must be in list [1 2]",
+		}
+	}
 
 	// no validation rules for FieldPath
 
@@ -1806,6 +1811,11 @@ var _ interface {
 	ErrorName() string
 } = ListPoliciesRequest_FilterValidationError{}
 
+var _ListPoliciesRequest_Filter_Type_InLookup = map[ListPoliciesRequest_MatchType]struct{}{
+	1: {},
+	2: {},
+}
+
 // Validate checks the field values on ListPoliciesRequest_SortOptions with the
 // rules defined in the proto definition for this message. If any rules are
 // violated, an error is returned.
@@ -1814,9 +1824,19 @@ func (m *ListPoliciesRequest_SortOptions) Validate() error {
 		return nil
 	}
 
-	// no validation rules for Column
+	if _, ok := _ListPoliciesRequest_SortOptions_Column_InLookup[m.GetColumn()]; !ok {
+		return ListPoliciesRequest_SortOptionsValidationError{
+			field:  "Column",
+			reason: "value must be in list [1 2]",
+		}
+	}
 
-	// no validation rules for Order
+	if _, ok := _ListPoliciesRequest_SortOptions_Order_InLookup[m.GetOrder()]; !ok {
+		return ListPoliciesRequest_SortOptionsValidationError{
+			field:  "Order",
+			reason: "value must be in list [1 2]",
+		}
+	}
 
 	return nil
 }
@@ -1877,3 +1897,13 @@ var _ interface {
 	Cause() error
 	ErrorName() string
 } = ListPoliciesRequest_SortOptionsValidationError{}
+
+var _ListPoliciesRequest_SortOptions_Column_InLookup = map[ListPoliciesRequest_SortOptions_Column]struct{}{
+	1: {},
+	2: {},
+}
+
+var _ListPoliciesRequest_SortOptions_Order_InLookup = map[ListPoliciesRequest_SortOptions_Order]struct{}{
+	1: {},
+	2: {},
+}
