@@ -15,9 +15,10 @@ condition:
         - expr: "GB" in request.resource.attr.geographies
 ----
 
-Within a condition block you have access to three special variables:
+Within a condition block you have access to serveral special variables:
 
 `request`:: The entire request object containing data provided about the resource and the principal. Use dots to access nested fields. For example, the expression to get the principal's department attribute is `request.principal.attr.department`.
+`variables`:: Access variables declared in the `variables` section of the policy.
 `P`:: An alias for `request.principal` for accessing the principal object.
 `R`:: An alias for `request.resource` for accessing the resource object.
 `V`:: An alias for `variables` for accessing the policy variables object.
@@ -137,6 +138,19 @@ principalPolicy:
         - action: "*"
           effect: EFFECT_DENY
 ----
+
+[id="auxdata"]
+== Auxiliary Data
+
+If you have xref:configuration:auxdata.adoc[auxiliary data sources configured], they can be accessed using `request.aux_data`. 
+
+.Accessing JWT claims
+[source,yaml,linenums]
+----
+"cerbie" in request.aux_data.jwt.aud && request.aux_data.jwt.iss == "cerbos"
+----
+
+
 == Operators
 
 NOTE: CEL has many builtin functions and operators. The fully up-to-date list can be found at https://github.com/google/cel-spec/blob/master/doc/langdef.md#list-of-standard-definitions. 

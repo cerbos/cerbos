@@ -51,6 +51,7 @@ import (
 
 	// Import to register the Badger audit log backend.
 	_ "github.com/cerbos/cerbos/internal/audit/local"
+	"github.com/cerbos/cerbos/internal/auxdata"
 	"github.com/cerbos/cerbos/internal/compile"
 	"github.com/cerbos/cerbos/internal/config"
 	"github.com/cerbos/cerbos/internal/engine"
@@ -119,8 +120,22 @@ func Start(ctx context.Context, zpagesEnabled bool) error {
 		return fmt.Errorf("failed to create engine: %w", err)
 	}
 
+	// initialize aux data
+	auxData, err := auxdata.New(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to initialize auxData handler: %w", err)
+	}
+
 	s := NewServer(conf)
-	return s.Start(ctx, store, eng, auditLog, zpagesEnabled)
+	return s.Start(ctx, Param{AuditLog: auditLog, AuxData: auxData, Engine: eng, Store: store, ZPagesEnabled: zpagesEnabled})
+}
+
+type Param struct {
+	AuditLog      audit.Log
+	AuxData       *auxdata.AuxData
+	Engine        *engine.Engine
+	Store         storage.Store
+	ZPagesEnabled bool
 }
 
 type Server struct {
@@ -144,7 +159,7 @@ func NewServer(conf *Conf) *Server {
 	}
 }
 
-func (s *Server) Start(ctx context.Context, store storage.Store, eng *engine.Engine, auditLog audit.Log, zpagesEnabled bool) error {
+func (s *Server) Start(ctx context.Context, param Param) error {
 	defer s.cancelFunc()
 
 	log := zap.L().Named("server")
@@ -179,9 +194,9 @@ func (s *Server) Start(ctx context.Context, store storage.Store, eng *engine.Eng
 	}
 
 	// start servers
-	grpcServer := s.startGRPCServer(grpcL, store, eng, auditLog)
+	grpcServer := s.startGRPCServer(grpcL, param)
 
-	httpServer, err := s.startHTTPServer(ctx, httpL, grpcServer, zpagesEnabled)
+	httpServer, err := s.startHTTPServer(ctx, httpL, grpcServer, param.ZPagesEnabled)
 	if err != nil {
 		log.Error("Failed to start HTTP server", zap.Error(err))
 		return err
@@ -206,7 +221,7 @@ func (s *Server) Start(ctx context.Context, store storage.Store, eng *engine.Eng
 		}
 
 		log.Debug("Shutting down the audit log")
-		auditLog.Close()
+		param.AuditLog.Close()
 
 		log.Info("Shutdown complete")
 		return nil
@@ -278,14 +293,14 @@ func (s *Server) getTLSConfig() (*tls.Config, error) {
 	return tlsConfig, nil
 }
 
-func (s *Server) startGRPCServer(l net.Listener, store storage.Store, eng *engine.Engine, auditLog audit.Log) *grpc.Server {
+func (s *Server) startGRPCServer(l net.Listener, param Param) *grpc.Server {
 	log := zap.L().Named("grpc")
-	server := s.mkGRPCServer(log, auditLog)
+	server := s.mkGRPCServer(log, param.AuditLog)
 
 	healthpb.RegisterHealthServer(server, s.health)
 	reflection.Register(server)
 
-	cerbosSvc := svc.NewCerbosService(eng)
+	cerbosSvc := svc.NewCerbosService(param.Engine, param.AuxData)
 	svcv1.RegisterCerbosServiceServer(server, cerbosSvc)
 	s.health.SetServingStatus(svcv1.CerbosService_ServiceDesc.ServiceName, healthpb.HealthCheckResponse_SERVING)
 
@@ -295,7 +310,7 @@ func (s *Server) startGRPCServer(l net.Listener, store storage.Store, eng *engin
 		if creds.isUnsafe() {
 			log.Warn("[SECURITY RISK] Admin API uses default credentials which are unsafe for production use. Please change the credentials by updating the configuration file.")
 		}
-		svcv1.RegisterCerbosAdminServiceServer(server, svc.NewCerbosAdminService(store, auditLog, creds.Username, creds.PasswordHash))
+		svcv1.RegisterCerbosAdminServiceServer(server, svc.NewCerbosAdminService(param.Store, param.AuditLog, creds.Username, creds.PasswordHash))
 		s.health.SetServingStatus(svcv1.CerbosAdminService_ServiceDesc.ServiceName, healthpb.HealthCheckResponse_SERVING)
 	}
 

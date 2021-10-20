@@ -350,6 +350,7 @@ func (crbr *CheckResourceBatchResponse) String() string {
 	return protojson.Format(crbr.CheckResourceBatchResponse)
 }
 
+// TODO (cell) replace with util.ToStructPB.
 func toStructPB(v interface{}) (*structpb.Value, error) {
 	val, err := structpb.NewValue(v)
 	if err == nil {

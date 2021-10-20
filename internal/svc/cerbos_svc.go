@@ -17,6 +17,7 @@ import (
 	requestv1 "github.com/cerbos/cerbos/api/genpb/cerbos/request/v1"
 	responsev1 "github.com/cerbos/cerbos/api/genpb/cerbos/response/v1"
 	svcv1 "github.com/cerbos/cerbos/api/genpb/cerbos/svc/v1"
+	"github.com/cerbos/cerbos/internal/auxdata"
 	"github.com/cerbos/cerbos/internal/compile"
 	"github.com/cerbos/cerbos/internal/engine"
 	"github.com/cerbos/cerbos/internal/observability/logging"
@@ -27,19 +28,27 @@ var _ svcv1.CerbosServiceServer = (*CerbosService)(nil)
 
 // CerbosService implements the policy checking service.
 type CerbosService struct {
-	eng *engine.Engine
+	eng     *engine.Engine
+	auxData *auxdata.AuxData
 	*svcv1.UnimplementedCerbosServiceServer
 }
 
-func NewCerbosService(eng *engine.Engine) *CerbosService {
+func NewCerbosService(eng *engine.Engine, auxData *auxdata.AuxData) *CerbosService {
 	return &CerbosService{
 		eng:                              eng,
+		auxData:                          auxData,
 		UnimplementedCerbosServiceServer: &svcv1.UnimplementedCerbosServiceServer{},
 	}
 }
 
 func (cs *CerbosService) CheckResourceSet(ctx context.Context, req *requestv1.CheckResourceSetRequest) (*responsev1.CheckResourceSetResponse, error) {
 	log := ctxzap.Extract(ctx)
+
+	auxData, err := cs.auxData.Extract(ctx, req.AuxData)
+	if err != nil {
+		log.Error("Failed to extract auxData", zap.Error(err))
+		return nil, status.Error(codes.InvalidArgument, "failed to extract auxData")
+	}
 
 	inputs := make([]*enginev1.CheckInput, len(req.Resource.Instances))
 	idxToKey := make([]string, len(req.Resource.Instances))
@@ -56,6 +65,7 @@ func (cs *CerbosService) CheckResourceSet(ctx context.Context, req *requestv1.Ch
 				Id:            key,
 				Attr:          res.Attr,
 			},
+			AuxData: auxData,
 		}
 		idxToKey[i] = key
 		i++
@@ -81,6 +91,12 @@ func (cs *CerbosService) CheckResourceSet(ctx context.Context, req *requestv1.Ch
 func (cs *CerbosService) CheckResourceBatch(ctx context.Context, req *requestv1.CheckResourceBatchRequest) (*responsev1.CheckResourceBatchResponse, error) {
 	log := ctxzap.Extract(ctx)
 
+	auxData, err := cs.auxData.Extract(ctx, req.AuxData)
+	if err != nil {
+		log.Error("Failed to extract auxData", zap.Error(err))
+		return nil, status.Error(codes.InvalidArgument, "failed to extract auxData")
+	}
+
 	inputs := make([]*enginev1.CheckInput, len(req.Resources))
 	for i, res := range req.Resources {
 		inputs[i] = &enginev1.CheckInput{
@@ -88,6 +104,7 @@ func (cs *CerbosService) CheckResourceBatch(ctx context.Context, req *requestv1.
 			Actions:   res.Actions,
 			Principal: req.Principal,
 			Resource:  res.Resource,
+			AuxData:   auxData,
 		}
 	}
 

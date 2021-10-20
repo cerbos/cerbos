@@ -65,6 +65,28 @@ server:
       username: cerbos # The hardcoded username to use for authentication.
       passwordHash: $2y$10$6v.PIn0zJ1xFdIDPlX3yheDZHM2iXI8CSKT5a3d35djtOxnOATxFi # The bcrypt hash of the password to use for authentication.
 
+auxData: # Optional
+  jwt:
+    disableVerification: false # Set to true to disable JWT verification
+    keySets: # Keysets for verifying JWTs
+      - id: ks1 # Unique ID that can be used in API requests to indicate the keyset to use to verify a particular token.
+        remote: # Fetch from a JWKS URL. 
+          url: https://domain.tld/.well-known/keys.jwks
+      - id: ks2
+        remote: 
+          url: https://other-domain.tld/.well-known/keys.jwks
+          refreshInterval: 1h # Explicitly set the refresh interval.
+      - id: ks3
+        local: # Load from a local file
+          file: /path/to/keys.jwks
+      - id: ks4
+        local: # Load from a base64-encoded key data defined inline.
+          data: BASE64-ENCODED-KEY-DATA
+      - id: ks5
+        local:
+          file: /path/to/keys.pem
+          pem: true # Treat the file (or data) as PEM.
+
 engine: # Optional
   defaultPolicyVersion: "default" # Default policy version to assume if the request does not specify one.
 
