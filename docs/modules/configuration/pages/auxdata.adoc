@@ -9,7 +9,7 @@ The `auxData` block configures the auxiliary data sources that can be referenced
 
 Cerbos supports reading claims from a JWT issued by an authentication system. This helps reduce the boilerplate on the client side to extract the claims from a JWT and add them as attributes to the Cerbos API request. (See xref:api:index.adoc[] and xref:policies:conditions.adoc#auxdata[Auxiliary Data] for more information on how to craft the API request and access the JWT claims in policies.)
 
-In order to verify the JWT, the Cerbos instance must have access to the appropriate keysets. They can be fetched from a URL or read from the local file system. 
+In order to verify the JWT, the Cerbos instance must have access to the appropriate keysets. They can be fetched from a URL or read from the local file system. Verification involves checking that the signature is valid and that the token has not expired. 
 
 
 .Using multiple keysets
