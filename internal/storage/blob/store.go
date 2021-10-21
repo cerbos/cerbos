@@ -213,15 +213,17 @@ func (s *Store) updateIndex(ctx context.Context) error {
 		return err
 	}
 
-	if changes == nil {
+	if failures := changes.failures(); failures > 0 {
+		s.log.Warnf("Failed to download (%d) files", failures)
+	}
+
+	if changes.isEmpty() {
 		s.log.Debug("No changes")
 		return nil
 	}
-	if changes.failuresCount > 0 {
-		s.log.Warnf("Failed to download (%d) files from the bucket %q", changes.failuresCount, s.conf.Bucket)
-	}
 
 	s.log.Infof("Detected changes: added or updated (%d), deleted (%d)", len(changes.updateOrAdd), len(changes.delete))
+
 	var p *policyv1.Policy
 	var event storage.Event
 	for _, f := range changes.updateOrAdd {

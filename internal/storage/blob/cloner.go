@@ -61,6 +61,18 @@ type CloneResult struct {
 	failuresCount int
 }
 
+func (cr *CloneResult) isEmpty() bool {
+	return cr == nil || (len(cr.updateOrAdd) == 0 && len(cr.delete) == 0)
+}
+
+func (cr *CloneResult) failures() int {
+	if cr == nil {
+		return 0
+	}
+
+	return cr.failuresCount
+}
+
 func (c *Cloner) Clone(ctx context.Context) (*CloneResult, error) {
 	iter := c.bucket.List(nil)
 	info := make(infoType, len(c.info))
