@@ -43,14 +43,21 @@ func init() {
 		if err := config.GetSection(conf); err != nil {
 			return nil, err
 		}
+
 		bucket, err := newBucket(ctx, conf)
 		if err != nil {
 			return nil, err
 		}
-		c, err := NewCloner(bucket, storeFS{conf.WorkDir})
+
+		if err := validateOrCreateWorkDir(conf.WorkDir); err != nil {
+			return nil, err
+		}
+
+		c, err := NewCloner(bucket, storeFS{dir: conf.WorkDir})
 		if err != nil {
 			return nil, err
 		}
+
 		return NewStore(ctx, conf, c)
 	})
 }
@@ -114,6 +121,25 @@ func openS3Bucket(ctx context.Context, conf *Conf, bucketURL *url.URL) (*blob.Bu
 	return opener.OpenBucketURL(ctx, bucketURL)
 }
 
+func validateOrCreateWorkDir(workDir string) error {
+	fileInfo, err := os.Stat(workDir)
+	if err != nil {
+		if !errors.Is(err, os.ErrNotExist) {
+			return fmt.Errorf("failed to stat workDir %q: %w", workDir, err)
+		}
+
+		if err := os.MkdirAll(workDir, 0o744); err != nil { //nolint:gomnd
+			return fmt.Errorf("failed to create workDir %q: %w", workDir, err)
+		}
+	}
+
+	if fileInfo != nil && !fileInfo.IsDir() {
+		return fmt.Errorf("workDir is not a directory: %s", workDir)
+	}
+
+	return nil
+}
+
 type bucketCloner interface {
 	Clone(ctx context.Context) (*CloneResult, error)
 }
@@ -133,7 +159,7 @@ func (s *Store) Subscribe(sub storage.Subscriber) {
 
 func NewStore(ctx context.Context, conf *Conf, cloner bucketCloner) (*Store, error) {
 	s := &Store{
-		log:                 zap.S().Named(DriverName).With("dir", conf.WorkDir),
+		log:                 zap.S().Named(DriverName).With("bucket", conf.Bucket, "workDir", conf.WorkDir),
 		conf:                conf,
 		cloner:              cloner,
 		SubscriptionManager: storage.NewSubscriptionManager(ctx),
@@ -150,11 +176,6 @@ func NewStore(ctx context.Context, conf *Conf, cloner bucketCloner) (*Store, err
 var ErrPartialFailureToDownloadOnInit = errors.New("failed to download some files from the bucket")
 
 func (s *Store) init(ctx context.Context) error {
-	err := s.validateOrCreateWorkDir()
-	if err != nil {
-		return err
-	}
-
 	s.fsys = os.DirFS(s.conf.WorkDir)
 
 	if cr, err := s.clone(ctx); err != nil {
@@ -165,6 +186,7 @@ func (s *Store) init(ctx context.Context) error {
 		return ErrPartialFailureToDownloadOnInit
 	}
 
+	var err error
 	s.idx, err = index.Build(ctx, s.fsys, index.WithRootDir("."))
 	if err != nil {
 		s.log.Errorw("Failed to build index", "error", err)
@@ -173,22 +195,6 @@ func (s *Store) init(ctx context.Context) error {
 
 	go s.pollForUpdates(ctx)
 
-	return nil
-}
-
-func (s *Store) validateOrCreateWorkDir() error {
-	fileInfo, err := os.Stat(s.conf.WorkDir)
-	if err != nil && !errors.Is(err, os.ErrNotExist) {
-		return fmt.Errorf("failed to stat %s: %w", s.conf.WorkDir, err)
-	} else if fileInfo != nil && !fileInfo.IsDir() {
-		return fmt.Errorf("not a directory: %s", s.conf.WorkDir)
-	}
-
-	if errors.Is(err, os.ErrNotExist) {
-		if err = os.MkdirAll(s.conf.WorkDir, 0o744); err != nil { //nolint:gomnd
-			return fmt.Errorf("failed to create directory %q: %w", s.conf.WorkDir, err)
-		}
-	}
 	return nil
 }
 
@@ -207,15 +213,17 @@ func (s *Store) updateIndex(ctx context.Context) error {
 		return err
 	}
 
-	if changes == nil {
+	if failures := changes.failures(); failures > 0 {
+		s.log.Warnf("Failed to download (%d) files", failures)
+	}
+
+	if changes.isEmpty() {
 		s.log.Debug("No changes")
 		return nil
 	}
-	if changes.failuresCount > 0 {
-		s.log.Warnf("Failed to download (%d) files from the bucket %q", changes.failuresCount, s.conf.Bucket)
-	}
 
 	s.log.Infof("Detected changes: added or updated (%d), deleted (%d)", len(changes.updateOrAdd), len(changes.delete))
+
 	var p *policyv1.Policy
 	var event storage.Event
 	for _, f := range changes.updateOrAdd {
