@@ -24,6 +24,8 @@ include::example$photo-share/config.yaml[]
 
 ****
 
+NOTE: You can find all the policies and tests used in this tutorial at https://github.com/cerbos/photo-share-tutorial. 
+
 == The Apatr application
 
 Apatr is a simple photo-sharing service that allows users to upload their photos and optionally share them with the rest of the world. Users sign-up to the service either by creating their own user account on the website or by signing-in with an identity provider (IDP) like Google or Facebook. Apatr uses a third-party identity management tool to manage these accounts and authenticating users to the site. Once they are logged-in, users can do the following:
@@ -39,7 +41,6 @@ Apatr’s identity provider allows defining roles for users. The roles currently
 
 * `moderator`: Member of the moderator team
 * `user`: Authenticated users
-
 
 == Resources and actions
 
@@ -298,16 +299,5 @@ Test results
 == 'Delete flagged album' by principal 'maria' [OK]
 ----
 
-[NOTE]
-====
-You can produce machine-readable output from the `test` command by using the `--format=json` flag.
+NOTE: See https://github.com/cerbos/photo-share-tutorial for an example of using Cerbos GitHub Actions in a CI workflow to compile and test policies. 
 
-[source,shell,subs="attributes"]
-----
-docker run -it -v $(pwd):/photo-share {app-docker-img} \
-    compile --tests=/photo-share/tests --format=json /photo-share/policies
-----
-
-See xref:policies:compile.adoc[Policy validation and testing] documentation for more information. 
-
-====
