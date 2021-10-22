@@ -1,5 +1,9 @@
 gomod:
   proxy: true
+
+snapshot:
+  name_template: '{{ incminor .Version }}-prerelease'
+
 builds:
   - main: ./cmd/cerbos
     binary: cerbos
