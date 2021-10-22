@@ -390,6 +390,12 @@ message ServerInfoRequest {
 }
 
 message ListPoliciesRequest { 
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
+		json_schema: {
+			description: "List policies request"
+		}
+    };
+
     enum MatchType {
         MATCH_TYPE_UNSPECIFIED = 0;
         MATCH_TYPE_EXACT = 1;
@@ -397,26 +403,42 @@ message ListPoliciesRequest {
     }
 
     message Filter {
+        option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
+            json_schema: {
+                description: "Filter options"
+            }
+        };
+
         MatchType type = 1 [
+            (validate.rules).enum = {in: [1,2]},
             (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = { 
                 description: "Kind of filter"
-                enum: ["MATCH_TYPE_EXACT", "MATCH_TYPE_WILDCARD"]
+                example: "\"MATCH_TYPE_WILDCARD\""
             }
         ];
         string field_path = 2 [
+            (google.api.field_behavior) = REQUIRED,
             (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
                 description: "JSONPath expression describing the field to match"
                 example: "\"$.resourcePolicy.resource\""
             }
         ];
         string value = 3 [
+            (google.api.field_behavior) = REQUIRED,
             (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = { 
                 description: "The value to compare"
+                example: "\"*\""
             }
         ];
     }
 
     message SortOptions {
+        option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
+            json_schema: {
+                description: "Sort options"
+            }
+        };
+
         enum Column {
             COLUMN_UNSPECIFIED = 0;
             COLUMN_NAME = 1;
@@ -430,26 +452,23 @@ message ListPoliciesRequest {
         }
         
         Column column = 1 [
+            (validate.rules).enum = {in: [1,2]},
             (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
                 description: "Sort column"
-                enum: ["COLUMN_NAME", "COLUMN_VERSION"]
+                example: "\"COLUMN_NAME\""
             }
         ];
 
         Order order = 2 [
+            (validate.rules).enum = {in: [1,2]},
             (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = { 
                 description: "Sort order"
-                enum: ["ORDER_ASCENDING", "ORDER_DESCENDING"]
+                array: ["ORDER_ASCENDING", "ORDER_DESCENDING"]
+                example: "\"ORDER_ASCENDING\""
             }
         ];
     }
 
     repeated Filter filters = 1;
     SortOptions sort_options = 2;
-
-    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
-		json_schema: {
-			description: "List policies request"
-		}
-    };
 }

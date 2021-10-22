@@ -249,6 +249,42 @@
             "BasicAuth": []
           }
         ]
+      },
+      "post": {
+        "summary": "List policies",
+        "operationId": "CerbosAdminService_ListPolicies2",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1ListPoliciesResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/v1ListPoliciesRequest"
+            }
+          }
+        ],
+        "tags": [
+          "CerbosAdminService"
+        ],
+        "security": [
+          {
+            "BasicAuth": []
+          }
+        ]
       }
     },
     "/api/check": {
@@ -580,22 +616,31 @@
       "properties": {
         "type": {
           "$ref": "#/definitions/ListPoliciesRequestMatchType",
-          "enum": [
-            "MATCH_TYPE_EXACT",
-            "MATCH_TYPE_WILDCARD"
-          ],
+          "example": "MATCH_TYPE_WILDCARD",
           "description": "Kind of filter"
         },
         "fieldPath": {
           "type": "string",
           "example": "$.resourcePolicy.resource",
-          "description": "JSONPath expression describing the field to match"
+          "description": "JSONPath expression describing the field to match",
+          "required": [
+            "field_path"
+          ]
         },
         "value": {
           "type": "string",
-          "description": "The value to compare"
+          "example": "*",
+          "description": "The value to compare",
+          "required": [
+            "value"
+          ]
         }
-      }
+      },
+      "description": "Filter options",
+      "required": [
+        "fieldPath",
+        "value"
+      ]
     },
     "ListPoliciesRequestMatchType": {
       "type": "string",
@@ -611,21 +656,16 @@
       "properties": {
         "column": {
           "$ref": "#/definitions/SortOptionsColumn",
-          "enum": [
-            "COLUMN_NAME",
-            "COLUMN_VERSION"
-          ],
+          "example": "COLUMN_NAME",
           "description": "Sort column"
         },
         "order": {
           "$ref": "#/definitions/SortOptionsOrder",
-          "enum": [
-            "ORDER_ASCENDING",
-            "ORDER_DESCENDING"
-          ],
+          "example": "ORDER_ASCENDING",
           "description": "Sort order"
         }
-      }
+      },
+      "description": "Sort options"
     },
     "MatchExprList": {
       "type": "object",
@@ -1204,6 +1244,21 @@
         }
       },
       "description": "Audit log stream."
+    },
+    "v1ListPoliciesRequest": {
+      "type": "object",
+      "properties": {
+        "filters": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ListPoliciesRequestFilter"
+          }
+        },
+        "sortOptions": {
+          "$ref": "#/definitions/ListPoliciesRequestSortOptions"
+        }
+      },
+      "description": "List policies request"
     },
     "v1ListPoliciesResponse": {
       "type": "object",
