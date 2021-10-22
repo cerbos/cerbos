@@ -226,6 +226,7 @@ tests:
 ----
 
 
+[id="ci-environments"]
 == Validating and testing policies in CI environments
 
 Because Cerbos artefacts are distributed as self-contained containers and binaries, you should be able to easily integrate Cerbos into any CI environment. Simply configure your workflow to execute the commands described in the sections above using either the Cerbos container (you may need to configure mount points to suit your repo structure) or the binary.

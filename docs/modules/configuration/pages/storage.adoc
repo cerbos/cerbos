@@ -31,6 +31,7 @@ storage:
 
 CAUTION: On some platforms the automatic change detection feature can be inefficient and resource-intensive if the watched directory contains many files or gets updated frequently.
 
+[id="blob-driver"]
 == Blob driver
 
 Cerbos policies can be stored in AWS S3, Google Cloud Storage, or any other S3-compatible storage systems such as link:https://www.minio.io[Minio].
