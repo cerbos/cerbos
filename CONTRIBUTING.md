@@ -16,18 +16,10 @@ Submitting pull requests
 - Wait for the project maintainers and other community members to respond to your proposal and clearly agree on a course of action.
 - Create your patch, constraining yourself to what was agreed on the issue. If previously unforeseen problems arise and you have to make significant changes to an area that wasn’t discussed in the issue, make sure to go back to the issue to discuss the new circumstances and get buy-in from the people who are involved.
 - Run the pre-commit checks that are appropriate for the kind of change. (See below for details.)
-- Submit your pull request. Use the [closing keywords](https://docs.github.com/en/issues/tracking-your-work-with-issues/linking-a-pull-request-to-an-issue#linking-a-pull-request-to-an-issue-using-a-keyword) to link the PR to the original issue. Make sure to use the appropriate prefix to the pull request title:
-  - `bug:` Bug fix
-  - `chore:` General maintenance work
-      - `chore(ci):` CI related work
-      - `chore(deps):` Dependency updates
-      - `chore(refactor):` Refactoring
-      - `chore(release):` Release related work
-      - `chore(test):` Tests
-   - `docs:` Documentation changes
-   - `enhancement:` Enhancements to existing features
-   - `feature:` New feature
-- At least one approval from a maintainer is required to merge the pull request.
+- Submit your pull request.
+    - We require all pull requests to follow the [conventional commit](https://www.conventionalcommits.org/en/v1.0.0/) format.
+    - Use [closing keywords](https://docs.github.com/en/issues/tracking-your-work-with-issues/linking-a-pull-request-to-an-issue#linking-a-pull-request-to-an-issue-using-a-keyword) to link the PR to the original issue. 
+    - At least one approval from a maintainer is required to merge the pull request.
 
 
 ### Submitting pull requests for code changes
