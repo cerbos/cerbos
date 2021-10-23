@@ -139,11 +139,12 @@ type Param struct {
 }
 
 type Server struct {
-	conf       *Conf
-	cancelFunc context.CancelFunc
-	group      *errgroup.Group
-	health     *health.Server
-	ocExporter *prometheus.Exporter
+	conf        *Conf
+	cancelFunc  context.CancelFunc
+	group       *errgroup.Group
+	health      *health.Server
+	ocExporter  *prometheus.Exporter
+	initialised chan struct{}
 }
 
 func NewServer(conf *Conf) *Server {
@@ -151,17 +152,26 @@ func NewServer(conf *Conf) *Server {
 
 	group, _ := errgroup.WithContext(ctx)
 
+	initialised := make(chan struct{}, 1)
+
 	return &Server{
-		conf:       conf,
-		cancelFunc: cancelFunc,
-		group:      group,
-		health:     health.NewServer(),
+		conf: conf,
+		cancelFunc: func() {
+			close(initialised)
+			cancelFunc()
+		},
+		group:       group,
+		health:      health.NewServer(),
+		initialised: initialised,
 	}
+}
+
+func (s *Server) WaitInit() {
+	<-s.initialised
 }
 
 func (s *Server) Start(ctx context.Context, param Param) error {
 	defer s.cancelFunc()
-
 	log := zap.L().Named("server")
 
 	if s.conf.MetricsEnabled {
@@ -226,7 +236,7 @@ func (s *Server) Start(ctx context.Context, param Param) error {
 		log.Info("Shutdown complete")
 		return nil
 	})
-
+	s.initialised <- struct{}{}
 	err = s.group.Wait()
 	if err != nil {
 		log.Error("Stopping server due to error", zap.Error(err))

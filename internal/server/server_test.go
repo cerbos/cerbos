@@ -13,7 +13,6 @@ import (
 	"net"
 	"net/http"
 	"path/filepath"
-	"runtime"
 	"testing"
 	"time"
 
@@ -168,6 +167,7 @@ func TestServer(t *testing.T) {
 			startServer(ctx, conf, param)
 
 			t.Run("grpc", testGRPCRequests(testCases, conf.GRPCListenAddr, grpc.WithTransportCredentials(local.NewCredentials())))
+			t.Run("h2c", testGRPCRequests(testCases, conf.HTTPListenAddr, grpc.WithTransportCredentials(local.NewCredentials())))
 		})
 	})
 }
@@ -240,7 +240,7 @@ func startServer(ctx context.Context, conf *Conf, param Param) {
 			panic(err)
 		}
 	}()
-	runtime.Gosched()
+	s.WaitInit()
 }
 
 func testGRPCRequests(testCases []*privatev1.ServerTestCase, addr string, opts ...grpc.DialOption) func(*testing.T) {

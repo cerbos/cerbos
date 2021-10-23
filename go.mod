@@ -75,6 +75,7 @@ require (
 )
 
 require (
+	github.com/aws/aws-lambda-go v1.27.0
 	github.com/aws/aws-sdk-go v1.41.6
 	github.com/lestrrat-go/jwx v1.2.7
 	github.com/minio/minio-go/v7 v7.0.15
