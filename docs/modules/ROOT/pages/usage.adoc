@@ -28,10 +28,14 @@ After authoring your policies you should run the compiler over the files to make
 .Using the binary
 [source,sh,subs="attributes"]
 ----
+# Compiles and run tests in the given directory
 ./{app-name} compile /path/to/policies/dir
 
-# To run tests, provide the path to the tests directory
-./{app-name} compile --tests=/path/to/tests /path/to/policies/dir
+# To skip the tests
+./{app-name} compile /path/to/policies/dir --skip-tests
+
+# To specify a different path to the tests directory
+./{app-name} compile /path/to/policies/dir --tests=/path/to/tests
 ----
 
 .Using Docker
