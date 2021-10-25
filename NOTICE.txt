@@ -974,11 +974,11 @@ SOFTWARE.
 
 --------------------------------------------------------------------------------
 Module  : github.com/envoyproxy/protoc-gen-validate
-Version : v0.6.1
-Time    : 2021-04-26T13:58:17Z
+Version : v0.6.2
+Time    : 2021-09-30T17:49:23Z
 Licence : Apache-2.0
 
-Contents of probable licence file $GOMODCACHE/github.com/envoyproxy/protoc-gen-validate@v0.6.1/LICENSE:
+Contents of probable licence file $GOMODCACHE/github.com/envoyproxy/protoc-gen-validate@v0.6.2/LICENSE:
 
 
                                  Apache License
