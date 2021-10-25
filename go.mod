@@ -12,7 +12,7 @@ require (
 	github.com/cespare/xxhash v1.1.0
 	github.com/dgraph-io/badger/v3 v3.2103.2
 	github.com/doug-martin/goqu/v9 v9.18.0
-	github.com/envoyproxy/protoc-gen-validate v0.6.1
+	github.com/envoyproxy/protoc-gen-validate v0.6.2
 	github.com/fatih/color v1.13.0
 	github.com/fergusstrange/embedded-postgres v1.11.0
 	github.com/fsnotify/fsnotify v1.5.1
