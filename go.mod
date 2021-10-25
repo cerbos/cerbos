@@ -76,7 +76,7 @@ require (
 
 require (
 	github.com/aws/aws-sdk-go v1.41.6
-	github.com/lestrrat-go/jwx v1.2.7
+	github.com/lestrrat-go/jwx v1.2.8
 	github.com/minio/minio-go/v7 v7.0.15
 	gocloud.dev v0.24.0
 )
@@ -125,7 +125,7 @@ require (
 	github.com/go-git/go-billy/v5 v5.3.1 // indirect
 	github.com/go-kit/log v0.1.0 // indirect
 	github.com/go-logfmt/logfmt v0.5.0 // indirect
-	github.com/goccy/go-json v0.7.8 // indirect
+	github.com/goccy/go-json v0.7.10 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/golang/glog v1.0.0 // indirect
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
