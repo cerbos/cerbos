@@ -1,6 +1,3 @@
-gomod:
-  proxy: true
-
 snapshot:
   name_template: '{{ incminor .Version }}-prerelease'
 
