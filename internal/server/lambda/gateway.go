@@ -16,6 +16,11 @@ import (
 	"strings"
 )
 
+// PanicListener panics if used
+type PanicListener struct {
+	net.Listener
+}
+
 type gateway struct {
 	h http.Handler
 }
@@ -40,13 +45,13 @@ func (g *gateway) Invoke(ctx context.Context, payload []byte) ([]byte, error) {
 		resp = &events.APIGatewayV2HTTPResponse{
 			StatusCode: http.StatusInternalServerError,
 			Body: err.Error(),
-			Headers: map[string]string{"content-type": "text/plain; charset=UTF-8"},
+			Headers: map[string]string{"content-type": "text/plain; charset=utf-8"},
 		}
 	}
 	return json.Marshal(resp)
 }
 
-func Serve(l net.Listener, handler http.Handler) error {
+func Serve(_ net.Listener, handler http.Handler) error {
 	awslambda.StartHandler(&gateway{h: handler})
 	return nil
 }
@@ -150,6 +155,10 @@ func join(vv []string) string {
 	return strings.Join(vv, ",")
 }
 
+func (w *ResponseWriter) addHeaderValue(h string, vv []string) {
+	w.out.Headers[strings.ToLower(h)] = join(vv)
+}
+
 // WriteHeader implementation.
 func (w *ResponseWriter) WriteHeader(status int) {
 	if w.headerWritten {
@@ -163,21 +172,17 @@ func (w *ResponseWriter) WriteHeader(status int) {
 
 	w.out.StatusCode = status
 
-	h := make(map[string]string, len(w.Header()))
+	w.out.Headers = make(map[string]string, len(w.Header()))
 
 	for k, v := range w.Header() {
 		if k == "Trailer" {
 			w.trailers = append(w.trailers, v...)
 		} else if !strings.HasPrefix(k, http.TrailerPrefix) { // a regular header
-			h[strings.ToLower(k)] = join(v)
+			w.addHeaderValue(k, v)
 		}
 	}
 
-	w.out.Headers = h
 	w.headerWritten = true
-}
-func (w *ResponseWriter) addHeaderValue(h string, vv []string) {
-	w.out.Headers[strings.ToLower(h)] = join(vv)
 }
 // End the request.
 func (w *ResponseWriter) End() (*events.APIGatewayV2HTTPResponse, error) {
