@@ -44,7 +44,7 @@ When keysets are fetched from a `remote` source, if the `refreshInterval` is not
 
 You can disable JWT verification by setting `disableVerification` to `true`.
 
-WARNING: Disabling JWT verification is not recommended because it makes the system insecure by forcing Cerbos to evaluate policies using untrusted data.
+WARNING: Disabling JWT verification is not recommended because it makes the system insecure by forcing Cerbos to evaluate policies using potentially tampered data.
 
 [source,yaml,linenums]
 ----

@@ -1,0 +1,75 @@
+include::ROOT:partial$attributes.adoc[]
+
+[#v0.9.0]
+= Cerbos v0.9.0
+
+In the biggest release yet, Cerbos is now faster and much better integrated with the wider service and cloud ecosystems. 
+
+== Highlights
+
+New Decision Engine:: Written from the ground up to handle the specialised use cases Cerbos is designed for, the brand new policy decision engine is significantly faster and more efficient than the previous version. This new engine is fully backward compatible with all existing policies while being much faster: during benchmarking we have seen speed-ups of up to 17x in some cases. With this new engine we are much better placed to handle even the most demanding use cases and build exciting new features in the future.
+Native JWT Support:: Many applications these days make use of JSON Web Tokens (JWT) for carrying signed authentication claims between services. Now with native support for JWT, the Cerbos PDP is able to verify the tokens and use the claims directly when evaluating policies. This is a great way to ensure attributes about the principal are accurate and verified while reducing the burden on developers to correctly extract and transmit the claims over to Cerbos. See xref:0.9.0@cerbos:configuration:auxdata.adoc[] for more information.
+Cloud Storage:: The new `blob` storage driver supports reading policies from cloud blob stores such as AWS S3, Google Cloud Storage, or any S3-compatible storage implementation like Minio. This enables you to host your policy repository on highly available, versioned and encrypted storage services offered by major cloud providers and run Cerbos on serverless environments like AWS Lambda, Google Cloud Functions, Google Cloud Run or Knative. See xref:0.9.0@cerbos:configuration:storage.adoc#blob-driver[Blob driver] for more information. 
+Hierarchies:: Hierarchical relationships are a common occurrence in software development. Whether you use directory services like Active Directory/LDAP or whether your data model naturally imposes hierarchical relationships on objects, Cerbos policy rules can be written to deal with tree-like data using the new hierarchy functions introduced in this release. See the xref:0.9.0@cerbos:policies:conditions.adoc#hierarchies[hierarchy function documentation] for more details. 
+GitHub Actions:: Validating and testing policies in your GitHub workflows is now much easier using the official Cerbos Actions. See xref:0.9.0@cerbos:policies:compile.adoc#ci-environments[Validating and testing policies in CI environments] for details on how to integrate them into your workflow. 
+
+
+== Changelog
+
+
+=== Bug Fixes
+
+* Create blob store work dir when it does not exist (link:https://github.com/cerbos/cerbos/pull/385[#385])
+* Rename cors.enabled config key to cors.disabled (link:https://github.com/cerbos/cerbos/pull/334[#334])
+
+=== Features
+
+* Add JWT aux data support to Go SDK (link:https://github.com/cerbos/cerbos/pull/377[#377])
+* Implement storage driver for cloud object stores. (link:https://github.com/cerbos/cerbos/pull/347[#347])
+* JWT auxiliary data source (link:https://github.com/cerbos/cerbos/pull/371[#371])
+* Switch to new policy engine (link:https://github.com/cerbos/cerbos/pull/354[#354])
+
+=== Enhancements
+
+* Add sorting option to the list policies method options (link:https://github.com/cerbos/cerbos/pull/320[#320])
+* Hierarchy function improvements (link:https://github.com/cerbos/cerbos/pull/342[#342])
+* #**BREAKING**# Rename globals to variables (link:https://github.com/cerbos/cerbos/pull/346[#346])
+* re-use compiled global expressions (link:https://github.com/cerbos/cerbos/pull/336[#336])
+
+=== Documentation
+
+* Document how to obtain protobuf definitions (link:https://github.com/cerbos/cerbos/pull/338[#338])
+* Document how to use GitHub Actions (link:https://github.com/cerbos/cerbos/pull/387[#387])
+* Document the policy LIST endpoint (link:https://github.com/cerbos/cerbos/pull/378[#378])
+* Offer minimal configuration and full configuration in documentation (link:https://github.com/cerbos/cerbos/pull/358[#358])
+* Update README (link:https://github.com/cerbos/cerbos/pull/384[#384])
+
+=== Chores
+
+* Add stargazers badge to readme (link:https://github.com/cerbos/cerbos/pull/348[#348])
+* Bump github.com/alecthomas/chroma from 0.9.2 to 0.9.4 (link:https://github.com/cerbos/cerbos/pull/369[#369])
+* Bump github.com/aws/aws-sdk-go from 1.40.34 to 1.41.6 (link:https://github.com/cerbos/cerbos/pull/382[#382])
+* Bump github.com/containerd/containerd from 1.5.5 to 1.5.7 (link:https://github.com/cerbos/cerbos/pull/345[#345])
+* Bump github.com/dgraph-io/badger/v3 (link:https://github.com/cerbos/cerbos/pull/350[#350])
+* Bump github.com/doug-martin/goqu/v9 from 9.16.0 to 9.17.0 (link:https://github.com/cerbos/cerbos/pull/349[#349])
+* Bump github.com/doug-martin/goqu/v9 from 9.16.0 to 9.17.0 (link:https://github.com/cerbos/cerbos/pull/362[#362])
+* Bump github.com/doug-martin/goqu/v9 from 9.17.0 to 9.18.0 (link:https://github.com/cerbos/cerbos/pull/370[#370])
+* Bump github.com/fergusstrange/embedded-postgres from 1.10.0 to 1.11.0 (link:https://github.com/cerbos/cerbos/pull/340[#340])
+* Bump github.com/google/cel-go from 0.8.0 to 0.9.0 (link:https://github.com/cerbos/cerbos/pull/380[#380])
+* Bump github.com/google/gops from 0.3.20 to 0.3.21 (link:https://github.com/cerbos/cerbos/pull/351[#351])
+* Bump github.com/google/gops from 0.3.20 to 0.3.21 (link:https://github.com/cerbos/cerbos/pull/364[#364])
+* Bump github.com/jwalton/gchalk from 1.1.0 to 1.1.1 (link:https://github.com/cerbos/cerbos/pull/353[#353])
+* Bump github.com/jwalton/gchalk from 1.1.0 to 1.2.1 (link:https://github.com/cerbos/cerbos/pull/363[#363])
+* Bump github.com/minio/minio-go/v7 from 7.0.14 to 7.0.15 (link:https://github.com/cerbos/cerbos/pull/381[#381])
+* Bump github.com/open-policy-agent/opa from 0.32.1 to 0.33.0 (link:https://github.com/cerbos/cerbos/pull/339[#339])
+* Bump github.com/open-policy-agent/opa from 0.33.0 to 0.33.1 (link:https://github.com/cerbos/cerbos/pull/352[#352])
+* Bump helm.sh/helm/v3 from 3.7.0 to 3.7.1 (link:https://github.com/cerbos/cerbos/pull/365[#365])
+* Bump version to 0.9.0
+* Configure Dependabot to update tools (link:https://github.com/cerbos/cerbos/pull/360[#360])
+* Configure semantic commit checker (link:https://github.com/cerbos/cerbos/pull/372[#372])
+* Fix version in snapshot builds (link:https://github.com/cerbos/cerbos/pull/386[#386])
+* Move CEL code to conditions package (link:https://github.com/cerbos/cerbos/pull/335[#335])
+* Refactor test framework to use templating (link:https://github.com/cerbos/cerbos/pull/375[#375])
+* Remove scratchDir from storage configuration options (link:https://github.com/cerbos/cerbos/pull/367[#367])
+* Update container repository to GHCR (link:https://github.com/cerbos/cerbos/pull/383[#383])
+* Update goreleaser configuration (link:https://github.com/cerbos/cerbos/pull/359[#359])
