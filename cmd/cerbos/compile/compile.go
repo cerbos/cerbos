@@ -35,6 +35,7 @@ var (
 	successfulTest = color.New(color.FgHiGreen).SprintFunc()
 
 	format     string
+	skipTests  bool
 	verifyConf = verify.Config{}
 )
 
@@ -55,6 +56,7 @@ func NewCommand() *cobra.Command {
 	cmd.Flags().StringVarP(&format, "format", "f", "", "Output format (valid values: json,plain)")
 	cmd.Flags().StringVar(&verifyConf.TestsDir, "tests", "", "Path to the directory containing tests")
 	cmd.Flags().StringVar(&verifyConf.Run, "run", "", "Run only tests that match this regex")
+	cmd.Flags().BoolVar(&skipTests, "skip-tests", false, "Skip tests")
 
 	return cmd
 }
@@ -82,7 +84,11 @@ func doRun(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("failed to create engine: %w", err)
 	}
 
-	if verifyConf.TestsDir != "" {
+	if verifyConf.TestsDir == "" {
+		verifyConf.TestsDir = args[0]
+	}
+
+	if !skipTests {
 		compiler := compile.NewManager(ctx, disk.NewFromIndex(idx))
 		eng, err := engine.NewEphemeral(ctx, compiler)
 		if err != nil {
