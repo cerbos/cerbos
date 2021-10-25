@@ -13,6 +13,9 @@ import (
 // ParseListenAddress parses an address and returns the network type and the address to dial.
 // inspired by https://github.com/ghostunnel/ghostunnel/blob/6e58c75c8762fe371c1134e89dd55033a6d577a4/socket/net.go#L31
 func ParseListenAddress(listenAddr string) (network, addr string, err error) {
+	if strings.HasPrefix(listenAddr, "mock:") {
+		return "mock", "", nil
+	}
 	if strings.HasPrefix(listenAddr, "unix:") {
 		network = "unix"
 		addr = listenAddr[5:]

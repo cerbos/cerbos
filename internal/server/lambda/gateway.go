@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"github.com/aws/aws-lambda-go/events"
 	awslambda "github.com/aws/aws-lambda-go/lambda"
+	"log"
 	"mime"
 	"net"
 	"net/http"
@@ -22,7 +23,8 @@ type PanicListener struct {
 }
 
 type gateway struct {
-	h http.Handler
+	h   http.Handler
+	log *log.Logger
 }
 
 func (g *gateway) Invoke(ctx context.Context, payload []byte) ([]byte, error) {
@@ -51,8 +53,8 @@ func (g *gateway) Invoke(ctx context.Context, payload []byte) ([]byte, error) {
 	return json.Marshal(resp)
 }
 
-func Serve(_ net.Listener, handler http.Handler) error {
-	awslambda.StartHandler(&gateway{h: handler})
+func Serve(srv *http.Server, _ net.Listener) error {
+	awslambda.StartHandler(&gateway{h: srv.Handler, log: srv.ErrorLog})
 	return nil
 }
 

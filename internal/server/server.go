@@ -9,6 +9,7 @@ import (
 	"crypto/x509"
 	"errors"
 	"fmt"
+	"github.com/cerbos/cerbos/internal/server/lambda"
 	"net"
 	"net/http"
 	"os"
@@ -136,6 +137,7 @@ type Param struct {
 	Engine        *engine.Engine
 	Store         storage.Store
 	ZPagesEnabled bool
+	AWSLambda     bool
 }
 
 type Server struct {
@@ -144,7 +146,8 @@ type Server struct {
 	group       *errgroup.Group
 	health      *health.Server
 	ocExporter  *prometheus.Exporter
-	initialised chan struct{}
+	initialised     chan struct{}
+	httpServerServe func(srv *http.Server, l net.Listener) error
 }
 
 func NewServer(conf *Conf) *Server {
@@ -160,9 +163,10 @@ func NewServer(conf *Conf) *Server {
 			close(initialised)
 			cancelFunc()
 		},
-		group:       group,
-		health:      health.NewServer(),
-		initialised: initialised,
+		group:           group,
+		health:          health.NewServer(),
+		initialised:     initialised,
+		httpServerServe: http.Server.Serve,
 	}
 }
 
@@ -174,6 +178,9 @@ func (s *Server) Start(ctx context.Context, param Param) error {
 	defer s.cancelFunc()
 	log := zap.L().Named("server")
 
+	if param.AWSLambda {
+		s.httpServerServe = lambda.Serve
+	}
 	if s.conf.MetricsEnabled {
 		ocExporter, err := initOCPromExporter()
 		if err != nil {
@@ -247,7 +254,7 @@ func (s *Server) Start(ctx context.Context, param Param) error {
 }
 
 func (s *Server) createListener(listenAddr string) (net.Listener, error) {
-	l, err := parseAndOpen(listenAddr)
+	l, err := s.parseAndOpen(listenAddr)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create listener at '%s': %w", listenAddr, err)
 	}
@@ -455,7 +462,7 @@ func (s *Server) startHTTPServer(ctx context.Context, l net.Listener, grpcSrv *g
 
 	s.group.Go(func() error {
 		log.Infof("Starting HTTP server at %s", s.conf.HTTPListenAddr)
-		err := h.Serve(l)
+		err := s.httpServerServe(h, l)
 		if err != nil && !errors.Is(err, http.ErrServerClosed) {
 			log.Errorw("HTTP server failed", "error", err)
 			return err
@@ -519,10 +526,15 @@ func (s *Server) mkGRPCConn(ctx context.Context) (*grpc.ClientConn, error) {
 }
 
 // inspired by https://github.com/ghostunnel/ghostunnel/blob/6e58c75c8762fe371c1134e89dd55033a6d577a4/socket/net.go#L100
-func parseAndOpen(listenAddr string) (net.Listener, error) {
+func (s *Server) parseAndOpen(listenAddr string) (net.Listener, error) {
 	network, addr, err := util.ParseListenAddress(listenAddr)
 	if err != nil {
 		return nil, err
+	}
+
+	if network == "mock" {
+		// TODO: add s.newMockListener field
+		return lambda.PanicListener{}, nil
 	}
 
 	if network == "unix" {
