@@ -6,7 +6,7 @@ package main
 import (
 	"context"
 
-	awslambda "github.com/aws/aws-lambda-go/lambda"
+	runtime "github.com/aws/aws-lambda-go/lambda"
 	"go.uber.org/zap"
 
 	"github.com/cerbos/cerbos/internal/server"
@@ -25,5 +25,5 @@ func main() {
 		log.Fatal("failed to start the server", zap.Error(err))
 	}
 	gateway := lambda.Gateway{Handler: handler, Log: log}
-	awslambda.StartHandler(&gateway)
+	runtime.StartHandler(&gateway)
 }
