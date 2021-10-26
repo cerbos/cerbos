@@ -5,7 +5,7 @@ on:
 jobs:
   dependabot:
     runs-on: ubuntu-latest
-    if: ${{ github.actor == 'dependabot[bot]' }}
+    #if: ${{ github.actor == 'dependabot[bot]' }}
     steps:
       - uses: actions/checkout@v2
 
@@ -17,10 +17,9 @@ jobs:
         run: "make deps generate-notice"
 
       - name: Commit NOTICE
-        uses: EndBug/add-and-commit@v7
-        with:
-          message: Generate NOTICE
-          committer_name: Cerbos Actions
-          committer_email: info@cerbos.dev
-          signoff: true
+        run: |
+          git config --global user.name 'Cerbos Actions'
+          git config --global user.email 'info@cerbos.dev'
+          git commit -am "Generate NOTICE"
+          git push
 
