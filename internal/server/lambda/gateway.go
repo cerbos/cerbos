@@ -151,12 +151,8 @@ func (w *ResponseWriter) Write(b []byte) (int, error) {
 	return w.buf.Write(b)
 }
 
-func join(vv []string) string {
-	return strings.Join(vv, ",")
-}
-
 func (w *ResponseWriter) addHeaderValue(h string, vv []string) {
-	w.out.Headers[strings.ToLower(h)] = join(vv)
+	w.out.Headers[strings.ToLower(h)] = strings.Join(vv, ",")
 }
 
 // WriteHeader implementation.
