@@ -19939,11 +19939,11 @@ SOFTWARE.
 
 --------------------------------------------------------------------------------
 Module  : github.com/tidwall/gjson
-Version : v1.9.1
-Time    : 2021-09-15T12:37:28Z
+Version : v1.10.2
+Time    : 2021-10-25T14:11:04Z
 Licence : MIT
 
-Contents of probable licence file $GOMODCACHE/github.com/tidwall/gjson@v1.9.1/LICENSE:
+Contents of probable licence file $GOMODCACHE/github.com/tidwall/gjson@v1.10.2/LICENSE:
 
 The MIT License (MIT)
 
@@ -19969,11 +19969,11 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 --------------------------------------------------------------------------------
 Module  : github.com/tidwall/match
-Version : v1.0.3
-Time    : 2020-12-23T11:58:28Z
+Version : v1.1.1
+Time    : 2021-10-08T14:36:13Z
 Licence : MIT
 
-Contents of probable licence file $GOMODCACHE/github.com/tidwall/match@v1.0.3/LICENSE:
+Contents of probable licence file $GOMODCACHE/github.com/tidwall/match@v1.1.1/LICENSE:
 
 The MIT License (MIT)
 
