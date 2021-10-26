@@ -39,7 +39,7 @@ type Conf struct {
 	// AdminAPI defines the admin API configuration.
 	AdminAPI AdminAPIConf `yaml:"adminAPI"`
 	// Skip setting up HTTP-reverse proxy
-	DisableHTTP bool `yaml: "disableHTTP"`
+	DisableHTTP bool `yaml:"disableHTTP"`
 }
 
 // TLSConf holds TLS configuration.
@@ -90,6 +90,9 @@ func (c *Conf) Key() string {
 }
 
 func (c *Conf) SetDefaults() {
+	if !c.DisableHTTP {
+		c.HTTPListenAddr = defaultHTTPListenAddr
+	}
 	c.GRPCListenAddr = defaultGRPCListenAddr
 	c.MetricsEnabled = true
 	if c.AdminAPI.AdminCredentials == nil {

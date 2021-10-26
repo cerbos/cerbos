@@ -1,3 +1,6 @@
+// Copyright 2021 Zenauth Ltd.
+// SPDX-License-Identifier: Apache-2.0
+
 package lambda
 
 import (
@@ -6,28 +9,28 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"github.com/aws/aws-lambda-go/events"
-	awslambda "github.com/aws/aws-lambda-go/lambda"
-	"log"
 	"mime"
 	"net"
 	"net/http"
 	"net/url"
 	"strconv"
 	"strings"
+
+	"github.com/aws/aws-lambda-go/events"
+	"go.uber.org/zap"
 )
 
-// PanicListener panics if used
+// PanicListener panics if used.
 type PanicListener struct {
 	net.Listener
 }
 
-type gateway struct {
-	h   http.Handler
-	log *log.Logger
+type Gateway struct {
+	Handler http.Handler
+	Log     *zap.Logger
 }
 
-func (g *gateway) Invoke(ctx context.Context, payload []byte) ([]byte, error) {
+func (g *Gateway) Invoke(ctx context.Context, payload []byte) ([]byte, error) {
 	var evt events.APIGatewayV2HTTPRequest
 
 	if err := json.Unmarshal(payload, &evt); err != nil {
@@ -40,22 +43,17 @@ func (g *gateway) Invoke(ctx context.Context, payload []byte) ([]byte, error) {
 	}
 
 	w := NewResponseWriter()
-	g.h.ServeHTTP(w, r)
+	g.Handler.ServeHTTP(w, r)
 
 	resp, err := w.End()
 	if err != nil {
 		resp = &events.APIGatewayV2HTTPResponse{
 			StatusCode: http.StatusInternalServerError,
-			Body: err.Error(),
-			Headers: map[string]string{"content-type": "text/plain; charset=utf-8"},
+			Body:       err.Error(),
+			Headers:    map[string]string{"content-type": "text/plain; charset=utf-8"},
 		}
 	}
 	return json.Marshal(resp)
-}
-
-func Serve(srv *http.Server, _ net.Listener) error {
-	awslambda.StartHandler(&gateway{h: srv.Handler, log: srv.ErrorLog})
-	return nil
 }
 
 // NewRequest returns a new http.Request from the given Lambda event.
@@ -80,7 +78,7 @@ func NewRequest(ctx context.Context, e events.APIGatewayV2HTTPRequest) (*http.Re
 
 	req, err := http.NewRequestWithContext(ctx, e.RequestContext.HTTP.Method, u.String(), strings.NewReader(body))
 	if err != nil {
-		return nil, fmt.Errorf("failed to create HTTP request: %w")
+		return nil, fmt.Errorf("failed to create HTTP request: %w", err)
 	}
 
 	// manually set RequestURI because NewRequest is for clients and req.RequestURI is for servers
@@ -123,11 +121,11 @@ func NewRequest(ctx context.Context, e events.APIGatewayV2HTTPRequest) (*http.Re
 // ResponseWriter implements the http.ResponseWriter interface
 // in order to support the API Gateway Lambda HTTP "protocol".
 type ResponseWriter struct {
-	out              events.APIGatewayV2HTTPResponse
-	buf              bytes.Buffer
-	header           http.Header
-	headerWritten    bool
-	trailers         []string // trailer headers
+	out           events.APIGatewayV2HTTPResponse
+	buf           bytes.Buffer
+	header        http.Header
+	headerWritten bool
+	trailers      []string // trailer headers
 }
 
 // NewResponseWriter returns a new response writer to capture http output.
@@ -186,12 +184,13 @@ func (w *ResponseWriter) WriteHeader(status int) {
 
 	w.headerWritten = true
 }
+
 // End the request.
 func (w *ResponseWriter) End() (*events.APIGatewayV2HTTPResponse, error) {
 	var err error
 	w.out.IsBase64Encoded, err = isBinary(w.header)
 	if err != nil {
-	    return nil, err
+		return nil, err
 	}
 	if w.out.IsBase64Encoded {
 		w.out.Body = base64.StdEncoding.EncodeToString(w.buf.Bytes())

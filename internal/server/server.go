@@ -9,7 +9,6 @@ import (
 	"crypto/x509"
 	"errors"
 	"fmt"
-	"github.com/cerbos/cerbos/internal/server/lambda"
 	"net"
 	"net/http"
 	"os"
@@ -58,6 +57,7 @@ import (
 	"github.com/cerbos/cerbos/internal/engine"
 	"github.com/cerbos/cerbos/internal/observability/metrics"
 	"github.com/cerbos/cerbos/internal/observability/tracing"
+	"github.com/cerbos/cerbos/internal/server/lambda"
 	"github.com/cerbos/cerbos/internal/storage"
 
 	// Import cloud to register the storage driver.
@@ -180,6 +180,7 @@ func (s *Server) Start(ctx context.Context, param Param) error {
 
 	return nil
 }
+
 func (s *Server) StartAsync(ctx context.Context, param Param) (http.Handler, error) {
 	defer s.cancelFunc()
 
