@@ -38,6 +38,8 @@ type Conf struct {
 	PlaygroundEnabled bool `yaml:"playgroundEnabled"`
 	// AdminAPI defines the admin API configuration.
 	AdminAPI AdminAPIConf `yaml:"adminAPI"`
+	// Skip setting up HTTP-reverse proxy
+	DisableHTTP bool `yaml: "disableHTTP"`
 }
 
 // TLSConf holds TLS configuration.
@@ -88,7 +90,6 @@ func (c *Conf) Key() string {
 }
 
 func (c *Conf) SetDefaults() {
-	c.HTTPListenAddr = defaultHTTPListenAddr
 	c.GRPCListenAddr = defaultGRPCListenAddr
 	c.MetricsEnabled = true
 	if c.AdminAPI.AdminCredentials == nil {
@@ -100,8 +101,10 @@ func (c *Conf) SetDefaults() {
 }
 
 func (c *Conf) Validate() (errs error) {
-	if _, _, err := util.ParseListenAddress(c.HTTPListenAddr); err != nil {
-		errs = multierr.Append(errs, fmt.Errorf("invalid httpListenAddr '%s': %w", c.HTTPListenAddr, err))
+	if !c.DisableHTTP {
+		if _, _, err := util.ParseListenAddress(c.HTTPListenAddr); err != nil {
+			errs = multierr.Append(errs, fmt.Errorf("invalid httpListenAddr '%s': %w", c.HTTPListenAddr, err))
+		}
 	}
 
 	if _, _, err := util.ParseListenAddress(c.GRPCListenAddr); err != nil {

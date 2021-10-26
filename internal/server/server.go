@@ -137,17 +137,15 @@ type Param struct {
 	Engine        *engine.Engine
 	Store         storage.Store
 	ZPagesEnabled bool
-	AWSLambda     bool
 }
 
 type Server struct {
-	conf        *Conf
-	cancelFunc  context.CancelFunc
-	group       *errgroup.Group
-	health      *health.Server
-	ocExporter  *prometheus.Exporter
-	initialised     chan struct{}
-	httpServerServe func(srv *http.Server, l net.Listener) error
+	conf       *Conf
+	cancelFunc context.CancelFunc
+	group      *errgroup.Group
+	health     *health.Server
+	ocExporter *prometheus.Exporter
+	log        *zap.Logger
 }
 
 func NewServer(conf *Conf) *Server {
@@ -163,29 +161,33 @@ func NewServer(conf *Conf) *Server {
 			close(initialised)
 			cancelFunc()
 		},
-		group:           group,
-		health:          health.NewServer(),
-		initialised:     initialised,
-		httpServerServe: http.Server.Serve,
+		group:  group,
+		health: health.NewServer(),
+		log:    zap.L().Named("server"),
 	}
-}
-
-func (s *Server) WaitInit() {
-	<-s.initialised
 }
 
 func (s *Server) Start(ctx context.Context, param Param) error {
-	defer s.cancelFunc()
-	log := zap.L().Named("server")
-
-	if param.AWSLambda {
-		s.httpServerServe = lambda.Serve
+	_, err := s.StartAsync(ctx, param)
+	if err != nil {
+		return err
 	}
+	err = s.group.Wait()
+	if err != nil {
+		s.log.Error("Stopping server due to error", zap.Error(err))
+		return err
+	}
+
+	return nil
+}
+func (s *Server) StartAsync(ctx context.Context, param Param) (http.Handler, error) {
+	defer s.cancelFunc()
+
 	if s.conf.MetricsEnabled {
 		ocExporter, err := initOCPromExporter()
 		if err != nil {
-			log.Error("Failed to initialize Prometheus exporter", zap.Error(err))
-			return err
+			s.log.Error("Failed to initialize Prometheus exporter", zap.Error(err))
+			return nil, err
 		}
 
 		s.ocExporter = ocExporter
@@ -200,14 +202,17 @@ func (s *Server) Start(ctx context.Context, param Param) error {
 
 	grpcL, err := s.createListener(s.conf.GRPCListenAddr)
 	if err != nil {
-		log.Error("Failed to create gRPC listener", zap.Error(err))
-		return err
+		s.log.Error("Failed to create gRPC listener", zap.Error(err))
+		return nil, err
 	}
 
-	httpL, err := s.createListener(s.conf.HTTPListenAddr)
-	if err != nil {
-		log.Error("Failed to create HTTP listener", zap.Error(err))
-		return err
+	var httpL net.Listener
+	if !s.conf.DisableHTTP {
+		httpL, err = s.createListener(s.conf.HTTPListenAddr)
+		if err != nil {
+			s.log.Error("Failed to create HTTP listener", zap.Error(err))
+			return nil, err
+		}
 	}
 
 	// start servers
@@ -215,42 +220,38 @@ func (s *Server) Start(ctx context.Context, param Param) error {
 
 	httpServer, err := s.startHTTPServer(ctx, httpL, grpcServer, param.ZPagesEnabled)
 	if err != nil {
-		log.Error("Failed to start HTTP server", zap.Error(err))
-		return err
+		s.log.Error("Failed to start HTTP server", zap.Error(err))
+		return nil, err
 	}
 
 	s.group.Go(func() error {
 		<-ctx.Done()
-		log.Info("Shutting down")
+		s.log.Info("Shutting down")
 
 		// mark this service as NOT_SERVING in the gRPC health check.
 		s.health.Shutdown()
 
-		log.Debug("Shutting down gRPC server")
+		s.log.Debug("Shutting down gRPC server")
 		grpcServer.GracefulStop()
 
-		log.Debug("Shutting down HTTP server")
-		shutdownCtx, cancelFunc := context.WithTimeout(context.Background(), defaultTimeout)
-		defer cancelFunc()
+		if !s.conf.DisableHTTP {
+			s.log.Debug("Shutting down HTTP server")
+			shutdownCtx, cancelFunc := context.WithTimeout(context.Background(), defaultTimeout)
+			defer cancelFunc()
 
-		if err := httpServer.Shutdown(shutdownCtx); err != nil {
-			log.Error("Failed to cleanly shutdown HTTP server", zap.Error(err))
+			if err := httpServer.Shutdown(shutdownCtx); err != nil {
+				s.log.Error("Failed to cleanly shutdown HTTP server", zap.Error(err))
+			}
 		}
 
-		log.Debug("Shutting down the audit log")
+		s.log.Debug("Shutting down the audit log")
 		param.AuditLog.Close()
 
-		log.Info("Shutdown complete")
+		s.log.Info("Shutdown complete")
 		return nil
 	})
-	s.initialised <- struct{}{}
-	err = s.group.Wait()
-	if err != nil {
-		log.Error("Stopping server due to error", zap.Error(err))
-		return err
-	}
 
-	return nil
+	return httpServer.Handler, err
 }
 
 func (s *Server) createListener(listenAddr string) (net.Listener, error) {
@@ -460,17 +461,19 @@ func (s *Server) startHTTPServer(ctx context.Context, l net.Listener, grpcSrv *g
 		WriteTimeout:      defaultTimeout,
 	}
 
-	s.group.Go(func() error {
-		log.Infof("Starting HTTP server at %s", s.conf.HTTPListenAddr)
-		err := s.httpServerServe(h, l)
-		if err != nil && !errors.Is(err, http.ErrServerClosed) {
-			log.Errorw("HTTP server failed", "error", err)
-			return err
-		}
+	if !s.conf.DisableHTTP {
+		s.group.Go(func() error {
+			log.Infof("Starting HTTP server at %s", s.conf.HTTPListenAddr)
+			err := h.Serve(l)
+			if err != nil && !errors.Is(err, http.ErrServerClosed) {
+				log.Errorw("HTTP server failed", "error", err)
+				return err
+			}
 
-		log.Info("HTTP server stopped")
-		return nil
-	})
+			log.Info("HTTP server stopped")
+			return nil
+		})
+	}
 
 	return h, nil
 }

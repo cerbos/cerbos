@@ -12,7 +12,9 @@ import (
 	"io"
 	"net"
 	"net/http"
+	"net/http/httptest"
 	"path/filepath"
+	"runtime"
 	"testing"
 	"time"
 
@@ -169,7 +171,39 @@ func TestServer(t *testing.T) {
 			t.Run("grpc", testGRPCRequests(testCases, conf.GRPCListenAddr, grpc.WithTransportCredentials(local.NewCredentials())))
 			t.Run("h2c", testGRPCRequests(testCases, conf.HTTPListenAddr, grpc.WithTransportCredentials(local.NewCredentials())))
 		})
+
+		t.Run("grpc.uds", func(t *testing.T) {
+			tempDir := t.TempDir()
+
+			conf := &Conf{
+				GRPCListenAddr:    fmt.Sprintf("unix:%s", filepath.Join(tempDir, "grpc.sock")),
+				PlaygroundEnabled: true,
+				DisableHTTP:       true,
+			}
+
+			ctx, cancelFunc := context.WithCancel(context.Background())
+			defer cancelFunc()
+
+			server := NewServer(conf)
+			handler, err := server.StartAsync(ctx, param)
+			require.NoError(t, err)
+			hostAddr := "http://example.com"
+			c := func(req *http.Request) (*http.Response, error) {
+				recorder := httptest.NewRecorder()
+				handler.ServeHTTP(recorder, req)
+				return recorder.Result(), nil
+			}
+			for _, tc := range testCases {
+				t.Run(tc.Name, executeHTTPTestCase(DoFunc(c), hostAddr, nil, tc))
+			}
+		})
 	})
+}
+
+type DoFunc func(req *http.Request) (*http.Response, error)
+
+func (f DoFunc) Do(req *http.Request) (*http.Response, error) {
+	return f(req)
 }
 
 func TestAdminService(t *testing.T) {
@@ -240,7 +274,7 @@ func startServer(ctx context.Context, conf *Conf, param Param) {
 			panic(err)
 		}
 	}()
-	s.WaitInit()
+	runtime.Gosched()
 }
 
 func testGRPCRequests(testCases []*privatev1.ServerTestCase, addr string, opts ...grpc.DialOption) func(*testing.T) {
@@ -336,7 +370,9 @@ func mkHTTPClient(t *testing.T) *http.Client {
 	return &http.Client{Transport: customTransport}
 }
 
-func executeHTTPTestCase(c *http.Client, hostAddr string, creds *authCreds, tc *privatev1.ServerTestCase) func(*testing.T) {
+func executeHTTPTestCase(c interface {
+	Do(r *http.Request) (*http.Response, error)
+}, hostAddr string, creds *authCreds, tc *privatev1.ServerTestCase) func(*testing.T) {
 	//nolint:thelper
 	return func(t *testing.T) {
 		var input, have, want proto.Message
