@@ -5,7 +5,7 @@ on:
 jobs:
   dependabot:
     runs-on: ubuntu-latest
-    # if: ${{ github.actor == 'dependabot[bot]' }}
+    if: ${{ github.actor == 'dependabot[bot]' }}
     steps:
       - uses: actions/checkout@v2
 
@@ -23,6 +23,6 @@ jobs:
         uses: EndBug/add-and-commit@v7
         with:
           message: Generate NOTICE
-          committer_name: GitHub Actions
-          committer_email: actions@github.com
+          committer_name: Cerbos Actions
+          committer_email: info@cerbos.dev
 
