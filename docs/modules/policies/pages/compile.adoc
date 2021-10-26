@@ -234,7 +234,6 @@ Because Cerbos artefacts are distributed as self-contained containers and binari
 
 === GitHub Actions 
 
-
 - link:https://github.com/cerbos/cerbos-setup-action[cerbos-setup-action]: Install `cerbos` and `cerbosctl` binaries into your workflow tools cache
 - link:https://github.com/cerbos/cerbos-compile-action[cerbos-compile-action]: Compile and (optionally) test Cerbos policies
 
@@ -268,3 +267,30 @@ jobs:
 ----
 
 See https://github.com/cerbos/photo-share-tutorial for an example of Cerbos GitHub Actions being used in a workflow.
+
+=== GitLab CI
+
+.Example pipeline
+[source,yaml]
+----
+---
+stages:
+  - prepare
+  - compile
+
+download-cerbos:
+  stage: prepare
+  script:
+    - curl https://github.com/cerbos/cerbos/releases/download/v0.9.0/cerbos_0.9.0_Linux_x86_64.tar.gz -L --output /tmp/cerbos.tar.gz
+    - tar -xf /tmp/cerbos.tar.gz -C ./
+    - chmod +x ./cerbos
+  artifacts:
+    paths:
+      - cerbos
+
+compile-job:
+  stage: compile
+  dependencies: ["download-cerbos"]
+  script:
+    - ./cerbos compile ./policies --tests ./tests
+----
