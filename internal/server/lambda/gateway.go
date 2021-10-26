@@ -15,6 +15,7 @@ import (
 	"net/url"
 	"strconv"
 	"strings"
+	"sync"
 
 	"github.com/aws/aws-lambda-go/events"
 	"go.uber.org/zap"
@@ -126,6 +127,7 @@ type ResponseWriter struct {
 	header        http.Header
 	headerWritten bool
 	trailers      []string // trailer headers
+	mu            sync.Mutex
 }
 
 // NewResponseWriter returns a new response writer to capture http output.
@@ -135,6 +137,8 @@ func NewResponseWriter() *ResponseWriter {
 
 // Header implementation.
 func (w *ResponseWriter) Header() http.Header {
+	w.mu.Lock()
+	defer w.mu.Unlock()
 	if w.header == nil {
 		w.header = make(http.Header)
 	}
@@ -144,9 +148,12 @@ func (w *ResponseWriter) Header() http.Header {
 
 // Write implementation.
 func (w *ResponseWriter) Write(b []byte) (int, error) {
-	if !w.headerWritten {
+	if !w.headerWritten { // not sync access here, since writeHeader does it again
 		w.WriteHeader(http.StatusOK)
 	}
+
+	w.mu.Lock()
+	defer w.mu.Unlock()
 
 	return w.buf.Write(b)
 }
@@ -157,6 +164,9 @@ func (w *ResponseWriter) addHeaderValue(h string, vv []string) {
 
 // WriteHeader implementation.
 func (w *ResponseWriter) WriteHeader(status int) {
+	w.mu.Lock()
+	defer w.mu.Unlock()
+
 	if w.headerWritten {
 		return
 	}
@@ -183,6 +193,9 @@ func (w *ResponseWriter) WriteHeader(status int) {
 
 // End the request.
 func (w *ResponseWriter) End() (*events.APIGatewayV2HTTPResponse, error) {
+	w.mu.Lock()
+	defer w.mu.Unlock()
+
 	var err error
 	w.out.IsBase64Encoded, err = isBinary(w.header)
 	if err != nil {

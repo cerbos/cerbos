@@ -188,13 +188,13 @@ func TestServer(t *testing.T) {
 			handler, err := server.StartAsync(ctx, param)
 			require.NoError(t, err)
 			hostAddr := "http://example.com"
-			c := func(req *http.Request) (*http.Response, error) {
+			do := func(req *http.Request) (*http.Response, error) {
 				recorder := httptest.NewRecorder()
 				handler.ServeHTTP(recorder, req)
 				return recorder.Result(), nil
 			}
 			for _, tc := range testCases {
-				t.Run(tc.Name, executeHTTPTestCase(DoFunc(c), hostAddr, nil, tc))
+				t.Run(tc.Name, executeHTTPTestCase(DoFunc(do), hostAddr, nil, tc))
 			}
 		})
 	})
