@@ -25,4 +25,5 @@ jobs:
           message: Generate NOTICE
           committer_name: Cerbos Actions
           committer_email: info@cerbos.dev
+          signoff: true
 
