@@ -8,6 +8,8 @@ jobs:
     if: ${{ github.actor == 'dependabot[bot]' }}
     steps:
       - uses: actions/checkout@v2
+        with:
+          ref: ${{ github.event.pull_request.head.ref }}
 
       - uses: actions/setup-go@v2
         with:
@@ -16,6 +18,9 @@ jobs:
       - name: Generate notice
         run: "make deps generate-notice"
 
+      - name: DEBUG
+        run: "git status"
+
       - name: Commit NOTICE
         uses: EndBug/add-and-commit@v7
         with:
@@ -23,4 +28,5 @@ jobs:
           committer_name: Cerbos Actions
           committer_email: info@cerbos.dev
           signoff: true
+          push: origin
 
