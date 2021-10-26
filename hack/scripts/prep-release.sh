@@ -23,7 +23,7 @@ update_version() {
     echo "Setting version to $VER"
 
     # Docs version
-    sed -i -E "s#app\-version: \"[0-9]+\.[0-9]+\.[0-9]+.*\"#app-version: \"$VER\"#" "${DOCS_DIR}/antora-playbook.yml"
+    sed -i -E "s#app\-version: \"[0-9]+\.[0-9]+\.[0-9]+.*\"#app-version: \"${VER}@\"#" "${DOCS_DIR}/antora-playbook.yml"
     sed -i -E "s#^version: \"[0-9]+\.[0-9]+\.[0-9]+.*\"#version: \"$VER\"#" "${DOCS_DIR}/antora.yml"
     sed -i -E "/^prerelease:/d" "${DOCS_DIR}/antora.yml"
 

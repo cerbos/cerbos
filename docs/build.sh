@@ -7,7 +7,7 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 SOURCE_DIR=$(cd "${SCRIPT_DIR}/.." && pwd)
 WORKSPACE="/github/workspace"
-ANTORA_VERSION=${ANTORA_VERSION:-"3.0.0-alpha.9"}
+ANTORA_VERSION=${ANTORA_VERSION:-"3.0.0-alpha.10"}
 
 rm -rf ${SCRIPT_DIR}/build
 docker run -v "$SOURCE_DIR":"$WORKSPACE":Z --rm -t docker.io/antora/antora:${ANTORA_VERSION} antora --stacktrace --clean "${WORKSPACE}/docs/antora-playbook.yml"
