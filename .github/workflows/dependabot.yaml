@@ -13,11 +13,8 @@ jobs:
         with:
           go-version: '1.17'
 
-      - name: Run make deps
-        run: "make deps"
-
-      - name: Run make generate-notice
-        run: "make generate-notice"
+      - name: Generate notice
+        run: "make deps generate-notice"
 
       - name: Commit NOTICE
         uses: EndBug/add-and-commit@v7
