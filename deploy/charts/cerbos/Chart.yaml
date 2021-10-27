@@ -2,10 +2,17 @@
 apiVersion: v2
 name: cerbos
 home: https://cerbos.dev
-description: A Helm chart to deploy the Cerbos policy decision point
+icon: https://download.cerbos.dev/helm-charts/cerbie.png
+description: |-
+  Cerbos helps you super-charge your authorization implementation by writing context-aware access control policies for your application resources.
 type: application
 maintainers:
   - name: Cerbos authors
     email: help+helm@cerbos.dev
+keywords:
+  - security
+  - rbac
+  - abac
+  - policy
 version: "0.10.0"
 appVersion: "0.10.0"
