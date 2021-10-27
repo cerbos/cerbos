@@ -21,7 +21,7 @@ builds:
       - 7
     mod_timestamp: '{{ .CommitTimestamp }}'
     ldflags:
-      - -s -w -X github.com/cerbos/cerbos/internal/util.Version={{.Version}} -X github.com/cerbos/cerbos/internal/util.Commit={{.FullCommit}} -X github.com/cerbos/cerbos/internal/util.BuildDate={{.Date}}  
+      - -s -w -X github.com/cerbos/cerbos/internal/util.Version={{.Version}} -X github.com/cerbos/cerbos/internal/util.Commit={{.FullCommit}} -X github.com/cerbos/cerbos/internal/util.BuildDate={{.Date}}
   - main: ./cmd/cerbosctl
     binary: cerbosctl
     id: "cerbosctl"
@@ -39,6 +39,18 @@ builds:
     mod_timestamp: '{{ .CommitTimestamp }}'
     ldflags:
       - -s -w -X github.com/cerbos/cerbos/internal/util.Version={{.Version}} -X github.com/cerbos/cerbos/internal/util.Commit={{.FullCommit}} -X github.com/cerbos/cerbos/internal/util.BuildDate={{.Date}}  
+  - main: ./cmd/lambda
+    binary: lambda
+    id: "lambda"
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+    goarch:
+      - amd64
+    mod_timestamp: '{{ .CommitTimestamp }}'
+    ldflags:
+      - -s -w -X github.com/cerbos/cerbos/internal/util.Version={{.Version}} -X github.com/cerbos/cerbos/internal/util.Commit={{.FullCommit}} -X github.com/cerbos/cerbos/internal/util.BuildDate={{.Date}}
 universal_binaries:
   - id: "cerbos"
     replace: false
@@ -47,11 +59,28 @@ universal_binaries:
     replace: false
     name_template: "cerbosctl"
 archives:
-  - replacements:
+  -
+    builds:
+      - cerbos
+      - cerbosctl
+    replacements:
       darwin: Darwin
       linux: Linux
       amd64: x86_64
 dockers:
+  -
+    id: lambda
+    goos: linux
+    goarch: amd64
+    ids:
+      - lambda
+    image_templates:
+      - "cerbos/lambda:latest"
+      - "cerbos/lambda:{{ .Version }}"
+    skip_push: true
+    dockerfile: hack/docker/lambda/Dockerfile
+    extra_files:
+      - hack/docker/lambda/conf.yaml
   - image_templates:
       - "ghcr.io/cerbos/cerbos:latest"
       - "ghcr.io/cerbos/cerbos:{{ .Version }}"
