@@ -17,6 +17,18 @@ You can view all the available configuration values for the chart by running the
 helm show values cerbos/cerbos --version={app-version}
 ----
 
+[NOTE]
+====
+
+Cerbos Helm chart is also available from an link:https://helm.sh/docs/topics/registries/[OCI registry].
+
+[source,sh,subs="attributes"]
+----
+HELM_EXPERIMENTAL_OCI=1 helm install cerbos oci://ghcr.io/cerbos/helm-charts/cerbos --version={app-version}
+----
+
+====
+
 .Securing Cerbos with TLS
 ****
 
