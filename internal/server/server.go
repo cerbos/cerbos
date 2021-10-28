@@ -7,6 +7,7 @@ import (
 	"context"
 	"crypto/tls"
 	"crypto/x509"
+	"encoding/base64"
 	"errors"
 	"fmt"
 	"net"
@@ -194,7 +195,11 @@ func (s *Server) Start(ctx context.Context, param Param) error {
 	}
 
 	// start servers
-	grpcServer := s.startGRPCServer(grpcL, param)
+	grpcServer, err := s.startGRPCServer(grpcL, param)
+	if err != nil {
+		log.Error("Failed to start GRPC server", zap.Error(err))
+		return err
+	}
 
 	httpServer, err := s.startHTTPServer(ctx, httpL, grpcServer, param.ZPagesEnabled)
 	if err != nil {
@@ -293,7 +298,7 @@ func (s *Server) getTLSConfig() (*tls.Config, error) {
 	return tlsConfig, nil
 }
 
-func (s *Server) startGRPCServer(l net.Listener, param Param) *grpc.Server {
+func (s *Server) startGRPCServer(l net.Listener, param Param) (*grpc.Server, error) {
 	log := zap.L().Named("grpc")
 	server := s.mkGRPCServer(log, param.AuditLog)
 
@@ -310,7 +315,14 @@ func (s *Server) startGRPCServer(l net.Listener, param Param) *grpc.Server {
 		if creds.isUnsafe() {
 			log.Warn("[SECURITY RISK] Admin API uses default credentials which are unsafe for production use. Please change the credentials by updating the configuration file.")
 		}
-		svcv1.RegisterCerbosAdminServiceServer(server, svc.NewCerbosAdminService(param.Store, param.AuditLog, creds.Username, creds.PasswordHash))
+
+		passwordHashBytes, err := base64.StdEncoding.DecodeString(creds.PasswordHash)
+		if err != nil {
+			log.Error("Failed to base64 decode password hash", zap.Error(err))
+			return nil, err
+		}
+
+		svcv1.RegisterCerbosAdminServiceServer(server, svc.NewCerbosAdminService(param.Store, param.AuditLog, creds.Username, passwordHashBytes))
 		s.health.SetServingStatus(svcv1.CerbosAdminService_ServiceDesc.ServiceName, healthpb.HealthCheckResponse_SERVING)
 	}
 
@@ -339,7 +351,7 @@ func (s *Server) startGRPCServer(l net.Listener, param Param) *grpc.Server {
 		return nil
 	})
 
-	return server
+	return server, nil
 }
 
 func (s *Server) mkGRPCServer(log *zap.Logger, auditLog audit.Log) *grpc.Server {

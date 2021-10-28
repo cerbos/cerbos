@@ -44,11 +44,11 @@ type CerbosAdminService struct {
 	*svcv1.UnimplementedCerbosAdminServiceServer
 }
 
-func NewCerbosAdminService(store storage.Store, auditLog audit.Log, adminUser, adminPasswdHash string) *CerbosAdminService {
+func NewCerbosAdminService(store storage.Store, auditLog audit.Log, adminUser string, adminPasswdHash []byte) *CerbosAdminService {
 	svc := &CerbosAdminService{
 		auditLog:                              auditLog,
 		adminUser:                             adminUser,
-		adminPasswdHash:                       []byte(adminPasswdHash),
+		adminPasswdHash:                       adminPasswdHash,
 		UnimplementedCerbosAdminServiceServer: &svcv1.UnimplementedCerbosAdminServiceServer{},
 		store:                                 store,
 	}

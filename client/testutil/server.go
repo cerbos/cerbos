@@ -8,6 +8,7 @@ import (
 	"context"
 	"crypto/tls"
 	"crypto/x509"
+	"encoding/base64"
 	"errors"
 	"fmt"
 	"os"
@@ -89,7 +90,7 @@ func WithAdminAPI(username, password string) ServerOpt {
 		so.serverConf.AdminAPI.Enabled = true
 		so.serverConf.AdminAPI.AdminCredentials = &server.AdminCredentialsConf{
 			Username:     username,
-			PasswordHash: string(hashBytes),
+			PasswordHash: base64.StdEncoding.EncodeToString(hashBytes),
 		}
 	}
 }
