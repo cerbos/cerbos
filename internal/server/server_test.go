@@ -188,7 +188,7 @@ func TestAdminService(t *testing.T) {
 			Enabled: true,
 			AdminCredentials: &AdminCredentialsConf{
 				Username:     "cerbos",
-				PasswordHash: "$2y$10$yOdMOoQq6g7s.ogYRBDG3e2JyJFCyncpOEmkEyV.mNGKNyg68uPZS",
+				PasswordHash: base64.StdEncoding.EncodeToString([]byte("$2y$10$yOdMOoQq6g7s.ogYRBDG3e2JyJFCyncpOEmkEyV.mNGKNyg68uPZS")),
 			},
 		},
 	}
