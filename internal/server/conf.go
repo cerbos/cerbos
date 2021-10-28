@@ -4,6 +4,7 @@
 package server
 
 import (
+	"encoding/base64"
 	"fmt"
 	"time"
 
@@ -13,11 +14,15 @@ import (
 )
 
 const (
-	confKey                  = "server"
-	defaultHTTPListenAddr    = ":3592"
-	defaultGRPCListenAddr    = ":3593"
-	defaultAdminUsername     = "cerbos"
-	defaultAdminPasswordHash = "$2y$10$VlPwcwpgcGZ5KjTaN1Pzk.vpFiQVG6F2cSWzQa9RtrNo3IacbzsEi" //nolint:gosec
+	confKey                     = "server"
+	defaultHTTPListenAddr       = ":3592"
+	defaultGRPCListenAddr       = ":3593"
+	defaultAdminUsername        = "cerbos"
+	defaultRawAdminPasswordHash = "$2y$10$VlPwcwpgcGZ5KjTaN1Pzk.vpFiQVG6F2cSWzQa9RtrNo3IacbzsEi" //nolint:gosec
+)
+
+var (
+	defaultAdminPasswordHash = base64.StdEncoding.EncodeToString([]byte(defaultRawAdminPasswordHash))
 )
 
 // Conf holds configuration pertaining to the server.
