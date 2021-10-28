@@ -1,0 +1,54 @@
+include::ROOT:partial$attributes.adoc[]
+
+= AuxData block
+
+The `auxData` block configures the auxiliary data sources that can be referenced in policy conditions. 
+
+
+== JWT
+
+Cerbos supports reading claims from a JWT issued by an authentication system. This helps reduce the boilerplate on the client side to extract the claims from a JWT and add them as attributes to the Cerbos API request. (See xref:api:index.adoc[] and xref:policies:conditions.adoc#auxdata[Auxiliary Data] for more information on how to craft the API request and access the JWT claims in policies.)
+
+In order to verify the JWT, the Cerbos instance must have access to the appropriate keysets. They can be fetched from a URL or read from the local file system. Verification involves checking that the signature is valid and that the token has not expired. 
+
+
+.Using multiple keysets
+[source,yaml,linenums]
+----
+auxData:
+  jwt:
+    keySets:
+      - id: ks1 # Unique ID that can be used in API requests to indicate the keyset to use to verify a particular token.
+        remote: # Fetch from a JWKS URL. 
+          url: https://domain.tld/.well-known/keys.jwks
+      - id: ks2
+        remote: 
+          url: https://other-domain.tld/.well-known/keys.jwks
+          refreshInterval: 1h # Explicitly set the refresh interval.
+      - id: ks3
+        local: # Load from a local file
+          file: /path/to/keys.jwks
+      - id: ks4
+        local: # Load from a base64-encoded key data defined inline.
+          data: BASE64-ENCODED-KEY-DATA
+      - id: ks5
+        local:
+          file: /path/to/keys.pem
+          pem: true # Treat the file (or data) as PEM.
+----
+
+IMPORTANT: When multiple keysets are defined in the configuration file, all API requests _must_ include the keyset ID along with the JWT. When only a single keyset is defined in the configuration, then the keyset ID can be dropped from the API requests.
+
+
+When keysets are fetched from a `remote` source, if the `refreshInterval` is not defined in the configuration, Cerbos will respect the `Cache-Control` and `Expiry` headers returned from the remote source when determining the refresh interval. If none of these data points are available, then the default refresh interval is one hour.
+
+You can disable JWT verification by setting `disableVerification` to `true`.
+
+WARNING: Disabling JWT verification is not recommended because it makes the system insecure by forcing Cerbos to evaluate policies using potentially tampered data.
+
+[source,yaml,linenums]
+----
+auxData:
+  jwt:
+    disableVerification: true
+----

@@ -118,6 +118,10 @@ service CerbosAdminService {
     rpc ListPolicies(cerbos.request.v1.ListPoliciesRequest) returns (cerbos.response.v1.ListPoliciesResponse) {
         option (google.api.http) = {
             get: "/admin/policy/list",
+            additional_bindings: {
+                post: "/admin/policy/list",
+                body: "*"
+            }
         };
         option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
             summary: "List policies",

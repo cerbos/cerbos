@@ -10,22 +10,19 @@ adminAddOrUpdatePolicy:
       {
         "apiVersion": "api.cerbos.dev/v1",
         "derivedRoles": {
-          "name": "my_derived_roles",
+          "name": "x_my_derived_roles",
           "definitions": [
             {
               "name": "direct_manager",
-              "parentRoles": [
-                "manager"
-              ],
               "condition": {
                 "match": {
                   "all": {
                     "of": [
                       {
-                        "expr": "X.resource.attr.geography == request.principal.attr.geography"
+                        "expr": "request.resource.attr.geography == request.principal.attr.geography"
                       },
                       {
-                        "expr": "X.resource.attr.geography == request.principal.attr.managed_geographies"
+                        "expr": "request.resource.attr.geography == request.principal.attr.managed_geographies"
                       }
                     ]
                   }

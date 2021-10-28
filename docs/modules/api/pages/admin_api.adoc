@@ -61,7 +61,37 @@ NOTE: This endpoint requires a mutable storage driver such as xref:configuration
 {"success":{}}
 ----
 
-== List audit log entries [`/admin/auditlog/list`]
+== List Policies [`/admin/policy/list`]
+
+NOTE: This endpoint is still under development and should be considered unstable.
+
+Issue a GET request to the endpoint to list the policies available in the store.
+
+[source,shell]
+----
+curl -k -u cerbos:cerbosAdmin \
+    'https://localhost:3592/admin/policy/list?pretty'
+----
+
+If you want to filter the list by specific fields in the policies, use the POST method. Filters can do exact or wildcard matches on policy fields. Policy fields are defined using the link:https://goessner.net/articles/JsonPath/[JSONPath] syntax.
+
+.Show resource policies for resources containing the word "album"
+[source,shell]
+----
+curl -k -u cerbos:cerbosAdmin \
+    'https://localhost:3592/admin/policy/list?pretty'\
+    -d '{"filters": [{"type": "MATCH_TYPE_WILDCARD", "fieldPath": "$.resourcePolicy.resource", "value":"album"}]}'
+----
+
+.Show any policies with the version field set to "staging"
+[source,shell]
+----
+curl -k -u cerbos:cerbosAdmin \
+    'https://localhost:3592/admin/policy/list?pretty'\
+    -d '{"filters": [{"type": "MATCH_TYPE_EXACT", "fieldPath": "$.*.version", "value":"staging"}]}'
+----
+
+== List Audit Log Entries [`/admin/auditlog/list`]
 
 When xref:configuration:audit.adoc[audit logging is enabled] you can view the audit log entries using this API endpoint.
 
@@ -82,14 +112,14 @@ Supported filters are:
 [source,shell]
 ----
 curl -k -u cerbos:cerbosAdmin \
-    'https://localhost:3592/admin/auditlog/list/KIND_DECISION?tail=5
+    'https://localhost:3592/admin/auditlog/list/KIND_DECISION?tail=5'
 ----
 
 .View decision logs from 2 hours ago up to now
 [source,shell]
 ----
 curl -k -u cerbos:cerbosAdmin \
-    'https://localhost:3592/admin/auditlog/list/KIND_DECISION?since=2h
+    'https://localhost:3592/admin/auditlog/list/KIND_DECISION?since=2h'
 ----
 
 .View access log entries between midnight 2021-07-01 and midnight 2021-07-02

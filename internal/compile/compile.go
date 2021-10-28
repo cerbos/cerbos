@@ -4,189 +4,278 @@
 package compile
 
 import (
-	"errors"
 	"fmt"
 	"strings"
-	"time"
 
-	"github.com/open-policy-agent/opa/ast"
+	"google.golang.org/protobuf/types/known/emptypb"
 
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
-	"github.com/cerbos/cerbos/internal/codegen"
+	runtimev1 "github.com/cerbos/cerbos/api/genpb/cerbos/runtime/v1"
 	"github.com/cerbos/cerbos/internal/namer"
 	"github.com/cerbos/cerbos/internal/policy"
 )
 
-const (
-	storeFetchTimeout = 2 * time.Second
-	updateQueueSize   = 32
-)
+var emptyVal = &emptypb.Empty{}
 
 func BatchCompile(queue <-chan *policy.CompilationUnit) error {
 	var errs ErrorList
 
 	for unit := range queue {
 		if _, err := Compile(unit); err != nil {
-			errList := new(ErrorList)
-			if errors.As(err, errList) {
-				errs = append(errs, (*errList)...)
-			} else {
-				errs = append(errs, newError(unit.MainSourceFile(), err, "Compiler error"))
-			}
+			errs.Add(err)
 		}
 	}
 
 	return errs.ErrOrNil()
 }
 
-func Compile(unit *policy.CompilationUnit) (Evaluator, error) {
-	if err := checkForAmbiguousOrUnknownDerivedRoles(unit); err != nil {
-		return nil, err
+func Compile(unit *policy.CompilationUnit) (rps *runtimev1.RunnablePolicySet, err error) {
+	uc := newUnitCtx(unit)
+	mc := uc.moduleCtx(unit.ModID)
+
+	switch pt := mc.def.PolicyType.(type) {
+	case *policyv1.Policy_ResourcePolicy:
+		rps = compileResourcePolicy(mc, pt.ResourcePolicy)
+	case *policyv1.Policy_PrincipalPolicy:
+		rps = compilePrincipalPolicy(mc, pt.PrincipalPolicy)
+	case *policyv1.Policy_DerivedRoles:
+		rps = compileDerivedRoles(mc, pt.DerivedRoles)
+	default:
+		mc.addErrWithDesc(fmt.Errorf("unknown policy type %T", pt), "Unexpected error")
 	}
 
-	modules, conditionIdx, err := hydrate(unit)
-	if err != nil {
-		return nil, newError(unit.MainSourceFile(), err, "Failed to generate code")
-	}
-
-	regoCompiler := codegen.NewRegoCompiler()
-	if regoCompiler.Compile(modules); regoCompiler.Failed() {
-		return nil, newCodeGenErrors(unit.MainSourceFile(), regoCompiler.Errors)
-	}
-
-	eval, err := newEvaluator(unit, regoCompiler, conditionIdx)
-	if err != nil {
-		return nil, newError(unit.MainSourceFile(), err, "Failed to prepare evaluator")
-	}
-
-	return eval, nil
+	return rps, uc.error()
 }
 
-func checkForAmbiguousOrUnknownDerivedRoles(p *policy.CompilationUnit) ErrorList {
-	root := p.Definitions[p.ModID]
-	rp, ok := root.PolicyType.(*policyv1.Policy_ResourcePolicy)
-	if !ok {
+func compileResourcePolicy(modCtx *moduleCtx, rp *policyv1.ResourcePolicy) *runtimev1.RunnablePolicySet {
+	referencedRoles, err := compileImportedDerivedRoles(modCtx, rp)
+	if err != nil {
 		return nil
 	}
 
-	var errors ErrorList
-	srcFile := policy.GetSourceFile(root)
+	rrp := &runtimev1.RunnableResourcePolicySet_Policy{
+		DerivedRoles: referencedRoles,
+		Scope:        strings.Split(rp.Scope, "."),
+		Rules:        make([]*runtimev1.RunnableResourcePolicySet_Policy_Rule, len(rp.Rules)),
+		Variables:    compileVariables(modCtx, modCtx.def.Variables),
+	}
 
-	// build a set of derived roles defined in the imports.
-	roleDefs := make(map[string][]string)
-
-	for _, imp := range rp.ResourcePolicy.ImportDerivedRoles {
-		impID := namer.GenModuleIDFromName(namer.DerivedRolesModuleName(imp))
-
-		def, ok := p.Definitions[impID]
-		if !ok {
-			errors = append(errors,
-				newError(srcFile, ErrImportNotFound, fmt.Sprintf("Import '%s' cannot be found", imp)))
+	for i, rule := range rp.Rules {
+		rule.Name = namer.ResourceRuleName(rule, i+1)
+		cr := compileResourceRule(modCtx, rule)
+		if cr == nil {
 			continue
 		}
 
-		dr, ok := def.PolicyType.(*policyv1.Policy_DerivedRoles)
+		rrp.Rules[i] = cr
+	}
+
+	return &runtimev1.RunnablePolicySet{
+		Fqn: modCtx.fqn,
+		PolicySet: &runtimev1.RunnablePolicySet_ResourcePolicy{
+			ResourcePolicy: &runtimev1.RunnableResourcePolicySet{
+				Meta: &runtimev1.RunnableResourcePolicySet_Metadata{
+					Fqn:      modCtx.fqn,
+					Resource: rp.Resource,
+					Version:  rp.Version,
+				},
+				Policies: []*runtimev1.RunnableResourcePolicySet_Policy{rrp},
+			},
+		},
+	}
+}
+
+func compileImportedDerivedRoles(modCtx *moduleCtx, rp *policyv1.ResourcePolicy) (map[string]*runtimev1.RunnableDerivedRole, error) {
+	type derivedRoleInfo struct {
+		importName    string
+		sourceFile    string
+		compiledRoles *runtimev1.RunnableDerivedRolesSet
+	}
+
+	roleImports := make(map[string][]derivedRoleInfo)
+
+	for _, imp := range rp.ImportDerivedRoles {
+		impID := namer.GenModuleIDFromFQN(namer.DerivedRolesFQN(imp))
+
+		drModCtx := modCtx.moduleCtx(impID)
+		if drModCtx == nil {
+			modCtx.addErrWithDesc(errImportNotFound, "Import '%s' cannot be found", imp)
+			continue
+		}
+
+		dr, ok := drModCtx.def.PolicyType.(*policyv1.Policy_DerivedRoles)
 		if !ok {
-			errors = append(errors,
-				newError(srcFile, ErrInvalidImport, fmt.Sprintf("Import '%s' is not a derived roles definition", imp)))
+			modCtx.addErrWithDesc(errUnexpectedErr, "Module '%s' is not a derived roles definition", impID.String())
+			continue
+		}
+
+		compiledRoles := doCompileDerivedRoles(drModCtx, dr.DerivedRoles)
+		if compiledRoles == nil {
 			continue
 		}
 
 		for _, rd := range dr.DerivedRoles.Definitions {
-			roleDefs[rd.Name] = append(roleDefs[rd.Name], imp)
+			roleImports[rd.Name] = append(roleImports[rd.Name], derivedRoleInfo{
+				importName:    imp,
+				sourceFile:    drModCtx.sourceFile,
+				compiledRoles: compiledRoles,
+			})
 		}
 	}
 
-	if len(errors) > 0 {
-		return errors
-	}
+	referencedRoles := make(map[string]*runtimev1.RunnableDerivedRole)
 
-	// check for derived role references that don't exist in the imports.
-	for _, rule := range rp.ResourcePolicy.Rules {
+	// used to dedupe error messages
+	unknownRoles := make(map[string]struct{})
+	ambiguousRoles := make(map[string]string)
+
+	for _, rule := range rp.Rules {
 		for _, r := range rule.DerivedRoles {
-			rd, ok := roleDefs[r]
+			imp, ok := roleImports[r]
 			if !ok {
-				errors = append(errors,
-					newError(srcFile, ErrUnknownDerivedRole, fmt.Sprintf("Derived role '%s' is not defined in any imports", r)))
+				unknownRoles[r] = struct{}{}
+				continue
 			}
 
-			if len(rd) > 1 {
-				rdList := strings.Join(rd, ",")
-				errors = append(errors,
-					newError(srcFile, ErrAmbiguousDerivedRole, fmt.Sprintf("Derived role '%s' is defined in more than one import: [%s]", r, rdList)))
+			if len(imp) > 1 {
+				if _, ok := ambiguousRoles[r]; ok {
+					continue
+				}
+
+				rdList := make([]string, len(imp))
+				for i, dri := range imp {
+					rdList[i] = fmt.Sprintf("%s (imported as '%s')", dri.sourceFile, dri.importName)
+				}
+				ambiguousRoles[r] = strings.Join(rdList, ",")
+				continue
 			}
+
+			referencedRoles[r] = imp[0].compiledRoles.DerivedRoles[r]
 		}
 	}
 
-	return errors
+	for ur := range unknownRoles {
+		modCtx.addErrWithDesc(errUnknownDerivedRole, "Derived role '%s' is not defined in any imports", ur)
+	}
+
+	for ar, impList := range ambiguousRoles {
+		modCtx.addErrWithDesc(errAmbiguousDerivedRole, "Derived role '%s' is defined in more than one import: [%s]", ar, impList)
+	}
+
+	return referencedRoles, modCtx.error()
 }
 
-func hydrate(unit *policy.CompilationUnit) (map[string]*ast.Module, ConditionIndex, error) {
-	var conditionIdx ConditionIndex
-	modules := make(map[string]*ast.Module, len(unit.Definitions))
-
-	for modID, def := range unit.Definitions {
-		srcFile := policy.GetSourceFile(def)
-		var mod *ast.Module
-		var cm ConditionMap
-		var err error
-
-		// use generated code if it exists -- which should be faster.
-		if gp, ok := unit.Generated[modID]; ok {
-			mod, cm, err = hydrateGeneratedPolicy(srcFile, gp)
-			if err != nil {
-				// try to generate the code from source
-				mod, cm, err = generateCode(srcFile, def)
-			}
-		} else {
-			mod, cm, err = generateCode(srcFile, def)
-		}
-
-		if err != nil {
-			return nil, nil, err
-		}
-
-		modules[srcFile] = mod
-		if cm != nil {
-			if conditionIdx == nil {
-				conditionIdx = NewConditionIndex()
-			}
-
-			conditionIdx[modID] = cm
-		}
+func compileDerivedRoles(modCtx *moduleCtx, dr *policyv1.DerivedRoles) *runtimev1.RunnablePolicySet {
+	rdr := doCompileDerivedRoles(modCtx, dr)
+	return &runtimev1.RunnablePolicySet{
+		Fqn: modCtx.fqn,
+		PolicySet: &runtimev1.RunnablePolicySet_DerivedRoles{
+			DerivedRoles: rdr,
+		},
 	}
-
-	return modules, conditionIdx, nil
 }
 
-func hydrateGeneratedPolicy(srcFile string, gp *policyv1.GeneratedPolicy) (*ast.Module, ConditionMap, error) {
-	m, err := ast.ParseModule(srcFile, string(gp.Code))
-	if err != nil {
-		return nil, nil, fmt.Errorf("failed to parse generated code: %w", err)
+func doCompileDerivedRoles(modCtx *moduleCtx, dr *policyv1.DerivedRoles) *runtimev1.RunnableDerivedRolesSet {
+	// TODO(cell) Because derived roles can be imported many times, cache the result to avoid repeating the work
+	compiled := &runtimev1.RunnableDerivedRolesSet{
+		Meta: &runtimev1.RunnableDerivedRolesSet_Metadata{
+			Fqn: modCtx.fqn,
+		},
+		DerivedRoles: make(map[string]*runtimev1.RunnableDerivedRole, len(dr.Definitions)),
 	}
 
-	cm, err := NewConditionMapFromRepr(gp.CelConditions)
-	if err != nil {
-		return nil, nil, err
+	variables := compileVariables(modCtx, modCtx.def.Variables)
+
+	for i, def := range dr.Definitions {
+		rdr := &runtimev1.RunnableDerivedRole{
+			Name:        def.Name,
+			ParentRoles: make(map[string]*emptypb.Empty, len(def.ParentRoles)),
+			Variables:   variables,
+		}
+
+		for _, pr := range def.ParentRoles {
+			rdr.ParentRoles[pr] = emptyVal
+		}
+
+		rdr.Condition = compileCondition(modCtx, fmt.Sprintf("derived role '%s' (#%d)", def.Name, i), def.Condition)
+		compiled.DerivedRoles[def.Name] = rdr
 	}
 
-	return m, cm, nil
+	return compiled
 }
 
-func generateCode(srcFile string, p *policyv1.Policy) (*ast.Module, ConditionMap, error) {
-	res, err := codegen.GenerateCode(p)
-	if err != nil {
-		return nil, nil, newCodeGenErrors(srcFile, err)
+func compileResourceRule(modCtx *moduleCtx, rule *policyv1.ResourceRule) *runtimev1.RunnableResourcePolicySet_Policy_Rule {
+	if len(rule.DerivedRoles) == 0 && len(rule.Roles) == 0 {
+		modCtx.addErrWithDesc(errInvalidResourceRule, "Rule '%s' does not specify any roles or derived roles to be matched", rule.Name)
 	}
 
-	var cm ConditionMap
+	cr := &runtimev1.RunnableResourcePolicySet_Policy_Rule{
+		Name:      rule.Name,
+		Condition: compileCondition(modCtx, fmt.Sprintf("resource rule '%s'", rule.Name), rule.Condition),
+		Effect:    rule.Effect,
+	}
 
-	if len(res.Conditions) > 0 {
-		cm, err = NewConditionMap(res.Conditions)
-		if err != nil {
-			return nil, nil, err
+	if len(rule.DerivedRoles) > 0 {
+		cr.DerivedRoles = make(map[string]*emptypb.Empty, len(rule.DerivedRoles))
+		for _, dr := range rule.DerivedRoles {
+			cr.DerivedRoles[dr] = emptyVal
 		}
 	}
 
-	return res.Module, cm, nil
+	if len(rule.Roles) > 0 {
+		cr.Roles = make(map[string]*emptypb.Empty, len(rule.Roles))
+		for _, r := range rule.Roles {
+			cr.Roles[r] = emptyVal
+		}
+	}
+
+	if len(rule.Actions) > 0 {
+		cr.Actions = make(map[string]*emptypb.Empty, len(rule.Actions))
+		for _, a := range rule.Actions {
+			cr.Actions[a] = emptyVal
+		}
+	}
+
+	return cr
+}
+
+func compilePrincipalPolicy(modCtx *moduleCtx, pp *policyv1.PrincipalPolicy) *runtimev1.RunnablePolicySet {
+	rpp := &runtimev1.RunnablePrincipalPolicySet_Policy{
+		Scope:         strings.Split(pp.Scope, "."),
+		ResourceRules: make(map[string]*runtimev1.RunnablePrincipalPolicySet_Policy_ResourceRules, len(pp.Rules)),
+		Variables:     compileVariables(modCtx, modCtx.def.Variables),
+	}
+
+	for _, rule := range pp.Rules {
+		rr := &runtimev1.RunnablePrincipalPolicySet_Policy_ResourceRules{
+			ActionRules: make(map[string]*runtimev1.RunnablePrincipalPolicySet_Policy_ActionRule, len(rule.Actions)),
+		}
+
+		for i, action := range rule.Actions {
+			action.Name = namer.PrincipalResourceActionRuleName(action, rule.Resource, i+1)
+
+			ruleName := fmt.Sprintf("rule '%s' (#%d) of resource '%s'", action.Name, i+1, rule.Resource)
+			rr.ActionRules[action.Action] = &runtimev1.RunnablePrincipalPolicySet_Policy_ActionRule{
+				Name:      action.Name,
+				Effect:    action.Effect,
+				Condition: compileCondition(modCtx, ruleName, action.Condition),
+			}
+		}
+
+		rpp.ResourceRules[rule.Resource] = rr
+	}
+
+	return &runtimev1.RunnablePolicySet{
+		Fqn: modCtx.fqn,
+		PolicySet: &runtimev1.RunnablePolicySet_PrincipalPolicy{
+			PrincipalPolicy: &runtimev1.RunnablePrincipalPolicySet{
+				Meta: &runtimev1.RunnablePrincipalPolicySet_Metadata{
+					Fqn:       modCtx.fqn,
+					Principal: pp.Principal,
+					Version:   pp.Version,
+				},
+				Policies: []*runtimev1.RunnablePrincipalPolicySet_Policy{rpp},
+			},
+		},
+	}
 }

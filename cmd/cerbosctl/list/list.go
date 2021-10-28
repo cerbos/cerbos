@@ -7,7 +7,6 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"sort"
 	"strings"
 
 	"github.com/fatih/color"
@@ -77,7 +76,6 @@ func printPolicies(w io.Writer, policies []*policy.Policy, format string) error 
 		tbl.WithWriter(w)
 		tbl.WithHeaderFormatter(headerFmt)
 
-		sort.Sort(alphabetical(policies))
 		for _, p := range policies {
 			tbl.AddRow(policyPrintables(p)...)
 		}
@@ -100,16 +98,6 @@ func policyPrintables(p *policy.Policy) []interface{} {
 	default:
 		return []interface{}{"-"}
 	}
-}
-
-type alphabetical []*policy.Policy
-
-func (s alphabetical) Len() int { return len(s) }
-
-func (s alphabetical) Swap(i, j int) { s[i], s[j] = s[j], s[i] }
-
-func (s alphabetical) Less(i, j int) bool {
-	return getPolicyName(s[i]) < getPolicyName(s[j])
 }
 
 func getPolicyName(p *policy.Policy) string {

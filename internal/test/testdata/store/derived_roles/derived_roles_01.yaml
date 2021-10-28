@@ -1,7 +1,7 @@
 ---
 apiVersion: "api.cerbos.dev/v1"
 derivedRoles:
-  name: my_derived_roles
+  name: alpha
   definitions:
     - name: admin
       parentRoles: ["admin"]
@@ -12,17 +12,5 @@ derivedRoles:
     - name: employee_that_owns_the_record
       parentRoles: ["employee"]
       condition:
-        script: |-
-          input.resource.attr.owner == input.principal.id
-
-    - name: any_employee
-      parentRoles: ["employee"]
-
-    - name: direct_manager
-      parentRoles: ["manager"]
-      condition:
         match:
-          all:
-            of:
-              - expr: "request.resource.attr.geography == request.principal.attr.geography"
-              - expr: "request.resource.attr.geography == request.principal.attr.managed_geographies"
+          expr: R.attr.owner == P.id

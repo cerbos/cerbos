@@ -302,10 +302,6 @@ func (drb *DerivedRolesBuilder) AddRoleWithMatch(name string, parentRoles []stri
 	return drb.addRoleDef(name, parentRoles, buildAndCondition(expr...))
 }
 
-func (drb *DerivedRolesBuilder) AddRoleWithScript(name string, parentRoles []string, script string) *DerivedRolesBuilder {
-	return drb.addRoleDef(name, parentRoles, &policyv1.Condition{Condition: &policyv1.Condition_Script{Script: script}})
-}
-
 func (drb *DerivedRolesBuilder) addRoleDef(name string, parentRoles []string, comp *policyv1.Condition) *DerivedRolesBuilder {
 	drb.dr.Definitions = append(drb.dr.Definitions, &policyv1.RoleDef{Name: name, ParentRoles: parentRoles, Condition: comp})
 	return drb
@@ -335,8 +331,10 @@ func GenDerivedRoles(mod NameMod) *policyv1.Policy {
 						Name:        "employee_that_owns_the_record",
 						ParentRoles: []string{"employee"},
 						Condition: &policyv1.Condition{
-							Condition: &policyv1.Condition_Script{
-								Script: "input.resource.attr.owner == input.principal.id",
+							Condition: &policyv1.Condition_Match{
+								Match: &policyv1.Match{
+									Op: &policyv1.Match_Expr{Expr: `R.attr.owner == P.id`},
+								},
 							},
 						},
 					},

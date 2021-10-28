@@ -21,10 +21,11 @@ import (
 	requestv1 "github.com/cerbos/cerbos/api/genpb/cerbos/request/v1"
 	responsev1 "github.com/cerbos/cerbos/api/genpb/cerbos/response/v1"
 	svcv1 "github.com/cerbos/cerbos/api/genpb/cerbos/svc/v1"
+	"github.com/cerbos/cerbos/internal/auxdata"
 	"github.com/cerbos/cerbos/internal/compile"
 	"github.com/cerbos/cerbos/internal/engine"
 	"github.com/cerbos/cerbos/internal/storage/disk"
-	"github.com/cerbos/cerbos/internal/storage/disk/index"
+	"github.com/cerbos/cerbos/internal/storage/index"
 )
 
 const playgroundRequestTimeout = 60 * time.Second
@@ -34,11 +35,13 @@ var _ svcv1.CerbosPlaygroundServiceServer = (*CerbosPlaygroundService)(nil)
 // CerbosPlaygroundService implements the playground API.
 type CerbosPlaygroundService struct {
 	*svcv1.UnimplementedCerbosPlaygroundServiceServer
+	auxData *auxdata.AuxData
 }
 
 func NewCerbosPlaygroundService() *CerbosPlaygroundService {
 	return &CerbosPlaygroundService{
 		UnimplementedCerbosPlaygroundServiceServer: &svcv1.UnimplementedCerbosPlaygroundServiceServer{},
+		auxData: auxdata.NewWithoutVerification(context.Background()),
 	}
 }
 
@@ -90,6 +93,12 @@ func (cs *CerbosPlaygroundService) PlaygroundEvaluate(ctx context.Context, req *
 		}, nil
 	}
 
+	auxData, err := cs.auxData.Extract(ctx, req.AuxData)
+	if err != nil {
+		log.Error("Failed to extract auxData", zap.Error(err))
+		return nil, status.Error(codes.InvalidArgument, "failed to extract auxData")
+	}
+
 	eng, err := engine.NewEphemeral(ctx, compile.NewManager(ctx, disk.NewFromIndex(idx)))
 	if err != nil {
 		log.Error("Failed to create engine", zap.Error(err))
@@ -102,6 +111,7 @@ func (cs *CerbosPlaygroundService) PlaygroundEvaluate(ctx context.Context, req *
 			Actions:   req.Actions,
 			Principal: req.Principal,
 			Resource:  req.Resource,
+			AuxData:   auxData,
 		},
 	}
 
@@ -140,7 +150,7 @@ func (cs *CerbosPlaygroundService) PlaygroundProxy(ctx context.Context, req *req
 		return nil, status.Error(codes.Internal, "failed to create engine")
 	}
 
-	cerbosSvc := NewCerbosService(eng)
+	cerbosSvc := NewCerbosService(eng, cs.auxData)
 	switch proxyReq := req.ProxyRequest.(type) {
 	case *requestv1.PlaygroundProxyRequest_CheckResourceSet:
 		resp, err := cerbosSvc.CheckResourceSet(ctx, proxyReq.CheckResourceSet)
@@ -208,7 +218,7 @@ func buildIndex(ctx context.Context, log *zap.Logger, files []*requestv1.PolicyF
 		}
 	}
 
-	return index.Build(ctx, afero.NewIOFS(fs), index.WithMemoryCache())
+	return index.Build(ctx, afero.NewIOFS(fs))
 }
 
 func processLintErrors(ctx context.Context, errs *index.BuildError) *responsev1.PlaygroundFailure {
@@ -232,13 +242,6 @@ func processLintErrors(ctx context.Context, errs *index.BuildError) *responsev1.
 		errors = append(errors, &responsev1.PlaygroundFailure_Error{
 			File:  lf.File,
 			Error: fmt.Sprintf("Failed to read: %s", lf.Err.Error()),
-		})
-	}
-
-	for _, cf := range errs.CodegenFailures {
-		errors = append(errors, &responsev1.PlaygroundFailure_Error{
-			File:  cf.File,
-			Error: fmt.Sprintf("Failed to generate code: %s", cf.Err.Error()),
 		})
 	}
 

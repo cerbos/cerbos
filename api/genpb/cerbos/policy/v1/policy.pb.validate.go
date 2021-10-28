@@ -67,6 +67,8 @@ func (m *Policy) Validate() error {
 		}
 	}
 
+	// no validation rules for Variables
+
 	switch m.PolicyType.(type) {
 
 	case *Policy_ResourcePolicy:
@@ -312,6 +314,13 @@ func (m *ResourcePolicy) Validate() error {
 
 	}
 
+	if !_ResourcePolicy_Scope_Pattern.MatchString(m.GetScope()) {
+		return ResourcePolicyValidationError{
+			field:  "Scope",
+			reason: "value does not match regex pattern \"^([[:alpha:]][[:word:]\\\\-]+(\\\\.[[:alpha:]][[:word:]\\\\-]*)*)*$\"",
+		}
+	}
+
 	return nil
 }
 
@@ -374,6 +383,8 @@ var _ResourcePolicy_Resource_Pattern = regexp.MustCompile("^[[:alpha:]][[:word:]
 var _ResourcePolicy_Version_Pattern = regexp.MustCompile("^[[:word:]]+$")
 
 var _ResourcePolicy_ImportDerivedRoles_Pattern = regexp.MustCompile("^[[:word:]\\-\\.]+$")
+
+var _ResourcePolicy_Scope_Pattern = regexp.MustCompile("^([[:alpha:]][[:word:]\\-]+(\\.[[:alpha:]][[:word:]\\-]*)*)*$")
 
 // Validate checks the field values on ResourceRule with the rules defined in
 // the proto definition for this message. If any rules are violated, an error
@@ -595,6 +606,13 @@ func (m *PrincipalPolicy) Validate() error {
 
 	}
 
+	if !_PrincipalPolicy_Scope_Pattern.MatchString(m.GetScope()) {
+		return PrincipalPolicyValidationError{
+			field:  "Scope",
+			reason: "value does not match regex pattern \"^([[:alpha:]][[:word:]\\\\-]+(\\\\.[[:alpha:]][[:word:]\\\\-]*)*)*$\"",
+		}
+	}
+
 	return nil
 }
 
@@ -655,6 +673,8 @@ var _ interface {
 var _PrincipalPolicy_Principal_Pattern = regexp.MustCompile("^[[:alpha:]][[:word:]\\@\\.\\-]*(\\:[[:alpha:]][[:word:]\\@\\.\\-]*)*$")
 
 var _PrincipalPolicy_Version_Pattern = regexp.MustCompile("^[[:word:]]+$")
+
+var _PrincipalPolicy_Scope_Pattern = regexp.MustCompile("^([[:alpha:]][[:word:]\\-]+(\\.[[:alpha:]][[:word:]\\-]*)*)*$")
 
 // Validate checks the field values on PrincipalRule with the rules defined in
 // the proto definition for this message. If any rules are violated, an error
@@ -1598,92 +1618,6 @@ var _ interface {
 	Cause() error
 	ErrorName() string
 } = TestValidationError{}
-
-// Validate checks the field values on GeneratedPolicy with the rules defined
-// in the proto definition for this message. If any rules are violated, an
-// error is returned.
-func (m *GeneratedPolicy) Validate() error {
-	if m == nil {
-		return nil
-	}
-
-	// no validation rules for Fqn
-
-	for key, val := range m.GetCelConditions() {
-		_ = val
-
-		// no validation rules for CelConditions[key]
-
-		if v, ok := interface{}(val).(interface{ Validate() error }); ok {
-			if err := v.Validate(); err != nil {
-				return GeneratedPolicyValidationError{
-					field:  fmt.Sprintf("CelConditions[%v]", key),
-					reason: "embedded message failed validation",
-					cause:  err,
-				}
-			}
-		}
-
-	}
-
-	// no validation rules for Code
-
-	return nil
-}
-
-// GeneratedPolicyValidationError is the validation error returned by
-// GeneratedPolicy.Validate if the designated constraints aren't met.
-type GeneratedPolicyValidationError struct {
-	field  string
-	reason string
-	cause  error
-	key    bool
-}
-
-// Field function returns field value.
-func (e GeneratedPolicyValidationError) Field() string { return e.field }
-
-// Reason function returns reason value.
-func (e GeneratedPolicyValidationError) Reason() string { return e.reason }
-
-// Cause function returns cause value.
-func (e GeneratedPolicyValidationError) Cause() error { return e.cause }
-
-// Key function returns key value.
-func (e GeneratedPolicyValidationError) Key() bool { return e.key }
-
-// ErrorName returns error name.
-func (e GeneratedPolicyValidationError) ErrorName() string { return "GeneratedPolicyValidationError" }
-
-// Error satisfies the builtin error interface
-func (e GeneratedPolicyValidationError) Error() string {
-	cause := ""
-	if e.cause != nil {
-		cause = fmt.Sprintf(" | caused by: %v", e.cause)
-	}
-
-	key := ""
-	if e.key {
-		key = "key for "
-	}
-
-	return fmt.Sprintf(
-		"invalid %sGeneratedPolicy.%s: %s%s",
-		key,
-		e.field,
-		e.reason,
-		cause)
-}
-
-var _ error = GeneratedPolicyValidationError{}
-
-var _ interface {
-	Field() string
-	Reason() string
-	Key() bool
-	Cause() error
-	ErrorName() string
-} = GeneratedPolicyValidationError{}
 
 // Validate checks the field values on PrincipalRule_Action with the rules
 // defined in the proto definition for this message. If any rules are

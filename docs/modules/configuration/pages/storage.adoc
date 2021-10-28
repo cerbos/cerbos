@@ -17,7 +17,6 @@ storage:
   driver: disk
   disk: 
     directory: /etc/cerbos/policies
-    scratchDir: /tmp/cerbos
 ----
 
 .Dynamic fileset with change detection
@@ -28,11 +27,65 @@ storage:
   disk: 
     directory: /etc/cerbos/policies
     watchForChanges: true
-    scratchDir: /tmp/cerbos
 ----
 
 CAUTION: On some platforms the automatic change detection feature can be inefficient and resource-intensive if the watched directory contains many files or gets updated frequently.
 
+[id="blob-driver"]
+== Blob driver
+
+Cerbos policies can be stored in AWS S3, Google Cloud Storage, or any other S3-compatible storage systems such as link:https://www.minio.io[Minio].
+
+.Configuration keys
+* `bucket`: Required. A URL specifying the service (e.g. S3, GCS), the storage bucket and any other configuration parameters required by the provider.
+** AWS S3: `s3://my-bucket?region=us-west-1`. Must specify region in the URL.
+** Google Cloud Storage: `gs://my-bucket`
+** S3-compatible (e.g. Minio): `s3://my-bucket?endpoint=my.minio.local:8080&disableSSL=true&s3ForcePathStyle=true&region=local`. Must specify region in the URL.
+* `prefix`: Optional. Look for policies only under this key prefix.
+* `workDir`: Optional. Path to the local directory to download the policies to. Defaults to the system cache directory if not specified.
+* `updatePollInterval`: Optional. How frequently the blob store should be checked to discover new or updated policies. Defaults to 0 -- which disables polling.
+* `requestTimeout`: Optional. HTTP request timeout. It takes an HTTP request to download a policy file. Defaults to 5s.
+* `downloadTimeout`: Optional. Timeout to download all policies from the the storage provider. Must be greater than the `requestTimeout`. Defaults to 60s.
+
+NOTE: Cloud provider credentials are taken from the environment using default credential provider chain.
+
+CAUTION: Setting the `updatePollInterval` to a low value could increase resource consumption in both the client and the server systems. Some managed service providers may even impose rate limits or temporary suspensions on your account if the number of requests is too high.
+
+.AWS S3
+[source,yaml,linenums]
+----
+storage:
+  driver: "blob"
+  blob:
+    bucket: "s3://my-bucket-name?region=us-east-2"
+    prefix: policies
+    workDir: ${HOME}/tmp/cerbos/work
+    updatePollInterval: 15s
+    downloadTimeout: 30s
+    requestTimeout: 10s
+----
+
+.Google Cloud Storage
+[source,yaml,linenums]
+----
+storage:
+  driver: "blob"
+  blob:
+    bucket: "gs://my-bucket-name"
+    workDir: ${HOME}/tmp/cerbos/work
+    updatePollInterval: 10s
+----
+
+.Minio local container
+[source,yaml,linenums]
+----
+storage:
+  driver: "blob"
+  blob:
+    bucket: "s3://my-bucket-name?endpoint=localhost:9000&disableSSL=true&s3ForcePathStyle=true&region=local"
+    workDir: ${HOME}/tmp/cerbos/work
+    updatePollInterval: 10s
+----
 == Git driver
 
 Git is the preferred method of storing Cerbos policies. The server is smart enough to detect when new commits are made to the git repository and refresh its state based on the changes.
@@ -57,7 +110,6 @@ storage:
     url: file://${HOME}/tmp/cerbos/policies 
     checkoutDir: ${HOME}/tmp/cerbos/work 
     updatePollInterval: 10s 
-    scratchDir: /tmp/cerbos
 ----
 
 .Remote git repository accessed over HTTPS

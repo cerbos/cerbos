@@ -1,6 +1,9 @@
 ---
 wantErrors:
-  - "resource_policies/leave_request_20210210.yaml: [import not found] Import 'some_derived_roles' cannot be found"
+  - "resource_policies/leave_request_20210210.yaml: Import 'some_derived_roles' cannot be found (import not found)"
+  - "resource_policies/leave_request_20210210.yaml: Derived role 'employee_that_owns_the_record' is not defined in any imports (unknown derived role)"
+  - "resource_policies/leave_request_20210210.yaml: Derived role 'direct_manager' is not defined in any imports (unknown derived role)"
+  - "resource_policies/leave_request_20210210.yaml: Derived role 'any_employee' is not defined in any imports (unknown derived role)"
 mainDef: "resource_policies/leave_request_20210210.yaml"
 inputDefs:
   "resource_policies/leave_request_20210210.yaml":

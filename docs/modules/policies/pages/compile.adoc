@@ -11,54 +11,6 @@ You can use the Cerbos compiler to make sure that your policies are valid before
 docker run -i -t -v /path/to/policy/dir:/policies {app-docker-img} compile /policies
 ----
 
-=== Example: GitHub Actions workflow
-
-- Create a directory named `.github/actions/cerbos` at the root of your repository
-- Create a file named `.github/actions/cerbos/actions.yaml` containing the following:
-+
-[source,yaml,subs="attributes"]
-----
----
-name: 'cerbos'
-description: 'Cerbos compile'
-inputs:
-  policyDir:
-    description: 'Policy directory'
-    required: true
-runs:
-  using: 'docker'
-  image: 'docker://{app-docker-img}'
-  args:
-    - 'compile'
-    - ${{ inputs.policyDir }}
-----
-- Now you can add a job to your workflow definition that references the action created above. For example, the following workflow runs the Cerbos compile step on every pull request:
-+
-[source,yaml]
-----
----
-name: PR Check
-on:
-  pull_request:
-    branches:
-      - main
-jobs:
-  cerbosCheck:
-    name: Check Cerbos policies
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v2
-
-      - name: Run Cerbos compile
-        uses: ./.github/actions/cerbos
-        id: cerbos
-        with:
-          policyDir: cerbos/policies
-----
-
-
-NOTE: See link:https://github.com/cerbos/demo-rest[the Cerbos REST demo respoisitory] for an example of a similar GitHub Action being used to check the policies on each pull request. 
 
 
 == Testing policies
@@ -271,4 +223,74 @@ tests:
       - principal: alicia
         actions:
           view: EFFECT_ALLOW
+----
+
+
+[id="ci-environments"]
+== Validating and testing policies in CI environments
+
+Because Cerbos artefacts are distributed as self-contained containers and binaries, you should be able to easily integrate Cerbos into any CI environment. Simply configure your workflow to execute the commands described in the sections above using either the Cerbos container (you may need to configure mount points to suit your repo structure) or the binary.
+
+
+=== GitHub Actions 
+
+- link:https://github.com/cerbos/cerbos-setup-action[cerbos-setup-action]: Install `cerbos` and `cerbosctl` binaries into your workflow tools cache
+- link:https://github.com/cerbos/cerbos-compile-action[cerbos-compile-action]: Compile and (optionally) test Cerbos policies
+
+.Example workflow
+[source,yaml]
+----
+---
+name: PR Check
+on:
+  pull_request:
+    branches:
+      - main
+jobs:
+  cerbosCheck:
+    name: Check Cerbos policies
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Setup Cerbos
+        uses: cerbos/cerbos-setup-action@v1
+        with:
+          version: latest
+
+      - name: Compile and test policies
+        uses: cerbos/cerbos-compile-action@v1
+        with:
+          policyDir: policies
+          testDir: tests
+----
+
+See https://github.com/cerbos/photo-share-tutorial for an example of Cerbos GitHub Actions being used in a workflow.
+
+=== GitLab CI
+
+.Example pipeline
+[source,yaml,subs="attributes"]
+----
+---
+stages:
+  - prepare
+  - compile
+
+download-cerbos:
+  stage: prepare
+  script:
+    - curl https://github.com/cerbos/cerbos/releases/download/v{app-version}/cerbos_{app-version}_Linux_x86_64.tar.gz -L --output /tmp/cerbos.tar.gz
+    - tar -xf /tmp/cerbos.tar.gz -C ./
+    - chmod +x ./cerbos
+  artifacts:
+    paths:
+      - cerbos
+
+compile-job:
+  stage: compile
+  dependencies: ["download-cerbos"]
+  script:
+    - ./cerbos compile ./policies --tests ./tests
 ----

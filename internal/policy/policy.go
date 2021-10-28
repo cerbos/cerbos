@@ -64,7 +64,7 @@ func Dependencies(p *policyv1.Policy) []string {
 
 		dr := make([]string, len(imports))
 		for i, imp := range imports {
-			dr[i] = namer.DerivedRolesModuleName(imp)
+			dr[i] = namer.DerivedRolesFQN(imp)
 		}
 
 		return dr
@@ -95,7 +95,7 @@ func GetSourceFile(p *policyv1.Policy) string {
 		return p.Metadata.SourceFile
 	}
 
-	return fmt.Sprintf("unknown<%s>", namer.ModuleName(p))
+	return fmt.Sprintf("unknown<%s>", namer.FQN(p))
 }
 
 // Wrapper is a convenience layer over the policy definition.
@@ -115,8 +115,8 @@ func Wrap(p *policyv1.Policy) Wrapper {
 	switch pt := p.PolicyType.(type) {
 	case *policyv1.Policy_ResourcePolicy:
 		w.Kind = ResourceKind.String()
-		w.FQN = namer.ResourcePolicyModuleName(pt.ResourcePolicy.Resource, pt.ResourcePolicy.Version)
-		w.ID = namer.GenModuleIDFromName(w.FQN)
+		w.FQN = namer.ResourcePolicyFQN(pt.ResourcePolicy.Resource, pt.ResourcePolicy.Version)
+		w.ID = namer.GenModuleIDFromFQN(w.FQN)
 		w.Name = pt.ResourcePolicy.Resource
 		w.Version = pt.ResourcePolicy.Version
 
@@ -124,21 +124,21 @@ func Wrap(p *policyv1.Policy) Wrapper {
 		if len(imports) > 0 {
 			w.Dependencies = make([]namer.ModuleID, len(imports))
 			for i, imp := range imports {
-				w.Dependencies[i] = namer.GenModuleIDFromName(namer.DerivedRolesModuleName(imp))
+				w.Dependencies[i] = namer.GenModuleIDFromFQN(namer.DerivedRolesFQN(imp))
 			}
 		}
 
 	case *policyv1.Policy_PrincipalPolicy:
 		w.Kind = PrincipalKind.String()
-		w.FQN = namer.PrincipalPolicyModuleName(pt.PrincipalPolicy.Principal, pt.PrincipalPolicy.Version)
-		w.ID = namer.GenModuleIDFromName(w.FQN)
+		w.FQN = namer.PrincipalPolicyFQN(pt.PrincipalPolicy.Principal, pt.PrincipalPolicy.Version)
+		w.ID = namer.GenModuleIDFromFQN(w.FQN)
 		w.Name = pt.PrincipalPolicy.Principal
 		w.Version = pt.PrincipalPolicy.Version
 
 	case *policyv1.Policy_DerivedRoles:
 		w.Kind = DerivedRolesKind.String()
-		w.FQN = namer.DerivedRolesModuleName(pt.DerivedRoles.Name)
-		w.ID = namer.GenModuleIDFromName(w.FQN)
+		w.FQN = namer.DerivedRolesFQN(pt.DerivedRoles.Name)
+		w.ID = namer.GenModuleIDFromFQN(w.FQN)
 		w.Name = pt.DerivedRoles.Name
 
 	default:
@@ -154,7 +154,6 @@ func Wrap(p *policyv1.Policy) Wrapper {
 type CompilationUnit struct {
 	ModID       namer.ModuleID
 	Definitions map[namer.ModuleID]*policyv1.Policy
-	Generated   map[namer.ModuleID]*policyv1.GeneratedPolicy
 }
 
 func (cu *CompilationUnit) AddDefinition(id namer.ModuleID, p *policyv1.Policy) {
@@ -165,32 +164,12 @@ func (cu *CompilationUnit) AddDefinition(id namer.ModuleID, p *policyv1.Policy) 
 	cu.Definitions[id] = p
 }
 
-func (cu *CompilationUnit) AddGenerated(id namer.ModuleID, p *policyv1.GeneratedPolicy) {
-	if cu.Generated == nil {
-		cu.Generated = make(map[namer.ModuleID]*policyv1.GeneratedPolicy)
-	}
-
-	cu.Generated[id] = p
-}
-
 func (cu *CompilationUnit) MainSourceFile() string {
 	return GetSourceFile(cu.Definitions[cu.ModID])
 }
 
-// Query returns the query that is expected to be evaluated from this policy set.
-func (cu *CompilationUnit) Query() string {
-	main := cu.Definitions[cu.ModID]
-
-	switch pt := main.PolicyType.(type) {
-	case *policyv1.Policy_ResourcePolicy:
-		return namer.QueryForResource(pt.ResourcePolicy.Resource, pt.ResourcePolicy.Version)
-	case *policyv1.Policy_PrincipalPolicy:
-		return namer.QueryForPrincipal(pt.PrincipalPolicy.Principal, pt.PrincipalPolicy.Version)
-	case *policyv1.Policy_DerivedRoles:
-		return ""
-	default:
-		panic(fmt.Errorf("unknown policy type %T", pt))
-	}
+func (cu *CompilationUnit) MainPolicy() *policyv1.Policy {
+	return cu.Definitions[cu.ModID]
 }
 
 // Key returns the human readable identifier for the main module.

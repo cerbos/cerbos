@@ -109,6 +109,16 @@ func (m *CheckResourceSetRequest) Validate() error {
 
 	// no validation rules for IncludeMeta
 
+	if v, ok := interface{}(m.GetAuxData()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return CheckResourceSetRequestValidationError{
+				field:  "AuxData",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
 	return nil
 }
 
@@ -427,6 +437,16 @@ func (m *CheckResourceBatchRequest) Validate() error {
 
 	}
 
+	if v, ok := interface{}(m.GetAuxData()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return CheckResourceBatchRequestValidationError{
+				field:  "AuxData",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
 	return nil
 }
 
@@ -485,6 +505,80 @@ var _ interface {
 	Cause() error
 	ErrorName() string
 } = CheckResourceBatchRequestValidationError{}
+
+// Validate checks the field values on AuxData with the rules defined in the
+// proto definition for this message. If any rules are violated, an error is returned.
+func (m *AuxData) Validate() error {
+	if m == nil {
+		return nil
+	}
+
+	if v, ok := interface{}(m.GetJwt()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return AuxDataValidationError{
+				field:  "Jwt",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	return nil
+}
+
+// AuxDataValidationError is the validation error returned by AuxData.Validate
+// if the designated constraints aren't met.
+type AuxDataValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e AuxDataValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e AuxDataValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e AuxDataValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e AuxDataValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e AuxDataValidationError) ErrorName() string { return "AuxDataValidationError" }
+
+// Error satisfies the builtin error interface
+func (e AuxDataValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sAuxData.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = AuxDataValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = AuxDataValidationError{}
 
 // Validate checks the field values on PolicyFile with the rules defined in the
 // proto definition for this message. If any rules are violated, an error is returned.
@@ -749,6 +843,16 @@ func (m *PlaygroundEvaluateRequest) Validate() error {
 			}
 		}
 
+	}
+
+	if v, ok := interface{}(m.GetAuxData()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return PlaygroundEvaluateRequestValidationError{
+				field:  "AuxData",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
 	}
 
 	return nil
@@ -1247,6 +1351,16 @@ func (m *ListPoliciesRequest) Validate() error {
 
 	}
 
+	if v, ok := interface{}(m.GetSortOptions()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return ListPoliciesRequestValidationError{
+				field:  "SortOptions",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
 	return nil
 }
 
@@ -1421,6 +1535,80 @@ var _ interface {
 	ErrorName() string
 } = CheckResourceBatchRequest_BatchEntryValidationError{}
 
+// Validate checks the field values on AuxData_JWT with the rules defined in
+// the proto definition for this message. If any rules are violated, an error
+// is returned.
+func (m *AuxData_JWT) Validate() error {
+	if m == nil {
+		return nil
+	}
+
+	if utf8.RuneCountInString(m.GetToken()) < 1 {
+		return AuxData_JWTValidationError{
+			field:  "Token",
+			reason: "value length must be at least 1 runes",
+		}
+	}
+
+	// no validation rules for KeySetId
+
+	return nil
+}
+
+// AuxData_JWTValidationError is the validation error returned by
+// AuxData_JWT.Validate if the designated constraints aren't met.
+type AuxData_JWTValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e AuxData_JWTValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e AuxData_JWTValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e AuxData_JWTValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e AuxData_JWTValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e AuxData_JWTValidationError) ErrorName() string { return "AuxData_JWTValidationError" }
+
+// Error satisfies the builtin error interface
+func (e AuxData_JWTValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sAuxData_JWT.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = AuxData_JWTValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = AuxData_JWTValidationError{}
+
 // Validate checks the field values on ListAuditLogEntriesRequest_TimeRange
 // with the rules defined in the proto definition for this message. If any
 // rules are violated, an error is returned.
@@ -1553,7 +1741,12 @@ func (m *ListPoliciesRequest_Filter) Validate() error {
 		return nil
 	}
 
-	// no validation rules for Type
+	if _, ok := _ListPoliciesRequest_Filter_Type_InLookup[m.GetType()]; !ok {
+		return ListPoliciesRequest_FilterValidationError{
+			field:  "Type",
+			reason: "value must be in list [1 2]",
+		}
+	}
 
 	// no validation rules for FieldPath
 
@@ -1617,3 +1810,100 @@ var _ interface {
 	Cause() error
 	ErrorName() string
 } = ListPoliciesRequest_FilterValidationError{}
+
+var _ListPoliciesRequest_Filter_Type_InLookup = map[ListPoliciesRequest_MatchType]struct{}{
+	1: {},
+	2: {},
+}
+
+// Validate checks the field values on ListPoliciesRequest_SortOptions with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, an error is returned.
+func (m *ListPoliciesRequest_SortOptions) Validate() error {
+	if m == nil {
+		return nil
+	}
+
+	if _, ok := _ListPoliciesRequest_SortOptions_Column_InLookup[m.GetColumn()]; !ok {
+		return ListPoliciesRequest_SortOptionsValidationError{
+			field:  "Column",
+			reason: "value must be in list [1 2]",
+		}
+	}
+
+	if _, ok := _ListPoliciesRequest_SortOptions_Order_InLookup[m.GetOrder()]; !ok {
+		return ListPoliciesRequest_SortOptionsValidationError{
+			field:  "Order",
+			reason: "value must be in list [1 2]",
+		}
+	}
+
+	return nil
+}
+
+// ListPoliciesRequest_SortOptionsValidationError is the validation error
+// returned by ListPoliciesRequest_SortOptions.Validate if the designated
+// constraints aren't met.
+type ListPoliciesRequest_SortOptionsValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e ListPoliciesRequest_SortOptionsValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e ListPoliciesRequest_SortOptionsValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e ListPoliciesRequest_SortOptionsValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e ListPoliciesRequest_SortOptionsValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e ListPoliciesRequest_SortOptionsValidationError) ErrorName() string {
+	return "ListPoliciesRequest_SortOptionsValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e ListPoliciesRequest_SortOptionsValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sListPoliciesRequest_SortOptions.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = ListPoliciesRequest_SortOptionsValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = ListPoliciesRequest_SortOptionsValidationError{}
+
+var _ListPoliciesRequest_SortOptions_Column_InLookup = map[ListPoliciesRequest_SortOptions_Column]struct{}{
+	1: {},
+	2: {},
+}
+
+var _ListPoliciesRequest_SortOptions_Order_InLookup = map[ListPoliciesRequest_SortOptions_Order]struct{}{
+	1: {},
+	2: {},
+}

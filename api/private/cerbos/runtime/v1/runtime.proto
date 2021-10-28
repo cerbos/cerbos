@@ -1,0 +1,126 @@
+// Copyright 2021 Zenauth Ltd.
+// SPDX-License-Identifier: Apache-2.0
+
+syntax = "proto3";
+
+package cerbos.runtime.v1;
+
+option go_package = "github.com/cerbos/cerbos/api/genpb/cerbos/runtime/v1;runtimev1";
+
+import "cerbos/effect/v1/effect.proto";
+import "google/api/expr/v1alpha1/checked.proto";
+import "google/protobuf/empty.proto";
+
+message RunnablePolicySet {
+    string fqn = 1;
+    oneof policy_set {
+        RunnableResourcePolicySet resource_policy = 2;
+        RunnablePrincipalPolicySet principal_policy = 3;
+        RunnableDerivedRolesSet derived_roles = 4;
+    }
+}
+
+
+// RunnableResourcePolicySet is a container for all "compiled" resource policies belonging to a particular scope hierarchy.
+// For example, consider the following policy files:
+//
+// Resource       Version     Scope
+// --------------------------------
+// leave_request  default     foo.bar.baz
+// leave_request  default     foo.bar
+// leave_request  default     foo
+// leave_request  staging     foo
+//
+// After "compiling", the above would result in two RunnableResourcePolicySet objects. One containing the three 
+// leave_request:default polcies and one containing the single leave_request:staging policy.
+message RunnableResourcePolicySet {
+    message Metadata {
+        string fqn = 1;
+        string resource = 2;
+        string version = 3;
+    }
+
+    message Policy {
+        message Rule {
+            string name = 1; 
+            map<string, google.protobuf.Empty> actions = 2;
+            map<string, google.protobuf.Empty> derived_roles = 3;
+            map<string, google.protobuf.Empty> roles = 4;
+            Condition condition = 5;
+            cerbos.effect.v1.Effect effect = 6; 
+        }
+
+
+        repeated string scope = 1;
+        map<string, RunnableDerivedRole> derived_roles = 2;
+        map<string, Expr> variables = 3;
+        repeated Rule rules = 4;
+    }
+
+    Metadata meta = 1;
+    repeated Policy policies = 2;
+}
+
+message RunnableDerivedRole {
+    string name = 1;
+    map<string, google.protobuf.Empty> parent_roles = 2;
+    map<string, Expr> variables = 3;
+    Condition condition = 4;
+}
+
+message RunnableDerivedRolesSet {
+    message Metadata {
+        string fqn = 1;
+    }
+
+    Metadata meta = 1;
+    map<string, RunnableDerivedRole> derived_roles = 2;
+}
+
+// RunnablePrincipalPolicySet is a container for all "compiled" principal policies belonging to a particular scope hierarchy.
+// See the description of RunnableResourcePolicySet to get an idea about how this is constructed.
+message RunnablePrincipalPolicySet {
+    message Metadata {
+        string fqn = 1;
+        string principal = 2;
+        string version = 3;
+    }
+
+    message Policy {
+        message ActionRule {
+            string name = 1;
+            Condition condition = 2;
+            cerbos.effect.v1.Effect effect = 3;
+        }
+
+        message ResourceRules {
+            map<string, ActionRule> action_rules = 1;
+        }
+
+        repeated string scope = 1;
+        map<string, Expr> variables = 2;
+        map<string, ResourceRules> resource_rules = 3;
+    }
+
+    Metadata meta = 1;
+    repeated Policy policies = 2;
+}
+
+message Expr {
+    string original = 1;
+    google.api.expr.v1alpha1.CheckedExpr checked = 2;
+}
+
+message Condition {
+    message ExprList {
+        repeated Condition expr = 1;
+    }
+
+    oneof op {
+        ExprList all = 1;
+        ExprList any = 2;
+        ExprList none = 3;
+        Expr expr = 4;
+    }
+}
+

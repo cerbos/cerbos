@@ -18,7 +18,7 @@ import (
 	"github.com/cerbos/cerbos/internal/compile"
 	"github.com/cerbos/cerbos/internal/engine"
 	"github.com/cerbos/cerbos/internal/storage/disk"
-	"github.com/cerbos/cerbos/internal/storage/disk/index"
+	"github.com/cerbos/cerbos/internal/storage/index"
 	"github.com/cerbos/cerbos/internal/verify"
 )
 
@@ -35,6 +35,7 @@ var (
 	successfulTest = color.New(color.FgHiGreen).SprintFunc()
 
 	format     string
+	skipTests  bool
 	verifyConf = verify.Config{}
 )
 
@@ -55,6 +56,7 @@ func NewCommand() *cobra.Command {
 	cmd.Flags().StringVarP(&format, "format", "f", "", "Output format (valid values: json,plain)")
 	cmd.Flags().StringVar(&verifyConf.TestsDir, "tests", "", "Path to the directory containing tests")
 	cmd.Flags().StringVar(&verifyConf.Run, "run", "", "Run only tests that match this regex")
+	cmd.Flags().BoolVar(&skipTests, "skip-tests", false, "Skip tests")
 
 	return cmd
 }
@@ -63,7 +65,7 @@ func doRun(cmd *cobra.Command, args []string) error {
 	ctx, stopFunc := signal.NotifyContext(context.Background(), os.Interrupt)
 	defer stopFunc()
 
-	idx, err := index.Build(ctx, os.DirFS(args[0]), index.WithMemoryCache())
+	idx, err := index.Build(ctx, os.DirFS(args[0]))
 	if err != nil {
 		idxErr := new(index.BuildError)
 		if errors.As(err, &idxErr) {
@@ -82,7 +84,11 @@ func doRun(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("failed to create engine: %w", err)
 	}
 
-	if verifyConf.TestsDir != "" {
+	if verifyConf.TestsDir == "" {
+		verifyConf.TestsDir = args[0]
+	}
+
+	if !skipTests {
 		compiler := compile.NewManager(ctx, disk.NewFromIndex(idx))
 		eng, err := engine.NewEphemeral(ctx, compiler)
 		if err != nil {
@@ -132,14 +138,6 @@ func displayLintErrors(cmd *cobra.Command, errs *index.BuildError) error {
 		cmd.Println(header("Load failures"))
 		for _, lf := range errs.LoadFailures {
 			cmd.Printf("%s: %s\n", fileName(lf.File), errorMsg(lf.Err.Error()))
-		}
-		cmd.Println()
-	}
-
-	if len(errs.CodegenFailures) > 0 {
-		cmd.Println(header("Code generation failures"))
-		for _, cf := range errs.CodegenFailures {
-			cmd.Printf("%s: %s\n", fileName(cf.File), errorMsg(cf.Err.Error()))
 		}
 		cmd.Println()
 	}

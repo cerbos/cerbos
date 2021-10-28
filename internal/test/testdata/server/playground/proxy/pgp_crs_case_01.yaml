@@ -8,16 +8,20 @@ playgroundProxy:
     "playgroundId": "test",
     "policyFiles": [
       {
-        "fileName": "common_roles.yaml",
-        "contents": "LS0tCmFwaVZlcnNpb246ICJhcGkuY2VyYm9zLmRldi92MSIKZGVyaXZlZFJvbGVzOgogIG5hbWU6IG15X2Rlcml2ZWRfcm9sZXMKICBkZWZpbml0aW9uczoKICAgIC0gbmFtZTogYWRtaW4KICAgICAgcGFyZW50Um9sZXM6IFsiYWRtaW4iXQoKICAgIC0gbmFtZTogdGVzdGVyCiAgICAgIHBhcmVudFJvbGVzOiBbImRldiIsICJxYSJdCgogICAgLSBuYW1lOiBlbXBsb3llZV90aGF0X293bnNfdGhlX3JlY29yZAogICAgICBwYXJlbnRSb2xlczogWyJlbXBsb3llZSJdCiAgICAgIGNvbmRpdGlvbjoKICAgICAgICBzY3JpcHQ6IHwtCiAgICAgICAgICBpbnB1dC5yZXNvdXJjZS5hdHRyLm93bmVyID09IGlucHV0LnByaW5jaXBhbC5pZAoKICAgIC0gbmFtZTogYW55X2VtcGxveWVlCiAgICAgIHBhcmVudFJvbGVzOiBbImVtcGxveWVlIl0KCiAgICAtIG5hbWU6IGRpcmVjdF9tYW5hZ2VyCiAgICAgIHBhcmVudFJvbGVzOiBbIm1hbmFnZXIiXQogICAgICBjb25kaXRpb246CiAgICAgICAgbWF0Y2g6CiAgICAgICAgICBhbGw6CiAgICAgICAgICAgIG9mOgogICAgICAgICAgICAgIC0gZXhwcjogInJlcXVlc3QucmVzb3VyY2UuYXR0ci5nZW9ncmFwaHkgPT0gcmVxdWVzdC5wcmluY2lwYWwuYXR0ci5nZW9ncmFwaHkiCiAgICAgICAgICAgICAgLSBleHByOiAicmVxdWVzdC5yZXNvdXJjZS5hdHRyLmdlb2dyYXBoeSA9PSByZXF1ZXN0LnByaW5jaXBhbC5hdHRyLm1hbmFnZWRfZ2VvZ3JhcGhpZXMiCg=="
+        "fileName": "derived_roles_01.yaml",
+        "contents": "{{ .Files.Get `store/derived_roles/derived_roles_01.yaml` | base64encode }}",
       },
       {
-        "fileName": "resource.yaml",
-        "contents": "LS0tCmFwaVZlcnNpb246IGFwaS5jZXJib3MuZGV2L3YxCnJlc291cmNlUG9saWN5OgogIGltcG9ydERlcml2ZWRSb2xlczoKICAtIG15X2Rlcml2ZWRfcm9sZXMKICByZXNvdXJjZTogbGVhdmVfcmVxdWVzdAogIHJ1bGVzOgogIC0gYWN0aW9uczogWycqJ10KICAgIGVmZmVjdDogRUZGRUNUX0FMTE9XCiAgICByb2xlczoKICAgIC0gYWRtaW4KICAtIGFjdGlvbnM6IFsiY3JlYXRlIl0KICAgIGRlcml2ZWRSb2xlczoKICAgIC0gZW1wbG95ZWVfdGhhdF9vd25zX3RoZV9yZWNvcmQKICAgIGVmZmVjdDogRUZGRUNUX0FMTE9XCiAgLSBhY3Rpb25zOiBbInZpZXc6KiJdCiAgICBkZXJpdmVkUm9sZXM6CiAgICAtIGVtcGxveWVlX3RoYXRfb3duc190aGVfcmVjb3JkCiAgICAtIGRpcmVjdF9tYW5hZ2VyCiAgICBlZmZlY3Q6IEVGRkVDVF9BTExPVwogIC0gYWN0aW9uczogWyJ2aWV3OnB1YmxpYyJdCiAgICBkZXJpdmVkUm9sZXM6CiAgICAtIGFueV9lbXBsb3llZQogICAgZWZmZWN0OiBFRkZFQ1RfQUxMT1cKICAtIGFjdGlvbnM6IFsiYXBwcm92ZSJdCiAgICBjb25kaXRpb246CiAgICAgIG1hdGNoOgogICAgICAgIGV4cHI6IHJlcXVlc3QucmVzb3VyY2UuYXR0ci5zdGF0dXMgPT0gIlBFTkRJTkdfQVBQUk9WQUwiCiAgICBkZXJpdmVkUm9sZXM6CiAgICAtIGRpcmVjdF9tYW5hZ2VyCiAgICBlZmZlY3Q6IEVGRkVDVF9BTExPVwogIHZlcnNpb246ICIyMDIxMDIxMCIK"
+        "fileName": "derived_roles_02.yaml",
+        "contents": "{{ .Files.Get `store/derived_roles/derived_roles_02.yaml` | base64encode }}",
       },
       {
-        "fileName": "principal.yaml",
-        "contents": "LS0tCmFwaVZlcnNpb246ICJhcGkuY2VyYm9zLmRldi92MSIKcHJpbmNpcGFsUG9saWN5OgogIHByaW5jaXBhbDogZG9uYWxkX2R1Y2sKICB2ZXJzaW9uOiAiMjAyMTAyMTAiCiAgcnVsZXM6CiAgICAtIHJlc291cmNlOiBsZWF2ZV9yZXF1ZXN0CiAgICAgIGFjdGlvbnM6CiAgICAgICAgLSBhY3Rpb246ICIqIgogICAgICAgICAgY29uZGl0aW9uOgogICAgICAgICAgICBtYXRjaDoKICAgICAgICAgICAgICBleHByOiAicmVxdWVzdC5yZXNvdXJjZS5hdHRyLmRldl9yZWNvcmQgPT0gdHJ1ZSIKICAgICAgICAgIGVmZmVjdDogRUZGRUNUX0FMTE9XCgogICAgLSByZXNvdXJjZTogc2FsYXJ5X3JlY29yZAogICAgICBhY3Rpb25zOgogICAgICAgIC0gYWN0aW9uOiAiKiIKICAgICAgICAgIGVmZmVjdDogRUZGRUNUX0RFTlkK"
+        "fileName": "policy_01.yaml",
+        "contents": "{{ .Files.Get `store/resource_policies/policy_01.yaml` | base64encode }}",
+      },
+      {
+        "fileName": "policy_02.yaml",
+        "contents": "{{ .Files.Get `store/principal_policies/policy_01.yaml` | base64encode }}",
       }
     ],
     "checkResourceSet": {

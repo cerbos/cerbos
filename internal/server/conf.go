@@ -7,6 +7,8 @@ import (
 	"fmt"
 	"time"
 
+	"go.uber.org/multierr"
+
 	"github.com/cerbos/cerbos/internal/util"
 )
 
@@ -50,7 +52,7 @@ type TLSConf struct {
 
 type CORSConf struct {
 	// Disabled sets whether CORS is disabled.
-	Disabled bool `yaml:"enabled"`
+	Disabled bool `yaml:"disabled"`
 	// AllowedOrigins is the contents of the allowed-origins header.
 	AllowedOrigins []string `yaml:"allowedOrigins"`
 	// AllowedHeaders is the contents of the allowed-headers header.
@@ -97,14 +99,14 @@ func (c *Conf) SetDefaults() {
 	}
 }
 
-func (c *Conf) Validate() error {
+func (c *Conf) Validate() (errs error) {
 	if _, _, err := util.ParseListenAddress(c.HTTPListenAddr); err != nil {
-		return fmt.Errorf("invalid httpListenAddr '%s': %w", c.HTTPListenAddr, err)
+		errs = multierr.Append(errs, fmt.Errorf("invalid httpListenAddr '%s': %w", c.HTTPListenAddr, err))
 	}
 
 	if _, _, err := util.ParseListenAddress(c.GRPCListenAddr); err != nil {
-		return fmt.Errorf("invalid grpcListenAddr '%s': %w", c.GRPCListenAddr, err)
+		errs = multierr.Append(errs, fmt.Errorf("invalid grpcListenAddr '%s': %w", c.GRPCListenAddr, err))
 	}
 
-	return nil
+	return errs
 }
