@@ -1,0 +1,47 @@
+include::ROOT:partial$attributes.adoc[]
+
+[#v0.9.1]
+= Cerbos v0.9.1
+
+This is a quick patch release to fix an issue that was discovered in config parsing. The `bcrypt` hashes of admin API credentials can contain `$` characters which cause the config loader to treat the subsequent set of characters as the name of an environment variable. We now require the `passwordHash` to be a bcrypt hash that has been base64 encoded. Please note that this is a breaking change. If you have a config file with `server.adminAPI.adminCredentials.passwordHash` set, encode it with base64 to work with this version of Cerbos. 
+
+
+== Highlights 
+
+If you have policy tests intermingled with your policies, the `cerbos compile` command will now automatically run those tests. Use the `--skip-tests` flag to switch off this behaviour.  
+
+
+== Changelog
+
+
+=== Bug Fixes
+
+* Base64 encode password hashes in config file (link:https://github.com/cerbos/cerbos/pull/406[#406])
+
+=== Features
+
+* Run tests by default in cerbos compile sub command (link:https://github.com/cerbos/cerbos/pull/392[#392])
+
+=== Documentation
+
+* Add README to Helm chart (link:https://github.com/cerbos/cerbos/pull/404[#404])
+* Determine app-version from component (link:https://github.com/cerbos/cerbos/pull/397[#397])
+* Validating and testing policies with GitLab CI (link:https://github.com/cerbos/cerbos/pull/394[#394])
+
+=== Chores
+
+* Add .idea to .gitignore (link:https://github.com/cerbos/cerbos/pull/405[#405])
+* Add tests for admin credentials config (link:https://github.com/cerbos/cerbos/pull/407[#407])
+* Bump github.com/aws/aws-sdk-go from 1.41.6 to 1.41.11 (link:https://github.com/cerbos/cerbos/pull/401[#401])
+* Bump github.com/envoyproxy/protoc-gen-validate from 0.6.1 to 0.6.2 (link:https://github.com/cerbos/cerbos/pull/390[#390])
+* Bump github.com/lestrrat-go/jwx from 1.2.7 to 1.2.8 (link:https://github.com/cerbos/cerbos/pull/391[#391])
+* Bump github.com/tidwall/gjson from 1.9.1 to 1.10.2 (link:https://github.com/cerbos/cerbos/pull/398[#398])
+* Bump version to 0.10.0
+* Fix dependabot workflow committing issue (link:https://github.com/cerbos/cerbos/pull/400[#400])
+* Publish Helm charts to download.cerbos.dev and OCI registry (link:https://github.com/cerbos/cerbos/pull/403[#403])
+* Remove GoReleaser mod stanza (link:https://github.com/cerbos/cerbos/pull/389[#389])
+* Run make commands to generate NOTICE after dependabot PRs (link:https://github.com/cerbos/cerbos/pull/395[#395])
+
+=== Other
+
+* Add contents write permission to Dependabot workflow (link:https://github.com/cerbos/cerbos/pull/402[#402])
