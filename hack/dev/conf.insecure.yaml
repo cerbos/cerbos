@@ -4,6 +4,11 @@ server:
   grpcListenAddr: ":3593"
   logRequestPayloads: false
   playgroundEnabled: true
+  adminAPI:
+    enabled: true
+    adminCredentials: 
+      username: cerbos
+      passwordHash: JDJ5JDEwJC5BYjQyY2RJNG5QR2NWMmJPdnNtQU93c09RYVA0eFFGdHBrbmFEeXh1NnlIVTE1cHJNY05PCgo=
 
 auxData:
   jwt:
