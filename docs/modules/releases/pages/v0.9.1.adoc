@@ -3,7 +3,7 @@ include::ROOT:partial$attributes.adoc[]
 [#v0.9.1]
 = Cerbos v0.9.1
 
-This is a quick patch release to fix an issue that was discovered in config parsing. The `bcrypt` hashes of admin API credentials can contain `$` characters which cause the config loader to treat the subsequent set of characters as the name of an environment variable. We now require the `passwordHash` to be a bcrypt hash that has been base64 encoded. Please note that this is a breaking change. If you have a config file with `server.adminAPI.adminCredentials.passwordHash` set, encode it with base64 to work with this version of Cerbos. Thanks to `@jack-ntwrk` for reporting and fixing the issue.
+This is a quick patch release to fix an issue that was discovered in config parsing. The `bcrypt` hashes of admin API credentials can contain `$` characters which cause the config loader to treat the subsequent set of characters as the name of an environment variable. We now require the `passwordHash` to be a bcrypt hash that has been base64 encoded. Please note that this is a breaking change. If you have a config file with `server.adminAPI.adminCredentials.passwordHash` set, encode it with base64 to work with this version of Cerbos. 
 
 
 == Highlights 
