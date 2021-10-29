@@ -5,6 +5,7 @@ package server
 
 import (
 	"encoding/base64"
+	"errors"
 	"fmt"
 	"time"
 
@@ -23,6 +24,7 @@ const (
 
 var (
 	defaultAdminPasswordHash = base64.StdEncoding.EncodeToString([]byte(defaultRawAdminPasswordHash))
+	errAdminCredsUndefined   = errors.New("admin credentials not defined")
 )
 
 // Conf holds configuration pertaining to the server.
@@ -76,7 +78,7 @@ type AdminAPIConf struct {
 type AdminCredentialsConf struct {
 	// Username is the hardcoded username to use for authentication.
 	Username string `yaml:"username"`
-	// PasswordHash is the bcrypt hash of the password to use for authentication.
+	// PasswordHash is the base64-encoded bcrypt hash of the password to use for authentication.
 	PasswordHash string `yaml:"passwordHash"`
 }
 
@@ -86,6 +88,19 @@ func (a *AdminCredentialsConf) isUnsafe() bool {
 	}
 
 	return a.Username == defaultAdminUsername || a.PasswordHash == defaultAdminPasswordHash
+}
+
+func (a *AdminCredentialsConf) usernameAndPasswordHash() (string, []byte, error) {
+	if a == nil {
+		return "", nil, errAdminCredsUndefined
+	}
+
+	passwordHashBytes, err := base64.StdEncoding.DecodeString(a.PasswordHash)
+	if err != nil {
+		return "", nil, fmt.Errorf("failed to base64 decode admin passwordHash: %w", err)
+	}
+
+	return a.Username, passwordHashBytes, nil
 }
 
 func (c *Conf) Key() string {

@@ -7,7 +7,6 @@ import (
 	"context"
 	"crypto/tls"
 	"crypto/x509"
-	"encoding/base64"
 	"errors"
 	"fmt"
 	"net"
@@ -316,13 +315,13 @@ func (s *Server) startGRPCServer(l net.Listener, param Param) (*grpc.Server, err
 			log.Warn("[SECURITY RISK] Admin API uses default credentials which are unsafe for production use. Please change the credentials by updating the configuration file.")
 		}
 
-		passwordHashBytes, err := base64.StdEncoding.DecodeString(creds.PasswordHash)
+		adminUser, adminPasswdHash, err := creds.usernameAndPasswordHash()
 		if err != nil {
-			log.Error("Failed to base64 decode password hash", zap.Error(err))
+			log.Error("Failed to get admin API credentials", zap.Error(err))
 			return nil, err
 		}
 
-		svcv1.RegisterCerbosAdminServiceServer(server, svc.NewCerbosAdminService(param.Store, param.AuditLog, creds.Username, passwordHashBytes))
+		svcv1.RegisterCerbosAdminServiceServer(server, svc.NewCerbosAdminService(param.Store, param.AuditLog, adminUser, adminPasswdHash))
 		s.health.SetServingStatus(svcv1.CerbosAdminService_ServiceDesc.ServiceName, healthpb.HealthCheckResponse_SERVING)
 	}
 
