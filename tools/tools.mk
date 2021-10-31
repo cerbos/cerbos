@@ -128,3 +128,13 @@ swagger-editor:
 .PHONY: releaser
 releaser: $(GORELEASER)
 	@ $(GORELEASER) --config=.goreleaser-dev.yml --snapshot --skip-publish --rm-dist
+
+.PHONY: publish-lambda-image
+publish-lambda-image:
+	docker tag  cerbos/lambda:latest 414605243264.dkr.ecr.us-east-2.amazonaws.com/lambda:latest
+	docker push 414605243264.dkr.ecr.us-east-2.amazonaws.com/lambda:latest
+
+.PHONY: publish-lambda
+publish-lambda:
+	sam deploy --template hack/docker/lambda/sam.yaml --stack-name CerbosServerLambdaStack \
+--resolve-image-repos --capabilities CAPABILITY_IAM --no-confirm-changeset  --no-fail-on-empty-changeset

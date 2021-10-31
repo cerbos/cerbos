@@ -1,6 +1,7 @@
 ---
 server:
   grpcListenAddr: ":3593"
+  disableHTTP: true
 
 engine:
   defaultPolicyVersion: "default"
