@@ -81,6 +81,7 @@ dockers:
     dockerfile: hack/docker/lambda/Dockerfile
     extra_files:
       - hack/docker/lambda/conf.yaml
+      - internal/test/testdata/store
   - image_templates:
       - "ghcr.io/cerbos/cerbos:latest"
       - "ghcr.io/cerbos/cerbos:{{ .Version }}"
