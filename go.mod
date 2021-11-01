@@ -76,7 +76,7 @@ require (
 
 require (
 	github.com/aws/aws-sdk-go v1.40.34
-	github.com/lestrrat-go/jwx v1.2.8
+	github.com/lestrrat-go/jwx v1.2.9
 	github.com/minio/minio-go/v7 v7.0.15
 	gocloud.dev v0.24.0
 )
