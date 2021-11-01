@@ -54,7 +54,7 @@ require (
 	github.com/spf13/cobra v1.2.1
 	github.com/spf13/pflag v1.0.5
 	github.com/stretchr/testify v1.7.0
-	github.com/tidwall/sjson v1.2.2
+	github.com/tidwall/sjson v1.2.3
 	github.com/ulikunitz/xz v0.5.10 // indirect
 	go.elastic.co/ecszap v1.0.0
 	go.opencensus.io v0.23.0
@@ -75,7 +75,7 @@ require (
 )
 
 require (
-	github.com/aws/aws-sdk-go v1.41.14
+	github.com/aws/aws-sdk-go v1.40.34
 	github.com/lestrrat-go/jwx v1.2.8
 	github.com/minio/minio-go/v7 v7.0.15
 	gocloud.dev v0.24.0
