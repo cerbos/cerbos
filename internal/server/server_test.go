@@ -171,7 +171,6 @@ func TestServer(t *testing.T) {
 			t.Run("grpc", testGRPCRequests(testCases, conf.GRPCListenAddr, grpc.WithTransportCredentials(local.NewCredentials())))
 			t.Run("h2c", testGRPCRequests(testCases, conf.HTTPListenAddr, grpc.WithTransportCredentials(local.NewCredentials())))
 		})
-
 		t.Run("grpc.uds", func(t *testing.T) {
 			tempDir := t.TempDir()
 
@@ -196,6 +195,10 @@ func TestServer(t *testing.T) {
 			for _, tc := range testCases {
 				t.Run(tc.Name, executeHTTPTestCase(DoFunc(do), hostAddr, nil, tc))
 			}
+		})
+		t.Run("real grpc.uds", func(t *testing.T) {
+			hostAddr := "https://g3crbwhxtc.execute-api.us-east-2.amazonaws.com"
+			t.Run("http", testHTTPRequests(testCases[:1], hostAddr,  nil))
 		})
 	})
 }
@@ -416,7 +419,7 @@ func executeHTTPTestCase(c interface {
 		reqBytes, err := protojson.Marshal(input)
 		require.NoError(t, err, "Failed to marshal request")
 
-		ctx, cancelFunc := context.WithTimeout(context.Background(), 5*time.Second)
+		ctx, cancelFunc := context.WithTimeout(context.Background(), 15*time.Second)
 		defer cancelFunc()
 
 		req, err := http.NewRequestWithContext(ctx, http.MethodPost, addr, bytes.NewReader(reqBytes))

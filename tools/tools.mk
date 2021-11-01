@@ -133,6 +133,8 @@ releaser: $(GORELEASER)
 publish-lambda-image:
 	docker tag  cerbos/lambda:latest 414605243264.dkr.ecr.us-east-2.amazonaws.com/lambda:latest
 	docker push 414605243264.dkr.ecr.us-east-2.amazonaws.com/lambda:latest
+	aws lambda update-function-code --function-name CerbosServerLambdaStack-CerbosServerFunction-4QnrPEkXATTH --image-uri 414605243264.dkr.ecr.us-east-2.amazonaws.com/lambda:latest
+	aws lambda wait function-updated --function-name CerbosServerLambdaStack-CerbosServerFunction-4QnrPEkXATTH
 
 .PHONY: publish-lambda
 publish-lambda:

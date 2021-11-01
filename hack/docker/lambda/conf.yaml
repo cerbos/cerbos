@@ -2,6 +2,14 @@
 server:
   grpcListenAddr: ":3593"
   disableHTTP: true
+  logRequestPayloads: false
+
+auxData:
+  jwt:
+    disableVerification: true
+
+audit:
+  enabled: false
 
 engine:
   defaultPolicyVersion: "default"

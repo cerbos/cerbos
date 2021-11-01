@@ -26,7 +26,7 @@ const (
 )
 func main() {
 	ctx := context.Background()
-	logging.InitLogging("INFO")
+	logging.InitLogging("DEBUG")
 	log := zap.S().Named("server")
 
 	fmt.Println("Starting Cerbos server")

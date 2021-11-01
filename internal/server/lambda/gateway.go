@@ -33,7 +33,7 @@ type Gateway struct {
 
 func (g *Gateway) Invoke(ctx context.Context, payload []byte) ([]byte, error) {
 	var evt events.APIGatewayV2HTTPRequest
-
+	g.Log.Info("Gateway handler invoked")
 	if err := json.Unmarshal(payload, &evt); err != nil {
 		return []byte{}, err
 	}
@@ -44,9 +44,25 @@ func (g *Gateway) Invoke(ctx context.Context, payload []byte) ([]byte, error) {
 	}
 
 	w := NewResponseWriter()
+	//recorder := httptest.NewRecorder()
+	g.Log.Info("Calling HTTP handler")
 	g.Handler.ServeHTTP(w, r)
 
 	resp, err := w.End()
+	g.Log.Info("Received a response", zap.String("resp.body", resp.Body), zap.Int("resp.statusCode", resp.StatusCode))
+	//res := recorder.Result()
+	//body, err := io.ReadAll(res.Body)
+	//defer res.Body.Close()
+	//if err != nil {
+	//	g.Log.Error("Can't read all body", zap.Error(err))
+	//} else {
+	//	g.Log.Info("Body", zap.String("body", string(body)))
+	//}
+	//resp := &events.APIGatewayV2HTTPResponse{
+	//	StatusCode: http.StatusInternalServerError,
+	//	Body:       string(body),
+	//	Headers:    map[string]string{"content-type": "text/plain; charset=utf-8"},
+	//}
 	if err != nil {
 		resp = &events.APIGatewayV2HTTPResponse{
 			StatusCode: http.StatusInternalServerError,
@@ -137,8 +153,8 @@ func NewResponseWriter() *ResponseWriter {
 
 // Header implementation.
 func (w *ResponseWriter) Header() http.Header {
-	w.mu.Lock()
-	defer w.mu.Unlock()
+	//w.mu.Lock()
+	//defer w.mu.Unlock()
 	if w.header == nil {
 		w.header = make(http.Header)
 	}
@@ -152,8 +168,8 @@ func (w *ResponseWriter) Write(b []byte) (int, error) {
 		w.WriteHeader(http.StatusOK)
 	}
 
-	w.mu.Lock()
-	defer w.mu.Unlock()
+	//w.mu.Lock()
+	//defer w.mu.Unlock()
 
 	return w.buf.Write(b)
 }
@@ -164,8 +180,8 @@ func (w *ResponseWriter) addHeaderValue(h string, vv []string) {
 
 // WriteHeader implementation.
 func (w *ResponseWriter) WriteHeader(status int) {
-	w.mu.Lock()
-	defer w.mu.Unlock()
+	//w.mu.Lock()
+	//defer w.mu.Unlock()
 
 	if w.headerWritten {
 		return
