@@ -2976,11 +2976,11 @@ SOFTWARE.
 
 --------------------------------------------------------------------------------
 Module  : github.com/lestrrat-go/jwx
-Version : v1.2.8
-Time    : 2021-10-21T01:23:06Z
+Version : v1.2.9
+Time    : 2021-10-26T01:00:34Z
 Licence : MIT
 
-Contents of probable licence file $GOMODCACHE/github.com/lestrrat-go/jwx@v1.2.8/LICENSE:
+Contents of probable licence file $GOMODCACHE/github.com/lestrrat-go/jwx@v1.2.9/LICENSE:
 
 The MIT License (MIT)
 
