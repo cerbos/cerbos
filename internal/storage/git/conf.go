@@ -1,6 +1,8 @@
 // Copyright 2021 Zenauth Ltd.
 // SPDX-License-Identifier: Apache-2.0
 
+//go:generate go run ./../../gen/gendocsfromconf.go
+
 package git
 
 import (
@@ -28,25 +30,25 @@ const (
 // Conf holds the configuration for Git storage driver.
 type Conf struct {
 	// Protocol is the Git protocol to use. Valid values are https, ssh, and file.
-	Protocol string `yaml:"protocol"`
+	Protocol string `yaml:"protocol" conf:"optional"`
 	// URL is the URL to the Git repo.
-	URL string `yaml:"url"`
+	URL string `yaml:"url" conf:"optional"`
 	// Branch is the branch to checkout.
-	Branch string `yaml:"branch"`
+	Branch string `yaml:"branch" conf:"optional"`
 	// SubDir is the path under the checked-out Git repo where the policies are stored.
-	SubDir string `yaml:"subDir,omitempty"`
+	SubDir string `yaml:"subDir,omitempty" conf:"optional"`
 	// CheckoutDir is the local path to checkout the Git repo to.
-	CheckoutDir string `yaml:"checkoutDir"`
+	CheckoutDir string `yaml:"checkoutDir" conf:"optional"`
 	// [DEPRECATED] ScratchDir is the directory to use for holding temporary data.
-	ScratchDir string `yaml:"scratchDir"`
+	ScratchDir string `yaml:"scratchDir" conf:"optional"`
 	// SSH holds auth details for the SSH protocol.
-	SSH *SSHAuth `yaml:"ssh,omitempty"`
+	SSH *SSHAuth `yaml:"ssh,omitempty" conf:"optional"`
 	// HTTPS holds auth details for the HTTPS protocol.
-	HTTPS *HTTPSAuth `yaml:"https,omitempty"`
+	HTTPS *HTTPSAuth `yaml:"https,omitempty" conf:"optional"`
 	// OperationTimeout specifies the timeout for git operations.
-	OperationTimeout *time.Duration `yaml:"operationTimeout,omitempty"`
+	OperationTimeout *time.Duration `yaml:"operationTimeout,omitempty" conf:"optional"`
 	// UpdatePollInterval specifies the interval to poll the Git repository for changes. Set to 0 to disable.
-	UpdatePollInterval time.Duration `yaml:"updatePollInterval"`
+	UpdatePollInterval time.Duration `yaml:"updatePollInterval" conf:"optional"`
 }
 
 // SSHAuth holds auth details for the SSH protocol.

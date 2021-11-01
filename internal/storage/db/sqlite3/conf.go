@@ -1,6 +1,8 @@
 // Copyright 2021 Zenauth Ltd.
 // SPDX-License-Identifier: Apache-2.0
 
+//go:generate go run ./../../../gen/gendocsfromconf.go
+
 package sqlite3
 
 import "github.com/cerbos/cerbos/internal/storage"
@@ -8,7 +10,7 @@ import "github.com/cerbos/cerbos/internal/storage"
 const confKey = storage.ConfKey + ".sqlite3"
 
 type Conf struct {
-	DSN string `yaml:"dsn"`
+	DSN string `yaml:"dsn" conf:"optional"`
 }
 
 func (c *Conf) Key() string {

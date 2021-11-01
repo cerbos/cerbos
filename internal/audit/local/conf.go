@@ -1,6 +1,8 @@
 // Copyright 2021 Zenauth Ltd.
 // SPDX-License-Identifier: Apache-2.0
 
+//go:generate go run ./../../gen/gendocsfromconf.go
+
 package local
 
 import (
@@ -33,9 +35,9 @@ var (
 )
 
 type Conf struct {
-	StoragePath     string        `yaml:"storagePath"`
-	RetentionPeriod time.Duration `yaml:"retentionPeriod"`
-	Advanced        AdvancedConf  `yaml:"advanced"`
+	StoragePath     string        `yaml:"storagePath" conf:"optional"`
+	RetentionPeriod time.Duration `yaml:"retentionPeriod" conf:"optional"`
+	Advanced        AdvancedConf  `yaml:"advanced" conf:"optional"`
 }
 
 type AdvancedConf struct {

@@ -1,6 +1,8 @@
 // Copyright 2021 Zenauth Ltd.
 // SPDX-License-Identifier: Apache-2.0
 
+//go:generate go run ./../../../gen/gendocsfromconf.go
+
 package postgres
 
 import (
@@ -12,8 +14,8 @@ const confKey = storage.ConfKey + ".postgres"
 
 type Conf struct {
 	// URL is the Postgres connection URL. See https://www.postgresql.org/docs/current/libpq-connect.html#LIBPQ-CONNSTRING
-	URL      string                 `yaml:"url"`
-	ConnPool *internal.ConnPoolConf `yaml:"connPool"`
+	URL      string                 `yaml:"url" conf:"optional"`
+	ConnPool *internal.ConnPoolConf `yaml:"connPool" conf:"optional"`
 }
 
 func (c *Conf) Key() string {

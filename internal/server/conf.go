@@ -1,6 +1,8 @@
 // Copyright 2021 Zenauth Ltd.
 // SPDX-License-Identifier: Apache-2.0
 
+//go:generate go run ./../gen/gendocsfromconf.go
+
 package server
 
 import (
@@ -30,21 +32,21 @@ var (
 // Conf holds configuration pertaining to the server.
 type Conf struct {
 	// HTTPListenAddr is the dedicated HTTP address.
-	HTTPListenAddr string `yaml:"httpListenAddr"`
+	HTTPListenAddr string `yaml:"httpListenAddr" conf:"required"`
 	// GRPCListenAddr is the dedicated GRPC address.
-	GRPCListenAddr string `yaml:"grpcListenAddr"`
+	GRPCListenAddr string `yaml:"grpcListenAddr" conf:"required"`
 	// TLS defines the TLS configuration for the server.
-	TLS *TLSConf `yaml:"tls"`
+	TLS *TLSConf `yaml:"tls" conf:"optional"`
 	// CORS defines the CORS configuration for the server.
-	CORS CORSConf `yaml:"cors"`
+	CORS CORSConf `yaml:"cors" conf:"optional"`
 	// MetricsEnabled defines whether the metrics endpoint is enabled.
-	MetricsEnabled bool `yaml:"metricsEnabled"`
+	MetricsEnabled bool `yaml:"metricsEnabled" conf:"optional"`
 	// LogRequestPayloads defines whether the request payloads should be logged.
-	LogRequestPayloads bool `yaml:"logRequestPayloads"`
+	LogRequestPayloads bool `yaml:"logRequestPayloads" conf:"optional"`
 	// PlaygroundEnabled defines whether the playground API is enabled.
-	PlaygroundEnabled bool `yaml:"playgroundEnabled"`
+	PlaygroundEnabled bool `yaml:"playgroundEnabled" conf:"optional"`
 	// AdminAPI defines the admin API configuration.
-	AdminAPI AdminAPIConf `yaml:"adminAPI"`
+	AdminAPI AdminAPIConf `yaml:"adminAPI" conf:"optional"`
 }
 
 // TLSConf holds TLS configuration.

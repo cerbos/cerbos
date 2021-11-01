@@ -79,6 +79,7 @@ require (
 	github.com/lestrrat-go/jwx v1.2.8
 	github.com/minio/minio-go/v7 v7.0.15
 	gocloud.dev v0.24.0
+	golang.org/x/tools v0.1.5
 )
 
 require (
@@ -199,7 +200,6 @@ require (
 	golang.org/x/sys v0.0.0-20211004093028-2c5d950f24ef // indirect
 	golang.org/x/term v0.0.0-20210927222741-03fcf44c2211 // indirect
 	golang.org/x/text v0.3.7 // indirect
-	golang.org/x/tools v0.1.5 // indirect
 	golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
 	gopkg.in/ini.v1 v1.62.0 // indirect

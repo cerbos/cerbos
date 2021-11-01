@@ -1,6 +1,8 @@
 // Copyright 2021 Zenauth Ltd.
 // SPDX-License-Identifier: Apache-2.0
 
+//go:generate go run ./../../gen/gendocsfromconf.go
+
 package blob
 
 import (
@@ -30,17 +32,17 @@ type Conf struct {
 	// s3://my-bucket?region=us-west-1
 	// gs://my-bucket
 	// azblob://my-container
-	Bucket string `yaml:"bucket"`
+	Bucket string `yaml:"bucket" conf:"optional"`
 	// Bucket prefix specifies a subdirectory to download
-	Prefix string `yaml:"prefix,omitempty"`
+	Prefix string `yaml:"prefix,omitempty" conf:"optional"`
 	// WorkDir is the local path to check out policies to.
-	WorkDir string `yaml:"workDir"`
+	WorkDir string `yaml:"workDir" conf:"optional"`
 	// UpdatePollInterval specifies the interval to poll the cloud storage. Set to 0 to disable.
-	UpdatePollInterval time.Duration `yaml:"updatePollInterval"`
+	UpdatePollInterval time.Duration `yaml:"updatePollInterval" conf:"optional"`
 	// DownloadTimeout specifies the timeout for downloading from cloud storage.
-	DownloadTimeout *time.Duration `yaml:"downloadTimeout,omitempty"`
+	DownloadTimeout *time.Duration `yaml:"downloadTimeout,omitempty" conf:"optional"`
 	// RequestTimeout specifies the timeout for an HTTP request.
-	RequestTimeout *time.Duration `yaml:"requestTimeout,omitempty"`
+	RequestTimeout *time.Duration `yaml:"requestTimeout,omitempty" conf:"optional"`
 }
 
 func (conf *Conf) Key() string {

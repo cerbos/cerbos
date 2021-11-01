@@ -1,6 +1,8 @@
 // Copyright 2021 Zenauth Ltd.
 // SPDX-License-Identifier: Apache-2.0
 
+//go:generate go run ./../gen/gendocsfromconf.go
+
 package auxdata
 
 import (
@@ -14,7 +16,7 @@ const confKey = "auxData"
 
 type Conf struct {
 	// JWT holds the configuration for JWTs used as an auxiliary data source for the engine.
-	JWT *JWTConf `yaml:"jwt"`
+	JWT *JWTConf `yaml:"jwt" conf:"optional"`
 }
 
 type JWTConf struct {

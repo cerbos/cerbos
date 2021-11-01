@@ -1,6 +1,8 @@
 // Copyright 2021 Zenauth Ltd.
 // SPDX-License-Identifier: Apache-2.0
 
+//go:generate go run ./../../gen/gendocsfromconf.go
+
 package disk
 
 import (
@@ -12,9 +14,9 @@ const confKey = storage.ConfKey + ".disk"
 // Conf holds the configuration for disk storage driver.
 type Conf struct {
 	// Directory is the path on disk where policies are stored.
-	Directory string `yaml:"directory"`
+	Directory string `yaml:"directory" conf:"required"`
 	// WatchForChanges enables watching the directory for changes.
-	WatchForChanges bool `yaml:"watchForChanges"`
+	WatchForChanges bool `yaml:"watchForChanges" conf:"required"`
 	// [DEPRECATED] ScratchDir is the directory to use for holding temporary data.
 	ScratchDir string `yaml:"scratchDir"`
 }
