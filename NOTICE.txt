@@ -2430,11 +2430,11 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 --------------------------------------------------------------------------------
 Module  : github.com/google/gops
-Version : v0.3.21
-Time    : 2021-10-08T16:51:17Z
+Version : v0.3.22
+Time    : 2021-10-11T16:06:37Z
 Licence : BSD-3-Clause
 
-Contents of probable licence file $GOMODCACHE/github.com/google/gops@v0.3.21/LICENSE:
+Contents of probable licence file $GOMODCACHE/github.com/google/gops@v0.3.22/LICENSE:
 
 Copyright (c) 2016 The Go Authors. All rights reserved.
 
