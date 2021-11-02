@@ -44,25 +44,12 @@ func (g *Gateway) Invoke(ctx context.Context, payload []byte) ([]byte, error) {
 	}
 
 	w := NewResponseWriter()
-	// recorder := httptest.NewRecorder()
 	g.Log.Info("Calling HTTP handler")
 	g.Handler.ServeHTTP(w, r)
 
 	resp, err := w.End()
 	g.Log.Info("Received a response", zap.String("resp.body", resp.Body), zap.Int("resp.statusCode", resp.StatusCode))
-	//res := recorder.Result()
-	//body, err := io.ReadAll(res.Body)
-	//defer res.Body.Close()
-	//if err != nil {
-	//	g.Log.Error("Can't read all body", zap.Error(err))
-	//} else {
-	//	g.Log.Info("Body", zap.String("body", string(body)))
-	//}
-	//resp := &events.APIGatewayV2HTTPResponse{
-	//	StatusCode: http.StatusInternalServerError,
-	//	Body:       string(body),
-	//	Headers:    map[string]string{"content-type": "text/plain; charset=utf-8"},
-	//}
+
 	if err != nil {
 		resp = &events.APIGatewayV2HTTPResponse{
 			StatusCode: http.StatusInternalServerError,
