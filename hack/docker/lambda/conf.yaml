@@ -20,6 +20,7 @@ storage:
     bucket: $BUCKET_URL
     prefix: $BUCKET_PREFIX
     updatePollInterval: 15s
+    workDir: /workDir
   disk:
     directory: /policies
     watchForChanges: false

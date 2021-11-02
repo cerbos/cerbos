@@ -23,6 +23,7 @@ Resources:
         Variables:
           BUCKET_URL: ""
           BUCKET_PREFIX: ""
+          CERBOS_LOGGING_LEVEL: INFO
           STORAGE_DRIVER: disk
 
 Outputs:

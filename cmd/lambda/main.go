@@ -5,6 +5,7 @@ package main
 
 import (
 	"context"
+	"os"
 
 	runtime "github.com/aws/aws-lambda-go/lambda"
 	"go.uber.org/zap"
@@ -22,12 +23,25 @@ import (
 
 const (
 	configFile = "/conf.yaml"
+	storageDriverEnvVar = "STORAGE_DRIVER"
+	loggingLevelEnvVar = "CERBOS_LOGGING_LEVEL"
 )
 
 func main() {
 	ctx := context.Background()
-	logging.InitLogging("DEBUG")
+
+	os.TempDir()
+	loggingLevel := os.Getenv(loggingLevelEnvVar)
+	if loggingLevel == "" {
+		loggingLevel = "INFO"
+	}
+	logging.InitLogging(loggingLevel)
+
 	log := zap.S().Named("server")
+
+	if os.Getenv(storageDriverEnvVar) == "" {
+		os.Setenv(storageDriverEnvVar, "blob") // main use-case: policies are to be downloaded from an S3 bucket
+	}
 
 	log.Info("Starting Cerbos server")
 	if err := config.Load(configFile, nil); err != nil {
