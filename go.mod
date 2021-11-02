@@ -71,7 +71,7 @@ require (
 	google.golang.org/protobuf v1.27.1
 	gopkg.in/yaml.v2 v2.4.0
 	helm.sh/helm/v3 v3.7.1
-	modernc.org/sqlite v1.13.1
+	modernc.org/sqlite v1.13.3
 )
 
 require (
@@ -196,7 +196,7 @@ require (
 	golang.org/x/lint v0.0.0-20210508222113-6edffad5e616 // indirect
 	golang.org/x/mod v0.5.0 // indirect
 	golang.org/x/oauth2 v0.0.0-20210819190943-2bc19b11175f // indirect
-	golang.org/x/sys v0.0.0-20211004093028-2c5d950f24ef // indirect
+	golang.org/x/sys v0.0.0-20211007075335-d3039528d8ac // indirect
 	golang.org/x/term v0.0.0-20210927222741-03fcf44c2211 // indirect
 	golang.org/x/text v0.3.7 // indirect
 	golang.org/x/tools v0.1.5 // indirect
@@ -206,9 +206,9 @@ require (
 	gopkg.in/warnings.v0 v0.1.2 // indirect
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b // indirect
 	lukechampine.com/uint128 v1.1.1 // indirect
-	modernc.org/cc/v3 v3.34.0 // indirect
-	modernc.org/ccgo/v3 v3.11.2 // indirect
-	modernc.org/libc v1.11.3 // indirect
+	modernc.org/cc/v3 v3.35.15 // indirect
+	modernc.org/ccgo/v3 v3.12.39 // indirect
+	modernc.org/libc v1.11.40 // indirect
 	modernc.org/mathutil v1.4.1 // indirect
 	modernc.org/memory v1.0.5 // indirect
 	modernc.org/opt v0.1.1 // indirect
