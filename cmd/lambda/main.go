@@ -5,31 +5,31 @@ package main
 
 import (
 	"context"
-	"fmt"
+
+	runtime "github.com/aws/aws-lambda-go/lambda"
+	"go.uber.org/zap"
+
 	"github.com/cerbos/cerbos/internal/audit"
 	"github.com/cerbos/cerbos/internal/auxdata"
 	"github.com/cerbos/cerbos/internal/compile"
 	"github.com/cerbos/cerbos/internal/config"
 	"github.com/cerbos/cerbos/internal/engine"
 	"github.com/cerbos/cerbos/internal/observability/logging"
-	"github.com/cerbos/cerbos/internal/storage"
-
-	runtime "github.com/aws/aws-lambda-go/lambda"
-	"go.uber.org/zap"
-
 	"github.com/cerbos/cerbos/internal/server"
 	"github.com/cerbos/cerbos/internal/server/lambda"
+	"github.com/cerbos/cerbos/internal/storage"
 )
 
 const (
 	configFile = "/conf.yaml"
 )
+
 func main() {
 	ctx := context.Background()
 	logging.InitLogging("DEBUG")
 	log := zap.S().Named("server")
 
-	fmt.Println("Starting Cerbos server")
+	log.Info("Starting Cerbos server")
 	if err := config.Load(configFile, nil); err != nil {
 		log.Fatalw("Failed to load configuration", "error", err)
 	}
@@ -71,7 +71,7 @@ func main() {
 		log.Fatalw("failed to start the server", "error", err)
 	}
 
-	fmt.Println("Starting Cerbos handler")
+	log.Info("Starting Cerbos handler")
 	gateway := lambda.Gateway{Handler: handler, Log: log.Desugar()}
 	runtime.StartHandler(&gateway)
 }

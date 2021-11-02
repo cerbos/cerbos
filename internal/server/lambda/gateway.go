@@ -44,7 +44,7 @@ func (g *Gateway) Invoke(ctx context.Context, payload []byte) ([]byte, error) {
 	}
 
 	w := NewResponseWriter()
-	//recorder := httptest.NewRecorder()
+	// recorder := httptest.NewRecorder()
 	g.Log.Info("Calling HTTP handler")
 	g.Handler.ServeHTTP(w, r)
 
@@ -148,17 +148,12 @@ type ResponseWriter struct {
 
 // NewResponseWriter returns a new response writer to capture http output.
 func NewResponseWriter() *ResponseWriter {
-	return &ResponseWriter{}
+	return &ResponseWriter{
+		header: make(http.Header),
+	}
 }
 
-// Header implementation.
 func (w *ResponseWriter) Header() http.Header {
-	//w.mu.Lock()
-	//defer w.mu.Unlock()
-	if w.header == nil {
-		w.header = make(http.Header)
-	}
-
 	return w.header
 }
 
@@ -168,8 +163,8 @@ func (w *ResponseWriter) Write(b []byte) (int, error) {
 		w.WriteHeader(http.StatusOK)
 	}
 
-	//w.mu.Lock()
-	//defer w.mu.Unlock()
+	w.mu.Lock()
+	defer w.mu.Unlock()
 
 	return w.buf.Write(b)
 }
@@ -180,8 +175,8 @@ func (w *ResponseWriter) addHeaderValue(h string, vv []string) {
 
 // WriteHeader implementation.
 func (w *ResponseWriter) WriteHeader(status int) {
-	//w.mu.Lock()
-	//defer w.mu.Unlock()
+	w.mu.Lock()
+	defer w.mu.Unlock()
 
 	if w.headerWritten {
 		return

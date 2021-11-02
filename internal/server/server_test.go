@@ -198,7 +198,7 @@ func TestServer(t *testing.T) {
 		})
 		t.Run("real grpc.uds", func(t *testing.T) {
 			hostAddr := "https://g3crbwhxtc.execute-api.us-east-2.amazonaws.com"
-			t.Run("http", testHTTPRequests(testCases[:1], hostAddr,  nil))
+			t.Run("http", testHTTPRequests(testCases[:1], hostAddr, nil))
 		})
 	})
 }
