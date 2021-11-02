@@ -15,7 +15,11 @@ engine:
   defaultPolicyVersion: "default"
 
 storage:
-  driver: "disk"
+  driver: $STORAGE_DRIVER
+  blob:
+    bucket: $BUCKET_URL
+    prefix: $BUCKET_PREFIX
+    updatePollInterval: 15s
   disk:
     directory: /policies
     watchForChanges: false

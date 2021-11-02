@@ -196,19 +196,12 @@ func TestServer(t *testing.T) {
 				t.Run(tc.Name, executeHTTPTestCase(DoFunc(do), hostAddr, nil, tc))
 			}
 		})
-		t.Run("lambda", func(t *testing.T) {
-			hostAddr := "https://g3crbwhxtc.execute-api.us-east-2.amazonaws.com"
-			var tcs []*privatev1.ServerTestCase
-			for _, tc := range testCases {
-				switch tc.CallKind.(type) {
-				case *privatev1.ServerTestCase_CheckResourceSet:
-					tcs = append(tcs, tc)
-				case *privatev1.ServerTestCase_CheckResourceBatch:
-					tcs = append(tcs, tc)
-				}
-			}
-			t.Run("http", testHTTPRequests(tcs, hostAddr, nil))
-		})
+	})
+	t.Run("lambda", func(t *testing.T) {
+		// TODO: Integration test with real lambda. How can we go about testing it?
+		hostAddr := "https://g3crbwhxtc.execute-api.us-east-2.amazonaws.com"
+		testCases := loadTestCases(t, "checks")
+		t.Run("http", testHTTPRequests(testCases, hostAddr, nil))
 	})
 }
 
