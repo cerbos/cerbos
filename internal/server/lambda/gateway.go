@@ -48,7 +48,7 @@ func (g *Gateway) Invoke(ctx context.Context, payload []byte) ([]byte, error) {
 	g.Handler.ServeHTTP(w, r)
 
 	resp, err := w.End()
-	g.Log.Info("Received a response", zap.String("resp.body", resp.Body), zap.Int("resp.statusCode", resp.StatusCode))
+	g.Log.Debug("Received a response", zap.String("resp.body", resp.Body), zap.Int("resp.statusCode", resp.StatusCode))
 
 	if err != nil {
 		resp = &events.APIGatewayV2HTTPResponse{

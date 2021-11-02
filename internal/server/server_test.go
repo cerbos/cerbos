@@ -196,9 +196,18 @@ func TestServer(t *testing.T) {
 				t.Run(tc.Name, executeHTTPTestCase(DoFunc(do), hostAddr, nil, tc))
 			}
 		})
-		t.Run("real grpc.uds", func(t *testing.T) {
+		t.Run("lambda", func(t *testing.T) {
 			hostAddr := "https://g3crbwhxtc.execute-api.us-east-2.amazonaws.com"
-			t.Run("http", testHTTPRequests(testCases[:1], hostAddr, nil))
+			var tcs []*privatev1.ServerTestCase
+			for _, tc := range testCases {
+				switch tc.CallKind.(type) {
+				case *privatev1.ServerTestCase_CheckResourceSet:
+					tcs = append(tcs, tc)
+				case *privatev1.ServerTestCase_CheckResourceBatch:
+					tcs = append(tcs, tc)
+				}
+			}
+			t.Run("http", testHTTPRequests(tcs, hostAddr, nil))
 		})
 	})
 }
@@ -441,7 +450,7 @@ func executeHTTPTestCase(c interface {
 		}()
 
 		if tc.WantStatus != nil {
-			require.EqualValues(t, tc.WantStatus.HttpStatusCode, resp.StatusCode)
+			require.EqualValues(t, int(tc.WantStatus.HttpStatusCode), resp.StatusCode, "HTTP status codes do not match")
 		}
 
 		if tc.WantError {
