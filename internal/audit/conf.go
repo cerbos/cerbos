@@ -1,7 +1,7 @@
 // Copyright 2021 Zenauth Ltd.
 // SPDX-License-Identifier: Apache-2.0
 
-//go:generate go run ./../gen/gendocsfromconf.go
+//go:generate go run ./../../hack/tools/confdocs.go
 
 package audit
 
@@ -20,10 +20,10 @@ type Conf struct {
 }
 
 type confHolder struct {
-	Enabled             bool   `yaml:"enabled" conf:"optional"`
-	Backend             string `yaml:"backend" conf:"optional"`
-	AccessLogsEnabled   bool   `yaml:"accessLogsEnabled" conf:"optional"`
-	DecisionLogsEnabled bool   `yaml:"decisionLogsEnabled" conf:"optional"`
+	Enabled             bool   `yaml:"enabled"`
+	Backend             string `yaml:"backend"`
+	AccessLogsEnabled   bool   `yaml:"accessLogsEnabled"`
+	DecisionLogsEnabled bool   `yaml:"decisionLogsEnabled"`
 }
 
 func (c *Conf) UnmarshalYAML(unmarshal func(interface{}) error) error {

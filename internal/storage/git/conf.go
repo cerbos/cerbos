@@ -1,7 +1,7 @@
 // Copyright 2021 Zenauth Ltd.
 // SPDX-License-Identifier: Apache-2.0
 
-//go:generate go run ./../../gen/gendocsfromconf.go
+//go:generate go run ./../../../hack/tools/confdocs.go
 
 package git
 
@@ -30,25 +30,25 @@ const (
 // Conf holds the configuration for Git storage driver.
 type Conf struct {
 	// Protocol is the Git protocol to use. Valid values are https, ssh, and file.
-	Protocol string `yaml:"protocol" conf:"optional"`
+	Protocol string `yaml:"protocol"`
 	// URL is the URL to the Git repo.
-	URL string `yaml:"url" conf:"optional"`
+	URL string `yaml:"url"`
 	// Branch is the branch to checkout.
-	Branch string `yaml:"branch" conf:"optional"`
+	Branch string `yaml:"branch"`
 	// SubDir is the path under the checked-out Git repo where the policies are stored.
-	SubDir string `yaml:"subDir,omitempty" conf:"optional"`
+	SubDir string `yaml:"subDir,omitempty"`
 	// CheckoutDir is the local path to checkout the Git repo to.
-	CheckoutDir string `yaml:"checkoutDir" conf:"optional"`
+	CheckoutDir string `yaml:"checkoutDir"`
 	// [DEPRECATED] ScratchDir is the directory to use for holding temporary data.
-	ScratchDir string `yaml:"scratchDir" conf:"optional"`
+	ScratchDir string `yaml:"scratchDir"`
 	// SSH holds auth details for the SSH protocol.
-	SSH *SSHAuth `yaml:"ssh,omitempty" conf:"optional"`
+	SSH *SSHAuth `yaml:"ssh,omitempty"`
 	// HTTPS holds auth details for the HTTPS protocol.
-	HTTPS *HTTPSAuth `yaml:"https,omitempty" conf:"optional"`
+	HTTPS *HTTPSAuth `yaml:"https,omitempty"`
 	// OperationTimeout specifies the timeout for git operations.
-	OperationTimeout *time.Duration `yaml:"operationTimeout,omitempty" conf:"optional"`
+	OperationTimeout *time.Duration `yaml:"operationTimeout,omitempty"`
 	// UpdatePollInterval specifies the interval to poll the Git repository for changes. Set to 0 to disable.
-	UpdatePollInterval time.Duration `yaml:"updatePollInterval" conf:"optional"`
+	UpdatePollInterval time.Duration `yaml:"updatePollInterval"`
 }
 
 // SSHAuth holds auth details for the SSH protocol.

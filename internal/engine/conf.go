@@ -1,7 +1,7 @@
 // Copyright 2021 Zenauth Ltd.
 // SPDX-License-Identifier: Apache-2.0
 
-//go:generate go run ./../gen/gendocsfromconf.go
+//go:generate go run ./../../hack/tools/confdocs.go
 
 package engine
 
@@ -18,8 +18,8 @@ const confKey = "engine"
 var errEmptyDefaultVersion = errors.New("engine.defaultVersion must not be an empty string")
 
 type Conf struct {
-	DefaultPolicyVersion string `yaml:"defaultPolicyVersion" conf:"optional"`
-	NumWorkers           uint   `yaml:"numWorkers" conf:"optional"`
+	DefaultPolicyVersion string `yaml:"defaultPolicyVersion"`
+	NumWorkers           uint   `yaml:"numWorkers"`
 }
 
 func (c *Conf) Key() string {
