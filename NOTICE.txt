@@ -482,11 +482,11 @@ SOFTWARE.
 
 --------------------------------------------------------------------------------
 Module  : github.com/aws/aws-sdk-go
-Version : v1.41.11
-Time    : 2021-10-26T18:11:44Z
+Version : v1.40.34
+Time    : 2021-08-31T18:21:50Z
 Licence : Apache-2.0
 
-Contents of probable licence file $GOMODCACHE/github.com/aws/aws-sdk-go@v1.41.11/LICENSE.txt:
+Contents of probable licence file $GOMODCACHE/github.com/aws/aws-sdk-go@v1.40.34/LICENSE.txt:
 
 
                                  Apache License
@@ -2430,11 +2430,11 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 --------------------------------------------------------------------------------
 Module  : github.com/google/gops
-Version : v0.3.21
-Time    : 2021-10-08T16:51:17Z
+Version : v0.3.22
+Time    : 2021-10-11T16:06:37Z
 Licence : BSD-3-Clause
 
-Contents of probable licence file $GOMODCACHE/github.com/google/gops@v0.3.21/LICENSE:
+Contents of probable licence file $GOMODCACHE/github.com/google/gops@v0.3.22/LICENSE:
 
 Copyright (c) 2016 The Go Authors. All rights reserved.
 
@@ -2976,11 +2976,11 @@ SOFTWARE.
 
 --------------------------------------------------------------------------------
 Module  : github.com/lestrrat-go/jwx
-Version : v1.2.8
-Time    : 2021-10-21T01:23:06Z
+Version : v1.2.9
+Time    : 2021-10-26T01:00:34Z
 Licence : MIT
 
-Contents of probable licence file $GOMODCACHE/github.com/lestrrat-go/jwx@v1.2.8/LICENSE:
+Contents of probable licence file $GOMODCACHE/github.com/lestrrat-go/jwx@v1.2.9/LICENSE:
 
 The MIT License (MIT)
 
@@ -4429,11 +4429,11 @@ SOFTWARE.
 
 --------------------------------------------------------------------------------
 Module  : github.com/tidwall/sjson
-Version : v1.2.2
-Time    : 2021-09-15T12:40:01Z
+Version : v1.2.3
+Time    : 2021-10-25T21:40:37Z
 Licence : MIT
 
-Contents of probable licence file $GOMODCACHE/github.com/tidwall/sjson@v1.2.2/LICENSE:
+Contents of probable licence file $GOMODCACHE/github.com/tidwall/sjson@v1.2.3/LICENSE:
 
 The MIT License (MIT)
 
@@ -5532,11 +5532,11 @@ Contents of probable licence file $GOMODCACHE/google.golang.org/genproto@v0.0.0-
 
 --------------------------------------------------------------------------------
 Module  : google.golang.org/grpc
-Version : v1.41.0
-Time    : 2021-09-23T18:09:09Z
+Version : v1.42.0
+Time    : 2021-11-02T18:24:25Z
 Licence : Apache-2.0
 
-Contents of probable licence file $GOMODCACHE/google.golang.org/grpc@v1.41.0/LICENSE:
+Contents of probable licence file $GOMODCACHE/google.golang.org/grpc@v1.42.0/LICENSE:
 
 
                                  Apache License
@@ -6204,11 +6204,11 @@ Contents of probable licence file $GOMODCACHE/helm.sh/helm/v3@v3.7.1/LICENSE:
 
 --------------------------------------------------------------------------------
 Module  : modernc.org/sqlite
-Version : v1.13.1
-Time    : 2021-09-17T10:38:44Z
+Version : v1.13.3
+Time    : 2021-10-24T16:00:29Z
 Licence : BSD-3-Clause
 
-Contents of probable licence file $GOMODCACHE/modernc.org/sqlite@v1.13.1/LICENSE:
+Contents of probable licence file $GOMODCACHE/modernc.org/sqlite@v1.13.3/LICENSE:
 
 Copyright (c) 2017 The Sqlite Authors. All rights reserved.
 
@@ -9579,11 +9579,11 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 --------------------------------------------------------------------------------
 Module  : github.com/cncf/xds/go
-Version : v0.0.0-20210805033703-aa0b78936158
-Time    : 2021-08-05T03:37:03Z
+Version : v0.0.0-20211011173535-cb28da3451f1
+Time    : 2021-10-11T17:35:35Z
 Licence : Apache-2.0
 
-Contents of probable licence file $GOMODCACHE/github.com/cncf/xds/go@v0.0.0-20210805033703-aa0b78936158/LICENSE:
+Contents of probable licence file $GOMODCACHE/github.com/cncf/xds/go@v0.0.0-20211011173535-cb28da3451f1/LICENSE:
 
                                  Apache License
                            Version 2.0, January 2004
@@ -20711,11 +20711,11 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 --------------------------------------------------------------------------------
 Module  : golang.org/x/sys
-Version : v0.0.0-20211004093028-2c5d950f24ef
-Time    : 2021-10-04T09:30:28Z
+Version : v0.0.0-20211007075335-d3039528d8ac
+Time    : 2021-10-07T07:53:35Z
 Licence : BSD-3-Clause
 
-Contents of probable licence file $GOMODCACHE/golang.org/x/sys@v0.0.0-20211004093028-2c5d950f24ef/LICENSE:
+Contents of probable licence file $GOMODCACHE/golang.org/x/sys@v0.0.0-20211007075335-d3039528d8ac/LICENSE:
 
 Copyright (c) 2009 The Go Authors. All rights reserved.
 
@@ -21552,11 +21552,11 @@ THE SOFTWARE.
 
 --------------------------------------------------------------------------------
 Module  : modernc.org/cc/v3
-Version : v3.34.0
-Time    : 2021-09-02T10:54:53Z
+Version : v3.35.15
+Time    : 2021-10-23T15:50:07Z
 Licence : BSD-2-Clause
 
-Contents of probable licence file $GOMODCACHE/modernc.org/cc/v3@v3.34.0/LICENSE:
+Contents of probable licence file $GOMODCACHE/modernc.org/cc/v3@v3.35.15/LICENSE:
 
 Copyright (c) 2017 The CC Authors. All rights reserved.
 
@@ -21589,11 +21589,11 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 --------------------------------------------------------------------------------
 Module  : modernc.org/ccgo/v3
-Version : v3.11.2
-Time    : 2021-09-06T14:03:16Z
+Version : v3.12.39
+Time    : 2021-10-23T18:49:52Z
 Licence : BSD-2-Clause
 
-Contents of probable licence file $GOMODCACHE/modernc.org/ccgo/v3@v3.11.2/LICENSE:
+Contents of probable licence file $GOMODCACHE/modernc.org/ccgo/v3@v3.12.39/LICENSE:
 
 Copyright (c) 2017 The CCGO Authors. All rights reserved.
 
@@ -21663,11 +21663,11 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 --------------------------------------------------------------------------------
 Module  : modernc.org/libc
-Version : v1.11.3
-Time    : 2021-09-06T13:58:17Z
+Version : v1.11.40
+Time    : 2021-10-23T18:29:50Z
 Licence : BSD-2-Clause
 
-Contents of probable licence file $GOMODCACHE/modernc.org/libc@v1.11.3/LICENSE:
+Contents of probable licence file $GOMODCACHE/modernc.org/libc@v1.11.40/LICENSE:
 
 Copyright (c) 2017 The Libc Authors. All rights reserved.
 
@@ -21848,11 +21848,11 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 --------------------------------------------------------------------------------
 Module  : modernc.org/tcl
-Version : v1.5.9
-Time    : 2021-09-06T14:18:11Z
+Version : v1.8.1
+Time    : 2021-10-23T19:01:51Z
 Licence : BSD-3-Clause
 
-Contents of probable licence file $GOMODCACHE/modernc.org/tcl@v1.5.9/LICENSE:
+Contents of probable licence file $GOMODCACHE/modernc.org/tcl@v1.8.1/LICENSE:
 
 Copyright (c) 2020 The Tcl Authors. All rights reserved.
 
@@ -21921,11 +21921,11 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 --------------------------------------------------------------------------------
 Module  : modernc.org/z
-Version : v1.1.2
-Time    : 2021-09-06T14:14:21Z
+Version : v1.2.7
+Time    : 2021-10-23T18:53:29Z
 Licence : BSD-3-Clause
 
-Contents of probable licence file $GOMODCACHE/modernc.org/z@v1.1.2/LICENSE:
+Contents of probable licence file $GOMODCACHE/modernc.org/z@v1.2.7/LICENSE:
 
 Copyright notice:
 
