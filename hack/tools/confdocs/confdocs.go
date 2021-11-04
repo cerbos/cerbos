@@ -12,27 +12,9 @@ import (
 	"log"
 )
 
-type Method struct {
-	FilePos         token.Pos
-	ReceiverType    string
-	FunctionName    string
-	RawFunctionDecl *ast.FuncDecl
-}
-
-type Struct struct {
-	FilePos    token.Pos
-	StructName string
-	RawStruct  *ast.StructType
-	Fields     []*StructField
-	Methods    []*Method
-}
-
-type StructField struct {
-	Name   string
-	Doc    string
-	Tags   string
-	Fields []*StructField
-}
+const (
+	unnamedField = "<NONAME>"
+)
 
 type ConfDoc struct {
 	packagesDir      string
@@ -100,7 +82,7 @@ func (cd *ConfDoc) addMethodsToIndexedStructs(file *ast.File, indexedStructs map
 					recieverType = xv.Name
 				}
 
-				m := &Method{
+				m := &StructMethod{
 					FilePos:         file.Pos(),
 					ReceiverType:    recieverType,
 					FunctionName:    functionDecl.Name.Name,
@@ -137,36 +119,11 @@ func (cd *ConfDoc) indexStructs(file *ast.File, indexedStructs map[string]*Struc
 							StructName: s.Name.Name,
 							RawStruct:  t,
 						}
-						var fields []*StructField
 
 						for _, field := range t.Fields.List {
-							for _, name := range field.Names {
-								var doc = ""
-								var tags = ""
-
-								structField := &StructField{
-									Name: name.Name,
-								}
-
-								if field.Tag != nil {
-									tags = field.Tag.Value
-								}
-
-								if field.Doc != nil {
-									doc = field.Doc.List[0].Text
-								}
-
-								structField.Doc = doc
-								structField.Tags = tags
-
-								// TODO: Index all subfields of the root struct
-								//indexSubfields(field)
-
-								fields = append(fields, structField)
-							}
+							structField := NewStructFieldFromIdentArray(field.Names, field.Doc, field.Tag, indexFields(field))
+							rootStruct.Fields = append(rootStruct.Fields, structField)
 						}
-
-						rootStruct.Fields = fields
 
 						indexedStructs[fmt.Sprintf("%d-%s", int(file.Pos()), rootStruct.StructName)] = rootStruct
 					}
@@ -178,11 +135,14 @@ func (cd *ConfDoc) indexStructs(file *ast.File, indexedStructs map[string]*Struc
 	})
 }
 
-func indexSubfields(field *ast.Field) {
-	fmt.Printf("FIELD %s\n", field.Names[0].Name)
+func indexFields(field *ast.Field) []*StructField {
+	var structFields []*StructField
 
 	switch t := field.Type.(type) {
 	case *ast.StarExpr:
+		/* matches;
+		tracer *tracer
+		*/
 		var x *ast.Ident
 		x, ok := t.X.(*ast.Ident)
 		if ok {
@@ -194,13 +154,16 @@ func indexSubfields(field *ast.Field) {
 					structType = typeSpec.Type.(*ast.StructType)
 					for _, f := range structType.Fields.List {
 						for _, n := range f.Names {
-							fmt.Printf("\tSUBFIELD %s\n", n.Name)
+							structFields = append(structFields, NewStructField(n, field.Doc, field.Tag, indexFields(f)))
 						}
 					}
 				}
 			}
 		}
 	case *ast.Ident:
+		/* matches;
+		Advanced AdvancedConf `yaml:"advanced"`
+		*/
 		if t.Obj != nil {
 			typeSpec, ok := t.Obj.Decl.(*ast.TypeSpec)
 			if ok {
@@ -209,13 +172,41 @@ func indexSubfields(field *ast.Field) {
 				if ok {
 					for _, f := range structType.Fields.List {
 						for _, n := range f.Names {
-							fmt.Printf("\tSUBFIELD %s\n", n.Name)
+							structFields = append(structFields, NewStructField(n, field.Doc, field.Tag, indexFields(f)))
 						}
 					}
 				}
 			}
 		}
+	case *ast.SelectorExpr:
+		/* matches;
+			Timestamp time.Time
+		    internal.DBStorage -> interface
+		*/
+		structFields = append(structFields, NewStructFieldFromIdentArray(field.Names, field.Doc, field.Tag, nil))
+	default:
+		switch tt := field.Type.(type) {
+		case *ast.ArrayType:
+			/* matches;
+			pool []io.Reader
+			*/
+			structFields = append(structFields, NewStructFieldFromIdentArray(field.Names, field.Doc, field.Tag, nil))
+		case *ast.ChanType:
+			/* matches;
+			buffer chan *badgerv3.Entry
+			*/
+			structFields = append(structFields, NewStructFieldFromIdentArray(field.Names, field.Doc, field.Tag, nil))
+		case *ast.MapType:
+			/* matches;
+			keySets map[string]keySet
+			*/
+			structFields = append(structFields, NewStructFieldFromIdentArray(field.Names, field.Doc, field.Tag, nil))
+		default:
+			// This shouldn't print
+			fmt.Printf("DEFAULT - %v\n", tt)
+		}
 	}
+	return structFields
 }
 
 func (cd *ConfDoc) isInterfaceFunc(iface *types.Interface, t types.Type, funcName string) bool {
