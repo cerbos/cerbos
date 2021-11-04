@@ -38,6 +38,8 @@ func NewConfDoc(packagesDir string, interfaceName string, interfacePath string) 
 func (cd *ConfDoc) Run() error {
 	fileSet := token.NewFileSet()
 
+	fmt.Printf("Package Directory: %s\n", cd.packagesDir)
+
 	pkgs, err := cd.loadPackages(cd.packagesDir, fileSet)
 
 	if err != nil {
@@ -228,6 +230,8 @@ func indexFields(field *ast.Field) []*StructField {
 			keySets map[string]keySet
 			*/
 			structFields = append(structFields, NewStructFieldFromIdentArray(field.Names, field.Doc, field.Tag, nil))
+		case *ast.FuncType:
+			log.Printf("Ignoring FuncType")
 		default:
 			log.Printf("This is not supposed to print! - %v\n", tt)
 		}

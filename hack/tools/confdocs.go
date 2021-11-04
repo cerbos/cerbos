@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"github.com/cerbos/cerbos/hack/tools/confdocs"
 	"log"
+	"os"
 	"path/filepath"
 	"runtime"
 )
@@ -17,12 +18,12 @@ const (
 )
 
 func main() {
-	internalDir, err := getAbsToInternalDir()
+	cwd, err := os.Getwd()
 	if err != nil {
 		log.Fatalf(err.Error())
 	}
 
-	dir, err := filepath.Abs(internalDir)
+	dir, err := filepath.Abs(cwd)
 	if err != nil {
 		log.Fatalf(err.Error())
 	}
