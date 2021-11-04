@@ -20,7 +20,9 @@ type ConfDoc struct {
 	packagesDir      string
 	interfaceName    string
 	interfacePackage string
+	iface            *types.Interface
 	indexedStructs   map[string]*Struct
+	filteredStructs  map[string]*Struct
 }
 
 func NewConfDoc(packagesDir string, interfaceName string, interfacePath string) *ConfDoc {
@@ -29,6 +31,7 @@ func NewConfDoc(packagesDir string, interfaceName string, interfacePath string) 
 		interfaceName:    interfaceName,
 		interfacePackage: interfacePath,
 		indexedStructs:   make(map[string]*Struct),
+		filteredStructs:  make(map[string]*Struct),
 	}
 }
 
@@ -41,21 +44,45 @@ func (cd *ConfDoc) Run() error {
 		return err
 	}
 
-	/*
-		iface, err := cd.findInterface(pkgs, cd.interfaceName, cd.interfacePackage)
-		if err != nil {
-			return err
-		}
-	*/
+	err = cd.loadInterface(pkgs, cd.interfaceName, cd.interfacePackage)
+
+	if err != nil {
+		return err
+	}
 
 	for _, pkg := range pkgs {
 		for _, file := range pkg.Syntax {
 			cd.indexStructs(file, cd.indexedStructs)
 			cd.addMethodsToIndexedStructs(file, cd.indexedStructs)
+			cd.filterInterfaceImplementingStructs(cd.indexedStructs, cd.iface, cd.filteredStructs)
 		}
 	}
 
 	return nil
+}
+
+func (cd *ConfDoc) filterInterfaceImplementingStructs(indexedStructs map[string]*Struct, iface *types.Interface, filteredStructs map[string]*Struct) {
+	for structKey, indexedStruct := range indexedStructs {
+		structImplementsInterface := true
+		for i := 0; i < iface.NumMethods(); i++ {
+			foundInterfaceMethod := false
+
+			ifaceMethod := iface.Method(i)
+			for _, method := range indexedStruct.Methods {
+				if ifaceMethod.Name() == method.FunctionName {
+					foundInterfaceMethod = true
+				}
+			}
+
+			if !foundInterfaceMethod {
+				structImplementsInterface = false
+				break
+			}
+		}
+		if structImplementsInterface {
+			filteredStructs[structKey] = indexedStruct
+		}
+	}
 }
 
 func (cd *ConfDoc) addMethodsToIndexedStructs(file *ast.File, indexedStructs map[string]*Struct) {
@@ -202,8 +229,7 @@ func indexFields(field *ast.Field) []*StructField {
 			*/
 			structFields = append(structFields, NewStructFieldFromIdentArray(field.Names, field.Doc, field.Tag, nil))
 		default:
-			// This shouldn't print
-			fmt.Printf("DEFAULT - %v\n", tt)
+			log.Printf("This is not supposed to print! - %v\n", tt)
 		}
 	}
 	return structFields
@@ -224,6 +250,17 @@ func (cd *ConfDoc) isInterfaceFunc(iface *types.Interface, t types.Type, funcNam
 	return false
 }
 
+func (cd *ConfDoc) loadInterface(pkgs []*packages.Package, interfaceName, interfacePackage string) error {
+	iface, err := findInterface(pkgs, interfaceName, interfacePackage)
+	if err != nil {
+		return err
+	}
+
+	cd.iface = iface
+
+	return nil
+}
+
 func (cd *ConfDoc) loadPackages(absPackagesDir string, fileSet *token.FileSet) ([]*packages.Package, error) {
 	config := &packages.Config{
 		Mode:  packages.NeedTypes | packages.NeedTypesInfo | packages.NeedFiles | packages.NeedSyntax | packages.NeedName | packages.NeedImports | packages.NeedDeps,
@@ -239,29 +276,4 @@ func (cd *ConfDoc) loadPackages(absPackagesDir string, fileSet *token.FileSet) (
 	}
 
 	return pkgs, nil
-}
-
-func (cd *ConfDoc) findInterface(pkgs []*packages.Package, interfaceName string, interfacePackage string) (*types.Interface, error) {
-	for _, p := range pkgs {
-		if p.PkgPath == interfacePackage {
-			return cd.getInterface(p.Types, interfaceName)
-		}
-
-		for _, i := range p.Types.Imports() {
-			if i.Path() == interfacePackage {
-				return cd.getInterface(i, interfaceName)
-			}
-		}
-	}
-
-	return nil, fmt.Errorf("failed to find %s.%s", interfacePackage, interfaceName)
-}
-
-func (cd *ConfDoc) getInterface(pkg *types.Package, interfaceName string) (*types.Interface, error) {
-	obj := pkg.Scope().Lookup(interfaceName)
-	if obj != nil {
-		return obj.Type().Underlying().(*types.Interface), nil
-	}
-
-	return nil, fmt.Errorf("interface %s does not exist in %s", interfaceName, pkg.Path())
 }

@@ -3,6 +3,7 @@ package confdocs
 import (
 	"go/ast"
 	"go/token"
+	"go/types"
 )
 
 type Struct struct {
@@ -11,6 +12,10 @@ type Struct struct {
 	RawStruct  *ast.StructType
 	Fields     []*StructField
 	Methods    []*StructMethod
+}
+
+func (s *Struct) doesImplementInterface(iface *types.Interface) {
+
 }
 
 type StructMethod struct {
