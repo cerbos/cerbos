@@ -143,7 +143,7 @@ func readFileContents(tb testing.TB, filePath string) []byte {
 	if _, err := os.Stat(filePath); err == nil {
 		b, err := os.ReadFile(filePath)
 		if err != nil {
-			tb.Errorf("Failed to read %s: %w", filePath, err)
+			tb.Errorf("Failed to read %s: %s", filePath, err)
 			return nil
 		}
 
