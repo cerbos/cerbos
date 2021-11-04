@@ -22,6 +22,7 @@ type StructMethod struct {
 	FilePos         token.Pos
 	ReceiverType    string
 	FunctionName    string
+	ReturnType      string
 	RawFunctionDecl *ast.FuncDecl
 }
 

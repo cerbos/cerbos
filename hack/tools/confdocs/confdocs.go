@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"go/ast"
 	"go/token"
-	"go/types"
 	"golang.org/x/tools/go/packages"
 	"log"
 )
@@ -20,7 +19,7 @@ type ConfDoc struct {
 	packagesDir      string
 	interfaceName    string
 	interfacePackage string
-	iface            *types.Interface
+	iface            *Interface
 	indexedStructs   map[string]*Struct
 	filteredStructs  map[string]*Struct
 }
@@ -30,6 +29,7 @@ func NewConfDoc(packagesDir string, interfaceName string, interfacePath string) 
 		packagesDir:      packagesDir,
 		interfaceName:    interfaceName,
 		interfacePackage: interfacePath,
+		iface:            nil,
 		indexedStructs:   make(map[string]*Struct),
 		filteredStructs:  make(map[string]*Struct),
 	}
@@ -38,15 +38,11 @@ func NewConfDoc(packagesDir string, interfaceName string, interfacePath string) 
 func (cd *ConfDoc) Run() error {
 	fileSet := token.NewFileSet()
 
-	fmt.Printf("Package Directory: %s\n", cd.packagesDir)
-
 	pkgs, err := cd.loadPackages(cd.packagesDir, fileSet)
 
 	if err != nil {
 		return err
 	}
-
-	err = cd.loadInterface(pkgs, cd.interfaceName, cd.interfacePackage)
 
 	if err != nil {
 		return err
@@ -54,24 +50,30 @@ func (cd *ConfDoc) Run() error {
 
 	for _, pkg := range pkgs {
 		for _, file := range pkg.Syntax {
+			if pkg.PkgPath == cd.interfacePackage {
+				ifaceRef := cd.findInterface(file, cd.interfaceName)
+				if ifaceRef != nil {
+					cd.iface = ifaceRef
+				}
+			}
 			cd.indexStructs(file, cd.indexedStructs)
 			cd.addMethodsToIndexedStructs(file, cd.indexedStructs)
-			cd.filterInterfaceImplementingStructs(cd.indexedStructs, cd.iface, cd.filteredStructs)
 		}
 	}
+
+	cd.filterInterfaceImplementingStructs(cd.indexedStructs, cd.iface, cd.filteredStructs)
 
 	return nil
 }
 
-func (cd *ConfDoc) filterInterfaceImplementingStructs(indexedStructs map[string]*Struct, iface *types.Interface, filteredStructs map[string]*Struct) {
+func (cd *ConfDoc) filterInterfaceImplementingStructs(indexedStructs map[string]*Struct, iface *Interface, filteredStructs map[string]*Struct) {
 	for structKey, indexedStruct := range indexedStructs {
 		structImplementsInterface := true
-		for i := 0; i < iface.NumMethods(); i++ {
+		for _, interfaceMethod := range iface.Methods {
 			foundInterfaceMethod := false
 
-			ifaceMethod := iface.Method(i)
 			for _, method := range indexedStruct.Methods {
-				if ifaceMethod.Name() == method.FunctionName {
+				if interfaceMethod.FunctionName == method.FunctionName {
 					foundInterfaceMethod = true
 				}
 			}
@@ -111,10 +113,21 @@ func (cd *ConfDoc) addMethodsToIndexedStructs(file *ast.File, indexedStructs map
 					recieverType = xv.Name
 				}
 
+				var returnType = ""
+
+				if functionDecl.Type != nil && functionDecl.Type.Results != nil &&
+					functionDecl.Type.Results.List != nil && functionDecl.Type.Results.List[0] != nil {
+					id, okk := functionDecl.Type.Results.List[0].Type.(*ast.Ident)
+					if okk {
+						returnType = id.Name
+					}
+				}
+
 				m := &StructMethod{
 					FilePos:         file.Pos(),
 					ReceiverType:    recieverType,
 					FunctionName:    functionDecl.Name.Name,
+					ReturnType:      returnType,
 					RawFunctionDecl: functionDecl,
 				}
 
@@ -239,30 +252,58 @@ func indexFields(field *ast.Field) []*StructField {
 	return structFields
 }
 
-func (cd *ConfDoc) isInterfaceFunc(iface *types.Interface, t types.Type, funcName string) bool {
-	if !types.Implements(t, iface) {
-		return false
+func (cd *ConfDoc) findInterface(file *ast.File, interfaceName string) *Interface {
+	var iface = &Interface{
+		Methods: []*InterfaceMethod{},
 	}
 
-	for i := 0; i < iface.NumMethods(); i++ {
-		fn := iface.Method(i)
-		if fn.Name() == funcName {
-			return true
+	ast.Inspect(file, func(node ast.Node) bool {
+		if node == nil {
+			return false
 		}
-	}
 
-	return false
-}
+		switch n := node.(type) {
+		case *ast.TypeSpec:
+			if n.Name.IsExported() {
+				switch i := n.Type.(type) {
+				case *ast.InterfaceType:
+					if n.Name.Name == interfaceName {
+						iface.InterfaceName = n.Name.Name
+						iface.RawInterfaceType = i
 
-func (cd *ConfDoc) loadInterface(pkgs []*packages.Package, interfaceName, interfacePackage string) error {
-	iface, err := findInterface(pkgs, interfaceName, interfacePackage)
-	if err != nil {
-		return err
-	}
+						for _, field := range i.Methods.List {
+							if field.Names != nil && field.Names[0] != nil {
+								var ok bool
+								var t *ast.FuncType
+								var ident *ast.Ident
 
-	cd.iface = iface
+								t, ok = field.Type.(*ast.FuncType)
+								if ok {
+									if t.Results != nil && t.Results.List != nil && t.Results.List[0] != nil {
+										ident, ok = t.Results.List[0].Type.(*ast.Ident)
+										if ok {
+											returnType := ident.Name
 
-	return nil
+											iface.Methods = append(iface.Methods, &InterfaceMethod{
+												ReturnType:      returnType,
+												FunctionName:    field.Names[0].Name,
+												RawFunctionType: t,
+											})
+										}
+									}
+								}
+
+							}
+						}
+					}
+				}
+			}
+		}
+
+		return true
+	})
+
+	return iface
 }
 
 func (cd *ConfDoc) loadPackages(absPackagesDir string, fileSet *token.FileSet) ([]*packages.Package, error) {
