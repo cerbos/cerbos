@@ -1,1 +1,10 @@
 titleOnly: true
+types:
+  - enhancement
+  - feat
+  - fix
+  - docs
+  - test
+  - ci
+  - chore
+  - revert
