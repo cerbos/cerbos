@@ -24,6 +24,8 @@ include::example$photo-share/config.yaml[]
 
 ****
 
+NOTE: You can find all the policies and tests used in this tutorial at https://github.com/cerbos/photo-share-tutorial. 
+
 == The Apatr application
 
 Apatr is a simple photo-sharing service that allows users to upload their photos and optionally share them with the rest of the world. Users sign-up to the service either by creating their own user account on the website or by signing-in with an identity provider (IDP) like Google or Facebook. Apatr uses a third-party identity management tool to manage these accounts and authenticating users to the site. Once they are logged-in, users can do the following:
@@ -39,7 +41,6 @@ Apatr’s identity provider allows defining roles for users. The roles currently
 
 * `moderator`: Member of the moderator team
 * `user`: Authenticated users
-
 
 == Resources and actions
 
@@ -250,7 +251,7 @@ EOF
       "XX125": {
         "actions": {
           "view": {
-            "matchedPolicy": "album:object:default"
+            "matchedPolicy": "resource.album_object.vdefault"
           }
         },
         "effectiveDerivedRoles": [
@@ -266,11 +267,11 @@ It's not practical to start the server and manually make requests every time a p
 
 === Writing tests to verify behaviour
 
-Create a new directory named `tests` and create a file named `album_object_tests.yaml` with the following contents.
+Create a new directory named `tests` and create a file named `album_object_test.yaml` with the following contents.
 
 [source,yaml,linenums]
 ----
-include::example$photo-share/tests/album_object_tests.yaml[]
+include::example$photo-share/tests/album_object_test.yaml[]
 ----
 
 Now run the compiler, pointing it to the `tests` directory.
@@ -283,10 +284,20 @@ docker run -it -v $(pwd):/photo-share {app-docker-img} \
 
 ----
 Test results
-= AlbumObjectTestSuite (album_object_tests.yaml)
-== Alicia tries to view her own private album [OK]
-== Bradley tries to view Alicia's private album [OK]
-== Bradley tries to view Alicia's public album [OK]
-== Moderator tries to delete a flagged album [OK]
-== Moderator tries to delete an unflagged album [OK]
+= AlbumObjectTestSuite (album_object_test.yaml)
+== 'View private album' by principal 'alicia' [OK]
+== 'View private album' by principal 'bradley' [OK]
+== 'View private album' by principal 'maria' [OK]
+== 'View public album' by principal 'alicia' [OK]
+== 'View public album' by principal 'bradley' [OK]
+== 'View public album' by principal 'maria' [OK]
+== 'Delete unflagged album' by principal 'alicia' [OK]
+== 'Delete unflagged album' by principal 'bradley' [OK]
+== 'Delete unflagged album' by principal 'maria' [OK]
+== 'Delete flagged album' by principal 'alicia' [OK]
+== 'Delete flagged album' by principal 'bradley' [OK]
+== 'Delete flagged album' by principal 'maria' [OK]
 ----
+
+NOTE: See https://github.com/cerbos/photo-share-tutorial for an example of using Cerbos GitHub Actions in a CI workflow to compile and test policies. 
+

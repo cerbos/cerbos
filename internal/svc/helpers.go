@@ -5,10 +5,14 @@ package svc
 
 import (
 	"context"
+	"encoding/json"
+	"fmt"
 	"strconv"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
+	"google.golang.org/protobuf/encoding/protojson"
+	"google.golang.org/protobuf/reflect/protoreflect"
 
 	requestv1 "github.com/cerbos/cerbos/api/genpb/cerbos/request/v1"
 )
@@ -72,4 +76,29 @@ func ExtractRequestFields(fullMethod string, req interface{}) map[string]interfa
 
 func SetHTTPStatusCode(ctx context.Context, code int) {
 	_ = grpc.SendHeader(ctx, metadata.Pairs("x-http-code", strconv.Itoa(code)))
+}
+
+func getStringValue(v interface{}) string {
+	if s, ok := v.([]interface{}); ok && len(s) != 0 {
+		return getStringValue(s[0])
+	}
+
+	return fmt.Sprint(v)
+}
+
+// protoMessageToStringMap returns map[string]interface{} representation of the proto message.
+// jsonpath lib explicitly requires either map[string]interface{} or slice of interface{}.
+func protoMessageToStringMap(m protoreflect.ProtoMessage) (map[string]interface{}, error) {
+	b, err := protojson.Marshal(m)
+	if err != nil {
+		return nil, fmt.Errorf("could not marshal policy: %w", err)
+	}
+
+	var v map[string]interface{}
+	err = json.Unmarshal(b, &v)
+	if err != nil {
+		return nil, fmt.Errorf("could not unmarshal policy: %w", err)
+	}
+
+	return v, nil
 }

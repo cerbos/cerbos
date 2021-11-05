@@ -1,5 +1,7 @@
 ---
 apiVersion: "api.cerbos.dev/v1"
+variables:
+  is_dev_record: request.resource.attr.dev_record == true
 principalPolicy:
   principal: donald_duck
   version: "20210210"
@@ -9,8 +11,9 @@ principalPolicy:
         - action: "*"
           condition:
             match:
-              expr: "request.resource.attr.dev_record == true"
+              expr: variables.is_dev_record
           effect: EFFECT_ALLOW
+          name: dev_admin
 
     - resource: salary_record
       actions:

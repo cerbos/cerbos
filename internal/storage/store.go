@@ -13,6 +13,11 @@ import (
 	"github.com/cerbos/cerbos/internal/policy"
 )
 
+const (
+	ConfKey       = "storage"
+	driverConfKey = "storage.driver"
+)
+
 var (
 	driversMu sync.RWMutex
 	drivers   = map[string]Constructor{}
@@ -49,17 +54,17 @@ func RegisterDriver(name string, cons Constructor) {
 
 // New returns a storage driver implementation based on the configured driver.
 func New(ctx context.Context) (Store, error) {
-	conf := &Conf{}
-	if err := config.GetSection(conf); err != nil {
-		return nil, fmt.Errorf("failed to read storage configuration: %w", err)
+	var driver string
+	if err := config.Get(driverConfKey, &driver); err != nil {
+		return nil, fmt.Errorf("failed to read storage driver name: %w", err)
 	}
 
 	driversMu.RLock()
-	cons, ok := drivers[conf.Driver]
+	cons, ok := drivers[driver]
 	driversMu.RUnlock()
 
 	if !ok {
-		return nil, fmt.Errorf("unknown storage driver [%s]", conf.Driver)
+		return nil, fmt.Errorf("unknown storage driver [%s]", driver)
 	}
 
 	return cons(ctx)
@@ -74,6 +79,8 @@ type Store interface {
 	GetCompilationUnits(context.Context, ...namer.ModuleID) (map[namer.ModuleID]*policy.CompilationUnit, error)
 	// GetDependents returns the dependents of the given modules.
 	GetDependents(context.Context, ...namer.ModuleID) (map[namer.ModuleID][]namer.ModuleID, error)
+	// GetPolicies returns the policies recorded in the store.
+	GetPolicies(context.Context) ([]*policy.Wrapper, error)
 }
 
 // MutableStore is a store that allows mutations.

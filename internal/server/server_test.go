@@ -31,9 +31,9 @@ import (
 	responsev1 "github.com/cerbos/cerbos/api/genpb/cerbos/response/v1"
 	svcv1 "github.com/cerbos/cerbos/api/genpb/cerbos/svc/v1"
 	"github.com/cerbos/cerbos/internal/audit"
+	"github.com/cerbos/cerbos/internal/auxdata"
 	"github.com/cerbos/cerbos/internal/compile"
 	"github.com/cerbos/cerbos/internal/engine"
-	"github.com/cerbos/cerbos/internal/storage"
 	"github.com/cerbos/cerbos/internal/storage/db/sqlite3"
 	"github.com/cerbos/cerbos/internal/storage/disk"
 	"github.com/cerbos/cerbos/internal/test"
@@ -65,12 +65,22 @@ func TestServer(t *testing.T) {
 	defer cancelFunc()
 
 	auditLog := audit.NewNopLog()
+	auxData := auxdata.NewFromConf(ctx, &auxdata.Conf{JWT: &auxdata.JWTConf{
+		KeySets: []auxdata.JWTKeySet{
+			{
+				ID:    "cerbos",
+				Local: &auxdata.LocalSource{File: filepath.Join(test.PathToDir(t, "auxdata"), "verify_key.jwk")},
+			},
+		},
+	}})
 
-	store, err := disk.NewStore(ctx, &disk.Conf{Directory: dir, ScratchDir: t.TempDir()})
+	store, err := disk.NewStore(ctx, &disk.Conf{Directory: dir})
 	require.NoError(t, err)
 
 	eng, err := engine.New(ctx, compile.NewManager(ctx, store), auditLog)
 	require.NoError(t, err)
+
+	param := Param{AuditLog: auditLog, AuxData: auxData, Store: store, Engine: eng}
 
 	testCases := loadTestCases(t, "checks", "playground")
 
@@ -91,7 +101,7 @@ func TestServer(t *testing.T) {
 			ctx, cancelFunc := context.WithCancel(context.Background())
 			defer cancelFunc()
 
-			startServer(ctx, conf, store, eng, auditLog)
+			startServer(ctx, conf, param)
 
 			tlsConf := &tls.Config{InsecureSkipVerify: true} //nolint:gosec
 
@@ -116,7 +126,7 @@ func TestServer(t *testing.T) {
 			ctx, cancelFunc := context.WithCancel(context.Background())
 			defer cancelFunc()
 
-			startServer(ctx, conf, store, eng, auditLog)
+			startServer(ctx, conf, param)
 
 			tlsConf := &tls.Config{InsecureSkipVerify: true} //nolint:gosec
 
@@ -136,7 +146,7 @@ func TestServer(t *testing.T) {
 			ctx, cancelFunc := context.WithCancel(context.Background())
 			defer cancelFunc()
 
-			startServer(ctx, conf, store, eng, auditLog)
+			startServer(ctx, conf, param)
 
 			t.Run("grpc", testGRPCRequests(testCases, conf.GRPCListenAddr, grpc.WithTransportCredentials(local.NewCredentials())))
 			t.Run("h2c", testGRPCRequests(testCases, conf.HTTPListenAddr, grpc.WithTransportCredentials(local.NewCredentials())))
@@ -155,7 +165,7 @@ func TestServer(t *testing.T) {
 			ctx, cancelFunc := context.WithCancel(context.Background())
 			defer cancelFunc()
 
-			startServer(ctx, conf, store, eng, auditLog)
+			startServer(ctx, conf, param)
 
 			t.Run("grpc", testGRPCRequests(testCases, conf.GRPCListenAddr, grpc.WithTransportCredentials(local.NewCredentials())))
 		})
@@ -169,6 +179,14 @@ func TestAdminService(t *testing.T) {
 	defer cancelFunc()
 
 	auditLog := audit.NewNopLog()
+	auxData := auxdata.NewFromConf(ctx, &auxdata.Conf{JWT: &auxdata.JWTConf{
+		KeySets: []auxdata.JWTKeySet{
+			{
+				ID:    "cerbos",
+				Local: &auxdata.LocalSource{File: filepath.Join(test.PathToDir(t, "auxdata"), "verify_key.jwk")},
+			},
+		},
+	}})
 
 	store, err := sqlite3.NewStore(ctx, &sqlite3.Conf{DSN: fmt.Sprintf("%s?_fk=true", filepath.Join(t.TempDir(), "cerbos.db"))})
 	require.NoError(t, err)
@@ -188,12 +206,12 @@ func TestAdminService(t *testing.T) {
 			Enabled: true,
 			AdminCredentials: &AdminCredentialsConf{
 				Username:     "cerbos",
-				PasswordHash: "$2y$10$yOdMOoQq6g7s.ogYRBDG3e2JyJFCyncpOEmkEyV.mNGKNyg68uPZS",
+				PasswordHash: base64.StdEncoding.EncodeToString([]byte("$2y$10$yOdMOoQq6g7s.ogYRBDG3e2JyJFCyncpOEmkEyV.mNGKNyg68uPZS")),
 			},
 		},
 	}
 
-	startServer(ctx, conf, store, eng, auditLog)
+	startServer(ctx, conf, Param{Store: store, Engine: eng, AuditLog: auditLog, AuxData: auxData})
 
 	testCases := loadTestCases(t, "admin", "checks")
 	creds := &authCreds{username: "cerbos", password: "cerbosAdmin"}
@@ -215,10 +233,10 @@ func getFreeListenAddr(t *testing.T) string {
 	return addr
 }
 
-func startServer(ctx context.Context, conf *Conf, store storage.Store, eng *engine.Engine, auditLog audit.Log) {
+func startServer(ctx context.Context, conf *Conf, param Param) {
 	s := NewServer(conf)
 	go func() {
-		if err := s.Start(ctx, store, eng, auditLog, false); err != nil {
+		if err := s.Start(ctx, param); err != nil {
 			panic(err)
 		}
 	}()
@@ -433,6 +451,7 @@ func compareProto(t *testing.T, want, have interface{}) {
 
 	require.Empty(t, cmp.Diff(want, have,
 		protocmp.Transform(),
+		protocmp.SortRepeatedFields(&responsev1.CheckResourceSetResponse_Meta_ActionMeta{}, "effective_derived_roles"),
 		protocmp.SortRepeated(cmpPlaygroundEvalResult),
 		protocmp.SortRepeated(cmpPlaygroundError),
 	))

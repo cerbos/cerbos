@@ -8,6 +8,7 @@ import (
 	"context"
 	"crypto/tls"
 	"crypto/x509"
+	"encoding/base64"
 	"errors"
 	"fmt"
 	"os"
@@ -24,6 +25,7 @@ import (
 
 	svcv1 "github.com/cerbos/cerbos/api/genpb/cerbos/svc/v1"
 	"github.com/cerbos/cerbos/internal/audit"
+	"github.com/cerbos/cerbos/internal/auxdata"
 	"github.com/cerbos/cerbos/internal/compile"
 	"github.com/cerbos/cerbos/internal/engine"
 	"github.com/cerbos/cerbos/internal/server"
@@ -88,7 +90,7 @@ func WithAdminAPI(username, password string) ServerOpt {
 		so.serverConf.AdminAPI.Enabled = true
 		so.serverConf.AdminAPI.AdminCredentials = &server.AdminCredentialsConf{
 			Username:     username,
-			PasswordHash: string(hashBytes),
+			PasswordHash: base64.StdEncoding.EncodeToString(hashBytes),
 		}
 	}
 }
@@ -266,14 +268,16 @@ func startServer(ctx context.Context, g *errgroup.Group, sopt *serverOpt) (err e
 	}
 
 	auditLog := audit.NewNopLog()
+	auxData := auxdata.NewWithoutVerification(ctx)
+
 	eng, err := engine.New(ctx, compile.NewManager(ctx, store), auditLog)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to create engine: %w", err)
 	}
 
 	s := server.NewServer(sopt.serverConf)
 	g.Go(func() error {
-		return s.Start(ctx, store, eng, auditLog, false)
+		return s.Start(ctx, server.Param{Store: store, Engine: eng, AuditLog: auditLog, AuxData: auxData})
 	})
 	runtime.Gosched()
 

@@ -1,0 +1,17 @@
+---
+name: TestSuite
+description: Tests for verifying something
+tests:
+  - name: John and his leave request
+    input:
+      requestId: "test"
+      actions:
+        - "view:public"
+        - "approve"
+      resource: "john_leave_request"
+    expected:
+      -
+        principal: john
+        actions:
+          "view:public": "EFFECT_ALLOW"
+          "approve": "EFFECT_DENY"

@@ -1,0 +1,44 @@
+---
+name: Release Helm Charts
+on:
+  workflow_dispatch:
+
+jobs:
+  publishHelm:
+    name: Release Helm chart
+    runs-on: ubuntu-latest
+    env:
+      CHARTS_DIR: deploy/out/helm-charts
+      OCI_REGISTRY: ghcr.io/cerbos/helm-charts
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Install Helm
+        uses: azure/setup-helm@v1
+
+      - name: Install Cloud SDK
+        uses: google-github-actions/setup-gcloud@v0.2.1
+        with:
+          project_id: ${{ secrets.GCP_PROJECT }}
+          service_account_key: ${{ secrets.GCP_SA_KEY }}
+          export_default_credentials: true
+
+      - name: Package Helm chart
+        run: |-
+          mkdir -p ${{ env.CHARTS_DIR }}/cerbos
+          helm package -d ${{ env.CHARTS_DIR }}/cerbos deploy/charts/cerbos
+
+      - name: Publish to download site
+        run: |-
+          gsutil cp ${{ secrets.GCS_BUCKET }}/helm-charts/index.yaml ${{ env.CHARTS_DIR }}/index.yaml
+          helm repo index --url=https://download.cerbos.dev/helm-charts --merge=${{ env.CHARTS_DIR }}/index.yaml ${{ env.CHARTS_DIR }}
+          gsutil rsync -r ${{ env.CHARTS_DIR }}/ ${{ secrets.GCS_BUCKET }}/helm-charts/
+
+      - name: Publish to OCI registry
+        run: |-
+          helm registry login ${{ env.OCI_REGISTRY }} -u ${{ secrets.HELM_CHARTS_REPO_USER }} -p ${{ secrets.HELM_CHARTS_REPO_TOKEN }}
+          CHART=$(ls ${{ env.CHARTS_DIR }}/cerbos/*.tgz); helm push $CHART oci://${{ env.OCI_REGISTRY }}
+          helm registry logout ${{ env.OCI_REGISTRY }}
+        env:
+          HELM_EXPERIMENTAL_OCI: '1'

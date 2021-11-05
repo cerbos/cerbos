@@ -1,0 +1,113 @@
+---
+name: AlbumObjectTestSuite
+description: Tests for verifying the album:object resource policy
+resources:
+  alicia_private_album:
+    kind: "album:object"
+    attr:
+      owner: "alicia"
+      id: "XX125"
+      public: false
+      flagged: false
+
+  alicia_public_album:
+    kind: "album:object"
+    attr:
+      owner: "alicia"
+      id: "XX525"
+      public: true
+      flagged: false
+
+  alicia_flagged_album:
+    kind: "album:object"
+    attr:
+      owner: "alicia"
+      id: "XX666"
+      public: true
+      flagged: true
+
+principals:
+  alicia:
+    id: "alicia"
+    roles: ["user"]
+
+  bradley:
+    id: "bradley"
+    roles: ["user"]
+
+  maria:
+    id: "maria"
+    roles: ["moderator", "user"]
+
+tests:
+  - name: View private album
+    input:
+      requestId: "test01"
+      actions: ["view"]
+      resource: alicia_private_album
+    expected:
+      - principal: alicia
+        actions:
+          view: EFFECT_ALLOW
+
+      - principal: bradley
+        actions:
+          view: EFFECT_DENY
+
+      - principal: maria
+        actions:
+          view: EFFECT_DENY
+
+  - name: View public album
+    input:
+      requestId: "test02"
+      actions: ["view"]
+      resource: alicia_public_album
+    expected:
+      - principal: alicia
+        actions:
+          view: EFFECT_ALLOW
+
+      - principal: bradley
+        actions:
+          view: EFFECT_ALLOW
+
+      - principal: maria
+        actions:
+          view: EFFECT_ALLOW
+
+  - name: Delete unflagged album
+    input:
+      requestId: "test03"
+      actions: ["delete"]
+      resource: alicia_public_album
+    expected:
+      - principal: alicia
+        actions:
+          delete: EFFECT_ALLOW
+
+      - principal: bradley
+        actions:
+          delete: EFFECT_DENY
+
+      - principal: maria
+        actions:
+          delete: EFFECT_DENY
+
+  - name: Delete flagged album
+    input:
+      requestId: "test04"
+      actions: ["delete"]
+      resource: alicia_flagged_album
+    expected:
+      - principal: alicia
+        actions:
+          delete: EFFECT_ALLOW
+
+      - principal: bradley
+        actions:
+          delete: EFFECT_DENY
+
+      - principal: maria
+        actions:
+          delete: EFFECT_ALLOW

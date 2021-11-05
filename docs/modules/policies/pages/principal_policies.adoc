@@ -6,26 +6,42 @@ include::ROOT:partial$attributes.adoc[]
 ----
 ---
 apiVersion: "api.cerbos.dev/v1"
+variables: <1>
+  is_dev_record: request.resource.attr.dev_record == true
 principalPolicy:
-  principal: daffy_duck <1>
-  version: "dev" <2>
+  principal: daffy_duck <2>
+  version: "dev" <3>
   rules:
-    - resource: leave_request <3>
+    - resource: leave_request <4>
       actions:
-        - action: "*" <4>
-          condition: <5>
+        - name: dev_record_wildcard <5>
+          action: "*" <6>
+          condition: <7>
             match:
-              expr: "request.resource.attr.dev_record == true"
+              expr: variables.is_dev_record
           effect: EFFECT_ALLOW
-
-    - resource: salary_record 
+    - resource: employee_profile
+      actions:
+        - name: view_employee_profile
+          action: "*" <6>
+          condition: <7>
+            match:
+              all:
+                of:
+                  - expr: V.is_dev_record
+                  - expr: request.resource.attr.public == true
+          effect: EFFECT_ALLOW
+    - resource: salary_record
       actions:
         - action: "*"
           effect: EFFECT_DENY
 ----
-<1> Principal to whom this policy applies.
-<2> Version of this policy. Policies are uniquely identified by the principal name and version pair. You can have multiple policy versions for the same principal (e.g. production vs. staging). The version value `default` is special as it is the default fallback when no version is specified in the request.
-<3> Resource to which this override applies. Wildcards are supported here.
-<4> Actions that can be performed on the resource. Wildcards are supported here.
-<5> Optional conditions required to match this rule.
+<1> Optional variables section. Each variable is evaluated before any rule condition.
+A variable expression can contain anything that condition expression can have.
+<2> Principal to whom this policy applies.
+<3> Version of this policy. Policies are uniquely identified by the principal name and version pair. You can have multiple policy versions for the same principal (e.g. production vs. staging). The version value `default` is special as it is the default fallback when no version is specified in the request.
+<4> Resource to which this override applies. Wildcards are supported here.
+<5> Optional name for the rule.
+<6> Actions that can be performed on the resource. Wildcards are supported here.
+<7> Optional conditions required to match this rule.
 

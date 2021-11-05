@@ -12,6 +12,8 @@ import (
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/testing/protocmp"
 
+	enginev1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
+	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
 	privatev1 "github.com/cerbos/cerbos/api/genpb/cerbos/private/v1"
 	"github.com/cerbos/cerbos/internal/audit"
 	"github.com/cerbos/cerbos/internal/audit/local"
@@ -34,8 +36,11 @@ func TestCheck(t *testing.T) {
 		tcase := tcase
 		t.Run(tcase.Name, func(t *testing.T) {
 			tc := readTestCase(t, tcase.Input)
+			buf := new(bytes.Buffer)
 
-			haveOutputs, err := eng.Check(context.Background(), tc.Inputs)
+			haveOutputs, err := eng.Check(context.Background(), tc.Inputs, WithWriterTraceSink(buf))
+			t.Logf("TRACE =>\n%s", buf.String())
+
 			if tc.WantError {
 				require.Error(t, err)
 			} else {
@@ -43,7 +48,7 @@ func TestCheck(t *testing.T) {
 			}
 
 			for i, have := range haveOutputs {
-				require.Empty(t, cmp.Diff(tc.WantOutputs[i], have, protocmp.Transform()))
+				require.Empty(t, cmp.Diff(tc.WantOutputs[i], have, protocmp.Transform(), protocmp.SortRepeatedFields(&enginev1.CheckOutput{}, "effective_derived_roles")))
 			}
 		})
 	}
@@ -61,14 +66,14 @@ func readTestCase(tb testing.TB, data []byte) *privatev1.EngineTestCase {
 func BenchmarkCheck(b *testing.B) {
 	testCases := test.LoadTestCases(b, "engine")
 
-	b.Run("nop_decision_logger", func(b *testing.B) {
+	b.Run("noop_decision_logger", func(b *testing.B) {
 		eng, cancelFunc := mkEngine(b, false)
 		defer cancelFunc()
 
 		runBenchmarks(b, eng, testCases)
 	})
 
-	b.Run("badger_decision_logger", func(b *testing.B) {
+	b.Run("local_decision_logger", func(b *testing.B) {
 		eng, cancelFunc := mkEngine(b, true)
 		defer cancelFunc()
 
@@ -130,4 +135,40 @@ func mkEngine(tb testing.TB, enableAuditLog bool) (*Engine, context.CancelFunc) 
 	require.NoError(tb, err)
 
 	return eng, cancelFunc
+}
+
+func TestSatisfiesCondition(t *testing.T) {
+	testCases := test.LoadTestCases(t, "cel_eval")
+
+	for _, tcase := range testCases {
+		tcase := tcase
+		t.Run(tcase.Name, func(t *testing.T) {
+			tc := readCELTestCase(t, tcase.Input)
+			cond, err := compile.Condition(&policyv1.Condition{Condition: &policyv1.Condition_Match{Match: tc.Condition}})
+			require.NoError(t, err)
+
+			buf := new(bytes.Buffer)
+			tcr := newTracer(NewWriterTraceSink(buf))
+
+			retVal, err := satisfiesCondition(tcr.beginTrace(conditionComponent), cond, nil, tc.Input)
+			t.Logf("TRACE =>\n%s", buf.String())
+
+			if tc.WantError {
+				require.Error(t, err)
+				return
+			}
+
+			require.NoError(t, err)
+			require.Equal(t, tc.Want, retVal)
+		})
+	}
+}
+
+func readCELTestCase(t *testing.T, data []byte) *privatev1.CelTestCase {
+	t.Helper()
+
+	tc := &privatev1.CelTestCase{}
+	require.NoError(t, util.ReadJSONOrYAML(bytes.NewReader(data), tc))
+
+	return tc
 }

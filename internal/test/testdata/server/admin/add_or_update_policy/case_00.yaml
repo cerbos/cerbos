@@ -23,7 +23,9 @@ adminAddOrUpdatePolicy:
                 "employee"
               ],
               "condition": {
-                "script": "input.resource.attr.owner == input.principal.id"
+                "match": {
+                  "expr": "R.attr.owner == P.id"
+                }
               }
             },
             {
@@ -111,6 +113,25 @@ adminAddOrUpdatePolicy:
               "condition": {
                 "match": {
                   "expr": "request.resource.attr.status == \"PENDING_APPROVAL\""
+                }
+              },
+              "effect": "EFFECT_ALLOW"
+            },
+            {
+              "actions": [
+                "defer"
+              ],
+              "roles": [
+                "employee"
+              ],
+              "condition": {
+                "match": {
+                  "all": {
+                    "of": [
+                      {"expr": "\"cerbos-jwt-tests\" in request.aux_data.jwt.aud"},
+                      {"expr": "\"A\" in request.aux_data.jwt.customArray"}
+                    ]
+                  }
                 }
               },
               "effect": "EFFECT_ALLOW"

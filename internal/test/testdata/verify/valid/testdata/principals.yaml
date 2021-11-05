@@ -1,0 +1,29 @@
+---
+principals:
+  john:
+    id: john
+    policyVersion: '20210210'
+    roles:
+      - employee
+    attr:
+      department: marketing
+      geography: GB
+      team: design
+  bev: &bev
+    id: bev
+    policyVersion: '20210210'
+    roles:
+      - employee
+      - manager
+    attr: &bev_attr
+      department: marketing
+      geography: GB
+      managed_geographies: GB
+      ip_address: 10.20.1.2
+      team: design
+  matt:
+    << : *bev
+    id: matt
+    attr:
+      << : *bev_attr
+      ip_address: 10.10.1.2

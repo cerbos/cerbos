@@ -3,8 +3,9 @@ name: 'antora-docs'
 description: 'Build the docs using Antora'
 runs:
   using: 'docker'
-  image: 'docker://docker.io/antora/antora:2.3.4'
+  image: 'docker://docker.io/antora/antora:3.0.0-alpha.9'
   args:
     - 'antora'
     - '--stacktrace'
+    - '--clean'
     - 'docs/antora-playbook.yml'

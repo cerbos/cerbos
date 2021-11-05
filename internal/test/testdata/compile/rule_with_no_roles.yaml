@@ -1,0 +1,19 @@
+---
+wantErrors:
+  - "resource_policies/leave_request_20210210.yaml: Rule 'rule-003' does not specify any roles or derived roles to be matched (invalid resource rule)"
+mainDef: "resource_policies/leave_request_20210210.yaml"
+inputDefs:
+  "resource_policies/leave_request_20210210.yaml":
+    apiVersion: api.cerbos.dev/v1
+    resourcePolicy:
+      resource: leave_request
+      rules:
+        - actions: ['*']
+          roles: ["admin"]
+          effect: EFFECT_ALLOW
+          name: wildcard
+        - actions: ["create"]
+          roles: ["admin"]
+          effect: EFFECT_ALLOW
+        - actions: ["view:*"]
+          effect: EFFECT_ALLOW

@@ -4,7 +4,6 @@ wantErrJson: |-
     "disabled": null,
     "duplicateDefs": null,
     "loadFailures": null,
-    "codegenFailures": null,
     "missingImports": [
       {
         "importingFile": "resource.yaml",

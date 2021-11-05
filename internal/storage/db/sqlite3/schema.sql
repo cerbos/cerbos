@@ -8,8 +8,7 @@ CREATE TABLE IF NOT EXISTS policy (
     version VARCHAR(128) NOT NULL,
     description TEXT,
     disabled BOOLEAN default false,
-    definition BLOB,
-    generated BLOB
+    definition BLOB
 );
 
 -- name: policy_dependency
@@ -22,7 +21,7 @@ CREATE TABLE IF NOT EXISTS policy_dependency (
 
 -- name: policy_revision
 CREATE TABLE IF NOT EXISTS policy_revision (
-    revision_id INTEGER AUTO INCREMENT PRIMARY KEY,
+    revision_id INTEGER PRIMARY KEY AUTOINCREMENT,
     action VARCHAR(64),
     id UNSIGNED BIG INT,
     kind VARCHAR(128),

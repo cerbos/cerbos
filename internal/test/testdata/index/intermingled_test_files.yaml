@@ -1,0 +1,70 @@
+---
+files:
+  "test.txt": |-
+    this is some text
+
+  "principal.yaml": |-
+    ---
+    apiVersion: "api.cerbos.dev/v1"
+    principalPolicy:
+      principal: donald_duck
+      version: "20210210"
+      rules:
+        - resource: leave_request
+          actions:
+            - action: "*"
+              condition:
+                match:
+                  expr: "request.resource.attr.dev_record == true"
+              effect: EFFECT_ALLOW
+
+        - resource: salary_record
+          actions:
+            - action: "*"
+              effect: EFFECT_DENY
+
+  "resource_test.yaml": |-
+    ---
+    name: TestSuite
+    description: Tests for verifying something
+    tests:
+      - name: John and his leave request
+        input:
+          requestId: "test"
+          actions:
+            - "view:public"
+            - "approve"
+          resource: "john_leave_request"
+        expected:
+          -
+            principal: john
+            actions:
+              "view:public": "EFFECT_ALLOW"
+              "approve": "EFFECT_DENY"
+
+  "testdata/principals.yaml": |-
+    ---
+    principals:
+      john:
+        id: john
+        policyVersion: '20210210'
+        roles:
+          - employee
+        attr:
+          department: marketing
+          geography: GB
+          team: design
+
+  "testdata/resources.yaml": |-
+    ---
+    resources:
+      john_leave_request:
+        kind: leave_request
+        policyVersion: '20210210'
+        id: XX125
+        attr:
+          department: marketing
+          geography: GB
+          id: XX125
+          owner: john
+          team: design

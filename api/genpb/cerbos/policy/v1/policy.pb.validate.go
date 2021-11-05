@@ -67,6 +67,8 @@ func (m *Policy) Validate() error {
 		}
 	}
 
+	// no validation rules for Variables
+
 	switch m.PolicyType.(type) {
 
 	case *Policy_ResourcePolicy:
@@ -312,6 +314,13 @@ func (m *ResourcePolicy) Validate() error {
 
 	}
 
+	if !_ResourcePolicy_Scope_Pattern.MatchString(m.GetScope()) {
+		return ResourcePolicyValidationError{
+			field:  "Scope",
+			reason: "value does not match regex pattern \"^([[:alpha:]][[:word:]\\\\-]+(\\\\.[[:alpha:]][[:word:]\\\\-]*)*)*$\"",
+		}
+	}
+
 	return nil
 }
 
@@ -374,6 +383,8 @@ var _ResourcePolicy_Resource_Pattern = regexp.MustCompile("^[[:alpha:]][[:word:]
 var _ResourcePolicy_Version_Pattern = regexp.MustCompile("^[[:word:]]+$")
 
 var _ResourcePolicy_ImportDerivedRoles_Pattern = regexp.MustCompile("^[[:word:]\\-\\.]+$")
+
+var _ResourcePolicy_Scope_Pattern = regexp.MustCompile("^([[:alpha:]][[:word:]\\-]+(\\.[[:alpha:]][[:word:]\\-]*)*)*$")
 
 // Validate checks the field values on ResourceRule with the rules defined in
 // the proto definition for this message. If any rules are violated, an error
@@ -469,6 +480,13 @@ func (m *ResourceRule) Validate() error {
 		}
 	}
 
+	if !_ResourceRule_Name_Pattern.MatchString(m.GetName()) {
+		return ResourceRuleValidationError{
+			field:  "Name",
+			reason: "value does not match regex pattern \"^([[:alpha:]][[:word:]\\\\@\\\\.\\\\-]*)*$\"",
+		}
+	}
+
 	return nil
 }
 
@@ -535,6 +553,8 @@ var _ResourceRule_Effect_InLookup = map[effectv1.Effect]struct{}{
 	2: {},
 }
 
+var _ResourceRule_Name_Pattern = regexp.MustCompile("^([[:alpha:]][[:word:]\\@\\.\\-]*)*$")
+
 // Validate checks the field values on PrincipalPolicy with the rules defined
 // in the proto definition for this message. If any rules are violated, an
 // error is returned.
@@ -584,6 +604,13 @@ func (m *PrincipalPolicy) Validate() error {
 			}
 		}
 
+	}
+
+	if !_PrincipalPolicy_Scope_Pattern.MatchString(m.GetScope()) {
+		return PrincipalPolicyValidationError{
+			field:  "Scope",
+			reason: "value does not match regex pattern \"^([[:alpha:]][[:word:]\\\\-]+(\\\\.[[:alpha:]][[:word:]\\\\-]*)*)*$\"",
+		}
 	}
 
 	return nil
@@ -646,6 +673,8 @@ var _ interface {
 var _PrincipalPolicy_Principal_Pattern = regexp.MustCompile("^[[:alpha:]][[:word:]\\@\\.\\-]*(\\:[[:alpha:]][[:word:]\\@\\.\\-]*)*$")
 
 var _PrincipalPolicy_Version_Pattern = regexp.MustCompile("^[[:word:]]+$")
+
+var _PrincipalPolicy_Scope_Pattern = regexp.MustCompile("^([[:alpha:]][[:word:]\\-]+(\\.[[:alpha:]][[:word:]\\-]*)*)*$")
 
 // Validate checks the field values on PrincipalRule with the rules defined in
 // the proto definition for this message. If any rules are violated, an error
@@ -1170,6 +1199,71 @@ var _ interface {
 	ErrorName() string
 } = MatchValidationError{}
 
+// Validate checks the field values on TestFixture with the rules defined in
+// the proto definition for this message. If any rules are violated, an error
+// is returned.
+func (m *TestFixture) Validate() error {
+	if m == nil {
+		return nil
+	}
+
+	return nil
+}
+
+// TestFixtureValidationError is the validation error returned by
+// TestFixture.Validate if the designated constraints aren't met.
+type TestFixtureValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e TestFixtureValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e TestFixtureValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e TestFixtureValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e TestFixtureValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e TestFixtureValidationError) ErrorName() string { return "TestFixtureValidationError" }
+
+// Error satisfies the builtin error interface
+func (e TestFixtureValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sTestFixture.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = TestFixtureValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = TestFixtureValidationError{}
+
 // Validate checks the field values on TestSuite with the rules defined in the
 // proto definition for this message. If any rules are violated, an error is returned.
 func (m *TestSuite) Validate() error {
@@ -1204,6 +1298,40 @@ func (m *TestSuite) Validate() error {
 			if err := v.Validate(); err != nil {
 				return TestSuiteValidationError{
 					field:  fmt.Sprintf("Tests[%v]", idx),
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	}
+
+	for key, val := range m.GetPrincipals() {
+		_ = val
+
+		// no validation rules for Principals[key]
+
+		if v, ok := interface{}(val).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return TestSuiteValidationError{
+					field:  fmt.Sprintf("Principals[%v]", key),
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	}
+
+	for key, val := range m.GetResources() {
+		_ = val
+
+		// no validation rules for Resources[key]
+
+		if v, ok := interface{}(val).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return TestSuiteValidationError{
+					field:  fmt.Sprintf("Resources[%v]", key),
 					reason: "embedded message failed validation",
 					cause:  err,
 				}
@@ -1269,6 +1397,122 @@ var _ interface {
 	ErrorName() string
 } = TestSuiteValidationError{}
 
+// Validate checks the field values on TestTable with the rules defined in the
+// proto definition for this message. If any rules are violated, an error is returned.
+func (m *TestTable) Validate() error {
+	if m == nil {
+		return nil
+	}
+
+	if utf8.RuneCountInString(m.GetName()) < 1 {
+		return TestTableValidationError{
+			field:  "Name",
+			reason: "value length must be at least 1 runes",
+		}
+	}
+
+	// no validation rules for Description
+
+	// no validation rules for Skip
+
+	// no validation rules for SkipReason
+
+	if m.GetInput() == nil {
+		return TestTableValidationError{
+			field:  "Input",
+			reason: "value is required",
+		}
+	}
+
+	if v, ok := interface{}(m.GetInput()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return TestTableValidationError{
+				field:  "Input",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if len(m.GetExpected()) < 1 {
+		return TestTableValidationError{
+			field:  "Expected",
+			reason: "value must contain at least 1 item(s)",
+		}
+	}
+
+	for idx, item := range m.GetExpected() {
+		_, _ = idx, item
+
+		if v, ok := interface{}(item).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return TestTableValidationError{
+					field:  fmt.Sprintf("Expected[%v]", idx),
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	}
+
+	return nil
+}
+
+// TestTableValidationError is the validation error returned by
+// TestTable.Validate if the designated constraints aren't met.
+type TestTableValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e TestTableValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e TestTableValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e TestTableValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e TestTableValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e TestTableValidationError) ErrorName() string { return "TestTableValidationError" }
+
+// Error satisfies the builtin error interface
+func (e TestTableValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sTestTable.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = TestTableValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = TestTableValidationError{}
+
 // Validate checks the field values on Test with the rules defined in the proto
 // definition for this message. If any rules are violated, an error is returned.
 func (m *Test) Validate() error {
@@ -1276,10 +1520,20 @@ func (m *Test) Validate() error {
 		return nil
 	}
 
-	if utf8.RuneCountInString(m.GetName()) < 1 {
+	if m.GetName() == nil {
 		return TestValidationError{
 			field:  "Name",
-			reason: "value length must be at least 1 runes",
+			reason: "value is required",
+		}
+	}
+
+	if v, ok := interface{}(m.GetName()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return TestValidationError{
+				field:  "Name",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
 		}
 	}
 
@@ -1365,92 +1619,6 @@ var _ interface {
 	ErrorName() string
 } = TestValidationError{}
 
-// Validate checks the field values on GeneratedPolicy with the rules defined
-// in the proto definition for this message. If any rules are violated, an
-// error is returned.
-func (m *GeneratedPolicy) Validate() error {
-	if m == nil {
-		return nil
-	}
-
-	// no validation rules for Fqn
-
-	for key, val := range m.GetCelConditions() {
-		_ = val
-
-		// no validation rules for CelConditions[key]
-
-		if v, ok := interface{}(val).(interface{ Validate() error }); ok {
-			if err := v.Validate(); err != nil {
-				return GeneratedPolicyValidationError{
-					field:  fmt.Sprintf("CelConditions[%v]", key),
-					reason: "embedded message failed validation",
-					cause:  err,
-				}
-			}
-		}
-
-	}
-
-	// no validation rules for Code
-
-	return nil
-}
-
-// GeneratedPolicyValidationError is the validation error returned by
-// GeneratedPolicy.Validate if the designated constraints aren't met.
-type GeneratedPolicyValidationError struct {
-	field  string
-	reason string
-	cause  error
-	key    bool
-}
-
-// Field function returns field value.
-func (e GeneratedPolicyValidationError) Field() string { return e.field }
-
-// Reason function returns reason value.
-func (e GeneratedPolicyValidationError) Reason() string { return e.reason }
-
-// Cause function returns cause value.
-func (e GeneratedPolicyValidationError) Cause() error { return e.cause }
-
-// Key function returns key value.
-func (e GeneratedPolicyValidationError) Key() bool { return e.key }
-
-// ErrorName returns error name.
-func (e GeneratedPolicyValidationError) ErrorName() string { return "GeneratedPolicyValidationError" }
-
-// Error satisfies the builtin error interface
-func (e GeneratedPolicyValidationError) Error() string {
-	cause := ""
-	if e.cause != nil {
-		cause = fmt.Sprintf(" | caused by: %v", e.cause)
-	}
-
-	key := ""
-	if e.key {
-		key = "key for "
-	}
-
-	return fmt.Sprintf(
-		"invalid %sGeneratedPolicy.%s: %s%s",
-		key,
-		e.field,
-		e.reason,
-		cause)
-}
-
-var _ error = GeneratedPolicyValidationError{}
-
-var _ interface {
-	Field() string
-	Reason() string
-	Key() bool
-	Cause() error
-	ErrorName() string
-} = GeneratedPolicyValidationError{}
-
 // Validate checks the field values on PrincipalRule_Action with the rules
 // defined in the proto definition for this message. If any rules are
 // violated, an error is returned.
@@ -1480,6 +1648,13 @@ func (m *PrincipalRule_Action) Validate() error {
 		return PrincipalRule_ActionValidationError{
 			field:  "Effect",
 			reason: "value must be in list [1 2]",
+		}
+	}
+
+	if !_PrincipalRule_Action_Name_Pattern.MatchString(m.GetName()) {
+		return PrincipalRule_ActionValidationError{
+			field:  "Name",
+			reason: "value does not match regex pattern \"^([[:alpha:]][[:word:]\\\\@\\\\.\\\\-]*)*$\"",
 		}
 	}
 
@@ -1546,6 +1721,8 @@ var _PrincipalRule_Action_Effect_InLookup = map[effectv1.Effect]struct{}{
 	1: {},
 	2: {},
 }
+
+var _PrincipalRule_Action_Name_Pattern = regexp.MustCompile("^([[:alpha:]][[:word:]\\@\\.\\-]*)*$")
 
 // Validate checks the field values on Match_ExprList with the rules defined in
 // the proto definition for this message. If any rules are violated, an error
@@ -1634,22 +1811,37 @@ var _ interface {
 	ErrorName() string
 } = Match_ExprListValidationError{}
 
-// Validate checks the field values on Test_ActionEffectMap with the rules
+// Validate checks the field values on TestFixture_Principals with the rules
 // defined in the proto definition for this message. If any rules are
 // violated, an error is returned.
-func (m *Test_ActionEffectMap) Validate() error {
+func (m *TestFixture_Principals) Validate() error {
 	if m == nil {
 		return nil
 	}
 
-	// no validation rules for Actions
+	for key, val := range m.GetPrincipals() {
+		_ = val
+
+		// no validation rules for Principals[key]
+
+		if v, ok := interface{}(val).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return TestFixture_PrincipalsValidationError{
+					field:  fmt.Sprintf("Principals[%v]", key),
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	}
 
 	return nil
 }
 
-// Test_ActionEffectMapValidationError is the validation error returned by
-// Test_ActionEffectMap.Validate if the designated constraints aren't met.
-type Test_ActionEffectMapValidationError struct {
+// TestFixture_PrincipalsValidationError is the validation error returned by
+// TestFixture_Principals.Validate if the designated constraints aren't met.
+type TestFixture_PrincipalsValidationError struct {
 	field  string
 	reason string
 	cause  error
@@ -1657,24 +1849,24 @@ type Test_ActionEffectMapValidationError struct {
 }
 
 // Field function returns field value.
-func (e Test_ActionEffectMapValidationError) Field() string { return e.field }
+func (e TestFixture_PrincipalsValidationError) Field() string { return e.field }
 
 // Reason function returns reason value.
-func (e Test_ActionEffectMapValidationError) Reason() string { return e.reason }
+func (e TestFixture_PrincipalsValidationError) Reason() string { return e.reason }
 
 // Cause function returns cause value.
-func (e Test_ActionEffectMapValidationError) Cause() error { return e.cause }
+func (e TestFixture_PrincipalsValidationError) Cause() error { return e.cause }
 
 // Key function returns key value.
-func (e Test_ActionEffectMapValidationError) Key() bool { return e.key }
+func (e TestFixture_PrincipalsValidationError) Key() bool { return e.key }
 
 // ErrorName returns error name.
-func (e Test_ActionEffectMapValidationError) ErrorName() string {
-	return "Test_ActionEffectMapValidationError"
+func (e TestFixture_PrincipalsValidationError) ErrorName() string {
+	return "TestFixture_PrincipalsValidationError"
 }
 
 // Error satisfies the builtin error interface
-func (e Test_ActionEffectMapValidationError) Error() string {
+func (e TestFixture_PrincipalsValidationError) Error() string {
 	cause := ""
 	if e.cause != nil {
 		cause = fmt.Sprintf(" | caused by: %v", e.cause)
@@ -1686,14 +1878,14 @@ func (e Test_ActionEffectMapValidationError) Error() string {
 	}
 
 	return fmt.Sprintf(
-		"invalid %sTest_ActionEffectMap.%s: %s%s",
+		"invalid %sTestFixture_Principals.%s: %s%s",
 		key,
 		e.field,
 		e.reason,
 		cause)
 }
 
-var _ error = Test_ActionEffectMapValidationError{}
+var _ error = TestFixture_PrincipalsValidationError{}
 
 var _ interface {
 	Field() string
@@ -1701,4 +1893,347 @@ var _ interface {
 	Key() bool
 	Cause() error
 	ErrorName() string
-} = Test_ActionEffectMapValidationError{}
+} = TestFixture_PrincipalsValidationError{}
+
+// Validate checks the field values on TestFixture_Resources with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, an error is returned.
+func (m *TestFixture_Resources) Validate() error {
+	if m == nil {
+		return nil
+	}
+
+	for key, val := range m.GetResources() {
+		_ = val
+
+		// no validation rules for Resources[key]
+
+		if v, ok := interface{}(val).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return TestFixture_ResourcesValidationError{
+					field:  fmt.Sprintf("Resources[%v]", key),
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	}
+
+	return nil
+}
+
+// TestFixture_ResourcesValidationError is the validation error returned by
+// TestFixture_Resources.Validate if the designated constraints aren't met.
+type TestFixture_ResourcesValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e TestFixture_ResourcesValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e TestFixture_ResourcesValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e TestFixture_ResourcesValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e TestFixture_ResourcesValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e TestFixture_ResourcesValidationError) ErrorName() string {
+	return "TestFixture_ResourcesValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e TestFixture_ResourcesValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sTestFixture_Resources.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = TestFixture_ResourcesValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = TestFixture_ResourcesValidationError{}
+
+// Validate checks the field values on TestTable_CheckInput with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, an error is returned.
+func (m *TestTable_CheckInput) Validate() error {
+	if m == nil {
+		return nil
+	}
+
+	// no validation rules for RequestId
+
+	if utf8.RuneCountInString(m.GetResource()) < 1 {
+		return TestTable_CheckInputValidationError{
+			field:  "Resource",
+			reason: "value length must be at least 1 runes",
+		}
+	}
+
+	_TestTable_CheckInput_Actions_Unique := make(map[string]struct{}, len(m.GetActions()))
+
+	for idx, item := range m.GetActions() {
+		_, _ = idx, item
+
+		if _, exists := _TestTable_CheckInput_Actions_Unique[item]; exists {
+			return TestTable_CheckInputValidationError{
+				field:  fmt.Sprintf("Actions[%v]", idx),
+				reason: "repeated value must contain unique items",
+			}
+		} else {
+			_TestTable_CheckInput_Actions_Unique[item] = struct{}{}
+		}
+
+		if utf8.RuneCountInString(item) < 1 {
+			return TestTable_CheckInputValidationError{
+				field:  fmt.Sprintf("Actions[%v]", idx),
+				reason: "value length must be at least 1 runes",
+			}
+		}
+
+	}
+
+	return nil
+}
+
+// TestTable_CheckInputValidationError is the validation error returned by
+// TestTable_CheckInput.Validate if the designated constraints aren't met.
+type TestTable_CheckInputValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e TestTable_CheckInputValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e TestTable_CheckInputValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e TestTable_CheckInputValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e TestTable_CheckInputValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e TestTable_CheckInputValidationError) ErrorName() string {
+	return "TestTable_CheckInputValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e TestTable_CheckInputValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sTestTable_CheckInput.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = TestTable_CheckInputValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = TestTable_CheckInputValidationError{}
+
+// Validate checks the field values on TestTable_ExpectedItem with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, an error is returned.
+func (m *TestTable_ExpectedItem) Validate() error {
+	if m == nil {
+		return nil
+	}
+
+	if utf8.RuneCountInString(m.GetPrincipal()) < 1 {
+		return TestTable_ExpectedItemValidationError{
+			field:  "Principal",
+			reason: "value length must be at least 1 runes",
+		}
+	}
+
+	if len(m.GetActions()) < 1 {
+		return TestTable_ExpectedItemValidationError{
+			field:  "Actions",
+			reason: "value must contain at least 1 pair(s)",
+		}
+	}
+
+	return nil
+}
+
+// TestTable_ExpectedItemValidationError is the validation error returned by
+// TestTable_ExpectedItem.Validate if the designated constraints aren't met.
+type TestTable_ExpectedItemValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e TestTable_ExpectedItemValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e TestTable_ExpectedItemValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e TestTable_ExpectedItemValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e TestTable_ExpectedItemValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e TestTable_ExpectedItemValidationError) ErrorName() string {
+	return "TestTable_ExpectedItemValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e TestTable_ExpectedItemValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sTestTable_ExpectedItem.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = TestTable_ExpectedItemValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = TestTable_ExpectedItemValidationError{}
+
+// Validate checks the field values on Test_TestName with the rules defined in
+// the proto definition for this message. If any rules are violated, an error
+// is returned.
+func (m *Test_TestName) Validate() error {
+	if m == nil {
+		return nil
+	}
+
+	if utf8.RuneCountInString(m.GetTestTableName()) < 1 {
+		return Test_TestNameValidationError{
+			field:  "TestTableName",
+			reason: "value length must be at least 1 runes",
+		}
+	}
+
+	if utf8.RuneCountInString(m.GetPrincipalKey()) < 1 {
+		return Test_TestNameValidationError{
+			field:  "PrincipalKey",
+			reason: "value length must be at least 1 runes",
+		}
+	}
+
+	return nil
+}
+
+// Test_TestNameValidationError is the validation error returned by
+// Test_TestName.Validate if the designated constraints aren't met.
+type Test_TestNameValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e Test_TestNameValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e Test_TestNameValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e Test_TestNameValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e Test_TestNameValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e Test_TestNameValidationError) ErrorName() string { return "Test_TestNameValidationError" }
+
+// Error satisfies the builtin error interface
+func (e Test_TestNameValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sTest_TestName.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = Test_TestNameValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = Test_TestNameValidationError{}

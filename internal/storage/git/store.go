@@ -23,7 +23,7 @@ import (
 	"github.com/cerbos/cerbos/internal/namer"
 	"github.com/cerbos/cerbos/internal/policy"
 	"github.com/cerbos/cerbos/internal/storage"
-	"github.com/cerbos/cerbos/internal/storage/disk/index"
+	"github.com/cerbos/cerbos/internal/storage/index"
 	"github.com/cerbos/cerbos/internal/util"
 )
 
@@ -66,6 +66,9 @@ func NewStore(ctx context.Context, conf *Conf) (*Store, error) {
 }
 
 func (s *Store) init(ctx context.Context) error {
+	if s.conf.ScratchDir != "" {
+		s.log.Warnf("ScratchDir storage option is deprecated and will be removed in a future release")
+	}
 	finfo, err := os.Stat(s.conf.CheckoutDir)
 	if err != nil && !errors.Is(err, os.ErrNotExist) {
 		return fmt.Errorf("failed to stat %s: %w", s.conf.CheckoutDir, err)
@@ -131,6 +134,10 @@ func (s *Store) GetDependents(_ context.Context, ids ...namer.ModuleID) (map[nam
 	return s.idx.GetDependents(ids...)
 }
 
+func (s *Store) GetPolicies(ctx context.Context) ([]*policy.Wrapper, error) {
+	return s.idx.GetPolicies(ctx)
+}
+
 func isEmptyDir(dir string) (bool, error) {
 	d, err := os.Open(dir)
 	if err != nil {
@@ -182,7 +189,7 @@ func (s *Store) loadAll(ctx context.Context) error {
 		policyDir = s.conf.SubDir
 	}
 
-	idx, err := index.Build(ctx, os.DirFS(s.conf.CheckoutDir), index.WithRootDir(policyDir), index.WithDiskCache(s.conf.ScratchDir))
+	idx, err := index.Build(ctx, os.DirFS(s.conf.CheckoutDir), index.WithRootDir(policyDir))
 	if err != nil {
 		return err
 	}

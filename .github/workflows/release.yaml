@@ -69,10 +69,10 @@ jobs:
       - uses: actions/checkout@v2
 
       - name: Setup Buf
-        uses: bufbuild/buf-setup-action@v0.3.1
+        uses: bufbuild/buf-setup-action@v0.6.0
 
       - name: Push to BSR 
-        uses: bufbuild/buf-push-action@v0.3.0
+        uses: bufbuild/buf-push-action@v1.0.0
         with:
           buf_token: ${{ secrets.BUF_TOKEN }}
           input: api/public
@@ -92,9 +92,6 @@ jobs:
         uses: ./.github/actions/antora-docs
         id: docs
 
-      - name: Upload docs
-        run: curl -H "X-JFrog-Art-Api:${{ secrets.ARTIFACTORY_API_KEY }}" -T "docs/build/cerbos_docs.zip" "https://cerbos.jfrog.io/artifactory/binaries/cerbos_${GITHUB_REF/refs\/tags\//}_docs.zip"
-
       - name: Publish to Netlify
         uses: netlify/actions/cli@master
         with:
@@ -103,20 +100,46 @@ jobs:
           NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
           NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
 
-  releaseHelm:
-    name: Release Helm chart
+
+  publishHelm:
+    name: Publish Helm chart
     runs-on: ubuntu-latest
+    env:
+      CHARTS_DIR: deploy/out/helm-charts
+      OCI_REGISTRY: ghcr.io/cerbos/helm-charts
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
-        with:
-          fetch-depth: 0
 
       - name: Install Helm
         uses: azure/setup-helm@v1
 
-      - name: Package Helm chart
-        run: helm package -d deploy/out deploy/charts/cerbos
+      - name: Install Cloud SDK
+        uses: google-github-actions/setup-gcloud@v0.2.1
+        with:
+          project_id: ${{ secrets.GCP_PROJECT }}
+          service_account_key: ${{ secrets.GCP_SA_KEY }}
+          export_default_credentials: true
 
-      - name: Upload Helm chart
-        run: CHART=$(ls deploy/out/*.tgz); curl -H "X-JFrog-Art-Api:${{ secrets.ARTIFACTORY_API_KEY }}" -T "$CHART" "https://cerbos.jfrog.io/artifactory/helm/$(basename $CHART)"
+      - name: Package Helm chart
+        run: |-
+          mkdir -p ${{ env.CHARTS_DIR }}/cerbos
+          helm package -d ${{ env.CHARTS_DIR }}/cerbos deploy/charts/cerbos
+
+      - name: Publish to download site
+        run: |-
+          gsutil cp ${{ secrets.GCS_BUCKET }}/helm-charts/index.yaml ${{ env.CHARTS_DIR }}/index.yaml
+          helm repo index --url=https://download.cerbos.dev/helm-charts --merge=${{ env.CHARTS_DIR }}/index.yaml ${{ env.CHARTS_DIR }}
+          gsutil rsync -r ${{ env.CHARTS_DIR }}/ ${{ secrets.GCS_BUCKET }}/helm-charts/
+
+      - name: Publish to OCI registry
+        run: |-
+          helm registry login ${{ env.OCI_REGISTRY }} -u ${{ secrets.HELM_CHARTS_REPO_USER }} -p ${{ secrets.HELM_CHARTS_REPO_TOKEN }}
+          CHART=$(ls ${{ env.CHARTS_DIR }}/cerbos/*.tgz); helm push $CHART oci://${{ env.OCI_REGISTRY }}
+          helm registry logout ${{ env.OCI_REGISTRY }}
+        env:
+          HELM_EXPERIMENTAL_OCI: '1'
+
+      - name: Publish to JFrog
+        run: CHART=$(ls ${{ env.CHARTS_DIR }}/cerbos/*.tgz); curl -H "X-JFrog-Art-Api:${{ secrets.ARTIFACTORY_API_KEY }}" -T "$CHART" "https://cerbos.jfrog.io/artifactory/helm/$(basename $CHART)"
+

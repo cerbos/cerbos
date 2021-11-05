@@ -350,6 +350,7 @@ func (crbr *CheckResourceBatchResponse) String() string {
 	return protojson.Format(crbr.CheckResourceBatchResponse)
 }
 
+// TODO (cell) replace with util.ToStructPB.
 func toStructPB(v interface{}) (*structpb.Value, error) {
 	val, err := structpb.NewValue(v)
 	if err == nil {
@@ -879,4 +880,65 @@ func (e *AuditLogEntry) AccessLog() (*auditv1.AccessLogEntry, error) {
 
 func (e *AuditLogEntry) DecisionLog() (*auditv1.DecisionLogEntry, error) {
 	return e.decisionLog, e.err
+}
+
+type ListPoliciesSortingType uint8
+
+const (
+	SortByName    ListPoliciesSortingType = 1
+	SortByVersion ListPoliciesSortingType = 2
+)
+
+type sortingOptions struct {
+	descending bool
+	field      ListPoliciesSortingType
+}
+
+type policyListOptions struct {
+	filters        []*requestv1.ListPoliciesRequest_Filter
+	sortingOptions *sortingOptions
+}
+
+// ListOpt is used to specify options for ListPolicies method.
+type ListOpt func(*policyListOptions)
+
+// FieldEqualsFilter adds a exact match filter for the field.
+func FieldEqualsFilter(path, value string) ListOpt {
+	return func(pf *policyListOptions) {
+		pf.filters = append(pf.filters, &requestv1.ListPoliciesRequest_Filter{
+			Type:      requestv1.ListPoliciesRequest_MATCH_TYPE_EXACT,
+			FieldPath: path,
+			Value:     value,
+		})
+	}
+}
+
+// FieldEqualsFilter adds a regex match filter for the field.
+func FieldMatchesFilter(path, value string) ListOpt {
+	return func(pf *policyListOptions) {
+		pf.filters = append(pf.filters, &requestv1.ListPoliciesRequest_Filter{
+			Type:      requestv1.ListPoliciesRequest_MATCH_TYPE_WILDCARD,
+			FieldPath: path,
+			Value:     value,
+		})
+	}
+}
+
+// SortAscending enables sorting the policies by ascending order with given field.
+func SortAscending(field ListPoliciesSortingType) ListOpt {
+	return func(pf *policyListOptions) {
+		pf.sortingOptions = &sortingOptions{
+			field: field,
+		}
+	}
+}
+
+// SortDescending enables sorting the policies by descending order with given field.
+func SortDescending(field ListPoliciesSortingType) ListOpt {
+	return func(pf *policyListOptions) {
+		pf.sortingOptions = &sortingOptions{
+			descending: true,
+			field:      field,
+		}
+	}
 }

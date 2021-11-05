@@ -67,7 +67,7 @@ func TestMySQL(t *testing.T) {
 	}), "Container did not start")
 
 	store, err := mysql.NewStore(ctx, &mysql.Conf{
-		DSN: fmt.Sprintf("cerbos_user:changeme@tcp(localhost:%s)/cerbos", resource.GetPort("3306/tcp")),
+		DSN: fmt.Sprintf("cerbos_user:changeme@tcp(localhost:%s)/cerbos?parseTime=true", resource.GetPort("3306/tcp")),
 		ConnPool: &internal.ConnPoolConf{
 			MaxLifetime: 1 * time.Minute,
 			MaxIdleTime: 45 * time.Second,

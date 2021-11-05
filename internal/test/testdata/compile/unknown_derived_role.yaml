@@ -1,6 +1,6 @@
 ---
 wantErrors: 
-  - "resource_policies/leave_request_20210210.yaml: [unknown derived role] Derived role 'some_employee' is not defined in any imports"
+  - "resource_policies/leave_request_20210210.yaml: Derived role 'some_employee' is not defined in any imports (unknown derived role)"
 mainDef: "resource_policies/leave_request_20210210.yaml"
 inputDefs:
   "resource_policies/leave_request_20210210.yaml":
@@ -49,8 +49,8 @@ inputDefs:
         - name: employee_that_owns_the_record
           parentRoles: ["employee"]
           condition:
-            script: |-
-              input.resource.attr.owner == input.principal.id
+            match:
+              expr: R.attr.owner == P.id
 
   "derived_roles/beta.yaml":
     apiVersion: "api.cerbos.dev/v1"

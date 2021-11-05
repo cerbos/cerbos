@@ -8,12 +8,14 @@ include::ROOT:partial$attributes.adoc[]
 apiVersion: "api.cerbos.dev/v1"
 description: |-
   Common dynamic roles used within the Apatr app
+variables: <1>
+  flagged_resource: request.resource.attr.flagged
 derivedRoles:
-  name: apatr_common_roles <1>
+  name: apatr_common_roles <2>
   definitions:
-    - name: owner <2>
-      parentRoles: ["user"] <3>
-      condition: <4>
+    - name: owner <3>
+      parentRoles: ["user"] <4>
+      condition: <5>
         match:
           expr: request.resource.attr.owner == request.principal.id 
 
@@ -21,10 +23,12 @@ derivedRoles:
       parentRoles: ["moderator"]
       condition:
         match:
-          expr: request.resource.attr.flagged == true
+          expr: V.flagged_resource == true
 ----
-<1> Name to use when importing this set of derived roles.
-<2> Descriptive name for this derived role.
-<3> The static roles (from the identity provider) to which this derived role applies to.
-<4> An (optional) set of expressions that should evaluate to true for this role to activate.
+<1> Optional variables section. Each variable is evaluated before any rule condition.
+A variable expression can contain anything that condition expression can have.
+<2> Name to use when importing this set of derived roles.
+<3> Descriptive name for this derived role.
+<4> The static roles (from the identity provider) to which this derived role applies to.
+<5> An (optional) set of expressions that should evaluate to true for this role to activate.
 

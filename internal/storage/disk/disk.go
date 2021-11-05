@@ -13,7 +13,7 @@ import (
 	"github.com/cerbos/cerbos/internal/namer"
 	"github.com/cerbos/cerbos/internal/policy"
 	"github.com/cerbos/cerbos/internal/storage"
-	"github.com/cerbos/cerbos/internal/storage/disk/index"
+	"github.com/cerbos/cerbos/internal/storage/index"
 )
 
 const DriverName = "disk"
@@ -42,7 +42,7 @@ func NewStore(ctx context.Context, conf *Conf) (*Store, error) {
 		return nil, fmt.Errorf("failed to determine absolute path of directory [%s]: %w", conf.Directory, err)
 	}
 
-	idx, err := index.Build(ctx, os.DirFS(dir), index.WithDiskCache(conf.ScratchDir))
+	idx, err := index.Build(ctx, os.DirFS(dir))
 	if err != nil {
 		return nil, err
 	}
@@ -71,4 +71,8 @@ func (s *Store) GetCompilationUnits(_ context.Context, ids ...namer.ModuleID) (m
 
 func (s *Store) GetDependents(_ context.Context, ids ...namer.ModuleID) (map[namer.ModuleID][]namer.ModuleID, error) {
 	return s.idx.GetDependents(ids...)
+}
+
+func (s *Store) GetPolicies(ctx context.Context) ([]*policy.Wrapper, error) {
+	return s.idx.GetPolicies(ctx)
 }

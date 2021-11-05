@@ -1,3 +1,17 @@
 [build]
   base = "docs"
   publish = "build"
+
+# Only required until Antora LFS support lands. https://gitlab.com/antora/antora/-/issues/185
+
+[[redirects]]
+from = "/cerbos/latest/_images/*"
+to = "/cerbos/prerelease/_images/:splat"
+status = 302
+force = true
+
+[[redirects]]
+from = "/cerbos/latest/:module/_images/*"
+to = "/cerbos/prerelease/:module/_images/:splat"
+status = 302
+force = true

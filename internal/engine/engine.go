@@ -4,20 +4,18 @@
 package engine
 
 import (
-	"bytes"
 	"context"
 	"errors"
 	"fmt"
+	"io"
 	"math/rand"
 	"net/http"
+	"os"
 	"sync/atomic"
 	"time"
 
-	"github.com/open-policy-agent/opa/ast"
-	"github.com/open-policy-agent/opa/topdown/cache"
 	"go.opencensus.io/trace"
 	"go.uber.org/zap"
-	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	auditv1 "github.com/cerbos/cerbos/api/genpb/cerbos/audit/v1"
@@ -35,21 +33,56 @@ import (
 var ErrNoPoliciesMatched = errors.New("no matching policies")
 
 const (
-	defaultEffect                = effectv1.Effect_EFFECT_DENY
-	maxQueryCacheSizeBytes int64 = 10 * 1024 * 1024 // 10 MiB
-	noPolicyMatch                = "NO_MATCH"
-	parallelismThreshold         = 2
-	workerQueueSize              = 4
-	workerResetJitter            = 1 << 4
-	workerResetThreshold         = 1 << 16
+	defaultEffect        = effectv1.Effect_EFFECT_DENY
+	noPolicyMatch        = "NO_MATCH"
+	parallelismThreshold = 2
+	workerQueueSize      = 4
+	workerResetJitter    = 1 << 4
+	workerResetThreshold = 1 << 16
 )
+
+var defaultTracer = newTracer(NoopTraceSink{})
+
+type checkOptions struct {
+	tracer *tracer
+}
+
+func newCheckOptions(ctx context.Context, opts ...CheckOpt) *checkOptions {
+	tracer := defaultTracer
+	if debugEnabled, ok := os.LookupEnv("CERBOS_ENGINE_DEBUG"); ok && debugEnabled != "false" {
+		tracer = newTracer(NewZapTraceSink(logging.FromContext(ctx).Named("tracer")))
+	}
+
+	co := &checkOptions{tracer: tracer}
+	for _, opt := range opts {
+		opt(co)
+	}
+
+	return co
+}
+
+// CheckOpt defines options for engine Check calls.
+type CheckOpt func(*checkOptions)
+
+// WithZapTraceSink sets an engine tracer with Zap set as the sink.
+func WithZapTraceSink(log *zap.Logger) CheckOpt {
+	return func(co *checkOptions) {
+		co.tracer = newTracer(NewZapTraceSink(log))
+	}
+}
+
+// WithWriterTraceSink sets an engine tracer with an io.Writer as the sink.
+func WithWriterTraceSink(w io.Writer) CheckOpt {
+	return func(co *checkOptions) {
+		co.tracer = newTracer(NewWriterTraceSink(w))
+	}
+}
 
 type Engine struct {
 	conf        *Conf
 	workerIndex uint64
 	workerPool  []chan<- workIn
 	compileMgr  *compile.Manager
-	queryCache  cache.InterQueryCache
 	auditLog    audit.Log
 }
 
@@ -82,17 +115,9 @@ func newEngine(compileMgr *compile.Manager, auditLog audit.Log) (*Engine, error)
 		return nil, err
 	}
 
-	cacheSize := maxQueryCacheSizeBytes
-	queryCache := cache.NewInterQueryCache(&cache.Config{
-		InterQueryBuiltinCache: cache.InterQueryBuiltinCacheConfig{
-			MaxSizeBytes: &cacheSize,
-		},
-	})
-
 	engine := &Engine{
 		conf:       conf,
 		compileMgr: compileMgr,
-		queryCache: queryCache,
 		auditLog:   auditLog,
 	}
 
@@ -113,7 +138,7 @@ func (engine *Engine) startWorker(ctx context.Context, num int, inputChan <-chan
 				return
 			}
 
-			result, err := engine.evaluate(work.ctx, work.input)
+			result, err := engine.evaluate(work.ctx, work.input, work.checkOpts)
 			work.out <- workOut{index: work.index, result: result, err: err}
 		}
 	}
@@ -135,18 +160,20 @@ func (engine *Engine) submitWork(ctx context.Context, work workIn) error {
 	}
 }
 
-func (engine *Engine) Check(ctx context.Context, inputs []*enginev1.CheckInput) ([]*enginev1.CheckOutput, error) {
+func (engine *Engine) Check(ctx context.Context, inputs []*enginev1.CheckInput, opts ...CheckOpt) ([]*enginev1.CheckOutput, error) {
 	outputs, err := measureCheckLatency(len(inputs), func() ([]*enginev1.CheckOutput, error) {
 		ctx, span := tracing.StartSpan(ctx, "engine.Check")
 		defer span.End()
 
+		checkOpts := newCheckOptions(ctx, opts...)
+
 		// if the number of inputs is less than the threshold, do a serial execution as it is usually faster.
 		// ditto if the worker pool is not initialized
 		if len(inputs) < parallelismThreshold || len(engine.workerPool) == 0 {
-			return engine.checkSerial(ctx, inputs)
+			return engine.checkSerial(ctx, inputs, checkOpts)
 		}
 
-		return engine.checkParallel(ctx, inputs)
+		return engine.checkParallel(ctx, inputs, checkOpts)
 	})
 
 	return engine.logDecision(ctx, inputs, outputs, err)
@@ -183,11 +210,11 @@ func (engine *Engine) logDecision(ctx context.Context, inputs []*enginev1.CheckI
 	return outputs, checkErr
 }
 
-func (engine *Engine) checkSerial(ctx context.Context, inputs []*enginev1.CheckInput) ([]*enginev1.CheckOutput, error) {
+func (engine *Engine) checkSerial(ctx context.Context, inputs []*enginev1.CheckInput, checkOpts *checkOptions) ([]*enginev1.CheckOutput, error) {
 	outputs := make([]*enginev1.CheckOutput, len(inputs))
 
 	for i, input := range inputs {
-		o, err := engine.evaluate(ctx, input)
+		o, err := engine.evaluate(ctx, input, checkOpts)
 		if err != nil {
 			return nil, err
 		}
@@ -198,12 +225,12 @@ func (engine *Engine) checkSerial(ctx context.Context, inputs []*enginev1.CheckI
 	return outputs, nil
 }
 
-func (engine *Engine) checkParallel(ctx context.Context, inputs []*enginev1.CheckInput) ([]*enginev1.CheckOutput, error) {
+func (engine *Engine) checkParallel(ctx context.Context, inputs []*enginev1.CheckInput, checkOpts *checkOptions) ([]*enginev1.CheckOutput, error) {
 	outputs := make([]*enginev1.CheckOutput, len(inputs))
 	collector := make(chan workOut, len(inputs))
 
 	for i, input := range inputs {
-		if err := engine.submitWork(ctx, workIn{index: i, ctx: ctx, input: input, out: collector}); err != nil {
+		if err := engine.submitWork(ctx, workIn{index: i, ctx: ctx, input: input, out: collector, checkOpts: checkOpts}); err != nil {
 			return nil, err
 		}
 	}
@@ -224,8 +251,8 @@ func (engine *Engine) checkParallel(ctx context.Context, inputs []*enginev1.Chec
 	return outputs, nil
 }
 
-func (engine *Engine) evaluate(ctx context.Context, input *enginev1.CheckInput) (*enginev1.CheckOutput, error) {
-	ctx, span := tracing.StartSpan(ctx, "engine.EvaluateInput")
+func (engine *Engine) evaluate(ctx context.Context, input *enginev1.CheckInput, checkOpts *checkOptions) (*enginev1.CheckOutput, error) {
+	ctx, span := tracing.StartSpan(ctx, "engine.Evaluate")
 	defer span.End()
 
 	span.AddAttributes(trace.StringAttribute("request_id", input.RequestId), trace.StringAttribute("resource_id", input.Resource.Id))
@@ -236,7 +263,7 @@ func (engine *Engine) evaluate(ctx context.Context, input *enginev1.CheckInput) 
 		return nil, err
 	}
 
-	ec, err := engine.buildEvaluationCtx(ctx, input)
+	ec, err := engine.buildEvaluationCtx(ctx, input, checkOpts)
 	if err != nil {
 		return nil, err
 	}
@@ -259,17 +286,8 @@ func (engine *Engine) evaluate(ctx context.Context, input *enginev1.CheckInput) 
 		return output, nil
 	}
 
-	// convert input to AST
-	inputAST, err := toAST(input)
-	if err != nil {
-		logging.FromContext(ctx).Error("Failed to convert input into internal representation", zap.Error(err))
-		tracing.MarkFailed(span, trace.StatusCodeInvalidArgument, "Failed to convert input into internal representation", err)
-
-		return nil, fmt.Errorf("failed to convert input into internal representation: %w", err)
-	}
-
 	// evaluate the policies
-	result, err := ec.evaluate(ctx, inputAST)
+	result, err := ec.evaluate(ctx, input)
 	if err != nil {
 		logging.FromContext(ctx).Error("Failed to evaluate policies", zap.Error(err))
 
@@ -297,12 +315,12 @@ func (engine *Engine) evaluate(ctx context.Context, input *enginev1.CheckInput) 
 	return output, nil
 }
 
-func (engine *Engine) buildEvaluationCtx(ctx context.Context, input *enginev1.CheckInput) (*evaluationCtx, error) {
-	ec := &evaluationCtx{queryCache: engine.queryCache}
+func (engine *Engine) buildEvaluationCtx(ctx context.Context, input *enginev1.CheckInput, checkOpts *checkOptions) (*evaluationCtx, error) {
+	ec := &evaluationCtx{}
 
 	// get the principal policy check
 	ppName, ppVersion := engine.policyAttr(input.Principal.Id, input.Principal.PolicyVersion)
-	ppCheck, err := engine.getPrincipalPolicyEvaluator(ctx, ppName, ppVersion)
+	ppCheck, err := engine.getPrincipalPolicyEvaluator(ctx, ppName, ppVersion, checkOpts)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get check for [%s.%s]: %w", ppName, ppVersion, err)
 	}
@@ -310,7 +328,7 @@ func (engine *Engine) buildEvaluationCtx(ctx context.Context, input *enginev1.Ch
 
 	// get the resource policy check
 	rpName, rpVersion := engine.policyAttr(input.Resource.Kind, input.Resource.PolicyVersion)
-	rpCheck, err := engine.getResourcePolicyEvaluator(ctx, rpName, rpVersion)
+	rpCheck, err := engine.getResourcePolicyEvaluator(ctx, rpName, rpVersion, checkOpts)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get check for [%s.%s]: %w", rpName, rpVersion, err)
 	}
@@ -319,14 +337,32 @@ func (engine *Engine) buildEvaluationCtx(ctx context.Context, input *enginev1.Ch
 	return ec, nil
 }
 
-func (engine *Engine) getPrincipalPolicyEvaluator(ctx context.Context, principal, policyVersion string) (compile.Evaluator, error) {
+func (engine *Engine) getPrincipalPolicyEvaluator(ctx context.Context, principal, policyVersion string, checkOpts *checkOptions) (Evaluator, error) {
 	principalModID := namer.PrincipalPolicyModuleID(principal, policyVersion)
-	return engine.compileMgr.GetEvaluator(ctx, principalModID)
+	rps, err := engine.compileMgr.Get(ctx, principalModID)
+	if err != nil {
+		return nil, err
+	}
+
+	if rps == nil {
+		return nil, nil
+	}
+
+	return NewEvaluator(rps, checkOpts.tracer), nil
 }
 
-func (engine *Engine) getResourcePolicyEvaluator(ctx context.Context, resource, policyVersion string) (compile.Evaluator, error) {
+func (engine *Engine) getResourcePolicyEvaluator(ctx context.Context, resource, policyVersion string, checkOpts *checkOptions) (Evaluator, error) {
 	resourceModID := namer.ResourcePolicyModuleID(resource, policyVersion)
-	return engine.compileMgr.GetEvaluator(ctx, resourceModID)
+	rps, err := engine.compileMgr.Get(ctx, resourceModID)
+	if err != nil {
+		return nil, err
+	}
+
+	if rps == nil {
+		return nil, nil
+	}
+
+	return NewEvaluator(rps, checkOpts.tracer), nil
 }
 
 func (engine *Engine) policyAttr(name, version string) (pName, pVersion string) {
@@ -341,20 +377,19 @@ func (engine *Engine) policyAttr(name, version string) (pName, pVersion string) 
 }
 
 type evaluationCtx struct {
-	numChecks  int
-	checks     [2]compile.Evaluator
-	queryCache cache.InterQueryCache
+	numChecks int
+	checks    [2]Evaluator
 }
 
-func (ec *evaluationCtx) addCheck(eval compile.Evaluator) {
+func (ec *evaluationCtx) addCheck(eval Evaluator) {
 	if eval != nil {
 		ec.checks[ec.numChecks] = eval
 		ec.numChecks++
 	}
 }
 
-func (ec *evaluationCtx) evaluate(ctx context.Context, input ast.Value) (*evaluationResult, error) {
-	ctx, span := tracing.StartSpan(ctx, "engine.Evaluate")
+func (ec *evaluationCtx) evaluate(ctx context.Context, input *enginev1.CheckInput) (*evaluationResult, error) {
+	ctx, span := tracing.StartSpan(ctx, "engine.EvalCtxEvaluate")
 	defer span.End()
 
 	if ec.numChecks == 0 {
@@ -368,7 +403,7 @@ func (ec *evaluationCtx) evaluate(ctx context.Context, input ast.Value) (*evalua
 	for i := 0; i < ec.numChecks; i++ {
 		c := ec.checks[i]
 
-		result, err := c.Eval(ctx, ec.queryCache, input)
+		result, err := c.Evaluate(ctx, input)
 		if err != nil {
 			logging.FromContext(ctx).Error("Failed to evaluate policy", zap.Error(err))
 			tracing.MarkFailed(span, trace.StatusCodeInternal, "Failed to execute policy", err)
@@ -394,7 +429,7 @@ type evaluationResult struct {
 }
 
 // merge the results by only updating the actions that have a no_match effect.
-func (er *evaluationResult) merge(res *compile.EvalResult) bool {
+func (er *evaluationResult) merge(res *EvalResult) bool {
 	hasNoMatches := false
 
 	if er.effects == nil {
@@ -403,7 +438,9 @@ func (er *evaluationResult) merge(res *compile.EvalResult) bool {
 	}
 
 	if len(res.EffectiveDerivedRoles) > 0 {
-		er.effectiveDerivedRoles = append(er.effectiveDerivedRoles, res.EffectiveDerivedRoles...)
+		for edr := range res.EffectiveDerivedRoles {
+			er.effectiveDerivedRoles = append(er.effectiveDerivedRoles, edr)
+		}
 	}
 
 	for action, effect := range res.Effects {
@@ -423,21 +460,6 @@ func (er *evaluationResult) merge(res *compile.EvalResult) bool {
 	return hasNoMatches
 }
 
-func toAST(req *enginev1.CheckInput) (ast.Value, error) {
-	// TODO (cell) Replace with codegen.MarshalProtoToRego when it's optimized
-	requestJSON, err := protojson.Marshal(req)
-	if err != nil {
-		return nil, fmt.Errorf("failed to marshal request: %w", err)
-	}
-
-	input, err := ast.ValueFromReader(bytes.NewReader(requestJSON))
-	if err != nil {
-		return nil, fmt.Errorf("failed to convert request: %w", err)
-	}
-
-	return input, nil
-}
-
 type workOut struct {
 	index  int
 	result *enginev1.CheckOutput
@@ -445,8 +467,9 @@ type workOut struct {
 }
 
 type workIn struct {
-	index int
-	ctx   context.Context
-	input *enginev1.CheckInput
-	out   chan<- workOut
+	index     int
+	ctx       context.Context
+	input     *enginev1.CheckInput
+	checkOpts *checkOptions
+	out       chan<- workOut
 }

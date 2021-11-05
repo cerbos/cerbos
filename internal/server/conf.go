@@ -4,18 +4,27 @@
 package server
 
 import (
+	"encoding/base64"
+	"errors"
 	"fmt"
 	"time"
+
+	"go.uber.org/multierr"
 
 	"github.com/cerbos/cerbos/internal/util"
 )
 
 const (
-	confKey                  = "server"
-	defaultHTTPListenAddr    = ":3592"
-	defaultGRPCListenAddr    = ":3593"
-	defaultAdminUsername     = "cerbos"
-	defaultAdminPasswordHash = "$2y$10$VlPwcwpgcGZ5KjTaN1Pzk.vpFiQVG6F2cSWzQa9RtrNo3IacbzsEi" //nolint:gosec
+	confKey                     = "server"
+	defaultHTTPListenAddr       = ":3592"
+	defaultGRPCListenAddr       = ":3593"
+	defaultAdminUsername        = "cerbos"
+	defaultRawAdminPasswordHash = "$2y$10$VlPwcwpgcGZ5KjTaN1Pzk.vpFiQVG6F2cSWzQa9RtrNo3IacbzsEi" //nolint:gosec
+)
+
+var (
+	defaultAdminPasswordHash = base64.StdEncoding.EncodeToString([]byte(defaultRawAdminPasswordHash))
+	errAdminCredsUndefined   = errors.New("admin credentials not defined")
 )
 
 // Conf holds configuration pertaining to the server.
@@ -50,7 +59,7 @@ type TLSConf struct {
 
 type CORSConf struct {
 	// Disabled sets whether CORS is disabled.
-	Disabled bool `yaml:"enabled"`
+	Disabled bool `yaml:"disabled"`
 	// AllowedOrigins is the contents of the allowed-origins header.
 	AllowedOrigins []string `yaml:"allowedOrigins"`
 	// AllowedHeaders is the contents of the allowed-headers header.
@@ -69,7 +78,7 @@ type AdminAPIConf struct {
 type AdminCredentialsConf struct {
 	// Username is the hardcoded username to use for authentication.
 	Username string `yaml:"username"`
-	// PasswordHash is the bcrypt hash of the password to use for authentication.
+	// PasswordHash is the base64-encoded bcrypt hash of the password to use for authentication.
 	PasswordHash string `yaml:"passwordHash"`
 }
 
@@ -79,6 +88,19 @@ func (a *AdminCredentialsConf) isUnsafe() bool {
 	}
 
 	return a.Username == defaultAdminUsername || a.PasswordHash == defaultAdminPasswordHash
+}
+
+func (a *AdminCredentialsConf) usernameAndPasswordHash() (string, []byte, error) {
+	if a == nil {
+		return "", nil, errAdminCredsUndefined
+	}
+
+	passwordHashBytes, err := base64.StdEncoding.DecodeString(a.PasswordHash)
+	if err != nil {
+		return "", nil, fmt.Errorf("failed to base64 decode admin passwordHash: %w", err)
+	}
+
+	return a.Username, passwordHashBytes, nil
 }
 
 func (c *Conf) Key() string {
@@ -97,14 +119,14 @@ func (c *Conf) SetDefaults() {
 	}
 }
 
-func (c *Conf) Validate() error {
+func (c *Conf) Validate() (errs error) {
 	if _, _, err := util.ParseListenAddress(c.HTTPListenAddr); err != nil {
-		return fmt.Errorf("invalid httpListenAddr '%s': %w", c.HTTPListenAddr, err)
+		errs = multierr.Append(errs, fmt.Errorf("invalid httpListenAddr '%s': %w", c.HTTPListenAddr, err))
 	}
 
 	if _, _, err := util.ParseListenAddress(c.GRPCListenAddr); err != nil {
-		return fmt.Errorf("invalid grpcListenAddr '%s': %w", c.GRPCListenAddr, err)
+		errs = multierr.Append(errs, fmt.Errorf("invalid grpcListenAddr '%s': %w", c.GRPCListenAddr, err))
 	}
 
-	return nil
+	return errs
 }

@@ -18,7 +18,7 @@ import (
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
 	"github.com/cerbos/cerbos/internal/policy"
 	"github.com/cerbos/cerbos/internal/storage"
-	"github.com/cerbos/cerbos/internal/storage/disk/index"
+	"github.com/cerbos/cerbos/internal/storage/index"
 	"github.com/cerbos/cerbos/internal/util"
 )
 
@@ -155,6 +155,7 @@ func (dw *dirWatch) triggerUpdate() {
 	}
 }
 
+// TODO: use ReadPolicyFromFile instead.
 func readPolicy(path string) (*policyv1.Policy, error) {
 	f, err := os.Open(path)
 	if err != nil {

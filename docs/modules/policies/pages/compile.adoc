@@ -1,6 +1,8 @@
 include::ROOT:partial$attributes.adoc[]
 
-= Compiling policies
+= Validating and testing policies
+
+== Validating policies
 
 You can use the Cerbos compiler to make sure that your policies are valid before pushing them to a production Cerbos instance. We recommend setting up a git hook or a CI step to run the Cerbos compiler before you push any policy changes to production.
 
@@ -10,11 +12,12 @@ docker run -i -t -v /path/to/policy/dir:/policies {app-docker-img} compile /poli
 ----
 
 
+
 == Testing policies
 
 You can write optional tests for policies and run them as part of the compilation stage to make sure that the policies do exactly what you expect.
 
-Tests are defined using the familiar YAML format as well. Make sure that your tests are in separate directory from the policies to avoid confusion. We recommend storing them in a top-level directory named `tests`.
+Tests are defined using the familiar YAML format as well. Make sure that your tests are in a separate directory from the policies to avoid confusion. We recommend storing them in a top-level directory named `tests`. A test file must have `_test` suffix in the name and one of the following file extensions: 'yaml', 'yml', or 'json'. For example, `album_test.yml`, `album_test.yaml` or `album_test.json`.
 
 .Test suite definition
 [source,yaml]
@@ -22,35 +25,158 @@ Tests are defined using the familiar YAML format as well. Make sure that your te
 ---
 name: AlbumObjectTestSuite <1>
 description: Tests for verifying the album:object resource policy <2>
-tests: <3>
-  - name: Alicia tries to view her own private album <4>
-    input: { <5>
-      "requestId": "test",
-      "actions": ["view"],
-      "principal": {
-        "id": "alicia",
-        "roles": ["user"]
-      },
-      "resource": {
-        "kind": "album:object",
-        "attr": {
-          "owner": "alicia",
-          "id": "XX125",
-          "public": false,
-          "flagged": false
-        }
-      }
-    }
-    expected: <6>
-      view: EFFECT_ALLOW
+resources: <3>
+  alicia_album:
+    kind: "album:object",
+    attr:
+      owner: aliciaID,
+      id: XX125,
+      public: false,
+      flagged: false
+principals: <4>
+  bradley:
+    id: bradleyID
+    roles:
+      - user
+  alicia:
+    id: aliciaID
+    roles:
+      - user
+tests: <5>
+  - name: Alicia tries to view her own private album <6>
+    input: <7>
+      requestId: "test"
+      actions: ["view", "delete"]
+      resource: "alicia_album"
+    expected: <8>
+      - principal: alicia
+        actions:
+          view: EFFECT_ALLOW
+          delete: EFFECT_ALLOW
+      - principal: bradley
+        actions:
+          view: EFFECT_DENY
+          delete: EFFECT_DENY
 ----
 <1> Name of the test suite
 <2> Description of the test suite
-<3> List of tests in this suite
-<4> Name of the test
-<5> Input to the policy engine
-<6> Expected outcome for each of the actions defined in the input
+<3> Map of resources. A key is a string that can be used to refer to the associated resource
+<4> Map of principals. A key is a string that can be used to refer to the associated principal
+<5> List of tests in this suite
+<6> Name of the test
+<7> Input to the policy engine
+<8> List of outcomes expected for a specified principal and a given action.
 
+=== Sharing test fixtures
+
+It is possible to share principals and resources between test suites stored in the same directory. Create a `testdata` directory in the directory containing your test suite files, then define shared resources and principals in `testdata\resources.yml` and `testdata\principals.yml` respectively (`yaml` and `json` extensions are also supported).
+
+----
+tests
+├── album_object_test.yaml
+├── gallery_object_test.yaml
+├── slideshow_object_test.yaml
+└── testdata
+   ├── principals.yaml
+   └── resources.yaml
+----
+
+.An example of `testdata\principals.yml`
+[source,yaml]
+----
+---
+principals:
+  john:
+    id: johnID
+    roles:
+      - user
+      - moderator
+
+----
+
+.An example of `testdata\resources.yml`
+[source,yaml]
+----
+---
+resources:
+  alicia_album:
+    kind: "album:object",
+    attr:
+      owner: aliciaID,
+      id: XX125,
+      public: false,
+      flagged: false
+----
+
+[NOTE]
+====
+
+link:https://www.educative.io/blog/advanced-yaml-syntax-cheatsheet#anchors[YAML anchors and overrides] are a great way to reduce repetition and reuse definitions in test cases. 
+
+For example, the following definitions are equivalent:
+
+[options="header",cols="a,a"]
+|===
+| Without anchors and overrides 
+| With anchors and overrides
+|
+[source,yaml]
+----
+resources:
+  alicias_album1:
+    kind: "album:object"
+    attr: 
+      owner: "alicia"
+      id: "XX125"
+      public: false
+      flagged: false
+
+  alicias_album2:
+    kind: "album:object"
+    attr: 
+      owner: "alicia"
+      id: "XX525"
+      public: false
+      flagged: false
+
+  alicias_album3:
+    kind: "album:object"
+    attr: 
+      owner: "alicia"
+      id: "XX925"
+      public: false
+      flagged: false
+----
+|
+[source,yaml]
+----
+resources:
+  alicias_album1:
+    kind: "album:object"
+    attr: &alicia_album_attr
+      owner: "alicia"
+      id: "XX125"
+      public: false
+      flagged: false
+
+  alicias_album2:
+    kind: "album:object"
+    attr:
+      <<: *alicia_album_attr
+      id: "XX525"
+
+  alicias_album3:
+    kind: "album:object"
+    attr:
+      <<: *alicia_album_attr
+      id: "XX925"
+----
+|===
+
+
+====
+
+=== Running tests
 
 To run the tests, provide the path to the tests directory using the `--tests` flag.
 
@@ -62,12 +188,109 @@ docker run -i -t \
     {app-docker-img} compile --tests=/tests /policies
 ----
 
+
+Machine readable output can be produced by passing `--format=json` flag to the command.
+
+
+By default, all discovered tests are run. To run just some of the tests, provide a regular expression that matches the test using the `--run` flag.
+
+.Example: Running only tests that contain 'Delete' in the name
+[source,sh,subs="attributes"]
 ----
-Test results
-= AlbumObjectTestSuite (album_object_tests.yaml)
-== Alicia tries to view her own private album [OK]
-== Bradley tries to view Alicia's private album [OK]
-== Bradley tries to view Alicia's public album [OK]
-== Moderator tries to delete a flagged album [OK]
-== Moderator tries to delete an unflagged album [OK]
+docker run -i -t \
+    -v /path/to/policy/dir:/policies \
+    -v /path/to/test/dir:/tests \
+    {app-docker-img} compile --tests=/tests --run=Delete /policies
+----
+
+You can also skip entire suites or individual tests in a suite by adding `skip: true` to the test definition.
+
+.Example: Skipping a test
+[source,yaml]
+----
+---
+name: AlbumObjectTestSuite
+description: Tests for verifying the album:object resource policy
+tests:
+  - name: View private album
+    skip: true
+    skipReason: "Policy under review"
+    input:
+      requestId: "test01"
+      actions: ["view"]
+      resource: alicia_private_album
+    expected:
+      - principal: alicia
+        actions:
+          view: EFFECT_ALLOW
+----
+
+
+[id="ci-environments"]
+== Validating and testing policies in CI environments
+
+Because Cerbos artefacts are distributed as self-contained containers and binaries, you should be able to easily integrate Cerbos into any CI environment. Simply configure your workflow to execute the commands described in the sections above using either the Cerbos container (you may need to configure mount points to suit your repo structure) or the binary.
+
+
+=== GitHub Actions 
+
+- link:https://github.com/cerbos/cerbos-setup-action[cerbos-setup-action]: Install `cerbos` and `cerbosctl` binaries into your workflow tools cache
+- link:https://github.com/cerbos/cerbos-compile-action[cerbos-compile-action]: Compile and (optionally) test Cerbos policies
+
+.Example workflow
+[source,yaml]
+----
+---
+name: PR Check
+on:
+  pull_request:
+    branches:
+      - main
+jobs:
+  cerbosCheck:
+    name: Check Cerbos policies
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Setup Cerbos
+        uses: cerbos/cerbos-setup-action@v1
+        with:
+          version: latest
+
+      - name: Compile and test policies
+        uses: cerbos/cerbos-compile-action@v1
+        with:
+          policyDir: policies
+          testDir: tests
+----
+
+See https://github.com/cerbos/photo-share-tutorial for an example of Cerbos GitHub Actions being used in a workflow.
+
+=== GitLab CI
+
+.Example pipeline
+[source,yaml,subs="attributes"]
+----
+---
+stages:
+  - prepare
+  - compile
+
+download-cerbos:
+  stage: prepare
+  script:
+    - curl https://github.com/cerbos/cerbos/releases/download/v{app-version}/cerbos_{app-version}_Linux_x86_64.tar.gz -L --output /tmp/cerbos.tar.gz
+    - tar -xf /tmp/cerbos.tar.gz -C ./
+    - chmod +x ./cerbos
+  artifacts:
+    paths:
+      - cerbos
+
+compile-job:
+  stage: compile
+  dependencies: ["download-cerbos"]
+  script:
+    - ./cerbos compile ./policies --tests ./tests
 ----

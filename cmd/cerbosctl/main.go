@@ -16,6 +16,7 @@ import (
 	"github.com/cerbos/cerbos/cmd/cerbosctl/audit"
 	"github.com/cerbos/cerbos/cmd/cerbosctl/decisions"
 	"github.com/cerbos/cerbos/cmd/cerbosctl/internal"
+	"github.com/cerbos/cerbos/cmd/cerbosctl/list"
 	"github.com/cerbos/cerbos/cmd/cerbosctl/version"
 	"github.com/cerbos/cerbos/internal/util"
 )
@@ -60,8 +61,8 @@ cerbosctl --server=localhost:3593 --username=user --password=password --plaintex
 func main() {
 	cmd := &cobra.Command{
 		Use:               "cerbosctl",
-		Short:             "A remote control tool for Cerbos",
-		Version:           fmt.Sprintf("%s; commit sha: %s, build date: %s", util.Version, util.Commit, util.BuildDate),
+		Short:             "A CLI for managing Cerbos",
+		Version:           util.AppVersion(),
 		Long:              longDesc,
 		Example:           exampleDesc,
 		SilenceUsage:      true,
@@ -78,7 +79,7 @@ func main() {
 	cmd.PersistentFlags().BoolVar(&connConf.insecure, "insecure", false, "Skip validating server certificate")
 	cmd.PersistentFlags().BoolVar(&connConf.plaintext, "plaintext", false, "Use plaintext protocol without TLS")
 
-	cmd.AddCommand(audit.NewAuditCmd(withAdminClient), decisions.NewDecisionsCmd(withAdminClient), version.NewVersionCmd(withClient))
+	cmd.AddCommand(audit.NewAuditCmd(withAdminClient), decisions.NewDecisionsCmd(withAdminClient), version.NewVersionCmd(withClient), list.NewListCmd(withAdminClient))
 
 	defer func() {
 		if x := recover(); x != nil {

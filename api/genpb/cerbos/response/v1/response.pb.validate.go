@@ -848,6 +848,88 @@ var _ interface {
 	ErrorName() string
 } = ServerInfoResponseValidationError{}
 
+// Validate checks the field values on ListPoliciesResponse with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, an error is returned.
+func (m *ListPoliciesResponse) Validate() error {
+	if m == nil {
+		return nil
+	}
+
+	for idx, item := range m.GetPolicies() {
+		_, _ = idx, item
+
+		if v, ok := interface{}(item).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return ListPoliciesResponseValidationError{
+					field:  fmt.Sprintf("Policies[%v]", idx),
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	}
+
+	return nil
+}
+
+// ListPoliciesResponseValidationError is the validation error returned by
+// ListPoliciesResponse.Validate if the designated constraints aren't met.
+type ListPoliciesResponseValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e ListPoliciesResponseValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e ListPoliciesResponseValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e ListPoliciesResponseValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e ListPoliciesResponseValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e ListPoliciesResponseValidationError) ErrorName() string {
+	return "ListPoliciesResponseValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e ListPoliciesResponseValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sListPoliciesResponse.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = ListPoliciesResponseValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = ListPoliciesResponseValidationError{}
+
 // Validate checks the field values on CheckResourceSetResponse_ActionEffectMap
 // with the rules defined in the proto definition for this message. If any
 // rules are violated, an error is returned.

@@ -55,6 +55,7 @@ message CheckResourceSetRequest {
             description: "Opt to receive request processing metadata in the response."
         }
     ];
+    AuxData aux_data = 6;
 }
 
 message ResourceSet {
@@ -155,6 +156,38 @@ message CheckResourceBatchRequest {
             example: "[{\"actions\":[\"view\",\"comment\"], \"resource\":{\"kind\":\"album:object\",\"policyVersion\":\"default\",\"id\":\"XX125\",\"attr\":{\"owner\":\"bugs_bunny\", \"public\": false, \"flagged\": false}}}]"
         } 
     ];
+    AuxData aux_data = 4;
+}
+
+message AuxData {
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
+		json_schema: {
+			description: "Structured auxiliary data useful for evaluating the request"
+		}
+    };
+
+    message JWT {
+        option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
+            json_schema: {
+                description: "JWT from the original request"
+            }
+        };
+
+        string token = 1 [
+            (validate.rules).string = {min_len: 1}, 
+            (google.api.field_behavior) = REQUIRED,
+            (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = { 
+                description: "JWT from the original request"
+            } 
+        ];
+        string key_set_id = 2 [
+            (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = { 
+                description: "Key ID to use when decoding the token (defined in the Cerbos server configuration)"
+            } 
+        ];
+    }
+
+    JWT jwt = 1;
 }
 
 
@@ -229,6 +262,8 @@ message PlaygroundEvaluateRequest {
             unique_items: true
         } 
     ];
+
+    AuxData aux_data = 6;
 }
 
 message PlaygroundProxyRequest {
@@ -352,4 +387,88 @@ message ServerInfoRequest {
 			description: "Server info request"
 		}
     };
+}
+
+message ListPoliciesRequest { 
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
+		json_schema: {
+			description: "List policies request"
+		}
+    };
+
+    enum MatchType {
+        MATCH_TYPE_UNSPECIFIED = 0;
+        MATCH_TYPE_EXACT = 1;
+        MATCH_TYPE_WILDCARD = 2;
+    }
+
+    message Filter {
+        option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
+            json_schema: {
+                description: "Filter options"
+            }
+        };
+
+        MatchType type = 1 [
+            (validate.rules).enum = {in: [1,2]},
+            (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = { 
+                description: "Kind of filter"
+                example: "\"MATCH_TYPE_WILDCARD\""
+            }
+        ];
+        string field_path = 2 [
+            (google.api.field_behavior) = REQUIRED,
+            (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+                description: "JSONPath expression describing the field to match"
+                example: "\"$.resourcePolicy.resource\""
+            }
+        ];
+        string value = 3 [
+            (google.api.field_behavior) = REQUIRED,
+            (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = { 
+                description: "The value to compare"
+                example: "\"*\""
+            }
+        ];
+    }
+
+    message SortOptions {
+        option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
+            json_schema: {
+                description: "Sort options"
+            }
+        };
+
+        enum Column {
+            COLUMN_UNSPECIFIED = 0;
+            COLUMN_NAME = 1;
+            COLUMN_VERSION = 2;
+        }
+        
+        enum Order {
+            ORDER_UNSPECIFIED = 0;
+            ORDER_ASCENDING = 1;
+            ORDER_DESCENDING = 2;
+        }
+        
+        Column column = 1 [
+            (validate.rules).enum = {in: [1,2]},
+            (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+                description: "Sort column"
+                example: "\"COLUMN_NAME\""
+            }
+        ];
+
+        Order order = 2 [
+            (validate.rules).enum = {in: [1,2]},
+            (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = { 
+                description: "Sort order"
+                array: ["ORDER_ASCENDING", "ORDER_DESCENDING"]
+                example: "\"ORDER_ASCENDING\""
+            }
+        ];
+    }
+
+    repeated Filter filters = 1;
+    SortOptions sort_options = 2;
 }

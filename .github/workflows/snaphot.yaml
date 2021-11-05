@@ -5,8 +5,8 @@ on:
     branches:
       - main
 jobs:
-  test:
-    name: Test
+  publishContainers:
+    name: Publish Dev Containers
     runs-on: ubuntu-latest
     steps:
       - name: Install Go
@@ -69,11 +69,39 @@ jobs:
       - name: Push dev images
         run: docker push ghcr.io/cerbos/cerbos:dev-amd64 && docker push ghcr.io/cerbos/cerbos:dev-arm64
 
-      - name: Setup Buf
-        uses: bufbuild/buf-setup-action@v0.3.1
+  publishDocs:
+    name: Publish Documentation
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+          lfs: true
 
-      - name: Push to BSR 
-        uses: bufbuild/buf-push-action@v0.3.0
+      - name: Generate docs
+        uses: ./.github/actions/antora-docs
+        id: docs
+
+      - name: Publish to Netlify
+        uses: netlify/actions/cli@master
+        with:
+          args: deploy --prod
+        env:
+          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+
+  publishProtos:
+    name: Publish Protobufs
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Setup Buf
+        uses: bufbuild/buf-setup-action@v0.6.0
+
+      - name: Push to BSR
+        uses: bufbuild/buf-push-action@v1.0.0
         with:
           buf_token: ${{ secrets.BUF_TOKEN }}
           input: api/public

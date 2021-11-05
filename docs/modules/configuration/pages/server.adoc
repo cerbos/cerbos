@@ -99,16 +99,16 @@ server:
     enabled: true
     adminCredentials:
       username: cerbos
-      passwordHash: $2y$10$6v.PIn0zJ1xFdIDPlX3yheDZHM2iXI8CSKT5a3d35djtOxnOATxFi
+      passwordHash: JDJ5JDEwJE5HYnk4cTY3VTE1bFV1NlR2bmp3ME9QOXdXQXFROGtBb2lWREdEY2xXbzR6WnoxYWtSNWNDCgo=
 ----
 
 === Generating a password hash
 
-Cerbos expects the password to be hashed with bcrypt. This can be achieved using the `htpasswd` utility available on most operating systems.
+Cerbos expects the password to be hashed with bcrypt and encoded with base64. This can be achieved using the `htpasswd` and `base64` utilities available on most operating systems.
 
 [source, sh]
 ----
-echo "cerbosAdmin" | htpasswd -niBC 10 cerbos | cut -d ':' -f 2
+echo "cerbosAdmin" | htpasswd -niBC 10 cerbos | cut -d ':' -f 2 | base64 -w0
 ----
 
 

@@ -28,7 +28,6 @@ func TestManager(t *testing.T) {
 		defer cancel()
 
 		rp := policy.Wrap(test.GenResourcePolicy(test.NoMod()))
-		// pp := policy.Wrap(test.GenPrincipalPolicy(test.NoMod()))
 		dr := policy.Wrap(test.GenDerivedRoles(test.NoMod()))
 
 		mockStore.
@@ -41,15 +40,15 @@ func TestManager(t *testing.T) {
 			}, nil).
 			Once()
 
-		eval1, err := mgr.GetEvaluator(context.Background(), rp.ID)
+		rps1, err := mgr.Get(context.Background(), rp.ID)
 		require.NoError(t, err)
-		require.NotNil(t, eval1)
+		require.NotNil(t, rps1)
 
 		// should be read from the cache this time
-		eval2, err := mgr.GetEvaluator(context.Background(), rp.ID)
+		rps2, err := mgr.Get(context.Background(), rp.ID)
 		require.NoError(t, err)
-		require.NotNil(t, eval2)
-		require.Equal(t, eval1, eval2)
+		require.NotNil(t, rps2)
+		require.Equal(t, rps1, rps2)
 
 		mockStore.AssertExpectations(t)
 	})
@@ -65,14 +64,14 @@ func TestManager(t *testing.T) {
 			Return(map[namer.ModuleID]*policy.CompilationUnit{}, nil).
 			Once()
 
-		eval1, err := mgr.GetEvaluator(context.Background(), rp.ID)
+		rps1, err := mgr.Get(context.Background(), rp.ID)
 		require.NoError(t, err)
-		require.Nil(t, eval1)
+		require.Nil(t, rps1)
 
 		// should be read from the cache this time
-		eval2, err := mgr.GetEvaluator(context.Background(), rp.ID)
+		rps2, err := mgr.Get(context.Background(), rp.ID)
 		require.NoError(t, err)
-		require.Nil(t, eval2)
+		require.Nil(t, rps2)
 
 		mockStore.AssertExpectations(t)
 	})
@@ -89,12 +88,12 @@ func TestManager(t *testing.T) {
 			Return(nil, wantErr).
 			Twice()
 
-		_, err := mgr.GetEvaluator(context.Background(), rp.ID)
+		_, err := mgr.Get(context.Background(), rp.ID)
 		require.Error(t, err)
 		require.ErrorIs(t, err, wantErr)
 
 		// should not hit the cache this time because the previous call errored
-		_, err = mgr.GetEvaluator(context.Background(), rp.ID)
+		_, err = mgr.Get(context.Background(), rp.ID)
 		require.Error(t, err)
 		require.ErrorIs(t, err, wantErr)
 
@@ -137,9 +136,9 @@ func TestManager(t *testing.T) {
 			Return(map[namer.ModuleID][]namer.ModuleID{dr.ID: []namer.ModuleID{rp.ID}}, nil).
 			Once()
 
-		eval1, err := mgr.GetEvaluator(context.Background(), rp.ID)
+		rps1, err := mgr.Get(context.Background(), rp.ID)
 		require.NoError(t, err)
-		require.NotNil(t, eval1)
+		require.NotNil(t, rps1)
 
 		// send event to trigger recompiliation
 		mockStore.subscriber.OnStorageEvent(storage.Event{Kind: storage.EventAddOrUpdatePolicy, PolicyID: dr.ID})
@@ -147,10 +146,10 @@ func TestManager(t *testing.T) {
 		yield()
 
 		// a new evaluator should have replaced the previous one
-		eval2, err := mgr.GetEvaluator(context.Background(), rp.ID)
+		rps2, err := mgr.Get(context.Background(), rp.ID)
 		require.NoError(t, err)
-		require.NotNil(t, eval2)
-		require.NotEqual(t, eval1, eval2)
+		require.NotNil(t, rps2)
+		require.True(t, rps1 != rps2)
 
 		mockStore.AssertExpectations(t)
 	})
@@ -194,9 +193,9 @@ func TestManager(t *testing.T) {
 			Return(map[namer.ModuleID][]namer.ModuleID{dr.ID: []namer.ModuleID{rp.ID}}, nil).
 			Once()
 
-		eval1, err := mgr.GetEvaluator(context.Background(), rp.ID)
+		rps1, err := mgr.Get(context.Background(), rp.ID)
 		require.NoError(t, err)
-		require.NotNil(t, eval1)
+		require.NotNil(t, rps1)
 
 		// send event to trigger recompiliation
 		mockStore.subscriber.OnStorageEvent(storage.Event{Kind: storage.EventDeletePolicy, PolicyID: dr.ID})
@@ -204,9 +203,9 @@ func TestManager(t *testing.T) {
 		yield()
 
 		// evaluator should be removed because it is now invalid and cannot be compiled
-		eval2, err := mgr.GetEvaluator(context.Background(), rp.ID)
+		rps2, err := mgr.Get(context.Background(), rp.ID)
 		require.Error(t, err)
-		require.Nil(t, eval2)
+		require.Nil(t, rps2)
 
 		mockStore.AssertExpectations(t)
 	})
@@ -284,4 +283,12 @@ func (ms *MockStore) AddOrUpdate(ctx context.Context, policies ...policy.Wrapper
 func (ms *MockStore) Delete(ctx context.Context, ids ...namer.ModuleID) error {
 	args := ms.MethodCalled("Delete", ctx, ids)
 	return args.Error(0)
+}
+
+func (ms *MockStore) GetPolicies(ctx context.Context) ([]*policy.Wrapper, error) {
+	args := ms.MethodCalled("GetPolicies", ctx)
+	if res := args.Get(0); res == nil {
+		return nil, args.Error(0)
+	}
+	return args.Get(0).([]*policy.Wrapper), args.Error(0)
 }

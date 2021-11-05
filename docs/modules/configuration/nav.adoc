@@ -1,6 +1,7 @@
 .xref:index.adoc[Configuration]
 * xref:engine.adoc[Engine]
 * xref:server.adoc[Server]
+* xref:auxdata.adoc[AuxData]
 * xref:storage.adoc[Storage]
 * xref:audit.adoc[Audit]
 * xref:tracing.adoc[Tracing]

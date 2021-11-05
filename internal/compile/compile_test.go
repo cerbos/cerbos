@@ -14,7 +14,6 @@ import (
 
 	effectv1 "github.com/cerbos/cerbos/api/genpb/cerbos/effect/v1"
 	privatev1 "github.com/cerbos/cerbos/api/genpb/cerbos/private/v1"
-	"github.com/cerbos/cerbos/internal/codegen"
 	"github.com/cerbos/cerbos/internal/compile"
 	"github.com/cerbos/cerbos/internal/namer"
 	"github.com/cerbos/cerbos/internal/policy"
@@ -71,10 +70,6 @@ func mkCompilationUnit(t *testing.T, tc *privatev1.CompileTestCase) *policy.Comp
 		}
 
 		cu.AddDefinition(modID, policy.WithMetadata(pol, fileName, nil))
-
-		if gp, err := codegen.GenerateRepr(pol); err == nil {
-			cu.AddGenerated(modID, gp)
-		}
 	}
 
 	return cu
@@ -120,30 +115,16 @@ func generateCompilationUnit() *policy.CompilationUnit {
 		}
 
 		drPol := dr.Build()
-
-		drGen, err := codegen.GenerateRepr(drPol)
-		if err != nil {
-			panic(err)
-		}
-
 		drID := namer.GenModuleID(drPol)
 		cu.AddDefinition(drID, drPol)
-		cu.AddGenerated(drID, drGen)
 
 		rp = rp.WithDerivedRolesImports(drName).WithRules(rr.Build())
 	}
 
 	rpPol := rp.Build()
-
-	rpGen, err := codegen.GenerateRepr(rpPol)
-	if err != nil {
-		panic(err)
-	}
-
 	rpID := namer.GenModuleID(rpPol)
 	cu.ModID = rpID
 	cu.AddDefinition(rpID, rpPol)
-	cu.AddGenerated(rpID, rpGen)
 
 	return cu
 }

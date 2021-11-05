@@ -1,5 +1,5 @@
 DOCKER := docker
-MOCK_INTERFACES := '(Index|Store)'
+MOCK_INTERFACES := 'Index'
 
 include tools/tools.mk
 include hack/dev/dev.mk
@@ -46,6 +46,7 @@ generate-proto-code: proto-gen-deps
 .PHONY: generate-mocks
 generate-mocks: $(MOCKERY)
 	@-rm -rf $(MOCK_DIR)
+	@ $(MOCKERY) --version
 	@ $(MOCKERY) --recursive --quiet --name=$(MOCK_INTERFACES) --output $(MOCK_DIR) --boilerplate-file=hack/copyright_header.txt
 
 .PHONY: generate-notice
@@ -59,7 +60,7 @@ generate-notice: $(GO_LICENCE_DETECTOR)
 
 .PHONY: deps
 deps:
-	@ go mod tidy
+	@ go mod tidy -compat=1.17
 
 .PHONY: test-all
 test-all: test-race test-integration

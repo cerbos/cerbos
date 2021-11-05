@@ -15,11 +15,13 @@ condition:
         - expr: "GB" in request.resource.attr.geographies
 ----
 
-Within a condition block you have access to three special variables:
+Within a condition block you have access to serveral special variables:
 
 `request`:: The entire request object containing data provided about the resource and the principal. Use dots to access nested fields. For example, the expression to get the principal's department attribute is `request.principal.attr.department`.
+`variables`:: Access variables declared in the `variables` section of the policy.
 `P`:: An alias for `request.principal` for accessing the principal object.
 `R`:: An alias for `request.resource` for accessing the resource object.
+`V`:: An alias for `variables` for accessing the policy variables object.
 
 Every condition expression must evaluate to a boolean true/false value. You can combine complex expressions together in a single condition block by using the `all`, `any`, or `none` operators.
 
@@ -99,6 +101,54 @@ condition:
         !(R.attr.qa == true || R.attr.canary == true))
 ----
 
+== Policy variables
+If your policy repeats the same expression in multiple conditions, you can declare it in the variables section of a policy and refer in the conditions to avoid a repeat.
+
+[source,yaml,linenums]
+----
+---
+apiVersion: "api.cerbos.dev/v1"
+variables:
+  is_dev_record: request.resource.attr.dev_record == true
+principalPolicy:
+  principal: daffy_duck
+  version: "dev"
+  rules:
+    - resource: leave_request
+      actions:
+        - name: dev_record_wildcard
+          action: "*"
+          condition:
+            match:
+              expr: variables.is_dev_record
+          effect: EFFECT_ALLOW
+    - resource: employee_profile
+      actions:
+        - name: view_employee_profile
+          action: "*"
+          condition:
+            match:
+              all:
+                of:
+                  - expr: V.is_dev_record
+                  - expr: request.resource.attr.public == true
+          effect: EFFECT_ALLOW
+    - resource: salary_record
+      actions:
+        - action: "*"
+          effect: EFFECT_DENY
+----
+
+[id="auxdata"]
+== Auxiliary Data
+
+If you have xref:configuration:auxdata.adoc[auxiliary data sources configured], they can be accessed using `request.aux_data`. 
+
+.Accessing JWT claims
+[source,yaml,linenums]
+----
+"cerbie" in request.aux_data.jwt.aud && request.aux_data.jwt.iss == "cerbos"
+----
 
 
 == Operators
@@ -155,6 +205,48 @@ NOTE: CEL has many builtin functions and operators. The fully up-to-date list ca
 | timeSince | Time elapsed since the given timestamp to current time on the server. This is a Cerbos extension to CEL | timestamp(R.attr.lastAccessed).timeSince() > duration("1h")
 |===
 
+
+[#hierarchies]
+== Hierarchies
+
+NOTE: The hierarchy functions are Cerbos-specific extensions to CEL.
+
+.Test data
+[source,json,linenums]
+----
+...
+"principal": {
+  "id": "john",
+  "roles": ["employee"],
+  "attr": {
+    "scope": "foo.bar.baz.qux",
+  }
+},
+"resource": {
+  "kind": "leave_request",
+  "attr": {
+    "scope": "foo.bar",
+  }
+}
+...
+----
+
+[caption=]
+[%header,cols=".^1m,.^2,4m",grid=rows]
+|===
+| Function | Description | Example 
+| hierarchy | Convert a dotted string or a string list to a hierarchy | hierarchy("a.b.c") == hierarchy(["a","b","c"])
+| hierarchy | Convert a delimited string representation to a hierarchy | hierarchy("a:b:c", ":").size() == 3
+| ancestorOf | Returns true if the first hierarchy shares a common prefix with the second hierarchy | hierarchy("a.b").ancestorOf(hierarchy("a.b.c.d")) == true
+| commonAncestors | Returns the common ancestor hierarchy | hierarchy(R.attr.scope).commonAncestors(hierarchy(P.attr.scope)) == hierarchy("foo.bar")
+| descendentOf | Mirror function of `ancestorOf` | hierarchy("a.b.c.d").descendentOf(hierarchy("a.b")) == true 
+| immediateChildOf | Returns true if the first hierarchy is a first-level child of the second hierarchy | hierarchy("a.b.c").immediateChildOf(hierarchy("a.b")) == true && hierarchy("a.b.c.d").immediateChildOf(hierarchy("a.b")) == false
+| immediateParentOf | Mirror function of `immediateChildOf` | hierarchy("a.b").immediateParentOf(hierarchy("a.b.c")) == true && hierarchy("a.b").immediateParentOf(hierarchy("a.b.c.d")) == false
+| overlaps | Returns true if one of the hierarchies is a prefix of the other | hierarchy("a.b.c").overlaps(hierarchy("a.b.c.d.e")) == true && hierarchy("a.b.x").overlaps(hierarchy("a.b.c.d.e")) == false
+| siblingOf | Returns true if both hierarchies share the same parent | hierarchy("a.b.c").siblingOf(hierarchy("a.b.d")) == true
+| size | Returns the number of levels in the hierarchy | hierarchy("a.b.c").size() == 3
+| []   | Access a level in the hierarchy | hierarchy("a.b.c.d")[1] == "b"
+|===
 
 
 == IP Addresses

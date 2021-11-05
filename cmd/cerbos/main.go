@@ -17,7 +17,7 @@ func main() {
 	cmd := &cobra.Command{
 		Use:           util.AppName,
 		Short:         "Painless access controls for cloud-native applications",
-		Version:       util.Version,
+		Version:       util.AppVersion(),
 		SilenceUsage:  true,
 		SilenceErrors: true,
 	}

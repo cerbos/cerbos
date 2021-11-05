@@ -10,20 +10,16 @@ import (
 	"strings"
 
 	"github.com/fatih/color"
-	"github.com/open-policy-agent/opa/ast"
-
-	"github.com/cerbos/cerbos/internal/codegen"
+	"github.com/google/cel-go/cel"
 )
 
 var (
-	ErrAmbiguousDerivedRole = errors.New("ambiguous derived role")
-	ErrCodeGenFailure       = errors.New("code generation failure")
-	ErrCompileError         = errors.New("compile error")
-	ErrImportNotFound       = errors.New("import not found")
-	ErrInvalidImport        = errors.New("invalid import")
-	ErrInvalidMatchExpr     = errors.New("invalid match expression")
-	ErrNoEvaluator          = errors.New("no evaluator available")
-	ErrUnknownDerivedRole   = errors.New("unknown derived role")
+	errAmbiguousDerivedRole = errors.New("ambiguous derived role")
+	errImportNotFound       = errors.New("import not found")
+	errInvalidResourceRule  = errors.New("invalid resource rule")
+	errScriptsUnsupported   = errors.New("scripts in conditions are no longer supported")
+	errUnexpectedErr        = errors.New("unexpected error")
+	errUnknownDerivedRole   = errors.New("unknown derived role")
 )
 
 type ErrorList []*Error
@@ -54,6 +50,21 @@ func (e ErrorList) Display() string {
 	return strings.Join(d, "\n")
 }
 
+func (e *ErrorList) Add(err error) {
+	if errList := new(ErrorList); errors.As(err, errList) {
+		*e = append(*e, (*errList)...)
+		return
+	}
+
+	tmpErr := &Error{}
+	if errors.As(err, &tmpErr) {
+		*e = append(*e, tmpErr)
+		return
+	}
+
+	*e = append(*e, newError("-", "", err))
+}
+
 // Error describes an error encountered during compilation.
 type Error struct {
 	File        string
@@ -65,7 +76,10 @@ func (e *Error) Display() string {
 	yellow := color.New(color.FgYellow).SprintFunc()
 	red := color.New(color.FgRed).SprintFunc()
 
-	return fmt.Sprintf("%s: %s (%v)", yellow(e.File), red(e.Description), e.Err)
+	if e.Description != "" {
+		return fmt.Sprintf("%s: %s (%v)", yellow(e.File), red(e.Description), e.Err)
+	}
+	return fmt.Sprintf("%s: %v", yellow(e.File), red(e.Err))
 }
 
 func (e *Error) MarshalJSON() ([]byte, error) {
@@ -79,43 +93,39 @@ func (e *Error) MarshalJSON() ([]byte, error) {
 }
 
 func (e *Error) Error() string {
-	return fmt.Sprintf("%s: [%v] %s", e.File, e.Err, e.Description)
+	if e.Description != "" {
+		return fmt.Sprintf("%s: %s (%v)", e.File, e.Description, e.Err)
+	}
+	return fmt.Sprintf("%s: %v", e.File, e.Err)
 }
 
 func (e *Error) Unwrap() error {
 	return e.Err
 }
 
-func newError(file string, err error, desc string) *Error {
+func newError(file, desc string, err error) *Error {
 	return &Error{File: file, Err: err, Description: desc}
 }
 
-func newCodeGenErrors(file string, err error) ErrorList {
-	var errs []*Error
+// CELCompileError holds CEL compilation errors.
+type CELCompileError struct {
+	expr   string
+	issues *cel.Issues
+}
 
-	celErr := &codegen.CELCompileError{}
-	if errors.As(err, &celErr) {
-		for _, ce := range celErr.Issues.Errors() {
-			errs = append(errs, newError(file, ErrInvalidMatchExpr, fmt.Sprintf("Invalid match expression in '%s': %s", celErr.Parent, ce.Message)))
-		}
+func newCELCompileError(expr string, issues *cel.Issues) *CELCompileError {
+	return &CELCompileError{expr: expr, issues: issues}
+}
 
-		return errs
+func (cce *CELCompileError) Error() string {
+	errList := make([]string, len(cce.issues.Errors()))
+	for i, ce := range cce.issues.Errors() {
+		errList[i] = ce.Message
 	}
 
-	regoErrs := new(ast.Errors) //nolint:ifshort
-	if errors.As(err, regoErrs) {
-		for _, re := range *regoErrs {
-			fileName := file
-			if re.Location != nil && re.Location.File != "" {
-				fileName = re.Location.File
-			}
-			errs = append(errs, newError(fileName, ErrCompileError, fmt.Sprintf("%s: %s", re.Code, re.Message)))
-		}
+	return fmt.Sprintf("failed to compile `%s` [%s]", cce.expr, strings.Join(errList, ", "))
+}
 
-		return errs
-	}
-
-	errs = append(errs, newError(file, ErrCompileError, err.Error()))
-
-	return errs
+func (cce *CELCompileError) Unwrap() error {
+	return cce.issues.Err()
 }

@@ -6,9 +6,19 @@ server:
   playgroundEnabled: true
   adminAPI:
     enabled: true
+    adminCredentials: 
+      username: cerbos
+      passwordHash: JDJ5JDEwJC5BYjQyY2RJNG5QR2NWMmJPdnNtQU93c09RYVA0eFFGdHBrbmFEeXh1NnlIVTE1cHJNY05PCgo=
   tls:
     cert: hack/dev/tls.crt
     key: hack/dev/tls.key
+
+auxData:
+  jwt:
+    keySets:
+      - id: default
+        local:
+          file: internal/test/testdata/auxdata/verify_key.jwk
 
 audit:
   enabled: true
