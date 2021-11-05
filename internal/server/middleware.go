@@ -20,7 +20,16 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
+	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/proto"
+
+	svcv1 "github.com/cerbos/cerbos/api/genpb/cerbos/svc/v1"
+)
+
+const (
+	adminSvcDisabled      = "Admin service is disabled by the configuration"
+	playgroundSvcDisabled = "Playground service is disabled by the configuration"
+	unknownSvc            = "Unknown service"
 )
 
 func XForwardedHostUnaryServerInterceptor(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
@@ -123,4 +132,52 @@ func withCORS(conf *Conf, handler http.Handler) http.Handler {
 	}
 
 	return handlers.CORS(opts...)(handler)
+}
+
+func handleUnknownServices(_ interface{}, stream grpc.ServerStream) error {
+	errFn := func(msg string) error {
+		return status.Errorf(codes.Unimplemented, msg)
+	}
+
+	method, ok := grpc.MethodFromServerStream(stream)
+	if !ok {
+		return errFn(unknownSvc)
+	}
+
+	parts := strings.Split(method, "/")
+	if len(parts) < 2 { //nolint:gomnd
+		return errFn(unknownSvc)
+	}
+
+	switch parts[1] {
+	case svcv1.CerbosAdminService_ServiceDesc.ServiceName:
+		return errFn(adminSvcDisabled)
+	case svcv1.CerbosPlaygroundService_ServiceDesc.ServiceName:
+		return errFn(playgroundSvcDisabled)
+	}
+
+	return errFn(unknownSvc)
+}
+
+func handleRoutingError(ctx context.Context, mux *runtime.ServeMux, marshaler runtime.Marshaler, w http.ResponseWriter, r *http.Request, httpStatus int) {
+	if httpStatus == http.StatusNotFound && r != nil && r.URL != nil {
+		errHandler := func(msg string) {
+			err := &runtime.HTTPStatusError{
+				HTTPStatus: httpStatus,
+				Err:        status.Errorf(codes.Unimplemented, msg),
+			}
+			runtime.DefaultHTTPErrorHandler(ctx, mux, marshaler, w, r, err)
+		}
+
+		switch {
+		case strings.HasPrefix(r.URL.Path, adminEndpoint):
+			errHandler(adminSvcDisabled)
+			return
+		case strings.HasPrefix(r.URL.Path, playgroundEndpoint):
+			errHandler(playgroundSvcDisabled)
+			return
+		}
+	}
+
+	runtime.DefaultRoutingErrorHandler(ctx, mux, marshaler, w, r, httpStatus)
 }

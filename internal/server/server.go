@@ -87,12 +87,13 @@ const (
 	metricsReportingInterval = 15 * time.Second
 	minGRPCConnectTimeout    = 20 * time.Second
 
-	adminEndpoint   = "/admin"
-	apiEndpoint     = "/api"
-	healthEndpoint  = "/_cerbos/health"
-	metricsEndpoint = "/_cerbos/metrics"
-	schemaEndpoint  = "/schema/swagger.json"
-	zpagesEndpoint  = "/_cerbos/debug"
+	adminEndpoint      = "/admin"
+	apiEndpoint        = "/api"
+	healthEndpoint     = "/_cerbos/health"
+	metricsEndpoint    = "/_cerbos/metrics"
+	playgroundEndpoint = "/api/playground"
+	schemaEndpoint     = "/schema/swagger.json"
+	zpagesEndpoint     = "/_cerbos/debug"
 )
 
 func Start(ctx context.Context, zpagesEnabled bool) error {
@@ -381,6 +382,7 @@ func (s *Server) mkGRPCServer(log *zap.Logger, auditLog audit.Log) *grpc.Server 
 		),
 		grpc.StatsHandler(&ocgrpc.ServerHandler{StartOptions: tracing.StartOptions()}),
 		grpc.KeepaliveParams(keepalive.ServerParameters{MaxConnectionAge: maxConnectionAge}),
+		grpc.UnknownServiceHandler(handleUnknownServices),
 	}
 
 	return grpc.NewServer(opts...)
@@ -395,6 +397,7 @@ func (s *Server) startHTTPServer(ctx context.Context, l net.Listener, grpcSrv *g
 			MarshalOptions:   protojson.MarshalOptions{Indent: "  "},
 			UnmarshalOptions: protojson.UnmarshalOptions{DiscardUnknown: true},
 		}),
+		runtime.WithRoutingErrorHandler(handleRoutingError),
 	)
 
 	grpcConn, err := s.mkGRPCConn(ctx)
