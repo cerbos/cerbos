@@ -83,8 +83,8 @@ func main() {
 
 	defer func() {
 		if x := recover(); x != nil {
-			cmd.PrintErrln(internal.FeedbackMsg)
-			cmd.PrintErrln(internal.FeedbackLink + "\n")
+			cmd.PrintErrln(internal.FeedbackMsg + "\n")
+			cmd.PrintErrln(internal.GenerateFeedbackLink("bug: Panic in cerbosctl", util.Version, util.Commit, debug.Stack()) + "\n")
 			cmd.PrintErrln(string(debug.Stack()))
 
 			os.Exit(1)
