@@ -3,5 +3,6 @@
 :app-docker-img: {app-container-registry}/cerbos/cerbos:{app-version}
 :app-github-url: https://github.com/cerbos/cerbos
 :app-github-download-page: {app-github-url}/releases/download/v{app-version}
+:app-github-releases-page: {app-github-url}/releases/tag/v{app-version}
 :app-helm-chart-repo: https://download.cerbos.dev/helm-charts
 :cerbos-openapi-schema: /schema/swagger.json 

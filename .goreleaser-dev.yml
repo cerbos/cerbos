@@ -39,13 +39,6 @@ builds:
     mod_timestamp: '{{ .CommitTimestamp }}'
     ldflags:
       - -s -w -X github.com/cerbos/cerbos/internal/util.Version={{.Version}} -X github.com/cerbos/cerbos/internal/util.Commit={{.FullCommit}} -X github.com/cerbos/cerbos/internal/util.BuildDate={{.Date}}  
-universal_binaries:
-  - id: "cerbos"
-    replace: false
-    name_template: "cerbos"
-  - id: "cerbosctl"
-    replace: false
-    name_template: "cerbosctl"
 archives:
   - replacements:
       darwin: Darwin

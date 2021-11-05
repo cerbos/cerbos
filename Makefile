@@ -92,6 +92,10 @@ pre-commit: lint-helm build test-race
 build: $(GORELEASER) generate lint test
 	@ $(GORELEASER) --config=.goreleaser-dev.yml --snapshot --skip-publish --rm-dist
 
+.PHONY: simulate-release
+simulate-release: $(GORELEASER) generate lint test
+	@ $(GORELEASER) release --config=.goreleaser-ci.yml --snapshot --skip-publish --rm-dist
+
 .PHONY: docs
 docs:
 	@ docs/build.sh

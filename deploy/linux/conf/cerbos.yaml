@@ -1,0 +1,13 @@
+---
+server:
+  httpListenAddr: ":3592"
+  grpcListenAddr: ":3593"
+
+engine:
+  defaultPolicyVersion: "default"
+
+storage:
+  driver: "disk"
+  disk:
+    directory: /var/cerbos/policies
+    watchForChanges: true
