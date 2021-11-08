@@ -49,4 +49,13 @@ sudo systemctl restart cerbos
 sudo journalctl -xeu cerbos.service
 ----
 
+[id="homebrew"]
+== Homebrew
 
+You can install Cerbos binaries using Homebrew as well.
+
+[source,sh]
+----
+brew tap cerbos/tap
+brew install cerbos
+----
