@@ -1,0 +1,26 @@
+package schema
+
+const (
+	confKey = "schema"
+)
+
+// Conf holds configuration related to schema validation
+type Conf struct {
+	// IgnoreExtraFields allows extra fields to be accepted.
+	IgnoreExtraFields bool `yaml:"ignoreExtraFields"`
+	// Enforcement level of the validations. (none, warn, reject)
+	Enforcement Enforcement `yaml:"enforcement"`
+}
+
+func (c *Conf) Key() string {
+	return confKey
+}
+
+// Enforcement level for schema validation
+type Enforcement string
+
+const (
+	EnforcementNone   Enforcement = "none"   // No enforcement made.
+	EnforcementWarn   Enforcement = "warn"   // In case schema is not validated, display a warning.
+	EnforcementReject Enforcement = "reject" // In case schema is not validated, reject.
+)
