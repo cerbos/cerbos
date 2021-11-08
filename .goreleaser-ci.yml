@@ -52,6 +52,30 @@ archives:
       darwin: Darwin
       linux: Linux
       amd64: x86_64
+nfpms:
+  - id: cerbos
+    package_name: cerbos
+    builds:
+      - cerbos
+      - cerbosctl
+    vendor: Zenauth Ltd.
+    homepage: https://cerbos.dev
+    maintainer: "Cerbos Authors <help@cerbos.dev>"
+    license: Apache 2.0
+    formats:
+      - deb
+      - rpm
+    scripts:
+      postinstall: deploy/linux/scripts/post-install.sh
+      preremove: deploy/linux/scripts/pre-remove.sh
+    empty_folders:
+      - /var/cerbos/policies
+    contents:
+      - src: deploy/linux/conf/cerbos.yaml
+        dst: /etc/cerbos.yaml
+        type: config|noreplace
+      - src: deploy/linux/unit/cerbos.service
+        dst: /etc/systemd/system/cerbos.service
 dockers:
   - image_templates:
       - "ghcr.io/cerbos/cerbos:{{ .Version }}-amd64"
