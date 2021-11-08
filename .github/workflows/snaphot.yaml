@@ -16,6 +16,8 @@ jobs:
 
       - name: Checkout code
         uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
 
       - name: Set up QEMU
         id: qemu
@@ -62,7 +64,7 @@ jobs:
         uses: goreleaser/goreleaser-action@v2
         with:
           version: latest
-          args: release --config=.goreleaser-ci.yml --rm-dist --snapshot --skip-publish
+          args: release --config=.goreleaser.yml --rm-dist --snapshot --skip-publish
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 

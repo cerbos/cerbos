@@ -10,12 +10,16 @@ builds:
     goos:
       - linux
       - darwin
+      - windows
     goarch:
       - amd64
       - arm64
     goarm:
       - 6
       - 7
+    ignore: # modernc.org/libc does not support Windows/ARM-64
+      - goos: windows
+        goarch: arm64
     mod_timestamp: '{{ .CommitTimestamp }}'
     flags:
       - -trimpath
@@ -36,6 +40,9 @@ builds:
     goarm:
       - 6
       - 7
+    ignore: # modernc.org/libc does not support Windows/ARM-64
+      - goos: windows
+        goarch: arm64
     mod_timestamp: '{{ .CommitTimestamp }}'
     flags:
       - -trimpath

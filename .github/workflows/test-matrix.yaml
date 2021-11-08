@@ -29,7 +29,7 @@ jobs:
         uses: goreleaser/goreleaser-action@v2
         with:
           version: latest
-          args: build --config=.goreleaser-ci.yml --rm-dist --snapshot --single-target
+          args: build --config=.goreleaser.yml --rm-dist --snapshot --single-target
 
       - name: Test
         run: go test -tags=tests -v -race ./...
