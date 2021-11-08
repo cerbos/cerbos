@@ -75,7 +75,7 @@ require (
 )
 
 require (
-	github.com/aws/aws-sdk-go v1.40.34
+	github.com/aws/aws-sdk-go v1.41.19
 	github.com/lestrrat-go/jwx v1.2.9
 	github.com/minio/minio-go/v7 v7.0.15
 	gocloud.dev v0.24.0
@@ -169,7 +169,6 @@ require (
 	github.com/nwaples/rardecode v1.1.0 // indirect
 	github.com/opencontainers/go-digest v1.0.0 // indirect
 	github.com/opencontainers/image-spec v1.0.1 // indirect
-	github.com/opencontainers/runc v1.0.2 // indirect
 	github.com/pierrec/lz4/v4 v4.0.3 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
