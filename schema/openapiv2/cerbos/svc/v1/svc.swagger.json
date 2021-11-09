@@ -740,20 +740,6 @@
       },
       "description": "Metadata about request evaluation."
     },
-    "JSONSchemaJSONSchemaSimpleTypes": {
-      "type": "string",
-      "enum": [
-        "UNKNOWN",
-        "ARRAY",
-        "BOOLEAN",
-        "INTEGER",
-        "NULL",
-        "NUMBER",
-        "OBJECT",
-        "STRING"
-      ],
-      "default": "UNKNOWN"
-    },
     "ListAuditLogEntriesRequestKind": {
       "type": "string",
       "enum": [
@@ -953,154 +939,6 @@
         "actions"
       ]
     },
-    "optionsExternalDocumentation": {
-      "type": "object",
-      "properties": {
-        "description": {
-          "type": "string",
-          "description": "A short description of the target documentation. GFM syntax can be used for\nrich text representation."
-        },
-        "url": {
-          "type": "string",
-          "description": "The URL for the target documentation. Value MUST be in the format\nof a URL."
-        }
-      },
-      "description": "`ExternalDocumentation` is a representation of OpenAPI v2 specification's\nExternalDocumentation object.\n\nSee: https://github.com/OAI/OpenAPI-Specification/blob/3.0.0/versions/2.0.md#externalDocumentationObject\n\nExample:\n\n option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_swagger) = {\n   ...\n   external_docs: {\n     description: \"More about gRPC-Gateway\";\n     url: \"https://github.com/grpc-ecosystem/grpc-gateway\";\n   }\n   ...\n };"
-    },
-    "optionsHeader": {
-      "type": "object",
-      "properties": {
-        "description": {
-          "type": "string",
-          "description": "`Description` is a short description of the header."
-        },
-        "type": {
-          "type": "string",
-          "description": "The type of the object. The value MUST be one of \"string\", \"number\", \"integer\", or \"boolean\". The \"array\" type is not supported."
-        },
-        "format": {
-          "type": "string",
-          "description": "`Format` The extending format for the previously mentioned type."
-        },
-        "default": {
-          "type": "string",
-          "description": "`Default` Declares the value of the header that the server will use if none is provided.\nSee: https://tools.ietf.org/html/draft-fge-json-schema-validation-00#section-6.2.\nUnlike JSON Schema this value MUST conform to the defined type for the header."
-        },
-        "pattern": {
-          "type": "string",
-          "description": "'Pattern' See https://tools.ietf.org/html/draft-fge-json-schema-validation-00#section-5.2.3."
-        }
-      },
-      "description": "`Header` is a representation of OpenAPI v2 specification's Header object.\n\nSee: https://github.com/OAI/OpenAPI-Specification/blob/3.0.0/versions/2.0.md#headerObject"
-    },
-    "optionsJSONSchema": {
-      "type": "object",
-      "properties": {
-        "ref": {
-          "type": "string",
-          "description": "Ref is used to define an external reference to include in the message.\nThis could be a fully qualified proto message reference, and that type must\nbe imported into the protofile. If no message is identified, the Ref will\nbe used verbatim in the output.\nFor example:\n `ref: \".google.protobuf.Timestamp\"`."
-        },
-        "title": {
-          "type": "string",
-          "description": "The title of the schema."
-        },
-        "description": {
-          "type": "string",
-          "description": "A short description of the schema."
-        },
-        "default": {
-          "type": "string"
-        },
-        "readOnly": {
-          "type": "boolean"
-        },
-        "example": {
-          "type": "string",
-          "title": "A free-form property to include a JSON example of this field. This is copied\nverbatim to the output swagger.json. Quotes must be escaped.\nThis property is the same for 2.0 and 3.0.0 https://github.com/OAI/OpenAPI-Specification/blob/3.0.0/versions/3.0.0.md#schemaObject  https://github.com/OAI/OpenAPI-Specification/blob/3.0.0/versions/2.0.md#schemaObject"
-        },
-        "multipleOf": {
-          "type": "number",
-          "format": "double"
-        },
-        "maximum": {
-          "type": "number",
-          "format": "double",
-          "title": "Maximum represents an inclusive upper limit for a numeric instance. The \nvalue of MUST be a number,"
-        },
-        "exclusiveMaximum": {
-          "type": "boolean"
-        },
-        "minimum": {
-          "type": "number",
-          "format": "double",
-          "title": "minimum represents an inclusive lower limit for a numeric instance. The \nvalue of MUST be a number,"
-        },
-        "exclusiveMinimum": {
-          "type": "boolean"
-        },
-        "maxLength": {
-          "type": "string",
-          "format": "uint64"
-        },
-        "minLength": {
-          "type": "string",
-          "format": "uint64"
-        },
-        "pattern": {
-          "type": "string"
-        },
-        "maxItems": {
-          "type": "string",
-          "format": "uint64"
-        },
-        "minItems": {
-          "type": "string",
-          "format": "uint64"
-        },
-        "uniqueItems": {
-          "type": "boolean"
-        },
-        "maxProperties": {
-          "type": "string",
-          "format": "uint64"
-        },
-        "minProperties": {
-          "type": "string",
-          "format": "uint64"
-        },
-        "required": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          }
-        },
-        "array": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          },
-          "description": "Items in 'array' must be unique."
-        },
-        "type": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/JSONSchemaJSONSchemaSimpleTypes"
-          }
-        },
-        "format": {
-          "type": "string",
-          "title": "`Format`"
-        },
-        "enum": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          },
-          "title": "Items in `enum` must be unique https://tools.ietf.org/html/draft-fge-json-schema-validation-00#section-5.5.1"
-        }
-      },
-      "description": "`JSONSchema` represents properties from JSON Schema taken, and as used, in\nthe OpenAPI v2 spec.\n\nThis includes changes made by OpenAPI v2.\n\nSee: https://github.com/OAI/OpenAPI-Specification/blob/3.0.0/versions/2.0.md#schemaObject\n\nSee also: https://cswr.github.io/JsonSchema/spec/basic_types/,\nhttps://github.com/json-schema-org/json-schema-spec/blob/master/schema.json\n\nExample:\n\n message SimpleMessage {\n   option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {\n     json_schema: {\n       title: \"SimpleMessage\"\n       description: \"A simple message.\"\n       required: [\"id\"]\n     }\n   };\n\n   // Id represents the message identifier.\n   string id = 1; [\n       (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {\n         {description: \"The unique identifier of the simple message.\"\n       }];\n }"
-    },
     "protobufAny": {
       "type": "object",
       "properties": {
@@ -1120,31 +958,6 @@
       ],
       "default": "NULL_VALUE",
       "description": "`NullValue` is a singleton enumeration to represent the null value for the\n`Value` type union.\n\n The JSON representation for `NullValue` is JSON `null`.\n\n - NULL_VALUE: Null value."
-    },
-    "protoc_gen_openapiv2optionsSchema": {
-      "type": "object",
-      "properties": {
-        "jsonSchema": {
-          "$ref": "#/definitions/optionsJSONSchema"
-        },
-        "discriminator": {
-          "type": "string",
-          "description": "Adds support for polymorphism. The discriminator is the schema property\nname that is used to differentiate between other schema that inherit this\nschema. The property name used MUST be defined at this schema and it MUST\nbe in the required property list. When used, the value MUST be the name of\nthis schema or any schema that inherits it."
-        },
-        "readOnly": {
-          "type": "boolean",
-          "description": "Relevant only for Schema \"properties\" definitions. Declares the property as\n\"read only\". This means that it MAY be sent as part of a response but MUST\nNOT be sent as part of the request. Properties marked as readOnly being\ntrue SHOULD NOT be in the required list of the defined schema. Default\nvalue is false."
-        },
-        "externalDocs": {
-          "$ref": "#/definitions/optionsExternalDocumentation",
-          "description": "Additional external documentation for this schema."
-        },
-        "example": {
-          "type": "string",
-          "description": "A free-form property to include an example of an instance for this schema in JSON.\nThis is copied verbatim to the output."
-        }
-      },
-      "description": "`Schema` is a representation of OpenAPI v2 specification's Schema object.\n\nSee: https://github.com/OAI/OpenAPI-Specification/blob/3.0.0/versions/2.0.md#schemaObject"
     },
     "rpcStatus": {
       "type": "object",
@@ -1180,7 +993,7 @@
           "type": "string"
         },
         "principleSchema": {
-          "$ref": "#/definitions/v1PrincipalSchema"
+          "$ref": "#/definitions/v1JSONSchemaProps"
         },
         "resourceSchema": {
           "$ref": "#/definitions/v1ResourceSchema"
@@ -1564,6 +1377,45 @@
         "EFFECT_NO_MATCH"
       ],
       "default": "EFFECT_UNSPECIFIED"
+    },
+    "v1JSONSchemaProps": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "schema": {
+          "type": "string"
+        },
+        "ref": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string"
+        },
+        "format": {
+          "type": "string"
+        },
+        "title": {
+          "type": "string"
+        },
+        "properties": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/v1JSONSchemaProps"
+          }
+        },
+        "definitions": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/v1JSONSchemaProps"
+          }
+        }
+      },
+      "title": "JSONSchema Specification Draft 4"
     },
     "v1ListAuditLogEntriesResponse": {
       "type": "object",
@@ -2138,17 +1990,6 @@
         }
       }
     },
-    "v1PrincipalSchema": {
-      "type": "object",
-      "properties": {
-        "schemas": {
-          "type": "object",
-          "additionalProperties": {
-            "$ref": "#/definitions/v1SchemaDef"
-          }
-        }
-      }
-    },
     "v1Resource": {
       "type": "object",
       "properties": {
@@ -2255,7 +2096,7 @@
         "schemas": {
           "type": "object",
           "additionalProperties": {
-            "$ref": "#/definitions/v1SchemaDef"
+            "$ref": "#/definitions/v1JSONSchemaProps"
           }
         }
       }
@@ -2327,20 +2168,6 @@
         },
         "condition": {
           "$ref": "#/definitions/v1Condition"
-        }
-      }
-    },
-    "v1SchemaDef": {
-      "type": "object",
-      "properties": {
-        "schema": {
-          "$ref": "#/definitions/protoc_gen_openapiv2optionsSchema"
-        },
-        "headers": {
-          "type": "object",
-          "additionalProperties": {
-            "$ref": "#/definitions/optionsHeader"
-          }
         }
       }
     },

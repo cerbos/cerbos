@@ -137,88 +137,6 @@ var _ interface {
 
 var _Schema_SchemaVersion_Pattern = regexp.MustCompile("^[[:word:]]+$")
 
-// Validate checks the field values on PrincipalSchema with the rules defined
-// in the proto definition for this message. If any rules are violated, an
-// error is returned.
-func (m *PrincipalSchema) Validate() error {
-	if m == nil {
-		return nil
-	}
-
-	for key, val := range m.GetSchemas() {
-		_ = val
-
-		// no validation rules for Schemas[key]
-
-		if v, ok := interface{}(val).(interface{ Validate() error }); ok {
-			if err := v.Validate(); err != nil {
-				return PrincipalSchemaValidationError{
-					field:  fmt.Sprintf("Schemas[%v]", key),
-					reason: "embedded message failed validation",
-					cause:  err,
-				}
-			}
-		}
-
-	}
-
-	return nil
-}
-
-// PrincipalSchemaValidationError is the validation error returned by
-// PrincipalSchema.Validate if the designated constraints aren't met.
-type PrincipalSchemaValidationError struct {
-	field  string
-	reason string
-	cause  error
-	key    bool
-}
-
-// Field function returns field value.
-func (e PrincipalSchemaValidationError) Field() string { return e.field }
-
-// Reason function returns reason value.
-func (e PrincipalSchemaValidationError) Reason() string { return e.reason }
-
-// Cause function returns cause value.
-func (e PrincipalSchemaValidationError) Cause() error { return e.cause }
-
-// Key function returns key value.
-func (e PrincipalSchemaValidationError) Key() bool { return e.key }
-
-// ErrorName returns error name.
-func (e PrincipalSchemaValidationError) ErrorName() string { return "PrincipalSchemaValidationError" }
-
-// Error satisfies the builtin error interface
-func (e PrincipalSchemaValidationError) Error() string {
-	cause := ""
-	if e.cause != nil {
-		cause = fmt.Sprintf(" | caused by: %v", e.cause)
-	}
-
-	key := ""
-	if e.key {
-		key = "key for "
-	}
-
-	return fmt.Sprintf(
-		"invalid %sPrincipalSchema.%s: %s%s",
-		key,
-		e.field,
-		e.reason,
-		cause)
-}
-
-var _ error = PrincipalSchemaValidationError{}
-
-var _ interface {
-	Field() string
-	Reason() string
-	Key() bool
-	Cause() error
-	ErrorName() string
-} = PrincipalSchemaValidationError{}
-
 // Validate checks the field values on ResourceSchema with the rules defined in
 // the proto definition for this message. If any rules are violated, an error
 // is returned.
@@ -301,32 +219,54 @@ var _ interface {
 	ErrorName() string
 } = ResourceSchemaValidationError{}
 
-// Validate checks the field values on SchemaDef with the rules defined in the
-// proto definition for this message. If any rules are violated, an error is returned.
-func (m *SchemaDef) Validate() error {
+// Validate checks the field values on JSONSchemaProps with the rules defined
+// in the proto definition for this message. If any rules are violated, an
+// error is returned.
+func (m *JSONSchemaProps) Validate() error {
 	if m == nil {
 		return nil
 	}
 
-	if v, ok := interface{}(m.GetSchema()).(interface{ Validate() error }); ok {
-		if err := v.Validate(); err != nil {
-			return SchemaDefValidationError{
-				field:  "Schema",
-				reason: "embedded message failed validation",
-				cause:  err,
-			}
-		}
-	}
+	// no validation rules for Id
 
-	for key, val := range m.GetHeaders() {
+	// no validation rules for Schema
+
+	// no validation rules for Ref
+
+	// no validation rules for Description
+
+	// no validation rules for Type
+
+	// no validation rules for Format
+
+	// no validation rules for Title
+
+	for key, val := range m.GetProperties() {
 		_ = val
 
-		// no validation rules for Headers[key]
+		// no validation rules for Properties[key]
 
 		if v, ok := interface{}(val).(interface{ Validate() error }); ok {
 			if err := v.Validate(); err != nil {
-				return SchemaDefValidationError{
-					field:  fmt.Sprintf("Headers[%v]", key),
+				return JSONSchemaPropsValidationError{
+					field:  fmt.Sprintf("Properties[%v]", key),
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	}
+
+	for key, val := range m.GetDefinitions() {
+		_ = val
+
+		// no validation rules for Definitions[key]
+
+		if v, ok := interface{}(val).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return JSONSchemaPropsValidationError{
+					field:  fmt.Sprintf("Definitions[%v]", key),
 					reason: "embedded message failed validation",
 					cause:  err,
 				}
@@ -338,9 +278,9 @@ func (m *SchemaDef) Validate() error {
 	return nil
 }
 
-// SchemaDefValidationError is the validation error returned by
-// SchemaDef.Validate if the designated constraints aren't met.
-type SchemaDefValidationError struct {
+// JSONSchemaPropsValidationError is the validation error returned by
+// JSONSchemaProps.Validate if the designated constraints aren't met.
+type JSONSchemaPropsValidationError struct {
 	field  string
 	reason string
 	cause  error
@@ -348,22 +288,22 @@ type SchemaDefValidationError struct {
 }
 
 // Field function returns field value.
-func (e SchemaDefValidationError) Field() string { return e.field }
+func (e JSONSchemaPropsValidationError) Field() string { return e.field }
 
 // Reason function returns reason value.
-func (e SchemaDefValidationError) Reason() string { return e.reason }
+func (e JSONSchemaPropsValidationError) Reason() string { return e.reason }
 
 // Cause function returns cause value.
-func (e SchemaDefValidationError) Cause() error { return e.cause }
+func (e JSONSchemaPropsValidationError) Cause() error { return e.cause }
 
 // Key function returns key value.
-func (e SchemaDefValidationError) Key() bool { return e.key }
+func (e JSONSchemaPropsValidationError) Key() bool { return e.key }
 
 // ErrorName returns error name.
-func (e SchemaDefValidationError) ErrorName() string { return "SchemaDefValidationError" }
+func (e JSONSchemaPropsValidationError) ErrorName() string { return "JSONSchemaPropsValidationError" }
 
 // Error satisfies the builtin error interface
-func (e SchemaDefValidationError) Error() string {
+func (e JSONSchemaPropsValidationError) Error() string {
 	cause := ""
 	if e.cause != nil {
 		cause = fmt.Sprintf(" | caused by: %v", e.cause)
@@ -375,14 +315,14 @@ func (e SchemaDefValidationError) Error() string {
 	}
 
 	return fmt.Sprintf(
-		"invalid %sSchemaDef.%s: %s%s",
+		"invalid %sJSONSchemaProps.%s: %s%s",
 		key,
 		e.field,
 		e.reason,
 		cause)
 }
 
-var _ error = SchemaDefValidationError{}
+var _ error = JSONSchemaPropsValidationError{}
 
 var _ interface {
 	Field() string
@@ -390,4 +330,4 @@ var _ interface {
 	Key() bool
 	Cause() error
 	ErrorName() string
-} = SchemaDefValidationError{}
+} = JSONSchemaPropsValidationError{}

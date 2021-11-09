@@ -5,7 +5,6 @@ syntax = "proto3";
 
 package cerbos.schema.v1;
 
-import "protoc-gen-openapiv2/options/openapiv2.proto";
 import "validate/validate.proto";
 
 option go_package = "github.com/cerbos/cerbos/api/genpb/cerbos/schema/v1;schemav1";
@@ -17,19 +16,31 @@ message Schema {
   string schema_version = 2 [(validate.rules).string.pattern = "^[[:word:]]+$"];
   bool disabled = 3;
   string description = 4;
-  PrincipalSchema principle_schema = 5;
+  JSONSchemaProps principle_schema = 5;
   ResourceSchema resource_schema = 6;
 }
 
-message PrincipalSchema {
-  map<string, SchemaDef> schemas = 1;
-}
-
 message ResourceSchema {
-  map<string, SchemaDef> schemas = 1;
+  map<string, JSONSchemaProps> schemas = 1;
 }
 
-message SchemaDef {
-  grpc.gateway.protoc_gen_openapiv2.options.Schema schema = 1;
-  map<string, grpc.gateway.protoc_gen_openapiv2.options.Header> headers = 2;
+// JSONSchema Specification Draft 4
+message JSONSchemaProps {
+  string id = 1;
+
+  string schema = 2;
+
+  string ref = 3;
+
+  string description = 4;
+
+  string type = 5;
+
+  string format = 6;
+
+  string title = 7;
+
+  map<string, JSONSchemaProps> properties = 29;
+
+  map<string, JSONSchemaProps> definitions = 34;
 }
