@@ -12,6 +12,7 @@ option csharp_namespace = "Cerbos.Api.V1.Response";
 import "cerbos/audit/v1/audit.proto";
 import "cerbos/effect/v1/effect.proto";
 import "cerbos/policy/v1/policy.proto";
+import "cerbos/schema/v1/schema.proto";
 import "google/protobuf/empty.proto";
 import "protoc-gen-openapiv2/options/annotations.proto";
 
@@ -249,4 +250,24 @@ message ListPoliciesResponse {
     };
 
     repeated cerbos.policy.v1.Policy policies = 1;
+}
+
+message AddOrUpdateSchemaResponse {
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
+        json_schema: {
+            description: "Add/update schema response"
+        }
+    };
+
+    google.protobuf.Empty success = 1;
+}
+
+message ListSchemasResponse {
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
+        json_schema: {
+            description: "List of schemas stored in the Cerbos server"
+        }
+    };
+
+    repeated cerbos.schema.v1.Schema schemas = 1;
 }

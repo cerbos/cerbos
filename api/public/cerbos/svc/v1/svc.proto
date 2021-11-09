@@ -133,6 +133,45 @@ service CerbosAdminService {
             }
         };
     }
+
+    rpc AddOrUpdateSchema(cerbos.request.v1.AddOrUpdateSchemaRequest) returns (cerbos.response.v1.AddOrUpdateSchemaResponse) {
+        option (google.api.http) = {
+            post: "/admin/schema",
+            body: "*",
+            additional_bindings: {
+                put: "/admin/schema",
+                body: "*"
+            }
+        };
+        option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+            summary: "Add or update schemas",
+            security: {
+                security_requirement: {
+                    key: "BasicAuth";
+                    value: {};
+                }
+            }
+        };
+    }
+
+    rpc ListSchemas(cerbos.request.v1.ListSchemasRequest) returns (cerbos.response.v1.ListSchemasResponse) {
+        option (google.api.http) = {
+            get: "/admin/schema/list",
+            additional_bindings: {
+                post: "/admin/schema/list",
+                body: "*"
+            }
+        };
+        option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+            summary: "List schemas",
+            security: {
+                security_requirement: {
+                    key: "BasicAuth";
+                    value: {};
+                }
+            }
+        };
+    }
 }
 
 service CerbosPlaygroundService {

@@ -1420,6 +1420,187 @@ var _ interface {
 	ErrorName() string
 } = ListPoliciesRequestValidationError{}
 
+// Validate checks the field values on AddOrUpdateSchemaRequest with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, an error is returned.
+func (m *AddOrUpdateSchemaRequest) Validate() error {
+	if m == nil {
+		return nil
+	}
+
+	if l := len(m.GetSchemas()); l < 1 || l > 10 {
+		return AddOrUpdateSchemaRequestValidationError{
+			field:  "Schemas",
+			reason: "value must contain between 1 and 10 items, inclusive",
+		}
+	}
+
+	for idx, item := range m.GetSchemas() {
+		_, _ = idx, item
+
+		if v, ok := interface{}(item).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return AddOrUpdateSchemaRequestValidationError{
+					field:  fmt.Sprintf("Schemas[%v]", idx),
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	}
+
+	return nil
+}
+
+// AddOrUpdateSchemaRequestValidationError is the validation error returned by
+// AddOrUpdateSchemaRequest.Validate if the designated constraints aren't met.
+type AddOrUpdateSchemaRequestValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e AddOrUpdateSchemaRequestValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e AddOrUpdateSchemaRequestValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e AddOrUpdateSchemaRequestValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e AddOrUpdateSchemaRequestValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e AddOrUpdateSchemaRequestValidationError) ErrorName() string {
+	return "AddOrUpdateSchemaRequestValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e AddOrUpdateSchemaRequestValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sAddOrUpdateSchemaRequest.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = AddOrUpdateSchemaRequestValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = AddOrUpdateSchemaRequestValidationError{}
+
+// Validate checks the field values on ListSchemasRequest with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, an error is returned.
+func (m *ListSchemasRequest) Validate() error {
+	if m == nil {
+		return nil
+	}
+
+	for idx, item := range m.GetFilters() {
+		_, _ = idx, item
+
+		if v, ok := interface{}(item).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return ListSchemasRequestValidationError{
+					field:  fmt.Sprintf("Filters[%v]", idx),
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	}
+
+	if v, ok := interface{}(m.GetSortOptions()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return ListSchemasRequestValidationError{
+				field:  "SortOptions",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	return nil
+}
+
+// ListSchemasRequestValidationError is the validation error returned by
+// ListSchemasRequest.Validate if the designated constraints aren't met.
+type ListSchemasRequestValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e ListSchemasRequestValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e ListSchemasRequestValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e ListSchemasRequestValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e ListSchemasRequestValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e ListSchemasRequestValidationError) ErrorName() string {
+	return "ListSchemasRequestValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e ListSchemasRequestValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sListSchemasRequest.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = ListSchemasRequestValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = ListSchemasRequestValidationError{}
+
 // Validate checks the field values on CheckResourceBatchRequest_BatchEntry
 // with the rules defined in the proto definition for this message. If any
 // rules are violated, an error is returned.
@@ -1904,6 +2085,181 @@ var _ListPoliciesRequest_SortOptions_Column_InLookup = map[ListPoliciesRequest_S
 }
 
 var _ListPoliciesRequest_SortOptions_Order_InLookup = map[ListPoliciesRequest_SortOptions_Order]struct{}{
+	1: {},
+	2: {},
+}
+
+// Validate checks the field values on ListSchemasRequest_Filter with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, an error is returned.
+func (m *ListSchemasRequest_Filter) Validate() error {
+	if m == nil {
+		return nil
+	}
+
+	if _, ok := _ListSchemasRequest_Filter_Type_InLookup[m.GetType()]; !ok {
+		return ListSchemasRequest_FilterValidationError{
+			field:  "Type",
+			reason: "value must be in list [1 2]",
+		}
+	}
+
+	// no validation rules for FieldPath
+
+	// no validation rules for Value
+
+	return nil
+}
+
+// ListSchemasRequest_FilterValidationError is the validation error returned by
+// ListSchemasRequest_Filter.Validate if the designated constraints aren't met.
+type ListSchemasRequest_FilterValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e ListSchemasRequest_FilterValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e ListSchemasRequest_FilterValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e ListSchemasRequest_FilterValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e ListSchemasRequest_FilterValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e ListSchemasRequest_FilterValidationError) ErrorName() string {
+	return "ListSchemasRequest_FilterValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e ListSchemasRequest_FilterValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sListSchemasRequest_Filter.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = ListSchemasRequest_FilterValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = ListSchemasRequest_FilterValidationError{}
+
+var _ListSchemasRequest_Filter_Type_InLookup = map[ListSchemasRequest_MatchType]struct{}{
+	1: {},
+	2: {},
+}
+
+// Validate checks the field values on ListSchemasRequest_SortOptions with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, an error is returned.
+func (m *ListSchemasRequest_SortOptions) Validate() error {
+	if m == nil {
+		return nil
+	}
+
+	if _, ok := _ListSchemasRequest_SortOptions_Column_InLookup[m.GetColumn()]; !ok {
+		return ListSchemasRequest_SortOptionsValidationError{
+			field:  "Column",
+			reason: "value must be in list [1 2]",
+		}
+	}
+
+	if _, ok := _ListSchemasRequest_SortOptions_Order_InLookup[m.GetOrder()]; !ok {
+		return ListSchemasRequest_SortOptionsValidationError{
+			field:  "Order",
+			reason: "value must be in list [1 2]",
+		}
+	}
+
+	return nil
+}
+
+// ListSchemasRequest_SortOptionsValidationError is the validation error
+// returned by ListSchemasRequest_SortOptions.Validate if the designated
+// constraints aren't met.
+type ListSchemasRequest_SortOptionsValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e ListSchemasRequest_SortOptionsValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e ListSchemasRequest_SortOptionsValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e ListSchemasRequest_SortOptionsValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e ListSchemasRequest_SortOptionsValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e ListSchemasRequest_SortOptionsValidationError) ErrorName() string {
+	return "ListSchemasRequest_SortOptionsValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e ListSchemasRequest_SortOptionsValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sListSchemasRequest_SortOptions.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = ListSchemasRequest_SortOptionsValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = ListSchemasRequest_SortOptionsValidationError{}
+
+var _ListSchemasRequest_SortOptions_Column_InLookup = map[ListSchemasRequest_SortOptions_Column]struct{}{
+	1: {},
+	2: {},
+}
+
+var _ListSchemasRequest_SortOptions_Order_InLookup = map[ListSchemasRequest_SortOptions_Order]struct{}{
 	1: {},
 	2: {},
 }

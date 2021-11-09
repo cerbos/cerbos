@@ -287,6 +287,172 @@
         ]
       }
     },
+    "/admin/schema": {
+      "post": {
+        "summary": "Add or update schemas",
+        "operationId": "CerbosAdminService_AddOrUpdateSchema",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1AddOrUpdateSchemaResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/v1AddOrUpdateSchemaRequest"
+            }
+          }
+        ],
+        "tags": [
+          "CerbosAdminService"
+        ],
+        "security": [
+          {
+            "BasicAuth": []
+          }
+        ]
+      },
+      "put": {
+        "summary": "Add or update schemas",
+        "operationId": "CerbosAdminService_AddOrUpdateSchema2",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1AddOrUpdateSchemaResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/v1AddOrUpdateSchemaRequest"
+            }
+          }
+        ],
+        "tags": [
+          "CerbosAdminService"
+        ],
+        "security": [
+          {
+            "BasicAuth": []
+          }
+        ]
+      }
+    },
+    "/admin/schema/list": {
+      "get": {
+        "summary": "List schemas",
+        "operationId": "CerbosAdminService_ListSchemas",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1ListSchemasResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "sortOptions.column",
+            "description": "Sort column",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "enum": [
+              "COLUMN_UNSPECIFIED",
+              "COLUMN_NAME",
+              "COLUMN_VERSION"
+            ],
+            "default": "COLUMN_UNSPECIFIED"
+          },
+          {
+            "name": "sortOptions.order",
+            "description": "Sort order",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "enum": [
+              "ORDER_UNSPECIFIED",
+              "ORDER_ASCENDING",
+              "ORDER_DESCENDING"
+            ],
+            "default": "ORDER_UNSPECIFIED"
+          }
+        ],
+        "tags": [
+          "CerbosAdminService"
+        ],
+        "security": [
+          {
+            "BasicAuth": []
+          }
+        ]
+      },
+      "post": {
+        "summary": "List schemas",
+        "operationId": "CerbosAdminService_ListSchemas2",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1ListSchemasResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/v1ListSchemasRequest"
+            }
+          }
+        ],
+        "tags": [
+          "CerbosAdminService"
+        ],
+        "security": [
+          {
+            "BasicAuth": []
+          }
+        ]
+      }
+    },
     "/api/check": {
       "post": {
         "summary": "Check",
@@ -574,6 +740,20 @@
       },
       "description": "Metadata about request evaluation."
     },
+    "JSONSchemaJSONSchemaSimpleTypes": {
+      "type": "string",
+      "enum": [
+        "UNKNOWN",
+        "ARRAY",
+        "BOOLEAN",
+        "INTEGER",
+        "NULL",
+        "NUMBER",
+        "OBJECT",
+        "STRING"
+      ],
+      "default": "UNKNOWN"
+    },
     "ListAuditLogEntriesRequestKind": {
       "type": "string",
       "enum": [
@@ -610,62 +790,6 @@
         "start",
         "end"
       ]
-    },
-    "ListPoliciesRequestFilter": {
-      "type": "object",
-      "properties": {
-        "type": {
-          "$ref": "#/definitions/ListPoliciesRequestMatchType",
-          "example": "MATCH_TYPE_WILDCARD",
-          "description": "Kind of filter"
-        },
-        "fieldPath": {
-          "type": "string",
-          "example": "$.resourcePolicy.resource",
-          "description": "JSONPath expression describing the field to match",
-          "required": [
-            "field_path"
-          ]
-        },
-        "value": {
-          "type": "string",
-          "example": "*",
-          "description": "The value to compare",
-          "required": [
-            "value"
-          ]
-        }
-      },
-      "description": "Filter options",
-      "required": [
-        "fieldPath",
-        "value"
-      ]
-    },
-    "ListPoliciesRequestMatchType": {
-      "type": "string",
-      "enum": [
-        "MATCH_TYPE_UNSPECIFIED",
-        "MATCH_TYPE_EXACT",
-        "MATCH_TYPE_WILDCARD"
-      ],
-      "default": "MATCH_TYPE_UNSPECIFIED"
-    },
-    "ListPoliciesRequestSortOptions": {
-      "type": "object",
-      "properties": {
-        "column": {
-          "$ref": "#/definitions/SortOptionsColumn",
-          "example": "COLUMN_NAME",
-          "description": "Sort column"
-        },
-        "order": {
-          "$ref": "#/definitions/SortOptionsOrder",
-          "example": "ORDER_ASCENDING",
-          "description": "Sort order"
-        }
-      },
-      "description": "Sort options"
     },
     "MatchExprList": {
       "type": "object",
@@ -779,24 +903,6 @@
         }
       }
     },
-    "SortOptionsColumn": {
-      "type": "string",
-      "enum": [
-        "COLUMN_UNSPECIFIED",
-        "COLUMN_NAME",
-        "COLUMN_VERSION"
-      ],
-      "default": "COLUMN_UNSPECIFIED"
-    },
-    "SortOptionsOrder": {
-      "type": "string",
-      "enum": [
-        "ORDER_UNSPECIFIED",
-        "ORDER_ASCENDING",
-        "ORDER_DESCENDING"
-      ],
-      "default": "ORDER_UNSPECIFIED"
-    },
     "cerbosenginev1AuxData": {
       "type": "object",
       "properties": {
@@ -847,6 +953,154 @@
         "actions"
       ]
     },
+    "optionsExternalDocumentation": {
+      "type": "object",
+      "properties": {
+        "description": {
+          "type": "string",
+          "description": "A short description of the target documentation. GFM syntax can be used for\nrich text representation."
+        },
+        "url": {
+          "type": "string",
+          "description": "The URL for the target documentation. Value MUST be in the format\nof a URL."
+        }
+      },
+      "description": "`ExternalDocumentation` is a representation of OpenAPI v2 specification's\nExternalDocumentation object.\n\nSee: https://github.com/OAI/OpenAPI-Specification/blob/3.0.0/versions/2.0.md#externalDocumentationObject\n\nExample:\n\n option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_swagger) = {\n   ...\n   external_docs: {\n     description: \"More about gRPC-Gateway\";\n     url: \"https://github.com/grpc-ecosystem/grpc-gateway\";\n   }\n   ...\n };"
+    },
+    "optionsHeader": {
+      "type": "object",
+      "properties": {
+        "description": {
+          "type": "string",
+          "description": "`Description` is a short description of the header."
+        },
+        "type": {
+          "type": "string",
+          "description": "The type of the object. The value MUST be one of \"string\", \"number\", \"integer\", or \"boolean\". The \"array\" type is not supported."
+        },
+        "format": {
+          "type": "string",
+          "description": "`Format` The extending format for the previously mentioned type."
+        },
+        "default": {
+          "type": "string",
+          "description": "`Default` Declares the value of the header that the server will use if none is provided.\nSee: https://tools.ietf.org/html/draft-fge-json-schema-validation-00#section-6.2.\nUnlike JSON Schema this value MUST conform to the defined type for the header."
+        },
+        "pattern": {
+          "type": "string",
+          "description": "'Pattern' See https://tools.ietf.org/html/draft-fge-json-schema-validation-00#section-5.2.3."
+        }
+      },
+      "description": "`Header` is a representation of OpenAPI v2 specification's Header object.\n\nSee: https://github.com/OAI/OpenAPI-Specification/blob/3.0.0/versions/2.0.md#headerObject"
+    },
+    "optionsJSONSchema": {
+      "type": "object",
+      "properties": {
+        "ref": {
+          "type": "string",
+          "description": "Ref is used to define an external reference to include in the message.\nThis could be a fully qualified proto message reference, and that type must\nbe imported into the protofile. If no message is identified, the Ref will\nbe used verbatim in the output.\nFor example:\n `ref: \".google.protobuf.Timestamp\"`."
+        },
+        "title": {
+          "type": "string",
+          "description": "The title of the schema."
+        },
+        "description": {
+          "type": "string",
+          "description": "A short description of the schema."
+        },
+        "default": {
+          "type": "string"
+        },
+        "readOnly": {
+          "type": "boolean"
+        },
+        "example": {
+          "type": "string",
+          "title": "A free-form property to include a JSON example of this field. This is copied\nverbatim to the output swagger.json. Quotes must be escaped.\nThis property is the same for 2.0 and 3.0.0 https://github.com/OAI/OpenAPI-Specification/blob/3.0.0/versions/3.0.0.md#schemaObject  https://github.com/OAI/OpenAPI-Specification/blob/3.0.0/versions/2.0.md#schemaObject"
+        },
+        "multipleOf": {
+          "type": "number",
+          "format": "double"
+        },
+        "maximum": {
+          "type": "number",
+          "format": "double",
+          "title": "Maximum represents an inclusive upper limit for a numeric instance. The \nvalue of MUST be a number,"
+        },
+        "exclusiveMaximum": {
+          "type": "boolean"
+        },
+        "minimum": {
+          "type": "number",
+          "format": "double",
+          "title": "minimum represents an inclusive lower limit for a numeric instance. The \nvalue of MUST be a number,"
+        },
+        "exclusiveMinimum": {
+          "type": "boolean"
+        },
+        "maxLength": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "minLength": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "pattern": {
+          "type": "string"
+        },
+        "maxItems": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "minItems": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "uniqueItems": {
+          "type": "boolean"
+        },
+        "maxProperties": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "minProperties": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "required": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "array": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Items in 'array' must be unique."
+        },
+        "type": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/JSONSchemaJSONSchemaSimpleTypes"
+          }
+        },
+        "format": {
+          "type": "string",
+          "title": "`Format`"
+        },
+        "enum": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "title": "Items in `enum` must be unique https://tools.ietf.org/html/draft-fge-json-schema-validation-00#section-5.5.1"
+        }
+      },
+      "description": "`JSONSchema` represents properties from JSON Schema taken, and as used, in\nthe OpenAPI v2 spec.\n\nThis includes changes made by OpenAPI v2.\n\nSee: https://github.com/OAI/OpenAPI-Specification/blob/3.0.0/versions/2.0.md#schemaObject\n\nSee also: https://cswr.github.io/JsonSchema/spec/basic_types/,\nhttps://github.com/json-schema-org/json-schema-spec/blob/master/schema.json\n\nExample:\n\n message SimpleMessage {\n   option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {\n     json_schema: {\n       title: \"SimpleMessage\"\n       description: \"A simple message.\"\n       required: [\"id\"]\n     }\n   };\n\n   // Id represents the message identifier.\n   string id = 1; [\n       (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {\n         {description: \"The unique identifier of the simple message.\"\n       }];\n }"
+    },
     "protobufAny": {
       "type": "object",
       "properties": {
@@ -867,6 +1121,31 @@
       "default": "NULL_VALUE",
       "description": "`NullValue` is a singleton enumeration to represent the null value for the\n`Value` type union.\n\n The JSON representation for `NullValue` is JSON `null`.\n\n - NULL_VALUE: Null value."
     },
+    "protoc_gen_openapiv2optionsSchema": {
+      "type": "object",
+      "properties": {
+        "jsonSchema": {
+          "$ref": "#/definitions/optionsJSONSchema"
+        },
+        "discriminator": {
+          "type": "string",
+          "description": "Adds support for polymorphism. The discriminator is the schema property\nname that is used to differentiate between other schema that inherit this\nschema. The property name used MUST be defined at this schema and it MUST\nbe in the required property list. When used, the value MUST be the name of\nthis schema or any schema that inherits it."
+        },
+        "readOnly": {
+          "type": "boolean",
+          "description": "Relevant only for Schema \"properties\" definitions. Declares the property as\n\"read only\". This means that it MAY be sent as part of a response but MUST\nNOT be sent as part of the request. Properties marked as readOnly being\ntrue SHOULD NOT be in the required list of the defined schema. Default\nvalue is false."
+        },
+        "externalDocs": {
+          "$ref": "#/definitions/optionsExternalDocumentation",
+          "description": "Additional external documentation for this schema."
+        },
+        "example": {
+          "type": "string",
+          "description": "A free-form property to include an example of an instance for this schema in JSON.\nThis is copied verbatim to the output."
+        }
+      },
+      "description": "`Schema` is a representation of OpenAPI v2 specification's Schema object.\n\nSee: https://github.com/OAI/OpenAPI-Specification/blob/3.0.0/versions/2.0.md#schemaObject"
+    },
     "rpcStatus": {
       "type": "object",
       "properties": {
@@ -882,6 +1161,29 @@
           "items": {
             "$ref": "#/definitions/protobufAny"
           }
+        }
+      }
+    },
+    "schemav1Schema": {
+      "type": "object",
+      "properties": {
+        "apiVersion": {
+          "type": "string"
+        },
+        "schemaVersion": {
+          "type": "string"
+        },
+        "disabled": {
+          "type": "boolean"
+        },
+        "description": {
+          "type": "string"
+        },
+        "principleSchema": {
+          "$ref": "#/definitions/v1PrincipalSchema"
+        },
+        "resourceSchema": {
+          "$ref": "#/definitions/v1ResourceSchema"
         }
       }
     },
@@ -942,6 +1244,36 @@
         }
       },
       "description": "Add/update policy response"
+    },
+    "v1AddOrUpdateSchemaRequest": {
+      "type": "object",
+      "properties": {
+        "schemas": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/schemav1Schema"
+          },
+          "description": "List of schemas.",
+          "maxItems": 10,
+          "minItems": 1,
+          "required": [
+            "schemas"
+          ]
+        }
+      },
+      "description": "Add/update schema request",
+      "required": [
+        "schemas"
+      ]
+    },
+    "v1AddOrUpdateSchemaResponse": {
+      "type": "object",
+      "properties": {
+        "success": {
+          "properties": {}
+        }
+      },
+      "description": "Add/update schema response"
     },
     "v1AttributesMap": {
       "type": "object",
@@ -1251,14 +1583,88 @@
         "filters": {
           "type": "array",
           "items": {
-            "$ref": "#/definitions/ListPoliciesRequestFilter"
+            "$ref": "#/definitions/v1ListPoliciesRequestFilter"
           }
         },
         "sortOptions": {
-          "$ref": "#/definitions/ListPoliciesRequestSortOptions"
+          "$ref": "#/definitions/v1ListPoliciesRequestSortOptions"
         }
       },
       "description": "List policies request"
+    },
+    "v1ListPoliciesRequestFilter": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "$ref": "#/definitions/v1ListPoliciesRequestMatchType",
+          "example": "MATCH_TYPE_WILDCARD",
+          "description": "Kind of filter"
+        },
+        "fieldPath": {
+          "type": "string",
+          "example": "$.resourcePolicy.resource",
+          "description": "JSONPath expression describing the field to match",
+          "required": [
+            "field_path"
+          ]
+        },
+        "value": {
+          "type": "string",
+          "example": "*",
+          "description": "The value to compare",
+          "required": [
+            "value"
+          ]
+        }
+      },
+      "description": "Filter options",
+      "required": [
+        "fieldPath",
+        "value"
+      ]
+    },
+    "v1ListPoliciesRequestMatchType": {
+      "type": "string",
+      "enum": [
+        "MATCH_TYPE_UNSPECIFIED",
+        "MATCH_TYPE_EXACT",
+        "MATCH_TYPE_WILDCARD"
+      ],
+      "default": "MATCH_TYPE_UNSPECIFIED"
+    },
+    "v1ListPoliciesRequestSortOptions": {
+      "type": "object",
+      "properties": {
+        "column": {
+          "$ref": "#/definitions/v1ListPoliciesRequestSortOptionsColumn",
+          "example": "COLUMN_NAME",
+          "description": "Sort column"
+        },
+        "order": {
+          "$ref": "#/definitions/v1ListPoliciesRequestSortOptionsOrder",
+          "example": "ORDER_ASCENDING",
+          "description": "Sort order"
+        }
+      },
+      "description": "Sort options"
+    },
+    "v1ListPoliciesRequestSortOptionsColumn": {
+      "type": "string",
+      "enum": [
+        "COLUMN_UNSPECIFIED",
+        "COLUMN_NAME",
+        "COLUMN_VERSION"
+      ],
+      "default": "COLUMN_UNSPECIFIED"
+    },
+    "v1ListPoliciesRequestSortOptionsOrder": {
+      "type": "string",
+      "enum": [
+        "ORDER_UNSPECIFIED",
+        "ORDER_ASCENDING",
+        "ORDER_DESCENDING"
+      ],
+      "default": "ORDER_UNSPECIFIED"
     },
     "v1ListPoliciesResponse": {
       "type": "object",
@@ -1271,6 +1677,107 @@
         }
       },
       "description": "List of policies stored in the Cerbos server"
+    },
+    "v1ListSchemasRequest": {
+      "type": "object",
+      "properties": {
+        "filters": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/v1ListSchemasRequestFilter"
+          }
+        },
+        "sortOptions": {
+          "$ref": "#/definitions/v1ListSchemasRequestSortOptions"
+        }
+      },
+      "description": "List schemas request"
+    },
+    "v1ListSchemasRequestFilter": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "$ref": "#/definitions/v1ListSchemasRequestMatchType",
+          "example": "MATCH_TYPE_WILDCARD",
+          "description": "Kind of filter"
+        },
+        "fieldPath": {
+          "type": "string",
+          "example": "$.resourcePolicy.resource",
+          "description": "JSONPath expression describing the field to match",
+          "required": [
+            "field_path"
+          ]
+        },
+        "value": {
+          "type": "string",
+          "example": "*",
+          "description": "The value to compare",
+          "required": [
+            "value"
+          ]
+        }
+      },
+      "description": "Filter options",
+      "required": [
+        "fieldPath",
+        "value"
+      ]
+    },
+    "v1ListSchemasRequestMatchType": {
+      "type": "string",
+      "enum": [
+        "MATCH_TYPE_UNSPECIFIED",
+        "MATCH_TYPE_EXACT",
+        "MATCH_TYPE_WILDCARD"
+      ],
+      "default": "MATCH_TYPE_UNSPECIFIED"
+    },
+    "v1ListSchemasRequestSortOptions": {
+      "type": "object",
+      "properties": {
+        "column": {
+          "$ref": "#/definitions/v1ListSchemasRequestSortOptionsColumn",
+          "example": "COLUMN_NAME",
+          "description": "Sort column"
+        },
+        "order": {
+          "$ref": "#/definitions/v1ListSchemasRequestSortOptionsOrder",
+          "example": "ORDER_ASCENDING",
+          "description": "Sort order"
+        }
+      },
+      "description": "Sort options"
+    },
+    "v1ListSchemasRequestSortOptionsColumn": {
+      "type": "string",
+      "enum": [
+        "COLUMN_UNSPECIFIED",
+        "COLUMN_NAME",
+        "COLUMN_VERSION"
+      ],
+      "default": "COLUMN_UNSPECIFIED"
+    },
+    "v1ListSchemasRequestSortOptionsOrder": {
+      "type": "string",
+      "enum": [
+        "ORDER_UNSPECIFIED",
+        "ORDER_ASCENDING",
+        "ORDER_DESCENDING"
+      ],
+      "default": "ORDER_UNSPECIFIED"
+    },
+    "v1ListSchemasResponse": {
+      "type": "object",
+      "properties": {
+        "schemas": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/schemav1Schema"
+          }
+        }
+      },
+      "description": "List of schemas stored in the Cerbos server"
     },
     "v1Match": {
       "type": "object",
@@ -1631,6 +2138,17 @@
         }
       }
     },
+    "v1PrincipalSchema": {
+      "type": "object",
+      "properties": {
+        "schemas": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/v1SchemaDef"
+          }
+        }
+      }
+    },
     "v1Resource": {
       "type": "object",
       "properties": {
@@ -1731,6 +2249,17 @@
         }
       }
     },
+    "v1ResourceSchema": {
+      "type": "object",
+      "properties": {
+        "schemas": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/v1SchemaDef"
+          }
+        }
+      }
+    },
     "v1ResourceSet": {
       "type": "object",
       "properties": {
@@ -1798,6 +2327,20 @@
         },
         "condition": {
           "$ref": "#/definitions/v1Condition"
+        }
+      }
+    },
+    "v1SchemaDef": {
+      "type": "object",
+      "properties": {
+        "schema": {
+          "$ref": "#/definitions/protoc_gen_openapiv2optionsSchema"
+        },
+        "headers": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/optionsHeader"
+          }
         }
       }
     },
