@@ -7,6 +7,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/cerbos/cerbos/internal/schema"
 	"runtime"
 	"testing"
 	"time"
@@ -291,4 +292,12 @@ func (ms *MockStore) GetPolicies(ctx context.Context) ([]*policy.Wrapper, error)
 		return nil, args.Error(0)
 	}
 	return args.Get(0).([]*policy.Wrapper), args.Error(0)
+}
+
+func (ms *MockStore) GetSchemas(ctx context.Context) ([]*schema.Wrapper, error) {
+	args := ms.MethodCalled("GetSchemas", ctx)
+	if res := args.Get(0); res == nil {
+		return nil, args.Error(0)
+	}
+	return args.Get(0).([]*schema.Wrapper), args.Error(0)
 }

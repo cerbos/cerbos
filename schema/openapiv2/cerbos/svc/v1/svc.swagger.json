@@ -992,6 +992,9 @@
         "description": {
           "type": "string"
         },
+        "name": {
+          "type": "string"
+        },
         "principalSchema": {
           "$ref": "#/definitions/v1JSONSchemaProps"
         },

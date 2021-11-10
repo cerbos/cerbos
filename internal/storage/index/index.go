@@ -10,6 +10,9 @@ import (
 	"io/fs"
 	"sync"
 
+	schemav1 "github.com/cerbos/cerbos/api/genpb/cerbos/schema/v1"
+	"github.com/cerbos/cerbos/internal/schema"
+
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
 	"github.com/cerbos/cerbos/internal/namer"
 	"github.com/cerbos/cerbos/internal/policy"
@@ -37,6 +40,7 @@ type Index interface {
 	GetAllCompilationUnits(context.Context) <-chan *policy.CompilationUnit
 	Clear() error
 	GetPolicies(context.Context) ([]*policy.Wrapper, error)
+	GetSchemas(context.Context) ([]*schema.Wrapper, error)
 }
 
 type index struct {
@@ -45,6 +49,7 @@ type index struct {
 	executables  map[namer.ModuleID]struct{}
 	modIDToFile  map[namer.ModuleID]string
 	fileToModID  map[string]namer.ModuleID
+	modIdToType  map[namer.ModuleID]string
 	dependents   map[namer.ModuleID]map[namer.ModuleID]struct{}
 	dependencies map[namer.ModuleID]map[namer.ModuleID]struct{}
 }
@@ -125,6 +130,27 @@ func (idx *index) loadPolicy(id namer.ModuleID) (*policyv1.Policy, error) {
 	}
 
 	return policy.WithMetadata(p, fileName, nil), nil
+}
+
+func (idx *index) loadSchema(id namer.ModuleID) (*schemav1.Schema, error) {
+	fileName, ok := idx.modIDToFile[id]
+	if !ok {
+		return nil, fmt.Errorf("schema not found [%s]", id.String())
+	}
+
+	f, err := idx.fsys.Open(fileName)
+	if err != nil {
+		return nil, err
+	}
+
+	defer f.Close()
+
+	s, err := schema.ReadSchema(f)
+	if err != nil {
+		return nil, err
+	}
+
+	return s, nil
 }
 
 func (idx *index) GetDependents(ids ...namer.ModuleID) (map[namer.ModuleID][]namer.ModuleID, error) {
@@ -331,6 +357,9 @@ func (idx *index) GetPolicies(_ context.Context) ([]*policy.Wrapper, error) {
 
 	entries := make([]*policy.Wrapper, 0)
 	for _, modID := range idx.fileToModID {
+		if idx.modIdToType[modID] != IndexTypePolicy {
+			continue
+		}
 		pol, err := idx.loadPolicy(modID)
 		if err != nil {
 			return nil, err
@@ -338,6 +367,27 @@ func (idx *index) GetPolicies(_ context.Context) ([]*policy.Wrapper, error) {
 
 		wp := policy.Wrap(pol)
 		entries = append(entries, &wp)
+	}
+
+	return entries, nil
+}
+
+func (idx *index) GetSchemas(_ context.Context) ([]*schema.Wrapper, error) {
+	idx.mu.RLock()
+	defer idx.mu.RUnlock()
+
+	entries := make([]*schema.Wrapper, 0)
+	for _, modID := range idx.fileToModID {
+		if idx.modIdToType[modID] != IndexTypeSchema {
+			continue
+		}
+		sch, err := idx.loadSchema(modID)
+		if err != nil {
+			return nil, err
+		}
+
+		ws := schema.Wrap(sch)
+		entries = append(entries, &ws)
 	}
 
 	return entries, nil

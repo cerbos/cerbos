@@ -17,11 +17,11 @@ type Wrapper struct {
 	*schemav1.Schema
 }
 
-func Wrap(s *schemav1.Schema, fileName string) Wrapper {
-	fqn := namer.SchemaFQN(fileName, s.SchemaVersion)
+func Wrap(s *schemav1.Schema) Wrapper {
+	fqn := namer.SchemaFQN(s.Name, s.SchemaVersion)
 	w := Wrapper{
 		ID:            namer.GenModuleIDFromFQN(fqn),
-		Name:          fileName,
+		Name:          s.Name,
 		FQN:           fqn,
 		SchemaVersion: s.SchemaVersion,
 		Schema:        s,

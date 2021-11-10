@@ -6,6 +6,7 @@ package internal
 import (
 	"context"
 	"fmt"
+	"github.com/cerbos/cerbos/internal/schema"
 	"os"
 
 	"github.com/doug-martin/goqu/v9"
@@ -23,6 +24,7 @@ type DBStorage interface {
 	GetDependents(ctx context.Context, ids ...namer.ModuleID) (map[namer.ModuleID][]namer.ModuleID, error)
 	Delete(ctx context.Context, ids ...namer.ModuleID) error
 	GetPolicies(ctx context.Context) ([]*policy.Wrapper, error)
+	GetSchemas(ctx context.Context) ([]*schema.Wrapper, error)
 }
 
 func NewDBStorage(ctx context.Context, db *goqu.Database) (DBStorage, error) {
@@ -261,4 +263,25 @@ func (s *dbStorage) GetPolicies(ctx context.Context) ([]*policy.Wrapper, error) 
 	}
 
 	return policies, nil
+}
+
+func (s *dbStorage) GetSchemas(ctx context.Context) ([]*schema.Wrapper, error) {
+	res, err := s.db.From(SchemaTbl).Executor().ScannerContext(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("could not execute %q query: %w", "GetSchemas", err)
+	}
+	defer res.Close()
+
+	var schemas []*schema.Wrapper
+	for res.Next() {
+		var rec Schema
+		if err := res.ScanStruct(&rec); err != nil {
+			return nil, fmt.Errorf("could not scan row: %w", err)
+		}
+
+		p := schema.Wrap(rec.Definition.Schema)
+		schemas = append(schemas, &p)
+	}
+
+	return schemas, nil
 }

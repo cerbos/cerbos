@@ -6,6 +6,7 @@ package disk
 import (
 	"context"
 	"fmt"
+	"github.com/cerbos/cerbos/internal/schema"
 	"os"
 	"path/filepath"
 
@@ -75,4 +76,8 @@ func (s *Store) GetDependents(_ context.Context, ids ...namer.ModuleID) (map[nam
 
 func (s *Store) GetPolicies(ctx context.Context) ([]*policy.Wrapper, error) {
 	return s.idx.GetPolicies(ctx)
+}
+
+func (s *Store) GetSchemas(ctx context.Context) ([]*schema.Wrapper, error) {
+	return s.idx.GetSchemas(ctx)
 }

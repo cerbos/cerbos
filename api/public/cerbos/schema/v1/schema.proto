@@ -16,8 +16,9 @@ message Schema {
   string schema_version = 2 [(validate.rules).string.pattern = "^[[:word:]]+$"];
   bool disabled = 3;
   string description = 4;
-  JSONSchemaProps principal_schema = 5;
-  ResourceSchema resource_schema = 6;
+  string name = 5 [(validate.rules).string.min_len = 1];
+  JSONSchemaProps principal_schema = 6;
+  ResourceSchema resource_schema = 7;
 }
 
 message ResourceSchema {

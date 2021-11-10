@@ -144,6 +144,32 @@ func (cas *CerbosAdminService) ListPolicies(ctx context.Context, req *requestv1.
 	}, nil
 }
 
+func (cas *CerbosAdminService) ListSchemas(ctx context.Context, req *requestv1.ListSchemasRequest) (*responsev1.ListSchemasResponse, error) {
+	if err := cas.checkCredentials(ctx); err != nil {
+		return nil, err
+	}
+
+	if cas.store == nil {
+		return nil, status.Error(codes.NotFound, "store is not configured")
+	}
+
+	units, err := cas.store.GetSchemas(context.Background())
+	if err != nil {
+		return nil, status.Error(codes.Internal, fmt.Sprintf("could not get schemas: %s", err.Error()))
+	}
+
+	schemas, err := filterSchemas(req.Filters, units)
+	if err != nil {
+		return nil, err
+	}
+
+	sortSchemas(req.SortOptions, schemas)
+
+	return &responsev1.ListSchemasResponse{
+		Schemas: schemas,
+	}, nil
+}
+
 func (cas *CerbosAdminService) getAuditLogStream(ctx context.Context, req *requestv1.ListAuditLogEntriesRequest) (auditLogStream, error) {
 	switch req.Kind {
 	case requestv1.ListAuditLogEntriesRequest_KIND_ACCESS:

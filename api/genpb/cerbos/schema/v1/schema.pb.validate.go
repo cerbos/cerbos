@@ -58,6 +58,13 @@ func (m *Schema) Validate() error {
 
 	// no validation rules for Description
 
+	if utf8.RuneCountInString(m.GetName()) < 1 {
+		return SchemaValidationError{
+			field:  "Name",
+			reason: "value length must be at least 1 runes",
+		}
+	}
+
 	if v, ok := interface{}(m.GetPrincipalSchema()).(interface{ Validate() error }); ok {
 		if err := v.Validate(); err != nil {
 			return SchemaValidationError{

@@ -7,6 +7,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/cerbos/cerbos/internal/schema"
 	"io/fs"
 	"net/http"
 	"net/url"
@@ -289,4 +290,8 @@ func (s *Store) GetDependents(_ context.Context, ids ...namer.ModuleID) (map[nam
 
 func (s *Store) GetPolicies(ctx context.Context) ([]*policy.Wrapper, error) {
 	return s.idx.GetPolicies(ctx)
+}
+
+func (s *Store) GetSchemas(ctx context.Context) ([]*schema.Wrapper, error) {
+	return s.idx.GetSchemas(ctx)
 }

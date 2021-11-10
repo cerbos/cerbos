@@ -8,6 +8,8 @@ import (
 	"fmt"
 	"sync"
 
+	"github.com/cerbos/cerbos/internal/schema"
+
 	"github.com/cerbos/cerbos/internal/config"
 	"github.com/cerbos/cerbos/internal/namer"
 	"github.com/cerbos/cerbos/internal/policy"
@@ -81,6 +83,8 @@ type Store interface {
 	GetDependents(context.Context, ...namer.ModuleID) (map[namer.ModuleID][]namer.ModuleID, error)
 	// GetPolicies returns the policies recorded in the store.
 	GetPolicies(context.Context) ([]*policy.Wrapper, error)
+	// GetSchemas returns the schemas recorded in the store.
+	GetSchemas(context.Context) ([]*schema.Wrapper, error)
 }
 
 // MutableStore is a store that allows mutations.

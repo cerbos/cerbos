@@ -19,7 +19,9 @@ import (
 )
 
 const (
-	schemasDir = "_schemas"
+	schemasDir      = "_schemas"
+	IndexTypeSchema = "schema"
+	IndexTypePolicy = "policy"
 )
 
 // BuildError is an error type that contains details about the failures encountered during the index build.
@@ -118,6 +120,7 @@ type indexBuilder struct {
 	executables  map[namer.ModuleID]struct{}
 	modIDToFile  map[namer.ModuleID]string
 	fileToModID  map[string]namer.ModuleID
+	modIdToType  map[namer.ModuleID]string
 	dependents   map[namer.ModuleID]map[namer.ModuleID]struct{}
 	dependencies map[namer.ModuleID]map[namer.ModuleID]struct{}
 	missing      map[namer.ModuleID][]MissingImport
@@ -131,6 +134,7 @@ func newIndexBuilder() *indexBuilder {
 		executables:  make(map[namer.ModuleID]struct{}),
 		modIDToFile:  make(map[namer.ModuleID]string),
 		fileToModID:  make(map[string]namer.ModuleID),
+		modIdToType:  make(map[namer.ModuleID]string),
 		dependents:   make(map[namer.ModuleID]map[namer.ModuleID]struct{}),
 		dependencies: make(map[namer.ModuleID]map[namer.ModuleID]struct{}),
 		missing:      make(map[namer.ModuleID][]MissingImport),
@@ -153,18 +157,16 @@ func (idx *indexBuilder) add(fsys fs.FS, path string) {
 			return
 		}
 
-		/* TODO(oguzhan)
-		if err := schema.Validate(p); err != nil {
-			ib.addLoadFailure(path, err)
+		if err := schema.Validate(s); err != nil {
+			idx.addLoadFailure(path, err)
 			return
 		}
-		*/
 
 		if s.Disabled {
 			idx.addDisabled(path)
 		}
 
-		idx.addSchema(path, schema.Wrap(s, path))
+		idx.addSchema(path, schema.Wrap(s))
 	} else {
 		p := &policyv1.Policy{}
 		if err := util.LoadFromJSONOrYAML(fsys, path, p); err != nil {
@@ -199,6 +201,7 @@ func (idx *indexBuilder) addSchema(file string, s schema.Wrapper) {
 
 	idx.fileToModID[file] = s.ID
 	idx.modIDToFile[s.ID] = file
+	idx.modIdToType[s.ID] = IndexTypeSchema
 	delete(idx.missing, s.ID)
 }
 
@@ -215,6 +218,7 @@ func (idx *indexBuilder) addPolicy(file string, p policy.Wrapper) {
 
 	idx.fileToModID[file] = p.ID
 	idx.modIDToFile[p.ID] = file
+	idx.modIdToType[p.ID] = IndexTypePolicy
 	delete(idx.missing, p.ID)
 
 	if p.Kind != policy.DerivedRolesKindStr {
@@ -271,6 +275,7 @@ func (idx *indexBuilder) build(fsys fs.FS) (*index, error) {
 		executables:  idx.executables,
 		modIDToFile:  idx.modIDToFile,
 		fileToModID:  idx.fileToModID,
+		modIdToType:  idx.modIdToType,
 		dependents:   idx.dependents,
 		dependencies: idx.dependencies,
 	}, nil
