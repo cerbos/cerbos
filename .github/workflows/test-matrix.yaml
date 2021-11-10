@@ -2,12 +2,12 @@
 name: Test Matrix
 on:
   workflow_dispatch:
-  schedule:
-    - cron: '0 23 * * 0,1,2,3,4'
 jobs:
   tests:
     runs-on: ${{ matrix.os }}
     strategy:
+      fail-fast: false
+      max-parallel: 3
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
     steps:
@@ -32,4 +32,6 @@ jobs:
           args: build --config=.goreleaser.yml --rm-dist --snapshot --single-target
 
       - name: Test
-        run: go test -tags=tests -v -race ./...
+        run: |
+          go install -modfile=tools/go.mod gotest.tools/gotestsum
+          gotestsum --rerun-fails --packages="./..." -- -tags=tests -race
