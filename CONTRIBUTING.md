@@ -59,7 +59,7 @@ The `Makefile` automatically installs required build tools using the versions de
 
 Useful `make` targets:
 
-- `make build`: Compile, test and build the Cerbos binaries and container. Binaries will be output to the `dist` directory. The container name is `ghcr.io/cerbos/cerbos:latest`.
+- `make build`: Compile, test and build the Cerbos binaries and container. Binaries will be output to the `dist` directory. The container name would be `ghcr.io/cerbos/cerbos:<VERSION>-prerelease`.
 - `make pre-commit`: Run tests, lint, and generate code and documentation. Run this before submitting a PR to make sure your code is ready to submit.
 - `make dev-server`: Start a Cerbos server 
 - `make docs`: Generate docs and preview in browser.
