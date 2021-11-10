@@ -8,11 +8,18 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/fs"
+	"strings"
 
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
+	schemav1 "github.com/cerbos/cerbos/api/genpb/cerbos/schema/v1"
 	"github.com/cerbos/cerbos/internal/namer"
 	"github.com/cerbos/cerbos/internal/policy"
+	"github.com/cerbos/cerbos/internal/schema"
 	"github.com/cerbos/cerbos/internal/util"
+)
+
+const (
+	schemasDir = "_schemas"
 )
 
 // BuildError is an error type that contains details about the failures encountered during the index build.
@@ -92,31 +99,11 @@ func Build(ctx context.Context, fsys fs.FS, opts ...BuildOpt) (Index, error) {
 			return nil
 		}
 
-		if !util.IsSupportedFileType(d.Name()) {
+		if !util.IsSupportedFileType(d.Name()) || util.IsSupportedTestFile(d.Name()) {
 			return nil
 		}
 
-		if util.IsSupportedTestFile(d.Name()) {
-			return nil
-		}
-
-		p := &policyv1.Policy{}
-		if err := util.LoadFromJSONOrYAML(fsys, path, p); err != nil {
-			ib.addLoadFailure(path, err)
-			return nil
-		}
-
-		if err := policy.Validate(p); err != nil {
-			ib.addLoadFailure(path, err)
-			return nil
-		}
-
-		if p.Disabled {
-			ib.addDisabled(path)
-			return nil
-		}
-
-		ib.addPolicy(path, policy.Wrap(policy.WithMetadata(p, path, nil)))
+		ib.add(fsys, path)
 
 		return nil
 	})
@@ -156,6 +143,63 @@ func (idx *indexBuilder) addLoadFailure(file string, err error) {
 
 func (idx *indexBuilder) addDisabled(file string) {
 	idx.disabled = append(idx.disabled, file)
+}
+
+func (idx *indexBuilder) add(fsys fs.FS, path string) {
+	if strings.HasPrefix(path, schemasDir) {
+		s := &schemav1.Schema{}
+		if err := util.LoadFromJSONOrYAML(fsys, path, s); err != nil {
+			idx.addLoadFailure(path, err)
+			return
+		}
+
+		/* TODO(oguzhan)
+		if err := schema.Validate(p); err != nil {
+			ib.addLoadFailure(path, err)
+			return
+		}
+		*/
+
+		if s.Disabled {
+			idx.addDisabled(path)
+		}
+
+		idx.addSchema(path, schema.Wrap(s, path))
+	} else {
+		p := &policyv1.Policy{}
+		if err := util.LoadFromJSONOrYAML(fsys, path, p); err != nil {
+			idx.addLoadFailure(path, err)
+			return
+		}
+
+		if err := policy.Validate(p); err != nil {
+			idx.addLoadFailure(path, err)
+			return
+		}
+
+		if p.Disabled {
+			idx.addDisabled(path)
+			return
+		}
+
+		idx.addPolicy(path, policy.Wrap(policy.WithMetadata(p, path, nil)))
+	}
+}
+
+func (idx *indexBuilder) addSchema(file string, s schema.Wrapper) {
+	// Is this is a duplicate of another file?
+	if otherFile, ok := idx.modIDToFile[s.ID]; ok && (otherFile != file) {
+		idx.duplicates = append(idx.duplicates, DuplicateDef{
+			File:      file,
+			OtherFile: otherFile,
+		})
+
+		return
+	}
+
+	idx.fileToModID[file] = s.ID
+	idx.modIDToFile[s.ID] = file
+	delete(idx.missing, s.ID)
 }
 
 func (idx *indexBuilder) addPolicy(file string, p policy.Wrapper) {

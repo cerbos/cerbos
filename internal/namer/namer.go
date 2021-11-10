@@ -22,6 +22,7 @@ const (
 	DerivedRolesPrefix      = "cerbos.derived_roles"
 	PrincipalPoliciesPrefix = "cerbos.principal"
 	ResourcePoliciesPrefix  = "cerbos.resource"
+	SchemaPrefix            = "cerbos.schema"
 
 	DefaultVersion = "default"
 )
@@ -127,6 +128,11 @@ func DerivedRolesModuleID(roleSetName string) ModuleID {
 // DerivedRolesSimpleName extracts the simple name from a derived roles FQN.
 func DerivedRolesSimpleName(fqn string) string {
 	return strings.TrimPrefix(fqn, DerivedRolesPrefix+".")
+}
+
+// SchemaFQN returns the fully-qualified module name for the schema with given file name and version.
+func SchemaFQN(fileName, schemaVersion string) string {
+	return fmt.Sprintf("%s.%s.v%s", SchemaPrefix, Sanitize(fileName), Sanitize(schemaVersion))
 }
 
 // Sanitize replaces special characters in the string with underscores.

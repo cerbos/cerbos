@@ -58,10 +58,10 @@ func (m *Schema) Validate() error {
 
 	// no validation rules for Description
 
-	if v, ok := interface{}(m.GetPrincipleSchema()).(interface{ Validate() error }); ok {
+	if v, ok := interface{}(m.GetPrincipalSchema()).(interface{ Validate() error }); ok {
 		if err := v.Validate(); err != nil {
 			return SchemaValidationError{
-				field:  "PrincipleSchema",
+				field:  "PrincipalSchema",
 				reason: "embedded message failed validation",
 				cause:  err,
 			}

@@ -58,8 +58,8 @@ func (m *Schema) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 		i--
 		dAtA[i] = 0x32
 	}
-	if m.PrincipleSchema != nil {
-		size, err := m.PrincipleSchema.MarshalToSizedBufferVT(dAtA[:i])
+	if m.PrincipalSchema != nil {
+		size, err := m.PrincipalSchema.MarshalToSizedBufferVT(dAtA[:i])
 		if err != nil {
 			return 0, err
 		}
@@ -319,8 +319,8 @@ func (m *Schema) SizeVT() (n int) {
 	if l > 0 {
 		n += 1 + l + sov(uint64(l))
 	}
-	if m.PrincipleSchema != nil {
-		l = m.PrincipleSchema.SizeVT()
+	if m.PrincipalSchema != nil {
+		l = m.PrincipalSchema.SizeVT()
 		n += 1 + l + sov(uint64(l))
 	}
 	if m.ResourceSchema != nil {
@@ -577,7 +577,7 @@ func (m *Schema) UnmarshalVT(dAtA []byte) error {
 			iNdEx = postIndex
 		case 5:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field PrincipleSchema", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field PrincipalSchema", wireType)
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
@@ -604,10 +604,10 @@ func (m *Schema) UnmarshalVT(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			if m.PrincipleSchema == nil {
-				m.PrincipleSchema = &JSONSchemaProps{}
+			if m.PrincipalSchema == nil {
+				m.PrincipalSchema = &JSONSchemaProps{}
 			}
-			if err := m.PrincipleSchema.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
+			if err := m.PrincipalSchema.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
 			iNdEx = postIndex
