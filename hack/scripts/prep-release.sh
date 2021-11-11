@@ -34,7 +34,7 @@ update_version() {
 
 set_branch() {
     local BRANCH="$1"
-    sed -i -E "s#branches:.*#branches: [${BRANCH}]#g" "${DOCS_DIR}/antora-playbook.yml"
+    sed -i -E "s#branches:.*#branches: [${BRANCH}, 'v*']#g" "${DOCS_DIR}/antora-playbook.yml"
 }
 
 # Set release version and tag
