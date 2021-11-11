@@ -2,3 +2,4 @@
 - xref:k8s-service.adoc[Kubernetes Service]
 - xref:k8s-sidecar.adoc[Kubernetes Sidecar]
 - xref:systemd.adoc[Systemd Service]
+- xref:serverless-faas.adoc[Serverless/FaaS environments]
