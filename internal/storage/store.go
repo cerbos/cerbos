@@ -113,7 +113,9 @@ type EventKind int
 
 const (
 	EventAddOrUpdatePolicy EventKind = iota
+	EventAddOrUpdateSchema
 	EventDeletePolicy
+	EventDeleteSchema
 	EventNop
 )
 
@@ -128,8 +130,12 @@ func (evt Event) String() string {
 	switch evt.Kind {
 	case EventAddOrUpdatePolicy:
 		kind = "ADD/UPDATE"
+	case EventAddOrUpdateSchema:
+		kind = "ADD/UPDATE-SCHEMA"
 	case EventDeletePolicy:
 		kind = "DELETE"
+	case EventDeleteSchema:
+		kind = "DELETE-SCHEMA"
 	case EventNop:
 		kind = "NOP"
 	default:

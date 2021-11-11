@@ -102,7 +102,7 @@ func TestBuildIndexWithDisk(t *testing.T) {
 		rp := policy.Wrap(test.GenResourcePolicy(test.PrefixAndSuffix("x", "x")))
 		path := "x.yaml"
 
-		evt, err := idx.AddOrUpdate(Entry{File: path, Policy: rp})
+		evt, err := idx.AddOrUpdate(Entry{File: path, Policy: rp, FileType: FileTypePolicy})
 		require.NoError(t, err)
 		require.Equal(t, rp.ID, evt.PolicyID)
 		require.Equal(t, storage.EventAddOrUpdatePolicy, evt.Kind)

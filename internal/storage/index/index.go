@@ -22,13 +22,17 @@ import (
 var (
 	// ErrDuplicatePolicy signals that there are duplicate policy definitions.
 	ErrDuplicatePolicy = errors.New("duplicate policy definitions")
+	// ErrDuplicateSchema signals that there are duplicate schema definitions.
+	ErrDuplicateSchema = errors.New("duplicate schema definitions")
 	// ErrInvalidEntry signals that the index entry is invalid.
 	ErrInvalidEntry = errors.New("invalid index entry")
 )
 
 type Entry struct {
-	File   string
-	Policy policy.Wrapper
+	File     string
+	FileType FileType
+	Policy   policy.Wrapper
+	Schema   schema.Wrapper
 }
 
 type Index interface {
@@ -49,7 +53,7 @@ type index struct {
 	executables  map[namer.ModuleID]struct{}
 	modIDToFile  map[namer.ModuleID]string
 	fileToModID  map[string]namer.ModuleID
-	modIdToType  map[namer.ModuleID]string
+	modIdToType  map[namer.ModuleID]FileType
 	dependents   map[namer.ModuleID]map[namer.ModuleID]struct{}
 	dependencies map[namer.ModuleID]map[namer.ModuleID]struct{}
 }
@@ -181,11 +185,7 @@ func (idx *index) GetDependents(ids ...namer.ModuleID) (map[namer.ModuleID][]nam
 	return results, nil
 }
 
-func (idx *index) AddOrUpdate(entry Entry) (evt storage.Event, err error) {
-	if entry.Policy.Policy == nil {
-		return storage.Event{Kind: storage.EventNop}, ErrInvalidEntry
-	}
-
+func (idx *index) addOrUpdatePolicy(entry Entry) (evt storage.Event, err error) {
 	modID := entry.Policy.ID
 
 	evt = storage.NewEvent(storage.EventAddOrUpdatePolicy, modID)
@@ -216,6 +216,7 @@ func (idx *index) AddOrUpdate(entry Entry) (evt storage.Event, err error) {
 	// add to index
 	idx.fileToModID[entry.File] = modID
 	idx.modIDToFile[modID] = entry.File
+	idx.modIdToType[modID] = FileTypePolicy
 
 	if entry.Policy.Kind != policy.DerivedRolesKindStr {
 		idx.executables[modID] = struct{}{}
@@ -223,6 +224,58 @@ func (idx *index) AddOrUpdate(entry Entry) (evt storage.Event, err error) {
 
 	for _, dep := range entry.Policy.Dependencies {
 		idx.addDep(modID, dep)
+	}
+
+	return evt, nil
+}
+
+func (idx *index) addOrUpdateSchema(entry Entry) (evt storage.Event, err error) {
+	modID := entry.Schema.ID
+
+	evt = storage.NewEvent(storage.EventAddOrUpdateSchema, modID)
+
+	idx.mu.Lock()
+	defer idx.mu.Unlock()
+
+	// Is this is a duplicate of another file?
+	if otherFile, ok := idx.modIDToFile[modID]; ok && otherFile != entry.File {
+		return evt, fmt.Errorf("schema is already defined in %s: %w", otherFile, ErrDuplicateSchema)
+	}
+
+	// TODO(oguzhan): check dependencies
+	// if this is an existing file, clear its state first
+	if _, ok := idx.fileToModID[entry.File]; ok {
+		// go through the dependencies and remove self from the dependents list of each dependency.
+		if deps, ok := idx.dependencies[modID]; ok {
+			for dep := range deps {
+				if refs, ok := idx.dependents[dep]; ok {
+					delete(refs, modID)
+				}
+			}
+		}
+
+		// remove the dependencies set because it could have changed.
+		delete(idx.dependencies, modID)
+	}
+
+	// add to index
+	idx.fileToModID[entry.File] = modID
+	idx.modIDToFile[modID] = entry.File
+	idx.modIdToType[modID] = FileTypeSchema
+
+	return evt, nil
+}
+
+func (idx *index) AddOrUpdate(entry Entry) (evt storage.Event, err error) {
+	if (entry.FileType == FileTypePolicy && entry.Policy.Policy == nil) ||
+		(entry.FileType == FileTypeSchema && entry.Schema.Schema == nil) {
+		return storage.Event{Kind: storage.EventNop}, ErrInvalidEntry
+	}
+
+	if entry.FileType == FileTypePolicy {
+		evt, err = idx.addOrUpdatePolicy(entry)
+	} else if entry.FileType == FileTypeSchema {
+		evt, err = idx.addOrUpdatePolicy(entry)
 	}
 
 	return evt, nil
@@ -357,7 +410,7 @@ func (idx *index) GetPolicies(_ context.Context) ([]*policy.Wrapper, error) {
 
 	entries := make([]*policy.Wrapper, 0)
 	for _, modID := range idx.fileToModID {
-		if idx.modIdToType[modID] != IndexTypePolicy {
+		if idx.modIdToType[modID] != FileTypePolicy {
 			continue
 		}
 		pol, err := idx.loadPolicy(modID)
@@ -378,7 +431,7 @@ func (idx *index) GetSchemas(_ context.Context) ([]*schema.Wrapper, error) {
 
 	entries := make([]*schema.Wrapper, 0)
 	for _, modID := range idx.fileToModID {
-		if idx.modIdToType[modID] != IndexTypeSchema {
+		if idx.modIdToType[modID] != FileTypeSchema {
 			continue
 		}
 		sch, err := idx.loadSchema(modID)

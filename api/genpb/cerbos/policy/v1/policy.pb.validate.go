@@ -321,6 +321,8 @@ func (m *ResourcePolicy) Validate() error {
 		}
 	}
 
+	// no validation rules for SchemaVersion
+
 	return nil
 }
 
@@ -612,6 +614,8 @@ func (m *PrincipalPolicy) Validate() error {
 			reason: "value does not match regex pattern \"^([[:alpha:]][[:word:]\\\\-]+(\\\\.[[:alpha:]][[:word:]\\\\-]*)*)*$\"",
 		}
 	}
+
+	// no validation rules for SchemaVersion
 
 	return nil
 }

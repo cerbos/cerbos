@@ -19,9 +19,14 @@ import (
 )
 
 const (
-	schemasDir      = "_schemas"
-	IndexTypeSchema = "schema"
-	IndexTypePolicy = "policy"
+	SchemasDir = "_schemas"
+)
+
+type FileType string
+
+const (
+	FileTypePolicy = "policy"
+	FileTypeSchema = "schema"
 )
 
 // BuildError is an error type that contains details about the failures encountered during the index build.
@@ -120,7 +125,7 @@ type indexBuilder struct {
 	executables  map[namer.ModuleID]struct{}
 	modIDToFile  map[namer.ModuleID]string
 	fileToModID  map[string]namer.ModuleID
-	modIdToType  map[namer.ModuleID]string
+	modIdToType  map[namer.ModuleID]FileType
 	dependents   map[namer.ModuleID]map[namer.ModuleID]struct{}
 	dependencies map[namer.ModuleID]map[namer.ModuleID]struct{}
 	missing      map[namer.ModuleID][]MissingImport
@@ -134,7 +139,7 @@ func newIndexBuilder() *indexBuilder {
 		executables:  make(map[namer.ModuleID]struct{}),
 		modIDToFile:  make(map[namer.ModuleID]string),
 		fileToModID:  make(map[string]namer.ModuleID),
-		modIdToType:  make(map[namer.ModuleID]string),
+		modIdToType:  make(map[namer.ModuleID]FileType),
 		dependents:   make(map[namer.ModuleID]map[namer.ModuleID]struct{}),
 		dependencies: make(map[namer.ModuleID]map[namer.ModuleID]struct{}),
 		missing:      make(map[namer.ModuleID][]MissingImport),
@@ -150,7 +155,7 @@ func (idx *indexBuilder) addDisabled(file string) {
 }
 
 func (idx *indexBuilder) add(fsys fs.FS, path string) {
-	if strings.HasPrefix(path, schemasDir) {
+	if strings.HasPrefix(path, SchemasDir) {
 		s := &schemav1.Schema{}
 		if err := util.LoadFromJSONOrYAML(fsys, path, s); err != nil {
 			idx.addLoadFailure(path, err)
@@ -201,7 +206,7 @@ func (idx *indexBuilder) addSchema(file string, s schema.Wrapper) {
 
 	idx.fileToModID[file] = s.ID
 	idx.modIDToFile[s.ID] = file
-	idx.modIdToType[s.ID] = IndexTypeSchema
+	idx.modIdToType[s.ID] = FileTypeSchema
 	delete(idx.missing, s.ID)
 }
 
@@ -218,7 +223,7 @@ func (idx *indexBuilder) addPolicy(file string, p policy.Wrapper) {
 
 	idx.fileToModID[file] = p.ID
 	idx.modIDToFile[p.ID] = file
-	idx.modIdToType[p.ID] = IndexTypePolicy
+	idx.modIdToType[p.ID] = FileTypePolicy
 	delete(idx.missing, p.ID)
 
 	if p.Kind != policy.DerivedRolesKindStr {

@@ -1976,6 +1976,9 @@
         },
         "scope": {
           "type": "string"
+        },
+        "schemaVersion": {
+          "type": "string"
         }
       }
     },
@@ -2057,6 +2060,9 @@
           }
         },
         "scope": {
+          "type": "string"
+        },
+        "schemaVersion": {
           "type": "string"
         }
       }

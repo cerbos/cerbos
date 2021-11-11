@@ -7,8 +7,11 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	schemav1 "github.com/cerbos/cerbos/api/genpb/cerbos/schema/v1"
+	"github.com/cerbos/cerbos/internal/schema"
 	"os"
 	"path/filepath"
+	"strings"
 	"sync"
 	"time"
 
@@ -138,16 +141,33 @@ func (dw *dirWatch) triggerUpdate() {
 			}
 
 			dw.log.Debugw("Detected file update", "file", f)
-			p, err := readPolicy(fullPath)
-			if err != nil {
-				dw.log.Warnw("Failed to read policy from file", "file", f, "error", err)
-				continue
-			}
 
-			evt, err := dw.idx.AddOrUpdate(index.Entry{File: f, Policy: policy.Wrap(p)})
-			if err != nil {
-				dw.log.Warnw("Failed to add file to index", "file", f, "error", err)
-				continue
+			var evt storage.Event
+
+			if strings.HasPrefix(f, index.SchemasDir) {
+				s, err := readSchema(fullPath)
+				if err != nil {
+					dw.log.Warnw("Failed to read schema from file", "file", f, "error", err)
+					continue
+				}
+
+				evt, err = dw.idx.AddOrUpdate(index.Entry{File: f, FileType: index.FileTypeSchema, Schema: schema.Wrap(s)})
+				if err != nil {
+					dw.log.Warnw("Failed to add file to index", "file", f, "error", err)
+					continue
+				}
+			} else {
+				p, err := readPolicy(fullPath)
+				if err != nil {
+					dw.log.Warnw("Failed to read policy from file", "file", f, "error", err)
+					continue
+				}
+
+				evt, err = dw.idx.AddOrUpdate(index.Entry{File: f, FileType: index.FileTypePolicy, Policy: policy.Wrap(p)})
+				if err != nil {
+					dw.log.Warnw("Failed to add file to index", "file", f, "error", err)
+					continue
+				}
 			}
 
 			dw.NotifySubscribers(evt)
@@ -165,4 +185,15 @@ func readPolicy(path string) (*policyv1.Policy, error) {
 	defer f.Close()
 
 	return policy.ReadPolicy(f)
+}
+
+func readSchema(path string) (*schemav1.Schema, error) {
+	f, err := os.Open(path)
+	if err != nil {
+		return nil, fmt.Errorf("failed to open %s: %w", path, err)
+	}
+
+	defer f.Close()
+
+	return schema.ReadSchema(f)
 }

@@ -232,7 +232,7 @@ func (s *Store) updateIndex(ctx context.Context) error {
 		if err != nil {
 			return err
 		}
-		entry := index.Entry{File: f, Policy: policy.Wrap(p)}
+		entry := index.Entry{File: f, FileType: index.FileTypePolicy, Policy: policy.Wrap(p)}
 		event, err = s.idx.AddOrUpdate(entry)
 		if err != nil {
 			return err

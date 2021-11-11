@@ -7,6 +7,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	schemav1 "github.com/cerbos/cerbos/api/genpb/cerbos/schema/v1"
 	"github.com/cerbos/cerbos/internal/schema"
 	"io"
 	"os"
@@ -333,6 +334,7 @@ func (s *Store) getTreeForHash(hash plumbing.Hash) (*object.Tree, error) {
 	return commit.Tree()
 }
 
+// TODO(oguzhan): handle events for git store
 func (s *Store) updateIndex(ctx context.Context) error {
 	s.log.Debug("Checking for new commits")
 
@@ -394,7 +396,19 @@ func (s *Store) applyIndexUpdate(ce object.ChangeEntry, eventKind storage.EventK
 		}
 
 		idxFn = s.idx.AddOrUpdate
+		entry.FileType = index.FileTypePolicy
 		entry.Policy = policy.Wrap(p)
+	} else if eventKind == storage.EventAddOrUpdateSchema {
+		s.log.Debugw("Reading schema", "path", ce.Name)
+		sch, err := s.readSchemaFromBlob(ce.TreeEntry.Hash)
+		if err != nil {
+			s.log.Errorw("Failed to read schema", "path", ce.Name, "error", err)
+			return err
+		}
+
+		idxFn = s.idx.AddOrUpdate
+		entry.FileType = index.FileTypeSchema
+		entry.Schema = schema.Wrap(sch)
 	}
 
 	evt, err := idxFn(entry)
@@ -436,6 +450,27 @@ func (s *Store) readPolicyFromBlob(hash plumbing.Hash) (*policyv1.Policy, error)
 	p, err := policy.ReadPolicy(reader)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read policy from blob %s: %w", hash, err)
+	}
+
+	return p, nil
+}
+
+func (s *Store) readSchemaFromBlob(hash plumbing.Hash) (*schemav1.Schema, error) {
+	blob, err := s.repo.BlobObject(hash)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get blob for %s: %w", hash, err)
+	}
+
+	reader, err := blob.Reader()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get reader for blob %s: %w", hash, err)
+	}
+
+	defer reader.Close()
+
+	p, err := schema.ReadSchema(reader)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read schema from blob %s: %w", hash, err)
 	}
 
 	return p, nil
