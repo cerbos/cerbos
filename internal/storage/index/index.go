@@ -305,7 +305,12 @@ func (idx *index) Delete(entry Entry) (storage.Event, error) {
 		return storage.Event{Kind: storage.EventNop}, nil
 	}
 
-	evt := storage.NewEvent(storage.EventDeletePolicy, modID)
+	var evt storage.Event
+	if entry.FileType == FileTypePolicy {
+		evt = storage.NewEvent(storage.EventDeletePolicy, modID)
+	} else if entry.FileType == FileTypeSchema {
+		evt = storage.NewEvent(storage.EventDeleteSchema, modID)
+	}
 
 	// go through the dependencies and remove self from the dependents list for each dependency.
 	if deps, ok := idx.dependencies[modID]; ok {
@@ -318,6 +323,7 @@ func (idx *index) Delete(entry Entry) (storage.Event, error) {
 
 	delete(idx.fileToModID, entry.File)
 	delete(idx.modIDToFile, modID)
+	delete(idx.modIdToType, modID)
 	delete(idx.dependencies, modID)
 	delete(idx.executables, modID)
 

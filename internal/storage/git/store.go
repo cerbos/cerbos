@@ -358,6 +358,7 @@ func (s *Store) updateIndex(ctx context.Context) error {
 				return err
 			}
 		case c.To.Name == "" && s.inPolicyDir(c.From.Name): // File deleted
+			// TODO(oguzhan): handle EventDeleteSchema
 			if err := s.applyIndexUpdate(c.From, storage.EventDeletePolicy); err != nil {
 				return err
 			}

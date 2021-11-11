@@ -129,8 +129,16 @@ func (dw *dirWatch) triggerUpdate() {
 			fullPath := filepath.Join(dw.dir, f)
 
 			if _, err := os.Stat(fullPath); errors.Is(err, os.ErrNotExist) {
+				isSchema := strings.HasPrefix(f, index.SchemasDir)
+
 				dw.log.Debugw("Detected file removal", "file", f)
-				evt, err := dw.idx.Delete(index.Entry{File: f})
+				var evt storage.Event
+				if isSchema {
+					evt, err = dw.idx.Delete(index.Entry{File: f, FileType: index.FileTypeSchema})
+				} else {
+					evt, err = dw.idx.Delete(index.Entry{File: f, FileType: index.FileTypePolicy})
+				}
+
 				if err != nil {
 					dw.log.Warnw("Failed to remove file from index", "file", f, "error", err)
 					continue

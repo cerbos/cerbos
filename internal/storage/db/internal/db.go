@@ -222,6 +222,7 @@ func (s *dbStorage) Delete(ctx context.Context, ids ...namer.ModuleID) error {
 			return err
 		}
 
+		// TODO(oguzhan): handle EventDeleteSchema
 		s.NotifySubscribers(storage.Event{Kind: storage.EventDeletePolicy, PolicyID: ids[0]})
 		return nil
 	}
@@ -231,6 +232,7 @@ func (s *dbStorage) Delete(ctx context.Context, ids ...namer.ModuleID) error {
 
 	for i, id := range ids {
 		idList[i] = id
+		// TODO(oguzhan): handle EventDeleteSchema
 		events[i] = storage.Event{Kind: storage.EventDeletePolicy, PolicyID: id}
 	}
 	_, err := s.db.Delete(PolicyTbl).Prepared(true).

@@ -58,7 +58,7 @@ func (sm *SubscriptionManager) distributeEvent(evt Event) {
 	}
 }
 
-// Notify sends the events to all subscribers.
+// NotifySubscribers sends the events to all subscribers.
 func (sm *SubscriptionManager) NotifySubscribers(events ...Event) {
 	for _, evt := range events {
 		if evt.Kind == EventNop {
