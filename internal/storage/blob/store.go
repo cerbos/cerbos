@@ -206,6 +206,7 @@ func (s *Store) clone(ctx context.Context) (*CloneResult, error) {
 	return s.cloner.Clone(ctx)
 }
 
+// TODO(oguzhan): handle events for blob store
 func (s *Store) updateIndex(ctx context.Context) error {
 	s.log.Debug("Checking for updates")
 

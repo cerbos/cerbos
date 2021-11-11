@@ -275,7 +275,7 @@ func (idx *index) AddOrUpdate(entry Entry) (evt storage.Event, err error) {
 	if entry.FileType == FileTypePolicy {
 		evt, err = idx.addOrUpdatePolicy(entry)
 	} else if entry.FileType == FileTypeSchema {
-		evt, err = idx.addOrUpdatePolicy(entry)
+		evt, err = idx.addOrUpdateSchema(entry)
 	}
 
 	return evt, nil
