@@ -1,0 +1,107 @@
+---
+apiVersion: api.cerbos.dev/v1
+resourcePolicy:
+  version: "default"
+
+  importDerivedRoles:
+    - my_derived_roles
+
+  resource: leave_request
+  rules:
+    - actions: ["*"]
+      effect: EFFECT_ALLOW
+      roles:
+        - admin
+
+    - actions: ["create", "view", "submit"]
+      derivedRoles:
+        - employee_that_owns_the_record
+      effect: EFFECT_ALLOW
+
+    - actions: ["view"]
+      derivedRoles:
+        - direct_manager
+      effect: EFFECT_ALLOW
+      condition:
+        match:
+          expr: request.resource.attr.status == "PENDING_APPROVAL"
+
+    - actions: ["approve"]
+      derivedRoles:
+        - direct_manager
+      effect: EFFECT_ALLOW
+      condition:
+        match:
+          all:
+            of:
+              - expr: request.resource.attr.status == "PENDING_APPROVAL"
+              - expr: request.resource.attr.owner != request.principal.id
+
+    - actions: ["view"]
+      derivedRoles:
+        - any_employee
+      effect: EFFECT_ALLOW
+      condition:
+        match:
+          expr: request.resource.attr.status == "APPROVED"
+---
+apiVersion: "api.cerbos.dev/v1"
+derived_roles:
+  name: my_derived_roles
+  definitions:
+    - name: admin
+      parentRoles: ["admin"]
+
+    - name: tester
+      parentRoles: ["dev", "qa"]
+
+    - name: employee_that_owns_the_record
+      parentRoles: ["employee"]
+      condition:
+        match:
+          expr: request.resource.attr.owner == request.principal.id
+
+    - name: any_employee
+      parentRoles: ["employee"]
+
+    - name: direct_manager
+      parentRoles: ["manager"]
+      condition:
+        match:
+          any:
+            of:
+              - expr: request.resource.attr.geography == request.principal.attr.geography
+              - expr: request.resource.attr.geography in request.principal.attr.managed_geographies
+---
+requestId: '123123'
+action: view
+principal:
+  id: maggie
+  roles: ["employee", "manager"]
+  attr:
+    department: marketing
+    geography: GB
+    managed_geographies: ["GB", "US"]
+    team: design
+resource:
+  kind: leave_request
+  policyVersion: default
+---
+requestId: '123123'
+action: view
+filter:
+  or:
+    - eq:
+        field: owner
+        value: maggie
+    - and:
+        - or:
+          - eq:
+              field: R.attr.geography
+              value: GB
+          - in:
+              field: R.attr.georgraphy
+              value: ["GB", "US"]
+        - eq:
+            field: R.attr.status
+            value: PENDING_APPROVAL
