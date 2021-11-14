@@ -631,6 +631,40 @@
         ]
       }
     },
+    "/api/resources_query_plan": {
+      "post": {
+        "summary": "Resources query plan",
+        "description": "Resources query plan",
+        "operationId": "CerbosService_ResourcesQueryPlan",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1ResourcesQueryPlanResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/v1ResourcesQueryPlanRequest"
+            }
+          }
+        ],
+        "tags": [
+          "CerbosService"
+        ]
+      }
+    },
     "/api/server_info": {
       "get": {
         "summary": "Get server information",
@@ -755,6 +789,20 @@
         }
       },
       "description": "Metadata about request evaluation."
+    },
+    "ExpressionOperand": {
+      "type": "object",
+      "properties": {
+        "value": {
+          "type": "object"
+        },
+        "expression": {
+          "$ref": "#/definitions/ResourcesQueryPlanResponseExpression"
+        },
+        "variable": {
+          "type": "string"
+        }
+      }
     },
     "ListAuditLogEntriesRequestKind": {
       "type": "string",
@@ -966,6 +1014,22 @@
           "type": "string"
         }
       }
+    },
+    "ResourcesQueryPlanResponseExpression": {
+      "type": "object",
+      "properties": {
+        "operator": {
+          "type": "string",
+          "description": "Operator"
+        },
+        "operands": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ExpressionOperand"
+          }
+        }
+      },
+      "description": "CEL expression"
     },
     "SortOptionsColumn": {
       "type": "string",
@@ -2085,6 +2149,85 @@
         "kind",
         "instances"
       ]
+    },
+    "v1ResourcesQueryPlanRequest": {
+      "type": "object",
+      "properties": {
+        "requestId": {
+          "type": "string",
+          "example": "c2db17b8-4f9f-4fb1-acfd-9162a02be42b",
+          "description": "Optional application-specific ID useful for correlating logs for analysis."
+        },
+        "action": {
+          "type": "string",
+          "example": "view:public",
+          "description": "Action to be applied to each resource in the list.",
+          "required": [
+            "action"
+          ]
+        },
+        "principal": {
+          "$ref": "#/definitions/v1Principal"
+        },
+        "resourceKind": {
+          "type": "string",
+          "example": "album:object",
+          "description": "Resource kind.",
+          "pattern": "^[[:alpha:]][[:word:]\\@\\.\\-]*(\\:[[:alpha:]][[:word:]\\@\\.\\-]*)*$",
+          "required": [
+            "resource_kind"
+          ]
+        },
+        "policyVersion": {
+          "type": "string",
+          "example": "default",
+          "description": "The policy version to use to evaluate this request. If not specified, will default to the server-configured default version.",
+          "pattern": "^[[:word:]]*$"
+        },
+        "auxData": {
+          "$ref": "#/definitions/cerbosrequestv1AuxData"
+        }
+      },
+      "description": "PDP Resources Query Plan Request",
+      "required": [
+        "action",
+        "resourceKind"
+      ]
+    },
+    "v1ResourcesQueryPlanResponse": {
+      "type": "object",
+      "properties": {
+        "requestId": {
+          "type": "string",
+          "example": "c2db17b8-4f9f-4fb1-acfd-9162a02be42b",
+          "description": "Request ID provided in the request."
+        },
+        "action": {
+          "type": "string",
+          "example": "view:public",
+          "description": "Action"
+        },
+        "resourceKind": {
+          "type": "string",
+          "example": "album:object",
+          "description": "Resource kind.",
+          "pattern": "^[[:alpha:]][[:word:]\\@\\.\\-]*(\\:[[:alpha:]][[:word:]\\@\\.\\-]*)*$"
+        },
+        "policyVersion": {
+          "type": "string",
+          "example": "default",
+          "description": "The policy version."
+        },
+        "filter": {
+          "$ref": "#/definitions/ExpressionOperand",
+          "description": "Filter"
+        },
+        "filterDebug": {
+          "type": "string",
+          "description": "Filter textual representation for debugging purposes."
+        }
+      },
+      "description": "Resources query plan response for a set of resources."
     },
     "v1RoleDef": {
       "type": "object",

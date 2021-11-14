@@ -41,6 +41,18 @@ func NewCerbosService(eng *engine.Engine, auxData *auxdata.AuxData) *CerbosServi
 	}
 }
 
+func (cs *CerbosService) ResourcesQueryPlan(ctx context.Context, request *requestv1.ResourcesQueryPlanRequest) (*responsev1.ResourcesQueryPlanResponse, error) {
+	log := ctxzap.Extract(ctx)
+
+	response, err := cs.eng.ResourcesQueryPlan(logging.ToContext(ctx, log), request)
+	if err != nil {
+		log.Error("Resources query plan request failed", zap.Error(err))
+		return nil, status.Errorf(codes.Internal, "Resources query plan request failed")
+	}
+
+	return response, nil
+}
+
 func (cs *CerbosService) CheckResourceSet(ctx context.Context, req *requestv1.CheckResourceSetRequest) (*responsev1.CheckResourceSetResponse, error) {
 	log := ctxzap.Extract(ctx)
 

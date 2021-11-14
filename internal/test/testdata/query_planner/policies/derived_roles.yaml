@@ -5,6 +5,12 @@ variables:
 derivedRoles:
   name: beta
   definitions:
+    - name: owner
+      parentRoles: ["user"]
+      condition:
+        match:
+          expr: request.resource.attr.owner == request.principal.id
+
     - name: any_employee
       parentRoles: ["employee"]
 
@@ -12,7 +18,7 @@ derivedRoles:
       parentRoles: ["manager"]
       condition:
         match:
-          all:
+          any:
             of:
               - expr: V.same_geography
-              - expr: request.resource.attr.geography == request.principal.attr.managed_geographies
+              - expr: request.resource.attr.geography in request.principal.attr.managed_geographies

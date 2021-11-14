@@ -21,6 +21,8 @@ import (
 	auditv1 "github.com/cerbos/cerbos/api/genpb/cerbos/audit/v1"
 	effectv1 "github.com/cerbos/cerbos/api/genpb/cerbos/effect/v1"
 	enginev1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
+	requestv1 "github.com/cerbos/cerbos/api/genpb/cerbos/request/v1"
+	responsev1 "github.com/cerbos/cerbos/api/genpb/cerbos/response/v1"
 	schemav1 "github.com/cerbos/cerbos/api/genpb/cerbos/schema/v1"
 	"github.com/cerbos/cerbos/internal/audit"
 	"github.com/cerbos/cerbos/internal/compile"
@@ -261,6 +263,65 @@ func (engine *Engine) checkParallel(ctx context.Context, inputs []*enginev1.Chec
 	return outputs, nil
 }
 
+func (engine *Engine) ResourcesQueryPlan(ctx context.Context, input *requestv1.ResourcesQueryPlanRequest) (*responsev1.ResourcesQueryPlanResponse, error) {
+	// exit early if the context is cancelled
+	if err := ctx.Err(); err != nil {
+		return nil, err
+	}
+
+	checkOpts := newCheckOptions(ctx)
+
+	// get the principal policy check
+	ppName, ppVersion := engine.policyAttr(input.Principal.Id, input.Principal.PolicyVersion)
+	policyEvaluator, err := engine.getPrincipalPolicyEvaluator(ctx, ppName, ppVersion, checkOpts)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get check for [%s.%s]: %w", ppName, ppVersion, err)
+	}
+
+	var plan *enginev1.ResourcesQueryPlanOutput
+	if policyEvaluator != nil {
+		plan, err = policyEvaluator.EvaluateResourcesQueryPlan(ctx, input)
+		if err != nil {
+			return nil, err
+		}
+	}
+	if plan == nil {
+		// get the resource policy check
+		rpName, rpVersion := engine.policyAttr(input.ResourceKind, input.PolicyVersion)
+		policyEvaluator, err = engine.getResourcePolicyEvaluator(ctx, rpName, rpVersion, checkOpts)
+		if err != nil {
+			return nil, fmt.Errorf("failed to get check for [%s.%s]: %w", rpName, rpVersion, err)
+		}
+		if policyEvaluator != nil {
+			plan, err = policyEvaluator.EvaluateResourcesQueryPlan(ctx, input)
+			if err != nil {
+				return nil, err
+			}
+		}
+	}
+
+	response := &responsev1.ResourcesQueryPlanResponse{
+		RequestId:     input.RequestId,
+		Action:        input.Action,
+		ResourceKind:  input.ResourceKind,
+		PolicyVersion: input.PolicyVersion,
+	}
+
+	if plan != nil {
+		response.Filter = new(responsev1.ResourcesQueryPlanResponse_Expression_Operand)
+		err = convert(plan.Filter, response.Filter)
+		if err != nil {
+			return nil, err
+		}
+		response.FilterDebug, err = String(plan.Filter)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return response, nil
+}
+
 func (engine *Engine) evaluate(ctx context.Context, input *enginev1.CheckInput, checkOpts *checkOptions) (*enginev1.CheckOutput, error) {
 	ctx, span := tracing.StartSpan(ctx, "engine.Evaluate")
 	defer span.End()
@@ -441,7 +502,7 @@ type evaluationResult struct {
 }
 
 // merge the results by only updating the actions that have a no_match effect.
-func (er *evaluationResult) merge(res *EvalResult) bool {
+func (er *evaluationResult) merge(res *PolicyEvalResult) bool {
 	hasNoMatches := false
 
 	if er.effects == nil {

@@ -7,6 +7,8 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
+	requestv1 "github.com/cerbos/cerbos/api/genpb/cerbos/request/v1"
 	"path/filepath"
 	"testing"
 
@@ -15,7 +17,6 @@ import (
 	"google.golang.org/protobuf/testing/protocmp"
 
 	enginev1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
-	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
 	privatev1 "github.com/cerbos/cerbos/api/genpb/cerbos/private/v1"
 	schemav1 "github.com/cerbos/cerbos/api/genpb/cerbos/schema/v1"
 	"github.com/cerbos/cerbos/internal/audit"
@@ -161,12 +162,14 @@ func runBenchmarks(b *testing.B, eng *Engine, testCases []test.Case) {
 type param struct {
 	enableAuditLog    bool
 	schemaEnforcement schema.Enforcement
+	subDir            string
 }
 
 func mkEngine(tb testing.TB, p param) (*Engine, context.CancelFunc) {
-	tb.Helper()
-
-	dir := test.PathToDir(tb, "store")
+	if p.subDir == "" {
+		p.subDir = "store"
+	}
+	dir := test.PathToDir(tb, p.subDir)
 
 	ctx, cancelFunc := context.WithCancel(context.Background())
 
@@ -231,4 +234,45 @@ func readCELTestCase(t *testing.T, data []byte) *privatev1.CelTestCase {
 	require.NoError(t, util.ReadJSONOrYAML(bytes.NewReader(data), tc))
 
 	return tc
+}
+
+func readQPTestSuite(t *testing.T, data []byte) *privatev1.QueryPlannerTestSuite {
+	t.Helper()
+
+	tc := &privatev1.QueryPlannerTestSuite{}
+	require.NoError(t, util.ReadJSONOrYAML(bytes.NewReader(data), tc))
+
+	return tc
+}
+
+func TestQueryPlan(t *testing.T) {
+	eng, cancelFunc := mkEngine(t, param{subDir: "query_planner/policies"})
+	defer cancelFunc()
+
+	suites := test.LoadTestCases(t, "query_planner/suite")
+	for _, suite := range suites {
+		s := suite
+		t.Run(s.Name, func(t *testing.T) {
+			ts := readQPTestSuite(t, s.Input)
+			for _, tt := range ts.Tests {
+				t.Run(tt.Action, func(t *testing.T) {
+					is := require.New(t)
+					request := &requestv1.ResourcesQueryPlanRequest{
+						RequestId:     "requestId",
+						Action:        tt.Action,
+						Principal:     ts.Principal,
+						PolicyVersion: tt.PolicyVersion,
+						ResourceKind:  tt.ResourceKind,
+					}
+
+					response, err := eng.ResourcesQueryPlan(context.Background(), request)
+					is.NoError(err)
+					is.NotNil(response)
+
+					is.Empty(cmp.Diff(tt.Want, response.Filter, protocmp.Transform()))
+					t.Log(response.FilterDebug)
+				})
+			}
+		})
+	}
 }

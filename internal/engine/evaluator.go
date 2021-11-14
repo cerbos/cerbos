@@ -16,6 +16,7 @@ import (
 
 	effectv1 "github.com/cerbos/cerbos/api/genpb/cerbos/effect/v1"
 	enginev1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
+	requestv1 "github.com/cerbos/cerbos/api/genpb/cerbos/request/v1"
 	runtimev1 "github.com/cerbos/cerbos/api/genpb/cerbos/runtime/v1"
 	schemav1 "github.com/cerbos/cerbos/api/genpb/cerbos/schema/v1"
 	"github.com/cerbos/cerbos/internal/conditions"
@@ -30,7 +31,8 @@ var (
 )
 
 type Evaluator interface {
-	Evaluate(context.Context, *enginev1.CheckInput) (*EvalResult, error)
+	Evaluate(context.Context, *enginev1.CheckInput) (*PolicyEvalResult, error)
+	EvaluateResourcesQueryPlan(ctx context.Context, request *requestv1.ResourcesQueryPlanRequest) (*enginev1.ResourcesQueryPlanOutput, error)
 }
 
 func NewEvaluator(rps *runtimev1.RunnablePolicySet, t *tracer, schemaMgr schema.Manager) Evaluator {
@@ -46,7 +48,11 @@ func NewEvaluator(rps *runtimev1.RunnablePolicySet, t *tracer, schemaMgr schema.
 
 type noopEvaluator struct{}
 
-func (noopEvaluator) Evaluate(_ context.Context, _ *enginev1.CheckInput) (*EvalResult, error) {
+func (e noopEvaluator) EvaluateResourcesQueryPlan(ctx context.Context, request *requestv1.ResourcesQueryPlanRequest) (*enginev1.ResourcesQueryPlanOutput, error) {
+	return nil, ErrPolicyNotExecutable
+}
+
+func (noopEvaluator) Evaluate(_ context.Context, _ *enginev1.CheckInput) (*PolicyEvalResult, error) {
 	return nil, ErrPolicyNotExecutable
 }
 
@@ -56,7 +62,7 @@ type resourcePolicyEvaluator struct {
 	*tracer
 }
 
-func (rpe *resourcePolicyEvaluator) Evaluate(ctx context.Context, input *enginev1.CheckInput) (*EvalResult, error) {
+func (rpe *resourcePolicyEvaluator) Evaluate(ctx context.Context, input *enginev1.CheckInput) (*PolicyEvalResult, error) {
 	_, span := tracing.StartSpan(ctx, "resource_policy.Evaluate")
 	span.SetAttributes(tracing.PolicyFQN(rpe.policy.Meta.Fqn))
 	defer span.End()
@@ -166,7 +172,7 @@ type principalPolicyEvaluator struct {
 	*tracer
 }
 
-func (ppe *principalPolicyEvaluator) Evaluate(ctx context.Context, input *enginev1.CheckInput) (*EvalResult, error) {
+func (ppe *principalPolicyEvaluator) Evaluate(ctx context.Context, input *enginev1.CheckInput) (*PolicyEvalResult, error) {
 	_, span := tracing.StartSpan(ctx, "principal_policy.Evaluate")
 	span.SetAttributes(tracing.PolicyFQN(ppe.policy.Meta.Fqn))
 	defer span.End()
@@ -392,22 +398,22 @@ func globMatch(g string, values []string) []string {
 	return out
 }
 
-type EvalResult struct {
+type PolicyEvalResult struct {
 	PolicyKey             string
 	Effects               map[string]effectv1.Effect
 	EffectiveDerivedRoles map[string]struct{}
 	ValidationErrors      []*schemav1.ValidationError
 }
 
-func newEvalResult(policyKey string, actions []string) *EvalResult {
-	return &EvalResult{
+func newEvalResult(policyKey string, actions []string) *PolicyEvalResult {
+	return &PolicyEvalResult{
 		PolicyKey: policyKey,
 		Effects:   make(map[string]effectv1.Effect, len(actions)),
 	}
 }
 
 // setEffect sets the effect for an action. DENY always takes precedence.
-func (er *EvalResult) setEffect(action string, effect effectv1.Effect) {
+func (er *PolicyEvalResult) setEffect(action string, effect effectv1.Effect) {
 	if effect == effectv1.Effect_EFFECT_DENY {
 		er.Effects[action] = effect
 		return
@@ -424,7 +430,7 @@ func (er *EvalResult) setEffect(action string, effect effectv1.Effect) {
 	}
 }
 
-func (er *EvalResult) setDefaultEffect(tctx *traceContext, actions []string, effect effectv1.Effect) {
+func (er *PolicyEvalResult) setDefaultEffect(tctx *traceContext, actions []string, effect effectv1.Effect) {
 	for _, a := range actions {
 		if _, ok := er.Effects[a]; !ok {
 			er.Effects[a] = effect
