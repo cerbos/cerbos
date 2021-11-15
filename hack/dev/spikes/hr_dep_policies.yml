@@ -8,17 +8,17 @@ resourcePolicy:
 
   resource: leave_request
   rules:
-    - actions: ["*"]
+    - actions: [ "*" ]
       effect: EFFECT_ALLOW
       roles:
         - admin
 
-    - actions: ["create", "view", "submit"]
+    - actions: [ "create", "view", "submit" ]
       derivedRoles:
         - employee_that_owns_the_record
       effect: EFFECT_ALLOW
 
-    - actions: ["view"]
+    - actions: [ "view" ]
       derivedRoles:
         - direct_manager
       effect: EFFECT_ALLOW
@@ -26,7 +26,7 @@ resourcePolicy:
         match:
           expr: request.resource.attr.status == "PENDING_APPROVAL"
 
-    - actions: ["approve"]
+    - actions: [ "approve" ]
       derivedRoles:
         - direct_manager
       effect: EFFECT_ALLOW
@@ -37,7 +37,7 @@ resourcePolicy:
               - expr: request.resource.attr.status == "PENDING_APPROVAL"
               - expr: request.resource.attr.owner != request.principal.id
 
-    - actions: ["view"]
+    - actions: [ "view" ]
       derivedRoles:
         - any_employee
       effect: EFFECT_ALLOW
@@ -50,22 +50,22 @@ derived_roles:
   name: my_derived_roles
   definitions:
     - name: admin
-      parentRoles: ["admin"]
+      parentRoles: [ "admin" ]
 
     - name: tester
-      parentRoles: ["dev", "qa"]
+      parentRoles: [ "dev", "qa" ]
 
     - name: employee_that_owns_the_record
-      parentRoles: ["employee"]
+      parentRoles: [ "employee" ]
       condition:
         match:
           expr: request.resource.attr.owner == request.principal.id
 
     - name: any_employee
-      parentRoles: ["employee"]
+      parentRoles: [ "employee" ]
 
     - name: direct_manager
-      parentRoles: ["manager"]
+      parentRoles: [ "manager" ]
       condition:
         match:
           any:
@@ -77,11 +77,11 @@ requestId: '123123'
 action: view
 principal:
   id: maggie
-  roles: ["employee", "manager"]
+  roles: [ "employee", "manager" ]
   attr:
     department: marketing
     geography: GB
-    managed_geographies: ["GB", "US"]
+    managed_geographies: [ "GB", "US" ]
     team: design
 resource:
   kind: leave_request
@@ -96,12 +96,100 @@ filter:
         value: maggie
     - and:
         - or:
-          - eq:
-              field: R.attr.geography
-              value: GB
-          - in:
-              field: R.attr.georgraphy
-              value: ["GB", "US"]
+            - eq:
+                field: R.attr.geography
+                value: GB
+            - in:
+                field: R.attr.georgraphy
+                value: [ "GB", "US" ]
         - eq:
             field: R.attr.status
             value: PENDING_APPROVAL
+---
+{
+  "id": 2,
+  "ExprKind": {
+    "CallExpr": {
+      "function": "@in",
+      "args": [
+        {
+          "id": 1,
+          "ExprKind": {
+            "IdentExpr": {
+              "name": "x"
+            }
+          }
+        },
+        {
+          "id": 3,
+          "ExprKind": {
+            "ListExpr": {
+              "elements": [
+                {
+                  "id": 4,
+                  "ExprKind": {
+                    "ConstExpr": {
+                      "ConstantKind": {
+                        "StringValue": "GB"
+                      }
+                    }
+                  }
+                },
+                {
+                  "id": 5,
+                  "ExprKind": {
+                    "ConstExpr": {
+                      "ConstantKind": {
+                        "StringValue": "US"
+                      }
+                    }
+                  }
+                },
+                {
+                  "id": 6,
+                  "ExprKind": {
+                    "ConstExpr": {
+                      "ConstantKind": {
+                        "StringValue": "CA"
+                      }
+                    }
+                  }
+                }
+              ]
+            }
+          }
+        }
+      ]
+    }
+  }
+}
+---
+ExprKind:
+  CallExpr:
+    args:
+      - ExprKind:
+          IdentExpr:
+            name: x
+        id: 1
+      - ExprKind:
+          ListExpr:
+            elements:
+              - ExprKind:
+                  ConstExpr:
+                    ConstantKind:
+                      StringValue: GB
+                id: 4
+              - ExprKind:
+                  ConstExpr:
+                    ConstantKind:
+                      StringValue: US
+                id: 5
+              - ExprKind:
+                  ConstExpr:
+                    ConstantKind:
+                      StringValue: CA
+                id: 6
+        id: 3
+    function: '@in'
+id: 2
+---

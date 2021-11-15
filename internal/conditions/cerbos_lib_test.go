@@ -5,7 +5,10 @@ package conditions_test
 
 import (
 	"fmt"
+	enginev1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
+	"github.com/ghodss/yaml"
 	"github.com/google/cel-go/checker/decls"
+	"github.com/google/cel-go/ext"
 	"log"
 	"math/rand"
 	"strings"
@@ -158,12 +161,13 @@ func benchmarkIntersect(b *testing.B, size int) {
 func TestPartialEvaluation(t *testing.T) {
 	is := require.New(t)
 
-	expr := "x in y + [z]"
+	expr := "R.attr.geo in (y + [z]).map(t, t.upperAscii())"
 	env, _ := cel.NewEnv(
+		cel.Types(&enginev1.Resource{}),
 		cel.Declarations(
 			decls.NewVar("y", decls.NewListType(decls.String)),
-			decls.NewVar("x", decls.String),
-			decls.NewVar("z", decls.String)))
+			decls.NewVar(conditions.CELResourceAbbrev, decls.NewObjectType("cerbos.engine.v1.Resource")),
+			decls.NewVar("z", decls.String)), ext.Strings())
 
 	ast, issues := env.Compile(expr)
 	if issues != nil {
@@ -174,8 +178,8 @@ func TestPartialEvaluation(t *testing.T) {
 	is.NoError(err)
 	vars, err := cel.PartialVars(map[string]interface{}{
 		"y": []string{"GB", "US"},
-		"z": "CA",
-	}, cel.AttributePattern("x"))
+		"z": "ca",
+	}, cel.AttributePattern("R"))
 	is.NoError(err)
 	out, det, err := prg.Eval(vars)
 	is.NotNil(det) // It is not nil if cel.OptTrackState is included in the cel.EvalOptions
@@ -183,8 +187,11 @@ func TestPartialEvaluation(t *testing.T) {
 	is.NoError(err)
 	residual, err := env.ResidualAst(ast, det)
 	is.NoError(err)
+	bytes, err := yaml.Marshal(residual.Expr())
+	log.Print("\n", string(bytes))
+	is.NoError(err)
 	astToString, err := cel.AstToString(residual)
 	is.NoError(err)
-	is.Equal(`x in ["GB", "US", "CA"]`, astToString)
+	is.Equal(`R.attr.geo in ["GB", "US", "CA"]`, astToString)
 	log.Print(astToString)
 }
