@@ -6,10 +6,16 @@ package tracing
 import (
 	"context"
 	"fmt"
+	"net"
 	"strings"
 
-	"contrib.go.opencensus.io/exporter/jaeger"
-	"go.opencensus.io/trace"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/exporters/jaeger"
+	"go.opentelemetry.io/otel/sdk/resource"
+	tracesdk "go.opentelemetry.io/otel/sdk/trace"
+	semconv "go.opentelemetry.io/otel/semconv/v1.7.0"
+	"go.opentelemetry.io/otel/trace"
+	"go.uber.org/zap"
 
 	"github.com/cerbos/cerbos/internal/config"
 	"github.com/cerbos/cerbos/internal/util"
@@ -17,85 +23,112 @@ import (
 
 var conf Conf
 
-func Init() error {
+func Init(ctx context.Context) error {
 	if err := config.GetSection(&conf); err != nil {
 		return fmt.Errorf("failed to load tracing config: %w", err)
 	}
 
-	if conf.Exporter == "" || conf.SampleProbability == 0.0 {
-		trace.ApplyConfig(trace.Config{DefaultSampler: trace.NeverSample()})
+	if conf.Exporter == "" {
+		otel.SetTracerProvider(trace.NewNoopTracerProvider)
 		return nil
 	}
 
 	if conf.Exporter == jaegerExporter {
-		svcName := conf.Jaeger.ServiceName
-		if svcName == "" {
-			svcName = util.AppName
-		}
-
-		opts := jaeger.Options{
-			Process: jaeger.Process{ServiceName: svcName},
-		}
-
+		var endpoint jaeger.EndpointOption
 		if conf.Jaeger.AgentEndpoint != "" {
-			opts.AgentEndpoint = conf.Jaeger.AgentEndpoint
+			agentHost, agentPort, err := net.SplitHostPort(conf.Jaeger.AgentEndpoint)
+			if err != nil {
+				return fmt.Errorf("failed to parse agent endpoint %q: %w", conf.Jaeger.AgentEndpoint, err)
+			}
+
+			endpoint = jaeger.WithAgentEndpoint(jaeger.WithAgentHost(agentHost), jaeger.WithAgenPort(agentPort))
 		} else {
-			opts.CollectorEndpoint = conf.Jaeger.CollectorEndpoint
+			endpoint = jaeger.WithCollectorEndpoint(jaeger.WithEndpoint(conf.Jaeger.CollectorEndpoint))
 		}
 
-		exporter, err := jaeger.NewExporter(opts)
+		exporter, err := jaeger.New(endpoint)
 		if err != nil {
 			return fmt.Errorf("failed to create Jaeger exporter: %w", err)
 		}
 
-		trace.ApplyConfig(trace.Config{DefaultSampler: trace.ProbabilitySampler(conf.SampleProbability)})
-		trace.RegisterExporter(exporter)
-
+		configureOtel(ctx, exporter)
 		return nil
 	}
 
 	return nil
 }
 
-// StartOptions returns the options for tracing http and gRPC calls.
-func StartOptions() trace.StartOptions {
-	opt := trace.StartOptions{
-		SpanKind: trace.SpanKindServer,
+func configureOtel(ctx context.Context, exporter tracesdk.SpanExporter) {
+	sampler := mkSampler(conf.SampleProbability)
+
+	svcName := conf.Jaeger.ServiceName
+	if svcName == "" {
+		svcName = util.AppName
 	}
 
-	if conf.Exporter == "" || conf.SampleProbability == 0.0 {
-		opt.Sampler = trace.NeverSample()
-	} else {
-		opt.Sampler = mkSampler(conf.SampleProbability)
-	}
+	res := resource.New(context.Background(),
+		resource.WithSchemaURL(semconv.SchemaURL),
+		resource.WithAttributes(semconv.ServiceNameKey.String(svcName)),
+		resource.WithHost(),
+		resource.WithOS(),
+		resource.WithFromEnv())
 
-	return opt
-}
+	traceProvider := tracesdk.NewTracerProvider(
+		tracesdk.WithBatcher(exporter),
+		tracesdk.WithSampler(sampler),
+		tracesdk.WithResource(res),
+	)
 
-func mkSampler(probability float64) trace.Sampler {
-	ps := trace.ProbabilitySampler(probability)
+	otel.SetTracerProvider(traceProvider)
 
-	return func(params trace.SamplingParameters) trace.SamplingDecision {
-		switch {
-		case strings.HasPrefix(params.Name, "grpc."):
-			return trace.SamplingDecision{Sample: false}
-		case strings.HasPrefix(params.Name, "cerbos.svc.v1.CerbosPlaygroundService."):
-			return trace.SamplingDecision{Sample: false}
-		case strings.HasPrefix(params.Name, "cerbos.svc.v1.CerbosAdminService."):
-			return trace.SamplingDecision{Sample: false}
-		case strings.HasPrefix(params.Name, "/api/playground/"):
-			return trace.SamplingDecision{Sample: false}
-		default:
-			return ps(params)
+	go func() {
+		<-ctx.Done()
+		// TODO (cell) Add hook to make the server wait until the trace provider shuts down cleanly.
+
+		if err := traceProvider.Shutdown(context.TODO()); err != nil {
+			zap.L().Warn("Failed to cleanly shutdown trace exporter", zap.Error(err))
 		}
+	}()
+}
+
+func mkSampler(probability float64) tracesdk.Sampler {
+	if probability == 0.0 {
+		return tracesdk.NeverSample()
+	}
+
+	return sampler{s: tracesdk.ParentBased(tracesdk.TraceIDRatioBased(conf.SampleProbability))}
+}
+
+type sampler struct {
+	s tracesdk.Sampler
+}
+
+func (s sampler) ShouldSample(params tracesdk.SamplingParameters) tracesdk.SamplingResult {
+	switch {
+	case strings.HasPrefix(params.Name, "grpc."):
+		return tracesdk.SamplingResult{Decision: tracesdk.Drop}
+	case strings.HasPrefix(params.Name, "cerbos.svc.v1.CerbosPlaygroundService."):
+		return tracesdk.SamplingResult{Decision: tracesdk.Drop}
+	case strings.HasPrefix(params.Name, "/api/playground/"):
+		return tracesdk.SamplingResult{Decision: tracesdk.Drop}
+	default:
+		return s.s.ShouldSample(params)
 	}
 }
 
-func StartSpan(ctx context.Context, name string) (context.Context, *trace.Span) {
-	return trace.StartSpan(ctx, fmt.Sprintf("cerbos.dev/%s", name))
+func (s sampler) Description() string {
+	return "CerbosCustomSampler"
 }
 
-func MarkFailed(span *trace.Span, code int32, msg string, err error) {
-	span.AddAttributes(trace.StringAttribute("error_message", err.Error()))
-	span.SetStatus(trace.Status{Code: code, Message: msg})
+func StartSpan(ctx context.Context, name string) (context.Context, trace.Span) {
+	return otel.Tracer("cerbos.dev/cerbos").Start(ctx, name)
+}
+
+func MarkFailed(span trace.Span, code int, err error) {
+	if err != nil {
+		span.RecordError(err)
+	}
+
+	c, desc := semconv.SpanStatusFromHTTPStatusCode(code)
+	span.SetStatus(c, desc)
 }
