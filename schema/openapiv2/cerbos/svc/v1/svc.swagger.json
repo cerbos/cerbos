@@ -999,7 +999,10 @@
           "$ref": "#/definitions/v1JSONSchemaProps"
         },
         "resourceSchema": {
-          "$ref": "#/definitions/v1ResourceSchema"
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/v1JSONSchemaProps"
+          }
         }
       }
     },
@@ -2096,17 +2099,6 @@
         },
         "name": {
           "type": "string"
-        }
-      }
-    },
-    "v1ResourceSchema": {
-      "type": "object",
-      "properties": {
-        "schemas": {
-          "type": "object",
-          "additionalProperties": {
-            "$ref": "#/definitions/v1JSONSchemaProps"
-          }
         }
       }
     },

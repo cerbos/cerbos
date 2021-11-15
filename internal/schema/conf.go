@@ -4,7 +4,8 @@
 package schema
 
 const (
-	confKey = "schema"
+	ResourceSchemaGlobalKey = "__global__"
+	confKey                 = "schema"
 )
 
 // Conf holds configuration related to schema validation

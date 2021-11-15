@@ -35,7 +35,7 @@ type Evaluator interface {
 func NewEvaluator(rps *runtimev1.RunnablePolicySet, t *tracer) Evaluator {
 	switch rp := rps.PolicySet.(type) {
 	case *runtimev1.RunnablePolicySet_ResourcePolicy:
-		return &resourcePolicyEvaluator{policy: rp.ResourcePolicy, tracer: t}
+		return &resourcePolicyEvaluator{policy: rp.ResourcePolicy, schemaProps: rps.SchemaProps, tracer: t}
 	case *runtimev1.RunnablePolicySet_PrincipalPolicy:
 		return &principalPolicyEvaluator{policy: rp.PrincipalPolicy, tracer: t}
 	default:
@@ -50,7 +50,8 @@ func (noopEvaluator) Evaluate(_ context.Context, _ *enginev1.CheckInput) (*EvalR
 }
 
 type resourcePolicyEvaluator struct {
-	policy *runtimev1.RunnableResourcePolicySet
+	policy      *runtimev1.RunnableResourcePolicySet
+	schemaProps *runtimev1.SchemaProps
 	*tracer
 }
 

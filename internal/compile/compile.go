@@ -35,7 +35,7 @@ func Compile(unit *policy.CompilationUnit) (rps *runtimev1.RunnablePolicySet, er
 
 	switch pt := mc.def.PolicyType.(type) {
 	case *policyv1.Policy_ResourcePolicy:
-		rps = compileResourcePolicy(mc, pt.ResourcePolicy)
+		rps = compileResourcePolicy(mc, pt.ResourcePolicy, unit.SchemaProps)
 	case *policyv1.Policy_PrincipalPolicy:
 		rps = compilePrincipalPolicy(mc, pt.PrincipalPolicy)
 	case *policyv1.Policy_DerivedRoles:
@@ -47,7 +47,8 @@ func Compile(unit *policy.CompilationUnit) (rps *runtimev1.RunnablePolicySet, er
 	return rps, uc.error()
 }
 
-func compileResourcePolicy(modCtx *moduleCtx, rp *policyv1.ResourcePolicy) *runtimev1.RunnablePolicySet {
+func compileResourcePolicy(modCtx *moduleCtx, rp *policyv1.ResourcePolicy,
+	schemaProps *runtimev1.SchemaProps) *runtimev1.RunnablePolicySet {
 	referencedRoles, err := compileImportedDerivedRoles(modCtx, rp)
 	if err != nil {
 		return nil
@@ -82,6 +83,7 @@ func compileResourcePolicy(modCtx *moduleCtx, rp *policyv1.ResourcePolicy) *runt
 				Policies: []*runtimev1.RunnableResourcePolicySet_Policy{rrp},
 			},
 		},
+		SchemaProps: schemaProps,
 	}
 }
 

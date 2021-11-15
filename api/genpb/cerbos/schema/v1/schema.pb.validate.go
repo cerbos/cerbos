@@ -75,14 +75,21 @@ func (m *Schema) Validate() error {
 		}
 	}
 
-	if v, ok := interface{}(m.GetResourceSchema()).(interface{ Validate() error }); ok {
-		if err := v.Validate(); err != nil {
-			return SchemaValidationError{
-				field:  "ResourceSchema",
-				reason: "embedded message failed validation",
-				cause:  err,
+	for key, val := range m.GetResourceSchema() {
+		_ = val
+
+		// no validation rules for ResourceSchema[key]
+
+		if v, ok := interface{}(val).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return SchemaValidationError{
+					field:  fmt.Sprintf("ResourceSchema[%v]", key),
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
 			}
 		}
+
 	}
 
 	return nil
@@ -143,88 +150,6 @@ var _ interface {
 } = SchemaValidationError{}
 
 var _Schema_SchemaVersion_Pattern = regexp.MustCompile("^[[:word:]]+$")
-
-// Validate checks the field values on ResourceSchema with the rules defined in
-// the proto definition for this message. If any rules are violated, an error
-// is returned.
-func (m *ResourceSchema) Validate() error {
-	if m == nil {
-		return nil
-	}
-
-	for key, val := range m.GetSchemas() {
-		_ = val
-
-		// no validation rules for Schemas[key]
-
-		if v, ok := interface{}(val).(interface{ Validate() error }); ok {
-			if err := v.Validate(); err != nil {
-				return ResourceSchemaValidationError{
-					field:  fmt.Sprintf("Schemas[%v]", key),
-					reason: "embedded message failed validation",
-					cause:  err,
-				}
-			}
-		}
-
-	}
-
-	return nil
-}
-
-// ResourceSchemaValidationError is the validation error returned by
-// ResourceSchema.Validate if the designated constraints aren't met.
-type ResourceSchemaValidationError struct {
-	field  string
-	reason string
-	cause  error
-	key    bool
-}
-
-// Field function returns field value.
-func (e ResourceSchemaValidationError) Field() string { return e.field }
-
-// Reason function returns reason value.
-func (e ResourceSchemaValidationError) Reason() string { return e.reason }
-
-// Cause function returns cause value.
-func (e ResourceSchemaValidationError) Cause() error { return e.cause }
-
-// Key function returns key value.
-func (e ResourceSchemaValidationError) Key() bool { return e.key }
-
-// ErrorName returns error name.
-func (e ResourceSchemaValidationError) ErrorName() string { return "ResourceSchemaValidationError" }
-
-// Error satisfies the builtin error interface
-func (e ResourceSchemaValidationError) Error() string {
-	cause := ""
-	if e.cause != nil {
-		cause = fmt.Sprintf(" | caused by: %v", e.cause)
-	}
-
-	key := ""
-	if e.key {
-		key = "key for "
-	}
-
-	return fmt.Sprintf(
-		"invalid %sResourceSchema.%s: %s%s",
-		key,
-		e.field,
-		e.reason,
-		cause)
-}
-
-var _ error = ResourceSchemaValidationError{}
-
-var _ interface {
-	Field() string
-	Reason() string
-	Key() bool
-	Cause() error
-	ErrorName() string
-} = ResourceSchemaValidationError{}
 
 // Validate checks the field values on JSONSchemaProps with the rules defined
 // in the proto definition for this message. If any rules are violated, an

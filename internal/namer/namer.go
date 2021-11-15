@@ -130,6 +130,11 @@ func DerivedRolesSimpleName(fqn string) string {
 	return strings.TrimPrefix(fqn, DerivedRolesPrefix+".")
 }
 
+// SchemaModuleID returns the module ID for the schema with given name and version.
+func SchemaModuleID(name, version string) ModuleID {
+	return GenModuleIDFromFQN(SchemaFQN(name, version))
+}
+
 // SchemaFQN returns the fully-qualified module name for the schema with given file name and version.
 func SchemaFQN(name, schemaVersion string) string {
 	return fmt.Sprintf("%s.%s.v%s", SchemaPrefix, Sanitize(name), Sanitize(schemaVersion))

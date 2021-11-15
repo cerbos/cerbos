@@ -18,11 +18,7 @@ message Schema {
   string description = 4;
   string name = 5 [(validate.rules).string.min_len = 1];
   JSONSchemaProps principal_schema = 6;
-  ResourceSchema resource_schema = 7;
-}
-
-message ResourceSchema {
-  map<string, JSONSchemaProps> schemas = 1;
+  map<string, JSONSchemaProps> resource_schema = 7;
 }
 
 // JSONSchema Specification Draft 4

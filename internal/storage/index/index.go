@@ -7,6 +7,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	runtimev1 "github.com/cerbos/cerbos/api/genpb/cerbos/runtime/v1"
 	"io/fs"
 	"sync"
 
@@ -109,6 +110,41 @@ func (idx *index) GetCompilationUnits(ids ...namer.ModuleID) (map[namer.ModuleID
 			}
 
 			cu.AddDefinition(dep, p)
+		}
+
+		// TODO(oguzhan): Add schemas to compilation units here
+		for modId, t := range idx.modIdToType {
+			if t == FileTypeSchema {
+				var loadedSchemas *schemav1.Schema
+
+				loadedSchemas, err = idx.loadSchema(modId)
+				if err != nil {
+					return nil, err
+				}
+
+				policyWithType, ok := p.PolicyType.(*policyv1.Policy_ResourcePolicy)
+				if !ok {
+					continue
+				}
+
+				if loadedSchemas.SchemaVersion == policyWithType.ResourcePolicy.SchemaVersion {
+					schemaProps := &runtimev1.SchemaProps{
+						Principal:      loadedSchemas.PrincipalSchema,
+						GlobalResource: nil,
+						Resource:       nil,
+					}
+
+					for key, sch := range loadedSchemas.ResourceSchema {
+						if key == policyWithType.ResourcePolicy.Resource {
+							schemaProps.Resource = sch
+						} else if key == schema.ResourceSchemaGlobalKey {
+							schemaProps.GlobalResource = sch
+						}
+					}
+
+					cu.SetSchemaProps(schemaProps)
+				}
+			}
 		}
 	}
 

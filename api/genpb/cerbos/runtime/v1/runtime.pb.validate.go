@@ -49,6 +49,16 @@ func (m *RunnablePolicySet) Validate() error {
 
 	// no validation rules for Fqn
 
+	if v, ok := interface{}(m.GetSchemaProps()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return RunnablePolicySetValidationError{
+				field:  "SchemaProps",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
 	switch m.PolicySet.(type) {
 
 	case *RunnablePolicySet_ResourcePolicy:
@@ -147,6 +157,101 @@ var _ interface {
 	Cause() error
 	ErrorName() string
 } = RunnablePolicySetValidationError{}
+
+// Validate checks the field values on SchemaProps with the rules defined in
+// the proto definition for this message. If any rules are violated, an error
+// is returned.
+func (m *SchemaProps) Validate() error {
+	if m == nil {
+		return nil
+	}
+
+	if v, ok := interface{}(m.GetPrincipal()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return SchemaPropsValidationError{
+				field:  "Principal",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if v, ok := interface{}(m.GetGlobalResource()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return SchemaPropsValidationError{
+				field:  "GlobalResource",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if v, ok := interface{}(m.GetResource()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return SchemaPropsValidationError{
+				field:  "Resource",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	return nil
+}
+
+// SchemaPropsValidationError is the validation error returned by
+// SchemaProps.Validate if the designated constraints aren't met.
+type SchemaPropsValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e SchemaPropsValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e SchemaPropsValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e SchemaPropsValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e SchemaPropsValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e SchemaPropsValidationError) ErrorName() string { return "SchemaPropsValidationError" }
+
+// Error satisfies the builtin error interface
+func (e SchemaPropsValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sSchemaProps.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = SchemaPropsValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = SchemaPropsValidationError{}
 
 // Validate checks the field values on RunnableResourcePolicySet with the rules
 // defined in the proto definition for this message. If any rules are

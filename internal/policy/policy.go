@@ -5,8 +5,8 @@ package policy
 
 import (
 	"fmt"
-
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
+	runtimev1 "github.com/cerbos/cerbos/api/genpb/cerbos/runtime/v1"
 	"github.com/cerbos/cerbos/internal/namer"
 )
 
@@ -154,6 +154,7 @@ func Wrap(p *policyv1.Policy) Wrapper {
 type CompilationUnit struct {
 	ModID       namer.ModuleID
 	Definitions map[namer.ModuleID]*policyv1.Policy
+	SchemaProps *runtimev1.SchemaProps
 }
 
 func (cu *CompilationUnit) AddDefinition(id namer.ModuleID, p *policyv1.Policy) {
@@ -162,6 +163,10 @@ func (cu *CompilationUnit) AddDefinition(id namer.ModuleID, p *policyv1.Policy) 
 	}
 
 	cu.Definitions[id] = p
+}
+
+func (cu *CompilationUnit) SetSchemaProps(schemaProps *runtimev1.SchemaProps) {
+	cu.SchemaProps = schemaProps
 }
 
 func (cu *CompilationUnit) MainSourceFile() string {

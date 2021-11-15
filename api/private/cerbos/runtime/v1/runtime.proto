@@ -8,6 +8,7 @@ package cerbos.runtime.v1;
 option go_package = "github.com/cerbos/cerbos/api/genpb/cerbos/runtime/v1;runtimev1";
 
 import "cerbos/effect/v1/effect.proto";
+import "cerbos/schema/v1/schema.proto";
 import "google/api/expr/v1alpha1/checked.proto";
 import "google/protobuf/empty.proto";
 
@@ -18,6 +19,13 @@ message RunnablePolicySet {
         RunnablePrincipalPolicySet principal_policy = 3;
         RunnableDerivedRolesSet derived_roles = 4;
     }
+    SchemaProps schema_props = 6;
+}
+
+message SchemaProps {
+    .cerbos.schema.v1.JSONSchemaProps principal = 1;
+    .cerbos.schema.v1.JSONSchemaProps global_resource = 2;
+    .cerbos.schema.v1.JSONSchemaProps resource = 3;
 }
 
 
