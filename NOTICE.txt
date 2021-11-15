@@ -482,11 +482,11 @@ SOFTWARE.
 
 --------------------------------------------------------------------------------
 Module  : github.com/aws/aws-sdk-go
-Version : v1.41.19
-Time    : 2021-11-05T18:19:18Z
+Version : v1.42.4
+Time    : 2021-11-12T19:16:16Z
 Licence : Apache-2.0
 
-Contents of probable licence file $GOMODCACHE/github.com/aws/aws-sdk-go@v1.41.19/LICENSE.txt:
+Contents of probable licence file $GOMODCACHE/github.com/aws/aws-sdk-go@v1.42.4/LICENSE.txt:
 
 
                                  Apache License
@@ -10002,11 +10002,11 @@ Apache License
 
 --------------------------------------------------------------------------------
 Module  : github.com/containerd/continuity
-Version : v0.2.0
-Time    : 2021-09-14T15:36:40Z
+Version : v0.1.0
+Time    : 2021-04-17T04:23:58Z
 Licence : Apache-2.0
 
-Contents of probable licence file $GOMODCACHE/github.com/containerd/continuity@v0.2.0/LICENSE:
+Contents of probable licence file $GOMODCACHE/github.com/containerd/continuity@v0.1.0/LICENSE:
 
 
                                  Apache License
@@ -16054,11 +16054,11 @@ Contents of probable licence file $GOMODCACHE/github.com/magefile/mage@v1.9.0/LI
 
 --------------------------------------------------------------------------------
 Module  : github.com/matryer/is
-Version : v1.4.0
-Time    : 2020-06-30T09:14:28Z
+Version : v1.2.0
+Time    : 2018-10-19T07:34:01Z
 Licence : MIT
 
-Contents of probable licence file $GOMODCACHE/github.com/matryer/is@v1.4.0/LICENSE:
+Contents of probable licence file $GOMODCACHE/github.com/matryer/is@v1.2.0/LICENSE:
 
 MIT License
 
@@ -20075,8 +20075,8 @@ Contents of probable licence file $GOMODCACHE/github.com/xanzy/ssh-agent@v0.3.0/
 
 --------------------------------------------------------------------------------
 Module  : github.com/xeipuuv/gojsonpointer
-Version : v0.0.0-20190905194746-02993c407bfb
-Time    : 2019-09-05T19:47:46Z
+Version : v0.0.0-20180127040702-4e3ac2762d5f
+Time    : 2018-01-27T04:07:02Z
 Licence : Apache-2.0
 
 No licence file provided.
