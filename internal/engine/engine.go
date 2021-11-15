@@ -255,11 +255,11 @@ func (engine *Engine) evaluate(ctx context.Context, input *enginev1.CheckInput, 
 	ctx, span := tracing.StartSpan(ctx, "engine.Evaluate")
 	defer span.End()
 
-	span.AddAttributes(trace.StringAttribute("request_id", input.RequestId), trace.StringAttribute("resource_id", input.Resource.Id))
+	span.SetAttributes(tracing.RequestID(input.RequestId), tracing.ReqResourceID(input.Resource.Id))
 
 	// exit early if the context is cancelled
 	if err := ctx.Err(); err != nil {
-		tracing.MarkFailed(span, http.StatusRequestTimeout, "Context cancelled", err)
+		tracing.MarkFailed(span, http.StatusRequestTimeout, err)
 		return nil, err
 	}
 
@@ -393,7 +393,7 @@ func (ec *evaluationCtx) evaluate(ctx context.Context, input *enginev1.CheckInpu
 	defer span.End()
 
 	if ec.numChecks == 0 {
-		tracing.MarkFailed(span, trace.StatusCodeNotFound, "No matching policies", ErrNoPoliciesMatched)
+		tracing.MarkFailed(span, trace.StatusCodeNotFound, ErrNoPoliciesMatched)
 
 		return nil, ErrNoPoliciesMatched
 	}
@@ -406,7 +406,7 @@ func (ec *evaluationCtx) evaluate(ctx context.Context, input *enginev1.CheckInpu
 		result, err := c.Evaluate(ctx, input)
 		if err != nil {
 			logging.FromContext(ctx).Error("Failed to evaluate policy", zap.Error(err))
-			tracing.MarkFailed(span, trace.StatusCodeInternal, "Failed to execute policy", err)
+			tracing.MarkFailed(span, trace.StatusCodeInternal, err)
 
 			return nil, fmt.Errorf("failed to execute policy: %w", err)
 		}
@@ -417,7 +417,7 @@ func (ec *evaluationCtx) evaluate(ctx context.Context, input *enginev1.CheckInpu
 		}
 	}
 
-	tracing.MarkFailed(span, trace.StatusCodeNotFound, "No matching policies", ErrNoPoliciesMatched)
+	tracing.MarkFailed(span, trace.StatusCodeNotFound, ErrNoPoliciesMatched)
 
 	return resp, ErrNoPoliciesMatched
 }

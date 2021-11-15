@@ -9,7 +9,9 @@ import (
 	"net"
 	"strings"
 
+	octrace "go.opencensus.io/trace"
 	"go.opentelemetry.io/otel"
+	ocbridge "go.opentelemetry.io/otel/bridge/opencensus"
 	"go.opentelemetry.io/otel/exporters/jaeger"
 	"go.opentelemetry.io/otel/sdk/resource"
 	tracesdk "go.opentelemetry.io/otel/sdk/trace"
@@ -28,37 +30,40 @@ func Init(ctx context.Context) error {
 		return fmt.Errorf("failed to load tracing config: %w", err)
 	}
 
-	if conf.Exporter == "" {
-		otel.SetTracerProvider(trace.NewNoopTracerProvider)
+	switch conf.Exporter {
+	case jaegerExporter:
+		return configureJaeger(ctx)
+	case "":
+		otel.SetTracerProvider(trace.NewNoopTracerProvider())
 		return nil
+	default:
+		return fmt.Errorf("unknown exporter %q", conf.Exporter)
 	}
+}
 
-	if conf.Exporter == jaegerExporter {
-		var endpoint jaeger.EndpointOption
-		if conf.Jaeger.AgentEndpoint != "" {
-			agentHost, agentPort, err := net.SplitHostPort(conf.Jaeger.AgentEndpoint)
-			if err != nil {
-				return fmt.Errorf("failed to parse agent endpoint %q: %w", conf.Jaeger.AgentEndpoint, err)
-			}
-
-			endpoint = jaeger.WithAgentEndpoint(jaeger.WithAgentHost(agentHost), jaeger.WithAgenPort(agentPort))
-		} else {
-			endpoint = jaeger.WithCollectorEndpoint(jaeger.WithEndpoint(conf.Jaeger.CollectorEndpoint))
-		}
-
-		exporter, err := jaeger.New(endpoint)
+func configureJaeger(ctx context.Context) error {
+	var endpoint jaeger.EndpointOption
+	if conf.Jaeger.AgentEndpoint != "" {
+		agentHost, agentPort, err := net.SplitHostPort(conf.Jaeger.AgentEndpoint)
 		if err != nil {
-			return fmt.Errorf("failed to create Jaeger exporter: %w", err)
+			return fmt.Errorf("failed to parse agent endpoint %q: %w", conf.Jaeger.AgentEndpoint, err)
 		}
 
-		configureOtel(ctx, exporter)
-		return nil
+		endpoint = jaeger.WithAgentEndpoint(jaeger.WithAgentHost(agentHost), jaeger.WithAgentPort(agentPort))
+	} else {
+		endpoint = jaeger.WithCollectorEndpoint(jaeger.WithEndpoint(conf.Jaeger.CollectorEndpoint))
 	}
 
+	exporter, err := jaeger.New(endpoint)
+	if err != nil {
+		return fmt.Errorf("failed to create Jaeger exporter: %w", err)
+	}
+
+	configureOtel(ctx, exporter)
 	return nil
 }
 
-func configureOtel(ctx context.Context, exporter tracesdk.SpanExporter) {
+func configureOtel(ctx context.Context, exporter tracesdk.SpanExporter) error {
 	sampler := mkSampler(conf.SampleProbability)
 
 	svcName := conf.Jaeger.ServiceName
@@ -66,12 +71,15 @@ func configureOtel(ctx context.Context, exporter tracesdk.SpanExporter) {
 		svcName = util.AppName
 	}
 
-	res := resource.New(context.Background(),
+	res, err := resource.New(context.Background(),
 		resource.WithSchemaURL(semconv.SchemaURL),
 		resource.WithAttributes(semconv.ServiceNameKey.String(svcName)),
+		resource.WithProcessPID(),
 		resource.WithHost(),
-		resource.WithOS(),
 		resource.WithFromEnv())
+	if err != nil {
+		return fmt.Errorf("failed to initialize otel resource: %w", err)
+	}
 
 	traceProvider := tracesdk.NewTracerProvider(
 		tracesdk.WithBatcher(exporter),
@@ -80,6 +88,7 @@ func configureOtel(ctx context.Context, exporter tracesdk.SpanExporter) {
 	)
 
 	otel.SetTracerProvider(traceProvider)
+	octrace.DefaultTracer = ocbridge.NewTracer(traceProvider.Tracer("cerbos"))
 
 	go func() {
 		<-ctx.Done()
@@ -89,6 +98,8 @@ func configureOtel(ctx context.Context, exporter tracesdk.SpanExporter) {
 			zap.L().Warn("Failed to cleanly shutdown trace exporter", zap.Error(err))
 		}
 	}()
+
+	return nil
 }
 
 func mkSampler(probability float64) tracesdk.Sampler {
@@ -118,6 +129,11 @@ func (s sampler) ShouldSample(params tracesdk.SamplingParameters) tracesdk.Sampl
 
 func (s sampler) Description() string {
 	return "CerbosCustomSampler"
+}
+
+// StartOptions returns the options for tracing http and gRPC calls.
+func StartOptions() octrace.StartOptions {
+	return octrace.StartOptions{SpanKind: octrace.SpanKindServer}
 }
 
 func StartSpan(ctx context.Context, name string) (context.Context, trace.Span) {
