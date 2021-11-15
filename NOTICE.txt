@@ -6204,11 +6204,11 @@ Contents of probable licence file $GOMODCACHE/helm.sh/helm/v3@v3.7.1/LICENSE:
 
 --------------------------------------------------------------------------------
 Module  : modernc.org/sqlite
-Version : v1.13.3
-Time    : 2021-10-24T16:00:29Z
+Version : v1.14.1
+Time    : 2021-11-14T10:12:37Z
 Licence : BSD-3-Clause
 
-Contents of probable licence file $GOMODCACHE/modernc.org/sqlite@v1.13.3/LICENSE:
+Contents of probable licence file $GOMODCACHE/modernc.org/sqlite@v1.14.1/LICENSE:
 
 Copyright (c) 2017 The Sqlite Authors. All rights reserved.
 
@@ -7363,11 +7363,11 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 --------------------------------------------------------------------------------
 Module  : github.com/aws/aws-sdk-go-v2
-Version : v1.9.1
-Time    : 2021-09-17T22:07:00Z
+Version : v1.9.0
+Time    : 2021-08-27T22:42:09Z
 Licence : Apache-2.0
 
-Contents of probable licence file $GOMODCACHE/github.com/aws/aws-sdk-go-v2@v1.9.1/LICENSE.txt:
+Contents of probable licence file $GOMODCACHE/github.com/aws/aws-sdk-go-v2@v1.9.0/LICENSE.txt:
 
 
                                  Apache License
@@ -7575,11 +7575,11 @@ Contents of probable licence file $GOMODCACHE/github.com/aws/aws-sdk-go-v2@v1.9.
 
 --------------------------------------------------------------------------------
 Module  : github.com/aws/aws-sdk-go-v2/config
-Version : v1.8.2
-Time    : 2021-09-17T22:07:00Z
+Version : v1.7.0
+Time    : 2021-08-27T22:42:09Z
 Licence : Apache-2.0
 
-Contents of probable licence file $GOMODCACHE/github.com/aws/aws-sdk-go-v2/config@v1.8.2/LICENSE.txt:
+Contents of probable licence file $GOMODCACHE/github.com/aws/aws-sdk-go-v2/config@v1.7.0/LICENSE.txt:
 
 
                                  Apache License
@@ -7787,11 +7787,11 @@ Contents of probable licence file $GOMODCACHE/github.com/aws/aws-sdk-go-v2/confi
 
 --------------------------------------------------------------------------------
 Module  : github.com/aws/aws-sdk-go-v2/credentials
-Version : v1.4.2
-Time    : 2021-09-17T22:07:00Z
+Version : v1.4.0
+Time    : 2021-08-27T22:42:09Z
 Licence : Apache-2.0
 
-Contents of probable licence file $GOMODCACHE/github.com/aws/aws-sdk-go-v2/credentials@v1.4.2/LICENSE.txt:
+Contents of probable licence file $GOMODCACHE/github.com/aws/aws-sdk-go-v2/credentials@v1.4.0/LICENSE.txt:
 
 
                                  Apache License
@@ -7999,11 +7999,11 @@ Contents of probable licence file $GOMODCACHE/github.com/aws/aws-sdk-go-v2/crede
 
 --------------------------------------------------------------------------------
 Module  : github.com/aws/aws-sdk-go-v2/feature/ec2/imds
-Version : v1.5.1
-Time    : 2021-09-17T22:07:00Z
+Version : v1.5.0
+Time    : 2021-08-27T22:42:09Z
 Licence : Apache-2.0
 
-Contents of probable licence file $GOMODCACHE/github.com/aws/aws-sdk-go-v2/feature/ec2/imds@v1.5.1/LICENSE.txt:
+Contents of probable licence file $GOMODCACHE/github.com/aws/aws-sdk-go-v2/feature/ec2/imds@v1.5.0/LICENSE.txt:
 
 
                                  Apache License
@@ -8211,11 +8211,11 @@ Contents of probable licence file $GOMODCACHE/github.com/aws/aws-sdk-go-v2/featu
 
 --------------------------------------------------------------------------------
 Module  : github.com/aws/aws-sdk-go-v2/internal/ini
-Version : v1.2.3
-Time    : 2021-09-17T22:07:00Z
+Version : v1.2.2
+Time    : 2021-08-27T22:42:09Z
 Licence : Apache-2.0
 
-Contents of probable licence file $GOMODCACHE/github.com/aws/aws-sdk-go-v2/internal/ini@v1.2.3/LICENSE.txt:
+Contents of probable licence file $GOMODCACHE/github.com/aws/aws-sdk-go-v2/internal/ini@v1.2.2/LICENSE.txt:
 
 
                                  Apache License
@@ -8423,11 +8423,11 @@ Contents of probable licence file $GOMODCACHE/github.com/aws/aws-sdk-go-v2/inter
 
 --------------------------------------------------------------------------------
 Module  : github.com/aws/aws-sdk-go-v2/service/internal/presigned-url
-Version : v1.3.1
-Time    : 2021-09-17T22:07:00Z
+Version : v1.3.0
+Time    : 2021-08-27T22:42:09Z
 Licence : Apache-2.0
 
-Contents of probable licence file $GOMODCACHE/github.com/aws/aws-sdk-go-v2/service/internal/presigned-url@v1.3.1/LICENSE.txt:
+Contents of probable licence file $GOMODCACHE/github.com/aws/aws-sdk-go-v2/service/internal/presigned-url@v1.3.0/LICENSE.txt:
 
 
                                  Apache License
@@ -8635,11 +8635,11 @@ Contents of probable licence file $GOMODCACHE/github.com/aws/aws-sdk-go-v2/servi
 
 --------------------------------------------------------------------------------
 Module  : github.com/aws/aws-sdk-go-v2/service/sso
-Version : v1.4.1
-Time    : 2021-09-17T22:07:00Z
+Version : v1.4.0
+Time    : 2021-08-27T22:42:09Z
 Licence : Apache-2.0
 
-Contents of probable licence file $GOMODCACHE/github.com/aws/aws-sdk-go-v2/service/sso@v1.4.1/LICENSE.txt:
+Contents of probable licence file $GOMODCACHE/github.com/aws/aws-sdk-go-v2/service/sso@v1.4.0/LICENSE.txt:
 
 
                                  Apache License
@@ -8847,11 +8847,11 @@ Contents of probable licence file $GOMODCACHE/github.com/aws/aws-sdk-go-v2/servi
 
 --------------------------------------------------------------------------------
 Module  : github.com/aws/aws-sdk-go-v2/service/sts
-Version : v1.7.1
-Time    : 2021-09-17T22:07:00Z
+Version : v1.7.0
+Time    : 2021-08-27T22:42:09Z
 Licence : Apache-2.0
 
-Contents of probable licence file $GOMODCACHE/github.com/aws/aws-sdk-go-v2/service/sts@v1.7.1/LICENSE.txt:
+Contents of probable licence file $GOMODCACHE/github.com/aws/aws-sdk-go-v2/service/sts@v1.7.0/LICENSE.txt:
 
 
                                  Apache License
@@ -16180,11 +16180,11 @@ SOFTWARE.
 
 --------------------------------------------------------------------------------
 Module  : github.com/mattn/go-sqlite3
-Version : v1.14.8
-Time    : 2021-07-15T13:31:14Z
+Version : v1.14.9
+Time    : 2021-07-20T13:28:26Z
 Licence : MIT
 
-Contents of probable licence file $GOMODCACHE/github.com/mattn/go-sqlite3@v1.14.8/LICENSE:
+Contents of probable licence file $GOMODCACHE/github.com/mattn/go-sqlite3@v1.14.9/LICENSE:
 
 The MIT License (MIT)
 
@@ -21139,11 +21139,11 @@ THE SOFTWARE.
 
 --------------------------------------------------------------------------------
 Module  : modernc.org/cc/v3
-Version : v3.35.15
-Time    : 2021-10-23T15:50:07Z
+Version : v3.35.17
+Time    : 2021-11-07T15:47:43Z
 Licence : BSD-2-Clause
 
-Contents of probable licence file $GOMODCACHE/modernc.org/cc/v3@v3.35.15/LICENSE:
+Contents of probable licence file $GOMODCACHE/modernc.org/cc/v3@v3.35.17/LICENSE:
 
 Copyright (c) 2017 The CC Authors. All rights reserved.
 
@@ -21176,11 +21176,11 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 --------------------------------------------------------------------------------
 Module  : modernc.org/ccgo/v3
-Version : v3.12.39
-Time    : 2021-10-23T18:49:52Z
+Version : v3.12.65
+Time    : 2021-11-13T08:19:51Z
 Licence : BSD-2-Clause
 
-Contents of probable licence file $GOMODCACHE/modernc.org/ccgo/v3@v3.12.39/LICENSE:
+Contents of probable licence file $GOMODCACHE/modernc.org/ccgo/v3@v3.12.65/LICENSE:
 
 Copyright (c) 2017 The CCGO Authors. All rights reserved.
 
@@ -21250,11 +21250,11 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 --------------------------------------------------------------------------------
 Module  : modernc.org/libc
-Version : v1.11.40
-Time    : 2021-10-23T18:29:50Z
+Version : v1.11.71
+Time    : 2021-11-14T10:08:55Z
 Licence : BSD-2-Clause
 
-Contents of probable licence file $GOMODCACHE/modernc.org/libc@v1.11.40/LICENSE:
+Contents of probable licence file $GOMODCACHE/modernc.org/libc@v1.11.71/LICENSE:
 
 Copyright (c) 2017 The Libc Authors. All rights reserved.
 
@@ -21435,11 +21435,11 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 --------------------------------------------------------------------------------
 Module  : modernc.org/tcl
-Version : v1.8.1
-Time    : 2021-10-23T19:01:51Z
+Version : v1.8.13
+Time    : 2021-11-13T08:31:15Z
 Licence : BSD-3-Clause
 
-Contents of probable licence file $GOMODCACHE/modernc.org/tcl@v1.8.1/LICENSE:
+Contents of probable licence file $GOMODCACHE/modernc.org/tcl@v1.8.13/LICENSE:
 
 Copyright (c) 2020 The Tcl Authors. All rights reserved.
 
@@ -21508,11 +21508,11 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 --------------------------------------------------------------------------------
 Module  : modernc.org/z
-Version : v1.2.7
-Time    : 2021-10-23T18:53:29Z
+Version : v1.2.19
+Time    : 2021-11-13T08:24:42Z
 Licence : BSD-3-Clause
 
-Contents of probable licence file $GOMODCACHE/modernc.org/z@v1.2.7/LICENSE:
+Contents of probable licence file $GOMODCACHE/modernc.org/z@v1.2.19/LICENSE:
 
 Copyright notice:
 
