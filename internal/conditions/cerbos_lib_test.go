@@ -5,6 +5,8 @@ package conditions_test
 
 import (
 	"fmt"
+	"github.com/google/cel-go/checker/decls"
+	"log"
 	"math/rand"
 	"strings"
 	"testing"
@@ -151,4 +153,38 @@ func benchmarkIntersect(b *testing.B, size int) {
 		_, _, err := prg.Eval(cel.NoVars())
 		require.NoError(b, err)
 	}
+}
+
+func TestPartialEvaluation(t *testing.T) {
+	is := require.New(t)
+
+	expr := "x in y + [z]"
+	env, _ := cel.NewEnv(
+		cel.Declarations(
+			decls.NewVar("y", decls.NewListType(decls.String)),
+			decls.NewVar("x", decls.String),
+			decls.NewVar("z", decls.String)))
+
+	ast, issues := env.Compile(expr)
+	if issues != nil {
+		is.NoError(issues.Err())
+	}
+
+	prg, err := env.Program(ast, cel.EvalOptions(cel.OptTrackState, cel.OptPartialEval))
+	is.NoError(err)
+	vars, err := cel.PartialVars(map[string]interface{}{
+		"y": []string{"GB", "US"},
+		"z": "CA",
+	}, cel.AttributePattern("x"))
+	is.NoError(err)
+	out, det, err := prg.Eval(vars)
+	is.NotNil(det) // It is not nil if cel.OptTrackState is included in the cel.EvalOptions
+	t.Log(out.Type())
+	is.NoError(err)
+	residual, err := env.ResidualAst(ast, det)
+	is.NoError(err)
+	astToString, err := cel.AstToString(residual)
+	is.NoError(err)
+	is.Equal(`x in ["GB", "US", "CA"]`, astToString)
+	log.Print(astToString)
 }
