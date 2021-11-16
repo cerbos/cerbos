@@ -91,6 +91,10 @@ func configureOtel(ctx context.Context, exporter tracesdk.SpanExporter) error {
 		tracesdk.WithResource(res),
 	)
 
+	otel.SetErrorHandler(otelErrHandler(func(err error) {
+		zap.L().Named("otel").Warn("OpenTelemetry error", zap.Error(err))
+	}))
+
 	otel.SetTracerProvider(traceProvider)
 	octrace.DefaultTracer = ocbridge.NewTracer(traceProvider.Tracer("cerbos"))
 
@@ -158,4 +162,10 @@ func MarkFailed(span trace.Span, code int, err error) {
 
 	c, desc := semconv.SpanStatusFromHTTPStatusCode(code)
 	span.SetStatus(c, desc)
+}
+
+type otelErrHandler func(err error)
+
+func (o otelErrHandler) Handle(err error) {
+	o(err)
 }

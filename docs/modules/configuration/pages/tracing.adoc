@@ -21,15 +21,12 @@ In Go applications, the propagation format can be set using one of the following
 otel.SetTextMapPropagator(propagation.TraceContext{})
 
 // B3 
-b3propagator := b3.New(b3.WithInjectEncoding(b3.B3MultipleHeader | b3.B3SingleHeader))
-otel.SetTextMapPropagator(b3propagator)
+otel.SetTextMapPropagator(b3.New(b3.WithInjectEncoding(b3.B3MultipleHeader | b3.B3SingleHeader)))
 ----
 
 * gRPC clients should use the link:https://github.com/open-telemetry/opentelemetry-go-contrib/tree/main/propagators/opencensus[OpenCensus binary propagation format] for distributed traces.
 
 * Metrics are not yet supported. 
-
-* When Cerbos starts, you may see a message printed to standard output in the form `starting span "ExportMetrics": unsupported sampler: 0xaed6e0`. This is an issue in the OpenTelemetry library and can be ignored.
 
 ****
 
