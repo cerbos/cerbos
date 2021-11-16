@@ -40,20 +40,23 @@ set_branch() {
 # Set release version and tag
 update_version $VERSION
 # Set Antora branch to main
-#set_branch "main"
+set_branch "main"
 # Commit changes and tag release
 git -C "$PROJECT_DIR" commit -s -a -m "chore(release): Prepare release $VERSION"
 git tag "v${VERSION}" -m "v${VERSION}"
 # Create a release branch
 SEGMENTS=(${VERSION//./ })
-git branch "v${SEGMENTS[0]}.${SEGMENTS[1]}" "v${VERSION}" || true 
+RELEASE_BRANCH="v${SEGMENTS[0]}.${SEGMENTS[1]}"
+git branch "$RELEASE_BRANCH" "v${VERSION}" || true 
 
 # Set next version
 update_version $NEXT_VERSION
 # Set Antora branch to HEAD (author mode)
-#set_branch "HEAD"
+set_branch "HEAD"
 # Mark it as a pre-release
 sed -i -E "/^version:/a prerelease: -prerelease" "${DOCS_DIR}/antora.yml"
 # Commit changes
 git -C "$PROJECT_DIR" commit -s -a -m "chore(version): Bump version to $NEXT_VERSION"
 
+echo "Run the following commands to trigger the release"
+echo "git push --atomic upstream main ${RELEASE_BRANCH} ${VERSION}"
