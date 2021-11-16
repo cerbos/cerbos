@@ -6,6 +6,9 @@ package schema
 const (
 	ResourceSchemaGlobalKey = "__global__"
 	confKey                 = "schema"
+
+	defaultIgnoreExtraFields = true
+	defaultEnforcement       = EnforcementReject
 )
 
 // Conf holds configuration related to schema validation
@@ -18,6 +21,11 @@ type Conf struct {
 
 func (c *Conf) Key() string {
 	return confKey
+}
+
+func (c *Conf) SetDefaults() {
+	c.IgnoreExtraFields = defaultIgnoreExtraFields
+	c.Enforcement = defaultEnforcement
 }
 
 // Enforcement level for schema validation

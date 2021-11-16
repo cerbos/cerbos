@@ -5,11 +5,16 @@ package engine
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/cerbos/cerbos/internal/config"
+	"github.com/cerbos/cerbos/internal/observability/logging"
+	"github.com/cerbos/cerbos/internal/schema"
 	"strings"
 
 	"github.com/google/cel-go/cel"
+	"github.com/qri-io/jsonschema"
 	"go.opencensus.io/trace"
 	"go.uber.org/multierr"
 	exprpb "google.golang.org/genproto/googleapis/api/expr/v1alpha1"
@@ -55,6 +60,60 @@ type resourcePolicyEvaluator struct {
 	*tracer
 }
 
+func (rpe *resourcePolicyEvaluator) validateSchema(ctx context.Context, input *enginev1.CheckInput, conf *schema.Conf) ([]jsonschema.KeyError, error) {
+	schemaPropsPrincipal, err := json.Marshal(rpe.schemaProps.Principal)
+	if err != nil {
+		return nil, err
+	}
+
+	schemaPropsResource, err := json.Marshal(rpe.schemaProps.Resource)
+	if err != nil {
+		return nil, err
+	}
+
+	principal, err := json.Marshal(input.Principal.Attr)
+	if err != nil {
+		return nil, err
+	}
+
+	resource, err := json.Marshal(input.Resource.Attr)
+	if err != nil {
+		return nil, err
+	}
+
+	schemaPrincipal := &jsonschema.Schema{}
+	if err := json.Unmarshal(schemaPropsPrincipal, schemaPrincipal); err != nil {
+		return nil, err
+	}
+
+	schemaResource := &jsonschema.Schema{}
+	if err := json.Unmarshal(schemaPropsResource, schemaResource); err != nil {
+		return nil, err
+	}
+
+	principalValidation, err := schemaPrincipal.ValidateBytes(ctx, principal)
+	if err != nil {
+		return nil, err
+	}
+
+	resourceValidation, err := schemaResource.ValidateBytes(ctx, resource)
+	if err != nil {
+		return nil, err
+	}
+
+	var allErrors []jsonschema.KeyError
+
+	for _, keyError := range principalValidation {
+		allErrors = append(allErrors, keyError)
+	}
+
+	for _, keyError := range resourceValidation {
+		allErrors = append(allErrors, keyError)
+	}
+
+	return allErrors, nil
+}
+
 func (rpe *resourcePolicyEvaluator) Evaluate(ctx context.Context, input *enginev1.CheckInput) (*EvalResult, error) {
 	_, span := tracing.StartSpan(ctx, "resource_policy.Evaluate")
 	span.AddAttributes(trace.StringAttribute("policy", rpe.policy.Meta.Fqn))
@@ -64,6 +123,34 @@ func (rpe *resourcePolicyEvaluator) Evaluate(ctx context.Context, input *enginev
 	effectiveRoles := toSet(input.Principal.Roles)
 
 	tctx := rpe.beginTrace(policyComponent, rpe.policy.Meta.Fqn)
+
+	conf := &schema.Conf{}
+	if err := config.GetSection(conf); err != nil {
+		return nil, fmt.Errorf("invalid configuration: %w", err)
+	}
+
+	schemaValidationKeys, err := rpe.validateSchema(ctx, input, conf)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(schemaValidationKeys) != 0 && conf.Enforcement != schema.EnforcementNone {
+		for _, validationKey := range schemaValidationKeys {
+			msg := fmt.Sprintf("Schema validation failed: Path=%s - Message=%s", validationKey.PropertyPath,
+				validationKey.Message)
+			if conf.Enforcement == schema.EnforcementWarn {
+				logging.FromContext(ctx).Warn(msg)
+			} else {
+				logging.FromContext(ctx).Error(msg)
+			}
+		}
+
+		if conf.Enforcement == schema.EnforcementReject {
+			result.setDefaultEffect(tctx, input.Actions, effectv1.Effect_EFFECT_DENY)
+			return result, nil
+		}
+	}
+
 	for _, p := range rpe.policy.Policies {
 		// evaluate the variables of this policy
 		variables, err := evaluateVariables(tctx.beginTrace(variablesComponent), p.Variables, input)
