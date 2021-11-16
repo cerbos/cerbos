@@ -112,7 +112,6 @@ func (idx *index) GetCompilationUnits(ids ...namer.ModuleID) (map[namer.ModuleID
 			cu.AddDefinition(dep, p)
 		}
 
-		// TODO(oguzhan): Add schemas to compilation units here
 		for modId, t := range idx.modIdToType {
 			if t == FileTypeSchema {
 				var loadedSchemas *schemav1.Schema
@@ -278,7 +277,6 @@ func (idx *index) addOrUpdateSchema(entry Entry) (evt storage.Event, err error) 
 		return evt, fmt.Errorf("schema is already defined in %s: %w", otherFile, ErrDuplicateSchema)
 	}
 
-	// TODO(oguzhan): check dependencies
 	// if this is an existing file, clear its state first
 	if _, ok := idx.fileToModID[entry.File]; ok {
 		// go through the dependencies and remove self from the dependents list of each dependency.
