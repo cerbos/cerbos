@@ -11,6 +11,7 @@ import (
 	"strings"
 
 	"go.opencensus.io/plugin/ochttp"
+	"go.opencensus.io/plugin/ochttp/propagation/tracecontext"
 	octrace "go.opencensus.io/trace"
 	"go.opentelemetry.io/otel"
 	ocbridge "go.opentelemetry.io/otel/bridge/opencensus"
@@ -135,7 +136,8 @@ func (s sampler) Description() string {
 
 func HTTPHandler(handler http.Handler) http.Handler {
 	return &ochttp.Handler{
-		Handler: handler,
+		Handler:     handler,
+		Propagation: &tracecontext.HTTPFormat{},
 	}
 }
 
