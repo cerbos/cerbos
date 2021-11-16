@@ -7,8 +7,10 @@ import (
 	"context"
 	"fmt"
 	"net"
+	"net/http"
 	"strings"
 
+	"go.opencensus.io/plugin/ochttp"
 	octrace "go.opencensus.io/trace"
 	"go.opentelemetry.io/otel"
 	ocbridge "go.opentelemetry.io/otel/bridge/opencensus"
@@ -131,9 +133,10 @@ func (s sampler) Description() string {
 	return "CerbosCustomSampler"
 }
 
-// StartOptions returns the options for tracing http and gRPC calls.
-func StartOptions() octrace.StartOptions {
-	return octrace.StartOptions{SpanKind: octrace.SpanKindServer}
+func HTTPHandler(handler http.Handler) http.Handler {
+	return &ochttp.Handler{
+		Handler: handler,
+	}
 }
 
 func StartSpan(ctx context.Context, name string) (context.Context, trace.Span) {
