@@ -63,8 +63,7 @@ func configureJaeger(ctx context.Context) error {
 		return fmt.Errorf("failed to create Jaeger exporter: %w", err)
 	}
 
-	configureOtel(ctx, exporter)
-	return nil
+	return configureOtel(ctx, exporter)
 }
 
 func configureOtel(ctx context.Context, exporter tracesdk.SpanExporter) error {
