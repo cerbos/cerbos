@@ -13,6 +13,7 @@ import (
 	"go.opencensus.io/plugin/ochttp"
 	"go.opencensus.io/plugin/ochttp/propagation/tracecontext"
 	octrace "go.opencensus.io/trace"
+	"go.opencensus.io/trace/propagation"
 	"go.opentelemetry.io/otel"
 	ocbridge "go.opentelemetry.io/otel/bridge/opencensus"
 	"go.opentelemetry.io/otel/exporters/jaeger"
@@ -135,9 +136,14 @@ func (s sampler) Description() string {
 }
 
 func HTTPHandler(handler http.Handler) http.Handler {
+	var prop propagation.HTTPFormat
+	if conf.PropagationFormat == propagationW3CTraceContext {
+		prop = &tracecontext.HTTPFormat{}
+	}
+
 	return &ochttp.Handler{
 		Handler:     handler,
-		Propagation: &tracecontext.HTTPFormat{},
+		Propagation: prop,
 	}
 }
 
