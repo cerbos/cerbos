@@ -79,7 +79,7 @@ nfpms:
 dockers:
   - image_templates:
       - "ghcr.io/cerbos/cerbos:{{ .Version }}-amd64"
-      - "cerbos.jfrog.io/containers/cerbos:{{ .Version }}-amd64"
+      - "ghcr.io/cerbos/cerbos:latest-amd64"
       - "ghcr.io/cerbos/cerbos:dev-amd64"
     goarch: amd64
     use: buildx
@@ -96,7 +96,7 @@ dockers:
 
   - image_templates:
       - "ghcr.io/cerbos/cerbos:{{ .Version }}-arm64"
-      - "cerbos.jfrog.io/containers/cerbos:{{ .Version }}-arm64"
+      - "ghcr.io/cerbos/cerbos:latest-arm64"
       - "ghcr.io/cerbos/cerbos:dev-arm64"
     goarch: arm64
     use: buildx
@@ -115,10 +115,10 @@ docker_manifests:
     image_templates:
       - "ghcr.io/cerbos/cerbos:{{ .Version }}-amd64"
       - "ghcr.io/cerbos/cerbos:{{ .Version }}-arm64"
-  - name_template: "cerbos.jfrog.io/containers/cerbos:{{ .Version }}"
+  - name_template: "ghcr.io/cerbos/cerbos:latest"
     image_templates:
-      - "cerbos.jfrog.io/containers/cerbos:{{ .Version }}-amd64"
-      - "cerbos.jfrog.io/containers/cerbos:{{ .Version }}-arm64"
+      - "ghcr.io/cerbos/cerbos:latest-amd64"
+      - "ghcr.io/cerbos/cerbos:latest-arm64"
   - name_template: "ghcr.io/cerbos/cerbos:dev"
     image_templates:
       - "ghcr.io/cerbos/cerbos:dev-amd64"
@@ -132,10 +132,6 @@ brews:
     homepage: "https://cerbos.dev"
     description: "Cerbos is the open core, language-agnostic, scalable authorization solution that makes user permissions and authorization simple to implement and manage by writing context-aware access control policies for your application resources."
     license: "Apache-2.0"
-artifactories:
-  - name: prod
-    mode: archive
-    target: https://cerbos.jfrog.io/artifactory/binaries
 checksum:
   name_template: 'checksums.txt'
 release:
