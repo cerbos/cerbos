@@ -37,6 +37,184 @@ var (
 	_ = effectv1.Effect(0)
 )
 
+// Validate checks the field values on ListResourcesResponse with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, an error is returned.
+func (m *ListResourcesResponse) Validate() error {
+	if m == nil {
+		return nil
+	}
+
+	// no validation rules for RequestId
+
+	// no validation rules for Action
+
+	// no validation rules for Kind
+
+	// no validation rules for PolicyVersion
+
+	if v, ok := interface{}(m.GetFilter()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return ListResourcesResponseValidationError{
+				field:  "Filter",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	return nil
+}
+
+// ListResourcesResponseValidationError is the validation error returned by
+// ListResourcesResponse.Validate if the designated constraints aren't met.
+type ListResourcesResponseValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e ListResourcesResponseValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e ListResourcesResponseValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e ListResourcesResponseValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e ListResourcesResponseValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e ListResourcesResponseValidationError) ErrorName() string {
+	return "ListResourcesResponseValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e ListResourcesResponseValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sListResourcesResponse.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = ListResourcesResponseValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = ListResourcesResponseValidationError{}
+
+// Validate checks the field values on ResourcesAST with the rules defined in
+// the proto definition for this message. If any rules are violated, an error
+// is returned.
+func (m *ResourcesAST) Validate() error {
+	if m == nil {
+		return nil
+	}
+
+	switch m.Node.(type) {
+
+	case *ResourcesAST_BinaryOperation_:
+
+		if v, ok := interface{}(m.GetBinaryOperation()).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return ResourcesASTValidationError{
+					field:  "BinaryOperation",
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	case *ResourcesAST_LogicalOperation_:
+
+		if v, ok := interface{}(m.GetLogicalOperation()).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return ResourcesASTValidationError{
+					field:  "LogicalOperation",
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	}
+
+	return nil
+}
+
+// ResourcesASTValidationError is the validation error returned by
+// ResourcesAST.Validate if the designated constraints aren't met.
+type ResourcesASTValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e ResourcesASTValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e ResourcesASTValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e ResourcesASTValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e ResourcesASTValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e ResourcesASTValidationError) ErrorName() string { return "ResourcesASTValidationError" }
+
+// Error satisfies the builtin error interface
+func (e ResourcesASTValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sResourcesAST.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = ResourcesASTValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = ResourcesASTValidationError{}
+
 // Validate checks the field values on CheckResourceSetResponse with the rules
 // defined in the proto definition for this message. If any rules are
 // violated, an error is returned.
@@ -929,6 +1107,165 @@ var _ interface {
 	Cause() error
 	ErrorName() string
 } = ListPoliciesResponseValidationError{}
+
+// Validate checks the field values on ResourcesAST_BinaryOperation with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, an error is returned.
+func (m *ResourcesAST_BinaryOperation) Validate() error {
+	if m == nil {
+		return nil
+	}
+
+	// no validation rules for Op
+
+	// no validation rules for Field
+
+	// no validation rules for Value
+
+	return nil
+}
+
+// ResourcesAST_BinaryOperationValidationError is the validation error returned
+// by ResourcesAST_BinaryOperation.Validate if the designated constraints
+// aren't met.
+type ResourcesAST_BinaryOperationValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e ResourcesAST_BinaryOperationValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e ResourcesAST_BinaryOperationValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e ResourcesAST_BinaryOperationValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e ResourcesAST_BinaryOperationValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e ResourcesAST_BinaryOperationValidationError) ErrorName() string {
+	return "ResourcesAST_BinaryOperationValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e ResourcesAST_BinaryOperationValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sResourcesAST_BinaryOperation.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = ResourcesAST_BinaryOperationValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = ResourcesAST_BinaryOperationValidationError{}
+
+// Validate checks the field values on ResourcesAST_LogicalOperation with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, an error is returned.
+func (m *ResourcesAST_LogicalOperation) Validate() error {
+	if m == nil {
+		return nil
+	}
+
+	// no validation rules for Op
+
+	for idx, item := range m.GetResources() {
+		_, _ = idx, item
+
+		if v, ok := interface{}(item).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return ResourcesAST_LogicalOperationValidationError{
+					field:  fmt.Sprintf("Resources[%v]", idx),
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	}
+
+	return nil
+}
+
+// ResourcesAST_LogicalOperationValidationError is the validation error
+// returned by ResourcesAST_LogicalOperation.Validate if the designated
+// constraints aren't met.
+type ResourcesAST_LogicalOperationValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e ResourcesAST_LogicalOperationValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e ResourcesAST_LogicalOperationValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e ResourcesAST_LogicalOperationValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e ResourcesAST_LogicalOperationValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e ResourcesAST_LogicalOperationValidationError) ErrorName() string {
+	return "ResourcesAST_LogicalOperationValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e ResourcesAST_LogicalOperationValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sResourcesAST_LogicalOperation.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = ResourcesAST_LogicalOperationValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = ResourcesAST_LogicalOperationValidationError{}
 
 // Validate checks the field values on CheckResourceSetResponse_ActionEffectMap
 // with the rules defined in the proto definition for this message. If any

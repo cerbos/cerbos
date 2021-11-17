@@ -355,6 +355,40 @@
         ]
       }
     },
+    "/api/list_resources": {
+      "post": {
+        "summary": "List resources",
+        "description": "List resources",
+        "operationId": "CerbosService_ListResources",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1ListResourcesResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/v1ListResourcesRequest"
+            }
+          }
+        ],
+        "tags": [
+          "CerbosService"
+        ]
+      }
+    },
     "/api/playground/evaluate": {
       "post": {
         "operationId": "CerbosPlaygroundService_PlaygroundEvaluate",
@@ -778,6 +812,46 @@
           "type": "string"
         }
       }
+    },
+    "ResourcesASTBinaryOperation": {
+      "type": "object",
+      "properties": {
+        "op": {
+          "type": "string",
+          "example": "and",
+          "description": "Binary operation.",
+          "pattern": "^[[:alpha:]]+$"
+        },
+        "field": {
+          "type": "string",
+          "example": "R.attr.geo",
+          "description": "Resource field"
+        },
+        "value": {
+          "type": "string",
+          "description": "Resource field value"
+        }
+      },
+      "description": "Binary operation."
+    },
+    "ResourcesASTLogicalOperation": {
+      "type": "object",
+      "properties": {
+        "op": {
+          "type": "string",
+          "example": "and",
+          "description": "Logical operation.",
+          "pattern": "^[[:alpha:]]+$"
+        },
+        "resources": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/v1ResourcesAST"
+          },
+          "description": "Resources."
+        }
+      },
+      "description": "Logical operation."
     },
     "SortOptionsColumn": {
       "type": "string",
@@ -1271,6 +1345,81 @@
         }
       },
       "description": "List of policies stored in the Cerbos server"
+    },
+    "v1ListResourcesRequest": {
+      "type": "object",
+      "properties": {
+        "requestId": {
+          "type": "string",
+          "example": "c2db17b8-4f9f-4fb1-acfd-9162a02be42b",
+          "description": "Optional application-specific ID useful for correlating logs for analysis."
+        },
+        "action": {
+          "type": "string",
+          "example": "view:public",
+          "description": "Action to be applied to each resource in the list.",
+          "required": [
+            "action"
+          ]
+        },
+        "principal": {
+          "$ref": "#/definitions/v1Principal"
+        },
+        "resourceKind": {
+          "type": "string",
+          "example": "album:object",
+          "description": "Resource kind.",
+          "pattern": "^[[:alpha:]][[:word:]\\@\\.\\-]*(\\:[[:alpha:]][[:word:]\\@\\.\\-]*)*$",
+          "required": [
+            "resource_kind"
+          ]
+        },
+        "policyVersion": {
+          "type": "string",
+          "example": "default",
+          "description": "The policy version to use to evaluate this request. If not specified, will default to the server-configured default version.",
+          "pattern": "^[[:word:]]*$"
+        },
+        "auxData": {
+          "$ref": "#/definitions/cerbosrequestv1AuxData"
+        }
+      },
+      "description": "PDP List Resources Request",
+      "required": [
+        "action",
+        "resourceKind"
+      ]
+    },
+    "v1ListResourcesResponse": {
+      "type": "object",
+      "properties": {
+        "requestId": {
+          "type": "string",
+          "example": "c2db17b8-4f9f-4fb1-acfd-9162a02be42b",
+          "description": "Request ID provided in the request."
+        },
+        "action": {
+          "type": "string",
+          "example": "view:public",
+          "description": "Request ID provided in the request."
+        },
+        "kind": {
+          "type": "string",
+          "example": "album:object",
+          "description": "Resource kind.",
+          "pattern": "^[[:alpha:]][[:word:]\\@\\.\\-]*(\\:[[:alpha:]][[:word:]\\@\\.\\-]*)*$"
+        },
+        "policyVersion": {
+          "type": "string",
+          "example": "default",
+          "description": "The policy version."
+        },
+        "filter": {
+          "$ref": "#/definitions/v1ResourcesAST",
+          "description": "Filter"
+        }
+      },
+      "description": "List resources response for a set of resources."
     },
     "v1Match": {
       "type": "object",
@@ -1783,6 +1932,18 @@
         "kind",
         "instances"
       ]
+    },
+    "v1ResourcesAST": {
+      "type": "object",
+      "properties": {
+        "binaryOperation": {
+          "$ref": "#/definitions/ResourcesASTBinaryOperation"
+        },
+        "logicalOperation": {
+          "$ref": "#/definitions/ResourcesASTLogicalOperation"
+        }
+      },
+      "description": "List resources AST response."
     },
     "v1RoleDef": {
       "type": "object",

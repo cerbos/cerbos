@@ -73,6 +73,17 @@ service CerbosService {
             description: "Get information about the server e.g. server version"
         };
     }
+
+    rpc ListResources(cerbos.request.v1.ListResourcesRequest) returns (cerbos.response.v1.ListResourcesResponse) {
+        option (google.api.http) = {
+            post: "/api/list_resources",
+            body: "*"
+        };
+        option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+            summary: "List resources"
+            description: "List resources"
+        };
+    }
 }
 
 service CerbosAdminService {

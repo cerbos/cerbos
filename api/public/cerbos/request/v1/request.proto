@@ -18,6 +18,55 @@ import "google/api/field_behavior.proto";
 import "protoc-gen-openapiv2/options/annotations.proto";
 import "validate/validate.proto";
 
+message ListResourcesRequest {
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
+        json_schema: {
+            description: "PDP List Resources Request"
+        }
+    };
+
+    string request_id = 1 [
+        (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+            description: "Optional application-specific ID useful for correlating logs for analysis."
+            example: "\"c2db17b8-4f9f-4fb1-acfd-9162a02be42b\""
+        }
+    ];
+
+    string action = 2 [
+        (google.api.field_behavior) = REQUIRED,
+        (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+            description: "Action to be applied to each resource in the list."
+            example: "\"view:public\""
+        }
+    ];
+
+    cerbos.engine.v1.Principal principal = 3 [
+        (validate.rules).message.required = true,
+        (google.api.field_behavior) = REQUIRED
+    ];
+
+    string resource_kind = 4 [
+        (validate.rules).string = {pattern: "^[[:alpha:]][[:word:]\\@\\.\\-/]*(\\:[[:alpha:]][[:word:]\\@\\.\\-/]*)*$", min_len: 1},
+        (google.api.field_behavior) = REQUIRED,
+        (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+            description: "Resource kind."
+            example: "\"album:object\""
+            pattern: "^[[:alpha:]][[:word:]\\@\\.\\-]*(\\:[[:alpha:]][[:word:]\\@\\.\\-]*)*$"
+        }
+    ];
+    string policy_version = 5 [
+        (validate.rules).string.pattern = "^[[:word:]]*$",
+        (google.api.field_behavior) = OPTIONAL,
+        (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+            description: "The policy version to use to evaluate this request. If not specified, will default to the server-configured default version.",
+            pattern: "^[[:word:]]*$"
+            example: "\"default\""
+        }
+    ];
+
+    AuxData aux_data = 6;
+}
+
 message CheckResourceSetRequest {
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
 		json_schema: {
