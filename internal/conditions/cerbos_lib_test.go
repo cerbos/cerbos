@@ -160,9 +160,6 @@ func benchmarkIntersect(b *testing.B, size int) {
 }
 
 func TestPartialEvaluation(t *testing.T) {
-	is := require.New(t)
-
-	expr := "R.attr.geo in (y + [z]).map(t, t.upperAscii())"
 	env, _ := cel.NewEnv(
 		cel.Types(&enginev1.Resource{}),
 		cel.Declarations(
@@ -170,29 +167,46 @@ func TestPartialEvaluation(t *testing.T) {
 			decls.NewVar(conditions.CELResourceAbbrev, decls.NewObjectType("cerbos.engine.v1.Resource")),
 			decls.NewVar("z", decls.String)), ext.Strings())
 
-	ast, issues := env.Compile(expr)
-	if issues != nil {
-		is.NoError(issues.Err())
-	}
-
-	prg, err := env.Program(ast, cel.EvalOptions(cel.OptTrackState, cel.OptPartialEval))
-	is.NoError(err)
-	vars, err := cel.PartialVars(map[string]interface{}{
+	vars, _ := cel.PartialVars(map[string]interface{}{
 		"y": []string{"GB", "US"},
 		"z": "ca",
 	}, cel.AttributePattern("R"))
-	is.NoError(err)
-	out, det, err := prg.Eval(vars)
-	is.NotNil(det) // It is not nil if cel.OptTrackState is included in the cel.EvalOptions
-	t.Log(out.Type())
-	is.NoError(err)
-	residual, err := env.ResidualAst(ast, det)
-	is.NoError(err)
-	bytes, err := yaml.Marshal(residual.Expr())
-	log.Print("\n", string(bytes))
-	is.NoError(err)
-	astToString, err := cel.AstToString(residual)
-	is.NoError(err)
-	is.Equal(`R.attr.geo in ["GB", "US", "CA"]`, astToString)
-	log.Print(astToString)
+	tests := []struct {
+		expr, result string
+	}{
+		{
+			expr:   "R.attr.geo in (y + [z]).map(t, t.upperAscii())",
+			result: `R.attr.geo in ["GB", "US", "CA"]`,
+		},
+		{
+			expr:   `"CA" in (y + [z]).map(t, t.upperAscii())`,
+			result: "true",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.expr, func(t *testing.T) {
+			is := require.New(t)
+			expr := tt.expr
+			ast, issues := env.Compile(expr)
+			if issues != nil {
+				is.NoError(issues.Err())
+			}
+			prg, err := env.Program(ast, cel.EvalOptions(cel.OptTrackState, cel.OptPartialEval))
+			is.NoError(err)
+
+			out, det, err := prg.Eval(vars)
+			is.NotNil(det) // It is not nil if cel.OptTrackState is included in the cel.EvalOptions
+			t.Log(out.Type())
+			is.NoError(err)
+			residual, err := env.ResidualAst(ast, det)
+			is.NoError(err)
+			bytes, err := yaml.Marshal(residual.Expr())
+			log.Print("\n", string(bytes))
+			is.NoError(err)
+			astToString, err := cel.AstToString(residual)
+			is.NoError(err)
+			is.Equal(tt.result, astToString)
+			log.Print(astToString)
+		})
+	}
 }
