@@ -75,11 +75,11 @@ func (c *Manager) processUpdateQueue(ctx context.Context) {
 
 func (c *Manager) recompile(evt storage.Event) error {
 	// if this is a delete event, remove the module from the cache
-	// TODO(oguzhan): Handle EventDeleteSchema
-	if evt.Kind == storage.EventDeletePolicy {
+	if evt.Kind == storage.EventDeletePolicy || evt.Kind == storage.EventDeleteSchema {
 		c.evict(evt.PolicyID)
 	}
 
+	// TODO(oguzhan): recompile policies to include freshly added schemas
 	// find the modules that will be affected by this policy getting updated or deleted.
 	var toRecompile []namer.ModuleID
 	if evt.Kind == storage.EventAddOrUpdatePolicy {

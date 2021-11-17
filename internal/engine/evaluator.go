@@ -61,10 +61,21 @@ type resourcePolicyEvaluator struct {
 }
 
 func (rpe *resourcePolicyEvaluator) validateSchema(ctx context.Context, input *enginev1.CheckInput, conf *schema.Conf) ([]jsonschema.KeyError, error) {
+	if rpe.schemaProps == nil {
+		return nil, nil
+	}
+
 	schemaPropsPrincipal, err := json.Marshal(rpe.schemaProps.Principal)
 	if err != nil {
 		return nil, err
 	}
+
+	/*
+		schemaPropsGlobalResource, err := json.Marshal(rpe.schemaProps.GlobalResource)
+		if err != nil {
+			return nil, err
+		}
+	*/
 
 	schemaPropsResource, err := json.Marshal(rpe.schemaProps.Resource)
 	if err != nil {

@@ -286,7 +286,6 @@ func (engine *Engine) evaluate(ctx context.Context, input *enginev1.CheckInput, 
 		return output, nil
 	}
 
-	// TODO(oguzhan): Evaluation of the schemas here
 	// evaluate the policies
 	result, err := ec.evaluate(ctx, input)
 	if err != nil {
