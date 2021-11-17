@@ -13,6 +13,7 @@ import "cerbos/audit/v1/audit.proto";
 import "cerbos/effect/v1/effect.proto";
 import "cerbos/policy/v1/policy.proto";
 import "google/protobuf/empty.proto";
+import "google/api/expr/v1alpha1/checked.proto";
 import "protoc-gen-openapiv2/options/annotations.proto";
 
 message ListResourcesResponse {
@@ -51,7 +52,7 @@ message ListResourcesResponse {
         }
     ];
 
-    ResourcesAST filter = 5 [
+    google.api.expr.v1alpha1.CheckedExpr filter = 5 [
         (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
             description: "Filter",
         }
