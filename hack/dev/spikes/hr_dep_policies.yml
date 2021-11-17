@@ -168,9 +168,19 @@ ExprKind:
   CallExpr:
     args:
       - ExprKind:
-          IdentExpr:
-            name: x
-        id: 1
+          SelectExpr:
+            field: geo
+            operand:
+              ExprKind:
+                SelectExpr:
+                  field: attr
+                  operand:
+                    ExprKind:
+                      IdentExpr:
+                        name: R
+                    id: 1
+              id: 2
+        id: 3
       - ExprKind:
           ListExpr:
             elements:
@@ -178,18 +188,19 @@ ExprKind:
                   ConstExpr:
                     ConstantKind:
                       StringValue: GB
-                id: 4
+                id: 6
               - ExprKind:
                   ConstExpr:
                     ConstantKind:
                       StringValue: US
-                id: 5
+                id: 7
               - ExprKind:
                   ConstExpr:
                     ConstantKind:
                       StringValue: CA
-                id: 6
-        id: 3
+                id: 8
+        id: 5
     function: '@in'
-id: 2
+id: 4
+# R.attr.geo in ["GB", "US", "CA"]
 ---
