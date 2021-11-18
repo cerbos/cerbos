@@ -1118,12 +1118,12 @@ func (m *ListResourcesResponse_Node) Validate() error {
 
 	switch m.Node.(type) {
 
-	case *ListResourcesResponse_Node_LogicalOperator:
+	case *ListResourcesResponse_Node_LogicalOperation:
 
-		if v, ok := interface{}(m.GetLogicalOperator()).(interface{ Validate() error }); ok {
+		if v, ok := interface{}(m.GetLogicalOperation()).(interface{ Validate() error }); ok {
 			if err := v.Validate(); err != nil {
 				return ListResourcesResponse_NodeValidationError{
-					field:  "LogicalOperator",
+					field:  "LogicalOperation",
 					reason: "embedded message failed validation",
 					cause:  err,
 				}
@@ -1203,10 +1203,10 @@ var _ interface {
 	ErrorName() string
 } = ListResourcesResponse_NodeValidationError{}
 
-// Validate checks the field values on ListResourcesResponse_LogicalOperator
+// Validate checks the field values on ListResourcesResponse_LogicalOperation
 // with the rules defined in the proto definition for this message. If any
 // rules are violated, an error is returned.
-func (m *ListResourcesResponse_LogicalOperator) Validate() error {
+func (m *ListResourcesResponse_LogicalOperation) Validate() error {
 	if m == nil {
 		return nil
 	}
@@ -1218,7 +1218,7 @@ func (m *ListResourcesResponse_LogicalOperator) Validate() error {
 
 		if v, ok := interface{}(item).(interface{ Validate() error }); ok {
 			if err := v.Validate(); err != nil {
-				return ListResourcesResponse_LogicalOperatorValidationError{
+				return ListResourcesResponse_LogicalOperationValidationError{
 					field:  fmt.Sprintf("Nodes[%v]", idx),
 					reason: "embedded message failed validation",
 					cause:  err,
@@ -1231,10 +1231,10 @@ func (m *ListResourcesResponse_LogicalOperator) Validate() error {
 	return nil
 }
 
-// ListResourcesResponse_LogicalOperatorValidationError is the validation error
-// returned by ListResourcesResponse_LogicalOperator.Validate if the
+// ListResourcesResponse_LogicalOperationValidationError is the validation
+// error returned by ListResourcesResponse_LogicalOperation.Validate if the
 // designated constraints aren't met.
-type ListResourcesResponse_LogicalOperatorValidationError struct {
+type ListResourcesResponse_LogicalOperationValidationError struct {
 	field  string
 	reason string
 	cause  error
@@ -1242,24 +1242,24 @@ type ListResourcesResponse_LogicalOperatorValidationError struct {
 }
 
 // Field function returns field value.
-func (e ListResourcesResponse_LogicalOperatorValidationError) Field() string { return e.field }
+func (e ListResourcesResponse_LogicalOperationValidationError) Field() string { return e.field }
 
 // Reason function returns reason value.
-func (e ListResourcesResponse_LogicalOperatorValidationError) Reason() string { return e.reason }
+func (e ListResourcesResponse_LogicalOperationValidationError) Reason() string { return e.reason }
 
 // Cause function returns cause value.
-func (e ListResourcesResponse_LogicalOperatorValidationError) Cause() error { return e.cause }
+func (e ListResourcesResponse_LogicalOperationValidationError) Cause() error { return e.cause }
 
 // Key function returns key value.
-func (e ListResourcesResponse_LogicalOperatorValidationError) Key() bool { return e.key }
+func (e ListResourcesResponse_LogicalOperationValidationError) Key() bool { return e.key }
 
 // ErrorName returns error name.
-func (e ListResourcesResponse_LogicalOperatorValidationError) ErrorName() string {
-	return "ListResourcesResponse_LogicalOperatorValidationError"
+func (e ListResourcesResponse_LogicalOperationValidationError) ErrorName() string {
+	return "ListResourcesResponse_LogicalOperationValidationError"
 }
 
 // Error satisfies the builtin error interface
-func (e ListResourcesResponse_LogicalOperatorValidationError) Error() string {
+func (e ListResourcesResponse_LogicalOperationValidationError) Error() string {
 	cause := ""
 	if e.cause != nil {
 		cause = fmt.Sprintf(" | caused by: %v", e.cause)
@@ -1271,14 +1271,14 @@ func (e ListResourcesResponse_LogicalOperatorValidationError) Error() string {
 	}
 
 	return fmt.Sprintf(
-		"invalid %sListResourcesResponse_LogicalOperator.%s: %s%s",
+		"invalid %sListResourcesResponse_LogicalOperation.%s: %s%s",
 		key,
 		e.field,
 		e.reason,
 		cause)
 }
 
-var _ error = ListResourcesResponse_LogicalOperatorValidationError{}
+var _ error = ListResourcesResponse_LogicalOperationValidationError{}
 
 var _ interface {
 	Field() string
@@ -1286,7 +1286,7 @@ var _ interface {
 	Key() bool
 	Cause() error
 	ErrorName() string
-} = ListResourcesResponse_LogicalOperatorValidationError{}
+} = ListResourcesResponse_LogicalOperationValidationError{}
 
 // Validate checks the field values on ResourcesAST_BinaryOperation with the
 // rules defined in the proto definition for this message. If any rules are

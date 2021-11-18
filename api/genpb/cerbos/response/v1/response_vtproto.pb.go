@@ -69,15 +69,15 @@ func (m *ListResourcesResponse_Node) MarshalToSizedBufferVT(dAtA []byte) (int, e
 	return len(dAtA) - i, nil
 }
 
-func (m *ListResourcesResponse_Node_LogicalOperator) MarshalToVT(dAtA []byte) (int, error) {
+func (m *ListResourcesResponse_Node_LogicalOperation) MarshalToVT(dAtA []byte) (int, error) {
 	size := m.SizeVT()
 	return m.MarshalToSizedBufferVT(dAtA[:size])
 }
 
-func (m *ListResourcesResponse_Node_LogicalOperator) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
+func (m *ListResourcesResponse_Node_LogicalOperation) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 	i := len(dAtA)
-	if m.LogicalOperator != nil {
-		size, err := m.LogicalOperator.MarshalToSizedBufferVT(dAtA[:i])
+	if m.LogicalOperation != nil {
+		size, err := m.LogicalOperation.MarshalToSizedBufferVT(dAtA[:i])
 		if err != nil {
 			return 0, err
 		}
@@ -119,7 +119,7 @@ func (m *ListResourcesResponse_Node_Expression) MarshalToSizedBufferVT(dAtA []by
 	}
 	return len(dAtA) - i, nil
 }
-func (m *ListResourcesResponse_LogicalOperator) MarshalVT() (dAtA []byte, err error) {
+func (m *ListResourcesResponse_LogicalOperation) MarshalVT() (dAtA []byte, err error) {
 	if m == nil {
 		return nil, nil
 	}
@@ -132,12 +132,12 @@ func (m *ListResourcesResponse_LogicalOperator) MarshalVT() (dAtA []byte, err er
 	return dAtA[:n], nil
 }
 
-func (m *ListResourcesResponse_LogicalOperator) MarshalToVT(dAtA []byte) (int, error) {
+func (m *ListResourcesResponse_LogicalOperation) MarshalToVT(dAtA []byte) (int, error) {
 	size := m.SizeVT()
 	return m.MarshalToSizedBufferVT(dAtA[:size])
 }
 
-func (m *ListResourcesResponse_LogicalOperator) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
+func (m *ListResourcesResponse_LogicalOperation) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 	if m == nil {
 		return 0, nil
 	}
@@ -1617,14 +1617,14 @@ func (m *ListResourcesResponse_Node) SizeVT() (n int) {
 	return n
 }
 
-func (m *ListResourcesResponse_Node_LogicalOperator) SizeVT() (n int) {
+func (m *ListResourcesResponse_Node_LogicalOperation) SizeVT() (n int) {
 	if m == nil {
 		return 0
 	}
 	var l int
 	_ = l
-	if m.LogicalOperator != nil {
-		l = m.LogicalOperator.SizeVT()
+	if m.LogicalOperation != nil {
+		l = m.LogicalOperation.SizeVT()
 		n += 1 + l + sov(uint64(l))
 	}
 	return n
@@ -1647,7 +1647,7 @@ func (m *ListResourcesResponse_Node_Expression) SizeVT() (n int) {
 	}
 	return n
 }
-func (m *ListResourcesResponse_LogicalOperator) SizeVT() (n int) {
+func (m *ListResourcesResponse_LogicalOperation) SizeVT() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -2346,7 +2346,7 @@ func (m *ListResourcesResponse_Node) UnmarshalVT(dAtA []byte) error {
 		switch fieldNum {
 		case 1:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field LogicalOperator", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field LogicalOperation", wireType)
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
@@ -2373,16 +2373,16 @@ func (m *ListResourcesResponse_Node) UnmarshalVT(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			if oneof, ok := m.Node.(*ListResourcesResponse_Node_LogicalOperator); ok {
-				if err := oneof.LogicalOperator.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
+			if oneof, ok := m.Node.(*ListResourcesResponse_Node_LogicalOperation); ok {
+				if err := oneof.LogicalOperation.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
 					return err
 				}
 			} else {
-				v := &ListResourcesResponse_LogicalOperator{}
+				v := &ListResourcesResponse_LogicalOperation{}
 				if err := v.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
 					return err
 				}
-				m.Node = &ListResourcesResponse_Node_LogicalOperator{v}
+				m.Node = &ListResourcesResponse_Node_LogicalOperation{v}
 			}
 			iNdEx = postIndex
 		case 2:
@@ -2464,7 +2464,7 @@ func (m *ListResourcesResponse_Node) UnmarshalVT(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *ListResourcesResponse_LogicalOperator) UnmarshalVT(dAtA []byte) error {
+func (m *ListResourcesResponse_LogicalOperation) UnmarshalVT(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -2487,10 +2487,10 @@ func (m *ListResourcesResponse_LogicalOperator) UnmarshalVT(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: ListResourcesResponse_LogicalOperator: wiretype end group for non-group")
+			return fmt.Errorf("proto: ListResourcesResponse_LogicalOperation: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: ListResourcesResponse_LogicalOperator: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: ListResourcesResponse_LogicalOperation: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
@@ -2507,7 +2507,7 @@ func (m *ListResourcesResponse_LogicalOperator) UnmarshalVT(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				m.Operator |= ListResourcesResponse_LogicalOperator_Operator(b&0x7F) << shift
+				m.Operator |= ListResourcesResponse_LogicalOperation_Operator(b&0x7F) << shift
 				if b < 0x80 {
 					break
 				}
