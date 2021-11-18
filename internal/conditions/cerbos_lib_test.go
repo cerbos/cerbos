@@ -182,6 +182,14 @@ func TestPartialEvaluation(t *testing.T) {
 			expr:   `"CA" in (y + [z]).map(t, t.upperAscii())`,
 			result: "true",
 		},
+		{
+			expr:   `("CA" in (y + [z]).map(t, t.upperAscii())) && 1 == 2`,
+			result: "false",
+		},
+		{
+			expr:   `("NZ" in (y + [z]).map(t, t.upperAscii()))`,
+			result: "false",
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.expr, func(t *testing.T) {
