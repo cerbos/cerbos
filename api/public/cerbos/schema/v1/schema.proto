@@ -1,0 +1,41 @@
+// Copyright 2021 Zenauth Ltd.
+// SPDX-License-Identifier: Apache-2.0
+
+syntax = "proto3";
+
+package cerbos.schema.v1;
+
+import "validate/validate.proto";
+
+option go_package = "github.com/cerbos/cerbos/api/genpb/cerbos/schema/v1;schemav1";
+option java_package = "dev.cerbos.api.v1.schema";
+option csharp_namespace = "Cerbos.Api.V1.Schema";
+
+message Schema {
+  string api_version = 1 [(validate.rules).string.const = "api.cerbos.dev/v1"];
+  reserved 2; // string schema_version = 2 [(validate.rules).string.pattern = "^[[:word:]]+$"];
+  bool disabled = 3;
+  string description = 4;
+  JSONSchemaProps principal_schema = 5;
+  map<string, JSONSchemaProps> resource_schema = 6;
+}
+
+message JSONSchemaProps {
+  string id = 1;
+
+  string schema = 2;
+
+  string ref = 3;
+
+  string description = 4;
+
+  string type = 5;
+
+  string format = 6;
+
+  string title = 7;
+
+  map<string, JSONSchemaProps> properties = 29;
+
+  map<string, JSONSchemaProps> definitions = 34;
+}

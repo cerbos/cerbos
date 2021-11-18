@@ -27,6 +27,7 @@ import (
 	"github.com/cerbos/cerbos/internal/namer"
 	"github.com/cerbos/cerbos/internal/observability/logging"
 	"github.com/cerbos/cerbos/internal/observability/tracing"
+	"github.com/cerbos/cerbos/internal/schema"
 )
 
 // ErrNoPoliciesMatched indicates that no policies were matched.
@@ -83,11 +84,12 @@ type Engine struct {
 	workerIndex uint64
 	workerPool  []chan<- workIn
 	compileMgr  *compile.Manager
+	schemaMgr   *schema.Manager
 	auditLog    audit.Log
 }
 
-func New(ctx context.Context, compileMgr *compile.Manager, auditLog audit.Log) (*Engine, error) {
-	engine, err := newEngine(compileMgr, auditLog)
+func New(ctx context.Context, compileMgr *compile.Manager, schemaMgr *schema.Manager, auditLog audit.Log) (*Engine, error) {
+	engine, err := newEngine(compileMgr, schemaMgr, auditLog)
 	if err != nil {
 		return nil, err
 	}
@@ -105,11 +107,11 @@ func New(ctx context.Context, compileMgr *compile.Manager, auditLog audit.Log) (
 	return engine, nil
 }
 
-func NewEphemeral(ctx context.Context, compileMgr *compile.Manager) (*Engine, error) {
-	return newEngine(compileMgr, audit.NewNopLog())
+func NewEphemeral(ctx context.Context, compileMgr *compile.Manager, schemaMgr *schema.Manager) (*Engine, error) {
+	return newEngine(compileMgr, schemaMgr, audit.NewNopLog())
 }
 
-func newEngine(compileMgr *compile.Manager, auditLog audit.Log) (*Engine, error) {
+func newEngine(compileMgr *compile.Manager, schemaMgr *schema.Manager, auditLog audit.Log) (*Engine, error) {
 	conf := &Conf{}
 	if err := config.GetSection(conf); err != nil {
 		return nil, err
@@ -118,6 +120,7 @@ func newEngine(compileMgr *compile.Manager, auditLog audit.Log) (*Engine, error)
 	engine := &Engine{
 		conf:       conf,
 		compileMgr: compileMgr,
+		schemaMgr:  schemaMgr,
 		auditLog:   auditLog,
 	}
 
@@ -268,10 +271,27 @@ func (engine *Engine) evaluate(ctx context.Context, input *enginev1.CheckInput, 
 		return nil, err
 	}
 
+	schemaValidationErrors, err := engine.schemaMgr.Validate(ctx, input)
+	if err != nil {
+		return nil, err
+	}
+
 	output := &enginev1.CheckOutput{
 		RequestId:  input.RequestId,
 		ResourceId: input.Resource.Id,
 		Actions:    make(map[string]*enginev1.CheckOutput_ActionEffect, len(input.Actions)),
+	}
+
+	// If there are errors present in schema validation, return EFFECT_DENY for all actions
+	if len(schemaValidationErrors) > 0 {
+		for _, action := range input.Actions {
+			output.Actions[action] = &enginev1.CheckOutput_ActionEffect{
+				Effect: effectv1.Effect_EFFECT_DENY,
+				Policy: noPolicyMatch,
+			}
+		}
+
+		return output, nil
 	}
 
 	// If there are no checks, set the default effect and return.

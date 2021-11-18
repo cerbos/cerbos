@@ -57,6 +57,7 @@ import (
 	"github.com/cerbos/cerbos/internal/engine"
 	"github.com/cerbos/cerbos/internal/observability/metrics"
 	"github.com/cerbos/cerbos/internal/observability/tracing"
+	internalSchema "github.com/cerbos/cerbos/internal/schema"
 	"github.com/cerbos/cerbos/internal/storage"
 
 	// Import cloud to register the storage driver.
@@ -115,8 +116,14 @@ func Start(ctx context.Context, zpagesEnabled bool) error {
 		return fmt.Errorf("failed to create store: %w", err)
 	}
 
+	// create schema manager
+	schemaManager, err := internalSchema.New(store)
+	if err != nil {
+		return fmt.Errorf("failed to create schema manager: %w", err)
+	}
+
 	// create engine
-	eng, err := engine.New(ctx, compile.NewManager(ctx, store), auditLog)
+	eng, err := engine.New(ctx, compile.NewManager(ctx, store), schemaManager, auditLog)
 	if err != nil {
 		return fmt.Errorf("failed to create engine: %w", err)
 	}

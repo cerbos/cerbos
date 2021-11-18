@@ -12,6 +12,7 @@ import (
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
 	"github.com/cerbos/cerbos/internal/namer"
 	"github.com/cerbos/cerbos/internal/policy"
+	"github.com/cerbos/cerbos/internal/schema"
 	"github.com/cerbos/cerbos/internal/util"
 )
 
@@ -84,7 +85,7 @@ func Build(ctx context.Context, fsys fs.FS, opts ...BuildOpt) (Index, error) {
 			return err
 		}
 
-		if d.IsDir() {
+		if d.IsDir() || path == schema.RelativePathToSchema {
 			if d.Name() == util.TestDataDirectory {
 				return fs.SkipDir
 			}

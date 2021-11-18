@@ -19,6 +19,7 @@ import (
 	"go.uber.org/zap"
 
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
+	schemav1 "github.com/cerbos/cerbos/api/genpb/cerbos/schema/v1"
 	"github.com/cerbos/cerbos/internal/config"
 	"github.com/cerbos/cerbos/internal/namer"
 	"github.com/cerbos/cerbos/internal/policy"
@@ -136,6 +137,11 @@ func (s *Store) GetDependents(_ context.Context, ids ...namer.ModuleID) (map[nam
 
 func (s *Store) GetPolicies(ctx context.Context) ([]*policy.Wrapper, error) {
 	return s.idx.GetPolicies(ctx)
+}
+
+func (s *Store) GetSchema(ctx context.Context) (*schemav1.Schema, error) {
+	// TODO(oguzhan): Implement reading schema for this Store type
+	return nil, fmt.Errorf("not implemented")
 }
 
 func isEmptyDir(dir string) (bool, error) {

@@ -76,6 +76,7 @@ require (
 	github.com/aws/aws-sdk-go v1.42.4
 	github.com/lestrrat-go/jwx v1.2.9
 	github.com/minio/minio-go/v7 v7.0.15
+	github.com/qri-io/jsonschema v0.2.1
 	go.opentelemetry.io/otel v1.2.0
 	go.opentelemetry.io/otel/bridge/opencensus v0.25.0
 	go.opentelemetry.io/otel/exporters/jaeger v1.2.0
@@ -178,6 +179,7 @@ require (
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/prometheus/client_model v0.2.0 // indirect
 	github.com/prometheus/common v0.29.0 // indirect
+	github.com/qri-io/jsonpointer v0.1.1 // indirect
 	github.com/remyoudompheng/bigfft v0.0.0-20200410134404-eec4a21b6bb0 // indirect
 	github.com/rivo/uniseg v0.2.0 // indirect
 	github.com/rs/xid v1.2.1 // indirect

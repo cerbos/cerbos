@@ -7,11 +7,14 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"path"
 	"path/filepath"
 
+	schemav1 "github.com/cerbos/cerbos/api/genpb/cerbos/schema/v1"
 	"github.com/cerbos/cerbos/internal/config"
 	"github.com/cerbos/cerbos/internal/namer"
 	"github.com/cerbos/cerbos/internal/policy"
+	"github.com/cerbos/cerbos/internal/schema"
 	"github.com/cerbos/cerbos/internal/storage"
 	"github.com/cerbos/cerbos/internal/storage/index"
 )
@@ -32,7 +35,8 @@ func init() {
 }
 
 type Store struct {
-	idx index.Index
+	conf *Conf
+	idx  index.Index
 	*storage.SubscriptionManager
 }
 
@@ -47,7 +51,7 @@ func NewStore(ctx context.Context, conf *Conf) (*Store, error) {
 		return nil, err
 	}
 
-	s := &Store{idx: idx, SubscriptionManager: storage.NewSubscriptionManager(ctx)}
+	s := &Store{conf: conf, idx: idx, SubscriptionManager: storage.NewSubscriptionManager(ctx)}
 	if conf.WatchForChanges {
 		if err := watchDir(ctx, dir, s.idx, s.SubscriptionManager, defaultCooldownPeriod); err != nil {
 			return nil, err
@@ -75,4 +79,19 @@ func (s *Store) GetDependents(_ context.Context, ids ...namer.ModuleID) (map[nam
 
 func (s *Store) GetPolicies(ctx context.Context) ([]*policy.Wrapper, error) {
 	return s.idx.GetPolicies(ctx)
+}
+
+func (s *Store) GetSchema(ctx context.Context) (*schemav1.Schema, error) {
+	schemaFileAbsPath, err := filepath.Abs(path.Join(s.conf.Directory, schema.RelativePathToSchema))
+	if err != nil {
+		return nil, fmt.Errorf("failed to determine absolute path to the schema file [%s - %s]: %w",
+			s.conf.Directory, schema.RelativePathToSchema, err)
+	}
+
+	sch, err := schema.ReadSchemaFromFile(schemaFileAbsPath)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read schema file from path %s: %w", schemaFileAbsPath, err)
+	}
+
+	return sch, nil
 }

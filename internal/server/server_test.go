@@ -34,6 +34,7 @@ import (
 	"github.com/cerbos/cerbos/internal/auxdata"
 	"github.com/cerbos/cerbos/internal/compile"
 	"github.com/cerbos/cerbos/internal/engine"
+	"github.com/cerbos/cerbos/internal/schema"
 	"github.com/cerbos/cerbos/internal/storage/db/sqlite3"
 	"github.com/cerbos/cerbos/internal/storage/disk"
 	"github.com/cerbos/cerbos/internal/test"
@@ -77,7 +78,10 @@ func TestServer(t *testing.T) {
 	store, err := disk.NewStore(ctx, &disk.Conf{Directory: dir})
 	require.NoError(t, err)
 
-	eng, err := engine.New(ctx, compile.NewManager(ctx, store), auditLog)
+	schemaMgr, err := schema.New(store)
+	require.NoError(t, err)
+
+	eng, err := engine.New(ctx, compile.NewManager(ctx, store), schemaMgr, auditLog)
 	require.NoError(t, err)
 
 	param := Param{AuditLog: auditLog, AuxData: auxData, Store: store, Engine: eng}
@@ -191,7 +195,10 @@ func TestAdminService(t *testing.T) {
 	store, err := sqlite3.NewStore(ctx, &sqlite3.Conf{DSN: fmt.Sprintf("%s?_fk=true", filepath.Join(t.TempDir(), "cerbos.db"))})
 	require.NoError(t, err)
 
-	eng, err := engine.New(ctx, compile.NewManager(ctx, store), auditLog)
+	schemaMgr, err := schema.New(store)
+	require.NoError(t, err)
+
+	eng, err := engine.New(ctx, compile.NewManager(ctx, store), schemaMgr, auditLog)
 	require.NoError(t, err)
 
 	testdataDir := test.PathToDir(t, "server")
