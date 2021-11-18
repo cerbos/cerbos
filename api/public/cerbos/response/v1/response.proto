@@ -51,8 +51,22 @@ message ListResourcesResponse {
             example: "\"default\""
         }
     ];
+    message Node {
+        oneof node {
+            LogicalOperator logical_operator = 1;
+            google.api.expr.v1alpha1.CheckedExpr expression = 2;
+        }
+    }
+    message LogicalOperator {
+        enum Operator {
+            AND = 0;
+            OR = 1;
+        }
+        Operator operator = 1;
+        repeated Node nodes = 2;
+    }
 
-    google.api.expr.v1alpha1.CheckedExpr filter = 5 [
+     Node filter = 5 [
         (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
             description: "Filter",
         }

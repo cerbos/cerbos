@@ -837,6 +837,39 @@
       },
       "description": "Sort options"
     },
+    "ListResourcesResponseLogicalOperator": {
+      "type": "object",
+      "properties": {
+        "operator": {
+          "$ref": "#/definitions/LogicalOperatorOperator"
+        },
+        "nodes": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ListResourcesResponseNode"
+          }
+        }
+      }
+    },
+    "ListResourcesResponseNode": {
+      "type": "object",
+      "properties": {
+        "logicalOperator": {
+          "$ref": "#/definitions/ListResourcesResponseLogicalOperator"
+        },
+        "expression": {
+          "$ref": "#/definitions/v1alpha1CheckedExpr"
+        }
+      }
+    },
+    "LogicalOperatorOperator": {
+      "type": "string",
+      "enum": [
+        "AND",
+        "OR"
+      ],
+      "default": "AND"
+    },
     "MatchExprList": {
       "type": "object",
       "properties": {
@@ -1652,7 +1685,7 @@
           "description": "The policy version."
         },
         "filter": {
-          "$ref": "#/definitions/v1alpha1CheckedExpr",
+          "$ref": "#/definitions/ListResourcesResponseNode",
           "description": "Filter"
         }
       },
