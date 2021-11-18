@@ -7,6 +7,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	requestv1 "github.com/cerbos/cerbos/api/genpb/cerbos/request/v1"
+	v1alpha1 "google.golang.org/genproto/googleapis/api/expr/v1alpha1"
 	"io"
 	"math/rand"
 	"net/http"
@@ -159,7 +161,6 @@ func (engine *Engine) submitWork(ctx context.Context, work workIn) error {
 		}
 	}
 }
-
 func (engine *Engine) Check(ctx context.Context, inputs []*enginev1.CheckInput, opts ...CheckOpt) ([]*enginev1.CheckOutput, error) {
 	outputs, err := measureCheckLatency(len(inputs), func() ([]*enginev1.CheckOutput, error) {
 		ctx, span := tracing.StartSpan(ctx, "engine.Check")
@@ -249,6 +250,20 @@ func (engine *Engine) checkParallel(ctx context.Context, inputs []*enginev1.Chec
 	}
 
 	return outputs, nil
+}
+
+func (engine *Engine) List(ctx context.Context, request *requestv1.ListResourcesRequest) (*v1alpha1.CheckedExpr, error) {
+	ctx, span := tracing.StartSpan(ctx, "engine.List")
+	defer span.End()
+
+	span.AddAttributes(trace.StringAttribute("request_id", request.RequestId), trace.StringAttribute("resource_kind", request.ResourceKind))
+	// exit early if the context is cancelled
+	if err := ctx.Err(); err != nil {
+		tracing.MarkFailed(span, http.StatusRequestTimeout, "Context cancelled", err)
+		return nil, err
+	}
+
+	panic("not implemented")
 }
 
 func (engine *Engine) evaluate(ctx context.Context, input *enginev1.CheckInput, checkOpts *checkOptions) (*enginev1.CheckOutput, error) {

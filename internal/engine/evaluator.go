@@ -7,6 +7,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	requestv1 "github.com/cerbos/cerbos/api/genpb/cerbos/request/v1"
+	responsev1 "github.com/cerbos/cerbos/api/genpb/cerbos/response/v1"
 	"strings"
 
 	"github.com/google/cel-go/cel"
@@ -29,6 +31,7 @@ var (
 
 type Evaluator interface {
 	Evaluate(context.Context, *enginev1.CheckInput) (*EvalResult, error)
+	EvaluateListResources(ctx context.Context, request *requestv1.ListResourcesRequest) (*responsev1.ListResourcesResponse, error)
 }
 
 func NewEvaluator(rps *runtimev1.RunnablePolicySet, t *tracer) Evaluator {
@@ -44,6 +47,10 @@ func NewEvaluator(rps *runtimev1.RunnablePolicySet, t *tracer) Evaluator {
 
 type noopEvaluator struct{}
 
+func (e noopEvaluator) EvaluateListResources(ctx context.Context, request *requestv1.ListResourcesRequest) (*responsev1.ListResourcesResponse, error) {
+	return nil, ErrPolicyNotExecutable
+}
+
 func (noopEvaluator) Evaluate(_ context.Context, _ *enginev1.CheckInput) (*EvalResult, error) {
 	return nil, ErrPolicyNotExecutable
 }
@@ -51,6 +58,63 @@ func (noopEvaluator) Evaluate(_ context.Context, _ *enginev1.CheckInput) (*EvalR
 type resourcePolicyEvaluator struct {
 	policy *runtimev1.RunnableResourcePolicySet
 	*tracer
+}
+
+func (rpe *resourcePolicyEvaluator) EvaluateListResources(ctx context.Context, input *requestv1.ListResourcesRequest) (*responsev1.ListResourcesResponse, error) {
+	effectiveRoles := toSet(input.Principal.Roles)
+	inputActions := []string{input.Action}
+	result := &responsev1.ListResourcesResponse{}
+	result.RequestId = input.RequestId
+	result.Kind = input.ResourceKind
+	result.Action = input.Action
+	for _, p := range rpe.policy.Policies {
+		// calculate the set of effective derived roles
+		effectiveDerivedRoles := stringSet{}
+		for drName, dr := range p.DerivedRoles {
+			if !setIntersects(dr.ParentRoles, effectiveRoles) {
+				continue
+			}
+
+			node, err := evaluateCondition(dr.Condition, input)
+			if err != nil { // TODO: why ignore?
+				continue
+			}
+
+			if !node.GetExpression().GetExpr().GetConstExpr().GetBoolValue() {
+				continue
+			}
+
+			effectiveDerivedRoles[drName] = struct{}{}
+		}
+
+		// evaluate each rule until all actions have a result
+		for _, rule := range p.Rules {
+			if !setIntersects(rule.Roles, effectiveRoles) && !setIntersects(rule.DerivedRoles, effectiveDerivedRoles) {
+				continue
+			}
+			if rule.Effect == effectv1.Effect_EFFECT_DENY {
+				panic("effect DENY is not supported yet")
+            }
+			for actionGlob := range rule.Actions {
+				matchedActions := globMatch(actionGlob, inputActions)
+				for _, _ = range matchedActions {
+					node, err := evaluateCondition(rule.Condition, input)
+					if err != nil {
+						continue
+					}
+					if !node.GetExpression().GetExpr().GetConstExpr().GetBoolValue() {
+						continue
+					}
+				}
+			}
+		}
+	}
+	return result, nil
+}
+
+func evaluateCondition(condition *runtimev1.Condition, input *requestv1.ListResourcesRequest) (*responsev1.ListResourcesResponse_Node, error) {
+	res := new(responsev1.ListResourcesResponse_Node)
+	return res, nil
 }
 
 func (rpe *resourcePolicyEvaluator) Evaluate(ctx context.Context, input *enginev1.CheckInput) (*EvalResult, error) {
@@ -142,6 +206,10 @@ func (rpe *resourcePolicyEvaluator) Evaluate(ctx context.Context, input *enginev
 type principalPolicyEvaluator struct {
 	policy *runtimev1.RunnablePrincipalPolicySet
 	*tracer
+}
+
+func (ppe *principalPolicyEvaluator) EvaluateListResources(ctx context.Context, request *requestv1.ListResourcesRequest) (*responsev1.ListResourcesResponse, error) {
+	panic("implement me")
 }
 
 func (ppe *principalPolicyEvaluator) Evaluate(ctx context.Context, input *enginev1.CheckInput) (*EvalResult, error) {
