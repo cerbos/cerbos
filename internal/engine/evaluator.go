@@ -10,7 +10,6 @@ import (
 	"strings"
 
 	"github.com/google/cel-go/cel"
-	"go.opencensus.io/trace"
 	"go.uber.org/multierr"
 	exprpb "google.golang.org/genproto/googleapis/api/expr/v1alpha1"
 	"google.golang.org/protobuf/types/known/emptypb"
@@ -56,7 +55,7 @@ type resourcePolicyEvaluator struct {
 
 func (rpe *resourcePolicyEvaluator) Evaluate(ctx context.Context, input *enginev1.CheckInput) (*EvalResult, error) {
 	_, span := tracing.StartSpan(ctx, "resource_policy.Evaluate")
-	span.AddAttributes(trace.StringAttribute("policy", rpe.policy.Meta.Fqn))
+	span.SetAttributes(tracing.PolicyFQN(rpe.policy.Meta.Fqn))
 	defer span.End()
 
 	result := newEvalResult(namer.PolicyKeyFromFQN(rpe.policy.Meta.Fqn), input.Actions)
@@ -147,7 +146,7 @@ type principalPolicyEvaluator struct {
 
 func (ppe *principalPolicyEvaluator) Evaluate(ctx context.Context, input *enginev1.CheckInput) (*EvalResult, error) {
 	_, span := tracing.StartSpan(ctx, "principal_policy.Evaluate")
-	span.AddAttributes(trace.StringAttribute("policy", ppe.policy.Meta.Fqn))
+	span.SetAttributes(tracing.PolicyFQN(ppe.policy.Meta.Fqn))
 	defer span.End()
 
 	result := newEvalResult(namer.PolicyKeyFromFQN(ppe.policy.Meta.Fqn), input.Actions)
