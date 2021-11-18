@@ -69,7 +69,12 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Push dev images
-        run: docker push ghcr.io/cerbos/cerbos:dev-amd64 && docker push ghcr.io/cerbos/cerbos:dev-arm64
+        run: |
+          docker push ghcr.io/cerbos/cerbos:dev-amd64 
+          docker push ghcr.io/cerbos/cerbos:dev-arm64
+          docker manifest create ghcr.io/cerbos/cerbos:dev ghcr.io/cerbos/cerbos:dev-arm64 ghcr.io/cerbos/cerbos:dev-amd64
+          docker manifest push ghcr.io/cerbos/cerbos:dev
+
 
   publishDocs:
     name: Publish Documentation
