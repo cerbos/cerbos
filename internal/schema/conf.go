@@ -3,12 +3,16 @@
 
 package schema
 
+import "path/filepath"
+
 const (
 	confKey                  = "schema"
 	defaultIgnoreExtraFields = true
-	defaultEnforcement       = EnforcementReject
+	defaultEnforcement       = EnforcementNone
+)
 
-	RelativePathToSchema = "_schemas/schema.yaml"
+var (
+	RelativePathToSchema = filepath.Join("_schemas", "schema.yaml")
 )
 
 // Conf holds configuration related to schema validation

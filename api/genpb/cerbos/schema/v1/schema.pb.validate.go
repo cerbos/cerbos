@@ -61,15 +61,15 @@ func (m *Schema) Validate() error {
 		}
 	}
 
-	for key, val := range m.GetResourceSchema() {
+	for key, val := range m.GetResourceSchemas() {
 		_ = val
 
-		// no validation rules for ResourceSchema[key]
+		// no validation rules for ResourceSchemas[key]
 
 		if v, ok := interface{}(val).(interface{ Validate() error }); ok {
 			if err := v.Validate(); err != nil {
 				return SchemaValidationError{
-					field:  fmt.Sprintf("ResourceSchema[%v]", key),
+					field:  fmt.Sprintf("ResourceSchemas[%v]", key),
 					reason: "embedded message failed validation",
 					cause:  err,
 				}
@@ -247,3 +247,73 @@ var _ interface {
 	Cause() error
 	ErrorName() string
 } = JSONSchemaPropsValidationError{}
+
+// Validate checks the field values on Error with the rules defined in the
+// proto definition for this message. If any rules are violated, an error is returned.
+func (m *Error) Validate() error {
+	if m == nil {
+		return nil
+	}
+
+	// no validation rules for Path
+
+	// no validation rules for Message
+
+	// no validation rules for Type
+
+	return nil
+}
+
+// ErrorValidationError is the validation error returned by Error.Validate if
+// the designated constraints aren't met.
+type ErrorValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e ErrorValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e ErrorValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e ErrorValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e ErrorValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e ErrorValidationError) ErrorName() string { return "ErrorValidationError" }
+
+// Error satisfies the builtin error interface
+func (e ErrorValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sError.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = ErrorValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = ErrorValidationError{}

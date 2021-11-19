@@ -271,19 +271,27 @@ func (engine *Engine) evaluate(ctx context.Context, input *enginev1.CheckInput, 
 		return nil, err
 	}
 
-	schemaValidationErrors, err := engine.schemaMgr.Validate(ctx, input)
-	if err != nil {
-		return nil, err
-	}
-
 	output := &enginev1.CheckOutput{
 		RequestId:  input.RequestId,
 		ResourceId: input.Resource.Id,
 		Actions:    make(map[string]*enginev1.CheckOutput_ActionEffect, len(input.Actions)),
 	}
 
+	err = engine.schemaMgr.Validate(ctx, input)
+	if err != nil && !schema.IsValidationErrorList(err) {
+		return nil, err
+	}
+
+	var validationErrorList *schema.ValidationErrorList
+	ok := errors.As(err, &validationErrorList)
+	if !ok {
+		validationErrorList = nil
+	}
+
 	// If there are errors present in schema validation, return EFFECT_DENY for all actions
-	if len(schemaValidationErrors) > 0 {
+	if validationErrorList != nil && len(validationErrorList.Errors) > 0 {
+		output.ValidationErrors = validationErrorList.SchemaErrors()
+
 		for _, action := range input.Actions {
 			output.Actions[action] = &enginev1.CheckOutput_ActionEffect{
 				Effect: effectv1.Effect_EFFECT_DENY,

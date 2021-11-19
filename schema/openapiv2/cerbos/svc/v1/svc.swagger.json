@@ -751,17 +751,6 @@
         }
       }
     },
-    "PlaygroundFailureError": {
-      "type": "object",
-      "properties": {
-        "file": {
-          "type": "string"
-        },
-        "error": {
-          "type": "string"
-        }
-      }
-    },
     "PrincipalRuleAction": {
       "type": "object",
       "properties": {
@@ -885,6 +874,20 @@
         }
       }
     },
+    "schemav1Error": {
+      "type": "object",
+      "properties": {
+        "path": {
+          "type": "string"
+        },
+        "message": {
+          "type": "string"
+        },
+        "type": {
+          "$ref": "#/definitions/v1ErrorType"
+        }
+      }
+    },
     "v1AccessLogEntry": {
       "type": "object",
       "properties": {
@@ -975,6 +978,12 @@
           "type": "array",
           "items": {
             "type": "string"
+          }
+        },
+        "validationErrors": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/schemav1Error"
           }
         }
       }
@@ -1165,6 +1174,13 @@
             "$ref": "#/definitions/v1Effect"
           },
           "description": "Mapping of each action to an effect."
+        },
+        "validationErrors": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/schemav1Error"
+          },
+          "description": "Array of validation errors"
         }
       }
     },
@@ -1232,6 +1248,15 @@
         "EFFECT_NO_MATCH"
       ],
       "default": "EFFECT_UNSPECIFIED"
+    },
+    "v1ErrorType": {
+      "type": "string",
+      "enum": [
+        "ERROR_TYPE_UNSPECIFIED",
+        "ERROR_TYPE_PRINCIPAL",
+        "ERROR_TYPE_RESOURCE"
+      ],
+      "default": "ERROR_TYPE_UNSPECIFIED"
     },
     "v1ListAuditLogEntriesResponse": {
       "type": "object",
@@ -1399,11 +1424,22 @@
         "errors": {
           "type": "array",
           "items": {
-            "$ref": "#/definitions/PlaygroundFailureError"
+            "$ref": "#/definitions/v1PlaygroundFailureError"
           }
         }
       },
       "description": "Playground response"
+    },
+    "v1PlaygroundFailureError": {
+      "type": "object",
+      "properties": {
+        "file": {
+          "type": "string"
+        },
+        "error": {
+          "type": "string"
+        }
+      }
     },
     "v1PlaygroundProxyRequest": {
       "type": "object",
