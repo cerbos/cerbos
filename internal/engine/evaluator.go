@@ -9,6 +9,7 @@ import (
 	"fmt"
 	requestv1 "github.com/cerbos/cerbos/api/genpb/cerbos/request/v1"
 	responsev1 "github.com/cerbos/cerbos/api/genpb/cerbos/response/v1"
+	"github.com/google/cel-go/common/types"
 	"strings"
 
 	"github.com/google/cel-go/cel"
@@ -94,7 +95,7 @@ func (rpe *resourcePolicyEvaluator) EvaluateListResources(ctx context.Context, i
 			}
 			if rule.Effect == effectv1.Effect_EFFECT_DENY {
 				panic("effect DENY is not supported yet")
-            }
+			}
 			for actionGlob := range rule.Actions {
 				matchedActions := globMatch(actionGlob, inputActions)
 				for _, _ = range matchedActions {
@@ -114,6 +115,44 @@ func (rpe *resourcePolicyEvaluator) EvaluateListResources(ctx context.Context, i
 
 func evaluateCondition(condition *runtimev1.Condition, input *requestv1.ListResourcesRequest) (*responsev1.ListResourcesResponse_Node, error) {
 	res := new(responsev1.ListResourcesResponse_Node)
+	switch t := condition.Op.(type) {
+	case *runtimev1.Condition_Any:
+		operation := &responsev1.ListResourcesResponse_LogicalOperation{
+			Operator: responsev1.ListResourcesResponse_LogicalOperation_OR,
+			Nodes:    nil,
+		}
+		res.Node = &responsev1.ListResourcesResponse_Node_LogicalOperation{
+            LogicalOperation: operation,
+        }
+		for _, c	 := range t.Any.Expr {
+            node, err := evaluateCondition(c, input)
+            if err != nil {
+                return nil, err
+            }
+            operation.Nodes = append(operation.Nodes, node)
+        }
+	case *runtimev1.Condition_All:
+		operation := &responsev1.ListResourcesResponse_LogicalOperation{
+			Operator: responsev1.ListResourcesResponse_LogicalOperation_AND,
+			Nodes:    nil,
+		}
+		res.Node = &responsev1.ListResourcesResponse_Node_LogicalOperation{LogicalOperation: operation}
+		for _, c := range t.All.Expr {
+			node, err := evaluateCondition(c, input)
+			if err != nil {
+				return nil, err
+			}
+			operation.Nodes = append(operation.Nodes, node)
+		}
+	case *runtimev1.Condition_Expr:
+		_, residual, err := evaluateCELExprPartially(t.Expr.Checked, input)
+		if err != nil {
+			return nil, fmt.Errorf("error evaluating condition %q: %v", t.Expr.Original, err)
+		}
+		res.Node = &responsev1.ListResourcesResponse_Node_Expression{Expression: residual}
+	default:
+		return nil, fmt.Errorf("unsupported condition type %T", t)
+	}
 	return res, nil
 }
 
@@ -367,7 +406,42 @@ func evaluateBoolCELExpr(expr *exprpb.CheckedExpr, variables map[string]interfac
 
 	return boolVal, nil
 }
+func evaluateCELExprPartially(expr *exprpb.CheckedExpr, input *requestv1.ListResourcesRequest) (*bool, *exprpb.CheckedExpr, error) {
+	ast := cel.CheckedExprToAst(expr)
+	prg, err := conditions.StdEnv.Program(ast, cel.EvalOptions(cel.OptPartialEval, cel.OptTrackState))
+	if err != nil {
+		return nil, nil, err
+	}
 
+	vars, err := cel.PartialVars(map[string]interface{}{
+		conditions.CELRequestIdent:    input,
+		conditions.CELPrincipalAbbrev: input.Principal,
+	}, cel.AttributePattern(conditions.CELResourceAbbrev))
+	if err != nil {
+		return nil, nil, err
+	}
+
+	val, details, err := prg.Eval(vars)
+	if err != nil {
+		return nil, nil, err
+	}
+	residual, err := conditions.StdEnv.ResidualAst(ast, details)
+	if err != nil {
+		return nil, nil, err
+	}
+	checkedExpr, err := cel.AstToCheckedExpr(residual)
+	if err != nil {
+		return nil, nil, err
+	}
+	if types.IsBool(val) {
+		v := val.Value().(bool)
+		return &v, checkedExpr, nil
+	} else if types.IsUnknown(val) {
+		return nil, checkedExpr, nil
+	} else {
+		panic("Unexpected evaluation type")
+	}
+}
 func evaluateCELExpr(expr *exprpb.CheckedExpr, variables map[string]interface{}, input *enginev1.CheckInput) (interface{}, error) {
 	if expr == nil {
 		return nil, nil
