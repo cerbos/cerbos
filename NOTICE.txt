@@ -18640,11 +18640,11 @@ Contents of probable licence file $GOMODCACHE/github.com/opencontainers/go-diges
 
 --------------------------------------------------------------------------------
 Module  : github.com/opencontainers/image-spec
-Version : v1.0.1
-Time    : 2017-10-30T17:47:40Z
+Version : v1.0.2
+Time    : 2021-11-09T17:06:10Z
 Licence : Apache-2.0
 
-Contents of probable licence file $GOMODCACHE/github.com/opencontainers/image-spec@v1.0.1/LICENSE:
+Contents of probable licence file $GOMODCACHE/github.com/opencontainers/image-spec@v1.0.2/LICENSE:
 
 
                                  Apache License
