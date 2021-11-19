@@ -40,6 +40,17 @@ func Test_evaluateCondition(t *testing.T) {
 			},
 			wantExpression: "true",
 		},
+		{
+			args: args{
+				expr: "R.attr.owner == P.attr.name",
+				input: &requestv1.ListResourcesRequest{
+					Principal:    &enginev1.Principal{
+						Attr:          map[string]*structpb.Value{"name": {Kind: &structpb.Value_StringValue{StringValue: "harry"}}},
+					},
+				},
+			},
+			wantExpression: `R.attr.owner == "harry"`,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(fmt.Sprintf("Expr:%q", tt.args.expr), func(t *testing.T) {
