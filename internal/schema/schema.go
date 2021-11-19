@@ -17,12 +17,14 @@ import (
 )
 
 type Manager struct {
-	conf            *Conf
-	log             *zap.SugaredLogger
-	store           storage.Store
-	schema          *schemav1.Schema
-	principalSchema *jsonschema.Schema
-	resourceSchemas map[string]*jsonschema.Schema
+	conf                *Conf
+	log                 *zap.SugaredLogger
+	store               storage.Store
+	schema              *schemav1.Schema
+	principalSchema     *jsonschema.Schema
+	resourceSchemas     map[string]*jsonschema.Schema
+	principalProperties map[string]string
+	resourceProperties  map[string]map[string]string
 }
 
 func New(store storage.Store) (*Manager, error) {
@@ -32,9 +34,11 @@ func New(store storage.Store) (*Manager, error) {
 	}
 
 	mgr := &Manager{
-		conf:  conf,
-		log:   zap.S().Named("schema"),
-		store: store,
+		conf:                conf,
+		log:                 zap.S().Named("schema"),
+		store:               store,
+		principalProperties: make(map[string]string),
+		resourceProperties:  make(map[string]map[string]string),
 	}
 
 	err := mgr.ReadOrUpdateSchemaFromStore()
@@ -93,7 +97,30 @@ func (m *Manager) Validate(ctx context.Context, input *enginev1.CheckInput) ([]j
 	}
 }
 
+func (m *Manager) validateInput(inputProperties map[string]*structpb.Value, schemaProperties map[string]string) error {
+	if m.conf.IgnoreExtraFields {
+		return nil
+	}
+
+	var properties = make(map[string]string)
+	m.walkInputProperties("", inputProperties, properties)
+
+	for _, property := range properties {
+		_, ok := schemaProperties[property]
+		if !ok {
+			return fmt.Errorf("extra field present in the input attributes: jsonpath=%s", property)
+		}
+	}
+
+	return nil
+}
+
 func (m *Manager) validatePrincipal(ctx context.Context, principalAttributes map[string]*structpb.Value) ([]jsonschema.KeyError, error) {
+	err := m.validateInput(principalAttributes, m.principalProperties)
+	if err != nil {
+		return nil, err
+	}
+
 	principalAttrBytes, err := json.Marshal(principalAttributes)
 	if err != nil {
 		return nil, err
@@ -108,6 +135,17 @@ func (m *Manager) validatePrincipal(ctx context.Context, principalAttributes map
 }
 
 func (m *Manager) validateResource(ctx context.Context, resourceKind string, resourceAttributes map[string]*structpb.Value) ([]jsonschema.KeyError, error) {
+	resourcePropertiesMap, ok := m.resourceProperties[resourceKind]
+	if !ok {
+		m.log.Warnf("no schema properties found for the kind '%s'", resourceKind)
+		return nil, nil
+	}
+
+	err := m.validateInput(resourceAttributes, resourcePropertiesMap)
+	if err != nil {
+		return nil, err
+	}
+
 	resourceAttrBytes, err := json.Marshal(resourceAttributes)
 	if err != nil {
 		return nil, err
@@ -127,12 +165,46 @@ func (m *Manager) validateResource(ctx context.Context, resourceKind string, res
 	return resourceValidation, nil
 }
 
+func (m *Manager) walkInputProperties(path string, properties map[string]*structpb.Value, writeTo map[string]string) {
+	for key, value := range properties {
+		fmt.Printf("%s, %s\n", key, value)
+
+		structVal, ok := value.Kind.(*structpb.Value_StructValue)
+		if !ok {
+			writeTo[fmt.Sprintf("%s/%s", path, key)] = fmt.Sprintf("%s/%s", path, key)
+			continue
+		}
+		if structVal.StructValue.Fields != nil {
+			m.walkInputProperties(fmt.Sprintf("%s/%s", path, key), structVal.StructValue.Fields, writeTo)
+		}
+	}
+}
+
+func (m *Manager) walkSchemaProperties(path string, properties map[string]*schemav1.JSONSchemaProps, writeTo map[string]string) {
+	for name, value := range properties {
+		if value.Type != "object" {
+			writeTo[fmt.Sprintf("%s/%s", path, name)] = fmt.Sprintf("%s/%s", path, name)
+			continue
+		}
+		if value.Properties != nil {
+			m.walkSchemaProperties(fmt.Sprintf("%s/%s", path, name), value.Properties, writeTo)
+		}
+	}
+}
+
 func (m *Manager) ReadOrUpdateSchemaFromStore() error {
 	// TODO(oguzhan): How to handle context?
 	sch, err := m.store.GetSchema(context.TODO())
 	if err != nil {
 		return err
 	}
+
+	err = Validate(sch)
+	if err != nil {
+		return err
+	}
+
+	m.walkSchemaProperties("", sch.PrincipalSchema.Properties, m.principalProperties)
 
 	principalSchema, err := json.Marshal(sch.PrincipalSchema)
 	if err != nil {
@@ -150,6 +222,10 @@ func (m *Manager) ReadOrUpdateSchemaFromStore() error {
 	m.principalSchema = principalSchemaObject
 
 	for key, resourceSchema := range sch.ResourceSchema {
+		var resourcePropertiesArr = make(map[string]string)
+		m.walkSchemaProperties("", resourceSchema.Properties, resourcePropertiesArr)
+		m.resourceProperties[key] = resourcePropertiesArr
+
 		resourceSchemaBytes, err := json.Marshal(resourceSchema)
 		if err != nil {
 			return err
