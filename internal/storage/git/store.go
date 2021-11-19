@@ -23,6 +23,7 @@ import (
 	"github.com/cerbos/cerbos/internal/config"
 	"github.com/cerbos/cerbos/internal/namer"
 	"github.com/cerbos/cerbos/internal/policy"
+	"github.com/cerbos/cerbos/internal/schema"
 	"github.com/cerbos/cerbos/internal/storage"
 	"github.com/cerbos/cerbos/internal/storage/index"
 	"github.com/cerbos/cerbos/internal/util"
@@ -140,8 +141,18 @@ func (s *Store) GetPolicies(ctx context.Context) ([]*policy.Wrapper, error) {
 }
 
 func (s *Store) GetSchema(ctx context.Context) (*schemav1.Schema, error) {
-	// TODO(oguzhan): Implement reading schema for this Store type
-	return nil, fmt.Errorf("not implemented")
+	schemaFileAbsPath, err := filepath.Abs(filepath.Join(s.conf.CheckoutDir, s.conf.SubDir, schema.RelativePathToSchema))
+	if err != nil {
+		return nil, fmt.Errorf("failed to determine absolute path to the schema file [%s - %s]: %w",
+			s.conf.CheckoutDir, schema.RelativePathToSchema, err)
+	}
+
+	sch, err := schema.ReadSchemaFromFile(schemaFileAbsPath)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read schema file from path %s: %w", schemaFileAbsPath, err)
+	}
+
+	return sch, nil
 }
 
 func isEmptyDir(dir string) (bool, error) {
