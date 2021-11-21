@@ -444,7 +444,7 @@ type evaluationResult struct {
 }
 
 // merge the results by only updating the actions that have a no_match effect.
-func (er *evaluationResult) merge(res *EvalResult) bool {
+func (er *evaluationResult) merge(res *PolicyEvalResult) bool {
 	hasNoMatches := false
 
 	if er.effects == nil {

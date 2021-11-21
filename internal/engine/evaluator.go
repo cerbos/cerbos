@@ -31,7 +31,7 @@ var (
 )
 
 type Evaluator interface {
-	Evaluate(context.Context, *enginev1.CheckInput) (*EvalResult, error)
+	Evaluate(context.Context, *enginev1.CheckInput) (*PolicyEvalResult, error)
 	EvaluateListResources(ctx context.Context, request *requestv1.ListResourcesRequest) (*responsev1.ListResourcesResponse, error)
 }
 
@@ -52,7 +52,7 @@ func (e noopEvaluator) EvaluateListResources(ctx context.Context, request *reque
 	return nil, ErrPolicyNotExecutable
 }
 
-func (noopEvaluator) Evaluate(_ context.Context, _ *enginev1.CheckInput) (*EvalResult, error) {
+func (noopEvaluator) Evaluate(_ context.Context, _ *enginev1.CheckInput) (*PolicyEvalResult, error) {
 	return nil, ErrPolicyNotExecutable
 }
 
@@ -69,32 +69,13 @@ func (rpe *resourcePolicyEvaluator) EvaluateListResources(ctx context.Context, i
 	result.Kind = input.ResourceKind
 	result.Action = input.Action
 	for _, p := range rpe.policy.Policies {
-		// calculate the set of effective derived roles
-		effectiveDerivedRoles := stringSet{}
-		for drName, dr := range p.DerivedRoles {
-			if !setIntersects(dr.ParentRoles, effectiveRoles) {
-				continue
-			}
-
-			node, err := evaluateCondition(dr.Condition, input)
-			if err != nil { // TODO: why ignore?
-				continue
-			}
-
-			if !node.GetExpression().GetExpr().GetConstExpr().GetBoolValue() {
-				continue
-			}
-
-			effectiveDerivedRoles[drName] = struct{}{}
-		}
-
 		// evaluate each rule until all actions have a result
 		for _, rule := range p.Rules {
-			if !setIntersects(rule.Roles, effectiveRoles) && !setIntersects(rule.DerivedRoles, effectiveDerivedRoles) {
+			if !setIntersects(rule.Roles, effectiveRoles) {
 				continue
 			}
 			if rule.Effect == effectv1.Effect_EFFECT_DENY {
-				panic("effect DENY is not supported yet")
+				panic("rules with effect DENY not supported")
 			}
 			for actionGlob := range rule.Actions {
 				matchedActions := globMatch(actionGlob, inputActions)
@@ -156,7 +137,7 @@ func evaluateCondition(condition *runtimev1.Condition, input *requestv1.ListReso
 	return res, nil
 }
 
-func (rpe *resourcePolicyEvaluator) Evaluate(ctx context.Context, input *enginev1.CheckInput) (*EvalResult, error) {
+func (rpe *resourcePolicyEvaluator) Evaluate(ctx context.Context, input *enginev1.CheckInput) (*PolicyEvalResult, error) {
 	_, span := tracing.StartSpan(ctx, "resource_policy.Evaluate")
 	span.SetAttributes(tracing.PolicyFQN(rpe.policy.Meta.Fqn))
 	defer span.End()
@@ -251,7 +232,7 @@ func (ppe *principalPolicyEvaluator) EvaluateListResources(ctx context.Context, 
 	panic("implement me")
 }
 
-func (ppe *principalPolicyEvaluator) Evaluate(ctx context.Context, input *enginev1.CheckInput) (*EvalResult, error) {
+func (ppe *principalPolicyEvaluator) Evaluate(ctx context.Context, input *enginev1.CheckInput) (*PolicyEvalResult, error) {
 	_, span := tracing.StartSpan(ctx, "principal_policy.Evaluate")
 	span.SetAttributes(tracing.PolicyFQN(ppe.policy.Meta.Fqn))
 	defer span.End()
@@ -512,21 +493,21 @@ func globMatch(g string, values []string) []string {
 	return out
 }
 
-type EvalResult struct {
+type PolicyEvalResult struct {
 	PolicyKey             string
 	Effects               map[string]effectv1.Effect
 	EffectiveDerivedRoles map[string]struct{}
 }
 
-func newEvalResult(policyKey string, actions []string) *EvalResult {
-	return &EvalResult{
+func newEvalResult(policyKey string, actions []string) *PolicyEvalResult {
+	return &PolicyEvalResult{
 		PolicyKey: policyKey,
 		Effects:   make(map[string]effectv1.Effect, len(actions)),
 	}
 }
 
 // setEffect sets the effect for an action. DENY always takes precedence.
-func (er *EvalResult) setEffect(action string, effect effectv1.Effect) {
+func (er *PolicyEvalResult) setEffect(action string, effect effectv1.Effect) {
 	if effect == effectv1.Effect_EFFECT_DENY {
 		er.Effects[action] = effect
 		return
@@ -543,7 +524,7 @@ func (er *EvalResult) setEffect(action string, effect effectv1.Effect) {
 	}
 }
 
-func (er *EvalResult) setDefaultEffect(tctx *traceContext, actions []string, effect effectv1.Effect) {
+func (er *PolicyEvalResult) setDefaultEffect(tctx *traceContext, actions []string, effect effectv1.Effect) {
 	for _, a := range actions {
 		if _, ok := er.Effects[a]; !ok {
 			er.Effects[a] = effect
