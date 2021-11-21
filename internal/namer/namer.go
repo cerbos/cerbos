@@ -16,7 +16,7 @@ import (
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
 )
 
-var invalidIdentiferChars = regexp.MustCompile(`[^\w\.]+`)
+var invalidIdentiferChars = regexp.MustCompile(`[^\w.]+`)
 
 const (
 	DerivedRolesPrefix      = "cerbos.derived_roles"
