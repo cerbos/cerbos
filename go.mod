@@ -71,7 +71,7 @@ require (
 )
 
 require (
-	github.com/aws/aws-sdk-go v1.42.7
+	github.com/aws/aws-sdk-go v1.42.9
 	github.com/lestrrat-go/jwx v1.2.11
 	github.com/minio/minio-go/v7 v7.0.15
 	go.opentelemetry.io/otel v1.2.0
@@ -111,7 +111,6 @@ require (
 	github.com/dgryski/go-farm v0.0.0-20200201041132-a6ae2369ad13 // indirect
 	github.com/dlclark/regexp2 v1.4.0 // indirect
 	github.com/docker/cli v20.10.8+incompatible // indirect
-	github.com/docker/docker v20.10.7+incompatible // indirect
 	github.com/docker/go-connections v0.4.0 // indirect
 	github.com/docker/go-units v0.4.0 // indirect
 	github.com/dustin/go-humanize v1.0.0 // indirect
@@ -200,14 +199,10 @@ require (
 	gopkg.in/ini.v1 v1.62.0 // indirect
 	gopkg.in/warnings.v0 v0.1.2 // indirect
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b // indirect
-	lukechampine.com/uint128 v1.1.1 // indirect
-	modernc.org/cc/v3 v3.35.17 // indirect
 	modernc.org/ccgo/v3 v3.12.65 // indirect
 	modernc.org/libc v1.11.71 // indirect
 	modernc.org/mathutil v1.4.1 // indirect
 	modernc.org/memory v1.0.5 // indirect
 	modernc.org/opt v0.1.1 // indirect
-	modernc.org/strutil v1.1.1 // indirect
-	modernc.org/token v1.0.0 // indirect
 	sigs.k8s.io/yaml v1.2.0 // indirect
 )
