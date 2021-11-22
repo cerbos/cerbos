@@ -7090,11 +7090,11 @@ Indirect dependencies
 
 --------------------------------------------------------------------------------
 Module  : cloud.google.com/go
-Version : v0.94.0
-Time    : 2021-08-31T18:19:36Z
+Version : v0.97.0
+Time    : 2021-09-29T22:22:36Z
 Licence : Apache-2.0
 
-Contents of probable licence file $GOMODCACHE/cloud.google.com/go@v0.94.0/LICENSE:
+Contents of probable licence file $GOMODCACHE/cloud.google.com/go@v0.97.0/LICENSE:
 
 
                                  Apache License
@@ -7302,11 +7302,11 @@ Contents of probable licence file $GOMODCACHE/cloud.google.com/go@v0.94.0/LICENS
 
 --------------------------------------------------------------------------------
 Module  : cloud.google.com/go/storage
-Version : v1.16.1
-Time    : 2021-08-31T22:30:37Z
+Version : v1.18.2
+Time    : 2021-10-18T15:26:11Z
 Licence : Apache-2.0
 
-Contents of probable licence file $GOMODCACHE/cloud.google.com/go/storage@v1.16.1/LICENSE:
+Contents of probable licence file $GOMODCACHE/cloud.google.com/go/storage@v1.18.2/LICENSE:
 
 
                                  Apache License
@@ -15410,11 +15410,11 @@ Contents of probable licence file $GOMODCACHE/github.com/google/wire@v0.5.0/LICE
 
 --------------------------------------------------------------------------------
 Module  : github.com/googleapis/gax-go/v2
-Version : v2.1.0
-Time    : 2021-08-23T04:42:23Z
+Version : v2.1.1
+Time    : 2021-09-16T18:45:08Z
 Licence : BSD-3-Clause
 
-Contents of probable licence file $GOMODCACHE/github.com/googleapis/gax-go/v2@v2.1.0/LICENSE:
+Contents of probable licence file $GOMODCACHE/github.com/googleapis/gax-go/v2@v2.1.1/LICENSE:
 
 Copyright 2016, Google Inc.
 All rights reserved.
@@ -21960,11 +21960,11 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 --------------------------------------------------------------------------------
 Module  : google.golang.org/api
-Version : v0.56.0
-Time    : 2021-08-31T21:32:48Z
+Version : v0.58.0
+Time    : 2021-09-28T14:57:44Z
 Licence : BSD-3-Clause
 
-Contents of probable licence file $GOMODCACHE/google.golang.org/api@v0.56.0/LICENSE:
+Contents of probable licence file $GOMODCACHE/google.golang.org/api@v0.58.0/LICENSE:
 
 Copyright (c) 2011 Google Inc. All rights reserved.
 
