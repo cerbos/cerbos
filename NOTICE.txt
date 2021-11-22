@@ -2572,11 +2572,11 @@ Contents of probable licence file $GOMODCACHE/github.com/grpc-ecosystem/go-grpc-
 
 --------------------------------------------------------------------------------
 Module  : github.com/grpc-ecosystem/grpc-gateway/v2
-Version : v2.6.0
-Time    : 2021-09-08T00:32:15Z
+Version : v2.7.0
+Time    : 2021-11-18T20:38:58Z
 Licence : BSD-3-Clause
 
-Contents of probable licence file $GOMODCACHE/github.com/grpc-ecosystem/grpc-gateway/v2@v2.6.0/LICENSE.txt:
+Contents of probable licence file $GOMODCACHE/github.com/grpc-ecosystem/grpc-gateway/v2@v2.7.0/LICENSE.txt:
 
 Copyright (c) 2015, Gengo, Inc.
 All rights reserved.
@@ -6164,11 +6164,11 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 --------------------------------------------------------------------------------
 Module  : google.golang.org/genproto
-Version : v0.0.0-20211001223012-bfb93cce50d9
-Time    : 2021-10-01T22:30:12Z
+Version : v0.0.0-20211118181313-81c1377c94b1
+Time    : 2021-11-18T18:13:13Z
 Licence : Apache-2.0
 
-Contents of probable licence file $GOMODCACHE/google.golang.org/genproto@v0.0.0-20211001223012-bfb93cce50d9/LICENSE:
+Contents of probable licence file $GOMODCACHE/google.golang.org/genproto@v0.0.0-20211118181313-81c1377c94b1/LICENSE:
 
 
                                  Apache License
@@ -21738,11 +21738,11 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 --------------------------------------------------------------------------------
 Module  : golang.org/x/oauth2
-Version : v0.0.0-20210819190943-2bc19b11175f
-Time    : 2021-08-19T19:09:43Z
+Version : v0.0.0-20211104180415-d3ed0bb246c8
+Time    : 2021-11-04T18:04:15Z
 Licence : BSD-3-Clause
 
-Contents of probable licence file $GOMODCACHE/golang.org/x/oauth2@v0.0.0-20210819190943-2bc19b11175f/LICENSE:
+Contents of probable licence file $GOMODCACHE/golang.org/x/oauth2@v0.0.0-20211104180415-d3ed0bb246c8/LICENSE:
 
 Copyright (c) 2009 The Go Authors. All rights reserved.
 
