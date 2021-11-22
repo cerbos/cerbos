@@ -90,8 +90,13 @@ func doRun(cmd *cobra.Command, args []string) error {
 	}
 
 	if !skipTests {
-		compiler := compile.NewManager(ctx, disk.NewFromIndex(idx))
-		schemaMgr, err := schema.New(disk.NewFromIndex(idx))
+		storeFromIndex, err := disk.NewFromIndex(idx)
+		if err != nil {
+			return fmt.Errorf("failed to create disk store from index: %w", err)
+		}
+
+		compiler := compile.NewManager(ctx, storeFromIndex)
+		schemaMgr, err := schema.New(storeFromIndex)
 		if err != nil {
 			return fmt.Errorf("failed to create schema manager: %w", err)
 		}

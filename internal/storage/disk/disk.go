@@ -61,8 +61,12 @@ func NewStore(ctx context.Context, conf *Conf) (*Store, error) {
 	return s, nil
 }
 
-func NewFromIndex(idx index.Index) *Store {
-	return &Store{idx: idx}
+func NewFromIndex(idx index.Index) (*Store, error) {
+	conf := &Conf{}
+	if err := config.GetSection(conf); err != nil {
+		return nil, err
+	}
+	return &Store{idx: idx, conf: conf}, nil
 }
 
 func (s *Store) Driver() string {

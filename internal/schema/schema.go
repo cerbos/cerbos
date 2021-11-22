@@ -47,7 +47,7 @@ func New(store storage.Store) (*Manager, error) {
 
 	err := mgr.ReadOrUpdateSchemaFromStore()
 	if err != nil {
-		var msg = fmt.Sprintf("failed to read schema file from store: %s", err)
+		var msg = fmt.Sprintf("schema file not found: %s", err)
 		if conf.Enforcement == EnforcementReject {
 			return nil, fmt.Errorf(msg)
 		} else {

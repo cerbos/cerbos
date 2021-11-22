@@ -100,12 +100,17 @@ func (cs *CerbosPlaygroundService) PlaygroundEvaluate(ctx context.Context, req *
 		return nil, status.Error(codes.InvalidArgument, "failed to extract auxData")
 	}
 
-	schemaMgr, err := schema.New(disk.NewFromIndex(idx))
+	storeFromIndex, err := disk.NewFromIndex(idx)
+	if err != nil {
+		return nil, status.Error(codes.Internal, "failed to create disk store from index")
+	}
+
+	schemaMgr, err := schema.New(storeFromIndex)
 	if err != nil {
 		return nil, status.Error(codes.Internal, "failed to create schema manager")
 	}
 
-	eng, err := engine.NewEphemeral(ctx, compile.NewManager(ctx, disk.NewFromIndex(idx)), schemaMgr)
+	eng, err := engine.NewEphemeral(ctx, compile.NewManager(ctx, storeFromIndex), schemaMgr)
 	if err != nil {
 		log.Error("Failed to create engine", zap.Error(err))
 		return nil, status.Errorf(codes.Internal, "failed to create engine")
@@ -150,12 +155,17 @@ func (cs *CerbosPlaygroundService) PlaygroundProxy(ctx context.Context, req *req
 		}, nil
 	}
 
-	schemaMgr, err := schema.New(disk.NewFromIndex(idx))
+	storeFromIndex, err := disk.NewFromIndex(idx)
+	if err != nil {
+		return nil, status.Error(codes.Internal, "failed to create disk store from index")
+	}
+
+	schemaMgr, err := schema.New(storeFromIndex)
 	if err != nil {
 		return nil, status.Error(codes.Internal, "failed to create schema manager")
 	}
 
-	eng, err := engine.NewEphemeral(ctx, compile.NewManager(ctx, disk.NewFromIndex(idx)), schemaMgr)
+	eng, err := engine.NewEphemeral(ctx, compile.NewManager(ctx, storeFromIndex), schemaMgr)
 	if err != nil {
 		log.Error("Failed to create engine", zap.Error(err))
 		return nil, status.Error(codes.Internal, "failed to create engine")
