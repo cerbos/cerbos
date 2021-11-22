@@ -61,7 +61,7 @@ type resourcePolicyEvaluator struct {
 	*tracer
 }
 
-func (rpe *resourcePolicyEvaluator) EvaluateListResources(ctx context.Context, input *requestv1.ListResourcesRequest) (*responsev1.ListResourcesResponse, error) {
+func (rpe *resourcePolicyEvaluator) EvaluateListResources(_ context.Context, input *requestv1.ListResourcesRequest) (*responsev1.ListResourcesResponse, error) {
 	effectiveRoles := toSet(input.Principal.Roles)
 	inputActions := []string{input.Action}
 	result := &responsev1.ListResourcesResponse{}
@@ -82,8 +82,9 @@ func (rpe *resourcePolicyEvaluator) EvaluateListResources(ctx context.Context, i
 				for _, _ = range matchedActions {
 					node, err := evaluateCondition(rule.Condition, input)
 					if err != nil {
-						continue
+						return nil, err
 					}
+					result.Filter = node
 					if !node.GetExpression().GetExpr().GetConstExpr().GetBoolValue() {
 						continue
 					}

@@ -6,6 +6,7 @@ package engine
 import (
 	"bytes"
 	"context"
+	requestv1 "github.com/cerbos/cerbos/api/genpb/cerbos/request/v1"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -171,4 +172,21 @@ func readCELTestCase(t *testing.T, data []byte) *privatev1.CelTestCase {
 	require.NoError(t, util.ReadJSONOrYAML(bytes.NewReader(data), tc))
 
 	return tc
+}
+
+func TestList(t *testing.T) {
+	eng, cancelFunc := mkEngine(t, false)
+	defer cancelFunc()
+	input := &requestv1.ListResourcesRequest{
+		RequestId: "requestId",
+		Action:    "view",
+		Principal: &enginev1.Principal{
+			Id:    "harry",
+			Roles: []string{"employee"},
+		},
+		ResourceKind: "list-resources:leave_request",
+	}
+	list, err := eng.List(context.Background(), input)
+	require.NoError(t, err)
+	require.NotNil(t, list)
 }

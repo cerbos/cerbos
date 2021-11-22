@@ -8,7 +8,7 @@ import (
 	"errors"
 	"fmt"
 	requestv1 "github.com/cerbos/cerbos/api/genpb/cerbos/request/v1"
-	v1alpha1 "google.golang.org/genproto/googleapis/api/expr/v1alpha1"
+	responsev1 "github.com/cerbos/cerbos/api/genpb/cerbos/response/v1"
 	"io"
 	"math/rand"
 	"net/http"
@@ -252,18 +252,24 @@ func (engine *Engine) checkParallel(ctx context.Context, inputs []*enginev1.Chec
 	return outputs, nil
 }
 
-func (engine *Engine) List(ctx context.Context, request *requestv1.ListResourcesRequest) (*v1alpha1.CheckedExpr, error) {
+func (engine *Engine) List(ctx context.Context, input *requestv1.ListResourcesRequest) (*responsev1.ListResourcesResponse, error) {
 	ctx, span := tracing.StartSpan(ctx, "engine.List")
 	defer span.End()
 
-	span.AddAttributes(trace.StringAttribute("request_id", request.RequestId), trace.StringAttribute("resource_kind", request.ResourceKind))
+	span.AddAttributes(trace.StringAttribute("request_id", input.RequestId), trace.StringAttribute("resource_kind", input.ResourceKind))
 	// exit early if the context is cancelled
 	if err := ctx.Err(); err != nil {
 		tracing.MarkFailed(span, http.StatusRequestTimeout, "Context cancelled", err)
 		return nil, err
 	}
 
-	panic("not implemented")
+	// get the principal policy check
+	ppName, ppVersion := engine.policyAttr(input.Principal.Id, input.Principal.PolicyVersion)
+	policyEvaluator, err := engine.getPrincipalPolicyEvaluator(ctx, ppName, ppVersion, nil)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get check for [%s.%s]: %w", ppName, ppVersion, err)
+	}
+	return policyEvaluator.EvaluateListResources(ctx, input)
 }
 
 func (engine *Engine) evaluate(ctx context.Context, input *enginev1.CheckInput, checkOpts *checkOptions) (*enginev1.CheckOutput, error) {

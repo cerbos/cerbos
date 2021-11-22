@@ -1,0 +1,12 @@
+---
+apiVersion: api.cerbos.dev/v1
+resourcePolicy:
+  version: "default"
+  resource: "list-resources:leave_request"
+  rules:
+    - actions: ["create", "view", "submit"]
+      roles: ["employee"]
+      effect: EFFECT_ALLOW
+      condition:
+        match:
+          expr: R.attr.owner == request.principal.id
