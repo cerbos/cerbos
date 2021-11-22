@@ -271,11 +271,11 @@ SOFTWARE.
 
 --------------------------------------------------------------------------------
 Module  : github.com/aws/aws-sdk-go
-Version : v1.42.7
-Time    : 2021-11-17T19:17:27Z
+Version : v1.42.9
+Time    : 2021-11-19T19:24:56Z
 Licence : Apache-2.0
 
-Contents of probable licence file $GOMODCACHE/github.com/aws/aws-sdk-go@v1.42.7/LICENSE.txt:
+Contents of probable licence file $GOMODCACHE/github.com/aws/aws-sdk-go@v1.42.9/LICENSE.txt:
 
 
                                  Apache License
