@@ -40,14 +40,13 @@ message JSONSchemaProps {
   map<string, JSONSchemaProps> definitions = 9;
 }
 
-enum ErrorType {
-  ERROR_TYPE_UNSPECIFIED = 0;
-  ERROR_TYPE_PRINCIPAL = 1;
-  ERROR_TYPE_RESOURCE = 2;
-}
-
-message Error {
-    string path = 1;
-    string message = 2;
-    ErrorType type = 3;
+message ValidationError {
+  enum Source {
+    SOURCE_UNSPECIFIED = 0;
+    SOURCE_PRINCIPAL = 1;
+    SOURCE_RESOURCE = 2;
+  }
+  string path = 1;
+  string message = 2;
+  Source source = 3;
 }

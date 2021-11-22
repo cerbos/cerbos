@@ -34,12 +34,13 @@ import (
 var ErrNoPoliciesMatched = errors.New("no matching policies")
 
 const (
-	defaultEffect        = effectv1.Effect_EFFECT_DENY
-	noPolicyMatch        = "NO_MATCH"
-	parallelismThreshold = 2
-	workerQueueSize      = 4
-	workerResetJitter    = 1 << 4
-	workerResetThreshold = 1 << 16
+	defaultEffect            = effectv1.Effect_EFFECT_DENY
+	noPolicyMatch            = "NO_MATCH"
+	skippedDueToInvalidInput = "SKIPPED_DUE_TO_INVALID_INPUT"
+	parallelismThreshold     = 2
+	workerQueueSize          = 4
+	workerResetJitter        = 1 << 4
+	workerResetThreshold     = 1 << 16
 )
 
 var defaultTracer = newTracer(NoopTraceSink{})
@@ -278,14 +279,11 @@ func (engine *Engine) evaluate(ctx context.Context, input *enginev1.CheckInput, 
 	}
 
 	err = engine.schemaMgr.Validate(ctx, input)
-	if err != nil && !schema.IsValidationErrorList(err) {
-		return nil, err
-	}
-
 	var validationErrorList *schema.ValidationErrorList
-	ok := errors.As(err, &validationErrorList)
-	if !ok {
-		validationErrorList = nil
+	if err != nil {
+		if ok := errors.As(err, &validationErrorList); !ok {
+			return nil, err
+		}
 	}
 
 	// If there are errors present in schema validation, return EFFECT_DENY for all actions
@@ -295,7 +293,7 @@ func (engine *Engine) evaluate(ctx context.Context, input *enginev1.CheckInput, 
 		for _, action := range input.Actions {
 			output.Actions[action] = &enginev1.CheckOutput_ActionEffect{
 				Effect: effectv1.Effect_EFFECT_DENY,
-				Policy: noPolicyMatch,
+				Policy: skippedDueToInvalidInput,
 			}
 		}
 

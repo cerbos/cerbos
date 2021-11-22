@@ -4,22 +4,23 @@ import (
 	"fmt"
 	schemav1 "github.com/cerbos/cerbos/api/genpb/cerbos/schema/v1"
 	"github.com/qri-io/jsonschema"
+	"strings"
 )
 
 type ValidationErrorType string
 
-func NewValidationError(keyError jsonschema.KeyError, errorType schemav1.ErrorType) *ValidationError {
+func NewValidationError(keyError jsonschema.KeyError, source schemav1.ValidationError_Source) *ValidationError {
 	return &ValidationError{
 		Path:    keyError.PropertyPath,
 		Message: keyError.Message,
-		Type:    errorType,
+		Source:  source,
 	}
 }
 
-func NewValidationErrorList(errors []jsonschema.KeyError, errorType schemav1.ErrorType) *ValidationErrorList {
+func NewValidationErrorList(errors []jsonschema.KeyError, source schemav1.ValidationError_Source) *ValidationErrorList {
 	var validationErrorList []ValidationError
 	for _, value := range errors {
-		validationError := NewValidationError(value, errorType)
+		validationError := NewValidationError(value, source)
 		validationErrorList = append(validationErrorList, *validationError)
 	}
 
@@ -29,13 +30,7 @@ func NewValidationErrorList(errors []jsonschema.KeyError, errorType schemav1.Err
 }
 
 func MergeValidationErrorLists(validationErrors ...*ValidationErrorList) *ValidationErrorList {
-	noOfErrors := 0
-	for _, validationErrorList := range validationErrors {
-		noOfErrors += len(validationErrorList.Errors)
-	}
-
-	var errors = make([]ValidationError, 0, noOfErrors)
-
+	var errors []ValidationError
 	for _, validationErrorList := range validationErrors {
 		for _, validationError := range validationErrorList.Errors {
 			errors = append(errors, validationError)
@@ -60,7 +55,7 @@ func IsValidationErrorList(err error) bool {
 type ValidationError struct {
 	Path    string
 	Message string
-	Type    schemav1.ErrorType
+	Source  schemav1.ValidationError_Source
 }
 
 func (e *ValidationError) Error() string {
@@ -72,26 +67,26 @@ type ValidationErrorList struct {
 }
 
 func (e *ValidationErrorList) Error() string {
-	var errorString = ""
+	var errorString strings.Builder
 	for _, value := range e.Errors {
-		errorString += fmt.Sprintf("%s\n", value.Error())
+		errorString.WriteString(value.Error())
+		errorString.WriteString("\n")
 	}
-
-	return errorString
+	return errorString.String()
 }
 
-func (e *ValidationErrorList) SchemaErrors() []*schemav1.Error {
+func (e *ValidationErrorList) SchemaErrors() []*schemav1.ValidationError {
 	noOfErrors := len(e.Errors)
 	if noOfErrors == 0 {
 		return nil
 	}
 
-	var schemaErrors = make([]*schemav1.Error, 0, noOfErrors)
+	var schemaErrors = make([]*schemav1.ValidationError, 0, noOfErrors)
 	for _, validationError := range e.Errors {
-		schemaErrors = append(schemaErrors, &schemav1.Error{
+		schemaErrors = append(schemaErrors, &schemav1.ValidationError{
 			Path:    validationError.Path,
 			Message: validationError.Message,
-			Type:    validationError.Type,
+			Source:  validationError.Source,
 		})
 	}
 

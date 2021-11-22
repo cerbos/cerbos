@@ -29,7 +29,7 @@ message CheckResourceSetResponse {
                 description: "Mapping of each action to an effect."
             } 
         ];
-        repeated cerbos.schema.v1.Error validation_errors = 2 [
+        repeated cerbos.schema.v1.ValidationError validation_errors = 2 [
             (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
                 description: "Array of validation errors"
             }

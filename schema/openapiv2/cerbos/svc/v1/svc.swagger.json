@@ -751,6 +751,17 @@
         }
       }
     },
+    "PlaygroundFailureError": {
+      "type": "object",
+      "properties": {
+        "file": {
+          "type": "string"
+        },
+        "error": {
+          "type": "string"
+        }
+      }
+    },
     "PrincipalRuleAction": {
       "type": "object",
       "properties": {
@@ -785,6 +796,15 @@
         "ORDER_DESCENDING"
       ],
       "default": "ORDER_UNSPECIFIED"
+    },
+    "ValidationErrorSource": {
+      "type": "string",
+      "enum": [
+        "SOURCE_UNSPECIFIED",
+        "SOURCE_PRINCIPAL",
+        "SOURCE_RESOURCE"
+      ],
+      "default": "SOURCE_UNSPECIFIED"
     },
     "cerbosenginev1AuxData": {
       "type": "object",
@@ -871,20 +891,6 @@
           "items": {
             "$ref": "#/definitions/protobufAny"
           }
-        }
-      }
-    },
-    "schemav1Error": {
-      "type": "object",
-      "properties": {
-        "path": {
-          "type": "string"
-        },
-        "message": {
-          "type": "string"
-        },
-        "type": {
-          "$ref": "#/definitions/v1ErrorType"
         }
       }
     },
@@ -983,7 +989,7 @@
         "validationErrors": {
           "type": "array",
           "items": {
-            "$ref": "#/definitions/schemav1Error"
+            "$ref": "#/definitions/v1ValidationError"
           }
         }
       }
@@ -1178,7 +1184,7 @@
         "validationErrors": {
           "type": "array",
           "items": {
-            "$ref": "#/definitions/schemav1Error"
+            "$ref": "#/definitions/v1ValidationError"
           },
           "description": "Array of validation errors"
         }
@@ -1248,15 +1254,6 @@
         "EFFECT_NO_MATCH"
       ],
       "default": "EFFECT_UNSPECIFIED"
-    },
-    "v1ErrorType": {
-      "type": "string",
-      "enum": [
-        "ERROR_TYPE_UNSPECIFIED",
-        "ERROR_TYPE_PRINCIPAL",
-        "ERROR_TYPE_RESOURCE"
-      ],
-      "default": "ERROR_TYPE_UNSPECIFIED"
     },
     "v1ListAuditLogEntriesResponse": {
       "type": "object",
@@ -1424,22 +1421,11 @@
         "errors": {
           "type": "array",
           "items": {
-            "$ref": "#/definitions/v1PlaygroundFailureError"
+            "$ref": "#/definitions/PlaygroundFailureError"
           }
         }
       },
       "description": "Playground response"
-    },
-    "v1PlaygroundFailureError": {
-      "type": "object",
-      "properties": {
-        "file": {
-          "type": "string"
-        },
-        "error": {
-          "type": "string"
-        }
-      }
     },
     "v1PlaygroundProxyRequest": {
       "type": "object",
@@ -1851,6 +1837,20 @@
         }
       },
       "description": "Server info response"
+    },
+    "v1ValidationError": {
+      "type": "object",
+      "properties": {
+        "path": {
+          "type": "string"
+        },
+        "message": {
+          "type": "string"
+        },
+        "source": {
+          "$ref": "#/definitions/ValidationErrorSource"
+        }
+      }
     }
   },
   "securityDefinitions": {

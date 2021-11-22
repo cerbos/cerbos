@@ -1934,7 +1934,7 @@ func (m *CheckResourceSetResponse_ActionEffectMap) UnmarshalVT(dAtA []byte) erro
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.ValidationErrors = append(m.ValidationErrors, &v11.Error{})
+			m.ValidationErrors = append(m.ValidationErrors, &v11.ValidationError{})
 			if unmarshal, ok := interface{}(m.ValidationErrors[len(m.ValidationErrors)-1]).(interface {
 				UnmarshalVT([]byte) error
 			}); ok {

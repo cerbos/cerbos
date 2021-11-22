@@ -1341,7 +1341,7 @@ func (m *CheckOutput) UnmarshalVT(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.ValidationErrors = append(m.ValidationErrors, &v11.Error{})
+			m.ValidationErrors = append(m.ValidationErrors, &v11.ValidationError{})
 			if unmarshal, ok := interface{}(m.ValidationErrors[len(m.ValidationErrors)-1]).(interface {
 				UnmarshalVT([]byte) error
 			}); ok {

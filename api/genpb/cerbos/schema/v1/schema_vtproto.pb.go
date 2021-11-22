@@ -233,7 +233,7 @@ func (m *JSONSchemaProps) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 	return len(dAtA) - i, nil
 }
 
-func (m *Error) MarshalVT() (dAtA []byte, err error) {
+func (m *ValidationError) MarshalVT() (dAtA []byte, err error) {
 	if m == nil {
 		return nil, nil
 	}
@@ -246,12 +246,12 @@ func (m *Error) MarshalVT() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *Error) MarshalToVT(dAtA []byte) (int, error) {
+func (m *ValidationError) MarshalToVT(dAtA []byte) (int, error) {
 	size := m.SizeVT()
 	return m.MarshalToSizedBufferVT(dAtA[:size])
 }
 
-func (m *Error) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
+func (m *ValidationError) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 	if m == nil {
 		return 0, nil
 	}
@@ -263,8 +263,8 @@ func (m *Error) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 		i -= len(m.unknownFields)
 		copy(dAtA[i:], m.unknownFields)
 	}
-	if m.Type != 0 {
-		i = encodeVarint(dAtA, i, uint64(m.Type))
+	if m.Source != 0 {
+		i = encodeVarint(dAtA, i, uint64(m.Source))
 		i--
 		dAtA[i] = 0x18
 	}
@@ -402,7 +402,7 @@ func (m *JSONSchemaProps) SizeVT() (n int) {
 	return n
 }
 
-func (m *Error) SizeVT() (n int) {
+func (m *ValidationError) SizeVT() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -416,8 +416,8 @@ func (m *Error) SizeVT() (n int) {
 	if l > 0 {
 		n += 1 + l + sov(uint64(l))
 	}
-	if m.Type != 0 {
-		n += 1 + sov(uint64(m.Type))
+	if m.Source != 0 {
+		n += 1 + sov(uint64(m.Source))
 	}
 	if m.unknownFields != nil {
 		n += len(m.unknownFields)
@@ -1264,7 +1264,7 @@ func (m *JSONSchemaProps) UnmarshalVT(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *Error) UnmarshalVT(dAtA []byte) error {
+func (m *ValidationError) UnmarshalVT(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -1287,10 +1287,10 @@ func (m *Error) UnmarshalVT(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: Error: wiretype end group for non-group")
+			return fmt.Errorf("proto: ValidationError: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: Error: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: ValidationError: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
@@ -1359,9 +1359,9 @@ func (m *Error) UnmarshalVT(dAtA []byte) error {
 			iNdEx = postIndex
 		case 3:
 			if wireType != 0 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Type", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field Source", wireType)
 			}
-			m.Type = 0
+			m.Source = 0
 			for shift := uint(0); ; shift += 7 {
 				if shift >= 64 {
 					return ErrIntOverflow
@@ -1371,7 +1371,7 @@ func (m *Error) UnmarshalVT(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				m.Type |= ErrorType(b&0x7F) << shift
+				m.Source |= ValidationError_Source(b&0x7F) << shift
 				if b < 0x80 {
 					break
 				}

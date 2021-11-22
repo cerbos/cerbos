@@ -23,12 +23,12 @@ type Manager struct {
 	conf                *Conf
 	log                 *zap.SugaredLogger
 	store               storage.Store
+	mu                  sync.RWMutex
 	principalProperties map[string]string
 	resourceProperties  map[string]map[string]string
 	schema              *schemav1.Schema
 	principalSchema     *jsonschema.Schema
 	resourceSchemas     map[string]*jsonschema.Schema
-	mu                  sync.RWMutex // mutex for schema, principalSchema and resourceSchemas fields
 }
 
 func New(store storage.Store) (*Manager, error) {
@@ -61,6 +61,8 @@ func New(store storage.Store) (*Manager, error) {
 }
 
 func (m *Manager) Validate(ctx context.Context, input *enginev1.CheckInput) error {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
 	if m.schema == nil {
 		return nil
 	}
@@ -119,7 +121,7 @@ func (m *Manager) Validate(ctx context.Context, input *enginev1.CheckInput) erro
 
 	for _, validationData := range validation {
 		msg := fmt.Sprintf("Schema validation failed for %s attributes: Path=%s - Message=%s",
-			strings.ToLower(validationData.Type.String()),
+			strings.ToLower(validationData.Source.String()),
 			validationData.Path, validationData.Message)
 		if m.conf.Enforcement == EnforcementWarn {
 			logging.FromContext(ctx).Warn(msg)
@@ -136,7 +138,7 @@ func (m *Manager) Validate(ctx context.Context, input *enginev1.CheckInput) erro
 }
 
 func (m *Manager) validateInput(inputProperties map[string]*structpb.Value, schemaProperties map[string]string,
-	errorType schemav1.ErrorType) error {
+	errorType schemav1.ValidationError_Source) error {
 	if m.conf.IgnoreExtraFields {
 		return nil
 	}
@@ -151,7 +153,7 @@ func (m *Manager) validateInput(inputProperties map[string]*structpb.Value, sche
 			validationErrors = append(validationErrors, ValidationError{
 				Path:    property,
 				Message: "Unexpected field present in the attributes",
-				Type:    errorType,
+				Source:  errorType,
 			})
 		}
 	}
@@ -163,7 +165,10 @@ func (m *Manager) validateInput(inputProperties map[string]*structpb.Value, sche
 
 func (m *Manager) validatePrincipal(ctx context.Context,
 	principalAttributes map[string]*structpb.Value) error {
-	inputValidationErr := m.validateInput(principalAttributes, m.principalProperties, schemav1.ErrorType_ERROR_TYPE_PRINCIPAL)
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	inputValidationErr := m.validateInput(principalAttributes, m.principalProperties, schemav1.ValidationError_SOURCE_PRINCIPAL)
 	if inputValidationErr != nil && !IsValidationErrorList(inputValidationErr) {
 		return fmt.Errorf("failed to validate the input: %w", inputValidationErr)
 	}
@@ -184,18 +189,21 @@ func (m *Manager) validatePrincipal(ctx context.Context,
 		inputValidationErrorList = nil
 	}
 
-	return MergeValidationErrorLists(inputValidationErrorList, NewValidationErrorList(principalValidation, schemav1.ErrorType_ERROR_TYPE_PRINCIPAL))
+	return MergeValidationErrorLists(inputValidationErrorList, NewValidationErrorList(principalValidation, schemav1.ValidationError_SOURCE_PRINCIPAL))
 }
 
 func (m *Manager) validateResource(ctx context.Context, resourceKind string,
 	resourceAttributes map[string]*structpb.Value) error {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
 	resourcePropertiesMap, ok := m.resourceProperties[resourceKind]
 	if !ok {
 		m.log.Warnf("no schema properties found for the kind '%s'", resourceKind)
 		return nil
 	}
 
-	inputValidationErr := m.validateInput(resourceAttributes, resourcePropertiesMap, schemav1.ErrorType_ERROR_TYPE_RESOURCE)
+	inputValidationErr := m.validateInput(resourceAttributes, resourcePropertiesMap, schemav1.ValidationError_SOURCE_RESOURCE)
 	if inputValidationErr != nil && !IsValidationErrorList(inputValidationErr) {
 		return fmt.Errorf("failed to validate the input: %w", inputValidationErr)
 	}
@@ -225,7 +233,7 @@ func (m *Manager) validateResource(ctx context.Context, resourceKind string,
 		inputValidationErrorList = nil
 	}
 
-	return MergeValidationErrorLists(inputValidationErrorList, NewValidationErrorList(resourceValidation, schemav1.ErrorType_ERROR_TYPE_RESOURCE))
+	return MergeValidationErrorLists(inputValidationErrorList, NewValidationErrorList(resourceValidation, schemav1.ValidationError_SOURCE_RESOURCE))
 }
 
 func (m *Manager) walkInputProperties(path string, properties map[string]*structpb.Value, writeTo map[string]string) {
