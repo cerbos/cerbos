@@ -7,6 +7,10 @@ import (
 	"bytes"
 	"context"
 	requestv1 "github.com/cerbos/cerbos/api/genpb/cerbos/request/v1"
+	responsev1 "github.com/cerbos/cerbos/api/genpb/cerbos/response/v1"
+	"github.com/google/cel-go/parser"
+	"google.golang.org/protobuf/types/known/structpb"
+	"strings"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -174,7 +178,7 @@ func readCELTestCase(t *testing.T, data []byte) *privatev1.CelTestCase {
 	return tc
 }
 
-func TestList(t *testing.T) {
+func TestListHarry(t *testing.T) {
 	eng, cancelFunc := mkEngine(t, false)
 	defer cancelFunc()
 	input := &requestv1.ListResourcesRequest{
@@ -182,11 +186,70 @@ func TestList(t *testing.T) {
 		Action:    "view",
 		Principal: &enginev1.Principal{
 			Id:    "harry",
+			PolicyVersion: "default",
 			Roles: []string{"employee"},
 		},
+		PolicyVersion: "default",
 		ResourceKind: "list-resources:leave_request",
 	}
 	list, err := eng.List(context.Background(), input)
 	require.NoError(t, err)
 	require.NotNil(t, list)
+	t.Log(unparse(t, list.Filter))
+}
+
+func TestListMaggie(t *testing.T) {
+	eng, cancelFunc := mkEngine(t, false)
+	defer cancelFunc()
+	input := &requestv1.ListResourcesRequest{
+		RequestId: "requestId",
+		Action:    "approve",
+		Principal: &enginev1.Principal{
+			Id:    "maggie",
+			PolicyVersion: "default",
+			Roles: []string{"employee", "manager"},
+			Attr: map[string]*structpb.Value{
+				"geography": {Kind: &structpb.Value_StringValue{StringValue: "US"}},
+				"managed_geographies": {Kind: &structpb.Value_ListValue{
+					ListValue: &structpb.ListValue{
+						Values: []*structpb.Value{
+							{Kind: &structpb.Value_StringValue{StringValue: "US"}},
+							{Kind: &structpb.Value_StringValue{StringValue: "CA"}},
+						},
+					},
+                }},
+			},
+		},
+		PolicyVersion: "default",
+		ResourceKind: "list-resources:leave_request",
+	}
+	list, err := eng.List(context.Background(), input)
+	require.NoError(t, err)
+	require.NotNil(t, list)
+	t.Log(unparse(t, list.Filter))
+}
+
+func unparse(t *testing.T, expr *responsev1.ListResourcesResponse_Node) string {
+	t.Helper()
+	if expr == nil {
+		return ""
+	}
+	var err error
+	var source string
+	switch node := expr.Node.(type) {
+	case *responsev1.ListResourcesResponse_Node_Expression:
+		expr := node.Expression
+		source, err = parser.Unparse(expr.Expr, expr.SourceInfo)
+		require.NoError(t, err)
+	case *responsev1.ListResourcesResponse_Node_LogicalOperation:
+		op := responsev1.ListResourcesResponse_LogicalOperation_Operator_name[int32(node.LogicalOperation.Operator)]
+		s := make([]string, 0, len(node.LogicalOperation.Nodes))
+		for _, n := range node.LogicalOperation.Nodes {
+            s = append(s, unparse(t, n))
+        }
+
+		source = strings.Join(s, " " + op + " ")
+	}
+
+	return "(" + source + ")"
 }

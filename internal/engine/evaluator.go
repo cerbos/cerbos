@@ -85,9 +85,6 @@ func (rpe *resourcePolicyEvaluator) EvaluateListResources(_ context.Context, inp
 						return nil, err
 					}
 					result.Filter = node
-					if !node.GetExpression().GetExpr().GetConstExpr().GetBoolValue() {
-						continue
-					}
 				}
 			}
 		}
