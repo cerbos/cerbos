@@ -7,11 +7,7 @@ import (
 	"bytes"
 	"context"
 	requestv1 "github.com/cerbos/cerbos/api/genpb/cerbos/request/v1"
-	responsev1 "github.com/cerbos/cerbos/api/genpb/cerbos/response/v1"
-	"github.com/ghodss/yaml"
-	"github.com/google/cel-go/parser"
 	"google.golang.org/protobuf/types/known/structpb"
-	"strings"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -235,69 +231,7 @@ func TestList(t *testing.T) {
 			list, err := eng.List(context.Background(), tt.input)
 			is.NoError(err)
 			is.NotNil(list)
-			is.Equal(tt.want, String(t, list.Filter))
+			is.Equal(tt.want, list.FilterSql)
 		})
 	}
-}
-
-func String(t *testing.T, expr *responsev1.ListResourcesResponse_Node) string {
-	t.Helper()
-	if expr == nil {
-		return ""
-	}
-	var err error
-	var source string
-	switch node := expr.Node.(type) {
-	case *responsev1.ListResourcesResponse_Node_Expression:
-		expr := node.Expression
-		source, err = parser.Unparse(expr.Expr, expr.SourceInfo)
-		require.NoError(t, err)
-		data, err := yaml.Marshal(expr)
-		require.NoError(t, err)
-		t.Log(string(data))
-	case *responsev1.ListResourcesResponse_Node_LogicalOperation:
-		op := responsev1.ListResourcesResponse_LogicalOperation_Operator_name[int32(node.LogicalOperation.Operator)]
-		s := make([]string, 0, len(node.LogicalOperation.Nodes))
-		for _, n := range node.LogicalOperation.Nodes {
-			s = append(s, String(t, n))
-		}
-
-		source = strings.Join(s, " "+op+" ")
-	}
-
-	return "(" + source + ")"
-}
-
-type Expr struct {
-	op    string  `json:"op,omitempty"`
-	args  []*Expr `json:"args,omitempty"`
-	value string  `json:"value,omitempty"`
-}
-
-func Convert(t *testing.T, expr *responsev1.ListResourcesResponse_Node) interface{} {
-	t.Helper()
-	if expr == nil {
-		return ""
-	}
-	var err error
-	var source string
-	switch node := expr.Node.(type) {
-	case *responsev1.ListResourcesResponse_Node_Expression:
-		expr := node.Expression
-		source, err = parser.Unparse(expr.Expr, expr.SourceInfo)
-		require.NoError(t, err)
-		data, err := yaml.Marshal(expr)
-		require.NoError(t, err)
-		t.Log(string(data))
-	case *responsev1.ListResourcesResponse_Node_LogicalOperation:
-		op := responsev1.ListResourcesResponse_LogicalOperation_Operator_name[int32(node.LogicalOperation.Operator)]
-		s := make([]string, 0, len(node.LogicalOperation.Nodes))
-		for _, n := range node.LogicalOperation.Nodes {
-			s = append(s, String(t, n))
-		}
-
-		source = strings.Join(s, " "+op+" ")
-	}
-
-	return "(" + source + ")"
 }

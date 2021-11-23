@@ -9,10 +9,12 @@ import (
 	"fmt"
 	requestv1 "github.com/cerbos/cerbos/api/genpb/cerbos/request/v1"
 	responsev1 "github.com/cerbos/cerbos/api/genpb/cerbos/response/v1"
+	"github.com/google/cel-go/parser"
 	"io"
 	"math/rand"
 	"net/http"
 	"os"
+	"strings"
 	"sync/atomic"
 	"time"
 
@@ -272,9 +274,46 @@ func (engine *Engine) List(ctx context.Context, input *requestv1.ListResourcesRe
 	if err != nil {
 	    return nil, err
 	}
-	return convert(list)
+
+	response := &responsev1.ListResourcesResponse{
+		RequestId:     input.RequestId,
+		Action:        input.Action,
+		ResourceKind:  input.ResourceKind,
+		PolicyVersion: input.PolicyVersion,
+	}
+
+	response.FilterSql, err = String(list.Filter)
+	if err != nil {
+	    return nil, err
+	}
+
+	return response, nil
 }
 
+func String(expr *enginev1.ListResourcesOutput_Node) (source string, err error) {
+	if expr == nil {
+		return "", nil
+	}
+	switch node := expr.Node.(type) {
+	case *enginev1.ListResourcesOutput_Node_Expression:
+		expr := node.Expression
+		source, err = parser.Unparse(expr.Expr, expr.SourceInfo)
+	case *enginev1.ListResourcesOutput_Node_LogicalOperation:
+		op := enginev1.ListResourcesOutput_LogicalOperation_Operator_name[int32(node.LogicalOperation.Operator)]
+		s := make([]string, 0, len(node.LogicalOperation.Nodes))
+		for _, n := range node.LogicalOperation.Nodes {
+			source, err = String(n)
+			if err != nil {
+			    return "", err
+			}
+			s = append(s, source)
+		}
+
+		source = strings.Join(s, " "+op+" ")
+	}
+
+	return "(" + source + ")", nil
+}
 func convert(list *enginev1.ListResourcesOutput) (*responsev1.ListResourcesResponse, error) {
 	panic("implement me")
 }
