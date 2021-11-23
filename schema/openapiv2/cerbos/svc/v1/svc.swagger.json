@@ -608,142 +608,6 @@
       },
       "description": "Metadata about request evaluation."
     },
-    "CreateStructEntry": {
-      "type": "object",
-      "properties": {
-        "id": {
-          "type": "string",
-          "format": "int64",
-          "description": "Required. An id assigned to this node by the parser which is unique\nin a given expression tree. This is used to associate type\ninformation and other attributes to the node."
-        },
-        "fieldKey": {
-          "type": "string",
-          "description": "The field key for a message creator statement."
-        },
-        "mapKey": {
-          "$ref": "#/definitions/v1alpha1Expr",
-          "description": "The key expression for a map creation statement."
-        },
-        "value": {
-          "$ref": "#/definitions/v1alpha1Expr",
-          "description": "Required. The value assigned to the key."
-        }
-      },
-      "description": "Represents an entry."
-    },
-    "ExprCall": {
-      "type": "object",
-      "properties": {
-        "target": {
-          "$ref": "#/definitions/v1alpha1Expr",
-          "description": "The target of an method call-style expression. For example, `x` in\n`x.f()`."
-        },
-        "function": {
-          "type": "string",
-          "description": "Required. The name of the function or method being called."
-        },
-        "args": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/v1alpha1Expr"
-          },
-          "description": "The arguments."
-        }
-      },
-      "description": "A call expression, including calls to predefined functions and operators.\n\nFor example, `value == 10`, `size(map_value)`."
-    },
-    "ExprComprehension": {
-      "type": "object",
-      "properties": {
-        "iterVar": {
-          "type": "string",
-          "description": "The name of the iteration variable."
-        },
-        "iterRange": {
-          "$ref": "#/definitions/v1alpha1Expr",
-          "description": "The range over which var iterates."
-        },
-        "accuVar": {
-          "type": "string",
-          "description": "The name of the variable used for accumulation of the result."
-        },
-        "accuInit": {
-          "$ref": "#/definitions/v1alpha1Expr",
-          "description": "The initial value of the accumulator."
-        },
-        "loopCondition": {
-          "$ref": "#/definitions/v1alpha1Expr",
-          "description": "An expression which can contain iter_var and accu_var.\n\nReturns false when the result has been computed and may be used as\na hint to short-circuit the remainder of the comprehension."
-        },
-        "loopStep": {
-          "$ref": "#/definitions/v1alpha1Expr",
-          "description": "An expression which can contain iter_var and accu_var.\n\nComputes the next value of accu_var."
-        },
-        "result": {
-          "$ref": "#/definitions/v1alpha1Expr",
-          "description": "An expression which can contain accu_var.\n\nComputes the result."
-        }
-      },
-      "description": "A comprehension expression applied to a list or map.\n\nComprehensions are not part of the core syntax, but enabled with macros.\nA macro matches a specific call signature within a parsed AST and replaces\nthe call with an alternate AST block. Macro expansion happens at parse\ntime.\n\nThe following macros are supported within CEL:\n\nAggregate type macros may be applied to all elements in a list or all keys\nin a map:\n\n*  `all`, `exists`, `exists_one` -  test a predicate expression against\n   the inputs and return `true` if the predicate is satisfied for all,\n   any, or only one value `list.all(x, x \u003c 10)`.\n*  `filter` - test a predicate expression against the inputs and return\n   the subset of elements which satisfy the predicate:\n   `payments.filter(p, p \u003e 1000)`.\n*  `map` - apply an expression to all elements in the input and return the\n   output aggregate type: `[1, 2, 3].map(i, i * i)`.\n\nThe `has(m.x)` macro tests whether the property `x` is present in struct\n`m`. The semantics of this macro depend on the type of `m`. For proto2\nmessages `has(m.x)` is defined as 'defined, but not set`. For proto3, the\nmacro tests whether the property is set to its default. For map and struct\ntypes, the macro tests whether the property `x` is defined on `m`."
-    },
-    "ExprCreateList": {
-      "type": "object",
-      "properties": {
-        "elements": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/v1alpha1Expr"
-          },
-          "description": "The elements part of the list."
-        }
-      },
-      "description": "A list creation expression.\n\nLists may either be homogenous, e.g. `[1, 2, 3]`, or heterogenous, e.g.\n`dyn([1, 'hello', 2.0])`"
-    },
-    "ExprCreateStruct": {
-      "type": "object",
-      "properties": {
-        "messageName": {
-          "type": "string",
-          "description": "The type name of the message to be created, empty when creating map\nliterals."
-        },
-        "entries": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/CreateStructEntry"
-          },
-          "description": "The entries in the creation expression."
-        }
-      },
-      "description": "A map or message creation expression.\n\nMaps are constructed as `{'key_name': 'value'}`. Message construction is\nsimilar, but prefixed with a type name and composed of field ids:\n`types.MyType{field_id: 'value'}`."
-    },
-    "ExprIdent": {
-      "type": "object",
-      "properties": {
-        "name": {
-          "type": "string",
-          "description": "Required. Holds a single, unqualified identifier, possibly preceded by a\n'.'.\n\nQualified names are represented by the [Expr.Select][google.api.expr.v1alpha1.Expr.Select] expression."
-        }
-      },
-      "description": "An identifier expression. e.g. `request`."
-    },
-    "ExprSelect": {
-      "type": "object",
-      "properties": {
-        "operand": {
-          "$ref": "#/definitions/v1alpha1Expr",
-          "description": "Required. The target of the selection expression.\n\nFor example, in the select expression `request.auth`, the `request`\nportion of the expression is the `operand`."
-        },
-        "field": {
-          "type": "string",
-          "description": "Required. The name of the field to select.\n\nFor example, in the select expression `request.auth`, the `auth` portion\nof the expression would be the `field`."
-        },
-        "testOnly": {
-          "type": "boolean",
-          "description": "Whether the select is to be interpreted as a field presence test.\n\nThis results from the macro `has(request.auth)`."
-        }
-      },
-      "description": "A field selection expression. e.g. `request.auth`."
-    },
     "ListAuditLogEntriesRequestKind": {
       "type": "string",
       "enum": [
@@ -837,24 +701,51 @@
       },
       "description": "Sort options"
     },
-    "ListResourcesResponseNode": {
+    "ListResourcesResponseConditionOperand": {
       "type": "object",
       "properties": {
-        "logicalOperation": {
-          "$ref": "#/definitions/v1ListResourcesResponseLogicalOperation"
+        "condition": {
+          "$ref": "#/definitions/v1ListResourcesResponseCondition"
         },
         "expression": {
-          "$ref": "#/definitions/v1alpha1CheckedExpr"
+          "$ref": "#/definitions/ListResourcesResponseExpression"
         }
       }
     },
-    "LogicalOperationOperator": {
+    "ListResourcesResponseConditionOperator": {
       "type": "string",
       "enum": [
         "AND",
         "OR"
       ],
       "default": "AND"
+    },
+    "ListResourcesResponseExpression": {
+      "type": "object",
+      "properties": {
+        "operator": {
+          "type": "string",
+          "description": "Operator"
+        },
+        "operands": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ListResourcesResponseExpressionOperand"
+          }
+        }
+      },
+      "description": "CEL expression"
+    },
+    "ListResourcesResponseExpressionOperand": {
+      "type": "object",
+      "properties": {
+        "value": {
+          "type": "object"
+        },
+        "expression": {
+          "$ref": "#/definitions/ListResourcesResponseExpression"
+        }
+      }
     },
     "MatchExprList": {
       "type": "object",
@@ -958,7 +849,7 @@
           "type": "string"
         },
         "condition": {
-          "$ref": "#/definitions/v1Condition"
+          "$ref": "#/definitions/policyv1Condition"
         },
         "effect": {
           "$ref": "#/definitions/v1Effect"
@@ -985,89 +876,6 @@
         "ORDER_DESCENDING"
       ],
       "default": "ORDER_UNSPECIFIED"
-    },
-    "TypeAbstractType": {
-      "type": "object",
-      "properties": {
-        "name": {
-          "type": "string",
-          "description": "The fully qualified name of this abstract type."
-        },
-        "parameterTypes": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/exprv1alpha1Type"
-          },
-          "description": "Parameter types for this abstract type."
-        }
-      },
-      "description": "Application defined abstract type."
-    },
-    "TypeFunctionType": {
-      "type": "object",
-      "properties": {
-        "resultType": {
-          "$ref": "#/definitions/exprv1alpha1Type",
-          "description": "Result type of the function."
-        },
-        "argTypes": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/exprv1alpha1Type"
-          },
-          "description": "Argument types of the function."
-        }
-      },
-      "description": "Function type with result and arg types."
-    },
-    "TypeListType": {
-      "type": "object",
-      "properties": {
-        "elemType": {
-          "$ref": "#/definitions/exprv1alpha1Type",
-          "description": "The element type."
-        }
-      },
-      "description": "List type with typed elements, e.g. `list\u003cexample.proto.MyMessage\u003e`."
-    },
-    "TypeMapType": {
-      "type": "object",
-      "properties": {
-        "keyType": {
-          "$ref": "#/definitions/exprv1alpha1Type",
-          "description": "The type of the key."
-        },
-        "valueType": {
-          "$ref": "#/definitions/exprv1alpha1Type",
-          "description": "The type of the value."
-        }
-      },
-      "description": "Map type with parameterized key and value types, e.g. `map\u003cstring, int\u003e`."
-    },
-    "TypePrimitiveType": {
-      "type": "string",
-      "enum": [
-        "PRIMITIVE_TYPE_UNSPECIFIED",
-        "BOOL",
-        "INT64",
-        "UINT64",
-        "DOUBLE",
-        "STRING",
-        "BYTES"
-      ],
-      "default": "PRIMITIVE_TYPE_UNSPECIFIED",
-      "description": "CEL primitive types.\n\n - PRIMITIVE_TYPE_UNSPECIFIED: Unspecified type.\n - BOOL: Boolean type.\n - INT64: Int64 type.\n\nProto-based integer values are widened to int64.\n - UINT64: Uint64 type.\n\nProto-based unsigned integer values are widened to uint64.\n - DOUBLE: Double type.\n\nProto-based float values are widened to double values.\n - STRING: String type.\n - BYTES: Bytes type."
-    },
-    "TypeWellKnownType": {
-      "type": "string",
-      "enum": [
-        "WELL_KNOWN_TYPE_UNSPECIFIED",
-        "ANY",
-        "TIMESTAMP",
-        "DURATION"
-      ],
-      "default": "WELL_KNOWN_TYPE_UNSPECIFIED",
-      "description": "Well-known protobuf types treated with first-class support in CEL.\n\n - WELL_KNOWN_TYPE_UNSPECIFIED: Unspecified type.\n - ANY: Well-known protobuf.Any type.\n\nAny types are a polymorphic message type. During type-checking they are\ntreated like `DYN` types, but at runtime they are resolved to a specific\nmessage type specified at evaluation time.\n - TIMESTAMP: Well-known protobuf.Timestamp type, internally referenced as `timestamp`.\n - DURATION: Well-known protobuf.Duration type, internally referenced as `duration`."
     },
     "cerbosenginev1AuxData": {
       "type": "object",
@@ -1119,63 +927,16 @@
         "actions"
       ]
     },
-    "exprv1alpha1Type": {
+    "policyv1Condition": {
       "type": "object",
       "properties": {
-        "dyn": {
-          "properties": {},
-          "description": "Dynamic type."
+        "match": {
+          "$ref": "#/definitions/v1Match"
         },
-        "null": {
-          "type": "string",
-          "description": "Null value."
-        },
-        "primitive": {
-          "$ref": "#/definitions/TypePrimitiveType",
-          "description": "Primitive types: `true`, `1u`, `-2.0`, `'string'`, `b'bytes'`."
-        },
-        "wrapper": {
-          "$ref": "#/definitions/TypePrimitiveType",
-          "description": "Wrapper of a primitive type, e.g. `google.protobuf.Int64Value`."
-        },
-        "wellKnown": {
-          "$ref": "#/definitions/TypeWellKnownType",
-          "description": "Well-known protobuf type such as `google.protobuf.Timestamp`."
-        },
-        "listType": {
-          "$ref": "#/definitions/TypeListType",
-          "description": "Parameterized list with elements of `list_type`, e.g. `list\u003ctimestamp\u003e`."
-        },
-        "mapType": {
-          "$ref": "#/definitions/TypeMapType",
-          "description": "Parameterized map with typed keys and values."
-        },
-        "function": {
-          "$ref": "#/definitions/TypeFunctionType",
-          "description": "Function type."
-        },
-        "messageType": {
-          "type": "string",
-          "description": "Protocol buffer message type.\n\nThe `message_type` string specifies the qualified message type name. For\nexample, `google.plus.Profile`."
-        },
-        "typeParam": {
-          "type": "string",
-          "description": "Type param type.\n\nThe `type_param` string specifies the type parameter name, e.g. `list\u003cE\u003e`\nwould be a `list_type` whose element type was a `type_param` type\nnamed `E`."
-        },
-        "type": {
-          "$ref": "#/definitions/exprv1alpha1Type",
-          "description": "Type type.\n\nThe `type` value specifies the target type. e.g. int is type with a\ntarget type of `Primitive.INT`."
-        },
-        "error": {
-          "properties": {},
-          "description": "Error type.\n\nDuring type-checking if an expression is an error, its type is propagated\nas the `ERROR` type. This permits the type-checker to discover other\nerrors present in the expression."
-        },
-        "abstractType": {
-          "$ref": "#/definitions/TypeAbstractType",
-          "description": "Abstract, application defined type."
+        "script": {
+          "type": "string"
         }
-      },
-      "description": "Represents a CEL type."
+      }
     },
     "protobufAny": {
       "type": "object",
@@ -1498,17 +1259,6 @@
         }
       }
     },
-    "v1Condition": {
-      "type": "object",
-      "properties": {
-        "match": {
-          "$ref": "#/definitions/v1Match"
-        },
-        "script": {
-          "type": "string"
-        }
-      }
-    },
     "v1DecisionLogEntry": {
       "type": "object",
       "properties": {
@@ -1659,7 +1409,7 @@
           "example": "view:public",
           "description": "Request ID provided in the request."
         },
-        "kind": {
+        "resourceKind": {
           "type": "string",
           "example": "album:object",
           "description": "Resource kind.",
@@ -1671,25 +1421,30 @@
           "description": "The policy version."
         },
         "filter": {
-          "$ref": "#/definitions/ListResourcesResponseNode",
+          "$ref": "#/definitions/ListResourcesResponseConditionOperand",
           "description": "Filter"
+        },
+        "filterSql": {
+          "type": "string",
+          "description": "Filter SQL"
         }
       },
       "description": "List resources response for a set of resources."
     },
-    "v1ListResourcesResponseLogicalOperation": {
+    "v1ListResourcesResponseCondition": {
       "type": "object",
       "properties": {
         "operator": {
-          "$ref": "#/definitions/LogicalOperationOperator"
+          "$ref": "#/definitions/ListResourcesResponseConditionOperator"
         },
         "nodes": {
           "type": "array",
           "items": {
-            "$ref": "#/definitions/ListResourcesResponseNode"
+            "$ref": "#/definitions/ListResourcesResponseConditionOperand"
           }
         }
-      }
+      },
+      "description": "List resources response for a set of resources."
     },
     "v1Match": {
       "type": "object",
@@ -2140,7 +1895,7 @@
           }
         },
         "condition": {
-          "$ref": "#/definitions/v1Condition"
+          "$ref": "#/definitions/policyv1Condition"
         },
         "effect": {
           "$ref": "#/definitions/v1Effect"
@@ -2216,7 +1971,7 @@
           }
         },
         "condition": {
-          "$ref": "#/definitions/v1Condition"
+          "$ref": "#/definitions/policyv1Condition"
         }
       }
     },
@@ -2234,178 +1989,6 @@
         }
       },
       "description": "Server info response"
-    },
-    "v1alpha1CheckedExpr": {
-      "type": "object",
-      "properties": {
-        "referenceMap": {
-          "type": "object",
-          "additionalProperties": {
-            "$ref": "#/definitions/v1alpha1Reference"
-          },
-          "description": "A map from expression ids to resolved references.\n\nThe following entries are in this table:\n\n- An Ident or Select expression is represented here if it resolves to a\n  declaration. For instance, if `a.b.c` is represented by\n  `select(select(id(a), b), c)`, and `a.b` resolves to a declaration,\n  while `c` is a field selection, then the reference is attached to the\n  nested select expression (but not to the id or or the outer select).\n  In turn, if `a` resolves to a declaration and `b.c` are field selections,\n  the reference is attached to the ident expression.\n- Every Call expression has an entry here, identifying the function being\n  called.\n- Every CreateStruct expression for a message has an entry, identifying\n  the message."
-        },
-        "typeMap": {
-          "type": "object",
-          "additionalProperties": {
-            "$ref": "#/definitions/exprv1alpha1Type"
-          },
-          "description": "A map from expression ids to types.\n\nEvery expression node which has a type different than DYN has a mapping\nhere. If an expression has type DYN, it is omitted from this map to save\nspace."
-        },
-        "sourceInfo": {
-          "$ref": "#/definitions/v1alpha1SourceInfo",
-          "description": "The source info derived from input that generated the parsed `expr` and\nany optimizations made during the type-checking pass."
-        },
-        "expr": {
-          "$ref": "#/definitions/v1alpha1Expr",
-          "description": "The checked expression. Semantically equivalent to the parsed `expr`, but\nmay have structural differences."
-        }
-      },
-      "description": "A CEL expression which has been successfully type checked."
-    },
-    "v1alpha1Constant": {
-      "type": "object",
-      "properties": {
-        "nullValue": {
-          "type": "string",
-          "description": "null value."
-        },
-        "boolValue": {
-          "type": "boolean",
-          "description": "boolean value."
-        },
-        "int64Value": {
-          "type": "string",
-          "format": "int64",
-          "description": "int64 value."
-        },
-        "uint64Value": {
-          "type": "string",
-          "format": "uint64",
-          "description": "uint64 value."
-        },
-        "doubleValue": {
-          "type": "number",
-          "format": "double",
-          "description": "double value."
-        },
-        "stringValue": {
-          "type": "string",
-          "description": "string value."
-        },
-        "bytesValue": {
-          "type": "string",
-          "format": "byte",
-          "description": "bytes value."
-        },
-        "durationValue": {
-          "type": "string",
-          "description": "protobuf.Duration value.\n\nDeprecated: duration is no longer considered a builtin cel type."
-        },
-        "timestampValue": {
-          "type": "string",
-          "format": "date-time",
-          "description": "protobuf.Timestamp value.\n\nDeprecated: timestamp is no longer considered a builtin cel type."
-        }
-      },
-      "description": "Represents a primitive literal.\n\nNamed 'Constant' here for backwards compatibility.\n\nThis is similar as the primitives supported in the well-known type\n`google.protobuf.Value`, but richer so it can represent CEL's full range of\nprimitives.\n\nLists and structs are not included as constants as these aggregate types may\ncontain [Expr][google.api.expr.v1alpha1.Expr] elements which require evaluation and are thus not constant.\n\nExamples of literals include: `\"hello\"`, `b'bytes'`, `1u`, `4.2`, `-2`,\n`true`, `null`."
-    },
-    "v1alpha1Expr": {
-      "type": "object",
-      "properties": {
-        "id": {
-          "type": "string",
-          "format": "int64",
-          "description": "Required. An id assigned to this node by the parser which is unique in a\ngiven expression tree. This is used to associate type information and other\nattributes to a node in the parse tree."
-        },
-        "constExpr": {
-          "$ref": "#/definitions/v1alpha1Constant",
-          "description": "A literal expression."
-        },
-        "identExpr": {
-          "$ref": "#/definitions/ExprIdent",
-          "description": "An identifier expression."
-        },
-        "selectExpr": {
-          "$ref": "#/definitions/ExprSelect",
-          "description": "A field selection expression, e.g. `request.auth`."
-        },
-        "callExpr": {
-          "$ref": "#/definitions/ExprCall",
-          "description": "A call expression, including calls to predefined functions and operators."
-        },
-        "listExpr": {
-          "$ref": "#/definitions/ExprCreateList",
-          "description": "A list creation expression."
-        },
-        "structExpr": {
-          "$ref": "#/definitions/ExprCreateStruct",
-          "description": "A map or message creation expression."
-        },
-        "comprehensionExpr": {
-          "$ref": "#/definitions/ExprComprehension",
-          "description": "A comprehension expression."
-        }
-      },
-      "description": "An abstract representation of a common expression.\n\nExpressions are abstractly represented as a collection of identifiers,\nselect statements, function calls, literals, and comprehensions. All\noperators with the exception of the '.' operator are modelled as function\ncalls. This makes it easy to represent new operators into the existing AST.\n\nAll references within expressions must resolve to a [Decl][google.api.expr.v1alpha1.Decl] provided at\ntype-check for an expression to be valid. A reference may either be a bare\nidentifier `name` or a qualified identifier `google.api.name`. References\nmay either refer to a value or a function declaration.\n\nFor example, the expression `google.api.name.startsWith('expr')` references\nthe declaration `google.api.name` within a [Expr.Select][google.api.expr.v1alpha1.Expr.Select] expression, and\nthe function declaration `startsWith`."
-    },
-    "v1alpha1Reference": {
-      "type": "object",
-      "properties": {
-        "name": {
-          "type": "string",
-          "description": "The fully qualified name of the declaration."
-        },
-        "overloadId": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          },
-          "description": "For references to functions, this is a list of `Overload.overload_id`\nvalues which match according to typing rules.\n\nIf the list has more than one element, overload resolution among the\npresented candidates must happen at runtime because of dynamic types. The\ntype checker attempts to narrow down this list as much as possible.\n\nEmpty if this is not a reference to a [Decl.FunctionDecl][google.api.expr.v1alpha1.Decl.FunctionDecl]."
-        },
-        "value": {
-          "$ref": "#/definitions/v1alpha1Constant",
-          "description": "For references to constants, this may contain the value of the\nconstant if known at compile time."
-        }
-      },
-      "description": "Describes a resolved reference to a declaration."
-    },
-    "v1alpha1SourceInfo": {
-      "type": "object",
-      "properties": {
-        "syntaxVersion": {
-          "type": "string",
-          "description": "The syntax version of the source, e.g. `cel1`."
-        },
-        "location": {
-          "type": "string",
-          "description": "The location name. All position information attached to an expression is\nrelative to this location.\n\nThe location could be a file, UI element, or similar. For example,\n`acme/app/AnvilPolicy.cel`."
-        },
-        "lineOffsets": {
-          "type": "array",
-          "items": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "description": "Monotonically increasing list of character offsets where newlines appear.\n\nThe line number of a given position is the index `i` where for a given\n`id` the `line_offsets[i] \u003c id_positions[id] \u003c line_offsets[i+1]`. The\ncolumn may be derivd from `id_positions[id] - line_offsets[i]`."
-        },
-        "positions": {
-          "type": "object",
-          "additionalProperties": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "description": "A map from the parse node id (e.g. `Expr.id`) to the character offset\nwithin source."
-        },
-        "macroCalls": {
-          "type": "object",
-          "additionalProperties": {
-            "$ref": "#/definitions/v1alpha1Expr"
-          },
-          "description": "A map from the parse node id where a macro replacement was made to the\ncall `Expr` that resulted in a macro expansion.\n\nFor example, `has(value.field)` is a function call that is replaced by a\n`test_only` field selection in the AST. Likewise, the call\n`list.exists(e, e \u003e 10)` translates to a comprehension expression. The key\nin the map corresponds to the expression id of the expanded macro, and the\nvalue is the call `Expr` that was replaced."
-        }
-      },
-      "description": "Source information collected at parse time."
     }
   },
   "securityDefinitions": {

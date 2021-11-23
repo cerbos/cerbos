@@ -267,7 +267,16 @@ func (engine *Engine) List(ctx context.Context, input *requestv1.ListResourcesRe
 		return nil, fmt.Errorf("failed to get check for [%s.%s]: %w", rpName, rpVersion, err)
 	}
 	// get the principal policy check
-	return policyEvaluator.EvaluateListResources(ctx, input)
+
+	list, err := policyEvaluator.EvaluateListResources(ctx, input)
+	if err != nil {
+	    return nil, err
+	}
+	return convert(list)
+}
+
+func convert(list *enginev1.ListResourcesOutput) (*responsev1.ListResourcesResponse, error) {
+	panic("implement me")
 }
 
 func (engine *Engine) evaluate(ctx context.Context, input *enginev1.CheckInput, checkOpts *checkOptions) (*enginev1.CheckOutput, error) {

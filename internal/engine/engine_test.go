@@ -8,6 +8,7 @@ import (
 	"context"
 	requestv1 "github.com/cerbos/cerbos/api/genpb/cerbos/request/v1"
 	responsev1 "github.com/cerbos/cerbos/api/genpb/cerbos/response/v1"
+	"github.com/ghodss/yaml"
 	"github.com/google/cel-go/parser"
 	"google.golang.org/protobuf/types/known/structpb"
 	"strings"
@@ -178,58 +179,68 @@ func readCELTestCase(t *testing.T, data []byte) *privatev1.CelTestCase {
 	return tc
 }
 
-func TestListHarry(t *testing.T) {
+func TestList(t *testing.T) {
 	eng, cancelFunc := mkEngine(t, false)
 	defer cancelFunc()
-	input := &requestv1.ListResourcesRequest{
-		RequestId: "requestId",
-		Action:    "view",
-		Principal: &enginev1.Principal{
-			Id:    "harry",
-			PolicyVersion: "default",
-			Roles: []string{"employee"},
-		},
-		PolicyVersion: "default",
-		ResourceKind: "list-resources:leave_request",
-	}
-	list, err := eng.List(context.Background(), input)
-	require.NoError(t, err)
-	require.NotNil(t, list)
-	t.Log(unparse(t, list.Filter))
-}
-
-func TestListMaggie(t *testing.T) {
-	eng, cancelFunc := mkEngine(t, false)
-	defer cancelFunc()
-	input := &requestv1.ListResourcesRequest{
-		RequestId: "requestId",
-		Action:    "approve",
-		Principal: &enginev1.Principal{
-			Id:    "maggie",
-			PolicyVersion: "default",
-			Roles: []string{"employee", "manager"},
-			Attr: map[string]*structpb.Value{
-				"geography": {Kind: &structpb.Value_StringValue{StringValue: "US"}},
-				"managed_geographies": {Kind: &structpb.Value_ListValue{
-					ListValue: &structpb.ListValue{
-						Values: []*structpb.Value{
-							{Kind: &structpb.Value_StringValue{StringValue: "US"}},
-							{Kind: &structpb.Value_StringValue{StringValue: "CA"}},
-						},
-					},
-                }},
+	tests := []struct {
+		name string
+		input *requestv1.ListResourcesRequest
+		want  string
+	}{
+		{
+			name: "harry wants to view",
+			input: &requestv1.ListResourcesRequest{
+				RequestId: "requestId",
+				Action:    "view",
+				Principal: &enginev1.Principal{
+					Id:            "harry",
+					PolicyVersion: "default",
+					Roles:         []string{"employee"},
+				},
+				PolicyVersion: "default",
+				ResourceKind:  "list-resources:leave_request",
 			},
+			want: `(R.attr.owner == "harry")`,
 		},
-		PolicyVersion: "default",
-		ResourceKind: "list-resources:leave_request",
+		{
+			name: "maggie wants to approve",
+			input: &requestv1.ListResourcesRequest{
+				RequestId: "requestId",
+				Action:    "approve",
+				Principal: &enginev1.Principal{
+					Id:            "maggie",
+					PolicyVersion: "default",
+					Roles:         []string{"employee", "manager"},
+					Attr: map[string]*structpb.Value{
+						"geography": {Kind: &structpb.Value_StringValue{StringValue: "US"}},
+						"managed_geographies": {Kind: &structpb.Value_ListValue{
+							ListValue: &structpb.ListValue{
+								Values: []*structpb.Value{
+									{Kind: &structpb.Value_StringValue{StringValue: "US"}},
+									{Kind: &structpb.Value_StringValue{StringValue: "CA"}},
+								},
+							},
+						}},
+					},
+				},
+				PolicyVersion: "default",
+				ResourceKind:  "list-resources:leave_request",
+			},
+			want: `((R.attr.status == "PENDING_APPROVAL") AND (R.attr.owner != "maggie") AND ((R.attr.geography == "US") OR (R.attr.geography in ["US", "CA"])))`,
+		},
 	}
-	list, err := eng.List(context.Background(), input)
-	require.NoError(t, err)
-	require.NotNil(t, list)
-	t.Log(unparse(t, list.Filter))
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			is := require.New(t)
+			list, err := eng.List(context.Background(), tt.input)
+			is.NoError(err)
+			is.NotNil(list)
+			is.Equal(tt.want, String(t, list.Filter))
+		})
+	}
 }
 
-func unparse(t *testing.T, expr *responsev1.ListResourcesResponse_Node) string {
+func String(t *testing.T, expr *responsev1.ListResourcesResponse_Node) string {
 	t.Helper()
 	if expr == nil {
 		return ""
@@ -241,14 +252,51 @@ func unparse(t *testing.T, expr *responsev1.ListResourcesResponse_Node) string {
 		expr := node.Expression
 		source, err = parser.Unparse(expr.Expr, expr.SourceInfo)
 		require.NoError(t, err)
+		data, err := yaml.Marshal(expr)
+		require.NoError(t, err)
+		t.Log(string(data))
 	case *responsev1.ListResourcesResponse_Node_LogicalOperation:
 		op := responsev1.ListResourcesResponse_LogicalOperation_Operator_name[int32(node.LogicalOperation.Operator)]
 		s := make([]string, 0, len(node.LogicalOperation.Nodes))
 		for _, n := range node.LogicalOperation.Nodes {
-            s = append(s, unparse(t, n))
-        }
+			s = append(s, String(t, n))
+		}
 
-		source = strings.Join(s, " " + op + " ")
+		source = strings.Join(s, " "+op+" ")
+	}
+
+	return "(" + source + ")"
+}
+
+type Expr struct {
+	op    string  `json:"op,omitempty"`
+	args  []*Expr `json:"args,omitempty"`
+	value string  `json:"value,omitempty"`
+}
+
+func Convert(t *testing.T, expr *responsev1.ListResourcesResponse_Node) interface{} {
+	t.Helper()
+	if expr == nil {
+		return ""
+	}
+	var err error
+	var source string
+	switch node := expr.Node.(type) {
+	case *responsev1.ListResourcesResponse_Node_Expression:
+		expr := node.Expression
+		source, err = parser.Unparse(expr.Expr, expr.SourceInfo)
+		require.NoError(t, err)
+		data, err := yaml.Marshal(expr)
+		require.NoError(t, err)
+		t.Log(string(data))
+	case *responsev1.ListResourcesResponse_Node_LogicalOperation:
+		op := responsev1.ListResourcesResponse_LogicalOperation_Operator_name[int32(node.LogicalOperation.Operator)]
+		s := make([]string, 0, len(node.LogicalOperation.Nodes))
+		for _, n := range node.LogicalOperation.Nodes {
+			s = append(s, String(t, n))
+		}
+
+		source = strings.Join(s, " "+op+" ")
 	}
 
 	return "(" + source + ")"

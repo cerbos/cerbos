@@ -8,7 +8,6 @@ import (
 	"errors"
 	"fmt"
 	requestv1 "github.com/cerbos/cerbos/api/genpb/cerbos/request/v1"
-	responsev1 "github.com/cerbos/cerbos/api/genpb/cerbos/response/v1"
 	"github.com/google/cel-go/common/types"
 	"strings"
 
@@ -32,7 +31,7 @@ var (
 
 type Evaluator interface {
 	Evaluate(context.Context, *enginev1.CheckInput) (*PolicyEvalResult, error)
-	EvaluateListResources(ctx context.Context, request *requestv1.ListResourcesRequest) (*responsev1.ListResourcesResponse, error)
+	EvaluateListResources(ctx context.Context, request *requestv1.ListResourcesRequest) (*enginev1.ListResourcesOutput, error)
 }
 
 func NewEvaluator(rps *runtimev1.RunnablePolicySet, t *tracer) Evaluator {
@@ -48,7 +47,7 @@ func NewEvaluator(rps *runtimev1.RunnablePolicySet, t *tracer) Evaluator {
 
 type noopEvaluator struct{}
 
-func (e noopEvaluator) EvaluateListResources(ctx context.Context, request *requestv1.ListResourcesRequest) (*responsev1.ListResourcesResponse, error) {
+func (e noopEvaluator) EvaluateListResources(ctx context.Context, request *requestv1.ListResourcesRequest) (*enginev1.ListResourcesOutput, error) {
 	return nil, ErrPolicyNotExecutable
 }
 
@@ -61,10 +60,10 @@ type resourcePolicyEvaluator struct {
 	*tracer
 }
 
-func (rpe *resourcePolicyEvaluator) EvaluateListResources(_ context.Context, input *requestv1.ListResourcesRequest) (*responsev1.ListResourcesResponse, error) {
+func (rpe *resourcePolicyEvaluator) EvaluateListResources(_ context.Context, input *requestv1.ListResourcesRequest) (*enginev1.ListResourcesOutput, error) {
 	effectiveRoles := toSet(input.Principal.Roles)
 	inputActions := []string{input.Action}
-	result := &responsev1.ListResourcesResponse{}
+	result := &enginev1.ListResourcesOutput{}
 	result.RequestId = input.RequestId
 	result.Kind = input.ResourceKind
 	result.Action = input.Action
@@ -92,15 +91,15 @@ func (rpe *resourcePolicyEvaluator) EvaluateListResources(_ context.Context, inp
 	return result, nil
 }
 
-func evaluateCondition(condition *runtimev1.Condition, input *requestv1.ListResourcesRequest) (*responsev1.ListResourcesResponse_Node, error) {
-	res := new(responsev1.ListResourcesResponse_Node)
+func evaluateCondition(condition *runtimev1.Condition, input *requestv1.ListResourcesRequest) (*enginev1.ListResourcesOutput_Node, error) {
+	res := new(enginev1.ListResourcesOutput_Node)
 	switch t := condition.Op.(type) {
 	case *runtimev1.Condition_Any:
-		operation := &responsev1.ListResourcesResponse_LogicalOperation{
-			Operator: responsev1.ListResourcesResponse_LogicalOperation_OR,
+		operation := &enginev1.ListResourcesOutput_LogicalOperation{
+			Operator: enginev1.ListResourcesOutput_LogicalOperation_OR,
 			Nodes:    nil,
 		}
-		res.Node = &responsev1.ListResourcesResponse_Node_LogicalOperation{
+		res.Node = &enginev1.ListResourcesOutput_Node_LogicalOperation{
             LogicalOperation: operation,
         }
 		for _, c	 := range t.Any.Expr {
@@ -111,11 +110,11 @@ func evaluateCondition(condition *runtimev1.Condition, input *requestv1.ListReso
             operation.Nodes = append(operation.Nodes, node)
         }
 	case *runtimev1.Condition_All:
-		operation := &responsev1.ListResourcesResponse_LogicalOperation{
-			Operator: responsev1.ListResourcesResponse_LogicalOperation_AND,
+		operation := &enginev1.ListResourcesOutput_LogicalOperation{
+			Operator: enginev1.ListResourcesOutput_LogicalOperation_AND,
 			Nodes:    nil,
 		}
-		res.Node = &responsev1.ListResourcesResponse_Node_LogicalOperation{LogicalOperation: operation}
+		res.Node = &enginev1.ListResourcesOutput_Node_LogicalOperation{LogicalOperation: operation}
 		for _, c := range t.All.Expr {
 			node, err := evaluateCondition(c, input)
 			if err != nil {
@@ -128,7 +127,7 @@ func evaluateCondition(condition *runtimev1.Condition, input *requestv1.ListReso
 		if err != nil {
 			return nil, fmt.Errorf("error evaluating condition %q: %v", t.Expr.Original, err)
 		}
-		res.Node = &responsev1.ListResourcesResponse_Node_Expression{Expression: residual}
+		res.Node = &enginev1.ListResourcesOutput_Node_Expression{Expression: residual}
 	default:
 		return nil, fmt.Errorf("unsupported condition type %T", t)
 	}
@@ -226,7 +225,7 @@ type principalPolicyEvaluator struct {
 	*tracer
 }
 
-func (ppe *principalPolicyEvaluator) EvaluateListResources(ctx context.Context, request *requestv1.ListResourcesRequest) (*responsev1.ListResourcesResponse, error) {
+func (ppe *principalPolicyEvaluator) EvaluateListResources(ctx context.Context, request *requestv1.ListResourcesRequest) (*enginev1.ListResourcesOutput, error) {
 	panic("implement me")
 }
 
