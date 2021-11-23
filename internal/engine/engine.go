@@ -272,7 +272,7 @@ func (engine *Engine) List(ctx context.Context, input *requestv1.ListResourcesRe
 
 	list, err := policyEvaluator.EvaluateListResources(ctx, input)
 	if err != nil {
-	    return nil, err
+		return nil, err
 	}
 
 	response := &responsev1.ListResourcesResponse{
@@ -281,10 +281,14 @@ func (engine *Engine) List(ctx context.Context, input *requestv1.ListResourcesRe
 		ResourceKind:  input.ResourceKind,
 		PolicyVersion: input.PolicyVersion,
 	}
-
+	response.Filter = &responsev1.ListResourcesResponse_Condition_Operand{}
+	err = convert(list.Filter, response.Filter)
+	if err != nil {
+		return nil, err
+	}
 	response.FilterSql, err = String(list.Filter)
 	if err != nil {
-	    return nil, err
+		return nil, err
 	}
 
 	return response, nil
@@ -304,7 +308,7 @@ func String(expr *enginev1.ListResourcesOutput_Node) (source string, err error) 
 		for _, n := range node.LogicalOperation.Nodes {
 			source, err = String(n)
 			if err != nil {
-			    return "", err
+				return "", err
 			}
 			s = append(s, source)
 		}
@@ -314,8 +318,34 @@ func String(expr *enginev1.ListResourcesOutput_Node) (source string, err error) 
 
 	return "(" + source + ")", nil
 }
-func convert(list *enginev1.ListResourcesOutput) (*responsev1.ListResourcesResponse, error) {
-	panic("implement me")
+
+func convert(expr *enginev1.ListResourcesOutput_Node, ac *responsev1.ListResourcesResponse_Condition_Operand) error {
+	type (
+		Expression = responsev1.ListResourcesResponse_Expression_Operand_Expression
+		Co         = responsev1.ListResourcesResponse_Condition
+		CoOp       = responsev1.ListResourcesResponse_Condition_Operand
+		CoOpCo     = responsev1.ListResourcesResponse_Condition_Operand_Condition
+	)
+
+	switch node := expr.Node.(type) {
+	case *enginev1.ListResourcesOutput_Node_Expression:
+		expr := node.Expression
+	case *enginev1.ListResourcesOutput_Node_LogicalOperation:
+		c := &CoOpCo{
+			Condition: &Co{
+				Operator: responsev1.ListResourcesResponse_Condition_Operator(node.LogicalOperation.Operator),
+				Nodes:    make([]*CoOp, len(node.LogicalOperation.Nodes)),
+			},
+		}
+		for i, n := range node.LogicalOperation.Nodes {
+			c.Condition.Nodes[i] = &CoOp{}
+            err := convert(n, c.Condition.Nodes[i])
+            if err != nil {
+                return err
+            }
+        }
+		ac.Node = c
+	}
 }
 
 func (engine *Engine) evaluate(ctx context.Context, input *enginev1.CheckInput, checkOpts *checkOptions) (*enginev1.CheckOutput, error) {
