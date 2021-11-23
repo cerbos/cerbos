@@ -45,13 +45,11 @@ func New(store storage.Store) (*Manager, error) {
 		resourceProperties:  make(map[string]map[string]string),
 	}
 
-	err := mgr.ReadOrUpdateSchemaFromStore()
-	if err != nil {
-		var msg = fmt.Sprintf("schema file not found: %s", err)
+	if err := mgr.ReadOrUpdateSchemaFromStore(); err != nil {
 		if conf.Enforcement == EnforcementReject {
-			return nil, fmt.Errorf(msg)
+			return nil, fmt.Errorf("schema file not found: %w", err)
 		} else {
-			mgr.log.Warn(msg)
+			mgr.log.Warnf("schema file not found: %s", err)
 		}
 	}
 

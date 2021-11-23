@@ -1186,7 +1186,7 @@
           "items": {
             "$ref": "#/definitions/v1ValidationError"
           },
-          "description": "Array of validation errors"
+          "description": "List of validation errors"
         }
       }
     },

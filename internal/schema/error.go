@@ -82,12 +82,12 @@ func (e *ValidationErrorList) SchemaErrors() []*schemav1.ValidationError {
 	}
 
 	var schemaErrors = make([]*schemav1.ValidationError, 0, noOfErrors)
-	for _, validationError := range e.Errors {
-		schemaErrors = append(schemaErrors, &schemav1.ValidationError{
+	for i, validationError := range e.Errors {
+		schemaErrors[i] = &schemav1.ValidationError{
 			Path:    validationError.Path,
 			Message: validationError.Message,
 			Source:  validationError.Source,
-		})
+		}
 	}
 
 	return schemaErrors

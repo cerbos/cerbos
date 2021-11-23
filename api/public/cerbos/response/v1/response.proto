@@ -31,7 +31,7 @@ message CheckResourceSetResponse {
         ];
         repeated cerbos.schema.v1.ValidationError validation_errors = 2 [
             (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
-                description: "Array of validation errors"
+                description: "List of validation errors"
             }
         ];
     }
