@@ -9,6 +9,7 @@ option go_package = "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1;enginev
 option java_package = "dev.cerbos.api.v1.engine";
 option csharp_namespace = "Cerbos.Api.V1.Engine";
 
+import "google/api/expr/v1alpha1/checked.proto";
 import "google/api/field_behavior.proto";
 import "google/protobuf/struct.proto";
 import "protoc-gen-openapiv2/options/annotations.proto";
@@ -33,6 +34,29 @@ message CheckOutput {
     string resource_id = 2;
     map<string, ActionEffect> actions = 3;
     repeated string effective_derived_roles = 4;
+}
+
+message ListResourcesOutput {
+    string request_id = 1;
+    string action = 2;
+    string kind = 3;
+    string policy_version = 4;
+    message Node {
+        oneof node {
+            LogicalOperation logical_operation = 1;
+            google.api.expr.v1alpha1.CheckedExpr expression = 2;
+        }
+    }
+    message LogicalOperation {
+        enum Operator {
+            AND = 0;
+            OR = 1;
+        }
+        Operator operator = 1;
+        repeated Node nodes = 2;
+    }
+
+    Node filter = 5;
 }
 
 message Resource {

@@ -13,7 +13,7 @@ import "cerbos/audit/v1/audit.proto";
 import "cerbos/effect/v1/effect.proto";
 import "cerbos/policy/v1/policy.proto";
 import "google/protobuf/empty.proto";
-import "google/api/expr/v1alpha1/checked.proto";
+import "google/protobuf/struct.proto";
 import "protoc-gen-openapiv2/options/annotations.proto";
 
 message ListResourcesResponse {
@@ -37,7 +37,7 @@ message ListResourcesResponse {
         } 
     ];
 
-    string kind = 3 [
+    string resource_kind = 3 [
         (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
             description: "Resource kind."
             example: "\"album:object\""
@@ -51,83 +51,54 @@ message ListResourcesResponse {
             example: "\"default\""
         }
     ];
-    message Node {
-        oneof node {
-            LogicalOperation logical_operation = 1;
-            google.api.expr.v1alpha1.CheckedExpr expression = 2;
+    message Expression {
+        option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
+            json_schema: {
+                description: "CEL expression"
+            }
+        };
+        string operator = 1 [
+            (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+                description: "Operator",
+            }
+        ];
+        message Operand {
+            oneof node {
+                google.protobuf.Value value = 1;
+                Expression expression = 2;
+            }
         }
+        repeated Operand operands = 2;
     }
-    message LogicalOperation {
+    message Condition {
+        option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
+            json_schema: {
+                description: "List resources response for a set of resources."
+            }
+        };
         enum Operator {
             AND = 0;
             OR = 1;
         }
+        message Operand {
+            oneof node {
+                Condition condition = 1;
+                Expression expression = 2;
+            }
+        }
         Operator operator = 1;
-        repeated Node nodes = 2;
+        repeated Operand nodes = 2;
     }
-
-     Node filter = 5 [
+    Condition.Operand filter = 5 [
         (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
             description: "Filter",
         }
-    ];
-}
-
-message ResourcesAST {
-    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
-        json_schema: {
-            description: "List resources AST response."
+   ];
+    string filter_sql = 6 [
+        (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+            description: "Filter SQL",
         }
-    };
-    oneof node {
-        BinaryOperation binary_operation = 1;
-        LogicalOperation logical_operation = 2;
-    }
-
-    message BinaryOperation {
-        option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
-            json_schema: {
-                description: "Binary operation."
-            }
-        };
-        string op = 1 [
-            (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
-                description: "Binary operation."
-                example: "\"and\""
-                pattern: "^[[:alpha:]]+$"
-            }
-        ];
-        string field = 2 [
-            (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
-                description: "Resource field"
-                example: "\"R.attr.geo\""
-            }
-        ];
-        string value = 3 [
-            (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
-                description: "Resource field value"
-            }
-        ];
-    }
-    message LogicalOperation {
-        option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
-            json_schema: {
-                description: "Logical operation."
-            }
-        };
-        string op = 1 [
-            (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
-                description: "Logical operation."
-                example: "\"and\""
-                pattern: "^[[:alpha:]]+$"
-            }
-        ];
-        repeated ResourcesAST resources = 2 [
-            (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
-                description: "Resources."
-            }
-        ];
-    }
+    ];
 }
 
 message CheckResourceSetResponse {
