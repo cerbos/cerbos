@@ -117,7 +117,7 @@ func mkEngine(tb testing.TB, enableAuditLog bool) (*Engine, context.CancelFunc) 
 	store, err := disk.NewStore(ctx, &disk.Conf{Directory: dir})
 	require.NoError(tb, err)
 
-	schemaMgr, err := schema.New(store)
+	schemaMgr, err := schema.New(ctx, store)
 	require.NoError(tb, err)
 
 	compiler := compile.NewManager(ctx, store)

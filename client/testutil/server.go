@@ -271,7 +271,7 @@ func startServer(ctx context.Context, g *errgroup.Group, sopt *serverOpt) (err e
 	auditLog := audit.NewNopLog()
 	auxData := auxdata.NewWithoutVerification(ctx)
 
-	schemaMgr, err := schema.New(store)
+	schemaMgr, err := schema.New(ctx, store)
 	if err != nil {
 		return fmt.Errorf("failed to create schema manager: %w", err)
 	}

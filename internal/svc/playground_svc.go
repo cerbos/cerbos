@@ -105,7 +105,7 @@ func (cs *CerbosPlaygroundService) PlaygroundEvaluate(ctx context.Context, req *
 		return nil, status.Error(codes.Internal, "failed to create disk store from index")
 	}
 
-	schemaMgr, err := schema.New(storeFromIndex)
+	schemaMgr, err := schema.New(ctx, storeFromIndex)
 	if err != nil {
 		return nil, status.Error(codes.Internal, "failed to create schema manager")
 	}
@@ -160,7 +160,7 @@ func (cs *CerbosPlaygroundService) PlaygroundProxy(ctx context.Context, req *req
 		return nil, status.Error(codes.Internal, "failed to create disk store from index")
 	}
 
-	schemaMgr, err := schema.New(storeFromIndex)
+	schemaMgr, err := schema.New(ctx, storeFromIndex)
 	if err != nil {
 		return nil, status.Error(codes.Internal, "failed to create schema manager")
 	}

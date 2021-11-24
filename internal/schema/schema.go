@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/cerbos/cerbos/internal/observability/tracing"
 	"strings"
 	"sync"
 
@@ -31,7 +32,7 @@ type Manager struct {
 	resourceSchemas     map[string]*jsonschema.Schema
 }
 
-func New(store storage.Store) (*Manager, error) {
+func New(ctx context.Context, store storage.Store) (*Manager, error) {
 	conf := &Conf{}
 	if err := config.GetSection(conf); err != nil {
 		return nil, fmt.Errorf("failed to get config section %q: %w", confKey, err)
@@ -45,7 +46,7 @@ func New(store storage.Store) (*Manager, error) {
 		resourceProperties:  make(map[string]map[string]string),
 	}
 
-	if err := mgr.ReadOrUpdateSchemaFromStore(); err != nil {
+	if err := mgr.ReadOrUpdateSchemaFromStore(ctx); err != nil {
 		if conf.Enforcement == EnforcementReject {
 			return nil, fmt.Errorf("schema file not found: %w", err)
 		} else {
@@ -59,6 +60,8 @@ func New(store storage.Store) (*Manager, error) {
 }
 
 func (m *Manager) Validate(ctx context.Context, input *enginev1.CheckInput) error {
+	ctx, span := tracing.StartSpan(ctx, "schema.Validate")
+	defer span.End()
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 	if m.schema == nil {
@@ -260,10 +263,12 @@ func (m *Manager) walkSchemaProperties(path string, properties map[string]*schem
 	}
 }
 
-func (m *Manager) ReadOrUpdateSchemaFromStore() error {
+func (m *Manager) ReadOrUpdateSchemaFromStore(ctx context.Context) error {
+	ctx, span := tracing.StartSpan(ctx, "schema.ReadOrUpdateSchemaFromStore")
+	defer span.End()
 	m.mu.Lock()
 	defer m.mu.Unlock()
-	sch, err := m.store.GetSchema(context.TODO())
+	sch, err := m.store.GetSchema(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to retrieve schema from store: %w", err)
 	}
@@ -320,7 +325,7 @@ func (m *Manager) SubscriberID() string {
 func (m *Manager) OnStorageEvent(events ...storage.Event) {
 	for _, event := range events {
 		if event.Kind == storage.EventAddOrUpdateSchema {
-			err := m.ReadOrUpdateSchemaFromStore()
+			err := m.ReadOrUpdateSchemaFromStore(context.TODO())
 			if err != nil {
 				m.log.Warnw("Failed to read schema file from store", "event", event)
 				return

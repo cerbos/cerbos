@@ -96,7 +96,7 @@ func doRun(cmd *cobra.Command, args []string) error {
 		}
 
 		compiler := compile.NewManager(ctx, storeFromIndex)
-		schemaMgr, err := schema.New(storeFromIndex)
+		schemaMgr, err := schema.New(ctx, storeFromIndex)
 		if err != nil {
 			return fmt.Errorf("failed to create schema manager: %w", err)
 		}

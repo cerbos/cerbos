@@ -1,6 +1,10 @@
 include::ROOT:partial$attributes.adoc[]
 
-= Schema block
+= Schema
+
+Cerbos may use user provided schema definition to validate each request made.
+
+== Configuration
 
 `schema` block enables Cerbos to validate request attributes (request.principal.attr and request.resource.attr) by
 defining a schema file.
@@ -13,27 +17,101 @@ schema:
   ignoreExtraFields: false
 ----
 
-== enforcement
+=== enforcement
 
-Cerbos will utilize the schemas according to `enforcement` parameter. It has three possible values;
+Cerbos utilizes the schemas according to the `enforcement` parameter. It has three possible values;
 
     - none
     - warn
     - reject
 
-=== None
+==== None
 
 Ignores schemas and does nothing.
 
-=== Warn
+==== Warn
 
 Only displays warnings in the server logs.
 
-=== Reject
+==== Reject
 
 Responds to the requests with validation errors and also displays them in the server logs.
 
-== ignoreExtraFields
+=== ignoreExtraFields
 
 If there are extra fields present in the `.attr` sections of the principal or resource, Cerbos will complain. This
 parameter will ignore the extra fields.
+
+== Schema file
+
+Cerbos reads the schema from `<STORE>/schemas/schema.yaml`. The schema file may indicate one principal schema definition
+and one or more resource schema definition.
+
+The placeholders `<JSON_SCHEMA_DEFINITION>` in the following schema file represents a JSON Schema definition. Please,
+see https://json-schema.org/ for more details on what JSON Schema is.
+
+The schema file supports *JSON Schema Draft 04*.
+
+=== Schema file format
+
+.Schema file
+[source,yaml]
+----
+---
+apiVersion: "api.cerbos.dev/v1"
+description: |-
+ Schema definition file
+
+principalSchema: # define schema for request.principal.attr
+  <JSON_SCHEMA_DEFINITION>
+
+resourceSchema: # define schemas for request.resource.attr
+  some_resource_kind:
+    <JSON_SCHEMA_DEFINITION>
+
+  some_other_resource_kind:
+    <JSON_SCHEMA_DEFINITION>
+----
+
+=== Schema file example
+.Schema file
+[source,yaml]
+----
+---
+apiVersion: "api.cerbos.dev/v1"
+description: |-
+ Schema file
+
+principalSchema: # define schema for request.principal.attr
+  type: object
+  properties:
+    department:
+      type: string
+      description: "the department the principal working in (ex: marketing)"
+    geography:
+      type: string
+      description: "the geography the principal working from (ex: GB)"
+    team:
+      type: string
+      description: "the team the principal working for (ex: design)"
+
+resourceSchemas: # define schema for request.resource.attr
+  leave_request:
+    type: object
+    properties:
+        id:
+          type: integer
+          description: "resource id"
+        department:
+          type: string
+          description: "the department of the principal that is associated with this resource (ex: marketing)"
+        geography:
+          type: string
+          description: "the geographical location of the principal that is associated with this resource (ex: GB)"
+        team:
+          type: string
+          description: "the team of the principal that is associated with this resource (ex: design)"
+        owner:
+          type: string
+          description: "owner of the resource"
+----

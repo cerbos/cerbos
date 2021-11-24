@@ -344,7 +344,7 @@ func mkEngine(t *testing.T) *engine.Engine {
 	store, err := disk.NewStore(ctx, &disk.Conf{Directory: dir})
 	require.NoError(t, err)
 
-	schemaMgr, err := schema.New(store)
+	schemaMgr, err := schema.New(ctx, store)
 	require.NoError(t, err)
 
 	eng, err := engine.New(ctx, compile.NewManager(ctx, store), schemaMgr, audit.NewNopLog())

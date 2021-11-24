@@ -117,7 +117,7 @@ func Start(ctx context.Context, zpagesEnabled bool) error {
 	}
 
 	// create schema manager
-	schemaManager, err := internalSchema.New(store)
+	schemaManager, err := internalSchema.New(ctx, store)
 	if err != nil {
 		return fmt.Errorf("failed to create schema manager: %w", err)
 	}
