@@ -1,17 +1,22 @@
+// Copyright 2021 Zenauth Ltd.
+// SPDX-License-Identifier: Apache-2.0
+
 package engine
 
 import (
 	"fmt"
-	enginev1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
-	requestv1 "github.com/cerbos/cerbos/api/genpb/cerbos/request/v1"
-	runtimev1 "github.com/cerbos/cerbos/api/genpb/cerbos/runtime/v1"
-	"github.com/cerbos/cerbos/internal/conditions"
+	"testing"
+
 	"github.com/google/cel-go/cel"
 	"github.com/google/cel-go/parser"
 	"github.com/stretchr/testify/require"
 	expr "google.golang.org/genproto/googleapis/api/expr/v1alpha1"
 	"google.golang.org/protobuf/types/known/structpb"
-	"testing"
+
+	enginev1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
+	requestv1 "github.com/cerbos/cerbos/api/genpb/cerbos/request/v1"
+	runtimev1 "github.com/cerbos/cerbos/api/genpb/cerbos/runtime/v1"
+	"github.com/cerbos/cerbos/internal/conditions"
 )
 
 func Test_evaluateCondition(t *testing.T) {
@@ -78,17 +83,17 @@ func Test_evaluateCondition(t *testing.T) {
 			is.Equal(tt.wantExpression, unparse(t, expression))
 		})
 	}
-	for _, op := range []enginev1.ListResourcesOutput_LogicalOperation_Operator {enginev1.ListResourcesOutput_LogicalOperation_AND, enginev1.ListResourcesOutput_LogicalOperation_OR} {
+	for _, op := range []enginev1.ListResourcesOutput_LogicalOperation_Operator{enginev1.ListResourcesOutput_LogicalOperation_AND, enginev1.ListResourcesOutput_LogicalOperation_OR} {
 		attr := make(map[string]*structpb.Value)
 		conds := make([]*runtimev1.Condition, len(tests))
 
 		exprList := &runtimev1.Condition_ExprList{}
 		var c *runtimev1.Condition
 		if op == enginev1.ListResourcesOutput_LogicalOperation_AND {
-            c = &runtimev1.Condition{Op: &runtimev1.Condition_All{All: exprList}}
-        } else {
-            c = &runtimev1.Condition{Op: &runtimev1.Condition_Any{Any: exprList}}
-        }
+			c = &runtimev1.Condition{Op: &runtimev1.Condition_All{All: exprList}}
+		} else {
+			c = &runtimev1.Condition{Op: &runtimev1.Condition_Any{Any: exprList}}
+		}
 		t.Run(fmt.Sprintf("%s operation", enginev1.ListResourcesOutput_LogicalOperation_Operator_name[int32(op)]), func(t *testing.T) {
 			is := require.New(t)
 			for i := 0; i < len(tests); i++ {

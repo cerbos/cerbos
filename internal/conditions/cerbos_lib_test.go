@@ -11,14 +11,13 @@ import (
 	"testing"
 	"time"
 
-	enginev1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
 	"github.com/ghodss/yaml"
+	"github.com/google/cel-go/cel"
 	"github.com/google/cel-go/checker/decls"
 	"github.com/google/cel-go/ext"
-
-	"github.com/google/cel-go/cel"
 	"github.com/stretchr/testify/require"
 
+	enginev1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
 	"github.com/cerbos/cerbos/internal/conditions"
 )
 

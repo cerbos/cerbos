@@ -6,19 +6,19 @@ package engine
 import (
 	"bytes"
 	"context"
-	requestv1 "github.com/cerbos/cerbos/api/genpb/cerbos/request/v1"
-	"github.com/ghodss/yaml"
-	"google.golang.org/protobuf/types/known/structpb"
 	"log"
 	"testing"
 
+	"github.com/ghodss/yaml"
 	"github.com/google/go-cmp/cmp"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/testing/protocmp"
+	"google.golang.org/protobuf/types/known/structpb"
 
 	enginev1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
 	privatev1 "github.com/cerbos/cerbos/api/genpb/cerbos/private/v1"
+	requestv1 "github.com/cerbos/cerbos/api/genpb/cerbos/request/v1"
 	"github.com/cerbos/cerbos/internal/audit"
 	"github.com/cerbos/cerbos/internal/audit/local"
 	"github.com/cerbos/cerbos/internal/compile"
@@ -181,7 +181,7 @@ func TestList(t *testing.T) {
 	eng, cancelFunc := mkEngine(t, false)
 	defer cancelFunc()
 	tests := []struct {
-		name string
+		name  string
 		input *requestv1.ListResourcesRequest
 		want  string
 	}{

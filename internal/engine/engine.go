@@ -7,11 +7,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	requestv1 "github.com/cerbos/cerbos/api/genpb/cerbos/request/v1"
-	responsev1 "github.com/cerbos/cerbos/api/genpb/cerbos/response/v1"
-	"github.com/google/cel-go/parser"
-	exprpb "google.golang.org/genproto/googleapis/api/expr/v1alpha1"
-	"google.golang.org/protobuf/types/known/structpb"
 	"io"
 	"math/rand"
 	"net/http"
@@ -20,13 +15,18 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/google/cel-go/parser"
 	"go.opencensus.io/trace"
 	"go.uber.org/zap"
+	exprpb "google.golang.org/genproto/googleapis/api/expr/v1alpha1"
+	"google.golang.org/protobuf/types/known/structpb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	auditv1 "github.com/cerbos/cerbos/api/genpb/cerbos/audit/v1"
 	effectv1 "github.com/cerbos/cerbos/api/genpb/cerbos/effect/v1"
 	enginev1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
+	requestv1 "github.com/cerbos/cerbos/api/genpb/cerbos/request/v1"
+	responsev1 "github.com/cerbos/cerbos/api/genpb/cerbos/response/v1"
 	"github.com/cerbos/cerbos/internal/audit"
 	"github.com/cerbos/cerbos/internal/compile"
 	"github.com/cerbos/cerbos/internal/config"
@@ -165,6 +165,7 @@ func (engine *Engine) submitWork(ctx context.Context, work workIn) error {
 		}
 	}
 }
+
 func (engine *Engine) Check(ctx context.Context, inputs []*enginev1.CheckInput, opts ...CheckOpt) ([]*enginev1.CheckOutput, error) {
 	outputs, err := measureCheckLatency(len(inputs), func() ([]*enginev1.CheckOutput, error) {
 		ctx, span := tracing.StartSpan(ctx, "engine.Check")
@@ -304,6 +305,9 @@ func String(expr *enginev1.ListResourcesOutput_Node) (source string, err error) 
 	case *enginev1.ListResourcesOutput_Node_Expression:
 		expr := node.Expression
 		source, err = parser.Unparse(expr.Expr, expr.SourceInfo)
+		if err != nil {
+			return "", err
+		}
 	case *enginev1.ListResourcesOutput_Node_LogicalOperation:
 		op := enginev1.ListResourcesOutput_LogicalOperation_Operator_name[int32(node.LogicalOperation.Operator)]
 		s := make([]string, 0, len(node.LogicalOperation.Nodes))
@@ -323,11 +327,11 @@ func String(expr *enginev1.ListResourcesOutput_Node) (source string, err error) 
 
 func convert(expr *enginev1.ListResourcesOutput_Node, acc *responsev1.ListResourcesResponse_Condition_Operand) error {
 	type (
-		ExprOp     = responsev1.ListResourcesResponse_Expression_Operand
-		Co         = responsev1.ListResourcesResponse_Condition
-		CoOp       = responsev1.ListResourcesResponse_Condition_Operand
-		CoOpCo     = responsev1.ListResourcesResponse_Condition_Operand_Condition
-		CoOpEx     = responsev1.ListResourcesResponse_Condition_Operand_Expression
+		ExprOp = responsev1.ListResourcesResponse_Expression_Operand
+		Co     = responsev1.ListResourcesResponse_Condition
+		CoOp   = responsev1.ListResourcesResponse_Condition_Operand
+		CoOpCo = responsev1.ListResourcesResponse_Condition_Operand_Condition
+		CoOpEx = responsev1.ListResourcesResponse_Condition_Operand_Expression
 	)
 
 	switch node := expr.Node.(type) {
@@ -386,7 +390,7 @@ func buildExpr(expr *exprpb.Expr, acc *responsev1.ListResourcesResponse_Expressi
 	case *exprpb.Expr_ConstExpr:
 		value, err := visitConst(expr.ConstExpr)
 		if err != nil {
-		    return err
+			return err
 		}
 		acc.Node = &responsev1.ListResourcesResponse_Expression_Operand_Value{Value: value}
 	case *exprpb.Expr_IdentExpr:
@@ -398,38 +402,38 @@ func buildExpr(expr *exprpb.Expr, acc *responsev1.ListResourcesResponse_Expressi
 			switch et := e.SelectExpr.Operand.ExprKind.(type) {
 			case *exprpb.Expr_IdentExpr:
 				names = append(names, et.IdentExpr.Name)
-                e = nil
+				e = nil
 			case *exprpb.Expr_SelectExpr:
 				e = et
 			default:
 				return fmt.Errorf("unexpected expression type: %T", et)
 			}
-        }
+		}
 
 		n := len(names)
-		if n > 2 && names[n - 1] == "R" && names[n -2] == "attr" {
-			n = n - 2
+		if n > 2 && names[n-1] == "R" && names[n-2] == "attr" {
+			n -= 2
 		}
 		var sb strings.Builder
 		for i := n - 1; i >= 0; i-- {
-            sb.WriteString(names[i])
-            if i > 0 {
-                sb.WriteString(".")
-            }
-        }
+			sb.WriteString(names[i])
+			if i > 0 {
+				sb.WriteString(".")
+			}
+		}
 		acc.Node = &responsev1.ListResourcesResponse_Expression_Operand_Variable{Variable: sb.String()}
 	case *exprpb.Expr_ListExpr:
 		listValue := structpb.ListValue{Values: make([]*structpb.Value, len(expr.ListExpr.Elements))}
 		for i, element := range expr.ListExpr.Elements {
 			if e, ok := element.ExprKind.(*exprpb.Expr_ConstExpr); ok {
-                value, err := visitConst(e.ConstExpr)
-                if err != nil {
-                    return err
-                }
+				value, err := visitConst(e.ConstExpr)
+				if err != nil {
+					return err
+				}
 				listValue.Values[i] = value
-            } else {
-                return fmt.Errorf("unexpected expression type: %T", element.ExprKind)
-            }
+			} else {
+				return fmt.Errorf("unexpected expression type: %T", element.ExprKind)
+			}
 		}
 		acc.Node = &responsev1.ListResourcesResponse_Expression_Operand_Value{Value: structpb.NewListValue(&listValue)}
 	default:

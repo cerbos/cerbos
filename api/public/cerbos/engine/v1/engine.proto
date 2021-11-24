@@ -49,8 +49,9 @@ message ListResourcesOutput {
     }
     message LogicalOperation {
         enum Operator {
-            AND = 0;
-            OR = 1;
+            OPERATOR_UNSPECIFIED = 0;
+            OPERATOR_AND = 1;
+            OPERATOR_OR = 2;
         }
         Operator operator = 1;
         repeated Node nodes = 2;

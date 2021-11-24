@@ -7,17 +7,17 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	requestv1 "github.com/cerbos/cerbos/api/genpb/cerbos/request/v1"
-	"github.com/google/cel-go/common/types"
 	"strings"
 
 	"github.com/google/cel-go/cel"
+	"github.com/google/cel-go/common/types"
 	"go.uber.org/multierr"
 	exprpb "google.golang.org/genproto/googleapis/api/expr/v1alpha1"
 	"google.golang.org/protobuf/types/known/emptypb"
 
 	effectv1 "github.com/cerbos/cerbos/api/genpb/cerbos/effect/v1"
 	enginev1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
+	requestv1 "github.com/cerbos/cerbos/api/genpb/cerbos/request/v1"
 	runtimev1 "github.com/cerbos/cerbos/api/genpb/cerbos/runtime/v1"
 	"github.com/cerbos/cerbos/internal/conditions"
 	"github.com/cerbos/cerbos/internal/namer"
@@ -78,13 +78,14 @@ func (rpe *resourcePolicyEvaluator) EvaluateListResources(_ context.Context, inp
 			}
 			for actionGlob := range rule.Actions {
 				matchedActions := globMatch(actionGlob, inputActions)
-				for _, _ = range matchedActions {
-					node, err := evaluateCondition(rule.Condition, input)
-					if err != nil {
-						return nil, err
-					}
-					result.Filter = node
+				if len(matchedActions) == 0 {
+					continue
 				}
+				node, err := evaluateCondition(rule.Condition, input)
+				if err != nil {
+					return nil, err
+				}
+				result.Filter = node
 			}
 		}
 	}
@@ -100,15 +101,15 @@ func evaluateCondition(condition *runtimev1.Condition, input *requestv1.ListReso
 			Nodes:    nil,
 		}
 		res.Node = &enginev1.ListResourcesOutput_Node_LogicalOperation{
-            LogicalOperation: operation,
-        }
-		for _, c	 := range t.Any.Expr {
-            node, err := evaluateCondition(c, input)
-            if err != nil {
-                return nil, err
-            }
-            operation.Nodes = append(operation.Nodes, node)
-        }
+			LogicalOperation: operation,
+		}
+		for _, c := range t.Any.Expr {
+			node, err := evaluateCondition(c, input)
+			if err != nil {
+				return nil, err
+			}
+			operation.Nodes = append(operation.Nodes, node)
+		}
 	case *runtimev1.Condition_All:
 		operation := &enginev1.ListResourcesOutput_LogicalOperation{
 			Operator: enginev1.ListResourcesOutput_LogicalOperation_AND,
@@ -125,7 +126,7 @@ func evaluateCondition(condition *runtimev1.Condition, input *requestv1.ListReso
 	case *runtimev1.Condition_Expr:
 		_, residual, err := evaluateCELExprPartially(t.Expr.Checked, input)
 		if err != nil {
-			return nil, fmt.Errorf("error evaluating condition %q: %v", t.Expr.Original, err)
+			return nil, fmt.Errorf("error evaluating condition %q: %w", t.Expr.Original, err)
 		}
 		res.Node = &enginev1.ListResourcesOutput_Node_Expression{Expression: residual}
 	default:
@@ -384,6 +385,7 @@ func evaluateBoolCELExpr(expr *exprpb.CheckedExpr, variables map[string]interfac
 
 	return boolVal, nil
 }
+
 func evaluateCELExprPartially(expr *exprpb.CheckedExpr, input *requestv1.ListResourcesRequest) (*bool, *exprpb.CheckedExpr, error) {
 	ast := cel.CheckedExprToAst(expr)
 	prg, err := conditions.StdEnv.Program(ast, cel.EvalOptions(cel.OptPartialEval, cel.OptTrackState))
@@ -411,15 +413,15 @@ func evaluateCELExprPartially(expr *exprpb.CheckedExpr, input *requestv1.ListRes
 	if err != nil {
 		return nil, nil, err
 	}
-	if types.IsBool(val) {
-		v := val.Value().(bool)
-		return &v, checkedExpr, nil
-	} else if types.IsUnknown(val) {
+	if types.IsUnknown(val) {
 		return nil, checkedExpr, nil
-	} else {
-		panic("Unexpected evaluation type")
 	}
+	if b, ok := val.Value().(bool); ok {
+		return &b, checkedExpr, nil
+	}
+	return nil, checkedExpr, fmt.Errorf("unexpected result type %T", val.Value())
 }
+
 func evaluateCELExpr(expr *exprpb.CheckedExpr, variables map[string]interface{}, input *enginev1.CheckInput) (interface{}, error) {
 	if expr == nil {
 		return nil, nil
