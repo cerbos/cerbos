@@ -32,7 +32,7 @@ message ListResourcesResponse {
 
     string action = 2 [
         (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = { 
-            description: "Request ID provided in the request."
+            description: "Action"
             example: "\"view:public\""
         } 
     ];

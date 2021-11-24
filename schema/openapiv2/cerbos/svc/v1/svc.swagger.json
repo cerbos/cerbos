@@ -1402,7 +1402,7 @@
         "action": {
           "type": "string",
           "example": "view:public",
-          "description": "Request ID provided in the request."
+          "description": "Action"
         },
         "resourceKind": {
           "type": "string",

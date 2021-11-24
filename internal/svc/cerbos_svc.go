@@ -41,8 +41,16 @@ func NewCerbosService(eng *engine.Engine, auxData *auxdata.AuxData) *CerbosServi
 	}
 }
 
-func (cs *CerbosService) ListResources(context.Context, *requestv1.ListResourcesRequest) (*responsev1.ListResourcesResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method ListResources not implemented")
+func (cs *CerbosService) ListResources(ctx context.Context, request *requestv1.ListResourcesRequest) (*responsev1.ListResourcesResponse, error) {
+	log := ctxzap.Extract(ctx)
+
+	response, err := cs.eng.List(logging.ToContext(ctx, log), request)
+	if err != nil {
+		log.Error("List resources request failed", zap.Error(err))
+		return nil, status.Errorf(codes.Internal, "List resources request failed")
+	}
+
+	return response, nil
 }
 
 func (cs *CerbosService) CheckResourceSet(ctx context.Context, req *requestv1.CheckResourceSetRequest) (*responsev1.CheckResourceSetResponse, error) {
