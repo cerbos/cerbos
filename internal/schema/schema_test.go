@@ -3,9 +3,15 @@ package schema
 import (
 	"bytes"
 	"encoding/base64"
+	"errors"
+	schemav1 "github.com/cerbos/cerbos/api/genpb/cerbos/schema/v1"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/types/known/structpb"
 	"testing"
+)
+
+const (
+	dummySchema = "LS0tCmFwaVZlcnNpb246ICJhcGkuY2VyYm9zLmRldi92MSIKZGVzY3JpcHRpb246IHwtCiBTY2hlbWEgZGVmaW5pdGlvbiBmaWxlCgpwcmluY2lwYWxTY2hlbWE6ICMgZGVmaW5lIHNjaGVtYSBmb3IgcmVxdWVzdC5wcmluY2lwYWwuYXR0cgogIHR5cGU6IG9iamVjdAogIHByb3BlcnRpZXM6CiAgICBwZXJtaXNzaW9uczoKICAgICAgdHlwZTogYXJyYXkKICAgICAgZGVzY3JpcHRpb246ICJwZXJtaXNzaW9ucyBkZWZpbmVkIGZvciB0aGlzIHVzZXIiCiAgICBlZGl0b3JfZm9yX2NhdGVnb3JpZXM6CiAgICAgIHR5cGU6IGFycmF5CiAgICBwZXJzb25hbERldGFpbHM6CiAgICAgIHR5cGU6IG9iamVjdAogICAgICBwcm9wZXJ0aWVzOgogICAgICAgIG5hbWU6CiAgICAgICAgICB0eXBlOiBzdHJpbmcKICAgICAgICBtYWlsOgogICAgICAgICAgdHlwZTogc3RyaW5nCgpyZXNvdXJjZVNjaGVtYXM6ICMgZGVmaW5lIHNjaGVtYSBmb3IgcmVxdWVzdC5yZXNvdXJjZS5hdHRyCiAgcmVzb3VyY2VfYmxvZzoKICAgIHR5cGU6IG9iamVjdAogICAgcHJvcGVydGllczoKICAgICAgY2F0ZWdvcmllczoKICAgICAgICB0eXBlOiBzdHJpbmcK"
 )
 
 func TestMethods(t *testing.T) {
@@ -107,6 +113,83 @@ func TestMethods(t *testing.T) {
 				t.Fail()
 			} else if eq && tc.wantErr {
 				t.Log("wanted map is equal to resulting map, but error expected")
+				t.Fail()
+			}
+		}
+	})
+
+	t.Run("schema.Manager.validateInput", func(t *testing.T) {
+		mgr := &Manager{
+			conf: &Conf{
+				IgnoreExtraFields: false,
+			},
+		}
+
+		var testCases = []struct {
+			name             string
+			schemaProperties map[string]string
+			inputProperties  map[string]*structpb.Value
+			want             map[string]string
+			wantErr          bool
+		}{
+			{
+				name: "Test 1",
+				inputProperties: map[string]*structpb.Value{
+					"somekey": {
+						Kind: &structpb.Value_StructValue{
+							StructValue: &structpb.Struct{
+								Fields: map[string]*structpb.Value{
+									"somekey1": {
+										Kind: &structpb.Value_StringValue{
+											StringValue: "somevalue1",
+										},
+									},
+									"somekey2": {
+										Kind: &structpb.Value_NumberValue{
+											NumberValue: 2,
+										},
+									},
+								},
+							},
+						},
+					},
+					"somekey3": {
+						Kind: &structpb.Value_BoolValue{
+							BoolValue: true,
+						},
+					},
+				},
+				schemaProperties: map[string]string{
+					"/somekey/somekey1": "/somekey/somekey1",
+					"/somekey/somekey2": "/somekey/somekey2",
+					"/somekey3":         "/somekey3",
+				},
+				want: map[string]string{
+					"a": "a",
+				},
+				wantErr: false,
+			},
+		}
+
+		for _, tc := range testCases {
+			err := mgr.validateInput(tc.inputProperties, tc.schemaProperties, schemav1.ValidationError_SOURCE_PRINCIPAL)
+
+			if err == nil {
+				continue
+			}
+
+			var validationErrorList *ValidationErrorList
+			ok := errors.As(err, &validationErrorList)
+			if !ok {
+				t.Log("failed to assert type for ValidationErrorList")
+				t.Fail()
+			}
+
+			if validationErrorList.Errors != nil && !tc.wantErr {
+				t.Log("wanted no error, but error occurred")
+				t.Fail()
+			} else if validationErrorList.Errors == nil && tc.wantErr {
+				t.Log("wanted error, but no error present")
 				t.Fail()
 			}
 		}

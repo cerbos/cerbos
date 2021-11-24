@@ -139,7 +139,7 @@ func (m *Manager) Validate(ctx context.Context, input *enginev1.CheckInput) erro
 }
 
 func (m *Manager) validateInput(inputProperties map[string]*structpb.Value, schemaProperties map[string]string,
-	errorType schemav1.ValidationError_Source) error {
+	source schemav1.ValidationError_Source) error {
 	if m.conf.IgnoreExtraFields {
 		return nil
 	}
@@ -154,7 +154,7 @@ func (m *Manager) validateInput(inputProperties map[string]*structpb.Value, sche
 			validationErrors = append(validationErrors, ValidationError{
 				Path:    property,
 				Message: "Unexpected field present in the attributes",
-				Source:  errorType,
+				Source:  source,
 			})
 		}
 	}
