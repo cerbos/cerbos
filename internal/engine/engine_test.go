@@ -7,7 +7,9 @@ import (
 	"bytes"
 	"context"
 	requestv1 "github.com/cerbos/cerbos/api/genpb/cerbos/request/v1"
+	"github.com/ghodss/yaml"
 	"google.golang.org/protobuf/types/known/structpb"
+	"log"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -232,6 +234,9 @@ func TestList(t *testing.T) {
 			is.NoError(err)
 			is.NotNil(list)
 			is.Equal(tt.want, list.FilterSql)
+			buf, err := yaml.Marshal(list.Filter)
+			is.NoError(err)
+			log.Print(string(buf))
 		})
 	}
 }

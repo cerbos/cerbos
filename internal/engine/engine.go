@@ -323,7 +323,6 @@ func String(expr *enginev1.ListResourcesOutput_Node) (source string, err error) 
 
 func convert(expr *enginev1.ListResourcesOutput_Node, acc *responsev1.ListResourcesResponse_Condition_Operand) error {
 	type (
-		Expression = responsev1.ListResourcesResponse_Expression
 		ExprOp     = responsev1.ListResourcesResponse_Expression_Operand
 		Co         = responsev1.ListResourcesResponse_Condition
 		CoOp       = responsev1.ListResourcesResponse_Condition_Operand
@@ -334,7 +333,7 @@ func convert(expr *enginev1.ListResourcesOutput_Node, acc *responsev1.ListResour
 	switch node := expr.Node.(type) {
 	case *enginev1.ListResourcesOutput_Node_Expression:
 		eop := new(ExprOp)
-		err := buildExpr(eop, node.Expression.Expr)
+		err := buildExpr(node.Expression.Expr, eop)
 		if err != nil {
 			return err
 		}
@@ -361,7 +360,7 @@ func convert(expr *enginev1.ListResourcesOutput_Node, acc *responsev1.ListResour
 	return nil
 }
 
-func buildExpr(e *responsev1.ListResourcesResponse_Expression_Operand, expr *exprpb.Expr) error {
+func buildExpr(expr *exprpb.Expr, acc *responsev1.ListResourcesResponse_Expression_Operand) error {
 	type (
 		Expr       = responsev1.ListResourcesResponse_Expression
 		ExprOp     = responsev1.ListResourcesResponse_Expression_Operand
@@ -370,7 +369,7 @@ func buildExpr(e *responsev1.ListResourcesResponse_Expression_Operand, expr *exp
 
 	switch expr := expr.ExprKind.(type) {
 	case *exprpb.Expr_CallExpr:
-		eoe := &ExprOpExpr{
+		eoe := ExprOpExpr{
 			Expression: &Expr{
 				Operator: expr.CallExpr.Function,
 				Operands: make([]*ExprOp, len(expr.CallExpr.Args)),
@@ -378,21 +377,50 @@ func buildExpr(e *responsev1.ListResourcesResponse_Expression_Operand, expr *exp
 		}
 		for i, arg := range expr.CallExpr.Args {
 			eoe.Expression.Operands[i] = &ExprOp{}
-			err := buildExpr(eoe.Expression.Operands[i], arg)
+			err := buildExpr(arg, eoe.Expression.Operands[i])
 			if err != nil {
 				return err
 			}
 		}
-		e.Node = eoe
+		acc.Node = &eoe
 	case *exprpb.Expr_ConstExpr:
 		value, err := visitConst(expr.ConstExpr)
 		if err != nil {
 		    return err
 		}
-		e.Node = &responsev1.ListResourcesResponse_Expression_Operand_Value{Value: value}
+		acc.Node = &responsev1.ListResourcesResponse_Expression_Operand_Value{Value: value}
 	case *exprpb.Expr_IdentExpr:
-		expr.IdentExpr.
+		acc.Node = &responsev1.ListResourcesResponse_Expression_Operand_Variable{Variable: expr.IdentExpr.Name}
 	case *exprpb.Expr_SelectExpr:
+		var names []string
+		for e := expr; e != nil; {
+			names = append(names, e.SelectExpr.Field)
+			switch et := e.SelectExpr.Operand.ExprKind.(type) {
+			case *exprpb.Expr_IdentExpr:
+				names = append(names, et.IdentExpr.Name)
+                e = nil
+			case *exprpb.Expr_SelectExpr:
+				e = et
+			default:
+				return fmt.Errorf("unexpected expression type: %T", et)
+			}
+        }
+		//sort.Reverse(sort.StringSlice(names))
+		acc.Node = &responsev1.ListResourcesResponse_Expression_Operand_Variable{Variable: strings.Join(names, ".")}
+	case *exprpb.Expr_ListExpr:
+		listValue := structpb.ListValue{Values: make([]*structpb.Value, len(expr.ListExpr.Elements))}
+		for i, element := range expr.ListExpr.Elements {
+			if e, ok := element.ExprKind.(*exprpb.Expr_ConstExpr); ok {
+                value, err := visitConst(e.ConstExpr)
+                if err != nil {
+                    return err
+                }
+				listValue.Values[i] = value
+            } else {
+                return fmt.Errorf("unexpected expression type: %T", element.ExprKind)
+            }
+		}
+		acc.Node = &responsev1.ListResourcesResponse_Expression_Operand_Value{Value: structpb.NewListValue(&listValue)}
 	default:
 		return fmt.Errorf("unsupported expression: %v", expr)
 	}

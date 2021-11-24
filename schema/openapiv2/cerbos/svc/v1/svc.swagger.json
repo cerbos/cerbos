@@ -744,6 +744,9 @@
         },
         "expression": {
           "$ref": "#/definitions/ListResourcesResponseExpression"
+        },
+        "variable": {
+          "type": "string"
         }
       }
     },

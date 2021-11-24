@@ -119,6 +119,20 @@ func (m *ListResourcesResponse_Expression_Operand_Expression) MarshalToSizedBuff
 	}
 	return len(dAtA) - i, nil
 }
+func (m *ListResourcesResponse_Expression_Operand_Variable) MarshalToVT(dAtA []byte) (int, error) {
+	size := m.SizeVT()
+	return m.MarshalToSizedBufferVT(dAtA[:size])
+}
+
+func (m *ListResourcesResponse_Expression_Operand_Variable) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	i -= len(m.Variable)
+	copy(dAtA[i:], m.Variable)
+	i = encodeVarint(dAtA, i, uint64(len(m.Variable)))
+	i--
+	dAtA[i] = 0x1a
+	return len(dAtA) - i, nil
+}
 func (m *ListResourcesResponse_Expression) MarshalVT() (dAtA []byte, err error) {
 	if m == nil {
 		return nil, nil
@@ -1600,6 +1614,16 @@ func (m *ListResourcesResponse_Expression_Operand_Expression) SizeVT() (n int) {
 	}
 	return n
 }
+func (m *ListResourcesResponse_Expression_Operand_Variable) SizeVT() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = len(m.Variable)
+	n += 1 + l + sov(uint64(l))
+	return n
+}
 func (m *ListResourcesResponse_Expression) SizeVT() (n int) {
 	if m == nil {
 		return 0
@@ -2374,6 +2398,38 @@ func (m *ListResourcesResponse_Expression_Operand) UnmarshalVT(dAtA []byte) erro
 				}
 				m.Node = &ListResourcesResponse_Expression_Operand_Expression{v}
 			}
+			iNdEx = postIndex
+		case 3:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Variable", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLength
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLength
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Node = &ListResourcesResponse_Expression_Operand_Variable{string(dAtA[iNdEx:postIndex])}
 			iNdEx = postIndex
 		default:
 			iNdEx = preIndex

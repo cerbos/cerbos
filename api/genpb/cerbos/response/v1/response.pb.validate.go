@@ -1221,6 +1221,9 @@ func (m *ListResourcesResponse_Expression_Operand) Validate() error {
 			}
 		}
 
+	case *ListResourcesResponse_Expression_Operand_Variable:
+		// no validation rules for Variable
+
 	}
 
 	return nil

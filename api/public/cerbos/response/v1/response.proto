@@ -66,6 +66,7 @@ message ListResourcesResponse {
             oneof node {
                 google.protobuf.Value value = 1;
                 Expression expression = 2;
+                string variable = 3;
             }
         }
         repeated Operand operands = 2;
