@@ -444,21 +444,21 @@ func buildExpr(expr *exprpb.Expr, acc *responsev1.ListResourcesResponse_Expressi
 }
 
 func visitConst(c *exprpb.Constant) (*structpb.Value, error) {
-	switch c.ConstantKind.(type) {
+	switch v := c.ConstantKind.(type) {
 	case *exprpb.Constant_BoolValue:
-		return structpb.NewValue(c.GetBoolValue())
+		return structpb.NewValue(v.BoolValue)
 	case *exprpb.Constant_BytesValue:
-		return structpb.NewValue(c.GetBytesValue())
+		return structpb.NewValue(v.BytesValue)
 	case *exprpb.Constant_DoubleValue:
-		return structpb.NewValue(c.GetDoubleValue())
+		return structpb.NewValue(v.DoubleValue)
 	case *exprpb.Constant_Int64Value:
-		return structpb.NewValue(c.GetInt64Value())
+		return structpb.NewValue(v.Int64Value)
 	case *exprpb.Constant_NullValue:
-		return structpb.NewValue(c.GetNullValue())
+		return structpb.NewValue(v.NullValue)
 	case *exprpb.Constant_StringValue:
-		return structpb.NewValue(c.GetStringValue())
+		return structpb.NewValue(v.StringValue)
 	case *exprpb.Constant_Uint64Value:
-		return structpb.NewValue(c.GetUint64Value())
+		return structpb.NewValue(v.Uint64Value)
 	default:
 		return nil, fmt.Errorf("unsupported constant: %v", c)
 	}
