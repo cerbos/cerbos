@@ -77,17 +77,13 @@ message ListResourcesResponse {
                 description: "List resources response for a set of resources."
             }
         };
-        enum Operator {
-            AND = 0;
-            OR = 1;
-        }
         message Operand {
             oneof node {
                 Condition condition = 1;
                 Expression expression = 2;
             }
         }
-        Operator operator = 1;
+        string operator = 1;
         repeated Operand nodes = 2;
     }
     Condition.Operand filter = 5 [

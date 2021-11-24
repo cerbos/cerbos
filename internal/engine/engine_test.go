@@ -230,11 +230,11 @@ func TestList(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			is := require.New(t)
-			list, err := eng.List(context.Background(), tt.input)
+			response, err := eng.List(context.Background(), tt.input)
 			is.NoError(err)
-			is.NotNil(list)
-			is.Equal(tt.want, list.FilterSql)
-			buf, err := yaml.Marshal(list.Filter)
+			is.NotNil(response)
+			is.Equal(tt.want, response.FilterSql)
+			buf, err := yaml.Marshal(response)
 			is.NoError(err)
 			log.Print(string(buf))
 		})

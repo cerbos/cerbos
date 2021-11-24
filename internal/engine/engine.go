@@ -343,7 +343,7 @@ func convert(expr *enginev1.ListResourcesOutput_Node, acc *responsev1.ListResour
 	case *enginev1.ListResourcesOutput_Node_LogicalOperation:
 		c := &CoOpCo{
 			Condition: &Co{
-				Operator: responsev1.ListResourcesResponse_Condition_Operator(node.LogicalOperation.Operator),
+				Operator: enginev1.ListResourcesOutput_LogicalOperation_Operator_name[int32(node.LogicalOperation.Operator)],
 				Nodes:    make([]*CoOp, len(node.LogicalOperation.Nodes)),
 			},
 		}
@@ -405,8 +405,19 @@ func buildExpr(expr *exprpb.Expr, acc *responsev1.ListResourcesResponse_Expressi
 				return fmt.Errorf("unexpected expression type: %T", et)
 			}
         }
-		//sort.Reverse(sort.StringSlice(names))
-		acc.Node = &responsev1.ListResourcesResponse_Expression_Operand_Variable{Variable: strings.Join(names, ".")}
+
+		n := len(names)
+		if n > 2 && names[n - 1] == "R" && names[n -2] == "attr" {
+			n = n - 2
+		}
+		var sb strings.Builder
+		for i := n - 1; i >= 0; i-- {
+            sb.WriteString(names[i])
+            if i > 0 {
+                sb.WriteString(".")
+            }
+        }
+		acc.Node = &responsev1.ListResourcesResponse_Expression_Operand_Variable{Variable: sb.String()}
 	case *exprpb.Expr_ListExpr:
 		listValue := structpb.ListValue{Values: make([]*structpb.Value, len(expr.ListExpr.Elements))}
 		for i, element := range expr.ListExpr.Elements {

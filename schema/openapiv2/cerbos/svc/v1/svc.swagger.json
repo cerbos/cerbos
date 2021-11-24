@@ -712,14 +712,6 @@
         }
       }
     },
-    "ListResourcesResponseConditionOperator": {
-      "type": "string",
-      "enum": [
-        "AND",
-        "OR"
-      ],
-      "default": "AND"
-    },
     "ListResourcesResponseExpression": {
       "type": "object",
       "properties": {
@@ -1438,7 +1430,7 @@
       "type": "object",
       "properties": {
         "operator": {
-          "$ref": "#/definitions/ListResourcesResponseConditionOperator"
+          "type": "string"
         },
         "nodes": {
           "type": "array",
