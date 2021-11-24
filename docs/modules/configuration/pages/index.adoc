@@ -161,6 +161,10 @@ audit: # Optional
       maxBatchSize: 32
       flushInterval: 1s
       gcInterval: 60s
+
+schema: # Optional
+  enforcement: reject # level of the validations (none, warn, reject)
+  ignoreExtraFields: false # allows extra fields to be accepted
 ----
 
 

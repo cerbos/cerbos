@@ -1,0 +1,39 @@
+include::ROOT:partial$attributes.adoc[]
+
+= Schema block
+
+`schema` block enables Cerbos to validate request attributes (request.principal.attr and request.resource.attr) by
+defining a schema file.
+
+.Schema section
+[source,yaml]
+----
+schema:
+  enforcement: reject
+  ignoreExtraFields: false
+----
+
+== enforcement
+
+Cerbos will utilize the schemas according to `enforcement` parameter. It has three possible values;
+
+    - none
+    - warn
+    - reject
+
+=== None
+
+Ignores schemas and does nothing.
+
+=== Warn
+
+Only displays warnings in the server logs.
+
+=== Reject
+
+Responds to the requests with validation errors and also displays them in the server logs.
+
+== ignoreExtraFields
+
+If there are extra fields present in the `.attr` sections of the principal or resource, Cerbos will complain. This
+parameter will ignore the extra fields.
