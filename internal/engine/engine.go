@@ -319,7 +319,7 @@ func String(expr *enginev1.ListResourcesOutput_Node) (source string, err error) 
 			s = append(s, source)
 		}
 
-		source = strings.Join(s, " "+op+" ")
+		source = strings.Join(s, " "+strings.TrimPrefix(op, "OPERATOR_")+" ")
 	}
 
 	return "(" + source + ")", nil

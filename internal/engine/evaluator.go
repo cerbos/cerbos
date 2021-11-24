@@ -97,7 +97,7 @@ func evaluateCondition(condition *runtimev1.Condition, input *requestv1.ListReso
 	switch t := condition.Op.(type) {
 	case *runtimev1.Condition_Any:
 		operation := &enginev1.ListResourcesOutput_LogicalOperation{
-			Operator: enginev1.ListResourcesOutput_LogicalOperation_OR,
+			Operator: enginev1.ListResourcesOutput_LogicalOperation_OPERATOR_OR,
 			Nodes:    nil,
 		}
 		res.Node = &enginev1.ListResourcesOutput_Node_LogicalOperation{
@@ -112,7 +112,7 @@ func evaluateCondition(condition *runtimev1.Condition, input *requestv1.ListReso
 		}
 	case *runtimev1.Condition_All:
 		operation := &enginev1.ListResourcesOutput_LogicalOperation{
-			Operator: enginev1.ListResourcesOutput_LogicalOperation_AND,
+			Operator: enginev1.ListResourcesOutput_LogicalOperation_OPERATOR_AND,
 			Nodes:    nil,
 		}
 		res.Node = &enginev1.ListResourcesOutput_Node_LogicalOperation{LogicalOperation: operation}

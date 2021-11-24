@@ -83,13 +83,13 @@ func Test_evaluateCondition(t *testing.T) {
 			is.Equal(tt.wantExpression, unparse(t, expression))
 		})
 	}
-	for _, op := range []enginev1.ListResourcesOutput_LogicalOperation_Operator{enginev1.ListResourcesOutput_LogicalOperation_AND, enginev1.ListResourcesOutput_LogicalOperation_OR} {
+	for _, op := range []enginev1.ListResourcesOutput_LogicalOperation_Operator{enginev1.ListResourcesOutput_LogicalOperation_OPERATOR_AND, enginev1.ListResourcesOutput_LogicalOperation_OPERATOR_OR} {
 		attr := make(map[string]*structpb.Value)
 		conds := make([]*runtimev1.Condition, len(tests))
 
 		exprList := &runtimev1.Condition_ExprList{}
 		var c *runtimev1.Condition
-		if op == enginev1.ListResourcesOutput_LogicalOperation_AND {
+		if op == enginev1.ListResourcesOutput_LogicalOperation_OPERATOR_AND {
 			c = &runtimev1.Condition{Op: &runtimev1.Condition_All{All: exprList}}
 		} else {
 			c = &runtimev1.Condition{Op: &runtimev1.Condition_Any{Any: exprList}}
