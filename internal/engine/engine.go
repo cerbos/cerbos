@@ -10,6 +10,8 @@ import (
 	requestv1 "github.com/cerbos/cerbos/api/genpb/cerbos/request/v1"
 	responsev1 "github.com/cerbos/cerbos/api/genpb/cerbos/response/v1"
 	"github.com/google/cel-go/parser"
+	exprpb "google.golang.org/genproto/googleapis/api/expr/v1alpha1"
+	"google.golang.org/protobuf/types/known/structpb"
 	"io"
 	"math/rand"
 	"net/http"
@@ -319,17 +321,26 @@ func String(expr *enginev1.ListResourcesOutput_Node) (source string, err error) 
 	return "(" + source + ")", nil
 }
 
-func convert(expr *enginev1.ListResourcesOutput_Node, ac *responsev1.ListResourcesResponse_Condition_Operand) error {
+func convert(expr *enginev1.ListResourcesOutput_Node, acc *responsev1.ListResourcesResponse_Condition_Operand) error {
 	type (
-		Expression = responsev1.ListResourcesResponse_Expression_Operand_Expression
+		Expression = responsev1.ListResourcesResponse_Expression
+		ExprOp     = responsev1.ListResourcesResponse_Expression_Operand
 		Co         = responsev1.ListResourcesResponse_Condition
 		CoOp       = responsev1.ListResourcesResponse_Condition_Operand
 		CoOpCo     = responsev1.ListResourcesResponse_Condition_Operand_Condition
+		CoOpEx     = responsev1.ListResourcesResponse_Condition_Operand_Expression
 	)
 
 	switch node := expr.Node.(type) {
 	case *enginev1.ListResourcesOutput_Node_Expression:
-		expr := node.Expression
+		eop := new(ExprOp)
+		err := buildExpr(eop, node.Expression.Expr)
+		if err != nil {
+			return err
+		}
+		acc.Node = &CoOpEx{
+			Expression: eop.GetExpression(),
+		}
 	case *enginev1.ListResourcesOutput_Node_LogicalOperation:
 		c := &CoOpCo{
 			Condition: &Co{
@@ -339,12 +350,74 @@ func convert(expr *enginev1.ListResourcesOutput_Node, ac *responsev1.ListResourc
 		}
 		for i, n := range node.LogicalOperation.Nodes {
 			c.Condition.Nodes[i] = &CoOp{}
-            err := convert(n, c.Condition.Nodes[i])
-            if err != nil {
-                return err
-            }
-        }
-		ac.Node = c
+			err := convert(n, c.Condition.Nodes[i])
+			if err != nil {
+				return err
+			}
+		}
+		acc.Node = c
+	}
+
+	return nil
+}
+
+func buildExpr(e *responsev1.ListResourcesResponse_Expression_Operand, expr *exprpb.Expr) error {
+	type (
+		Expr       = responsev1.ListResourcesResponse_Expression
+		ExprOp     = responsev1.ListResourcesResponse_Expression_Operand
+		ExprOpExpr = responsev1.ListResourcesResponse_Expression_Operand_Expression
+	)
+
+	switch expr := expr.ExprKind.(type) {
+	case *exprpb.Expr_CallExpr:
+		eoe := &ExprOpExpr{
+			Expression: &Expr{
+				Operator: expr.CallExpr.Function,
+				Operands: make([]*ExprOp, len(expr.CallExpr.Args)),
+			},
+		}
+		for i, arg := range expr.CallExpr.Args {
+			eoe.Expression.Operands[i] = &ExprOp{}
+			err := buildExpr(eoe.Expression.Operands[i], arg)
+			if err != nil {
+				return err
+			}
+		}
+		e.Node = eoe
+	case *exprpb.Expr_ConstExpr:
+		value, err := visitConst(expr.ConstExpr)
+		if err != nil {
+		    return err
+		}
+		e.Node = &responsev1.ListResourcesResponse_Expression_Operand_Value{Value: value}
+	case *exprpb.Expr_IdentExpr:
+		expr.IdentExpr.
+	case *exprpb.Expr_SelectExpr:
+	default:
+		return fmt.Errorf("unsupported expression: %v", expr)
+	}
+
+	return nil
+}
+
+func visitConst(c *exprpb.Constant) (*structpb.Value, error) {
+	switch c.ConstantKind.(type) {
+	case *exprpb.Constant_BoolValue:
+		return structpb.NewValue(c.GetBoolValue())
+	case *exprpb.Constant_BytesValue:
+		return structpb.NewValue(c.GetBytesValue())
+	case *exprpb.Constant_DoubleValue:
+		return structpb.NewValue(c.GetDoubleValue())
+	case *exprpb.Constant_Int64Value:
+		return structpb.NewValue(c.GetInt64Value())
+	case *exprpb.Constant_NullValue:
+		return structpb.NewValue(c.GetNullValue())
+	case *exprpb.Constant_StringValue:
+		return structpb.NewValue(c.GetStringValue())
+	case *exprpb.Constant_Uint64Value:
+		return structpb.NewValue(c.GetUint64Value())
+	default:
+		return nil, fmt.Errorf("unsupported constant: %v", c)
 	}
 }
 
