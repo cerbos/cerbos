@@ -2,17 +2,105 @@ package schema
 
 import (
 	"bytes"
+	"context"
 	"encoding/base64"
 	"errors"
+	enginev1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
 	schemav1 "github.com/cerbos/cerbos/api/genpb/cerbos/schema/v1"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/types/known/structpb"
 	"testing"
 )
 
-const (
-	dummySchema = "LS0tCmFwaVZlcnNpb246ICJhcGkuY2VyYm9zLmRldi92MSIKZGVzY3JpcHRpb246IHwtCiBTY2hlbWEgZGVmaW5pdGlvbiBmaWxlCgpwcmluY2lwYWxTY2hlbWE6ICMgZGVmaW5lIHNjaGVtYSBmb3IgcmVxdWVzdC5wcmluY2lwYWwuYXR0cgogIHR5cGU6IG9iamVjdAogIHByb3BlcnRpZXM6CiAgICBwZXJtaXNzaW9uczoKICAgICAgdHlwZTogYXJyYXkKICAgICAgZGVzY3JpcHRpb246ICJwZXJtaXNzaW9ucyBkZWZpbmVkIGZvciB0aGlzIHVzZXIiCiAgICBlZGl0b3JfZm9yX2NhdGVnb3JpZXM6CiAgICAgIHR5cGU6IGFycmF5CiAgICBwZXJzb25hbERldGFpbHM6CiAgICAgIHR5cGU6IG9iamVjdAogICAgICBwcm9wZXJ0aWVzOgogICAgICAgIG5hbWU6CiAgICAgICAgICB0eXBlOiBzdHJpbmcKICAgICAgICBtYWlsOgogICAgICAgICAgdHlwZTogc3RyaW5nCgpyZXNvdXJjZVNjaGVtYXM6ICMgZGVmaW5lIHNjaGVtYSBmb3IgcmVxdWVzdC5yZXNvdXJjZS5hdHRyCiAgcmVzb3VyY2VfYmxvZzoKICAgIHR5cGU6IG9iamVjdAogICAgcHJvcGVydGllczoKICAgICAgY2F0ZWdvcmllczoKICAgICAgICB0eXBlOiBzdHJpbmcK"
-)
+func TestValidate(t *testing.T) {
+	t.Run("schema.Manager.Validate", func(t *testing.T) {
+		var testCases = []struct {
+			name    string
+			input   enginev1.CheckInput
+			wantErr bool
+		}{
+			{
+				name: "Test 1",
+				input: enginev1.CheckInput{
+					Principal: &enginev1.Principal{
+						Attr: map[string]*structpb.Value{
+							"department": {
+								Kind: &structpb.Value_StringValue{
+									StringValue: "marketing",
+								},
+							},
+							"geography": {
+								Kind: &structpb.Value_StringValue{
+									StringValue: "GB",
+								},
+							},
+							"team": {
+								Kind: &structpb.Value_StringValue{
+									StringValue: "design",
+								},
+							},
+						},
+					},
+					Resource: &enginev1.Resource{
+						Attr: map[string]*structpb.Value{
+							"department": {
+								Kind: &structpb.Value_StringValue{
+									StringValue: "marketing",
+								},
+							},
+							"geography": {
+								Kind: &structpb.Value_StringValue{
+									StringValue: "GB",
+								},
+							},
+							"team": {
+								Kind: &structpb.Value_StringValue{
+									StringValue: "design",
+								},
+							},
+							"owner": {
+								Kind: &structpb.Value_StringValue{
+									StringValue: "harry",
+								},
+							},
+						},
+					},
+					Actions: []string{"view"},
+				},
+				wantErr: false,
+			},
+		}
+
+		var mgr = &Manager{
+			conf: &Conf{
+				IgnoreExtraFields: false,
+			},
+		}
+
+		for _, tc := range testCases {
+			err := mgr.Validate(context.TODO(), &tc.input)
+
+			if err == nil {
+				continue
+			}
+
+			var validationErrorList *ValidationErrorList
+			ok := errors.As(err, &validationErrorList)
+			if !ok {
+				t.Log("failed to assert type for ValidationErrorList")
+				t.Fail()
+			}
+
+			if validationErrorList.Errors != nil && !tc.wantErr {
+				t.Log("wanted no error, but error occurred")
+				t.Fail()
+			} else if validationErrorList.Errors == nil && tc.wantErr {
+				t.Log("wanted error, but no error present")
+				t.Fail()
+			}
+		}
+	})
+}
 
 func TestMethods(t *testing.T) {
 	t.Run("schema.Manager.walkInputProperties", func(t *testing.T) {
@@ -163,9 +251,6 @@ func TestMethods(t *testing.T) {
 					"/somekey/somekey1": "/somekey/somekey1",
 					"/somekey/somekey2": "/somekey/somekey2",
 					"/somekey3":         "/somekey3",
-				},
-				want: map[string]string{
-					"a": "a",
 				},
 				wantErr: false,
 			},
