@@ -131,7 +131,7 @@ func LoadTestCases(tb testing.TB, subDir string) []Case {
 
 		testCases[i].Input = output.Bytes()
 
-		//TODO: is this still in use?
+		// TODO: is this still in use?
 		wantedFiles, err := filepath.Glob(fmt.Sprintf("%s.*", entry))
 		require.NoError(tb, err)
 
