@@ -22,11 +22,11 @@ principalSchema: # define schema for request.principal.attr
       type: object
       properties:
         brands:
-          type: string
+          type: array
         classes:
-          type: string
+          type: array
         regions:
-          type: string
+          type: array
 
 
 resourceSchemas: # define schema for request.resource.attr
