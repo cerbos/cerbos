@@ -28,7 +28,7 @@ import (
 var dummy int
 
 func TestCheck(t *testing.T) {
-	eng, cancelFunc := mkEngine(t, false)
+	eng, cancelFunc := mkEngine(t, false, true)
 	defer cancelFunc()
 
 	testCases := test.LoadTestCases(t, "engine")
@@ -36,8 +36,15 @@ func TestCheck(t *testing.T) {
 	for _, tcase := range testCases {
 		tcase := tcase
 		t.Run(tcase.Name, func(t *testing.T) {
+			defer eng.schemaMgr.ClearSchema()
+
 			tc := readTestCase(t, tcase.Input)
 			buf := new(bytes.Buffer)
+
+			if tc.Schema != nil {
+				err := eng.schemaMgr.UpdateSchema(bytes.NewReader(tc.Schema))
+				require.NoError(t, err)
+			}
 
 			haveOutputs, err := eng.Check(context.Background(), tc.Inputs, WithWriterTraceSink(buf))
 			t.Logf("TRACE =>\n%s", buf.String())
@@ -68,14 +75,14 @@ func BenchmarkCheck(b *testing.B) {
 	testCases := test.LoadTestCases(b, "engine")
 
 	b.Run("noop_decision_logger", func(b *testing.B) {
-		eng, cancelFunc := mkEngine(b, false)
+		eng, cancelFunc := mkEngine(b, false, false)
 		defer cancelFunc()
 
 		runBenchmarks(b, eng, testCases)
 	})
 
 	b.Run("local_decision_logger", func(b *testing.B) {
-		eng, cancelFunc := mkEngine(b, true)
+		eng, cancelFunc := mkEngine(b, true, false)
 		defer cancelFunc()
 
 		runBenchmarks(b, eng, testCases)
@@ -107,7 +114,7 @@ func runBenchmarks(b *testing.B, eng *Engine, testCases []test.Case) {
 	}
 }
 
-func mkEngine(tb testing.TB, enableAuditLog bool) (*Engine, context.CancelFunc) {
+func mkEngine(tb testing.TB, enableAuditLog, enableSchemaValidation bool) (*Engine, context.CancelFunc) {
 	tb.Helper()
 
 	dir := test.PathToDir(tb, "store")
@@ -117,7 +124,19 @@ func mkEngine(tb testing.TB, enableAuditLog bool) (*Engine, context.CancelFunc) 
 	store, err := disk.NewStore(ctx, &disk.Conf{Directory: dir})
 	require.NoError(tb, err)
 
-	schemaMgr, err := schema.New(ctx, store)
+	ignoreUnknownFields := true
+	enforcement := schema.EnforcementNone
+	if enableSchemaValidation {
+		ignoreUnknownFields = false
+		enforcement = schema.EnforcementReject
+	}
+
+	schemaMgr, err := schema.NewWithConf(ctx, store, &schema.Conf{
+		IgnoreUnknownFields:  ignoreUnknownFields,
+		IgnoreSchemaNotFound: true,
+		Enforcement:          enforcement,
+	})
+
 	require.NoError(tb, err)
 
 	compiler := compile.NewManager(ctx, store)

@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"github.com/cerbos/cerbos/internal/observability/tracing"
 	"google.golang.org/protobuf/encoding/protojson"
+	"io"
 	"strings"
 	"sync"
 
@@ -47,7 +48,28 @@ func New(ctx context.Context, store storage.Store) (*Manager, error) {
 		resourceProperties:  make(map[string]map[string]string),
 	}
 
-	if err := mgr.ReadOrUpdateSchemaFromStore(ctx); err != nil {
+	if err := mgr.UpdateSchemaFromStore(ctx); err != nil {
+		if conf.Enforcement == EnforcementReject {
+			return nil, fmt.Errorf("schema file not found: %w", err)
+		}
+		mgr.log.Warnw("schema file not found", "error", err)
+	}
+
+	store.Subscribe(mgr)
+
+	return mgr, nil
+}
+
+func NewWithConf(ctx context.Context, store storage.Store, conf *Conf) (*Manager, error) {
+	mgr := &Manager{
+		conf:                conf,
+		log:                 zap.S().Named("schema"),
+		store:               store,
+		principalProperties: make(map[string]string),
+		resourceProperties:  make(map[string]map[string]string),
+	}
+
+	if err := mgr.UpdateSchemaFromStore(ctx); err != nil {
 		if conf.Enforcement == EnforcementReject {
 			return nil, fmt.Errorf("schema file not found: %w", err)
 		}
@@ -263,13 +285,8 @@ func (m *Manager) walkSchemaProperties(path string, properties map[string]*schem
 	}
 }
 
-func (m *Manager) ReadOrUpdateSchemaFromStore(ctx context.Context) error {
-	sch, err := m.store.GetSchema(ctx)
-	if err != nil {
-		return fmt.Errorf("failed to retrieve schema from store: %w", err)
-	}
-
-	err = Validate(sch)
+func (m *Manager) updateSchema(sch *schemav1.Schema) error {
+	err := Validate(sch)
 	if err != nil {
 		return fmt.Errorf("failed to validate schema: %w", err)
 	}
@@ -319,6 +336,48 @@ func (m *Manager) ReadOrUpdateSchemaFromStore(ctx context.Context) error {
 	return nil
 }
 
+func (m *Manager) UpdateSchemaFromStore(ctx context.Context) error {
+	sch, err := m.store.GetSchema(ctx)
+	if err != nil {
+		if !m.conf.IgnoreSchemaNotFound {
+			return fmt.Errorf("failed to retrieve schema from store: %w", err)
+		} else {
+			return nil
+		}
+	}
+
+	err = m.updateSchema(sch)
+	if err != nil {
+		return fmt.Errorf("failed to update the schema using store: %w", err)
+	}
+
+	return nil
+}
+
+func (m *Manager) UpdateSchema(source io.Reader) error {
+	sch, err := ReadSchema(source)
+	if err != nil {
+		return fmt.Errorf("failed to read schema from source: %w", err)
+	}
+
+	err = m.updateSchema(sch)
+	if err != nil {
+		return fmt.Errorf("failed to update the schema: %w", err)
+	}
+
+	return nil
+}
+
+func (m *Manager) ClearSchema() {
+	m.mu.Lock()
+	m.schema = nil
+	m.principalProperties = nil
+	m.principalSchema = nil
+	m.resourceProperties = nil
+	m.resourceSchemas = nil
+	m.mu.Unlock()
+}
+
 func (m *Manager) SubscriberID() string {
 	return "schema.Manager"
 }
@@ -326,7 +385,7 @@ func (m *Manager) SubscriberID() string {
 func (m *Manager) OnStorageEvent(events ...storage.Event) {
 	for _, event := range events {
 		if event.Kind == storage.EventAddOrUpdateSchema {
-			err := m.ReadOrUpdateSchemaFromStore(context.TODO())
+			err := m.UpdateSchemaFromStore(context.TODO())
 			if err != nil {
 				m.log.Warnw("Failed to read schema file from store", "event", event)
 				return

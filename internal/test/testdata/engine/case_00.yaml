@@ -1,5 +1,6 @@
 ---
 description: "No metadata"
+schema: "{{ .Files.Get `_schemas/schema_01.yaml` | base64encode }}"
 inputs: [
   {
     "requestId": "test",
