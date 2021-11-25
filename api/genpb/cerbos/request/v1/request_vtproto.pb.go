@@ -24,7 +24,7 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
-func (m *ListResourcesRequest) MarshalVT() (dAtA []byte, err error) {
+func (m *ResourcesQueryPlanRequest) MarshalVT() (dAtA []byte, err error) {
 	if m == nil {
 		return nil, nil
 	}
@@ -37,12 +37,12 @@ func (m *ListResourcesRequest) MarshalVT() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *ListResourcesRequest) MarshalToVT(dAtA []byte) (int, error) {
+func (m *ResourcesQueryPlanRequest) MarshalToVT(dAtA []byte) (int, error) {
 	size := m.SizeVT()
 	return m.MarshalToSizedBufferVT(dAtA[:size])
 }
 
-func (m *ListResourcesRequest) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
+func (m *ResourcesQueryPlanRequest) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 	if m == nil {
 		return 0, nil
 	}
@@ -1362,7 +1362,7 @@ func encodeVarint(dAtA []byte, offset int, v uint64) int {
 	dAtA[offset] = uint8(v)
 	return base
 }
-func (m *ListResourcesRequest) SizeVT() (n int) {
+func (m *ResourcesQueryPlanRequest) SizeVT() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -1958,7 +1958,7 @@ func sov(x uint64) (n int) {
 func soz(x uint64) (n int) {
 	return sov(uint64((x << 1) ^ uint64((int64(x) >> 63))))
 }
-func (m *ListResourcesRequest) UnmarshalVT(dAtA []byte) error {
+func (m *ResourcesQueryPlanRequest) UnmarshalVT(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -1981,10 +1981,10 @@ func (m *ListResourcesRequest) UnmarshalVT(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: ListResourcesRequest: wiretype end group for non-group")
+			return fmt.Errorf("proto: ResourcesQueryPlanRequest: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: ListResourcesRequest: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: ResourcesQueryPlanRequest: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:

@@ -355,40 +355,6 @@
         ]
       }
     },
-    "/api/list_resources": {
-      "post": {
-        "summary": "List resources",
-        "description": "List resources",
-        "operationId": "CerbosService_ListResources",
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "$ref": "#/definitions/v1ListResourcesResponse"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/rpcStatus"
-            }
-          }
-        },
-        "parameters": [
-          {
-            "name": "body",
-            "in": "body",
-            "required": true,
-            "schema": {
-              "$ref": "#/definitions/v1ListResourcesRequest"
-            }
-          }
-        ],
-        "tags": [
-          "CerbosService"
-        ]
-      }
-    },
     "/api/playground/evaluate": {
       "post": {
         "operationId": "CerbosPlaygroundService_PlaygroundEvaluate",
@@ -482,6 +448,40 @@
         ],
         "tags": [
           "CerbosPlaygroundService"
+        ]
+      }
+    },
+    "/api/resources_query_plan": {
+      "post": {
+        "summary": "Resources query plan",
+        "description": "Resources query plan",
+        "operationId": "CerbosService_ResourcesQueryPlan",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1ResourcesQueryPlanResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/v1ResourcesQueryPlanRequest"
+            }
+          }
+        ],
+        "tags": [
+          "CerbosService"
         ]
       }
     },
@@ -701,47 +701,6 @@
       },
       "description": "Sort options"
     },
-    "ListResourcesResponseConditionOperand": {
-      "type": "object",
-      "properties": {
-        "condition": {
-          "$ref": "#/definitions/v1ListResourcesResponseCondition"
-        },
-        "expression": {
-          "$ref": "#/definitions/ListResourcesResponseExpression"
-        }
-      }
-    },
-    "ListResourcesResponseExpression": {
-      "type": "object",
-      "properties": {
-        "operator": {
-          "type": "string",
-          "description": "Operator"
-        },
-        "operands": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/ListResourcesResponseExpressionOperand"
-          }
-        }
-      },
-      "description": "CEL expression"
-    },
-    "ListResourcesResponseExpressionOperand": {
-      "type": "object",
-      "properties": {
-        "value": {
-          "type": "object"
-        },
-        "expression": {
-          "$ref": "#/definitions/ListResourcesResponseExpression"
-        },
-        "variable": {
-          "type": "string"
-        }
-      }
-    },
     "MatchExprList": {
       "type": "object",
       "properties": {
@@ -850,6 +809,47 @@
           "$ref": "#/definitions/v1Effect"
         },
         "name": {
+          "type": "string"
+        }
+      }
+    },
+    "ResourcesQueryPlanResponseConditionOperand": {
+      "type": "object",
+      "properties": {
+        "condition": {
+          "$ref": "#/definitions/v1ResourcesQueryPlanResponseCondition"
+        },
+        "expression": {
+          "$ref": "#/definitions/ResourcesQueryPlanResponseExpression"
+        }
+      }
+    },
+    "ResourcesQueryPlanResponseExpression": {
+      "type": "object",
+      "properties": {
+        "operator": {
+          "type": "string",
+          "description": "Operator"
+        },
+        "operands": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ResourcesQueryPlanResponseExpressionOperand"
+          }
+        }
+      },
+      "description": "CEL expression"
+    },
+    "ResourcesQueryPlanResponseExpressionOperand": {
+      "type": "object",
+      "properties": {
+        "value": {
+          "type": "object"
+        },
+        "expression": {
+          "$ref": "#/definitions/ResourcesQueryPlanResponseExpression"
+        },
+        "variable": {
           "type": "string"
         }
       }
@@ -1346,100 +1346,6 @@
         }
       },
       "description": "List of policies stored in the Cerbos server"
-    },
-    "v1ListResourcesRequest": {
-      "type": "object",
-      "properties": {
-        "requestId": {
-          "type": "string",
-          "example": "c2db17b8-4f9f-4fb1-acfd-9162a02be42b",
-          "description": "Optional application-specific ID useful for correlating logs for analysis."
-        },
-        "action": {
-          "type": "string",
-          "example": "view:public",
-          "description": "Action to be applied to each resource in the list.",
-          "required": [
-            "action"
-          ]
-        },
-        "principal": {
-          "$ref": "#/definitions/v1Principal"
-        },
-        "resourceKind": {
-          "type": "string",
-          "example": "album:object",
-          "description": "Resource kind.",
-          "pattern": "^[[:alpha:]][[:word:]\\@\\.\\-]*(\\:[[:alpha:]][[:word:]\\@\\.\\-]*)*$",
-          "required": [
-            "resource_kind"
-          ]
-        },
-        "policyVersion": {
-          "type": "string",
-          "example": "default",
-          "description": "The policy version to use to evaluate this request. If not specified, will default to the server-configured default version.",
-          "pattern": "^[[:word:]]*$"
-        },
-        "auxData": {
-          "$ref": "#/definitions/cerbosrequestv1AuxData"
-        }
-      },
-      "description": "PDP List Resources Request",
-      "required": [
-        "action",
-        "resourceKind"
-      ]
-    },
-    "v1ListResourcesResponse": {
-      "type": "object",
-      "properties": {
-        "requestId": {
-          "type": "string",
-          "example": "c2db17b8-4f9f-4fb1-acfd-9162a02be42b",
-          "description": "Request ID provided in the request."
-        },
-        "action": {
-          "type": "string",
-          "example": "view:public",
-          "description": "Action"
-        },
-        "resourceKind": {
-          "type": "string",
-          "example": "album:object",
-          "description": "Resource kind.",
-          "pattern": "^[[:alpha:]][[:word:]\\@\\.\\-]*(\\:[[:alpha:]][[:word:]\\@\\.\\-]*)*$"
-        },
-        "policyVersion": {
-          "type": "string",
-          "example": "default",
-          "description": "The policy version."
-        },
-        "filter": {
-          "$ref": "#/definitions/ListResourcesResponseConditionOperand",
-          "description": "Filter"
-        },
-        "filterSql": {
-          "type": "string",
-          "description": "Filter SQL"
-        }
-      },
-      "description": "List resources response for a set of resources."
-    },
-    "v1ListResourcesResponseCondition": {
-      "type": "object",
-      "properties": {
-        "operator": {
-          "type": "string"
-        },
-        "nodes": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/ListResourcesResponseConditionOperand"
-          }
-        }
-      },
-      "description": "List resources response for a set of resources."
     },
     "v1Match": {
       "type": "object",
@@ -1952,6 +1858,100 @@
         "kind",
         "instances"
       ]
+    },
+    "v1ResourcesQueryPlanRequest": {
+      "type": "object",
+      "properties": {
+        "requestId": {
+          "type": "string",
+          "example": "c2db17b8-4f9f-4fb1-acfd-9162a02be42b",
+          "description": "Optional application-specific ID useful for correlating logs for analysis."
+        },
+        "action": {
+          "type": "string",
+          "example": "view:public",
+          "description": "Action to be applied to each resource in the list.",
+          "required": [
+            "action"
+          ]
+        },
+        "principal": {
+          "$ref": "#/definitions/v1Principal"
+        },
+        "resourceKind": {
+          "type": "string",
+          "example": "album:object",
+          "description": "Resource kind.",
+          "pattern": "^[[:alpha:]][[:word:]\\@\\.\\-]*(\\:[[:alpha:]][[:word:]\\@\\.\\-]*)*$",
+          "required": [
+            "resource_kind"
+          ]
+        },
+        "policyVersion": {
+          "type": "string",
+          "example": "default",
+          "description": "The policy version to use to evaluate this request. If not specified, will default to the server-configured default version.",
+          "pattern": "^[[:word:]]*$"
+        },
+        "auxData": {
+          "$ref": "#/definitions/cerbosrequestv1AuxData"
+        }
+      },
+      "description": "PDP Resources Query Plan Request",
+      "required": [
+        "action",
+        "resourceKind"
+      ]
+    },
+    "v1ResourcesQueryPlanResponse": {
+      "type": "object",
+      "properties": {
+        "requestId": {
+          "type": "string",
+          "example": "c2db17b8-4f9f-4fb1-acfd-9162a02be42b",
+          "description": "Request ID provided in the request."
+        },
+        "action": {
+          "type": "string",
+          "example": "view:public",
+          "description": "Action"
+        },
+        "resourceKind": {
+          "type": "string",
+          "example": "album:object",
+          "description": "Resource kind.",
+          "pattern": "^[[:alpha:]][[:word:]\\@\\.\\-]*(\\:[[:alpha:]][[:word:]\\@\\.\\-]*)*$"
+        },
+        "policyVersion": {
+          "type": "string",
+          "example": "default",
+          "description": "The policy version."
+        },
+        "filter": {
+          "$ref": "#/definitions/ResourcesQueryPlanResponseConditionOperand",
+          "description": "Filter"
+        },
+        "filterDebug": {
+          "type": "string",
+          "description": "Filter textual representation for debugging purposes."
+        }
+      },
+      "description": "Resources query plan response for a set of resources."
+    },
+    "v1ResourcesQueryPlanResponseCondition": {
+      "type": "object",
+      "properties": {
+        "operator": {
+          "type": "string"
+        },
+        "nodes": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ResourcesQueryPlanResponseConditionOperand"
+          }
+        }
+      },
+      "description": "List resources response for a set of resources."
     },
     "v1RoleDef": {
       "type": "object",

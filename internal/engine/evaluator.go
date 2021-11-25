@@ -31,7 +31,7 @@ var (
 
 type Evaluator interface {
 	Evaluate(context.Context, *enginev1.CheckInput) (*PolicyEvalResult, error)
-	EvaluateListResources(ctx context.Context, request *requestv1.ListResourcesRequest) (*enginev1.ListResourcesOutput, error)
+	EvaluateResourcesQueryPlan(ctx context.Context, request *requestv1.ResourcesQueryPlanRequest) (*enginev1.ResourcesQueryPlanOutput, error)
 }
 
 func NewEvaluator(rps *runtimev1.RunnablePolicySet, t *tracer) Evaluator {
@@ -47,7 +47,7 @@ func NewEvaluator(rps *runtimev1.RunnablePolicySet, t *tracer) Evaluator {
 
 type noopEvaluator struct{}
 
-func (e noopEvaluator) EvaluateListResources(ctx context.Context, request *requestv1.ListResourcesRequest) (*enginev1.ListResourcesOutput, error) {
+func (e noopEvaluator) EvaluateResourcesQueryPlan(ctx context.Context, request *requestv1.ResourcesQueryPlanRequest) (*enginev1.ResourcesQueryPlanOutput, error) {
 	return nil, ErrPolicyNotExecutable
 }
 
@@ -60,10 +60,10 @@ type resourcePolicyEvaluator struct {
 	*tracer
 }
 
-func (rpe *resourcePolicyEvaluator) EvaluateListResources(_ context.Context, input *requestv1.ListResourcesRequest) (*enginev1.ListResourcesOutput, error) {
+func (rpe *resourcePolicyEvaluator) EvaluateResourcesQueryPlan(_ context.Context, input *requestv1.ResourcesQueryPlanRequest) (*enginev1.ResourcesQueryPlanOutput, error) {
 	effectiveRoles := toSet(input.Principal.Roles)
 	inputActions := []string{input.Action}
-	result := &enginev1.ListResourcesOutput{}
+	result := &enginev1.ResourcesQueryPlanOutput{}
 	result.RequestId = input.RequestId
 	result.Kind = input.ResourceKind
 	result.Action = input.Action
@@ -92,15 +92,15 @@ func (rpe *resourcePolicyEvaluator) EvaluateListResources(_ context.Context, inp
 	return result, nil
 }
 
-func evaluateCondition(condition *runtimev1.Condition, input *requestv1.ListResourcesRequest) (*enginev1.ListResourcesOutput_Node, error) {
-	res := new(enginev1.ListResourcesOutput_Node)
+func evaluateCondition(condition *runtimev1.Condition, input *requestv1.ResourcesQueryPlanRequest) (*enginev1.ResourcesQueryPlanOutput_Node, error) {
+	res := new(enginev1.ResourcesQueryPlanOutput_Node)
 	switch t := condition.Op.(type) {
 	case *runtimev1.Condition_Any:
-		operation := &enginev1.ListResourcesOutput_LogicalOperation{
-			Operator: enginev1.ListResourcesOutput_LogicalOperation_OPERATOR_OR,
+		operation := &enginev1.ResourcesQueryPlanOutput_LogicalOperation{
+			Operator: enginev1.ResourcesQueryPlanOutput_LogicalOperation_OPERATOR_OR,
 			Nodes:    nil,
 		}
-		res.Node = &enginev1.ListResourcesOutput_Node_LogicalOperation{
+		res.Node = &enginev1.ResourcesQueryPlanOutput_Node_LogicalOperation{
 			LogicalOperation: operation,
 		}
 		for _, c := range t.Any.Expr {
@@ -111,11 +111,11 @@ func evaluateCondition(condition *runtimev1.Condition, input *requestv1.ListReso
 			operation.Nodes = append(operation.Nodes, node)
 		}
 	case *runtimev1.Condition_All:
-		operation := &enginev1.ListResourcesOutput_LogicalOperation{
-			Operator: enginev1.ListResourcesOutput_LogicalOperation_OPERATOR_AND,
+		operation := &enginev1.ResourcesQueryPlanOutput_LogicalOperation{
+			Operator: enginev1.ResourcesQueryPlanOutput_LogicalOperation_OPERATOR_AND,
 			Nodes:    nil,
 		}
-		res.Node = &enginev1.ListResourcesOutput_Node_LogicalOperation{LogicalOperation: operation}
+		res.Node = &enginev1.ResourcesQueryPlanOutput_Node_LogicalOperation{LogicalOperation: operation}
 		for _, c := range t.All.Expr {
 			node, err := evaluateCondition(c, input)
 			if err != nil {
@@ -128,7 +128,7 @@ func evaluateCondition(condition *runtimev1.Condition, input *requestv1.ListReso
 		if err != nil {
 			return nil, fmt.Errorf("error evaluating condition %q: %w", t.Expr.Original, err)
 		}
-		res.Node = &enginev1.ListResourcesOutput_Node_Expression{Expression: residual}
+		res.Node = &enginev1.ResourcesQueryPlanOutput_Node_Expression{Expression: residual}
 	default:
 		return nil, fmt.Errorf("unsupported condition type %T", t)
 	}
@@ -226,7 +226,7 @@ type principalPolicyEvaluator struct {
 	*tracer
 }
 
-func (ppe *principalPolicyEvaluator) EvaluateListResources(ctx context.Context, request *requestv1.ListResourcesRequest) (*enginev1.ListResourcesOutput, error) {
+func (ppe *principalPolicyEvaluator) EvaluateResourcesQueryPlan(ctx context.Context, request *requestv1.ResourcesQueryPlanRequest) (*enginev1.ResourcesQueryPlanOutput, error) {
 	panic("implement me")
 }
 
@@ -386,7 +386,7 @@ func evaluateBoolCELExpr(expr *exprpb.CheckedExpr, variables map[string]interfac
 	return boolVal, nil
 }
 
-func evaluateCELExprPartially(expr *exprpb.CheckedExpr, input *requestv1.ListResourcesRequest) (*bool, *exprpb.CheckedExpr, error) {
+func evaluateCELExprPartially(expr *exprpb.CheckedExpr, input *requestv1.ResourcesQueryPlanRequest) (*bool, *exprpb.CheckedExpr, error) {
 	ast := cel.CheckedExprToAst(expr)
 	prg, err := conditions.StdEnv.Program(ast, cel.EvalOptions(cel.OptPartialEval, cel.OptTrackState))
 	if err != nil {

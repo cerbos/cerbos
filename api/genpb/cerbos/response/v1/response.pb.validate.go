@@ -37,10 +37,10 @@ var (
 	_ = effectv1.Effect(0)
 )
 
-// Validate checks the field values on ListResourcesResponse with the rules
-// defined in the proto definition for this message. If any rules are
+// Validate checks the field values on ResourcesQueryPlanResponse with the
+// rules defined in the proto definition for this message. If any rules are
 // violated, an error is returned.
-func (m *ListResourcesResponse) Validate() error {
+func (m *ResourcesQueryPlanResponse) Validate() error {
 	if m == nil {
 		return nil
 	}
@@ -55,7 +55,7 @@ func (m *ListResourcesResponse) Validate() error {
 
 	if v, ok := interface{}(m.GetFilter()).(interface{ Validate() error }); ok {
 		if err := v.Validate(); err != nil {
-			return ListResourcesResponseValidationError{
+			return ResourcesQueryPlanResponseValidationError{
 				field:  "Filter",
 				reason: "embedded message failed validation",
 				cause:  err,
@@ -63,14 +63,14 @@ func (m *ListResourcesResponse) Validate() error {
 		}
 	}
 
-	// no validation rules for FilterSql
+	// no validation rules for FilterDebug
 
 	return nil
 }
 
-// ListResourcesResponseValidationError is the validation error returned by
-// ListResourcesResponse.Validate if the designated constraints aren't met.
-type ListResourcesResponseValidationError struct {
+// ResourcesQueryPlanResponseValidationError is the validation error returned
+// by ResourcesQueryPlanResponse.Validate if the designated constraints aren't met.
+type ResourcesQueryPlanResponseValidationError struct {
 	field  string
 	reason string
 	cause  error
@@ -78,24 +78,24 @@ type ListResourcesResponseValidationError struct {
 }
 
 // Field function returns field value.
-func (e ListResourcesResponseValidationError) Field() string { return e.field }
+func (e ResourcesQueryPlanResponseValidationError) Field() string { return e.field }
 
 // Reason function returns reason value.
-func (e ListResourcesResponseValidationError) Reason() string { return e.reason }
+func (e ResourcesQueryPlanResponseValidationError) Reason() string { return e.reason }
 
 // Cause function returns cause value.
-func (e ListResourcesResponseValidationError) Cause() error { return e.cause }
+func (e ResourcesQueryPlanResponseValidationError) Cause() error { return e.cause }
 
 // Key function returns key value.
-func (e ListResourcesResponseValidationError) Key() bool { return e.key }
+func (e ResourcesQueryPlanResponseValidationError) Key() bool { return e.key }
 
 // ErrorName returns error name.
-func (e ListResourcesResponseValidationError) ErrorName() string {
-	return "ListResourcesResponseValidationError"
+func (e ResourcesQueryPlanResponseValidationError) ErrorName() string {
+	return "ResourcesQueryPlanResponseValidationError"
 }
 
 // Error satisfies the builtin error interface
-func (e ListResourcesResponseValidationError) Error() string {
+func (e ResourcesQueryPlanResponseValidationError) Error() string {
 	cause := ""
 	if e.cause != nil {
 		cause = fmt.Sprintf(" | caused by: %v", e.cause)
@@ -107,14 +107,14 @@ func (e ListResourcesResponseValidationError) Error() string {
 	}
 
 	return fmt.Sprintf(
-		"invalid %sListResourcesResponse.%s: %s%s",
+		"invalid %sResourcesQueryPlanResponse.%s: %s%s",
 		key,
 		e.field,
 		e.reason,
 		cause)
 }
 
-var _ error = ListResourcesResponseValidationError{}
+var _ error = ResourcesQueryPlanResponseValidationError{}
 
 var _ interface {
 	Field() string
@@ -122,7 +122,7 @@ var _ interface {
 	Key() bool
 	Cause() error
 	ErrorName() string
-} = ListResourcesResponseValidationError{}
+} = ResourcesQueryPlanResponseValidationError{}
 
 // Validate checks the field values on CheckResourceSetResponse with the rules
 // defined in the proto definition for this message. If any rules are
@@ -1017,10 +1017,10 @@ var _ interface {
 	ErrorName() string
 } = ListPoliciesResponseValidationError{}
 
-// Validate checks the field values on ListResourcesResponse_Expression with
-// the rules defined in the proto definition for this message. If any rules
-// are violated, an error is returned.
-func (m *ListResourcesResponse_Expression) Validate() error {
+// Validate checks the field values on ResourcesQueryPlanResponse_Expression
+// with the rules defined in the proto definition for this message. If any
+// rules are violated, an error is returned.
+func (m *ResourcesQueryPlanResponse_Expression) Validate() error {
 	if m == nil {
 		return nil
 	}
@@ -1032,7 +1032,7 @@ func (m *ListResourcesResponse_Expression) Validate() error {
 
 		if v, ok := interface{}(item).(interface{ Validate() error }); ok {
 			if err := v.Validate(); err != nil {
-				return ListResourcesResponse_ExpressionValidationError{
+				return ResourcesQueryPlanResponse_ExpressionValidationError{
 					field:  fmt.Sprintf("Operands[%v]", idx),
 					reason: "embedded message failed validation",
 					cause:  err,
@@ -1045,10 +1045,10 @@ func (m *ListResourcesResponse_Expression) Validate() error {
 	return nil
 }
 
-// ListResourcesResponse_ExpressionValidationError is the validation error
-// returned by ListResourcesResponse_Expression.Validate if the designated
-// constraints aren't met.
-type ListResourcesResponse_ExpressionValidationError struct {
+// ResourcesQueryPlanResponse_ExpressionValidationError is the validation error
+// returned by ResourcesQueryPlanResponse_Expression.Validate if the
+// designated constraints aren't met.
+type ResourcesQueryPlanResponse_ExpressionValidationError struct {
 	field  string
 	reason string
 	cause  error
@@ -1056,24 +1056,24 @@ type ListResourcesResponse_ExpressionValidationError struct {
 }
 
 // Field function returns field value.
-func (e ListResourcesResponse_ExpressionValidationError) Field() string { return e.field }
+func (e ResourcesQueryPlanResponse_ExpressionValidationError) Field() string { return e.field }
 
 // Reason function returns reason value.
-func (e ListResourcesResponse_ExpressionValidationError) Reason() string { return e.reason }
+func (e ResourcesQueryPlanResponse_ExpressionValidationError) Reason() string { return e.reason }
 
 // Cause function returns cause value.
-func (e ListResourcesResponse_ExpressionValidationError) Cause() error { return e.cause }
+func (e ResourcesQueryPlanResponse_ExpressionValidationError) Cause() error { return e.cause }
 
 // Key function returns key value.
-func (e ListResourcesResponse_ExpressionValidationError) Key() bool { return e.key }
+func (e ResourcesQueryPlanResponse_ExpressionValidationError) Key() bool { return e.key }
 
 // ErrorName returns error name.
-func (e ListResourcesResponse_ExpressionValidationError) ErrorName() string {
-	return "ListResourcesResponse_ExpressionValidationError"
+func (e ResourcesQueryPlanResponse_ExpressionValidationError) ErrorName() string {
+	return "ResourcesQueryPlanResponse_ExpressionValidationError"
 }
 
 // Error satisfies the builtin error interface
-func (e ListResourcesResponse_ExpressionValidationError) Error() string {
+func (e ResourcesQueryPlanResponse_ExpressionValidationError) Error() string {
 	cause := ""
 	if e.cause != nil {
 		cause = fmt.Sprintf(" | caused by: %v", e.cause)
@@ -1085,14 +1085,14 @@ func (e ListResourcesResponse_ExpressionValidationError) Error() string {
 	}
 
 	return fmt.Sprintf(
-		"invalid %sListResourcesResponse_Expression.%s: %s%s",
+		"invalid %sResourcesQueryPlanResponse_Expression.%s: %s%s",
 		key,
 		e.field,
 		e.reason,
 		cause)
 }
 
-var _ error = ListResourcesResponse_ExpressionValidationError{}
+var _ error = ResourcesQueryPlanResponse_ExpressionValidationError{}
 
 var _ interface {
 	Field() string
@@ -1100,12 +1100,12 @@ var _ interface {
 	Key() bool
 	Cause() error
 	ErrorName() string
-} = ListResourcesResponse_ExpressionValidationError{}
+} = ResourcesQueryPlanResponse_ExpressionValidationError{}
 
-// Validate checks the field values on ListResourcesResponse_Condition with the
-// rules defined in the proto definition for this message. If any rules are
-// violated, an error is returned.
-func (m *ListResourcesResponse_Condition) Validate() error {
+// Validate checks the field values on ResourcesQueryPlanResponse_Condition
+// with the rules defined in the proto definition for this message. If any
+// rules are violated, an error is returned.
+func (m *ResourcesQueryPlanResponse_Condition) Validate() error {
 	if m == nil {
 		return nil
 	}
@@ -1117,7 +1117,7 @@ func (m *ListResourcesResponse_Condition) Validate() error {
 
 		if v, ok := interface{}(item).(interface{ Validate() error }); ok {
 			if err := v.Validate(); err != nil {
-				return ListResourcesResponse_ConditionValidationError{
+				return ResourcesQueryPlanResponse_ConditionValidationError{
 					field:  fmt.Sprintf("Nodes[%v]", idx),
 					reason: "embedded message failed validation",
 					cause:  err,
@@ -1130,10 +1130,10 @@ func (m *ListResourcesResponse_Condition) Validate() error {
 	return nil
 }
 
-// ListResourcesResponse_ConditionValidationError is the validation error
-// returned by ListResourcesResponse_Condition.Validate if the designated
+// ResourcesQueryPlanResponse_ConditionValidationError is the validation error
+// returned by ResourcesQueryPlanResponse_Condition.Validate if the designated
 // constraints aren't met.
-type ListResourcesResponse_ConditionValidationError struct {
+type ResourcesQueryPlanResponse_ConditionValidationError struct {
 	field  string
 	reason string
 	cause  error
@@ -1141,24 +1141,24 @@ type ListResourcesResponse_ConditionValidationError struct {
 }
 
 // Field function returns field value.
-func (e ListResourcesResponse_ConditionValidationError) Field() string { return e.field }
+func (e ResourcesQueryPlanResponse_ConditionValidationError) Field() string { return e.field }
 
 // Reason function returns reason value.
-func (e ListResourcesResponse_ConditionValidationError) Reason() string { return e.reason }
+func (e ResourcesQueryPlanResponse_ConditionValidationError) Reason() string { return e.reason }
 
 // Cause function returns cause value.
-func (e ListResourcesResponse_ConditionValidationError) Cause() error { return e.cause }
+func (e ResourcesQueryPlanResponse_ConditionValidationError) Cause() error { return e.cause }
 
 // Key function returns key value.
-func (e ListResourcesResponse_ConditionValidationError) Key() bool { return e.key }
+func (e ResourcesQueryPlanResponse_ConditionValidationError) Key() bool { return e.key }
 
 // ErrorName returns error name.
-func (e ListResourcesResponse_ConditionValidationError) ErrorName() string {
-	return "ListResourcesResponse_ConditionValidationError"
+func (e ResourcesQueryPlanResponse_ConditionValidationError) ErrorName() string {
+	return "ResourcesQueryPlanResponse_ConditionValidationError"
 }
 
 // Error satisfies the builtin error interface
-func (e ListResourcesResponse_ConditionValidationError) Error() string {
+func (e ResourcesQueryPlanResponse_ConditionValidationError) Error() string {
 	cause := ""
 	if e.cause != nil {
 		cause = fmt.Sprintf(" | caused by: %v", e.cause)
@@ -1170,14 +1170,14 @@ func (e ListResourcesResponse_ConditionValidationError) Error() string {
 	}
 
 	return fmt.Sprintf(
-		"invalid %sListResourcesResponse_Condition.%s: %s%s",
+		"invalid %sResourcesQueryPlanResponse_Condition.%s: %s%s",
 		key,
 		e.field,
 		e.reason,
 		cause)
 }
 
-var _ error = ListResourcesResponse_ConditionValidationError{}
+var _ error = ResourcesQueryPlanResponse_ConditionValidationError{}
 
 var _ interface {
 	Field() string
@@ -1185,23 +1185,23 @@ var _ interface {
 	Key() bool
 	Cause() error
 	ErrorName() string
-} = ListResourcesResponse_ConditionValidationError{}
+} = ResourcesQueryPlanResponse_ConditionValidationError{}
 
-// Validate checks the field values on ListResourcesResponse_Expression_Operand
-// with the rules defined in the proto definition for this message. If any
-// rules are violated, an error is returned.
-func (m *ListResourcesResponse_Expression_Operand) Validate() error {
+// Validate checks the field values on
+// ResourcesQueryPlanResponse_Expression_Operand with the rules defined in the
+// proto definition for this message. If any rules are violated, an error is returned.
+func (m *ResourcesQueryPlanResponse_Expression_Operand) Validate() error {
 	if m == nil {
 		return nil
 	}
 
 	switch m.Node.(type) {
 
-	case *ListResourcesResponse_Expression_Operand_Value:
+	case *ResourcesQueryPlanResponse_Expression_Operand_Value:
 
 		if v, ok := interface{}(m.GetValue()).(interface{ Validate() error }); ok {
 			if err := v.Validate(); err != nil {
-				return ListResourcesResponse_Expression_OperandValidationError{
+				return ResourcesQueryPlanResponse_Expression_OperandValidationError{
 					field:  "Value",
 					reason: "embedded message failed validation",
 					cause:  err,
@@ -1209,11 +1209,11 @@ func (m *ListResourcesResponse_Expression_Operand) Validate() error {
 			}
 		}
 
-	case *ListResourcesResponse_Expression_Operand_Expression:
+	case *ResourcesQueryPlanResponse_Expression_Operand_Expression:
 
 		if v, ok := interface{}(m.GetExpression()).(interface{ Validate() error }); ok {
 			if err := v.Validate(); err != nil {
-				return ListResourcesResponse_Expression_OperandValidationError{
+				return ResourcesQueryPlanResponse_Expression_OperandValidationError{
 					field:  "Expression",
 					reason: "embedded message failed validation",
 					cause:  err,
@@ -1221,7 +1221,7 @@ func (m *ListResourcesResponse_Expression_Operand) Validate() error {
 			}
 		}
 
-	case *ListResourcesResponse_Expression_Operand_Variable:
+	case *ResourcesQueryPlanResponse_Expression_Operand_Variable:
 		// no validation rules for Variable
 
 	}
@@ -1229,10 +1229,11 @@ func (m *ListResourcesResponse_Expression_Operand) Validate() error {
 	return nil
 }
 
-// ListResourcesResponse_Expression_OperandValidationError is the validation
-// error returned by ListResourcesResponse_Expression_Operand.Validate if the
-// designated constraints aren't met.
-type ListResourcesResponse_Expression_OperandValidationError struct {
+// ResourcesQueryPlanResponse_Expression_OperandValidationError is the
+// validation error returned by
+// ResourcesQueryPlanResponse_Expression_Operand.Validate if the designated
+// constraints aren't met.
+type ResourcesQueryPlanResponse_Expression_OperandValidationError struct {
 	field  string
 	reason string
 	cause  error
@@ -1240,24 +1241,26 @@ type ListResourcesResponse_Expression_OperandValidationError struct {
 }
 
 // Field function returns field value.
-func (e ListResourcesResponse_Expression_OperandValidationError) Field() string { return e.field }
+func (e ResourcesQueryPlanResponse_Expression_OperandValidationError) Field() string { return e.field }
 
 // Reason function returns reason value.
-func (e ListResourcesResponse_Expression_OperandValidationError) Reason() string { return e.reason }
+func (e ResourcesQueryPlanResponse_Expression_OperandValidationError) Reason() string {
+	return e.reason
+}
 
 // Cause function returns cause value.
-func (e ListResourcesResponse_Expression_OperandValidationError) Cause() error { return e.cause }
+func (e ResourcesQueryPlanResponse_Expression_OperandValidationError) Cause() error { return e.cause }
 
 // Key function returns key value.
-func (e ListResourcesResponse_Expression_OperandValidationError) Key() bool { return e.key }
+func (e ResourcesQueryPlanResponse_Expression_OperandValidationError) Key() bool { return e.key }
 
 // ErrorName returns error name.
-func (e ListResourcesResponse_Expression_OperandValidationError) ErrorName() string {
-	return "ListResourcesResponse_Expression_OperandValidationError"
+func (e ResourcesQueryPlanResponse_Expression_OperandValidationError) ErrorName() string {
+	return "ResourcesQueryPlanResponse_Expression_OperandValidationError"
 }
 
 // Error satisfies the builtin error interface
-func (e ListResourcesResponse_Expression_OperandValidationError) Error() string {
+func (e ResourcesQueryPlanResponse_Expression_OperandValidationError) Error() string {
 	cause := ""
 	if e.cause != nil {
 		cause = fmt.Sprintf(" | caused by: %v", e.cause)
@@ -1269,14 +1272,14 @@ func (e ListResourcesResponse_Expression_OperandValidationError) Error() string 
 	}
 
 	return fmt.Sprintf(
-		"invalid %sListResourcesResponse_Expression_Operand.%s: %s%s",
+		"invalid %sResourcesQueryPlanResponse_Expression_Operand.%s: %s%s",
 		key,
 		e.field,
 		e.reason,
 		cause)
 }
 
-var _ error = ListResourcesResponse_Expression_OperandValidationError{}
+var _ error = ResourcesQueryPlanResponse_Expression_OperandValidationError{}
 
 var _ interface {
 	Field() string
@@ -1284,23 +1287,23 @@ var _ interface {
 	Key() bool
 	Cause() error
 	ErrorName() string
-} = ListResourcesResponse_Expression_OperandValidationError{}
+} = ResourcesQueryPlanResponse_Expression_OperandValidationError{}
 
-// Validate checks the field values on ListResourcesResponse_Condition_Operand
-// with the rules defined in the proto definition for this message. If any
-// rules are violated, an error is returned.
-func (m *ListResourcesResponse_Condition_Operand) Validate() error {
+// Validate checks the field values on
+// ResourcesQueryPlanResponse_Condition_Operand with the rules defined in the
+// proto definition for this message. If any rules are violated, an error is returned.
+func (m *ResourcesQueryPlanResponse_Condition_Operand) Validate() error {
 	if m == nil {
 		return nil
 	}
 
 	switch m.Node.(type) {
 
-	case *ListResourcesResponse_Condition_Operand_Condition:
+	case *ResourcesQueryPlanResponse_Condition_Operand_Condition:
 
 		if v, ok := interface{}(m.GetCondition()).(interface{ Validate() error }); ok {
 			if err := v.Validate(); err != nil {
-				return ListResourcesResponse_Condition_OperandValidationError{
+				return ResourcesQueryPlanResponse_Condition_OperandValidationError{
 					field:  "Condition",
 					reason: "embedded message failed validation",
 					cause:  err,
@@ -1308,11 +1311,11 @@ func (m *ListResourcesResponse_Condition_Operand) Validate() error {
 			}
 		}
 
-	case *ListResourcesResponse_Condition_Operand_Expression:
+	case *ResourcesQueryPlanResponse_Condition_Operand_Expression:
 
 		if v, ok := interface{}(m.GetExpression()).(interface{ Validate() error }); ok {
 			if err := v.Validate(); err != nil {
-				return ListResourcesResponse_Condition_OperandValidationError{
+				return ResourcesQueryPlanResponse_Condition_OperandValidationError{
 					field:  "Expression",
 					reason: "embedded message failed validation",
 					cause:  err,
@@ -1325,10 +1328,11 @@ func (m *ListResourcesResponse_Condition_Operand) Validate() error {
 	return nil
 }
 
-// ListResourcesResponse_Condition_OperandValidationError is the validation
-// error returned by ListResourcesResponse_Condition_Operand.Validate if the
-// designated constraints aren't met.
-type ListResourcesResponse_Condition_OperandValidationError struct {
+// ResourcesQueryPlanResponse_Condition_OperandValidationError is the
+// validation error returned by
+// ResourcesQueryPlanResponse_Condition_Operand.Validate if the designated
+// constraints aren't met.
+type ResourcesQueryPlanResponse_Condition_OperandValidationError struct {
 	field  string
 	reason string
 	cause  error
@@ -1336,24 +1340,24 @@ type ListResourcesResponse_Condition_OperandValidationError struct {
 }
 
 // Field function returns field value.
-func (e ListResourcesResponse_Condition_OperandValidationError) Field() string { return e.field }
+func (e ResourcesQueryPlanResponse_Condition_OperandValidationError) Field() string { return e.field }
 
 // Reason function returns reason value.
-func (e ListResourcesResponse_Condition_OperandValidationError) Reason() string { return e.reason }
+func (e ResourcesQueryPlanResponse_Condition_OperandValidationError) Reason() string { return e.reason }
 
 // Cause function returns cause value.
-func (e ListResourcesResponse_Condition_OperandValidationError) Cause() error { return e.cause }
+func (e ResourcesQueryPlanResponse_Condition_OperandValidationError) Cause() error { return e.cause }
 
 // Key function returns key value.
-func (e ListResourcesResponse_Condition_OperandValidationError) Key() bool { return e.key }
+func (e ResourcesQueryPlanResponse_Condition_OperandValidationError) Key() bool { return e.key }
 
 // ErrorName returns error name.
-func (e ListResourcesResponse_Condition_OperandValidationError) ErrorName() string {
-	return "ListResourcesResponse_Condition_OperandValidationError"
+func (e ResourcesQueryPlanResponse_Condition_OperandValidationError) ErrorName() string {
+	return "ResourcesQueryPlanResponse_Condition_OperandValidationError"
 }
 
 // Error satisfies the builtin error interface
-func (e ListResourcesResponse_Condition_OperandValidationError) Error() string {
+func (e ResourcesQueryPlanResponse_Condition_OperandValidationError) Error() string {
 	cause := ""
 	if e.cause != nil {
 		cause = fmt.Sprintf(" | caused by: %v", e.cause)
@@ -1365,14 +1369,14 @@ func (e ListResourcesResponse_Condition_OperandValidationError) Error() string {
 	}
 
 	return fmt.Sprintf(
-		"invalid %sListResourcesResponse_Condition_Operand.%s: %s%s",
+		"invalid %sResourcesQueryPlanResponse_Condition_Operand.%s: %s%s",
 		key,
 		e.field,
 		e.reason,
 		cause)
 }
 
-var _ error = ListResourcesResponse_Condition_OperandValidationError{}
+var _ error = ResourcesQueryPlanResponse_Condition_OperandValidationError{}
 
 var _ interface {
 	Field() string
@@ -1380,7 +1384,7 @@ var _ interface {
 	Key() bool
 	Cause() error
 	ErrorName() string
-} = ListResourcesResponse_Condition_OperandValidationError{}
+} = ResourcesQueryPlanResponse_Condition_OperandValidationError{}
 
 // Validate checks the field values on CheckResourceSetResponse_ActionEffectMap
 // with the rules defined in the proto definition for this message. If any

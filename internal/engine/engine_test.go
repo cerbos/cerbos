@@ -6,12 +6,12 @@ package engine
 import (
 	"bytes"
 	"context"
-	"google.golang.org/protobuf/encoding/protojson"
 	"log"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/stretchr/testify/require"
+	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/testing/protocmp"
 	"google.golang.org/protobuf/types/known/structpb"
 
@@ -182,12 +182,12 @@ func TestList(t *testing.T) {
 	defer cancelFunc()
 	tests := []struct {
 		name  string
-		input *requestv1.ListResourcesRequest
+		input *requestv1.ResourcesQueryPlanRequest
 		want  string
 	}{
 		{
 			name: "harry wants to view",
-			input: &requestv1.ListResourcesRequest{
+			input: &requestv1.ResourcesQueryPlanRequest{
 				RequestId: "requestId",
 				Action:    "view",
 				Principal: &enginev1.Principal{
@@ -202,7 +202,7 @@ func TestList(t *testing.T) {
 		},
 		{
 			name: "maggie wants to approve",
-			input: &requestv1.ListResourcesRequest{
+			input: &requestv1.ResourcesQueryPlanRequest{
 				RequestId: "requestId",
 				Action:    "approve",
 				Principal: &enginev1.Principal{
@@ -233,7 +233,7 @@ func TestList(t *testing.T) {
 			response, err := eng.List(context.Background(), tt.input)
 			is.NoError(err)
 			is.NotNil(response)
-			is.Equal(tt.want, response.FilterSql)
+			is.Equal(tt.want, response.FilterDebug)
 			buf := protojson.Format(response)
 			log.Print(buf)
 		})

@@ -41,7 +41,7 @@ func NewCerbosService(eng *engine.Engine, auxData *auxdata.AuxData) *CerbosServi
 	}
 }
 
-func (cs *CerbosService) ListResources(ctx context.Context, request *requestv1.ListResourcesRequest) (*responsev1.ListResourcesResponse, error) {
+func (cs *CerbosService) ResourcesQueryPlan(ctx context.Context, request *requestv1.ResourcesQueryPlanRequest) (*responsev1.ResourcesQueryPlanResponse, error) {
 	log := ctxzap.Extract(ctx)
 
 	response, err := cs.eng.List(logging.ToContext(ctx, log), request)

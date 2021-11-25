@@ -74,14 +74,14 @@ service CerbosService {
         };
     }
 
-    rpc ListResources(cerbos.request.v1.ListResourcesRequest) returns (cerbos.response.v1.ListResourcesResponse) {
+    rpc ResourcesQueryPlan(cerbos.request.v1.ResourcesQueryPlanRequest) returns (cerbos.response.v1.ResourcesQueryPlanResponse) {
         option (google.api.http) = {
-            post: "/api/list_resources",
+            post: "/api/resources_query_plan",
             body: "*"
         };
         option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
-            summary: "List resources"
-            description: "List resources"
+            summary: "Resources query plan"
+            description: "Resources query plan"
         };
     }
 }

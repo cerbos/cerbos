@@ -36,7 +36,7 @@ message CheckOutput {
     repeated string effective_derived_roles = 4;
 }
 
-message ListResourcesOutput {
+message ResourcesQueryPlanOutput {
     string request_id = 1;
     string action = 2;
     string kind = 3;

@@ -5,41 +5,39 @@ package engine
 
 import (
 	"errors"
+
 	"github.com/google/cel-go/common/operators"
 )
 
 const (
-	Equals = "eq"
-	NotEquals = "ne"
-	GreaterThan = "gt"
+	Equals             = "eq"
+	NotEquals          = "ne"
+	GreaterThan        = "gt"
 	GreaterThanOrEqual = "ge"
-	LessThan = "lt"
-	LessThanOrEqual = "le"
-	In = "in"
+	LessThan           = "lt"
+	LessThanOrEqual    = "le"
+	In                 = "in"
 )
 
-var (
-	ErrUnknownOperator = errors.New("unknown operator")
-)
+var ErrUnknownOperator = errors.New("unknown operator")
 
 func opFromCLE(fn string) (string, error) {
 	switch fn {
 	case operators.Equals:
-        return Equals, nil
+		return Equals, nil
 	case operators.NotEquals:
 		return NotEquals, nil
 	case operators.Greater:
 		return GreaterThan, nil
 	case operators.GreaterEquals:
-        return GreaterThanOrEqual, nil
+		return GreaterThanOrEqual, nil
 	case operators.Less:
 		return LessThan, nil
 	case operators.LessEquals:
-        return LessThanOrEqual, nil
+		return LessThanOrEqual, nil
 	case operators.In:
-        return In, nil
+		return In, nil
 	default:
 		return fn, ErrUnknownOperator
 	}
 }
-

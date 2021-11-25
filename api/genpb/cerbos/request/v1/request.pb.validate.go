@@ -33,10 +33,10 @@ var (
 	_ = anypb.Any{}
 )
 
-// Validate checks the field values on ListResourcesRequest with the rules
+// Validate checks the field values on ResourcesQueryPlanRequest with the rules
 // defined in the proto definition for this message. If any rules are
 // violated, an error is returned.
-func (m *ListResourcesRequest) Validate() error {
+func (m *ResourcesQueryPlanRequest) Validate() error {
 	if m == nil {
 		return nil
 	}
@@ -46,7 +46,7 @@ func (m *ListResourcesRequest) Validate() error {
 	// no validation rules for Action
 
 	if m.GetPrincipal() == nil {
-		return ListResourcesRequestValidationError{
+		return ResourcesQueryPlanRequestValidationError{
 			field:  "Principal",
 			reason: "value is required",
 		}
@@ -54,7 +54,7 @@ func (m *ListResourcesRequest) Validate() error {
 
 	if v, ok := interface{}(m.GetPrincipal()).(interface{ Validate() error }); ok {
 		if err := v.Validate(); err != nil {
-			return ListResourcesRequestValidationError{
+			return ResourcesQueryPlanRequestValidationError{
 				field:  "Principal",
 				reason: "embedded message failed validation",
 				cause:  err,
@@ -63,21 +63,21 @@ func (m *ListResourcesRequest) Validate() error {
 	}
 
 	if utf8.RuneCountInString(m.GetResourceKind()) < 1 {
-		return ListResourcesRequestValidationError{
+		return ResourcesQueryPlanRequestValidationError{
 			field:  "ResourceKind",
 			reason: "value length must be at least 1 runes",
 		}
 	}
 
-	if !_ListResourcesRequest_ResourceKind_Pattern.MatchString(m.GetResourceKind()) {
-		return ListResourcesRequestValidationError{
+	if !_ResourcesQueryPlanRequest_ResourceKind_Pattern.MatchString(m.GetResourceKind()) {
+		return ResourcesQueryPlanRequestValidationError{
 			field:  "ResourceKind",
 			reason: "value does not match regex pattern \"^[[:alpha:]][[:word:]\\\\@\\\\.\\\\-/]*(\\\\:[[:alpha:]][[:word:]\\\\@\\\\.\\\\-/]*)*$\"",
 		}
 	}
 
-	if !_ListResourcesRequest_PolicyVersion_Pattern.MatchString(m.GetPolicyVersion()) {
-		return ListResourcesRequestValidationError{
+	if !_ResourcesQueryPlanRequest_PolicyVersion_Pattern.MatchString(m.GetPolicyVersion()) {
+		return ResourcesQueryPlanRequestValidationError{
 			field:  "PolicyVersion",
 			reason: "value does not match regex pattern \"^[[:word:]]*$\"",
 		}
@@ -85,7 +85,7 @@ func (m *ListResourcesRequest) Validate() error {
 
 	if v, ok := interface{}(m.GetAuxData()).(interface{ Validate() error }); ok {
 		if err := v.Validate(); err != nil {
-			return ListResourcesRequestValidationError{
+			return ResourcesQueryPlanRequestValidationError{
 				field:  "AuxData",
 				reason: "embedded message failed validation",
 				cause:  err,
@@ -96,9 +96,9 @@ func (m *ListResourcesRequest) Validate() error {
 	return nil
 }
 
-// ListResourcesRequestValidationError is the validation error returned by
-// ListResourcesRequest.Validate if the designated constraints aren't met.
-type ListResourcesRequestValidationError struct {
+// ResourcesQueryPlanRequestValidationError is the validation error returned by
+// ResourcesQueryPlanRequest.Validate if the designated constraints aren't met.
+type ResourcesQueryPlanRequestValidationError struct {
 	field  string
 	reason string
 	cause  error
@@ -106,24 +106,24 @@ type ListResourcesRequestValidationError struct {
 }
 
 // Field function returns field value.
-func (e ListResourcesRequestValidationError) Field() string { return e.field }
+func (e ResourcesQueryPlanRequestValidationError) Field() string { return e.field }
 
 // Reason function returns reason value.
-func (e ListResourcesRequestValidationError) Reason() string { return e.reason }
+func (e ResourcesQueryPlanRequestValidationError) Reason() string { return e.reason }
 
 // Cause function returns cause value.
-func (e ListResourcesRequestValidationError) Cause() error { return e.cause }
+func (e ResourcesQueryPlanRequestValidationError) Cause() error { return e.cause }
 
 // Key function returns key value.
-func (e ListResourcesRequestValidationError) Key() bool { return e.key }
+func (e ResourcesQueryPlanRequestValidationError) Key() bool { return e.key }
 
 // ErrorName returns error name.
-func (e ListResourcesRequestValidationError) ErrorName() string {
-	return "ListResourcesRequestValidationError"
+func (e ResourcesQueryPlanRequestValidationError) ErrorName() string {
+	return "ResourcesQueryPlanRequestValidationError"
 }
 
 // Error satisfies the builtin error interface
-func (e ListResourcesRequestValidationError) Error() string {
+func (e ResourcesQueryPlanRequestValidationError) Error() string {
 	cause := ""
 	if e.cause != nil {
 		cause = fmt.Sprintf(" | caused by: %v", e.cause)
@@ -135,14 +135,14 @@ func (e ListResourcesRequestValidationError) Error() string {
 	}
 
 	return fmt.Sprintf(
-		"invalid %sListResourcesRequest.%s: %s%s",
+		"invalid %sResourcesQueryPlanRequest.%s: %s%s",
 		key,
 		e.field,
 		e.reason,
 		cause)
 }
 
-var _ error = ListResourcesRequestValidationError{}
+var _ error = ResourcesQueryPlanRequestValidationError{}
 
 var _ interface {
 	Field() string
@@ -150,11 +150,11 @@ var _ interface {
 	Key() bool
 	Cause() error
 	ErrorName() string
-} = ListResourcesRequestValidationError{}
+} = ResourcesQueryPlanRequestValidationError{}
 
-var _ListResourcesRequest_ResourceKind_Pattern = regexp.MustCompile("^[[:alpha:]][[:word:]\\@\\.\\-/]*(\\:[[:alpha:]][[:word:]\\@\\.\\-/]*)*$")
+var _ResourcesQueryPlanRequest_ResourceKind_Pattern = regexp.MustCompile("^[[:alpha:]][[:word:]\\@\\.\\-/]*(\\:[[:alpha:]][[:word:]\\@\\.\\-/]*)*$")
 
-var _ListResourcesRequest_PolicyVersion_Pattern = regexp.MustCompile("^[[:word:]]*$")
+var _ResourcesQueryPlanRequest_PolicyVersion_Pattern = regexp.MustCompile("^[[:word:]]*$")
 
 // Validate checks the field values on CheckResourceSetRequest with the rules
 // defined in the proto definition for this message. If any rules are

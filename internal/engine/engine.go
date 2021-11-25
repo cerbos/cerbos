@@ -257,7 +257,7 @@ func (engine *Engine) checkParallel(ctx context.Context, inputs []*enginev1.Chec
 	return outputs, nil
 }
 
-func (engine *Engine) List(ctx context.Context, input *requestv1.ListResourcesRequest) (*responsev1.ListResourcesResponse, error) {
+func (engine *Engine) List(ctx context.Context, input *requestv1.ResourcesQueryPlanRequest) (*responsev1.ResourcesQueryPlanResponse, error) {
 	// exit early if the context is cancelled
 	if err := ctx.Err(); err != nil {
 		return nil, err
@@ -273,23 +273,23 @@ func (engine *Engine) List(ctx context.Context, input *requestv1.ListResourcesRe
 	}
 	// get the principal policy check
 
-	list, err := policyEvaluator.EvaluateListResources(ctx, input)
+	list, err := policyEvaluator.EvaluateResourcesQueryPlan(ctx, input)
 	if err != nil {
 		return nil, err
 	}
 
-	response := &responsev1.ListResourcesResponse{
+	response := &responsev1.ResourcesQueryPlanResponse{
 		RequestId:     input.RequestId,
 		Action:        input.Action,
 		ResourceKind:  input.ResourceKind,
 		PolicyVersion: input.PolicyVersion,
 	}
-	response.Filter = &responsev1.ListResourcesResponse_Condition_Operand{}
+	response.Filter = &responsev1.ResourcesQueryPlanResponse_Condition_Operand{}
 	err = convert(list.Filter, response.Filter)
 	if err != nil {
 		return nil, err
 	}
-	response.FilterSql, err = String(list.Filter)
+	response.FilterDebug, err = String(list.Filter)
 	if err != nil {
 		return nil, err
 	}
@@ -297,19 +297,19 @@ func (engine *Engine) List(ctx context.Context, input *requestv1.ListResourcesRe
 	return response, nil
 }
 
-func String(expr *enginev1.ListResourcesOutput_Node) (source string, err error) {
+func String(expr *enginev1.ResourcesQueryPlanOutput_Node) (source string, err error) {
 	if expr == nil {
 		return "", nil
 	}
 	switch node := expr.Node.(type) {
-	case *enginev1.ListResourcesOutput_Node_Expression:
+	case *enginev1.ResourcesQueryPlanOutput_Node_Expression:
 		expr := node.Expression
 		source, err = parser.Unparse(expr.Expr, expr.SourceInfo)
 		if err != nil {
 			return "", err
 		}
-	case *enginev1.ListResourcesOutput_Node_LogicalOperation:
-		op := enginev1.ListResourcesOutput_LogicalOperation_Operator_name[int32(node.LogicalOperation.Operator)]
+	case *enginev1.ResourcesQueryPlanOutput_Node_LogicalOperation:
+		op := enginev1.ResourcesQueryPlanOutput_LogicalOperation_Operator_name[int32(node.LogicalOperation.Operator)]
 		s := make([]string, 0, len(node.LogicalOperation.Nodes))
 		for _, n := range node.LogicalOperation.Nodes {
 			source, err = String(n)
@@ -325,17 +325,17 @@ func String(expr *enginev1.ListResourcesOutput_Node) (source string, err error) 
 	return "(" + source + ")", nil
 }
 
-func convert(expr *enginev1.ListResourcesOutput_Node, acc *responsev1.ListResourcesResponse_Condition_Operand) error {
+func convert(expr *enginev1.ResourcesQueryPlanOutput_Node, acc *responsev1.ResourcesQueryPlanResponse_Condition_Operand) error {
 	type (
-		ExprOp = responsev1.ListResourcesResponse_Expression_Operand
-		Co     = responsev1.ListResourcesResponse_Condition
-		CoOp   = responsev1.ListResourcesResponse_Condition_Operand
-		CoOpCo = responsev1.ListResourcesResponse_Condition_Operand_Condition
-		CoOpEx = responsev1.ListResourcesResponse_Condition_Operand_Expression
+		ExprOp = responsev1.ResourcesQueryPlanResponse_Expression_Operand
+		Co     = responsev1.ResourcesQueryPlanResponse_Condition
+		CoOp   = responsev1.ResourcesQueryPlanResponse_Condition_Operand
+		CoOpCo = responsev1.ResourcesQueryPlanResponse_Condition_Operand_Condition
+		CoOpEx = responsev1.ResourcesQueryPlanResponse_Condition_Operand_Expression
 	)
 
 	switch node := expr.Node.(type) {
-	case *enginev1.ListResourcesOutput_Node_Expression:
+	case *enginev1.ResourcesQueryPlanOutput_Node_Expression:
 		eop := new(ExprOp)
 		err := buildExpr(node.Expression.Expr, eop)
 		if err != nil {
@@ -344,10 +344,10 @@ func convert(expr *enginev1.ListResourcesOutput_Node, acc *responsev1.ListResour
 		acc.Node = &CoOpEx{
 			Expression: eop.GetExpression(),
 		}
-	case *enginev1.ListResourcesOutput_Node_LogicalOperation:
+	case *enginev1.ResourcesQueryPlanOutput_Node_LogicalOperation:
 		c := &CoOpCo{
 			Condition: &Co{
-				Operator: enginev1.ListResourcesOutput_LogicalOperation_Operator_name[int32(node.LogicalOperation.Operator)],
+				Operator: enginev1.ResourcesQueryPlanOutput_LogicalOperation_Operator_name[int32(node.LogicalOperation.Operator)],
 				Nodes:    make([]*CoOp, len(node.LogicalOperation.Nodes)),
 			},
 		}
@@ -364,11 +364,11 @@ func convert(expr *enginev1.ListResourcesOutput_Node, acc *responsev1.ListResour
 	return nil
 }
 
-func buildExpr(expr *exprpb.Expr, acc *responsev1.ListResourcesResponse_Expression_Operand) error {
+func buildExpr(expr *exprpb.Expr, acc *responsev1.ResourcesQueryPlanResponse_Expression_Operand) error {
 	type (
-		Expr       = responsev1.ListResourcesResponse_Expression
-		ExprOp     = responsev1.ListResourcesResponse_Expression_Operand
-		ExprOpExpr = responsev1.ListResourcesResponse_Expression_Operand_Expression
+		Expr       = responsev1.ResourcesQueryPlanResponse_Expression
+		ExprOp     = responsev1.ResourcesQueryPlanResponse_Expression_Operand
+		ExprOpExpr = responsev1.ResourcesQueryPlanResponse_Expression_Operand_Expression
 	)
 
 	switch expr := expr.ExprKind.(type) {
@@ -394,9 +394,9 @@ func buildExpr(expr *exprpb.Expr, acc *responsev1.ListResourcesResponse_Expressi
 		if err != nil {
 			return err
 		}
-		acc.Node = &responsev1.ListResourcesResponse_Expression_Operand_Value{Value: value}
+		acc.Node = &responsev1.ResourcesQueryPlanResponse_Expression_Operand_Value{Value: value}
 	case *exprpb.Expr_IdentExpr:
-		acc.Node = &responsev1.ListResourcesResponse_Expression_Operand_Variable{Variable: expr.IdentExpr.Name}
+		acc.Node = &responsev1.ResourcesQueryPlanResponse_Expression_Operand_Variable{Variable: expr.IdentExpr.Name}
 	case *exprpb.Expr_SelectExpr:
 		var names []string
 		for e := expr; e != nil; {
@@ -419,7 +419,7 @@ func buildExpr(expr *exprpb.Expr, acc *responsev1.ListResourcesResponse_Expressi
 				sb.WriteString(".")
 			}
 		}
-		acc.Node = &responsev1.ListResourcesResponse_Expression_Operand_Variable{Variable: sb.String()}
+		acc.Node = &responsev1.ResourcesQueryPlanResponse_Expression_Operand_Variable{Variable: sb.String()}
 	case *exprpb.Expr_ListExpr:
 		listValue := structpb.ListValue{Values: make([]*structpb.Value, len(expr.ListExpr.Elements))}
 		for i, element := range expr.ListExpr.Elements {
@@ -433,7 +433,7 @@ func buildExpr(expr *exprpb.Expr, acc *responsev1.ListResourcesResponse_Expressi
 				return fmt.Errorf("unexpected expression type: %T", element.ExprKind)
 			}
 		}
-		acc.Node = &responsev1.ListResourcesResponse_Expression_Operand_Value{Value: structpb.NewListValue(&listValue)}
+		acc.Node = &responsev1.ResourcesQueryPlanResponse_Expression_Operand_Value{Value: structpb.NewListValue(&listValue)}
 	default:
 		return fmt.Errorf("unsupported expression: %v", expr)
 	}
