@@ -797,6 +797,15 @@
       ],
       "default": "ORDER_UNSPECIFIED"
     },
+    "ValidationErrorSource": {
+      "type": "string",
+      "enum": [
+        "SOURCE_UNSPECIFIED",
+        "SOURCE_PRINCIPAL",
+        "SOURCE_RESOURCE"
+      ],
+      "default": "SOURCE_UNSPECIFIED"
+    },
     "cerbosenginev1AuxData": {
       "type": "object",
       "properties": {
@@ -975,6 +984,12 @@
           "type": "array",
           "items": {
             "type": "string"
+          }
+        },
+        "validationErrors": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/v1ValidationError"
           }
         }
       }
@@ -1165,6 +1180,13 @@
             "$ref": "#/definitions/v1Effect"
           },
           "description": "Mapping of each action to an effect."
+        },
+        "validationErrors": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/v1ValidationError"
+          },
+          "description": "List of validation errors"
         }
       }
     },
@@ -1815,6 +1837,20 @@
         }
       },
       "description": "Server info response"
+    },
+    "v1ValidationError": {
+      "type": "object",
+      "properties": {
+        "path": {
+          "type": "string"
+        },
+        "message": {
+          "type": "string"
+        },
+        "source": {
+          "$ref": "#/definitions/ValidationErrorSource"
+        }
+      }
     }
   },
   "securityDefinitions": {

@@ -40,7 +40,8 @@ func (resp *checkResourceSetResponseBuilder) addResult(resourceKey string, resul
 	}
 
 	resp.ResourceInstances[resourceKey] = &responsev1.CheckResourceSetResponse_ActionEffectMap{
-		Actions: actionsMap,
+		Actions:          actionsMap,
+		ValidationErrors: result.ValidationErrors,
 	}
 
 	if resp.includeMeta {

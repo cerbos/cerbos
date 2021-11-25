@@ -940,6 +940,21 @@ func (m *CheckResourceSetResponse_ActionEffectMap) Validate() error {
 
 	// no validation rules for Actions
 
+	for idx, item := range m.GetValidationErrors() {
+		_, _ = idx, item
+
+		if v, ok := interface{}(item).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return CheckResourceSetResponse_ActionEffectMapValidationError{
+					field:  fmt.Sprintf("ValidationErrors[%v]", idx),
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	}
+
 	return nil
 }
 

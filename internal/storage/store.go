@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"sync"
 
+	schemav1 "github.com/cerbos/cerbos/api/genpb/cerbos/schema/v1"
 	"github.com/cerbos/cerbos/internal/config"
 	"github.com/cerbos/cerbos/internal/namer"
 	"github.com/cerbos/cerbos/internal/policy"
@@ -81,6 +82,7 @@ type Store interface {
 	GetDependents(context.Context, ...namer.ModuleID) (map[namer.ModuleID][]namer.ModuleID, error)
 	// GetPolicies returns the policies recorded in the store.
 	GetPolicies(context.Context) ([]*policy.Wrapper, error)
+	GetSchema(context.Context) (*schemav1.Schema, error)
 }
 
 // MutableStore is a store that allows mutations.
@@ -110,6 +112,8 @@ type EventKind int
 const (
 	EventAddOrUpdatePolicy EventKind = iota
 	EventDeletePolicy
+	EventAddOrUpdateSchema
+	EventDeleteSchema
 	EventNop
 )
 
@@ -126,6 +130,10 @@ func (evt Event) String() string {
 		kind = "ADD/UPDATE"
 	case EventDeletePolicy:
 		kind = "DELETE"
+	case EventAddOrUpdateSchema:
+		kind = "ADD/UPDATE SCHEMA"
+	case EventDeleteSchema:
+		kind = "DELETE SCHEMA"
 	case EventNop:
 		kind = "NOP"
 	default:

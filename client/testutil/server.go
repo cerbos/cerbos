@@ -28,6 +28,7 @@ import (
 	"github.com/cerbos/cerbos/internal/auxdata"
 	"github.com/cerbos/cerbos/internal/compile"
 	"github.com/cerbos/cerbos/internal/engine"
+	"github.com/cerbos/cerbos/internal/schema"
 	"github.com/cerbos/cerbos/internal/server"
 	"github.com/cerbos/cerbos/internal/storage"
 	"github.com/cerbos/cerbos/internal/storage/db/postgres"
@@ -270,7 +271,12 @@ func startServer(ctx context.Context, g *errgroup.Group, sopt *serverOpt) (err e
 	auditLog := audit.NewNopLog()
 	auxData := auxdata.NewWithoutVerification(ctx)
 
-	eng, err := engine.New(ctx, compile.NewManager(ctx, store), auditLog)
+	schemaMgr, err := schema.New(ctx, store)
+	if err != nil {
+		return fmt.Errorf("failed to create schema manager: %w", err)
+	}
+
+	eng, err := engine.New(ctx, compile.NewManager(ctx, store), schemaMgr, auditLog)
 	if err != nil {
 		return fmt.Errorf("failed to create engine: %w", err)
 	}

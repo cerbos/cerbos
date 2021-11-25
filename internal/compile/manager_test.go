@@ -15,6 +15,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
+	schemav1 "github.com/cerbos/cerbos/api/genpb/cerbos/schema/v1"
 	"github.com/cerbos/cerbos/internal/compile"
 	"github.com/cerbos/cerbos/internal/namer"
 	"github.com/cerbos/cerbos/internal/policy"
@@ -291,4 +292,13 @@ func (ms *MockStore) GetPolicies(ctx context.Context) ([]*policy.Wrapper, error)
 		return nil, args.Error(0)
 	}
 	return args.Get(0).([]*policy.Wrapper), args.Error(0)
+}
+
+func (ms *MockStore) GetSchema(ctx context.Context) (*schemav1.Schema, error) {
+	// TODO(oguzhan): Implement this method
+	args := ms.MethodCalled("GetSchema", ctx)
+	if res := args.Get(0); res == nil {
+		return nil, args.Error(0)
+	}
+	return nil, nil
 }

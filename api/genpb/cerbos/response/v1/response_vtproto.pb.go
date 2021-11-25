@@ -6,9 +6,10 @@ package responsev1
 
 import (
 	fmt "fmt"
-	v11 "github.com/cerbos/cerbos/api/genpb/cerbos/audit/v1"
+	v12 "github.com/cerbos/cerbos/api/genpb/cerbos/audit/v1"
 	v1 "github.com/cerbos/cerbos/api/genpb/cerbos/effect/v1"
-	v12 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
+	v13 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
+	v11 "github.com/cerbos/cerbos/api/genpb/cerbos/schema/v1"
 	proto "google.golang.org/protobuf/proto"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	emptypb "google.golang.org/protobuf/types/known/emptypb"
@@ -52,6 +53,30 @@ func (m *CheckResourceSetResponse_ActionEffectMap) MarshalToSizedBufferVT(dAtA [
 	if m.unknownFields != nil {
 		i -= len(m.unknownFields)
 		copy(dAtA[i:], m.unknownFields)
+	}
+	if len(m.ValidationErrors) > 0 {
+		for iNdEx := len(m.ValidationErrors) - 1; iNdEx >= 0; iNdEx-- {
+			if marshalto, ok := interface{}(m.ValidationErrors[iNdEx]).(interface {
+				MarshalToSizedBufferVT([]byte) (int, error)
+			}); ok {
+				size, err := marshalto.MarshalToSizedBufferVT(dAtA[:i])
+				if err != nil {
+					return 0, err
+				}
+				i -= size
+				i = encodeVarint(dAtA, i, uint64(size))
+			} else {
+				encoded, err := proto.Marshal(m.ValidationErrors[iNdEx])
+				if err != nil {
+					return 0, err
+				}
+				i -= len(encoded)
+				copy(dAtA[i:], encoded)
+				i = encodeVarint(dAtA, i, uint64(len(encoded)))
+			}
+			i--
+			dAtA[i] = 0x12
+		}
 	}
 	if len(m.Actions) > 0 {
 		for k := range m.Actions {
@@ -1210,6 +1235,18 @@ func (m *CheckResourceSetResponse_ActionEffectMap) SizeVT() (n int) {
 			n += mapEntrySize + 1 + sov(uint64(mapEntrySize))
 		}
 	}
+	if len(m.ValidationErrors) > 0 {
+		for _, e := range m.ValidationErrors {
+			if size, ok := interface{}(e).(interface {
+				SizeVT() int
+			}); ok {
+				l = size.SizeVT()
+			} else {
+				l = proto.Size(e)
+			}
+			n += 1 + l + sov(uint64(l))
+		}
+	}
 	if m.unknownFields != nil {
 		n += len(m.unknownFields)
 	}
@@ -1867,6 +1904,48 @@ func (m *CheckResourceSetResponse_ActionEffectMap) UnmarshalVT(dAtA []byte) erro
 				}
 			}
 			m.Actions[mapkey] = mapvalue
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field ValidationErrors", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLength
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLength
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.ValidationErrors = append(m.ValidationErrors, &v11.ValidationError{})
+			if unmarshal, ok := interface{}(m.ValidationErrors[len(m.ValidationErrors)-1]).(interface {
+				UnmarshalVT([]byte) error
+			}); ok {
+				if err := unmarshal.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
+					return err
+				}
+			} else {
+				if err := proto.Unmarshal(dAtA[iNdEx:postIndex], m.ValidationErrors[len(m.ValidationErrors)-1]); err != nil {
+					return err
+				}
+			}
 			iNdEx = postIndex
 		default:
 			iNdEx = preIndex
@@ -4095,7 +4174,7 @@ func (m *ListAuditLogEntriesResponse) UnmarshalVT(dAtA []byte) error {
 					}
 				}
 			} else {
-				v := &v11.AccessLogEntry{}
+				v := &v12.AccessLogEntry{}
 				if unmarshal, ok := interface{}(v).(interface {
 					UnmarshalVT([]byte) error
 				}); ok {
@@ -4152,7 +4231,7 @@ func (m *ListAuditLogEntriesResponse) UnmarshalVT(dAtA []byte) error {
 					}
 				}
 			} else {
-				v := &v11.DecisionLogEntry{}
+				v := &v12.DecisionLogEntry{}
 				if unmarshal, ok := interface{}(v).(interface {
 					UnmarshalVT([]byte) error
 				}); ok {
@@ -4394,7 +4473,7 @@ func (m *ListPoliciesResponse) UnmarshalVT(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.Policies = append(m.Policies, &v12.Policy{})
+			m.Policies = append(m.Policies, &v13.Policy{})
 			if unmarshal, ok := interface{}(m.Policies[len(m.Policies)-1]).(interface {
 				UnmarshalVT([]byte) error
 			}); ok {

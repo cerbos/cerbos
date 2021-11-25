@@ -16,7 +16,9 @@ import (
 	"go.uber.org/zap"
 
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
+	"github.com/cerbos/cerbos/internal/namer"
 	"github.com/cerbos/cerbos/internal/policy"
+	"github.com/cerbos/cerbos/internal/schema"
 	"github.com/cerbos/cerbos/internal/storage"
 	"github.com/cerbos/cerbos/internal/storage/index"
 	"github.com/cerbos/cerbos/internal/util"
@@ -124,6 +126,18 @@ func (dw *dirWatch) triggerUpdate() {
 
 		for f := range batch {
 			fullPath := filepath.Join(dw.dir, f)
+
+			if f == schema.RelativePathToSchema {
+				if _, err := os.Stat(fullPath); errors.Is(err, os.ErrNotExist) {
+					dw.log.Debugw("Detected schema file removal", "file", f)
+					dw.NotifySubscribers(storage.NewEvent(storage.EventDeleteSchema, namer.ModuleID{}))
+					continue
+				}
+
+				dw.NotifySubscribers(storage.NewEvent(storage.EventAddOrUpdateSchema, namer.ModuleID{}))
+
+				continue
+			}
 
 			if _, err := os.Stat(fullPath); errors.Is(err, os.ErrNotExist) {
 				dw.log.Debugw("Detected file removal", "file", f)

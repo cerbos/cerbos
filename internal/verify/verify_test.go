@@ -19,6 +19,7 @@ import (
 	"github.com/cerbos/cerbos/internal/audit"
 	"github.com/cerbos/cerbos/internal/compile"
 	"github.com/cerbos/cerbos/internal/engine"
+	"github.com/cerbos/cerbos/internal/schema"
 	"github.com/cerbos/cerbos/internal/storage/disk"
 	"github.com/cerbos/cerbos/internal/test"
 	"github.com/cerbos/cerbos/internal/util"
@@ -343,7 +344,10 @@ func mkEngine(t *testing.T) *engine.Engine {
 	store, err := disk.NewStore(ctx, &disk.Conf{Directory: dir})
 	require.NoError(t, err)
 
-	eng, err := engine.New(ctx, compile.NewManager(ctx, store), audit.NewNopLog())
+	schemaMgr, err := schema.New(ctx, store)
+	require.NoError(t, err)
+
+	eng, err := engine.New(ctx, compile.NewManager(ctx, store), schemaMgr, audit.NewNopLog())
 	require.NoError(t, err)
 
 	return eng

@@ -11,6 +11,7 @@ import (
 	"github.com/doug-martin/goqu/v9"
 	"go.uber.org/zap"
 
+	schemav1 "github.com/cerbos/cerbos/api/genpb/cerbos/schema/v1"
 	"github.com/cerbos/cerbos/internal/namer"
 	"github.com/cerbos/cerbos/internal/policy"
 	"github.com/cerbos/cerbos/internal/storage"
@@ -23,6 +24,7 @@ type DBStorage interface {
 	GetDependents(ctx context.Context, ids ...namer.ModuleID) (map[namer.ModuleID][]namer.ModuleID, error)
 	Delete(ctx context.Context, ids ...namer.ModuleID) error
 	GetPolicies(ctx context.Context) ([]*policy.Wrapper, error)
+	GetSchema(ctx context.Context) (*schemav1.Schema, error)
 }
 
 func NewDBStorage(ctx context.Context, db *goqu.Database) (DBStorage, error) {
@@ -44,6 +46,11 @@ func NewDBStorage(ctx context.Context, db *goqu.Database) (DBStorage, error) {
 type dbStorage struct {
 	db *goqu.Database
 	*storage.SubscriptionManager
+}
+
+func (s *dbStorage) GetSchema(ctx context.Context) (*schemav1.Schema, error) {
+	// TODO(oguzhan): Implement reading schema for this Store type
+	return nil, fmt.Errorf("not implemented")
 }
 
 func (s *dbStorage) AddOrUpdate(ctx context.Context, policies ...policy.Wrapper) error {

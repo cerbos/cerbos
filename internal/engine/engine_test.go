@@ -18,6 +18,7 @@ import (
 	"github.com/cerbos/cerbos/internal/audit"
 	"github.com/cerbos/cerbos/internal/audit/local"
 	"github.com/cerbos/cerbos/internal/compile"
+	"github.com/cerbos/cerbos/internal/schema"
 	"github.com/cerbos/cerbos/internal/storage/disk"
 	"github.com/cerbos/cerbos/internal/test"
 	"github.com/cerbos/cerbos/internal/util"
@@ -116,6 +117,9 @@ func mkEngine(tb testing.TB, enableAuditLog bool) (*Engine, context.CancelFunc) 
 	store, err := disk.NewStore(ctx, &disk.Conf{Directory: dir})
 	require.NoError(tb, err)
 
+	schemaMgr, err := schema.New(ctx, store)
+	require.NoError(tb, err)
+
 	compiler := compile.NewManager(ctx, store)
 
 	var auditLog audit.Log
@@ -131,7 +135,7 @@ func mkEngine(tb testing.TB, enableAuditLog bool) (*Engine, context.CancelFunc) 
 		auditLog = audit.NewNopLog()
 	}
 
-	eng, err := New(ctx, compiler, auditLog)
+	eng, err := New(ctx, compiler, schemaMgr, auditLog)
 	require.NoError(tb, err)
 
 	return eng, cancelFunc

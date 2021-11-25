@@ -19,9 +19,11 @@ import (
 	"go.uber.org/zap"
 
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
+	schemav1 "github.com/cerbos/cerbos/api/genpb/cerbos/schema/v1"
 	"github.com/cerbos/cerbos/internal/config"
 	"github.com/cerbos/cerbos/internal/namer"
 	"github.com/cerbos/cerbos/internal/policy"
+	"github.com/cerbos/cerbos/internal/schema"
 	"github.com/cerbos/cerbos/internal/storage"
 	"github.com/cerbos/cerbos/internal/storage/index"
 	"github.com/cerbos/cerbos/internal/util"
@@ -136,6 +138,21 @@ func (s *Store) GetDependents(_ context.Context, ids ...namer.ModuleID) (map[nam
 
 func (s *Store) GetPolicies(ctx context.Context) ([]*policy.Wrapper, error) {
 	return s.idx.GetPolicies(ctx)
+}
+
+func (s *Store) GetSchema(ctx context.Context) (*schemav1.Schema, error) {
+	schemaFileAbsPath, err := filepath.Abs(filepath.Join(s.conf.CheckoutDir, s.conf.SubDir, schema.RelativePathToSchema))
+	if err != nil {
+		return nil, fmt.Errorf("failed to determine absolute path to the schema file [%s - %s - %s]: %w",
+			s.conf.CheckoutDir, s.conf.SubDir, schema.RelativePathToSchema, err)
+	}
+
+	sch, err := schema.ReadSchemaFromFile(schemaFileAbsPath)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read schema file from path %s: %w", schemaFileAbsPath, err)
+	}
+
+	return sch, nil
 }
 
 func isEmptyDir(dir string) (bool, error) {

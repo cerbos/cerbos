@@ -17,6 +17,7 @@ import (
 
 	"github.com/cerbos/cerbos/internal/compile"
 	"github.com/cerbos/cerbos/internal/engine"
+	"github.com/cerbos/cerbos/internal/schema"
 	"github.com/cerbos/cerbos/internal/storage/disk"
 	"github.com/cerbos/cerbos/internal/storage/index"
 	"github.com/cerbos/cerbos/internal/verify"
@@ -89,8 +90,18 @@ func doRun(cmd *cobra.Command, args []string) error {
 	}
 
 	if !skipTests {
-		compiler := compile.NewManager(ctx, disk.NewFromIndex(idx))
-		eng, err := engine.NewEphemeral(ctx, compiler)
+		storeFromIndex, err := disk.NewFromIndex(idx)
+		if err != nil {
+			return fmt.Errorf("failed to create disk store from index: %w", err)
+		}
+
+		compiler := compile.NewManager(ctx, storeFromIndex)
+		schemaMgr, err := schema.New(ctx, storeFromIndex)
+		if err != nil {
+			return fmt.Errorf("failed to create schema manager: %w", err)
+		}
+
+		eng, err := engine.NewEphemeral(ctx, compiler, schemaMgr)
 		if err != nil {
 			return fmt.Errorf("failed to create engine: %w", err)
 		}
