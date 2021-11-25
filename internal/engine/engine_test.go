@@ -6,10 +6,10 @@ package engine
 import (
 	"bytes"
 	"context"
+	"google.golang.org/protobuf/encoding/protojson"
 	"log"
 	"testing"
 
-	"github.com/ghodss/yaml"
 	"github.com/google/go-cmp/cmp"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/testing/protocmp"
@@ -234,9 +234,8 @@ func TestList(t *testing.T) {
 			is.NoError(err)
 			is.NotNil(response)
 			is.Equal(tt.want, response.FilterSql)
-			buf, err := yaml.Marshal(response)
-			is.NoError(err)
-			log.Print(string(buf))
+			buf := protojson.Format(response)
+			log.Print(buf)
 		})
 	}
 }

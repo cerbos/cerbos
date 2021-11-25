@@ -178,6 +178,10 @@ func TestPartialEvaluation(t *testing.T) {
 			result: `R.attr.geo in ["GB", "US", "CA"]`,
 		},
 		{
+			expr:   "R.attr.geo in (y + [z]).map(t, t.upperAscii()) || 1 == 1",
+			result: "true",
+		},
+		{
 			expr:   `"CA" in (y + [z]).map(t, t.upperAscii())`,
 			result: "true",
 		},

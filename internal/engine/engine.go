@@ -373,11 +373,13 @@ func buildExpr(expr *exprpb.Expr, acc *responsev1.ListResourcesResponse_Expressi
 
 	switch expr := expr.ExprKind.(type) {
 	case *exprpb.Expr_CallExpr:
+		fn, _ := opFromCLE(expr.CallExpr.Function)
+		e := Expr{
+			Operator: fn,
+			Operands: make([]*ExprOp, len(expr.CallExpr.Args)),
+		}
 		eoe := ExprOpExpr{
-			Expression: &Expr{
-				Operator: expr.CallExpr.Function,
-				Operands: make([]*ExprOp, len(expr.CallExpr.Args)),
-			},
+			Expression: &e,
 		}
 		for i, arg := range expr.CallExpr.Args {
 			eoe.Expression.Operands[i] = &ExprOp{}
@@ -410,12 +412,8 @@ func buildExpr(expr *exprpb.Expr, acc *responsev1.ListResourcesResponse_Expressi
 			}
 		}
 
-		n := len(names)
-		if n > 2 && names[n-1] == "R" && names[n-2] == "attr" {
-			n -= 2
-		}
 		var sb strings.Builder
-		for i := n - 1; i >= 0; i-- {
+		for i := len(names) - 1; i >= 0; i-- {
 			sb.WriteString(names[i])
 			if i > 0 {
 				sb.WriteString(".")
