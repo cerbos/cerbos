@@ -153,12 +153,12 @@ mkdir policies
 
 Now we will start the Cerbos container, mounting the config and policies folder into the container:
 
-[source,bash]
+[source,bash,subs="attributes"]
 ----
 docker run -i -t -p 3592:3592 \
   -v $(pwd)/config:/config \
   -v $(pwd)/policies:/policies \
-  ghcr.io/cerbos/cerbos:0.10.0 \
+  {app-docker-img} \
   server --config=/config/conf.yaml
 ----
 
@@ -216,11 +216,11 @@ xref:policies:conditions.adoc[Conditions] are the powerful part of Cerbos which 
 
 As you are working on the policies you can run the following to check that they are valid. If no errors are logged then you are good to go.
 
-[source,bash]
+[source,bash,subs="attributes"]
 ----
 docker run -i -t -p 3592:3592 \
   -v $(pwd)/policies:/policies \
-  ghcr.io/cerbos/cerbos:0.10.0 \
+  {app-docker-img} \
   compile /policies
 ----
 
