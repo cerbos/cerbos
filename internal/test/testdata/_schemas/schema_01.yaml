@@ -47,14 +47,34 @@ resourceSchemas: # define schema for request.resource.attr
         type: string
       dev_record:
         type: boolean
+
+  salary_record:
+    type: object
+    properties:
+      department:
+        type: string
+      geography:
+        type: string
+      id:
+        type: string
+      team:
+        type: string
+      owner:
+        type: string
+      dev_record:
+        type: boolean
+
+  purchase_order:
+    type: object
+    properties:
       ownerOrgId:
         type: string
       tags:
         type: object
         properties:
-          brands:
+          brand:
             type: string
-          classes:
+          class:
             type: string
-          regions:
+          region:
             type: string

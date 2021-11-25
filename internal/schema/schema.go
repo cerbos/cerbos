@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/cerbos/cerbos/internal/observability/tracing"
+	"github.com/tidwall/gjson"
 	"google.golang.org/protobuf/encoding/protojson"
 	"io"
 	"strings"
@@ -203,7 +204,7 @@ func (m *Manager) validatePrincipal(ctx context.Context,
 		return fmt.Errorf("failed to marshal principal attributes: %w", err)
 	}
 
-	principalValidation, err := principalSchema.ValidateBytes(ctx, principalAttrBytes)
+	principalValidation, err := principalSchema.ValidateBytes(ctx, []byte(gjson.GetBytes(principalAttrBytes, "attr").Raw))
 	if err != nil {
 		return fmt.Errorf("failed to validate principal attributes: %w", err)
 	}
@@ -244,8 +245,8 @@ func (m *Manager) validateResource(ctx context.Context, resourceKind string,
 		m.log.Debugf("no schema found for the kind '%s'", resourceKind)
 		return nil
 	}
-
-	resourceValidation, err := resourceSchema.ValidateBytes(ctx, resourceAttrBytes)
+	resourceValidation, err := resourceSchema.ValidateBytes(ctx,
+		[]byte(gjson.GetBytes(resourceAttrBytes, "attr").Raw))
 	if err != nil {
 		return fmt.Errorf("failed to validate resource attributes: %w", err)
 	}
