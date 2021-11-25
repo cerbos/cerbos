@@ -223,7 +223,10 @@ func (m *Manager) validateResource(ctx context.Context, resourceKind string,
 	resourceSchemas map[string]*jsonschema.Schema) error {
 	resourcePropertiesMap, ok := resourceProperties[resourceKind]
 	if !ok {
-		m.log.Warnf("no schema properties found for the kind '%s'", resourceKind)
+		if m.conf.Enforcement == EnforcementReject {
+			return fmt.Errorf("no schema properties found for the kind '%s'", resourceKind)
+		}
+		m.log.Debugf("no schema properties found for the kind '%s'", resourceKind)
 		return nil
 	}
 
