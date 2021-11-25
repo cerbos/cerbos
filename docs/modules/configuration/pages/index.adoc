@@ -163,8 +163,8 @@ audit: # Optional
       gcInterval: 60s
 
 schema: # Optional
-  enforcement: reject # level of the validations (none, warn, reject)
-  ignoreExtraFields: false # allows extra fields to be accepted
+  enforcement: reject # How to enforce schema validation (none: no enforcement, warn: log warnings, reject: reject invalid requests)
+  ignoreUnknownFields: false # Ignore unknown fields not defined in the schema
 ----
 
 

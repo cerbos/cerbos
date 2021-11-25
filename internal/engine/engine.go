@@ -279,7 +279,7 @@ func (engine *Engine) evaluate(ctx context.Context, input *enginev1.CheckInput, 
 	}
 
 	err = engine.schemaMgr.Validate(ctx, input)
-	var validationErrorList *schema.ValidationErrorList
+	var validationErrorList schema.ValidationErrorList
 	if err != nil {
 		if ok := errors.As(err, &validationErrorList); !ok {
 			return nil, err
@@ -287,7 +287,7 @@ func (engine *Engine) evaluate(ctx context.Context, input *enginev1.CheckInput, 
 	}
 
 	// If there are errors present in schema validation, return EFFECT_DENY for all actions
-	if validationErrorList != nil && len(validationErrorList.Errors) > 0 {
+	if validationErrorList != nil && len(validationErrorList) > 0 {
 		output.ValidationErrors = validationErrorList.SchemaErrors()
 
 		for _, action := range input.Actions {

@@ -86,7 +86,7 @@ func TestValidate(t *testing.T) {
 
 		var mgr = &Manager{
 			conf: &Conf{
-				IgnoreExtraFields: false,
+				IgnoreUnknownFields: false,
 			},
 		}
 
@@ -104,10 +104,10 @@ func TestValidate(t *testing.T) {
 				t.Fail()
 			}
 
-			if validationErrorList.Errors != nil && !tc.wantErr {
+			if validationErrorList != nil && !tc.wantErr {
 				t.Log("wanted no error, but error occurred")
 				t.Fail()
-			} else if validationErrorList.Errors == nil && tc.wantErr {
+			} else if validationErrorList == nil && tc.wantErr {
 				t.Log("wanted error, but no error present")
 				t.Fail()
 			}
@@ -245,7 +245,7 @@ func TestMethods(t *testing.T) {
 	t.Run("schema.Manager.validateInput", func(t *testing.T) {
 		mgr := &Manager{
 			conf: &Conf{
-				IgnoreExtraFields: false,
+				IgnoreUnknownFields: false,
 			},
 		}
 
@@ -332,17 +332,17 @@ func TestMethods(t *testing.T) {
 				continue
 			}
 
-			var validationErrorList *ValidationErrorList
+			var validationErrorList ValidationErrorList
 			ok := errors.As(err, &validationErrorList)
 			if !ok {
 				t.Log("failed to assert type for ValidationErrorList")
 				t.Fail()
 			}
 
-			if validationErrorList.Errors != nil && !tc.wantErr {
+			if validationErrorList != nil && !tc.wantErr {
 				t.Log("wanted no error, but error occurred")
 				t.Fail()
-			} else if validationErrorList.Errors == nil && tc.wantErr {
+			} else if validationErrorList == nil && tc.wantErr {
 				t.Log("wanted error, but no error present")
 				t.Fail()
 			}

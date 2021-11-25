@@ -5,4 +5,3 @@
 * xref:storage.adoc[Storage]
 * xref:audit.adoc[Audit]
 * xref:tracing.adoc[Tracing]
-* xref:schema.adoc[Schema]

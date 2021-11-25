@@ -6,9 +6,9 @@ package schema
 import "path/filepath"
 
 const (
-	confKey                  = "schema"
-	defaultIgnoreExtraFields = true
-	defaultEnforcement       = EnforcementNone
+	confKey                    = "schema"
+	defaultIgnoreUnknownFields = true
+	defaultEnforcement         = EnforcementNone
 )
 
 var (
@@ -17,8 +17,8 @@ var (
 
 // Conf holds configuration related to schema validation
 type Conf struct {
-	// IgnoreExtraFields allows extra fields to be accepted.
-	IgnoreExtraFields bool `yaml:"ignoreExtraFields"`
+	// IgnoreUnknownFields Ignores fields not defined in the schema
+	IgnoreUnknownFields bool `yaml:"ignoreUnknownFields"`
 	// Enforcement level of the validations. (none, warn, reject)
 	Enforcement Enforcement `yaml:"enforcement"`
 }
@@ -28,7 +28,7 @@ func (c *Conf) Key() string {
 }
 
 func (c *Conf) SetDefaults() {
-	c.IgnoreExtraFields = defaultIgnoreExtraFields
+	c.IgnoreUnknownFields = defaultIgnoreUnknownFields
 	c.Enforcement = defaultEnforcement
 }
 

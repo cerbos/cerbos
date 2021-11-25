@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/cerbos/cerbos/internal/observability/tracing"
+	"google.golang.org/protobuf/encoding/protojson"
 	"strings"
 	"sync"
 
@@ -49,9 +50,8 @@ func New(ctx context.Context, store storage.Store) (*Manager, error) {
 	if err := mgr.ReadOrUpdateSchemaFromStore(ctx); err != nil {
 		if conf.Enforcement == EnforcementReject {
 			return nil, fmt.Errorf("schema file not found: %w", err)
-		} else {
-			mgr.log.Warnf("schema file not found: %s", err)
 		}
+		mgr.log.Warnw("schema file not found", "error", err)
 	}
 
 	store.Subscribe(mgr)
@@ -63,8 +63,13 @@ func (m *Manager) Validate(ctx context.Context, input *enginev1.CheckInput) erro
 	ctx, span := tracing.StartSpan(ctx, "schema.Validate")
 	defer span.End()
 	m.mu.RLock()
-	defer m.mu.RUnlock()
-	if m.schema == nil {
+	schema := m.schema
+	principalProperties := m.principalProperties
+	principalSchema := m.principalSchema
+	resourceProperties := m.resourceProperties
+	resourceSchemas := m.resourceSchemas
+	m.mu.RUnlock()
+	if schema == nil {
 		return nil
 	}
 
@@ -73,39 +78,40 @@ func (m *Manager) Validate(ctx context.Context, input *enginev1.CheckInput) erro
 		return nil
 	}
 
-	principalValidationErr := m.validatePrincipal(ctx, input.Principal.Attr)
+	principalValidationErr := m.validatePrincipal(ctx, input.Principal.Attr, principalProperties, principalSchema)
 	if principalValidationErr != nil && !IsValidationErrorList(principalValidationErr) {
 		return fmt.Errorf("failed to validate the principal: %w", principalValidationErr)
 	}
 
-	resourceValidationErr := m.validateResource(ctx, input.Resource.Kind, input.Resource.Attr)
+	resourceValidationErr := m.validateResource(ctx, input.Resource.Kind, input.Resource.Attr, resourceProperties,
+		resourceSchemas)
 	if resourceValidationErr != nil && !IsValidationErrorList(resourceValidationErr) {
 		return fmt.Errorf("failed to validate the resource: %w", resourceValidationErr)
 	}
 
-	var principalValidationErrorList *ValidationErrorList
+	var principalValidationErrorList ValidationErrorList
 	ok := errors.As(principalValidationErr, &principalValidationErrorList)
 	if !ok {
 		principalValidationErrorList = nil
 	}
 
-	var resourceValidationErrorList *ValidationErrorList
+	var resourceValidationErrorList ValidationErrorList
 	ok = errors.As(resourceValidationErr, &resourceValidationErrorList)
 	if !ok {
 		resourceValidationErrorList = nil
 	}
 
-	numErrors := len(principalValidationErrorList.Errors) + len(resourceValidationErrorList.Errors)
+	numErrors := len(principalValidationErrorList) + len(resourceValidationErrorList)
 	validation := make([]ValidationError, 0, numErrors)
 	messages := make([]string, 0, numErrors)
 
-	for _, validationError := range principalValidationErrorList.Errors {
+	for _, validationError := range principalValidationErrorList {
 		validation = append(validation, validationError)
 		messages = append(messages, fmt.Sprintf("%s: %s", validationError.Path,
 			validationError.Message))
 	}
 
-	for _, validationError := range resourceValidationErrorList.Errors {
+	for _, validationError := range resourceValidationErrorList {
 		validation = append(validation, validationError)
 		messages = append(messages, fmt.Sprintf("%s: %s", validationError.Path,
 			validationError.Message))
@@ -117,7 +123,7 @@ func (m *Manager) Validate(ctx context.Context, input *enginev1.CheckInput) erro
 	}
 
 	if len(validation) != 0 {
-		printFn("Schema validation failure", zap.Strings("Errors", messages))
+		printFn("Schema validation failure", zap.Strings("errors", messages))
 	}
 
 	for _, validationData := range validation {
@@ -133,14 +139,14 @@ func (m *Manager) Validate(ctx context.Context, input *enginev1.CheckInput) erro
 
 	if m.conf.Enforcement == EnforcementReject {
 		return MergeValidationErrorLists(principalValidationErrorList, resourceValidationErrorList)
-	} else {
-		return nil
 	}
+
+	return nil
 }
 
 func (m *Manager) validateInput(inputProperties map[string]*structpb.Value, schemaProperties map[string]string,
 	source schemav1.ValidationError_Source) error {
-	if m.conf.IgnoreExtraFields {
+	if m.conf.IgnoreUnknownFields {
 		return nil
 	}
 
@@ -159,32 +165,28 @@ func (m *Manager) validateInput(inputProperties map[string]*structpb.Value, sche
 		}
 	}
 
-	return &ValidationErrorList{
-		Errors: validationErrors,
-	}
+	return ValidationErrorList(validationErrors)
 }
 
 func (m *Manager) validatePrincipal(ctx context.Context,
-	principalAttributes map[string]*structpb.Value) error {
-	m.mu.RLock()
-	defer m.mu.RUnlock()
-
-	inputValidationErr := m.validateInput(principalAttributes, m.principalProperties, schemav1.ValidationError_SOURCE_PRINCIPAL)
+	principalAttributes map[string]*structpb.Value, principalProperties map[string]string,
+	principalSchema *jsonschema.Schema) error {
+	inputValidationErr := m.validateInput(principalAttributes, principalProperties, schemav1.ValidationError_SOURCE_PRINCIPAL)
 	if inputValidationErr != nil && !IsValidationErrorList(inputValidationErr) {
 		return fmt.Errorf("failed to validate the input: %w", inputValidationErr)
 	}
 
-	principalAttrBytes, err := json.Marshal(principalAttributes)
+	principalAttrBytes, err := protojson.Marshal(&schemav1.AttrWrapper{Attr: principalAttributes})
 	if err != nil {
 		return fmt.Errorf("failed to marshal principal attributes: %w", err)
 	}
 
-	principalValidation, err := m.principalSchema.ValidateBytes(ctx, principalAttrBytes)
+	principalValidation, err := principalSchema.ValidateBytes(ctx, principalAttrBytes)
 	if err != nil {
 		return fmt.Errorf("failed to validate principal attributes: %w", err)
 	}
 
-	var inputValidationErrorList *ValidationErrorList
+	var inputValidationErrorList ValidationErrorList
 	ok := errors.As(inputValidationErr, &inputValidationErrorList)
 	if !ok {
 		inputValidationErrorList = nil
@@ -194,11 +196,9 @@ func (m *Manager) validatePrincipal(ctx context.Context,
 }
 
 func (m *Manager) validateResource(ctx context.Context, resourceKind string,
-	resourceAttributes map[string]*structpb.Value) error {
-	m.mu.RLock()
-	defer m.mu.RUnlock()
-
-	resourcePropertiesMap, ok := m.resourceProperties[resourceKind]
+	resourceAttributes map[string]*structpb.Value, resourceProperties map[string]map[string]string,
+	resourceSchemas map[string]*jsonschema.Schema) error {
+	resourcePropertiesMap, ok := resourceProperties[resourceKind]
 	if !ok {
 		m.log.Warnf("no schema properties found for the kind '%s'", resourceKind)
 		return nil
@@ -209,12 +209,12 @@ func (m *Manager) validateResource(ctx context.Context, resourceKind string,
 		return fmt.Errorf("failed to validate the input: %w", inputValidationErr)
 	}
 
-	resourceAttrBytes, err := json.Marshal(resourceAttributes)
+	resourceAttrBytes, err := protojson.Marshal(&schemav1.AttrWrapper{Attr: resourceAttributes})
 	if err != nil {
 		return fmt.Errorf("failed to marshal resource attributes: %w", err)
 	}
 
-	resourceSchema, ok := m.resourceSchemas[resourceKind]
+	resourceSchema, ok := resourceSchemas[resourceKind]
 	if !ok {
 		if m.conf.Enforcement == EnforcementReject {
 			return fmt.Errorf("no schema found for the kind '%s'", resourceKind)
@@ -228,7 +228,7 @@ func (m *Manager) validateResource(ctx context.Context, resourceKind string,
 		return fmt.Errorf("failed to validate resource attributes: %w", err)
 	}
 
-	var inputValidationErrorList *ValidationErrorList
+	var inputValidationErrorList ValidationErrorList
 	ok = errors.As(inputValidationErr, &inputValidationErrorList)
 	if !ok {
 		inputValidationErrorList = nil
@@ -264,10 +264,6 @@ func (m *Manager) walkSchemaProperties(path string, properties map[string]*schem
 }
 
 func (m *Manager) ReadOrUpdateSchemaFromStore(ctx context.Context) error {
-	ctx, span := tracing.StartSpan(ctx, "schema.ReadOrUpdateSchemaFromStore")
-	defer span.End()
-	m.mu.Lock()
-	defer m.mu.Unlock()
 	sch, err := m.store.GetSchema(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to retrieve schema from store: %w", err)
@@ -278,9 +274,10 @@ func (m *Manager) ReadOrUpdateSchemaFromStore(ctx context.Context) error {
 		return fmt.Errorf("failed to validate schema: %w", err)
 	}
 
-	m.walkSchemaProperties("", sch.PrincipalSchema.Properties, m.principalProperties)
+	principalProperties := make(map[string]string)
+	m.walkSchemaProperties("", sch.PrincipalSchema.Properties, principalProperties)
 
-	principalSchema, err := json.Marshal(sch.PrincipalSchema)
+	principalSchema, err := protojson.Marshal(sch.PrincipalSchema)
 	if err != nil {
 		return fmt.Errorf("failed to marshal principal schema: %w", err)
 	}
@@ -290,17 +287,15 @@ func (m *Manager) ReadOrUpdateSchemaFromStore(ctx context.Context) error {
 		return fmt.Errorf("failed to unmarshal into principal schema object: %w", err)
 	}
 
-	resourceSchemaMap := make(map[string]*jsonschema.Schema)
-
-	m.schema = sch
-	m.principalSchema = principalSchemaObject
+	var resourceSchemaMap = make(map[string]*jsonschema.Schema)
+	var resourceProperties = make(map[string]map[string]string)
 
 	for key, resourceSchema := range sch.ResourceSchemas {
 		var resourcePropertiesArr = make(map[string]string)
 		m.walkSchemaProperties("", resourceSchema.Properties, resourcePropertiesArr)
-		m.resourceProperties[key] = resourcePropertiesArr
+		resourceProperties[key] = resourcePropertiesArr
 
-		resourceSchemaBytes, err := json.Marshal(resourceSchema)
+		resourceSchemaBytes, err := protojson.Marshal(resourceSchema)
 		if err != nil {
 			return fmt.Errorf("failed to marshal resource schema: %w", err)
 		}
@@ -313,7 +308,13 @@ func (m *Manager) ReadOrUpdateSchemaFromStore(ctx context.Context) error {
 		resourceSchemaMap[key] = resourceSchemaObject
 	}
 
+	m.mu.Lock()
+	m.schema = sch
+	m.principalProperties = principalProperties
+	m.principalSchema = principalSchemaObject
+	m.resourceProperties = resourceProperties
 	m.resourceSchemas = resourceSchemaMap
+	m.mu.Unlock()
 
 	return nil
 }
@@ -335,7 +336,9 @@ func (m *Manager) OnStorageEvent(events ...storage.Event) {
 			m.mu.Lock()
 			m.schema = nil
 			m.principalSchema = nil
+			m.principalProperties = nil
 			m.resourceSchemas = nil
+			m.resourceProperties = nil
 			m.mu.Unlock()
 			m.log.Debugw("Handled schema deletion event", "event", event)
 		}

@@ -9,46 +9,42 @@ import (
 
 type ValidationErrorType string
 
-func NewValidationError(keyError jsonschema.KeyError, source schemav1.ValidationError_Source) *ValidationError {
-	return &ValidationError{
+func NewValidationError(keyError jsonschema.KeyError, source schemav1.ValidationError_Source) ValidationError {
+	return ValidationError{
 		Path:    keyError.PropertyPath,
 		Message: keyError.Message,
 		Source:  source,
 	}
 }
 
-func NewValidationErrorList(errors []jsonschema.KeyError, source schemav1.ValidationError_Source) *ValidationErrorList {
+func NewValidationErrorList(errors []jsonschema.KeyError, source schemav1.ValidationError_Source) ValidationErrorList {
 	var validationErrorList []ValidationError
 	for _, value := range errors {
 		validationError := NewValidationError(value, source)
-		validationErrorList = append(validationErrorList, *validationError)
+		validationErrorList = append(validationErrorList, validationError)
 	}
 
-	return &ValidationErrorList{
-		Errors: validationErrorList,
-	}
+	return validationErrorList
 }
 
-func MergeValidationErrorLists(validationErrors ...*ValidationErrorList) *ValidationErrorList {
+func MergeValidationErrorLists(validationErrors ...ValidationErrorList) ValidationErrorList {
 	var errors []ValidationError
 	for _, validationErrorList := range validationErrors {
-		for _, validationError := range validationErrorList.Errors {
+		for _, validationError := range validationErrorList {
 			errors = append(errors, validationError)
 		}
 	}
 
-	return &ValidationErrorList{
-		Errors: errors,
-	}
+	return errors
 }
 
 func IsValidationError(err error) bool {
-	_, ok := err.(*ValidationError)
+	_, ok := err.(ValidationError)
 	return ok
 }
 
 func IsValidationErrorList(err error) bool {
-	_, ok := err.(*ValidationErrorList)
+	_, ok := err.(ValidationErrorList)
 	return ok
 }
 
@@ -58,31 +54,29 @@ type ValidationError struct {
 	Source  schemav1.ValidationError_Source
 }
 
-func (e *ValidationError) Error() string {
+func (e ValidationError) Error() string {
 	return fmt.Sprintf("%s: %s", e.Path, e.Message)
 }
 
-type ValidationErrorList struct {
-	Errors []ValidationError
-}
+type ValidationErrorList []ValidationError
 
-func (e *ValidationErrorList) Error() string {
+func (e ValidationErrorList) Error() string {
 	var errorString strings.Builder
-	for _, value := range e.Errors {
+	for _, value := range e {
 		errorString.WriteString(value.Error())
 		errorString.WriteString("\n")
 	}
 	return errorString.String()
 }
 
-func (e *ValidationErrorList) SchemaErrors() []*schemav1.ValidationError {
-	noOfErrors := len(e.Errors)
+func (e ValidationErrorList) SchemaErrors() []*schemav1.ValidationError {
+	noOfErrors := len(e)
 	if noOfErrors == 0 {
 		return nil
 	}
 
 	var schemaErrors = make([]*schemav1.ValidationError, noOfErrors, noOfErrors)
-	for i, validationError := range e.Errors {
+	for i, validationError := range e {
 		schemaErrors[i] = &schemav1.ValidationError{
 			Path:    validationError.Path,
 			Message: validationError.Message,
