@@ -124,15 +124,12 @@ func mkEngine(tb testing.TB, enableAuditLog, enableSchemaValidation bool) (*Engi
 	store, err := disk.NewStore(ctx, &disk.Conf{Directory: dir})
 	require.NoError(tb, err)
 
-	ignoreUnknownFields := true
 	enforcement := schema.EnforcementNone
 	if enableSchemaValidation {
-		ignoreUnknownFields = false
 		enforcement = schema.EnforcementReject
 	}
 
 	schemaMgr, err := schema.NewWithConf(ctx, store, &schema.Conf{
-		IgnoreUnknownFields:  ignoreUnknownFields,
 		IgnoreSchemaNotFound: true,
 		Enforcement:          enforcement,
 	})

@@ -1,6 +1,6 @@
 ---
 description: "Donald Duck tries to view and approve a production leave request and a dev leave request"
-schema: "{{ .Files.Get `_schemas/schema_01.yaml` | base64encode }}"
+schema: "{{ .Files.Get `_schemas/common.yaml` | b64enc }}"
 inputs: [
   {
     "requestId": "test1",

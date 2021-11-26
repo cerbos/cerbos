@@ -82,6 +82,7 @@ type Store interface {
 	GetDependents(context.Context, ...namer.ModuleID) (map[namer.ModuleID][]namer.ModuleID, error)
 	// GetPolicies returns the policies recorded in the store.
 	GetPolicies(context.Context) ([]*policy.Wrapper, error)
+	// GetSchema loads the schema from the store.
 	GetSchema(context.Context) (*schemav1.Schema, error)
 }
 

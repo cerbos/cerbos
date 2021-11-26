@@ -1,0 +1,42 @@
+---
+description: Valid input
+schema:
+  {{- .Files.Get "_schemas/complex.yaml" | nindent 2 }}
+input: 
+  actions: [ "view:public" ]
+  principal: 
+    id: "john"
+    policyVersion: "20210210"
+    roles: [ "employee" ]
+    attr: &crazyAttr 
+      stringField: hello
+      intField: 23
+      floatList: 3.14
+      boolField: false
+      dateField: "2021-12-01Z12:11:13"
+      stringList: ["item1", "item2"]
+      intList: [1, 2, 3]
+      floatList: [1.3, 1, 3.14]
+      boolList: [true, false]
+      nestedList:  
+        - stringField: "string"
+          floatField: 3.14
+          intListField: [1,2,3]
+        - stringField: "string"
+          floatField: 3.14
+          intListField: [1,2,3]
+      simpleObject:
+        stringField: "string"
+        floatField: 3.14
+      nestedObject:
+        key1: 
+          stringField: "string"
+          floatField: 3.14
+          intListField: [1,2,3]
+        key2: [a, b, c]
+        key3: true
+  resource: 
+    kind: "leave_request"
+    policyVersion: "20210210"
+    id: "XX125"
+    attr: *crazyAttr 

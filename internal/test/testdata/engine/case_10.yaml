@@ -1,6 +1,6 @@
 ---
 description: "No metadata"
-schema: "{{ .Files.Get `_schemas/schema_02.yaml` | base64encode }}"
+schema: "{{ .Files.Get `_schemas/complex.yaml` | b64enc }}"
 inputs: [
   {
     "requestId": "test",
@@ -14,6 +14,8 @@ inputs: [
         "employee"
       ],
       "attr": {
+        "stringField": "hello",
+        "intField": 30,
         "list": ["item1", "item2"],
         "objectsInObject": {
           "obj1": {
@@ -35,6 +37,8 @@ inputs: [
       "policyVersion": "20210210",
       "id": "XX125",
       "attr": {
+        "stringField": "hello",
+        "intField": 30,
         "department": "marketing",
         "geography": "GB",
         "id": "XX125",

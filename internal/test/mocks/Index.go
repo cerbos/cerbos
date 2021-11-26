@@ -7,8 +7,10 @@ package mocks
 
 import (
 	context "context"
+	io "io"
 
 	index "github.com/cerbos/cerbos/internal/storage/index"
+
 	mock "github.com/stretchr/testify/mock"
 
 	namer "github.com/cerbos/cerbos/internal/namer"
@@ -184,6 +186,29 @@ func (_m *Index) GetPolicies(_a0 context.Context) ([]*policy.Wrapper, error) {
 
 	var r1 error
 	if rf, ok := ret.Get(1).(func(context.Context) error); ok {
+		r1 = rf(_a0)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// OpenFile provides a mock function with given fields: _a0
+func (_m *Index) OpenFile(_a0 string) (io.ReadCloser, error) {
+	ret := _m.Called(_a0)
+
+	var r0 io.ReadCloser
+	if rf, ok := ret.Get(0).(func(string) io.ReadCloser); ok {
+		r0 = rf(_a0)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(io.ReadCloser)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(string) error); ok {
 		r1 = rf(_a0)
 	} else {
 		r1 = ret.Error(1)

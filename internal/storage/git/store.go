@@ -141,15 +141,17 @@ func (s *Store) GetPolicies(ctx context.Context) ([]*policy.Wrapper, error) {
 }
 
 func (s *Store) GetSchema(ctx context.Context) (*schemav1.Schema, error) {
-	schemaFileAbsPath, err := filepath.Abs(filepath.Join(s.conf.CheckoutDir, s.conf.SubDir, schema.RelativePathToSchema))
+	path := filepath.Join(schema.Directory, schema.File)
+	f, err := s.idx.OpenFile(path)
 	if err != nil {
-		return nil, fmt.Errorf("failed to determine absolute path to the schema file [%s - %s - %s]: %w",
-			s.conf.CheckoutDir, s.conf.SubDir, schema.RelativePathToSchema, err)
+		return nil, fmt.Errorf("failed to open schema from %s: %w", path, err)
 	}
 
-	sch, err := schema.ReadSchemaFromFile(schemaFileAbsPath)
+	defer f.Close()
+
+	sch, err := schema.ReadSchema(f)
 	if err != nil {
-		return nil, fmt.Errorf("failed to read schema file from path %s: %w", schemaFileAbsPath, err)
+		return nil, fmt.Errorf("failed to read schema: %w", err)
 	}
 
 	return sch, nil

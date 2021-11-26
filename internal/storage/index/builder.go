@@ -8,7 +8,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/fs"
-	"strings"
 
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
 	"github.com/cerbos/cerbos/internal/namer"
@@ -86,12 +85,15 @@ func Build(ctx context.Context, fsys fs.FS, opts ...BuildOpt) (Index, error) {
 			return err
 		}
 
-		if d.IsDir() || strings.HasSuffix(path, schema.RelativePathToSchema) {
-			if d.Name() == util.TestDataDirectory {
+		if d.IsDir() {
+			switch d.Name() {
+			case util.TestDataDirectory:
 				return fs.SkipDir
+			case schema.Directory:
+				return fs.SkipDir
+			default:
+				return nil
 			}
-
-			return nil
 		}
 
 		if !util.IsSupportedFileType(d.Name()) {
