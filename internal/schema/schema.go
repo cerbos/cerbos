@@ -5,13 +5,13 @@ package schema
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
 	"sync"
+	"unsafe"
 
-	"github.com/qri-io/jsonschema"
+	jsonschema "github.com/santhosh-tekuri/jsonschema/v5"
 	"github.com/tidwall/gjson"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
@@ -109,14 +109,14 @@ func (m *Manager) Validate(ctx context.Context, input *enginev1.CheckInput) erro
 	defer span.End()
 
 	var principalErrs ValidationErrorList
-	if err := m.validateAttr(ctx, ErrSourcePrincipal, input.Principal.Attr, principalProps, principalSchema); err != nil {
+	if err := m.validateAttr(ErrSourcePrincipal, input.Principal.Attr, principalProps, principalSchema); err != nil {
 		if ok := errors.As(err, &principalErrs); !ok {
 			return fmt.Errorf("failed to validate the principal: %w", err)
 		}
 	}
 
 	var resourceErrs ValidationErrorList
-	if err := m.validateAttr(ctx, ErrSourceResource, input.Resource.Attr, resourceProps, resourceSchema); err != nil {
+	if err := m.validateAttr(ErrSourceResource, input.Resource.Attr, resourceProps, resourceSchema); err != nil {
 		if ok := errors.As(err, &resourceErrs); !ok {
 			return fmt.Errorf("failed to validate the resource: %w", err)
 		}
@@ -143,7 +143,7 @@ func (m *Manager) Validate(ctx context.Context, input *enginev1.CheckInput) erro
 	return nil
 }
 
-func (m *Manager) validateAttr(ctx context.Context, src ErrSource, attr map[string]*structpb.Value, props propSet, schema *jsonschema.Schema) error {
+func (m *Manager) validateAttr(src ErrSource, attr map[string]*structpb.Value, props propSet, schema *jsonschema.Schema) error {
 	var inputErrs ValidationErrorList
 	if !m.conf.IgnoreUnknownFields {
 		if err := validateInput(src, attr, props); err != nil {
@@ -158,13 +158,17 @@ func (m *Manager) validateAttr(ctx context.Context, src ErrSource, attr map[stri
 		return fmt.Errorf("failed to marshal %s: %w", src, err)
 	}
 
-	attrBytes := []byte(gjson.GetBytes(jsonBytes, attrPath).Raw)
-	validationErrs, err := schema.ValidateBytes(ctx, attrBytes)
-	if err != nil {
-		return fmt.Errorf("failed to validate %s: %w", src, err)
+	attrJSON := gjson.GetBytes(jsonBytes, attrPath).Value()
+	if err := schema.Validate(attrJSON); err != nil {
+		var validationErr *jsonschema.ValidationError
+		if ok := errors.As(err, &validationErr); !ok {
+			return fmt.Errorf("unable to validate %s: %w", src, err)
+		}
+
+		return mergeErrLists(inputErrs, newValidationErrorList(validationErr, src))
 	}
 
-	return mergeErrLists(inputErrs, newValidationErrorList(validationErrs, src))
+	return inputErrs.ErrOrNil()
 }
 
 func validateInput(src ErrSource, attr map[string]*structpb.Value, props propSet) error {
@@ -175,7 +179,7 @@ func validateInput(src ErrSource, attr map[string]*structpb.Value, props propSet
 		if _, ok := props[p]; !ok {
 			errs = append(errs, ValidationError{
 				Path:    p,
-				Message: "Unexpected field present in the attributes",
+				Message: "Field not defined in the schema",
 				Source:  src,
 			})
 		}
@@ -257,16 +261,6 @@ func (m *Manager) UpdateSchema(source io.Reader) error {
 	return nil
 }
 
-func (m *Manager) ClearSchema() {
-	m.mu.Lock()
-	m.schema = nil
-	m.principalProps = nil
-	m.principalSchema = nil
-	m.resourceProps = nil
-	m.resourceSchemas = nil
-	m.mu.Unlock()
-}
-
 func (m *Manager) doUpdateSchema(sch *schemav1.Schema) error {
 	if err := ValidateSchemaProto(sch); err != nil {
 		return fmt.Errorf("failed to validate schema: %w", err)
@@ -308,12 +302,22 @@ func toJSONSchema(schemaProps *schemav1.JSONSchemaProps) (*jsonschema.Schema, er
 		return nil, fmt.Errorf("failed to marshal schema props: %w", err)
 	}
 
-	schema := &jsonschema.Schema{}
-	if err := json.Unmarshal(schemaBytes, schema); err != nil {
-		return nil, fmt.Errorf("failed to unmarshal JSON schema: %w", err)
+	schema, err := jsonschema.CompileString(RelativePathToSchema, *(*string)(unsafe.Pointer(&schemaBytes)))
+	if err != nil {
+		return nil, fmt.Errorf("failed to compile JSON schema: %w", err)
 	}
 
 	return schema, nil
+}
+
+func (m *Manager) ClearSchema() {
+	m.mu.Lock()
+	m.schema = nil
+	m.principalProps = nil
+	m.principalSchema = nil
+	m.resourceProps = nil
+	m.resourceSchemas = nil
+	m.mu.Unlock()
 }
 
 func (m *Manager) SubscriberID() string {
