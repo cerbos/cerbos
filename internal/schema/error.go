@@ -51,19 +51,12 @@ func newValidationErrorList(errors []jsonschema.KeyError, source ErrSource) Vali
 	return errs
 }
 
-func mergeErrLists(validationErrors ...ValidationErrorList) ValidationErrorList {
-	if len(validationErrors) == 0 {
+func mergeErrLists(el1, el2 ValidationErrorList) error {
+	if len(el1)+len(el2) == 0 {
 		return nil
 	}
 
-	var errs []ValidationError
-	for _, errList := range validationErrors {
-		for _, err := range errList {
-			errs = append(errs, err)
-		}
-	}
-
-	return errs
+	return append(el1, el2...)
 }
 
 type ValidationError struct {
@@ -86,13 +79,29 @@ func (e ValidationError) toProto() *schemav1.ValidationError {
 
 type ValidationErrorList []ValidationError
 
-func (e ValidationErrorList) Error() string {
-	var errorString strings.Builder
-	for _, value := range e {
-		errorString.WriteString(value.Error())
-		errorString.WriteString("\n")
+func (e ValidationErrorList) ErrOrNil() error {
+	if len(e) == 0 {
+		return nil
 	}
-	return errorString.String()
+
+	return e
+}
+
+func (e ValidationErrorList) Error() string {
+	return fmt.Sprintf("Validation errors: [%s]", strings.Join(e.ErrorMessages(), ", "))
+}
+
+func (e ValidationErrorList) ErrorMessages() []string {
+	if len(e) == 0 {
+		return nil
+	}
+
+	msgs := make([]string, len(e))
+	for i, err := range e {
+		msgs[i] = err.Error()
+	}
+
+	return msgs
 }
 
 func (e ValidationErrorList) SchemaErrors() []*schemav1.ValidationError {
