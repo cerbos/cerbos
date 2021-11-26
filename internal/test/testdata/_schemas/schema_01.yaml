@@ -1,0 +1,80 @@
+---
+apiVersion: "api.cerbos.dev/v1"
+description: |-
+  Schema definition file used in tests
+
+principalSchema: # define schema for request.principal.attr
+  type: object
+  properties:
+    department:
+      type: string
+    geography:
+      type: string
+    team:
+      type: string
+    managed_geographies:
+      type: string
+    orgId:
+      type: string
+    jobRoles:
+      type: array
+    tags:
+      type: object
+      properties:
+        brands:
+          type: array
+        classes:
+          type: array
+        regions:
+          type: array
+
+
+resourceSchemas: # define schema for request.resource.attr
+  leave_request:
+    type: object
+    properties:
+      department:
+        type: string
+      geography:
+        type: string
+      team:
+        type: string
+      id:
+        type: string
+      owner:
+        type: string
+      status:
+        type: string
+      dev_record:
+        type: boolean
+
+  salary_record:
+    type: object
+    properties:
+      department:
+        type: string
+      geography:
+        type: string
+      id:
+        type: string
+      team:
+        type: string
+      owner:
+        type: string
+      dev_record:
+        type: boolean
+
+  purchase_order:
+    type: object
+    properties:
+      ownerOrgId:
+        type: string
+      tags:
+        type: object
+        properties:
+          brand:
+            type: string
+          class:
+            type: string
+          region:
+            type: string

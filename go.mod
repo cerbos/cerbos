@@ -74,6 +74,7 @@ require (
 	github.com/lestrrat-go/jwx v1.2.11
 	github.com/minio/minio-go/v7 v7.0.15
 	github.com/qri-io/jsonschema v0.2.1
+	github.com/tidwall/gjson v1.12.0
 	go.opentelemetry.io/otel v1.2.0
 	go.opentelemetry.io/otel/bridge/opencensus v0.25.0
 	go.opentelemetry.io/otel/exporters/jaeger v1.2.0
@@ -179,7 +180,6 @@ require (
 	github.com/sirupsen/logrus v1.8.1 // indirect
 	github.com/stoewer/go-strcase v1.2.0 // indirect
 	github.com/stretchr/objx v0.2.0 // indirect
-	github.com/tidwall/gjson v1.10.2 // indirect
 	github.com/tidwall/match v1.1.1 // indirect
 	github.com/tidwall/pretty v1.2.0 // indirect
 	github.com/xanzy/ssh-agent v0.3.0 // indirect

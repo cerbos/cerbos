@@ -17,6 +17,7 @@ message EngineTestCase {
     repeated cerbos.engine.v1.CheckInput inputs = 2;
     repeated cerbos.engine.v1.CheckOutput want_outputs = 3;
     bool want_error = 4;
+    bytes schema = 5;
 }
 
 message ServerTestCase {

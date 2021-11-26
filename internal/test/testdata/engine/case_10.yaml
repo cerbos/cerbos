@@ -1,12 +1,11 @@
 ---
 description: "No metadata"
-schema: "{{ .Files.Get `_schemas/schema_01.yaml` | base64encode }}"
+schema: "{{ .Files.Get `_schemas/schema_02.yaml` | base64encode }}"
 inputs: [
   {
     "requestId": "test",
     "actions": [
-      "view:public",
-      "approve"
+      "view:public"
     ],
     "principal": {
       "id": "john",
@@ -15,9 +14,20 @@ inputs: [
         "employee"
       ],
       "attr": {
-        "department": "marketing",
-        "geography": "GB",
-        "team": "design"
+        "list": ["item1", "item2"],
+        "objectsInObject": {
+          "obj1": {
+            "somebool": true,
+            "somenumber": 1,
+            "somefloat": 1.34,
+          },
+          "obj2": {
+            "somebool": true,
+            "somenumber": 1,
+            "somefloat": 1.34,
+            "somelist": ["listItem1", "listItem2"]
+          }
+        }
       }
     },
     "resource": {
@@ -43,10 +53,6 @@ wantOutputs: [
         "effect": "EFFECT_ALLOW",
         "policy": "resource.leave_request.v20210210"
       },
-      "approve": {
-        "effect": "EFFECT_DENY",
-        "policy": "resource.leave_request.v20210210"
-      }
     },
     "effectiveDerivedRoles": [
       "employee_that_owns_the_record",
