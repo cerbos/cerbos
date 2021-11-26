@@ -1,15 +1,36 @@
+// Copyright 2021 Zenauth Ltd.
+// SPDX-License-Identifier: Apache-2.0
+
 package schema
 
 import (
 	"fmt"
-	schemav1 "github.com/cerbos/cerbos/api/genpb/cerbos/schema/v1"
-	"github.com/qri-io/jsonschema"
 	"strings"
+
+	"github.com/qri-io/jsonschema"
+
+	schemav1 "github.com/cerbos/cerbos/api/genpb/cerbos/schema/v1"
 )
 
-type ValidationErrorType string
+type ErrSource string
 
-func NewValidationError(keyError jsonschema.KeyError, source schemav1.ValidationError_Source) ValidationError {
+const (
+	ErrSourcePrincipal ErrSource = "P.attr"
+	ErrSourceResource  ErrSource = "R.attr"
+)
+
+func (e ErrSource) toProto() schemav1.ValidationError_Source {
+	switch e {
+	case ErrSourcePrincipal:
+		return schemav1.ValidationError_SOURCE_PRINCIPAL
+	case ErrSourceResource:
+		return schemav1.ValidationError_SOURCE_RESOURCE
+	default:
+		return schemav1.ValidationError_SOURCE_UNSPECIFIED
+	}
+}
+
+func newValidationError(keyError jsonschema.KeyError, source ErrSource) ValidationError {
 	return ValidationError{
 		Path:    keyError.PropertyPath,
 		Message: keyError.Message,
@@ -17,72 +38,82 @@ func NewValidationError(keyError jsonschema.KeyError, source schemav1.Validation
 	}
 }
 
-func NewValidationErrorList(errors []jsonschema.KeyError, source schemav1.ValidationError_Source) ValidationErrorList {
-	var validationErrorList []ValidationError
-	for _, value := range errors {
-		validationError := NewValidationError(value, source)
-		validationErrorList = append(validationErrorList, validationError)
+func newValidationErrorList(errors []jsonschema.KeyError, source ErrSource) ValidationErrorList {
+	if len(errors) == 0 {
+		return nil
 	}
 
-	return validationErrorList
-}
-
-func MergeValidationErrorLists(validationErrors ...ValidationErrorList) ValidationErrorList {
-	var errors []ValidationError
-	for _, validationErrorList := range validationErrors {
-		for _, validationError := range validationErrorList {
-			errors = append(errors, validationError)
-		}
+	errs := make([]ValidationError, len(errors))
+	for i, value := range errors {
+		errs[i] = newValidationError(value, source)
 	}
 
-	return errors
+	return errs
 }
 
-func IsValidationError(err error) bool {
-	_, ok := err.(ValidationError)
-	return ok
-}
+func mergeErrLists(el1, el2 ValidationErrorList) error {
+	if len(el1)+len(el2) == 0 {
+		return nil
+	}
 
-func IsValidationErrorList(err error) bool {
-	_, ok := err.(ValidationErrorList)
-	return ok
+	return append(el1, el2...)
 }
 
 type ValidationError struct {
 	Path    string
 	Message string
-	Source  schemav1.ValidationError_Source
+	Source  ErrSource
 }
 
 func (e ValidationError) Error() string {
-	return fmt.Sprintf("%s: %s", e.Path, e.Message)
+	return fmt.Sprintf("%s[%s]: %s", e.Source, e.Path, e.Message)
+}
+
+func (e ValidationError) toProto() *schemav1.ValidationError {
+	return &schemav1.ValidationError{
+		Path:    e.Path,
+		Message: e.Message,
+		Source:  e.Source.toProto(),
+	}
 }
 
 type ValidationErrorList []ValidationError
 
-func (e ValidationErrorList) Error() string {
-	var errorString strings.Builder
-	for _, value := range e {
-		errorString.WriteString(value.Error())
-		errorString.WriteString("\n")
-	}
-	return errorString.String()
-}
-
-func (e ValidationErrorList) SchemaErrors() []*schemav1.ValidationError {
-	noOfErrors := len(e)
-	if noOfErrors == 0 {
+func (e ValidationErrorList) ErrOrNil() error {
+	if len(e) == 0 {
 		return nil
 	}
 
-	var schemaErrors = make([]*schemav1.ValidationError, noOfErrors, noOfErrors)
-	for i, validationError := range e {
-		schemaErrors[i] = &schemav1.ValidationError{
-			Path:    validationError.Path,
-			Message: validationError.Message,
-			Source:  validationError.Source,
-		}
+	return e
+}
+
+func (e ValidationErrorList) Error() string {
+	return fmt.Sprintf("Validation errors: [%s]", strings.Join(e.ErrorMessages(), ", "))
+}
+
+func (e ValidationErrorList) ErrorMessages() []string {
+	if len(e) == 0 {
+		return nil
 	}
 
-	return schemaErrors
+	msgs := make([]string, len(e))
+	for i, err := range e {
+		msgs[i] = err.Error()
+	}
+
+	return msgs
+}
+
+func (e ValidationErrorList) SchemaErrors() []*schemav1.ValidationError {
+	numErrs := len(e)
+	if numErrs == 0 {
+		return nil
+	}
+
+	schemaErrs := make([]*schemav1.ValidationError, numErrs)
+	for i, vErr := range e {
+		schemaErrs[i] = vErr.toProto()
+	}
+
+	return schemaErrs
 }

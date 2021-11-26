@@ -12,11 +12,9 @@ const (
 	defaultIgnoreSchemaNotFound = false
 )
 
-var (
-	RelativePathToSchema = filepath.Join("_schemas", "schema.yaml")
-)
+var RelativePathToSchema = filepath.Join("_schemas", "schema.yaml")
 
-// Conf holds configuration related to schema validation
+// Conf holds configuration related to schema validation.
 type Conf struct {
 	// IgnoreUnknownFields Ignores fields not defined in the schema
 	IgnoreUnknownFields bool `yaml:"ignoreUnknownFields"`
@@ -36,7 +34,7 @@ func (c *Conf) SetDefaults() {
 	c.Enforcement = defaultEnforcement
 }
 
-// Enforcement level for schema validation
+// Enforcement level for schema validation.
 type Enforcement string
 
 const (
