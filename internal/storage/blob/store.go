@@ -11,6 +11,8 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -28,6 +30,7 @@ import (
 	"github.com/cerbos/cerbos/internal/config"
 	"github.com/cerbos/cerbos/internal/namer"
 	"github.com/cerbos/cerbos/internal/policy"
+	"github.com/cerbos/cerbos/internal/schema"
 	"github.com/cerbos/cerbos/internal/storage"
 	"github.com/cerbos/cerbos/internal/storage/index"
 )
@@ -228,6 +231,11 @@ func (s *Store) updateIndex(ctx context.Context) error {
 	var p *policyv1.Policy
 	var event storage.Event
 	for _, f := range changes.updateOrAdd {
+		if strings.HasSuffix(f, schema.RelativePathToSchema) {
+			s.NotifySubscribers(storage.NewEvent(storage.EventAddOrUpdateSchema, namer.ModuleID{}))
+			continue
+		}
+
 		p, err = policy.ReadPolicyFromFile(s.fsys, f)
 		if err != nil {
 			return err
@@ -240,6 +248,11 @@ func (s *Store) updateIndex(ctx context.Context) error {
 		s.NotifySubscribers(event)
 	}
 	for _, f := range changes.delete {
+		if strings.HasSuffix(f, schema.RelativePathToSchema) {
+			s.NotifySubscribers(storage.NewEvent(storage.EventDeleteSchema, namer.ModuleID{}))
+			continue
+		}
+
 		entry := index.Entry{File: f}
 		event, err = s.idx.Delete(entry)
 		if err != nil {
@@ -293,6 +306,16 @@ func (s *Store) GetPolicies(ctx context.Context) ([]*policy.Wrapper, error) {
 }
 
 func (s *Store) GetSchema(ctx context.Context) (*schemav1.Schema, error) {
-	// TODO(oguzhan): Implement reading schema for this Store type
-	return nil, fmt.Errorf("not implemented")
+	schemaFileAbsPath, err := filepath.Abs(filepath.Join(s.conf.WorkDir, s.conf.Prefix, schema.RelativePathToSchema))
+	if err != nil {
+		return nil, fmt.Errorf("failed to determine absolute path to the schema file [%s - %s - %s]: %w",
+			s.conf.WorkDir, s.conf.Prefix, schema.RelativePathToSchema, err)
+	}
+
+	sch, err := schema.ReadSchemaFromFile(schemaFileAbsPath)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read schema file from path %s: %w", schemaFileAbsPath, err)
+	}
+
+	return sch, nil
 }

@@ -7,6 +7,7 @@ import (
 	"bytes"
 	"fmt"
 	"io"
+	"io/fs"
 	"io/ioutil"
 
 	schemav1 "github.com/cerbos/cerbos/api/genpb/cerbos/schema/v1"
@@ -20,6 +21,17 @@ func ReadSchemaFromFile(filePath string) (*schemav1.Schema, error) {
 	}
 
 	return ReadSchema(bytes.NewReader(file))
+}
+
+func ReadSchemaFromFileSystem(fsys fs.FS, path string) (*schemav1.Schema, error) {
+	f, err := fsys.Open(path)
+	if err != nil {
+		return nil, fmt.Errorf("failed to open %s: %w", path, err)
+	}
+
+	defer f.Close()
+
+	return ReadSchema(f)
 }
 
 // ReadSchema reads a schema from the given reader.
