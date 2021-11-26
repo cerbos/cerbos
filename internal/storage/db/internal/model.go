@@ -9,6 +9,7 @@ import (
 	"time"
 
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
+	schemav1 "github.com/cerbos/cerbos/api/genpb/cerbos/schema/v1"
 	"github.com/cerbos/cerbos/internal/namer"
 )
 
@@ -21,7 +22,23 @@ const (
 	PolicyDepTbl            = "policy_dependency"
 	PolicyDepTblPolicyIDCol = "policy_id"
 	PolicyDepTblDepIDCol    = "dependency_id"
+
+	SchemaTbl              = "schema"
+	SchemaTblIDCol         = "id"
+	SchemaTblDefinitionCol = "definition"
+	SchemaDefaultID        = 1
 )
+
+type Schema struct {
+	ID          uint
+	Description string
+	Disabled    bool
+	Definition  SchemaDefWrapper
+}
+
+type SchemaDefWrapper struct {
+	*schemav1.Schema
+}
 
 type Policy struct {
 	ID          namer.ModuleID

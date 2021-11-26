@@ -272,6 +272,11 @@ func (m *Manager) doUpdateSchema(sch *schemav1.Schema) error {
 		return fmt.Errorf("failed to validate schema: %w", err)
 	}
 
+	if sch == nil {
+		m.ClearSchema()
+		return nil
+	}
+
 	principalProps := propertiesFromSchema(sch.PrincipalSchema.Properties)
 	principalSchema, err := toJSONSchema(sch.PrincipalSchema)
 	if err != nil {

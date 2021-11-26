@@ -29,6 +29,12 @@ CREATE TABLE IF NOT EXISTS policy_revision (
     definition BLOB,
     update_timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP);
 
+CREATE TABLE IF NOT EXISTS schema (
+    id INTEGER AUTO_INCREMENT PRIMARY KEY,
+    description TEXT,
+    disabled BOOLEAN default false,
+    definition BLOB);
+
 DROP TRIGGER IF EXISTS policy_on_insert;
 
 CREATE TRIGGER policy_on_insert AFTER INSERT ON policy 

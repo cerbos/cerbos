@@ -33,6 +33,12 @@ CREATE TABLE IF NOT EXISTS policy_revision (
     update_timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 
+CREATE TABLE IF NOT EXISTS schema (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    description TEXT,
+    disabled BOOLEAN default false,
+    definition BLOB
+);
 
 -- name: policy_on_insert
 CREATE TRIGGER IF NOT EXISTS policy_on_insert AFTER INSERT ON policy 

@@ -24,6 +24,7 @@ type DBStorage interface {
 	GetDependents(ctx context.Context, ids ...namer.ModuleID) (map[namer.ModuleID][]namer.ModuleID, error)
 	Delete(ctx context.Context, ids ...namer.ModuleID) error
 	GetPolicies(ctx context.Context) ([]*policy.Wrapper, error)
+	AddOrUpdateSchema(ctx context.Context, sch *schemav1.Schema) error
 	GetSchema(ctx context.Context) (*schemav1.Schema, error)
 }
 
@@ -48,9 +49,42 @@ type dbStorage struct {
 	*storage.SubscriptionManager
 }
 
+func (s *dbStorage) AddOrUpdateSchema(ctx context.Context, sch *schemav1.Schema) error {
+	event := storage.Event{
+		Kind: storage.EventAddOrUpdateSchema,
+	}
+
+	schemaRecord := Schema{
+		ID:          SchemaDefaultID,
+		Description: sch.Description,
+		Disabled:    sch.Disabled,
+		Definition:  SchemaDefWrapper{sch},
+	}
+
+	// try to upsert this policy record
+	if _, err := goqu.Insert(SchemaTbl).
+		Prepared(true).
+		Rows(schemaRecord).
+		OnConflict(goqu.DoUpdate(PolicyTblDefinitionCol, schemaRecord)).
+		Executor().ExecContext(ctx); err != nil {
+		return fmt.Errorf("failed to upsert schema: %w", err)
+	}
+
+	s.NotifySubscribers(event)
+	return nil
+}
+
 func (s *dbStorage) GetSchema(ctx context.Context) (*schemav1.Schema, error) {
-	// TODO(oguzhan): Implement reading schema for this Store type
-	return nil, fmt.Errorf("not implemented")
+	var sch Schema
+
+	_, err := s.db.Select(
+		goqu.C(SchemaTblIDCol).As("parent"),
+		goqu.C(SchemaTblDefinitionCol)).From(SchemaTbl).Where(goqu.Ex{SchemaTblIDCol: SchemaDefaultID}).ScanStruct(&sch)
+	if err != nil {
+		return nil, fmt.Errorf("could not execute %q query: %w", "GetSchema", err)
+	}
+
+	return sch.Definition.Schema, nil
 }
 
 func (s *dbStorage) AddOrUpdate(ctx context.Context, policies ...policy.Wrapper) error {

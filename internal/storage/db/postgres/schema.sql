@@ -32,6 +32,13 @@ CREATE TABLE IF NOT EXISTS policy_revision (
     update_timestamp TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );
 
+CREATE TABLE IF NOT EXISTS schema (
+    id SERIAL PRIMARY KEY,
+    description TEXT,
+    disabled BOOLEAN default false,
+    definition BYTEA
+);
+
 CREATE OR REPLACE FUNCTION process_policy_audit() RETURNS TRIGGER AS $policy_audit$
     BEGIN
         IF (TG_OP = 'DELETE') THEN
