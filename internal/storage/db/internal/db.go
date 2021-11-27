@@ -25,6 +25,7 @@ type DBStorage interface {
 	Delete(ctx context.Context, ids ...namer.ModuleID) error
 	GetPolicies(ctx context.Context) ([]*policy.Wrapper, error)
 	AddOrUpdateSchema(ctx context.Context, sch *schemav1.Schema) error
+	DeleteSchema(ctx context.Context) error
 	GetSchema(ctx context.Context) (*schemav1.Schema, error)
 }
 
@@ -51,21 +52,7 @@ type dbStorage struct {
 
 func (s *dbStorage) AddOrUpdateSchema(ctx context.Context, sch *schemav1.Schema) error {
 	if sch == nil {
-		event := storage.Event{
-			Kind: storage.EventDeleteSchema,
-		}
-
-		_, err := s.db.From(SchemaTbl).Where(goqu.C(SchemaTblIDCol).Eq(SchemaDefaultID)).Delete().Executor().Exec()
-		if err != nil {
-			return fmt.Errorf("failed to delete the schema: %w", err)
-		}
-
-		s.NotifySubscribers(event)
-
-		return nil
-	}
-	event := storage.Event{
-		Kind: storage.EventAddOrUpdateSchema,
+		return fmt.Errorf("schema cannot be nil")
 	}
 
 	schemaRecord := Schema{
@@ -77,24 +64,44 @@ func (s *dbStorage) AddOrUpdateSchema(ctx context.Context, sch *schemav1.Schema)
 
 	// try to upsert the schema record
 	if _, err := s.db.Insert(SchemaTbl).
-		Prepared(true).
 		Rows(schemaRecord).
-		OnConflict(goqu.DoUpdate(PolicyTblDefinitionCol, schemaRecord)).
 		Executor().
 		ExecContext(ctx); err != nil {
 		return fmt.Errorf("failed to upsert the schema: %w", err)
 	}
 
-	s.NotifySubscribers(event)
+	s.NotifySubscribers(storage.Event{
+		Kind: storage.EventAddOrUpdateSchema,
+	})
+
+	return nil
+}
+
+func (s *dbStorage) DeleteSchema(ctx context.Context) error {
+	_, err := s.db.From(SchemaTbl).
+		Where(goqu.C(SchemaTblIDCol).Eq(SchemaDefaultID)).
+		Delete().
+		Executor().
+		ExecContext(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to delete the schema: %w", err)
+	}
+
+	s.NotifySubscribers(storage.Event{
+		Kind: storage.EventDeleteSchema,
+	})
+
 	return nil
 }
 
 func (s *dbStorage) GetSchema(ctx context.Context) (*schemav1.Schema, error) {
 	var sch Schema
 
-	_, err := s.db.Select(
-		goqu.C(SchemaTblIDCol).As("parent"),
-		goqu.C(SchemaTblDefinitionCol)).From(SchemaTbl).Where(goqu.Ex{SchemaTblIDCol: SchemaDefaultID}).ScanStruct(&sch)
+	_, err := s.db.
+		Select(goqu.C(SchemaTblIDCol), goqu.C(SchemaTblDefinitionCol)).
+		From(SchemaTbl).
+		Where(goqu.Ex{SchemaTblIDCol: SchemaDefaultID}).
+		ScanStructContext(ctx, &sch)
 	if err != nil {
 		return nil, fmt.Errorf("could not execute %q query: %w", "GetSchema", err)
 	}

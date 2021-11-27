@@ -288,8 +288,60 @@
       }
     },
     "/admin/schema": {
+      "get": {
+        "summary": "Get schema",
+        "operationId": "CerbosAdminService_GetSchema",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1GetSchemaResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "tags": [
+          "CerbosAdminService"
+        ],
+        "security": [
+          {
+            "BasicAuth": []
+          }
+        ]
+      },
+      "delete": {
+        "summary": "Delete schema",
+        "operationId": "CerbosAdminService_DeleteSchema",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1DeleteSchemaResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "tags": [
+          "CerbosAdminService"
+        ],
+        "security": [
+          {
+            "BasicAuth": []
+          }
+        ]
+      },
       "post": {
-        "summary": "Add or update the schema",
+        "summary": "Add or update schema",
         "operationId": "CerbosAdminService_AddOrUpdateSchema",
         "responses": {
           "200": {
@@ -325,7 +377,7 @@
         ]
       },
       "put": {
-        "summary": "Add or update the schema",
+        "summary": "Add or update schema",
         "operationId": "CerbosAdminService_AddOrUpdateSchema2",
         "responses": {
           "200": {
@@ -1056,11 +1108,11 @@
           "$ref": "#/definitions/schemav1Schema"
         }
       },
-      "description": "Add/update the schema request"
+      "description": "Add/update schema request"
     },
     "v1AddOrUpdateSchemaResponse": {
       "type": "object",
-      "description": "Add/update the schema response"
+      "description": "Add/update schema response"
     },
     "v1AttributesMap": {
       "type": "object",
@@ -1341,6 +1393,10 @@
         }
       }
     },
+    "v1DeleteSchemaResponse": {
+      "type": "object",
+      "description": "Add/update schema response"
+    },
     "v1DerivedRoles": {
       "type": "object",
       "properties": {
@@ -1364,6 +1420,15 @@
         "EFFECT_NO_MATCH"
       ],
       "default": "EFFECT_UNSPECIFIED"
+    },
+    "v1GetSchemaResponse": {
+      "type": "object",
+      "properties": {
+        "schema": {
+          "$ref": "#/definitions/schemav1Schema"
+        }
+      },
+      "description": "Get schema response"
     },
     "v1ListAuditLogEntriesResponse": {
       "type": "object",

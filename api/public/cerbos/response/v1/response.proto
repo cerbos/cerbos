@@ -260,7 +260,25 @@ message ListPoliciesResponse {
 message AddOrUpdateSchemaResponse {
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
         json_schema: {
-            description: "Add/update the schema response"
+            description: "Add/update schema response"
+        }
+    };
+}
+
+message GetSchemaResponse {
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
+        json_schema: {
+            description: "Get schema response"
+        }
+    };
+
+    cerbos.schema.v1.Schema schema = 1;
+}
+
+message DeleteSchemaResponse {
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
+        json_schema: {
+            description: "Add/update schema response"
         }
     };
 }

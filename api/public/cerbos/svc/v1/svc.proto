@@ -144,7 +144,37 @@ service CerbosAdminService {
             }
         };
         option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
-            summary: "Add or update the schema",
+            summary: "Add or update schema",
+            security: {
+                security_requirement: {
+                    key: "BasicAuth";
+                    value: {};
+                }
+            }
+        };
+    }
+
+    rpc GetSchema(cerbos.request.v1.GetSchemaRequest) returns (cerbos.response.v1.GetSchemaResponse) {
+        option (google.api.http) = {
+            get: "/admin/schema"
+        };
+        option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+            summary: "Get schema",
+            security: {
+                security_requirement: {
+                    key: "BasicAuth";
+                    value: {};
+                }
+            }
+        };
+    }
+
+    rpc DeleteSchema(cerbos.request.v1.DeleteSchemaRequest) returns (cerbos.response.v1.DeleteSchemaResponse) {
+        option (google.api.http) = {
+            delete: "/admin/schema"
+        };
+        option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+            summary: "Delete schema",
             security: {
                 security_requirement: {
                     key: "BasicAuth";

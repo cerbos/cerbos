@@ -477,11 +477,28 @@ message ListPoliciesRequest {
 message AddOrUpdateSchemaRequest {
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
         json_schema: {
-            description: "Add/update the schema request"
+            description: "Add/update schema request"
         }
     };
 
     cerbos.schema.v1.Schema schema = 1 [
         (google.api.field_behavior) = REQUIRED
     ];
+}
+
+
+message GetSchemaRequest {
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
+        json_schema: {
+            description: "Get schema request"
+        }
+    };
+}
+
+message DeleteSchemaRequest {
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
+        json_schema: {
+            description: "Delete schema request"
+        }
+    };
 }

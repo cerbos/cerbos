@@ -40,6 +40,31 @@ type SchemaDefWrapper struct {
 	*schemav1.Schema
 }
 
+func (sdw SchemaDefWrapper) Value() (driver.Value, error) {
+	return sdw.Schema.MarshalVT()
+}
+
+func (sdw *SchemaDefWrapper) Scan(src interface{}) error {
+	var source []byte
+	switch t := src.(type) {
+	case nil:
+		return nil
+	case string:
+		source = []byte(t)
+	case []byte:
+		source = t
+	default:
+		return fmt.Errorf("unexpected type for schema definition: %T", src)
+	}
+
+	sdw.Schema = &schemav1.Schema{}
+	if err := sdw.Schema.UnmarshalVT(source); err != nil {
+		return fmt.Errorf("failed to unmarshal schema definition: %w", err)
+	}
+
+	return nil
+}
+
 type Policy struct {
 	ID          namer.ModuleID
 	Kind        string
