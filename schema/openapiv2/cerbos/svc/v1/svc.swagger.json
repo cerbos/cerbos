@@ -981,12 +981,12 @@
           "type": "string"
         },
         "principalSchema": {
-          "$ref": "#/definitions/v1JSONSchemaProps"
+          "type": "object"
         },
         "resourceSchemas": {
           "type": "object",
           "additionalProperties": {
-            "$ref": "#/definitions/v1JSONSchemaProps"
+            "type": "object"
           }
         }
       }
@@ -1364,44 +1364,6 @@
         "EFFECT_NO_MATCH"
       ],
       "default": "EFFECT_UNSPECIFIED"
-    },
-    "v1JSONSchemaProps": {
-      "type": "object",
-      "properties": {
-        "id": {
-          "type": "string"
-        },
-        "schema": {
-          "type": "string"
-        },
-        "ref": {
-          "type": "string"
-        },
-        "description": {
-          "type": "string"
-        },
-        "type": {
-          "type": "string"
-        },
-        "format": {
-          "type": "string"
-        },
-        "title": {
-          "type": "string"
-        },
-        "properties": {
-          "type": "object",
-          "additionalProperties": {
-            "$ref": "#/definitions/v1JSONSchemaProps"
-          }
-        },
-        "definitions": {
-          "type": "object",
-          "additionalProperties": {
-            "$ref": "#/definitions/v1JSONSchemaProps"
-          }
-        }
-      }
     },
     "v1ListAuditLogEntriesResponse": {
       "type": "object",
