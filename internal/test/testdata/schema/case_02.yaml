@@ -1,0 +1,19 @@
+---
+description: Bad schema
+schema:
+  apiVersion: "api.cerbos.dev/v1"
+  principalSchema: 
+    type: object
+    properties:
+      department:
+        type: blah
+
+  resourceSchemas: 
+    leave_request:
+      type: object
+      properties:
+        department:
+          type: string
+
+invalidSchema: true
+

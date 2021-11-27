@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/qri-io/jsonschema"
+	jsonschema "github.com/santhosh-tekuri/jsonschema/v5"
 
 	schemav1 "github.com/cerbos/cerbos/api/genpb/cerbos/schema/v1"
 )
@@ -30,22 +30,27 @@ func (e ErrSource) toProto() schemav1.ValidationError_Source {
 	}
 }
 
-func newValidationError(keyError jsonschema.KeyError, source ErrSource) ValidationError {
+func newValidationError(err jsonschema.Detailed, source ErrSource) ValidationError {
 	return ValidationError{
-		Path:    keyError.PropertyPath,
-		Message: keyError.Message,
+		Path:    err.InstanceLocation,
+		Message: err.Error,
 		Source:  source,
 	}
 }
 
-func newValidationErrorList(errors []jsonschema.KeyError, source ErrSource) ValidationErrorList {
-	if len(errors) == 0 {
+func newValidationErrorList(validationErr *jsonschema.ValidationError, source ErrSource) ValidationErrorList {
+	if validationErr == nil {
 		return nil
 	}
 
-	errs := make([]ValidationError, len(errors))
-	for i, value := range errors {
-		errs[i] = newValidationError(value, source)
+	details := validationErr.DetailedOutput()
+	if details.Valid {
+		return nil
+	}
+
+	errs := make([]ValidationError, len(details.Errors))
+	for i, err := range details.Errors {
+		errs[i] = newValidationError(err, source)
 	}
 
 	return errs

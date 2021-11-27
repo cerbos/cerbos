@@ -9,11 +9,11 @@ playgroundValidate:
     "policyFiles": [
       {
         "fileName": "common_roles.yaml",
-        "contents": "{{ .Files.Get `store/derived_roles/common_roles.yaml` | base64encode }}",
+        "contents": "{{ .Files.Get `store/derived_roles/common_roles.yaml` | b64enc }}",
       },
       {
         "fileName": "policy_04.yaml",
-        "contents": "{{ .Files.Get `store/resource_policies/policy_04.yaml` | base64encode }}",
+        "contents": "{{ .Files.Get `store/resource_policies/policy_04.yaml` | b64enc }}",
       }
     ]
   }

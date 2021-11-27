@@ -4,11 +4,12 @@
 package test
 
 import (
-	"encoding/base64"
 	"fmt"
 	"io/ioutil"
 	"testing"
 	"text/template"
+
+	sprig "github.com/Masterminds/sprig/v3"
 )
 
 // TemplateFuncs contains structs (and functions) used in templates.
@@ -25,36 +26,20 @@ func GetTemplateFunctions(tb testing.TB) TemplateFuncs {
 }
 
 func GetTemplateUtilityFunctions() template.FuncMap {
-	return template.FuncMap{
-		"base64encode": encodeBase64,
-		"base64decode": decodeBase64,
-	}
+	return sprig.TxtFuncMap()
 }
 
 type Files struct {
 	tb testing.TB
 }
 
-func (f Files) Get(relativePathToFile string) (string, error) {
-	path := PathToDir(f.tb, relativePathToFile)
+func (f Files) Get(relativePath string) string {
+	path := PathToDir(f.tb, relativePath)
 
 	fileBytes, err := ioutil.ReadFile(path)
 	if err != nil {
-		return "", fmt.Errorf("failed to read from source: %w", err)
+		panic(fmt.Errorf("failed to read from %q: %w", relativePath, err))
 	}
 
-	return string(fileBytes), nil
-}
-
-func encodeBase64(data string) string {
-	return base64.StdEncoding.EncodeToString([]byte(data))
-}
-
-func decodeBase64(data string) (string, error) {
-	decodedBytes, err := base64.StdEncoding.DecodeString(data)
-	if err != nil {
-		return "", err
-	}
-
-	return string(decodedBytes), nil
+	return string(fileBytes)
 }

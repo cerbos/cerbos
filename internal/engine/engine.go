@@ -85,12 +85,18 @@ type Engine struct {
 	workerIndex uint64
 	workerPool  []chan<- workIn
 	compileMgr  *compile.Manager
-	schemaMgr   *schema.Manager
+	schemaMgr   schema.Manager
 	auditLog    audit.Log
 }
 
-func New(ctx context.Context, compileMgr *compile.Manager, schemaMgr *schema.Manager, auditLog audit.Log) (*Engine, error) {
-	engine, err := newEngine(compileMgr, schemaMgr, auditLog)
+type Components struct {
+	AuditLog   audit.Log
+	CompileMgr *compile.Manager
+	SchemaMgr  schema.Manager
+}
+
+func New(ctx context.Context, components Components) (*Engine, error) {
+	engine, err := newEngine(components)
 	if err != nil {
 		return nil, err
 	}
@@ -108,11 +114,11 @@ func New(ctx context.Context, compileMgr *compile.Manager, schemaMgr *schema.Man
 	return engine, nil
 }
 
-func NewEphemeral(ctx context.Context, compileMgr *compile.Manager, schemaMgr *schema.Manager) (*Engine, error) {
-	return newEngine(compileMgr, schemaMgr, audit.NewNopLog())
+func NewEphemeral(ctx context.Context, compileMgr *compile.Manager, schemaMgr schema.Manager) (*Engine, error) {
+	return newEngine(Components{CompileMgr: compileMgr, SchemaMgr: schemaMgr, AuditLog: audit.NewNopLog()})
 }
 
-func newEngine(compileMgr *compile.Manager, schemaMgr *schema.Manager, auditLog audit.Log) (*Engine, error) {
+func newEngine(c Components) (*Engine, error) {
 	conf := &Conf{}
 	if err := config.GetSection(conf); err != nil {
 		return nil, err
@@ -120,9 +126,9 @@ func newEngine(compileMgr *compile.Manager, schemaMgr *schema.Manager, auditLog 
 
 	engine := &Engine{
 		conf:       conf,
-		compileMgr: compileMgr,
-		schemaMgr:  schemaMgr,
-		auditLog:   auditLog,
+		compileMgr: c.CompileMgr,
+		schemaMgr:  c.SchemaMgr,
+		auditLog:   c.AuditLog,
 	}
 
 	return engine, nil
@@ -267,28 +273,22 @@ func (engine *Engine) evaluate(ctx context.Context, input *enginev1.CheckInput, 
 		return nil, err
 	}
 
-	ec, err := engine.buildEvaluationCtx(ctx, input, checkOpts)
-	if err != nil {
-		return nil, err
-	}
+	// validate the request using schema
+	var validationErrs schema.ValidationErrorList
+	if err := engine.schemaMgr.Validate(ctx, input); err != nil {
+		tracing.MarkFailed(span, http.StatusBadRequest, err)
 
-	output := &enginev1.CheckOutput{
-		RequestId:  input.RequestId,
-		ResourceId: input.Resource.Id,
-		Actions:    make(map[string]*enginev1.CheckOutput_ActionEffect, len(input.Actions)),
-	}
-
-	err = engine.schemaMgr.Validate(ctx, input)
-	var validationErrorList schema.ValidationErrorList
-	if err != nil {
-		if ok := errors.As(err, &validationErrorList); !ok {
-			return nil, err
+		if ok := errors.As(err, &validationErrs); !ok {
+			return nil, fmt.Errorf("failed to run schema validator on input: %w", err)
 		}
-	}
 
-	// If there are errors present in schema validation, return EFFECT_DENY for all actions
-	if validationErrorList != nil && len(validationErrorList) > 0 {
-		output.ValidationErrors = validationErrorList.SchemaErrors()
+		// return EFFECT_DENY for all actions because validation failed
+		output := &enginev1.CheckOutput{
+			RequestId:        input.RequestId,
+			ResourceId:       input.Resource.Id,
+			ValidationErrors: validationErrs.SchemaErrors(),
+			Actions:          make(map[string]*enginev1.CheckOutput_ActionEffect, len(input.Actions)),
+		}
 
 		for _, action := range input.Actions {
 			output.Actions[action] = &enginev1.CheckOutput_ActionEffect{
@@ -298,6 +298,17 @@ func (engine *Engine) evaluate(ctx context.Context, input *enginev1.CheckInput, 
 		}
 
 		return output, nil
+	}
+
+	ec, err := engine.buildEvaluationCtx(ctx, input, checkOpts)
+	if err != nil {
+		return nil, err
+	}
+
+	output := &enginev1.CheckOutput{
+		RequestId:  input.RequestId,
+		ResourceId: input.Resource.Id,
+		Actions:    make(map[string]*enginev1.CheckOutput_ActionEffect, len(input.Actions)),
 	}
 
 	// If there are no checks, set the default effect and return.

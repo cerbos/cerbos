@@ -14,7 +14,6 @@ defining a schema file.
 ----
 schema:
   enforcement: reject
-  ignoreUnknownFields: false
 ----
 
 === enforcement
@@ -36,11 +35,6 @@ Only displays warnings in the server logs.
 ==== Reject
 
 Responds to the requests with validation errors and also displays them in the server logs.
-
-=== ignoreUnknownFields
-
-If there are extra fields present in the `.attr` sections of the principal or resource, Cerbos will complain. This
-parameter will ignore the extra fields.
 
 == Schema file
 

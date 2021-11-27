@@ -7,17 +7,18 @@ package cerbos.private.v1;
 
 option go_package = "github.com/cerbos/cerbos/api/genpb/cerbos/private/v1;privatev1";
 
+import "google/protobuf/struct.proto";
 import "cerbos/engine/v1/engine.proto";
 import "cerbos/policy/v1/policy.proto";
 import "cerbos/request/v1/request.proto";
 import "cerbos/response/v1/response.proto";
+import "cerbos/schema/v1/schema.proto";
 
 message EngineTestCase {
     string description = 1;
     repeated cerbos.engine.v1.CheckInput inputs = 2;
     repeated cerbos.engine.v1.CheckOutput want_outputs = 3;
     bool want_error = 4;
-    bytes schema = 5;
 }
 
 message ServerTestCase {
@@ -94,4 +95,21 @@ message CelTestCase {
     cerbos.engine.v1.CheckInput input = 2;
     bool want = 3;
     bool want_error = 4;
+}
+
+message SchemaTestCase {
+    string description = 1;
+    cerbos.schema.v1.Schema schema = 2;
+    cerbos.engine.v1.CheckInput input = 3;
+    bool invalid_schema = 4;
+    bool want_error = 5;
+    repeated cerbos.schema.v1.ValidationError want_validation_errors = 6;
+}
+
+message ValidationErrContainer {
+    repeated cerbos.schema.v1.ValidationError errors = 1;
+}
+
+message AttrWrapper {
+  map<string, google.protobuf.Value> attr = 1;
 }
