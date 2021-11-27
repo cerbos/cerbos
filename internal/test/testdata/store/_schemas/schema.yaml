@@ -8,6 +8,7 @@ principalSchema: # define schema for request.principal.attr
   properties:
     department:
       type: string
+      enum: [marketing, engineering]
     geography:
       type: string
     team:
@@ -27,6 +28,10 @@ principalSchema: # define schema for request.principal.attr
           type: array
         regions:
           type: array
+  required: 
+    - department
+    - geography
+    - team
 
 
 resourceSchemas: # define schema for request.resource.attr
@@ -35,6 +40,7 @@ resourceSchemas: # define schema for request.resource.attr
     properties:
       department:
         type: string
+        enum: [marketing, engineering]
       geography:
         type: string
       team:
@@ -47,6 +53,11 @@ resourceSchemas: # define schema for request.resource.attr
         type: string
       dev_record:
         type: boolean
+    required: 
+      - department
+      - geography
+      - team
+      - id
 
   salary_record:
     type: object

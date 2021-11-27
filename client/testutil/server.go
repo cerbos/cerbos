@@ -276,7 +276,7 @@ func startServer(ctx context.Context, g *errgroup.Group, sopt *serverOpt) (err e
 		return fmt.Errorf("failed to create schema manager: %w", err)
 	}
 
-	eng, err := engine.New(ctx, compile.NewManager(ctx, store), schemaMgr, auditLog)
+	eng, err := engine.New(ctx, engine.Components{CompileMgr: compile.NewManager(ctx, store), SchemaMgr: schemaMgr, AuditLog: auditLog})
 	if err != nil {
 		return fmt.Errorf("failed to create engine: %w", err)
 	}

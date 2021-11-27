@@ -6,7 +6,6 @@ package client_test
 import (
 	"context"
 	"fmt"
-	"io/fs"
 	"path/filepath"
 	"testing"
 	"time"
@@ -16,7 +15,6 @@ import (
 	"github.com/cerbos/cerbos/client"
 	"github.com/cerbos/cerbos/client/testutil"
 	"github.com/cerbos/cerbos/internal/test"
-	"github.com/cerbos/cerbos/internal/util"
 )
 
 const (
@@ -129,20 +127,7 @@ func loadPolicies(t *testing.T, ac client.AdminClient) {
 	t.Helper()
 
 	ps := client.NewPolicySet()
-	testdataDir := test.PathToDir(t, "store")
-	err := filepath.WalkDir(testdataDir, func(path string, d fs.DirEntry, err error) error {
-		if err != nil {
-			return err
-		}
-
-		if d.IsDir() {
-			return nil
-		}
-
-		if !util.IsSupportedFileType(d.Name()) {
-			return nil
-		}
-
+	err := test.FindPolicyFiles(t, "store", func(path string) error {
 		ps.AddPolicyFromFile(path)
 		return ps.Err()
 	})

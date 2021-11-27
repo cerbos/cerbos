@@ -31,6 +31,8 @@ const (
 	defaultCooldownPeriod = 2 * time.Second
 )
 
+var schemaFile = filepath.Join(schema.Directory, schema.File)
+
 func watchDir(ctx context.Context, dir string, idx index.Index, sub *storage.SubscriptionManager, cooldownPeriod time.Duration) error {
 	resolved, err := filepath.EvalSymlinks(dir)
 	if err != nil {
@@ -127,7 +129,7 @@ func (dw *dirWatch) triggerUpdate() {
 		for f := range batch {
 			fullPath := filepath.Join(dw.dir, f)
 
-			if f == schema.RelativePathToSchema {
+			if f == schemaFile {
 				if _, err := os.Stat(fullPath); errors.Is(err, os.ErrNotExist) {
 					dw.log.Debugw("Detected schema file removal", "file", f)
 					dw.NotifySubscribers(storage.NewEvent(storage.EventDeleteSchema, namer.ModuleID{}))

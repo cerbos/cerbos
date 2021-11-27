@@ -5,13 +5,13 @@ package schema
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
 	"sync"
+	"unsafe"
 
-	"github.com/qri-io/jsonschema"
+	jsonschema "github.com/santhosh-tekuri/jsonschema/v5"
 	"github.com/tidwall/gjson"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
@@ -19,6 +19,7 @@ import (
 	"google.golang.org/protobuf/types/known/structpb"
 
 	enginev1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
+	privatev1 "github.com/cerbos/cerbos/api/genpb/cerbos/private/v1"
 	schemav1 "github.com/cerbos/cerbos/api/genpb/cerbos/schema/v1"
 	"github.com/cerbos/cerbos/internal/config"
 	"github.com/cerbos/cerbos/internal/observability/logging"
@@ -26,9 +27,12 @@ import (
 	"github.com/cerbos/cerbos/internal/storage"
 )
 
-const attrPath = "attr"
+const (
+	Directory = "_schemas"
+	File      = "schema.yaml"
+)
 
-type propSet map[string]struct{}
+const attrPath = "attr"
 
 func ValidateSchemaProto(s *schemav1.Schema) error {
 	if err := s.Validate(); err != nil {
@@ -38,19 +42,27 @@ func ValidateSchemaProto(s *schemav1.Schema) error {
 	return nil
 }
 
-type Manager struct {
+type Manager interface {
+	Validate(context.Context, *enginev1.CheckInput) error
+}
+
+type nopManager struct{}
+
+func (nopManager) Validate(_ context.Context, _ *enginev1.CheckInput) error {
+	return nil
+}
+
+type manager struct {
 	conf            *Conf
 	log             *zap.SugaredLogger
 	store           storage.Store
 	mu              sync.RWMutex
-	principalProps  propSet
-	resourceProps   map[string]propSet
 	schema          *schemav1.Schema
 	principalSchema *jsonschema.Schema
 	resourceSchemas map[string]*jsonschema.Schema
 }
 
-func New(ctx context.Context, store storage.Store) (*Manager, error) {
+func New(ctx context.Context, store storage.Store) (Manager, error) {
 	conf := &Conf{}
 	if err := config.GetSection(conf); err != nil {
 		return nil, fmt.Errorf("failed to get config section %q: %w", confKey, err)
@@ -59,8 +71,12 @@ func New(ctx context.Context, store storage.Store) (*Manager, error) {
 	return NewWithConf(ctx, store, conf)
 }
 
-func NewWithConf(ctx context.Context, store storage.Store, conf *Conf) (*Manager, error) {
-	mgr := &Manager{
+func NewWithConf(ctx context.Context, store storage.Store, conf *Conf) (Manager, error) {
+	if conf.Enforcement == EnforcementNone {
+		return nopManager{}, nil
+	}
+
+	mgr := &manager{
 		conf:  conf,
 		log:   zap.S().Named("schema"),
 		store: store,
@@ -78,7 +94,7 @@ func NewWithConf(ctx context.Context, store storage.Store, conf *Conf) (*Manager
 	return mgr, nil
 }
 
-func (m *Manager) Validate(ctx context.Context, input *enginev1.CheckInput) error {
+func (m *manager) Validate(ctx context.Context, input *enginev1.CheckInput) error {
 	if m.conf.Enforcement == EnforcementNone {
 		m.log.Debug("Ignoring schema validation because enforcement is disabled")
 		return nil
@@ -90,9 +106,7 @@ func (m *Manager) Validate(ctx context.Context, input *enginev1.CheckInput) erro
 		return nil
 	}
 
-	principalProps := m.principalProps
 	principalSchema := m.principalSchema
-	resourceProps := m.resourceProps[input.Resource.Kind]
 	resourceSchema := m.resourceSchemas[input.Resource.Kind]
 	m.mu.RUnlock()
 
@@ -109,14 +123,14 @@ func (m *Manager) Validate(ctx context.Context, input *enginev1.CheckInput) erro
 	defer span.End()
 
 	var principalErrs ValidationErrorList
-	if err := m.validateAttr(ctx, ErrSourcePrincipal, input.Principal.Attr, principalProps, principalSchema); err != nil {
+	if err := m.validateAttr(ErrSourcePrincipal, input.Principal.Attr, principalSchema); err != nil {
 		if ok := errors.As(err, &principalErrs); !ok {
 			return fmt.Errorf("failed to validate the principal: %w", err)
 		}
 	}
 
 	var resourceErrs ValidationErrorList
-	if err := m.validateAttr(ctx, ErrSourceResource, input.Resource.Attr, resourceProps, resourceSchema); err != nil {
+	if err := m.validateAttr(ErrSourceResource, input.Resource.Attr, resourceSchema); err != nil {
 		if ok := errors.As(err, &resourceErrs); !ok {
 			return fmt.Errorf("failed to validate the resource: %w", err)
 		}
@@ -143,89 +157,26 @@ func (m *Manager) Validate(ctx context.Context, input *enginev1.CheckInput) erro
 	return nil
 }
 
-func (m *Manager) validateAttr(ctx context.Context, src ErrSource, attr map[string]*structpb.Value, props propSet, schema *jsonschema.Schema) error {
-	var inputErrs ValidationErrorList
-	if !m.conf.IgnoreUnknownFields {
-		if err := validateInput(src, attr, props); err != nil {
-			if ok := errors.As(err, &inputErrs); !ok {
-				return fmt.Errorf("failed to validate properties of %s: %w", src, err)
-			}
-		}
-	}
-
-	jsonBytes, err := protojson.Marshal(&schemav1.AttrWrapper{Attr: attr})
+func (m *manager) validateAttr(src ErrSource, attr map[string]*structpb.Value, schema *jsonschema.Schema) error {
+	jsonBytes, err := protojson.Marshal(&privatev1.AttrWrapper{Attr: attr})
 	if err != nil {
 		return fmt.Errorf("failed to marshal %s: %w", src, err)
 	}
 
-	attrBytes := []byte(gjson.GetBytes(jsonBytes, attrPath).Raw)
-	validationErrs, err := schema.ValidateBytes(ctx, attrBytes)
-	if err != nil {
-		return fmt.Errorf("failed to validate %s: %w", src, err)
+	attrJSON := gjson.GetBytes(jsonBytes, attrPath).Value()
+	if err := schema.Validate(attrJSON); err != nil {
+		var validationErr *jsonschema.ValidationError
+		if ok := errors.As(err, &validationErr); !ok {
+			return fmt.Errorf("unable to validate %s: %w", src, err)
+		}
+
+		return newValidationErrorList(validationErr, src)
 	}
 
-	return mergeErrLists(inputErrs, newValidationErrorList(validationErrs, src))
+	return nil
 }
 
-func validateInput(src ErrSource, attr map[string]*structpb.Value, props propSet) error {
-	properties := propertiesFromInput(attr)
-
-	var errs ValidationErrorList
-	for p := range properties {
-		if _, ok := props[p]; !ok {
-			errs = append(errs, ValidationError{
-				Path:    p,
-				Message: "Unexpected field present in the attributes",
-				Source:  src,
-			})
-		}
-	}
-
-	return errs.ErrOrNil()
-}
-
-func propertiesFromInput(attr map[string]*structpb.Value) map[string]struct{} {
-	out := make(map[string]struct{}, len(attr))
-	walkPropertiesFromInput("", attr, out)
-	return out
-}
-
-func walkPropertiesFromInput(path string, attr map[string]*structpb.Value, out map[string]struct{}) {
-	for key, value := range attr {
-		fullPath := fmt.Sprintf("%s/%s", path, key)
-		structVal, ok := value.Kind.(*structpb.Value_StructValue)
-		if !ok {
-			out[fullPath] = struct{}{}
-			continue
-		}
-
-		if structVal.StructValue.Fields != nil {
-			walkPropertiesFromInput(fullPath, structVal.StructValue.Fields, out)
-		}
-	}
-}
-
-func propertiesFromSchema(schemaProps map[string]*schemav1.JSONSchemaProps) map[string]struct{} {
-	out := make(map[string]struct{}, len(schemaProps))
-	walkPropertiesFromSchema("", schemaProps, out)
-	return out
-}
-
-func walkPropertiesFromSchema(path string, schemaProps map[string]*schemav1.JSONSchemaProps, out map[string]struct{}) {
-	for name, value := range schemaProps {
-		fullPath := fmt.Sprintf("%s/%s", path, name)
-		if value.Type != "object" {
-			out[fullPath] = struct{}{}
-			continue
-		}
-
-		if value.Properties != nil {
-			walkPropertiesFromSchema(fullPath, value.Properties, out)
-		}
-	}
-}
-
-func (m *Manager) UpdateSchemaFromStore(ctx context.Context) error {
+func (m *manager) UpdateSchemaFromStore(ctx context.Context) error {
 	sch, err := m.store.GetSchema(ctx)
 	if err != nil {
 		if !m.conf.IgnoreSchemaNotFound {
@@ -243,7 +194,7 @@ func (m *Manager) UpdateSchemaFromStore(ctx context.Context) error {
 	return nil
 }
 
-func (m *Manager) UpdateSchema(source io.Reader) error {
+func (m *manager) UpdateSchema(source io.Reader) error {
 	sch, err := ReadSchema(source)
 	if err != nil {
 		return fmt.Errorf("failed to read schema from source: %w", err)
@@ -257,32 +208,18 @@ func (m *Manager) UpdateSchema(source io.Reader) error {
 	return nil
 }
 
-func (m *Manager) ClearSchema() {
-	m.mu.Lock()
-	m.schema = nil
-	m.principalProps = nil
-	m.principalSchema = nil
-	m.resourceProps = nil
-	m.resourceSchemas = nil
-	m.mu.Unlock()
-}
-
-func (m *Manager) doUpdateSchema(sch *schemav1.Schema) error {
+func (m *manager) doUpdateSchema(sch *schemav1.Schema) error {
 	if err := ValidateSchemaProto(sch); err != nil {
 		return fmt.Errorf("failed to validate schema: %w", err)
 	}
 
-	principalProps := propertiesFromSchema(sch.PrincipalSchema.Properties)
 	principalSchema, err := toJSONSchema(sch.PrincipalSchema)
 	if err != nil {
 		return fmt.Errorf("failed to load principal schema: %w", err)
 	}
 
 	resourceSchemas := make(map[string]*jsonschema.Schema, len(sch.ResourceSchemas))
-	resourceProps := make(map[string]propSet, len(sch.ResourceSchemas))
-
 	for kind, schema := range sch.ResourceSchemas {
-		resourceProps[kind] = propertiesFromSchema(schema.Properties)
 		s, err := toJSONSchema(schema)
 		if err != nil {
 			return fmt.Errorf("failed to load resource schema for %q: %w", kind, err)
@@ -293,34 +230,40 @@ func (m *Manager) doUpdateSchema(sch *schemav1.Schema) error {
 
 	m.mu.Lock()
 	m.schema = sch
-	m.principalProps = principalProps
 	m.principalSchema = principalSchema
-	m.resourceProps = resourceProps
 	m.resourceSchemas = resourceSchemas
 	m.mu.Unlock()
 
 	return nil
 }
 
-func toJSONSchema(schemaProps *schemav1.JSONSchemaProps) (*jsonschema.Schema, error) {
+func toJSONSchema(schemaProps *structpb.Value) (*jsonschema.Schema, error) {
 	schemaBytes, err := protojson.Marshal(schemaProps)
 	if err != nil {
 		return nil, fmt.Errorf("failed to marshal schema props: %w", err)
 	}
 
-	schema := &jsonschema.Schema{}
-	if err := json.Unmarshal(schemaBytes, schema); err != nil {
-		return nil, fmt.Errorf("failed to unmarshal JSON schema: %w", err)
+	schema, err := jsonschema.CompileString(File, *(*string)(unsafe.Pointer(&schemaBytes)))
+	if err != nil {
+		return nil, fmt.Errorf("failed to compile JSON schema: %w", err)
 	}
 
 	return schema, nil
 }
 
-func (m *Manager) SubscriberID() string {
-	return "schema.Manager"
+func (m *manager) ClearSchema() {
+	m.mu.Lock()
+	m.schema = nil
+	m.principalSchema = nil
+	m.resourceSchemas = nil
+	m.mu.Unlock()
 }
 
-func (m *Manager) OnStorageEvent(events ...storage.Event) {
+func (m *manager) SubscriberID() string {
+	return "schema.manager"
+}
+
+func (m *manager) OnStorageEvent(events ...storage.Event) {
 	for _, event := range events {
 		//nolint:exhaustive
 		switch event.Kind {

@@ -21,6 +21,8 @@ import (
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
 	"github.com/cerbos/cerbos/internal/observability/logging"
 	"github.com/cerbos/cerbos/internal/policy"
+	"github.com/cerbos/cerbos/internal/schema"
+	"github.com/cerbos/cerbos/internal/util"
 )
 
 func init() {
@@ -168,4 +170,32 @@ func SkipIfGHActions(t *testing.T) {
 	if isGH, ok := os.LookupEnv("GITHUB_ACTIONS"); ok && isGH == "true" {
 		t.Skipf("Skipping because of known issue with GitHub Actions")
 	}
+}
+
+func FindPolicyFiles(t *testing.T, dir string, callback func(string) error) error {
+	t.Helper()
+
+	testdataDir := PathToDir(t, dir)
+	return filepath.WalkDir(testdataDir, func(path string, d fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+
+		if d.IsDir() {
+			switch d.Name() {
+			case schema.Directory:
+				return fs.SkipDir
+			case util.TestDataDirectory:
+				return fs.SkipDir
+			default:
+				return nil
+			}
+		}
+
+		if !util.IsSupportedFileType(d.Name()) {
+			return nil
+		}
+
+		return callback(path)
+	})
 }

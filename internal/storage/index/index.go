@@ -7,6 +7,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
 	"io/fs"
 	"sync"
 
@@ -37,6 +38,7 @@ type Index interface {
 	GetAllCompilationUnits(context.Context) <-chan *policy.CompilationUnit
 	Clear() error
 	GetPolicies(context.Context) ([]*policy.Wrapper, error)
+	OpenFile(string) (io.ReadCloser, error)
 }
 
 type index struct {
@@ -341,4 +343,8 @@ func (idx *index) GetPolicies(_ context.Context) ([]*policy.Wrapper, error) {
 	}
 
 	return entries, nil
+}
+
+func (idx *index) OpenFile(filepath string) (io.ReadCloser, error) {
+	return idx.fsys.Open(filepath)
 }
