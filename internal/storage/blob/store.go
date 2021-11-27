@@ -231,7 +231,7 @@ func (s *Store) updateIndex(ctx context.Context) error {
 	var p *policyv1.Policy
 	var event storage.Event
 	for _, f := range changes.updateOrAdd {
-		if strings.HasSuffix(f, schema.RelativePathToSchema) {
+		if strings.HasSuffix(f, filepath.Join(schema.Directory, schema.File)) {
 			s.NotifySubscribers(storage.NewEvent(storage.EventAddOrUpdateSchema, namer.ModuleID{}))
 			continue
 		}
@@ -248,7 +248,7 @@ func (s *Store) updateIndex(ctx context.Context) error {
 		s.NotifySubscribers(event)
 	}
 	for _, f := range changes.delete {
-		if strings.HasSuffix(f, schema.RelativePathToSchema) {
+		if strings.HasSuffix(f, filepath.Join(schema.Directory, schema.File)) {
 			s.NotifySubscribers(storage.NewEvent(storage.EventDeleteSchema, namer.ModuleID{}))
 			continue
 		}
@@ -306,10 +306,11 @@ func (s *Store) GetPolicies(ctx context.Context) ([]*policy.Wrapper, error) {
 }
 
 func (s *Store) GetSchema(ctx context.Context) (*schemav1.Schema, error) {
-	schemaFileAbsPath, err := filepath.Abs(filepath.Join(s.conf.WorkDir, s.conf.Prefix, schema.RelativePathToSchema))
+	schFilePath := filepath.Join(schema.Directory, schema.File)
+	schemaFileAbsPath, err := filepath.Abs(filepath.Join(s.conf.WorkDir, s.conf.Prefix, schFilePath))
 	if err != nil {
 		return nil, fmt.Errorf("failed to determine absolute path to the schema file [%s - %s - %s]: %w",
-			s.conf.WorkDir, s.conf.Prefix, schema.RelativePathToSchema, err)
+			s.conf.WorkDir, s.conf.Prefix, schFilePath, err)
 	}
 
 	sch, err := schema.ReadSchemaFromFile(schemaFileAbsPath)
