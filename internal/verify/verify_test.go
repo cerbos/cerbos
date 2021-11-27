@@ -347,7 +347,7 @@ func mkEngine(t *testing.T) *engine.Engine {
 	schemaMgr, err := schema.New(ctx, store)
 	require.NoError(t, err)
 
-	eng, err := engine.New(ctx, compile.NewManager(ctx, store), schemaMgr, audit.NewNopLog())
+	eng, err := engine.New(ctx, engine.Components{CompileMgr: compile.NewManager(ctx, store), SchemaMgr: schemaMgr, AuditLog: audit.NewNopLog()})
 	require.NoError(t, err)
 
 	return eng

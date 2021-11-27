@@ -42,7 +42,17 @@ func ValidateSchemaProto(s *schemav1.Schema) error {
 	return nil
 }
 
-type Manager struct {
+type Manager interface {
+	Validate(context.Context, *enginev1.CheckInput) error
+}
+
+type nopManager struct{}
+
+func (nopManager) Validate(_ context.Context, _ *enginev1.CheckInput) error {
+	return nil
+}
+
+type manager struct {
 	conf            *Conf
 	log             *zap.SugaredLogger
 	store           storage.Store
@@ -52,7 +62,7 @@ type Manager struct {
 	resourceSchemas map[string]*jsonschema.Schema
 }
 
-func New(ctx context.Context, store storage.Store) (*Manager, error) {
+func New(ctx context.Context, store storage.Store) (Manager, error) {
 	conf := &Conf{}
 	if err := config.GetSection(conf); err != nil {
 		return nil, fmt.Errorf("failed to get config section %q: %w", confKey, err)
@@ -61,8 +71,12 @@ func New(ctx context.Context, store storage.Store) (*Manager, error) {
 	return NewWithConf(ctx, store, conf)
 }
 
-func NewWithConf(ctx context.Context, store storage.Store, conf *Conf) (*Manager, error) {
-	mgr := &Manager{
+func NewWithConf(ctx context.Context, store storage.Store, conf *Conf) (Manager, error) {
+	if conf.Enforcement == EnforcementNone {
+		return nopManager{}, nil
+	}
+
+	mgr := &manager{
 		conf:  conf,
 		log:   zap.S().Named("schema"),
 		store: store,
@@ -80,7 +94,7 @@ func NewWithConf(ctx context.Context, store storage.Store, conf *Conf) (*Manager
 	return mgr, nil
 }
 
-func (m *Manager) Validate(ctx context.Context, input *enginev1.CheckInput) error {
+func (m *manager) Validate(ctx context.Context, input *enginev1.CheckInput) error {
 	if m.conf.Enforcement == EnforcementNone {
 		m.log.Debug("Ignoring schema validation because enforcement is disabled")
 		return nil
@@ -143,7 +157,7 @@ func (m *Manager) Validate(ctx context.Context, input *enginev1.CheckInput) erro
 	return nil
 }
 
-func (m *Manager) validateAttr(src ErrSource, attr map[string]*structpb.Value, schema *jsonschema.Schema) error {
+func (m *manager) validateAttr(src ErrSource, attr map[string]*structpb.Value, schema *jsonschema.Schema) error {
 	jsonBytes, err := protojson.Marshal(&privatev1.AttrWrapper{Attr: attr})
 	if err != nil {
 		return fmt.Errorf("failed to marshal %s: %w", src, err)
@@ -162,7 +176,7 @@ func (m *Manager) validateAttr(src ErrSource, attr map[string]*structpb.Value, s
 	return nil
 }
 
-func (m *Manager) UpdateSchemaFromStore(ctx context.Context) error {
+func (m *manager) UpdateSchemaFromStore(ctx context.Context) error {
 	sch, err := m.store.GetSchema(ctx)
 	if err != nil {
 		if !m.conf.IgnoreSchemaNotFound {
@@ -180,7 +194,7 @@ func (m *Manager) UpdateSchemaFromStore(ctx context.Context) error {
 	return nil
 }
 
-func (m *Manager) UpdateSchema(source io.Reader) error {
+func (m *manager) UpdateSchema(source io.Reader) error {
 	sch, err := ReadSchema(source)
 	if err != nil {
 		return fmt.Errorf("failed to read schema from source: %w", err)
@@ -194,7 +208,7 @@ func (m *Manager) UpdateSchema(source io.Reader) error {
 	return nil
 }
 
-func (m *Manager) doUpdateSchema(sch *schemav1.Schema) error {
+func (m *manager) doUpdateSchema(sch *schemav1.Schema) error {
 	if err := ValidateSchemaProto(sch); err != nil {
 		return fmt.Errorf("failed to validate schema: %w", err)
 	}
@@ -237,7 +251,7 @@ func toJSONSchema(schemaProps *structpb.Value) (*jsonschema.Schema, error) {
 	return schema, nil
 }
 
-func (m *Manager) ClearSchema() {
+func (m *manager) ClearSchema() {
 	m.mu.Lock()
 	m.schema = nil
 	m.principalSchema = nil
@@ -245,11 +259,11 @@ func (m *Manager) ClearSchema() {
 	m.mu.Unlock()
 }
 
-func (m *Manager) SubscriberID() string {
-	return "schema.Manager"
+func (m *manager) SubscriberID() string {
+	return "schema.manager"
 }
 
-func (m *Manager) OnStorageEvent(events ...storage.Event) {
+func (m *manager) OnStorageEvent(events ...storage.Event) {
 	for _, event := range events {
 		//nolint:exhaustive
 		switch event.Kind {

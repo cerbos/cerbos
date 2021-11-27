@@ -35,7 +35,7 @@ func TestCloneResult(t *testing.T) {
 	is.NoError(err)
 	result, err := cloner.Clone(ctx)
 	is.NoError(err)
-	is.Len(result.updateOrAdd, 9)
+	is.Len(result.updateOrAdd, 10)
 }
 
 func uploadDirToBucket(ctx context.Context, dir string, bucket *blob.Bucket) ([]string, error) {

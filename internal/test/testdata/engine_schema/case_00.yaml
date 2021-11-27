@@ -1,11 +1,11 @@
 ---
-description: "No metadata"
-schema: "{{ .Files.Get `_schemas/complex.yaml` | b64enc }}"
+description: "Valid request"
 inputs: [
   {
     "requestId": "test",
     "actions": [
-      "view:public"
+      "view:public",
+      "approve"
     ],
     "principal": {
       "id": "john",
@@ -14,22 +14,9 @@ inputs: [
         "employee"
       ],
       "attr": {
-        "stringField": "hello",
-        "intField": 30,
-        "list": ["item1", "item2"],
-        "objectsInObject": {
-          "obj1": {
-            "somebool": true,
-            "somenumber": 1,
-            "somefloat": 1.34,
-          },
-          "obj2": {
-            "somebool": true,
-            "somenumber": 1,
-            "somefloat": 1.34,
-            "somelist": ["listItem1", "listItem2"]
-          }
-        }
+        "department": "marketing",
+        "geography": "GB",
+        "team": "design"
       }
     },
     "resource": {
@@ -37,8 +24,6 @@ inputs: [
       "policyVersion": "20210210",
       "id": "XX125",
       "attr": {
-        "stringField": "hello",
-        "intField": 30,
         "department": "marketing",
         "geography": "GB",
         "id": "XX125",
@@ -57,6 +42,10 @@ wantOutputs: [
         "effect": "EFFECT_ALLOW",
         "policy": "resource.leave_request.v20210210"
       },
+      "approve": {
+        "effect": "EFFECT_DENY",
+        "policy": "resource.leave_request.v20210210"
+      }
     },
     "effectiveDerivedRoles": [
       "employee_that_owns_the_record",

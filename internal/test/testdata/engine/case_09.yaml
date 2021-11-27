@@ -1,6 +1,5 @@
 ---
 description: "CEL expression combination using parentheses"
-schema: "{{ .Files.Get `_schemas/common.yaml` | b64enc }}"
 inputs: [
   {
     "requestId": "test1",

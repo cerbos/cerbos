@@ -75,8 +75,6 @@ func (m *EngineTestCase) Validate() error {
 
 	// no validation rules for WantError
 
-	// no validation rules for Schema
-
 	return nil
 }
 
