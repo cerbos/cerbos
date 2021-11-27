@@ -256,3 +256,11 @@ message ListPoliciesResponse {
 
     repeated cerbos.policy.v1.Policy policies = 1;
 }
+
+message AddOrUpdateSchemaResponse {
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
+        json_schema: {
+            description: "Add/update the schema response"
+        }
+    };
+}

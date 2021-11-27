@@ -287,6 +287,80 @@
         ]
       }
     },
+    "/admin/schema": {
+      "post": {
+        "summary": "Add or update the schema",
+        "operationId": "CerbosAdminService_AddOrUpdateSchema",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1AddOrUpdateSchemaResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/v1AddOrUpdateSchemaRequest"
+            }
+          }
+        ],
+        "tags": [
+          "CerbosAdminService"
+        ],
+        "security": [
+          {
+            "BasicAuth": []
+          }
+        ]
+      },
+      "put": {
+        "summary": "Add or update the schema",
+        "operationId": "CerbosAdminService_AddOrUpdateSchema2",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1AddOrUpdateSchemaResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/v1AddOrUpdateSchemaRequest"
+            }
+          }
+        ],
+        "tags": [
+          "CerbosAdminService"
+        ],
+        "security": [
+          {
+            "BasicAuth": []
+          }
+        ]
+      }
+    },
     "/api/check": {
       "post": {
         "summary": "Check",
@@ -894,6 +968,29 @@
         }
       }
     },
+    "schemav1Schema": {
+      "type": "object",
+      "properties": {
+        "apiVersion": {
+          "type": "string"
+        },
+        "disabled": {
+          "type": "boolean"
+        },
+        "description": {
+          "type": "string"
+        },
+        "principalSchema": {
+          "$ref": "#/definitions/v1JSONSchemaProps"
+        },
+        "resourceSchemas": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/v1JSONSchemaProps"
+          }
+        }
+      }
+    },
     "v1AccessLogEntry": {
       "type": "object",
       "properties": {
@@ -951,6 +1048,19 @@
         }
       },
       "description": "Add/update policy response"
+    },
+    "v1AddOrUpdateSchemaRequest": {
+      "type": "object",
+      "properties": {
+        "schema": {
+          "$ref": "#/definitions/schemav1Schema"
+        }
+      },
+      "description": "Add/update the schema request"
+    },
+    "v1AddOrUpdateSchemaResponse": {
+      "type": "object",
+      "description": "Add/update the schema response"
     },
     "v1AttributesMap": {
       "type": "object",
@@ -1254,6 +1364,44 @@
         "EFFECT_NO_MATCH"
       ],
       "default": "EFFECT_UNSPECIFIED"
+    },
+    "v1JSONSchemaProps": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "schema": {
+          "type": "string"
+        },
+        "ref": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string"
+        },
+        "format": {
+          "type": "string"
+        },
+        "title": {
+          "type": "string"
+        },
+        "properties": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/v1JSONSchemaProps"
+          }
+        },
+        "definitions": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/v1JSONSchemaProps"
+          }
+        }
+      }
     },
     "v1ListAuditLogEntriesResponse": {
       "type": "object",

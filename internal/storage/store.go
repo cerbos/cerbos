@@ -89,6 +89,7 @@ type Store interface {
 type MutableStore interface {
 	Store
 	AddOrUpdate(context.Context, ...policy.Wrapper) error
+	AddOrUpdateSchema(context.Context, *schemav1.Schema) error
 	Delete(context.Context, ...namer.ModuleID) error
 }
 

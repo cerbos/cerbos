@@ -50,6 +50,20 @@ type dbStorage struct {
 }
 
 func (s *dbStorage) AddOrUpdateSchema(ctx context.Context, sch *schemav1.Schema) error {
+	if sch == nil {
+		event := storage.Event{
+			Kind: storage.EventDeleteSchema,
+		}
+
+		_, err := s.db.From(SchemaTbl).Where(goqu.C(SchemaTblIDCol).Eq(SchemaDefaultID)).Delete().Executor().Exec()
+		if err != nil {
+			return fmt.Errorf("failed to delete the schema: %w", err)
+		}
+
+		s.NotifySubscribers(event)
+
+		return nil
+	}
 	event := storage.Event{
 		Kind: storage.EventAddOrUpdateSchema,
 	}
@@ -61,13 +75,14 @@ func (s *dbStorage) AddOrUpdateSchema(ctx context.Context, sch *schemav1.Schema)
 		Definition:  SchemaDefWrapper{sch},
 	}
 
-	// try to upsert this policy record
-	if _, err := goqu.Insert(SchemaTbl).
+	// try to upsert the schema record
+	if _, err := s.db.Insert(SchemaTbl).
 		Prepared(true).
 		Rows(schemaRecord).
 		OnConflict(goqu.DoUpdate(PolicyTblDefinitionCol, schemaRecord)).
-		Executor().ExecContext(ctx); err != nil {
-		return fmt.Errorf("failed to upsert schema: %w", err)
+		Executor().
+		ExecContext(ctx); err != nil {
+		return fmt.Errorf("failed to upsert the schema: %w", err)
 	}
 
 	s.NotifySubscribers(event)

@@ -181,6 +181,7 @@ type CerbosAdminServiceClient interface {
 	AddOrUpdatePolicy(ctx context.Context, in *v1.AddOrUpdatePolicyRequest, opts ...grpc.CallOption) (*v11.AddOrUpdatePolicyResponse, error)
 	ListAuditLogEntries(ctx context.Context, in *v1.ListAuditLogEntriesRequest, opts ...grpc.CallOption) (CerbosAdminService_ListAuditLogEntriesClient, error)
 	ListPolicies(ctx context.Context, in *v1.ListPoliciesRequest, opts ...grpc.CallOption) (*v11.ListPoliciesResponse, error)
+	AddOrUpdateSchema(ctx context.Context, in *v1.AddOrUpdateSchemaRequest, opts ...grpc.CallOption) (*v11.AddOrUpdateSchemaResponse, error)
 }
 
 type cerbosAdminServiceClient struct {
@@ -241,6 +242,15 @@ func (c *cerbosAdminServiceClient) ListPolicies(ctx context.Context, in *v1.List
 	return out, nil
 }
 
+func (c *cerbosAdminServiceClient) AddOrUpdateSchema(ctx context.Context, in *v1.AddOrUpdateSchemaRequest, opts ...grpc.CallOption) (*v11.AddOrUpdateSchemaResponse, error) {
+	out := new(v11.AddOrUpdateSchemaResponse)
+	err := c.cc.Invoke(ctx, "/cerbos.svc.v1.CerbosAdminService/AddOrUpdateSchema", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // CerbosAdminServiceServer is the server API for CerbosAdminService service.
 // All implementations must embed UnimplementedCerbosAdminServiceServer
 // for forward compatibility
@@ -248,6 +258,7 @@ type CerbosAdminServiceServer interface {
 	AddOrUpdatePolicy(context.Context, *v1.AddOrUpdatePolicyRequest) (*v11.AddOrUpdatePolicyResponse, error)
 	ListAuditLogEntries(*v1.ListAuditLogEntriesRequest, CerbosAdminService_ListAuditLogEntriesServer) error
 	ListPolicies(context.Context, *v1.ListPoliciesRequest) (*v11.ListPoliciesResponse, error)
+	AddOrUpdateSchema(context.Context, *v1.AddOrUpdateSchemaRequest) (*v11.AddOrUpdateSchemaResponse, error)
 	mustEmbedUnimplementedCerbosAdminServiceServer()
 }
 
@@ -263,6 +274,9 @@ func (UnimplementedCerbosAdminServiceServer) ListAuditLogEntries(*v1.ListAuditLo
 }
 func (UnimplementedCerbosAdminServiceServer) ListPolicies(context.Context, *v1.ListPoliciesRequest) (*v11.ListPoliciesResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ListPolicies not implemented")
+}
+func (UnimplementedCerbosAdminServiceServer) AddOrUpdateSchema(context.Context, *v1.AddOrUpdateSchemaRequest) (*v11.AddOrUpdateSchemaResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method AddOrUpdateSchema not implemented")
 }
 func (UnimplementedCerbosAdminServiceServer) mustEmbedUnimplementedCerbosAdminServiceServer() {}
 
@@ -334,6 +348,24 @@ func _CerbosAdminService_ListPolicies_Handler(srv interface{}, ctx context.Conte
 	return interceptor(ctx, in, info, handler)
 }
 
+func _CerbosAdminService_AddOrUpdateSchema_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(v1.AddOrUpdateSchemaRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CerbosAdminServiceServer).AddOrUpdateSchema(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/cerbos.svc.v1.CerbosAdminService/AddOrUpdateSchema",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CerbosAdminServiceServer).AddOrUpdateSchema(ctx, req.(*v1.AddOrUpdateSchemaRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // CerbosAdminService_ServiceDesc is the grpc.ServiceDesc for CerbosAdminService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -348,6 +380,10 @@ var CerbosAdminService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ListPolicies",
 			Handler:    _CerbosAdminService_ListPolicies_Handler,
+		},
+		{
+			MethodName: "AddOrUpdateSchema",
+			Handler:    _CerbosAdminService_AddOrUpdateSchema_Handler,
 		},
 	},
 	Streams: []grpc.StreamDesc{

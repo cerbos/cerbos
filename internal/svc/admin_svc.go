@@ -84,6 +84,24 @@ func (cas *CerbosAdminService) AddOrUpdatePolicy(ctx context.Context, req *reque
 	return &responsev1.AddOrUpdatePolicyResponse{Success: &emptypb.Empty{}}, nil
 }
 
+func (cas *CerbosAdminService) AddOrUpdateSchema(ctx context.Context, req *requestv1.AddOrUpdateSchemaRequest) (*responsev1.AddOrUpdateSchemaResponse, error) {
+	if err := cas.checkCredentials(ctx); err != nil {
+		return nil, err
+	}
+
+	ms, ok := cas.store.(storage.MutableStore)
+	if !ok {
+		return nil, status.Error(codes.Unimplemented, "Configured store is not mutable")
+	}
+	log := ctxzap.Extract(ctx)
+	if err := ms.AddOrUpdateSchema(ctx, req.Schema); err != nil {
+		log.Error("Failed to add/update the schema", zap.Error(err))
+		return nil, status.Error(codes.Internal, "Failed to add/update the schema")
+	}
+
+	return &responsev1.AddOrUpdateSchemaResponse{}, nil
+}
+
 func (cas *CerbosAdminService) ListAuditLogEntries(req *requestv1.ListAuditLogEntriesRequest, stream svcv1.CerbosAdminService_ListAuditLogEntriesServer) error {
 	ctx := stream.Context()
 
