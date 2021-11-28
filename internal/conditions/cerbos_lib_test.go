@@ -5,6 +5,10 @@ package conditions_test
 
 import (
 	"fmt"
+	"github.com/google/cel-go/common"
+	"github.com/google/cel-go/common/types"
+	"github.com/google/cel-go/parser"
+	"google.golang.org/genproto/googleapis/api/expr/v1alpha1"
 	"log"
 	"math/rand"
 	"strings"
@@ -156,6 +160,46 @@ func benchmarkIntersect(b *testing.B, size int) {
 		_, _, err := prg.Eval(cel.NoVars())
 		require.NoError(b, err)
 	}
+}
+
+func TestPartialEvaluationWithGlobalVars(t *testing.T) {
+	expander := func(eh parser.ExprHelper, _ *expr.Expr, _ []*expr.Expr) (*expr.Expr, *common.Error) {
+		return eh.Select(eh.Select(eh.Ident("R"), "attr"), "geo"), nil
+	}
+	geo := parser.NewReceiverMacro("geo", 0, expander)
+	env, _ := cel.NewEnv(
+		cel.Types(&enginev1.Resource{}),
+		cel.Declarations(
+			decls.NewVar("y", decls.NewListType(decls.String)),
+			decls.NewVar(conditions.CELResourceAbbrev, decls.NewObjectType("cerbos.engine.v1.Resource")),
+			decls.NewVar("z", decls.String),
+			decls.NewVar("v", decls.NewMapType(decls.String, decls.Dyn))),
+		ext.Strings(),
+		cel.Macros(geo))
+
+	vars, _ := cel.PartialVars(map[string]interface{}{
+		"y": []string{"GB", "US"},
+		"z": "ca",
+		"v": map[string]interface{}{},
+	}, cel.AttributePattern("R"))
+	expr := "v.geo in (y + [z]).map(t, t.upperAscii())"
+	want := `R.attr.geo in ["GB", "US", "CA"]`
+
+	is := require.New(t)
+	ast, issues := env.Compile(expr)
+	if issues != nil {
+		is.NoError(issues.Err())
+	}
+	prg, err := env.Program(ast, cel.EvalOptions(cel.OptTrackState, cel.OptPartialEval))
+	is.NoError(err)
+
+	out, det, err := prg.Eval(vars)
+	is.NoError(err)
+	is.True(types.IsUnknown(out))
+	residual, err := env.ResidualAst(ast, det)
+	astToString, err := cel.AstToString(residual)
+	is.NoError(err)
+	is.Equal(want, astToString)
 }
 
 func TestPartialEvaluation(t *testing.T) {
