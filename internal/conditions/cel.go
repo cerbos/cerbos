@@ -16,6 +16,7 @@ import (
 const (
 	CELRequestIdent    = "request"
 	CELResourceAbbrev  = "R"
+	CELResourceField   = "resource"
 	CELPrincipalAbbrev = "P"
 	CELVariablesIdent  = "variables"
 	CELVariablesAbbrev = "V"

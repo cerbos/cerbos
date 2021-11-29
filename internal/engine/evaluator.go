@@ -396,7 +396,10 @@ func evaluateCELExprPartially(expr *exprpb.CheckedExpr, input *requestv1.Resourc
 	vars, err := cel.PartialVars(map[string]interface{}{
 		conditions.CELRequestIdent:    input,
 		conditions.CELPrincipalAbbrev: input.Principal,
-	}, cel.AttributePattern(conditions.CELResourceAbbrev))
+	},
+	cel.AttributePattern(conditions.CELResourceAbbrev),
+	cel.AttributePattern(conditions.CELRequestIdent).QualString(conditions.CELResourceField))
+
 	if err != nil {
 		return nil, nil, err
 	}

@@ -11,6 +11,7 @@ import (
 	"google.golang.org/genproto/googleapis/api/expr/v1alpha1"
 	"log"
 	"math/rand"
+	"reflect"
 	"strings"
 	"testing"
 	"time"
@@ -162,8 +163,35 @@ func benchmarkIntersect(b *testing.B, size int) {
 	}
 }
 
+func TestCmpSelectAndCall(t *testing.T) {
+	env, _ := cel.NewEnv(
+		cel.Types(&enginev1.Resource{}),
+		cel.Declarations(
+			decls.NewVar("y", decls.NewListType(decls.String)),
+			decls.NewVar(conditions.CELResourceAbbrev, decls.NewObjectType("cerbos.engine.v1.Resource")),
+			decls.NewVar("z", decls.String),
+			decls.NewVar("v", decls.NewMapType(decls.String, decls.Dyn))),
+		ext.Strings())
+
+	expr0 := "v.geo() in (y + [z]).map(t, t.upperAscii())"
+	expr := "v.geo in (y + [z]).map(t, t.upperAscii())"
+
+	ast, issues := env.Parse(expr)
+	is := require.New(t)
+	if issues != nil {
+		is.NoError(issues.Err())
+	}
+	ast0, issues := env.Parse(expr0)
+	if issues != nil {
+		is.NoError(issues.Err())
+	}
+
+	v := reflect.DeepEqual(*ast0, *ast)
+	is.True(v)
+}
+
 func TestPartialEvaluationWithGlobalVars(t *testing.T) {
-	expander := func(eh parser.ExprHelper, _ *expr.Expr, _ []*expr.Expr) (*expr.Expr, *common.Error) {
+	expander := func(eh parser.ExprHelper, t *expr.Expr, args []*expr.Expr) (*expr.Expr, *common.Error) {
 		return eh.Select(eh.Select(eh.Ident("R"), "attr"), "geo"), nil
 	}
 	geo := parser.NewReceiverMacro("geo", 0, expander)
@@ -172,8 +200,8 @@ func TestPartialEvaluationWithGlobalVars(t *testing.T) {
 		cel.Declarations(
 			decls.NewVar("y", decls.NewListType(decls.String)),
 			decls.NewVar(conditions.CELResourceAbbrev, decls.NewObjectType("cerbos.engine.v1.Resource")),
-			decls.NewVar("z", decls.String),
-			decls.NewVar("v", decls.NewMapType(decls.String, decls.Dyn))),
+			decls.NewVar("z", decls.String)),
+		//decls.NewVar("v", decls.NewMapType(decls.String, decls.Dyn))),
 		ext.Strings(),
 		cel.Macros(geo))
 
@@ -182,7 +210,7 @@ func TestPartialEvaluationWithGlobalVars(t *testing.T) {
 		"z": "ca",
 		"v": map[string]interface{}{},
 	}, cel.AttributePattern("R"))
-	expr := "v.geo in (y + [z]).map(t, t.upperAscii())"
+	expr := "v.geo() in (y + [z]).map(t, t.upperAscii())"
 	want := `R.attr.geo in ["GB", "US", "CA"]`
 
 	is := require.New(t)
@@ -206,20 +234,35 @@ func TestPartialEvaluation(t *testing.T) {
 	env, _ := cel.NewEnv(
 		cel.Types(&enginev1.Resource{}),
 		cel.Declarations(
+			decls.NewVar(conditions.CELRequestIdent, decls.NewObjectType("cerbos.engine.v1.CheckInput")),
 			decls.NewVar("y", decls.NewListType(decls.String)),
 			decls.NewVar(conditions.CELResourceAbbrev, decls.NewObjectType("cerbos.engine.v1.Resource")),
+			decls.NewVar("request.principal", decls.NewMapType(decls.String, decls.Dyn)),
 			decls.NewVar("z", decls.String)), ext.Strings())
 
 	vars, _ := cel.PartialVars(map[string]interface{}{
 		"y": []string{"GB", "US"},
 		"z": "ca",
-	}, cel.AttributePattern("R"))
+		"request.principal": map[string]interface{}{
+			"attr": map[string]interface{}{
+				"country": "NZ",
+			},
+		},
+	},
+		cel.AttributePattern("request").QualString("resource"),
+		cel.AttributePattern("R"),
+	)
+
 	tests := []struct {
 		expr, result string
 	}{
 		{
 			expr:   "R.attr.geo in (y + [z]).map(t, t.upperAscii())",
 			result: `R.attr.geo in ["GB", "US", "CA"]`,
+		},
+		{
+			expr:   "request.resource.attr.geo == request.principal.attr.country",
+			result: `request.resource.attr.geo == "NZ"`,
 		},
 		{
 			expr:   "R.attr.geo in (y + [z]).map(t, t.upperAscii()) || 1 == 1",
