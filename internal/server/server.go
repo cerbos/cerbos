@@ -87,12 +87,13 @@ const (
 	metricsReportingInterval = 15 * time.Second
 	minGRPCConnectTimeout    = 20 * time.Second
 
-	adminEndpoint   = "/admin"
-	apiEndpoint     = "/api"
-	healthEndpoint  = "/_cerbos/health"
-	metricsEndpoint = "/_cerbos/metrics"
-	schemaEndpoint  = "/schema/swagger.json"
-	zpagesEndpoint  = "/_cerbos/debug"
+	adminEndpoint      = "/admin"
+	apiEndpoint        = "/api"
+	healthEndpoint     = "/_cerbos/health"
+	metricsEndpoint    = "/_cerbos/metrics"
+	playgroundEndpoint = "/api/playground"
+	schemaEndpoint     = "/schema/swagger.json"
+	zpagesEndpoint     = "/_cerbos/debug"
 )
 
 func Start(ctx context.Context, zpagesEnabled bool) error {
@@ -379,8 +380,9 @@ func (s *Server) mkGRPCServer(log *zap.Logger, auditLog audit.Log) *grpc.Server 
 			grpc_zap.PayloadUnaryServerInterceptor(payloadLog, payloadLoggingDecider(s.conf)),
 			audit.NewUnaryInterceptor(auditLog, accessLogExclude),
 		),
-		grpc.StatsHandler(&ocgrpc.ServerHandler{StartOptions: tracing.StartOptions()}),
+		grpc.StatsHandler(&ocgrpc.ServerHandler{}),
 		grpc.KeepaliveParams(keepalive.ServerParameters{MaxConnectionAge: maxConnectionAge}),
+		grpc.UnknownServiceHandler(handleUnknownServices),
 	}
 
 	return grpc.NewServer(opts...)
@@ -395,6 +397,7 @@ func (s *Server) startHTTPServer(ctx context.Context, l net.Listener, grpcSrv *g
 			MarshalOptions:   protojson.MarshalOptions{Indent: "  "},
 			UnmarshalOptions: protojson.UnmarshalOptions{DiscardUnknown: true},
 		}),
+		runtime.WithRoutingErrorHandler(handleRoutingError),
 	)
 
 	grpcConn, err := s.mkGRPCConn(ctx)
@@ -424,10 +427,10 @@ func (s *Server) startHTTPServer(ctx context.Context, l net.Listener, grpcSrv *g
 	// handle gRPC requests that come over http
 	cerbosMux.MatcherFunc(func(r *http.Request, _ *mux.RouteMatch) bool {
 		return r.ProtoMajor == 2 && strings.Contains(r.Header.Get("Content-Type"), "application/grpc")
-	}).Handler(&ochttp.Handler{Handler: grpcSrv})
+	}).Handler(tracing.HTTPHandler(grpcSrv))
 
-	cerbosMux.PathPrefix(adminEndpoint).Handler(&ochttp.Handler{Handler: prettyJSON(gwmux), StartOptions: tracing.StartOptions()})
-	cerbosMux.PathPrefix(apiEndpoint).Handler(&ochttp.Handler{Handler: prettyJSON(gwmux), StartOptions: tracing.StartOptions()})
+	cerbosMux.PathPrefix(adminEndpoint).Handler(tracing.HTTPHandler(prettyJSON(gwmux)))
+	cerbosMux.PathPrefix(apiEndpoint).Handler(tracing.HTTPHandler(prettyJSON(gwmux)))
 	cerbosMux.Path(schemaEndpoint).HandlerFunc(schema.ServeSvcSwagger)
 	cerbosMux.Path(healthEndpoint).HandlerFunc(s.handleHTTPHealthCheck(grpcConn))
 

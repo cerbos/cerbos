@@ -2,7 +2,7 @@ include::partial$attributes.adoc[]
 
 = Install from binary
 
-Cerbos binaries are available for multiple operating systems and architectures.
+Cerbos binaries are available for multiple operating systems and architectures. See the link:{app-github-releases-page}[releases page] for all available downloads.
 
 [caption=]
 [%header,cols=".^1,.^1,3m",grid=rows]
@@ -10,6 +10,7 @@ Cerbos binaries are available for multiple operating systems and architectures.
 |OS | Arch | Bundle 
 |Linux | x86-64 | {app-name}_{app-version}_Linux_x86_64.tar.gz
 |Linux | arm64 | {app-name}_{app-version}_Linux_arm64.tar.gz
+|MacOS | universal | {app-name}_{app-version}_Darwin_all.tar.gz
 |MacOS | x86-64 | {app-name}_{app-version}_Darwin_x86_64.tar.gz
 |MacOS | arm64 | {app-name}_{app-version}_Darwin_arm64.tar.gz
 |===
@@ -23,3 +24,38 @@ tar xvf {app-name}.tar.gz
 chmod +x {app-name}
 ----
 
+[id="linux-packages"]
+== Linux Packages
+
+NOTE: Linux packages are currently an experimental feature and should be considered unstable.
+
+Cerbos DEB and RPM packages can be installed on any Linux distribution that supports one of those package formats. You can download the appropriate package for your system from the link:{app-github-releases-page}[releases page].
+
+IMPORTANT: Cerbos packages are currently only designed to work with systems where `systemd` is the init system. If you use a different init system, consider installing cerbos from the tarballs instead.
+
+
+The packages install the `cerbos` and `cerbosctl` binaries to `/usr/local/bin` and create a systemd service to automatically start the Cerbos server. The default configuration is setup to look for policies in `/var/cerbos/policies` but you can change this by editing `/etc/cerbos/yaml` and reloading the service with `sudo systemctl restart cerbos`. 
+
+
+[source,sh]
+----
+# Show status of the service
+sudo systemctl status cerbos
+
+# Restart the service
+sudo systemctl restart cerbos
+
+# View logs
+sudo journalctl -xeu cerbos.service
+----
+
+[id="homebrew"]
+== Homebrew
+
+You can install Cerbos binaries using Homebrew as well.
+
+[source,sh]
+----
+brew tap cerbos/tap
+brew install cerbos
+----

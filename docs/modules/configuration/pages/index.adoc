@@ -63,7 +63,7 @@ server:
     enabled: true # Defines whether the admin API is enabled.
     adminCredentials: # Defines the admin user credentials.
       username: cerbos # The hardcoded username to use for authentication.
-      passwordHash: $2y$10$6v.PIn0zJ1xFdIDPlX3yheDZHM2iXI8CSKT5a3d35djtOxnOATxFi # The bcrypt hash of the password to use for authentication.
+      passwordHash: JDJ5JDEwJEdEOVFzZDE2VVhoVkR0N2VkUFBVM09nalc0QnNZaC9xc2E4bS9mcUJJcEZXenp5OUpjMi91Cgo= # BCrypt hashed and base64 encoded password to use for authentication.
 
 auxData: # Optional
   jwt:

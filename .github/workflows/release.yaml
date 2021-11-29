@@ -37,13 +37,6 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Log in to JFrog
-        uses: docker/login-action@v1
-        with:
-          registry: cerbos.jfrog.io
-          username: ${{ secrets.ARTIFACTORY_PROD_USERNAME }}
-          password: ${{ secrets.ARTIFACTORY_PROD_SECRET }}
-
       - uses: actions/cache@v2
         with:
           path: |
@@ -56,11 +49,10 @@ jobs:
         uses: goreleaser/goreleaser-action@v2
         with:
           version: latest
-          args: release --config=.goreleaser-ci.yml --rm-dist
+          args: release --config=.goreleaser.yml --rm-dist
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          ARTIFACTORY_PROD_USERNAME: ${{ secrets.ARTIFACTORY_PROD_USERNAME }}
-          ARTIFACTORY_PROD_SECRET: ${{ secrets.ARTIFACTORY_PROD_SECRET }}
+          HOMEBREW_GITHUB_TOKEN: ${{ secrets.HOMEBREW_GITHUB_TOKEN }}
 
   releaseProtos:
     name: Release Protobufs
@@ -69,7 +61,7 @@ jobs:
       - uses: actions/checkout@v2
 
       - name: Setup Buf
-        uses: bufbuild/buf-setup-action@v0.6.0
+        uses: bufbuild/buf-setup-action@v0.7.0
 
       - name: Push to BSR 
         uses: bufbuild/buf-push-action@v1.0.0
@@ -85,6 +77,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v2
         with:
+          ref: main
           fetch-depth: 0
           lfs: true
 
@@ -139,7 +132,4 @@ jobs:
           helm registry logout ${{ env.OCI_REGISTRY }}
         env:
           HELM_EXPERIMENTAL_OCI: '1'
-
-      - name: Publish to JFrog
-        run: CHART=$(ls ${{ env.CHARTS_DIR }}/cerbos/*.tgz); curl -H "X-JFrog-Art-Api:${{ secrets.ARTIFACTORY_API_KEY }}" -T "$CHART" "https://cerbos.jfrog.io/artifactory/helm/$(basename $CHART)"
 

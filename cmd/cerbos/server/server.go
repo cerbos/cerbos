@@ -102,7 +102,7 @@ func doRun(_ *cobra.Command, _ []string) error {
 	}
 
 	// initialize tracing
-	if err := tracing.Init(); err != nil {
+	if err := tracing.Init(ctx); err != nil {
 		return err
 	}
 

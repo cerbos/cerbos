@@ -1,0 +1,13 @@
+[Unit]
+Description=Cerbos Policy Decision Point
+
+[Service]
+ExecStart=/usr/local/bin/cerbos server --config=/etc/cerbos.yaml
+ProtectSystem=full
+ProtectHome=true
+PrivateUsers=true
+PrivateTmp=true
+DynamicUser=yes
+
+[Install]
+WantedBy=multi-user.target

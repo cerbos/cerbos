@@ -1,0 +1,56 @@
+include::ROOT:partial$attributes.adoc[]
+
+[#v0.10.0]
+= Cerbos v0.10.0
+
+== Highlights
+
+This release is about making Cerbos easier to install and try out. In addition to the existing container images, binaries and Helm charts, Cerbos can now be installed using xref:0.10.0@ROOT:installation/binary.adoc#homebrew[Homebrew] and xref:0.10.0@ROOT:installation/binary.adoc#linux-packages[DEB or RPM packages] as well. We have also added documentation and recipes for running Cerbos on the xref:0.10.0@deployment:serverless-faas.adoc[AWS Lambda platform] and as a xref:0.10.0@deployment:systemd.adoc[Systemd service] on Linux.
+
+
+== Changelog
+
+
+=== Bug Fixes
+
+* Updates URL to download Cerbos binaries (link:https://github.com/cerbos/cerbos/pull/422[#422])
+
+=== Features
+
+* Homebrew formula (link:https://github.com/cerbos/cerbos/pull/428[#428])
+* Linux packages (link:https://github.com/cerbos/cerbos/pull/424[#424])
+
+=== Enhancements
+
+* Better errors when disabled services are accessed (link:https://github.com/cerbos/cerbos/pull/420[#420])
+* Provide issue submission link for panics at cerbosctl (link:https://github.com/cerbos/cerbos/pull/283[#283])
+
+=== Documentation
+
+* Add AWS Lambda deployment option (link:https://github.com/cerbos/cerbos/pull/433[#433])
+* Generate docs from branches (link:https://github.com/cerbos/cerbos/pull/435[#435])
+
+=== Chores
+
+* Add nightly multi-OS test workflow (link:https://github.com/cerbos/cerbos/pull/427[#427])
+* Bump bufbuild/buf-setup-action from 0.5.0 to 0.6.0 (link:https://github.com/cerbos/cerbos/pull/409[#409])
+* Bump bufbuild/buf-setup-action from 0.6.0 to 0.7.0 (link:https://github.com/cerbos/cerbos/pull/437[#437])
+* Bump github.com/aws/aws-sdk-go from 1.40.34 to 1.41.19 (link:https://github.com/cerbos/cerbos/pull/426[#426])
+* Bump github.com/aws/aws-sdk-go from 1.41.11 to 1.41.14 (link:https://github.com/cerbos/cerbos/pull/410[#410])
+* Bump github.com/aws/aws-sdk-go from 1.41.19 to 1.42.4 (link:https://github.com/cerbos/cerbos/pull/438[#438])
+* Bump github.com/google/gops from 0.3.21 to 0.3.22 (link:https://github.com/cerbos/cerbos/pull/413[#413])
+* Bump github.com/lestrrat-go/jwx from 1.2.8 to 1.2.9 (link:https://github.com/cerbos/cerbos/pull/414[#414])
+* Bump github.com/tidwall/sjson from 1.2.2 to 1.2.3 (link:https://github.com/cerbos/cerbos/pull/411[#411])
+* Bump google.golang.org/grpc from 1.41.0 to 1.42.0 (link:https://github.com/cerbos/cerbos/pull/419[#419])
+* Bump modernc.org/sqlite from 1.13.1 to 1.13.3 (link:https://github.com/cerbos/cerbos/pull/416[#416])
+* Bump modernc.org/sqlite from 1.13.3 to 1.14.1 (link:https://github.com/cerbos/cerbos/pull/439[#439])
+* Bump version to 0.10.0
+* Cleanup Goreleaser configuration (link:https://github.com/cerbos/cerbos/pull/429[#429])
+* Configure semantic commit prefixes (link:https://github.com/cerbos/cerbos/pull/423[#423])
+* Disable test matrix and Windows build (link:https://github.com/cerbos/cerbos/pull/430[#430])
+* Remove outdated Docker dependencies (link:https://github.com/cerbos/cerbos/pull/425[#425])
+* Run PR workflow for backports (link:https://github.com/cerbos/cerbos/pull/436[#436])
+
+=== Other
+
+* Fix passwordHash in full configuration doc (link:https://github.com/cerbos/cerbos/pull/434[#434])

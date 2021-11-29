@@ -9,8 +9,7 @@ site:
 content:
   sources:
     - url: ./../
-      branches: [HEAD]
-      tags: ['v*', '!v0.0.*', '!v0.1.*', '!v0.2.*', '!v0.3.*', '!v0.4.*', '!v0.5.*', '!v0.6.*']
+      branches: [HEAD, 'v*']
       edit_url: 'https://github.com/cerbos/cerbos/tree/{refname}/{path}'
       start_path: docs
 urls:
@@ -21,7 +20,7 @@ urls:
 asciidoc:
   attributes:
     app-name: "cerbos"
-    app-version: "0.10.0@"
+    app-version: "0.11.0@"
     experimental: true
     page-pagination: true
 ui:

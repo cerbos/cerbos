@@ -6,6 +6,30 @@ Cerbos supports distributed tracing to provide insights into application perform
 
 The system to export the trace data must be specified using the `exporter` setting. Currently only link:https://www.jaegertracing.io[Jaeger] is supported. 
 
+
+.OpenTelemetry
+****
+link:https://opentelemetry.io[OpenTelemetry] is the evolving standard for observability. Cerbos supports OpenTelemetry with a few caveats due to limitations in the current Go implementation of OpenTelemetry. 
+
+* Traces must be in one of `W3C Trace Context` or `B3` propagation formats in order for distributed tracing to work. You must configure this using `tracing.propagationFormat` configuration key (see below). The default is `w3c-tracecontext`.
++
+In Go applications, the propagation format can be set using one of the following code snippets. For other languages, refer to the relevant OpenTelemetry library documentation.
++
+[source,go]
+----
+// W3C Trace Context
+otel.SetTextMapPropagator(propagation.TraceContext{})
+
+// B3 
+otel.SetTextMapPropagator(b3.New(b3.WithInjectEncoding(b3.B3MultipleHeader | b3.B3SingleHeader)))
+----
+
+* gRPC clients should use the link:https://github.com/open-telemetry/opentelemetry-go-contrib/tree/main/propagators/opencensus[OpenCensus binary propagation format] for distributed traces.
+
+* Metrics are not yet supported. 
+
+****
+
 == Jaeger
 
 .Send trace data to Jaeger exporter
@@ -13,6 +37,7 @@ The system to export the trace data must be specified using the `exporter` setti
 ----
 tracing:
   sampleProbability: 0.5
+  propagationFormat: b3
   exporter: jaeger
   jaeger: 
     serviceName: cerbos 
