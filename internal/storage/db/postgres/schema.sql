@@ -33,10 +33,10 @@ CREATE TABLE IF NOT EXISTS policy_revision (
 );
 
 CREATE TABLE IF NOT EXISTS schema (
-    id SERIAL PRIMARY KEY,
+    id BIGINT PRIMARY KEY,
     description TEXT,
     disabled BOOLEAN default false,
-    definition BYTEA
+    definition JSON
 );
 
 CREATE OR REPLACE FUNCTION process_policy_audit() RETURNS TRIGGER AS $policy_audit$
@@ -64,5 +64,6 @@ CREATE USER cerbos_user WITH PASSWORD 'changeme';
 GRANT CONNECT ON DATABASE postgres TO cerbos_user;
 GRANT USAGE ON SCHEMA cerbos TO cerbos_user;
 GRANT SELECT,INSERT,UPDATE,DELETE ON cerbos.policy, cerbos.policy_dependency TO cerbos_user; 
-GRANT SELECT,INSERT ON cerbos.policy_revision TO cerbos_user; 
+GRANT SELECT,INSERT,UPDATE,DELETE ON cerbos.schema TO cerbos_user;
+GRANT SELECT,INSERT ON cerbos.policy_revision TO cerbos_user;
 GRANT USAGE,SELECT ON cerbos.policy_revision_revision_id_seq TO cerbos_user;

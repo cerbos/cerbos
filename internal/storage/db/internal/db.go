@@ -63,11 +63,27 @@ func (s *dbStorage) AddOrUpdateSchema(ctx context.Context, sch *schemav1.Schema)
 	}
 
 	// try to upsert the schema record
-	if _, err := s.db.Insert(SchemaTbl).
-		Rows(schemaRecord).
-		Executor().
-		ExecContext(ctx); err != nil {
-		return fmt.Errorf("failed to upsert the schema: %w", err)
+	err := s.db.WithTx(func(tx *goqu.TxDatabase) error {
+		_, err := s.db.From(SchemaTbl).
+			Where(goqu.C(SchemaTblIDCol).Eq(SchemaDefaultID)).
+			Delete().
+			Executor().
+			ExecContext(ctx)
+		if err != nil {
+			return fmt.Errorf("failed to delete the schema before inserting: %w", err)
+		}
+
+		if _, err := s.db.Insert(SchemaTbl).
+			Rows(schemaRecord).
+			Executor().
+			ExecContext(ctx); err != nil {
+			return fmt.Errorf("failed to insert the schema: %w", err)
+		}
+
+		return nil
+	})
+	if err != nil {
+		return err
 	}
 
 	s.NotifySubscribers(storage.Event{

@@ -30,10 +30,10 @@ CREATE TABLE IF NOT EXISTS policy_revision (
     update_timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP);
 
 CREATE TABLE IF NOT EXISTS schema (
-    id INTEGER AUTO_INCREMENT PRIMARY KEY,
+    id BIGINT PRIMARY KEY,
     description TEXT,
     disabled BOOLEAN default false,
-    definition BLOB);
+    definition JSON);
 
 DROP TRIGGER IF EXISTS policy_on_insert;
 
@@ -58,5 +58,6 @@ VALUES('DELETE', OLD.id, OLD.kind, OLD.name, OLD.version, OLD.description, OLD.d
 
 CREATE USER IF NOT EXISTS cerbos_user IDENTIFIED WITH mysql_native_password BY 'changeme';
 GRANT SELECT,INSERT,UPDATE,DELETE ON cerbos.policy TO cerbos_user; 
-GRANT SELECT,INSERT,UPDATE,DELETE ON cerbos.policy_dependency TO cerbos_user; 
+GRANT SELECT,INSERT,UPDATE,DELETE ON cerbos.schema TO cerbos_user;
+GRANT SELECT,INSERT,UPDATE,DELETE ON cerbos.policy_dependency TO cerbos_user;
 GRANT SELECT,INSERT ON cerbos.policy_revision TO cerbos_user; 

@@ -6,6 +6,7 @@ package internal
 import (
 	"database/sql/driver"
 	"fmt"
+	"google.golang.org/protobuf/encoding/protojson"
 	"time"
 
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
@@ -30,7 +31,7 @@ const (
 )
 
 type Schema struct {
-	ID          uint
+	ID          uint64
 	Description string
 	Disabled    bool
 	Definition  SchemaDefWrapper
@@ -41,7 +42,7 @@ type SchemaDefWrapper struct {
 }
 
 func (sdw SchemaDefWrapper) Value() (driver.Value, error) {
-	return sdw.Schema.MarshalVT()
+	return protojson.Marshal(sdw.Schema)
 }
 
 func (sdw *SchemaDefWrapper) Scan(src interface{}) error {
@@ -58,7 +59,7 @@ func (sdw *SchemaDefWrapper) Scan(src interface{}) error {
 	}
 
 	sdw.Schema = &schemav1.Schema{}
-	if err := sdw.Schema.UnmarshalVT(source); err != nil {
+	if err := protojson.Unmarshal(source, sdw.Schema); err != nil {
 		return fmt.Errorf("failed to unmarshal schema definition: %w", err)
 	}
 

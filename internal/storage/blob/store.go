@@ -12,7 +12,6 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
-	"strings"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -231,7 +230,7 @@ func (s *Store) updateIndex(ctx context.Context) error {
 	var p *policyv1.Policy
 	var event storage.Event
 	for _, f := range changes.updateOrAdd {
-		if strings.HasSuffix(f, filepath.Join(schema.Directory, schema.File)) {
+		if f == filepath.Join(schema.Directory, schema.File) {
 			s.NotifySubscribers(storage.NewEvent(storage.EventAddOrUpdateSchema, namer.ModuleID{}))
 			continue
 		}
@@ -248,7 +247,7 @@ func (s *Store) updateIndex(ctx context.Context) error {
 		s.NotifySubscribers(event)
 	}
 	for _, f := range changes.delete {
-		if strings.HasSuffix(f, filepath.Join(schema.Directory, schema.File)) {
+		if f == filepath.Join(schema.Directory, schema.File) {
 			s.NotifySubscribers(storage.NewEvent(storage.EventDeleteSchema, namer.ModuleID{}))
 			continue
 		}
