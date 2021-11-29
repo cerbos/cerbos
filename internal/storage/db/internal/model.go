@@ -25,7 +25,7 @@ const (
 	PolicyDepTblPolicyIDCol = "policy_id"
 	PolicyDepTblDepIDCol    = "dependency_id"
 
-	SchemaTbl              = "schema"
+	SchemaTbl              = "attr_schema_defs"
 	SchemaTblIDCol         = "id"
 	SchemaTblDefinitionCol = "definition"
 	SchemaDefaultID        = 1

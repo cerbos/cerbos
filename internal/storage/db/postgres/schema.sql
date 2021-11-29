@@ -32,7 +32,7 @@ CREATE TABLE IF NOT EXISTS policy_revision (
     update_timestamp TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TABLE IF NOT EXISTS schema (
+CREATE TABLE IF NOT EXISTS attr_schema_defs (
     id BIGINT PRIMARY KEY,
     description TEXT,
     disabled BOOLEAN default false,
@@ -64,6 +64,6 @@ CREATE USER cerbos_user WITH PASSWORD 'changeme';
 GRANT CONNECT ON DATABASE postgres TO cerbos_user;
 GRANT USAGE ON SCHEMA cerbos TO cerbos_user;
 GRANT SELECT,INSERT,UPDATE,DELETE ON cerbos.policy, cerbos.policy_dependency TO cerbos_user; 
-GRANT SELECT,INSERT,UPDATE,DELETE ON cerbos.schema TO cerbos_user;
+GRANT SELECT,INSERT,UPDATE,DELETE ON cerbos.attr_schema_defs TO cerbos_user;
 GRANT SELECT,INSERT ON cerbos.policy_revision TO cerbos_user;
 GRANT USAGE,SELECT ON cerbos.policy_revision_revision_id_seq TO cerbos_user;

@@ -33,8 +33,8 @@ CREATE TABLE IF NOT EXISTS policy_revision (
     update_timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 
--- name: schema
-CREATE TABLE IF NOT EXISTS `schema` (
+-- name: attr_schema_defs
+CREATE TABLE IF NOT EXISTS attr_schema_defs (
     id BIG INT PRIMARY KEY,
     description TEXT,
     disabled BOOLEAN default false,
