@@ -29,7 +29,7 @@ CREATE TABLE IF NOT EXISTS policy_revision (
     definition BLOB,
     update_timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP);
 
-CREATE TABLE IF NOT EXISTS schema (
+CREATE TABLE IF NOT EXISTS `schema` (
     id BIGINT PRIMARY KEY,
     description TEXT,
     disabled BOOLEAN default false,

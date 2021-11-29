@@ -29,15 +29,16 @@ CREATE TABLE IF NOT EXISTS policy_revision (
     version VARCHAR(128),
     description TEXT,
     disabled BOOLEAN, 
-    definition VARCHAR,
+    definition BLOB,
     update_timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TABLE IF NOT EXISTS schema (
+-- name: schema
+CREATE TABLE IF NOT EXISTS `schema` (
     id BIG INT PRIMARY KEY,
     description TEXT,
     disabled BOOLEAN default false,
-    definition BLOB
+    definition VARCHAR
 );
 
 -- name: policy_on_insert

@@ -6,8 +6,9 @@ package internal
 import (
 	"database/sql/driver"
 	"fmt"
-	"google.golang.org/protobuf/encoding/protojson"
 	"time"
+
+	"google.golang.org/protobuf/encoding/protojson"
 
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
 	schemav1 "github.com/cerbos/cerbos/api/genpb/cerbos/schema/v1"

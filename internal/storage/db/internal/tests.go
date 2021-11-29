@@ -31,6 +31,7 @@ func TestSuite(store DBStorage) func(*testing.T) {
 		dr := policy.Wrap(test.GenDerivedRoles(test.NoMod()))
 		rpx := policy.Wrap(test.GenResourcePolicy(test.PrefixAndSuffix("x", "x")))
 		drx := policy.Wrap(test.GenDerivedRoles(test.PrefixAndSuffix("x", "x")))
+		sch := test.GenSchema()
 
 		t.Run("add", func(t *testing.T) {
 			checkEvents := storage.TestSubscription(store)
@@ -44,6 +45,13 @@ func TestSuite(store DBStorage) func(*testing.T) {
 				{Kind: storage.EventAddOrUpdatePolicy, PolicyID: drx.ID},
 			}
 			checkEvents(t, wantEvents...)
+		})
+
+		t.Run("add_schema", func(t *testing.T) {
+			checkEvents := storage.TestSubscription(store)
+			require.NoError(t, store.AddOrUpdateSchema(ctx, sch))
+
+			checkEvents(t, storage.Event{Kind: storage.EventAddOrUpdateSchema})
 		})
 
 		t.Run("get_compilation_unit_with_deps", func(t *testing.T) {
@@ -128,6 +136,14 @@ func TestSuite(store DBStorage) func(*testing.T) {
 			})
 		})
 
+		t.Run("get_schema", func(t *testing.T) {
+			t.Run("should be able to get schema", func(t *testing.T) {
+				schema, err := store.GetSchema(ctx)
+				require.NoError(t, err)
+				require.NotEmpty(t, schema)
+			})
+		})
+
 		t.Run("delete", func(t *testing.T) {
 			checkEvents := storage.TestSubscription(store)
 
@@ -139,6 +155,15 @@ func TestSuite(store DBStorage) func(*testing.T) {
 			require.Empty(t, have)
 
 			checkEvents(t, storage.Event{Kind: storage.EventDeletePolicy, PolicyID: rpx.ID})
+		})
+
+		t.Run("delete_schema", func(t *testing.T) {
+			checkEvents := storage.TestSubscription(store)
+
+			err := store.DeleteSchema(ctx)
+			require.NoError(t, err)
+
+			checkEvents(t, storage.Event{Kind: storage.EventDeleteSchema})
 		})
 	}
 }
