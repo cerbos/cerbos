@@ -6,7 +6,7 @@ package schema_test
 import (
 	"bytes"
 	"context"
-	"errors"
+	"fmt"
 	"path/filepath"
 	"testing"
 
@@ -18,6 +18,7 @@ import (
 	privatev1 "github.com/cerbos/cerbos/api/genpb/cerbos/private/v1"
 	schemav1 "github.com/cerbos/cerbos/api/genpb/cerbos/schema/v1"
 	"github.com/cerbos/cerbos/internal/schema"
+	"github.com/cerbos/cerbos/internal/storage"
 	"github.com/cerbos/cerbos/internal/storage/disk"
 	"github.com/cerbos/cerbos/internal/storage/index"
 	"github.com/cerbos/cerbos/internal/test"
@@ -27,40 +28,96 @@ import (
 func TestValidate(t *testing.T) {
 	testCases := test.LoadTestCases(t, "schema")
 
-	for _, tcase := range testCases {
-		tcase := tcase
-		t.Run(tcase.Name, func(t *testing.T) {
-			tc := readTestCase(t, tcase.Input)
-			store := mkStore(t, tc.Schema)
-			conf := &schema.Conf{Enforcement: schema.EnforcementReject}
-			mgr, err := schema.NewWithConf(context.Background(), store, conf)
+	for _, enforcement := range []schema.Enforcement{schema.EnforcementWarn, schema.EnforcementReject} {
+		enforcement := enforcement
+		t.Run(fmt.Sprintf("enforcement=%s", enforcement), func(t *testing.T) {
+			for _, tcase := range testCases {
+				tcase := tcase
+				t.Run(tcase.Name, func(t *testing.T) {
+					tc := readTestCase(t, tcase.Input)
+					store := mkStore(t, mkFS(t, tc.Schema))
+					conf := &schema.Conf{Enforcement: enforcement}
+					mgr, err := schema.NewWithConf(context.Background(), store, conf)
 
-			if tc.InvalidSchema {
-				require.Error(t, err)
-				return
+					if tc.InvalidSchema {
+						require.Error(t, err)
+						return
+					}
+					require.NoError(t, err)
+
+					have, err := mgr.Validate(context.Background(), tc.Input)
+					if tc.WantError {
+						require.Error(t, err)
+						return
+					}
+
+					require.Equal(t, conf.Enforcement == schema.EnforcementReject, have.Reject)
+
+					if len(tc.WantValidationErrors) > 0 {
+						wantErrs := &privatev1.ValidationErrContainer{Errors: tc.WantValidationErrors}
+						haveErrs := &privatev1.ValidationErrContainer{Errors: have.Errors.SchemaErrors()}
+
+						require.Empty(t, cmp.Diff(wantErrs, haveErrs,
+							protocmp.Transform(),
+							protocmp.SortRepeated(cmpValidationError),
+						))
+					}
+				})
 			}
+		})
+	}
+
+	t.Run(fmt.Sprintf("enforcement=%s", schema.EnforcementNone), func(t *testing.T) {
+		for _, tcase := range testCases {
+			tcase := tcase
+			t.Run(tcase.Name, func(t *testing.T) {
+				tc := readTestCase(t, tcase.Input)
+				store := mkStore(t, mkFS(t, tc.Schema))
+				conf := &schema.Conf{Enforcement: schema.EnforcementNone}
+				mgr, err := schema.NewWithConf(context.Background(), store, conf)
+				require.NoError(t, err)
+
+				have, err := mgr.Validate(context.Background(), tc.Input)
+				require.NoError(t, err)
+				require.False(t, have.Reject)
+				require.Empty(t, have.Errors)
+			})
+		}
+	})
+}
+
+func TestSchemaUpdate(t *testing.T) {
+	for _, enforcement := range []schema.Enforcement{schema.EnforcementWarn, schema.EnforcementReject} {
+		enforcement := enforcement
+		t.Run(fmt.Sprintf("enforcement=%s", enforcement), func(t *testing.T) {
+			tc := &privatev1.SchemaTestCase{}
+			test.ReadSingleTestCase(t, "schema/case_00.yaml", tc)
+
+			fs := mkFS(t, tc.Schema)
+			store := mkStore(t, fs)
+			conf := &schema.Conf{Enforcement: enforcement}
+			mgr, err := schema.NewWithConf(context.Background(), store, conf)
 			require.NoError(t, err)
 
-			have := mgr.Validate(context.Background(), tc.Input)
-			if tc.WantError || len(tc.WantValidationErrors) > 0 {
-				require.Error(t, have)
-			} else {
-				require.NoError(t, have)
-				return
+			s, ok := mgr.(storage.Subscriber)
+			require.True(t, ok)
+
+			checkValid := func() {
+				have, err := mgr.Validate(context.Background(), tc.Input)
+				require.NoError(t, err)
+				require.Empty(t, have.Errors)
 			}
 
-			if len(tc.WantValidationErrors) > 0 {
-				var haveErr schema.ValidationErrorList
-				require.True(t, errors.As(have, &haveErr))
+			// Control test
+			checkValid()
 
-				wantErrs := &privatev1.ValidationErrContainer{Errors: tc.WantValidationErrors}
-				haveErrs := &privatev1.ValidationErrContainer{Errors: haveErr.SchemaErrors()}
+			// Signal schema deletion
+			s.OnStorageEvent(storage.Event{Kind: storage.EventDeleteSchema})
+			checkValid()
 
-				require.Empty(t, cmp.Diff(wantErrs, haveErrs,
-					protocmp.Transform(),
-					protocmp.SortRepeated(cmpValidationError),
-				))
-			}
+			// Signal schema addition
+			s.OnStorageEvent(storage.Event{Kind: storage.EventAddOrUpdateSchema})
+			checkValid()
 		})
 	}
 }
@@ -74,7 +131,16 @@ func readTestCase(t *testing.T, data []byte) *privatev1.SchemaTestCase {
 	return tc
 }
 
-func mkStore(t *testing.T, s *schemav1.Schema) *disk.Store {
+func mkStore(t *testing.T, fs afero.Fs) *disk.Store {
+	t.Helper()
+
+	index, err := index.Build(context.Background(), afero.NewIOFS(fs))
+	require.NoError(t, err)
+
+	return disk.NewFromIndexWithConf(index, &disk.Conf{})
+}
+
+func mkFS(t *testing.T, s *schemav1.Schema) afero.Fs {
 	t.Helper()
 
 	fs := afero.NewMemMapFs()
@@ -83,10 +149,7 @@ func mkStore(t *testing.T, s *schemav1.Schema) *disk.Store {
 	require.NoError(t, util.WriteYAML(buf, s))
 	require.NoError(t, afero.WriteReader(fs, filepath.Join(schema.Directory, schema.File), buf))
 
-	index, err := index.Build(context.Background(), afero.NewIOFS(fs))
-	require.NoError(t, err)
-
-	return disk.NewFromIndexWithConf(index, &disk.Conf{})
+	return fs
 }
 
 func cmpValidationError(a, b *schemav1.ValidationError) bool {
