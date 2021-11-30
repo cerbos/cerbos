@@ -31,7 +31,7 @@ func TestSuite(store DBStorage) func(*testing.T) {
 		dr := policy.Wrap(test.GenDerivedRoles(test.NoMod()))
 		rpx := policy.Wrap(test.GenResourcePolicy(test.PrefixAndSuffix("x", "x")))
 		drx := policy.Wrap(test.GenDerivedRoles(test.PrefixAndSuffix("x", "x")))
-		sch := test.GenSchema()
+		sch := test.LoadSchema(t, test.PathToDir(t, "store/_schemas/schema.yaml"))
 
 		t.Run("add", func(t *testing.T) {
 			checkEvents := storage.TestSubscription(store)
@@ -162,6 +162,11 @@ func TestSuite(store DBStorage) func(*testing.T) {
 
 			err := store.DeleteSchema(ctx)
 			require.NoError(t, err)
+
+			have, err := store.GetSchema(ctx)
+			require.NoError(t, err)
+
+			require.Empty(t, have)
 
 			checkEvents(t, storage.Event{Kind: storage.EventDeleteSchema})
 		})

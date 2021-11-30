@@ -62,17 +62,9 @@ func (s *dbStorage) AddOrUpdateSchema(ctx context.Context, sch *schemav1.Schema)
 		Definition:  SchemaDefWrapper{sch},
 	}
 
-	_, err := s.db.From(SchemaTbl).
-		Where(goqu.C(SchemaTblIDCol).Eq(SchemaDefaultID)).
-		Delete().
-		Executor().
-		ExecContext(ctx)
-	if err != nil {
-		return fmt.Errorf("failed to delete the schema before inserting: %w", err)
-	}
-
 	if _, err := s.db.Insert(SchemaTbl).
 		Rows(schemaRecord).
+		OnConflict(goqu.DoUpdate(SchemaTblIDCol, schemaRecord)).
 		Executor().
 		ExecContext(ctx); err != nil {
 		return fmt.Errorf("failed to insert the schema: %w", err)
