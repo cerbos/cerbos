@@ -2609,11 +2609,11 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 --------------------------------------------------------------------------------
 Module  : github.com/jackc/pgx/v4
-Version : v4.13.0
-Time    : 2021-07-24T15:59:24Z
+Version : v4.14.1
+Time    : 2021-11-29T03:46:52Z
 Licence : MIT
 
-Contents of probable licence file $GOMODCACHE/github.com/jackc/pgx/v4@v4.13.0/LICENSE:
+Contents of probable licence file $GOMODCACHE/github.com/jackc/pgx/v4@v4.14.1/LICENSE:
 
 Copyright (c) 2013-2021 Jack Christensen
 
@@ -15511,11 +15511,11 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 --------------------------------------------------------------------------------
 Module  : github.com/jackc/pgconn
-Version : v1.10.0
-Time    : 2021-07-24T15:52:26Z
+Version : v1.10.1
+Time    : 2021-11-20T15:56:46Z
 Licence : MIT
 
-Contents of probable licence file $GOMODCACHE/github.com/jackc/pgconn@v1.10.0/LICENSE:
+Contents of probable licence file $GOMODCACHE/github.com/jackc/pgconn@v1.10.1/LICENSE:
 
 Copyright (c) 2019-2021 Jack Christensen
 
@@ -15638,11 +15638,11 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 --------------------------------------------------------------------------------
 Module  : github.com/jackc/pgproto3/v2
-Version : v2.1.1
-Time    : 2021-07-07T23:10:44Z
+Version : v2.2.0
+Time    : 2021-11-06T21:39:43Z
 Licence : MIT
 
-Contents of probable licence file $GOMODCACHE/github.com/jackc/pgproto3/v2@v2.1.1/LICENSE:
+Contents of probable licence file $GOMODCACHE/github.com/jackc/pgproto3/v2@v2.2.0/LICENSE:
 
 Copyright (c) 2019 Jack Christensen
 
@@ -15702,11 +15702,11 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 --------------------------------------------------------------------------------
 Module  : github.com/jackc/pgtype
-Version : v1.8.1
-Time    : 2021-07-24T15:50:22Z
+Version : v1.9.1
+Time    : 2021-11-28T22:29:42Z
 Licence : MIT
 
-Contents of probable licence file $GOMODCACHE/github.com/jackc/pgtype@v1.8.1/LICENSE:
+Contents of probable licence file $GOMODCACHE/github.com/jackc/pgtype@v1.9.1/LICENSE:
 
 Copyright (c) 2013-2021 Jack Christensen
 
