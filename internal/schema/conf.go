@@ -4,15 +4,12 @@
 package schema
 
 const (
-	confKey                     = "schema"
-	defaultEnforcement          = EnforcementNone
-	defaultIgnoreSchemaNotFound = false
+	confKey            = "schema"
+	defaultEnforcement = EnforcementNone
 )
 
 // Conf holds configuration related to schema validation.
 type Conf struct {
-	// IgnoreSchemaNotFound Ignores schema file not found error
-	IgnoreSchemaNotFound bool `yaml:"ignoreSchemaNotFound"`
 	// Enforcement level of the validations. (none, warn, reject)
 	Enforcement Enforcement `yaml:"enforcement"`
 }
@@ -22,7 +19,6 @@ func (c *Conf) Key() string {
 }
 
 func (c *Conf) SetDefaults() {
-	c.IgnoreSchemaNotFound = defaultIgnoreSchemaNotFound
 	c.Enforcement = defaultEnforcement
 }
 

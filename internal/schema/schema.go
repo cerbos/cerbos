@@ -14,7 +14,6 @@ import (
 	jsonschema "github.com/santhosh-tekuri/jsonschema/v5"
 	"github.com/tidwall/gjson"
 	"go.uber.org/zap"
-	"go.uber.org/zap/zapcore"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/types/known/structpb"
 
@@ -34,6 +33,8 @@ const (
 
 const attrPath = "attr"
 
+var alwaysValidResult = &ValidationResult{Reject: false}
+
 func ValidateSchemaProto(s *schemav1.Schema) error {
 	if err := s.Validate(); err != nil {
 		return err
@@ -42,22 +43,34 @@ func ValidateSchemaProto(s *schemav1.Schema) error {
 	return nil
 }
 
-type Manager interface {
-	Validate(context.Context, *enginev1.CheckInput) error
+type ValidationResult struct {
+	Reject bool
+	Errors ValidationErrorList
 }
 
-type nopManager struct{}
+func (vr *ValidationResult) add(errs ...ValidationError) {
+	vr.Errors = append(vr.Errors, errs...)
+}
 
-func (nopManager) Validate(_ context.Context, _ *enginev1.CheckInput) error {
-	return nil
+type Manager interface {
+	Validate(context.Context, *enginev1.CheckInput) (*ValidationResult, error)
+}
+
+func NewNopManager() NopManager {
+	return NopManager{}
+}
+
+type NopManager struct{}
+
+func (NopManager) Validate(_ context.Context, _ *enginev1.CheckInput) (*ValidationResult, error) {
+	return alwaysValidResult, nil
 }
 
 type manager struct {
 	conf            *Conf
-	log             *zap.SugaredLogger
+	log             *zap.Logger
 	store           storage.Store
 	mu              sync.RWMutex
-	schema          *schemav1.Schema
 	principalSchema *jsonschema.Schema
 	resourceSchemas map[string]*jsonschema.Schema
 }
@@ -73,20 +86,18 @@ func New(ctx context.Context, store storage.Store) (Manager, error) {
 
 func NewWithConf(ctx context.Context, store storage.Store, conf *Conf) (Manager, error) {
 	if conf.Enforcement == EnforcementNone {
-		return nopManager{}, nil
+		return NopManager{}, nil
 	}
 
 	mgr := &manager{
 		conf:  conf,
-		log:   zap.S().Named("schema"),
+		log:   zap.L().Named("schema"),
 		store: store,
 	}
 
 	if err := mgr.UpdateSchemaFromStore(ctx); err != nil {
-		if conf.Enforcement == EnforcementReject {
-			return nil, fmt.Errorf("schema file not found: %w", err)
-		}
-		mgr.log.Warnw("schema file not found", "error", err)
+		mgr.log.Error("Failed to load schema", zap.Error(err))
+		return nil, err
 	}
 
 	store.Subscribe(mgr)
@@ -94,67 +105,43 @@ func NewWithConf(ctx context.Context, store storage.Store, conf *Conf) (Manager,
 	return mgr, nil
 }
 
-func (m *manager) Validate(ctx context.Context, input *enginev1.CheckInput) error {
-	if m.conf.Enforcement == EnforcementNone {
-		m.log.Debug("Ignoring schema validation because enforcement is disabled")
-		return nil
-	}
-
+func (m *manager) Validate(ctx context.Context, input *enginev1.CheckInput) (*ValidationResult, error) {
 	m.mu.RLock()
-	if m.schema == nil {
-		m.mu.RUnlock()
-		return nil
-	}
-
 	principalSchema := m.principalSchema
 	resourceSchema := m.resourceSchemas[input.Resource.Kind]
 	m.mu.RUnlock()
 
-	if resourceSchema == nil {
-		if m.conf.Enforcement == EnforcementReject {
-			return fmt.Errorf("no schema found for resource kind '%s'", input.Resource.Kind)
-		}
-
-		m.log.Debugf("No schema found for kind '%s'", input.Resource.Kind)
-		return nil
-	}
-
 	ctx, span := tracing.StartSpan(ctx, "schema.Validate")
 	defer span.End()
 
-	var principalErrs ValidationErrorList
+	result := &ValidationResult{Reject: m.conf.Enforcement == EnforcementReject}
+
 	if err := m.validateAttr(ErrSourcePrincipal, input.Principal.Attr, principalSchema); err != nil {
+		var principalErrs ValidationErrorList
 		if ok := errors.As(err, &principalErrs); !ok {
-			return fmt.Errorf("failed to validate the principal: %w", err)
+			return result, fmt.Errorf("failed to validate the principal: %w", err)
 		}
+		result.add(principalErrs...)
 	}
 
-	var resourceErrs ValidationErrorList
+	if resourceSchema == nil {
+		result.add(newResourceSchemaNotFoundErr(input.Resource.Kind))
+		return result, nil
+	}
+
 	if err := m.validateAttr(ErrSourceResource, input.Resource.Attr, resourceSchema); err != nil {
+		var resourceErrs ValidationErrorList
 		if ok := errors.As(err, &resourceErrs); !ok {
-			return fmt.Errorf("failed to validate the resource: %w", err)
+			return result, fmt.Errorf("failed to validate the resource: %w", err)
 		}
+		result.add(resourceErrs...)
 	}
 
-	numErrs := len(principalErrs) + len(resourceErrs)
-	if numErrs == 0 {
-		return nil
+	if len(result.Errors) > 0 {
+		logging.FromContext(ctx).Warn("Validation failed", zap.Any("input", input), zap.Strings("errors", result.Errors.ErrorMessages()))
 	}
 
-	logger := logging.FromContext(ctx)
-	logFields := []zapcore.Field{
-		zap.Any("input", input),
-		zap.Strings("principal_errors", principalErrs.ErrorMessages()),
-		zap.Strings("resource_errors", resourceErrs.ErrorMessages()),
-	}
-
-	if m.conf.Enforcement == EnforcementReject {
-		logger.Error("Schema validation failed for input", logFields...)
-		return mergeErrLists(principalErrs, resourceErrs)
-	}
-
-	logger.Warn("Schema validation failed for input", logFields...)
-	return nil
+	return result, nil
 }
 
 func (m *manager) validateAttr(src ErrSource, attr map[string]*structpb.Value, schema *jsonschema.Schema) error {
@@ -179,11 +166,7 @@ func (m *manager) validateAttr(src ErrSource, attr map[string]*structpb.Value, s
 func (m *manager) UpdateSchemaFromStore(ctx context.Context) error {
 	sch, err := m.store.GetSchema(ctx)
 	if err != nil {
-		if !m.conf.IgnoreSchemaNotFound {
-			return fmt.Errorf("failed to retrieve schema from store: %w", err)
-		}
-
-		return nil
+		return fmt.Errorf("failed to retrieve schema from store: %w", err)
 	}
 
 	err = m.doUpdateSchema(sch)
@@ -234,7 +217,6 @@ func (m *manager) doUpdateSchema(sch *schemav1.Schema) error {
 	}
 
 	m.mu.Lock()
-	m.schema = sch
 	m.principalSchema = principalSchema
 	m.resourceSchemas = resourceSchemas
 	m.mu.Unlock()
@@ -258,7 +240,6 @@ func toJSONSchema(schemaProps *structpb.Value) (*jsonschema.Schema, error) {
 
 func (m *manager) ClearSchema() {
 	m.mu.Lock()
-	m.schema = nil
 	m.principalSchema = nil
 	m.resourceSchemas = nil
 	m.mu.Unlock()
@@ -274,13 +255,12 @@ func (m *manager) OnStorageEvent(events ...storage.Event) {
 		switch event.Kind {
 		case storage.EventAddOrUpdateSchema:
 			if err := m.UpdateSchemaFromStore(context.Background()); err != nil {
-				m.log.Warnw("Failed to read schema file from store", "error", err)
+				m.log.Warn("Failed to read schema file from store", zap.Error(err))
 				continue
 			}
-			m.log.Debugw("Handled schema add/update event")
+			m.log.Debug("Handled schema add/update event")
 		case storage.EventDeleteSchema:
-			m.ClearSchema()
-			m.log.Debugw("Handled schema deletion event")
+			m.log.Warn("Schema was removed from storage. Continuing to use cached copy of schema but the PDP may fail to start next time unless schema enforcement is disabled in the configuration")
 		}
 	}
 }

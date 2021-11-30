@@ -274,41 +274,38 @@ func (engine *Engine) evaluate(ctx context.Context, input *enginev1.CheckInput, 
 	}
 
 	// validate the request using schema
-	var validationErrs schema.ValidationErrorList
-	if err := engine.schemaMgr.Validate(ctx, input); err != nil {
-		tracing.MarkFailed(span, http.StatusBadRequest, err)
-
-		if ok := errors.As(err, &validationErrs); !ok {
-			return nil, fmt.Errorf("failed to run schema validator on input: %w", err)
-		}
-
-		// return EFFECT_DENY for all actions because validation failed
-		output := &enginev1.CheckOutput{
-			RequestId:        input.RequestId,
-			ResourceId:       input.Resource.Id,
-			ValidationErrors: validationErrs.SchemaErrors(),
-			Actions:          make(map[string]*enginev1.CheckOutput_ActionEffect, len(input.Actions)),
-		}
-
-		for _, action := range input.Actions {
-			output.Actions[action] = &enginev1.CheckOutput_ActionEffect{
-				Effect: effectv1.Effect_EFFECT_DENY,
-				Policy: skippedDueToInvalidInput,
-			}
-		}
-
-		return output, nil
-	}
-
-	ec, err := engine.buildEvaluationCtx(ctx, input, checkOpts)
+	vResult, err := engine.schemaMgr.Validate(ctx, input)
 	if err != nil {
-		return nil, err
+		tracing.MarkFailed(span, http.StatusInternalServerError, err)
+		return nil, fmt.Errorf("failed to validate input: %w", err)
 	}
 
 	output := &enginev1.CheckOutput{
 		RequestId:  input.RequestId,
 		ResourceId: input.Resource.Id,
 		Actions:    make(map[string]*enginev1.CheckOutput_ActionEffect, len(input.Actions)),
+	}
+
+	if len(vResult.Errors) > 0 {
+		tracing.MarkFailed(span, http.StatusBadRequest, err)
+		output.ValidationErrors = vResult.Errors.SchemaErrors()
+
+		// return EFFECT_DENY for all actions if enforcement is strict.
+		if vResult.Reject {
+			for _, action := range input.Actions {
+				output.Actions[action] = &enginev1.CheckOutput_ActionEffect{
+					Effect: effectv1.Effect_EFFECT_DENY,
+					Policy: skippedDueToInvalidInput,
+				}
+			}
+
+			return output, nil
+		}
+	}
+
+	ec, err := engine.buildEvaluationCtx(ctx, input, checkOpts)
+	if err != nil {
+		return nil, err
 	}
 
 	// If there are no checks, set the default effect and return.
