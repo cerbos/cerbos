@@ -5,10 +5,6 @@ package conditions_test
 
 import (
 	"fmt"
-	"github.com/google/cel-go/common"
-	"github.com/google/cel-go/common/types"
-	"github.com/google/cel-go/parser"
-	"google.golang.org/genproto/googleapis/api/expr/v1alpha1"
 	"log"
 	"math/rand"
 	"reflect"
@@ -19,8 +15,12 @@ import (
 	"github.com/ghodss/yaml"
 	"github.com/google/cel-go/cel"
 	"github.com/google/cel-go/checker/decls"
+	"github.com/google/cel-go/common"
+	"github.com/google/cel-go/common/types"
 	"github.com/google/cel-go/ext"
+	"github.com/google/cel-go/parser"
 	"github.com/stretchr/testify/require"
+	expr "google.golang.org/genproto/googleapis/api/expr/v1alpha1"
 
 	enginev1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
 	"github.com/cerbos/cerbos/internal/conditions"
@@ -164,6 +164,7 @@ func benchmarkIntersect(b *testing.B, size int) {
 }
 
 func TestCmpSelectAndCall(t *testing.T) {
+	t.Skip()
 	env, _ := cel.NewEnv(
 		cel.Types(&enginev1.Resource{}),
 		cel.Declarations(
@@ -201,7 +202,7 @@ func TestPartialEvaluationWithGlobalVars(t *testing.T) {
 			decls.NewVar("y", decls.NewListType(decls.String)),
 			decls.NewVar(conditions.CELResourceAbbrev, decls.NewObjectType("cerbos.engine.v1.Resource")),
 			decls.NewVar("z", decls.String)),
-		//decls.NewVar("v", decls.NewMapType(decls.String, decls.Dyn))),
+		// decls.NewVar("v", decls.NewMapType(decls.String, decls.Dyn))),
 		ext.Strings(),
 		cel.Macros(geo))
 
@@ -225,6 +226,7 @@ func TestPartialEvaluationWithGlobalVars(t *testing.T) {
 	is.NoError(err)
 	is.True(types.IsUnknown(out))
 	residual, err := env.ResidualAst(ast, det)
+	is.NoError(err)
 	astToString, err := cel.AstToString(residual)
 	is.NoError(err)
 	is.Equal(want, astToString)

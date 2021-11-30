@@ -18,22 +18,41 @@ const (
 	CELResourceAbbrev  = "R"
 	CELResourceField   = "resource"
 	CELPrincipalAbbrev = "P"
+	CELPrincipalField  = "principal"
 	CELVariablesIdent  = "variables"
 	CELVariablesAbbrev = "V"
+	CELAuxDataField    = "aux_data"
 )
 
-var StdEnv *cel.Env
+var (
+	StdEnv        *cel.Env
+	StdPartialEnv *cel.Env
+)
 
 func init() {
 	var err error
-	StdEnv, err = NewCELEnv()
+	envOptions := newCELEnvOptions()
+	StdEnv, err = cel.NewEnv(envOptions...)
+	if err != nil {
+		panic(fmt.Errorf("failed to initialize standard CEL environment: %w", err))
+	}
+
+	opts := make([]cel.EnvOption, len(envOptions)+1)
+	copy(opts, envOptions)
+	opts[len(envOptions)] = cel.Declarations(
+		decls.NewVar(fqn(CELPrincipalField), decls.NewObjectType("cerbos.engine.v1.Principal")),
+		decls.NewVar(fqn(CELResourceField), decls.NewObjectType("cerbos.engine.v1.Resource")),
+		decls.NewVar(fqn(CELAuxDataField), decls.NewObjectType("cerbos.engine.v1.AuxData")),
+	)
+	StdPartialEnv, err = cel.NewEnv(opts...)
+
 	if err != nil {
 		panic(fmt.Errorf("failed to initialize standard CEL environment: %w", err))
 	}
 }
 
-func NewCELEnv() (*cel.Env, error) {
-	return cel.NewEnv(newCELEnvOptions()...)
+func fqn(s string) string {
+	return fmt.Sprintf("%s.%s", CELRequestIdent, s)
 }
 
 func newCELEnvOptions() []cel.EnvOption {

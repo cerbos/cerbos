@@ -388,7 +388,7 @@ func evaluateBoolCELExpr(expr *exprpb.CheckedExpr, variables map[string]interfac
 
 func evaluateCELExprPartially(expr *exprpb.CheckedExpr, input *requestv1.ResourcesQueryPlanRequest) (*bool, *exprpb.CheckedExpr, error) {
 	ast := cel.CheckedExprToAst(expr)
-	prg, err := conditions.StdEnv.Program(ast, cel.EvalOptions(cel.OptPartialEval, cel.OptTrackState))
+	prg, err := conditions.StdPartialEnv.Program(ast, cel.EvalOptions(cel.OptPartialEval, cel.OptTrackState))
 	if err != nil {
 		return nil, nil, err
 	}
@@ -397,9 +397,8 @@ func evaluateCELExprPartially(expr *exprpb.CheckedExpr, input *requestv1.Resourc
 		conditions.CELRequestIdent:    input,
 		conditions.CELPrincipalAbbrev: input.Principal,
 	},
-	cel.AttributePattern(conditions.CELResourceAbbrev),
-	cel.AttributePattern(conditions.CELRequestIdent).QualString(conditions.CELResourceField))
-
+		cel.AttributePattern(conditions.CELResourceAbbrev),
+		cel.AttributePattern(conditions.CELRequestIdent).QualString(conditions.CELResourceField))
 	if err != nil {
 		return nil, nil, err
 	}
@@ -408,7 +407,7 @@ func evaluateCELExprPartially(expr *exprpb.CheckedExpr, input *requestv1.Resourc
 	if err != nil {
 		return nil, nil, err
 	}
-	residual, err := conditions.StdEnv.ResidualAst(ast, details)
+	residual, err := conditions.StdPartialEnv.ResidualAst(ast, details)
 	if err != nil {
 		return nil, nil, err
 	}
