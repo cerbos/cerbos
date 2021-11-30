@@ -192,6 +192,11 @@ func (m *manager) UpdateSchema(source io.Reader) error {
 }
 
 func (m *manager) doUpdateSchema(sch *schemav1.Schema) error {
+	if sch == nil {
+		m.ClearSchema()
+		return nil
+	}
+
 	if err := ValidateSchemaProto(sch); err != nil {
 		return fmt.Errorf("failed to validate schema: %w", err)
 	}

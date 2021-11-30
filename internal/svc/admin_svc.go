@@ -84,6 +84,61 @@ func (cas *CerbosAdminService) AddOrUpdatePolicy(ctx context.Context, req *reque
 	return &responsev1.AddOrUpdatePolicyResponse{Success: &emptypb.Empty{}}, nil
 }
 
+func (cas *CerbosAdminService) AddOrUpdateSchema(ctx context.Context, req *requestv1.AddOrUpdateSchemaRequest) (*responsev1.AddOrUpdateSchemaResponse, error) {
+	if err := cas.checkCredentials(ctx); err != nil {
+		return nil, err
+	}
+
+	ms, ok := cas.store.(storage.MutableStore)
+	if !ok {
+		return nil, status.Error(codes.Unimplemented, "Configured store is not mutable")
+	}
+	log := ctxzap.Extract(ctx)
+	if err := ms.AddOrUpdateSchema(ctx, req.Schema); err != nil {
+		log.Error("Failed to add/update the schema", zap.Error(err))
+		return nil, status.Error(codes.Internal, "Failed to add/update the schema")
+	}
+
+	return &responsev1.AddOrUpdateSchemaResponse{}, nil
+}
+
+func (cas *CerbosAdminService) GetSchema(ctx context.Context, req *requestv1.GetSchemaRequest) (*responsev1.GetSchemaResponse, error) {
+	if err := cas.checkCredentials(ctx); err != nil {
+		return nil, err
+	}
+
+	if cas.store == nil {
+		return nil, status.Error(codes.NotFound, "store is not configured")
+	}
+
+	sch, err := cas.store.GetSchema(context.Background())
+	if err != nil {
+		return nil, status.Error(codes.Internal, fmt.Sprintf("could not get schema: %s", err.Error()))
+	}
+
+	return &responsev1.GetSchemaResponse{
+		Schema: sch,
+	}, nil
+}
+
+func (cas *CerbosAdminService) DeleteSchema(ctx context.Context, _ *requestv1.DeleteSchemaRequest) (*responsev1.DeleteSchemaResponse, error) {
+	if err := cas.checkCredentials(ctx); err != nil {
+		return nil, err
+	}
+
+	ms, ok := cas.store.(storage.MutableStore)
+	if !ok {
+		return nil, status.Error(codes.Unimplemented, "Configured store is not mutable")
+	}
+	log := ctxzap.Extract(ctx)
+	if err := ms.DeleteSchema(ctx); err != nil {
+		log.Error("Failed to delete the schema", zap.Error(err))
+		return nil, status.Error(codes.Internal, "Failed to delete the schema")
+	}
+
+	return &responsev1.DeleteSchemaResponse{}, nil
+}
+
 func (cas *CerbosAdminService) ListAuditLogEntries(req *requestv1.ListAuditLogEntriesRequest, stream svcv1.CerbosAdminService_ListAuditLogEntriesServer) error {
 	ctx := stream.Context()
 

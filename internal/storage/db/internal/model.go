@@ -8,7 +8,10 @@ import (
 	"fmt"
 	"time"
 
+	"google.golang.org/protobuf/encoding/protojson"
+
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
+	schemav1 "github.com/cerbos/cerbos/api/genpb/cerbos/schema/v1"
 	"github.com/cerbos/cerbos/internal/namer"
 )
 
@@ -21,7 +24,48 @@ const (
 	PolicyDepTbl            = "policy_dependency"
 	PolicyDepTblPolicyIDCol = "policy_id"
 	PolicyDepTblDepIDCol    = "dependency_id"
+
+	SchemaTbl              = "attr_schema_defs"
+	SchemaTblIDCol         = "id"
+	SchemaTblDefinitionCol = "definition"
+	SchemaDefaultID        = 1
 )
+
+type Schema struct {
+	ID          uint64
+	Description string
+	Disabled    bool
+	Definition  SchemaDefWrapper
+}
+
+type SchemaDefWrapper struct {
+	*schemav1.Schema
+}
+
+func (sdw SchemaDefWrapper) Value() (driver.Value, error) {
+	return protojson.Marshal(sdw.Schema)
+}
+
+func (sdw *SchemaDefWrapper) Scan(src interface{}) error {
+	var source []byte
+	switch t := src.(type) {
+	case nil:
+		return nil
+	case string:
+		source = []byte(t)
+	case []byte:
+		source = t
+	default:
+		return fmt.Errorf("unexpected type for schema definition: %T", src)
+	}
+
+	sdw.Schema = &schemav1.Schema{}
+	if err := protojson.Unmarshal(source, sdw.Schema); err != nil {
+		return fmt.Errorf("failed to unmarshal schema definition: %w", err)
+	}
+
+	return nil
+}
 
 type Policy struct {
 	ID          namer.ModuleID

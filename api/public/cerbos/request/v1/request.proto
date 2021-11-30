@@ -11,6 +11,7 @@ option csharp_namespace = "Cerbos.Api.V1.Request";
 
 import "cerbos/engine/v1/engine.proto";
 import "cerbos/policy/v1/policy.proto";
+import "cerbos/schema/v1/schema.proto";
 import "google/protobuf/duration.proto";
 import "google/protobuf/struct.proto";
 import "google/protobuf/timestamp.proto";
@@ -471,4 +472,33 @@ message ListPoliciesRequest {
 
     repeated Filter filters = 1;
     SortOptions sort_options = 2;
+}
+
+message AddOrUpdateSchemaRequest {
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
+        json_schema: {
+            description: "Add/update schema request"
+        }
+    };
+
+    cerbos.schema.v1.Schema schema = 1 [
+        (google.api.field_behavior) = REQUIRED
+    ];
+}
+
+
+message GetSchemaRequest {
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
+        json_schema: {
+            description: "Get schema request"
+        }
+    };
+}
+
+message DeleteSchemaRequest {
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
+        json_schema: {
+            description: "Delete schema request"
+        }
+    };
 }

@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"path/filepath"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -28,6 +29,7 @@ import (
 	"github.com/cerbos/cerbos/internal/config"
 	"github.com/cerbos/cerbos/internal/namer"
 	"github.com/cerbos/cerbos/internal/policy"
+	"github.com/cerbos/cerbos/internal/schema"
 	"github.com/cerbos/cerbos/internal/storage"
 	"github.com/cerbos/cerbos/internal/storage/index"
 )
@@ -228,6 +230,11 @@ func (s *Store) updateIndex(ctx context.Context) error {
 	var p *policyv1.Policy
 	var event storage.Event
 	for _, f := range changes.updateOrAdd {
+		if f == filepath.Join(schema.Directory, schema.File) {
+			s.NotifySubscribers(storage.NewEvent(storage.EventAddOrUpdateSchema, namer.ModuleID{}))
+			continue
+		}
+
 		p, err = policy.ReadPolicyFromFile(s.fsys, f)
 		if err != nil {
 			return err
@@ -240,6 +247,11 @@ func (s *Store) updateIndex(ctx context.Context) error {
 		s.NotifySubscribers(event)
 	}
 	for _, f := range changes.delete {
+		if f == filepath.Join(schema.Directory, schema.File) {
+			s.NotifySubscribers(storage.NewEvent(storage.EventDeleteSchema, namer.ModuleID{}))
+			continue
+		}
+
 		entry := index.Entry{File: f}
 		event, err = s.idx.Delete(entry)
 		if err != nil {
@@ -293,6 +305,19 @@ func (s *Store) GetPolicies(ctx context.Context) ([]*policy.Wrapper, error) {
 }
 
 func (s *Store) GetSchema(ctx context.Context) (*schemav1.Schema, error) {
-	// TODO(oguzhan): Implement reading schema for this Store type
-	return nil, fmt.Errorf("not implemented")
+	path := filepath.Join(schema.Directory, schema.File)
+
+	f, err := s.idx.OpenFile(path)
+	if err != nil {
+		return nil, fmt.Errorf("failed to open schema from %s: %w", path, err)
+	}
+
+	defer f.Close()
+
+	sch, err := schema.ReadSchema(f)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read schema: %w", err)
+	}
+
+	return sch, nil
 }

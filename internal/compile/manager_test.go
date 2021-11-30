@@ -295,7 +295,6 @@ func (ms *MockStore) GetPolicies(ctx context.Context) ([]*policy.Wrapper, error)
 }
 
 func (ms *MockStore) GetSchema(ctx context.Context) (*schemav1.Schema, error) {
-	// TODO(oguzhan): Implement this method
 	args := ms.MethodCalled("GetSchema", ctx)
 	if res := args.Get(0); res == nil {
 		return nil, args.Error(0)
