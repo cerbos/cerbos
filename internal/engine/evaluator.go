@@ -92,6 +92,18 @@ func (rpe *resourcePolicyEvaluator) EvaluateResourcesQueryPlan(_ context.Context
 	return result, nil
 }
 
+func isNodeConstBool(node *enginev1.ResourcesQueryPlanOutput_Node) (bool, bool) {
+	if e, ok := node.Node.(*enginev1.ResourcesQueryPlanOutput_Node_Expression); ok {
+		if e1 := e.Expression.GetExpr().GetConstExpr(); e1 != nil {
+			if b, ok := e1.ConstantKind.(*exprpb.Constant_BoolValue); ok {
+				return b.BoolValue, true
+			}
+		}
+	}
+
+	return false, false
+}
+
 func evaluateCondition(condition *runtimev1.Condition, input *requestv1.ResourcesQueryPlanRequest) (*enginev1.ResourcesQueryPlanOutput_Node, error) {
 	res := new(enginev1.ResourcesQueryPlanOutput_Node)
 	switch t := condition.Op.(type) {
@@ -108,7 +120,16 @@ func evaluateCondition(condition *runtimev1.Condition, input *requestv1.Resource
 			if err != nil {
 				return nil, err
 			}
-			operation.Nodes = append(operation.Nodes, node)
+
+			add := true
+
+			if b, ok := isNodeConstBool(node); ok && !b{
+				add = false
+			}
+
+			if add {
+				operation.Nodes = append(operation.Nodes, node)
+			}
 		}
 	case *runtimev1.Condition_All:
 		operation := &enginev1.ResourcesQueryPlanOutput_LogicalOperation{
@@ -121,7 +142,15 @@ func evaluateCondition(condition *runtimev1.Condition, input *requestv1.Resource
 			if err != nil {
 				return nil, err
 			}
-			operation.Nodes = append(operation.Nodes, node)
+			add := true
+
+			if b, ok := isNodeConstBool(node); ok && b{
+				add = false
+			}
+
+			if add {
+				operation.Nodes = append(operation.Nodes, node)
+			}
 		}
 	case *runtimev1.Condition_Expr:
 		_, residual, err := evaluateCELExprPartially(t.Expr.Checked, input)
