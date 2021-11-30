@@ -38,6 +38,14 @@ func newValidationError(err jsonschema.Detailed, source ErrSource) ValidationErr
 	}
 }
 
+func newResourceSchemaNotFoundErr(resource string) ValidationError {
+	return ValidationError{
+		Path:    "N/A",
+		Message: fmt.Sprintf("No schema defined for resource kind %q", resource),
+		Source:  ErrSourceResource,
+	}
+}
+
 func newValidationErrorList(validationErr *jsonschema.ValidationError, source ErrSource) ValidationErrorList {
 	if validationErr == nil {
 		return nil
@@ -54,14 +62,6 @@ func newValidationErrorList(validationErr *jsonschema.ValidationError, source Er
 	}
 
 	return errs
-}
-
-func mergeErrLists(el1, el2 ValidationErrorList) error {
-	if len(el1)+len(el2) == 0 {
-		return nil
-	}
-
-	return append(el1, el2...)
 }
 
 type ValidationError struct {

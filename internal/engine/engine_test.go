@@ -7,6 +7,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"path/filepath"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -30,7 +31,7 @@ import (
 var dummy int
 
 func TestCheck(t *testing.T) {
-	eng, cancelFunc := mkEngine(t, param{})
+	eng, cancelFunc := mkEngine(t, param{schemaEnforcement: schema.EnforcementNone})
 	defer cancelFunc()
 
 	testCases := test.LoadTestCases(t, "engine")
@@ -62,33 +63,43 @@ func TestCheck(t *testing.T) {
 }
 
 func TestSchemaValidation(t *testing.T) {
-	eng, cancelFunc := mkEngine(t, param{enableSchemas: true})
-	defer cancelFunc()
-
-	testCases := test.LoadTestCases(t, "engine_schema")
-
-	for _, tcase := range testCases {
-		tcase := tcase
-		t.Run(tcase.Name, func(t *testing.T) {
-			tc := readTestCase(t, tcase.Input)
-			buf := new(bytes.Buffer)
-
-			haveOutputs, err := eng.Check(context.Background(), tc.Inputs, WithWriterTraceSink(buf))
-			t.Logf("TRACE =>\n%s", buf.String())
-
-			if tc.WantError {
-				require.Error(t, err)
-			} else {
-				require.NoError(t, err)
+	for _, enforcement := range []string{"warn", "reject"} {
+		enforcement := enforcement
+		t.Run(fmt.Sprintf("enforcement=%s", enforcement), func(t *testing.T) {
+			p := param{schemaEnforcement: schema.EnforcementWarn}
+			if enforcement == "reject" {
+				p.schemaEnforcement = schema.EnforcementReject
 			}
 
-			for i, have := range haveOutputs {
-				require.Empty(t, cmp.Diff(tc.WantOutputs[i],
-					have,
-					protocmp.Transform(),
-					protocmp.SortRepeatedFields(&enginev1.CheckOutput{}, "effective_derived_roles"),
-					protocmp.SortRepeated(cmpValidationError),
-				))
+			eng, cancelFunc := mkEngine(t, p)
+			t.Cleanup(cancelFunc)
+
+			testCases := test.LoadTestCases(t, filepath.Join("engine_schema_enforcement", enforcement))
+
+			for _, tcase := range testCases {
+				tcase := tcase
+				t.Run(tcase.Name, func(t *testing.T) {
+					tc := readTestCase(t, tcase.Input)
+					buf := new(bytes.Buffer)
+
+					haveOutputs, err := eng.Check(context.Background(), tc.Inputs, WithWriterTraceSink(buf))
+					t.Logf("TRACE =>\n%s", buf.String())
+
+					if tc.WantError {
+						require.Error(t, err)
+					} else {
+						require.NoError(t, err)
+					}
+
+					for i, have := range haveOutputs {
+						require.Empty(t, cmp.Diff(tc.WantOutputs[i],
+							have,
+							protocmp.Transform(),
+							protocmp.SortRepeatedFields(&enginev1.CheckOutput{}, "effective_derived_roles"),
+							protocmp.SortRepeated(cmpValidationError),
+						))
+					}
+				})
 			}
 		})
 	}
@@ -114,9 +125,9 @@ func BenchmarkCheck(b *testing.B) {
 	testCases := test.LoadTestCases(b, "engine")
 
 	for _, enableAuditLog := range []bool{false, true} {
-		for _, enableSchemas := range []bool{false, true} {
-			b.Run(fmt.Sprintf("auditLog=%t/schemas=%t", enableAuditLog, enableSchemas), func(b *testing.B) {
-				eng, cancelFunc := mkEngine(b, param{enableAuditLog: enableAuditLog, enableSchemas: enableSchemas})
+		for _, schemaEnforcement := range []schema.Enforcement{schema.EnforcementNone, schema.EnforcementWarn, schema.EnforcementReject} {
+			b.Run(fmt.Sprintf("auditLog=%t/schemaEnforcement=%s", enableAuditLog, schemaEnforcement), func(b *testing.B) {
+				eng, cancelFunc := mkEngine(b, param{enableAuditLog: enableAuditLog, schemaEnforcement: schemaEnforcement})
 				defer cancelFunc()
 
 				runBenchmarks(b, eng, testCases)
@@ -151,8 +162,8 @@ func runBenchmarks(b *testing.B, eng *Engine, testCases []test.Case) {
 }
 
 type param struct {
-	enableAuditLog bool
-	enableSchemas  bool
+	enableAuditLog    bool
+	schemaEnforcement schema.Enforcement
 }
 
 func mkEngine(tb testing.TB, p param) (*Engine, context.CancelFunc) {
@@ -180,11 +191,7 @@ func mkEngine(tb testing.TB, p param) (*Engine, context.CancelFunc) {
 		auditLog = audit.NewNopLog()
 	}
 
-	schemaConf := &schema.Conf{Enforcement: schema.EnforcementNone}
-	if p.enableSchemas {
-		schemaConf.Enforcement = schema.EnforcementReject
-	}
-
+	schemaConf := &schema.Conf{Enforcement: p.schemaEnforcement}
 	schemaMgr, err := schema.NewWithConf(ctx, store, schemaConf)
 	require.NoError(tb, err)
 

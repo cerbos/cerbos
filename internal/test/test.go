@@ -17,6 +17,7 @@ import (
 	"text/template"
 
 	"github.com/stretchr/testify/require"
+	"google.golang.org/protobuf/proto"
 
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
 	"github.com/cerbos/cerbos/internal/observability/logging"
@@ -162,6 +163,20 @@ func readFileContents(tb testing.TB, filePath string) []byte {
 	}
 
 	return nil
+}
+
+func ReadSingleTestCase(tb testing.TB, filePath string, out proto.Message) {
+	tb.Helper()
+
+	fullPath := PathToDir(tb, filePath)
+	data := readFileContents(tb, fullPath)
+
+	tmpl, err := template.New(fullPath).Funcs(GetTemplateUtilityFunctions()).Parse(string(data))
+	require.NoError(tb, err)
+
+	buf := new(bytes.Buffer)
+	require.NoError(tb, tmpl.Execute(buf, GetTemplateFunctions(tb)))
+	require.NoError(tb, util.ReadJSONOrYAML(buf, out))
 }
 
 func SkipIfGHActions(t *testing.T) {
