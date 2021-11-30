@@ -180,14 +180,36 @@ func readCELTestCase(t *testing.T, data []byte) *privatev1.CelTestCase {
 func TestList(t *testing.T) {
 	eng, cancelFunc := mkEngine(t, false)
 	defer cancelFunc()
+
+	request := requestv1.ResourcesQueryPlanRequest{
+		RequestId: "requestId",
+		Action:    "approve",
+		Principal: &enginev1.Principal{
+			Id:            "maggie",
+			PolicyVersion: "default",
+			Roles:         []string{"employee", "manager"},
+			Attr: map[string]*structpb.Value{
+				"geography": {Kind: &structpb.Value_StringValue{StringValue: "US"}},
+				"managed_geographies": {Kind: &structpb.Value_ListValue{
+					ListValue: &structpb.ListValue{
+						Values: []*structpb.Value{
+							{Kind: &structpb.Value_StringValue{StringValue: "US"}},
+							{Kind: &structpb.Value_StringValue{StringValue: "CA"}},
+						},
+					},
+				}},
+			},
+		},
+		PolicyVersion: "default",
+		ResourceKind:  "list-resources:leave_request",
+	}
 	tests := []struct {
-		name  string
-		input *requestv1.ResourcesQueryPlanRequest
-		want  string
+		name, action, want  string
+		input requestv1.ResourcesQueryPlanRequest
 	}{
 		{
 			name: "harry wants to view",
-			input: &requestv1.ResourcesQueryPlanRequest{
+			input: requestv1.ResourcesQueryPlanRequest{
 				RequestId: "requestId",
 				Action:    "view",
 				Principal: &enginev1.Principal{
@@ -202,35 +224,29 @@ func TestList(t *testing.T) {
 		},
 		{
 			name: "maggie wants to approve",
-			input: &requestv1.ResourcesQueryPlanRequest{
-				RequestId: "requestId",
-				Action:    "approve",
-				Principal: &enginev1.Principal{
-					Id:            "maggie",
-					PolicyVersion: "default",
-					Roles:         []string{"employee", "manager"},
-					Attr: map[string]*structpb.Value{
-						"geography": {Kind: &structpb.Value_StringValue{StringValue: "US"}},
-						"managed_geographies": {Kind: &structpb.Value_ListValue{
-							ListValue: &structpb.ListValue{
-								Values: []*structpb.Value{
-									{Kind: &structpb.Value_StringValue{StringValue: "US"}},
-									{Kind: &structpb.Value_StringValue{StringValue: "CA"}},
-								},
-							},
-						}},
-					},
-				},
-				PolicyVersion: "default",
-				ResourceKind:  "list-resources:leave_request",
-			},
+			input: request,
 			want: `((R.attr.status == "PENDING_APPROVAL") AND (R.attr.owner != "maggie") AND ((R.attr.geography == "US") OR (R.attr.geography in ["US", "CA"])))`,
+		},
+		{
+			name: "maggie wants to approve 2: short-circuit test",
+			action: "approve2",
+			input: request,
+			want: `((R.attr.status == "PENDING_APPROVAL") AND (R.attr.owner != "maggie"))`,
+		},
+		{
+			name: "maggie wants to approve 3: short-circuit test",
+			action: "approve3",
+			input: request,
+			want: `(false)`,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			is := require.New(t)
-			response, err := eng.List(context.Background(), tt.input)
+			if tt.action != "" {
+				tt.input.Action = tt.action
+			}
+			response, err := eng.List(context.Background(), &tt.input)
 			is.NoError(err)
 			is.NotNil(response)
 			is.Equal(tt.want, response.FilterDebug)

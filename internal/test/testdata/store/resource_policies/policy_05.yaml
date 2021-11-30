@@ -25,3 +25,33 @@ resourcePolicy:
                     - expr: 1 != 1
                     - expr: R.attr.geography == request.principal.attr.geography
                     - expr: R.attr.geography in request.principal.attr.managed_geographies
+    - actions: ["approve2"]
+      roles: ["manager"]
+      effect: EFFECT_ALLOW
+      condition:
+        match:
+          all:
+            of:
+              - expr: 1 == 1
+              - expr: R.attr.status == "PENDING_APPROVAL"
+              - expr: R.attr.owner != request.principal.id
+              - any:
+                  of:
+                    - expr: 1 == 1
+                    - expr: R.attr.geography == request.principal.attr.geography
+                    - expr: R.attr.geography in request.principal.attr.managed_geographies
+    - actions: ["approve3"]
+      roles: ["manager"]
+      effect: EFFECT_ALLOW
+      condition:
+        match:
+          all:
+            of:
+              - expr: 1 != 1
+              - expr: R.attr.status == "PENDING_APPROVAL"
+              - expr: R.attr.owner != request.principal.id
+              - any:
+                  of:
+                    - expr: 1 == 1
+                    - expr: R.attr.geography == request.principal.attr.geography
+                    - expr: R.attr.geography in request.principal.attr.managed_geographies

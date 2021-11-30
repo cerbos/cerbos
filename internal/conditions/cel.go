@@ -5,12 +5,11 @@ package conditions
 
 import (
 	"fmt"
-
+	enginev1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
 	"github.com/google/cel-go/cel"
 	"github.com/google/cel-go/checker/decls"
 	"github.com/google/cel-go/ext"
-
-	enginev1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
+	exprpb "google.golang.org/genproto/googleapis/api/expr/v1alpha1"
 )
 
 const (
@@ -27,6 +26,8 @@ const (
 var (
 	StdEnv        *cel.Env
 	StdPartialEnv *cel.Env
+	TrueExpr      *exprpb.CheckedExpr
+	FalseExpr     *exprpb.CheckedExpr
 )
 
 func init() {
@@ -48,6 +49,22 @@ func init() {
 
 	if err != nil {
 		panic(fmt.Errorf("failed to initialize standard CEL environment: %w", err))
+	}
+	ast, iss := StdEnv.Compile("false")
+	if iss.Err() != nil {
+		panic(iss.Err())
+	}
+	FalseExpr, err = cel.AstToCheckedExpr(ast)
+	if err != nil {
+		panic(err)
+	}
+	ast, iss = StdEnv.Compile("true")
+	if iss.Err() != nil {
+		panic(iss.Err())
+	}
+	TrueExpr, err = cel.AstToCheckedExpr(ast)
+	if err != nil {
+		panic(err)
 	}
 }
 

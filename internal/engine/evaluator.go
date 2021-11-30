@@ -123,8 +123,14 @@ func evaluateCondition(condition *runtimev1.Condition, input *requestv1.Resource
 
 			add := true
 
-			if b, ok := isNodeConstBool(node); ok && !b{
-				add = false
+			if b, ok := isNodeConstBool(node); ok {
+				if b {
+					res.Node = &enginev1.ResourcesQueryPlanOutput_Node_Expression{Expression: conditions.TrueExpr}
+
+					return res, nil
+				} else {
+					add = false
+				}
 			}
 
 			if add {
@@ -144,7 +150,14 @@ func evaluateCondition(condition *runtimev1.Condition, input *requestv1.Resource
 			}
 			add := true
 
-			if b, ok := isNodeConstBool(node); ok && b{
+			if b, ok := isNodeConstBool(node); ok {
+				if !b {
+					res.Node = &enginev1.ResourcesQueryPlanOutput_Node_Expression{Expression: conditions.FalseExpr}
+
+					return res, nil
+				} else {
+					add = false
+				}
 				add = false
 			}
 
