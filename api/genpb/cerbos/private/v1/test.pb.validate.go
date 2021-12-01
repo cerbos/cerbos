@@ -626,10 +626,10 @@ func (m *SchemaTestCase) Validate() error {
 
 	// no validation rules for Description
 
-	if v, ok := interface{}(m.GetSchema()).(interface{ Validate() error }); ok {
+	if v, ok := interface{}(m.GetSchemaRefs()).(interface{ Validate() error }); ok {
 		if err := v.Validate(); err != nil {
 			return SchemaTestCaseValidationError{
-				field:  "Schema",
+				field:  "SchemaRefs",
 				reason: "embedded message failed validation",
 				cause:  err,
 			}
@@ -645,8 +645,6 @@ func (m *SchemaTestCase) Validate() error {
 			}
 		}
 	}
-
-	// no validation rules for InvalidSchema
 
 	// no validation rules for WantError
 

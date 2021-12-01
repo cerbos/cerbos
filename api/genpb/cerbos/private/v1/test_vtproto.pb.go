@@ -1195,22 +1195,12 @@ func (m *SchemaTestCase) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 				i = encodeVarint(dAtA, i, uint64(len(encoded)))
 			}
 			i--
-			dAtA[i] = 0x32
+			dAtA[i] = 0x2a
 		}
 	}
 	if m.WantError {
 		i--
 		if m.WantError {
-			dAtA[i] = 1
-		} else {
-			dAtA[i] = 0
-		}
-		i--
-		dAtA[i] = 0x28
-	}
-	if m.InvalidSchema {
-		i--
-		if m.InvalidSchema {
 			dAtA[i] = 1
 		} else {
 			dAtA[i] = 0
@@ -1240,8 +1230,8 @@ func (m *SchemaTestCase) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 		i--
 		dAtA[i] = 0x1a
 	}
-	if m.Schema != nil {
-		if marshalto, ok := interface{}(m.Schema).(interface {
+	if m.SchemaRefs != nil {
+		if marshalto, ok := interface{}(m.SchemaRefs).(interface {
 			MarshalToSizedBufferVT([]byte) (int, error)
 		}); ok {
 			size, err := marshalto.MarshalToSizedBufferVT(dAtA[:i])
@@ -1251,7 +1241,7 @@ func (m *SchemaTestCase) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 			i -= size
 			i = encodeVarint(dAtA, i, uint64(size))
 		} else {
-			encoded, err := proto.Marshal(m.Schema)
+			encoded, err := proto.Marshal(m.SchemaRefs)
 			if err != nil {
 				return 0, err
 			}
@@ -1911,13 +1901,13 @@ func (m *SchemaTestCase) SizeVT() (n int) {
 	if l > 0 {
 		n += 1 + l + sov(uint64(l))
 	}
-	if m.Schema != nil {
-		if size, ok := interface{}(m.Schema).(interface {
+	if m.SchemaRefs != nil {
+		if size, ok := interface{}(m.SchemaRefs).(interface {
 			SizeVT() int
 		}); ok {
 			l = size.SizeVT()
 		} else {
-			l = proto.Size(m.Schema)
+			l = proto.Size(m.SchemaRefs)
 		}
 		n += 1 + l + sov(uint64(l))
 	}
@@ -1930,9 +1920,6 @@ func (m *SchemaTestCase) SizeVT() (n int) {
 			l = proto.Size(m.Input)
 		}
 		n += 1 + l + sov(uint64(l))
-	}
-	if m.InvalidSchema {
-		n += 2
 	}
 	if m.WantError {
 		n += 2
@@ -4445,7 +4432,7 @@ func (m *SchemaTestCase) UnmarshalVT(dAtA []byte) error {
 			iNdEx = postIndex
 		case 2:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Schema", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field SchemaRefs", wireType)
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
@@ -4472,17 +4459,17 @@ func (m *SchemaTestCase) UnmarshalVT(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			if m.Schema == nil {
-				m.Schema = &v14.Schema{}
+			if m.SchemaRefs == nil {
+				m.SchemaRefs = &v13.Schemas{}
 			}
-			if unmarshal, ok := interface{}(m.Schema).(interface {
+			if unmarshal, ok := interface{}(m.SchemaRefs).(interface {
 				UnmarshalVT([]byte) error
 			}); ok {
 				if err := unmarshal.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
 					return err
 				}
 			} else {
-				if err := proto.Unmarshal(dAtA[iNdEx:postIndex], m.Schema); err != nil {
+				if err := proto.Unmarshal(dAtA[iNdEx:postIndex], m.SchemaRefs); err != nil {
 					return err
 				}
 			}
@@ -4533,26 +4520,6 @@ func (m *SchemaTestCase) UnmarshalVT(dAtA []byte) error {
 			iNdEx = postIndex
 		case 4:
 			if wireType != 0 {
-				return fmt.Errorf("proto: wrong wireType = %d for field InvalidSchema", wireType)
-			}
-			var v int
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflow
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				v |= int(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			m.InvalidSchema = bool(v != 0)
-		case 5:
-			if wireType != 0 {
 				return fmt.Errorf("proto: wrong wireType = %d for field WantError", wireType)
 			}
 			var v int
@@ -4571,7 +4538,7 @@ func (m *SchemaTestCase) UnmarshalVT(dAtA []byte) error {
 				}
 			}
 			m.WantError = bool(v != 0)
-		case 6:
+		case 5:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field WantValidationErrors", wireType)
 			}

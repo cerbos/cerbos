@@ -305,6 +305,15 @@
             }
           }
         },
+        "parameters": [
+          {
+            "name": "id",
+            "description": "Unique identifier for the schema",
+            "in": "query",
+            "required": true,
+            "type": "string"
+          }
+        ],
         "tags": [
           "CerbosAdminService"
         ],
@@ -331,6 +340,15 @@
             }
           }
         },
+        "parameters": [
+          {
+            "name": "id",
+            "description": "Unique identifier for the schema",
+            "in": "query",
+            "required": true,
+            "type": "string"
+          }
+        ],
         "tags": [
           "CerbosAdminService"
         ],
@@ -1020,29 +1038,6 @@
         }
       }
     },
-    "schemav1Schema": {
-      "type": "object",
-      "properties": {
-        "apiVersion": {
-          "type": "string"
-        },
-        "disabled": {
-          "type": "boolean"
-        },
-        "description": {
-          "type": "string"
-        },
-        "principalSchema": {
-          "type": "object"
-        },
-        "resourceSchemas": {
-          "type": "object",
-          "additionalProperties": {
-            "type": "object"
-          }
-        }
-      }
-    },
     "v1AccessLogEntry": {
       "type": "object",
       "properties": {
@@ -1104,11 +1099,32 @@
     "v1AddOrUpdateSchemaRequest": {
       "type": "object",
       "properties": {
+        "id": {
+          "type": "string",
+          "example": "principal.json",
+          "description": "Unique identifier for the schema",
+          "required": [
+            "id"
+          ]
+        },
         "schema": {
-          "$ref": "#/definitions/schemav1Schema"
+          "type": "string",
+          "format": "byte",
+          "example": {
+            "type": "object",
+            "properties": {}
+          },
+          "description": "JSON schema definition",
+          "required": [
+            "schema"
+          ]
         }
       },
-      "description": "Add/update schema request"
+      "description": "Add/update schema request",
+      "required": [
+        "id",
+        "schema"
+      ]
     },
     "v1AddOrUpdateSchemaResponse": {
       "type": "object",
@@ -1424,8 +1440,19 @@
     "v1GetSchemaResponse": {
       "type": "object",
       "properties": {
+        "id": {
+          "type": "string",
+          "example": "principal.json",
+          "description": "Unique identifier for the schema"
+        },
         "schema": {
-          "$ref": "#/definitions/schemav1Schema"
+          "type": "string",
+          "format": "byte",
+          "example": {
+            "type": "object",
+            "properties": {}
+          },
+          "description": "JSON schema definition"
         }
       },
       "description": "Get schema response"
@@ -1893,6 +1920,9 @@
         },
         "scope": {
           "type": "string"
+        },
+        "schemas": {
+          "$ref": "#/definitions/v1Schemas"
         }
       }
     },
@@ -1995,6 +2025,25 @@
         },
         "condition": {
           "$ref": "#/definitions/v1Condition"
+        }
+      }
+    },
+    "v1Schemas": {
+      "type": "object",
+      "properties": {
+        "principalSchema": {
+          "$ref": "#/definitions/v1SchemasSchema"
+        },
+        "resourceSchema": {
+          "$ref": "#/definitions/v1SchemasSchema"
+        }
+      }
+    },
+    "v1SchemasSchema": {
+      "type": "object",
+      "properties": {
+        "ref": {
+          "type": "string"
         }
       }
     },

@@ -1,0 +1,46 @@
+{
+  "type": "object",
+  "properties": {
+    "department": {
+      "type": "string",
+      "enum": [
+        "marketing",
+        "engineering"
+      ]
+    },
+    "geography": {
+      "type": "string"
+    },
+    "team": {
+      "type": "string"
+    },
+    "managed_geographies": {
+      "type": "string"
+    },
+    "orgId": {
+      "type": "string"
+    },
+    "jobRoles": {
+      "type": "array"
+    },
+    "tags": {
+      "type": "object",
+      "properties": {
+        "brands": {
+          "type": "array"
+        },
+        "classes": {
+          "type": "array"
+        },
+        "regions": {
+          "type": "array"
+        }
+      }
+    }
+  },
+  "required": [
+    "department",
+    "geography",
+    "team"
+  ]
+}

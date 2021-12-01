@@ -195,8 +195,7 @@ func TestAdminService(t *testing.T) {
 	store, err := sqlite3.NewStore(ctx, &sqlite3.Conf{DSN: fmt.Sprintf("%s?_fk=true", filepath.Join(t.TempDir(), "cerbos.db"))})
 	require.NoError(t, err)
 
-	schemaMgr, err := schema.NewWithConf(ctx, store, &schema.Conf{Enforcement: schema.EnforcementNone})
-	require.NoError(t, err)
+	schemaMgr := schema.NewWithConf(ctx, store, &schema.Conf{Enforcement: schema.EnforcementNone})
 
 	eng, err := engine.New(ctx, engine.Components{CompileMgr: compile.NewManager(ctx, store), SchemaMgr: schemaMgr, AuditLog: auditLog})
 	require.NoError(t, err)

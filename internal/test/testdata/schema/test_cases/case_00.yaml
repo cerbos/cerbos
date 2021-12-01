@@ -1,7 +1,10 @@
 ---
 description: Valid input
-schema:
-  {{- .Files.Get "_schemas/complex.yaml" | nindent 2 }}
+schemaRefs:
+  principalSchema:
+    ref: cerbos:///complex_object.json
+  resourceSchema:
+    ref: cerbos:///complex_object.json
 input: 
   actions: [ "view:public" ]
   principal: 

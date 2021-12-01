@@ -7,13 +7,15 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"io"
 	"io/fs"
 	"sync"
+
+	jsonschema "github.com/santhosh-tekuri/jsonschema/v5"
 
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
 	"github.com/cerbos/cerbos/internal/namer"
 	"github.com/cerbos/cerbos/internal/policy"
+	"github.com/cerbos/cerbos/internal/schema"
 	"github.com/cerbos/cerbos/internal/storage"
 )
 
@@ -38,7 +40,7 @@ type Index interface {
 	GetAllCompilationUnits(context.Context) <-chan *policy.CompilationUnit
 	Clear() error
 	GetPolicies(context.Context) ([]*policy.Wrapper, error)
-	OpenFile(string) (io.ReadCloser, error)
+	LoadSchema(context.Context, string) (*jsonschema.Schema, error)
 }
 
 type index struct {
@@ -49,6 +51,7 @@ type index struct {
 	fileToModID  map[string]namer.ModuleID
 	dependents   map[namer.ModuleID]map[namer.ModuleID]struct{}
 	dependencies map[namer.ModuleID]map[namer.ModuleID]struct{}
+	schemaLoader *schema.FSLoader
 }
 
 func (idx *index) GetFiles() []string {
@@ -163,8 +166,7 @@ func (idx *index) AddOrUpdate(entry Entry) (evt storage.Event, err error) {
 	}
 
 	modID := entry.Policy.ID
-
-	evt = storage.NewEvent(storage.EventAddOrUpdatePolicy, modID)
+	evt = storage.NewPolicyEvent(storage.EventAddOrUpdatePolicy, modID)
 
 	idx.mu.Lock()
 	defer idx.mu.Unlock()
@@ -227,8 +229,7 @@ func (idx *index) Delete(entry Entry) (storage.Event, error) {
 		// nothing to do because we don't have that file in the index.
 		return storage.Event{Kind: storage.EventNop}, nil
 	}
-
-	evt := storage.NewEvent(storage.EventDeletePolicy, modID)
+	evt := storage.NewPolicyEvent(storage.EventDeletePolicy, modID)
 
 	// go through the dependencies and remove self from the dependents list for each dependency.
 	if deps, ok := idx.dependencies[modID]; ok {
@@ -345,6 +346,6 @@ func (idx *index) GetPolicies(_ context.Context) ([]*policy.Wrapper, error) {
 	return entries, nil
 }
 
-func (idx *index) OpenFile(filepath string) (io.ReadCloser, error) {
-	return idx.fsys.Open(filepath)
+func (idx *index) LoadSchema(ctx context.Context, url string) (*jsonschema.Schema, error) {
+	return idx.schemaLoader.Load(ctx, url)
 }

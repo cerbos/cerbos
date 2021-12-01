@@ -20,7 +20,6 @@ import (
 	"google.golang.org/protobuf/proto"
 
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
-	schemav1 "github.com/cerbos/cerbos/api/genpb/cerbos/schema/v1"
 	"github.com/cerbos/cerbos/internal/observability/logging"
 	"github.com/cerbos/cerbos/internal/policy"
 	"github.com/cerbos/cerbos/internal/schema"
@@ -40,18 +39,6 @@ func LoadPolicy(t *testing.T, path string) *policyv1.Policy {
 	defer inp.Close()
 
 	p, err := policy.ReadPolicy(inp)
-	require.NoError(t, err, "Failed to load %s", path)
-
-	return p
-}
-
-func LoadSchema(t *testing.T, path string) *schemav1.Schema {
-	t.Helper()
-
-	inp := mkReadCloser(t, path)
-	defer inp.Close()
-
-	p, err := schema.ReadSchema(inp)
 	require.NoError(t, err, "Failed to load %s", path)
 
 	return p

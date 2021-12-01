@@ -1,0 +1,26 @@
+---
+description: Invalid schema references
+schemaRefs:
+  principalSchema:
+    ref: complex_object.json
+  resourceSchema:
+    ref: complex_object.json
+input: 
+  actions: [ "view:public" ]
+  principal: 
+    id: "john"
+    policyVersion: "20210210"
+    roles: [ "employee" ]
+    attr: &myAttr 
+      stringField: hello
+  resource: 
+    kind: "expense_request"
+    policyVersion: "20210210"
+    id: "XX125"
+    attr: *myAttr 
+wantValidationErrors:
+  - message: "Failed to load schema \"complex_object.json\""
+    source: SOURCE_PRINCIPAL
+
+  - message: "Failed to load schema \"complex_object.json\""
+    source: SOURCE_RESOURCE

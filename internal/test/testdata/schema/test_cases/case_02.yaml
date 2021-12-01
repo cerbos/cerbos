@@ -1,7 +1,10 @@
 ---
-description: Missing resource schema
-schema:
-  {{- .Files.Get "_schemas/complex.yaml" | nindent 2 }}
+description: Missing both schemas
+schemaRefs:
+  principalSchema:
+    ref: cerbos:///blah.json
+  resourceSchema:
+    ref: cerbos:///blah.json
 input: 
   actions: [ "view:public" ]
   principal: 
@@ -16,9 +19,8 @@ input:
     id: "XX125"
     attr: *myAttr 
 wantValidationErrors:
-  - message: "missing properties: 'intField'"
-    source: SOURCE_PRINCIPAL
-
-  - path: "N/A"
-    message: "No schema defined for resource kind \"expense_request\""
+  - message: "Failed to load schema \"cerbos:///blah.json\""
     source: SOURCE_RESOURCE
+
+  - message: "Failed to load schema \"cerbos:///blah.json\""
+    source: SOURCE_PRINCIPAL

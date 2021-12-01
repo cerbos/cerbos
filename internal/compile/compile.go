@@ -58,6 +58,7 @@ func compileResourcePolicy(modCtx *moduleCtx, rp *policyv1.ResourcePolicy) *runt
 		Scope:        strings.Split(rp.Scope, "."),
 		Rules:        make([]*runtimev1.RunnableResourcePolicySet_Policy_Rule, len(rp.Rules)),
 		Variables:    compileVariables(modCtx, modCtx.def.Variables),
+		Schemas:      rp.Schemas,
 	}
 
 	for i, rule := range rp.Rules {

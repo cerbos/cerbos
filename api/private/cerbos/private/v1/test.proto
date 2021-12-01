@@ -99,11 +99,10 @@ message CelTestCase {
 
 message SchemaTestCase {
     string description = 1;
-    cerbos.schema.v1.Schema schema = 2;
+    cerbos.policy.v1.Schemas schema_refs = 2;
     cerbos.engine.v1.CheckInput input = 3;
-    bool invalid_schema = 4;
-    bool want_error = 5;
-    repeated cerbos.schema.v1.ValidationError want_validation_errors = 6;
+    bool want_error = 4;
+    repeated cerbos.schema.v1.ValidationError want_validation_errors = 5;
 }
 
 message ValidationErrContainer {

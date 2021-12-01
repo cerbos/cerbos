@@ -8,7 +8,8 @@ import (
 	"fmt"
 	"sync"
 
-	schemav1 "github.com/cerbos/cerbos/api/genpb/cerbos/schema/v1"
+	jsonschema "github.com/santhosh-tekuri/jsonschema/v5"
+
 	"github.com/cerbos/cerbos/internal/config"
 	"github.com/cerbos/cerbos/internal/namer"
 	"github.com/cerbos/cerbos/internal/policy"
@@ -82,16 +83,16 @@ type Store interface {
 	GetDependents(context.Context, ...namer.ModuleID) (map[namer.ModuleID][]namer.ModuleID, error)
 	// GetPolicies returns the policies recorded in the store.
 	GetPolicies(context.Context) ([]*policy.Wrapper, error)
-	// GetSchema loads the schema from the store.
-	GetSchema(context.Context) (*schemav1.Schema, error)
+	// LoadSchema loads the given schema from the store.
+	LoadSchema(context.Context, string) (*jsonschema.Schema, error)
 }
 
 // MutableStore is a store that allows mutations.
 type MutableStore interface {
 	Store
 	AddOrUpdate(context.Context, ...policy.Wrapper) error
-	AddOrUpdateSchema(context.Context, *schemav1.Schema) error
-	DeleteSchema(context.Context) error
+	AddOrUpdateSchema(context.Context, string, []byte) error
+	DeleteSchema(context.Context, string) error
 	Delete(context.Context, ...namer.ModuleID) error
 }
 
@@ -122,8 +123,9 @@ const (
 
 // Event is an event detected by the storage layer.
 type Event struct {
-	Kind     EventKind
-	PolicyID namer.ModuleID
+	Kind       EventKind
+	PolicyID   namer.ModuleID
+	SchemaFile string
 }
 
 func (evt Event) String() string {
@@ -146,7 +148,12 @@ func (evt Event) String() string {
 	return fmt.Sprintf("%s [%s]", kind, evt.PolicyID.String())
 }
 
-// NewEvent creates a new storage event.
-func NewEvent(kind EventKind, policyID namer.ModuleID) Event {
+// NewPolicyEvent creates a new storage event for a policy.
+func NewPolicyEvent(kind EventKind, policyID namer.ModuleID) Event {
 	return Event{Kind: kind, PolicyID: policyID}
+}
+
+// NewSchemaEvent creates a new storage event for a schema.
+func NewSchemaEvent(kind EventKind, schemaFile string) Event {
+	return Event{Kind: kind, SchemaFile: schemaFile}
 }

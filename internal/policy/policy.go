@@ -6,6 +6,8 @@ package policy
 import (
 	"fmt"
 
+	jsonschema "github.com/santhosh-tekuri/jsonschema/v5"
+
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
 	"github.com/cerbos/cerbos/internal/namer"
 )
@@ -68,6 +70,30 @@ func Dependencies(p *policyv1.Policy) []string {
 		}
 
 		return dr
+	default:
+		return nil
+	}
+}
+
+// SchemaReferences returns references to the schemas found in the policy.
+func SchemaReferences(p *policyv1.Policy) []string {
+	switch pt := p.PolicyType.(type) {
+	case *policyv1.Policy_ResourcePolicy:
+		schemas := pt.ResourcePolicy.Schemas
+		if schemas == nil {
+			return nil
+		}
+
+		var refs []string
+		if schemas.PrincipalSchema != nil && schemas.PrincipalSchema.Ref != "" {
+			refs = append(refs, schemas.PrincipalSchema.Ref)
+		}
+
+		if schemas.ResourceSchema != nil && schemas.ResourceSchema.Ref != "" {
+			refs = append(refs, schemas.ResourceSchema.Ref)
+		}
+
+		return refs
 	default:
 		return nil
 	}
@@ -154,6 +180,7 @@ func Wrap(p *policyv1.Policy) Wrapper {
 type CompilationUnit struct {
 	ModID       namer.ModuleID
 	Definitions map[namer.ModuleID]*policyv1.Policy
+	Schemas     map[string]*jsonschema.Schema
 }
 
 func (cu *CompilationUnit) AddDefinition(id namer.ModuleID, p *policyv1.Policy) {
@@ -162,6 +189,20 @@ func (cu *CompilationUnit) AddDefinition(id namer.ModuleID, p *policyv1.Policy) 
 	}
 
 	cu.Definitions[id] = p
+}
+
+func (cu *CompilationUnit) AddSchemas(schemas map[string]*jsonschema.Schema) {
+	if len(schemas) == 0 {
+		return
+	}
+
+	if cu.Schemas == nil {
+		cu.Schemas = make(map[string]*jsonschema.Schema, len(schemas))
+	}
+
+	for id, def := range schemas {
+		cu.Schemas[id] = def
+	}
 }
 
 func (cu *CompilationUnit) MainSourceFile() string {

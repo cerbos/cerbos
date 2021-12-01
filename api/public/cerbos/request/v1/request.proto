@@ -11,7 +11,6 @@ option csharp_namespace = "Cerbos.Api.V1.Request";
 
 import "cerbos/engine/v1/engine.proto";
 import "cerbos/policy/v1/policy.proto";
-import "cerbos/schema/v1/schema.proto";
 import "google/protobuf/duration.proto";
 import "google/protobuf/struct.proto";
 import "google/protobuf/timestamp.proto";
@@ -481,8 +480,21 @@ message AddOrUpdateSchemaRequest {
         }
     };
 
-    cerbos.schema.v1.Schema schema = 1 [
-        (google.api.field_behavior) = REQUIRED
+    string id = 1 [
+        (google.api.field_behavior) = REQUIRED,
+        (validate.rules).string = {min_len: 1, max_len: 256},
+        (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = { 
+            description: "Unique identifier for the schema"
+            example: "\"principal.json\""
+        }
+    ];
+    bytes schema = 2 [
+        (google.api.field_behavior) = REQUIRED,
+        (validate.rules).bytes = {min_len: 10},
+        (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = { 
+            description: "JSON schema definition"
+            example: "{\"type\":\"object\", \"properties\":{}}"
+        }
     ];
 }
 
@@ -493,6 +505,14 @@ message GetSchemaRequest {
             description: "Get schema request"
         }
     };
+    string id = 1 [
+        (google.api.field_behavior) = REQUIRED,
+        (validate.rules).string = {min_len: 1, max_len: 256},
+        (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = { 
+            description: "Unique identifier for the schema"
+            example: "\"principal.json\""
+        }
+    ];
 }
 
 message DeleteSchemaRequest {
@@ -501,4 +521,12 @@ message DeleteSchemaRequest {
             description: "Delete schema request"
         }
     };
+    string id = 1 [
+        (google.api.field_behavior) = REQUIRED,
+        (validate.rules).string = {min_len: 1, max_len: 256},
+        (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = { 
+            description: "Unique identifier for the schema"
+            example: "\"principal.json\""
+        }
+    ];
 }

@@ -372,9 +372,20 @@ func local_request_CerbosAdminService_AddOrUpdateSchema_1(ctx context.Context, m
 
 }
 
+var (
+	filter_CerbosAdminService_GetSchema_0 = &utilities.DoubleArray{Encoding: map[string]int{}, Base: []int(nil), Check: []int(nil)}
+)
+
 func request_CerbosAdminService_GetSchema_0(ctx context.Context, marshaler runtime.Marshaler, client CerbosAdminServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var protoReq requestv1.GetSchemaRequest
 	var metadata runtime.ServerMetadata
+
+	if err := req.ParseForm(); err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_CerbosAdminService_GetSchema_0); err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
 
 	msg, err := client.GetSchema(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
 	return msg, metadata, err
@@ -385,14 +396,32 @@ func local_request_CerbosAdminService_GetSchema_0(ctx context.Context, marshaler
 	var protoReq requestv1.GetSchemaRequest
 	var metadata runtime.ServerMetadata
 
+	if err := req.ParseForm(); err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_CerbosAdminService_GetSchema_0); err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+
 	msg, err := server.GetSchema(ctx, &protoReq)
 	return msg, metadata, err
 
 }
 
+var (
+	filter_CerbosAdminService_DeleteSchema_0 = &utilities.DoubleArray{Encoding: map[string]int{}, Base: []int(nil), Check: []int(nil)}
+)
+
 func request_CerbosAdminService_DeleteSchema_0(ctx context.Context, marshaler runtime.Marshaler, client CerbosAdminServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var protoReq requestv1.DeleteSchemaRequest
 	var metadata runtime.ServerMetadata
+
+	if err := req.ParseForm(); err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_CerbosAdminService_DeleteSchema_0); err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
 
 	msg, err := client.DeleteSchema(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
 	return msg, metadata, err
@@ -402,6 +431,13 @@ func request_CerbosAdminService_DeleteSchema_0(ctx context.Context, marshaler ru
 func local_request_CerbosAdminService_DeleteSchema_0(ctx context.Context, marshaler runtime.Marshaler, server CerbosAdminServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var protoReq requestv1.DeleteSchemaRequest
 	var metadata runtime.ServerMetadata
+
+	if err := req.ParseForm(); err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_CerbosAdminService_DeleteSchema_0); err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
 
 	msg, err := server.DeleteSchema(ctx, &protoReq)
 	return msg, metadata, err
