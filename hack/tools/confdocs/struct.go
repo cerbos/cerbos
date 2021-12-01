@@ -6,16 +6,15 @@ import (
 	"go/types"
 )
 
+const unnamedField = "<UNKNOWN_FIELD>"
+
 type Struct struct {
 	FilePos    token.Pos
 	StructName string
-	RawStruct  *ast.StructType
 	Fields     []*StructField
 	Methods    []*StructMethod
-}
-
-func (s *Struct) doesImplementInterface(iface *types.Interface) {
-
+	Raw        *ast.StructType
+	Typed      *types.Struct
 }
 
 type StructMethod struct {

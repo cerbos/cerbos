@@ -4,12 +4,10 @@
 package main
 
 import (
-	"fmt"
 	"github.com/cerbos/cerbos/hack/tools/confdocs"
 	"log"
 	"os"
 	"path/filepath"
-	"runtime"
 )
 
 const (
@@ -35,12 +33,3 @@ func main() {
 	}
 }
 
-func getAbsToInternalDir() (string, error) {
-	_, pathToFile, _, ok := runtime.Caller(0)
-
-	if !ok {
-		return "", fmt.Errorf("couldn't find path")
-	}
-
-	return filepath.Join(filepath.Dir(pathToFile), "./../../internal"), nil
-}
