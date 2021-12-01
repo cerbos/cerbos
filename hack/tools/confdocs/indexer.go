@@ -6,65 +6,69 @@ package confdocs
 import (
 	"fmt"
 	"github.com/fatih/color"
+	"go.uber.org/zap"
 	"go/ast"
 	"go/token"
 	"go/types"
 	"golang.org/x/tools/go/packages"
-	"log"
+	"unicode"
 )
 
-type ConfDoc struct {
-	packagesDir      string
-	interfaceName    string
-	interfacePackage string
-	iface            *types.Interface
-	indexedStructs   map[string]*Struct
+type Index map[string]*Struct
+type Indexer struct {
+	log         *zap.SugaredLogger
+	packagesDir string
+	ifaceName   string
+	ifacePkg    string
+	iface       *types.Interface
+	index       Index
 }
 
-func NewConfDoc(packagesDir string, interfaceName string, interfacePath string) *ConfDoc {
-	return &ConfDoc{
-		packagesDir:      packagesDir,
-		interfaceName:    interfaceName,
-		interfacePackage: interfacePath,
-		iface:            nil,
-		indexedStructs:   make(map[string]*Struct),
+func NewIndexer(logger *zap.SugaredLogger, packagesDir string, ifaceName string, ifacePkg string) *Indexer {
+	return &Indexer{
+		log:         logger,
+		packagesDir: packagesDir,
+		ifaceName:   ifaceName,
+		ifacePkg:    ifacePkg,
+		iface:       nil,
+		index:       make(Index),
 	}
 }
 
-func (cd *ConfDoc) Run() error {
+func (cd *Indexer) Run() (Index, error) {
 	fileSet := token.NewFileSet()
 
 	pkgs, err := cd.loadPackages(cd.packagesDir, fileSet)
 
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	cd.iface, err = cd.findInterface(pkgs, cd.interfaceName, cd.interfacePackage)
+	cd.iface, err = cd.findInterface(pkgs, cd.ifaceName, cd.ifacePkg)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	ifaceImplStructs, err := cd.findStructsImplIface(pkgs, cd.iface)
+	ifaceImplStructs, err := cd.findStructsImplIface(pkgs, cd.iface, cd.ifaceName)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	for _, pkg := range pkgs {
 		for _, file := range pkg.Syntax {
-			cd.indexStructs(pkg, file, ifaceImplStructs, cd.indexedStructs)
-			cd.addMethodsToIndexedStructs(file, cd.indexedStructs)
+			cd.indexStructs(pkg, file, ifaceImplStructs, cd.index)
+			cd.addMethodsToIndexedStructs(file, cd.index)
 		}
 	}
 
-	return nil
+	return cd.index, nil
 }
 
-func (cd *ConfDoc) addMethodsToIndexedStructs(file *ast.File, indexedStructs map[string]*Struct) {
+func (cd *Indexer) addMethodsToIndexedStructs(file *ast.File, indexedStructs map[string]*Struct) {
 	ast.Inspect(file, func(node ast.Node) bool {
 		if node == nil {
 			return false
@@ -99,11 +103,11 @@ func (cd *ConfDoc) addMethodsToIndexedStructs(file *ast.File, indexedStructs map
 				}
 
 				m := &StructMethod{
-					FilePos:         file.Pos(),
-					ReceiverType:    recieverType,
-					FunctionName:    functionDecl.Name.Name,
-					ReturnType:      returnType,
-					RawFunctionDecl: functionDecl,
+					FilePos:      file.Pos(),
+					ReceiverType: recieverType,
+					Name:         functionDecl.Name.Name,
+					ReturnType:   returnType,
+					Raw:          functionDecl,
 				}
 
 				structObject, ok := indexedStructs[fmt.Sprintf("%d-%s", int(file.Pos()), m.ReceiverType)]
@@ -118,7 +122,7 @@ func (cd *ConfDoc) addMethodsToIndexedStructs(file *ast.File, indexedStructs map
 }
 
 // indexStructs, indexes all structs in the given file and marks them if they implement the interface
-func (cd *ConfDoc) indexStructs(pkg *packages.Package, file *ast.File, ifaceImplStructs map[string]*types.Struct,
+func (cd *Indexer) indexStructs(pkg *packages.Package, file *ast.File, ifaceImplStructs map[string]*types.Struct,
 	indexedStructs map[string]*Struct) {
 	ast.Inspect(file, func(node ast.Node) bool {
 		if node == nil {
@@ -133,24 +137,24 @@ func (cd *ConfDoc) indexStructs(pkg *packages.Package, file *ast.File, ifaceImpl
 					switch t := s.Type.(type) {
 					case *ast.StructType:
 						var rootStruct = &Struct{
-							FilePos:    t.Pos(),
-							StructName: s.Name.Name,
-							Raw:        t,
+							FilePos: t.Pos(),
+							Name:    s.Name.Name,
+							Raw:     t,
+							PkgPath: pkg.PkgPath,
 						}
 
 						for _, field := range t.Fields.List {
-							structField := NewStructFieldFromIdentArray(field.Names, field.Doc, field.Tag, indexFields(field))
+							structField := NewStructFieldFromIdentArray(field.Names, field.Doc, field.Tag, cd.indexFields(field))
 							rootStruct.Fields = append(rootStruct.Fields, structField)
 						}
 
-						fqn := fmt.Sprintf("%s.%s", pkg.PkgPath, rootStruct.StructName)
+						fqn := fmt.Sprintf("%s.%s", pkg.PkgPath, rootStruct.Name)
 						typedStruct, ok := ifaceImplStructs[fqn]
 						if !ok {
 							continue
 						}
 						rootStruct.Typed = typedStruct
-						indexedStructs[fmt.Sprintf("%d-%s", int(file.Pos()), rootStruct.StructName)] = rootStruct
-						color.Yellow("indexStructs: %s", fqn)
+						indexedStructs[fmt.Sprintf("%d-%s", int(file.Pos()), rootStruct.Name)] = rootStruct
 					}
 				}
 			}
@@ -160,7 +164,7 @@ func (cd *ConfDoc) indexStructs(pkg *packages.Package, file *ast.File, ifaceImpl
 	})
 }
 
-func indexFields(field *ast.Field) []*StructField {
+func (cd *Indexer) indexFields(field *ast.Field) []*StructField {
 	var structFields []*StructField
 
 	switch t := field.Type.(type) {
@@ -179,7 +183,7 @@ func indexFields(field *ast.Field) []*StructField {
 					structType = typeSpec.Type.(*ast.StructType)
 					for _, f := range structType.Fields.List {
 						for _, n := range f.Names {
-							structFields = append(structFields, NewStructField(n, field.Doc, field.Tag, indexFields(f)))
+							structFields = append(structFields, NewStructField(n, field.Doc, field.Tag, cd.indexFields(f)))
 						}
 					}
 				}
@@ -197,7 +201,7 @@ func indexFields(field *ast.Field) []*StructField {
 				if ok {
 					for _, f := range structType.Fields.List {
 						for _, n := range f.Names {
-							structFields = append(structFields, NewStructField(n, field.Doc, field.Tag, indexFields(f)))
+							structFields = append(structFields, NewStructField(n, field.Doc, field.Tag, cd.indexFields(f)))
 						}
 					}
 				}
@@ -227,15 +231,15 @@ func indexFields(field *ast.Field) []*StructField {
 			*/
 			structFields = append(structFields, NewStructFieldFromIdentArray(field.Names, field.Doc, field.Tag, nil))
 		case *ast.FuncType:
-			log.Printf("Ignoring FuncType")
+			cd.log.Debug("ignored a FuncType")
 		default:
-			log.Printf("This is not supposed to print! - %v\n", tt)
+			cd.log.Warn("This is not supposed to be printed - %v", tt)
 		}
 	}
 	return structFields
 }
 
-func (cd *ConfDoc) findInterface(pkgs []*packages.Package, ifaceName string, ifacePkg string) (*types.Interface, error) {
+func (cd *Indexer) findInterface(pkgs []*packages.Package, ifaceName string, ifacePkg string) (*types.Interface, error) {
 	for _, p := range pkgs {
 		if p.PkgPath == ifacePkg {
 			return cd.getInterface(p.Types, ifaceName)
@@ -248,10 +252,10 @@ func (cd *ConfDoc) findInterface(pkgs []*packages.Package, ifaceName string, ifa
 		}
 	}
 
-	return nil, fmt.Errorf("failed to find %s.%s", cd.interfacePackage, cd.interfaceName)
+	return nil, fmt.Errorf("failed to find %s.%s", cd.ifacePkg, cd.ifaceName)
 }
 
-func (cd *ConfDoc) getInterface(pkg *types.Package, name string) (*types.Interface, error) {
+func (cd *Indexer) getInterface(pkg *types.Package, name string) (*types.Interface, error) {
 	obj := pkg.Scope().Lookup(name)
 	if obj != nil {
 		return obj.Type().Underlying().(*types.Interface), nil
@@ -260,21 +264,26 @@ func (cd *ConfDoc) getInterface(pkg *types.Package, name string) (*types.Interfa
 	return nil, fmt.Errorf("interface %s does not exist in %s", name, pkg.Path())
 }
 
-func (cd *ConfDoc) findStructsImplIface(pkgs []*packages.Package, iface *types.Interface) (map[string]*types.Struct,
-	error) {
+func (cd *Indexer) findStructsImplIface(pkgs []*packages.Package, iface *types.Interface, ifaceName string) (map[string]*types.Struct, error) {
 	var structs = make(map[string]*types.Struct)
 
 	for _, pkg := range pkgs {
-		cd.getStructsImplIface(pkg.Types, iface, structs)
+		cd.getStructsImplIface(pkg.Types, iface, ifaceName, structs)
 	}
 
 	return structs, nil
 }
 
-func (cd *ConfDoc) getStructsImplIface(pkg *types.Package, iface *types.Interface, out map[string]*types.Struct) {
+func (cd *Indexer) getStructsImplIface(pkg *types.Package, iface *types.Interface, ifaceName string,
+	out map[string]*types.Struct) {
 	names := pkg.Scope().Names()
 
 	for _, name := range names {
+		if !unicode.IsUpper(rune(name[0])) {
+			cd.log.Debug("Ignoring unexported name")
+			return
+		}
+
 		obj := pkg.Scope().Lookup(name)
 		if obj != nil {
 			str, ok := obj.Type().Underlying().(*types.Struct)
@@ -285,19 +294,21 @@ func (cd *ConfDoc) getStructsImplIface(pkg *types.Package, iface *types.Interfac
 			ptr := types.NewPointer(obj.Type())
 
 			if types.Implements(ptr.Underlying(), iface) {
-				color.Red("%s.%s\n", pkg.Path(), name)
+				color.Set(color.FgRed)
+				cd.log.Infof("Found %s.%s implementing the interface %s", pkg.Path(), name, ifaceName)
+				color.Unset()
 				out[fmt.Sprintf("%s.%s", pkg.Path(), name)] = str
 			}
 		}
 	}
 }
 
-func (cd *ConfDoc) loadPackages(absPackagesDir string, fileSet *token.FileSet) ([]*packages.Package, error) {
+func (cd *Indexer) loadPackages(absPackagesDir string, fileSet *token.FileSet) ([]*packages.Package, error) {
 	config := &packages.Config{
 		Mode:  packages.NeedTypes | packages.NeedTypesInfo | packages.NeedFiles | packages.NeedSyntax | packages.NeedName | packages.NeedImports | packages.NeedDeps,
 		Dir:   absPackagesDir,
 		Fset:  fileSet,
-		Logf:  log.Printf,
+		Logf:  cd.log.Infof,
 		Tests: false,
 	}
 
