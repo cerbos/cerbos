@@ -389,6 +389,21 @@ func (m *CompileTestCase) Validate() error {
 
 	}
 
+	for idx, item := range m.GetWantErrors() {
+		_, _ = idx, item
+
+		if v, ok := interface{}(item).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return CompileTestCaseValidationError{
+					field:  fmt.Sprintf("WantErrors[%v]", idx),
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	}
+
 	return nil
 }
 
@@ -1482,3 +1497,76 @@ var _ interface {
 	Cause() error
 	ErrorName() string
 } = ServerTestCase_StatusValidationError{}
+
+// Validate checks the field values on CompileTestCase_Error with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, an error is returned.
+func (m *CompileTestCase_Error) Validate() error {
+	if m == nil {
+		return nil
+	}
+
+	// no validation rules for File
+
+	// no validation rules for Error
+
+	// no validation rules for Desc
+
+	return nil
+}
+
+// CompileTestCase_ErrorValidationError is the validation error returned by
+// CompileTestCase_Error.Validate if the designated constraints aren't met.
+type CompileTestCase_ErrorValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e CompileTestCase_ErrorValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e CompileTestCase_ErrorValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e CompileTestCase_ErrorValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e CompileTestCase_ErrorValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e CompileTestCase_ErrorValidationError) ErrorName() string {
+	return "CompileTestCase_ErrorValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e CompileTestCase_ErrorValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sCompileTestCase_Error.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = CompileTestCase_ErrorValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = CompileTestCase_ErrorValidationError{}

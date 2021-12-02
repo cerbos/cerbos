@@ -7,6 +7,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io/fs"
 
 	jsonschema "github.com/santhosh-tekuri/jsonschema/v5"
 	"github.com/tidwall/gjson"
@@ -91,6 +92,19 @@ func NewWithConf(ctx context.Context, store storage.Store, conf *Conf) Manager {
 
 func (m *manager) CheckSchema(ctx context.Context, url string) error {
 	_, err := m.store.LoadSchema(ctx, url)
+	if err == nil {
+		return nil
+	}
+
+	var schemaErr *jsonschema.SchemaError
+	if !errors.As(err, &schemaErr) {
+		return err
+	}
+
+	if errors.Is(schemaErr.Err, fs.ErrNotExist) {
+		return fmt.Errorf("schema %q does not exist in the store", schemaErr.SchemaURL)
+	}
+
 	return err
 }
 

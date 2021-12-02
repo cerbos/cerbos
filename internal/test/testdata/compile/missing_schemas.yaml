@@ -1,9 +1,13 @@
 ---
 wantErrors:
   - file: resource_policies/leave_request_20210210.yaml
-    error: ambiguous derived role
+    error: invalid schema
     desc: |-
-      Derived role 'any_employee' is defined in more than one import: [derived_roles/beta.yaml (imported as 'beta'),derived_roles/gamma.yaml (imported as 'gamma')]
+      Failed to load principal schema "cerbos:///non_existent_principal.json": schema "cerbos:///non_existent_principal.json" does not exist in the store
+  - file: resource_policies/leave_request_20210210.yaml
+    error: invalid schema
+    desc: |-
+      Failed to load resource schema "cerbos:///non_existent_leave_request.json": schema "cerbos:///non_existent_leave_request.json" does not exist in the store
 mainDef: "resource_policies/leave_request_20210210.yaml"
 inputDefs:
   "resource_policies/leave_request_20210210.yaml":
@@ -12,14 +16,18 @@ inputDefs:
       resource: leave_request
       version: "20210210"
       importDerivedRoles:
-        - alpha
-        - beta
-        - gamma
+        - my_derived_roles
+      schemas:
+        principalSchema:
+          ref: cerbos:///non_existent_principal.json
+        resourceSchema:
+          ref: cerbos:///non_existent_leave_request.json
       rules:
         - actions: ['*']
           effect: EFFECT_ALLOW
           roles:
             - admin
+          name: wildcard
         - actions: ["create"]
           derivedRoles:
             - employee_that_owns_the_record
@@ -41,10 +49,10 @@ inputDefs:
             - direct_manager
           effect: EFFECT_ALLOW
 
-  "derived_roles/alpha.yaml":
+  "derived_roles/my_derived_roles.yaml":
     apiVersion: "api.cerbos.dev/v1"
     derivedRoles:
-      name: alpha
+      name: my_derived_roles
       definitions:
         - name: tester
           parentRoles: ["dev", "qa"]
@@ -55,22 +63,6 @@ inputDefs:
             match:
               expr: R.attr.owner == P.id
 
-  "derived_roles/beta.yaml":
-    apiVersion: "api.cerbos.dev/v1"
-    derivedRoles:
-      name: beta
-      definitions:
-        - name: tester
-          parentRoles: ["dev", "qa"]
-
-        - name: any_employee
-          parentRoles: ["employee"]
-
-  "derived_roles/gamma.yaml":
-    apiVersion: "api.cerbos.dev/v1"
-    derivedRoles:
-      name: gamma
-      definitions:
         - name: any_employee
           parentRoles: ["employee"]
 

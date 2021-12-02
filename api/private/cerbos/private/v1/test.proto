@@ -78,9 +78,15 @@ message IndexBuilderTestCase {
 }
 
 message CompileTestCase {
+    message Error {
+        string file = 1;
+        string error = 2;
+        string desc = 3;
+    }
+
     string main_def = 1;
     map<string, cerbos.policy.v1.Policy> input_defs = 2;
-    repeated string want_errors = 3;
+    repeated Error want_errors = 3;
 }
 
 message CodeGenTestCase {

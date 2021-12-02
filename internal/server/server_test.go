@@ -81,7 +81,11 @@ func TestServer(t *testing.T) {
 	schemaMgr, err := schema.New(ctx, store)
 	require.NoError(t, err)
 
-	eng, err := engine.New(ctx, engine.Components{CompileMgr: compile.NewManager(ctx, store), SchemaMgr: schemaMgr, AuditLog: auditLog})
+	eng, err := engine.New(ctx, engine.Components{
+		CompileMgr: compile.NewManager(ctx, store, schemaMgr),
+		SchemaMgr:  schemaMgr,
+		AuditLog:   auditLog,
+	})
 	require.NoError(t, err)
 
 	param := Param{AuditLog: auditLog, AuxData: auxData, Store: store, Engine: eng}
@@ -197,7 +201,11 @@ func TestAdminService(t *testing.T) {
 
 	schemaMgr := schema.NewWithConf(ctx, store, &schema.Conf{Enforcement: schema.EnforcementNone})
 
-	eng, err := engine.New(ctx, engine.Components{CompileMgr: compile.NewManager(ctx, store), SchemaMgr: schemaMgr, AuditLog: auditLog})
+	eng, err := engine.New(ctx, engine.Components{
+		CompileMgr: compile.NewManager(ctx, store, schemaMgr),
+		SchemaMgr:  schemaMgr,
+		AuditLog:   auditLog,
+	})
 	require.NoError(t, err)
 
 	testdataDir := test.PathToDir(t, "server")

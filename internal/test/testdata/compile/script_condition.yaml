@@ -1,6 +1,9 @@
 ---
 wantErrors:
-  - "principal_policies/donald_duck_20210210.yaml: Unsupported feature in rule 'leave_request_rule-001' (#1) of resource 'leave_request' (scripts in conditions are no longer supported)"
+  - file: principal_policies/donald_duck_20210210.yaml
+    error: scripts in conditions are no longer supported
+    desc: |-
+      Unsupported feature in rule 'leave_request_rule-001' (#1) of resource 'leave_request'
 mainDef: "principal_policies/donald_duck_20210210.yaml"
 inputDefs:
   "principal_policies/donald_duck_20210210.yaml":

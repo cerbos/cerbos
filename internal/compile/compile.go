@@ -4,6 +4,7 @@
 package compile
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
@@ -13,15 +14,16 @@ import (
 	runtimev1 "github.com/cerbos/cerbos/api/genpb/cerbos/runtime/v1"
 	"github.com/cerbos/cerbos/internal/namer"
 	"github.com/cerbos/cerbos/internal/policy"
+	"github.com/cerbos/cerbos/internal/schema"
 )
 
 var emptyVal = &emptypb.Empty{}
 
-func BatchCompile(queue <-chan *policy.CompilationUnit) error {
+func BatchCompile(queue <-chan *policy.CompilationUnit, schemaMgr schema.Manager) error {
 	var errs ErrorList
 
 	for unit := range queue {
-		if _, err := Compile(unit); err != nil {
+		if _, err := Compile(unit, schemaMgr); err != nil {
 			errs.Add(err)
 		}
 	}
@@ -29,13 +31,13 @@ func BatchCompile(queue <-chan *policy.CompilationUnit) error {
 	return errs.ErrOrNil()
 }
 
-func Compile(unit *policy.CompilationUnit) (rps *runtimev1.RunnablePolicySet, err error) {
+func Compile(unit *policy.CompilationUnit, schemaMgr schema.Manager) (rps *runtimev1.RunnablePolicySet, err error) {
 	uc := newUnitCtx(unit)
 	mc := uc.moduleCtx(unit.ModID)
 
 	switch pt := mc.def.PolicyType.(type) {
 	case *policyv1.Policy_ResourcePolicy:
-		rps = compileResourcePolicy(mc, pt.ResourcePolicy)
+		rps = compileResourcePolicy(mc, pt.ResourcePolicy, schemaMgr)
 	case *policyv1.Policy_PrincipalPolicy:
 		rps = compilePrincipalPolicy(mc, pt.PrincipalPolicy)
 	case *policyv1.Policy_DerivedRoles:
@@ -47,9 +49,13 @@ func Compile(unit *policy.CompilationUnit) (rps *runtimev1.RunnablePolicySet, er
 	return rps, uc.error()
 }
 
-func compileResourcePolicy(modCtx *moduleCtx, rp *policyv1.ResourcePolicy) *runtimev1.RunnablePolicySet {
+func compileResourcePolicy(modCtx *moduleCtx, rp *policyv1.ResourcePolicy, schemaMgr schema.Manager) *runtimev1.RunnablePolicySet {
 	referencedRoles, err := compileImportedDerivedRoles(modCtx, rp)
 	if err != nil {
+		return nil
+	}
+
+	if err := checkReferencedSchemas(modCtx, rp, schemaMgr); err != nil {
 		return nil
 	}
 
@@ -203,6 +209,26 @@ func doCompileDerivedRoles(modCtx *moduleCtx, dr *policyv1.DerivedRoles) *runtim
 	}
 
 	return compiled
+}
+
+func checkReferencedSchemas(modCtx *moduleCtx, rp *policyv1.ResourcePolicy, schemaMgr schema.Manager) error {
+	if rp.Schemas == nil {
+		return nil
+	}
+
+	if ps := rp.Schemas.PrincipalSchema; ps != nil && ps.Ref != "" {
+		if err := schemaMgr.CheckSchema(context.TODO(), ps.Ref); err != nil {
+			modCtx.addErrWithDesc(errInvalidSchema, "Failed to load principal schema %q: %v", ps.Ref, err)
+		}
+	}
+
+	if rs := rp.Schemas.ResourceSchema; rs != nil && rs.Ref != "" {
+		if err := schemaMgr.CheckSchema(context.TODO(), rs.Ref); err != nil {
+			modCtx.addErrWithDesc(errInvalidSchema, "Failed to load resource schema %q: %v", rs.Ref, err)
+		}
+	}
+
+	return modCtx.error()
 }
 
 func compileResourceRule(modCtx *moduleCtx, rule *policyv1.ResourceRule) *runtimev1.RunnableResourcePolicySet_Policy_Rule {
