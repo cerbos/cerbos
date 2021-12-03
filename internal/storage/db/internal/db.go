@@ -4,17 +4,23 @@
 package internal
 
 import (
+	"bytes"
 	"context"
-	"errors"
+	"encoding/json"
 	"fmt"
+	"io"
+	"net/url"
 	"os"
+	"strings"
 
 	"github.com/doug-martin/goqu/v9"
+	"github.com/jackc/pgtype"
 	jsonschema "github.com/santhosh-tekuri/jsonschema/v5"
 	"go.uber.org/zap"
 
 	"github.com/cerbos/cerbos/internal/namer"
 	"github.com/cerbos/cerbos/internal/policy"
+	"github.com/cerbos/cerbos/internal/schema"
 	"github.com/cerbos/cerbos/internal/storage"
 )
 
@@ -26,6 +32,7 @@ type DBStorage interface {
 	Delete(ctx context.Context, ids ...namer.ModuleID) error
 	GetPolicies(ctx context.Context) ([]*policy.Wrapper, error)
 	AddOrUpdateSchema(ctx context.Context, id string, def []byte) error
+	GetSchema(ctx context.Context, id string) ([]byte, error)
 	DeleteSchema(ctx context.Context, id string) error
 	LoadSchema(ctx context.Context, url string) (*jsonschema.Schema, error)
 }
@@ -42,82 +49,136 @@ func NewDBStorage(ctx context.Context, db *goqu.Database) (DBStorage, error) {
 
 	return &dbStorage{
 		db:                  db,
+		schemaLoader:        schema.NewDBLoader(getLoadURL(db)),
 		SubscriptionManager: storage.NewSubscriptionManager(ctx),
 	}, nil
 }
 
+func getLoadURL(db *goqu.Database) schema.LoadURLFn {
+	return func(schemaUrl string) (io.ReadCloser, error) {
+		u, err := url.Parse(schemaUrl)
+		if err != nil {
+			return nil, err
+		}
+
+		if u.Scheme == schema.URLScheme {
+			relativePath := strings.TrimPrefix(u.Path, "/")
+
+			var sch Schema
+			_, err := db.From(SchemaTbl).
+				Where(goqu.Ex{SchemaTblIDCol: relativePath}).
+				ScanStruct(&sch)
+			if err != nil {
+				return nil, err
+			}
+
+			b, err := json.Marshal(sch.Definition)
+			if err != nil {
+				return nil, err
+			}
+
+			return io.NopCloser(bytes.NewBuffer(b)), nil
+		}
+
+		loader, ok := jsonschema.Loaders[u.Scheme]
+		if !ok {
+			return nil, jsonschema.LoaderNotFoundError(schemaUrl)
+		}
+		return loader(schemaUrl)
+	}
+}
+
 type dbStorage struct {
-	db *goqu.Database
+	db           *goqu.Database
+	schemaLoader *schema.DBLoader
 	*storage.SubscriptionManager
 }
 
 func (s *dbStorage) AddOrUpdateSchema(ctx context.Context, id string, def []byte) error {
-	// TODO (cell) Implement method
-	/*
-		if sch == nil {
-			return fmt.Errorf("schema cannot be nil")
-		}
+	if def == nil {
+		return fmt.Errorf("schema definition cannot be nil")
+	}
 
-		schemaRecord := Schema{
-			ID:          SchemaDefaultID,
-			Description: sch.Description,
-			Disabled:    sch.Disabled,
-			Definition:  SchemaDefWrapper{sch},
-		}
+	defJSON := pgtype.JSON{}
+	err := defJSON.UnmarshalJSON(def)
+	if err != nil {
+		return fmt.Errorf("failed to unmarshal schema definition")
+	}
 
-		if _, err := s.db.Insert(SchemaTbl).
-			Rows(schemaRecord).
-			OnConflict(goqu.DoUpdate(SchemaTblIDCol, schemaRecord)).
-			Executor().
-			ExecContext(ctx); err != nil {
-			return fmt.Errorf("failed to insert the schema: %w", err)
-		}
+	schemaRecord := Schema{
+		ID:         id,
+		Definition: &defJSON,
+	}
 
-		s.NotifySubscribers(storage.Event{
-			Kind: storage.EventAddOrUpdateSchema,
-		})
-	*/
+	if _, err := s.db.Insert(SchemaTbl).
+		Rows(schemaRecord).
+		OnConflict(goqu.DoUpdate(SchemaTblIDCol, schemaRecord)).
+		Executor().
+		ExecContext(ctx); err != nil {
+		return fmt.Errorf("failed to upsert the schema: %w", err)
+	}
 
-	return errors.New("unimplemented")
+	s.NotifySubscribers(storage.Event{
+		Kind: storage.EventAddOrUpdateSchema,
+	})
+
+	return nil
 }
 
 func (s *dbStorage) DeleteSchema(ctx context.Context, id string) error {
-	// TODO (cell) Implement method
-	/*
-		_, err := s.db.From(SchemaTbl).
-			Where(goqu.C(SchemaTblIDCol).Eq(SchemaDefaultID)).
-			Delete().
-			Executor().
-			ExecContext(ctx)
-		if err != nil {
-			return fmt.Errorf("failed to delete the schema: %w", err)
-		}
+	res, err := s.db.From(SchemaTbl).
+		Where(goqu.C(SchemaTblIDCol).Eq(id)).
+		Delete().
+		Executor().
+		ExecContext(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to delete schema with id %s: %w", id, err)
+	}
 
-		s.NotifySubscribers(storage.Event{
-			Kind: storage.EventDeleteSchema,
-		})
-	*/
+	affected, err := res.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("failed to discover whether the schema got deleted or not")
+	}
 
-	return errors.New("unimplemented")
+	if affected == 0 {
+		return fmt.Errorf("failed to find the schema with id %s for deletion", id)
+	}
+
+	s.NotifySubscribers(storage.Event{
+		Kind: storage.EventDeleteSchema,
+	})
+
+	return nil
+}
+
+func (s *dbStorage) GetSchema(ctx context.Context, id string) ([]byte, error) {
+	var sch Schema
+	_, err := s.db.From(SchemaTbl).
+		Where(goqu.Ex{SchemaTblIDCol: id}).
+		ScanStructContext(ctx, &sch)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get schema: %w", err)
+	}
+
+	if sch.Definition == nil {
+		return nil, fmt.Errorf("failed to find schema")
+	}
+
+	def, err := json.Marshal(sch.Definition)
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal schema: %w", err)
+	}
+
+	return def, nil
 }
 
 func (s *dbStorage) LoadSchema(ctx context.Context, url string) (*jsonschema.Schema, error) {
-	// TODO (cell) Implement method
-	/*
-		var sch Schema
+	sch, err := s.schemaLoader.Load(ctx, url)
+	if err != nil {
+		return nil, fmt.Errorf("failed to load schema: %w", err)
+	}
 
-		_, err := s.db.
-			Select(goqu.C(SchemaTblIDCol), goqu.C(SchemaTblDefinitionCol)).
-			From(SchemaTbl).
-			Where(goqu.Ex{SchemaTblIDCol: SchemaDefaultID}).
-			ScanStructContext(ctx, &sch)
-		if err != nil {
-			return nil, fmt.Errorf("could not execute %q query: %w", "GetSchema", err)
-		}
-
-		return sch.Definition.Schema, nil
-	*/
-	return nil, errors.New("unimplemented")
+	return sch, nil
 }
 
 func (s *dbStorage) AddOrUpdate(ctx context.Context, policies ...policy.Wrapper) error {
