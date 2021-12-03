@@ -302,3 +302,27 @@ func (ms *MockStore) LoadSchema(ctx context.Context, url string) (*jsonschema.Sc
 	}
 	return nil, nil
 }
+
+func (ms *MockStore) GetSchema(ctx context.Context, id string) ([]byte, error) {
+	args := ms.MethodCalled("GetSchema", ctx)
+	if res := args.Get(0); res == nil {
+		return nil, args.Error(0)
+	}
+	return nil, nil
+}
+
+func (ms *MockStore) AddOrUpdateSchema(ctx context.Context, id string, def []byte) error {
+	args := ms.MethodCalled("AddOrUpdateSchema", ctx)
+	if res := args.Get(0); res == nil {
+		return args.Error(0)
+	}
+	return nil
+}
+
+func (ms *MockStore) DeleteSchema(ctx context.Context, id string) error {
+	args := ms.MethodCalled("DeleteSchema", ctx)
+	if res := args.Get(0); res == nil {
+		return args.Error(0)
+	}
+	return nil
+}

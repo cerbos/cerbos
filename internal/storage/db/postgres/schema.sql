@@ -33,9 +33,7 @@ CREATE TABLE IF NOT EXISTS policy_revision (
 );
 
 CREATE TABLE IF NOT EXISTS attr_schema_defs (
-    id BIGINT PRIMARY KEY,
-    description TEXT,
-    disabled BOOLEAN default false,
+    id VARCHAR PRIMARY KEY,
     definition JSON
 );
 

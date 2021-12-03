@@ -44,6 +44,32 @@ func LoadPolicy(t *testing.T, path string) *policyv1.Policy {
 	return p
 }
 
+func ReadSchemaFromFile(t *testing.T, path string) []byte {
+	t.Helper()
+
+	inp := mkReadCloser(t, path)
+	defer inp.Close()
+
+	data, err := io.ReadAll(inp)
+	require.NoError(t, err, "Failed to load %s", path)
+
+	return data
+}
+
+func ReadSchemaFromFS(t *testing.T, fsys fs.FS, path string) []byte {
+	t.Helper()
+
+	f, err := fsys.Open(path)
+	require.NoError(t, err, "Failed to open %s", path)
+
+	defer f.Close()
+
+	data, err := io.ReadAll(io.Reader(f))
+	require.NoError(t, err, "failed to read from source: %w", err)
+
+	return data
+}
+
 func mkReadCloser(t *testing.T, file string) io.ReadCloser {
 	t.Helper()
 

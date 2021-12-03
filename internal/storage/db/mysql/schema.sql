@@ -30,9 +30,7 @@ CREATE TABLE IF NOT EXISTS policy_revision (
     update_timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP);
 
 CREATE TABLE IF NOT EXISTS attr_schema_defs (
-    id BIGINT PRIMARY KEY,
-    description TEXT,
-    disabled BOOLEAN default false,
+    id VARCHAR(255) PRIMARY KEY,
     definition JSON);
 
 DROP TRIGGER IF EXISTS policy_on_insert;
