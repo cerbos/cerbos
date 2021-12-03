@@ -862,6 +862,16 @@ func (m *RunnableResourcePolicySet_Policy) Validate() error {
 
 	}
 
+	if v, ok := interface{}(m.GetSchemas()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return RunnableResourcePolicySet_PolicyValidationError{
+				field:  "Schemas",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
 	return nil
 }
 

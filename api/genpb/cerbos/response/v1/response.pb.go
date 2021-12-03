@@ -11,9 +11,9 @@ package responsev1
 
 import (
 	v1 "github.com/cerbos/cerbos/api/genpb/cerbos/audit/v1"
-	v13 "github.com/cerbos/cerbos/api/genpb/cerbos/effect/v1"
+	v12 "github.com/cerbos/cerbos/api/genpb/cerbos/effect/v1"
 	v11 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
-	v12 "github.com/cerbos/cerbos/api/genpb/cerbos/schema/v1"
+	v13 "github.com/cerbos/cerbos/api/genpb/cerbos/schema/v1"
 	_ "github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-openapiv2/options"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
@@ -752,7 +752,8 @@ type GetSchemaResponse struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Schema *v12.Schema `protobuf:"bytes,1,opt,name=schema,proto3" json:"schema,omitempty"`
+	Id     string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	Schema []byte `protobuf:"bytes,2,opt,name=schema,proto3" json:"schema,omitempty"`
 }
 
 func (x *GetSchemaResponse) Reset() {
@@ -787,7 +788,14 @@ func (*GetSchemaResponse) Descriptor() ([]byte, []int) {
 	return file_cerbos_response_v1_response_proto_rawDescGZIP(), []int{11}
 }
 
-func (x *GetSchemaResponse) GetSchema() *v12.Schema {
+func (x *GetSchemaResponse) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
+func (x *GetSchemaResponse) GetSchema() []byte {
 	if x != nil {
 		return x.Schema
 	}
@@ -837,8 +845,8 @@ type CheckResourceSetResponse_ActionEffectMap struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Actions          map[string]v13.Effect  `protobuf:"bytes,1,rep,name=actions,proto3" json:"actions,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"varint,2,opt,name=value,proto3,enum=cerbos.effect.v1.Effect"`
-	ValidationErrors []*v12.ValidationError `protobuf:"bytes,2,rep,name=validation_errors,json=validationErrors,proto3" json:"validation_errors,omitempty"`
+	Actions          map[string]v12.Effect  `protobuf:"bytes,1,rep,name=actions,proto3" json:"actions,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"varint,2,opt,name=value,proto3,enum=cerbos.effect.v1.Effect"`
+	ValidationErrors []*v13.ValidationError `protobuf:"bytes,2,rep,name=validation_errors,json=validationErrors,proto3" json:"validation_errors,omitempty"`
 }
 
 func (x *CheckResourceSetResponse_ActionEffectMap) Reset() {
@@ -873,14 +881,14 @@ func (*CheckResourceSetResponse_ActionEffectMap) Descriptor() ([]byte, []int) {
 	return file_cerbos_response_v1_response_proto_rawDescGZIP(), []int{0, 0}
 }
 
-func (x *CheckResourceSetResponse_ActionEffectMap) GetActions() map[string]v13.Effect {
+func (x *CheckResourceSetResponse_ActionEffectMap) GetActions() map[string]v12.Effect {
 	if x != nil {
 		return x.Actions
 	}
 	return nil
 }
 
-func (x *CheckResourceSetResponse_ActionEffectMap) GetValidationErrors() []*v12.ValidationError {
+func (x *CheckResourceSetResponse_ActionEffectMap) GetValidationErrors() []*v13.ValidationError {
 	if x != nil {
 		return x.ValidationErrors
 	}
@@ -1042,7 +1050,7 @@ type CheckResourceBatchResponse_ActionEffectMap struct {
 	unknownFields protoimpl.UnknownFields
 
 	ResourceId string                `protobuf:"bytes,1,opt,name=resource_id,json=resourceId,proto3" json:"resource_id,omitempty"`
-	Actions    map[string]v13.Effect `protobuf:"bytes,2,rep,name=actions,proto3" json:"actions,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"varint,2,opt,name=value,proto3,enum=cerbos.effect.v1.Effect"`
+	Actions    map[string]v12.Effect `protobuf:"bytes,2,rep,name=actions,proto3" json:"actions,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"varint,2,opt,name=value,proto3,enum=cerbos.effect.v1.Effect"`
 }
 
 func (x *CheckResourceBatchResponse_ActionEffectMap) Reset() {
@@ -1084,7 +1092,7 @@ func (x *CheckResourceBatchResponse_ActionEffectMap) GetResourceId() string {
 	return ""
 }
 
-func (x *CheckResourceBatchResponse_ActionEffectMap) GetActions() map[string]v13.Effect {
+func (x *CheckResourceBatchResponse_ActionEffectMap) GetActions() map[string]v12.Effect {
 	if x != nil {
 		return x.Actions
 	}
@@ -1152,7 +1160,7 @@ type PlaygroundEvaluateResponse_EvalResult struct {
 	unknownFields protoimpl.UnknownFields
 
 	Action                string     `protobuf:"bytes,1,opt,name=action,proto3" json:"action,omitempty"`
-	Effect                v13.Effect `protobuf:"varint,2,opt,name=effect,proto3,enum=cerbos.effect.v1.Effect" json:"effect,omitempty"`
+	Effect                v12.Effect `protobuf:"varint,2,opt,name=effect,proto3,enum=cerbos.effect.v1.Effect" json:"effect,omitempty"`
 	Policy                string     `protobuf:"bytes,3,opt,name=policy,proto3" json:"policy,omitempty"`
 	EffectiveDerivedRoles []string   `protobuf:"bytes,4,rep,name=effective_derived_roles,json=effectiveDerivedRoles,proto3" json:"effective_derived_roles,omitempty"`
 }
@@ -1196,11 +1204,11 @@ func (x *PlaygroundEvaluateResponse_EvalResult) GetAction() string {
 	return ""
 }
 
-func (x *PlaygroundEvaluateResponse_EvalResult) GetEffect() v13.Effect {
+func (x *PlaygroundEvaluateResponse_EvalResult) GetEffect() v12.Effect {
 	if x != nil {
 		return x.Effect
 	}
-	return v13.Effect(0)
+	return v12.Effect(0)
 }
 
 func (x *PlaygroundEvaluateResponse_EvalResult) GetPolicy() string {
@@ -1616,25 +1624,32 @@ var file_cerbos_response_v1_response_proto_rawDesc = []byte{
 	0x61, 0x74, 0x65, 0x53, 0x63, 0x68, 0x65, 0x6d, 0x61, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73,
 	0x65, 0x3a, 0x21, 0x92, 0x41, 0x1e, 0x0a, 0x1c, 0x32, 0x1a, 0x41, 0x64, 0x64, 0x2f, 0x75, 0x70,
 	0x64, 0x61, 0x74, 0x65, 0x20, 0x73, 0x63, 0x68, 0x65, 0x6d, 0x61, 0x20, 0x72, 0x65, 0x73, 0x70,
-	0x6f, 0x6e, 0x73, 0x65, 0x22, 0x61, 0x0a, 0x11, 0x47, 0x65, 0x74, 0x53, 0x63, 0x68, 0x65, 0x6d,
-	0x61, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x30, 0x0a, 0x06, 0x73, 0x63, 0x68,
-	0x65, 0x6d, 0x61, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x18, 0x2e, 0x63, 0x65, 0x72, 0x62,
-	0x6f, 0x73, 0x2e, 0x73, 0x63, 0x68, 0x65, 0x6d, 0x61, 0x2e, 0x76, 0x31, 0x2e, 0x53, 0x63, 0x68,
-	0x65, 0x6d, 0x61, 0x52, 0x06, 0x73, 0x63, 0x68, 0x65, 0x6d, 0x61, 0x3a, 0x1a, 0x92, 0x41, 0x17,
-	0x0a, 0x15, 0x32, 0x13, 0x47, 0x65, 0x74, 0x20, 0x73, 0x63, 0x68, 0x65, 0x6d, 0x61, 0x20, 0x72,
-	0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x39, 0x0a, 0x14, 0x44, 0x65, 0x6c, 0x65, 0x74,
-	0x65, 0x53, 0x63, 0x68, 0x65, 0x6d, 0x61, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x3a,
-	0x21, 0x92, 0x41, 0x1e, 0x0a, 0x1c, 0x32, 0x1a, 0x41, 0x64, 0x64, 0x2f, 0x75, 0x70, 0x64, 0x61,
-	0x74, 0x65, 0x20, 0x73, 0x63, 0x68, 0x65, 0x6d, 0x61, 0x20, 0x72, 0x65, 0x73, 0x70, 0x6f, 0x6e,
-	0x73, 0x65, 0x42, 0x77, 0x0a, 0x1a, 0x64, 0x65, 0x76, 0x2e, 0x63, 0x65, 0x72, 0x62, 0x6f, 0x73,
-	0x2e, 0x61, 0x70, 0x69, 0x2e, 0x76, 0x31, 0x2e, 0x72, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65,
-	0x5a, 0x40, 0x67, 0x69, 0x74, 0x68, 0x75, 0x62, 0x2e, 0x63, 0x6f, 0x6d, 0x2f, 0x63, 0x65, 0x72,
-	0x62, 0x6f, 0x73, 0x2f, 0x63, 0x65, 0x72, 0x62, 0x6f, 0x73, 0x2f, 0x61, 0x70, 0x69, 0x2f, 0x67,
-	0x65, 0x6e, 0x70, 0x62, 0x2f, 0x63, 0x65, 0x72, 0x62, 0x6f, 0x73, 0x2f, 0x72, 0x65, 0x73, 0x70,
-	0x6f, 0x6e, 0x73, 0x65, 0x2f, 0x76, 0x31, 0x3b, 0x72, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65,
-	0x76, 0x31, 0xaa, 0x02, 0x16, 0x43, 0x65, 0x72, 0x62, 0x6f, 0x73, 0x2e, 0x41, 0x70, 0x69, 0x2e,
-	0x56, 0x31, 0x2e, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x62, 0x06, 0x70, 0x72, 0x6f,
-	0x74, 0x6f, 0x33,
+	0x6f, 0x6e, 0x73, 0x65, 0x22, 0xd1, 0x01, 0x0a, 0x11, 0x47, 0x65, 0x74, 0x53, 0x63, 0x68, 0x65,
+	0x6d, 0x61, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x47, 0x0a, 0x02, 0x69, 0x64,
+	0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x42, 0x37, 0x92, 0x41, 0x34, 0x32, 0x20, 0x55, 0x6e, 0x69,
+	0x71, 0x75, 0x65, 0x20, 0x69, 0x64, 0x65, 0x6e, 0x74, 0x69, 0x66, 0x69, 0x65, 0x72, 0x20, 0x66,
+	0x6f, 0x72, 0x20, 0x74, 0x68, 0x65, 0x20, 0x73, 0x63, 0x68, 0x65, 0x6d, 0x61, 0x4a, 0x10, 0x22,
+	0x70, 0x72, 0x69, 0x6e, 0x63, 0x69, 0x70, 0x61, 0x6c, 0x2e, 0x6a, 0x73, 0x6f, 0x6e, 0x22, 0x52,
+	0x02, 0x69, 0x64, 0x12, 0x57, 0x0a, 0x06, 0x73, 0x63, 0x68, 0x65, 0x6d, 0x61, 0x18, 0x02, 0x20,
+	0x01, 0x28, 0x0c, 0x42, 0x3f, 0x92, 0x41, 0x3c, 0x32, 0x16, 0x4a, 0x53, 0x4f, 0x4e, 0x20, 0x73,
+	0x63, 0x68, 0x65, 0x6d, 0x61, 0x20, 0x64, 0x65, 0x66, 0x69, 0x6e, 0x69, 0x74, 0x69, 0x6f, 0x6e,
+	0x4a, 0x22, 0x7b, 0x22, 0x74, 0x79, 0x70, 0x65, 0x22, 0x3a, 0x22, 0x6f, 0x62, 0x6a, 0x65, 0x63,
+	0x74, 0x22, 0x2c, 0x20, 0x22, 0x70, 0x72, 0x6f, 0x70, 0x65, 0x72, 0x74, 0x69, 0x65, 0x73, 0x22,
+	0x3a, 0x7b, 0x7d, 0x7d, 0x52, 0x06, 0x73, 0x63, 0x68, 0x65, 0x6d, 0x61, 0x3a, 0x1a, 0x92, 0x41,
+	0x17, 0x0a, 0x15, 0x32, 0x13, 0x47, 0x65, 0x74, 0x20, 0x73, 0x63, 0x68, 0x65, 0x6d, 0x61, 0x20,
+	0x72, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x39, 0x0a, 0x14, 0x44, 0x65, 0x6c, 0x65,
+	0x74, 0x65, 0x53, 0x63, 0x68, 0x65, 0x6d, 0x61, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65,
+	0x3a, 0x21, 0x92, 0x41, 0x1e, 0x0a, 0x1c, 0x32, 0x1a, 0x41, 0x64, 0x64, 0x2f, 0x75, 0x70, 0x64,
+	0x61, 0x74, 0x65, 0x20, 0x73, 0x63, 0x68, 0x65, 0x6d, 0x61, 0x20, 0x72, 0x65, 0x73, 0x70, 0x6f,
+	0x6e, 0x73, 0x65, 0x42, 0x77, 0x0a, 0x1a, 0x64, 0x65, 0x76, 0x2e, 0x63, 0x65, 0x72, 0x62, 0x6f,
+	0x73, 0x2e, 0x61, 0x70, 0x69, 0x2e, 0x76, 0x31, 0x2e, 0x72, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73,
+	0x65, 0x5a, 0x40, 0x67, 0x69, 0x74, 0x68, 0x75, 0x62, 0x2e, 0x63, 0x6f, 0x6d, 0x2f, 0x63, 0x65,
+	0x72, 0x62, 0x6f, 0x73, 0x2f, 0x63, 0x65, 0x72, 0x62, 0x6f, 0x73, 0x2f, 0x61, 0x70, 0x69, 0x2f,
+	0x67, 0x65, 0x6e, 0x70, 0x62, 0x2f, 0x63, 0x65, 0x72, 0x62, 0x6f, 0x73, 0x2f, 0x72, 0x65, 0x73,
+	0x70, 0x6f, 0x6e, 0x73, 0x65, 0x2f, 0x76, 0x31, 0x3b, 0x72, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73,
+	0x65, 0x76, 0x31, 0xaa, 0x02, 0x16, 0x43, 0x65, 0x72, 0x62, 0x6f, 0x73, 0x2e, 0x41, 0x70, 0x69,
+	0x2e, 0x56, 0x31, 0x2e, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x62, 0x06, 0x70, 0x72,
+	0x6f, 0x74, 0x6f, 0x33,
 }
 
 var (
@@ -1681,9 +1696,8 @@ var file_cerbos_response_v1_response_proto_goTypes = []interface{}{
 	(*v1.AccessLogEntry)(nil),                         // 27: cerbos.audit.v1.AccessLogEntry
 	(*v1.DecisionLogEntry)(nil),                       // 28: cerbos.audit.v1.DecisionLogEntry
 	(*v11.Policy)(nil),                                // 29: cerbos.policy.v1.Policy
-	(*v12.Schema)(nil),                                // 30: cerbos.schema.v1.Schema
-	(*v12.ValidationError)(nil),                       // 31: cerbos.schema.v1.ValidationError
-	(v13.Effect)(0),                                   // 32: cerbos.effect.v1.Effect
+	(*v13.ValidationError)(nil),                       // 30: cerbos.schema.v1.ValidationError
+	(v12.Effect)(0),                                   // 31: cerbos.effect.v1.Effect
 }
 var file_cerbos_response_v1_response_proto_depIdxs = []int32{
 	15, // 0: cerbos.response.v1.CheckResourceSetResponse.resource_instances:type_name -> cerbos.response.v1.CheckResourceSetResponse.ResourceInstancesEntry
@@ -1701,24 +1715,23 @@ var file_cerbos_response_v1_response_proto_depIdxs = []int32{
 	27, // 12: cerbos.response.v1.ListAuditLogEntriesResponse.access_log_entry:type_name -> cerbos.audit.v1.AccessLogEntry
 	28, // 13: cerbos.response.v1.ListAuditLogEntriesResponse.decision_log_entry:type_name -> cerbos.audit.v1.DecisionLogEntry
 	29, // 14: cerbos.response.v1.ListPoliciesResponse.policies:type_name -> cerbos.policy.v1.Policy
-	30, // 15: cerbos.response.v1.GetSchemaResponse.schema:type_name -> cerbos.schema.v1.Schema
-	16, // 16: cerbos.response.v1.CheckResourceSetResponse.ActionEffectMap.actions:type_name -> cerbos.response.v1.CheckResourceSetResponse.ActionEffectMap.ActionsEntry
-	31, // 17: cerbos.response.v1.CheckResourceSetResponse.ActionEffectMap.validation_errors:type_name -> cerbos.schema.v1.ValidationError
-	19, // 18: cerbos.response.v1.CheckResourceSetResponse.Meta.resource_instances:type_name -> cerbos.response.v1.CheckResourceSetResponse.Meta.ResourceInstancesEntry
-	13, // 19: cerbos.response.v1.CheckResourceSetResponse.ResourceInstancesEntry.value:type_name -> cerbos.response.v1.CheckResourceSetResponse.ActionEffectMap
-	32, // 20: cerbos.response.v1.CheckResourceSetResponse.ActionEffectMap.ActionsEntry.value:type_name -> cerbos.effect.v1.Effect
-	20, // 21: cerbos.response.v1.CheckResourceSetResponse.Meta.ActionMeta.actions:type_name -> cerbos.response.v1.CheckResourceSetResponse.Meta.ActionMeta.ActionsEntry
-	18, // 22: cerbos.response.v1.CheckResourceSetResponse.Meta.ResourceInstancesEntry.value:type_name -> cerbos.response.v1.CheckResourceSetResponse.Meta.ActionMeta
-	17, // 23: cerbos.response.v1.CheckResourceSetResponse.Meta.ActionMeta.ActionsEntry.value:type_name -> cerbos.response.v1.CheckResourceSetResponse.Meta.EffectMeta
-	22, // 24: cerbos.response.v1.CheckResourceBatchResponse.ActionEffectMap.actions:type_name -> cerbos.response.v1.CheckResourceBatchResponse.ActionEffectMap.ActionsEntry
-	32, // 25: cerbos.response.v1.CheckResourceBatchResponse.ActionEffectMap.ActionsEntry.value:type_name -> cerbos.effect.v1.Effect
-	32, // 26: cerbos.response.v1.PlaygroundEvaluateResponse.EvalResult.effect:type_name -> cerbos.effect.v1.Effect
-	24, // 27: cerbos.response.v1.PlaygroundEvaluateResponse.EvalResultList.results:type_name -> cerbos.response.v1.PlaygroundEvaluateResponse.EvalResult
-	28, // [28:28] is the sub-list for method output_type
-	28, // [28:28] is the sub-list for method input_type
-	28, // [28:28] is the sub-list for extension type_name
-	28, // [28:28] is the sub-list for extension extendee
-	0,  // [0:28] is the sub-list for field type_name
+	16, // 15: cerbos.response.v1.CheckResourceSetResponse.ActionEffectMap.actions:type_name -> cerbos.response.v1.CheckResourceSetResponse.ActionEffectMap.ActionsEntry
+	30, // 16: cerbos.response.v1.CheckResourceSetResponse.ActionEffectMap.validation_errors:type_name -> cerbos.schema.v1.ValidationError
+	19, // 17: cerbos.response.v1.CheckResourceSetResponse.Meta.resource_instances:type_name -> cerbos.response.v1.CheckResourceSetResponse.Meta.ResourceInstancesEntry
+	13, // 18: cerbos.response.v1.CheckResourceSetResponse.ResourceInstancesEntry.value:type_name -> cerbos.response.v1.CheckResourceSetResponse.ActionEffectMap
+	31, // 19: cerbos.response.v1.CheckResourceSetResponse.ActionEffectMap.ActionsEntry.value:type_name -> cerbos.effect.v1.Effect
+	20, // 20: cerbos.response.v1.CheckResourceSetResponse.Meta.ActionMeta.actions:type_name -> cerbos.response.v1.CheckResourceSetResponse.Meta.ActionMeta.ActionsEntry
+	18, // 21: cerbos.response.v1.CheckResourceSetResponse.Meta.ResourceInstancesEntry.value:type_name -> cerbos.response.v1.CheckResourceSetResponse.Meta.ActionMeta
+	17, // 22: cerbos.response.v1.CheckResourceSetResponse.Meta.ActionMeta.ActionsEntry.value:type_name -> cerbos.response.v1.CheckResourceSetResponse.Meta.EffectMeta
+	22, // 23: cerbos.response.v1.CheckResourceBatchResponse.ActionEffectMap.actions:type_name -> cerbos.response.v1.CheckResourceBatchResponse.ActionEffectMap.ActionsEntry
+	31, // 24: cerbos.response.v1.CheckResourceBatchResponse.ActionEffectMap.ActionsEntry.value:type_name -> cerbos.effect.v1.Effect
+	31, // 25: cerbos.response.v1.PlaygroundEvaluateResponse.EvalResult.effect:type_name -> cerbos.effect.v1.Effect
+	24, // 26: cerbos.response.v1.PlaygroundEvaluateResponse.EvalResultList.results:type_name -> cerbos.response.v1.PlaygroundEvaluateResponse.EvalResult
+	27, // [27:27] is the sub-list for method output_type
+	27, // [27:27] is the sub-list for method input_type
+	27, // [27:27] is the sub-list for extension type_name
+	27, // [27:27] is the sub-list for extension extendee
+	0,  // [0:27] is the sub-list for field type_name
 }
 
 func init() { file_cerbos_response_v1_response_proto_init() }

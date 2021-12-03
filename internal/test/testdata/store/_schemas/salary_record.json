@@ -1,0 +1,23 @@
+{
+  "type": "object",
+  "properties": {
+    "department": {
+      "type": "string"
+    },
+    "geography": {
+      "type": "string"
+    },
+    "id": {
+      "type": "string"
+    },
+    "team": {
+      "type": "string"
+    },
+    "owner": {
+      "type": "string"
+    },
+    "dev_record": {
+      "type": "boolean"
+    }
+  }
+}

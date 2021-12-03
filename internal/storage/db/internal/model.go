@@ -8,10 +8,7 @@ import (
 	"fmt"
 	"time"
 
-	"google.golang.org/protobuf/encoding/protojson"
-
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
-	schemav1 "github.com/cerbos/cerbos/api/genpb/cerbos/schema/v1"
 	"github.com/cerbos/cerbos/internal/namer"
 )
 
@@ -31,6 +28,7 @@ const (
 	SchemaDefaultID        = 1
 )
 
+/*
 type Schema struct {
 	ID          uint64
 	Description string
@@ -66,6 +64,7 @@ func (sdw *SchemaDefWrapper) Scan(src interface{}) error {
 
 	return nil
 }
+*/
 
 type Policy struct {
 	ID          namer.ModuleID

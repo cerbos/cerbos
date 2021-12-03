@@ -11,14 +11,15 @@ import (
 	"testing"
 	"time"
 
+	jsonschema "github.com/santhosh-tekuri/jsonschema/v5"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
-	schemav1 "github.com/cerbos/cerbos/api/genpb/cerbos/schema/v1"
 	"github.com/cerbos/cerbos/internal/compile"
 	"github.com/cerbos/cerbos/internal/namer"
 	"github.com/cerbos/cerbos/internal/policy"
+	"github.com/cerbos/cerbos/internal/schema"
 	"github.com/cerbos/cerbos/internal/storage"
 	"github.com/cerbos/cerbos/internal/test"
 )
@@ -224,7 +225,7 @@ func mkManager() (*compile.Manager, *MockStore, context.CancelFunc) {
 	mockStore := &MockStore{}
 	mockStore.On("Subscribe", mock.Anything)
 
-	mgr := compile.NewManager(ctx, mockStore)
+	mgr := compile.NewManager(ctx, mockStore, schema.NewNopManager())
 
 	return mgr, mockStore, cancelFunc
 }
@@ -294,8 +295,8 @@ func (ms *MockStore) GetPolicies(ctx context.Context) ([]*policy.Wrapper, error)
 	return args.Get(0).([]*policy.Wrapper), args.Error(0)
 }
 
-func (ms *MockStore) GetSchema(ctx context.Context) (*schemav1.Schema, error) {
-	args := ms.MethodCalled("GetSchema", ctx)
+func (ms *MockStore) LoadSchema(ctx context.Context, url string) (*jsonschema.Schema, error) {
+	args := ms.MethodCalled("LoadSchema", ctx)
 	if res := args.Get(0); res == nil {
 		return nil, args.Error(0)
 	}

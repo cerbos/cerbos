@@ -1005,15 +1005,9 @@ func (m *GetSchemaResponse) Validate() error {
 		return nil
 	}
 
-	if v, ok := interface{}(m.GetSchema()).(interface{ Validate() error }); ok {
-		if err := v.Validate(); err != nil {
-			return GetSchemaResponseValidationError{
-				field:  "Schema",
-				reason: "embedded message failed validation",
-				cause:  err,
-			}
-		}
-	}
+	// no validation rules for Id
+
+	// no validation rules for Schema
 
 	return nil
 }

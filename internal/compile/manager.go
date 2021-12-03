@@ -17,6 +17,7 @@ import (
 	"github.com/cerbos/cerbos/internal/namer"
 	"github.com/cerbos/cerbos/internal/observability/metrics"
 	"github.com/cerbos/cerbos/internal/policy"
+	"github.com/cerbos/cerbos/internal/schema"
 	"github.com/cerbos/cerbos/internal/storage"
 )
 
@@ -30,14 +31,16 @@ const (
 type Manager struct {
 	log         *zap.SugaredLogger
 	store       storage.Store
+	schemaMgr   schema.Manager
 	updateQueue chan storage.Event
 	cache       gcache.Cache
 }
 
-func NewManager(ctx context.Context, store storage.Store) *Manager {
+func NewManager(ctx context.Context, store storage.Store, schemaMgr schema.Manager) *Manager {
 	c := &Manager{
 		log:         zap.S().Named("compiler"),
 		store:       store,
+		schemaMgr:   schemaMgr,
 		updateQueue: make(chan storage.Event, updateQueueSize),
 		cache:       gcache.New(maxCacheSize).ARC().Build(),
 	}
@@ -138,7 +141,7 @@ func (c *Manager) getDependents(modID namer.ModuleID) ([]namer.ModuleID, error) 
 
 func (c *Manager) compile(unit *policy.CompilationUnit) (*runtimev1.RunnablePolicySet, error) {
 	startTime := time.Now()
-	rps, err := Compile(unit)
+	rps, err := Compile(unit, c.schemaMgr)
 	durationMs := float64(time.Since(startTime)) / float64(time.Millisecond)
 
 	if err == nil && rps != nil {

@@ -1428,13 +1428,17 @@ func (m *AddOrUpdateSchemaRequest) Validate() error {
 		return nil
 	}
 
-	if v, ok := interface{}(m.GetSchema()).(interface{ Validate() error }); ok {
-		if err := v.Validate(); err != nil {
-			return AddOrUpdateSchemaRequestValidationError{
-				field:  "Schema",
-				reason: "embedded message failed validation",
-				cause:  err,
-			}
+	if l := utf8.RuneCountInString(m.GetId()); l < 1 || l > 256 {
+		return AddOrUpdateSchemaRequestValidationError{
+			field:  "Id",
+			reason: "value length must be between 1 and 256 runes, inclusive",
+		}
+	}
+
+	if len(m.GetSchema()) < 10 {
+		return AddOrUpdateSchemaRequestValidationError{
+			field:  "Schema",
+			reason: "value length must be at least 10 bytes",
 		}
 	}
 
@@ -1505,6 +1509,13 @@ func (m *GetSchemaRequest) Validate() error {
 		return nil
 	}
 
+	if l := utf8.RuneCountInString(m.GetId()); l < 1 || l > 256 {
+		return GetSchemaRequestValidationError{
+			field:  "Id",
+			reason: "value length must be between 1 and 256 runes, inclusive",
+		}
+	}
+
 	return nil
 }
 
@@ -1568,6 +1579,13 @@ var _ interface {
 func (m *DeleteSchemaRequest) Validate() error {
 	if m == nil {
 		return nil
+	}
+
+	if l := utf8.RuneCountInString(m.GetId()); l < 1 || l > 256 {
+		return DeleteSchemaRequestValidationError{
+			field:  "Id",
+			reason: "value length must be between 1 and 256 runes, inclusive",
+		}
 	}
 
 	return nil

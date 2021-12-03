@@ -21,6 +21,7 @@ import (
 	auditv1 "github.com/cerbos/cerbos/api/genpb/cerbos/audit/v1"
 	effectv1 "github.com/cerbos/cerbos/api/genpb/cerbos/effect/v1"
 	enginev1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
+	schemav1 "github.com/cerbos/cerbos/api/genpb/cerbos/schema/v1"
 	"github.com/cerbos/cerbos/internal/audit"
 	"github.com/cerbos/cerbos/internal/compile"
 	"github.com/cerbos/cerbos/internal/config"
@@ -34,13 +35,12 @@ import (
 var ErrNoPoliciesMatched = errors.New("no matching policies")
 
 const (
-	defaultEffect            = effectv1.Effect_EFFECT_DENY
-	noPolicyMatch            = "NO_MATCH"
-	skippedDueToInvalidInput = "SKIPPED_DUE_TO_INVALID_INPUT"
-	parallelismThreshold     = 2
-	workerQueueSize          = 4
-	workerResetJitter        = 1 << 4
-	workerResetThreshold     = 1 << 16
+	defaultEffect        = effectv1.Effect_EFFECT_DENY
+	noPolicyMatch        = "NO_MATCH"
+	parallelismThreshold = 2
+	workerQueueSize      = 4
+	workerResetJitter    = 1 << 4
+	workerResetThreshold = 1 << 16
 )
 
 var defaultTracer = newTracer(NoopTraceSink{})
@@ -273,34 +273,10 @@ func (engine *Engine) evaluate(ctx context.Context, input *enginev1.CheckInput, 
 		return nil, err
 	}
 
-	// validate the request using schema
-	vResult, err := engine.schemaMgr.Validate(ctx, input)
-	if err != nil {
-		tracing.MarkFailed(span, http.StatusInternalServerError, err)
-		return nil, fmt.Errorf("failed to validate input: %w", err)
-	}
-
 	output := &enginev1.CheckOutput{
 		RequestId:  input.RequestId,
 		ResourceId: input.Resource.Id,
 		Actions:    make(map[string]*enginev1.CheckOutput_ActionEffect, len(input.Actions)),
-	}
-
-	if len(vResult.Errors) > 0 {
-		tracing.MarkFailed(span, http.StatusBadRequest, err)
-		output.ValidationErrors = vResult.Errors.SchemaErrors()
-
-		// return EFFECT_DENY for all actions if enforcement is strict.
-		if vResult.Reject {
-			for _, action := range input.Actions {
-				output.Actions[action] = &enginev1.CheckOutput_ActionEffect{
-					Effect: effectv1.Effect_EFFECT_DENY,
-					Policy: skippedDueToInvalidInput,
-				}
-			}
-
-			return output, nil
-		}
 	}
 
 	ec, err := engine.buildEvaluationCtx(ctx, input, checkOpts)
@@ -345,6 +321,7 @@ func (engine *Engine) evaluate(ctx context.Context, input *enginev1.CheckInput, 
 	}
 
 	output.EffectiveDerivedRoles = result.effectiveDerivedRoles
+	output.ValidationErrors = result.validationErrors
 
 	return output, nil
 }
@@ -382,7 +359,7 @@ func (engine *Engine) getPrincipalPolicyEvaluator(ctx context.Context, principal
 		return nil, nil
 	}
 
-	return NewEvaluator(rps, checkOpts.tracer), nil
+	return NewEvaluator(rps, checkOpts.tracer, engine.schemaMgr), nil
 }
 
 func (engine *Engine) getResourcePolicyEvaluator(ctx context.Context, resource, policyVersion string, checkOpts *checkOptions) (Evaluator, error) {
@@ -396,7 +373,7 @@ func (engine *Engine) getResourcePolicyEvaluator(ctx context.Context, resource, 
 		return nil, nil
 	}
 
-	return NewEvaluator(rps, checkOpts.tracer), nil
+	return NewEvaluator(rps, checkOpts.tracer, engine.schemaMgr), nil
 }
 
 func (engine *Engine) policyAttr(name, version string) (pName, pVersion string) {
@@ -460,6 +437,7 @@ type evaluationResult struct {
 	effects               map[string]effectv1.Effect
 	matchedPolicies       map[string]string
 	effectiveDerivedRoles []string
+	validationErrors      []*schemav1.ValidationError
 }
 
 // merge the results by only updating the actions that have a no_match effect.
@@ -475,6 +453,10 @@ func (er *evaluationResult) merge(res *EvalResult) bool {
 		for edr := range res.EffectiveDerivedRoles {
 			er.effectiveDerivedRoles = append(er.effectiveDerivedRoles, edr)
 		}
+	}
+
+	if len(res.ValidationErrors) > 0 {
+		er.validationErrors = append(er.validationErrors, res.ValidationErrors...)
 	}
 
 	for action, effect := range res.Effects {

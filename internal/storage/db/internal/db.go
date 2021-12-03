@@ -5,13 +5,14 @@ package internal
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 
 	"github.com/doug-martin/goqu/v9"
+	jsonschema "github.com/santhosh-tekuri/jsonschema/v5"
 	"go.uber.org/zap"
 
-	schemav1 "github.com/cerbos/cerbos/api/genpb/cerbos/schema/v1"
 	"github.com/cerbos/cerbos/internal/namer"
 	"github.com/cerbos/cerbos/internal/policy"
 	"github.com/cerbos/cerbos/internal/storage"
@@ -24,9 +25,9 @@ type DBStorage interface {
 	GetDependents(ctx context.Context, ids ...namer.ModuleID) (map[namer.ModuleID][]namer.ModuleID, error)
 	Delete(ctx context.Context, ids ...namer.ModuleID) error
 	GetPolicies(ctx context.Context) ([]*policy.Wrapper, error)
-	AddOrUpdateSchema(ctx context.Context, sch *schemav1.Schema) error
-	DeleteSchema(ctx context.Context) error
-	GetSchema(ctx context.Context) (*schemav1.Schema, error)
+	AddOrUpdateSchema(ctx context.Context, id string, def []byte) error
+	DeleteSchema(ctx context.Context, id string) error
+	LoadSchema(ctx context.Context, url string) (*jsonschema.Schema, error)
 }
 
 func NewDBStorage(ctx context.Context, db *goqu.Database) (DBStorage, error) {
@@ -50,63 +51,73 @@ type dbStorage struct {
 	*storage.SubscriptionManager
 }
 
-func (s *dbStorage) AddOrUpdateSchema(ctx context.Context, sch *schemav1.Schema) error {
-	if sch == nil {
-		return fmt.Errorf("schema cannot be nil")
-	}
+func (s *dbStorage) AddOrUpdateSchema(ctx context.Context, id string, def []byte) error {
+	// TODO (cell) Implement method
+	/*
+		if sch == nil {
+			return fmt.Errorf("schema cannot be nil")
+		}
 
-	schemaRecord := Schema{
-		ID:          SchemaDefaultID,
-		Description: sch.Description,
-		Disabled:    sch.Disabled,
-		Definition:  SchemaDefWrapper{sch},
-	}
+		schemaRecord := Schema{
+			ID:          SchemaDefaultID,
+			Description: sch.Description,
+			Disabled:    sch.Disabled,
+			Definition:  SchemaDefWrapper{sch},
+		}
 
-	if _, err := s.db.Insert(SchemaTbl).
-		Rows(schemaRecord).
-		OnConflict(goqu.DoUpdate(SchemaTblIDCol, schemaRecord)).
-		Executor().
-		ExecContext(ctx); err != nil {
-		return fmt.Errorf("failed to insert the schema: %w", err)
-	}
+		if _, err := s.db.Insert(SchemaTbl).
+			Rows(schemaRecord).
+			OnConflict(goqu.DoUpdate(SchemaTblIDCol, schemaRecord)).
+			Executor().
+			ExecContext(ctx); err != nil {
+			return fmt.Errorf("failed to insert the schema: %w", err)
+		}
 
-	s.NotifySubscribers(storage.Event{
-		Kind: storage.EventAddOrUpdateSchema,
-	})
+		s.NotifySubscribers(storage.Event{
+			Kind: storage.EventAddOrUpdateSchema,
+		})
+	*/
 
-	return nil
+	return errors.New("unimplemented")
 }
 
-func (s *dbStorage) DeleteSchema(ctx context.Context) error {
-	_, err := s.db.From(SchemaTbl).
-		Where(goqu.C(SchemaTblIDCol).Eq(SchemaDefaultID)).
-		Delete().
-		Executor().
-		ExecContext(ctx)
-	if err != nil {
-		return fmt.Errorf("failed to delete the schema: %w", err)
-	}
+func (s *dbStorage) DeleteSchema(ctx context.Context, id string) error {
+	// TODO (cell) Implement method
+	/*
+		_, err := s.db.From(SchemaTbl).
+			Where(goqu.C(SchemaTblIDCol).Eq(SchemaDefaultID)).
+			Delete().
+			Executor().
+			ExecContext(ctx)
+		if err != nil {
+			return fmt.Errorf("failed to delete the schema: %w", err)
+		}
 
-	s.NotifySubscribers(storage.Event{
-		Kind: storage.EventDeleteSchema,
-	})
+		s.NotifySubscribers(storage.Event{
+			Kind: storage.EventDeleteSchema,
+		})
+	*/
 
-	return nil
+	return errors.New("unimplemented")
 }
 
-func (s *dbStorage) GetSchema(ctx context.Context) (*schemav1.Schema, error) {
-	var sch Schema
+func (s *dbStorage) LoadSchema(ctx context.Context, url string) (*jsonschema.Schema, error) {
+	// TODO (cell) Implement method
+	/*
+		var sch Schema
 
-	_, err := s.db.
-		Select(goqu.C(SchemaTblIDCol), goqu.C(SchemaTblDefinitionCol)).
-		From(SchemaTbl).
-		Where(goqu.Ex{SchemaTblIDCol: SchemaDefaultID}).
-		ScanStructContext(ctx, &sch)
-	if err != nil {
-		return nil, fmt.Errorf("could not execute %q query: %w", "GetSchema", err)
-	}
+		_, err := s.db.
+			Select(goqu.C(SchemaTblIDCol), goqu.C(SchemaTblDefinitionCol)).
+			From(SchemaTbl).
+			Where(goqu.Ex{SchemaTblIDCol: SchemaDefaultID}).
+			ScanStructContext(ctx, &sch)
+		if err != nil {
+			return nil, fmt.Errorf("could not execute %q query: %w", "GetSchema", err)
+		}
 
-	return sch.Definition.Schema, nil
+		return sch.Definition.Schema, nil
+	*/
+	return nil, errors.New("unimplemented")
 }
 
 func (s *dbStorage) AddOrUpdate(ctx context.Context, policies ...policy.Wrapper) error {

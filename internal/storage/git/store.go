@@ -16,14 +16,13 @@ import (
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-git/go-git/v5/plumbing/object"
+	jsonschema "github.com/santhosh-tekuri/jsonschema/v5"
 	"go.uber.org/zap"
 
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
-	schemav1 "github.com/cerbos/cerbos/api/genpb/cerbos/schema/v1"
 	"github.com/cerbos/cerbos/internal/config"
 	"github.com/cerbos/cerbos/internal/namer"
 	"github.com/cerbos/cerbos/internal/policy"
-	"github.com/cerbos/cerbos/internal/schema"
 	"github.com/cerbos/cerbos/internal/storage"
 	"github.com/cerbos/cerbos/internal/storage/index"
 	"github.com/cerbos/cerbos/internal/util"
@@ -140,21 +139,8 @@ func (s *Store) GetPolicies(ctx context.Context) ([]*policy.Wrapper, error) {
 	return s.idx.GetPolicies(ctx)
 }
 
-func (s *Store) GetSchema(ctx context.Context) (*schemav1.Schema, error) {
-	path := filepath.Join(schema.Directory, schema.File)
-	f, err := s.idx.OpenFile(path)
-	if err != nil {
-		return nil, fmt.Errorf("failed to open schema from %s: %w", path, err)
-	}
-
-	defer f.Close()
-
-	sch, err := schema.ReadSchema(f)
-	if err != nil {
-		return nil, fmt.Errorf("failed to read schema: %w", err)
-	}
-
-	return sch, nil
+func (s *Store) LoadSchema(ctx context.Context, url string) (*jsonschema.Schema, error) {
+	return s.idx.LoadSchema(ctx, url)
 }
 
 func isEmptyDir(dir string) (bool, error) {

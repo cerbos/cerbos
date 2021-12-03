@@ -78,9 +78,15 @@ message IndexBuilderTestCase {
 }
 
 message CompileTestCase {
+    message Error {
+        string file = 1;
+        string error = 2;
+        string desc = 3;
+    }
+
     string main_def = 1;
     map<string, cerbos.policy.v1.Policy> input_defs = 2;
-    repeated string want_errors = 3;
+    repeated Error want_errors = 3;
 }
 
 message CodeGenTestCase {
@@ -99,11 +105,10 @@ message CelTestCase {
 
 message SchemaTestCase {
     string description = 1;
-    cerbos.schema.v1.Schema schema = 2;
+    cerbos.policy.v1.Schemas schema_refs = 2;
     cerbos.engine.v1.CheckInput input = 3;
-    bool invalid_schema = 4;
-    bool want_error = 5;
-    repeated cerbos.schema.v1.ValidationError want_validation_errors = 6;
+    bool want_error = 4;
+    repeated cerbos.schema.v1.ValidationError want_validation_errors = 5;
 }
 
 message ValidationErrContainer {

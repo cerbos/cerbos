@@ -16,6 +16,7 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
+	jsonschema "github.com/santhosh-tekuri/jsonschema/v5"
 	"go.uber.org/zap"
 	"gocloud.dev/blob"
 
@@ -25,7 +26,6 @@ import (
 	"gocloud.dev/gcp"
 
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
-	schemav1 "github.com/cerbos/cerbos/api/genpb/cerbos/schema/v1"
 	"github.com/cerbos/cerbos/internal/config"
 	"github.com/cerbos/cerbos/internal/namer"
 	"github.com/cerbos/cerbos/internal/policy"
@@ -230,8 +230,13 @@ func (s *Store) updateIndex(ctx context.Context) error {
 	var p *policyv1.Policy
 	var event storage.Event
 	for _, f := range changes.updateOrAdd {
-		if f == filepath.Join(schema.Directory, schema.File) {
-			s.NotifySubscribers(storage.NewEvent(storage.EventAddOrUpdateSchema, namer.ModuleID{}))
+		if filepath.Dir(f) == schema.Directory {
+			schemaFile, err := filepath.Rel(schema.Directory, f)
+			if err != nil {
+				s.log.Warnw("Failed to find relative path to schema file", "file", f, "error", err)
+				continue
+			}
+			s.NotifySubscribers(storage.NewSchemaEvent(storage.EventAddOrUpdateSchema, schemaFile))
 			continue
 		}
 
@@ -246,9 +251,15 @@ func (s *Store) updateIndex(ctx context.Context) error {
 		}
 		s.NotifySubscribers(event)
 	}
+
 	for _, f := range changes.delete {
-		if f == filepath.Join(schema.Directory, schema.File) {
-			s.NotifySubscribers(storage.NewEvent(storage.EventDeleteSchema, namer.ModuleID{}))
+		if filepath.Dir(f) == schema.Directory {
+			schemaFile, err := filepath.Rel(schema.Directory, f)
+			if err != nil {
+				s.log.Warnw("Failed to find relative path to schema file", "file", f, "error", err)
+				continue
+			}
+			s.NotifySubscribers(storage.NewSchemaEvent(storage.EventDeleteSchema, schemaFile))
 			continue
 		}
 
@@ -304,20 +315,6 @@ func (s *Store) GetPolicies(ctx context.Context) ([]*policy.Wrapper, error) {
 	return s.idx.GetPolicies(ctx)
 }
 
-func (s *Store) GetSchema(ctx context.Context) (*schemav1.Schema, error) {
-	path := filepath.Join(schema.Directory, schema.File)
-
-	f, err := s.idx.OpenFile(path)
-	if err != nil {
-		return nil, fmt.Errorf("failed to open schema from %s: %w", path, err)
-	}
-
-	defer f.Close()
-
-	sch, err := schema.ReadSchema(f)
-	if err != nil {
-		return nil, fmt.Errorf("failed to read schema: %w", err)
-	}
-
-	return sch, nil
+func (s *Store) LoadSchema(ctx context.Context, url string) (*jsonschema.Schema, error) {
+	return s.idx.LoadSchema(ctx, url)
 }

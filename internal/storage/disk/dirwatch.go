@@ -16,7 +16,6 @@ import (
 	"go.uber.org/zap"
 
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
-	"github.com/cerbos/cerbos/internal/namer"
 	"github.com/cerbos/cerbos/internal/policy"
 	"github.com/cerbos/cerbos/internal/schema"
 	"github.com/cerbos/cerbos/internal/storage"
@@ -30,8 +29,6 @@ const (
 	// We want the system to settle down before performing an expensive update operation.
 	defaultCooldownPeriod = 2 * time.Second
 )
-
-var schemaFile = filepath.Join(schema.Directory, schema.File)
 
 func watchDir(ctx context.Context, dir string, idx index.Index, sub *storage.SubscriptionManager, cooldownPeriod time.Duration) error {
 	resolved, err := filepath.EvalSymlinks(dir)
@@ -129,14 +126,20 @@ func (dw *dirWatch) triggerUpdate() {
 		for f := range batch {
 			fullPath := filepath.Join(dw.dir, f)
 
-			if f == schemaFile {
-				if _, err := os.Stat(fullPath); errors.Is(err, os.ErrNotExist) {
-					dw.log.Debugw("Detected schema file removal", "file", f)
-					dw.NotifySubscribers(storage.NewEvent(storage.EventDeleteSchema, namer.ModuleID{}))
+			if filepath.Dir(f) == schema.Directory {
+				schemaFile, err := filepath.Rel(schema.Directory, f)
+				if err != nil {
+					dw.log.Warnw("Failed to find relative path to schema file", "file", f, "error", err)
 					continue
 				}
 
-				dw.NotifySubscribers(storage.NewEvent(storage.EventAddOrUpdateSchema, namer.ModuleID{}))
+				if _, err := os.Stat(fullPath); errors.Is(err, os.ErrNotExist) {
+					dw.log.Debugw("Detected schema file removal", "file", f)
+					dw.NotifySubscribers(storage.NewSchemaEvent(storage.EventDeleteSchema, schemaFile))
+					continue
+				}
+
+				dw.NotifySubscribers(storage.NewSchemaEvent(storage.EventAddOrUpdateSchema, schemaFile))
 
 				continue
 			}

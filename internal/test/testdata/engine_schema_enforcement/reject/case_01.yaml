@@ -44,11 +44,11 @@ wantOutputs: [
     "actions": {
       "view:public": {
         "effect": "EFFECT_DENY",
-        "policy": "SKIPPED_DUE_TO_INVALID_INPUT"
+        "policy": "resource.leave_request.v20210210"
       },
       "approve": {
         "effect": "EFFECT_DENY",
-        "policy": "SKIPPED_DUE_TO_INVALID_INPUT"
+        "policy": "resource.leave_request.v20210210"
       }
     }
   }

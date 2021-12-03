@@ -66,10 +66,7 @@ func TestSchemaValidation(t *testing.T) {
 	for _, enforcement := range []string{"warn", "reject"} {
 		enforcement := enforcement
 		t.Run(fmt.Sprintf("enforcement=%s", enforcement), func(t *testing.T) {
-			p := param{schemaEnforcement: schema.EnforcementWarn}
-			if enforcement == "reject" {
-				p.schemaEnforcement = schema.EnforcementReject
-			}
+			p := param{schemaEnforcement: schema.Enforcement(enforcement)}
 
 			eng, cancelFunc := mkEngine(t, p)
 			t.Cleanup(cancelFunc)
@@ -176,7 +173,10 @@ func mkEngine(tb testing.TB, p param) (*Engine, context.CancelFunc) {
 	store, err := disk.NewStore(ctx, &disk.Conf{Directory: dir})
 	require.NoError(tb, err)
 
-	compiler := compile.NewManager(ctx, store)
+	schemaConf := &schema.Conf{Enforcement: p.schemaEnforcement}
+	schemaMgr := schema.NewWithConf(ctx, store, schemaConf)
+
+	compiler := compile.NewManager(ctx, store, schemaMgr)
 
 	var auditLog audit.Log
 	if p.enableAuditLog {
@@ -190,10 +190,6 @@ func mkEngine(tb testing.TB, p param) (*Engine, context.CancelFunc) {
 	} else {
 		auditLog = audit.NewNopLog()
 	}
-
-	schemaConf := &schema.Conf{Enforcement: p.schemaEnforcement}
-	schemaMgr, err := schema.NewWithConf(ctx, store, schemaConf)
-	require.NoError(tb, err)
 
 	eng, err := New(ctx, Components{CompileMgr: compiler, SchemaMgr: schemaMgr, AuditLog: auditLog})
 	require.NoError(tb, err)

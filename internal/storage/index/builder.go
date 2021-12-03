@@ -233,6 +233,7 @@ func (idx *indexBuilder) build(fsys fs.FS) (*index, error) {
 		fileToModID:  idx.fileToModID,
 		dependents:   idx.dependents,
 		dependencies: idx.dependencies,
+		schemaLoader: schema.NewFSLoader(fsys, "."),
 	}, nil
 }
 

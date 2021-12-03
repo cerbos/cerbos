@@ -117,13 +117,17 @@ func Start(ctx context.Context, zpagesEnabled bool) error {
 	}
 
 	// create schema manager
-	schemaManager, err := internalSchema.New(ctx, store)
+	schemaMgr, err := internalSchema.New(ctx, store)
 	if err != nil {
 		return fmt.Errorf("failed to create schema manager: %w", err)
 	}
 
 	// create engine
-	eng, err := engine.New(ctx, engine.Components{CompileMgr: compile.NewManager(ctx, store), SchemaMgr: schemaManager, AuditLog: auditLog})
+	eng, err := engine.New(ctx, engine.Components{
+		CompileMgr: compile.NewManager(ctx, store, schemaMgr),
+		SchemaMgr:  schemaMgr,
+		AuditLog:   auditLog,
+	})
 	if err != nil {
 		return fmt.Errorf("failed to create engine: %w", err)
 	}

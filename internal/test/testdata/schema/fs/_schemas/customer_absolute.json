@@ -1,0 +1,10 @@
+{
+  "type": "object",
+  "properties": {
+    "first_name": { "type": "string" },
+    "last_name": { "type": "string" },
+    "shipping_address": { "$ref": "cerbos:///address.json" },
+    "billing_address": { "$ref": "cerbos:///address.json" }
+  },
+  "required": ["first_name", "last_name", "shipping_address", "billing_address"]
+}

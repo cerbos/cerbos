@@ -5,6 +5,11 @@ resourcePolicy:
   importDerivedRoles:
     - buyer_derived_roles
   resource: purchase_order
+  schemas:
+    principalSchema:
+      ref: cerbos:///principal.json
+    resourceSchema:
+      ref: cerbos:///purchase_order.json
   rules:
     - actions: ["*"]
       effect: EFFECT_ALLOW
