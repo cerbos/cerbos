@@ -9,15 +9,18 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/testing/protocmp"
 
+	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
 	privatev1 "github.com/cerbos/cerbos/api/genpb/cerbos/private/v1"
 	schemav1 "github.com/cerbos/cerbos/api/genpb/cerbos/schema/v1"
 	"github.com/cerbos/cerbos/internal/schema"
+	"github.com/cerbos/cerbos/internal/storage"
 	"github.com/cerbos/cerbos/internal/storage/disk"
 	"github.com/cerbos/cerbos/internal/storage/index"
 	"github.com/cerbos/cerbos/internal/test"
@@ -30,13 +33,14 @@ func TestValidate(t *testing.T) {
 	for _, enforcement := range []schema.Enforcement{schema.EnforcementWarn, schema.EnforcementReject} {
 		enforcement := enforcement
 		t.Run(fmt.Sprintf("enforcement=%s", enforcement), func(t *testing.T) {
+			store := mkStore(t)
+			conf := &schema.Conf{Enforcement: enforcement}
+			mgr := schema.NewWithConf(context.Background(), store, conf)
+
 			for _, tcase := range testCases {
 				tcase := tcase
 				t.Run(tcase.Name, func(t *testing.T) {
 					tc := readTestCase(t, tcase.Input)
-					store := mkStore(t)
-					conf := &schema.Conf{Enforcement: enforcement}
-					mgr := schema.NewWithConf(context.Background(), store, conf)
 
 					have, err := mgr.Validate(context.Background(), tc.SchemaRefs, tc.Input)
 					if tc.WantError {
@@ -45,6 +49,7 @@ func TestValidate(t *testing.T) {
 					}
 
 					require.Equal(t, conf.Enforcement == schema.EnforcementReject, have.Reject)
+					require.Len(t, have.Errors, len(tc.WantValidationErrors))
 
 					if len(tc.WantValidationErrors) > 0 {
 						wantErrs := &privatev1.ValidationErrContainer{Errors: tc.WantValidationErrors}
@@ -78,43 +83,42 @@ func TestValidate(t *testing.T) {
 	})
 }
 
-/*
-func TestSchemaUpdate(t *testing.T) {
-	for _, enforcement := range []schema.Enforcement{schema.EnforcementWarn, schema.EnforcementReject} {
-		enforcement := enforcement
-		t.Run(fmt.Sprintf("enforcement=%s", enforcement), func(t *testing.T) {
-			tc := &privatev1.SchemaTestCase{}
-			test.ReadSingleTestCase(t, "schema/case_00.yaml", tc)
+func TestCache(t *testing.T) {
+	store := mkStore(t)
+	conf := &schema.Conf{Enforcement: schema.EnforcementReject}
+	mgr := schema.NewWithConf(context.Background(), store, conf)
 
-			fs := mkFS(t, tc.Schema)
-			store := mkStore(t, fs)
-			conf := &schema.Conf{Enforcement: enforcement}
-			mgr, err := schema.NewWithConf(context.Background(), store, conf)
-			require.NoError(t, err)
+	s, ok := mgr.(storage.Subscriber)
+	require.True(t, ok)
 
-			s, ok := mgr.(storage.Subscriber)
-			require.True(t, ok)
+	tc := &privatev1.SchemaTestCase{}
+	test.ReadSingleTestCase(t, filepath.Join("schema", "test_cases", "case_00.yaml"), tc)
 
-			checkValid := func() {
-				have, err := mgr.Validate(context.Background(), tc.Input)
-				require.NoError(t, err)
-				require.Empty(t, have.Errors)
-			}
+	checkValid := func(t *testing.T) {
+		t.Helper()
 
-			// Control test
-			checkValid()
+		have, err := mgr.Validate(context.Background(), tc.SchemaRefs, tc.Input)
+		require.NoError(t, err)
+		require.Empty(t, have.Errors)
+	}
 
-			// Signal schema deletion
-			s.OnStorageEvent(storage.Event{Kind: storage.EventDeleteSchema})
-			checkValid()
+	t.Run("delete_schema", func(t *testing.T) {
+		s.OnStorageEvent(genEvents(storage.EventDeleteSchema, tc.SchemaRefs)...)
+		checkValid(t)
+	})
 
-			// Signal schema addition
-			s.OnStorageEvent(storage.Event{Kind: storage.EventAddOrUpdateSchema})
-			checkValid()
-		})
+	t.Run("add_schema", func(t *testing.T) {
+		s.OnStorageEvent(genEvents(storage.EventAddOrUpdateSchema, tc.SchemaRefs)...)
+		checkValid(t)
+	})
+}
+
+func genEvents(kind storage.EventKind, schemas *policyv1.Schemas) []storage.Event {
+	return []storage.Event{
+		{Kind: kind, SchemaFile: strings.TrimPrefix(schemas.PrincipalSchema.Ref, schema.URLScheme+"/")},
+		{Kind: kind, SchemaFile: strings.TrimPrefix(schemas.ResourceSchema.Ref, schema.URLScheme+"/")},
 	}
 }
-*/
 
 func readTestCase(t *testing.T, data []byte) *privatev1.SchemaTestCase {
 	t.Helper()

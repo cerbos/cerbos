@@ -9,6 +9,7 @@ package internal
 import (
 	"context"
 	"testing"
+	"time"
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/stretchr/testify/require"
@@ -18,6 +19,8 @@ import (
 	"github.com/cerbos/cerbos/internal/storage"
 	"github.com/cerbos/cerbos/internal/test"
 )
+
+const timeout = 1 * time.Second
 
 //nolint:gomnd
 func TestSuite(store DBStorage) func(*testing.T) {
@@ -43,7 +46,7 @@ func TestSuite(store DBStorage) func(*testing.T) {
 				{Kind: storage.EventAddOrUpdatePolicy, PolicyID: rpx.ID},
 				{Kind: storage.EventAddOrUpdatePolicy, PolicyID: drx.ID},
 			}
-			checkEvents(t, wantEvents...)
+			checkEvents(t, timeout, wantEvents...)
 		})
 
 		t.Run("get_compilation_unit_with_deps", func(t *testing.T) {
@@ -138,7 +141,7 @@ func TestSuite(store DBStorage) func(*testing.T) {
 			require.NoError(t, err)
 			require.Empty(t, have)
 
-			checkEvents(t, storage.Event{Kind: storage.EventDeletePolicy, PolicyID: rpx.ID})
+			checkEvents(t, timeout, storage.Event{Kind: storage.EventDeletePolicy, PolicyID: rpx.ID})
 		})
 
 		/*

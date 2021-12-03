@@ -8,6 +8,7 @@ import (
 	"errors"
 	"path"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/require"
 
@@ -123,7 +124,7 @@ func TestStore_updateIndex(t *testing.T) {
 	must.NoError(err)
 	must.True(addOrUpdateCalled)
 	must.True(deleteCalled)
-	mustBeNotified(t, addOrUpdateEvent, deleteEvent)
+	mustBeNotified(t, 1*time.Second, addOrUpdateEvent, deleteEvent)
 }
 
 func TestStore_AWSS3(t *testing.T) {

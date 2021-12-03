@@ -32,6 +32,7 @@ const (
 	namePrefix = "git"
 	policyDir  = "policies"
 	ignoredDir = "ignore"
+	timeout    = 1 * time.Second
 )
 
 // TODO (cell) Test HTTPS and SSH auth
@@ -132,7 +133,7 @@ func TestUpdateStore(t *testing.T) {
 
 		require.NoError(t, store.updateIndex(context.Background()))
 		mockIdx.AssertExpectations(t)
-		checkEvents(t)
+		checkEvents(t, timeout)
 	})
 
 	t.Run("modify policy", func(t *testing.T) {
@@ -166,7 +167,7 @@ func TestUpdateStore(t *testing.T) {
 			wantEvents = append(wantEvents, storage.Event{Kind: storage.EventAddOrUpdatePolicy, PolicyID: namer.GenModuleID(p)})
 		}
 
-		checkEvents(t, wantEvents...)
+		checkEvents(t, timeout, wantEvents...)
 	})
 
 	t.Run("add policy", func(t *testing.T) {
@@ -202,7 +203,7 @@ func TestUpdateStore(t *testing.T) {
 			wantEvents = append(wantEvents, storage.Event{Kind: storage.EventAddOrUpdatePolicy, PolicyID: namer.GenModuleID(p)})
 		}
 
-		checkEvents(t, wantEvents...)
+		checkEvents(t, timeout, wantEvents...)
 	})
 
 	t.Run("add policy to ignored dir", func(t *testing.T) {
@@ -227,7 +228,7 @@ func TestUpdateStore(t *testing.T) {
 		require.NoError(t, store.updateIndex(context.Background()))
 		mockIdx.AssertExpectations(t)
 		mockIdx.AssertNotCalled(t, "AddOrUpdate", mock.MatchedBy(anyIndexEntry))
-		checkEvents(t)
+		checkEvents(t, timeout)
 	})
 
 	t.Run("delete policy", func(t *testing.T) {
@@ -265,7 +266,7 @@ func TestUpdateStore(t *testing.T) {
 			wantEvents = append(wantEvents, storage.Event{Kind: storage.EventDeletePolicy, PolicyID: namer.GenModuleID(p)})
 		}
 
-		checkEvents(t, wantEvents...)
+		checkEvents(t, timeout, wantEvents...)
 	})
 
 	t.Run("move policy out of policy dir", func(t *testing.T) {
@@ -309,7 +310,7 @@ func TestUpdateStore(t *testing.T) {
 			wantEvents = append(wantEvents, storage.Event{Kind: storage.EventDeletePolicy, PolicyID: namer.GenModuleID(p)})
 		}
 
-		checkEvents(t, wantEvents...)
+		checkEvents(t, timeout, wantEvents...)
 	})
 
 	t.Run("ignore unsupported file", func(t *testing.T) {
@@ -329,7 +330,7 @@ func TestUpdateStore(t *testing.T) {
 		require.NoError(t, store.updateIndex(context.Background()))
 		mockIdx.AssertExpectations(t)
 		mockIdx.AssertNotCalled(t, "Delete", mock.MatchedBy(anyIndexEntry))
-		checkEvents(t)
+		checkEvents(t, timeout)
 	})
 }
 
