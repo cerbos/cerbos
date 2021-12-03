@@ -1,0 +1,124 @@
+---
+description: "Validation failures"
+wantStatus:
+  httpStatusCode: 200
+  grpcStatusCode: 0
+checkResourceBatch:
+  input: {
+    "requestId": "test",
+    "principal": {
+      "id": "john",
+      "policyVersion": "20210210",
+      "roles": [
+        "employee"
+      ],
+      "attr": {
+        "department": "accounting",
+        "geography": "GB",
+        "team": "design"
+      }
+    },
+    "resources": [
+      {
+        "actions": [
+          "view:public",
+          "approve"
+        ],
+        "resource": {
+          "kind": "leave_request",
+          "policyVersion": "20210210",
+          "id": "XX125",
+          "attr": {
+            "department": "accounting",
+            "geography": "GB",
+            "id": "XX125",
+            "owner": "john",
+            "team": "design"
+          }
+        }
+      },
+      {
+        "actions": [
+          "view:public",
+          "approve"
+        ],
+        "resource": {
+          "kind": "leave_request",
+          "policyVersion": "20210210",
+          "id": "YY125",
+          "attr": {
+            "department": "engineering",
+            "geography": "GB",
+            "id": "YY125",
+            "owner": "jenny",
+            "team": "backend"
+          }
+        }
+      },
+      {
+        "actions": [
+          "view:public",
+          "delete",
+          "edit"
+        ],
+        "resource": {
+          "kind": "salary_record",
+          "policyVersion": "20210210",
+          "id": "YY525",
+          "attr": {
+            "department": "engineering",
+            "geography": "GB",
+            "id": "YY525",
+            "owner": "mark",
+            "team": "backend"
+          }
+        }
+      }
+    ]
+  }
+  wantResponse: {
+    "requestId": "test",
+    "results": [
+      {
+        "resourceId": "XX125",
+        "actions": {
+          "view:public": "EFFECT_DENY",
+          "approve": "EFFECT_DENY"
+        },
+        "validationErrors": [
+          {
+            "path": "/department",
+            "message": "value must be one of \"marketing\", \"engineering\"",
+            "source": "SOURCE_PRINCIPAL"
+          },
+          {
+            "path": "/department",
+            "message": "value must be one of \"marketing\", \"engineering\"",
+            "source": "SOURCE_RESOURCE"
+          }
+        ]
+      },
+      {
+        "resourceId": "YY125",
+        "actions": {
+          "view:public": "EFFECT_DENY",
+          "approve": "EFFECT_DENY"
+        },
+        "validationErrors": [
+          {
+            "path": "/department",
+            "message": "value must be one of \"marketing\", \"engineering\"",
+            "source": "SOURCE_PRINCIPAL"
+          }
+        ]
+      },
+      {
+        "resourceId": "YY525",
+        "actions": {
+          "view:public": "EFFECT_DENY",
+          "delete": "EFFECT_DENY",
+          "edit": "EFFECT_DENY"
+        }
+      }
+    ]
+  }

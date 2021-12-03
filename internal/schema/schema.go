@@ -100,10 +100,13 @@ func (m *manager) CheckSchema(ctx context.Context, url string) error {
 }
 
 func (m *manager) Validate(ctx context.Context, schemas *policyv1.Schemas, input *enginev1.CheckInput) (*ValidationResult, error) {
+	result := &ValidationResult{Reject: m.conf.Enforcement == EnforcementReject}
+	if schemas == nil {
+		return result, nil
+	}
+
 	ctx, span := tracing.StartSpan(ctx, "schema.Validate")
 	defer span.End()
-
-	result := &ValidationResult{Reject: m.conf.Enforcement == EnforcementReject}
 
 	if err := m.validateAttr(ctx, ErrSourcePrincipal, schemas.PrincipalSchema, input.Principal.Attr); err != nil {
 		var principalErrs ValidationErrorList
