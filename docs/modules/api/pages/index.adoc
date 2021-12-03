@@ -109,18 +109,25 @@ image:csharp.svg[alt="C#",opts="interactive",width=40,height=40]  image:python.s
     "XX125": { <2>
       "actions": {
         "view": "EFFECT_ALLOW" <3>
-      }
+      },
+      "validationErrors": [ <4>
+        {
+          "path": "/department",
+          "message": "value must be one of \"marketing\", \"engineering\"",
+          "source": "SOURCE_PRINCIPAL"
+        }
+      ]
     }
   },
-  "meta": { <4>
+  "meta": { <5>
     "resourceInstances": {
       "XX125": {
         "actions": {
           "view": {
-            "matchedPolicy": "album:object:default" <5>
+            "matchedPolicy": "album:object:default" <6>
           }
         },
-        "effectiveDerivedRoles": [ <6>
+        "effectiveDerivedRoles": [ <7>
           "owner"
         ]
       }
@@ -131,9 +138,10 @@ image:csharp.svg[alt="C#",opts="interactive",width=40,height=40]  image:python.s
 <1> The request ID received from the request. Helpful for correlating logs.
 <2> Unique ID of the resource.
 <3> Policy decision for each action on the resource.
-<4> Optional metadata about request evaluation.
-<5> The policy that matched to make the decision for the given action.
-<6> Derived roles that were activated.
+<4> Optional validation errors if schema enforcement is enabled.
+<5> Optional metadata about request evaluation.
+<6> The policy that matched to make the decision for the given action.
+<7> Derived roles that were activated.
 
 === `CheckResourceBatch` (`/api/check_resource_batch`)
 
@@ -218,7 +226,14 @@ Unlike `CheckResourceSet` -- which checks access to resource instances of the _s
         "approve":  "EFFECT_DENY",
         "create":  "EFFECT_DENY",
         "view:public":  "EFFECT_ALLOW"
-      }
+      },
+      "validationErrors": [
+        {
+          "path": "/department",
+          "message": "value must be one of \"marketing\", \"engineering\"",
+          "source": "SOURCE_RESOURCE"
+        }
+      ]
     },
     {
       "resourceId":  "XX150",

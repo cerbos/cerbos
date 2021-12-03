@@ -3809,12 +3809,12 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 
 
 --------------------------------------------------------------------------------
-Module  : github.com/santhosh-tekuri/jsonschema/v5
-Version : v5.0.0
-Time    : 2021-09-02T13:57:26Z
+Module  : /home/cell/git/jsonschema
+Version : 
+Time    : unknown
 Licence : Apache-2.0
 
-Contents of probable licence file $GOMODCACHE/github.com/santhosh-tekuri/jsonschema/v5@v5.0.0/LICENSE:
+Contents of probable licence file /home/cell/git/jsonschema/LICENSE:
 
 
                                  Apache License
