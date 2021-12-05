@@ -5,6 +5,7 @@ package conditions_test
 
 import (
 	"fmt"
+	"google.golang.org/protobuf/encoding/protojson"
 	"log"
 	"math/rand"
 	"reflect"
@@ -190,8 +191,89 @@ func TestCmpSelectAndCall(t *testing.T) {
 	v := reflect.DeepEqual(*ast0, *ast)
 	is.True(v)
 }
-
+func updateIds(e *expr.Expr, n *int64) {
+	if e == nil {
+		return
+	}
+	*n++
+	e.Id = *n
+	switch e := e.ExprKind.(type) {
+	case *expr.Expr_SelectExpr:
+		updateIds(e.SelectExpr.Operand, n)
+	case *expr.Expr_CallExpr:
+		updateIds(e.CallExpr.Target, n)
+		for _, arg := range e.CallExpr.Args {
+			updateIds(arg, n)
+		}
+	}
+}
+func replace(e *expr.Expr, vars map[string]*expr.Expr) *expr.Expr {
+	if e == nil {
+		return nil
+	}
+	switch e := e.ExprKind.(type) {
+	case *expr.Expr_SelectExpr:
+		ident := e.SelectExpr.Operand.GetIdentExpr()
+		if ident != nil && ident.Name == "v" {
+			if v, ok := vars[e.SelectExpr.Field]; ok {
+				return v
+			}
+		}
+	case *expr.Expr_CallExpr:
+		e.CallExpr.Target = replace(e.CallExpr.Target, vars)
+		for i, arg := range e.CallExpr.Args {
+			e.CallExpr.Args[i] = replace(arg, vars)
+		}
+	}
+	return e
+}
 func TestPartialEvaluationWithGlobalVars(t *testing.T) {
+	is := require.New(t)
+
+	env, _ := cel.NewEnv(
+		cel.Types(&enginev1.Resource{}),
+		cel.Declarations(
+			decls.NewVar("gb", decls.NewListType(decls.String)),
+			decls.NewVar(conditions.CELResourceAbbrev, decls.NewObjectType("cerbos.engine.v1.Resource")),
+			decls.NewVar("v", decls.NewMapType(decls.String, decls.Dyn))),
+		ext.Strings())
+
+	e0 := `v.locale == gb`
+	ast, iss := env.Compile(e0)
+	is.Nil(iss, iss.Err())
+	t.Log(protojson.Format(ast.Expr()))
+	ast0 := ast
+	v := `R.attr.language + "_" + R.attr.country`
+	ast, iss = env.Compile(v)
+	is.Nil(iss, iss.Err())
+	t.Log(protojson.Format(ast.Expr()))
+
+	e := replace(ast0.Expr(), map[string]*expr.Expr{
+		"locale": ast.Expr(),
+	})
+	var n int64
+	updateIds(e, &n)
+	t.Log(protojson.Format(e))
+	ast = cel.ParsedExprToAst(&expr.ParsedExpr{Expr: e})
+	t.Log(cel.AstToString(ast))
+
+	prg, _ := env.Program(ast, cel.EvalOptions(cel.OptTrackState, cel.OptPartialEval))
+	vars, _ := cel.PartialVars(map[string]interface{}{
+		"gb": "en_GB",
+		"v":  map[string]interface{}{},
+	}, cel.AttributePattern("R"))
+	out, det, err := prg.Eval(vars)
+	log.Print(types.IsUnknown(out))
+	is.NoError(err)
+
+	residual, err := env.ResidualAst(ast, det)
+	is.NoError(err)
+	astToString, err := cel.AstToString(residual)
+	is.NoError(err)
+	t.Log(astToString)
+}
+
+func TestPartialEvaluationWithMacroGlobalVars(t *testing.T) {
 	expander := func(eh parser.ExprHelper, t *expr.Expr, args []*expr.Expr) (*expr.Expr, *common.Error) {
 		return eh.Select(eh.Select(eh.Ident("R"), "attr"), "geo"), nil
 	}
