@@ -7,15 +7,13 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
 	"io/fs"
 	"sync"
-
-	jsonschema "github.com/santhosh-tekuri/jsonschema/v5"
 
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
 	"github.com/cerbos/cerbos/internal/namer"
 	"github.com/cerbos/cerbos/internal/policy"
-	"github.com/cerbos/cerbos/internal/schema"
 	"github.com/cerbos/cerbos/internal/storage"
 )
 
@@ -40,7 +38,7 @@ type Index interface {
 	GetAllCompilationUnits(context.Context) <-chan *policy.CompilationUnit
 	Clear() error
 	GetPolicies(context.Context) ([]*policy.Wrapper, error)
-	LoadSchema(context.Context, string) (*jsonschema.Schema, error)
+	LoadSchema(context.Context, string) (io.ReadCloser, error)
 }
 
 type index struct {
@@ -51,7 +49,7 @@ type index struct {
 	fileToModID  map[string]namer.ModuleID
 	dependents   map[namer.ModuleID]map[namer.ModuleID]struct{}
 	dependencies map[namer.ModuleID]map[namer.ModuleID]struct{}
-	schemaLoader *schema.FSLoader
+	schemaLoader *SchemaLoader
 }
 
 func (idx *index) GetFiles() []string {
@@ -346,6 +344,6 @@ func (idx *index) GetPolicies(_ context.Context) ([]*policy.Wrapper, error) {
 	return entries, nil
 }
 
-func (idx *index) LoadSchema(ctx context.Context, url string) (*jsonschema.Schema, error) {
+func (idx *index) LoadSchema(ctx context.Context, url string) (io.ReadCloser, error) {
 	return idx.schemaLoader.Load(ctx, url)
 }

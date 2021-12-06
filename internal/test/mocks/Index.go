@@ -7,9 +7,9 @@ package mocks
 
 import (
 	context "context"
+	io "io"
 
 	index "github.com/cerbos/cerbos/internal/storage/index"
-	jsonschema "github.com/santhosh-tekuri/jsonschema/v5"
 
 	mock "github.com/stretchr/testify/mock"
 
@@ -195,15 +195,15 @@ func (_m *Index) GetPolicies(_a0 context.Context) ([]*policy.Wrapper, error) {
 }
 
 // LoadSchema provides a mock function with given fields: _a0, _a1
-func (_m *Index) LoadSchema(_a0 context.Context, _a1 string) (*jsonschema.Schema, error) {
+func (_m *Index) LoadSchema(_a0 context.Context, _a1 string) (io.ReadCloser, error) {
 	ret := _m.Called(_a0, _a1)
 
-	var r0 *jsonschema.Schema
-	if rf, ok := ret.Get(0).(func(context.Context, string) *jsonschema.Schema); ok {
+	var r0 io.ReadCloser
+	if rf, ok := ret.Get(0).(func(context.Context, string) io.ReadCloser); ok {
 		r0 = rf(_a0, _a1)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*jsonschema.Schema)
+			r0 = ret.Get(0).(io.ReadCloser)
 		}
 	}
 

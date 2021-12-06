@@ -7,6 +7,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
 	"io/fs"
 	"net/http"
 	"net/url"
@@ -16,7 +17,6 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
-	jsonschema "github.com/santhosh-tekuri/jsonschema/v5"
 	"go.uber.org/zap"
 	"gocloud.dev/blob"
 
@@ -315,6 +315,6 @@ func (s *Store) GetPolicies(ctx context.Context) ([]*policy.Wrapper, error) {
 	return s.idx.GetPolicies(ctx)
 }
 
-func (s *Store) LoadSchema(ctx context.Context, url string) (*jsonschema.Schema, error) {
+func (s *Store) LoadSchema(ctx context.Context, url string) (io.ReadCloser, error) {
 	return s.idx.LoadSchema(ctx, url)
 }
