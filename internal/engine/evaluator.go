@@ -576,40 +576,46 @@ func (er *PolicyEvalResult) setDefaultEffect(tctx *traceContext, actions []strin
 	}
 }
 
-func updateIds(e *exprpb.Expr, n *int64) {
-	if e == nil {
-		return
+func updateIds(e *exprpb.Expr) {
+	var n int64
+
+	var impl func(e *exprpb.Expr)
+	impl = func(e *exprpb.Expr) {
+		if e == nil {
+			return
+		}
+		n++
+		e.Id = n
+		switch e := e.ExprKind.(type) {
+		case *exprpb.Expr_SelectExpr:
+			impl(e.SelectExpr.Operand)
+		case *exprpb.Expr_CallExpr:
+			impl(e.CallExpr.Target)
+			for _, arg := range e.CallExpr.Args {
+				impl(arg)
+			}
+		case *exprpb.Expr_StructExpr:
+			for _, entry := range e.StructExpr.Entries {
+				impl(entry.GetMapKey())
+				impl(entry.GetValue())
+			}
+		case *exprpb.Expr_ComprehensionExpr:
+			ce := e.ComprehensionExpr
+			impl(ce.IterRange)
+			impl(ce.AccuInit)
+			impl(ce.LoopStep)
+			impl(ce.LoopCondition)
+			impl(ce.Result)
+		case *exprpb.Expr_ListExpr:
+			for _, element := range e.ListExpr.Elements {
+				impl(element)
+			}
+		}
 	}
-	*n++
-	e.Id = *n
-	switch e := e.ExprKind.(type) {
-	case *exprpb.Expr_SelectExpr:
-		updateIds(e.SelectExpr.Operand, n)
-	case *exprpb.Expr_CallExpr:
-		updateIds(e.CallExpr.Target, n)
-		for _, arg := range e.CallExpr.Args {
-			updateIds(arg, n)
-		}
-	case *exprpb.Expr_StructExpr:
-		for _, entry := range e.StructExpr.Entries {
-			updateIds(entry.GetMapKey(), n)
-			updateIds(entry.GetValue(), n)
-		}
-	case *exprpb.Expr_ComprehensionExpr:
-		ce := e.ComprehensionExpr
-		updateIds(ce.IterRange, n)
-		updateIds(ce.AccuInit, n)
-		updateIds(ce.LoopStep, n)
-		updateIds(ce.LoopCondition, n)
-		updateIds(ce.Result, n)
-	case *exprpb.Expr_ListExpr:
-		for _, element := range e.ListExpr.Elements {
-			updateIds(element, n)
-		}
-	}
+	impl(e)
 }
 
-func replaceVars(e *exprpb.Expr, vars map[string]*exprpb.Expr) *exprpb.Expr {
+func replaceVars(e *exprpb.Expr, vars map[string]*exprpb.Expr) (err error) {
 	var r func(e *exprpb.Expr) *exprpb.Expr
 	r = func(e *exprpb.Expr) *exprpb.Expr {
 		if e == nil {
@@ -623,7 +629,7 @@ func replaceVars(e *exprpb.Expr, vars map[string]*exprpb.Expr) *exprpb.Expr {
 					if v, ok := vars[e.SelectExpr.Field]; ok {
 						return v
 					} else {
-						panic("unknown variable")
+						err = multierr.Append(err, fmt.Errorf("unknown variable %q", e.SelectExpr.Field))
 					}
 				}
 			} else {
@@ -656,8 +662,11 @@ func replaceVars(e *exprpb.Expr, vars map[string]*exprpb.Expr) *exprpb.Expr {
 		return e
 	}
 
-	var n int64
-	e = r(e)
-	updateIds(e, &n)
-	return e
+	if t := r(e); t != e {
+		*e = *t
+	}
+
+	updateIds(e)
+
+	return
 }

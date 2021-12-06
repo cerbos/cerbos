@@ -157,6 +157,10 @@ func TestPartialEvaluationWithGlobalVars(t *testing.T) {
 		expr, want string
 	}{
 		{
+			expr: "V.geo",
+			want: "R.attr.geo",
+		},
+		{
 			expr: "V.locale == gbLoc",
 			want: `R.attr.language + "_" + R.attr.country == "en_GB"`,
 		},
@@ -178,7 +182,8 @@ func TestPartialEvaluationWithGlobalVars(t *testing.T) {
 			is := require.New(t)
 			ast, iss := env.Compile(tt.expr)
 			is.Nil(iss, iss.Err())
-			e := replaceVars(ast.Expr(), variables)
+			e := ast.Expr()
+			replaceVars(e, variables)
 			ast = cel.ParsedExprToAst(&expr.ParsedExpr{Expr: e})
 			prg, err := env.Program(ast, cel.EvalOptions(cel.OptTrackState, cel.OptPartialEval))
 			is.NoError(err)
