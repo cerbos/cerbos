@@ -5,6 +5,7 @@ package test
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"io"
 	"io/fs"
@@ -23,6 +24,7 @@ import (
 	"github.com/cerbos/cerbos/internal/observability/logging"
 	"github.com/cerbos/cerbos/internal/policy"
 	"github.com/cerbos/cerbos/internal/schema"
+	"github.com/cerbos/cerbos/internal/storage"
 	"github.com/cerbos/cerbos/internal/util"
 )
 
@@ -42,6 +44,33 @@ func LoadPolicy(t *testing.T, path string) *policyv1.Policy {
 	require.NoError(t, err, "Failed to load %s", path)
 
 	return p
+}
+
+func AddSchemasToStore(t *testing.T, dir string, ms storage.MutableStore) {
+	t.Helper()
+
+	fsys := os.DirFS(dir)
+	err := fs.WalkDir(fsys, ".", func(path string, d fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+
+		if d.IsDir() {
+			return nil
+		}
+
+		if !util.IsSupportedFileType(d.Name()) {
+			return nil
+		}
+
+		sch := ReadSchemaFromFS(t, fsys, path)
+
+		err = ms.AddOrUpdateSchema(context.TODO(), path, sch)
+		require.NoError(t, err)
+
+		return nil
+	})
+	require.NoError(t, err)
 }
 
 func ReadSchemaFromFile(t *testing.T, path string) []byte {

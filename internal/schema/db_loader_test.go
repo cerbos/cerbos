@@ -8,10 +8,8 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"io/fs"
 	"io/ioutil"
 	"net/url"
-	"os"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -22,7 +20,6 @@ import (
 	"github.com/cerbos/cerbos/internal/storage"
 	"github.com/cerbos/cerbos/internal/storage/db/sqlite3"
 	"github.com/cerbos/cerbos/internal/test"
-	"github.com/cerbos/cerbos/internal/util"
 )
 
 func TestDBLoader(t *testing.T) {
@@ -38,7 +35,7 @@ func TestDBLoader(t *testing.T) {
 	ms, ok := store.(storage.MutableStore)
 	require.True(t, ok)
 
-	addSchemasToStore(t, dir, ms)
+	test.AddSchemasToStore(t, dir, ms)
 	require.NoError(t, err)
 
 	loader := schema.NewDBLoader(getLoadURL(ms))
@@ -69,33 +66,6 @@ func TestDBLoader(t *testing.T) {
 		_, err := loader.Load(context.Background(), "cerbos:///blah.json")
 		require.Error(t, err)
 	})
-}
-
-func addSchemasToStore(t *testing.T, dir string, ms storage.MutableStore) {
-	t.Helper()
-
-	fsys := os.DirFS(dir)
-	err := fs.WalkDir(fsys, ".", func(path string, d fs.DirEntry, err error) error {
-		if err != nil {
-			return err
-		}
-
-		if d.IsDir() {
-			return nil
-		}
-
-		if !util.IsSupportedFileType(d.Name()) {
-			return nil
-		}
-
-		sch := test.ReadSchemaFromFS(t, fsys, path)
-
-		err = ms.AddOrUpdateSchema(context.TODO(), path, sch)
-		require.NoError(t, err)
-
-		return nil
-	})
-	require.NoError(t, err)
 }
 
 func getLoadURL(ms storage.MutableStore) schema.LoadURLFn {
