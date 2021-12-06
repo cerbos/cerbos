@@ -232,7 +232,7 @@ func replace(e *expr.Expr, vars map[string]*expr.Expr) *expr.Expr {
 		switch e := e.ExprKind.(type) {
 		case *expr.Expr_SelectExpr:
 			ident := e.SelectExpr.Operand.GetIdentExpr()
-			if ident != nil && ident.Name == "v" {
+			if ident != nil && (ident.Name == conditions.CELVariablesAbbrev || ident.Name == conditions.CELVariablesIdent) {
 				if v, ok := vars[e.SelectExpr.Field]; ok {
 					return v
 				} else {
@@ -275,16 +275,12 @@ func replace(e *expr.Expr, vars map[string]*expr.Expr) *expr.Expr {
 func TestPartialEvaluationWithGlobalVars(t *testing.T) {
 	is := require.New(t)
 
-	env, err := cel.NewEnv(
-		cel.Types(&enginev1.Resource{}),
-		cel.Declarations(
-			decls.NewVar("gb_us", decls.NewListType(decls.String)),
-			decls.NewVar("gbLoc", decls.String),
-			decls.NewVar("ca", decls.String),
-			decls.NewVar("gb", decls.NewListType(decls.String)),
-			decls.NewVar(conditions.CELResourceAbbrev, decls.NewObjectType("cerbos.engine.v1.Resource")),
-			decls.NewVar("v", decls.NewMapType(decls.String, decls.Dyn))),
-		ext.Strings())
+	env, err := conditions.StdPartialEnv.Extend(cel.Declarations(
+		decls.NewVar("gb_us", decls.NewListType(decls.String)),
+		decls.NewVar("gbLoc", decls.String),
+		decls.NewVar("ca", decls.String),
+		decls.NewVar("gb", decls.NewListType(decls.String)),
+	))
 	is.NoError(err)
 
 	pvars, _ := cel.PartialVars(map[string]interface{}{
@@ -307,15 +303,15 @@ func TestPartialEvaluationWithGlobalVars(t *testing.T) {
 		expr, want string
 	}{
 		{
-			expr: "v.locale == gbLoc",
+			expr: "V.locale == gbLoc",
 			want: `R.attr.language + "_" + R.attr.country == "en_GB"`,
 		},
 		{
-			expr: "v.geo in (gb_us + [ca]).map(t, t.upperAscii())",
+			expr: "V.geo in (gb_us + [ca]).map(t, t.upperAscii())",
 			want: `R.attr.geo in ["GB", "US", "CA"]`,
 		},
 		{
-			expr: "v.geo in (v.gb_us + [ca]).map(t, t.upperAscii())",
+			expr: "V.geo in (variables.gb_us + [ca]).map(t, t.upperAscii())",
 			want: `R.attr.geo in ["GB", "US", "CA"]`,
 		},
 	}
