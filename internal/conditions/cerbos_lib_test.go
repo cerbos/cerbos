@@ -232,12 +232,16 @@ func replace(e *expr.Expr, vars map[string]*expr.Expr) *expr.Expr {
 		switch e := e.ExprKind.(type) {
 		case *expr.Expr_SelectExpr:
 			ident := e.SelectExpr.Operand.GetIdentExpr()
-			if ident != nil && (ident.Name == conditions.CELVariablesAbbrev || ident.Name == conditions.CELVariablesIdent) {
-				if v, ok := vars[e.SelectExpr.Field]; ok {
-					return v
-				} else {
-					panic("unknown variable")
+			if ident != nil {
+				if ident.Name == conditions.CELVariablesAbbrev || ident.Name == conditions.CELVariablesIdent {
+					if v, ok := vars[e.SelectExpr.Field]; ok {
+						return v
+					} else {
+						panic("unknown variable")
+					}
 				}
+			} else {
+				e.SelectExpr.Operand = r(e.SelectExpr.Operand)
 			}
 		case *expr.Expr_CallExpr:
 			e.CallExpr.Target = r(e.CallExpr.Target)
@@ -294,6 +298,7 @@ func TestPartialEvaluationWithGlobalVars(t *testing.T) {
 		"locale": `R.attr.language + "_" + R.attr.country`,
 		"geo":    "R.attr.geo",
 		"gb_us":  `["gb", "us"].map(t, t.upperAscii())`,
+		"info":   `{"country": "GB", "language": "en"}`,
 	} {
 		e, iss := env.Compile(txt)
 		is.Nil(iss, iss.Err())
@@ -313,6 +318,10 @@ func TestPartialEvaluationWithGlobalVars(t *testing.T) {
 		{
 			expr: "V.geo in (variables.gb_us + [ca]).map(t, t.upperAscii())",
 			want: `R.attr.geo in ["GB", "US", "CA"]`,
+		},
+		{
+			expr: `V.info.language + "_" + V.info.country == gbLoc`,
+			want: "true",
 		},
 	}
 	for _, tt := range tests {
@@ -357,6 +366,7 @@ func TestPartialEvaluationWithMacroGlobalVars(t *testing.T) {
 		"z": "ca",
 		"v": map[string]interface{}{},
 	}, cel.AttributePattern("R"))
+
 	expr := "v.geo() in (y + [z]).map(t, t.upperAscii())"
 	want := `R.attr.geo in ["GB", "US", "CA"]`
 
