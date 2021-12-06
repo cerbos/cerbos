@@ -79,7 +79,7 @@ func Test_evaluateCondition(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(fmt.Sprintf("Expr:%q", tt.args.expr), func(t *testing.T) {
 			is := require.New(t)
-			got, err := evaluateCondition(tt.args.condition, tt.args.input)
+			got, err := evaluateCondition(tt.args.condition, tt.args.input, nil)
 			is.NoError(err)
 			expression := got.GetExpression()
 			is.Equal(tt.wantExpression, unparse(t, expression))
@@ -111,7 +111,7 @@ func Test_evaluateCondition(t *testing.T) {
 					}
 				}
 			}
-			got, err := evaluateCondition(c, &requestv1.ResourcesQueryPlanRequest{Principal: &enginev1.Principal{Attr: attr}})
+			got, err := evaluateCondition(c, &requestv1.ResourcesQueryPlanRequest{Principal: &enginev1.Principal{Attr: attr}}, nil)
 			is.NotNil(got)
 			is.NoError(err)
 			operation := got.GetLogicalOperation()

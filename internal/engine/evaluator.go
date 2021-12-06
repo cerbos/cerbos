@@ -81,7 +81,7 @@ func (rpe *resourcePolicyEvaluator) EvaluateResourcesQueryPlan(_ context.Context
 				if len(matchedActions) == 0 {
 					continue
 				}
-				node, err := evaluateCondition(rule.Condition, input)
+				node, err := evaluateCondition(rule.Condition, input, p.Variables)
 				if err != nil {
 					return nil, err
 				}
@@ -104,7 +104,7 @@ func isNodeConstBool(node *enginev1.ResourcesQueryPlanOutput_Node) (bool, bool) 
 	return false, false
 }
 
-func evaluateCondition(condition *runtimev1.Condition, input *requestv1.ResourcesQueryPlanRequest) (*enginev1.ResourcesQueryPlanOutput_Node, error) {
+func evaluateCondition(condition *runtimev1.Condition, input *requestv1.ResourcesQueryPlanRequest, variables map[string]*runtimev1.Expr) (*enginev1.ResourcesQueryPlanOutput_Node, error) {
 	res := new(enginev1.ResourcesQueryPlanOutput_Node)
 	switch t := condition.Op.(type) {
 	case *runtimev1.Condition_Any:
@@ -116,7 +116,7 @@ func evaluateCondition(condition *runtimev1.Condition, input *requestv1.Resource
 			LogicalOperation: operation,
 		}
 		for _, c := range t.Any.Expr {
-			node, err := evaluateCondition(c, input)
+			node, err := evaluateCondition(c, input, variables)
 			if err != nil {
 				return nil, err
 			}
@@ -144,7 +144,7 @@ func evaluateCondition(condition *runtimev1.Condition, input *requestv1.Resource
 		}
 		res.Node = &enginev1.ResourcesQueryPlanOutput_Node_LogicalOperation{LogicalOperation: operation}
 		for _, c := range t.All.Expr {
-			node, err := evaluateCondition(c, input)
+			node, err := evaluateCondition(c, input, variables)
 			if err != nil {
 				return nil, err
 			}
@@ -166,7 +166,7 @@ func evaluateCondition(condition *runtimev1.Condition, input *requestv1.Resource
 			}
 		}
 	case *runtimev1.Condition_Expr:
-		_, residual, err := evaluateCELExprPartially(t.Expr.Checked, input)
+		_, residual, err := evaluateCELExprPartially(t.Expr.Checked, input, variables)
 		if err != nil {
 			return nil, fmt.Errorf("error evaluating condition %q: %w", t.Expr.Original, err)
 		}
@@ -428,7 +428,7 @@ func evaluateBoolCELExpr(expr *exprpb.CheckedExpr, variables map[string]interfac
 	return boolVal, nil
 }
 
-func evaluateCELExprPartially(expr *exprpb.CheckedExpr, input *requestv1.ResourcesQueryPlanRequest) (*bool, *exprpb.CheckedExpr, error) {
+func evaluateCELExprPartially(expr *exprpb.CheckedExpr, input *requestv1.ResourcesQueryPlanRequest, variables map[string]*runtimev1.Expr) (*bool, *exprpb.CheckedExpr, error) {
 	ast := cel.CheckedExprToAst(expr)
 	prg, err := conditions.StdPartialEnv.Program(ast, cel.EvalOptions(cel.OptPartialEval, cel.OptTrackState))
 	if err != nil {
