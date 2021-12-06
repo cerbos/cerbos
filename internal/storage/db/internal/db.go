@@ -15,7 +15,6 @@ import (
 
 	"github.com/doug-martin/goqu/v9"
 	"github.com/jackc/pgtype"
-	jsonschema "github.com/santhosh-tekuri/jsonschema/v5"
 	"go.uber.org/zap"
 
 	schemav1 "github.com/cerbos/cerbos/api/genpb/cerbos/schema/v1"
@@ -50,48 +49,12 @@ func NewDBStorage(ctx context.Context, db *goqu.Database) (DBStorage, error) {
 
 	return &dbStorage{
 		db:                  db,
-		schemaLoader:        schema.NewDBLoader(getLoadURL(db)),
 		SubscriptionManager: storage.NewSubscriptionManager(ctx),
 	}, nil
 }
 
-func getLoadURL(db *goqu.Database) schema.LoadURLFn {
-	return func(schemaUrl string) (io.ReadCloser, error) {
-		u, err := url.Parse(schemaUrl)
-		if err != nil {
-			return nil, err
-		}
-
-		if u.Scheme == schema.URLScheme {
-			relativePath := strings.TrimPrefix(u.Path, "/")
-
-			var sch Schema
-			_, err := db.From(SchemaTbl).
-				Where(goqu.Ex{SchemaTblIDCol: relativePath}).
-				ScanStruct(&sch)
-			if err != nil {
-				return nil, err
-			}
-
-			b, err := json.Marshal(sch.Definition)
-			if err != nil {
-				return nil, err
-			}
-
-			return io.NopCloser(bytes.NewReader(b)), nil
-		}
-
-		loader, ok := jsonschema.Loaders[u.Scheme]
-		if !ok {
-			return nil, jsonschema.LoaderNotFoundError(schemaUrl)
-		}
-		return loader(schemaUrl)
-	}
-}
-
 type dbStorage struct {
-	db           *goqu.Database
-	schemaLoader *schema.DBLoader
+	db *goqu.Database
 	*storage.SubscriptionManager
 }
 
