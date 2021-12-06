@@ -277,7 +277,7 @@ message ListSchemasResponse {
         }
     };
 
-    repeated .cerbos.schema.v1.Schema schemas = 1;
+    repeated cerbos.schema.v1.Schema schemas = 1;
 }
 
 message GetSchemaResponse {
