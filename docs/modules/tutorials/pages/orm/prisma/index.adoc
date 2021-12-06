@@ -1,0 +1,273 @@
+include::ROOT:partial$attributes.adoc[]
+
+[#tutorial-orm-prisma]
+= Tutorial: Using Cerbos with Prisma
+
+https://prisma.io[Prisma] has come onto the Node/Typescript scene recently as a new generation of ORM. With it’s strongly-typed client, schema abstraction and great documentation, it is turning into the natural choice for modern applications.
+
+This article covers setting up a basic CRM web application using Prisma for data storage and Cerbos for authorization to create, read, update and delete contacts based on who the user is. Our business requirements for who can do what are as follows:
+
+* Admins can do all actions
+* Users in the Sales department can read and create contacts
+* Only the user who created the contact can update and delete it
+* The last point is an important one as the authorization decision requires context of what is being accessed to make the decision if an action can be performed.
+
+Note that whilst authentication is out of scope of this article, Cerbos is compatible with any authentication system - be it basic auth, JWT or a service like https://auth0.com[Auth0].
+
+You can find the Github repo for this tutorial  https://github.com/cerbos/express-prisma-cerbos/[here].
+
+== Setting up Prisma
+
+To get started, we need to install our various dependencies:
+
+[source,bash]
+----
+mkdir express-prisma-cerbos
+cd express-prisma-cerbos
+npm i express cerbos @prisma/client
+----
+
+For this example app we will use a simple Prisma model for users and a CRM contact which belongs to a company. As this is just an example a SQLite database is used but this can be swapped out to your DB of choice. You can find the Prisma documentation https://www.prisma.io/docs/[here] for more details.
+
+Create a `prisma` folder and add in basic Prisma schema in `prisma/schema.prisma`
+
+[source]
+----
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model Contact {
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  firstName String
+  lastName  String
+  ownerId   Int
+}
+----
+
+Now to initialize our DB and generate the Prisma client, run the following:
+
+[source,bash]
+----
+npx prisma migrate dev --name init
+----
+
+This will generate the Prisma client which we will use in our server.
+
+== Setting up the server
+Having now setup our Prisma database, it is time to implement our web server. For this example we will be using Express to setup a simple server running on port 3000. We will also import our Prisma and Cerbos clients which we will use later on.
+
+[source,js]
+----
+import { PrismaClient } from "@prisma/client";
+import express from "express";
+import { Cerbos } from "cerbos";
+
+const prisma = new PrismaClient();
+const app = express();
+const cerbos = new Cerbos({
+  hostname: "http://localhost:3592", // The Cerbos PDP instance
+});
+
+app.use(express.json());
+
+const server = app.listen(3000, () =>
+  console.log(`🚀 Server ready at: http://localhost:3000`)
+);
+----
+
+Now we need to create our routes which we will authorize. For this simple example we will create a GET for a contact resource. 
+
+Using the Prisma client, query for the contact which matches the ID of the URL parameter. If it is not found, return an error message.
+
+[source,js]
+----
+app.get("/contacts/:id", async (req, res) => {
+  // load the contact
+  const contact = await prisma.contact.findUnique({
+    where: {
+      id: parseInt(req.params.id),
+    }
+  });
+  if (!contact) return res.status(404).json({ error: "Contact not found" });
+
+  // TODO check authz and return a response
+
+});
+----
+
+Implementing an authentication provider is out of scope of this article and you will more than likely already have one in place, so this code is assuming that the req.user object is structured as follows containing information about the user. These fields will be used by Cerbos to authorize actions.
+
+[source,js]
+----
+{
+  "id": 1 // user id,
+  "roles": ["user"], // list of roles (user, admin)
+  "department": "Sales" // department of the user
+}
+----
+
+== Setting up Cerbos
+As Cerbos is self-hosted the first step is to run an instance locally for development. For this we need to create a few files and a folder to hold the policies.
+
+Note: We will be using a docker container to run the instance so ensure you have this setup first.
+
+First create a config folder (https://github.com/cerbos/express-prisma-cerbos/tree/main/cerbos[see repo]) and a file called `config.yaml`. This tells the Cerbos instance which port to run on and where the policies are located:
+
+[source,bash]
+----
+mkdir config && cd config && touch config.yaml
+----
+
+Then save the following into the `config.yaml`:
+
+[source,yaml]
+----
+---
+server:
+  httpListenAddr: ":3592"
+storage:
+  driver: "disk"
+  disk:
+    directory: /policies
+    readOnly: true
+    watchForChanges: true
+---- 
+
+Then also create a folder for the policies
+
+[source,bash]
+----
+mkdir policies
+----
+
+Now we will start the Cerbos container, mounting the config and policies folder into the container:
+
+[source,bash,subs="attributes"]
+----
+docker run -i -t -p 3592:3592 \
+  -v $(pwd)/config:/config \
+  -v $(pwd)/policies:/policies \
+  {app-docker-img} \
+  server --config=/config/conf.yaml
+----
+
+If everything is correct, we should see the following output:
+
+[source,bash]
+----
+2021-09-07T10:59:25.770Z INFO cerbos.server maxprocs: Leaving GOMAXPROCS=4: CPU quota undefined
+2021-09-07T10:59:25.801Z INFO cerbos.dir.watch Watching directory for changes {"dir": "/policies"}
+2021-09-07T10:59:25.802Z INFO cerbos.grpc Starting gRPC server at :3593
+2021-09-07T10:59:25.803Z INFO cerbos.http Starting HTTP server at :3592
+----
+
+== Creating an access policy
+Now that our server is setup, it is time to define our resource policy as per the requirements, which as a reminder where:
+
+* Admins can do all actions
+* Users in the Sales department can read and create contacts
+* Only the user who created the contact can update and delete it
+* A resource policy file called ‘contacts.yaml’ should be created in the policies folder with the following:
+
+[source,yaml]
+----
+---
+apiVersion: api.cerbos.dev/v1
+resourcePolicy:
+  version: default
+  resource: contact
+  rules:
+# Admins can do all actions
+  - actions: ["*"]
+    effect: EFFECT_ALLOW
+    roles:
+      - admin    
+# Users in the Sales department can read and create contacts
+  - actions: ["read", "create"]
+    effect: EFFECT_ALLOW
+    roles:
+      - user
+    condition:
+      match:
+        expr: request.principal.attr.department == "Sales"
+
+# Only the user who created the contact can update and delete it
+  - actions: ["update", "delete"]
+    effect: EFFECT_ALLOW
+    roles:
+      - user
+    condition:
+      match:
+        expr: request.resource.attr.ownerId == request.principal.id
+----
+
+xref:policies:conditions.adoc[Conditions] are the powerful part of Cerbos which enables authorization decisions to be made at request time using context from both the principal (the user) and the resource they are trying to access. In this policy we are using conditions to check the department of the user for read and create actions, then again in the update and delete policy to check that the owner of the resource is the principal making the request.
+
+As you are working on the policies you can run the following to check that they are valid. If no errors are logged then you are good to go.
+
+[source,bash,subs="attributes"]
+----
+docker run -i -t -p 3592:3592 \
+  -v $(pwd)/policies:/policies \
+  {app-docker-img} \
+  compile /policies
+----
+
+== Authorizing requests
+Now that our policy is set we can call Cerbos from our request handler to authorize the principal to take the action on the resource. 
+
+To do this we need to update our GET handler and replace the TODO with a call to the Cerbos passing in the details about the user and the attributes of the contact of the resource as well as the action being made:
+
+[source,js]
+----
+// check user is authorized
+const allowed = await cerbos.check({
+  principal: {
+    id: `${req.user.id}`,
+    roles: req.user.roles,
+    attr: {
+      department: req.user.department,
+    },
+  },
+  resource: {
+    kind: "contact",
+    instances: {
+      [contact.id]: {
+        attr: contact,
+      },
+    },
+  },
+  actions: ["read"],
+});
+
+// authorized for read action
+if (allowed.isAuthorized(`${contact.id}`, "read")) {
+  return res.json(contact);
+} else {
+  return res.status(403).json({ error: "Unauthorized" });
+}
+----
+
+In this case we are only checking a single contact, but for list response for example, you can pass in a map of up to 20 resources from the database and Cerbos will authorize all the actions for each of them.
+
+Once we get the response back from Cerbos, calling the `.isAuthorized` method for the given resource ID and required action will return a simple boolean of whether the user is authorized or not. Using this we can either return the contact or throw an HTTP 403 Unauthorized response.
+
+== Conclusion
+Through this simple example we have used Primsa as our ORM to create a REST API which is authorized using Cerbos for a simple CRM system. This can be built upon to add more complex requirements for example:
+
+* Checking the IP address of the request to ensure it is within the corporate IP range
+* Check if the incoming change is within an acceptable boundary eg only allow 20% discounts on a product unless an admin
+* Ensure only certain actions are done during work-hours
+
+You can find a sample repo of integrating Primsa and Cerbos in an Express server on https://github.com/cerbos/express-prisma-cerbos/[Github], as well as many other example projects of implementing Cerbos.

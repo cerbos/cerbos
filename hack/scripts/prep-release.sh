@@ -39,8 +39,8 @@ set_branch() {
 
 # Set release version and tag
 update_version $VERSION
-# Set Antora branch to main
-set_branch "main"
+# Set Antora branch to HEAD (author mode)
+set_branch "HEAD"
 # Commit changes and tag release
 git -C "$PROJECT_DIR" commit -s -a -m "chore(release): Prepare release $VERSION"
 git tag "v${VERSION}" -m "v${VERSION}"
