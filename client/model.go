@@ -264,6 +264,10 @@ func (crsr *CheckResourceSetResponse) String() string {
 	return protojson.Format(crsr.CheckResourceSetResponse)
 }
 
+func (crsr *CheckResourceSetResponse) MarshalJSON() ([]byte, error) {
+	return protojson.Marshal(crsr.CheckResourceSetResponse)
+}
+
 // ResourceBatch is a container for a batch of heterogeneous resources.
 type ResourceBatch struct {
 	batch []*requestv1.CheckResourceBatchRequest_BatchEntry
@@ -376,6 +380,10 @@ func (crbr *CheckResourceBatchResponse) Errors() error {
 
 func (crbr *CheckResourceBatchResponse) String() string {
 	return protojson.Format(crbr.CheckResourceBatchResponse)
+}
+
+func (crbr *CheckResourceBatchResponse) MarshalJSON() ([]byte, error) {
+	return protojson.Marshal(crbr.CheckResourceBatchResponse)
 }
 
 // PolicySet is a container for a set of policies.
@@ -842,6 +850,14 @@ func (ml matchList) build() *policyv1.Match {
 
 type ServerInfo struct {
 	*responsev1.ServerInfoResponse
+}
+
+func (si *ServerInfo) String() string {
+	return protojson.Format(si.ServerInfoResponse)
+}
+
+func (si *ServerInfo) MarshalJSON() ([]byte, error) {
+	return protojson.Marshal(si.ServerInfoResponse)
 }
 
 type AuditLogType uint8
