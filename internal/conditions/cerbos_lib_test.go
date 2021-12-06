@@ -5,7 +5,6 @@ package conditions_test
 
 import (
 	"fmt"
-	"google.golang.org/protobuf/encoding/protojson"
 	"log"
 	"math/rand"
 	"reflect"
@@ -205,72 +204,141 @@ func updateIds(e *expr.Expr, n *int64) {
 		for _, arg := range e.CallExpr.Args {
 			updateIds(arg, n)
 		}
+	case *expr.Expr_StructExpr:
+		for _, entry := range e.StructExpr.Entries {
+			updateIds(entry.GetMapKey(), n)
+			updateIds(entry.GetValue(), n)
+		}
+	case *expr.Expr_ComprehensionExpr:
+		ce := e.ComprehensionExpr
+		updateIds(ce.IterRange, n)
+		updateIds(ce.AccuInit, n)
+		updateIds(ce.LoopStep, n)
+		updateIds(ce.LoopCondition, n)
+		updateIds(ce.Result, n)
+	case *expr.Expr_ListExpr:
+		for _, element := range e.ListExpr.Elements {
+			updateIds(element, n)
+		}
 	}
 }
+
 func replace(e *expr.Expr, vars map[string]*expr.Expr) *expr.Expr {
-	if e == nil {
-		return nil
-	}
-	switch e := e.ExprKind.(type) {
-	case *expr.Expr_SelectExpr:
-		ident := e.SelectExpr.Operand.GetIdentExpr()
-		if ident != nil && ident.Name == "v" {
-			if v, ok := vars[e.SelectExpr.Field]; ok {
-				return v
+	var r func(e *expr.Expr) *expr.Expr
+	r = func(e *expr.Expr) *expr.Expr {
+		if e == nil {
+			return nil
+		}
+		switch e := e.ExprKind.(type) {
+		case *expr.Expr_SelectExpr:
+			ident := e.SelectExpr.Operand.GetIdentExpr()
+			if ident != nil && ident.Name == "v" {
+				if v, ok := vars[e.SelectExpr.Field]; ok {
+					return v
+				} else {
+					panic("unknown variable")
+				}
+			}
+		case *expr.Expr_CallExpr:
+			e.CallExpr.Target = r(e.CallExpr.Target)
+			for i, arg := range e.CallExpr.Args {
+				e.CallExpr.Args[i] = r(arg)
+			}
+		case *expr.Expr_StructExpr:
+			for _, entry := range e.StructExpr.Entries {
+				if k, ok := entry.KeyKind.(*expr.Expr_CreateStruct_Entry_MapKey); ok {
+					k.MapKey = r(k.MapKey)
+				}
+				entry.Value = r(entry.Value)
+			}
+		case *expr.Expr_ComprehensionExpr:
+			ce := e.ComprehensionExpr
+			ce.IterRange = r(ce.IterRange)
+			ce.AccuInit = r(ce.AccuInit)
+			ce.LoopStep = r(ce.LoopStep)
+			ce.LoopCondition = r(ce.LoopCondition)
+			// ce.Result seems to be always an identifier, so isn't necessary to process
+		case *expr.Expr_ListExpr:
+			for i, element := range e.ListExpr.Elements {
+				e.ListExpr.Elements[i] = r(element)
 			}
 		}
-	case *expr.Expr_CallExpr:
-		e.CallExpr.Target = replace(e.CallExpr.Target, vars)
-		for i, arg := range e.CallExpr.Args {
-			e.CallExpr.Args[i] = replace(arg, vars)
-		}
+		return e
 	}
+
+	var n int64
+	e = r(e)
+	updateIds(e, &n)
 	return e
 }
+
 func TestPartialEvaluationWithGlobalVars(t *testing.T) {
 	is := require.New(t)
 
-	env, _ := cel.NewEnv(
+	env, err := cel.NewEnv(
 		cel.Types(&enginev1.Resource{}),
 		cel.Declarations(
+			decls.NewVar("gb_us", decls.NewListType(decls.String)),
+			decls.NewVar("gbLoc", decls.String),
+			decls.NewVar("ca", decls.String),
 			decls.NewVar("gb", decls.NewListType(decls.String)),
 			decls.NewVar(conditions.CELResourceAbbrev, decls.NewObjectType("cerbos.engine.v1.Resource")),
 			decls.NewVar("v", decls.NewMapType(decls.String, decls.Dyn))),
 		ext.Strings())
+	is.NoError(err)
 
-	e0 := `v.locale == gb`
-	ast, iss := env.Compile(e0)
-	is.Nil(iss, iss.Err())
-	t.Log(protojson.Format(ast.Expr()))
-	ast0 := ast
-	v := `R.attr.language + "_" + R.attr.country`
-	ast, iss = env.Compile(v)
-	is.Nil(iss, iss.Err())
-	t.Log(protojson.Format(ast.Expr()))
-
-	e := replace(ast0.Expr(), map[string]*expr.Expr{
-		"locale": ast.Expr(),
-	})
-	var n int64
-	updateIds(e, &n)
-	t.Log(protojson.Format(e))
-	ast = cel.ParsedExprToAst(&expr.ParsedExpr{Expr: e})
-	t.Log(cel.AstToString(ast))
-
-	prg, _ := env.Program(ast, cel.EvalOptions(cel.OptTrackState, cel.OptPartialEval))
-	vars, _ := cel.PartialVars(map[string]interface{}{
-		"gb": "en_GB",
-		"v":  map[string]interface{}{},
+	pvars, _ := cel.PartialVars(map[string]interface{}{
+		"gbLoc": "en_GB",
+		"gb_us": []string{"GB", "US"},
+		"ca":    "ca",
 	}, cel.AttributePattern("R"))
-	out, det, err := prg.Eval(vars)
-	log.Print(types.IsUnknown(out))
-	is.NoError(err)
 
-	residual, err := env.ResidualAst(ast, det)
-	is.NoError(err)
-	astToString, err := cel.AstToString(residual)
-	is.NoError(err)
-	t.Log(astToString)
+	variables := make(map[string]*expr.Expr)
+	for k, txt := range map[string]string{
+		"locale": `R.attr.language + "_" + R.attr.country`,
+		"geo":    "R.attr.geo",
+		"gb_us":  `["gb", "us"].map(t, t.upperAscii())`,
+	} {
+		e, iss := env.Compile(txt)
+		is.Nil(iss, iss.Err())
+		variables[k] = e.Expr()
+	}
+	tests := []struct {
+		expr, want string
+	}{
+		{
+			expr: "v.locale == gbLoc",
+			want: `R.attr.language + "_" + R.attr.country == "en_GB"`,
+		},
+		{
+			expr: "v.geo in (gb_us + [ca]).map(t, t.upperAscii())",
+			want: `R.attr.geo in ["GB", "US", "CA"]`,
+		},
+		{
+			expr: "v.geo in (v.gb_us + [ca]).map(t, t.upperAscii())",
+			want: `R.attr.geo in ["GB", "US", "CA"]`,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.expr, func(t *testing.T) {
+			is := require.New(t)
+			ast, iss := env.Compile(tt.expr)
+			is.Nil(iss, iss.Err())
+			e := replace(ast.Expr(), variables)
+			ast = cel.ParsedExprToAst(&expr.ParsedExpr{Expr: e})
+			prg, err := env.Program(ast, cel.EvalOptions(cel.OptTrackState, cel.OptPartialEval))
+			is.NoError(err)
+			out, det, err := prg.Eval(pvars)
+			log.Print(types.IsUnknown(out))
+			is.NoError(err)
+
+			residual, err := env.ResidualAst(ast, det)
+			is.NoError(err)
+			astToString, err := cel.AstToString(residual)
+			is.NoError(err)
+			is.Equal(tt.want, astToString)
+		})
+	}
 }
 
 func TestPartialEvaluationWithMacroGlobalVars(t *testing.T) {
