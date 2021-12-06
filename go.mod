@@ -71,7 +71,7 @@ require (
 
 require (
 	github.com/aws/aws-sdk-go v1.42.19
-	github.com/lestrrat-go/jwx v1.2.11
+	github.com/lestrrat-go/jwx v1.2.12
 	github.com/minio/minio-go/v7 v7.0.16
 	go.opentelemetry.io/otel v1.2.0
 	go.opentelemetry.io/otel/bridge/opencensus v0.25.0
