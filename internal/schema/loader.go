@@ -17,8 +17,8 @@ import (
 const Directory = "_schemas"
 
 type FSLoader struct {
-	err      error
-	compiler *jsonschema.Compiler
+	err  error
+	fsys fs.FS
 }
 
 func NewFSLoader(fsys fs.FS, rootDir string) *FSLoader {
@@ -28,6 +28,19 @@ func NewFSLoader(fsys fs.FS, rootDir string) *FSLoader {
 		return &FSLoader{err: err}
 	}
 
+	return &FSLoader{fsys: schemaFS}
+}
+
+func (sl *FSLoader) Load(_ context.Context, url string) (s *jsonschema.Schema, err error) {
+	if sl.err != nil {
+		return nil, sl.err
+	}
+
+	compiler := sl.mkCompiler()
+	return compiler.Compile(url)
+}
+
+func (sl *FSLoader) mkCompiler() *jsonschema.Compiler {
 	compiler := jsonschema.NewCompiler()
 	compiler.AssertFormat = true
 	compiler.AssertContent = true
@@ -37,9 +50,9 @@ func NewFSLoader(fsys fs.FS, rootDir string) *FSLoader {
 			return nil, err
 		}
 
-		if u.Scheme == URLScheme {
+		if u.Scheme == "" || u.Scheme == URLScheme {
 			relativePath := strings.TrimPrefix(u.Path, "/")
-			return schemaFS.Open(relativePath)
+			return sl.fsys.Open(relativePath)
 		}
 
 		loader, ok := jsonschema.Loaders[u.Scheme]
@@ -49,13 +62,5 @@ func NewFSLoader(fsys fs.FS, rootDir string) *FSLoader {
 		return loader(path)
 	}
 
-	return &FSLoader{compiler: compiler}
-}
-
-func (sl *FSLoader) Load(_ context.Context, url string) (*jsonschema.Schema, error) {
-	if sl.err != nil {
-		return nil, sl.err
-	}
-
-	return sl.compiler.Compile(url)
+	return compiler
 }

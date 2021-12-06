@@ -31,7 +31,7 @@ message CheckResourceSetResponse {
         ];
         repeated cerbos.schema.v1.ValidationError validation_errors = 2 [
             (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
-                description: "List of validation errors"
+                description: "List of validation errors (if schema validation is enabled)"
             }
         ];
     }
@@ -124,6 +124,11 @@ message CheckResourceBatchResponse {
                 description: "Mapping of each action to an effect."
                 example: "{\"view\":\"EFFECT_ALLOW\"}"
             } 
+        ];
+        repeated cerbos.schema.v1.ValidationError validation_errors = 3 [
+            (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+                description: "List of validation errors (if schema validation is enabled)"
+            }
         ];
     }
 

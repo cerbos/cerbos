@@ -44,4 +44,4 @@ storage:
     watchForChanges: true
 
 schema:
-  enforcement: warn
+  enforcement: reject

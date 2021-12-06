@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"io/fs"
 
+	"github.com/bluele/gcache"
 	jsonschema "github.com/santhosh-tekuri/jsonschema/v5"
 	"github.com/tidwall/gjson"
 	"go.uber.org/zap"
@@ -25,8 +26,9 @@ import (
 )
 
 const (
-	URLScheme = "cerbos"
-	attrPath  = "attr"
+	URLScheme    = "cerbos"
+	attrPath     = "attr"
+	maxCacheSize = 64
 )
 
 var alwaysValidResult = &ValidationResult{Reject: false}
@@ -63,6 +65,7 @@ type manager struct {
 	conf  *Conf
 	log   *zap.Logger
 	store storage.Store
+	cache gcache.Cache
 }
 
 func New(ctx context.Context, store storage.Store) (Manager, error) {
@@ -83,6 +86,7 @@ func NewWithConf(ctx context.Context, store storage.Store, conf *Conf) Manager {
 		conf:  conf,
 		log:   zap.L().Named("schema"),
 		store: store,
+		cache: gcache.New(maxCacheSize).ARC().Build(),
 	}
 
 	store.Subscribe(mgr)
@@ -91,28 +95,18 @@ func NewWithConf(ctx context.Context, store storage.Store, conf *Conf) Manager {
 }
 
 func (m *manager) CheckSchema(ctx context.Context, url string) error {
-	_, err := m.store.LoadSchema(ctx, url)
-	if err == nil {
-		return nil
-	}
-
-	var schemaErr *jsonschema.SchemaError
-	if !errors.As(err, &schemaErr) {
-		return err
-	}
-
-	if errors.Is(schemaErr.Err, fs.ErrNotExist) {
-		return fmt.Errorf("schema %q does not exist in the store", schemaErr.SchemaURL)
-	}
-
+	_, err := m.loadSchema(ctx, url)
 	return err
 }
 
 func (m *manager) Validate(ctx context.Context, schemas *policyv1.Schemas, input *enginev1.CheckInput) (*ValidationResult, error) {
+	result := &ValidationResult{Reject: m.conf.Enforcement == EnforcementReject}
+	if schemas == nil {
+		return result, nil
+	}
+
 	ctx, span := tracing.StartSpan(ctx, "schema.Validate")
 	defer span.End()
-
-	result := &ValidationResult{Reject: m.conf.Enforcement == EnforcementReject}
 
 	if err := m.validateAttr(ctx, ErrSourcePrincipal, schemas.PrincipalSchema, input.Principal.Attr); err != nil {
 		var principalErrs ValidationErrorList
@@ -142,8 +136,7 @@ func (m *manager) validateAttr(ctx context.Context, src ErrSource, schemaRef *po
 		return nil
 	}
 
-	// TODO (cell) Read schemas from cache
-	schema, err := m.store.LoadSchema(ctx, schemaRef.Ref)
+	schema, err := m.loadSchema(ctx, schemaRef.Ref)
 	if err != nil {
 		m.log.Warn("Failed to load schema", zap.String("schema", schemaRef.Ref), zap.Error(err))
 		return newSchemaLoadErr(src, schemaRef.Ref)
@@ -167,19 +160,47 @@ func (m *manager) validateAttr(ctx context.Context, src ErrSource, schemaRef *po
 	return nil
 }
 
+func (m *manager) loadSchema(ctx context.Context, url string) (*jsonschema.Schema, error) {
+	entry, err := m.cache.GetIFPresent(url)
+	if err == nil {
+		if e, ok := entry.(*cacheEntry); ok {
+			return e.schema, e.err
+		}
+	}
+
+	e := &cacheEntry{}
+	e.schema, e.err = m.store.LoadSchema(ctx, url)
+
+	if e.err != nil && errors.Is(e.err, fs.ErrNotExist) {
+		e.err = fmt.Errorf("schema %q does not exist in the store", url)
+	}
+
+	_ = m.cache.Set(url, e)
+
+	return e.schema, e.err
+}
+
 func (m *manager) SubscriberID() string {
 	return "schema.manager"
 }
 
 func (m *manager) OnStorageEvent(events ...storage.Event) {
-	// TODO (cell) Invalidate cache based on changed schemas
 	for _, event := range events {
 		//nolint:exhaustive
 		switch event.Kind {
 		case storage.EventAddOrUpdateSchema:
-			m.log.Debug("Handled schema add/update event")
+			cacheKey := fmt.Sprintf("%s/%s", URLScheme, event.SchemaFile)
+			_ = m.cache.Remove(cacheKey)
+			m.log.Debug("Handled schema add/update event", zap.String("schema", cacheKey))
 		case storage.EventDeleteSchema:
-			m.log.Warn("Handled schema delete event")
+			cacheKey := fmt.Sprintf("%s/%s", URLScheme, event.SchemaFile)
+			_ = m.cache.Remove(cacheKey)
+			m.log.Warn("Handled schema delete event", zap.String("schema", cacheKey))
 		}
 	}
+}
+
+type cacheEntry struct {
+	schema *jsonschema.Schema
+	err    error
 }

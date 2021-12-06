@@ -1,4 +1,5 @@
 {
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
   "type": "object",
   "properties": {
     "department": {
@@ -21,19 +22,31 @@
       "type": "string"
     },
     "jobRoles": {
-      "type": "array"
+      "type": "array",
+      "items": {
+          "type": "string"
+      }
     },
     "tags": {
       "type": "object",
       "properties": {
         "brands": {
-          "type": "array"
+          "type": "array",
+          "items": {
+              "type": "string"
+          }
         },
         "classes": {
-          "type": "array"
+          "type": "array",
+          "items": {
+              "type": "string"
+          }
         },
         "regions": {
-          "type": "array"
+          "type": "array",
+          "items": {
+              "type": "string"
+          }
         }
       }
     }

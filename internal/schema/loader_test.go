@@ -48,4 +48,16 @@ func TestFSLoader(t *testing.T) {
 		require.Error(t, err)
 		require.ErrorIs(t, err, fs.ErrNotExist)
 	})
+
+	t.Run("schema_in_sub_dir", func(t *testing.T) {
+		have, err := loader.Load(context.Background(), "cerbos:///subdir/customer_absolute.json")
+		require.NoError(t, err)
+		require.NotNil(t, have)
+	})
+
+	t.Run("load_directly_from_file", func(t *testing.T) {
+		have, err := loader.Load(context.Background(), filepath.Join(fsDir, schema.Directory, "customer_absolute.json"))
+		require.NoError(t, err)
+		require.NotNil(t, have)
+	})
 }

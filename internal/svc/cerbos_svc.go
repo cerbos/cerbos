@@ -126,8 +126,9 @@ func (cs *CerbosService) CheckResourceBatch(ctx context.Context, req *requestv1.
 		}
 
 		result.Results[i] = &responsev1.CheckResourceBatchResponse_ActionEffectMap{
-			ResourceId: inputs[i].Resource.Id,
-			Actions:    aem,
+			ResourceId:       inputs[i].Resource.Id,
+			Actions:          aem,
+			ValidationErrors: out.ValidationErrors,
 		}
 	}
 

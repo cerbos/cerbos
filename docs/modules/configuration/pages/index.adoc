@@ -166,4 +166,3 @@ schema: # Optional
   enforcement: reject # How to enforce schema validation (none: no enforcement, warn: log warnings, reject: reject invalid requests)
 ----
 
-

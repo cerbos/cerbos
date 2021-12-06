@@ -29,6 +29,7 @@ import (
 
 	privatev1 "github.com/cerbos/cerbos/api/genpb/cerbos/private/v1"
 	responsev1 "github.com/cerbos/cerbos/api/genpb/cerbos/response/v1"
+	schemav1 "github.com/cerbos/cerbos/api/genpb/cerbos/schema/v1"
 	svcv1 "github.com/cerbos/cerbos/api/genpb/cerbos/svc/v1"
 	"github.com/cerbos/cerbos/internal/audit"
 	"github.com/cerbos/cerbos/internal/auxdata"
@@ -78,8 +79,7 @@ func TestServer(t *testing.T) {
 	store, err := disk.NewStore(ctx, &disk.Conf{Directory: dir})
 	require.NoError(t, err)
 
-	schemaMgr, err := schema.New(ctx, store)
-	require.NoError(t, err)
+	schemaMgr := schema.NewWithConf(ctx, store, &schema.Conf{Enforcement: schema.EnforcementReject})
 
 	eng, err := engine.New(ctx, engine.Components{
 		CompileMgr: compile.NewManager(ctx, store, schemaMgr),
@@ -199,7 +199,7 @@ func TestAdminService(t *testing.T) {
 	store, err := sqlite3.NewStore(ctx, &sqlite3.Conf{DSN: fmt.Sprintf("%s?_fk=true", filepath.Join(t.TempDir(), "cerbos.db"))})
 	require.NoError(t, err)
 
-	schemaMgr := schema.NewWithConf(ctx, store, &schema.Conf{Enforcement: schema.EnforcementNone})
+	schemaMgr := schema.NewWithConf(ctx, store, &schema.Conf{Enforcement: schema.EnforcementReject})
 
 	eng, err := engine.New(ctx, engine.Components{
 		CompileMgr: compile.NewManager(ctx, store, schemaMgr),
@@ -468,6 +468,7 @@ func compareProto(t *testing.T, want, have interface{}) {
 		protocmp.SortRepeatedFields(&responsev1.CheckResourceSetResponse_Meta_ActionMeta{}, "effective_derived_roles"),
 		protocmp.SortRepeated(cmpPlaygroundEvalResult),
 		protocmp.SortRepeated(cmpPlaygroundError),
+		protocmp.SortRepeated(cmpValidationError),
 	))
 }
 
@@ -481,4 +482,11 @@ func cmpPlaygroundError(a, b *responsev1.PlaygroundFailure_Error) bool {
 	}
 
 	return a.File < b.File
+}
+
+func cmpValidationError(a, b *schemav1.ValidationError) bool {
+	if a.Source == b.Source {
+		return a.Path < b.Path
+	}
+	return a.Source < b.Source
 }

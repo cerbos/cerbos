@@ -1,11 +1,10 @@
 {
-  "$schema": "https://json-schema.org/draft/2020-12/schema",
   "type": "object",
   "properties": {
     "first_name": { "type": "string" },
     "last_name": { "type": "string" },
-    "shipping_address": { "$ref": "/address.json" },
-    "billing_address": { "$ref": "/address.json" }
+    "shipping_address": { "$ref": "cerbos:///address.json" },
+    "billing_address": { "$ref": "cerbos:///address.json" }
   },
   "required": ["first_name", "last_name", "shipping_address", "billing_address"]
 }
