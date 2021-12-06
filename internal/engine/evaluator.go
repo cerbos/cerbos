@@ -575,3 +575,89 @@ func (er *PolicyEvalResult) setDefaultEffect(tctx *traceContext, actions []strin
 		}
 	}
 }
+
+func updateIds(e *exprpb.Expr, n *int64) {
+	if e == nil {
+		return
+	}
+	*n++
+	e.Id = *n
+	switch e := e.ExprKind.(type) {
+	case *exprpb.Expr_SelectExpr:
+		updateIds(e.SelectExpr.Operand, n)
+	case *exprpb.Expr_CallExpr:
+		updateIds(e.CallExpr.Target, n)
+		for _, arg := range e.CallExpr.Args {
+			updateIds(arg, n)
+		}
+	case *exprpb.Expr_StructExpr:
+		for _, entry := range e.StructExpr.Entries {
+			updateIds(entry.GetMapKey(), n)
+			updateIds(entry.GetValue(), n)
+		}
+	case *exprpb.Expr_ComprehensionExpr:
+		ce := e.ComprehensionExpr
+		updateIds(ce.IterRange, n)
+		updateIds(ce.AccuInit, n)
+		updateIds(ce.LoopStep, n)
+		updateIds(ce.LoopCondition, n)
+		updateIds(ce.Result, n)
+	case *exprpb.Expr_ListExpr:
+		for _, element := range e.ListExpr.Elements {
+			updateIds(element, n)
+		}
+	}
+}
+
+func replaceVars(e *exprpb.Expr, vars map[string]*exprpb.Expr) *exprpb.Expr {
+	var r func(e *exprpb.Expr) *exprpb.Expr
+	r = func(e *exprpb.Expr) *exprpb.Expr {
+		if e == nil {
+			return nil
+		}
+		switch e := e.ExprKind.(type) {
+		case *exprpb.Expr_SelectExpr:
+			ident := e.SelectExpr.Operand.GetIdentExpr()
+			if ident != nil {
+				if ident.Name == conditions.CELVariablesAbbrev || ident.Name == conditions.CELVariablesIdent {
+					if v, ok := vars[e.SelectExpr.Field]; ok {
+						return v
+					} else {
+						panic("unknown variable")
+					}
+				}
+			} else {
+				e.SelectExpr.Operand = r(e.SelectExpr.Operand)
+			}
+		case *exprpb.Expr_CallExpr:
+			e.CallExpr.Target = r(e.CallExpr.Target)
+			for i, arg := range e.CallExpr.Args {
+				e.CallExpr.Args[i] = r(arg)
+			}
+		case *exprpb.Expr_StructExpr:
+			for _, entry := range e.StructExpr.Entries {
+				if k, ok := entry.KeyKind.(*exprpb.Expr_CreateStruct_Entry_MapKey); ok {
+					k.MapKey = r(k.MapKey)
+				}
+				entry.Value = r(entry.Value)
+			}
+		case *exprpb.Expr_ComprehensionExpr:
+			ce := e.ComprehensionExpr
+			ce.IterRange = r(ce.IterRange)
+			ce.AccuInit = r(ce.AccuInit)
+			ce.LoopStep = r(ce.LoopStep)
+			ce.LoopCondition = r(ce.LoopCondition)
+			// ce.Result seems to be always an identifier, so isn't necessary to process
+		case *exprpb.Expr_ListExpr:
+			for i, element := range e.ListExpr.Elements {
+				e.ListExpr.Elements[i] = r(element)
+			}
+		}
+		return e
+	}
+
+	var n int64
+	e = r(e)
+	updateIds(e, &n)
+	return e
+}

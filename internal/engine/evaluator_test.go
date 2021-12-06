@@ -5,6 +5,8 @@ package engine
 
 import (
 	"fmt"
+	"github.com/google/cel-go/checker/decls"
+	"github.com/google/cel-go/common/types"
 	"testing"
 
 	"github.com/google/cel-go/cel"
@@ -119,6 +121,76 @@ func Test_evaluateCondition(t *testing.T) {
 				expression := operation.Nodes[i].GetExpression()
 				is.Equal(tests[i].wantExpression, unparse(t, expression))
 			}
+		})
+	}
+}
+
+func TestPartialEvaluationWithGlobalVars(t *testing.T) {
+	is := require.New(t)
+
+	env, err := conditions.StdPartialEnv.Extend(cel.Declarations(
+		decls.NewVar("gb_us", decls.NewListType(decls.String)),
+		decls.NewVar("gbLoc", decls.String),
+		decls.NewVar("ca", decls.String),
+		decls.NewVar("gb", decls.NewListType(decls.String)),
+	))
+	is.NoError(err)
+
+	pvars, _ := cel.PartialVars(map[string]interface{}{
+		"gbLoc": "en_GB",
+		"gb_us": []string{"GB", "US"},
+		"ca":    "ca",
+	}, cel.AttributePattern("R"))
+
+	variables := make(map[string]*expr.Expr)
+	for k, txt := range map[string]string{
+		"locale": `R.attr.language + "_" + R.attr.country`,
+		"geo":    "R.attr.geo",
+		"gb_us":  `["gb", "us"].map(t, t.upperAscii())`,
+		"info":   `{"country": "GB", "language": "en"}`,
+	} {
+		e, iss := env.Compile(txt)
+		is.Nil(iss, iss.Err())
+		variables[k] = e.Expr()
+	}
+	tests := []struct {
+		expr, want string
+	}{
+		{
+			expr: "V.locale == gbLoc",
+			want: `R.attr.language + "_" + R.attr.country == "en_GB"`,
+		},
+		{
+			expr: "V.geo in (gb_us + [ca]).map(t, t.upperAscii())",
+			want: `R.attr.geo in ["GB", "US", "CA"]`,
+		},
+		{
+			expr: "V.geo in (variables.gb_us + [ca]).map(t, t.upperAscii())",
+			want: `R.attr.geo in ["GB", "US", "CA"]`,
+		},
+		{
+			expr: `V.info.language + "_" + V.info.country == gbLoc`,
+			want: "true",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.expr, func(t *testing.T) {
+			is := require.New(t)
+			ast, iss := env.Compile(tt.expr)
+			is.Nil(iss, iss.Err())
+			e := replaceVars(ast.Expr(), variables)
+			ast = cel.ParsedExprToAst(&expr.ParsedExpr{Expr: e})
+			prg, err := env.Program(ast, cel.EvalOptions(cel.OptTrackState, cel.OptPartialEval))
+			is.NoError(err)
+			out, det, err := prg.Eval(pvars)
+			t.Log(types.IsUnknown(out))
+			is.NoError(err)
+
+			residual, err := env.ResidualAst(ast, det)
+			is.NoError(err)
+			astToString, err := cel.AstToString(residual)
+			is.NoError(err)
+			is.Equal(tt.want, astToString)
 		})
 	}
 }
