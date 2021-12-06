@@ -27,6 +27,70 @@ import (
 	"github.com/cerbos/cerbos/internal/util"
 )
 
+func TestLoad(t *testing.T) {
+	fsDir := test.PathToDir(t, filepath.Join("schema", "fs"))
+
+	testCases := []struct {
+		name    string
+		url     string
+		wantErr bool
+	}{
+		{
+			name: "schema_with_relative_refs",
+			url:  "cerbos:///customer_relative.json",
+		},
+		{
+			name: "schema_with_absolute_refs",
+			url:  "cerbos:///customer_absolute.json",
+		},
+		{
+			name:    "schema_with_bad_refs",
+			url:     "cerbos:///customer_bad.json",
+			wantErr: true,
+		},
+		{
+			name:    "invalid schema",
+			url:     "cerbos:///invalid.json",
+			wantErr: true,
+		},
+		{
+			name:    "non_existent_schema",
+			url:     "cerbos:///blah.json",
+			wantErr: true,
+		},
+		{
+			name: "schema_in_subdir",
+			url:  "cerbos:///subdir/customer_absolute.json",
+		},
+		{
+			name: "schema_from_file_url",
+			url:  fmt.Sprintf("file://%s", filepath.ToSlash(filepath.Join(fsDir, schema.Directory, "customer_absolute.json"))),
+		},
+	}
+
+	fsys := os.DirFS(fsDir)
+	ctx, cancelFunc := context.WithCancel(context.Background())
+	t.Cleanup(cancelFunc)
+
+	idx, err := index.Build(ctx, fsys)
+	require.NoError(t, err)
+
+	store := disk.NewFromIndexWithConf(idx, &disk.Conf{})
+	mgr := schema.NewWithConf(ctx, store, &schema.Conf{Enforcement: schema.EnforcementReject})
+
+	for _, tc := range testCases {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			err := mgr.CheckSchema(context.Background(), tc.url)
+			if tc.wantErr {
+				require.Error(t, err)
+				return
+			}
+			require.NoError(t, err)
+		})
+	}
+}
+
 func TestValidate(t *testing.T) {
 	testCases := test.LoadTestCases(t, filepath.Join("schema", "test_cases"))
 

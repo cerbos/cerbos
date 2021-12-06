@@ -7,10 +7,10 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
 	"os"
 
 	"github.com/doug-martin/goqu/v9"
-	jsonschema "github.com/santhosh-tekuri/jsonschema/v5"
 	"go.uber.org/zap"
 
 	"github.com/cerbos/cerbos/internal/namer"
@@ -27,7 +27,7 @@ type DBStorage interface {
 	GetPolicies(ctx context.Context) ([]*policy.Wrapper, error)
 	AddOrUpdateSchema(ctx context.Context, id string, def []byte) error
 	DeleteSchema(ctx context.Context, id string) error
-	LoadSchema(ctx context.Context, url string) (*jsonschema.Schema, error)
+	LoadSchema(ctx context.Context, url string) (io.ReadCloser, error)
 }
 
 func NewDBStorage(ctx context.Context, db *goqu.Database) (DBStorage, error) {
@@ -101,7 +101,7 @@ func (s *dbStorage) DeleteSchema(ctx context.Context, id string) error {
 	return errors.New("unimplemented")
 }
 
-func (s *dbStorage) LoadSchema(ctx context.Context, url string) (*jsonschema.Schema, error) {
+func (s *dbStorage) LoadSchema(ctx context.Context, url string) (io.ReadCloser, error) {
 	// TODO (cell) Implement method
 	/*
 		var sch Schema
