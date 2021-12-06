@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"io"
 	"io/fs"
+	"io/ioutil"
 	"net/url"
 	"os"
 	"path/filepath"
@@ -107,13 +108,17 @@ func getLoadURL(ms storage.MutableStore) schema.LoadURLFn {
 		if u.Scheme == schema.URLScheme {
 			relativePath := strings.TrimPrefix(u.Path, "/")
 
-			var b []byte
-			b, err = ms.GetSchema(context.TODO(), relativePath)
+			reader, err := ms.LoadSchema(context.TODO(), relativePath)
 			if err != nil {
 				return nil, err
 			}
 
-			return io.NopCloser(bytes.NewBuffer(b)), nil
+			s, err := ioutil.ReadAll(reader)
+			if err != nil {
+				return nil, err
+			}
+
+			return io.NopCloser(bytes.NewReader(s)), nil
 		}
 
 		return nil, fmt.Errorf("invalid schema url")

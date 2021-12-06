@@ -32,9 +32,8 @@ type DBStorage interface {
 	Delete(ctx context.Context, ids ...namer.ModuleID) error
 	GetPolicies(ctx context.Context) ([]*policy.Wrapper, error)
 	AddOrUpdateSchema(ctx context.Context, id string, def []byte) error
-	GetSchema(ctx context.Context, id string) ([]byte, error)
 	DeleteSchema(ctx context.Context, id string) error
-	LoadSchema(ctx context.Context, url string) (*jsonschema.Schema, error)
+	LoadSchema(ctx context.Context, url string) (io.ReadCloser, error)
 }
 
 func NewDBStorage(ctx context.Context, db *goqu.Database) (DBStorage, error) {
@@ -146,10 +145,19 @@ func (s *dbStorage) DeleteSchema(ctx context.Context, id string) error {
 	return nil
 }
 
-func (s *dbStorage) GetSchema(ctx context.Context, id string) ([]byte, error) {
+func (s *dbStorage) LoadSchema(ctx context.Context, urlVar string) (io.ReadCloser, error) {
+	u, err := url.Parse(urlVar)
+	if err != nil {
+		return nil, err
+	}
+
+	if u.Scheme != "" && u.Scheme != schema.URLScheme {
+		return nil, fmt.Errorf("invalid url scheme %q", u.Scheme)
+	}
+
 	var sch Schema
-	_, err := s.db.From(SchemaTbl).
-		Where(goqu.Ex{SchemaTblIDCol: id}).
+	_, err = s.db.From(SchemaTbl).
+		Where(goqu.Ex{SchemaTblIDCol: strings.TrimPrefix(u.Path, "/")}).
 		ScanStructContext(ctx, &sch)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get schema: %w", err)
@@ -164,16 +172,7 @@ func (s *dbStorage) GetSchema(ctx context.Context, id string) ([]byte, error) {
 		return nil, fmt.Errorf("failed to marshal schema: %w", err)
 	}
 
-	return def, nil
-}
-
-func (s *dbStorage) LoadSchema(ctx context.Context, url string) (*jsonschema.Schema, error) {
-	sch, err := s.schemaLoader.Load(ctx, url)
-	if err != nil {
-		return nil, fmt.Errorf("failed to load schema: %w", err)
-	}
-
-	return sch, nil
+	return io.NopCloser(bytes.NewReader(def)), nil
 }
 
 func (s *dbStorage) AddOrUpdate(ctx context.Context, policies ...policy.Wrapper) error {

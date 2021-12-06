@@ -6,10 +6,9 @@ package disk
 import (
 	"context"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
-
-	jsonschema "github.com/santhosh-tekuri/jsonschema/v5"
 
 	"github.com/cerbos/cerbos/internal/config"
 	"github.com/cerbos/cerbos/internal/namer"
@@ -89,6 +88,6 @@ func (s *Store) GetPolicies(ctx context.Context) ([]*policy.Wrapper, error) {
 	return s.idx.GetPolicies(ctx)
 }
 
-func (s *Store) LoadSchema(ctx context.Context, url string) (*jsonschema.Schema, error) {
+func (s *Store) LoadSchema(ctx context.Context, url string) (io.ReadCloser, error) {
 	return s.idx.LoadSchema(ctx, url)
 }

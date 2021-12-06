@@ -7,7 +7,10 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
 	"io/fs"
+	"net/url"
+	"strings"
 
 	"github.com/bluele/gcache"
 	jsonschema "github.com/santhosh-tekuri/jsonschema/v5"
@@ -26,6 +29,7 @@ import (
 )
 
 const (
+	Directory    = "_schemas"
 	URLScheme    = "cerbos"
 	attrPath     = "attr"
 	maxCacheSize = 64
@@ -47,6 +51,11 @@ type Manager interface {
 	CheckSchema(context.Context, string) error
 }
 
+type Loader interface {
+	storage.Subscribable
+	LoadSchema(context.Context, string) (io.ReadCloser, error)
+}
+
 func NewNopManager() NopManager {
 	return NopManager{}
 }
@@ -62,34 +71,34 @@ func (NopManager) CheckSchema(_ context.Context, _ string) error {
 }
 
 type manager struct {
-	conf  *Conf
-	log   *zap.Logger
-	store storage.Store
-	cache gcache.Cache
+	conf   *Conf
+	log    *zap.Logger
+	loader Loader
+	cache  gcache.Cache
 }
 
-func New(ctx context.Context, store storage.Store) (Manager, error) {
+func New(ctx context.Context, loader Loader) (Manager, error) {
 	conf := &Conf{}
 	if err := config.GetSection(conf); err != nil {
 		return nil, fmt.Errorf("failed to get config section %q: %w", confKey, err)
 	}
 
-	return NewWithConf(ctx, store, conf), nil
+	return NewWithConf(ctx, loader, conf), nil
 }
 
-func NewWithConf(ctx context.Context, store storage.Store, conf *Conf) Manager {
+func NewWithConf(ctx context.Context, loader Loader, conf *Conf) Manager {
 	if conf.Enforcement == EnforcementNone {
 		return NopManager{}
 	}
 
 	mgr := &manager{
-		conf:  conf,
-		log:   zap.L().Named("schema"),
-		store: store,
-		cache: gcache.New(maxCacheSize).ARC().Build(),
+		conf:   conf,
+		log:    zap.L().Named("schema"),
+		loader: loader,
+		cache:  gcache.New(maxCacheSize).ARC().Build(),
 	}
 
-	store.Subscribe(mgr)
+	loader.Subscribe(mgr)
 
 	return mgr
 }
@@ -169,7 +178,7 @@ func (m *manager) loadSchema(ctx context.Context, url string) (*jsonschema.Schem
 	}
 
 	e := &cacheEntry{}
-	e.schema, e.err = m.store.LoadSchema(ctx, url)
+	e.schema, e.err = m.loadSchemaFromStore(ctx, url)
 
 	if e.err != nil && errors.Is(e.err, fs.ErrNotExist) {
 		e.err = fmt.Errorf("schema %q does not exist in the store", url)
@@ -178,6 +187,31 @@ func (m *manager) loadSchema(ctx context.Context, url string) (*jsonschema.Schem
 	_ = m.cache.Set(url, e)
 
 	return e.schema, e.err
+}
+
+func (m *manager) loadSchemaFromStore(ctx context.Context, schemaURL string) (*jsonschema.Schema, error) {
+	compiler := jsonschema.NewCompiler()
+	compiler.AssertFormat = true
+	compiler.AssertContent = true
+	compiler.LoadURL = func(path string) (io.ReadCloser, error) {
+		u, err := url.Parse(path)
+		if err != nil {
+			return nil, err
+		}
+
+		if u.Scheme == "" || u.Scheme == URLScheme {
+			relativePath := strings.TrimPrefix(u.Path, "/")
+			return m.loader.LoadSchema(ctx, relativePath)
+		}
+
+		loader, ok := jsonschema.Loaders[u.Scheme]
+		if !ok {
+			return nil, jsonschema.LoaderNotFoundError(path)
+		}
+		return loader(path)
+	}
+
+	return compiler.Compile(schemaURL)
 }
 
 func (m *manager) SubscriberID() string {

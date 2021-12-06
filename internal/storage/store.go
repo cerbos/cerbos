@@ -6,9 +6,8 @@ package storage
 import (
 	"context"
 	"fmt"
+	"io"
 	"sync"
-
-	jsonschema "github.com/santhosh-tekuri/jsonschema/v5"
 
 	"github.com/cerbos/cerbos/internal/config"
 	"github.com/cerbos/cerbos/internal/namer"
@@ -84,7 +83,7 @@ type Store interface {
 	// GetPolicies returns the policies recorded in the store.
 	GetPolicies(context.Context) ([]*policy.Wrapper, error)
 	// LoadSchema loads the given schema from the store.
-	LoadSchema(context.Context, string) (*jsonschema.Schema, error)
+	LoadSchema(context.Context, string) (io.ReadCloser, error)
 }
 
 // MutableStore is a store that allows mutations.
@@ -92,7 +91,6 @@ type MutableStore interface {
 	Store
 	AddOrUpdate(context.Context, ...policy.Wrapper) error
 	AddOrUpdateSchema(context.Context, string, []byte) error
-	GetSchema(context.Context, string) ([]byte, error)
 	DeleteSchema(context.Context, string) error
 	Delete(context.Context, ...namer.ModuleID) error
 }

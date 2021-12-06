@@ -7,11 +7,11 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
 	"runtime"
 	"testing"
 	"time"
 
-	jsonschema "github.com/santhosh-tekuri/jsonschema/v5"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
@@ -295,7 +295,7 @@ func (ms *MockStore) GetPolicies(ctx context.Context) ([]*policy.Wrapper, error)
 	return args.Get(0).([]*policy.Wrapper), args.Error(0)
 }
 
-func (ms *MockStore) LoadSchema(ctx context.Context, url string) (*jsonschema.Schema, error) {
+func (ms *MockStore) LoadSchema(ctx context.Context, url string) (io.ReadCloser, error) {
 	args := ms.MethodCalled("LoadSchema", ctx)
 	if res := args.Get(0); res == nil {
 		return nil, args.Error(0)

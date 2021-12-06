@@ -8,6 +8,7 @@ package internal
 
 import (
 	"context"
+	"io/ioutil"
 	"testing"
 	"time"
 
@@ -154,10 +155,13 @@ func TestSuite(store DBStorage) func(*testing.T) {
 
 		t.Run("get_schema", func(t *testing.T) {
 			t.Run("should be able to get schema", func(t *testing.T) {
-				schema, err := store.GetSchema(ctx, schID)
+				schema, err := store.LoadSchema(ctx, schID)
 				require.NoError(t, err)
 				require.NotEmpty(t, schema)
-				require.JSONEq(t, string(sch), string(schema))
+				schBytes, err := ioutil.ReadAll(schema)
+				require.NoError(t, err)
+				require.NotEmpty(t, schBytes)
+				require.JSONEq(t, string(sch), string(schBytes))
 			})
 		})
 
@@ -167,7 +171,7 @@ func TestSuite(store DBStorage) func(*testing.T) {
 			err := store.DeleteSchema(ctx, schID)
 			require.NoError(t, err)
 
-			have, err := store.GetSchema(ctx, schID)
+			have, err := store.LoadSchema(ctx, schID)
 			require.Error(t, err)
 			require.Empty(t, have)
 

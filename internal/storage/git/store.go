@@ -16,7 +16,6 @@ import (
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-git/go-git/v5/plumbing/object"
-	jsonschema "github.com/santhosh-tekuri/jsonschema/v5"
 	"go.uber.org/zap"
 
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
@@ -139,7 +138,7 @@ func (s *Store) GetPolicies(ctx context.Context) ([]*policy.Wrapper, error) {
 	return s.idx.GetPolicies(ctx)
 }
 
-func (s *Store) LoadSchema(ctx context.Context, url string) (*jsonschema.Schema, error) {
+func (s *Store) LoadSchema(ctx context.Context, url string) (io.ReadCloser, error) {
 	return s.idx.LoadSchema(ctx, url)
 }
 

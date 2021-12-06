@@ -9,6 +9,7 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
+	"io/ioutil"
 	"strings"
 	"time"
 
@@ -116,14 +117,19 @@ func (cas *CerbosAdminService) GetSchema(ctx context.Context, req *requestv1.Get
 		return nil, status.Error(codes.Unimplemented, "Configured store is not mutable")
 	}
 
-	sch, err := ms.GetSchema(context.Background(), req.Id)
+	sch, err := ms.LoadSchema(context.Background(), req.Id)
 	if err != nil {
 		return nil, status.Error(codes.Internal, fmt.Sprintf("could not get schema: %s", err.Error()))
 	}
 
+	schBytes, err := ioutil.ReadAll(sch)
+	if err != nil {
+		return nil, status.Error(codes.Internal, fmt.Sprintf("could not read schema from interface: %s", err.Error()))
+	}
+
 	return &responsev1.GetSchemaResponse{
 		Id:     req.Id,
-		Schema: sch,
+		Schema: schBytes,
 	}, nil
 }
 
