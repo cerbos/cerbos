@@ -73,7 +73,6 @@ require (
 	github.com/Masterminds/sprig/v3 v3.2.2
 	github.com/aws/aws-sdk-go v1.42.9
 	github.com/jackc/pgtype v1.8.1
-	github.com/kinbiko/jsonassert v1.0.2
 	github.com/lestrrat-go/jwx v1.2.11
 	github.com/minio/minio-go/v7 v7.0.15
 	github.com/santhosh-tekuri/jsonschema/v5 v5.0.0

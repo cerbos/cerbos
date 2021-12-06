@@ -77,7 +77,7 @@ func getLoadURL(db *goqu.Database) schema.LoadURLFn {
 				return nil, err
 			}
 
-			return io.NopCloser(bytes.NewBuffer(b)), nil
+			return io.NopCloser(bytes.NewReader(b)), nil
 		}
 
 		loader, ok := jsonschema.Loaders[u.Scheme]
@@ -102,7 +102,7 @@ func (s *dbStorage) AddOrUpdateSchema(ctx context.Context, id string, def []byte
 	defJSON := pgtype.JSON{}
 	err := defJSON.UnmarshalJSON(def)
 	if err != nil {
-		return fmt.Errorf("failed to unmarshal schema definition")
+		return fmt.Errorf("failed to unmarshal schema definition: %w", err)
 	}
 
 	schemaRecord := Schema{
@@ -118,10 +118,7 @@ func (s *dbStorage) AddOrUpdateSchema(ctx context.Context, id string, def []byte
 		return fmt.Errorf("failed to upsert the schema: %w", err)
 	}
 
-	s.NotifySubscribers(storage.Event{
-		Kind: storage.EventAddOrUpdateSchema,
-	})
-
+	s.NotifySubscribers(storage.NewSchemaEvent(storage.EventAddOrUpdateSchema, id))
 	return nil
 }
 
@@ -137,16 +134,14 @@ func (s *dbStorage) DeleteSchema(ctx context.Context, id string) error {
 
 	affected, err := res.RowsAffected()
 	if err != nil {
-		return fmt.Errorf("failed to discover whether the schema got deleted or not")
+		return fmt.Errorf("failed to discover whether the schema got deleted or not: %w", err)
 	}
 
 	if affected == 0 {
 		return fmt.Errorf("failed to find the schema with id %s for deletion", id)
 	}
 
-	s.NotifySubscribers(storage.Event{
-		Kind: storage.EventDeleteSchema,
-	})
+	s.NotifySubscribers(storage.NewSchemaEvent(storage.EventDeleteSchema, id))
 
 	return nil
 }
@@ -355,7 +350,8 @@ func (s *dbStorage) Delete(ctx context.Context, ids ...namer.ModuleID) error {
 			return err
 		}
 
-		s.NotifySubscribers(storage.Event{Kind: storage.EventDeletePolicy, PolicyID: ids[0]})
+		s.NotifySubscribers(storage.NewPolicyEvent(storage.EventDeletePolicy, ids[0]))
+
 		return nil
 	}
 

@@ -12,7 +12,6 @@ import (
 	"time"
 
 	"github.com/google/go-cmp/cmp"
-	"github.com/kinbiko/jsonassert"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/testing/protocmp"
 
@@ -29,7 +28,6 @@ func TestSuite(store DBStorage) func(*testing.T) {
 	return func(t *testing.T) {
 		ctx, cancelFunc := context.WithCancel(context.Background())
 		defer cancelFunc()
-		ja := jsonassert.New(t)
 		rp := policy.Wrap(test.GenResourcePolicy(test.NoMod()))
 		pp := policy.Wrap(test.GenPrincipalPolicy(test.NoMod()))
 		dr := policy.Wrap(test.GenDerivedRoles(test.NoMod()))
@@ -151,7 +149,7 @@ func TestSuite(store DBStorage) func(*testing.T) {
 			checkEvents := storage.TestSubscription(store)
 			require.NoError(t, store.AddOrUpdateSchema(ctx, schID, sch))
 
-			checkEvents(t, storage.Event{Kind: storage.EventAddOrUpdateSchema})
+			checkEvents(t, timeout, storage.NewSchemaEvent(storage.EventAddOrUpdateSchema, schID))
 		})
 
 		t.Run("get_schema", func(t *testing.T) {
@@ -159,7 +157,7 @@ func TestSuite(store DBStorage) func(*testing.T) {
 				schema, err := store.GetSchema(ctx, schID)
 				require.NoError(t, err)
 				require.NotEmpty(t, schema)
-				ja.Assertf(string(schema), string(sch))
+				require.JSONEq(t, string(sch), string(schema))
 			})
 		})
 
@@ -173,7 +171,7 @@ func TestSuite(store DBStorage) func(*testing.T) {
 			require.Error(t, err)
 			require.Empty(t, have)
 
-			checkEvents(t, storage.Event{Kind: storage.EventDeleteSchema})
+			checkEvents(t, timeout, storage.NewSchemaEvent(storage.EventDeleteSchema, schID))
 		})
 	}
 }

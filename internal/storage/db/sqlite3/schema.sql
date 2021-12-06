@@ -35,7 +35,7 @@ CREATE TABLE IF NOT EXISTS policy_revision (
 
 -- name: attr_schema_defs
 CREATE TABLE IF NOT EXISTS attr_schema_defs (
-    id VARCHAR PRIMARY KEY,
+    id VARCHAR(255) PRIMARY KEY,
     definition VARCHAR
 );
 
