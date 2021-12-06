@@ -270,6 +270,16 @@ message AddOrUpdateSchemaResponse {
     };
 }
 
+message ListSchemasResponse {
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
+        json_schema: {
+            description: "List of schemas stored in the Cerbos server"
+        }
+    };
+
+    repeated .cerbos.schema.v1.Schema schemas = 1;
+}
+
 message GetSchemaResponse {
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
         json_schema: {

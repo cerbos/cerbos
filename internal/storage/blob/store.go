@@ -26,6 +26,7 @@ import (
 	"gocloud.dev/gcp"
 
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
+	schemav1 "github.com/cerbos/cerbos/api/genpb/cerbos/schema/v1"
 	"github.com/cerbos/cerbos/internal/config"
 	"github.com/cerbos/cerbos/internal/namer"
 	"github.com/cerbos/cerbos/internal/policy"
@@ -313,6 +314,10 @@ func (s *Store) GetDependents(_ context.Context, ids ...namer.ModuleID) (map[nam
 
 func (s *Store) GetPolicies(ctx context.Context) ([]*policy.Wrapper, error) {
 	return s.idx.GetPolicies(ctx)
+}
+
+func (s *Store) GetSchemas(ctx context.Context) ([]*schemav1.Schema, error) {
+	return s.idx.GetSchemas(ctx)
 }
 
 func (s *Store) LoadSchema(ctx context.Context, url string) (io.ReadCloser, error) {

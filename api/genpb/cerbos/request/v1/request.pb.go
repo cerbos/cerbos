@@ -227,6 +227,101 @@ func (ListPoliciesRequest_SortOptions_Order) EnumDescriptor() ([]byte, []int) {
 	return file_cerbos_request_v1_request_proto_rawDescGZIP(), []int{12, 1, 1}
 }
 
+type ListSchemasRequest_SortOptions_Column int32
+
+const (
+	ListSchemasRequest_SortOptions_COLUMN_UNSPECIFIED ListSchemasRequest_SortOptions_Column = 0
+	ListSchemasRequest_SortOptions_COLUMN_NAME        ListSchemasRequest_SortOptions_Column = 1
+)
+
+// Enum value maps for ListSchemasRequest_SortOptions_Column.
+var (
+	ListSchemasRequest_SortOptions_Column_name = map[int32]string{
+		0: "COLUMN_UNSPECIFIED",
+		1: "COLUMN_NAME",
+	}
+	ListSchemasRequest_SortOptions_Column_value = map[string]int32{
+		"COLUMN_UNSPECIFIED": 0,
+		"COLUMN_NAME":        1,
+	}
+)
+
+func (x ListSchemasRequest_SortOptions_Column) Enum() *ListSchemasRequest_SortOptions_Column {
+	p := new(ListSchemasRequest_SortOptions_Column)
+	*p = x
+	return p
+}
+
+func (x ListSchemasRequest_SortOptions_Column) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (ListSchemasRequest_SortOptions_Column) Descriptor() protoreflect.EnumDescriptor {
+	return file_cerbos_request_v1_request_proto_enumTypes[4].Descriptor()
+}
+
+func (ListSchemasRequest_SortOptions_Column) Type() protoreflect.EnumType {
+	return &file_cerbos_request_v1_request_proto_enumTypes[4]
+}
+
+func (x ListSchemasRequest_SortOptions_Column) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use ListSchemasRequest_SortOptions_Column.Descriptor instead.
+func (ListSchemasRequest_SortOptions_Column) EnumDescriptor() ([]byte, []int) {
+	return file_cerbos_request_v1_request_proto_rawDescGZIP(), []int{14, 0, 0}
+}
+
+type ListSchemasRequest_SortOptions_Order int32
+
+const (
+	ListSchemasRequest_SortOptions_ORDER_UNSPECIFIED ListSchemasRequest_SortOptions_Order = 0
+	ListSchemasRequest_SortOptions_ORDER_ASCENDING   ListSchemasRequest_SortOptions_Order = 1
+	ListSchemasRequest_SortOptions_ORDER_DESCENDING  ListSchemasRequest_SortOptions_Order = 2
+)
+
+// Enum value maps for ListSchemasRequest_SortOptions_Order.
+var (
+	ListSchemasRequest_SortOptions_Order_name = map[int32]string{
+		0: "ORDER_UNSPECIFIED",
+		1: "ORDER_ASCENDING",
+		2: "ORDER_DESCENDING",
+	}
+	ListSchemasRequest_SortOptions_Order_value = map[string]int32{
+		"ORDER_UNSPECIFIED": 0,
+		"ORDER_ASCENDING":   1,
+		"ORDER_DESCENDING":  2,
+	}
+)
+
+func (x ListSchemasRequest_SortOptions_Order) Enum() *ListSchemasRequest_SortOptions_Order {
+	p := new(ListSchemasRequest_SortOptions_Order)
+	*p = x
+	return p
+}
+
+func (x ListSchemasRequest_SortOptions_Order) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (ListSchemasRequest_SortOptions_Order) Descriptor() protoreflect.EnumDescriptor {
+	return file_cerbos_request_v1_request_proto_enumTypes[5].Descriptor()
+}
+
+func (ListSchemasRequest_SortOptions_Order) Type() protoreflect.EnumType {
+	return &file_cerbos_request_v1_request_proto_enumTypes[5]
+}
+
+func (x ListSchemasRequest_SortOptions_Order) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use ListSchemasRequest_SortOptions_Order.Descriptor instead.
+func (ListSchemasRequest_SortOptions_Order) EnumDescriptor() ([]byte, []int) {
+	return file_cerbos_request_v1_request_proto_rawDescGZIP(), []int{14, 0, 1}
+}
+
 type CheckResourceSetRequest struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -1146,6 +1241,53 @@ func (x *AddOrUpdateSchemaRequest) GetSchema() []byte {
 	return nil
 }
 
+type ListSchemasRequest struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	SortOptions *ListSchemasRequest_SortOptions `protobuf:"bytes,1,opt,name=sort_options,json=sortOptions,proto3" json:"sort_options,omitempty"`
+}
+
+func (x *ListSchemasRequest) Reset() {
+	*x = ListSchemasRequest{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_cerbos_request_v1_request_proto_msgTypes[14]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *ListSchemasRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListSchemasRequest) ProtoMessage() {}
+
+func (x *ListSchemasRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_cerbos_request_v1_request_proto_msgTypes[14]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListSchemasRequest.ProtoReflect.Descriptor instead.
+func (*ListSchemasRequest) Descriptor() ([]byte, []int) {
+	return file_cerbos_request_v1_request_proto_rawDescGZIP(), []int{14}
+}
+
+func (x *ListSchemasRequest) GetSortOptions() *ListSchemasRequest_SortOptions {
+	if x != nil {
+		return x.SortOptions
+	}
+	return nil
+}
+
 type GetSchemaRequest struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -1157,7 +1299,7 @@ type GetSchemaRequest struct {
 func (x *GetSchemaRequest) Reset() {
 	*x = GetSchemaRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_cerbos_request_v1_request_proto_msgTypes[14]
+		mi := &file_cerbos_request_v1_request_proto_msgTypes[15]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1170,7 +1312,7 @@ func (x *GetSchemaRequest) String() string {
 func (*GetSchemaRequest) ProtoMessage() {}
 
 func (x *GetSchemaRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_cerbos_request_v1_request_proto_msgTypes[14]
+	mi := &file_cerbos_request_v1_request_proto_msgTypes[15]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1183,7 +1325,7 @@ func (x *GetSchemaRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetSchemaRequest.ProtoReflect.Descriptor instead.
 func (*GetSchemaRequest) Descriptor() ([]byte, []int) {
-	return file_cerbos_request_v1_request_proto_rawDescGZIP(), []int{14}
+	return file_cerbos_request_v1_request_proto_rawDescGZIP(), []int{15}
 }
 
 func (x *GetSchemaRequest) GetId() string {
@@ -1204,7 +1346,7 @@ type DeleteSchemaRequest struct {
 func (x *DeleteSchemaRequest) Reset() {
 	*x = DeleteSchemaRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_cerbos_request_v1_request_proto_msgTypes[15]
+		mi := &file_cerbos_request_v1_request_proto_msgTypes[16]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1217,7 +1359,7 @@ func (x *DeleteSchemaRequest) String() string {
 func (*DeleteSchemaRequest) ProtoMessage() {}
 
 func (x *DeleteSchemaRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_cerbos_request_v1_request_proto_msgTypes[15]
+	mi := &file_cerbos_request_v1_request_proto_msgTypes[16]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1230,7 +1372,7 @@ func (x *DeleteSchemaRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteSchemaRequest.ProtoReflect.Descriptor instead.
 func (*DeleteSchemaRequest) Descriptor() ([]byte, []int) {
-	return file_cerbos_request_v1_request_proto_rawDescGZIP(), []int{15}
+	return file_cerbos_request_v1_request_proto_rawDescGZIP(), []int{16}
 }
 
 func (x *DeleteSchemaRequest) GetId() string {
@@ -1252,7 +1394,7 @@ type CheckResourceBatchRequest_BatchEntry struct {
 func (x *CheckResourceBatchRequest_BatchEntry) Reset() {
 	*x = CheckResourceBatchRequest_BatchEntry{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_cerbos_request_v1_request_proto_msgTypes[18]
+		mi := &file_cerbos_request_v1_request_proto_msgTypes[19]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1265,7 +1407,7 @@ func (x *CheckResourceBatchRequest_BatchEntry) String() string {
 func (*CheckResourceBatchRequest_BatchEntry) ProtoMessage() {}
 
 func (x *CheckResourceBatchRequest_BatchEntry) ProtoReflect() protoreflect.Message {
-	mi := &file_cerbos_request_v1_request_proto_msgTypes[18]
+	mi := &file_cerbos_request_v1_request_proto_msgTypes[19]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1307,7 +1449,7 @@ type AuxData_JWT struct {
 func (x *AuxData_JWT) Reset() {
 	*x = AuxData_JWT{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_cerbos_request_v1_request_proto_msgTypes[19]
+		mi := &file_cerbos_request_v1_request_proto_msgTypes[20]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1320,7 +1462,7 @@ func (x *AuxData_JWT) String() string {
 func (*AuxData_JWT) ProtoMessage() {}
 
 func (x *AuxData_JWT) ProtoReflect() protoreflect.Message {
-	mi := &file_cerbos_request_v1_request_proto_msgTypes[19]
+	mi := &file_cerbos_request_v1_request_proto_msgTypes[20]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1362,7 +1504,7 @@ type ListAuditLogEntriesRequest_TimeRange struct {
 func (x *ListAuditLogEntriesRequest_TimeRange) Reset() {
 	*x = ListAuditLogEntriesRequest_TimeRange{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_cerbos_request_v1_request_proto_msgTypes[20]
+		mi := &file_cerbos_request_v1_request_proto_msgTypes[21]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1375,7 +1517,7 @@ func (x *ListAuditLogEntriesRequest_TimeRange) String() string {
 func (*ListAuditLogEntriesRequest_TimeRange) ProtoMessage() {}
 
 func (x *ListAuditLogEntriesRequest_TimeRange) ProtoReflect() protoreflect.Message {
-	mi := &file_cerbos_request_v1_request_proto_msgTypes[20]
+	mi := &file_cerbos_request_v1_request_proto_msgTypes[21]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1418,7 +1560,7 @@ type ListPoliciesRequest_Filter struct {
 func (x *ListPoliciesRequest_Filter) Reset() {
 	*x = ListPoliciesRequest_Filter{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_cerbos_request_v1_request_proto_msgTypes[21]
+		mi := &file_cerbos_request_v1_request_proto_msgTypes[22]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1431,7 +1573,7 @@ func (x *ListPoliciesRequest_Filter) String() string {
 func (*ListPoliciesRequest_Filter) ProtoMessage() {}
 
 func (x *ListPoliciesRequest_Filter) ProtoReflect() protoreflect.Message {
-	mi := &file_cerbos_request_v1_request_proto_msgTypes[21]
+	mi := &file_cerbos_request_v1_request_proto_msgTypes[22]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1480,7 +1622,7 @@ type ListPoliciesRequest_SortOptions struct {
 func (x *ListPoliciesRequest_SortOptions) Reset() {
 	*x = ListPoliciesRequest_SortOptions{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_cerbos_request_v1_request_proto_msgTypes[22]
+		mi := &file_cerbos_request_v1_request_proto_msgTypes[23]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1493,7 +1635,7 @@ func (x *ListPoliciesRequest_SortOptions) String() string {
 func (*ListPoliciesRequest_SortOptions) ProtoMessage() {}
 
 func (x *ListPoliciesRequest_SortOptions) ProtoReflect() protoreflect.Message {
-	mi := &file_cerbos_request_v1_request_proto_msgTypes[22]
+	mi := &file_cerbos_request_v1_request_proto_msgTypes[23]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1521,6 +1663,61 @@ func (x *ListPoliciesRequest_SortOptions) GetOrder() ListPoliciesRequest_SortOpt
 		return x.Order
 	}
 	return ListPoliciesRequest_SortOptions_ORDER_UNSPECIFIED
+}
+
+type ListSchemasRequest_SortOptions struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Column ListSchemasRequest_SortOptions_Column `protobuf:"varint,1,opt,name=column,proto3,enum=cerbos.request.v1.ListSchemasRequest_SortOptions_Column" json:"column,omitempty"`
+	Order  ListSchemasRequest_SortOptions_Order  `protobuf:"varint,2,opt,name=order,proto3,enum=cerbos.request.v1.ListSchemasRequest_SortOptions_Order" json:"order,omitempty"`
+}
+
+func (x *ListSchemasRequest_SortOptions) Reset() {
+	*x = ListSchemasRequest_SortOptions{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_cerbos_request_v1_request_proto_msgTypes[24]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *ListSchemasRequest_SortOptions) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListSchemasRequest_SortOptions) ProtoMessage() {}
+
+func (x *ListSchemasRequest_SortOptions) ProtoReflect() protoreflect.Message {
+	mi := &file_cerbos_request_v1_request_proto_msgTypes[24]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListSchemasRequest_SortOptions.ProtoReflect.Descriptor instead.
+func (*ListSchemasRequest_SortOptions) Descriptor() ([]byte, []int) {
+	return file_cerbos_request_v1_request_proto_rawDescGZIP(), []int{14, 0}
+}
+
+func (x *ListSchemasRequest_SortOptions) GetColumn() ListSchemasRequest_SortOptions_Column {
+	if x != nil {
+		return x.Column
+	}
+	return ListSchemasRequest_SortOptions_COLUMN_UNSPECIFIED
+}
+
+func (x *ListSchemasRequest_SortOptions) GetOrder() ListSchemasRequest_SortOptions_Order {
+	if x != nil {
+		return x.Order
+	}
+	return ListSchemasRequest_SortOptions_ORDER_UNSPECIFIED
 }
 
 var File_cerbos_request_v1_request_proto protoreflect.FileDescriptor
@@ -1980,32 +2177,68 @@ var file_cerbos_request_v1_request_proto_rawDesc = []byte{
 	0x02, 0xfa, 0x42, 0x04, 0x7a, 0x02, 0x10, 0x0a, 0x52, 0x06, 0x73, 0x63, 0x68, 0x65, 0x6d, 0x61,
 	0x3a, 0x20, 0x92, 0x41, 0x1d, 0x0a, 0x1b, 0x32, 0x19, 0x41, 0x64, 0x64, 0x2f, 0x75, 0x70, 0x64,
 	0x61, 0x74, 0x65, 0x20, 0x73, 0x63, 0x68, 0x65, 0x6d, 0x61, 0x20, 0x72, 0x65, 0x71, 0x75, 0x65,
-	0x73, 0x74, 0x22, 0x84, 0x01, 0x0a, 0x10, 0x47, 0x65, 0x74, 0x53, 0x63, 0x68, 0x65, 0x6d, 0x61,
-	0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x55, 0x0a, 0x02, 0x69, 0x64, 0x18, 0x01, 0x20,
-	0x01, 0x28, 0x09, 0x42, 0x45, 0x92, 0x41, 0x34, 0x32, 0x20, 0x55, 0x6e, 0x69, 0x71, 0x75, 0x65,
-	0x20, 0x69, 0x64, 0x65, 0x6e, 0x74, 0x69, 0x66, 0x69, 0x65, 0x72, 0x20, 0x66, 0x6f, 0x72, 0x20,
-	0x74, 0x68, 0x65, 0x20, 0x73, 0x63, 0x68, 0x65, 0x6d, 0x61, 0x4a, 0x10, 0x22, 0x70, 0x72, 0x69,
-	0x6e, 0x63, 0x69, 0x70, 0x61, 0x6c, 0x2e, 0x6a, 0x73, 0x6f, 0x6e, 0x22, 0xe2, 0x41, 0x01, 0x02,
-	0xfa, 0x42, 0x07, 0x72, 0x05, 0x10, 0x01, 0x18, 0x80, 0x02, 0x52, 0x02, 0x69, 0x64, 0x3a, 0x19,
-	0x92, 0x41, 0x16, 0x0a, 0x14, 0x32, 0x12, 0x47, 0x65, 0x74, 0x20, 0x73, 0x63, 0x68, 0x65, 0x6d,
-	0x61, 0x20, 0x72, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x22, 0x8a, 0x01, 0x0a, 0x13, 0x44, 0x65,
-	0x6c, 0x65, 0x74, 0x65, 0x53, 0x63, 0x68, 0x65, 0x6d, 0x61, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73,
-	0x74, 0x12, 0x55, 0x0a, 0x02, 0x69, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x42, 0x45, 0x92,
-	0x41, 0x34, 0x32, 0x20, 0x55, 0x6e, 0x69, 0x71, 0x75, 0x65, 0x20, 0x69, 0x64, 0x65, 0x6e, 0x74,
-	0x69, 0x66, 0x69, 0x65, 0x72, 0x20, 0x66, 0x6f, 0x72, 0x20, 0x74, 0x68, 0x65, 0x20, 0x73, 0x63,
-	0x68, 0x65, 0x6d, 0x61, 0x4a, 0x10, 0x22, 0x70, 0x72, 0x69, 0x6e, 0x63, 0x69, 0x70, 0x61, 0x6c,
-	0x2e, 0x6a, 0x73, 0x6f, 0x6e, 0x22, 0xe2, 0x41, 0x01, 0x02, 0xfa, 0x42, 0x07, 0x72, 0x05, 0x10,
-	0x01, 0x18, 0x80, 0x02, 0x52, 0x02, 0x69, 0x64, 0x3a, 0x1c, 0x92, 0x41, 0x19, 0x0a, 0x17, 0x32,
-	0x15, 0x44, 0x65, 0x6c, 0x65, 0x74, 0x65, 0x20, 0x73, 0x63, 0x68, 0x65, 0x6d, 0x61, 0x20, 0x72,
-	0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x42, 0x73, 0x0a, 0x19, 0x64, 0x65, 0x76, 0x2e, 0x63, 0x65,
-	0x72, 0x62, 0x6f, 0x73, 0x2e, 0x61, 0x70, 0x69, 0x2e, 0x76, 0x31, 0x2e, 0x72, 0x65, 0x71, 0x75,
-	0x65, 0x73, 0x74, 0x5a, 0x3e, 0x67, 0x69, 0x74, 0x68, 0x75, 0x62, 0x2e, 0x63, 0x6f, 0x6d, 0x2f,
-	0x63, 0x65, 0x72, 0x62, 0x6f, 0x73, 0x2f, 0x63, 0x65, 0x72, 0x62, 0x6f, 0x73, 0x2f, 0x61, 0x70,
-	0x69, 0x2f, 0x67, 0x65, 0x6e, 0x70, 0x62, 0x2f, 0x63, 0x65, 0x72, 0x62, 0x6f, 0x73, 0x2f, 0x72,
-	0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x2f, 0x76, 0x31, 0x3b, 0x72, 0x65, 0x71, 0x75, 0x65, 0x73,
-	0x74, 0x76, 0x31, 0xaa, 0x02, 0x15, 0x43, 0x65, 0x72, 0x62, 0x6f, 0x73, 0x2e, 0x41, 0x70, 0x69,
-	0x2e, 0x56, 0x31, 0x2e, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x62, 0x06, 0x70, 0x72, 0x6f,
-	0x74, 0x6f, 0x33,
+	0x73, 0x74, 0x22, 0xca, 0x04, 0x0a, 0x12, 0x4c, 0x69, 0x73, 0x74, 0x53, 0x63, 0x68, 0x65, 0x6d,
+	0x61, 0x73, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x54, 0x0a, 0x0c, 0x73, 0x6f, 0x72,
+	0x74, 0x5f, 0x6f, 0x70, 0x74, 0x69, 0x6f, 0x6e, 0x73, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0b, 0x32,
+	0x31, 0x2e, 0x63, 0x65, 0x72, 0x62, 0x6f, 0x73, 0x2e, 0x72, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74,
+	0x2e, 0x76, 0x31, 0x2e, 0x4c, 0x69, 0x73, 0x74, 0x53, 0x63, 0x68, 0x65, 0x6d, 0x61, 0x73, 0x52,
+	0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x2e, 0x53, 0x6f, 0x72, 0x74, 0x4f, 0x70, 0x74, 0x69, 0x6f,
+	0x6e, 0x73, 0x52, 0x0b, 0x73, 0x6f, 0x72, 0x74, 0x4f, 0x70, 0x74, 0x69, 0x6f, 0x6e, 0x73, 0x1a,
+	0xc0, 0x03, 0x0a, 0x0b, 0x53, 0x6f, 0x72, 0x74, 0x4f, 0x70, 0x74, 0x69, 0x6f, 0x6e, 0x73, 0x12,
+	0x7b, 0x0a, 0x06, 0x63, 0x6f, 0x6c, 0x75, 0x6d, 0x6e, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0e, 0x32,
+	0x38, 0x2e, 0x63, 0x65, 0x72, 0x62, 0x6f, 0x73, 0x2e, 0x72, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74,
+	0x2e, 0x76, 0x31, 0x2e, 0x4c, 0x69, 0x73, 0x74, 0x53, 0x63, 0x68, 0x65, 0x6d, 0x61, 0x73, 0x52,
+	0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x2e, 0x53, 0x6f, 0x72, 0x74, 0x4f, 0x70, 0x74, 0x69, 0x6f,
+	0x6e, 0x73, 0x2e, 0x43, 0x6f, 0x6c, 0x75, 0x6d, 0x6e, 0x42, 0x29, 0x92, 0x41, 0x1c, 0x32, 0x0b,
+	0x53, 0x6f, 0x72, 0x74, 0x20, 0x63, 0x6f, 0x6c, 0x75, 0x6d, 0x6e, 0x4a, 0x0d, 0x22, 0x43, 0x4f,
+	0x4c, 0x55, 0x4d, 0x4e, 0x5f, 0x4e, 0x41, 0x4d, 0x45, 0x22, 0xfa, 0x42, 0x07, 0x82, 0x01, 0x04,
+	0x18, 0x01, 0x18, 0x02, 0x52, 0x06, 0x63, 0x6f, 0x6c, 0x75, 0x6d, 0x6e, 0x12, 0xa0, 0x01, 0x0a,
+	0x05, 0x6f, 0x72, 0x64, 0x65, 0x72, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0e, 0x32, 0x37, 0x2e, 0x63,
+	0x65, 0x72, 0x62, 0x6f, 0x73, 0x2e, 0x72, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x2e, 0x76, 0x31,
+	0x2e, 0x4c, 0x69, 0x73, 0x74, 0x53, 0x63, 0x68, 0x65, 0x6d, 0x61, 0x73, 0x52, 0x65, 0x71, 0x75,
+	0x65, 0x73, 0x74, 0x2e, 0x53, 0x6f, 0x72, 0x74, 0x4f, 0x70, 0x74, 0x69, 0x6f, 0x6e, 0x73, 0x2e,
+	0x4f, 0x72, 0x64, 0x65, 0x72, 0x42, 0x51, 0x92, 0x41, 0x44, 0x32, 0x0a, 0x53, 0x6f, 0x72, 0x74,
+	0x20, 0x6f, 0x72, 0x64, 0x65, 0x72, 0x4a, 0x11, 0x22, 0x4f, 0x52, 0x44, 0x45, 0x52, 0x5f, 0x41,
+	0x53, 0x43, 0x45, 0x4e, 0x44, 0x49, 0x4e, 0x47, 0x22, 0x92, 0x02, 0x0f, 0x4f, 0x52, 0x44, 0x45,
+	0x52, 0x5f, 0x41, 0x53, 0x43, 0x45, 0x4e, 0x44, 0x49, 0x4e, 0x47, 0x92, 0x02, 0x10, 0x4f, 0x52,
+	0x44, 0x45, 0x52, 0x5f, 0x44, 0x45, 0x53, 0x43, 0x45, 0x4e, 0x44, 0x49, 0x4e, 0x47, 0xfa, 0x42,
+	0x07, 0x82, 0x01, 0x04, 0x18, 0x01, 0x18, 0x02, 0x52, 0x05, 0x6f, 0x72, 0x64, 0x65, 0x72, 0x22,
+	0x31, 0x0a, 0x06, 0x43, 0x6f, 0x6c, 0x75, 0x6d, 0x6e, 0x12, 0x16, 0x0a, 0x12, 0x43, 0x4f, 0x4c,
+	0x55, 0x4d, 0x4e, 0x5f, 0x55, 0x4e, 0x53, 0x50, 0x45, 0x43, 0x49, 0x46, 0x49, 0x45, 0x44, 0x10,
+	0x00, 0x12, 0x0f, 0x0a, 0x0b, 0x43, 0x4f, 0x4c, 0x55, 0x4d, 0x4e, 0x5f, 0x4e, 0x41, 0x4d, 0x45,
+	0x10, 0x01, 0x22, 0x49, 0x0a, 0x05, 0x4f, 0x72, 0x64, 0x65, 0x72, 0x12, 0x15, 0x0a, 0x11, 0x4f,
+	0x52, 0x44, 0x45, 0x52, 0x5f, 0x55, 0x4e, 0x53, 0x50, 0x45, 0x43, 0x49, 0x46, 0x49, 0x45, 0x44,
+	0x10, 0x00, 0x12, 0x13, 0x0a, 0x0f, 0x4f, 0x52, 0x44, 0x45, 0x52, 0x5f, 0x41, 0x53, 0x43, 0x45,
+	0x4e, 0x44, 0x49, 0x4e, 0x47, 0x10, 0x01, 0x12, 0x14, 0x0a, 0x10, 0x4f, 0x52, 0x44, 0x45, 0x52,
+	0x5f, 0x44, 0x45, 0x53, 0x43, 0x45, 0x4e, 0x44, 0x49, 0x4e, 0x47, 0x10, 0x02, 0x3a, 0x13, 0x92,
+	0x41, 0x10, 0x0a, 0x0e, 0x32, 0x0c, 0x53, 0x6f, 0x72, 0x74, 0x20, 0x6f, 0x70, 0x74, 0x69, 0x6f,
+	0x6e, 0x73, 0x3a, 0x1b, 0x92, 0x41, 0x18, 0x0a, 0x16, 0x32, 0x14, 0x4c, 0x69, 0x73, 0x74, 0x20,
+	0x73, 0x63, 0x68, 0x65, 0x6d, 0x61, 0x73, 0x20, 0x72, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x22,
+	0x84, 0x01, 0x0a, 0x10, 0x47, 0x65, 0x74, 0x53, 0x63, 0x68, 0x65, 0x6d, 0x61, 0x52, 0x65, 0x71,
+	0x75, 0x65, 0x73, 0x74, 0x12, 0x55, 0x0a, 0x02, 0x69, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09,
+	0x42, 0x45, 0x92, 0x41, 0x34, 0x32, 0x20, 0x55, 0x6e, 0x69, 0x71, 0x75, 0x65, 0x20, 0x69, 0x64,
+	0x65, 0x6e, 0x74, 0x69, 0x66, 0x69, 0x65, 0x72, 0x20, 0x66, 0x6f, 0x72, 0x20, 0x74, 0x68, 0x65,
+	0x20, 0x73, 0x63, 0x68, 0x65, 0x6d, 0x61, 0x4a, 0x10, 0x22, 0x70, 0x72, 0x69, 0x6e, 0x63, 0x69,
+	0x70, 0x61, 0x6c, 0x2e, 0x6a, 0x73, 0x6f, 0x6e, 0x22, 0xe2, 0x41, 0x01, 0x02, 0xfa, 0x42, 0x07,
+	0x72, 0x05, 0x10, 0x01, 0x18, 0x80, 0x02, 0x52, 0x02, 0x69, 0x64, 0x3a, 0x19, 0x92, 0x41, 0x16,
+	0x0a, 0x14, 0x32, 0x12, 0x47, 0x65, 0x74, 0x20, 0x73, 0x63, 0x68, 0x65, 0x6d, 0x61, 0x20, 0x72,
+	0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x22, 0x8a, 0x01, 0x0a, 0x13, 0x44, 0x65, 0x6c, 0x65, 0x74,
+	0x65, 0x53, 0x63, 0x68, 0x65, 0x6d, 0x61, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x55,
+	0x0a, 0x02, 0x69, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x42, 0x45, 0x92, 0x41, 0x34, 0x32,
+	0x20, 0x55, 0x6e, 0x69, 0x71, 0x75, 0x65, 0x20, 0x69, 0x64, 0x65, 0x6e, 0x74, 0x69, 0x66, 0x69,
+	0x65, 0x72, 0x20, 0x66, 0x6f, 0x72, 0x20, 0x74, 0x68, 0x65, 0x20, 0x73, 0x63, 0x68, 0x65, 0x6d,
+	0x61, 0x4a, 0x10, 0x22, 0x70, 0x72, 0x69, 0x6e, 0x63, 0x69, 0x70, 0x61, 0x6c, 0x2e, 0x6a, 0x73,
+	0x6f, 0x6e, 0x22, 0xe2, 0x41, 0x01, 0x02, 0xfa, 0x42, 0x07, 0x72, 0x05, 0x10, 0x01, 0x18, 0x80,
+	0x02, 0x52, 0x02, 0x69, 0x64, 0x3a, 0x1c, 0x92, 0x41, 0x19, 0x0a, 0x17, 0x32, 0x15, 0x44, 0x65,
+	0x6c, 0x65, 0x74, 0x65, 0x20, 0x73, 0x63, 0x68, 0x65, 0x6d, 0x61, 0x20, 0x72, 0x65, 0x71, 0x75,
+	0x65, 0x73, 0x74, 0x42, 0x73, 0x0a, 0x19, 0x64, 0x65, 0x76, 0x2e, 0x63, 0x65, 0x72, 0x62, 0x6f,
+	0x73, 0x2e, 0x61, 0x70, 0x69, 0x2e, 0x76, 0x31, 0x2e, 0x72, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74,
+	0x5a, 0x3e, 0x67, 0x69, 0x74, 0x68, 0x75, 0x62, 0x2e, 0x63, 0x6f, 0x6d, 0x2f, 0x63, 0x65, 0x72,
+	0x62, 0x6f, 0x73, 0x2f, 0x63, 0x65, 0x72, 0x62, 0x6f, 0x73, 0x2f, 0x61, 0x70, 0x69, 0x2f, 0x67,
+	0x65, 0x6e, 0x70, 0x62, 0x2f, 0x63, 0x65, 0x72, 0x62, 0x6f, 0x73, 0x2f, 0x72, 0x65, 0x71, 0x75,
+	0x65, 0x73, 0x74, 0x2f, 0x76, 0x31, 0x3b, 0x72, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x76, 0x31,
+	0xaa, 0x02, 0x15, 0x43, 0x65, 0x72, 0x62, 0x6f, 0x73, 0x2e, 0x41, 0x70, 0x69, 0x2e, 0x56, 0x31,
+	0x2e, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
 }
 
 var (
@@ -2020,80 +2253,87 @@ func file_cerbos_request_v1_request_proto_rawDescGZIP() []byte {
 	return file_cerbos_request_v1_request_proto_rawDescData
 }
 
-var file_cerbos_request_v1_request_proto_enumTypes = make([]protoimpl.EnumInfo, 4)
-var file_cerbos_request_v1_request_proto_msgTypes = make([]protoimpl.MessageInfo, 23)
+var file_cerbos_request_v1_request_proto_enumTypes = make([]protoimpl.EnumInfo, 6)
+var file_cerbos_request_v1_request_proto_msgTypes = make([]protoimpl.MessageInfo, 25)
 var file_cerbos_request_v1_request_proto_goTypes = []interface{}{
 	(ListAuditLogEntriesRequest_Kind)(0),         // 0: cerbos.request.v1.ListAuditLogEntriesRequest.Kind
 	(ListPoliciesRequest_MatchType)(0),           // 1: cerbos.request.v1.ListPoliciesRequest.MatchType
 	(ListPoliciesRequest_SortOptions_Column)(0),  // 2: cerbos.request.v1.ListPoliciesRequest.SortOptions.Column
 	(ListPoliciesRequest_SortOptions_Order)(0),   // 3: cerbos.request.v1.ListPoliciesRequest.SortOptions.Order
-	(*CheckResourceSetRequest)(nil),              // 4: cerbos.request.v1.CheckResourceSetRequest
-	(*ResourceSet)(nil),                          // 5: cerbos.request.v1.ResourceSet
-	(*AttributesMap)(nil),                        // 6: cerbos.request.v1.AttributesMap
-	(*CheckResourceBatchRequest)(nil),            // 7: cerbos.request.v1.CheckResourceBatchRequest
-	(*AuxData)(nil),                              // 8: cerbos.request.v1.AuxData
-	(*PolicyFile)(nil),                           // 9: cerbos.request.v1.PolicyFile
-	(*PlaygroundValidateRequest)(nil),            // 10: cerbos.request.v1.PlaygroundValidateRequest
-	(*PlaygroundEvaluateRequest)(nil),            // 11: cerbos.request.v1.PlaygroundEvaluateRequest
-	(*PlaygroundProxyRequest)(nil),               // 12: cerbos.request.v1.PlaygroundProxyRequest
-	(*AddOrUpdatePolicyRequest)(nil),             // 13: cerbos.request.v1.AddOrUpdatePolicyRequest
-	(*ListAuditLogEntriesRequest)(nil),           // 14: cerbos.request.v1.ListAuditLogEntriesRequest
-	(*ServerInfoRequest)(nil),                    // 15: cerbos.request.v1.ServerInfoRequest
-	(*ListPoliciesRequest)(nil),                  // 16: cerbos.request.v1.ListPoliciesRequest
-	(*AddOrUpdateSchemaRequest)(nil),             // 17: cerbos.request.v1.AddOrUpdateSchemaRequest
-	(*GetSchemaRequest)(nil),                     // 18: cerbos.request.v1.GetSchemaRequest
-	(*DeleteSchemaRequest)(nil),                  // 19: cerbos.request.v1.DeleteSchemaRequest
-	nil,                                          // 20: cerbos.request.v1.ResourceSet.InstancesEntry
-	nil,                                          // 21: cerbos.request.v1.AttributesMap.AttrEntry
-	(*CheckResourceBatchRequest_BatchEntry)(nil), // 22: cerbos.request.v1.CheckResourceBatchRequest.BatchEntry
-	(*AuxData_JWT)(nil),                          // 23: cerbos.request.v1.AuxData.JWT
-	(*ListAuditLogEntriesRequest_TimeRange)(nil), // 24: cerbos.request.v1.ListAuditLogEntriesRequest.TimeRange
-	(*ListPoliciesRequest_Filter)(nil),           // 25: cerbos.request.v1.ListPoliciesRequest.Filter
-	(*ListPoliciesRequest_SortOptions)(nil),      // 26: cerbos.request.v1.ListPoliciesRequest.SortOptions
-	(*v1.Principal)(nil),                         // 27: cerbos.engine.v1.Principal
-	(*v1.Resource)(nil),                          // 28: cerbos.engine.v1.Resource
-	(*v11.Policy)(nil),                           // 29: cerbos.policy.v1.Policy
-	(*durationpb.Duration)(nil),                  // 30: google.protobuf.Duration
-	(*structpb.Value)(nil),                       // 31: google.protobuf.Value
-	(*timestamppb.Timestamp)(nil),                // 32: google.protobuf.Timestamp
+	(ListSchemasRequest_SortOptions_Column)(0),   // 4: cerbos.request.v1.ListSchemasRequest.SortOptions.Column
+	(ListSchemasRequest_SortOptions_Order)(0),    // 5: cerbos.request.v1.ListSchemasRequest.SortOptions.Order
+	(*CheckResourceSetRequest)(nil),              // 6: cerbos.request.v1.CheckResourceSetRequest
+	(*ResourceSet)(nil),                          // 7: cerbos.request.v1.ResourceSet
+	(*AttributesMap)(nil),                        // 8: cerbos.request.v1.AttributesMap
+	(*CheckResourceBatchRequest)(nil),            // 9: cerbos.request.v1.CheckResourceBatchRequest
+	(*AuxData)(nil),                              // 10: cerbos.request.v1.AuxData
+	(*PolicyFile)(nil),                           // 11: cerbos.request.v1.PolicyFile
+	(*PlaygroundValidateRequest)(nil),            // 12: cerbos.request.v1.PlaygroundValidateRequest
+	(*PlaygroundEvaluateRequest)(nil),            // 13: cerbos.request.v1.PlaygroundEvaluateRequest
+	(*PlaygroundProxyRequest)(nil),               // 14: cerbos.request.v1.PlaygroundProxyRequest
+	(*AddOrUpdatePolicyRequest)(nil),             // 15: cerbos.request.v1.AddOrUpdatePolicyRequest
+	(*ListAuditLogEntriesRequest)(nil),           // 16: cerbos.request.v1.ListAuditLogEntriesRequest
+	(*ServerInfoRequest)(nil),                    // 17: cerbos.request.v1.ServerInfoRequest
+	(*ListPoliciesRequest)(nil),                  // 18: cerbos.request.v1.ListPoliciesRequest
+	(*AddOrUpdateSchemaRequest)(nil),             // 19: cerbos.request.v1.AddOrUpdateSchemaRequest
+	(*ListSchemasRequest)(nil),                   // 20: cerbos.request.v1.ListSchemasRequest
+	(*GetSchemaRequest)(nil),                     // 21: cerbos.request.v1.GetSchemaRequest
+	(*DeleteSchemaRequest)(nil),                  // 22: cerbos.request.v1.DeleteSchemaRequest
+	nil,                                          // 23: cerbos.request.v1.ResourceSet.InstancesEntry
+	nil,                                          // 24: cerbos.request.v1.AttributesMap.AttrEntry
+	(*CheckResourceBatchRequest_BatchEntry)(nil), // 25: cerbos.request.v1.CheckResourceBatchRequest.BatchEntry
+	(*AuxData_JWT)(nil),                          // 26: cerbos.request.v1.AuxData.JWT
+	(*ListAuditLogEntriesRequest_TimeRange)(nil), // 27: cerbos.request.v1.ListAuditLogEntriesRequest.TimeRange
+	(*ListPoliciesRequest_Filter)(nil),           // 28: cerbos.request.v1.ListPoliciesRequest.Filter
+	(*ListPoliciesRequest_SortOptions)(nil),      // 29: cerbos.request.v1.ListPoliciesRequest.SortOptions
+	(*ListSchemasRequest_SortOptions)(nil),       // 30: cerbos.request.v1.ListSchemasRequest.SortOptions
+	(*v1.Principal)(nil),                         // 31: cerbos.engine.v1.Principal
+	(*v1.Resource)(nil),                          // 32: cerbos.engine.v1.Resource
+	(*v11.Policy)(nil),                           // 33: cerbos.policy.v1.Policy
+	(*durationpb.Duration)(nil),                  // 34: google.protobuf.Duration
+	(*structpb.Value)(nil),                       // 35: google.protobuf.Value
+	(*timestamppb.Timestamp)(nil),                // 36: google.protobuf.Timestamp
 }
 var file_cerbos_request_v1_request_proto_depIdxs = []int32{
-	27, // 0: cerbos.request.v1.CheckResourceSetRequest.principal:type_name -> cerbos.engine.v1.Principal
-	5,  // 1: cerbos.request.v1.CheckResourceSetRequest.resource:type_name -> cerbos.request.v1.ResourceSet
-	8,  // 2: cerbos.request.v1.CheckResourceSetRequest.aux_data:type_name -> cerbos.request.v1.AuxData
-	20, // 3: cerbos.request.v1.ResourceSet.instances:type_name -> cerbos.request.v1.ResourceSet.InstancesEntry
-	21, // 4: cerbos.request.v1.AttributesMap.attr:type_name -> cerbos.request.v1.AttributesMap.AttrEntry
-	27, // 5: cerbos.request.v1.CheckResourceBatchRequest.principal:type_name -> cerbos.engine.v1.Principal
-	22, // 6: cerbos.request.v1.CheckResourceBatchRequest.resources:type_name -> cerbos.request.v1.CheckResourceBatchRequest.BatchEntry
-	8,  // 7: cerbos.request.v1.CheckResourceBatchRequest.aux_data:type_name -> cerbos.request.v1.AuxData
-	23, // 8: cerbos.request.v1.AuxData.jwt:type_name -> cerbos.request.v1.AuxData.JWT
-	9,  // 9: cerbos.request.v1.PlaygroundValidateRequest.policy_files:type_name -> cerbos.request.v1.PolicyFile
-	9,  // 10: cerbos.request.v1.PlaygroundEvaluateRequest.policy_files:type_name -> cerbos.request.v1.PolicyFile
-	27, // 11: cerbos.request.v1.PlaygroundEvaluateRequest.principal:type_name -> cerbos.engine.v1.Principal
-	28, // 12: cerbos.request.v1.PlaygroundEvaluateRequest.resource:type_name -> cerbos.engine.v1.Resource
-	8,  // 13: cerbos.request.v1.PlaygroundEvaluateRequest.aux_data:type_name -> cerbos.request.v1.AuxData
-	9,  // 14: cerbos.request.v1.PlaygroundProxyRequest.policy_files:type_name -> cerbos.request.v1.PolicyFile
-	4,  // 15: cerbos.request.v1.PlaygroundProxyRequest.check_resource_set:type_name -> cerbos.request.v1.CheckResourceSetRequest
-	7,  // 16: cerbos.request.v1.PlaygroundProxyRequest.check_resource_batch:type_name -> cerbos.request.v1.CheckResourceBatchRequest
-	29, // 17: cerbos.request.v1.AddOrUpdatePolicyRequest.policies:type_name -> cerbos.policy.v1.Policy
+	31, // 0: cerbos.request.v1.CheckResourceSetRequest.principal:type_name -> cerbos.engine.v1.Principal
+	7,  // 1: cerbos.request.v1.CheckResourceSetRequest.resource:type_name -> cerbos.request.v1.ResourceSet
+	10, // 2: cerbos.request.v1.CheckResourceSetRequest.aux_data:type_name -> cerbos.request.v1.AuxData
+	23, // 3: cerbos.request.v1.ResourceSet.instances:type_name -> cerbos.request.v1.ResourceSet.InstancesEntry
+	24, // 4: cerbos.request.v1.AttributesMap.attr:type_name -> cerbos.request.v1.AttributesMap.AttrEntry
+	31, // 5: cerbos.request.v1.CheckResourceBatchRequest.principal:type_name -> cerbos.engine.v1.Principal
+	25, // 6: cerbos.request.v1.CheckResourceBatchRequest.resources:type_name -> cerbos.request.v1.CheckResourceBatchRequest.BatchEntry
+	10, // 7: cerbos.request.v1.CheckResourceBatchRequest.aux_data:type_name -> cerbos.request.v1.AuxData
+	26, // 8: cerbos.request.v1.AuxData.jwt:type_name -> cerbos.request.v1.AuxData.JWT
+	11, // 9: cerbos.request.v1.PlaygroundValidateRequest.policy_files:type_name -> cerbos.request.v1.PolicyFile
+	11, // 10: cerbos.request.v1.PlaygroundEvaluateRequest.policy_files:type_name -> cerbos.request.v1.PolicyFile
+	31, // 11: cerbos.request.v1.PlaygroundEvaluateRequest.principal:type_name -> cerbos.engine.v1.Principal
+	32, // 12: cerbos.request.v1.PlaygroundEvaluateRequest.resource:type_name -> cerbos.engine.v1.Resource
+	10, // 13: cerbos.request.v1.PlaygroundEvaluateRequest.aux_data:type_name -> cerbos.request.v1.AuxData
+	11, // 14: cerbos.request.v1.PlaygroundProxyRequest.policy_files:type_name -> cerbos.request.v1.PolicyFile
+	6,  // 15: cerbos.request.v1.PlaygroundProxyRequest.check_resource_set:type_name -> cerbos.request.v1.CheckResourceSetRequest
+	9,  // 16: cerbos.request.v1.PlaygroundProxyRequest.check_resource_batch:type_name -> cerbos.request.v1.CheckResourceBatchRequest
+	33, // 17: cerbos.request.v1.AddOrUpdatePolicyRequest.policies:type_name -> cerbos.policy.v1.Policy
 	0,  // 18: cerbos.request.v1.ListAuditLogEntriesRequest.kind:type_name -> cerbos.request.v1.ListAuditLogEntriesRequest.Kind
-	24, // 19: cerbos.request.v1.ListAuditLogEntriesRequest.between:type_name -> cerbos.request.v1.ListAuditLogEntriesRequest.TimeRange
-	30, // 20: cerbos.request.v1.ListAuditLogEntriesRequest.since:type_name -> google.protobuf.Duration
-	25, // 21: cerbos.request.v1.ListPoliciesRequest.filters:type_name -> cerbos.request.v1.ListPoliciesRequest.Filter
-	26, // 22: cerbos.request.v1.ListPoliciesRequest.sort_options:type_name -> cerbos.request.v1.ListPoliciesRequest.SortOptions
-	6,  // 23: cerbos.request.v1.ResourceSet.InstancesEntry.value:type_name -> cerbos.request.v1.AttributesMap
-	31, // 24: cerbos.request.v1.AttributesMap.AttrEntry.value:type_name -> google.protobuf.Value
-	28, // 25: cerbos.request.v1.CheckResourceBatchRequest.BatchEntry.resource:type_name -> cerbos.engine.v1.Resource
-	32, // 26: cerbos.request.v1.ListAuditLogEntriesRequest.TimeRange.start:type_name -> google.protobuf.Timestamp
-	32, // 27: cerbos.request.v1.ListAuditLogEntriesRequest.TimeRange.end:type_name -> google.protobuf.Timestamp
-	1,  // 28: cerbos.request.v1.ListPoliciesRequest.Filter.type:type_name -> cerbos.request.v1.ListPoliciesRequest.MatchType
-	2,  // 29: cerbos.request.v1.ListPoliciesRequest.SortOptions.column:type_name -> cerbos.request.v1.ListPoliciesRequest.SortOptions.Column
-	3,  // 30: cerbos.request.v1.ListPoliciesRequest.SortOptions.order:type_name -> cerbos.request.v1.ListPoliciesRequest.SortOptions.Order
-	31, // [31:31] is the sub-list for method output_type
-	31, // [31:31] is the sub-list for method input_type
-	31, // [31:31] is the sub-list for extension type_name
-	31, // [31:31] is the sub-list for extension extendee
-	0,  // [0:31] is the sub-list for field type_name
+	27, // 19: cerbos.request.v1.ListAuditLogEntriesRequest.between:type_name -> cerbos.request.v1.ListAuditLogEntriesRequest.TimeRange
+	34, // 20: cerbos.request.v1.ListAuditLogEntriesRequest.since:type_name -> google.protobuf.Duration
+	28, // 21: cerbos.request.v1.ListPoliciesRequest.filters:type_name -> cerbos.request.v1.ListPoliciesRequest.Filter
+	29, // 22: cerbos.request.v1.ListPoliciesRequest.sort_options:type_name -> cerbos.request.v1.ListPoliciesRequest.SortOptions
+	30, // 23: cerbos.request.v1.ListSchemasRequest.sort_options:type_name -> cerbos.request.v1.ListSchemasRequest.SortOptions
+	8,  // 24: cerbos.request.v1.ResourceSet.InstancesEntry.value:type_name -> cerbos.request.v1.AttributesMap
+	35, // 25: cerbos.request.v1.AttributesMap.AttrEntry.value:type_name -> google.protobuf.Value
+	32, // 26: cerbos.request.v1.CheckResourceBatchRequest.BatchEntry.resource:type_name -> cerbos.engine.v1.Resource
+	36, // 27: cerbos.request.v1.ListAuditLogEntriesRequest.TimeRange.start:type_name -> google.protobuf.Timestamp
+	36, // 28: cerbos.request.v1.ListAuditLogEntriesRequest.TimeRange.end:type_name -> google.protobuf.Timestamp
+	1,  // 29: cerbos.request.v1.ListPoliciesRequest.Filter.type:type_name -> cerbos.request.v1.ListPoliciesRequest.MatchType
+	2,  // 30: cerbos.request.v1.ListPoliciesRequest.SortOptions.column:type_name -> cerbos.request.v1.ListPoliciesRequest.SortOptions.Column
+	3,  // 31: cerbos.request.v1.ListPoliciesRequest.SortOptions.order:type_name -> cerbos.request.v1.ListPoliciesRequest.SortOptions.Order
+	4,  // 32: cerbos.request.v1.ListSchemasRequest.SortOptions.column:type_name -> cerbos.request.v1.ListSchemasRequest.SortOptions.Column
+	5,  // 33: cerbos.request.v1.ListSchemasRequest.SortOptions.order:type_name -> cerbos.request.v1.ListSchemasRequest.SortOptions.Order
+	34, // [34:34] is the sub-list for method output_type
+	34, // [34:34] is the sub-list for method input_type
+	34, // [34:34] is the sub-list for extension type_name
+	34, // [34:34] is the sub-list for extension extendee
+	0,  // [0:34] is the sub-list for field type_name
 }
 
 func init() { file_cerbos_request_v1_request_proto_init() }
@@ -2271,7 +2511,7 @@ func file_cerbos_request_v1_request_proto_init() {
 			}
 		}
 		file_cerbos_request_v1_request_proto_msgTypes[14].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*GetSchemaRequest); i {
+			switch v := v.(*ListSchemasRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -2283,6 +2523,18 @@ func file_cerbos_request_v1_request_proto_init() {
 			}
 		}
 		file_cerbos_request_v1_request_proto_msgTypes[15].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*GetSchemaRequest); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_cerbos_request_v1_request_proto_msgTypes[16].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*DeleteSchemaRequest); i {
 			case 0:
 				return &v.state
@@ -2294,7 +2546,7 @@ func file_cerbos_request_v1_request_proto_init() {
 				return nil
 			}
 		}
-		file_cerbos_request_v1_request_proto_msgTypes[18].Exporter = func(v interface{}, i int) interface{} {
+		file_cerbos_request_v1_request_proto_msgTypes[19].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*CheckResourceBatchRequest_BatchEntry); i {
 			case 0:
 				return &v.state
@@ -2306,7 +2558,7 @@ func file_cerbos_request_v1_request_proto_init() {
 				return nil
 			}
 		}
-		file_cerbos_request_v1_request_proto_msgTypes[19].Exporter = func(v interface{}, i int) interface{} {
+		file_cerbos_request_v1_request_proto_msgTypes[20].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*AuxData_JWT); i {
 			case 0:
 				return &v.state
@@ -2318,7 +2570,7 @@ func file_cerbos_request_v1_request_proto_init() {
 				return nil
 			}
 		}
-		file_cerbos_request_v1_request_proto_msgTypes[20].Exporter = func(v interface{}, i int) interface{} {
+		file_cerbos_request_v1_request_proto_msgTypes[21].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*ListAuditLogEntriesRequest_TimeRange); i {
 			case 0:
 				return &v.state
@@ -2330,7 +2582,7 @@ func file_cerbos_request_v1_request_proto_init() {
 				return nil
 			}
 		}
-		file_cerbos_request_v1_request_proto_msgTypes[21].Exporter = func(v interface{}, i int) interface{} {
+		file_cerbos_request_v1_request_proto_msgTypes[22].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*ListPoliciesRequest_Filter); i {
 			case 0:
 				return &v.state
@@ -2342,8 +2594,20 @@ func file_cerbos_request_v1_request_proto_init() {
 				return nil
 			}
 		}
-		file_cerbos_request_v1_request_proto_msgTypes[22].Exporter = func(v interface{}, i int) interface{} {
+		file_cerbos_request_v1_request_proto_msgTypes[23].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*ListPoliciesRequest_SortOptions); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_cerbos_request_v1_request_proto_msgTypes[24].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*ListSchemasRequest_SortOptions); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -2370,8 +2634,8 @@ func file_cerbos_request_v1_request_proto_init() {
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_cerbos_request_v1_request_proto_rawDesc,
-			NumEnums:      4,
-			NumMessages:   23,
+			NumEnums:      6,
+			NumMessages:   25,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

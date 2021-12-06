@@ -21,3 +21,8 @@ message ValidationError {
     Source source = 3;
 }
 
+message Schema {
+    string id = 1;
+    bytes definition = 2;
+}
+

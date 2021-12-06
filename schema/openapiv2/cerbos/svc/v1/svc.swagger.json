@@ -361,6 +361,44 @@
         ]
       }
     },
+    "/admin/schema/list": {
+      "post": {
+        "summary": "List schemas",
+        "operationId": "CerbosAdminService_ListSchemas",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1ListSchemasResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/v1ListSchemasRequest"
+            }
+          }
+        ],
+        "tags": [
+          "CerbosAdminService"
+        ],
+        "security": [
+          {
+            "BasicAuth": []
+          }
+        ]
+      }
+    },
     "/admin/schema/{id}": {
       "get": {
         "summary": "Get schema",
@@ -797,22 +835,6 @@
       ],
       "default": "MATCH_TYPE_UNSPECIFIED"
     },
-    "ListPoliciesRequestSortOptions": {
-      "type": "object",
-      "properties": {
-        "column": {
-          "$ref": "#/definitions/SortOptionsColumn",
-          "example": "COLUMN_NAME",
-          "description": "Sort column"
-        },
-        "order": {
-          "$ref": "#/definitions/SortOptionsOrder",
-          "example": "ORDER_ASCENDING",
-          "description": "Sort order"
-        }
-      },
-      "description": "Sort options"
-    },
     "MatchExprList": {
       "type": "object",
       "properties": {
@@ -925,24 +947,6 @@
         }
       }
     },
-    "SortOptionsColumn": {
-      "type": "string",
-      "enum": [
-        "COLUMN_UNSPECIFIED",
-        "COLUMN_NAME",
-        "COLUMN_VERSION"
-      ],
-      "default": "COLUMN_UNSPECIFIED"
-    },
-    "SortOptionsOrder": {
-      "type": "string",
-      "enum": [
-        "ORDER_UNSPECIFIED",
-        "ORDER_ASCENDING",
-        "ORDER_DESCENDING"
-      ],
-      "default": "ORDER_UNSPECIFIED"
-    },
     "ValidationErrorSource": {
       "type": "string",
       "enum": [
@@ -1037,6 +1041,18 @@
           "items": {
             "$ref": "#/definitions/protobufAny"
           }
+        }
+      }
+    },
+    "schemav1Schema": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "definition": {
+          "type": "string",
+          "format": "byte"
         }
       }
     },
@@ -1488,10 +1504,44 @@
           }
         },
         "sortOptions": {
-          "$ref": "#/definitions/ListPoliciesRequestSortOptions"
+          "$ref": "#/definitions/v1ListPoliciesRequestSortOptions"
         }
       },
       "description": "List policies request"
+    },
+    "v1ListPoliciesRequestSortOptions": {
+      "type": "object",
+      "properties": {
+        "column": {
+          "$ref": "#/definitions/v1ListPoliciesRequestSortOptionsColumn",
+          "example": "COLUMN_NAME",
+          "description": "Sort column"
+        },
+        "order": {
+          "$ref": "#/definitions/v1ListPoliciesRequestSortOptionsOrder",
+          "example": "ORDER_ASCENDING",
+          "description": "Sort order"
+        }
+      },
+      "description": "Sort options"
+    },
+    "v1ListPoliciesRequestSortOptionsColumn": {
+      "type": "string",
+      "enum": [
+        "COLUMN_UNSPECIFIED",
+        "COLUMN_NAME",
+        "COLUMN_VERSION"
+      ],
+      "default": "COLUMN_UNSPECIFIED"
+    },
+    "v1ListPoliciesRequestSortOptionsOrder": {
+      "type": "string",
+      "enum": [
+        "ORDER_UNSPECIFIED",
+        "ORDER_ASCENDING",
+        "ORDER_DESCENDING"
+      ],
+      "default": "ORDER_UNSPECIFIED"
     },
     "v1ListPoliciesResponse": {
       "type": "object",
@@ -1504,6 +1554,60 @@
         }
       },
       "description": "List of policies stored in the Cerbos server"
+    },
+    "v1ListSchemasRequest": {
+      "type": "object",
+      "properties": {
+        "sortOptions": {
+          "$ref": "#/definitions/v1ListSchemasRequestSortOptions"
+        }
+      },
+      "description": "List schemas request"
+    },
+    "v1ListSchemasRequestSortOptions": {
+      "type": "object",
+      "properties": {
+        "column": {
+          "$ref": "#/definitions/v1ListSchemasRequestSortOptionsColumn",
+          "example": "COLUMN_NAME",
+          "description": "Sort column"
+        },
+        "order": {
+          "$ref": "#/definitions/v1ListSchemasRequestSortOptionsOrder",
+          "example": "ORDER_ASCENDING",
+          "description": "Sort order"
+        }
+      },
+      "description": "Sort options"
+    },
+    "v1ListSchemasRequestSortOptionsColumn": {
+      "type": "string",
+      "enum": [
+        "COLUMN_UNSPECIFIED",
+        "COLUMN_NAME"
+      ],
+      "default": "COLUMN_UNSPECIFIED"
+    },
+    "v1ListSchemasRequestSortOptionsOrder": {
+      "type": "string",
+      "enum": [
+        "ORDER_UNSPECIFIED",
+        "ORDER_ASCENDING",
+        "ORDER_DESCENDING"
+      ],
+      "default": "ORDER_UNSPECIFIED"
+    },
+    "v1ListSchemasResponse": {
+      "type": "object",
+      "properties": {
+        "schemas": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/schemav1Schema"
+          }
+        }
+      },
+      "description": "List of schemas stored in the Cerbos server"
     },
     "v1Match": {
       "type": "object",

@@ -9,6 +9,7 @@ import (
 	"io"
 	"sync"
 
+	schemav1 "github.com/cerbos/cerbos/api/genpb/cerbos/schema/v1"
 	"github.com/cerbos/cerbos/internal/config"
 	"github.com/cerbos/cerbos/internal/namer"
 	"github.com/cerbos/cerbos/internal/policy"
@@ -82,6 +83,8 @@ type Store interface {
 	GetDependents(context.Context, ...namer.ModuleID) (map[namer.ModuleID][]namer.ModuleID, error)
 	// GetPolicies returns the policies recorded in the store.
 	GetPolicies(context.Context) ([]*policy.Wrapper, error)
+	// GetSchemas returns the schemas in the store
+	GetSchemas(context.Context) ([]*schemav1.Schema, error)
 	// LoadSchema loads the given schema from the store.
 	LoadSchema(context.Context, string) (io.ReadCloser, error)
 }

@@ -103,6 +103,27 @@ func (cas *CerbosAdminService) AddOrUpdateSchema(ctx context.Context, req *reque
 	return &responsev1.AddOrUpdateSchemaResponse{}, nil
 }
 
+func (cas *CerbosAdminService) ListSchemas(ctx context.Context, req *requestv1.ListSchemasRequest) (*responsev1.ListSchemasResponse, error) {
+	if err := cas.checkCredentials(ctx); err != nil {
+		return nil, err
+	}
+
+	if cas.store == nil {
+		return nil, status.Error(codes.NotFound, "store is not configured")
+	}
+
+	schemas, err := cas.store.GetSchemas(ctx)
+	if err != nil {
+		return nil, status.Error(codes.Internal, fmt.Sprintf("could not get schemas: %s", err.Error()))
+	}
+
+	sortSchemas(req.SortOptions, schemas)
+
+	return &responsev1.ListSchemasResponse{
+		Schemas: schemas,
+	}, nil
+}
+
 func (cas *CerbosAdminService) GetSchema(ctx context.Context, req *requestv1.GetSchemaRequest) (*responsev1.GetSchemaResponse, error) {
 	if err := cas.checkCredentials(ctx); err != nil {
 		return nil, err
@@ -112,12 +133,7 @@ func (cas *CerbosAdminService) GetSchema(ctx context.Context, req *requestv1.Get
 		return nil, status.Error(codes.NotFound, "store is not configured")
 	}
 
-	ms, ok := cas.store.(storage.MutableStore)
-	if !ok {
-		return nil, status.Error(codes.Unimplemented, "Configured store is not mutable")
-	}
-
-	sch, err := ms.LoadSchema(context.Background(), req.Id)
+	sch, err := cas.store.LoadSchema(context.Background(), req.Id)
 	if err != nil {
 		return nil, status.Error(codes.Internal, fmt.Sprintf("could not get schema: %s", err.Error()))
 	}

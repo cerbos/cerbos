@@ -498,6 +498,51 @@ message AddOrUpdateSchemaRequest {
     ];
 }
 
+message ListSchemasRequest {
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
+        json_schema: {
+            description: "List schemas request"
+        }
+    };
+
+    message SortOptions {
+        option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
+            json_schema: {
+                description: "Sort options"
+            }
+        };
+
+        enum Column {
+            COLUMN_UNSPECIFIED = 0;
+            COLUMN_NAME = 1;
+        }
+
+        enum Order {
+            ORDER_UNSPECIFIED = 0;
+            ORDER_ASCENDING = 1;
+            ORDER_DESCENDING = 2;
+        }
+
+        Column column = 1 [
+            (validate.rules).enum = {in: [1,2]},
+            (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+                description: "Sort column"
+                example: "\"COLUMN_NAME\""
+            }
+        ];
+
+        Order order = 2 [
+            (validate.rules).enum = {in: [1,2]},
+            (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+                description: "Sort order"
+                array: ["ORDER_ASCENDING", "ORDER_DESCENDING"]
+                example: "\"ORDER_ASCENDING\""
+            }
+        ];
+    }
+
+    SortOptions sort_options = 1;
+}
 
 message GetSchemaRequest {
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
