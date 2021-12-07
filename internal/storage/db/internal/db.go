@@ -4,17 +4,23 @@
 package internal
 
 import (
+	"bytes"
 	"context"
-	"errors"
+	"encoding/json"
 	"fmt"
 	"io"
+	"net/url"
 	"os"
+	"strings"
 
 	"github.com/doug-martin/goqu/v9"
+	"github.com/jackc/pgtype"
 	"go.uber.org/zap"
 
+	schemav1 "github.com/cerbos/cerbos/api/genpb/cerbos/schema/v1"
 	"github.com/cerbos/cerbos/internal/namer"
 	"github.com/cerbos/cerbos/internal/policy"
+	"github.com/cerbos/cerbos/internal/schema"
 	"github.com/cerbos/cerbos/internal/storage"
 )
 
@@ -25,6 +31,7 @@ type DBStorage interface {
 	GetDependents(ctx context.Context, ids ...namer.ModuleID) (map[namer.ModuleID][]namer.ModuleID, error)
 	Delete(ctx context.Context, ids ...namer.ModuleID) error
 	GetPolicies(ctx context.Context) ([]*policy.Wrapper, error)
+	GetSchemas(ctx context.Context) ([]*schemav1.Schema, error)
 	AddOrUpdateSchema(ctx context.Context, id string, def []byte) error
 	DeleteSchema(ctx context.Context, id string) error
 	LoadSchema(ctx context.Context, url string) (io.ReadCloser, error)
@@ -52,72 +59,85 @@ type dbStorage struct {
 }
 
 func (s *dbStorage) AddOrUpdateSchema(ctx context.Context, id string, def []byte) error {
-	// TODO (cell) Implement method
-	/*
-		if sch == nil {
-			return fmt.Errorf("schema cannot be nil")
-		}
+	if def == nil {
+		return fmt.Errorf("schema definition cannot be nil")
+	}
 
-		schemaRecord := Schema{
-			ID:          SchemaDefaultID,
-			Description: sch.Description,
-			Disabled:    sch.Disabled,
-			Definition:  SchemaDefWrapper{sch},
-		}
+	defJSON := pgtype.JSON{}
+	err := defJSON.UnmarshalJSON(def)
+	if err != nil {
+		return fmt.Errorf("failed to unmarshal schema definition: %w", err)
+	}
 
-		if _, err := s.db.Insert(SchemaTbl).
-			Rows(schemaRecord).
-			OnConflict(goqu.DoUpdate(SchemaTblIDCol, schemaRecord)).
-			Executor().
-			ExecContext(ctx); err != nil {
-			return fmt.Errorf("failed to insert the schema: %w", err)
-		}
+	schemaRecord := Schema{
+		ID:         id,
+		Definition: &defJSON,
+	}
 
-		s.NotifySubscribers(storage.Event{
-			Kind: storage.EventAddOrUpdateSchema,
-		})
-	*/
+	if _, err := s.db.Insert(SchemaTbl).
+		Rows(schemaRecord).
+		OnConflict(goqu.DoUpdate(SchemaTblIDCol, schemaRecord)).
+		Executor().
+		ExecContext(ctx); err != nil {
+		return fmt.Errorf("failed to upsert the schema: %w", err)
+	}
 
-	return errors.New("unimplemented")
+	s.NotifySubscribers(storage.NewSchemaEvent(storage.EventAddOrUpdateSchema, id))
+	return nil
 }
 
 func (s *dbStorage) DeleteSchema(ctx context.Context, id string) error {
-	// TODO (cell) Implement method
-	/*
-		_, err := s.db.From(SchemaTbl).
-			Where(goqu.C(SchemaTblIDCol).Eq(SchemaDefaultID)).
-			Delete().
-			Executor().
-			ExecContext(ctx)
-		if err != nil {
-			return fmt.Errorf("failed to delete the schema: %w", err)
-		}
+	res, err := s.db.From(SchemaTbl).
+		Where(goqu.C(SchemaTblIDCol).Eq(id)).
+		Delete().
+		Executor().
+		ExecContext(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to delete schema with id %s: %w", id, err)
+	}
 
-		s.NotifySubscribers(storage.Event{
-			Kind: storage.EventDeleteSchema,
-		})
-	*/
+	affected, err := res.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("failed to discover whether the schema got deleted or not: %w", err)
+	}
 
-	return errors.New("unimplemented")
+	if affected == 0 {
+		return fmt.Errorf("failed to find the schema with id %s for deletion", id)
+	}
+
+	s.NotifySubscribers(storage.NewSchemaEvent(storage.EventDeleteSchema, id))
+
+	return nil
 }
 
-func (s *dbStorage) LoadSchema(ctx context.Context, url string) (io.ReadCloser, error) {
-	// TODO (cell) Implement method
-	/*
-		var sch Schema
+func (s *dbStorage) LoadSchema(ctx context.Context, urlVar string) (io.ReadCloser, error) {
+	u, err := url.Parse(urlVar)
+	if err != nil {
+		return nil, err
+	}
 
-		_, err := s.db.
-			Select(goqu.C(SchemaTblIDCol), goqu.C(SchemaTblDefinitionCol)).
-			From(SchemaTbl).
-			Where(goqu.Ex{SchemaTblIDCol: SchemaDefaultID}).
-			ScanStructContext(ctx, &sch)
-		if err != nil {
-			return nil, fmt.Errorf("could not execute %q query: %w", "GetSchema", err)
-		}
+	if u.Scheme != "" && u.Scheme != schema.URLScheme {
+		return nil, fmt.Errorf("invalid url scheme %q", u.Scheme)
+	}
 
-		return sch.Definition.Schema, nil
-	*/
-	return nil, errors.New("unimplemented")
+	var sch Schema
+	_, err = s.db.From(SchemaTbl).
+		Where(goqu.Ex{SchemaTblIDCol: strings.TrimPrefix(u.Path, "/")}).
+		ScanStructContext(ctx, &sch)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get schema: %w", err)
+	}
+
+	if sch.Definition == nil {
+		return nil, fmt.Errorf("failed to find schema")
+	}
+
+	def, err := json.Marshal(sch.Definition)
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal schema: %w", err)
+	}
+
+	return io.NopCloser(bytes.NewReader(def)), nil
 }
 
 func (s *dbStorage) AddOrUpdate(ctx context.Context, policies ...policy.Wrapper) error {
@@ -294,7 +314,8 @@ func (s *dbStorage) Delete(ctx context.Context, ids ...namer.ModuleID) error {
 			return err
 		}
 
-		s.NotifySubscribers(storage.Event{Kind: storage.EventDeletePolicy, PolicyID: ids[0]})
+		s.NotifySubscribers(storage.NewPolicyEvent(storage.EventDeletePolicy, ids[0]))
+
 		return nil
 	}
 
@@ -335,4 +356,24 @@ func (s *dbStorage) GetPolicies(ctx context.Context) ([]*policy.Wrapper, error) 
 	}
 
 	return policies, nil
+}
+
+func (s *dbStorage) GetSchemas(ctx context.Context) ([]*schemav1.Schema, error) {
+	res, err := s.db.From(SchemaTbl).Executor().ScannerContext(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("could not execute %q query: %w", "GetSchemas", err)
+	}
+	defer res.Close()
+
+	var schemas []*schemav1.Schema
+	for res.Next() {
+		var rec schemav1.Schema
+		if err := res.ScanStruct(&rec); err != nil {
+			return nil, fmt.Errorf("could not scan row: %w", err)
+		}
+
+		schemas = append(schemas, &rec)
+	}
+
+	return schemas, nil
 }

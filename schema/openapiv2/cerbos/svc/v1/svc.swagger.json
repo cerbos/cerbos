@@ -288,76 +288,6 @@
       }
     },
     "/admin/schema": {
-      "get": {
-        "summary": "Get schema",
-        "operationId": "CerbosAdminService_GetSchema",
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "$ref": "#/definitions/v1GetSchemaResponse"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/rpcStatus"
-            }
-          }
-        },
-        "parameters": [
-          {
-            "name": "id",
-            "description": "Unique identifier for the schema",
-            "in": "query",
-            "required": true,
-            "type": "string"
-          }
-        ],
-        "tags": [
-          "CerbosAdminService"
-        ],
-        "security": [
-          {
-            "BasicAuth": []
-          }
-        ]
-      },
-      "delete": {
-        "summary": "Delete schema",
-        "operationId": "CerbosAdminService_DeleteSchema",
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "$ref": "#/definitions/v1DeleteSchemaResponse"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/rpcStatus"
-            }
-          }
-        },
-        "parameters": [
-          {
-            "name": "id",
-            "description": "Unique identifier for the schema",
-            "in": "query",
-            "required": true,
-            "type": "string"
-          }
-        ],
-        "tags": [
-          "CerbosAdminService"
-        ],
-        "security": [
-          {
-            "BasicAuth": []
-          }
-        ]
-      },
       "post": {
         "summary": "Add or update schema",
         "operationId": "CerbosAdminService_AddOrUpdateSchema",
@@ -1416,10 +1346,6 @@
         }
       }
     },
-    "v1DeleteSchemaResponse": {
-      "type": "object",
-      "description": "Add/update schema response"
-    },
     "v1DerivedRoles": {
       "type": "object",
       "properties": {
@@ -1443,26 +1369,6 @@
         "EFFECT_NO_MATCH"
       ],
       "default": "EFFECT_UNSPECIFIED"
-    },
-    "v1GetSchemaResponse": {
-      "type": "object",
-      "properties": {
-        "id": {
-          "type": "string",
-          "example": "principal.json",
-          "description": "Unique identifier for the schema"
-        },
-        "schema": {
-          "type": "string",
-          "format": "byte",
-          "example": {
-            "type": "object",
-            "properties": {}
-          },
-          "description": "JSON schema definition"
-        }
-      },
-      "description": "Get schema response"
     },
     "v1ListAuditLogEntriesResponse": {
       "type": "object",

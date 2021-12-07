@@ -8,6 +8,7 @@ package internal
 
 import (
 	"context"
+	"io/ioutil"
 	"testing"
 	"time"
 
@@ -28,12 +29,13 @@ func TestSuite(store DBStorage) func(*testing.T) {
 	return func(t *testing.T) {
 		ctx, cancelFunc := context.WithCancel(context.Background())
 		defer cancelFunc()
-
 		rp := policy.Wrap(test.GenResourcePolicy(test.NoMod()))
 		pp := policy.Wrap(test.GenPrincipalPolicy(test.NoMod()))
 		dr := policy.Wrap(test.GenDerivedRoles(test.NoMod()))
 		rpx := policy.Wrap(test.GenResourcePolicy(test.PrefixAndSuffix("x", "x")))
 		drx := policy.Wrap(test.GenDerivedRoles(test.PrefixAndSuffix("x", "x")))
+		sch := test.ReadSchemaFromFile(t, test.PathToDir(t, "store/_schemas/leave_request.json"))
+		const schID = "leave_request"
 
 		t.Run("add", func(t *testing.T) {
 			checkEvents := storage.TestSubscription(store)
@@ -144,36 +146,36 @@ func TestSuite(store DBStorage) func(*testing.T) {
 			checkEvents(t, timeout, storage.Event{Kind: storage.EventDeletePolicy, PolicyID: rpx.ID})
 		})
 
-		/*
+		t.Run("add_schema", func(t *testing.T) {
+			checkEvents := storage.TestSubscription(store)
+			require.NoError(t, store.AddOrUpdateSchema(ctx, schID, sch))
 
-			t.Run("add_schema", func(t *testing.T) {
-				checkEvents := storage.TestSubscription(store)
-				require.NoError(t, store.AddOrUpdateSchema(ctx, sch))
+			checkEvents(t, timeout, storage.NewSchemaEvent(storage.EventAddOrUpdateSchema, schID))
+		})
 
-				checkEvents(t, storage.Event{Kind: storage.EventAddOrUpdateSchema})
+		t.Run("get_schema", func(t *testing.T) {
+			t.Run("should be able to get schema", func(t *testing.T) {
+				schema, err := store.LoadSchema(ctx, schID)
+				require.NoError(t, err)
+				require.NotEmpty(t, schema)
+				schBytes, err := ioutil.ReadAll(schema)
+				require.NoError(t, err)
+				require.NotEmpty(t, schBytes)
+				require.JSONEq(t, string(sch), string(schBytes))
 			})
+		})
 
-				t.Run("get_schema", func(t *testing.T) {
-					t.Run("should be able to get schema", func(t *testing.T) {
-						schema, err := store.GetSchema(ctx)
-						require.NoError(t, err)
-						require.NotEmpty(t, schema)
-					})
-				})
+		t.Run("delete_schema", func(t *testing.T) {
+			checkEvents := storage.TestSubscription(store)
 
-				t.Run("delete_schema", func(t *testing.T) {
-					checkEvents := storage.TestSubscription(store)
+			err := store.DeleteSchema(ctx, schID)
+			require.NoError(t, err)
 
-					err := store.DeleteSchema(ctx)
-					require.NoError(t, err)
+			have, err := store.LoadSchema(ctx, schID)
+			require.Error(t, err)
+			require.Empty(t, have)
 
-					have, err := store.GetSchema(ctx)
-					require.NoError(t, err)
-
-					require.Empty(t, have)
-
-					checkEvents(t, storage.Event{Kind: storage.EventDeleteSchema})
-				})
-		*/
+			checkEvents(t, timeout, storage.NewSchemaEvent(storage.EventDeleteSchema, schID))
+		})
 	}
 }

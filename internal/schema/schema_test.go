@@ -21,6 +21,7 @@ import (
 	schemav1 "github.com/cerbos/cerbos/api/genpb/cerbos/schema/v1"
 	"github.com/cerbos/cerbos/internal/schema"
 	"github.com/cerbos/cerbos/internal/storage"
+	"github.com/cerbos/cerbos/internal/storage/db/sqlite3"
 	"github.com/cerbos/cerbos/internal/storage/disk"
 	"github.com/cerbos/cerbos/internal/storage/index"
 	"github.com/cerbos/cerbos/internal/test"
@@ -29,6 +30,7 @@ import (
 
 func TestLoad(t *testing.T) {
 	fsDir := test.PathToDir(t, filepath.Join("schema", "fs"))
+	mgrs := mkMgrs(t, fsDir)
 
 	testCases := []struct {
 		name    string
@@ -68,25 +70,19 @@ func TestLoad(t *testing.T) {
 		},
 	}
 
-	fsys := os.DirFS(fsDir)
-	ctx, cancelFunc := context.WithCancel(context.Background())
-	t.Cleanup(cancelFunc)
-
-	idx, err := index.Build(ctx, fsys)
-	require.NoError(t, err)
-
-	store := disk.NewFromIndexWithConf(idx, &disk.Conf{})
-	mgr := schema.NewWithConf(ctx, store, &schema.Conf{Enforcement: schema.EnforcementReject})
-
-	for _, tc := range testCases {
-		tc := tc
-		t.Run(tc.name, func(t *testing.T) {
-			err := mgr.CheckSchema(context.Background(), tc.url)
-			if tc.wantErr {
-				require.Error(t, err)
-				return
+	for storeName, mgr := range mgrs {
+		t.Run(storeName, func(t *testing.T) {
+			for _, tc := range testCases {
+				tc := tc
+				t.Run(tc.name, func(t *testing.T) {
+					err := mgr.CheckSchema(context.Background(), tc.url)
+					if tc.wantErr {
+						require.Error(t, err)
+						return
+					}
+					require.NoError(t, err)
+				})
 			}
-			require.NoError(t, err)
 		})
 	}
 }
@@ -210,4 +206,34 @@ func cmpValidationError(a, b *schemav1.ValidationError) bool {
 		return a.Path < b.Path
 	}
 	return a.Source < b.Source
+}
+
+func mkMgrs(t *testing.T, fsDir string) map[string]schema.Manager {
+	t.Helper()
+	mgrs := make(map[string]schema.Manager)
+
+	schemasDir := test.PathToDir(t, filepath.Join("schema", "fs", schema.Directory))
+	fsys := os.DirFS(fsDir)
+	ctx, cancelFunc := context.WithCancel(context.Background())
+	t.Cleanup(cancelFunc)
+
+	// Create mgr with disk store
+	idx, err := index.Build(ctx, fsys)
+	require.NoError(t, err)
+	diskStore := disk.NewFromIndexWithConf(idx, &disk.Conf{})
+	diskMgr := schema.NewWithConf(ctx, diskStore, &schema.Conf{Enforcement: schema.EnforcementReject})
+
+	// Create mgr with sqlite3 store
+	var sqlite3Store storage.MutableStore
+	sqlite3Store, err = sqlite3.NewStore(ctx, &sqlite3.Conf{DSN: "file::memory:?_fk=true"})
+	require.NoError(t, err)
+	test.AddSchemasToStore(t, schemasDir, sqlite3Store)
+	require.NoError(t, err)
+	sqlite3Mgr := schema.NewWithConf(ctx, sqlite3Store, &schema.Conf{Enforcement: schema.EnforcementReject})
+
+	// Add each created store to mgrs map
+	mgrs[disk.DriverName] = diskMgr
+	mgrs[sqlite3.DriverName] = sqlite3Mgr
+
+	return mgrs
 }

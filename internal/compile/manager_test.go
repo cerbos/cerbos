@@ -16,6 +16,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
+	schemav1 "github.com/cerbos/cerbos/api/genpb/cerbos/schema/v1"
 	"github.com/cerbos/cerbos/internal/compile"
 	"github.com/cerbos/cerbos/internal/namer"
 	"github.com/cerbos/cerbos/internal/policy"
@@ -295,10 +296,42 @@ func (ms *MockStore) GetPolicies(ctx context.Context) ([]*policy.Wrapper, error)
 	return args.Get(0).([]*policy.Wrapper), args.Error(0)
 }
 
+func (ms *MockStore) GetSchemas(ctx context.Context) ([]*schemav1.Schema, error) {
+	args := ms.MethodCalled("GetSchemas", ctx)
+	if res := args.Get(0); res == nil {
+		return nil, args.Error(0)
+	}
+	return args.Get(0).([]*schemav1.Schema), args.Error(0)
+}
+
 func (ms *MockStore) LoadSchema(ctx context.Context, url string) (io.ReadCloser, error) {
 	args := ms.MethodCalled("LoadSchema", ctx)
 	if res := args.Get(0); res == nil {
 		return nil, args.Error(0)
 	}
 	return nil, nil
+}
+
+func (ms *MockStore) GetSchema(ctx context.Context, id string) ([]byte, error) {
+	args := ms.MethodCalled("GetSchema", ctx)
+	if res := args.Get(0); res == nil {
+		return nil, args.Error(0)
+	}
+	return nil, nil
+}
+
+func (ms *MockStore) AddOrUpdateSchema(ctx context.Context, id string, def []byte) error {
+	args := ms.MethodCalled("AddOrUpdateSchema", ctx)
+	if res := args.Get(0); res == nil {
+		return args.Error(0)
+	}
+	return nil
+}
+
+func (ms *MockStore) DeleteSchema(ctx context.Context, id string) error {
+	args := ms.MethodCalled("DeleteSchema", ctx)
+	if res := args.Get(0); res == nil {
+		return args.Error(0)
+	}
+	return nil
 }

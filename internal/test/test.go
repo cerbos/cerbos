@@ -5,6 +5,7 @@ package test
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"io"
 	"io/fs"
@@ -23,6 +24,7 @@ import (
 	"github.com/cerbos/cerbos/internal/observability/logging"
 	"github.com/cerbos/cerbos/internal/policy"
 	"github.com/cerbos/cerbos/internal/schema"
+	"github.com/cerbos/cerbos/internal/storage"
 	"github.com/cerbos/cerbos/internal/util"
 )
 
@@ -42,6 +44,59 @@ func LoadPolicy(t *testing.T, path string) *policyv1.Policy {
 	require.NoError(t, err, "Failed to load %s", path)
 
 	return p
+}
+
+func AddSchemasToStore(t *testing.T, dir string, ms storage.MutableStore) {
+	t.Helper()
+
+	fsys := os.DirFS(dir)
+	err := fs.WalkDir(fsys, ".", func(path string, d fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+
+		if d.IsDir() {
+			return nil
+		}
+
+		if !util.IsSupportedFileType(d.Name()) {
+			return nil
+		}
+
+		sch := ReadSchemaFromFS(t, fsys, path)
+
+		err = ms.AddOrUpdateSchema(context.TODO(), path, sch)
+		require.NoError(t, err)
+
+		return nil
+	})
+	require.NoError(t, err)
+}
+
+func ReadSchemaFromFile(t *testing.T, path string) []byte {
+	t.Helper()
+
+	inp := mkReadCloser(t, path)
+	defer inp.Close()
+
+	data, err := io.ReadAll(inp)
+	require.NoError(t, err, "Failed to load %s", path)
+
+	return data
+}
+
+func ReadSchemaFromFS(t *testing.T, fsys fs.FS, path string) []byte {
+	t.Helper()
+
+	f, err := fsys.Open(path)
+	require.NoError(t, err, "Failed to open %s", path)
+
+	defer f.Close()
+
+	data, err := io.ReadAll(io.Reader(f))
+	require.NoError(t, err, "failed to read from source: %w", err)
+
+	return data
 }
 
 func mkReadCloser(t *testing.T, file string) io.ReadCloser {

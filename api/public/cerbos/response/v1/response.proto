@@ -269,32 +269,3 @@ message AddOrUpdateSchemaResponse {
         }
     };
 }
-
-message GetSchemaResponse {
-    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
-        json_schema: {
-            description: "Get schema response"
-        }
-    };
-
-    string id = 1 [
-        (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = { 
-            description: "Unique identifier for the schema"
-            example: "\"principal.json\""
-        }
-    ];
-    bytes schema = 2 [
-        (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = { 
-            description: "JSON schema definition"
-            example: "{\"type\":\"object\", \"properties\":{}}"
-        }
-    ];
-}
-
-message DeleteSchemaResponse {
-    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
-        json_schema: {
-            description: "Add/update schema response"
-        }
-    };
-}
