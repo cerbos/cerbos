@@ -128,9 +128,8 @@ func evaluateCondition(condition *runtimev1.Condition, input *requestv1.Resource
 					res.Node = &enginev1.ResourcesQueryPlanOutput_Node_Expression{Expression: conditions.TrueExpr}
 
 					return res, nil
-				} else {
-					add = false
 				}
+				add = false
 			}
 
 			if add {
@@ -155,8 +154,6 @@ func evaluateCondition(condition *runtimev1.Condition, input *requestv1.Resource
 					res.Node = &enginev1.ResourcesQueryPlanOutput_Node_Expression{Expression: conditions.FalseExpr}
 
 					return res, nil
-				} else {
-					add = false
 				}
 				add = false
 			}
@@ -428,7 +425,7 @@ func evaluateBoolCELExpr(expr *exprpb.CheckedExpr, variables map[string]interfac
 	return boolVal, nil
 }
 
-func evaluateCELExprPartially(expr *exprpb.CheckedExpr, input *requestv1.ResourcesQueryPlanRequest, variables map[string]*runtimev1.Expr) (*bool, *exprpb.CheckedExpr, error) {
+func evaluateCELExprPartially(expr *exprpb.CheckedExpr, input *requestv1.ResourcesQueryPlanRequest, _ map[string]*runtimev1.Expr) (*bool, *exprpb.CheckedExpr, error) {
 	ast := cel.CheckedExprToAst(expr)
 	prg, err := conditions.StdPartialEnv.Program(ast, cel.EvalOptions(cel.OptPartialEval, cel.OptTrackState))
 	if err != nil {
@@ -615,7 +612,7 @@ func updateIds(e *exprpb.Expr) {
 	impl(e)
 }
 
-func replaceVars(e *exprpb.Expr, vars map[string]*exprpb.Expr) (err error) {
+func replaceVars(e **exprpb.Expr, vars map[string]*exprpb.Expr) (err error) {
 	var r func(e *exprpb.Expr) *exprpb.Expr
 	r = func(e *exprpb.Expr) *exprpb.Expr {
 		if e == nil {
@@ -624,14 +621,11 @@ func replaceVars(e *exprpb.Expr, vars map[string]*exprpb.Expr) (err error) {
 		switch e := e.ExprKind.(type) {
 		case *exprpb.Expr_SelectExpr:
 			ident := e.SelectExpr.Operand.GetIdentExpr()
-			if ident != nil {
-				if ident.Name == conditions.CELVariablesAbbrev || ident.Name == conditions.CELVariablesIdent {
-					if v, ok := vars[e.SelectExpr.Field]; ok {
-						return v
-					} else {
-						err = multierr.Append(err, fmt.Errorf("unknown variable %q", e.SelectExpr.Field))
-					}
+			if ident != nil && (ident.Name == conditions.CELVariablesAbbrev || ident.Name == conditions.CELVariablesIdent) {
+				if v, ok := vars[e.SelectExpr.Field]; ok {
+					return v
 				}
+				err = multierr.Append(err, fmt.Errorf("unknown variable %q", e.SelectExpr.Field))
 			} else {
 				e.SelectExpr.Operand = r(e.SelectExpr.Operand)
 			}
@@ -662,11 +656,8 @@ func replaceVars(e *exprpb.Expr, vars map[string]*exprpb.Expr) (err error) {
 		return e
 	}
 
-	if t := r(e); t != e {
-		*e = *t
-	}
+	*e = r(*e)
+	updateIds(*e)
 
-	updateIds(e)
-
-	return
+	return err
 }

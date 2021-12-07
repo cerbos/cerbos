@@ -5,11 +5,11 @@ package engine
 
 import (
 	"fmt"
-	"github.com/google/cel-go/checker/decls"
-	"github.com/google/cel-go/common/types"
 	"testing"
 
 	"github.com/google/cel-go/cel"
+	"github.com/google/cel-go/checker/decls"
+	"github.com/google/cel-go/common/types"
 	"github.com/google/cel-go/parser"
 	"github.com/stretchr/testify/require"
 	expr "google.golang.org/genproto/googleapis/api/expr/v1alpha1"
@@ -68,6 +68,10 @@ func Test_evaluateCondition(t *testing.T) {
 			wantExpression: "true",
 		},
 		{
+			args:           compile(`R.attr.department == "marketing"`, &requestv1.ResourcesQueryPlanRequest{}),
+			wantExpression: `R.attr.department == "marketing"`,
+		},
+		{
 			args: compile("R.attr.owner == P.attr.name", &requestv1.ResourcesQueryPlanRequest{
 				Principal: &enginev1.Principal{
 					Attr: map[string]*structpb.Value{"name": {Kind: &structpb.Value_StringValue{StringValue: "harry"}}},
@@ -85,6 +89,8 @@ func Test_evaluateCondition(t *testing.T) {
 			is.Equal(tt.wantExpression, unparse(t, expression))
 		})
 	}
+
+	tests = tests[2:] // Skip degenerate cases
 	for _, op := range []enginev1.ResourcesQueryPlanOutput_LogicalOperation_Operator{enginev1.ResourcesQueryPlanOutput_LogicalOperation_OPERATOR_AND, enginev1.ResourcesQueryPlanOutput_LogicalOperation_OPERATOR_OR} {
 		attr := make(map[string]*structpb.Value)
 		conds := make([]*runtimev1.Condition, len(tests))
@@ -96,7 +102,7 @@ func Test_evaluateCondition(t *testing.T) {
 		} else {
 			c = &runtimev1.Condition{Op: &runtimev1.Condition_Any{Any: exprList}}
 		}
-		t.Run(fmt.Sprintf("%s operation", enginev1.ResourcesQueryPlanOutput_LogicalOperation_Operator_name[int32(op)]), func(t *testing.T) {
+		t.Run(enginev1.ResourcesQueryPlanOutput_LogicalOperation_Operator_name[int32(op)], func(t *testing.T) {
 			is := require.New(t)
 			for i := 0; i < len(tests); i++ {
 				exprList.Expr = append(exprList.Expr, tests[i].args.condition)
@@ -183,7 +189,8 @@ func TestPartialEvaluationWithGlobalVars(t *testing.T) {
 			ast, iss := env.Compile(tt.expr)
 			is.Nil(iss, iss.Err())
 			e := ast.Expr()
-			replaceVars(e, variables)
+			err = replaceVars(&e, variables)
+			is.NoError(err)
 			ast = cel.ParsedExprToAst(&expr.ParsedExpr{Expr: e})
 			prg, err := env.Program(ast, cel.EvalOptions(cel.OptTrackState, cel.OptPartialEval))
 			is.NoError(err)

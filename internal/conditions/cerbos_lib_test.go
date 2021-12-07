@@ -190,6 +190,7 @@ func TestCmpSelectAndCall(t *testing.T) {
 	v := reflect.DeepEqual(*ast0, *ast)
 	is.True(v)
 }
+
 func TestPartialEvaluationWithMacroGlobalVars(t *testing.T) {
 	expander := func(eh parser.ExprHelper, t *expr.Expr, args []*expr.Expr) (*expr.Expr, *common.Error) {
 		return eh.Select(eh.Select(eh.Ident("R"), "attr"), "geo"), nil
