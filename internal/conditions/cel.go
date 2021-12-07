@@ -5,6 +5,7 @@ package conditions
 
 import (
 	"fmt"
+	requestv1 "github.com/cerbos/cerbos/api/genpb/cerbos/request/v1"
 
 	"github.com/google/cel-go/cel"
 	"github.com/google/cel-go/checker/decls"
@@ -40,15 +41,7 @@ func init() {
 		panic(fmt.Errorf("failed to initialize standard CEL environment: %w", err))
 	}
 
-	opts := make([]cel.EnvOption, len(envOptions)+1)
-	copy(opts, envOptions)
-	opts[len(envOptions)] = cel.Declarations(
-		decls.NewVar(fqn(CELPrincipalField), decls.NewObjectType("cerbos.engine.v1.Principal")),
-		decls.NewVar(fqn(CELResourceField), decls.NewObjectType("cerbos.engine.v1.Resource")),
-		decls.NewVar(fqn(CELAuxDataField), decls.NewObjectType("cerbos.engine.v1.AuxData")),
-	)
-	StdPartialEnv, err = cel.NewEnv(opts...)
-
+	StdPartialEnv, err = cel.NewEnv(newCELQueryPlanEnvOptions()...)
 	if err != nil {
 		panic(fmt.Errorf("failed to initialize standard CEL environment: %w", err))
 	}
@@ -70,11 +63,29 @@ func init() {
 	}
 }
 
-func fqn(s string) string {
+func Fqn(s string) string {
 	return fmt.Sprintf("%s.%s", CELRequestIdent, s)
 }
 
 func newCELEnvOptions() []cel.EnvOption {
+	return []cel.EnvOption{
+		cel.Types(&requestv1.ResourcesQueryPlanRequest{}, &enginev1.Principal{}, &enginev1.Resource{}),
+		cel.Declarations(
+			decls.NewVar(CELRequestIdent, decls.NewObjectType("cerbos.request.v1.ResourcesQueryPlanRequest")),
+			decls.NewVar(Fqn(CELPrincipalField), decls.NewObjectType("cerbos.engine.v1.Principal")),
+			decls.NewVar(Fqn(CELResourceField), decls.NewObjectType("cerbos.engine.v1.Resource")),
+			decls.NewVar(Fqn(CELAuxDataField), decls.NewObjectType("cerbos.engine.v1.AuxData")),
+			decls.NewVar(CELPrincipalAbbrev, decls.NewObjectType("cerbos.engine.v1.Principal")),
+			decls.NewVar(CELResourceAbbrev, decls.NewObjectType("cerbos.engine.v1.Resource")),
+			decls.NewVar(CELVariablesIdent, decls.NewMapType(decls.String, decls.Dyn)),
+			decls.NewVar(CELVariablesAbbrev, decls.NewMapType(decls.String, decls.Dyn)),
+		),
+		ext.Strings(),
+		ext.Encoders(),
+		CerbosCELLib(),
+	}
+}
+func newCELQueryPlanEnvOptions() []cel.EnvOption {
 	return []cel.EnvOption{
 		cel.Types(&enginev1.CheckInput{}, &enginev1.Principal{}, &enginev1.Resource{}),
 		cel.Declarations(

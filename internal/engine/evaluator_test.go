@@ -68,6 +68,14 @@ func Test_evaluateCondition(t *testing.T) {
 			wantExpression: "true",
 		},
 		{
+			args: compile("request.principal.attr.authenticated", &requestv1.ResourcesQueryPlanRequest{
+				Principal: &enginev1.Principal{
+					Attr: map[string]*structpb.Value{"authenticated": {Kind: &structpb.Value_BoolValue{BoolValue: true}}},
+				},
+			}),
+			wantExpression: "true",
+		},
+		{
 			args:           compile(`R.attr.department == "marketing"`, &requestv1.ResourcesQueryPlanRequest{}),
 			wantExpression: `R.attr.department == "marketing"`,
 		},
@@ -90,7 +98,7 @@ func Test_evaluateCondition(t *testing.T) {
 		})
 	}
 
-	tests = tests[2:] // Skip degenerate cases
+	tests = tests[len(tests)-2:] // Skip degenerate cases
 	for _, op := range []enginev1.ResourcesQueryPlanOutput_LogicalOperation_Operator{enginev1.ResourcesQueryPlanOutput_LogicalOperation_OPERATOR_AND, enginev1.ResourcesQueryPlanOutput_LogicalOperation_OPERATOR_OR} {
 		attr := make(map[string]*structpb.Value)
 		conds := make([]*runtimev1.Condition, len(tests))

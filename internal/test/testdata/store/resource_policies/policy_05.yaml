@@ -1,5 +1,7 @@
 ---
 apiVersion: api.cerbos.dev/v1
+variables:
+  is_owner: R.attr.owner == request.principal.id
 resourcePolicy:
   version: "default"
   resource: "list-resources:leave_request"
@@ -9,7 +11,7 @@ resourcePolicy:
       effect: EFFECT_ALLOW
       condition:
         match:
-          expr: R.attr.owner == request.principal.id
+          expr: V.is_owner
     - actions: ["approve"]
       roles: ["manager"]
       effect: EFFECT_ALLOW

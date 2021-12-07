@@ -81,7 +81,11 @@ func (rpe *resourcePolicyEvaluator) EvaluateResourcesQueryPlan(_ context.Context
 				if len(matchedActions) == 0 {
 					continue
 				}
-				node, err := evaluateCondition(rule.Condition, input, p.Variables)
+				variables := make(map[string]*exprpb.Expr, len(p.Variables))
+				for k, v := range p.Variables {
+					variables[k] = v.Checked.Expr
+				}
+				node, err := evaluateCondition(rule.Condition, input, variables)
 				if err != nil {
 					return nil, err
 				}
@@ -104,7 +108,7 @@ func isNodeConstBool(node *enginev1.ResourcesQueryPlanOutput_Node) (bool, bool) 
 	return false, false
 }
 
-func evaluateCondition(condition *runtimev1.Condition, input *requestv1.ResourcesQueryPlanRequest, variables map[string]*runtimev1.Expr) (*enginev1.ResourcesQueryPlanOutput_Node, error) {
+func evaluateCondition(condition *runtimev1.Condition, input *requestv1.ResourcesQueryPlanRequest, variables map[string]*exprpb.Expr) (*enginev1.ResourcesQueryPlanOutput_Node, error) {
 	res := new(enginev1.ResourcesQueryPlanOutput_Node)
 	switch t := condition.Op.(type) {
 	case *runtimev1.Condition_Any:
@@ -425,16 +429,23 @@ func evaluateBoolCELExpr(expr *exprpb.CheckedExpr, variables map[string]interfac
 	return boolVal, nil
 }
 
-func evaluateCELExprPartially(expr *exprpb.CheckedExpr, input *requestv1.ResourcesQueryPlanRequest, _ map[string]*runtimev1.Expr) (*bool, *exprpb.CheckedExpr, error) {
-	ast := cel.CheckedExprToAst(expr)
-	prg, err := conditions.StdPartialEnv.Program(ast, cel.EvalOptions(cel.OptPartialEval, cel.OptTrackState))
+func evaluateCELExprPartially(expr *exprpb.CheckedExpr, input *requestv1.ResourcesQueryPlanRequest, variables map[string]*exprpb.Expr) (*bool, *exprpb.CheckedExpr, error) {
+	e := expr.Expr
+	err := replaceVars(&e, variables)
+	if err != nil {
+		return nil, nil, err
+	}
+	ast := cel.ParsedExprToAst(&exprpb.ParsedExpr{Expr: e})
+	env := conditions.StdPartialEnv
+	prg, err := env.Program(ast, cel.EvalOptions(cel.OptPartialEval, cel.OptTrackState))
 	if err != nil {
 		return nil, nil, err
 	}
 
 	vars, err := cel.PartialVars(map[string]interface{}{
-		conditions.CELRequestIdent:    input,
-		conditions.CELPrincipalAbbrev: input.Principal,
+		conditions.CELRequestIdent:                   input,
+		conditions.CELPrincipalAbbrev:                input.Principal,
+		conditions.Fqn(conditions.CELPrincipalField): input.Principal,
 	},
 		cel.AttributePattern(conditions.CELResourceAbbrev),
 		cel.AttributePattern(conditions.CELRequestIdent).QualString(conditions.CELResourceField))
@@ -446,11 +457,15 @@ func evaluateCELExprPartially(expr *exprpb.CheckedExpr, input *requestv1.Resourc
 	if err != nil {
 		return nil, nil, err
 	}
-	residual, err := conditions.StdPartialEnv.ResidualAst(ast, details)
+	residual, err := env.ResidualAst(ast, details)
 	if err != nil {
 		return nil, nil, err
 	}
-	checkedExpr, err := cel.AstToCheckedExpr(residual)
+	ast, iss := env.Check(residual)
+	if iss != nil {
+		return nil, nil, fmt.Errorf("failed to check residual express: %w", iss.Err())
+	}
+	checkedExpr, err := cel.AstToCheckedExpr(ast)
 	if err != nil {
 		return nil, nil, err
 	}
