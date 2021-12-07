@@ -71,7 +71,7 @@ require (
 
 require (
 	github.com/aws/aws-sdk-go v1.42.19
-	github.com/lestrrat-go/jwx v1.2.12
+	github.com/lestrrat-go/jwx v1.2.13
 	github.com/minio/minio-go/v7 v7.0.16
 	go.opentelemetry.io/otel v1.2.0
 	go.opentelemetry.io/otel/bridge/opencensus v0.25.0
@@ -122,7 +122,7 @@ require (
 	github.com/go-git/go-billy/v5 v5.3.1 // indirect
 	github.com/go-kit/log v0.1.0 // indirect
 	github.com/go-logfmt/logfmt v0.5.0 // indirect
-	github.com/goccy/go-json v0.7.10 // indirect
+	github.com/goccy/go-json v0.8.1 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/golang/glog v1.0.0 // indirect
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
@@ -189,12 +189,10 @@ require (
 	go.opentelemetry.io/otel/sdk/export/metric v0.25.0 // indirect
 	go.uber.org/atomic v1.9.0 // indirect
 	golang.org/x/lint v0.0.0-20210508222113-6edffad5e616 // indirect
-	golang.org/x/mod v0.5.0 // indirect
 	golang.org/x/oauth2 v0.0.0-20211104180415-d3ed0bb246c8 // indirect
 	golang.org/x/sys v0.0.0-20211007075335-d3039528d8ac // indirect
 	golang.org/x/term v0.0.0-20210927222741-03fcf44c2211 // indirect
 	golang.org/x/text v0.3.7 // indirect
-	golang.org/x/tools v0.1.5 // indirect
 	golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
 	gopkg.in/ini.v1 v1.62.0 // indirect
