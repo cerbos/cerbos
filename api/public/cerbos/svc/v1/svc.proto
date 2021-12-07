@@ -156,8 +156,11 @@ service CerbosAdminService {
 
     rpc ListSchemas(cerbos.request.v1.ListSchemasRequest) returns (cerbos.response.v1.ListSchemasResponse) {
         option (google.api.http) = {
-            post: "/admin/schema/list",
-            body: "*"
+            get: "/admin/schema/list",
+            additional_bindings: {
+                post: "/admin/schema/list",
+                body: "*"
+            }
         };
         option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
             summary: "List schemas",
