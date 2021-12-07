@@ -138,7 +138,6 @@ func TestPartialEvaluationWithGlobalVars(t *testing.T) {
 		decls.NewVar("gb_us", decls.NewListType(decls.String)),
 		decls.NewVar("gbLoc", decls.String),
 		decls.NewVar("ca", decls.String),
-		decls.NewVar("gb", decls.NewListType(decls.String)),
 	))
 	is.NoError(err)
 
@@ -152,6 +151,7 @@ func TestPartialEvaluationWithGlobalVars(t *testing.T) {
 	for k, txt := range map[string]string{
 		"locale": `R.attr.language + "_" + R.attr.country`,
 		"geo":    "R.attr.geo",
+		"gb_us2": "gb_us",
 		"gb_us":  `["gb", "us"].map(t, t.upperAscii())`,
 		"info":   `{"country": "GB", "language": "en"}`,
 	} {
@@ -172,6 +172,10 @@ func TestPartialEvaluationWithGlobalVars(t *testing.T) {
 		},
 		{
 			expr: "V.geo in (gb_us + [ca]).map(t, t.upperAscii())",
+			want: `R.attr.geo in ["GB", "US", "CA"]`,
+		},
+		{
+			expr: "V.geo in (V.gb_us2 + [ca]).map(t, t.upperAscii())",
 			want: `R.attr.geo in ["GB", "US", "CA"]`,
 		},
 		{
@@ -203,6 +207,8 @@ func TestPartialEvaluationWithGlobalVars(t *testing.T) {
 			astToString, err := cel.AstToString(residual)
 			is.NoError(err)
 			is.Equal(tt.want, astToString)
+			ast, iss = env.Check(residual)
+			is.Nil(iss, iss.Err())
 		})
 	}
 }
