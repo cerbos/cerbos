@@ -2572,11 +2572,11 @@ Contents of probable licence file $GOMODCACHE/github.com/grpc-ecosystem/go-grpc-
 
 --------------------------------------------------------------------------------
 Module  : github.com/grpc-ecosystem/grpc-gateway/v2
-Version : v2.7.0
-Time    : 2021-11-18T20:38:58Z
+Version : v2.7.1
+Time    : 2021-12-02T03:29:31Z
 Licence : BSD-3-Clause
 
-Contents of probable licence file $GOMODCACHE/github.com/grpc-ecosystem/grpc-gateway/v2@v2.7.0/LICENSE.txt:
+Contents of probable licence file $GOMODCACHE/github.com/grpc-ecosystem/grpc-gateway/v2@v2.7.1/LICENSE.txt:
 
 Copyright (c) 2015, Gengo, Inc.
 All rights reserved.
@@ -6164,11 +6164,11 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 --------------------------------------------------------------------------------
 Module  : google.golang.org/genproto
-Version : v0.0.0-20211118181313-81c1377c94b1
-Time    : 2021-11-18T18:13:13Z
+Version : v0.0.0-20211129164237-f09f9a12af12
+Time    : 2021-11-29T16:42:37Z
 Licence : Apache-2.0
 
-Contents of probable licence file $GOMODCACHE/google.golang.org/genproto@v0.0.0-20211118181313-81c1377c94b1/LICENSE:
+Contents of probable licence file $GOMODCACHE/google.golang.org/genproto@v0.0.0-20211129164237-f09f9a12af12/LICENSE:
 
 
                                  Apache License
@@ -22830,11 +22830,11 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 --------------------------------------------------------------------------------
 Module  : sigs.k8s.io/yaml
-Version : v1.2.0
-Time    : 2020-02-04T15:11:26Z
+Version : v1.3.0
+Time    : 2021-09-22T21:48:32Z
 Licence : MIT
 
-Contents of probable licence file $GOMODCACHE/sigs.k8s.io/yaml@v1.2.0/LICENSE:
+Contents of probable licence file $GOMODCACHE/sigs.k8s.io/yaml@v1.3.0/LICENSE:
 
 The MIT License (MIT)
 
