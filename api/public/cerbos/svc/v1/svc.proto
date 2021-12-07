@@ -172,7 +172,7 @@ service CerbosAdminService {
 
     rpc GetSchema(cerbos.request.v1.GetSchemaRequest) returns (cerbos.response.v1.GetSchemaResponse) {
         option (google.api.http) = {
-            get: "/admin/schema/{id}",
+            get: "/admin/schema",
         };
         option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
             summary: "Get schema",
@@ -187,7 +187,7 @@ service CerbosAdminService {
 
     rpc DeleteSchema(cerbos.request.v1.DeleteSchemaRequest) returns (cerbos.response.v1.DeleteSchemaResponse) {
         option (google.api.http) = {
-            delete: "/admin/schema/{id}",
+            delete: "/admin/schema",
         };
         option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
             summary: "Delete schema",
