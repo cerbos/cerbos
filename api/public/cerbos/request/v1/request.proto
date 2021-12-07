@@ -497,3 +497,43 @@ message AddOrUpdateSchemaRequest {
         }
     ];
 }
+
+message ListSchemasRequest {
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
+        json_schema: {
+            description: "List schema ids request"
+            }
+    };
+}
+
+message GetSchemaRequest {
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
+        json_schema: {
+            description: "Get schema(s) request"
+        }
+    };
+    repeated string id = 1 [
+        (google.api.field_behavior) = REQUIRED,
+        (validate.rules).repeated = { unique: true, items { string { min_len: 1, max_len: 256} } },
+        (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+            description: "Unique identifier for the schema"
+            example: "\"principal.json\""
+        }
+    ];
+}
+
+message DeleteSchemaRequest {
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
+        json_schema: {
+            description: "Delete schema(s) request"
+        }
+    };
+    repeated string id = 1 [
+        (google.api.field_behavior) = REQUIRED,
+        (validate.rules).repeated = { unique: true, items { string { min_len: 1, max_len: 256} } },
+        (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+            description: "Unique identifier for the schema"
+            example: "\"principal.json\""
+        }
+    ];
+}

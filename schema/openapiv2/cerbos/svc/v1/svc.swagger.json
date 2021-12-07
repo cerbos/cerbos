@@ -288,6 +288,84 @@
       }
     },
     "/admin/schema": {
+      "get": {
+        "summary": "Get schema",
+        "operationId": "CerbosAdminService_GetSchema",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1GetSchemaResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "description": "Unique identifier for the schema",
+            "in": "query",
+            "required": true,
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "collectionFormat": "multi"
+          }
+        ],
+        "tags": [
+          "CerbosAdminService"
+        ],
+        "security": [
+          {
+            "BasicAuth": []
+          }
+        ]
+      },
+      "delete": {
+        "summary": "Delete schema",
+        "operationId": "CerbosAdminService_DeleteSchema",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1DeleteSchemaResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "description": "Unique identifier for the schema",
+            "in": "query",
+            "required": true,
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "collectionFormat": "multi"
+          }
+        ],
+        "tags": [
+          "CerbosAdminService"
+        ],
+        "security": [
+          {
+            "BasicAuth": []
+          }
+        ]
+      },
       "post": {
         "summary": "Add or update schema",
         "operationId": "CerbosAdminService_AddOrUpdateSchema",
@@ -351,6 +429,34 @@
             }
           }
         ],
+        "tags": [
+          "CerbosAdminService"
+        ],
+        "security": [
+          {
+            "BasicAuth": []
+          }
+        ]
+      }
+    },
+    "/admin/schemas": {
+      "get": {
+        "summary": "List schemas",
+        "operationId": "CerbosAdminService_ListSchemas",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1ListSchemasResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
         "tags": [
           "CerbosAdminService"
         ],
@@ -968,6 +1074,18 @@
         }
       }
     },
+    "schemav1Schema": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "definition": {
+          "type": "string",
+          "format": "byte"
+        }
+      }
+    },
     "v1AccessLogEntry": {
       "type": "object",
       "properties": {
@@ -1346,6 +1464,10 @@
         }
       }
     },
+    "v1DeleteSchemaResponse": {
+      "type": "object",
+      "description": "Delete schema(s) response"
+    },
     "v1DerivedRoles": {
       "type": "object",
       "properties": {
@@ -1369,6 +1491,18 @@
         "EFFECT_NO_MATCH"
       ],
       "default": "EFFECT_UNSPECIFIED"
+    },
+    "v1GetSchemaResponse": {
+      "type": "object",
+      "properties": {
+        "schemas": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/schemav1Schema"
+          }
+        }
+      },
+      "description": "Get schema(s) response"
     },
     "v1ListAuditLogEntriesResponse": {
       "type": "object",
@@ -1408,6 +1542,18 @@
         }
       },
       "description": "List of policies stored in the Cerbos server"
+    },
+    "v1ListSchemasResponse": {
+      "type": "object",
+      "properties": {
+        "schemas": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/v1SchemaWithoutDef"
+          }
+        }
+      },
+      "description": "List schema ids response"
     },
     "v1Match": {
       "type": "object",
@@ -1938,6 +2084,14 @@
         },
         "condition": {
           "$ref": "#/definitions/v1Condition"
+        }
+      }
+    },
+    "v1SchemaWithoutDef": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
         }
       }
     },

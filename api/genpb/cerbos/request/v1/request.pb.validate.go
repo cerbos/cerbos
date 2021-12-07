@@ -1501,6 +1501,251 @@ var _ interface {
 	ErrorName() string
 } = AddOrUpdateSchemaRequestValidationError{}
 
+// Validate checks the field values on ListSchemasRequest with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, an error is returned.
+func (m *ListSchemasRequest) Validate() error {
+	if m == nil {
+		return nil
+	}
+
+	return nil
+}
+
+// ListSchemasRequestValidationError is the validation error returned by
+// ListSchemasRequest.Validate if the designated constraints aren't met.
+type ListSchemasRequestValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e ListSchemasRequestValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e ListSchemasRequestValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e ListSchemasRequestValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e ListSchemasRequestValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e ListSchemasRequestValidationError) ErrorName() string {
+	return "ListSchemasRequestValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e ListSchemasRequestValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sListSchemasRequest.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = ListSchemasRequestValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = ListSchemasRequestValidationError{}
+
+// Validate checks the field values on GetSchemaRequest with the rules defined
+// in the proto definition for this message. If any rules are violated, an
+// error is returned.
+func (m *GetSchemaRequest) Validate() error {
+	if m == nil {
+		return nil
+	}
+
+	_GetSchemaRequest_Id_Unique := make(map[string]struct{}, len(m.GetId()))
+
+	for idx, item := range m.GetId() {
+		_, _ = idx, item
+
+		if _, exists := _GetSchemaRequest_Id_Unique[item]; exists {
+			return GetSchemaRequestValidationError{
+				field:  fmt.Sprintf("Id[%v]", idx),
+				reason: "repeated value must contain unique items",
+			}
+		} else {
+			_GetSchemaRequest_Id_Unique[item] = struct{}{}
+		}
+
+		if l := utf8.RuneCountInString(item); l < 1 || l > 256 {
+			return GetSchemaRequestValidationError{
+				field:  fmt.Sprintf("Id[%v]", idx),
+				reason: "value length must be between 1 and 256 runes, inclusive",
+			}
+		}
+
+	}
+
+	return nil
+}
+
+// GetSchemaRequestValidationError is the validation error returned by
+// GetSchemaRequest.Validate if the designated constraints aren't met.
+type GetSchemaRequestValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e GetSchemaRequestValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e GetSchemaRequestValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e GetSchemaRequestValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e GetSchemaRequestValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e GetSchemaRequestValidationError) ErrorName() string { return "GetSchemaRequestValidationError" }
+
+// Error satisfies the builtin error interface
+func (e GetSchemaRequestValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sGetSchemaRequest.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = GetSchemaRequestValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = GetSchemaRequestValidationError{}
+
+// Validate checks the field values on DeleteSchemaRequest with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, an error is returned.
+func (m *DeleteSchemaRequest) Validate() error {
+	if m == nil {
+		return nil
+	}
+
+	_DeleteSchemaRequest_Id_Unique := make(map[string]struct{}, len(m.GetId()))
+
+	for idx, item := range m.GetId() {
+		_, _ = idx, item
+
+		if _, exists := _DeleteSchemaRequest_Id_Unique[item]; exists {
+			return DeleteSchemaRequestValidationError{
+				field:  fmt.Sprintf("Id[%v]", idx),
+				reason: "repeated value must contain unique items",
+			}
+		} else {
+			_DeleteSchemaRequest_Id_Unique[item] = struct{}{}
+		}
+
+		if l := utf8.RuneCountInString(item); l < 1 || l > 256 {
+			return DeleteSchemaRequestValidationError{
+				field:  fmt.Sprintf("Id[%v]", idx),
+				reason: "value length must be between 1 and 256 runes, inclusive",
+			}
+		}
+
+	}
+
+	return nil
+}
+
+// DeleteSchemaRequestValidationError is the validation error returned by
+// DeleteSchemaRequest.Validate if the designated constraints aren't met.
+type DeleteSchemaRequestValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e DeleteSchemaRequestValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e DeleteSchemaRequestValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e DeleteSchemaRequestValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e DeleteSchemaRequestValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e DeleteSchemaRequestValidationError) ErrorName() string {
+	return "DeleteSchemaRequestValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e DeleteSchemaRequestValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sDeleteSchemaRequest.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = DeleteSchemaRequestValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = DeleteSchemaRequestValidationError{}
+
 // Validate checks the field values on CheckResourceBatchRequest_BatchEntry
 // with the rules defined in the proto definition for this message. If any
 // rules are violated, an error is returned.

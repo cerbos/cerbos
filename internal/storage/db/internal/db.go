@@ -17,7 +17,6 @@ import (
 	"github.com/jackc/pgtype"
 	"go.uber.org/zap"
 
-	schemav1 "github.com/cerbos/cerbos/api/genpb/cerbos/schema/v1"
 	"github.com/cerbos/cerbos/internal/namer"
 	"github.com/cerbos/cerbos/internal/policy"
 	"github.com/cerbos/cerbos/internal/schema"
@@ -31,7 +30,7 @@ type DBStorage interface {
 	GetDependents(ctx context.Context, ids ...namer.ModuleID) (map[namer.ModuleID][]namer.ModuleID, error)
 	Delete(ctx context.Context, ids ...namer.ModuleID) error
 	GetPolicies(ctx context.Context) ([]*policy.Wrapper, error)
-	GetSchemas(ctx context.Context) ([]*schemav1.Schema, error)
+	ListSchemaIDs(ctx context.Context) ([]string, error)
 	AddOrUpdateSchema(ctx context.Context, id string, def []byte) error
 	DeleteSchema(ctx context.Context, id string) error
 	LoadSchema(ctx context.Context, url string) (io.ReadCloser, error)
@@ -358,22 +357,22 @@ func (s *dbStorage) GetPolicies(ctx context.Context) ([]*policy.Wrapper, error) 
 	return policies, nil
 }
 
-func (s *dbStorage) GetSchemas(ctx context.Context) ([]*schemav1.Schema, error) {
-	res, err := s.db.From(SchemaTbl).Executor().ScannerContext(ctx)
+func (s *dbStorage) ListSchemaIDs(ctx context.Context) ([]string, error) {
+	res, err := s.db.Select(goqu.C(SchemaTblIDCol)).From(SchemaTbl).Executor().ScannerContext(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("could not execute %q query: %w", "GetSchemas", err)
+		return nil, fmt.Errorf("could not execute %q query: %w", "ListSchemaIDs", err)
 	}
 	defer res.Close()
 
-	var schemas []*schemav1.Schema
+	var schemaIds []string
 	for res.Next() {
-		var rec schemav1.Schema
-		if err := res.ScanStruct(&rec); err != nil {
+		var id string
+		if err := res.ScanVal(&id); err != nil {
 			return nil, fmt.Errorf("could not scan row: %w", err)
 		}
 
-		schemas = append(schemas, &rec)
+		schemaIds = append(schemaIds, id)
 	}
 
-	return schemas, nil
+	return schemaIds, nil
 }

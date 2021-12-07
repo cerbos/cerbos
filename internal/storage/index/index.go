@@ -13,7 +13,6 @@ import (
 	"sync"
 
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
-	schemav1 "github.com/cerbos/cerbos/api/genpb/cerbos/schema/v1"
 	"github.com/cerbos/cerbos/internal/namer"
 	"github.com/cerbos/cerbos/internal/policy"
 	"github.com/cerbos/cerbos/internal/schema"
@@ -41,7 +40,7 @@ type Index interface {
 	GetAllCompilationUnits(context.Context) <-chan *policy.CompilationUnit
 	Clear() error
 	GetPolicies(context.Context) ([]*policy.Wrapper, error)
-	GetSchemas(context.Context) ([]*schemav1.Schema, error)
+	ListSchemaIDs(context.Context) ([]string, error)
 	LoadSchema(context.Context, string) (io.ReadCloser, error)
 }
 
@@ -348,8 +347,8 @@ func (idx *index) GetPolicies(_ context.Context) ([]*policy.Wrapper, error) {
 	return entries, nil
 }
 
-func (idx *index) GetSchemas(_ context.Context) ([]*schemav1.Schema, error) {
-	var schemas []*schemav1.Schema
+func (idx *index) ListSchemaIDs(_ context.Context) ([]string, error) {
+	var schemaIds []string
 	err := fs.WalkDir(idx.fsys, schema.Directory, func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
 			return err
@@ -359,20 +358,12 @@ func (idx *index) GetSchemas(_ context.Context) ([]*schemav1.Schema, error) {
 			return nil
 		}
 
-		f, err := fs.ReadFile(idx.fsys, path)
-		if err != nil {
-			return fmt.Errorf("failed to open %s: %w", path, err)
-		}
-
 		id, err := filepath.Rel(schema.Directory, path)
 		if err != nil {
 			return fmt.Errorf("failed to generate id from path %s: %w", path, err)
 		}
 
-		schemas = append(schemas, &schemav1.Schema{
-			Id:         id,
-			Definition: f,
-		})
+		schemaIds = append(schemaIds, id)
 
 		return nil
 	})
@@ -380,7 +371,7 @@ func (idx *index) GetSchemas(_ context.Context) ([]*schemav1.Schema, error) {
 		return nil, fmt.Errorf("failed to walk schemas directory: %w", err)
 	}
 
-	return schemas, nil
+	return schemaIds, nil
 }
 
 func (idx *index) LoadSchema(ctx context.Context, url string) (io.ReadCloser, error) {
