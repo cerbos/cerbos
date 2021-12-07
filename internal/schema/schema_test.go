@@ -71,18 +71,19 @@ func TestLoad(t *testing.T) {
 	}
 
 	for storeName, mgr := range mgrs {
-		for _, tc := range testCases {
-			tc := tc
-			testName := fmt.Sprintf("%s-%s", tc.name, storeName)
-			t.Run(testName, func(t *testing.T) {
-				err := mgr.CheckSchema(context.Background(), tc.url)
-				if tc.wantErr {
-					require.Error(t, err)
-					return
-				}
-				require.NoError(t, err)
-			})
-		}
+		t.Run(storeName, func(t *testing.T) {
+			for _, tc := range testCases {
+				tc := tc
+				t.Run(tc.name, func(t *testing.T) {
+					err := mgr.CheckSchema(context.Background(), tc.url)
+					if tc.wantErr {
+						require.Error(t, err)
+						return
+					}
+					require.NoError(t, err)
+				})
+			}
+		})
 	}
 }
 
