@@ -9,7 +9,6 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"strings"
 	"time"
 
@@ -101,70 +100,6 @@ func (cas *CerbosAdminService) AddOrUpdateSchema(ctx context.Context, req *reque
 	}
 
 	return &responsev1.AddOrUpdateSchemaResponse{}, nil
-}
-
-func (cas *CerbosAdminService) ListSchemas(ctx context.Context, req *requestv1.ListSchemasRequest) (*responsev1.ListSchemasResponse, error) {
-	if err := cas.checkCredentials(ctx); err != nil {
-		return nil, err
-	}
-
-	if cas.store == nil {
-		return nil, status.Error(codes.NotFound, "store is not configured")
-	}
-
-	schemas, err := cas.store.GetSchemas(ctx)
-	if err != nil {
-		return nil, status.Error(codes.Internal, fmt.Sprintf("could not get schemas: %s", err.Error()))
-	}
-
-	sortSchemas(req.SortOptions, schemas)
-
-	return &responsev1.ListSchemasResponse{
-		Schemas: schemas,
-	}, nil
-}
-
-func (cas *CerbosAdminService) GetSchema(ctx context.Context, req *requestv1.GetSchemaRequest) (*responsev1.GetSchemaResponse, error) {
-	if err := cas.checkCredentials(ctx); err != nil {
-		return nil, err
-	}
-
-	if cas.store == nil {
-		return nil, status.Error(codes.NotFound, "store is not configured")
-	}
-
-	sch, err := cas.store.LoadSchema(context.Background(), req.Id)
-	if err != nil {
-		return nil, status.Error(codes.Internal, fmt.Sprintf("could not get schema: %s", err.Error()))
-	}
-
-	schBytes, err := ioutil.ReadAll(sch)
-	if err != nil {
-		return nil, status.Error(codes.Internal, fmt.Sprintf("could not read schema from interface: %s", err.Error()))
-	}
-
-	return &responsev1.GetSchemaResponse{
-		Id:     req.Id,
-		Schema: schBytes,
-	}, nil
-}
-
-func (cas *CerbosAdminService) DeleteSchema(ctx context.Context, req *requestv1.DeleteSchemaRequest) (*responsev1.DeleteSchemaResponse, error) {
-	if err := cas.checkCredentials(ctx); err != nil {
-		return nil, err
-	}
-
-	ms, ok := cas.store.(storage.MutableStore)
-	if !ok {
-		return nil, status.Error(codes.Unimplemented, "Configured store is not mutable")
-	}
-	log := ctxzap.Extract(ctx)
-	if err := ms.DeleteSchema(ctx, req.Id); err != nil {
-		log.Error("Failed to delete the schema", zap.Error(err))
-		return nil, status.Error(codes.Internal, fmt.Sprintf("Failed to delete the schema: %s", err.Error()))
-	}
-
-	return &responsev1.DeleteSchemaResponse{}, nil
 }
 
 func (cas *CerbosAdminService) ListAuditLogEntries(req *requestv1.ListAuditLogEntriesRequest, stream svcv1.CerbosAdminService_ListAuditLogEntriesServer) error {

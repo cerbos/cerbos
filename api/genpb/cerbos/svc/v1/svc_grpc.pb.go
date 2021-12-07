@@ -182,9 +182,6 @@ type CerbosAdminServiceClient interface {
 	ListAuditLogEntries(ctx context.Context, in *v1.ListAuditLogEntriesRequest, opts ...grpc.CallOption) (CerbosAdminService_ListAuditLogEntriesClient, error)
 	ListPolicies(ctx context.Context, in *v1.ListPoliciesRequest, opts ...grpc.CallOption) (*v11.ListPoliciesResponse, error)
 	AddOrUpdateSchema(ctx context.Context, in *v1.AddOrUpdateSchemaRequest, opts ...grpc.CallOption) (*v11.AddOrUpdateSchemaResponse, error)
-	ListSchemas(ctx context.Context, in *v1.ListSchemasRequest, opts ...grpc.CallOption) (*v11.ListSchemasResponse, error)
-	GetSchema(ctx context.Context, in *v1.GetSchemaRequest, opts ...grpc.CallOption) (*v11.GetSchemaResponse, error)
-	DeleteSchema(ctx context.Context, in *v1.DeleteSchemaRequest, opts ...grpc.CallOption) (*v11.DeleteSchemaResponse, error)
 }
 
 type cerbosAdminServiceClient struct {
@@ -254,33 +251,6 @@ func (c *cerbosAdminServiceClient) AddOrUpdateSchema(ctx context.Context, in *v1
 	return out, nil
 }
 
-func (c *cerbosAdminServiceClient) ListSchemas(ctx context.Context, in *v1.ListSchemasRequest, opts ...grpc.CallOption) (*v11.ListSchemasResponse, error) {
-	out := new(v11.ListSchemasResponse)
-	err := c.cc.Invoke(ctx, "/cerbos.svc.v1.CerbosAdminService/ListSchemas", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *cerbosAdminServiceClient) GetSchema(ctx context.Context, in *v1.GetSchemaRequest, opts ...grpc.CallOption) (*v11.GetSchemaResponse, error) {
-	out := new(v11.GetSchemaResponse)
-	err := c.cc.Invoke(ctx, "/cerbos.svc.v1.CerbosAdminService/GetSchema", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *cerbosAdminServiceClient) DeleteSchema(ctx context.Context, in *v1.DeleteSchemaRequest, opts ...grpc.CallOption) (*v11.DeleteSchemaResponse, error) {
-	out := new(v11.DeleteSchemaResponse)
-	err := c.cc.Invoke(ctx, "/cerbos.svc.v1.CerbosAdminService/DeleteSchema", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
 // CerbosAdminServiceServer is the server API for CerbosAdminService service.
 // All implementations must embed UnimplementedCerbosAdminServiceServer
 // for forward compatibility
@@ -289,9 +259,6 @@ type CerbosAdminServiceServer interface {
 	ListAuditLogEntries(*v1.ListAuditLogEntriesRequest, CerbosAdminService_ListAuditLogEntriesServer) error
 	ListPolicies(context.Context, *v1.ListPoliciesRequest) (*v11.ListPoliciesResponse, error)
 	AddOrUpdateSchema(context.Context, *v1.AddOrUpdateSchemaRequest) (*v11.AddOrUpdateSchemaResponse, error)
-	ListSchemas(context.Context, *v1.ListSchemasRequest) (*v11.ListSchemasResponse, error)
-	GetSchema(context.Context, *v1.GetSchemaRequest) (*v11.GetSchemaResponse, error)
-	DeleteSchema(context.Context, *v1.DeleteSchemaRequest) (*v11.DeleteSchemaResponse, error)
 	mustEmbedUnimplementedCerbosAdminServiceServer()
 }
 
@@ -310,15 +277,6 @@ func (UnimplementedCerbosAdminServiceServer) ListPolicies(context.Context, *v1.L
 }
 func (UnimplementedCerbosAdminServiceServer) AddOrUpdateSchema(context.Context, *v1.AddOrUpdateSchemaRequest) (*v11.AddOrUpdateSchemaResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method AddOrUpdateSchema not implemented")
-}
-func (UnimplementedCerbosAdminServiceServer) ListSchemas(context.Context, *v1.ListSchemasRequest) (*v11.ListSchemasResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method ListSchemas not implemented")
-}
-func (UnimplementedCerbosAdminServiceServer) GetSchema(context.Context, *v1.GetSchemaRequest) (*v11.GetSchemaResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetSchema not implemented")
-}
-func (UnimplementedCerbosAdminServiceServer) DeleteSchema(context.Context, *v1.DeleteSchemaRequest) (*v11.DeleteSchemaResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method DeleteSchema not implemented")
 }
 func (UnimplementedCerbosAdminServiceServer) mustEmbedUnimplementedCerbosAdminServiceServer() {}
 
@@ -408,60 +366,6 @@ func _CerbosAdminService_AddOrUpdateSchema_Handler(srv interface{}, ctx context.
 	return interceptor(ctx, in, info, handler)
 }
 
-func _CerbosAdminService_ListSchemas_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(v1.ListSchemasRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(CerbosAdminServiceServer).ListSchemas(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/cerbos.svc.v1.CerbosAdminService/ListSchemas",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(CerbosAdminServiceServer).ListSchemas(ctx, req.(*v1.ListSchemasRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _CerbosAdminService_GetSchema_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(v1.GetSchemaRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(CerbosAdminServiceServer).GetSchema(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/cerbos.svc.v1.CerbosAdminService/GetSchema",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(CerbosAdminServiceServer).GetSchema(ctx, req.(*v1.GetSchemaRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _CerbosAdminService_DeleteSchema_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(v1.DeleteSchemaRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(CerbosAdminServiceServer).DeleteSchema(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/cerbos.svc.v1.CerbosAdminService/DeleteSchema",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(CerbosAdminServiceServer).DeleteSchema(ctx, req.(*v1.DeleteSchemaRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
 // CerbosAdminService_ServiceDesc is the grpc.ServiceDesc for CerbosAdminService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -480,18 +384,6 @@ var CerbosAdminService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "AddOrUpdateSchema",
 			Handler:    _CerbosAdminService_AddOrUpdateSchema_Handler,
-		},
-		{
-			MethodName: "ListSchemas",
-			Handler:    _CerbosAdminService_ListSchemas_Handler,
-		},
-		{
-			MethodName: "GetSchema",
-			Handler:    _CerbosAdminService_GetSchema_Handler,
-		},
-		{
-			MethodName: "DeleteSchema",
-			Handler:    _CerbosAdminService_DeleteSchema_Handler,
 		},
 	},
 	Streams: []grpc.StreamDesc{

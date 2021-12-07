@@ -15,7 +15,6 @@ import (
 
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
 	requestv1 "github.com/cerbos/cerbos/api/genpb/cerbos/request/v1"
-	schemav1 "github.com/cerbos/cerbos/api/genpb/cerbos/schema/v1"
 	"github.com/cerbos/cerbos/internal/policy"
 )
 
@@ -166,30 +165,3 @@ func getPolicyVersion(p *policyv1.Policy) string {
 	}
 }
 
-func sortSchemas(sortOptions *requestv1.ListSchemasRequest_SortOptions, schemas []*schemav1.Schema) {
-	if sortOptions == nil {
-		return
-	}
-
-	var data sort.Interface
-	if sortOptions.GetColumn() == requestv1.ListSchemasRequest_SortOptions_COLUMN_NAME {
-		data = nameOrderSchema(schemas)
-	}
-
-	if sortOptions.Order == requestv1.ListSchemasRequest_SortOptions_ORDER_DESCENDING {
-		sort.Sort(sort.Reverse(data))
-	} else {
-		sort.Sort(data)
-	}
-}
-
-type nameOrderSchema []*schemav1.Schema
-
-func (s nameOrderSchema) Len() int { return len(s) }
-
-func (s nameOrderSchema) Swap(i, j int) { s[i], s[j] = s[j], s[i] }
-
-func (s nameOrderSchema) Less(i, j int) bool {
-	in, jn := s[i].Id, s[j].Id
-	return in < jn
-}
