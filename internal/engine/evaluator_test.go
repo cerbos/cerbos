@@ -215,7 +215,7 @@ func TestPartialEvaluationWithGlobalVars(t *testing.T) {
 			astToString, err := cel.AstToString(residual)
 			is.NoError(err)
 			is.Equal(tt.want, astToString)
-			ast, iss = env.Check(residual)
+			_, iss = env.Check(residual)
 			is.Nil(iss, iss.Err())
 		})
 	}

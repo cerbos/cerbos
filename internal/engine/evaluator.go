@@ -68,6 +68,32 @@ func (rpe *resourcePolicyEvaluator) EvaluateResourcesQueryPlan(_ context.Context
 	result.Kind = input.ResourceKind
 	result.Action = input.Action
 	for _, p := range rpe.policy.Policies {
+		effectiveDerivedRoles := stringSet{}
+
+		for drName, dr := range p.DerivedRoles {
+			if !setIntersects(dr.ParentRoles, effectiveRoles) {
+				continue
+			}
+			drVariables := make(map[string]*exprpb.Expr, len(dr.Variables))
+			for k, v := range p.Variables {
+				drVariables[k] = v.Checked.Expr
+			}
+
+			node, err := evaluateCondition(dr.Condition, input, drVariables)
+			if err != nil {
+				return nil, err
+			}
+			e := node.GetExpression().GetExpr()
+			switch {
+			case e == conditions.FalseExpr.Expr:
+				continue
+			case e == conditions.TrueExpr.Expr:
+				effectiveDerivedRoles[drName] = struct{}{}
+			}
+			if node.GetExpression().GetExpr() == conditions.FalseExpr.Expr {
+				continue
+			}
+		}
 		// evaluate each rule until all actions have a result
 		for _, rule := range p.Rules {
 			if !setIntersects(rule.Roles, effectiveRoles) {

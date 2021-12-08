@@ -5,14 +5,13 @@ package conditions
 
 import (
 	"fmt"
-	requestv1 "github.com/cerbos/cerbos/api/genpb/cerbos/request/v1"
-
 	"github.com/google/cel-go/cel"
 	"github.com/google/cel-go/checker/decls"
 	"github.com/google/cel-go/ext"
 	exprpb "google.golang.org/genproto/googleapis/api/expr/v1alpha1"
 
 	enginev1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
+	requestv1 "github.com/cerbos/cerbos/api/genpb/cerbos/request/v1"
 )
 
 const (
@@ -41,10 +40,6 @@ func init() {
 		panic(fmt.Errorf("failed to initialize standard CEL environment: %w", err))
 	}
 
-	StdPartialEnv, err = cel.NewEnv(newCELQueryPlanEnvOptions()...)
-	if err != nil {
-		panic(fmt.Errorf("failed to initialize standard CEL environment: %w", err))
-	}
 	ast, iss := StdEnv.Compile("false")
 	if iss.Err() != nil {
 		panic(iss.Err())
@@ -61,13 +56,17 @@ func init() {
 	if err != nil {
 		panic(err)
 	}
+	StdPartialEnv, err = cel.NewEnv(newCELQueryPlanEnvOptions()...)
+	if err != nil {
+		panic(fmt.Errorf("failed to initialize CEL environment for partial evaluation: %w", err))
+	}
 }
 
 func Fqn(s string) string {
 	return fmt.Sprintf("%s.%s", CELRequestIdent, s)
 }
 
-func newCELEnvOptions() []cel.EnvOption {
+func newCELQueryPlanEnvOptions() []cel.EnvOption {
 	return []cel.EnvOption{
 		cel.Types(&requestv1.ResourcesQueryPlanRequest{}, &enginev1.Principal{}, &enginev1.Resource{}),
 		cel.Declarations(
@@ -85,7 +84,8 @@ func newCELEnvOptions() []cel.EnvOption {
 		CerbosCELLib(),
 	}
 }
-func newCELQueryPlanEnvOptions() []cel.EnvOption {
+
+func newCELEnvOptions() []cel.EnvOption {
 	return []cel.EnvOption{
 		cel.Types(&enginev1.CheckInput{}, &enginev1.Principal{}, &enginev1.Resource{}),
 		cel.Declarations(
