@@ -23,6 +23,7 @@ import (
 	"github.com/cerbos/cerbos/internal/config"
 	"github.com/cerbos/cerbos/internal/namer"
 	"github.com/cerbos/cerbos/internal/policy"
+	"github.com/cerbos/cerbos/internal/schema"
 	"github.com/cerbos/cerbos/internal/storage"
 	"github.com/cerbos/cerbos/internal/storage/index"
 	"github.com/cerbos/cerbos/internal/util"
@@ -356,18 +357,38 @@ func (s *Store) updateIndex(ctx context.Context) error {
 		s.log.Debugw("Processing change", "change", c)
 		switch {
 		case c.From.Name == "" && s.inPolicyDir(c.To.Name): // File created
+			if filename := s.schemaFileName(c.To.Name); filename != "" {
+				s.NotifySubscribers(storage.NewSchemaEvent(storage.EventAddOrUpdateSchema, filename))
+				continue
+			}
+
 			if err := s.applyIndexUpdate(c.To, storage.EventAddOrUpdatePolicy); err != nil {
 				return err
 			}
 		case c.To.Name == "" && s.inPolicyDir(c.From.Name): // File deleted
+			if filename := s.schemaFileName(c.From.Name); filename != "" {
+				s.NotifySubscribers(storage.NewSchemaEvent(storage.EventDeleteSchema, filename))
+				continue
+			}
+
 			if err := s.applyIndexUpdate(c.From, storage.EventDeletePolicy); err != nil {
 				return err
 			}
 		case s.inPolicyDir(c.From.Name) && !s.inPolicyDir(c.To.Name): // File moved out of policy dir
+			if filename := s.schemaFileName(c.From.Name); filename != "" {
+				s.NotifySubscribers(storage.NewSchemaEvent(storage.EventDeleteSchema, filename))
+				continue
+			}
+
 			if err := s.applyIndexUpdate(c.From, storage.EventDeletePolicy); err != nil {
 				return err
 			}
 		case s.inPolicyDir(c.To.Name): // file moved in or modified
+			if filename := s.schemaFileName(c.To.Name); filename != "" {
+				s.NotifySubscribers(storage.NewSchemaEvent(storage.EventAddOrUpdateSchema, filename))
+				continue
+			}
+
 			if err := s.applyIndexUpdate(c.To, storage.EventAddOrUpdatePolicy); err != nil {
 				return err
 			}
@@ -422,6 +443,26 @@ func (s *Store) inPolicyDir(filePath string) bool {
 
 	// if there are no double dots, the file is inside the policy dir.
 	return !strings.Contains(rel, "..")
+}
+
+func (s *Store) schemaFileName(filePath string) string {
+	rootDir := schema.Directory
+	if s.conf.SubDir != "" {
+		rootDir = filepath.Join(s.conf.SubDir, schema.Directory)
+	}
+
+	rel, err := filepath.Rel(rootDir, filePath)
+	if err != nil {
+		s.log.Warnf("Failed to find the path of %s relative to %s: file will be ignored", filePath, rootDir)
+		return ""
+	}
+
+	// if the relative path contains dots, it's not inside the schema directory
+	if strings.Contains(rel, "..") {
+		return ""
+	}
+
+	return rel
 }
 
 func (s *Store) readPolicyFromBlob(hash plumbing.Hash) (*policyv1.Policy, error) {
