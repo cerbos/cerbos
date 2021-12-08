@@ -136,7 +136,11 @@ curl -k -u cerbos:cerbosAdmin \
     'https://localhost:3592/admin/auditlog/list/KIND_ACCESS?lookup=01F9VS1N77S83MTSBBX44GYSJ6'
 ----
 
-== Add/update schemas [`/admin/schema`]
+== Add/update schemas
+----
+POST /admin/schema
+PUT /admin/schema
+----
 
 NOTE: This endpoint requires a mutable storage driver such as xref:configuration:storage.adoc#sqlite3[sqlite3] to be configured.
 
@@ -153,7 +157,7 @@ NOTE: This endpoint requires a mutable storage driver such as xref:configuration
 }
 ----
 <1> List of schema definitions
-<2> base64 encoded schema definition
+<2> base64 encoded link:http://json-schema.org[JSON schema] definition
 
 .Response
 [source,json,linenums]
@@ -161,12 +165,20 @@ NOTE: This endpoint requires a mutable storage driver such as xref:configuration
 {}
 ----
 
-== List schemas [`/admin/schemas`]
+== List schemas
+----
+GET /admin/schemas
+----
 
 Issue a GET request to the endpoint to list the schemas available in the store.
 
-NOTE: Only the schema ids will be responded for this request. Please use the get schema endpoint to retrieve related
-schema's definition.
+NOTE: Only the schema IDs will be returned from this request. Use the `GetSchema` endpoint to retrieve the full  definition of a schema.
+
+[source,shell]
+----
+curl -k -u cerbos:cerbosAdmin \
+    'https://localhost:3592/admin/schemas'
+----
 
 .Response
 [source,json,linenums]
@@ -180,9 +192,18 @@ schema's definition.
 ----
 <1> List of schema ids
 
-== Get schema(s) [`/admin/schema?id=principal.json&id=leave_request.json`]
+== Get schema(s)
+----
+GET /admin/schema
+----
 
 Issue a GET request to the endpoint to get the schema(s) stated in the query parameters.
+
+[source,shell]
+----
+curl -k -u cerbos:cerbosAdmin \
+    'https://localhost:3592/admin/schema?id=principal.json&id=leave_request.json'
+----
 
 .Response
 [source,json,linenums]
@@ -202,9 +223,18 @@ Issue a GET request to the endpoint to get the schema(s) stated in the query par
 ----
 <1> List of schemas
 
-== Delete schema(s) [`/admin/schema?id=principal.json&id=leave_request.json`]
+== Delete schema(s)
+----
+DELETE /admin/schema
+----
 
 Issue a DELETE request to the endpoint to delete the schema(s) stated in the query parameters.
+
+[source,shell]
+----
+curl -k -u cerbos:cerbosAdmin -X DELETE \
+    'https://localhost:3592/admin/schema?id=principal.json&id=leave_request.json'
+----
 
 .Response
 [source,json,linenums]
