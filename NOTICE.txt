@@ -2765,11 +2765,11 @@ SOFTWARE.
 
 --------------------------------------------------------------------------------
 Module  : github.com/lestrrat-go/jwx
-Version : v1.2.12
-Time    : 2021-12-01T06:52:40Z
+Version : v1.2.13
+Time    : 2021-12-07T02:59:52Z
 Licence : MIT
 
-Contents of probable licence file $GOMODCACHE/github.com/lestrrat-go/jwx@v1.2.12/LICENSE:
+Contents of probable licence file $GOMODCACHE/github.com/lestrrat-go/jwx@v1.2.13/LICENSE:
 
 The MIT License (MIT)
 
@@ -13280,11 +13280,11 @@ SOFTWARE.
 
 --------------------------------------------------------------------------------
 Module  : github.com/goccy/go-json
-Version : v0.7.10
-Time    : 2021-10-16T14:45:11Z
+Version : v0.8.1
+Time    : 2021-12-05T02:56:17Z
 Licence : MIT
 
-Contents of probable licence file $GOMODCACHE/github.com/goccy/go-json@v0.7.10/LICENSE:
+Contents of probable licence file $GOMODCACHE/github.com/goccy/go-json@v0.8.1/LICENSE:
 
 MIT License
 
