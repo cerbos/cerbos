@@ -6,12 +6,13 @@ package blob
 import (
 	"context"
 	"errors"
-	"path"
+	"path/filepath"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/require"
 
+	"github.com/cerbos/cerbos/internal/schema"
 	"github.com/cerbos/cerbos/internal/storage"
 	"github.com/cerbos/cerbos/internal/storage/index"
 	"github.com/cerbos/cerbos/internal/test"
@@ -85,20 +86,25 @@ func (m *mockIndex) Delete(e index.Entry) (storage.Event, error) {
 
 func TestStore_updateIndex(t *testing.T) {
 	ctx := context.Background()
+
 	dir := t.TempDir()
 	conf := &Conf{WorkDir: dir}
 	conf.SetDefaults()
+
 	must := require.New(t)
-	policyDir := test.PathToDir(t, path.Join("store", "principal_policies"))
-	policy01 := "policy_01.yaml"
+
+	policyDir := test.PathToDir(t, "store")
+	policyFile := filepath.Join("resource_policies", "policy_01.yaml")
+	schemaFile := filepath.Join(schema.Directory, "principal.json")
 	store, err := NewStore(ctx, conf, clonerFunc(func(_ context.Context) (*CloneResult, error) {
 		return &CloneResult{
-			updateOrAdd: []string{policy01},
-			delete:      []string{policy01},
+			updateOrAdd: []string{policyFile, schemaFile},
+			delete:      []string{policyFile, schemaFile},
 		}, nil
 	}))
 	must.NoError(err)
 	store.fsys = storeFS{dir: policyDir}
+
 	var addOrUpdateCalled bool
 	var deleteCalled bool
 	addOrUpdateEvent := storage.Event{
@@ -110,21 +116,27 @@ func TestStore_updateIndex(t *testing.T) {
 	store.idx = &mockIndex{
 		addOrUpdate: func(entry index.Entry) (storage.Event, error) {
 			addOrUpdateCalled = true
-			must.Equal(entry.File, policy01)
+			must.Equal(entry.File, policyFile)
 			return addOrUpdateEvent, nil
 		},
 		delete: func(entry index.Entry) (storage.Event, error) {
 			deleteCalled = true
-			must.Equal(entry.File, policy01)
+			must.Equal(entry.File, policyFile)
 			return deleteEvent, nil
 		},
 	}
+
 	mustBeNotified := storage.TestSubscription(store)
 	err = store.updateIndex(ctx)
 	must.NoError(err)
 	must.True(addOrUpdateCalled)
 	must.True(deleteCalled)
-	mustBeNotified(t, 1*time.Second, addOrUpdateEvent, deleteEvent)
+	mustBeNotified(t, 1*time.Second,
+		addOrUpdateEvent,
+		deleteEvent,
+		storage.NewSchemaEvent(storage.EventAddOrUpdateSchema, "principal.json"),
+		storage.NewSchemaEvent(storage.EventDeleteSchema, "principal.json"),
+	)
 }
 
 func TestStore_AWSS3(t *testing.T) {
