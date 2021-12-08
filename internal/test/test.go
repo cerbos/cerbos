@@ -21,6 +21,7 @@ import (
 	"google.golang.org/protobuf/proto"
 
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
+	schemav1 "github.com/cerbos/cerbos/api/genpb/cerbos/schema/v1"
 	"github.com/cerbos/cerbos/internal/observability/logging"
 	"github.com/cerbos/cerbos/internal/policy"
 	"github.com/cerbos/cerbos/internal/schema"
@@ -63,9 +64,10 @@ func AddSchemasToStore(t *testing.T, dir string, ms storage.MutableStore) {
 			return nil
 		}
 
-		sch := ReadSchemaFromFS(t, fsys, path)
-
-		err = ms.AddOrUpdateSchema(context.TODO(), path, sch)
+		err = ms.AddOrUpdateSchema(context.TODO(), &schemav1.Schema{
+			Id:         path,
+			Definition: ReadSchemaFromFS(t, fsys, path),
+		})
 		require.NoError(t, err)
 
 		return nil

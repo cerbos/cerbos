@@ -269,3 +269,31 @@ message AddOrUpdateSchemaResponse {
         }
     };
 }
+
+message ListSchemasResponse {
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
+        json_schema: {
+            description: "List schema ids response"
+        }
+    };
+
+    repeated string schema_ids = 1;
+}
+
+message GetSchemaResponse {
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
+        json_schema: {
+            description: "Get schema(s) response"
+        }
+    };
+
+    repeated cerbos.schema.v1.Schema schemas = 1;
+}
+
+message DeleteSchemaResponse {
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
+        json_schema: {
+            description: "Delete schema(s) response"
+        }
+    };
+}

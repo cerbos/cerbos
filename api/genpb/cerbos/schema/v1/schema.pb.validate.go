@@ -111,9 +111,19 @@ func (m *Schema) Validate() error {
 		return nil
 	}
 
-	// no validation rules for Id
+	if l := utf8.RuneCountInString(m.GetId()); l < 1 || l > 255 {
+		return SchemaValidationError{
+			field:  "Id",
+			reason: "value length must be between 1 and 255 runes, inclusive",
+		}
+	}
 
-	// no validation rules for Definition
+	if len(m.GetDefinition()) < 10 {
+		return SchemaValidationError{
+			field:  "Definition",
+			reason: "value length must be at least 10 bytes",
+		}
+	}
 
 	return nil
 }

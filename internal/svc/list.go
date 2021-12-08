@@ -165,3 +165,6 @@ func getPolicyVersion(p *policyv1.Policy) string {
 	}
 }
 
+func sortSchemas(schemasIds []string) {
+	sort.Strings(schemasIds)
+}

@@ -16,6 +16,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/testing/protocmp"
 
+	schemav1 "github.com/cerbos/cerbos/api/genpb/cerbos/schema/v1"
 	"github.com/cerbos/cerbos/internal/policy"
 	"github.com/cerbos/cerbos/internal/storage"
 	"github.com/cerbos/cerbos/internal/test"
@@ -148,7 +149,7 @@ func TestSuite(store DBStorage) func(*testing.T) {
 
 		t.Run("add_schema", func(t *testing.T) {
 			checkEvents := storage.TestSubscription(store)
-			require.NoError(t, store.AddOrUpdateSchema(ctx, schID, sch))
+			require.NoError(t, store.AddOrUpdateSchema(ctx, &schemav1.Schema{Id: schID, Definition: sch}))
 
 			checkEvents(t, timeout, storage.NewSchemaEvent(storage.EventAddOrUpdateSchema, schID))
 		})

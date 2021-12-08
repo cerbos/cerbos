@@ -296,12 +296,12 @@ func (ms *MockStore) GetPolicies(ctx context.Context) ([]*policy.Wrapper, error)
 	return args.Get(0).([]*policy.Wrapper), args.Error(0)
 }
 
-func (ms *MockStore) GetSchemas(ctx context.Context) ([]*schemav1.Schema, error) {
-	args := ms.MethodCalled("GetSchemas", ctx)
+func (ms *MockStore) ListSchemaIDs(ctx context.Context) ([]string, error) {
+	args := ms.MethodCalled("ListSchemaIDs", ctx)
 	if res := args.Get(0); res == nil {
 		return nil, args.Error(0)
 	}
-	return args.Get(0).([]*schemav1.Schema), args.Error(0)
+	return args.Get(0).([]string), args.Error(0)
 }
 
 func (ms *MockStore) LoadSchema(ctx context.Context, url string) (io.ReadCloser, error) {
@@ -320,7 +320,7 @@ func (ms *MockStore) GetSchema(ctx context.Context, id string) ([]byte, error) {
 	return nil, nil
 }
 
-func (ms *MockStore) AddOrUpdateSchema(ctx context.Context, id string, def []byte) error {
+func (ms *MockStore) AddOrUpdateSchema(ctx context.Context, schemas ...*schemav1.Schema) error {
 	args := ms.MethodCalled("AddOrUpdateSchema", ctx)
 	if res := args.Get(0); res == nil {
 		return args.Error(0)
@@ -328,7 +328,7 @@ func (ms *MockStore) AddOrUpdateSchema(ctx context.Context, id string, def []byt
 	return nil
 }
 
-func (ms *MockStore) DeleteSchema(ctx context.Context, id string) error {
+func (ms *MockStore) DeleteSchema(ctx context.Context, ids ...string) error {
 	args := ms.MethodCalled("DeleteSchema", ctx)
 	if res := args.Get(0); res == nil {
 		return args.Error(0)

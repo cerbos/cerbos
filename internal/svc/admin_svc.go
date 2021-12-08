@@ -9,6 +9,7 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
+	"io/ioutil"
 	"strings"
 	"time"
 
@@ -22,6 +23,7 @@ import (
 
 	requestv1 "github.com/cerbos/cerbos/api/genpb/cerbos/request/v1"
 	responsev1 "github.com/cerbos/cerbos/api/genpb/cerbos/response/v1"
+	schemav1 "github.com/cerbos/cerbos/api/genpb/cerbos/schema/v1"
 	svcv1 "github.com/cerbos/cerbos/api/genpb/cerbos/svc/v1"
 	"github.com/cerbos/cerbos/internal/audit"
 	"github.com/cerbos/cerbos/internal/policy"
@@ -93,13 +95,89 @@ func (cas *CerbosAdminService) AddOrUpdateSchema(ctx context.Context, req *reque
 	if !ok {
 		return nil, status.Error(codes.Unimplemented, "Configured store is not mutable")
 	}
-	log := ctxzap.Extract(ctx)
-	if err := ms.AddOrUpdateSchema(ctx, req.Id, req.Schema); err != nil {
-		log.Error("Failed to add/update schema", zap.Error(err))
-		return nil, status.Error(codes.Internal, "Failed to add/update the schema")
+
+	if err := ms.AddOrUpdateSchema(ctx, req.Schemas...); err != nil {
+		ctxzap.Extract(ctx).Error("Failed to add/update the schema(s)", zap.Error(err))
+		return nil, status.Errorf(codes.Internal, "Failed to add/update the schema(s)")
 	}
 
 	return &responsev1.AddOrUpdateSchemaResponse{}, nil
+}
+
+func (cas *CerbosAdminService) ListSchemas(ctx context.Context, req *requestv1.ListSchemasRequest) (*responsev1.ListSchemasResponse, error) {
+	if err := cas.checkCredentials(ctx); err != nil {
+		return nil, err
+	}
+
+	if cas.store == nil {
+		return nil, status.Error(codes.NotFound, "store is not configured")
+	}
+
+	schemaIds, err := cas.store.ListSchemaIDs(ctx)
+	if err != nil {
+		ctxzap.Extract(ctx).Error("Failed to list schema ids", zap.Error(err))
+		return nil, status.Error(codes.NotFound, "failed to list schema ids")
+	}
+
+	sortSchemas(schemaIds)
+
+	return &responsev1.ListSchemasResponse{
+		SchemaIds: schemaIds,
+	}, nil
+}
+
+func (cas *CerbosAdminService) GetSchema(ctx context.Context, req *requestv1.GetSchemaRequest) (*responsev1.GetSchemaResponse, error) {
+	if err := cas.checkCredentials(ctx); err != nil {
+		return nil, err
+	}
+
+	if cas.store == nil {
+		return nil, status.Error(codes.NotFound, "store is not configured")
+	}
+
+	log := ctxzap.Extract(ctx)
+
+	schemas := make([]*schemav1.Schema, 0, len(req.Id))
+	for _, id := range req.Id {
+		sch, err := cas.store.LoadSchema(context.Background(), id)
+		if err != nil {
+			log.Error(fmt.Sprintf("Could not get the schema with id %s", id), zap.Error(err))
+			return nil, status.Errorf(codes.Internal, "could not get the schema with id %s", id)
+		}
+
+		schBytes, err := ioutil.ReadAll(sch)
+		if err != nil {
+			log.Error(fmt.Sprintf("Could not read the schema with id %s", id), zap.Error(err))
+			return nil, status.Errorf(codes.Internal, "could not read the schema with id %s", id)
+		}
+
+		schemas = append(schemas, &schemav1.Schema{
+			Id:         id,
+			Definition: schBytes,
+		})
+	}
+
+	return &responsev1.GetSchemaResponse{
+		Schemas: schemas,
+	}, nil
+}
+
+func (cas *CerbosAdminService) DeleteSchema(ctx context.Context, req *requestv1.DeleteSchemaRequest) (*responsev1.DeleteSchemaResponse, error) {
+	if err := cas.checkCredentials(ctx); err != nil {
+		return nil, err
+	}
+
+	ms, ok := cas.store.(storage.MutableStore)
+	if !ok {
+		return nil, status.Error(codes.Unimplemented, "Configured store is not mutable")
+	}
+
+	if err := ms.DeleteSchema(ctx, req.Id...); err != nil {
+		ctxzap.Extract(ctx).Error("Failed to delete the schema(s)", zap.Error(err))
+		return nil, status.Errorf(codes.Internal, "Failed to delete the schema(s)")
+	}
+
+	return &responsev1.DeleteSchemaResponse{}, nil
 }
 
 func (cas *CerbosAdminService) ListAuditLogEntries(req *requestv1.ListAuditLogEntriesRequest, stream svcv1.CerbosAdminService_ListAuditLogEntriesServer) error {

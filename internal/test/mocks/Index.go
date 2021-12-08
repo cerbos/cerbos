@@ -17,8 +17,6 @@ import (
 
 	policy "github.com/cerbos/cerbos/internal/policy"
 
-	schemav1 "github.com/cerbos/cerbos/api/genpb/cerbos/schema/v1"
-
 	storage "github.com/cerbos/cerbos/internal/storage"
 )
 
@@ -196,16 +194,16 @@ func (_m *Index) GetPolicies(_a0 context.Context) ([]*policy.Wrapper, error) {
 	return r0, r1
 }
 
-// GetSchemas provides a mock function with given fields: _a0
-func (_m *Index) GetSchemas(_a0 context.Context) ([]*schemav1.Schema, error) {
+// ListSchemaIDs provides a mock function with given fields: _a0
+func (_m *Index) ListSchemaIDs(_a0 context.Context) ([]string, error) {
 	ret := _m.Called(_a0)
 
-	var r0 []*schemav1.Schema
-	if rf, ok := ret.Get(0).(func(context.Context) []*schemav1.Schema); ok {
+	var r0 []string
+	if rf, ok := ret.Get(0).(func(context.Context) []string); ok {
 		r0 = rf(_a0)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]*schemav1.Schema)
+			r0 = ret.Get(0).([]string)
 		}
 	}
 

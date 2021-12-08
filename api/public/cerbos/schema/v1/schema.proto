@@ -9,6 +9,10 @@ option go_package = "github.com/cerbos/cerbos/api/genpb/cerbos/schema/v1;schemav
 option java_package = "dev.cerbos.api.v1.schema";
 option csharp_namespace = "Cerbos.Api.V1.Schema";
 
+import "google/api/field_behavior.proto";
+import "protoc-gen-openapiv2/options/annotations.proto";
+import "validate/validate.proto";
+
 message ValidationError {
     enum Source {
         SOURCE_UNSPECIFIED = 0;
@@ -22,7 +26,20 @@ message ValidationError {
 }
 
 message Schema {
-    string id = 1;
-    bytes definition = 2;
+    string id = 1 [
+        (google.api.field_behavior) = REQUIRED,
+        (validate.rules).string = {min_len: 1, max_len: 255},
+        (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+            description: "Unique identifier for the schema"
+            example: "\"principal.json\""
+        }
+    ];
+    bytes definition = 2 [
+        (google.api.field_behavior) = REQUIRED,
+        (validate.rules).bytes = {min_len: 10},
+        (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+            description: "JSON schema definition"
+            example: "{\"type\":\"object\", \"properties\":{}}"
+        }
+    ];
 }
-
