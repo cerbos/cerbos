@@ -1428,18 +1428,26 @@ func (m *AddOrUpdateSchemaRequest) Validate() error {
 		return nil
 	}
 
-	if l := utf8.RuneCountInString(m.GetId()); l < 1 || l > 255 {
+	if l := len(m.GetSchemas()); l < 1 || l > 10 {
 		return AddOrUpdateSchemaRequestValidationError{
-			field:  "Id",
-			reason: "value length must be between 1 and 255 runes, inclusive",
+			field:  "Schemas",
+			reason: "value must contain between 1 and 10 items, inclusive",
 		}
 	}
 
-	if len(m.GetSchema()) < 10 {
-		return AddOrUpdateSchemaRequestValidationError{
-			field:  "Schema",
-			reason: "value length must be at least 10 bytes",
+	for idx, item := range m.GetSchemas() {
+		_, _ = idx, item
+
+		if v, ok := interface{}(item).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return AddOrUpdateSchemaRequestValidationError{
+					field:  fmt.Sprintf("Schemas[%v]", idx),
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
 		}
+
 	}
 
 	return nil

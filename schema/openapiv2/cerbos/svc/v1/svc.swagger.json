@@ -1078,13 +1078,30 @@
       "type": "object",
       "properties": {
         "id": {
-          "type": "string"
+          "type": "string",
+          "example": "principal.json",
+          "description": "Unique identifier for the schema",
+          "required": [
+            "id"
+          ]
         },
         "definition": {
           "type": "string",
-          "format": "byte"
+          "format": "byte",
+          "example": {
+            "type": "object",
+            "properties": {}
+          },
+          "description": "JSON schema definition",
+          "required": [
+            "definition"
+          ]
         }
-      }
+      },
+      "required": [
+        "id",
+        "definition"
+      ]
     },
     "v1AccessLogEntry": {
       "type": "object",
@@ -1147,31 +1164,22 @@
     "v1AddOrUpdateSchemaRequest": {
       "type": "object",
       "properties": {
-        "id": {
-          "type": "string",
-          "example": "principal.json",
-          "description": "Unique identifier for the schema",
-          "required": [
-            "id"
-          ]
-        },
-        "schema": {
-          "type": "string",
-          "format": "byte",
-          "example": {
-            "type": "object",
-            "properties": {}
+        "schemas": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/schemav1Schema"
           },
-          "description": "JSON schema definition",
+          "description": "List of schemas.",
+          "maxItems": 10,
+          "minItems": 1,
           "required": [
-            "schema"
+            "schemas"
           ]
         }
       },
       "description": "Add/update schema request",
       "required": [
-        "id",
-        "schema"
+        "schemas"
       ]
     },
     "v1AddOrUpdateSchemaResponse": {
