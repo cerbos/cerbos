@@ -18684,11 +18684,11 @@ Contents of probable licence file $GOMODCACHE/github.com/opencontainers/image-sp
 
 --------------------------------------------------------------------------------
 Module  : github.com/opencontainers/runc
-Version : v1.0.2
-Time    : 2021-08-20T07:24:11Z
+Version : v1.0.3
+Time    : 2021-12-03T08:17:37Z
 Licence : Apache-2.0
 
-Contents of probable licence file $GOMODCACHE/github.com/opencontainers/runc@v1.0.2/LICENSE:
+Contents of probable licence file $GOMODCACHE/github.com/opencontainers/runc@v1.0.3/LICENSE:
 
 
                                  Apache License
