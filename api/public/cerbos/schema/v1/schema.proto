@@ -25,8 +25,3 @@ message Schema {
     string id = 1;
     bytes definition = 2;
 }
-
-message SchemaWithoutDef {
-    string id = 1;
-}
-

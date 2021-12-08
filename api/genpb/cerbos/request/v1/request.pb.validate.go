@@ -1428,10 +1428,10 @@ func (m *AddOrUpdateSchemaRequest) Validate() error {
 		return nil
 	}
 
-	if l := utf8.RuneCountInString(m.GetId()); l < 1 || l > 256 {
+	if l := utf8.RuneCountInString(m.GetId()); l < 1 || l > 255 {
 		return AddOrUpdateSchemaRequestValidationError{
 			field:  "Id",
-			reason: "value length must be between 1 and 256 runes, inclusive",
+			reason: "value length must be between 1 and 255 runes, inclusive",
 		}
 	}
 
@@ -1576,6 +1576,13 @@ func (m *GetSchemaRequest) Validate() error {
 		return nil
 	}
 
+	if l := len(m.GetId()); l < 1 || l > 25 {
+		return GetSchemaRequestValidationError{
+			field:  "Id",
+			reason: "value must contain between 1 and 25 items, inclusive",
+		}
+	}
+
 	_GetSchemaRequest_Id_Unique := make(map[string]struct{}, len(m.GetId()))
 
 	for idx, item := range m.GetId() {
@@ -1590,10 +1597,10 @@ func (m *GetSchemaRequest) Validate() error {
 			_GetSchemaRequest_Id_Unique[item] = struct{}{}
 		}
 
-		if l := utf8.RuneCountInString(item); l < 1 || l > 256 {
+		if l := utf8.RuneCountInString(item); l < 1 || l > 255 {
 			return GetSchemaRequestValidationError{
 				field:  fmt.Sprintf("Id[%v]", idx),
-				reason: "value length must be between 1 and 256 runes, inclusive",
+				reason: "value length must be between 1 and 255 runes, inclusive",
 			}
 		}
 
@@ -1664,6 +1671,13 @@ func (m *DeleteSchemaRequest) Validate() error {
 		return nil
 	}
 
+	if l := len(m.GetId()); l < 1 || l > 25 {
+		return DeleteSchemaRequestValidationError{
+			field:  "Id",
+			reason: "value must contain between 1 and 25 items, inclusive",
+		}
+	}
+
 	_DeleteSchemaRequest_Id_Unique := make(map[string]struct{}, len(m.GetId()))
 
 	for idx, item := range m.GetId() {
@@ -1678,10 +1692,10 @@ func (m *DeleteSchemaRequest) Validate() error {
 			_DeleteSchemaRequest_Id_Unique[item] = struct{}{}
 		}
 
-		if l := utf8.RuneCountInString(item); l < 1 || l > 256 {
+		if l := utf8.RuneCountInString(item); l < 1 || l > 255 {
 			return DeleteSchemaRequestValidationError{
 				field:  fmt.Sprintf("Id[%v]", idx),
-				reason: "value length must be between 1 and 256 runes, inclusive",
+				reason: "value length must be between 1 and 255 runes, inclusive",
 			}
 		}
 

@@ -482,7 +482,7 @@ message AddOrUpdateSchemaRequest {
 
     string id = 1 [
         (google.api.field_behavior) = REQUIRED,
-        (validate.rules).string = {min_len: 1, max_len: 256},
+        (validate.rules).string = {min_len: 1, max_len: 255},
         (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = { 
             description: "Unique identifier for the schema"
             example: "\"principal.json\""
@@ -514,7 +514,7 @@ message GetSchemaRequest {
     };
     repeated string id = 1 [
         (google.api.field_behavior) = REQUIRED,
-        (validate.rules).repeated = { unique: true, items { string { min_len: 1, max_len: 256} } },
+        (validate.rules).repeated = { unique: true, min_items: 1, max_items: 25, items { string { min_len: 1, max_len: 255} } },
         (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
             description: "Unique identifier for the schema"
             example: "\"principal.json\""
@@ -530,7 +530,7 @@ message DeleteSchemaRequest {
     };
     repeated string id = 1 [
         (google.api.field_behavior) = REQUIRED,
-        (validate.rules).repeated = { unique: true, items { string { min_len: 1, max_len: 256} } },
+        (validate.rules).repeated = { unique: true, min_items: 1, max_items: 25, items { string { min_len: 1, max_len: 255} } },
         (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
             description: "Unique identifier for the schema"
             example: "\"principal.json\""

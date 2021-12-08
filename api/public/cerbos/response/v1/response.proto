@@ -277,7 +277,7 @@ message ListSchemasResponse {
         }
     };
 
-    repeated cerbos.schema.v1.SchemaWithoutDef schemas = 1;
+    repeated string schema_ids = 1;
 }
 
 message GetSchemaResponse {

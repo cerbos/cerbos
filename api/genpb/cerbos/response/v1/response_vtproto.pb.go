@@ -1297,26 +1297,11 @@ func (m *ListSchemasResponse) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 		i -= len(m.unknownFields)
 		copy(dAtA[i:], m.unknownFields)
 	}
-	if len(m.Schemas) > 0 {
-		for iNdEx := len(m.Schemas) - 1; iNdEx >= 0; iNdEx-- {
-			if marshalto, ok := interface{}(m.Schemas[iNdEx]).(interface {
-				MarshalToSizedBufferVT([]byte) (int, error)
-			}); ok {
-				size, err := marshalto.MarshalToSizedBufferVT(dAtA[:i])
-				if err != nil {
-					return 0, err
-				}
-				i -= size
-				i = encodeVarint(dAtA, i, uint64(size))
-			} else {
-				encoded, err := proto.Marshal(m.Schemas[iNdEx])
-				if err != nil {
-					return 0, err
-				}
-				i -= len(encoded)
-				copy(dAtA[i:], encoded)
-				i = encodeVarint(dAtA, i, uint64(len(encoded)))
-			}
+	if len(m.SchemaIds) > 0 {
+		for iNdEx := len(m.SchemaIds) - 1; iNdEx >= 0; iNdEx-- {
+			i -= len(m.SchemaIds[iNdEx])
+			copy(dAtA[i:], m.SchemaIds[iNdEx])
+			i = encodeVarint(dAtA, i, uint64(len(m.SchemaIds[iNdEx])))
 			i--
 			dAtA[i] = 0xa
 		}
@@ -1991,15 +1976,9 @@ func (m *ListSchemasResponse) SizeVT() (n int) {
 	}
 	var l int
 	_ = l
-	if len(m.Schemas) > 0 {
-		for _, e := range m.Schemas {
-			if size, ok := interface{}(e).(interface {
-				SizeVT() int
-			}); ok {
-				l = size.SizeVT()
-			} else {
-				l = proto.Size(e)
-			}
+	if len(m.SchemaIds) > 0 {
+		for _, s := range m.SchemaIds {
+			l = len(s)
 			n += 1 + l + sov(uint64(l))
 		}
 	}
@@ -4920,9 +4899,9 @@ func (m *ListSchemasResponse) UnmarshalVT(dAtA []byte) error {
 		switch fieldNum {
 		case 1:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Schemas", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field SchemaIds", wireType)
 			}
-			var msglen int
+			var stringLen uint64
 			for shift := uint(0); ; shift += 7 {
 				if shift >= 64 {
 					return ErrIntOverflow
@@ -4932,33 +4911,23 @@ func (m *ListSchemasResponse) UnmarshalVT(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				msglen |= int(b&0x7F) << shift
+				stringLen |= uint64(b&0x7F) << shift
 				if b < 0x80 {
 					break
 				}
 			}
-			if msglen < 0 {
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
 				return ErrInvalidLength
 			}
-			postIndex := iNdEx + msglen
+			postIndex := iNdEx + intStringLen
 			if postIndex < 0 {
 				return ErrInvalidLength
 			}
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.Schemas = append(m.Schemas, &v11.SchemaWithoutDef{})
-			if unmarshal, ok := interface{}(m.Schemas[len(m.Schemas)-1]).(interface {
-				UnmarshalVT([]byte) error
-			}); ok {
-				if err := unmarshal.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
-					return err
-				}
-			} else {
-				if err := proto.Unmarshal(dAtA[iNdEx:postIndex], m.Schemas[len(m.Schemas)-1]); err != nil {
-					return err
-				}
-			}
+			m.SchemaIds = append(m.SchemaIds, string(dAtA[iNdEx:postIndex]))
 			iNdEx = postIndex
 		default:
 			iNdEx = preIndex

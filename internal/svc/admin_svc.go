@@ -113,22 +113,15 @@ func (cas *CerbosAdminService) ListSchemas(ctx context.Context, req *requestv1.L
 		return nil, status.Error(codes.NotFound, "store is not configured")
 	}
 
-	ids, err := cas.store.ListSchemaIDs(ctx)
+	schemaIds, err := cas.store.ListSchemaIDs(ctx)
 	if err != nil {
 		return nil, status.Error(codes.NotFound, fmt.Sprintf("failed to list schema ids: %s", err.Error()))
 	}
 
-	schemas := make([]*schemav1.SchemaWithoutDef, 0, len(ids))
-	for _, id := range ids {
-		schemas = append(schemas, &schemav1.SchemaWithoutDef{
-			Id: id,
-		})
-	}
-
-	sortSchemas(schemas)
+	sortSchemas(schemaIds)
 
 	return &responsev1.ListSchemasResponse{
-		Schemas: schemas,
+		SchemaIds: schemaIds,
 	}, nil
 }
 

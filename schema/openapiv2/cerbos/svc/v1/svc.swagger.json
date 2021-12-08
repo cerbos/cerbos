@@ -1546,10 +1546,10 @@
     "v1ListSchemasResponse": {
       "type": "object",
       "properties": {
-        "schemas": {
+        "schemaIds": {
           "type": "array",
           "items": {
-            "$ref": "#/definitions/v1SchemaWithoutDef"
+            "type": "string"
           }
         }
       },
@@ -2084,14 +2084,6 @@
         },
         "condition": {
           "$ref": "#/definitions/v1Condition"
-        }
-      }
-    },
-    "v1SchemaWithoutDef": {
-      "type": "object",
-      "properties": {
-        "id": {
-          "type": "string"
         }
       }
     },
