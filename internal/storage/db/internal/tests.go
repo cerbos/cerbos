@@ -149,7 +149,7 @@ func TestSuite(store DBStorage) func(*testing.T) {
 
 		t.Run("add_schema", func(t *testing.T) {
 			checkEvents := storage.TestSubscription(store)
-			require.NoError(t, store.AddOrUpdateSchema(ctx, []*schemav1.Schema{{Id: schID, Definition: sch}}))
+			require.NoError(t, store.AddOrUpdateSchema(ctx, &schemav1.Schema{Id: schID, Definition: sch}))
 
 			checkEvents(t, timeout, storage.NewSchemaEvent(storage.EventAddOrUpdateSchema, schID))
 		})
@@ -169,7 +169,7 @@ func TestSuite(store DBStorage) func(*testing.T) {
 		t.Run("delete_schema", func(t *testing.T) {
 			checkEvents := storage.TestSubscription(store)
 
-			err := store.DeleteSchema(ctx, []string{schID})
+			err := store.DeleteSchema(ctx, schID)
 			require.NoError(t, err)
 
 			have, err := store.LoadSchema(ctx, schID)

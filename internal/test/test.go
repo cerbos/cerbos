@@ -64,11 +64,9 @@ func AddSchemasToStore(t *testing.T, dir string, ms storage.MutableStore) {
 			return nil
 		}
 
-		err = ms.AddOrUpdateSchema(context.TODO(), []*schemav1.Schema{
-			{
-				Id:         path,
-				Definition: ReadSchemaFromFS(t, fsys, path),
-			},
+		err = ms.AddOrUpdateSchema(context.TODO(), &schemav1.Schema{
+			Id:         path,
+			Definition: ReadSchemaFromFS(t, fsys, path),
 		})
 		require.NoError(t, err)
 

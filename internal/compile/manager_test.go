@@ -320,7 +320,7 @@ func (ms *MockStore) GetSchema(ctx context.Context, id string) ([]byte, error) {
 	return nil, nil
 }
 
-func (ms *MockStore) AddOrUpdateSchema(ctx context.Context, schemas []*schemav1.Schema) error {
+func (ms *MockStore) AddOrUpdateSchema(ctx context.Context, schemas ...*schemav1.Schema) error {
 	args := ms.MethodCalled("AddOrUpdateSchema", ctx)
 	if res := args.Get(0); res == nil {
 		return args.Error(0)
@@ -328,7 +328,7 @@ func (ms *MockStore) AddOrUpdateSchema(ctx context.Context, schemas []*schemav1.
 	return nil
 }
 
-func (ms *MockStore) DeleteSchema(ctx context.Context, id []string) error {
+func (ms *MockStore) DeleteSchema(ctx context.Context, ids ...string) error {
 	args := ms.MethodCalled("DeleteSchema", ctx)
 	if res := args.Get(0); res == nil {
 		return args.Error(0)

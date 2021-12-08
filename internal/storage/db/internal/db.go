@@ -32,8 +32,8 @@ type DBStorage interface {
 	Delete(ctx context.Context, ids ...namer.ModuleID) error
 	GetPolicies(ctx context.Context) ([]*policy.Wrapper, error)
 	ListSchemaIDs(ctx context.Context) ([]string, error)
-	AddOrUpdateSchema(ctx context.Context, schemas []*schemav1.Schema) error
-	DeleteSchema(ctx context.Context, ids []string) error
+	AddOrUpdateSchema(ctx context.Context, schemas ...*schemav1.Schema) error
+	DeleteSchema(ctx context.Context, ids ...string) error
 	LoadSchema(ctx context.Context, url string) (io.ReadCloser, error)
 }
 
@@ -58,7 +58,7 @@ type dbStorage struct {
 	*storage.SubscriptionManager
 }
 
-func (s *dbStorage) AddOrUpdateSchema(ctx context.Context, schemas []*schemav1.Schema) error {
+func (s *dbStorage) AddOrUpdateSchema(ctx context.Context, schemas ...*schemav1.Schema) error {
 	events := make([]storage.Event, 0, len(schemas))
 	err := s.db.WithTx(func(tx *goqu.TxDatabase) error {
 		for _, sch := range schemas {
@@ -93,7 +93,7 @@ func (s *dbStorage) AddOrUpdateSchema(ctx context.Context, schemas []*schemav1.S
 	return nil
 }
 
-func (s *dbStorage) DeleteSchema(ctx context.Context, ids []string) error {
+func (s *dbStorage) DeleteSchema(ctx context.Context, ids ...string) error {
 	events := make([]storage.Event, 0, len(ids))
 	for _, id := range ids {
 		events = append(events, storage.NewSchemaEvent(storage.EventDeleteSchema, id))

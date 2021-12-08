@@ -96,7 +96,7 @@ func (cas *CerbosAdminService) AddOrUpdateSchema(ctx context.Context, req *reque
 		return nil, status.Error(codes.Unimplemented, "Configured store is not mutable")
 	}
 
-	if err := ms.AddOrUpdateSchema(ctx, req.Schemas); err != nil {
+	if err := ms.AddOrUpdateSchema(ctx, req.Schemas...); err != nil {
 		ctxzap.Extract(ctx).Error("Failed to add/update the schema(s)", zap.Error(err))
 		return nil, status.Errorf(codes.Internal, "Failed to add/update the schema(s)")
 	}
@@ -172,7 +172,7 @@ func (cas *CerbosAdminService) DeleteSchema(ctx context.Context, req *requestv1.
 		return nil, status.Error(codes.Unimplemented, "Configured store is not mutable")
 	}
 
-	if err := ms.DeleteSchema(ctx, req.Id); err != nil {
+	if err := ms.DeleteSchema(ctx, req.Id...); err != nil {
 		ctxzap.Extract(ctx).Error("Failed to delete the schema(s)", zap.Error(err))
 		return nil, status.Errorf(codes.Internal, "Failed to delete the schema(s)")
 	}
