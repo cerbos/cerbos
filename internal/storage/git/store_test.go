@@ -6,6 +6,8 @@ package git
 import (
 	"context"
 	"fmt"
+	"io"
+	"io/fs"
 	"math/rand"
 	"os"
 	"path/filepath"
@@ -22,6 +24,7 @@ import (
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
 	"github.com/cerbos/cerbos/internal/namer"
 	"github.com/cerbos/cerbos/internal/policy"
+	"github.com/cerbos/cerbos/internal/schema"
 	"github.com/cerbos/cerbos/internal/storage"
 	"github.com/cerbos/cerbos/internal/storage/index"
 	"github.com/cerbos/cerbos/internal/test"
@@ -29,10 +32,11 @@ import (
 )
 
 const (
-	namePrefix = "git"
-	policyDir  = "policies"
-	ignoredDir = "ignore"
-	timeout    = 1 * time.Second
+	namePrefix   = "git"
+	policyDir    = "policies"
+	ignoredDir   = "ignore"
+	schemaSubDir = "subdir"
+	timeout      = 1 * time.Second
 )
 
 // TODO (cell) Test HTTPS and SSH auth
@@ -252,6 +256,10 @@ func TestUpdateStore(t *testing.T) {
 				if err := os.Remove(filepath.Join(sourceGitDir, fp)); err != nil {
 					return err
 				}
+
+				if _, err := wt.Remove(fp); err != nil {
+					return err
+				}
 			}
 
 			return nil
@@ -297,8 +305,14 @@ func TestUpdateStore(t *testing.T) {
 				if err := os.Rename(from, to); err != nil {
 					return err
 				}
+
+				if _, err := wt.Remove(filepath.Join(policyDir, file)); err != nil {
+					return err
+				}
 			}
-			return nil
+
+			_, err := wt.Add(".")
+			return err
 		}))
 
 		require.NoError(t, store.updateIndex(context.Background()))
@@ -332,6 +346,89 @@ func TestUpdateStore(t *testing.T) {
 		mockIdx.AssertNotCalled(t, "Delete", mock.MatchedBy(anyIndexEntry))
 		checkEvents(t, timeout)
 	})
+
+	t.Run("add schema", func(t *testing.T) {
+		mockIdx := setupMock()
+		checkEvents := storage.TestSubscription(store)
+
+		require.NoError(t, commitToGitRepo(sourceGitDir, "Add schema", func(wt *git.Worktree) error {
+			fp := filepath.Join(sourceGitDir, policyDir, schema.Directory, "test_policy1.json")
+			if err := os.WriteFile(fp, []byte("{}"), 0o600); err != nil {
+				return err
+			}
+
+			fp = filepath.Join(sourceGitDir, policyDir, schema.Directory, schemaSubDir, "test_policy2.json")
+			if err := os.WriteFile(fp, []byte("{}"), 0o600); err != nil {
+				return err
+			}
+
+			_, err := wt.Add(".")
+			return err
+		}))
+
+		require.NoError(t, store.updateIndex(context.Background()))
+		mockIdx.AssertExpectations(t)
+
+		checkEvents(t, timeout,
+			storage.NewSchemaEvent(storage.EventAddOrUpdateSchema, "test_policy1.json"),
+			storage.NewSchemaEvent(storage.EventAddOrUpdateSchema, filepath.Join(schemaSubDir, "test_policy2.json")))
+	})
+
+	t.Run("delete schema", func(t *testing.T) {
+		mockIdx := setupMock()
+		checkEvents := storage.TestSubscription(store)
+
+		require.NoError(t, commitToGitRepo(sourceGitDir, "Delete schema", func(wt *git.Worktree) error {
+			fp := filepath.Join(sourceGitDir, policyDir, schema.Directory, "customer_absolute.json")
+			if err := os.Remove(fp); err != nil {
+				return err
+			}
+			if _, err := wt.Remove(filepath.Join(policyDir, schema.Directory, "customer_absolute.json")); err != nil {
+				return err
+			}
+
+			fp = filepath.Join(sourceGitDir, policyDir, schema.Directory, schemaSubDir, "customer_absolute.json")
+			if err := os.Remove(fp); err != nil {
+				return err
+			}
+			if _, err := wt.Remove(filepath.Join(policyDir, schema.Directory, schemaSubDir, "customer_absolute.json")); err != nil {
+				return err
+			}
+
+			_, err := wt.Add(".")
+			return err
+		}))
+
+		require.NoError(t, store.updateIndex(context.Background()))
+		mockIdx.AssertExpectations(t)
+
+		checkEvents(t, timeout,
+			storage.NewSchemaEvent(storage.EventDeleteSchema, "customer_absolute.json"),
+			storage.NewSchemaEvent(storage.EventDeleteSchema, filepath.Join(schemaSubDir, "customer_absolute.json")))
+	})
+
+	t.Run("move schema out", func(t *testing.T) {
+		mockIdx := setupMock()
+		checkEvents := storage.TestSubscription(store)
+		require.NoError(t, commitToGitRepo(sourceGitDir, "Move schema out", func(wt *git.Worktree) error {
+			from := filepath.Join(sourceGitDir, policyDir, schema.Directory, "invalid.json")
+			to := filepath.Join(sourceGitDir, ignoredDir, "invalid.json")
+			if err := os.Rename(from, to); err != nil {
+				return err
+			}
+			if _, err := wt.Remove(filepath.Join(policyDir, schema.Directory, "invalid.json")); err != nil {
+				return err
+			}
+
+			_, err := wt.Add(".")
+			return err
+		}))
+
+		require.NoError(t, store.updateIndex(context.Background()))
+		mockIdx.AssertExpectations(t)
+
+		checkEvents(t, timeout, storage.NewSchemaEvent(storage.EventDeleteSchema, "invalid.json"))
+	})
 }
 
 func anyIndexEntry(_ index.Entry) bool { return true }
@@ -360,6 +457,9 @@ func createGitRepo(t *testing.T, dir string, policyCount int) []string {
 
 	fullPolicyDir := filepath.Join(dir, policyDir)
 	require.NoError(t, os.MkdirAll(fullPolicyDir, 0o744), "Failed to create policy dir %s", fullPolicyDir)
+
+	fullSchemaDir := filepath.Join(dir, policyDir, schema.Directory, schemaSubDir)
+	require.NoError(t, os.MkdirAll(fullSchemaDir, 0o744), "Failed to create schema dir %s", fullSchemaDir)
 
 	fullIgnoredDir := filepath.Join(dir, ignoredDir)
 	require.NoError(t, os.MkdirAll(fullIgnoredDir, 0o744), "Failed to create ignored dir %s", fullIgnoredDir)
@@ -402,6 +502,9 @@ func createGitRepo(t *testing.T, dir string, policyCount int) []string {
 			allFiles = append(allFiles, filepath.Join(policyDir, f))
 		}
 	}
+
+	// write schemas
+	copySchemas(t, fullPolicyDir)
 
 	_, err = wt.Add(".")
 	require.NoError(t, err, "Failed to add")
@@ -469,6 +572,48 @@ func mkFileName(p *policyv1.Policy) string {
 	default:
 		panic(fmt.Errorf("unknown policy type %T", pt))
 	}
+}
+
+func copySchemas(t *testing.T, dir string) {
+	t.Helper()
+
+	src := test.PathToDir(t, filepath.Join("schema", "fs", "_schemas"))
+	err := filepath.WalkDir(src, func(path string, d fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+
+		if d.IsDir() {
+			return nil
+		}
+
+		relPath, err := filepath.Rel(src, path)
+		if err != nil {
+			return err
+		}
+
+		in, err := os.Open(path)
+		if err != nil {
+			return fmt.Errorf("failed to open %s: %w", path, err)
+		}
+		defer in.Close()
+
+		outFile := filepath.Join(dir, schema.Directory, relPath)
+		if err := os.MkdirAll(filepath.Dir(outFile), 0o744); err != nil {
+			return err
+		}
+
+		out, err := os.Create(outFile)
+		if err != nil {
+			return fmt.Errorf("failed to create %s: %w", outFile, err)
+		}
+		defer out.Close()
+
+		_, err = io.Copy(out, in)
+		return err
+	})
+
+	require.NoError(t, err)
 }
 
 func commitToGitRepo(dir, msg string, work func(*git.Worktree) error) error {
