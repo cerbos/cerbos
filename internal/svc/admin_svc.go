@@ -96,11 +96,9 @@ func (cas *CerbosAdminService) AddOrUpdateSchema(ctx context.Context, req *reque
 		return nil, status.Error(codes.Unimplemented, "Configured store is not mutable")
 	}
 
-	for _, sch := range req.Schemas {
-		if err := ms.AddOrUpdateSchema(ctx, sch.Id, sch.Definition); err != nil {
-			ctxzap.Extract(ctx).Error(fmt.Sprintf("Failed to add/update the schema with id %s", sch.Id), zap.Error(err))
-			return nil, status.Errorf(codes.Internal, "Failed to add/update the schema with id %s", sch.Id)
-		}
+	if err := ms.AddOrUpdateSchema(ctx, req.Schemas); err != nil {
+		ctxzap.Extract(ctx).Error("Failed to add/update the schema(s)", zap.Error(err))
+		return nil, status.Errorf(codes.Internal, "Failed to add/update the schema(s)")
 	}
 
 	return &responsev1.AddOrUpdateSchemaResponse{}, nil
@@ -118,7 +116,7 @@ func (cas *CerbosAdminService) ListSchemas(ctx context.Context, req *requestv1.L
 	schemaIds, err := cas.store.ListSchemaIDs(ctx)
 	if err != nil {
 		ctxzap.Extract(ctx).Error("Failed to list schema ids", zap.Error(err))
-		return nil, status.Errorf(codes.NotFound, "failed to list schema ids: %s")
+		return nil, status.Error(codes.NotFound, "failed to list schema ids")
 	}
 
 	sortSchemas(schemaIds)
@@ -174,11 +172,9 @@ func (cas *CerbosAdminService) DeleteSchema(ctx context.Context, req *requestv1.
 		return nil, status.Error(codes.Unimplemented, "Configured store is not mutable")
 	}
 
-	for _, id := range req.Id {
-		if err := ms.DeleteSchema(ctx, id); err != nil {
-			ctxzap.Extract(ctx).Error(fmt.Sprintf("Failed to delete the schema with id %s", id), zap.Error(err))
-			return nil, status.Errorf(codes.Internal, "Failed to delete the schema with id %s", id)
-		}
+	if err := ms.DeleteSchema(ctx, req.Id); err != nil {
+		ctxzap.Extract(ctx).Error("Failed to delete the schema(s)", zap.Error(err))
+		return nil, status.Errorf(codes.Internal, "Failed to delete the schema(s)")
 	}
 
 	return &responsev1.DeleteSchemaResponse{}, nil

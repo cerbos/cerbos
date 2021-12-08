@@ -17,6 +17,7 @@ import (
 	"github.com/jackc/pgtype"
 	"go.uber.org/zap"
 
+	schemav1 "github.com/cerbos/cerbos/api/genpb/cerbos/schema/v1"
 	"github.com/cerbos/cerbos/internal/namer"
 	"github.com/cerbos/cerbos/internal/policy"
 	"github.com/cerbos/cerbos/internal/schema"
@@ -31,8 +32,8 @@ type DBStorage interface {
 	Delete(ctx context.Context, ids ...namer.ModuleID) error
 	GetPolicies(ctx context.Context) ([]*policy.Wrapper, error)
 	ListSchemaIDs(ctx context.Context) ([]string, error)
-	AddOrUpdateSchema(ctx context.Context, id string, def []byte) error
-	DeleteSchema(ctx context.Context, id string) error
+	AddOrUpdateSchema(ctx context.Context, schemas []*schemav1.Schema) error
+	DeleteSchema(ctx context.Context, ids []string) error
 	LoadSchema(ctx context.Context, url string) (io.ReadCloser, error)
 }
 
@@ -57,54 +58,66 @@ type dbStorage struct {
 	*storage.SubscriptionManager
 }
 
-func (s *dbStorage) AddOrUpdateSchema(ctx context.Context, id string, def []byte) error {
-	if def == nil {
-		return fmt.Errorf("schema definition cannot be nil")
-	}
+func (s *dbStorage) AddOrUpdateSchema(ctx context.Context, schemas []*schemav1.Schema) error {
+	events := make([]storage.Event, 0, len(schemas))
+	err := s.db.WithTx(func(tx *goqu.TxDatabase) error {
+		for _, sch := range schemas {
+			defJSON := pgtype.JSON{}
+			err := defJSON.UnmarshalJSON(sch.Definition)
+			if err != nil {
+				return fmt.Errorf("failed to unmarshal schema definition with id %s: %w", sch.Id, err)
+			}
 
-	defJSON := pgtype.JSON{}
-	err := defJSON.UnmarshalJSON(def)
+			row := Schema{
+				ID:         sch.Id,
+				Definition: &defJSON,
+			}
+
+			if _, err := tx.Insert(SchemaTbl).
+				Rows(row).
+				OnConflict(goqu.DoUpdate(SchemaTblIDCol, row)).
+				Executor().
+				ExecContext(ctx); err != nil {
+				return fmt.Errorf("failed to upsert the schema with id %s: %w", sch.Id, err)
+			}
+
+			events = append(events, storage.NewSchemaEvent(storage.EventAddOrUpdateSchema, sch.Id))
+		}
+		return nil
+	})
 	if err != nil {
-		return fmt.Errorf("failed to unmarshal schema definition: %w", err)
+		return err
 	}
 
-	schemaRecord := Schema{
-		ID:         id,
-		Definition: &defJSON,
-	}
-
-	if _, err := s.db.Insert(SchemaTbl).
-		Rows(schemaRecord).
-		OnConflict(goqu.DoUpdate(SchemaTblIDCol, schemaRecord)).
-		Executor().
-		ExecContext(ctx); err != nil {
-		return fmt.Errorf("failed to upsert the schema: %w", err)
-	}
-
-	s.NotifySubscribers(storage.NewSchemaEvent(storage.EventAddOrUpdateSchema, id))
+	s.NotifySubscribers(events...)
 	return nil
 }
 
-func (s *dbStorage) DeleteSchema(ctx context.Context, id string) error {
-	res, err := s.db.From(SchemaTbl).
-		Where(goqu.C(SchemaTblIDCol).Eq(id)).
-		Delete().
+func (s *dbStorage) DeleteSchema(ctx context.Context, ids []string) error {
+	events := make([]storage.Event, 0, len(ids))
+	for _, id := range ids {
+		events = append(events, storage.NewSchemaEvent(storage.EventDeleteSchema, id))
+	}
+
+	res, err := s.db.Delete(SchemaTbl).
+		Prepared(true).
+		Where(goqu.Ex{SchemaTblIDCol: ids}).
 		Executor().
 		ExecContext(ctx)
 	if err != nil {
-		return fmt.Errorf("failed to delete schema with id %s: %w", id, err)
+		return fmt.Errorf("failed to delete schema(s): %w", err)
 	}
 
 	affected, err := res.RowsAffected()
 	if err != nil {
-		return fmt.Errorf("failed to discover whether the schema got deleted or not: %w", err)
+		return fmt.Errorf("failed to discover whether the schema(s) got deleted or not: %w", err)
 	}
 
 	if affected == 0 {
-		return fmt.Errorf("failed to find the schema with id %s for deletion", id)
+		return fmt.Errorf("failed to find the schema(s) for deletion")
 	}
 
-	s.NotifySubscribers(storage.NewSchemaEvent(storage.EventDeleteSchema, id))
+	s.NotifySubscribers(events...)
 
 	return nil
 }

@@ -9,6 +9,7 @@ import (
 	"io"
 	"sync"
 
+	schemav1 "github.com/cerbos/cerbos/api/genpb/cerbos/schema/v1"
 	"github.com/cerbos/cerbos/internal/config"
 	"github.com/cerbos/cerbos/internal/namer"
 	"github.com/cerbos/cerbos/internal/policy"
@@ -92,8 +93,8 @@ type Store interface {
 type MutableStore interface {
 	Store
 	AddOrUpdate(context.Context, ...policy.Wrapper) error
-	AddOrUpdateSchema(context.Context, string, []byte) error
-	DeleteSchema(context.Context, string) error
+	AddOrUpdateSchema(context.Context, []*schemav1.Schema) error
+	DeleteSchema(context.Context, []string) error
 	Delete(context.Context, ...namer.ModuleID) error
 }
 
