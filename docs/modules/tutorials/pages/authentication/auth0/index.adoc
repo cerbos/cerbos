@@ -1,0 +1,123 @@
+include::ROOT:partial$attributes.adoc[]
+
+[#tutorial-auth-auth0]
+= Tutorial: Using Cerbos with Auth0
+
+
+An example application of integrating https://cerbos.dev[Cerbos] with an https://expressjs.com/[Express] server using https://auth0.com/[Auth0] for authentication.
+
+== Dependencies
+
+* Node.js
+* Docker for running the xref:ROOT:installation/container.adoc[Cerbos Policy Decision Point (PDP)]
+* An https://auth0.com/[Auth0] account if you want to use your own
+
+== Getting Started
+
+. Clone the repo
++
+[source,bash]
+----
+git clone git@github.com:cerbos/express-auth0-cerbos.git
+----
+
+. Start up the Cerbos PDP instance docker container. This will be called
+by the express app to check authorization.
++
+[source,bash]
+----
+cd cerbos
+./start.sh
+----
+
+. Install node dependencies
++
+[source,bash]
+----
+npm install
+----
+
+. Start the express server
++
+[source,bash]
+----
+node index.js
+----
+
+== Auth0 Rule to add roles to token
+
+By default any roles set up in the Auth0 console are not passed through
+in the authentication token. To enable this, add the following rule to
+the Auth Pipeline in your Auth0 account.
+
+[source,js]
+----
+function (user, context, callback) {
+  const namespace = 'https://cerbos.cloud';
+  const assignedRoles = (context.authorization || {}).roles;
+
+  let idTokenClaims = context.idToken || {};
+  let accessTokenClaims = context.accessToken || {};
+
+  idTokenClaims[`${namespace}/roles`] = assignedRoles;
+  accessTokenClaims[`${namespace}/roles`] = assignedRoles;
+
+  context.idToken = idTokenClaims;
+  context.accessToken = accessTokenClaims;
+
+  callback(null, user, context);
+}
+----
+
+== Policies
+
+This example has a simple CRUD policy in place for a resource kind of
+`contact` - like a CRM system would have. The policy file can be found
+in the `cerbos/policies` folder
+https://github.com/cerbos/express-auth0-cerbos/blob/main/cerbos/policies/contact.yaml[here].
+
+Should you wish to experiment with this policy, you can try it in the
+https://play.cerbos.dev/p/g561543292ospj7w0zOrFx7H5DzhmLu2[Cerbos Playground].
+
+The policy expects one of two roles to be set on the principal - `admin`
+and `user`. These roles are authorized as follows:
+
+[cols=",,",options="header",]
+|===
+|Action |User |Admin
+|list |Y |Y
+|read |Y |Y
+|create |N |Y
+|update |N |Y
+|delete |N |Y
+|===
+
+This business logic is represented in Cerbos as a resource policy.
+
+[source,yaml]
+----
+---
+apiVersion: api.cerbos.dev/v1
+resourcePolicy:
+  version: default
+  resource: contact
+  rules:
+    - actions: ["read", "create"]
+      effect: EFFECT_ALLOW
+      roles:
+        - admin
+        - user
+
+    - actions: ["update", "delete"]
+      effect: EFFECT_ALLOW
+      roles:
+        - admin
+
+    - actions: ["update", "delete"]
+      effect: EFFECT_ALLOW
+      roles:
+        - user
+      condition:
+        match:
+          expr: request.resource.attr.owner == request.principal.id
+----
