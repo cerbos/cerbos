@@ -5,7 +5,13 @@ variables:
 resourcePolicy:
   version: "default"
   resource: "list-resources:leave_request"
+  importDerivedRoles:
+    - apatr_common_roles
   rules:
+    - actions: ["view2"]
+      derivedRoles:
+        - owner
+      effect: EFFECT_ALLOW
     - actions: ["create", "view", "submit"]
       roles: ["employee"]
       effect: EFFECT_ALLOW

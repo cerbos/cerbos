@@ -130,15 +130,23 @@ func (rpe *resourcePolicyEvaluator) EvaluateResourcesQueryPlan(_ context.Context
 				for k, v := range p.Variables {
 					variables[k] = v.Checked.Expr
 				}
-				node, err := evaluateCondition(rule.Condition, input, variables)
-				if err != nil {
-					return nil, err
+				var node *qpN
+				var err error
+				if rule.Condition != nil {
+					node, err = evaluateCondition(rule.Condition, input, variables)
+					if err != nil {
+						return nil, err
+					}
 				}
 				if drNode == nil {
 					result.Filter = node
 				} else {
 					// node AND drNode
-					result.Filter = &qpN{Node: &qpNLO{LogicalOperation: mkAndLogicalOperation([]*qpN{drNode, node})}}
+					if node != nil {
+						result.Filter = &qpN{Node: &qpNLO{LogicalOperation: mkAndLogicalOperation([]*qpN{drNode, node})}}
+					} else {
+						result.Filter = drNode
+					}
 				}
 			}
 		}

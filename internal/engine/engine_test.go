@@ -223,6 +223,21 @@ func TestList(t *testing.T) {
 			want: `(R.attr.owner == "harry")`,
 		},
 		{
+			name: "harry wants to view2",
+			input: &requestv1.ResourcesQueryPlanRequest{
+				RequestId: "requestId",
+				Action:    "view2",
+				Principal: &enginev1.Principal{
+					Id:            "harry",
+					PolicyVersion: "default",
+					Roles:         []string{"user"},
+				},
+				PolicyVersion: "default",
+				ResourceKind:  "list-resources:leave_request",
+			},
+			want: `(request.resource.attr.owner == "harry")`,
+		},
+		{
 			name:  "maggie wants to approve",
 			input: request,
 			want:  `((R.attr.status == "PENDING_APPROVAL") AND (R.attr.owner != "maggie") AND ((R.attr.geography == "US") OR (R.attr.geography in ["US", "CA"])))`,
