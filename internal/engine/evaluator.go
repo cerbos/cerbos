@@ -73,29 +73,34 @@ func (rpe *resourcePolicyEvaluator) EvaluateResourcesQueryPlan(_ context.Context
 	result.Action = input.Action
 
 	for _, p := range rpe.policy.Policies { // zero or one policy in the set
-		type rN = struct {
+		type rN struct {
 			role string
+			f    func() (*qpN, error)
 			node *qpN
 		}
 		var derivedRoles []rN
 
 		for drName, dr := range p.DerivedRoles {
+			dr := dr
 			if !setIntersects(dr.ParentRoles, effectiveRoles) {
 				continue
 			}
-			drVariables := make(map[string]*exprpb.Expr, len(dr.Variables))
-			for k, v := range dr.Variables {
-				drVariables[k] = v.Checked.Expr
-			}
 
-			node, err := evaluateCondition(dr.Condition, input, drVariables)
-			if err != nil {
-				return nil, err
-			}
-			if node.GetExpression().GetExpr() == conditions.FalseExpr.Expr {
-				continue
-			}
-			derivedRoles = append(derivedRoles, rN{role: drName, node: node})
+			derivedRoles = append(derivedRoles, rN{
+				role: drName,
+				f: func() (*qpN, error) {
+					drVariables := make(map[string]*exprpb.Expr, len(dr.Variables))
+					for k, v := range dr.Variables {
+						drVariables[k] = v.Checked.Expr
+					}
+					node, err := evaluateCondition(dr.Condition, input, drVariables)
+					if err != nil {
+						return nil, err
+					}
+					return node, nil
+				},
+				node: nil,
+			})
 		}
 
 		// evaluate each rule until all actions have a result
@@ -105,7 +110,16 @@ func (rpe *resourcePolicyEvaluator) EvaluateResourcesQueryPlan(_ context.Context
 				var nodes []*qpN
 				for _, n := range derivedRoles {
 					if _, ok := rule.DerivedRoles[n.role]; ok {
-						nodes = append(nodes, n.node)
+						node := n.node
+						var err error
+						if node == nil {
+							node, err = n.f()
+							if err != nil {
+								return nil, err
+							}
+							n.node = node
+						}
+						nodes = append(nodes, node)
 					}
 				}
 				switch len(nodes) {
@@ -165,18 +179,21 @@ func isNodeConstBool(node *enginev1.ResourcesQueryPlanOutput_Node) (bool, bool) 
 
 	return false, false
 }
+
 func mkOrLogicalOperation(nodes []*enginev1.ResourcesQueryPlanOutput_Node) *enginev1.ResourcesQueryPlanOutput_LogicalOperation {
 	return &enginev1.ResourcesQueryPlanOutput_LogicalOperation{
 		Operator: enginev1.ResourcesQueryPlanOutput_LogicalOperation_OPERATOR_OR,
 		Nodes:    nodes,
 	}
 }
+
 func mkAndLogicalOperation(nodes []*enginev1.ResourcesQueryPlanOutput_Node) *enginev1.ResourcesQueryPlanOutput_LogicalOperation {
 	return &enginev1.ResourcesQueryPlanOutput_LogicalOperation{
 		Operator: enginev1.ResourcesQueryPlanOutput_LogicalOperation_OPERATOR_AND,
 		Nodes:    nodes,
 	}
 }
+
 func evaluateCondition(condition *runtimev1.Condition, input *requestv1.ResourcesQueryPlanRequest, variables map[string]*exprpb.Expr) (*enginev1.ResourcesQueryPlanOutput_Node, error) {
 	type (
 		qpN   = enginev1.ResourcesQueryPlanOutput_Node

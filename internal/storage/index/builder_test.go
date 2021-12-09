@@ -78,7 +78,7 @@ func TestBuildIndexWithDisk(t *testing.T) {
 
 		require.Contains(t, data, drCommon)
 		require.Empty(t, data[drCommon].Dependencies)
-		require.Len(t, data[drCommon].References, 1)
+		require.Len(t, data[drCommon].References, 2)
 
 		require.Contains(t, data, dr1)
 		require.Empty(t, data[dr1].Dependencies)
@@ -87,7 +87,7 @@ func TestBuildIndexWithDisk(t *testing.T) {
 
 		require.Contains(t, data, dr2)
 		require.Empty(t, data[dr2].Dependencies)
-		require.Len(t, data[dr2].References, 1)
+		require.Len(t, data[dr2].References, 2)
 		require.Contains(t, data[dr2].References, rp1)
 
 		require.Contains(t, data, dr3)
