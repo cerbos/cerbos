@@ -75,29 +75,6 @@ jobs:
           docker manifest create ghcr.io/cerbos/cerbos:dev ghcr.io/cerbos/cerbos:dev-arm64 ghcr.io/cerbos/cerbos:dev-amd64
           docker manifest push ghcr.io/cerbos/cerbos:dev
 
-
-  publishDocs:
-    name: Publish Documentation
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v2
-        with:
-          fetch-depth: 0
-          lfs: true
-
-      - name: Generate docs
-        uses: ./.github/actions/antora-docs
-        id: docs
-
-      - name: Publish to Netlify
-        uses: netlify/actions/cli@master
-        with:
-          args: deploy --prod
-        env:
-          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
-          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
-
   publishProtos:
     name: Publish Protobufs
     runs-on: ubuntu-latest
