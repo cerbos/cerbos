@@ -61,14 +61,23 @@ type resourcePolicyEvaluator struct {
 }
 
 func (rpe *resourcePolicyEvaluator) EvaluateResourcesQueryPlan(_ context.Context, input *requestv1.ResourcesQueryPlanRequest) (*enginev1.ResourcesQueryPlanOutput, error) {
+	type (
+		qpN   = enginev1.ResourcesQueryPlanOutput_Node
+		qpNLO = enginev1.ResourcesQueryPlanOutput_Node_LogicalOperation
+	)
 	effectiveRoles := toSet(input.Principal.Roles)
 	inputActions := []string{input.Action}
 	result := &enginev1.ResourcesQueryPlanOutput{}
 	result.RequestId = input.RequestId
 	result.Kind = input.ResourceKind
 	result.Action = input.Action
-	for _, p := range rpe.policy.Policies {
-		effectiveDerivedRoles := stringSet{}
+
+	for _, p := range rpe.policy.Policies { // zero or one policy in the set
+		type rN = struct {
+			role string
+			node *qpN
+		}
+		var derivedRoles []rN
 
 		for drName, dr := range p.DerivedRoles {
 			if !setIntersects(dr.ParentRoles, effectiveRoles) {
@@ -83,21 +92,31 @@ func (rpe *resourcePolicyEvaluator) EvaluateResourcesQueryPlan(_ context.Context
 			if err != nil {
 				return nil, err
 			}
-			e := node.GetExpression().GetExpr()
-			switch {
-			case e == conditions.FalseExpr.Expr:
-				continue
-			case e == conditions.TrueExpr.Expr:
-				effectiveDerivedRoles[drName] = struct{}{}
-			}
 			if node.GetExpression().GetExpr() == conditions.FalseExpr.Expr {
 				continue
 			}
+			derivedRoles = append(derivedRoles, rN{role: drName, node: node})
 		}
+
 		// evaluate each rule until all actions have a result
 		for _, rule := range p.Rules {
+			var drNode *qpN
 			if !setIntersects(rule.Roles, effectiveRoles) {
-				continue
+				var nodes []*qpN
+				for _, n := range derivedRoles {
+					if _, ok := rule.DerivedRoles[n.role]; ok {
+						nodes = append(nodes, n.node)
+					}
+				}
+				switch len(nodes) {
+				case 0:
+					continue
+				case 1:
+					drNode = nodes[0]
+				default:
+					// combine restrictions (with OR) imposed by derived roles
+					drNode = &qpN{Node: &qpNLO{LogicalOperation: mkOrLogicalOperation(nodes)}}
+				}
 			}
 			if rule.Effect == effectv1.Effect_EFFECT_DENY {
 				panic("rules with effect DENY not supported")
@@ -115,7 +134,12 @@ func (rpe *resourcePolicyEvaluator) EvaluateResourcesQueryPlan(_ context.Context
 				if err != nil {
 					return nil, err
 				}
-				result.Filter = node
+				if drNode == nil {
+					result.Filter = node
+				} else {
+					// node AND drNode
+					result.Filter = &qpN{Node: &qpNLO{LogicalOperation: mkAndLogicalOperation([]*qpN{drNode, node})}}
+				}
 			}
 		}
 	}
@@ -133,18 +157,29 @@ func isNodeConstBool(node *enginev1.ResourcesQueryPlanOutput_Node) (bool, bool) 
 
 	return false, false
 }
-
+func mkOrLogicalOperation(nodes []*enginev1.ResourcesQueryPlanOutput_Node) *enginev1.ResourcesQueryPlanOutput_LogicalOperation {
+	return &enginev1.ResourcesQueryPlanOutput_LogicalOperation{
+		Operator: enginev1.ResourcesQueryPlanOutput_LogicalOperation_OPERATOR_OR,
+		Nodes:    nodes,
+	}
+}
+func mkAndLogicalOperation(nodes []*enginev1.ResourcesQueryPlanOutput_Node) *enginev1.ResourcesQueryPlanOutput_LogicalOperation {
+	return &enginev1.ResourcesQueryPlanOutput_LogicalOperation{
+		Operator: enginev1.ResourcesQueryPlanOutput_LogicalOperation_OPERATOR_AND,
+		Nodes:    nodes,
+	}
+}
 func evaluateCondition(condition *runtimev1.Condition, input *requestv1.ResourcesQueryPlanRequest, variables map[string]*exprpb.Expr) (*enginev1.ResourcesQueryPlanOutput_Node, error) {
-	res := new(enginev1.ResourcesQueryPlanOutput_Node)
+	type (
+		qpN   = enginev1.ResourcesQueryPlanOutput_Node
+		qpNE  = enginev1.ResourcesQueryPlanOutput_Node_Expression
+		qpNLO = enginev1.ResourcesQueryPlanOutput_Node_LogicalOperation
+	)
+
+	res := new(qpN)
 	switch t := condition.Op.(type) {
 	case *runtimev1.Condition_Any:
-		operation := &enginev1.ResourcesQueryPlanOutput_LogicalOperation{
-			Operator: enginev1.ResourcesQueryPlanOutput_LogicalOperation_OPERATOR_OR,
-			Nodes:    nil,
-		}
-		res.Node = &enginev1.ResourcesQueryPlanOutput_Node_LogicalOperation{
-			LogicalOperation: operation,
-		}
+		nodes := make([]*qpN, 0, len(t.Any.Expr))
 		for _, c := range t.Any.Expr {
 			node, err := evaluateCondition(c, input, variables)
 			if err != nil {
@@ -155,23 +190,21 @@ func evaluateCondition(condition *runtimev1.Condition, input *requestv1.Resource
 
 			if b, ok := isNodeConstBool(node); ok {
 				if b {
-					res.Node = &enginev1.ResourcesQueryPlanOutput_Node_Expression{Expression: conditions.TrueExpr}
-
+					res.Node = &qpNE{Expression: conditions.TrueExpr}
 					return res, nil
 				}
 				add = false
 			}
 
 			if add {
-				operation.Nodes = append(operation.Nodes, node)
+				nodes = append(nodes, node)
 			}
 		}
-	case *runtimev1.Condition_All:
-		operation := &enginev1.ResourcesQueryPlanOutput_LogicalOperation{
-			Operator: enginev1.ResourcesQueryPlanOutput_LogicalOperation_OPERATOR_AND,
-			Nodes:    nil,
+		res.Node = &qpNLO{
+			LogicalOperation: mkOrLogicalOperation(nodes),
 		}
-		res.Node = &enginev1.ResourcesQueryPlanOutput_Node_LogicalOperation{LogicalOperation: operation}
+	case *runtimev1.Condition_All:
+		nodes := make([]*qpN, 0, len(t.All.Expr))
 		for _, c := range t.All.Expr {
 			node, err := evaluateCondition(c, input, variables)
 			if err != nil {
@@ -181,23 +214,23 @@ func evaluateCondition(condition *runtimev1.Condition, input *requestv1.Resource
 
 			if b, ok := isNodeConstBool(node); ok {
 				if !b {
-					res.Node = &enginev1.ResourcesQueryPlanOutput_Node_Expression{Expression: conditions.FalseExpr}
-
+					res.Node = &qpNE{Expression: conditions.FalseExpr}
 					return res, nil
 				}
 				add = false
 			}
 
 			if add {
-				operation.Nodes = append(operation.Nodes, node)
+				nodes = append(nodes, node)
 			}
 		}
+		res.Node = &qpNLO{LogicalOperation: mkAndLogicalOperation(nodes)}
 	case *runtimev1.Condition_Expr:
 		_, residual, err := evaluateCELExprPartially(t.Expr.Checked, input, variables)
 		if err != nil {
 			return nil, fmt.Errorf("error evaluating condition %q: %w", t.Expr.Original, err)
 		}
-		res.Node = &enginev1.ResourcesQueryPlanOutput_Node_Expression{Expression: residual}
+		res.Node = &qpNE{Expression: residual}
 	default:
 		return nil, fmt.Errorf("unsupported condition type %T", t)
 	}
