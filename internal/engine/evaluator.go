@@ -17,9 +17,11 @@ import (
 	effectv1 "github.com/cerbos/cerbos/api/genpb/cerbos/effect/v1"
 	enginev1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
 	runtimev1 "github.com/cerbos/cerbos/api/genpb/cerbos/runtime/v1"
+	schemav1 "github.com/cerbos/cerbos/api/genpb/cerbos/schema/v1"
 	"github.com/cerbos/cerbos/internal/conditions"
 	"github.com/cerbos/cerbos/internal/namer"
 	"github.com/cerbos/cerbos/internal/observability/tracing"
+	"github.com/cerbos/cerbos/internal/schema"
 )
 
 var (
@@ -31,10 +33,10 @@ type Evaluator interface {
 	Evaluate(context.Context, *enginev1.CheckInput) (*EvalResult, error)
 }
 
-func NewEvaluator(rps *runtimev1.RunnablePolicySet, t *tracer) Evaluator {
+func NewEvaluator(rps *runtimev1.RunnablePolicySet, t *tracer, schemaMgr schema.Manager) Evaluator {
 	switch rp := rps.PolicySet.(type) {
 	case *runtimev1.RunnablePolicySet_ResourcePolicy:
-		return &resourcePolicyEvaluator{policy: rp.ResourcePolicy, tracer: t}
+		return &resourcePolicyEvaluator{policy: rp.ResourcePolicy, tracer: t, schemaMgr: schemaMgr}
 	case *runtimev1.RunnablePolicySet_PrincipalPolicy:
 		return &principalPolicyEvaluator{policy: rp.PrincipalPolicy, tracer: t}
 	default:
@@ -49,7 +51,8 @@ func (noopEvaluator) Evaluate(_ context.Context, _ *enginev1.CheckInput) (*EvalR
 }
 
 type resourcePolicyEvaluator struct {
-	policy *runtimev1.RunnableResourcePolicySet
+	policy    *runtimev1.RunnableResourcePolicySet
+	schemaMgr schema.Manager
 	*tracer
 }
 
@@ -63,6 +66,25 @@ func (rpe *resourcePolicyEvaluator) Evaluate(ctx context.Context, input *enginev
 
 	tctx := rpe.beginTrace(policyComponent, rpe.policy.Meta.Fqn)
 	for _, p := range rpe.policy.Policies {
+		// validate the input
+		vr, err := rpe.schemaMgr.Validate(ctx, p.Schemas, input)
+		if err != nil {
+			tctx.writeEvent(KVMsg("Error during validation"), KVError(err))
+			return nil, fmt.Errorf("failed to validate input: %w", err)
+		}
+		if len(vr.Errors) > 0 {
+			result.ValidationErrors = vr.Errors.SchemaErrors()
+			tctx.writeEvent(KVMsg("Validation errors"), KVError(vr.Errors))
+			if vr.Reject {
+				for _, action := range input.Actions {
+					actx := tctx.beginTrace(actionComponent, action)
+					result.setEffect(action, effectv1.Effect_EFFECT_DENY)
+					actx.writeEvent(KVActivated(), KVEffect(effectv1.Effect_EFFECT_DENY), KVMsg("Rejected due to validation failures"))
+				}
+				return result, nil
+			}
+		}
+
 		// evaluate the variables of this policy
 		variables, err := evaluateVariables(tctx.beginTrace(variablesComponent), p.Variables, input)
 		if err != nil {
@@ -374,6 +396,7 @@ type EvalResult struct {
 	PolicyKey             string
 	Effects               map[string]effectv1.Effect
 	EffectiveDerivedRoles map[string]struct{}
+	ValidationErrors      []*schemav1.ValidationError
 }
 
 func newEvalResult(policyKey string, actions []string) *EvalResult {

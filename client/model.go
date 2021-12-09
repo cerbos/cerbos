@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"reflect"
 	"sync"
 	"time"
 
@@ -23,6 +22,7 @@ import (
 	requestv1 "github.com/cerbos/cerbos/api/genpb/cerbos/request/v1"
 	responsev1 "github.com/cerbos/cerbos/api/genpb/cerbos/response/v1"
 	"github.com/cerbos/cerbos/internal/policy"
+	"github.com/cerbos/cerbos/internal/util"
 )
 
 const apiVersion = "api.cerbos.dev/v1"
@@ -62,7 +62,7 @@ func (p *Principal) WithAttributes(attr map[string]interface{}) *Principal {
 	}
 
 	for k, v := range attr {
-		pbVal, err := toStructPB(v)
+		pbVal, err := util.ToStructPB(v)
 		if err != nil {
 			p.err = multierr.Append(p.err, fmt.Errorf("invalid attribute value for '%s': %w", k, err))
 			continue
@@ -80,7 +80,7 @@ func (p *Principal) WithAttr(key string, value interface{}) *Principal {
 		p.p.Attr = make(map[string]*structpb.Value)
 	}
 
-	pbVal, err := toStructPB(value)
+	pbVal, err := util.ToStructPB(value)
 	if err != nil {
 		p.err = multierr.Append(p.err, fmt.Errorf("invalid attribute value for '%s': %w", key, err))
 		return p
@@ -130,7 +130,7 @@ func (r *Resource) WithAttributes(attr map[string]interface{}) *Resource {
 	}
 
 	for k, v := range attr {
-		pbVal, err := toStructPB(v)
+		pbVal, err := util.ToStructPB(v)
 		if err != nil {
 			r.err = multierr.Append(r.err, fmt.Errorf("invalid attribute value for '%s': %w", k, err))
 			continue
@@ -148,7 +148,7 @@ func (r *Resource) WithAttr(key string, value interface{}) *Resource {
 		r.r.Attr = make(map[string]*structpb.Value)
 	}
 
-	pbVal, err := toStructPB(value)
+	pbVal, err := util.ToStructPB(value)
 	if err != nil {
 		r.err = multierr.Append(r.err, fmt.Errorf("invalid attribute value for '%s': %w", key, err))
 		return r
@@ -246,8 +246,26 @@ func (crsr *CheckResourceSetResponse) IsAllowed(resourceID, action string) bool 
 	return effect == effectv1.Effect_EFFECT_ALLOW
 }
 
+// Errors returns all validation errors returned by the server.
+func (crsr *CheckResourceSetResponse) Errors() error {
+	var err error
+	for resource, actions := range crsr.ResourceInstances {
+		for _, verr := range actions.ValidationErrors {
+			err = multierr.Append(err,
+				fmt.Errorf("resource %q failed validation: source=%s path=%s msg=%s", resource, verr.Source, verr.Path, verr.Message),
+			)
+		}
+	}
+
+	return err
+}
+
 func (crsr *CheckResourceSetResponse) String() string {
 	return protojson.Format(crsr.CheckResourceSetResponse)
+}
+
+func (crsr *CheckResourceSetResponse) MarshalJSON() ([]byte, error) {
+	return protojson.Marshal(crsr.CheckResourceSetResponse)
 }
 
 // ResourceBatch is a container for a batch of heterogeneous resources.
@@ -346,44 +364,26 @@ func (crbr *CheckResourceBatchResponse) IsAllowed(resourceID, action string) boo
 	return false
 }
 
+// Errors returns any validation errors returned by the server.
+func (crbr *CheckResourceBatchResponse) Errors() error {
+	var err error
+	for _, result := range crbr.Results {
+		for _, verr := range result.ValidationErrors {
+			err = multierr.Append(err,
+				fmt.Errorf("resource %q failed validation: source=%s path=%s msg=%s", result.ResourceId, verr.Source, verr.Path, verr.Message),
+			)
+		}
+	}
+
+	return err
+}
+
 func (crbr *CheckResourceBatchResponse) String() string {
 	return protojson.Format(crbr.CheckResourceBatchResponse)
 }
 
-// TODO (cell) replace with util.ToStructPB.
-func toStructPB(v interface{}) (*structpb.Value, error) {
-	val, err := structpb.NewValue(v)
-	if err == nil {
-		return val, nil
-	}
-
-	vv := reflect.ValueOf(v)
-	switch vv.Kind() {
-	case reflect.Array, reflect.Slice:
-		arr := make([]interface{}, vv.Len())
-		for i := 0; i < vv.Len(); i++ {
-			el := vv.Index(i)
-			// TODO: (cell) Recurse
-			arr[i] = el.Interface()
-		}
-
-		return structpb.NewValue(arr)
-	case reflect.Map:
-		if vv.Type().Key().Kind() == reflect.String {
-			m := make(map[string]interface{})
-
-			iter := vv.MapRange()
-			for iter.Next() {
-				m[iter.Key().String()] = iter.Value().Interface()
-			}
-
-			return structpb.NewValue(m)
-		}
-	default:
-		return nil, err
-	}
-
-	return nil, err
+func (crbr *CheckResourceBatchResponse) MarshalJSON() ([]byte, error) {
+	return protojson.Marshal(crbr.CheckResourceBatchResponse)
 }
 
 // PolicySet is a container for a set of policies.
@@ -850,6 +850,14 @@ func (ml matchList) build() *policyv1.Match {
 
 type ServerInfo struct {
 	*responsev1.ServerInfoResponse
+}
+
+func (si *ServerInfo) String() string {
+	return protojson.Format(si.ServerInfoResponse)
+}
+
+func (si *ServerInfo) MarshalJSON() ([]byte, error) {
+	return protojson.Marshal(si.ServerInfoResponse)
 }
 
 type AuditLogType uint8

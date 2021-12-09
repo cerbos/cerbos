@@ -27,3 +27,4 @@ NOTE: View the latest documentation and example requests by accessing a running 
 * Resource names, actions, and principal names can be hierarchical. Use `:` as the delimiter. E.g. `app:component:resource`.
 * Wildcard matches are allowed on certain fields. Wildcards respect the hierarchy delimiter `:`.
 * See xref:conditions.adoc[Conditions] to learn how to write conditions in policy rules.
+* See xref:schemas.adoc[Schemas] to learn how you can define schemas for validating requests.

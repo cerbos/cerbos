@@ -8,16 +8,21 @@ package internal
 
 import (
 	"context"
+	"io/ioutil"
 	"testing"
+	"time"
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/testing/protocmp"
 
+	schemav1 "github.com/cerbos/cerbos/api/genpb/cerbos/schema/v1"
 	"github.com/cerbos/cerbos/internal/policy"
 	"github.com/cerbos/cerbos/internal/storage"
 	"github.com/cerbos/cerbos/internal/test"
 )
+
+const timeout = 1 * time.Second
 
 //nolint:gomnd
 func TestSuite(store DBStorage) func(*testing.T) {
@@ -25,12 +30,13 @@ func TestSuite(store DBStorage) func(*testing.T) {
 	return func(t *testing.T) {
 		ctx, cancelFunc := context.WithCancel(context.Background())
 		defer cancelFunc()
-
 		rp := policy.Wrap(test.GenResourcePolicy(test.NoMod()))
 		pp := policy.Wrap(test.GenPrincipalPolicy(test.NoMod()))
 		dr := policy.Wrap(test.GenDerivedRoles(test.NoMod()))
 		rpx := policy.Wrap(test.GenResourcePolicy(test.PrefixAndSuffix("x", "x")))
 		drx := policy.Wrap(test.GenDerivedRoles(test.PrefixAndSuffix("x", "x")))
+		sch := test.ReadSchemaFromFile(t, test.PathToDir(t, "store/_schemas/leave_request.json"))
+		const schID = "leave_request"
 
 		t.Run("add", func(t *testing.T) {
 			checkEvents := storage.TestSubscription(store)
@@ -43,7 +49,7 @@ func TestSuite(store DBStorage) func(*testing.T) {
 				{Kind: storage.EventAddOrUpdatePolicy, PolicyID: rpx.ID},
 				{Kind: storage.EventAddOrUpdatePolicy, PolicyID: drx.ID},
 			}
-			checkEvents(t, wantEvents...)
+			checkEvents(t, timeout, wantEvents...)
 		})
 
 		t.Run("get_compilation_unit_with_deps", func(t *testing.T) {
@@ -138,7 +144,39 @@ func TestSuite(store DBStorage) func(*testing.T) {
 			require.NoError(t, err)
 			require.Empty(t, have)
 
-			checkEvents(t, storage.Event{Kind: storage.EventDeletePolicy, PolicyID: rpx.ID})
+			checkEvents(t, timeout, storage.Event{Kind: storage.EventDeletePolicy, PolicyID: rpx.ID})
+		})
+
+		t.Run("add_schema", func(t *testing.T) {
+			checkEvents := storage.TestSubscription(store)
+			require.NoError(t, store.AddOrUpdateSchema(ctx, &schemav1.Schema{Id: schID, Definition: sch}))
+
+			checkEvents(t, timeout, storage.NewSchemaEvent(storage.EventAddOrUpdateSchema, schID))
+		})
+
+		t.Run("get_schema", func(t *testing.T) {
+			t.Run("should be able to get schema", func(t *testing.T) {
+				schema, err := store.LoadSchema(ctx, schID)
+				require.NoError(t, err)
+				require.NotEmpty(t, schema)
+				schBytes, err := ioutil.ReadAll(schema)
+				require.NoError(t, err)
+				require.NotEmpty(t, schBytes)
+				require.JSONEq(t, string(sch), string(schBytes))
+			})
+		})
+
+		t.Run("delete_schema", func(t *testing.T) {
+			checkEvents := storage.TestSubscription(store)
+
+			err := store.DeleteSchema(ctx, schID)
+			require.NoError(t, err)
+
+			have, err := store.LoadSchema(ctx, schID)
+			require.Error(t, err)
+			require.Empty(t, have)
+
+			checkEvents(t, timeout, storage.NewSchemaEvent(storage.EventDeleteSchema, schID))
 		})
 	}
 }

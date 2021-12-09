@@ -8,6 +8,8 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/jackc/pgtype"
+
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
 	"github.com/cerbos/cerbos/internal/namer"
 )
@@ -21,7 +23,16 @@ const (
 	PolicyDepTbl            = "policy_dependency"
 	PolicyDepTblPolicyIDCol = "policy_id"
 	PolicyDepTblDepIDCol    = "dependency_id"
+
+	SchemaTbl              = "attr_schema_defs"
+	SchemaTblIDCol         = "id"
+	SchemaTblDefinitionCol = "definition"
 )
+
+type Schema struct {
+	ID         string
+	Definition *pgtype.JSON
+}
 
 type Policy struct {
 	ID          namer.ModuleID

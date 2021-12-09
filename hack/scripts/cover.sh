@@ -11,7 +11,7 @@ trap 'rm -rf "$COVERFILE"' EXIT
 
 (
     cd "${SCRIPT_DIR}/../.."
-    go test -tags=tests -coverprofile="$COVERFILE" -count=1 ./...
+    go test -tags=tests -coverprofile="$COVERFILE" -count=1 $@
     go tool cover -html="$COVERFILE"
 )
 

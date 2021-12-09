@@ -12,6 +12,7 @@ option csharp_namespace = "Cerbos.Api.V1.Response";
 import "cerbos/audit/v1/audit.proto";
 import "cerbos/effect/v1/effect.proto";
 import "cerbos/policy/v1/policy.proto";
+import "cerbos/schema/v1/schema.proto";
 import "google/protobuf/empty.proto";
 import "protoc-gen-openapiv2/options/annotations.proto";
 
@@ -27,6 +28,11 @@ message CheckResourceSetResponse {
             (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = { 
                 description: "Mapping of each action to an effect."
             } 
+        ];
+        repeated cerbos.schema.v1.ValidationError validation_errors = 2 [
+            (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+                description: "List of validation errors (if schema validation is enabled)"
+            }
         ];
     }
 
@@ -118,6 +124,11 @@ message CheckResourceBatchResponse {
                 description: "Mapping of each action to an effect."
                 example: "{\"view\":\"EFFECT_ALLOW\"}"
             } 
+        ];
+        repeated cerbos.schema.v1.ValidationError validation_errors = 3 [
+            (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+                description: "List of validation errors (if schema validation is enabled)"
+            }
         ];
     }
 
@@ -249,4 +260,40 @@ message ListPoliciesResponse {
     };
 
     repeated cerbos.policy.v1.Policy policies = 1;
+}
+
+message AddOrUpdateSchemaResponse {
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
+        json_schema: {
+            description: "Add/update schema response"
+        }
+    };
+}
+
+message ListSchemasResponse {
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
+        json_schema: {
+            description: "List schema ids response"
+        }
+    };
+
+    repeated string schema_ids = 1;
+}
+
+message GetSchemaResponse {
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
+        json_schema: {
+            description: "Get schema(s) response"
+        }
+    };
+
+    repeated cerbos.schema.v1.Schema schemas = 1;
+}
+
+message DeleteSchemaResponse {
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
+        json_schema: {
+            description: "Delete schema(s) response"
+        }
+    };
 }

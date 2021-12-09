@@ -8,6 +8,11 @@ inputDefs:
       version: "20210210"
       importDerivedRoles:
         - my_derived_roles
+      schemas:
+        principalSchema:
+          ref: cerbos:///complex_object.json
+        resourceSchema:
+          ref: cerbos:///complex_object.json
       rules:
         - actions: ['*']
           effect: EFFECT_ALLOW

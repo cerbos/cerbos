@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "ownerOrgId": {
+      "type": "string"
+    },
+    "tags": {
+      "type": "object",
+      "properties": {
+        "brand": {
+          "type": "string"
+        },
+        "class": {
+          "type": "string"
+        },
+        "region": {
+          "type": "string"
+        }
+      }
+    }
+  }
+}

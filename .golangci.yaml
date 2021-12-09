@@ -7,7 +7,6 @@ run:
     - docs
     - hack
     - internal/test/mocks
-    - schema
   build-tags:
     - tests
 
@@ -45,6 +44,7 @@ linters-settings:
 linters:
   enable:
     - asciicheck
+    - bidichk
     - bodyclose
     - dupl
     - durationcheck
@@ -78,6 +78,7 @@ linters:
     - rowserrcheck
     - sqlclosecheck
     - tagliatelle
+    - tenv
     - thelper
     - tparallel
     - unconvert

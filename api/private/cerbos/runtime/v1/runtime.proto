@@ -8,6 +8,7 @@ package cerbos.runtime.v1;
 option go_package = "github.com/cerbos/cerbos/api/genpb/cerbos/runtime/v1;runtimev1";
 
 import "cerbos/effect/v1/effect.proto";
+import "cerbos/policy/v1/policy.proto";
 import "google/api/expr/v1alpha1/checked.proto";
 import "google/protobuf/empty.proto";
 
@@ -55,6 +56,7 @@ message RunnableResourcePolicySet {
         map<string, RunnableDerivedRole> derived_roles = 2;
         map<string, Expr> variables = 3;
         repeated Rule rules = 4;
+        cerbos.policy.v1.Schemas schemas = 5;
     }
 
     Metadata meta = 1;

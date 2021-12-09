@@ -1,0 +1,45 @@
+// Copyright 2021 Zenauth Ltd.
+// SPDX-License-Identifier: Apache-2.0
+
+syntax = "proto3";
+
+package cerbos.schema.v1;
+
+option go_package = "github.com/cerbos/cerbos/api/genpb/cerbos/schema/v1;schemav1";
+option java_package = "dev.cerbos.api.v1.schema";
+option csharp_namespace = "Cerbos.Api.V1.Schema";
+
+import "google/api/field_behavior.proto";
+import "protoc-gen-openapiv2/options/annotations.proto";
+import "validate/validate.proto";
+
+message ValidationError {
+    enum Source {
+        SOURCE_UNSPECIFIED = 0;
+        SOURCE_PRINCIPAL = 1;
+        SOURCE_RESOURCE = 2;
+    }
+
+    string path = 1;
+    string message = 2;
+    Source source = 3;
+}
+
+message Schema {
+    string id = 1 [
+        (google.api.field_behavior) = REQUIRED,
+        (validate.rules).string = {min_len: 1, max_len: 255},
+        (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+            description: "Unique identifier for the schema"
+            example: "\"principal.json\""
+        }
+    ];
+    bytes definition = 2 [
+        (google.api.field_behavior) = REQUIRED,
+        (validate.rules).bytes = {min_len: 10},
+        (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+            description: "JSON schema definition"
+            example: "{\"type\":\"object\", \"properties\":{}}"
+        }
+    ];
+}

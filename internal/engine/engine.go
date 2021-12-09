@@ -21,12 +21,14 @@ import (
 	auditv1 "github.com/cerbos/cerbos/api/genpb/cerbos/audit/v1"
 	effectv1 "github.com/cerbos/cerbos/api/genpb/cerbos/effect/v1"
 	enginev1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
+	schemav1 "github.com/cerbos/cerbos/api/genpb/cerbos/schema/v1"
 	"github.com/cerbos/cerbos/internal/audit"
 	"github.com/cerbos/cerbos/internal/compile"
 	"github.com/cerbos/cerbos/internal/config"
 	"github.com/cerbos/cerbos/internal/namer"
 	"github.com/cerbos/cerbos/internal/observability/logging"
 	"github.com/cerbos/cerbos/internal/observability/tracing"
+	"github.com/cerbos/cerbos/internal/schema"
 )
 
 // ErrNoPoliciesMatched indicates that no policies were matched.
@@ -83,11 +85,18 @@ type Engine struct {
 	workerIndex uint64
 	workerPool  []chan<- workIn
 	compileMgr  *compile.Manager
+	schemaMgr   schema.Manager
 	auditLog    audit.Log
 }
 
-func New(ctx context.Context, compileMgr *compile.Manager, auditLog audit.Log) (*Engine, error) {
-	engine, err := newEngine(compileMgr, auditLog)
+type Components struct {
+	AuditLog   audit.Log
+	CompileMgr *compile.Manager
+	SchemaMgr  schema.Manager
+}
+
+func New(ctx context.Context, components Components) (*Engine, error) {
+	engine, err := newEngine(components)
 	if err != nil {
 		return nil, err
 	}
@@ -105,11 +114,11 @@ func New(ctx context.Context, compileMgr *compile.Manager, auditLog audit.Log) (
 	return engine, nil
 }
 
-func NewEphemeral(ctx context.Context, compileMgr *compile.Manager) (*Engine, error) {
-	return newEngine(compileMgr, audit.NewNopLog())
+func NewEphemeral(ctx context.Context, compileMgr *compile.Manager, schemaMgr schema.Manager) (*Engine, error) {
+	return newEngine(Components{CompileMgr: compileMgr, SchemaMgr: schemaMgr, AuditLog: audit.NewNopLog()})
 }
 
-func newEngine(compileMgr *compile.Manager, auditLog audit.Log) (*Engine, error) {
+func newEngine(c Components) (*Engine, error) {
 	conf := &Conf{}
 	if err := config.GetSection(conf); err != nil {
 		return nil, err
@@ -117,8 +126,9 @@ func newEngine(compileMgr *compile.Manager, auditLog audit.Log) (*Engine, error)
 
 	engine := &Engine{
 		conf:       conf,
-		compileMgr: compileMgr,
-		auditLog:   auditLog,
+		compileMgr: c.CompileMgr,
+		schemaMgr:  c.SchemaMgr,
+		auditLog:   c.AuditLog,
 	}
 
 	return engine, nil
@@ -263,15 +273,15 @@ func (engine *Engine) evaluate(ctx context.Context, input *enginev1.CheckInput, 
 		return nil, err
 	}
 
-	ec, err := engine.buildEvaluationCtx(ctx, input, checkOpts)
-	if err != nil {
-		return nil, err
-	}
-
 	output := &enginev1.CheckOutput{
 		RequestId:  input.RequestId,
 		ResourceId: input.Resource.Id,
 		Actions:    make(map[string]*enginev1.CheckOutput_ActionEffect, len(input.Actions)),
+	}
+
+	ec, err := engine.buildEvaluationCtx(ctx, input, checkOpts)
+	if err != nil {
+		return nil, err
 	}
 
 	// If there are no checks, set the default effect and return.
@@ -311,6 +321,7 @@ func (engine *Engine) evaluate(ctx context.Context, input *enginev1.CheckInput, 
 	}
 
 	output.EffectiveDerivedRoles = result.effectiveDerivedRoles
+	output.ValidationErrors = result.validationErrors
 
 	return output, nil
 }
@@ -348,7 +359,7 @@ func (engine *Engine) getPrincipalPolicyEvaluator(ctx context.Context, principal
 		return nil, nil
 	}
 
-	return NewEvaluator(rps, checkOpts.tracer), nil
+	return NewEvaluator(rps, checkOpts.tracer, engine.schemaMgr), nil
 }
 
 func (engine *Engine) getResourcePolicyEvaluator(ctx context.Context, resource, policyVersion string, checkOpts *checkOptions) (Evaluator, error) {
@@ -362,7 +373,7 @@ func (engine *Engine) getResourcePolicyEvaluator(ctx context.Context, resource, 
 		return nil, nil
 	}
 
-	return NewEvaluator(rps, checkOpts.tracer), nil
+	return NewEvaluator(rps, checkOpts.tracer, engine.schemaMgr), nil
 }
 
 func (engine *Engine) policyAttr(name, version string) (pName, pVersion string) {
@@ -426,6 +437,7 @@ type evaluationResult struct {
 	effects               map[string]effectv1.Effect
 	matchedPolicies       map[string]string
 	effectiveDerivedRoles []string
+	validationErrors      []*schemav1.ValidationError
 }
 
 // merge the results by only updating the actions that have a no_match effect.
@@ -441,6 +453,10 @@ func (er *evaluationResult) merge(res *EvalResult) bool {
 		for edr := range res.EffectiveDerivedRoles {
 			er.effectiveDerivedRoles = append(er.effectiveDerivedRoles, edr)
 		}
+	}
+
+	if len(res.ValidationErrors) > 0 {
+		er.validationErrors = append(er.validationErrors, res.ValidationErrors...)
 	}
 
 	for action, effect := range res.Effects {

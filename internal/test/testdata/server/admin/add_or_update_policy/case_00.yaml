@@ -65,6 +65,14 @@ adminAddOrUpdatePolicy:
           "importDerivedRoles": [
             "my_derived_roles"
           ],
+          "schemas": {
+            "principalSchema": {
+              "ref": "cerbos:///principal.json"
+            },
+            "resourceSchema": {
+              "ref": "cerbos:///leave_request.json"
+            }
+          },
           "rules": [
             {
               "actions": [

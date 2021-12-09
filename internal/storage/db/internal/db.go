@@ -4,15 +4,23 @@
 package internal
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
+	"io"
+	"net/url"
 	"os"
+	"strings"
 
 	"github.com/doug-martin/goqu/v9"
+	"github.com/jackc/pgtype"
 	"go.uber.org/zap"
 
+	schemav1 "github.com/cerbos/cerbos/api/genpb/cerbos/schema/v1"
 	"github.com/cerbos/cerbos/internal/namer"
 	"github.com/cerbos/cerbos/internal/policy"
+	"github.com/cerbos/cerbos/internal/schema"
 	"github.com/cerbos/cerbos/internal/storage"
 )
 
@@ -23,6 +31,10 @@ type DBStorage interface {
 	GetDependents(ctx context.Context, ids ...namer.ModuleID) (map[namer.ModuleID][]namer.ModuleID, error)
 	Delete(ctx context.Context, ids ...namer.ModuleID) error
 	GetPolicies(ctx context.Context) ([]*policy.Wrapper, error)
+	ListSchemaIDs(ctx context.Context) ([]string, error)
+	AddOrUpdateSchema(ctx context.Context, schemas ...*schemav1.Schema) error
+	DeleteSchema(ctx context.Context, ids ...string) error
+	LoadSchema(ctx context.Context, url string) (io.ReadCloser, error)
 }
 
 func NewDBStorage(ctx context.Context, db *goqu.Database) (DBStorage, error) {
@@ -44,6 +56,100 @@ func NewDBStorage(ctx context.Context, db *goqu.Database) (DBStorage, error) {
 type dbStorage struct {
 	db *goqu.Database
 	*storage.SubscriptionManager
+}
+
+func (s *dbStorage) AddOrUpdateSchema(ctx context.Context, schemas ...*schemav1.Schema) error {
+	events := make([]storage.Event, 0, len(schemas))
+	err := s.db.WithTx(func(tx *goqu.TxDatabase) error {
+		for _, sch := range schemas {
+			defJSON := pgtype.JSON{}
+			err := defJSON.UnmarshalJSON(sch.Definition)
+			if err != nil {
+				return fmt.Errorf("failed to unmarshal schema definition with id %s: %w", sch.Id, err)
+			}
+
+			row := Schema{
+				ID:         sch.Id,
+				Definition: &defJSON,
+			}
+
+			if _, err := tx.Insert(SchemaTbl).
+				Rows(row).
+				OnConflict(goqu.DoUpdate(SchemaTblIDCol, row)).
+				Executor().
+				ExecContext(ctx); err != nil {
+				return fmt.Errorf("failed to upsert the schema with id %s: %w", sch.Id, err)
+			}
+
+			events = append(events, storage.NewSchemaEvent(storage.EventAddOrUpdateSchema, sch.Id))
+		}
+		return nil
+	})
+	if err != nil {
+		return err
+	}
+
+	s.NotifySubscribers(events...)
+	return nil
+}
+
+func (s *dbStorage) DeleteSchema(ctx context.Context, ids ...string) error {
+	events := make([]storage.Event, 0, len(ids))
+	for _, id := range ids {
+		events = append(events, storage.NewSchemaEvent(storage.EventDeleteSchema, id))
+	}
+
+	res, err := s.db.Delete(SchemaTbl).
+		Prepared(true).
+		Where(goqu.Ex{SchemaTblIDCol: ids}).
+		Executor().
+		ExecContext(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to delete schema(s): %w", err)
+	}
+
+	affected, err := res.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("failed to discover whether the schema(s) got deleted or not: %w", err)
+	}
+
+	if affected == 0 {
+		return fmt.Errorf("failed to find the schema(s) for deletion")
+	}
+
+	s.NotifySubscribers(events...)
+
+	return nil
+}
+
+func (s *dbStorage) LoadSchema(ctx context.Context, urlVar string) (io.ReadCloser, error) {
+	u, err := url.Parse(urlVar)
+	if err != nil {
+		return nil, err
+	}
+
+	if u.Scheme != "" && u.Scheme != schema.URLScheme {
+		return nil, fmt.Errorf("invalid url scheme %q", u.Scheme)
+	}
+
+	var sch Schema
+	_, err = s.db.From(SchemaTbl).
+		Where(goqu.Ex{SchemaTblIDCol: strings.TrimPrefix(u.Path, "/")}).
+		ScanStructContext(ctx, &sch)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get schema: %w", err)
+	}
+
+	if sch.Definition == nil {
+		return nil, fmt.Errorf("failed to find schema")
+	}
+
+	def, err := json.Marshal(sch.Definition)
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal schema: %w", err)
+	}
+
+	return io.NopCloser(bytes.NewReader(def)), nil
 }
 
 func (s *dbStorage) AddOrUpdate(ctx context.Context, policies ...policy.Wrapper) error {
@@ -220,7 +326,8 @@ func (s *dbStorage) Delete(ctx context.Context, ids ...namer.ModuleID) error {
 			return err
 		}
 
-		s.NotifySubscribers(storage.Event{Kind: storage.EventDeletePolicy, PolicyID: ids[0]})
+		s.NotifySubscribers(storage.NewPolicyEvent(storage.EventDeletePolicy, ids[0]))
+
 		return nil
 	}
 
@@ -261,4 +368,24 @@ func (s *dbStorage) GetPolicies(ctx context.Context) ([]*policy.Wrapper, error) 
 	}
 
 	return policies, nil
+}
+
+func (s *dbStorage) ListSchemaIDs(ctx context.Context) ([]string, error) {
+	res, err := s.db.Select(goqu.C(SchemaTblIDCol)).From(SchemaTbl).Executor().ScannerContext(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("could not execute %q query: %w", "ListSchemaIDs", err)
+	}
+	defer res.Close()
+
+	var schemaIds []string
+	for res.Next() {
+		var id string
+		if err := res.ScanVal(&id); err != nil {
+			return nil, fmt.Errorf("could not scan row: %w", err)
+		}
+
+		schemaIds = append(schemaIds, id)
+	}
+
+	return schemaIds, nil
 }

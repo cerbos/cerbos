@@ -8,7 +8,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/fs"
 	"path/filepath"
 	"testing"
 	"time"
@@ -21,7 +20,6 @@ import (
 	svcv1 "github.com/cerbos/cerbos/api/genpb/cerbos/svc/v1"
 	"github.com/cerbos/cerbos/client/testutil"
 	"github.com/cerbos/cerbos/internal/test"
-	"github.com/cerbos/cerbos/internal/util"
 )
 
 func TestCollectLogs(t *testing.T) {
@@ -110,20 +108,7 @@ func TestListPolicies(t *testing.T) {
 	require.NoError(t, err)
 
 	ps := NewPolicySet()
-	testdataDir := test.PathToDir(t, "store")
-	err = filepath.WalkDir(testdataDir, func(path string, d fs.DirEntry, err error) error {
-		if err != nil {
-			return err
-		}
-
-		if d.IsDir() {
-			return nil
-		}
-
-		if !util.IsSupportedFileType(d.Name()) {
-			return nil
-		}
-
+	err = test.FindPolicyFiles(t, "store", func(path string) error {
 		ps.AddPolicyFromFile(path)
 		return ps.Err()
 	})

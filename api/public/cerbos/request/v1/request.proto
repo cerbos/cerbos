@@ -11,6 +11,7 @@ option csharp_namespace = "Cerbos.Api.V1.Request";
 
 import "cerbos/engine/v1/engine.proto";
 import "cerbos/policy/v1/policy.proto";
+import "cerbos/schema/v1/schema.proto";
 import "google/protobuf/duration.proto";
 import "google/protobuf/struct.proto";
 import "google/protobuf/timestamp.proto";
@@ -55,7 +56,7 @@ message CheckResourceSetRequest {
             description: "Opt to receive request processing metadata in the response."
         }
     ];
-    AuxData aux_data = 6;
+    AuxData aux_data = 6 [(google.api.field_behavior) = OPTIONAL];
 }
 
 message ResourceSet {
@@ -178,11 +179,13 @@ message AuxData {
             (google.api.field_behavior) = REQUIRED,
             (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = { 
                 description: "JWT from the original request"
+                example: "\"eyJhbGciOiJFUzM4NCIsImtpZCI6IjE5TGZaYXRFZGc4M1lOYzVyMjNndU1KcXJuND0iLCJ0eXAiOiJKV1QifQ.eyJhdWQiOlsiY2VyYm9zLWp3dC10ZXN0cyJdLCJjdXN0b21BcnJheSI6WyJBIiwiQiIsIkMiXSwiY3VzdG9tSW50Ijo0MiwiY3VzdG9tTWFwIjp7IkEiOiJBQSIsIkIiOiJCQiIsIkMiOiJDQyJ9LCJjdXN0b21TdHJpbmciOiJmb29iYXIiLCJleHAiOjE5NDk5MzQwMzksImlzcyI6ImNlcmJvcy10ZXN0LXN1aXRlIn0.WN_tOScSpd_EI-P5EI1YlagxEgExSfBjAtcrgcF6lyWj1lGpR_GKx9goZEp2p_t5AVWXN_bjz_sMUmJdJa4cVd55Qm1miR-FKu6oNRHnSEWdMFmnArwPw-YDJWfylLFX\""
             } 
         ];
         string key_set_id = 2 [
             (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = { 
                 description: "Key ID to use when decoding the token (defined in the Cerbos server configuration)"
+                example: "\"my-keyset\""
             } 
         ];
     }
@@ -471,4 +474,62 @@ message ListPoliciesRequest {
 
     repeated Filter filters = 1;
     SortOptions sort_options = 2;
+}
+
+message AddOrUpdateSchemaRequest {
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
+        json_schema: {
+            description: "Add/update schema request"
+        }
+    };
+
+    repeated cerbos.schema.v1.Schema schemas = 1 [
+        (google.api.field_behavior) = REQUIRED,
+        (validate.rules).repeated = {min_items: 1, max_items: 10},
+        (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+            description: "List of schemas."
+            min_items: 1
+            max_items: 10
+        }
+    ];
+}
+
+message ListSchemasRequest {
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
+        json_schema: {
+            description: "List schema ids request"
+            }
+    };
+}
+
+message GetSchemaRequest {
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
+        json_schema: {
+            description: "Get schema(s) request"
+        }
+    };
+    repeated string id = 1 [
+        (google.api.field_behavior) = REQUIRED,
+        (validate.rules).repeated = { unique: true, min_items: 1, max_items: 25, items { string { min_len: 1, max_len: 255} } },
+        (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+            description: "Unique identifier for the schema"
+            example: "\"principal.json\""
+        }
+    ];
+}
+
+message DeleteSchemaRequest {
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
+        json_schema: {
+            description: "Delete schema(s) request"
+        }
+    };
+    repeated string id = 1 [
+        (google.api.field_behavior) = REQUIRED,
+        (validate.rules).repeated = { unique: true, min_items: 1, max_items: 25, items { string { min_len: 1, max_len: 255} } },
+        (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+            description: "Unique identifier for the schema"
+            example: "\"principal.json\""
+        }
+    ];
 }

@@ -17,6 +17,7 @@ import (
 
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
 	"github.com/cerbos/cerbos/internal/policy"
+	"github.com/cerbos/cerbos/internal/schema"
 	"github.com/cerbos/cerbos/internal/storage"
 	"github.com/cerbos/cerbos/internal/storage/index"
 	"github.com/cerbos/cerbos/internal/util"
@@ -127,6 +128,16 @@ func (dw *dirWatch) triggerUpdate() {
 
 			if _, err := os.Stat(fullPath); errors.Is(err, os.ErrNotExist) {
 				dw.log.Debugw("Detected file removal", "file", f)
+				if isSchemaFile(f) {
+					sf, err := schemaFileName(f)
+					if err != nil {
+						dw.log.Warnw("Failed to find relative path to schema file", "file", f, "error", err)
+						continue
+					}
+					dw.NotifySubscribers(storage.NewSchemaEvent(storage.EventDeleteSchema, sf))
+					continue
+				}
+
 				evt, err := dw.idx.Delete(index.Entry{File: f})
 				if err != nil {
 					dw.log.Warnw("Failed to remove file from index", "file", f, "error", err)
@@ -138,6 +149,16 @@ func (dw *dirWatch) triggerUpdate() {
 			}
 
 			dw.log.Debugw("Detected file update", "file", f)
+			if isSchemaFile(f) {
+				sf, err := schemaFileName(f)
+				if err != nil {
+					dw.log.Warnw("Failed to find relative path to schema file", "file", f, "error", err)
+					continue
+				}
+				dw.NotifySubscribers(storage.NewSchemaEvent(storage.EventAddOrUpdateSchema, sf))
+				continue
+			}
+
 			p, err := readPolicy(fullPath)
 			if err != nil {
 				dw.log.Warnw("Failed to read policy from file", "file", f, "error", err)
@@ -153,6 +174,14 @@ func (dw *dirWatch) triggerUpdate() {
 			dw.NotifySubscribers(evt)
 		}
 	}
+}
+
+func isSchemaFile(f string) bool {
+	return filepath.Dir(f) == schema.Directory
+}
+
+func schemaFileName(f string) (string, error) {
+	return filepath.Rel(schema.Directory, f)
 }
 
 // TODO: use ReadPolicyFromFile instead.

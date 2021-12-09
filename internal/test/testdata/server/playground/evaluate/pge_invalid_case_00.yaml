@@ -9,7 +9,7 @@ playgroundEvaluate:
     "policyFiles": [
       {
         "fileName": "resource.yaml",
-        "contents": "{{ .Files.Get `store/resource_policies/policy_04.yaml` | base64encode }}",
+        "contents": "{{ .Files.Get `store/resource_policies/policy_04.yaml` | b64enc }}",
       }
     ],
     "actions": ["view", "delete"],

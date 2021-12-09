@@ -10,19 +10,19 @@ playgroundProxy:
     "policyFiles": [
       {
         "fileName": "derived_roles_01.yaml",
-        "contents": "{{ .Files.Get `store/derived_roles/derived_roles_01.yaml` | base64encode }}",
+        "contents": "{{ .Files.Get `store/derived_roles/derived_roles_01.yaml` | b64enc }}",
       },
       {
         "fileName": "derived_roles_02.yaml",
-        "contents": "{{ .Files.Get `store/derived_roles/derived_roles_02.yaml` | base64encode }}",
+        "contents": "{{ .Files.Get `store/derived_roles/derived_roles_02.yaml` | b64enc }}",
       },
       {
         "fileName": "resource.yaml",
-        "contents": "{{ .Files.Get `store/resource_policies/policy_01.yaml` | base64encode }}"
+        "contents": "{{ .Files.Get `store/resource_policies/policy_01.yaml` | b64enc }}"
       },
       {
         "fileName": "policy_02.yaml",
-        "contents": "{{ .Files.Get `store/principal_policies/policy_01.yaml` | base64encode }}",
+        "contents": "{{ .Files.Get `store/principal_policies/policy_01.yaml` | b64enc }}",
       }
     ],
     "checkResourceSet": {

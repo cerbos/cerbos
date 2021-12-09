@@ -24,6 +24,7 @@ import (
 	"github.com/cerbos/cerbos/internal/auxdata"
 	"github.com/cerbos/cerbos/internal/compile"
 	"github.com/cerbos/cerbos/internal/engine"
+	"github.com/cerbos/cerbos/internal/schema"
 	"github.com/cerbos/cerbos/internal/storage/disk"
 	"github.com/cerbos/cerbos/internal/storage/index"
 )
@@ -99,7 +100,10 @@ func (cs *CerbosPlaygroundService) PlaygroundEvaluate(ctx context.Context, req *
 		return nil, status.Error(codes.InvalidArgument, "failed to extract auxData")
 	}
 
-	eng, err := engine.NewEphemeral(ctx, compile.NewManager(ctx, disk.NewFromIndex(idx)))
+	store := disk.NewFromIndexWithConf(idx, &disk.Conf{})
+	schemaMgr := schema.NewNopManager()
+
+	eng, err := engine.NewEphemeral(ctx, compile.NewManager(ctx, store, schemaMgr), schemaMgr)
 	if err != nil {
 		log.Error("Failed to create engine", zap.Error(err))
 		return nil, status.Errorf(codes.Internal, "failed to create engine")
@@ -144,7 +148,10 @@ func (cs *CerbosPlaygroundService) PlaygroundProxy(ctx context.Context, req *req
 		}, nil
 	}
 
-	eng, err := engine.NewEphemeral(ctx, compile.NewManager(ctx, disk.NewFromIndex(idx)))
+	store := disk.NewFromIndexWithConf(idx, &disk.Conf{})
+	schemaMgr := schema.NewNopManager()
+
+	eng, err := engine.NewEphemeral(ctx, compile.NewManager(ctx, store, schemaMgr), schemaMgr)
 	if err != nil {
 		log.Error("Failed to create engine", zap.Error(err))
 		return nil, status.Error(codes.Internal, "failed to create engine")
@@ -195,7 +202,7 @@ func doCompile(ctx context.Context, log *zap.Logger, files []*requestv1.PolicyFi
 		return nil, nil, status.Errorf(codes.Internal, "failed to create index")
 	}
 
-	if err := compile.BatchCompile(idx.GetAllCompilationUnits(ctx)); err != nil {
+	if err := compile.BatchCompile(idx.GetAllCompilationUnits(ctx), schema.NewNopManager()); err != nil {
 		compErr := new(compile.ErrorList)
 		if errors.As(err, compErr) {
 			pf := processCompileErrors(ctx, *compErr)

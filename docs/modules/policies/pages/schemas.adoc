@@ -1,0 +1,117 @@
+include::ROOT:partial$attributes.adoc[]
+
+= Schemas
+
+Cerbos policies rely on context data about the principal and the resource(s) that are submitted through the `attr` fields of the xref:api:index.adoc[API request]. While the free-form nature of these fields gives you maximum flexibility to author policies that work on data of any shape or form, they can become difficult to reason about and make it harder to enforce system-wide standards and conventions. 
+
+Using the link:http://json-schema.org[JSON Schema] support built into Cerbos, you can define schemas for all your principal and resource attributes on a per-resource basis by specifying them in the resource policy. The Cerbos PDP will validate the incoming requests and either log warnings or completely reject them based on the schema enforcement configuration in effect. 
+
+
+== Define schemas
+
+Cerbos schemas are standard link:http://json-schema.org/specification.html[JSON Schemas] (draft 2020-12). If you are using any of `disk`, `git` or `blob` xref:configuration:storage.adoc[storage drivers] the schemas are expected to be in a special directory named `_schemas` located at the root of the storage directory or bucket. Use the xref:api:admin_api.adoc[Admin API] to add or update schemas if you are using one of the database drivers.
+
+To avoid repetition, you can define common schema fragments inline using `$defs` or refer to other schemas using `$ref` (see https://json-schema.org/understanding-json-schema/structuring.html). When using `$ref` to refer to another schema stored in Cerbos storage, make sure to use an absolute URL with `cerbos` as the scheme. For example, use `cerbos:///common/address.json` to refer to a schema file stored in `_schemas/common/address.json` (if using one of the disk-based stores). This ensures that policies remain portable between different environments.
+
+
+
+.customer.json: a schema that references another schema to avoid repetition
+[source,json,linenums,highlight=7..8]
+----
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "first_name": { "type": "string" },
+    "last_name": { "type": "string" },
+    "shipping_address": { "$ref": "cerbos:///address.json" },
+    "billing_address": { "$ref": "cerbos:///address.json" }
+  },
+  "required": ["first_name", "last_name", "shipping_address", "billing_address"]
+}
+----
+
+.address.json: the schema referenced by customer.json
+[source,json,linenums]
+----
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "street_address": { "type": "string" },
+    "city": { "type": "string" },
+    "state": { "type": "string" }
+  },
+  "required": ["street_address", "city", "state"]
+}
+----
+
+
+== Validate requests using schemas
+
+First, update your resource policy to point to the schemas that should be used to validate requests for that resource kind. For example, the following resource policy requires all requests for `album:object` resource kind to validated using `principal.json` for the principal attributes and `album/object.json` for the resource attributes respectively.
+
+.Example
+[source,yaml,linenums,highlight=20..24]
+----
+---
+apiVersion: api.cerbos.dev/v1
+resourcePolicy:
+  importDerivedRoles:
+    - apatr_common_roles 
+  resource: "album:object" 
+  rules:
+    - actions: ['view']
+      effect: EFFECT_ALLOW
+      roles:
+        - user 
+      condition:
+        match:
+          expr: request.resource.attr.public == true
+
+  schemas: 
+    principalSchema:
+      ref: cerbos:///principal.json 
+    resourceSchema:
+      ref: cerbos:///album/object.json 
+----
+
+NOTE: The `schemas` field is optional and can be left out if you do not want to validate that particular resource kind. Alternatively, you can leave out the `principalSchema` or the `resourceSchema` if you do not want the corresponding attributes section to be validated.
+
+
+Finally, xref:configuration:schema.adoc[configure the schema enforcement level] of the Cerbos PDP to either `warn` or `reject` and restart it. Now the PDP will validate any requests where the matching resource policy has schemas specified.
+
+[IMPORTANT]
+====
+If enforcement level is `reject` and the request is invalid according to the schema, the effect for all actions will be set to `EFFECT_DENY`. If enforcement level is `warn`, then Cerbos will still evaluate the policies and return the effects determined by the policy.
+====
+
+.Example: CheckResourceSet API response containing validation errors
+[source,json,linenums]
+----
+{
+  "requestId": "test",
+  "resourceInstances": {
+    "XX125": {
+      "actions": {
+        "approve": "EFFECT_DENY",
+        "create": "EFFECT_DENY",
+        "defer": "EFFECT_ALLOW",
+        "view:public": "EFFECT_ALLOW"
+      },
+      "validationErrors": [
+        {
+          "path": "/department",
+          "message": "value must be one of \"marketing\", \"engineering\"",
+          "source": "SOURCE_PRINCIPAL"
+        },
+        {
+          "path": "/department",
+          "message": "value must be one of \"marketing\", \"engineering\"",
+          "source": "SOURCE_RESOURCE"
+        }
+      ]
+    }
+  }
+}
+----

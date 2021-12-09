@@ -7,10 +7,12 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
 	"io/fs"
 	"net/http"
 	"net/url"
 	"os"
+	"path/filepath"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -27,6 +29,7 @@ import (
 	"github.com/cerbos/cerbos/internal/config"
 	"github.com/cerbos/cerbos/internal/namer"
 	"github.com/cerbos/cerbos/internal/policy"
+	"github.com/cerbos/cerbos/internal/schema"
 	"github.com/cerbos/cerbos/internal/storage"
 	"github.com/cerbos/cerbos/internal/storage/index"
 )
@@ -227,6 +230,16 @@ func (s *Store) updateIndex(ctx context.Context) error {
 	var p *policyv1.Policy
 	var event storage.Event
 	for _, f := range changes.updateOrAdd {
+		if filepath.Dir(f) == schema.Directory {
+			schemaFile, err := filepath.Rel(schema.Directory, f)
+			if err != nil {
+				s.log.Warnw("Failed to find relative path to schema file", "file", f, "error", err)
+				continue
+			}
+			s.NotifySubscribers(storage.NewSchemaEvent(storage.EventAddOrUpdateSchema, schemaFile))
+			continue
+		}
+
 		p, err = policy.ReadPolicyFromFile(s.fsys, f)
 		if err != nil {
 			return err
@@ -238,7 +251,18 @@ func (s *Store) updateIndex(ctx context.Context) error {
 		}
 		s.NotifySubscribers(event)
 	}
+
 	for _, f := range changes.delete {
+		if filepath.Dir(f) == schema.Directory {
+			schemaFile, err := filepath.Rel(schema.Directory, f)
+			if err != nil {
+				s.log.Warnw("Failed to find relative path to schema file", "file", f, "error", err)
+				continue
+			}
+			s.NotifySubscribers(storage.NewSchemaEvent(storage.EventDeleteSchema, schemaFile))
+			continue
+		}
+
 		entry := index.Entry{File: f}
 		event, err = s.idx.Delete(entry)
 		if err != nil {
@@ -289,4 +313,12 @@ func (s *Store) GetDependents(_ context.Context, ids ...namer.ModuleID) (map[nam
 
 func (s *Store) GetPolicies(ctx context.Context) ([]*policy.Wrapper, error) {
 	return s.idx.GetPolicies(ctx)
+}
+
+func (s *Store) ListSchemaIDs(ctx context.Context) ([]string, error) {
+	return s.idx.ListSchemaIDs(ctx)
+}
+
+func (s *Store) LoadSchema(ctx context.Context, url string) (io.ReadCloser, error) {
+	return s.idx.LoadSchema(ctx, url)
 }
