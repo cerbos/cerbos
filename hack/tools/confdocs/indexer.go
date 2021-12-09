@@ -144,8 +144,14 @@ func (cd *Indexer) indexStructs(pkg *packages.Package, file *ast.File, ifaceImpl
 						}
 
 						for _, field := range t.Fields.List {
-							structField := NewStructFieldFromIdentArray(field.Names, field.Doc, field.Tag, cd.indexFields(field))
-							rootStruct.Fields = append(rootStruct.Fields, structField)
+							if len(field.Names) == 0 {
+								structFields := cd.indexFields(field)
+								rootStruct.Fields = structFields
+
+							} else {
+								structField := NewStructFieldFromIdentArray(field.Names, field.Doc, field.Tag, cd.indexFields(field))
+								rootStruct.Fields = append(rootStruct.Fields, structField)
+							}
 						}
 
 						fqn := fmt.Sprintf("%s.%s", pkg.PkgPath, rootStruct.Name)
@@ -168,6 +174,25 @@ func (cd *Indexer) indexFields(field *ast.Field) []*StructField {
 	var structFields []*StructField
 
 	switch t := field.Type.(type) {
+	case *ast.MapType:
+		/* matches;
+		CLS          map[string]TLSConf
+		ServerPubKey map[string]string
+		*/
+		structFields = nil
+		break
+	case *ast.ArrayType:
+		/* matches;
+		AllowedHeaders []string
+		*/
+		if len(field.Names) <= 1 {
+			structFields = nil
+		} else {
+			for _, n := range field.Names {
+				structFields = append(structFields, NewStructField(n, field.Doc, field.Tag, nil))
+			}
+		}
+		break
 	case *ast.StarExpr:
 		/* matches;
 		tracer *tracer
@@ -183,15 +208,22 @@ func (cd *Indexer) indexFields(field *ast.Field) []*StructField {
 					structType = typeSpec.Type.(*ast.StructType)
 					for _, f := range structType.Fields.List {
 						for _, n := range f.Names {
-							structFields = append(structFields, NewStructField(n, field.Doc, field.Tag, cd.indexFields(f)))
+							fieldData, ok := n.Obj.Decl.(*ast.Field)
+							if ok {
+								structFields = append(structFields, NewStructField(n, fieldData.Doc, fieldData.Tag, cd.indexFields(f)))
+							} else {
+								structFields = append(structFields, NewStructField(n, nil, nil, cd.indexFields(f)))
+							}
 						}
 					}
 				}
 			}
 		}
+		break
 	case *ast.Ident:
 		/* matches;
 		Advanced AdvancedConf `yaml:"advanced"`
+		confHolder -> struct
 		*/
 		if t.Obj != nil {
 			typeSpec, ok := t.Obj.Decl.(*ast.TypeSpec)
@@ -201,18 +233,30 @@ func (cd *Indexer) indexFields(field *ast.Field) []*StructField {
 				if ok {
 					for _, f := range structType.Fields.List {
 						for _, n := range f.Names {
-							structFields = append(structFields, NewStructField(n, field.Doc, field.Tag, cd.indexFields(f)))
+							fieldData, ok := n.Obj.Decl.(*ast.Field)
+							if ok {
+								structFields = append(structFields, NewStructField(n, fieldData.Doc, fieldData.Tag, cd.indexFields(f)))
+							} else {
+								structFields = append(structFields, NewStructField(n, nil, nil, cd.indexFields(f)))
+							}
 						}
 					}
 				}
 			}
 		}
+		break
 	case *ast.SelectorExpr:
 		/* matches;
 			Timestamp time.Time
 		    internal.DBStorage -> interface
+			UpdatePollInterval time.Duration
 		*/
-		structFields = append(structFields, NewStructFieldFromIdentArray(field.Names, field.Doc, field.Tag, nil))
+		if len(field.Names) <= 1 {
+			structFields = nil
+		} else {
+			structFields = append(structFields, NewStructFieldFromIdentArray(field.Names, field.Doc, field.Tag, nil))
+		}
+		break
 	default:
 		switch tt := field.Type.(type) {
 		case *ast.ArrayType:
@@ -220,18 +264,22 @@ func (cd *Indexer) indexFields(field *ast.Field) []*StructField {
 			pool []io.Reader
 			*/
 			structFields = append(structFields, NewStructFieldFromIdentArray(field.Names, field.Doc, field.Tag, nil))
+			break
 		case *ast.ChanType:
 			/* matches;
 			buffer chan *badgerv3.Entry
 			*/
 			structFields = append(structFields, NewStructFieldFromIdentArray(field.Names, field.Doc, field.Tag, nil))
+			break
 		case *ast.MapType:
 			/* matches;
 			keySets map[string]keySet
 			*/
 			structFields = append(structFields, NewStructFieldFromIdentArray(field.Names, field.Doc, field.Tag, nil))
+			break
 		case *ast.FuncType:
 			cd.log.Debug("ignored a FuncType")
+			break
 		default:
 			cd.log.Warn("This is not supposed to be printed - %v", tt)
 		}

@@ -4,6 +4,7 @@
 package main
 
 import (
+	_ "embed"
 	"fmt"
 	"github.com/cerbos/cerbos/hack/tools/confdocs"
 	"go.uber.org/zap"
@@ -18,6 +19,9 @@ const (
 	interfaceName     = "Section"
 	internalPkgPrefix = "github.com/cerbos/cerbos/internal/"
 )
+
+//go:embed docs.tmpl
+var docsTempl string
 
 func main() {
 	zapLogger, err := zap.NewProduction()
@@ -56,11 +60,9 @@ func main() {
 		return split[len(split)-1]
 	}
 
-	engine := confdocs.NewEngine(logger, index, getFileName, getRootName)
+	engine := confdocs.NewEngine(logger, index, docsTempl, getFileName, getRootName)
 	err = engine.Run()
 	if err != nil {
 		logger.Fatalf("Failed to run engine: %v", err)
 	}
-
-	fmt.Println(index)
 }

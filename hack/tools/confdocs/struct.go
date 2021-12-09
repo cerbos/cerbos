@@ -6,7 +6,7 @@ import (
 	"go/types"
 )
 
-const unnamedField = "<UNKNOWN_FIELD>"
+const unknownField = "<UNKNOWN_FIELD>"
 
 type Struct struct {
 	FilePos token.Pos
@@ -36,7 +36,7 @@ type StructField struct {
 func NewStructFieldFromIdentArray(nameField []*ast.Ident, docsField *ast.CommentGroup, tagsField *ast.BasicLit, fields []*StructField) *StructField {
 	var docs = ""
 	var tags = ""
-	var name = unnamedField
+	var name = unknownField
 
 	if tagsField != nil {
 		tags = tagsField.Value
@@ -61,7 +61,7 @@ func NewStructFieldFromIdentArray(nameField []*ast.Ident, docsField *ast.Comment
 func NewStructField(nameField *ast.Ident, docsField *ast.CommentGroup, tagsField *ast.BasicLit, fields []*StructField) *StructField {
 	var docs = ""
 	var tags = ""
-	var name = unnamedField
+	var name = unknownField
 
 	if tagsField != nil {
 		tags = tagsField.Value
