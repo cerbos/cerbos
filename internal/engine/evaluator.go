@@ -60,11 +60,18 @@ type resourcePolicyEvaluator struct {
 	*tracer
 }
 
+type (
+	qpN   = enginev1.ResourcesQueryPlanOutput_Node
+	qpNLO = enginev1.ResourcesQueryPlanOutput_Node_LogicalOperation
+	qpNE  = enginev1.ResourcesQueryPlanOutput_Node_Expression
+	rN    = struct {
+		role string
+		f    func() (*qpN, error)
+		node *qpN
+	}
+)
+
 func (rpe *resourcePolicyEvaluator) EvaluateResourcesQueryPlan(_ context.Context, input *requestv1.ResourcesQueryPlanRequest) (*enginev1.ResourcesQueryPlanOutput, error) {
-	type (
-		qpN   = enginev1.ResourcesQueryPlanOutput_Node
-		qpNLO = enginev1.ResourcesQueryPlanOutput_Node_LogicalOperation
-	)
 	effectiveRoles := toSet(input.Principal.Roles)
 	inputActions := []string{input.Action}
 	result := &enginev1.ResourcesQueryPlanOutput{}
@@ -73,11 +80,6 @@ func (rpe *resourcePolicyEvaluator) EvaluateResourcesQueryPlan(_ context.Context
 	result.Action = input.Action
 
 	for _, p := range rpe.policy.Policies { // zero or one policy in the set
-		type rN struct {
-			role string
-			f    func() (*qpN, error)
-			node *qpN
-		}
 		var derivedRoles []rN
 
 		for drName, dr := range p.DerivedRoles {
@@ -107,20 +109,9 @@ func (rpe *resourcePolicyEvaluator) EvaluateResourcesQueryPlan(_ context.Context
 		for _, rule := range p.Rules {
 			var drNode *qpN
 			if !setIntersects(rule.Roles, effectiveRoles) {
-				var nodes []*qpN
-				for _, n := range derivedRoles {
-					if _, ok := rule.DerivedRoles[n.role]; ok {
-						node := n.node
-						var err error
-						if node == nil {
-							node, err = n.f()
-							if err != nil {
-								return nil, err
-							}
-							n.node = node
-						}
-						nodes = append(nodes, node)
-					}
+				nodes, err := getDerivedRoleConditions(derivedRoles, rule)
+				if err != nil {
+					return nil, err
 				}
 				switch len(nodes) {
 				case 0:
@@ -168,6 +159,25 @@ func (rpe *resourcePolicyEvaluator) EvaluateResourcesQueryPlan(_ context.Context
 	return result, nil
 }
 
+func getDerivedRoleConditions(derivedRoles []rN, rule *runtimev1.RunnableResourcePolicySet_Policy_Rule) ([]*qpN, error) {
+	var nodes []*qpN
+	for _, n := range derivedRoles {
+		if _, ok := rule.DerivedRoles[n.role]; ok {
+			node := n.node
+			var err error
+			if node == nil {
+				node, err = n.f()
+				if err != nil {
+					return nil, err
+				}
+				n.node = node
+			}
+			nodes = append(nodes, node)
+		}
+	}
+	return nodes, nil
+}
+
 func isNodeConstBool(node *enginev1.ResourcesQueryPlanOutput_Node) (bool, bool) {
 	if e, ok := node.Node.(*enginev1.ResourcesQueryPlanOutput_Node_Expression); ok {
 		if e1 := e.Expression.GetExpr().GetConstExpr(); e1 != nil {
@@ -195,12 +205,6 @@ func mkAndLogicalOperation(nodes []*enginev1.ResourcesQueryPlanOutput_Node) *eng
 }
 
 func evaluateCondition(condition *runtimev1.Condition, input *requestv1.ResourcesQueryPlanRequest, variables map[string]*exprpb.Expr) (*enginev1.ResourcesQueryPlanOutput_Node, error) {
-	type (
-		qpN   = enginev1.ResourcesQueryPlanOutput_Node
-		qpNE  = enginev1.ResourcesQueryPlanOutput_Node_Expression
-		qpNLO = enginev1.ResourcesQueryPlanOutput_Node_LogicalOperation
-	)
-
 	res := new(qpN)
 	switch t := condition.Op.(type) {
 	case *runtimev1.Condition_Any:
