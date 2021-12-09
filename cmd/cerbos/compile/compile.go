@@ -78,10 +78,7 @@ func doRun(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("failed to open directory %s: %w", args[0], err)
 	}
 
-	store, err := disk.NewFromIndex(idx)
-	if err != nil {
-		return fmt.Errorf("failed to create disk store: %w", err)
-	}
+	store := disk.NewFromIndexWithConf(idx, &disk.Conf{})
 
 	enforcement := schema.EnforcementReject
 	if ignoreSchemas {

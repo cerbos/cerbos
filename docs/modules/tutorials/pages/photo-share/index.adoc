@@ -263,9 +263,10 @@ EOF
 }
 ----
 
-It's not practical to start the server and manually make requests every time a policy is updated. So let's write some tests instead.
 
-=== Writing tests to verify behaviour
+== Writing tests to verify behaviour
+
+It's not practical to start the server and manually make requests every time a policy is updated. So let's write some tests instead.
 
 Create a new directory named `tests` and create a file named `album_object_test.yaml` with the following contents.
 
@@ -301,3 +302,171 @@ Test results
 
 NOTE: See https://github.com/cerbos/photo-share-tutorial for an example of using Cerbos GitHub Actions in a CI workflow to compile and test policies. 
 
+
+== Using schemas to enforce type safety [Optional]
+
+The derived roles and resource policy rules we defined above rely on certain attributes being present in the `attr` sections of the incoming request. To ensure that API requests are strictly-typed and contain required attributes, we can define schemas for the principal and resource attributes sections.
+
+Create a new directory named `_schemas` inside the `policies` directory.
+
+[source,sh]
+----
+mkdir policies/_schemas
+----
+
+Let's add a JSON schema defining the data types and required fields for `album:object` resources. Create a file named `album_object.json` inside the `policies/_schemas` directory with the following contents:
+
+
+[source,json,linenums]
+----
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "owner": {
+      "type": "string"
+    },
+    "public": {
+      "type": "boolean"
+    },
+    "flagged": {
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "owner"
+  ]
+}
+----
+
+Now update `policies/resource_album_object.yaml` to add the reference to the schema:
+
+[source,yaml,linenums]
+----
+---
+apiVersion: api.cerbos.dev/v1
+resourcePolicy:
+  version: "default" 
+  importDerivedRoles:
+    - apatr_common_roles
+  resource: "album:object"
+  rules:
+    - actions: ['*']
+      effect: EFFECT_ALLOW
+      derivedRoles:
+        - owner
+
+    - actions: ['view', 'flag']
+      effect: EFFECT_ALLOW
+      roles:
+        - user
+      condition:
+        match:
+          expr: request.resource.attr.public == true
+
+    - actions: ['view', 'delete']
+      effect: EFFECT_ALLOW
+      derivedRoles:
+        - abuse_moderator
+
+  schemas:
+    resourceSchema: 
+      ref: cerbos:///album_object.json <1>
+----
+<1> Defines the schema to use for validating resource attributes
+
+
+Update `config.yaml` to enable schema enforcement.
+
+[source,yaml,linenums]
+----
+---
+server:
+  httpListenAddr: ":3592"
+
+storage:
+  driver: "disk"
+  disk:
+    directory: /photo-share/policies
+
+schema:
+  enforcement: reject
+----
+
+Now start the server again and send a request that does not conform to the schema. The server response should contain a list validation errors.
+
+[source,shell,subs="attributes"]
+----
+docker run -it -v $(pwd):/photo-share -p 3592:3592 {app-docker-img} \
+    server --config=/photo-share/config.yaml
+----
+
+.Invalid request
+[source,shell,linenums]
+----
+cat <<EOF | curl --silent "http://localhost:3592/api/check?pretty" -d @-
+{
+  "requestId":  "test02",
+  "includeMeta": true,
+  "principal":  {
+    "id":  "alicia",
+    "policyVersion": "default",
+    "roles":  ["user"]
+  },
+  "actions":  ["view"],
+  "resource":  {
+    "policyVersion": "default",
+    "kind":  "album:object",
+    "instances": {
+      "XX125": {
+        "attr":  {
+          "id":  "XX125",
+          "public": "false",
+          "flagged": "false"
+        }
+      }
+    }
+  }
+}
+EOF
+----
+
+----
+{
+  "requestId": "test02",
+  "resourceInstances": {
+    "XX125": {
+      "actions": {
+        "view": "EFFECT_DENY"
+      },
+      "validationErrors": [
+        {
+          "message": "missing properties: 'owner'",
+          "source": "SOURCE_RESOURCE"
+        },
+        {
+          "path": "/public",
+          "message": "expected boolean, but got string",
+          "source": "SOURCE_RESOURCE"
+        },
+        {
+          "path": "/flagged",
+          "message": "expected boolean, but got string",
+          "source": "SOURCE_RESOURCE"
+        }
+      ]
+    }
+  },
+  "meta": {
+    "resourceInstances": {
+      "XX125": {
+        "actions": {
+          "view": {
+            "matchedPolicy": "resource.album_object.vdefault"
+          }
+        }
+      }
+    }
+  }
+}
+----
