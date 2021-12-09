@@ -8,7 +8,68 @@ Authentication is mandatory for the Admin API. Currently only basic authenticati
 
 IMPORTANT: Always change the default credentials and enable TLS for the endpoint when enabling the Admin API. See xref:configuration:server.adoc[Server configuration] for more information.  
 
-== Add/update policies [`/admin/policy`]
+NOTE: The Admin API is still under heavy development and might include breaking changes in future releases. 
+
+== Audit Logs
+
+=== List Audit Log Entries 
+
+----
+GET /admin/auditlog/list/{kind}
+----
+
+When xref:configuration:audit.adoc[audit logging is enabled] you can view the audit log entries using this API endpoint.
+
+There are two kinds of audit logs:
+
+`KIND_ACCESS`:: Captured Cerbos API access logs. These records are only available if `accessLogsEnabled` is set to `true` in the  xref:configuration:audit.adoc[configuration]. 
+`KIND_DECISION`:: Decision logs captured by the engine. These records are only available if `decisionLogsEnabled` is set to `true` in the  xref:configuration:audit.adoc[configuration]. 
+
+Supported filters are:
+
+`tail`:: View the last N entries
+`between`:: View entries captured between two timestamps. The time range is specified by providing two ISO-8601 timestamps using the `between.start` and `between.end` query parameters.
+`since`:: View entries captured since N hours/minutes/seconds ago
+`lookup`:: View a specific entry by call ID
+
+
+.View last 5 decision log entries
+[source,shell]
+----
+curl -k -u cerbos:cerbosAdmin \
+    'https://localhost:3592/admin/auditlog/list/KIND_DECISION?tail=5'
+----
+
+.View decision logs from 2 hours ago up to now
+[source,shell]
+----
+curl -k -u cerbos:cerbosAdmin \
+    'https://localhost:3592/admin/auditlog/list/KIND_DECISION?since=2h'
+----
+
+.View access log entries between midnight 2021-07-01 and midnight 2021-07-02
+[source,shell]
+----
+curl -k -u cerbos:cerbosAdmin \
+    'https://localhost:3592/admin/auditlog/list/KIND_ACCESS?between.start=2021-07-01T00:00:00Z&between.end=2021-07-02T00:00:00Z'
+----
+
+.View specific access log entry
+[source,shell]
+----
+curl -k -u cerbos:cerbosAdmin \
+    'https://localhost:3592/admin/auditlog/list/KIND_ACCESS?lookup=01F9VS1N77S83MTSBBX44GYSJ6'
+----
+
+
+== Policy Management
+
+=== Add/update policies 
+
+----
+POST /admin/policy
+PUT /admin/policy
+----
 
 NOTE: This endpoint requires a mutable storage driver such as xref:configuration:storage.adoc#sqlite3[sqlite3] to be configured.
 
@@ -61,7 +122,11 @@ NOTE: This endpoint requires a mutable storage driver such as xref:configuration
 {"success":{}}
 ----
 
-== List Policies [`/admin/policy/list`]
+=== List Policies 
+
+----
+GET /admin/policy/list
+----
 
 NOTE: This endpoint is still under development and should be considered unstable.
 
@@ -91,52 +156,9 @@ curl -k -u cerbos:cerbosAdmin \
     -d '{"filters": [{"type": "MATCH_TYPE_EXACT", "fieldPath": "$.*.version", "value":"staging"}]}'
 ----
 
-== List Audit Log Entries [`/admin/auditlog/list`]
+== Schema Management
 
-When xref:configuration:audit.adoc[audit logging is enabled] you can view the audit log entries using this API endpoint.
-
-There are two kinds of audit logs:
-
-`KIND_ACCESS`:: Captured Cerbos API access logs. These records are only available if `accessLogsEnabled` is set to `true` in the  xref:configuration:audit.adoc[configuration]. 
-`KIND_DECISION`:: Decision logs captured by the engine. These records are only available if `decisionLogsEnabled` is set to `true` in the  xref:configuration:audit.adoc[configuration]. 
-
-Supported filters are:
-
-`tail`:: View the last N entries
-`between`:: View entries captured between two timestamps. The time range is specified by providing two ISO-8601 timestamps using the `between.start` and `between.end` query parameters.
-`since`:: View entries captured since N hours/minutes/seconds ago
-`lookup`:: View a specific entry by call ID
-
-
-.View last 5 decision log entries
-[source,shell]
-----
-curl -k -u cerbos:cerbosAdmin \
-    'https://localhost:3592/admin/auditlog/list/KIND_DECISION?tail=5'
-----
-
-.View decision logs from 2 hours ago up to now
-[source,shell]
-----
-curl -k -u cerbos:cerbosAdmin \
-    'https://localhost:3592/admin/auditlog/list/KIND_DECISION?since=2h'
-----
-
-.View access log entries between midnight 2021-07-01 and midnight 2021-07-02
-[source,shell]
-----
-curl -k -u cerbos:cerbosAdmin \
-    'https://localhost:3592/admin/auditlog/list/KIND_ACCESS?between.start=2021-07-01T00:00:00Z&between.end=2021-07-02T00:00:00Z'
-----
-
-.View specific access log entry
-[source,shell]
-----
-curl -k -u cerbos:cerbosAdmin \
-    'https://localhost:3592/admin/auditlog/list/KIND_ACCESS?lookup=01F9VS1N77S83MTSBBX44GYSJ6'
-----
-
-== Add/update schemas
+=== Add/update schemas
 ----
 POST /admin/schema
 PUT /admin/schema
@@ -165,7 +187,8 @@ NOTE: This endpoint requires a mutable storage driver such as xref:configuration
 {}
 ----
 
-== List schemas
+=== List schemas
+
 ----
 GET /admin/schemas
 ----
@@ -192,7 +215,8 @@ curl -k -u cerbos:cerbosAdmin \
 ----
 <1> List of schema ids
 
-== Get schema(s)
+=== Get schema(s)
+
 ----
 GET /admin/schema
 ----
@@ -223,7 +247,8 @@ curl -k -u cerbos:cerbosAdmin \
 ----
 <1> List of schemas
 
-== Delete schema(s)
+=== Delete schema(s)
+
 ----
 DELETE /admin/schema
 ----
