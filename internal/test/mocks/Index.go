@@ -7,8 +7,10 @@ package mocks
 
 import (
 	context "context"
+	io "io"
 
 	index "github.com/cerbos/cerbos/internal/storage/index"
+
 	mock "github.com/stretchr/testify/mock"
 
 	namer "github.com/cerbos/cerbos/internal/namer"
@@ -185,6 +187,52 @@ func (_m *Index) GetPolicies(_a0 context.Context) ([]*policy.Wrapper, error) {
 	var r1 error
 	if rf, ok := ret.Get(1).(func(context.Context) error); ok {
 		r1 = rf(_a0)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// ListSchemaIDs provides a mock function with given fields: _a0
+func (_m *Index) ListSchemaIDs(_a0 context.Context) ([]string, error) {
+	ret := _m.Called(_a0)
+
+	var r0 []string
+	if rf, ok := ret.Get(0).(func(context.Context) []string); ok {
+		r0 = rf(_a0)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]string)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(context.Context) error); ok {
+		r1 = rf(_a0)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// LoadSchema provides a mock function with given fields: _a0, _a1
+func (_m *Index) LoadSchema(_a0 context.Context, _a1 string) (io.ReadCloser, error) {
+	ret := _m.Called(_a0, _a1)
+
+	var r0 io.ReadCloser
+	if rf, ok := ret.Get(0).(func(context.Context, string) io.ReadCloser); ok {
+		r0 = rf(_a0, _a1)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(io.ReadCloser)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = rf(_a0, _a1)
 	} else {
 		r1 = ret.Error(1)
 	}

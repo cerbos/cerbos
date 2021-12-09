@@ -17,6 +17,7 @@ import (
 
 	"github.com/cerbos/cerbos/internal/compile"
 	"github.com/cerbos/cerbos/internal/engine"
+	"github.com/cerbos/cerbos/internal/schema"
 	"github.com/cerbos/cerbos/internal/storage/disk"
 	"github.com/cerbos/cerbos/internal/storage/index"
 	"github.com/cerbos/cerbos/internal/verify"
@@ -34,9 +35,10 @@ var (
 	failedTest     = color.New(color.FgHiRed).SprintFunc()
 	successfulTest = color.New(color.FgHiGreen).SprintFunc()
 
-	format     string
-	skipTests  bool
-	verifyConf = verify.Config{}
+	format        string
+	skipTests     bool
+	ignoreSchemas bool
+	verifyConf    = verify.Config{}
 )
 
 const (
@@ -57,6 +59,7 @@ func NewCommand() *cobra.Command {
 	cmd.Flags().StringVar(&verifyConf.TestsDir, "tests", "", "Path to the directory containing tests")
 	cmd.Flags().StringVar(&verifyConf.Run, "run", "", "Run only tests that match this regex")
 	cmd.Flags().BoolVar(&skipTests, "skip-tests", false, "Skip tests")
+	cmd.Flags().BoolVar(&ignoreSchemas, "ignore-schemas", false, "Ignore schemas during compilation")
 
 	return cmd
 }
@@ -75,7 +78,18 @@ func doRun(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("failed to open directory %s: %w", args[0], err)
 	}
 
-	if err := compile.BatchCompile(idx.GetAllCompilationUnits(ctx)); err != nil {
+	store, err := disk.NewFromIndex(idx)
+	if err != nil {
+		return fmt.Errorf("failed to create disk store: %w", err)
+	}
+
+	enforcement := schema.EnforcementReject
+	if ignoreSchemas {
+		enforcement = schema.EnforcementNone
+	}
+	schemaMgr := schema.NewWithConf(ctx, store, &schema.Conf{Enforcement: enforcement})
+
+	if err := compile.BatchCompile(idx.GetAllCompilationUnits(ctx), schemaMgr); err != nil {
 		compErr := new(compile.ErrorList)
 		if errors.As(err, compErr) {
 			return displayCompileErrors(cmd, *compErr)
@@ -89,8 +103,8 @@ func doRun(cmd *cobra.Command, args []string) error {
 	}
 
 	if !skipTests {
-		compiler := compile.NewManager(ctx, disk.NewFromIndex(idx))
-		eng, err := engine.NewEphemeral(ctx, compiler)
+		compiler := compile.NewManager(ctx, store, schemaMgr)
+		eng, err := engine.NewEphemeral(ctx, compiler, schemaMgr)
 		if err != nil {
 			return fmt.Errorf("failed to create engine: %w", err)
 		}

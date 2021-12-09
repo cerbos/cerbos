@@ -42,3 +42,6 @@ storage:
   disk:
     directory: internal/test/testdata/store
     watchForChanges: true
+
+schema:
+  enforcement: reject

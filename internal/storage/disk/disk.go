@@ -6,6 +6,7 @@ package disk
 import (
 	"context"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 
@@ -32,7 +33,8 @@ func init() {
 }
 
 type Store struct {
-	idx index.Index
+	conf *Conf
+	idx  index.Index
 	*storage.SubscriptionManager
 }
 
@@ -47,7 +49,7 @@ func NewStore(ctx context.Context, conf *Conf) (*Store, error) {
 		return nil, err
 	}
 
-	s := &Store{idx: idx, SubscriptionManager: storage.NewSubscriptionManager(ctx)}
+	s := &Store{conf: conf, idx: idx, SubscriptionManager: storage.NewSubscriptionManager(ctx)}
 	if conf.WatchForChanges {
 		if err := watchDir(ctx, dir, s.idx, s.SubscriptionManager, defaultCooldownPeriod); err != nil {
 			return nil, err
@@ -57,8 +59,17 @@ func NewStore(ctx context.Context, conf *Conf) (*Store, error) {
 	return s, nil
 }
 
-func NewFromIndex(idx index.Index) *Store {
-	return &Store{idx: idx}
+func NewFromIndex(idx index.Index) (*Store, error) {
+	conf := &Conf{}
+	if err := config.GetSection(conf); err != nil {
+		return nil, err
+	}
+
+	return NewFromIndexWithConf(idx, conf), nil
+}
+
+func NewFromIndexWithConf(idx index.Index, conf *Conf) *Store {
+	return &Store{idx: idx, conf: conf}
 }
 
 func (s *Store) Driver() string {
@@ -75,4 +86,12 @@ func (s *Store) GetDependents(_ context.Context, ids ...namer.ModuleID) (map[nam
 
 func (s *Store) GetPolicies(ctx context.Context) ([]*policy.Wrapper, error) {
 	return s.idx.GetPolicies(ctx)
+}
+
+func (s *Store) ListSchemaIDs(ctx context.Context) ([]string, error) {
+	return s.idx.ListSchemaIDs(ctx)
+}
+
+func (s *Store) LoadSchema(ctx context.Context, url string) (io.ReadCloser, error) {
+	return s.idx.LoadSchema(ctx, url)
 }

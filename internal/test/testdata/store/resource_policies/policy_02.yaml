@@ -3,6 +3,11 @@ apiVersion: api.cerbos.dev/v1
 resourcePolicy:
   resource: leave_request
   version: "staging"
+  schemas:
+    principalSchema:
+      ref: cerbos:///principal.json
+    resourceSchema:
+      ref: cerbos:///leave_request.json
   rules:
   - actions: ['*']
     effect: EFFECT_ALLOW

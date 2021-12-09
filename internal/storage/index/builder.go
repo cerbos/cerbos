@@ -12,6 +12,7 @@ import (
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
 	"github.com/cerbos/cerbos/internal/namer"
 	"github.com/cerbos/cerbos/internal/policy"
+	"github.com/cerbos/cerbos/internal/schema"
 	"github.com/cerbos/cerbos/internal/util"
 )
 
@@ -85,11 +86,14 @@ func Build(ctx context.Context, fsys fs.FS, opts ...BuildOpt) (Index, error) {
 		}
 
 		if d.IsDir() {
-			if d.Name() == util.TestDataDirectory {
+			switch d.Name() {
+			case util.TestDataDirectory:
 				return fs.SkipDir
+			case schema.Directory:
+				return fs.SkipDir
+			default:
+				return nil
 			}
-
-			return nil
 		}
 
 		if !util.IsSupportedFileType(d.Name()) {
@@ -229,6 +233,7 @@ func (idx *indexBuilder) build(fsys fs.FS) (*index, error) {
 		fileToModID:  idx.fileToModID,
 		dependents:   idx.dependents,
 		dependencies: idx.dependencies,
+		schemaLoader: NewSchemaLoader(fsys, "."),
 	}, nil
 }
 

@@ -6,6 +6,8 @@ package engine
 import (
 	"bytes"
 	"context"
+	"fmt"
+	"path/filepath"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -15,9 +17,11 @@ import (
 	enginev1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
 	privatev1 "github.com/cerbos/cerbos/api/genpb/cerbos/private/v1"
+	schemav1 "github.com/cerbos/cerbos/api/genpb/cerbos/schema/v1"
 	"github.com/cerbos/cerbos/internal/audit"
 	"github.com/cerbos/cerbos/internal/audit/local"
 	"github.com/cerbos/cerbos/internal/compile"
+	"github.com/cerbos/cerbos/internal/schema"
 	"github.com/cerbos/cerbos/internal/storage/disk"
 	"github.com/cerbos/cerbos/internal/test"
 	"github.com/cerbos/cerbos/internal/util"
@@ -27,7 +31,7 @@ import (
 var dummy int
 
 func TestCheck(t *testing.T) {
-	eng, cancelFunc := mkEngine(t, false)
+	eng, cancelFunc := mkEngine(t, param{schemaEnforcement: schema.EnforcementNone})
 	defer cancelFunc()
 
 	testCases := test.LoadTestCases(t, "engine")
@@ -48,10 +52,61 @@ func TestCheck(t *testing.T) {
 			}
 
 			for i, have := range haveOutputs {
-				require.Empty(t, cmp.Diff(tc.WantOutputs[i], have, protocmp.Transform(), protocmp.SortRepeatedFields(&enginev1.CheckOutput{}, "effective_derived_roles")))
+				require.Empty(t, cmp.Diff(tc.WantOutputs[i],
+					have,
+					protocmp.Transform(),
+					protocmp.SortRepeatedFields(&enginev1.CheckOutput{}, "effective_derived_roles"),
+				))
 			}
 		})
 	}
+}
+
+func TestSchemaValidation(t *testing.T) {
+	for _, enforcement := range []string{"warn", "reject"} {
+		enforcement := enforcement
+		t.Run(fmt.Sprintf("enforcement=%s", enforcement), func(t *testing.T) {
+			p := param{schemaEnforcement: schema.Enforcement(enforcement)}
+
+			eng, cancelFunc := mkEngine(t, p)
+			t.Cleanup(cancelFunc)
+
+			testCases := test.LoadTestCases(t, filepath.Join("engine_schema_enforcement", enforcement))
+
+			for _, tcase := range testCases {
+				tcase := tcase
+				t.Run(tcase.Name, func(t *testing.T) {
+					tc := readTestCase(t, tcase.Input)
+					buf := new(bytes.Buffer)
+
+					haveOutputs, err := eng.Check(context.Background(), tc.Inputs, WithWriterTraceSink(buf))
+					t.Logf("TRACE =>\n%s", buf.String())
+
+					if tc.WantError {
+						require.Error(t, err)
+					} else {
+						require.NoError(t, err)
+					}
+
+					for i, have := range haveOutputs {
+						require.Empty(t, cmp.Diff(tc.WantOutputs[i],
+							have,
+							protocmp.Transform(),
+							protocmp.SortRepeatedFields(&enginev1.CheckOutput{}, "effective_derived_roles"),
+							protocmp.SortRepeated(cmpValidationError),
+						))
+					}
+				})
+			}
+		})
+	}
+}
+
+func cmpValidationError(a, b *schemav1.ValidationError) bool {
+	if a.Source == b.Source {
+		return a.Path < b.Path
+	}
+	return a.Source < b.Source
 }
 
 func readTestCase(tb testing.TB, data []byte) *privatev1.EngineTestCase {
@@ -66,19 +121,16 @@ func readTestCase(tb testing.TB, data []byte) *privatev1.EngineTestCase {
 func BenchmarkCheck(b *testing.B) {
 	testCases := test.LoadTestCases(b, "engine")
 
-	b.Run("noop_decision_logger", func(b *testing.B) {
-		eng, cancelFunc := mkEngine(b, false)
-		defer cancelFunc()
+	for _, enableAuditLog := range []bool{false, true} {
+		for _, schemaEnforcement := range []schema.Enforcement{schema.EnforcementNone, schema.EnforcementWarn, schema.EnforcementReject} {
+			b.Run(fmt.Sprintf("auditLog=%t/schemaEnforcement=%s", enableAuditLog, schemaEnforcement), func(b *testing.B) {
+				eng, cancelFunc := mkEngine(b, param{enableAuditLog: enableAuditLog, schemaEnforcement: schemaEnforcement})
+				defer cancelFunc()
 
-		runBenchmarks(b, eng, testCases)
-	})
-
-	b.Run("local_decision_logger", func(b *testing.B) {
-		eng, cancelFunc := mkEngine(b, true)
-		defer cancelFunc()
-
-		runBenchmarks(b, eng, testCases)
-	})
+				runBenchmarks(b, eng, testCases)
+			})
+		}
+	}
 }
 
 func runBenchmarks(b *testing.B, eng *Engine, testCases []test.Case) {
@@ -106,7 +158,12 @@ func runBenchmarks(b *testing.B, eng *Engine, testCases []test.Case) {
 	}
 }
 
-func mkEngine(tb testing.TB, enableAuditLog bool) (*Engine, context.CancelFunc) {
+type param struct {
+	enableAuditLog    bool
+	schemaEnforcement schema.Enforcement
+}
+
+func mkEngine(tb testing.TB, p param) (*Engine, context.CancelFunc) {
 	tb.Helper()
 
 	dir := test.PathToDir(tb, "store")
@@ -116,10 +173,13 @@ func mkEngine(tb testing.TB, enableAuditLog bool) (*Engine, context.CancelFunc) 
 	store, err := disk.NewStore(ctx, &disk.Conf{Directory: dir})
 	require.NoError(tb, err)
 
-	compiler := compile.NewManager(ctx, store)
+	schemaConf := &schema.Conf{Enforcement: p.schemaEnforcement}
+	schemaMgr := schema.NewWithConf(ctx, store, schemaConf)
+
+	compiler := compile.NewManager(ctx, store, schemaMgr)
 
 	var auditLog audit.Log
-	if enableAuditLog {
+	if p.enableAuditLog {
 		conf := &local.Conf{
 			StoragePath: tb.TempDir(),
 		}
@@ -131,7 +191,7 @@ func mkEngine(tb testing.TB, enableAuditLog bool) (*Engine, context.CancelFunc) 
 		auditLog = audit.NewNopLog()
 	}
 
-	eng, err := New(ctx, compiler, auditLog)
+	eng, err := New(ctx, Components{CompileMgr: compiler, SchemaMgr: schemaMgr, AuditLog: auditLog})
 	require.NoError(tb, err)
 
 	return eng, cancelFunc

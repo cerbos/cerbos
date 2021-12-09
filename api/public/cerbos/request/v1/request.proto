@@ -11,6 +11,7 @@ option csharp_namespace = "Cerbos.Api.V1.Request";
 
 import "cerbos/engine/v1/engine.proto";
 import "cerbos/policy/v1/policy.proto";
+import "cerbos/schema/v1/schema.proto";
 import "google/protobuf/duration.proto";
 import "google/protobuf/struct.proto";
 import "google/protobuf/timestamp.proto";
@@ -473,4 +474,62 @@ message ListPoliciesRequest {
 
     repeated Filter filters = 1;
     SortOptions sort_options = 2;
+}
+
+message AddOrUpdateSchemaRequest {
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
+        json_schema: {
+            description: "Add/update schema request"
+        }
+    };
+
+    repeated cerbos.schema.v1.Schema schemas = 1 [
+        (google.api.field_behavior) = REQUIRED,
+        (validate.rules).repeated = {min_items: 1, max_items: 10},
+        (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+            description: "List of schemas."
+            min_items: 1
+            max_items: 10
+        }
+    ];
+}
+
+message ListSchemasRequest {
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
+        json_schema: {
+            description: "List schema ids request"
+            }
+    };
+}
+
+message GetSchemaRequest {
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
+        json_schema: {
+            description: "Get schema(s) request"
+        }
+    };
+    repeated string id = 1 [
+        (google.api.field_behavior) = REQUIRED,
+        (validate.rules).repeated = { unique: true, min_items: 1, max_items: 25, items { string { min_len: 1, max_len: 255} } },
+        (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+            description: "Unique identifier for the schema"
+            example: "\"principal.json\""
+        }
+    ];
+}
+
+message DeleteSchemaRequest {
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
+        json_schema: {
+            description: "Delete schema(s) request"
+        }
+    };
+    repeated string id = 1 [
+        (google.api.field_behavior) = REQUIRED,
+        (validate.rules).repeated = { unique: true, min_items: 1, max_items: 25, items { string { min_len: 1, max_len: 255} } },
+        (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+            description: "Unique identifier for the schema"
+            example: "\"principal.json\""
+        }
+    ];
 }

@@ -1,13 +1,11 @@
 // Copyright 2021 Zenauth Ltd.
 // SPDX-License-Identifier: Apache-2.0
 
-//go:build tests
-// +build tests
-
 package test
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"io"
 	"io/fs"
@@ -20,10 +18,15 @@ import (
 	"text/template"
 
 	"github.com/stretchr/testify/require"
+	"google.golang.org/protobuf/proto"
 
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
+	schemav1 "github.com/cerbos/cerbos/api/genpb/cerbos/schema/v1"
 	"github.com/cerbos/cerbos/internal/observability/logging"
 	"github.com/cerbos/cerbos/internal/policy"
+	"github.com/cerbos/cerbos/internal/schema"
+	"github.com/cerbos/cerbos/internal/storage"
+	"github.com/cerbos/cerbos/internal/util"
 )
 
 func init() {
@@ -42,6 +45,60 @@ func LoadPolicy(t *testing.T, path string) *policyv1.Policy {
 	require.NoError(t, err, "Failed to load %s", path)
 
 	return p
+}
+
+func AddSchemasToStore(t *testing.T, dir string, ms storage.MutableStore) {
+	t.Helper()
+
+	fsys := os.DirFS(dir)
+	err := fs.WalkDir(fsys, ".", func(path string, d fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+
+		if d.IsDir() {
+			return nil
+		}
+
+		if !util.IsSupportedFileType(d.Name()) {
+			return nil
+		}
+
+		err = ms.AddOrUpdateSchema(context.TODO(), &schemav1.Schema{
+			Id:         path,
+			Definition: ReadSchemaFromFS(t, fsys, path),
+		})
+		require.NoError(t, err)
+
+		return nil
+	})
+	require.NoError(t, err)
+}
+
+func ReadSchemaFromFile(t *testing.T, path string) []byte {
+	t.Helper()
+
+	inp := mkReadCloser(t, path)
+	defer inp.Close()
+
+	data, err := io.ReadAll(inp)
+	require.NoError(t, err, "Failed to load %s", path)
+
+	return data
+}
+
+func ReadSchemaFromFS(t *testing.T, fsys fs.FS, path string) []byte {
+	t.Helper()
+
+	f, err := fsys.Open(path)
+	require.NoError(t, err, "Failed to open %s", path)
+
+	defer f.Close()
+
+	data, err := io.ReadAll(io.Reader(f))
+	require.NoError(t, err, "failed to read from source: %w", err)
+
+	return data
 }
 
 func mkReadCloser(t *testing.T, file string) io.ReadCloser {
@@ -165,10 +222,52 @@ func readFileContents(tb testing.TB, filePath string) []byte {
 	return nil
 }
 
+func ReadSingleTestCase(tb testing.TB, filePath string, out proto.Message) {
+	tb.Helper()
+
+	fullPath := PathToDir(tb, filePath)
+	data := readFileContents(tb, fullPath)
+
+	tmpl, err := template.New(fullPath).Funcs(GetTemplateUtilityFunctions()).Parse(string(data))
+	require.NoError(tb, err)
+
+	buf := new(bytes.Buffer)
+	require.NoError(tb, tmpl.Execute(buf, GetTemplateFunctions(tb)))
+	require.NoError(tb, util.ReadJSONOrYAML(buf, out))
+}
+
 func SkipIfGHActions(t *testing.T) {
 	t.Helper()
 
 	if isGH, ok := os.LookupEnv("GITHUB_ACTIONS"); ok && isGH == "true" {
 		t.Skipf("Skipping because of known issue with GitHub Actions")
 	}
+}
+
+func FindPolicyFiles(t *testing.T, dir string, callback func(string) error) error {
+	t.Helper()
+
+	testdataDir := PathToDir(t, dir)
+	return filepath.WalkDir(testdataDir, func(path string, d fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+
+		if d.IsDir() {
+			switch d.Name() {
+			case schema.Directory:
+				return fs.SkipDir
+			case util.TestDataDirectory:
+				return fs.SkipDir
+			default:
+				return nil
+			}
+		}
+
+		if !util.IsSupportedFileType(d.Name()) {
+			return nil
+		}
+
+		return callback(path)
+	})
 }

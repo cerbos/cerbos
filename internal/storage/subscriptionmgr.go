@@ -5,7 +5,6 @@ package storage
 
 import (
 	"context"
-	"runtime"
 	"sync"
 	"testing"
 	"time"
@@ -97,31 +96,38 @@ func (sm *SubscriptionManager) shutdown() {
 }
 
 // TestSubscription is a helper to test subscriptions.
-func TestSubscription(s Subscribable) func(*testing.T, ...Event) {
-	sub := &subscriber{}
+func TestSubscription(s Subscribable) func(*testing.T, time.Duration, ...Event) {
+	stream := make(chan Event, 8) //nolint:gomnd
+
+	sub := &subscriber{stream: stream}
 	s.Subscribe(sub)
 
-	return func(t *testing.T, wantEvents ...Event) {
+	return func(t *testing.T, timeout time.Duration, wantEvents ...Event) {
 		t.Helper()
 
+		timer := time.NewTimer(timeout)
+		t.Cleanup(func() {
+			close(stream)
+			timer.Stop()
+		})
+
 		var haveEvents []Event
-		for tries := 0; tries < 3; tries++ {
-			runtime.Gosched()
-
-			haveEvents = sub.Events()
-			if len(haveEvents) == len(wantEvents) {
-				break
+		for len(haveEvents) < len(wantEvents) {
+			select {
+			case evt := <-stream:
+				haveEvents = append(haveEvents, evt)
+			case <-timer.C:
+				t.Errorf("Timeout: expected %d events but only received %d", len(wantEvents), len(haveEvents))
 			}
-
-			time.Sleep(5 * time.Millisecond) //nolint:gomnd
 		}
-		s.Unsubscribe(sub)
 
+		s.Unsubscribe(sub)
 		require.ElementsMatch(t, wantEvents, haveEvents)
 	}
 }
 
 type subscriber struct {
+	stream chan Event
 	mu     sync.RWMutex
 	events []Event
 }
@@ -132,9 +138,15 @@ func (s *subscriber) SubscriberID() string {
 
 func (s *subscriber) OnStorageEvent(evt ...Event) {
 	s.mu.Lock()
-	defer s.mu.Unlock()
-
 	s.events = append(s.events, evt...)
+	s.mu.Unlock()
+
+	for _, e := range evt {
+		select {
+		case s.stream <- e:
+		default:
+		}
+	}
 }
 
 func (s *subscriber) Events() []Event {

@@ -1,0 +1,27 @@
+---
+description: Missing resource schema
+schemaRefs:
+  principalSchema:
+    ref: cerbos:///complex_object.json
+  resourceSchema:
+    ref: cerbos:///blah.json
+input: 
+  actions: [ "view:public" ]
+  principal: 
+    id: "john"
+    policyVersion: "20210210"
+    roles: [ "employee" ]
+    attr: &myAttr 
+      stringField: hello
+  resource: 
+    kind: "expense_request"
+    policyVersion: "20210210"
+    id: "XX125"
+    attr: *myAttr 
+wantValidationErrors:
+  - message: "Failed to load schema \"cerbos:///blah.json\""
+    source: SOURCE_RESOURCE
+
+  - message: "missing properties: 'intField'"
+    source: SOURCE_PRINCIPAL
+

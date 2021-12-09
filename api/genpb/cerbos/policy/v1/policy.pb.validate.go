@@ -321,6 +321,16 @@ func (m *ResourcePolicy) Validate() error {
 		}
 	}
 
+	if v, ok := interface{}(m.GetSchemas()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return ResourcePolicyValidationError{
+				field:  "Schemas",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
 	return nil
 }
 
@@ -1199,6 +1209,90 @@ var _ interface {
 	ErrorName() string
 } = MatchValidationError{}
 
+// Validate checks the field values on Schemas with the rules defined in the
+// proto definition for this message. If any rules are violated, an error is returned.
+func (m *Schemas) Validate() error {
+	if m == nil {
+		return nil
+	}
+
+	if v, ok := interface{}(m.GetPrincipalSchema()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return SchemasValidationError{
+				field:  "PrincipalSchema",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if v, ok := interface{}(m.GetResourceSchema()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return SchemasValidationError{
+				field:  "ResourceSchema",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	return nil
+}
+
+// SchemasValidationError is the validation error returned by Schemas.Validate
+// if the designated constraints aren't met.
+type SchemasValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e SchemasValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e SchemasValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e SchemasValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e SchemasValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e SchemasValidationError) ErrorName() string { return "SchemasValidationError" }
+
+// Error satisfies the builtin error interface
+func (e SchemasValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sSchemas.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = SchemasValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = SchemasValidationError{}
+
 // Validate checks the field values on TestFixture with the rules defined in
 // the proto definition for this message. If any rules are violated, an error
 // is returned.
@@ -1810,6 +1904,78 @@ var _ interface {
 	Cause() error
 	ErrorName() string
 } = Match_ExprListValidationError{}
+
+// Validate checks the field values on Schemas_Schema with the rules defined in
+// the proto definition for this message. If any rules are violated, an error
+// is returned.
+func (m *Schemas_Schema) Validate() error {
+	if m == nil {
+		return nil
+	}
+
+	if utf8.RuneCountInString(m.GetRef()) < 1 {
+		return Schemas_SchemaValidationError{
+			field:  "Ref",
+			reason: "value length must be at least 1 runes",
+		}
+	}
+
+	return nil
+}
+
+// Schemas_SchemaValidationError is the validation error returned by
+// Schemas_Schema.Validate if the designated constraints aren't met.
+type Schemas_SchemaValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e Schemas_SchemaValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e Schemas_SchemaValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e Schemas_SchemaValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e Schemas_SchemaValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e Schemas_SchemaValidationError) ErrorName() string { return "Schemas_SchemaValidationError" }
+
+// Error satisfies the builtin error interface
+func (e Schemas_SchemaValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sSchemas_Schema.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = Schemas_SchemaValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = Schemas_SchemaValidationError{}
 
 // Validate checks the field values on TestFixture_Principals with the rules
 // defined in the proto definition for this message. If any rules are

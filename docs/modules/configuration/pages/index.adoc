@@ -161,6 +161,8 @@ audit: # Optional
       maxBatchSize: 32
       flushInterval: 1s
       gcInterval: 60s
-----
 
+schema: # Optional
+  enforcement: reject # How to enforce schema validation (none: no enforcement, warn: log warnings, reject: reject invalid requests)
+----
 

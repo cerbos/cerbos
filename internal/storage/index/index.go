@@ -7,12 +7,15 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
 	"io/fs"
+	"path/filepath"
 	"sync"
 
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
 	"github.com/cerbos/cerbos/internal/namer"
 	"github.com/cerbos/cerbos/internal/policy"
+	"github.com/cerbos/cerbos/internal/schema"
 	"github.com/cerbos/cerbos/internal/storage"
 )
 
@@ -37,6 +40,8 @@ type Index interface {
 	GetAllCompilationUnits(context.Context) <-chan *policy.CompilationUnit
 	Clear() error
 	GetPolicies(context.Context) ([]*policy.Wrapper, error)
+	ListSchemaIDs(context.Context) ([]string, error)
+	LoadSchema(context.Context, string) (io.ReadCloser, error)
 }
 
 type index struct {
@@ -47,6 +52,7 @@ type index struct {
 	fileToModID  map[string]namer.ModuleID
 	dependents   map[namer.ModuleID]map[namer.ModuleID]struct{}
 	dependencies map[namer.ModuleID]map[namer.ModuleID]struct{}
+	schemaLoader *SchemaLoader
 }
 
 func (idx *index) GetFiles() []string {
@@ -161,8 +167,7 @@ func (idx *index) AddOrUpdate(entry Entry) (evt storage.Event, err error) {
 	}
 
 	modID := entry.Policy.ID
-
-	evt = storage.NewEvent(storage.EventAddOrUpdatePolicy, modID)
+	evt = storage.NewPolicyEvent(storage.EventAddOrUpdatePolicy, modID)
 
 	idx.mu.Lock()
 	defer idx.mu.Unlock()
@@ -225,8 +230,7 @@ func (idx *index) Delete(entry Entry) (storage.Event, error) {
 		// nothing to do because we don't have that file in the index.
 		return storage.Event{Kind: storage.EventNop}, nil
 	}
-
-	evt := storage.NewEvent(storage.EventDeletePolicy, modID)
+	evt := storage.NewPolicyEvent(storage.EventDeletePolicy, modID)
 
 	// go through the dependencies and remove self from the dependents list for each dependency.
 	if deps, ok := idx.dependencies[modID]; ok {
@@ -341,4 +345,35 @@ func (idx *index) GetPolicies(_ context.Context) ([]*policy.Wrapper, error) {
 	}
 
 	return entries, nil
+}
+
+func (idx *index) ListSchemaIDs(_ context.Context) ([]string, error) {
+	var schemaIds []string
+	err := fs.WalkDir(idx.fsys, schema.Directory, func(path string, d fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+
+		if d.IsDir() {
+			return nil
+		}
+
+		id, err := filepath.Rel(schema.Directory, path)
+		if err != nil {
+			return fmt.Errorf("failed to generate id from path %s: %w", path, err)
+		}
+
+		schemaIds = append(schemaIds, id)
+
+		return nil
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to walk schemas directory: %w", err)
+	}
+
+	return schemaIds, nil
+}
+
+func (idx *index) LoadSchema(ctx context.Context, url string) (io.ReadCloser, error) {
+	return idx.schemaLoader.Load(ctx, url)
 }

@@ -36,6 +36,11 @@ resourcePolicy:
           expr: V.is_corporate_network
       derivedRoles:
         - abuse_moderator
+  schemas: <9>
+    principalSchema:
+      ref: cerbos:///principal.json <10>
+    resourceSchema:
+      ref: cerbos:///album/object.json <11>
 ----
 <1> Optional variables section. Each variable is evaluated before any rule condition.
 A variable expression can contain anything that condition expression can have.
@@ -46,3 +51,6 @@ A variable expression can contain anything that condition expression can have.
 <6> This rule applies to a derived role.
 <7> Rules can also refer directly to static roles.
 <8> Optional name for the rule.
+<9> Optional section for defining schemas that apply to this resource kind.
+<10> Optional schema for validating the principal attributes.
+<11> Optional schema for validating the resource attributes.
