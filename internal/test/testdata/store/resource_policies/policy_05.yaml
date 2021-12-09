@@ -7,6 +7,7 @@ resourcePolicy:
   resource: "list-resources:leave_request"
   importDerivedRoles:
     - apatr_common_roles
+    - beta
   rules:
     - actions: ["view2"]
       derivedRoles:
@@ -33,6 +34,16 @@ resourcePolicy:
                     - expr: 1 != 1
                     - expr: R.attr.geography == request.principal.attr.geography
                     - expr: R.attr.geography in request.principal.attr.managed_geographies
+    - actions: ["approve:refer_derived_role"]
+      effect: EFFECT_ALLOW
+      derivedRoles:
+        - direct_manager_v2
+      condition:
+        match:
+          all:
+            of:
+              - expr: R.attr.status == "PENDING_APPROVAL"
+              - expr: R.attr.owner != request.principal.id
     - actions: ["approve2"]
       roles: ["manager"]
       effect: EFFECT_ALLOW

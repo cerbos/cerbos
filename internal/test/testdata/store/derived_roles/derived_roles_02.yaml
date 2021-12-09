@@ -16,3 +16,11 @@ derivedRoles:
             of:
               - expr: V.same_geography
               - expr: request.resource.attr.geography == request.principal.attr.managed_geographies
+    - name: direct_manager_v2
+      parentRoles: ["manager"]
+      condition:
+        match:
+          any:
+            of:
+              - expr: V.same_geography
+              - expr: request.resource.attr.geography in request.principal.attr.managed_geographies

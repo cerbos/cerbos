@@ -238,9 +238,10 @@ func TestList(t *testing.T) {
 			want: `(request.resource.attr.owner == "harry")`,
 		},
 		{
-			name:  "maggie wants to approve",
-			input: request,
-			want:  `((R.attr.status == "PENDING_APPROVAL") AND (R.attr.owner != "maggie") AND ((R.attr.geography == "US") OR (R.attr.geography in ["US", "CA"])))`,
+			name:   "maggie wants to approve:refer_derived_role",
+			action: "approve:refer_derived_role",
+			input:  request,
+			want:   "(((request.resource.attr.geography == \"US\") OR (request.resource.attr.geography in [\"US\", \"CA\"])) AND ((R.attr.status == \"PENDING_APPROVAL\") AND (R.attr.owner != \"maggie\")))",
 		},
 		{
 			name:   "maggie wants to approve 2: short-circuit test",

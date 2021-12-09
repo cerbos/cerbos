@@ -84,7 +84,7 @@ func (rpe *resourcePolicyEvaluator) EvaluateResourcesQueryPlan(_ context.Context
 				continue
 			}
 			drVariables := make(map[string]*exprpb.Expr, len(dr.Variables))
-			for k, v := range p.Variables {
+			for k, v := range dr.Variables {
 				drVariables[k] = v.Checked.Expr
 			}
 
