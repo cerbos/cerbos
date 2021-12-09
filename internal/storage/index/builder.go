@@ -9,6 +9,8 @@ import (
 	"fmt"
 	"io/fs"
 
+	"go.uber.org/zap"
+
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
 	"github.com/cerbos/cerbos/internal/namer"
 	"github.com/cerbos/cerbos/internal/policy"
@@ -211,6 +213,8 @@ func (idx *indexBuilder) addDep(child, parent namer.ModuleID) {
 }
 
 func (idx *indexBuilder) build(fsys fs.FS) (*index, error) {
+	logger := zap.L().Named("index")
+
 	nErr := len(idx.missing) + len(idx.duplicates) + len(idx.loadFailures)
 	if nErr > 0 {
 		err := &BuildError{
@@ -223,8 +227,12 @@ func (idx *indexBuilder) build(fsys fs.FS) (*index, error) {
 			err.MissingImports = append(err.MissingImports, missing...)
 		}
 
+		logger.Debug("Index build failed", zap.Error(err))
+
 		return nil, err
 	}
+
+	logger.Info(fmt.Sprintf("Found %d executable policies", len(idx.executables)))
 
 	return &index{
 		fsys:         fsys,
