@@ -8,7 +8,12 @@ Authentication is mandatory for the Admin API. Currently only basic authenticati
 
 IMPORTANT: Always change the default credentials and enable TLS for the endpoint when enabling the Admin API. See xref:configuration:server.adoc[Server configuration] for more information.  
 
-== Add/update policies [`/admin/policy`]
+== Add/update policies 
+
+----
+POST /admin/policy
+PUT /admin/policy
+----
 
 NOTE: This endpoint requires a mutable storage driver such as xref:configuration:storage.adoc#sqlite3[sqlite3] to be configured.
 
@@ -61,7 +66,11 @@ NOTE: This endpoint requires a mutable storage driver such as xref:configuration
 {"success":{}}
 ----
 
-== List Policies [`/admin/policy/list`]
+== List Policies 
+
+----
+GET /admin/policy/list
+----
 
 NOTE: This endpoint is still under development and should be considered unstable.
 
@@ -91,7 +100,11 @@ curl -k -u cerbos:cerbosAdmin \
     -d '{"filters": [{"type": "MATCH_TYPE_EXACT", "fieldPath": "$.*.version", "value":"staging"}]}'
 ----
 
-== List Audit Log Entries [`/admin/auditlog/list`]
+== List Audit Log Entries 
+
+----
+GET /admin/auditlog/list/{kind}
+----
 
 When xref:configuration:audit.adoc[audit logging is enabled] you can view the audit log entries using this API endpoint.
 
