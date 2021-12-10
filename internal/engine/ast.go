@@ -27,7 +27,8 @@ const (
 	LessThan           = "lt"
 	LessThanOrEqual    = "le"
 	In                 = "in"
-	List               = "list"
+	List               = "newList"
+	Add                = "add"
 )
 
 var ErrUnknownOperator = errors.New("unknown operator")
@@ -48,6 +49,8 @@ func opFromCLE(fn string) (string, error) {
 		return LessThanOrEqual, nil
 	case operators.In:
 		return In, nil
+	case operators.Add:
+		return Add, nil
 	default:
 		return fn, ErrUnknownOperator
 	}
