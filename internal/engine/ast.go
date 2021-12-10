@@ -17,6 +17,7 @@ const (
 	LessThan           = "lt"
 	LessThanOrEqual    = "le"
 	In                 = "in"
+	List               = "list"
 )
 
 var ErrUnknownOperator = errors.New("unknown operator")
