@@ -1,7 +1,7 @@
 // Copyright 2021 Zenauth Ltd.
 // SPDX-License-Identifier: Apache-2.0
 
-package confdocs
+package indexer
 
 import (
 	"fmt"
@@ -16,29 +16,30 @@ import (
 
 type Index map[string]*Struct
 type Indexer struct {
-	log         *zap.SugaredLogger
-	packagesDir string
-	ifaceName   string
-	ifacePkg    string
-	iface       *types.Interface
-	index       Index
+	Options
+	iface *types.Interface
+	index Index
 }
 
-func NewIndexer(logger *zap.SugaredLogger, packagesDir string, ifaceName string, ifacePkg string) *Indexer {
+type Options struct {
+	Log         *zap.SugaredLogger
+	PackagesDir string
+	IfaceName   string
+	IfacePkg    string
+}
+
+func New(options Options) *Indexer {
 	return &Indexer{
-		log:         logger,
-		packagesDir: packagesDir,
-		ifaceName:   ifaceName,
-		ifacePkg:    ifacePkg,
-		iface:       nil,
-		index:       make(Index),
+		Options: options,
+		iface:   nil,
+		index:   make(Index),
 	}
 }
 
 func (cd *Indexer) Run() (Index, error) {
 	fileSet := token.NewFileSet()
 
-	pkgs, err := cd.loadPackages(cd.packagesDir, fileSet)
+	pkgs, err := cd.loadPackages(cd.PackagesDir, fileSet)
 
 	if err != nil {
 		return nil, err
@@ -48,12 +49,12 @@ func (cd *Indexer) Run() (Index, error) {
 		return nil, err
 	}
 
-	cd.iface, err = cd.findInterface(pkgs, cd.ifaceName, cd.ifacePkg)
+	cd.iface, err = cd.findInterface(pkgs, cd.IfaceName, cd.IfacePkg)
 	if err != nil {
 		return nil, err
 	}
 
-	ifaceImplStructs, err := cd.findStructsImplIface(pkgs, cd.iface, cd.ifaceName)
+	ifaceImplStructs, err := cd.findStructsImplIface(pkgs, cd.iface, cd.IfaceName)
 	if err != nil {
 		return nil, err
 	}
@@ -278,10 +279,10 @@ func (cd *Indexer) indexFields(field *ast.Field) []*StructField {
 			structFields = append(structFields, NewStructFieldFromIdentArray(field.Names, field.Doc, field.Tag, nil))
 			break
 		case *ast.FuncType:
-			cd.log.Debug("ignored a FuncType")
+			cd.Log.Debug("ignored a FuncType")
 			break
 		default:
-			cd.log.Warn("This is not supposed to be printed - %v", tt)
+			cd.Log.Warn("This is not supposed to be printed - %v", tt)
 		}
 	}
 	return structFields
@@ -300,7 +301,7 @@ func (cd *Indexer) findInterface(pkgs []*packages.Package, ifaceName string, ifa
 		}
 	}
 
-	return nil, fmt.Errorf("failed to find %s.%s", cd.ifacePkg, cd.ifaceName)
+	return nil, fmt.Errorf("failed to find %s.%s", cd.IfacePkg, cd.IfaceName)
 }
 
 func (cd *Indexer) getInterface(pkg *types.Package, name string) (*types.Interface, error) {
@@ -328,7 +329,7 @@ func (cd *Indexer) getStructsImplIface(pkg *types.Package, iface *types.Interfac
 
 	for _, name := range names {
 		if !unicode.IsUpper(rune(name[0])) {
-			cd.log.Debug("Ignoring unexported name")
+			cd.Log.Debug("Ignoring unexported name")
 			return
 		}
 
@@ -343,7 +344,7 @@ func (cd *Indexer) getStructsImplIface(pkg *types.Package, iface *types.Interfac
 
 			if types.Implements(ptr.Underlying(), iface) {
 				color.Set(color.FgRed)
-				cd.log.Infof("Found %s.%s implementing the interface %s", pkg.Path(), name, ifaceName)
+				cd.Log.Infof("Found %s.%s implementing the interface %s", pkg.Path(), name, ifaceName)
 				color.Unset()
 				out[fmt.Sprintf("%s.%s", pkg.Path(), name)] = str
 			}
@@ -356,7 +357,7 @@ func (cd *Indexer) loadPackages(absPackagesDir string, fileSet *token.FileSet) (
 		Mode:  packages.NeedTypes | packages.NeedTypesInfo | packages.NeedFiles | packages.NeedSyntax | packages.NeedName | packages.NeedImports | packages.NeedDeps,
 		Dir:   absPackagesDir,
 		Fset:  fileSet,
-		Logf:  cd.log.Infof,
+		Logf:  cd.Log.Infof,
 		Tests: false,
 	}
 

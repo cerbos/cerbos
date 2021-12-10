@@ -1,4 +1,4 @@
-package confdocs
+package indexer
 
 import (
 	"go/ast"
