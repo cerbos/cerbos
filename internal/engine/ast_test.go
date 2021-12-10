@@ -15,20 +15,52 @@ import (
 	"testing"
 )
 
-func mkValue(t *testing.T, v interface{}) *structpb.Value {
-	t.Helper()
+type tEx struct {
+	t  *testing.T
+	is *require.Assertions
+}
+
+func (r tEx) mkValue(v interface{}) *structpb.Value {
+	r.t.Helper()
 	s, err := structpb.NewValue(v)
-	require.NoError(t, err)
+	r.is.NoError(err)
 	return s
 }
 
+type tExArgs = []interface{}
+
+func (r tEx) rEx(expr *responsev1.ResourcesQueryPlanResponse_Expression, op string, args tExArgs) {
+	r.t.Helper()
+	is := r.is
+	is.NotNil(expr)
+	is.Equal(op, expr.Operator)
+	is.Len(expr.Operands, len(args))
+
+	for i, arg := range args {
+		switch e := arg.(type) {
+		case string:
+			is.Equal(e, expr.Operands[i].GetVariable())
+		case *structpb.Value:
+			is.Empty(cmp.Diff(e, expr.Operands[i].GetValue(), protocmp.Transform()))
+		case func(expression *responsev1.ResourcesQueryPlanResponse_Expression):
+			e(expr.Operands[i].GetExpression())
+		default:
+			r.t.Fatalf("unexpected argument type %T", e)
+		}
+	}
+}
+
 func Test_buildExpr(t *testing.T) {
+	type (
+		Ex = responsev1.ResourcesQueryPlanResponse_Expression
+	)
 	is := require.New(t)
 	parse := func(s string) *exprpb.Expr {
 		ast, iss := conditions.StdEnv.Parse(s)
 		is.Nil(iss, iss.Err())
 		return ast.Expr()
 	}
+	tex := tEx{t: t, is: is}
 	tests := []struct {
 		name string
 	}{
@@ -42,30 +74,13 @@ func Test_buildExpr(t *testing.T) {
 			is.NoError(err)
 			t.Log(protojson.Format(acc))
 
-			expr := acc.GetExpression()
-			is.NotNil(expr)
-			is.Equal(expr.Operator, List)
-			is.Len(expr.Operands, 3)
-
-			// first operand
-			op := expr.Operands[0]
-			is.Empty(cmp.Diff(mkValue(t, 1), op.GetValue(), protocmp.Transform()))
-
-			// second operand
-			op = expr.Operands[1]
-			{
-				expr := op.GetExpression()
-				is.NotNil(expr)
-				is.Equal(expr.Operator, Add)
-				is.Len(expr.Operands, 2)
-
-				is.Equal("a", expr.Operands[0].GetVariable())
-				is.Empty(cmp.Diff(mkValue(t, 2), expr.Operands[1].GetValue(), protocmp.Transform()))
-			}
-
-			// third operand
-			op = expr.Operands[2]
-			is.Empty(cmp.Diff(mkValue(t, "q"), op.GetValue(), protocmp.Transform()))
+			tex.rEx(acc.GetExpression(), List, tExArgs{
+				tex.mkValue(1),
+				func(e *Ex) {
+					tex.rEx(e, Add, tExArgs{"a", tex.mkValue(2)})
+				},
+				tex.mkValue("q"),
+			})
 		})
 	}
 }
