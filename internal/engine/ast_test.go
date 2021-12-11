@@ -73,6 +73,17 @@ func Test_buildExpr(t *testing.T) {
 				})
 			},
 		},
+		{
+			expr: `z + [2,3]`,
+			must: func(acc *ExOp) {
+				h.assert(acc.GetExpression(), Add, []any{
+					"z",
+					func(e *Ex) {
+						h.assert(e, List, []any{h.mkValue(2), h.mkValue(3)})
+					},
+				})
+			},
+		},
 	}
 
 	parse := func(s string) *exprpb.Expr {
