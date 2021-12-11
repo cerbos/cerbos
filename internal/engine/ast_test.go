@@ -15,21 +15,21 @@ import (
 	"testing"
 )
 
-type tEx struct {
+type buildExprTestHelper struct {
 	t  *testing.T
 	is *require.Assertions
 }
 
-func (r tEx) mkValue(v interface{}) *structpb.Value {
+func (r buildExprTestHelper) mkValue(v interface{}) *structpb.Value {
 	r.t.Helper()
 	s, err := structpb.NewValue(v)
 	r.is.NoError(err)
 	return s
 }
 
-type tExArgs = []interface{}
+type any = interface{}
 
-func (r tEx) rEx(expr *responsev1.ResourcesQueryPlanResponse_Expression, op string, args tExArgs) {
+func (r buildExprTestHelper) assert(expr *responsev1.ResourcesQueryPlanResponse_Expression, op string, args []any) {
 	r.t.Helper()
 	is := r.is
 	is.NotNil(expr)
@@ -52,35 +52,41 @@ func (r tEx) rEx(expr *responsev1.ResourcesQueryPlanResponse_Expression, op stri
 
 func Test_buildExpr(t *testing.T) {
 	type (
-		Ex = responsev1.ResourcesQueryPlanResponse_Expression
+		Ex   = responsev1.ResourcesQueryPlanResponse_Expression
+		ExOp = responsev1.ResourcesQueryPlanResponse_Expression_Operand
 	)
 	is := require.New(t)
+	h := buildExprTestHelper{t: t, is: is}
+	tests := []struct {
+		expr string
+		must func(op *ExOp)
+	}{
+		{
+			expr: `[1,a + 2,"q"]`,
+			must: func(acc *ExOp) {
+				h.assert(acc.GetExpression(), List, []any{
+					h.mkValue(1),
+					func(e *Ex) {
+						h.assert(e, Add, []any{"a", h.mkValue(2)})
+					},
+					h.mkValue("q"),
+				})
+			},
+		},
+	}
+
 	parse := func(s string) *exprpb.Expr {
 		ast, iss := conditions.StdEnv.Parse(s)
 		is.Nil(iss, iss.Err())
 		return ast.Expr()
 	}
-	tex := tEx{t: t, is: is}
-	tests := []struct {
-		name string
-	}{
-		{"first"},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			acc := new(responsev1.ResourcesQueryPlanResponse_Expression_Operand)
 
+	for _, tt := range tests {
+		t.Run(tt.expr, func(t *testing.T) {
+			acc := new(ExOp)
 			err := buildExpr(parse(`[1,a + 2,"q"]`), acc)
 			is.NoError(err)
 			t.Log(protojson.Format(acc))
-
-			tex.rEx(acc.GetExpression(), List, tExArgs{
-				tex.mkValue(1),
-				func(e *Ex) {
-					tex.rEx(e, Add, tExArgs{"a", tex.mkValue(2)})
-				},
-				tex.mkValue("q"),
-			})
 		})
 	}
 }
