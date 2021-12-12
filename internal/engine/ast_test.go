@@ -41,7 +41,7 @@ func (r buildExprTestHelper) assert(expr *responsev1.ResourcesQueryPlanResponse_
 	for i, arg := range args {
 		switch e := arg.(type) {
 		case string:
-			is.Equal(e, expr.Operands[i].GetVariable())
+			is.Equal(e, expr.Operands[i].GetVariable(), "type of node is %T", expr.Operands[i].Node)
 		case *structpb.Value:
 			is.Empty(cmp.Diff(e, expr.Operands[i].GetValue(), protocmp.Transform()))
 		case func(expression *responsev1.ResourcesQueryPlanResponse_Expression):
@@ -80,16 +80,19 @@ func Test_buildExpr(t *testing.T) {
 			must: func(acc *ExOp) {
 				h.assert(acc.GetExpression(), Add, []any{
 					"z",
-					func(e *Ex) {
-						h.assert(e, List, []any{h.mkValue(2), h.mkValue(3)})
-					},
+					h.mkValue([]any{2, 3}),
 				})
 			},
 		},
 		{
 			expr: `a[b].c`,
-			must: func(op *ExOp) {
-				h.is.NotNil(op)
+			must: func(acc *ExOp) {
+				h.assert(acc.GetExpression(), Field, []any{
+					func(e *Ex) {
+						h.assert(e, Index, []any{"a", "b"})
+					},
+					"c",
+				})
 			},
 		},
 	}
@@ -106,6 +109,7 @@ func Test_buildExpr(t *testing.T) {
 			err := buildExpr(parse(tt.expr), acc)
 			is.NoError(err)
 			t.Log(protojson.Format(acc))
+			tt.must(acc)
 		})
 	}
 }

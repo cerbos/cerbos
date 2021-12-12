@@ -287,8 +287,8 @@ func buildExpr(expr *exprpb.Expr, acc *responsev1.ResourcesQueryPlanResponse_Exp
 				Expression: &Expr{
 					Operator: Field,
 					Operands: []*ExprOp{
-						{Node: &ExprOpVar{Variable: sb.String()}},
 						op,
+						{Node: &ExprOpVar{Variable: sb.String()}},
 					},
 				},
 			}
