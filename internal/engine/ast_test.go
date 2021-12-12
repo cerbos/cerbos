@@ -4,15 +4,17 @@
 package engine
 
 import (
-	responsev1 "github.com/cerbos/cerbos/api/genpb/cerbos/response/v1"
-	"github.com/cerbos/cerbos/internal/conditions"
+	"testing"
+
 	"github.com/google/go-cmp/cmp"
 	"github.com/stretchr/testify/require"
 	exprpb "google.golang.org/genproto/googleapis/api/expr/v1alpha1"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/testing/protocmp"
 	"google.golang.org/protobuf/types/known/structpb"
-	"testing"
+
+	responsev1 "github.com/cerbos/cerbos/api/genpb/cerbos/response/v1"
+	"github.com/cerbos/cerbos/internal/conditions"
 )
 
 type buildExprTestHelper struct {
@@ -84,6 +86,12 @@ func Test_buildExpr(t *testing.T) {
 				})
 			},
 		},
+		{
+			expr: `a[b].c`,
+			must: func(op *ExOp) {
+				h.is.NotNil(op)
+			},
+		},
 	}
 
 	parse := func(s string) *exprpb.Expr {
@@ -95,7 +103,7 @@ func Test_buildExpr(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.expr, func(t *testing.T) {
 			acc := new(ExOp)
-			err := buildExpr(parse(`[1,a + 2,"q"]`), acc)
+			err := buildExpr(parse(tt.expr), acc)
 			is.NoError(err)
 			t.Log(protojson.Format(acc))
 		})

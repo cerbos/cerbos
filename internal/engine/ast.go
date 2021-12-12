@@ -29,6 +29,8 @@ const (
 	In                 = "in"
 	List               = "newList"
 	Add                = "add"
+	Field              = "field"
+	Index              = "index"
 )
 
 var ErrUnknownOperator = errors.New("unknown operator")
@@ -51,6 +53,8 @@ func opFromCLE(fn string) (string, error) {
 		return In, nil
 	case operators.Add:
 		return Add, nil
+	case operators.Index:
+		return Index, nil
 	default:
 		return fn, ErrUnknownOperator
 	}
@@ -249,7 +253,9 @@ func buildExpr(expr *exprpb.Expr, acc *responsev1.ResourcesQueryPlanResponse_Exp
 		acc.Node = &ExprOpVar{Variable: expr.IdentExpr.Name}
 	case *exprpb.Expr_SelectExpr:
 		var names []string
-		for e := expr; e != nil; {
+		e := expr
+	loop:
+		for e != nil {
 			names = append(names, e.SelectExpr.Field)
 			switch et := e.SelectExpr.Operand.ExprKind.(type) {
 			case *exprpb.Expr_IdentExpr:
@@ -258,7 +264,7 @@ func buildExpr(expr *exprpb.Expr, acc *responsev1.ResourcesQueryPlanResponse_Exp
 			case *exprpb.Expr_SelectExpr:
 				e = et
 			default:
-				return fmt.Errorf("unexpected expression type: %T", et)
+				break loop
 			}
 		}
 
@@ -269,7 +275,24 @@ func buildExpr(expr *exprpb.Expr, acc *responsev1.ResourcesQueryPlanResponse_Exp
 				sb.WriteString(".")
 			}
 		}
-		acc.Node = &ExprOpVar{Variable: sb.String()}
+		if e == nil {
+			acc.Node = &ExprOpVar{Variable: sb.String()}
+		} else {
+			op := new(ExprOp)
+			err := buildExpr(e.SelectExpr.Operand, op)
+			if err != nil {
+				return err
+			}
+			acc.Node = &ExprOpExpr{
+				Expression: &Expr{
+					Operator: Field,
+					Operands: []*ExprOp{
+						{Node: &ExprOpVar{Variable: sb.String()}},
+						op,
+					},
+				},
+			}
+		}
 	case *exprpb.Expr_ListExpr:
 		ok := true
 		for _, e := range expr.ListExpr.Elements {
