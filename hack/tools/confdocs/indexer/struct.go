@@ -1,9 +1,12 @@
 package indexer
 
 import (
+	"errors"
+	"fmt"
 	"go/ast"
 	"go/token"
 	"go/types"
+	"strings"
 )
 
 const unknownField = "<UNKNOWN_FIELD>"
@@ -18,23 +21,30 @@ type Struct struct {
 }
 
 type StructField struct {
-	Name   string
-	Docs   string
-	Tags   string
-	Fields []*StructField
+	Name     string
+	Docs     string
+	Tags     string
+	TagsData *TagsData
+	Fields   []*StructField
 }
 
-func NewStructFieldFromIdentArray(nameField []*ast.Ident, docsField *ast.CommentGroup, tagsField *ast.BasicLit, fields []*StructField) *StructField {
+func NewStructFieldFromIdentArray(nameField []*ast.Ident, docsField *ast.CommentGroup, tagsField *ast.BasicLit, fields []*StructField) (*StructField, error) {
+	var err error
 	var docs = ""
 	var tags = ""
 	var name = unknownField
+	var tagsData *TagsData
 
 	if tagsField != nil {
-		tags = tagsField.Value
+		tags = tagsField.Value[1 : len(tagsField.Value)-1]
+		tagsData, err = ParseTags(tags)
+		if err != nil && !errors.As(err, &errTagNotExists) {
+			return nil, fmt.Errorf("failed to parse tags: %w", err)
+		}
 	}
 
 	if docsField != nil && docsField.List != nil && docsField.List[0] != nil {
-		docs = docsField.List[0].Text
+		docs = strings.TrimSpace(strings.TrimPrefix(docsField.List[0].Text, "//"))
 	}
 
 	if nameField != nil && nameField[0] != nil {
@@ -42,24 +52,31 @@ func NewStructFieldFromIdentArray(nameField []*ast.Ident, docsField *ast.Comment
 	}
 
 	return &StructField{
-		Name:   name,
-		Docs:   docs,
-		Tags:   tags,
-		Fields: fields,
-	}
+		Name:     name,
+		Docs:     docs,
+		Tags:     tags,
+		TagsData: tagsData,
+		Fields:   fields,
+	}, nil
 }
 
-func NewStructField(nameField *ast.Ident, docsField *ast.CommentGroup, tagsField *ast.BasicLit, fields []*StructField) *StructField {
+func NewStructField(nameField *ast.Ident, docsField *ast.CommentGroup, tagsField *ast.BasicLit, fields []*StructField) (*StructField, error) {
+	var err error
 	var docs = ""
 	var tags = ""
 	var name = unknownField
+	var tagsData *TagsData
 
 	if tagsField != nil {
-		tags = tagsField.Value
+		tags = tagsField.Value[1 : len(tagsField.Value)-1]
+		tagsData, err = ParseTags(tags)
+		if err != nil && !errors.As(err, &errTagNotExists) {
+			return nil, fmt.Errorf("failed to parse tags: %w", err)
+		}
 	}
 
 	if docsField != nil && docsField.List != nil && docsField.List[0] != nil {
-		docs = docsField.List[0].Text
+		docs = strings.TrimSpace(strings.TrimPrefix(docsField.List[0].Text, "//"))
 	}
 
 	if nameField != nil {
@@ -67,9 +84,10 @@ func NewStructField(nameField *ast.Ident, docsField *ast.CommentGroup, tagsField
 	}
 
 	return &StructField{
-		Name:   name,
-		Docs:   docs,
-		Tags:   tags,
-		Fields: fields,
-	}
+		Name:     name,
+		Docs:     docs,
+		Tags:     tags,
+		TagsData: tagsData,
+		Fields:   fields,
+	}, nil
 }

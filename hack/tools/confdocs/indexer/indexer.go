@@ -96,7 +96,10 @@ func (cd *Indexer) indexStructs(pkg *packages.Package, file *ast.File, ifaceImpl
 								rootStruct.Fields = structFields
 
 							} else {
-								structField := NewStructFieldFromIdentArray(field.Names, field.Doc, field.Tag, cd.indexFields(field))
+								structField, err := NewStructFieldFromIdentArray(field.Names, field.Doc, field.Tag, cd.indexFields(field))
+								if err != nil {
+									cd.Log.Fatalf("failed to create a struct field: %v", err)
+								}
 								rootStruct.Fields = append(rootStruct.Fields, structField)
 							}
 						}
@@ -136,7 +139,11 @@ func (cd *Indexer) indexFields(field *ast.Field) []*StructField {
 			structFields = nil
 		} else {
 			for _, n := range field.Names {
-				structFields = append(structFields, NewStructField(n, field.Doc, field.Tag, nil))
+				sf, err := NewStructField(n, field.Doc, field.Tag, nil)
+				if err != nil {
+					cd.Log.Fatalf("failed to create a struct field: %v", err)
+				}
+				structFields = append(structFields, sf)
 			}
 		}
 		break
@@ -157,9 +164,17 @@ func (cd *Indexer) indexFields(field *ast.Field) []*StructField {
 						for _, n := range f.Names {
 							fieldData, ok := n.Obj.Decl.(*ast.Field)
 							if ok {
-								structFields = append(structFields, NewStructField(n, fieldData.Doc, fieldData.Tag, cd.indexFields(f)))
+								sf, err := NewStructField(n, fieldData.Doc, fieldData.Tag, cd.indexFields(f))
+								if err != nil {
+									cd.Log.Fatalf("failed to create a struct field: %v", err)
+								}
+								structFields = append(structFields, sf)
 							} else {
-								structFields = append(structFields, NewStructField(n, nil, nil, cd.indexFields(f)))
+								sf, err := NewStructField(n, nil, nil, cd.indexFields(f))
+								if err != nil {
+									cd.Log.Fatalf("failed to create a struct field: %v", err)
+								}
+								structFields = append(structFields, sf)
 							}
 						}
 					}
@@ -182,9 +197,17 @@ func (cd *Indexer) indexFields(field *ast.Field) []*StructField {
 						for _, n := range f.Names {
 							fieldData, ok := n.Obj.Decl.(*ast.Field)
 							if ok {
-								structFields = append(structFields, NewStructField(n, fieldData.Doc, fieldData.Tag, cd.indexFields(f)))
+								sf, err := NewStructField(n, fieldData.Doc, fieldData.Tag, cd.indexFields(f))
+								if err != nil {
+									cd.Log.Fatalf("failed to create a struct field: %v", err)
+								}
+								structFields = append(structFields, sf)
 							} else {
-								structFields = append(structFields, NewStructField(n, nil, nil, cd.indexFields(f)))
+								sf, err := NewStructField(n, nil, nil, cd.indexFields(f))
+								if err != nil {
+									cd.Log.Fatalf("failed to create a struct field: %v", err)
+								}
+								structFields = append(structFields, sf)
 							}
 						}
 					}
@@ -201,7 +224,11 @@ func (cd *Indexer) indexFields(field *ast.Field) []*StructField {
 		if len(field.Names) <= 1 {
 			structFields = nil
 		} else {
-			structFields = append(structFields, NewStructFieldFromIdentArray(field.Names, field.Doc, field.Tag, nil))
+			sf, err := NewStructFieldFromIdentArray(field.Names, field.Doc, field.Tag, nil)
+			if err != nil {
+				cd.Log.Fatalf("failed to create a struct field: %v", err)
+			}
+			structFields = append(structFields, sf)
 		}
 		break
 	default:
@@ -210,19 +237,31 @@ func (cd *Indexer) indexFields(field *ast.Field) []*StructField {
 			/* matches;
 			pool []io.Reader
 			*/
-			structFields = append(structFields, NewStructFieldFromIdentArray(field.Names, field.Doc, field.Tag, nil))
+			sf, err := NewStructFieldFromIdentArray(field.Names, field.Doc, field.Tag, nil)
+			if err != nil {
+				cd.Log.Fatalf("failed to create a struct field: %v", err)
+			}
+			structFields = append(structFields, sf)
 			break
 		case *ast.ChanType:
 			/* matches;
 			buffer chan *badgerv3.Entry
 			*/
-			structFields = append(structFields, NewStructFieldFromIdentArray(field.Names, field.Doc, field.Tag, nil))
+			sf, err := NewStructFieldFromIdentArray(field.Names, field.Doc, field.Tag, nil)
+			if err != nil {
+				cd.Log.Fatalf("failed to create a struct field: %v", err)
+			}
+			structFields = append(structFields, sf)
 			break
 		case *ast.MapType:
 			/* matches;
 			keySets map[string]keySet
 			*/
-			structFields = append(structFields, NewStructFieldFromIdentArray(field.Names, field.Doc, field.Tag, nil))
+			sf, err := NewStructFieldFromIdentArray(field.Names, field.Doc, field.Tag, nil)
+			if err != nil {
+				cd.Log.Fatalf("failed to create a struct field: %v", err)
+			}
+			structFields = append(structFields, sf)
 			break
 		case *ast.FuncType:
 			cd.Log.Debug("ignored a FuncType")

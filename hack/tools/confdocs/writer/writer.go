@@ -57,8 +57,18 @@ func (w *Writer) walk(s *indexer.Struct, writer io.Writer) error {
 
 func (w *Writer) doWalk(fields []*indexer.StructField, writer io.Writer, prefix string) error {
 	for _, field := range fields {
+		name := field.Name
+		if field.TagsData != nil {
+			name = field.TagsData.Name
+		}
+
+		docs := ""
+		if field.Docs != "" {
+			docs = fmt.Sprintf("# %s", field.Docs)
+		}
+
 		if field.Fields != nil {
-			_, err := fmt.Fprintf(writer, "%s%s: %s\n", prefix, field.Name, field.Docs)
+			_, err := fmt.Fprintf(writer, "%s%s: %s\n", prefix, name, docs)
 			if err != nil {
 				return err
 			}
@@ -67,7 +77,7 @@ func (w *Writer) doWalk(fields []*indexer.StructField, writer io.Writer, prefix 
 				return err
 			}
 		} else {
-			_, err := fmt.Fprintf(writer, "%s%s %s\n", prefix, field.Name, field.Docs)
+			_, err := fmt.Fprintf(writer, "%s%s %s\n", prefix, name, docs)
 			if err != nil {
 				return err
 			}
