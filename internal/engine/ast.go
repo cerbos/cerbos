@@ -244,29 +244,23 @@ func buildExpr(expr *exprpb.Expr, acc *responsev1.ResourcesQueryPlanResponse_Exp
 		if expr.CallExpr.Target != nil {
 			offset++
 		}
-		e := Expr{
-			Operator: fn,
-			Operands: make([]*ExprOp, len(expr.CallExpr.Args)+offset),
-		}
-		eoe := ExprOpExpr{
-			Expression: &e,
-		}
+		operands := make([]*ExprOp, len(expr.CallExpr.Args)+offset)
 		if expr.CallExpr.Target != nil {
-			eoe.Expression.Operands[0] = &ExprOp{}
-			err := buildExpr(expr.CallExpr.Target, eoe.Expression.Operands[0])
+			operands[0] = new(ExprOp)
+			err := buildExpr(expr.CallExpr.Target, operands[0])
 			if err != nil {
 				return err
 			}
 		}
 
 		for i, arg := range expr.CallExpr.Args {
-			eoe.Expression.Operands[i+offset] = &ExprOp{}
-			err := buildExpr(arg, eoe.Expression.Operands[i+offset])
+			operands[i+offset] = new(ExprOp)
+			err := buildExpr(arg, operands[i+offset])
 			if err != nil {
 				return err
 			}
 		}
-		acc.Node = &eoe
+		acc.Node = mkExprOpExpr(fn, operands...)
 	case *exprpb.Expr_ConstExpr:
 		value, err := visitConst(expr.ConstExpr)
 		if err != nil {
@@ -311,15 +305,16 @@ func buildExpr(expr *exprpb.Expr, acc *responsev1.ResourcesQueryPlanResponse_Exp
 			acc.Node = mkExprOpExpr(GetField, op, &ExprOp{Node: &ExprOpVar{Variable: expr.SelectExpr.Field}})
 		}
 	case *exprpb.Expr_ListExpr:
+		x := expr.ListExpr
 		ok := true
-		for _, e := range expr.ListExpr.Elements {
+		for _, e := range x.Elements {
 			if _, ok = e.ExprKind.(*exprpb.Expr_ConstExpr); !ok {
 				break
 			}
 		}
 		if ok { // only values in list, so acc.Node is a list of values
-			listValue := structpb.ListValue{Values: make([]*structpb.Value, len(expr.ListExpr.Elements))}
-			for i, e := range expr.ListExpr.Elements {
+			listValue := structpb.ListValue{Values: make([]*structpb.Value, len(x.Elements))}
+			for i, e := range x.Elements {
 				value, err := visitConst(e.ExprKind.(*exprpb.Expr_ConstExpr).ConstExpr)
 				if err != nil {
 					return err
@@ -329,10 +324,10 @@ func buildExpr(expr *exprpb.Expr, acc *responsev1.ResourcesQueryPlanResponse_Exp
 			acc.Node = &ExprOpValue{Value: structpb.NewListValue(&listValue)}
 		} else {
 			// list of expressions
-			operands := make([]*ExprOp, len(expr.ListExpr.Elements))
+			operands := make([]*ExprOp, len(x.Elements))
 			for i := range operands {
 				operands[i] = new(ExprOp)
-				err := buildExpr(expr.ListExpr.Elements[i], operands[i])
+				err := buildExpr(x.Elements[i], operands[i])
 				if err != nil {
 					return err
 				}
@@ -340,8 +335,9 @@ func buildExpr(expr *exprpb.Expr, acc *responsev1.ResourcesQueryPlanResponse_Exp
 			acc.Node = mkExprOpExpr(List, operands...)
 		}
 	case *exprpb.Expr_StructExpr:
-		operands := make([]*ExprOp, len(expr.StructExpr.Entries))
-		for i, entry := range expr.StructExpr.Entries {
+		x := expr.StructExpr
+		operands := make([]*ExprOp, len(x.Entries))
+		for i, entry := range x.Entries {
 			k, v := new(ExprOp), new(ExprOp)
 			switch entry := entry.KeyKind.(type) {
 			case *exprpb.Expr_CreateStruct_Entry_MapKey:
@@ -361,22 +357,21 @@ func buildExpr(expr *exprpb.Expr, acc *responsev1.ResourcesQueryPlanResponse_Exp
 		}
 		acc.Node = mkExprOpExpr(Struct, operands...)
 	case *exprpb.Expr_ComprehensionExpr:
-		e := expr.ComprehensionExpr
+		x := expr.ComprehensionExpr
 		var operands []*ExprOp
 
 		for _, r := range []struct {
 			n, v string
 			x    *exprpb.Expr
 		}{
-			{n: LoopStep, x: e.LoopStep},
-			{n: LoopCondition, x: e.LoopCondition},
-			{n: LoopResult, x: e.Result},
-			{n: LoopAccuInit, x: e.AccuInit},
-			{n: LoopIterRange, x: e.IterRange},
-			{n: LoopIterVar, v: e.IterVar},
-			{n: LoopAccuVar, v: e.AccuVar},
+			{n: LoopStep, x: x.LoopStep},
+			{n: LoopCondition, x: x.LoopCondition},
+			{n: LoopResult, x: x.Result},
+			{n: LoopAccuInit, x: x.AccuInit},
+			{n: LoopIterRange, x: x.IterRange},
+			{n: LoopIterVar, v: x.IterVar},
+			{n: LoopAccuVar, v: x.AccuVar},
 		} {
-
 			op := new(ExprOp)
 			if r.x != nil {
 				err := buildExpr(r.x, op)
