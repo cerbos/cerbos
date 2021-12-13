@@ -4463,11 +4463,11 @@ SOFTWARE.
 
 --------------------------------------------------------------------------------
 Module  : github.com/tidwall/gjson
-Version : v1.10.2
-Time    : 2021-10-25T14:11:04Z
+Version : v1.12.1
+Time    : 2021-12-01T00:20:07Z
 Licence : MIT
 
-Contents of probable licence file $GOMODCACHE/github.com/tidwall/gjson@v1.10.2/LICENSE:
+Contents of probable licence file $GOMODCACHE/github.com/tidwall/gjson@v1.12.1/LICENSE:
 
 The MIT License (MIT)
 
