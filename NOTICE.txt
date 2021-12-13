@@ -5157,11 +5157,11 @@ Contents of probable licence file $GOMODCACHE/go.opentelemetry.io/otel@v1.3.0/LI
 
 --------------------------------------------------------------------------------
 Module  : go.opentelemetry.io/otel/bridge/opencensus
-Version : v0.25.0
-Time    : 2021-11-12T16:43:51Z
+Version : v0.26.0
+Time    : 2021-12-10T16:44:16Z
 Licence : Apache-2.0
 
-Contents of probable licence file $GOMODCACHE/go.opentelemetry.io/otel/bridge/opencensus@v0.25.0/LICENSE:
+Contents of probable licence file $GOMODCACHE/go.opentelemetry.io/otel/bridge/opencensus@v0.26.0/LICENSE:
 
                                  Apache License
                            Version 2.0, January 2004
@@ -10517,11 +10517,11 @@ Contents of probable licence file $GOMODCACHE/github.com/aws/smithy-go@v1.8.0/LI
 
 --------------------------------------------------------------------------------
 Module  : github.com/benbjohnson/clock
-Version : v1.2.0
-Time    : 2021-11-01T15:29:23Z
+Version : v1.3.0
+Time    : 2021-11-15T23:27:27Z
 Licence : MIT
 
-Contents of probable licence file $GOMODCACHE/github.com/benbjohnson/clock@v1.2.0/LICENSE:
+Contents of probable licence file $GOMODCACHE/github.com/benbjohnson/clock@v1.3.0/LICENSE:
 
 The MIT License (MIT)
 
@@ -21471,11 +21471,11 @@ Licensing of github.com/xi2/xz
 
 --------------------------------------------------------------------------------
 Module  : go.opentelemetry.io/otel/internal/metric
-Version : v0.25.0
-Time    : 2021-11-12T16:43:51Z
+Version : v0.26.0
+Time    : 2021-12-10T16:44:16Z
 Licence : Apache-2.0
 
-Contents of probable licence file $GOMODCACHE/go.opentelemetry.io/otel/internal/metric@v0.25.0/LICENSE:
+Contents of probable licence file $GOMODCACHE/go.opentelemetry.io/otel/internal/metric@v0.26.0/LICENSE:
 
                                  Apache License
                            Version 2.0, January 2004
@@ -21682,11 +21682,11 @@ Contents of probable licence file $GOMODCACHE/go.opentelemetry.io/otel/internal/
 
 --------------------------------------------------------------------------------
 Module  : go.opentelemetry.io/otel/metric
-Version : v0.25.0
-Time    : 2021-11-12T16:43:51Z
+Version : v0.26.0
+Time    : 2021-12-10T16:44:16Z
 Licence : Apache-2.0
 
-Contents of probable licence file $GOMODCACHE/go.opentelemetry.io/otel/metric@v0.25.0/LICENSE:
+Contents of probable licence file $GOMODCACHE/go.opentelemetry.io/otel/metric@v0.26.0/LICENSE:
 
                                  Apache License
                            Version 2.0, January 2004
@@ -21893,11 +21893,11 @@ Contents of probable licence file $GOMODCACHE/go.opentelemetry.io/otel/metric@v0
 
 --------------------------------------------------------------------------------
 Module  : go.opentelemetry.io/otel/sdk/export/metric
-Version : v0.25.0
-Time    : 2021-11-12T16:43:51Z
+Version : v0.26.0
+Time    : 2021-12-10T16:44:16Z
 Licence : Apache-2.0
 
-Contents of probable licence file $GOMODCACHE/go.opentelemetry.io/otel/sdk/export/metric@v0.25.0/LICENSE:
+Contents of probable licence file $GOMODCACHE/go.opentelemetry.io/otel/sdk/export/metric@v0.26.0/LICENSE:
 
                                  Apache License
                            Version 2.0, January 2004
@@ -22104,11 +22104,11 @@ Contents of probable licence file $GOMODCACHE/go.opentelemetry.io/otel/sdk/expor
 
 --------------------------------------------------------------------------------
 Module  : go.opentelemetry.io/otel/sdk/metric
-Version : v0.25.0
-Time    : 2021-11-12T16:43:51Z
+Version : v0.26.0
+Time    : 2021-12-10T16:44:16Z
 Licence : Apache-2.0
 
-Contents of probable licence file $GOMODCACHE/go.opentelemetry.io/otel/sdk/metric@v0.25.0/LICENSE:
+Contents of probable licence file $GOMODCACHE/go.opentelemetry.io/otel/sdk/metric@v0.26.0/LICENSE:
 
                                  Apache License
                            Version 2.0, January 2004
