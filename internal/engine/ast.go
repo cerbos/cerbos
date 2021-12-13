@@ -230,16 +230,28 @@ func buildExpr(expr *exprpb.Expr, acc *responsev1.ResourcesQueryPlanResponse_Exp
 	switch expr := expr.ExprKind.(type) {
 	case *exprpb.Expr_CallExpr:
 		fn, _ := opFromCLE(expr.CallExpr.Function)
+		var offset int
+		if expr.CallExpr.Target != nil {
+			offset++
+		}
 		e := Expr{
 			Operator: fn,
-			Operands: make([]*ExprOp, len(expr.CallExpr.Args)),
+			Operands: make([]*ExprOp, len(expr.CallExpr.Args)+offset),
 		}
 		eoe := ExprOpExpr{
 			Expression: &e,
 		}
+		if expr.CallExpr.Target != nil {
+			eoe.Expression.Operands[0] = &ExprOp{}
+			err := buildExpr(expr.CallExpr.Target, eoe.Expression.Operands[0])
+			if err != nil {
+				return err
+			}
+		}
+
 		for i, arg := range expr.CallExpr.Args {
-			eoe.Expression.Operands[i] = &ExprOp{}
-			err := buildExpr(arg, eoe.Expression.Operands[i])
+			eoe.Expression.Operands[i+offset] = &ExprOp{}
+			err := buildExpr(arg, eoe.Expression.Operands[i+offset])
 			if err != nil {
 				return err
 			}

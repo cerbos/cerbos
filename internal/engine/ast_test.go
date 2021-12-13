@@ -148,6 +148,21 @@ expression:
           - value: 3
 `,
 		},
+		{
+			expr: "x.map(t, t.upperAscii())",
+		},
+		{
+			expr: "f(a,3)",
+			must: func(acc *ExOp) {
+				h.assert(acc.GetExpression(), "f", []any{"a", h.mkValue(3)})
+			},
+		},
+		{
+			expr: "x.f(a,3)",
+			must: func(acc *ExOp) {
+				h.assert(acc.GetExpression(), "f", []any{"x", "a", h.mkValue(3)})
+			},
+		},
 	}
 
 	parse := func(s string) *exprpb.Expr {
