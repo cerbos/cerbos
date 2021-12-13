@@ -4493,11 +4493,11 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 --------------------------------------------------------------------------------
 Module  : github.com/tidwall/sjson
-Version : v1.2.3
-Time    : 2021-10-25T21:40:37Z
+Version : v1.2.4
+Time    : 2021-12-08T23:30:41Z
 Licence : MIT
 
-Contents of probable licence file $GOMODCACHE/github.com/tidwall/sjson@v1.2.3/LICENSE:
+Contents of probable licence file $GOMODCACHE/github.com/tidwall/sjson@v1.2.4/LICENSE:
 
 The MIT License (MIT)
 
