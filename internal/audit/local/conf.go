@@ -35,16 +35,16 @@ var (
 )
 
 type Conf struct {
-	StoragePath     string        `yaml:"storagePath"`
-	RetentionPeriod time.Duration `yaml:"retentionPeriod"`
+	StoragePath     string        `yaml:"storagePath" conf:",defaultValue=/path/to/dir"`
+	RetentionPeriod time.Duration `yaml:"retentionPeriod" conf:",defaultValue=168h"`
 	Advanced        AdvancedConf  `yaml:"advanced"`
 }
 
 type AdvancedConf struct {
-	BufferSize    uint          `yaml:"bufferSize"`
-	MaxBatchSize  uint          `yaml:"maxBatchSize"`
-	FlushInterval time.Duration `yaml:"flushInterval"`
-	GCInterval    time.Duration `yaml:"gcInterval"`
+	BufferSize    uint          `yaml:"bufferSize" conf:",defaultValue=256"`
+	MaxBatchSize  uint          `yaml:"maxBatchSize" conf:",defaultValue=32"`
+	FlushInterval time.Duration `yaml:"flushInterval" conf:",defaultValue=1s"`
+	GCInterval    time.Duration `yaml:"gcInterval" conf:",defaultValue=60s"`
 }
 
 func (c *Conf) Key() string {
