@@ -2877,11 +2877,11 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 
 --------------------------------------------------------------------------------
 Module  : github.com/minio/minio-go/v7
-Version : v7.0.16
-Time    : 2021-11-17T16:46:32Z
+Version : v7.0.18
+Time    : 2021-12-10T18:34:26Z
 Licence : Apache-2.0
 
-Contents of probable licence file $GOMODCACHE/github.com/minio/minio-go/v7@v7.0.16/LICENSE:
+Contents of probable licence file $GOMODCACHE/github.com/minio/minio-go/v7@v7.0.18/LICENSE:
 
 
                                  Apache License
