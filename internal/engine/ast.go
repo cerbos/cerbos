@@ -27,9 +27,11 @@ const (
 	LessThan           = "lt"
 	LessThanOrEqual    = "le"
 	In                 = "in"
-	List               = "newList"
+	List               = "list"
+	Struct             = "struct"
 	Add                = "add"
-	Field              = "field"
+	SetField           = "set-field"
+	GetField           = "get-field"
 	Index              = "index"
 )
 
@@ -286,7 +288,7 @@ func buildExpr(expr *exprpb.Expr, acc *responsev1.ResourcesQueryPlanResponse_Exp
 			}
 			acc.Node = &ExprOpExpr{
 				Expression: &Expr{
-					Operator: Field,
+					Operator: GetField,
 					Operands: []*ExprOp{
 						op,
 						{Node: &ExprOpVar{Variable: expr.SelectExpr.Field}},
@@ -322,6 +324,27 @@ func buildExpr(expr *exprpb.Expr, acc *responsev1.ResourcesQueryPlanResponse_Exp
 				}
 			}
 			acc.Node = &ExprOpExpr{Expression: &Expr{Operator: List, Operands: operands}}
+		}
+	case *exprpb.Expr_StructExpr:
+		operands := make([]*ExprOp, len(expr.StructExpr.Entries))
+		acc.Node = &ExprOpExpr{Expression: &Expr{Operator: Struct, Operands: operands}}
+		for i, entry := range expr.StructExpr.Entries {
+			k, v := new(ExprOp), new(ExprOp)
+			switch entry := entry.KeyKind.(type) {
+			case *exprpb.Expr_CreateStruct_Entry_MapKey:
+				err := buildExpr(entry.MapKey, k)
+				if err != nil {
+					return err
+				}
+			case *exprpb.Expr_CreateStruct_Entry_FieldKey:
+				k.Node = &ExprOpValue{Value: structpb.NewStringValue(entry.FieldKey)}
+			}
+			err := buildExpr(entry.Value, v)
+			if err != nil {
+				return err
+			}
+			operands[i] = new(ExprOp)
+			operands[i].Node = &ExprOpExpr{Expression: &Expr{Operator: SetField, Operands: []*ExprOp{k, v}}}
 		}
 	default:
 		return fmt.Errorf("unsupported expression: %v", expr)

@@ -4,10 +4,10 @@
 package engine
 
 import (
-	"github.com/cerbos/cerbos/internal/util"
 	"strings"
 	"testing"
 
+	"github.com/ghodss/yaml"
 	"github.com/google/go-cmp/cmp"
 	"github.com/stretchr/testify/require"
 	exprpb "google.golang.org/genproto/googleapis/api/expr/v1alpha1"
@@ -17,6 +17,7 @@ import (
 
 	responsev1 "github.com/cerbos/cerbos/api/genpb/cerbos/response/v1"
 	"github.com/cerbos/cerbos/internal/conditions"
+	"github.com/cerbos/cerbos/internal/util"
 )
 
 type buildExprTestHelper struct {
@@ -90,7 +91,7 @@ func Test_buildExpr(t *testing.T) {
 		{
 			expr: `a[b].c`,
 			must: func(acc *ExOp) {
-				h.assert(acc.GetExpression(), Field, []any{
+				h.assert(acc.GetExpression(), GetField, []any{
 					func(e *Ex) {
 						h.assert(e, Index, []any{"a", "b"})
 					},
@@ -102,10 +103,10 @@ func Test_buildExpr(t *testing.T) {
 			expr: `a[b].c.d`,
 			yaml: `
 expression:
-  operator: field
+  operator: "get-field"
   operands:
     - expression:
-        operator: field
+        operator: "get-field"
         operands:
           - expression:
               operator: index
@@ -116,9 +117,9 @@ expression:
     - variable: d
 `,
 			must: func(acc *ExOp) {
-				h.assert(acc.GetExpression(), Field, []any{
+				h.assert(acc.GetExpression(), GetField, []any{
 					func(e *Ex) {
-						h.assert(e, Field, []any{
+						h.assert(e, GetField, []any{
 							func(e *Ex) {
 								h.assert(e, Index, []any{"a", "b"})
 							},
@@ -128,6 +129,24 @@ expression:
 					"d",
 				})
 			},
+		},
+		{
+			expr: `{a:2, b: 3}`,
+			yaml: `
+expression:
+  operator: struct
+  operands:
+    - expression:
+        operator: "set-field"
+        operands:
+          - variable: a
+          - value: 2
+    - expression:
+        operator: "set-field"
+        operands:
+          - variable: b
+          - value: 3
+`,
 		},
 	}
 
@@ -142,7 +161,12 @@ expression:
 			acc := new(ExOp)
 			err := buildExpr(parse(tt.expr), acc)
 			is.NoError(err)
-			t.Log(protojson.Format(acc))
+			data, err := protojson.Marshal(acc)
+			is.NoError(err)
+			data, err = yaml.JSONToYAML(data)
+			is.NoError(err)
+			t.Log(string(data))
+
 			if tt.must != nil {
 				tt.must(acc)
 			}
