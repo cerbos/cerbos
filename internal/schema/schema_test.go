@@ -9,14 +9,13 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"strings"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
+	"github.com/spf13/afero"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/testing/protocmp"
 
-	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
 	privatev1 "github.com/cerbos/cerbos/api/genpb/cerbos/private/v1"
 	schemav1 "github.com/cerbos/cerbos/api/genpb/cerbos/schema/v1"
 	"github.com/cerbos/cerbos/internal/schema"
@@ -144,40 +143,58 @@ func TestValidate(t *testing.T) {
 }
 
 func TestCache(t *testing.T) {
-	store := mkStore(t)
+	fsDir := test.PathToDir(t, filepath.Join("schema", "fs"))
+	fsys := afero.NewCopyOnWriteFs(afero.FromIOFS{FS: os.DirFS(fsDir)}, afero.NewMemMapFs())
+
+	index, err := index.Build(context.Background(), afero.NewIOFS(fsys))
+	require.NoError(t, err)
+
+	store := disk.NewFromIndexWithConf(index, &disk.Conf{})
 	conf := &schema.Conf{Enforcement: schema.EnforcementReject}
 	mgr := schema.NewWithConf(context.Background(), store, conf)
 
 	s, ok := mgr.(storage.Subscriber)
 	require.True(t, ok)
 
-	tc := &privatev1.SchemaTestCase{}
-	test.ReadSingleTestCase(t, filepath.Join("schema", "test_cases", "case_00.yaml"), tc)
+	// stash the schema contents for later use
+	schemaBytes, err := afero.ReadFile(fsys, filepath.Join(schema.Directory, "complex_object.json"))
+	require.NoError(t, err)
 
-	checkValid := func(t *testing.T) {
-		t.Helper()
+	t.Run("change_contents", func(t *testing.T) {
+		schemaFile := filepath.Join(schema.Directory, "complex_object.json")
+		schemaURL := fmt.Sprintf("%s:///complex_object.json", schema.URLScheme)
 
-		have, err := mgr.Validate(context.Background(), tc.SchemaRefs, tc.Input)
-		require.NoError(t, err)
-		require.Empty(t, have.Errors)
-	}
+		// control test (everything is as it should be)
+		require.NoError(t, mgr.CheckSchema(context.Background(), schemaURL))
 
-	t.Run("delete_schema", func(t *testing.T) {
-		s.OnStorageEvent(genEvents(storage.EventDeleteSchema, tc.SchemaRefs)...)
-		checkValid(t)
+		// write rubbish to file
+		require.NoError(t, afero.WriteFile(fsys, schemaFile, []byte("blah"), 0o644))
+		s.OnStorageEvent(storage.Event{Kind: storage.EventAddOrUpdateSchema, SchemaFile: "complex_object.json"})
+		require.Error(t, mgr.CheckSchema(context.Background(), schemaURL))
+
+		// reset
+		require.NoError(t, afero.WriteFile(fsys, schemaFile, schemaBytes, 0o644))
+		s.OnStorageEvent(storage.Event{Kind: storage.EventAddOrUpdateSchema, SchemaFile: "complex_object.json"})
+		require.NoError(t, mgr.CheckSchema(context.Background(), schemaURL))
 	})
 
-	t.Run("add_schema", func(t *testing.T) {
-		s.OnStorageEvent(genEvents(storage.EventAddOrUpdateSchema, tc.SchemaRefs)...)
-		checkValid(t)
-	})
-}
+	t.Run("add_and_delete", func(t *testing.T) {
+		schemaFile := filepath.Join(schema.Directory, "wibble.json")
+		schemaURL := fmt.Sprintf("%s:///wibble.json", schema.URLScheme)
 
-func genEvents(kind storage.EventKind, schemas *policyv1.Schemas) []storage.Event {
-	return []storage.Event{
-		{Kind: kind, SchemaFile: strings.TrimPrefix(schemas.PrincipalSchema.Ref, schema.URLScheme+"/")},
-		{Kind: kind, SchemaFile: strings.TrimPrefix(schemas.ResourceSchema.Ref, schema.URLScheme+"/")},
-	}
+		// control test
+		require.Error(t, mgr.CheckSchema(context.Background(), schemaURL))
+
+		// add file
+		require.NoError(t, afero.WriteFile(fsys, schemaFile, schemaBytes, 0o644))
+		s.OnStorageEvent(storage.Event{Kind: storage.EventAddOrUpdateSchema, SchemaFile: "wibble.json"})
+		require.NoError(t, mgr.CheckSchema(context.Background(), schemaURL))
+
+		// delete file
+		require.NoError(t, fsys.Remove(schemaFile))
+		s.OnStorageEvent(storage.Event{Kind: storage.EventDeleteSchema, SchemaFile: "wibble.json"})
+		require.Error(t, mgr.CheckSchema(context.Background(), schemaURL))
+	})
 }
 
 func readTestCase(t *testing.T, data []byte) *privatev1.SchemaTestCase {
