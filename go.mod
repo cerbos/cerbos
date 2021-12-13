@@ -76,7 +76,7 @@ require (
 	github.com/lestrrat-go/jwx v1.2.13
 	github.com/minio/minio-go/v7 v7.0.16
 	github.com/santhosh-tekuri/jsonschema/v5 v5.0.0
-	github.com/tidwall/gjson v1.10.2
+	github.com/tidwall/gjson v1.12.1
 	go.opentelemetry.io/otel v1.3.0
 	go.opentelemetry.io/otel/bridge/opencensus v0.25.0
 	go.opentelemetry.io/otel/exporters/jaeger v1.3.0
