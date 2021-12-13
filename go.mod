@@ -65,7 +65,7 @@ require (
 	google.golang.org/grpc v1.42.0
 	google.golang.org/protobuf v1.27.1
 	gopkg.in/yaml.v2 v2.4.0
-	helm.sh/helm/v3 v3.7.1
+	helm.sh/helm/v3 v3.7.2
 	modernc.org/sqlite v1.14.1
 )
 
