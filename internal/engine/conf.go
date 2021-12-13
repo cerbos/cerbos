@@ -18,8 +18,8 @@ const confKey = "engine"
 var errEmptyDefaultVersion = errors.New("engine.defaultVersion must not be an empty string")
 
 type Conf struct {
-	DefaultPolicyVersion string `yaml:"defaultPolicyVersion"`
-	NumWorkers           uint   `yaml:"numWorkers"`
+	DefaultPolicyVersion string `yaml:"defaultPolicyVersion" conf:",defaultValue=\"default\""`
+	NumWorkers           uint   `yaml:"numWorkers" conf:",ignore"`
 }
 
 func (c *Conf) Key() string {
