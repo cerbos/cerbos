@@ -203,9 +203,7 @@ func convert(expr *enginev1.ResourcesQueryPlanOutput_Node, acc *responsev1.Resou
 		if err != nil {
 			return err
 		}
-		acc.Node = &CoOpEx{
-			Expression: eop.GetExpression(),
-		}
+		acc.Node = &CoOpEx{Expression: eop.GetExpression()}
 	case *enginev1.ResourcesQueryPlanOutput_Node_LogicalOperation:
 		c := &CoOpCo{
 			Condition: &Co{
@@ -214,7 +212,7 @@ func convert(expr *enginev1.ResourcesQueryPlanOutput_Node, acc *responsev1.Resou
 			},
 		}
 		for i, n := range node.LogicalOperation.Nodes {
-			c.Condition.Nodes[i] = &CoOp{}
+			c.Condition.Nodes[i] = new(CoOp)
 			err := convert(n, c.Condition.Nodes[i])
 			if err != nil {
 				return err
