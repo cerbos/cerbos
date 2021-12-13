@@ -58,8 +58,12 @@ func (w *Writer) walk(s *indexer.Struct, writer io.Writer) error {
 func (w *Writer) doWalk(fields []*indexer.StructField, writer io.Writer, prefix string) error {
 	for _, field := range fields {
 		name := field.Name
+		defaultValue := "<DEFAULT_VALUE_NOT_SET>"
 		if field.TagsData != nil {
 			name = field.TagsData.Name
+			if field.TagsData.ConfOptions.DefaultValue != "" {
+				defaultValue = field.TagsData.DefaultValue
+			}
 		}
 
 		docs := ""
@@ -77,7 +81,7 @@ func (w *Writer) doWalk(fields []*indexer.StructField, writer io.Writer, prefix 
 				return err
 			}
 		} else {
-			_, err := fmt.Fprintf(writer, "%s%s %s\n", prefix, name, docs)
+			_, err := fmt.Fprintf(writer, "%s%s: %s %s\n", prefix, name, defaultValue, docs)
 			if err != nil {
 				return err
 			}

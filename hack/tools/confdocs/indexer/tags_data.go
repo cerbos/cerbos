@@ -4,12 +4,28 @@ import (
 	"errors"
 	"fmt"
 	"github.com/fatih/structtag"
+	"strings"
 )
 
 var errTagNotExists = errors.New("tag doesn't exist")
 
+const (
+	keyRequired = "required"
+	keyOptional = "optional"
+
+	optionDefaultValue      = "defaultValue"
+	optionMutuallyExclusive = "mutuallyExclusive"
+)
+
 type TagsData struct {
-	Name string
+	ConfOptions
+	Name       string
+	IsRequired bool
+}
+
+type ConfOptions struct {
+	DefaultValue      string
+	MutuallyExclusive string
 }
 
 func ParseTags(tags string) (*TagsData, error) {
@@ -27,7 +43,40 @@ func ParseTags(tags string) (*TagsData, error) {
 		return nil, errTagNotExists
 	}
 
+	var isRequired = false
+	var confOptions ConfOptions
+	confTag, _ := t.Get("conf")
+	if confTag != nil {
+		if confTag.Name == keyRequired {
+			isRequired = true
+		} else if confTag.Name == keyOptional {
+			isRequired = false
+		}
+		confOptions = parseConfOptions(confTag.Options)
+	}
+
 	return &TagsData{
-		Name: yamlTag.Name,
+		ConfOptions: confOptions,
+		Name:        yamlTag.Name,
+		IsRequired:  isRequired,
 	}, nil
+}
+
+func parseConfOptions(options []string) ConfOptions {
+	var confOptions = ConfOptions{}
+	for _, option := range options {
+		sp := strings.SplitN(option, "=", 2)
+
+		switch sp[0] {
+		case optionDefaultValue:
+			confOptions.DefaultValue = sp[1]
+			break
+		case optionMutuallyExclusive:
+			// TODO(oguzhan): Implement mutually exclusive option
+			confOptions.MutuallyExclusive = sp[1]
+			break
+		}
+	}
+
+	return confOptions
 }
