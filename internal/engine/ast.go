@@ -268,18 +268,19 @@ func buildExpr(expr *exprpb.Expr, acc *responsev1.ResourcesQueryPlanResponse_Exp
 			}
 		}
 
-		var sb strings.Builder
-		for i := len(names) - 1; i >= 0; i-- {
-			sb.WriteString(names[i])
-			if i > 0 {
-				sb.WriteString(".")
-			}
-		}
 		if e == nil {
+			var sb strings.Builder
+			for i := len(names) - 1; i >= 0; i-- {
+				sb.WriteString(names[i])
+				if i > 0 {
+					sb.WriteString(".")
+				}
+			}
+			// This is a compound "a.b.c" variable
 			acc.Node = &ExprOpVar{Variable: sb.String()}
 		} else {
 			op := new(ExprOp)
-			err := buildExpr(e.SelectExpr.Operand, op)
+			err := buildExpr(expr.SelectExpr.Operand, op)
 			if err != nil {
 				return err
 			}
@@ -288,7 +289,7 @@ func buildExpr(expr *exprpb.Expr, acc *responsev1.ResourcesQueryPlanResponse_Exp
 					Operator: Field,
 					Operands: []*ExprOp{
 						op,
-						{Node: &ExprOpVar{Variable: sb.String()}},
+						{Node: &ExprOpVar{Variable: expr.SelectExpr.Field}},
 					},
 				},
 			}

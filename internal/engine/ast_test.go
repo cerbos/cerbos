@@ -4,6 +4,8 @@
 package engine
 
 import (
+	"github.com/cerbos/cerbos/internal/util"
+	"strings"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -61,7 +63,8 @@ func Test_buildExpr(t *testing.T) {
 	h := buildExprTestHelper{t: t, is: is}
 	tests := []struct {
 		expr string
-		must func(op *ExOp)
+		must func(op *ExOp) // use this
+		yaml string         // and/or this to assert
 	}{
 		{
 			expr: `[1,a + 2,"q"]`,
@@ -95,6 +98,37 @@ func Test_buildExpr(t *testing.T) {
 				})
 			},
 		},
+		{
+			expr: `a[b].c.d`,
+			yaml: `
+expression:
+  operator: field
+  operands:
+    - expression:
+        operator: field
+        operands:
+          - expression:
+              operator: index
+              operands:
+                - variable: a
+                - variable: b
+          - variable: c
+    - variable: d
+`,
+			must: func(acc *ExOp) {
+				h.assert(acc.GetExpression(), Field, []any{
+					func(e *Ex) {
+						h.assert(e, Field, []any{
+							func(e *Ex) {
+								h.assert(e, Index, []any{"a", "b"})
+							},
+							"c",
+						})
+					},
+					"d",
+				})
+			},
+		},
 	}
 
 	parse := func(s string) *exprpb.Expr {
@@ -109,7 +143,15 @@ func Test_buildExpr(t *testing.T) {
 			err := buildExpr(parse(tt.expr), acc)
 			is.NoError(err)
 			t.Log(protojson.Format(acc))
-			tt.must(acc)
+			if tt.must != nil {
+				tt.must(acc)
+			}
+			if tt.yaml != "" {
+				expected := new(ExOp)
+				err = util.ReadJSONOrYAML(strings.NewReader(tt.yaml), expected)
+				is.NoError(err)
+				is.Empty(cmp.Diff(expected, acc, protocmp.Transform()))
+			}
 		})
 	}
 }
