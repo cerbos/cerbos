@@ -74,7 +74,7 @@ require (
 	github.com/aws/aws-sdk-go v1.42.19
 	github.com/jackc/pgtype v1.9.1
 	github.com/lestrrat-go/jwx v1.2.13
-	github.com/minio/minio-go/v7 v7.0.16
+	github.com/minio/minio-go/v7 v7.0.18
 	github.com/santhosh-tekuri/jsonschema/v5 v5.0.0
 	github.com/tidwall/gjson v1.10.2
 	go.opentelemetry.io/otel v1.2.0
