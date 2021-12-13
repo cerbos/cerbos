@@ -227,7 +227,14 @@ func (idx *indexBuilder) build(fsys fs.FS) (*index, error) {
 			err.MissingImports = append(err.MissingImports, missing...)
 		}
 
-		logger.Debug("Index build failed", zap.Error(err))
+		if ce := logger.Check(zap.DebugLevel, "Index build failed"); ce != nil {
+			ce.Write(
+				zap.Any("missing", err.MissingImports),
+				zap.Any("load_failures", err.LoadFailures),
+				zap.Any("duplicates", err.DuplicateDefs),
+				zap.Strings("disabled", err.Disabled),
+			)
+		}
 
 		return nil, err
 	}

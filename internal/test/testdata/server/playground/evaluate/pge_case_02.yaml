@@ -1,0 +1,83 @@
+---
+description: "Valid Request with validation errors"
+wantStatus:
+  httpStatusCode: 200
+  grpcStatusCode: 0
+playgroundEvaluate:
+  input: {
+    "playgroundId": "test",
+    "policyFiles": [
+      {
+        "fileName": "derived_roles_01.yaml",
+        "contents": "{{ .Files.Get `store/derived_roles/derived_roles_01.yaml` | b64enc }}",
+      },
+      {
+        "fileName": "derived_roles_02.yaml",
+        "contents": "{{ .Files.Get `store/derived_roles/derived_roles_02.yaml` | b64enc }}",
+      },
+      {
+        "fileName": "policy_01.yaml",
+        "contents": "{{ .Files.Get `store/resource_policies/policy_01.yaml` | b64enc }}",
+      },
+      {
+        "fileName": "_schemas/principal.json",
+        "contents": "{{ .Files.Get `store/_schemas/principal.json` | b64enc }}",
+      },
+      {
+        "fileName": "_schemas/leave_request.json",
+        "contents": "{{ .Files.Get `store/_schemas/leave_request.json` | b64enc }}",
+      }
+    ],
+  "actions": ["approve", "view:public"],
+    "principal": {
+      "id": "john",
+      "policyVersion": "20210210",
+      "roles": [
+        "employee"
+      ],
+      "attr": {
+        "department": "accounting",
+        "geography": "GB",
+        "team": "design"
+      }
+    },
+    "resource": {
+      "id": "XX125",
+      "kind": "leave_request",
+      "policyVersion": "20210210",
+      "attr": {
+        "department": "accounting",
+        "geography": "GB",
+        "id": "XX125",
+        "owner": "john",
+        "team": "design"
+      }
+    }
+  }
+  wantResponse: {
+    "playgroundId": "test",
+    "success": {
+      "results": [
+        {
+          "action": "approve",
+          "effect": "EFFECT_DENY",
+          "policy": "resource.leave_request.v20210210",
+          "effective_derived_roles": ["employee_that_owns_the_record", "any_employee"],
+          "validationErrors": [
+            {"path": "/department", "message": "value must be one of \"marketing\", \"engineering\"", "source": "SOURCE_PRINCIPAL"},
+            {"path": "/department", "message": "value must be one of \"marketing\", \"engineering\"", "source": "SOURCE_RESOURCE"}
+          ]
+        },
+        {
+          "action": "view:public",
+          "effect": "EFFECT_ALLOW",
+          "policy": "resource.leave_request.v20210210",
+          "effective_derived_roles": ["employee_that_owns_the_record", "any_employee"],
+          "validationErrors": [
+            {"path": "/department", "message": "value must be one of \"marketing\", \"engineering\"", "source": "SOURCE_PRINCIPAL"},
+            {"path": "/department", "message": "value must be one of \"marketing\", \"engineering\"", "source": "SOURCE_RESOURCE"}
+          ]
+        }
+      ]
+    }
+  }

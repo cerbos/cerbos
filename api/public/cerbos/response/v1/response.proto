@@ -188,6 +188,7 @@ message PlaygroundEvaluateResponse {
         cerbos.effect.v1.Effect effect = 2;
         string policy = 3;
         repeated string effective_derived_roles = 4;
+        repeated cerbos.schema.v1.ValidationError validation_errors = 5;
     }
 
     message EvalResultList {

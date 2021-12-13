@@ -1,5 +1,5 @@
 ---
-description: "Valid CheckResourceSet request"
+description: "CheckResourceSet request with validation errors"
 wantStatus:
   httpStatusCode: 200
   grpcStatusCode: 0
@@ -47,7 +47,7 @@ playgroundProxy:
           "employee"
         ],
         "attr": {
-          "department": "marketing",
+          "department": "accounting",
           "geography": "GB",
           "team": "design"
         }
@@ -58,7 +58,7 @@ playgroundProxy:
         "instances": {
           "XX125": {
             "attr": {
-              "department": "marketing",
+              "department": "accounting",
               "geography": "GB",
               "id": "XX125",
               "owner": "john",
@@ -84,7 +84,11 @@ playgroundProxy:
             "view:public": "EFFECT_ALLOW",
             "approve": "EFFECT_DENY",
             "defer": "EFFECT_ALLOW"
-          }
+          },
+          "validationErrors": [
+            {"path": "/department", "message": "value must be one of \"marketing\", \"engineering\"", "source": "SOURCE_PRINCIPAL"},
+            {"path": "/department", "message": "value must be one of \"marketing\", \"engineering\"", "source": "SOURCE_RESOURCE"}
+          ]
         }
       },
       "meta": {

@@ -919,6 +919,12 @@
           "items": {
             "type": "string"
           }
+        },
+        "validationErrors": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/v1ValidationError"
+          }
         }
       }
     },
