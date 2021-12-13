@@ -78,7 +78,7 @@ require (
 	github.com/santhosh-tekuri/jsonschema/v5 v5.0.0
 	github.com/tidwall/gjson v1.12.1
 	go.opentelemetry.io/otel v1.3.0
-	go.opentelemetry.io/otel/bridge/opencensus v0.25.0
+	go.opentelemetry.io/otel/bridge/opencensus v0.26.0
 	go.opentelemetry.io/otel/exporters/jaeger v1.3.0
 	go.opentelemetry.io/otel/sdk v1.3.0
 	go.opentelemetry.io/otel/trace v1.3.0
