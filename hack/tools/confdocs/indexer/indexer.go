@@ -62,67 +62,13 @@ func (cd *Indexer) Run() (Index, error) {
 	for _, pkg := range pkgs {
 		for _, file := range pkg.Syntax {
 			cd.indexStructs(pkg, file, ifaceImplStructs, cd.index)
-			cd.addMethodsToIndexedStructs(file, cd.index)
 		}
 	}
 
 	return cd.index, nil
 }
 
-func (cd *Indexer) addMethodsToIndexedStructs(file *ast.File, indexedStructs map[string]*Struct) {
-	ast.Inspect(file, func(node ast.Node) bool {
-		if node == nil {
-			return false
-		}
-
-		functionDecl, ok := node.(*ast.FuncDecl)
-		var recieverType string
-
-		if !ok {
-			return true
-		}
-
-		if functionDecl.Recv != nil {
-			for _, v := range functionDecl.Recv.List {
-				switch xv := v.Type.(type) {
-				case *ast.StarExpr:
-					if si, ok := xv.X.(*ast.Ident); ok {
-						recieverType = si.Name
-					}
-				case *ast.Ident:
-					recieverType = xv.Name
-				}
-
-				var returnType = ""
-
-				if functionDecl.Type != nil && functionDecl.Type.Results != nil &&
-					functionDecl.Type.Results.List != nil && functionDecl.Type.Results.List[0] != nil {
-					id, okk := functionDecl.Type.Results.List[0].Type.(*ast.Ident)
-					if okk {
-						returnType = id.Name
-					}
-				}
-
-				m := &StructMethod{
-					FilePos:      file.Pos(),
-					ReceiverType: recieverType,
-					Name:         functionDecl.Name.Name,
-					ReturnType:   returnType,
-					Raw:          functionDecl,
-				}
-
-				structObject, ok := indexedStructs[fmt.Sprintf("%d-%s", int(file.Pos()), m.ReceiverType)]
-				if ok {
-					structObject.Methods = append(structObject.Methods, m)
-				}
-			}
-		}
-
-		return true
-	})
-}
-
-// indexStructs, indexes all structs in the given file and marks them if they implement the interface
+// indexStructs, indexes all struct fields in the given package and file
 func (cd *Indexer) indexStructs(pkg *packages.Package, file *ast.File, ifaceImplStructs map[string]*types.Struct,
 	indexedStructs map[string]*Struct) {
 	ast.Inspect(file, func(node ast.Node) bool {
@@ -313,6 +259,7 @@ func (cd *Indexer) getInterface(pkg *types.Package, name string) (*types.Interfa
 	return nil, fmt.Errorf("interface %s does not exist in %s", name, pkg.Path())
 }
 
+// findStructsImplIface, creates an index of structs implementing interface iface.
 func (cd *Indexer) findStructsImplIface(pkgs []*packages.Package, iface *types.Interface, ifaceName string) (map[string]*types.Struct, error) {
 	var structs = make(map[string]*types.Struct)
 

@@ -11,19 +11,10 @@ const unknownField = "<UNKNOWN_FIELD>"
 type Struct struct {
 	FilePos token.Pos
 	Fields  []*StructField
-	Methods []*StructMethod
 	Raw     *ast.StructType
 	Typed   *types.Struct
 	PkgPath string
 	Name    string
-}
-
-type StructMethod struct {
-	FilePos      token.Pos
-	ReceiverType string
-	Name         string
-	ReturnType   string
-	Raw          *ast.FuncDecl
 }
 
 type StructField struct {
