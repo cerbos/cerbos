@@ -149,7 +149,102 @@ expression:
 `,
 		},
 		{
+			expr: "x.filter(t, t > 0)",
+			yaml: `
+        expression:
+          operator: loop
+          operands:
+          - expression:
+              operands:
+              - expression:
+                  operands:
+                  - expression:
+                      operands:
+                      - variable: t
+                      - value: 0
+                      operator: gt
+                  - expression:
+                      operands:
+                      - variable: __result__
+                      - expression:
+                          operands:
+                          - variable: t
+                          operator: list
+                      operator: add
+                  - variable: __result__
+                  operator: _?_:_
+              operator: loop-step
+          - expression:
+              operands:
+              - value: true
+              operator: loop-condition
+          - expression:
+              operands:
+              - variable: __result__
+              operator: loop-result
+          - expression:
+              operands:
+              - value: []
+              operator: loop-accu-init
+          - expression:
+              operands:
+              - variable: x
+              operator: loop-iter-range
+          - expression:
+              operands:
+              - variable: t
+              operator: loop-iter-var
+          - expression:
+              operands:
+              - variable: __result__
+              operator: loop-accu-var
+`,
+		},
+		{
 			expr: "x.map(t, t.upperAscii())",
+			yaml: `
+        expression:
+          operands:
+          - expression:
+              operands:
+              - expression:
+                  operands:
+                  - variable: __result__
+                  - expression:
+                      operands:
+                      - expression:
+                          operands:
+                          - variable: t
+                          operator: upperAscii
+                      operator: list
+                  operator: add
+              operator: loop-step
+          - expression:
+              operands:
+              - value: true
+              operator: loop-condition
+          - expression:
+              operands:
+              - variable: __result__
+              operator: loop-result
+          - expression:
+              operands:
+              - value: []
+              operator: loop-accu-init
+          - expression:
+              operands:
+              - variable: x
+              operator: loop-iter-range
+          - expression:
+              operands:
+              - variable: t
+              operator: loop-iter-var
+          - expression:
+              operands:
+              - variable: __result__
+              operator: loop-accu-var
+          operator: loop
+`,
 		},
 		{
 			expr: "f(a,3)",
@@ -180,7 +275,7 @@ expression:
 			is.NoError(err)
 			data, err = yaml.JSONToYAML(data)
 			is.NoError(err)
-			t.Log(string(data))
+			t.Logf("\n%s", string(data))
 
 			if tt.must != nil {
 				tt.must(acc)

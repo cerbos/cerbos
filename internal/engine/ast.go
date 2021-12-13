@@ -33,6 +33,14 @@ const (
 	SetField           = "set-field"
 	GetField           = "get-field"
 	Index              = "index"
+	Comprehension      = "loop"
+	LoopStep           = "loop-step"
+	LoopCondition      = "loop-condition"
+	LoopResult         = "loop-result"
+	LoopAccuInit       = "loop-accu-init"
+	LoopIterRange      = "loop-iter-range"
+	LoopIterVar        = "loop-iter-var"
+	LoopAccuVar        = "loop-accu-var"
 )
 
 var ErrUnknownOperator = errors.New("unknown operator")
@@ -226,7 +234,9 @@ func buildExpr(expr *exprpb.Expr, acc *responsev1.ResourcesQueryPlanResponse_Exp
 		ExprOpValue = responsev1.ResourcesQueryPlanResponse_Expression_Operand_Value
 		ExprOpVar   = responsev1.ResourcesQueryPlanResponse_Expression_Operand_Variable
 	)
-
+	mkExprOpExpr := func(op string, args ...*ExprOp) *ExprOpExpr {
+		return &ExprOpExpr{Expression: &Expr{Operator: op, Operands: args}}
+	}
 	switch expr := expr.ExprKind.(type) {
 	case *exprpb.Expr_CallExpr:
 		fn, _ := opFromCLE(expr.CallExpr.Function)
@@ -298,15 +308,7 @@ func buildExpr(expr *exprpb.Expr, acc *responsev1.ResourcesQueryPlanResponse_Exp
 			if err != nil {
 				return err
 			}
-			acc.Node = &ExprOpExpr{
-				Expression: &Expr{
-					Operator: GetField,
-					Operands: []*ExprOp{
-						op,
-						{Node: &ExprOpVar{Variable: expr.SelectExpr.Field}},
-					},
-				},
-			}
+			acc.Node = mkExprOpExpr(GetField, op, &ExprOp{Node: &ExprOpVar{Variable: expr.SelectExpr.Field}})
 		}
 	case *exprpb.Expr_ListExpr:
 		ok := true
@@ -335,11 +337,10 @@ func buildExpr(expr *exprpb.Expr, acc *responsev1.ResourcesQueryPlanResponse_Exp
 					return err
 				}
 			}
-			acc.Node = &ExprOpExpr{Expression: &Expr{Operator: List, Operands: operands}}
+			acc.Node = mkExprOpExpr(List, operands...)
 		}
 	case *exprpb.Expr_StructExpr:
 		operands := make([]*ExprOp, len(expr.StructExpr.Entries))
-		acc.Node = &ExprOpExpr{Expression: &Expr{Operator: Struct, Operands: operands}}
 		for i, entry := range expr.StructExpr.Entries {
 			k, v := new(ExprOp), new(ExprOp)
 			switch entry := entry.KeyKind.(type) {
@@ -356,8 +357,38 @@ func buildExpr(expr *exprpb.Expr, acc *responsev1.ResourcesQueryPlanResponse_Exp
 				return err
 			}
 			operands[i] = new(ExprOp)
-			operands[i].Node = &ExprOpExpr{Expression: &Expr{Operator: SetField, Operands: []*ExprOp{k, v}}}
+			operands[i].Node = mkExprOpExpr(SetField, k, v)
 		}
+		acc.Node = mkExprOpExpr(Struct, operands...)
+	case *exprpb.Expr_ComprehensionExpr:
+		e := expr.ComprehensionExpr
+		var operands []*ExprOp
+
+		for _, r := range []struct {
+			n, v string
+			x    *exprpb.Expr
+		}{
+			{n: LoopStep, x: e.LoopStep},
+			{n: LoopCondition, x: e.LoopCondition},
+			{n: LoopResult, x: e.Result},
+			{n: LoopAccuInit, x: e.AccuInit},
+			{n: LoopIterRange, x: e.IterRange},
+			{n: LoopIterVar, v: e.IterVar},
+			{n: LoopAccuVar, v: e.AccuVar},
+		} {
+
+			op := new(ExprOp)
+			if r.x != nil {
+				err := buildExpr(r.x, op)
+				if err != nil {
+					return err
+				}
+			} else if r.v != "" {
+				op.Node = &ExprOpVar{Variable: r.v}
+			}
+			operands = append(operands, &ExprOp{Node: mkExprOpExpr(r.n, op)})
+		}
+		acc.Node = mkExprOpExpr(Comprehension, operands...)
 	default:
 		return fmt.Errorf("unsupported expression: %v", expr)
 	}
