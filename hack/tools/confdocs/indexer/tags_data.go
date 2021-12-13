@@ -15,17 +15,19 @@ const (
 
 	optionDefaultValue      = "defaultValue"
 	optionMutuallyExclusive = "mutuallyExclusive"
+	optionIgnore            = "ignore"
 )
 
 type TagsData struct {
 	ConfOptions
-	Name       string
-	IsRequired bool
+	Name     string
+	Required bool
 }
 
 type ConfOptions struct {
 	DefaultValue      string
 	MutuallyExclusive string
+	Ignore            bool
 }
 
 func ParseTags(tags string) (*TagsData, error) {
@@ -58,7 +60,7 @@ func ParseTags(tags string) (*TagsData, error) {
 	return &TagsData{
 		ConfOptions: confOptions,
 		Name:        yamlTag.Name,
-		IsRequired:  isRequired,
+		Required:    isRequired,
 	}, nil
 }
 
@@ -75,6 +77,8 @@ func parseConfOptions(options []string) ConfOptions {
 			// TODO(oguzhan): Implement mutually exclusive option
 			confOptions.MutuallyExclusive = sp[1]
 			break
+		case optionIgnore:
+			confOptions.Ignore = true
 		}
 	}
 

@@ -60,6 +60,9 @@ func (w *Writer) doWalk(fields []*indexer.StructField, writer io.Writer, prefix 
 		name := field.Name
 		defaultValue := "<DEFAULT_VALUE_NOT_SET>"
 		if field.TagsData != nil {
+			if field.TagsData.Ignore {
+				continue
+			}
 			name = field.TagsData.Name
 			if field.TagsData.ConfOptions.DefaultValue != "" {
 				defaultValue = field.TagsData.DefaultValue
