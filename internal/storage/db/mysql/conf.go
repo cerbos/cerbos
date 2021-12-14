@@ -13,10 +13,10 @@ import (
 const confKey = storage.ConfKey + ".mysql"
 
 type Conf struct {
-	DSN          string                 `yaml:"dsn"`
+	DSN          string                 `yaml:"dsn" conf:"required,defaultValue=\"user:password@tcp(localhost:3306)/db?interpolateParams=true\""`
 	ConnPool     *internal.ConnPoolConf `yaml:"connPool"`
-	TLS          map[string]TLSConf     `yaml:"tls"`
-	ServerPubKey map[string]string      `yaml:"serverPubKey"`
+	TLS          map[string]TLSConf     `yaml:"tls" conf:",defaultValue=\n  mytls:\n    cert: /path/to/certificate\n      key: /path/to/private_key\n      caCert: /path/to/CA_certificate"`
+	ServerPubKey map[string]string      `yaml:"serverPubKey" conf:",defaultValue=\n  mykey: testdata/server_public_key.pem"`
 }
 
 type TLSConf struct {

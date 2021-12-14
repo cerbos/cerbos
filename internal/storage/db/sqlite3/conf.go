@@ -10,7 +10,7 @@ import "github.com/cerbos/cerbos/internal/storage"
 const confKey = storage.ConfKey + ".sqlite3"
 
 type Conf struct {
-	DSN string `yaml:"dsn"`
+	DSN string `yaml:"dsn" conf:"required,defaultValue=\":memory:?_fk=true\""`
 }
 
 func (c *Conf) Key() string {

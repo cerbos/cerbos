@@ -11,10 +11,10 @@ import (
 
 // ConnPoolConf holds common SQL connection pool settings.
 type ConnPoolConf struct {
-	MaxLifetime time.Duration `yaml:"maxLifeTime"`
-	MaxIdleTime time.Duration `yaml:"maxIdleTime"`
-	MaxOpen     uint          `yaml:"maxOpen"`
-	MaxIdle     uint          `yaml:"maxIdle"`
+	MaxLifetime time.Duration `yaml:"maxLifeTime" conf:",defaultValue=60m"`
+	MaxIdleTime time.Duration `yaml:"maxIdleTime" conf:",defaultValue=45s"`
+	MaxOpen     uint          `yaml:"maxOpen" conf:",defaultValue=4"`
+	MaxIdle     uint          `yaml:"maxIdle" conf:",defaultValue=1"`
 }
 
 func (cc *ConnPoolConf) Configure(db *sqlx.DB) {
