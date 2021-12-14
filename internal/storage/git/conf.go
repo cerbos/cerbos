@@ -30,35 +30,35 @@ const (
 // Conf holds the configuration for Git storage driver.
 type Conf struct {
 	// Protocol is the Git protocol to use. Valid values are https, ssh, and file.
-	Protocol string `yaml:"protocol"`
+	Protocol string `yaml:"protocol" conf:"required,defaultValue=file"`
 	// URL is the URL to the Git repo.
-	URL string `yaml:"url"`
+	URL string `yaml:"url" conf:"required,defaultValue=file://${HOME}/tmp/cerbos/policies"`
 	// Branch is the branch to checkout.
-	Branch string `yaml:"branch"`
+	Branch string `yaml:"branch" conf:",defaultValue=policies"`
 	// SubDir is the path under the checked-out Git repo where the policies are stored.
-	SubDir string `yaml:"subDir,omitempty"`
+	SubDir string `yaml:"subDir,omitempty" conf:",defaultValue=policies"`
 	// CheckoutDir is the local path to checkout the Git repo to.
-	CheckoutDir string `yaml:"checkoutDir"`
+	CheckoutDir string `yaml:"checkoutDir" conf:",defaultValue=${HOME}/tmp/cerbos/work"`
 	// [DEPRECATED] ScratchDir is the directory to use for holding temporary data.
-	ScratchDir string `yaml:"scratchDir"`
+	ScratchDir string `yaml:"scratchDir" conf:",ignore"`
 	// SSH holds auth details for the SSH protocol.
 	SSH *SSHAuth `yaml:"ssh,omitempty"`
 	// HTTPS holds auth details for the HTTPS protocol.
 	HTTPS *HTTPSAuth `yaml:"https,omitempty"`
 	// OperationTimeout specifies the timeout for git operations.
-	OperationTimeout *time.Duration `yaml:"operationTimeout,omitempty"`
+	OperationTimeout *time.Duration `yaml:"operationTimeout,omitempty" conf:",defaultValue=60s"`
 	// UpdatePollInterval specifies the interval to poll the Git repository for changes. Set to 0 to disable.
-	UpdatePollInterval time.Duration `yaml:"updatePollInterval"`
+	UpdatePollInterval time.Duration `yaml:"updatePollInterval" conf:",defaultValue=60s"`
 }
 
 // SSHAuth holds auth details for the SSH protocol.
 type SSHAuth struct {
 	// User is the git user. Defaults to git.
-	User string `yaml:"user"`
+	User string `yaml:"user" conf:",defaultValue=git"`
 	// PrivateKeyFile is the path to the SSH private key file.
-	PrivateKeyFile string `yaml:"privateKeyFile"`
+	PrivateKeyFile string `yaml:"privateKeyFile" conf:",defaultValue=${HOME}/.ssh/id_rsa"`
 	// Password is the password to the SSH private key.
-	Password string `yaml:"password"`
+	Password string `yaml:"password" conf:",defaultValue=pw"`
 }
 
 func (sa *SSHAuth) Auth() (transport.AuthMethod, error) {
@@ -77,9 +77,9 @@ func (sa *SSHAuth) Auth() (transport.AuthMethod, error) {
 // HTTPSAuth holds auth details for the HTTPS protocol.
 type HTTPSAuth struct {
 	// Username is the username to use for authentication.
-	Username string `yaml:"username"`
+	Username string `yaml:"username" conf:",defaultValue=cerbos"`
 	// Password is the password (or token) to use for authentication.
-	Password string `yaml:"password"`
+	Password string `yaml:"password" conf:",defaultValue=${GITHUB_TOKEN}"`
 }
 
 func (ha *HTTPSAuth) Auth() (transport.AuthMethod, error) {
