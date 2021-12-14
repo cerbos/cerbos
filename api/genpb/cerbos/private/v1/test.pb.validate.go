@@ -616,6 +616,100 @@ var _ interface {
 	ErrorName() string
 } = CelTestCaseValidationError{}
 
+// Validate checks the field values on QueryPlannerTestSuite with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, an error is returned.
+func (m *QueryPlannerTestSuite) Validate() error {
+	if m == nil {
+		return nil
+	}
+
+	// no validation rules for Description
+
+	if v, ok := interface{}(m.GetPrincipal()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return QueryPlannerTestSuiteValidationError{
+				field:  "Principal",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	for idx, item := range m.GetTests() {
+		_, _ = idx, item
+
+		if v, ok := interface{}(item).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return QueryPlannerTestSuiteValidationError{
+					field:  fmt.Sprintf("Tests[%v]", idx),
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	}
+
+	return nil
+}
+
+// QueryPlannerTestSuiteValidationError is the validation error returned by
+// QueryPlannerTestSuite.Validate if the designated constraints aren't met.
+type QueryPlannerTestSuiteValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e QueryPlannerTestSuiteValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e QueryPlannerTestSuiteValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e QueryPlannerTestSuiteValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e QueryPlannerTestSuiteValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e QueryPlannerTestSuiteValidationError) ErrorName() string {
+	return "QueryPlannerTestSuiteValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e QueryPlannerTestSuiteValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sQueryPlannerTestSuite.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = QueryPlannerTestSuiteValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = QueryPlannerTestSuiteValidationError{}
+
 // Validate checks the field values on ServerTestCase_CheckResourceSetCall with
 // the rules defined in the proto definition for this message. If any rules
 // are violated, an error is returned.
@@ -1214,3 +1308,86 @@ var _ interface {
 	Cause() error
 	ErrorName() string
 } = ServerTestCase_StatusValidationError{}
+
+// Validate checks the field values on QueryPlannerTestSuite_Test with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, an error is returned.
+func (m *QueryPlannerTestSuite_Test) Validate() error {
+	if m == nil {
+		return nil
+	}
+
+	// no validation rules for Action
+
+	if v, ok := interface{}(m.GetWant()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return QueryPlannerTestSuite_TestValidationError{
+				field:  "Want",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	// no validation rules for PolicyVersion
+
+	// no validation rules for ResourceKind
+
+	return nil
+}
+
+// QueryPlannerTestSuite_TestValidationError is the validation error returned
+// by QueryPlannerTestSuite_Test.Validate if the designated constraints aren't met.
+type QueryPlannerTestSuite_TestValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e QueryPlannerTestSuite_TestValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e QueryPlannerTestSuite_TestValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e QueryPlannerTestSuite_TestValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e QueryPlannerTestSuite_TestValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e QueryPlannerTestSuite_TestValidationError) ErrorName() string {
+	return "QueryPlannerTestSuite_TestValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e QueryPlannerTestSuite_TestValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sQueryPlannerTestSuite_Test.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = QueryPlannerTestSuite_TestValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = QueryPlannerTestSuite_TestValidationError{}

@@ -33,7 +33,7 @@ import (
 var dummy int
 
 func TestCheck(t *testing.T) {
-	eng, cancelFunc := mkEngine(t, false)
+	eng, cancelFunc := mkEngine(t, false, "")
 	defer cancelFunc()
 
 	testCases := test.LoadTestCases(t, "engine")
@@ -73,14 +73,14 @@ func BenchmarkCheck(b *testing.B) {
 	testCases := test.LoadTestCases(b, "engine")
 
 	b.Run("noop_decision_logger", func(b *testing.B) {
-		eng, cancelFunc := mkEngine(b, false)
+		eng, cancelFunc := mkEngine(b, false, "")
 		defer cancelFunc()
 
 		runBenchmarks(b, eng, testCases)
 	})
 
 	b.Run("local_decision_logger", func(b *testing.B) {
-		eng, cancelFunc := mkEngine(b, true)
+		eng, cancelFunc := mkEngine(b, true, "")
 		defer cancelFunc()
 
 		runBenchmarks(b, eng, testCases)
@@ -112,10 +112,13 @@ func runBenchmarks(b *testing.B, eng *Engine, testCases []test.Case) {
 	}
 }
 
-func mkEngine(tb testing.TB, enableAuditLog bool) (*Engine, context.CancelFunc) {
+func mkEngine(tb testing.TB, enableAuditLog bool, subDir string) (*Engine, context.CancelFunc) {
 	tb.Helper()
 
-	dir := test.PathToDir(tb, "store")
+	if subDir == "" {
+		subDir = "store"
+	}
+	dir := test.PathToDir(tb, subDir)
 
 	ctx, cancelFunc := context.WithCancel(context.Background())
 
@@ -179,8 +182,46 @@ func readCELTestCase(t *testing.T, data []byte) *privatev1.CelTestCase {
 	return tc
 }
 
+func readQPTestSuite(t *testing.T, data []byte) *privatev1.QueryPlannerTestSuite {
+	t.Helper()
+
+	tc := &privatev1.QueryPlannerTestSuite{}
+	require.NoError(t, util.ReadJSONOrYAML(bytes.NewReader(data), tc))
+
+	return tc
+}
+func TestQueryPlan(t *testing.T) {
+	eng, cancelFunc := mkEngine(t, false, "query_planner/policies")
+	defer cancelFunc()
+
+	suites := test.LoadTestCases(t, "query_planner/suite")
+	for _, suite := range suites {
+		s := suite
+		t.Run(s.Name, func(t *testing.T) {
+			ts := readQPTestSuite(t, s.Input)
+			for _, tt := range ts.Tests {
+				t.Run(tt.Action, func(t *testing.T) {
+					is := require.New(t)
+					request := &requestv1.ResourcesQueryPlanRequest{
+						RequestId:     "requestId",
+						Action:        tt.Action,
+						Principal:     ts.Principal,
+						PolicyVersion: tt.PolicyVersion,
+						ResourceKind:  tt.ResourceKind,
+					}
+
+					response, err := eng.List(context.Background(), request)
+					is.NoError(err)
+					is.NotNil(response)
+
+					is.Empty(cmp.Diff(tt.Want, response.Filter, protocmp.Transform()))
+				})
+			}
+		})
+	}
+}
 func TestList(t *testing.T) {
-	eng, cancelFunc := mkEngine(t, false)
+	eng, cancelFunc := mkEngine(t, false, "")
 	defer cancelFunc()
 
 	request := &requestv1.ResourcesQueryPlanRequest{

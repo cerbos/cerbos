@@ -1,0 +1,47 @@
+---
+description: Maggie tests
+principal:
+    id: maggie
+    policyVersion: default
+    roles:
+        - employee
+        - manager
+    attr:
+        geography: US
+        managed_geographies:
+            - US
+            - CA
+tests:
+    - action: approve:refer_derived_role
+      policyVersion: default
+      resourceKind: leave_request
+      want:
+          expression:
+              operator: and
+              operands:
+                  - expression:
+                        operator: or
+                        operands:
+                            - expression:
+                                  operator: eq
+                                  operands:
+                                      - variable: request.resource.attr.geography
+                                      - value: "US"
+                            - expression:
+                                  operator: in
+                                  operands:
+                                      - variable: request.resource.attr.geography
+                                      - value: ["US", "CA"]
+                  - expression:
+                        operator: and
+                        operands:
+                            - expression:
+                                  operator: eq
+                                  operands:
+                                      - variable: R.attr.status
+                                      - value: "PENDING_APPROVAL"
+                            - expression:
+                                  operator: ne
+                                  operands:
+                                      - variable: R.attr.owner
+                                      - value: "maggie"
