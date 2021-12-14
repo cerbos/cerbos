@@ -6,11 +6,10 @@ package engine
 import (
 	"bytes"
 	"context"
-	responsev1 "github.com/cerbos/cerbos/api/genpb/cerbos/response/v1"
-	"github.com/ghodss/yaml"
 	"strings"
 	"testing"
 
+	"github.com/ghodss/yaml"
 	"github.com/google/go-cmp/cmp"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/encoding/protojson"
@@ -21,6 +20,7 @@ import (
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
 	privatev1 "github.com/cerbos/cerbos/api/genpb/cerbos/private/v1"
 	requestv1 "github.com/cerbos/cerbos/api/genpb/cerbos/request/v1"
+	responsev1 "github.com/cerbos/cerbos/api/genpb/cerbos/response/v1"
 	"github.com/cerbos/cerbos/internal/audit"
 	"github.com/cerbos/cerbos/internal/audit/local"
 	"github.com/cerbos/cerbos/internal/compile"
@@ -244,6 +244,37 @@ func TestList(t *testing.T) {
 			action: "approve:refer_derived_role",
 			input:  request,
 			want:   "(((request.resource.attr.geography == \"US\") OR (request.resource.attr.geography in [\"US\", \"CA\"])) AND ((R.attr.status == \"PENDING_APPROVAL\") AND (R.attr.owner != \"maggie\")))",
+			yaml: `
+expression:
+  operator: and
+  operands:
+    - expression:
+        operator: or
+        operands:
+          - expression:
+              operator: eq
+              operands:
+                - variable: request.resource.attr.geography
+                - value: "US"
+          - expression:
+              operator: in
+              operands:
+                - variable: request.resource.attr.geography
+                - value: ["US", "CA"]
+    - expression:
+        operator: and
+        operands:
+          - expression:
+              operator: eq
+              operands:
+                - variable: R.attr.status
+                - value: "PENDING_APPROVAL"
+          - expression:
+              operator: ne
+              operands:
+                - variable: R.attr.owner
+                - value: "maggie"
+`,
 		},
 		{
 			name:   "maggie wants to report a user",
@@ -263,21 +294,19 @@ func TestList(t *testing.T) {
 			input:  request,
 			want:   `((R.attr.status == "PENDING_APPROVAL") AND (R.attr.owner != "maggie"))`,
 			yaml: `
-        condition:
-          operator: OPERATOR_AND
-          nodes:
-          - expOperand:
-              expression:
-                operands:
-                - variable: R.attr.status
-                - value: PENDING_APPROVAL
-                operator: eq
-          - expOperand:
-              expression:
-                operands:
-                - variable: R.attr.owner
-                - value: maggie
-                operator: ne
+expression:
+  operator: and
+  operands:
+    - expression:
+        operator: eq
+        operands:
+          - variable: R.attr.status
+          - value: "PENDING_APPROVAL"
+    - expression:
+        operator: ne
+        operands:
+          - variable: R.attr.owner
+          - value: "maggie"
 `,
 		},
 		{
@@ -285,7 +314,7 @@ func TestList(t *testing.T) {
 			action: "approve3",
 			input:  request,
 			want:   `(false)`,
-			yaml:   `{ "expOperand": { "value": false } }`,
+			yaml:   "value: false",
 		},
 	}
 	for _, tt := range tests {

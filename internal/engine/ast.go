@@ -251,6 +251,7 @@ func mkExprOpExpr(op string, args ...*responsev1.ResourcesQueryPlanResponse_Expr
 		Expression: &responsev1.ResourcesQueryPlanResponse_Expression{Operator: op, Operands: args},
 	}
 }
+
 func buildExpr(expr *exprpb.Expr, acc *responsev1.ResourcesQueryPlanResponse_Expression_Operand) error {
 	type (
 		Expr        = responsev1.ResourcesQueryPlanResponse_Expression
