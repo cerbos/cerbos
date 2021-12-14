@@ -6,7 +6,9 @@ package engine
 import (
 	"bytes"
 	"context"
-	"log"
+	responsev1 "github.com/cerbos/cerbos/api/genpb/cerbos/response/v1"
+	"github.com/ghodss/yaml"
+	"strings"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -204,8 +206,8 @@ func TestList(t *testing.T) {
 		ResourceKind:  "list-resources:leave_request",
 	}
 	tests := []struct {
-		name, action, want string
-		input              *requestv1.ResourcesQueryPlanRequest
+		name, action, want, yaml string
+		input                    *requestv1.ResourcesQueryPlanRequest
 	}{
 		{
 			name: "harry wants to view",
@@ -248,18 +250,43 @@ func TestList(t *testing.T) {
 			action: "report",
 			input:  request,
 			want:   `(NOT (R.attr.deleted))`,
+			yaml: `
+        condition:
+          operator: OPERATOR_NOT
+          nodes:
+          - expOperand:
+              variable: R.attr.deleted
+`,
 		},
 		{
 			name:   "maggie wants to approve 2: short-circuit test",
 			action: "approve2",
 			input:  request,
 			want:   `((R.attr.status == "PENDING_APPROVAL") AND (R.attr.owner != "maggie"))`,
+			yaml: `
+        condition:
+          operator: OPERATOR_AND
+          nodes:
+          - expOperand:
+              expression:
+                operands:
+                - variable: R.attr.status
+                - value: PENDING_APPROVAL
+                operator: eq
+          - expOperand:
+              expression:
+                operands:
+                - variable: R.attr.owner
+                - value: maggie
+                operator: ne
+`,
 		},
 		{
 			name:   "maggie wants to approve 3: short-circuit test",
 			action: "approve3",
 			input:  request,
 			want:   `(false)`,
+			yaml:   `{ "expOperand": { "value": false } }`,
 		},
 	}
 	for _, tt := range tests {
@@ -271,9 +298,19 @@ func TestList(t *testing.T) {
 			response, err := eng.List(context.Background(), tt.input)
 			is.NoError(err)
 			is.NotNil(response)
-			buf := protojson.Format(response)
-			log.Print(buf)
 			is.Equal(tt.want, response.FilterDebug)
+			if tt.yaml == "" {
+				buf, err := protojson.Marshal(response.Filter)
+				is.NoError(err)
+				buf, err = yaml.JSONToYAML(buf)
+				is.NoError(err)
+
+				t.Fatalf("Please specify yaml to test response.Filter. Returned value:\n%s", string(buf))
+			}
+			expected := new(responsev1.ResourcesQueryPlanResponse_Condition_Operand)
+			err = util.ReadJSONOrYAML(strings.NewReader(tt.yaml), expected)
+			is.NoError(err)
+			is.Empty(cmp.Diff(expected, response.Filter, protocmp.Transform()))
 		})
 	}
 }
