@@ -249,15 +249,15 @@ func (m *ResourcesQueryPlanResponse_Condition_Operand_Condition) MarshalToSizedB
 	}
 	return len(dAtA) - i, nil
 }
-func (m *ResourcesQueryPlanResponse_Condition_Operand_Expression) MarshalToVT(dAtA []byte) (int, error) {
+func (m *ResourcesQueryPlanResponse_Condition_Operand_ExpOperand) MarshalToVT(dAtA []byte) (int, error) {
 	size := m.SizeVT()
 	return m.MarshalToSizedBufferVT(dAtA[:size])
 }
 
-func (m *ResourcesQueryPlanResponse_Condition_Operand_Expression) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
+func (m *ResourcesQueryPlanResponse_Condition_Operand_ExpOperand) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 	i := len(dAtA)
-	if m.Expression != nil {
-		size, err := m.Expression.MarshalToSizedBufferVT(dAtA[:i])
+	if m.ExpOperand != nil {
+		size, err := m.ExpOperand.MarshalToSizedBufferVT(dAtA[:i])
 		if err != nil {
 			return 0, err
 		}
@@ -1675,14 +1675,14 @@ func (m *ResourcesQueryPlanResponse_Condition_Operand_Condition) SizeVT() (n int
 	}
 	return n
 }
-func (m *ResourcesQueryPlanResponse_Condition_Operand_Expression) SizeVT() (n int) {
+func (m *ResourcesQueryPlanResponse_Condition_Operand_ExpOperand) SizeVT() (n int) {
 	if m == nil {
 		return 0
 	}
 	var l int
 	_ = l
-	if m.Expression != nil {
-		l = m.Expression.SizeVT()
+	if m.ExpOperand != nil {
+		l = m.ExpOperand.SizeVT()
 		n += 1 + l + sov(uint64(l))
 	}
 	return n
@@ -2645,7 +2645,7 @@ func (m *ResourcesQueryPlanResponse_Condition_Operand) UnmarshalVT(dAtA []byte) 
 			iNdEx = postIndex
 		case 2:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Expression", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field ExpOperand", wireType)
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
@@ -2672,16 +2672,16 @@ func (m *ResourcesQueryPlanResponse_Condition_Operand) UnmarshalVT(dAtA []byte) 
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			if oneof, ok := m.Node.(*ResourcesQueryPlanResponse_Condition_Operand_Expression); ok {
-				if err := oneof.Expression.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
+			if oneof, ok := m.Node.(*ResourcesQueryPlanResponse_Condition_Operand_ExpOperand); ok {
+				if err := oneof.ExpOperand.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
 					return err
 				}
 			} else {
-				v := &ResourcesQueryPlanResponse_Expression{}
+				v := &ResourcesQueryPlanResponse_Expression_Operand{}
 				if err := v.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
 					return err
 				}
-				m.Node = &ResourcesQueryPlanResponse_Condition_Operand_Expression{v}
+				m.Node = &ResourcesQueryPlanResponse_Condition_Operand_ExpOperand{v}
 			}
 			iNdEx = postIndex
 		default:

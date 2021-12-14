@@ -6,12 +6,13 @@ package engine
 import (
 	"context"
 	"fmt"
-	effectv1 "github.com/cerbos/cerbos/api/genpb/cerbos/effect/v1"
+
 
 	"github.com/google/cel-go/cel"
 	"github.com/google/cel-go/common/types"
 	exprpb "google.golang.org/genproto/googleapis/api/expr/v1alpha1"
 
+	effectv1 "github.com/cerbos/cerbos/api/genpb/cerbos/effect/v1"
 	enginev1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
 	requestv1 "github.com/cerbos/cerbos/api/genpb/cerbos/request/v1"
 	runtimev1 "github.com/cerbos/cerbos/api/genpb/cerbos/runtime/v1"

@@ -271,9 +271,9 @@ func TestList(t *testing.T) {
 			response, err := eng.List(context.Background(), tt.input)
 			is.NoError(err)
 			is.NotNil(response)
-			is.Equal(tt.want, response.FilterDebug)
 			buf := protojson.Format(response)
 			log.Print(buf)
+			is.Equal(tt.want, response.FilterDebug)
 		})
 	}
 }

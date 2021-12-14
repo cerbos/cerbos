@@ -204,7 +204,7 @@ func convert(expr *enginev1.ResourcesQueryPlanOutput_Node, acc *responsev1.Resou
 		Co     = responsev1.ResourcesQueryPlanResponse_Condition
 		CoOp   = responsev1.ResourcesQueryPlanResponse_Condition_Operand
 		CoOpCo = responsev1.ResourcesQueryPlanResponse_Condition_Operand_Condition
-		CoOpEx = responsev1.ResourcesQueryPlanResponse_Condition_Operand_Expression
+		CoOpEx = responsev1.ResourcesQueryPlanResponse_Condition_Operand_ExpOperand
 	)
 
 	switch node := expr.Node.(type) {
@@ -214,7 +214,7 @@ func convert(expr *enginev1.ResourcesQueryPlanOutput_Node, acc *responsev1.Resou
 		if err != nil {
 			return err
 		}
-		acc.Node = &CoOpEx{Expression: eop.GetExpression()}
+		acc.Node = &CoOpEx{ExpOperand: eop}
 	case *enginev1.ResourcesQueryPlanOutput_Node_LogicalOperation:
 		c := &CoOpCo{
 			Condition: &Co{

@@ -80,7 +80,7 @@ message ResourcesQueryPlanResponse {
         message Operand {
             oneof node {
                 Condition condition = 1;
-                Expression expression = 2;
+                Expression.Operand exp_operand = 2;
             }
         }
         string operator = 1;

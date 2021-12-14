@@ -819,8 +819,8 @@
         "condition": {
           "$ref": "#/definitions/v1ResourcesQueryPlanResponseCondition"
         },
-        "expression": {
-          "$ref": "#/definitions/ResourcesQueryPlanResponseExpression"
+        "expOperand": {
+          "$ref": "#/definitions/ResourcesQueryPlanResponseExpressionOperand"
         }
       }
     },

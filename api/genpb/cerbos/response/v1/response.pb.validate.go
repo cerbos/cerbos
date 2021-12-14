@@ -1311,12 +1311,12 @@ func (m *ResourcesQueryPlanResponse_Condition_Operand) Validate() error {
 			}
 		}
 
-	case *ResourcesQueryPlanResponse_Condition_Operand_Expression:
+	case *ResourcesQueryPlanResponse_Condition_Operand_ExpOperand:
 
-		if v, ok := interface{}(m.GetExpression()).(interface{ Validate() error }); ok {
+		if v, ok := interface{}(m.GetExpOperand()).(interface{ Validate() error }); ok {
 			if err := v.Validate(); err != nil {
 				return ResourcesQueryPlanResponse_Condition_OperandValidationError{
-					field:  "Expression",
+					field:  "ExpOperand",
 					reason: "embedded message failed validation",
 					cause:  err,
 				}
