@@ -321,7 +321,7 @@ func executeGRPCTestCase(grpcConn *grpc.ClientConn, tc *privatev1.ServerTestCase
 
 		if tc.WantStatus != nil {
 			code := status.Code(err)
-			require.EqualValues(t, tc.WantStatus.GrpcStatusCode, code)
+			require.EqualValues(t, tc.WantStatus.GrpcStatusCode, code, "Error=%v", err)
 		}
 
 		if tc.WantError {
@@ -469,6 +469,7 @@ func compareProto(t *testing.T, want, have interface{}) {
 	require.Empty(t, cmp.Diff(want, have,
 		protocmp.Transform(),
 		protocmp.SortRepeatedFields(&responsev1.CheckResourceSetResponse_Meta_ActionMeta{}, "effective_derived_roles"),
+		protocmp.SortRepeatedFields(&responsev1.PlaygroundEvaluateResponse_EvalResult{}, "effective_derived_roles"),
 		protocmp.SortRepeated(cmpPlaygroundEvalResult),
 		protocmp.SortRepeated(cmpPlaygroundError),
 		protocmp.SortRepeated(cmpValidationError),

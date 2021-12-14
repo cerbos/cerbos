@@ -25,6 +25,7 @@ import (
 	"github.com/cerbos/cerbos/internal/compile"
 	"github.com/cerbos/cerbos/internal/engine"
 	"github.com/cerbos/cerbos/internal/schema"
+	"github.com/cerbos/cerbos/internal/storage"
 	"github.com/cerbos/cerbos/internal/storage/disk"
 	"github.com/cerbos/cerbos/internal/storage/index"
 )
@@ -80,7 +81,7 @@ func (cs *CerbosPlaygroundService) PlaygroundEvaluate(ctx context.Context, req *
 	procCtx, cancelFunc := context.WithTimeout(ctx, playgroundRequestTimeout)
 	defer cancelFunc()
 
-	idx, fail, err := doCompile(procCtx, log, req.PolicyFiles)
+	comps, fail, err := doCompile(procCtx, log, req.PolicyFiles)
 	if err != nil {
 		return nil, err
 	}
@@ -100,10 +101,7 @@ func (cs *CerbosPlaygroundService) PlaygroundEvaluate(ctx context.Context, req *
 		return nil, status.Error(codes.InvalidArgument, "failed to extract auxData")
 	}
 
-	store := disk.NewFromIndexWithConf(idx, &disk.Conf{})
-	schemaMgr := schema.NewNopManager()
-
-	eng, err := engine.NewEphemeral(ctx, compile.NewManager(ctx, store, schemaMgr), schemaMgr)
+	eng, err := comps.mkEngine(procCtx)
 	if err != nil {
 		log.Error("Failed to create engine", zap.Error(err))
 		return nil, status.Errorf(codes.Internal, "failed to create engine")
@@ -134,7 +132,7 @@ func (cs *CerbosPlaygroundService) PlaygroundProxy(ctx context.Context, req *req
 	procCtx, cancelFunc := context.WithTimeout(ctx, playgroundRequestTimeout)
 	defer cancelFunc()
 
-	idx, fail, err := doCompile(procCtx, log, req.PolicyFiles)
+	comps, fail, err := doCompile(procCtx, log, req.PolicyFiles)
 	if err != nil {
 		return nil, err
 	}
@@ -148,10 +146,7 @@ func (cs *CerbosPlaygroundService) PlaygroundProxy(ctx context.Context, req *req
 		}, nil
 	}
 
-	store := disk.NewFromIndexWithConf(idx, &disk.Conf{})
-	schemaMgr := schema.NewNopManager()
-
-	eng, err := engine.NewEphemeral(ctx, compile.NewManager(ctx, store, schemaMgr), schemaMgr)
+	eng, err := comps.mkEngine(procCtx)
 	if err != nil {
 		log.Error("Failed to create engine", zap.Error(err))
 		return nil, status.Error(codes.Internal, "failed to create engine")
@@ -189,7 +184,7 @@ func (cs *CerbosPlaygroundService) PlaygroundProxy(ctx context.Context, req *req
 	}
 }
 
-func doCompile(ctx context.Context, log *zap.Logger, files []*requestv1.PolicyFile) (index.Index, *responsev1.PlaygroundFailure, error) {
+func doCompile(ctx context.Context, log *zap.Logger, files []*requestv1.PolicyFile) (*components, *responsev1.PlaygroundFailure, error) {
 	idx, err := buildIndex(ctx, log, files)
 	if err != nil {
 		idxErr := new(index.BuildError)
@@ -202,7 +197,10 @@ func doCompile(ctx context.Context, log *zap.Logger, files []*requestv1.PolicyFi
 		return nil, nil, status.Errorf(codes.Internal, "failed to create index")
 	}
 
-	if err := compile.BatchCompile(idx.GetAllCompilationUnits(ctx), schema.NewNopManager()); err != nil {
+	store := disk.NewFromIndexWithConf(idx, &disk.Conf{})
+	schemaMgr := schema.NewWithConf(ctx, store, &schema.Conf{Enforcement: schema.EnforcementWarn})
+
+	if err := compile.BatchCompile(idx.GetAllCompilationUnits(ctx), schemaMgr); err != nil {
 		compErr := new(compile.ErrorList)
 		if errors.As(err, compErr) {
 			pf := processCompileErrors(ctx, *compErr)
@@ -213,7 +211,7 @@ func doCompile(ctx context.Context, log *zap.Logger, files []*requestv1.PolicyFi
 		return nil, nil, status.Errorf(codes.Internal, "failed to compile")
 	}
 
-	return idx, nil, nil
+	return &components{idx: idx, store: store, schemaMgr: schemaMgr}, nil, nil
 }
 
 func buildIndex(ctx context.Context, log *zap.Logger, files []*requestv1.PolicyFile) (index.Index, error) {
@@ -292,6 +290,7 @@ func processEngineOutput(_ context.Context, playgroundID string, outputs []*engi
 			Effect:                effect.Effect,
 			Policy:                effect.Policy,
 			EffectiveDerivedRoles: outputs[0].EffectiveDerivedRoles,
+			ValidationErrors:      outputs[0].ValidationErrors,
 		})
 	}
 
@@ -301,4 +300,14 @@ func processEngineOutput(_ context.Context, playgroundID string, outputs []*engi
 			Success: &responsev1.PlaygroundEvaluateResponse_EvalResultList{Results: results},
 		},
 	}, nil
+}
+
+type components struct {
+	idx       index.Index
+	store     storage.Store
+	schemaMgr schema.Manager
+}
+
+func (c *components) mkEngine(ctx context.Context) (*engine.Engine, error) {
+	return engine.NewEphemeral(ctx, compile.NewManager(ctx, c.store, c.schemaMgr), c.schemaMgr)
 }
