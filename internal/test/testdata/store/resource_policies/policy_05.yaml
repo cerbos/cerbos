@@ -44,6 +44,12 @@ resourcePolicy:
             of:
               - expr: R.attr.status == "PENDING_APPROVAL"
               - expr: R.attr.owner != request.principal.id
+    - actions: ["report"]
+      roles: ["manager"]
+      effect: EFFECT_DENY
+      condition:
+        match:
+          expr: R.attr.deleted
     - actions: ["approve2"]
       roles: ["manager"]
       effect: EFFECT_ALLOW

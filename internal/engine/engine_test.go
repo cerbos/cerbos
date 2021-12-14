@@ -244,6 +244,12 @@ func TestList(t *testing.T) {
 			want:   "(((request.resource.attr.geography == \"US\") OR (request.resource.attr.geography in [\"US\", \"CA\"])) AND ((R.attr.status == \"PENDING_APPROVAL\") AND (R.attr.owner != \"maggie\")))",
 		},
 		{
+			name:   "maggie wants to report a user",
+			action: "report",
+			input:  request,
+			want:   `(NOT (R.attr.deleted))`,
+		},
+		{
 			name:   "maggie wants to approve 2: short-circuit test",
 			action: "approve2",
 			input:  request,

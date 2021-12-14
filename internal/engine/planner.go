@@ -6,12 +6,12 @@ package engine
 import (
 	"context"
 	"fmt"
+	effectv1 "github.com/cerbos/cerbos/api/genpb/cerbos/effect/v1"
 
 	"github.com/google/cel-go/cel"
 	"github.com/google/cel-go/common/types"
 	exprpb "google.golang.org/genproto/googleapis/api/expr/v1alpha1"
 
-	effectv1 "github.com/cerbos/cerbos/api/genpb/cerbos/effect/v1"
 	enginev1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
 	requestv1 "github.com/cerbos/cerbos/api/genpb/cerbos/request/v1"
 	runtimev1 "github.com/cerbos/cerbos/api/genpb/cerbos/runtime/v1"
@@ -63,7 +63,6 @@ func (rpe *resourcePolicyEvaluator) EvaluateResourcesQueryPlan(_ context.Context
 			})
 		}
 
-		// evaluate each rule until all actions have a result
 		for _, rule := range p.Rules {
 			var drNode *qpN
 			if !setIntersects(rule.Roles, effectiveRoles) {
@@ -80,9 +79,6 @@ func (rpe *resourcePolicyEvaluator) EvaluateResourcesQueryPlan(_ context.Context
 					// combine restrictions (with OR) imposed by derived roles
 					drNode = &qpN{Node: &qpNLO{LogicalOperation: mkOrLogicalOperation(nodes)}}
 				}
-			}
-			if rule.Effect == effectv1.Effect_EFFECT_DENY {
-				panic("rules with effect DENY not supported")
 			}
 			for actionGlob := range rule.Actions {
 				matchedActions := globMatch(actionGlob, inputActions)
@@ -111,6 +107,13 @@ func (rpe *resourcePolicyEvaluator) EvaluateResourcesQueryPlan(_ context.Context
 						result.Filter = drNode
 					}
 				}
+
+				if rule.Effect == effectv1.Effect_EFFECT_DENY {
+					// invert result
+					result.Filter = &qpN{Node: &qpNLO{LogicalOperation: mkNotLogicalOperation(result.Filter)}}
+				}
+
+				return result, nil // Shall we combine (with AND) rule results instead?
 			}
 		}
 	}
@@ -159,6 +162,13 @@ func mkAndLogicalOperation(nodes []*enginev1.ResourcesQueryPlanOutput_Node) *eng
 	return &enginev1.ResourcesQueryPlanOutput_LogicalOperation{
 		Operator: enginev1.ResourcesQueryPlanOutput_LogicalOperation_OPERATOR_AND,
 		Nodes:    nodes,
+	}
+}
+
+func mkNotLogicalOperation(node *enginev1.ResourcesQueryPlanOutput_Node) *enginev1.ResourcesQueryPlanOutput_LogicalOperation {
+	return &enginev1.ResourcesQueryPlanOutput_LogicalOperation{
+		Operator: enginev1.ResourcesQueryPlanOutput_LogicalOperation_OPERATOR_NOT,
+		Nodes:    []*enginev1.ResourcesQueryPlanOutput_Node{node},
 	}
 }
 

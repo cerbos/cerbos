@@ -181,7 +181,18 @@ func String(expr *enginev1.ResourcesQueryPlanOutput_Node) (source string, err er
 			s = append(s, source)
 		}
 
+		if node.LogicalOperation.Operator == enginev1.ResourcesQueryPlanOutput_LogicalOperation_OPERATOR_NOT {
+			op = enginev1.ResourcesQueryPlanOutput_LogicalOperation_Operator_name[int32(enginev1.ResourcesQueryPlanOutput_LogicalOperation_OPERATOR_AND)]
+		}
 		source = strings.Join(s, " "+strings.TrimPrefix(op, "OPERATOR_")+" ")
+
+		if node.LogicalOperation.Operator == enginev1.ResourcesQueryPlanOutput_LogicalOperation_OPERATOR_NOT {
+			if len(node.LogicalOperation.Nodes) == 1 {
+				source = "NOT " + source
+			} else {
+				source = "NOT (" + source + ")"
+			}
+		}
 	}
 
 	return "(" + source + ")", nil
