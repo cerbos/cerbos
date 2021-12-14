@@ -32,17 +32,17 @@ type Conf struct {
 	// s3://my-bucket?region=us-west-1
 	// gs://my-bucket
 	// azblob://my-container
-	Bucket string `yaml:"bucket"`
+	Bucket string `yaml:"bucket" conf:"required,defaultValue=\"s3://my-bucket-name?region=us-east-2\""`
 	// Bucket prefix specifies a subdirectory to download
-	Prefix string `yaml:"prefix,omitempty"`
+	Prefix string `yaml:"prefix,omitempty" conf:",defaultValue=policies"`
 	// WorkDir is the local path to check out policies to.
-	WorkDir string `yaml:"workDir"`
+	WorkDir string `yaml:"workDir" conf:",defaultValue=${HOME}/tmp/cerbos/work"`
 	// UpdatePollInterval specifies the interval to poll the cloud storage. Set to 0 to disable.
-	UpdatePollInterval time.Duration `yaml:"updatePollInterval"`
+	UpdatePollInterval time.Duration `yaml:"updatePollInterval" conf:",defaultValue=15s"`
 	// DownloadTimeout specifies the timeout for downloading from cloud storage.
-	DownloadTimeout *time.Duration `yaml:"downloadTimeout,omitempty"`
+	DownloadTimeout *time.Duration `yaml:"downloadTimeout,omitempty" conf:",defaultValue=30s"`
 	// RequestTimeout specifies the timeout for an HTTP request.
-	RequestTimeout *time.Duration `yaml:"requestTimeout,omitempty"`
+	RequestTimeout *time.Duration `yaml:"requestTimeout,omitempty" conf:",defaultValue=10s"`
 }
 
 func (conf *Conf) Key() string {
