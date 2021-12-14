@@ -1,0 +1,70 @@
+include::ROOT:partial$attributes.adoc[]
+
+[#v0.11.0]
+= Cerbos v0.11.0
+
+== Highlights
+
+This release's defining feature is the support for defining schemas for the contextual data that is required to evaluate policies. From the get go, Cerbos was designed to be a stateless application that had no access to your important data. Client applications have the responsibility of sending all the data required to evaluate access policies with each request to the PDP. With the new schema support introduced in this release, policy authors can define link:http://json-schema.org[JSON schemas] for the principal and resource attributes required by each policy. Using the full expressive power of JSON schema draft 2020-12, the entire shape of the request can be defined including the enforcing strict data types and formats for fields and marking some fields as required. 
+
+Schema enforcement is disabled by default for backward compatibility. Once you have defined schemas and updated your policies to reference them, you can initially configure the Cerbos PDPs to `warn` when requests don't conform to the schema. The warnings are returned in the response and logged to the audit logs as well. After you have fixed the warnings, set the enforcement level to `reject` and any invalid request will result in a `DENY` response. See xref:0.11.0@policies:schemas.adoc[] for more information.
+
+This release also adds preliminary support for link:https://opentelemetry.io[OpenTelemetry] distributed traces in either `W3C Trace Context` or `B3` formats. See xref:0.11.0@configuration:tracing.adoc[] for more information.
+
+
+== Changelog
+
+
+=== Bug Fixes
+
+* Make auxData optional in the OpenAPI example (link:https://github.com/cerbos/cerbos/pull/476[#476])
+
+=== Features
+
+* Attribute validation using JSON schemas (link:https://github.com/cerbos/cerbos/pull/485[#485])
+* Support for OpenTelemetry traces (link:https://github.com/cerbos/cerbos/pull/443[#443])
+
+=== Enhancements
+
+* Add schema support to playground (link:https://github.com/cerbos/cerbos/pull/496[#496])
+* Log the number of policies found on startup (link:https://github.com/cerbos/cerbos/pull/488[#488])
+
+=== Documentation
+
+* Add schema example to photo-share tutorial (link:https://github.com/cerbos/cerbos/pull/490[#490])
+* Add tutorials to documentation (link:https://github.com/cerbos/cerbos/pull/454[#454])
+* Make the Admin API docs follow a consistent style (link:https://github.com/cerbos/cerbos/pull/486[#486])
+* References variable for container image (link:https://github.com/cerbos/cerbos/pull/455[#455])
+
+=== Chores
+
+* Add docs publication workflow (link:https://github.com/cerbos/cerbos/pull/459[#459])
+* Add latest tag and remove JFrog (link:https://github.com/cerbos/cerbos/pull/445[#445])
+* Bump github.com/aws/aws-sdk-go from 1.42.15 to 1.42.19 (link:https://github.com/cerbos/cerbos/pull/471[#471])
+* Bump github.com/aws/aws-sdk-go from 1.42.19 to 1.42.22 (link:https://github.com/cerbos/cerbos/pull/500[#500])
+* Bump github.com/aws/aws-sdk-go from 1.42.4 to 1.42.7 (link:https://github.com/cerbos/cerbos/pull/447[#447])
+* Bump github.com/aws/aws-sdk-go from 1.42.7 to 1.42.9 (link:https://github.com/cerbos/cerbos/pull/452[#452])
+* Bump github.com/aws/aws-sdk-go from 1.42.9 to 1.42.15 (link:https://github.com/cerbos/cerbos/pull/466[#466])
+* Bump github.com/fergusstrange/embedded-postgres from 1.11.0 to 1.12.0 (link:https://github.com/cerbos/cerbos/pull/450[#450])
+* Bump github.com/grpc-ecosystem/grpc-gateway/v2 from 2.6.0 to 2.7.0 (link:https://github.com/cerbos/cerbos/pull/451[#451])
+* Bump github.com/grpc-ecosystem/grpc-gateway/v2 from 2.7.0 to 2.7.1 (link:https://github.com/cerbos/cerbos/pull/472[#472])
+* Bump github.com/jackc/pgx/v4 from 4.13.0 to 4.14.1 (link:https://github.com/cerbos/cerbos/pull/464[#464])
+* Bump github.com/lestrrat-go/jwx from 1.2.11 to 1.2.12 (link:https://github.com/cerbos/cerbos/pull/475[#475])
+* Bump github.com/lestrrat-go/jwx from 1.2.11 to 1.2.13 (link:https://github.com/cerbos/cerbos/pull/477[#477])
+* Bump github.com/lestrrat-go/jwx from 1.2.9 to 1.2.11 (link:https://github.com/cerbos/cerbos/pull/446[#446])
+* Bump github.com/minio/minio-go/v7 from 7.0.15 to 7.0.16 (link:https://github.com/cerbos/cerbos/pull/462[#462])
+* Bump github.com/minio/minio-go/v7 from 7.0.16 to 7.0.18 (link:https://github.com/cerbos/cerbos/pull/498[#498])
+* Bump github.com/opencontainers/image-spec from 1.0.1 to 1.0.2 (link:https://github.com/cerbos/cerbos/pull/449[#449])
+* Bump github.com/opencontainers/runc from 1.0.2 to 1.0.3 (link:https://github.com/cerbos/cerbos/pull/479[#479])
+* Bump github.com/ory/dockertest/v3 from 3.8.0 to 3.8.1 (link:https://github.com/cerbos/cerbos/pull/463[#463])
+* Bump github.com/tidwall/gjson from 1.10.2 to 1.12.1 (link:https://github.com/cerbos/cerbos/pull/494[#494])
+* Bump github.com/tidwall/sjson from 1.2.3 to 1.2.4 (link:https://github.com/cerbos/cerbos/pull/495[#495])
+* Bump go.opentelemetry.io/otel/bridge/opencensus from 0.25.0 to 0.26.0 (link:https://github.com/cerbos/cerbos/pull/497[#497])
+* Bump go.opentelemetry.io/otel/exporters/jaeger from 1.2.0 to 1.3.0 (link:https://github.com/cerbos/cerbos/pull/493[#493])
+* Bump google-github-actions/setup-gcloud from 0.2.1 to 0.3 (link:https://github.com/cerbos/cerbos/pull/491[#491])
+* Bump helm.sh/helm/v3 from 3.7.1 to 3.7.2 (link:https://github.com/cerbos/cerbos/pull/492[#492])
+* Bump modernc.org/sqlite from 1.14.1 to 1.14.2 (link:https://github.com/cerbos/cerbos/pull/501[#501])
+* Bump version to 0.11.0
+* Fix schema cache and blob store timeout (link:https://github.com/cerbos/cerbos/pull/502[#502])
+* Only generate NOTICE during a release (link:https://github.com/cerbos/cerbos/pull/499[#499])
+* Update docs branch list during release (link:https://github.com/cerbos/cerbos/pull/442[#442])
