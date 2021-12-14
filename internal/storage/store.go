@@ -132,6 +132,7 @@ type Event struct {
 
 func (evt Event) String() string {
 	kind := ""
+	id := evt.PolicyID.String()
 	switch evt.Kind {
 	case EventAddOrUpdatePolicy:
 		kind = "ADD/UPDATE"
@@ -139,15 +140,17 @@ func (evt Event) String() string {
 		kind = "DELETE"
 	case EventAddOrUpdateSchema:
 		kind = "ADD/UPDATE SCHEMA"
+		id = evt.SchemaFile
 	case EventDeleteSchema:
 		kind = "DELETE SCHEMA"
+		id = evt.SchemaFile
 	case EventNop:
 		kind = "NOP"
 	default:
 		kind = "UNKNOWN"
 	}
 
-	return fmt.Sprintf("%s [%s]", kind, evt.PolicyID.String())
+	return fmt.Sprintf("%s [%s]", kind, id)
 }
 
 // NewPolicyEvent creates a new storage event for a policy.

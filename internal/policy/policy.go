@@ -6,8 +6,6 @@ package policy
 import (
 	"fmt"
 
-	jsonschema "github.com/santhosh-tekuri/jsonschema/v5"
-
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
 	"github.com/cerbos/cerbos/internal/namer"
 )
@@ -180,7 +178,6 @@ func Wrap(p *policyv1.Policy) Wrapper {
 type CompilationUnit struct {
 	ModID       namer.ModuleID
 	Definitions map[namer.ModuleID]*policyv1.Policy
-	Schemas     map[string]*jsonschema.Schema
 }
 
 func (cu *CompilationUnit) AddDefinition(id namer.ModuleID, p *policyv1.Policy) {
@@ -189,20 +186,6 @@ func (cu *CompilationUnit) AddDefinition(id namer.ModuleID, p *policyv1.Policy) 
 	}
 
 	cu.Definitions[id] = p
-}
-
-func (cu *CompilationUnit) AddSchemas(schemas map[string]*jsonschema.Schema) {
-	if len(schemas) == 0 {
-		return
-	}
-
-	if cu.Schemas == nil {
-		cu.Schemas = make(map[string]*jsonschema.Schema, len(schemas))
-	}
-
-	for id, def := range schemas {
-		cu.Schemas[id] = def
-	}
 }
 
 func (cu *CompilationUnit) MainSourceFile() string {

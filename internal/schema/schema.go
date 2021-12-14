@@ -223,11 +223,11 @@ func (m *manager) OnStorageEvent(events ...storage.Event) {
 		//nolint:exhaustive
 		switch event.Kind {
 		case storage.EventAddOrUpdateSchema:
-			cacheKey := fmt.Sprintf("%s/%s", URLScheme, event.SchemaFile)
+			cacheKey := fmt.Sprintf("%s:///%s", URLScheme, event.SchemaFile)
 			_ = m.cache.Remove(cacheKey)
 			m.log.Debug("Handled schema add/update event", zap.String("schema", cacheKey))
 		case storage.EventDeleteSchema:
-			cacheKey := fmt.Sprintf("%s/%s", URLScheme, event.SchemaFile)
+			cacheKey := fmt.Sprintf("%s:///%s", URLScheme, event.SchemaFile)
 			_ = m.cache.Remove(cacheKey)
 			m.log.Warn("Handled schema delete event", zap.String("schema", cacheKey))
 		}
