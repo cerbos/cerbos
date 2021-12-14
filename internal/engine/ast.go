@@ -20,6 +20,9 @@ import (
 )
 
 const (
+	Or                 = "or"
+	And                = "and"
+	Not                = "not"
 	Equals             = "eq"
 	NotEquals          = "ne"
 	GreaterThan        = "gt"
@@ -198,43 +201,56 @@ func String(expr *enginev1.ResourcesQueryPlanOutput_Node) (source string, err er
 	return "(" + source + ")", nil
 }
 
-func convert(expr *enginev1.ResourcesQueryPlanOutput_Node, acc *responsev1.ResourcesQueryPlanResponse_Condition_Operand) error {
+func convert(expr *enginev1.ResourcesQueryPlanOutput_Node, acc *responsev1.ResourcesQueryPlanResponse_Expression_Operand) error {
 	type (
-		ExprOp = responsev1.ResourcesQueryPlanResponse_Expression_Operand
-		Co     = responsev1.ResourcesQueryPlanResponse_Condition
-		CoOp   = responsev1.ResourcesQueryPlanResponse_Condition_Operand
-		CoOpCo = responsev1.ResourcesQueryPlanResponse_Condition_Operand_Condition
-		CoOpEx = responsev1.ResourcesQueryPlanResponse_Condition_Operand_ExpOperand
+		Expr        = responsev1.ResourcesQueryPlanResponse_Expression
+		ExprOp      = responsev1.ResourcesQueryPlanResponse_Expression_Operand
+		ExprOpExpr  = responsev1.ResourcesQueryPlanResponse_Expression_Operand_Expression
+		ExprOpValue = responsev1.ResourcesQueryPlanResponse_Expression_Operand_Value
+		ExprOpVar   = responsev1.ResourcesQueryPlanResponse_Expression_Operand_Variable
 	)
 
 	switch node := expr.Node.(type) {
 	case *enginev1.ResourcesQueryPlanOutput_Node_Expression:
-		eop := new(ExprOp)
-		err := buildExpr(node.Expression.Expr, eop)
+		err := buildExpr(node.Expression.Expr, acc)
 		if err != nil {
 			return err
 		}
-		acc.Node = &CoOpEx{ExpOperand: eop}
 	case *enginev1.ResourcesQueryPlanOutput_Node_LogicalOperation:
-		c := &CoOpCo{
-			Condition: &Co{
-				Operator: enginev1.ResourcesQueryPlanOutput_LogicalOperation_Operator_name[int32(node.LogicalOperation.Operator)],
-				Nodes:    make([]*CoOp, len(node.LogicalOperation.Nodes)),
-			},
-		}
+		operands := make([]*ExprOp, len(node.LogicalOperation.Nodes))
 		for i, n := range node.LogicalOperation.Nodes {
-			c.Condition.Nodes[i] = new(CoOp)
-			err := convert(n, c.Condition.Nodes[i])
+			operands[i] = new(ExprOp)
+			err := convert(n, operands[i])
 			if err != nil {
 				return err
 			}
 		}
-		acc.Node = c
+		var operation string
+		switch node.LogicalOperation.Operator {
+		case enginev1.ResourcesQueryPlanOutput_LogicalOperation_OPERATOR_AND:
+			operation = And
+		case enginev1.ResourcesQueryPlanOutput_LogicalOperation_OPERATOR_OR:
+			operation = Or
+		case enginev1.ResourcesQueryPlanOutput_LogicalOperation_OPERATOR_NOT:
+			operation = Not
+		default:
+			if name, ok := enginev1.ResourcesQueryPlanOutput_LogicalOperation_Operator_name[int32(node.LogicalOperation.Operator)]; ok {
+				return fmt.Errorf("unknown logical operator: %v", name)
+			}
+
+			return fmt.Errorf("unknown logical operator: %v", node.LogicalOperation.Operator)
+		}
+		acc.Node = mkExprOpExpr(operation, operands...)
 	}
 
 	return nil
 }
 
+func mkExprOpExpr(op string, args ...*responsev1.ResourcesQueryPlanResponse_Expression_Operand) *responsev1.ResourcesQueryPlanResponse_Expression_Operand_Expression {
+	return &responsev1.ResourcesQueryPlanResponse_Expression_Operand_Expression{
+		Expression: &responsev1.ResourcesQueryPlanResponse_Expression{Operator: op, Operands: args},
+	}
+}
 func buildExpr(expr *exprpb.Expr, acc *responsev1.ResourcesQueryPlanResponse_Expression_Operand) error {
 	type (
 		Expr        = responsev1.ResourcesQueryPlanResponse_Expression
@@ -243,9 +259,6 @@ func buildExpr(expr *exprpb.Expr, acc *responsev1.ResourcesQueryPlanResponse_Exp
 		ExprOpValue = responsev1.ResourcesQueryPlanResponse_Expression_Operand_Value
 		ExprOpVar   = responsev1.ResourcesQueryPlanResponse_Expression_Operand_Variable
 	)
-	mkExprOpExpr := func(op string, args ...*ExprOp) *ExprOpExpr {
-		return &ExprOpExpr{Expression: &Expr{Operator: op, Operands: args}}
-	}
 	switch expr := expr.ExprKind.(type) {
 	case *exprpb.Expr_CallExpr:
 		fn, _ := opFromCLE(expr.CallExpr.Function)

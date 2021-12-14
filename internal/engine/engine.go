@@ -280,7 +280,7 @@ func (engine *Engine) List(ctx context.Context, input *requestv1.ResourcesQueryP
 		ResourceKind:  input.ResourceKind,
 		PolicyVersion: input.PolicyVersion,
 	}
-	response.Filter = &responsev1.ResourcesQueryPlanResponse_Condition_Operand{}
+	response.Filter = new(responsev1.ResourcesQueryPlanResponse_Expression_Operand)
 	err = convert(list.Filter, response.Filter)
 	if err != nil {
 		return nil, err

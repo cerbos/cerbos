@@ -608,6 +608,20 @@
       },
       "description": "Metadata about request evaluation."
     },
+    "ExpressionOperand": {
+      "type": "object",
+      "properties": {
+        "value": {
+          "type": "object"
+        },
+        "expression": {
+          "$ref": "#/definitions/ResourcesQueryPlanResponseExpression"
+        },
+        "variable": {
+          "type": "string"
+        }
+      }
+    },
     "ListAuditLogEntriesRequestKind": {
       "type": "string",
       "enum": [
@@ -803,24 +817,13 @@
           "type": "string"
         },
         "condition": {
-          "$ref": "#/definitions/policyv1Condition"
+          "$ref": "#/definitions/v1Condition"
         },
         "effect": {
           "$ref": "#/definitions/v1Effect"
         },
         "name": {
           "type": "string"
-        }
-      }
-    },
-    "ResourcesQueryPlanResponseConditionOperand": {
-      "type": "object",
-      "properties": {
-        "condition": {
-          "$ref": "#/definitions/v1ResourcesQueryPlanResponseCondition"
-        },
-        "expOperand": {
-          "$ref": "#/definitions/ResourcesQueryPlanResponseExpressionOperand"
         }
       }
     },
@@ -834,25 +837,11 @@
         "operands": {
           "type": "array",
           "items": {
-            "$ref": "#/definitions/ResourcesQueryPlanResponseExpressionOperand"
+            "$ref": "#/definitions/ExpressionOperand"
           }
         }
       },
       "description": "CEL expression"
-    },
-    "ResourcesQueryPlanResponseExpressionOperand": {
-      "type": "object",
-      "properties": {
-        "value": {
-          "type": "object"
-        },
-        "expression": {
-          "$ref": "#/definitions/ResourcesQueryPlanResponseExpression"
-        },
-        "variable": {
-          "type": "string"
-        }
-      }
     },
     "SortOptionsColumn": {
       "type": "string",
@@ -921,17 +910,6 @@
       "required": [
         "actions"
       ]
-    },
-    "policyv1Condition": {
-      "type": "object",
-      "properties": {
-        "match": {
-          "$ref": "#/definitions/v1Match"
-        },
-        "script": {
-          "type": "string"
-        }
-      }
     },
     "protobufAny": {
       "type": "object",
@@ -1251,6 +1229,17 @@
             "$ref": "#/definitions/v1Effect"
           },
           "description": "Mapping of each action to an effect."
+        }
+      }
+    },
+    "v1Condition": {
+      "type": "object",
+      "properties": {
+        "match": {
+          "$ref": "#/definitions/v1Match"
+        },
+        "script": {
+          "type": "string"
         }
       }
     },
@@ -1796,7 +1785,7 @@
           }
         },
         "condition": {
-          "$ref": "#/definitions/policyv1Condition"
+          "$ref": "#/definitions/v1Condition"
         },
         "effect": {
           "$ref": "#/definitions/v1Effect"
@@ -1928,7 +1917,7 @@
           "description": "The policy version."
         },
         "filter": {
-          "$ref": "#/definitions/ResourcesQueryPlanResponseConditionOperand",
+          "$ref": "#/definitions/ExpressionOperand",
           "description": "Filter"
         },
         "filterDebug": {
@@ -1937,21 +1926,6 @@
         }
       },
       "description": "Resources query plan response for a set of resources."
-    },
-    "v1ResourcesQueryPlanResponseCondition": {
-      "type": "object",
-      "properties": {
-        "operator": {
-          "type": "string"
-        },
-        "nodes": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/ResourcesQueryPlanResponseConditionOperand"
-          }
-        }
-      },
-      "description": "List resources response for a set of resources."
     },
     "v1RoleDef": {
       "type": "object",
@@ -1966,7 +1940,7 @@
           }
         },
         "condition": {
-          "$ref": "#/definitions/policyv1Condition"
+          "$ref": "#/definitions/v1Condition"
         }
       }
     },

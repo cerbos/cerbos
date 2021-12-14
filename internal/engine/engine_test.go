@@ -251,11 +251,10 @@ func TestList(t *testing.T) {
 			input:  request,
 			want:   `(NOT (R.attr.deleted))`,
 			yaml: `
-        condition:
-          operator: OPERATOR_NOT
-          nodes:
-          - expOperand:
-              variable: R.attr.deleted
+        expression:
+          operator: not
+          operands:
+            - variable: R.attr.deleted
 `,
 		},
 		{
@@ -307,7 +306,7 @@ func TestList(t *testing.T) {
 
 				t.Fatalf("Please specify yaml to test response.Filter. Returned value:\n%s", string(buf))
 			}
-			expected := new(responsev1.ResourcesQueryPlanResponse_Condition_Operand)
+			expected := new(responsev1.ResourcesQueryPlanResponse_Expression_Operand)
 			err = util.ReadJSONOrYAML(strings.NewReader(tt.yaml), expected)
 			is.NoError(err)
 			is.Empty(cmp.Diff(expected, response.Filter, protocmp.Transform()))

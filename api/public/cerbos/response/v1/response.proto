@@ -71,22 +71,7 @@ message ResourcesQueryPlanResponse {
         }
         repeated Operand operands = 2;
     }
-    message Condition {
-        option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
-            json_schema: {
-                description: "List resources response for a set of resources."
-            }
-        };
-        message Operand {
-            oneof node {
-                Condition condition = 1;
-                Expression.Operand exp_operand = 2;
-            }
-        }
-        string operator = 1;
-        repeated Operand nodes = 2;
-    }
-    Condition.Operand filter = 5 [
+    Expression.Operand filter = 5 [
         (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
             description: "Filter",
         }
