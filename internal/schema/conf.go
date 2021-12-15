@@ -13,7 +13,7 @@ const (
 // Conf holds configuration related to schema validation.
 type Conf struct {
 	// Enforcement level of the validations. (none, warn, reject)
-	Enforcement Enforcement `yaml:"enforcement"`
+	Enforcement Enforcement `yaml:"enforcement" conf:",defaultValue=reject"`
 }
 
 func (c *Conf) Key() string {

@@ -72,6 +72,7 @@ require (
 require (
 	github.com/Masterminds/sprig/v3 v3.2.2
 	github.com/aws/aws-sdk-go v1.42.19
+	github.com/fatih/structtag v1.2.0
 	github.com/jackc/pgtype v1.9.1
 	github.com/lestrrat-go/jwx v1.2.13
 	github.com/minio/minio-go/v7 v7.0.16
@@ -83,6 +84,7 @@ require (
 	go.opentelemetry.io/otel/sdk v1.2.0
 	go.opentelemetry.io/otel/trace v1.2.0
 	gocloud.dev v0.24.0
+	golang.org/x/tools v0.1.5
 	google.golang.org/genproto v0.0.0-20211129164237-f09f9a12af12
 )
 
@@ -122,7 +124,6 @@ require (
 	github.com/docker/go-units v0.4.0 // indirect
 	github.com/dustin/go-humanize v1.0.0 // indirect
 	github.com/emirpasic/gods v1.12.0 // indirect
-	github.com/fatih/structtag v1.2.0 // indirect
 	github.com/felixge/httpsnoop v1.0.2 // indirect
 	github.com/gdamore/encoding v1.0.0 // indirect
 	github.com/go-git/gcfg v1.5.0 // indirect
@@ -204,7 +205,6 @@ require (
 	golang.org/x/sys v0.0.0-20211007075335-d3039528d8ac // indirect
 	golang.org/x/term v0.0.0-20210927222741-03fcf44c2211 // indirect
 	golang.org/x/text v0.3.7 // indirect
-	golang.org/x/tools v0.1.5 // indirect
 	golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
 	gopkg.in/ini.v1 v1.62.0 // indirect
