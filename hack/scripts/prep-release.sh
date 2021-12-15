@@ -37,6 +37,8 @@ set_branch() {
     sed -i -E "s#branches:.*#branches: [${BRANCH}, 'v*']#g" "${DOCS_DIR}/antora-playbook.yml"
 }
 
+# Generate NOTICE.txt
+make generate-notice
 # Set release version and tag
 update_version $VERSION
 # Set Antora branch to HEAD (author mode)

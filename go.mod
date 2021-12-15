@@ -51,7 +51,7 @@ require (
 	github.com/spf13/cobra v1.2.1
 	github.com/spf13/pflag v1.0.5
 	github.com/stretchr/testify v1.7.0
-	github.com/tidwall/sjson v1.2.3
+	github.com/tidwall/sjson v1.2.4
 	go.elastic.co/ecszap v1.0.0
 	go.opencensus.io v0.23.0
 	go.uber.org/automaxprocs v1.4.0
@@ -65,24 +65,24 @@ require (
 	google.golang.org/grpc v1.42.0
 	google.golang.org/protobuf v1.27.1
 	gopkg.in/yaml.v2 v2.4.0
-	helm.sh/helm/v3 v3.7.1
-	modernc.org/sqlite v1.14.1
+	helm.sh/helm/v3 v3.7.2
+	modernc.org/sqlite v1.14.2
 )
 
 require (
 	github.com/Masterminds/sprig/v3 v3.2.2
-	github.com/aws/aws-sdk-go v1.42.19
+	github.com/aws/aws-sdk-go v1.42.22
 	github.com/fatih/structtag v1.2.0
 	github.com/jackc/pgtype v1.9.1
 	github.com/lestrrat-go/jwx v1.2.13
-	github.com/minio/minio-go/v7 v7.0.16
+	github.com/minio/minio-go/v7 v7.0.18
 	github.com/santhosh-tekuri/jsonschema/v5 v5.0.0
-	github.com/tidwall/gjson v1.10.2
-	go.opentelemetry.io/otel v1.2.0
-	go.opentelemetry.io/otel/bridge/opencensus v0.25.0
-	go.opentelemetry.io/otel/exporters/jaeger v1.2.0
-	go.opentelemetry.io/otel/sdk v1.2.0
-	go.opentelemetry.io/otel/trace v1.2.0
+	github.com/tidwall/gjson v1.12.1
+	go.opentelemetry.io/otel v1.3.0
+	go.opentelemetry.io/otel/bridge/opencensus v0.26.0
+	go.opentelemetry.io/otel/exporters/jaeger v1.3.0
+	go.opentelemetry.io/otel/sdk v1.3.0
+	go.opentelemetry.io/otel/trace v1.3.0
 	gocloud.dev v0.24.0
 	golang.org/x/tools v0.1.5
 	google.golang.org/genproto v0.0.0-20211129164237-f09f9a12af12
@@ -130,6 +130,8 @@ require (
 	github.com/go-git/go-billy/v5 v5.3.1 // indirect
 	github.com/go-kit/log v0.1.0 // indirect
 	github.com/go-logfmt/logfmt v0.5.0 // indirect
+	github.com/go-logr/logr v1.2.1 // indirect
+	github.com/go-logr/stdr v1.2.0 // indirect
 	github.com/goccy/go-json v0.8.1 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/golang/glog v1.0.0 // indirect
@@ -196,8 +198,8 @@ require (
 	github.com/xeipuuv/gojsonreference v0.0.0-20180127040603-bd5ef7bd5415 // indirect
 	github.com/xeipuuv/gojsonschema v1.2.0 // indirect
 	github.com/xi2/xz v0.0.0-20171230120015-48954b6210f8 // indirect
-	go.opentelemetry.io/otel/metric v0.25.0 // indirect
-	go.opentelemetry.io/otel/sdk/export/metric v0.25.0 // indirect
+	go.opentelemetry.io/otel/metric v0.26.0 // indirect
+	go.opentelemetry.io/otel/sdk/export/metric v0.26.0 // indirect
 	go.uber.org/atomic v1.9.0 // indirect
 	golang.org/x/lint v0.0.0-20210508222113-6edffad5e616 // indirect
 	golang.org/x/mod v0.5.0 // indirect
@@ -211,9 +213,9 @@ require (
 	gopkg.in/warnings.v0 v0.1.2 // indirect
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b // indirect
 	lukechampine.com/uint128 v1.1.1 // indirect
-	modernc.org/cc/v3 v3.35.17 // indirect
-	modernc.org/ccgo/v3 v3.12.65 // indirect
-	modernc.org/libc v1.11.71 // indirect
+	modernc.org/cc/v3 v3.35.18 // indirect
+	modernc.org/ccgo/v3 v3.12.82 // indirect
+	modernc.org/libc v1.11.87 // indirect
 	modernc.org/mathutil v1.4.1 // indirect
 	modernc.org/memory v1.0.5 // indirect
 	modernc.org/opt v0.1.1 // indirect

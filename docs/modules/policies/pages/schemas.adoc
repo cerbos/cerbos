@@ -49,7 +49,7 @@ To avoid repetition, you can define common schema fragments inline using `$defs`
 
 == Validate requests using schemas
 
-First, update your resource policy to point to the schemas that should be used to validate requests for that resource kind. For example, the following resource policy requires all requests for `album:object` resource kind to validated using `principal.json` for the principal attributes and `album/object.json` for the resource attributes respectively.
+First, update your resource policy to point to the schemas that should be used to validate requests for that resource kind. For example, the following resource policy requires all requests for `album:object` resource kind to be validated using `principal.json` for the principal attributes and `album/object.json` for the resource attributes respectively.
 
 .Example
 [source,yaml,linenums,highlight=20..24]

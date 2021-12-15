@@ -135,7 +135,8 @@ func (c *Cloner) downloadToFile(ctx context.Context, key, file string) (err erro
 	if err != nil {
 		return fmt.Errorf("failed to create a reader for the object %q: %w", key, err)
 	}
-	defer multierr.AppendInvoke(&err, multierr.Close(r))
+	// defer multierr.AppendInvoke(&err, multierr.Close(r))
+	defer r.Close()
 
 	if _, err = io.Copy(fd, r); err != nil {
 		return fmt.Errorf("failed to read the object %q: %w", key, err)
