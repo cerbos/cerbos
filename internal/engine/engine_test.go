@@ -8,6 +8,10 @@ import (
 	"context"
 	"testing"
 
+	"github.com/google/go-cmp/cmp"
+	"github.com/stretchr/testify/require"
+	"google.golang.org/protobuf/testing/protocmp"
+
 	enginev1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
 	privatev1 "github.com/cerbos/cerbos/api/genpb/cerbos/private/v1"
@@ -18,9 +22,6 @@ import (
 	"github.com/cerbos/cerbos/internal/storage/disk"
 	"github.com/cerbos/cerbos/internal/test"
 	"github.com/cerbos/cerbos/internal/util"
-	"github.com/google/go-cmp/cmp"
-	"github.com/stretchr/testify/require"
-	"google.golang.org/protobuf/testing/protocmp"
 )
 
 // trick compiler into not converting benchmarks into nops.
@@ -184,6 +185,7 @@ func readQPTestSuite(t *testing.T, data []byte) *privatev1.QueryPlannerTestSuite
 
 	return tc
 }
+
 func TestQueryPlan(t *testing.T) {
 	eng, cancelFunc := mkEngine(t, false, "query_planner/policies")
 	defer cancelFunc()
