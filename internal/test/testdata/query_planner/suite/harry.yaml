@@ -1,0 +1,27 @@
+---
+description: Harry tests
+principal:
+  id: harry
+  policyVersion: default
+  roles:
+    - employee
+    - user
+tests:
+  - action: view
+    policyVersion: default
+    resourceKind: leave_request
+    want:
+      expression:
+        operator: eq
+        operands:
+          - variable: R.attr.owner
+          - value: harry
+  - action: view:refer-derived-role
+    policyVersion: default
+    resourceKind: leave_request
+    want:
+      expression:
+        operator: eq
+        operands:
+          - variable: request.resource.attr.owner
+          - value: harry

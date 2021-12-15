@@ -8,7 +8,7 @@ resourcePolicy:
   importDerivedRoles:
     - beta
   rules:
-    - actions: ["view2"]
+    - actions: ["view:refer-derived-role"]
       derivedRoles:
         - owner
       effect: EFFECT_ALLOW
@@ -33,10 +33,10 @@ resourcePolicy:
                     - expr: 1 != 1
                     - expr: R.attr.geography == request.principal.attr.geography
                     - expr: R.attr.geography in request.principal.attr.managed_geographies
-    - actions: ["approve:refer_derived_role"]
+    - actions: ["approve:refer-derived-role"]
       effect: EFFECT_ALLOW
       derivedRoles:
-        - direct_manager_v2
+        - direct_manager
       condition:
         match:
           all:

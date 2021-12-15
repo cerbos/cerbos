@@ -6,27 +6,21 @@ package engine
 import (
 	"bytes"
 	"context"
-	"strings"
 	"testing"
-
-	"github.com/ghodss/yaml"
-	"github.com/google/go-cmp/cmp"
-	"github.com/stretchr/testify/require"
-	"google.golang.org/protobuf/encoding/protojson"
-	"google.golang.org/protobuf/testing/protocmp"
-	"google.golang.org/protobuf/types/known/structpb"
 
 	enginev1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
 	privatev1 "github.com/cerbos/cerbos/api/genpb/cerbos/private/v1"
 	requestv1 "github.com/cerbos/cerbos/api/genpb/cerbos/request/v1"
-	responsev1 "github.com/cerbos/cerbos/api/genpb/cerbos/response/v1"
 	"github.com/cerbos/cerbos/internal/audit"
 	"github.com/cerbos/cerbos/internal/audit/local"
 	"github.com/cerbos/cerbos/internal/compile"
 	"github.com/cerbos/cerbos/internal/storage/disk"
 	"github.com/cerbos/cerbos/internal/test"
 	"github.com/cerbos/cerbos/internal/util"
+	"github.com/google/go-cmp/cmp"
+	"github.com/stretchr/testify/require"
+	"google.golang.org/protobuf/testing/protocmp"
 )
 
 // trick compiler into not converting benchmarks into nops.
@@ -217,99 +211,6 @@ func TestQueryPlan(t *testing.T) {
 					is.Empty(cmp.Diff(tt.Want, response.Filter, protocmp.Transform()))
 				})
 			}
-		})
-	}
-}
-func TestList(t *testing.T) {
-	eng, cancelFunc := mkEngine(t, false, "")
-	defer cancelFunc()
-
-	request := &requestv1.ResourcesQueryPlanRequest{
-		RequestId: "requestId",
-		Action:    "approve",
-		Principal: &enginev1.Principal{
-			Id:            "maggie",
-			PolicyVersion: "default",
-			Roles:         []string{"employee", "manager"},
-			Attr: map[string]*structpb.Value{
-				"geography": {Kind: &structpb.Value_StringValue{StringValue: "US"}},
-				"managed_geographies": {Kind: &structpb.Value_ListValue{
-					ListValue: &structpb.ListValue{
-						Values: []*structpb.Value{
-							{Kind: &structpb.Value_StringValue{StringValue: "US"}},
-							{Kind: &structpb.Value_StringValue{StringValue: "CA"}},
-						},
-					},
-				}},
-			},
-		},
-		PolicyVersion: "default",
-		ResourceKind:  "list-resources:leave_request",
-	}
-	tests := []struct {
-		name, action, want, yaml string
-		input                    *requestv1.ResourcesQueryPlanRequest
-	}{
-		{
-			name: "harry wants to view",
-			input: &requestv1.ResourcesQueryPlanRequest{
-				RequestId: "requestId",
-				Action:    "view",
-				Principal: &enginev1.Principal{
-					Id:            "harry",
-					PolicyVersion: "default",
-					Roles:         []string{"employee"},
-				},
-				PolicyVersion: "default",
-				ResourceKind:  "list-resources:leave_request",
-			},
-			want: `(R.attr.owner == "harry")`,
-		},
-		{
-			name: "harry wants to view2",
-			input: &requestv1.ResourcesQueryPlanRequest{
-				RequestId: "requestId",
-				Action:    "view2",
-				Principal: &enginev1.Principal{
-					Id:            "harry",
-					PolicyVersion: "default",
-					Roles:         []string{"user"},
-				},
-				PolicyVersion: "default",
-				ResourceKind:  "list-resources:leave_request",
-			},
-			want: `(request.resource.attr.owner == "harry")`,
-		},
-		{
-			name:   "maggie wants to approve 3: short-circuit test",
-			action: "approve3",
-			input:  request,
-			want:   `(false)`,
-			yaml:   "value: false",
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			is := require.New(t)
-			if tt.action != "" {
-				tt.input.Action = tt.action
-			}
-			response, err := eng.List(context.Background(), tt.input)
-			is.NoError(err)
-			is.NotNil(response)
-			is.Equal(tt.want, response.FilterDebug)
-			if tt.yaml == "" {
-				buf, err := protojson.Marshal(response.Filter)
-				is.NoError(err)
-				buf, err = yaml.JSONToYAML(buf)
-				is.NoError(err)
-
-				t.Fatalf("Please specify yaml to test response.Filter. Returned value:\n%s", string(buf))
-			}
-			expected := new(responsev1.ResourcesQueryPlanResponse_Expression_Operand)
-			err = util.ReadJSONOrYAML(strings.NewReader(tt.yaml), expected)
-			is.NoError(err)
-			is.Empty(cmp.Diff(expected, response.Filter, protocmp.Transform()))
 		})
 	}
 }

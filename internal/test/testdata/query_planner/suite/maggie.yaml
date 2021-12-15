@@ -12,7 +12,7 @@ principal:
             - US
             - CA
 tests:
-    - action: approve:refer_derived_role
+    - action: "approve:refer-derived-role"
       policyVersion: default
       resourceKind: leave_request
       want:
