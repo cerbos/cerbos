@@ -117,6 +117,9 @@ func (rpe *resourcePolicyEvaluator) EvaluateResourcesQueryPlan(_ context.Context
 			}
 		}
 	}
+	if result.Filter == nil {
+		result.Filter = &qpN{Node: &qpNE{Expression: conditions.TrueExpr}} // No restrictions on this resource
+	}
 	return result, nil
 }
 

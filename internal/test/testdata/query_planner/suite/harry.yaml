@@ -25,3 +25,8 @@ tests:
         operands:
           - variable: request.resource.attr.owner
           - value: harry
+  - action: non-existent-action
+    policyVersion: default
+    resourceKind: leave_request
+    want:
+      value: true
