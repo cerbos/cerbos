@@ -300,11 +300,11 @@ SOFTWARE.
 
 --------------------------------------------------------------------------------
 Module  : github.com/aws/aws-sdk-go
-Version : v1.42.19
-Time    : 2021-12-03T19:17:01Z
+Version : v1.42.22
+Time    : 2021-12-09T19:18:38Z
 Licence : Apache-2.0
 
-Contents of probable licence file $GOMODCACHE/github.com/aws/aws-sdk-go@v1.42.19/LICENSE.txt:
+Contents of probable licence file $GOMODCACHE/github.com/aws/aws-sdk-go@v1.42.22/LICENSE.txt:
 
 
                                  Apache License
@@ -7323,11 +7323,11 @@ Contents of probable licence file $GOMODCACHE/helm.sh/helm/v3@v3.7.2/LICENSE:
 
 --------------------------------------------------------------------------------
 Module  : modernc.org/sqlite
-Version : v1.14.1
-Time    : 2021-11-14T10:12:37Z
+Version : v1.14.2
+Time    : 2021-12-02T13:56:58Z
 Licence : BSD-3-Clause
 
-Contents of probable licence file $GOMODCACHE/modernc.org/sqlite@v1.14.1/LICENSE:
+Contents of probable licence file $GOMODCACHE/modernc.org/sqlite@v1.14.2/LICENSE:
 
 Copyright (c) 2017 The Sqlite Authors. All rights reserved.
 
@@ -23327,11 +23327,11 @@ THE SOFTWARE.
 
 --------------------------------------------------------------------------------
 Module  : modernc.org/cc/v3
-Version : v3.35.17
-Time    : 2021-11-07T15:47:43Z
+Version : v3.35.18
+Time    : 2021-11-16T10:54:44Z
 Licence : BSD-2-Clause
 
-Contents of probable licence file $GOMODCACHE/modernc.org/cc/v3@v3.35.17/LICENSE:
+Contents of probable licence file $GOMODCACHE/modernc.org/cc/v3@v3.35.18/LICENSE:
 
 Copyright (c) 2017 The CC Authors. All rights reserved.
 
@@ -23364,11 +23364,11 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 --------------------------------------------------------------------------------
 Module  : modernc.org/ccgo/v3
-Version : v3.12.65
-Time    : 2021-11-13T08:19:51Z
+Version : v3.12.82
+Time    : 2021-12-01T19:17:48Z
 Licence : BSD-2-Clause
 
-Contents of probable licence file $GOMODCACHE/modernc.org/ccgo/v3@v3.12.65/LICENSE:
+Contents of probable licence file $GOMODCACHE/modernc.org/ccgo/v3@v3.12.82/LICENSE:
 
 Copyright (c) 2017 The CCGO Authors. All rights reserved.
 
@@ -23396,6 +23396,42 @@ LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
 DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
 THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+
+--------------------------------------------------------------------------------
+Module  : modernc.org/ccorpus
+Version : v1.11.1
+Time    : 2021-11-26T10:14:33Z
+Licence : BSD-3-Clause
+
+Contents of probable licence file $GOMODCACHE/modernc.org/ccorpus@v1.11.1/LICENSE:
+
+Copyright (c) 2020 The Ccorpus Authors. All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+1. Redistributions of source code must retain the above copyright notice, this
+list of conditions and the following disclaimer.
+
+2. Redistributions in binary form must reproduce the above copyright notice,
+this list of conditions and the following disclaimer in the documentation
+and/or other materials provided with the distribution.
+
+3. Neither the name of the copyright holder nor the names of its contributors
+may be used to endorse or promote products derived from this software without
+specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
@@ -23438,11 +23474,11 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 --------------------------------------------------------------------------------
 Module  : modernc.org/libc
-Version : v1.11.71
-Time    : 2021-11-14T10:08:55Z
+Version : v1.11.87
+Time    : 2021-12-01T18:48:54Z
 Licence : BSD-2-Clause
 
-Contents of probable licence file $GOMODCACHE/modernc.org/libc@v1.11.71/LICENSE:
+Contents of probable licence file $GOMODCACHE/modernc.org/libc@v1.11.87/LICENSE:
 
 Copyright (c) 2017 The Libc Authors. All rights reserved.
 
