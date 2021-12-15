@@ -49,7 +49,7 @@ resourcePolicy:
       condition:
         match:
           expr: R.attr.deleted
-    - actions: ["approve2"]
+    - actions: ["approve:true-in-both-or-and-conditions"]
       roles: ["manager"]
       effect: EFFECT_ALLOW
       condition:
@@ -64,7 +64,7 @@ resourcePolicy:
                     - expr: 1 == 1
                     - expr: R.attr.geography == request.principal.attr.geography
                     - expr: R.attr.geography in request.principal.attr.managed_geographies
-    - actions: ["approve3"]
+    - actions: ["approve:false-in-and-condition"]
       roles: ["manager"]
       effect: EFFECT_ALLOW
       condition:

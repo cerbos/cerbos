@@ -45,3 +45,33 @@ tests:
                                   operands:
                                       - variable: R.attr.owner
                                       - value: "maggie"
+    - action: report
+      policyVersion: default
+      resourceKind: leave_request
+      want:
+        expression:
+          operator: not
+          operands:
+            - variable: R.attr.deleted
+    - action: "approve:true-in-both-or-and-conditions"
+      policyVersion: default
+      resourceKind: leave_request
+      want:
+        expression:
+          operator: and
+          operands:
+            - expression:
+                operator: eq
+                operands:
+                  - variable: R.attr.status
+                  - value: "PENDING_APPROVAL"
+            - expression:
+                operator: ne
+                operands:
+                  - variable: R.attr.owner
+                  - value: "maggie"
+    - action: "approve:false-in-and-condition"
+      policyVersion: default
+      resourceKind: leave_request
+      want:
+        value: false
