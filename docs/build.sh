@@ -9,6 +9,11 @@ SOURCE_DIR=$(cd "${SCRIPT_DIR}/.." && pwd)
 WORKSPACE="/github/workspace"
 ANTORA_VERSION=${ANTORA_VERSION:-"3.0.0-alpha.10"}
 
+PARTIALS_DIR=docs/modules/configuration/partials
+for file in "${PARTIALS_DIR}"/conf*.adoc; do
+    echo "${file}"
+done
+
 rm -rf ${SCRIPT_DIR}/build
 docker run -v "$SOURCE_DIR":"$WORKSPACE":Z --rm -t docker.io/antora/antora:${ANTORA_VERSION} antora --stacktrace --clean "${WORKSPACE}/docs/antora-playbook.yml"
 
