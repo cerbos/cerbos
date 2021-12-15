@@ -57,5 +57,6 @@ resourcePolicy:
         match:
           all:
             of:
+              - expr: '"marketing" == P.attr.department'
               - expr: '"cerbos-jwt-tests" in request.aux_data.jwt.aud'
               - expr: '"A" in request.aux_data.jwt.customArray'

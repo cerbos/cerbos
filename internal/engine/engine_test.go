@@ -211,6 +211,7 @@ func TestQueryPlan(t *testing.T) {
 					is.NotNil(response)
 
 					is.Empty(cmp.Diff(tt.Want, response.Filter, protocmp.Transform()))
+					t.Log(response.FilterDebug)
 				})
 			}
 		})

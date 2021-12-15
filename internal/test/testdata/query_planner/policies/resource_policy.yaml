@@ -79,3 +79,13 @@ resourcePolicy:
                     - expr: 1 == 1
                     - expr: R.attr.geography == request.principal.attr.geography
                     - expr: R.attr.geography in request.principal.attr.managed_geographies
+    - actions: ["enlist:none-condition"]
+      roles: ["manager"]
+      effect: EFFECT_ALLOW
+      condition:
+        match:
+          none:
+            of:
+              - expr: R.attr.team in ["A", "B"]
+              - expr: R.attr.GPA < 4.7
+

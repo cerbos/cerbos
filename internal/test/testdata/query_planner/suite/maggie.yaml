@@ -75,3 +75,26 @@ tests:
       resourceKind: leave_request
       want:
         value: false
+    - action: "enlist:none-condition"
+      policyVersion: default
+      resourceKind: leave_request
+      want:
+        expression:
+          operator: and
+          operands:
+            - expression:
+                operator: not
+                operands:
+                  - expression:
+                      operator: in
+                      operands:
+                        - variable: R.attr.team
+                        - value: ["A", "B"]
+            - expression:
+                operator: not
+                operands:
+                  - expression:
+                      operator: lt
+                      operands:
+                        - variable: R.attr.GPA
+                        - value: 4.7

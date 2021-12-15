@@ -113,7 +113,7 @@ func (rpe *resourcePolicyEvaluator) EvaluateResourcesQueryPlan(_ context.Context
 					result.Filter = &qpN{Node: &qpNLO{LogicalOperation: mkNotLogicalOperation(result.Filter)}}
 				}
 
-				return result, nil // Shall we combine (with AND) rule results instead?
+				return result, nil // @Charith: Shall we combine (with AND) rule results instead?
 			}
 		}
 	}
@@ -218,6 +218,29 @@ func evaluateCondition(condition *runtimev1.Condition, input *requestv1.Resource
 			}
 
 			if add {
+				nodes = append(nodes, node)
+			}
+		}
+		res.Node = &qpNLO{LogicalOperation: mkAndLogicalOperation(nodes)}
+	case *runtimev1.Condition_None:
+		nodes := make([]*qpN, 0, len(t.None.Expr))
+		for _, c := range t.None.Expr {
+			node, err := evaluateCondition(c, input, variables)
+			if err != nil {
+				return nil, err
+			}
+			add := true
+
+			if b, ok := isNodeConstBool(node); ok {
+				if b {
+					res.Node = &qpNE{Expression: conditions.FalseExpr}
+					return res, nil
+				}
+				add = false
+			}
+
+			if add {
+				node = &qpN{Node: &qpNLO{LogicalOperation: mkNotLogicalOperation(node)}}
 				nodes = append(nodes, node)
 			}
 		}
