@@ -30,11 +30,11 @@ type (
 func getExpectedExpressions(t *testing.T) map[string]*exOp {
 	t.Helper()
 
-	res := make(map[string]*exOp)
-	var results map[string]json.RawMessage
-	err := yaml.Unmarshal(astBuildExprBlob, &results)
+	var raw map[string]json.RawMessage
+	err := yaml.Unmarshal(astBuildExprBlob, &raw)
 	require.NoError(t, err)
-	for k, v := range results {
+	res := make(map[string]*exOp, len(raw))
+	for k, v := range raw {
 		expected := new(exOp)
 		b, err := v.MarshalJSON()
 		require.NoError(t, err)
