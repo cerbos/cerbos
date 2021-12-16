@@ -1,6 +1,8 @@
 // Copyright 2021 Zenauth Ltd.
 // SPDX-License-Identifier: Apache-2.0
 
+//go:generate go run ./../../hack/tools/confdocs.go
+
 package audit
 
 import (
@@ -13,15 +15,20 @@ const (
 	ConfKey = "audit"
 )
 
+// Optional.
 type Conf struct {
 	confHolder
 }
 
 type confHolder struct {
-	Enabled             bool   `yaml:"enabled"`
-	Backend             string `yaml:"backend"`
-	AccessLogsEnabled   bool   `yaml:"accessLogsEnabled"`
-	DecisionLogsEnabled bool   `yaml:"decisionLogsEnabled"`
+	// Enables audit logging.
+	Enabled bool `yaml:"enabled" conf:",defaultValue=false"`
+	// Audit backend to use.
+	Backend string `yaml:"backend" conf:",defaultValue=local"`
+	// Enables logging of access attempts.
+	AccessLogsEnabled bool `yaml:"accessLogsEnabled" conf:",defaultValue=true"`
+	// Enables logging of policy decisions.
+	DecisionLogsEnabled bool `yaml:"decisionLogsEnabled" conf:",defaultValue=true"`
 }
 
 func (c *Conf) UnmarshalYAML(unmarshal func(interface{}) error) error {

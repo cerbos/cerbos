@@ -1,6 +1,8 @@
 // Copyright 2021 Zenauth Ltd.
 // SPDX-License-Identifier: Apache-2.0
 
+//go:generate go run ./../../../hack/tools/confdocs.go
+
 package blob
 
 import (
@@ -23,24 +25,20 @@ const (
 	defaultRequestTimeout  = 5 * time.Second
 )
 
-// Conf holds the configuration for Cloud storage driver.
+// Required (if driver is set to 'blob'). Configuration for Cloud storage driver.
 type Conf struct {
-	// Bucket URL
-	// For example
-	// s3://my-bucket?region=us-west-1
-	// gs://my-bucket
-	// azblob://my-container
-	Bucket string `yaml:"bucket"`
-	// Bucket prefix specifies a subdirectory to download
-	Prefix string `yaml:"prefix,omitempty"`
-	// WorkDir is the local path to check out policies to.
-	WorkDir string `yaml:"workDir"`
-	// UpdatePollInterval specifies the interval to poll the cloud storage. Set to 0 to disable.
-	UpdatePollInterval time.Duration `yaml:"updatePollInterval"`
-	// DownloadTimeout specifies the timeout for downloading from cloud storage.
-	DownloadTimeout *time.Duration `yaml:"downloadTimeout,omitempty"`
-	// RequestTimeout specifies the timeout for an HTTP request.
-	RequestTimeout *time.Duration `yaml:"requestTimeout,omitempty"`
+	// Bucket URL (Examples: s3://my-bucket?region=us-west-1 gs://my-bucket azblob://my-container).
+	Bucket string `yaml:"bucket" conf:"required,defaultValue=\"s3://my-bucket-name?region=us-east-2\""`
+	// Specifies a subdirectory to download.
+	Prefix string `yaml:"prefix,omitempty" conf:",defaultValue=policies"`
+	// The local path to check out policies to.
+	WorkDir string `yaml:"workDir" conf:",defaultValue=${HOME}/tmp/cerbos/work"`
+	// Specifies the interval to poll the cloud storage. Set to 0 to disable.
+	UpdatePollInterval time.Duration `yaml:"updatePollInterval" conf:",defaultValue=15s"`
+	// Specifies the timeout for downloading from cloud storage.
+	DownloadTimeout *time.Duration `yaml:"downloadTimeout,omitempty" conf:",defaultValue=30s"`
+	// Specifies the timeout for an HTTP request.
+	RequestTimeout *time.Duration `yaml:"requestTimeout,omitempty" conf:",defaultValue=10s"`
 }
 
 func (conf *Conf) Key() string {

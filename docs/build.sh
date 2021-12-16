@@ -9,6 +9,15 @@ SOURCE_DIR=$(cd "${SCRIPT_DIR}/.." && pwd)
 WORKSPACE="/github/workspace"
 ANTORA_VERSION=${ANTORA_VERSION:-"3.0.0-alpha.10"}
 
+PARTIALS_DIR=docs/modules/configuration/partials
+FULL_CONFIGURATION_DOC="${PARTIALS_DIR}"/fullconfiguration.adoc
+rm -f "${FULL_CONFIGURATION_DOC}"
+for path in "${PARTIALS_DIR}"/conf*.adoc; do
+    file=$(basename "${path}")
+    content=$(printf 'include::partial$%s[]' "$file")
+    echo "${content}" >> "${FULL_CONFIGURATION_DOC}"
+done
+
 rm -rf ${SCRIPT_DIR}/build
 docker run -v "$SOURCE_DIR":"$WORKSPACE":Z --rm -t docker.io/antora/antora:${ANTORA_VERSION} antora --stacktrace --clean "${WORKSPACE}/docs/antora-playbook.yml"
 

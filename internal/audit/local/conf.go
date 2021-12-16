@@ -1,6 +1,8 @@
 // Copyright 2021 Zenauth Ltd.
 // SPDX-License-Identifier: Apache-2.0
 
+//go:generate go run ./../../../hack/tools/confdocs.go
+
 package local
 
 import (
@@ -32,17 +34,20 @@ var (
 	errInvalidMaxBatchSize = errors.New("maxBatchSize must be at least 1")
 )
 
+// Configuration for the local audit backend.
 type Conf struct {
-	StoragePath     string        `yaml:"storagePath"`
-	RetentionPeriod time.Duration `yaml:"retentionPeriod"`
+	// Path to store the data
+	StoragePath string `yaml:"storagePath" conf:",defaultValue=/path/to/dir"`
+	// How long to keep records for
+	RetentionPeriod time.Duration `yaml:"retentionPeriod" conf:",defaultValue=168h"`
 	Advanced        AdvancedConf  `yaml:"advanced"`
 }
 
 type AdvancedConf struct {
-	BufferSize    uint          `yaml:"bufferSize"`
-	MaxBatchSize  uint          `yaml:"maxBatchSize"`
-	FlushInterval time.Duration `yaml:"flushInterval"`
-	GCInterval    time.Duration `yaml:"gcInterval"`
+	BufferSize    uint          `yaml:"bufferSize" conf:",defaultValue=256"`
+	MaxBatchSize  uint          `yaml:"maxBatchSize" conf:",defaultValue=32"`
+	FlushInterval time.Duration `yaml:"flushInterval" conf:",defaultValue=1s"`
+	GCInterval    time.Duration `yaml:"gcInterval" conf:",defaultValue=60s"`
 }
 
 func (c *Conf) Key() string {

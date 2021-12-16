@@ -1,0 +1,2 @@
+schema: # Optional. Configuration related to schema validation.
+  enforcement: reject # Level of the validations. (none, warn, reject)

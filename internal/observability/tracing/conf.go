@@ -1,6 +1,8 @@
 // Copyright 2021 Zenauth Ltd.
 // SPDX-License-Identifier: Apache-2.0
 
+//go:generate go run ./../../../hack/tools/confdocs.go
+
 package tracing
 
 import (
@@ -20,25 +22,25 @@ var (
 	errJaegerEndpointUndefined = errors.New("jaeger endpoint undefined")
 )
 
-// Conf holds the tracing configuration.
+// Optional. Configuration for tracing.
 type Conf struct {
-	// SampleProbability is the probability of sampling expressed as a number between 0 and 1.
-	SampleProbability float64 `yaml:"sampleProbability"`
-	// PropagationFormat is the trace propagation format to use. Valid values are w3c-tracecontext or b3.
-	PropagationFormat string `yaml:"propagationFormat"`
-	// Exporter is the type of trace exporter to use.
-	Exporter string `yaml:"exporter"`
-	// Jaeger configures the Jaeger exporter.
+	// The probability of sampling expressed as a number between 0 and 1.
+	SampleProbability float64 `yaml:"sampleProbability" conf:",defaultValue=0.1"`
+	// The trace propagation format to use. Valid values are w3c-tracecontext or b3.
+	PropagationFormat string `yaml:"propagationFormat" conf:",ignore"`
+	// The type of trace exporter to use.
+	Exporter string `yaml:"exporter" conf:",defaultValue=jaeger"`
+	// Configures the Jaeger exporter.
 	Jaeger *JaegerConf `yaml:"jaeger"`
 }
 
 type JaegerConf struct {
 	// ServiceName is the name of the service to report to Jaeger.
-	ServiceName string `yaml:"serviceName"`
+	ServiceName string `yaml:"serviceName" conf:",defaultValue=cerbos"`
 	// AgentEndpoint is the Jaeger agent endpoint to report to.
-	AgentEndpoint string `yaml:"agentEndpoint"`
+	AgentEndpoint string `yaml:"agentEndpoint" conf:",defaultValue=\"localhost:6831\""`
 	// CollectorEndpoint is the Jaeger collector endpoint to report to.
-	CollectorEndpoint string `yaml:"collectorEndpoint"`
+	CollectorEndpoint string `yaml:"collectorEndpoint" conf:",defaultValue=\"http://localhost:14268\""`
 }
 
 func (c *Conf) Key() string {

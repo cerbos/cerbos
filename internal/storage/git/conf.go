@@ -1,6 +1,8 @@
 // Copyright 2021 Zenauth Ltd.
 // SPDX-License-Identifier: Apache-2.0
 
+//go:generate go run ./../../../hack/tools/confdocs.go
+
 package git
 
 import (
@@ -25,38 +27,38 @@ const (
 	defaultOperationTimeout = 60 * time.Second
 )
 
-// Conf holds the configuration for Git storage driver.
+// Required (if driver is set to 'git'). Configuration for Git storage driver.
 type Conf struct {
-	// Protocol is the Git protocol to use. Valid values are https, ssh, and file.
-	Protocol string `yaml:"protocol"`
-	// URL is the URL to the Git repo.
-	URL string `yaml:"url"`
-	// Branch is the branch to checkout.
-	Branch string `yaml:"branch"`
-	// SubDir is the path under the checked-out Git repo where the policies are stored.
-	SubDir string `yaml:"subDir,omitempty"`
-	// CheckoutDir is the local path to checkout the Git repo to.
-	CheckoutDir string `yaml:"checkoutDir"`
+	// The Git protocol to use. Valid values are https, ssh, and file.
+	Protocol string `yaml:"protocol" conf:"required,defaultValue=file"`
+	// The URL to the Git repo.
+	URL string `yaml:"url" conf:"required,defaultValue=file://${HOME}/tmp/cerbos/policies"`
+	// The branch to checkout.
+	Branch string `yaml:"branch" conf:",defaultValue=policies"`
+	// The path under the checked-out Git repo where the policies are stored.
+	SubDir string `yaml:"subDir,omitempty" conf:",defaultValue=policies"`
+	// The local path to checkout the Git repo to.
+	CheckoutDir string `yaml:"checkoutDir" conf:",defaultValue=${HOME}/tmp/cerbos/work"`
 	// [DEPRECATED] ScratchDir is the directory to use for holding temporary data.
-	ScratchDir string `yaml:"scratchDir"`
-	// SSH holds auth details for the SSH protocol.
+	ScratchDir string `yaml:"scratchDir" conf:",ignore"`
+	// Holds auth details for the SSH protocol.
 	SSH *SSHAuth `yaml:"ssh,omitempty"`
-	// HTTPS holds auth details for the HTTPS protocol.
+	// Holds auth details for the HTTPS protocol.
 	HTTPS *HTTPSAuth `yaml:"https,omitempty"`
-	// OperationTimeout specifies the timeout for git operations.
-	OperationTimeout *time.Duration `yaml:"operationTimeout,omitempty"`
-	// UpdatePollInterval specifies the interval to poll the Git repository for changes. Set to 0 to disable.
-	UpdatePollInterval time.Duration `yaml:"updatePollInterval"`
+	// Specifies the timeout for git operations.
+	OperationTimeout *time.Duration `yaml:"operationTimeout,omitempty" conf:",defaultValue=60s"`
+	// Specifies the interval to poll the Git repository for changes. Set to 0 to disable.
+	UpdatePollInterval time.Duration `yaml:"updatePollInterval" conf:",defaultValue=60s"`
 }
 
 // SSHAuth holds auth details for the SSH protocol.
 type SSHAuth struct {
-	// User is the git user. Defaults to git.
-	User string `yaml:"user"`
-	// PrivateKeyFile is the path to the SSH private key file.
-	PrivateKeyFile string `yaml:"privateKeyFile"`
-	// Password is the password to the SSH private key.
-	Password string `yaml:"password"`
+	// The git user. Defaults to git.
+	User string `yaml:"user" conf:",defaultValue=git"`
+	// The path to the SSH private key file.
+	PrivateKeyFile string `yaml:"privateKeyFile" conf:",defaultValue=${HOME}/.ssh/id_rsa"`
+	// The password to the SSH private key.
+	Password string `yaml:"password" conf:",defaultValue=pw"`
 }
 
 func (sa *SSHAuth) Auth() (transport.AuthMethod, error) {
@@ -74,10 +76,10 @@ func (sa *SSHAuth) Auth() (transport.AuthMethod, error) {
 
 // HTTPSAuth holds auth details for the HTTPS protocol.
 type HTTPSAuth struct {
-	// Username is the username to use for authentication.
-	Username string `yaml:"username"`
-	// Password is the password (or token) to use for authentication.
-	Password string `yaml:"password"`
+	// The username to use for authentication.
+	Username string `yaml:"username" conf:",defaultValue=cerbos"`
+	// The password (or token) to use for authentication.
+	Password string `yaml:"password" conf:",defaultValue=${GITHUB_TOKEN}"`
 }
 
 func (ha *HTTPSAuth) Auth() (transport.AuthMethod, error) {

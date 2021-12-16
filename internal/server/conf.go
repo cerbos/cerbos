@@ -1,6 +1,8 @@
 // Copyright 2021 Zenauth Ltd.
 // SPDX-License-Identifier: Apache-2.0
 
+//go:generate go run ./../../hack/tools/confdocs.go
+
 package server
 
 import (
@@ -27,59 +29,59 @@ var (
 	errAdminCredsUndefined   = errors.New("admin credentials not defined")
 )
 
-// Conf holds configuration pertaining to the server.
+// Required. Configuration pertaining to the server.
 type Conf struct {
-	// HTTPListenAddr is the dedicated HTTP address.
-	HTTPListenAddr string `yaml:"httpListenAddr"`
-	// GRPCListenAddr is the dedicated GRPC address.
-	GRPCListenAddr string `yaml:"grpcListenAddr"`
-	// TLS defines the TLS configuration for the server.
+	// The dedicated HTTP address to listen.
+	HTTPListenAddr string `yaml:"httpListenAddr" conf:"required,defaultValue=\":3592\""`
+	// The dedicated HTTP address to listen.
+	GRPCListenAddr string `yaml:"grpcListenAddr" conf:"required,defaultValue=\":3593\""`
+	// The TLS configuration for the server.
 	TLS *TLSConf `yaml:"tls"`
 	// CORS defines the CORS configuration for the server.
 	CORS CORSConf `yaml:"cors"`
-	// MetricsEnabled defines whether the metrics endpoint is enabled.
-	MetricsEnabled bool `yaml:"metricsEnabled"`
-	// LogRequestPayloads defines whether the request payloads should be logged.
-	LogRequestPayloads bool `yaml:"logRequestPayloads"`
-	// PlaygroundEnabled defines whether the playground API is enabled.
-	PlaygroundEnabled bool `yaml:"playgroundEnabled"`
-	// AdminAPI defines the admin API configuration.
+	// Defines whether the metrics endpoint (/_cerbos/metrics) is enabled.
+	MetricsEnabled bool `yaml:"metricsEnabled" conf:",defaultValue=true"`
+	// Defines whether the request payloads should be logged.
+	LogRequestPayloads bool `yaml:"logRequestPayloads" conf:",defaultValue=false"`
+	// Defines whether the playground API is enabled.
+	PlaygroundEnabled bool `yaml:"playgroundEnabled" conf:",defaultValue=false"`
+	// Defines the admin API configuration.
 	AdminAPI AdminAPIConf `yaml:"adminAPI"`
 }
 
 // TLSConf holds TLS configuration.
 type TLSConf struct {
-	// Cert is the path to the TLS certificate file.
-	Cert string `yaml:"cert"`
-	// Key is the path to the TLS private key file.
-	Key string `yaml:"key"`
-	//	CACert is the path to the optional CA certificate for verifying client requests.
-	CACert string `yaml:"caCert"`
+	// Path to the TLS certificate file.
+	Cert string `yaml:"cert" conf:",defaultValue=/path/to/certificate"`
+	// Path to the TLS private key file.
+	Key string `yaml:"key" conf:",defaultValue=/path/to/private_key"`
+	// Path to the optional CA certificate for verifying client requests.
+	CACert string `yaml:"caCert" conf:",defaultValue=/path/to/CA_certificate"`
 }
 
 type CORSConf struct {
-	// Disabled sets whether CORS is disabled.
-	Disabled bool `yaml:"disabled"`
-	// AllowedOrigins is the contents of the allowed-origins header.
-	AllowedOrigins []string `yaml:"allowedOrigins"`
-	// AllowedHeaders is the contents of the allowed-headers header.
-	AllowedHeaders []string `yaml:"allowedHeaders"`
-	// MaxAge is the max age of the CORS preflight check.kk
-	MaxAge time.Duration `yaml:"maxAge"`
+	// Sets whether CORS is disabled.
+	Disabled bool `yaml:"disabled" conf:",defaultValue=false"`
+	// The contents of the allowed-origins header.
+	AllowedOrigins []string `yaml:"allowedOrigins" conf:",defaultValue=['*']"`
+	// The contents of the allowed-headers header.
+	AllowedHeaders []string `yaml:"allowedHeaders" conf:",defaultValue=['content-type']"`
+	// The max age of the CORS preflight check.
+	MaxAge time.Duration `yaml:"maxAge" conf:",defaultValue=10s"`
 }
 
 type AdminAPIConf struct {
 	// Enabled defines whether the admin API is enabled.
-	Enabled bool `yaml:"enabled"`
+	Enabled bool `yaml:"enabled" conf:",defaultValue=true"`
 	// AdminCredentials defines the admin user credentials.
 	AdminCredentials *AdminCredentialsConf `yaml:"adminCredentials"`
 }
 
 type AdminCredentialsConf struct {
 	// Username is the hardcoded username to use for authentication.
-	Username string `yaml:"username"`
+	Username string `yaml:"username" conf:",defaultValue=cerbos"`
 	// PasswordHash is the base64-encoded bcrypt hash of the password to use for authentication.
-	PasswordHash string `yaml:"passwordHash"`
+	PasswordHash string `yaml:"passwordHash" conf:",defaultValue=JDJ5JDEwJEdEOVFzZDE2VVhoVkR0N2VkUFBVM09nalc0QnNZaC9xc2E4bS9mcUJJcEZXenp5OUpjMi91Cgo="`
 }
 
 func (a *AdminCredentialsConf) isUnsafe() bool {

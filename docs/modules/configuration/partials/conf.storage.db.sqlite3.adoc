@@ -1,0 +1,2 @@
+  sqlite3: # Required (if driver is set to 'sqlite3'). Configuration for the sqlite3 driver.
+    dsn: ":memory:?_fk=true" # Required. Data source name

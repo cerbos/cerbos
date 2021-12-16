@@ -1,6 +1,8 @@
 // Copyright 2021 Zenauth Ltd.
 // SPDX-License-Identifier: Apache-2.0
 
+//go:generate go run ./../../../../hack/tools/confdocs.go
+
 package postgres
 
 import (
@@ -10,10 +12,11 @@ import (
 
 const confKey = storage.ConfKey + ".postgres"
 
+// Required (if driver is set to 'postres'). Configuration for the postgres driver.
 type Conf struct {
 	// URL is the Postgres connection URL. See https://www.postgresql.org/docs/current/libpq-connect.html#LIBPQ-CONNSTRING
-	URL      string                 `yaml:"url"`
-	ConnPool *internal.ConnPoolConf `yaml:"connPool"`
+	URL      string                 `yaml:"url" conf:"required,defaultValue=\"postgres://user:password@localhost:port/db\""`
+	ConnPool *internal.ConnPoolConf `yaml:"connPool" conf:",defaultValue=\n      maxLifeTime: 60m\n      maxIdleTime: 45s\n      maxOpen: 4\n      maxIdle: 1"`
 }
 
 func (c *Conf) Key() string {
