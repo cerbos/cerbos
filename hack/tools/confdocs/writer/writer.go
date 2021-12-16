@@ -18,10 +18,11 @@ type Writer struct {
 }
 
 type Options struct {
-	Log           *zap.SugaredLogger
-	Index         indexer.Index
-	TemplateFile  string
-	GetFileNameFn func(pkgPath, structName string) string
+	Log               *zap.SugaredLogger
+	Index             indexer.Index
+	TemplateFile      string
+	IgnoreTabsForPkgs []string
+	GetFileNameFn     func(pkgPath, structName string) string
 }
 
 func New(options Options) *Writer {
@@ -44,10 +45,13 @@ func (w *Writer) Run() (map[string]*bytes.Buffer, error) {
 
 		split := strings.Split(fileName, ".")
 		parent := split[len(split)-2]
+		pkg := split[len(split)-3]
 		extraTabs := len(split) - 3
 
-		if parent == "tracing" {
-			extraTabs = 0 // "tracing" is a special case due to it being in a sub-package but not in a sub-config.
+		for _, p := range w.IgnoreTabsForPkgs {
+			if p == pkg {
+				extraTabs = extraTabs - 1
+			}
 		}
 
 		var buf bytes.Buffer

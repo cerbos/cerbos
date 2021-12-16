@@ -66,10 +66,11 @@ func main() {
 	}
 
 	data, err := writer.New(writer.Options{
-		Log:           logger,
-		Index:         index,
-		TemplateFile:  docsTempl,
-		GetFileNameFn: getFileName,
+		Log:               logger,
+		Index:             index,
+		TemplateFile:      docsTempl,
+		IgnoreTabsForPkgs: []string{"observability", "db"},
+		GetFileNameFn:     getFileName,
 	}).Run()
 	if err != nil {
 		logger.Fatalf("Failed to run engine: %v", err)

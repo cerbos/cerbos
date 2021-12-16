@@ -10,8 +10,12 @@ WORKSPACE="/github/workspace"
 ANTORA_VERSION=${ANTORA_VERSION:-"3.0.0-alpha.10"}
 
 PARTIALS_DIR=docs/modules/configuration/partials
-for file in "${PARTIALS_DIR}"/conf*.adoc; do
-    echo "${file}"
+FULL_CONFIGURATION_DOC="${PARTIALS_DIR}"/fullconfiguration.adoc
+rm -f "${FULL_CONFIGURATION_DOC}"
+for path in "${PARTIALS_DIR}"/conf*.adoc; do
+    file=$(basename "${path}")
+    content=$(printf 'include::partial$%s[]' "$file")
+    echo "${content}" >> "${FULL_CONFIGURATION_DOC}"
 done
 
 rm -rf ${SCRIPT_DIR}/build

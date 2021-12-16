@@ -1,0 +1,2 @@
+storage:
+  driver: "disk" # Valid values are "disk", "git" or "sqlite3"
