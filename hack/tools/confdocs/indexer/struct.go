@@ -18,6 +18,7 @@ type Struct struct {
 	Typed   *types.Struct
 	PkgPath string
 	Name    string
+	Docs    string
 }
 
 type StructField struct {

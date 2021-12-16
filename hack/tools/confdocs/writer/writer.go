@@ -75,7 +75,12 @@ func (w *Writer) walk(s *indexer.Struct, parent string, extraTabs int, writer io
 		}
 	}
 
-	_, err := fmt.Fprintf(writer, "%s%s:\n", tabs.String(), parent)
+	docs := ""
+	if s.Docs != "" {
+		docs = fmt.Sprintf("# %s", s.Docs)
+	}
+
+	_, err := fmt.Fprintf(writer, "%s%s: %s\n", tabs.String(), parent, docs)
 	if err != nil {
 		return fmt.Errorf("failed to prepend file with parent name: %w", err)
 	}
@@ -87,6 +92,8 @@ func (w *Writer) doWalk(fields []*indexer.StructField, writer io.Writer, prefix 
 	for _, field := range fields {
 		name := field.Name
 		defaultValue := "<DEFAULT_VALUE_NOT_SET>"
+		docs := ""
+
 		if field.TagsData != nil {
 			if field.TagsData.Ignore {
 				continue
@@ -95,11 +102,18 @@ func (w *Writer) doWalk(fields []*indexer.StructField, writer io.Writer, prefix 
 			if field.TagsData.ConfOptions.DefaultValue != "" {
 				defaultValue = field.TagsData.DefaultValue
 			}
+
+			if field.TagsData.Required {
+				docs = "Required. "
+			}
 		}
 
-		docs := ""
 		if field.Docs != "" {
-			docs = fmt.Sprintf("# %s", field.Docs)
+			docs = fmt.Sprintf("%s%s", docs, field.Docs)
+		}
+
+		if docs != "" {
+			docs = fmt.Sprintf("# %s", docs)
 		}
 
 		if field.Fields != nil {

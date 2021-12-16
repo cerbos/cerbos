@@ -25,7 +25,7 @@ const (
 	defaultRequestTimeout  = 5 * time.Second
 )
 
-// Conf holds the configuration for Cloud storage driver.
+// Required (if driver is set to 'blob'). Configuration for Cloud storage driver.
 type Conf struct {
 	// Bucket URL
 	// For example

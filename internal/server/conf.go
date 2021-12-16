@@ -29,7 +29,7 @@ var (
 	errAdminCredsUndefined   = errors.New("admin credentials not defined")
 )
 
-// Conf holds configuration pertaining to the server.
+// Required. Configuration pertaining to the server.
 type Conf struct {
 	// HTTPListenAddr is the dedicated HTTP address.
 	HTTPListenAddr string `yaml:"httpListenAddr" conf:"required,defaultValue=\":3592\""`

@@ -27,7 +27,7 @@ const (
 	defaultOperationTimeout = 60 * time.Second
 )
 
-// Conf holds the configuration for Git storage driver.
+// Required (if driver is set to 'git'). Configuration for Git storage driver.
 type Conf struct {
 	// Protocol is the Git protocol to use. Valid values are https, ssh, and file.
 	Protocol string `yaml:"protocol" conf:"required,defaultValue=file"`

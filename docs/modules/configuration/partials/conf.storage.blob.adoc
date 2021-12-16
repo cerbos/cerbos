@@ -1,5 +1,5 @@
-  blob:
-    bucket: "s3://my-bucket-name?region=us-east-2" # Bucket URL
+  blob: # Required (if driver is set to 'blob'). Configuration for Cloud storage driver.
+    bucket: "s3://my-bucket-name?region=us-east-2" # Required. Bucket URL
     prefix: policies # Bucket prefix specifies a subdirectory to download
     workDir: ${HOME}/tmp/cerbos/work # WorkDir is the local path to check out policies to.
     updatePollInterval: 15s # UpdatePollInterval specifies the interval to poll the cloud storage. Set to 0 to disable.

@@ -9,6 +9,7 @@ import "github.com/cerbos/cerbos/internal/storage"
 
 const confKey = storage.ConfKey + ".sqlite3"
 
+// Required (if driver is set to 'sqlite3'). Configuration for the sqlite3 driver.
 type Conf struct {
 	DSN string `yaml:"dsn" conf:"required,defaultValue=\":memory:?_fk=true\""`
 }

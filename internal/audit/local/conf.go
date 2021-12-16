@@ -34,8 +34,11 @@ var (
 	errInvalidMaxBatchSize = errors.New("maxBatchSize must be at least 1")
 )
 
+// Configuration for the local audit backend.
 type Conf struct {
-	StoragePath     string        `yaml:"storagePath" conf:",defaultValue=/path/to/dir"`
+	// Path to store the data
+	StoragePath string `yaml:"storagePath" conf:",defaultValue=/path/to/dir"`
+	// How long to keep records for
 	RetentionPeriod time.Duration `yaml:"retentionPeriod" conf:",defaultValue=168h"`
 	Advanced        AdvancedConf  `yaml:"advanced"`
 }

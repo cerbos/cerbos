@@ -11,6 +11,7 @@ import (
 	"go/token"
 	"go/types"
 	"golang.org/x/tools/go/packages"
+	"strings"
 	"unicode"
 )
 
@@ -88,6 +89,10 @@ func (cd *Indexer) indexStructs(pkg *packages.Package, file *ast.File, ifaceImpl
 							Name:    s.Name.Name,
 							Raw:     t,
 							PkgPath: pkg.PkgPath,
+						}
+
+						if n.Doc != nil && n.Doc.List != nil && n.Doc.List[0] != nil {
+							rootStruct.Docs = strings.TrimSpace(strings.TrimPrefix(n.Doc.List[0].Text, "//"))
 						}
 
 						for _, field := range t.Fields.List {

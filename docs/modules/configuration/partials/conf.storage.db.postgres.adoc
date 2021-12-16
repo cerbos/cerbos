@@ -1,5 +1,5 @@
-  postgres:
-    url: "postgres://user:password@localhost:port/db" # URL is the Postgres connection URL. See https://www.postgresql.org/docs/current/libpq-connect.html#LIBPQ-CONNSTRING
+  postgres: # Required (if driver is set to 'postres'). Configuration for the postgres driver.
+    url: "postgres://user:password@localhost:port/db" # Required. URL is the Postgres connection URL. See https://www.postgresql.org/docs/current/libpq-connect.html#LIBPQ-CONNSTRING
     connPool: 
       maxLifeTime: 60m
       maxIdleTime: 45s

@@ -1,6 +1,6 @@
-  git:
-    protocol: file # Protocol is the Git protocol to use. Valid values are https, ssh, and file.
-    url: file://${HOME}/tmp/cerbos/policies # URL is the URL to the Git repo.
+  git: # Required (if driver is set to 'git'). Configuration for Git storage driver.
+    protocol: file # Required. Protocol is the Git protocol to use. Valid values are https, ssh, and file.
+    url: file://${HOME}/tmp/cerbos/policies # Required. URL is the URL to the Git repo.
     branch: policies # Branch is the branch to checkout.
     subDir: policies # SubDir is the path under the checked-out Git repo where the policies are stored.
     checkoutDir: ${HOME}/tmp/cerbos/work # CheckoutDir is the local path to checkout the Git repo to.

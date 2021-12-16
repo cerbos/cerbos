@@ -17,6 +17,7 @@ const confKey = "engine"
 
 var errEmptyDefaultVersion = errors.New("engine.defaultVersion must not be an empty string")
 
+// Optional.
 type Conf struct {
 	DefaultPolicyVersion string `yaml:"defaultPolicyVersion" conf:",defaultValue=\"default\""`
 	NumWorkers           uint   `yaml:"numWorkers" conf:",ignore"`

@@ -15,15 +15,20 @@ const (
 	ConfKey = "audit"
 )
 
+// Optional.
 type Conf struct {
 	confHolder
 }
 
 type confHolder struct {
-	Enabled             bool   `yaml:"enabled" conf:",defaultValue=false"`
-	Backend             string `yaml:"backend" conf:",defaultValue=local"`
-	AccessLogsEnabled   bool   `yaml:"accessLogsEnabled" conf:",defaultValue=true"`
-	DecisionLogsEnabled bool   `yaml:"decisionLogsEnabled" conf:",defaultValue=true"`
+	// Enables audit logging
+	Enabled bool `yaml:"enabled" conf:",defaultValue=false"`
+	// Audit backend to use
+	Backend string `yaml:"backend" conf:",defaultValue=local"`
+	// Enables logging of access attempts
+	AccessLogsEnabled bool `yaml:"accessLogsEnabled" conf:",defaultValue=true"`
+	// Enables logging of policy decisions
+	DecisionLogsEnabled bool `yaml:"decisionLogsEnabled" conf:",defaultValue=true"`
 }
 
 func (c *Conf) UnmarshalYAML(unmarshal func(interface{}) error) error {

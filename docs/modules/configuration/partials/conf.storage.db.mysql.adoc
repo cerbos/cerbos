@@ -1,5 +1,5 @@
-  mysql:
-    dsn: "user:password@tcp(localhost:3306)/db?interpolateParams=true" 
+  mysql: # Required (if driver is set to 'mysql'). Configuration for the mysql driver.
+    dsn: "user:password@tcp(localhost:3306)/db?interpolateParams=true" # Required. 
     connPool: 
       maxLifeTime: 60m
       maxIdleTime: 45s

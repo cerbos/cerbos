@@ -1,6 +1,6 @@
-server:
-  httpListenAddr: ":3592" # HTTPListenAddr is the dedicated HTTP address.
-  grpcListenAddr: ":3593" # GRPCListenAddr is the dedicated GRPC address.
+server: # Required. Configuration pertaining to the server.
+  httpListenAddr: ":3592" # Required. HTTPListenAddr is the dedicated HTTP address.
+  grpcListenAddr: ":3593" # Required. GRPCListenAddr is the dedicated GRPC address.
   tls: # TLS defines the TLS configuration for the server.
     cert: /path/to/certificate # Cert is the path to the TLS certificate file.
     key: /path/to/private_key # Key is the path to the TLS private key file.
