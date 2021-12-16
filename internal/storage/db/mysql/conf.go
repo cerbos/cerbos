@@ -14,6 +14,7 @@ const confKey = storage.ConfKey + ".mysql"
 
 // Required (if driver is set to 'mysql'). Configuration for the mysql driver.
 type Conf struct {
+	// Data source name
 	DSN          string                 `yaml:"dsn" conf:"required,defaultValue=\"user:password@tcp(localhost:3306)/db?interpolateParams=true\""`
 	ConnPool     *internal.ConnPoolConf `yaml:"connPool" conf:",defaultValue=\n      maxLifeTime: 60m\n      maxIdleTime: 45s\n      maxOpen: 4\n      maxIdle: 1"`
 	TLS          map[string]TLSConf     `yaml:"tls" conf:",defaultValue=\n        mytls:\n          cert: /path/to/certificate\n          key: /path/to/private_key\n          caCert: /path/to/CA_certificate"`

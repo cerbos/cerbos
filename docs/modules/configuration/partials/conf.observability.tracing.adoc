@@ -1,7 +1,7 @@
 tracing: # Optional. Configuration for tracing.
-  sampleProbability: 0.1 # SampleProbability is the probability of sampling expressed as a number between 0 and 1.
-  exporter: jaeger # Exporter is the type of trace exporter to use.
-  jaeger: # Jaeger configures the Jaeger exporter.
+  sampleProbability: 0.1 # The probability of sampling expressed as a number between 0 and 1.
+  exporter: jaeger # The type of trace exporter to use.
+  jaeger: # Configures the Jaeger exporter.
     serviceName: cerbos # ServiceName is the name of the service to report to Jaeger.
     agentEndpoint: "localhost:6831" # AgentEndpoint is the Jaeger agent endpoint to report to.
     collectorEndpoint: "http://localhost:14268" # CollectorEndpoint is the Jaeger collector endpoint to report to.

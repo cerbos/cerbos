@@ -1,19 +1,19 @@
 server: # Required. Configuration pertaining to the server.
-  httpListenAddr: ":3592" # Required. HTTPListenAddr is the dedicated HTTP address.
-  grpcListenAddr: ":3593" # Required. GRPCListenAddr is the dedicated GRPC address.
-  tls: # TLS defines the TLS configuration for the server.
-    cert: /path/to/certificate # Cert is the path to the TLS certificate file.
-    key: /path/to/private_key # Key is the path to the TLS private key file.
-    caCert: /path/to/CA_certificate # CACert is the path to the optional CA certificate for verifying client requests.
+  httpListenAddr: ":3592" # Required. The dedicated HTTP address to listen.
+  grpcListenAddr: ":3593" # Required. The dedicated HTTP address to listen.
+  tls: # The TLS configuration for the server.
+    cert: /path/to/certificate # Path to the TLS certificate file.
+    key: /path/to/private_key # Path to the TLS private key file.
+    caCert: /path/to/CA_certificate # Path to the optional CA certificate for verifying client requests.
   cors: # CORS defines the CORS configuration for the server.
-    disabled: false # Disabled sets whether CORS is disabled.
-    allowedOrigins: ['*'] # AllowedOrigins is the contents of the allowed-origins header.
-    allowedHeaders: ['content-type'] # AllowedHeaders is the contents of the allowed-headers header.
-    maxAge: 10s # MaxAge is the max age of the CORS preflight check.kk
-  metricsEnabled: true # MetricsEnabled defines whether the metrics endpoint is enabled.
-  logRequestPayloads: false # LogRequestPayloads defines whether the request payloads should be logged.
-  playgroundEnabled: false # PlaygroundEnabled defines whether the playground API is enabled.
-  adminAPI: # AdminAPI defines the admin API configuration.
+    disabled: false # Sets whether CORS is disabled.
+    allowedOrigins: ['*'] # The contents of the allowed-origins header.
+    allowedHeaders: ['content-type'] # The contents of the allowed-headers header.
+    maxAge: 10s # The max age of the CORS preflight check.
+  metricsEnabled: true # Defines whether the metrics endpoint (/_cerbos/metrics) is enabled.
+  logRequestPayloads: false # Defines whether the request payloads should be logged.
+  playgroundEnabled: false # Defines whether the playground API is enabled.
+  adminAPI: # Defines the admin API configuration.
     enabled: true # Enabled defines whether the admin API is enabled.
     adminCredentials: # AdminCredentials defines the admin user credentials.
       username: cerbos # Username is the hardcoded username to use for authentication.

@@ -19,6 +19,7 @@ var errEmptyDefaultVersion = errors.New("engine.defaultVersion must not be an em
 
 // Optional.
 type Conf struct {
+	// Default policy version to assume if the request does not specify one.
 	DefaultPolicyVersion string `yaml:"defaultPolicyVersion" conf:",defaultValue=\"default\""`
 	NumWorkers           uint   `yaml:"numWorkers" conf:",ignore"`
 }

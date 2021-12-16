@@ -27,21 +27,17 @@ const (
 
 // Required (if driver is set to 'blob'). Configuration for Cloud storage driver.
 type Conf struct {
-	// Bucket URL
-	// For example
-	// s3://my-bucket?region=us-west-1
-	// gs://my-bucket
-	// azblob://my-container
+	// Bucket URL (Examples: s3://my-bucket?region=us-west-1 gs://my-bucket azblob://my-container).
 	Bucket string `yaml:"bucket" conf:"required,defaultValue=\"s3://my-bucket-name?region=us-east-2\""`
-	// Bucket prefix specifies a subdirectory to download
+	// Specifies a subdirectory to download.
 	Prefix string `yaml:"prefix,omitempty" conf:",defaultValue=policies"`
-	// WorkDir is the local path to check out policies to.
+	// The local path to check out policies to.
 	WorkDir string `yaml:"workDir" conf:",defaultValue=${HOME}/tmp/cerbos/work"`
-	// UpdatePollInterval specifies the interval to poll the cloud storage. Set to 0 to disable.
+	// Specifies the interval to poll the cloud storage. Set to 0 to disable.
 	UpdatePollInterval time.Duration `yaml:"updatePollInterval" conf:",defaultValue=15s"`
-	// DownloadTimeout specifies the timeout for downloading from cloud storage.
+	// Specifies the timeout for downloading from cloud storage.
 	DownloadTimeout *time.Duration `yaml:"downloadTimeout,omitempty" conf:",defaultValue=30s"`
-	// RequestTimeout specifies the timeout for an HTTP request.
+	// Specifies the timeout for an HTTP request.
 	RequestTimeout *time.Duration `yaml:"requestTimeout,omitempty" conf:",defaultValue=10s"`
 }
 

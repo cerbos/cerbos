@@ -21,13 +21,13 @@ type Conf struct {
 }
 
 type confHolder struct {
-	// Enables audit logging
+	// Enables audit logging.
 	Enabled bool `yaml:"enabled" conf:",defaultValue=false"`
-	// Audit backend to use
+	// Audit backend to use.
 	Backend string `yaml:"backend" conf:",defaultValue=local"`
-	// Enables logging of access attempts
+	// Enables logging of access attempts.
 	AccessLogsEnabled bool `yaml:"accessLogsEnabled" conf:",defaultValue=true"`
-	// Enables logging of policy decisions
+	// Enables logging of policy decisions.
 	DecisionLogsEnabled bool `yaml:"decisionLogsEnabled" conf:",defaultValue=true"`
 }
 

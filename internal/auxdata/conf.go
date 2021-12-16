@@ -16,14 +16,14 @@ const confKey = "auxData"
 
 // Optional.
 type Conf struct {
-	// JWT holds the configuration for JWTs used as an auxiliary data source for the engine.
+	// Holds the configuration for JWTs used as an auxiliary data source for the engine.
 	JWT *JWTConf `yaml:"jwt"`
 }
 
 type JWTConf struct {
-	// KeySets is the list of keysets to be used to verify tokens.
+	// The list of JWT key sets to be used to verify tokens.
 	KeySets []JWTKeySet `yaml:"keySets" conf:",defaultValue=\n    - id: ks1\n      remote:\n        url: https://domain.tld/.well-known/keys.jwks"`
-	// DisableVerification disables JWT verification.
+	// Disables JWT verification.
 	DisableVerification bool `yaml:"disableVerification" conf:",defaultValue=false"`
 }
 

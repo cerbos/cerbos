@@ -12,7 +12,7 @@ const (
 
 // Optional. Configuration related to schema validation.
 type Conf struct {
-	// Enforcement level of the validations. (none, warn, reject)
+	// Level of the validations. (none, warn, reject)
 	Enforcement Enforcement `yaml:"enforcement" conf:",defaultValue=reject"`
 }
 

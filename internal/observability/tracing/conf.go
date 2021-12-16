@@ -24,13 +24,13 @@ var (
 
 // Optional. Configuration for tracing.
 type Conf struct {
-	// SampleProbability is the probability of sampling expressed as a number between 0 and 1.
+	// The probability of sampling expressed as a number between 0 and 1.
 	SampleProbability float64 `yaml:"sampleProbability" conf:",defaultValue=0.1"`
-	// PropagationFormat is the trace propagation format to use. Valid values are w3c-tracecontext or b3.
+	// The trace propagation format to use. Valid values are w3c-tracecontext or b3.
 	PropagationFormat string `yaml:"propagationFormat" conf:",ignore"`
-	// Exporter is the type of trace exporter to use.
+	// The type of trace exporter to use.
 	Exporter string `yaml:"exporter" conf:",defaultValue=jaeger"`
-	// Jaeger configures the Jaeger exporter.
+	// Configures the Jaeger exporter.
 	Jaeger *JaegerConf `yaml:"jaeger"`
 }
 

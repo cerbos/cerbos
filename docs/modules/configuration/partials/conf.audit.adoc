@@ -1,5 +1,5 @@
 audit: # Optional.
-  enabled: false # Enables audit logging
-  backend: local # Audit backend to use
-  accessLogsEnabled: true # Enables logging of access attempts
-  decisionLogsEnabled: true # Enables logging of policy decisions
+  enabled: false # Enables audit logging.
+  backend: local # Audit backend to use.
+  accessLogsEnabled: true # Enables logging of access attempts.
+  decisionLogsEnabled: true # Enables logging of policy decisions.

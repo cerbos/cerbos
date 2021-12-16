@@ -1,7 +1,7 @@
   blob: # Required (if driver is set to 'blob'). Configuration for Cloud storage driver.
-    bucket: "s3://my-bucket-name?region=us-east-2" # Required. Bucket URL
-    prefix: policies # Bucket prefix specifies a subdirectory to download
-    workDir: ${HOME}/tmp/cerbos/work # WorkDir is the local path to check out policies to.
-    updatePollInterval: 15s # UpdatePollInterval specifies the interval to poll the cloud storage. Set to 0 to disable.
-    downloadTimeout: 30s # DownloadTimeout specifies the timeout for downloading from cloud storage.
-    requestTimeout: 10s # RequestTimeout specifies the timeout for an HTTP request.
+    bucket: "s3://my-bucket-name?region=us-east-2" # Required. Bucket URL (Examples: s3://my-bucket?region=us-west-1 gs://my-bucket azblob://my-container).
+    prefix: policies # Specifies a subdirectory to download.
+    workDir: ${HOME}/tmp/cerbos/work # The local path to check out policies to.
+    updatePollInterval: 15s # Specifies the interval to poll the cloud storage. Set to 0 to disable.
+    downloadTimeout: 30s # Specifies the timeout for downloading from cloud storage.
+    requestTimeout: 10s # Specifies the timeout for an HTTP request.

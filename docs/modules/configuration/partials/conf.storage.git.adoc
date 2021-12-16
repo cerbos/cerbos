@@ -1,15 +1,15 @@
   git: # Required (if driver is set to 'git'). Configuration for Git storage driver.
-    protocol: file # Required. Protocol is the Git protocol to use. Valid values are https, ssh, and file.
-    url: file://${HOME}/tmp/cerbos/policies # Required. URL is the URL to the Git repo.
-    branch: policies # Branch is the branch to checkout.
-    subDir: policies # SubDir is the path under the checked-out Git repo where the policies are stored.
-    checkoutDir: ${HOME}/tmp/cerbos/work # CheckoutDir is the local path to checkout the Git repo to.
-    ssh: # SSH holds auth details for the SSH protocol.
-      user: git # User is the git user. Defaults to git.
-      privateKeyFile: ${HOME}/.ssh/id_rsa # PrivateKeyFile is the path to the SSH private key file.
-      password: pw # Password is the password to the SSH private key.
-    https: # HTTPS holds auth details for the HTTPS protocol.
-      username: cerbos # Username is the username to use for authentication.
-      password: ${GITHUB_TOKEN} # Password is the password (or token) to use for authentication.
-    operationTimeout: 60s # OperationTimeout specifies the timeout for git operations.
-    updatePollInterval: 60s # UpdatePollInterval specifies the interval to poll the Git repository for changes. Set to 0 to disable.
+    protocol: file # Required. The Git protocol to use. Valid values are https, ssh, and file.
+    url: file://${HOME}/tmp/cerbos/policies # Required. The URL to the Git repo.
+    branch: policies # The branch to checkout.
+    subDir: policies # The path under the checked-out Git repo where the policies are stored.
+    checkoutDir: ${HOME}/tmp/cerbos/work # The local path to checkout the Git repo to.
+    ssh: # Holds auth details for the SSH protocol.
+      user: git # The git user. Defaults to git.
+      privateKeyFile: ${HOME}/.ssh/id_rsa # The path to the SSH private key file.
+      password: pw # The password to the SSH private key.
+    https: # Holds auth details for the HTTPS protocol.
+      username: cerbos # The username to use for authentication.
+      password: ${GITHUB_TOKEN} # The password (or token) to use for authentication.
+    operationTimeout: 60s # Specifies the timeout for git operations.
+    updatePollInterval: 60s # Specifies the interval to poll the Git repository for changes. Set to 0 to disable.
