@@ -103,7 +103,6 @@ message CelTestCase {
     bool want_error = 4;
 }
 
-<<<<<<< HEAD
 message SchemaTestCase {
     string description = 1;
     cerbos.policy.v1.Schemas schema_refs = 2;
@@ -119,7 +118,7 @@ message ValidationErrContainer {
 message AttrWrapper {
   map<string, google.protobuf.Value> attr = 1;
 }
-=======
+
 message QueryPlannerTestSuite {
     string description = 1;
     cerbos.engine.v1.Principal principal = 2;
@@ -131,4 +130,3 @@ message QueryPlannerTestSuite {
     }
     repeated Test tests = 3;
 }
->>>>>>> a95d858 (feat: resource query planner)

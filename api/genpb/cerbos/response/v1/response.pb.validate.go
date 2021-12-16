@@ -1017,22 +1017,14 @@ var _ interface {
 	ErrorName() string
 } = ListPoliciesResponseValidationError{}
 
-<<<<<<< HEAD
 // Validate checks the field values on AddOrUpdateSchemaResponse with the rules
 // defined in the proto definition for this message. If any rules are
 // violated, an error is returned.
 func (m *AddOrUpdateSchemaResponse) Validate() error {
-=======
-// Validate checks the field values on ResourcesQueryPlanResponse_Expression
-// with the rules defined in the proto definition for this message. If any
-// rules are violated, an error is returned.
-func (m *ResourcesQueryPlanResponse_Expression) Validate() error {
->>>>>>> a95d858 (feat: resource query planner)
 	if m == nil {
 		return nil
 	}
 
-<<<<<<< HEAD
 	return nil
 }
 
@@ -1168,22 +1160,12 @@ func (m *GetSchemaResponse) Validate() error {
 	}
 
 	for idx, item := range m.GetSchemas() {
-=======
-	// no validation rules for Operator
-
-	for idx, item := range m.GetOperands() {
->>>>>>> a95d858 (feat: resource query planner)
 		_, _ = idx, item
 
 		if v, ok := interface{}(item).(interface{ Validate() error }); ok {
 			if err := v.Validate(); err != nil {
-<<<<<<< HEAD
 				return GetSchemaResponseValidationError{
 					field:  fmt.Sprintf("Schemas[%v]", idx),
-=======
-				return ResourcesQueryPlanResponse_ExpressionValidationError{
-					field:  fmt.Sprintf("Operands[%v]", idx),
->>>>>>> a95d858 (feat: resource query planner)
 					reason: "embedded message failed validation",
 					cause:  err,
 				}
@@ -1195,16 +1177,9 @@ func (m *GetSchemaResponse) Validate() error {
 	return nil
 }
 
-<<<<<<< HEAD
 // GetSchemaResponseValidationError is the validation error returned by
 // GetSchemaResponse.Validate if the designated constraints aren't met.
 type GetSchemaResponseValidationError struct {
-=======
-// ResourcesQueryPlanResponse_ExpressionValidationError is the validation error
-// returned by ResourcesQueryPlanResponse_Expression.Validate if the
-// designated constraints aren't met.
-type ResourcesQueryPlanResponse_ExpressionValidationError struct {
->>>>>>> a95d858 (feat: resource query planner)
 	field  string
 	reason string
 	cause  error
@@ -1212,7 +1187,6 @@ type ResourcesQueryPlanResponse_ExpressionValidationError struct {
 }
 
 // Field function returns field value.
-<<<<<<< HEAD
 func (e GetSchemaResponseValidationError) Field() string { return e.field }
 
 // Reason function returns reason value.
@@ -1231,7 +1205,140 @@ func (e GetSchemaResponseValidationError) ErrorName() string {
 
 // Error satisfies the builtin error interface
 func (e GetSchemaResponseValidationError) Error() string {
-=======
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sGetSchemaResponse.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = GetSchemaResponseValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = GetSchemaResponseValidationError{}
+
+// Validate checks the field values on DeleteSchemaResponse with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, an error is returned.
+func (m *DeleteSchemaResponse) Validate() error {
+	if m == nil {
+		return nil
+	}
+
+	return nil
+}
+
+// DeleteSchemaResponseValidationError is the validation error returned by
+// DeleteSchemaResponse.Validate if the designated constraints aren't met.
+type DeleteSchemaResponseValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e DeleteSchemaResponseValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e DeleteSchemaResponseValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e DeleteSchemaResponseValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e DeleteSchemaResponseValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e DeleteSchemaResponseValidationError) ErrorName() string {
+	return "DeleteSchemaResponseValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e DeleteSchemaResponseValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sDeleteSchemaResponse.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = DeleteSchemaResponseValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = DeleteSchemaResponseValidationError{}
+
+// Validate checks the field values on ResourcesQueryPlanResponse_Expression
+// with the rules defined in the proto definition for this message. If any
+// rules are violated, an error is returned.
+func (m *ResourcesQueryPlanResponse_Expression) Validate() error {
+	if m == nil {
+		return nil
+	}
+
+	// no validation rules for Operator
+
+	for idx, item := range m.GetOperands() {
+		_, _ = idx, item
+
+		if v, ok := interface{}(item).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return ResourcesQueryPlanResponse_ExpressionValidationError{
+					field:  fmt.Sprintf("Operands[%v]", idx),
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	}
+
+	return nil
+}
+
+// ResourcesQueryPlanResponse_ExpressionValidationError is the validation error
+// returned by ResourcesQueryPlanResponse_Expression.Validate if the
+// designated constraints aren't met.
+type ResourcesQueryPlanResponse_ExpressionValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
 func (e ResourcesQueryPlanResponse_ExpressionValidationError) Field() string { return e.field }
 
 // Reason function returns reason value.
@@ -1250,7 +1357,6 @@ func (e ResourcesQueryPlanResponse_ExpressionValidationError) ErrorName() string
 
 // Error satisfies the builtin error interface
 func (e ResourcesQueryPlanResponse_ExpressionValidationError) Error() string {
->>>>>>> a95d858 (feat: resource query planner)
 	cause := ""
 	if e.cause != nil {
 		cause = fmt.Sprintf(" | caused by: %v", e.cause)
@@ -1262,22 +1368,14 @@ func (e ResourcesQueryPlanResponse_ExpressionValidationError) Error() string {
 	}
 
 	return fmt.Sprintf(
-<<<<<<< HEAD
-		"invalid %sGetSchemaResponse.%s: %s%s",
-=======
 		"invalid %sResourcesQueryPlanResponse_Expression.%s: %s%s",
->>>>>>> a95d858 (feat: resource query planner)
 		key,
 		e.field,
 		e.reason,
 		cause)
 }
 
-<<<<<<< HEAD
-var _ error = GetSchemaResponseValidationError{}
-=======
 var _ error = ResourcesQueryPlanResponse_ExpressionValidationError{}
->>>>>>> a95d858 (feat: resource query planner)
 
 var _ interface {
 	Field() string
@@ -1285,33 +1383,16 @@ var _ interface {
 	Key() bool
 	Cause() error
 	ErrorName() string
-<<<<<<< HEAD
-} = GetSchemaResponseValidationError{}
-
-// Validate checks the field values on DeleteSchemaResponse with the rules
-// defined in the proto definition for this message. If any rules are
-// violated, an error is returned.
-func (m *DeleteSchemaResponse) Validate() error {
-=======
 } = ResourcesQueryPlanResponse_ExpressionValidationError{}
 
 // Validate checks the field values on
 // ResourcesQueryPlanResponse_Expression_Operand with the rules defined in the
 // proto definition for this message. If any rules are violated, an error is returned.
 func (m *ResourcesQueryPlanResponse_Expression_Operand) Validate() error {
->>>>>>> a95d858 (feat: resource query planner)
 	if m == nil {
 		return nil
 	}
 
-<<<<<<< HEAD
-	return nil
-}
-
-// DeleteSchemaResponseValidationError is the validation error returned by
-// DeleteSchemaResponse.Validate if the designated constraints aren't met.
-type DeleteSchemaResponseValidationError struct {
-=======
 	switch m.Node.(type) {
 
 	case *ResourcesQueryPlanResponse_Expression_Operand_Value:
@@ -1351,7 +1432,6 @@ type DeleteSchemaResponseValidationError struct {
 // ResourcesQueryPlanResponse_Expression_Operand.Validate if the designated
 // constraints aren't met.
 type ResourcesQueryPlanResponse_Expression_OperandValidationError struct {
->>>>>>> a95d858 (feat: resource query planner)
 	field  string
 	reason string
 	cause  error
@@ -1359,26 +1439,6 @@ type ResourcesQueryPlanResponse_Expression_OperandValidationError struct {
 }
 
 // Field function returns field value.
-<<<<<<< HEAD
-func (e DeleteSchemaResponseValidationError) Field() string { return e.field }
-
-// Reason function returns reason value.
-func (e DeleteSchemaResponseValidationError) Reason() string { return e.reason }
-
-// Cause function returns cause value.
-func (e DeleteSchemaResponseValidationError) Cause() error { return e.cause }
-
-// Key function returns key value.
-func (e DeleteSchemaResponseValidationError) Key() bool { return e.key }
-
-// ErrorName returns error name.
-func (e DeleteSchemaResponseValidationError) ErrorName() string {
-	return "DeleteSchemaResponseValidationError"
-}
-
-// Error satisfies the builtin error interface
-func (e DeleteSchemaResponseValidationError) Error() string {
-=======
 func (e ResourcesQueryPlanResponse_Expression_OperandValidationError) Field() string { return e.field }
 
 // Reason function returns reason value.
@@ -1399,7 +1459,6 @@ func (e ResourcesQueryPlanResponse_Expression_OperandValidationError) ErrorName(
 
 // Error satisfies the builtin error interface
 func (e ResourcesQueryPlanResponse_Expression_OperandValidationError) Error() string {
->>>>>>> a95d858 (feat: resource query planner)
 	cause := ""
 	if e.cause != nil {
 		cause = fmt.Sprintf(" | caused by: %v", e.cause)
@@ -1411,22 +1470,14 @@ func (e ResourcesQueryPlanResponse_Expression_OperandValidationError) Error() st
 	}
 
 	return fmt.Sprintf(
-<<<<<<< HEAD
-		"invalid %sDeleteSchemaResponse.%s: %s%s",
-=======
 		"invalid %sResourcesQueryPlanResponse_Expression_Operand.%s: %s%s",
->>>>>>> a95d858 (feat: resource query planner)
 		key,
 		e.field,
 		e.reason,
 		cause)
 }
 
-<<<<<<< HEAD
-var _ error = DeleteSchemaResponseValidationError{}
-=======
 var _ error = ResourcesQueryPlanResponse_Expression_OperandValidationError{}
->>>>>>> a95d858 (feat: resource query planner)
 
 var _ interface {
 	Field() string
@@ -1434,11 +1485,7 @@ var _ interface {
 	Key() bool
 	Cause() error
 	ErrorName() string
-<<<<<<< HEAD
-} = DeleteSchemaResponseValidationError{}
-=======
 } = ResourcesQueryPlanResponse_Expression_OperandValidationError{}
->>>>>>> a95d858 (feat: resource query planner)
 
 // Validate checks the field values on CheckResourceSetResponse_ActionEffectMap
 // with the rules defined in the proto definition for this message. If any

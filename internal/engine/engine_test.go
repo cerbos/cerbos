@@ -7,8 +7,6 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
-	requestv1 "github.com/cerbos/cerbos/api/genpb/cerbos/request/v1"
 	"path/filepath"
 	"testing"
 
@@ -17,7 +15,9 @@ import (
 	"google.golang.org/protobuf/testing/protocmp"
 
 	enginev1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
+	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
 	privatev1 "github.com/cerbos/cerbos/api/genpb/cerbos/private/v1"
+	requestv1 "github.com/cerbos/cerbos/api/genpb/cerbos/request/v1"
 	schemav1 "github.com/cerbos/cerbos/api/genpb/cerbos/schema/v1"
 	"github.com/cerbos/cerbos/internal/audit"
 	"github.com/cerbos/cerbos/internal/audit/local"
@@ -166,6 +166,8 @@ type param struct {
 }
 
 func mkEngine(tb testing.TB, p param) (*Engine, context.CancelFunc) {
+	tb.Helper()
+
 	if p.subDir == "" {
 		p.subDir = "store"
 	}

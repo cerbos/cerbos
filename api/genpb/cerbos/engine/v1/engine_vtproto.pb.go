@@ -7,11 +7,8 @@ package enginev1
 import (
 	fmt "fmt"
 	v1 "github.com/cerbos/cerbos/api/genpb/cerbos/effect/v1"
-<<<<<<< HEAD
 	v11 "github.com/cerbos/cerbos/api/genpb/cerbos/schema/v1"
-=======
 	v1alpha1 "google.golang.org/genproto/googleapis/api/expr/v1alpha1"
->>>>>>> a95d858 (feat: resource query planner)
 	proto "google.golang.org/protobuf/proto"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	structpb "google.golang.org/protobuf/types/known/structpb"
