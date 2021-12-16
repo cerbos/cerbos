@@ -1,0 +1,8 @@
+  local:
+    storagePath: /path/to/dir 
+    retentionPeriod: 168h 
+    advanced: 
+      bufferSize: 256 
+      maxBatchSize: 32 
+      flushInterval: 1s 
+      gcInterval: 60s 

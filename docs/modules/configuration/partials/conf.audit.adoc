@@ -1,0 +1,5 @@
+audit:
+  enabled: false 
+  backend: local 
+  accessLogsEnabled: true 
+  decisionLogsEnabled: true 

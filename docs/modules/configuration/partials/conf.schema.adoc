@@ -1,0 +1,2 @@
+schema:
+  enforcement: reject # Enforcement level of the validations. (none, warn, reject)
