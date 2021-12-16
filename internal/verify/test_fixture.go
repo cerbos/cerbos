@@ -4,6 +4,7 @@
 package verify
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"fmt"
@@ -11,23 +12,27 @@ import (
 	"path/filepath"
 
 	"github.com/google/go-cmp/cmp"
+	"google.golang.org/protobuf/proto"
 
 	effectv1 "github.com/cerbos/cerbos/api/genpb/cerbos/effect/v1"
-	v1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
+	enginev1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
 	"github.com/cerbos/cerbos/internal/engine"
 	"github.com/cerbos/cerbos/internal/util"
 )
 
 type testFixture struct {
-	principals map[string]*v1.Principal
-	resources  map[string]*v1.Resource
+	principals map[string]*enginev1.Principal
+	resources  map[string]*enginev1.Resource
+	auxData    map[string]*enginev1.AuxData
 }
 
 const (
-	PrincipalsFileName = "principals"
-	ResourcesFileName  = "resources"
+	principalsFileName = "principals"
+	resourcesFileName  = "resources"
 )
+
+var auxDataFileNames = []string{"auxdata", "auxData", "aux_data"}
 
 func loadTestFixture(fsys fs.FS, path string) (tf *testFixture, err error) {
 	tf = new(testFixture)
@@ -35,39 +40,71 @@ func loadTestFixture(fsys fs.FS, path string) (tf *testFixture, err error) {
 	if err != nil {
 		return nil, err
 	}
+
 	tf.resources, err = loadResources(fsys, path)
 	if err != nil {
 		return nil, err
 	}
+
+	tf.auxData, err = loadAuxData(fsys, path)
+	if err != nil {
+		return nil, err
+	}
+
 	return tf, nil
 }
 
-func loadResources(fsys fs.FS, path string) (map[string]*v1.Resource, error) {
+func loadResources(fsys fs.FS, path string) (map[string]*enginev1.Resource, error) {
 	pb := &policyv1.TestFixture_Resources{}
-	file, err := util.OpenOneOfSupportedFiles(fsys, filepath.Join(path, ResourcesFileName))
-	if err != nil || file == nil {
+	fp := filepath.Join(path, resourcesFileName)
+	if err := loadFixtureElement(fsys, fp, pb); err != nil {
+		if errors.Is(err, util.ErrNoMatchingFiles) {
+			return nil, nil
+		}
 		return nil, err
 	}
-	defer file.Close()
-	err = util.ReadJSONOrYAML(file, pb)
-	if err != nil {
-		return nil, err
-	}
+
 	return pb.Resources, nil
 }
 
-func loadPrincipals(fsys fs.FS, path string) (map[string]*v1.Principal, error) {
+func loadPrincipals(fsys fs.FS, path string) (map[string]*enginev1.Principal, error) {
 	pb := &policyv1.TestFixture_Principals{}
-	file, err := util.OpenOneOfSupportedFiles(fsys, filepath.Join(path, PrincipalsFileName))
-	if err != nil || file == nil {
+	fp := filepath.Join(path, principalsFileName)
+	if err := loadFixtureElement(fsys, fp, pb); err != nil {
+		if errors.Is(err, util.ErrNoMatchingFiles) {
+			return nil, nil
+		}
 		return nil, err
 	}
-	defer file.Close()
-	err = util.ReadJSONOrYAML(file, pb)
-	if err != nil {
-		return nil, err
-	}
+
 	return pb.Principals, nil
+}
+
+func loadAuxData(fsys fs.FS, path string) (map[string]*enginev1.AuxData, error) {
+	pb := &policyv1.TestFixture_AuxData{}
+	for _, fn := range auxDataFileNames {
+		fp := filepath.Join(path, fn)
+		if err := loadFixtureElement(fsys, fp, pb); err != nil {
+			if errors.Is(err, util.ErrNoMatchingFiles) {
+				continue
+			}
+			return nil, err
+		}
+
+		return pb.AuxData, nil
+	}
+
+	return nil, nil
+}
+
+func loadFixtureElement(fsys fs.FS, path string, pb proto.Message) error {
+	file, err := util.OpenOneOfSupportedFiles(fsys, path)
+	if err != nil || file == nil {
+		return err
+	}
+
+	defer file.Close()
+	return util.ReadJSONOrYAML(file, pb)
 }
 
 func (tf *testFixture) runTestSuite(ctx context.Context, eng *engine.Engine, shouldRun func(string) bool, file string, ts *policyv1.TestSuite) (SuiteResult, bool) {
@@ -101,10 +138,12 @@ func (tf *testFixture) runTestSuite(ctx context.Context, eng *engine.Engine, sho
 			continue
 		}
 
-		actual, err := eng.Check(ctx, []*v1.CheckInput{test.Input})
+		traceBuf := new(bytes.Buffer)
+		actual, err := eng.Check(ctx, []*enginev1.CheckInput{test.Input}, engine.WithWriterTraceSink(traceBuf))
 		if err != nil {
 			testResult.Failed = true
 			testResult.Error = err.Error()
+			testResult.EngineTrace = traceBuf.String()
 			failed = true
 			sr.Tests = append(sr.Tests, testResult)
 			continue
@@ -130,6 +169,7 @@ func (tf *testFixture) runTestSuite(ctx context.Context, eng *engine.Engine, sho
 		if diff := cmp.Diff(expectedResult, actualResult); diff != "" {
 			testResult.Failed = true
 			testResult.Error = diff
+			testResult.EngineTrace = traceBuf.String()
 			failed = true
 		}
 
@@ -140,11 +180,12 @@ func (tf *testFixture) runTestSuite(ctx context.Context, eng *engine.Engine, sho
 }
 
 var (
+	ErrAuxDataNotFound   = errors.New("auxData not found")
 	ErrPrincipalNotFound = errors.New("principal not found")
 	ErrResourceNotFound  = errors.New("resource not found")
 )
 
-func (tf *testFixture) lookupResource(k string) (*v1.Resource, bool) {
+func (tf *testFixture) lookupResource(k string) (*enginev1.Resource, bool) {
 	if tf == nil {
 		return nil, false
 	}
@@ -152,11 +193,19 @@ func (tf *testFixture) lookupResource(k string) (*v1.Resource, bool) {
 	return v, ok
 }
 
-func (tf *testFixture) lookupPrincipal(k string) (*v1.Principal, bool) {
+func (tf *testFixture) lookupPrincipal(k string) (*enginev1.Principal, bool) {
 	if tf == nil {
 		return nil, false
 	}
 	v, ok := tf.principals[k]
+	return v, ok
+}
+
+func (tf *testFixture) lookupAuxData(k string) (*enginev1.AuxData, bool) {
+	if tf == nil {
+		return nil, false
+	}
+	v, ok := tf.auxData[k]
 	return v, ok
 }
 
@@ -170,6 +219,7 @@ func (tf *testFixture) getTests(ts *policyv1.TestSuite) (tests []*policyv1.Test,
 					return nil, fmt.Errorf("%w:%q", ErrPrincipalNotFound, expected.Principal)
 				}
 			}
+
 			resource, ok := ts.Resources[table.Input.Resource]
 			if !ok {
 				resource, ok = tf.lookupResource(table.Input.Resource)
@@ -177,15 +227,28 @@ func (tf *testFixture) getTests(ts *policyv1.TestSuite) (tests []*policyv1.Test,
 					return nil, fmt.Errorf("%w:%q", ErrResourceNotFound, table.Input.Resource)
 				}
 			}
+
+			var auxData *enginev1.AuxData
+			if adKey := table.Input.AuxData; adKey != "" {
+				auxData, ok = ts.AuxData[adKey]
+				if !ok {
+					auxData, ok = tf.lookupAuxData(adKey)
+					if !ok {
+						return nil, fmt.Errorf("%w:%q", ErrAuxDataNotFound, adKey)
+					}
+				}
+			}
+
 			test := &policyv1.Test{
 				Name:        &policyv1.Test_TestName{TestTableName: table.Name, PrincipalKey: expected.Principal},
 				Description: table.Description,
 				Skip:        table.Skip,
 				SkipReason:  table.SkipReason,
-				Input: &v1.CheckInput{
+				Input: &enginev1.CheckInput{
 					RequestId: table.Input.RequestId,
 					Resource:  resource,
 					Principal: principal,
+					AuxData:   auxData,
 					Actions:   table.Input.Actions,
 				},
 				Expected: expected.Actions,

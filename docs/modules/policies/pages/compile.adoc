@@ -42,13 +42,20 @@ principals: <4>
     id: aliciaID
     roles:
       - user
-tests: <5>
-  - name: Alicia tries to view her own private album <6>
-    input: <7>
+auxData: <5>
+  validJWT:
+    jwt:
+      iss: my.domain
+      aud: ["x", "y"]
+      myField: value
+tests: <6>
+  - name: Alicia tries to view her own private album <7>
+    input: <8>
       requestId: "test"
       actions: ["view", "delete"]
       resource: "alicia_album"
-    expected: <8>
+      auxData: "validJWT"
+    expected: <9>
       - principal: alicia
         actions:
           view: EFFECT_ALLOW
@@ -60,16 +67,17 @@ tests: <5>
 ----
 <1> Name of the test suite
 <2> Description of the test suite
-<3> Map of resources. A key is a string that can be used to refer to the associated resource
-<4> Map of principals. A key is a string that can be used to refer to the associated principal
-<5> List of tests in this suite
-<6> Name of the test
-<7> Input to the policy engine
-<8> List of outcomes expected for a specified principal and a given action.
+<3> Map of resources. The key is a string that can be used to refer to the associated resource
+<4> Map of principals. The key is a string that can be used to refer to the associated principal
+<5> Map of (optional) auxiliary data blocks required to evaluate some requests. The key is a string that can be used to refer to the associated auxData.
+<6> List of tests in this suite
+<7> Name of the test
+<8> Input to the policy engine
+<9> List of outcomes expected for a specified principal and a given action.
 
 === Sharing test fixtures
 
-It is possible to share principals and resources between test suites stored in the same directory. Create a `testdata` directory in the directory containing your test suite files, then define shared resources and principals in `testdata\resources.yml` and `testdata\principals.yml` respectively (`yaml` and `json` extensions are also supported).
+It is possible to share principals, resources and auxData blocks between test suites stored in the same directory. Create a `testdata` directory in the directory containing your test suite files, then define shared resources, principals and auxData in `testdata/resources.yml`, `testdata/principals.yml`, `testdata/auxdata.yml` respectively (`yaml` and `json` extensions are also supported).
 
 ----
 tests
@@ -77,11 +85,12 @@ tests
 ├── gallery_object_test.yaml
 ├── slideshow_object_test.yaml
 └── testdata
+   ├── auxdata.yaml
    ├── principals.yaml
    └── resources.yaml
 ----
 
-.An example of `testdata\principals.yml`
+.An example of `testdata/principals.yml`
 [source,yaml]
 ----
 ---
@@ -94,7 +103,7 @@ principals:
 
 ----
 
-.An example of `testdata\resources.yml`
+.An example of `testdata/resources.yml`
 [source,yaml]
 ----
 ---
@@ -107,6 +116,19 @@ resources:
       public: false,
       flagged: false
 ----
+
+.An example of `testdata/auxdata.yml`
+[source,yaml]
+----
+---
+auxData:
+  validJWT:
+    jwt:
+      iss: my.domain
+      aud: ["x", "y"]
+      myField: value
+----
+
 
 [NOTE]
 ====

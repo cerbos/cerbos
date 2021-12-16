@@ -23,15 +23,15 @@ type Config struct {
 }
 
 type Result struct {
-	Failed  bool          `json:"-"`
 	Results []SuiteResult `json:"results"`
+	Failed  bool          `json:"-"`
 }
 
 type SuiteResult struct {
 	File    string       `json:"file"`
 	Suite   string       `json:"suite"`
-	Skipped bool         `json:"skipped,omitempty"`
 	Tests   []TestResult `json:"tests"`
+	Skipped bool         `json:"skipped,omitempty"`
 }
 
 type TestName struct {
@@ -44,10 +44,11 @@ func (r TestName) String() string {
 }
 
 type TestResult struct {
-	Name    TestName `json:"case"`
-	Skipped bool     `json:"skipped,omitempty"`
-	Failed  bool     `json:"failed"`
-	Error   string   `json:"error,omitempty"`
+	Error       string   `json:"error,omitempty"`
+	EngineTrace string   `json:"engineTrace,omitempty"`
+	Name        TestName `json:"case"`
+	Skipped     bool     `json:"skipped,omitempty"`
+	Failed      bool     `json:"failed"`
 }
 
 var ErrTestFixtureNotFound = errors.New("test fixture not found")
