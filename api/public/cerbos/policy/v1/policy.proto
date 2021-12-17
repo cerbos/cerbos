@@ -7,7 +7,6 @@ package cerbos.policy.v1;
 
 import "cerbos/effect/v1/effect.proto";
 import "cerbos/engine/v1/engine.proto";
-import "google/api/field_behavior.proto";
 import "validate/validate.proto";
 
 option go_package = "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1;policyv1";
@@ -119,6 +118,9 @@ message TestFixture {
     message Resources {
         map<string, cerbos.engine.v1.Resource> resources = 1;
     }
+    message AuxData {
+        map<string, cerbos.engine.v1.AuxData> aux_data = 1;
+    }
 }
 
 message TestSuite {
@@ -129,31 +131,36 @@ message TestSuite {
     repeated TestTable tests = 5 [(validate.rules).repeated.min_items = 1];
     map<string, cerbos.engine.v1.Principal> principals = 6;
     map<string, cerbos.engine.v1.Resource> resources = 7;
+    map<string, cerbos.engine.v1.AuxData> aux_data = 8;
 }
 
 message TestTable {
+    message CheckInput {
+        string request_id = 1;
+        string resource = 2 [(validate.rules).string.min_len = 1];
+        repeated string actions = 3 [(validate.rules).repeated = {unique: true, items: {string: {min_len: 1}}}];
+        string aux_data = 4;
+    }
+
+    message ExpectedItem {
+        string principal = 1 [(validate.rules).string.min_len = 1];
+        map<string, cerbos.effect.v1.Effect> actions = 2[(validate.rules).map = {min_pairs: 1}];
+    }
+
     string name = 1 [(validate.rules).string.min_len = 1];
     string description = 2;
     bool skip = 3;
     string skip_reason = 4;
-    message CheckInput {
-        string request_id = 1;
-        string resource = 2 [(validate.rules).string.min_len = 1, (google.api.field_behavior) = REQUIRED];
-        repeated string actions = 3 [(validate.rules).repeated = {unique: true, items: {string: {min_len: 1}}}, (google.api.field_behavior) = REQUIRED];
-    }
-    CheckInput input = 5 [(validate.rules).message.required = true, (google.api.field_behavior) = REQUIRED];
-    message ExpectedItem {
-        string principal = 1 [(validate.rules).string.min_len = 1, (google.api.field_behavior) = REQUIRED];
-        map<string, cerbos.effect.v1.Effect> actions = 2[(validate.rules).map = {min_pairs: 1}, (google.api.field_behavior) = REQUIRED];
-    }
-    repeated ExpectedItem expected = 6 [(validate.rules).repeated.min_items = 1, (google.api.field_behavior) = REQUIRED];
+    CheckInput input = 5 [(validate.rules).message.required = true];
+    repeated ExpectedItem expected = 6 [(validate.rules).repeated.min_items = 1];
 }
 
 message Test {
     message TestName {
-        string test_table_name = 1[(validate.rules).string.min_len = 1];
-        string principal_key = 2[(validate.rules).string.min_len = 1];
+        string test_table_name = 1 [(validate.rules).string.min_len = 1];
+        string principal_key = 2 [(validate.rules).string.min_len = 1];
     }
+
     TestName name = 1 [(validate.rules).message.required = true];
     string description = 2;
     bool skip = 3;
