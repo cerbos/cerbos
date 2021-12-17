@@ -679,7 +679,7 @@ func RegisterCerbosServiceHandlerServer(ctx context.Context, mux *runtime.ServeM
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/cerbos.svc.v1.CerbosService/ResourcesQueryPlan", runtime.WithHTTPPathPattern("/api/resources_query_plan"))
+		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/cerbos.svc.v1.CerbosService/ResourcesQueryPlan", runtime.WithHTTPPathPattern("/api/plan/resources"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -1102,7 +1102,7 @@ func RegisterCerbosServiceHandlerClient(ctx context.Context, mux *runtime.ServeM
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/cerbos.svc.v1.CerbosService/ResourcesQueryPlan", runtime.WithHTTPPathPattern("/api/resources_query_plan"))
+		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/cerbos.svc.v1.CerbosService/ResourcesQueryPlan", runtime.WithHTTPPathPattern("/api/plan/resources"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -1128,7 +1128,7 @@ var (
 
 	pattern_CerbosService_ServerInfo_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"api", "server_info"}, ""))
 
-	pattern_CerbosService_ResourcesQueryPlan_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"api", "resources_query_plan"}, ""))
+	pattern_CerbosService_ResourcesQueryPlan_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"api", "plan", "resources"}, ""))
 )
 
 var (

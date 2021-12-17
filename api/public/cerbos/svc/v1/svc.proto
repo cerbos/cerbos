@@ -76,7 +76,7 @@ service CerbosService {
 
     rpc ResourcesQueryPlan(cerbos.request.v1.ResourcesQueryPlanRequest) returns (cerbos.response.v1.ResourcesQueryPlanResponse) {
         option (google.api.http) = {
-            post: "/api/resources_query_plan",
+            post: "/api/plan/resources",
             body: "*"
         };
         option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
