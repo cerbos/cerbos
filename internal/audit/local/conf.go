@@ -34,7 +34,7 @@ var (
 	errInvalidMaxBatchSize = errors.New("maxBatchSize must be at least 1")
 )
 
-// Configuration for the local audit backend.
+// Conf is optional configuration for Audit.
 type Conf struct {
 	// Path to store the data
 	StoragePath string `yaml:"storagePath" conf:",defaultValue=/path/to/dir"`

@@ -29,44 +29,44 @@ var (
 	errAdminCredsUndefined   = errors.New("admin credentials not defined")
 )
 
-// Required. Configuration pertaining to the server.
+// Conf is required configuration for the server.
 type Conf struct {
-	// The dedicated HTTP address to listen.
+	// HTTPListenAddr is the dedicated HTTP address.
 	HTTPListenAddr string `yaml:"httpListenAddr" conf:"required,defaultValue=\":3592\""`
-	// The dedicated HTTP address to listen.
+	// GRPCListenAddr is the dedicated GRPC address.
 	GRPCListenAddr string `yaml:"grpcListenAddr" conf:"required,defaultValue=\":3593\""`
-	// The TLS configuration for the server.
+	// TLS defines the TLS configuration for the server.
 	TLS *TLSConf `yaml:"tls"`
 	// CORS defines the CORS configuration for the server.
 	CORS CORSConf `yaml:"cors"`
-	// Defines whether the metrics endpoint (/_cerbos/metrics) is enabled.
+	// MetricsEnabled defines whether the metrics endpoint is enabled.
 	MetricsEnabled bool `yaml:"metricsEnabled" conf:",defaultValue=true"`
-	// Defines whether the request payloads should be logged.
+	// LogRequestPayloads defines whether the request payloads should be logged.
 	LogRequestPayloads bool `yaml:"logRequestPayloads" conf:",defaultValue=false"`
-	// Defines whether the playground API is enabled.
+	// PlaygroundEnabled defines whether the playground API is enabled.
 	PlaygroundEnabled bool `yaml:"playgroundEnabled" conf:",defaultValue=false"`
-	// Defines the admin API configuration.
+	// AdminAPI defines the admin API configuration.
 	AdminAPI AdminAPIConf `yaml:"adminAPI"`
 }
 
 // TLSConf holds TLS configuration.
 type TLSConf struct {
-	// Path to the TLS certificate file.
+	// Cert is the path to the TLS certificate file.
 	Cert string `yaml:"cert" conf:",defaultValue=/path/to/certificate"`
-	// Path to the TLS private key file.
+	// Key is the path to the TLS private key file.
 	Key string `yaml:"key" conf:",defaultValue=/path/to/private_key"`
-	// Path to the optional CA certificate for verifying client requests.
+	// CACert is the path to the optional CA certificate for verifying client requests.
 	CACert string `yaml:"caCert" conf:",defaultValue=/path/to/CA_certificate"`
 }
 
 type CORSConf struct {
-	// Sets whether CORS is disabled.
+	// Disabled sets whether CORS is disabled.
 	Disabled bool `yaml:"disabled" conf:",defaultValue=false"`
-	// The contents of the allowed-origins header.
+	// AllowedOrigins is the contents of the allowed-origins header.
 	AllowedOrigins []string `yaml:"allowedOrigins" conf:",defaultValue=['*']"`
-	// The contents of the allowed-headers header.
+	// AllowedHeaders is the contents of the allowed-headers header.
 	AllowedHeaders []string `yaml:"allowedHeaders" conf:",defaultValue=['content-type']"`
-	// The max age of the CORS preflight check.
+	// MaxAge is the max age of the CORS preflight check.
 	MaxAge time.Duration `yaml:"maxAge" conf:",defaultValue=10s"`
 }
 

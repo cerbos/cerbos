@@ -1,4 +1,4 @@
-  mysql: # Required (if driver is set to 'mysql'). Configuration for the mysql driver.
+  mysql: # Conf is required (if driver is set to 'mysql') configuration for mysql driver.
     dsn: "user:password@tcp(localhost:3306)/db?interpolateParams=true" # Required. Data source name
     connPool: 
       maxLifeTime: 60m

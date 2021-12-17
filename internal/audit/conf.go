@@ -15,19 +15,19 @@ const (
 	ConfKey = "audit"
 )
 
-// Optional.
+// Conf is optional configuration for local Audit.
 type Conf struct {
 	confHolder
 }
 
 type confHolder struct {
-	// Enables audit logging.
+	// Enabled defines whether audit logging is enabled.
 	Enabled bool `yaml:"enabled" conf:",defaultValue=false"`
-	// Audit backend to use.
+	// Backend states which backend to use for Audits.
 	Backend string `yaml:"backend" conf:",defaultValue=local"`
-	// Enables logging of access attempts.
+	// AccessLogsEnabled defines whether access logging is enabled.
 	AccessLogsEnabled bool `yaml:"accessLogsEnabled" conf:",defaultValue=true"`
-	// Enables logging of policy decisions.
+	// DecisionLogsEnabled defines whether logging of policy decisions is enabled.
 	DecisionLogsEnabled bool `yaml:"decisionLogsEnabled" conf:",defaultValue=true"`
 }
 

@@ -5,14 +5,14 @@ package indexer
 
 import (
 	"fmt"
-	"github.com/fatih/color"
-	"go.uber.org/zap"
 	"go/ast"
 	"go/token"
 	"go/types"
-	"golang.org/x/tools/go/packages"
 	"strings"
 	"unicode"
+
+	"go.uber.org/zap"
+	"golang.org/x/tools/go/packages"
 )
 
 type Index map[string]*Struct
@@ -336,9 +336,7 @@ func (cd *Indexer) getStructsImplIface(pkg *types.Package, iface *types.Interfac
 			ptr := types.NewPointer(obj.Type())
 
 			if types.Implements(ptr.Underlying(), iface) {
-				color.Set(color.FgRed)
 				cd.Log.Infof("Found %s.%s implementing the interface %s", pkg.Path(), name, ifaceName)
-				color.Unset()
 				out[fmt.Sprintf("%s.%s", pkg.Path(), name)] = str
 			}
 		}
@@ -347,7 +345,7 @@ func (cd *Indexer) getStructsImplIface(pkg *types.Package, iface *types.Interfac
 
 func (cd *Indexer) loadPackages(absPackagesDir string, fileSet *token.FileSet) ([]*packages.Package, error) {
 	config := &packages.Config{
-		Mode:  packages.NeedTypes | packages.NeedTypesInfo | packages.NeedFiles | packages.NeedSyntax | packages.NeedName | packages.NeedImports | packages.NeedDeps,
+		Mode:  packages.NeedTypes | packages.NeedTypesInfo | packages.NeedFiles | packages.NeedSyntax | packages.NeedName,
 		Dir:   absPackagesDir,
 		Fset:  fileSet,
 		Logf:  cd.Log.Infof,

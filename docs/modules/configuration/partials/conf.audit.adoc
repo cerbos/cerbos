@@ -1,5 +1,5 @@
-audit: # Optional.
-  enabled: false # Enables audit logging.
-  backend: local # Audit backend to use.
-  accessLogsEnabled: true # Enables logging of access attempts.
-  decisionLogsEnabled: true # Enables logging of policy decisions.
+audit: # Conf is optional configuration for local Audit.
+  enabled: false # Enabled defines whether audit logging is enabled.
+  backend: local # Backend states which backend to use for Audits.
+  accessLogsEnabled: true # AccessLogsEnabled defines whether access logging is enabled.
+  decisionLogsEnabled: true # DecisionLogsEnabled defines whether logging of policy decisions is enabled.

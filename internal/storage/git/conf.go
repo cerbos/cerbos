@@ -27,27 +27,27 @@ const (
 	defaultOperationTimeout = 60 * time.Second
 )
 
-// Required (if driver is set to 'git'). Configuration for Git storage driver.
+// Conf is required (if driver is set to 'git') configuration for Git storage driver.
 type Conf struct {
-	// The Git protocol to use. Valid values are https, ssh, and file.
+	// Protocol is the Git protocol to use. Valid values are https, ssh, and file.
 	Protocol string `yaml:"protocol" conf:"required,defaultValue=file"`
-	// The URL to the Git repo.
+	// URL is the URL to the Git repo.
 	URL string `yaml:"url" conf:"required,defaultValue=file://${HOME}/tmp/cerbos/policies"`
-	// The branch to checkout.
+	// Branch is the branch to checkout.
 	Branch string `yaml:"branch" conf:",defaultValue=policies"`
-	// The path under the checked-out Git repo where the policies are stored.
+	// SubDir is the path under the checked-out Git repo where the policies are stored.
 	SubDir string `yaml:"subDir,omitempty" conf:",defaultValue=policies"`
-	// The local path to checkout the Git repo to.
+	// CheckoutDir is the local path to checkout the Git repo to.
 	CheckoutDir string `yaml:"checkoutDir" conf:",defaultValue=${HOME}/tmp/cerbos/work"`
 	// [DEPRECATED] ScratchDir is the directory to use for holding temporary data.
 	ScratchDir string `yaml:"scratchDir" conf:",ignore"`
-	// Holds auth details for the SSH protocol.
+	// SSH holds auth details for the SSH protocol.
 	SSH *SSHAuth `yaml:"ssh,omitempty"`
-	// Holds auth details for the HTTPS protocol.
+	// HTTPS holds auth details for the HTTPS protocol.
 	HTTPS *HTTPSAuth `yaml:"https,omitempty"`
-	// Specifies the timeout for git operations.
+	// OperationTimeout specifies the timeout for git operations.
 	OperationTimeout *time.Duration `yaml:"operationTimeout,omitempty" conf:",defaultValue=60s"`
-	// Specifies the interval to poll the Git repository for changes. Set to 0 to disable.
+	// UpdatePollInterval specifies the interval to poll the Git repository for changes. Set to 0 to disable.
 	UpdatePollInterval time.Duration `yaml:"updatePollInterval" conf:",defaultValue=60s"`
 }
 

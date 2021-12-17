@@ -1,4 +1,4 @@
-  postgres: # Required (if driver is set to 'postres'). Configuration for the postgres driver.
+  postgres: # Conf is required (if driver is set to 'postres') configuration for postres driver.
     url: "postgres://user:password@localhost:port/db" # Required. URL is the Postgres connection URL. See https://www.postgresql.org/docs/current/libpq-connect.html#LIBPQ-CONNSTRING
     connPool: 
       maxLifeTime: 60m

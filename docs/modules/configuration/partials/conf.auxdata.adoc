@@ -1,7 +1,7 @@
-auxdata: # Optional.
-  jwt: # Holds the configuration for JWTs used as an auxiliary data source for the engine.
+auxdata: # Conf is optional configuration for Auxdata.
+  jwt: # JWT holds the configuration for JWTs used as an auxiliary data source for the engine.
     keySets: 
     - id: ks1
       remote:
-        url: https://domain.tld/.well-known/keys.jwks # The list of JWT key sets to be used to verify tokens.
-    disableVerification: false # Disables JWT verification.
+        url: https://domain.tld/.well-known/keys.jwks # KeySets is the list of keysets to be used to verify tokens.
+    disableVerification: false # DisableVerification disables JWT verification.
