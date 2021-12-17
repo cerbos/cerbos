@@ -313,7 +313,10 @@ func (engine *Engine) ResourcesQueryPlan(ctx context.Context, input *requestv1.R
 		if err != nil {
 			return nil, err
 		}
-		response.FilterDebug, err = String(plan.Filter)
+		if input.IncludeMeta {
+			response.Meta = new(responsev1.ResourcesQueryPlanResponse_Meta)
+			response.Meta.FilterDebug, err = String(plan.Filter)
+		}
 		if err != nil {
 			return nil, err
 		}

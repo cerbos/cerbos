@@ -65,7 +65,13 @@ message ResourcesQueryPlanRequest {
         }
     ];
 
-    AuxData aux_data = 6;
+    AuxData aux_data = 6 [(google.api.field_behavior) = OPTIONAL];
+
+    bool include_meta = 7 [
+        (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+            description: "Opt to receive request processing metadata in the response."
+        }
+    ];
 }
 
 message CheckResourceSetRequest {

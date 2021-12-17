@@ -55,6 +55,16 @@ func (m *ResourcesQueryPlanRequest) MarshalToSizedBufferVT(dAtA []byte) (int, er
 		i -= len(m.unknownFields)
 		copy(dAtA[i:], m.unknownFields)
 	}
+	if m.IncludeMeta {
+		i--
+		if m.IncludeMeta {
+			dAtA[i] = 1
+		} else {
+			dAtA[i] = 0
+		}
+		i--
+		dAtA[i] = 0x38
+	}
 	if m.AuxData != nil {
 		size, err := m.AuxData.MarshalToSizedBufferVT(dAtA[:i])
 		if err != nil {
@@ -1573,6 +1583,9 @@ func (m *ResourcesQueryPlanRequest) SizeVT() (n int) {
 		l = m.AuxData.SizeVT()
 		n += 1 + l + sov(uint64(l))
 	}
+	if m.IncludeMeta {
+		n += 2
+	}
 	if m.unknownFields != nil {
 		n += len(m.unknownFields)
 	}
@@ -2442,6 +2455,26 @@ func (m *ResourcesQueryPlanRequest) UnmarshalVT(dAtA []byte) error {
 				return err
 			}
 			iNdEx = postIndex
+		case 7:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field IncludeMeta", wireType)
+			}
+			var v int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				v |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			m.IncludeMeta = bool(v != 0)
 		default:
 			iNdEx = preIndex
 			skippy, err := skip(dAtA[iNdEx:])

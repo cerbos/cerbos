@@ -265,6 +265,7 @@ func TestQueryPlan(t *testing.T) {
 						Principal:     ts.Principal,
 						PolicyVersion: tt.PolicyVersion,
 						ResourceKind:  tt.ResourceKind,
+						IncludeMeta:   true,
 					}
 
 					response, err := eng.ResourcesQueryPlan(context.Background(), request)
@@ -272,7 +273,7 @@ func TestQueryPlan(t *testing.T) {
 					is.NotNil(response)
 
 					is.Empty(cmp.Diff(tt.Want, response.Filter, protocmp.Transform()))
-					t.Log(response.FilterDebug)
+					t.Log(response.Meta.FilterDebug)
 				})
 			}
 		})

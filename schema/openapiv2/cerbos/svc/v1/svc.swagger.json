@@ -752,44 +752,6 @@
         "actions"
       ]
     },
-    "CheckResourceSetResponseMeta": {
-      "type": "object",
-      "properties": {
-        "resourceInstances": {
-          "type": "object",
-          "example": {
-            "XX125": {
-              "actions": {
-                "view:*": {
-                  "matched_policy": "album:object:default"
-                },
-                "comment": {
-                  "matched_policy": "album:object:default"
-                }
-              },
-              "effective_derived_roles": [
-                "owner"
-              ]
-            },
-            "XX225": {
-              "actions": {
-                "view:*": {
-                  "matched_policy": "album:object:default"
-                },
-                "comment": {
-                  "matched_policy": "album:object:default"
-                }
-              }
-            }
-          },
-          "additionalProperties": {
-            "$ref": "#/definitions/MetaActionMeta"
-          },
-          "description": "Metadata about resource instances."
-        }
-      },
-      "description": "Metadata about request evaluation."
-    },
     "ExpressionOperand": {
       "type": "object",
       "properties": {
@@ -1478,7 +1440,7 @@
           "description": "Results for each resource instance, keyed by the ID supplied in the request"
         },
         "meta": {
-          "$ref": "#/definitions/CheckResourceSetResponseMeta",
+          "$ref": "#/definitions/v1CheckResourceSetResponseMeta",
           "description": "Optional metadata about the request evaluation process"
         }
       },
@@ -1502,6 +1464,44 @@
           "description": "List of validation errors (if schema validation is enabled)"
         }
       }
+    },
+    "v1CheckResourceSetResponseMeta": {
+      "type": "object",
+      "properties": {
+        "resourceInstances": {
+          "type": "object",
+          "example": {
+            "XX125": {
+              "actions": {
+                "view:*": {
+                  "matched_policy": "album:object:default"
+                },
+                "comment": {
+                  "matched_policy": "album:object:default"
+                }
+              },
+              "effective_derived_roles": [
+                "owner"
+              ]
+            },
+            "XX225": {
+              "actions": {
+                "view:*": {
+                  "matched_policy": "album:object:default"
+                },
+                "comment": {
+                  "matched_policy": "album:object:default"
+                }
+              }
+            }
+          },
+          "additionalProperties": {
+            "$ref": "#/definitions/MetaActionMeta"
+          },
+          "description": "Metadata about resource instances."
+        }
+      },
+      "description": "Metadata about request evaluation."
     },
     "v1Condition": {
       "type": "object",
@@ -2186,6 +2186,10 @@
         },
         "auxData": {
           "$ref": "#/definitions/cerbosrequestv1AuxData"
+        },
+        "includeMeta": {
+          "type": "boolean",
+          "description": "Opt to receive request processing metadata in the response."
         }
       },
       "description": "PDP Resources Query Plan Request",
@@ -2222,12 +2226,22 @@
           "$ref": "#/definitions/ExpressionOperand",
           "description": "Filter"
         },
+        "meta": {
+          "$ref": "#/definitions/v1ResourcesQueryPlanResponseMeta",
+          "description": "Optional metadata about the request evaluation process"
+        }
+      },
+      "description": "Resources query plan response for a set of resources."
+    },
+    "v1ResourcesQueryPlanResponseMeta": {
+      "type": "object",
+      "properties": {
         "filterDebug": {
           "type": "string",
           "description": "Filter textual representation for debugging purposes."
         }
       },
-      "description": "Resources query plan response for a set of resources."
+      "description": "Metadata about request evaluation."
     },
     "v1RoleDef": {
       "type": "object",
