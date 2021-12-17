@@ -48,36 +48,19 @@ func getExpectedExpressions(t *testing.T) map[string]*exOp {
 
 func Test_buildExpr(t *testing.T) {
 	is := require.New(t)
-	expected := getExpectedExpressions(t)
-	tests := []string{
-		`[1,a + 2,"q"]`,
-		"z + [2,3]",
-		"a[b].c",
-		"a[b].c.d",
-		"{a:2, b: 3}",
-		"x.filter(t, t > 0)",
-		"x.map(t, t.upperAscii())",
-		"f(a,3)",
-		"x.f(a,3)",
-	}
-
 	parse := func(s string) *exprpb.Expr {
 		ast, iss := conditions.StdEnv.Parse(s)
 		is.Nil(iss, iss.Err())
 		return ast.Expr()
 	}
 
-	for _, expr := range tests {
-		t.Run(expr, func(t *testing.T) {
+	for k, v := range getExpectedExpressions(t) {
+		t.Run(k, func(t *testing.T) {
 			acc := new(exOp)
-			err := buildExpr(parse(expr), acc)
+			err := buildExpr(parse(k), acc)
 			is.NoError(err)
 
-			if exp, ok := expected[expr]; ok {
-				is.Empty(cmp.Diff(exp, acc, protocmp.Transform()))
-			} else {
-				t.Fatalf("expected result not found for expression: %q", expr)
-			}
+			is.Empty(cmp.Diff(v, acc, protocmp.Transform()))
 		})
 	}
 }
