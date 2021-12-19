@@ -535,40 +535,6 @@
         ]
       }
     },
-    "/api/plan/resources": {
-      "post": {
-        "summary": "Resources query plan",
-        "description": "Resources query plan",
-        "operationId": "CerbosService_ResourcesQueryPlan",
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "$ref": "#/definitions/v1ResourcesQueryPlanResponse"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/rpcStatus"
-            }
-          }
-        },
-        "parameters": [
-          {
-            "name": "body",
-            "in": "body",
-            "required": true,
-            "schema": {
-              "$ref": "#/definitions/v1ResourcesQueryPlanRequest"
-            }
-          }
-        ],
-        "tags": [
-          "CerbosService"
-        ]
-      }
-    },
     "/api/playground/evaluate": {
       "post": {
         "operationId": "CerbosPlaygroundService_PlaygroundEvaluate",
@@ -684,6 +650,40 @@
             }
           }
         },
+        "tags": [
+          "CerbosService"
+        ]
+      }
+    },
+    "/api/x/plan/resources": {
+      "post": {
+        "summary": "Resources query plan",
+        "description": "Resources query plan",
+        "operationId": "CerbosService_ResourcesQueryPlan",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1ResourcesQueryPlanResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/v1ResourcesQueryPlanRequest"
+            }
+          }
+        ],
         "tags": [
           "CerbosService"
         ]
