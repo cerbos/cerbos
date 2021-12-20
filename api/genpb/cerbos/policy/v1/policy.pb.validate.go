@@ -1434,6 +1434,23 @@ func (m *TestSuite) Validate() error {
 
 	}
 
+	for key, val := range m.GetAuxData() {
+		_ = val
+
+		// no validation rules for AuxData[key]
+
+		if v, ok := interface{}(val).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return TestSuiteValidationError{
+					field:  fmt.Sprintf("AuxData[%v]", key),
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	}
+
 	return nil
 }
 
@@ -2145,6 +2162,90 @@ var _ interface {
 	ErrorName() string
 } = TestFixture_ResourcesValidationError{}
 
+// Validate checks the field values on TestFixture_AuxData with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, an error is returned.
+func (m *TestFixture_AuxData) Validate() error {
+	if m == nil {
+		return nil
+	}
+
+	for key, val := range m.GetAuxData() {
+		_ = val
+
+		// no validation rules for AuxData[key]
+
+		if v, ok := interface{}(val).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return TestFixture_AuxDataValidationError{
+					field:  fmt.Sprintf("AuxData[%v]", key),
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	}
+
+	return nil
+}
+
+// TestFixture_AuxDataValidationError is the validation error returned by
+// TestFixture_AuxData.Validate if the designated constraints aren't met.
+type TestFixture_AuxDataValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e TestFixture_AuxDataValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e TestFixture_AuxDataValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e TestFixture_AuxDataValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e TestFixture_AuxDataValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e TestFixture_AuxDataValidationError) ErrorName() string {
+	return "TestFixture_AuxDataValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e TestFixture_AuxDataValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sTestFixture_AuxData.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = TestFixture_AuxDataValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = TestFixture_AuxDataValidationError{}
+
 // Validate checks the field values on TestTable_CheckInput with the rules
 // defined in the proto definition for this message. If any rules are
 // violated, an error is returned.
@@ -2184,6 +2285,8 @@ func (m *TestTable_CheckInput) Validate() error {
 		}
 
 	}
+
+	// no validation rules for AuxData
 
 	return nil
 }

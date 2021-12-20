@@ -46,13 +46,12 @@ func TestOpenOneOfSupportedFiles(t *testing.T) {
 	tests := []struct {
 		fileName string
 		wantErr  bool
-		notExist bool
 	}{
-		{"a", false, false},
-		{"b", false, false},
-		{"c", false, false},
-		{"d", false, true},
-		{"not_exist", false, true},
+		{"a", false},
+		{"b", false},
+		{"c", false},
+		{"d", true},
+		{"not_exist", true},
 	}
 	for _, tt := range tests {
 		t.Run(tt.fileName, func(t *testing.T) {
@@ -66,11 +65,6 @@ func TestOpenOneOfSupportedFiles(t *testing.T) {
 				is.Nil(file)
 			} else {
 				is.NoError(err)
-			}
-			if tt.notExist {
-				is.Nil(file)
-			} else {
-				is.NotNil(file)
 			}
 		})
 	}

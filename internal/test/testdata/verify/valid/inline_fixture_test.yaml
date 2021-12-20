@@ -1,6 +1,24 @@
 ---
 name: TestSuite
 description: Tests for verifying something
+principals:
+  johnny:
+    id: johnny
+    policyVersion: '20210210'
+    roles:
+      - employee
+    attr:
+      department: marketing
+      geography: GB
+      team: design
+auxData:
+  johnJWT:
+    jwt:
+      iss: cerbos-test-suite
+      aud: [cerbos-jwt-tests]
+      customArray: [A, B]
+
+
 tests:
   - name: John and his leave request
     input:
@@ -10,10 +28,10 @@ tests:
         - "approve"
         - "defer"
       resource: "john_leave_request"
-      auxData: "myJWT"
+      auxData: "johnJWT"
     expected:
       -
-        principal: john
+        principal: johnny
         actions:
           "view:public": "EFFECT_ALLOW"
           "approve": "EFFECT_DENY"

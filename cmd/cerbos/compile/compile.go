@@ -38,6 +38,7 @@ var (
 	format        string
 	skipTests     bool
 	ignoreSchemas bool
+	verbose       bool
 	verifyConf    = verify.Config{}
 )
 
@@ -60,6 +61,7 @@ func NewCommand() *cobra.Command {
 	cmd.Flags().StringVar(&verifyConf.Run, "run", "", "Run only tests that match this regex")
 	cmd.Flags().BoolVar(&skipTests, "skip-tests", false, "Skip tests")
 	cmd.Flags().BoolVar(&ignoreSchemas, "ignore-schemas", false, "Ignore schemas during compilation")
+	cmd.Flags().BoolVar(&verbose, "verbose", false, "Verbose output on test failure")
 
 	return cmd
 }
@@ -219,6 +221,9 @@ func displayVerificationResult(cmd *cobra.Command, result *verify.Result) error 
 			if tr.Failed {
 				cmd.Println(failedTest("[FAILED]"))
 				cmd.Printf("\tError: %s\n", tr.Error)
+				if verbose {
+					cmd.Printf("\tTrace: \n%s\n", tr.EngineTrace)
+				}
 				continue
 			}
 

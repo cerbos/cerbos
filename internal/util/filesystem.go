@@ -4,6 +4,7 @@
 package util
 
 import (
+	"errors"
 	"fmt"
 	"io/fs"
 	"path/filepath"
@@ -13,6 +14,8 @@ import (
 )
 
 var supportedFileTypes = map[string]struct{}{".yaml": {}, ".yml": {}, ".json": {}}
+
+var ErrNoMatchingFiles = errors.New("no matching files")
 
 // TestDataDirectory is the name of the special directory containing test fixtures. It is defined here to avoid an import loop.
 const TestDataDirectory = "testdata"
@@ -66,7 +69,7 @@ func OpenOneOfSupportedFiles(fsys fs.FS, fileName string) (fs.File, error) {
 		}
 	}
 	if filepath == "" {
-		return nil, nil
+		return nil, ErrNoMatchingFiles
 	}
 
 	file, err := fsys.Open(filepath)
