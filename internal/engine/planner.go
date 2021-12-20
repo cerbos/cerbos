@@ -160,9 +160,6 @@ func (rpe *resourcePolicyEvaluator) EvaluateResourcesQueryPlan(_ context.Context
 					}
 				}
 
-				if result.Filter == nil {
-					result.Filter = &qpN{Node: &qpNE{Expression: conditions.TrueExpr}}
-				}
 				if rule.Effect == effectv1.Effect_EFFECT_DENY {
 					denyFilter = append(denyFilter, invertNodeBooleanValue(result.Filter))
 				} else if rule.Effect == effectv1.Effect_EFFECT_ALLOW {
@@ -183,12 +180,9 @@ func (rpe *resourcePolicyEvaluator) EvaluateResourcesQueryPlan(_ context.Context
 			result.Filter = mkNodeFromLO(mkAndLogicalOperation(denyFilter))
 		}
 	case 1:
-		switch d {
-		case 0:
+		if d == 0 {
 			result.Filter = allowFilter[0]
-		case 1:
-			result.Filter = mkNodeFromLO(mkAndLogicalOperation([]*qpN{allowFilter[0], denyFilter[0]}))
-		default:
+		} else {
 			nodes := make([]*qpN, d+1)
 			copy(nodes, denyFilter)
 			nodes[len(nodes)-1] = allowFilter[0]

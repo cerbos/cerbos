@@ -18,6 +18,48 @@ resourcePolicy:
       condition:
         match:
           expr: V.is_owner
+    - actions: ["approve:allow-deny"]
+      roles: ["manager"]
+      effect: EFFECT_DENY
+      condition:
+        match:
+          expr: R.attr.owner == request.principal.id
+    - actions: ["approve:allow-deny"]
+      roles: ["manager"]
+      effect: EFFECT_ALLOW
+      condition:
+        match:
+          expr: R.attr.status == "PENDING_APPROVAL"
+    - actions: ["approve:allow-allow-deny"]
+      roles: ["manager"]
+      effect: EFFECT_ALLOW
+      condition:
+        match:
+          expr: R.attr.status == "PENDING_APPROVAL"
+    - actions: ["approve:allow-allow-deny"]
+      roles: ["manager"]
+      effect: EFFECT_ALLOW
+      condition:
+        match:
+          expr: R.attr.geography == request.principal.attr.geography
+    - actions: ["approve:allow-allow-deny"]
+      roles: ["manager"]
+      effect: EFFECT_DENY
+      condition:
+        match:
+          expr: R.attr.owner == request.principal.id
+    - actions: ["approve:allow-allow"]
+      roles: ["manager"]
+      effect: EFFECT_ALLOW
+      condition:
+        match:
+          expr: R.attr.status == "PENDING_APPROVAL"
+    - actions: ["approve:allow-allow"]
+      roles: ["manager"]
+      effect: EFFECT_ALLOW
+      condition:
+        match:
+          expr: R.attr.geography == request.principal.attr.geography
     - actions: ["approve"]
       roles: ["manager"]
       effect: EFFECT_ALLOW
@@ -43,7 +85,19 @@ resourcePolicy:
             of:
               - expr: R.attr.status == "PENDING_APPROVAL"
               - expr: R.attr.owner != request.principal.id
-    - actions: ["report"]
+    - actions: ["report:deny-deny"]
+      roles: ["manager"]
+      effect: EFFECT_DENY
+      condition:
+        match:
+          expr: R.attr.deleted
+    - actions: ["report:deny-deny"]
+      roles: ["manager"]
+      effect: EFFECT_DENY
+      condition:
+        match:
+          expr: R.attr.hidden
+    - actions: ["report:deny"]
       roles: ["manager"]
       effect: EFFECT_DENY
       condition:

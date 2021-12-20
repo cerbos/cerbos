@@ -45,7 +45,22 @@ tests:
                                   operands:
                                       - variable: R.attr.owner
                                       - value: "maggie"
-    - action: report
+    - action: "report:deny-deny"
+      policyVersion: default
+      resourceKind: leave_request
+      want:
+        expression:
+          operator: and
+          operands:
+            - expression:
+                operator: not
+                operands:
+                  - variable: R.attr.deleted
+            - expression:
+                operator: not
+                operands:
+                  - variable: R.attr.hidden
+    - action: "report:deny"
       policyVersion: default
       resourceKind: leave_request
       want:
@@ -70,6 +85,71 @@ tests:
                 operands:
                   - variable: R.attr.owner
                   - value: "maggie"
+    - action: "approve:allow-allow-deny"
+      policyVersion: default
+      resourceKind: leave_request
+      want:
+        expression:
+          operator: and
+          operands:
+            - expression:
+                operator: not
+                operands:
+                  - expression:
+                      operator: eq
+                      operands:
+                        - variable: R.attr.owner
+                        - value: "maggie"
+            - expression:
+                operator: or
+                operands:
+                  - expression:
+                      operator: eq
+                      operands:
+                        - variable: R.attr.status
+                        - value: "PENDING_APPROVAL"
+                  - expression:
+                      operator: eq
+                      operands:
+                        - variable: R.attr.geography
+                        - value: "US"
+    - action: "approve:allow-allow"
+      policyVersion: default
+      resourceKind: leave_request
+      want:
+        expression:
+          operator: or
+          operands:
+            - expression:
+                operator: eq
+                operands:
+                  - variable: R.attr.status
+                  - value: "PENDING_APPROVAL"
+            - expression:
+                operator: eq
+                operands:
+                  - variable: R.attr.geography
+                  - value: "US"
+    - action: "approve:allow-deny"
+      policyVersion: default
+      resourceKind: leave_request
+      want:
+        expression:
+          operator: and
+          operands:
+            - expression:
+                operator: not
+                operands:
+                - expression:
+                    operator: eq
+                    operands:
+                      - variable: R.attr.owner
+                      - value: "maggie"
+            - expression:
+                operator: eq
+                operands:
+                  - variable: R.attr.status
+                  - value: "PENDING_APPROVAL"
     - action: "approve:false-in-and-condition"
       policyVersion: default
       resourceKind: leave_request
