@@ -6,6 +6,7 @@ package engine
 import (
 	"context"
 	"fmt"
+	"github.com/cerbos/cerbos/internal/observability/tracing"
 
 	"github.com/google/cel-go/cel"
 	"github.com/google/cel-go/common/types"
@@ -30,6 +31,10 @@ type (
 )
 
 func (ppe *principalPolicyEvaluator) EvaluateResourcesQueryPlan(ctx context.Context, input *requestv1.ResourcesQueryPlanRequest) (*enginev1.ResourcesQueryPlanOutput, error) {
+	_, span := tracing.StartSpan(ctx, "principal_policy.EvaluateResourcesQueryPlan")
+	span.SetAttributes(tracing.PolicyFQN(ppe.policy.Meta.Fqn))
+	defer span.End()
+
 	inputActions := []string{input.Action}
 	result := &enginev1.ResourcesQueryPlanOutput{}
 	result.RequestId = input.RequestId
@@ -80,7 +85,11 @@ func (ppe *principalPolicyEvaluator) EvaluateResourcesQueryPlan(ctx context.Cont
 	return result, nil
 }
 
-func (rpe *resourcePolicyEvaluator) EvaluateResourcesQueryPlan(_ context.Context, input *requestv1.ResourcesQueryPlanRequest) (*enginev1.ResourcesQueryPlanOutput, error) {
+func (rpe *resourcePolicyEvaluator) EvaluateResourcesQueryPlan(ctx context.Context, input *requestv1.ResourcesQueryPlanRequest) (*enginev1.ResourcesQueryPlanOutput, error) {
+	_, span := tracing.StartSpan(ctx, "resource_policy.EvaluateResourcesQueryPlan")
+	span.SetAttributes(tracing.PolicyFQN(rpe.policy.Meta.Fqn))
+	defer span.End()
+
 	effectiveRoles := toSet(input.Principal.Roles)
 	inputActions := []string{input.Action}
 	result := &enginev1.ResourcesQueryPlanOutput{}
