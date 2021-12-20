@@ -1,4 +1,4 @@
-  blob: # Conf is required (if driver is set to 'blob') configuration for cloud storage driver.
+  blob: 
     bucket: "s3://my-bucket-name?region=us-east-2" # Required. Bucket URL (Examples: s3://my-bucket?region=us-west-1 gs://my-bucket azblob://my-container).
     prefix: policies # Prefix specifies a subdirectory to download.
     workDir: ${HOME}/tmp/cerbos/work # WorkDir is the local path to check out policies to.

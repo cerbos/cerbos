@@ -1,7 +1,7 @@
 // Copyright 2021 Zenauth Ltd.
 // SPDX-License-Identifier: Apache-2.0
 
-//go:generate go run ./../../../hack/tools/confdocs.go
+//go:generate go run ./../../../hack/tools/confdocs/confdocs.go
 
 package local
 
@@ -34,7 +34,7 @@ var (
 	errInvalidMaxBatchSize = errors.New("maxBatchSize must be at least 1")
 )
 
-// Conf is optional configuration for Audit.
+// Conf is optional configuration for local Audit.
 type Conf struct {
 	// Path to store the data
 	StoragePath string `yaml:"storagePath" conf:",defaultValue=/path/to/dir"`

@@ -13,9 +13,7 @@ PARTIALS_DIR="${SOURCE_DIR}/docs/modules/configuration/partials"
 FULL_CONFIGURATION_DOC="${PARTIALS_DIR}"/fullconfiguration.adoc
 rm -f "${FULL_CONFIGURATION_DOC}"
 for path in "${PARTIALS_DIR}"/conf*.adoc; do
-    file=$(basename "${path}")
-    content=$(printf 'include::partial$%s[]' "$file")
-    echo "${content}" >> "${FULL_CONFIGURATION_DOC}"
+    printf 'include::partial$%s[]' "$(basename "${path}")" >> "${FULL_CONFIGURATION_DOC}"
 done
 
 rm -rf ${SCRIPT_DIR}/build

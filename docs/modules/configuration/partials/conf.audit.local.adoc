@@ -1,4 +1,4 @@
-  local: # Conf is optional configuration for Audit.
+  local: 
     storagePath: /path/to/dir # Path to store the data
     retentionPeriod: 168h # How long to keep records for
     advanced: 

@@ -1,4 +1,4 @@
-server: # Conf is required configuration for the server.
+server: 
   httpListenAddr: ":3592" # Required. HTTPListenAddr is the dedicated HTTP address.
   grpcListenAddr: ":3593" # Required. GRPCListenAddr is the dedicated GRPC address.
   tls: # TLS defines the TLS configuration for the server.

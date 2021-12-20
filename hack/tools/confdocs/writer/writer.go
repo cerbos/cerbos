@@ -6,10 +6,12 @@ package writer
 import (
 	"bytes"
 	"fmt"
-	"github.com/cerbos/cerbos/hack/tools/confdocs/indexer"
-	"go.uber.org/zap"
 	"io"
 	"strings"
+
+	"go.uber.org/zap"
+
+	"github.com/cerbos/cerbos/hack/tools/confdocs/indexer"
 )
 
 const tabString = "  "
@@ -20,7 +22,7 @@ type Writer struct {
 
 type Options struct {
 	Log               *zap.SugaredLogger
-	Index             indexer.Index
+	Index             []*indexer.StructInfo
 	IgnoreTabsForPkgs []string
 	GetFileNameFn     func(pkgPath, structName string) string
 }
@@ -36,7 +38,7 @@ func (w *Writer) Run() (map[string]*bytes.Buffer, error) {
 	var data = make(map[string]*bytes.Buffer)
 
 	for _, str := range w.Index {
-		fileName := w.GetFileNameFn(str.PkgPath, str.Name)
+		fileName := w.GetFileNameFn(str.PackagePath, str.Name)
 
 		split := strings.Split(fileName, ".")
 		parent := split[len(split)-2]
@@ -62,7 +64,7 @@ func (w *Writer) Run() (map[string]*bytes.Buffer, error) {
 }
 
 // walk over the given struct and writes the docs to writer.
-func (w *Writer) walk(s *indexer.Struct, parent string, extraTabs int, writer io.Writer) error {
+func (w *Writer) walk(s *indexer.StructInfo, parent string, extraTabs int, writer io.Writer) error {
 	tabs := strings.Builder{}
 	for i := 0; i < extraTabs; i++ {
 		_, err := tabs.WriteString(tabString)
@@ -72,8 +74,8 @@ func (w *Writer) walk(s *indexer.Struct, parent string, extraTabs int, writer io
 	}
 
 	docs := ""
-	if s.Docs != "" {
-		docs = fmt.Sprintf("# %s", s.Docs)
+	if s.Documentation != "" {
+		docs = fmt.Sprintf("# %s", s.Documentation)
 	}
 
 	_, err := fmt.Fprintf(writer, "%s%s: %s\n", tabs.String(), parent, docs)
@@ -84,28 +86,34 @@ func (w *Writer) walk(s *indexer.Struct, parent string, extraTabs int, writer io
 	return w.doWalk(s.Fields, writer, fmt.Sprintf("%s%s", tabString, tabs.String()))
 }
 
-func (w *Writer) doWalk(fields []*indexer.StructField, writer io.Writer, prefix string) error {
+func (w *Writer) doWalk(fields []indexer.FieldInfo, writer io.Writer, prefix string) error {
 	for _, field := range fields {
 		name := field.Name
 		defaultValue := "<DEFAULT_VALUE_NOT_SET>"
 		docs := ""
 
-		if field.TagsData != nil {
-			if field.TagsData.Ignore {
+		tag, err := parseTag(field.Tag)
+		if err != nil {
+			return fmt.Errorf("failed to parse tags: %w", err)
+		}
+
+		if tag != nil {
+			if tag.Ignore {
 				continue
 			}
-			name = field.TagsData.Name
-			if field.TagsData.ConfOptions.DefaultValue != "" {
-				defaultValue = field.TagsData.DefaultValue
+			if tag.Name != "" {
+				name = tag.Name
 			}
-
-			if field.TagsData.Required {
+			if tag.DefaultValue != "" {
+				defaultValue = tag.DefaultValue
+			}
+			if tag.Required {
 				docs = "Required. "
 			}
 		}
 
-		if field.Docs != "" {
-			docs = fmt.Sprintf("%s%s", docs, field.Docs)
+		if field.Documentation != "" {
+			docs = fmt.Sprintf("%s%s", docs, field.Documentation)
 		}
 
 		if docs != "" {

@@ -1,4 +1,4 @@
-auxdata: # Conf is optional configuration for Auxdata.
+auxdata: 
   jwt: # JWT holds the configuration for JWTs used as an auxiliary data source for the engine.
     keySets: 
     - id: ks1

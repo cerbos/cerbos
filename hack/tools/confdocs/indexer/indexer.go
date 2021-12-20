@@ -4,154 +4,191 @@
 package indexer
 
 import (
-	"fmt"
+	"encoding/json"
 	"go/ast"
-	"go/token"
 	"go/types"
+	"os"
 	"strings"
-	"unicode"
 
+	"github.com/fatih/color"
 	"go.uber.org/zap"
+
 	"golang.org/x/tools/go/packages"
 )
 
-type Index map[string]*Struct
+const unnamedField = "<UNNAMED>"
+
 type Indexer struct {
 	Options
-	iface *types.Interface
-	index Index
 }
 
 type Options struct {
-	Log         *zap.SugaredLogger
-	PackagesDir string
-	IfaceName   string
-	IfacePkg    string
+	Log              *zap.SugaredLogger
+	Packages         []*packages.Package
+	InterfaceName    string
+	InterfacePackage string
 }
 
 func New(options Options) *Indexer {
 	return &Indexer{
 		Options: options,
-		iface:   nil,
-		index:   make(Index),
 	}
 }
 
-// Run the indexer and return the index of the structs implementing the given interface in Options.
-func (cd *Indexer) Run() (Index, error) {
-	fileSet := token.NewFileSet()
+func (i *Indexer) Run() ([]*StructInfo, error) {
+	iface, err := i.findInterfaceDef()
+	if err != nil {
+		i.Log.Fatalf("failed to find %s.%s: %v", i.InterfacePackage, i.InterfaceName, err)
+	}
 
-	pkgs, err := cd.loadPackages(cd.PackagesDir, fileSet)
+	impls := i.findIfaceImplementors(iface, i.Packages)
+	m := json.NewEncoder(os.Stdout)
+	m.SetIndent("", "  ")
+	if err := m.Encode(impls); err != nil {
+		i.Log.Fatalf("failed to encode: %v", err)
+	}
 
+	return impls, nil
+}
+
+func (i *Indexer) findInterfaceDef() (*types.Interface, error) {
+	cfg := &packages.Config{
+		Mode: packages.NeedTypes | packages.NeedTypesInfo,
+		Logf: i.Log.Infof,
+	}
+
+	pkgs, err := packages.Load(cfg, i.InterfacePackage)
 	if err != nil {
 		return nil, err
 	}
 
-	if err != nil {
-		return nil, err
+	for _, p := range pkgs {
+		if obj := p.Types.Scope().Lookup(i.InterfaceName); obj != nil {
+			return obj.Type().Underlying().(*types.Interface), nil
+		}
 	}
 
-	cd.iface, err = cd.findInterface(pkgs, cd.IfaceName, cd.IfacePkg)
-	if err != nil {
-		return nil, err
-	}
+	return nil, nil
+}
 
-	ifaceImplStructs, err := cd.findStructsImplIface(pkgs, cd.iface, cd.IfaceName)
-	if err != nil {
-		return nil, err
-	}
+func (i *Indexer) findIfaceImplementors(iface *types.Interface, pkgs []*packages.Package) []*StructInfo {
+	var impls []*StructInfo
 
 	for _, pkg := range pkgs {
-		for _, file := range pkg.Syntax {
-			cd.indexStructs(pkg, file, ifaceImplStructs, cd.index)
-		}
-	}
-
-	return cd.index, nil
-}
-
-// indexStructs, indexes all structs in the given package and file.
-func (cd *Indexer) indexStructs(pkg *packages.Package, file *ast.File, ifaceImplStructs map[string]*types.Struct,
-	indexedStructs map[string]*Struct) {
-	ast.Inspect(file, func(node ast.Node) bool {
-		if node == nil {
-			return false
-		}
-
-		switch n := node.(type) {
-		case *ast.GenDecl:
-			for _, spec := range n.Specs {
-				switch s := spec.(type) {
-				case *ast.TypeSpec:
-					switch t := s.Type.(type) {
-					case *ast.StructType:
-						var rootStruct = &Struct{
-							FilePos: t.Pos(),
-							Name:    s.Name.Name,
-							Raw:     t,
-							PkgPath: pkg.PkgPath,
-						}
-
-						if n.Doc != nil && n.Doc.List != nil && n.Doc.List[0] != nil {
-							rootStruct.Docs = strings.TrimSpace(strings.TrimPrefix(n.Doc.List[0].Text, "//"))
-						}
-
-						for _, field := range t.Fields.List {
-							if len(field.Names) == 0 {
-								structFields := cd.indexFields(field)
-								rootStruct.Fields = structFields
-
-							} else {
-								structField, err := NewStructFieldFromIdentArray(field.Names, field.Doc, field.Tag, cd.indexFields(field))
-								if err != nil {
-									cd.Log.Fatalf("failed to create a struct field: %v", err)
-								}
-								rootStruct.Fields = append(rootStruct.Fields, structField)
-							}
-						}
-
-						fqn := fmt.Sprintf("%s.%s", pkg.PkgPath, rootStruct.Name)
-						typedStruct, ok := ifaceImplStructs[fqn]
-						if !ok {
-							continue
-						}
-						rootStruct.Typed = typedStruct
-						indexedStructs[fmt.Sprintf("%d-%s", int(file.Pos()), rootStruct.Name)] = rootStruct
-					}
+		scope := pkg.Types.Scope()
+		for _, name := range scope.Names() {
+			obj := scope.Lookup(name)
+			if i.implementsIface(iface, obj) {
+				if si := i.inspect(pkg, obj); si != nil {
+					impls = append(impls, si)
 				}
 			}
 		}
+	}
 
-		return true
-	})
+	return impls
 }
 
-// indexFields, indexes all fields of the given field.
-func (cd *Indexer) indexFields(field *ast.Field) []*StructField {
-	var structFields []*StructField
+func (i *Indexer) implementsIface(iface *types.Interface, obj types.Object) bool {
+	if obj == nil || !obj.Exported() {
+		return false
+	}
 
+	t := obj.Type()
+	if types.Implements(t, iface) {
+		return true
+	}
+
+	ptr := types.NewPointer(t)
+	if ptr != nil && types.Implements(ptr, iface) {
+		return true
+	}
+
+	return false
+}
+
+func (i *Indexer) inspect(pkg *packages.Package, obj types.Object) *StructInfo {
+	recurse := true
+	name := obj.Name()
+	var si *StructInfo
+
+	for _, f := range pkg.Syntax {
+		ast.Inspect(f, func(n ast.Node) bool {
+			ts, ok := n.(*ast.TypeSpec)
+			if !ok || ts.Name.Name != name {
+				return recurse
+			}
+
+			gd, ok := n.(*ast.GenDecl)
+			if ok && gd.Doc != nil {
+				color.Set(color.FgRed)
+				i.Log.Infof("Docs: %s", gd.Doc.Text())
+				color.Unset()
+			}
+
+			recurse = false
+
+			si = &StructInfo{Name: ts.Name.Name, Documentation: strings.TrimSpace(ts.Doc.Text()), PackagePath: obj.Pkg().Path()}
+			si.Fields = i.inspectStruct(ts.Type)
+			return recurse
+		})
+	}
+
+	return si
+}
+
+func (i *Indexer) inspectStruct(node ast.Expr) []FieldInfo {
+	var fields []FieldInfo
+	switch t := node.(type) {
+	case *ast.StructType:
+		for _, f := range t.Fields.List {
+			if len(f.Names) == 0 {
+				fields = i.inspectFields(f)
+				continue
+			}
+
+			fi := FieldInfo{Name: f.Names[0].Name, Documentation: strings.TrimSpace(f.Doc.Text())}
+			if f.Tag != nil {
+				fi.Tag = f.Tag.Value
+			}
+			fi.Fields = i.inspectStruct(f.Type)
+
+			fields = append(fields, fi)
+		}
+	case *ast.StarExpr:
+		return i.inspectStruct(t.X)
+	case *ast.Ident:
+		if t.Obj != nil && t.Obj.Kind == ast.Typ {
+			if ts, ok := t.Obj.Decl.(*ast.TypeSpec); ok {
+				return i.inspectStruct(ts.Type)
+			}
+		}
+	}
+
+	return fields
+}
+
+func (i *Indexer) inspectFields(field *ast.Field) []FieldInfo {
+	var sFields []FieldInfo
 	switch t := field.Type.(type) {
 	case *ast.MapType:
 		/* matches;
 		CLS          map[string]TLSConf
 		ServerPubKey map[string]string
 		*/
-		structFields = nil
+		sFields = nil
 		break
 	case *ast.ArrayType:
 		/* matches;
 		AllowedHeaders []string
 		*/
-		if len(field.Names) <= 1 {
-			structFields = nil
-		} else {
-			for _, n := range field.Names {
-				sf, err := NewStructField(n, field.Doc, field.Tag, nil)
-				if err != nil {
-					cd.Log.Fatalf("failed to create a struct field: %v", err)
-				}
-				structFields = append(structFields, sf)
-			}
+		for _, n := range field.Names {
+			sFields = append(sFields, FieldInfo{
+				Name:          n.Name,
+				Documentation: strings.TrimSpace(field.Doc.Text()),
+				Tag:           field.Tag.Value,
+				Fields:        nil,
+			})
 		}
 		break
 	case *ast.StarExpr:
@@ -171,17 +208,19 @@ func (cd *Indexer) indexFields(field *ast.Field) []*StructField {
 						for _, n := range f.Names {
 							fieldData, ok := n.Obj.Decl.(*ast.Field)
 							if ok {
-								sf, err := NewStructField(n, fieldData.Doc, fieldData.Tag, cd.indexFields(f))
-								if err != nil {
-									cd.Log.Fatalf("failed to create a struct field: %v", err)
-								}
-								structFields = append(structFields, sf)
+								sFields = append(sFields, FieldInfo{
+									Name:          n.Name,
+									Documentation: strings.TrimSpace(fieldData.Doc.Text()),
+									Tag:           fieldData.Tag.Value,
+									Fields:        i.inspectFields(f),
+								})
 							} else {
-								sf, err := NewStructField(n, nil, nil, cd.indexFields(f))
-								if err != nil {
-									cd.Log.Fatalf("failed to create a struct field: %v", err)
-								}
-								structFields = append(structFields, sf)
+								sFields = append(sFields, FieldInfo{
+									Name:          n.Name,
+									Documentation: "",
+									Tag:           "",
+									Fields:        i.inspectFields(f),
+								})
 							}
 						}
 					}
@@ -204,17 +243,19 @@ func (cd *Indexer) indexFields(field *ast.Field) []*StructField {
 						for _, n := range f.Names {
 							fieldData, ok := n.Obj.Decl.(*ast.Field)
 							if ok {
-								sf, err := NewStructField(n, fieldData.Doc, fieldData.Tag, cd.indexFields(f))
-								if err != nil {
-									cd.Log.Fatalf("failed to create a struct field: %v", err)
-								}
-								structFields = append(structFields, sf)
+								sFields = append(sFields, FieldInfo{
+									Name:          n.Name,
+									Documentation: strings.TrimSpace(fieldData.Doc.Text()),
+									Tag:           fieldData.Tag.Value,
+									Fields:        i.inspectFields(f),
+								})
 							} else {
-								sf, err := NewStructField(n, nil, nil, cd.indexFields(f))
-								if err != nil {
-									cd.Log.Fatalf("failed to create a struct field: %v", err)
-								}
-								structFields = append(structFields, sf)
+								sFields = append(sFields, FieldInfo{
+									Name:          n.Name,
+									Documentation: "",
+									Tag:           "",
+									Fields:        i.inspectFields(f),
+								})
 							}
 						}
 					}
@@ -229,133 +270,55 @@ func (cd *Indexer) indexFields(field *ast.Field) []*StructField {
 			UpdatePollInterval time.Duration
 		*/
 		if len(field.Names) <= 1 {
-			structFields = nil
+			sFields = nil
 		} else {
-			sf, err := NewStructFieldFromIdentArray(field.Names, field.Doc, field.Tag, nil)
-			if err != nil {
-				cd.Log.Fatalf("failed to create a struct field: %v", err)
+			var name = unnamedField
+			if field.Names != nil && field.Names[0] != nil {
+				name = field.Names[0].Name
 			}
-			structFields = append(structFields, sf)
+			sFields = append(sFields, FieldInfo{
+				Name:          name,
+				Documentation: strings.TrimSpace(field.Doc.Text()),
+				Tag:           field.Tag.Value,
+				Fields:        nil,
+			})
 		}
 		break
+	case *ast.ChanType:
+		/* matches;
+		buffer chan *badgerv3.Entry
+		*/
+		var name = unnamedField
+		if field.Names != nil && field.Names[0] != nil {
+			name = field.Names[0].Name
+		}
+		sFields = append(sFields, FieldInfo{
+			Name:          name,
+			Documentation: strings.TrimSpace(field.Doc.Text()),
+			Tag:           field.Tag.Value,
+			Fields:        nil,
+		})
+		break
+	case *ast.FuncType:
+		i.Log.Debug("ignored a FuncType")
+		break
 	default:
-		switch tt := field.Type.(type) {
-		case *ast.ArrayType:
-			/* matches;
-			pool []io.Reader
-			*/
-			sf, err := NewStructFieldFromIdentArray(field.Names, field.Doc, field.Tag, nil)
-			if err != nil {
-				cd.Log.Fatalf("failed to create a struct field: %v", err)
-			}
-			structFields = append(structFields, sf)
-			break
-		case *ast.ChanType:
-			/* matches;
-			buffer chan *badgerv3.Entry
-			*/
-			sf, err := NewStructFieldFromIdentArray(field.Names, field.Doc, field.Tag, nil)
-			if err != nil {
-				cd.Log.Fatalf("failed to create a struct field: %v", err)
-			}
-			structFields = append(structFields, sf)
-			break
-		case *ast.MapType:
-			/* matches;
-			keySets map[string]keySet
-			*/
-			sf, err := NewStructFieldFromIdentArray(field.Names, field.Doc, field.Tag, nil)
-			if err != nil {
-				cd.Log.Fatalf("failed to create a struct field: %v", err)
-			}
-			structFields = append(structFields, sf)
-			break
-		case *ast.FuncType:
-			cd.Log.Debug("ignored a FuncType")
-			break
-		default:
-			cd.Log.Warn("This is not supposed to be printed - %v", tt)
-		}
+		i.Log.Warn("This is not supposed to be printed - %v", t)
 	}
-	return structFields
+
+	return sFields
 }
 
-func (cd *Indexer) findInterface(pkgs []*packages.Package, ifaceName string, ifacePkg string) (*types.Interface, error) {
-	for _, p := range pkgs {
-		if p.PkgPath == ifacePkg {
-			return cd.getInterface(p.Types, ifaceName)
-		}
-
-		for _, i := range p.Types.Imports() {
-			if i.Path() == ifacePkg {
-				return cd.getInterface(i, ifaceName)
-			}
-		}
-	}
-
-	return nil, fmt.Errorf("failed to find %s.%s", cd.IfacePkg, cd.IfaceName)
+type StructInfo struct {
+	Name          string      `json:"name"`
+	Documentation string      `json:"documentation"`
+	Fields        []FieldInfo `json:"fields"`
+	PackagePath   string      `json:"packagePath"`
 }
 
-func (cd *Indexer) getInterface(pkg *types.Package, name string) (*types.Interface, error) {
-	obj := pkg.Scope().Lookup(name)
-	if obj != nil {
-		return obj.Type().Underlying().(*types.Interface), nil
-	}
-
-	return nil, fmt.Errorf("interface %s does not exist in %s", name, pkg.Path())
-}
-
-// findStructsImplIface, creates an index of structs implementing interface iface.
-func (cd *Indexer) findStructsImplIface(pkgs []*packages.Package, iface *types.Interface, ifaceName string) (map[string]*types.Struct, error) {
-	var structs = make(map[string]*types.Struct)
-
-	for _, pkg := range pkgs {
-		cd.getStructsImplIface(pkg.Types, iface, ifaceName, structs)
-	}
-
-	return structs, nil
-}
-
-func (cd *Indexer) getStructsImplIface(pkg *types.Package, iface *types.Interface, ifaceName string,
-	out map[string]*types.Struct) {
-	names := pkg.Scope().Names()
-
-	for _, name := range names {
-		if !unicode.IsUpper(rune(name[0])) {
-			cd.Log.Debug("Ignoring unexported name")
-			return
-		}
-
-		obj := pkg.Scope().Lookup(name)
-		if obj != nil {
-			str, ok := obj.Type().Underlying().(*types.Struct)
-			if !ok {
-				continue
-			}
-
-			ptr := types.NewPointer(obj.Type())
-
-			if types.Implements(ptr.Underlying(), iface) {
-				cd.Log.Infof("Found %s.%s implementing the interface %s", pkg.Path(), name, ifaceName)
-				out[fmt.Sprintf("%s.%s", pkg.Path(), name)] = str
-			}
-		}
-	}
-}
-
-func (cd *Indexer) loadPackages(absPackagesDir string, fileSet *token.FileSet) ([]*packages.Package, error) {
-	config := &packages.Config{
-		Mode:  packages.NeedTypes | packages.NeedTypesInfo | packages.NeedFiles | packages.NeedSyntax | packages.NeedName,
-		Dir:   absPackagesDir,
-		Fset:  fileSet,
-		Logf:  cd.Log.Infof,
-		Tests: false,
-	}
-
-	pkgs, err := packages.Load(config, "./...")
-	if err != nil {
-		return nil, err
-	}
-
-	return pkgs, nil
+type FieldInfo struct {
+	Name          string      `json:"name"`
+	Documentation string      `json:"documentation"`
+	Tag           string      `json:"tags"`
+	Fields        []FieldInfo `json:"fields"`
 }

@@ -1,2 +1,2 @@
-engine: # Conf is optional configuration for engine.
+engine: 
   defaultPolicyVersion: "default" # DefaultPolicyVersion defines what version to assume if the request does not specify one.

@@ -1,4 +1,4 @@
-tracing: # Conf is optional configuration for tracing.
+tracing: 
   sampleProbability: 0.1 # SampleProbability is the probability of sampling expressed as a number between 0 and 1.
   exporter: jaeger # Exporter is the type of trace exporter to use.
   jaeger: # Jaeger configures the Jaeger exporter.

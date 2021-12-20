@@ -1,7 +1,7 @@
 // Copyright 2021 Zenauth Ltd.
 // SPDX-License-Identifier: Apache-2.0
 
-//go:generate go run ./../../hack/tools/confdocs.go
+//go:generate go run ./../../hack/tools/confdocs/confdocs.go
 
 package audit
 
@@ -15,7 +15,7 @@ const (
 	ConfKey = "audit"
 )
 
-// Conf is optional configuration for local Audit.
+// Conf is optional configuration for Audit.
 type Conf struct {
 	confHolder
 }
