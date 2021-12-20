@@ -67,7 +67,7 @@ test-all: test-race test-integration
 
 .PHONY: test
 test: $(GOTESTSUM)
-	@ $(GOTESTSUM) -- -tags=tests -cover ./...
+	@ $(GOTESTSUM) -- -tags=tests $(COVERPROFILE) -cover ./...
 
 .PHONY: test-race
 test-race: $(GOTESTSUM)
