@@ -98,8 +98,18 @@ require (
 	github.com/PaesslerAG/gval v1.0.0 // indirect
 	github.com/acomagu/bufpipe v1.0.3 // indirect
 	github.com/antlr/antlr4 v0.0.0-20200503195918-621b933c7a7f // indirect
+	github.com/aws/aws-sdk-go-v2 v1.9.0 // indirect
+	github.com/aws/aws-sdk-go-v2/config v1.7.0 // indirect
+	github.com/aws/aws-sdk-go-v2/credentials v1.4.0 // indirect
+	github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.5.0 // indirect
+	github.com/aws/aws-sdk-go-v2/internal/ini v1.2.2 // indirect
+	github.com/aws/aws-sdk-go-v2/service/internal/presigned-url v1.3.0 // indirect
+	github.com/aws/aws-sdk-go-v2/service/sso v1.4.0 // indirect
+	github.com/aws/aws-sdk-go-v2/service/sts v1.7.0 // indirect
+	github.com/aws/smithy-go v1.8.0 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/cenkalti/backoff/v4 v4.1.2 // indirect
+	github.com/census-instrumentation/opencensus-proto v0.3.0 // indirect
 	github.com/cespare/xxhash/v2 v2.1.2 // indirect
 	github.com/cncf/udpa/go v0.0.0-20210930031921-04548b0d99d4 // indirect
 	github.com/cncf/xds/go v0.0.0-20211130200136-a8f946100490 // indirect
