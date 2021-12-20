@@ -225,7 +225,8 @@ func (cas *CerbosAdminService) ListPolicies(ctx context.Context, req *requestv1.
 
 	units, err := cas.store.GetPolicies(context.Background())
 	if err != nil {
-		return nil, status.Error(codes.Internal, fmt.Sprintf("could not get policies: %s", err.Error()))
+		ctxzap.Extract(ctx).Error("Could not get policies", zap.Error(err))
+		return nil, status.Error(codes.Internal, "could not get policies")
 	}
 
 	policies, err := filterPolicies(req.Filters, units)
