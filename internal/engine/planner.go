@@ -6,7 +6,7 @@ package engine
 import (
 	"context"
 	"fmt"
-	"github.com/cerbos/cerbos/internal/observability/tracing"
+
 
 	"github.com/google/cel-go/cel"
 	"github.com/google/cel-go/common/types"
@@ -17,6 +17,7 @@ import (
 	requestv1 "github.com/cerbos/cerbos/api/genpb/cerbos/request/v1"
 	runtimev1 "github.com/cerbos/cerbos/api/genpb/cerbos/runtime/v1"
 	"github.com/cerbos/cerbos/internal/conditions"
+	"github.com/cerbos/cerbos/internal/observability/tracing"
 )
 
 type (
