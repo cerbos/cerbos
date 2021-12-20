@@ -87,8 +87,8 @@ func (rpe *resourcePolicyEvaluator) EvaluateResourcesQueryPlan(_ context.Context
 	result.RequestId = input.RequestId
 	result.Kind = input.ResourceKind
 	result.Action = input.Action
+	var allowFilter, denyFilter []*qpN
 
-	nodeBoolTrue := &qpN{Node: &qpNE{Expression: conditions.TrueExpr}}
 	for _, p := range rpe.policy.Policies { // zero or one policy in the set
 		var derivedRoles []rN
 
@@ -129,7 +129,7 @@ func (rpe *resourcePolicyEvaluator) EvaluateResourcesQueryPlan(_ context.Context
 					drNode = nodes[0]
 				default:
 					// combine restrictions (with OR) imposed by derived roles
-					drNode = &qpN{Node: &qpNLO{LogicalOperation: mkOrLogicalOperation(nodes)}}
+					drNode = mkNodeFromLO(mkOrLogicalOperation(nodes))
 				}
 			}
 			for actionGlob := range rule.Actions {
@@ -156,24 +156,56 @@ func (rpe *resourcePolicyEvaluator) EvaluateResourcesQueryPlan(_ context.Context
 
 					if node != nil {
 						// node AND drNode
-						result.Filter = &qpN{Node: &qpNLO{LogicalOperation: mkAndLogicalOperation([]*qpN{drNode, node})}}
+						result.Filter = mkNodeFromLO(mkAndLogicalOperation([]*qpN{drNode, node}))
 					}
 				}
 
 				if result.Filter == nil {
-					result.Filter = nodeBoolTrue
+					result.Filter = &qpN{Node: &qpNE{Expression: conditions.TrueExpr}}
 				}
 				if rule.Effect == effectv1.Effect_EFFECT_DENY {
-					result.Filter = invertNodeBooleanValue(result.Filter)
+					denyFilter = append(denyFilter, invertNodeBooleanValue(result.Filter))
+				} else if rule.Effect == effectv1.Effect_EFFECT_ALLOW {
+					allowFilter = append(allowFilter, result.Filter)
 				}
-
-				return result, nil // @Charith: Shall we combine (with AND) rule results instead?
 			}
 		}
 	}
-	if result.Filter == nil {
-		result.Filter = nodeBoolTrue // No restrictions on this resource
+
+	switch a, d := len(allowFilter), len(denyFilter); a {
+	case 0:
+		switch d {
+		case 0:
+			result.Filter = &qpN{Node: &qpNE{Expression: conditions.TrueExpr}} // default value sets no restrictions on this resource
+		case 1:
+			result.Filter = denyFilter[0]
+		default:
+			result.Filter = mkNodeFromLO(mkAndLogicalOperation(denyFilter))
+		}
+	case 1:
+		switch d {
+		case 0:
+			result.Filter = allowFilter[0]
+		case 1:
+			result.Filter = mkNodeFromLO(mkAndLogicalOperation([]*qpN{allowFilter[0], denyFilter[0]}))
+		default:
+			nodes := make([]*qpN, d+1)
+			copy(nodes, denyFilter)
+			nodes[len(nodes)-1] = allowFilter[0]
+			result.Filter = mkNodeFromLO(mkAndLogicalOperation(nodes))
+		}
+	default:
+		switch d {
+		case 0:
+			result.Filter = mkNodeFromLO(mkOrLogicalOperation(allowFilter))
+		default:
+			nodes := make([]*qpN, d+1)
+			copy(nodes, denyFilter)
+			nodes[len(nodes)-1] = mkNodeFromLO(mkOrLogicalOperation(allowFilter))
+			result.Filter = mkNodeFromLO(mkAndLogicalOperation(nodes))
+		}
 	}
+
 	return result, nil
 }
 
@@ -206,6 +238,11 @@ func isNodeConstBool(node *enginev1.ResourcesQueryPlanOutput_Node) (bool, bool) 
 	}
 
 	return false, false
+}
+
+func mkNodeFromLO(lo *enginev1.ResourcesQueryPlanOutput_LogicalOperation) *enginev1.ResourcesQueryPlanOutput_Node {
+	// node AND drNode
+	return &qpN{Node: &qpNLO{LogicalOperation: lo}}
 }
 
 func mkOrLogicalOperation(nodes []*enginev1.ResourcesQueryPlanOutput_Node) *enginev1.ResourcesQueryPlanOutput_LogicalOperation {
