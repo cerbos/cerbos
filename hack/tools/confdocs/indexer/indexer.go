@@ -1,6 +1,9 @@
 // Copyright 2021 Zenauth Ltd.
 // SPDX-License-Identifier: Apache-2.0
 
+//go:build confdocs
+// +build confdocs
+
 package indexer
 
 import (
@@ -12,7 +15,6 @@ import (
 
 	"github.com/fatih/color"
 	"go.uber.org/zap"
-
 	"golang.org/x/tools/go/packages"
 )
 
