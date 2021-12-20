@@ -59,7 +59,7 @@ require (
 	go.uber.org/multierr v1.7.0
 	go.uber.org/zap v1.19.1
 	golang.org/x/crypto v0.0.0-20210817164053-32db794688a5
-	golang.org/x/net v0.0.0-20210825183410-e898025ed96a
+	golang.org/x/net v0.0.0-20211209124913-491a49abca63
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
 	google.golang.org/api v0.58.0 // indirect
 	google.golang.org/grpc v1.42.0
@@ -71,7 +71,7 @@ require (
 
 require (
 	github.com/Masterminds/sprig/v3 v3.2.2
-	github.com/aws/aws-sdk-go v1.42.22
+	github.com/aws/aws-sdk-go v1.42.23
 	github.com/jackc/pgtype v1.9.1
 	github.com/lestrrat-go/jwx v1.2.13
 	github.com/minio/minio-go/v7 v7.0.18
