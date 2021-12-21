@@ -10,27 +10,27 @@ playgroundProxy:
     "policyFiles": [
       {
         "fileName": "derived_roles_01.yaml",
-        "contents": "{{ .Files.Get `store/derived_roles/derived_roles_01.yaml` | b64enc }}",
+        "contents": "{{ fileString `store/derived_roles/derived_roles_01.yaml` | b64enc }}",
       },
       {
         "fileName": "derived_roles_02.yaml",
-        "contents": "{{ .Files.Get `store/derived_roles/derived_roles_02.yaml` | b64enc }}",
+        "contents": "{{ fileString `store/derived_roles/derived_roles_02.yaml` | b64enc }}",
       },
       {
         "fileName": "policy_05.yaml",
-        "contents": "{{ .Files.Get `store/resource_policies/policy_01.yaml` | b64enc }}",
+        "contents": "{{ fileString `store/resource_policies/policy_01.yaml` | b64enc }}",
       },
       {
         "fileName": "principal.yaml",
-        "contents": "{{ .Files.Get `store/principal_policies/policy_01.yaml` | b64enc }}",
+        "contents": "{{ fileString `store/principal_policies/policy_01.yaml` | b64enc }}",
       },
       {
         "fileName": "_schemas/principal.json",
-        "contents": "{{ .Files.Get `store/_schemas/principal.json` | b64enc }}",
+        "contents": "{{ fileString `store/_schemas/principal.json` | b64enc }}",
       },
       {
         "fileName": "_schemas/leave_request.json",
-        "contents": "{{ .Files.Get `store/_schemas/leave_request.json` | b64enc }}",
+        "contents": "{{ fileString `store/_schemas/leave_request.json` | b64enc }}",
       }
     ],
     "checkResourceBatch": {
