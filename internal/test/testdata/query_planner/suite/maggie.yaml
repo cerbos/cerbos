@@ -178,3 +178,13 @@ tests:
                       operands:
                         - variable: R.attr.GPA
                         - value: 4.7
+
+    - action: "approve:with-jwt"
+      policyVersion: default
+      resourceKind: leave_request
+      want:
+        expression:
+          operator: eq
+          operands:
+            - variable: R.attr.groupID
+            - value: 42

@@ -22,6 +22,11 @@ message EngineTestCase {
 }
 
 message ServerTestCase {
+    message ResourcesQueryPlanCall {
+        cerbos.request.v1.ResourcesQueryPlanRequest input = 1;
+        cerbos.response.v1.ResourcesQueryPlanResponse want_response = 2;
+    }
+
     message CheckResourceSetCall {
         cerbos.request.v1.CheckResourceSetRequest input = 1;
         cerbos.response.v1.CheckResourceSetResponse want_response = 2;
@@ -68,6 +73,7 @@ message ServerTestCase {
         PlaygroundEvaluateCall playground_evaluate = 8;
         AdminAddOrUpdatePolicyCall admin_add_or_update_policy = 9;
         PlaygroundProxyCall playground_proxy = 10;
+        ResourcesQueryPlanCall resources_query_plan = 11;
     }
 }
 

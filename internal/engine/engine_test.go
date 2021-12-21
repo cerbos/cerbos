@@ -13,6 +13,7 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/testing/protocmp"
+	"google.golang.org/protobuf/types/known/structpb"
 
 	enginev1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
@@ -250,6 +251,9 @@ func TestQueryPlan(t *testing.T) {
 	eng, cancelFunc := mkEngine(t, param{subDir: "query_planner/policies"})
 	defer cancelFunc()
 
+	auxData := &enginev1.AuxData{Jwt: make(map[string]*structpb.Value)}
+	auxData.Jwt["customInt"] = structpb.NewNumberValue(42)
+
 	suites := test.LoadTestCases(t, "query_planner/suite")
 	for _, suite := range suites {
 		s := suite
@@ -265,6 +269,7 @@ func TestQueryPlan(t *testing.T) {
 						PolicyVersion: tt.PolicyVersion,
 						ResourceKind:  tt.ResourceKind,
 						IncludeMeta:   true,
+						AuxData:       auxData,
 					}
 
 					response, err := eng.ResourcesQueryPlan(context.Background(), request)

@@ -12,6 +12,7 @@ import (
 	"github.com/google/cel-go/parser"
 	"go.uber.org/multierr"
 	exprpb "google.golang.org/genproto/googleapis/api/expr/v1alpha1"
+	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/structpb"
 
 	enginev1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
@@ -112,7 +113,7 @@ func updateIds(e *exprpb.Expr) {
 	impl(e)
 }
 
-func replaceVars(e **exprpb.Expr, vars map[string]*exprpb.Expr) (err error) {
+func replaceVars(e *exprpb.Expr, vars map[string]*exprpb.Expr) (output *exprpb.Expr, err error) {
 	var r func(e *exprpb.Expr) *exprpb.Expr
 	r = func(e *exprpb.Expr) *exprpb.Expr {
 		if e == nil {
@@ -123,7 +124,7 @@ func replaceVars(e **exprpb.Expr, vars map[string]*exprpb.Expr) (err error) {
 			ident := e.SelectExpr.Operand.GetIdentExpr()
 			if ident != nil && (ident.Name == conditions.CELVariablesAbbrev || ident.Name == conditions.CELVariablesIdent) {
 				if v, ok := vars[e.SelectExpr.Field]; ok {
-					return v
+					return proto.Clone(v).(*exprpb.Expr)
 				}
 				err = multierr.Append(err, fmt.Errorf("unknown variable %q", e.SelectExpr.Field))
 			} else {
@@ -156,10 +157,14 @@ func replaceVars(e **exprpb.Expr, vars map[string]*exprpb.Expr) (err error) {
 		return e
 	}
 
-	*e = r(*e)
-	updateIds(*e)
+	output, ok := proto.Clone(e).(*exprpb.Expr)
+	if !ok {
+		return nil, fmt.Errorf("failed to clone an expression: %v", e)
+	}
+	output = r(output)
+	updateIds(output)
 
-	return err
+	return output, err
 }
 
 func String(expr *enginev1.ResourcesQueryPlanOutput_Node) (source string, err error) {

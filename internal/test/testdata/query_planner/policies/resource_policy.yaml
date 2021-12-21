@@ -142,4 +142,9 @@ resourcePolicy:
             of:
               - expr: R.attr.team in ["A", "B"]
               - expr: R.attr.GPA < 4.7
-
+    - actions: ["approve:with-jwt"]
+      roles: ["manager"]
+      effect: EFFECT_ALLOW
+      condition:
+        match:
+          expr: R.attr.groupID == request.aux_data.jwt.customInt

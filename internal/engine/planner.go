@@ -109,6 +109,9 @@ func (rpe *resourcePolicyEvaluator) EvaluateResourcesQueryPlan(ctx context.Conte
 			derivedRoles = append(derivedRoles, rN{
 				role: drName,
 				f: func() (*qpN, error) {
+					if dr.Condition == nil {
+						return nil, nil
+					}
 					drVariables := make(map[string]*exprpb.Expr, len(dr.Variables))
 					for k, v := range dr.Variables {
 						drVariables[k] = v.Checked.Expr
@@ -224,7 +227,9 @@ func getDerivedRoleConditions(derivedRoles []rN, rule *runtimev1.RunnableResourc
 				}
 				n.node = node
 			}
-			nodes = append(nodes, node)
+			if node != nil {
+				nodes = append(nodes, node)
+			}
 		}
 	}
 	return nodes, nil
@@ -294,8 +299,10 @@ func evaluateCondition(condition *runtimev1.Condition, input *enginev1.Resources
 				nodes = append(nodes, node)
 			}
 		}
-		res.Node = &qpNLO{
-			LogicalOperation: mkOrLogicalOperation(nodes),
+		if len(nodes) > 0 {
+			res.Node = &qpNLO{LogicalOperation: mkOrLogicalOperation(nodes)}
+		} else {
+			res.Node = &qpNE{Expression: conditions.TrueExpr}
 		}
 	case *runtimev1.Condition_All:
 		nodes := make([]*qpN, 0, len(t.All.Expr))
@@ -318,7 +325,11 @@ func evaluateCondition(condition *runtimev1.Condition, input *enginev1.Resources
 				nodes = append(nodes, node)
 			}
 		}
-		res.Node = &qpNLO{LogicalOperation: mkAndLogicalOperation(nodes)}
+		if len(nodes) > 0 {
+			res.Node = &qpNLO{LogicalOperation: mkAndLogicalOperation(nodes)}
+		} else {
+			res.Node = &qpNE{Expression: conditions.TrueExpr}
+		}
 	case *runtimev1.Condition_None:
 		nodes := make([]*qpN, 0, len(t.None.Expr))
 		for _, c := range t.None.Expr {
@@ -340,7 +351,11 @@ func evaluateCondition(condition *runtimev1.Condition, input *enginev1.Resources
 				nodes = append(nodes, invertNodeBooleanValue(node))
 			}
 		}
-		res.Node = &qpNLO{LogicalOperation: mkAndLogicalOperation(nodes)}
+		if len(nodes) > 0 {
+			res.Node = &qpNLO{LogicalOperation: mkAndLogicalOperation(nodes)}
+		} else {
+			res.Node = &qpNE{Expression: conditions.TrueExpr}
+		}
 	case *runtimev1.Condition_Expr:
 		_, residual, err := evaluateCELExprPartially(t.Expr.Checked, input, variables)
 		if err != nil {
@@ -355,7 +370,7 @@ func evaluateCondition(condition *runtimev1.Condition, input *enginev1.Resources
 
 func evaluateCELExprPartially(expr *exprpb.CheckedExpr, input *enginev1.ResourcesQueryPlanRequest, variables map[string]*exprpb.Expr) (*bool, *exprpb.CheckedExpr, error) {
 	e := expr.Expr
-	err := replaceVars(&e, variables)
+	e, err := replaceVars(e, variables)
 	if err != nil {
 		return nil, nil, err
 	}
