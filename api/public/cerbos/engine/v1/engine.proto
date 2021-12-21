@@ -17,6 +17,16 @@ import "cerbos/effect/v1/effect.proto";
 import "cerbos/schema/v1/schema.proto";
 import "validate/validate.proto";
 
+message ResourcesQueryPlanRequest {
+    string request_id = 1;
+    string action = 2;
+    Principal principal = 3;
+    string resource_kind = 4;
+    string policy_version = 5;
+    AuxData aux_data = 6;
+    bool include_meta = 7;
+}
+
 message CheckInput {
     string request_id = 1; 
     Resource resource = 2 [(validate.rules).message.required = true, (google.api.field_behavior) = REQUIRED];

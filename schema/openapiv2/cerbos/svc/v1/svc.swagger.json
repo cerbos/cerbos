@@ -680,7 +680,7 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/v1ResourcesQueryPlanRequest"
+              "$ref": "#/definitions/cerbosrequestv1ResourcesQueryPlanRequest"
             }
           }
         ],
@@ -1040,6 +1040,54 @@
         }
       },
       "description": "Structured auxiliary data useful for evaluating the request"
+    },
+    "cerbosrequestv1ResourcesQueryPlanRequest": {
+      "type": "object",
+      "properties": {
+        "requestId": {
+          "type": "string",
+          "example": "c2db17b8-4f9f-4fb1-acfd-9162a02be42b",
+          "description": "Optional application-specific ID useful for correlating logs for analysis."
+        },
+        "action": {
+          "type": "string",
+          "example": "view:public",
+          "description": "Action to be applied to each resource in the list.",
+          "required": [
+            "action"
+          ]
+        },
+        "principal": {
+          "$ref": "#/definitions/v1Principal"
+        },
+        "resourceKind": {
+          "type": "string",
+          "example": "album:object",
+          "description": "Resource kind.",
+          "pattern": "^[[:alpha:]][[:word:]\\@\\.\\-]*(\\:[[:alpha:]][[:word:]\\@\\.\\-]*)*$",
+          "required": [
+            "resource_kind"
+          ]
+        },
+        "policyVersion": {
+          "type": "string",
+          "example": "default",
+          "description": "The policy version to use to evaluate this request. If not specified, will default to the server-configured default version.",
+          "pattern": "^[[:word:]]*$"
+        },
+        "auxData": {
+          "$ref": "#/definitions/cerbosrequestv1AuxData"
+        },
+        "includeMeta": {
+          "type": "boolean",
+          "description": "Opt to receive request processing metadata in the response."
+        }
+      },
+      "description": "PDP Resources Query Plan Request",
+      "required": [
+        "action",
+        "resourceKind"
+      ]
     },
     "enginev1CheckInput": {
       "type": "object",
@@ -2148,54 +2196,6 @@
       "required": [
         "kind",
         "instances"
-      ]
-    },
-    "v1ResourcesQueryPlanRequest": {
-      "type": "object",
-      "properties": {
-        "requestId": {
-          "type": "string",
-          "example": "c2db17b8-4f9f-4fb1-acfd-9162a02be42b",
-          "description": "Optional application-specific ID useful for correlating logs for analysis."
-        },
-        "action": {
-          "type": "string",
-          "example": "view:public",
-          "description": "Action to be applied to each resource in the list.",
-          "required": [
-            "action"
-          ]
-        },
-        "principal": {
-          "$ref": "#/definitions/v1Principal"
-        },
-        "resourceKind": {
-          "type": "string",
-          "example": "album:object",
-          "description": "Resource kind.",
-          "pattern": "^[[:alpha:]][[:word:]\\@\\.\\-]*(\\:[[:alpha:]][[:word:]\\@\\.\\-]*)*$",
-          "required": [
-            "resource_kind"
-          ]
-        },
-        "policyVersion": {
-          "type": "string",
-          "example": "default",
-          "description": "The policy version to use to evaluate this request. If not specified, will default to the server-configured default version.",
-          "pattern": "^[[:word:]]*$"
-        },
-        "auxData": {
-          "$ref": "#/definitions/cerbosrequestv1AuxData"
-        },
-        "includeMeta": {
-          "type": "boolean",
-          "description": "Opt to receive request processing metadata in the response."
-        }
-      },
-      "description": "PDP Resources Query Plan Request",
-      "required": [
-        "action",
-        "resourceKind"
       ]
     },
     "v1ResourcesQueryPlanResponse": {

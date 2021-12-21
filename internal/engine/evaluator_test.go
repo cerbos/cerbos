@@ -16,7 +16,6 @@ import (
 	"google.golang.org/protobuf/types/known/structpb"
 
 	enginev1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
-	requestv1 "github.com/cerbos/cerbos/api/genpb/cerbos/request/v1"
 	runtimev1 "github.com/cerbos/cerbos/api/genpb/cerbos/runtime/v1"
 	"github.com/cerbos/cerbos/internal/conditions"
 )
@@ -25,7 +24,7 @@ func Test_evaluateCondition(t *testing.T) {
 	type args struct {
 		expr      string
 		condition *runtimev1.Condition
-		input     *requestv1.ResourcesQueryPlanRequest
+		input     *enginev1.ResourcesQueryPlanRequest
 	}
 
 	unparse := func(t *testing.T, expr *expr.CheckedExpr) string {
@@ -36,7 +35,7 @@ func Test_evaluateCondition(t *testing.T) {
 		return source
 	}
 
-	compile := func(expr string, input *requestv1.ResourcesQueryPlanRequest) args {
+	compile := func(expr string, input *enginev1.ResourcesQueryPlanRequest) args {
 		ast, iss := conditions.StdEnv.Compile(expr)
 		require.Nil(t, iss, "Error is %s", iss.Err())
 		checkedExpr, err := cel.AstToCheckedExpr(ast)
@@ -56,11 +55,11 @@ func Test_evaluateCondition(t *testing.T) {
 		wantExpression string
 	}{
 		{
-			args:           compile("false", &requestv1.ResourcesQueryPlanRequest{}),
+			args:           compile("false", &enginev1.ResourcesQueryPlanRequest{}),
 			wantExpression: "false",
 		},
 		{
-			args: compile("P.attr.authenticated", &requestv1.ResourcesQueryPlanRequest{
+			args: compile("P.attr.authenticated", &enginev1.ResourcesQueryPlanRequest{
 				Principal: &enginev1.Principal{
 					Attr: map[string]*structpb.Value{"authenticated": {Kind: &structpb.Value_BoolValue{BoolValue: true}}},
 				},
@@ -68,7 +67,7 @@ func Test_evaluateCondition(t *testing.T) {
 			wantExpression: "true",
 		},
 		{
-			args: compile("request.principal.attr.authenticated", &requestv1.ResourcesQueryPlanRequest{
+			args: compile("request.principal.attr.authenticated", &enginev1.ResourcesQueryPlanRequest{
 				Principal: &enginev1.Principal{
 					Attr: map[string]*structpb.Value{"authenticated": {Kind: &structpb.Value_BoolValue{BoolValue: true}}},
 				},
@@ -76,11 +75,11 @@ func Test_evaluateCondition(t *testing.T) {
 			wantExpression: "true",
 		},
 		{
-			args:           compile(`R.attr.department == "marketing"`, &requestv1.ResourcesQueryPlanRequest{}),
+			args:           compile(`R.attr.department == "marketing"`, &enginev1.ResourcesQueryPlanRequest{}),
 			wantExpression: `R.attr.department == "marketing"`,
 		},
 		{
-			args: compile("R.attr.owner == P.attr.name", &requestv1.ResourcesQueryPlanRequest{
+			args: compile("R.attr.owner == P.attr.name", &enginev1.ResourcesQueryPlanRequest{
 				Principal: &enginev1.Principal{
 					Attr: map[string]*structpb.Value{"name": {Kind: &structpb.Value_StringValue{StringValue: "harry"}}},
 				},
@@ -125,7 +124,7 @@ func Test_evaluateCondition(t *testing.T) {
 					}
 				}
 			}
-			got, err := evaluateCondition(c, &requestv1.ResourcesQueryPlanRequest{Principal: &enginev1.Principal{Attr: attr}}, nil)
+			got, err := evaluateCondition(c, &enginev1.ResourcesQueryPlanRequest{Principal: &enginev1.Principal{Attr: attr}}, nil)
 			is.NotNil(got)
 			is.NoError(err)
 			operation := got.GetLogicalOperation()

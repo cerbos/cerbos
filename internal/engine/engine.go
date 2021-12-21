@@ -21,7 +21,6 @@ import (
 	auditv1 "github.com/cerbos/cerbos/api/genpb/cerbos/audit/v1"
 	effectv1 "github.com/cerbos/cerbos/api/genpb/cerbos/effect/v1"
 	enginev1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
-	requestv1 "github.com/cerbos/cerbos/api/genpb/cerbos/request/v1"
 	responsev1 "github.com/cerbos/cerbos/api/genpb/cerbos/response/v1"
 	schemav1 "github.com/cerbos/cerbos/api/genpb/cerbos/schema/v1"
 	"github.com/cerbos/cerbos/internal/audit"
@@ -263,7 +262,7 @@ func (engine *Engine) checkParallel(ctx context.Context, inputs []*enginev1.Chec
 	return outputs, nil
 }
 
-func (engine *Engine) ResourcesQueryPlan(ctx context.Context, input *requestv1.ResourcesQueryPlanRequest) (*responsev1.ResourcesQueryPlanResponse, error) {
+func (engine *Engine) ResourcesQueryPlan(ctx context.Context, input *enginev1.ResourcesQueryPlanRequest) (*responsev1.ResourcesQueryPlanResponse, error) {
 	// exit early if the context is cancelled
 	if err := ctx.Err(); err != nil {
 		return nil, err

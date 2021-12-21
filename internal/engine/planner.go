@@ -7,14 +7,12 @@ import (
 	"context"
 	"fmt"
 
-
 	"github.com/google/cel-go/cel"
 	"github.com/google/cel-go/common/types"
 	exprpb "google.golang.org/genproto/googleapis/api/expr/v1alpha1"
 
 	effectv1 "github.com/cerbos/cerbos/api/genpb/cerbos/effect/v1"
 	enginev1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
-	requestv1 "github.com/cerbos/cerbos/api/genpb/cerbos/request/v1"
 	runtimev1 "github.com/cerbos/cerbos/api/genpb/cerbos/runtime/v1"
 	"github.com/cerbos/cerbos/internal/conditions"
 	"github.com/cerbos/cerbos/internal/observability/tracing"
@@ -31,7 +29,7 @@ type (
 	}
 )
 
-func (ppe *principalPolicyEvaluator) EvaluateResourcesQueryPlan(ctx context.Context, input *requestv1.ResourcesQueryPlanRequest) (*enginev1.ResourcesQueryPlanOutput, error) {
+func (ppe *principalPolicyEvaluator) EvaluateResourcesQueryPlan(ctx context.Context, input *enginev1.ResourcesQueryPlanRequest) (*enginev1.ResourcesQueryPlanOutput, error) {
 	_, span := tracing.StartSpan(ctx, "principal_policy.EvaluateResourcesQueryPlan")
 	span.SetAttributes(tracing.PolicyFQN(ppe.policy.Meta.Fqn))
 	defer span.End()
@@ -86,7 +84,7 @@ func (ppe *principalPolicyEvaluator) EvaluateResourcesQueryPlan(ctx context.Cont
 	return result, nil
 }
 
-func (rpe *resourcePolicyEvaluator) EvaluateResourcesQueryPlan(ctx context.Context, input *requestv1.ResourcesQueryPlanRequest) (*enginev1.ResourcesQueryPlanOutput, error) {
+func (rpe *resourcePolicyEvaluator) EvaluateResourcesQueryPlan(ctx context.Context, input *enginev1.ResourcesQueryPlanRequest) (*enginev1.ResourcesQueryPlanOutput, error) {
 	_, span := tracing.StartSpan(ctx, "resource_policy.EvaluateResourcesQueryPlan")
 	span.SetAttributes(tracing.PolicyFQN(rpe.policy.Meta.Fqn))
 	defer span.End()
@@ -271,7 +269,7 @@ func invertNodeBooleanValue(node *enginev1.ResourcesQueryPlanOutput_Node) *engin
 	return &qpN{Node: &qpNLO{LogicalOperation: lo}}
 }
 
-func evaluateCondition(condition *runtimev1.Condition, input *requestv1.ResourcesQueryPlanRequest, variables map[string]*exprpb.Expr) (*enginev1.ResourcesQueryPlanOutput_Node, error) {
+func evaluateCondition(condition *runtimev1.Condition, input *enginev1.ResourcesQueryPlanRequest, variables map[string]*exprpb.Expr) (*enginev1.ResourcesQueryPlanOutput_Node, error) {
 	res := new(qpN)
 	switch t := condition.Op.(type) {
 	case *runtimev1.Condition_Any:
@@ -355,7 +353,7 @@ func evaluateCondition(condition *runtimev1.Condition, input *requestv1.Resource
 	return res, nil
 }
 
-func evaluateCELExprPartially(expr *exprpb.CheckedExpr, input *requestv1.ResourcesQueryPlanRequest, variables map[string]*exprpb.Expr) (*bool, *exprpb.CheckedExpr, error) {
+func evaluateCELExprPartially(expr *exprpb.CheckedExpr, input *enginev1.ResourcesQueryPlanRequest, variables map[string]*exprpb.Expr) (*bool, *exprpb.CheckedExpr, error) {
 	e := expr.Expr
 	err := replaceVars(&e, variables)
 	if err != nil {

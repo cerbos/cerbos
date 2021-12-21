@@ -17,7 +17,6 @@ import (
 	enginev1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
 	privatev1 "github.com/cerbos/cerbos/api/genpb/cerbos/private/v1"
-	requestv1 "github.com/cerbos/cerbos/api/genpb/cerbos/request/v1"
 	schemav1 "github.com/cerbos/cerbos/api/genpb/cerbos/schema/v1"
 	"github.com/cerbos/cerbos/internal/audit"
 	"github.com/cerbos/cerbos/internal/audit/local"
@@ -259,7 +258,7 @@ func TestQueryPlan(t *testing.T) {
 			for _, tt := range ts.Tests {
 				t.Run(tt.Action, func(t *testing.T) {
 					is := require.New(t)
-					request := &requestv1.ResourcesQueryPlanRequest{
+					request := &enginev1.ResourcesQueryPlanRequest{
 						RequestId:     "requestId",
 						Action:        tt.Action,
 						Principal:     ts.Principal,

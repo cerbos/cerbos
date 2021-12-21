@@ -16,7 +16,6 @@ import (
 
 	effectv1 "github.com/cerbos/cerbos/api/genpb/cerbos/effect/v1"
 	enginev1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
-	requestv1 "github.com/cerbos/cerbos/api/genpb/cerbos/request/v1"
 	runtimev1 "github.com/cerbos/cerbos/api/genpb/cerbos/runtime/v1"
 	schemav1 "github.com/cerbos/cerbos/api/genpb/cerbos/schema/v1"
 	"github.com/cerbos/cerbos/internal/conditions"
@@ -32,7 +31,7 @@ var (
 
 type Evaluator interface {
 	Evaluate(context.Context, *enginev1.CheckInput) (*PolicyEvalResult, error)
-	EvaluateResourcesQueryPlan(ctx context.Context, request *requestv1.ResourcesQueryPlanRequest) (*enginev1.ResourcesQueryPlanOutput, error)
+	EvaluateResourcesQueryPlan(ctx context.Context, request *enginev1.ResourcesQueryPlanRequest) (*enginev1.ResourcesQueryPlanOutput, error)
 }
 
 func NewEvaluator(rps *runtimev1.RunnablePolicySet, t *tracer, schemaMgr schema.Manager) Evaluator {
@@ -48,7 +47,7 @@ func NewEvaluator(rps *runtimev1.RunnablePolicySet, t *tracer, schemaMgr schema.
 
 type noopEvaluator struct{}
 
-func (e noopEvaluator) EvaluateResourcesQueryPlan(ctx context.Context, request *requestv1.ResourcesQueryPlanRequest) (*enginev1.ResourcesQueryPlanOutput, error) {
+func (e noopEvaluator) EvaluateResourcesQueryPlan(ctx context.Context, request *enginev1.ResourcesQueryPlanRequest) (*enginev1.ResourcesQueryPlanOutput, error) {
 	return nil, ErrPolicyNotExecutable
 }
 
