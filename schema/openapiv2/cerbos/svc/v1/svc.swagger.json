@@ -121,81 +121,7 @@
         ]
       }
     },
-    "/admin/policy": {
-      "post": {
-        "summary": "Add or update policies",
-        "operationId": "CerbosAdminService_AddOrUpdatePolicy",
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "$ref": "#/definitions/v1AddOrUpdatePolicyResponse"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/rpcStatus"
-            }
-          }
-        },
-        "parameters": [
-          {
-            "name": "body",
-            "in": "body",
-            "required": true,
-            "schema": {
-              "$ref": "#/definitions/v1AddOrUpdatePolicyRequest"
-            }
-          }
-        ],
-        "tags": [
-          "CerbosAdminService"
-        ],
-        "security": [
-          {
-            "BasicAuth": []
-          }
-        ]
-      },
-      "put": {
-        "summary": "Add or update policies",
-        "operationId": "CerbosAdminService_AddOrUpdatePolicy2",
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "$ref": "#/definitions/v1AddOrUpdatePolicyResponse"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/rpcStatus"
-            }
-          }
-        },
-        "parameters": [
-          {
-            "name": "body",
-            "in": "body",
-            "required": true,
-            "schema": {
-              "$ref": "#/definitions/v1AddOrUpdatePolicyRequest"
-            }
-          }
-        ],
-        "tags": [
-          "CerbosAdminService"
-        ],
-        "security": [
-          {
-            "BasicAuth": []
-          }
-        ]
-      }
-    },
-    "/admin/policy/list": {
+    "/admin/policies": {
       "get": {
         "summary": "List policies",
         "operationId": "CerbosAdminService_ListPolicies",
@@ -274,6 +200,119 @@
             "required": true,
             "schema": {
               "$ref": "#/definitions/v1ListPoliciesRequest"
+            }
+          }
+        ],
+        "tags": [
+          "CerbosAdminService"
+        ],
+        "security": [
+          {
+            "BasicAuth": []
+          }
+        ]
+      }
+    },
+    "/admin/policy": {
+      "get": {
+        "summary": "Get policy",
+        "operationId": "CerbosAdminService_GetPolicy",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1GetPolicyResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "description": "id (fully qualified name) for the policy",
+            "in": "query",
+            "required": true,
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "collectionFormat": "multi"
+          }
+        ],
+        "tags": [
+          "CerbosAdminService"
+        ],
+        "security": [
+          {
+            "BasicAuth": []
+          }
+        ]
+      },
+      "post": {
+        "summary": "Add or update policies",
+        "operationId": "CerbosAdminService_AddOrUpdatePolicy",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1AddOrUpdatePolicyResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/v1AddOrUpdatePolicyRequest"
+            }
+          }
+        ],
+        "tags": [
+          "CerbosAdminService"
+        ],
+        "security": [
+          {
+            "BasicAuth": []
+          }
+        ]
+      },
+      "put": {
+        "summary": "Add or update policies",
+        "operationId": "CerbosAdminService_AddOrUpdatePolicy2",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1AddOrUpdatePolicyResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/v1AddOrUpdatePolicyRequest"
             }
           }
         ],
@@ -1508,6 +1547,18 @@
       ],
       "default": "EFFECT_UNSPECIFIED"
     },
+    "v1GetPolicyResponse": {
+      "type": "object",
+      "properties": {
+        "policies": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/v1Policy"
+          }
+        }
+      },
+      "description": "Get policy(s) response"
+    },
     "v1GetSchemaResponse": {
       "type": "object",
       "properties": {
@@ -1550,10 +1601,10 @@
     "v1ListPoliciesResponse": {
       "type": "object",
       "properties": {
-        "policies": {
+        "policyIds": {
           "type": "array",
           "items": {
-            "$ref": "#/definitions/v1Policy"
+            "type": "string"
           }
         }
       },

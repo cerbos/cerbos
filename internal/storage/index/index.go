@@ -10,6 +10,7 @@ import (
 	"io"
 	"io/fs"
 	"path/filepath"
+	"sort"
 	"sync"
 
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
@@ -39,9 +40,10 @@ type Index interface {
 	GetFiles() []string
 	GetAllCompilationUnits(context.Context) <-chan *policy.CompilationUnit
 	Clear() error
-	GetPolicies(context.Context) ([]*policy.Wrapper, error)
+	ListPolicyIDs(context.Context) ([]string, error)
 	ListSchemaIDs(context.Context) ([]string, error)
 	LoadSchema(context.Context, string) (io.ReadCloser, error)
+	LoadPolicy(context.Context, string) (*policy.Wrapper, error)
 }
 
 type index struct {
@@ -49,6 +51,8 @@ type index struct {
 	mu           sync.RWMutex
 	executables  map[namer.ModuleID]struct{}
 	modIDToFile  map[namer.ModuleID]string
+	modIDToFQN   map[namer.ModuleID]string
+	FQNToModID   map[string]namer.ModuleID
 	fileToModID  map[string]namer.ModuleID
 	dependents   map[namer.ModuleID]map[namer.ModuleID]struct{}
 	dependencies map[namer.ModuleID]map[namer.ModuleID]struct{}
@@ -195,6 +199,8 @@ func (idx *index) AddOrUpdate(entry Entry) (evt storage.Event, err error) {
 	// add to index
 	idx.fileToModID[entry.File] = modID
 	idx.modIDToFile[modID] = entry.File
+	idx.modIDToFQN[modID] = entry.Policy.FQN
+	idx.FQNToModID[entry.Policy.FQN] = modID
 
 	if entry.Policy.Kind != policy.DerivedRolesKindStr {
 		idx.executables[modID] = struct{}{}
@@ -243,6 +249,8 @@ func (idx *index) Delete(entry Entry) (storage.Event, error) {
 
 	delete(idx.fileToModID, entry.File)
 	delete(idx.modIDToFile, modID)
+	delete(idx.modIDToFQN, modID)
+	delete(idx.FQNToModID, entry.Policy.FQN)
 	delete(idx.dependencies, modID)
 	delete(idx.executables, modID)
 
@@ -296,6 +304,8 @@ func (idx *index) Clear() error {
 	idx.fsys = nil
 	idx.executables = nil
 	idx.modIDToFile = nil
+	idx.modIDToFQN = nil
+	idx.FQNToModID = nil
 	idx.fileToModID = nil
 	idx.dependents = nil
 	idx.dependencies = nil
@@ -329,22 +339,17 @@ func (idx *index) Inspect() map[string]meta {
 	return entries
 }
 
-func (idx *index) GetPolicies(_ context.Context) ([]*policy.Wrapper, error) {
+func (idx *index) ListPolicyIDs(_ context.Context) ([]string, error) {
 	idx.mu.RLock()
 	defer idx.mu.RUnlock()
 
-	entries := make([]*policy.Wrapper, 0)
-	for _, modID := range idx.fileToModID {
-		pol, err := idx.loadPolicy(modID)
-		if err != nil {
-			return nil, err
-		}
-
-		wp := policy.Wrap(pol)
-		entries = append(entries, &wp)
+	policyIds := make([]string, 0, len(idx.modIDToFQN))
+	for _, id := range idx.modIDToFQN {
+		policyIds = append(policyIds, id)
 	}
 
-	return entries, nil
+	sort.Strings(policyIds)
+	return policyIds, nil
 }
 
 func (idx *index) ListSchemaIDs(_ context.Context) ([]string, error) {
@@ -376,4 +381,22 @@ func (idx *index) ListSchemaIDs(_ context.Context) ([]string, error) {
 
 func (idx *index) LoadSchema(ctx context.Context, url string) (io.ReadCloser, error) {
 	return idx.schemaLoader.Load(ctx, url)
+}
+
+func (idx *index) LoadPolicy(_ context.Context, fqn string) (*policy.Wrapper, error) {
+	idx.mu.RLock()
+	defer idx.mu.RUnlock()
+
+	modID, ok := idx.FQNToModID[fqn]
+	if !ok {
+		return nil, fmt.Errorf("failed to find policy by fqn %s", fqn)
+	}
+
+	p, err := idx.loadPolicy(modID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to load policy file with fqn %s: %w", fqn, err)
+	}
+
+	pw := policy.Wrap(p)
+	return &pw, nil
 }

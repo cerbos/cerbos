@@ -288,12 +288,12 @@ func (ms *MockStore) Delete(ctx context.Context, ids ...namer.ModuleID) error {
 	return args.Error(0)
 }
 
-func (ms *MockStore) GetPolicies(ctx context.Context) ([]*policy.Wrapper, error) {
-	args := ms.MethodCalled("GetPolicies", ctx)
+func (ms *MockStore) ListPolicyIDs(ctx context.Context) ([]string, error) {
+	args := ms.MethodCalled("ListPolicyIDs", ctx)
 	if res := args.Get(0); res == nil {
 		return nil, args.Error(0)
 	}
-	return args.Get(0).([]*policy.Wrapper), args.Error(0)
+	return args.Get(0).([]string), args.Error(0)
 }
 
 func (ms *MockStore) ListSchemaIDs(ctx context.Context) ([]string, error) {
@@ -302,6 +302,14 @@ func (ms *MockStore) ListSchemaIDs(ctx context.Context) ([]string, error) {
 		return nil, args.Error(0)
 	}
 	return args.Get(0).([]string), args.Error(0)
+}
+
+func (ms *MockStore) LoadPolicy(ctx context.Context, fqn string) (*policy.Wrapper, error) {
+	args := ms.MethodCalled("LoadPolicy", ctx)
+	if res := args.Get(0); res == nil {
+		return nil, args.Error(0)
+	}
+	return nil, nil
 }
 
 func (ms *MockStore) LoadSchema(ctx context.Context, url string) (io.ReadCloser, error) {

@@ -17,6 +17,7 @@ import (
 const (
 	PolicyTbl              = "policy"
 	PolicyTblIDCol         = "id"
+	PolicyTblFQNCol        = "fqn"
 	PolicyTblDefinitionCol = "definition"
 	PolicyTblDisabledCol   = "disabled"
 
@@ -39,6 +40,7 @@ type Policy struct {
 	Kind        string
 	Name        string
 	Version     string
+	FQN         string
 	Description string
 	Disabled    bool
 	Definition  PolicyDefWrapper

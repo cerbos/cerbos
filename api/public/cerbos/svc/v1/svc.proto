@@ -100,31 +100,46 @@ service CerbosAdminService {
         };
     }
 
+    rpc ListPolicies(cerbos.request.v1.ListPoliciesRequest) returns (cerbos.response.v1.ListPoliciesResponse) {
+        option (google.api.http) = {
+            get: "/admin/policies",
+            additional_bindings: {
+                post: "/admin/policies",
+                body: "*"
+            }
+        };
+        option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+            summary: "List policies",
+            security: {
+                security_requirement: {
+                    key: "BasicAuth";
+                    value: {};
+                }
+            }
+        };
+    }
+
+    rpc GetPolicy(cerbos.request.v1.GetPolicyRequest) returns (cerbos.response.v1.GetPolicyResponse) {
+        option (google.api.http) = {
+            get: "/admin/policy",
+        };
+        option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+            summary: "Get policy",
+            security: {
+                security_requirement: {
+                    key: "BasicAuth";
+                    value: {};
+                }
+            }
+        };
+    }
+
     rpc ListAuditLogEntries(cerbos.request.v1.ListAuditLogEntriesRequest) returns (stream cerbos.response.v1.ListAuditLogEntriesResponse) {
         option (google.api.http) = {
             get: "/admin/auditlog/list/{kind}",
         };
         option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
             summary: "List audit log entries",
-            security: {
-                security_requirement: {
-                    key: "BasicAuth";
-                    value: {};
-                }    
-            }
-        };
-    }
-
-    rpc ListPolicies(cerbos.request.v1.ListPoliciesRequest) returns (cerbos.response.v1.ListPoliciesResponse) {
-        option (google.api.http) = {
-            get: "/admin/policy/list",
-            additional_bindings: {
-                post: "/admin/policy/list",
-                body: "*"
-            }
-        };
-        option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
-            summary: "List policies",
             security: {
                 security_requirement: {
                     key: "BasicAuth";

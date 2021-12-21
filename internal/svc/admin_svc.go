@@ -21,6 +21,7 @@ import (
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/emptypb"
 
+	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
 	requestv1 "github.com/cerbos/cerbos/api/genpb/cerbos/request/v1"
 	responsev1 "github.com/cerbos/cerbos/api/genpb/cerbos/response/v1"
 	schemav1 "github.com/cerbos/cerbos/api/genpb/cerbos/schema/v1"
@@ -102,6 +103,51 @@ func (cas *CerbosAdminService) AddOrUpdateSchema(ctx context.Context, req *reque
 	}
 
 	return &responsev1.AddOrUpdateSchemaResponse{}, nil
+}
+
+func (cas *CerbosAdminService) ListPolicies(ctx context.Context, req *requestv1.ListPoliciesRequest) (*responsev1.ListPoliciesResponse, error) {
+	if err := cas.checkCredentials(ctx); err != nil {
+		return nil, err
+	}
+
+	if cas.store == nil {
+		return nil, status.Error(codes.NotFound, "store is not configured")
+	}
+
+	policyIds, err := cas.store.ListPolicyIDs(context.Background())
+	if err != nil {
+		ctxzap.Extract(ctx).Error("Could not get policy ids", zap.Error(err))
+		return nil, status.Error(codes.Internal, "could not get policy ids")
+	}
+
+	return &responsev1.ListPoliciesResponse{
+		PolicyIds: policyIds,
+	}, nil
+}
+
+func (cas *CerbosAdminService) GetPolicy(ctx context.Context, req *requestv1.GetPolicyRequest) (*responsev1.GetPolicyResponse, error) {
+	if err := cas.checkCredentials(ctx); err != nil {
+		return nil, err
+	}
+
+	if cas.store == nil {
+		return nil, status.Error(codes.NotFound, "store is not configured")
+	}
+
+	log := ctxzap.Extract(ctx)
+	policies := make([]*policyv1.Policy, 0, len(req.Id))
+	for _, fqn := range req.Id {
+		p, err := cas.store.LoadPolicy(ctx, fqn)
+		if err != nil {
+			log.Error(fmt.Sprintf("Could not get the policy with fqn %s", fqn), zap.Error(err))
+			return nil, status.Errorf(codes.Internal, "could not get the policy with fqn %s", fqn)
+		}
+		policies = append(policies, p.Policy)
+	}
+
+	return &responsev1.GetPolicyResponse{
+		Policies: policies,
+	}, nil
 }
 
 func (cas *CerbosAdminService) ListSchemas(ctx context.Context, req *requestv1.ListSchemasRequest) (*responsev1.ListSchemasResponse, error) {
@@ -212,33 +258,6 @@ func (cas *CerbosAdminService) ListAuditLogEntries(req *requestv1.ListAuditLogEn
 			return err
 		}
 	}
-}
-
-func (cas *CerbosAdminService) ListPolicies(ctx context.Context, req *requestv1.ListPoliciesRequest) (*responsev1.ListPoliciesResponse, error) {
-	if err := cas.checkCredentials(ctx); err != nil {
-		return nil, err
-	}
-
-	if cas.store == nil {
-		return nil, status.Error(codes.NotFound, "store is not configured")
-	}
-
-	units, err := cas.store.GetPolicies(context.Background())
-	if err != nil {
-		ctxzap.Extract(ctx).Error("Could not get policies", zap.Error(err))
-		return nil, status.Error(codes.Internal, "could not get policies")
-	}
-
-	policies, err := filterPolicies(req.Filters, units)
-	if err != nil {
-		return nil, err
-	}
-
-	sortPolicies(req.SortOptions, policies)
-
-	return &responsev1.ListPoliciesResponse{
-		Policies: policies,
-	}, nil
 }
 
 func (cas *CerbosAdminService) getAuditLogStream(ctx context.Context, req *requestv1.ListAuditLogEntriesRequest) (auditLogStream, error) {

@@ -476,6 +476,22 @@ message ListPoliciesRequest {
     SortOptions sort_options = 2;
 }
 
+message GetPolicyRequest {
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
+        json_schema: {
+            description: "Get policy(s) request"
+        }
+    };
+    repeated string id = 1 [
+        (google.api.field_behavior) = REQUIRED,
+        (validate.rules).repeated = { unique: true, min_items: 1, max_items: 25, items { string { min_len: 1, max_len: 255} } },
+        (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+            description: "id (fully qualified name) for the policy"
+            example: "\"\""
+        }
+    ];
+}
+
 message AddOrUpdateSchemaRequest {
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
         json_schema: {

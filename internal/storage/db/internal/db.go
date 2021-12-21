@@ -30,11 +30,12 @@ type DBStorage interface {
 	GetCompilationUnits(ctx context.Context, ids ...namer.ModuleID) (map[namer.ModuleID]*policy.CompilationUnit, error)
 	GetDependents(ctx context.Context, ids ...namer.ModuleID) (map[namer.ModuleID][]namer.ModuleID, error)
 	Delete(ctx context.Context, ids ...namer.ModuleID) error
-	GetPolicies(ctx context.Context) ([]*policy.Wrapper, error)
+	ListPolicyIDs(ctx context.Context) ([]string, error)
 	ListSchemaIDs(ctx context.Context) ([]string, error)
 	AddOrUpdateSchema(ctx context.Context, schemas ...*schemav1.Schema) error
 	DeleteSchema(ctx context.Context, ids ...string) error
 	LoadSchema(ctx context.Context, url string) (io.ReadCloser, error)
+	LoadPolicy(ctx context.Context, fqn string) (*policy.Wrapper, error)
 }
 
 func NewDBStorage(ctx context.Context, db *goqu.Database) (DBStorage, error) {
@@ -122,6 +123,19 @@ func (s *dbStorage) DeleteSchema(ctx context.Context, ids ...string) error {
 	return nil
 }
 
+func (s *dbStorage) LoadPolicy(ctx context.Context, fqn string) (*policy.Wrapper, error) {
+	var rec Policy
+	_, err := s.db.From(PolicyTbl).
+		Where(goqu.Ex{PolicyTblFQNCol: fqn}).
+		ScanStructContext(ctx, &rec)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get policy: %w", err)
+	}
+
+	p := policy.Wrap(rec.Definition.Policy)
+	return &p, nil
+}
+
 func (s *dbStorage) LoadSchema(ctx context.Context, urlVar string) (io.ReadCloser, error) {
 	u, err := url.Parse(urlVar)
 	if err != nil {
@@ -161,6 +175,7 @@ func (s *dbStorage) AddOrUpdate(ctx context.Context, policies ...policy.Wrapper)
 				Kind:        p.Kind,
 				Name:        p.Name,
 				Version:     p.Version,
+				FQN:         p.FQN,
 				Description: p.Description,
 				Disabled:    p.Disabled,
 				Definition:  PolicyDefWrapper{Policy: p.Policy},
@@ -349,25 +364,24 @@ func (s *dbStorage) Delete(ctx context.Context, ids ...namer.ModuleID) error {
 	return nil
 }
 
-func (s *dbStorage) GetPolicies(ctx context.Context) ([]*policy.Wrapper, error) {
-	res, err := s.db.From(PolicyTbl).Executor().ScannerContext(ctx)
+func (s *dbStorage) ListPolicyIDs(ctx context.Context) ([]string, error) {
+	res, err := s.db.Select(goqu.C(PolicyTblIDCol)).From(PolicyTbl).Executor().ScannerContext(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("could not execute %q query: %w", "GetPolicies", err)
+		return nil, fmt.Errorf("could not execute %q query: %w", "ListPolicyIDs", err)
 	}
 	defer res.Close()
 
-	var policies []*policy.Wrapper
+	var policyIds []string
 	for res.Next() {
-		var rec Policy
-		if err := res.ScanStruct(&rec); err != nil {
+		var id string
+		if err := res.ScanVal(&id); err != nil {
 			return nil, fmt.Errorf("could not scan row: %w", err)
 		}
 
-		p := policy.Wrap(rec.Definition.Policy)
-		policies = append(policies, &p)
+		policyIds = append(policyIds, id)
 	}
 
-	return policies, nil
+	return policyIds, nil
 }
 
 func (s *dbStorage) ListSchemaIDs(ctx context.Context) ([]string, error) {
