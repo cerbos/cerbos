@@ -9,6 +9,10 @@ updates:
       - "chore"
       - "ci"
       - "bots"
+    ignore:
+      - dependency-name: github.com/aws/aws-sdk-go
+        update-types: 
+          - version-update:semver-patch
 
   - package-ecosystem: "gomod"
     directory: "/tools"
