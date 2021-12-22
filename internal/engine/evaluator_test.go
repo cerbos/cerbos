@@ -193,6 +193,14 @@ func TestPartialEvaluationWithGlobalVars(t *testing.T) {
 			expr: `V.info.language + "_" + V.info.country == gbLoc`,
 			want: "true",
 		},
+		{
+			expr: `has(R.attr.geo) && R.attr.geo in ["GB", "US"]`,
+			want: `has(R.attr.geo) && R.attr.geo in ["GB", "US"]`,
+		},
+		{
+			expr: "has(V.info.language)",
+			want: "true",
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.expr, func(t *testing.T) {

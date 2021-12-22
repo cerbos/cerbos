@@ -298,6 +298,10 @@ func buildExpr(expr *exprpb.Expr, acc *responsev1.ResourcesQueryPlanResponse_Exp
 	case *exprpb.Expr_IdentExpr:
 		acc.Node = &ExprOpVar{Variable: expr.IdentExpr.Name}
 	case *exprpb.Expr_SelectExpr:
+		if expr.SelectExpr.TestOnly {
+			acc.Node = &ExprOpValue{Value: structpb.NewBoolValue(true)}
+			break
+		}
 		var names []string
 		e := expr
 	loop:
