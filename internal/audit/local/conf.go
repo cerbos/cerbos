@@ -35,6 +35,7 @@ var (
 )
 
 // Conf is optional configuration for local Audit.
+//+sectionKey=audit.local
 type Conf struct {
 	// Path to store the data
 	StoragePath string `yaml:"storagePath" conf:",defaultValue=/path/to/dir"`

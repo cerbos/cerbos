@@ -28,6 +28,7 @@ const (
 )
 
 // Conf is required (if driver is set to 'git') configuration for Git storage driver.
+//+sectionKey=storage.git
 type Conf struct {
 	// Protocol is the Git protocol to use. Valid values are https, ssh, and file.
 	Protocol string `yaml:"protocol" conf:"required,defaultValue=file"`

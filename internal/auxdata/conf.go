@@ -15,6 +15,7 @@ import (
 const confKey = "auxData"
 
 // Conf is optional configuration for Auxdata.
+//+sectionKey=auxdata
 type Conf struct {
 	// JWT holds the configuration for JWTs used as an auxiliary data source for the engine.
 	JWT *JWTConf `yaml:"jwt"`

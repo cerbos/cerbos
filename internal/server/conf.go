@@ -30,6 +30,7 @@ var (
 )
 
 // Conf is required configuration for the server.
+//+sectionKey=server
 type Conf struct {
 	// HTTPListenAddr is the dedicated HTTP address.
 	HTTPListenAddr string `yaml:"httpListenAddr" conf:"required,defaultValue=\":3592\""`

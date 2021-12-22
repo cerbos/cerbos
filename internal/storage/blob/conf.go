@@ -26,6 +26,7 @@ const (
 )
 
 // Conf is required (if driver is set to 'blob') configuration for cloud storage driver.
+//+sectionKey=blob
 type Conf struct {
 	// Bucket URL (Examples: s3://my-bucket?region=us-west-1 gs://my-bucket azblob://my-container).
 	Bucket string `yaml:"bucket" conf:"required,defaultValue=\"s3://my-bucket-name?region=us-east-2\""`

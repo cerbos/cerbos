@@ -23,6 +23,7 @@ var (
 )
 
 // Conf is optional configuration for tracing.
+//+sectionKey=tracing
 type Conf struct {
 	// SampleProbability is the probability of sampling expressed as a number between 0 and 1.
 	SampleProbability float64 `yaml:"sampleProbability" conf:",defaultValue=0.1"`

@@ -7,7 +7,6 @@ package audit
 
 import (
 	"fmt"
-
 	"gopkg.in/yaml.v2"
 )
 
@@ -16,6 +15,7 @@ const (
 )
 
 // Conf is optional configuration for Audit.
+//+sectionKey=audit
 type Conf struct {
 	confHolder
 }

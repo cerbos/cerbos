@@ -18,6 +18,7 @@ const confKey = "engine"
 var errEmptyDefaultVersion = errors.New("engine.defaultVersion must not be an empty string")
 
 // Conf is optional configuration for engine.
+//+sectionKey=engine
 type Conf struct {
 	// DefaultPolicyVersion defines what version to assume if the request does not specify one.
 	DefaultPolicyVersion string `yaml:"defaultPolicyVersion" conf:",defaultValue=\"default\""`
