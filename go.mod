@@ -27,7 +27,7 @@ require (
 	github.com/gorilla/handlers v1.5.1
 	github.com/gorilla/mux v1.8.0
 	github.com/grpc-ecosystem/go-grpc-middleware v1.3.0
-	github.com/grpc-ecosystem/grpc-gateway/v2 v2.7.1
+	github.com/grpc-ecosystem/grpc-gateway/v2 v2.7.2
 	github.com/jackc/pgx/v4 v4.14.1
 	github.com/jdxcode/netrc v0.0.0-20210204082910-926c7f70242a
 	github.com/jmoiron/sqlx v1.3.4
@@ -62,7 +62,7 @@ require (
 	golang.org/x/net v0.0.0-20211209124913-491a49abca63
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
 	google.golang.org/api v0.62.0 // indirect
-	google.golang.org/grpc v1.42.0
+	google.golang.org/grpc v1.43.0
 	google.golang.org/protobuf v1.27.1
 	gopkg.in/yaml.v2 v2.4.0
 	helm.sh/helm/v3 v3.7.2
@@ -180,7 +180,7 @@ require (
 	github.com/modern-go/reflect2 v1.0.2 // indirect
 	github.com/opencontainers/go-digest v1.0.0 // indirect
 	github.com/opencontainers/image-spec v1.0.2 // indirect
-	github.com/opencontainers/runc v1.0.3 // indirect
+	github.com/opencontainers/runc v1.0.2 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/prometheus/client_model v0.2.0 // indirect
