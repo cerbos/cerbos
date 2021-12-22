@@ -1,5 +1,5 @@
 ---
-description: "No metadata"
+description: "auxData is used in policies"
 wantStatus:
   httpStatusCode: 200
   grpcStatusCode: 0
