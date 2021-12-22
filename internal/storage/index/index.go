@@ -51,8 +51,6 @@ type index struct {
 	mu           sync.RWMutex
 	executables  map[namer.ModuleID]struct{}
 	modIDToFile  map[namer.ModuleID]string
-	modIDToFQN   map[namer.ModuleID]string
-	FQNToModID   map[string]namer.ModuleID
 	fileToModID  map[string]namer.ModuleID
 	dependents   map[namer.ModuleID]map[namer.ModuleID]struct{}
 	dependencies map[namer.ModuleID]map[namer.ModuleID]struct{}
@@ -199,8 +197,6 @@ func (idx *index) AddOrUpdate(entry Entry) (evt storage.Event, err error) {
 	// add to index
 	idx.fileToModID[entry.File] = modID
 	idx.modIDToFile[modID] = entry.File
-	idx.modIDToFQN[modID] = entry.Policy.FQN
-	idx.FQNToModID[entry.Policy.FQN] = modID
 
 	if entry.Policy.Kind != policy.DerivedRolesKindStr {
 		idx.executables[modID] = struct{}{}
@@ -249,8 +245,6 @@ func (idx *index) Delete(entry Entry) (storage.Event, error) {
 
 	delete(idx.fileToModID, entry.File)
 	delete(idx.modIDToFile, modID)
-	delete(idx.modIDToFQN, modID)
-	delete(idx.FQNToModID, entry.Policy.FQN)
 	delete(idx.dependencies, modID)
 	delete(idx.executables, modID)
 
@@ -304,8 +298,6 @@ func (idx *index) Clear() error {
 	idx.fsys = nil
 	idx.executables = nil
 	idx.modIDToFile = nil
-	idx.modIDToFQN = nil
-	idx.FQNToModID = nil
 	idx.fileToModID = nil
 	idx.dependents = nil
 	idx.dependencies = nil
@@ -387,12 +379,7 @@ func (idx *index) LoadPolicy(_ context.Context, fqn string) (*policy.Wrapper, er
 	idx.mu.RLock()
 	defer idx.mu.RUnlock()
 
-	modID, ok := idx.FQNToModID[fqn]
-	if !ok {
-		return nil, fmt.Errorf("failed to find policy by fqn %s", fqn)
-	}
-
-	p, err := idx.loadPolicy(modID)
+	p, err := idx.loadPolicy(namer.GenModuleIDFromFQN(fqn))
 	if err != nil {
 		return nil, fmt.Errorf("failed to load policy file with fqn %s: %w", fqn, err)
 	}

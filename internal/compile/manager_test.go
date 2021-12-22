@@ -304,7 +304,7 @@ func (ms *MockStore) ListSchemaIDs(ctx context.Context) ([]string, error) {
 	return args.Get(0).([]string), args.Error(0)
 }
 
-func (ms *MockStore) LoadPolicy(ctx context.Context, fqn string) (*policy.Wrapper, error) {
+func (ms *MockStore) LoadPolicy(ctx context.Context, policyKey string) (*policy.Wrapper, error) {
 	args := ms.MethodCalled("LoadPolicy", ctx)
 	if res := args.Get(0); res == nil {
 		return nil, args.Error(0)

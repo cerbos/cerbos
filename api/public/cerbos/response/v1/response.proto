@@ -266,7 +266,7 @@ message ListPoliciesResponse {
 message GetPolicyResponse {
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
         json_schema: {
-            description: "Get policy(s) response"
+            description: "Get policy response"
         }
     };
 

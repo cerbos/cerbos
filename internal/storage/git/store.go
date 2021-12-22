@@ -147,8 +147,8 @@ func (s *Store) LoadSchema(ctx context.Context, url string) (io.ReadCloser, erro
 	return s.idx.LoadSchema(ctx, url)
 }
 
-func (s *Store) LoadPolicy(ctx context.Context, fqn string) (*policy.Wrapper, error) {
-	return s.idx.LoadPolicy(ctx, fqn)
+func (s *Store) LoadPolicy(ctx context.Context, policyKey string) (*policy.Wrapper, error) {
+	return s.idx.LoadPolicy(ctx, policyKey)
 }
 
 func isEmptyDir(dir string) (bool, error) {

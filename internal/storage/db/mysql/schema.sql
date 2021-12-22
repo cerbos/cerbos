@@ -7,7 +7,6 @@ CREATE TABLE IF NOT EXISTS policy (
     kind VARCHAR(128) NOT NULL,
     name VARCHAR(1024) NOT NULL,
     version VARCHAR(128) NOT NULL,
-    fqn VARCHAR(255) NOT NULL,
     description TEXT,
     disabled BOOLEAN default false,
     definition BLOB);

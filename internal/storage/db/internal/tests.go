@@ -8,6 +8,7 @@ package internal
 
 import (
 	"context"
+	"github.com/cerbos/cerbos/internal/namer"
 	"io/ioutil"
 	"testing"
 	"time"
@@ -128,7 +129,7 @@ func TestSuite(store DBStorage) func(*testing.T) {
 
 		t.Run("get_policy", func(t *testing.T) {
 			t.Run("should be able to get policy", func(t *testing.T) {
-				p, err := store.LoadPolicy(ctx, dr.FQN)
+				p, err := store.LoadPolicy(ctx, namer.PolicyKeyFromFQN(dr.FQN))
 				require.NoError(t, err)
 				require.NotEmpty(t, p)
 			})

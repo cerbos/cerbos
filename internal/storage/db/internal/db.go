@@ -35,7 +35,7 @@ type DBStorage interface {
 	AddOrUpdateSchema(ctx context.Context, schemas ...*schemav1.Schema) error
 	DeleteSchema(ctx context.Context, ids ...string) error
 	LoadSchema(ctx context.Context, url string) (io.ReadCloser, error)
-	LoadPolicy(ctx context.Context, fqn string) (*policy.Wrapper, error)
+	LoadPolicy(ctx context.Context, policyKey string) (*policy.Wrapper, error)
 }
 
 func NewDBStorage(ctx context.Context, db *goqu.Database) (DBStorage, error) {
@@ -123,10 +123,15 @@ func (s *dbStorage) DeleteSchema(ctx context.Context, ids ...string) error {
 	return nil
 }
 
-func (s *dbStorage) LoadPolicy(ctx context.Context, fqn string) (*policy.Wrapper, error) {
+func (s *dbStorage) LoadPolicy(ctx context.Context, policyKey string) (*policy.Wrapper, error) {
+	knv := strings.Split(policyKey, ".")
+	if len(knv) != 3 {
+		return nil, fmt.Errorf("invalid format for policyKey")
+	}
+
 	var rec Policy
 	_, err := s.db.From(PolicyTbl).
-		Where(goqu.Ex{PolicyTblFQNCol: fqn}).
+		Where(goqu.Ex{PolicyTblKindCol: knv[0], PolicyTblNameCol: knv[1], PolicyTblVerCol: knv[2]}).
 		ScanStructContext(ctx, &rec)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get policy: %w", err)

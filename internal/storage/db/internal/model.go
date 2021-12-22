@@ -17,7 +17,9 @@ import (
 const (
 	PolicyTbl              = "policy"
 	PolicyTblIDCol         = "id"
-	PolicyTblFQNCol        = "fqn"
+	PolicyTblKindCol       = "kind"
+	PolicyTblNameCol       = "name"
+	PolicyTblVerCol        = "version"
 	PolicyTblDefinitionCol = "definition"
 	PolicyTblDisabledCol   = "disabled"
 
