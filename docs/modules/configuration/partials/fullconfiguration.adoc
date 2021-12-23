@@ -2,7 +2,7 @@ audit:
   enabled: false # Enabled defines whether audit logging is enabled.
   backend: local # Backend states which backend to use for Audits.
   accessLogsEnabled: true # AccessLogsEnabled defines whether access logging is enabled.
-  decisionLogsEnabled: true # DecisionLogsEnabled defines whether logging of policy decisions is enabled.%!s(MISSING)
+  decisionLogsEnabled: true # DecisionLogsEnabled defines whether logging of policy decisions is enabled.
   local:
     storagePath: /path/to/dir # Path to store the data
     retentionPeriod: 168h # How long to keep records for
@@ -10,18 +10,18 @@ audit:
       bufferSize: 256 
       maxBatchSize: 32 
       flushInterval: 1s 
-      gcInterval: 60s%!s(MISSING)
+      gcInterval: 60s
 auxData:
   jwt: # JWT holds the configuration for JWTs used as an auxiliary data source for the engine.
     keySets: 
       - id: ks1
         remote:
           url: https://domain.tld/.well-known/keys.jwks # KeySets is the list of keysets to be used to verify tokens.
-    disableVerification: false # DisableVerification disables JWT verification.%!s(MISSING)
+    disableVerification: false # DisableVerification disables JWT verification.
 engine:
-  defaultPolicyVersion: "default" # DefaultPolicyVersion defines what version to assume if the request does not specify one.%!s(MISSING)
+  defaultPolicyVersion: "default" # DefaultPolicyVersion defines what version to assume if the request does not specify one.
 schema:
-  enforcement: reject # Enforcement defines level of the validations. Possible values are none, warn, reject.%!s(MISSING)
+  enforcement: reject # Enforcement defines level of the validations. Possible values are none, warn, reject.
 server:
   httpListenAddr: ":3592" # Required. HTTPListenAddr is the dedicated HTTP address.
   grpcListenAddr: ":3593" # Required. GRPCListenAddr is the dedicated GRPC address.
@@ -41,10 +41,10 @@ server:
     enabled: true # Enabled defines whether the admin API is enabled.
     adminCredentials: # AdminCredentials defines the admin user credentials.
       username: cerbos # Username is the hardcoded username to use for authentication.
-      passwordHash: JDJ5JDEwJEdEOVFzZDE2VVhoVkR0N2VkUFBVM09nalc0QnNZaC9xc2E4bS9mcUJJcEZXenp5OUpjMi91Cgo= # PasswordHash is the base64-encoded bcrypt hash of the password to use for authentication.%!s(MISSING)
+      passwordHash: JDJ5JDEwJEdEOVFzZDE2VVhoVkR0N2VkUFBVM09nalc0QnNZaC9xc2E4bS9mcUJJcEZXenp5OUpjMi91Cgo= # PasswordHash is the base64-encoded bcrypt hash of the password to use for authentication.
 storage:
   # This section is required. The field driver must be set to indicate which driver to use.
-  driver: "disk" # Required. Driver states which storage driver to use. Possible values are blob, mysql, postgres, sqlite3, disk and git.%!s(MISSING)
+  driver: "disk" # Required. Driver states which storage driver to use. Possible values are blob, mysql, postgres, sqlite3, disk and git.
   blob:
     # This section is required only if storage.driver is blob.
     bucket: "s3://my-bucket-name?region=us-east-2" # Required. Bucket URL (Examples: s3://my-bucket?region=us-west-1 gs://my-bucket azblob://my-container).
@@ -52,11 +52,11 @@ storage:
     workDir: ${HOME}/tmp/cerbos/work # WorkDir is the local path to check out policies to.
     updatePollInterval: 15s # UpdatePollInterval specifies the interval to poll the cloud storage. Set to 0 to disable.
     downloadTimeout: 30s # DownloadTimeout specifies the timeout for downloading from cloud storage.
-    requestTimeout: 10s # RequestTimeout specifies the timeout for an HTTP request.%!s(MISSING)
+    requestTimeout: 10s # RequestTimeout specifies the timeout for an HTTP request.
   disk:
     # This section is required only if storage.driver is disk.
     directory: pkg/test/testdata/store # Required. Directory is the path on disk where policies are stored.
-    watchForChanges: false # Required. WatchForChanges enables watching the directory for changes.%!s(MISSING)
+    watchForChanges: false # Required. WatchForChanges enables watching the directory for changes.
   git:
     # This section is required only if storage.driver is git.
     protocol: file # Required. Protocol is the Git protocol to use. Valid values are https, ssh, and file.
@@ -72,7 +72,7 @@ storage:
       username: cerbos # The username to use for authentication.
       password: ${GITHUB_TOKEN} # The password (or token) to use for authentication.
     operationTimeout: 60s # OperationTimeout specifies the timeout for git operations.
-    updatePollInterval: 60s # UpdatePollInterval specifies the interval to poll the Git repository for changes. Set to 0 to disable.%!s(MISSING)
+    updatePollInterval: 60s # UpdatePollInterval specifies the interval to poll the Git repository for changes. Set to 0 to disable.
   mysql:
     # This section is required only if storage.driver is mysql.
     dsn: "user:password@tcp(localhost:3306)/db?interpolateParams=true" # Required. Data source name
@@ -87,7 +87,7 @@ storage:
         key: /path/to/private_key
         caCert: /path/to/CA_certificate 
     serverPubKey: 
-      mykey: testdata/server_public_key.pem%!s(MISSING)
+      mykey: testdata/server_public_key.pem
   postgres:
     # This section is required only if storage.driver is postgres.
     url: "postgres://user:password@localhost:port/db" # Required. URL is the Postgres connection URL. See https://www.postgresql.org/docs/current/libpq-connect.html#LIBPQ-CONNSTRING
@@ -95,14 +95,14 @@ storage:
       maxLifeTime: 60m
       maxIdleTime: 45s
       maxOpen: 4
-      maxIdle: 1%!s(MISSING)
+      maxIdle: 1
   sqlite3:
     # This section is required only if storage.driver is sqlite3.
-    dsn: ":memory:?_fk=true" # Required. Data source name%!s(MISSING)
+    dsn: ":memory:?_fk=true" # Required. Data source name
 tracing:
   sampleProbability: 0.1 # SampleProbability is the probability of sampling expressed as a number between 0 and 1.
   exporter: jaeger # Exporter is the type of trace exporter to use.
   jaeger: # Jaeger configures the Jaeger exporter.
     serviceName: cerbos # ServiceName is the name of the service to report to Jaeger.
     agentEndpoint: "localhost:6831" # AgentEndpoint is the Jaeger agent endpoint to report to.
-    collectorEndpoint: "http://localhost:14268" # CollectorEndpoint is the Jaeger collector endpoint to report to.%!s(MISSING)
+    collectorEndpoint: "http://localhost:14268" # CollectorEndpoint is the Jaeger collector endpoint to report to.

@@ -32,7 +32,7 @@ sort.Strings(sectionKeys)
 for _, k := range sectionKeys {
 keyParts := strings.Split(k, ".")
 _, _ = fmt.Fprintf(out, "%s%s:\n", strings.Repeat("  ", len(keyParts)-1), keyParts[len(keyParts)-1])
-_, _ = fmt.Fprintf(out, "%s%s\n", indent(len(keyParts), sections[k]))
+_, _ = fmt.Fprintf(out, "%s\n", indent(len(keyParts), sections[k]))
 }
 }
 
