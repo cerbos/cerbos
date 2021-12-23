@@ -1,23 +1,24 @@
 // Copyright 2021 Zenauth Ltd.
 // SPDX-License-Identifier: Apache-2.0
 
+//go:build confdocs
+// +build confdocs
+
 package main
 
 import (
 	"bytes"
 	_ "embed"
 	"errors"
+	"flag"
 	"fmt"
 	"go/ast"
-	"go/token"
 	"go/types"
 	"io"
-	"log"
 	"os"
 	"path/filepath"
-	"regexp"
-	"runtime"
 	"strings"
+	"text/template"
 
 	"github.com/fatih/structtag"
 	"github.com/mattn/go-isatty"
@@ -31,7 +32,6 @@ const (
 	interfacePackage   = "github.com/cerbos/cerbos/internal/config"
 	interfaceName      = "Section"
 	internalPkgPrefix  = "github.com/cerbos/cerbos/internal/"
-	confKeyConstName   = "confKey"
 	defaultLogLevel    = "ERROR"
 	keyRequired        = "required"
 	keyOptional        = "optional"
@@ -39,24 +39,34 @@ const (
 	optionIgnore       = "ignore"
 )
 
+//go:embed generator.go.tmpl
+var templateText string
+
 var (
-	errTagNotExists = errors.New("yaml tag does not exist")
-	r               = regexp.MustCompile(`\+sectionKey=([a-zA-Z.]+)`)
+	errInterfaceNotFound = errors.New("interface not found")
+	errTagNotExists      = errors.New("yaml tag does not exist")
+)
+
+var (
+	rootDir    = flag.String("rootDir", ".", "Root directory to scan")
+	outputFile = flag.String("outFile", "docs/modules/configuration/partials/fullconfiguration.adoc", "Path to output the content")
+
+	logger      *zap.SugaredLogger
+	excludeObjs = map[string]struct{}{"CompilationUnit": {}, "Section": {}}
 )
 
 type StructInfo struct {
-	Pkg           string      `json:"pkg"`
-	SectionKey    string      `json:"section_key"`
-	Name          string      `json:"name"`
-	Documentation string      `json:"documentation"`
-	Fields        []FieldInfo `json:"fields"`
+	Pkg           string
+	Name          string
+	Documentation string
+	Fields        []FieldInfo
 }
 
 type FieldInfo struct {
-	Name          string      `json:"name"`
-	Documentation string      `json:"documentation"`
-	Tag           string      `json:"tags"`
-	Fields        []FieldInfo `json:"fields"`
+	Name          string
+	Documentation string
+	Tag           string
+	Fields        []FieldInfo
 }
 
 type TagInfo struct {
@@ -66,7 +76,11 @@ type TagInfo struct {
 	Required     bool
 }
 
-var logger *zap.SugaredLogger
+type Output struct {
+	Imports  map[string]string
+	Sections map[string]string
+	File     string
+}
 
 func init() {
 	if envLevel := os.Getenv("CONFDOCS_LOG_LEVEL"); envLevel != "" {
@@ -76,90 +90,79 @@ func init() {
 	doInitLogging(defaultLogLevel)
 }
 
+/*
+TODO
+- Write out the generated Go program to internal/x/x.go
+- Invoke `go run ./internal/x/x.go` to write out the final partials file.
+- Fix extra indentation added at the beginning
+- Fix `storage` block rendering (the `storage` key is missing from output)
+- Create make target to invoke hack/tools/confdocs.go
+- Remove go generate calls added to the source
+*/
+
 func main() {
-	partialsDir, err := getPartialsDir()
+	flag.Parse()
+	absRootDir, err := filepath.Abs(*rootDir)
 	if err != nil {
-		logger.Fatalf("failed to get partials directory: %v", err)
+		logger.Fatalf("Failed to find absolute path to %q: %v", *rootDir, err)
 	}
 
-	pkgsDir, err := getPackagesDir()
+	absOutputFile, err := filepath.Abs(*outputFile)
 	if err != nil {
-		logger.Fatalf("failed to get packages directory: %v", err)
+		logger.Fatalf("Failed to find absoulte path to %q: %v", *outputFile, err)
 	}
 
-	pkgs, err := loadCurrPackage(pkgsDir)
+	pkgs, err := loadPackages(absRootDir)
 	if err != nil {
-		logger.Fatalf("failed to load package: %v", err)
+		logger.Fatalf("failed to load packages: %v", err)
 	}
 
-	iface, err := findInterfaceDef()
+	iface, err := findInterfaceDef(pkgs)
 	if err != nil {
 		logger.Fatalf("failed to find %s.%s: %v", interfacePackage, interfaceName, err)
 	}
 
-	impls := findIfaceImplementors(iface, pkgs)
-	for _, imp := range impls {
-		if err := genDocs(partialsDir, imp); err != nil {
-			logger.Fatalf("Failed to generate docs for %s.%s: %v", imp.Pkg, imp.Name, err)
-		}
-	}
-}
+	structs := findIfaceImplementors(iface, pkgs)
 
-func getPackagesDir() (string, error) {
-	cwd, err := os.Getwd()
+	output := Output{
+		File:     absOutputFile,
+		Imports:  make(map[string]string),
+		Sections: make(map[string]string),
+	}
+	for i, s := range structs {
+		imp := fmt.Sprintf("c%d", i)
+		output.Imports[imp] = s.Pkg
+		output.Sections[fmt.Sprintf("%s.%s", imp, s.Name)] = genDocs(s)
+	}
+
+	tmpl, err := template.New("generator.go").Parse(templateText)
 	if err != nil {
-		return "", fmt.Errorf("failed to get working directory: %v", err)
+		logger.Fatalf("failed to parse template: %v", err)
 	}
 
-	dir, err := filepath.Abs(cwd)
-	if err != nil {
-		return "", fmt.Errorf("failed to get absolute path: %v", err)
+	if err := tmpl.Execute(os.Stdout, output); err != nil {
+		logger.Fatalf("failed to render template: %v", err)
 	}
-
-	return dir, nil
 }
 
-func getPartialsDir() (string, error) {
-	_, currFile, _, ok := runtime.Caller(0)
-	if !ok {
-		return "", fmt.Errorf("failed to get working directory")
-	}
-
-	return filepath.Join(filepath.Dir(currFile), "..", "..", "..", "docs/modules/configuration/partials"), nil
-}
-
-func loadCurrPackage(pkgDir string) ([]*packages.Package, error) {
-	pkgFile, ok := os.LookupEnv("GOFILE")
-	if !ok || pkgFile == "" {
-		return nil, fmt.Errorf("unable to determine GOFILE")
-	}
-
+func loadPackages(pkgDir string) ([]*packages.Package, error) {
 	cfg := &packages.Config{
 		Mode: packages.NeedTypes | packages.NeedTypesInfo | packages.NeedSyntax,
+		Dir:  pkgDir,
 		Logf: logger.Infof,
 	}
 
-	return packages.Load(cfg, fmt.Sprintf("file=%s", filepath.Join(pkgDir, pkgFile)))
+	return packages.Load(cfg, "./...")
 }
 
-func findInterfaceDef() (*types.Interface, error) {
-	cfg := &packages.Config{
-		Mode: packages.NeedTypes | packages.NeedTypesInfo,
-		Logf: log.Printf,
-	}
-
-	pkgs, err := packages.Load(cfg, interfacePackage)
-	if err != nil {
-		return nil, err
-	}
-
-	for _, p := range pkgs {
-		if obj := p.Types.Scope().Lookup(interfaceName); obj != nil {
+func findInterfaceDef(pkgs []*packages.Package) (*types.Interface, error) {
+	for _, pkg := range pkgs {
+		if obj := pkg.Types.Scope().Lookup(interfaceName); obj != nil {
 			return obj.Type().Underlying().(*types.Interface), nil
 		}
 	}
 
-	return nil, nil
+	return nil, errInterfaceNotFound
 }
 
 func findIfaceImplementors(iface *types.Interface, pkgs []*packages.Package) []*StructInfo {
@@ -170,6 +173,10 @@ func findIfaceImplementors(iface *types.Interface, pkgs []*packages.Package) []*
 		for _, name := range scope.Names() {
 			obj := scope.Lookup(name)
 			if implementsIface(iface, obj) {
+				if _, ok := excludeObjs[obj.Name()]; ok {
+					continue
+				}
+
 				if si := inspect(pkg, obj); si != nil {
 					impls = append(impls, si)
 				}
@@ -199,49 +206,27 @@ func implementsIface(iface *types.Interface, obj types.Object) bool {
 }
 
 func inspect(pkg *packages.Package, obj types.Object) *StructInfo {
-	ts, vs, cg := find(pkg.Syntax, obj.Name(), confKeyConstName)
-	if vs == nil {
-		logger.Fatalf("Failed to find constant named %q", confKeyConstName)
-	}
-
+	ts := find(pkg.Syntax, obj.Name())
 	if ts == nil {
 		logger.Fatalf("Failed to find object named %q", obj.Name())
 	}
 
-	ast.Print(nil, vs)
-
-	var sectionKey = "<MISSING_SECTION_KEY>"
-	switch v := vs.Values[0].(type) {
-	case *ast.BasicLit:
-		sectionKey = strings.Trim(v.Value, "\"")
-		break
-	}
-
-	var doc = ""
-	if cg != nil && cg.List[0] != nil {
-		doc = strings.TrimSpace(strings.TrimPrefix(cg.List[0].Text, "//"))
-	}
-	si := &StructInfo{Pkg: pkg.ID, SectionKey: sectionKey, Name: ts.Name.Name, Documentation: doc}
+	si := &StructInfo{Pkg: pkg.ID, Name: ts.Name.Name, Documentation: strings.TrimSpace(ts.Doc.Text())}
 	si.Fields = inspectStruct(ts.Type)
-	var ok bool
-	si.SectionKey, ok = parseSectionKey(cg)
-	if !ok {
-		logger.Debug()
-	}
 
 	return si
 }
 
-func find(files []*ast.File, objName, constName string) (*ast.TypeSpec, *ast.ValueSpec, *ast.CommentGroup) {
-	f := &finder{objName: objName, constName: constName}
+func find(files []*ast.File, objName string) *ast.TypeSpec {
+	f := &finder{objName: objName}
 	for _, file := range files {
 		ast.Walk(f, file)
-		if f.typeSpec != nil && f.constSpec != nil {
+		if f.typeSpec != nil {
 			break
 		}
 	}
 
-	return f.typeSpec, f.constSpec, f.commentGroup
+	return f.typeSpec
 }
 
 func inspectStruct(node ast.Expr) []FieldInfo {
@@ -275,35 +260,23 @@ func inspectStruct(node ast.Expr) []FieldInfo {
 	return fields
 }
 
-func genDocs(partialsDir string, si *StructInfo) error {
-	dottedPkg := strings.ReplaceAll(strings.TrimPrefix(si.Pkg, internalPkgPrefix), "/", ".")
-	fileName := filepath.Join(partialsDir, fmt.Sprintf("%s.%s.adoc", strings.ToLower(si.Name), dottedPkg))
-
+func genDocs(si *StructInfo) string {
 	buf := new(bytes.Buffer)
-	buf.WriteString(fileName)
-	buf.WriteString("\n")
-
 	if err := doGenDocs(buf, si, 0); err != nil {
-		return err
+		logger.Fatalf("failed to generate docs for %s.%s", si.Pkg, si.Name)
 	}
 
-	// TODO write to file instead of stdout
-	fmt.Println(buf.String())
-	fmt.Printf("%s\n", strings.Repeat("-", 80))
-	return nil
+	return buf.String()
 }
 
 func doGenDocs(out io.Writer, si *StructInfo, indent int) error {
-	docs := ""
 	if si.Documentation != "" {
-		docs = fmt.Sprintf("# %s", si.Documentation)
+		if err := indentf(out, indent, "# %s\n", si.Documentation); err != nil {
+			return err
+		}
 	}
 
-	if err := indentf(out, indent, "%s: %s\n", si.SectionKey, docs); err != nil {
-		return err
-	}
-
-	return walkFields(out, si.Fields, indent+1)
+	return walkFields(out, si.Fields, indent)
 }
 
 func walkFields(out io.Writer, fields []FieldInfo, indent int) error {
@@ -409,23 +382,9 @@ func parseTag(tag string) (*TagInfo, error) {
 	return ti, nil
 }
 
-func parseSectionKey(cg *ast.CommentGroup) (string, bool) {
-	for _, c := range cg.List {
-		submatches := r.FindAllStringSubmatch(c.Text, -1)
-		if submatches != nil && submatches[0] != nil {
-			return submatches[0][1], true
-		}
-	}
-
-	return "", false
-}
-
 type finder struct {
-	objName      string
-	constName    string
-	typeSpec     *ast.TypeSpec
-	constSpec    *ast.ValueSpec
-	commentGroup *ast.CommentGroup
+	typeSpec *ast.TypeSpec
+	objName  string
 }
 
 func (f *finder) Visit(n ast.Node) ast.Visitor {
@@ -433,25 +392,8 @@ func (f *finder) Visit(n ast.Node) ast.Visitor {
 	case *ast.TypeSpec:
 		if t.Name.Name == f.objName {
 			f.typeSpec = t
+			return nil
 		}
-	case *ast.GenDecl:
-		if t.Tok == token.CONST && len(t.Specs) > 0 {
-			vs, ok := t.Specs[0].(*ast.ValueSpec)
-			if ok {
-				if vs.Names[0].Name == f.constName || vs.Names[0].Name == strings.Title(f.constName) {
-					f.constSpec = vs
-				}
-			}
-		} else if t.Tok == token.TYPE && t.Doc != nil && len(t.Specs) > 0 {
-			typeSpec, ok := t.Specs[0].(*ast.TypeSpec)
-			if ok && typeSpec.Name.Name == f.objName {
-				f.commentGroup = t.Doc
-			}
-		}
-	}
-
-	if f.typeSpec != nil && f.constSpec != nil {
-		return nil
 	}
 
 	return f
