@@ -4,7 +4,6 @@
 package test
 
 import (
-	"bytes"
 	"context"
 	"fmt"
 	"io"
@@ -15,10 +14,8 @@ import (
 	"sort"
 	"strings"
 	"testing"
-	"text/template"
 
 	"github.com/stretchr/testify/require"
-	"google.golang.org/protobuf/proto"
 
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
 	schemav1 "github.com/cerbos/cerbos/api/genpb/cerbos/schema/v1"
@@ -122,6 +119,15 @@ func PathToDir(tb testing.TB, dir string) string {
 	return filepath.Join(filepath.Dir(currFile), "testdata", dir)
 }
 
+func DataFS() fs.FS {
+	_, currFile, _, ok := runtime.Caller(0)
+	if !ok {
+		panic(fmt.Errorf("failed to determine current dir"))
+	}
+
+	return os.DirFS(filepath.Join(filepath.Dir(currFile), "testdata"))
+}
+
 type Case struct {
 	Name  string
 	Input []byte
@@ -175,18 +181,8 @@ func LoadTestCases(tb testing.TB, subDir string) []Case {
 
 		testCases[i] = Case{
 			Name:  name,
-			Input: readFileContents(tb, entry),
+			Input: RenderTemplate(tb, entry, nil),
 		}
-
-		tmpl, err := template.New(entry).Funcs(GetTemplateUtilityFunctions()).Parse(string(testCases[i].Input))
-		require.NoError(tb, err)
-
-		var output bytes.Buffer
-
-		err = tmpl.Execute(&output, GetTemplateFunctions(tb))
-		require.NoError(tb, err)
-
-		testCases[i].Input = output.Bytes()
 
 		wantedFiles, err := filepath.Glob(fmt.Sprintf("%s.*", entry))
 		require.NoError(tb, err)
@@ -220,20 +216,6 @@ func readFileContents(tb testing.TB, filePath string) []byte {
 	}
 
 	return nil
-}
-
-func ReadSingleTestCase(tb testing.TB, filePath string, out proto.Message) {
-	tb.Helper()
-
-	fullPath := PathToDir(tb, filePath)
-	data := readFileContents(tb, fullPath)
-
-	tmpl, err := template.New(fullPath).Funcs(GetTemplateUtilityFunctions()).Parse(string(data))
-	require.NoError(tb, err)
-
-	buf := new(bytes.Buffer)
-	require.NoError(tb, tmpl.Execute(buf, GetTemplateFunctions(tb)))
-	require.NoError(tb, util.ReadJSONOrYAML(buf, out))
 }
 
 func SkipIfGHActions(t *testing.T) {

@@ -4,42 +4,76 @@
 package test
 
 import (
+	"bytes"
 	"fmt"
-	"io/ioutil"
+	"io/fs"
+	"path/filepath"
 	"testing"
 	"text/template"
 
 	sprig "github.com/Masterminds/sprig/v3"
+	"google.golang.org/protobuf/encoding/protojson"
+
+	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
+	"github.com/cerbos/cerbos/internal/policy"
 )
 
-// TemplateFuncs contains structs (and functions) used in templates.
-type TemplateFuncs struct {
-	Files Files
-}
-
-func GetTemplateFunctions(tb testing.TB) TemplateFuncs {
+func RenderTemplate(tb testing.TB, path string, data interface{}) []byte {
 	tb.Helper()
 
-	return TemplateFuncs{
-		Files: Files{tb: tb},
-	}
-}
-
-func GetTemplateUtilityFunctions() template.FuncMap {
-	return sprig.TxtFuncMap()
-}
-
-type Files struct {
-	tb testing.TB
-}
-
-func (f Files) Get(relativePath string) string {
-	path := PathToDir(f.tb, relativePath)
-
-	fileBytes, err := ioutil.ReadFile(path)
+	tmpl, err := template.New(filepath.Base(path)).Funcs(TemplateFuncs()).ParseFiles(path)
 	if err != nil {
-		panic(fmt.Errorf("failed to read from %q: %w", relativePath, err))
+		tb.Fatalf("Failed to parse template from %q: %v", path, err)
 	}
 
-	return string(fileBytes)
+	output := new(bytes.Buffer)
+	if err := tmpl.Execute(output, data); err != nil {
+		tb.Fatalf("Failed to execute template at %q: %v", path, err)
+	}
+
+	return output.Bytes()
+}
+
+func TemplateFuncs() template.FuncMap {
+	funcs := make(map[string]interface{})
+	for n, f := range sprig.FuncMap() {
+		funcs[n] = f
+	}
+
+	th := &templateHelper{fsys: DataFS()}
+	funcs["fileBytes"] = th.FileBytes
+	funcs["fileString"] = th.FileString
+	funcs["readPolicy"] = th.ReadPolicy
+	funcs["toPolicyJSON"] = th.ToPolicyJSON
+
+	return template.FuncMap(funcs)
+}
+
+type templateHelper struct {
+	fsys fs.FS
+}
+
+func (th *templateHelper) FileBytes(relPath string) []byte {
+	b, err := fs.ReadFile(th.fsys, relPath)
+	if err != nil {
+		panic(fmt.Errorf("failed to read file %q: %w", relPath, err))
+	}
+	return b
+}
+
+func (th *templateHelper) FileString(relPath string) string {
+	return string(th.FileBytes(relPath))
+}
+
+func (th *templateHelper) ToPolicyJSON(p *policyv1.Policy) string {
+	return protojson.Format(p)
+}
+
+func (th *templateHelper) ReadPolicy(relPath string) *policyv1.Policy {
+	p, err := policy.ReadPolicyFromFile(th.fsys, relPath)
+	if err != nil {
+		panic(fmt.Errorf("failed to read policy from %q: %w", relPath, err))
+	}
+
+	return p
 }

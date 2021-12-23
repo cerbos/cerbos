@@ -1,0 +1,26 @@
+---
+description: Donald duck tests
+principal:
+  id: donald_duck
+  policyVersion: default
+  roles:
+    - employee
+    - user
+tests:
+  - action: view
+    policyVersion: default
+    resourceKind: leave_request
+    want:
+      expression:
+        operator: eq
+        operands:
+          - variable: request.resource.attr.dev_record
+          - value: true
+  - action: view-salary-record
+    policyVersion: default
+    resourceKind: salary_record
+    want:
+      expression:
+        operator: not
+        operands:
+          - value: true

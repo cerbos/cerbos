@@ -5,14 +5,24 @@ package conditions_test
 
 import (
 	"fmt"
+	"log"
 	"math/rand"
+	"reflect"
 	"strings"
 	"testing"
 	"time"
 
+	"github.com/ghodss/yaml"
 	"github.com/google/cel-go/cel"
+	"github.com/google/cel-go/checker/decls"
+	"github.com/google/cel-go/common"
+	"github.com/google/cel-go/common/types"
+	"github.com/google/cel-go/ext"
+	"github.com/google/cel-go/parser"
 	"github.com/stretchr/testify/require"
+	expr "google.golang.org/genproto/googleapis/api/expr/v1alpha1"
 
+	enginev1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
 	"github.com/cerbos/cerbos/internal/conditions"
 )
 
@@ -150,5 +160,154 @@ func benchmarkIntersect(b *testing.B, size int) {
 	for i := 0; i < b.N; i++ {
 		_, _, err := prg.Eval(cel.NoVars())
 		require.NoError(b, err)
+	}
+}
+
+func TestCmpSelectAndCall(t *testing.T) {
+	t.Skip()
+	env, _ := cel.NewEnv(
+		cel.Types(&enginev1.Resource{}),
+		cel.Declarations(
+			decls.NewVar("y", decls.NewListType(decls.String)),
+			decls.NewVar(conditions.CELResourceAbbrev, decls.NewObjectType("cerbos.engine.v1.Resource")),
+			decls.NewVar("z", decls.String),
+			decls.NewVar("v", decls.NewMapType(decls.String, decls.Dyn))),
+		ext.Strings())
+
+	expr0 := "v.geo() in (y + [z]).map(t, t.upperAscii())"
+	expr := "v.geo in (y + [z]).map(t, t.upperAscii())"
+
+	ast, issues := env.Parse(expr)
+	is := require.New(t)
+	if issues != nil {
+		is.NoError(issues.Err())
+	}
+	ast0, issues := env.Parse(expr0)
+	if issues != nil {
+		is.NoError(issues.Err())
+	}
+
+	v := reflect.DeepEqual(*ast0, *ast)
+	is.True(v)
+}
+
+func TestPartialEvaluationWithMacroGlobalVars(t *testing.T) {
+	expander := func(eh parser.ExprHelper, t *expr.Expr, args []*expr.Expr) (*expr.Expr, *common.Error) {
+		return eh.Select(eh.Select(eh.Ident("R"), "attr"), "geo"), nil
+	}
+	geo := parser.NewReceiverMacro("geo", 0, expander)
+	env, _ := cel.NewEnv(
+		cel.Types(&enginev1.Resource{}),
+		cel.Declarations(
+			decls.NewVar("y", decls.NewListType(decls.String)),
+			decls.NewVar(conditions.CELResourceAbbrev, decls.NewObjectType("cerbos.engine.v1.Resource")),
+			decls.NewVar("z", decls.String)),
+		// decls.NewVar("v", decls.NewMapType(decls.String, decls.Dyn))),
+		ext.Strings(),
+		cel.Macros(geo))
+
+	vars, _ := cel.PartialVars(map[string]interface{}{
+		"y": []string{"GB", "US"},
+		"z": "ca",
+		"v": map[string]interface{}{},
+	}, cel.AttributePattern("R"))
+
+	expr := "v.geo() in (y + [z]).map(t, t.upperAscii())"
+	want := `R.attr.geo in ["GB", "US", "CA"]`
+
+	is := require.New(t)
+	ast, issues := env.Compile(expr)
+	if issues != nil {
+		is.NoError(issues.Err())
+	}
+	prg, err := env.Program(ast, cel.EvalOptions(cel.OptTrackState, cel.OptPartialEval))
+	is.NoError(err)
+
+	out, det, err := prg.Eval(vars)
+	is.NoError(err)
+	is.True(types.IsUnknown(out))
+	residual, err := env.ResidualAst(ast, det)
+	is.NoError(err)
+	astToString, err := cel.AstToString(residual)
+	is.NoError(err)
+	is.Equal(want, astToString)
+}
+
+func TestPartialEvaluation(t *testing.T) {
+	env, _ := cel.NewEnv(
+		cel.Types(&enginev1.Resource{}),
+		cel.Declarations(
+			decls.NewVar(conditions.CELRequestIdent, decls.NewObjectType("cerbos.engine.v1.CheckInput")),
+			decls.NewVar("y", decls.NewListType(decls.String)),
+			decls.NewVar(conditions.CELResourceAbbrev, decls.NewObjectType("cerbos.engine.v1.Resource")),
+			decls.NewVar("request.principal", decls.NewMapType(decls.String, decls.Dyn)),
+			decls.NewVar("z", decls.String)), ext.Strings())
+
+	vars, _ := cel.PartialVars(map[string]interface{}{
+		"y": []string{"GB", "US"},
+		"z": "ca",
+		"request.principal": map[string]interface{}{
+			"attr": map[string]interface{}{
+				"country": "NZ",
+			},
+		},
+	},
+		cel.AttributePattern("request").QualString("resource"),
+		cel.AttributePattern("R"),
+	)
+
+	tests := []struct {
+		expr, result string
+	}{
+		{
+			expr:   "R.attr.geo in (y + [z]).map(t, t.upperAscii())",
+			result: `R.attr.geo in ["GB", "US", "CA"]`,
+		},
+		{
+			expr:   "request.resource.attr.geo == request.principal.attr.country",
+			result: `request.resource.attr.geo == "NZ"`,
+		},
+		{
+			expr:   "R.attr.geo in (y + [z]).map(t, t.upperAscii()) || 1 == 1",
+			result: "true",
+		},
+		{
+			expr:   `"CA" in (y + [z]).map(t, t.upperAscii())`,
+			result: "true",
+		},
+		{
+			expr:   `("CA" in (y + [z]).map(t, t.upperAscii())) && 1 == 2`,
+			result: "false",
+		},
+		{
+			expr:   `("NZ" in (y + [z]).map(t, t.upperAscii()))`,
+			result: "false",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.expr, func(t *testing.T) {
+			is := require.New(t)
+			expr := tt.expr
+			ast, issues := env.Compile(expr)
+			if issues != nil {
+				is.NoError(issues.Err())
+			}
+			prg, err := env.Program(ast, cel.EvalOptions(cel.OptTrackState, cel.OptPartialEval))
+			is.NoError(err)
+
+			out, det, err := prg.Eval(vars)
+			is.NotNil(det) // It is not nil if cel.OptTrackState is included in the cel.EvalOptions
+			t.Log(out.Type())
+			is.NoError(err)
+			residual, err := env.ResidualAst(ast, det)
+			is.NoError(err)
+			bytes, err := yaml.Marshal(residual.Expr())
+			log.Print("\n", string(bytes))
+			is.NoError(err)
+			astToString, err := cel.AstToString(residual)
+			is.NoError(err)
+			is.Equal(tt.result, astToString)
+			log.Print(astToString)
+		})
 	}
 }

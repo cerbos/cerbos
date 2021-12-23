@@ -57,6 +57,11 @@ func TestReadPolicy(t *testing.T) {
 			input: filepath.Join(dir, "derived_roles_01.json"),
 			want:  test.GenDerivedRoles(test.NoMod()),
 		},
+		{
+			name:    "Multiple YAML documents",
+			input:   filepath.Join(dir, "multiple_policies.yaml"),
+			wantErr: true,
+		},
 	}
 
 	for _, tc := range testCases {

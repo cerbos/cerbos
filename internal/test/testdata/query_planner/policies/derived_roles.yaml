@@ -1,0 +1,24 @@
+---
+apiVersion: "api.cerbos.dev/v1"
+variables:
+  same_geography: request.resource.attr.geography == request.principal.attr.geography
+derivedRoles:
+  name: beta
+  definitions:
+    - name: owner
+      parentRoles: ["user"]
+      condition:
+        match:
+          expr: request.resource.attr.owner == request.principal.id
+
+    - name: any_employee
+      parentRoles: ["employee"]
+
+    - name: direct_manager
+      parentRoles: ["manager"]
+      condition:
+        match:
+          any:
+            of:
+              - expr: V.same_geography
+              - expr: request.resource.attr.geography in request.principal.attr.managed_geographies

@@ -57,6 +57,12 @@ check-grpc: $(GRPCURL)
 		$(GRPCURL) -authority cerbos.local -insecure -d @ localhost:$(GRPC_PORT) cerbos.svc.v1.CerbosPlaygroundService/PlaygroundEvaluate < $(REQ_FILE);\
 		echo "";)
 
+	@ $(foreach REQ_FILE,\
+		$(wildcard $(DEV_DIR)/requests/plan_resources/*.json),\
+		echo $(REQ_FILE); \
+		$(GRPCURL) -authority cerbos.local -insecure -d @ localhost:$(GRPC_PORT) cerbos.svc.v1.CerbosService/ResourcesQueryPlan < $(REQ_FILE);\
+		echo "";)
+
 .PHONY: check-grpc-insecure
 check-grpc-insecure: $(GRPCURL)
 	@ $(foreach REQ_FILE,\
@@ -81,6 +87,12 @@ check-grpc-insecure: $(GRPCURL)
 		$(wildcard $(DEV_DIR)/requests/playground_evaluate/*.json),\
 		echo $(REQ_FILE); \
 		$(GRPCURL) -plaintext -d @ localhost:$(GRPC_PORT) cerbos.svc.v1.CerbosPlaygroundService/PlaygroundEvaluate < $(REQ_FILE);\
+		echo "";)
+
+	@ $(foreach REQ_FILE,\
+		$(wildcard $(DEV_DIR)/requests/plan_resources/*.json),\
+		echo $(REQ_FILE); \
+		$(GRPCURL) -plaintext -d @ localhost:$(GRPC_PORT) cerbos.svc.v1.CerbosService/ResourcesQueryPlan< $(REQ_FILE);\
 		echo "";)
 
 .PHONY: check-http
@@ -113,6 +125,13 @@ check-http:
 		curl -k https://localhost:$(HTTP_PORT)/api/playground/evaluate?pretty -d @$(REQ_FILE);\
 		echo "";)
 
+	@ $(foreach REQ_FILE,\
+		$(wildcard $(DEV_DIR)/requests/plan_resources/*.json),\
+		echo "";\
+		echo $(REQ_FILE); \
+		curl -k https://localhost:$(HTTP_PORT)/api/x/plan/resources?pretty -d @$(REQ_FILE);\
+		echo "";)
+
 .PHONY: check-http-insecure
 check-http-insecure:
 	@ $(foreach REQ_FILE,\
@@ -141,6 +160,13 @@ check-http-insecure:
 		echo "";\
 		echo $(REQ_FILE); \
 		curl http://localhost:$(HTTP_PORT)/api/playground/evaluate?pretty -d @$(REQ_FILE);\
+		echo "";)
+
+	@ $(foreach REQ_FILE,\
+		$(wildcard $(DEV_DIR)/requests/plan_resources/*.json),\
+		echo "";\
+		echo $(REQ_FILE); \
+		curl -k http://localhost:$(HTTP_PORT)/api/x/plan/resources?pretty -d @$(REQ_FILE);\
 		echo "";)
 
 .PHONY: perf

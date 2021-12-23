@@ -1,0 +1,165 @@
+---
+"{a:2, b: 3}":
+  expression:
+    operator: struct
+    operands:
+      - expression:
+          operator: "set-field"
+          operands:
+            - variable: a
+            - value: 2
+      - expression:
+          operator: "set-field"
+          operands:
+            - variable: b
+            - value: 3
+"a[b].c.d":
+  expression:
+    operator: "get-field"
+    operands:
+      - expression:
+          operator: "get-field"
+          operands:
+            - expression:
+                operator: index
+                operands:
+                  - variable: a
+                  - variable: b
+            - variable: c
+      - variable: d
+"x.filter(t, t > 0)":
+  expression:
+    operator: loop
+    operands:
+      - expression:
+          operands:
+            - expression:
+                operands:
+                  - expression:
+                      operands:
+                        - variable: t
+                        - value: 0
+                      operator: gt
+                  - expression:
+                      operands:
+                        - variable: __result__
+                        - expression:
+                            operands:
+                              - variable: t
+                            operator: list
+                      operator: add
+                  - variable: __result__
+                operator: _?_:_
+          operator: loop-step
+      - expression:
+          operands:
+            - value: true
+          operator: loop-condition
+      - expression:
+          operands:
+            - variable: __result__
+          operator: loop-result
+      - expression:
+          operands:
+            - value: []
+          operator: loop-accu-init
+      - expression:
+          operands:
+            - variable: x
+          operator: loop-iter-range
+      - expression:
+          operands:
+            - variable: t
+          operator: loop-iter-var
+      - expression:
+          operands:
+            - variable: __result__
+          operator: loop-accu-var
+
+"x.map(t, t.upperAscii())":
+  expression:
+    operands:
+      - expression:
+          operands:
+            - expression:
+                operands:
+                  - variable: __result__
+                  - expression:
+                      operands:
+                        - expression:
+                            operands:
+                              - variable: t
+                            operator: upperAscii
+                      operator: list
+                operator: add
+          operator: loop-step
+      - expression:
+          operands:
+            - value: true
+          operator: loop-condition
+      - expression:
+          operands:
+            - variable: __result__
+          operator: loop-result
+      - expression:
+          operands:
+            - value: []
+          operator: loop-accu-init
+      - expression:
+          operands:
+            - variable: x
+          operator: loop-iter-range
+      - expression:
+          operands:
+            - variable: t
+          operator: loop-iter-var
+      - expression:
+          operands:
+            - variable: __result__
+          operator: loop-accu-var
+    operator: loop
+
+"x.f(a,3)":
+  expression:
+    operands:
+      - variable: x
+      - variable: a
+      - value: 3
+    operator: f
+"f(a,3)":
+  expression:
+    operands:
+      - variable: a
+      - value: 3
+    operator: f
+"a[b].c":
+  expression:
+    operands:
+      - expression:
+          operands:
+            - variable: a
+            - variable: b
+          operator: index
+      - variable: c
+    operator: get-field
+"z + [2,3]":
+      expression:
+        operands:
+          - variable: z
+          - value:
+              - 2
+              - 3
+        operator: add
+"[1,a + 2,\"q\"]":
+  expression:
+    operands:
+      - value: 1
+      - expression:
+          operands:
+            - variable: a
+            - value: 2
+          operator: add
+      - value: q
+    operator: list
+"has(a.b)":
+  value: true
