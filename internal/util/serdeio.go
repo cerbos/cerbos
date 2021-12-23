@@ -4,7 +4,9 @@
 package util
 
 import (
+	"bufio"
 	"bytes"
+	"errors"
 	"fmt"
 	"io"
 	"unicode"
@@ -14,33 +16,102 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
+const (
+	bufSize     = 1024 * 4        // 4KiB
+	maxFileSize = 1024 * 1024 * 4 // 4MiB
+	newline     = '\n'
+)
+
+var (
+	jsonStart           = []byte("{")
+	yamlSep             = []byte("---")
+	ErrMultipleYAMLDocs = errors.New("more than one YAML document detected")
+)
+
 func ReadJSONOrYAML(src io.Reader, dest proto.Message) error {
-	data, err := io.ReadAll(src)
-	if err != nil {
-		return fmt.Errorf("failed to read from source: %w", err)
-	}
-
-	jsonBytes, err := toJSON(data)
-	if err != nil {
-		return fmt.Errorf("failed to convert data to JSON: %w", err)
-	}
-
-	if err := protojson.Unmarshal(jsonBytes, dest); err != nil {
-		return fmt.Errorf("failed to unmarshal JSON: %w", err)
-	}
-
-	return nil
+	d := mkDecoder(io.LimitReader(src, maxFileSize))
+	return d.decode(dest)
 }
 
-func toJSON(data []byte) ([]byte, error) {
-	trimmed := bytes.TrimLeftFunc(data, unicode.IsSpace)
+func mkDecoder(src io.Reader) decoder {
+	buf := bufio.NewReaderSize(src, bufSize)
+	prelude, _ := buf.Peek(bufSize)
+	trimmed := bytes.TrimLeftFunc(prelude, unicode.IsSpace)
 
-	// If we find a starting brace, this already contains JSON.
-	if bytes.HasPrefix(trimmed, []byte("{")) {
-		return trimmed, nil
+	if bytes.HasPrefix(trimmed, jsonStart) {
+		return newJSONDecoder(buf)
 	}
 
-	return yaml.YAMLToJSON(trimmed)
+	return newYAMLDecoder(buf)
+}
+
+type decoder interface {
+	decode(dest proto.Message) error
+}
+
+type decoderFunc func(dest proto.Message) error
+
+func (df decoderFunc) decode(dest proto.Message) error {
+	return df(dest)
+}
+
+func newJSONDecoder(src *bufio.Reader) decoderFunc {
+	return func(dest proto.Message) error {
+		jsonBytes, err := io.ReadAll(src)
+		if err != nil {
+			return err
+		}
+
+		if err := protojson.Unmarshal(jsonBytes, dest); err != nil {
+			return fmt.Errorf("failed to unmarshal JSON: %w", err)
+		}
+		return nil
+	}
+}
+
+func newYAMLDecoder(src *bufio.Reader) decoderFunc {
+	return func(dest proto.Message) error {
+		buf := new(bytes.Buffer)
+		numDocs := 0
+
+		s := bufio.NewScanner(src)
+		seenContent := false
+		for s.Scan() {
+			line := s.Bytes()
+
+			// ignore empty lines at the beginning of the file
+			if !seenContent && len(bytes.TrimSpace(line)) == 0 {
+				continue
+			}
+			seenContent = true
+
+			if bytes.HasPrefix(line, yamlSep) {
+				numDocs++
+				if numDocs > 1 || (numDocs == 1 && buf.Len() > 0) {
+					return ErrMultipleYAMLDocs
+				}
+			}
+
+			if _, err := buf.Write(line); err != nil {
+				return fmt.Errorf("failed to buffer YAML data: %w", err)
+			}
+			_ = buf.WriteByte(newline)
+		}
+
+		if err := s.Err(); err != nil {
+			return fmt.Errorf("failed to read from source: %w", err)
+		}
+
+		jsonBytes, err := yaml.YAMLToJSON(buf.Bytes())
+		if err != nil {
+			return fmt.Errorf("failed to convert YAML to JSON: %w", err)
+		}
+
+		if err := protojson.Unmarshal(jsonBytes, dest); err != nil {
+			return fmt.Errorf("failed to unmarshal JSON: %w", err)
+		}
+		return nil
+	}
 }
 
 func WriteYAML(dest io.Writer, data proto.Message) error {

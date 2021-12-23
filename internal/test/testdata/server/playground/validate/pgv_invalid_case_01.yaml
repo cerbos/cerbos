@@ -23,11 +23,11 @@ playgroundValidate:
       "errors": [
         {
           "file": "resource.yaml",
-          "error": "Failed to read: failed to convert data to JSON: yaml: invalid leading UTF-8 octet"
+          "error": "Failed to read: failed to convert YAML to JSON: yaml: invalid leading UTF-8 octet"
         },
         {
           "file": "common_roles.yaml",
-          "error": "Failed to read: failed to convert data to JSON: yaml: invalid leading UTF-8 octet"
+          "error": "Failed to read: failed to convert YAML to JSON: yaml: invalid leading UTF-8 octet"
         }
       ]
     }
