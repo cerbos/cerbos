@@ -4,8 +4,8 @@
 package storage
 
 const (
-	defaultDriver = "disk"
 	ConfKey       = "storage"
+	driverConfKey = "storage.driver"
 )
 
 // Conf is required configuration for storage.
@@ -17,8 +17,4 @@ type Conf struct {
 
 func (c *Conf) Key() string {
 	return ConfKey
-}
-
-func (c *Conf) SetDefaults() {
-	c.Driver = defaultDriver
 }
