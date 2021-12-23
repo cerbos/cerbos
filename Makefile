@@ -58,9 +58,12 @@ generate-notice: $(GO_LICENCE_DETECTOR)
 		-rules=hack/notice/rules.json \
 		-noticeOut=NOTICE.txt
 
-.PHONY: generate-go
-generate-go:
-	@ go generate ./...
+.PHONY: confdocs
+confdocs:
+	@ mkdir -p ./internal/confdocs
+	@ go run ./hack/tools/confdocs/confdocs.go > ./internal/confdocs/generated.go
+	@ go run ./internal/confdocs/generated.go
+	@ rm -rf ./internal/confdocs
 
 .PHONY: deps
 deps:
@@ -97,7 +100,7 @@ build: $(GORELEASER) generate lint test
 	@ $(GORELEASER) release --config=.goreleaser.yml --snapshot --skip-publish --rm-dist
 
 .PHONY: docs
-docs: generate-go
+docs: confdocs
 	@ docs/build.sh
 
 .PHONY: install

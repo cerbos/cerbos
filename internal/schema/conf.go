@@ -1,8 +1,6 @@
 // Copyright 2021 Zenauth Ltd.
 // SPDX-License-Identifier: Apache-2.0
 
-//go:generate go run -tags=confdocs ./../../hack/tools/confdocs/confdocs.go
-
 package schema
 
 const (
@@ -11,7 +9,6 @@ const (
 )
 
 // Conf is optional configuration for schema validation.
-//+sectionKey=schema
 type Conf struct {
 	// Enforcement defines level of the validations. Possible values are none, warn, reject.
 	Enforcement Enforcement `yaml:"enforcement" conf:",defaultValue=reject"`

@@ -1,8 +1,6 @@
 // Copyright 2021 Zenauth Ltd.
 // SPDX-License-Identifier: Apache-2.0
 
-//go:generate go run -tags=confdocs ./../../../hack/tools/confdocs/confdocs.go
-
 package tracing
 
 import (
@@ -23,7 +21,6 @@ var (
 )
 
 // Conf is optional configuration for tracing.
-//+sectionKey=tracing
 type Conf struct {
 	// SampleProbability is the probability of sampling expressed as a number between 0 and 1.
 	SampleProbability float64 `yaml:"sampleProbability" conf:",defaultValue=0.1"`

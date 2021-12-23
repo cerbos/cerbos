@@ -1,2 +1,0 @@
-schema: 
-  enforcement: reject # Enforcement defines level of the validations. Possible values are none, warn, reject.

@@ -1,5 +1,0 @@
-audit:
-  enabled: false # Enabled defines whether audit logging is enabled.
-  backend: local # Backend states which backend to use for Audits.
-  accessLogsEnabled: true # AccessLogsEnabled defines whether access logging is enabled.
-  decisionLogsEnabled: true # DecisionLogsEnabled defines whether logging of policy decisions is enabled.

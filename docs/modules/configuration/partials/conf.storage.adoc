@@ -1,2 +1,0 @@
-storage: # Required.
-  driver: "disk" # Required. Valid values are "disk", "git", "sqlite3", "mysql", "postgres" and "blob"

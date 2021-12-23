@@ -1,8 +1,6 @@
 // Copyright 2021 Zenauth Ltd.
 // SPDX-License-Identifier: Apache-2.0
 
-//go:generate go run -tags=confdocs ./../../../hack/tools/confdocs/confdocs.go
-
 package local
 
 import (
@@ -35,7 +33,6 @@ var (
 )
 
 // Conf is optional configuration for local Audit.
-//+sectionKey=audit.local
 type Conf struct {
 	// Path to store the data
 	StoragePath string `yaml:"storagePath" conf:",defaultValue=/path/to/dir"`

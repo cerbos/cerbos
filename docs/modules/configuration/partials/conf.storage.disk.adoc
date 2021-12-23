@@ -1,3 +1,0 @@
-  disk: 
-    directory: pkg/test/testdata/store # Required. Directory is the path on disk where policies are stored.
-    watchForChanges: false # Required. WatchForChanges enables watching the directory for changes.

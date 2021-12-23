@@ -1,7 +1,0 @@
-  postgres: 
-    url: "postgres://user:password@localhost:port/db" # Required. URL is the Postgres connection URL. See https://www.postgresql.org/docs/current/libpq-connect.html#LIBPQ-CONNSTRING
-    connPool: 
-      maxLifeTime: 60m
-      maxIdleTime: 45s
-      maxOpen: 4
-      maxIdle: 1 

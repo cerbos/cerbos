@@ -1,8 +1,6 @@
 // Copyright 2021 Zenauth Ltd.
 // SPDX-License-Identifier: Apache-2.0
 
-//go:generate go run -tags=confdocs ./../../../hack/tools/confdocs/confdocs.go
-
 package blob
 
 import (
@@ -26,7 +24,6 @@ const (
 )
 
 // Conf is required (if driver is set to 'blob') configuration for cloud storage driver.
-//+sectionKey=blob
 type Conf struct {
 	// Bucket URL (Examples: s3://my-bucket?region=us-west-1 gs://my-bucket azblob://my-container).
 	Bucket string `yaml:"bucket" conf:"required,defaultValue=\"s3://my-bucket-name?region=us-east-2\""`

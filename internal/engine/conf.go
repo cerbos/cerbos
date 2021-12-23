@@ -1,8 +1,6 @@
 // Copyright 2021 Zenauth Ltd.
 // SPDX-License-Identifier: Apache-2.0
 
-//go:generate go run -tags=confdocs ./../../hack/tools/confdocs/confdocs.go
-
 package engine
 
 import (
@@ -18,7 +16,6 @@ const confKey = "engine"
 var errEmptyDefaultVersion = errors.New("engine.defaultVersion must not be an empty string")
 
 // Conf is optional configuration for engine.
-//+sectionKey=engine
 type Conf struct {
 	// DefaultPolicyVersion defines what version to assume if the request does not specify one.
 	DefaultPolicyVersion string `yaml:"defaultPolicyVersion" conf:",defaultValue=\"default\""`
