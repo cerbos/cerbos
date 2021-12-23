@@ -23,7 +23,7 @@ var sectionKeys []string
     {
     s := &{{ $k }}{}
     k := s.Key()
-    sections[k] = `{{- $v -}}`
+    sections[k] = strings.TrimSpace(`{{- $v -}}`)
     sectionKeys = append(sectionKeys, k)
     }
 {{- end }}
