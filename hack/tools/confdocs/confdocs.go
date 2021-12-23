@@ -93,7 +93,6 @@ func init() {
 
 /*
 TODO
-- Fix extra indentation added at the beginning
 - Fix `storage` block rendering (the `storage` key is missing from output)
 */
 

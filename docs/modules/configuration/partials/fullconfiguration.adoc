@@ -48,6 +48,8 @@ server:
     adminCredentials: # AdminCredentials defines the admin user credentials.
       username: cerbos # Username is the hardcoded username to use for authentication.
       passwordHash: JDJ5JDEwJEdEOVFzZDE2VVhoVkR0N2VkUFBVM09nalc0QnNZaC9xc2E4bS9mcUJJcEZXenp5OUpjMi91Cgo= # PasswordHash is the base64-encoded bcrypt hash of the password to use for authentication.%!s(MISSING)
+storage:
+  # Conf is required configuration for storage.%!s(MISSING)
   blob:
     # Conf is required (if driver is set to 'blob') configuration for cloud storage driver.
     bucket: "s3://my-bucket-name?region=us-east-2" # Required. Bucket URL (Examples: s3://my-bucket?region=us-west-1 gs://my-bucket azblob://my-container).
