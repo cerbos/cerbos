@@ -80,25 +80,25 @@ server:
     # Conf is required (if driver is set to 'mysql') configuration for mysql driver.
     dsn: "user:password@tcp(localhost:3306)/db?interpolateParams=true" # Required. Data source name
     connPool: 
-          maxLifeTime: 60m
-          maxIdleTime: 45s
-          maxOpen: 4
-          maxIdle: 1 
+      maxLifeTime: 60m
+      maxIdleTime: 45s
+      maxOpen: 4
+      maxIdle: 1 
     tls: 
-            mytls:
-              cert: /path/to/certificate
-              key: /path/to/private_key
-              caCert: /path/to/CA_certificate 
+      mytls:
+        cert: /path/to/certificate
+        key: /path/to/private_key
+        caCert: /path/to/CA_certificate 
     serverPubKey: 
-            mykey: testdata/server_public_key.pem%!s(MISSING)
+      mykey: testdata/server_public_key.pem%!s(MISSING)
   postgres:
     # Conf is required (if driver is set to 'postres') configuration for postres driver.
     url: "postgres://user:password@localhost:port/db" # Required. URL is the Postgres connection URL. See https://www.postgresql.org/docs/current/libpq-connect.html#LIBPQ-CONNSTRING
     connPool: 
-          maxLifeTime: 60m
-          maxIdleTime: 45s
-          maxOpen: 4
-          maxIdle: 1%!s(MISSING)
+      maxLifeTime: 60m
+      maxIdleTime: 45s
+      maxOpen: 4
+      maxIdle: 1%!s(MISSING)
   sqlite3:
     # Conf is required (if driver is set to 'sqlite3') configuration for sqlite3 driver.
     dsn: ":memory:?_fk=true" # Required. Data source name%!s(MISSING)
