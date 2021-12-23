@@ -51,8 +51,8 @@ func RegisterDriver(name string, cons Constructor) {
 
 // New returns a storage driver implementation based on the configured driver.
 func New(ctx context.Context) (Store, error) {
-	conf := Conf{}
-	if err := config.GetSection(&conf); err != nil {
+	conf := &Conf{}
+	if err := config.GetSection(conf); err != nil {
 		return nil, fmt.Errorf("failed to get storage configuration section: %w", err)
 	}
 
