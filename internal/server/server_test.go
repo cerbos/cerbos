@@ -463,7 +463,7 @@ func readTestCase(t *testing.T, name string, data []byte) *privatev1.ServerTestC
 	t.Helper()
 
 	tc := &privatev1.ServerTestCase{}
-	require.NoError(t, util.ReadJSONOrYAML(bytes.NewReader(data), tc), string(data))
+	require.NoError(t, util.ReadJSONOrYAML(bytes.NewReader(data), tc), "Failed to parse:>>>\n%s\n", string(data))
 
 	if tc.Name == "" {
 		tc.Name = name
