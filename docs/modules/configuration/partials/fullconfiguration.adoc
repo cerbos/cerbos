@@ -1,6 +1,12 @@
   audit:
+    # Conf is optional configuration for Audit.
+    enabled: false # Enabled defines whether audit logging is enabled.
+    backend: local # Backend states which backend to use for Audits.
+    accessLogsEnabled: true # AccessLogsEnabled defines whether access logging is enabled.
+    decisionLogsEnabled: true # DecisionLogsEnabled defines whether logging of policy decisions is enabled.
     
     local:
+      # Conf is optional configuration for local Audit.
       storagePath: /path/to/dir # Path to store the data
       retentionPeriod: 168h # How long to keep records for
       advanced: 
@@ -10,6 +16,7 @@
         gcInterval: 60s 
       
   auxData:
+    # Conf is optional configuration for Auxdata.
     jwt: # JWT holds the configuration for JWTs used as an auxiliary data source for the engine.
       keySets: 
         - id: ks1
@@ -18,12 +25,15 @@
       disableVerification: false # DisableVerification disables JWT verification.
     
   engine:
+    # Conf is optional configuration for engine.
     defaultPolicyVersion: "default" # DefaultPolicyVersion defines what version to assume if the request does not specify one.
     
   schema:
+    # Conf is optional configuration for schema validation.
     enforcement: reject # Enforcement defines level of the validations. Possible values are none, warn, reject.
     
   server:
+    # Conf is required configuration for the server.
     httpListenAddr: ":3592" # Required. HTTPListenAddr is the dedicated HTTP address.
     grpcListenAddr: ":3593" # Required. GRPCListenAddr is the dedicated GRPC address.
     tls: # TLS defines the TLS configuration for the server.
@@ -45,6 +55,7 @@
         passwordHash: JDJ5JDEwJEdEOVFzZDE2VVhoVkR0N2VkUFBVM09nalc0QnNZaC9xc2E4bS9mcUJJcEZXenp5OUpjMi91Cgo= # PasswordHash is the base64-encoded bcrypt hash of the password to use for authentication.
     
     blob:
+      # Conf is required (if driver is set to 'blob') configuration for cloud storage driver.
       bucket: "s3://my-bucket-name?region=us-east-2" # Required. Bucket URL (Examples: s3://my-bucket?region=us-west-1 gs://my-bucket azblob://my-container).
       prefix: policies # Prefix specifies a subdirectory to download.
       workDir: ${HOME}/tmp/cerbos/work # WorkDir is the local path to check out policies to.
@@ -53,10 +64,12 @@
       requestTimeout: 10s # RequestTimeout specifies the timeout for an HTTP request.
       
     disk:
+      # Conf is required (if driver is set to 'disk') configuration for disk storage driver.
       directory: pkg/test/testdata/store # Required. Directory is the path on disk where policies are stored.
       watchForChanges: false # Required. WatchForChanges enables watching the directory for changes.
       
     git:
+      # Conf is required (if driver is set to 'git') configuration for Git storage driver.
       protocol: file # Required. Protocol is the Git protocol to use. Valid values are https, ssh, and file.
       url: file://${HOME}/tmp/cerbos/policies # Required. URL is the URL to the Git repo.
       branch: policies # Branch is the branch to checkout.
@@ -73,6 +86,7 @@
       updatePollInterval: 60s # UpdatePollInterval specifies the interval to poll the Git repository for changes. Set to 0 to disable.
       
     mysql:
+      # Conf is required (if driver is set to 'mysql') configuration for mysql driver.
       dsn: "user:password@tcp(localhost:3306)/db?interpolateParams=true" # Required. Data source name
       connPool: 
             maxLifeTime: 60m
@@ -88,6 +102,7 @@
               mykey: testdata/server_public_key.pem 
       
     postgres:
+      # Conf is required (if driver is set to 'postres') configuration for postres driver.
       url: "postgres://user:password@localhost:port/db" # Required. URL is the Postgres connection URL. See https://www.postgresql.org/docs/current/libpq-connect.html#LIBPQ-CONNSTRING
       connPool: 
             maxLifeTime: 60m
@@ -96,9 +111,11 @@
             maxIdle: 1 
       
     sqlite3:
+      # Conf is required (if driver is set to 'sqlite3') configuration for sqlite3 driver.
       dsn: ":memory:?_fk=true" # Required. Data source name
       
   tracing:
+    # Conf is optional configuration for tracing.
     sampleProbability: 0.1 # SampleProbability is the probability of sampling expressed as a number between 0 and 1.
     exporter: jaeger # Exporter is the type of trace exporter to use.
     jaeger: # Jaeger configures the Jaeger exporter.

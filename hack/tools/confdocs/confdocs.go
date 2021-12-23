@@ -13,6 +13,7 @@ import (
 	"flag"
 	"fmt"
 	"go/ast"
+	"go/token"
 	"go/types"
 	"io"
 	"os"
@@ -92,12 +93,8 @@ func init() {
 
 /*
 TODO
-- Write out the generated Go program to internal/x/x.go
-- Invoke `go run ./internal/x/x.go` to write out the final partials file.
 - Fix extra indentation added at the beginning
 - Fix `storage` block rendering (the `storage` key is missing from output)
-- Create make target to invoke hack/tools/confdocs.go
-- Remove go generate calls added to the source
 */
 
 func main() {
@@ -206,18 +203,18 @@ func implementsIface(iface *types.Interface, obj types.Object) bool {
 }
 
 func inspect(pkg *packages.Package, obj types.Object) *StructInfo {
-	ts := find(pkg.Syntax, obj.Name())
+	ts, cg := find(pkg.Syntax, obj.Name())
 	if ts == nil {
 		logger.Fatalf("Failed to find object named %q", obj.Name())
 	}
 
-	si := &StructInfo{Pkg: pkg.ID, Name: ts.Name.Name, Documentation: strings.TrimSpace(ts.Doc.Text())}
+	si := &StructInfo{Pkg: pkg.ID, Name: ts.Name.Name, Documentation: strings.TrimSpace(cg.Text())}
 	si.Fields = inspectStruct(ts.Type)
 
 	return si
 }
 
-func find(files []*ast.File, objName string) *ast.TypeSpec {
+func find(files []*ast.File, objName string) (*ast.TypeSpec, *ast.CommentGroup) {
 	f := &finder{objName: objName}
 	for _, file := range files {
 		ast.Walk(f, file)
@@ -226,7 +223,7 @@ func find(files []*ast.File, objName string) *ast.TypeSpec {
 		}
 	}
 
-	return f.typeSpec
+	return f.typeSpec, f.commentGroup
 }
 
 func inspectStruct(node ast.Expr) []FieldInfo {
@@ -235,8 +232,17 @@ func inspectStruct(node ast.Expr) []FieldInfo {
 	case *ast.StructType:
 		for _, f := range t.Fields.List {
 			if len(f.Names) == 0 {
-				// TODO Handle Embedded struct
-				continue
+				i, ok := f.Type.(*ast.Ident)
+				if ok {
+					ts, ok := i.Obj.Decl.(*ast.TypeSpec)
+					if ok {
+						st, ok := ts.Type.(*ast.StructType)
+						if ok {
+							fields = inspectStruct(st)
+							continue
+						}
+					}
+				}
 			}
 
 			fi := FieldInfo{Name: f.Names[0].Name, Documentation: strings.TrimSpace(f.Doc.Text())}
@@ -244,7 +250,6 @@ func inspectStruct(node ast.Expr) []FieldInfo {
 				fi.Tag = f.Tag.Value
 			}
 			fi.Fields = inspectStruct(f.Type)
-
 			fields = append(fields, fi)
 		}
 	case *ast.StarExpr:
@@ -383,8 +388,9 @@ func parseTag(tag string) (*TagInfo, error) {
 }
 
 type finder struct {
-	typeSpec *ast.TypeSpec
-	objName  string
+	typeSpec     *ast.TypeSpec
+	commentGroup *ast.CommentGroup
+	objName      string
 }
 
 func (f *finder) Visit(n ast.Node) ast.Visitor {
@@ -394,6 +400,15 @@ func (f *finder) Visit(n ast.Node) ast.Visitor {
 			f.typeSpec = t
 			return nil
 		}
+		break
+	case *ast.GenDecl:
+		if t.Tok == token.TYPE && t.Doc != nil && len(t.Specs) > 0 {
+			typeSpec, ok := t.Specs[0].(*ast.TypeSpec)
+			if ok && typeSpec.Name.Name == f.objName {
+				f.commentGroup = t.Doc
+			}
+		}
+		break
 	}
 
 	return f
