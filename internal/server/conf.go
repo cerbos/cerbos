@@ -30,19 +30,19 @@ var (
 // Conf is required configuration for the server.
 type Conf struct {
 	// HTTPListenAddr is the dedicated HTTP address.
-	HTTPListenAddr string `yaml:"httpListenAddr" conf:"required,defaultValue=\":3592\""`
+	HTTPListenAddr string `yaml:"httpListenAddr" conf:"required,example=\":3592\""`
 	// GRPCListenAddr is the dedicated GRPC address.
-	GRPCListenAddr string `yaml:"grpcListenAddr" conf:"required,defaultValue=\":3593\""`
+	GRPCListenAddr string `yaml:"grpcListenAddr" conf:"required,example=\":3593\""`
 	// TLS defines the TLS configuration for the server.
 	TLS *TLSConf `yaml:"tls"`
 	// CORS defines the CORS configuration for the server.
 	CORS CORSConf `yaml:"cors"`
 	// MetricsEnabled defines whether the metrics endpoint is enabled.
-	MetricsEnabled bool `yaml:"metricsEnabled" conf:",defaultValue=true"`
+	MetricsEnabled bool `yaml:"metricsEnabled" conf:",example=true"`
 	// LogRequestPayloads defines whether the request payloads should be logged.
-	LogRequestPayloads bool `yaml:"logRequestPayloads" conf:",defaultValue=false"`
+	LogRequestPayloads bool `yaml:"logRequestPayloads" conf:",example=false"`
 	// PlaygroundEnabled defines whether the playground API is enabled.
-	PlaygroundEnabled bool `yaml:"playgroundEnabled" conf:",defaultValue=false"`
+	PlaygroundEnabled bool `yaml:"playgroundEnabled" conf:",example=false"`
 	// AdminAPI defines the admin API configuration.
 	AdminAPI AdminAPIConf `yaml:"adminAPI"`
 }
@@ -50,36 +50,36 @@ type Conf struct {
 // TLSConf holds TLS configuration.
 type TLSConf struct {
 	// Cert is the path to the TLS certificate file.
-	Cert string `yaml:"cert" conf:",defaultValue=/path/to/certificate"`
+	Cert string `yaml:"cert" conf:",example=/path/to/certificate"`
 	// Key is the path to the TLS private key file.
-	Key string `yaml:"key" conf:",defaultValue=/path/to/private_key"`
+	Key string `yaml:"key" conf:",example=/path/to/private_key"`
 	// CACert is the path to the optional CA certificate for verifying client requests.
-	CACert string `yaml:"caCert" conf:",defaultValue=/path/to/CA_certificate"`
+	CACert string `yaml:"caCert" conf:",example=/path/to/CA_certificate"`
 }
 
 type CORSConf struct {
 	// Disabled sets whether CORS is disabled.
-	Disabled bool `yaml:"disabled" conf:",defaultValue=false"`
+	Disabled bool `yaml:"disabled" conf:",example=false"`
 	// AllowedOrigins is the contents of the allowed-origins header.
-	AllowedOrigins []string `yaml:"allowedOrigins" conf:",defaultValue=['*']"`
+	AllowedOrigins []string `yaml:"allowedOrigins" conf:",example=['*']"`
 	// AllowedHeaders is the contents of the allowed-headers header.
-	AllowedHeaders []string `yaml:"allowedHeaders" conf:",defaultValue=['content-type']"`
+	AllowedHeaders []string `yaml:"allowedHeaders" conf:",example=['content-type']"`
 	// MaxAge is the max age of the CORS preflight check.
-	MaxAge time.Duration `yaml:"maxAge" conf:",defaultValue=10s"`
+	MaxAge time.Duration `yaml:"maxAge" conf:",example=10s"`
 }
 
 type AdminAPIConf struct {
 	// Enabled defines whether the admin API is enabled.
-	Enabled bool `yaml:"enabled" conf:",defaultValue=true"`
+	Enabled bool `yaml:"enabled" conf:",example=true"`
 	// AdminCredentials defines the admin user credentials.
 	AdminCredentials *AdminCredentialsConf `yaml:"adminCredentials"`
 }
 
 type AdminCredentialsConf struct {
 	// Username is the hardcoded username to use for authentication.
-	Username string `yaml:"username" conf:",defaultValue=cerbos"`
+	Username string `yaml:"username" conf:",example=cerbos"`
 	// PasswordHash is the base64-encoded bcrypt hash of the password to use for authentication.
-	PasswordHash string `yaml:"passwordHash" conf:",defaultValue=JDJ5JDEwJEdEOVFzZDE2VVhoVkR0N2VkUFBVM09nalc0QnNZaC9xc2E4bS9mcUJJcEZXenp5OUpjMi91Cgo="`
+	PasswordHash string `yaml:"passwordHash" conf:",example=JDJ5JDEwJEdEOVFzZDE2VVhoVkR0N2VkUFBVM09nalc0QnNZaC9xc2E4bS9mcUJJcEZXenp5OUpjMi91Cgo="`
 }
 
 func (a *AdminCredentialsConf) isUnsafe() bool {

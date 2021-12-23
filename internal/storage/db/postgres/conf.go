@@ -14,8 +14,8 @@ const confKey = storage.ConfKey + ".postgres"
 //+desc=This section is required only if storage.driver is postgres.
 type Conf struct {
 	// URL is the Postgres connection URL. See https://www.postgresql.org/docs/current/libpq-connect.html#LIBPQ-CONNSTRING
-	URL      string                 `yaml:"url" conf:"required,defaultValue=\"postgres://user:password@localhost:port/db\""`
-	ConnPool *internal.ConnPoolConf `yaml:"connPool" conf:",defaultValue=\n  maxLifeTime: 60m\n  maxIdleTime: 45s\n  maxOpen: 4\n  maxIdle: 1"`
+	URL      string                 `yaml:"url" conf:"required,example=\"postgres://user:password@localhost:port/db\""`
+	ConnPool *internal.ConnPoolConf `yaml:"connPool" conf:",example=\n  maxLifeTime: 60m\n  maxIdleTime: 45s\n  maxOpen: 4\n  maxIdle: 1"`
 }
 
 func (c *Conf) Key() string {

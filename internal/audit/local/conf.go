@@ -35,17 +35,17 @@ var (
 // Conf is optional configuration for local Audit.
 type Conf struct {
 	// Path to store the data
-	StoragePath string `yaml:"storagePath" conf:",defaultValue=/path/to/dir"`
+	StoragePath string `yaml:"storagePath" conf:",example=/path/to/dir"`
 	// How long to keep records for
-	RetentionPeriod time.Duration `yaml:"retentionPeriod" conf:",defaultValue=168h"`
+	RetentionPeriod time.Duration `yaml:"retentionPeriod" conf:",example=168h"`
 	Advanced        AdvancedConf  `yaml:"advanced"`
 }
 
 type AdvancedConf struct {
-	BufferSize    uint          `yaml:"bufferSize" conf:",defaultValue=256"`
-	MaxBatchSize  uint          `yaml:"maxBatchSize" conf:",defaultValue=32"`
-	FlushInterval time.Duration `yaml:"flushInterval" conf:",defaultValue=1s"`
-	GCInterval    time.Duration `yaml:"gcInterval" conf:",defaultValue=60s"`
+	BufferSize    uint          `yaml:"bufferSize" conf:",example=256"`
+	MaxBatchSize  uint          `yaml:"maxBatchSize" conf:",example=32"`
+	FlushInterval time.Duration `yaml:"flushInterval" conf:",example=1s"`
+	GCInterval    time.Duration `yaml:"gcInterval" conf:",example=60s"`
 }
 
 func (c *Conf) Key() string {

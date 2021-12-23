@@ -33,11 +33,10 @@ import (
 const (
 	interfacePackage   = "github.com/cerbos/cerbos/internal/config"
 	interfaceName      = "Section"
-	internalPkgPrefix  = "github.com/cerbos/cerbos/internal/"
 	defaultLogLevel    = "ERROR"
 	keyRequired        = "required"
 	keyOptional        = "optional"
-	optionDefaultValue = "defaultValue"
+	optionExampleValue = "example"
 	optionIgnore       = "ignore"
 )
 
@@ -378,7 +377,7 @@ func parseTag(tag string) (*TagInfo, error) {
 			sp := strings.SplitN(option, "=", 2)
 
 			switch sp[0] {
-			case optionDefaultValue:
+			case optionExampleValue:
 				ti.DefaultValue = sp[1]
 			case optionIgnore:
 				ti.Ignore = true

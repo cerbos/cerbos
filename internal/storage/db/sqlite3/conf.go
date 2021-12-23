@@ -11,7 +11,7 @@ const confKey = storage.ConfKey + ".sqlite3"
 //+desc=This section is required only if storage.driver is sqlite3.
 type Conf struct {
 	// Data source name
-	DSN string `yaml:"dsn" conf:"required,defaultValue=\":memory:?_fk=true\""`
+	DSN string `yaml:"dsn" conf:"required,example=\":memory:?_fk=true\""`
 }
 
 func (c *Conf) Key() string {
