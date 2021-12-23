@@ -11,6 +11,7 @@ import (
 const confKey = storage.ConfKey + ".mysql"
 
 // Conf is required (if driver is set to 'mysql') configuration for mysql driver.
+//+desc=This section is required only if storage.driver is mysql.
 type Conf struct {
 	// Data source name
 	DSN          string                 `yaml:"dsn" conf:"required,defaultValue=\"user:password@tcp(localhost:3306)/db?interpolateParams=true\""`

@@ -10,6 +10,7 @@ import (
 const confKey = storage.ConfKey + ".disk"
 
 // Conf is required (if driver is set to 'disk') configuration for disk storage driver.
+//+desc=This section is required only if storage.driver is disk.
 type Conf struct {
 	// Directory is the path on disk where policies are stored.
 	Directory string `yaml:"directory" conf:"required,defaultValue=pkg/test/testdata/store"`

@@ -15,11 +15,6 @@ import (
 	"github.com/cerbos/cerbos/internal/policy"
 )
 
-const (
-	ConfKey       = "storage"
-	driverConfKey = "storage.driver"
-)
-
 var (
 	driversMu sync.RWMutex
 	drivers   = map[string]Constructor{}
@@ -56,17 +51,17 @@ func RegisterDriver(name string, cons Constructor) {
 
 // New returns a storage driver implementation based on the configured driver.
 func New(ctx context.Context) (Store, error) {
-	var driver string
-	if err := config.Get(driverConfKey, &driver); err != nil {
-		return nil, fmt.Errorf("failed to read storage driver name: %w", err)
+	conf := Conf{}
+	if err := config.GetSection(&conf); err != nil {
+		return nil, fmt.Errorf("failed to get storage configuration section: %w", err)
 	}
 
 	driversMu.RLock()
-	cons, ok := drivers[driver]
+	cons, ok := drivers[conf.Driver]
 	driversMu.RUnlock()
 
 	if !ok {
-		return nil, fmt.Errorf("unknown storage driver [%s]", driver)
+		return nil, fmt.Errorf("unknown storage driver [%s]", conf.Driver)
 	}
 
 	return cons(ctx)

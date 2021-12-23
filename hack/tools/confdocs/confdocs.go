@@ -18,6 +18,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"text/template"
 
@@ -46,6 +47,7 @@ var templateText string
 var (
 	errInterfaceNotFound = errors.New("interface not found")
 	errTagNotExists      = errors.New("yaml tag does not exist")
+	descRegex            = regexp.MustCompile(`\+desc=(.+)`)
 )
 
 var (
@@ -207,7 +209,8 @@ func inspect(pkg *packages.Package, obj types.Object) *StructInfo {
 		logger.Fatalf("Failed to find object named %q", obj.Name())
 	}
 
-	si := &StructInfo{Pkg: pkg.ID, Name: ts.Name.Name, Documentation: strings.TrimSpace(cg.Text())}
+	doc, _ := parseDescMarker(cg)
+	si := &StructInfo{Pkg: pkg.ID, Name: ts.Name.Name, Documentation: doc}
 	si.Fields = inspectStruct(ts.Type)
 
 	return si
@@ -384,6 +387,17 @@ func parseTag(tag string) (*TagInfo, error) {
 	}
 
 	return ti, nil
+}
+
+func parseDescMarker(cg *ast.CommentGroup) (string, bool) {
+	for _, c := range cg.List {
+		submatches := descRegex.FindAllStringSubmatch(c.Text, -1)
+		if submatches != nil && submatches[0] != nil {
+			return submatches[0][1], true
+		}
+	}
+
+	return "", false
 }
 
 type finder struct {

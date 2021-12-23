@@ -11,6 +11,7 @@ import (
 const confKey = storage.ConfKey + ".postgres"
 
 // Conf is required (if driver is set to 'postres') configuration for postres driver.
+//+desc=This section is required only if storage.driver is postgres.
 type Conf struct {
 	// URL is the Postgres connection URL. See https://www.postgresql.org/docs/current/libpq-connect.html#LIBPQ-CONNSTRING
 	URL      string                 `yaml:"url" conf:"required,defaultValue=\"postgres://user:password@localhost:port/db\""`
