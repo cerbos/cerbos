@@ -1,0 +1,150 @@
+---
+apiVersion: api.cerbos.dev/v1
+variables:
+  is_owner: R.attr.owner == request.principal.id
+resourcePolicy:
+  version: "default"
+  resource: "leave_request"
+  importDerivedRoles:
+    - beta
+  rules:
+    - actions: ["view:refer-derived-role"]
+      derivedRoles:
+        - owner
+      effect: EFFECT_ALLOW
+    - actions: ["create", "view", "submit"]
+      roles: ["employee"]
+      effect: EFFECT_ALLOW
+      condition:
+        match:
+          expr: V.is_owner
+    - actions: ["approve:allow-deny"]
+      roles: ["manager"]
+      effect: EFFECT_DENY
+      condition:
+        match:
+          expr: R.attr.owner == request.principal.id
+    - actions: ["approve:allow-deny"]
+      roles: ["manager"]
+      effect: EFFECT_ALLOW
+      condition:
+        match:
+          expr: R.attr.status == "PENDING_APPROVAL"
+    - actions: ["approve:allow-allow-deny"]
+      roles: ["manager"]
+      effect: EFFECT_ALLOW
+      condition:
+        match:
+          expr: R.attr.status == "PENDING_APPROVAL"
+    - actions: ["approve:allow-allow-deny"]
+      roles: ["manager"]
+      effect: EFFECT_ALLOW
+      condition:
+        match:
+          expr: R.attr.geography == request.principal.attr.geography
+    - actions: ["approve:allow-allow-deny"]
+      roles: ["manager"]
+      effect: EFFECT_DENY
+      condition:
+        match:
+          expr: R.attr.owner == request.principal.id
+    - actions: ["approve:allow-allow"]
+      roles: ["manager"]
+      effect: EFFECT_ALLOW
+      condition:
+        match:
+          expr: R.attr.status == "PENDING_APPROVAL"
+    - actions: ["approve:allow-allow"]
+      roles: ["manager"]
+      effect: EFFECT_ALLOW
+      condition:
+        match:
+          expr: R.attr.geography == request.principal.attr.geography
+    - actions: ["approve"]
+      roles: ["manager"]
+      effect: EFFECT_ALLOW
+      condition:
+        match:
+          all:
+            of:
+              - expr: 1 == 1
+              - expr: R.attr.status == "PENDING_APPROVAL"
+              - expr: R.attr.owner != request.principal.id
+              - any:
+                  of:
+                    - expr: 1 != 1
+                    - expr: R.attr.geography == request.principal.attr.geography
+                    - expr: R.attr.geography in request.principal.attr.managed_geographies
+    - actions: ["approve:refer-derived-role"]
+      effect: EFFECT_ALLOW
+      derivedRoles:
+        - direct_manager
+      condition:
+        match:
+          all:
+            of:
+              - expr: R.attr.status == "PENDING_APPROVAL"
+              - expr: R.attr.owner != request.principal.id
+    - actions: ["report:deny-deny"]
+      roles: ["manager"]
+      effect: EFFECT_DENY
+      condition:
+        match:
+          expr: R.attr.deleted
+    - actions: ["report:deny-deny"]
+      roles: ["manager"]
+      effect: EFFECT_DENY
+      condition:
+        match:
+          expr: R.attr.hidden
+    - actions: ["report:deny"]
+      roles: ["manager"]
+      effect: EFFECT_DENY
+      condition:
+        match:
+          expr: R.attr.deleted
+    - actions: ["approve:true-in-both-or-and-conditions"]
+      roles: ["manager"]
+      effect: EFFECT_ALLOW
+      condition:
+        match:
+          all:
+            of:
+              - expr: 1 == 1
+              - expr: R.attr.status == "PENDING_APPROVAL"
+              - expr: R.attr.owner != request.principal.id
+              - any:
+                  of:
+                    - expr: 1 == 1
+                    - expr: R.attr.geography == request.principal.attr.geography
+                    - expr: R.attr.geography in request.principal.attr.managed_geographies
+    - actions: ["approve:false-in-and-condition"]
+      roles: ["manager"]
+      effect: EFFECT_ALLOW
+      condition:
+        match:
+          all:
+            of:
+              - expr: 1 != 1
+              - expr: R.attr.status == "PENDING_APPROVAL"
+              - expr: R.attr.owner != request.principal.id
+              - any:
+                  of:
+                    - expr: 1 == 1
+                    - expr: R.attr.geography == request.principal.attr.geography
+                    - expr: R.attr.geography in request.principal.attr.managed_geographies
+    - actions: ["enlist:none-condition"]
+      roles: ["manager"]
+      effect: EFFECT_ALLOW
+      condition:
+        match:
+          none:
+            of:
+              - expr: R.attr.team in ["A", "B"]
+              - expr: R.attr.GPA < 4.7
+    - actions: ["approve:with-jwt"]
+      roles: ["manager"]
+      effect: EFFECT_ALLOW
+      condition:
+        match:
+          expr: R.attr.groupID == request.aux_data.jwt.customInt

@@ -90,7 +90,7 @@ func TestServer(t *testing.T) {
 
 	param := Param{AuditLog: auditLog, AuxData: auxData, Store: store, Engine: eng}
 
-	testCases := loadTestCases(t, "checks", "playground")
+	testCases := loadTestCases(t, "checks", "playground", "plan_resources")
 
 	t.Run("with_tls", func(t *testing.T) {
 		testdataDir := test.PathToDir(t, "server")
@@ -315,6 +315,10 @@ func executeGRPCTestCase(grpcConn *grpc.ClientConn, tc *privatev1.ServerTestCase
 			adminClient := svcv1.NewCerbosAdminServiceClient(grpcConn)
 			want = call.AdminAddOrUpdatePolicy.WantResponse
 			have, err = adminClient.AddOrUpdatePolicy(ctx, call.AdminAddOrUpdatePolicy.Input)
+		case *privatev1.ServerTestCase_ResourcesQueryPlan:
+			cerbosClient := svcv1.NewCerbosServiceClient(grpcConn)
+			want = call.ResourcesQueryPlan.WantResponse
+			have, err = cerbosClient.ResourcesQueryPlan(ctx, call.ResourcesQueryPlan.Input)
 		default:
 			t.Fatalf("Unknown call type: %T", call)
 		}
@@ -390,6 +394,11 @@ func executeHTTPTestCase(c *http.Client, hostAddr string, creds *authCreds, tc *
 			input = call.AdminAddOrUpdatePolicy.Input
 			want = call.AdminAddOrUpdatePolicy.WantResponse
 			have = &responsev1.AddOrUpdatePolicyResponse{}
+		case *privatev1.ServerTestCase_ResourcesQueryPlan:
+			addr = fmt.Sprintf("%s/api/x/plan/resources", hostAddr)
+			input = call.ResourcesQueryPlan.Input
+			want = call.ResourcesQueryPlan.WantResponse
+			have = &responsev1.ResourcesQueryPlanResponse{}
 		default:
 			t.Fatalf("Unknown call type: %T", call)
 		}
@@ -454,7 +463,7 @@ func readTestCase(t *testing.T, name string, data []byte) *privatev1.ServerTestC
 	t.Helper()
 
 	tc := &privatev1.ServerTestCase{}
-	require.NoError(t, util.ReadJSONOrYAML(bytes.NewReader(data), tc))
+	require.NoError(t, util.ReadJSONOrYAML(bytes.NewReader(data), tc), string(data))
 
 	if tc.Name == "" {
 		tc.Name = name

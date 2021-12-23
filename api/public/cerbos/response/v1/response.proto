@@ -14,7 +14,89 @@ import "cerbos/effect/v1/effect.proto";
 import "cerbos/policy/v1/policy.proto";
 import "cerbos/schema/v1/schema.proto";
 import "google/protobuf/empty.proto";
+import "google/protobuf/struct.proto";
 import "protoc-gen-openapiv2/options/annotations.proto";
+
+message ResourcesQueryPlanResponse {
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
+		json_schema: {
+			description: "Resources query plan response for a set of resources."
+		}
+    };
+
+    string request_id = 1 [
+        (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+            description: "Request ID provided in the request."
+            example: "\"c2db17b8-4f9f-4fb1-acfd-9162a02be42b\""
+        }
+    ];
+
+    string action = 2 [
+        (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+            description: "Action"
+            example: "\"view:public\""
+        }
+    ];
+
+    string resource_kind = 3 [
+        (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+            description: "Resource kind."
+            example: "\"album:object\""
+            pattern: "^[[:alpha:]][[:word:]\\@\\.\\-]*(\\:[[:alpha:]][[:word:]\\@\\.\\-]*)*$"
+        }
+    ];
+
+    string policy_version = 4 [
+        (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+            description: "The policy version.",
+            example: "\"default\""
+        }
+    ];
+    message Expression {
+        option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
+            json_schema: {
+                description: "CEL expression"
+            }
+        };
+        string operator = 1 [
+            (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+                description: "Operator",
+            }
+        ];
+        message Operand {
+            oneof node {
+                google.protobuf.Value value = 1;
+                Expression expression = 2;
+                string variable = 3;
+            }
+        }
+        repeated Operand operands = 2;
+    }
+    Expression.Operand filter = 5 [
+        (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+            description: "Filter",
+        }
+   ];
+    message Meta {
+        option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
+            json_schema: {
+                description: "Metadata about request evaluation."
+            }
+        };
+
+        string filter_debug = 1 [
+            (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+                description: "Filter textual representation for debugging purposes.",
+            }
+        ];
+    }
+
+    Meta meta = 6 [
+        (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+            description: "Optional metadata about the request evaluation process"
+        }
+    ];
+}
 
 message CheckResourceSetResponse {
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
@@ -25,9 +107,9 @@ message CheckResourceSetResponse {
 
     message ActionEffectMap {
         map<string,cerbos.effect.v1.Effect> actions = 1 [
-            (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = { 
+            (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
                 description: "Mapping of each action to an effect."
-            } 
+            }
         ];
         repeated cerbos.schema.v1.ValidationError validation_errors = 2 [
             (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
@@ -50,13 +132,13 @@ message CheckResourceSetResponse {
                 }
             };
             string matched_policy = 1 [
-                (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = { 
+                (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
                     description: "Policy that matched to produce this effect."
                     example: "\"album:object:default\""
-                } 
+                }
             ];
         }
-            
+
         message ActionMeta {
             option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
                 json_schema: {
@@ -64,41 +146,41 @@ message CheckResourceSetResponse {
                 }
             };
             map<string, EffectMeta> actions = 1 [
-                (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = { 
+                (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
                     description: "Metadata about the effect calculated for each action on this resource instance."
                     example: "{\"view:*\":{\"matched_policy\": \"album:object:default\"},\"comment\":{\"matched_policy\": \"album:object:default\"}}"
-                } 
+                }
             ];
             repeated string effective_derived_roles = 2 [
-                (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = { 
+                (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
                     description: "Derived roles that were effective during policy evaluation."
                     example: "[\"owner\"]"
-                } 
+                }
             ];
         }
 
         map<string,ActionMeta> resource_instances = 1 [
-            (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = { 
+            (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
                 description: "Metadata about resource instances."
                 example: "{\"XX125\": {\"actions\": {\"view:*\":{\"matched_policy\": \"album:object:default\"},\"comment\":{\"matched_policy\": \"album:object:default\"}}, \"effective_derived_roles\": [\"owner\"]}, \"XX225\": {\"actions\": {\"view:*\":{\"matched_policy\": \"album:object:default\"},\"comment\":{\"matched_policy\": \"album:object:default\"}}}}"
-            } 
+            }
         ];
     }
 
     string request_id = 1 [
-        (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = { 
+        (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
             description: "Request ID provided in the request."
             example: "\"c2db17b8-4f9f-4fb1-acfd-9162a02be42b\""
-        } 
+        }
     ];
     map<string,ActionEffectMap> resource_instances = 2 [
-        (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = { 
+        (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
             description: "Results for each resource instance, keyed by the ID supplied in the request"
             example: "{\"XX125\":{\"actions\":{\"view:*\":\"EFFECT_ALLOW\", \"comment\": \"EFFECT_ALLOW\"}}, \"XX225\":{\"actions\":{\"view:*\":\"EFFECT_DENY\", \"comment\": \"EFFECT_DENY\"}}}"
         }
     ];
     Meta meta = 3 [
-        (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = { 
+        (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
             description: "Optional metadata about the request evaluation process"
         }
     ];
@@ -114,16 +196,16 @@ message CheckResourceBatchResponse {
 
     message ActionEffectMap {
         string resource_id = 1 [
-            (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = { 
+            (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
                 description: "Resource ID"
                 example: "\"XX125\""
-            } 
+            }
         ];
         map<string,cerbos.effect.v1.Effect> actions = 2 [
-            (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = { 
+            (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
                 description: "Mapping of each action to an effect."
                 example: "{\"view\":\"EFFECT_ALLOW\"}"
-            } 
+            }
         ];
         repeated cerbos.schema.v1.ValidationError validation_errors = 3 [
             (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
@@ -133,16 +215,16 @@ message CheckResourceBatchResponse {
     }
 
     string request_id = 1 [
-        (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = { 
+        (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
             description: "Request ID provided in the request."
             example: "\"c2db17b8-4f9f-4fb1-acfd-9162a02be42b\""
-        } 
+        }
     ];
     repeated ActionEffectMap results = 2 [
-        (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = { 
+        (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
             description: "Result for each resource"
             example: "[{\"resourceId\":\"XX125\",\"actions\":{\"view\":\"EFFECT_ALLOW\"}}]"
-        } 
+        }
     ];
 }
 
@@ -152,7 +234,7 @@ message PlaygroundFailure {
 			description: "Playground response"
 		}
     };
-    
+
     message Error {
         string file = 1;
         string error = 2;
@@ -182,7 +264,7 @@ message PlaygroundEvaluateResponse {
 			description: "Playground evaluate response"
 		}
     };
-    
+
     message EvalResult {
         string action = 1;
         cerbos.effect.v1.Effect effect = 2;
@@ -208,7 +290,7 @@ message PlaygroundProxyResponse {
 			description: "Playground proxy response"
 		}
     };
-    
+
     string playground_id = 1;
     oneof outcome {
         PlaygroundFailure failure = 2;
