@@ -136,11 +136,11 @@ func (cas *CerbosAdminService) GetPolicy(ctx context.Context, req *requestv1.Get
 
 	log := ctxzap.Extract(ctx)
 	policies := make([]*policyv1.Policy, 0, len(req.Id))
-	for _, policyKey := range req.Id {
-		p, err := cas.store.LoadPolicy(ctx, policyKey)
+	for _, id := range req.Id {
+		p, err := cas.store.LoadPolicy(ctx, id)
 		if err != nil {
-			log.Error(fmt.Sprintf("Could not get the policy with id %s", policyKey), zap.Error(err))
-			return nil, status.Errorf(codes.Internal, "could not get the policy with id %s", policyKey)
+			log.Error(fmt.Sprintf("Could not get the policy with id %s", id), zap.Error(err))
+			return nil, status.Errorf(codes.Internal, "could not get the policy with id %s", id)
 		}
 		policies = append(policies, p.Policy)
 	}

@@ -116,12 +116,9 @@ func TestListPolicies(t *testing.T) {
 	require.NoError(t, err)
 	require.NoError(t, ac.AddOrUpdatePolicy(context.Background(), ps))
 
-	// TODO(oguzhan): Take a look at this
-	/*
-		t.Run("should get the list of policies", func(t *testing.T) {
-			policies, err := ac.ListPolicies(context.Background())
-			require.NoError(t, err)
-			require.NotEmpty(t, policies)
-		})
-	*/
+	t.Run("should get the list of policies", func(t *testing.T) {
+		policies, err := ac.ListPolicies(context.Background())
+		require.NoError(t, err)
+		require.NotEmpty(t, policies)
+	})
 }

@@ -42,7 +42,6 @@ type Policy struct {
 	Kind        string
 	Name        string
 	Version     string
-	FQN         string
 	Description string
 	Disabled    bool
 	Definition  PolicyDefWrapper

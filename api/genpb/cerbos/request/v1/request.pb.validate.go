@@ -1449,10 +1449,10 @@ func (m *GetPolicyRequest) Validate() error {
 			_GetPolicyRequest_Id_Unique[item] = struct{}{}
 		}
 
-		if l := utf8.RuneCountInString(item); l < 1 || l > 255 {
+		if l := utf8.RuneCountInString(item); l < 1 || l > 1280 {
 			return GetPolicyRequestValidationError{
 				field:  fmt.Sprintf("Id[%v]", idx),
-				reason: "value length must be between 1 and 255 runes, inclusive",
+				reason: "value length must be between 1 and 1280 runes, inclusive",
 			}
 		}
 

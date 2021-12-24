@@ -335,13 +335,13 @@ func (idx *index) ListPolicyIDs(_ context.Context) ([]string, error) {
 	idx.mu.RLock()
 	defer idx.mu.RUnlock()
 
-	policyIds := make([]string, 0, len(idx.modIDToFQN))
-	for _, id := range idx.modIDToFQN {
-		policyIds = append(policyIds, id)
+	files := make([]string, 0, len(idx.modIDToFile))
+	for _, f := range idx.modIDToFile {
+		files = append(files, f)
 	}
 
-	sort.Strings(policyIds)
-	return policyIds, nil
+	sort.Strings(files)
+	return files, nil
 }
 
 func (idx *index) ListSchemaIDs(_ context.Context) ([]string, error) {
@@ -375,13 +375,13 @@ func (idx *index) LoadSchema(ctx context.Context, url string) (io.ReadCloser, er
 	return idx.schemaLoader.Load(ctx, url)
 }
 
-func (idx *index) LoadPolicy(_ context.Context, fqn string) (*policy.Wrapper, error) {
+func (idx *index) LoadPolicy(_ context.Context, file string) (*policy.Wrapper, error) {
 	idx.mu.RLock()
 	defer idx.mu.RUnlock()
 
-	p, err := idx.loadPolicy(namer.GenModuleIDFromFQN(fqn))
+	p, err := idx.loadPolicy(idx.fileToModID[file])
 	if err != nil {
-		return nil, fmt.Errorf("failed to load policy file with fqn %s: %w", fqn, err)
+		return nil, fmt.Errorf("failed to load policy file with file path %s: %w", file, err)
 	}
 
 	pw := policy.Wrap(p)

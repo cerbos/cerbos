@@ -136,7 +136,6 @@ func Build(ctx context.Context, fsys fs.FS, opts ...BuildOpt) (Index, error) {
 type indexBuilder struct {
 	executables  map[namer.ModuleID]struct{}
 	modIDToFile  map[namer.ModuleID]string
-	modIDToFQN   map[namer.ModuleID]string
 	fileToModID  map[string]namer.ModuleID
 	dependents   map[namer.ModuleID]map[namer.ModuleID]struct{}
 	dependencies map[namer.ModuleID]map[namer.ModuleID]struct{}
@@ -150,7 +149,6 @@ func newIndexBuilder() *indexBuilder {
 	return &indexBuilder{
 		executables:  make(map[namer.ModuleID]struct{}),
 		modIDToFile:  make(map[namer.ModuleID]string),
-		modIDToFQN:   make(map[namer.ModuleID]string),
 		fileToModID:  make(map[string]namer.ModuleID),
 		dependents:   make(map[namer.ModuleID]map[namer.ModuleID]struct{}),
 		dependencies: make(map[namer.ModuleID]map[namer.ModuleID]struct{}),
@@ -179,7 +177,6 @@ func (idx *indexBuilder) addPolicy(file string, p policy.Wrapper) {
 
 	idx.fileToModID[file] = p.ID
 	idx.modIDToFile[p.ID] = file
-	idx.modIDToFQN[p.ID] = p.FQN
 	delete(idx.missing, p.ID)
 
 	if p.Kind != policy.DerivedRolesKindStr {
@@ -248,7 +245,6 @@ func (idx *indexBuilder) build(fsys fs.FS) (*index, error) {
 		fsys:         fsys,
 		executables:  idx.executables,
 		modIDToFile:  idx.modIDToFile,
-		modIDToFQN:   idx.modIDToFQN,
 		fileToModID:  idx.fileToModID,
 		dependents:   idx.dependents,
 		dependencies: idx.dependencies,

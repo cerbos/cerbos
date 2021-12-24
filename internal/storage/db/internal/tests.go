@@ -8,7 +8,6 @@ package internal
 
 import (
 	"context"
-	"github.com/cerbos/cerbos/internal/namer"
 	"io/ioutil"
 	"testing"
 	"time"
@@ -18,6 +17,7 @@ import (
 	"google.golang.org/protobuf/testing/protocmp"
 
 	schemav1 "github.com/cerbos/cerbos/api/genpb/cerbos/schema/v1"
+	"github.com/cerbos/cerbos/internal/namer"
 	"github.com/cerbos/cerbos/internal/policy"
 	"github.com/cerbos/cerbos/internal/storage"
 	"github.com/cerbos/cerbos/internal/test"
