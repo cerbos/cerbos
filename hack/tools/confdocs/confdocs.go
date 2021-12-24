@@ -19,6 +19,7 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"sort"
 	"strings"
 	"text/template"
 
@@ -69,6 +70,7 @@ type FieldInfo struct {
 	Documentation string
 	Tag           string
 	Fields        []FieldInfo
+	Array         bool
 }
 
 type TagInfo struct {
@@ -91,11 +93,6 @@ func init() {
 	}
 	doInitLogging(defaultLogLevel)
 }
-
-/*
-TODO
-- Fix `storage` block rendering (the `storage` key is missing from output)
-*/
 
 func main() {
 	flag.Parse()
@@ -250,7 +247,13 @@ func inspectStruct(node ast.Expr) []FieldInfo {
 			if f.Tag != nil {
 				fi.Tag = f.Tag.Value
 			}
+
+			if _, ok := f.Type.(*ast.ArrayType); ok {
+				fi.Array = true
+			}
+
 			fi.Fields = inspectStruct(f.Type)
+
 			fields = append(fields, fi)
 		}
 	case *ast.StarExpr:
@@ -261,8 +264,13 @@ func inspectStruct(node ast.Expr) []FieldInfo {
 				return inspectStruct(ts.Type)
 			}
 		}
+	case *ast.ArrayType:
+		return inspectStruct(t.Elt)
 	}
 
+	sort.Slice(fields, func(i, j int) bool {
+		return fields[i].Name < fields[j].Name
+	})
 	return fields
 }
 
@@ -322,6 +330,17 @@ func walkFields(out io.Writer, fields []FieldInfo, indent int) error {
 		if field.Fields != nil {
 			if err := indentf(out, indent, "%s: %s\n", name, docs); err != nil {
 				return err
+			}
+
+			if field.Array {
+				if err := indentf(out, indent+1, "- \n"); err != nil {
+					return err
+				}
+
+				if err := walkFields(out, field.Fields, indent+2); err != nil {
+					return err
+				}
+				continue
 			}
 
 			if err := walkFields(out, field.Fields, indent+1); err != nil {
@@ -412,7 +431,6 @@ func (f *finder) Visit(n ast.Node) ast.Visitor {
 			f.typeSpec = t
 			return nil
 		}
-		break
 	case *ast.GenDecl:
 		if t.Tok == token.TYPE && t.Doc != nil && len(t.Specs) > 0 {
 			typeSpec, ok := t.Specs[0].(*ast.TypeSpec)
@@ -420,7 +438,6 @@ func (f *finder) Visit(n ast.Node) ast.Visitor {
 				f.commentGroup = t.Doc
 			}
 		}
-		break
 	}
 
 	return f

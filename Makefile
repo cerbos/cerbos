@@ -36,7 +36,7 @@ lint-helm:
 	@ deploy/charts/validate.sh
 
 .PHONY: generate
-generate: clean generate-proto-code generate-mocks deps 
+generate: clean generate-proto-code generate-mocks deps confdocs
 
 .PHONY: generate-proto-code
 generate-proto-code: proto-gen-deps

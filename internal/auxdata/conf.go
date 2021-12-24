@@ -20,14 +20,14 @@ type Conf struct {
 
 type JWTConf struct {
 	// KeySets is the list of keysets to be used to verify tokens.
-	KeySets []JWTKeySet `yaml:"keySets" conf:",example=\n    - id: ks1\n      remote:\n        url: https://domain.tld/.well-known/keys.jwks"`
+	KeySets []JWTKeySet `yaml:"keySets"`
 	// DisableVerification disables JWT verification.
 	DisableVerification bool `yaml:"disableVerification" conf:",example=false"`
 }
 
 type JWTKeySet struct {
 	// ID is the unique reference to this keyset.
-	ID string `yaml:"id"`
+	ID string `yaml:"id" conf:"required,example=ks1"`
 	// Remote defines a remote keyset. Mutually exclusive with Local.
 	Remote *RemoteSource `yaml:"remote"`
 	// Local defines a local keyset. Mutually exclusive with Remote.
@@ -36,18 +36,18 @@ type JWTKeySet struct {
 
 type RemoteSource struct {
 	// URL is the JWKS URL to fetch the keyset from.
-	URL string `yaml:"url"`
+	URL string `yaml:"url" conf:"required,example=https://domain.tld/.well-known/keys.jwks"`
 	// RefreshInterval is the refresh interval for the keyset.
-	RefreshInterval time.Duration `yaml:"refreshInterval"`
+	RefreshInterval time.Duration `yaml:"refreshInterval" conf:",example=1h"`
 }
 
 type LocalSource struct {
 	// Data is the encoded JWK data for this keyset. Mutually exclusive with File.
-	Data string `yaml:"data"`
+	Data string `yaml:"data" conf:",example=base64encodedJWK"`
 	// File is the path to file containing JWK data. Mutually exclusive with Data.
-	File string `yaml:"file"`
+	File string `yaml:"file" conf:",example=/path/to/keys.jwk"`
 	// PEM indicates that the data is PEM encoded.
-	PEM bool `yaml:"pem"`
+	PEM bool `yaml:"pem" conf:",example=true"`
 }
 
 func (c *Conf) Key() string {
