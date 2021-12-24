@@ -1461,21 +1461,6 @@ func (m *ListPoliciesRequest) Validate() error {
 		return nil
 	}
 
-	for idx, item := range m.GetFilters() {
-		_, _ = idx, item
-
-		if v, ok := interface{}(item).(interface{ Validate() error }); ok {
-			if err := v.Validate(); err != nil {
-				return ListPoliciesRequestValidationError{
-					field:  fmt.Sprintf("Filters[%v]", idx),
-					reason: "embedded message failed validation",
-					cause:  err,
-				}
-			}
-		}
-
-	}
-
 	if v, ok := interface{}(m.GetSortOptions()).(interface{ Validate() error }); ok {
 		if err := v.Validate(); err != nil {
 			return ListPoliciesRequestValidationError{
@@ -2301,102 +2286,12 @@ var _ interface {
 	ErrorName() string
 } = ListAuditLogEntriesRequest_TimeRangeValidationError{}
 
-// Validate checks the field values on ListPoliciesRequest_Filter with the
-// rules defined in the proto definition for this message. If any rules are
-// violated, an error is returned.
-func (m *ListPoliciesRequest_Filter) Validate() error {
-	if m == nil {
-		return nil
-	}
-
-	if _, ok := _ListPoliciesRequest_Filter_Type_InLookup[m.GetType()]; !ok {
-		return ListPoliciesRequest_FilterValidationError{
-			field:  "Type",
-			reason: "value must be in list [1 2]",
-		}
-	}
-
-	// no validation rules for FieldPath
-
-	// no validation rules for Value
-
-	return nil
-}
-
-// ListPoliciesRequest_FilterValidationError is the validation error returned
-// by ListPoliciesRequest_Filter.Validate if the designated constraints aren't met.
-type ListPoliciesRequest_FilterValidationError struct {
-	field  string
-	reason string
-	cause  error
-	key    bool
-}
-
-// Field function returns field value.
-func (e ListPoliciesRequest_FilterValidationError) Field() string { return e.field }
-
-// Reason function returns reason value.
-func (e ListPoliciesRequest_FilterValidationError) Reason() string { return e.reason }
-
-// Cause function returns cause value.
-func (e ListPoliciesRequest_FilterValidationError) Cause() error { return e.cause }
-
-// Key function returns key value.
-func (e ListPoliciesRequest_FilterValidationError) Key() bool { return e.key }
-
-// ErrorName returns error name.
-func (e ListPoliciesRequest_FilterValidationError) ErrorName() string {
-	return "ListPoliciesRequest_FilterValidationError"
-}
-
-// Error satisfies the builtin error interface
-func (e ListPoliciesRequest_FilterValidationError) Error() string {
-	cause := ""
-	if e.cause != nil {
-		cause = fmt.Sprintf(" | caused by: %v", e.cause)
-	}
-
-	key := ""
-	if e.key {
-		key = "key for "
-	}
-
-	return fmt.Sprintf(
-		"invalid %sListPoliciesRequest_Filter.%s: %s%s",
-		key,
-		e.field,
-		e.reason,
-		cause)
-}
-
-var _ error = ListPoliciesRequest_FilterValidationError{}
-
-var _ interface {
-	Field() string
-	Reason() string
-	Key() bool
-	Cause() error
-	ErrorName() string
-} = ListPoliciesRequest_FilterValidationError{}
-
-var _ListPoliciesRequest_Filter_Type_InLookup = map[ListPoliciesRequest_MatchType]struct{}{
-	1: {},
-	2: {},
-}
-
 // Validate checks the field values on ListPoliciesRequest_SortOptions with the
 // rules defined in the proto definition for this message. If any rules are
 // violated, an error is returned.
 func (m *ListPoliciesRequest_SortOptions) Validate() error {
 	if m == nil {
 		return nil
-	}
-
-	if _, ok := _ListPoliciesRequest_SortOptions_Column_InLookup[m.GetColumn()]; !ok {
-		return ListPoliciesRequest_SortOptionsValidationError{
-			field:  "Column",
-			reason: "value must be in list [1 2]",
-		}
 	}
 
 	if _, ok := _ListPoliciesRequest_SortOptions_Order_InLookup[m.GetOrder()]; !ok {
@@ -2465,11 +2360,6 @@ var _ interface {
 	Cause() error
 	ErrorName() string
 } = ListPoliciesRequest_SortOptionsValidationError{}
-
-var _ListPoliciesRequest_SortOptions_Column_InLookup = map[ListPoliciesRequest_SortOptions_Column]struct{}{
-	1: {},
-	2: {},
-}
 
 var _ListPoliciesRequest_SortOptions_Order_InLookup = map[ListPoliciesRequest_SortOptions_Order]struct{}{
 	1: {},

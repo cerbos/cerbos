@@ -155,25 +155,19 @@ func (c *GrpcAdminClient) auditLogs(ctx context.Context, opts AuditLogOptions) (
 }
 
 func (c *GrpcAdminClient) ListPolicies(ctx context.Context, opts ...ListOpt) ([]*policyv1.Policy, error) {
-	listOptions := &policyListOptions{
-		filters: make([]*requestv1.ListPoliciesRequest_Filter, 0, len(opts)),
-	}
+	listOptions := &policyListOptions{}
 	for _, opt := range opts {
 		opt(listOptions)
 	}
 
-	req := &requestv1.ListPoliciesRequest{
-		Filters: listOptions.filters,
-	}
-
+	req := &requestv1.ListPoliciesRequest{}
 	if listOptions.sortingOptions != nil {
 		order := requestv1.ListPoliciesRequest_SortOptions_ORDER_ASCENDING
 		if listOptions.sortingOptions.descending {
 			order = requestv1.ListPoliciesRequest_SortOptions_ORDER_DESCENDING
 		}
 		req.SortOptions = &requestv1.ListPoliciesRequest_SortOptions{
-			Order:  order,
-			Column: requestv1.ListPoliciesRequest_SortOptions_Column(listOptions.sortingOptions.field),
+			Order: order,
 		}
 	}
 
@@ -184,6 +178,10 @@ func (c *GrpcAdminClient) ListPolicies(ctx context.Context, opts ...ListOpt) ([]
 	p, err := c.client.ListPolicies(ctx, req, grpc.PerRPCCredentials(c.creds))
 	if err != nil {
 		return nil, fmt.Errorf("could not list policies: %w", err)
+	}
+
+	if len(p.PolicyIds) == 0 {
+		return nil, nil
 	}
 
 	getReq := &requestv1.GetPolicyRequest{

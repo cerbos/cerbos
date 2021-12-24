@@ -120,6 +120,7 @@ func (cas *CerbosAdminService) ListPolicies(ctx context.Context, req *requestv1.
 		return nil, status.Error(codes.Internal, "could not get policy ids")
 	}
 
+	sortPolicies(req.SortOptions, policyIds)
 	return &responsev1.ListPoliciesResponse{
 		PolicyIds: policyIds,
 	}, nil

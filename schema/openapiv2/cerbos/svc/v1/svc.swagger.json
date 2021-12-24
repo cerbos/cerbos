@@ -141,19 +141,6 @@
         },
         "parameters": [
           {
-            "name": "sortOptions.column",
-            "description": "Sort column",
-            "in": "query",
-            "required": false,
-            "type": "string",
-            "enum": [
-              "COLUMN_UNSPECIFIED",
-              "COLUMN_NAME",
-              "COLUMN_VERSION"
-            ],
-            "default": "COLUMN_UNSPECIFIED"
-          },
-          {
             "name": "sortOptions.order",
             "description": "Sort order",
             "in": "query",
@@ -842,54 +829,9 @@
         "end"
       ]
     },
-    "ListPoliciesRequestFilter": {
-      "type": "object",
-      "properties": {
-        "type": {
-          "$ref": "#/definitions/ListPoliciesRequestMatchType",
-          "example": "MATCH_TYPE_WILDCARD",
-          "description": "Kind of filter"
-        },
-        "fieldPath": {
-          "type": "string",
-          "example": "$.resourcePolicy.resource",
-          "description": "JSONPath expression describing the field to match",
-          "required": [
-            "field_path"
-          ]
-        },
-        "value": {
-          "type": "string",
-          "example": "*",
-          "description": "The value to compare",
-          "required": [
-            "value"
-          ]
-        }
-      },
-      "description": "Filter options",
-      "required": [
-        "fieldPath",
-        "value"
-      ]
-    },
-    "ListPoliciesRequestMatchType": {
-      "type": "string",
-      "enum": [
-        "MATCH_TYPE_UNSPECIFIED",
-        "MATCH_TYPE_EXACT",
-        "MATCH_TYPE_WILDCARD"
-      ],
-      "default": "MATCH_TYPE_UNSPECIFIED"
-    },
     "ListPoliciesRequestSortOptions": {
       "type": "object",
       "properties": {
-        "column": {
-          "$ref": "#/definitions/SortOptionsColumn",
-          "example": "COLUMN_NAME",
-          "description": "Sort column"
-        },
         "order": {
           "$ref": "#/definitions/SortOptionsOrder",
           "example": "ORDER_ASCENDING",
@@ -1031,15 +973,6 @@
         }
       },
       "description": "CEL expression"
-    },
-    "SortOptionsColumn": {
-      "type": "string",
-      "enum": [
-        "COLUMN_UNSPECIFIED",
-        "COLUMN_NAME",
-        "COLUMN_VERSION"
-      ],
-      "default": "COLUMN_UNSPECIFIED"
     },
     "SortOptionsOrder": {
       "type": "string",
@@ -1698,12 +1631,6 @@
     "v1ListPoliciesRequest": {
       "type": "object",
       "properties": {
-        "filters": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/ListPoliciesRequestFilter"
-          }
-        },
         "sortOptions": {
           "$ref": "#/definitions/ListPoliciesRequestSortOptions"
         }

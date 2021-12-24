@@ -893,8 +893,7 @@ func (e *AuditLogEntry) DecisionLog() (*auditv1.DecisionLogEntry, error) {
 type ListPoliciesSortingType uint8
 
 const (
-	SortByName    ListPoliciesSortingType = 1
-	SortByVersion ListPoliciesSortingType = 2
+	SortByName ListPoliciesSortingType = 1
 )
 
 type sortingOptions struct {
@@ -904,33 +903,10 @@ type sortingOptions struct {
 
 type policyListOptions struct {
 	sortingOptions *sortingOptions
-	filters        []*requestv1.ListPoliciesRequest_Filter
 }
 
 // ListOpt is used to specify options for ListPolicies method.
 type ListOpt func(*policyListOptions)
-
-// FieldEqualsFilter adds a exact match filter for the field.
-func FieldEqualsFilter(path, value string) ListOpt {
-	return func(pf *policyListOptions) {
-		pf.filters = append(pf.filters, &requestv1.ListPoliciesRequest_Filter{
-			Type:      requestv1.ListPoliciesRequest_MATCH_TYPE_EXACT,
-			FieldPath: path,
-			Value:     value,
-		})
-	}
-}
-
-// FieldEqualsFilter adds a regex match filter for the field.
-func FieldMatchesFilter(path, value string) ListOpt {
-	return func(pf *policyListOptions) {
-		pf.filters = append(pf.filters, &requestv1.ListPoliciesRequest_Filter{
-			Type:      requestv1.ListPoliciesRequest_MATCH_TYPE_WILDCARD,
-			FieldPath: path,
-			Value:     value,
-		})
-	}
-}
 
 // SortAscending enables sorting the policies by ascending order with given field.
 func SortAscending(field ListPoliciesSortingType) ListOpt {

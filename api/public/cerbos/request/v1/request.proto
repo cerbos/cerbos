@@ -460,36 +460,6 @@ message ListPoliciesRequest {
         MATCH_TYPE_WILDCARD = 2;
     }
 
-    message Filter {
-        option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
-            json_schema: {
-                description: "Filter options"
-            }
-        };
-
-        MatchType type = 1 [
-            (validate.rules).enum = {in: [1,2]},
-            (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = { 
-                description: "Kind of filter"
-                example: "\"MATCH_TYPE_WILDCARD\""
-            }
-        ];
-        string field_path = 2 [
-            (google.api.field_behavior) = REQUIRED,
-            (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
-                description: "JSONPath expression describing the field to match"
-                example: "\"$.resourcePolicy.resource\""
-            }
-        ];
-        string value = 3 [
-            (google.api.field_behavior) = REQUIRED,
-            (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = { 
-                description: "The value to compare"
-                example: "\"*\""
-            }
-        ];
-    }
-
     message SortOptions {
         option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
             json_schema: {
@@ -497,27 +467,13 @@ message ListPoliciesRequest {
             }
         };
 
-        enum Column {
-            COLUMN_UNSPECIFIED = 0;
-            COLUMN_NAME = 1;
-            COLUMN_VERSION = 2;
-        }
-        
         enum Order {
             ORDER_UNSPECIFIED = 0;
             ORDER_ASCENDING = 1;
             ORDER_DESCENDING = 2;
         }
-        
-        Column column = 1 [
-            (validate.rules).enum = {in: [1,2]},
-            (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
-                description: "Sort column"
-                example: "\"COLUMN_NAME\""
-            }
-        ];
 
-        Order order = 2 [
+        Order order = 1 [
             (validate.rules).enum = {in: [1,2]},
             (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = { 
                 description: "Sort order"
@@ -527,8 +483,7 @@ message ListPoliciesRequest {
         ];
     }
 
-    repeated Filter filters = 1;
-    SortOptions sort_options = 2;
+    SortOptions sort_options = 1;
 }
 
 message GetPolicyRequest {
