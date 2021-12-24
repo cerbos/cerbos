@@ -181,10 +181,22 @@ func (c *GrpcAdminClient) ListPolicies(ctx context.Context, opts ...ListOpt) ([]
 		return nil, fmt.Errorf("could not validate list policies request: %w", err)
 	}
 
-	pc, err := c.client.ListPolicies(ctx, req, grpc.PerRPCCredentials(c.creds))
+	p, err := c.client.ListPolicies(ctx, req, grpc.PerRPCCredentials(c.creds))
 	if err != nil {
 		return nil, fmt.Errorf("could not list policies: %w", err)
 	}
 
-	return pc, nil
+	getReq := &requestv1.GetPolicyRequest{
+		Id: p.PolicyIds,
+	}
+	if err := getReq.Validate(); err != nil {
+		return nil, fmt.Errorf("could not validate get policy request: %w", err)
+	}
+
+	getRes, err := c.client.GetPolicy(ctx, getReq, grpc.PerRPCCredentials(c.creds))
+	if err != nil {
+		return nil, fmt.Errorf("could not get policy: %w", err)
+	}
+
+	return getRes.Policies, nil
 }
