@@ -56,15 +56,15 @@ func watchDir(ctx context.Context, dir string, idx index.Index, sub *storage.Sub
 }
 
 type dirWatch struct {
-	dir       string
-	log       *zap.SugaredLogger
-	watchChan chan notify.EventInfo
-	idx       index.Index
+	lastEventTime time.Time
+	idx           index.Index
+	log           *zap.SugaredLogger
+	watchChan     chan notify.EventInfo
+	eventBatch    map[string]struct{}
 	*storage.SubscriptionManager
+	dir            string
 	cooldownPeriod time.Duration
 	mu             sync.RWMutex
-	eventBatch     map[string]struct{}
-	lastEventTime  time.Time
 }
 
 func (dw *dirWatch) handleEvents(ctx context.Context) {

@@ -19,9 +19,9 @@ import (
 var errTestValidate = errors.New("validation error")
 
 type Server struct {
+	TLS        *TLS   `yaml:"tls"`
 	DataDir    string `yaml:"dataDir"`
 	ListenAddr string `yaml:"listenAddr"`
-	TLS        *TLS   `yaml:"tls"`
 }
 
 func (s *Server) Key() string {
@@ -153,8 +153,8 @@ func TestCerbosConfig(t *testing.T) {
 
 func TestStrictParsing(t *testing.T) {
 	testCases := []struct {
-		name    string
 		conf    map[string]interface{}
+		name    string
 		wantErr bool
 	}{
 		{

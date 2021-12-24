@@ -293,9 +293,9 @@ func (s *dbStorage) GetCompilationUnits(ctx context.Context, ids ...namer.Module
 	units := make(map[namer.ModuleID]*policy.CompilationUnit)
 	for results.Next() {
 		var row struct {
+			Definition PolicyDefWrapper
 			Parent     namer.ModuleID
 			ID         namer.ModuleID
-			Definition PolicyDefWrapper
 		}
 
 		if err := results.ScanStruct(&row); err != nil {

@@ -14,10 +14,10 @@ const confKey = storage.ConfKey + ".disk"
 type Conf struct {
 	// Directory is the path on disk where policies are stored.
 	Directory string `yaml:"directory" conf:"required,example=pkg/test/testdata/store"`
-	// WatchForChanges enables watching the directory for changes.
-	WatchForChanges bool `yaml:"watchForChanges" conf:"required,example=false"`
 	// [DEPRECATED] ScratchDir is the directory to use for holding temporary data.
 	ScratchDir string `yaml:"scratchDir" conf:",ignore"`
+	// WatchForChanges enables watching the directory for changes.
+	WatchForChanges bool `yaml:"watchForChanges" conf:"required,example=false"`
 }
 
 func (conf *Conf) Key() string {

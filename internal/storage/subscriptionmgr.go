@@ -15,10 +15,10 @@ import (
 const eventBufferSize = 16
 
 type SubscriptionManager struct {
-	once        sync.Once
 	eventChan   chan Event
-	mu          sync.RWMutex
 	subscribers map[string]Subscriber
+	mu          sync.RWMutex
+	once        sync.Once
 }
 
 func NewSubscriptionManager(ctx context.Context) *SubscriptionManager {
@@ -128,8 +128,8 @@ func TestSubscription(s Subscribable) func(*testing.T, time.Duration, ...Event) 
 
 type subscriber struct {
 	stream chan Event
-	mu     sync.RWMutex
 	events []Event
+	mu     sync.RWMutex
 }
 
 func (s *subscriber) SubscriberID() string {

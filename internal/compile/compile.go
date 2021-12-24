@@ -94,9 +94,9 @@ func compileResourcePolicy(modCtx *moduleCtx, rp *policyv1.ResourcePolicy, schem
 
 func compileImportedDerivedRoles(modCtx *moduleCtx, rp *policyv1.ResourcePolicy) (map[string]*runtimev1.RunnableDerivedRole, error) {
 	type derivedRoleInfo struct {
+		compiledRoles *runtimev1.RunnableDerivedRolesSet
 		importName    string
 		sourceFile    string
-		compiledRoles *runtimev1.RunnableDerivedRolesSet
 	}
 
 	roleImports := make(map[string][]derivedRoleInfo)

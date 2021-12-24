@@ -270,8 +270,8 @@ func (crsr *CheckResourceSetResponse) MarshalJSON() ([]byte, error) {
 
 // ResourceBatch is a container for a batch of heterogeneous resources.
 type ResourceBatch struct {
-	batch []*requestv1.CheckResourceBatchRequest_BatchEntry
 	err   error
+	batch []*requestv1.CheckResourceBatchRequest_BatchEntry
 }
 
 // NewResourceBatch creates a new resource batch.
@@ -327,8 +327,8 @@ func (rb *ResourceBatch) Validate() error {
 // CheckResourceBatchResponse is the response from the CheckResourceBatch API call.
 type CheckResourceBatchResponse struct {
 	*responsev1.CheckResourceBatchResponse
-	once sync.Once
 	idx  map[string][]int
+	once sync.Once
 }
 
 func (crbr *CheckResourceBatchResponse) buildIdx() {
@@ -388,8 +388,8 @@ func (crbr *CheckResourceBatchResponse) MarshalJSON() ([]byte, error) {
 
 // PolicySet is a container for a set of policies.
 type PolicySet struct {
-	policies []*policyv1.Policy
 	err      error
+	policies []*policyv1.Policy
 }
 
 // NewPolicySet creates a new policy set.
@@ -835,8 +835,8 @@ func (me matchExpr) build() *policyv1.Match {
 }
 
 type matchList struct {
-	list []match
 	cons func([]*policyv1.Match) *policyv1.Match
+	list []match
 }
 
 func (ml matchList) build() *policyv1.Match {
@@ -869,11 +869,11 @@ const (
 
 // AuditLogOptions is used to filter audit logs.
 type AuditLogOptions struct {
-	Type      AuditLogType
-	Tail      uint32
 	StartTime time.Time
 	EndTime   time.Time
 	Lookup    string
+	Tail      uint32
+	Type      AuditLogType
 }
 
 type AuditLogEntry struct {
@@ -903,8 +903,8 @@ type sortingOptions struct {
 }
 
 type policyListOptions struct {
-	filters        []*requestv1.ListPoliciesRequest_Filter
 	sortingOptions *sortingOptions
+	filters        []*requestv1.ListPoliciesRequest_Filter
 }
 
 // ListOpt is used to specify options for ListPolicies method.

@@ -124,13 +124,13 @@ func GetSourceFile(p *policyv1.Policy) string {
 
 // Wrapper is a convenience layer over the policy definition.
 type Wrapper struct {
-	ID           namer.ModuleID
+	*policyv1.Policy
 	FQN          string
 	Kind         string
 	Name         string
 	Version      string
 	Dependencies []namer.ModuleID
-	*policyv1.Policy
+	ID           namer.ModuleID
 }
 
 func Wrap(p *policyv1.Policy) Wrapper {
@@ -176,8 +176,8 @@ func Wrap(p *policyv1.Policy) Wrapper {
 // For example, if a resource policy named R imports derived roles named D, the compilation unit will contain
 // both R and D with the ModID field pointing to R because it is the main policy.
 type CompilationUnit struct {
-	ModID       namer.ModuleID
 	Definitions map[namer.ModuleID]*policyv1.Policy
+	ModID       namer.ModuleID
 }
 
 func (cu *CompilationUnit) AddDefinition(id namer.ModuleID, p *policyv1.Policy) {

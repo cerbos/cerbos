@@ -110,8 +110,8 @@ func newError(file, desc string, err error) *Error {
 
 // CELCompileError holds CEL compilation errors.
 type CELCompileError struct {
-	expr   string
 	issues *cel.Issues
+	expr   string
 }
 
 func newCELCompileError(expr string, issues *cel.Issues) *CELCompileError {

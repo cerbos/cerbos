@@ -40,11 +40,11 @@ var (
 
 // CerbosAdminService implements the Cerbos administration service.
 type CerbosAdminService struct {
-	store           storage.Store
-	auditLog        audit.Log
+	store    storage.Store
+	auditLog audit.Log
+	*svcv1.UnimplementedCerbosAdminServiceServer
 	adminUser       string
 	adminPasswdHash []byte
-	*svcv1.UnimplementedCerbosAdminServiceServer
 }
 
 func NewCerbosAdminService(store storage.Store, auditLog audit.Log, adminUser string, adminPasswdHash []byte) *CerbosAdminService {

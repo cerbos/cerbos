@@ -22,8 +22,8 @@ var (
 
 // InvalidPolicyError is a custom error to signal that a policy is invalid.
 type InvalidPolicyError struct {
-	Message string
 	Err     error
+	Message string
 }
 
 func (ipe InvalidPolicyError) Error() string {
@@ -122,9 +122,9 @@ const (
 
 // Event is an event detected by the storage layer.
 type Event struct {
+	SchemaFile string
 	Kind       EventKind
 	PolicyID   namer.ModuleID
-	SchemaFile string
 }
 
 func (evt Event) String() string {

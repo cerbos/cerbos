@@ -28,6 +28,11 @@ linters-settings:
       Copyright {{ YEAR-RANGE }} {{ COMPANY }}
       SPDX-License-Identifier: Apache-2.0
 
+  govet:
+    enable-all: true 
+    disable:
+      - shadow
+
   nolintlint:
     allow-unused: false
     allow-leading-space: false
@@ -62,6 +67,7 @@ linters:
     - goheader
     - gomnd
     - gosec
+    - govet
     - ifshort
     - importas
     - makezero
@@ -121,3 +127,4 @@ issues:
       linters:
         - goconst
         - gomnd
+        - govet

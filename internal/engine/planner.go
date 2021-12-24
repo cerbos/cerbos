@@ -23,9 +23,9 @@ type (
 	qpNLO = enginev1.ResourcesQueryPlanOutput_Node_LogicalOperation
 	qpNE  = enginev1.ResourcesQueryPlanOutput_Node_Expression
 	rN    = struct {
-		role string
 		f    func() (*qpN, error)
 		node *qpN
+		role string
 	}
 )
 

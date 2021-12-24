@@ -24,9 +24,9 @@ import (
 
 type serverArgs struct {
 	configFile      string
-	configOverrides []string
 	debugListenAddr string
 	logLevel        string
+	configOverrides []string
 	zpagesEnabled   bool
 }
 
