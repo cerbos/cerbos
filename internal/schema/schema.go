@@ -38,8 +38,8 @@ const (
 var alwaysValidResult = &ValidationResult{Reject: false}
 
 type ValidationResult struct {
-	Reject bool
 	Errors ValidationErrorList
+	Reject bool
 }
 
 func (vr *ValidationResult) add(errs ...ValidationError) {

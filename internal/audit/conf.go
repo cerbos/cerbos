@@ -19,10 +19,10 @@ type Conf struct {
 }
 
 type confHolder struct {
-	// Enabled defines whether audit logging is enabled.
-	Enabled bool `yaml:"enabled" conf:",example=false"`
 	// Backend states which backend to use for Audits.
 	Backend string `yaml:"backend" conf:",example=local"`
+	// Enabled defines whether audit logging is enabled.
+	Enabled bool `yaml:"enabled" conf:",example=false"`
 	// AccessLogsEnabled defines whether access logging is enabled.
 	AccessLogsEnabled bool `yaml:"accessLogsEnabled" conf:",example=true"`
 	// DecisionLogsEnabled defines whether logging of policy decisions is enabled.

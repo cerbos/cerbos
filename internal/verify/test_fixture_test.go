@@ -34,8 +34,8 @@ principals:
 	fsys["a/"+util.TestDataDirectory+"/principals.yaml"] = newMapFile(principals)
 
 	tests := []struct {
-		name    string
 		want    map[string]*v1.Principal
+		name    string
 		wantErr bool
 	}{
 		{

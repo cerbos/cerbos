@@ -393,8 +393,9 @@ func buildExpr(expr *exprpb.Expr, acc *responsev1.ResourcesQueryPlanResponse_Exp
 		var operands []*ExprOp
 
 		for _, r := range []struct {
-			n, v string
-			x    *exprpb.Expr
+			x *exprpb.Expr
+			n string
+			v string
 		}{
 			{n: LoopStep, x: x.LoopStep},
 			{n: LoopCondition, x: x.LoopCondition},

@@ -41,17 +41,17 @@ type Client interface {
 
 type config struct {
 	address            string
-	plaintext          bool
 	tlsAuthority       string
-	tlsInsecure        bool
 	tlsCACert          string
 	tlsClientCert      string
 	tlsClientKey       string
-	connectTimeout     time.Duration
-	maxRetries         uint
-	retryTimeout       time.Duration
 	userAgent          string
 	playgroundInstance string
+	connectTimeout     time.Duration
+	retryTimeout       time.Duration
+	maxRetries         uint
+	plaintext          bool
+	tlsInsecure        bool
 }
 
 type Opt func(*config)

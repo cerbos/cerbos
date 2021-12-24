@@ -54,10 +54,10 @@ type Log struct {
 	logger   *zap.Logger
 	db       *badgerv3.DB
 	buffer   chan *badgerv3.Entry
-	wg       sync.WaitGroup
-	stopOnce sync.Once
 	stopChan chan struct{}
 	ttl      time.Duration
+	wg       sync.WaitGroup
+	stopOnce sync.Once
 }
 
 func NewLog(conf *Conf) (*Log, error) {

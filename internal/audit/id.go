@@ -125,8 +125,8 @@ func nearestPowerOfTwo(v uint64) uint64 {
 
 // lockedRand is a rand protected by a mutex because random sources are not thread-safe.
 type lockedRand struct {
-	mu  sync.Mutex
 	rnd *rand.Rand
+	mu  sync.Mutex
 }
 
 func newLockedRand(seed int64) *lockedRand {

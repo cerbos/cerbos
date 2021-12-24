@@ -28,6 +28,12 @@ const (
 // Conf is required (if driver is set to 'git') configuration for Git storage driver.
 //+desc=This section is required only if storage.driver is git.
 type Conf struct {
+	// SSH holds auth details for the SSH protocol.
+	SSH *SSHAuth `yaml:"ssh,omitempty"`
+	// HTTPS holds auth details for the HTTPS protocol.
+	HTTPS *HTTPSAuth `yaml:"https,omitempty"`
+	// OperationTimeout specifies the timeout for git operations.
+	OperationTimeout *time.Duration `yaml:"operationTimeout,omitempty" conf:",example=60s"`
 	// Protocol is the Git protocol to use. Valid values are https, ssh, and file.
 	Protocol string `yaml:"protocol" conf:"required,example=file"`
 	// URL is the URL to the Git repo.
@@ -40,12 +46,6 @@ type Conf struct {
 	CheckoutDir string `yaml:"checkoutDir" conf:",example=${HOME}/tmp/cerbos/work"`
 	// [DEPRECATED] ScratchDir is the directory to use for holding temporary data.
 	ScratchDir string `yaml:"scratchDir" conf:",ignore"`
-	// SSH holds auth details for the SSH protocol.
-	SSH *SSHAuth `yaml:"ssh,omitempty"`
-	// HTTPS holds auth details for the HTTPS protocol.
-	HTTPS *HTTPSAuth `yaml:"https,omitempty"`
-	// OperationTimeout specifies the timeout for git operations.
-	OperationTimeout *time.Duration `yaml:"operationTimeout,omitempty" conf:",example=60s"`
 	// UpdatePollInterval specifies the interval to poll the Git repository for changes. Set to 0 to disable.
 	UpdatePollInterval time.Duration `yaml:"updatePollInterval" conf:",example=60s"`
 }

@@ -29,12 +29,14 @@ var (
 
 // Conf is required configuration for the server.
 type Conf struct {
+	// AdminAPI defines the admin API configuration.
+	AdminAPI AdminAPIConf `yaml:"adminAPI"`
+	// TLS defines the TLS configuration for the server.
+	TLS *TLSConf `yaml:"tls"`
 	// HTTPListenAddr is the dedicated HTTP address.
 	HTTPListenAddr string `yaml:"httpListenAddr" conf:"required,example=\":3592\""`
 	// GRPCListenAddr is the dedicated GRPC address.
 	GRPCListenAddr string `yaml:"grpcListenAddr" conf:"required,example=\":3593\""`
-	// TLS defines the TLS configuration for the server.
-	TLS *TLSConf `yaml:"tls"`
 	// CORS defines the CORS configuration for the server.
 	CORS CORSConf `yaml:"cors"`
 	// MetricsEnabled defines whether the metrics endpoint is enabled.
@@ -43,8 +45,6 @@ type Conf struct {
 	LogRequestPayloads bool `yaml:"logRequestPayloads" conf:",example=false"`
 	// PlaygroundEnabled defines whether the playground API is enabled.
 	PlaygroundEnabled bool `yaml:"playgroundEnabled" conf:",example=false"`
-	// AdminAPI defines the admin API configuration.
-	AdminAPI AdminAPIConf `yaml:"adminAPI"`
 }
 
 // TLSConf holds TLS configuration.
@@ -58,21 +58,21 @@ type TLSConf struct {
 }
 
 type CORSConf struct {
-	// Disabled sets whether CORS is disabled.
-	Disabled bool `yaml:"disabled" conf:",example=false"`
 	// AllowedOrigins is the contents of the allowed-origins header.
 	AllowedOrigins []string `yaml:"allowedOrigins" conf:",example=['*']"`
 	// AllowedHeaders is the contents of the allowed-headers header.
 	AllowedHeaders []string `yaml:"allowedHeaders" conf:",example=['content-type']"`
+	// Disabled sets whether CORS is disabled.
+	Disabled bool `yaml:"disabled" conf:",example=false"`
 	// MaxAge is the max age of the CORS preflight check.
 	MaxAge time.Duration `yaml:"maxAge" conf:",example=10s"`
 }
 
 type AdminAPIConf struct {
-	// Enabled defines whether the admin API is enabled.
-	Enabled bool `yaml:"enabled" conf:",example=true"`
 	// AdminCredentials defines the admin user credentials.
 	AdminCredentials *AdminCredentialsConf `yaml:"adminCredentials"`
+	// Enabled defines whether the admin API is enabled.
+	Enabled bool `yaml:"enabled" conf:",example=true"`
 }
 
 type AdminCredentialsConf struct {

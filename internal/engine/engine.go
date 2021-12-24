@@ -82,12 +82,12 @@ func WithWriterTraceSink(w io.Writer) CheckOpt {
 }
 
 type Engine struct {
-	conf        *Conf
-	workerIndex uint64
-	workerPool  []chan<- workIn
-	compileMgr  *compile.Manager
 	schemaMgr   schema.Manager
 	auditLog    audit.Log
+	conf        *Conf
+	compileMgr  *compile.Manager
+	workerPool  []chan<- workIn
+	workerIndex uint64
 }
 
 type Components struct {
@@ -451,8 +451,8 @@ func (engine *Engine) policyAttr(name, version string) (pName, pVersion string) 
 }
 
 type evaluationCtx struct {
-	numChecks int
 	checks    [2]Evaluator
+	numChecks int
 }
 
 func (ec *evaluationCtx) addCheck(eval Evaluator) {
@@ -540,15 +540,15 @@ func (er *evaluationResult) merge(res *PolicyEvalResult) bool {
 }
 
 type workOut struct {
-	index  int
-	result *enginev1.CheckOutput
 	err    error
+	result *enginev1.CheckOutput
+	index  int
 }
 
 type workIn struct {
-	index     int
 	ctx       context.Context
 	input     *enginev1.CheckInput
 	checkOpts *checkOptions
 	out       chan<- workOut
+	index     int
 }
