@@ -10,11 +10,14 @@ import (
 
 const confKey = storage.ConfKey + ".mysql"
 
+// Conf is required (if driver is set to 'mysql') configuration for mysql driver.
+//+desc=This section is required only if storage.driver is mysql.
 type Conf struct {
-	DSN          string                 `yaml:"dsn"`
-	ConnPool     *internal.ConnPoolConf `yaml:"connPool"`
-	TLS          map[string]TLSConf     `yaml:"tls"`
-	ServerPubKey map[string]string      `yaml:"serverPubKey"`
+	// Data source name
+	DSN          string                 `yaml:"dsn" conf:"required,example=\"user:password@tcp(localhost:3306)/db?interpolateParams=true\""`
+	ConnPool     *internal.ConnPoolConf `yaml:"connPool" conf:",example=\n  maxLifeTime: 60m\n  maxIdleTime: 45s\n  maxOpen: 4\n  maxIdle: 1"`
+	TLS          map[string]TLSConf     `yaml:"tls" conf:",example=\n  mytls:\n    cert: /path/to/certificate\n    key: /path/to/private_key\n    caCert: /path/to/CA_certificate"`
+	ServerPubKey map[string]string      `yaml:"serverPubKey" conf:",example=\n  mykey: testdata/server_public_key.pem"`
 }
 
 type TLSConf struct {

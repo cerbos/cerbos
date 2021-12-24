@@ -73,6 +73,17 @@ service CerbosService {
             description: "Get information about the server e.g. server version"
         };
     }
+
+    rpc ResourcesQueryPlan(cerbos.request.v1.ResourcesQueryPlanRequest) returns (cerbos.response.v1.ResourcesQueryPlanResponse) {
+        option (google.api.http) = {
+            post: "/api/x/plan/resources",
+            body: "*"
+        };
+        option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+            summary: "Resources query plan"
+            description: "Resources query plan"
+        };
+    }
 }
 
 service CerbosAdminService {

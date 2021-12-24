@@ -15,3 +15,5 @@ hack/dev/tls.key
 
 # macOS files
 .DS_Store
+
+coverage.out

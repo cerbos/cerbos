@@ -16,7 +16,7 @@ import (
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
 )
 
-var invalidIdentiferChars = regexp.MustCompile(`[^\w\.]+`)
+var invalidIdentifierChars = regexp.MustCompile(`[^\w.]+`)
 
 const (
 	DerivedRolesPrefix      = "cerbos.derived_roles"
@@ -136,7 +136,7 @@ func DerivedRolesSimpleName(fqn string) string {
 
 // Sanitize replaces special characters in the string with underscores.
 func Sanitize(v string) string {
-	return invalidIdentiferChars.ReplaceAllLiteralString(v, "_")
+	return invalidIdentifierChars.ReplaceAllLiteralString(v, "_")
 }
 
 // ResourceRuleName returns the name of the given resource rule.

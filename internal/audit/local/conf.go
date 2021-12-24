@@ -32,17 +32,20 @@ var (
 	errInvalidMaxBatchSize = errors.New("maxBatchSize must be at least 1")
 )
 
+// Conf is optional configuration for local Audit.
 type Conf struct {
-	StoragePath     string        `yaml:"storagePath"`
-	RetentionPeriod time.Duration `yaml:"retentionPeriod"`
+	// Path to store the data
+	StoragePath string `yaml:"storagePath" conf:",example=/path/to/dir"`
+	// How long to keep records for
+	RetentionPeriod time.Duration `yaml:"retentionPeriod" conf:",example=168h"`
 	Advanced        AdvancedConf  `yaml:"advanced"`
 }
 
 type AdvancedConf struct {
-	BufferSize    uint          `yaml:"bufferSize"`
-	MaxBatchSize  uint          `yaml:"maxBatchSize"`
-	FlushInterval time.Duration `yaml:"flushInterval"`
-	GCInterval    time.Duration `yaml:"gcInterval"`
+	BufferSize    uint          `yaml:"bufferSize" conf:",example=256"`
+	MaxBatchSize  uint          `yaml:"maxBatchSize" conf:",example=32"`
+	FlushInterval time.Duration `yaml:"flushInterval" conf:",example=1s"`
+	GCInterval    time.Duration `yaml:"gcInterval" conf:",example=60s"`
 }
 
 func (c *Conf) Key() string {

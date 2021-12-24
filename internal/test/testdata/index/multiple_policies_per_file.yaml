@@ -1,0 +1,35 @@
+---
+wantErrJson: |-
+  {
+    "disabled": null,
+    "duplicateDefs": null,
+    "loadFailures": [
+      {
+        "error": "more than one YAML document detected",
+        "file": "principal.yaml"
+      }
+    ],
+    "missingImports": null
+  }
+files:
+  "principal.yaml": |-
+    ---
+    apiVersion: "api.cerbos.dev/v1"
+    principalPolicy:
+      principal: donald_duck
+      version: "20210210"
+      rules:
+        - resource: salary_record
+          actions:
+            - action: "*"
+              effect: EFFECT_DENY
+    ---
+    apiVersion: "api.cerbos.dev/v1"
+    principalPolicy:
+      principal: mickey_mouse
+      version: "20210210"
+      rules:
+        - resource: salary_record
+          actions:
+            - action: "*"
+              effect: EFFECT_ALLOW

@@ -37,6 +37,103 @@ var (
 	_ = effectv1.Effect(0)
 )
 
+// Validate checks the field values on ResourcesQueryPlanRequest with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, an error is returned.
+func (m *ResourcesQueryPlanRequest) Validate() error {
+	if m == nil {
+		return nil
+	}
+
+	// no validation rules for RequestId
+
+	// no validation rules for Action
+
+	if v, ok := interface{}(m.GetPrincipal()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return ResourcesQueryPlanRequestValidationError{
+				field:  "Principal",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	// no validation rules for ResourceKind
+
+	// no validation rules for PolicyVersion
+
+	if v, ok := interface{}(m.GetAuxData()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return ResourcesQueryPlanRequestValidationError{
+				field:  "AuxData",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	// no validation rules for IncludeMeta
+
+	return nil
+}
+
+// ResourcesQueryPlanRequestValidationError is the validation error returned by
+// ResourcesQueryPlanRequest.Validate if the designated constraints aren't met.
+type ResourcesQueryPlanRequestValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e ResourcesQueryPlanRequestValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e ResourcesQueryPlanRequestValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e ResourcesQueryPlanRequestValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e ResourcesQueryPlanRequestValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e ResourcesQueryPlanRequestValidationError) ErrorName() string {
+	return "ResourcesQueryPlanRequestValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e ResourcesQueryPlanRequestValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sResourcesQueryPlanRequest.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = ResourcesQueryPlanRequestValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = ResourcesQueryPlanRequestValidationError{}
+
 // Validate checks the field values on CheckInput with the rules defined in the
 // proto definition for this message. If any rules are violated, an error is returned.
 func (m *CheckInput) Validate() error {
@@ -270,6 +367,91 @@ var _ interface {
 	Cause() error
 	ErrorName() string
 } = CheckOutputValidationError{}
+
+// Validate checks the field values on ResourcesQueryPlanOutput with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, an error is returned.
+func (m *ResourcesQueryPlanOutput) Validate() error {
+	if m == nil {
+		return nil
+	}
+
+	// no validation rules for RequestId
+
+	// no validation rules for Action
+
+	// no validation rules for Kind
+
+	// no validation rules for PolicyVersion
+
+	if v, ok := interface{}(m.GetFilter()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return ResourcesQueryPlanOutputValidationError{
+				field:  "Filter",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	return nil
+}
+
+// ResourcesQueryPlanOutputValidationError is the validation error returned by
+// ResourcesQueryPlanOutput.Validate if the designated constraints aren't met.
+type ResourcesQueryPlanOutputValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e ResourcesQueryPlanOutputValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e ResourcesQueryPlanOutputValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e ResourcesQueryPlanOutputValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e ResourcesQueryPlanOutputValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e ResourcesQueryPlanOutputValidationError) ErrorName() string {
+	return "ResourcesQueryPlanOutputValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e ResourcesQueryPlanOutputValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sResourcesQueryPlanOutput.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = ResourcesQueryPlanOutputValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = ResourcesQueryPlanOutputValidationError{}
 
 // Validate checks the field values on Resource with the rules defined in the
 // proto definition for this message. If any rules are violated, an error is returned.
@@ -678,3 +860,184 @@ var _ interface {
 	Cause() error
 	ErrorName() string
 } = CheckOutput_ActionEffectValidationError{}
+
+// Validate checks the field values on ResourcesQueryPlanOutput_Node with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, an error is returned.
+func (m *ResourcesQueryPlanOutput_Node) Validate() error {
+	if m == nil {
+		return nil
+	}
+
+	switch m.Node.(type) {
+
+	case *ResourcesQueryPlanOutput_Node_LogicalOperation:
+
+		if v, ok := interface{}(m.GetLogicalOperation()).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return ResourcesQueryPlanOutput_NodeValidationError{
+					field:  "LogicalOperation",
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	case *ResourcesQueryPlanOutput_Node_Expression:
+
+		if v, ok := interface{}(m.GetExpression()).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return ResourcesQueryPlanOutput_NodeValidationError{
+					field:  "Expression",
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	}
+
+	return nil
+}
+
+// ResourcesQueryPlanOutput_NodeValidationError is the validation error
+// returned by ResourcesQueryPlanOutput_Node.Validate if the designated
+// constraints aren't met.
+type ResourcesQueryPlanOutput_NodeValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e ResourcesQueryPlanOutput_NodeValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e ResourcesQueryPlanOutput_NodeValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e ResourcesQueryPlanOutput_NodeValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e ResourcesQueryPlanOutput_NodeValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e ResourcesQueryPlanOutput_NodeValidationError) ErrorName() string {
+	return "ResourcesQueryPlanOutput_NodeValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e ResourcesQueryPlanOutput_NodeValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sResourcesQueryPlanOutput_Node.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = ResourcesQueryPlanOutput_NodeValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = ResourcesQueryPlanOutput_NodeValidationError{}
+
+// Validate checks the field values on
+// ResourcesQueryPlanOutput_LogicalOperation with the rules defined in the
+// proto definition for this message. If any rules are violated, an error is returned.
+func (m *ResourcesQueryPlanOutput_LogicalOperation) Validate() error {
+	if m == nil {
+		return nil
+	}
+
+	// no validation rules for Operator
+
+	for idx, item := range m.GetNodes() {
+		_, _ = idx, item
+
+		if v, ok := interface{}(item).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return ResourcesQueryPlanOutput_LogicalOperationValidationError{
+					field:  fmt.Sprintf("Nodes[%v]", idx),
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	}
+
+	return nil
+}
+
+// ResourcesQueryPlanOutput_LogicalOperationValidationError is the validation
+// error returned by ResourcesQueryPlanOutput_LogicalOperation.Validate if the
+// designated constraints aren't met.
+type ResourcesQueryPlanOutput_LogicalOperationValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e ResourcesQueryPlanOutput_LogicalOperationValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e ResourcesQueryPlanOutput_LogicalOperationValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e ResourcesQueryPlanOutput_LogicalOperationValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e ResourcesQueryPlanOutput_LogicalOperationValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e ResourcesQueryPlanOutput_LogicalOperationValidationError) ErrorName() string {
+	return "ResourcesQueryPlanOutput_LogicalOperationValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e ResourcesQueryPlanOutput_LogicalOperationValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sResourcesQueryPlanOutput_LogicalOperation.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = ResourcesQueryPlanOutput_LogicalOperationValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = ResourcesQueryPlanOutput_LogicalOperationValidationError{}

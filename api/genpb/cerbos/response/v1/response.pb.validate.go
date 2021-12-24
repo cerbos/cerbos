@@ -37,6 +37,101 @@ var (
 	_ = effectv1.Effect(0)
 )
 
+// Validate checks the field values on ResourcesQueryPlanResponse with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, an error is returned.
+func (m *ResourcesQueryPlanResponse) Validate() error {
+	if m == nil {
+		return nil
+	}
+
+	// no validation rules for RequestId
+
+	// no validation rules for Action
+
+	// no validation rules for ResourceKind
+
+	// no validation rules for PolicyVersion
+
+	if v, ok := interface{}(m.GetFilter()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return ResourcesQueryPlanResponseValidationError{
+				field:  "Filter",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if v, ok := interface{}(m.GetMeta()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return ResourcesQueryPlanResponseValidationError{
+				field:  "Meta",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	return nil
+}
+
+// ResourcesQueryPlanResponseValidationError is the validation error returned
+// by ResourcesQueryPlanResponse.Validate if the designated constraints aren't met.
+type ResourcesQueryPlanResponseValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e ResourcesQueryPlanResponseValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e ResourcesQueryPlanResponseValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e ResourcesQueryPlanResponseValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e ResourcesQueryPlanResponseValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e ResourcesQueryPlanResponseValidationError) ErrorName() string {
+	return "ResourcesQueryPlanResponseValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e ResourcesQueryPlanResponseValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sResourcesQueryPlanResponse.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = ResourcesQueryPlanResponseValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = ResourcesQueryPlanResponseValidationError{}
+
 // Validate checks the field values on CheckResourceSetResponse with the rules
 // defined in the proto definition for this message. If any rules are
 // violated, an error is returned.
@@ -1279,6 +1374,263 @@ var _ interface {
 	Cause() error
 	ErrorName() string
 } = DeleteSchemaResponseValidationError{}
+
+// Validate checks the field values on ResourcesQueryPlanResponse_Expression
+// with the rules defined in the proto definition for this message. If any
+// rules are violated, an error is returned.
+func (m *ResourcesQueryPlanResponse_Expression) Validate() error {
+	if m == nil {
+		return nil
+	}
+
+	// no validation rules for Operator
+
+	for idx, item := range m.GetOperands() {
+		_, _ = idx, item
+
+		if v, ok := interface{}(item).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return ResourcesQueryPlanResponse_ExpressionValidationError{
+					field:  fmt.Sprintf("Operands[%v]", idx),
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	}
+
+	return nil
+}
+
+// ResourcesQueryPlanResponse_ExpressionValidationError is the validation error
+// returned by ResourcesQueryPlanResponse_Expression.Validate if the
+// designated constraints aren't met.
+type ResourcesQueryPlanResponse_ExpressionValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e ResourcesQueryPlanResponse_ExpressionValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e ResourcesQueryPlanResponse_ExpressionValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e ResourcesQueryPlanResponse_ExpressionValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e ResourcesQueryPlanResponse_ExpressionValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e ResourcesQueryPlanResponse_ExpressionValidationError) ErrorName() string {
+	return "ResourcesQueryPlanResponse_ExpressionValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e ResourcesQueryPlanResponse_ExpressionValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sResourcesQueryPlanResponse_Expression.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = ResourcesQueryPlanResponse_ExpressionValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = ResourcesQueryPlanResponse_ExpressionValidationError{}
+
+// Validate checks the field values on ResourcesQueryPlanResponse_Meta with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, an error is returned.
+func (m *ResourcesQueryPlanResponse_Meta) Validate() error {
+	if m == nil {
+		return nil
+	}
+
+	// no validation rules for FilterDebug
+
+	return nil
+}
+
+// ResourcesQueryPlanResponse_MetaValidationError is the validation error
+// returned by ResourcesQueryPlanResponse_Meta.Validate if the designated
+// constraints aren't met.
+type ResourcesQueryPlanResponse_MetaValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e ResourcesQueryPlanResponse_MetaValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e ResourcesQueryPlanResponse_MetaValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e ResourcesQueryPlanResponse_MetaValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e ResourcesQueryPlanResponse_MetaValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e ResourcesQueryPlanResponse_MetaValidationError) ErrorName() string {
+	return "ResourcesQueryPlanResponse_MetaValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e ResourcesQueryPlanResponse_MetaValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sResourcesQueryPlanResponse_Meta.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = ResourcesQueryPlanResponse_MetaValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = ResourcesQueryPlanResponse_MetaValidationError{}
+
+// Validate checks the field values on
+// ResourcesQueryPlanResponse_Expression_Operand with the rules defined in the
+// proto definition for this message. If any rules are violated, an error is returned.
+func (m *ResourcesQueryPlanResponse_Expression_Operand) Validate() error {
+	if m == nil {
+		return nil
+	}
+
+	switch m.Node.(type) {
+
+	case *ResourcesQueryPlanResponse_Expression_Operand_Value:
+
+		if v, ok := interface{}(m.GetValue()).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return ResourcesQueryPlanResponse_Expression_OperandValidationError{
+					field:  "Value",
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	case *ResourcesQueryPlanResponse_Expression_Operand_Expression:
+
+		if v, ok := interface{}(m.GetExpression()).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return ResourcesQueryPlanResponse_Expression_OperandValidationError{
+					field:  "Expression",
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	case *ResourcesQueryPlanResponse_Expression_Operand_Variable:
+		// no validation rules for Variable
+
+	}
+
+	return nil
+}
+
+// ResourcesQueryPlanResponse_Expression_OperandValidationError is the
+// validation error returned by
+// ResourcesQueryPlanResponse_Expression_Operand.Validate if the designated
+// constraints aren't met.
+type ResourcesQueryPlanResponse_Expression_OperandValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e ResourcesQueryPlanResponse_Expression_OperandValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e ResourcesQueryPlanResponse_Expression_OperandValidationError) Reason() string {
+	return e.reason
+}
+
+// Cause function returns cause value.
+func (e ResourcesQueryPlanResponse_Expression_OperandValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e ResourcesQueryPlanResponse_Expression_OperandValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e ResourcesQueryPlanResponse_Expression_OperandValidationError) ErrorName() string {
+	return "ResourcesQueryPlanResponse_Expression_OperandValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e ResourcesQueryPlanResponse_Expression_OperandValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sResourcesQueryPlanResponse_Expression_Operand.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = ResourcesQueryPlanResponse_Expression_OperandValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = ResourcesQueryPlanResponse_Expression_OperandValidationError{}
 
 // Validate checks the field values on CheckResourceSetResponse_ActionEffectMap
 // with the rules defined in the proto definition for this message. If any

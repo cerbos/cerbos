@@ -36,7 +36,7 @@ lint-helm:
 	@ deploy/charts/validate.sh
 
 .PHONY: generate
-generate: clean generate-proto-code generate-mocks deps 
+generate: clean generate-proto-code generate-mocks deps confdocs
 
 .PHONY: generate-proto-code
 generate-proto-code: proto-gen-deps
@@ -58,6 +58,13 @@ generate-notice: $(GO_LICENCE_DETECTOR)
 		-rules=hack/notice/rules.json \
 		-noticeOut=NOTICE.txt
 
+.PHONY: confdocs
+confdocs:
+	@ mkdir -p ./internal/confdocs
+	@ go run ./hack/tools/confdocs/confdocs.go > ./internal/confdocs/generated.go
+	@ go run ./internal/confdocs/generated.go
+	@ rm -rf ./internal/confdocs
+
 .PHONY: deps
 deps:
 	@ go mod tidy -compat=1.17
@@ -67,7 +74,7 @@ test-all: test-race test-integration
 
 .PHONY: test
 test: $(GOTESTSUM)
-	@ $(GOTESTSUM) -- -tags=tests -cover ./...
+	@ $(GOTESTSUM) -- -tags=tests $(COVERPROFILE) -cover ./...
 
 .PHONY: test-race
 test-race: $(GOTESTSUM)
@@ -93,7 +100,7 @@ build: $(GORELEASER) generate lint test
 	@ $(GORELEASER) release --config=.goreleaser.yml --snapshot --skip-publish --rm-dist
 
 .PHONY: docs
-docs:
+docs: confdocs
 	@ docs/build.sh
 
 .PHONY: install
