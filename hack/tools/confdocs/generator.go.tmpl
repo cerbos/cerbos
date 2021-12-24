@@ -1,0 +1,57 @@
+// Copyright 2021 Zenauth Ltd.
+// SPDX-License-Identifier: Apache-2.0
+
+package main
+
+import (
+"io"
+"os"
+"fmt"
+"sort"
+"strings"
+
+{{- range $k, $v := .Imports }}
+    {{ $k }} "{{ $v }}"
+{{- end }}
+)
+
+func generateOutput(out io.Writer) {
+sections := make(map[string]string)
+var sectionKeys []string
+
+{{- range $k, $v := .Sections }}
+    {
+    s := &{{ $k }}{}
+    k := s.Key()
+    sections[k] = strings.TrimSpace(`{{- $v -}}`)
+    sectionKeys = append(sectionKeys, k)
+    }
+{{- end }}
+
+sort.Strings(sectionKeys)
+for _, k := range sectionKeys {
+keyParts := strings.Split(k, ".")
+_, _ = fmt.Fprintf(out, "%s%s:\n", strings.Repeat("  ", len(keyParts)-1), keyParts[len(keyParts)-1])
+_, _ = fmt.Fprintf(out, "%s\n", indent(len(keyParts), sections[k]))
+}
+}
+
+func indent(n int, s string) string {
+spaces := strings.Repeat("  ", n)
+lines := strings.Split(s, "\n")
+for i, l := range lines {
+lines[i] = fmt.Sprintf("%s%s", spaces, l)
+}
+
+return strings.Join(lines, "\n")
+}
+
+func main() {
+f, err := os.Create("{{ .File }}")
+if err != nil {
+panic(err)
+}
+defer f.Close()
+
+generateOutput(f)
+}

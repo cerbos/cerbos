@@ -9,14 +9,15 @@ import (
 
 const confKey = storage.ConfKey + ".disk"
 
-// Conf holds the configuration for disk storage driver.
+// Conf is required (if driver is set to 'disk') configuration for disk storage driver.
+//+desc=This section is required only if storage.driver is disk.
 type Conf struct {
 	// Directory is the path on disk where policies are stored.
-	Directory string `yaml:"directory"`
+	Directory string `yaml:"directory" conf:"required,example=pkg/test/testdata/store"`
 	// WatchForChanges enables watching the directory for changes.
-	WatchForChanges bool `yaml:"watchForChanges"`
+	WatchForChanges bool `yaml:"watchForChanges" conf:"required,example=false"`
 	// [DEPRECATED] ScratchDir is the directory to use for holding temporary data.
-	ScratchDir string `yaml:"scratchDir"`
+	ScratchDir string `yaml:"scratchDir" conf:",ignore"`
 }
 
 func (conf *Conf) Key() string {

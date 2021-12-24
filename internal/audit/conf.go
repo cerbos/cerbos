@@ -13,15 +13,20 @@ const (
 	ConfKey = "audit"
 )
 
+// Conf is optional configuration for Audit.
 type Conf struct {
 	confHolder
 }
 
 type confHolder struct {
-	Enabled             bool   `yaml:"enabled"`
-	Backend             string `yaml:"backend"`
-	AccessLogsEnabled   bool   `yaml:"accessLogsEnabled"`
-	DecisionLogsEnabled bool   `yaml:"decisionLogsEnabled"`
+	// Enabled defines whether audit logging is enabled.
+	Enabled bool `yaml:"enabled" conf:",example=false"`
+	// Backend states which backend to use for Audits.
+	Backend string `yaml:"backend" conf:",example=local"`
+	// AccessLogsEnabled defines whether access logging is enabled.
+	AccessLogsEnabled bool `yaml:"accessLogsEnabled" conf:",example=true"`
+	// DecisionLogsEnabled defines whether logging of policy decisions is enabled.
+	DecisionLogsEnabled bool `yaml:"decisionLogsEnabled" conf:",example=true"`
 }
 
 func (c *Conf) UnmarshalYAML(unmarshal func(interface{}) error) error {
