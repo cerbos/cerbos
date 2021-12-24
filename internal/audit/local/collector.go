@@ -16,10 +16,10 @@ type collector interface {
 }
 
 type accessLogEntryCollector struct {
-	buffer   chan *auditv1.AccessLogEntry
-	doneOnce sync.Once
-	mu       sync.RWMutex
 	err      error
+	buffer   chan *auditv1.AccessLogEntry
+	mu       sync.RWMutex
+	doneOnce sync.Once
 }
 
 func newAccessLogEntryCollector() *accessLogEntryCollector {
@@ -65,10 +65,10 @@ func (a *accessLogEntryCollector) Next() (*auditv1.AccessLogEntry, error) {
 }
 
 type decisionLogEntryCollector struct {
-	buffer   chan *auditv1.DecisionLogEntry
-	doneOnce sync.Once
-	mu       sync.RWMutex
 	err      error
+	buffer   chan *auditv1.DecisionLogEntry
+	mu       sync.RWMutex
+	doneOnce sync.Once
 }
 
 func newDecisionLogEntryCollector() *decisionLogEntryCollector {

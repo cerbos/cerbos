@@ -53,8 +53,8 @@ func cleanup(r *http.Request) {
 }
 
 type swaggerMod struct {
-	schema []byte
 	err    error
+	schema []byte
 }
 
 func newSwaggerMod() *swaggerMod {

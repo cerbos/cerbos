@@ -26,12 +26,12 @@ type JWTConf struct {
 }
 
 type JWTKeySet struct {
-	// ID is the unique reference to this keyset.
-	ID string `yaml:"id" conf:"required,example=ks1"`
 	// Remote defines a remote keyset. Mutually exclusive with Local.
 	Remote *RemoteSource `yaml:"remote"`
 	// Local defines a local keyset. Mutually exclusive with Remote.
 	Local *LocalSource `yaml:"local"`
+	// ID is the unique reference to this keyset.
+	ID string `yaml:"id" conf:"required,example=ks1"`
 }
 
 type RemoteSource struct {

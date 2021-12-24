@@ -45,14 +45,14 @@ type Index interface {
 }
 
 type index struct {
-	fsys         fs.FS
-	mu           sync.RWMutex
 	executables  map[namer.ModuleID]struct{}
 	modIDToFile  map[namer.ModuleID]string
 	fileToModID  map[string]namer.ModuleID
 	dependents   map[namer.ModuleID]map[namer.ModuleID]struct{}
 	dependencies map[namer.ModuleID]map[namer.ModuleID]struct{}
 	schemaLoader *SchemaLoader
+	fsys         fs.FS
+	mu           sync.RWMutex
 }
 
 func (idx *index) GetFiles() []string {

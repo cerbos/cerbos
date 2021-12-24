@@ -26,6 +26,10 @@ const (
 // Conf is required (if driver is set to 'blob') configuration for cloud storage driver.
 //+desc=This section is required only if storage.driver is blob.
 type Conf struct {
+	// DownloadTimeout specifies the timeout for downloading from cloud storage.
+	DownloadTimeout *time.Duration `yaml:"downloadTimeout,omitempty" conf:",example=30s"`
+	// RequestTimeout specifies the timeout for an HTTP request.
+	RequestTimeout *time.Duration `yaml:"requestTimeout,omitempty" conf:",example=10s"`
 	// Bucket URL (Examples: s3://my-bucket?region=us-west-1 gs://my-bucket azblob://my-container).
 	Bucket string `yaml:"bucket" conf:"required,example=\"s3://my-bucket-name?region=us-east-2\""`
 	// Prefix specifies a subdirectory to download.
@@ -34,10 +38,6 @@ type Conf struct {
 	WorkDir string `yaml:"workDir" conf:",example=${HOME}/tmp/cerbos/work"`
 	// UpdatePollInterval specifies the interval to poll the cloud storage. Set to 0 to disable.
 	UpdatePollInterval time.Duration `yaml:"updatePollInterval" conf:",example=15s"`
-	// DownloadTimeout specifies the timeout for downloading from cloud storage.
-	DownloadTimeout *time.Duration `yaml:"downloadTimeout,omitempty" conf:",example=30s"`
-	// RequestTimeout specifies the timeout for an HTTP request.
-	RequestTimeout *time.Duration `yaml:"requestTimeout,omitempty" conf:",example=10s"`
 }
 
 func (conf *Conf) Key() string {

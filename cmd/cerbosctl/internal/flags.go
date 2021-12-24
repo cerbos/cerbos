@@ -20,10 +20,10 @@ import (
 var errMoreThanOneFilter = errors.New("more than one filter specified: choose from either `tail`, `between`, `since` or `lookup`")
 
 type AuditLogFilterDef struct {
-	tail    uint16
+	lookup  string
 	between timerangeFlag
 	since   time.Duration
-	lookup  string
+	tail    uint16
 }
 
 func NewAuditLogFilterDef() *AuditLogFilterDef {
@@ -167,11 +167,11 @@ func GenAuditLogOptions(filter *AuditLogFilterDef) client.AuditLogOptions {
 }
 
 type ListPoliciesFilterDef struct {
+	sort       string
+	format     string
 	fieldEq    []string
 	fieldMatch []string
-	sort       string
 	sortDesc   bool
-	format     string
 }
 
 func NewListPoliciesFilterDef() *ListPoliciesFilterDef {

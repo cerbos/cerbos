@@ -86,7 +86,7 @@ storage:
       maxIdleTime: 45s
       maxOpen: 4
       maxIdle: 1 
-    dsn: "user:password@tcp(localhost:3306)/db?interpolateParams=true" # Required. Data source name
+    dsn: "user:password@tcp(localhost:3306)/db?interpolateParams=true" # Required. DSN is the data source connection string.
     serverPubKey: 
       mykey: testdata/server_public_key.pem 
     tls: 

@@ -111,8 +111,8 @@ func (zts *ZapTraceSink) WriteEvent(component []string, data ...KV) {
 
 // WriterTraceSink implements TraceSink using an io.Writer.
 type WriterTraceSink struct {
-	mu sync.Mutex
 	w  io.Writer
+	mu sync.Mutex
 }
 
 func NewWriterTraceSink(w io.Writer) *WriterTraceSink {
@@ -138,8 +138,8 @@ func (wts *WriterTraceSink) WriteEvent(component []string, data ...KV) {
 }
 
 type tracer struct {
-	enabled bool
 	sink    TraceSink
+	enabled bool
 }
 
 func newTracer(sink TraceSink) *tracer {
@@ -155,9 +155,9 @@ func (t *tracer) beginTrace(nameFormat string, params ...interface{}) *traceCont
 }
 
 type traceContext struct {
-	enabled   bool
-	component []string
 	sink      TraceSink
+	component []string
+	enabled   bool
 }
 
 var noopTraceCtx = &traceContext{enabled: false}

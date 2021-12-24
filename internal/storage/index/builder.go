@@ -45,8 +45,8 @@ type DuplicateDef struct {
 
 // LoadFailure describes a failure to load a policy.
 type LoadFailure struct {
-	File string
 	Err  error
+	File string
 }
 
 func (lf LoadFailure) MarshalJSON() ([]byte, error) {

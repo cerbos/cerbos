@@ -30,18 +30,18 @@ const (
 )
 
 type Schema struct {
-	ID         string
 	Definition *pgtype.JSON
+	ID         string
 }
 
 type Policy struct {
-	ID          namer.ModuleID
+	Definition  PolicyDefWrapper
 	Kind        string
 	Name        string
 	Version     string
 	Description string
+	ID          namer.ModuleID
 	Disabled    bool
-	Definition  PolicyDefWrapper
 }
 
 type PolicyDependency struct {
@@ -79,14 +79,14 @@ func (pdw *PolicyDefWrapper) Scan(src interface{}) error {
 }
 
 type PolicyRevision struct {
-	RevisionID  int64 `db:"revision_id"`
-	ID          namer.ModuleID
-	Kind        string
-	Name        string
+	Timestamp   time.Time `db:"update_timestamp"`
+	Definition  PolicyDefWrapper
+	Action      string
 	Version     string
 	Description string
-	Action      string
+	Kind        string
+	Name        string
+	ID          namer.ModuleID
+	RevisionID  int64 `db:"revision_id"`
 	Disabled    bool
-	Definition  PolicyDefWrapper
-	Timestamp   time.Time `db:"update_timestamp"`
 }

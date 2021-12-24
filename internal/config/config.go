@@ -143,8 +143,8 @@ func GetSection(section Section) error {
 }
 
 type configHolder struct {
-	mu       sync.RWMutex
 	provider config.Provider
+	mu       sync.RWMutex
 }
 
 func (ch *configHolder) Get(key string, out interface{}) error {
