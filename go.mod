@@ -4,15 +4,17 @@ go 1.17
 
 require (
 	contrib.go.opencensus.io/exporter/prometheus v0.4.0
+	github.com/Masterminds/sprig/v3 v3.2.2
 	github.com/PaesslerAG/jsonpath v0.1.1
-	github.com/ProtonMail/go-crypto v0.0.0-20210512092938-c05353c2d58c // indirect
 	github.com/alecthomas/chroma v0.9.4
+	github.com/aws/aws-sdk-go v1.42.23
 	github.com/bluele/gcache v0.0.2
 	github.com/cespare/xxhash v1.1.0
 	github.com/dgraph-io/badger/v3 v3.2103.2
 	github.com/doug-martin/goqu/v9 v9.18.0
 	github.com/envoyproxy/protoc-gen-validate v0.6.2
 	github.com/fatih/color v1.13.0
+	github.com/fatih/structtag v1.2.0
 	github.com/fergusstrange/embedded-postgres v1.12.0
 	github.com/fsnotify/fsnotify v1.5.1
 	github.com/gdamore/tcell/v2 v2.4.0
@@ -28,64 +30,51 @@ require (
 	github.com/gorilla/mux v1.8.0
 	github.com/grpc-ecosystem/go-grpc-middleware v1.3.0
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.7.2
+	github.com/jackc/pgtype v1.9.1
 	github.com/jackc/pgx/v4 v4.14.1
 	github.com/jdxcode/netrc v0.0.0-20210204082910-926c7f70242a
 	github.com/jmoiron/sqlx v1.3.4
 	github.com/jwalton/gchalk v1.2.1
 	github.com/kavu/go_reuseport v1.5.0
-	github.com/kevinburke/ssh_config v1.1.0 // indirect
-	github.com/klauspost/compress v1.13.6 // indirect
+	github.com/lestrrat-go/jwx v1.2.14
 	github.com/mattn/go-isatty v0.0.14
-	github.com/mattn/go-runewidth v0.0.13 // indirect
+	github.com/minio/minio-go/v7 v7.0.20
 	github.com/oklog/ulid/v2 v2.0.2
 	github.com/ory/dockertest/v3 v3.8.1
 	github.com/planetscale/vtprotobuf v0.0.0-20210616093554-9236f7c7b8ca
 	github.com/prometheus/client_golang v1.11.0
-	github.com/prometheus/procfs v0.7.0 // indirect
-	github.com/prometheus/statsd_exporter v0.21.0 // indirect
 	github.com/rivo/tview v0.0.0-20210624165335-29d673af0ce2
 	github.com/rjeczalik/notify v0.9.3-0.20201210012515-e2a77dcc14cf
 	github.com/rodaine/table v1.0.1
-	github.com/sergi/go-diff v1.2.0 // indirect
+	github.com/santhosh-tekuri/jsonschema/v5 v5.0.0
 	github.com/spf13/afero v1.7.0
 	github.com/spf13/cobra v1.3.0
 	github.com/spf13/pflag v1.0.5
 	github.com/stretchr/testify v1.7.0
+	github.com/tidwall/gjson v1.12.1
 	github.com/tidwall/sjson v1.2.4
 	go.elastic.co/ecszap v1.0.0
 	go.opencensus.io v0.23.0
-	go.uber.org/automaxprocs v1.4.0
-	go.uber.org/config v1.4.0
-	go.uber.org/multierr v1.7.0
-	go.uber.org/zap v1.19.1
-	golang.org/x/crypto v0.0.0-20211108221036-ceb1ce70b4fa
-	golang.org/x/net v0.0.0-20211209124913-491a49abca63
-	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
-	google.golang.org/api v0.62.0 // indirect
-	google.golang.org/grpc v1.43.0
-	google.golang.org/protobuf v1.27.1
-	gopkg.in/yaml.v2 v2.4.0
-	helm.sh/helm/v3 v3.7.2
-	modernc.org/sqlite v1.14.3
-)
-
-require (
-	github.com/Masterminds/sprig/v3 v3.2.2
-	github.com/aws/aws-sdk-go v1.42.23
-	github.com/fatih/structtag v1.2.0
-	github.com/jackc/pgtype v1.9.1
-	github.com/lestrrat-go/jwx v1.2.14
-	github.com/minio/minio-go/v7 v7.0.20
-	github.com/santhosh-tekuri/jsonschema/v5 v5.0.0
-	github.com/tidwall/gjson v1.12.1
 	go.opentelemetry.io/otel v1.3.0
 	go.opentelemetry.io/otel/bridge/opencensus v0.26.0
 	go.opentelemetry.io/otel/exporters/jaeger v1.3.0
 	go.opentelemetry.io/otel/sdk v1.3.0
 	go.opentelemetry.io/otel/trace v1.3.0
+	go.uber.org/automaxprocs v1.4.0
+	go.uber.org/config v1.4.0
+	go.uber.org/multierr v1.7.0
+	go.uber.org/zap v1.19.1
 	gocloud.dev v0.24.0
+	golang.org/x/crypto v0.0.0-20211108221036-ceb1ce70b4fa
+	golang.org/x/net v0.0.0-20211209124913-491a49abca63
+	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
 	golang.org/x/tools v0.1.8
 	google.golang.org/genproto v0.0.0-20211208223120-3a66f561d7aa
+	google.golang.org/grpc v1.43.0
+	google.golang.org/protobuf v1.27.1
+	gopkg.in/yaml.v2 v2.4.0
+	helm.sh/helm/v3 v3.7.2
+	modernc.org/sqlite v1.14.3
 )
 
 require (
@@ -98,6 +87,7 @@ require (
 	github.com/Nvveen/Gotty v0.0.0-20120604004816-cd527374f1e5 // indirect
 	github.com/OneOfOne/xxhash v1.2.8 // indirect
 	github.com/PaesslerAG/gval v1.0.0 // indirect
+	github.com/ProtonMail/go-crypto v0.0.0-20210512092938-c05353c2d58c // indirect
 	github.com/acomagu/bufpipe v1.0.3 // indirect
 	github.com/antlr/antlr4 v0.0.0-20200503195918-621b933c7a7f // indirect
 	github.com/aws/aws-sdk-go-v2 v1.9.0 // indirect
@@ -161,6 +151,8 @@ require (
 	github.com/json-iterator/go v1.1.12 // indirect
 	github.com/jwalton/go-supportscolor v1.1.0 // indirect
 	github.com/kballard/go-shellquote v0.0.0-20180428030007-95032a82bc51 // indirect
+	github.com/kevinburke/ssh_config v1.1.0 // indirect
+	github.com/klauspost/compress v1.13.6 // indirect
 	github.com/klauspost/cpuid v1.3.1 // indirect
 	github.com/lestrrat-go/backoff/v2 v2.0.8 // indirect
 	github.com/lestrrat-go/blackmagic v1.0.0 // indirect
@@ -171,6 +163,7 @@ require (
 	github.com/lucasb-eyer/go-colorful v1.2.0 // indirect
 	github.com/magefile/mage v1.9.0 // indirect
 	github.com/mattn/go-colorable v0.1.12 // indirect
+	github.com/mattn/go-runewidth v0.0.13 // indirect
 	github.com/matttproud/golang_protobuf_extensions v1.0.2-0.20181231171920-c182affec369 // indirect
 	github.com/minio/md5-simd v1.1.0 // indirect
 	github.com/minio/sha256-simd v0.1.1 // indirect
@@ -188,9 +181,12 @@ require (
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/prometheus/client_model v0.2.0 // indirect
 	github.com/prometheus/common v0.29.0 // indirect
+	github.com/prometheus/procfs v0.7.0 // indirect
+	github.com/prometheus/statsd_exporter v0.21.0 // indirect
 	github.com/remyoudompheng/bigfft v0.0.0-20200410134404-eec4a21b6bb0 // indirect
 	github.com/rivo/uniseg v0.2.0 // indirect
 	github.com/rs/xid v1.2.1 // indirect
+	github.com/sergi/go-diff v1.2.0 // indirect
 	github.com/shopspring/decimal v1.2.0 // indirect
 	github.com/sirupsen/logrus v1.8.1 // indirect
 	github.com/spf13/cast v1.4.1 // indirect
@@ -213,6 +209,7 @@ require (
 	golang.org/x/term v0.0.0-20210927222741-03fcf44c2211 // indirect
 	golang.org/x/text v0.3.7 // indirect
 	golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1 // indirect
+	google.golang.org/api v0.62.0 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
 	gopkg.in/ini.v1 v1.66.2 // indirect
 	gopkg.in/warnings.v0 v0.1.2 // indirect
