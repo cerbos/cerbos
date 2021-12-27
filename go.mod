@@ -74,7 +74,7 @@ require (
 	github.com/aws/aws-sdk-go v1.42.23
 	github.com/fatih/structtag v1.2.0
 	github.com/jackc/pgtype v1.9.1
-	github.com/lestrrat-go/jwx v1.2.13
+	github.com/lestrrat-go/jwx v1.2.14
 	github.com/minio/minio-go/v7 v7.0.20
 	github.com/santhosh-tekuri/jsonschema/v5 v5.0.0
 	github.com/tidwall/gjson v1.12.1
