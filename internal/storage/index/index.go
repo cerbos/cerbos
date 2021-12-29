@@ -43,7 +43,7 @@ type Index interface {
 	ListPolicyIDs(context.Context) ([]string, error)
 	ListSchemaIDs(context.Context) ([]string, error)
 	LoadSchema(context.Context, string) (io.ReadCloser, error)
-	LoadPolicy(context.Context, string) (*policy.Wrapper, error)
+	LoadPolicy(context.Context, ...string) ([]*policy.Wrapper, error)
 }
 
 type index struct {
@@ -335,13 +335,13 @@ func (idx *index) ListPolicyIDs(_ context.Context) ([]string, error) {
 	idx.mu.RLock()
 	defer idx.mu.RUnlock()
 
-	files := make([]string, 0, len(idx.modIDToFile))
+	entries := make([]string, 0, len(idx.modIDToFile))
 	for _, f := range idx.modIDToFile {
-		files = append(files, f)
+		entries = append(entries, f)
 	}
 
-	sort.Strings(files)
-	return files, nil
+	sort.Strings(entries)
+	return entries, nil
 }
 
 func (idx *index) ListSchemaIDs(_ context.Context) ([]string, error) {
@@ -375,15 +375,20 @@ func (idx *index) LoadSchema(ctx context.Context, url string) (io.ReadCloser, er
 	return idx.schemaLoader.Load(ctx, url)
 }
 
-func (idx *index) LoadPolicy(_ context.Context, file string) (*policy.Wrapper, error) {
+func (idx *index) LoadPolicy(_ context.Context, file ...string) ([]*policy.Wrapper, error) {
 	idx.mu.RLock()
 	defer idx.mu.RUnlock()
 
-	p, err := idx.loadPolicy(idx.fileToModID[file])
-	if err != nil {
-		return nil, fmt.Errorf("failed to load policy file with file path %s: %w", file, err)
+	policies := make([]*policy.Wrapper, len(file))
+	for i, f := range file {
+		p, err := idx.loadPolicy(idx.fileToModID[f])
+		if err != nil {
+			return nil, fmt.Errorf("failed to load policy file with file path %s: %w", file, err)
+		}
+
+		pw := policy.Wrap(p)
+		policies[i] = &pw
 	}
 
-	pw := policy.Wrap(p)
-	return &pw, nil
+	return policies, nil
 }

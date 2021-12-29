@@ -139,57 +139,6 @@
             }
           }
         },
-        "parameters": [
-          {
-            "name": "sortOptions.order",
-            "description": "Sort order",
-            "in": "query",
-            "required": false,
-            "type": "string",
-            "enum": [
-              "ORDER_UNSPECIFIED",
-              "ORDER_ASCENDING",
-              "ORDER_DESCENDING"
-            ],
-            "default": "ORDER_UNSPECIFIED"
-          }
-        ],
-        "tags": [
-          "CerbosAdminService"
-        ],
-        "security": [
-          {
-            "BasicAuth": []
-          }
-        ]
-      },
-      "post": {
-        "summary": "List policies",
-        "operationId": "CerbosAdminService_ListPolicies2",
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "$ref": "#/definitions/v1ListPoliciesResponse"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/rpcStatus"
-            }
-          }
-        },
-        "parameters": [
-          {
-            "name": "body",
-            "in": "body",
-            "required": true,
-            "schema": {
-              "$ref": "#/definitions/v1ListPoliciesRequest"
-            }
-          }
-        ],
         "tags": [
           "CerbosAdminService"
         ],
@@ -829,17 +778,6 @@
         "end"
       ]
     },
-    "ListPoliciesRequestSortOptions": {
-      "type": "object",
-      "properties": {
-        "order": {
-          "$ref": "#/definitions/SortOptionsOrder",
-          "example": "ORDER_ASCENDING",
-          "description": "Sort order"
-        }
-      },
-      "description": "Sort options"
-    },
     "MatchExprList": {
       "type": "object",
       "properties": {
@@ -973,15 +911,6 @@
         }
       },
       "description": "CEL expression"
-    },
-    "SortOptionsOrder": {
-      "type": "string",
-      "enum": [
-        "ORDER_UNSPECIFIED",
-        "ORDER_ASCENDING",
-        "ORDER_DESCENDING"
-      ],
-      "default": "ORDER_UNSPECIFIED"
     },
     "ValidationErrorSource": {
       "type": "string",
@@ -1627,15 +1556,6 @@
         }
       },
       "description": "Audit log stream."
-    },
-    "v1ListPoliciesRequest": {
-      "type": "object",
-      "properties": {
-        "sortOptions": {
-          "$ref": "#/definitions/ListPoliciesRequestSortOptions"
-        }
-      },
-      "description": "List policies request"
     },
     "v1ListPoliciesResponse": {
       "type": "object",

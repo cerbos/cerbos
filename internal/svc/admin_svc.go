@@ -120,7 +120,7 @@ func (cas *CerbosAdminService) ListPolicies(ctx context.Context, req *requestv1.
 		return nil, status.Error(codes.Internal, "could not get policy ids")
 	}
 
-	sortPolicies(req.SortOptions, policyIds)
+	sortPolicies(policyIds)
 	return &responsev1.ListPoliciesResponse{
 		PolicyIds: policyIds,
 	}, nil
@@ -136,14 +136,15 @@ func (cas *CerbosAdminService) GetPolicy(ctx context.Context, req *requestv1.Get
 	}
 
 	log := ctxzap.Extract(ctx)
-	policies := make([]*policyv1.Policy, 0, len(req.Id))
-	for _, id := range req.Id {
-		p, err := cas.store.LoadPolicy(ctx, id)
-		if err != nil {
-			log.Error(fmt.Sprintf("Could not get the policy with id %s", id), zap.Error(err))
-			return nil, status.Errorf(codes.Internal, "could not get the policy with id %s", id)
-		}
-		policies = append(policies, p.Policy)
+	wrappers, err := cas.store.LoadPolicy(ctx, req.Id...)
+	if err != nil {
+		log.Error("Could not get policy", zap.Error(err))
+		return nil, status.Errorf(codes.Internal, "could not get policy")
+	}
+
+	policies := make([]*policyv1.Policy, len(wrappers))
+	for i, wrapper := range wrappers {
+		policies[i] = wrapper.Policy
 	}
 
 	return &responsev1.GetPolicyResponse{

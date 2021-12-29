@@ -167,8 +167,7 @@ func GenAuditLogOptions(filter *AuditLogFilterDef) client.AuditLogOptions {
 }
 
 type ListPoliciesFilterDef struct {
-	format   string
-	sortDesc bool
+	format string
 }
 
 func NewListPoliciesFilterDef() *ListPoliciesFilterDef {
@@ -177,27 +176,10 @@ func NewListPoliciesFilterDef() *ListPoliciesFilterDef {
 
 func (lpfd *ListPoliciesFilterDef) FlagSet() *pflag.FlagSet {
 	fs := pflag.NewFlagSet("filters", pflag.ExitOnError)
-	fs.BoolVar(&lpfd.sortDesc, "sort-desc", false, "Sort policies by descending order")
 	fs.StringVar(&lpfd.format, "format", "", "Output format for the policies; json, yaml formats are supported (leave empty for pretty output)")
 	return fs
 }
 
 func (lpfd *ListPoliciesFilterDef) OutputFormat() string {
 	return lpfd.format
-}
-
-func GenListPoliciesFilterOptions(lpfd *ListPoliciesFilterDef) ([]client.ListOpt, error) {
-	var opts []client.ListOpt
-	opts = append(opts, getSortingOption(lpfd.sortDesc))
-
-	return opts, nil
-}
-
-func getSortingOption(desc bool) client.ListOpt {
-	sortFn := client.SortAscending
-	if desc {
-		sortFn = client.SortDescending
-	}
-
-	return sortFn(client.SortByName)
 }

@@ -19,11 +19,14 @@ import (
 	svcv1 "github.com/cerbos/cerbos/api/genpb/cerbos/svc/v1"
 )
 
+const errMsgItemsLen = "value must contain between 1 and 25 items, inclusive"
+
 type AdminClient interface {
 	AddOrUpdatePolicy(context.Context, *PolicySet) error
 	AuditLogs(ctx context.Context, opts AuditLogOptions) (<-chan *AuditLogEntry, error)
 	// ListPolicies retrieves the policies on the Cerbos server.
-	ListPolicies(ctx context.Context, opts ...ListOpt) ([]*policyv1.Policy, error)
+	ListPolicies(ctx context.Context) ([]string, error)
+	GetPolicy(ctx context.Context, ids ...string) ([]*policyv1.Policy, error)
 }
 
 // NewAdminClient creates a new admin client.
@@ -154,23 +157,8 @@ func (c *GrpcAdminClient) auditLogs(ctx context.Context, opts AuditLogOptions) (
 	return resp, nil
 }
 
-func (c *GrpcAdminClient) ListPolicies(ctx context.Context, opts ...ListOpt) ([]*policyv1.Policy, error) {
-	listOptions := &policyListOptions{}
-	for _, opt := range opts {
-		opt(listOptions)
-	}
-
+func (c *GrpcAdminClient) ListPolicies(ctx context.Context) ([]string, error) {
 	req := &requestv1.ListPoliciesRequest{}
-	if listOptions.sortingOptions != nil {
-		order := requestv1.ListPoliciesRequest_SortOptions_ORDER_ASCENDING
-		if listOptions.sortingOptions.descending {
-			order = requestv1.ListPoliciesRequest_SortOptions_ORDER_DESCENDING
-		}
-		req.SortOptions = &requestv1.ListPoliciesRequest_SortOptions{
-			Order: order,
-		}
-	}
-
 	if err := req.Validate(); err != nil {
 		return nil, fmt.Errorf("could not validate list policies request: %w", err)
 	}
@@ -180,21 +168,25 @@ func (c *GrpcAdminClient) ListPolicies(ctx context.Context, opts ...ListOpt) ([]
 		return nil, fmt.Errorf("could not list policies: %w", err)
 	}
 
-	if len(p.PolicyIds) == 0 {
-		return nil, nil
+	return p.PolicyIds, nil
+}
+
+func (c *GrpcAdminClient) GetPolicy(ctx context.Context, ids ...string) ([]*policyv1.Policy, error) {
+	req := &requestv1.GetPolicyRequest{
+		Id: ids,
+	}
+	if err := req.Validate(); err != nil {
+		valErr := new(requestv1.GetPolicyRequestValidationError)
+		ok := errors.As(err, &valErr)
+		if !ok || valErr.Reason() != errMsgItemsLen {
+			return nil, fmt.Errorf("could not validate get policy request: %w", err)
+		}
 	}
 
-	getReq := &requestv1.GetPolicyRequest{
-		Id: p.PolicyIds,
-	}
-	if err := getReq.Validate(); err != nil {
-		return nil, fmt.Errorf("could not validate get policy request: %w", err)
-	}
-
-	getRes, err := c.client.GetPolicy(ctx, getReq, grpc.PerRPCCredentials(c.creds))
+	res, err := c.client.GetPolicy(ctx, req, grpc.PerRPCCredentials(c.creds))
 	if err != nil {
 		return nil, fmt.Errorf("could not get policy: %w", err)
 	}
 
-	return getRes.Policies, nil
+	return res.Policies, nil
 }

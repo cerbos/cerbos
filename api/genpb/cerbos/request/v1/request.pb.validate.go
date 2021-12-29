@@ -1461,16 +1461,6 @@ func (m *ListPoliciesRequest) Validate() error {
 		return nil
 	}
 
-	if v, ok := interface{}(m.GetSortOptions()).(interface{ Validate() error }); ok {
-		if err := v.Validate(); err != nil {
-			return ListPoliciesRequestValidationError{
-				field:  "SortOptions",
-				reason: "embedded message failed validation",
-				cause:  err,
-			}
-		}
-	}
-
 	return nil
 }
 
@@ -2285,83 +2275,3 @@ var _ interface {
 	Cause() error
 	ErrorName() string
 } = ListAuditLogEntriesRequest_TimeRangeValidationError{}
-
-// Validate checks the field values on ListPoliciesRequest_SortOptions with the
-// rules defined in the proto definition for this message. If any rules are
-// violated, an error is returned.
-func (m *ListPoliciesRequest_SortOptions) Validate() error {
-	if m == nil {
-		return nil
-	}
-
-	if _, ok := _ListPoliciesRequest_SortOptions_Order_InLookup[m.GetOrder()]; !ok {
-		return ListPoliciesRequest_SortOptionsValidationError{
-			field:  "Order",
-			reason: "value must be in list [1 2]",
-		}
-	}
-
-	return nil
-}
-
-// ListPoliciesRequest_SortOptionsValidationError is the validation error
-// returned by ListPoliciesRequest_SortOptions.Validate if the designated
-// constraints aren't met.
-type ListPoliciesRequest_SortOptionsValidationError struct {
-	field  string
-	reason string
-	cause  error
-	key    bool
-}
-
-// Field function returns field value.
-func (e ListPoliciesRequest_SortOptionsValidationError) Field() string { return e.field }
-
-// Reason function returns reason value.
-func (e ListPoliciesRequest_SortOptionsValidationError) Reason() string { return e.reason }
-
-// Cause function returns cause value.
-func (e ListPoliciesRequest_SortOptionsValidationError) Cause() error { return e.cause }
-
-// Key function returns key value.
-func (e ListPoliciesRequest_SortOptionsValidationError) Key() bool { return e.key }
-
-// ErrorName returns error name.
-func (e ListPoliciesRequest_SortOptionsValidationError) ErrorName() string {
-	return "ListPoliciesRequest_SortOptionsValidationError"
-}
-
-// Error satisfies the builtin error interface
-func (e ListPoliciesRequest_SortOptionsValidationError) Error() string {
-	cause := ""
-	if e.cause != nil {
-		cause = fmt.Sprintf(" | caused by: %v", e.cause)
-	}
-
-	key := ""
-	if e.key {
-		key = "key for "
-	}
-
-	return fmt.Sprintf(
-		"invalid %sListPoliciesRequest_SortOptions.%s: %s%s",
-		key,
-		e.field,
-		e.reason,
-		cause)
-}
-
-var _ error = ListPoliciesRequest_SortOptionsValidationError{}
-
-var _ interface {
-	Field() string
-	Reason() string
-	Key() bool
-	Cause() error
-	ErrorName() string
-} = ListPoliciesRequest_SortOptionsValidationError{}
-
-var _ListPoliciesRequest_SortOptions_Order_InLookup = map[ListPoliciesRequest_SortOptions_Order]struct{}{
-	1: {},
-	2: {},
-}

@@ -83,7 +83,7 @@ type Store interface {
 	// LoadSchema loads the given schema from the store.
 	LoadSchema(context.Context, string) (io.ReadCloser, error)
 	// LoadPolicy loads the given policy from the store
-	LoadPolicy(context.Context, string) (*policy.Wrapper, error)
+	LoadPolicy(context.Context, ...string) ([]*policy.Wrapper, error)
 }
 
 // MutableStore is a store that allows mutations.

@@ -129,6 +129,7 @@ func TestSuite(store DBStorage) func(*testing.T) {
 
 		t.Run("get_policy", func(t *testing.T) {
 			t.Run("should be able to get policy", func(t *testing.T) {
+				t.Log(namer.PolicyKeyFromFQN(dr.FQN))
 				p, err := store.LoadPolicy(ctx, namer.PolicyKeyFromFQN(dr.FQN))
 				require.NoError(t, err)
 				require.NotEmpty(t, p)

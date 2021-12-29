@@ -453,37 +453,6 @@ message ListPoliciesRequest {
 			description: "List policies request"
 		}
     };
-
-    enum MatchType {
-        MATCH_TYPE_UNSPECIFIED = 0;
-        MATCH_TYPE_EXACT = 1;
-        MATCH_TYPE_WILDCARD = 2;
-    }
-
-    message SortOptions {
-        option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
-            json_schema: {
-                description: "Sort options"
-            }
-        };
-
-        enum Order {
-            ORDER_UNSPECIFIED = 0;
-            ORDER_ASCENDING = 1;
-            ORDER_DESCENDING = 2;
-        }
-
-        Order order = 1 [
-            (validate.rules).enum = {in: [1,2]},
-            (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = { 
-                description: "Sort order"
-                array: ["ORDER_ASCENDING", "ORDER_DESCENDING"]
-                example: "\"ORDER_ASCENDING\""
-            }
-        ];
-    }
-
-    SortOptions sort_options = 1;
 }
 
 message GetPolicyRequest {
