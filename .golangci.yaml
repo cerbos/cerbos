@@ -66,6 +66,7 @@ linters:
     - goimports
     - goheader
     - gomnd
+    - gomoddirectives
     - gosec
     - govet
     - ifshort
@@ -89,6 +90,7 @@ linters:
     - tparallel
     - unconvert
     - unparam
+    - wastedassign
     - whitespace
   disable:
     - cyclop
@@ -113,7 +115,6 @@ linters:
     - paralleltest
     - stylecheck
     - testpackage
-    - wastedassign
     - wrapcheck
     - wsl
 
