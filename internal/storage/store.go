@@ -126,7 +126,7 @@ type Event struct {
 }
 
 func (evt Event) String() string {
-	kind := ""
+	var kind string
 	id := evt.PolicyID.String()
 	switch evt.Kind {
 	case EventAddOrUpdatePolicy:
