@@ -137,7 +137,7 @@ func (s *dbStorage) LoadPolicy(ctx context.Context, policyKey ...string) ([]*pol
 	var recs []Policy
 	err := s.db.From(PolicyTbl).
 		Where(
-			goqu.V(concat(policyKeySep, goqu.C(PolicyTblKindCol), goqu.C(PolicyTblNameCol), goqu.C(PolicyTblVerCol))).
+			goqu.V(concat(policyKeySep, goqu.Func("LOWER", goqu.C(PolicyTblKindCol)), goqu.C(PolicyTblNameCol), goqu.C(PolicyTblVerCol))).
 				In(policyKey)).
 		ScanStructsContext(ctx, &recs)
 	if err != nil {
