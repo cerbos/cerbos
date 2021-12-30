@@ -1,6 +1,5 @@
 FROM alpine:3.15 AS base
-RUN apk add -U --no-cache ca-certificates
-RUN update-ca-certificates
+RUN apk add -U --no-cache ca-certificates && update-ca-certificates
 
 FROM scratch
 EXPOSE 3592 3593
