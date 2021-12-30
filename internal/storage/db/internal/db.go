@@ -383,12 +383,11 @@ func (s *dbStorage) ListPolicyIDs(ctx context.Context) ([]string, error) {
 	defer res.Close()
 
 	var policyKeys []string
-	for res.Next() {
-		var rec string
-		if err = res.ScanVal(&rec); err != nil {
-			return nil, fmt.Errorf("could not scan row: %w", err)
-		}
-		policyKeys = append(policyKeys, strings.TrimSuffix(rec, "."))
+	if err = res.ScanVals(&policyKeys); err != nil {
+		return nil, fmt.Errorf("could not scan row: %w", err)
+	}
+	for i := 0; i < len(policyKeys); i++ {
+		policyKeys[i] = strings.TrimSuffix(policyKeys[i], ".")
 	}
 
 	return policyKeys, nil

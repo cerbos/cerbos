@@ -19,8 +19,6 @@ import (
 	svcv1 "github.com/cerbos/cerbos/api/genpb/cerbos/svc/v1"
 )
 
-const errMsgItemsLen = "value must contain between 1 and 25 items, inclusive"
-
 type AdminClient interface {
 	AddOrUpdatePolicy(context.Context, *PolicySet) error
 	AuditLogs(ctx context.Context, opts AuditLogOptions) (<-chan *AuditLogEntry, error)
@@ -176,11 +174,7 @@ func (c *GrpcAdminClient) GetPolicy(ctx context.Context, ids ...string) ([]*poli
 		Id: ids,
 	}
 	if err := req.Validate(); err != nil {
-		valErr := new(requestv1.GetPolicyRequestValidationError)
-		ok := errors.As(err, &valErr)
-		if !ok || valErr.Reason() != errMsgItemsLen {
-			return nil, fmt.Errorf("could not validate get policy request: %w", err)
-		}
+		return nil, fmt.Errorf("could not validate get policy request: %w", err)
 	}
 
 	res, err := c.client.GetPolicy(ctx, req, grpc.PerRPCCredentials(c.creds))

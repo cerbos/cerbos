@@ -36,24 +36,30 @@ func NewListCmd(fn internal.WithClient) *cobra.Command {
 	return cmd
 }
 
+func minInt(a, b int) int {
+	if a < b {
+		return a
+	}
+	return b
+}
+
 func runListCmdF(c client.AdminClient, cmd *cobra.Command, _ []string) error {
 	policyIds, err := c.ListPolicies(context.Background())
 	if err != nil {
 		return fmt.Errorf("error while requesting policy list: %w", err)
 	}
 
-	policies := make([]*policy.Policy, 0, len(policyIds))
-	for _, chunk := range chunks(policyIds, maxPolicyPerReq) {
-		var p []*policy.Policy
-		p, err = c.GetPolicy(context.Background(), chunk...)
-		if err != nil {
-			return fmt.Errorf("error while requesting policy: %w", err)
+	for idx := range policyIds {
+		if idx%maxPolicyPerReq == 0 {
+			var p []*policy.Policy
+			p, err = c.GetPolicy(context.Background(), policyIds[idx:minInt(idx+maxPolicyPerReq, len(policyIds)-idx)]...)
+			if err != nil {
+				return fmt.Errorf("error while requesting policy: %w", err)
+			}
+			if err = printPolicies(cmd.OutOrStdout(), p, listPoliciesFlags.OutputFormat()); err != nil {
+				return fmt.Errorf("could not print policies: %w", err)
+			}
 		}
-		policies = append(policies, p...)
-	}
-
-	if err = printPolicies(cmd.OutOrStdout(), policies, listPoliciesFlags.OutputFormat()); err != nil {
-		return fmt.Errorf("could not print policies: %w", err)
 	}
 
 	return nil
@@ -119,23 +125,4 @@ func getPolicyName(p *policy.Policy) string {
 	default:
 		return "-"
 	}
-}
-
-// https://stackoverflow.com/a/67011816
-func chunks(xs []string, chunkSize int) [][]string {
-	if len(xs) == 0 {
-		return nil
-	}
-	divided := make([][]string, (len(xs)+chunkSize-1)/chunkSize)
-	prev := 0
-	i := 0
-	till := len(xs) - chunkSize
-	for prev < till {
-		next := prev + chunkSize
-		divided[i] = xs[prev:next]
-		prev = next
-		i++
-	}
-	divided[i] = xs[prev:]
-	return divided
 }
