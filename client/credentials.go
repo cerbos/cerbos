@@ -72,7 +72,7 @@ func loadCredsFromNetrc(env environment, server string) (username, password stri
 		return "", "", fmt.Errorf("failed to parse server target '%s': %w", server, err)
 	}
 
-	netrcPath := ""
+	var netrcPath string
 	if np, ok := env.LookupEnv(netrcEnvVar); ok {
 		netrcPath = np
 	} else {
