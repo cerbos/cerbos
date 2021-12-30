@@ -24,6 +24,8 @@ import (
 	"github.com/cerbos/cerbos/internal/storage"
 )
 
+const policyKeySep = "."
+
 type DBStorage interface {
 	storage.Subscribable
 	AddOrUpdate(ctx context.Context, policies ...policy.Wrapper) error
@@ -125,15 +127,18 @@ func (s *dbStorage) DeleteSchema(ctx context.Context, ids ...string) error {
 
 func (s *dbStorage) LoadPolicy(ctx context.Context, policyKey ...string) ([]*policy.Wrapper, error) {
 	for i := 0; i < len(policyKey); i++ {
-		if strings.Count(policyKey[i], ".") == 1 {
-			policyKey[i] += "."
+		if strings.Count(policyKey[i], policyKeySep) == 1 {
+			policyKey[i] += policyKeySep
 		}
 	}
 
+	concat := ConcatWithSepFunc(s.db.Dialect())
+
 	var recs []Policy
 	err := s.db.From(PolicyTbl).
-		Where(goqu.L("CONCAT(LOWER(?),?,?,?,?)", goqu.C(PolicyTblKindCol), goqu.V("."), goqu.C(PolicyTblNameCol), goqu.V("."), goqu.C(PolicyTblVerCol)).
-			In(policyKey)).
+		Where(
+			goqu.V(concat(policyKeySep, goqu.C(PolicyTblKindCol), goqu.C(PolicyTblNameCol), goqu.C(PolicyTblVerCol))).
+				In(policyKey)).
 		ScanStructsContext(ctx, &recs)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get policy: %w", err)
@@ -376,7 +381,14 @@ func (s *dbStorage) Delete(ctx context.Context, ids ...namer.ModuleID) error {
 }
 
 func (s *dbStorage) ListPolicyIDs(ctx context.Context) ([]string, error) {
-	res, err := s.db.From(PolicyTbl).Select(goqu.L("CONCAT(LOWER(?),?,?,?,?)", goqu.C(PolicyTblKindCol), goqu.V("."), goqu.C(PolicyTblNameCol), goqu.V("."), goqu.C(PolicyTblVerCol))).Executor().ScannerContext(ctx)
+	concat := ConcatWithSepFunc(s.db.Dialect())
+
+	res, err := s.db.From(PolicyTbl).
+		Select(
+			concat(policyKeySep, goqu.Func("LOWER", goqu.C(PolicyTblKindCol)), goqu.C(PolicyTblNameCol), goqu.C(PolicyTblVerCol)),
+		).
+		Executor().
+		ScannerContext(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("could not execute %q query: %w", "ListPolicyIDs", err)
 	}
