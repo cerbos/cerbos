@@ -121,7 +121,74 @@
         ]
       }
     },
+    "/admin/policies": {
+      "get": {
+        "summary": "List policies",
+        "operationId": "CerbosAdminService_ListPolicies",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1ListPoliciesResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "tags": [
+          "CerbosAdminService"
+        ],
+        "security": [
+          {
+            "BasicAuth": []
+          }
+        ]
+      }
+    },
     "/admin/policy": {
+      "get": {
+        "summary": "Get policy",
+        "operationId": "CerbosAdminService_GetPolicy",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1GetPolicyResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "description": "For blob, disk, git stores use file name (\u003cfilename\u003e.yaml). For mysql, postgres, sqlite3 use id (\u003ckind\u003e.\u003cname\u003e.\u003cversion\u003e) of the policy",
+            "in": "query",
+            "required": true,
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "collectionFormat": "multi"
+          }
+        ],
+        "tags": [
+          "CerbosAdminService"
+        ],
+        "security": [
+          {
+            "BasicAuth": []
+          }
+        ]
+      },
       "post": {
         "summary": "Add or update policies",
         "operationId": "CerbosAdminService_AddOrUpdatePolicy",
@@ -182,98 +249,6 @@
             "required": true,
             "schema": {
               "$ref": "#/definitions/v1AddOrUpdatePolicyRequest"
-            }
-          }
-        ],
-        "tags": [
-          "CerbosAdminService"
-        ],
-        "security": [
-          {
-            "BasicAuth": []
-          }
-        ]
-      }
-    },
-    "/admin/policy/list": {
-      "get": {
-        "summary": "List policies",
-        "operationId": "CerbosAdminService_ListPolicies",
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "$ref": "#/definitions/v1ListPoliciesResponse"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/rpcStatus"
-            }
-          }
-        },
-        "parameters": [
-          {
-            "name": "sortOptions.column",
-            "description": "Sort column",
-            "in": "query",
-            "required": false,
-            "type": "string",
-            "enum": [
-              "COLUMN_UNSPECIFIED",
-              "COLUMN_NAME",
-              "COLUMN_VERSION"
-            ],
-            "default": "COLUMN_UNSPECIFIED"
-          },
-          {
-            "name": "sortOptions.order",
-            "description": "Sort order",
-            "in": "query",
-            "required": false,
-            "type": "string",
-            "enum": [
-              "ORDER_UNSPECIFIED",
-              "ORDER_ASCENDING",
-              "ORDER_DESCENDING"
-            ],
-            "default": "ORDER_UNSPECIFIED"
-          }
-        ],
-        "tags": [
-          "CerbosAdminService"
-        ],
-        "security": [
-          {
-            "BasicAuth": []
-          }
-        ]
-      },
-      "post": {
-        "summary": "List policies",
-        "operationId": "CerbosAdminService_ListPolicies2",
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "$ref": "#/definitions/v1ListPoliciesResponse"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/rpcStatus"
-            }
-          }
-        },
-        "parameters": [
-          {
-            "name": "body",
-            "in": "body",
-            "required": true,
-            "schema": {
-              "$ref": "#/definitions/v1ListPoliciesRequest"
             }
           }
         ],
@@ -803,62 +778,6 @@
         "end"
       ]
     },
-    "ListPoliciesRequestFilter": {
-      "type": "object",
-      "properties": {
-        "type": {
-          "$ref": "#/definitions/ListPoliciesRequestMatchType",
-          "example": "MATCH_TYPE_WILDCARD",
-          "description": "Kind of filter"
-        },
-        "fieldPath": {
-          "type": "string",
-          "example": "$.resourcePolicy.resource",
-          "description": "JSONPath expression describing the field to match",
-          "required": [
-            "field_path"
-          ]
-        },
-        "value": {
-          "type": "string",
-          "example": "*",
-          "description": "The value to compare",
-          "required": [
-            "value"
-          ]
-        }
-      },
-      "description": "Filter options",
-      "required": [
-        "fieldPath",
-        "value"
-      ]
-    },
-    "ListPoliciesRequestMatchType": {
-      "type": "string",
-      "enum": [
-        "MATCH_TYPE_UNSPECIFIED",
-        "MATCH_TYPE_EXACT",
-        "MATCH_TYPE_WILDCARD"
-      ],
-      "default": "MATCH_TYPE_UNSPECIFIED"
-    },
-    "ListPoliciesRequestSortOptions": {
-      "type": "object",
-      "properties": {
-        "column": {
-          "$ref": "#/definitions/SortOptionsColumn",
-          "example": "COLUMN_NAME",
-          "description": "Sort column"
-        },
-        "order": {
-          "$ref": "#/definitions/SortOptionsOrder",
-          "example": "ORDER_ASCENDING",
-          "description": "Sort order"
-        }
-      },
-      "description": "Sort options"
-    },
     "MatchExprList": {
       "type": "object",
       "properties": {
@@ -992,24 +911,6 @@
         }
       },
       "description": "CEL expression"
-    },
-    "SortOptionsColumn": {
-      "type": "string",
-      "enum": [
-        "COLUMN_UNSPECIFIED",
-        "COLUMN_NAME",
-        "COLUMN_VERSION"
-      ],
-      "default": "COLUMN_UNSPECIFIED"
-    },
-    "SortOptionsOrder": {
-      "type": "string",
-      "enum": [
-        "ORDER_UNSPECIFIED",
-        "ORDER_ASCENDING",
-        "ORDER_DESCENDING"
-      ],
-      "default": "ORDER_UNSPECIFIED"
     },
     "ValidationErrorSource": {
       "type": "string",
@@ -1620,6 +1521,18 @@
       ],
       "default": "EFFECT_UNSPECIFIED"
     },
+    "v1GetPolicyResponse": {
+      "type": "object",
+      "properties": {
+        "policies": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/v1Policy"
+          }
+        }
+      },
+      "description": "Get policy response"
+    },
     "v1GetSchemaResponse": {
       "type": "object",
       "properties": {
@@ -1644,28 +1557,13 @@
       },
       "description": "Audit log stream."
     },
-    "v1ListPoliciesRequest": {
-      "type": "object",
-      "properties": {
-        "filters": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/ListPoliciesRequestFilter"
-          }
-        },
-        "sortOptions": {
-          "$ref": "#/definitions/ListPoliciesRequestSortOptions"
-        }
-      },
-      "description": "List policies request"
-    },
     "v1ListPoliciesResponse": {
       "type": "object",
       "properties": {
-        "policies": {
+        "policyIds": {
           "type": "array",
           "items": {
-            "$ref": "#/definitions/v1Policy"
+            "type": "string"
           }
         }
       },

@@ -23,7 +23,8 @@ type AdminClient interface {
 	AddOrUpdatePolicy(context.Context, *PolicySet) error
 	AuditLogs(ctx context.Context, opts AuditLogOptions) (<-chan *AuditLogEntry, error)
 	// ListPolicies retrieves the policies on the Cerbos server.
-	ListPolicies(ctx context.Context, opts ...ListOpt) ([]*policyv1.Policy, error)
+	ListPolicies(ctx context.Context) ([]string, error)
+	GetPolicy(ctx context.Context, ids ...string) ([]*policyv1.Policy, error)
 }
 
 // NewAdminClient creates a new admin client.
@@ -154,37 +155,32 @@ func (c *GrpcAdminClient) auditLogs(ctx context.Context, opts AuditLogOptions) (
 	return resp, nil
 }
 
-func (c *GrpcAdminClient) ListPolicies(ctx context.Context, opts ...ListOpt) ([]*policyv1.Policy, error) {
-	listOptions := &policyListOptions{
-		filters: make([]*requestv1.ListPoliciesRequest_Filter, 0, len(opts)),
-	}
-	for _, opt := range opts {
-		opt(listOptions)
-	}
-
-	req := &requestv1.ListPoliciesRequest{
-		Filters: listOptions.filters,
-	}
-
-	if listOptions.sortingOptions != nil {
-		order := requestv1.ListPoliciesRequest_SortOptions_ORDER_ASCENDING
-		if listOptions.sortingOptions.descending {
-			order = requestv1.ListPoliciesRequest_SortOptions_ORDER_DESCENDING
-		}
-		req.SortOptions = &requestv1.ListPoliciesRequest_SortOptions{
-			Order:  order,
-			Column: requestv1.ListPoliciesRequest_SortOptions_Column(listOptions.sortingOptions.field),
-		}
-	}
-
+func (c *GrpcAdminClient) ListPolicies(ctx context.Context) ([]string, error) {
+	req := &requestv1.ListPoliciesRequest{}
 	if err := req.Validate(); err != nil {
 		return nil, fmt.Errorf("could not validate list policies request: %w", err)
 	}
 
-	pc, err := c.client.ListPolicies(ctx, req, grpc.PerRPCCredentials(c.creds))
+	p, err := c.client.ListPolicies(ctx, req, grpc.PerRPCCredentials(c.creds))
 	if err != nil {
 		return nil, fmt.Errorf("could not list policies: %w", err)
 	}
 
-	return pc.Policies, nil
+	return p.PolicyIds, nil
+}
+
+func (c *GrpcAdminClient) GetPolicy(ctx context.Context, ids ...string) ([]*policyv1.Policy, error) {
+	req := &requestv1.GetPolicyRequest{
+		Id: ids,
+	}
+	if err := req.Validate(); err != nil {
+		return nil, fmt.Errorf("could not validate get policy request: %w", err)
+	}
+
+	res, err := c.client.GetPolicy(ctx, req, grpc.PerRPCCredentials(c.creds))
+	if err != nil {
+		return nil, fmt.Errorf("could not get policy: %w", err)
+	}
+
+	return res.Policies, nil
 }

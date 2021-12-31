@@ -342,6 +342,16 @@ message ListPoliciesResponse {
 		}
     };
 
+    repeated string policy_ids = 1;
+}
+
+message GetPolicyResponse {
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
+        json_schema: {
+            description: "Get policy response"
+        }
+    };
+
     repeated cerbos.policy.v1.Policy policies = 1;
 }
 

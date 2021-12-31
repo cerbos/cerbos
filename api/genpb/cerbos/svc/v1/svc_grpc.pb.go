@@ -215,8 +215,9 @@ var CerbosService_ServiceDesc = grpc.ServiceDesc{
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type CerbosAdminServiceClient interface {
 	AddOrUpdatePolicy(ctx context.Context, in *v1.AddOrUpdatePolicyRequest, opts ...grpc.CallOption) (*v11.AddOrUpdatePolicyResponse, error)
-	ListAuditLogEntries(ctx context.Context, in *v1.ListAuditLogEntriesRequest, opts ...grpc.CallOption) (CerbosAdminService_ListAuditLogEntriesClient, error)
 	ListPolicies(ctx context.Context, in *v1.ListPoliciesRequest, opts ...grpc.CallOption) (*v11.ListPoliciesResponse, error)
+	GetPolicy(ctx context.Context, in *v1.GetPolicyRequest, opts ...grpc.CallOption) (*v11.GetPolicyResponse, error)
+	ListAuditLogEntries(ctx context.Context, in *v1.ListAuditLogEntriesRequest, opts ...grpc.CallOption) (CerbosAdminService_ListAuditLogEntriesClient, error)
 	AddOrUpdateSchema(ctx context.Context, in *v1.AddOrUpdateSchemaRequest, opts ...grpc.CallOption) (*v11.AddOrUpdateSchemaResponse, error)
 	ListSchemas(ctx context.Context, in *v1.ListSchemasRequest, opts ...grpc.CallOption) (*v11.ListSchemasResponse, error)
 	GetSchema(ctx context.Context, in *v1.GetSchemaRequest, opts ...grpc.CallOption) (*v11.GetSchemaResponse, error)
@@ -234,6 +235,24 @@ func NewCerbosAdminServiceClient(cc grpc.ClientConnInterface) CerbosAdminService
 func (c *cerbosAdminServiceClient) AddOrUpdatePolicy(ctx context.Context, in *v1.AddOrUpdatePolicyRequest, opts ...grpc.CallOption) (*v11.AddOrUpdatePolicyResponse, error) {
 	out := new(v11.AddOrUpdatePolicyResponse)
 	err := c.cc.Invoke(ctx, "/cerbos.svc.v1.CerbosAdminService/AddOrUpdatePolicy", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *cerbosAdminServiceClient) ListPolicies(ctx context.Context, in *v1.ListPoliciesRequest, opts ...grpc.CallOption) (*v11.ListPoliciesResponse, error) {
+	out := new(v11.ListPoliciesResponse)
+	err := c.cc.Invoke(ctx, "/cerbos.svc.v1.CerbosAdminService/ListPolicies", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *cerbosAdminServiceClient) GetPolicy(ctx context.Context, in *v1.GetPolicyRequest, opts ...grpc.CallOption) (*v11.GetPolicyResponse, error) {
+	out := new(v11.GetPolicyResponse)
+	err := c.cc.Invoke(ctx, "/cerbos.svc.v1.CerbosAdminService/GetPolicy", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -270,15 +289,6 @@ func (x *cerbosAdminServiceListAuditLogEntriesClient) Recv() (*v11.ListAuditLogE
 		return nil, err
 	}
 	return m, nil
-}
-
-func (c *cerbosAdminServiceClient) ListPolicies(ctx context.Context, in *v1.ListPoliciesRequest, opts ...grpc.CallOption) (*v11.ListPoliciesResponse, error) {
-	out := new(v11.ListPoliciesResponse)
-	err := c.cc.Invoke(ctx, "/cerbos.svc.v1.CerbosAdminService/ListPolicies", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
 }
 
 func (c *cerbosAdminServiceClient) AddOrUpdateSchema(ctx context.Context, in *v1.AddOrUpdateSchemaRequest, opts ...grpc.CallOption) (*v11.AddOrUpdateSchemaResponse, error) {
@@ -322,8 +332,9 @@ func (c *cerbosAdminServiceClient) DeleteSchema(ctx context.Context, in *v1.Dele
 // for forward compatibility
 type CerbosAdminServiceServer interface {
 	AddOrUpdatePolicy(context.Context, *v1.AddOrUpdatePolicyRequest) (*v11.AddOrUpdatePolicyResponse, error)
-	ListAuditLogEntries(*v1.ListAuditLogEntriesRequest, CerbosAdminService_ListAuditLogEntriesServer) error
 	ListPolicies(context.Context, *v1.ListPoliciesRequest) (*v11.ListPoliciesResponse, error)
+	GetPolicy(context.Context, *v1.GetPolicyRequest) (*v11.GetPolicyResponse, error)
+	ListAuditLogEntries(*v1.ListAuditLogEntriesRequest, CerbosAdminService_ListAuditLogEntriesServer) error
 	AddOrUpdateSchema(context.Context, *v1.AddOrUpdateSchemaRequest) (*v11.AddOrUpdateSchemaResponse, error)
 	ListSchemas(context.Context, *v1.ListSchemasRequest) (*v11.ListSchemasResponse, error)
 	GetSchema(context.Context, *v1.GetSchemaRequest) (*v11.GetSchemaResponse, error)
@@ -338,11 +349,14 @@ type UnimplementedCerbosAdminServiceServer struct {
 func (UnimplementedCerbosAdminServiceServer) AddOrUpdatePolicy(context.Context, *v1.AddOrUpdatePolicyRequest) (*v11.AddOrUpdatePolicyResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method AddOrUpdatePolicy not implemented")
 }
-func (UnimplementedCerbosAdminServiceServer) ListAuditLogEntries(*v1.ListAuditLogEntriesRequest, CerbosAdminService_ListAuditLogEntriesServer) error {
-	return status.Errorf(codes.Unimplemented, "method ListAuditLogEntries not implemented")
-}
 func (UnimplementedCerbosAdminServiceServer) ListPolicies(context.Context, *v1.ListPoliciesRequest) (*v11.ListPoliciesResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ListPolicies not implemented")
+}
+func (UnimplementedCerbosAdminServiceServer) GetPolicy(context.Context, *v1.GetPolicyRequest) (*v11.GetPolicyResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetPolicy not implemented")
+}
+func (UnimplementedCerbosAdminServiceServer) ListAuditLogEntries(*v1.ListAuditLogEntriesRequest, CerbosAdminService_ListAuditLogEntriesServer) error {
+	return status.Errorf(codes.Unimplemented, "method ListAuditLogEntries not implemented")
 }
 func (UnimplementedCerbosAdminServiceServer) AddOrUpdateSchema(context.Context, *v1.AddOrUpdateSchemaRequest) (*v11.AddOrUpdateSchemaResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method AddOrUpdateSchema not implemented")
@@ -387,6 +401,42 @@ func _CerbosAdminService_AddOrUpdatePolicy_Handler(srv interface{}, ctx context.
 	return interceptor(ctx, in, info, handler)
 }
 
+func _CerbosAdminService_ListPolicies_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(v1.ListPoliciesRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CerbosAdminServiceServer).ListPolicies(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/cerbos.svc.v1.CerbosAdminService/ListPolicies",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CerbosAdminServiceServer).ListPolicies(ctx, req.(*v1.ListPoliciesRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _CerbosAdminService_GetPolicy_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(v1.GetPolicyRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CerbosAdminServiceServer).GetPolicy(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/cerbos.svc.v1.CerbosAdminService/GetPolicy",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CerbosAdminServiceServer).GetPolicy(ctx, req.(*v1.GetPolicyRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _CerbosAdminService_ListAuditLogEntries_Handler(srv interface{}, stream grpc.ServerStream) error {
 	m := new(v1.ListAuditLogEntriesRequest)
 	if err := stream.RecvMsg(m); err != nil {
@@ -406,24 +456,6 @@ type cerbosAdminServiceListAuditLogEntriesServer struct {
 
 func (x *cerbosAdminServiceListAuditLogEntriesServer) Send(m *v11.ListAuditLogEntriesResponse) error {
 	return x.ServerStream.SendMsg(m)
-}
-
-func _CerbosAdminService_ListPolicies_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(v1.ListPoliciesRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(CerbosAdminServiceServer).ListPolicies(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/cerbos.svc.v1.CerbosAdminService/ListPolicies",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(CerbosAdminServiceServer).ListPolicies(ctx, req.(*v1.ListPoliciesRequest))
-	}
-	return interceptor(ctx, in, info, handler)
 }
 
 func _CerbosAdminService_AddOrUpdateSchema_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
@@ -512,6 +544,10 @@ var CerbosAdminService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ListPolicies",
 			Handler:    _CerbosAdminService_ListPolicies_Handler,
+		},
+		{
+			MethodName: "GetPolicy",
+			Handler:    _CerbosAdminService_GetPolicy_Handler,
 		},
 		{
 			MethodName: "AddOrUpdateSchema",

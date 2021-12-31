@@ -453,82 +453,22 @@ message ListPoliciesRequest {
 			description: "List policies request"
 		}
     };
+}
 
-    enum MatchType {
-        MATCH_TYPE_UNSPECIFIED = 0;
-        MATCH_TYPE_EXACT = 1;
-        MATCH_TYPE_WILDCARD = 2;
-    }
-
-    message Filter {
-        option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
-            json_schema: {
-                description: "Filter options"
-            }
-        };
-
-        MatchType type = 1 [
-            (validate.rules).enum = {in: [1,2]},
-            (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = { 
-                description: "Kind of filter"
-                example: "\"MATCH_TYPE_WILDCARD\""
-            }
-        ];
-        string field_path = 2 [
-            (google.api.field_behavior) = REQUIRED,
-            (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
-                description: "JSONPath expression describing the field to match"
-                example: "\"$.resourcePolicy.resource\""
-            }
-        ];
-        string value = 3 [
-            (google.api.field_behavior) = REQUIRED,
-            (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = { 
-                description: "The value to compare"
-                example: "\"*\""
-            }
-        ];
-    }
-
-    message SortOptions {
-        option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
-            json_schema: {
-                description: "Sort options"
-            }
-        };
-
-        enum Column {
-            COLUMN_UNSPECIFIED = 0;
-            COLUMN_NAME = 1;
-            COLUMN_VERSION = 2;
+message GetPolicyRequest {
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
+        json_schema: {
+            description: "Get policy request"
         }
-        
-        enum Order {
-            ORDER_UNSPECIFIED = 0;
-            ORDER_ASCENDING = 1;
-            ORDER_DESCENDING = 2;
+    };
+    repeated string id = 1 [
+        (google.api.field_behavior) = REQUIRED,
+        (validate.rules).repeated = { unique: true, min_items: 1, max_items: 25, items { string { min_len: 1, max_len: 1280} } },
+        (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+            description: "For blob, disk, git stores use file name (<filename>.yaml). For mysql, postgres, sqlite3 use id (<kind>.<name>.<version>) of the policy"
+            example: "\"principal.sarah.vdefault\""
         }
-        
-        Column column = 1 [
-            (validate.rules).enum = {in: [1,2]},
-            (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
-                description: "Sort column"
-                example: "\"COLUMN_NAME\""
-            }
-        ];
-
-        Order order = 2 [
-            (validate.rules).enum = {in: [1,2]},
-            (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = { 
-                description: "Sort order"
-                array: ["ORDER_ASCENDING", "ORDER_DESCENDING"]
-                example: "\"ORDER_ASCENDING\""
-            }
-        ];
-    }
-
-    repeated Filter filters = 1;
-    SortOptions sort_options = 2;
+    ];
 }
 
 message AddOrUpdateSchemaRequest {

@@ -20,6 +20,8 @@ import (
 	"github.com/cerbos/cerbos/internal/util"
 )
 
+const maxPolicyPerReq = 25
+
 var listPoliciesFlags = internal.NewListPoliciesFilterDef()
 
 func NewListCmd(fn internal.WithClient) *cobra.Command {
@@ -34,18 +36,30 @@ func NewListCmd(fn internal.WithClient) *cobra.Command {
 	return cmd
 }
 
-func runListCmdF(c client.AdminClient, cmd *cobra.Command, _ []string) error {
-	opts, err := internal.GenListPoliciesFilterOptions(listPoliciesFlags)
-	if err != nil {
-		return fmt.Errorf("error generating list options: %w", err)
+func minInt(a, b int) int {
+	if a < b {
+		return a
 	}
-	policies, err := c.ListPolicies(context.Background(), opts...)
+	return b
+}
+
+func runListCmdF(c client.AdminClient, cmd *cobra.Command, _ []string) error {
+	policyIds, err := c.ListPolicies(context.Background())
 	if err != nil {
 		return fmt.Errorf("error while requesting policy list: %w", err)
 	}
 
-	if err = printPolicies(cmd.OutOrStdout(), policies, listPoliciesFlags.OutputFormat()); err != nil {
-		return fmt.Errorf("could not print policies: %w", err)
+	for idx := range policyIds {
+		if idx%maxPolicyPerReq == 0 {
+			var p []*policy.Policy
+			p, err = c.GetPolicy(context.Background(), policyIds[idx:minInt(idx+maxPolicyPerReq, len(policyIds)-idx)]...)
+			if err != nil {
+				return fmt.Errorf("error while requesting policy: %w", err)
+			}
+			if err = printPolicies(cmd.OutOrStdout(), p, listPoliciesFlags.OutputFormat()); err != nil {
+				return fmt.Errorf("could not print policies: %w", err)
+			}
+		}
 	}
 
 	return nil

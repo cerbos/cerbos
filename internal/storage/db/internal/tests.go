@@ -17,6 +17,7 @@ import (
 	"google.golang.org/protobuf/testing/protocmp"
 
 	schemav1 "github.com/cerbos/cerbos/api/genpb/cerbos/schema/v1"
+	"github.com/cerbos/cerbos/internal/namer"
 	"github.com/cerbos/cerbos/internal/policy"
 	"github.com/cerbos/cerbos/internal/storage"
 	"github.com/cerbos/cerbos/internal/test"
@@ -126,9 +127,18 @@ func TestSuite(store DBStorage) func(*testing.T) {
 			require.Contains(t, have[dr.ID], rp.ID)
 		})
 
-		t.Run("get_policies", func(t *testing.T) {
-			t.Run("should be able to get policies", func(t *testing.T) {
-				policies, err := store.GetPolicies(ctx)
+		t.Run("get_policy", func(t *testing.T) {
+			t.Run("should be able to get policy", func(t *testing.T) {
+				t.Log(namer.PolicyKeyFromFQN(dr.FQN))
+				p, err := store.LoadPolicy(ctx, namer.PolicyKeyFromFQN(dr.FQN))
+				require.NoError(t, err)
+				require.NotEmpty(t, p)
+			})
+		})
+
+		t.Run("list_policies", func(t *testing.T) {
+			t.Run("should be able to list policies", func(t *testing.T) {
+				policies, err := store.ListPolicyIDs(ctx)
 				require.NoError(t, err)
 				require.NotEmpty(t, policies)
 			})

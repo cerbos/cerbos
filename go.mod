@@ -5,7 +5,6 @@ go 1.17
 require (
 	contrib.go.opencensus.io/exporter/prometheus v0.4.0
 	github.com/Masterminds/sprig/v3 v3.2.2
-	github.com/PaesslerAG/jsonpath v0.1.1
 	github.com/alecthomas/chroma v0.9.4
 	github.com/aws/aws-sdk-go v1.42.23
 	github.com/bluele/gcache v0.0.2
@@ -86,7 +85,6 @@ require (
 	github.com/Microsoft/go-winio v0.5.1 // indirect
 	github.com/Nvveen/Gotty v0.0.0-20120604004816-cd527374f1e5 // indirect
 	github.com/OneOfOne/xxhash v1.2.8 // indirect
-	github.com/PaesslerAG/gval v1.0.0 // indirect
 	github.com/ProtonMail/go-crypto v0.0.0-20210512092938-c05353c2d58c // indirect
 	github.com/acomagu/bufpipe v1.0.3 // indirect
 	github.com/antlr/antlr4 v0.0.0-20200503195918-621b933c7a7f // indirect

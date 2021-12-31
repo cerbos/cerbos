@@ -171,16 +171,16 @@ func (_m *Index) GetFiles() []string {
 	return r0
 }
 
-// GetPolicies provides a mock function with given fields: _a0
-func (_m *Index) GetPolicies(_a0 context.Context) ([]*policy.Wrapper, error) {
+// ListPolicyIDs provides a mock function with given fields: _a0
+func (_m *Index) ListPolicyIDs(_a0 context.Context) ([]string, error) {
 	ret := _m.Called(_a0)
 
-	var r0 []*policy.Wrapper
-	if rf, ok := ret.Get(0).(func(context.Context) []*policy.Wrapper); ok {
+	var r0 []string
+	if rf, ok := ret.Get(0).(func(context.Context) []string); ok {
 		r0 = rf(_a0)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]*policy.Wrapper)
+			r0 = ret.Get(0).([]string)
 		}
 	}
 
@@ -210,6 +210,36 @@ func (_m *Index) ListSchemaIDs(_a0 context.Context) ([]string, error) {
 	var r1 error
 	if rf, ok := ret.Get(1).(func(context.Context) error); ok {
 		r1 = rf(_a0)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// LoadPolicy provides a mock function with given fields: _a0, _a1
+func (_m *Index) LoadPolicy(_a0 context.Context, _a1 ...string) ([]*policy.Wrapper, error) {
+	_va := make([]interface{}, len(_a1))
+	for _i := range _a1 {
+		_va[_i] = _a1[_i]
+	}
+	var _ca []interface{}
+	_ca = append(_ca, _a0)
+	_ca = append(_ca, _va...)
+	ret := _m.Called(_ca...)
+
+	var r0 []*policy.Wrapper
+	if rf, ok := ret.Get(0).(func(context.Context, ...string) []*policy.Wrapper); ok {
+		r0 = rf(_a0, _a1...)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]*policy.Wrapper)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(context.Context, ...string) error); ok {
+		r1 = rf(_a0, _a1...)
 	} else {
 		r1 = ret.Error(1)
 	}

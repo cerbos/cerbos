@@ -94,6 +94,11 @@ func PolicyKeyFromFQN(m string) string {
 	return strings.TrimPrefix(m, "cerbos.")
 }
 
+// FQNFromPolicyKey returns FQN from the policy key.
+func FQNFromPolicyKey(s string) string {
+	return "cerbos." + s
+}
+
 // ResourcePolicyFQN returns the fully-qualified name for the resource policy with given resource and version.
 func ResourcePolicyFQN(resource, version string) string {
 	return fmt.Sprintf("%s.%s.v%s", ResourcePoliciesPrefix, Sanitize(resource), Sanitize(version))

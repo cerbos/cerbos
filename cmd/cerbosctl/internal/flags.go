@@ -167,11 +167,7 @@ func GenAuditLogOptions(filter *AuditLogFilterDef) client.AuditLogOptions {
 }
 
 type ListPoliciesFilterDef struct {
-	sort       string
-	format     string
-	fieldEq    []string
-	fieldMatch []string
-	sortDesc   bool
+	format string
 }
 
 func NewListPoliciesFilterDef() *ListPoliciesFilterDef {
@@ -180,60 +176,10 @@ func NewListPoliciesFilterDef() *ListPoliciesFilterDef {
 
 func (lpfd *ListPoliciesFilterDef) FlagSet() *pflag.FlagSet {
 	fs := pflag.NewFlagSet("filters", pflag.ExitOnError)
-	fs.StringArrayVar(&lpfd.fieldEq, "field-eq", []string{}, "Filter a field with an exact match")
-	fs.StringArrayVar(&lpfd.fieldMatch, "field-match", []string{}, "Filter a field with a regex match")
-	fs.StringVar(&lpfd.sort, "sort", "name", "Sort policies by ascending order (available fields for sorting: name, version)")
-	fs.BoolVar(&lpfd.sortDesc, "sort-desc", false, "Sort policies by descending order")
 	fs.StringVar(&lpfd.format, "format", "", "Output format for the policies; json, yaml formats are supported (leave empty for pretty output)")
 	return fs
 }
 
 func (lpfd *ListPoliciesFilterDef) OutputFormat() string {
 	return lpfd.format
-}
-
-func GenListPoliciesFilterOptions(lpfd *ListPoliciesFilterDef) ([]client.ListOpt, error) {
-	opts := make([]client.ListOpt, 0, len(lpfd.fieldEq)+len(lpfd.fieldMatch))
-	for _, k := range lpfd.fieldEq {
-		s := strings.Split(k, "=")
-		if len(s) != 2 { //nolint:gomnd
-			return nil, fmt.Errorf("could not parse filter: %s", k)
-		}
-		opts = append(opts, client.FieldEqualsFilter(s[0], s[1]))
-	}
-
-	for _, k := range lpfd.fieldMatch {
-		s := strings.Split(k, "=")
-		if len(s) != 2 { //nolint:gomnd
-			return nil, fmt.Errorf("could not parse filter: %s", k)
-		}
-		opts = append(opts, client.FieldMatchesFilter(s[0], s[1]))
-	}
-
-	sort, err := getSortingOption(lpfd.sort, lpfd.sortDesc)
-	if err != nil {
-		return nil, fmt.Errorf("could not generate sorting option: %w", err)
-	}
-	opts = append(opts, sort)
-
-	return opts, nil
-}
-
-func getSortingOption(sortBy string, desc bool) (client.ListOpt, error) {
-	sortFn := client.SortAscending
-	if desc {
-		sortFn = client.SortDescending
-	}
-
-	var t client.ListPoliciesSortingType
-	switch target := strings.ToLower(sortBy); target {
-	case "name":
-		t = client.SortByName
-	case "version":
-		t = client.SortByVersion
-	default:
-		return nil, fmt.Errorf("invalid sorting target: %s", sortBy)
-	}
-
-	return sortFn(t), nil
 }

@@ -10,6 +10,7 @@ import (
 	"io"
 	"io/fs"
 	"path/filepath"
+	"sort"
 	"sync"
 
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
@@ -39,9 +40,10 @@ type Index interface {
 	GetFiles() []string
 	GetAllCompilationUnits(context.Context) <-chan *policy.CompilationUnit
 	Clear() error
-	GetPolicies(context.Context) ([]*policy.Wrapper, error)
+	ListPolicyIDs(context.Context) ([]string, error)
 	ListSchemaIDs(context.Context) ([]string, error)
 	LoadSchema(context.Context, string) (io.ReadCloser, error)
+	LoadPolicy(context.Context, ...string) ([]*policy.Wrapper, error)
 }
 
 type index struct {
@@ -329,21 +331,16 @@ func (idx *index) Inspect() map[string]meta {
 	return entries
 }
 
-func (idx *index) GetPolicies(_ context.Context) ([]*policy.Wrapper, error) {
+func (idx *index) ListPolicyIDs(_ context.Context) ([]string, error) {
 	idx.mu.RLock()
 	defer idx.mu.RUnlock()
 
-	entries := make([]*policy.Wrapper, 0)
-	for _, modID := range idx.fileToModID {
-		pol, err := idx.loadPolicy(modID)
-		if err != nil {
-			return nil, err
-		}
-
-		wp := policy.Wrap(pol)
-		entries = append(entries, &wp)
+	entries := make([]string, 0, len(idx.modIDToFile))
+	for _, f := range idx.modIDToFile {
+		entries = append(entries, f)
 	}
 
+	sort.Strings(entries)
 	return entries, nil
 }
 
@@ -376,4 +373,22 @@ func (idx *index) ListSchemaIDs(_ context.Context) ([]string, error) {
 
 func (idx *index) LoadSchema(ctx context.Context, url string) (io.ReadCloser, error) {
 	return idx.schemaLoader.Load(ctx, url)
+}
+
+func (idx *index) LoadPolicy(_ context.Context, file ...string) ([]*policy.Wrapper, error) {
+	idx.mu.RLock()
+	defer idx.mu.RUnlock()
+
+	policies := make([]*policy.Wrapper, len(file))
+	for i, f := range file {
+		p, err := idx.loadPolicy(idx.fileToModID[f])
+		if err != nil {
+			return nil, fmt.Errorf("failed to load policy file with file path %s: %w", file, err)
+		}
+
+		pw := policy.Wrap(p)
+		policies[i] = &pw
+	}
+
+	return policies, nil
 }
