@@ -10,6 +10,7 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
+	"sort"
 	"strings"
 	"time"
 
@@ -120,7 +121,7 @@ func (cas *CerbosAdminService) ListPolicies(ctx context.Context, req *requestv1.
 		return nil, status.Error(codes.Internal, "could not get policy ids")
 	}
 
-	sortPolicies(policyIds)
+	sort.Strings(policyIds)
 	return &responsev1.ListPoliciesResponse{
 		PolicyIds: policyIds,
 	}, nil
@@ -167,8 +168,7 @@ func (cas *CerbosAdminService) ListSchemas(ctx context.Context, req *requestv1.L
 		return nil, status.Error(codes.NotFound, "failed to list schema ids")
 	}
 
-	sortSchemas(schemaIds)
-
+	sort.Strings(schemaIds)
 	return &responsev1.ListSchemasResponse{
 		SchemaIds: schemaIds,
 	}, nil

@@ -12,7 +12,7 @@ CREATE TABLE IF NOT EXISTS policy (
     definition BYTEA
 );
 
-CREATE INDEX policy_knv_idx ON policy ((lower(kind) || '.' || name || '.' || version));
+CREATE INDEX IF NOT EXISTS policy_knv_idx ON policy ((lower(kind) || '.' || name || '.' || version));
 
 CREATE TABLE IF NOT EXISTS policy_dependency (
     policy_id BIGINT,
