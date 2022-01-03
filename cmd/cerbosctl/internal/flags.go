@@ -167,7 +167,10 @@ func GenAuditLogOptions(filter *AuditLogFilterDef) client.AuditLogOptions {
 }
 
 type ListPoliciesFilterDef struct {
-	format string
+	format  string
+	kind    []string
+	name    []string
+	version []string
 }
 
 func NewListPoliciesFilterDef() *ListPoliciesFilterDef {
@@ -177,9 +180,42 @@ func NewListPoliciesFilterDef() *ListPoliciesFilterDef {
 func (lpfd *ListPoliciesFilterDef) FlagSet() *pflag.FlagSet {
 	fs := pflag.NewFlagSet("filters", pflag.ExitOnError)
 	fs.StringVar(&lpfd.format, "format", "", "Output format for the policies; json, yaml formats are supported (leave empty for pretty output)")
+	fs.StringArrayVar(&lpfd.kind, "kind", []string{}, "Filter policies by kind. Possible values are derived_roles, principal, resource")
+	fs.StringArrayVar(&lpfd.name, "name", []string{}, "Filter policies by name.")
+	fs.StringArrayVar(&lpfd.version, "version", []string{}, "Filter policies by version.")
 	return fs
 }
 
 func (lpfd *ListPoliciesFilterDef) OutputFormat() string {
 	return lpfd.format
+}
+
+func (lpfd *ListPoliciesFilterDef) Kind() []string {
+	return lpfd.kind
+}
+
+func (lpfd *ListPoliciesFilterDef) Name() []string {
+	return lpfd.name
+}
+
+func (lpfd *ListPoliciesFilterDef) Version() []string {
+	return lpfd.version
+}
+
+type GetPolicyFilterDef struct {
+	format string
+}
+
+func NewGetPolicyFilterDef() *GetPolicyFilterDef {
+	return &GetPolicyFilterDef{}
+}
+
+func (gpfd *GetPolicyFilterDef) FlagSet() *pflag.FlagSet {
+	fs := pflag.NewFlagSet("filters", pflag.ExitOnError)
+	fs.StringVar(&gpfd.format, "format", "json", "Output format for the policies; json, yaml formats are supported")
+	return fs
+}
+
+func (gpfd *GetPolicyFilterDef) OutputFormat() string {
+	return gpfd.format
 }

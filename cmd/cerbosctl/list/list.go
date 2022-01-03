@@ -12,12 +12,11 @@ import (
 	"github.com/fatih/color"
 	"github.com/rodaine/table"
 	"github.com/spf13/cobra"
-	"google.golang.org/protobuf/encoding/protojson"
 
-	policy "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
+	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
 	"github.com/cerbos/cerbos/client"
 	"github.com/cerbos/cerbos/cmd/cerbosctl/internal"
-	"github.com/cerbos/cerbos/internal/util"
+	"github.com/cerbos/cerbos/internal/policy"
 )
 
 const maxPolicyPerReq = 25
@@ -51,12 +50,13 @@ func runListCmdF(c client.AdminClient, cmd *cobra.Command, _ []string) error {
 
 	for idx := range policyIds {
 		if idx%maxPolicyPerReq == 0 {
-			var p []*policy.Policy
+			var p []*policyv1.Policy
 			p, err = c.GetPolicy(context.Background(), policyIds[idx:minInt(idx+maxPolicyPerReq, len(policyIds)-idx)]...)
 			if err != nil {
 				return fmt.Errorf("error while requesting policy: %w", err)
 			}
-			if err = printPolicies(cmd.OutOrStdout(), p, listPoliciesFlags.OutputFormat()); err != nil {
+			filterPolicies(&p, listPoliciesFlags)
+			if err = printPolicy(cmd.OutOrStdout(), p, listPoliciesFlags.OutputFormat()); err != nil {
 				return fmt.Errorf("could not print policies: %w", err)
 			}
 		}
@@ -65,24 +65,42 @@ func runListCmdF(c client.AdminClient, cmd *cobra.Command, _ []string) error {
 	return nil
 }
 
-func printPolicies(w io.Writer, policies []*policy.Policy, format string) error {
+func filterPolicies(policies *[]*policyv1.Policy, lpfd *internal.ListPoliciesFilterDef) {
+	var filtered []*policyv1.Policy
+	for _, p := range *policies {
+		wp := policy.Wrap(p)
+		if len(lpfd.Kind()) != 0 && !stringInSlice(wp.Kind, lpfd.Kind()) {
+			continue
+		}
+
+		if len(lpfd.Name()) != 0 && !stringInSlice(wp.Name, lpfd.Name()) {
+			continue
+		}
+
+		if len(lpfd.Version()) != 0 && !stringInSlice(wp.Version, lpfd.Version()) {
+			continue
+		}
+
+		filtered = append(filtered, p)
+	}
+	*policies = filtered
+}
+
+func stringInSlice(a string, list []string) bool {
+	for _, b := range list {
+		if strings.ToLower(b) == strings.ToLower(a) {
+			return true
+		}
+	}
+	return false
+}
+
+func printPolicy(w io.Writer, policies []*policyv1.Policy, format string) error {
 	switch format {
 	case "json":
-		for _, policy := range policies {
-			b, err := protojson.Marshal(policy)
-			if err != nil {
-				return fmt.Errorf("could not marshal policy: %w", err)
-			}
-			fmt.Fprintf(w, "%s\n", b)
-		}
+		return internal.PrintJSON(w, policies)
 	case "yaml":
-		for _, policy := range policies {
-			err := util.WriteYAML(w, policy)
-			if err != nil {
-				return fmt.Errorf("could not write policy: %w", err)
-			}
-			fmt.Fprintln(w, "---")
-		}
+		return internal.PrintYAML(w, policies)
 	default:
 		headerFmt := color.New(color.FgGreen, color.Underline).SprintfFunc()
 
@@ -101,26 +119,26 @@ func printPolicies(w io.Writer, policies []*policy.Policy, format string) error 
 }
 
 // policyPrintables creates values according to {"NAME", "KIND", "DEPENDENCIES"}.
-func policyPrintables(p *policy.Policy) []interface{} {
+func policyPrintables(p *policyv1.Policy) []interface{} {
 	switch pt := p.PolicyType.(type) {
-	case *policy.Policy_ResourcePolicy:
+	case *policyv1.Policy_ResourcePolicy:
 		return []interface{}{getPolicyName(p), "RESOURCE", strings.Join(pt.ResourcePolicy.ImportDerivedRoles, ", "), pt.ResourcePolicy.Version}
-	case *policy.Policy_PrincipalPolicy:
+	case *policyv1.Policy_PrincipalPolicy:
 		return []interface{}{getPolicyName(p), "PRINCIPAL", "-", pt.PrincipalPolicy.Version}
-	case *policy.Policy_DerivedRoles:
+	case *policyv1.Policy_DerivedRoles:
 		return []interface{}{getPolicyName(p), "DERIVED_ROLES", "-", "-"}
 	default:
 		return []interface{}{"-"}
 	}
 }
 
-func getPolicyName(p *policy.Policy) string {
+func getPolicyName(p *policyv1.Policy) string {
 	switch pt := p.PolicyType.(type) {
-	case *policy.Policy_ResourcePolicy:
+	case *policyv1.Policy_ResourcePolicy:
 		return pt.ResourcePolicy.Resource
-	case *policy.Policy_PrincipalPolicy:
+	case *policyv1.Policy_PrincipalPolicy:
 		return pt.PrincipalPolicy.Principal
-	case *policy.Policy_DerivedRoles:
+	case *policyv1.Policy_DerivedRoles:
 		return pt.DerivedRoles.Name
 	default:
 		return "-"
