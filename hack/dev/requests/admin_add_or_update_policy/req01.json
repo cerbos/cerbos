@@ -17,7 +17,9 @@
               "employee"
             ],
             "condition": {
-              "script": "input.resource.attr.owner == input.principal.id"
+                "match": {
+                    "expr": "request.resource.attr.owner == request.principal.id"
+                }
             }
           },
           {

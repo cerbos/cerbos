@@ -1,0 +1,64 @@
+repositories:
+  - name: bitnami
+    url: https://charts.bitnami.com/bitnami
+
+helmDefaults:
+  cleanupOnFail: true
+  wait: true
+  recreatePods: true
+  force: true
+  createNamespace: true
+
+releases:
+  - name: postgres
+    namespace: '{{ requiredEnv "E2E_NS" }}'
+    createNamespace: true
+    labels:
+      e2e-run: '{{ requiredEnv "E2E_TEST_ID" }}'
+    chart: bitnami/postgresql
+    values:
+      - nameOverride: 'postgres-{{ requiredEnv "E2E_TEST_ID" }}'
+      - postgresqlUsername: postgres
+      - postgresqlPassword: passw0rd
+      - persistence:
+          enabled": false
+      - initdbScriptsConfigMap: postgres-init
+    hooks:
+      - events: ["presync"]
+        showlogs: true
+        command: kubectl
+        args:
+          - create
+          - configmap
+          - postgres-init
+          - '--namespace={{ requiredEnv "E2E_NS" }}'
+          - '--from-file=schema.sql={{ requiredEnv "E2E_SRC_ROOT" }}/internal/storage/db/postgres/schema.sql'
+      - events: ["postuninstall"]
+        showlogs: true
+        command: kubectl
+        args:
+          - delete
+          - configmap
+          - postgres-init
+          - '--namespace={{ requiredEnv "E2E_NS" }}'
+  - name: cerbos
+    namespace: '{{ requiredEnv "E2E_NS" }}'
+    needs: ["postgres"]
+    createNamespace: true
+    labels:
+      e2e-run: '{{ requiredEnv "E2E_TEST_ID" }}'
+    chart: '{{ requiredEnv "E2E_SRC_ROOT" }}/deploy/charts/cerbos'
+    values:
+      - nameOverride: 'cerbos-{{ requiredEnv "E2E_TEST_ID" }}'
+      - image:
+          tag: '{{ env "E2E_CERBOS_TAG" | default "dev" }}'
+      - cerbos:
+          config:
+            server:
+              adminAPI:
+                enabled: true
+            storage:
+              driver: "postgres"
+              postgres: 
+                url: 'postgres://cerbos_user:changeme@postgres-postgres-{{ requiredEnv "E2E_TEST_ID" }}.{{ requiredEnv "E2E_NS" }}.svc.cluster.local:5432/postgres?sslmode=disable&search_path=cerbos'
+
