@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# Copyright 2021 Zenauth Ltd.
+# Copyright 2021-2022 Zenauth Ltd.
 
 set -euo pipefail
 
