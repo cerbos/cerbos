@@ -66,7 +66,7 @@ func runListCmdF(c client.AdminClient, cmd *cobra.Command, _ []string) error {
 }
 
 func filterPolicies(policies *[]*policyv1.Policy, lpfd *internal.ListPoliciesFilterDef) {
-	var filtered []*policyv1.Policy
+	filtered := make([]*policyv1.Policy, 0, len(*policies))
 	for _, p := range *policies {
 		wp := policy.Wrap(p)
 		if len(lpfd.Kind()) != 0 && !stringInSlice(wp.Kind, lpfd.Kind()) {
@@ -88,7 +88,7 @@ func filterPolicies(policies *[]*policyv1.Policy, lpfd *internal.ListPoliciesFil
 
 func stringInSlice(a string, list []string) bool {
 	for _, b := range list {
-		if strings.ToLower(b) == strings.ToLower(a) {
+		if strings.EqualFold(b, a) {
 			return true
 		}
 	}

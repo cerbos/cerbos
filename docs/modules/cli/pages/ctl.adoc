@@ -129,9 +129,27 @@ cerbosctl decisions --tail=20
 
 This command lists the policies available in the configured policy repository.
 
+NOTE: Possible values for `kind` are `derived_roles`, `resource` and `principal`
+NOTE: Multiple values seperated by comma may be stated for `kind`, `name` and `version`.
+
 .List summary
 ----
 cerbosctl list
+----
+
+.List policies where `kind` is `derived_roles` or `resource`
+----
+cerbosctl list --kind derived_roles,resource
+----
+
+.List policies where `name` is `my_policy` or `a_policy`
+----
+cerbosctl list --version my_policy,a_policy
+----
+
+.List policies where `version` is `default` or `v1`
+----
+cerbosctl list --version default,v1
 ----
 
 .List YAML
@@ -139,3 +157,20 @@ cerbosctl list
 cerbosctl list --format=yaml
 ----
 
+== `get`
+This command gets the policies available in the store by their policy key (`<kind>.<name>.<version>`).
+
+.Get summary
+----
+cerbosctl get derived_roles.my_derived_roles principal.donald_duck.default
+----
+
+.Get JSON
+----
+cerbosctl get derived_roles.my_derived_roles --format=json
+----
+
+.Get YAML
+----
+cerbosctl get derived_roles.my_derived_roles --format=yaml
+----
