@@ -14,16 +14,23 @@ releases:
     namespace: '{{ requiredEnv "E2E_NS" }}'
     createNamespace: true
     labels:
-      e2e-run: '{{ requiredEnv "E2E_TEST_ID" }}'
+      e2e-run: '{{ requiredEnv "E2E_RUN_ID" }}'
     chart: bitnami/postgresql
     values:
-      - nameOverride: 'postgres-{{ requiredEnv "E2E_TEST_ID" }}'
+      - nameOverride: 'postgres-{{ requiredEnv "E2E_RUN_ID" }}'
       - postgresqlUsername: postgres
       - postgresqlPassword: passw0rd
       - persistence:
           enabled": false
       - initdbScriptsConfigMap: postgres-init
     hooks:
+      - events: ["presync"]
+        showlogs: true
+        command: kubectl
+        args:
+          - create
+          - namespace
+          - '{{ requiredEnv "E2E_NS" }}'
       - events: ["presync"]
         showlogs: true
         command: kubectl
@@ -46,12 +53,13 @@ releases:
     needs: ["postgres"]
     createNamespace: true
     labels:
-      e2e-run: '{{ requiredEnv "E2E_TEST_ID" }}'
+      e2e-run: '{{ requiredEnv "E2E_RUN_ID" }}'
     chart: '{{ requiredEnv "E2E_SRC_ROOT" }}/deploy/charts/cerbos'
     values:
-      - nameOverride: 'cerbos-{{ requiredEnv "E2E_TEST_ID" }}'
+      - nameOverride: 'cerbos-{{ requiredEnv "E2E_RUN_ID" }}'
       - image:
-          tag: '{{ env "E2E_CERBOS_TAG" | default "dev" }}'
+          repository: '{{ env "E2E_CERBOS_IMG_REPO" | default "ghcr.io/cerbos/cerbos" }}'
+          tag: '{{ env "E2E_CERBOS_IMG_TAG" | default "dev" }}'
       - cerbos:
           config:
             server:
@@ -60,5 +68,5 @@ releases:
             storage:
               driver: "postgres"
               postgres: 
-                url: 'postgres://cerbos_user:changeme@postgres-postgres-{{ requiredEnv "E2E_TEST_ID" }}.{{ requiredEnv "E2E_NS" }}.svc.cluster.local:5432/postgres?sslmode=disable&search_path=cerbos'
+                url: 'postgres://cerbos_user:changeme@postgres-postgres-{{ requiredEnv "E2E_RUN_ID" }}.{{ requiredEnv "E2E_NS" }}.svc.cluster.local:5432/postgres?sslmode=disable&search_path=cerbos'
 
