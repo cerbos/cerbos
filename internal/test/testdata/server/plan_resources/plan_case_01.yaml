@@ -18,8 +18,9 @@ resourcesQueryPlan:
         managed_geographies: GB
         geography: GB
         team: design
-    resourceKind: leave_request
-    policyVersion: '20210210'
+    resource:
+      kind: leave_request
+      policyVersion: '20210210'
     auxData:
       jwt:
         token: >-

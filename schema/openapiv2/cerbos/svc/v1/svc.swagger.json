@@ -720,7 +720,7 @@
           ]
         },
         "resource": {
-          "$ref": "#/definitions/v1Resource"
+          "$ref": "#/definitions/enginev1Resource"
         }
       },
       "required": [
@@ -961,20 +961,8 @@
         "principal": {
           "$ref": "#/definitions/v1Principal"
         },
-        "resourceKind": {
-          "type": "string",
-          "example": "album:object",
-          "description": "Resource kind.",
-          "pattern": "^[[:alpha:]][[:word:]\\@\\.\\-]*(\\:[[:alpha:]][[:word:]\\@\\.\\-]*)*$",
-          "required": [
-            "resource_kind"
-          ]
-        },
-        "policyVersion": {
-          "type": "string",
-          "example": "default",
-          "description": "The policy version to use to evaluate this request. If not specified, will default to the server-configured default version.",
-          "pattern": "^[[:word:]]*$"
+        "resource": {
+          "$ref": "#/definitions/v1ResourcesQueryPlanRequestResource"
         },
         "auxData": {
           "$ref": "#/definitions/cerbosrequestv1AuxData"
@@ -986,8 +974,7 @@
       },
       "description": "PDP Resources Query Plan Request",
       "required": [
-        "action",
-        "resourceKind"
+        "action"
       ]
     },
     "enginev1CheckInput": {
@@ -997,7 +984,7 @@
           "type": "string"
         },
         "resource": {
-          "$ref": "#/definitions/v1Resource"
+          "$ref": "#/definitions/enginev1Resource"
         },
         "principal": {
           "$ref": "#/definitions/v1Principal"
@@ -1017,6 +1004,48 @@
       },
       "required": [
         "actions"
+      ]
+    },
+    "enginev1Resource": {
+      "type": "object",
+      "properties": {
+        "kind": {
+          "type": "string",
+          "example": "album:photo",
+          "description": "Name of the resource kind being accessed.",
+          "pattern": "^[[:alpha:]][[:word:]\\@\\.\\-]*(\\:[[:alpha:]][[:word:]\\@\\.\\-]*)*$",
+          "required": [
+            "kind"
+          ]
+        },
+        "policyVersion": {
+          "type": "string",
+          "example": "default",
+          "description": "The policy version to use to evaluate this request. If not specified, will default to the server-configured default version.",
+          "pattern": "^[[:word:]]*$"
+        },
+        "id": {
+          "type": "string",
+          "example": "XX125",
+          "description": "ID of the resource instance",
+          "required": [
+            "id"
+          ]
+        },
+        "attr": {
+          "type": "object",
+          "example": {
+            "owner": "bugs_bunny"
+          },
+          "additionalProperties": {
+            "type": "object"
+          },
+          "description": "Kay-value pairs of contextual data about this resource that should be used during policy evaluation."
+        }
+      },
+      "required": [
+        "kind",
+        "id"
       ]
     },
     "protobufAny": {
@@ -1662,7 +1691,7 @@
           "$ref": "#/definitions/v1Principal"
         },
         "resource": {
-          "$ref": "#/definitions/v1Resource"
+          "$ref": "#/definitions/enginev1Resource"
         },
         "actions": {
           "type": "array",
@@ -1940,48 +1969,6 @@
         }
       }
     },
-    "v1Resource": {
-      "type": "object",
-      "properties": {
-        "kind": {
-          "type": "string",
-          "example": "album:photo",
-          "description": "Name of the resource kind being accessed.",
-          "pattern": "^[[:alpha:]][[:word:]\\@\\.\\-]*(\\:[[:alpha:]][[:word:]\\@\\.\\-]*)*$",
-          "required": [
-            "kind"
-          ]
-        },
-        "policyVersion": {
-          "type": "string",
-          "example": "default",
-          "description": "The policy version to use to evaluate this request. If not specified, will default to the server-configured default version.",
-          "pattern": "^[[:word:]]*$"
-        },
-        "id": {
-          "type": "string",
-          "example": "XX125",
-          "description": "ID of the resource instance",
-          "required": [
-            "id"
-          ]
-        },
-        "attr": {
-          "type": "object",
-          "example": {
-            "owner": "bugs_bunny"
-          },
-          "additionalProperties": {
-            "type": "object"
-          },
-          "description": "Kay-value pairs of contextual data about this resource that should be used during policy evaluation."
-        }
-      },
-      "required": [
-        "kind",
-        "id"
-      ]
-    },
     "v1ResourcePolicy": {
       "type": "object",
       "properties": {
@@ -2094,6 +2081,36 @@
       "required": [
         "kind",
         "instances"
+      ]
+    },
+    "v1ResourcesQueryPlanRequestResource": {
+      "type": "object",
+      "properties": {
+        "kind": {
+          "type": "string",
+          "example": "album:object",
+          "description": "Resource kind.",
+          "pattern": "^[[:alpha:]][[:word:]\\@\\.\\-]*(\\:[[:alpha:]][[:word:]\\@\\.\\-]*)*$",
+          "required": [
+            "kind"
+          ]
+        },
+        "attr": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "object"
+          },
+          "description": "Key-value pairs of contextual data about the resource that are known at a time of the request."
+        },
+        "policyVersion": {
+          "type": "string",
+          "example": "default",
+          "description": "The policy version to use to evaluate this request. If not specified, will default to the server-configured default version.",
+          "pattern": "^[[:word:]]*$"
+        }
+      },
+      "required": [
+        "kind"
       ]
     },
     "v1ResourcesQueryPlanResponse": {

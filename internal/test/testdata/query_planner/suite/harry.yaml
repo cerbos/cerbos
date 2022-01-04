@@ -8,8 +8,9 @@ principal:
     - user
 tests:
   - action: view
-    policyVersion: default
-    resourceKind: leave_request
+    resource:
+      kind: leave_request
+      policyVersion: default
     want:
       expression:
         operator: eq
@@ -17,8 +18,9 @@ tests:
           - variable: R.attr.owner
           - value: harry
   - action: view:refer-derived-role
-    policyVersion: default
-    resourceKind: leave_request
+    resource:
+      kind: leave_request
+      policyVersion: default
     want:
       expression:
         operator: eq
@@ -26,7 +28,8 @@ tests:
           - variable: request.resource.attr.owner
           - value: harry
   - action: non-existent-action
-    policyVersion: default
-    resourceKind: leave_request
+    resource:
+      kind: leave_request
+      policyVersion: default
     want:
       value: true

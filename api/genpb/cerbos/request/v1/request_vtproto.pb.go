@@ -63,7 +63,7 @@ func (m *ResourcesQueryPlanRequest) MarshalToSizedBufferVT(dAtA []byte) (int, er
 			dAtA[i] = 0
 		}
 		i--
-		dAtA[i] = 0x38
+		dAtA[i] = 0x30
 	}
 	if m.AuxData != nil {
 		size, err := m.AuxData.MarshalToSizedBufferVT(dAtA[:i])
@@ -73,19 +73,27 @@ func (m *ResourcesQueryPlanRequest) MarshalToSizedBufferVT(dAtA []byte) (int, er
 		i -= size
 		i = encodeVarint(dAtA, i, uint64(size))
 		i--
-		dAtA[i] = 0x32
-	}
-	if len(m.PolicyVersion) > 0 {
-		i -= len(m.PolicyVersion)
-		copy(dAtA[i:], m.PolicyVersion)
-		i = encodeVarint(dAtA, i, uint64(len(m.PolicyVersion)))
-		i--
 		dAtA[i] = 0x2a
 	}
-	if len(m.ResourceKind) > 0 {
-		i -= len(m.ResourceKind)
-		copy(dAtA[i:], m.ResourceKind)
-		i = encodeVarint(dAtA, i, uint64(len(m.ResourceKind)))
+	if m.Resource != nil {
+		if marshalto, ok := interface{}(m.Resource).(interface {
+			MarshalToSizedBufferVT([]byte) (int, error)
+		}); ok {
+			size, err := marshalto.MarshalToSizedBufferVT(dAtA[:i])
+			if err != nil {
+				return 0, err
+			}
+			i -= size
+			i = encodeVarint(dAtA, i, uint64(size))
+		} else {
+			encoded, err := proto.Marshal(m.Resource)
+			if err != nil {
+				return 0, err
+			}
+			i -= len(encoded)
+			copy(dAtA[i:], encoded)
+			i = encodeVarint(dAtA, i, uint64(len(encoded)))
+		}
 		i--
 		dAtA[i] = 0x22
 	}
@@ -1496,12 +1504,14 @@ func (m *ResourcesQueryPlanRequest) SizeVT() (n int) {
 		}
 		n += 1 + l + sov(uint64(l))
 	}
-	l = len(m.ResourceKind)
-	if l > 0 {
-		n += 1 + l + sov(uint64(l))
-	}
-	l = len(m.PolicyVersion)
-	if l > 0 {
+	if m.Resource != nil {
+		if size, ok := interface{}(m.Resource).(interface {
+			SizeVT() int
+		}); ok {
+			l = size.SizeVT()
+		} else {
+			l = proto.Size(m.Resource)
+		}
 		n += 1 + l + sov(uint64(l))
 	}
 	if m.AuxData != nil {
@@ -2249,9 +2259,9 @@ func (m *ResourcesQueryPlanRequest) UnmarshalVT(dAtA []byte) error {
 			iNdEx = postIndex
 		case 4:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field ResourceKind", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field Resource", wireType)
 			}
-			var stringLen uint64
+			var msglen int
 			for shift := uint(0); ; shift += 7 {
 				if shift >= 64 {
 					return ErrIntOverflow
@@ -2261,57 +2271,37 @@ func (m *ResourcesQueryPlanRequest) UnmarshalVT(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
+				msglen |= int(b&0x7F) << shift
 				if b < 0x80 {
 					break
 				}
 			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
+			if msglen < 0 {
 				return ErrInvalidLength
 			}
-			postIndex := iNdEx + intStringLen
+			postIndex := iNdEx + msglen
 			if postIndex < 0 {
 				return ErrInvalidLength
 			}
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.ResourceKind = string(dAtA[iNdEx:postIndex])
+			if m.Resource == nil {
+				m.Resource = &v1.ResourcesQueryPlanRequest_Resource{}
+			}
+			if unmarshal, ok := interface{}(m.Resource).(interface {
+				UnmarshalVT([]byte) error
+			}); ok {
+				if err := unmarshal.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
+					return err
+				}
+			} else {
+				if err := proto.Unmarshal(dAtA[iNdEx:postIndex], m.Resource); err != nil {
+					return err
+				}
+			}
 			iNdEx = postIndex
 		case 5:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field PolicyVersion", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflow
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return ErrInvalidLength
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex < 0 {
-				return ErrInvalidLength
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.PolicyVersion = string(dAtA[iNdEx:postIndex])
-			iNdEx = postIndex
-		case 6:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field AuxData", wireType)
 			}
@@ -2347,7 +2337,7 @@ func (m *ResourcesQueryPlanRequest) UnmarshalVT(dAtA []byte) error {
 				return err
 			}
 			iNdEx = postIndex
-		case 7:
+		case 6:
 			if wireType != 0 {
 				return fmt.Errorf("proto: wrong wireType = %d for field IncludeMeta", wireType)
 			}

@@ -19,9 +19,9 @@ import "protoc-gen-openapiv2/options/annotations.proto";
 
 message ResourcesQueryPlanResponse {
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
-		json_schema: {
-			description: "Resources query plan response for a set of resources."
-		}
+        json_schema: {
+          description: "Resources query plan response for a set of resources."
+        }
     };
 
     string request_id = 1 [

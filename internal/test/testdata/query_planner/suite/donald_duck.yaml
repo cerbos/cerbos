@@ -8,8 +8,9 @@ principal:
     - user
 tests:
   - action: view
-    policyVersion: default
-    resourceKind: leave_request
+    resource:
+      kind: leave_request
+      policyVersion: default
     want:
       expression:
         operator: eq
@@ -17,8 +18,9 @@ tests:
           - variable: request.resource.attr.dev_record
           - value: true
   - action: view-salary-record
-    policyVersion: default
-    resourceKind: salary_record
+    resource:
+      kind: salary_record
+      policyVersion: default
     want:
       expression:
         operator: not

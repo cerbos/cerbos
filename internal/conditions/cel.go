@@ -24,6 +24,7 @@ const (
 	CELVariablesIdent  = "variables"
 	CELVariablesAbbrev = "V"
 	CELAuxDataField    = "aux_data"
+	CELAttrField       = "attr"
 )
 
 var (
@@ -65,6 +66,13 @@ func init() {
 
 func Fqn(s string) string {
 	return fmt.Sprintf("%s.%s", CELRequestIdent, s)
+}
+
+func ResourceAttributeNames(s string) []string {
+	return []string{
+		fmt.Sprintf("%s.%s.%s", CELResourceAbbrev, CELAttrField, s),     // R.attr.<s>
+		fmt.Sprintf("%s.%s.%s", Fqn(CELResourceField), CELAttrField, s), // request.resource.attr.<s>
+	}
 }
 
 func newCELQueryPlanEnvOptions() []cel.EnvOption {

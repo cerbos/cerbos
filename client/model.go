@@ -889,3 +889,7 @@ func (e *AuditLogEntry) AccessLog() (*auditv1.AccessLogEntry, error) {
 func (e *AuditLogEntry) DecisionLog() (*auditv1.DecisionLogEntry, error) {
 	return e.decisionLog, e.err
 }
+
+type ResourcesQueryPlanResponse struct {
+	*responsev1.ResourcesQueryPlanResponse
+}

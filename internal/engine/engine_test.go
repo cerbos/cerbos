@@ -263,21 +263,24 @@ func TestQueryPlan(t *testing.T) {
 				t.Run(tt.Action, func(t *testing.T) {
 					is := require.New(t)
 					request := &enginev1.ResourcesQueryPlanRequest{
-						RequestId:     "requestId",
-						Action:        tt.Action,
-						Principal:     ts.Principal,
-						PolicyVersion: tt.PolicyVersion,
-						ResourceKind:  tt.ResourceKind,
-						IncludeMeta:   true,
-						AuxData:       auxData,
+						RequestId: "requestId",
+						Action:    tt.Action,
+						Principal: ts.Principal,
+						Resource: &enginev1.ResourcesQueryPlanRequest_Resource{
+							Kind:          tt.Resource.Kind,
+							Attr:          tt.Resource.Attr,
+							PolicyVersion: tt.Resource.PolicyVersion,
+						},
+						IncludeMeta: true,
+						AuxData:     auxData,
 					}
 
 					response, err := eng.ResourcesQueryPlan(context.Background(), request)
 					is.NoError(err)
 					is.NotNil(response)
 
-					is.Empty(cmp.Diff(tt.Want, response.Filter, protocmp.Transform()))
 					t.Log(response.Meta.FilterDebug)
+					is.Empty(cmp.Diff(tt.Want, response.Filter, protocmp.Transform()))
 				})
 			}
 		})
