@@ -406,7 +406,10 @@ func (s *Server) startHTTPServer(ctx context.Context, l net.Listener, grpcSrv *g
 		runtime.WithForwardResponseOption(customHTTPResponseCode),
 		runtime.WithMarshalerOption("application/json+pretty", &runtime.JSONPb{
 			MarshalOptions:   protojson.MarshalOptions{Indent: "  "},
-			UnmarshalOptions: protojson.UnmarshalOptions{DiscardUnknown: true},
+			UnmarshalOptions: protojson.UnmarshalOptions{DiscardUnknown: false},
+		}),
+		runtime.WithMarshalerOption(runtime.MIMEWildcard, &runtime.JSONPb{
+			UnmarshalOptions: protojson.UnmarshalOptions{DiscardUnknown: false},
 		}),
 		runtime.WithRoutingErrorHandler(handleRoutingError),
 	)
