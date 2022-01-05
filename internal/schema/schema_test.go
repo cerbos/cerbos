@@ -241,11 +241,9 @@ func mkMgrs(t *testing.T, fsDir string) map[string]schema.Manager {
 	diskMgr := schema.NewWithConf(ctx, diskStore, &schema.Conf{Enforcement: schema.EnforcementReject})
 
 	// Create mgr with sqlite3 store
-	var sqlite3Store storage.MutableStore
-	sqlite3Store, err = sqlite3.NewStore(ctx, &sqlite3.Conf{DSN: "file::memory:?_fk=true"})
+	sqlite3Store, err := sqlite3.NewStore(ctx, &sqlite3.Conf{DSN: "file::memory:?_fk=true"})
 	require.NoError(t, err)
 	test.AddSchemasToStore(t, schemasDir, sqlite3Store)
-	require.NoError(t, err)
 	sqlite3Mgr := schema.NewWithConf(ctx, sqlite3Store, &schema.Conf{Enforcement: schema.EnforcementReject})
 
 	// Add each created store to mgrs map

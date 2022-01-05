@@ -199,9 +199,6 @@ func TestAdminService(t *testing.T) {
 	store, err := sqlite3.NewStore(ctx, &sqlite3.Conf{DSN: fmt.Sprintf("%s?_fk=true", filepath.Join(t.TempDir(), "cerbos.db"))})
 	require.NoError(t, err)
 
-	schemasDir := test.PathToDir(t, filepath.Join("store", schema.Directory))
-	test.AddSchemasToStore(t, schemasDir, store)
-
 	schemaMgr := schema.NewWithConf(ctx, store, &schema.Conf{Enforcement: schema.EnforcementReject})
 
 	eng, err := engine.New(ctx, engine.Components{
@@ -319,6 +316,11 @@ func executeGRPCTestCase(grpcConn *grpc.ClientConn, tc *privatev1.ServerTestCase
 			cerbosClient := svcv1.NewCerbosServiceClient(grpcConn)
 			want = call.ResourcesQueryPlan.WantResponse
 			have, err = cerbosClient.ResourcesQueryPlan(ctx, call.ResourcesQueryPlan.Input)
+		case *privatev1.ServerTestCase_AdminAddOrUpdateSchema:
+			adminClient := svcv1.NewCerbosAdminServiceClient(grpcConn)
+			want = call.AdminAddOrUpdateSchema.WantResponse
+			have, err = adminClient.AddOrUpdateSchema(ctx, call.AdminAddOrUpdateSchema.Input)
+
 		default:
 			t.Fatalf("Unknown call type: %T", call)
 		}
@@ -399,6 +401,11 @@ func executeHTTPTestCase(c *http.Client, hostAddr string, creds *authCreds, tc *
 			input = call.ResourcesQueryPlan.Input
 			want = call.ResourcesQueryPlan.WantResponse
 			have = &responsev1.ResourcesQueryPlanResponse{}
+		case *privatev1.ServerTestCase_AdminAddOrUpdateSchema:
+			addr = fmt.Sprintf("%s/admin/schema", hostAddr)
+			input = call.AdminAddOrUpdateSchema.Input
+			want = call.AdminAddOrUpdateSchema.WantResponse
+			have = &responsev1.AddOrUpdateSchemaResponse{}
 		default:
 			t.Fatalf("Unknown call type: %T", call)
 		}

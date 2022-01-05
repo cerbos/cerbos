@@ -242,6 +242,18 @@ func (m *ServerTestCase) Validate() error {
 			}
 		}
 
+	case *ServerTestCase_AdminAddOrUpdateSchema:
+
+		if v, ok := interface{}(m.GetAdminAddOrUpdateSchema()).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return ServerTestCaseValidationError{
+					field:  "AdminAddOrUpdateSchema",
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
 	}
 
 	return nil
@@ -1620,6 +1632,94 @@ var _ interface {
 	Cause() error
 	ErrorName() string
 } = ServerTestCase_AdminAddOrUpdatePolicyCallValidationError{}
+
+// Validate checks the field values on
+// ServerTestCase_AdminAddOrUpdateSchemaCall with the rules defined in the
+// proto definition for this message. If any rules are violated, an error is returned.
+func (m *ServerTestCase_AdminAddOrUpdateSchemaCall) Validate() error {
+	if m == nil {
+		return nil
+	}
+
+	if v, ok := interface{}(m.GetInput()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return ServerTestCase_AdminAddOrUpdateSchemaCallValidationError{
+				field:  "Input",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if v, ok := interface{}(m.GetWantResponse()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return ServerTestCase_AdminAddOrUpdateSchemaCallValidationError{
+				field:  "WantResponse",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	return nil
+}
+
+// ServerTestCase_AdminAddOrUpdateSchemaCallValidationError is the validation
+// error returned by ServerTestCase_AdminAddOrUpdateSchemaCall.Validate if the
+// designated constraints aren't met.
+type ServerTestCase_AdminAddOrUpdateSchemaCallValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e ServerTestCase_AdminAddOrUpdateSchemaCallValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e ServerTestCase_AdminAddOrUpdateSchemaCallValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e ServerTestCase_AdminAddOrUpdateSchemaCallValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e ServerTestCase_AdminAddOrUpdateSchemaCallValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e ServerTestCase_AdminAddOrUpdateSchemaCallValidationError) ErrorName() string {
+	return "ServerTestCase_AdminAddOrUpdateSchemaCallValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e ServerTestCase_AdminAddOrUpdateSchemaCallValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sServerTestCase_AdminAddOrUpdateSchemaCall.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = ServerTestCase_AdminAddOrUpdateSchemaCallValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = ServerTestCase_AdminAddOrUpdateSchemaCallValidationError{}
 
 // Validate checks the field values on ServerTestCase_Status with the rules
 // defined in the proto definition for this message. If any rules are

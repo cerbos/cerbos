@@ -5,6 +5,7 @@ package test
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"io/fs"
@@ -61,14 +62,19 @@ func AddSchemasToStore(t *testing.T, dir string, ms storage.MutableStore) {
 			return nil
 		}
 
-		err = ms.AddOrUpdateSchema(context.TODO(), &schemav1.Schema{
+		if err := ms.AddOrUpdateSchema(context.TODO(), &schemav1.Schema{
 			Id:         path,
 			Definition: ReadSchemaFromFS(t, fsys, path),
-		})
-		require.NoError(t, err)
+		}); err != nil && !errors.Is(err, &storage.InvalidSchemaError{}) {
+			var ise storage.InvalidSchemaError
+			if ok := errors.As(err, &ise); !ok {
+				return err
+			}
+		}
 
 		return nil
 	})
+
 	require.NoError(t, err)
 }
 

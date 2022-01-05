@@ -100,6 +100,11 @@ func (cas *CerbosAdminService) AddOrUpdateSchema(ctx context.Context, req *reque
 
 	if err := ms.AddOrUpdateSchema(ctx, req.Schemas...); err != nil {
 		ctxzap.Extract(ctx).Error("Failed to add/update the schema(s)", zap.Error(err))
+		var ise storage.InvalidSchemaError
+		if ok := errors.As(err, &ise); ok {
+			return nil, status.Errorf(codes.InvalidArgument, "Invalid schema in request: %s", ise.Message)
+		}
+
 		return nil, status.Errorf(codes.Internal, "Failed to add/update the schema(s)")
 	}
 
