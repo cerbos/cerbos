@@ -17,7 +17,7 @@ releases:
       e2e-run: '{{ requiredEnv "E2E_RUN_ID" }}'
     chart: bitnami/postgresql
     values:
-      - nameOverride: 'postgres-{{ requiredEnv "E2E_RUN_ID" }}'
+      - nameOverride: postgres
       - postgresqlUsername: postgres
       - postgresqlPassword: passw0rd
       - persistence:
@@ -56,7 +56,7 @@ releases:
       e2e-run: '{{ requiredEnv "E2E_RUN_ID" }}'
     chart: '{{ requiredEnv "E2E_SRC_ROOT" }}/deploy/charts/cerbos'
     values:
-      - nameOverride: 'cerbos-{{ requiredEnv "E2E_RUN_ID" }}'
+      - nameOverride: cerbos
       - image:
           repository: '{{ env "E2E_CERBOS_IMG_REPO" | default "ghcr.io/cerbos/cerbos" }}'
           tag: '{{ env "E2E_CERBOS_IMG_TAG" | default "dev" }}'
@@ -68,5 +68,5 @@ releases:
             storage:
               driver: "postgres"
               postgres: 
-                url: 'postgres://cerbos_user:changeme@postgres-postgres-{{ requiredEnv "E2E_RUN_ID" }}.{{ requiredEnv "E2E_NS" }}.svc.cluster.local:5432/postgres?sslmode=disable&search_path=cerbos'
+                url: 'postgres://cerbos_user:changeme@postgres.{{ requiredEnv "E2E_NS" }}.svc.cluster.local:5432/postgres?sslmode=disable&search_path=cerbos'
 

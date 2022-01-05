@@ -13,8 +13,8 @@ import (
 )
 
 const (
-	HTTPPort       = 3452
-	GRPCPort       = 3453
+	HTTPPort       = 3592
+	GRPCPort       = 3593
 	HealthEndpoint = "/_cerbos/health"
 )
 
@@ -78,7 +78,7 @@ func (tc *TestConfig) Environ() []string {
 }
 
 func (tc *TestConfig) CerbosHost() string {
-	return fmt.Sprintf("cerbos-cerbos-%s.%s", tc.RunID, tc.Namespace())
+	return fmt.Sprintf("cerbos.%s", tc.Namespace())
 }
 
 func (tc *TestConfig) Namespace() string {

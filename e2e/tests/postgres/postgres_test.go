@@ -18,7 +18,7 @@ var _ = Describe("Postgres", func() {
 		Eventually(func(g Gomega) {
 			resp, err := http.Get(healthURL)
 			g.Expect(err).NotTo(HaveOccurred())
-			g.Expect(resp.StatusCode).To(Equal(http.StatusOK))
+			g.Expect(resp).To(HaveHTTPStatus(http.StatusOK))
 		}).Should(Succeed())
 	})
 })
