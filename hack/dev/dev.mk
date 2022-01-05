@@ -1,7 +1,9 @@
 DEV_DIR := hack/dev
 PROTOSET := cerbos.bin
 GRPC_PORT := 3593
+HTTP_HOST := localhost
 HTTP_PORT := 3592
+HTTP_PROTO := https
 PERF_DURATION := 2m
 
 $(DEV_DIR)/tls.crt:
@@ -168,6 +170,11 @@ check-http-insecure:
 		echo $(REQ_FILE); \
 		curl -k http://localhost:$(HTTP_PORT)/api/x/plan/resources?pretty -d @$(REQ_FILE);\
 		echo "";)
+
+.PHONY: test-http
+test-http:
+	@ hurl -k --variable protocol=$(HTTP_PROTO) --variable host=$(HTTP_HOST) --variable port=$(HTTP_PORT) --test $(DEV_DIR)/{check,playground,plan}.hurl
+
 
 .PHONY: perf
 perf: $(GHZ)
