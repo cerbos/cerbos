@@ -44,7 +44,6 @@ require (
 	github.com/prometheus/client_golang v1.11.0
 	github.com/rivo/tview v0.0.0-20210624165335-29d673af0ce2
 	github.com/rjeczalik/notify v0.9.3-0.20201210012515-e2a77dcc14cf
-	github.com/rodaine/table v1.0.1
 	github.com/santhosh-tekuri/jsonschema/v5 v5.0.0
 	github.com/spf13/afero v1.7.1
 	github.com/spf13/cobra v1.3.0

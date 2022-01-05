@@ -129,8 +129,9 @@ cerbosctl decisions --tail=20
 
 This command lists the policies available in the configured policy repository.
 
-NOTE: Possible values for `kind` are `derived_roles`, `resource` and `principal`
-NOTE: Multiple values seperated by comma may be stated for `kind`, `name` and `version`.
+You can filter the output using the `kind`, `name` and `version` flags. Each flag accepts multiple comma-separated values which are OR'ed together. For example, `--kind=resource,principal` matches policies that are either resource policies or principal policies.
+
+Possible values for `kind` are `derived_roles`, `resource` and `principal`.
 
 .List summary
 ----

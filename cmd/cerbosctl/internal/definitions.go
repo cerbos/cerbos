@@ -9,4 +9,13 @@ import (
 	"github.com/cerbos/cerbos/client"
 )
 
+const MaxIDPerReq = 25
+
 type WithClient func(fn func(c client.AdminClient, cmd *cobra.Command, args []string) error) func(cmd *cobra.Command, args []string) error
+
+func MinInt(a, b int) int {
+	if a < b {
+		return a
+	}
+	return b
+}
