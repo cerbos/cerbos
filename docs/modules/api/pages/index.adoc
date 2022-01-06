@@ -306,12 +306,8 @@ Unlike `CheckResourceSet` -- which checks access to resource instances of the _s
     "expression":  {
       "operator":  "eq",
       "operands":  [
-        {
-          "variable":  "request.resource.attr.status"
-        },
-        {
-          "value":  "PENDING_APPROVAL"
-        }
+        { "variable":  "request.resource.attr.status" },
+        { "value":  "PENDING_APPROVAL" }
       ]
     }
   },
