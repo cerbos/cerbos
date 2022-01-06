@@ -1,7 +1,9 @@
 // Copyright 2021-2022 Zenauth Ltd.
 // SPDX-License-Identifier: Apache-2.0
 
-package common
+//go:build e2e
+
+package e2e
 
 import (
 	"math/rand"
