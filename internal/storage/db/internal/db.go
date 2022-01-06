@@ -65,10 +65,14 @@ func (s *dbStorage) AddOrUpdateSchema(ctx context.Context, schemas ...*schemav1.
 	events := make([]storage.Event, 0, len(schemas))
 	err := s.db.WithTx(func(tx *goqu.TxDatabase) error {
 		for _, sch := range schemas {
+			var def json.RawMessage
+			if err := json.Unmarshal(sch.Definition, &def); err != nil {
+				return storage.NewInvalidSchemaError(err, "schema definition with ID %q is not valid", sch.Id)
+			}
+
 			defJSON := pgtype.JSON{}
-			err := defJSON.UnmarshalJSON(sch.Definition)
-			if err != nil {
-				return fmt.Errorf("failed to unmarshal schema definition with id %s: %w", sch.Id, err)
+			if err := defJSON.UnmarshalJSON(def); err != nil {
+				return storage.NewInvalidSchemaError(err, "schema definition with ID %q is not valid", sch.Id)
 			}
 
 			row := Schema{

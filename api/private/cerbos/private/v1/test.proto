@@ -57,6 +57,11 @@ message ServerTestCase {
         cerbos.response.v1.AddOrUpdatePolicyResponse want_response = 2;
     }
 
+    message AdminAddOrUpdateSchemaCall {
+        cerbos.request.v1.AddOrUpdateSchemaRequest input = 1;
+        cerbos.response.v1.AddOrUpdateSchemaResponse want_response = 2;
+    }
+
     message Status {
         uint32 http_status_code = 1;
         uint32 grpc_status_code = 2;
@@ -74,6 +79,7 @@ message ServerTestCase {
         AdminAddOrUpdatePolicyCall admin_add_or_update_policy = 9;
         PlaygroundProxyCall playground_proxy = 10;
         ResourcesQueryPlanCall resources_query_plan = 11;
+        AdminAddOrUpdateSchemaCall admin_add_or_update_schema = 12;
     }
 }
 

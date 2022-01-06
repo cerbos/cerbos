@@ -1,0 +1,12 @@
+---
+description: "Garbage definition"
+wantError: true
+wantStatus:
+  httpStatusCode: 400
+  grpcStatusCode: 3
+adminAddOrUpdateSchema:
+  input: {
+    "schemas": [
+      {"id": "leave_request.json", "definition": "YWFhYWFhYWFhYWFhYWFhYWFhYWEK"}
+    ]
+  }

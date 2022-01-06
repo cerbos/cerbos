@@ -38,6 +38,24 @@ func NewInvalidPolicyError(err error, msg string, args ...interface{}) InvalidPo
 	return InvalidPolicyError{Message: fmt.Sprintf(msg, args...), Err: err}
 }
 
+// InvalidSchemaError is a custom error to signal that a schema is invalid.
+type InvalidSchemaError struct {
+	Err     error
+	Message string
+}
+
+func (ise InvalidSchemaError) Error() string {
+	return fmt.Sprintf("%s: %v", ise.Message, ise.Err)
+}
+
+func (ise InvalidSchemaError) Unwrap() error {
+	return ise.Err
+}
+
+func NewInvalidSchemaError(err error, msg string, args ...interface{}) InvalidSchemaError {
+	return InvalidSchemaError{Message: fmt.Sprintf(msg, args...), Err: err}
+}
+
 // Constructor is a constructor function for a storage driver.
 type Constructor func(context.Context) (Store, error)
 
