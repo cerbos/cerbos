@@ -1,4 +1,4 @@
-CREATE DATABASE IF NOT EXISTS cerbos;
+CREATE DATABASE IF NOT EXISTS cerbos CHARACTER SET utf8mb4;
 
 USE cerbos;
 
@@ -13,7 +13,7 @@ CREATE TABLE IF NOT EXISTS policy (
 
 CREATE TABLE IF NOT EXISTS policy_dependency (
     policy_id BIGINT NOT NULL,
-    dependency_id BIGINT UNSIGNED NOT NULL,
+    dependency_id BIGINT NOT NULL,
     PRIMARY KEY (policy_id, dependency_id),
     FOREIGN KEY (policy_id) REFERENCES policy(id) ON DELETE CASCADE);
 

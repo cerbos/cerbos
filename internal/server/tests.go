@@ -33,6 +33,8 @@ import (
 	"github.com/cerbos/cerbos/internal/util"
 )
 
+const requestTimeout = 5 * time.Second
+
 type AuthCreds struct {
 	Username string
 	Password string
@@ -50,14 +52,14 @@ func (AuthCreds) RequireTransportSecurity() bool {
 	return true
 }
 
-func LoadTestCases(t testing.TB, dirs ...string) []*privatev1.ServerTestCase {
-	t.Helper()
+func LoadTestCases(tb testing.TB, dirs ...string) []*privatev1.ServerTestCase {
+	tb.Helper()
 	var testCases []*privatev1.ServerTestCase
 
 	for _, dir := range dirs {
-		cases := test.LoadTestCases(t, filepath.Join("server", dir))
+		cases := test.LoadTestCases(tb, filepath.Join("server", dir))
 		for _, c := range cases {
-			tc := readTestCase(t, c.Name, c.Input)
+			tc := readTestCase(tb, c.Name, c.Input)
 			testCases = append(testCases, tc)
 		}
 	}
@@ -65,11 +67,11 @@ func LoadTestCases(t testing.TB, dirs ...string) []*privatev1.ServerTestCase {
 	return testCases
 }
 
-func readTestCase(t testing.TB, name string, data []byte) *privatev1.ServerTestCase {
-	t.Helper()
+func readTestCase(tb testing.TB, name string, data []byte) *privatev1.ServerTestCase {
+	tb.Helper()
 
 	tc := &privatev1.ServerTestCase{}
-	require.NoError(t, util.ReadJSONOrYAML(bytes.NewReader(data), tc), "Failed to parse:>>>\n%s\n", string(data))
+	require.NoError(tb, util.ReadJSONOrYAML(bytes.NewReader(data), tc), "Failed to parse:>>>\n%s\n", string(data))
 
 	if tc.Name == "" {
 		tc.Name = name
@@ -105,7 +107,7 @@ func executeGRPCTestCase(grpcConn *grpc.ClientConn, tc *privatev1.ServerTestCase
 		var have, want proto.Message
 		var err error
 
-		ctx, cancelFunc := context.WithTimeout(context.Background(), 5*time.Second)
+		ctx, cancelFunc := context.WithTimeout(context.Background(), requestTimeout)
 		defer cancelFunc()
 
 		switch call := tc.CallKind.(type) {
@@ -234,7 +236,7 @@ func executeHTTPTestCase(c *http.Client, hostAddr string, creds *AuthCreds, tc *
 		reqBytes, err := protojson.Marshal(input)
 		require.NoError(t, err, "Failed to marshal request")
 
-		ctx, cancelFunc := context.WithTimeout(context.Background(), 5*time.Second)
+		ctx, cancelFunc := context.WithTimeout(context.Background(), requestTimeout)
 		defer cancelFunc()
 
 		req, err := http.NewRequestWithContext(ctx, http.MethodPost, addr, bytes.NewReader(reqBytes))

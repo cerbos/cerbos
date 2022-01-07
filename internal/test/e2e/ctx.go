@@ -12,6 +12,7 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
+	"strconv"
 	"testing"
 	"time"
 )
@@ -31,12 +32,17 @@ func init() {
 		panic(fmt.Errorf("failed to determine source root: %w", err))
 	}
 
-	flag.StringVar(&conf.RunID, "run-id", RandomStr(5), "Run ID for this test run")
+	noCleanup, err := strconv.ParseBool(envOrDefault("E2E_NO_CLEANUP", "false"))
+	if err != nil {
+		noCleanup = false
+	}
+
+	flag.StringVar(&conf.RunID, "run-id", envOrDefault("E2E_RUN_ID", RandomStr(5)), "Run ID for this test run")
 	flag.StringVar(&conf.SourceRoot, "source-root", srcRoot, "Directory containing the Cerbos source code")
 	flag.StringVar(&conf.CerbosImgRepo, "cerbos-img-repo", "ghcr.io/cerbos/cerbos", "Cerbos image repo")
 	flag.StringVar(&conf.CerbosImgTag, "cerbos-img-tag", "dev", "Cerbos image tag")
 	flag.DurationVar(&conf.CommandTimeout, "command-timeout", 3*time.Minute, "Command execution timeout")
-	flag.BoolVar(&conf.NoCleanup, "no-cleanup", false, "Do not cleanup after tests")
+	flag.BoolVar(&conf.NoCleanup, "no-cleanup", noCleanup, "Do not cleanup after tests")
 }
 
 func findSourceRoot() (string, error) {
@@ -46,6 +52,14 @@ func findSourceRoot() (string, error) {
 	}
 
 	return filepath.Abs(filepath.Join(filepath.Dir(currFile), "..", "..", ".."))
+}
+
+func envOrDefault(envVar, def string) string {
+	if v := os.Getenv(envVar); v != "" {
+		return v
+	}
+
+	return def
 }
 
 type Config struct {
@@ -72,6 +86,7 @@ func (c Ctx) Environ() []string {
 		"E2E_CERBOS_IMG_REPO": c.CerbosImgRepo,
 		"E2E_CERBOS_IMG_TAG":  c.CerbosImgTag,
 		"E2E_CONTEXT_ID":      c.ContextID,
+		"E2E_NO_CLEANUP":      strconv.FormatBool(c.NoCleanup),
 		"E2E_NS":              c.Namespace(),
 		"E2E_RUN_ID":          c.RunID,
 		"E2E_SRC_ROOT":        c.SourceRoot,
