@@ -247,6 +247,77 @@ Unlike `CheckResourceSet` -- which checks access to resource instances of the _s
 }
 ----
 
+=== `ResourcesQueryPlan` (`/api/x/plan/resources`)
+
+.Request
+[source,json,linenums]
+----
+{
+  "requestId":  "test01", <1>
+  "action":  "approve", <2>
+  "resource":  {
+    "policyVersion": "dev", <3>
+    "kind":  "leave_request", <4>
+    "attr":  { <5>
+      "owner":  "alicia"
+    }
+  },
+  "principal":  {
+    "id":  "alicia", <6>
+    "policyVersion": "dev", <7>
+    "roles":  ["user"], <8>
+    "attr": { <9>
+      "geography": "GB"
+    }
+  },
+  "includeMeta": true, <10>
+  "auxData": { <11>
+    "jwt": {
+      "token": "xxx.yyy.zzz", <12>
+      "keySetId": "ks-1" <15>
+    }
+  }
+}
+----
+<1> Request ID can be anything that uniquely identifies a request.
+<2> Action being performed on the resource instances. Required.
+<3> Resource policy version. Optional. The server falls back to the xref:configuration:engine.adoc[configured default version] if this is not specified.
+<4> Resource kind. Required. This value is used to determine the resource policy to evaluate.
+<5> Free-form context data about the resources under consideration. The object holds all attributes known about the resource at the time the request. Optional. Policy rule conditions will be (partially) evaluated based on these values. If an effective policy rule condition(s) requires a resource attribute not present in this object, then the response will contain the condition(s) abstract syntax tree.
+<6> ID of the principal performing the actions. Required.
+<7> Principal policy version. Optional. The server falls back to the xref:configuration:engine.adoc[configured default version] if this is not specified.
+<8> Static roles that are assigned to this principal by your identity management system. Required.
+<9> Free-form context data about this principal. Policy rule conditions are evaluated based on these values.
+<10> An optional flag to signal that the response should include metadata about evaluation. Useful for debugging.
+<11> Optional section for providing auxiliary data.
+<12> JWT to use as an auxiliary data source.
+<13> ID of the keyset to use to verify the JWT. Optional if only a single xref:configuration:auxdata.adoc[keyset is configured].
+
+
+.Response
+[source,json,linenums]
+----
+{
+  "requestId": "test01", 
+  "action": "approve",
+  "resourceKind": "leave_request",
+  "policyVersion": "dev",
+  "filter": { <1>
+    "expression":  {
+      "operator":  "eq",
+      "operands":  [
+        { "variable":  "request.resource.attr.status" },
+        { "value":  "PENDING_APPROVAL" }
+      ]
+    }
+  },
+  "meta": { 
+    "filterDebug": "(request.resource.attr.status == \"PENDING_APPROVAL\")" <2>
+  },
+}
+----
+<1> Abstract syntax tree (AST) of the policies' conditions, which have been partially evaluated using values provided in the request.
+<2> Filter AST represented as a string. Useful for debugging.
 
 == Accessing the API
 
@@ -264,8 +335,8 @@ cat <<EOF | curl --silent "localhost:3592/api/check?pretty" -d @-
     "policyVersion": "default",
     "kind":  "album:object",
     "instances": {
-      "XX125": {
-        "attr":  {
+    "XX125": {
+      "attr":  {
           "owner":  "alicia",
           "id":  "XX125",
           "public": false,

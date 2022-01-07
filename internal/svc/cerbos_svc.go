@@ -51,13 +51,12 @@ func (cs *CerbosService) ResourcesQueryPlan(ctx context.Context, request *reques
 	}
 
 	input := &enginev1.ResourcesQueryPlanRequest{
-		RequestId:     request.RequestId,
-		Action:        request.Action,
-		Principal:     request.Principal,
-		ResourceKind:  request.ResourceKind,
-		PolicyVersion: request.PolicyVersion,
-		AuxData:       auxData,
-		IncludeMeta:   request.IncludeMeta,
+		RequestId:   request.RequestId,
+		Action:      request.Action,
+		Principal:   request.Principal,
+		Resource:    request.Resource,
+		AuxData:     auxData,
+		IncludeMeta: request.IncludeMeta,
 	}
 	response, err := cs.eng.ResourcesQueryPlan(logging.ToContext(ctx, log), input)
 	if err != nil {

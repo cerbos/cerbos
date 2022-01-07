@@ -251,5 +251,31 @@ func testGRPCClient(c client.Client) func(*testing.T) {
 			require.NoError(t, err)
 			require.True(t, have)
 		})
+
+		t.Run("ResourcesQueryPlan", func(t *testing.T) {
+			is := require.New(t)
+			ctx, cancelFunc := context.WithTimeout(context.Background(), timeout)
+			defer cancelFunc()
+
+			c1 := c.With(client.IncludeMeta(true))
+			have, err := c1.ResourcesQueryPlan(
+				ctx,
+				client.NewPrincipal("maggie").
+					WithRoles("manager").
+					WithAttr("geography", "US").
+					WithAttr("managed_geographies", "US"),
+				client.NewResource("leave_request", "").
+					WithPolicyVersion("20210210").
+					WithAttr("geography", "US"),
+				"approve")
+
+			is.NoError(err)
+			expression := have.Filter.GetExpression()
+			is.NotNil(expression)
+			is.Equal(expression.Operator, "eq")
+			is.Equal(expression.Operands[0].GetVariable(), "request.resource.attr.status")
+			is.Equal(expression.Operands[1].GetValue().GetStringValue(), "PENDING_APPROVAL")
+			t.Log(have.Meta.FilterDebug)
+		})
 	}
 }

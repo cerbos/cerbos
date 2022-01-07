@@ -8,6 +8,7 @@ import (
 	"fmt"
 
 	"github.com/google/cel-go/cel"
+	"github.com/google/cel-go/checker/decls"
 	"github.com/google/cel-go/common/types"
 	exprpb "google.golang.org/genproto/googleapis/api/expr/v1alpha1"
 
@@ -37,13 +38,13 @@ func (ppe *principalPolicyEvaluator) EvaluateResourcesQueryPlan(ctx context.Cont
 	inputActions := []string{input.Action}
 	result := &enginev1.ResourcesQueryPlanOutput{}
 	result.RequestId = input.RequestId
-	result.Kind = input.ResourceKind
+	result.Kind = input.Resource.Kind
 	result.Action = input.Action
 
 	nodeBoolTrue := &qpN{Node: &qpNE{Expression: conditions.TrueExpr}}
 	for _, p := range ppe.policy.Policies { // zero or one policy in the set
 		for resource, resourceRules := range p.ResourceRules {
-			if !globs.matches(resource, input.ResourceKind) {
+			if !globs.matches(resource, input.Resource.Kind) {
 				continue
 			}
 
@@ -93,7 +94,7 @@ func (rpe *resourcePolicyEvaluator) EvaluateResourcesQueryPlan(ctx context.Conte
 	inputActions := []string{input.Action}
 	result := &enginev1.ResourcesQueryPlanOutput{}
 	result.RequestId = input.RequestId
-	result.Kind = input.ResourceKind
+	result.Kind = input.Resource.Kind
 	result.Action = input.Action
 	var allowFilter, denyFilter []*qpN
 
@@ -133,14 +134,24 @@ func (rpe *resourcePolicyEvaluator) EvaluateResourcesQueryPlan(ctx context.Conte
 				if err != nil {
 					return nil, err
 				}
-				switch len(nodes) {
-				case 0:
-					continue
-				case 1:
-					drNode = nodes[0]
-				default:
-					// combine restrictions (with OR) imposed by derived roles
-					drNode = mkNodeFromLO(mkOrLogicalOperation(nodes))
+
+				f := false
+				for _, node := range nodes {
+					if v, ok := isNodeConstBool(node); ok && v {
+						f = true
+						break
+					}
+				}
+				if !f {
+					switch len(nodes) {
+					case 0:
+						continue
+					case 1:
+						drNode = nodes[0]
+					default:
+						// combine restrictions (with OR) imposed by derived roles
+						drNode = mkNodeFromLO(mkOrLogicalOperation(nodes))
+					}
 				}
 			}
 			for actionGlob := range rule.Actions {
@@ -375,17 +386,31 @@ func evaluateCELExprPartially(expr *exprpb.CheckedExpr, input *enginev1.Resource
 		return nil, nil, err
 	}
 	ast := cel.ParsedExprToAst(&exprpb.ParsedExpr{Expr: e})
+	knownVars := make(map[string]interface{})
 	env := conditions.StdPartialEnv
+	if len(input.Resource.GetAttr()) > 0 {
+		var ds []*exprpb.Decl
+		for name, value := range input.Resource.Attr {
+			for _, s := range conditions.ResourceAttributeNames(name) {
+				ds = append(ds, decls.NewVar(s, decls.Dyn))
+				knownVars[s] = value
+			}
+		}
+		env, err = env.Extend(cel.Declarations(ds...))
+		if err != nil {
+			return nil, nil, err
+		}
+	}
 	prg, err := env.Program(ast, cel.EvalOptions(cel.OptPartialEval, cel.OptTrackState))
 	if err != nil {
 		return nil, nil, err
 	}
 
-	vars, err := cel.PartialVars(map[string]interface{}{
-		conditions.CELRequestIdent:                   input,
-		conditions.CELPrincipalAbbrev:                input.Principal,
-		conditions.Fqn(conditions.CELPrincipalField): input.Principal,
-	},
+	knownVars[conditions.CELRequestIdent] = input
+	knownVars[conditions.CELPrincipalAbbrev] = input.Principal
+	knownVars[conditions.Fqn(conditions.CELPrincipalField)] = input.Principal
+
+	vars, err := cel.PartialVars(knownVars,
 		cel.AttributePattern(conditions.CELResourceAbbrev),
 		cel.AttributePattern(conditions.CELRequestIdent).QualString(conditions.CELResourceField))
 	if err != nil {

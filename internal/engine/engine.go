@@ -286,7 +286,7 @@ func (engine *Engine) ResourcesQueryPlan(ctx context.Context, input *enginev1.Re
 	}
 	if plan == nil {
 		// get the resource policy check
-		rpName, rpVersion := engine.policyAttr(input.ResourceKind, input.PolicyVersion)
+		rpName, rpVersion := engine.policyAttr(input.Resource.Kind, input.Resource.PolicyVersion)
 		policyEvaluator, err = engine.getResourcePolicyEvaluator(ctx, rpName, rpVersion, checkOpts)
 		if err != nil {
 			return nil, fmt.Errorf("failed to get check for [%s.%s]: %w", rpName, rpVersion, err)
@@ -302,8 +302,8 @@ func (engine *Engine) ResourcesQueryPlan(ctx context.Context, input *enginev1.Re
 	response := &responsev1.ResourcesQueryPlanResponse{
 		RequestId:     input.RequestId,
 		Action:        input.Action,
-		ResourceKind:  input.ResourceKind,
-		PolicyVersion: input.PolicyVersion,
+		ResourceKind:  input.Resource.Kind,
+		PolicyVersion: input.Resource.PolicyVersion,
 	}
 
 	if plan != nil {

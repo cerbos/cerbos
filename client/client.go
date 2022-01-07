@@ -20,6 +20,7 @@ import (
 	"google.golang.org/grpc/credentials/local"
 
 	effectv1 "github.com/cerbos/cerbos/api/genpb/cerbos/effect/v1"
+	enginev1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
 	requestv1 "github.com/cerbos/cerbos/api/genpb/cerbos/request/v1"
 	svcv1 "github.com/cerbos/cerbos/api/genpb/cerbos/svc/v1"
 	"github.com/cerbos/cerbos/internal/util"
@@ -37,6 +38,8 @@ type Client interface {
 	ServerInfo(context.Context) (*ServerInfo, error)
 	// With sets per-request options for the client.
 	With(opts ...RequestOpt) Client
+	// ResourcesQueryPlan gets resources query plan for the given principal and resource description
+	ResourcesQueryPlan(ctx context.Context, principal *Principal, resource *Resource, action string) (*ResourcesQueryPlanResponse, error)
 }
 
 type config struct {
@@ -246,6 +249,51 @@ func mkTLSConfig(conf *config) (*tls.Config, error) {
 type grpcClient struct {
 	stub svcv1.CerbosServiceClient
 	opts *reqOpt
+}
+
+func (gc *grpcClient) ResourcesQueryPlan(ctx context.Context, principal *Principal, resource *Resource, action string) (*ResourcesQueryPlanResponse, error) {
+	if err := isValid(principal); err != nil {
+		return nil, fmt.Errorf("invalid principal: %w", err)
+	}
+
+	// ResourceQueryPlan.Resource object doesn't have an ID field, since it doesn't describe a concrete instance,
+	// but a set of resources. To workaround resource validation we assign a dummyID to resource.r.Id field,
+	// in case it is empty.
+	if resource != nil && resource.r != nil && resource.r.Id == "" {
+		resource.r.Id = "dummyID"
+	}
+
+	if err := isValid(resource); err != nil {
+		return nil, fmt.Errorf("invalid resource: %w", err)
+	}
+
+	reqID, err := uuid.NewRandom()
+	if err != nil {
+		return nil, fmt.Errorf("failed to generate request ID: %w", err)
+	}
+
+	req := &requestv1.ResourcesQueryPlanRequest{
+		RequestId: reqID.String(),
+		Action:    action,
+		Principal: principal.p,
+		Resource: &enginev1.ResourcesQueryPlanRequest_Resource{
+			Kind:          resource.r.Kind,
+			Attr:          resource.r.Attr,
+			PolicyVersion: resource.r.PolicyVersion,
+		},
+	}
+
+	if gc.opts != nil {
+		req.AuxData = gc.opts.auxData
+		req.IncludeMeta = gc.opts.includeMeta
+	}
+
+	result, err := gc.stub.ResourcesQueryPlan(ctx, req)
+	if err != nil {
+		return nil, fmt.Errorf("request failed: %w", err)
+	}
+
+	return &ResourcesQueryPlanResponse{ResourcesQueryPlanResponse: result}, nil
 }
 
 func (gc *grpcClient) CheckResourceSet(ctx context.Context, principal *Principal, resourceSet *ResourceSet, actions ...string) (*CheckResourceSetResponse, error) {

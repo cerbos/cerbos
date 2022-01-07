@@ -13,8 +13,9 @@ principal:
             - CA
 tests:
     - action: "approve:refer-derived-role"
-      policyVersion: default
-      resourceKind: leave_request
+      resource:
+        kind: leave_request
+        policyVersion: default
       want:
           expression:
               operator: and
@@ -46,8 +47,9 @@ tests:
                                       - variable: R.attr.owner
                                       - value: "maggie"
     - action: "report:deny-deny"
-      policyVersion: default
-      resourceKind: leave_request
+      resource:
+        kind: leave_request
+        policyVersion: default
       want:
         expression:
           operator: and
@@ -61,16 +63,18 @@ tests:
                 operands:
                   - variable: R.attr.hidden
     - action: "report:deny"
-      policyVersion: default
-      resourceKind: leave_request
+      resource:
+        kind: leave_request
+        policyVersion: default
       want:
         expression:
           operator: not
           operands:
             - variable: R.attr.deleted
     - action: "approve:true-in-both-or-and-conditions"
-      policyVersion: default
-      resourceKind: leave_request
+      resource:
+        kind: leave_request
+        policyVersion: default
       want:
         expression:
           operator: and
@@ -86,8 +90,9 @@ tests:
                   - variable: R.attr.owner
                   - value: "maggie"
     - action: "approve:allow-allow-deny"
-      policyVersion: default
-      resourceKind: leave_request
+      resource:
+        kind: leave_request
+        policyVersion: default
       want:
         expression:
           operator: and
@@ -114,8 +119,9 @@ tests:
                         - variable: R.attr.geography
                         - value: "US"
     - action: "approve:allow-allow"
-      policyVersion: default
-      resourceKind: leave_request
+      resource:
+        kind: leave_request
+        policyVersion: default
       want:
         expression:
           operator: or
@@ -131,8 +137,9 @@ tests:
                   - variable: R.attr.geography
                   - value: "US"
     - action: "approve:allow-deny"
-      policyVersion: default
-      resourceKind: leave_request
+      resource:
+        kind: leave_request
+        policyVersion: default
       want:
         expression:
           operator: and
@@ -151,13 +158,15 @@ tests:
                   - variable: R.attr.status
                   - value: "PENDING_APPROVAL"
     - action: "approve:false-in-and-condition"
-      policyVersion: default
-      resourceKind: leave_request
+      resource:
+        kind: leave_request
+        policyVersion: default
       want:
         value: false
     - action: "enlist:none-condition"
-      policyVersion: default
-      resourceKind: leave_request
+      resource:
+        kind: leave_request
+        policyVersion: default
       want:
         expression:
           operator: and
@@ -180,11 +189,52 @@ tests:
                         - value: 4.7
 
     - action: "approve:with-jwt"
-      policyVersion: default
-      resourceKind: leave_request
+      resource:
+        kind: leave_request
+        policyVersion: default
       want:
         expression:
           operator: eq
           operands:
             - variable: R.attr.groupID
             - value: 42
+    - action: "approve:refer-derived-role"
+      resource:
+        kind: leave_request
+        policyVersion: default
+        attr:
+          geography: "US"
+      want:
+        expression:
+          operator: and
+          operands:
+            - expression:
+                operator: eq
+                operands:
+                  - variable: R.attr.status
+                  - value: "PENDING_APPROVAL"
+            - expression:
+                operator: ne
+                operands:
+                  - variable: R.attr.owner
+                  - value: "maggie"
+    - action: "approve"
+      resource:
+        kind: leave_request
+        policyVersion: default
+        attr:
+          geography: "US"
+      want:
+        expression:
+          operator: and
+          operands:
+            - expression:
+                operator: eq
+                operands:
+                  - variable: R.attr.status
+                  - value: "PENDING_APPROVAL"
+            - expression:
+                operator: ne
+                operands:
+                  - variable: R.attr.owner
+                  - value: "maggie"

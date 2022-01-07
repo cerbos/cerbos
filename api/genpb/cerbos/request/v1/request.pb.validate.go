@@ -62,24 +62,13 @@ func (m *ResourcesQueryPlanRequest) Validate() error {
 		}
 	}
 
-	if utf8.RuneCountInString(m.GetResourceKind()) < 1 {
-		return ResourcesQueryPlanRequestValidationError{
-			field:  "ResourceKind",
-			reason: "value length must be at least 1 runes",
-		}
-	}
-
-	if !_ResourcesQueryPlanRequest_ResourceKind_Pattern.MatchString(m.GetResourceKind()) {
-		return ResourcesQueryPlanRequestValidationError{
-			field:  "ResourceKind",
-			reason: "value does not match regex pattern \"^[[:alpha:]][[:word:]\\\\@\\\\.\\\\-/]*(\\\\:[[:alpha:]][[:word:]\\\\@\\\\.\\\\-/]*)*$\"",
-		}
-	}
-
-	if !_ResourcesQueryPlanRequest_PolicyVersion_Pattern.MatchString(m.GetPolicyVersion()) {
-		return ResourcesQueryPlanRequestValidationError{
-			field:  "PolicyVersion",
-			reason: "value does not match regex pattern \"^[[:word:]]*$\"",
+	if v, ok := interface{}(m.GetResource()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return ResourcesQueryPlanRequestValidationError{
+				field:  "Resource",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
 		}
 	}
 
@@ -153,10 +142,6 @@ var _ interface {
 	Cause() error
 	ErrorName() string
 } = ResourcesQueryPlanRequestValidationError{}
-
-var _ResourcesQueryPlanRequest_ResourceKind_Pattern = regexp.MustCompile("^[[:alpha:]][[:word:]\\@\\.\\-/]*(\\:[[:alpha:]][[:word:]\\@\\.\\-/]*)*$")
-
-var _ResourcesQueryPlanRequest_PolicyVersion_Pattern = regexp.MustCompile("^[[:word:]]*$")
 
 // Validate checks the field values on CheckResourceSetRequest with the rules
 // defined in the proto definition for this message. If any rules are

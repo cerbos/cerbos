@@ -9,7 +9,8 @@ import requestv1 "github.com/cerbos/cerbos/api/genpb/cerbos/request/v1"
 type RequestOpt func(*reqOpt)
 
 type reqOpt struct {
-	auxData *requestv1.AuxData
+	auxData     *requestv1.AuxData
+	includeMeta bool
 }
 
 // AuxDataJWT sets the JWT to be used as auxiliary data for the request.
@@ -25,5 +26,12 @@ func AuxDataJWT(token, keySetID string) RequestOpt {
 
 		opts.auxData.Jwt.Token = token
 		opts.auxData.Jwt.KeySetId = keySetID
+	}
+}
+
+// IncludeMeta sets the flag on requests that support it to signal that evaluation metadata should be sent back with the response.
+func IncludeMeta(f bool) RequestOpt {
+	return func(opt *reqOpt) {
+		opt.includeMeta = f
 	}
 }

@@ -59,9 +59,15 @@ func (m *ResourcesQueryPlanRequest) Validate() error {
 		}
 	}
 
-	// no validation rules for ResourceKind
-
-	// no validation rules for PolicyVersion
+	if v, ok := interface{}(m.GetResource()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return ResourcesQueryPlanRequestValidationError{
+				field:  "Resource",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
 
 	if v, ok := interface{}(m.GetAuxData()).(interface{ Validate() error }); ok {
 		if err := v.Validate(); err != nil {
@@ -789,6 +795,123 @@ var _ interface {
 	Cause() error
 	ErrorName() string
 } = AuxDataValidationError{}
+
+// Validate checks the field values on ResourcesQueryPlanRequest_Resource with
+// the rules defined in the proto definition for this message. If any rules
+// are violated, an error is returned.
+func (m *ResourcesQueryPlanRequest_Resource) Validate() error {
+	if m == nil {
+		return nil
+	}
+
+	if utf8.RuneCountInString(m.GetKind()) < 1 {
+		return ResourcesQueryPlanRequest_ResourceValidationError{
+			field:  "Kind",
+			reason: "value length must be at least 1 runes",
+		}
+	}
+
+	if !_ResourcesQueryPlanRequest_Resource_Kind_Pattern.MatchString(m.GetKind()) {
+		return ResourcesQueryPlanRequest_ResourceValidationError{
+			field:  "Kind",
+			reason: "value does not match regex pattern \"^[[:alpha:]][[:word:]\\\\@\\\\.\\\\-/]*(\\\\:[[:alpha:]][[:word:]\\\\@\\\\.\\\\-/]*)*$\"",
+		}
+	}
+
+	for key, val := range m.GetAttr() {
+		_ = val
+
+		if val == nil {
+			return ResourcesQueryPlanRequest_ResourceValidationError{
+				field:  fmt.Sprintf("Attr[%v]", key),
+				reason: "value cannot be sparse, all pairs must be non-nil",
+			}
+		}
+
+		// no validation rules for Attr[key]
+
+		if v, ok := interface{}(val).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return ResourcesQueryPlanRequest_ResourceValidationError{
+					field:  fmt.Sprintf("Attr[%v]", key),
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	}
+
+	if !_ResourcesQueryPlanRequest_Resource_PolicyVersion_Pattern.MatchString(m.GetPolicyVersion()) {
+		return ResourcesQueryPlanRequest_ResourceValidationError{
+			field:  "PolicyVersion",
+			reason: "value does not match regex pattern \"^[[:word:]]*$\"",
+		}
+	}
+
+	return nil
+}
+
+// ResourcesQueryPlanRequest_ResourceValidationError is the validation error
+// returned by ResourcesQueryPlanRequest_Resource.Validate if the designated
+// constraints aren't met.
+type ResourcesQueryPlanRequest_ResourceValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e ResourcesQueryPlanRequest_ResourceValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e ResourcesQueryPlanRequest_ResourceValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e ResourcesQueryPlanRequest_ResourceValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e ResourcesQueryPlanRequest_ResourceValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e ResourcesQueryPlanRequest_ResourceValidationError) ErrorName() string {
+	return "ResourcesQueryPlanRequest_ResourceValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e ResourcesQueryPlanRequest_ResourceValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sResourcesQueryPlanRequest_Resource.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = ResourcesQueryPlanRequest_ResourceValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = ResourcesQueryPlanRequest_ResourceValidationError{}
+
+var _ResourcesQueryPlanRequest_Resource_Kind_Pattern = regexp.MustCompile("^[[:alpha:]][[:word:]\\@\\.\\-/]*(\\:[[:alpha:]][[:word:]\\@\\.\\-/]*)*$")
+
+var _ResourcesQueryPlanRequest_Resource_PolicyVersion_Pattern = regexp.MustCompile("^[[:word:]]*$")
 
 // Validate checks the field values on CheckOutput_ActionEffect with the rules
 // defined in the proto definition for this message. If any rules are

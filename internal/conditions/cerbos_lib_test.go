@@ -241,11 +241,14 @@ func TestPartialEvaluation(t *testing.T) {
 			decls.NewVar("y", decls.NewListType(decls.String)),
 			decls.NewVar(conditions.CELResourceAbbrev, decls.NewObjectType("cerbos.engine.v1.Resource")),
 			decls.NewVar("request.principal", decls.NewMapType(decls.String, decls.Dyn)),
-			decls.NewVar("z", decls.String)), ext.Strings())
+			decls.NewVar("z", decls.String),
+			decls.NewVar("R.attr.department", decls.String)),
+		ext.Strings())
 
 	vars, _ := cel.PartialVars(map[string]interface{}{
-		"y": []string{"GB", "US"},
-		"z": "ca",
+		"y":                 []string{"GB", "US"},
+		"z":                 "ca",
+		"R.attr.department": "marketing",
 		"request.principal": map[string]interface{}{
 			"attr": map[string]interface{}{
 				"country": "NZ",
@@ -259,6 +262,14 @@ func TestPartialEvaluation(t *testing.T) {
 	tests := []struct {
 		expr, result string
 	}{
+		{
+			expr:   `R.attr.department == R.attr.project.department`,
+			result: `"marketing" == R.attr.project.department`,
+		},
+		{
+			expr:   `R.attr.geo in y && R.attr.department in ["engineering", "design"]`,
+			result: `false`,
+		},
 		{
 			expr:   "R.attr.geo in (y + [z]).map(t, t.upperAscii())",
 			result: `R.attr.geo in ["GB", "US", "CA"]`,

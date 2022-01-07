@@ -1885,9 +1885,15 @@ func (m *QueryPlannerTestSuite_Test) Validate() error {
 		}
 	}
 
-	// no validation rules for PolicyVersion
-
-	// no validation rules for ResourceKind
+	if v, ok := interface{}(m.GetResource()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return QueryPlannerTestSuite_TestValidationError{
+				field:  "Resource",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
 
 	return nil
 }

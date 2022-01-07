@@ -46,28 +46,11 @@ message ResourcesQueryPlanRequest {
         (google.api.field_behavior) = REQUIRED
     ];
 
-    string resource_kind = 4 [
-        (validate.rules).string = {pattern: "^[[:alpha:]][[:word:]\\@\\.\\-/]*(\\:[[:alpha:]][[:word:]\\@\\.\\-/]*)*$", min_len: 1},
-        (google.api.field_behavior) = REQUIRED,
-        (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
-            description: "Resource kind."
-            example: "\"album:object\""
-            pattern: "^[[:alpha:]][[:word:]\\@\\.\\-]*(\\:[[:alpha:]][[:word:]\\@\\.\\-]*)*$"
-        }
-    ];
-    string policy_version = 5 [
-        (validate.rules).string.pattern = "^[[:word:]]*$",
-        (google.api.field_behavior) = OPTIONAL,
-        (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
-            description: "The policy version to use to evaluate this request. If not specified, will default to the server-configured default version.",
-            pattern: "^[[:word:]]*$"
-            example: "\"default\""
-        }
-    ];
+    cerbos.engine.v1.ResourcesQueryPlanRequest.Resource resource = 4 [(google.api.field_behavior) = REQUIRED];
 
-    AuxData aux_data = 6 [(google.api.field_behavior) = OPTIONAL];
+    AuxData aux_data = 5 [(google.api.field_behavior) = OPTIONAL];
 
-    bool include_meta = 7 [
+    bool include_meta = 6 [
         (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
             description: "Opt to receive request processing metadata in the response."
         }

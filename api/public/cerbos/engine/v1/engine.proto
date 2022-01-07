@@ -18,13 +18,39 @@ import "cerbos/schema/v1/schema.proto";
 import "validate/validate.proto";
 
 message ResourcesQueryPlanRequest {
+    message Resource {
+        string kind = 1 [
+            (validate.rules).string = {pattern: "^[[:alpha:]][[:word:]\\@\\.\\-/]*(\\:[[:alpha:]][[:word:]\\@\\.\\-/]*)*$", min_len: 1},
+            (google.api.field_behavior) = REQUIRED,
+            (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+                description: "Resource kind."
+                example: "\"album:object\""
+                pattern: "^[[:alpha:]][[:word:]\\@\\.\\-]*(\\:[[:alpha:]][[:word:]\\@\\.\\-]*)*$"
+            }
+        ];
+        map<string, google.protobuf.Value> attr = 2 [
+            (validate.rules).map.no_sparse = true,
+            (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+                description: "Key-value pairs of contextual data about the resource that are known at a time of the request."
+            }
+        ];
+        string policy_version = 3 [
+            (validate.rules).string.pattern = "^[[:word:]]*$",
+            (google.api.field_behavior) = OPTIONAL,
+            (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+                description: "The policy version to use to evaluate this request. If not specified, will default to the server-configured default version.",
+                pattern: "^[[:word:]]*$"
+                example: "\"default\""
+            }
+        ];
+    }
+
     string request_id = 1;
     string action = 2;
     Principal principal = 3;
-    string resource_kind = 4;
-    string policy_version = 5;
-    AuxData aux_data = 6;
-    bool include_meta = 7;
+    Resource resource = 4;
+    AuxData aux_data = 5;
+    bool include_meta = 6;
 }
 
 message CheckInput {

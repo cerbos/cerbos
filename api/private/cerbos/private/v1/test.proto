@@ -137,8 +137,7 @@ message QueryPlannerTestSuite {
     message Test {
         string action = 1;
         cerbos.response.v1.ResourcesQueryPlanResponse.Expression.Operand want = 2;
-        string policy_version = 3;
-        string resource_kind = 4;
+        cerbos.engine.v1.ResourcesQueryPlanRequest.Resource resource = 3;
     }
     repeated Test tests = 3;
 }
