@@ -2,30 +2,30 @@
 version: v1
 deps:
   - remote: buf.build
-    owner: beta
-    repository: googleapis
-    branch: main
-    commit: 1c473ad9220a49bca9320f4cc690eba5
-    digest: b1-unlhrcI3tnJd0JEGuOb692LZ_tY_gCGq6mK1bgCn1Pg=
-    create_time: 2021-06-23T20:16:47.788079Z
-  - remote: buf.build
-    owner: beta
-    repository: protoc-gen-validate
-    branch: main
-    commit: 82388a0a0cb04e98a203f95dfed5e84b
-    digest: b1-lYgUMN58PxyCwvfQoopp40AJ-oHHjWXAzksF7v9U-U4=
-    create_time: 2021-06-21T22:00:30.152545Z
-  - remote: buf.build
     owner: cerbos
     repository: cerbos-api
     branch: main
-    commit: 16e3cb16b42e4e469895a9126e53d07d
-    digest: b1-rpuYUZlySoyj7QrsPkQuRVszNl2jK7U-irxss4kSddA=
-    create_time: 2021-08-13T08:28:50.325584Z
+    commit: f181b5a5b5ea489fa71a9002331d1e8e
+    digest: b1-6IQHV_NUw8cvy15vQY2cQ5DsSleAC9Y6pPpjDgBMil4=
+    create_time: 2022-01-07T09:25:53.473852Z
+  - remote: buf.build
+    owner: envoyproxy
+    repository: protoc-gen-validate
+    branch: main
+    commit: d4b3491aba654a18ace264bc8196bd16
+    digest: b1-nntzab9-HTi6TLuah2VvNWF8KS8v6-kTyuigE5W5veE=
+    create_time: 2021-08-10T21:03:02.017838Z
+  - remote: buf.build
+    owner: googleapis
+    repository: googleapis
+    branch: main
+    commit: 84c3cad756d2435982d9e3b72680fa96
+    digest: b1-GVZocI28gwtZCKNAO4Jd83jaE_XMjcAuEBtjnWvybO0=
+    create_time: 2021-08-17T15:06:58.03881Z
   - remote: buf.build
     owner: grpc-ecosystem
     repository: grpc-gateway
     branch: main
-    commit: d19475fa22444a289c46af009acce62c
-    digest: b1-_zhDPyr_Ctc1QRAKuad6_0xvoyPd6QaB22ldm9gzS0Q=
-    create_time: 2021-04-26T15:19:26.742789Z
+    commit: d1922677830c448eb65ec590f3abc734
+    digest: b1-zmmsl0XlsSF4_BhZe7w9NMdImBCRtMSn68rmn9H1faQ=
+    create_time: 2021-08-17T02:45:07.151993Z
