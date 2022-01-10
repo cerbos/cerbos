@@ -62,7 +62,7 @@ require (
 	go.uber.org/automaxprocs v1.4.0
 	go.uber.org/config v1.4.0
 	go.uber.org/multierr v1.7.0
-	go.uber.org/zap v1.19.1
+	go.uber.org/zap v1.20.0
 	gocloud.dev v0.24.0
 	golang.org/x/crypto v0.0.0-20211108221036-ceb1ce70b4fa
 	golang.org/x/net v0.0.0-20211209124913-491a49abca63
@@ -88,15 +88,6 @@ require (
 	github.com/ProtonMail/go-crypto v0.0.0-20210512092938-c05353c2d58c // indirect
 	github.com/acomagu/bufpipe v1.0.3 // indirect
 	github.com/antlr/antlr4 v0.0.0-20200503195918-621b933c7a7f // indirect
-	github.com/aws/aws-sdk-go-v2 v1.9.0 // indirect
-	github.com/aws/aws-sdk-go-v2/config v1.7.0 // indirect
-	github.com/aws/aws-sdk-go-v2/credentials v1.4.0 // indirect
-	github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.5.0 // indirect
-	github.com/aws/aws-sdk-go-v2/internal/ini v1.2.2 // indirect
-	github.com/aws/aws-sdk-go-v2/service/internal/presigned-url v1.3.0 // indirect
-	github.com/aws/aws-sdk-go-v2/service/sso v1.4.0 // indirect
-	github.com/aws/aws-sdk-go-v2/service/sts v1.7.0 // indirect
-	github.com/aws/smithy-go v1.8.0 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/cenkalti/backoff/v4 v4.1.2 // indirect
 	github.com/census-instrumentation/opencensus-proto v0.3.0 // indirect
