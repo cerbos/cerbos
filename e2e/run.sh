@@ -15,11 +15,15 @@ check_prerequisites() {
 }
 
 start_kind() {
-    kind create cluster --name "$E2E_CLUSTER" 
+    if [[ "$E2E_SKIP_CLUSTER" == "false" ]]; then
+        kind create cluster --name "$E2E_CLUSTER" 
+    fi
 }
 
 stop_kind() {
-    kind delete cluster --name "$E2E_CLUSTER"
+    if [[ "$E2E_SKIP_CLUSTER" == "false" && "$E2E_NO_CLEANUP" == "false" ]]; then
+        kind delete cluster --name "$E2E_CLUSTER"
+    fi
 }
 
 run_tests() {
@@ -30,19 +34,12 @@ run_tests() {
 }
 
 check_prerequisites
+start_kind 
+trap stop_kind EXIT
 
-if [[ "$E2E_SKIP_CLUSTER" == "false" ]]; then
-    start_kind 
-
-    if [[ "$E2E_NO_CLEANUP" == "false" ]]; then
-        trap stop_kind EXIT
-    fi
-fi
-
-if [[ $# -gt 0 ]]; then
+if [[ "$#" -gt "0" ]]; then
     # E.g. e2e/run.sh ./mysql/... -args -run-id=xxxxx -no-cleanup
     run_tests "$@"
 else
-    E2E_RUN_ID=${E2E_RUN_ID:-"$(tr -dc a-z </dev/urandom | head -c 5)"}
-    run_tests ./... -args -run-id="$E2E_RUN_ID" -no-cleanup="$E2E_NO_CLEANUP"
+    run_tests ./... -args -no-cleanup="$E2E_NO_CLEANUP"
 fi
