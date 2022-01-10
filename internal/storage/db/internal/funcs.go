@@ -10,9 +10,17 @@ import (
 	"github.com/doug-martin/goqu/v9/exp"
 )
 
+func DialectFalseValue(dialect string) interface{} {
+	if dialect == "sqlserver" {
+		return 0
+	}
+
+	return false
+}
+
 func ConcatWithSepFunc(dialect string) func(string, ...interface{}) exp.Expression {
 	switch dialect {
-	case "mysql", "mysql8":
+	case "mysql", "mysql8", "sqlserver":
 		return mysqlConcatWithSep
 	default:
 		return ansiConcatWithSep

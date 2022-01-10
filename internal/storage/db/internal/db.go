@@ -28,6 +28,7 @@ const policyKeySep = "."
 
 type DBStorage interface {
 	storage.Subscribable
+	NotifySubscribers(events ...storage.Event)
 	AddOrUpdate(ctx context.Context, policies ...policy.Wrapper) error
 	GetCompilationUnits(ctx context.Context, ids ...namer.ModuleID) (map[namer.ModuleID]*policy.CompilationUnit, error)
 	GetDependents(ctx context.Context, ids ...namer.ModuleID) (map[namer.ModuleID][]namer.ModuleID, error)
@@ -47,6 +48,7 @@ func NewDBStorage(ctx context.Context, db *goqu.Database) (DBStorage, error) {
 			return nil, err
 		}
 
+		log.Println("YAHOO!")
 		db.Logger(log)
 	}
 
@@ -263,7 +265,7 @@ func (s *dbStorage) GetCompilationUnits(ctx context.Context, ids ...namer.Module
 		Where(
 			goqu.And(
 				goqu.C(PolicyDepTblPolicyIDCol).Table("pd").In(ids),
-				goqu.C(PolicyTblDisabledCol).Table("p").Eq(false),
+				goqu.C(PolicyTblDisabledCol).Table("p").Eq(DialectFalseValue(s.db.Dialect())),
 			),
 		)
 
@@ -279,7 +281,7 @@ func (s *dbStorage) GetCompilationUnits(ctx context.Context, ids ...namer.Module
 		Where(
 			goqu.And(
 				goqu.I(PolicyTblIDCol).In(ids),
-				goqu.I(PolicyTblDisabledCol).Eq(false),
+				goqu.I(PolicyTblDisabledCol).Eq(DialectFalseValue(s.db.Dialect())),
 			),
 		).
 		UnionAll(depsQuery).
