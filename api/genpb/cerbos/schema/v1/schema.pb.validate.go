@@ -11,6 +11,7 @@ import (
 	"net/mail"
 	"net/url"
 	"regexp"
+	"sort"
 	"strings"
 	"time"
 	"unicode/utf8"
@@ -31,15 +32,30 @@ var (
 	_ = (*url.URL)(nil)
 	_ = (*mail.Address)(nil)
 	_ = anypb.Any{}
+	_ = sort.Sort
 )
 
 // Validate checks the field values on ValidationError with the rules defined
-// in the proto definition for this message. If any rules are violated, an
-// error is returned.
+// in the proto definition for this message. If any rules are violated, the
+// first error encountered is returned, or nil if there are no violations.
 func (m *ValidationError) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on ValidationError with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// ValidationErrorMultiError, or nil if none found.
+func (m *ValidationError) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *ValidationError) validate(all bool) error {
 	if m == nil {
 		return nil
 	}
+
+	var errors []error
 
 	// no validation rules for Path
 
@@ -47,8 +63,28 @@ func (m *ValidationError) Validate() error {
 
 	// no validation rules for Source
 
+	if len(errors) > 0 {
+		return ValidationErrorMultiError(errors)
+	}
 	return nil
 }
+
+// ValidationErrorMultiError is an error wrapping multiple validation errors
+// returned by ValidationError.ValidateAll() if the designated constraints
+// aren't met.
+type ValidationErrorMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m ValidationErrorMultiError) Error() string {
+	var msgs []string
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m ValidationErrorMultiError) AllErrors() []error { return m }
 
 // ValidationErrorValidationError is the validation error returned by
 // ValidationError.Validate if the designated constraints aren't met.
@@ -105,28 +141,69 @@ var _ interface {
 } = ValidationErrorValidationError{}
 
 // Validate checks the field values on Schema with the rules defined in the
-// proto definition for this message. If any rules are violated, an error is returned.
+// proto definition for this message. If any rules are violated, the first
+// error encountered is returned, or nil if there are no violations.
 func (m *Schema) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on Schema with the rules defined in the
+// proto definition for this message. If any rules are violated, the result is
+// a list of violation errors wrapped in SchemaMultiError, or nil if none found.
+func (m *Schema) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *Schema) validate(all bool) error {
 	if m == nil {
 		return nil
 	}
 
+	var errors []error
+
 	if l := utf8.RuneCountInString(m.GetId()); l < 1 || l > 255 {
-		return SchemaValidationError{
+		err := SchemaValidationError{
 			field:  "Id",
 			reason: "value length must be between 1 and 255 runes, inclusive",
 		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
 	}
 
 	if len(m.GetDefinition()) < 10 {
-		return SchemaValidationError{
+		err := SchemaValidationError{
 			field:  "Definition",
 			reason: "value length must be at least 10 bytes",
 		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
 	}
 
+	if len(errors) > 0 {
+		return SchemaMultiError(errors)
+	}
 	return nil
 }
+
+// SchemaMultiError is an error wrapping multiple validation errors returned by
+// Schema.ValidateAll() if the designated constraints aren't met.
+type SchemaMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m SchemaMultiError) Error() string {
+	var msgs []string
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m SchemaMultiError) AllErrors() []error { return m }
 
 // SchemaValidationError is the validation error returned by Schema.Validate if
 // the designated constraints aren't met.

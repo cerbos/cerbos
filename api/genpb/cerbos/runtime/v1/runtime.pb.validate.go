@@ -11,6 +11,7 @@ import (
 	"net/mail"
 	"net/url"
 	"regexp"
+	"sort"
 	"strings"
 	"time"
 	"unicode/utf8"
@@ -33,6 +34,7 @@ var (
 	_ = (*url.URL)(nil)
 	_ = (*mail.Address)(nil)
 	_ = anypb.Any{}
+	_ = sort.Sort
 
 	_ = effectv1.Effect(0)
 
@@ -40,12 +42,26 @@ var (
 )
 
 // Validate checks the field values on RunnablePolicySet with the rules defined
-// in the proto definition for this message. If any rules are violated, an
-// error is returned.
+// in the proto definition for this message. If any rules are violated, the
+// first error encountered is returned, or nil if there are no violations.
 func (m *RunnablePolicySet) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on RunnablePolicySet with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// RunnablePolicySetMultiError, or nil if none found.
+func (m *RunnablePolicySet) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *RunnablePolicySet) validate(all bool) error {
 	if m == nil {
 		return nil
 	}
+
+	var errors []error
 
 	// no validation rules for Fqn
 
@@ -53,7 +69,26 @@ func (m *RunnablePolicySet) Validate() error {
 
 	case *RunnablePolicySet_ResourcePolicy:
 
-		if v, ok := interface{}(m.GetResourcePolicy()).(interface{ Validate() error }); ok {
+		if all {
+			switch v := interface{}(m.GetResourcePolicy()).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, RunnablePolicySetValidationError{
+						field:  "ResourcePolicy",
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, RunnablePolicySetValidationError{
+						field:  "ResourcePolicy",
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(m.GetResourcePolicy()).(interface{ Validate() error }); ok {
 			if err := v.Validate(); err != nil {
 				return RunnablePolicySetValidationError{
 					field:  "ResourcePolicy",
@@ -65,7 +100,26 @@ func (m *RunnablePolicySet) Validate() error {
 
 	case *RunnablePolicySet_PrincipalPolicy:
 
-		if v, ok := interface{}(m.GetPrincipalPolicy()).(interface{ Validate() error }); ok {
+		if all {
+			switch v := interface{}(m.GetPrincipalPolicy()).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, RunnablePolicySetValidationError{
+						field:  "PrincipalPolicy",
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, RunnablePolicySetValidationError{
+						field:  "PrincipalPolicy",
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(m.GetPrincipalPolicy()).(interface{ Validate() error }); ok {
 			if err := v.Validate(); err != nil {
 				return RunnablePolicySetValidationError{
 					field:  "PrincipalPolicy",
@@ -77,7 +131,26 @@ func (m *RunnablePolicySet) Validate() error {
 
 	case *RunnablePolicySet_DerivedRoles:
 
-		if v, ok := interface{}(m.GetDerivedRoles()).(interface{ Validate() error }); ok {
+		if all {
+			switch v := interface{}(m.GetDerivedRoles()).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, RunnablePolicySetValidationError{
+						field:  "DerivedRoles",
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, RunnablePolicySetValidationError{
+						field:  "DerivedRoles",
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(m.GetDerivedRoles()).(interface{ Validate() error }); ok {
 			if err := v.Validate(); err != nil {
 				return RunnablePolicySetValidationError{
 					field:  "DerivedRoles",
@@ -89,8 +162,28 @@ func (m *RunnablePolicySet) Validate() error {
 
 	}
 
+	if len(errors) > 0 {
+		return RunnablePolicySetMultiError(errors)
+	}
 	return nil
 }
+
+// RunnablePolicySetMultiError is an error wrapping multiple validation errors
+// returned by RunnablePolicySet.ValidateAll() if the designated constraints
+// aren't met.
+type RunnablePolicySetMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m RunnablePolicySetMultiError) Error() string {
+	var msgs []string
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m RunnablePolicySetMultiError) AllErrors() []error { return m }
 
 // RunnablePolicySetValidationError is the validation error returned by
 // RunnablePolicySet.Validate if the designated constraints aren't met.
@@ -150,13 +243,46 @@ var _ interface {
 
 // Validate checks the field values on RunnableResourcePolicySet with the rules
 // defined in the proto definition for this message. If any rules are
-// violated, an error is returned.
+// violated, the first error encountered is returned, or nil if there are no violations.
 func (m *RunnableResourcePolicySet) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on RunnableResourcePolicySet with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// RunnableResourcePolicySetMultiError, or nil if none found.
+func (m *RunnableResourcePolicySet) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *RunnableResourcePolicySet) validate(all bool) error {
 	if m == nil {
 		return nil
 	}
 
-	if v, ok := interface{}(m.GetMeta()).(interface{ Validate() error }); ok {
+	var errors []error
+
+	if all {
+		switch v := interface{}(m.GetMeta()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, RunnableResourcePolicySetValidationError{
+					field:  "Meta",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, RunnableResourcePolicySetValidationError{
+					field:  "Meta",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetMeta()).(interface{ Validate() error }); ok {
 		if err := v.Validate(); err != nil {
 			return RunnableResourcePolicySetValidationError{
 				field:  "Meta",
@@ -169,7 +295,26 @@ func (m *RunnableResourcePolicySet) Validate() error {
 	for idx, item := range m.GetPolicies() {
 		_, _ = idx, item
 
-		if v, ok := interface{}(item).(interface{ Validate() error }); ok {
+		if all {
+			switch v := interface{}(item).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, RunnableResourcePolicySetValidationError{
+						field:  fmt.Sprintf("Policies[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, RunnableResourcePolicySetValidationError{
+						field:  fmt.Sprintf("Policies[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(item).(interface{ Validate() error }); ok {
 			if err := v.Validate(); err != nil {
 				return RunnableResourcePolicySetValidationError{
 					field:  fmt.Sprintf("Policies[%v]", idx),
@@ -181,8 +326,28 @@ func (m *RunnableResourcePolicySet) Validate() error {
 
 	}
 
+	if len(errors) > 0 {
+		return RunnableResourcePolicySetMultiError(errors)
+	}
 	return nil
 }
+
+// RunnableResourcePolicySetMultiError is an error wrapping multiple validation
+// errors returned by RunnableResourcePolicySet.ValidateAll() if the
+// designated constraints aren't met.
+type RunnableResourcePolicySetMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m RunnableResourcePolicySetMultiError) Error() string {
+	var msgs []string
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m RunnableResourcePolicySetMultiError) AllErrors() []error { return m }
 
 // RunnableResourcePolicySetValidationError is the validation error returned by
 // RunnableResourcePolicySet.Validate if the designated constraints aren't met.
@@ -242,49 +407,140 @@ var _ interface {
 
 // Validate checks the field values on RunnableDerivedRole with the rules
 // defined in the proto definition for this message. If any rules are
-// violated, an error is returned.
+// violated, the first error encountered is returned, or nil if there are no violations.
 func (m *RunnableDerivedRole) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on RunnableDerivedRole with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// RunnableDerivedRoleMultiError, or nil if none found.
+func (m *RunnableDerivedRole) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *RunnableDerivedRole) validate(all bool) error {
 	if m == nil {
 		return nil
 	}
 
+	var errors []error
+
 	// no validation rules for Name
 
-	for key, val := range m.GetParentRoles() {
-		_ = val
+	{
+		sorted_keys := make([]string, len(m.GetParentRoles()))
+		i := 0
+		for key := range m.GetParentRoles() {
+			sorted_keys[i] = key
+			i++
+		}
+		sort.Slice(sorted_keys, func(i, j int) bool { return sorted_keys[i] < sorted_keys[j] })
+		for _, key := range sorted_keys {
+			val := m.GetParentRoles()[key]
+			_ = val
 
-		// no validation rules for ParentRoles[key]
+			// no validation rules for ParentRoles[key]
 
-		if v, ok := interface{}(val).(interface{ Validate() error }); ok {
-			if err := v.Validate(); err != nil {
-				return RunnableDerivedRoleValidationError{
-					field:  fmt.Sprintf("ParentRoles[%v]", key),
-					reason: "embedded message failed validation",
-					cause:  err,
+			if all {
+				switch v := interface{}(val).(type) {
+				case interface{ ValidateAll() error }:
+					if err := v.ValidateAll(); err != nil {
+						errors = append(errors, RunnableDerivedRoleValidationError{
+							field:  fmt.Sprintf("ParentRoles[%v]", key),
+							reason: "embedded message failed validation",
+							cause:  err,
+						})
+					}
+				case interface{ Validate() error }:
+					if err := v.Validate(); err != nil {
+						errors = append(errors, RunnableDerivedRoleValidationError{
+							field:  fmt.Sprintf("ParentRoles[%v]", key),
+							reason: "embedded message failed validation",
+							cause:  err,
+						})
+					}
+				}
+			} else if v, ok := interface{}(val).(interface{ Validate() error }); ok {
+				if err := v.Validate(); err != nil {
+					return RunnableDerivedRoleValidationError{
+						field:  fmt.Sprintf("ParentRoles[%v]", key),
+						reason: "embedded message failed validation",
+						cause:  err,
+					}
 				}
 			}
-		}
 
+		}
 	}
 
-	for key, val := range m.GetVariables() {
-		_ = val
+	{
+		sorted_keys := make([]string, len(m.GetVariables()))
+		i := 0
+		for key := range m.GetVariables() {
+			sorted_keys[i] = key
+			i++
+		}
+		sort.Slice(sorted_keys, func(i, j int) bool { return sorted_keys[i] < sorted_keys[j] })
+		for _, key := range sorted_keys {
+			val := m.GetVariables()[key]
+			_ = val
 
-		// no validation rules for Variables[key]
+			// no validation rules for Variables[key]
 
-		if v, ok := interface{}(val).(interface{ Validate() error }); ok {
-			if err := v.Validate(); err != nil {
-				return RunnableDerivedRoleValidationError{
-					field:  fmt.Sprintf("Variables[%v]", key),
-					reason: "embedded message failed validation",
-					cause:  err,
+			if all {
+				switch v := interface{}(val).(type) {
+				case interface{ ValidateAll() error }:
+					if err := v.ValidateAll(); err != nil {
+						errors = append(errors, RunnableDerivedRoleValidationError{
+							field:  fmt.Sprintf("Variables[%v]", key),
+							reason: "embedded message failed validation",
+							cause:  err,
+						})
+					}
+				case interface{ Validate() error }:
+					if err := v.Validate(); err != nil {
+						errors = append(errors, RunnableDerivedRoleValidationError{
+							field:  fmt.Sprintf("Variables[%v]", key),
+							reason: "embedded message failed validation",
+							cause:  err,
+						})
+					}
+				}
+			} else if v, ok := interface{}(val).(interface{ Validate() error }); ok {
+				if err := v.Validate(); err != nil {
+					return RunnableDerivedRoleValidationError{
+						field:  fmt.Sprintf("Variables[%v]", key),
+						reason: "embedded message failed validation",
+						cause:  err,
+					}
 				}
 			}
-		}
 
+		}
 	}
 
-	if v, ok := interface{}(m.GetCondition()).(interface{ Validate() error }); ok {
+	if all {
+		switch v := interface{}(m.GetCondition()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, RunnableDerivedRoleValidationError{
+					field:  "Condition",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, RunnableDerivedRoleValidationError{
+					field:  "Condition",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetCondition()).(interface{ Validate() error }); ok {
 		if err := v.Validate(); err != nil {
 			return RunnableDerivedRoleValidationError{
 				field:  "Condition",
@@ -294,8 +550,28 @@ func (m *RunnableDerivedRole) Validate() error {
 		}
 	}
 
+	if len(errors) > 0 {
+		return RunnableDerivedRoleMultiError(errors)
+	}
 	return nil
 }
+
+// RunnableDerivedRoleMultiError is an error wrapping multiple validation
+// errors returned by RunnableDerivedRole.ValidateAll() if the designated
+// constraints aren't met.
+type RunnableDerivedRoleMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m RunnableDerivedRoleMultiError) Error() string {
+	var msgs []string
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m RunnableDerivedRoleMultiError) AllErrors() []error { return m }
 
 // RunnableDerivedRoleValidationError is the validation error returned by
 // RunnableDerivedRole.Validate if the designated constraints aren't met.
@@ -355,13 +631,46 @@ var _ interface {
 
 // Validate checks the field values on RunnableDerivedRolesSet with the rules
 // defined in the proto definition for this message. If any rules are
-// violated, an error is returned.
+// violated, the first error encountered is returned, or nil if there are no violations.
 func (m *RunnableDerivedRolesSet) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on RunnableDerivedRolesSet with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// RunnableDerivedRolesSetMultiError, or nil if none found.
+func (m *RunnableDerivedRolesSet) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *RunnableDerivedRolesSet) validate(all bool) error {
 	if m == nil {
 		return nil
 	}
 
-	if v, ok := interface{}(m.GetMeta()).(interface{ Validate() error }); ok {
+	var errors []error
+
+	if all {
+		switch v := interface{}(m.GetMeta()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, RunnableDerivedRolesSetValidationError{
+					field:  "Meta",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, RunnableDerivedRolesSetValidationError{
+					field:  "Meta",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetMeta()).(interface{ Validate() error }); ok {
 		if err := v.Validate(); err != nil {
 			return RunnableDerivedRolesSetValidationError{
 				field:  "Meta",
@@ -371,25 +680,74 @@ func (m *RunnableDerivedRolesSet) Validate() error {
 		}
 	}
 
-	for key, val := range m.GetDerivedRoles() {
-		_ = val
+	{
+		sorted_keys := make([]string, len(m.GetDerivedRoles()))
+		i := 0
+		for key := range m.GetDerivedRoles() {
+			sorted_keys[i] = key
+			i++
+		}
+		sort.Slice(sorted_keys, func(i, j int) bool { return sorted_keys[i] < sorted_keys[j] })
+		for _, key := range sorted_keys {
+			val := m.GetDerivedRoles()[key]
+			_ = val
 
-		// no validation rules for DerivedRoles[key]
+			// no validation rules for DerivedRoles[key]
 
-		if v, ok := interface{}(val).(interface{ Validate() error }); ok {
-			if err := v.Validate(); err != nil {
-				return RunnableDerivedRolesSetValidationError{
-					field:  fmt.Sprintf("DerivedRoles[%v]", key),
-					reason: "embedded message failed validation",
-					cause:  err,
+			if all {
+				switch v := interface{}(val).(type) {
+				case interface{ ValidateAll() error }:
+					if err := v.ValidateAll(); err != nil {
+						errors = append(errors, RunnableDerivedRolesSetValidationError{
+							field:  fmt.Sprintf("DerivedRoles[%v]", key),
+							reason: "embedded message failed validation",
+							cause:  err,
+						})
+					}
+				case interface{ Validate() error }:
+					if err := v.Validate(); err != nil {
+						errors = append(errors, RunnableDerivedRolesSetValidationError{
+							field:  fmt.Sprintf("DerivedRoles[%v]", key),
+							reason: "embedded message failed validation",
+							cause:  err,
+						})
+					}
+				}
+			} else if v, ok := interface{}(val).(interface{ Validate() error }); ok {
+				if err := v.Validate(); err != nil {
+					return RunnableDerivedRolesSetValidationError{
+						field:  fmt.Sprintf("DerivedRoles[%v]", key),
+						reason: "embedded message failed validation",
+						cause:  err,
+					}
 				}
 			}
-		}
 
+		}
 	}
 
+	if len(errors) > 0 {
+		return RunnableDerivedRolesSetMultiError(errors)
+	}
 	return nil
 }
+
+// RunnableDerivedRolesSetMultiError is an error wrapping multiple validation
+// errors returned by RunnableDerivedRolesSet.ValidateAll() if the designated
+// constraints aren't met.
+type RunnableDerivedRolesSetMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m RunnableDerivedRolesSetMultiError) Error() string {
+	var msgs []string
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m RunnableDerivedRolesSetMultiError) AllErrors() []error { return m }
 
 // RunnableDerivedRolesSetValidationError is the validation error returned by
 // RunnableDerivedRolesSet.Validate if the designated constraints aren't met.
@@ -449,13 +807,46 @@ var _ interface {
 
 // Validate checks the field values on RunnablePrincipalPolicySet with the
 // rules defined in the proto definition for this message. If any rules are
-// violated, an error is returned.
+// violated, the first error encountered is returned, or nil if there are no violations.
 func (m *RunnablePrincipalPolicySet) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on RunnablePrincipalPolicySet with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// RunnablePrincipalPolicySetMultiError, or nil if none found.
+func (m *RunnablePrincipalPolicySet) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *RunnablePrincipalPolicySet) validate(all bool) error {
 	if m == nil {
 		return nil
 	}
 
-	if v, ok := interface{}(m.GetMeta()).(interface{ Validate() error }); ok {
+	var errors []error
+
+	if all {
+		switch v := interface{}(m.GetMeta()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, RunnablePrincipalPolicySetValidationError{
+					field:  "Meta",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, RunnablePrincipalPolicySetValidationError{
+					field:  "Meta",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetMeta()).(interface{ Validate() error }); ok {
 		if err := v.Validate(); err != nil {
 			return RunnablePrincipalPolicySetValidationError{
 				field:  "Meta",
@@ -468,7 +859,26 @@ func (m *RunnablePrincipalPolicySet) Validate() error {
 	for idx, item := range m.GetPolicies() {
 		_, _ = idx, item
 
-		if v, ok := interface{}(item).(interface{ Validate() error }); ok {
+		if all {
+			switch v := interface{}(item).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, RunnablePrincipalPolicySetValidationError{
+						field:  fmt.Sprintf("Policies[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, RunnablePrincipalPolicySetValidationError{
+						field:  fmt.Sprintf("Policies[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(item).(interface{ Validate() error }); ok {
 			if err := v.Validate(); err != nil {
 				return RunnablePrincipalPolicySetValidationError{
 					field:  fmt.Sprintf("Policies[%v]", idx),
@@ -480,8 +890,28 @@ func (m *RunnablePrincipalPolicySet) Validate() error {
 
 	}
 
+	if len(errors) > 0 {
+		return RunnablePrincipalPolicySetMultiError(errors)
+	}
 	return nil
 }
+
+// RunnablePrincipalPolicySetMultiError is an error wrapping multiple
+// validation errors returned by RunnablePrincipalPolicySet.ValidateAll() if
+// the designated constraints aren't met.
+type RunnablePrincipalPolicySetMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m RunnablePrincipalPolicySetMultiError) Error() string {
+	var msgs []string
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m RunnablePrincipalPolicySetMultiError) AllErrors() []error { return m }
 
 // RunnablePrincipalPolicySetValidationError is the validation error returned
 // by RunnablePrincipalPolicySet.Validate if the designated constraints aren't met.
@@ -540,15 +970,48 @@ var _ interface {
 } = RunnablePrincipalPolicySetValidationError{}
 
 // Validate checks the field values on Expr with the rules defined in the proto
-// definition for this message. If any rules are violated, an error is returned.
+// definition for this message. If any rules are violated, the first error
+// encountered is returned, or nil if there are no violations.
 func (m *Expr) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on Expr with the rules defined in the
+// proto definition for this message. If any rules are violated, the result is
+// a list of violation errors wrapped in ExprMultiError, or nil if none found.
+func (m *Expr) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *Expr) validate(all bool) error {
 	if m == nil {
 		return nil
 	}
 
+	var errors []error
+
 	// no validation rules for Original
 
-	if v, ok := interface{}(m.GetChecked()).(interface{ Validate() error }); ok {
+	if all {
+		switch v := interface{}(m.GetChecked()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, ExprValidationError{
+					field:  "Checked",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, ExprValidationError{
+					field:  "Checked",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetChecked()).(interface{ Validate() error }); ok {
 		if err := v.Validate(); err != nil {
 			return ExprValidationError{
 				field:  "Checked",
@@ -558,8 +1021,27 @@ func (m *Expr) Validate() error {
 		}
 	}
 
+	if len(errors) > 0 {
+		return ExprMultiError(errors)
+	}
 	return nil
 }
+
+// ExprMultiError is an error wrapping multiple validation errors returned by
+// Expr.ValidateAll() if the designated constraints aren't met.
+type ExprMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m ExprMultiError) Error() string {
+	var msgs []string
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m ExprMultiError) AllErrors() []error { return m }
 
 // ExprValidationError is the validation error returned by Expr.Validate if the
 // designated constraints aren't met.
@@ -616,17 +1098,51 @@ var _ interface {
 } = ExprValidationError{}
 
 // Validate checks the field values on Condition with the rules defined in the
-// proto definition for this message. If any rules are violated, an error is returned.
+// proto definition for this message. If any rules are violated, the first
+// error encountered is returned, or nil if there are no violations.
 func (m *Condition) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on Condition with the rules defined in
+// the proto definition for this message. If any rules are violated, the
+// result is a list of violation errors wrapped in ConditionMultiError, or nil
+// if none found.
+func (m *Condition) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *Condition) validate(all bool) error {
 	if m == nil {
 		return nil
 	}
+
+	var errors []error
 
 	switch m.Op.(type) {
 
 	case *Condition_All:
 
-		if v, ok := interface{}(m.GetAll()).(interface{ Validate() error }); ok {
+		if all {
+			switch v := interface{}(m.GetAll()).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, ConditionValidationError{
+						field:  "All",
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, ConditionValidationError{
+						field:  "All",
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(m.GetAll()).(interface{ Validate() error }); ok {
 			if err := v.Validate(); err != nil {
 				return ConditionValidationError{
 					field:  "All",
@@ -638,7 +1154,26 @@ func (m *Condition) Validate() error {
 
 	case *Condition_Any:
 
-		if v, ok := interface{}(m.GetAny()).(interface{ Validate() error }); ok {
+		if all {
+			switch v := interface{}(m.GetAny()).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, ConditionValidationError{
+						field:  "Any",
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, ConditionValidationError{
+						field:  "Any",
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(m.GetAny()).(interface{ Validate() error }); ok {
 			if err := v.Validate(); err != nil {
 				return ConditionValidationError{
 					field:  "Any",
@@ -650,7 +1185,26 @@ func (m *Condition) Validate() error {
 
 	case *Condition_None:
 
-		if v, ok := interface{}(m.GetNone()).(interface{ Validate() error }); ok {
+		if all {
+			switch v := interface{}(m.GetNone()).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, ConditionValidationError{
+						field:  "None",
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, ConditionValidationError{
+						field:  "None",
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(m.GetNone()).(interface{ Validate() error }); ok {
 			if err := v.Validate(); err != nil {
 				return ConditionValidationError{
 					field:  "None",
@@ -662,7 +1216,26 @@ func (m *Condition) Validate() error {
 
 	case *Condition_Expr:
 
-		if v, ok := interface{}(m.GetExpr()).(interface{ Validate() error }); ok {
+		if all {
+			switch v := interface{}(m.GetExpr()).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, ConditionValidationError{
+						field:  "Expr",
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, ConditionValidationError{
+						field:  "Expr",
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(m.GetExpr()).(interface{ Validate() error }); ok {
 			if err := v.Validate(); err != nil {
 				return ConditionValidationError{
 					field:  "Expr",
@@ -674,8 +1247,27 @@ func (m *Condition) Validate() error {
 
 	}
 
+	if len(errors) > 0 {
+		return ConditionMultiError(errors)
+	}
 	return nil
 }
+
+// ConditionMultiError is an error wrapping multiple validation errors returned
+// by Condition.ValidateAll() if the designated constraints aren't met.
+type ConditionMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m ConditionMultiError) Error() string {
+	var msgs []string
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m ConditionMultiError) AllErrors() []error { return m }
 
 // ConditionValidationError is the validation error returned by
 // Condition.Validate if the designated constraints aren't met.
@@ -733,11 +1325,26 @@ var _ interface {
 
 // Validate checks the field values on RunnableResourcePolicySet_Metadata with
 // the rules defined in the proto definition for this message. If any rules
-// are violated, an error is returned.
+// are violated, the first error encountered is returned, or nil if there are
+// no violations.
 func (m *RunnableResourcePolicySet_Metadata) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on RunnableResourcePolicySet_Metadata
+// with the rules defined in the proto definition for this message. If any
+// rules are violated, the result is a list of violation errors wrapped in
+// RunnableResourcePolicySet_MetadataMultiError, or nil if none found.
+func (m *RunnableResourcePolicySet_Metadata) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *RunnableResourcePolicySet_Metadata) validate(all bool) error {
 	if m == nil {
 		return nil
 	}
+
+	var errors []error
 
 	// no validation rules for Fqn
 
@@ -745,8 +1352,29 @@ func (m *RunnableResourcePolicySet_Metadata) Validate() error {
 
 	// no validation rules for Version
 
+	if len(errors) > 0 {
+		return RunnableResourcePolicySet_MetadataMultiError(errors)
+	}
 	return nil
 }
+
+// RunnableResourcePolicySet_MetadataMultiError is an error wrapping multiple
+// validation errors returned by
+// RunnableResourcePolicySet_Metadata.ValidateAll() if the designated
+// constraints aren't met.
+type RunnableResourcePolicySet_MetadataMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m RunnableResourcePolicySet_MetadataMultiError) Error() string {
+	var msgs []string
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m RunnableResourcePolicySet_MetadataMultiError) AllErrors() []error { return m }
 
 // RunnableResourcePolicySet_MetadataValidationError is the validation error
 // returned by RunnableResourcePolicySet_Metadata.Validate if the designated
@@ -807,50 +1435,142 @@ var _ interface {
 
 // Validate checks the field values on RunnableResourcePolicySet_Policy with
 // the rules defined in the proto definition for this message. If any rules
-// are violated, an error is returned.
+// are violated, the first error encountered is returned, or nil if there are
+// no violations.
 func (m *RunnableResourcePolicySet_Policy) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on RunnableResourcePolicySet_Policy with
+// the rules defined in the proto definition for this message. If any rules
+// are violated, the result is a list of violation errors wrapped in
+// RunnableResourcePolicySet_PolicyMultiError, or nil if none found.
+func (m *RunnableResourcePolicySet_Policy) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *RunnableResourcePolicySet_Policy) validate(all bool) error {
 	if m == nil {
 		return nil
 	}
 
-	for key, val := range m.GetDerivedRoles() {
-		_ = val
+	var errors []error
 
-		// no validation rules for DerivedRoles[key]
+	{
+		sorted_keys := make([]string, len(m.GetDerivedRoles()))
+		i := 0
+		for key := range m.GetDerivedRoles() {
+			sorted_keys[i] = key
+			i++
+		}
+		sort.Slice(sorted_keys, func(i, j int) bool { return sorted_keys[i] < sorted_keys[j] })
+		for _, key := range sorted_keys {
+			val := m.GetDerivedRoles()[key]
+			_ = val
 
-		if v, ok := interface{}(val).(interface{ Validate() error }); ok {
-			if err := v.Validate(); err != nil {
-				return RunnableResourcePolicySet_PolicyValidationError{
-					field:  fmt.Sprintf("DerivedRoles[%v]", key),
-					reason: "embedded message failed validation",
-					cause:  err,
+			// no validation rules for DerivedRoles[key]
+
+			if all {
+				switch v := interface{}(val).(type) {
+				case interface{ ValidateAll() error }:
+					if err := v.ValidateAll(); err != nil {
+						errors = append(errors, RunnableResourcePolicySet_PolicyValidationError{
+							field:  fmt.Sprintf("DerivedRoles[%v]", key),
+							reason: "embedded message failed validation",
+							cause:  err,
+						})
+					}
+				case interface{ Validate() error }:
+					if err := v.Validate(); err != nil {
+						errors = append(errors, RunnableResourcePolicySet_PolicyValidationError{
+							field:  fmt.Sprintf("DerivedRoles[%v]", key),
+							reason: "embedded message failed validation",
+							cause:  err,
+						})
+					}
+				}
+			} else if v, ok := interface{}(val).(interface{ Validate() error }); ok {
+				if err := v.Validate(); err != nil {
+					return RunnableResourcePolicySet_PolicyValidationError{
+						field:  fmt.Sprintf("DerivedRoles[%v]", key),
+						reason: "embedded message failed validation",
+						cause:  err,
+					}
 				}
 			}
-		}
 
+		}
 	}
 
-	for key, val := range m.GetVariables() {
-		_ = val
+	{
+		sorted_keys := make([]string, len(m.GetVariables()))
+		i := 0
+		for key := range m.GetVariables() {
+			sorted_keys[i] = key
+			i++
+		}
+		sort.Slice(sorted_keys, func(i, j int) bool { return sorted_keys[i] < sorted_keys[j] })
+		for _, key := range sorted_keys {
+			val := m.GetVariables()[key]
+			_ = val
 
-		// no validation rules for Variables[key]
+			// no validation rules for Variables[key]
 
-		if v, ok := interface{}(val).(interface{ Validate() error }); ok {
-			if err := v.Validate(); err != nil {
-				return RunnableResourcePolicySet_PolicyValidationError{
-					field:  fmt.Sprintf("Variables[%v]", key),
-					reason: "embedded message failed validation",
-					cause:  err,
+			if all {
+				switch v := interface{}(val).(type) {
+				case interface{ ValidateAll() error }:
+					if err := v.ValidateAll(); err != nil {
+						errors = append(errors, RunnableResourcePolicySet_PolicyValidationError{
+							field:  fmt.Sprintf("Variables[%v]", key),
+							reason: "embedded message failed validation",
+							cause:  err,
+						})
+					}
+				case interface{ Validate() error }:
+					if err := v.Validate(); err != nil {
+						errors = append(errors, RunnableResourcePolicySet_PolicyValidationError{
+							field:  fmt.Sprintf("Variables[%v]", key),
+							reason: "embedded message failed validation",
+							cause:  err,
+						})
+					}
+				}
+			} else if v, ok := interface{}(val).(interface{ Validate() error }); ok {
+				if err := v.Validate(); err != nil {
+					return RunnableResourcePolicySet_PolicyValidationError{
+						field:  fmt.Sprintf("Variables[%v]", key),
+						reason: "embedded message failed validation",
+						cause:  err,
+					}
 				}
 			}
-		}
 
+		}
 	}
 
 	for idx, item := range m.GetRules() {
 		_, _ = idx, item
 
-		if v, ok := interface{}(item).(interface{ Validate() error }); ok {
+		if all {
+			switch v := interface{}(item).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, RunnableResourcePolicySet_PolicyValidationError{
+						field:  fmt.Sprintf("Rules[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, RunnableResourcePolicySet_PolicyValidationError{
+						field:  fmt.Sprintf("Rules[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(item).(interface{ Validate() error }); ok {
 			if err := v.Validate(); err != nil {
 				return RunnableResourcePolicySet_PolicyValidationError{
 					field:  fmt.Sprintf("Rules[%v]", idx),
@@ -862,7 +1582,26 @@ func (m *RunnableResourcePolicySet_Policy) Validate() error {
 
 	}
 
-	if v, ok := interface{}(m.GetSchemas()).(interface{ Validate() error }); ok {
+	if all {
+		switch v := interface{}(m.GetSchemas()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, RunnableResourcePolicySet_PolicyValidationError{
+					field:  "Schemas",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, RunnableResourcePolicySet_PolicyValidationError{
+					field:  "Schemas",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetSchemas()).(interface{ Validate() error }); ok {
 		if err := v.Validate(); err != nil {
 			return RunnableResourcePolicySet_PolicyValidationError{
 				field:  "Schemas",
@@ -872,8 +1611,29 @@ func (m *RunnableResourcePolicySet_Policy) Validate() error {
 		}
 	}
 
+	if len(errors) > 0 {
+		return RunnableResourcePolicySet_PolicyMultiError(errors)
+	}
 	return nil
 }
+
+// RunnableResourcePolicySet_PolicyMultiError is an error wrapping multiple
+// validation errors returned by
+// RunnableResourcePolicySet_Policy.ValidateAll() if the designated
+// constraints aren't met.
+type RunnableResourcePolicySet_PolicyMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m RunnableResourcePolicySet_PolicyMultiError) Error() string {
+	var msgs []string
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m RunnableResourcePolicySet_PolicyMultiError) AllErrors() []error { return m }
 
 // RunnableResourcePolicySet_PolicyValidationError is the validation error
 // returned by RunnableResourcePolicySet_Policy.Validate if the designated
@@ -934,66 +1694,187 @@ var _ interface {
 
 // Validate checks the field values on RunnableResourcePolicySet_Policy_Rule
 // with the rules defined in the proto definition for this message. If any
-// rules are violated, an error is returned.
+// rules are violated, the first error encountered is returned, or nil if
+// there are no violations.
 func (m *RunnableResourcePolicySet_Policy_Rule) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on RunnableResourcePolicySet_Policy_Rule
+// with the rules defined in the proto definition for this message. If any
+// rules are violated, the result is a list of violation errors wrapped in
+// RunnableResourcePolicySet_Policy_RuleMultiError, or nil if none found.
+func (m *RunnableResourcePolicySet_Policy_Rule) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *RunnableResourcePolicySet_Policy_Rule) validate(all bool) error {
 	if m == nil {
 		return nil
 	}
 
+	var errors []error
+
 	// no validation rules for Name
 
-	for key, val := range m.GetActions() {
-		_ = val
+	{
+		sorted_keys := make([]string, len(m.GetActions()))
+		i := 0
+		for key := range m.GetActions() {
+			sorted_keys[i] = key
+			i++
+		}
+		sort.Slice(sorted_keys, func(i, j int) bool { return sorted_keys[i] < sorted_keys[j] })
+		for _, key := range sorted_keys {
+			val := m.GetActions()[key]
+			_ = val
 
-		// no validation rules for Actions[key]
+			// no validation rules for Actions[key]
 
-		if v, ok := interface{}(val).(interface{ Validate() error }); ok {
-			if err := v.Validate(); err != nil {
-				return RunnableResourcePolicySet_Policy_RuleValidationError{
-					field:  fmt.Sprintf("Actions[%v]", key),
-					reason: "embedded message failed validation",
-					cause:  err,
+			if all {
+				switch v := interface{}(val).(type) {
+				case interface{ ValidateAll() error }:
+					if err := v.ValidateAll(); err != nil {
+						errors = append(errors, RunnableResourcePolicySet_Policy_RuleValidationError{
+							field:  fmt.Sprintf("Actions[%v]", key),
+							reason: "embedded message failed validation",
+							cause:  err,
+						})
+					}
+				case interface{ Validate() error }:
+					if err := v.Validate(); err != nil {
+						errors = append(errors, RunnableResourcePolicySet_Policy_RuleValidationError{
+							field:  fmt.Sprintf("Actions[%v]", key),
+							reason: "embedded message failed validation",
+							cause:  err,
+						})
+					}
+				}
+			} else if v, ok := interface{}(val).(interface{ Validate() error }); ok {
+				if err := v.Validate(); err != nil {
+					return RunnableResourcePolicySet_Policy_RuleValidationError{
+						field:  fmt.Sprintf("Actions[%v]", key),
+						reason: "embedded message failed validation",
+						cause:  err,
+					}
 				}
 			}
-		}
 
+		}
 	}
 
-	for key, val := range m.GetDerivedRoles() {
-		_ = val
+	{
+		sorted_keys := make([]string, len(m.GetDerivedRoles()))
+		i := 0
+		for key := range m.GetDerivedRoles() {
+			sorted_keys[i] = key
+			i++
+		}
+		sort.Slice(sorted_keys, func(i, j int) bool { return sorted_keys[i] < sorted_keys[j] })
+		for _, key := range sorted_keys {
+			val := m.GetDerivedRoles()[key]
+			_ = val
 
-		// no validation rules for DerivedRoles[key]
+			// no validation rules for DerivedRoles[key]
 
-		if v, ok := interface{}(val).(interface{ Validate() error }); ok {
-			if err := v.Validate(); err != nil {
-				return RunnableResourcePolicySet_Policy_RuleValidationError{
-					field:  fmt.Sprintf("DerivedRoles[%v]", key),
-					reason: "embedded message failed validation",
-					cause:  err,
+			if all {
+				switch v := interface{}(val).(type) {
+				case interface{ ValidateAll() error }:
+					if err := v.ValidateAll(); err != nil {
+						errors = append(errors, RunnableResourcePolicySet_Policy_RuleValidationError{
+							field:  fmt.Sprintf("DerivedRoles[%v]", key),
+							reason: "embedded message failed validation",
+							cause:  err,
+						})
+					}
+				case interface{ Validate() error }:
+					if err := v.Validate(); err != nil {
+						errors = append(errors, RunnableResourcePolicySet_Policy_RuleValidationError{
+							field:  fmt.Sprintf("DerivedRoles[%v]", key),
+							reason: "embedded message failed validation",
+							cause:  err,
+						})
+					}
+				}
+			} else if v, ok := interface{}(val).(interface{ Validate() error }); ok {
+				if err := v.Validate(); err != nil {
+					return RunnableResourcePolicySet_Policy_RuleValidationError{
+						field:  fmt.Sprintf("DerivedRoles[%v]", key),
+						reason: "embedded message failed validation",
+						cause:  err,
+					}
 				}
 			}
-		}
 
+		}
 	}
 
-	for key, val := range m.GetRoles() {
-		_ = val
+	{
+		sorted_keys := make([]string, len(m.GetRoles()))
+		i := 0
+		for key := range m.GetRoles() {
+			sorted_keys[i] = key
+			i++
+		}
+		sort.Slice(sorted_keys, func(i, j int) bool { return sorted_keys[i] < sorted_keys[j] })
+		for _, key := range sorted_keys {
+			val := m.GetRoles()[key]
+			_ = val
 
-		// no validation rules for Roles[key]
+			// no validation rules for Roles[key]
 
-		if v, ok := interface{}(val).(interface{ Validate() error }); ok {
-			if err := v.Validate(); err != nil {
-				return RunnableResourcePolicySet_Policy_RuleValidationError{
-					field:  fmt.Sprintf("Roles[%v]", key),
-					reason: "embedded message failed validation",
-					cause:  err,
+			if all {
+				switch v := interface{}(val).(type) {
+				case interface{ ValidateAll() error }:
+					if err := v.ValidateAll(); err != nil {
+						errors = append(errors, RunnableResourcePolicySet_Policy_RuleValidationError{
+							field:  fmt.Sprintf("Roles[%v]", key),
+							reason: "embedded message failed validation",
+							cause:  err,
+						})
+					}
+				case interface{ Validate() error }:
+					if err := v.Validate(); err != nil {
+						errors = append(errors, RunnableResourcePolicySet_Policy_RuleValidationError{
+							field:  fmt.Sprintf("Roles[%v]", key),
+							reason: "embedded message failed validation",
+							cause:  err,
+						})
+					}
+				}
+			} else if v, ok := interface{}(val).(interface{ Validate() error }); ok {
+				if err := v.Validate(); err != nil {
+					return RunnableResourcePolicySet_Policy_RuleValidationError{
+						field:  fmt.Sprintf("Roles[%v]", key),
+						reason: "embedded message failed validation",
+						cause:  err,
+					}
 				}
 			}
-		}
 
+		}
 	}
 
-	if v, ok := interface{}(m.GetCondition()).(interface{ Validate() error }); ok {
+	if all {
+		switch v := interface{}(m.GetCondition()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, RunnableResourcePolicySet_Policy_RuleValidationError{
+					field:  "Condition",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, RunnableResourcePolicySet_Policy_RuleValidationError{
+					field:  "Condition",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetCondition()).(interface{ Validate() error }); ok {
 		if err := v.Validate(); err != nil {
 			return RunnableResourcePolicySet_Policy_RuleValidationError{
 				field:  "Condition",
@@ -1005,8 +1886,29 @@ func (m *RunnableResourcePolicySet_Policy_Rule) Validate() error {
 
 	// no validation rules for Effect
 
+	if len(errors) > 0 {
+		return RunnableResourcePolicySet_Policy_RuleMultiError(errors)
+	}
 	return nil
 }
+
+// RunnableResourcePolicySet_Policy_RuleMultiError is an error wrapping
+// multiple validation errors returned by
+// RunnableResourcePolicySet_Policy_Rule.ValidateAll() if the designated
+// constraints aren't met.
+type RunnableResourcePolicySet_Policy_RuleMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m RunnableResourcePolicySet_Policy_RuleMultiError) Error() string {
+	var msgs []string
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m RunnableResourcePolicySet_Policy_RuleMultiError) AllErrors() []error { return m }
 
 // RunnableResourcePolicySet_Policy_RuleValidationError is the validation error
 // returned by RunnableResourcePolicySet_Policy_Rule.Validate if the
@@ -1067,16 +1969,52 @@ var _ interface {
 
 // Validate checks the field values on RunnableDerivedRolesSet_Metadata with
 // the rules defined in the proto definition for this message. If any rules
-// are violated, an error is returned.
+// are violated, the first error encountered is returned, or nil if there are
+// no violations.
 func (m *RunnableDerivedRolesSet_Metadata) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on RunnableDerivedRolesSet_Metadata with
+// the rules defined in the proto definition for this message. If any rules
+// are violated, the result is a list of violation errors wrapped in
+// RunnableDerivedRolesSet_MetadataMultiError, or nil if none found.
+func (m *RunnableDerivedRolesSet_Metadata) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *RunnableDerivedRolesSet_Metadata) validate(all bool) error {
 	if m == nil {
 		return nil
 	}
 
+	var errors []error
+
 	// no validation rules for Fqn
 
+	if len(errors) > 0 {
+		return RunnableDerivedRolesSet_MetadataMultiError(errors)
+	}
 	return nil
 }
+
+// RunnableDerivedRolesSet_MetadataMultiError is an error wrapping multiple
+// validation errors returned by
+// RunnableDerivedRolesSet_Metadata.ValidateAll() if the designated
+// constraints aren't met.
+type RunnableDerivedRolesSet_MetadataMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m RunnableDerivedRolesSet_MetadataMultiError) Error() string {
+	var msgs []string
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m RunnableDerivedRolesSet_MetadataMultiError) AllErrors() []error { return m }
 
 // RunnableDerivedRolesSet_MetadataValidationError is the validation error
 // returned by RunnableDerivedRolesSet_Metadata.Validate if the designated
@@ -1137,11 +2075,26 @@ var _ interface {
 
 // Validate checks the field values on RunnablePrincipalPolicySet_Metadata with
 // the rules defined in the proto definition for this message. If any rules
-// are violated, an error is returned.
+// are violated, the first error encountered is returned, or nil if there are
+// no violations.
 func (m *RunnablePrincipalPolicySet_Metadata) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on RunnablePrincipalPolicySet_Metadata
+// with the rules defined in the proto definition for this message. If any
+// rules are violated, the result is a list of violation errors wrapped in
+// RunnablePrincipalPolicySet_MetadataMultiError, or nil if none found.
+func (m *RunnablePrincipalPolicySet_Metadata) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *RunnablePrincipalPolicySet_Metadata) validate(all bool) error {
 	if m == nil {
 		return nil
 	}
+
+	var errors []error
 
 	// no validation rules for Fqn
 
@@ -1149,8 +2102,29 @@ func (m *RunnablePrincipalPolicySet_Metadata) Validate() error {
 
 	// no validation rules for Version
 
+	if len(errors) > 0 {
+		return RunnablePrincipalPolicySet_MetadataMultiError(errors)
+	}
 	return nil
 }
+
+// RunnablePrincipalPolicySet_MetadataMultiError is an error wrapping multiple
+// validation errors returned by
+// RunnablePrincipalPolicySet_Metadata.ValidateAll() if the designated
+// constraints aren't met.
+type RunnablePrincipalPolicySet_MetadataMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m RunnablePrincipalPolicySet_MetadataMultiError) Error() string {
+	var msgs []string
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m RunnablePrincipalPolicySet_MetadataMultiError) AllErrors() []error { return m }
 
 // RunnablePrincipalPolicySet_MetadataValidationError is the validation error
 // returned by RunnablePrincipalPolicySet_Metadata.Validate if the designated
@@ -1211,48 +2185,142 @@ var _ interface {
 
 // Validate checks the field values on RunnablePrincipalPolicySet_Policy with
 // the rules defined in the proto definition for this message. If any rules
-// are violated, an error is returned.
+// are violated, the first error encountered is returned, or nil if there are
+// no violations.
 func (m *RunnablePrincipalPolicySet_Policy) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on RunnablePrincipalPolicySet_Policy
+// with the rules defined in the proto definition for this message. If any
+// rules are violated, the result is a list of violation errors wrapped in
+// RunnablePrincipalPolicySet_PolicyMultiError, or nil if none found.
+func (m *RunnablePrincipalPolicySet_Policy) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *RunnablePrincipalPolicySet_Policy) validate(all bool) error {
 	if m == nil {
 		return nil
 	}
 
-	for key, val := range m.GetVariables() {
-		_ = val
+	var errors []error
 
-		// no validation rules for Variables[key]
+	{
+		sorted_keys := make([]string, len(m.GetVariables()))
+		i := 0
+		for key := range m.GetVariables() {
+			sorted_keys[i] = key
+			i++
+		}
+		sort.Slice(sorted_keys, func(i, j int) bool { return sorted_keys[i] < sorted_keys[j] })
+		for _, key := range sorted_keys {
+			val := m.GetVariables()[key]
+			_ = val
 
-		if v, ok := interface{}(val).(interface{ Validate() error }); ok {
-			if err := v.Validate(); err != nil {
-				return RunnablePrincipalPolicySet_PolicyValidationError{
-					field:  fmt.Sprintf("Variables[%v]", key),
-					reason: "embedded message failed validation",
-					cause:  err,
+			// no validation rules for Variables[key]
+
+			if all {
+				switch v := interface{}(val).(type) {
+				case interface{ ValidateAll() error }:
+					if err := v.ValidateAll(); err != nil {
+						errors = append(errors, RunnablePrincipalPolicySet_PolicyValidationError{
+							field:  fmt.Sprintf("Variables[%v]", key),
+							reason: "embedded message failed validation",
+							cause:  err,
+						})
+					}
+				case interface{ Validate() error }:
+					if err := v.Validate(); err != nil {
+						errors = append(errors, RunnablePrincipalPolicySet_PolicyValidationError{
+							field:  fmt.Sprintf("Variables[%v]", key),
+							reason: "embedded message failed validation",
+							cause:  err,
+						})
+					}
+				}
+			} else if v, ok := interface{}(val).(interface{ Validate() error }); ok {
+				if err := v.Validate(); err != nil {
+					return RunnablePrincipalPolicySet_PolicyValidationError{
+						field:  fmt.Sprintf("Variables[%v]", key),
+						reason: "embedded message failed validation",
+						cause:  err,
+					}
 				}
 			}
-		}
 
+		}
 	}
 
-	for key, val := range m.GetResourceRules() {
-		_ = val
+	{
+		sorted_keys := make([]string, len(m.GetResourceRules()))
+		i := 0
+		for key := range m.GetResourceRules() {
+			sorted_keys[i] = key
+			i++
+		}
+		sort.Slice(sorted_keys, func(i, j int) bool { return sorted_keys[i] < sorted_keys[j] })
+		for _, key := range sorted_keys {
+			val := m.GetResourceRules()[key]
+			_ = val
 
-		// no validation rules for ResourceRules[key]
+			// no validation rules for ResourceRules[key]
 
-		if v, ok := interface{}(val).(interface{ Validate() error }); ok {
-			if err := v.Validate(); err != nil {
-				return RunnablePrincipalPolicySet_PolicyValidationError{
-					field:  fmt.Sprintf("ResourceRules[%v]", key),
-					reason: "embedded message failed validation",
-					cause:  err,
+			if all {
+				switch v := interface{}(val).(type) {
+				case interface{ ValidateAll() error }:
+					if err := v.ValidateAll(); err != nil {
+						errors = append(errors, RunnablePrincipalPolicySet_PolicyValidationError{
+							field:  fmt.Sprintf("ResourceRules[%v]", key),
+							reason: "embedded message failed validation",
+							cause:  err,
+						})
+					}
+				case interface{ Validate() error }:
+					if err := v.Validate(); err != nil {
+						errors = append(errors, RunnablePrincipalPolicySet_PolicyValidationError{
+							field:  fmt.Sprintf("ResourceRules[%v]", key),
+							reason: "embedded message failed validation",
+							cause:  err,
+						})
+					}
+				}
+			} else if v, ok := interface{}(val).(interface{ Validate() error }); ok {
+				if err := v.Validate(); err != nil {
+					return RunnablePrincipalPolicySet_PolicyValidationError{
+						field:  fmt.Sprintf("ResourceRules[%v]", key),
+						reason: "embedded message failed validation",
+						cause:  err,
+					}
 				}
 			}
-		}
 
+		}
 	}
 
+	if len(errors) > 0 {
+		return RunnablePrincipalPolicySet_PolicyMultiError(errors)
+	}
 	return nil
 }
+
+// RunnablePrincipalPolicySet_PolicyMultiError is an error wrapping multiple
+// validation errors returned by
+// RunnablePrincipalPolicySet_Policy.ValidateAll() if the designated
+// constraints aren't met.
+type RunnablePrincipalPolicySet_PolicyMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m RunnablePrincipalPolicySet_PolicyMultiError) Error() string {
+	var msgs []string
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m RunnablePrincipalPolicySet_PolicyMultiError) AllErrors() []error { return m }
 
 // RunnablePrincipalPolicySet_PolicyValidationError is the validation error
 // returned by RunnablePrincipalPolicySet_Policy.Validate if the designated
@@ -1313,15 +2381,50 @@ var _ interface {
 
 // Validate checks the field values on
 // RunnablePrincipalPolicySet_Policy_ActionRule with the rules defined in the
-// proto definition for this message. If any rules are violated, an error is returned.
+// proto definition for this message. If any rules are violated, the first
+// error encountered is returned, or nil if there are no violations.
 func (m *RunnablePrincipalPolicySet_Policy_ActionRule) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on
+// RunnablePrincipalPolicySet_Policy_ActionRule with the rules defined in the
+// proto definition for this message. If any rules are violated, the result is
+// a list of violation errors wrapped in
+// RunnablePrincipalPolicySet_Policy_ActionRuleMultiError, or nil if none found.
+func (m *RunnablePrincipalPolicySet_Policy_ActionRule) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *RunnablePrincipalPolicySet_Policy_ActionRule) validate(all bool) error {
 	if m == nil {
 		return nil
 	}
 
+	var errors []error
+
 	// no validation rules for Name
 
-	if v, ok := interface{}(m.GetCondition()).(interface{ Validate() error }); ok {
+	if all {
+		switch v := interface{}(m.GetCondition()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, RunnablePrincipalPolicySet_Policy_ActionRuleValidationError{
+					field:  "Condition",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, RunnablePrincipalPolicySet_Policy_ActionRuleValidationError{
+					field:  "Condition",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetCondition()).(interface{ Validate() error }); ok {
 		if err := v.Validate(); err != nil {
 			return RunnablePrincipalPolicySet_Policy_ActionRuleValidationError{
 				field:  "Condition",
@@ -1333,8 +2436,29 @@ func (m *RunnablePrincipalPolicySet_Policy_ActionRule) Validate() error {
 
 	// no validation rules for Effect
 
+	if len(errors) > 0 {
+		return RunnablePrincipalPolicySet_Policy_ActionRuleMultiError(errors)
+	}
 	return nil
 }
+
+// RunnablePrincipalPolicySet_Policy_ActionRuleMultiError is an error wrapping
+// multiple validation errors returned by
+// RunnablePrincipalPolicySet_Policy_ActionRule.ValidateAll() if the
+// designated constraints aren't met.
+type RunnablePrincipalPolicySet_Policy_ActionRuleMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m RunnablePrincipalPolicySet_Policy_ActionRuleMultiError) Error() string {
+	var msgs []string
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m RunnablePrincipalPolicySet_Policy_ActionRuleMultiError) AllErrors() []error { return m }
 
 // RunnablePrincipalPolicySet_Policy_ActionRuleValidationError is the
 // validation error returned by
@@ -1396,32 +2520,97 @@ var _ interface {
 
 // Validate checks the field values on
 // RunnablePrincipalPolicySet_Policy_ResourceRules with the rules defined in
-// the proto definition for this message. If any rules are violated, an error
-// is returned.
+// the proto definition for this message. If any rules are violated, the first
+// error encountered is returned, or nil if there are no violations.
 func (m *RunnablePrincipalPolicySet_Policy_ResourceRules) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on
+// RunnablePrincipalPolicySet_Policy_ResourceRules with the rules defined in
+// the proto definition for this message. If any rules are violated, the
+// result is a list of violation errors wrapped in
+// RunnablePrincipalPolicySet_Policy_ResourceRulesMultiError, or nil if none found.
+func (m *RunnablePrincipalPolicySet_Policy_ResourceRules) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *RunnablePrincipalPolicySet_Policy_ResourceRules) validate(all bool) error {
 	if m == nil {
 		return nil
 	}
 
-	for key, val := range m.GetActionRules() {
-		_ = val
+	var errors []error
 
-		// no validation rules for ActionRules[key]
+	{
+		sorted_keys := make([]string, len(m.GetActionRules()))
+		i := 0
+		for key := range m.GetActionRules() {
+			sorted_keys[i] = key
+			i++
+		}
+		sort.Slice(sorted_keys, func(i, j int) bool { return sorted_keys[i] < sorted_keys[j] })
+		for _, key := range sorted_keys {
+			val := m.GetActionRules()[key]
+			_ = val
 
-		if v, ok := interface{}(val).(interface{ Validate() error }); ok {
-			if err := v.Validate(); err != nil {
-				return RunnablePrincipalPolicySet_Policy_ResourceRulesValidationError{
-					field:  fmt.Sprintf("ActionRules[%v]", key),
-					reason: "embedded message failed validation",
-					cause:  err,
+			// no validation rules for ActionRules[key]
+
+			if all {
+				switch v := interface{}(val).(type) {
+				case interface{ ValidateAll() error }:
+					if err := v.ValidateAll(); err != nil {
+						errors = append(errors, RunnablePrincipalPolicySet_Policy_ResourceRulesValidationError{
+							field:  fmt.Sprintf("ActionRules[%v]", key),
+							reason: "embedded message failed validation",
+							cause:  err,
+						})
+					}
+				case interface{ Validate() error }:
+					if err := v.Validate(); err != nil {
+						errors = append(errors, RunnablePrincipalPolicySet_Policy_ResourceRulesValidationError{
+							field:  fmt.Sprintf("ActionRules[%v]", key),
+							reason: "embedded message failed validation",
+							cause:  err,
+						})
+					}
+				}
+			} else if v, ok := interface{}(val).(interface{ Validate() error }); ok {
+				if err := v.Validate(); err != nil {
+					return RunnablePrincipalPolicySet_Policy_ResourceRulesValidationError{
+						field:  fmt.Sprintf("ActionRules[%v]", key),
+						reason: "embedded message failed validation",
+						cause:  err,
+					}
 				}
 			}
-		}
 
+		}
 	}
 
+	if len(errors) > 0 {
+		return RunnablePrincipalPolicySet_Policy_ResourceRulesMultiError(errors)
+	}
 	return nil
 }
+
+// RunnablePrincipalPolicySet_Policy_ResourceRulesMultiError is an error
+// wrapping multiple validation errors returned by
+// RunnablePrincipalPolicySet_Policy_ResourceRules.ValidateAll() if the
+// designated constraints aren't met.
+type RunnablePrincipalPolicySet_Policy_ResourceRulesMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m RunnablePrincipalPolicySet_Policy_ResourceRulesMultiError) Error() string {
+	var msgs []string
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m RunnablePrincipalPolicySet_Policy_ResourceRulesMultiError) AllErrors() []error { return m }
 
 // RunnablePrincipalPolicySet_Policy_ResourceRulesValidationError is the
 // validation error returned by
@@ -1487,16 +2676,49 @@ var _ interface {
 
 // Validate checks the field values on Condition_ExprList with the rules
 // defined in the proto definition for this message. If any rules are
-// violated, an error is returned.
+// violated, the first error encountered is returned, or nil if there are no violations.
 func (m *Condition_ExprList) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on Condition_ExprList with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// Condition_ExprListMultiError, or nil if none found.
+func (m *Condition_ExprList) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *Condition_ExprList) validate(all bool) error {
 	if m == nil {
 		return nil
 	}
 
+	var errors []error
+
 	for idx, item := range m.GetExpr() {
 		_, _ = idx, item
 
-		if v, ok := interface{}(item).(interface{ Validate() error }); ok {
+		if all {
+			switch v := interface{}(item).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, Condition_ExprListValidationError{
+						field:  fmt.Sprintf("Expr[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, Condition_ExprListValidationError{
+						field:  fmt.Sprintf("Expr[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(item).(interface{ Validate() error }); ok {
 			if err := v.Validate(); err != nil {
 				return Condition_ExprListValidationError{
 					field:  fmt.Sprintf("Expr[%v]", idx),
@@ -1508,8 +2730,28 @@ func (m *Condition_ExprList) Validate() error {
 
 	}
 
+	if len(errors) > 0 {
+		return Condition_ExprListMultiError(errors)
+	}
 	return nil
 }
+
+// Condition_ExprListMultiError is an error wrapping multiple validation errors
+// returned by Condition_ExprList.ValidateAll() if the designated constraints
+// aren't met.
+type Condition_ExprListMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m Condition_ExprListMultiError) Error() string {
+	var msgs []string
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m Condition_ExprListMultiError) AllErrors() []error { return m }
 
 // Condition_ExprListValidationError is the validation error returned by
 // Condition_ExprList.Validate if the designated constraints aren't met.
