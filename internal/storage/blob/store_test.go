@@ -59,7 +59,7 @@ func TestNewStore(t *testing.T) {
 		endpoint := startMinio(ctx, t, bucketName)
 		t.Setenv("AWS_ACCESS_KEY_ID", minioUsername)
 		t.Setenv("AWS_SECRET_ACCESS_KEY", minioPassword)
-		conf.Bucket = minioBucketURL(bucketName, endpoint)
+		conf.Bucket = MinioBucketURL(bucketName, endpoint)
 
 		bucket, err := newBucket(ctx, conf)
 		must.NoError(err)

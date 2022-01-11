@@ -90,7 +90,7 @@ coverage:
 
 .PHONY: compile
 compile:
-	@ go build ./... && go test -tags=tests -run=ignore  ./... > /dev/null
+	@ go build ./... && go test -tags="tests e2e" -run=ignore  ./... > /dev/null
 
 .PHONY: pre-commit
 pre-commit: lint-helm build test-race 

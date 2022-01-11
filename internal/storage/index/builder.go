@@ -130,7 +130,7 @@ func Build(ctx context.Context, fsys fs.FS, opts ...BuildOpt) (Index, error) {
 		return nil, err
 	}
 
-	return ib.build(fsys)
+	return ib.build(fsys, o.rootDir)
 }
 
 type indexBuilder struct {
@@ -212,7 +212,7 @@ func (idx *indexBuilder) addDep(child, parent namer.ModuleID) {
 	idx.dependents[parent][child] = struct{}{}
 }
 
-func (idx *indexBuilder) build(fsys fs.FS) (*index, error) {
+func (idx *indexBuilder) build(fsys fs.FS, rootDir string) (*index, error) {
 	logger := zap.L().Named("index")
 
 	nErr := len(idx.missing) + len(idx.duplicates) + len(idx.loadFailures)
@@ -248,7 +248,7 @@ func (idx *indexBuilder) build(fsys fs.FS) (*index, error) {
 		fileToModID:  idx.fileToModID,
 		dependents:   idx.dependents,
 		dependencies: idx.dependencies,
-		schemaLoader: NewSchemaLoader(fsys, "."),
+		schemaLoader: NewSchemaLoader(fsys, rootDir),
 	}, nil
 }
 

@@ -1,0 +1,121 @@
+repositories:
+  - name: bitnami
+    url: https://charts.bitnami.com/bitnami
+
+helmDefaults:
+  cleanupOnFail: true
+  wait: true
+  recreatePods: true
+  force: true
+  createNamespace: true
+
+releases:
+  - name: minio
+    namespace: '{{ requiredEnv "E2E_NS" }}'
+    createNamespace: true
+    labels:
+      e2e-run: '{{ requiredEnv "E2E_RUN_ID" }}'
+      e2e-ctx: '{{ requiredEnv "E2E_CONTEXT_ID" }}'
+    chart: bitnami/minio
+    hooks:
+      - events: ["presync"]
+        showlogs: true
+        command: kubectl
+        args:
+          - create
+          - namespace
+          - '{{ requiredEnv "E2E_NS" }}'
+      - events: ["postuninstall"]
+        showlogs: true
+        command: kubectl
+        args:
+          - delete
+          - namespace
+          - '{{ requiredEnv "E2E_NS" }}'
+    values:
+      - nameOverride: '{{ requiredEnv "E2E_CONTEXT_ID" }}'
+      - auth:
+          rootUser: admin
+          rootPassword: passw0rd
+      - defaultBuckets: "cerbos"
+      - persistence:
+          enabled": false
+
+  - name: cerbos
+    namespace: '{{ requiredEnv "E2E_NS" }}'
+    needs: ["minio"]
+    createNamespace: true
+    labels:
+      e2e-run: '{{ requiredEnv "E2E_RUN_ID" }}'
+      e2e-ctx: '{{ requiredEnv "E2E_CONTEXT_ID" }}'
+    chart: '{{ requiredEnv "E2E_SRC_ROOT" }}/deploy/charts/cerbos'
+    hooks:
+      - events: ["presync"]
+        showlogs: true
+        command: kubectl
+        args:
+          - create
+          - secret
+          - tls
+          - 'cerbos-certs-{{ requiredEnv "E2E_CONTEXT_ID" }}'
+          - '--cert={{ requiredEnv "E2E_SRC_ROOT" }}/internal/test/testdata/server/tls.crt'
+          - '--key={{ requiredEnv "E2E_SRC_ROOT" }}/internal/test/testdata/server/tls.key'
+          - '--namespace={{ requiredEnv "E2E_NS" }}'
+      - events: ["postuninstall"]
+        showlogs: true
+        command: kubectl
+        args:
+          - delete
+          - secret
+          - 'cerbos-certs-{{ requiredEnv "E2E_CONTEXT_ID" }}'
+          - '--namespace={{ requiredEnv "E2E_NS" }}'
+    values:
+      - nameOverride: '{{ requiredEnv "E2E_CONTEXT_ID" }}'
+      - image:
+          repository: '{{ env "E2E_CERBOS_IMG_REPO" | default "ghcr.io/cerbos/cerbos" }}'
+          tag: '{{ env "E2E_CERBOS_IMG_TAG" | default "dev" }}'
+      - volumes:
+        - name: cerbos-auditlog
+          emptyDir: {}
+        - name: cerbos-policies
+          emptyDir: {}
+      - volumeMounts:
+        - name: cerbos-auditlog
+          mountPath: /audit
+        - name: cerbos-policies
+          mountPath: /data
+      - env:
+          - name: AWS_ACCESS_KEY_ID
+            value: admin
+          - name: AWS_SECRET_ACCESS_KEY
+            value: passw0rd
+      - cerbos:
+          tlsSecretName: 'cerbos-certs-{{ requiredEnv "E2E_CONTEXT_ID" }}'
+          logLevel: DEBUG
+          config:
+            server:
+              playgroundEnabled: true
+              adminAPI:
+                enabled: true
+                adminCredentials: 
+                  username: cerbos
+                  passwordHash: JDJ5JDEwJC5BYjQyY2RJNG5QR2NWMmJPdnNtQU93c09RYVA0eFFGdHBrbmFEeXh1NnlIVTE1cHJNY05PCgo=
+            auxData:
+              jwt:
+                disableVerification: true
+            schema:
+              enforcement: reject
+            audit:
+              enabled: true
+              accessLogsEnabled: true
+              decisionLogsEnabled: true
+              backend: local
+              local: 
+                storagePath: /audit/cerbos
+            storage:
+              driver: "blob"
+              blob:
+                bucket: 's3://cerbos?endpoint=minio-{{ requiredEnv "E2E_CONTEXT_ID" }}.{{ requiredEnv "E2E_NS" }}.svc.cluster.local:9000&disableSSL=true&s3ForcePathStyle=true&region=local'
+                prefix: repo/
+                workDir: /data
+                updatePollInterval: 0.1s
