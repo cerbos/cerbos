@@ -11,6 +11,7 @@ import (
 	"net/mail"
 	"net/url"
 	"regexp"
+	"sort"
 	"strings"
 	"time"
 	"unicode/utf8"
@@ -31,22 +32,56 @@ var (
 	_ = (*url.URL)(nil)
 	_ = (*mail.Address)(nil)
 	_ = anypb.Any{}
+	_ = sort.Sort
 )
 
 // Validate checks the field values on EngineTestCase with the rules defined in
-// the proto definition for this message. If any rules are violated, an error
-// is returned.
+// the proto definition for this message. If any rules are violated, the first
+// error encountered is returned, or nil if there are no violations.
 func (m *EngineTestCase) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on EngineTestCase with the rules defined
+// in the proto definition for this message. If any rules are violated, the
+// result is a list of violation errors wrapped in EngineTestCaseMultiError,
+// or nil if none found.
+func (m *EngineTestCase) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *EngineTestCase) validate(all bool) error {
 	if m == nil {
 		return nil
 	}
+
+	var errors []error
 
 	// no validation rules for Description
 
 	for idx, item := range m.GetInputs() {
 		_, _ = idx, item
 
-		if v, ok := interface{}(item).(interface{ Validate() error }); ok {
+		if all {
+			switch v := interface{}(item).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, EngineTestCaseValidationError{
+						field:  fmt.Sprintf("Inputs[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, EngineTestCaseValidationError{
+						field:  fmt.Sprintf("Inputs[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(item).(interface{ Validate() error }); ok {
 			if err := v.Validate(); err != nil {
 				return EngineTestCaseValidationError{
 					field:  fmt.Sprintf("Inputs[%v]", idx),
@@ -61,7 +96,26 @@ func (m *EngineTestCase) Validate() error {
 	for idx, item := range m.GetWantOutputs() {
 		_, _ = idx, item
 
-		if v, ok := interface{}(item).(interface{ Validate() error }); ok {
+		if all {
+			switch v := interface{}(item).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, EngineTestCaseValidationError{
+						field:  fmt.Sprintf("WantOutputs[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, EngineTestCaseValidationError{
+						field:  fmt.Sprintf("WantOutputs[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(item).(interface{ Validate() error }); ok {
 			if err := v.Validate(); err != nil {
 				return EngineTestCaseValidationError{
 					field:  fmt.Sprintf("WantOutputs[%v]", idx),
@@ -75,8 +129,28 @@ func (m *EngineTestCase) Validate() error {
 
 	// no validation rules for WantError
 
+	if len(errors) > 0 {
+		return EngineTestCaseMultiError(errors)
+	}
 	return nil
 }
+
+// EngineTestCaseMultiError is an error wrapping multiple validation errors
+// returned by EngineTestCase.ValidateAll() if the designated constraints
+// aren't met.
+type EngineTestCaseMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m EngineTestCaseMultiError) Error() string {
+	var msgs []string
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m EngineTestCaseMultiError) AllErrors() []error { return m }
 
 // EngineTestCaseValidationError is the validation error returned by
 // EngineTestCase.Validate if the designated constraints aren't met.
@@ -133,12 +207,26 @@ var _ interface {
 } = EngineTestCaseValidationError{}
 
 // Validate checks the field values on ServerTestCase with the rules defined in
-// the proto definition for this message. If any rules are violated, an error
-// is returned.
+// the proto definition for this message. If any rules are violated, the first
+// error encountered is returned, or nil if there are no violations.
 func (m *ServerTestCase) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on ServerTestCase with the rules defined
+// in the proto definition for this message. If any rules are violated, the
+// result is a list of violation errors wrapped in ServerTestCaseMultiError,
+// or nil if none found.
+func (m *ServerTestCase) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *ServerTestCase) validate(all bool) error {
 	if m == nil {
 		return nil
 	}
+
+	var errors []error
 
 	// no validation rules for Name
 
@@ -146,7 +234,26 @@ func (m *ServerTestCase) Validate() error {
 
 	// no validation rules for WantError
 
-	if v, ok := interface{}(m.GetWantStatus()).(interface{ Validate() error }); ok {
+	if all {
+		switch v := interface{}(m.GetWantStatus()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, ServerTestCaseValidationError{
+					field:  "WantStatus",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, ServerTestCaseValidationError{
+					field:  "WantStatus",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetWantStatus()).(interface{ Validate() error }); ok {
 		if err := v.Validate(); err != nil {
 			return ServerTestCaseValidationError{
 				field:  "WantStatus",
@@ -160,7 +267,26 @@ func (m *ServerTestCase) Validate() error {
 
 	case *ServerTestCase_CheckResourceSet:
 
-		if v, ok := interface{}(m.GetCheckResourceSet()).(interface{ Validate() error }); ok {
+		if all {
+			switch v := interface{}(m.GetCheckResourceSet()).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, ServerTestCaseValidationError{
+						field:  "CheckResourceSet",
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, ServerTestCaseValidationError{
+						field:  "CheckResourceSet",
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(m.GetCheckResourceSet()).(interface{ Validate() error }); ok {
 			if err := v.Validate(); err != nil {
 				return ServerTestCaseValidationError{
 					field:  "CheckResourceSet",
@@ -172,7 +298,26 @@ func (m *ServerTestCase) Validate() error {
 
 	case *ServerTestCase_CheckResourceBatch:
 
-		if v, ok := interface{}(m.GetCheckResourceBatch()).(interface{ Validate() error }); ok {
+		if all {
+			switch v := interface{}(m.GetCheckResourceBatch()).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, ServerTestCaseValidationError{
+						field:  "CheckResourceBatch",
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, ServerTestCaseValidationError{
+						field:  "CheckResourceBatch",
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(m.GetCheckResourceBatch()).(interface{ Validate() error }); ok {
 			if err := v.Validate(); err != nil {
 				return ServerTestCaseValidationError{
 					field:  "CheckResourceBatch",
@@ -184,7 +329,26 @@ func (m *ServerTestCase) Validate() error {
 
 	case *ServerTestCase_PlaygroundValidate:
 
-		if v, ok := interface{}(m.GetPlaygroundValidate()).(interface{ Validate() error }); ok {
+		if all {
+			switch v := interface{}(m.GetPlaygroundValidate()).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, ServerTestCaseValidationError{
+						field:  "PlaygroundValidate",
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, ServerTestCaseValidationError{
+						field:  "PlaygroundValidate",
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(m.GetPlaygroundValidate()).(interface{ Validate() error }); ok {
 			if err := v.Validate(); err != nil {
 				return ServerTestCaseValidationError{
 					field:  "PlaygroundValidate",
@@ -196,7 +360,26 @@ func (m *ServerTestCase) Validate() error {
 
 	case *ServerTestCase_PlaygroundEvaluate:
 
-		if v, ok := interface{}(m.GetPlaygroundEvaluate()).(interface{ Validate() error }); ok {
+		if all {
+			switch v := interface{}(m.GetPlaygroundEvaluate()).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, ServerTestCaseValidationError{
+						field:  "PlaygroundEvaluate",
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, ServerTestCaseValidationError{
+						field:  "PlaygroundEvaluate",
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(m.GetPlaygroundEvaluate()).(interface{ Validate() error }); ok {
 			if err := v.Validate(); err != nil {
 				return ServerTestCaseValidationError{
 					field:  "PlaygroundEvaluate",
@@ -208,7 +391,26 @@ func (m *ServerTestCase) Validate() error {
 
 	case *ServerTestCase_AdminAddOrUpdatePolicy:
 
-		if v, ok := interface{}(m.GetAdminAddOrUpdatePolicy()).(interface{ Validate() error }); ok {
+		if all {
+			switch v := interface{}(m.GetAdminAddOrUpdatePolicy()).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, ServerTestCaseValidationError{
+						field:  "AdminAddOrUpdatePolicy",
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, ServerTestCaseValidationError{
+						field:  "AdminAddOrUpdatePolicy",
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(m.GetAdminAddOrUpdatePolicy()).(interface{ Validate() error }); ok {
 			if err := v.Validate(); err != nil {
 				return ServerTestCaseValidationError{
 					field:  "AdminAddOrUpdatePolicy",
@@ -220,7 +422,26 @@ func (m *ServerTestCase) Validate() error {
 
 	case *ServerTestCase_PlaygroundProxy:
 
-		if v, ok := interface{}(m.GetPlaygroundProxy()).(interface{ Validate() error }); ok {
+		if all {
+			switch v := interface{}(m.GetPlaygroundProxy()).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, ServerTestCaseValidationError{
+						field:  "PlaygroundProxy",
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, ServerTestCaseValidationError{
+						field:  "PlaygroundProxy",
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(m.GetPlaygroundProxy()).(interface{ Validate() error }); ok {
 			if err := v.Validate(); err != nil {
 				return ServerTestCaseValidationError{
 					field:  "PlaygroundProxy",
@@ -232,7 +453,26 @@ func (m *ServerTestCase) Validate() error {
 
 	case *ServerTestCase_ResourcesQueryPlan:
 
-		if v, ok := interface{}(m.GetResourcesQueryPlan()).(interface{ Validate() error }); ok {
+		if all {
+			switch v := interface{}(m.GetResourcesQueryPlan()).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, ServerTestCaseValidationError{
+						field:  "ResourcesQueryPlan",
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, ServerTestCaseValidationError{
+						field:  "ResourcesQueryPlan",
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(m.GetResourcesQueryPlan()).(interface{ Validate() error }); ok {
 			if err := v.Validate(); err != nil {
 				return ServerTestCaseValidationError{
 					field:  "ResourcesQueryPlan",
@@ -244,7 +484,26 @@ func (m *ServerTestCase) Validate() error {
 
 	case *ServerTestCase_AdminAddOrUpdateSchema:
 
-		if v, ok := interface{}(m.GetAdminAddOrUpdateSchema()).(interface{ Validate() error }); ok {
+		if all {
+			switch v := interface{}(m.GetAdminAddOrUpdateSchema()).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, ServerTestCaseValidationError{
+						field:  "AdminAddOrUpdateSchema",
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, ServerTestCaseValidationError{
+						field:  "AdminAddOrUpdateSchema",
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(m.GetAdminAddOrUpdateSchema()).(interface{ Validate() error }); ok {
 			if err := v.Validate(); err != nil {
 				return ServerTestCaseValidationError{
 					field:  "AdminAddOrUpdateSchema",
@@ -256,8 +515,28 @@ func (m *ServerTestCase) Validate() error {
 
 	}
 
+	if len(errors) > 0 {
+		return ServerTestCaseMultiError(errors)
+	}
 	return nil
 }
+
+// ServerTestCaseMultiError is an error wrapping multiple validation errors
+// returned by ServerTestCase.ValidateAll() if the designated constraints
+// aren't met.
+type ServerTestCaseMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m ServerTestCaseMultiError) Error() string {
+	var msgs []string
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m ServerTestCaseMultiError) AllErrors() []error { return m }
 
 // ServerTestCaseValidationError is the validation error returned by
 // ServerTestCase.Validate if the designated constraints aren't met.
@@ -315,11 +594,25 @@ var _ interface {
 
 // Validate checks the field values on IndexBuilderTestCase with the rules
 // defined in the proto definition for this message. If any rules are
-// violated, an error is returned.
+// violated, the first error encountered is returned, or nil if there are no violations.
 func (m *IndexBuilderTestCase) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on IndexBuilderTestCase with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// IndexBuilderTestCaseMultiError, or nil if none found.
+func (m *IndexBuilderTestCase) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *IndexBuilderTestCase) validate(all bool) error {
 	if m == nil {
 		return nil
 	}
+
+	var errors []error
 
 	// no validation rules for Files
 
@@ -327,8 +620,28 @@ func (m *IndexBuilderTestCase) Validate() error {
 
 	// no validation rules for WantErr
 
+	if len(errors) > 0 {
+		return IndexBuilderTestCaseMultiError(errors)
+	}
 	return nil
 }
+
+// IndexBuilderTestCaseMultiError is an error wrapping multiple validation
+// errors returned by IndexBuilderTestCase.ValidateAll() if the designated
+// constraints aren't met.
+type IndexBuilderTestCaseMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m IndexBuilderTestCaseMultiError) Error() string {
+	var msgs []string
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m IndexBuilderTestCaseMultiError) AllErrors() []error { return m }
 
 // IndexBuilderTestCaseValidationError is the validation error returned by
 // IndexBuilderTestCase.Validate if the designated constraints aren't met.
@@ -387,36 +700,98 @@ var _ interface {
 } = IndexBuilderTestCaseValidationError{}
 
 // Validate checks the field values on CompileTestCase with the rules defined
-// in the proto definition for this message. If any rules are violated, an
-// error is returned.
+// in the proto definition for this message. If any rules are violated, the
+// first error encountered is returned, or nil if there are no violations.
 func (m *CompileTestCase) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on CompileTestCase with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// CompileTestCaseMultiError, or nil if none found.
+func (m *CompileTestCase) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *CompileTestCase) validate(all bool) error {
 	if m == nil {
 		return nil
 	}
 
+	var errors []error
+
 	// no validation rules for MainDef
 
-	for key, val := range m.GetInputDefs() {
-		_ = val
+	{
+		sorted_keys := make([]string, len(m.GetInputDefs()))
+		i := 0
+		for key := range m.GetInputDefs() {
+			sorted_keys[i] = key
+			i++
+		}
+		sort.Slice(sorted_keys, func(i, j int) bool { return sorted_keys[i] < sorted_keys[j] })
+		for _, key := range sorted_keys {
+			val := m.GetInputDefs()[key]
+			_ = val
 
-		// no validation rules for InputDefs[key]
+			// no validation rules for InputDefs[key]
 
-		if v, ok := interface{}(val).(interface{ Validate() error }); ok {
-			if err := v.Validate(); err != nil {
-				return CompileTestCaseValidationError{
-					field:  fmt.Sprintf("InputDefs[%v]", key),
-					reason: "embedded message failed validation",
-					cause:  err,
+			if all {
+				switch v := interface{}(val).(type) {
+				case interface{ ValidateAll() error }:
+					if err := v.ValidateAll(); err != nil {
+						errors = append(errors, CompileTestCaseValidationError{
+							field:  fmt.Sprintf("InputDefs[%v]", key),
+							reason: "embedded message failed validation",
+							cause:  err,
+						})
+					}
+				case interface{ Validate() error }:
+					if err := v.Validate(); err != nil {
+						errors = append(errors, CompileTestCaseValidationError{
+							field:  fmt.Sprintf("InputDefs[%v]", key),
+							reason: "embedded message failed validation",
+							cause:  err,
+						})
+					}
+				}
+			} else if v, ok := interface{}(val).(interface{ Validate() error }); ok {
+				if err := v.Validate(); err != nil {
+					return CompileTestCaseValidationError{
+						field:  fmt.Sprintf("InputDefs[%v]", key),
+						reason: "embedded message failed validation",
+						cause:  err,
+					}
 				}
 			}
-		}
 
+		}
 	}
 
 	for idx, item := range m.GetWantErrors() {
 		_, _ = idx, item
 
-		if v, ok := interface{}(item).(interface{ Validate() error }); ok {
+		if all {
+			switch v := interface{}(item).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, CompileTestCaseValidationError{
+						field:  fmt.Sprintf("WantErrors[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, CompileTestCaseValidationError{
+						field:  fmt.Sprintf("WantErrors[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(item).(interface{ Validate() error }); ok {
 			if err := v.Validate(); err != nil {
 				return CompileTestCaseValidationError{
 					field:  fmt.Sprintf("WantErrors[%v]", idx),
@@ -428,8 +803,28 @@ func (m *CompileTestCase) Validate() error {
 
 	}
 
+	if len(errors) > 0 {
+		return CompileTestCaseMultiError(errors)
+	}
 	return nil
 }
+
+// CompileTestCaseMultiError is an error wrapping multiple validation errors
+// returned by CompileTestCase.ValidateAll() if the designated constraints
+// aren't met.
+type CompileTestCaseMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m CompileTestCaseMultiError) Error() string {
+	var msgs []string
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m CompileTestCaseMultiError) AllErrors() []error { return m }
 
 // CompileTestCaseValidationError is the validation error returned by
 // CompileTestCase.Validate if the designated constraints aren't met.
@@ -486,14 +881,47 @@ var _ interface {
 } = CompileTestCaseValidationError{}
 
 // Validate checks the field values on CodeGenTestCase with the rules defined
-// in the proto definition for this message. If any rules are violated, an
-// error is returned.
+// in the proto definition for this message. If any rules are violated, the
+// first error encountered is returned, or nil if there are no violations.
 func (m *CodeGenTestCase) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on CodeGenTestCase with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// CodeGenTestCaseMultiError, or nil if none found.
+func (m *CodeGenTestCase) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *CodeGenTestCase) validate(all bool) error {
 	if m == nil {
 		return nil
 	}
 
-	if v, ok := interface{}(m.GetInputPolicy()).(interface{ Validate() error }); ok {
+	var errors []error
+
+	if all {
+		switch v := interface{}(m.GetInputPolicy()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, CodeGenTestCaseValidationError{
+					field:  "InputPolicy",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, CodeGenTestCaseValidationError{
+					field:  "InputPolicy",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetInputPolicy()).(interface{ Validate() error }); ok {
 		if err := v.Validate(); err != nil {
 			return CodeGenTestCaseValidationError{
 				field:  "InputPolicy",
@@ -509,8 +937,28 @@ func (m *CodeGenTestCase) Validate() error {
 
 	// no validation rules for WantNumConditions
 
+	if len(errors) > 0 {
+		return CodeGenTestCaseMultiError(errors)
+	}
 	return nil
 }
+
+// CodeGenTestCaseMultiError is an error wrapping multiple validation errors
+// returned by CodeGenTestCase.ValidateAll() if the designated constraints
+// aren't met.
+type CodeGenTestCaseMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m CodeGenTestCaseMultiError) Error() string {
+	var msgs []string
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m CodeGenTestCaseMultiError) AllErrors() []error { return m }
 
 // CodeGenTestCaseValidationError is the validation error returned by
 // CodeGenTestCase.Validate if the designated constraints aren't met.
@@ -567,14 +1015,47 @@ var _ interface {
 } = CodeGenTestCaseValidationError{}
 
 // Validate checks the field values on CelTestCase with the rules defined in
-// the proto definition for this message. If any rules are violated, an error
-// is returned.
+// the proto definition for this message. If any rules are violated, the first
+// error encountered is returned, or nil if there are no violations.
 func (m *CelTestCase) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on CelTestCase with the rules defined in
+// the proto definition for this message. If any rules are violated, the
+// result is a list of violation errors wrapped in CelTestCaseMultiError, or
+// nil if none found.
+func (m *CelTestCase) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *CelTestCase) validate(all bool) error {
 	if m == nil {
 		return nil
 	}
 
-	if v, ok := interface{}(m.GetCondition()).(interface{ Validate() error }); ok {
+	var errors []error
+
+	if all {
+		switch v := interface{}(m.GetCondition()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, CelTestCaseValidationError{
+					field:  "Condition",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, CelTestCaseValidationError{
+					field:  "Condition",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetCondition()).(interface{ Validate() error }); ok {
 		if err := v.Validate(); err != nil {
 			return CelTestCaseValidationError{
 				field:  "Condition",
@@ -584,7 +1065,26 @@ func (m *CelTestCase) Validate() error {
 		}
 	}
 
-	if v, ok := interface{}(m.GetInput()).(interface{ Validate() error }); ok {
+	if all {
+		switch v := interface{}(m.GetInput()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, CelTestCaseValidationError{
+					field:  "Input",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, CelTestCaseValidationError{
+					field:  "Input",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetInput()).(interface{ Validate() error }); ok {
 		if err := v.Validate(); err != nil {
 			return CelTestCaseValidationError{
 				field:  "Input",
@@ -598,8 +1098,27 @@ func (m *CelTestCase) Validate() error {
 
 	// no validation rules for WantError
 
+	if len(errors) > 0 {
+		return CelTestCaseMultiError(errors)
+	}
 	return nil
 }
+
+// CelTestCaseMultiError is an error wrapping multiple validation errors
+// returned by CelTestCase.ValidateAll() if the designated constraints aren't met.
+type CelTestCaseMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m CelTestCaseMultiError) Error() string {
+	var msgs []string
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m CelTestCaseMultiError) AllErrors() []error { return m }
 
 // CelTestCaseValidationError is the validation error returned by
 // CelTestCase.Validate if the designated constraints aren't met.
@@ -656,16 +1175,49 @@ var _ interface {
 } = CelTestCaseValidationError{}
 
 // Validate checks the field values on SchemaTestCase with the rules defined in
-// the proto definition for this message. If any rules are violated, an error
-// is returned.
+// the proto definition for this message. If any rules are violated, the first
+// error encountered is returned, or nil if there are no violations.
 func (m *SchemaTestCase) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on SchemaTestCase with the rules defined
+// in the proto definition for this message. If any rules are violated, the
+// result is a list of violation errors wrapped in SchemaTestCaseMultiError,
+// or nil if none found.
+func (m *SchemaTestCase) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *SchemaTestCase) validate(all bool) error {
 	if m == nil {
 		return nil
 	}
 
+	var errors []error
+
 	// no validation rules for Description
 
-	if v, ok := interface{}(m.GetSchemaRefs()).(interface{ Validate() error }); ok {
+	if all {
+		switch v := interface{}(m.GetSchemaRefs()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, SchemaTestCaseValidationError{
+					field:  "SchemaRefs",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, SchemaTestCaseValidationError{
+					field:  "SchemaRefs",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetSchemaRefs()).(interface{ Validate() error }); ok {
 		if err := v.Validate(); err != nil {
 			return SchemaTestCaseValidationError{
 				field:  "SchemaRefs",
@@ -675,7 +1227,26 @@ func (m *SchemaTestCase) Validate() error {
 		}
 	}
 
-	if v, ok := interface{}(m.GetInput()).(interface{ Validate() error }); ok {
+	if all {
+		switch v := interface{}(m.GetInput()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, SchemaTestCaseValidationError{
+					field:  "Input",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, SchemaTestCaseValidationError{
+					field:  "Input",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetInput()).(interface{ Validate() error }); ok {
 		if err := v.Validate(); err != nil {
 			return SchemaTestCaseValidationError{
 				field:  "Input",
@@ -690,7 +1261,26 @@ func (m *SchemaTestCase) Validate() error {
 	for idx, item := range m.GetWantValidationErrors() {
 		_, _ = idx, item
 
-		if v, ok := interface{}(item).(interface{ Validate() error }); ok {
+		if all {
+			switch v := interface{}(item).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, SchemaTestCaseValidationError{
+						field:  fmt.Sprintf("WantValidationErrors[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, SchemaTestCaseValidationError{
+						field:  fmt.Sprintf("WantValidationErrors[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(item).(interface{ Validate() error }); ok {
 			if err := v.Validate(); err != nil {
 				return SchemaTestCaseValidationError{
 					field:  fmt.Sprintf("WantValidationErrors[%v]", idx),
@@ -702,8 +1292,28 @@ func (m *SchemaTestCase) Validate() error {
 
 	}
 
+	if len(errors) > 0 {
+		return SchemaTestCaseMultiError(errors)
+	}
 	return nil
 }
+
+// SchemaTestCaseMultiError is an error wrapping multiple validation errors
+// returned by SchemaTestCase.ValidateAll() if the designated constraints
+// aren't met.
+type SchemaTestCaseMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m SchemaTestCaseMultiError) Error() string {
+	var msgs []string
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m SchemaTestCaseMultiError) AllErrors() []error { return m }
 
 // SchemaTestCaseValidationError is the validation error returned by
 // SchemaTestCase.Validate if the designated constraints aren't met.
@@ -761,16 +1371,49 @@ var _ interface {
 
 // Validate checks the field values on ValidationErrContainer with the rules
 // defined in the proto definition for this message. If any rules are
-// violated, an error is returned.
+// violated, the first error encountered is returned, or nil if there are no violations.
 func (m *ValidationErrContainer) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on ValidationErrContainer with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// ValidationErrContainerMultiError, or nil if none found.
+func (m *ValidationErrContainer) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *ValidationErrContainer) validate(all bool) error {
 	if m == nil {
 		return nil
 	}
 
+	var errors []error
+
 	for idx, item := range m.GetErrors() {
 		_, _ = idx, item
 
-		if v, ok := interface{}(item).(interface{ Validate() error }); ok {
+		if all {
+			switch v := interface{}(item).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, ValidationErrContainerValidationError{
+						field:  fmt.Sprintf("Errors[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, ValidationErrContainerValidationError{
+						field:  fmt.Sprintf("Errors[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(item).(interface{ Validate() error }); ok {
 			if err := v.Validate(); err != nil {
 				return ValidationErrContainerValidationError{
 					field:  fmt.Sprintf("Errors[%v]", idx),
@@ -782,8 +1425,28 @@ func (m *ValidationErrContainer) Validate() error {
 
 	}
 
+	if len(errors) > 0 {
+		return ValidationErrContainerMultiError(errors)
+	}
 	return nil
 }
+
+// ValidationErrContainerMultiError is an error wrapping multiple validation
+// errors returned by ValidationErrContainer.ValidateAll() if the designated
+// constraints aren't met.
+type ValidationErrContainerMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m ValidationErrContainerMultiError) Error() string {
+	var msgs []string
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m ValidationErrContainerMultiError) AllErrors() []error { return m }
 
 // ValidationErrContainerValidationError is the validation error returned by
 // ValidationErrContainer.Validate if the designated constraints aren't met.
@@ -842,32 +1505,94 @@ var _ interface {
 } = ValidationErrContainerValidationError{}
 
 // Validate checks the field values on AttrWrapper with the rules defined in
-// the proto definition for this message. If any rules are violated, an error
-// is returned.
+// the proto definition for this message. If any rules are violated, the first
+// error encountered is returned, or nil if there are no violations.
 func (m *AttrWrapper) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on AttrWrapper with the rules defined in
+// the proto definition for this message. If any rules are violated, the
+// result is a list of violation errors wrapped in AttrWrapperMultiError, or
+// nil if none found.
+func (m *AttrWrapper) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *AttrWrapper) validate(all bool) error {
 	if m == nil {
 		return nil
 	}
 
-	for key, val := range m.GetAttr() {
-		_ = val
+	var errors []error
 
-		// no validation rules for Attr[key]
+	{
+		sorted_keys := make([]string, len(m.GetAttr()))
+		i := 0
+		for key := range m.GetAttr() {
+			sorted_keys[i] = key
+			i++
+		}
+		sort.Slice(sorted_keys, func(i, j int) bool { return sorted_keys[i] < sorted_keys[j] })
+		for _, key := range sorted_keys {
+			val := m.GetAttr()[key]
+			_ = val
 
-		if v, ok := interface{}(val).(interface{ Validate() error }); ok {
-			if err := v.Validate(); err != nil {
-				return AttrWrapperValidationError{
-					field:  fmt.Sprintf("Attr[%v]", key),
-					reason: "embedded message failed validation",
-					cause:  err,
+			// no validation rules for Attr[key]
+
+			if all {
+				switch v := interface{}(val).(type) {
+				case interface{ ValidateAll() error }:
+					if err := v.ValidateAll(); err != nil {
+						errors = append(errors, AttrWrapperValidationError{
+							field:  fmt.Sprintf("Attr[%v]", key),
+							reason: "embedded message failed validation",
+							cause:  err,
+						})
+					}
+				case interface{ Validate() error }:
+					if err := v.Validate(); err != nil {
+						errors = append(errors, AttrWrapperValidationError{
+							field:  fmt.Sprintf("Attr[%v]", key),
+							reason: "embedded message failed validation",
+							cause:  err,
+						})
+					}
+				}
+			} else if v, ok := interface{}(val).(interface{ Validate() error }); ok {
+				if err := v.Validate(); err != nil {
+					return AttrWrapperValidationError{
+						field:  fmt.Sprintf("Attr[%v]", key),
+						reason: "embedded message failed validation",
+						cause:  err,
+					}
 				}
 			}
-		}
 
+		}
 	}
 
+	if len(errors) > 0 {
+		return AttrWrapperMultiError(errors)
+	}
 	return nil
 }
+
+// AttrWrapperMultiError is an error wrapping multiple validation errors
+// returned by AttrWrapper.ValidateAll() if the designated constraints aren't met.
+type AttrWrapperMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m AttrWrapperMultiError) Error() string {
+	var msgs []string
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m AttrWrapperMultiError) AllErrors() []error { return m }
 
 // AttrWrapperValidationError is the validation error returned by
 // AttrWrapper.Validate if the designated constraints aren't met.
@@ -925,15 +1650,48 @@ var _ interface {
 
 // Validate checks the field values on QueryPlannerTestSuite with the rules
 // defined in the proto definition for this message. If any rules are
-// violated, an error is returned.
+// violated, the first error encountered is returned, or nil if there are no violations.
 func (m *QueryPlannerTestSuite) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on QueryPlannerTestSuite with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// QueryPlannerTestSuiteMultiError, or nil if none found.
+func (m *QueryPlannerTestSuite) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *QueryPlannerTestSuite) validate(all bool) error {
 	if m == nil {
 		return nil
 	}
 
+	var errors []error
+
 	// no validation rules for Description
 
-	if v, ok := interface{}(m.GetPrincipal()).(interface{ Validate() error }); ok {
+	if all {
+		switch v := interface{}(m.GetPrincipal()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, QueryPlannerTestSuiteValidationError{
+					field:  "Principal",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, QueryPlannerTestSuiteValidationError{
+					field:  "Principal",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetPrincipal()).(interface{ Validate() error }); ok {
 		if err := v.Validate(); err != nil {
 			return QueryPlannerTestSuiteValidationError{
 				field:  "Principal",
@@ -946,7 +1704,26 @@ func (m *QueryPlannerTestSuite) Validate() error {
 	for idx, item := range m.GetTests() {
 		_, _ = idx, item
 
-		if v, ok := interface{}(item).(interface{ Validate() error }); ok {
+		if all {
+			switch v := interface{}(item).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, QueryPlannerTestSuiteValidationError{
+						field:  fmt.Sprintf("Tests[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, QueryPlannerTestSuiteValidationError{
+						field:  fmt.Sprintf("Tests[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(item).(interface{ Validate() error }); ok {
 			if err := v.Validate(); err != nil {
 				return QueryPlannerTestSuiteValidationError{
 					field:  fmt.Sprintf("Tests[%v]", idx),
@@ -958,8 +1735,28 @@ func (m *QueryPlannerTestSuite) Validate() error {
 
 	}
 
+	if len(errors) > 0 {
+		return QueryPlannerTestSuiteMultiError(errors)
+	}
 	return nil
 }
+
+// QueryPlannerTestSuiteMultiError is an error wrapping multiple validation
+// errors returned by QueryPlannerTestSuite.ValidateAll() if the designated
+// constraints aren't met.
+type QueryPlannerTestSuiteMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m QueryPlannerTestSuiteMultiError) Error() string {
+	var msgs []string
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m QueryPlannerTestSuiteMultiError) AllErrors() []error { return m }
 
 // QueryPlannerTestSuiteValidationError is the validation error returned by
 // QueryPlannerTestSuite.Validate if the designated constraints aren't met.
@@ -1019,13 +1816,47 @@ var _ interface {
 
 // Validate checks the field values on ServerTestCase_ResourcesQueryPlanCall
 // with the rules defined in the proto definition for this message. If any
-// rules are violated, an error is returned.
+// rules are violated, the first error encountered is returned, or nil if
+// there are no violations.
 func (m *ServerTestCase_ResourcesQueryPlanCall) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on ServerTestCase_ResourcesQueryPlanCall
+// with the rules defined in the proto definition for this message. If any
+// rules are violated, the result is a list of violation errors wrapped in
+// ServerTestCase_ResourcesQueryPlanCallMultiError, or nil if none found.
+func (m *ServerTestCase_ResourcesQueryPlanCall) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *ServerTestCase_ResourcesQueryPlanCall) validate(all bool) error {
 	if m == nil {
 		return nil
 	}
 
-	if v, ok := interface{}(m.GetInput()).(interface{ Validate() error }); ok {
+	var errors []error
+
+	if all {
+		switch v := interface{}(m.GetInput()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, ServerTestCase_ResourcesQueryPlanCallValidationError{
+					field:  "Input",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, ServerTestCase_ResourcesQueryPlanCallValidationError{
+					field:  "Input",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetInput()).(interface{ Validate() error }); ok {
 		if err := v.Validate(); err != nil {
 			return ServerTestCase_ResourcesQueryPlanCallValidationError{
 				field:  "Input",
@@ -1035,7 +1866,26 @@ func (m *ServerTestCase_ResourcesQueryPlanCall) Validate() error {
 		}
 	}
 
-	if v, ok := interface{}(m.GetWantResponse()).(interface{ Validate() error }); ok {
+	if all {
+		switch v := interface{}(m.GetWantResponse()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, ServerTestCase_ResourcesQueryPlanCallValidationError{
+					field:  "WantResponse",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, ServerTestCase_ResourcesQueryPlanCallValidationError{
+					field:  "WantResponse",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetWantResponse()).(interface{ Validate() error }); ok {
 		if err := v.Validate(); err != nil {
 			return ServerTestCase_ResourcesQueryPlanCallValidationError{
 				field:  "WantResponse",
@@ -1045,8 +1895,29 @@ func (m *ServerTestCase_ResourcesQueryPlanCall) Validate() error {
 		}
 	}
 
+	if len(errors) > 0 {
+		return ServerTestCase_ResourcesQueryPlanCallMultiError(errors)
+	}
 	return nil
 }
+
+// ServerTestCase_ResourcesQueryPlanCallMultiError is an error wrapping
+// multiple validation errors returned by
+// ServerTestCase_ResourcesQueryPlanCall.ValidateAll() if the designated
+// constraints aren't met.
+type ServerTestCase_ResourcesQueryPlanCallMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m ServerTestCase_ResourcesQueryPlanCallMultiError) Error() string {
+	var msgs []string
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m ServerTestCase_ResourcesQueryPlanCallMultiError) AllErrors() []error { return m }
 
 // ServerTestCase_ResourcesQueryPlanCallValidationError is the validation error
 // returned by ServerTestCase_ResourcesQueryPlanCall.Validate if the
@@ -1107,13 +1978,47 @@ var _ interface {
 
 // Validate checks the field values on ServerTestCase_CheckResourceSetCall with
 // the rules defined in the proto definition for this message. If any rules
-// are violated, an error is returned.
+// are violated, the first error encountered is returned, or nil if there are
+// no violations.
 func (m *ServerTestCase_CheckResourceSetCall) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on ServerTestCase_CheckResourceSetCall
+// with the rules defined in the proto definition for this message. If any
+// rules are violated, the result is a list of violation errors wrapped in
+// ServerTestCase_CheckResourceSetCallMultiError, or nil if none found.
+func (m *ServerTestCase_CheckResourceSetCall) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *ServerTestCase_CheckResourceSetCall) validate(all bool) error {
 	if m == nil {
 		return nil
 	}
 
-	if v, ok := interface{}(m.GetInput()).(interface{ Validate() error }); ok {
+	var errors []error
+
+	if all {
+		switch v := interface{}(m.GetInput()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, ServerTestCase_CheckResourceSetCallValidationError{
+					field:  "Input",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, ServerTestCase_CheckResourceSetCallValidationError{
+					field:  "Input",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetInput()).(interface{ Validate() error }); ok {
 		if err := v.Validate(); err != nil {
 			return ServerTestCase_CheckResourceSetCallValidationError{
 				field:  "Input",
@@ -1123,7 +2028,26 @@ func (m *ServerTestCase_CheckResourceSetCall) Validate() error {
 		}
 	}
 
-	if v, ok := interface{}(m.GetWantResponse()).(interface{ Validate() error }); ok {
+	if all {
+		switch v := interface{}(m.GetWantResponse()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, ServerTestCase_CheckResourceSetCallValidationError{
+					field:  "WantResponse",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, ServerTestCase_CheckResourceSetCallValidationError{
+					field:  "WantResponse",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetWantResponse()).(interface{ Validate() error }); ok {
 		if err := v.Validate(); err != nil {
 			return ServerTestCase_CheckResourceSetCallValidationError{
 				field:  "WantResponse",
@@ -1133,8 +2057,29 @@ func (m *ServerTestCase_CheckResourceSetCall) Validate() error {
 		}
 	}
 
+	if len(errors) > 0 {
+		return ServerTestCase_CheckResourceSetCallMultiError(errors)
+	}
 	return nil
 }
+
+// ServerTestCase_CheckResourceSetCallMultiError is an error wrapping multiple
+// validation errors returned by
+// ServerTestCase_CheckResourceSetCall.ValidateAll() if the designated
+// constraints aren't met.
+type ServerTestCase_CheckResourceSetCallMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m ServerTestCase_CheckResourceSetCallMultiError) Error() string {
+	var msgs []string
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m ServerTestCase_CheckResourceSetCallMultiError) AllErrors() []error { return m }
 
 // ServerTestCase_CheckResourceSetCallValidationError is the validation error
 // returned by ServerTestCase_CheckResourceSetCall.Validate if the designated
@@ -1195,13 +2140,47 @@ var _ interface {
 
 // Validate checks the field values on ServerTestCase_CheckResourceBatchCall
 // with the rules defined in the proto definition for this message. If any
-// rules are violated, an error is returned.
+// rules are violated, the first error encountered is returned, or nil if
+// there are no violations.
 func (m *ServerTestCase_CheckResourceBatchCall) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on ServerTestCase_CheckResourceBatchCall
+// with the rules defined in the proto definition for this message. If any
+// rules are violated, the result is a list of violation errors wrapped in
+// ServerTestCase_CheckResourceBatchCallMultiError, or nil if none found.
+func (m *ServerTestCase_CheckResourceBatchCall) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *ServerTestCase_CheckResourceBatchCall) validate(all bool) error {
 	if m == nil {
 		return nil
 	}
 
-	if v, ok := interface{}(m.GetInput()).(interface{ Validate() error }); ok {
+	var errors []error
+
+	if all {
+		switch v := interface{}(m.GetInput()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, ServerTestCase_CheckResourceBatchCallValidationError{
+					field:  "Input",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, ServerTestCase_CheckResourceBatchCallValidationError{
+					field:  "Input",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetInput()).(interface{ Validate() error }); ok {
 		if err := v.Validate(); err != nil {
 			return ServerTestCase_CheckResourceBatchCallValidationError{
 				field:  "Input",
@@ -1211,7 +2190,26 @@ func (m *ServerTestCase_CheckResourceBatchCall) Validate() error {
 		}
 	}
 
-	if v, ok := interface{}(m.GetWantResponse()).(interface{ Validate() error }); ok {
+	if all {
+		switch v := interface{}(m.GetWantResponse()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, ServerTestCase_CheckResourceBatchCallValidationError{
+					field:  "WantResponse",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, ServerTestCase_CheckResourceBatchCallValidationError{
+					field:  "WantResponse",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetWantResponse()).(interface{ Validate() error }); ok {
 		if err := v.Validate(); err != nil {
 			return ServerTestCase_CheckResourceBatchCallValidationError{
 				field:  "WantResponse",
@@ -1221,8 +2219,29 @@ func (m *ServerTestCase_CheckResourceBatchCall) Validate() error {
 		}
 	}
 
+	if len(errors) > 0 {
+		return ServerTestCase_CheckResourceBatchCallMultiError(errors)
+	}
 	return nil
 }
+
+// ServerTestCase_CheckResourceBatchCallMultiError is an error wrapping
+// multiple validation errors returned by
+// ServerTestCase_CheckResourceBatchCall.ValidateAll() if the designated
+// constraints aren't met.
+type ServerTestCase_CheckResourceBatchCallMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m ServerTestCase_CheckResourceBatchCallMultiError) Error() string {
+	var msgs []string
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m ServerTestCase_CheckResourceBatchCallMultiError) AllErrors() []error { return m }
 
 // ServerTestCase_CheckResourceBatchCallValidationError is the validation error
 // returned by ServerTestCase_CheckResourceBatchCall.Validate if the
@@ -1283,13 +2302,47 @@ var _ interface {
 
 // Validate checks the field values on ServerTestCase_PlaygroundValidateCall
 // with the rules defined in the proto definition for this message. If any
-// rules are violated, an error is returned.
+// rules are violated, the first error encountered is returned, or nil if
+// there are no violations.
 func (m *ServerTestCase_PlaygroundValidateCall) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on ServerTestCase_PlaygroundValidateCall
+// with the rules defined in the proto definition for this message. If any
+// rules are violated, the result is a list of violation errors wrapped in
+// ServerTestCase_PlaygroundValidateCallMultiError, or nil if none found.
+func (m *ServerTestCase_PlaygroundValidateCall) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *ServerTestCase_PlaygroundValidateCall) validate(all bool) error {
 	if m == nil {
 		return nil
 	}
 
-	if v, ok := interface{}(m.GetInput()).(interface{ Validate() error }); ok {
+	var errors []error
+
+	if all {
+		switch v := interface{}(m.GetInput()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, ServerTestCase_PlaygroundValidateCallValidationError{
+					field:  "Input",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, ServerTestCase_PlaygroundValidateCallValidationError{
+					field:  "Input",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetInput()).(interface{ Validate() error }); ok {
 		if err := v.Validate(); err != nil {
 			return ServerTestCase_PlaygroundValidateCallValidationError{
 				field:  "Input",
@@ -1299,7 +2352,26 @@ func (m *ServerTestCase_PlaygroundValidateCall) Validate() error {
 		}
 	}
 
-	if v, ok := interface{}(m.GetWantResponse()).(interface{ Validate() error }); ok {
+	if all {
+		switch v := interface{}(m.GetWantResponse()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, ServerTestCase_PlaygroundValidateCallValidationError{
+					field:  "WantResponse",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, ServerTestCase_PlaygroundValidateCallValidationError{
+					field:  "WantResponse",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetWantResponse()).(interface{ Validate() error }); ok {
 		if err := v.Validate(); err != nil {
 			return ServerTestCase_PlaygroundValidateCallValidationError{
 				field:  "WantResponse",
@@ -1309,8 +2381,29 @@ func (m *ServerTestCase_PlaygroundValidateCall) Validate() error {
 		}
 	}
 
+	if len(errors) > 0 {
+		return ServerTestCase_PlaygroundValidateCallMultiError(errors)
+	}
 	return nil
 }
+
+// ServerTestCase_PlaygroundValidateCallMultiError is an error wrapping
+// multiple validation errors returned by
+// ServerTestCase_PlaygroundValidateCall.ValidateAll() if the designated
+// constraints aren't met.
+type ServerTestCase_PlaygroundValidateCallMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m ServerTestCase_PlaygroundValidateCallMultiError) Error() string {
+	var msgs []string
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m ServerTestCase_PlaygroundValidateCallMultiError) AllErrors() []error { return m }
 
 // ServerTestCase_PlaygroundValidateCallValidationError is the validation error
 // returned by ServerTestCase_PlaygroundValidateCall.Validate if the
@@ -1371,13 +2464,47 @@ var _ interface {
 
 // Validate checks the field values on ServerTestCase_PlaygroundEvaluateCall
 // with the rules defined in the proto definition for this message. If any
-// rules are violated, an error is returned.
+// rules are violated, the first error encountered is returned, or nil if
+// there are no violations.
 func (m *ServerTestCase_PlaygroundEvaluateCall) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on ServerTestCase_PlaygroundEvaluateCall
+// with the rules defined in the proto definition for this message. If any
+// rules are violated, the result is a list of violation errors wrapped in
+// ServerTestCase_PlaygroundEvaluateCallMultiError, or nil if none found.
+func (m *ServerTestCase_PlaygroundEvaluateCall) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *ServerTestCase_PlaygroundEvaluateCall) validate(all bool) error {
 	if m == nil {
 		return nil
 	}
 
-	if v, ok := interface{}(m.GetInput()).(interface{ Validate() error }); ok {
+	var errors []error
+
+	if all {
+		switch v := interface{}(m.GetInput()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, ServerTestCase_PlaygroundEvaluateCallValidationError{
+					field:  "Input",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, ServerTestCase_PlaygroundEvaluateCallValidationError{
+					field:  "Input",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetInput()).(interface{ Validate() error }); ok {
 		if err := v.Validate(); err != nil {
 			return ServerTestCase_PlaygroundEvaluateCallValidationError{
 				field:  "Input",
@@ -1387,7 +2514,26 @@ func (m *ServerTestCase_PlaygroundEvaluateCall) Validate() error {
 		}
 	}
 
-	if v, ok := interface{}(m.GetWantResponse()).(interface{ Validate() error }); ok {
+	if all {
+		switch v := interface{}(m.GetWantResponse()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, ServerTestCase_PlaygroundEvaluateCallValidationError{
+					field:  "WantResponse",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, ServerTestCase_PlaygroundEvaluateCallValidationError{
+					field:  "WantResponse",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetWantResponse()).(interface{ Validate() error }); ok {
 		if err := v.Validate(); err != nil {
 			return ServerTestCase_PlaygroundEvaluateCallValidationError{
 				field:  "WantResponse",
@@ -1397,8 +2543,29 @@ func (m *ServerTestCase_PlaygroundEvaluateCall) Validate() error {
 		}
 	}
 
+	if len(errors) > 0 {
+		return ServerTestCase_PlaygroundEvaluateCallMultiError(errors)
+	}
 	return nil
 }
+
+// ServerTestCase_PlaygroundEvaluateCallMultiError is an error wrapping
+// multiple validation errors returned by
+// ServerTestCase_PlaygroundEvaluateCall.ValidateAll() if the designated
+// constraints aren't met.
+type ServerTestCase_PlaygroundEvaluateCallMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m ServerTestCase_PlaygroundEvaluateCallMultiError) Error() string {
+	var msgs []string
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m ServerTestCase_PlaygroundEvaluateCallMultiError) AllErrors() []error { return m }
 
 // ServerTestCase_PlaygroundEvaluateCallValidationError is the validation error
 // returned by ServerTestCase_PlaygroundEvaluateCall.Validate if the
@@ -1459,13 +2626,47 @@ var _ interface {
 
 // Validate checks the field values on ServerTestCase_PlaygroundProxyCall with
 // the rules defined in the proto definition for this message. If any rules
-// are violated, an error is returned.
+// are violated, the first error encountered is returned, or nil if there are
+// no violations.
 func (m *ServerTestCase_PlaygroundProxyCall) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on ServerTestCase_PlaygroundProxyCall
+// with the rules defined in the proto definition for this message. If any
+// rules are violated, the result is a list of violation errors wrapped in
+// ServerTestCase_PlaygroundProxyCallMultiError, or nil if none found.
+func (m *ServerTestCase_PlaygroundProxyCall) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *ServerTestCase_PlaygroundProxyCall) validate(all bool) error {
 	if m == nil {
 		return nil
 	}
 
-	if v, ok := interface{}(m.GetInput()).(interface{ Validate() error }); ok {
+	var errors []error
+
+	if all {
+		switch v := interface{}(m.GetInput()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, ServerTestCase_PlaygroundProxyCallValidationError{
+					field:  "Input",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, ServerTestCase_PlaygroundProxyCallValidationError{
+					field:  "Input",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetInput()).(interface{ Validate() error }); ok {
 		if err := v.Validate(); err != nil {
 			return ServerTestCase_PlaygroundProxyCallValidationError{
 				field:  "Input",
@@ -1475,7 +2676,26 @@ func (m *ServerTestCase_PlaygroundProxyCall) Validate() error {
 		}
 	}
 
-	if v, ok := interface{}(m.GetWantResponse()).(interface{ Validate() error }); ok {
+	if all {
+		switch v := interface{}(m.GetWantResponse()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, ServerTestCase_PlaygroundProxyCallValidationError{
+					field:  "WantResponse",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, ServerTestCase_PlaygroundProxyCallValidationError{
+					field:  "WantResponse",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetWantResponse()).(interface{ Validate() error }); ok {
 		if err := v.Validate(); err != nil {
 			return ServerTestCase_PlaygroundProxyCallValidationError{
 				field:  "WantResponse",
@@ -1485,8 +2705,29 @@ func (m *ServerTestCase_PlaygroundProxyCall) Validate() error {
 		}
 	}
 
+	if len(errors) > 0 {
+		return ServerTestCase_PlaygroundProxyCallMultiError(errors)
+	}
 	return nil
 }
+
+// ServerTestCase_PlaygroundProxyCallMultiError is an error wrapping multiple
+// validation errors returned by
+// ServerTestCase_PlaygroundProxyCall.ValidateAll() if the designated
+// constraints aren't met.
+type ServerTestCase_PlaygroundProxyCallMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m ServerTestCase_PlaygroundProxyCallMultiError) Error() string {
+	var msgs []string
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m ServerTestCase_PlaygroundProxyCallMultiError) AllErrors() []error { return m }
 
 // ServerTestCase_PlaygroundProxyCallValidationError is the validation error
 // returned by ServerTestCase_PlaygroundProxyCall.Validate if the designated
@@ -1547,13 +2788,48 @@ var _ interface {
 
 // Validate checks the field values on
 // ServerTestCase_AdminAddOrUpdatePolicyCall with the rules defined in the
-// proto definition for this message. If any rules are violated, an error is returned.
+// proto definition for this message. If any rules are violated, the first
+// error encountered is returned, or nil if there are no violations.
 func (m *ServerTestCase_AdminAddOrUpdatePolicyCall) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on
+// ServerTestCase_AdminAddOrUpdatePolicyCall with the rules defined in the
+// proto definition for this message. If any rules are violated, the result is
+// a list of violation errors wrapped in
+// ServerTestCase_AdminAddOrUpdatePolicyCallMultiError, or nil if none found.
+func (m *ServerTestCase_AdminAddOrUpdatePolicyCall) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *ServerTestCase_AdminAddOrUpdatePolicyCall) validate(all bool) error {
 	if m == nil {
 		return nil
 	}
 
-	if v, ok := interface{}(m.GetInput()).(interface{ Validate() error }); ok {
+	var errors []error
+
+	if all {
+		switch v := interface{}(m.GetInput()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, ServerTestCase_AdminAddOrUpdatePolicyCallValidationError{
+					field:  "Input",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, ServerTestCase_AdminAddOrUpdatePolicyCallValidationError{
+					field:  "Input",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetInput()).(interface{ Validate() error }); ok {
 		if err := v.Validate(); err != nil {
 			return ServerTestCase_AdminAddOrUpdatePolicyCallValidationError{
 				field:  "Input",
@@ -1563,7 +2839,26 @@ func (m *ServerTestCase_AdminAddOrUpdatePolicyCall) Validate() error {
 		}
 	}
 
-	if v, ok := interface{}(m.GetWantResponse()).(interface{ Validate() error }); ok {
+	if all {
+		switch v := interface{}(m.GetWantResponse()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, ServerTestCase_AdminAddOrUpdatePolicyCallValidationError{
+					field:  "WantResponse",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, ServerTestCase_AdminAddOrUpdatePolicyCallValidationError{
+					field:  "WantResponse",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetWantResponse()).(interface{ Validate() error }); ok {
 		if err := v.Validate(); err != nil {
 			return ServerTestCase_AdminAddOrUpdatePolicyCallValidationError{
 				field:  "WantResponse",
@@ -1573,8 +2868,29 @@ func (m *ServerTestCase_AdminAddOrUpdatePolicyCall) Validate() error {
 		}
 	}
 
+	if len(errors) > 0 {
+		return ServerTestCase_AdminAddOrUpdatePolicyCallMultiError(errors)
+	}
 	return nil
 }
+
+// ServerTestCase_AdminAddOrUpdatePolicyCallMultiError is an error wrapping
+// multiple validation errors returned by
+// ServerTestCase_AdminAddOrUpdatePolicyCall.ValidateAll() if the designated
+// constraints aren't met.
+type ServerTestCase_AdminAddOrUpdatePolicyCallMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m ServerTestCase_AdminAddOrUpdatePolicyCallMultiError) Error() string {
+	var msgs []string
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m ServerTestCase_AdminAddOrUpdatePolicyCallMultiError) AllErrors() []error { return m }
 
 // ServerTestCase_AdminAddOrUpdatePolicyCallValidationError is the validation
 // error returned by ServerTestCase_AdminAddOrUpdatePolicyCall.Validate if the
@@ -1635,13 +2951,48 @@ var _ interface {
 
 // Validate checks the field values on
 // ServerTestCase_AdminAddOrUpdateSchemaCall with the rules defined in the
-// proto definition for this message. If any rules are violated, an error is returned.
+// proto definition for this message. If any rules are violated, the first
+// error encountered is returned, or nil if there are no violations.
 func (m *ServerTestCase_AdminAddOrUpdateSchemaCall) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on
+// ServerTestCase_AdminAddOrUpdateSchemaCall with the rules defined in the
+// proto definition for this message. If any rules are violated, the result is
+// a list of violation errors wrapped in
+// ServerTestCase_AdminAddOrUpdateSchemaCallMultiError, or nil if none found.
+func (m *ServerTestCase_AdminAddOrUpdateSchemaCall) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *ServerTestCase_AdminAddOrUpdateSchemaCall) validate(all bool) error {
 	if m == nil {
 		return nil
 	}
 
-	if v, ok := interface{}(m.GetInput()).(interface{ Validate() error }); ok {
+	var errors []error
+
+	if all {
+		switch v := interface{}(m.GetInput()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, ServerTestCase_AdminAddOrUpdateSchemaCallValidationError{
+					field:  "Input",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, ServerTestCase_AdminAddOrUpdateSchemaCallValidationError{
+					field:  "Input",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetInput()).(interface{ Validate() error }); ok {
 		if err := v.Validate(); err != nil {
 			return ServerTestCase_AdminAddOrUpdateSchemaCallValidationError{
 				field:  "Input",
@@ -1651,7 +3002,26 @@ func (m *ServerTestCase_AdminAddOrUpdateSchemaCall) Validate() error {
 		}
 	}
 
-	if v, ok := interface{}(m.GetWantResponse()).(interface{ Validate() error }); ok {
+	if all {
+		switch v := interface{}(m.GetWantResponse()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, ServerTestCase_AdminAddOrUpdateSchemaCallValidationError{
+					field:  "WantResponse",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, ServerTestCase_AdminAddOrUpdateSchemaCallValidationError{
+					field:  "WantResponse",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetWantResponse()).(interface{ Validate() error }); ok {
 		if err := v.Validate(); err != nil {
 			return ServerTestCase_AdminAddOrUpdateSchemaCallValidationError{
 				field:  "WantResponse",
@@ -1661,8 +3031,29 @@ func (m *ServerTestCase_AdminAddOrUpdateSchemaCall) Validate() error {
 		}
 	}
 
+	if len(errors) > 0 {
+		return ServerTestCase_AdminAddOrUpdateSchemaCallMultiError(errors)
+	}
 	return nil
 }
+
+// ServerTestCase_AdminAddOrUpdateSchemaCallMultiError is an error wrapping
+// multiple validation errors returned by
+// ServerTestCase_AdminAddOrUpdateSchemaCall.ValidateAll() if the designated
+// constraints aren't met.
+type ServerTestCase_AdminAddOrUpdateSchemaCallMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m ServerTestCase_AdminAddOrUpdateSchemaCallMultiError) Error() string {
+	var msgs []string
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m ServerTestCase_AdminAddOrUpdateSchemaCallMultiError) AllErrors() []error { return m }
 
 // ServerTestCase_AdminAddOrUpdateSchemaCallValidationError is the validation
 // error returned by ServerTestCase_AdminAddOrUpdateSchemaCall.Validate if the
@@ -1723,18 +3114,52 @@ var _ interface {
 
 // Validate checks the field values on ServerTestCase_Status with the rules
 // defined in the proto definition for this message. If any rules are
-// violated, an error is returned.
+// violated, the first error encountered is returned, or nil if there are no violations.
 func (m *ServerTestCase_Status) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on ServerTestCase_Status with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// ServerTestCase_StatusMultiError, or nil if none found.
+func (m *ServerTestCase_Status) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *ServerTestCase_Status) validate(all bool) error {
 	if m == nil {
 		return nil
 	}
+
+	var errors []error
 
 	// no validation rules for HttpStatusCode
 
 	// no validation rules for GrpcStatusCode
 
+	if len(errors) > 0 {
+		return ServerTestCase_StatusMultiError(errors)
+	}
 	return nil
 }
+
+// ServerTestCase_StatusMultiError is an error wrapping multiple validation
+// errors returned by ServerTestCase_Status.ValidateAll() if the designated
+// constraints aren't met.
+type ServerTestCase_StatusMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m ServerTestCase_StatusMultiError) Error() string {
+	var msgs []string
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m ServerTestCase_StatusMultiError) AllErrors() []error { return m }
 
 // ServerTestCase_StatusValidationError is the validation error returned by
 // ServerTestCase_Status.Validate if the designated constraints aren't met.
@@ -1794,11 +3219,25 @@ var _ interface {
 
 // Validate checks the field values on CompileTestCase_Error with the rules
 // defined in the proto definition for this message. If any rules are
-// violated, an error is returned.
+// violated, the first error encountered is returned, or nil if there are no violations.
 func (m *CompileTestCase_Error) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on CompileTestCase_Error with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// CompileTestCase_ErrorMultiError, or nil if none found.
+func (m *CompileTestCase_Error) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *CompileTestCase_Error) validate(all bool) error {
 	if m == nil {
 		return nil
 	}
+
+	var errors []error
 
 	// no validation rules for File
 
@@ -1806,8 +3245,28 @@ func (m *CompileTestCase_Error) Validate() error {
 
 	// no validation rules for Desc
 
+	if len(errors) > 0 {
+		return CompileTestCase_ErrorMultiError(errors)
+	}
 	return nil
 }
+
+// CompileTestCase_ErrorMultiError is an error wrapping multiple validation
+// errors returned by CompileTestCase_Error.ValidateAll() if the designated
+// constraints aren't met.
+type CompileTestCase_ErrorMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m CompileTestCase_ErrorMultiError) Error() string {
+	var msgs []string
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m CompileTestCase_ErrorMultiError) AllErrors() []error { return m }
 
 // CompileTestCase_ErrorValidationError is the validation error returned by
 // CompileTestCase_Error.Validate if the designated constraints aren't met.
@@ -1867,15 +3326,48 @@ var _ interface {
 
 // Validate checks the field values on QueryPlannerTestSuite_Test with the
 // rules defined in the proto definition for this message. If any rules are
-// violated, an error is returned.
+// violated, the first error encountered is returned, or nil if there are no violations.
 func (m *QueryPlannerTestSuite_Test) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on QueryPlannerTestSuite_Test with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// QueryPlannerTestSuite_TestMultiError, or nil if none found.
+func (m *QueryPlannerTestSuite_Test) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *QueryPlannerTestSuite_Test) validate(all bool) error {
 	if m == nil {
 		return nil
 	}
 
+	var errors []error
+
 	// no validation rules for Action
 
-	if v, ok := interface{}(m.GetWant()).(interface{ Validate() error }); ok {
+	if all {
+		switch v := interface{}(m.GetWant()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, QueryPlannerTestSuite_TestValidationError{
+					field:  "Want",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, QueryPlannerTestSuite_TestValidationError{
+					field:  "Want",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetWant()).(interface{ Validate() error }); ok {
 		if err := v.Validate(); err != nil {
 			return QueryPlannerTestSuite_TestValidationError{
 				field:  "Want",
@@ -1885,7 +3377,26 @@ func (m *QueryPlannerTestSuite_Test) Validate() error {
 		}
 	}
 
-	if v, ok := interface{}(m.GetResource()).(interface{ Validate() error }); ok {
+	if all {
+		switch v := interface{}(m.GetResource()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, QueryPlannerTestSuite_TestValidationError{
+					field:  "Resource",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, QueryPlannerTestSuite_TestValidationError{
+					field:  "Resource",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetResource()).(interface{ Validate() error }); ok {
 		if err := v.Validate(); err != nil {
 			return QueryPlannerTestSuite_TestValidationError{
 				field:  "Resource",
@@ -1895,8 +3406,28 @@ func (m *QueryPlannerTestSuite_Test) Validate() error {
 		}
 	}
 
+	if len(errors) > 0 {
+		return QueryPlannerTestSuite_TestMultiError(errors)
+	}
 	return nil
 }
+
+// QueryPlannerTestSuite_TestMultiError is an error wrapping multiple
+// validation errors returned by QueryPlannerTestSuite_Test.ValidateAll() if
+// the designated constraints aren't met.
+type QueryPlannerTestSuite_TestMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m QueryPlannerTestSuite_TestMultiError) Error() string {
+	var msgs []string
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m QueryPlannerTestSuite_TestMultiError) AllErrors() []error { return m }
 
 // QueryPlannerTestSuite_TestValidationError is the validation error returned
 // by QueryPlannerTestSuite_Test.Validate if the designated constraints aren't met.

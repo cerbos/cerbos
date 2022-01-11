@@ -11,6 +11,7 @@ import (
 	"net/mail"
 	"net/url"
 	"regexp"
+	"sort"
 	"strings"
 	"time"
 	"unicode/utf8"
@@ -31,19 +32,53 @@ var (
 	_ = (*url.URL)(nil)
 	_ = (*mail.Address)(nil)
 	_ = anypb.Any{}
+	_ = sort.Sort
 )
 
 // Validate checks the field values on AccessLogEntry with the rules defined in
-// the proto definition for this message. If any rules are violated, an error
-// is returned.
+// the proto definition for this message. If any rules are violated, the first
+// error encountered is returned, or nil if there are no violations.
 func (m *AccessLogEntry) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on AccessLogEntry with the rules defined
+// in the proto definition for this message. If any rules are violated, the
+// result is a list of violation errors wrapped in AccessLogEntryMultiError,
+// or nil if none found.
+func (m *AccessLogEntry) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *AccessLogEntry) validate(all bool) error {
 	if m == nil {
 		return nil
 	}
 
+	var errors []error
+
 	// no validation rules for CallId
 
-	if v, ok := interface{}(m.GetTimestamp()).(interface{ Validate() error }); ok {
+	if all {
+		switch v := interface{}(m.GetTimestamp()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, AccessLogEntryValidationError{
+					field:  "Timestamp",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, AccessLogEntryValidationError{
+					field:  "Timestamp",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetTimestamp()).(interface{ Validate() error }); ok {
 		if err := v.Validate(); err != nil {
 			return AccessLogEntryValidationError{
 				field:  "Timestamp",
@@ -53,7 +88,26 @@ func (m *AccessLogEntry) Validate() error {
 		}
 	}
 
-	if v, ok := interface{}(m.GetPeer()).(interface{ Validate() error }); ok {
+	if all {
+		switch v := interface{}(m.GetPeer()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, AccessLogEntryValidationError{
+					field:  "Peer",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, AccessLogEntryValidationError{
+					field:  "Peer",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetPeer()).(interface{ Validate() error }); ok {
 		if err := v.Validate(); err != nil {
 			return AccessLogEntryValidationError{
 				field:  "Peer",
@@ -63,29 +117,78 @@ func (m *AccessLogEntry) Validate() error {
 		}
 	}
 
-	for key, val := range m.GetMetadata() {
-		_ = val
+	{
+		sorted_keys := make([]string, len(m.GetMetadata()))
+		i := 0
+		for key := range m.GetMetadata() {
+			sorted_keys[i] = key
+			i++
+		}
+		sort.Slice(sorted_keys, func(i, j int) bool { return sorted_keys[i] < sorted_keys[j] })
+		for _, key := range sorted_keys {
+			val := m.GetMetadata()[key]
+			_ = val
 
-		// no validation rules for Metadata[key]
+			// no validation rules for Metadata[key]
 
-		if v, ok := interface{}(val).(interface{ Validate() error }); ok {
-			if err := v.Validate(); err != nil {
-				return AccessLogEntryValidationError{
-					field:  fmt.Sprintf("Metadata[%v]", key),
-					reason: "embedded message failed validation",
-					cause:  err,
+			if all {
+				switch v := interface{}(val).(type) {
+				case interface{ ValidateAll() error }:
+					if err := v.ValidateAll(); err != nil {
+						errors = append(errors, AccessLogEntryValidationError{
+							field:  fmt.Sprintf("Metadata[%v]", key),
+							reason: "embedded message failed validation",
+							cause:  err,
+						})
+					}
+				case interface{ Validate() error }:
+					if err := v.Validate(); err != nil {
+						errors = append(errors, AccessLogEntryValidationError{
+							field:  fmt.Sprintf("Metadata[%v]", key),
+							reason: "embedded message failed validation",
+							cause:  err,
+						})
+					}
+				}
+			} else if v, ok := interface{}(val).(interface{ Validate() error }); ok {
+				if err := v.Validate(); err != nil {
+					return AccessLogEntryValidationError{
+						field:  fmt.Sprintf("Metadata[%v]", key),
+						reason: "embedded message failed validation",
+						cause:  err,
+					}
 				}
 			}
-		}
 
+		}
 	}
 
 	// no validation rules for Method
 
 	// no validation rules for StatusCode
 
+	if len(errors) > 0 {
+		return AccessLogEntryMultiError(errors)
+	}
 	return nil
 }
+
+// AccessLogEntryMultiError is an error wrapping multiple validation errors
+// returned by AccessLogEntry.ValidateAll() if the designated constraints
+// aren't met.
+type AccessLogEntryMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m AccessLogEntryMultiError) Error() string {
+	var msgs []string
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m AccessLogEntryMultiError) AllErrors() []error { return m }
 
 // AccessLogEntryValidationError is the validation error returned by
 // AccessLogEntry.Validate if the designated constraints aren't met.
@@ -142,16 +245,49 @@ var _ interface {
 } = AccessLogEntryValidationError{}
 
 // Validate checks the field values on DecisionLogEntry with the rules defined
-// in the proto definition for this message. If any rules are violated, an
-// error is returned.
+// in the proto definition for this message. If any rules are violated, the
+// first error encountered is returned, or nil if there are no violations.
 func (m *DecisionLogEntry) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on DecisionLogEntry with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// DecisionLogEntryMultiError, or nil if none found.
+func (m *DecisionLogEntry) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *DecisionLogEntry) validate(all bool) error {
 	if m == nil {
 		return nil
 	}
 
+	var errors []error
+
 	// no validation rules for CallId
 
-	if v, ok := interface{}(m.GetTimestamp()).(interface{ Validate() error }); ok {
+	if all {
+		switch v := interface{}(m.GetTimestamp()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, DecisionLogEntryValidationError{
+					field:  "Timestamp",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, DecisionLogEntryValidationError{
+					field:  "Timestamp",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetTimestamp()).(interface{ Validate() error }); ok {
 		if err := v.Validate(); err != nil {
 			return DecisionLogEntryValidationError{
 				field:  "Timestamp",
@@ -161,7 +297,26 @@ func (m *DecisionLogEntry) Validate() error {
 		}
 	}
 
-	if v, ok := interface{}(m.GetPeer()).(interface{ Validate() error }); ok {
+	if all {
+		switch v := interface{}(m.GetPeer()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, DecisionLogEntryValidationError{
+					field:  "Peer",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, DecisionLogEntryValidationError{
+					field:  "Peer",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetPeer()).(interface{ Validate() error }); ok {
 		if err := v.Validate(); err != nil {
 			return DecisionLogEntryValidationError{
 				field:  "Peer",
@@ -174,7 +329,26 @@ func (m *DecisionLogEntry) Validate() error {
 	for idx, item := range m.GetInputs() {
 		_, _ = idx, item
 
-		if v, ok := interface{}(item).(interface{ Validate() error }); ok {
+		if all {
+			switch v := interface{}(item).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, DecisionLogEntryValidationError{
+						field:  fmt.Sprintf("Inputs[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, DecisionLogEntryValidationError{
+						field:  fmt.Sprintf("Inputs[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(item).(interface{ Validate() error }); ok {
 			if err := v.Validate(); err != nil {
 				return DecisionLogEntryValidationError{
 					field:  fmt.Sprintf("Inputs[%v]", idx),
@@ -189,7 +363,26 @@ func (m *DecisionLogEntry) Validate() error {
 	for idx, item := range m.GetOutputs() {
 		_, _ = idx, item
 
-		if v, ok := interface{}(item).(interface{ Validate() error }); ok {
+		if all {
+			switch v := interface{}(item).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, DecisionLogEntryValidationError{
+						field:  fmt.Sprintf("Outputs[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, DecisionLogEntryValidationError{
+						field:  fmt.Sprintf("Outputs[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(item).(interface{ Validate() error }); ok {
 			if err := v.Validate(); err != nil {
 				return DecisionLogEntryValidationError{
 					field:  fmt.Sprintf("Outputs[%v]", idx),
@@ -203,8 +396,28 @@ func (m *DecisionLogEntry) Validate() error {
 
 	// no validation rules for Error
 
+	if len(errors) > 0 {
+		return DecisionLogEntryMultiError(errors)
+	}
 	return nil
 }
+
+// DecisionLogEntryMultiError is an error wrapping multiple validation errors
+// returned by DecisionLogEntry.ValidateAll() if the designated constraints
+// aren't met.
+type DecisionLogEntryMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m DecisionLogEntryMultiError) Error() string {
+	var msgs []string
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m DecisionLogEntryMultiError) AllErrors() []error { return m }
 
 // DecisionLogEntryValidationError is the validation error returned by
 // DecisionLogEntry.Validate if the designated constraints aren't met.
@@ -261,14 +474,48 @@ var _ interface {
 } = DecisionLogEntryValidationError{}
 
 // Validate checks the field values on MetaValues with the rules defined in the
-// proto definition for this message. If any rules are violated, an error is returned.
+// proto definition for this message. If any rules are violated, the first
+// error encountered is returned, or nil if there are no violations.
 func (m *MetaValues) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on MetaValues with the rules defined in
+// the proto definition for this message. If any rules are violated, the
+// result is a list of violation errors wrapped in MetaValuesMultiError, or
+// nil if none found.
+func (m *MetaValues) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *MetaValues) validate(all bool) error {
 	if m == nil {
 		return nil
 	}
 
+	var errors []error
+
+	if len(errors) > 0 {
+		return MetaValuesMultiError(errors)
+	}
 	return nil
 }
+
+// MetaValuesMultiError is an error wrapping multiple validation errors
+// returned by MetaValues.ValidateAll() if the designated constraints aren't met.
+type MetaValuesMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m MetaValuesMultiError) Error() string {
+	var msgs []string
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m MetaValuesMultiError) AllErrors() []error { return m }
 
 // MetaValuesValidationError is the validation error returned by
 // MetaValues.Validate if the designated constraints aren't met.
@@ -325,11 +572,25 @@ var _ interface {
 } = MetaValuesValidationError{}
 
 // Validate checks the field values on Peer with the rules defined in the proto
-// definition for this message. If any rules are violated, an error is returned.
+// definition for this message. If any rules are violated, the first error
+// encountered is returned, or nil if there are no violations.
 func (m *Peer) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on Peer with the rules defined in the
+// proto definition for this message. If any rules are violated, the result is
+// a list of violation errors wrapped in PeerMultiError, or nil if none found.
+func (m *Peer) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *Peer) validate(all bool) error {
 	if m == nil {
 		return nil
 	}
+
+	var errors []error
 
 	// no validation rules for Address
 
@@ -339,8 +600,27 @@ func (m *Peer) Validate() error {
 
 	// no validation rules for ForwardedFor
 
+	if len(errors) > 0 {
+		return PeerMultiError(errors)
+	}
 	return nil
 }
+
+// PeerMultiError is an error wrapping multiple validation errors returned by
+// Peer.ValidateAll() if the designated constraints aren't met.
+type PeerMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m PeerMultiError) Error() string {
+	var msgs []string
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m PeerMultiError) AllErrors() []error { return m }
 
 // PeerValidationError is the validation error returned by Peer.Validate if the
 // designated constraints aren't met.
