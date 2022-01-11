@@ -6,7 +6,7 @@ require (
 	github.com/bojand/ghz v0.105.0
 	github.com/bufbuild/buf v0.56.0
 	github.com/envoyproxy/protoc-gen-validate v0.6.1
-	github.com/fullstorydev/grpcurl v1.8.2
+	github.com/fullstorydev/grpcurl v1.8.5
 	github.com/golangci/golangci-lint v1.43.0
 	github.com/google/go-licenses v0.0.0-20210715153004-8751804a5b80
 	github.com/goreleaser/goreleaser v0.184.0
@@ -174,7 +174,7 @@ require (
 	github.com/inconshreveable/mousetrap v1.0.0 // indirect
 	github.com/jbenet/go-context v0.0.0-20150711004518-d14ea06fba99 // indirect
 	github.com/jgautheron/goconst v1.5.1 // indirect
-	github.com/jhump/protoreflect v1.9.1-0.20210817181203-db1a327a393e // indirect
+	github.com/jhump/protoreflect v1.10.1 // indirect
 	github.com/jingyugao/rowserrcheck v1.1.1 // indirect
 	github.com/jinzhu/configor v1.1.1 // indirect
 	github.com/jirfag/go-printf-func-name v0.0.0-20200119135958-7558a9eaa5af // indirect
