@@ -74,7 +74,7 @@ require (
 	google.golang.org/protobuf v1.27.1
 	gopkg.in/yaml.v2 v2.4.0
 	helm.sh/helm/v3 v3.7.2
-	modernc.org/sqlite v1.14.3
+	modernc.org/sqlite v1.14.4
 )
 
 require (
@@ -213,9 +213,9 @@ require (
 	gopkg.in/warnings.v0 v0.1.2 // indirect
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b // indirect
 	lukechampine.com/uint128 v1.1.1 // indirect
-	modernc.org/cc/v3 v3.35.18 // indirect
-	modernc.org/ccgo/v3 v3.12.95 // indirect
-	modernc.org/libc v1.11.105 // indirect
+	modernc.org/cc/v3 v3.35.22 // indirect
+	modernc.org/ccgo/v3 v3.14.0 // indirect
+	modernc.org/libc v1.13.2 // indirect
 	modernc.org/mathutil v1.4.1 // indirect
 	modernc.org/memory v1.0.5 // indirect
 	modernc.org/opt v0.1.1 // indirect
