@@ -8,6 +8,9 @@ resourcePolicy:
   importDerivedRoles:
     - beta
   rules:
+    - actions: ["*"]
+      roles: ["admin"]
+      effect: EFFECT_ALLOW
     - actions: ["view:refer-derived-role"]
       derivedRoles:
         - owner
