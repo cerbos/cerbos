@@ -215,6 +215,10 @@ func convert(expr *enginev1.ResourcesQueryPlanOutput_Node, acc *responsev1.Resou
 		ExprOpVar   = responsev1.ResourcesQueryPlanResponse_Expression_Operand_Variable
 	)
 
+	if expr == nil || expr.Node == nil {
+		return nil
+	}
+
 	switch node := expr.Node.(type) {
 	case *enginev1.ResourcesQueryPlanOutput_Node_Expression:
 		err := buildExpr(node.Expression.Expr, acc)

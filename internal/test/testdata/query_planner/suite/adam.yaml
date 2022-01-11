@@ -1,0 +1,13 @@
+---
+description: Adam tests
+principal:
+    id: adam
+    policyVersion: default
+    roles:
+        - admin
+tests:
+    - action: "approve:refer-derived-role"
+      resource:
+        kind: leave_request
+        policyVersion: default
+      want: {}
