@@ -23,6 +23,18 @@ This is still a WIP.
 ./run.sh ./... -args -run-id=mytest
 ```
 
+### Common Problems
+
+#### Telepresence timeout
+
+If telepresence exits with `telepresence: error: connector.Connect: failed to start traffic manager: the helm operation timed out`, try increasing the timeout in `~/.config/telepresence/config.yml`.
+
+```sh
+$ cat ~/.config/telepresence/config.yml 
+timeouts:
+  helm: 60s
+```
+
 ### How do I
 
 #### Use an existing K8s cluster
