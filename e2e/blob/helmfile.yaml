@@ -43,7 +43,7 @@ releases:
 
   - name: cerbos
     namespace: '{{ requiredEnv "E2E_NS" }}'
-    needs: ["postgres"]
+    needs: ["minio"]
     createNamespace: true
     labels:
       e2e-run: '{{ requiredEnv "E2E_RUN_ID" }}'
