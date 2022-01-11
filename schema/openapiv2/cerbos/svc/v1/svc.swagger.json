@@ -108,7 +108,8 @@
             "description": "By Call ID",
             "in": "query",
             "required": false,
-            "type": "string"
+            "type": "string",
+            "pattern": "^[0123456789ABCDEFGHJKMNPQRSTVWXYZ]{26}$"
           }
         ],
         "tags": [
@@ -1051,14 +1052,11 @@
     "protobufAny": {
       "type": "object",
       "properties": {
-        "typeUrl": {
+        "@type": {
           "type": "string"
-        },
-        "value": {
-          "type": "string",
-          "format": "byte"
         }
-      }
+      },
+      "additionalProperties": {}
     },
     "protobufNullValue": {
       "type": "string",
