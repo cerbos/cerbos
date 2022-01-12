@@ -17,7 +17,7 @@ import (
 	"github.com/cerbos/cerbos/internal/policy"
 )
 
-func listPolicies(c client.AdminClient, cmd *cobra.Command, args *Arguments, resType resourceType) error {
+func listPolicies(c client.AdminClient, cmd *cobra.Command, args *Arguments, resType ResourceType) error {
 	policyIds, err := c.ListPolicies(context.Background())
 	if err != nil {
 		return fmt.Errorf("error while requesting policies: %w", err)
@@ -30,16 +30,15 @@ func listPolicies(c client.AdminClient, cmd *cobra.Command, args *Arguments, res
 		}
 	}
 
-	//nolint:nestif
 	for idx := range policyIds {
 		if idx%internal.MaxIDPerReq == 0 {
-			idxEnd := internal.MinInt(idx+internal.MaxIDPerReq, len(policyIds)-idx)
+			idxEnd := internal.MinInt(idx+internal.MaxIDPerReq, len(policyIds))
 			policies, err := c.GetPolicy(context.Background(), policyIds[idx:idxEnd]...)
 			if err != nil {
 				return fmt.Errorf("error while requesting policy: %w", err)
 			}
 
-			filtered := filterPolicies(policies[idx:idxEnd], policyIds[idx:idxEnd], getArgs.Name, getArgs.Version, resType)
+			filtered := filterPolicies(policies, policyIds[idx:idxEnd], getArgs.Name, getArgs.Version, resType)
 
 			err = internal.PrintIds(cmd.OutOrStdout(), filtered...)
 			if err != nil {
@@ -68,7 +67,7 @@ func getPolicy(c client.AdminClient, cmd *cobra.Command, args *Arguments, ids ..
 	return nil
 }
 
-func filterPolicies(policies []*policyv1.Policy, policyIds, name, version []string, resType resourceType) []string {
+func filterPolicies(policies []*policyv1.Policy, policyIds, name, version []string, resType ResourceType) []string {
 	filtered := make([]string, 0, len(policies))
 	for idx, p := range policies {
 		wp := policy.Wrap(p)

@@ -127,7 +127,7 @@ func runGetCmd(c client.AdminClient, cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-func getResourceType(arg string) (resourceType, error) {
+func getResourceType(arg string) (ResourceType, error) {
 	switch arg {
 	case "dr", "derived_role", "derived_roles":
 		return DerivedRole, nil
@@ -142,10 +142,10 @@ func getResourceType(arg string) (resourceType, error) {
 	}
 }
 
-type resourceType uint
+type ResourceType uint
 
 const (
-	Unspecified resourceType = iota
+	Unspecified ResourceType = iota
 	DerivedRole
 	PrincipalPolicy
 	ResourcePolicy

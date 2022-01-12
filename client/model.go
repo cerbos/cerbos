@@ -421,6 +421,12 @@ func (ps *PolicySet) AddPolicyFromReader(r io.Reader) *PolicySet {
 	return nil
 }
 
+// AddPolicy adds the given policy.
+func (ps *PolicySet) AddPolicy(p *policyv1.Policy) *PolicySet {
+	ps.policies = append(ps.policies, p)
+	return nil
+}
+
 // AddResourcePolicies adds the given resource policies to the set.
 func (ps *PolicySet) AddResourcePolicies(policies ...*ResourcePolicy) *PolicySet {
 	for _, p := range policies {
@@ -464,6 +470,11 @@ func (ps *PolicySet) AddDerivedRoles(policies ...*DerivedRoles) *PolicySet {
 	}
 
 	return ps
+}
+
+// GetPolicies returns all of the policies in the set.
+func (ps *PolicySet) GetPolicies() []*policyv1.Policy {
+	return ps.policies
 }
 
 func (ps *PolicySet) add(b interface {
