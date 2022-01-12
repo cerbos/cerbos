@@ -276,11 +276,14 @@ func TestQueryPlan(t *testing.T) {
 					}
 
 					response, err := eng.ResourcesQueryPlan(context.Background(), request)
-					is.NoError(err)
-					is.NotNil(response)
-
-					t.Log(response.Meta.FilterDebug)
-					is.Empty(cmp.Diff(tt.Want, response.Filter, protocmp.Transform()))
+					if tt.WantErr {
+						is.Error(err)
+					} else {
+						is.NoError(err)
+						is.NotNil(response)
+						is.Empty(cmp.Diff(tt.Want, response.Filter, protocmp.Transform()))
+						t.Log(response.Meta.FilterDebug)
+					}
 				})
 			}
 		})

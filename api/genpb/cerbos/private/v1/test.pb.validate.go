@@ -3406,6 +3406,8 @@ func (m *QueryPlannerTestSuite_Test) validate(all bool) error {
 		}
 	}
 
+	// no validation rules for WantErr
+
 	if len(errors) > 0 {
 		return QueryPlannerTestSuite_TestMultiError(errors)
 	}

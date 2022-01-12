@@ -6,6 +6,7 @@ package engine
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/google/cel-go/cel"
 	"github.com/google/cel-go/checker/decls"
@@ -28,7 +29,14 @@ type (
 		node *qpN
 		role string
 	}
+	NoSuchKeyError struct {
+		msg string
+	}
 )
+
+func (e *NoSuchKeyError) Error() string {
+	return e.msg
+}
 
 func (ppe *principalPolicyEvaluator) EvaluateResourcesQueryPlan(ctx context.Context, input *enginev1.ResourcesQueryPlanRequest) (*enginev1.ResourcesQueryPlanOutput, error) {
 	_, span := tracing.StartSpan(ctx, "principal_policy.EvaluateResourcesQueryPlan")
@@ -419,6 +427,9 @@ func evaluateCELExprPartially(expr *exprpb.CheckedExpr, input *enginev1.Resource
 
 	val, details, err := prg.Eval(vars)
 	if err != nil {
+		if strings.HasPrefix(err.Error(), "no such key:") {
+			return nil, nil, &NoSuchKeyError{msg: fmt.Sprintf("missing principal attribute %q", strings.TrimPrefix(err.Error(), "no such key: "))}
+		}
 		return nil, nil, err
 	}
 	residual, err := env.ResidualAst(ast, details)

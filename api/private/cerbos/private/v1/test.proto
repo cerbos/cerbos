@@ -138,6 +138,7 @@ message QueryPlannerTestSuite {
         string action = 1;
         cerbos.response.v1.ResourcesQueryPlanResponse.Filter want = 2;
         cerbos.engine.v1.ResourcesQueryPlanRequest.Resource resource = 3;
+        bool want_err = 4;
     }
     repeated Test tests = 3;
 }

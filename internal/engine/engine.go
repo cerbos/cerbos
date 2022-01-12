@@ -324,9 +324,11 @@ func (engine *Engine) ResourcesQueryPlan(ctx context.Context, input *enginev1.Re
 		if err != nil {
 			return nil, err
 		}
+
+		return response, nil
 	}
 
-	return response, nil
+	return nil, ErrNoPoliciesMatched
 }
 
 func normaliseFilter(filter *responsev1.ResourcesQueryPlanResponse_Filter) {

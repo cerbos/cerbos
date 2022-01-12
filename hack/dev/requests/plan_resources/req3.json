@@ -1,0 +1,17 @@
+{
+  "requestId":  "test",
+  "includeMeta": true,
+  "action": "view-as-vip",
+  "principal":  {
+    "id":  "1",
+    "policyVersion":  "default",
+    "roles":  [
+      "user"
+    ],
+    "attr": { "a":  1 }
+  },
+  "resource": {
+    "kind": "album:object",
+    "policyVersion":  "default"
+  }
+}

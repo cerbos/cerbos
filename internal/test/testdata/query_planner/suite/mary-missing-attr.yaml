@@ -1,0 +1,14 @@
+---
+description: Mary tests
+principal:
+    id: mary
+    policyVersion: default
+    roles:
+        - user
+        - manager
+tests:
+    - action: "read"
+      resource:
+        kind: contact
+        policyVersion: default
+      wantErr: true

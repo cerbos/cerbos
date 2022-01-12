@@ -1,0 +1,16 @@
+{
+  "requestId":  "test",
+  "includeMeta": true,
+  "action": "view",
+  "principal":  {
+    "id":  "1",
+    "policyVersion":  "default",
+    "roles":  [
+      "user"
+    ]
+  },
+  "resource": {
+    "kind": "album:object",
+    "policyVersion":  "nonexistent"
+  }
+}
