@@ -52,7 +52,7 @@ func (AuthCreds) RequireTransportSecurity() bool {
 	return true
 }
 
-func LoadTestCases(tb testing.TB, dirs ...string) []*privatev1.ServerTestCase {
+func LoadTestCases(tb testing.TB, dirs ...string) *TestRunner {
 	tb.Helper()
 	var testCases []*privatev1.ServerTestCase
 
@@ -64,7 +64,7 @@ func LoadTestCases(tb testing.TB, dirs ...string) []*privatev1.ServerTestCase {
 		}
 	}
 
-	return testCases
+	return &TestRunner{Cases: testCases, Timeout: requestTimeout}
 }
 
 func readTestCase(tb testing.TB, name string, data []byte) *privatev1.ServerTestCase {
@@ -80,12 +80,17 @@ func readTestCase(tb testing.TB, name string, data []byte) *privatev1.ServerTest
 	return tc
 }
 
-func RunGRPCTests(testCases []*privatev1.ServerTestCase, addr string, opts ...grpc.DialOption) func(*testing.T) {
+type TestRunner struct {
+	Cases   []*privatev1.ServerTestCase
+	Timeout time.Duration
+}
+
+func (tr *TestRunner) RunGRPCTests(addr string, opts ...grpc.DialOption) func(*testing.T) {
 	//nolint:thelper
 	return func(t *testing.T) {
 		grpcConn := mkGRPCConn(t, addr, opts...)
-		for _, tc := range testCases {
-			t.Run(tc.Name, executeGRPCTestCase(grpcConn, tc))
+		for _, tc := range tr.Cases {
+			t.Run(tc.Name, tr.executeGRPCTestCase(grpcConn, tc))
 		}
 	}
 }
@@ -101,13 +106,13 @@ func mkGRPCConn(t *testing.T, addr string, opts ...grpc.DialOption) *grpc.Client
 	return grpcConn
 }
 
-func executeGRPCTestCase(grpcConn *grpc.ClientConn, tc *privatev1.ServerTestCase) func(*testing.T) {
+func (tr *TestRunner) executeGRPCTestCase(grpcConn *grpc.ClientConn, tc *privatev1.ServerTestCase) func(*testing.T) {
 	//nolint:thelper
 	return func(t *testing.T) {
 		var have, want proto.Message
 		var err error
 
-		ctx, cancelFunc := context.WithTimeout(context.Background(), requestTimeout)
+		ctx, cancelFunc := context.WithTimeout(context.Background(), tr.Timeout)
 		defer cancelFunc()
 
 		switch call := tc.CallKind.(type) {
@@ -163,12 +168,12 @@ func executeGRPCTestCase(grpcConn *grpc.ClientConn, tc *privatev1.ServerTestCase
 	}
 }
 
-func RunHTTPTests(testCases []*privatev1.ServerTestCase, hostAddr string, creds *AuthCreds) func(*testing.T) {
+func (tr *TestRunner) RunHTTPTests(hostAddr string, creds *AuthCreds) func(*testing.T) {
 	//nolint:thelper
 	return func(t *testing.T) {
 		c := mkHTTPClient(t)
-		for _, tc := range testCases {
-			t.Run(tc.Name, executeHTTPTestCase(c, hostAddr, creds, tc))
+		for _, tc := range tr.Cases {
+			t.Run(tc.Name, tr.executeHTTPTestCase(c, hostAddr, creds, tc))
 		}
 	}
 }
@@ -182,7 +187,7 @@ func mkHTTPClient(t *testing.T) *http.Client {
 	return &http.Client{Transport: customTransport}
 }
 
-func executeHTTPTestCase(c *http.Client, hostAddr string, creds *AuthCreds, tc *privatev1.ServerTestCase) func(*testing.T) {
+func (tr *TestRunner) executeHTTPTestCase(c *http.Client, hostAddr string, creds *AuthCreds, tc *privatev1.ServerTestCase) func(*testing.T) {
 	//nolint:thelper
 	return func(t *testing.T) {
 		var input, have, want proto.Message
@@ -236,7 +241,7 @@ func executeHTTPTestCase(c *http.Client, hostAddr string, creds *AuthCreds, tc *
 		reqBytes, err := protojson.Marshal(input)
 		require.NoError(t, err, "Failed to marshal request")
 
-		ctx, cancelFunc := context.WithTimeout(context.Background(), requestTimeout)
+		ctx, cancelFunc := context.WithTimeout(context.Background(), tr.Timeout)
 		defer cancelFunc()
 
 		req, err := http.NewRequestWithContext(ctx, http.MethodPost, addr, bytes.NewReader(reqBytes))

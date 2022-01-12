@@ -12,5 +12,5 @@ import (
 )
 
 func TestPostgres(t *testing.T) {
-	e2e.RunSuites(t, e2e.WithContextID("postgres"), e2e.WithSuites(e2e.AdminSuite, e2e.ChecksSuite))
+	e2e.RunSuites(t, e2e.WithContextID("postgres"), e2e.WithMutableStoreSuites())
 }
