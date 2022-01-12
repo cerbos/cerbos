@@ -16,13 +16,13 @@ check_prerequisites() {
 
 start_kind() {
     if [[ "$E2E_SKIP_CLUSTER" == "false" ]]; then
-        kind create cluster --name "$E2E_CLUSTER" 
+        kind create cluster --name="$E2E_CLUSTER" --config="${SCRIPT_DIR}/kind.yaml"
     fi
 }
 
 stop_kind() {
     if [[ "$E2E_SKIP_CLUSTER" == "false" && "$E2E_NO_CLEANUP" == "false" ]]; then
-        kind delete cluster --name "$E2E_CLUSTER"
+        kind delete cluster --name="$E2E_CLUSTER"
     fi
 }
 

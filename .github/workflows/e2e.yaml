@@ -1,0 +1,56 @@
+---
+name: E2E Tests
+on:
+  workflow_dispatch:
+jobs:
+  runE2ETests:
+    name: Run E2E Tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install Go
+        uses: actions/setup-go@v2
+        with:
+          go-version: 1.17.x
+
+      - name: Checkout code
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+
+      - uses: actions/cache@v2
+        with:
+          path: |
+            ~/go/pkg/mod
+            ~/.cache/go-build
+            ~/.cache/cerbos/bin
+          key: ${{ runner.os }}-go-${{ hashFiles('**/go.mod') }}
+
+      - name: Install Helm
+        uses: azure/setup-helm@v1
+
+      - name: Install Helmfile and Telepresence
+        run: |
+          mkdir bin
+          curl -fL https://github.com/roboll/helmfile/releases/download/v0.143.0/helmfile_linux_amd64 -o bin/helmfile
+          chmod +x bin/helmfile
+          curl -fL https://app.getambassador.io/download/tel2/linux/amd64/latest/telepresence -o bin/telepresence
+          chmod +x bin/telepresence
+          echo "$(pwd)/bin" >> $GITHUB_PATH
+          mkdir -p ~/.config/telepresence
+          cat >~/.config/telepresence/config.yml <<EOF
+          timeouts:
+            helm: 60s
+          EOF
+
+      - name: Install KinD
+        uses: helm/kind-action@v1.2.0
+        with:
+          cluster_name: cerbos-e2e
+          config: e2e/kind.yaml
+          wait: 180s
+
+      - name: Run E2E Tests
+        run: e2e/run.sh
+        env:
+          E2E_SKIP_CLUSTER: "true"
+          E2E_NO_CLEANUP: "true"
