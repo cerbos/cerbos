@@ -8,6 +8,7 @@ package e2e
 import (
 	"crypto/tls"
 	"testing"
+	"time"
 
 	"github.com/cerbos/cerbos/internal/server"
 	"github.com/stretchr/testify/require"
@@ -16,8 +17,9 @@ import (
 )
 
 const (
-	AdminSuite  = "admin"
-	ChecksSuite = "checks"
+	AdminSuite         = "admin"
+	ChecksSuite        = "checks"
+	PlanResourcesSuite = "plan_resources"
 )
 
 type Opt func(*suiteOpt)
@@ -46,6 +48,18 @@ func WithPostSetup(fn func(Ctx)) Opt {
 	}
 }
 
+func WithMutableStoreSuites() Opt {
+	return func(so *suiteOpt) {
+		so.suites = []string{AdminSuite, ChecksSuite, PlanResourcesSuite}
+	}
+}
+
+func WithImmutableStoreSuites() Opt {
+	return func(so *suiteOpt) {
+		so.suites = []string{ChecksSuite, PlanResourcesSuite}
+	}
+}
+
 func RunSuites(t *testing.T, opts ...Opt) {
 	sopt := suiteOpt{}
 	for _, o := range opts {
@@ -64,11 +78,12 @@ func RunSuites(t *testing.T, opts ...Opt) {
 		ctx.Logf("Finished PostSetup function")
 	}
 
-	testCases := server.LoadTestCases(t, sopt.suites...)
+	tr := server.LoadTestCases(t, sopt.suites...)
+	tr.Timeout = 30 * time.Second // Things are slower inside Kind
 
 	tlsConf := &tls.Config{InsecureSkipVerify: true} //nolint:gosec
 	creds := &server.AuthCreds{Username: "cerbos", Password: "cerbosAdmin"}
 
-	t.Run("grpc", server.RunGRPCTests(testCases, ctx.GRPCAddr(), grpc.WithPerRPCCredentials(creds), grpc.WithTransportCredentials(credentials.NewTLS(tlsConf))))
-	t.Run("http", server.RunHTTPTests(testCases, ctx.HTTPAddr(), creds))
+	t.Run("grpc", tr.RunGRPCTests(ctx.GRPCAddr(), grpc.WithPerRPCCredentials(creds), grpc.WithTransportCredentials(credentials.NewTLS(tlsConf))))
+	t.Run("http", tr.RunHTTPTests(ctx.HTTPAddr(), creds))
 }

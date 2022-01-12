@@ -3,7 +3,7 @@
 
 //go:build e2e
 
-package postgres_test
+package blob_test
 
 import (
 	"fmt"
@@ -36,5 +36,5 @@ func TestBlob(t *testing.T) {
 		time.Sleep(150 * time.Millisecond)
 	}
 
-	e2e.RunSuites(t, e2e.WithContextID("blob"), e2e.WithSuites(e2e.ChecksSuite), e2e.WithPostSetup(postSetup))
+	e2e.RunSuites(t, e2e.WithContextID("blob"), e2e.WithImmutableStoreSuites(), e2e.WithPostSetup(postSetup))
 }

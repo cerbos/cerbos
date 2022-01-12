@@ -12,5 +12,5 @@ import (
 )
 
 func TestGit(t *testing.T) {
-	e2e.RunSuites(t, e2e.WithContextID("git"), e2e.WithSuites(e2e.ChecksSuite))
+	e2e.RunSuites(t, e2e.WithContextID("git"), e2e.WithImmutableStoreSuites())
 }

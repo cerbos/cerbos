@@ -59,7 +59,7 @@ func TestServer(t *testing.T) {
 
 	param := Param{AuditLog: auditLog, AuxData: auxData, Store: store, Engine: eng}
 
-	testCases := LoadTestCases(t, "checks", "playground", "plan_resources")
+	tr := LoadTestCases(t, "checks", "playground", "plan_resources")
 
 	t.Run("with_tls", func(t *testing.T) {
 		testdataDir := test.PathToDir(t, "server")
@@ -82,9 +82,9 @@ func TestServer(t *testing.T) {
 
 			tlsConf := &tls.Config{InsecureSkipVerify: true} //nolint:gosec
 
-			t.Run("grpc", RunGRPCTests(testCases, conf.GRPCListenAddr, grpc.WithTransportCredentials(credentials.NewTLS(tlsConf))))
-			t.Run("grpc_over_http", RunGRPCTests(testCases, conf.HTTPListenAddr, grpc.WithTransportCredentials(credentials.NewTLS(tlsConf))))
-			t.Run("http", RunHTTPTests(testCases, fmt.Sprintf("https://%s", conf.HTTPListenAddr), nil))
+			t.Run("grpc", tr.RunGRPCTests(conf.GRPCListenAddr, grpc.WithTransportCredentials(credentials.NewTLS(tlsConf))))
+			t.Run("grpc_over_http", tr.RunGRPCTests(conf.HTTPListenAddr, grpc.WithTransportCredentials(credentials.NewTLS(tlsConf))))
+			t.Run("http", tr.RunHTTPTests(fmt.Sprintf("https://%s", conf.HTTPListenAddr), nil))
 		})
 
 		t.Run("uds", func(t *testing.T) {
@@ -107,8 +107,8 @@ func TestServer(t *testing.T) {
 
 			tlsConf := &tls.Config{InsecureSkipVerify: true} //nolint:gosec
 
-			t.Run("grpc", RunGRPCTests(testCases, conf.GRPCListenAddr, grpc.WithTransportCredentials(credentials.NewTLS(tlsConf))))
-			t.Run("grpc_over_http", RunGRPCTests(testCases, conf.HTTPListenAddr, grpc.WithTransportCredentials(credentials.NewTLS(tlsConf))))
+			t.Run("grpc", tr.RunGRPCTests(conf.GRPCListenAddr, grpc.WithTransportCredentials(credentials.NewTLS(tlsConf))))
+			t.Run("grpc_over_http", tr.RunGRPCTests(conf.HTTPListenAddr, grpc.WithTransportCredentials(credentials.NewTLS(tlsConf))))
 		})
 	})
 
@@ -125,9 +125,9 @@ func TestServer(t *testing.T) {
 
 			startServer(ctx, conf, param)
 
-			t.Run("grpc", RunGRPCTests(testCases, conf.GRPCListenAddr, grpc.WithTransportCredentials(local.NewCredentials())))
-			t.Run("h2c", RunGRPCTests(testCases, conf.HTTPListenAddr, grpc.WithTransportCredentials(local.NewCredentials())))
-			t.Run("http", RunHTTPTests(testCases, fmt.Sprintf("http://%s", conf.HTTPListenAddr), nil))
+			t.Run("grpc", tr.RunGRPCTests(conf.GRPCListenAddr, grpc.WithTransportCredentials(local.NewCredentials())))
+			t.Run("h2c", tr.RunGRPCTests(conf.HTTPListenAddr, grpc.WithTransportCredentials(local.NewCredentials())))
+			t.Run("http", tr.RunHTTPTests(fmt.Sprintf("http://%s", conf.HTTPListenAddr), nil))
 		})
 
 		t.Run("uds", func(t *testing.T) {
@@ -144,7 +144,7 @@ func TestServer(t *testing.T) {
 
 			startServer(ctx, conf, param)
 
-			t.Run("grpc", RunGRPCTests(testCases, conf.GRPCListenAddr, grpc.WithTransportCredentials(local.NewCredentials())))
+			t.Run("grpc", tr.RunGRPCTests(conf.GRPCListenAddr, grpc.WithTransportCredentials(local.NewCredentials())))
 		})
 	})
 }
@@ -196,12 +196,12 @@ func TestAdminService(t *testing.T) {
 
 	startServer(ctx, conf, Param{Store: store, Engine: eng, AuditLog: auditLog, AuxData: auxData})
 
-	testCases := LoadTestCases(t, "admin", "checks")
+	tr := LoadTestCases(t, "admin", "checks")
 	creds := &AuthCreds{Username: "cerbos", Password: "cerbosAdmin"}
 
 	tlsConf := &tls.Config{InsecureSkipVerify: true} //nolint:gosec
-	t.Run("grpc", RunGRPCTests(testCases, conf.GRPCListenAddr, grpc.WithPerRPCCredentials(creds), grpc.WithTransportCredentials(credentials.NewTLS(tlsConf))))
-	t.Run("http", RunHTTPTests(testCases, fmt.Sprintf("https://%s", conf.HTTPListenAddr), creds))
+	t.Run("grpc", tr.RunGRPCTests(conf.GRPCListenAddr, grpc.WithPerRPCCredentials(creds), grpc.WithTransportCredentials(credentials.NewTLS(tlsConf))))
+	t.Run("http", tr.RunHTTPTests(fmt.Sprintf("https://%s", conf.HTTPListenAddr), creds))
 }
 
 func getFreeListenAddr(t *testing.T) string {

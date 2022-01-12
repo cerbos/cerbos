@@ -29,7 +29,7 @@ stop_kind() {
 run_tests() {
     (
         cd "$SCRIPT_DIR"
-        telepresence connect --no-report -- go test -v --tags="tests e2e" "$@"
+        telepresence connect --no-report -- go test -v -failfast -p=2 --tags="tests e2e" "$@"
     )
 }
 
