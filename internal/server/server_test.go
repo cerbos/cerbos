@@ -29,8 +29,6 @@ import (
 )
 
 func TestServer(t *testing.T) {
-	test.SkipIfGHActions(t) // TODO (cell) Servers don't work inside GH Actions for some reason.
-
 	dir := test.PathToDir(t, "store")
 	ctx, cancelFunc := context.WithCancel(context.Background())
 	defer cancelFunc()
@@ -150,8 +148,6 @@ func TestServer(t *testing.T) {
 }
 
 func TestAdminService(t *testing.T) {
-	test.SkipIfGHActions(t) // TODO (cell) Servers don't work inside GH Actions for some reason.
-
 	ctx, cancelFunc := context.WithCancel(context.Background())
 	defer cancelFunc()
 
