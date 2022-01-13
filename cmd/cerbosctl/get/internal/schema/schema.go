@@ -1,7 +1,7 @@
 // Copyright 2021-2022 Zenauth Ltd.
 // SPDX-License-Identifier: Apache-2.0
 
-package get
+package schema
 
 import (
 	"context"
@@ -12,31 +12,34 @@ import (
 
 	schemav1 "github.com/cerbos/cerbos/api/genpb/cerbos/schema/v1"
 	"github.com/cerbos/cerbos/client"
+	"github.com/cerbos/cerbos/cmd/cerbosctl/get/internal/flagset"
 	"github.com/cerbos/cerbos/cmd/cerbosctl/internal"
 )
 
-func listSchemas(c client.AdminClient, cmd *cobra.Command, args *Arguments) error {
+func List(c client.AdminClient, cmd *cobra.Command, format *flagset.Format) error {
 	schemaIds, err := c.ListSchemas(context.Background())
 	if err != nil {
 		return fmt.Errorf("error while requesting schemas: %w", err)
 	}
 
-	if !args.NoHeaders {
-		err = internal.PrintSchemaHeader(cmd.OutOrStdout())
+	if !format.NoHeaders {
+		_, err = fmt.Fprintf(cmd.OutOrStdout(), "SCHEMA ID\n")
 		if err != nil {
-			return fmt.Errorf("failed to print header: %w", err)
+			return fmt.Errorf("failed print to writer: %w", err)
 		}
 	}
 
-	err = internal.PrintIds(cmd.OutOrStdout(), schemaIds...)
-	if err != nil {
-		return fmt.Errorf("failed to print schema ids: %w", err)
+	for _, id := range schemaIds {
+		_, err = fmt.Fprintf(cmd.OutOrStdout(), "%s\n", id)
+		if err != nil {
+			return fmt.Errorf("failed to print schemas: %w", err)
+		}
 	}
 
 	return nil
 }
 
-func getSchema(c client.AdminClient, cmd *cobra.Command, args *Arguments, ids ...string) error {
+func Get(c client.AdminClient, cmd *cobra.Command, format *flagset.Format, ids ...string) error {
 	for idx := range ids {
 		if idx%internal.MaxIDPerReq == 0 {
 			schemas, err := c.GetSchema(context.Background(), ids[idx:internal.MinInt(idx+internal.MaxIDPerReq, len(ids)-idx)]...)
@@ -44,7 +47,7 @@ func getSchema(c client.AdminClient, cmd *cobra.Command, args *Arguments, ids ..
 				return fmt.Errorf("error while requesting schema: %w", err)
 			}
 
-			if err = printSchema(cmd.OutOrStdout(), schemas, args.Output); err != nil {
+			if err = printSchema(cmd.OutOrStdout(), schemas, format.Output); err != nil {
 				return fmt.Errorf("could not print schemas: %w", err)
 			}
 		}

@@ -1,7 +1,7 @@
 // Copyright 2021-2022 Zenauth Ltd.
 // SPDX-License-Identifier: Apache-2.0
 
-package get
+package policy
 
 import (
 	"context"
@@ -13,17 +13,18 @@ import (
 
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
 	"github.com/cerbos/cerbos/client"
+	"github.com/cerbos/cerbos/cmd/cerbosctl/get/internal/flagset"
 	"github.com/cerbos/cerbos/cmd/cerbosctl/internal"
 	"github.com/cerbos/cerbos/internal/policy"
 )
 
-func listPolicies(c client.AdminClient, cmd *cobra.Command, args *Arguments, resType ResourceType) error {
+func List(c client.AdminClient, cmd *cobra.Command, filters *flagset.Filters, format *flagset.Format, resType ResourceType) error {
 	policyIds, err := c.ListPolicies(context.Background())
 	if err != nil {
 		return fmt.Errorf("error while requesting policies: %w", err)
 	}
 
-	if !args.NoHeaders {
+	if !format.NoHeaders {
 		err = internal.PrintPolicyHeader(cmd.OutOrStdout())
 		if err != nil {
 			return fmt.Errorf("failed to print hedaer: %w", err)
@@ -38,9 +39,14 @@ func listPolicies(c client.AdminClient, cmd *cobra.Command, args *Arguments, res
 				return fmt.Errorf("error while requesting policy: %w", err)
 			}
 
-			filtered := filterPolicies(policies, policyIds[idx:idxEnd], getArgs.Name, getArgs.Version, resType)
+			wp := make([]policy.Wrapper, len(policies))
+			for idx, p := range policies {
+				wp[idx] = policy.Wrap(p)
+			}
 
-			err = internal.PrintIds(cmd.OutOrStdout(), filtered...)
+			filtered := filter(wp, policyIds[idx:idxEnd], filters.Name, filters.Version, resType)
+
+			err = internal.PrintPolicies(cmd.OutOrStdout(), filtered)
 			if err != nil {
 				return fmt.Errorf("failed to print policy ids: %w", err)
 			}
@@ -50,7 +56,7 @@ func listPolicies(c client.AdminClient, cmd *cobra.Command, args *Arguments, res
 	return nil
 }
 
-func getPolicy(c client.AdminClient, cmd *cobra.Command, args *Arguments, ids ...string) error {
+func Get(c client.AdminClient, cmd *cobra.Command, format *flagset.Format, ids ...string) error {
 	for idx := range ids {
 		if idx%internal.MaxIDPerReq == 0 {
 			policies, err := c.GetPolicy(context.Background(), ids[idx:internal.MinInt(idx+internal.MaxIDPerReq, len(ids)-idx)]...)
@@ -58,7 +64,7 @@ func getPolicy(c client.AdminClient, cmd *cobra.Command, args *Arguments, ids ..
 				return fmt.Errorf("error while requesting policy: %w", err)
 			}
 
-			if err = printPolicy(cmd.OutOrStdout(), policies, args.Output); err != nil {
+			if err = printPolicy(cmd.OutOrStdout(), policies, format.Output); err != nil {
 				return fmt.Errorf("could not print policies: %w", err)
 			}
 		}
@@ -67,14 +73,13 @@ func getPolicy(c client.AdminClient, cmd *cobra.Command, args *Arguments, ids ..
 	return nil
 }
 
-func filterPolicies(policies []*policyv1.Policy, policyIds, name, version []string, resType ResourceType) []string {
-	filtered := make([]string, 0, len(policies))
+func filter(policies []policy.Wrapper, policyIds, name, version []string, resType ResourceType) map[string]policy.Wrapper {
+	filtered := make(map[string]policy.Wrapper)
 	for idx, p := range policies {
-		wp := policy.Wrap(p)
-		if len(name) != 0 && !stringInSlice(wp.Name, name) {
+		if len(name) != 0 && !stringInSlice(p.Name, name) {
 			continue
 		}
-		if len(version) != 0 && !stringInSlice(wp.Version, version) {
+		if len(version) != 0 && !stringInSlice(p.Version, version) {
 			continue
 		}
 
@@ -91,7 +96,7 @@ func filterPolicies(policies []*policyv1.Policy, policyIds, name, version []stri
 			continue
 		}
 
-		filtered = append(filtered, policyIds[idx])
+		filtered[policyIds[idx]] = p
 	}
 	return filtered
 }
@@ -117,3 +122,12 @@ func stringInSlice(a string, s []string) bool {
 	}
 	return false
 }
+
+type ResourceType uint
+
+const (
+	Unspecified ResourceType = iota
+	DerivedRole
+	PrincipalPolicy
+	ResourcePolicy
+)

@@ -13,26 +13,16 @@ import (
 
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
 	schemav1 "github.com/cerbos/cerbos/api/genpb/cerbos/schema/v1"
+	"github.com/cerbos/cerbos/internal/policy"
 	"github.com/cerbos/cerbos/internal/util"
 )
 
-const prettyPrintIndent = "  "
-
-func PrintIds(w io.Writer, ids ...string) error {
-	for _, id := range ids {
-		_, err := fmt.Fprintf(w, "%s\n", id)
+func PrintPolicies(w io.Writer, policies map[string]policy.Wrapper) error {
+	for policyID, p := range policies {
+		_, err := fmt.Fprintf(w, "%s\t%s\t%s\n", policyID, p.Name, p.Version)
 		if err != nil {
 			return fmt.Errorf("failed to print to writer: %w", err)
 		}
-	}
-
-	return nil
-}
-
-func PrintSchemaHeader(w io.Writer) error {
-	_, err := fmt.Fprintf(w, "SCHEMA ID\n")
-	if err != nil {
-		return fmt.Errorf("failed print to writer: %w", err)
 	}
 
 	return nil
@@ -66,7 +56,7 @@ func PrintSchemaJSON(w io.Writer, schemas []*schemav1.Schema) error {
 }
 
 func PrintPolicyHeader(w io.Writer) error {
-	_, err := fmt.Fprintf(w, "POLICY ID\n")
+	_, err := fmt.Fprintf(w, "POLICY ID\tNAME\tVERSION\n")
 	if err != nil {
 		return fmt.Errorf("failed print to writer: %w", err)
 	}
@@ -90,18 +80,9 @@ func PrintPolicyJSON(w io.Writer, policies []*policyv1.Policy) error {
 
 func PrintPolicyPrettyJSON(w io.Writer, policies []*policyv1.Policy) error {
 	for _, p := range policies {
-		b, err := protojson.Marshal(p)
-		if err != nil {
-			return fmt.Errorf("could not marshal policy: %w", err)
-		}
+		s := protojson.Format(p)
 
-		var prettyJSON bytes.Buffer
-		err = json.Indent(&prettyJSON, b, "", prettyPrintIndent)
-		if err != nil {
-			return fmt.Errorf("could not indent policy: %w", err)
-		}
-
-		_, err = fmt.Fprintf(w, "%s\n", prettyJSON.String())
+		_, err := fmt.Fprintf(w, "%s\n", s)
 		if err != nil {
 			return fmt.Errorf("failed to print policy: %w", err)
 		}

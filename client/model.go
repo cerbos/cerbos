@@ -421,10 +421,10 @@ func (ps *PolicySet) AddPolicyFromReader(r io.Reader) *PolicySet {
 	return nil
 }
 
-// AddPolicy adds the given policy.
-func (ps *PolicySet) AddPolicy(p *policyv1.Policy) *PolicySet {
-	ps.policies = append(ps.policies, p)
-	return nil
+// AddPolicies adds the given policies to the set.
+func (ps *PolicySet) AddPolicies(policies ...*policyv1.Policy) *PolicySet {
+	ps.policies = append(ps.policies, policies...)
+	return ps
 }
 
 // AddResourcePolicies adds the given resource policies to the set.

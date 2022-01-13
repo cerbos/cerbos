@@ -1,0 +1,77 @@
+// Copyright 2021-2022 Zenauth Ltd.
+// SPDX-License-Identifier: Apache-2.0
+
+package derivedroles
+
+import (
+	"fmt"
+
+	"github.com/spf13/cobra"
+
+	"github.com/cerbos/cerbos/client"
+	"github.com/cerbos/cerbos/cmd/cerbosctl/get/internal/flagset"
+	"github.com/cerbos/cerbos/cmd/cerbosctl/get/internal/policy"
+	"github.com/cerbos/cerbos/cmd/cerbosctl/internal"
+)
+
+const example = `# List derived roles
+cerbosctl get derived_roles
+cerbosctl get derived_role
+cerbosctl get dr
+
+# List and filter derived roles
+cerbosctl get derived_roles --name my_derived_roles
+
+# Get derived role policy definition (disk, git, blob stores)
+cerbosctl get derived_roles blog_derived_roles.yaml
+
+# Get derived role policy definition (mutable stores)
+cerbosctl get derived_roles derived_roles.my_derived_roles
+
+# Get derived role policy definition as yaml
+cerbosctl get derived_roles derived_roles.my_derived_roles -oyaml
+
+# Get derived role policy definition as json
+cerbosctl get derived_roles derived_roles.my_derived_roles -ojson
+
+# Get derived role policy definition as pretty json
+cerbosctl get derived_roles derived_roles.my_derived_roles -oprettyjson`
+
+type flag struct {
+	flagset.Format
+	flagset.Filters
+}
+
+var flags = &flag{}
+
+func NewDerivedRolesCmd(fn internal.WithClient) *cobra.Command {
+	cmd := &cobra.Command{
+		Use:     "derived_roles",
+		Aliases: []string{"derived_role", "dr"},
+		Example: example,
+		RunE:    fn(runDerivedRolesCmd),
+	}
+
+	cmd.Flags().AddFlagSet(flags.Format.FlagSet())
+	cmd.Flags().AddFlagSet(flags.Filters.FlagSet())
+
+	return cmd
+}
+
+func runDerivedRolesCmd(c client.AdminClient, cmd *cobra.Command, args []string) error {
+	if len(args) == 0 {
+		err := policy.List(c, cmd, &flags.Filters, &flags.Format, policy.DerivedRole)
+		if err != nil {
+			return fmt.Errorf("failed to list derived roles: %w", err)
+		}
+
+		return nil
+	}
+
+	err := policy.Get(c, cmd, &flags.Format, args[1:]...)
+	if err != nil {
+		return fmt.Errorf("failed to get derived roles: %w", err)
+	}
+
+	return nil
+}

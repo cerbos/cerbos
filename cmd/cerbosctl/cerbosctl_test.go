@@ -4,7 +4,7 @@
 //go:build tests
 // +build tests
 
-package main
+package main_test
 
 import (
 	"bytes"
@@ -51,13 +51,13 @@ func testGetCmd(fn internal.WithClient) func(*testing.T) {
 	//nolint:thelper
 	return func(t *testing.T) {
 		t.Run("cerbosctl get", func(t *testing.T) {
-			t.Run("no arguments", func(t *testing.T) {
+			t.Run("no arguments provided", func(t *testing.T) {
 				cmd := get.NewGetCmd(fn)
 
 				err := cmd.Execute()
-				require.Error(t, err, "no arguments provided")
+				require.Error(t, err)
 			})
-			t.Run("arguments after get", func(t *testing.T) {
+			t.Run("possible arguments after get command", func(t *testing.T) {
 				testCases := []struct {
 					args    []string
 					wantErr bool
@@ -97,7 +97,7 @@ func testGetCmd(fn internal.WithClient) func(*testing.T) {
 					}
 				}
 			})
-			t.Run("number of policies", func(t *testing.T) {
+			t.Run("compare policy count", func(t *testing.T) {
 				testCases := []struct {
 					args []string
 				}{
@@ -149,9 +149,9 @@ func loadPolicies(t *testing.T, ac client.AdminClient) {
 		pp := test.GenPrincipalPolicy(test.Suffix(strconv.Itoa(i)))
 		rp := test.GenResourcePolicy(test.Suffix(strconv.Itoa(i)))
 		dr := test.GenDerivedRoles(test.Suffix(strconv.Itoa(i)))
-		ps.AddPolicy(pp)
-		ps.AddPolicy(rp)
-		ps.AddPolicy(dr)
+		ps.AddPolicies(pp)
+		ps.AddPolicies(rp)
+		ps.AddPolicies(dr)
 
 		require.NoError(t, ac.AddOrUpdatePolicy(context.Background(), ps))
 	}
