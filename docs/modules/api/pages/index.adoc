@@ -358,6 +358,7 @@ The `condition` field holds the AST of the condition that must be satisfied. It 
 | ne                | Not equal (!=)
 | not               | Logical NOT
 | or                | Logical OR
+| sub               | Subtract (-)
 |===
 
 NOTE: Some advanced CEL features like `map` over a list cannot be directly translated into a simple AST and the `operator` field can contain other CEL-specific operators other than those listed above.
