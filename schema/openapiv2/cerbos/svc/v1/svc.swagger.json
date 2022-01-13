@@ -909,11 +909,11 @@
       "properties": {
         "kind": {
           "$ref": "#/definitions/ResourcesQueryPlanResponseFilterKind",
-          "description": "Filter kind"
+          "description": "Filter kind. Defines whether the given action is always allowed, always denied or allowed conditionally."
         },
         "condition": {
           "$ref": "#/definitions/ExpressionOperand",
-          "description": "Filter condition"
+          "description": "Filter condition. Only populated if kind is KIND_CONDITIONAL."
         }
       }
     },
