@@ -16,6 +16,7 @@ import (
 
 	"go.opencensus.io/trace"
 	"go.uber.org/zap"
+	"google.golang.org/protobuf/types/known/structpb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	auditv1 "github.com/cerbos/cerbos/api/genpb/cerbos/audit/v1"
@@ -307,11 +308,15 @@ func (engine *Engine) ResourcesQueryPlan(ctx context.Context, input *enginev1.Re
 	}
 
 	if plan != nil {
-		response.Filter = new(responsev1.ResourcesQueryPlanResponse_Expression_Operand)
-		err = convert(plan.Filter, response.Filter)
+		response.Filter = &responsev1.ResourcesQueryPlanResponse_Filter{
+			Kind:      responsev1.ResourcesQueryPlanResponse_Filter_KIND_CONDITIONAL,
+			Condition: new(responsev1.ResourcesQueryPlanResponse_Expression_Operand),
+		}
+		err = convert(plan.Filter, response.Filter.Condition)
 		if err != nil {
 			return nil, err
 		}
+		normaliseFilter(response.Filter)
 		if input.IncludeMeta {
 			response.Meta = new(responsev1.ResourcesQueryPlanResponse_Meta)
 			response.Meta.FilterDebug, err = String(plan.Filter)
@@ -322,6 +327,30 @@ func (engine *Engine) ResourcesQueryPlan(ctx context.Context, input *enginev1.Re
 	}
 
 	return response, nil
+}
+
+func normaliseFilter(filter *responsev1.ResourcesQueryPlanResponse_Filter) {
+	if filter.Condition == nil {
+		filter.Kind = responsev1.ResourcesQueryPlanResponse_Filter_KIND_ALWAYS_ALLOWED
+		return
+	}
+	if filter.Condition.Node == nil {
+		filter.Condition = nil
+		filter.Kind = responsev1.ResourcesQueryPlanResponse_Filter_KIND_ALWAYS_ALLOWED
+		return
+	}
+	v := filter.Condition.GetValue()
+	if v == nil {
+		return
+	}
+	if b, ok := v.Kind.(*structpb.Value_BoolValue); ok {
+		filter.Condition = nil
+		if b.BoolValue {
+			filter.Kind = responsev1.ResourcesQueryPlanResponse_Filter_KIND_ALWAYS_ALLOWED
+		} else {
+			filter.Kind = responsev1.ResourcesQueryPlanResponse_Filter_KIND_ALWAYS_DENIED
+		}
+	}
 }
 
 func (engine *Engine) evaluate(ctx context.Context, input *enginev1.CheckInput, checkOpts *checkOptions) (*enginev1.CheckOutput, error) {

@@ -72,11 +72,29 @@ message ResourcesQueryPlanResponse {
         }
         repeated Operand operands = 2;
     }
-    Expression.Operand filter = 5 [
+    message Filter {
+        enum Kind {
+           KIND_UNSPECIFIED = 0;
+           KIND_ALWAYS_ALLOWED = 1;
+           KIND_ALWAYS_DENIED = 2;
+           KIND_CONDITIONAL = 3;
+        }
+        Kind kind = 1 [
+            (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+                description: "Filter kind. Defines whether the given action is always allowed, always denied or allowed conditionally.",
+            }
+        ];
+        Expression.Operand condition = 2 [
+            (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+                description: "Filter condition. Only populated if kind is KIND_CONDITIONAL.",
+            }
+        ];
+    }
+    Filter filter = 5 [
         (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
             description: "Filter",
         }
-   ];
+    ];
     message Meta {
         option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
             json_schema: {

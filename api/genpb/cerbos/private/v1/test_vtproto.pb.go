@@ -6070,7 +6070,7 @@ func (m *QueryPlannerTestSuite_Test) UnmarshalVT(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if m.Want == nil {
-				m.Want = &v12.ResourcesQueryPlanResponse_Expression_Operand{}
+				m.Want = &v12.ResourcesQueryPlanResponse_Filter{}
 			}
 			if unmarshal, ok := interface{}(m.Want).(interface {
 				UnmarshalVT([]byte) error

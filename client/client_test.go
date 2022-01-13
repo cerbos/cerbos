@@ -12,6 +12,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
+	responsev1 "github.com/cerbos/cerbos/api/genpb/cerbos/response/v1"
 	"github.com/cerbos/cerbos/client"
 	"github.com/cerbos/cerbos/client/testutil"
 	"github.com/cerbos/cerbos/internal/test"
@@ -270,7 +271,8 @@ func testGRPCClient(c client.Client) func(*testing.T) {
 				"approve")
 
 			is.NoError(err)
-			expression := have.Filter.GetExpression()
+			is.Equal(have.Filter.Kind, responsev1.ResourcesQueryPlanResponse_Filter_KIND_CONDITIONAL)
+			expression := have.Filter.Condition.GetExpression()
 			is.NotNil(expression)
 			is.Equal(expression.Operator, "eq")
 			is.Equal(expression.Operands[0].GetVariable(), "request.resource.attr.status")

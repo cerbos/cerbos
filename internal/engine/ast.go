@@ -34,6 +34,10 @@ const (
 	List               = "list"
 	Struct             = "struct"
 	Add                = "add"
+	Sub                = "sub"
+	Mult               = "mult"
+	Div                = "div"
+	Mod                = "mod"
 	SetField           = "set-field"
 	GetField           = "get-field"
 	Index              = "index"
@@ -67,6 +71,14 @@ func opFromCLE(fn string) (string, error) {
 		return In, nil
 	case operators.Add:
 		return Add, nil
+	case operators.Subtract:
+		return Sub, nil
+	case operators.Multiply:
+		return Mult, nil
+	case operators.Divide:
+		return Div, nil
+	case operators.Modulo:
+		return Mod, nil
 	case operators.Index:
 		return Index, nil
 	default:

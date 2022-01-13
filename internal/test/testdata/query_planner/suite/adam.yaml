@@ -10,4 +10,5 @@ tests:
       resource:
         kind: leave_request
         policyVersion: default
-      want: {}
+      want:
+        kind: KIND_ALWAYS_ALLOWED

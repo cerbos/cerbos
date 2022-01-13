@@ -12,17 +12,21 @@ tests:
       kind: leave_request
       policyVersion: default
     want:
-      expression:
-        operator: eq
-        operands:
-          - variable: request.resource.attr.dev_record
-          - value: true
+      kind: KIND_CONDITIONAL
+      condition:
+        expression:
+          operator: eq
+          operands:
+            - variable: request.resource.attr.dev_record
+            - value: true
   - action: view-salary-record
     resource:
       kind: salary_record
       policyVersion: default
     want:
-      expression:
-        operator: not
-        operands:
-          - value: true
+      kind: KIND_CONDITIONAL
+      condition:
+        expression:
+          operator: not
+          operands:
+            - value: true
