@@ -31,26 +31,28 @@ resourcesQueryPlan:
     resourceKind: leave_request
     policyVersion: '20210210'
     filter:
-      expression:
-        operator: and
-        operands:
-          - expression:
-              operator: and
-              operands:
-                - expression:
-                    operator: eq
-                    operands:
-                      - variable: request.resource.attr.geography
-                      - value: GB
-                - expression:
-                    operator: eq
-                    operands:
-                      - variable: request.resource.attr.geography
-                      - value: GB
-          - expression:
-              operator: eq
-              operands:
-                - variable: request.resource.attr.status
-                - value: PENDING_APPROVAL
+      kind: KIND_CONDITIONAL
+      condition:
+        expression:
+          operator: and
+          operands:
+            - expression:
+                operator: and
+                operands:
+                  - expression:
+                      operator: eq
+                      operands:
+                        - variable: request.resource.attr.geography
+                        - value: GB
+                  - expression:
+                      operator: eq
+                      operands:
+                        - variable: request.resource.attr.geography
+                        - value: GB
+            - expression:
+                operator: eq
+                operands:
+                  - variable: request.resource.attr.status
+                  - value: PENDING_APPROVAL
     meta:
       filter_debug: (((request.resource.attr.geography == "GB") AND (request.resource.attr.geography == "GB")) AND (request.resource.attr.status == "PENDING_APPROVAL"))

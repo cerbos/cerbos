@@ -17,6 +17,8 @@ tests:
         kind: leave_request
         policyVersion: default
       want:
+        kind: KIND_CONDITIONAL
+        condition:
           expression:
               operator: and
               operands:
@@ -46,158 +48,181 @@ tests:
                                   operands:
                                       - variable: R.attr.owner
                                       - value: "maggie"
+
     - action: "report:deny-deny"
       resource:
         kind: leave_request
         policyVersion: default
       want:
-        expression:
-          operator: and
-          operands:
-            - expression:
-                operator: not
-                operands:
-                  - variable: R.attr.deleted
-            - expression:
-                operator: not
-                operands:
-                  - variable: R.attr.hidden
+        kind: KIND_CONDITIONAL
+        condition:
+          expression:
+            operator: and
+            operands:
+              - expression:
+                  operator: not
+                  operands:
+                    - variable: R.attr.deleted
+              - expression:
+                  operator: not
+                  operands:
+                    - variable: R.attr.hidden
+
     - action: "report:deny"
       resource:
         kind: leave_request
         policyVersion: default
       want:
-        expression:
-          operator: not
-          operands:
-            - variable: R.attr.deleted
+        kind: KIND_CONDITIONAL
+        condition:
+          expression:
+            operator: not
+            operands:
+              - variable: R.attr.deleted
+
     - action: "approve:true-in-both-or-and-conditions"
       resource:
         kind: leave_request
         policyVersion: default
       want:
-        expression:
-          operator: and
-          operands:
-            - expression:
-                operator: eq
-                operands:
-                  - variable: R.attr.status
-                  - value: "PENDING_APPROVAL"
-            - expression:
-                operator: ne
-                operands:
-                  - variable: R.attr.owner
-                  - value: "maggie"
+        kind: KIND_CONDITIONAL
+        condition:
+          expression:
+            operator: and
+            operands:
+              - expression:
+                  operator: eq
+                  operands:
+                    - variable: R.attr.status
+                    - value: "PENDING_APPROVAL"
+              - expression:
+                  operator: ne
+                  operands:
+                    - variable: R.attr.owner
+                    - value: "maggie"
+
     - action: "approve:allow-allow-deny"
       resource:
         kind: leave_request
         policyVersion: default
       want:
-        expression:
-          operator: and
-          operands:
-            - expression:
-                operator: not
-                operands:
-                  - expression:
-                      operator: eq
-                      operands:
-                        - variable: R.attr.owner
-                        - value: "maggie"
-            - expression:
-                operator: or
-                operands:
-                  - expression:
-                      operator: eq
-                      operands:
-                        - variable: R.attr.status
-                        - value: "PENDING_APPROVAL"
-                  - expression:
-                      operator: eq
-                      operands:
-                        - variable: R.attr.geography
-                        - value: "US"
+        kind: KIND_CONDITIONAL
+        condition:
+          expression:
+            operator: and
+            operands:
+              - expression:
+                  operator: not
+                  operands:
+                    - expression:
+                        operator: eq
+                        operands:
+                          - variable: R.attr.owner
+                          - value: "maggie"
+              - expression:
+                  operator: or
+                  operands:
+                    - expression:
+                        operator: eq
+                        operands:
+                          - variable: R.attr.status
+                          - value: "PENDING_APPROVAL"
+                    - expression:
+                        operator: eq
+                        operands:
+                          - variable: R.attr.geography
+                          - value: "US"
     - action: "approve:allow-allow"
       resource:
         kind: leave_request
         policyVersion: default
       want:
-        expression:
-          operator: or
-          operands:
-            - expression:
-                operator: eq
-                operands:
-                  - variable: R.attr.status
-                  - value: "PENDING_APPROVAL"
-            - expression:
-                operator: eq
-                operands:
-                  - variable: R.attr.geography
-                  - value: "US"
+        kind: KIND_CONDITIONAL
+        condition:
+          expression:
+            operator: or
+            operands:
+              - expression:
+                  operator: eq
+                  operands:
+                    - variable: R.attr.status
+                    - value: "PENDING_APPROVAL"
+              - expression:
+                  operator: eq
+                  operands:
+                    - variable: R.attr.geography
+                    - value: "US"
+
     - action: "approve:allow-deny"
       resource:
         kind: leave_request
         policyVersion: default
       want:
-        expression:
-          operator: and
-          operands:
-            - expression:
-                operator: not
-                operands:
-                - expression:
-                    operator: eq
-                    operands:
-                      - variable: R.attr.owner
-                      - value: "maggie"
-            - expression:
-                operator: eq
-                operands:
-                  - variable: R.attr.status
-                  - value: "PENDING_APPROVAL"
+        kind: KIND_CONDITIONAL
+        condition:
+          expression:
+            operator: and
+            operands:
+              - expression:
+                  operator: not
+                  operands:
+                  - expression:
+                      operator: eq
+                      operands:
+                        - variable: R.attr.owner
+                        - value: "maggie"
+              - expression:
+                  operator: eq
+                  operands:
+                    - variable: R.attr.status
+                    - value: "PENDING_APPROVAL"
+
     - action: "approve:false-in-and-condition"
       resource:
         kind: leave_request
         policyVersion: default
       want:
-        value: false
+        kind: KIND_ALWAYS_DENIED
+
     - action: "enlist:none-condition"
       resource:
         kind: leave_request
         policyVersion: default
       want:
-        expression:
-          operator: and
-          operands:
-            - expression:
-                operator: not
-                operands:
-                  - expression:
-                      operator: in
-                      operands:
-                        - variable: R.attr.team
-                        - value: ["A", "B"]
-            - expression:
-                operator: not
-                operands:
-                  - expression:
-                      operator: lt
-                      operands:
-                        - variable: R.attr.GPA
-                        - value: 4.7
+        kind: KIND_CONDITIONAL
+        condition:
+          expression:
+            operator: and
+            operands:
+              - expression:
+                  operator: not
+                  operands:
+                    - expression:
+                        operator: in
+                        operands:
+                          - variable: R.attr.team
+                          - value: ["A", "B"]
+              - expression:
+                  operator: not
+                  operands:
+                    - expression:
+                        operator: lt
+                        operands:
+                          - variable: R.attr.GPA
+                          - value: 4.7
 
     - action: "approve:with-jwt"
       resource:
         kind: leave_request
         policyVersion: default
       want:
-        expression:
-          operator: eq
-          operands:
-            - variable: R.attr.groupID
-            - value: 42
+        kind: KIND_CONDITIONAL
+        condition:
+          expression:
+            operator: eq
+            operands:
+              - variable: R.attr.groupID
+              - value: 42
     - action: "approve:refer-derived-role"
       resource:
         kind: leave_request
@@ -205,19 +230,21 @@ tests:
         attr:
           geography: "US"
       want:
-        expression:
-          operator: and
-          operands:
-            - expression:
-                operator: eq
-                operands:
-                  - variable: R.attr.status
-                  - value: "PENDING_APPROVAL"
-            - expression:
-                operator: ne
-                operands:
-                  - variable: R.attr.owner
-                  - value: "maggie"
+        kind: KIND_CONDITIONAL
+        condition:
+          expression:
+            operator: and
+            operands:
+              - expression:
+                  operator: eq
+                  operands:
+                    - variable: R.attr.status
+                    - value: "PENDING_APPROVAL"
+              - expression:
+                  operator: ne
+                  operands:
+                    - variable: R.attr.owner
+                    - value: "maggie"
     - action: "approve"
       resource:
         kind: leave_request
@@ -225,16 +252,18 @@ tests:
         attr:
           geography: "US"
       want:
-        expression:
-          operator: and
-          operands:
-            - expression:
-                operator: eq
-                operands:
-                  - variable: R.attr.status
-                  - value: "PENDING_APPROVAL"
-            - expression:
-                operator: ne
-                operands:
-                  - variable: R.attr.owner
-                  - value: "maggie"
+        kind: KIND_CONDITIONAL
+        condition:
+          expression:
+            operator: and
+            operands:
+              - expression:
+                  operator: eq
+                  operands:
+                    - variable: R.attr.status
+                    - value: "PENDING_APPROVAL"
+              - expression:
+                  operator: ne
+                  operands:
+                    - variable: R.attr.owner
+                    - value: "maggie"

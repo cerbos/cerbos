@@ -16,7 +16,7 @@ resourcesQueryPlan:
       ]
     },
     "resource": {
-      "kind":  "leave_request",
+      "kind": "leave_request",
       "policyVersion": "20210210"
     },
     "auxData": {
@@ -30,7 +30,9 @@ resourcesQueryPlan:
     "action": "defer",
     "resourceKind": "leave_request",
     "policyVersion": "20210210",
-    "filter": { "value": true },
+    "filter": {
+      "kind": "KIND_ALWAYS_ALLOWED",
+    },
     "meta": {
       "filter_debug": "(true)"
     }

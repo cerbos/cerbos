@@ -742,15 +742,6 @@
         }
       }
     },
-    "ListAuditLogEntriesRequestKind": {
-      "type": "string",
-      "enum": [
-        "KIND_UNSPECIFIED",
-        "KIND_ACCESS",
-        "KIND_DECISION"
-      ],
-      "default": "KIND_UNSPECIFIED"
-    },
     "ListAuditLogEntriesRequestTimeRange": {
       "type": "object",
       "properties": {
@@ -912,6 +903,29 @@
         }
       },
       "description": "CEL expression"
+    },
+    "ResourcesQueryPlanResponseFilter": {
+      "type": "object",
+      "properties": {
+        "kind": {
+          "$ref": "#/definitions/ResourcesQueryPlanResponseFilterKind",
+          "description": "Filter kind"
+        },
+        "condition": {
+          "$ref": "#/definitions/ExpressionOperand",
+          "description": "Filter condition"
+        }
+      }
+    },
+    "ResourcesQueryPlanResponseFilterKind": {
+      "type": "string",
+      "enum": [
+        "KIND_UNSPECIFIED",
+        "KIND_ALWAYS_ALLOWED",
+        "KIND_ALWAYS_DENIED",
+        "KIND_CONDITIONAL"
+      ],
+      "default": "KIND_UNSPECIFIED"
     },
     "ValidationErrorSource": {
       "type": "string",
@@ -1572,6 +1586,15 @@
       },
       "description": "Get schema(s) response"
     },
+    "v1ListAuditLogEntriesRequestKind": {
+      "type": "string",
+      "enum": [
+        "KIND_UNSPECIFIED",
+        "KIND_ACCESS",
+        "KIND_DECISION"
+      ],
+      "default": "KIND_UNSPECIFIED"
+    },
     "v1ListAuditLogEntriesResponse": {
       "type": "object",
       "properties": {
@@ -2136,7 +2159,7 @@
           "description": "The policy version."
         },
         "filter": {
-          "$ref": "#/definitions/ExpressionOperand",
+          "$ref": "#/definitions/ResourcesQueryPlanResponseFilter",
           "description": "Filter"
         },
         "meta": {

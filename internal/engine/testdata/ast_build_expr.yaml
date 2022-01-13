@@ -163,3 +163,27 @@
     operator: list
 "has(a.b)":
   value: true
+"a - 2":
+  expression:
+    operands:
+      - variable: a
+      - value: 2
+    operator: sub
+"a * 2":
+  expression:
+    operands:
+      - variable: a
+      - value: 2
+    operator: mult
+"a / 2":
+  expression:
+    operands:
+      - variable: a
+      - value: 2
+    operator: div
+"a % 2":
+  expression:
+    operands:
+      - variable: a
+      - value: 2
+    operator: mod

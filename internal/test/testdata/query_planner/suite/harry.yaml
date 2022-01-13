@@ -12,24 +12,28 @@ tests:
       kind: leave_request
       policyVersion: default
     want:
-      expression:
-        operator: eq
-        operands:
-          - variable: R.attr.owner
-          - value: harry
+      kind: KIND_CONDITIONAL
+      condition:
+        expression:
+          operator: eq
+          operands:
+            - variable: R.attr.owner
+            - value: harry
   - action: view:refer-derived-role
     resource:
       kind: leave_request
       policyVersion: default
     want:
-      expression:
-        operator: eq
-        operands:
-          - variable: request.resource.attr.owner
-          - value: harry
+      kind: KIND_CONDITIONAL
+      condition:
+        expression:
+          operator: eq
+          operands:
+            - variable: request.resource.attr.owner
+            - value: harry
   - action: non-existent-action
     resource:
       kind: leave_request
       policyVersion: default
     want:
-      value: true
+      kind: KIND_ALWAYS_ALLOWED

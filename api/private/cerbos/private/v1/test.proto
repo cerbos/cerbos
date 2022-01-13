@@ -136,7 +136,7 @@ message QueryPlannerTestSuite {
     cerbos.engine.v1.Principal principal = 2;
     message Test {
         string action = 1;
-        cerbos.response.v1.ResourcesQueryPlanResponse.Expression.Operand want = 2;
+        cerbos.response.v1.ResourcesQueryPlanResponse.Filter want = 2;
         cerbos.engine.v1.ResourcesQueryPlanRequest.Resource resource = 3;
     }
     repeated Test tests = 3;
