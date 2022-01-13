@@ -18,14 +18,11 @@ Alternatively, you can explore the API using the following methods as well:
 
 == Client SDKs
 
-=== Available
+* link:https://pkg.go.dev/github.com/cerbos/cerbos/client[Go] image:go.svg[alt="Go",opts="interactive",width=40,height=40,link="https://pkg.go.dev/github.com/cerbos/cerbos/client"] 
+* link:https://github.com/cerbos/cerbos-sdk-java[Java] image:java.svg[alt="Java",opts="interactive",width=40,height=40,link="https://github.com/cerbos/cerbos-sdk-java"]
+* link:https://github.com/cerbos/cerbos-sdk-node[NodeJS] image:nodejs.svg[alt="NodeJS",opts="interactive",width=40,height=40,link="https://github.com/cerbos/cerbos-sdk-node"]
 
-image:go.svg[alt="Go",opts="interactive",width=40,height=40,link="https://pkg.go.dev/github.com/cerbos/cerbos/client"] image:java.svg[alt="Java",opts="interactive",width=40,height=40,link="https://github.com/cerbos/cerbos-sdk-java"] image:nodejs.svg[alt="NodeJS",opts="interactive",width=40,height=40,link="https://github.com/cerbos/cerbos-sdk-node"]
-
-=== Coming soon
-
-image:csharp.svg[alt="C#",opts="interactive",width=40,height=40]  image:python.svg[alt="Python",opts="interactive",width=40,height=40]  image:ruby.svg[alt="Ruby",opts="interactive",width=40,height=40]  image:rust.svg[alt="Rust",opts="interactive",width=40,height=40]
-
+Other languages coming soon
 
 == Demos
 
@@ -44,6 +41,8 @@ image:csharp.svg[alt="C#",opts="interactive",width=40,height=40]  image:python.s
 == Request and response formats
 
 === `CheckResourceSet` (`/api/check`)
+
+Checks permissions for a set of homogeneous resources.
 
 .Request
 [source,json,linenums]
@@ -249,6 +248,10 @@ Unlike `CheckResourceSet` -- which checks access to resource instances of the _s
 
 === `ResourcesQueryPlan` (`/api/x/plan/resources`)
 
+Produces a query plan that can be used to obtain a list of resources that a principal is allowed to perform a particular action on. 
+
+IMPORTANT: This is an experimental API without any backward compatibility guarantees.
+
 .Request
 [source,json,linenums]
 ----
@@ -302,22 +305,120 @@ Unlike `CheckResourceSet` -- which checks access to resource instances of the _s
   "action": "approve",
   "resourceKind": "leave_request",
   "policyVersion": "dev",
-  "filter": { <1>
-    "expression":  {
-      "operator":  "eq",
-      "operands":  [
-        { "variable":  "request.resource.attr.status" },
-        { "value":  "PENDING_APPROVAL" }
-      ]
+  "filter": {
+    "kind": "KIND_CONDITIONAL", <1>
+    "condition": { <2>
+        "expression":  {
+          "operator":  "eq",
+          "operands":  [
+            { "variable":  "request.resource.attr.status" },
+            { "value":  "PENDING_APPROVAL" }
+          ]
+        }
     }
   },
   "meta": { 
-    "filterDebug": "(request.resource.attr.status == \"PENDING_APPROVAL\")" <2>
+    "filterDebug": "(request.resource.attr.status == \"PENDING_APPROVAL\")" <3>
   },
 }
 ----
-<1> Abstract syntax tree (AST) of the policies' conditions, which have been partially evaluated using values provided in the request.
-<2> Filter AST represented as a string. Useful for debugging.
+<1> Filter kind can be `KIND_ALWAYS_ALLOWED`, `KIND_ALWAYS_DENIED` or `KIND_CONDITIONAL`. See below for description of what these values mean.
+<2> Populated only if `kind ` is `KIND_CONDITIONAL`. Contains the abstract syntax tree (AST) of the condition that must be satisfied to allow the action.
+<3> Condition AST represented as a human readable string. Useful for debugging.
+
+==== Structure of the `filter` block
+
+The `kind` field defines the filter kind.
+
+`KIND_ALWAYS_ALLOWED`:: The principal is unconditionally allowed to perform the action
+`KIND_ALWAYS_DENIED`:: The principal is unconditionally not permitted to perfrom the action
+`KIND_CONDITIONAL`:: The principal is allowed to perform the action if the condition is satisfied
+
+
+The `condition` field holds the AST of the condition that must be satisfied. It is rooted in an expression that has an `operator` (e.g. equals, greater than) and `operands` (e.g. a constant value, a variable or another expression).
+
+.Common Operators
+[caption=]
+[%header,cols=".^1m,.^4",grid=rows]
+|===
+| Operator | Description 
+| add               | Addition (+)
+| and               | Logical AND (&&)  
+| div               | Division (/)
+| eq                | Equality (==)
+| ge                | Greater than or equal (>=)
+| gt                | Greater than (>)
+| in                | List membership (in)
+| index             | Array or map index 
+| le                | Less than or equal (<=)
+| list              | List constructor
+| lt                | Less than (<)
+| mod               | Modulo (%)
+| mult              | Multiplication (*)
+| ne                | Not equal (!=)
+| not               | Logical NOT
+| or                | Logical OR
+| sub               | Subtract (-)
+|===
+
+NOTE: Some advanced CEL features like `map` over a list cannot be directly translated into a simple AST and the `operator` field can contain other CEL-specific operators other than those listed above.
+
+
+.Example: `request.resource.attr.status == "PENDING_APPROVAL"
+[source,json,linenums]
+----
+{
+  "expression": {
+    "operator": "eq",
+    "operands": [
+      {
+        "variable": "request.resource.attr.status"
+      },
+      {
+        "value": "PENDING_APPROVAL"
+      }
+    ]
+  }
+}
+----
+
+.Example: `(request.resource.attr.department == "marketing") && (request.resource.attr.team != "design")
+[source,json,linenums]
+----
+{
+  "expression": {
+    "operator": "and",
+    "operands": [
+      {
+        "expression": {
+          "operator": "eq",
+          "operands": [
+            {
+              "variable": "request.resource.attr.department"
+            },
+            {
+              "value": "marketing"
+            }
+          ]
+        }
+      },
+      {
+        "expression": {
+          "operator": "ne",
+          "operands": [
+            {
+              "variable": "request.resource.attr.team"
+            },
+            {
+              "value": "design"
+            }
+          ]
+        }
+      }
+    ]
+  }
+}
+----
 
 == Accessing the API
 
