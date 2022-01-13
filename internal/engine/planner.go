@@ -310,10 +310,13 @@ func evaluateCondition(condition *runtimev1.Condition, input *enginev1.Resources
 				nodes = append(nodes, node)
 			}
 		}
-		if len(nodes) > 0 {
-			res.Node = &qpNLO{LogicalOperation: mkOrLogicalOperation(nodes)}
-		} else {
+		switch len(nodes) {
+		case 0:
 			res.Node = &qpNE{Expression: conditions.TrueExpr}
+		case 1:
+			res.Node = nodes[0].Node
+		default:
+			res.Node = &qpNLO{LogicalOperation: mkOrLogicalOperation(nodes)}
 		}
 	case *runtimev1.Condition_All:
 		nodes := make([]*qpN, 0, len(t.All.Expr))
@@ -336,10 +339,13 @@ func evaluateCondition(condition *runtimev1.Condition, input *enginev1.Resources
 				nodes = append(nodes, node)
 			}
 		}
-		if len(nodes) > 0 {
-			res.Node = &qpNLO{LogicalOperation: mkAndLogicalOperation(nodes)}
-		} else {
+		switch len(nodes) {
+		case 0:
 			res.Node = &qpNE{Expression: conditions.TrueExpr}
+		case 1:
+			res.Node = nodes[0].Node
+		default:
+			res.Node = &qpNLO{LogicalOperation: mkAndLogicalOperation(nodes)}
 		}
 	case *runtimev1.Condition_None:
 		nodes := make([]*qpN, 0, len(t.None.Expr))
@@ -362,10 +368,13 @@ func evaluateCondition(condition *runtimev1.Condition, input *enginev1.Resources
 				nodes = append(nodes, invertNodeBooleanValue(node))
 			}
 		}
-		if len(nodes) > 0 {
-			res.Node = &qpNLO{LogicalOperation: mkAndLogicalOperation(nodes)}
-		} else {
+		switch len(nodes) {
+		case 0:
 			res.Node = &qpNE{Expression: conditions.TrueExpr}
+		case 1:
+			res.Node = nodes[0].Node
+		default:
+			res.Node = &qpNLO{LogicalOperation: mkAndLogicalOperation(nodes)}
 		}
 	case *runtimev1.Condition_Expr:
 		_, residual, err := evaluateCELExprPartially(t.Expr.Checked, input, variables)
