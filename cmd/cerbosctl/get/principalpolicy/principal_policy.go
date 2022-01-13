@@ -49,6 +49,7 @@ func NewPrincipalPolicyCmd(fn internal.WithClient) *cobra.Command {
 		Use:     "principal_policies",
 		Aliases: []string{"principal_policy", "pp"},
 		Example: example,
+		PreRunE: policy.PreRunFn(policy.PrincipalPolicy, &flags.Filters, &flags.Format),
 		RunE:    fn(runPrincipalPolicyCmd),
 	}
 

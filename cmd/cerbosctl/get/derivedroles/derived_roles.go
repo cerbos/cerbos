@@ -49,6 +49,7 @@ func NewDerivedRolesCmd(fn internal.WithClient) *cobra.Command {
 		Use:     "derived_roles",
 		Aliases: []string{"derived_role", "dr"},
 		Example: example,
+		PreRunE: policy.PreRunFn(policy.DerivedRoles, &flags.Filters, &flags.Format),
 		RunE:    fn(runDerivedRolesCmd),
 	}
 
@@ -60,7 +61,7 @@ func NewDerivedRolesCmd(fn internal.WithClient) *cobra.Command {
 
 func runDerivedRolesCmd(c client.AdminClient, cmd *cobra.Command, args []string) error {
 	if len(args) == 0 {
-		err := policy.List(c, cmd, &flags.Filters, &flags.Format, policy.DerivedRole)
+		err := policy.List(c, cmd, &flags.Filters, &flags.Format, policy.DerivedRoles)
 		if err != nil {
 			return fmt.Errorf("failed to list derived roles: %w", err)
 		}

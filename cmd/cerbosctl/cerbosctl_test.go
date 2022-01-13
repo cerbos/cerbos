@@ -57,6 +57,29 @@ func testGetCmd(fn internal.WithClient) func(*testing.T) {
 				err := cmd.Execute()
 				require.Error(t, err)
 			})
+			t.Run("wrong flags in wrong commands", func(t *testing.T) {
+				testCases := []struct {
+					args    []string
+					wantErr bool
+				}{
+					{strings.Split("schema --no-headers", " "), false},
+					{strings.Split("derived_roles --name=a", " "), false},
+					{strings.Split("principal_policies --name=a --version=default", " "), false},
+					{strings.Split("resource_policies --name=a --version=default", " "), false},
+					{strings.Split("derived_roles --version=abc", " "), true},
+					{strings.Split("derived_roles a.b.c --no-headers", " "), true},
+				}
+				for _, tc := range testCases {
+					cmd := get.NewGetCmd(fn)
+					cmd.SetArgs(tc.args)
+					err := cmd.Execute()
+					if tc.wantErr {
+						require.Error(t, err)
+					} else {
+						require.NoError(t, err)
+					}
+				}
+			})
 			t.Run("possible arguments after get command", func(t *testing.T) {
 				testCases := []struct {
 					args    []string

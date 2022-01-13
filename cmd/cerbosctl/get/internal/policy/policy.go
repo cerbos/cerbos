@@ -92,7 +92,7 @@ func filter(policies []policy.Wrapper, policyIds, name, version []string, resTyp
 			continue
 		}
 		_, ok = p.PolicyType.(*policyv1.Policy_DerivedRoles)
-		if ok && resType != DerivedRole {
+		if ok && resType != DerivedRoles {
 			continue
 		}
 
@@ -127,7 +127,7 @@ type ResourceType uint
 
 const (
 	Unspecified ResourceType = iota
-	DerivedRole
+	DerivedRoles
 	PrincipalPolicy
 	ResourcePolicy
 )
