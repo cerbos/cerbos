@@ -30,13 +30,9 @@ func NewGetCmd(fn internal.WithClient) *cobra.Command {
 }
 
 func runGetCmd(_ client.AdminClient, cmd *cobra.Command, args []string) error {
-	if len(args) == 0 {
-		err := cmd.Help()
-		if err != nil {
-			return fmt.Errorf("failed to print help when no arguments provided")
-		}
-		return fmt.Errorf("no arguments provided")
+	err := cmd.Help()
+	if err != nil {
+		return fmt.Errorf("failed to print help when no arguments provided")
 	}
-
-	return nil
+	return fmt.Errorf("no arguments provided")
 }

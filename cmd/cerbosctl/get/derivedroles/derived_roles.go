@@ -49,7 +49,7 @@ func NewDerivedRolesCmd(fn internal.WithClient) *cobra.Command {
 		Use:     "derived_roles",
 		Aliases: []string{"derived_role", "dr"},
 		Example: example,
-		PreRunE: policy.PreRunFn(policy.DerivedRoles, &flags.Filters, &flags.Format),
+		PreRunE: policy.PreRunFn(policy.DerivedRoles),
 		RunE:    fn(runDerivedRolesCmd),
 	}
 
