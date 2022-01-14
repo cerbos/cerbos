@@ -927,6 +927,17 @@
       ],
       "default": "KIND_UNSPECIFIED"
     },
+    "SchemasIgnoreWhen": {
+      "type": "object",
+      "properties": {
+        "actions": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
     "ValidationErrorSource": {
       "type": "string",
       "enum": [
@@ -2212,6 +2223,9 @@
       "properties": {
         "ref": {
           "type": "string"
+        },
+        "ignoreWhen": {
+          "$ref": "#/definitions/SchemasIgnoreWhen"
         }
       }
     },

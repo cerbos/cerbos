@@ -22,6 +22,7 @@ import (
 	"github.com/cerbos/cerbos/internal/namer"
 	"github.com/cerbos/cerbos/internal/observability/tracing"
 	"github.com/cerbos/cerbos/internal/schema"
+	"github.com/cerbos/cerbos/internal/util"
 )
 
 var (
@@ -139,7 +140,7 @@ func (rpe *resourcePolicyEvaluator) Evaluate(ctx context.Context, input *enginev
 			}
 
 			for actionGlob := range rule.Actions {
-				matchedActions := globMatch(actionGlob, input.Actions)
+				matchedActions := util.FilterGlob(actionGlob, input.Actions)
 				for _, action := range matchedActions {
 					actx := rctx.beginTrace(actionComponent, action)
 					ok, err := satisfiesCondition(actx.beginTrace(conditionComponent), rule.Condition, variables, input)
@@ -189,13 +190,13 @@ func (ppe *principalPolicyEvaluator) Evaluate(ctx context.Context, input *engine
 
 		for resource, resourceRules := range p.ResourceRules {
 			rctx := tctx.beginTrace(resourceComponent, resource)
-			if !globs.matches(resource, input.Resource.Kind) {
+			if !util.MatchesGlob(resource, input.Resource.Kind) {
 				rctx.writeEvent(KVSkip(), KVMsg("Did not match input resource kind"))
 				continue
 			}
 
 			for actionGlob, rule := range resourceRules.ActionRules {
-				matchedActions := globMatch(actionGlob, input.Actions)
+				matchedActions := util.FilterGlob(actionGlob, input.Actions)
 				for _, action := range matchedActions {
 					actx := rctx.beginTrace(actionComponent, action)
 					ok, err := satisfiesCondition(actx.beginTrace(conditionComponent), rule.Condition, variables, input)
@@ -377,24 +378,6 @@ func setIntersects(s1 protoSet, s2 stringSet) bool {
 	}
 
 	return false
-}
-
-func globMatch(g string, values []string) []string {
-	globExp := g
-	// for backward compatibility, consider single * as **
-	if globExp == "*" {
-		globExp = "**"
-	}
-
-	var out []string
-
-	for _, v := range values {
-		if globs.matches(globExp, v) {
-			out = append(out, v)
-		}
-	}
-
-	return out
 }
 
 type PolicyEvalResult struct {
