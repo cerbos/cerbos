@@ -9,12 +9,12 @@ import (
 	"io"
 	"strings"
 
-	"github.com/olekukonko/tablewriter"
 	"github.com/spf13/cobra"
 
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
 	"github.com/cerbos/cerbos/client"
 	"github.com/cerbos/cerbos/cmd/cerbosctl/get/internal/flagset"
+	"github.com/cerbos/cerbos/cmd/cerbosctl/get/internal/printer"
 	"github.com/cerbos/cerbos/cmd/cerbosctl/internal"
 	"github.com/cerbos/cerbos/internal/policy"
 )
@@ -43,7 +43,7 @@ func List(c client.AdminClient, cmd *cobra.Command, filters *flagset.Filters, fo
 		return fmt.Errorf("error while requesting policies: %w", err)
 	}
 
-	tw := newTableWriter(cmd.OutOrStdout())
+	tw := printer.NewTableWriter(cmd.OutOrStdout())
 	if !format.NoHeaders {
 		tw.SetHeader(getHeaders(resType))
 	}
@@ -144,14 +144,6 @@ func printPolicy(w io.Writer, policies []*policyv1.Policy, format string) error 
 	default:
 		return fmt.Errorf("only yaml, json and prettyjson formats are supported")
 	}
-}
-
-func newTableWriter(writer io.Writer) *tablewriter.Table {
-	tw := tablewriter.NewWriter(writer)
-	tw.SetBorders(tablewriter.Border{Left: true, Top: false, Right: true, Bottom: false})
-	tw.SetCenterSeparator("|")
-
-	return tw
 }
 
 func getHeaders(resourceType ResourceType) []string {

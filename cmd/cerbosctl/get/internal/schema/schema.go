@@ -8,12 +8,12 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/olekukonko/tablewriter"
 	"github.com/spf13/cobra"
 
 	schemav1 "github.com/cerbos/cerbos/api/genpb/cerbos/schema/v1"
 	"github.com/cerbos/cerbos/client"
 	"github.com/cerbos/cerbos/cmd/cerbosctl/get/internal/flagset"
+	"github.com/cerbos/cerbos/cmd/cerbosctl/get/internal/printer"
 	"github.com/cerbos/cerbos/cmd/cerbosctl/internal"
 )
 
@@ -23,7 +23,7 @@ func List(c client.AdminClient, cmd *cobra.Command, format *flagset.Format) erro
 		return fmt.Errorf("error while requesting schemas: %w", err)
 	}
 
-	tw := newTableWriter(cmd.OutOrStdout())
+	tw := printer.NewTableWriter(cmd.OutOrStdout())
 	if !format.NoHeaders {
 		tw.SetHeader([]string{"SCHEMA ID"})
 	}
@@ -50,14 +50,6 @@ func Get(c client.AdminClient, cmd *cobra.Command, format *flagset.Format, ids .
 		}
 	}
 	return nil
-}
-
-func newTableWriter(writer io.Writer) *tablewriter.Table {
-	tw := tablewriter.NewWriter(writer)
-	tw.SetBorders(tablewriter.Border{Left: true, Top: false, Right: true, Bottom: false})
-	tw.SetCenterSeparator("|")
-
-	return tw
 }
 
 func printSchema(w io.Writer, schemas []*schemav1.Schema, output string) error {
