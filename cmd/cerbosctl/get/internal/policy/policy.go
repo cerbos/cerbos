@@ -18,6 +18,24 @@ import (
 	"github.com/cerbos/cerbos/internal/policy"
 )
 
+func MakeGetCmd(resType ResourceType, filters *flagset.Filters, format *flagset.Format) internal.AdminCommand {
+	return func(c client.AdminClient, cmd *cobra.Command, args []string) error {
+		if len(args) == 0 {
+			if err := List(c, cmd, filters, format, resType); err != nil {
+				return fmt.Errorf("failed to list: %w", err)
+			}
+
+			return nil
+		}
+
+		if err := Get(c, cmd, format, args...); err != nil {
+			return fmt.Errorf("failed to get: %w", err)
+		}
+
+		return nil
+	}
+}
+
 func List(c client.AdminClient, cmd *cobra.Command, filters *flagset.Filters, format *flagset.Format, resType ResourceType) error {
 	policyIds, err := c.ListPolicies(context.Background())
 	if err != nil {

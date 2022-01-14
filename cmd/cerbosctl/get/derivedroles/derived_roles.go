@@ -4,11 +4,8 @@
 package derivedroles
 
 import (
-	"fmt"
-
 	"github.com/spf13/cobra"
 
-	"github.com/cerbos/cerbos/client"
 	"github.com/cerbos/cerbos/cmd/cerbosctl/get/internal/flagset"
 	"github.com/cerbos/cerbos/cmd/cerbosctl/get/internal/policy"
 	"github.com/cerbos/cerbos/cmd/cerbosctl/internal"
@@ -50,29 +47,11 @@ func NewDerivedRolesCmd(fn internal.WithClient) *cobra.Command {
 		Aliases: []string{"derived_role", "dr"},
 		Example: example,
 		PreRunE: policy.PreRunFn(policy.DerivedRoles),
-		RunE:    fn(runDerivedRolesCmd),
+		RunE:    fn(policy.MakeGetCmd(policy.DerivedRoles, &flags.Filters, &flags.Format)),
 	}
 
 	cmd.Flags().AddFlagSet(flags.Format.FlagSet())
 	cmd.Flags().AddFlagSet(flags.Filters.FlagSet())
 
 	return cmd
-}
-
-func runDerivedRolesCmd(c client.AdminClient, cmd *cobra.Command, args []string) error {
-	if len(args) == 0 {
-		err := policy.List(c, cmd, &flags.Filters, &flags.Format, policy.DerivedRoles)
-		if err != nil {
-			return fmt.Errorf("failed to list derived roles: %w", err)
-		}
-
-		return nil
-	}
-
-	err := policy.Get(c, cmd, &flags.Format, args...)
-	if err != nil {
-		return fmt.Errorf("failed to get derived roles: %w", err)
-	}
-
-	return nil
 }

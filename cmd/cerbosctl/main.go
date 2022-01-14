@@ -121,7 +121,7 @@ func coalesceWithEnv(val, envVar string) string {
 	return val
 }
 
-func withAdminClient(fn func(c client.AdminClient, cmd *cobra.Command, args []string) error) func(cmd *cobra.Command, args []string) error {
+func withAdminClient(fn internal.AdminCommand) func(cmd *cobra.Command, args []string) error {
 	return func(cmd *cobra.Command, args []string) error {
 		if connConf.username == "" || connConf.password == "" {
 			return errInvalidCredentials

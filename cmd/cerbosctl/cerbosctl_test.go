@@ -218,7 +218,7 @@ func loadPolicies(t *testing.T, ac client.AdminClient) {
 	}
 }
 
-func withTestAdminClient(fn func(c client.AdminClient, cmd *cobra.Command, args []string) error) func(cmd *cobra.Command, args []string) error {
+func withTestAdminClient(fn internal.AdminCommand) func(cmd *cobra.Command, args []string) error {
 	return func(cmd *cobra.Command, args []string) error {
 		return fn(ac, cmd, args)
 	}

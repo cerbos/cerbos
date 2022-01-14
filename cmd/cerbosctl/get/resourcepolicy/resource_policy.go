@@ -4,11 +4,8 @@
 package resourcepolicy
 
 import (
-	"fmt"
-
 	"github.com/spf13/cobra"
 
-	"github.com/cerbos/cerbos/client"
 	"github.com/cerbos/cerbos/cmd/cerbosctl/get/internal/flagset"
 	"github.com/cerbos/cerbos/cmd/cerbosctl/get/internal/policy"
 	"github.com/cerbos/cerbos/cmd/cerbosctl/internal"
@@ -50,29 +47,11 @@ func NewResourcePolicyCmd(fn internal.WithClient) *cobra.Command {
 		Aliases: []string{"resource_policy", "rp"},
 		Example: example,
 		PreRunE: policy.PreRunFn(policy.ResourcePolicy),
-		RunE:    fn(runResourcePolicyCmd),
+		RunE:    fn(policy.MakeGetCmd(policy.ResourcePolicy, &flags.Filters, &flags.Format)),
 	}
 
 	cmd.Flags().AddFlagSet(flags.Format.FlagSet())
 	cmd.Flags().AddFlagSet(flags.Filters.FlagSet())
 
 	return cmd
-}
-
-func runResourcePolicyCmd(c client.AdminClient, cmd *cobra.Command, args []string) error {
-	if len(args) == 0 {
-		err := policy.List(c, cmd, &flags.Filters, &flags.Format, policy.ResourcePolicy)
-		if err != nil {
-			return fmt.Errorf("failed to list resource policies: %w", err)
-		}
-
-		return nil
-	}
-
-	err := policy.Get(c, cmd, &flags.Format, args...)
-	if err != nil {
-		return fmt.Errorf("failed to get resource policies: %w", err)
-	}
-
-	return nil
 }
