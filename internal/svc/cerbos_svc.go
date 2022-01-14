@@ -61,6 +61,13 @@ func (cs *CerbosService) ResourcesQueryPlan(ctx context.Context, request *reques
 	response, err := cs.eng.ResourcesQueryPlan(logging.ToContext(ctx, log), input)
 	if err != nil {
 		log.Error("Resources query plan request failed", zap.Error(err))
+		var e *engine.NoSuchKeyError
+		if errors.As(err, &e) {
+			return nil, status.Errorf(codes.InvalidArgument, "Bad request: %v", e)
+		}
+		if errors.Is(err, engine.ErrNoPoliciesMatched) {
+			return nil, status.Errorf(codes.InvalidArgument, "Bad request: %v", err)
+		}
 		return nil, status.Errorf(codes.Internal, "Resources query plan request failed")
 	}
 

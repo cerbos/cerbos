@@ -1,0 +1,23 @@
+---
+description: "Missing policy"
+wantStatus:
+  httpStatusCode: 400
+  grpcStatusCode: 3
+wantError: true
+resourcesQueryPlan:
+  input: {
+    "requestId": "test",
+    "includeMeta": true,
+    "action": "read",
+    "principal": {
+      "id": "harry",
+      "policyVersion": "default",
+      "roles": [
+          "employee"
+      ]
+    },
+    "resource": {
+      "kind": "contact",
+      "policyVersion": "default"
+    }
+  }
