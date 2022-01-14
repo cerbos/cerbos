@@ -20,7 +20,7 @@ cerbosctl get schema
 cerbosctl get s
 
 # Get schema definition
-cerbosctl get schemas principal.yaml`
+cerbosctl get schemas principal.json`
 
 type flag struct {
 	flagset.Format
