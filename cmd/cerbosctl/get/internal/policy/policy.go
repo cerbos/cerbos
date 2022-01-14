@@ -7,6 +7,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"sort"
 	"strings"
 
 	"github.com/spf13/cobra"
@@ -63,12 +64,17 @@ func List(c client.AdminClient, cmd *cobra.Command, filters *flagset.Filters, fo
 
 			filtered := filter(wp, policyIds[idx:idxEnd], filters.Name, filters.Version, resType)
 
-			for key, p := range filtered {
+			ids := make([]string, 0, len(filtered))
+			for key := range filtered {
+				ids = append(ids, key)
+			}
+			sort.Strings(ids)
+			for _, key := range ids {
 				row := make([]string, 2, 3) //nolint:gomnd
 				row[0] = key
-				row[1] = p.Name
+				row[1] = filtered[key].Name
 				if resType != DerivedRoles {
-					row = append(row, p.Version)
+					row = append(row, filtered[key].Version)
 				}
 				tw.Append(row)
 			}

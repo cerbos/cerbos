@@ -7,6 +7,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"sort"
 
 	"github.com/spf13/cobra"
 
@@ -28,6 +29,7 @@ func List(c client.AdminClient, cmd *cobra.Command, format *flagset.Format) erro
 		tw.SetHeader([]string{"SCHEMA ID"})
 	}
 
+	sort.Strings(schemaIds)
 	for _, id := range schemaIds {
 		tw.Append([]string{id})
 	}
