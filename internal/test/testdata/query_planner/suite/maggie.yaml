@@ -267,3 +267,18 @@ tests:
                   operands:
                     - variable: R.attr.owner
                     - value: "maggie"
+    - action: "approve"
+      resource:
+        kind: leave_request
+        policyVersion: default
+        attr:
+          geography: "US"
+          owner: brian
+      want:
+        kind: KIND_CONDITIONAL
+        condition:
+          expression:
+            operator: eq
+            operands:
+              - variable: R.attr.status
+              - value: "PENDING_APPROVAL"
