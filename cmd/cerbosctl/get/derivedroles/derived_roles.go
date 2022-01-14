@@ -50,7 +50,7 @@ func NewDerivedRolesCmd(fn internal.WithClient) *cobra.Command {
 		RunE:    fn(policy.MakeGetCmd(policy.DerivedRoles, &flags.Filters, &flags.Format)),
 	}
 
-	cmd.Flags().AddFlagSet(flags.Format.FlagSet())
+	cmd.Flags().AddFlagSet(flags.Format.FlagSet("yaml"))
 	cmd.Flags().AddFlagSet(flags.Filters.FlagSet())
 
 	return cmd

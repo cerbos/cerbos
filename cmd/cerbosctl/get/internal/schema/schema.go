@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io"
 
+	"github.com/olekukonko/tablewriter"
 	"github.com/spf13/cobra"
 
 	schemav1 "github.com/cerbos/cerbos/api/genpb/cerbos/schema/v1"
@@ -22,19 +23,15 @@ func List(c client.AdminClient, cmd *cobra.Command, format *flagset.Format) erro
 		return fmt.Errorf("error while requesting schemas: %w", err)
 	}
 
+	tw := newTableWriter(cmd.OutOrStdout())
 	if !format.NoHeaders {
-		_, err = fmt.Fprintf(cmd.OutOrStdout(), "SCHEMA ID\n")
-		if err != nil {
-			return fmt.Errorf("failed print to writer: %w", err)
-		}
+		tw.SetHeader([]string{"SCHEMA ID"})
 	}
 
 	for _, id := range schemaIds {
-		_, err = fmt.Fprintf(cmd.OutOrStdout(), "%s\n", id)
-		if err != nil {
-			return fmt.Errorf("failed to print schemas: %w", err)
-		}
+		tw.Append([]string{id})
 	}
+	tw.Render()
 
 	return nil
 }
@@ -53,6 +50,14 @@ func Get(c client.AdminClient, cmd *cobra.Command, format *flagset.Format, ids .
 		}
 	}
 	return nil
+}
+
+func newTableWriter(writer io.Writer) *tablewriter.Table {
+	tw := tablewriter.NewWriter(writer)
+	tw.SetBorders(tablewriter.Border{Left: true, Top: false, Right: true, Bottom: false})
+	tw.SetCenterSeparator("|")
+
+	return tw
 }
 
 func printSchema(w io.Writer, schemas []*schemav1.Schema, output string) error {

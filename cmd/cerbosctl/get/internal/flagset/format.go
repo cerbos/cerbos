@@ -15,9 +15,9 @@ type Format struct {
 	NoHeaders bool
 }
 
-func (f *Format) FlagSet() *pflag.FlagSet {
+func (f *Format) FlagSet(defaultOutputFormat string) *pflag.FlagSet {
 	fs := pflag.NewFlagSet("format", pflag.ExitOnError)
 	fs.BoolVar(&f.NoHeaders, NoHeadersFlag, false, "Do not output headers")
-	fs.StringVarP(&f.Output, OutputFormatFlag, "o", "yaml", "Output format for the policies; json, yaml, prettyjson formats are supported")
+	fs.StringVarP(&f.Output, OutputFormatFlag, "o", defaultOutputFormat, "Output format for the policies; json, yaml, prettyjson formats are supported")
 	return fs
 }

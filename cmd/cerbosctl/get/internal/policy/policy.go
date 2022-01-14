@@ -9,6 +9,7 @@ import (
 	"io"
 	"strings"
 
+	"github.com/olekukonko/tablewriter"
 	"github.com/spf13/cobra"
 
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
@@ -42,11 +43,9 @@ func List(c client.AdminClient, cmd *cobra.Command, filters *flagset.Filters, fo
 		return fmt.Errorf("error while requesting policies: %w", err)
 	}
 
+	tw := newTableWriter(cmd.OutOrStdout())
 	if !format.NoHeaders {
-		err = internal.PrintPolicyHeader(cmd.OutOrStdout())
-		if err != nil {
-			return fmt.Errorf("failed to print hedaer: %w", err)
-		}
+		tw.SetHeader(getHeaders(resType))
 	}
 
 	for idx := range policyIds {
@@ -64,12 +63,18 @@ func List(c client.AdminClient, cmd *cobra.Command, filters *flagset.Filters, fo
 
 			filtered := filter(wp, policyIds[idx:idxEnd], filters.Name, filters.Version, resType)
 
-			err = internal.PrintPolicies(cmd.OutOrStdout(), filtered)
-			if err != nil {
-				return fmt.Errorf("failed to print policy ids: %w", err)
+			for key, p := range filtered {
+				row := make([]string, 2, 3) //nolint:gomnd
+				row[0] = key
+				row[1] = p.Name
+				if resType != DerivedRoles {
+					row = append(row, p.Version)
+				}
+				tw.Append(row)
 			}
 		}
 	}
+	tw.Render()
 
 	return nil
 }
@@ -139,6 +144,21 @@ func printPolicy(w io.Writer, policies []*policyv1.Policy, format string) error 
 	default:
 		return fmt.Errorf("only yaml, json and prettyjson formats are supported")
 	}
+}
+
+func newTableWriter(writer io.Writer) *tablewriter.Table {
+	tw := tablewriter.NewWriter(writer)
+	tw.SetBorders(tablewriter.Border{Left: true, Top: false, Right: true, Bottom: false})
+	tw.SetCenterSeparator("|")
+
+	return tw
+}
+
+func getHeaders(resourceType ResourceType) []string {
+	if resourceType == DerivedRoles {
+		return []string{"POLICY ID", "NAME"}
+	}
+	return []string{"POLICY ID", "NAME", "VERSION"}
 }
 
 func stringInSlice(a string, s []string) bool {

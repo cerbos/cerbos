@@ -36,7 +36,7 @@ func NewSchemaCmd(fn internal.WithClient) *cobra.Command {
 		RunE:    fn(runSchemaCmd),
 	}
 
-	cmd.Flags().AddFlagSet(flags.Format.FlagSet())
+	cmd.Flags().AddFlagSet(flags.Format.FlagSet("json"))
 
 	return cmd
 }
@@ -51,7 +51,7 @@ func runSchemaCmd(c client.AdminClient, cmd *cobra.Command, args []string) error
 		return nil
 	}
 
-	err := schema.Get(c, cmd, &flags.Format, args[1:]...)
+	err := schema.Get(c, cmd, &flags.Format, args...)
 	if err != nil {
 		return fmt.Errorf("failed to get schemas: %w", err)
 	}

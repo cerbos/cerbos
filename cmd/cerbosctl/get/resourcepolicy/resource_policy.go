@@ -50,7 +50,7 @@ func NewResourcePolicyCmd(fn internal.WithClient) *cobra.Command {
 		RunE:    fn(policy.MakeGetCmd(policy.ResourcePolicy, &flags.Filters, &flags.Format)),
 	}
 
-	cmd.Flags().AddFlagSet(flags.Format.FlagSet())
+	cmd.Flags().AddFlagSet(flags.Format.FlagSet("yaml"))
 	cmd.Flags().AddFlagSet(flags.Filters.FlagSet())
 
 	return cmd

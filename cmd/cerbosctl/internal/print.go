@@ -13,20 +13,8 @@ import (
 
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
 	schemav1 "github.com/cerbos/cerbos/api/genpb/cerbos/schema/v1"
-	"github.com/cerbos/cerbos/internal/policy"
 	"github.com/cerbos/cerbos/internal/util"
 )
-
-func PrintPolicies(w io.Writer, policies map[string]policy.Wrapper) error {
-	for policyID, p := range policies {
-		_, err := fmt.Fprintf(w, "%s\t%s\t%s\n", policyID, p.Name, p.Version)
-		if err != nil {
-			return fmt.Errorf("failed to print to writer: %w", err)
-		}
-	}
-
-	return nil
-}
 
 func PrintSchemaPrettyJSON(w io.Writer, schemas []*schemav1.Schema) error {
 	for _, s := range schemas {
@@ -50,15 +38,6 @@ func PrintSchemaJSON(w io.Writer, schemas []*schemav1.Schema) error {
 		if err != nil {
 			return fmt.Errorf("failed to print schema: %w", err)
 		}
-	}
-
-	return nil
-}
-
-func PrintPolicyHeader(w io.Writer) error {
-	_, err := fmt.Fprintf(w, "POLICY ID\tNAME\tVERSION\n")
-	if err != nil {
-		return fmt.Errorf("failed print to writer: %w", err)
 	}
 
 	return nil
