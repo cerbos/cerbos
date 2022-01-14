@@ -125,17 +125,52 @@ cerbosctl decisions --tail=20
 ----
 
 
-== `list`
+== `get`
 
 This command lists the policies available in the configured policy repository.
+You can also retrieve individual policies or schemas by their identifiers and view their definitions as YAML or JSON.
 
-.List summary
+You can filter the output using the `name` and `version` flags. Each flag accepts multiple comma-separated values which are OR'ed together. For example, `--name=a.yaml,b.yaml` matches policies that are either named `a.yaml` or `b.yaml`.
+
+.List derived roles
 ----
-cerbosctl list
+cerbosctl get derived_roles
+cerbosctl get derived_role
+cerbosctl get dr
 ----
 
-.List YAML
+.List principal policies
 ----
-cerbosctl list --format=yaml
+cerbosctl get principal_policies
+cerbosctl get principal_policy
+cerbosctl get pp
 ----
 
+.List resource policies
+----
+cerbosctl get resource_policies
+cerbosctl get resource_policy
+cerbosctl get rp
+----
+
+.List derived_roles where `name` is `my_policy` or `a_policy`
+----
+cerbosctl get derived_roles --name my_policy,a_policy
+cerbosctl get dr --name my_policy,a_policy
+----
+
+.List principal_policies where `version` is `default` or `v1`
+----
+cerbosctl get principal_policies --version default,v1
+cerbosctl get pp --version default,v1
+----
+
+.Get JSON
+----
+cerbosctl get derived_roles my_derived_roles --format=json
+----
+
+.Get YAML
+----
+cerbosctl get derived_roles my_derived_roles --format=yaml
+----

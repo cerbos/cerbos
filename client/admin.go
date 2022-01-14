@@ -16,6 +16,7 @@ import (
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
 	requestv1 "github.com/cerbos/cerbos/api/genpb/cerbos/request/v1"
 	responsev1 "github.com/cerbos/cerbos/api/genpb/cerbos/response/v1"
+	schemav1 "github.com/cerbos/cerbos/api/genpb/cerbos/schema/v1"
 	svcv1 "github.com/cerbos/cerbos/api/genpb/cerbos/svc/v1"
 )
 
@@ -25,6 +26,8 @@ type AdminClient interface {
 	// ListPolicies retrieves the policies on the Cerbos server.
 	ListPolicies(ctx context.Context) ([]string, error)
 	GetPolicy(ctx context.Context, ids ...string) ([]*policyv1.Policy, error)
+	ListSchemas(ctx context.Context) ([]string, error)
+	GetSchema(ctx context.Context, ids ...string) ([]*schemav1.Schema, error)
 }
 
 // NewAdminClient creates a new admin client.
@@ -183,4 +186,34 @@ func (c *GrpcAdminClient) GetPolicy(ctx context.Context, ids ...string) ([]*poli
 	}
 
 	return res.Policies, nil
+}
+
+func (c *GrpcAdminClient) ListSchemas(ctx context.Context) ([]string, error) {
+	req := &requestv1.ListSchemasRequest{}
+	if err := req.Validate(); err != nil {
+		return nil, fmt.Errorf("could not validate list schemas request: %w", err)
+	}
+
+	s, err := c.client.ListSchemas(ctx, req, grpc.PerRPCCredentials(c.creds))
+	if err != nil {
+		return nil, fmt.Errorf("could not list schemas: %w", err)
+	}
+
+	return s.SchemaIds, nil
+}
+
+func (c *GrpcAdminClient) GetSchema(ctx context.Context, ids ...string) ([]*schemav1.Schema, error) {
+	req := &requestv1.GetSchemaRequest{
+		Id: ids,
+	}
+	if err := req.Validate(); err != nil {
+		return nil, fmt.Errorf("could not validate get schema request: %w", err)
+	}
+
+	res, err := c.client.GetSchema(ctx, req, grpc.PerRPCCredentials(c.creds))
+	if err != nil {
+		return nil, fmt.Errorf("could not get schema: %w", err)
+	}
+
+	return res.Schemas, nil
 }

@@ -165,21 +165,3 @@ func GenAuditLogOptions(filter *AuditLogFilterDef) client.AuditLogOptions {
 		return client.AuditLogOptions{}
 	}
 }
-
-type ListPoliciesFilterDef struct {
-	format string
-}
-
-func NewListPoliciesFilterDef() *ListPoliciesFilterDef {
-	return &ListPoliciesFilterDef{}
-}
-
-func (lpfd *ListPoliciesFilterDef) FlagSet() *pflag.FlagSet {
-	fs := pflag.NewFlagSet("filters", pflag.ExitOnError)
-	fs.StringVar(&lpfd.format, "format", "", "Output format for the policies; json, yaml formats are supported (leave empty for pretty output)")
-	return fs
-}
-
-func (lpfd *ListPoliciesFilterDef) OutputFormat() string {
-	return lpfd.format
-}

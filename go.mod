@@ -40,12 +40,12 @@ require (
 	github.com/mattn/go-isatty v0.0.14
 	github.com/minio/minio-go/v7 v7.0.20
 	github.com/oklog/ulid/v2 v2.0.2
+	github.com/olekukonko/tablewriter v0.0.5
 	github.com/ory/dockertest/v3 v3.8.1
 	github.com/planetscale/vtprotobuf v0.0.0-20210616093554-9236f7c7b8ca
 	github.com/prometheus/client_golang v1.11.0
 	github.com/rivo/tview v0.0.0-20210624165335-29d673af0ce2
 	github.com/rjeczalik/notify v0.9.3-0.20201210012515-e2a77dcc14cf
-	github.com/rodaine/table v1.0.1
 	github.com/santhosh-tekuri/jsonschema/v5 v5.0.0
 	github.com/spf13/afero v1.8.0
 	github.com/spf13/cobra v1.3.0

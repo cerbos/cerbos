@@ -362,6 +362,12 @@ func PrefixAndSuffix(prefix, suffix string) NameMod {
 	}
 }
 
+func Suffix(suffix string) NameMod {
+	return func(name string) string {
+		return fmt.Sprintf("%s_%s", name, suffix)
+	}
+}
+
 func NoMod() NameMod {
 	return func(name string) string { return name }
 }

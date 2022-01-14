@@ -15,8 +15,8 @@ import (
 	"github.com/cerbos/cerbos/client"
 	"github.com/cerbos/cerbos/cmd/cerbosctl/audit"
 	"github.com/cerbos/cerbos/cmd/cerbosctl/decisions"
+	"github.com/cerbos/cerbos/cmd/cerbosctl/get"
 	"github.com/cerbos/cerbos/cmd/cerbosctl/internal"
-	"github.com/cerbos/cerbos/cmd/cerbosctl/list"
 	"github.com/cerbos/cerbos/cmd/cerbosctl/version"
 	"github.com/cerbos/cerbos/internal/util"
 )
@@ -79,7 +79,7 @@ func main() {
 	cmd.PersistentFlags().BoolVar(&connConf.insecure, "insecure", false, "Skip validating server certificate")
 	cmd.PersistentFlags().BoolVar(&connConf.plaintext, "plaintext", false, "Use plaintext protocol without TLS")
 
-	cmd.AddCommand(audit.NewAuditCmd(withAdminClient), decisions.NewDecisionsCmd(withAdminClient), version.NewVersionCmd(withClient), list.NewListCmd(withAdminClient))
+	cmd.AddCommand(audit.NewAuditCmd(withAdminClient), decisions.NewDecisionsCmd(withAdminClient), version.NewVersionCmd(withClient), get.NewGetCmd(withAdminClient))
 
 	defer func() {
 		if x := recover(); x != nil {
@@ -121,7 +121,7 @@ func coalesceWithEnv(val, envVar string) string {
 	return val
 }
 
-func withAdminClient(fn func(c client.AdminClient, cmd *cobra.Command, args []string) error) func(cmd *cobra.Command, args []string) error {
+func withAdminClient(fn internal.AdminCommand) func(cmd *cobra.Command, args []string) error {
 	return func(cmd *cobra.Command, args []string) error {
 		if connConf.username == "" || connConf.password == "" {
 			return errInvalidCredentials
