@@ -69,7 +69,7 @@ func runResourcePolicyCmd(c client.AdminClient, cmd *cobra.Command, args []strin
 		return nil
 	}
 
-	err := policy.Get(c, cmd, &flags.Format, args[1:]...)
+	err := policy.Get(c, cmd, &flags.Format, args...)
 	if err != nil {
 		return fmt.Errorf("failed to get resource policies: %w", err)
 	}

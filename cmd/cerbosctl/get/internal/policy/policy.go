@@ -40,8 +40,8 @@ func List(c client.AdminClient, cmd *cobra.Command, filters *flagset.Filters, fo
 			}
 
 			wp := make([]policy.Wrapper, len(policies))
-			for idx, p := range policies {
-				wp[idx] = policy.Wrap(p)
+			for i, p := range policies {
+				wp[i] = policy.Wrap(p)
 			}
 
 			filtered := filter(wp, policyIds[idx:idxEnd], filters.Name, filters.Version, resType)
@@ -57,6 +57,7 @@ func List(c client.AdminClient, cmd *cobra.Command, filters *flagset.Filters, fo
 }
 
 func Get(c client.AdminClient, cmd *cobra.Command, format *flagset.Format, ids ...string) error {
+	foundPolicy := false
 	for idx := range ids {
 		if idx%internal.MaxIDPerReq == 0 {
 			policies, err := c.GetPolicy(context.Background(), ids[idx:internal.MinInt(idx+internal.MaxIDPerReq, len(ids)-idx)]...)
@@ -64,10 +65,18 @@ func Get(c client.AdminClient, cmd *cobra.Command, format *flagset.Format, ids .
 				return fmt.Errorf("error while requesting policy: %w", err)
 			}
 
+			if len(policies) != 0 {
+				foundPolicy = true
+			}
+
 			if err = printPolicy(cmd.OutOrStdout(), policies, format.Output); err != nil {
 				return fmt.Errorf("could not print policies: %w", err)
 			}
 		}
+	}
+
+	if !foundPolicy {
+		return fmt.Errorf("failed to find specified policy")
 	}
 
 	return nil

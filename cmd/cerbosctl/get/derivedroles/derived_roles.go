@@ -69,7 +69,7 @@ func runDerivedRolesCmd(c client.AdminClient, cmd *cobra.Command, args []string)
 		return nil
 	}
 
-	err := policy.Get(c, cmd, &flags.Format, args[1:]...)
+	err := policy.Get(c, cmd, &flags.Format, args...)
 	if err != nil {
 		return fmt.Errorf("failed to get derived roles: %w", err)
 	}

@@ -18,10 +18,15 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/stretchr/testify/require"
+	"google.golang.org/protobuf/encoding/protojson"
 
+	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
 	"github.com/cerbos/cerbos/client"
 	"github.com/cerbos/cerbos/client/testutil"
 	"github.com/cerbos/cerbos/cmd/cerbosctl/get"
+	"github.com/cerbos/cerbos/cmd/cerbosctl/get/derivedroles"
+	"github.com/cerbos/cerbos/cmd/cerbosctl/get/principalpolicy"
+	"github.com/cerbos/cerbos/cmd/cerbosctl/get/resourcepolicy"
 	"github.com/cerbos/cerbos/cmd/cerbosctl/internal"
 	"github.com/cerbos/cerbos/internal/test"
 )
@@ -145,6 +150,39 @@ func testGetCmd(fn internal.WithClient) func(*testing.T) {
 						require.NoError(t, err)
 						require.Equal(t, policiesPerType, noOfPoliciesInCmdOutput(t, out.String()))
 					}
+				}
+			})
+
+			t.Run("compare output", func(t *testing.T) {
+				testCases := []struct {
+					policy *policyv1.Policy
+					kind   string
+					name   string
+				}{
+					{test.GenDerivedRoles(test.Suffix(strconv.Itoa(1))), "dr", "derived_roles.my_derived_roles_1"},
+					{test.GenPrincipalPolicy(test.Suffix(strconv.Itoa(1))), "pp", "principal.donald_duck_1.default"},
+					{test.GenResourcePolicy(test.Suffix(strconv.Itoa(1))), "rp", "resource.leave_request_1.default"},
+				}
+
+				for _, tc := range testCases {
+					var cmd *cobra.Command
+					switch tc.kind {
+					case "dr":
+						cmd = derivedroles.NewDerivedRolesCmd(fn)
+					case "pp":
+						cmd = principalpolicy.NewPrincipalPolicyCmd(fn)
+					case "rp":
+						cmd = resourcepolicy.NewResourcePolicyCmd(fn)
+					}
+					cmd.SetArgs([]string{tc.name, "-ojson"})
+
+					out := bytes.NewBufferString("")
+					cmd.SetOut(out)
+					err := cmd.Execute()
+					require.NoError(t, err)
+					expected, err := protojson.Marshal(tc.policy)
+					require.NoError(t, err)
+					require.JSONEq(t, string(expected), out.String())
 				}
 			})
 		})

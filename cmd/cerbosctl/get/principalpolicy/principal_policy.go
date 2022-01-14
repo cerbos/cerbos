@@ -69,7 +69,7 @@ func runPrincipalPolicyCmd(c client.AdminClient, cmd *cobra.Command, args []stri
 		return nil
 	}
 
-	err := policy.Get(c, cmd, &flags.Format, args[1:]...)
+	err := policy.Get(c, cmd, &flags.Format, args...)
 	if err != nil {
 		return fmt.Errorf("failed to get principal policies: %w", err)
 	}
