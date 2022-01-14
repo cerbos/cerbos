@@ -78,11 +78,11 @@ test: $(GOTESTSUM)
 
 .PHONY: test-race
 test-race: $(GOTESTSUM)
-	@ $(GOTESTSUM) -- -tags=tests -race ./...
+	@ $(GOTESTSUM) -- -tags=tests -race -cover -coverprofile=unit.cover ./...
 
 .PHONY: test-integration
 test-integration: $(GOTESTSUM)
-	@ $(GOTESTSUM) -- -tags=tests,integration -cover ./...
+	@ $(GOTESTSUM) -- -tags=tests,integration -cover -coverprofile=integration.cover ./...
 
 .PHONY: coverage
 coverage:
