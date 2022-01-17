@@ -103,8 +103,13 @@ message Match {
 }
 
 message Schemas {
+    message IgnoreWhen {
+        repeated string actions = 1 [(validate.rules).repeated = {unique: true, min_items: 1, items {string {min_len: 1}}}];
+    }
+
     message Schema {
         string ref = 1 [(validate.rules).string = {min_len: 1}];
+        IgnoreWhen ignore_when = 2;
     }
 
     Schema principal_schema = 1;

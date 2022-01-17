@@ -26,6 +26,7 @@ import (
 	"github.com/cerbos/cerbos/internal/observability/logging"
 	"github.com/cerbos/cerbos/internal/observability/tracing"
 	"github.com/cerbos/cerbos/internal/storage"
+	"github.com/cerbos/cerbos/internal/util"
 )
 
 const (
@@ -117,7 +118,7 @@ func (m *manager) Validate(ctx context.Context, schemas *policyv1.Schemas, input
 	ctx, span := tracing.StartSpan(ctx, "schema.Validate")
 	defer span.End()
 
-	if err := m.validateAttr(ctx, ErrSourcePrincipal, schemas.PrincipalSchema, input.Principal.Attr); err != nil {
+	if err := m.validateAttr(ctx, ErrSourcePrincipal, schemas.PrincipalSchema, input.Principal.Attr, input.Actions); err != nil {
 		var principalErrs ValidationErrorList
 		if ok := errors.As(err, &principalErrs); !ok {
 			return result, fmt.Errorf("failed to validate the principal: %w", err)
@@ -125,7 +126,7 @@ func (m *manager) Validate(ctx context.Context, schemas *policyv1.Schemas, input
 		result.add(principalErrs...)
 	}
 
-	if err := m.validateAttr(ctx, ErrSourceResource, schemas.ResourceSchema, input.Resource.Attr); err != nil {
+	if err := m.validateAttr(ctx, ErrSourceResource, schemas.ResourceSchema, input.Resource.Attr, input.Actions); err != nil {
 		var resourceErrs ValidationErrorList
 		if ok := errors.As(err, &resourceErrs); !ok {
 			return result, fmt.Errorf("failed to validate the resource: %w", err)
@@ -140,9 +141,23 @@ func (m *manager) Validate(ctx context.Context, schemas *policyv1.Schemas, input
 	return result, nil
 }
 
-func (m *manager) validateAttr(ctx context.Context, src ErrSource, schemaRef *policyv1.Schemas_Schema, attr map[string]*structpb.Value) error {
+func (m *manager) validateAttr(ctx context.Context, src ErrSource, schemaRef *policyv1.Schemas_Schema, attr map[string]*structpb.Value, actions []string) error {
 	if schemaRef == nil || schemaRef.Ref == "" {
 		return nil
+	}
+
+	// check whether the current actions are excluded from validation
+	if ignore := schemaRef.IgnoreWhen; ignore != nil && len(ignore.Actions) > 0 {
+		toValidate := filterActionsToValidate(ignore.Actions, actions)
+		if len(toValidate) == 0 {
+			return nil
+		}
+
+		if len(toValidate) != len(actions) {
+			m.log.Warn("Schema validation is enabled for some actions but disabled for others",
+				zap.Strings("all_actions", actions),
+				zap.Strings("actions_requiring_validation", toValidate))
+		}
 	}
 
 	schema, err := m.loadSchema(ctx, schemaRef.Ref)
@@ -237,4 +252,16 @@ func (m *manager) OnStorageEvent(events ...storage.Event) {
 type cacheEntry struct {
 	schema *jsonschema.Schema
 	err    error
+}
+
+func filterActionsToValidate(ignore, actions []string) []string {
+	filtered := actions
+	for _, glob := range ignore {
+		filtered = util.FilterGlobNotMatches(glob, filtered)
+		if len(filtered) == 0 {
+			return nil
+		}
+	}
+
+	return filtered
 }

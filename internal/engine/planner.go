@@ -18,6 +18,7 @@ import (
 	runtimev1 "github.com/cerbos/cerbos/api/genpb/cerbos/runtime/v1"
 	"github.com/cerbos/cerbos/internal/conditions"
 	"github.com/cerbos/cerbos/internal/observability/tracing"
+	"github.com/cerbos/cerbos/internal/util"
 )
 
 type (
@@ -52,12 +53,12 @@ func (ppe *principalPolicyEvaluator) EvaluateResourcesQueryPlan(ctx context.Cont
 	nodeBoolTrue := &qpN{Node: &qpNE{Expression: conditions.TrueExpr}}
 	for _, p := range ppe.policy.Policies { // zero or one policy in the set
 		for resource, resourceRules := range p.ResourceRules {
-			if !globs.matches(resource, input.Resource.Kind) {
+			if !util.MatchesGlob(resource, input.Resource.Kind) {
 				continue
 			}
 
 			for actionGlob, rule := range resourceRules.ActionRules {
-				matchedActions := globMatch(actionGlob, inputActions)
+				matchedActions := util.FilterGlob(actionGlob, inputActions)
 				if len(matchedActions) == 0 {
 					continue
 				}
@@ -163,7 +164,7 @@ func (rpe *resourcePolicyEvaluator) EvaluateResourcesQueryPlan(ctx context.Conte
 				}
 			}
 			for actionGlob := range rule.Actions {
-				matchedActions := globMatch(actionGlob, inputActions)
+				matchedActions := util.FilterGlob(actionGlob, inputActions)
 				if len(matchedActions) == 0 {
 					continue
 				}
@@ -190,9 +191,11 @@ func (rpe *resourcePolicyEvaluator) EvaluateResourcesQueryPlan(ctx context.Conte
 					}
 				}
 
-				if rule.Effect == effectv1.Effect_EFFECT_DENY {
+				//nolint:exhaustive
+				switch rule.Effect {
+				case effectv1.Effect_EFFECT_DENY:
 					denyFilter = append(denyFilter, invertNodeBooleanValue(result.Filter))
-				} else if rule.Effect == effectv1.Effect_EFFECT_ALLOW {
+				case effectv1.Effect_EFFECT_ALLOW:
 					allowFilter = append(allowFilter, result.Filter)
 				}
 			}

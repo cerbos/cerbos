@@ -1,0 +1,29 @@
+---
+description: Only principal has an ignore clause
+schemaRefs:
+  principalSchema:
+    ref: cerbos:///complex_object.json
+    ignoreWhen:
+      actions: ["view:*"] 
+  resourceSchema:
+    ref: cerbos:///complex_object.json
+input: 
+  actions: [ "view:public" ]
+  principal: 
+    id: "john"
+    policyVersion: "20210210"
+    roles: [ "employee" ]
+    attr: &myAttr 
+      stringField: 1
+  resource: 
+    kind: "leave_request"
+    policyVersion: "20210210"
+    id: "XX125"
+    attr: *myAttr 
+wantValidationErrors:
+  - path: "/stringField"
+    message: "expected string, but got number"
+    source: SOURCE_RESOURCE
+
+  - message: "missing properties: 'intField'"
+    source: SOURCE_RESOURCE

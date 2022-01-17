@@ -3217,6 +3217,149 @@ var _ interface {
 	ErrorName() string
 } = Match_ExprListValidationError{}
 
+// Validate checks the field values on Schemas_IgnoreWhen with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *Schemas_IgnoreWhen) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on Schemas_IgnoreWhen with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// Schemas_IgnoreWhenMultiError, or nil if none found.
+func (m *Schemas_IgnoreWhen) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *Schemas_IgnoreWhen) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if len(m.GetActions()) < 1 {
+		err := Schemas_IgnoreWhenValidationError{
+			field:  "Actions",
+			reason: "value must contain at least 1 item(s)",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	_Schemas_IgnoreWhen_Actions_Unique := make(map[string]struct{}, len(m.GetActions()))
+
+	for idx, item := range m.GetActions() {
+		_, _ = idx, item
+
+		if _, exists := _Schemas_IgnoreWhen_Actions_Unique[item]; exists {
+			err := Schemas_IgnoreWhenValidationError{
+				field:  fmt.Sprintf("Actions[%v]", idx),
+				reason: "repeated value must contain unique items",
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
+		} else {
+			_Schemas_IgnoreWhen_Actions_Unique[item] = struct{}{}
+		}
+
+		if utf8.RuneCountInString(item) < 1 {
+			err := Schemas_IgnoreWhenValidationError{
+				field:  fmt.Sprintf("Actions[%v]", idx),
+				reason: "value length must be at least 1 runes",
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
+		}
+
+	}
+
+	if len(errors) > 0 {
+		return Schemas_IgnoreWhenMultiError(errors)
+	}
+	return nil
+}
+
+// Schemas_IgnoreWhenMultiError is an error wrapping multiple validation errors
+// returned by Schemas_IgnoreWhen.ValidateAll() if the designated constraints
+// aren't met.
+type Schemas_IgnoreWhenMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m Schemas_IgnoreWhenMultiError) Error() string {
+	var msgs []string
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m Schemas_IgnoreWhenMultiError) AllErrors() []error { return m }
+
+// Schemas_IgnoreWhenValidationError is the validation error returned by
+// Schemas_IgnoreWhen.Validate if the designated constraints aren't met.
+type Schemas_IgnoreWhenValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e Schemas_IgnoreWhenValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e Schemas_IgnoreWhenValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e Schemas_IgnoreWhenValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e Schemas_IgnoreWhenValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e Schemas_IgnoreWhenValidationError) ErrorName() string {
+	return "Schemas_IgnoreWhenValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e Schemas_IgnoreWhenValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sSchemas_IgnoreWhen.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = Schemas_IgnoreWhenValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = Schemas_IgnoreWhenValidationError{}
+
 // Validate checks the field values on Schemas_Schema with the rules defined in
 // the proto definition for this message. If any rules are violated, the first
 // error encountered is returned, or nil if there are no violations.
@@ -3248,6 +3391,35 @@ func (m *Schemas_Schema) validate(all bool) error {
 			return err
 		}
 		errors = append(errors, err)
+	}
+
+	if all {
+		switch v := interface{}(m.GetIgnoreWhen()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, Schemas_SchemaValidationError{
+					field:  "IgnoreWhen",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, Schemas_SchemaValidationError{
+					field:  "IgnoreWhen",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetIgnoreWhen()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return Schemas_SchemaValidationError{
+				field:  "IgnoreWhen",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
 	}
 
 	if len(errors) > 0 {

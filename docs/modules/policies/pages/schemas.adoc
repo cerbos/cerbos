@@ -61,6 +61,11 @@ resourcePolicy:
     - apatr_common_roles 
   resource: "album:object" 
   rules:
+    - actions: ['create']
+      effect: EFFECT_ALLOW
+      derivedRoles: 
+        - owner 
+
     - actions: ['view']
       effect: EFFECT_ALLOW
       roles:
@@ -69,14 +74,19 @@ resourcePolicy:
         match:
           expr: request.resource.attr.public == true
 
-  schemas: 
-    principalSchema:
+  schemas: <1>
+    principalSchema: <2>
       ref: cerbos:///principal.json 
-    resourceSchema:
+    resourceSchema: <3>
       ref: cerbos:///album/object.json 
+      ignoreWhen: <4>
+        actions: ['create', 'delete:*']
 ----
+<1> Schema definition block. Optional. Leave this out if you do not want to use schema validation for this resource type.
+<2> Schema for validating the principal attributes. Optional. Leave this out if you do not want to validate the principal.
+<3> Schema for validating the resource attributes. Optional. Leave this out if you do not want to validate the resource.
+<4> Ignore block. Optional. Define the actions for which schema validation should be ignored. This is useful for special cases like `CREATE` where your resource might not have all the required attributes to pass schema validation.
 
-NOTE: The `schemas` field is optional and can be left out if you do not want to validate that particular resource kind. Alternatively, you can leave out the `principalSchema` or the `resourceSchema` if you do not want the corresponding attributes section to be validated.
 
 
 Finally, xref:configuration:schema.adoc[configure the schema enforcement level] of the Cerbos PDP to either `warn` or `reject` and restart it. Now the PDP will validate any requests where the matching resource policy has schemas specified.
