@@ -62,6 +62,7 @@ curl -k -u cerbos:cerbosAdmin \
 ----
 
 
+[#policy-management]
 == Policy Management
 
 === Add/update policies 
@@ -125,7 +126,7 @@ NOTE: This endpoint requires a mutable storage driver such as xref:configuration
 === List Policies 
 
 ----
-GET /admin/policy/list
+GET /admin/policies
 ----
 
 NOTE: This endpoint is still under development and should be considered unstable.
@@ -135,26 +136,26 @@ Issue a GET request to the endpoint to list the policies available in the store.
 [source,shell]
 ----
 curl -k -u cerbos:cerbosAdmin \
-    'https://localhost:3592/admin/policy/list?pretty'
+    'https://localhost:3592/admin/policies?pretty'
 ----
 
-If you want to filter the list by specific fields in the policies, use the POST method. Filters can do exact or wildcard matches on policy fields. Policy fields are defined using the link:https://goessner.net/articles/JsonPath/[JSONPath] syntax.
+=== Get Policies
 
-.Show resource policies for resources containing the word "album"
+----
+GET /admin/policy?id=policy_id
+----
+
+NOTE: This endpoint is still under development and should be considered unstable.
+
+Issue a GET request to the endpoint with the list of IDs (the `id` query parameter can be repeated multiple times) to retrieve. The list of IDs available in the store can be retrieved using the `ListPolicies` API call described above.
+
+
 [source,shell]
 ----
 curl -k -u cerbos:cerbosAdmin \
-    'https://localhost:3592/admin/policy/list?pretty'\
-    -d '{"filters": [{"type": "MATCH_TYPE_WILDCARD", "fieldPath": "$.resourcePolicy.resource", "value":"album"}]}'
+    'https://localhost:3592/admin/policy?id=x.yaml&id=y.yaml'
 ----
 
-.Show any policies with the version field set to "staging"
-[source,shell]
-----
-curl -k -u cerbos:cerbosAdmin \
-    'https://localhost:3592/admin/policy/list?pretty'\
-    -d '{"filters": [{"type": "MATCH_TYPE_EXACT", "fieldPath": "$.*.version", "value":"staging"}]}'
-----
 
 == Schema Management
 
