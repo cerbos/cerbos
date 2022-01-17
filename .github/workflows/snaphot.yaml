@@ -58,7 +58,13 @@ jobs:
           fi
 
       - name: Test
-        run: make test
+        run: make test-all
+
+      - name: Upload to CodeCov
+        uses: codecov/codecov-action@v2
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: "unit.cover,integration.cover"
 
       - name: GoReleaser
         uses: goreleaser/goreleaser-action@v2

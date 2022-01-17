@@ -17,3 +17,5 @@ hack/dev/tls.key
 .DS_Store
 
 coverage.out
+unit.cover
+integration.cover
