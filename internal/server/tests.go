@@ -354,6 +354,11 @@ func httpHealthCheckPasses(client *http.Client, url string, reqTimeout time.Dura
 			return false
 		}
 
+		if resp.Body != nil {
+			_, _ = io.Copy(io.Discard, resp.Body)
+			resp.Body.Close()
+		}
+
 		return resp.StatusCode == http.StatusOK
 	}
 }
