@@ -5,7 +5,7 @@ go 1.17
 require (
 	github.com/bojand/ghz v0.105.0
 	github.com/bufbuild/buf v0.56.0
-	github.com/envoyproxy/protoc-gen-validate v0.6.2
+	github.com/envoyproxy/protoc-gen-validate v0.6.3
 	github.com/fullstorydev/grpcurl v1.8.5
 	github.com/golangci/golangci-lint v1.43.0
 	github.com/google/go-licenses v0.0.0-20210715153004-8751804a5b80
@@ -195,7 +195,7 @@ require (
 	github.com/kyoh86/exportloopref v0.1.8 // indirect
 	github.com/ldez/gomoddirectives v0.2.2 // indirect
 	github.com/ldez/tagliatelle v0.2.0 // indirect
-	github.com/lyft/protoc-gen-star v0.5.3 // indirect
+	github.com/lyft/protoc-gen-star v0.6.0 // indirect
 	github.com/magiconair/properties v1.8.5 // indirect
 	github.com/maratori/testpackage v1.0.1 // indirect
 	github.com/markbates/pkger v0.17.0 // indirect
