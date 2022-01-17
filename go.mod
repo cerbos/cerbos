@@ -5,7 +5,7 @@ go 1.17
 require (
 	contrib.go.opencensus.io/exporter/prometheus v0.4.0
 	github.com/Masterminds/sprig/v3 v3.2.2
-	github.com/alecthomas/chroma v0.9.4
+	github.com/alecthomas/chroma v0.10.0
 	github.com/aws/aws-sdk-go v1.42.23
 	github.com/bluele/gcache v0.0.2
 	github.com/cespare/xxhash v1.1.0
