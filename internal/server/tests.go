@@ -20,6 +20,7 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
+	healthpb "google.golang.org/grpc/health/grpc_health_v1"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"
@@ -33,7 +34,10 @@ import (
 	"github.com/cerbos/cerbos/internal/util"
 )
 
-const requestTimeout = 5 * time.Second
+const (
+	requestTimeout     = 5 * time.Second
+	healthPollInterval = 50 * time.Millisecond
+)
 
 type AuthCreds struct {
 	Username string
@@ -64,7 +68,7 @@ func LoadTestCases(tb testing.TB, dirs ...string) *TestRunner {
 		}
 	}
 
-	return &TestRunner{Cases: testCases, Timeout: requestTimeout}
+	return &TestRunner{Cases: testCases, Timeout: requestTimeout, HealthPollInterval: healthPollInterval}
 }
 
 func readTestCase(tb testing.TB, name string, data []byte) *privatev1.ServerTestCase {
@@ -81,14 +85,19 @@ func readTestCase(tb testing.TB, name string, data []byte) *privatev1.ServerTest
 }
 
 type TestRunner struct {
-	Cases   []*privatev1.ServerTestCase
-	Timeout time.Duration
+	Cases              []*privatev1.ServerTestCase
+	Timeout            time.Duration
+	HealthPollInterval time.Duration
 }
 
 func (tr *TestRunner) RunGRPCTests(addr string, opts ...grpc.DialOption) func(*testing.T) {
 	//nolint:thelper
 	return func(t *testing.T) {
 		grpcConn := mkGRPCConn(t, addr, opts...)
+		require.Eventually(t,
+			grpcHealthCheckPasses(grpcConn, tr.HealthPollInterval),
+			tr.Timeout, tr.HealthPollInterval, "Server did not come up on time")
+
 		for _, tc := range tr.Cases {
 			t.Run(tc.Name, tr.executeGRPCTestCase(grpcConn, tc))
 		}
@@ -172,6 +181,9 @@ func (tr *TestRunner) RunHTTPTests(hostAddr string, creds *AuthCreds) func(*test
 	//nolint:thelper
 	return func(t *testing.T) {
 		c := mkHTTPClient(t)
+		require.Eventually(t,
+			httpHealthCheckPasses(c, fmt.Sprintf("%s/_cerbos/health", hostAddr), tr.HealthPollInterval),
+			tr.Timeout, tr.HealthPollInterval, "Server did not come up on time")
 		for _, tc := range tr.Cases {
 			t.Run(tc.Name, tr.executeHTTPTestCase(c, hostAddr, creds, tc))
 		}
@@ -309,4 +321,39 @@ func cmpValidationError(a, b *schemav1.ValidationError) bool {
 		return a.Path < b.Path
 	}
 	return a.Source < b.Source
+}
+
+func grpcHealthCheckPasses(grpcConn *grpc.ClientConn, reqTimeout time.Duration) func() bool {
+	return func() bool {
+		client := healthpb.NewHealthClient(grpcConn)
+
+		ctx, cancelFunc := context.WithTimeout(context.Background(), reqTimeout)
+		defer cancelFunc()
+
+		resp, err := client.Check(ctx, &healthpb.HealthCheckRequest{})
+		if err != nil {
+			return false
+		}
+
+		return resp.GetStatus() == healthpb.HealthCheckResponse_SERVING
+	}
+}
+
+func httpHealthCheckPasses(client *http.Client, url string, reqTimeout time.Duration) func() bool {
+	return func() bool {
+		ctx, cancelFunc := context.WithTimeout(context.Background(), reqTimeout)
+		defer cancelFunc()
+
+		req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, http.NoBody)
+		if err != nil {
+			return false
+		}
+
+		resp, err := client.Do(req)
+		if err != nil {
+			return false
+		}
+
+		return resp.StatusCode == http.StatusOK
+	}
 }

@@ -23,11 +23,12 @@ const (
 	adminPassword = "cerbosAdmin"
 	jwt           = "eyJhbGciOiJFUzM4NCIsImtpZCI6IjE5TGZaYXRFZGc4M1lOYzVyMjNndU1KcXJuND0iLCJ0eXAiOiJKV1QifQ.eyJhdWQiOlsiY2VyYm9zLWp3dC10ZXN0cyJdLCJjdXN0b21BcnJheSI6WyJBIiwiQiIsIkMiXSwiY3VzdG9tSW50Ijo0MiwiY3VzdG9tTWFwIjp7IkEiOiJBQSIsIkIiOiJCQiIsIkMiOiJDQyJ9LCJjdXN0b21TdHJpbmciOiJmb29iYXIiLCJleHAiOjE5NDk5MzQwMzksImlzcyI6ImNlcmJvcy10ZXN0LXN1aXRlIn0.WN_tOScSpd_EI-P5EI1YlagxEgExSfBjAtcrgcF6lyWj1lGpR_GKx9goZEp2p_t5AVWXN_bjz_sMUmJdJa4cVd55Qm1miR-FKu6oNRHnSEWdMFmnArwPw-YDJWfylLFX"
 	timeout       = 15 * time.Second
+
+	readyTimeout      = 60 * time.Second
+	readyPollInterval = 50 * time.Millisecond
 )
 
 func TestClient(t *testing.T) {
-	test.SkipIfGHActions(t) // TODO (cell) Servers don't work inside GH Actions for some reason.
-
 	testCases := []struct {
 		name string
 		tls  bool
@@ -53,6 +54,7 @@ func TestClient(t *testing.T) {
 				require.NoError(t, err)
 
 				defer s.Stop() //nolint:errcheck
+				require.Eventually(t, serverIsReady(s), readyTimeout, readyPollInterval)
 
 				ac, err := client.NewAdminClientWithCredentials(s.GRPCAddr(), adminUsername, adminPassword, tc.opts...)
 				require.NoError(t, err)
@@ -91,6 +93,7 @@ func TestClient(t *testing.T) {
 				require.NoError(t, err)
 
 				defer s.Stop() //nolint:errcheck
+				require.Eventually(t, serverIsReady(s), readyTimeout, readyPollInterval)
 
 				ac, err := client.NewAdminClientWithCredentials(s.GRPCAddr(), adminUsername, adminPassword, tc.opts...)
 				require.NoError(t, err)
@@ -279,5 +282,19 @@ func testGRPCClient(c client.Client) func(*testing.T) {
 			is.Equal(expression.Operands[1].GetValue().GetStringValue(), "PENDING_APPROVAL")
 			t.Log(have.Meta.FilterDebug)
 		})
+	}
+}
+
+func serverIsReady(s *testutil.ServerInfo) func() bool {
+	return func() bool {
+		ctx, cancelFunc := context.WithTimeout(context.Background(), readyPollInterval)
+		defer cancelFunc()
+
+		ready, err := s.IsReady(ctx)
+		if err != nil {
+			return false
+		}
+
+		return ready
 	}
 }

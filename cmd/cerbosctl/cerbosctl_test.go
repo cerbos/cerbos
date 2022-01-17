@@ -15,6 +15,7 @@ import (
 	"strconv"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/spf13/cobra"
 	"github.com/stretchr/testify/require"
@@ -32,9 +33,11 @@ import (
 )
 
 const (
-	adminUsername   = "cerbos"
-	adminPassword   = "cerbosAdmin"
-	policiesPerType = 30
+	adminUsername     = "cerbos"
+	adminPassword     = "cerbosAdmin"
+	policiesPerType   = 30
+	readyTimeout      = 60 * time.Second
+	readyPollInterval = 50 * time.Millisecond
 )
 
 var (
@@ -240,7 +243,23 @@ func mkServer(t *testing.T) (*testutil.ServerInfo, client.AdminClient) {
 
 	s, err := testutil.StartCerbosServer(mkServerOpts(t)...)
 	require.NoError(t, err)
+	require.Eventually(t, serverIsReady(s), readyTimeout, readyPollInterval)
+
 	adminClient, err := client.NewAdminClientWithCredentials(s.GRPCAddr(), adminUsername, adminPassword, client.WithPlaintext())
 	require.NoError(t, err)
 	return s, adminClient
+}
+
+func serverIsReady(s *testutil.ServerInfo) func() bool {
+	return func() bool {
+		ctx, cancelFunc := context.WithTimeout(context.Background(), readyPollInterval)
+		defer cancelFunc()
+
+		ready, err := s.IsReady(ctx)
+		if err != nil {
+			return false
+		}
+
+		return ready
+	}
 }
