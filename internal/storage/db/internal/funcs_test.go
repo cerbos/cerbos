@@ -86,3 +86,20 @@ func TestConcatWithSep(t *testing.T) {
 		})
 	}
 }
+
+func TestDialectFalseValue(t *testing.T) {
+	tests := []struct {
+		dialect string
+		want    interface{}
+	}{
+		{dialect: "mysql", want: false},
+		{dialect: "postgres", want: false},
+		{dialect: "sqlserver", want: 0},
+	}
+	for _, tt := range tests {
+		t.Run(tt.dialect, func(t *testing.T) {
+			got := internal.DialectFalseValue(tt.dialect)
+			require.Equal(t, tt.want, got)
+		})
+	}
+}
