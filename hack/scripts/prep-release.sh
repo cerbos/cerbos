@@ -61,4 +61,4 @@ sed -i -E "/^version:/a prerelease: -prerelease" "${DOCS_DIR}/antora.yml"
 git -C "$PROJECT_DIR" commit -s -a -m "chore(version): Bump version to $NEXT_VERSION"
 
 echo "Run the following commands to trigger the release"
-echo "git push --atomic upstream main ${RELEASE_BRANCH} ${VERSION}"
+echo "git push --atomic upstream main ${RELEASE_BRANCH} v${VERSION}"
