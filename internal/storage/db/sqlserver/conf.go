@@ -14,7 +14,7 @@ const confKey = storage.ConfKey + ".sqlserver"
 //+desc=This section is required only if storage.driver is sqlserver.
 type Conf struct {
 	ConnPool *internal.ConnPoolConf `yaml:"connPool" conf:",example=\n  maxLifeTime: 60m\n  maxIdleTime: 45s\n  maxOpen: 4\n  maxIdle: 1"`
-	// URL is the Postgres connection URL. See https://www.postgresql.org/docs/current/libpq-connect.html#LIBPQ-CONNSTRING
+	// URL is the SQL Server connection URL. See https://github.com/denisenkom/go-mssqldb#connection-parameters-and-dsn
 	URL string `yaml:"url" conf:"required,example=\"sqlserver://username:password@host/instance?param1=value&param2=value\""`
 }
 
