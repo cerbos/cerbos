@@ -112,7 +112,7 @@ storage:
       maxIdleTime: 45s
       maxOpen: 4
       maxIdle: 1 
-    url: "sqlserver://username:password@host/instance?param1=value&param2=value" # Required. URL is the Postgres connection URL. See https://www.postgresql.org/docs/current/libpq-connect.html#LIBPQ-CONNSTRING
+    url: "sqlserver://username:password@host/instance?param1=value&param2=value" # Required. URL is the SQL Server connection URL. See https://github.com/denisenkom/go-mssqldb#connection-parameters-and-dsn
 tracing:
   exporter: jaeger # Exporter is the type of trace exporter to use.
   jaeger: # Jaeger configures the Jaeger exporter.

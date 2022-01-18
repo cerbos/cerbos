@@ -110,7 +110,7 @@ func createSchema(db *sqlx.DB, f func() (*sqlx.DB, error)) error {
 			if _, err = c.Exec(query); err != nil {
 				return fmt.Errorf("failed to execute [%s]: %w", query, err)
 			}
-			break
+			continue
 		}
 
 		if _, err := db.Exec(query); err != nil {
