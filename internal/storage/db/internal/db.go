@@ -264,7 +264,7 @@ func (s *dbStorage) GetCompilationUnits(ctx context.Context, ids ...namer.Module
 		Where(
 			goqu.And(
 				goqu.C(PolicyDepTblPolicyIDCol).Table("pd").In(ids),
-				goqu.C(PolicyTblDisabledCol).Table("p").Eq(DialectFalseValue(s.db.Dialect())),
+				goqu.C(PolicyTblDisabledCol).Table("p").Eq(goqu.V(false)),
 			),
 		)
 
@@ -280,7 +280,7 @@ func (s *dbStorage) GetCompilationUnits(ctx context.Context, ids ...namer.Module
 		Where(
 			goqu.And(
 				goqu.I(PolicyTblIDCol).In(ids),
-				goqu.I(PolicyTblDisabledCol).Eq(DialectFalseValue(s.db.Dialect())),
+				goqu.I(PolicyTblDisabledCol).Eq(goqu.V(false)),
 			),
 		).
 		UnionAll(depsQuery).
