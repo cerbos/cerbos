@@ -48,7 +48,6 @@ func NewDBStorage(ctx context.Context, db *goqu.Database) (DBStorage, error) {
 			return nil, err
 		}
 
-		log.Println("YAHOO!")
 		db.Logger(log)
 	}
 
