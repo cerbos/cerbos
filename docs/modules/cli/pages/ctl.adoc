@@ -125,6 +125,7 @@ cerbosctl decisions --tail=20
 ----
 
 
+[#get]
 == `get`
 
 This command lists the policies available in the configured policy repository.
