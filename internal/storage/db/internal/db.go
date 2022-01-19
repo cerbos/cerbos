@@ -28,7 +28,6 @@ const policyKeySep = "."
 
 type DBStorage interface {
 	storage.Subscribable
-	NotifySubscribers(events ...storage.Event)
 	AddOrUpdate(ctx context.Context, policies ...policy.Wrapper) error
 	GetCompilationUnits(ctx context.Context, ids ...namer.ModuleID) (map[namer.ModuleID]*policy.CompilationUnit, error)
 	GetDependents(ctx context.Context, ids ...namer.ModuleID) (map[namer.ModuleID][]namer.ModuleID, error)
@@ -41,7 +40,11 @@ type DBStorage interface {
 	LoadPolicy(ctx context.Context, policyKey ...string) ([]*policy.Wrapper, error)
 }
 
-func NewDBStorage(ctx context.Context, db *goqu.Database) (DBStorage, error) {
+func NewDBStorage(ctx context.Context, db *goqu.Database, dbOpts ...DBOpt) (DBStorage, error) {
+	opts := &dbOpt{}
+	for _, opt := range dbOpts {
+		opt(opts)
+	}
 	if _, ok := os.LookupEnv("CERBOS_DEBUG_DB"); ok {
 		log, err := zap.NewStdLogAt(zap.L().Named("db"), zap.DebugLevel)
 		if err != nil {
@@ -52,13 +55,15 @@ func NewDBStorage(ctx context.Context, db *goqu.Database) (DBStorage, error) {
 	}
 
 	return &dbStorage{
+		opts:                opts,
 		db:                  db,
 		SubscriptionManager: storage.NewSubscriptionManager(ctx),
 	}, nil
 }
 
 type dbStorage struct {
-	db *goqu.Database
+	opts *dbOpt
+	db   *goqu.Database
 	*storage.SubscriptionManager
 }
 
@@ -80,12 +85,18 @@ func (s *dbStorage) AddOrUpdateSchema(ctx context.Context, schemas ...*schemav1.
 				ID:         sch.Id,
 				Definition: &defJSON,
 			}
+			var err error
 
-			if _, err := tx.Insert(SchemaTbl).
-				Rows(row).
-				OnConflict(goqu.DoUpdate(SchemaTblIDCol, row)).
-				Executor().
-				ExecContext(ctx); err != nil {
+			if s.opts.upsertSchema != nil {
+				err = s.opts.upsertSchema(ctx, tx, row)
+			} else {
+				_, err = tx.Insert(SchemaTbl).
+					Rows(row).
+					OnConflict(goqu.DoUpdate(SchemaTblIDCol, row)).
+					Executor().
+					ExecContext(ctx)
+			}
+			if err != nil {
 				return fmt.Errorf("failed to upsert the schema with id %s: %w", sch.Id, err)
 			}
 
@@ -202,12 +213,18 @@ func (s *dbStorage) AddOrUpdate(ctx context.Context, policies ...policy.Wrapper)
 				Definition:  PolicyDefWrapper{Policy: p.Policy},
 			}
 
+			var err error
 			// try to upsert this policy record
-			if _, err := tx.Insert(PolicyTbl).
-				Prepared(true).
-				Rows(policyRecord).
-				OnConflict(goqu.DoUpdate(PolicyTblIDCol, policyRecord)).
-				Executor().ExecContext(ctx); err != nil {
+			if s.opts.upsertPolicy != nil {
+				err = s.opts.upsertPolicy(ctx, tx, p)
+			} else {
+				_, err = tx.Insert(PolicyTbl).
+					Prepared(true).
+					Rows(policyRecord).
+					OnConflict(goqu.DoUpdate(PolicyTblIDCol, policyRecord)).
+					Executor().ExecContext(ctx)
+			}
+			if err != nil {
 				return fmt.Errorf("failed to upsert %s: %w", p.FQN, err)
 			}
 
