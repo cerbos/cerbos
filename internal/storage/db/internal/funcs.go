@@ -12,7 +12,7 @@ import (
 
 func ConcatWithSepFunc(dialect string) func(string, ...interface{}) exp.Expression {
 	switch dialect {
-	case "mysql", "mysql8":
+	case "mysql", "mysql8", "sqlserver":
 		return mysqlConcatWithSep
 	default:
 		return ansiConcatWithSep

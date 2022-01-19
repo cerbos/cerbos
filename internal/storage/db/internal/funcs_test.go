@@ -29,41 +29,46 @@ func TestConcatWithSep(t *testing.T) {
 	}{
 		{
 			want: map[string]string{
-				"mysql":    "SELECT CONCAT_WS('.') FROM `table`",
-				"postgres": `SELECT '.' FROM "table"`,
-				"sqlite3":  "SELECT '.' FROM `table`",
+				"sqlserver": "SELECT CONCAT_WS('.') FROM \"table\"",
+				"mysql":     "SELECT CONCAT_WS('.') FROM `table`",
+				"postgres":  `SELECT '.' FROM "table"`,
+				"sqlite3":   "SELECT '.' FROM `table`",
 			},
 		},
 		{
 			args: []interface{}{"a"},
 			want: map[string]string{
-				"mysql":    "SELECT CONCAT_WS('.', 'a') FROM `table`",
-				"postgres": `SELECT 'a' || '.' FROM "table"`,
-				"sqlite3":  "SELECT 'a' || '.' FROM `table`",
+				"sqlserver": "SELECT CONCAT_WS('.', 'a') FROM \"table\"",
+				"mysql":     "SELECT CONCAT_WS('.', 'a') FROM `table`",
+				"postgres":  `SELECT 'a' || '.' FROM "table"`,
+				"sqlite3":   "SELECT 'a' || '.' FROM `table`",
 			},
 		},
 		{
 			args: []interface{}{"a", "b"},
 			want: map[string]string{
-				"mysql":    "SELECT CONCAT_WS('.', 'a', 'b') FROM `table`",
-				"postgres": `SELECT 'a' || '.' || 'b' FROM "table"`,
-				"sqlite3":  "SELECT 'a' || '.' || 'b' FROM `table`",
+				"sqlserver": "SELECT CONCAT_WS('.', 'a', 'b') FROM \"table\"",
+				"mysql":     "SELECT CONCAT_WS('.', 'a', 'b') FROM `table`",
+				"postgres":  `SELECT 'a' || '.' || 'b' FROM "table"`,
+				"sqlite3":   "SELECT 'a' || '.' || 'b' FROM `table`",
 			},
 		},
 		{
 			args: []interface{}{"a", "b", "c"},
 			want: map[string]string{
-				"mysql":    "SELECT CONCAT_WS('.', 'a', 'b', 'c') FROM `table`",
-				"postgres": `SELECT 'a' || '.' || 'b' || '.' || 'c' FROM "table"`,
-				"sqlite3":  "SELECT 'a' || '.' || 'b' || '.' || 'c' FROM `table`",
+				"sqlserver": `SELECT CONCAT_WS('.', 'a', 'b', 'c') FROM "table"`,
+				"mysql":     "SELECT CONCAT_WS('.', 'a', 'b', 'c') FROM `table`",
+				"postgres":  `SELECT 'a' || '.' || 'b' || '.' || 'c' FROM "table"`,
+				"sqlite3":   "SELECT 'a' || '.' || 'b' || '.' || 'c' FROM `table`",
 			},
 		},
 		{
 			args: []interface{}{goqu.C("a"), goqu.C("b"), "c", "d"},
 			want: map[string]string{
-				"mysql":    "SELECT CONCAT_WS('.', `a`, `b`, 'c', 'd') FROM `table`",
-				"postgres": `SELECT "a" || '.' || "b" || '.' || 'c' || '.' || 'd' FROM "table"`,
-				"sqlite3":  "SELECT `a` || '.' || `b` || '.' || 'c' || '.' || 'd' FROM `table`",
+				"sqlserver": `SELECT CONCAT_WS('.', "a", "b", 'c', 'd') FROM "table"`,
+				"mysql":     "SELECT CONCAT_WS('.', `a`, `b`, 'c', 'd') FROM `table`",
+				"postgres":  `SELECT "a" || '.' || "b" || '.' || 'c' || '.' || 'd' FROM "table"`,
+				"sqlite3":   "SELECT `a` || '.' || `b` || '.' || 'c' || '.' || 'd' FROM `table`",
 			},
 		},
 	}

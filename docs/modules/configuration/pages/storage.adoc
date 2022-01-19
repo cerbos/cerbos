@@ -300,3 +300,53 @@ You can customise the script below to suit your environment. Make sure to specif
 ----
 include::example$mysql_schema.sql[]
 ----
+
+[#sqlserver]
+== Microsoft SQL Server Driver
+
+The SQL Server storage backend is one of the dynamic stores that supports adding or updating policies at runtime through the xref:server.adoc#admin-api[Admin API].
+
+NOTE: Unlike the SQLite3 driver, the tables and other database objects are not created automatically by the Cerbos SQL Server driver. This is to minimize the privileges the Cerbos instance has on the SQL Server installation. You must create the required tables using the provided script before configuring Cerbos to connect to the database.
+
+The driver configuration expects the connection details to be provided as connection URL. See link:https://github.com/denisenkom/go-mssqldb#connection-parameters-and-dsn[SQL Server connstring documentation] for more information. Use the `database` parameter to point to the database containing the Cerbos tables.
+
+You can use environment variable references in the URL to avoid storing credentials as part of the Cerbos configuration file.
+
+.Using SQL Server as a storage backend for Cerbos
+[source,yaml,linenums]
+----
+storage:
+  driver: "sqlserver"
+  sqlserver:
+    url: "sqlserver://${SQL_SERVER_USERNAME}:${SQL_SERVER_PASSWORD}@host/instance?database=cerbos&param1=value&param2=value"
+----
+
+=== Connection pool
+
+include::partial$connpool.adoc[]
+
+[source,yaml,linenums]
+----
+storage:
+  driver: "sqlserver"
+  sqlserver:
+    url: "sqlserver://${SQL_SERVER_USERNAME}:${SQL_SERVER_PASSWORD}@host/instance?database=cerbos&param1=value&param2=value"
+    connPool:
+      maxLifeTime: 5m
+      maxIdleTime: 3m
+      maxOpen: 10
+      maxIdle: 5
+----
+
+
+
+=== Database object definitions
+
+You can customise the script below to suit your environment. Make sure to specify a strong password for the `cerbos_user` user.
+
+[source,sql,linenums]
+----
+include::example$sqlserver_schema.sql[]
+----
+
+
