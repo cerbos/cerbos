@@ -49,7 +49,7 @@ CREATE TABLE [dbo].[attr_schema_defs] (
     definition VARBINARY(MAX));
 
 DROP TRIGGER IF EXISTS dbo.policy_on_insert;
-DROP TRIGGER IF EXISTS dbo.policy_on_updatea;
+DROP TRIGGER IF EXISTS dbo.policy_on_update;
 DROP TRIGGER IF EXISTS dbo.policy_on_delete;
 
 GO
@@ -70,22 +70,22 @@ CREATE TRIGGER dbo.policy_on_insert ON dbo.[policy] AFTER INSERT
 AS
 BEGIN
     SET NOCOUNT ON;
-INSERT INTO dbo.policy_revision(action, id, kind, name, version, description, disabled, definition)
-SELECT
-    'INSERT', i.id, i.kind, i.name, i.version, i.description, i.disabled, i.definition
-FROM inserted i
+    INSERT INTO dbo.policy_revision(action, id, kind, name, version, description, disabled, definition)
+    SELECT
+        'INSERT', i.id, i.kind, i.name, i.version, i.description, i.disabled, i.definition
+    FROM inserted i
 END;
 
 GO
 
 CREATE TRIGGER dbo.policy_on_update ON dbo.[policy] AFTER UPDATE
-                                                              AS
+AS
 BEGIN
     SET NOCOUNT ON;
-INSERT INTO dbo.policy_revision(action, id, kind, name, version, description, disabled, definition)
-SELECT
-    'UPDATE', i.id, i.kind, i.name, i.version, i.description, i.disabled, i.definition
-FROM inserted i
+    INSERT INTO dbo.policy_revision(action, id, kind, name, version, description, disabled, definition)
+    SELECT
+        'UPDATE', i.id, i.kind, i.name, i.version, i.description, i.disabled, i.definition
+    FROM inserted i
 END;
 
 GO
@@ -94,9 +94,9 @@ CREATE TRIGGER dbo.policy_on_delete ON dbo.[policy] AFTER DELETE
 AS
 BEGIN
     SET NOCOUNT ON;
-INSERT INTO dbo.policy_revision(action, id, kind, name, version, description, disabled, definition)
-SELECT
-    'DELETE', d.id, d.kind, d.name, d.version, d.description, d.disabled, d.definition
-FROM deleted d
+    INSERT INTO dbo.policy_revision(action, id, kind, name, version, description, disabled, definition)
+    SELECT
+        'DELETE', d.id, d.kind, d.name, d.version, d.description, d.disabled, d.definition
+    FROM deleted d
 END;
 
