@@ -55,7 +55,7 @@ releases:
           rootPassword: passw0rd
       - primary:
           persistence:
-            enabled": false
+            enabled: false
       - initdbScriptsConfigMap: mysql-init
 
   - name: cerbos
