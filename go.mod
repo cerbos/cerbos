@@ -24,7 +24,7 @@ require (
 	github.com/go-sql-driver/mysql v1.6.0
 	github.com/gobwas/glob v0.2.3
 	github.com/google/cel-go v0.9.0
-	github.com/google/go-cmp v0.5.6
+	github.com/google/go-cmp v0.5.7
 	github.com/google/gops v0.3.22
 	github.com/google/uuid v1.3.0
 	github.com/gorilla/handlers v1.5.1
@@ -37,7 +37,7 @@ require (
 	github.com/jmoiron/sqlx v1.3.4
 	github.com/jwalton/gchalk v1.2.1
 	github.com/kavu/go_reuseport v1.5.0
-	github.com/lestrrat-go/jwx v1.2.17
+	github.com/lestrrat-go/jwx v1.2.18
 	github.com/mattn/go-isatty v0.0.14
 	github.com/minio/minio-go/v7 v7.0.21
 	github.com/oklog/ulid/v2 v2.0.2
@@ -126,7 +126,7 @@ require (
 	github.com/go-logfmt/logfmt v0.5.0 // indirect
 	github.com/go-logr/logr v1.2.1 // indirect
 	github.com/go-logr/stdr v1.2.0 // indirect
-	github.com/goccy/go-json v0.9.1 // indirect
+	github.com/goccy/go-json v0.9.4 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/golang-sql/civil v0.0.0-20190719163853-cb61b32ac6fe // indirect
 	github.com/golang/glog v1.0.0 // indirect
