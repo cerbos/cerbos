@@ -54,7 +54,7 @@ releases:
       - postgresqlUsername: postgres
       - postgresqlPassword: passw0rd
       - persistence:
-          enabled": false
+          enabled: false
       - initdbScriptsConfigMap: postgres-init
 
   - name: cerbos
