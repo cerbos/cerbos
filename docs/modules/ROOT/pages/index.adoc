@@ -27,9 +27,10 @@ Cerbos Policy Decision Point (PDP) is built for modern, containerised microservi
 == Authorization as a Service
 Cerbos is designed to be deployed as a service rather than a library compiled into an application. This design choice provides several benefits:
 
-* By having it as a single service any part of the application stack can call to check permissions regardless of language, deployment or system - Cerbos is totally agnostic in that way.
-* With modern network stacks, the latency is link:https://www.miketheman.net/2021/12/28/container-to-container-communication/[quite negligible] so it isn't an area of concern unless the system is processing millions of requests a second (and even then there are options to support this).
-* Allows the Cerbos core to be written in the most optimal language (Go in this case) rather than constraining options to just languages that can be compiled down to libraries for a handful of common ones.
+* Permission checks can be performed by any part of the application stack and even shared between multiple services regardless of the programming language, CPU architecture, operating system or deployment model. 
+* Policy updates instantly take effect without having to recompile or redeploy the applications. This reduces disruption to busy services and enables policy authors to iterate quickly and respond to events faster.
+* With modern network stacks, the communication overhead is link:https://www.miketheman.net/2021/12/28/container-to-container-communication/[effectively negligible] in all but the most extreme cases. Even in those exceptional cases, scaling Cerbos to handle the demand is extremely easy due to its lightweight, stateless design. 
+* All development and optimization efforts to Cerbos can be concentrated on a single project because we do not need to replicate the effort on multiple language-specific implementations. All our users, regardless of their programming language of choice, immediately get the benefit of the latest and greatest Cerbos features as soon they are released.
 
 Cerbos is design in a way that is very aware of the fact that it is in the request path in most cases so a number of key features have been implemented to mitigate this:
 
