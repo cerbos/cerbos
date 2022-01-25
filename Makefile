@@ -46,7 +46,6 @@ generate-proto-code: proto-gen-deps
 .PHONY: generate-mocks
 generate-mocks: $(MOCKERY)
 	@-rm -rf $(MOCK_DIR)
-	@ $(MOCKERY) --version
 	@ $(MOCKERY) --recursive --quiet --name=$(MOCK_INTERFACES) --output $(MOCK_DIR) --boilerplate-file=hack/copyright_header.txt
 
 .PHONY: generate-notice

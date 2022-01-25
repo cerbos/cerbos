@@ -126,6 +126,7 @@ issues:
   exclude-rules:
     - path: _test\.go
       linters:
+        - forcetypeassert
         - goconst
         - gomnd
         - govet

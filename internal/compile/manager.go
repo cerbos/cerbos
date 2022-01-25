@@ -175,7 +175,8 @@ func (c *Manager) Get(ctx context.Context, modID namer.ModuleID) (*runtimev1.Run
 		if rps == nil {
 			return nil, nil
 		}
-		return rps.(*runtimev1.RunnablePolicySet), nil
+
+		return rps.(*runtimev1.RunnablePolicySet), nil //nolint:forcetypeassert
 	}
 
 	compileUnits, err := c.store.GetCompilationUnits(ctx, modID)
