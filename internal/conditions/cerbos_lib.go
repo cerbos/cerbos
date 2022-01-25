@@ -254,7 +254,9 @@ func hasIntersection(lhs, rhs ref.Val) ref.Val {
 		return types.ValOrErr(b, "no such overload")
 	}
 
-	if a.Size().(types.Int).Compare(b.Size()) == types.IntOne {
+	//nolint:forcetypeassert
+	aSize := a.Size().(types.Int)
+	if aSize.Compare(b.Size()) == types.IntOne {
 		a, b = b, a // b is the longest list
 	}
 	m := convertToMap(b)
@@ -288,7 +290,9 @@ func intersect(lhs, rhs ref.Val) ref.Val {
 		return types.ValOrErr(b, "no such overload")
 	}
 
-	if a.Size().(types.Int).Compare(b.Size()) == types.IntOne {
+	//nolint:forcetypeassert
+	aSize := a.Size().(types.Int)
+	if aSize.Compare(b.Size()) == types.IntOne {
 		a, b = b, a // b is the longest list
 	}
 	m := convertToMap(b)

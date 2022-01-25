@@ -36,7 +36,7 @@ func TestManager(t *testing.T) {
 		mockStore.
 			On("GetCompilationUnits", mock.MatchedBy(anyCtx), []namer.ModuleID{rp.ID}).
 			Return(map[namer.ModuleID]*policy.CompilationUnit{
-				rp.ID: &policy.CompilationUnit{
+				rp.ID: {
 					ModID:       rp.ID,
 					Definitions: map[namer.ModuleID]*policyv1.Policy{rp.ID: rp.Policy, dr.ID: dr.Policy},
 				},
@@ -113,7 +113,7 @@ func TestManager(t *testing.T) {
 		mockStore.
 			On("GetCompilationUnits", mock.MatchedBy(anyCtx), []namer.ModuleID{rp.ID}).
 			Return(map[namer.ModuleID]*policy.CompilationUnit{
-				rp.ID: &policy.CompilationUnit{
+				rp.ID: {
 					ModID:       rp.ID,
 					Definitions: map[namer.ModuleID]*policyv1.Policy{rp.ID: rp.Policy, dr.ID: dr.Policy},
 				},
@@ -123,11 +123,11 @@ func TestManager(t *testing.T) {
 		mockStore.
 			On("GetCompilationUnits", mock.MatchedBy(anyCtx), []namer.ModuleID{dr.ID, rp.ID}).
 			Return(map[namer.ModuleID]*policy.CompilationUnit{
-				rp.ID: &policy.CompilationUnit{
+				rp.ID: {
 					ModID:       rp.ID,
 					Definitions: map[namer.ModuleID]*policyv1.Policy{rp.ID: rp.Policy, dr.ID: dr.Policy},
 				},
-				dr.ID: &policy.CompilationUnit{
+				dr.ID: {
 					ModID:       dr.ID,
 					Definitions: map[namer.ModuleID]*policyv1.Policy{dr.ID: dr.Policy},
 				},
@@ -136,7 +136,7 @@ func TestManager(t *testing.T) {
 
 		mockStore.
 			On("GetDependents", mock.MatchedBy(anyCtx), []namer.ModuleID{dr.ID}).
-			Return(map[namer.ModuleID][]namer.ModuleID{dr.ID: []namer.ModuleID{rp.ID}}, nil).
+			Return(map[namer.ModuleID][]namer.ModuleID{dr.ID: {rp.ID}}, nil).
 			Once()
 
 		rps1, err := mgr.Get(context.Background(), rp.ID)
@@ -170,14 +170,14 @@ func TestManager(t *testing.T) {
 			switch gcuInvocationCount {
 			case 1:
 				return map[namer.ModuleID]*policy.CompilationUnit{
-					rp.ID: &policy.CompilationUnit{
+					rp.ID: {
 						ModID:       rp.ID,
 						Definitions: map[namer.ModuleID]*policyv1.Policy{rp.ID: rp.Policy, dr.ID: dr.Policy},
 					},
 				}, nil
 			case 2, 3: // derived roles is now deleted
 				return map[namer.ModuleID]*policy.CompilationUnit{
-					rp.ID: &policy.CompilationUnit{
+					rp.ID: {
 						ModID:       rp.ID,
 						Definitions: map[namer.ModuleID]*policyv1.Policy{rp.ID: rp.Policy},
 					},
@@ -193,7 +193,7 @@ func TestManager(t *testing.T) {
 
 		mockStore.
 			On("GetDependents", mock.MatchedBy(anyCtx), []namer.ModuleID{dr.ID}).
-			Return(map[namer.ModuleID][]namer.ModuleID{dr.ID: []namer.ModuleID{rp.ID}}, nil).
+			Return(map[namer.ModuleID][]namer.ModuleID{dr.ID: {rp.ID}}, nil).
 			Once()
 
 		rps1, err := mgr.Get(context.Background(), rp.ID)

@@ -555,7 +555,7 @@ func parseAndOpen(listenAddr string) (net.Listener, error) {
 		if err != nil {
 			return nil, err
 		}
-
+		//nolint:forcetypeassert
 		listener.(*net.UnixListener).SetUnlinkOnClose(true)
 		return listener, nil
 	}

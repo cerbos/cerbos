@@ -136,6 +136,7 @@ func replaceVars(e *exprpb.Expr, vars map[string]*exprpb.Expr) (output *exprpb.E
 			ident := e.SelectExpr.Operand.GetIdentExpr()
 			if ident != nil && (ident.Name == conditions.CELVariablesAbbrev || ident.Name == conditions.CELVariablesIdent) {
 				if v, ok := vars[e.SelectExpr.Field]; ok {
+					//nolint:forcetypeassert
 					return proto.Clone(v).(*exprpb.Expr)
 				}
 				err = multierr.Append(err, fmt.Errorf("unknown variable %q", e.SelectExpr.Field))
