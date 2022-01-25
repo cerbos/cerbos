@@ -25,7 +25,7 @@ Cerbos Policy Decision Point (PDP) is built for modern, containerised microservi
 * Cerbos will automatically pull the latest commits from the production branch and update the policies in place without requiring a restart. Your changes are now rolled out! 
 
 == Authorization as a Service
-It was an explicit design choice to have Cerbos be a standalone service rather than a library for the following reasons:
+Cerbos is designed to be deployed as a service rather than a library compiled into an application. This design choice provides several benefits:
 
 * By having it as a single service any part of the application stack can call to check permissions regardless of language, deployment or system - Cerbos is totally agnostic in that way.
 * With modern network stacks, the latency is link:https://www.miketheman.net/2021/12/28/container-to-container-communication/[quite negligible] so it isn't an area of concern unless the system is processing millions of requests a second (and even then there are options to support this).
