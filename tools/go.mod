@@ -5,6 +5,7 @@ go 1.17
 require (
 	github.com/bojand/ghz v0.105.0
 	github.com/bufbuild/buf v0.56.0
+	github.com/cerbos/protoc-gen-go-hashpb v0.0.0-20220126110857-706919faf0d8
 	github.com/envoyproxy/protoc-gen-validate v0.6.2
 	github.com/fullstorydev/grpcurl v1.8.5
 	github.com/golangci/golangci-lint v1.44.0

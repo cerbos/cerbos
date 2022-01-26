@@ -1681,6 +1681,10 @@
           "additionalProperties": {
             "type": "string"
           }
+        },
+        "hash": {
+          "type": "string",
+          "format": "uint64"
         }
       }
     },
