@@ -18,11 +18,20 @@ Comprehensive audit trails:: The textual policy language of Cerbos makes it idea
 Cerbos Policy Decision Point (PDP) is built for modern, containerised microservice environments with support for both x86-64 and ARM64 architectures, comprehensive observability integrations (metrics, distributed tracing), REST and gRPC endpoints, and native GitOps support (CI tooling, push-to-deploy). 
 
 
-.Cerbos workflow
+== Cerbos workflow
 * Author Cerbos policies to define access rules for your resources. Optionally, write unit tests for the policies using the Cerbos DSL. 
 * Compile the policies and run tests using the Cerbos CLI.
 * Follow your standard development process to push the changes to production. (E.g. create pull request, run CI tests, get approval and merge to prod branch)
 * Cerbos will automatically pull the latest commits from the production branch and update the policies in place without requiring a restart. Your changes are now rolled out! 
 
+== Authorization as a Service
+Cerbos is designed to be deployed as a service rather than a library compiled into an application. This design choice provides several benefits:
 
+* Permission checks can be performed by any part of the application stack and even shared between multiple services regardless of the programming language, CPU architecture, operating system or deployment model. 
+* Policy updates instantly take effect without having to recompile or redeploy the applications. This reduces disruption to busy services and enables policy authors to iterate quickly and respond to events faster.
+* With modern network stacks, the communication overhead is link:https://www.miketheman.net/2021/12/28/container-to-container-communication/[effectively negligible] in all but the most extreme cases. Even in those exceptional cases, scaling Cerbos to handle the demand is extremely easy due to its lightweight, stateless design. 
+* All development and optimization efforts to Cerbos can be concentrated on a single project because we do not need to replicate the effort on multiple language-specific implementations. All our users, regardless of their programming language of choice, immediately get the benefit of the latest and greatest Cerbos features as soon they are released.
 
+The Cerbos approach is a proven, modern, cloud native pattern for delivering language-agnostic infrastructure services. link:https://dapr.io[Microsoft Dapr], link:https://istio.io[Istio] and link:https://linkerd.io[Linkerd] are good examples of popular products utilising similar language-agnostic service APIs to augment applications.
+    
+Because Cerbos is in the critical request path and expected to handle large volumes of requests, we are obsessive about making Cerbos as fast and as efficient as possible with every release. Cerbos exposes an efficient, low latency gRPC API and is designed to be stateless and lightweight so that it can be deployed as a sidecar right next to  your application. It can even be accessed over Unix domain sockets for extra security and reduced overhead.   
