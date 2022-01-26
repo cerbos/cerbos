@@ -6,6 +6,9 @@ package policy
 import (
 	"fmt"
 
+	"github.com/cespare/xxhash"
+	"google.golang.org/protobuf/types/known/wrapperspb"
+
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
 	"github.com/cerbos/cerbos/internal/namer"
 )
@@ -25,6 +28,12 @@ const (
 	PrincipalKindStr    = "PRINCIPAL"
 	DerivedRolesKindStr = "DERIVED_ROLES"
 )
+
+var ignoreHashFields = map[string]struct{}{
+	"cerbos.policy.v1.Policy.metadata":    {},
+	"cerbos.policy.v1.Policy.disabled":    {},
+	"cerbos.policy.v1.Policy.description": {},
+}
 
 func (k Kind) String() string {
 	switch k {
@@ -106,7 +115,33 @@ func WithMetadata(p *policyv1.Policy, source string, annotations map[string]stri
 	p.Metadata.SourceFile = source
 	p.Metadata.Annotations = annotations
 
+	if p.Metadata.Hash == nil {
+		return WithHash(p)
+	}
+
 	return p
+}
+
+// WithHash calculates the hash for the policy and adds it to metadata.
+func WithHash(p *policyv1.Policy) *policyv1.Policy {
+	if p.Metadata == nil {
+		p.Metadata = &policyv1.Metadata{}
+	}
+
+	hasher := xxhash.New()
+	p.HashPB(hasher, ignoreHashFields)
+	p.Metadata.Hash = wrapperspb.UInt64(hasher.Sum64())
+
+	return p
+}
+
+// GetHash returns the hash of the policy.
+func GetHash(p *policyv1.Policy) uint64 {
+	if p.Metadata == nil || p.Metadata.Hash == nil {
+		p = WithHash(p)
+	}
+
+	return p.Metadata.Hash.GetValue()
 }
 
 // GetSourceFile gets the source file name from metadata if it exists.
@@ -131,10 +166,12 @@ type Wrapper struct {
 	Version      string
 	Dependencies []namer.ModuleID
 	ID           namer.ModuleID
+	Hash         uint64
 }
 
+// Wrap augments a policy with useful information about itself.
 func Wrap(p *policyv1.Policy) Wrapper {
-	w := Wrapper{Policy: p}
+	w := Wrapper{Policy: p, Hash: GetHash(p)}
 
 	switch pt := p.PolicyType.(type) {
 	case *policyv1.Policy_ResourcePolicy:

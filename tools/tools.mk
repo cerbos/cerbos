@@ -13,6 +13,7 @@ GRPCURL := $(TOOLS_BIN_DIR)/grpcurl
 MOCKERY := $(TOOLS_BIN_DIR)/mockery
 PROTOC_GEN_GO := $(TOOLS_BIN_DIR)/protoc-gen-go
 PROTOC_GEN_GO_GRPC := $(TOOLS_BIN_DIR)/protoc-gen-go-grpc
+PROTOC_GEN_GO_HASHPB := $(TOOLS_BIN_DIR)/protoc-gen-go-hashpb
 PROTOC_GEN_GO_VTPROTO := $(TOOLS_BIN_DIR)/protoc-gen-go-vtproto
 PROTOC_GEN_GRPC_GATEWAY := $(TOOLS_BIN_DIR)/protoc-gen-grpc-gateway
 PROTOC_GEN_OPENAPIV2 := $(TOOLS_BIN_DIR)/protoc-gen-openapiv2
@@ -55,6 +56,12 @@ define BUF_GEN_TEMPLATE
       "opt": "paths=source_relative",\
       "out": "$(GEN_DIR)",\
       "path": "$(PROTOC_GEN_GO_GRPC)"\
+    },\
+    {\
+      "name": "go-hashpb",\
+      "opt": "paths=source_relative",\
+      "out": "$(GEN_DIR)",\
+      "path": "$(PROTOC_GEN_GO_HASHPB)"\
     },\
     {\
       "name": "grpc-gateway",\
@@ -107,6 +114,9 @@ $(PROTOC_GEN_GO): $(TOOLS_BIN_DIR)
 $(PROTOC_GEN_GO_GRPC): $(TOOLS_BIN_DIR) 
 	@ GOBIN=$(TOOLS_BIN_DIR) go install -modfile=$(TOOLS_MOD) google.golang.org/grpc/cmd/protoc-gen-go-grpc
 
+$(PROTOC_GEN_GO_HASHPB): $(TOOLS_BIN_DIR) 
+	@ GOBIN=$(TOOLS_BIN_DIR) go install -modfile=$(TOOLS_MOD) github.com/cerbos/protoc-gen-go-hashpb
+
 $(PROTOC_GEN_GO_VTPROTO): $(TOOLS_BIN_DIR) 
 	@ GOBIN=$(TOOLS_BIN_DIR) go install -modfile=$(TOOLS_MOD) github.com/planetscale/vtprotobuf/cmd/protoc-gen-go-vtproto
 
@@ -120,7 +130,7 @@ $(PROTOC_GEN_VALIDATE): $(TOOLS_BIN_DIR)
 	@ GOBIN=$(TOOLS_BIN_DIR) go install -modfile=$(TOOLS_MOD) github.com/envoyproxy/protoc-gen-validate
 
 .PHONY: proto-gen-deps
-proto-gen-deps: $(BUF) $(PROTOC_GEN_GO) $(PROTOC_GEN_GO_VTPROTO) $(PROTOC_GEN_GO_GRPC) $(PROTOC_GEN_GRPC_GATEWAY) $(PROTOC_GEN_OPENAPIV2) $(PROTOC_GEN_VALIDATE)
+proto-gen-deps: $(BUF) $(PROTOC_GEN_GO) $(PROTOC_GEN_GO_VTPROTO) $(PROTOC_GEN_GO_GRPC) $(PROTOC_GEN_GRPC_GATEWAY) $(PROTOC_GEN_OPENAPIV2) $(PROTOC_GEN_VALIDATE) $(PROTOC_GEN_GO_HASHPB)
 
 swagger-editor:
 	@ docker run -it -p 8080:8080 -v $(shell pwd)/$(OPENAPI_DIR):/tmp -e SWAGGER_FILE=/tmp/svc/v1/svc.swagger.json swaggerapi/swagger-editor
