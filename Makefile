@@ -95,7 +95,10 @@ compile:
 pre-commit: lint-helm build test-race 
 
 .PHONY: build
-build: $(GORELEASER) generate lint test
+build: generate lint test package
+
+.PHONY: package
+package: $(GORELEASER)
 	@ $(GORELEASER) release --config=.goreleaser.yml --snapshot --skip-publish --rm-dist
 
 .PHONY: docs
