@@ -1,4 +1,3 @@
 .xref:index.adoc[CLI]
-* xref:server.adoc[`server` Command]
-* xref:compile.adoc[`compile` Command]
-* xref:ctl.adoc[`cerbosctl` Command]
+* xref:cerbos.adoc[]
+* xref:cerbosctl.adoc[]
