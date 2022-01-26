@@ -1,8 +1,11 @@
 include::ROOT:partial$attributes.adoc[]
 
-= `cerbosctl` Command
+= `cerbosctl` 
+:page-aliases: ctl.adoc
 
-The `cerbosctl` command is the entrypoint for Cerbos administration utilities. It requires the xref:configuration:server.adoc#admin-api[Admin API to be enabled] on the Cerbos server.
+This utility is included in the tar archives, Linux packages and the Homebrew tap. See xref:ROOT:installation/binary.adoc[] for instructions on how to install this binary from one of those sources.
+
+This utility requires the xref:configuration:server.adoc#admin-api[Admin API to be enabled] on the Cerbos server.
 
 The server address to connect to and the credentials to authenticate can be provided through environment variables or as arguments to the command.
 
@@ -10,8 +13,8 @@ The server address to connect to and the credentials to authenticate can be prov
 ----
 Cerbos instance administration commands
 The Cerbos Admin API must be enabled in order for these commands to work.
-The Admin API requires credentials. They can be provided using environment
-variables or command-line arguments.
+The Admin API requires credentials. They can be provided using a netrc file, 
+environment variables or command-line arguments. 
 
 Environment variables
 
@@ -19,8 +22,8 @@ CERBOS_SERVER: gRPC address of the Cerbos server
 CERBOS_USERNAME: Admin username
 CERBOS_PASSWORD: Admin password
 
-Alternatively, command-line flags can be used to provide the server address and credentials.
-When both environment variables and command-line flags are provided, the flags take precedence.
+When more than one method is used to provide credentials, the precedence from lowest to 
+highest is: netrc < environment < command line.
 
 Usage:
   cerbosctl [command]
@@ -35,20 +38,23 @@ cerbosctl --server=localhost:3593 --username=user --password=password --plaintex
 
 Available Commands:
   audit       View audit logs
-  decisions   Explore Cerbos engine decision logs
-  list        List active policies
-  version     Display client and server versions
+  completion  Generate the autocompletion script for the specified shell
+  decisions   Interactive decision log viewer
+  get         
+  help        Help about any command
+  version     Detailed information of the ctl and server version
 
 Flags:
       --ca-cert string       Path to the CA certificate for verifying server identity
       --client-cert string   Path to the TLS client certificate
       --client-key string    Path to the TLS client key
-  -h, --help                 help for ctl
+  -h, --help                 help for cerbosctl
       --insecure             Skip validating server certificate
       --password string      Admin password
       --plaintext            Use plaintext protocol without TLS
       --server string        Address of the Cerbos server
       --username string      Admin username
+  -v, --version              version for cerbosctl
 
 Use "cerbosctl [command] --help" for more information about a command.
 ----
