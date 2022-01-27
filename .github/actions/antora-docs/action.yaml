@@ -3,7 +3,7 @@ name: 'antora-docs'
 description: 'Build the docs using Antora'
 runs:
   using: 'docker'
-  image: 'docker://docker.io/antora/antora:3.0.0-alpha.10'
+  image: 'docker://docker.io/antora/antora:3.0.1'
   args:
     - 'antora'
     - '--stacktrace'
