@@ -373,6 +373,11 @@ func (m *RunnableResourcePolicySet_Policy) MarshalToSizedBufferVT(dAtA []byte) (
 		i -= len(m.unknownFields)
 		copy(dAtA[i:], m.unknownFields)
 	}
+	if m.SourceHash != 0 {
+		i = encodeVarint(dAtA, i, uint64(m.SourceHash))
+		i--
+		dAtA[i] = 0x30
+	}
 	if m.Schemas != nil {
 		if marshalto, ok := interface{}(m.Schemas).(interface {
 			MarshalToSizedBufferVT([]byte) (int, error)
@@ -694,6 +699,11 @@ func (m *RunnableDerivedRolesSet) MarshalToSizedBufferVT(dAtA []byte) (int, erro
 		i -= len(m.unknownFields)
 		copy(dAtA[i:], m.unknownFields)
 	}
+	if m.SourceHash != 0 {
+		i = encodeVarint(dAtA, i, uint64(m.SourceHash))
+		i--
+		dAtA[i] = 0x18
+	}
 	if len(m.DerivedRoles) > 0 {
 		for k := range m.DerivedRoles {
 			v := m.DerivedRoles[k]
@@ -922,6 +932,11 @@ func (m *RunnablePrincipalPolicySet_Policy) MarshalToSizedBufferVT(dAtA []byte) 
 	if m.unknownFields != nil {
 		i -= len(m.unknownFields)
 		copy(dAtA[i:], m.unknownFields)
+	}
+	if m.SourceHash != 0 {
+		i = encodeVarint(dAtA, i, uint64(m.SourceHash))
+		i--
+		dAtA[i] = 0x20
 	}
 	if len(m.ResourceRules) > 0 {
 		for k := range m.ResourceRules {
@@ -1486,6 +1501,9 @@ func (m *RunnableResourcePolicySet_Policy) SizeVT() (n int) {
 		}
 		n += 1 + l + sov(uint64(l))
 	}
+	if m.SourceHash != 0 {
+		n += 1 + sov(uint64(m.SourceHash))
+	}
 	if m.unknownFields != nil {
 		n += len(m.unknownFields)
 	}
@@ -1605,6 +1623,9 @@ func (m *RunnableDerivedRolesSet) SizeVT() (n int) {
 			n += mapEntrySize + 1 + sov(uint64(mapEntrySize))
 		}
 	}
+	if m.SourceHash != 0 {
+		n += 1 + sov(uint64(m.SourceHash))
+	}
 	if m.unknownFields != nil {
 		n += len(m.unknownFields)
 	}
@@ -1720,6 +1741,9 @@ func (m *RunnablePrincipalPolicySet_Policy) SizeVT() (n int) {
 			mapEntrySize := 1 + len(k) + sov(uint64(len(k))) + l
 			n += mapEntrySize + 1 + sov(uint64(mapEntrySize))
 		}
+	}
+	if m.SourceHash != 0 {
+		n += 1 + sov(uint64(m.SourceHash))
 	}
 	if m.unknownFields != nil {
 		n += len(m.unknownFields)
@@ -3162,6 +3186,25 @@ func (m *RunnableResourcePolicySet_Policy) UnmarshalVT(dAtA []byte) error {
 				}
 			}
 			iNdEx = postIndex
+		case 6:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field SourceHash", wireType)
+			}
+			m.SourceHash = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.SourceHash |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
 		default:
 			iNdEx = preIndex
 			skippy, err := skip(dAtA[iNdEx:])
@@ -3967,6 +4010,25 @@ func (m *RunnableDerivedRolesSet) UnmarshalVT(dAtA []byte) error {
 			}
 			m.DerivedRoles[mapkey] = mapvalue
 			iNdEx = postIndex
+		case 3:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field SourceHash", wireType)
+			}
+			m.SourceHash = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.SourceHash |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
 		default:
 			iNdEx = preIndex
 			skippy, err := skip(dAtA[iNdEx:])
@@ -4773,6 +4835,25 @@ func (m *RunnablePrincipalPolicySet_Policy) UnmarshalVT(dAtA []byte) error {
 			}
 			m.ResourceRules[mapkey] = mapvalue
 			iNdEx = postIndex
+		case 4:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field SourceHash", wireType)
+			}
+			m.SourceHash = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.SourceHash |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
 		default:
 			iNdEx = preIndex
 			skippy, err := skip(dAtA[iNdEx:])

@@ -6,11 +6,11 @@ package policy
 import (
 	"fmt"
 
-	"github.com/cespare/xxhash"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
 	"github.com/cerbos/cerbos/internal/namer"
+	"github.com/cerbos/cerbos/internal/util"
 )
 
 // Kind defines the type of policy (resource, principal, derived_roles etc.).
@@ -128,9 +128,7 @@ func WithHash(p *policyv1.Policy) *policyv1.Policy {
 		p.Metadata = &policyv1.Metadata{}
 	}
 
-	hasher := xxhash.New()
-	p.HashPB(hasher, ignoreHashFields)
-	p.Metadata.Hash = wrapperspb.UInt64(hasher.Sum64())
+	p.Metadata.Hash = wrapperspb.UInt64(util.HashPB(p, ignoreHashFields))
 
 	return p
 }
