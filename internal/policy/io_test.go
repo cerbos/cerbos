@@ -39,8 +39,6 @@ func TestReadPolicy(t *testing.T) {
 	dir := test.PathToDir(t, "policy_formats")
 
 	for _, tc := range testCases {
-		want := policy.WithHash(tc.want)
-
 		t.Run(tc.input, func(t *testing.T) {
 			for _, format := range []string{"yaml", "json"} {
 				t.Run(format, func(t *testing.T) {
@@ -51,7 +49,7 @@ func TestReadPolicy(t *testing.T) {
 
 					have, err := policy.ReadPolicy(f)
 					require.NoError(t, err)
-					require.Empty(t, cmp.Diff(want, have, protocmp.Transform()))
+					require.Empty(t, cmp.Diff(tc.want, have, protocmp.Transform()))
 				})
 			}
 		})
