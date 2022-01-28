@@ -31,7 +31,7 @@ func ReadPolicy(src io.Reader) (*policyv1.Policy, error) {
 		return nil, err
 	}
 
-	return WithHash(policy), nil
+	return policy, nil
 }
 
 // WritePolicy writes a policy as YAML to the destination.
@@ -63,5 +63,5 @@ func ReadBinaryPolicy(src io.Reader) (*policyv1.Policy, error) {
 		return nil, err
 	}
 
-	return WithHash(p), nil
+	return p, nil
 }

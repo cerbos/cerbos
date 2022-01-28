@@ -8,12 +8,13 @@ import (
 	"sync"
 	"testing"
 
-	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
-	"github.com/cerbos/cerbos/internal/test"
 	"github.com/cespare/xxhash"
 	xxhashv2 "github.com/cespare/xxhash/v2"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/proto"
+
+	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
+	"github.com/cerbos/cerbos/internal/test"
 )
 
 var dummy uint64
@@ -32,6 +33,7 @@ func TestXXHashV2(t *testing.T) {
 	}
 }
 
+//nolint:gosec
 func BenchmarkHashString(b *testing.B) {
 	numInp := 10_000
 	inputs := make([]string, numInp)
@@ -56,13 +58,12 @@ func BenchmarkHashString(b *testing.B) {
 			h := hashStrPool(inputs[rand.Intn(numInp)])
 			dummy += h >> 4
 		}
-
 	})
 }
 
 func hashStrPool(s string) uint64 {
 	d := strPool.Get().(*xxhashv2.Digest)
-	d.WriteString(s)
+	_, _ = d.WriteString(s)
 	r := d.Sum64()
 
 	d.Reset()
@@ -71,6 +72,7 @@ func hashStrPool(s string) uint64 {
 	return r
 }
 
+//nolint:gosec
 func BenchmarkHashPB(b *testing.B) {
 	numInp := 10_000
 	inputs := make([]*policyv1.Policy, numInp)
@@ -96,7 +98,6 @@ func BenchmarkHashPB(b *testing.B) {
 			dummy += h >> 4
 		}
 	})
-
 }
 
 func hashPBNoPool(pb *policyv1.Policy) uint64 {

@@ -137,8 +137,8 @@ func DataFS() fs.FS {
 type Case struct {
 	Want       map[string][]byte
 	Name       string
-	Input      []byte
 	SourceFile string
+	Input      []byte
 }
 
 // LoadTestCases loads groups of test files from the given path.

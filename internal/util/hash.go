@@ -17,7 +17,7 @@ type Hashable interface {
 }
 
 func HashPB(h Hashable, ignore map[string]struct{}) uint64 {
-	d := hashPool.Get().(*xxhash.Digest)
+	d := hashPool.Get().(*xxhash.Digest) //nolint:forcetypeassert
 	h.HashPB(d, ignore)
 	res := d.Sum64()
 
