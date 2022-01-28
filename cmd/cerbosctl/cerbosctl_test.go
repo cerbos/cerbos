@@ -188,6 +188,28 @@ func testGetCmd(fn internal.WithClient) func(*testing.T) {
 					require.JSONEq(t, string(expected), out.String())
 				}
 			})
+
+			t.Run("invalid policy key type for commands", func(t *testing.T) {
+				testCases := []struct {
+					args    []string
+				}{
+					{strings.Split("derived_roles principal.donald_duck_1.default", " ")},
+					{strings.Split("derived_roles resource.leave_request_1.default", " ")},
+					{strings.Split("principal_policies derived_roles.my_derived_roles_1", " ")},
+					{strings.Split("principal_policies resource.leave_request_1.default", " ")},
+					{strings.Split("resource_policies derived_roles.my_derived_roles_1", " ")},
+					{strings.Split("resource_policies principal.donald_duck_1.default", " ")},
+				}
+
+				for _, tc := range testCases {
+					out := bytes.NewBufferString("")
+					cmd := get.NewGetCmd(fn)
+					cmd.SetOut(out)
+					cmd.SetArgs(tc.args)
+					err := cmd.Execute()
+					require.Error(t, err)
+				}
+			})
 		})
 	}
 }

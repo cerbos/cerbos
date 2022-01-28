@@ -30,7 +30,7 @@ func MakeGetCmd(resType ResourceType, filters *flagset.Filters, format *flagset.
 			return nil
 		}
 
-		if err := Get(c, cmd, format, args...); err != nil {
+		if err := Get(c, cmd, format, resType, args...); err != nil {
 			return fmt.Errorf("failed to get: %w", err)
 		}
 
@@ -85,20 +85,28 @@ func List(c client.AdminClient, cmd *cobra.Command, filters *flagset.Filters, fo
 	return nil
 }
 
-func Get(c client.AdminClient, cmd *cobra.Command, format *flagset.Format, ids ...string) error {
+func Get(c client.AdminClient, cmd *cobra.Command, format *flagset.Format, resType ResourceType, ids ...string) error {
 	foundPolicy := false
 	for idx := range ids {
 		if idx%internal.MaxIDPerReq == 0 {
-			policies, err := c.GetPolicy(context.Background(), ids[idx:internal.MinInt(idx+internal.MaxIDPerReq, len(ids)-idx)]...)
+			idxEnd := internal.MinInt(idx+internal.MaxIDPerReq, len(ids))
+			policies, err := c.GetPolicy(context.Background(), ids[idx:idxEnd]...)
 			if err != nil {
 				return fmt.Errorf("error while requesting policy: %w", err)
 			}
 
-			if len(policies) != 0 {
+			wp := make([]policy.Wrapper, len(policies))
+			for i, p := range policies {
+				wp[i] = policy.Wrap(p)
+			}
+
+			filtered := filter(wp, ids[idx:idxEnd], nil, nil, resType)
+
+			if len(filtered) != 0 {
 				foundPolicy = true
 			}
 
-			if err = printPolicy(cmd.OutOrStdout(), policies, format.Output); err != nil {
+			if err = printPolicy(cmd.OutOrStdout(), filtered, format.Output); err != nil {
 				return fmt.Errorf("could not print policies: %w", err)
 			}
 		}
@@ -139,7 +147,7 @@ func filter(policies []policy.Wrapper, policyIds, name, version []string, resTyp
 	return filtered
 }
 
-func printPolicy(w io.Writer, policies []*policyv1.Policy, format string) error {
+func printPolicy(w io.Writer, policies map[string]policy.Wrapper, format string) error {
 	switch format {
 	case "json":
 		return internal.PrintPolicyJSON(w, policies)
