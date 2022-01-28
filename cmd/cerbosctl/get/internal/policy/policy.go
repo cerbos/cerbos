@@ -106,12 +106,7 @@ func Get(c client.AdminClient, cmd *cobra.Command, format *flagset.Format, resTy
 				foundPolicy = true
 			}
 
-			p := make([]*policyv1.Policy, 0, len(filtered))
-			for _, wrappedPolicy := range filtered {
-				p = append(p, wrappedPolicy.Policy)
-			}
-
-			if err = printPolicy(cmd.OutOrStdout(), p, format.Output); err != nil {
+			if err = printPolicy(cmd.OutOrStdout(), filtered, format.Output); err != nil {
 				return fmt.Errorf("could not print policies: %w", err)
 			}
 		}
@@ -152,7 +147,7 @@ func filter(policies []policy.Wrapper, policyIds, name, version []string, resTyp
 	return filtered
 }
 
-func printPolicy(w io.Writer, policies []*policyv1.Policy, format string) error {
+func printPolicy(w io.Writer, policies map[string]policy.Wrapper, format string) error {
 	switch format {
 	case "json":
 		return internal.PrintPolicyJSON(w, policies)

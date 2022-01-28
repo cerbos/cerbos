@@ -7,11 +7,11 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"github.com/cerbos/cerbos/internal/policy"
 	"io"
 
 	"google.golang.org/protobuf/encoding/protojson"
 
-	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
 	schemav1 "github.com/cerbos/cerbos/api/genpb/cerbos/schema/v1"
 	"github.com/cerbos/cerbos/internal/util"
 )
@@ -43,9 +43,9 @@ func PrintSchemaJSON(w io.Writer, schemas []*schemav1.Schema) error {
 	return nil
 }
 
-func PrintPolicyJSON(w io.Writer, policies []*policyv1.Policy) error {
+func PrintPolicyJSON(w io.Writer, policies map[string]policy.Wrapper) error {
 	for _, p := range policies {
-		b, err := protojson.Marshal(p)
+		b, err := protojson.Marshal(p.Policy)
 		if err != nil {
 			return fmt.Errorf("could not marshal policy: %w", err)
 		}
@@ -57,9 +57,9 @@ func PrintPolicyJSON(w io.Writer, policies []*policyv1.Policy) error {
 	return nil
 }
 
-func PrintPolicyPrettyJSON(w io.Writer, policies []*policyv1.Policy) error {
+func PrintPolicyPrettyJSON(w io.Writer, policies map[string]policy.Wrapper) error {
 	for _, p := range policies {
-		s := protojson.Format(p)
+		s := protojson.Format(p.Policy)
 
 		_, err := fmt.Fprintf(w, "%s\n", s)
 		if err != nil {
@@ -69,14 +69,14 @@ func PrintPolicyPrettyJSON(w io.Writer, policies []*policyv1.Policy) error {
 	return nil
 }
 
-func PrintPolicyYAML(w io.Writer, policies []*policyv1.Policy) error {
+func PrintPolicyYAML(w io.Writer, policies map[string]policy.Wrapper) error {
 	for _, p := range policies {
 		_, err := fmt.Fprintln(w, "---")
 		if err != nil {
 			return fmt.Errorf("failed to print header: %w", err)
 		}
 
-		err = util.WriteYAML(w, p)
+		err = util.WriteYAML(w, p.Policy)
 		if err != nil {
 			return fmt.Errorf("could not write policy: %w", err)
 		}
