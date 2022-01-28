@@ -11,9 +11,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/cespare/xxhash"
-
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
+	"github.com/cerbos/cerbos/internal/util"
 )
 
 var invalidIdentifierChars = regexp.MustCompile(`[^\w.]+`)
@@ -67,7 +66,7 @@ func GenModuleID(p *policyv1.Policy) ModuleID {
 
 // GenModuleIDFromFQN generates a short ID for the given module name.
 func GenModuleIDFromFQN(name string) ModuleID {
-	return ModuleID{hash: xxhash.Sum64String(name)}
+	return ModuleID{hash: util.HashStr(name)}
 }
 
 // FQN returns the fully-qualified name of the policy.

@@ -63,5 +63,5 @@ func ReadBinaryPolicy(src io.Reader) (*policyv1.Policy, error) {
 		return nil, err
 	}
 
-	return p, nil
+	return WithHash(p), nil
 }
