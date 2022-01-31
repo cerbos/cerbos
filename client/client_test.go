@@ -141,7 +141,6 @@ func loadPolicies(t *testing.T, ac client.AdminClient) {
 }
 
 func testGRPCClient(c client.Client) func(*testing.T) {
-	//nolint:thelper
 	return func(t *testing.T) {
 		t.Run("CheckResourceSet", func(t *testing.T) {
 			ctx, cancelFunc := context.WithTimeout(context.Background(), timeout)

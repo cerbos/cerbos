@@ -193,7 +193,7 @@ func (tr *TestRunner) RunHTTPTests(hostAddr string, creds *AuthCreds) func(*test
 func mkHTTPClient(t *testing.T) *http.Client {
 	t.Helper()
 
-	customTransport := http.DefaultTransport.(*http.Transport).Clone()
+	customTransport := http.DefaultTransport.(*http.Transport).Clone()      //nolint:forcetypeassert
 	customTransport.TLSClientConfig = &tls.Config{InsecureSkipVerify: true} //nolint:gosec
 
 	return &http.Client{Transport: customTransport}
