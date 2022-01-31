@@ -29,7 +29,6 @@ import (
 	"github.com/cerbos/cerbos/cmd/cerbosctl/get/principalpolicy"
 	"github.com/cerbos/cerbos/cmd/cerbosctl/get/resourcepolicy"
 	"github.com/cerbos/cerbos/cmd/cerbosctl/internal"
-	"github.com/cerbos/cerbos/internal/policy"
 	"github.com/cerbos/cerbos/internal/test"
 )
 
@@ -184,7 +183,7 @@ func testGetCmd(fn internal.WithClient) func(*testing.T) {
 					cmd.SetOut(out)
 					err := cmd.Execute()
 					require.NoError(t, err)
-					expected, err := protojson.Marshal(policy.WithHash(tc.policy))
+					expected, err := protojson.Marshal(tc.policy)
 					require.NoError(t, err)
 					require.JSONEq(t, string(expected), out.String())
 				}

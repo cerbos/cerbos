@@ -65,7 +65,6 @@ func compileResourcePolicy(modCtx *moduleCtx, rp *policyv1.ResourcePolicy, schem
 		Rules:        make([]*runtimev1.RunnableResourcePolicySet_Policy_Rule, len(rp.Rules)),
 		Variables:    compileVariables(modCtx, modCtx.def.Variables),
 		Schemas:      rp.Schemas,
-		SourceHash:   policy.GetHash(modCtx.def),
 	}
 
 	for i, rule := range rp.Rules {
@@ -192,7 +191,6 @@ func doCompileDerivedRoles(modCtx *moduleCtx, dr *policyv1.DerivedRoles) *runtim
 			Fqn: modCtx.fqn,
 		},
 		DerivedRoles: make(map[string]*runtimev1.RunnableDerivedRole, len(dr.Definitions)),
-		SourceHash:   policy.GetHash(modCtx.def),
 	}
 
 	variables := compileVariables(modCtx, modCtx.def.Variables)

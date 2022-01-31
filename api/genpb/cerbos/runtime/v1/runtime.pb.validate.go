@@ -726,8 +726,6 @@ func (m *RunnableDerivedRolesSet) validate(all bool) error {
 		}
 	}
 
-	// no validation rules for SourceHash
-
 	if len(errors) > 0 {
 		return RunnableDerivedRolesSetMultiError(errors)
 	}
@@ -1612,8 +1610,6 @@ func (m *RunnableResourcePolicySet_Policy) validate(all bool) error {
 			}
 		}
 	}
-
-	// no validation rules for SourceHash
 
 	if len(errors) > 0 {
 		return RunnableResourcePolicySet_PolicyMultiError(errors)

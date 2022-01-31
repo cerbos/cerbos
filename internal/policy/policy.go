@@ -164,12 +164,11 @@ type Wrapper struct {
 	Version      string
 	Dependencies []namer.ModuleID
 	ID           namer.ModuleID
-	Hash         uint64
 }
 
 // Wrap augments a policy with useful information about itself.
 func Wrap(p *policyv1.Policy) Wrapper {
-	w := Wrapper{Policy: p, Hash: GetHash(p)}
+	w := Wrapper{Policy: p}
 
 	switch pt := p.PolicyType.(type) {
 	case *policyv1.Policy_ResourcePolicy:

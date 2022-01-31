@@ -193,10 +193,6 @@ func cerbos_runtime_v1_RunnableDerivedRolesSet_hashpb_sum(m *RunnableDerivedRole
 			}
 		}
 	}
-	if _, ok := ignore["cerbos.runtime.v1.RunnableDerivedRolesSet.source_hash"]; !ok {
-		_, _ = hasher.Write(protowire.AppendVarint(nil, m.SourceHash))
-
-	}
 }
 
 func cerbos_runtime_v1_RunnablePolicySet_hashpb_sum(m *RunnablePolicySet, hasher hash.Hash, ignore map[string]struct{}) {
@@ -503,10 +499,6 @@ func cerbos_runtime_v1_RunnableResourcePolicySet_Policy_hashpb_sum(m *RunnableRe
 		if m.Schemas != nil {
 			cerbos_policy_v1_Schemas_hashpb_sum(m.Schemas, hasher, ignore)
 		}
-
-	}
-	if _, ok := ignore["cerbos.runtime.v1.RunnableResourcePolicySet.Policy.source_hash"]; !ok {
-		_, _ = hasher.Write(protowire.AppendVarint(nil, m.SourceHash))
 
 	}
 }

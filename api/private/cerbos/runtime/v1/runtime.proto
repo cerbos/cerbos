@@ -57,7 +57,6 @@ message RunnableResourcePolicySet {
         map<string, Expr> variables = 3;
         repeated Rule rules = 4;
         cerbos.policy.v1.Schemas schemas = 5;
-        uint64 source_hash = 6;
     }
 
     Metadata meta = 1;
@@ -78,7 +77,6 @@ message RunnableDerivedRolesSet {
 
     Metadata meta = 1;
     map<string, RunnableDerivedRole> derived_roles = 2;
-    uint64 source_hash = 3;
 }
 
 // RunnablePrincipalPolicySet is a container for all "compiled" principal policies belonging to a particular scope hierarchy.
