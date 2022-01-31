@@ -34,21 +34,6 @@ func PreRunFn(kind policy.Kind) func(*cobra.Command, []string) error {
 			return fmt.Errorf("--version flag is not available for derived roles")
 		}
 
-		if len(args) == 0 && cmd.Flags().Changed(flagset.SortByFlag) {
-			sortBy, err := cmd.Flags().GetString(flagset.SortByFlag)
-			if err != nil {
-				return fmt.Errorf("failed to get --sort-by flag")
-			}
-
-			if sortBy != flagset.SortByPolicyID.String() && sortBy != flagset.SortByName.String() && sortBy != flagset.SortByVersion.String() {
-				return fmt.Errorf("invalid --sort-by value, possible values are %s, %s and %s", flagset.SortByPolicyID.String(), flagset.SortByName.String(), flagset.SortByVersion.String())
-			}
-
-			if sortBy == flagset.SortByVersion.String() && kind == policy.DerivedRolesKind {
-				return fmt.Errorf("value of --sort-by flag cannot be 'version' when listing derived_roles")
-			}
-		}
-
 		return nil
 	}
 }
