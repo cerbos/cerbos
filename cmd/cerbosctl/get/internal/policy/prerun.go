@@ -21,12 +21,31 @@ func PreRunFn(kind ResourceType) func(*cobra.Command, []string) error {
 			return fmt.Errorf("--name and --version flags are only available when listing")
 		}
 
+		if len(args) != 0 && cmd.Flags().Changed(flagset.SortByFlag) {
+			return fmt.Errorf("--sort-by flag is only available when listing")
+		}
+
 		if len(args) == 0 && cmd.Flags().Changed(flagset.OutputFormatFlag) {
 			return fmt.Errorf("--%s flag is only available when retrieving specific policy", flagset.OutputFormatFlag)
 		}
 
 		if len(args) == 0 && kind == DerivedRoles && cmd.Flags().Changed(flagset.VersionFlag) {
 			return fmt.Errorf("--version flag is not available for derived roles")
+		}
+
+		if len(args) == 0 && cmd.Flags().Changed(flagset.SortByFlag) {
+			sortBy, err := cmd.Flags().GetString(flagset.SortByFlag)
+			if err != nil {
+				return fmt.Errorf("failed to get --sort-by flag")
+			}
+
+			if sortBy != flagset.SortByPolicyID.String() && sortBy != flagset.SortByName.String() && sortBy != flagset.SortByVersion.String() {
+				return fmt.Errorf("invalid --sort-by value, possible values are %s, %s and %s", flagset.SortByPolicyID.String(), flagset.SortByName.String(), flagset.SortByVersion.String())
+			}
+
+			if sortBy == flagset.SortByVersion.String() && kind == DerivedRoles {
+				return fmt.Errorf("value of --sort-by flag cannot be 'version' when listing derived_roles")
+			}
 		}
 
 		return nil

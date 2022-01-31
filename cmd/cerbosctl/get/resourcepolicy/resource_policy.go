@@ -35,6 +35,7 @@ cerbosctl get resource_policies resource.leave_request.default -ojson
 cerbosctl get resource_policies resource.leave_request.default -oprettyjson`
 
 type flag struct {
+	flagset.Sort
 	flagset.Format
 	flagset.Filters
 }
@@ -47,9 +48,10 @@ func NewResourcePolicyCmd(fn internal.WithClient) *cobra.Command {
 		Aliases: []string{"resource_policy", "rp"},
 		Example: example,
 		PreRunE: policy.PreRunFn(policy.ResourcePolicy),
-		RunE:    fn(policy.MakeGetCmd(policy.ResourcePolicy, &flags.Filters, &flags.Format)),
+		RunE:    fn(policy.MakeGetCmd(policy.ResourcePolicy, &flags.Filters, &flags.Format, &flags.Sort)),
 	}
 
+	cmd.Flags().AddFlagSet(flags.Sort.FlagSet())
 	cmd.Flags().AddFlagSet(flags.Format.FlagSet("yaml"))
 	cmd.Flags().AddFlagSet(flags.Filters.FlagSet())
 

@@ -35,6 +35,7 @@ cerbosctl get derived_roles derived_roles.my_derived_roles -ojson
 cerbosctl get derived_roles derived_roles.my_derived_roles -oprettyjson`
 
 type flag struct {
+	flagset.Sort
 	flagset.Format
 	flagset.Filters
 }
@@ -47,9 +48,10 @@ func NewDerivedRolesCmd(fn internal.WithClient) *cobra.Command {
 		Aliases: []string{"derived_role", "dr"},
 		Example: example,
 		PreRunE: policy.PreRunFn(policy.DerivedRoles),
-		RunE:    fn(policy.MakeGetCmd(policy.DerivedRoles, &flags.Filters, &flags.Format)),
+		RunE:    fn(policy.MakeGetCmd(policy.DerivedRoles, &flags.Filters, &flags.Format, &flags.Sort)),
 	}
 
+	cmd.Flags().AddFlagSet(flags.Sort.FlagSet())
 	cmd.Flags().AddFlagSet(flags.Format.FlagSet("yaml"))
 	cmd.Flags().AddFlagSet(flags.Filters.FlagSet())
 

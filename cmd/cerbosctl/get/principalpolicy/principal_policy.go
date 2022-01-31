@@ -35,6 +35,7 @@ cerbosctl get principal_policies principal.donald_duck.default -ojson
 cerbosctl get principal_policies principal.donald_duck.default -oprettyjson`
 
 type flag struct {
+	flagset.Sort
 	flagset.Format
 	flagset.Filters
 }
@@ -47,9 +48,10 @@ func NewPrincipalPolicyCmd(fn internal.WithClient) *cobra.Command {
 		Aliases: []string{"principal_policy", "pp"},
 		Example: example,
 		PreRunE: policy.PreRunFn(policy.PrincipalPolicy),
-		RunE:    fn(policy.MakeGetCmd(policy.PrincipalPolicy, &flags.Filters, &flags.Format)),
+		RunE:    fn(policy.MakeGetCmd(policy.PrincipalPolicy, &flags.Filters, &flags.Format, &flags.Sort)),
 	}
 
+	cmd.Flags().AddFlagSet(flags.Sort.FlagSet())
 	cmd.Flags().AddFlagSet(flags.Format.FlagSet("yaml"))
 	cmd.Flags().AddFlagSet(flags.Filters.FlagSet())
 

@@ -6,12 +6,10 @@ package schema
 import (
 	"context"
 	"fmt"
-	"io"
 	"sort"
 
 	"github.com/spf13/cobra"
 
-	schemav1 "github.com/cerbos/cerbos/api/genpb/cerbos/schema/v1"
 	"github.com/cerbos/cerbos/client"
 	"github.com/cerbos/cerbos/cmd/cerbosctl/get/internal/flagset"
 	"github.com/cerbos/cerbos/cmd/cerbosctl/get/internal/printer"
@@ -52,15 +50,4 @@ func Get(c client.AdminClient, cmd *cobra.Command, format *flagset.Format, ids .
 		}
 	}
 	return nil
-}
-
-func printSchema(w io.Writer, schemas []*schemav1.Schema, output string) error {
-	switch output {
-	case "json":
-		return internal.PrintSchemaJSON(w, schemas)
-	case "prettyjson", "pretty-json":
-		return internal.PrintSchemaPrettyJSON(w, schemas)
-	default:
-		return fmt.Errorf("only json and prettyjson formats are supported")
-	}
 }

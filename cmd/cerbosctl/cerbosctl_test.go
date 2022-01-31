@@ -76,6 +76,9 @@ func testGetCmd(fn internal.WithClient) func(*testing.T) {
 					{strings.Split("resource_policies --name=a --version=default", " "), false},
 					{strings.Split("derived_roles --version=abc", " "), true},
 					{strings.Split("derived_roles a.b.c --no-headers", " "), true},
+					{strings.Split("derived_roles a.b.c --sort-by policyId", " "), true},
+					{strings.Split("derived_roles --sort-by policyId", " "), false},
+					{strings.Split("derived_roles --sort-by version", " "), true},
 				}
 				for _, tc := range testCases {
 					cmd := get.NewGetCmd(fn)
@@ -191,7 +194,7 @@ func testGetCmd(fn internal.WithClient) func(*testing.T) {
 
 			t.Run("invalid policy key type for commands", func(t *testing.T) {
 				testCases := []struct {
-					args    []string
+					args []string
 				}{
 					{strings.Split("derived_roles principal.donald_duck_1.default", " ")},
 					{strings.Split("derived_roles resource.leave_request_1.default", " ")},
