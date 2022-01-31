@@ -7,22 +7,16 @@ import (
 	"bytes"
 	"context"
 	"errors"
-	"flag"
 	"fmt"
 	"math/rand"
-	"os"
 	"path/filepath"
 	"testing"
 
-	"github.com/google/go-cmp/cmp"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/encoding/protojson"
-	"google.golang.org/protobuf/proto"
-	"google.golang.org/protobuf/testing/protocmp"
 
 	effectv1 "github.com/cerbos/cerbos/api/genpb/cerbos/effect/v1"
 	privatev1 "github.com/cerbos/cerbos/api/genpb/cerbos/private/v1"
-	runtimev1 "github.com/cerbos/cerbos/api/genpb/cerbos/runtime/v1"
 	"github.com/cerbos/cerbos/internal/compile"
 	"github.com/cerbos/cerbos/internal/namer"
 	"github.com/cerbos/cerbos/internal/policy"
@@ -32,18 +26,9 @@ import (
 	"github.com/cerbos/cerbos/internal/util"
 )
 
-var updateGolden = flag.Bool("updateGolden", false, "Update the golden values for the tests")
-
 func TestCompile(t *testing.T) {
 	testCases := test.LoadTestCases(t, "compile")
 	schemaMgr := mkSchemaMgr(t)
-
-	// go test -v -tags=tests ./internal/compile/... --args -updateGolden
-	if *updateGolden {
-		updateGoldenFiles(t, schemaMgr, testCases)
-		// reload to populate with new golden values
-		testCases = test.LoadTestCases(t, "compile")
-	}
 
 	for _, tcase := range testCases {
 		tcase := tcase
@@ -65,46 +50,8 @@ func TestCompile(t *testing.T) {
 			}
 
 			require.NotNil(t, haveRes)
-
-			wantRes := &runtimev1.RunnablePolicySet{}
-			require.NoError(t, protojson.Unmarshal(tcase.Want["golden"], wantRes))
-			require.Empty(t, cmp.Diff(wantRes, haveRes, protocmp.Transform()))
+			t.Log(protojson.Format(haveRes))
 		})
-	}
-}
-
-func updateGoldenFiles(t *testing.T, schemaMgr schema.Manager, testCases []test.Case) {
-	t.Helper()
-
-	for _, tcase := range testCases {
-		tc := readTestCase(t, tcase.Input)
-		if len(tc.WantErrors) > 0 {
-			continue
-		}
-
-		cu := mkCompilationUnit(t, tc)
-		res, err := compile.Compile(cu, schemaMgr)
-		if err != nil {
-			t.Fatalf("Cannot produce golden file because compiling %q returns an error: %v", tcase.SourceFile, err)
-		}
-
-		writeGoldenFile(t, tcase.SourceFile+".golden", res)
-	}
-}
-
-func writeGoldenFile(t *testing.T, path string, contents proto.Message) {
-	t.Helper()
-	f, err := os.Create(path)
-	if err != nil {
-		t.Fatalf("Failed to create %q: %v", path, err)
-	}
-
-	defer f.Close()
-
-	_, err = f.WriteString(protojson.Format(contents))
-	if err != nil {
-		f.Close()
-		t.Fatalf("Failed to write to %q: %v", path, err)
 	}
 }
 

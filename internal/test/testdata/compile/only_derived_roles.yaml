@@ -12,8 +12,8 @@ inputDefs:
         - name: employee_that_owns_the_record
           parentRoles: ["employee"]
           condition:
-            match:
-              expr: request.resource.attr.owner == request.principal.id
+            script: |-
+              input.resource.attr.owner == input.principal.id
 
         - name: any_employee
           parentRoles: ["employee"]
