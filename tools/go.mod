@@ -3,13 +3,13 @@ module github.com/cerbos/cerbos/tools
 go 1.17
 
 require (
-	github.com/bojand/ghz v0.105.0
+	github.com/bojand/ghz v0.106.0
 	github.com/bufbuild/buf v0.56.0
 	github.com/envoyproxy/protoc-gen-validate v0.6.2
 	github.com/fullstorydev/grpcurl v1.8.5
 	github.com/golangci/golangci-lint v1.44.0
 	github.com/google/go-licenses v0.0.0-20210715153004-8751804a5b80
-	github.com/goreleaser/goreleaser v1.3.1
+	github.com/goreleaser/goreleaser v1.4.1
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.7.3
 	github.com/planetscale/vtprotobuf v0.2.0
 	github.com/vektra/mockery/v2 v2.9.4
@@ -216,6 +216,8 @@ require (
 	github.com/mitchellh/mapstructure v1.4.3 // indirect
 	github.com/mitchellh/reflectwalk v1.0.2 // indirect
 	github.com/moricho/tparallel v0.2.1 // indirect
+	github.com/muesli/mango v0.0.0-20220118122812-f367188b892e // indirect
+	github.com/muesli/roff v0.1.0 // indirect
 	github.com/nakabonne/nestif v0.3.1 // indirect
 	github.com/nbutton23/zxcvbn-go v0.0.0-20210217022336-fa2cb2858354 // indirect
 	github.com/nishanths/exhaustive v0.7.11 // indirect
