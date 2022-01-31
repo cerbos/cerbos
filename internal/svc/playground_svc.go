@@ -178,6 +178,18 @@ func (cs *CerbosPlaygroundService) PlaygroundProxy(ctx context.Context, req *req
 				CheckResourceBatch: resp,
 			},
 		}, nil
+	case *requestv1.PlaygroundProxyRequest_ResourcesQueryPlan:
+		resp, err := cerbosSvc.ResourcesQueryPlan(ctx, proxyReq.ResourcesQueryPlan)
+		if err != nil {
+			return nil, err
+		}
+
+		return &responsev1.PlaygroundProxyResponse{
+			PlaygroundId: req.PlaygroundId,
+			Outcome: &responsev1.PlaygroundProxyResponse_ResourcesQueryPlan{
+				ResourcesQueryPlan: resp,
+			},
+		}, nil
 	default:
 		log.Error(fmt.Sprintf("Unhandled playground proxy request type %T", proxyReq))
 		return nil, status.Error(codes.Unimplemented, "unknown request type")

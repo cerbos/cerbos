@@ -1,0 +1,71 @@
+---
+description: "Valid Resources Query Plan request 3"
+wantStatus:
+  httpStatusCode: 200
+  grpcStatusCode: 0
+playgroundProxy:
+  input: {
+    "playgroundId": "test",
+    "policyFiles": [
+      {
+        "fileName": "derived_roles_01.yaml",
+        "contents": "{{ fileString `store/derived_roles/derived_roles_01.yaml` | b64enc }}",
+      },
+      {
+        "fileName": "derived_roles_02.yaml",
+        "contents": "{{ fileString `store/derived_roles/derived_roles_02.yaml` | b64enc }}",
+      },
+      {
+        "fileName": "policy_01.yaml",
+        "contents": "{{ fileString `store/resource_policies/policy_01.yaml` | b64enc }}",
+      },
+      {
+        "fileName": "policy_02.yaml",
+        "contents": "{{ fileString `store/principal_policies/policy_01.yaml` | b64enc }}",
+      },
+      {
+        "fileName": "_schemas/principal.json",
+        "contents": "{{ fileString `store/_schemas/principal.json` | b64enc }}",
+      },
+      {
+        "fileName": "_schemas/leave_request.json",
+        "contents": "{{ fileString `store/_schemas/leave_request.json` | b64enc }}",
+      }
+    ],
+    "resourcesQueryPlan":{
+      "requestId": "test",
+      "includeMeta": true,
+      "action": "defer",
+      "principal": {
+        "id": "harry",
+        "policyVersion": "20210210",
+        "roles": [
+          "employee"
+        ]
+      },
+      "resource": {
+        "kind": "leave_request",
+        "policyVersion": "20210210"
+      },
+      "auxData": {
+        "jwt": {
+          "token": "eyJhbGciOiJFUzM4NCIsImtpZCI6IjE5TGZaYXRFZGc4M1lOYzVyMjNndU1KcXJuND0iLCJ0eXAiOiJKV1QifQ.eyJhdWQiOlsiY2VyYm9zLWp3dC10ZXN0cyJdLCJjdXN0b21BcnJheSI6WyJBIiwiQiIsIkMiXSwiY3VzdG9tSW50Ijo0MiwiY3VzdG9tTWFwIjp7IkEiOiJBQSIsIkIiOiJCQiIsIkMiOiJDQyJ9LCJjdXN0b21TdHJpbmciOiJmb29iYXIiLCJleHAiOjE5NDk5MzQwMzksImlzcyI6ImNlcmJvcy10ZXN0LXN1aXRlIn0.WN_tOScSpd_EI-P5EI1YlagxEgExSfBjAtcrgcF6lyWj1lGpR_GKx9goZEp2p_t5AVWXN_bjz_sMUmJdJa4cVd55Qm1miR-FKu6oNRHnSEWdMFmnArwPw-YDJWfylLFX"
+        }
+      }
+    } 
+  }
+  wantResponse: {
+    "playgroundId": "test",
+    "resourcesQueryPlan": {
+      "requestId": "test",
+      "action": "defer",
+      "resourceKind": "leave_request",
+      "policyVersion": "20210210",
+      "filter": {
+        "kind": "KIND_ALWAYS_ALLOWED"
+      },
+      "meta": {
+        "filter_debug": "(true)"
+      }
+    }
+  }
