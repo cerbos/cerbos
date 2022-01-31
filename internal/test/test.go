@@ -135,9 +135,10 @@ func DataFS() fs.FS {
 }
 
 type Case struct {
-	Want  map[string][]byte
-	Name  string
-	Input []byte
+	Want       map[string][]byte
+	Name       string
+	SourceFile string
+	Input      []byte
 }
 
 // LoadTestCases loads groups of test files from the given path.
@@ -186,8 +187,9 @@ func LoadTestCases(tb testing.TB, subDir string) []Case {
 		require.NoError(tb, err)
 
 		testCases[i] = Case{
-			Name:  name,
-			Input: RenderTemplate(tb, entry, nil),
+			Name:       name,
+			Input:      RenderTemplate(tb, entry, nil),
+			SourceFile: entry,
 		}
 
 		wantedFiles, err := filepath.Glob(fmt.Sprintf("%s.*", entry))
