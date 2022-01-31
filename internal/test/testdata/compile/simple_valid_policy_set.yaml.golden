@@ -564,8 +564,7 @@
           "resourceSchema": {
             "ref": "cerbos:///complex_object.json"
           }
-        },
-        "sourceHash": "11886568669802888347"
+        }
       }
     ]
   }
