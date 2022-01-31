@@ -4,9 +4,9 @@
 package policy
 
 import (
+	"github.com/cerbos/cerbos/internal/policy"
 	"strings"
 
-	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
 )
 
 func stringInSlice(a string, s []string) bool {
@@ -18,7 +18,7 @@ func stringInSlice(a string, s []string) bool {
 	return false
 }
 
-func filter(keyPolicyPairs []KeyPolicyPair, name, version []string, resType ResourceType) []KeyPolicyPair {
+func filter(keyPolicyPairs []KeyPolicyPair, name, version []string, kind policy.Kind) []KeyPolicyPair {
 	filtered := make([]KeyPolicyPair, 0, len(keyPolicyPairs))
 	for _, pair := range keyPolicyPairs {
 		if len(name) != 0 && !stringInSlice(pair.Policy.Name, name) {
@@ -28,16 +28,8 @@ func filter(keyPolicyPairs []KeyPolicyPair, name, version []string, resType Reso
 			continue
 		}
 
-		_, ok := pair.Policy.PolicyType.(*policyv1.Policy_ResourcePolicy)
-		if ok && resType != ResourcePolicy {
-			continue
-		}
-		_, ok = pair.Policy.PolicyType.(*policyv1.Policy_PrincipalPolicy)
-		if ok && resType != PrincipalPolicy {
-			continue
-		}
-		_, ok = pair.Policy.PolicyType.(*policyv1.Policy_DerivedRoles)
-		if ok && resType != DerivedRoles {
+		policyKind := policy.GetKind(pair.Policy.Policy)
+		if policyKind != kind {
 			continue
 		}
 

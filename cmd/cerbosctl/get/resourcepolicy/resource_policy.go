@@ -9,6 +9,7 @@ import (
 	"github.com/cerbos/cerbos/cmd/cerbosctl/get/internal/flagset"
 	"github.com/cerbos/cerbos/cmd/cerbosctl/get/internal/policy"
 	"github.com/cerbos/cerbos/cmd/cerbosctl/internal"
+	policy2 "github.com/cerbos/cerbos/internal/policy"
 )
 
 const example = `# List resource policies
@@ -52,8 +53,8 @@ func NewResourcePolicyCmd(fn internal.WithClient) *cobra.Command {
 		Use:     "resource_policies",
 		Aliases: []string{"resource_policy", "rp"},
 		Example: example,
-		PreRunE: policy.PreRunFn(policy.ResourcePolicy),
-		RunE:    fn(policy.MakeGetCmd(policy.ResourcePolicy, &flags.Filters, &flags.Format, &flags.Sort)),
+		PreRunE: policy.PreRunFn(policy2.ResourceKind),
+		RunE:    fn(policy.MakeGetCmd(policy2.ResourceKind, &flags.Filters, &flags.Format, &flags.Sort)),
 	}
 
 	cmd.Flags().AddFlagSet(flags.Sort.FlagSet())

@@ -9,6 +9,7 @@ import (
 	"github.com/cerbos/cerbos/cmd/cerbosctl/get/internal/flagset"
 	"github.com/cerbos/cerbos/cmd/cerbosctl/get/internal/policy"
 	"github.com/cerbos/cerbos/cmd/cerbosctl/internal"
+	policy2 "github.com/cerbos/cerbos/internal/policy"
 )
 
 const example = `# List derived roles
@@ -51,8 +52,8 @@ func NewDerivedRolesCmd(fn internal.WithClient) *cobra.Command {
 		Use:     "derived_roles",
 		Aliases: []string{"derived_role", "dr"},
 		Example: example,
-		PreRunE: policy.PreRunFn(policy.DerivedRoles),
-		RunE:    fn(policy.MakeGetCmd(policy.DerivedRoles, &flags.Filters, &flags.Format, &flags.Sort)),
+		PreRunE: policy.PreRunFn(policy2.DerivedRolesKind),
+		RunE:    fn(policy.MakeGetCmd(policy2.DerivedRolesKind, &flags.Filters, &flags.Format, &flags.Sort)),
 	}
 
 	cmd.Flags().AddFlagSet(flags.Sort.FlagSet())

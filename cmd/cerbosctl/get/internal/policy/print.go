@@ -9,6 +9,7 @@ import (
 
 	"google.golang.org/protobuf/encoding/protojson"
 
+	"github.com/cerbos/cerbos/internal/policy"
 	"github.com/cerbos/cerbos/internal/util"
 )
 
@@ -66,8 +67,8 @@ func printPolicyYAML(w io.Writer, policies []KeyPolicyPair) error {
 	return nil
 }
 
-func getHeaders(resourceType ResourceType) []string {
-	if resourceType == DerivedRoles {
+func getHeaders(kind policy.Kind) []string {
+	if kind == policy.DerivedRolesKind {
 		return []string{"POLICY ID", "NAME"}
 	}
 	return []string{"POLICY ID", "NAME", "VERSION"}

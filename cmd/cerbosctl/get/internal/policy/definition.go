@@ -9,12 +9,3 @@ type KeyPolicyPair struct {
 	Key    string
 	Policy policy.Wrapper
 }
-
-type ResourceType uint
-
-const (
-	Unspecified ResourceType = iota
-	DerivedRoles
-	PrincipalPolicy
-	ResourcePolicy
-)
