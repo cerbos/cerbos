@@ -102,7 +102,6 @@ message RunnablePrincipalPolicySet {
         repeated string scope = 1;
         map<string, Expr> variables = 2;
         map<string, ResourceRules> resource_rules = 3;
-        uint64 source_hash = 4;
     }
 
     Metadata meta = 1;

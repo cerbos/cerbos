@@ -2298,8 +2298,6 @@ func (m *RunnablePrincipalPolicySet_Policy) validate(all bool) error {
 		}
 	}
 
-	// no validation rules for SourceHash
-
 	if len(errors) > 0 {
 		return RunnablePrincipalPolicySet_PolicyMultiError(errors)
 	}

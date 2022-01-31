@@ -273,7 +273,6 @@ func compilePrincipalPolicy(modCtx *moduleCtx, pp *policyv1.PrincipalPolicy) *ru
 		Scope:         strings.Split(pp.Scope, "."),
 		ResourceRules: make(map[string]*runtimev1.RunnablePrincipalPolicySet_Policy_ResourceRules, len(pp.Rules)),
 		Variables:     compileVariables(modCtx, modCtx.def.Variables),
-		SourceHash:    policy.GetHash(modCtx.def),
 	}
 
 	for _, rule := range pp.Rules {
