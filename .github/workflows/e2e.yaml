@@ -28,7 +28,7 @@ jobs:
           key: ${{ runner.os }}-go-${{ hashFiles('**/go.mod') }}
 
       - name: Install Helm
-        uses: azure/setup-helm@v1
+        uses: azure/setup-helm@v2.0
 
       - name: Install Helmfile and Telepresence
         run: |
