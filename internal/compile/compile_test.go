@@ -13,7 +13,6 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
-	"google.golang.org/protobuf/encoding/protojson"
 
 	effectv1 "github.com/cerbos/cerbos/api/genpb/cerbos/effect/v1"
 	privatev1 "github.com/cerbos/cerbos/api/genpb/cerbos/private/v1"
@@ -50,7 +49,6 @@ func TestCompile(t *testing.T) {
 			}
 
 			require.NotNil(t, haveRes)
-			t.Log(protojson.Format(haveRes))
 		})
 	}
 }
