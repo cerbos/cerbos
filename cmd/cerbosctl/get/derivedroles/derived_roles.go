@@ -19,6 +19,10 @@ cerbosctl get dr
 # List and filter derived roles
 cerbosctl get derived_roles --name my_derived_roles
 
+# List and sort derived roles by column
+cerbosctl get derived_roles --sort-by policyId
+cerbosctl get derived_roles --sort-by name
+
 # Get derived role policy definition (disk, git, blob stores)
 cerbosctl get derived_roles blog_derived_roles.yaml
 

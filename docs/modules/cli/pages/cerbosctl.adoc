@@ -172,6 +172,39 @@ cerbosctl get principal_policies --version default,v1
 cerbosctl get pp --version default,v1
 ----
 
+.List derived_roles and sort by column `policyId` or `name`
+----
+cerbosctl get derived_roles --sort-by policyId
+cerbosctl get dr --sort-by policyId
+
+cerbosctl get derived_roles --sort-by name
+cerbosctl get dr --sort-by name
+----
+
+.List principal_policies and sort by column `policyId`, `name` or `version`
+----
+cerbosctl get principal_policies --sort-by policyId
+cerbosctl get pp --sort-by policyId
+
+cerbosctl get principal_policies --sort-by name
+cerbosctl get pp --sort-by name
+
+cerbosctl get principal_policies --sort-by version
+cerbosctl get pp --sort-by version
+----
+
+.List resource_policies and sort by column `policyId`, `name` or `version`
+----
+cerbosctl get resource_policies --sort-by policyId
+cerbosctl get rp --sort-by policyId
+
+cerbosctl get resource_policies --sort-by name
+cerbosctl get rp --sort-by name
+
+cerbosctl get resource_policies --sort-by version
+cerbosctl get rp --sort-by version
+----
+
 .Get JSON
 ----
 cerbosctl get derived_roles my_derived_roles --format=json

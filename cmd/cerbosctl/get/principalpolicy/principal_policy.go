@@ -19,6 +19,11 @@ cerbosctl get pp
 # List and filter principal policies
 cerbosctl get principal_policies --name donald_duck
 
+# List and sort principal policies by column
+cerbosctl get principal_policies --sort-by policyId
+cerbosctl get principal_policies --sort-by name
+cerbosctl get principal_policies --sort-by version
+
 # Get principal policy definition (disk, git, blob stores)
 cerbosctl get principal_policies donald_duck.yaml
 

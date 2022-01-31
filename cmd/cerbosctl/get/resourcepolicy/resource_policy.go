@@ -19,6 +19,11 @@ cerbosctl get rp
 # List and filter resource policies
 cerbosctl get resource_policies --name leave_request
 
+# List and sort resource policies by column
+cerbosctl get resource_policies --sort-by policyId
+cerbosctl get resource_policies --sort-by name
+cerbosctl get resource_policies --sort-by version
+
 # Get resource policy definition (disk, git, blob stores)
 cerbosctl get resource_policies leave_request.yaml
 
