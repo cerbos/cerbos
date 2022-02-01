@@ -98,13 +98,25 @@ func SchemaReferences(p *policyv1.Policy) []string {
 }
 
 // WithMetadata adds metadata to the policy.
-func WithMetadata(p *policyv1.Policy, source string, annotations map[string]string) *policyv1.Policy {
+func WithMetadata(p *policyv1.Policy, source string, annotations map[string]string, storeIdentifier string) *policyv1.Policy {
 	if p.Metadata == nil {
 		p.Metadata = &policyv1.Metadata{}
 	}
 
 	p.Metadata.SourceFile = source
 	p.Metadata.Annotations = annotations
+	p = WithStoreIdentifier(p, storeIdentifier)
+
+	return p
+}
+
+// WithStoreIdentifier adds the store identifier to the metadata.
+func WithStoreIdentifier(p *policyv1.Policy, storeIdentifier string) *policyv1.Policy {
+	if p.Metadata == nil {
+		p.Metadata = &policyv1.Metadata{}
+	}
+
+	p.Metadata.StoreIdentifer = storeIdentifier
 
 	return p
 }

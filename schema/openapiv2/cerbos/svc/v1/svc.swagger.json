@@ -1681,6 +1681,9 @@
           "additionalProperties": {
             "type": "string"
           }
+        },
+        "storeIdentifer": {
+          "type": "string"
         }
       }
     },

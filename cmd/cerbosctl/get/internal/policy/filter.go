@@ -4,9 +4,9 @@
 package policy
 
 import (
-	"github.com/cerbos/cerbos/internal/policy"
 	"strings"
 
+	"github.com/cerbos/cerbos/internal/policy"
 )
 
 func stringInSlice(a string, s []string) bool {

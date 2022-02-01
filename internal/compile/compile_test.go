@@ -149,7 +149,7 @@ func mkCompilationUnit(t *testing.T, tc *privatev1.CompileTestCase) *policy.Comp
 			cu.ModID = modID
 		}
 
-		cu.AddDefinition(modID, policy.WithMetadata(pol, fileName, nil))
+		cu.AddDefinition(modID, policy.WithMetadata(pol, fileName, nil, fileName))
 	}
 
 	return cu

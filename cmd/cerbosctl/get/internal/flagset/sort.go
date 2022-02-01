@@ -5,6 +5,7 @@ package flagset
 
 import (
 	"fmt"
+
 	"github.com/spf13/pflag"
 )
 
@@ -21,6 +22,7 @@ func (s *Sort) FlagSet() *pflag.FlagSet {
 }
 
 type SortByValue string
+
 const (
 	SortByPolicyID SortByValue = "policyId"
 	SortByName     SortByValue = "name"

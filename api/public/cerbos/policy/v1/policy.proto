@@ -30,6 +30,7 @@ message Policy {
 message Metadata {
     string source_file = 1;
     map<string, string> annotations = 2;
+    string store_identifer = 3;
 }
 
 message ResourcePolicy {

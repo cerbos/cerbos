@@ -162,6 +162,8 @@ func (s *dbStorage) LoadPolicy(ctx context.Context, policyKey ...string) ([]*pol
 
 	policies := make([]*policy.Wrapper, len(recs))
 	for i, rec := range recs {
+		pk := strings.TrimSuffix(strings.ToLower(fmt.Sprintf("%s.%s.%s", rec.Kind, rec.Name, rec.Version)), policyKeySep)
+		rec.Definition.Policy = policy.WithStoreIdentifier(rec.Definition.Policy, pk)
 		wp := policy.Wrap(rec.Definition.Policy)
 		policies[i] = &wp
 	}
