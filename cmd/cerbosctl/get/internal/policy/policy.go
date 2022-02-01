@@ -53,22 +53,19 @@ func List(c client.AdminClient, cmd *cobra.Command, filters *flagset.Filters, fo
 				return fmt.Errorf("error while requesting policy: %w", err)
 			}
 
-			keyPolicyPairs := make([]KeyPolicyPair, len(policies))
+			wp := make([]policy.Wrapper, len(policies))
 			for i, p := range policies {
-				keyPolicyPairs[i] = KeyPolicyPair{
-					Key:    policyIds[idx+i],
-					Policy: policy.Wrap(p),
-				}
+				wp[i] = policy.Wrap(p)
 			}
 
-			filtered := filter(keyPolicyPairs, filters.Name, filters.Version, kind)
-			pairs := sort(filtered, flagset.SortByValue(sortFlags.SortBy))
-			for _, pair := range pairs {
+			filtered := filter(wp, filters.Name, filters.Version, kind)
+			sorted := sort(filtered, flagset.SortByValue(sortFlags.SortBy))
+			for _, p := range sorted {
 				row := make([]string, 2, 3) //nolint:gomnd
-				row[0] = pair.Key
-				row[1] = pair.Policy.Name
+				row[0] = p.Metadata.StoreIdentifer
+				row[1] = p.Name
 				if kind != policy.DerivedRolesKind {
-					row = append(row, pair.Policy.Version)
+					row = append(row, p.Version)
 				}
 				tw.Append(row)
 			}
@@ -89,16 +86,12 @@ func Get(c client.AdminClient, cmd *cobra.Command, format *flagset.Format, kind 
 				return fmt.Errorf("error while requesting policy: %w", err)
 			}
 
-			keyPolicyPairs := make([]KeyPolicyPair, len(policies))
+			wp := make([]policy.Wrapper, len(policies))
 			for i, p := range policies {
-				keyPolicyPairs[i] = KeyPolicyPair{
-					Key:    ids[idx+i],
-					Policy: policy.Wrap(p),
-				}
+				wp[i] = policy.Wrap(p)
 			}
 
-			filtered := filter(keyPolicyPairs, nil, nil, kind)
-
+			filtered := filter(wp, nil, nil, kind)
 			if len(filtered) != 0 {
 				foundPolicy = true
 			}

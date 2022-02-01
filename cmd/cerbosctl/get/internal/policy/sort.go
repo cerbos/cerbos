@@ -7,23 +7,24 @@ import (
 	gosort "sort"
 
 	"github.com/cerbos/cerbos/cmd/cerbosctl/get/internal/flagset"
+	"github.com/cerbos/cerbos/internal/policy"
 )
 
-func sort(pairs []KeyPolicyPair, sortBy flagset.SortByValue) []KeyPolicyPair {
+func sort(policies []policy.Wrapper, sortBy flagset.SortByValue) []policy.Wrapper {
 	switch sortBy {
 	case flagset.SortByPolicyID:
-		gosort.SliceStable(pairs, func(i, j int) bool {
-			return pairs[i].Key < pairs[j].Key
+		gosort.SliceStable(policies, func(i, j int) bool {
+			return policies[i].Metadata.StoreIdentifer < policies[j].Metadata.StoreIdentifer
 		})
 	case flagset.SortByName:
-		gosort.SliceStable(pairs, func(i, j int) bool {
-			return pairs[i].Policy.Name < pairs[j].Policy.Name
+		gosort.SliceStable(policies, func(i, j int) bool {
+			return policies[i].Name < policies[j].Name
 		})
 	case flagset.SortByVersion:
-		gosort.SliceStable(pairs, func(i, j int) bool {
-			return pairs[i].Policy.Version < pairs[j].Policy.Version
+		gosort.SliceStable(policies, func(i, j int) bool {
+			return policies[i].Version < policies[j].Version
 		})
 	}
 
-	return pairs
+	return policies
 }

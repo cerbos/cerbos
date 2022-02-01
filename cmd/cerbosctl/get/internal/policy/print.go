@@ -13,7 +13,7 @@ import (
 	"github.com/cerbos/cerbos/internal/util"
 )
 
-func printPolicy(w io.Writer, policies []KeyPolicyPair, format string) error {
+func printPolicy(w io.Writer, policies []policy.Wrapper, format string) error {
 	switch format {
 	case "json":
 		return printPolicyJSON(w, policies)
@@ -26,9 +26,9 @@ func printPolicy(w io.Writer, policies []KeyPolicyPair, format string) error {
 	}
 }
 
-func printPolicyJSON(w io.Writer, policies []KeyPolicyPair) error {
+func printPolicyJSON(w io.Writer, policies []policy.Wrapper) error {
 	for _, p := range policies {
-		b, err := protojson.Marshal(p.Policy.Policy)
+		b, err := protojson.Marshal(p.Policy)
 		if err != nil {
 			return fmt.Errorf("could not marshal policy: %w", err)
 		}
@@ -40,9 +40,9 @@ func printPolicyJSON(w io.Writer, policies []KeyPolicyPair) error {
 	return nil
 }
 
-func printPolicyPrettyJSON(w io.Writer, policies []KeyPolicyPair) error {
+func printPolicyPrettyJSON(w io.Writer, policies []policy.Wrapper) error {
 	for _, p := range policies {
-		s := protojson.Format(p.Policy.Policy)
+		s := protojson.Format(p.Policy)
 
 		_, err := fmt.Fprintf(w, "%s\n", s)
 		if err != nil {
@@ -52,14 +52,14 @@ func printPolicyPrettyJSON(w io.Writer, policies []KeyPolicyPair) error {
 	return nil
 }
 
-func printPolicyYAML(w io.Writer, policies []KeyPolicyPair) error {
+func printPolicyYAML(w io.Writer, policies []policy.Wrapper) error {
 	for _, p := range policies {
 		_, err := fmt.Fprintln(w, "---")
 		if err != nil {
 			return fmt.Errorf("failed to print header: %w", err)
 		}
 
-		err = util.WriteYAML(w, p.Policy.Policy)
+		err = util.WriteYAML(w, p.Policy)
 		if err != nil {
 			return fmt.Errorf("could not write policy: %w", err)
 		}

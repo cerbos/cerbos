@@ -18,22 +18,22 @@ func stringInSlice(a string, s []string) bool {
 	return false
 }
 
-func filter(keyPolicyPairs []KeyPolicyPair, name, version []string, kind policy.Kind) []KeyPolicyPair {
-	filtered := make([]KeyPolicyPair, 0, len(keyPolicyPairs))
-	for _, pair := range keyPolicyPairs {
-		if len(name) != 0 && !stringInSlice(pair.Policy.Name, name) {
+func filter(policies []policy.Wrapper, name, version []string, kind policy.Kind) []policy.Wrapper {
+	filtered := make([]policy.Wrapper, 0, len(policies))
+	for _, p := range policies {
+		if len(name) != 0 && !stringInSlice(p.Name, name) {
 			continue
 		}
-		if len(version) != 0 && !stringInSlice(pair.Policy.Version, version) {
+		if len(version) != 0 && !stringInSlice(p.Version, version) {
 			continue
 		}
 
-		policyKind := policy.GetKind(pair.Policy.Policy)
+		policyKind := policy.GetKind(p.Policy)
 		if policyKind != kind {
 			continue
 		}
 
-		filtered = append(filtered, pair)
+		filtered = append(filtered, p)
 	}
 
 	return filtered

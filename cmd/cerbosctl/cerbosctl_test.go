@@ -29,6 +29,7 @@ import (
 	"github.com/cerbos/cerbos/cmd/cerbosctl/get/principalpolicy"
 	"github.com/cerbos/cerbos/cmd/cerbosctl/get/resourcepolicy"
 	"github.com/cerbos/cerbos/cmd/cerbosctl/internal"
+	"github.com/cerbos/cerbos/internal/policy"
 	"github.com/cerbos/cerbos/internal/test"
 )
 
@@ -165,9 +166,9 @@ func testGetCmd(fn internal.WithClient) func(*testing.T) {
 					kind   string
 					name   string
 				}{
-					{test.GenDerivedRoles(test.Suffix(strconv.Itoa(1))), "dr", "derived_roles.my_derived_roles_1"},
-					{test.GenPrincipalPolicy(test.Suffix(strconv.Itoa(1))), "pp", "principal.donald_duck_1.default"},
-					{test.GenResourcePolicy(test.Suffix(strconv.Itoa(1))), "rp", "resource.leave_request_1.default"},
+					{policy.WithStoreIdentifier(test.GenDerivedRoles(test.Suffix(strconv.Itoa(1))), "derived_roles.my_derived_roles_1"), "dr", "derived_roles.my_derived_roles_1"},
+					{policy.WithStoreIdentifier(test.GenPrincipalPolicy(test.Suffix(strconv.Itoa(1))), "principal.donald_duck_1.default"), "pp", "principal.donald_duck_1.default"},
+					{policy.WithStoreIdentifier(test.GenResourcePolicy(test.Suffix(strconv.Itoa(1))), "resource.leave_request_1.default"), "rp", "resource.leave_request_1.default"},
 				}
 
 				for _, tc := range testCases {
