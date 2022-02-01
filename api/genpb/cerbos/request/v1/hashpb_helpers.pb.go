@@ -790,6 +790,11 @@ func cerbos_request_v1_PlaygroundProxyRequest_hashpb_sum(m *PlaygroundProxyReque
 					cerbos_request_v1_CheckResourceBatchRequest_hashpb_sum(t.CheckResourceBatch, hasher, ignore)
 				}
 
+			case *PlaygroundProxyRequest_ResourcesQueryPlan:
+				if t.ResourcesQueryPlan != nil {
+					cerbos_request_v1_ResourcesQueryPlanRequest_hashpb_sum(t.ResourcesQueryPlan, hasher, ignore)
+				}
+
 			}
 		}
 	}

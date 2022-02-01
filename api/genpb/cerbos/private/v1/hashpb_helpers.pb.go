@@ -1288,6 +1288,11 @@ func cerbos_request_v1_PlaygroundProxyRequest_hashpb_sum(m *v12.PlaygroundProxyR
 					cerbos_request_v1_CheckResourceBatchRequest_hashpb_sum(t.CheckResourceBatch, hasher, ignore)
 				}
 
+			case *v12.PlaygroundProxyRequest_ResourcesQueryPlan:
+				if t.ResourcesQueryPlan != nil {
+					cerbos_request_v1_ResourcesQueryPlanRequest_hashpb_sum(t.ResourcesQueryPlan, hasher, ignore)
+				}
+
 			}
 		}
 	}
@@ -1682,6 +1687,11 @@ func cerbos_response_v1_PlaygroundProxyResponse_hashpb_sum(m *v13.PlaygroundProx
 			case *v13.PlaygroundProxyResponse_CheckResourceBatch:
 				if t.CheckResourceBatch != nil {
 					cerbos_response_v1_CheckResourceBatchResponse_hashpb_sum(t.CheckResourceBatch, hasher, ignore)
+				}
+
+			case *v13.PlaygroundProxyResponse_ResourcesQueryPlan:
+				if t.ResourcesQueryPlan != nil {
+					cerbos_response_v1_ResourcesQueryPlanResponse_hashpb_sum(t.ResourcesQueryPlan, hasher, ignore)
 				}
 
 			}
