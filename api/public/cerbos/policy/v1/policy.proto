@@ -8,6 +8,7 @@ package cerbos.policy.v1;
 import "cerbos/effect/v1/effect.proto";
 import "cerbos/engine/v1/engine.proto";
 import "validate/validate.proto";
+import "google/protobuf/wrappers.proto";
 
 option go_package = "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1;policyv1";
 option java_package = "dev.cerbos.api.v1.policy";
@@ -30,7 +31,8 @@ message Policy {
 message Metadata {
     string source_file = 1;
     map<string, string> annotations = 2;
-    string store_identifer = 3;
+    google.protobuf.UInt64Value hash = 3;
+    string store_identifer = 4;
 }
 
 message ResourcePolicy {

@@ -8,6 +8,14 @@ coverage:
       default:
         informational: true
 
+ignore:
+  - "api"
+  - "deploy"
+  - "docs"
+  - "e2e"
+  - "hack"
+  - "tools"
+
 comment:
   layout: "reach, diff, flags, files"
   behavior: default

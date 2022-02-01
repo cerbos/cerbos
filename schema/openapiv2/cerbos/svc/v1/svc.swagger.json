@@ -1682,6 +1682,10 @@
             "type": "string"
           }
         },
+        "hash": {
+          "type": "string",
+          "format": "uint64"
+        },
         "storeIdentifer": {
           "type": "string"
         }
@@ -1801,6 +1805,9 @@
         },
         "checkResourceBatch": {
           "$ref": "#/definitions/v1CheckResourceBatchRequest"
+        },
+        "resourcesQueryPlan": {
+          "$ref": "#/definitions/cerbosrequestv1ResourcesQueryPlanRequest"
         }
       },
       "description": "Playground proxy request",
@@ -1822,6 +1829,9 @@
         },
         "checkResourceBatch": {
           "$ref": "#/definitions/v1CheckResourceBatchResponse"
+        },
+        "resourcesQueryPlan": {
+          "$ref": "#/definitions/v1ResourcesQueryPlanResponse"
         }
       },
       "description": "Playground proxy response"

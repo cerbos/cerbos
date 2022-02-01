@@ -166,9 +166,9 @@ func testGetCmd(fn internal.WithClient) func(*testing.T) {
 					kind   string
 					name   string
 				}{
-					{policy.WithStoreIdentifier(test.GenDerivedRoles(test.Suffix(strconv.Itoa(1))), "derived_roles.my_derived_roles_1"), "dr", "derived_roles.my_derived_roles_1"},
-					{policy.WithStoreIdentifier(test.GenPrincipalPolicy(test.Suffix(strconv.Itoa(1))), "principal.donald_duck_1.default"), "pp", "principal.donald_duck_1.default"},
-					{policy.WithStoreIdentifier(test.GenResourcePolicy(test.Suffix(strconv.Itoa(1))), "resource.leave_request_1.default"), "rp", "resource.leave_request_1.default"},
+					{policy.WithMetadata(test.GenDerivedRoles(test.Suffix(strconv.Itoa(1))), "", nil, "derived_roles.my_derived_roles_1"), "dr", "derived_roles.my_derived_roles_1"},
+					{policy.WithMetadata(test.GenPrincipalPolicy(test.Suffix(strconv.Itoa(1))),"", nil,"principal.donald_duck_1.default"), "pp", "principal.donald_duck_1.default"},
+					{policy.WithMetadata(test.GenResourcePolicy(test.Suffix(strconv.Itoa(1))),"", nil, "resource.leave_request_1.default"), "rp", "resource.leave_request_1.default"},
 				}
 
 				for _, tc := range testCases {

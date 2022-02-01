@@ -10,6 +10,7 @@ import (
 	v11 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
 	proto "google.golang.org/protobuf/proto"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
+	wrapperspb "google.golang.org/protobuf/types/known/wrapperspb"
 	io "io"
 	bits "math/bits"
 )
@@ -210,6 +211,28 @@ func (m *Metadata) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 		i -= len(m.StoreIdentifer)
 		copy(dAtA[i:], m.StoreIdentifer)
 		i = encodeVarint(dAtA, i, uint64(len(m.StoreIdentifer)))
+		i--
+		dAtA[i] = 0x22
+	}
+	if m.Hash != nil {
+		if marshalto, ok := interface{}(m.Hash).(interface {
+			MarshalToSizedBufferVT([]byte) (int, error)
+		}); ok {
+			size, err := marshalto.MarshalToSizedBufferVT(dAtA[:i])
+			if err != nil {
+				return 0, err
+			}
+			i -= size
+			i = encodeVarint(dAtA, i, uint64(size))
+		} else {
+			encoded, err := proto.Marshal(m.Hash)
+			if err != nil {
+				return 0, err
+			}
+			i -= len(encoded)
+			copy(dAtA[i:], encoded)
+			i = encodeVarint(dAtA, i, uint64(len(encoded)))
+		}
 		i--
 		dAtA[i] = 0x1a
 	}
@@ -1958,6 +1981,16 @@ func (m *Metadata) SizeVT() (n int) {
 			n += mapEntrySize + 1 + sov(uint64(mapEntrySize))
 		}
 	}
+	if m.Hash != nil {
+		if size, ok := interface{}(m.Hash).(interface {
+			SizeVT() int
+		}); ok {
+			l = size.SizeVT()
+		} else {
+			l = proto.Size(m.Hash)
+		}
+		n += 1 + l + sov(uint64(l))
+	}
 	l = len(m.StoreIdentifer)
 	if l > 0 {
 		n += 1 + l + sov(uint64(l))
@@ -3317,6 +3350,50 @@ func (m *Metadata) UnmarshalVT(dAtA []byte) error {
 			m.Annotations[mapkey] = mapvalue
 			iNdEx = postIndex
 		case 3:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Hash", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLength
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLength
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.Hash == nil {
+				m.Hash = &wrapperspb.UInt64Value{}
+			}
+			if unmarshal, ok := interface{}(m.Hash).(interface {
+				UnmarshalVT([]byte) error
+			}); ok {
+				if err := unmarshal.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
+					return err
+				}
+			} else {
+				if err := proto.Unmarshal(dAtA[iNdEx:postIndex], m.Hash); err != nil {
+					return err
+				}
+			}
+			iNdEx = postIndex
+		case 4:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field StoreIdentifer", wireType)
 			}

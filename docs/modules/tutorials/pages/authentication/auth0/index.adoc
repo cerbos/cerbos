@@ -87,9 +87,9 @@ and `user`. These roles are authorized as follows:
 |Action |User |Admin
 |list |Y |Y
 |read |Y |Y
-|create |N |Y
-|update |N |Y
-|delete |N |Y
+|create |Y |Y
+|update |If owner |Y
+|delete |If owner |Y
 |===
 
 This business logic is represented in Cerbos as a resource policy.
