@@ -77,17 +77,19 @@ func compileResourcePolicy(modCtx *moduleCtx, rp *policyv1.ResourcePolicy, schem
 		rrp.Rules[i] = cr
 	}
 
+	rrps := &runtimev1.RunnableResourcePolicySet{
+		Meta: &runtimev1.RunnableResourcePolicySet_Metadata{
+			Fqn:      modCtx.fqn,
+			Resource: rp.Resource,
+			Version:  rp.Version,
+		},
+		Policies: []*runtimev1.RunnableResourcePolicySet_Policy{rrp},
+	}
+
 	return &runtimev1.RunnablePolicySet{
 		Fqn: modCtx.fqn,
 		PolicySet: &runtimev1.RunnablePolicySet_ResourcePolicy{
-			ResourcePolicy: &runtimev1.RunnableResourcePolicySet{
-				Meta: &runtimev1.RunnableResourcePolicySet_Metadata{
-					Fqn:      modCtx.fqn,
-					Resource: rp.Resource,
-					Version:  rp.Version,
-				},
-				Policies: []*runtimev1.RunnableResourcePolicySet_Policy{rrp},
-			},
+			ResourcePolicy: rrps,
 		},
 	}
 }
@@ -292,17 +294,19 @@ func compilePrincipalPolicy(modCtx *moduleCtx, pp *policyv1.PrincipalPolicy) *ru
 		rpp.ResourceRules[rule.Resource] = rr
 	}
 
+	rpps := &runtimev1.RunnablePrincipalPolicySet{
+		Meta: &runtimev1.RunnablePrincipalPolicySet_Metadata{
+			Fqn:       modCtx.fqn,
+			Principal: pp.Principal,
+			Version:   pp.Version,
+		},
+		Policies: []*runtimev1.RunnablePrincipalPolicySet_Policy{rpp},
+	}
+
 	return &runtimev1.RunnablePolicySet{
 		Fqn: modCtx.fqn,
 		PolicySet: &runtimev1.RunnablePolicySet_PrincipalPolicy{
-			PrincipalPolicy: &runtimev1.RunnablePrincipalPolicySet{
-				Meta: &runtimev1.RunnablePrincipalPolicySet_Metadata{
-					Fqn:       modCtx.fqn,
-					Principal: pp.Principal,
-					Version:   pp.Version,
-				},
-				Policies: []*runtimev1.RunnablePrincipalPolicySet_Policy{rpp},
-			},
+			PrincipalPolicy: rpps,
 		},
 	}
 }

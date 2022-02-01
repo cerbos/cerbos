@@ -10,7 +10,6 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/stretchr/testify/require"
-	"google.golang.org/protobuf/reflect/protoreflect"
 	"google.golang.org/protobuf/testing/protocmp"
 
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
@@ -19,68 +18,71 @@ import (
 )
 
 func TestReadPolicy(t *testing.T) {
-	dir := test.PathToDir(t, "policy_formats")
-
 	testCases := []struct {
-		name    string
-		input   string
-		want    protoreflect.ProtoMessage
-		wantErr bool
+		input string
+		want  *policyv1.Policy
 	}{
 		{
-			name:  "YAML ResourcePolicy",
-			input: filepath.Join(dir, "resource_policy_01.yaml"),
+			input: "resource_policy_01",
 			want:  test.GenResourcePolicy(test.NoMod()),
 		},
 		{
-			name:  "JSON ResourcePolicy",
-			input: filepath.Join(dir, "resource_policy_01.json"),
-			want:  test.GenResourcePolicy(test.NoMod()),
-		},
-		{
-			name:  "YAML PrincipalPolicy",
-			input: filepath.Join(dir, "principal_policy_01.yaml"),
+			input: "principal_policy_01",
 			want:  test.GenPrincipalPolicy(test.NoMod()),
 		},
 		{
-			name:  "JSON PrincipalPolicy",
-			input: filepath.Join(dir, "principal_policy_01.json"),
-			want:  test.GenPrincipalPolicy(test.NoMod()),
-		},
-		{
-			name:  "YAML DerivedRoles",
-			input: filepath.Join(dir, "derived_roles_01.yaml"),
+			input: "derived_roles_01",
 			want:  test.GenDerivedRoles(test.NoMod()),
-		},
-		{
-			name:  "JSON DerivedRoles",
-			input: filepath.Join(dir, "derived_roles_01.json"),
-			want:  test.GenDerivedRoles(test.NoMod()),
-		},
-		{
-			name:    "Multiple YAML documents",
-			input:   filepath.Join(dir, "multiple_policies.yaml"),
-			wantErr: true,
 		},
 	}
 
+	dir := test.PathToDir(t, "policy_formats")
+
 	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			// fmt.Println(protojson.Format(tc.want))
-			f, err := os.Open(tc.input)
-			require.NoError(t, err)
+		t.Run(tc.input, func(t *testing.T) {
+			for _, format := range []string{"yaml", "json"} {
+				t.Run(format, func(t *testing.T) {
+					f, err := os.Open(filepath.Join(dir, tc.input+"."+format))
+					require.NoError(t, err)
 
-			defer f.Close()
+					defer f.Close()
 
-			have, err := policy.ReadPolicy(f)
-			if tc.wantErr {
-				require.Error(t, err)
-			} else {
-				require.NoError(t, err)
-				require.Empty(t, cmp.Diff(tc.want, have, protocmp.Transform()))
+					have, err := policy.ReadPolicy(f)
+					require.NoError(t, err)
+					require.Empty(t, cmp.Diff(tc.want, have, protocmp.Transform()))
+				})
 			}
 		})
 	}
+}
+
+func TestHash(t *testing.T) {
+	inputs := []string{"resource_policy_01", "principal_policy_01", "derived_roles_01"}
+	fs := os.DirFS(test.PathToDir(t, "policy_formats"))
+
+	for _, input := range inputs {
+		t.Run(input, func(t *testing.T) {
+			yamlP, err := policy.ReadPolicyFromFile(fs, input+".yaml")
+			require.NoError(t, err)
+
+			jsonP, err := policy.ReadPolicyFromFile(fs, input+".json")
+			require.NoError(t, err)
+
+			require.Equal(t, policy.GetHash(yamlP), policy.GetHash(jsonP))
+			require.Empty(t, cmp.Diff(yamlP, jsonP, protocmp.Transform()))
+		})
+	}
+}
+
+func TestReadFileWithMultiplePolicies(t *testing.T) {
+	input := filepath.Join(test.PathToDir(t, "policy_formats"), "multiple_policies.yaml")
+	f, err := os.Open(input)
+	require.NoError(t, err)
+
+	defer f.Close()
+
+	_, err = policy.ReadPolicy(f)
+	require.Error(t, err)
 }
 
 func TestValidate(t *testing.T) {
