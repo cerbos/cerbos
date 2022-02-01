@@ -126,20 +126,25 @@ and `user`. These roles are authorized as follows:
 |Action |User |Admin
 |list |Y |Y
 |read |Y |Y
-|create |N |Y
-|update |N |Y
-|delete |N |Y
+|create |Y |Y
+|update |If owner |Y
+|delete |If owner |Y
 |===
 
 == Request Flow
 
-. User access the application and clicks Login
-. User is directed to the Okta UI and authenticates
+. User access the application and clicks `Login`
+. User is directed to the FusionAuth UI and authenticates
 . A token is returned back in the redirect URL to the application
 . That token is then exchanged for the user profile information
-. The user profile from Okta being stored (user Id, roles etc).
-. Any requests to the /contacts endpoints fetch the data required about the resource being accessed from the data store
-. Call the Cerbos PDP with the principal, resource and action to check the authorization and then return an error if the user is not authorized. The Cerbos package is used for this.
+. The user profile from FusionAuth being stored (user Id, email, roles
+etc).
+. Any requests to the `/contacts` endpoints fetch the data required
+about the resource being accessed from the data store
+. Call the Cerbos PDP with the principal, resource and action to check
+the authorization and then return an error if the user is not
+authorized. The https://www.npmjs.com/package/cerbos[Cerbos package] is
+used for this.
 [source,javascript]
 ---
 const allowed = await cerbos.check({
