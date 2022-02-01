@@ -2,8 +2,10 @@
 * Example Apps
 ** xref:photo-share/index.adoc[Photo-share application]
 * Authentication Integration
-** xref:authentication/jwt/index.adoc[JWT]
 ** xref:authentication/auth0/index.adoc[Auth0]
+** xref:authentication/fusionauth/index.adoc[FusionAuth]
+** xref:authentication/jwt/index.adoc[JWT]
 ** xref:authentication/magic/index.adoc[Magic]
+** xref:authentication/okta/index.adoc[Okta]
 * ORM Integration
 ** xref:orm/prisma/index.adoc[Prisma]
