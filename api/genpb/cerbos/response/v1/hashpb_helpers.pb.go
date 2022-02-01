@@ -1059,6 +1059,11 @@ func cerbos_response_v1_PlaygroundProxyResponse_hashpb_sum(m *PlaygroundProxyRes
 					cerbos_response_v1_CheckResourceBatchResponse_hashpb_sum(t.CheckResourceBatch, hasher, ignore)
 				}
 
+			case *PlaygroundProxyResponse_ResourcesQueryPlan:
+				if t.ResourcesQueryPlan != nil {
+					cerbos_response_v1_ResourcesQueryPlanResponse_hashpb_sum(t.ResourcesQueryPlan, hasher, ignore)
+				}
+
 			}
 		}
 	}
