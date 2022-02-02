@@ -53,7 +53,7 @@ func NewResourcePolicyCmd(fn internal.WithClient) *cobra.Command {
 		Use:     "resource_policies",
 		Aliases: []string{"resource_policy", "rp"},
 		Example: example,
-		PreRunE: policy.PreRunFn(policy2.ResourceKind),
+		PreRunE: policy.PreRunFn(policy2.ResourceKind, &flags.Sort),
 		RunE:    fn(policy.MakeGetCmd(policy2.ResourceKind, &flags.Filters, &flags.Format, &flags.Sort)),
 	}
 
