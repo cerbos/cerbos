@@ -3,6 +3,8 @@ name: Publish Documentation
 on:
   workflow_dispatch:
   push:
+    paths:
+      - 'docs/**'
     branches:
       - main
       - 'v*'

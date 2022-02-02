@@ -6,7 +6,26 @@ on:
       - main
       - 'v*'
 jobs:
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      code: ${{ steps.filter.outputs.code }}
+      docs: ${{ steps.filter.outputs.docs }}
+      protos: ${{ steps.filter.outputs.protos }}
+    steps:
+      - uses: dorny/paths-filter@v2
+        id: filter
+        with:
+          filters: |
+            code:
+              - '!(docs/**)'
+            docs:
+              - 'docs/**'
+            protos:
+              - '**/*.proto'
   test:
+    needs: changes
+    if: ${{ needs.changes.outputs.code == 'true' }}
     name: Test
     runs-on: ubuntu-latest
     steps:
@@ -48,6 +67,8 @@ jobs:
           files: "unit.cover,integration.cover"
 
   docs:
+    needs: changes
+    if: ${{ needs.changes.outputs.docs == 'true' }}
     name: Build docs
     runs-on: ubuntu-latest
     steps:
@@ -61,6 +82,8 @@ jobs:
         id: docs
 
   golangci:
+    needs: changes
+    if: ${{ needs.changes.outputs.code == 'true' }}
     name: Lint
     runs-on: ubuntu-latest
     steps:
@@ -72,6 +95,8 @@ jobs:
           args: '--config=.golangci.yaml -v'
 
   buf:
+    needs: changes
+    if: ${{ needs.changes.outputs.protos == 'true' }}
     name: Proto check
     runs-on: ubuntu-latest
     steps:
