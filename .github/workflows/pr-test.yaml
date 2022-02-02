@@ -7,6 +7,7 @@ on:
       - 'v*'
 jobs:
   changes:
+    runs-on: ubuntu-latest
     outputs:
       docs: ${{ steps.filter.outputs.docs }}
       code: ${{ steps.filter.outputs.code }}
