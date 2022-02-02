@@ -29,30 +29,26 @@ const (
 	SortByVersion  SortByValue = "version"
 )
 
-func (sbv SortByValue) String() string {
-	return string(sbv)
-}
-
 type SortByFlagType SortByValue
 
-func (kf SortByFlagType) Kind() SortByValue {
-	return SortByValue(kf)
+func (sbft SortByFlagType) Kind() SortByValue {
+	return SortByValue(sbft)
 }
 
-func (kf SortByFlagType) String() string {
-	return SortByPolicyID.String()
+func (sbft SortByFlagType) String() string {
+	return string(SortByPolicyID)
 }
 
-func (kf *SortByFlagType) Set(v string) error {
-	switch v {
-	case SortByPolicyID.String(), SortByName.String(), SortByVersion.String():
-		*kf = SortByFlagType(v)
+func (sbft *SortByFlagType) Set(v string) error {
+	switch SortByValue(v) {
+	case SortByPolicyID, SortByName, SortByVersion:
+		*sbft = SortByFlagType(v)
 		return nil
 	default:
 		return fmt.Errorf("invalid --sort-by value %q, possible values are %s, %s and %s", v, SortByPolicyID, SortByName, SortByVersion)
 	}
 }
 
-func (kf SortByFlagType) Type() string {
+func (sbft SortByFlagType) Type() string {
 	return "SortByFlag"
 }
