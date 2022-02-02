@@ -2,6 +2,8 @@
 name: Snapshots
 on:
   push:
+    paths-ignore:
+      - 'docs/**'
     branches:
       - main
 jobs:
