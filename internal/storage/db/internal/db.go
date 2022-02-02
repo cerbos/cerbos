@@ -162,7 +162,7 @@ func (s *dbStorage) LoadPolicy(ctx context.Context, policyKey ...string) ([]*pol
 
 	policies := make([]*policy.Wrapper, len(recs))
 	for i, rec := range recs {
-		wp := policy.Wrap(rec.Definition.Policy)
+		wp := policy.Wrap(policy.WithMetadata(rec.Definition.Policy, "", nil, strings.TrimSuffix(strings.ToLower(fmt.Sprintf("%s.%s.%s", rec.Kind, rec.Name, rec.Version)), policyKeySep)))
 		policies[i] = &wp
 	}
 

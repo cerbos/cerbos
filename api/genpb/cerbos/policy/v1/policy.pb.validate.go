@@ -346,6 +346,8 @@ func (m *Metadata) validate(all bool) error {
 		}
 	}
 
+	// no validation rules for StoreIdentifer
+
 	if len(errors) > 0 {
 		return MetadataMultiError(errors)
 	}

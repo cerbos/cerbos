@@ -1,49 +1,32 @@
 // Copyright 2021-2022 Zenauth Ltd.
 // SPDX-License-Identifier: Apache-2.0
 
-package internal
+package policy
 
 import (
-	"bytes"
-	"encoding/json"
 	"fmt"
 	"io"
 
 	"google.golang.org/protobuf/encoding/protojson"
 
-	schemav1 "github.com/cerbos/cerbos/api/genpb/cerbos/schema/v1"
 	"github.com/cerbos/cerbos/internal/policy"
 	"github.com/cerbos/cerbos/internal/util"
 )
 
-func PrintSchemaPrettyJSON(w io.Writer, schemas []*schemav1.Schema) error {
-	for _, s := range schemas {
-		_, err := fmt.Fprintf(w, "%s\n", s.Definition)
-		if err != nil {
-			return fmt.Errorf("failed to print schema: %w", err)
-		}
+func printPolicy(w io.Writer, policies []policy.Wrapper, format string) error {
+	switch format {
+	case "json":
+		return printPolicyJSON(w, policies)
+	case "yaml":
+		return printPolicyYAML(w, policies)
+	case "prettyjson", "pretty-json":
+		return printPolicyPrettyJSON(w, policies)
+	default:
+		return fmt.Errorf("only yaml, json and prettyjson formats are supported")
 	}
-	return nil
 }
 
-func PrintSchemaJSON(w io.Writer, schemas []*schemav1.Schema) error {
-	for _, s := range schemas {
-		var b bytes.Buffer
-		err := json.Compact(&b, s.Definition)
-		if err != nil {
-			return fmt.Errorf("failed to produce compact json for schema: %w", err)
-		}
-
-		_, err = fmt.Fprintf(w, "%s\n", b.String())
-		if err != nil {
-			return fmt.Errorf("failed to print schema: %w", err)
-		}
-	}
-
-	return nil
-}
-
-func PrintPolicyJSON(w io.Writer, policies map[string]policy.Wrapper) error {
+func printPolicyJSON(w io.Writer, policies []policy.Wrapper) error {
 	for _, p := range policies {
 		b, err := protojson.Marshal(p.Policy)
 		if err != nil {
@@ -57,7 +40,7 @@ func PrintPolicyJSON(w io.Writer, policies map[string]policy.Wrapper) error {
 	return nil
 }
 
-func PrintPolicyPrettyJSON(w io.Writer, policies map[string]policy.Wrapper) error {
+func printPolicyPrettyJSON(w io.Writer, policies []policy.Wrapper) error {
 	for _, p := range policies {
 		s := protojson.Format(p.Policy)
 
@@ -69,7 +52,7 @@ func PrintPolicyPrettyJSON(w io.Writer, policies map[string]policy.Wrapper) erro
 	return nil
 }
 
-func PrintPolicyYAML(w io.Writer, policies map[string]policy.Wrapper) error {
+func printPolicyYAML(w io.Writer, policies []policy.Wrapper) error {
 	for _, p := range policies {
 		_, err := fmt.Fprintln(w, "---")
 		if err != nil {
@@ -82,4 +65,11 @@ func PrintPolicyYAML(w io.Writer, policies map[string]policy.Wrapper) error {
 		}
 	}
 	return nil
+}
+
+func getHeaders(kind policy.Kind) []string {
+	if kind == policy.DerivedRolesKind {
+		return []string{"POLICY ID", "NAME"}
+	}
+	return []string{"POLICY ID", "NAME", "VERSION"}
 }

@@ -6,13 +6,9 @@ package policy
 import (
 	"context"
 	"fmt"
-	"io"
-	"sort"
-	"strings"
 
 	"github.com/spf13/cobra"
 
-	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
 	"github.com/cerbos/cerbos/client"
 	"github.com/cerbos/cerbos/cmd/cerbosctl/get/internal/flagset"
 	"github.com/cerbos/cerbos/cmd/cerbosctl/get/internal/printer"
@@ -20,17 +16,17 @@ import (
 	"github.com/cerbos/cerbos/internal/policy"
 )
 
-func MakeGetCmd(resType ResourceType, filters *flagset.Filters, format *flagset.Format) internal.AdminCommand {
+func MakeGetCmd(kind policy.Kind, filters *flagset.Filters, format *flagset.Format, sort *flagset.Sort) internal.AdminCommand {
 	return func(c client.AdminClient, cmd *cobra.Command, args []string) error {
 		if len(args) == 0 {
-			if err := List(c, cmd, filters, format, resType); err != nil {
+			if err := List(c, cmd, filters, format, sort, kind); err != nil {
 				return fmt.Errorf("failed to list: %w", err)
 			}
 
 			return nil
 		}
 
-		if err := Get(c, cmd, format, resType, args...); err != nil {
+		if err := Get(c, cmd, format, kind, args...); err != nil {
 			return fmt.Errorf("failed to get: %w", err)
 		}
 
@@ -38,7 +34,7 @@ func MakeGetCmd(resType ResourceType, filters *flagset.Filters, format *flagset.
 	}
 }
 
-func List(c client.AdminClient, cmd *cobra.Command, filters *flagset.Filters, format *flagset.Format, resType ResourceType) error {
+func List(c client.AdminClient, cmd *cobra.Command, filters *flagset.Filters, format *flagset.Format, sortFlags *flagset.Sort, kind policy.Kind) error {
 	policyIds, err := c.ListPolicies(context.Background())
 	if err != nil {
 		return fmt.Errorf("error while requesting policies: %w", err)
@@ -46,7 +42,7 @@ func List(c client.AdminClient, cmd *cobra.Command, filters *flagset.Filters, fo
 
 	tw := printer.NewTableWriter(cmd.OutOrStdout())
 	if !format.NoHeaders {
-		tw.SetHeader(getHeaders(resType))
+		tw.SetHeader(getHeaders(kind))
 	}
 
 	for idx := range policyIds {
@@ -62,19 +58,14 @@ func List(c client.AdminClient, cmd *cobra.Command, filters *flagset.Filters, fo
 				wp[i] = policy.Wrap(p)
 			}
 
-			filtered := filter(wp, policyIds[idx:idxEnd], filters.Name, filters.Version, resType)
-
-			ids := make([]string, 0, len(filtered))
-			for key := range filtered {
-				ids = append(ids, key)
-			}
-			sort.Strings(ids)
-			for _, key := range ids {
+			filtered := filter(wp, filters.Name, filters.Version, kind)
+			sorted := sort(filtered, flagset.SortByValue(sortFlags.SortBy))
+			for _, p := range sorted {
 				row := make([]string, 2, 3) //nolint:gomnd
-				row[0] = key
-				row[1] = filtered[key].Name
-				if resType != DerivedRoles {
-					row = append(row, filtered[key].Version)
+				row[0] = p.Metadata.StoreIdentifer
+				row[1] = p.Name
+				if kind != policy.DerivedRolesKind {
+					row = append(row, p.Version)
 				}
 				tw.Append(row)
 			}
@@ -85,7 +76,7 @@ func List(c client.AdminClient, cmd *cobra.Command, filters *flagset.Filters, fo
 	return nil
 }
 
-func Get(c client.AdminClient, cmd *cobra.Command, format *flagset.Format, resType ResourceType, ids ...string) error {
+func Get(c client.AdminClient, cmd *cobra.Command, format *flagset.Format, kind policy.Kind, ids ...string) error {
 	foundPolicy := false
 	for idx := range ids {
 		if idx%internal.MaxIDPerReq == 0 {
@@ -100,8 +91,7 @@ func Get(c client.AdminClient, cmd *cobra.Command, format *flagset.Format, resTy
 				wp[i] = policy.Wrap(p)
 			}
 
-			filtered := filter(wp, ids[idx:idxEnd], nil, nil, resType)
-
+			filtered := filter(wp, nil, nil, kind)
 			if len(filtered) != 0 {
 				foundPolicy = true
 			}
@@ -118,69 +108,3 @@ func Get(c client.AdminClient, cmd *cobra.Command, format *flagset.Format, resTy
 
 	return nil
 }
-
-func filter(policies []policy.Wrapper, policyIds, name, version []string, resType ResourceType) map[string]policy.Wrapper {
-	filtered := make(map[string]policy.Wrapper)
-	for idx, p := range policies {
-		if len(name) != 0 && !stringInSlice(p.Name, name) {
-			continue
-		}
-		if len(version) != 0 && !stringInSlice(p.Version, version) {
-			continue
-		}
-
-		_, ok := p.PolicyType.(*policyv1.Policy_ResourcePolicy)
-		if ok && resType != ResourcePolicy {
-			continue
-		}
-		_, ok = p.PolicyType.(*policyv1.Policy_PrincipalPolicy)
-		if ok && resType != PrincipalPolicy {
-			continue
-		}
-		_, ok = p.PolicyType.(*policyv1.Policy_DerivedRoles)
-		if ok && resType != DerivedRoles {
-			continue
-		}
-
-		filtered[policyIds[idx]] = p
-	}
-	return filtered
-}
-
-func printPolicy(w io.Writer, policies map[string]policy.Wrapper, format string) error {
-	switch format {
-	case "json":
-		return internal.PrintPolicyJSON(w, policies)
-	case "yaml":
-		return internal.PrintPolicyYAML(w, policies)
-	case "prettyjson", "pretty-json":
-		return internal.PrintPolicyPrettyJSON(w, policies)
-	default:
-		return fmt.Errorf("only yaml, json and prettyjson formats are supported")
-	}
-}
-
-func getHeaders(resourceType ResourceType) []string {
-	if resourceType == DerivedRoles {
-		return []string{"POLICY ID", "NAME"}
-	}
-	return []string{"POLICY ID", "NAME", "VERSION"}
-}
-
-func stringInSlice(a string, s []string) bool {
-	for _, b := range s {
-		if strings.EqualFold(b, a) {
-			return true
-		}
-	}
-	return false
-}
-
-type ResourceType uint
-
-const (
-	Unspecified ResourceType = iota
-	DerivedRoles
-	PrincipalPolicy
-	ResourcePolicy
-)

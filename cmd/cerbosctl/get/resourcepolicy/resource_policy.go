@@ -9,6 +9,7 @@ import (
 	"github.com/cerbos/cerbos/cmd/cerbosctl/get/internal/flagset"
 	"github.com/cerbos/cerbos/cmd/cerbosctl/get/internal/policy"
 	"github.com/cerbos/cerbos/cmd/cerbosctl/internal"
+	policy2 "github.com/cerbos/cerbos/internal/policy"
 )
 
 const example = `# List resource policies
@@ -18,6 +19,11 @@ cerbosctl get rp
 
 # List and filter resource policies
 cerbosctl get resource_policies --name leave_request
+
+# List and sort resource policies by column
+cerbosctl get resource_policies --sort-by policyId
+cerbosctl get resource_policies --sort-by name
+cerbosctl get resource_policies --sort-by version
 
 # Get resource policy definition (disk, git, blob stores)
 cerbosctl get resource_policies leave_request.yaml
@@ -35,6 +41,7 @@ cerbosctl get resource_policies resource.leave_request.default -ojson
 cerbosctl get resource_policies resource.leave_request.default -oprettyjson`
 
 type flag struct {
+	flagset.Sort
 	flagset.Format
 	flagset.Filters
 }
@@ -46,10 +53,11 @@ func NewResourcePolicyCmd(fn internal.WithClient) *cobra.Command {
 		Use:     "resource_policies",
 		Aliases: []string{"resource_policy", "rp"},
 		Example: example,
-		PreRunE: policy.PreRunFn(policy.ResourcePolicy),
-		RunE:    fn(policy.MakeGetCmd(policy.ResourcePolicy, &flags.Filters, &flags.Format)),
+		PreRunE: policy.PreRunFn(policy2.ResourceKind, &flags.Sort),
+		RunE:    fn(policy.MakeGetCmd(policy2.ResourceKind, &flags.Filters, &flags.Format, &flags.Sort)),
 	}
 
+	cmd.Flags().AddFlagSet(flags.Sort.FlagSet())
 	cmd.Flags().AddFlagSet(flags.Format.FlagSet("yaml"))
 	cmd.Flags().AddFlagSet(flags.Filters.FlagSet())
 

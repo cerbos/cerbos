@@ -121,4 +121,15 @@ func TestListPolicies(t *testing.T) {
 		require.NoError(t, err)
 		require.NotEmpty(t, policies)
 	})
+
+	t.Run("policy metadata should include store identifier", func(t *testing.T) {
+		testCases := []string{"derived_roles.alpha", "principal.donald_duck.20210210", "resource.leave_request.20210210"}
+
+		for _, testCase := range testCases {
+			policies, err := ac.GetPolicy(context.Background(), testCase)
+			require.NoError(t, err)
+			require.Len(t, policies, 1)
+			require.Equal(t, testCase, policies[0].Metadata.StoreIdentifer)
+		}
+	})
 }

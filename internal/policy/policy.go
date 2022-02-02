@@ -29,7 +29,7 @@ const (
 	DerivedRolesKindStr = "DERIVED_ROLES"
 )
 
-var ignoreHashFields = map[string]struct{}{
+var IgnoreHashFields = map[string]struct{}{
 	"cerbos.policy.v1.Policy.metadata":    {},
 	"cerbos.policy.v1.Policy.disabled":    {},
 	"cerbos.policy.v1.Policy.description": {},
@@ -107,7 +107,7 @@ func SchemaReferences(p *policyv1.Policy) []string {
 }
 
 // WithMetadata adds metadata to the policy.
-func WithMetadata(p *policyv1.Policy, source string, annotations map[string]string) *policyv1.Policy {
+func WithMetadata(p *policyv1.Policy, source string, annotations map[string]string, storeIdentifier string) *policyv1.Policy {
 	if p.Metadata == nil {
 		p.Metadata = &policyv1.Metadata{}
 	}
@@ -115,9 +115,24 @@ func WithMetadata(p *policyv1.Policy, source string, annotations map[string]stri
 	p.Metadata.SourceFile = source
 	p.Metadata.Annotations = annotations
 
+	if p.Metadata.StoreIdentifer == "" {
+		p = WithStoreIdentifier(p, storeIdentifier)
+	}
+
 	if p.Metadata.Hash == nil {
 		return WithHash(p)
 	}
+
+	return p
+}
+
+// WithStoreIdentifier adds the store identifier to the metadata.
+func WithStoreIdentifier(p *policyv1.Policy, storeIdentifier string) *policyv1.Policy {
+	if p.Metadata == nil {
+		p.Metadata = &policyv1.Metadata{}
+	}
+
+	p.Metadata.StoreIdentifer = storeIdentifier
 
 	return p
 }
@@ -128,7 +143,7 @@ func WithHash(p *policyv1.Policy) *policyv1.Policy {
 		p.Metadata = &policyv1.Metadata{}
 	}
 
-	p.Metadata.Hash = wrapperspb.UInt64(util.HashPB(p, ignoreHashFields))
+	p.Metadata.Hash = wrapperspb.UInt64(util.HashPB(p, IgnoreHashFields))
 
 	return p
 }

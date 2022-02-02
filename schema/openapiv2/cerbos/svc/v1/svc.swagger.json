@@ -1685,6 +1685,9 @@
         "hash": {
           "type": "string",
           "format": "uint64"
+        },
+        "storeIdentifer": {
+          "type": "string"
         }
       }
     },
