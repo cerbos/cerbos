@@ -8,27 +8,26 @@ package index_test
 
 import (
 	"context"
-	"io/fs"
 	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
 	"github.com/cerbos/cerbos/internal/policy"
-	"github.com/cerbos/cerbos/internal/schema"
 	"github.com/cerbos/cerbos/internal/storage/index"
 	"github.com/cerbos/cerbos/internal/test"
 	"github.com/cerbos/cerbos/internal/util"
 )
 
 func TestIndex(t *testing.T) {
-	fsDir := test.PathToDir(t, "store")
-	fsys := os.DirFS(fsDir)
+	base := test.PathToDir(t, "store")
+	fsys := os.DirFS(base)
 	idx, err := index.Build(context.Background(), fsys)
 	require.NoError(t, err)
 
-	policyFiles := mkListOfFiles(t, fsys)
+	policyFiles := mkListOfFiles(t, "store", base)
 
 	t.Run("load policy", func(t *testing.T) {
 		t.Run("should load the policies", func(t *testing.T) {
@@ -67,28 +66,14 @@ func TestIndex(t *testing.T) {
 }
 
 // mkListOfFiles generates a list of policy files under the given filesystem and returns the list.
-func mkListOfFiles(t *testing.T, fsys fs.FS) []string {
+func mkListOfFiles(t *testing.T, dir, base string) []string {
 	t.Helper()
 
 	var list []string
-	err := fs.WalkDir(fsys, ".", func(path string, d fs.DirEntry, err error) error {
-		if d.IsDir() {
-			switch d.Name() {
-			case util.TestDataDirectory:
-				return fs.SkipDir
-			case schema.Directory:
-				return fs.SkipDir
-			default:
-				return nil
-			}
-		}
-
-		if !util.IsSupportedFileType(d.Name()) {
-			return nil
-		}
-
-		list = append(list, path)
-
+	err := test.FindPolicyFiles(t, dir, func(path string) error {
+		relPath, err := filepath.Rel(base, path)
+		require.NoError(t, err)
+		list = append(list, relPath)
 		return nil
 	})
 	require.NoError(t, err)
