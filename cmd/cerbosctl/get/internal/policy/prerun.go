@@ -14,7 +14,8 @@ import (
 
 func PreRunFn(kind policy.Kind, sort *flagset.Sort) func(*cobra.Command, []string) error {
 	return func(cmd *cobra.Command, args []string) error {
-		if len(args) == 0 {  // List policies
+		//nolint:nestif
+		if len(args) == 0 { // List policies
 			if kind == policy.DerivedRolesKind && cmd.Flags().Changed(flagset.SortByFlag) && flagset.SortByValue(sort.SortBy) == flagset.SortByVersion {
 				return fmt.Errorf("value of --sort-by flag cannot be %q when listing derived_roles", flagset.SortByVersion)
 			}

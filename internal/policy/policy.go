@@ -29,7 +29,7 @@ const (
 	DerivedRolesKindStr = "DERIVED_ROLES"
 )
 
-var ignoreHashFields = map[string]struct{}{
+var IgnoreHashFields = map[string]struct{}{
 	"cerbos.policy.v1.Policy.metadata":    {},
 	"cerbos.policy.v1.Policy.disabled":    {},
 	"cerbos.policy.v1.Policy.description": {},
@@ -143,7 +143,7 @@ func WithHash(p *policyv1.Policy) *policyv1.Policy {
 		p.Metadata = &policyv1.Metadata{}
 	}
 
-	p.Metadata.Hash = wrapperspb.UInt64(util.HashPB(p, ignoreHashFields))
+	p.Metadata.Hash = wrapperspb.UInt64(util.HashPB(p, IgnoreHashFields))
 
 	return p
 }

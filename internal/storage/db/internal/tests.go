@@ -15,12 +15,14 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/testing/protocmp"
+	"google.golang.org/protobuf/types/known/wrapperspb"
 
 	schemav1 "github.com/cerbos/cerbos/api/genpb/cerbos/schema/v1"
 	"github.com/cerbos/cerbos/internal/namer"
 	"github.com/cerbos/cerbos/internal/policy"
 	"github.com/cerbos/cerbos/internal/storage"
 	"github.com/cerbos/cerbos/internal/test"
+	"github.com/cerbos/cerbos/internal/util"
 )
 
 const timeout = 1 * time.Second
@@ -133,6 +135,16 @@ func TestSuite(store DBStorage) func(*testing.T) {
 				p, err := store.LoadPolicy(ctx, namer.PolicyKeyFromFQN(dr.FQN))
 				require.NoError(t, err)
 				require.NotEmpty(t, p)
+			})
+
+			t.Run("should have correct metadata", func(t *testing.T) {
+				t.Log(namer.PolicyKeyFromFQN(dr.FQN))
+				policies, err := store.LoadPolicy(ctx, namer.PolicyKeyFromFQN(dr.FQN))
+				require.NoError(t, err)
+				require.NotEmpty(t, policies)
+				require.NotEmpty(t, policies[0].Metadata)
+				require.Equal(t, policies[0].Metadata.StoreIdentifer, namer.PolicyKeyFromFQN(dr.FQN))
+				require.Equal(t, policies[0].Metadata.Hash, wrapperspb.UInt64(util.HashPB(policies[0], policy.IgnoreHashFields)))
 			})
 		})
 
