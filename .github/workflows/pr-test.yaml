@@ -9,17 +9,20 @@ jobs:
   changes:
     runs-on: ubuntu-latest
     outputs:
-      docs: ${{ steps.filter.outputs.docs }}
       code: ${{ steps.filter.outputs.code }}
+      docs: ${{ steps.filter.outputs.docs }}
+      protos: ${{ steps.filter.outputs.protos }}
     steps:
       - uses: dorny/paths-filter@v2
         id: filter
         with:
           filters: |
-            docs:
-              - 'docs/**'
             code:
               - '!(docs/**)'
+            docs:
+              - 'docs/**'
+            protos:
+              - '**/*.proto'
   test:
     needs: changes
     if: ${{ needs.changes.outputs.code == 'true' }}
@@ -93,7 +96,7 @@ jobs:
 
   buf:
     needs: changes
-    if: ${{ needs.changes.outputs.code == 'true' }}
+    if: ${{ needs.changes.outputs.protos == 'true' }}
     name: Proto check
     runs-on: ubuntu-latest
     steps:
