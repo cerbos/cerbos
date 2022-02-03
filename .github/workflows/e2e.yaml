@@ -42,6 +42,7 @@ jobs:
           cat >~/.config/telepresence/config.yml <<EOF
           timeouts:
             helm: 60s
+            trafficManagerAPI: 30s
           EOF
 
       - name: Install KinD

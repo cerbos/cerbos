@@ -25,7 +25,7 @@ jobs:
             revert
             test
           requireScope: false
-          subjectPattern: '^(?[A-Z]).+$'
+          subjectPattern: '^[A-Z].+$'
           subjectPatternError: |
             Subject "{subject}" does not start with an uppercase letter
           validateSingleCommit: true
