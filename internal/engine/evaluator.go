@@ -72,18 +72,19 @@ func (rpe *resourcePolicyEvaluator) Evaluate(ctx context.Context, input *enginev
 
 	tctx := rpe.beginTrace(policyComponent, rpe.policy.Meta.Fqn)
 	for _, p := range rpe.policy.Policies {
+		sctx := tctx.beginTrace(scopeComponent, p.Scope)
 		// validate the input
 		vr, err := rpe.schemaMgr.Validate(ctx, p.Schemas, input)
 		if err != nil {
-			tctx.writeEvent(KVMsg("Error during validation"), KVError(err))
+			sctx.writeEvent(KVMsg("Error during validation"), KVError(err))
 			return nil, fmt.Errorf("failed to validate input: %w", err)
 		}
 		if len(vr.Errors) > 0 {
 			result.ValidationErrors = vr.Errors.SchemaErrors()
-			tctx.writeEvent(KVMsg("Validation errors"), KVError(vr.Errors))
+			sctx.writeEvent(KVMsg("Validation errors"), KVError(vr.Errors))
 			if vr.Reject {
 				for _, action := range input.Actions {
-					actx := tctx.beginTrace(actionComponent, action)
+					actx := sctx.beginTrace(actionComponent, action)
 					result.setEffect(action, effectv1.Effect_EFFECT_DENY)
 					actx.writeEvent(KVActivated(), KVEffect(effectv1.Effect_EFFECT_DENY), KVMsg("Rejected due to validation failures"))
 				}
@@ -92,16 +93,16 @@ func (rpe *resourcePolicyEvaluator) Evaluate(ctx context.Context, input *enginev
 		}
 
 		// evaluate the variables of this policy
-		variables, err := evaluateVariables(tctx.beginTrace(variablesComponent), p.Variables, input)
+		variables, err := evaluateVariables(sctx.beginTrace(variablesComponent), p.Variables, input)
 		if err != nil {
-			tctx.writeEvent(KVMsg("Failed to evaluate variables"), KVError(err))
+			sctx.writeEvent(KVMsg("Failed to evaluate variables"), KVError(err))
 			return nil, fmt.Errorf("failed to evaluate variables: %w", err)
 		}
 
 		// calculate the set of effective derived roles
 		effectiveDerivedRoles := stringSet{}
 		for drName, dr := range p.DerivedRoles {
-			dctx := tctx.beginTrace(derivedRoleComponent, drName)
+			dctx := sctx.beginTrace(derivedRoleComponent, drName)
 			if !setIntersects(dr.ParentRoles, effectiveRoles) {
 				dctx.writeEvent(KVSkip(), KVMsg("No matching roles"))
 				continue
@@ -133,7 +134,7 @@ func (rpe *resourcePolicyEvaluator) Evaluate(ctx context.Context, input *enginev
 
 		// evaluate each rule until all actions have a result
 		for _, rule := range p.Rules {
-			rctx := tctx.beginTrace(ruleComponent, rule.Name)
+			rctx := sctx.beginTrace(ruleComponent, rule.Name)
 			if !setIntersects(rule.Roles, effectiveRoles) && !setIntersects(rule.DerivedRoles, effectiveDerivedRoles) {
 				rctx.writeEvent(KVSkip(), KVMsg("No matching roles or derived roles"))
 				continue
@@ -181,15 +182,16 @@ func (ppe *principalPolicyEvaluator) Evaluate(ctx context.Context, input *engine
 
 	tctx := ppe.beginTrace(policyComponent, ppe.policy.Meta.Fqn)
 	for _, p := range ppe.policy.Policies {
+		sctx := tctx.beginTrace(scopeComponent, p.Scope)
 		// evaluate the variables of this policy
-		variables, err := evaluateVariables(tctx.beginTrace(variablesComponent), p.Variables, input)
+		variables, err := evaluateVariables(sctx.beginTrace(variablesComponent), p.Variables, input)
 		if err != nil {
-			tctx.writeEvent(KVMsg("Failed to evaluate variables"), KVError(err))
+			sctx.writeEvent(KVMsg("Failed to evaluate variables"), KVError(err))
 			return nil, fmt.Errorf("failed to evaluate variables: %w", err)
 		}
 
 		for resource, resourceRules := range p.ResourceRules {
-			rctx := tctx.beginTrace(resourceComponent, resource)
+			rctx := sctx.beginTrace(resourceComponent, resource)
 			if !util.MatchesGlob(resource, input.Resource.Kind) {
 				rctx.writeEvent(KVSkip(), KVMsg("Did not match input resource kind"))
 				continue

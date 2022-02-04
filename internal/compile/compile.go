@@ -97,7 +97,7 @@ func compileResourcePolicy(modCtx *moduleCtx, schemaMgr schema.Manager) *runtime
 
 	rrp := &runtimev1.RunnableResourcePolicySet_Policy{
 		DerivedRoles: referencedRoles,
-		Scope:        strings.Split(rp.Scope, "."),
+		Scope:        rp.Scope,
 		Rules:        make([]*runtimev1.RunnableResourcePolicySet_Policy_Rule, len(rp.Rules)),
 		Variables:    compileVariables(modCtx, modCtx.def.Variables),
 		Schemas:      rp.Schemas, //TODO(cell) Dedupe the schemas so that we don't repeat validation for multiple policies when they have the same schema set defined.
@@ -327,7 +327,7 @@ func compilePrincipalPolicy(modCtx *moduleCtx) *runtimev1.RunnablePrincipalPolic
 	}
 
 	rpp := &runtimev1.RunnablePrincipalPolicySet_Policy{
-		Scope:         strings.Split(pp.Scope, "."),
+		Scope:         pp.Scope,
 		ResourceRules: make(map[string]*runtimev1.RunnablePrincipalPolicySet_Policy_ResourceRules, len(pp.Rules)),
 		Variables:     compileVariables(modCtx, modCtx.def.Variables),
 	}

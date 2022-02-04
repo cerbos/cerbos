@@ -452,13 +452,11 @@ func (m *RunnableResourcePolicySet_Policy) MarshalToSizedBufferVT(dAtA []byte) (
 		}
 	}
 	if len(m.Scope) > 0 {
-		for iNdEx := len(m.Scope) - 1; iNdEx >= 0; iNdEx-- {
-			i -= len(m.Scope[iNdEx])
-			copy(dAtA[i:], m.Scope[iNdEx])
-			i = encodeVarint(dAtA, i, uint64(len(m.Scope[iNdEx])))
-			i--
-			dAtA[i] = 0xa
-		}
+		i -= len(m.Scope)
+		copy(dAtA[i:], m.Scope)
+		i = encodeVarint(dAtA, i, uint64(len(m.Scope)))
+		i--
+		dAtA[i] = 0xa
 	}
 	return len(dAtA) - i, nil
 }
@@ -968,13 +966,11 @@ func (m *RunnablePrincipalPolicySet_Policy) MarshalToSizedBufferVT(dAtA []byte) 
 		}
 	}
 	if len(m.Scope) > 0 {
-		for iNdEx := len(m.Scope) - 1; iNdEx >= 0; iNdEx-- {
-			i -= len(m.Scope[iNdEx])
-			copy(dAtA[i:], m.Scope[iNdEx])
-			i = encodeVarint(dAtA, i, uint64(len(m.Scope[iNdEx])))
-			i--
-			dAtA[i] = 0xa
-		}
+		i -= len(m.Scope)
+		copy(dAtA[i:], m.Scope)
+		i = encodeVarint(dAtA, i, uint64(len(m.Scope)))
+		i--
+		dAtA[i] = 0xa
 	}
 	return len(dAtA) - i, nil
 }
@@ -1438,11 +1434,9 @@ func (m *RunnableResourcePolicySet_Policy) SizeVT() (n int) {
 	}
 	var l int
 	_ = l
-	if len(m.Scope) > 0 {
-		for _, s := range m.Scope {
-			l = len(s)
-			n += 1 + l + sov(uint64(l))
-		}
+	l = len(m.Scope)
+	if l > 0 {
+		n += 1 + l + sov(uint64(l))
 	}
 	if len(m.DerivedRoles) > 0 {
 		for k, v := range m.DerivedRoles {
@@ -1689,11 +1683,9 @@ func (m *RunnablePrincipalPolicySet_Policy) SizeVT() (n int) {
 	}
 	var l int
 	_ = l
-	if len(m.Scope) > 0 {
-		for _, s := range m.Scope {
-			l = len(s)
-			n += 1 + l + sov(uint64(l))
-		}
+	l = len(m.Scope)
+	if l > 0 {
+		n += 1 + l + sov(uint64(l))
 	}
 	if len(m.Variables) > 0 {
 		for k, v := range m.Variables {
@@ -2824,7 +2816,7 @@ func (m *RunnableResourcePolicySet_Policy) UnmarshalVT(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.Scope = append(m.Scope, string(dAtA[iNdEx:postIndex]))
+			m.Scope = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
 		case 2:
 			if wireType != 2 {
@@ -4513,7 +4505,7 @@ func (m *RunnablePrincipalPolicySet_Policy) UnmarshalVT(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.Scope = append(m.Scope, string(dAtA[iNdEx:postIndex]))
+			m.Scope = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
 		case 2:
 			if wireType != 2 {

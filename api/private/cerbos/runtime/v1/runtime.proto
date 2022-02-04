@@ -52,7 +52,7 @@ message RunnableResourcePolicySet {
         }
 
 
-        repeated string scope = 1;
+        string scope = 1;
         map<string, RunnableDerivedRole> derived_roles = 2;
         map<string, Expr> variables = 3;
         repeated Rule rules = 4;
@@ -99,7 +99,7 @@ message RunnablePrincipalPolicySet {
             map<string, ActionRule> action_rules = 1;
         }
 
-        repeated string scope = 1;
+        string scope = 1;
         map<string, Expr> variables = 2;
         map<string, ResourceRules> resource_rules = 3;
     }

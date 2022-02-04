@@ -1456,6 +1456,8 @@ func (m *RunnableResourcePolicySet_Policy) validate(all bool) error {
 
 	var errors []error
 
+	// no validation rules for Scope
+
 	{
 		sorted_keys := make([]string, len(m.GetDerivedRoles()))
 		i := 0
@@ -2205,6 +2207,8 @@ func (m *RunnablePrincipalPolicySet_Policy) validate(all bool) error {
 	}
 
 	var errors []error
+
+	// no validation rules for Scope
 
 	{
 		sorted_keys := make([]string, len(m.GetVariables()))
