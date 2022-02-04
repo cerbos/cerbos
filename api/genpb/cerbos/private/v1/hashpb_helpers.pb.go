@@ -240,6 +240,10 @@ func cerbos_engine_v1_ResourcesQueryPlanRequest_Resource_hashpb_sum(m *v1.Resour
 		_, _ = hasher.Write(protowire.AppendString(nil, m.PolicyVersion))
 
 	}
+	if _, ok := ignore["cerbos.engine.v1.ResourcesQueryPlanRequest.Resource.scope"]; !ok {
+		_, _ = hasher.Write(protowire.AppendString(nil, m.Scope))
+
+	}
 }
 
 func cerbos_policy_v1_Condition_hashpb_sum(m *v11.Condition, hasher hash.Hash, ignore map[string]struct{}) {

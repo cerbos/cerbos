@@ -272,8 +272,8 @@ func (engine *Engine) ResourcesQueryPlan(ctx context.Context, input *enginev1.Re
 	checkOpts := newCheckOptions(ctx)
 
 	// get the principal policy check
-	ppName, ppVersion := engine.policyAttr(input.Principal.Id, input.Principal.PolicyVersion)
-	policyEvaluator, err := engine.getPrincipalPolicyEvaluator(ctx, ppName, ppVersion, checkOpts)
+	ppName, ppVersion, ppScope := engine.policyAttr(input.Principal.Id, input.Principal.PolicyVersion, input.Principal.Scope)
+	policyEvaluator, err := engine.getPrincipalPolicyEvaluator(ctx, ppName, ppVersion, ppScope, checkOpts)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get check for [%s.%s]: %w", ppName, ppVersion, err)
 	}
@@ -287,8 +287,8 @@ func (engine *Engine) ResourcesQueryPlan(ctx context.Context, input *enginev1.Re
 	}
 	if plan == nil {
 		// get the resource policy check
-		rpName, rpVersion := engine.policyAttr(input.Resource.Kind, input.Resource.PolicyVersion)
-		policyEvaluator, err = engine.getResourcePolicyEvaluator(ctx, rpName, rpVersion, checkOpts)
+		rpName, rpVersion, rpScope := engine.policyAttr(input.Resource.Kind, input.Resource.PolicyVersion, input.Resource.Scope)
+		policyEvaluator, err = engine.getResourcePolicyEvaluator(ctx, rpName, rpVersion, rpScope, checkOpts)
 		if err != nil {
 			return nil, fmt.Errorf("failed to get check for [%s.%s]: %w", rpName, rpVersion, err)
 		}
@@ -424,16 +424,16 @@ func (engine *Engine) buildEvaluationCtx(ctx context.Context, input *enginev1.Ch
 	ec := &evaluationCtx{}
 
 	// get the principal policy check
-	ppName, ppVersion := engine.policyAttr(input.Principal.Id, input.Principal.PolicyVersion)
-	ppCheck, err := engine.getPrincipalPolicyEvaluator(ctx, ppName, ppVersion, input.Principal.Scope, checkOpts)
+	ppName, ppVersion, ppScope := engine.policyAttr(input.Principal.Id, input.Principal.PolicyVersion, input.Principal.Scope)
+	ppCheck, err := engine.getPrincipalPolicyEvaluator(ctx, ppName, ppVersion, ppScope, checkOpts)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get check for [%s.%s]: %w", ppName, ppVersion, err)
 	}
 	ec.addCheck(ppCheck)
 
 	// get the resource policy check
-	rpName, rpVersion := engine.policyAttr(input.Resource.Kind, input.Resource.PolicyVersion)
-	rpCheck, err := engine.getResourcePolicyEvaluator(ctx, rpName, rpVersion, input.Resource.Scope, checkOpts)
+	rpName, rpVersion, rpScope := engine.policyAttr(input.Resource.Kind, input.Resource.PolicyVersion, input.Resource.Scope)
+	rpCheck, err := engine.getResourcePolicyEvaluator(ctx, rpName, rpVersion, rpScope, checkOpts)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get check for [%s.%s]: %w", rpName, rpVersion, err)
 	}
@@ -442,8 +442,8 @@ func (engine *Engine) buildEvaluationCtx(ctx context.Context, input *enginev1.Ch
 	return ec, nil
 }
 
-func (engine *Engine) getPrincipalPolicyEvaluator(ctx context.Context, principal, policyVersion, scope string, checkOpts *checkOptions) (Evaluator, error) {
-	principalModID := namer.PrincipalPolicyModuleID(principal, policyVersion)
+func (engine *Engine) getPrincipalPolicyEvaluator(ctx context.Context, principal, policyVer, scope string, checkOpts *checkOptions) (Evaluator, error) {
+	principalModID := namer.PrincipalPolicyModuleID(principal, policyVer, scope)
 	rps, err := engine.compileMgr.Get(ctx, principalModID)
 	if err != nil {
 		return nil, err
@@ -456,8 +456,8 @@ func (engine *Engine) getPrincipalPolicyEvaluator(ctx context.Context, principal
 	return NewEvaluator(rps, checkOpts.tracer, engine.schemaMgr), nil
 }
 
-func (engine *Engine) getResourcePolicyEvaluator(ctx context.Context, resource, policyVersion, scope string, checkOpts *checkOptions) (Evaluator, error) {
-	resourceModID := namer.ResourcePolicyModuleID(resource, policyVersion)
+func (engine *Engine) getResourcePolicyEvaluator(ctx context.Context, resource, policyVer, scope string, checkOpts *checkOptions) (Evaluator, error) {
+	resourceModID := namer.ResourcePolicyModuleID(resource, policyVer, scope)
 	rps, err := engine.compileMgr.Get(ctx, resourceModID)
 	if err != nil {
 		return nil, err
@@ -470,15 +470,16 @@ func (engine *Engine) getResourcePolicyEvaluator(ctx context.Context, resource, 
 	return NewEvaluator(rps, checkOpts.tracer, engine.schemaMgr), nil
 }
 
-func (engine *Engine) policyAttr(name, version string) (pName, pVersion string) {
+func (engine *Engine) policyAttr(name, version, scope string) (pName, pVersion, pScope string) {
 	pName = name
 	pVersion = version
+	pScope = scope
 
 	if version == "" {
 		pVersion = engine.conf.DefaultPolicyVersion
 	}
 
-	return pName, pVersion
+	return pName, pVersion, pScope
 }
 
 type evaluationCtx struct {
