@@ -25,6 +25,8 @@ var (
 	ErrDuplicatePolicy = errors.New("duplicate policy definitions")
 	// ErrInvalidEntry signals that the index entry is invalid.
 	ErrInvalidEntry = errors.New("invalid index entry")
+	// ErrPolicyNotFound signals that the policy does not exist.
+	ErrPolicyNotFound = errors.New("policy not found")
 )
 
 type Entry struct {
@@ -91,33 +93,53 @@ func (idx *index) GetCompilationUnits(ids ...namer.ModuleID) (map[namer.ModuleID
 		cu := &policy.CompilationUnit{
 			ModID:       id,
 			Definitions: map[namer.ModuleID]*policyv1.Policy{id: p},
+			Ancestors:   policy.Ancestors(p),
 		}
 
 		result[id] = cu
 
-		// load the dependencies
-		deps, ok := idx.dependencies[id]
-		if !ok {
-			continue
-		}
+		// add dependencies
+		idx.addDepsToCompilationUnit(cu, id)
 
-		for dep := range deps {
-			p, err := idx.loadPolicy(dep)
+		// load ancestors of the policy
+		for _, ancestor := range cu.Ancestors {
+			p, err := idx.loadPolicy(ancestor)
 			if err != nil {
-				return nil, err
+				if errors.Is(err, ErrPolicyNotFound) {
+					continue
+				}
+				return nil, fmt.Errorf("failed to load parent %q of %q: %w", ancestor.String(), id.String(), err)
 			}
-
-			cu.AddDefinition(dep, p)
+			cu.AddDefinition(ancestor, p)
+			idx.addDepsToCompilationUnit(cu, ancestor)
 		}
 	}
 
 	return result, nil
 }
 
+func (idx *index) addDepsToCompilationUnit(cu *policy.CompilationUnit, id namer.ModuleID) error {
+	deps, ok := idx.dependencies[id]
+	if !ok {
+		return nil
+	}
+
+	for dep := range deps {
+		p, err := idx.loadPolicy(dep)
+		if err != nil {
+			return err
+		}
+
+		cu.AddDefinition(dep, p)
+	}
+
+	return nil
+}
+
 func (idx *index) loadPolicy(id namer.ModuleID) (*policyv1.Policy, error) {
 	fileName, ok := idx.modIDToFile[id]
 	if !ok {
-		return nil, fmt.Errorf("policy not found [%s]", id.String())
+		return nil, fmt.Errorf("policy id %q does not exist: %w", id.String(), ErrPolicyNotFound)
 	}
 
 	f, err := idx.fsys.Open(fileName)

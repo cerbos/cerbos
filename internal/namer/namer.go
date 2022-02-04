@@ -83,6 +83,43 @@ func FQN(p *policyv1.Policy) string {
 	}
 }
 
+// FQNTree returns the tree of FQNs that are ancestors of the given policy (including itself) sorted by most recent to oldest.
+// For example, if the policy has scope a.b.c, the returned tree will contain the FQNs in the following order:
+// - a.b.c
+// - a.b
+// - a
+func FQNTree(p *policyv1.Policy) []string {
+	var fqn string
+	var scope string
+
+	switch pt := p.PolicyType.(type) {
+	case *policyv1.Policy_ResourcePolicy:
+		fqn = ResourcePolicyFQN(pt.ResourcePolicy.Resource, pt.ResourcePolicy.Version, "")
+		scope = pt.ResourcePolicy.Scope
+	case *policyv1.Policy_PrincipalPolicy:
+		fqn = PrincipalPolicyFQN(pt.PrincipalPolicy.Principal, pt.PrincipalPolicy.Version, "")
+		scope = pt.PrincipalPolicy.Scope
+	case *policyv1.Policy_DerivedRoles:
+		fqn = DerivedRolesFQN(pt.DerivedRoles.Name)
+	default:
+		panic(fmt.Errorf("unknown policy type %T", pt))
+	}
+
+	if scope == "" {
+		return []string{fqn}
+	}
+
+	fqnTree := []string{withScope(fqn, scope)}
+
+	for i := len(scope) - 1; i >= 0; i-- {
+		if scope[i] == '.' {
+			fqnTree = append(fqnTree, withScope(fqn, scope[:i]))
+		}
+	}
+
+	return fqnTree
+}
+
 // PolicyKey returns a human-friendly identifier that can be used to refer to the policy in logs and other outputs.
 func PolicyKey(p *policyv1.Policy) string {
 	return PolicyKeyFromFQN(FQN(p))

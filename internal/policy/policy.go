@@ -82,6 +82,24 @@ func Dependencies(p *policyv1.Policy) []string {
 	}
 }
 
+// Ancestors returns the module IDs of the ancestors of this policy from most recent to oldest.
+func Ancestors(p *policyv1.Policy) []namer.ModuleID {
+	fqnTree := namer.FQNTree(p)
+	n := len(fqnTree)
+
+	// first element is the policy itself so we ignore that
+	if n <= 1 {
+		return nil
+	}
+
+	ancestors := make([]namer.ModuleID, n-1)
+	for i, fqn := range fqnTree[1:] {
+		ancestors[i] = namer.GenModuleIDFromFQN(fqn)
+	}
+
+	return ancestors
+}
+
 // SchemaReferences returns references to the schemas found in the policy.
 func SchemaReferences(p *policyv1.Policy) []string {
 	switch pt := p.PolicyType.(type) {
@@ -226,6 +244,7 @@ func Wrap(p *policyv1.Policy) Wrapper {
 // both R and D with the ModID field pointing to R because it is the main policy.
 type CompilationUnit struct {
 	Definitions map[namer.ModuleID]*policyv1.Policy
+	Ancestors   []namer.ModuleID
 	ModID       namer.ModuleID
 }
 

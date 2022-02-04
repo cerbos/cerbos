@@ -53,6 +53,10 @@ func cerbos_engine_v1_Principal_hashpb_sum(m *v1.Principal, hasher hash.Hash, ig
 			}
 		}
 	}
+	if _, ok := ignore["cerbos.engine.v1.Principal.scope"]; !ok {
+		_, _ = hasher.Write(protowire.AppendString(nil, m.Scope))
+
+	}
 }
 
 func cerbos_engine_v1_Resource_hashpb_sum(m *v1.Resource, hasher hash.Hash, ignore map[string]struct{}) {
@@ -86,6 +90,10 @@ func cerbos_engine_v1_Resource_hashpb_sum(m *v1.Resource, hasher hash.Hash, igno
 
 			}
 		}
+	}
+	if _, ok := ignore["cerbos.engine.v1.Resource.scope"]; !ok {
+		_, _ = hasher.Write(protowire.AppendString(nil, m.Scope))
+
 	}
 }
 
@@ -859,6 +867,10 @@ func cerbos_request_v1_ResourceSet_hashpb_sum(m *ResourceSet, hasher hash.Hash, 
 
 			}
 		}
+	}
+	if _, ok := ignore["cerbos.request.v1.ResourceSet.scope"]; !ok {
+		_, _ = hasher.Write(protowire.AppendString(nil, m.Scope))
+
 	}
 }
 

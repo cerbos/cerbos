@@ -425,7 +425,7 @@ func (engine *Engine) buildEvaluationCtx(ctx context.Context, input *enginev1.Ch
 
 	// get the principal policy check
 	ppName, ppVersion := engine.policyAttr(input.Principal.Id, input.Principal.PolicyVersion)
-	ppCheck, err := engine.getPrincipalPolicyEvaluator(ctx, ppName, ppVersion, checkOpts)
+	ppCheck, err := engine.getPrincipalPolicyEvaluator(ctx, ppName, ppVersion, input.Principal.Scope, checkOpts)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get check for [%s.%s]: %w", ppName, ppVersion, err)
 	}
@@ -433,7 +433,7 @@ func (engine *Engine) buildEvaluationCtx(ctx context.Context, input *enginev1.Ch
 
 	// get the resource policy check
 	rpName, rpVersion := engine.policyAttr(input.Resource.Kind, input.Resource.PolicyVersion)
-	rpCheck, err := engine.getResourcePolicyEvaluator(ctx, rpName, rpVersion, checkOpts)
+	rpCheck, err := engine.getResourcePolicyEvaluator(ctx, rpName, rpVersion, input.Resource.Scope, checkOpts)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get check for [%s.%s]: %w", rpName, rpVersion, err)
 	}
@@ -442,7 +442,7 @@ func (engine *Engine) buildEvaluationCtx(ctx context.Context, input *enginev1.Ch
 	return ec, nil
 }
 
-func (engine *Engine) getPrincipalPolicyEvaluator(ctx context.Context, principal, policyVersion string, checkOpts *checkOptions) (Evaluator, error) {
+func (engine *Engine) getPrincipalPolicyEvaluator(ctx context.Context, principal, policyVersion, scope string, checkOpts *checkOptions) (Evaluator, error) {
 	principalModID := namer.PrincipalPolicyModuleID(principal, policyVersion)
 	rps, err := engine.compileMgr.Get(ctx, principalModID)
 	if err != nil {
@@ -456,7 +456,7 @@ func (engine *Engine) getPrincipalPolicyEvaluator(ctx context.Context, principal
 	return NewEvaluator(rps, checkOpts.tracer, engine.schemaMgr), nil
 }
 
-func (engine *Engine) getResourcePolicyEvaluator(ctx context.Context, resource, policyVersion string, checkOpts *checkOptions) (Evaluator, error) {
+func (engine *Engine) getResourcePolicyEvaluator(ctx context.Context, resource, policyVersion, scope string, checkOpts *checkOptions) (Evaluator, error) {
 	resourceModID := namer.ResourcePolicyModuleID(resource, policyVersion)
 	rps, err := engine.compileMgr.Get(ctx, resourceModID)
 	if err != nil {
