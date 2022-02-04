@@ -73,9 +73,9 @@ func GenModuleIDFromFQN(name string) ModuleID {
 func FQN(p *policyv1.Policy) string {
 	switch pt := p.PolicyType.(type) {
 	case *policyv1.Policy_ResourcePolicy:
-		return ResourcePolicyFQN(pt.ResourcePolicy.Resource, pt.ResourcePolicy.Version)
+		return ResourcePolicyFQN(pt.ResourcePolicy.Resource, pt.ResourcePolicy.Version, pt.ResourcePolicy.Scope)
 	case *policyv1.Policy_PrincipalPolicy:
-		return PrincipalPolicyFQN(pt.PrincipalPolicy.Principal, pt.PrincipalPolicy.Version)
+		return PrincipalPolicyFQN(pt.PrincipalPolicy.Principal, pt.PrincipalPolicy.Version, pt.PrincipalPolicy.Scope)
 	case *policyv1.Policy_DerivedRoles:
 		return DerivedRolesFQN(pt.DerivedRoles.Name)
 	default:
@@ -98,29 +98,39 @@ func FQNFromPolicyKey(s string) string {
 	return "cerbos." + s
 }
 
-// ResourcePolicyFQN returns the fully-qualified name for the resource policy with given resource and version.
-func ResourcePolicyFQN(resource, version string) string {
-	return fmt.Sprintf("%s.%s.v%s", ResourcePoliciesPrefix, Sanitize(resource), Sanitize(version))
+// ResourcePolicyFQN returns the fully-qualified name for the resource policy with given resource, version and scope.
+func ResourcePolicyFQN(resource, version, scope string) string {
+	fqn := fmt.Sprintf("%s.%s.v%s", ResourcePoliciesPrefix, Sanitize(resource), Sanitize(version))
+	return withScope(fqn, scope)
 }
 
-// ResourcePolicyModuleID returns the module ID for the resource policy with given resource and version.
-func ResourcePolicyModuleID(resource, version string) ModuleID {
-	return GenModuleIDFromFQN(ResourcePolicyFQN(resource, version))
+// ResourcePolicyModuleID returns the module ID for the resource policy with given resource, version and scope.
+func ResourcePolicyModuleID(resource, version, scope string) ModuleID {
+	return GenModuleIDFromFQN(ResourcePolicyFQN(resource, version, scope))
 }
 
-// PrincipalPolicyFQN returns the fully-qualified module name for the principal policy with given principal and version.
-func PrincipalPolicyFQN(principal, version string) string {
-	return fmt.Sprintf("%s.%s.v%s", PrincipalPoliciesPrefix, Sanitize(principal), Sanitize(version))
+// PrincipalPolicyFQN returns the fully-qualified module name for the principal policy with given principal, version and scope.
+func PrincipalPolicyFQN(principal, version, scope string) string {
+	fqn := fmt.Sprintf("%s.%s.v%s", PrincipalPoliciesPrefix, Sanitize(principal), Sanitize(version))
+	return withScope(fqn, scope)
 }
 
 // PrincipalPolicyModuleID returns the module ID for the principal policy with given principal and version.
-func PrincipalPolicyModuleID(principal, version string) ModuleID {
-	return GenModuleIDFromFQN(PrincipalPolicyFQN(principal, version))
+func PrincipalPolicyModuleID(principal, version, scope string) ModuleID {
+	return GenModuleIDFromFQN(PrincipalPolicyFQN(principal, version, scope))
 }
 
 // DerivedRolesFQN returns the fully-qualified module name for the given derived roles set.
 func DerivedRolesFQN(roleSetName string) string {
 	return fmt.Sprintf("%s.%s", DerivedRolesPrefix, Sanitize(roleSetName))
+}
+
+func withScope(fqn, scope string) string {
+	if scope == "" {
+		return fqn
+	}
+
+	return fqn + "/" + scope
 }
 
 // DerivedRolesModuleID returns the module ID for the given derived roles set.

@@ -188,7 +188,7 @@ func Wrap(p *policyv1.Policy) Wrapper {
 	switch pt := p.PolicyType.(type) {
 	case *policyv1.Policy_ResourcePolicy:
 		w.Kind = ResourceKind.String()
-		w.FQN = namer.ResourcePolicyFQN(pt.ResourcePolicy.Resource, pt.ResourcePolicy.Version)
+		w.FQN = namer.ResourcePolicyFQN(pt.ResourcePolicy.Resource, pt.ResourcePolicy.Version, pt.ResourcePolicy.Scope)
 		w.ID = namer.GenModuleIDFromFQN(w.FQN)
 		w.Name = pt.ResourcePolicy.Resource
 		w.Version = pt.ResourcePolicy.Version
@@ -203,7 +203,7 @@ func Wrap(p *policyv1.Policy) Wrapper {
 
 	case *policyv1.Policy_PrincipalPolicy:
 		w.Kind = PrincipalKind.String()
-		w.FQN = namer.PrincipalPolicyFQN(pt.PrincipalPolicy.Principal, pt.PrincipalPolicy.Version)
+		w.FQN = namer.PrincipalPolicyFQN(pt.PrincipalPolicy.Principal, pt.PrincipalPolicy.Version, pt.PrincipalPolicy.Scope)
 		w.ID = namer.GenModuleIDFromFQN(w.FQN)
 		w.Name = pt.PrincipalPolicy.Principal
 		w.Version = pt.PrincipalPolicy.Version
