@@ -3,7 +3,7 @@ module github.com/cerbos/cerbos/tools
 go 1.17
 
 require (
-	github.com/bojand/ghz v0.106.0
+	github.com/bojand/ghz v0.106.1
 	github.com/bufbuild/buf v0.56.0
 	github.com/cerbos/protoc-gen-go-hashpb v0.1.0
 	github.com/envoyproxy/protoc-gen-validate v0.6.2
