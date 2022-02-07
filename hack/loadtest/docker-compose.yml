@@ -1,0 +1,47 @@
+version: "3.9"
+services:
+  cerbos:
+    container_name: cerbos
+    image: ghcr.io/cerbos/cerbos:0.12.0
+    restart: always
+    command: [ "server", "--config=/config.yml", "--debug-listen-addr=:6666" ]
+    depends_on:
+      - postgres
+    volumes:
+      - ./conf/cerbos/config.yml:/config.yml
+      - ./k6/gen/policies:/policies
+    ports:
+      - "3592:3592"
+      - "3593:3593"
+      - "6666:6666"
+
+  postgres:
+    container_name: postgres
+    image: postgres:14.0-alpine
+    restart: always
+    environment:
+      - POSTGRES_USER=cerbos
+      - POSTGRES_PASSWORD=cerbos
+      - POSTGRES_DB=cerbos
+    volumes:
+      - ./data_postgres:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+  prometheus:
+    container_name: prometheus
+    image: prom/prometheus:latest
+    volumes:
+      - ./conf/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+    ports:
+      - "9090:9090"
+    restart: always
+
+  grafana:
+    container_name: grafana
+    image: grafana/grafana:latest
+    volumes:
+      - ./data_grafana:/var/lib/grafana
+    ports:
+      - "3000:3000"
+    restart: always
