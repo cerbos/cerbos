@@ -1,0 +1,32 @@
+---
+condition:
+  all:
+    of:
+      - expr: |
+          request.aux_data.jwt.iss == "cerbos"
+      - expr: |
+          request.auxData.jwt.iss == "cerbos"
+
+input: {
+  "requestId": "test",
+  "actions": ["*"],
+  "principal": {
+    "id": "john",
+    "roles": ["employee"],
+    "attr": {
+      "department": "marketing"
+    }
+  },
+  "resource": {
+    "kind": "leave_request",
+    "attr": {
+      "department": "marketing"
+    }
+  },
+  "auxData": {
+     "jwt": {
+        "iss": "cerbos"
+     }
+  }
+}
+want: true
