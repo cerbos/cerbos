@@ -51,11 +51,13 @@ releases:
           - '{{ requiredEnv "E2E_NS" }}'
     values:
       - nameOverride: '{{ requiredEnv "E2E_CONTEXT_ID" }}'
-      - postgresqlUsername: postgres
-      - postgresqlPassword: passw0rd
-      - persistence:
-          enabled: false
-      - initdbScriptsConfigMap: postgres-init
+      - auth:
+          postgresPassword: passw0rd
+      - primary:
+          initdb:
+            scriptsConfigMap: postgres-init
+          persistence:
+            enabled: false
 
   - name: cerbos
     namespace: '{{ requiredEnv "E2E_NS" }}'
