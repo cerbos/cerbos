@@ -508,6 +508,12 @@ func cerbos_runtime_v1_RunnableResourcePolicySet_hashpb_sum(m *RunnableResourceP
 			}
 		}
 	}
+	if _, ok := ignore["cerbos.runtime.v1.RunnableResourcePolicySet.schemas"]; !ok {
+		if m.Schemas != nil {
+			cerbos_policy_v1_Schemas_hashpb_sum(m.Schemas, hasher, ignore)
+		}
+
+	}
 }
 
 func google_api_expr_v1alpha1_CheckedExpr_hashpb_sum(m *v1alpha1.CheckedExpr, hasher hash.Hash, ignore map[string]struct{}) {

@@ -65,11 +65,25 @@ func compileResourcePolicySet(modCtx *moduleCtx, schemaMgr schema.Manager) *runt
 		Policies: make([]*runtimev1.RunnableResourcePolicySet_Policy, len(modCtx.unit.Ancestors)+1),
 	}
 
-	rrps.Policies[0] = compileResourcePolicy(modCtx, schemaMgr)
+	compiled := compileResourcePolicy(modCtx, schemaMgr)
+	if compiled == nil {
+		return nil
+	}
+
+	rrps.Policies[0] = compiled
 
 	for i, ancestor := range modCtx.unit.Ancestors {
-		rrps.Policies[i+1] = compileResourcePolicy(modCtx.moduleCtx(ancestor), schemaMgr)
+		compiled := compileResourcePolicy(modCtx.moduleCtx(ancestor), schemaMgr)
+		if compiled == nil {
+			return nil
+		}
+		rrps.Policies[i+1] = compiled
 	}
+
+	// Only schema in effect is the schema defined by the "root" policy.
+	rrps.Schemas = rrps.Policies[len(rrps.Policies)-1].Schemas
+	// TODO(cell) Check for inconsistent schema references in the policy tree and make that an error
+	// For example: policies requiring different schemas from others, child having a schema but the parent not having one.
 
 	return &runtimev1.RunnablePolicySet{
 		Fqn: modCtx.fqn,
@@ -100,7 +114,7 @@ func compileResourcePolicy(modCtx *moduleCtx, schemaMgr schema.Manager) *runtime
 		Scope:        rp.Scope,
 		Rules:        make([]*runtimev1.RunnableResourcePolicySet_Policy_Rule, len(rp.Rules)),
 		Variables:    compileVariables(modCtx, modCtx.def.Variables),
-		Schemas:      rp.Schemas, //TODO(cell) Dedupe the schemas so that we don't repeat validation for multiple policies when they have the same schema set defined.
+		Schemas:      rp.Schemas,
 	}
 
 	for i, rule := range rp.Rules {

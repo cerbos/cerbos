@@ -6,6 +6,14 @@
       "resource": "leave_request",
       "version": "20210210"
     },
+    "schemas": {
+      "principalSchema": {
+        "ref": "cerbos:///complex_object.json"
+      },
+      "resourceSchema": {
+        "ref": "cerbos:///complex_object.json"
+      }
+    },
     "policies": [
       {
         "derivedRoles": {

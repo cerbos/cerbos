@@ -71,26 +71,30 @@ func (rpe *resourcePolicyEvaluator) Evaluate(ctx context.Context, input *enginev
 	effectiveRoles := toSet(input.Principal.Roles)
 
 	tctx := rpe.beginTrace(policyComponent, rpe.policy.Meta.Fqn)
+
+	// validate the input
+	vr, err := rpe.schemaMgr.Validate(ctx, rpe.policy.Schemas, input)
+	if err != nil {
+		tctx.writeEvent(KVMsg("Error during validation"), KVError(err))
+		return nil, fmt.Errorf("failed to validate input: %w", err)
+	}
+
+	if len(vr.Errors) > 0 {
+		result.ValidationErrors = vr.Errors.SchemaErrors()
+		tctx.writeEvent(KVMsg("Validation errors"), KVError(vr.Errors))
+		if vr.Reject {
+			for _, action := range input.Actions {
+				actx := tctx.beginTrace(actionComponent, action)
+				result.setEffect(action, effectv1.Effect_EFFECT_DENY)
+				actx.writeEvent(KVActivated(), KVEffect(effectv1.Effect_EFFECT_DENY), KVMsg("Rejected due to validation failures"))
+			}
+			return result, nil
+		}
+	}
+
+	// evaluate policies in the set
 	for _, p := range rpe.policy.Policies {
 		sctx := tctx.beginTrace(scopeComponent, p.Scope)
-		// validate the input
-		vr, err := rpe.schemaMgr.Validate(ctx, p.Schemas, input)
-		if err != nil {
-			sctx.writeEvent(KVMsg("Error during validation"), KVError(err))
-			return nil, fmt.Errorf("failed to validate input: %w", err)
-		}
-		if len(vr.Errors) > 0 {
-			result.ValidationErrors = vr.Errors.SchemaErrors()
-			sctx.writeEvent(KVMsg("Validation errors"), KVError(vr.Errors))
-			if vr.Reject {
-				for _, action := range input.Actions {
-					actx := sctx.beginTrace(actionComponent, action)
-					result.setEffect(action, effectv1.Effect_EFFECT_DENY)
-					actx.writeEvent(KVActivated(), KVEffect(effectv1.Effect_EFFECT_DENY), KVMsg("Rejected due to validation failures"))
-				}
-				return result, nil
-			}
-		}
 
 		// evaluate the variables of this policy
 		variables, err := evaluateVariables(sctx.beginTrace(variablesComponent), p.Variables, input)

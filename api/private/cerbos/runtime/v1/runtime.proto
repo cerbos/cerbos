@@ -61,6 +61,7 @@ message RunnableResourcePolicySet {
 
     Metadata meta = 1;
     repeated Policy policies = 2;
+    cerbos.policy.v1.Schemas schemas = 3;
 }
 
 message RunnableDerivedRole {
