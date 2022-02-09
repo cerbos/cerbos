@@ -11,7 +11,6 @@ import (
 	"syscall"
 
 	"github.com/google/gops/agent"
-	"github.com/spf13/cobra"
 	"go.uber.org/automaxprocs/maxprocs"
 	"go.uber.org/zap"
 	"helm.sh/helm/v3/pkg/strvals"
@@ -22,52 +21,27 @@ import (
 	"github.com/cerbos/cerbos/internal/server"
 )
 
-type serverArgs struct {
-	configFile      string
-	debugListenAddr string
-	logLevel        string
-	configOverrides []string
-	zpagesEnabled   bool
-}
+const help = `
+Examples:
 
-var args = serverArgs{}
-
-var longDesc = `Starts the Cerbos PDP.
-The config flag is required. Configuration values can be overridden by using the set flag.
-`
-
-var exampleDesc = `
 # Start the server 
+
 cerbos server --config=/path/to/config.yaml
 
 # Start the server with the Admin API enabled and the 'sqlite' storage driver
+
 cerbos server --config=/path/to/config.yaml --set=server.adminAPI.enabled=true --set=storage.driver=sqlite3 --set=storage.sqlite3.dsn=':memory:'`
 
-func NewCommand() *cobra.Command {
-	cmd := &cobra.Command{
-		Use:          "server",
-		Short:        "Start the Cerbos server",
-		Long:         longDesc,
-		Example:      exampleDesc,
-		RunE:         doRun,
-		SilenceUsage: true,
-	}
-
-	cmd.Flags().StringVar(&args.configFile, "config", "", "Path to config file")
-	cmd.Flags().StringSliceVar(&args.configOverrides, "set", nil, "Config overrides")
-	cmd.Flags().StringVar(&args.debugListenAddr, "debug-listen-addr", "", "Address to start the gops listener")
-	cmd.Flags().StringVar(&args.logLevel, "log-level", "INFO", "Log level")
-	cmd.Flags().BoolVar(&args.zpagesEnabled, "zpages-enabled", false, "Enable zpages for debugging")
-
-	_ = cmd.Flags().MarkHidden("zpages-enabled")
-	_ = cmd.MarkFlagFilename("config")
-	_ = cmd.MarkFlagRequired("config")
-
-	return cmd
+type Cmd struct {
+	Config          string   `help:"Path to config file" type:"existingfile" required:"" placeholder:"./config.yaml"`
+	Set             []string `help:"Config overrides" placeholder:"server.adminAPI.enabled=true"`
+	DebugListenAddr string   `help:"Address to start the gops listener" placeholder:":6666"`
+	LogLevel        string   `help:"Log level (${enum})" default:"info" enum:"debug,info,warn,error"`
+	ZPagesEnabled   bool     `help:"Enable zpages" hidden:""`
 }
 
-func doRun(_ *cobra.Command, _ []string) error {
-	logging.InitLogging(args.logLevel)
+func (c *Cmd) Run() error {
+	logging.InitLogging(c.LogLevel)
 	defer zap.L().Sync() //nolint:errcheck
 
 	log := zap.S().Named("server")
@@ -79,8 +53,8 @@ func doRun(_ *cobra.Command, _ []string) error {
 		log.Warnw("Failed to adjust GOMAXPROCS", "error", err)
 	}
 
-	if args.debugListenAddr != "" {
-		startDebugListener(args.debugListenAddr)
+	if c.DebugListenAddr != "" {
+		startDebugListener(c.DebugListenAddr)
 		defer agent.Close()
 	}
 
@@ -89,14 +63,14 @@ func doRun(_ *cobra.Command, _ []string) error {
 
 	// load any config overrides
 	confOverrides := map[string]interface{}{}
-	for _, override := range args.configOverrides {
+	for _, override := range c.Set {
 		if err := strvals.ParseInto(override, confOverrides); err != nil {
 			return fmt.Errorf("failed to parse config override [%s]: %w", override, err)
 		}
 	}
 
 	// load configuration
-	if err := config.Load(args.configFile, confOverrides); err != nil {
+	if err := config.Load(c.Config, confOverrides); err != nil {
 		log.Errorw("Failed to load configuration", "error", err)
 		return err
 	}
@@ -106,12 +80,16 @@ func doRun(_ *cobra.Command, _ []string) error {
 		return err
 	}
 
-	return server.Start(ctx, args.zpagesEnabled)
+	return server.Start(ctx, c.ZPagesEnabled)
+}
+
+func (c *Cmd) Help() string {
+	return help
 }
 
 func startDebugListener(listenAddr string) {
 	log := zap.S().Named("debug")
-	log.Infof("Starting debug listener at %s", args.debugListenAddr)
+	log.Infof("Starting debug listener at %s", listenAddr)
 
 	err := agent.Listen(agent.Options{
 		Addr:                   listenAddr,
