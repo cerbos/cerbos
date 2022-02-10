@@ -54,7 +54,7 @@ See xref:cli:cerbos.adoc#compile[Compile command] for more information.
 
 == Quick run
 
-Create a directory named `policies`, optionally add some policies to that directory, and try Cerbos out using an application of your choice:
+Add some policies to a directory named `policies` and try Cerbos out using an application of your choice:
 
 
 .Using the binary

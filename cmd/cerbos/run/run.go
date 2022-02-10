@@ -167,7 +167,14 @@ func (c *Cmd) loadConfig() error {
 			return fmt.Errorf("failed to determine current working directory: %w", err)
 		}
 
-		confYAML := fmt.Sprintf(confDefault, filepath.Join(wd, "policies"))
+		policyDir := filepath.Join(wd, "policies")
+		if _, err := os.Stat(policyDir); err != nil && errors.Is(err, os.ErrNotExist) {
+			if err := os.Mkdir(policyDir, 0o744); err != nil { //nolint:gomnd
+				return fmt.Errorf("unable to create policies directory: %w", err)
+			}
+		}
+
+		confYAML := fmt.Sprintf(confDefault, policyDir)
 		if err := config.LoadReader(strings.NewReader(confYAML), confOverrides); err != nil {
 			return fmt.Errorf("failed to load default Cerbos configuration: %w", err)
 		}
