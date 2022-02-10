@@ -33,10 +33,10 @@ cerbos server --config=/path/to/config.yaml
 cerbos server --config=/path/to/config.yaml --set=server.adminAPI.enabled=true --set=storage.driver=sqlite3 --set=storage.sqlite3.dsn=':memory:'`
 
 type Cmd struct {
-	Config          string   `help:"Path to config file" type:"existingfile" required:"" placeholder:"./config.yaml"`
-	Set             []string `help:"Config overrides" placeholder:"server.adminAPI.enabled=true"`
 	DebugListenAddr string   `help:"Address to start the gops listener" placeholder:":6666"`
 	LogLevel        string   `help:"Log level (${enum})" default:"info" enum:"debug,info,warn,error"`
+	Config          string   `help:"Path to config file" type:"existingfile" required:"" placeholder:"./config.yaml"`
+	Set             []string `help:"Config overrides" placeholder:"server.adminAPI.enabled=true"`
 	ZPagesEnabled   bool     `help:"Enable zpages" hidden:""`
 }
 

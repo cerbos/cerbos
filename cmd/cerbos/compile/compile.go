@@ -37,9 +37,8 @@ var (
 )
 
 const (
-	formatJSON   = "json"
-	formatPlain  = "plain"
-	formatPretty = "pretty"
+	formatJSON  = "json"
+	formatPlain = "plain"
 )
 
 const help = `
@@ -133,9 +132,9 @@ func (c *Cmd) Help() string {
 }
 
 type printer struct {
-	format  string
 	stdout  io.Writer
 	stderr  io.Writer
+	format  string
 	verbose bool
 }
 

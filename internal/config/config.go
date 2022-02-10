@@ -47,8 +47,8 @@ func Load(confFile string, overrides map[string]interface{}) error {
 	return doLoad(config.File(confFile), config.Static(overrides))
 }
 
-func LoadReader(reader io.Reader) error {
-	return doLoad(config.Source(reader))
+func LoadReader(reader io.Reader, overrides map[string]interface{}) error {
+	return doLoad(config.Source(reader), config.Static(overrides))
 }
 
 func LoadMap(m map[string]interface{}) error {
