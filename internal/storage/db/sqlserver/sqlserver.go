@@ -21,6 +21,13 @@ import (
 	"github.com/cerbos/cerbos/internal/policy"
 	"github.com/cerbos/cerbos/internal/storage"
 	"github.com/cerbos/cerbos/internal/storage/db/internal"
+	"bufio"
+	"bytes"
+	"strings"
+	"io"
+	"runtime"
+	"path/filepath"
+	"errors"
 )
 
 const DriverName = "sqlserver"
@@ -114,4 +121,63 @@ END
 	_, err = stm.ExecContext(ctx, sql.Named("definition", definition), sql.Named("id", schema.ID))
 
 	return err
+}
+
+func CreateSchema(r io.Reader, db *sqlx.DB, f func() (*sqlx.DB, error)) error {
+	s := bufio.NewScanner(r)
+	s.Split(splitOnGo)
+	var c *sqlx.DB
+	var err error
+
+	for s.Scan() {
+		query := s.Text()
+
+		if strings.HasPrefix(query, "CREATE TRIGGER") {
+			if c == nil {
+				c, err = f()
+				if err != nil {
+					return fmt.Errorf("failed to connect to \"cerbos\" database")
+				}
+			}
+			if _, err = c.Exec(query); err != nil {
+				return fmt.Errorf("failed to execute [%s]: %w", query, err)
+			}
+			continue
+		}
+
+		if _, err := db.Exec(query); err != nil {
+			return fmt.Errorf("failed to execute [%s]: %w", query, err)
+		}
+	}
+
+	return s.Err()
+}
+
+var sep = []byte("\nGO\n")
+
+func splitOnGo(data []byte, atEOF bool) (int, []byte, error) {
+	// no more data to process
+	if atEOF && len(data) == 0 {
+		return 0, nil, nil
+	}
+
+	if i := bytes.Index(data, sep); i >= 0 {
+		return i + len(sep), bytes.TrimSpace(data[:i-1]), nil
+	}
+	// at the end of input
+	if atEOF {
+		return len(data), bytes.TrimSpace(data), nil
+	}
+
+	// get more data
+	return 0, nil, nil
+}
+
+func PathToDir() (string, error) {
+	_, currFile, _, ok := runtime.Caller(0)
+	if !ok {
+		return "", errors.New("failed to detect path")
+	}
+
+	return filepath.Dir(currFile), nil
 }
