@@ -186,6 +186,14 @@ func displayLintErrors(p *printer, errs *index.BuildError) error {
 		p.Println()
 	}
 
+	if len(errs.MissingScopes) > 0 {
+		p.Println(header("Missing Scopes"))
+		for _, mi := range errs.MissingScopes {
+			p.Println(errorMsg(mi))
+		}
+		p.Println()
+	}
+
 	if len(errs.Disabled) > 0 {
 		p.Println(header("Disabled policies"))
 		for _, d := range errs.Disabled {

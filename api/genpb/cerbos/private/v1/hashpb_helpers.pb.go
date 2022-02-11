@@ -768,6 +768,29 @@ func cerbos_private_v1_EngineTestCase_hashpb_sum(m *EngineTestCase, hasher hash.
 	}
 }
 
+func cerbos_private_v1_IndexBuilderTestCase_CompilationUnit_hashpb_sum(m *IndexBuilderTestCase_CompilationUnit, hasher hash.Hash, ignore map[string]struct{}) {
+	if _, ok := ignore["cerbos.private.v1.IndexBuilderTestCase.CompilationUnit.main_fqn"]; !ok {
+		_, _ = hasher.Write(protowire.AppendString(nil, m.MainFqn))
+
+	}
+	if _, ok := ignore["cerbos.private.v1.IndexBuilderTestCase.CompilationUnit.definition_fqns"]; !ok {
+		if len(m.DefinitionFqns) > 0 {
+			for _, v := range m.DefinitionFqns {
+				_, _ = hasher.Write(protowire.AppendString(nil, v))
+
+			}
+		}
+	}
+	if _, ok := ignore["cerbos.private.v1.IndexBuilderTestCase.CompilationUnit.ancestor_fqns"]; !ok {
+		if len(m.AncestorFqns) > 0 {
+			for _, v := range m.AncestorFqns {
+				_, _ = hasher.Write(protowire.AppendString(nil, v))
+
+			}
+		}
+	}
+}
+
 func cerbos_private_v1_IndexBuilderTestCase_hashpb_sum(m *IndexBuilderTestCase, hasher hash.Hash, ignore map[string]struct{}) {
 	if _, ok := ignore["cerbos.private.v1.IndexBuilderTestCase.files"]; !ok {
 		if len(m.Files) > 0 {
@@ -793,6 +816,16 @@ func cerbos_private_v1_IndexBuilderTestCase_hashpb_sum(m *IndexBuilderTestCase, 
 	if _, ok := ignore["cerbos.private.v1.IndexBuilderTestCase.want_err"]; !ok {
 		_, _ = hasher.Write(protowire.AppendString(nil, m.WantErr))
 
+	}
+	if _, ok := ignore["cerbos.private.v1.IndexBuilderTestCase.want_compilation_units"]; !ok {
+		if len(m.WantCompilationUnits) > 0 {
+			for _, v := range m.WantCompilationUnits {
+				if v != nil {
+					cerbos_private_v1_IndexBuilderTestCase_CompilationUnit_hashpb_sum(v, hasher, ignore)
+				}
+
+			}
+		}
 	}
 }
 

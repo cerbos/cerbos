@@ -20,6 +20,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	privatev1 "github.com/cerbos/cerbos/api/genpb/cerbos/private/v1"
+	"github.com/cerbos/cerbos/internal/namer"
 	"github.com/cerbos/cerbos/internal/policy"
 	"github.com/cerbos/cerbos/internal/storage"
 	"github.com/cerbos/cerbos/internal/test"
@@ -122,7 +123,7 @@ func TestBuildIndex(t *testing.T) {
 			tc := readTestCase(t, tcase.Input)
 			fs := toFS(t, tc)
 
-			_, haveErr := Build(context.Background(), fs)
+			idx, haveErr := Build(context.Background(), fs)
 			switch {
 			case tc.WantErrJson != "":
 				errList := new(BuildError)
@@ -141,6 +142,31 @@ func TestBuildIndex(t *testing.T) {
 				require.EqualError(t, haveErr, tc.WantErr)
 			default:
 				require.NoError(t, haveErr)
+				for _, wantCU := range tc.WantCompilationUnits {
+					mainModID := namer.GenModuleIDFromFQN(wantCU.MainFqn)
+					cus, err := idx.GetCompilationUnits(mainModID)
+					require.NoError(t, err, "Failed to load compilation unit for %q", wantCU.MainFqn)
+					require.NotEmpty(t, cus, "No results for compilation unit %q", wantCU.MainFqn)
+
+					haveCU := cus[mainModID]
+					require.NotNil(t, haveCU, "Compilation unit for %q is missing", wantCU.MainFqn)
+
+					require.Equal(t, mainModID, haveCU.ModID)
+					require.Equal(t, len(wantCU.DefinitionFqns), len(haveCU.Definitions))
+					for _, defFQN := range wantCU.DefinitionFqns {
+						_, ok := haveCU.Definitions[namer.GenModuleIDFromFQN(defFQN)]
+						require.True(t, ok, "Definition %q is missing", defFQN)
+					}
+
+					require.Equal(t, len(wantCU.AncestorFqns), len(haveCU.Ancestors))
+					if len(wantCU.AncestorFqns) > 0 {
+						wantAncestors := make([]namer.ModuleID, len(wantCU.AncestorFqns))
+						for i, af := range wantCU.AncestorFqns {
+							wantAncestors[i] = namer.GenModuleIDFromFQN(af)
+						}
+						require.ElementsMatch(t, wantAncestors, haveCU.Ancestors)
+					}
+				}
 			}
 		})
 	}

@@ -106,6 +106,14 @@ func (m *IndexBuilderTestCase) HashPB(hasher hash.Hash, ignore map[string]struct
 
 // HashPB computes a hash of the message using the given hash function
 // The ignore set must contain fully-qualified field names (pkg.msg.field) that should be ignored from the hash
+func (m *IndexBuilderTestCase_CompilationUnit) HashPB(hasher hash.Hash, ignore map[string]struct{}) {
+	if m != nil {
+		cerbos_private_v1_IndexBuilderTestCase_CompilationUnit_hashpb_sum(m, hasher, ignore)
+	}
+}
+
+// HashPB computes a hash of the message using the given hash function
+// The ignore set must contain fully-qualified field names (pkg.msg.field) that should be ignored from the hash
 func (m *CompileTestCase) HashPB(hasher hash.Hash, ignore map[string]struct{}) {
 	if m != nil {
 		cerbos_private_v1_CompileTestCase_hashpb_sum(m, hasher, ignore)
