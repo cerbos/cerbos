@@ -4,27 +4,28 @@
 package main
 
 import (
-	"os"
-
-	"github.com/spf13/cobra"
+	"github.com/alecthomas/kong"
 
 	"github.com/cerbos/cerbos/cmd/cerbos/compile"
+	"github.com/cerbos/cerbos/cmd/cerbos/run"
 	"github.com/cerbos/cerbos/cmd/cerbos/server"
 	"github.com/cerbos/cerbos/internal/util"
 )
 
 func main() {
-	cmd := &cobra.Command{
-		Use:           util.AppName,
-		Short:         "Painless access controls for cloud-native applications",
-		Version:       util.AppVersion(),
-		SilenceUsage:  true,
-		SilenceErrors: true,
+	var cli struct {
+		Server  server.Cmd  `cmd:"" help:"Start Cerbos server (PDP)"`
+		Compile compile.Cmd `cmd:"" help:"Compile and test policies"`
+		Run     run.Cmd     `cmd:"" help:"Run a command in the context of a Cerbos PDP"`
+		Version kong.VersionFlag
 	}
 
-	cmd.AddCommand(server.NewCommand(), compile.NewCommand())
-	if err := cmd.Execute(); err != nil {
-		cmd.PrintErrf("ERROR: %v\n", err)
-		os.Exit(1)
-	}
+	ctx := kong.Parse(&cli,
+		kong.Name(util.AppName),
+		kong.Description("Painless access controls for cloud-native applications"),
+		kong.UsageOnError(),
+		kong.Vars{"version": util.AppVersion()},
+	)
+
+	ctx.FatalIfErrorf(ctx.Run())
 }

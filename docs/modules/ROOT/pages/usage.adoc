@@ -21,6 +21,8 @@ docker run -i -t -p 3592:3592 \
     server --config=/config/conf.yaml --set=server.httpListenAddr=:3592
 ----
 
+See xref:cli:cerbos.adoc#server[Server command] for more information.
+
 == Compiling and testing policies
 
 After authoring your policies you should run the compiler over the files to make sure they are valid. If you have policy tests they can be executed at this time as well.
@@ -47,3 +49,18 @@ docker run -i -t \
     {app-docker-img} \
     compile --tests=/tests /policies
 ----
+
+See xref:cli:cerbos.adoc#compile[Compile command] for more information.
+
+== Quick run
+
+Add some policies to a directory named `policies` and try Cerbos out using an application of your choice:
+
+
+.Using the binary
+[source,sh,subs="attributes"]
+----
+./{app-name} run -- curl -I http://127.0.0.1:3592/_cerbos/health
+----
+
+See xref:cli:cerbos.adoc#run[Run command] for more information.
