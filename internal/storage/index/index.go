@@ -49,6 +49,7 @@ type Index interface {
 }
 
 type index struct {
+	mu           sync.RWMutex
 	executables  map[namer.ModuleID]struct{}
 	modIDToFile  map[namer.ModuleID]string
 	fileToModID  map[string]namer.ModuleID
@@ -56,7 +57,6 @@ type index struct {
 	dependencies map[namer.ModuleID]map[namer.ModuleID]struct{}
 	schemaLoader *SchemaLoader
 	fsys         fs.FS
-	mu           sync.RWMutex
 }
 
 func (idx *index) GetFiles() []string {
@@ -90,6 +90,8 @@ func (idx *index) GetCompilationUnits(ids ...namer.ModuleID) (map[namer.ModuleID
 			return nil, err
 		}
 
+		policyKey := namer.PolicyKey(p)
+
 		cu := &policy.CompilationUnit{
 			ModID:       id,
 			Definitions: map[namer.ModuleID]*policyv1.Policy{id: p},
@@ -100,21 +102,18 @@ func (idx *index) GetCompilationUnits(ids ...namer.ModuleID) (map[namer.ModuleID
 
 		// add dependencies
 		if err := idx.addDepsToCompilationUnit(cu, id); err != nil {
-			return nil, fmt.Errorf("failed to load dependencies of %q: %w", id.String(), err)
+			return nil, fmt.Errorf("failed to load dependencies of %s: %w", policyKey, err)
 		}
 
 		// load ancestors of the policy
 		for _, ancestor := range cu.Ancestors {
 			p, err := idx.loadPolicy(ancestor)
 			if err != nil {
-				if errors.Is(err, ErrPolicyNotFound) {
-					continue
-				}
-				return nil, fmt.Errorf("failed to load parent %q of %q: %w", ancestor.String(), id.String(), err)
+				return nil, fmt.Errorf("failed to load ancestor %q of scoped policy %s: %w", ancestor.String(), policyKey, err)
 			}
 			cu.AddDefinition(ancestor, p)
 			if err := idx.addDepsToCompilationUnit(cu, ancestor); err != nil {
-				return nil, fmt.Errorf("failed to load dependencies of %q: %w", ancestor.String(), err)
+				return nil, fmt.Errorf("failed to load dependencies of ancestor %q of %s: %w", ancestor.String(), policyKey, err)
 			}
 		}
 	}

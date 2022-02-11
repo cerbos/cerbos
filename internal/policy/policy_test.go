@@ -98,3 +98,42 @@ func TestAncestors(t *testing.T) {
 		})
 	}
 }
+
+func TestRequiredAncestors(t *testing.T) {
+	testCases := []struct {
+		scope string
+		want  map[namer.ModuleID]string
+	}{
+		{
+			scope: "",
+			want:  nil,
+		},
+		{
+			scope: "foo",
+			want:  nil,
+		},
+		{
+			scope: "foo.bar",
+			want: map[namer.ModuleID]string{
+				namer.GenModuleIDFromFQN("cerbos.resource.leave_request.vdefault/foo"): "cerbos.resource.leave_request.vdefault/foo",
+			},
+		},
+		{
+			scope: "foo.bar.baz",
+			want: map[namer.ModuleID]string{
+				namer.GenModuleIDFromFQN("cerbos.resource.leave_request.vdefault/foo.bar"): "cerbos.resource.leave_request.vdefault/foo.bar",
+				namer.GenModuleIDFromFQN("cerbos.resource.leave_request.vdefault/foo"):     "cerbos.resource.leave_request.vdefault/foo",
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		tc := tc
+		t.Run(fmt.Sprintf("scope=%q", tc.scope), func(t *testing.T) {
+			p := test.GenResourcePolicy(test.NoMod())
+			p.GetResourcePolicy().Scope = tc.scope
+			have := policy.RequiredAncestors(p)
+			require.Equal(t, tc.want, have)
+		})
+	}
+}

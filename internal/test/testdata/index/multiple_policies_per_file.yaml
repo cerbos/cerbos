@@ -9,7 +9,8 @@ wantErrJson: |-
         "file": "principal.yaml"
       }
     ],
-    "missingImports": null
+    "missingImports": null,
+    "missingScopes": null
   }
 files:
   "principal.yaml": |-

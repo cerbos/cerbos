@@ -24,11 +24,12 @@ type BuildError struct {
 	DuplicateDefs  []DuplicateDef  `json:"duplicateDefs"`
 	LoadFailures   []LoadFailure   `json:"loadFailures"`
 	MissingImports []MissingImport `json:"missingImports"`
+	MissingScopes  []MissingScope  `json:"missingScopes"`
 }
 
 func (ibe *BuildError) Error() string {
-	return fmt.Sprintf("failed to build index: missing imports=%d, duplicate definitions=%d, load failures=%d",
-		len(ibe.MissingImports), len(ibe.DuplicateDefs), len(ibe.LoadFailures))
+	return fmt.Sprintf("failed to build index: missing imports=%d, missing scopes=%d, duplicate definitions=%d, load failures=%d",
+		len(ibe.MissingImports), len(ibe.MissingScopes), len(ibe.DuplicateDefs), len(ibe.LoadFailures))
 }
 
 // MissingImport describes an import that wasn't found.
@@ -36,6 +37,9 @@ type MissingImport struct {
 	ImportingFile string `json:"importingFile"`
 	Desc          string `json:"desc"`
 }
+
+// MissingScope describes a scope that is missing from the policies.
+type MissingScope string
 
 // DuplicateDef describes a policy file that has a duplicate.
 type DuplicateDef struct {
@@ -134,25 +138,27 @@ func Build(ctx context.Context, fsys fs.FS, opts ...BuildOpt) (Index, error) {
 }
 
 type indexBuilder struct {
-	executables  map[namer.ModuleID]struct{}
-	modIDToFile  map[namer.ModuleID]string
-	fileToModID  map[string]namer.ModuleID
-	dependents   map[namer.ModuleID]map[namer.ModuleID]struct{}
-	dependencies map[namer.ModuleID]map[namer.ModuleID]struct{}
-	missing      map[namer.ModuleID][]MissingImport
-	duplicates   []DuplicateDef
-	loadFailures []LoadFailure
-	disabled     []string
+	executables   map[namer.ModuleID]struct{}
+	modIDToFile   map[namer.ModuleID]string
+	fileToModID   map[string]namer.ModuleID
+	dependents    map[namer.ModuleID]map[namer.ModuleID]struct{}
+	dependencies  map[namer.ModuleID]map[namer.ModuleID]struct{}
+	missing       map[namer.ModuleID][]MissingImport
+	missingScopes map[namer.ModuleID]string
+	duplicates    []DuplicateDef
+	loadFailures  []LoadFailure
+	disabled      []string
 }
 
 func newIndexBuilder() *indexBuilder {
 	return &indexBuilder{
-		executables:  make(map[namer.ModuleID]struct{}),
-		modIDToFile:  make(map[namer.ModuleID]string),
-		fileToModID:  make(map[string]namer.ModuleID),
-		dependents:   make(map[namer.ModuleID]map[namer.ModuleID]struct{}),
-		dependencies: make(map[namer.ModuleID]map[namer.ModuleID]struct{}),
-		missing:      make(map[namer.ModuleID][]MissingImport),
+		executables:   make(map[namer.ModuleID]struct{}),
+		modIDToFile:   make(map[namer.ModuleID]string),
+		fileToModID:   make(map[string]namer.ModuleID),
+		dependents:    make(map[namer.ModuleID]map[namer.ModuleID]struct{}),
+		dependencies:  make(map[namer.ModuleID]map[namer.ModuleID]struct{}),
+		missing:       make(map[namer.ModuleID][]MissingImport),
+		missingScopes: make(map[namer.ModuleID]string),
 	}
 }
 
@@ -178,6 +184,7 @@ func (idx *indexBuilder) addPolicy(file string, p policy.Wrapper) {
 	idx.fileToModID[file] = p.ID
 	idx.modIDToFile[p.ID] = file
 	delete(idx.missing, p.ID)
+	delete(idx.missingScopes, p.ID)
 
 	if p.Kind != policy.DerivedRolesKindStr {
 		idx.executables[p.ID] = struct{}{}
@@ -194,6 +201,13 @@ func (idx *indexBuilder) addPolicy(file string, p policy.Wrapper) {
 				ImportingFile: file,
 				Desc:          fmt.Sprintf("Import '%s' not found", namer.DerivedRolesSimpleName(dep)),
 			})
+		}
+	}
+
+	ancestors := policy.RequiredAncestors(p.Policy)
+	for aID, a := range ancestors {
+		if _, ok := idx.modIDToFile[aID]; !ok {
+			idx.missingScopes[aID] = a
 		}
 	}
 }
@@ -215,7 +229,7 @@ func (idx *indexBuilder) addDep(child, parent namer.ModuleID) {
 func (idx *indexBuilder) build(fsys fs.FS, rootDir string) (*index, error) {
 	logger := zap.L().Named("index")
 
-	nErr := len(idx.missing) + len(idx.duplicates) + len(idx.loadFailures)
+	nErr := len(idx.missing) + len(idx.duplicates) + len(idx.loadFailures) + len(idx.missingScopes)
 	if nErr > 0 {
 		err := &BuildError{
 			Disabled:      idx.disabled,
@@ -227,9 +241,14 @@ func (idx *indexBuilder) build(fsys fs.FS, rootDir string) (*index, error) {
 			err.MissingImports = append(err.MissingImports, missing...)
 		}
 
+		for _, ms := range idx.missingScopes {
+			err.MissingScopes = append(err.MissingScopes, MissingScope(namer.PolicyKeyFromFQN(ms)))
+		}
+
 		if ce := logger.Check(zap.DebugLevel, "Index build failed"); ce != nil {
 			ce.Write(
 				zap.Any("missing", err.MissingImports),
+				zap.Any("missing_scopes", err.MissingScopes),
 				zap.Any("load_failures", err.LoadFailures),
 				zap.Any("duplicates", err.DuplicateDefs),
 				zap.Strings("disabled", err.Disabled),

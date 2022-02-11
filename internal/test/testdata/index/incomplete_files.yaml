@@ -13,7 +13,8 @@ wantErrJson: |-
     ],
     "disabled": null,
     "duplicateDefs": null,
-    "missingImports": null
+    "missingImports": null,
+    "missingScopes": null
   }
 files:
   "resource.yaml": |-

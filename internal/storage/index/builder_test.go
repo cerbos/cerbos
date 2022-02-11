@@ -12,6 +12,7 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
 	"testing"
 
@@ -126,6 +127,8 @@ func TestBuildIndex(t *testing.T) {
 			case tc.WantErrJson != "":
 				errList := new(BuildError)
 				require.True(t, errors.As(haveErr, &errList))
+
+				sort.Slice(errList.MissingScopes, func(i, j int) bool { return errList.MissingScopes[i] < errList.MissingScopes[j] })
 
 				haveErrJSON, err := json.Marshal(errList)
 				require.NoError(t, err)

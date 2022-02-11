@@ -100,6 +100,24 @@ func Ancestors(p *policyv1.Policy) []namer.ModuleID {
 	return ancestors
 }
 
+// RequiredAncestors returns the moduleID to FQN mapping of required ancestors of the policy.
+func RequiredAncestors(p *policyv1.Policy) map[namer.ModuleID]string {
+	fqnTree := namer.FQNTree(p)
+	n := len(fqnTree)
+
+	// first element is the policy itself so we ignore that
+	if n <= 1 {
+		return nil
+	}
+
+	ancestors := make(map[namer.ModuleID]string, n-1)
+	for _, fqn := range fqnTree[1:] {
+		ancestors[namer.GenModuleIDFromFQN(fqn)] = fqn
+	}
+
+	return ancestors
+}
+
 // SchemaReferences returns references to the schemas found in the policy.
 func SchemaReferences(p *policyv1.Policy) []string {
 	switch pt := p.PolicyType.(type) {
