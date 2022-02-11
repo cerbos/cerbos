@@ -1625,6 +1625,8 @@ func (m *CheckOutput_ActionEffect) validate(all bool) error {
 
 	// no validation rules for Policy
 
+	// no validation rules for Scope
+
 	if len(errors) > 0 {
 		return CheckOutput_ActionEffectMultiError(errors)
 	}

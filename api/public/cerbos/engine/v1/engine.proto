@@ -73,6 +73,7 @@ message CheckOutput {
     message ActionEffect {
         cerbos.effect.v1.Effect effect = 1;
         string policy = 2;
+        string scope = 3;
     }
 
     string request_id = 1;

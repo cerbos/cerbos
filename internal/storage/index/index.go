@@ -99,7 +99,9 @@ func (idx *index) GetCompilationUnits(ids ...namer.ModuleID) (map[namer.ModuleID
 		result[id] = cu
 
 		// add dependencies
-		idx.addDepsToCompilationUnit(cu, id)
+		if err := idx.addDepsToCompilationUnit(cu, id); err != nil {
+			return nil, fmt.Errorf("failed to load dependencies of %q: %w", id.String(), err)
+		}
 
 		// load ancestors of the policy
 		for _, ancestor := range cu.Ancestors {
@@ -111,7 +113,9 @@ func (idx *index) GetCompilationUnits(ids ...namer.ModuleID) (map[namer.ModuleID
 				return nil, fmt.Errorf("failed to load parent %q of %q: %w", ancestor.String(), id.String(), err)
 			}
 			cu.AddDefinition(ancestor, p)
-			idx.addDepsToCompilationUnit(cu, ancestor)
+			if err := idx.addDepsToCompilationUnit(cu, ancestor); err != nil {
+				return nil, fmt.Errorf("failed to load dependencies of %q: %w", ancestor.String(), err)
+			}
 		}
 	}
 

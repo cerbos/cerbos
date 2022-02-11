@@ -82,6 +82,10 @@ func cerbos_engine_v1_CheckOutput_ActionEffect_hashpb_sum(m *v1.CheckOutput_Acti
 		_, _ = hasher.Write(protowire.AppendString(nil, m.Policy))
 
 	}
+	if _, ok := ignore["cerbos.engine.v1.CheckOutput.ActionEffect.scope"]; !ok {
+		_, _ = hasher.Write(protowire.AppendString(nil, m.Scope))
+
+	}
 }
 
 func cerbos_engine_v1_CheckOutput_hashpb_sum(m *v1.CheckOutput, hasher hash.Hash, ignore map[string]struct{}) {
@@ -1535,6 +1539,10 @@ func cerbos_response_v1_CheckResourceSetResponse_Meta_ActionMeta_hashpb_sum(m *v
 func cerbos_response_v1_CheckResourceSetResponse_Meta_EffectMeta_hashpb_sum(m *v13.CheckResourceSetResponse_Meta_EffectMeta, hasher hash.Hash, ignore map[string]struct{}) {
 	if _, ok := ignore["cerbos.response.v1.CheckResourceSetResponse.Meta.EffectMeta.matched_policy"]; !ok {
 		_, _ = hasher.Write(protowire.AppendString(nil, m.MatchedPolicy))
+
+	}
+	if _, ok := ignore["cerbos.response.v1.CheckResourceSetResponse.Meta.EffectMeta.matched_scope"]; !ok {
+		_, _ = hasher.Write(protowire.AppendString(nil, m.MatchedScope))
 
 	}
 }

@@ -697,6 +697,9 @@
         },
         "policy": {
           "type": "string"
+        },
+        "scope": {
+          "type": "string"
         }
       }
     },
@@ -819,6 +822,11 @@
           "type": "string",
           "example": "album:object:default",
           "description": "Policy that matched to produce this effect."
+        },
+        "matchedScope": {
+          "type": "string",
+          "example": "acme.corp.base",
+          "description": "Policy scope that matched to produce this effect."
         }
       },
       "description": "Name of the action."

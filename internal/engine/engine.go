@@ -405,8 +405,10 @@ func (engine *Engine) evaluate(ctx context.Context, input *enginev1.CheckInput, 
 			Policy: noPolicyMatch,
 		}
 
-		if effect, ok := result.effects[action]; ok {
-			output.Actions[action].Effect = effect
+		if effectScope, ok := result.effects[action]; ok {
+			ae := output.Actions[action]
+			ae.Effect = effectScope.Effect
+			ae.Scope = effectScope.Scope
 		}
 
 		if policyMatch, ok := result.matchedPolicies[action]; ok {
@@ -529,7 +531,7 @@ func (ec *evaluationCtx) evaluate(ctx context.Context, input *enginev1.CheckInpu
 }
 
 type evaluationResult struct {
-	effects               map[string]effectv1.Effect
+	effects               map[string]EffectScope
 	matchedPolicies       map[string]string
 	effectiveDerivedRoles []string
 	validationErrors      []*schemav1.ValidationError
@@ -540,7 +542,7 @@ func (er *evaluationResult) merge(res *PolicyEvalResult) bool {
 	hasNoMatches := false
 
 	if er.effects == nil {
-		er.effects = make(map[string]effectv1.Effect, len(res.Effects))
+		er.effects = make(map[string]EffectScope, len(res.Effects))
 		er.matchedPolicies = make(map[string]string, len(res.Effects))
 	}
 
@@ -556,11 +558,11 @@ func (er *evaluationResult) merge(res *PolicyEvalResult) bool {
 
 	for action, effect := range res.Effects {
 		// if the action doesn't already exist or if it has a no_match effect, update it.
-		if currEffect, ok := er.effects[action]; !ok || currEffect == effectv1.Effect_EFFECT_NO_MATCH {
+		if currEffect, ok := er.effects[action]; !ok || currEffect.Effect == effectv1.Effect_EFFECT_NO_MATCH {
 			er.effects[action] = effect
 
 			// if this effect is a no_match, we still need to traverse the policy hierarchy until we find a definitive answer
-			if effect == effectv1.Effect_EFFECT_NO_MATCH {
+			if effect.Effect == effectv1.Effect_EFFECT_NO_MATCH {
 				hasNoMatches = true
 			} else {
 				er.matchedPolicies[action] = res.PolicyKey

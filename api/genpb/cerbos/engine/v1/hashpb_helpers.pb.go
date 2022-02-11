@@ -80,6 +80,10 @@ func cerbos_engine_v1_CheckOutput_ActionEffect_hashpb_sum(m *CheckOutput_ActionE
 		_, _ = hasher.Write(protowire.AppendString(nil, m.Policy))
 
 	}
+	if _, ok := ignore["cerbos.engine.v1.CheckOutput.ActionEffect.scope"]; !ok {
+		_, _ = hasher.Write(protowire.AppendString(nil, m.Scope))
+
+	}
 }
 
 func cerbos_engine_v1_CheckOutput_hashpb_sum(m *CheckOutput, hasher hash.Hash, ignore map[string]struct{}) {
