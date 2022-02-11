@@ -151,10 +151,51 @@ files:
             - action: "*"
               effect: EFFECT_DENY
 
+  "principal_acme.yaml": |-
+    ---
+    apiVersion: "api.cerbos.dev/v1"
+    principalPolicy:
+      principal: donald_duck
+      version: "20210210"
+      scope: "acme"
+      rules:
+        - resource: leave_request
+          actions:
+            - action: "*"
+              condition:
+                match:
+                  expr: "request.resource.attr.dev_record == true"
+              effect: EFFECT_ALLOW
+
+  "principal_acme_corp.yaml": |-
+    ---
+    apiVersion: "api.cerbos.dev/v1"
+    principalPolicy:
+      principal: donald_duck
+      version: "20210210"
+      scope: "acme.corp"
+      rules:
+        - resource: leave_request
+          actions:
+            - action: "*"
+              effect: EFFECT_ALLOW
+
+
 wantCompilationUnits:
   - mainFqn: cerbos.principal.donald_duck.v20210210
     definitionFqns: 
       - cerbos.principal.donald_duck.v20210210
+
+  - mainFqn: cerbos.principal.donald_duck.v20210210/acme
+    definitionFqns: 
+      - cerbos.principal.donald_duck.v20210210/acme
+
+  - mainFqn: cerbos.principal.donald_duck.v20210210/acme.corp
+    definitionFqns: 
+      - cerbos.principal.donald_duck.v20210210/acme.corp
+      - cerbos.principal.donald_duck.v20210210/acme
+    ancestorFqns:
+      - cerbos.principal.donald_duck.v20210210/acme
 
   - mainFqn: cerbos.resource.leave_request.v20210210
     definitionFqns:

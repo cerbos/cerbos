@@ -147,6 +147,7 @@ func mkCompilationUnit(t *testing.T, tc *privatev1.CompileTestCase) *policy.Comp
 
 		if fileName == tc.MainDef {
 			cu.ModID = modID
+			cu.Ancestors = policy.Ancestors(pol)
 		}
 
 		cu.AddDefinition(modID, policy.WithMetadata(pol, fileName, nil, fileName))

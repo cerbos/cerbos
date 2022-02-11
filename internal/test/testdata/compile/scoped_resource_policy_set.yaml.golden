@@ -1,13 +1,430 @@
 {
-  "fqn": "cerbos.resource.leave_request.v20210210",
+  "fqn": "cerbos.resource.leave_request.v20210210/acme.hr.uk",
   "resourcePolicy": {
     "meta": {
-      "fqn": "cerbos.resource.leave_request.v20210210",
+      "fqn": "cerbos.resource.leave_request.v20210210/acme.hr.uk",
       "resource": "leave_request",
       "version": "20210210"
     },
     "policies": [
       {
+        "scope": "acme.hr.uk",
+        "derivedRoles": {
+          "direct_manager": {
+            "name": "direct_manager",
+            "parentRoles": {
+              "manager": {}
+            },
+            "condition": {
+              "all": {
+                "expr": [
+                  {
+                    "expr": {
+                      "original": "request.resource.attr.geography == request.principal.attr.geography",
+                      "checked": {
+                        "referenceMap": {
+                          "1": {
+                            "name": "request"
+                          },
+                          "5": {
+                            "overloadId": [
+                              "equals"
+                            ]
+                          },
+                          "6": {
+                            "name": "request"
+                          }
+                        },
+                        "typeMap": {
+                          "1": {
+                            "messageType": "cerbos.engine.v1.CheckInput"
+                          },
+                          "2": {
+                            "messageType": "cerbos.engine.v1.Resource"
+                          },
+                          "3": {
+                            "mapType": {
+                              "keyType": {
+                                "primitive": "STRING"
+                              },
+                              "valueType": {
+                                "dyn": {}
+                              }
+                            }
+                          },
+                          "4": {
+                            "dyn": {}
+                          },
+                          "5": {
+                            "primitive": "BOOL"
+                          },
+                          "6": {
+                            "messageType": "cerbos.engine.v1.CheckInput"
+                          },
+                          "7": {
+                            "messageType": "cerbos.engine.v1.Principal"
+                          },
+                          "8": {
+                            "mapType": {
+                              "keyType": {
+                                "primitive": "STRING"
+                              },
+                              "valueType": {
+                                "dyn": {}
+                              }
+                            }
+                          },
+                          "9": {
+                            "dyn": {}
+                          }
+                        },
+                        "sourceInfo": {
+                          "location": "<input>",
+                          "lineOffsets": [
+                            68
+                          ],
+                          "positions": {
+                            "1": 0,
+                            "2": 7,
+                            "3": 16,
+                            "4": 21,
+                            "5": 32,
+                            "6": 35,
+                            "7": 42,
+                            "8": 52,
+                            "9": 57
+                          }
+                        },
+                        "expr": {
+                          "id": "5",
+                          "callExpr": {
+                            "function": "_==_",
+                            "args": [
+                              {
+                                "id": "4",
+                                "selectExpr": {
+                                  "operand": {
+                                    "id": "3",
+                                    "selectExpr": {
+                                      "operand": {
+                                        "id": "2",
+                                        "selectExpr": {
+                                          "operand": {
+                                            "id": "1",
+                                            "identExpr": {
+                                              "name": "request"
+                                            }
+                                          },
+                                          "field": "resource"
+                                        }
+                                      },
+                                      "field": "attr"
+                                    }
+                                  },
+                                  "field": "geography"
+                                }
+                              },
+                              {
+                                "id": "9",
+                                "selectExpr": {
+                                  "operand": {
+                                    "id": "8",
+                                    "selectExpr": {
+                                      "operand": {
+                                        "id": "7",
+                                        "selectExpr": {
+                                          "operand": {
+                                            "id": "6",
+                                            "identExpr": {
+                                              "name": "request"
+                                            }
+                                          },
+                                          "field": "principal"
+                                        }
+                                      },
+                                      "field": "attr"
+                                    }
+                                  },
+                                  "field": "geography"
+                                }
+                              }
+                            ]
+                          }
+                        }
+                      }
+                    }
+                  },
+                  {
+                    "expr": {
+                      "original": "request.resource.attr.geography == request.principal.attr.managed_geographies",
+                      "checked": {
+                        "referenceMap": {
+                          "1": {
+                            "name": "request"
+                          },
+                          "5": {
+                            "overloadId": [
+                              "equals"
+                            ]
+                          },
+                          "6": {
+                            "name": "request"
+                          }
+                        },
+                        "typeMap": {
+                          "1": {
+                            "messageType": "cerbos.engine.v1.CheckInput"
+                          },
+                          "2": {
+                            "messageType": "cerbos.engine.v1.Resource"
+                          },
+                          "3": {
+                            "mapType": {
+                              "keyType": {
+                                "primitive": "STRING"
+                              },
+                              "valueType": {
+                                "dyn": {}
+                              }
+                            }
+                          },
+                          "4": {
+                            "dyn": {}
+                          },
+                          "5": {
+                            "primitive": "BOOL"
+                          },
+                          "6": {
+                            "messageType": "cerbos.engine.v1.CheckInput"
+                          },
+                          "7": {
+                            "messageType": "cerbos.engine.v1.Principal"
+                          },
+                          "8": {
+                            "mapType": {
+                              "keyType": {
+                                "primitive": "STRING"
+                              },
+                              "valueType": {
+                                "dyn": {}
+                              }
+                            }
+                          },
+                          "9": {
+                            "dyn": {}
+                          }
+                        },
+                        "sourceInfo": {
+                          "location": "<input>",
+                          "lineOffsets": [
+                            78
+                          ],
+                          "positions": {
+                            "1": 0,
+                            "2": 7,
+                            "3": 16,
+                            "4": 21,
+                            "5": 32,
+                            "6": 35,
+                            "7": 42,
+                            "8": 52,
+                            "9": 57
+                          }
+                        },
+                        "expr": {
+                          "id": "5",
+                          "callExpr": {
+                            "function": "_==_",
+                            "args": [
+                              {
+                                "id": "4",
+                                "selectExpr": {
+                                  "operand": {
+                                    "id": "3",
+                                    "selectExpr": {
+                                      "operand": {
+                                        "id": "2",
+                                        "selectExpr": {
+                                          "operand": {
+                                            "id": "1",
+                                            "identExpr": {
+                                              "name": "request"
+                                            }
+                                          },
+                                          "field": "resource"
+                                        }
+                                      },
+                                      "field": "attr"
+                                    }
+                                  },
+                                  "field": "geography"
+                                }
+                              },
+                              {
+                                "id": "9",
+                                "selectExpr": {
+                                  "operand": {
+                                    "id": "8",
+                                    "selectExpr": {
+                                      "operand": {
+                                        "id": "7",
+                                        "selectExpr": {
+                                          "operand": {
+                                            "id": "6",
+                                            "identExpr": {
+                                              "name": "request"
+                                            }
+                                          },
+                                          "field": "principal"
+                                        }
+                                      },
+                                      "field": "attr"
+                                    }
+                                  },
+                                  "field": "managed_geographies"
+                                }
+                              }
+                            ]
+                          }
+                        }
+                      }
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "rules": [
+          {
+            "name": "rule-001",
+            "actions": {
+              "approve": {}
+            },
+            "derivedRoles": {
+              "direct_manager": {}
+            },
+            "roles": {
+              "hr_bp": {}
+            },
+            "condition": {
+              "expr": {
+                "original": "request.resource.attr.status == \"PENDING_APPROVAL\"",
+                "checked": {
+                  "referenceMap": {
+                    "1": {
+                      "name": "request"
+                    },
+                    "5": {
+                      "overloadId": [
+                        "equals"
+                      ]
+                    }
+                  },
+                  "typeMap": {
+                    "1": {
+                      "messageType": "cerbos.engine.v1.CheckInput"
+                    },
+                    "2": {
+                      "messageType": "cerbos.engine.v1.Resource"
+                    },
+                    "3": {
+                      "mapType": {
+                        "keyType": {
+                          "primitive": "STRING"
+                        },
+                        "valueType": {
+                          "dyn": {}
+                        }
+                      }
+                    },
+                    "4": {
+                      "dyn": {}
+                    },
+                    "5": {
+                      "primitive": "BOOL"
+                    },
+                    "6": {
+                      "primitive": "STRING"
+                    }
+                  },
+                  "sourceInfo": {
+                    "location": "<input>",
+                    "lineOffsets": [
+                      51
+                    ],
+                    "positions": {
+                      "1": 0,
+                      "2": 7,
+                      "3": 16,
+                      "4": 21,
+                      "5": 29,
+                      "6": 32
+                    }
+                  },
+                  "expr": {
+                    "id": "5",
+                    "callExpr": {
+                      "function": "_==_",
+                      "args": [
+                        {
+                          "id": "4",
+                          "selectExpr": {
+                            "operand": {
+                              "id": "3",
+                              "selectExpr": {
+                                "operand": {
+                                  "id": "2",
+                                  "selectExpr": {
+                                    "operand": {
+                                      "id": "1",
+                                      "identExpr": {
+                                        "name": "request"
+                                      }
+                                    },
+                                    "field": "resource"
+                                  }
+                                },
+                                "field": "attr"
+                              }
+                            },
+                            "field": "status"
+                          }
+                        },
+                        {
+                          "id": "6",
+                          "constExpr": {
+                            "stringValue": "PENDING_APPROVAL"
+                          }
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            },
+            "effect": "EFFECT_ALLOW"
+          }
+        ]
+      },
+      {
+        "scope": "acme.hr",
+        "rules": [
+          {
+            "name": "wildcard",
+            "actions": {
+              "*": {}
+            },
+            "roles": {
+              "admin": {},
+              "hr_admin": {}
+            },
+            "effect": "EFFECT_ALLOW"
+          }
+        ]
+      },
+      {
+        "scope": "acme",
         "derivedRoles": {
           "any_employee": {
             "name": "any_employee",
