@@ -6,33 +6,30 @@ package version
 import (
 	"context"
 	"fmt"
-	"os"
 
-	"github.com/spf13/cobra"
+	"github.com/alecthomas/kong"
 
-	"github.com/cerbos/cerbos/client"
+	client2 "github.com/cerbos/cerbos/cmd/cerbosctl/internal/client"
 	"github.com/cerbos/cerbos/internal/util"
 )
 
-type withClient func(fn func(c client.Client, cmd *cobra.Command, args []string) error) func(cmd *cobra.Command, args []string) error
+type Cmd struct{}
 
-// NewVersionCmd creates the command for version information.
-func NewVersionCmd(fn withClient) *cobra.Command {
-	return &cobra.Command{
-		Use:   "version",
-		Short: "Detailed information of the ctl and server version",
-		RunE:  fn(runVersionCmdF),
-	}
-}
-
-func runVersionCmdF(c client.Client, _ *cobra.Command, _ []string) error {
-	r, err := c.ServerInfo(context.Background())
+func (c *Cmd) Run(k *kong.Kong, ctx *client2.Context) error {
+	r, err := ctx.Client.ServerInfo(context.Background())
 	if err != nil {
 		return err
 	}
 
-	fmt.Fprintf(os.Stdout, "Client version %s; commit sha: %s, build date: %s\n", util.Version, util.Commit, util.BuildDate)
-	fmt.Fprintf(os.Stdout, "Server version %s; commit sha: %s, build date: %s\n", r.Version, r.Commit, r.BuildDate)
+	_, err = fmt.Fprintf(k.Stdout, "Client version %s; commit sha: %s, build date: %s\n", util.Version, util.Commit, util.BuildDate)
+	if err != nil {
+		return err
+	}
+
+	_, err = fmt.Fprintf(k.Stdout, "Server version %s; commit sha: %s, build date: %s\n", r.Version, r.Commit, r.BuildDate)
+	if err != nil {
+		return err
+	}
 
 	return nil
 }

@@ -4,15 +4,15 @@
 package principalpolicy
 
 import (
-	"github.com/spf13/cobra"
+	"github.com/alecthomas/kong"
 
 	"github.com/cerbos/cerbos/cmd/cerbosctl/get/internal/flagset"
 	"github.com/cerbos/cerbos/cmd/cerbosctl/get/internal/policy"
-	"github.com/cerbos/cerbos/cmd/cerbosctl/internal"
+	"github.com/cerbos/cerbos/cmd/cerbosctl/internal/client"
 	policy2 "github.com/cerbos/cerbos/internal/policy"
 )
 
-const example = `# List principal policies
+const help = `# List principal policies
 cerbosctl get principal_policies
 cerbosctl get principal_policy
 cerbosctl get pp
@@ -40,26 +40,42 @@ cerbosctl get principal_policies principal.donald_duck.default -ojson
 # Get principal policy definition as pretty json
 cerbosctl get principal_policies principal.donald_duck.default -oprettyjson`
 
-type flag struct {
-	flagset.Sort
-	flagset.Format
+type Cmd struct {
 	flagset.Filters
+	flagset.Format
+	flagset.Sort
+
+	PolicyIds []string `arg:"" name:"id" optional:"" help:"list of policy ids to retrieve"`
 }
 
-var flags = &flag{}
-
-func NewPrincipalPolicyCmd(fn internal.WithClient) *cobra.Command {
-	cmd := &cobra.Command{
-		Use:     "principal_policies",
-		Aliases: []string{"principal_policy", "pp"},
-		Example: example,
-		PreRunE: policy.PreRunFn(policy2.PrincipalKind, &flags.Sort),
-		RunE:    fn(policy.MakeGetCmd(policy2.PrincipalKind, &flags.Filters, &flags.Format, &flags.Sort)),
+func (c *Cmd) Run(k *kong.Kong, ctx *client.Context) error {
+	err := policy.DoCmd(k, ctx.AdminClient, policy2.PrincipalKind, &c.Filters, &c.Format, &c.Sort, c.PolicyIds)
+	if err != nil {
+		return err
 	}
 
-	cmd.Flags().AddFlagSet(flags.Sort.FlagSet())
-	cmd.Flags().AddFlagSet(flags.Format.FlagSet("yaml"))
-	cmd.Flags().AddFlagSet(flags.Filters.FlagSet())
+	return nil
+}
 
-	return cmd
+func (c *Cmd) Validate() error {
+	err := c.Filters.Validate(policy2.PrincipalKind, len(c.PolicyIds) == 0)
+	if err != nil {
+		return err
+	}
+
+	err = c.Format.Validate(len(c.PolicyIds) == 0)
+	if err != nil {
+		return err
+	}
+
+	err = c.Sort.Validate(policy2.PrincipalKind, len(c.PolicyIds) == 0)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (c *Cmd) Help() string {
+	return help
 }

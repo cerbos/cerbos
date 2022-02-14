@@ -6,49 +6,30 @@ package flagset
 import (
 	"fmt"
 
-	"github.com/spf13/pflag"
+	"github.com/cerbos/cerbos/internal/policy"
 )
-
-const SortByFlag = "sort-by"
 
 type Sort struct {
-	SortBy SortByFlagType
+	SortBy SortBy `help:"Sort policies by column" default:""`
 }
 
-func (s *Sort) FlagSet() *pflag.FlagSet {
-	fs := pflag.NewFlagSet("sort", pflag.ExitOnError)
-	fs.Var(&s.SortBy, SortByFlag, "Sort policies by column")
-	return fs
+func (s Sort) Validate(kind policy.Kind, listing bool) error {
+	if !listing && s.SortBy != SortByNone {
+		return fmt.Errorf("--sort-by flag is only available when listing")
+	}
+
+	if listing && kind == policy.DerivedRolesKind && s.SortBy == SortByVersion {
+		return fmt.Errorf("value of --sort-by flag cannot be %q when listing derived_roles", SortByVersion)
+	}
+
+	return nil
 }
 
-type SortByValue string
+type SortBy string
 
 const (
-	SortByPolicyID SortByValue = "policyId"
-	SortByName     SortByValue = "name"
-	SortByVersion  SortByValue = "version"
+	SortByNone     SortBy = ""
+	SortByPolicyID SortBy = "policyId"
+	SortByName     SortBy = "name"
+	SortByVersion  SortBy = "version"
 )
-
-type SortByFlagType SortByValue
-
-func (sbft SortByFlagType) Kind() SortByValue {
-	return SortByValue(sbft)
-}
-
-func (sbft SortByFlagType) String() string {
-	return string(SortByPolicyID)
-}
-
-func (sbft *SortByFlagType) Set(v string) error {
-	switch SortByValue(v) {
-	case SortByPolicyID, SortByName, SortByVersion:
-		*sbft = SortByFlagType(v)
-		return nil
-	default:
-		return fmt.Errorf("invalid --sort-by value %q, possible values are %s, %s and %s", v, SortByPolicyID, SortByName, SortByVersion)
-	}
-}
-
-func (sbft SortByFlagType) Type() string {
-	return "SortByFlag"
-}

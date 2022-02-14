@@ -10,9 +10,10 @@ import (
 	"io"
 
 	schemav1 "github.com/cerbos/cerbos/api/genpb/cerbos/schema/v1"
+	"github.com/cerbos/cerbos/cmd/cerbosctl/get/internal/flagset"
 )
 
-func printSchema(w io.Writer, schemas []*schemav1.Schema, output string) error {
+func printSchema(w io.Writer, schemas []*schemav1.Schema, output flagset.OutputFormat) error {
 	switch output {
 	case "json":
 		return printSchemaJSON(w, schemas)

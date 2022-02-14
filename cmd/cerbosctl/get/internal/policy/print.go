@@ -9,20 +9,21 @@ import (
 
 	"google.golang.org/protobuf/encoding/protojson"
 
+	"github.com/cerbos/cerbos/cmd/cerbosctl/get/internal/flagset"
 	"github.com/cerbos/cerbos/internal/policy"
 	"github.com/cerbos/cerbos/internal/util"
 )
 
-func printPolicy(w io.Writer, policies []policy.Wrapper, format string) error {
-	switch format {
-	case "json":
+func printPolicy(w io.Writer, policies []policy.Wrapper, output flagset.OutputFormat) error {
+	switch output {
+	case flagset.OutputFormatNone, flagset.OutputFormatJSON:
 		return printPolicyJSON(w, policies)
-	case "yaml":
+	case flagset.OutputFormatYAML:
 		return printPolicyYAML(w, policies)
-	case "prettyjson", "pretty-json":
+	case flagset.OutputFormatPrettyJSON:
 		return printPolicyPrettyJSON(w, policies)
 	default:
-		return fmt.Errorf("only yaml, json and prettyjson formats are supported")
+		return fmt.Errorf("only %q, %q and %q formats are supported", flagset.OutputFormatJSON, flagset.OutputFormatYAML, flagset.OutputFormatPrettyJSON)
 	}
 }
 

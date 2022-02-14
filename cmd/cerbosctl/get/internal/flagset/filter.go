@@ -3,21 +3,25 @@
 
 package flagset
 
-import "github.com/spf13/pflag"
+import (
+	"fmt"
 
-const (
-	NameFlag    = "name"
-	VersionFlag = "version"
+	"github.com/cerbos/cerbos/internal/policy"
 )
 
 type Filters struct {
-	Name    []string
-	Version []string
+	Name    []string `help:"Filter policies by name"`
+	Version []string `help:"Filter policies by version"`
 }
 
-func (f *Filters) FlagSet() *pflag.FlagSet {
-	fs := pflag.NewFlagSet("filters", pflag.ExitOnError)
-	fs.StringSliceVar(&f.Name, NameFlag, []string{}, "Filter policies by name")
-	fs.StringSliceVar(&f.Version, VersionFlag, []string{}, "Filter policies by version")
-	return fs
+func (f Filters) Validate(kind policy.Kind, listing bool) error {
+	if !listing && (len(f.Name) > 0 || len(f.Version) > 0) {
+		return fmt.Errorf("--name and --version flags are only available when listing")
+	}
+
+	if kind == policy.DerivedRolesKind && len(f.Version) > 0 {
+		return fmt.Errorf("--version flag is not available when listing derived roles")
+	}
+
+	return nil
 }

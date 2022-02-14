@@ -8,7 +8,7 @@ import (
 	"fmt"
 	"sort"
 
-	"github.com/spf13/cobra"
+	"github.com/alecthomas/kong"
 
 	"github.com/cerbos/cerbos/client"
 	"github.com/cerbos/cerbos/cmd/cerbosctl/get/internal/flagset"
@@ -16,13 +16,13 @@ import (
 	"github.com/cerbos/cerbos/cmd/cerbosctl/internal"
 )
 
-func List(c client.AdminClient, cmd *cobra.Command, format *flagset.Format) error {
+func List(k *kong.Kong, c client.AdminClient, format *flagset.Format) error {
 	schemaIds, err := c.ListSchemas(context.Background())
 	if err != nil {
 		return fmt.Errorf("error while requesting schemas: %w", err)
 	}
 
-	tw := printer.NewTableWriter(cmd.OutOrStdout())
+	tw := printer.NewTableWriter(k.Stdout)
 	if !format.NoHeaders {
 		tw.SetHeader([]string{"SCHEMA ID"})
 	}
@@ -36,15 +36,15 @@ func List(c client.AdminClient, cmd *cobra.Command, format *flagset.Format) erro
 	return nil
 }
 
-func Get(c client.AdminClient, cmd *cobra.Command, format *flagset.Format, ids ...string) error {
-	for idx := range ids {
+func Get(k *kong.Kong, c client.AdminClient, format *flagset.Format, policyIds ...string) error {
+	for idx := range policyIds {
 		if idx%internal.MaxIDPerReq == 0 {
-			schemas, err := c.GetSchema(context.Background(), ids[idx:internal.MinInt(idx+internal.MaxIDPerReq, len(ids)-idx)]...)
+			schemas, err := c.GetSchema(context.Background(), policyIds[idx:internal.MinInt(idx+internal.MaxIDPerReq, len(policyIds)-idx)]...)
 			if err != nil {
 				return fmt.Errorf("error while requesting schema: %w", err)
 			}
 
-			if err = printSchema(cmd.OutOrStdout(), schemas, format.Output); err != nil {
+			if err = printSchema(k.Stdout, schemas, format.Output); err != nil {
 				return fmt.Errorf("could not print schemas: %w", err)
 			}
 		}

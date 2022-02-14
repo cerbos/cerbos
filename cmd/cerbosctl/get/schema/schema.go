@@ -6,15 +6,14 @@ package schema
 import (
 	"fmt"
 
-	"github.com/spf13/cobra"
+	"github.com/alecthomas/kong"
 
-	"github.com/cerbos/cerbos/client"
 	"github.com/cerbos/cerbos/cmd/cerbosctl/get/internal/flagset"
 	"github.com/cerbos/cerbos/cmd/cerbosctl/get/internal/schema"
-	"github.com/cerbos/cerbos/cmd/cerbosctl/internal"
+	"github.com/cerbos/cerbos/cmd/cerbosctl/internal/client"
 )
 
-const example = `# List schemas
+const help = `# List schemas
 cerbosctl get schemas
 cerbosctl get schema
 cerbosctl get s
@@ -22,28 +21,15 @@ cerbosctl get s
 # Get schema definition
 cerbosctl get schemas principal.json`
 
-type flag struct {
+type Cmd struct {
 	flagset.Format
+
+	SchemaIds []string `arg:"" name:"id" optional:"" help:"list of schema ids to retrieve"`
 }
 
-var flags = &flag{}
-
-func NewSchemaCmd(fn internal.WithClient) *cobra.Command {
-	cmd := &cobra.Command{
-		Use:     "schemas",
-		Aliases: []string{"schema", "s"},
-		Example: example,
-		RunE:    fn(runSchemaCmd),
-	}
-
-	cmd.Flags().AddFlagSet(flags.Format.FlagSet("json"))
-
-	return cmd
-}
-
-func runSchemaCmd(c client.AdminClient, cmd *cobra.Command, args []string) error {
-	if len(args) == 0 {
-		err := schema.List(c, cmd, &flags.Format)
+func (c *Cmd) Run(k *kong.Kong, ctx *client.Context) error {
+	if len(c.SchemaIds) == 0 {
+		err := schema.List(k, ctx.AdminClient, &c.Format)
 		if err != nil {
 			return fmt.Errorf("failed to list schemas: %w", err)
 		}
@@ -51,10 +37,14 @@ func runSchemaCmd(c client.AdminClient, cmd *cobra.Command, args []string) error
 		return nil
 	}
 
-	err := schema.Get(c, cmd, &flags.Format, args...)
+	err := schema.Get(k, ctx.AdminClient, &c.Format, c.SchemaIds...)
 	if err != nil {
 		return fmt.Errorf("failed to get schemas: %w", err)
 	}
 
 	return nil
+}
+
+func (c *Cmd) Help() string {
+	return help
 }

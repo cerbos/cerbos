@@ -3,21 +3,32 @@
 
 package flagset
 
-import "github.com/spf13/pflag"
-
-const (
-	OutputFormatFlag = "output"
-	NoHeadersFlag    = "no-headers"
+import (
+	"fmt"
 )
 
 type Format struct {
-	Output    string
-	NoHeaders bool
+	Output    OutputFormat `short:"o" default:"" help:"Output format for the policies; json, yaml, prettyjson formats are supported"`
+	NoHeaders bool         `help:"Do not output headers"`
 }
 
-func (f *Format) FlagSet(defaultOutputFormat string) *pflag.FlagSet {
-	fs := pflag.NewFlagSet("format", pflag.ExitOnError)
-	fs.BoolVar(&f.NoHeaders, NoHeadersFlag, false, "Do not output headers")
-	fs.StringVarP(&f.Output, OutputFormatFlag, "o", defaultOutputFormat, "Output format for the policies; json, yaml, prettyjson formats are supported")
-	return fs
+func (f Format) Validate(listing bool) error {
+	if !listing && f.NoHeaders {
+		return fmt.Errorf("--no-headers flag is only available when listing")
+	}
+
+	if listing && f.Output != OutputFormatNone {
+		return fmt.Errorf("--output flag is only available when retrieving a specific policy")
+	}
+
+	return nil
 }
+
+type OutputFormat string
+
+const (
+	OutputFormatNone       OutputFormat = ""
+	OutputFormatJSON       OutputFormat = "json"
+	OutputFormatYAML       OutputFormat = "yaml"
+	OutputFormatPrettyJSON OutputFormat = "prettyjson"
+)

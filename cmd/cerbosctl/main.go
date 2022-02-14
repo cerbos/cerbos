@@ -4,168 +4,32 @@
 package main
 
 import (
-	"errors"
-	"fmt"
-	"os"
-	"runtime/debug"
-	"strings"
+	"github.com/alecthomas/kong"
 
-	"github.com/spf13/cobra"
-
-	"github.com/cerbos/cerbos/client"
-	"github.com/cerbos/cerbos/cmd/cerbosctl/audit"
-	"github.com/cerbos/cerbos/cmd/cerbosctl/decisions"
-	"github.com/cerbos/cerbos/cmd/cerbosctl/get"
-	"github.com/cerbos/cerbos/cmd/cerbosctl/internal"
-	"github.com/cerbos/cerbos/cmd/cerbosctl/version"
-	"github.com/cerbos/cerbos/internal/util"
+	"github.com/cerbos/cerbos/cmd/cerbosctl/internal/client"
+	"github.com/cerbos/cerbos/cmd/cerbosctl/root"
 )
-
-type connectConf struct {
-	serverAddr    string
-	username      string
-	password      string
-	caCert        string
-	tlsClientCert string
-	tlsClientKey  string
-	insecure      bool
-	plaintext     bool
-}
-
-var (
-	connConf              = connectConf{}
-	errInvalidCredentials = errors.New("invalid credentials: username and password must be non-empty strings")
-)
-
-var longDesc = `Cerbos instance administration commands
-The Cerbos Admin API must be enabled in order for these commands to work.
-The Admin API requires credentials. They can be provided using a netrc file, 
-environment variables or command-line arguments. 
-
-Environment variables
-
-CERBOS_SERVER: gRPC address of the Cerbos server
-CERBOS_USERNAME: Admin username
-CERBOS_PASSWORD: Admin password
-
-When more than one method is used to provide credentials, the precedence from lowest to 
-highest is: netrc < environment < command line.`
-
-var exampleDesc = `
-# Connect to a TLS enabled server while skipping certificate verification and launch the decisions viewer
-cerbosctl --server=localhost:3593 --username=user --password=password --insecure decisions
-
-# Connect to a non-TLS server and launch the decisions viewer
-cerbosctl --server=localhost:3593 --username=user --password=password --plaintext decisions`
 
 func main() {
-	cmd := &cobra.Command{
-		Use:               "cerbosctl",
-		Short:             "A CLI for managing Cerbos",
-		Version:           util.AppVersion(),
-		Long:              longDesc,
-		Example:           exampleDesc,
-		SilenceUsage:      true,
-		SilenceErrors:     true,
-		PersistentPreRunE: checkConnConf,
+	cli := &root.Cli{}
+	ctx := kong.Parse(cli,
+		kong.Name("cerbosctl"),
+		kong.Description("A CLI for managing Cerbos"),
+		kong.UsageOnError(),
+	)
+
+	c, err := client.GetClient(&cli.Globals)
+	if err != nil {
+		ctx.Fatalf("failed to get the client: %v", err)
 	}
 
-	cmd.PersistentFlags().StringVar(&connConf.serverAddr, "server", "", "Address of the Cerbos server")
-	cmd.PersistentFlags().StringVar(&connConf.username, "username", "", "Admin username")
-	cmd.PersistentFlags().StringVar(&connConf.password, "password", "", "Admin password")
-	cmd.PersistentFlags().StringVar(&connConf.caCert, "ca-cert", "", "Path to the CA certificate for verifying server identity")
-	cmd.PersistentFlags().StringVar(&connConf.tlsClientCert, "client-cert", "", "Path to the TLS client certificate")
-	cmd.PersistentFlags().StringVar(&connConf.tlsClientKey, "client-key", "", "Path to the TLS client key")
-	cmd.PersistentFlags().BoolVar(&connConf.insecure, "insecure", false, "Skip validating server certificate")
-	cmd.PersistentFlags().BoolVar(&connConf.plaintext, "plaintext", false, "Use plaintext protocol without TLS")
-
-	cmd.AddCommand(audit.NewAuditCmd(withAdminClient), decisions.NewDecisionsCmd(withAdminClient), version.NewVersionCmd(withClient), get.NewGetCmd(withAdminClient))
-
-	defer func() {
-		if x := recover(); x != nil {
-			cmd.PrintErrln(internal.FeedbackMsg)
-			cmd.PrintErrln()
-			cmd.PrintErrln(internal.GenerateFeedbackLink("bug: Panic in cerbosctl", util.Version, util.Commit, debug.Stack()))
-			cmd.PrintErrln()
-			cmd.PrintErrln(string(debug.Stack()))
-
-			os.Exit(1)
-		}
-	}()
-
-	if err := cmd.Execute(); err != nil {
-		cmd.PrintErrf("ERROR: %v\n", err)
-		os.Exit(1) //nolint:gocritic
-	}
-}
-
-func checkConnConf(_ *cobra.Command, _ []string) error {
-	connConf.serverAddr = coalesceWithEnv(connConf.serverAddr, "CERBOS_SERVER")
-	connConf.username = coalesceWithEnv(connConf.username, "CERBOS_USERNAME")
-	connConf.password = coalesceWithEnv(connConf.password, "CERBOS_PASSWORD")
-
-	if connConf.serverAddr == "" {
-		connConf.serverAddr = "localhost:3593"
+	ac, err := client.GetAdminClient(&cli.Globals)
+	if err != nil {
+		ctx.Fatalf("failed to get the admin client: %v", err)
 	}
 
-	return nil
-}
-
-func coalesceWithEnv(val, envVar string) string {
-	if v := strings.TrimSpace(val); v != "" {
-		return v
-	}
-
-	if envVal, ok := os.LookupEnv(envVar); ok {
-		return envVal
-	}
-
-	return val
-}
-
-func withAdminClient(fn internal.AdminCommand) func(cmd *cobra.Command, args []string) error {
-	return func(cmd *cobra.Command, args []string) error {
-		if connConf.username == "" || connConf.password == "" {
-			return errInvalidCredentials
-		}
-		opts := connConf.toClientOpts()
-
-		ac, err := client.NewAdminClientWithCredentials(connConf.serverAddr, connConf.username, connConf.password, opts...)
-		if err != nil {
-			return fmt.Errorf("could not create the admin client: %w", err)
-		}
-
-		return fn(ac, cmd, args)
-	}
-}
-
-func withClient(fn func(c client.Client, cmd *cobra.Command, args []string) error) func(cmd *cobra.Command, args []string) error {
-	return func(cmd *cobra.Command, args []string) error {
-		opts := connConf.toClientOpts()
-
-		ac, err := client.New(connConf.serverAddr, opts...)
-		if err != nil {
-			return fmt.Errorf("could not create the client: %w", err)
-		}
-
-		return fn(ac, cmd, args)
-	}
-}
-
-func (c connectConf) toClientOpts() []client.Opt {
-	opts := make([]client.Opt, 0)
-	if c.plaintext {
-		opts = append(opts, client.WithPlaintext())
-	}
-	if c.insecure {
-		opts = append(opts, client.WithTLSInsecure())
-	}
-	if cert := c.caCert; cert != "" {
-		opts = append(opts, client.WithTLSCACert(cert))
-	}
-	if cert := c.tlsClientCert; cert != "" {
-		opts = append(opts, client.WithTLSClientCert(cert, c.tlsClientKey))
-	}
-
-	return opts
+	ctx.FatalIfErrorf(ctx.Run(&cli.Globals, &client.Context{
+		Client:      c,
+		AdminClient: ac,
+	}))
 }
