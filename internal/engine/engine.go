@@ -405,14 +405,11 @@ func (engine *Engine) evaluate(ctx context.Context, input *enginev1.CheckInput, 
 			Policy: noPolicyMatch,
 		}
 
-		if effectScope, ok := result.effects[action]; ok {
+		if einfo, ok := result.effects[action]; ok {
 			ae := output.Actions[action]
-			ae.Effect = effectScope.Effect
-			ae.Scope = effectScope.Scope
-		}
-
-		if policyMatch, ok := result.matchedPolicies[action]; ok {
-			output.Actions[action].Policy = policyMatch
+			ae.Effect = einfo.Effect
+			ae.Policy = einfo.Policy
+			ae.Scope = einfo.Scope
 		}
 	}
 
@@ -531,8 +528,7 @@ func (ec *evaluationCtx) evaluate(ctx context.Context, input *enginev1.CheckInpu
 }
 
 type evaluationResult struct {
-	effects               map[string]EffectScope
-	matchedPolicies       map[string]string
+	effects               map[string]EffectInfo
 	effectiveDerivedRoles []string
 	validationErrors      []*schemav1.ValidationError
 }
@@ -542,8 +538,7 @@ func (er *evaluationResult) merge(res *PolicyEvalResult) bool {
 	hasNoMatches := false
 
 	if er.effects == nil {
-		er.effects = make(map[string]EffectScope, len(res.Effects))
-		er.matchedPolicies = make(map[string]string, len(res.Effects))
+		er.effects = make(map[string]EffectInfo, len(res.Effects))
 	}
 
 	if len(res.EffectiveDerivedRoles) > 0 {
@@ -564,8 +559,6 @@ func (er *evaluationResult) merge(res *PolicyEvalResult) bool {
 			// if this effect is a no_match, we still need to traverse the policy hierarchy until we find a definitive answer
 			if effect.Effect == effectv1.Effect_EFFECT_NO_MATCH {
 				hasNoMatches = true
-			} else {
-				er.matchedPolicies[action] = res.PolicyKey
 			}
 		}
 	}

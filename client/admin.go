@@ -20,10 +20,11 @@ import (
 	svcv1 "github.com/cerbos/cerbos/api/genpb/cerbos/svc/v1"
 )
 
+const addPolicyBatchSize = 10
+
 type AdminClient interface {
 	AddOrUpdatePolicy(context.Context, *PolicySet) error
 	AuditLogs(ctx context.Context, opts AuditLogOptions) (<-chan *AuditLogEntry, error)
-	// ListPolicies retrieves the policies on the Cerbos server.
 	ListPolicies(ctx context.Context) ([]string, error)
 	GetPolicy(ctx context.Context, ids ...string) ([]*policyv1.Policy, error)
 	ListSchemas(ctx context.Context) ([]string, error)
@@ -73,9 +74,18 @@ func (c *GrpcAdminClient) AddOrUpdatePolicy(ctx context.Context, policies *Polic
 		return err
 	}
 
-	req := &requestv1.AddOrUpdatePolicyRequest{Policies: policies.policies}
-	if _, err := c.client.AddOrUpdatePolicy(ctx, req, grpc.PerRPCCredentials(c.creds)); err != nil {
-		return err
+	all := policies.policies
+
+	for bs := 0; bs < len(all); bs += addPolicyBatchSize {
+		be := bs + addPolicyBatchSize
+		if be >= len(all) {
+			be = len(all)
+		}
+
+		req := &requestv1.AddOrUpdatePolicyRequest{Policies: all[bs:be]}
+		if _, err := c.client.AddOrUpdatePolicy(ctx, req, grpc.PerRPCCredentials(c.creds)); err != nil {
+			return fmt.Errorf("failed to send batch [%d,%d): %w", bs, be, err)
+		}
 	}
 
 	return nil

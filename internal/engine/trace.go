@@ -112,8 +112,8 @@ func (zts *ZapTraceSink) WriteEvent(component []string, data ...KV) {
 
 // WriterTraceSink implements TraceSink using an io.Writer.
 type WriterTraceSink struct {
-	w  io.Writer
 	mu sync.Mutex
+	w  io.Writer
 }
 
 func NewWriterTraceSink(w io.Writer) *WriterTraceSink {

@@ -1,0 +1,56 @@
+---
+description: "Scoped policy: missing policy"
+inputs: [
+  {
+    "requestId": "test",
+    "actions": [
+      "create",
+      "delete",
+      "view:public"
+    ],
+    "principal": {
+      "id": "john",
+      "roles": [
+        "employee"
+      ],
+      "attr": {
+        "department": "marketing",
+        "geography": "GB",
+        "team": "design",
+        "ip_address": "10.20.0.13"
+      }
+    },
+    "resource": {
+      "kind": "leave_request",
+      "scope": "acme.hr.fr",
+      "id": "XX125",
+      "attr": {
+        "department": "marketing",
+        "geography": "GB",
+        "id": "XX125",
+        "owner": "john",
+        "team": "design"
+      }
+    }
+  }
+]
+wantOutputs: [
+  {
+    "requestId": "test",
+    "resourceId": "XX125",
+    "actions": {
+      "view:public": {
+        "effect": "EFFECT_DENY",
+        "policy": "NO_MATCH"
+      },
+      "delete": {
+        "effect": "EFFECT_DENY",
+        "policy": "NO_MATCH"
+      },
+      "create": {
+        "effect": "EFFECT_DENY",
+        "policy": "NO_MATCH"
+      }
+    }
+  }
+]

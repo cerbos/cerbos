@@ -326,9 +326,9 @@ func (rb *ResourceBatch) Validate() error {
 
 // CheckResourceBatchResponse is the response from the CheckResourceBatch API call.
 type CheckResourceBatchResponse struct {
-	*responsev1.CheckResourceBatchResponse
-	idx  map[string][]int
 	once sync.Once
+	*responsev1.CheckResourceBatchResponse
+	idx map[string][]int
 }
 
 func (crbr *CheckResourceBatchResponse) buildIdx() {
@@ -475,6 +475,11 @@ func (ps *PolicySet) AddDerivedRoles(policies ...*DerivedRoles) *PolicySet {
 // GetPolicies returns all of the policies in the set.
 func (ps *PolicySet) GetPolicies() []*policyv1.Policy {
 	return ps.policies
+}
+
+// Size returns the number of policies in this set.
+func (ps *PolicySet) Size() int {
+	return len(ps.policies)
 }
 
 func (ps *PolicySet) add(b interface {

@@ -67,7 +67,8 @@ func (rpe *resourcePolicyEvaluator) Evaluate(ctx context.Context, input *enginev
 	span.SetAttributes(tracing.PolicyFQN(rpe.policy.Meta.Fqn))
 	defer span.End()
 
-	result := newEvalResult(namer.PolicyKeyFromFQN(rpe.policy.Meta.Fqn), input.Actions)
+	policyKey := namer.PolicyKeyFromFQN(rpe.policy.Meta.Fqn)
+	result := newEvalResult(input.Actions)
 	effectiveRoles := toSet(input.Principal.Roles)
 
 	tctx := rpe.beginTrace(policyComponent, rpe.policy.Meta.Fqn)
@@ -85,7 +86,7 @@ func (rpe *resourcePolicyEvaluator) Evaluate(ctx context.Context, input *enginev
 		if vr.Reject {
 			for _, action := range input.Actions {
 				actx := tctx.beginTrace(actionComponent, action)
-				result.setEffect(action, effectv1.Effect_EFFECT_DENY, "")
+				result.setEffect(action, EffectInfo{Effect: effectv1.Effect_EFFECT_DENY, Policy: policyKey})
 				actx.writeEvent(KVActivated(), KVEffect(effectv1.Effect_EFFECT_DENY), KVMsg("Rejected due to validation failures"))
 			}
 			return result, nil
@@ -166,7 +167,7 @@ func (rpe *resourcePolicyEvaluator) Evaluate(ctx context.Context, input *enginev
 						continue
 					}
 
-					result.setEffect(action, rule.Effect, p.Scope)
+					result.setEffect(action, EffectInfo{Effect: rule.Effect, Policy: policyKey, Scope: p.Scope})
 					actx.writeEvent(KVActivated(), KVEffect(rule.Effect))
 				}
 			}
@@ -174,7 +175,7 @@ func (rpe *resourcePolicyEvaluator) Evaluate(ctx context.Context, input *enginev
 	}
 
 	// set the default effect for actions that were not matched
-	result.setDefaultEffect(tctx, effectv1.Effect_EFFECT_DENY)
+	result.setDefaultEffect(tctx, EffectInfo{Effect: effectv1.Effect_EFFECT_DENY, Policy: policyKey})
 
 	return result, nil
 }
@@ -189,7 +190,8 @@ func (ppe *principalPolicyEvaluator) Evaluate(ctx context.Context, input *engine
 	span.SetAttributes(tracing.PolicyFQN(ppe.policy.Meta.Fqn))
 	defer span.End()
 
-	result := newEvalResult(namer.PolicyKeyFromFQN(ppe.policy.Meta.Fqn), input.Actions)
+	policyKey := namer.PolicyKeyFromFQN(ppe.policy.Meta.Fqn)
+	result := newEvalResult(input.Actions)
 
 	tctx := ppe.beginTrace(policyComponent, ppe.policy.Meta.Fqn)
 	for _, p := range ppe.policy.Policies {
@@ -227,14 +229,14 @@ func (ppe *principalPolicyEvaluator) Evaluate(ctx context.Context, input *engine
 						actx.writeEvent(KVSkip(), KVMsg("condition not satisfied"))
 						continue
 					}
-					result.setEffect(action, rule.Effect, p.Scope)
+					result.setEffect(action, EffectInfo{Effect: rule.Effect, Policy: policyKey, Scope: p.Scope})
 					actx.writeEvent(KVActivated(), KVEffect(rule.Effect))
 				}
 			}
 		}
 	}
 
-	result.setDefaultEffect(tctx, effectv1.Effect_EFFECT_NO_MATCH)
+	result.setDefaultEffect(tctx, EffectInfo{Effect: effectv1.Effect_EFFECT_NO_MATCH})
 	return result, nil
 }
 
@@ -398,23 +400,22 @@ func setIntersects(s1 protoSet, s2 stringSet) bool {
 	return false
 }
 
-type EffectScope struct {
+type EffectInfo struct {
+	Policy string
 	Scope  string
 	Effect effectv1.Effect
 }
 
 type PolicyEvalResult struct {
-	PolicyKey             string
-	Effects               map[string]EffectScope
+	Effects               map[string]EffectInfo
 	EffectiveDerivedRoles map[string]struct{}
 	toResolve             map[string]struct{}
 	ValidationErrors      []*schemav1.ValidationError
 }
 
-func newEvalResult(policyKey string, actions []string) *PolicyEvalResult {
+func newEvalResult(actions []string) *PolicyEvalResult {
 	per := &PolicyEvalResult{
-		PolicyKey:             policyKey,
-		Effects:               make(map[string]EffectScope, len(actions)),
+		Effects:               make(map[string]EffectInfo, len(actions)),
 		EffectiveDerivedRoles: make(map[string]struct{}),
 		toResolve:             make(map[string]struct{}, len(actions)),
 	}
@@ -442,28 +443,28 @@ func (er *PolicyEvalResult) unresolvedActions() []string {
 }
 
 // setEffect sets the effect for an action. DENY always takes precedence.
-func (er *PolicyEvalResult) setEffect(action string, effect effectv1.Effect, scope string) {
+func (er *PolicyEvalResult) setEffect(action string, effect EffectInfo) {
 	delete(er.toResolve, action)
 
-	if effect == effectv1.Effect_EFFECT_DENY {
-		er.Effects[action] = EffectScope{Effect: effect, Scope: scope}
+	if effect.Effect == effectv1.Effect_EFFECT_DENY {
+		er.Effects[action] = effect
 		return
 	}
 
 	current, ok := er.Effects[action]
 	if !ok {
-		er.Effects[action] = EffectScope{Effect: effect, Scope: scope}
+		er.Effects[action] = effect
 		return
 	}
 
 	if current.Effect != effectv1.Effect_EFFECT_DENY {
-		er.Effects[action] = EffectScope{Effect: effect, Scope: scope}
+		er.Effects[action] = effect
 	}
 }
 
-func (er *PolicyEvalResult) setDefaultEffect(tctx *traceContext, effect effectv1.Effect) {
+func (er *PolicyEvalResult) setDefaultEffect(tctx *traceContext, effect EffectInfo) {
 	for a := range er.toResolve {
-		er.Effects[a] = EffectScope{Effect: effect}
-		tctx.beginTrace(actionComponent, a).writeEvent(KVEffect(effect), KVMsg("Default effect"))
+		er.Effects[a] = effect
+		tctx.beginTrace(actionComponent, a).writeEvent(KVEffect(effect.Effect), KVMsg("Default effect"))
 	}
 }
