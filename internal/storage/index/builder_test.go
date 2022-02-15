@@ -172,13 +172,14 @@ func TestBuildIndex(t *testing.T) {
 						require.True(t, ok, "Definition %q is missing", defFQN)
 					}
 
-					require.Equal(t, len(wantCU.AncestorFqns), len(haveCU.Ancestors))
+					haveAncestors := haveCU.Ancestors()
+					require.Equal(t, len(wantCU.AncestorFqns), len(haveAncestors))
 					if len(wantCU.AncestorFqns) > 0 {
 						wantAncestors := make([]namer.ModuleID, len(wantCU.AncestorFqns))
 						for i, af := range wantCU.AncestorFqns {
 							wantAncestors[i] = namer.GenModuleIDFromFQN(af)
 						}
-						require.ElementsMatch(t, wantAncestors, haveCU.Ancestors)
+						require.ElementsMatch(t, wantAncestors, haveAncestors)
 					}
 				}
 			}

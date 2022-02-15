@@ -7,15 +7,16 @@ import (
 	"context"
 	"database/sql"
 	"embed"
+	"errors"
 	"fmt"
 
 	"github.com/doug-martin/goqu/v9"
-	migrate "github.com/golang-migrate/migrate/v4"
-	migratesqlite3 "github.com/golang-migrate/migrate/v4/database/sqlite3"
-	"github.com/golang-migrate/migrate/v4/source/iofs"
 
 	// import sqlite3 dialect.
 	_ "github.com/doug-martin/goqu/v9/dialect/sqlite3"
+	migrate "github.com/golang-migrate/migrate/v4"
+	migratesqlite3 "github.com/golang-migrate/migrate/v4/database/sqlite3"
+	"github.com/golang-migrate/migrate/v4/source/iofs"
 	"github.com/jmoiron/sqlx"
 	"go.uber.org/zap"
 
@@ -90,7 +91,11 @@ func runMigrations(db *sql.DB) error {
 		return err
 	}
 
-	return m.Up()
+	if err := m.Up(); err != nil && !errors.Is(err, migrate.ErrNoChange) {
+		return err
+	}
+
+	return nil
 }
 
 type Store struct {

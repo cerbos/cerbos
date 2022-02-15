@@ -240,8 +240,8 @@ func (s *dbStorage) AddOrUpdate(ctx context.Context, policies ...policy.Wrapper)
 
 				// insert the new dependency records
 				depRows := make([]interface{}, len(p.Dependencies))
-				for i, d := range p.Dependencies {
-					depRows[i] = PolicyDependency{PolicyID: p.ID, DependencyID: d}
+				for ix, d := range p.Dependencies {
+					depRows[ix] = PolicyDependency{PolicyID: p.ID, DependencyID: d}
 				}
 
 				if _, err := tx.Insert(PolicyDepTbl).
@@ -264,8 +264,8 @@ func (s *dbStorage) AddOrUpdate(ctx context.Context, policies ...policy.Wrapper)
 
 				// insert the new ancestry records
 				ancRows := make([]interface{}, len(ancestors))
-				for i, a := range ancestors {
-					ancRows[i] = PolicyAncestor{PolicyID: p.ID, AncestorID: a}
+				for ix, a := range ancestors {
+					ancRows[ix] = PolicyAncestor{PolicyID: p.ID, AncestorID: a}
 				}
 
 				if _, err := tx.Insert(PolicyAncestorTbl).
@@ -290,20 +290,25 @@ func (s *dbStorage) AddOrUpdate(ctx context.Context, policies ...policy.Wrapper)
 }
 
 func (s *dbStorage) GetCompilationUnits(ctx context.Context, ids ...namer.ModuleID) (map[namer.ModuleID]*policy.CompilationUnit, error) {
-	// SELECT ancestor_id as pid FROM policy_ancestor WHERE policy_id IN (?)
-	// UNION ALL SELECT policy_id as pid FROM policy WHERE policy_id IN (?)
-	withAncestors := s.db.Select(goqu.C(PolicyAncestorTblAncestorIDCol).As("pid")).
-		From(PolicyAncestorTbl).
-		Where(goqu.C(PolicyAncestorTblPolicyIDCol).In(ids)).
-		UnionAll(
-			s.db.Select(goqu.C(PolicyTblIDCol).As("pid")).
-				From(PolicyTbl).
-				Where(goqu.C(PolicyTblIDCol).In(ids)))
+	// SELECT p.id as parent, p.id, p.definition
+	// FROM policy p
+	// WHERE p.id IN (?) AND p.disabled = false
+	policiesQuery := s.db.Select(
+		goqu.C(PolicyTblIDCol).As("parent"),
+		goqu.C(PolicyTblIDCol),
+		goqu.C(PolicyTblDefinitionCol)).
+		From(PolicyTbl).
+		Where(
+			goqu.And(
+				goqu.I(PolicyTblIDCol).In(ids),
+				goqu.I(PolicyTblDisabledCol).Eq(goqu.V(false)),
+			),
+		)
 
 	// SELECT pd.policy_id as parent, p.id, p.definition
 	// FROM policy_dependency pd
-	// JOIN policy p ON (pd.dependency_id = p.id)
-	// WHERE pd.policy_id IN (?) AND p.disabled = false
+	// JOIN policy p ON (pd.dependency_id = p.id AND p.disabled = false )
+	// WHERE pd.policy_id IN (?)
 	depsQuery := s.db.Select(
 		goqu.C(PolicyDepTblPolicyIDCol).Table("pd").As("parent"),
 		goqu.C(PolicyTblIDCol).Table("p"),
@@ -311,35 +316,85 @@ func (s *dbStorage) GetCompilationUnits(ctx context.Context, ids ...namer.Module
 		From(goqu.T(PolicyDepTbl).As("pd")).
 		Join(
 			goqu.T(PolicyTbl).As("p"),
-			goqu.On(goqu.C(PolicyDepTblDepIDCol).Table("pd").Eq(goqu.C(PolicyTblIDCol).Table("p"))),
-		).
-		Where(
-			goqu.And(
-				goqu.C(PolicyDepTblPolicyIDCol).Table("pd").In(goqu.T("ancestors")),
+			goqu.On(goqu.And(
+				goqu.C(PolicyDepTblDepIDCol).Table("pd").Eq(goqu.C(PolicyTblIDCol).Table("p"))),
 				goqu.C(PolicyTblDisabledCol).Table("p").Eq(goqu.V(false)),
 			),
-		)
+		).
+		Where(goqu.C(PolicyDepTblPolicyIDCol).Table("pd").In(ids))
 
-	// SELECT id as parent, id,definition
-	// FROM policy WHERE id IN ? AND disabled = false
-	// UNION ALL <deps_query>
-	// ORDER BY parent
-	policiesQuery := s.db.Select(
-		goqu.C(PolicyTblIDCol).As("parent"),
-		goqu.C(PolicyTblIDCol),
-		goqu.C(PolicyTblDefinitionCol)).
-		From(PolicyTbl).
-		With("ancestors", withAncestors).
-		Where(
-			goqu.And(
-				goqu.I(PolicyTblIDCol).In(goqu.T("ancestors")),
-				goqu.I(PolicyTblDisabledCol).Eq(goqu.V(false)),
+	// SELECT pa.policy_id as parent, p.id, p.definition
+	// FROM policy_ancestor pa
+	// JOIN policy p ON (pa.ancestor_id = p.id AND p.disabled = false )
+	// WHERE pa.policy_id IN (?)
+	ancestorsQuery := s.db.Select(
+		goqu.C(PolicyAncestorTblPolicyIDCol).Table("pa").As("parent"),
+		goqu.C(PolicyTblIDCol).Table("p"),
+		goqu.C(PolicyTblDefinitionCol).Table("p")).
+		From(goqu.T(PolicyAncestorTbl).As("pa")).
+		Join(
+			goqu.T(PolicyTbl).As("p"),
+			goqu.On(goqu.And(
+				goqu.C(PolicyAncestorTblAncestorIDCol).Table("pa").Eq(goqu.C(PolicyTblIDCol).Table("p"))),
+				goqu.C(PolicyTblDisabledCol).Table("p").Eq(goqu.V(false)),
 			),
 		).
-		UnionAll(depsQuery).
+		Where(goqu.C(PolicyAncestorTblPolicyIDCol).Table("pa").In(ids))
+
+	// SELECT pa.policy_id as parent, p.id, p.definition
+	// FROM policy_ancestor pa
+	// JOIN policy_dependency pd ON (pa.ancestor_id = pd.policy_id)
+	// JOIN policy p ON (pd.dependency_id = p.id AND p.disabled = false )
+	// WHERE pa.policy_id IN (?)
+	ancestorDepsQuery := s.db.Select(
+		goqu.C(PolicyAncestorTblPolicyIDCol).Table("pa").As("parent"),
+		goqu.C(PolicyTblIDCol).Table("p"),
+		goqu.C(PolicyTblDefinitionCol).Table("p")).
+		From(goqu.T(PolicyAncestorTbl).As("pa")).
+		Join(
+			goqu.T(PolicyDepTbl).As("pd"),
+			goqu.On(goqu.C(PolicyAncestorTblAncestorIDCol).Table("pa").Eq(goqu.C(PolicyDepTblPolicyIDCol).Table("pd"))),
+		).
+		Join(
+			goqu.T(PolicyTbl).As("p"),
+			goqu.On(goqu.And(
+				goqu.C(PolicyDepTblDepIDCol).Table("pd").Eq(goqu.C(PolicyTblIDCol).Table("p"))),
+				goqu.C(PolicyTblDisabledCol).Table("p").Eq(goqu.V(false)),
+			),
+		).
+		Where(goqu.C(PolicyAncestorTblPolicyIDCol).Table("pa").In(ids))
+
+	// -- Select the policies requested
+	// SELECT p.id as parent,p.id, p.definition
+	// FROM policy p
+	// WHERE p.id IN (?) AND p.disabled = false
+	// UNION
+	// -- Select the dependencies of those policies
+	// SELECT pd.policy_id as parent, p.id, p.definition
+	// FROM policy_dependency pd
+	// JOIN policy p ON (pd.dependency_id = p.id AND p.disabled = false )
+	// WHERE pd.policy_id IN (?)
+	// UNION
+	// -- Select the ancestors of the policies requested
+	// SELECT pa.policy_id as parent, p.id, p.definition
+	// FROM policy_ancestor pa
+	// JOIN policy p ON (pa.ancestor_id = p.id AND p.disabled = false )
+	// WHERE pa.policy_id IN (?)
+	// UNION
+	// -- Select the dependencies of the ancestors
+	// SELECT pa.policy_id as parent, p.id, p.definition
+	// FROM policy_ancestor pa
+	// JOIN policy_dependency pd ON (pa.ancestor_id = pd.policy_id)
+	// JOIN policy p ON (pd.dependency_id = p.id AND p.disabled = false )
+	// WHERE pa.policy_id IN (?)
+	// ORDER BY parent
+	fullQuery := policiesQuery.
+		Union(depsQuery).
+		Union(ancestorsQuery).
+		Union(ancestorDepsQuery).
 		Order(goqu.C("parent").Asc())
 
-	results, err := policiesQuery.Executor().ScannerContext(ctx)
+	results, err := fullQuery.Executor().ScannerContext(ctx)
 	if err != nil {
 		return nil, err
 	}

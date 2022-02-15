@@ -326,9 +326,9 @@ func (rb *ResourceBatch) Validate() error {
 
 // CheckResourceBatchResponse is the response from the CheckResourceBatch API call.
 type CheckResourceBatchResponse struct {
-	once sync.Once
 	*responsev1.CheckResourceBatchResponse
-	idx map[string][]int
+	idx  map[string][]int
+	once sync.Once
 }
 
 func (crbr *CheckResourceBatchResponse) buildIdx() {

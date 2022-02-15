@@ -17,6 +17,7 @@ import (
 	"google.golang.org/protobuf/testing/protocmp"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
+	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
 	schemav1 "github.com/cerbos/cerbos/api/genpb/cerbos/schema/v1"
 	"github.com/cerbos/cerbos/internal/namer"
 	"github.com/cerbos/cerbos/internal/policy"
@@ -25,7 +26,7 @@ import (
 	"github.com/cerbos/cerbos/internal/util"
 )
 
-const timeout = 1 * time.Second
+const timeout = 2 * time.Second
 
 //nolint:gomnd
 func TestSuite(store DBStorage) func(*testing.T) {
@@ -38,12 +39,19 @@ func TestSuite(store DBStorage) func(*testing.T) {
 		dr := policy.Wrap(test.GenDerivedRoles(test.NoMod()))
 		rpx := policy.Wrap(test.GenResourcePolicy(test.PrefixAndSuffix("x", "x")))
 		drx := policy.Wrap(test.GenDerivedRoles(test.PrefixAndSuffix("x", "x")))
+
+		rpAcme := withScope(test.GenResourcePolicy(test.NoMod()), "acme")
+		rpAcmeHR := withScope(test.GenResourcePolicy(test.NoMod()), "acme.hr")
+		rpAcmeHRUK := withScope(test.GenResourcePolicy(test.NoMod()), "acme.hr.uk")
+		ppAcme := withScope(test.GenPrincipalPolicy(test.NoMod()), "acme")
+		ppAcmeHR := withScope(test.GenPrincipalPolicy(test.NoMod()), "acme.hr")
+
 		sch := test.ReadSchemaFromFile(t, test.PathToDir(t, "store/_schemas/leave_request.json"))
 		const schID = "leave_request"
 
 		t.Run("add", func(t *testing.T) {
 			checkEvents := storage.TestSubscription(store)
-			require.NoError(t, store.AddOrUpdate(ctx, rp, pp, dr, rpx, drx))
+			require.NoError(t, store.AddOrUpdate(ctx, rp, pp, dr, rpx, drx, rpAcme, rpAcmeHR, rpAcmeHRUK, ppAcme, ppAcmeHR))
 
 			wantEvents := []storage.Event{
 				{Kind: storage.EventAddOrUpdatePolicy, PolicyID: rp.ID},
@@ -51,6 +59,11 @@ func TestSuite(store DBStorage) func(*testing.T) {
 				{Kind: storage.EventAddOrUpdatePolicy, PolicyID: dr.ID},
 				{Kind: storage.EventAddOrUpdatePolicy, PolicyID: rpx.ID},
 				{Kind: storage.EventAddOrUpdatePolicy, PolicyID: drx.ID},
+				{Kind: storage.EventAddOrUpdatePolicy, PolicyID: rpAcme.ID},
+				{Kind: storage.EventAddOrUpdatePolicy, PolicyID: rpAcmeHR.ID},
+				{Kind: storage.EventAddOrUpdatePolicy, PolicyID: rpAcmeHRUK.ID},
+				{Kind: storage.EventAddOrUpdatePolicy, PolicyID: ppAcme.ID},
+				{Kind: storage.EventAddOrUpdatePolicy, PolicyID: ppAcmeHR.ID},
 			}
 			checkEvents(t, timeout, wantEvents...)
 		})
@@ -86,29 +99,73 @@ func TestSuite(store DBStorage) func(*testing.T) {
 			require.Empty(t, cmp.Diff(pp, haveRec.Definitions[pp.ID], protocmp.Transform()))
 		})
 
-		t.Run("get_multiple_compilation_units", func(t *testing.T) {
-			have, err := store.GetCompilationUnits(ctx, rp.ID, pp.ID)
+		t.Run("get_compilation_unit_for_scoped_resource_policy", func(t *testing.T) {
+			have, err := store.GetCompilationUnits(ctx, rpAcmeHRUK.ID)
 			require.NoError(t, err)
-			require.Len(t, have, 2)
+			require.Len(t, have, 1)
+			require.Contains(t, have, rpAcmeHRUK.ID)
+
+			haveRec := have[rpAcmeHRUK.ID]
+			require.Equal(t, rpAcmeHRUK.ID, haveRec.ModID)
+			require.Len(t, haveRec.Definitions, 4)
+			require.Contains(t, haveRec.Definitions, rpAcmeHRUK.ID)
+			require.Empty(t, cmp.Diff(rpAcmeHRUK, haveRec.Definitions[rpAcmeHRUK.ID], protocmp.Transform()))
+			require.Contains(t, haveRec.Definitions, rpAcmeHR.ID)
+			require.Empty(t, cmp.Diff(rpAcmeHR, haveRec.Definitions[rpAcmeHR.ID], protocmp.Transform()))
+			require.Contains(t, haveRec.Definitions, rpAcme.ID)
+			require.Empty(t, cmp.Diff(rpAcme, haveRec.Definitions[rpAcme.ID], protocmp.Transform()))
+			require.Contains(t, haveRec.Definitions, dr.ID)
+			require.Empty(t, cmp.Diff(dr, haveRec.Definitions[dr.ID], protocmp.Transform()))
+		})
+
+		t.Run("get_compilation_unit_for_scoped_principal_policy", func(t *testing.T) {
+			have, err := store.GetCompilationUnits(ctx, ppAcmeHR.ID)
+			require.NoError(t, err)
+			require.Len(t, have, 1)
+			require.Contains(t, have, ppAcmeHR.ID)
+
+			haveRec := have[ppAcmeHR.ID]
+			require.Equal(t, ppAcmeHR.ID, haveRec.ModID)
+			require.Len(t, haveRec.Definitions, 2)
+			require.Contains(t, haveRec.Definitions, ppAcmeHR.ID)
+			require.Empty(t, cmp.Diff(ppAcmeHR, haveRec.Definitions[ppAcmeHR.ID], protocmp.Transform()))
+			require.Contains(t, haveRec.Definitions, ppAcme.ID)
+			require.Empty(t, cmp.Diff(ppAcme, haveRec.Definitions[ppAcme.ID], protocmp.Transform()))
+		})
+
+		t.Run("get_multiple_compilation_units", func(t *testing.T) {
+			have, err := store.GetCompilationUnits(ctx, rp.ID, pp.ID, rpAcmeHRUK.ID)
+			require.NoError(t, err)
+			require.Len(t, have, 3)
 			require.Contains(t, have, rp.ID)
 			require.Contains(t, have, pp.ID)
+			require.Contains(t, have, rpAcmeHRUK.ID)
 
 			haveRP := have[rp.ID]
 			require.Equal(t, rp.ID, haveRP.ModID)
 			require.Len(t, haveRP.Definitions, 2)
-
 			require.Contains(t, haveRP.Definitions, rp.ID)
 			require.Empty(t, cmp.Diff(rp, haveRP.Definitions[rp.ID], protocmp.Transform()))
-
 			require.Contains(t, haveRP.Definitions, dr.ID)
 			require.Empty(t, cmp.Diff(dr, haveRP.Definitions[dr.ID], protocmp.Transform()))
 
 			havePP := have[pp.ID]
 			require.Equal(t, pp.ID, havePP.ModID)
 			require.Len(t, havePP.Definitions, 1)
-
 			require.Contains(t, havePP.Definitions, pp.ID)
 			require.Empty(t, cmp.Diff(pp, havePP.Definitions[pp.ID], protocmp.Transform()))
+
+			haveRPAcmeHRUK := have[rpAcmeHRUK.ID]
+			require.Equal(t, rpAcmeHRUK.ID, haveRPAcmeHRUK.ModID)
+			require.Len(t, haveRPAcmeHRUK.Definitions, 4)
+			require.Contains(t, haveRPAcmeHRUK.Definitions, rpAcmeHRUK.ID)
+			require.Empty(t, cmp.Diff(rpAcmeHRUK, haveRPAcmeHRUK.Definitions[rpAcmeHRUK.ID], protocmp.Transform()))
+			require.Contains(t, haveRPAcmeHRUK.Definitions, rpAcmeHR.ID)
+			require.Empty(t, cmp.Diff(rpAcmeHR, haveRPAcmeHRUK.Definitions[rpAcmeHR.ID], protocmp.Transform()))
+			require.Contains(t, haveRPAcmeHRUK.Definitions, rpAcme.ID)
+			require.Empty(t, cmp.Diff(rpAcme, haveRPAcmeHRUK.Definitions[rpAcme.ID], protocmp.Transform()))
+			require.Contains(t, haveRPAcmeHRUK.Definitions, dr.ID)
+			require.Empty(t, cmp.Diff(dr, haveRPAcmeHRUK.Definitions[dr.ID], protocmp.Transform()))
 		})
 
 		t.Run("get_non_existent_compilation_unit", func(t *testing.T) {
@@ -125,8 +182,12 @@ func TestSuite(store DBStorage) func(*testing.T) {
 			require.Len(t, have, 1)
 			require.Contains(t, have, dr.ID)
 
-			require.Len(t, have[dr.ID], 1)
-			require.Contains(t, have[dr.ID], rp.ID)
+			haveDeps := have[dr.ID]
+			require.Len(t, haveDeps, 4)
+			require.Contains(t, haveDeps, rp.ID)
+			require.Contains(t, haveDeps, rpAcme.ID)
+			require.Contains(t, haveDeps, rpAcmeHR.ID)
+			require.Contains(t, haveDeps, rpAcmeHRUK.ID)
 		})
 
 		t.Run("get_policy", func(t *testing.T) {
@@ -201,4 +262,15 @@ func TestSuite(store DBStorage) func(*testing.T) {
 			checkEvents(t, timeout, storage.NewSchemaEvent(storage.EventDeleteSchema, schID))
 		})
 	}
+}
+
+func withScope(p *policyv1.Policy, scope string) policy.Wrapper {
+	//nolint:exhaustive
+	switch policy.GetKind(p) {
+	case policy.PrincipalKind:
+		p.GetPrincipalPolicy().Scope = scope
+	case policy.ResourceKind:
+		p.GetResourcePolicy().Scope = scope
+	}
+	return policy.Wrap(p)
 }

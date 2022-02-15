@@ -49,14 +49,14 @@ type Index interface {
 }
 
 type index struct {
-	mu           sync.RWMutex
-	executables  map[namer.ModuleID]struct{}
-	modIDToFile  map[namer.ModuleID]string
+	fsys         fs.FS
 	fileToModID  map[string]namer.ModuleID
+	executables  map[namer.ModuleID]struct{}
 	dependents   map[namer.ModuleID]map[namer.ModuleID]struct{}
 	dependencies map[namer.ModuleID]map[namer.ModuleID]struct{}
+	modIDToFile  map[namer.ModuleID]string
 	schemaLoader *SchemaLoader
-	fsys         fs.FS
+	mu           sync.RWMutex
 }
 
 func (idx *index) GetFiles() []string {
@@ -95,7 +95,6 @@ func (idx *index) GetCompilationUnits(ids ...namer.ModuleID) (map[namer.ModuleID
 		cu := &policy.CompilationUnit{
 			ModID:       id,
 			Definitions: map[namer.ModuleID]*policyv1.Policy{id: p},
-			Ancestors:   policy.Ancestors(p),
 		}
 
 		result[id] = cu
@@ -106,7 +105,7 @@ func (idx *index) GetCompilationUnits(ids ...namer.ModuleID) (map[namer.ModuleID
 		}
 
 		// load ancestors of the policy
-		for _, ancestor := range cu.Ancestors {
+		for _, ancestor := range cu.Ancestors() {
 			p, err := idx.loadPolicy(ancestor)
 			if err != nil {
 				return nil, fmt.Errorf("failed to load ancestor %q of scoped policy %s: %w", ancestor.String(), policyKey, err)

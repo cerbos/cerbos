@@ -15,7 +15,8 @@ checkResourceBatch:
       "attr": {
         "department": "marketing",
         "geography": "GB",
-        "team": "design"
+        "team": "design",
+        "ip_address": "10.20.5.5"
       }
     },
     "resources": [
@@ -34,8 +35,7 @@ checkResourceBatch:
             "geography": "GB",
             "id": "XX125",
             "owner": "john",
-            "team": "design",
-            "ip_address": "10.20.5.5"
+            "team": "design"
           }
         }
       },
@@ -54,8 +54,7 @@ checkResourceBatch:
             "geography": "GB",
             "id": "XX225",
             "owner": "john",
-            "team": "design",
-            "ip_address": "10.20.5.5"
+            "team": "design"
           }
         }
       },
@@ -74,7 +73,6 @@ checkResourceBatch:
             "id": "YY125",
             "owner": "jenny",
             "team": "backend",
-            "ip_address": "10.20.5.5"
           }
         }
       },
@@ -93,8 +91,7 @@ checkResourceBatch:
             "geography": "GB",
             "id": "YY525",
             "owner": "mark",
-            "team": "backend",
-            "ip_address": "10.20.5.5"
+            "team": "backend"
           }
         }
       }
@@ -116,7 +113,7 @@ checkResourceBatch:
         "actions": {
           "view:public": "EFFECT_ALLOW",
           "delete": "EFFECT_DENY",
-          "create": "EFFECT_DENY"
+          "create": "EFFECT_ALLOW"
         }
       },
       {

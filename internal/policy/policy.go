@@ -265,7 +265,6 @@ func Wrap(p *policyv1.Policy) Wrapper {
 // both R and D with the ModID field pointing to R because it is the main policy.
 type CompilationUnit struct {
 	Definitions map[namer.ModuleID]*policyv1.Policy
-	Ancestors   []namer.ModuleID
 	ModID       namer.ModuleID
 }
 
@@ -283,6 +282,10 @@ func (cu *CompilationUnit) MainSourceFile() string {
 
 func (cu *CompilationUnit) MainPolicy() *policyv1.Policy {
 	return cu.Definitions[cu.ModID]
+}
+
+func (cu *CompilationUnit) Ancestors() []namer.ModuleID {
+	return Ancestors(cu.Definitions[cu.ModID])
 }
 
 // Key returns the human readable identifier for the main module.

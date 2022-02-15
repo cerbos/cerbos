@@ -56,13 +56,15 @@ func compileResourcePolicySet(modCtx *moduleCtx, schemaMgr schema.Manager) *runt
 		return nil
 	}
 
+	ancestors := modCtx.unit.Ancestors()
+
 	rrps := &runtimev1.RunnableResourcePolicySet{
 		Meta: &runtimev1.RunnableResourcePolicySet_Metadata{
 			Fqn:      modCtx.fqn,
 			Resource: rp.Resource,
 			Version:  rp.Version,
 		},
-		Policies: make([]*runtimev1.RunnableResourcePolicySet_Policy, len(modCtx.unit.Ancestors)+1),
+		Policies: make([]*runtimev1.RunnableResourcePolicySet_Policy, len(ancestors)+1),
 	}
 
 	compiled := compileResourcePolicy(modCtx, schemaMgr)
@@ -72,7 +74,7 @@ func compileResourcePolicySet(modCtx *moduleCtx, schemaMgr schema.Manager) *runt
 
 	rrps.Policies[0] = compiled
 
-	for i, ancestor := range modCtx.unit.Ancestors {
+	for i, ancestor := range ancestors {
 		compiled := compileResourcePolicy(modCtx.moduleCtx(ancestor), schemaMgr)
 		if compiled == nil {
 			return nil
@@ -310,18 +312,20 @@ func compilePrincipalPolicySet(modCtx *moduleCtx) *runtimev1.RunnablePolicySet {
 		return nil
 	}
 
+	ancestors := modCtx.unit.Ancestors()
+
 	rpps := &runtimev1.RunnablePrincipalPolicySet{
 		Meta: &runtimev1.RunnablePrincipalPolicySet_Metadata{
 			Fqn:       modCtx.fqn,
 			Principal: pp.Principal,
 			Version:   pp.Version,
 		},
-		Policies: make([]*runtimev1.RunnablePrincipalPolicySet_Policy, len(modCtx.unit.Ancestors)+1),
+		Policies: make([]*runtimev1.RunnablePrincipalPolicySet_Policy, len(ancestors)+1),
 	}
 
 	rpps.Policies[0] = compilePrincipalPolicy(modCtx)
 
-	for i, ancestor := range modCtx.unit.Ancestors {
+	for i, ancestor := range ancestors {
 		rpps.Policies[i+1] = compilePrincipalPolicy(modCtx.moduleCtx(ancestor))
 	}
 
