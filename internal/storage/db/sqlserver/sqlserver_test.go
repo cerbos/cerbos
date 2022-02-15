@@ -1,15 +1,12 @@
 // Copyright 2021-2022 Zenauth Ltd.
 // SPDX-License-Identifier: Apache-2.0
 
-package sqlserver_test
+package sqlserver
 
 import (
-	"bufio"
-	"bytes"
 	"context"
 	_ "embed"
 	"fmt"
-	"strings"
 	"testing"
 	"time"
 
@@ -18,7 +15,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/cerbos/cerbos/internal/storage/db/internal"
-	"github.com/cerbos/cerbos/internal/storage/db/sqlserver"
+	"bytes"
 )
 
 //go:embed schema.sql
@@ -73,12 +70,12 @@ func TestSqlServer(t *testing.T) {
 			return err
 		}
 
-		return createSchema(db, func() (*sqlx.DB, error) {
+		return CreateSchema(bytes.NewReader(schemaSQL), db, func() (*sqlx.DB, error) {
 			return sqlx.Connect("sqlserver", getConnString("cerbos"))
 		})
 	}), "Container did not start or couldn't create schema")
 
-	store, err := sqlserver.NewStore(ctx, &sqlserver.Conf{
+	store, err := NewStore(ctx, &Conf{
 		URL: fmt.Sprintf("sqlserver://cerbos_user:ChangeMe(1!!)@127.0.0.1:%s?database=cerbos", port),
 		ConnPool: &internal.ConnPoolConf{
 			MaxLifetime: 1 * time.Minute,
@@ -89,54 +86,4 @@ func TestSqlServer(t *testing.T) {
 	})
 	require.NoError(t, err)
 	t.Run("suite", internal.TestSuite(store))
-}
-
-func createSchema(db *sqlx.DB, f func() (*sqlx.DB, error)) error {
-	s := bufio.NewScanner(bytes.NewReader(schemaSQL))
-	s.Split(splitOnGo)
-	var c *sqlx.DB
-	var err error
-
-	for s.Scan() {
-		query := s.Text()
-
-		if strings.HasPrefix(query, "CREATE TRIGGER") {
-			if c == nil {
-				c, err = f()
-				if err != nil {
-					return fmt.Errorf("failed to connect to \"cerbos\" database")
-				}
-			}
-			if _, err = c.Exec(query); err != nil {
-				return fmt.Errorf("failed to execute [%s]: %w", query, err)
-			}
-			continue
-		}
-
-		if _, err := db.Exec(query); err != nil {
-			return fmt.Errorf("failed to execute [%s]: %w", query, err)
-		}
-	}
-
-	return s.Err()
-}
-
-var sep = []byte("\nGO\n")
-
-func splitOnGo(data []byte, atEOF bool) (int, []byte, error) {
-	// no more data to process
-	if atEOF && len(data) == 0 {
-		return 0, nil, nil
-	}
-
-	if i := bytes.Index(data, sep); i >= 0 {
-		return i + len(sep), bytes.TrimSpace(data[:i-1]), nil
-	}
-	// at the end of input
-	if atEOF {
-		return len(data), bytes.TrimSpace(data), nil
-	}
-
-	// get more data
-	return 0, nil, nil
 }

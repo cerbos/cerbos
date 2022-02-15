@@ -1,7 +1,3 @@
-repositories:
-  - name: bitnami
-    url: https://charts.bitnami.com/bitnami
-
 helmDefaults:
   cleanupOnFail: true
   wait: true
@@ -10,13 +6,13 @@ helmDefaults:
   createNamespace: true
 
 releases:
-  - name: postgres
+  - name: sqlserver
     namespace: '{{ requiredEnv "E2E_NS" }}'
     createNamespace: true
     labels:
       e2e-run: '{{ requiredEnv "E2E_RUN_ID" }}'
       e2e-ctx: '{{ requiredEnv "E2E_CONTEXT_ID" }}'
-    chart: bitnami/postgresql
+    chart: ./chart
     hooks:
       - events: ["presync"]
         showlogs: true
@@ -25,23 +21,6 @@ releases:
           - create
           - namespace
           - '{{ requiredEnv "E2E_NS" }}'
-      - events: ["presync"]
-        showlogs: true
-        command: kubectl
-        args:
-          - create
-          - configmap
-          - postgres-init
-          - '--namespace={{ requiredEnv "E2E_NS" }}'
-          - '--from-file=schema.sql={{ requiredEnv "E2E_SRC_ROOT" }}/internal/storage/db/postgres/schema.sql'
-      - events: ["postuninstall"]
-        showlogs: true
-        command: kubectl
-        args:
-          - delete
-          - configmap
-          - postgres-init
-          - '--namespace={{ requiredEnv "E2E_NS" }}'
       - events: ["postuninstall"]
         showlogs: true
         command: kubectl
@@ -51,17 +30,13 @@ releases:
           - '{{ requiredEnv "E2E_NS" }}'
     values:
       - nameOverride: '{{ requiredEnv "E2E_CONTEXT_ID" }}'
-      - auth:
-          postgresPassword: passw0rd
-      - primary:
-          initdb:
-            scriptsConfigMap: postgres-init
-          persistence:
-            enabled: false
+      - sa_password: MyPassword1!
+      - service:
+          type: ClusterIP
 
   - name: cerbos
     namespace: '{{ requiredEnv "E2E_NS" }}'
-    needs: ["postgres"]
+    needs: ["sqlserver"]
     createNamespace: true
     labels:
       e2e-run: '{{ requiredEnv "E2E_RUN_ID" }}'
@@ -79,6 +54,15 @@ releases:
           - '--cert={{ requiredEnv "E2E_SRC_ROOT" }}/internal/test/testdata/server/tls.crt'
           - '--key={{ requiredEnv "E2E_SRC_ROOT" }}/internal/test/testdata/server/tls.key'
           - '--namespace={{ requiredEnv "E2E_NS" }}'
+      - events: ["presync"]
+        showlogs: true
+        command: kubectl
+        args:
+          - create
+          - configmap
+          - mssql-init
+          - '--namespace={{ requiredEnv "E2E_NS" }}'
+          - '--from-file=schema.sql={{ requiredEnv "E2E_SRC_ROOT" }}/internal/storage/db/sqlserver/schema.sql'
       - events: ["postuninstall"]
         showlogs: true
         command: kubectl
@@ -87,14 +71,43 @@ releases:
           - secret
           - 'cerbos-certs-{{ requiredEnv "E2E_CONTEXT_ID" }}'
           - '--namespace={{ requiredEnv "E2E_NS" }}'
+      - events: ["postuninstall"]
+        showlogs: true
+        command: kubectl
+        args:
+          - delete
+          - configmap
+          - mssql-init
+          - '--namespace={{ requiredEnv "E2E_NS" }}'
     values:
       - nameOverride: '{{ requiredEnv "E2E_CONTEXT_ID" }}'
+      - initContainers:
+          - name: init-mssql
+            image: 'mcr.microsoft.com/azure-sql-edge:latest' 
+            command:
+              - '/opt/mssql-tools/bin/sqlcmd' 
+              - '-S'
+              - '{{ requiredEnv "E2E_CONTEXT_ID" }}.{{ requiredEnv "E2E_NS" }}.svc.cluster.local'
+              - '-l'
+              - '60'
+              - '-U'
+              - 'SA'
+              - '-P'
+              - 'MyPassword1!' 
+              - '-i'
+              - '/initdb/schema.sql'
+            volumeMounts:
+              - name: mssql-init-script
+                mountPath: /initdb
       - image:
           repository: '{{ env "E2E_CERBOS_IMG_REPO" | default "ghcr.io/cerbos/cerbos" }}'
           tag: '{{ env "E2E_CERBOS_IMG_TAG" | default "dev" }}'
       - volumes:
         - name: cerbos-auditlog
           emptyDir: {}
+        - name: mssql-init-script
+          configMap:
+            name: mssql-init
       - volumeMounts:
         - name: cerbos-auditlog
           mountPath: /audit
@@ -122,6 +135,6 @@ releases:
               local: 
                 storagePath: /audit/cerbos
             storage:
-              driver: "postgres"
-              postgres: 
-                url: 'postgres://cerbos_user:changeme@{{ requiredEnv "E2E_CONTEXT_ID" }}.{{ requiredEnv "E2E_NS" }}.svc.cluster.local:5432/postgres?sslmode=disable&search_path=cerbos'
+              driver: "sqlserver"
+              sqlserver:
+                url: 'sqlserver://cerbos_user:ChangeMe(1!!)@{{ requiredEnv "E2E_CONTEXT_ID" }}.{{ requiredEnv "E2E_NS" }}.svc.cluster.local:1433?database=cerbos'

@@ -8,12 +8,12 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"os"
 	"os/signal"
-	"strings"
 
+	"github.com/alecthomas/kong"
 	"github.com/fatih/color"
-	"github.com/spf13/cobra"
 
 	"github.com/cerbos/cerbos/internal/compile"
 	"github.com/cerbos/cerbos/internal/engine"
@@ -34,12 +34,6 @@ var (
 	skippedTest    = color.New(color.FgHiWhite).SprintFunc()
 	failedTest     = color.New(color.FgHiRed).SprintFunc()
 	successfulTest = color.New(color.FgHiGreen).SprintFunc()
-
-	format        string
-	skipTests     bool
-	ignoreSchemas bool
-	verbose       bool
-	verifyConf    = verify.Config{}
 )
 
 const (
@@ -47,43 +41,52 @@ const (
 	formatPlain = "plain"
 )
 
-func NewCommand() *cobra.Command {
-	cmd := &cobra.Command{
-		Use:           "compile DIR",
-		Short:         "Compile the policy files found in the directory",
-		RunE:          doRun,
-		Args:          cobra.ExactArgs(1),
-		SilenceErrors: true,
-	}
+const help = `
+Examples:
 
-	cmd.Flags().StringVarP(&format, "format", "f", "", "Output format (valid values: json,plain)")
-	cmd.Flags().StringVar(&verifyConf.TestsDir, "tests", "", "Path to the directory containing tests")
-	cmd.Flags().StringVar(&verifyConf.Run, "run", "", "Run only tests that match this regex")
-	cmd.Flags().BoolVar(&skipTests, "skip-tests", false, "Skip tests")
-	cmd.Flags().BoolVar(&ignoreSchemas, "ignore-schemas", false, "Ignore schemas during compilation")
-	cmd.Flags().BoolVar(&verbose, "verbose", false, "Verbose output on test failure")
+# Compile and run tests found in /path/to/policy/repo
 
-	return cmd
+cerbos compile /path/to/policy/repo
+
+# Compile and run tests that contain "Delete" in their name
+
+cerbos compile --run=Delete /path/to/policy/repo
+
+# Compile but skip tests
+
+cerbos compile --skip-tests /path/to/policy/repo
+`
+
+type Cmd struct {
+	Dir           string `help:"Policy directory" arg:"" required:"" type:"existingdir"`
+	Format        string `help:"Output format (${enum})" default:"pretty" enum:"pretty,plain,json" short:"f"`
+	Tests         string `help:"Path to the directory containing tests. Defaults to policy directory." type:"existingdir"`
+	RunRegex      string `help:"Run only tests that match this regex" name:"run"`
+	SkipTests     bool   `help:"Skip tests"`
+	IgnoreSchemas bool   `help:"Ignore schemas during compilation"`
+	Verbose       bool   `help:"Verbose output on test failure"`
 }
 
-func doRun(cmd *cobra.Command, args []string) error {
+func (c *Cmd) Run(k *kong.Kong) error {
 	ctx, stopFunc := signal.NotifyContext(context.Background(), os.Interrupt)
 	defer stopFunc()
 
-	idx, err := index.Build(ctx, os.DirFS(args[0]))
+	p := &printer{format: c.Format, verbose: c.Verbose, stdout: k.Stdout, stderr: k.Stderr}
+
+	idx, err := index.Build(ctx, os.DirFS(c.Dir))
 	if err != nil {
 		idxErr := new(index.BuildError)
 		if errors.As(err, &idxErr) {
-			return displayLintErrors(cmd, idxErr)
+			return displayLintErrors(p, idxErr)
 		}
 
-		return fmt.Errorf("failed to open directory %s: %w", args[0], err)
+		return fmt.Errorf("failed to open directory %s: %w", c.Dir, err)
 	}
 
 	store := disk.NewFromIndexWithConf(idx, &disk.Conf{})
 
 	enforcement := schema.EnforcementReject
-	if ignoreSchemas {
+	if c.IgnoreSchemas {
 		enforcement = schema.EnforcementNone
 	}
 	schemaMgr := schema.NewWithConf(ctx, store, &schema.Conf{Enforcement: enforcement})
@@ -91,17 +94,22 @@ func doRun(cmd *cobra.Command, args []string) error {
 	if err := compile.BatchCompile(idx.GetAllCompilationUnits(ctx), schemaMgr); err != nil {
 		compErr := new(compile.ErrorList)
 		if errors.As(err, compErr) {
-			return displayCompileErrors(cmd, *compErr)
+			return displayCompileErrors(p, *compErr)
 		}
 
 		return fmt.Errorf("failed to create engine: %w", err)
 	}
 
-	if verifyConf.TestsDir == "" {
-		verifyConf.TestsDir = args[0]
-	}
+	if !c.SkipTests {
+		verifyConf := verify.Config{
+			TestsDir: c.Tests,
+			Run:      c.RunRegex,
+		}
 
-	if !skipTests {
+		if verifyConf.TestsDir == "" {
+			verifyConf.TestsDir = c.Dir
+		}
+
 		compiler := compile.NewManager(ctx, store, schemaMgr)
 		eng, err := engine.NewEphemeral(ctx, compiler, schemaMgr)
 		if err != nil {
@@ -113,16 +121,39 @@ func doRun(cmd *cobra.Command, args []string) error {
 			return fmt.Errorf("failed to run tests: %w", err)
 		}
 
-		return displayVerificationResult(cmd, result)
+		return displayVerificationResult(p, result)
 	}
 
 	return nil
 }
 
-func displayLintErrors(cmd *cobra.Command, errs *index.BuildError) error {
-	switch strings.ToLower(format) {
+func (c *Cmd) Help() string {
+	return help
+}
+
+type printer struct {
+	stdout  io.Writer
+	stderr  io.Writer
+	format  string
+	verbose bool
+}
+
+func (p *printer) Println(args ...interface{}) {
+	fmt.Fprintln(p.stdout, args...)
+}
+
+func (p *printer) Printf(format string, args ...interface{}) {
+	fmt.Fprintf(p.stdout, format, args...)
+}
+
+func (p *printer) OutOrStdout() io.Writer {
+	return p.stdout
+}
+
+func displayLintErrors(p *printer, errs *index.BuildError) error {
+	switch p.format {
 	case formatJSON:
-		if err := outputJSON(cmd, map[string]*index.BuildError{"lintErrors": errs}); err != nil {
+		if err := outputJSON(p, map[string]*index.BuildError{"lintErrors": errs}); err != nil {
 			return err
 		}
 
@@ -132,44 +163,44 @@ func displayLintErrors(cmd *cobra.Command, errs *index.BuildError) error {
 	}
 
 	if len(errs.DuplicateDefs) > 0 {
-		cmd.Println(header("Duplicate definitions"))
+		p.Println(header("Duplicate definitions"))
 		for _, dd := range errs.DuplicateDefs {
-			cmd.Printf("%s is a duplicate of %s\n", fileName(dd.File), fileName(dd.OtherFile))
+			p.Printf("%s is a duplicate of %s\n", fileName(dd.File), fileName(dd.OtherFile))
 		}
-		cmd.Println()
+		p.Println()
 	}
 
 	if len(errs.MissingImports) > 0 {
-		cmd.Println(header("Missing Imports"))
+		p.Println(header("Missing Imports"))
 		for _, mi := range errs.MissingImports {
-			cmd.Printf("%s: %s\n", fileName(mi.ImportingFile), errorMsg(mi.Desc))
+			p.Printf("%s: %s\n", fileName(mi.ImportingFile), errorMsg(mi.Desc))
 		}
-		cmd.Println()
+		p.Println()
 	}
 
 	if len(errs.LoadFailures) > 0 {
-		cmd.Println(header("Load failures"))
+		p.Println(header("Load failures"))
 		for _, lf := range errs.LoadFailures {
-			cmd.Printf("%s: %s\n", fileName(lf.File), errorMsg(lf.Err.Error()))
+			p.Printf("%s: %s\n", fileName(lf.File), errorMsg(lf.Err.Error()))
 		}
-		cmd.Println()
+		p.Println()
 	}
 
 	if len(errs.Disabled) > 0 {
-		cmd.Println(header("Disabled policies"))
+		p.Println(header("Disabled policies"))
 		for _, d := range errs.Disabled {
-			cmd.Println(fileName(d))
+			p.Println(fileName(d))
 		}
-		cmd.Println()
+		p.Println()
 	}
 
 	return ErrFailed
 }
 
-func displayCompileErrors(cmd *cobra.Command, errs compile.ErrorList) error {
-	switch strings.ToLower(format) {
+func displayCompileErrors(p *printer, errs compile.ErrorList) error {
+	switch p.format {
 	case formatJSON:
-		if err := outputJSON(cmd, map[string]compile.ErrorList{"compileErrors": errs}); err != nil {
+		if err := outputJSON(p, map[string]compile.ErrorList{"compileErrors": errs}); err != nil {
 			return err
 		}
 
@@ -178,18 +209,18 @@ func displayCompileErrors(cmd *cobra.Command, errs compile.ErrorList) error {
 		color.NoColor = true
 	}
 
-	cmd.Println(header("Compilation errors"))
+	p.Println(header("Compilation errors"))
 	for _, err := range errs {
-		cmd.Printf("%s: %s (%s)\n", fileName(err.File), errorMsg(err.Description), err.Err.Error())
+		p.Printf("%s: %s (%s)\n", fileName(err.File), errorMsg(err.Description), err.Err.Error())
 	}
 
 	return ErrFailed
 }
 
-func displayVerificationResult(cmd *cobra.Command, result *verify.Result) error {
-	switch strings.ToLower(format) {
+func displayVerificationResult(p *printer, result *verify.Result) error {
+	switch p.format {
 	case formatJSON:
-		if err := outputJSON(cmd, result); err != nil {
+		if err := outputJSON(p, result); err != nil {
 			return err
 		}
 
@@ -202,32 +233,32 @@ func displayVerificationResult(cmd *cobra.Command, result *verify.Result) error 
 		color.NoColor = true
 	}
 
-	cmd.Println(header("Test results"))
+	p.Println(header("Test results"))
 	for _, sr := range result.Results {
-		cmd.Printf("= %s %s ", testName(sr.Suite), fileName("(", sr.File, ")"))
+		p.Printf("= %s %s ", testName(sr.Suite), fileName("(", sr.File, ")"))
 		if sr.Skipped {
-			cmd.Println(skippedTest("[SKIPPED]"))
+			p.Println(skippedTest("[SKIPPED]"))
 			continue
 		}
 
-		cmd.Println()
+		p.Println()
 		for _, tr := range sr.Tests {
-			cmd.Printf("== %s ", testName(tr.Name.String()))
+			p.Printf("== %s ", testName(tr.Name.String()))
 			if tr.Skipped {
-				cmd.Println(skippedTest("[SKIPPED]"))
+				p.Println(skippedTest("[SKIPPED]"))
 				continue
 			}
 
 			if tr.Failed {
-				cmd.Println(failedTest("[FAILED]"))
-				cmd.Printf("\tError: %s\n", tr.Error)
-				if verbose {
-					cmd.Printf("\tTrace: \n%s\n", tr.EngineTrace)
+				p.Println(failedTest("[FAILED]"))
+				p.Printf("\tError: %s\n", tr.Error)
+				if p.verbose {
+					p.Printf("\tTrace: \n%s\n", tr.EngineTrace)
 				}
 				continue
 			}
 
-			cmd.Println(successfulTest("[OK]"))
+			p.Println(successfulTest("[OK]"))
 		}
 	}
 
@@ -238,8 +269,8 @@ func displayVerificationResult(cmd *cobra.Command, result *verify.Result) error 
 	return nil
 }
 
-func outputJSON(cmd *cobra.Command, val interface{}) error {
-	enc := json.NewEncoder(cmd.OutOrStdout())
+func outputJSON(p *printer, val interface{}) error {
+	enc := json.NewEncoder(p.OutOrStdout())
 	enc.SetIndent("", "  ")
 	return enc.Encode(val)
 }

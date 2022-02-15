@@ -13,6 +13,7 @@ import (
 
 	enginev1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
 	requestv1 "github.com/cerbos/cerbos/api/genpb/cerbos/request/v1"
+	"github.com/cerbos/cerbos/internal/conditions/types"
 )
 
 const (
@@ -36,32 +37,50 @@ var (
 
 func init() {
 	var err error
-	envOptions := newCELEnvOptions()
-	StdEnv, err = cel.NewEnv(envOptions...)
+
+	StdEnv, err = initEnv(newCELEnvOptions())
 	if err != nil {
 		panic(fmt.Errorf("failed to initialize standard CEL environment: %w", err))
 	}
 
-	ast, iss := StdEnv.Compile("false")
-	if iss.Err() != nil {
-		panic(iss.Err())
-	}
-	FalseExpr, err = cel.AstToCheckedExpr(ast)
-	if err != nil {
-		panic(err)
-	}
-	ast, iss = StdEnv.Compile("true")
-	if iss.Err() != nil {
-		panic(iss.Err())
-	}
-	TrueExpr, err = cel.AstToCheckedExpr(ast)
-	if err != nil {
-		panic(err)
-	}
-	StdPartialEnv, err = cel.NewEnv(newCELQueryPlanEnvOptions()...)
+	StdPartialEnv, err = initEnv(newCELQueryPlanEnvOptions())
 	if err != nil {
 		panic(fmt.Errorf("failed to initialize CEL environment for partial evaluation: %w", err))
 	}
+
+	FalseExpr, err = compileConstant("false")
+	if err != nil {
+		panic(fmt.Errorf("failed to compile constant 'false': %w", err))
+	}
+
+	TrueExpr, err = compileConstant("true")
+	if err != nil {
+		panic(fmt.Errorf("failed to compile constant 'true': %w", err))
+	}
+}
+
+func initEnv(options []cel.EnvOption) (*cel.Env, error) {
+	env, err := cel.NewEnv(options...)
+	if err != nil {
+		return nil, err
+	}
+
+	cctp := types.NewCamelCaseFieldProvider(env.TypeProvider())
+	return env.Extend(cel.CustomTypeProvider(cctp))
+}
+
+func compileConstant(value string) (*exprpb.CheckedExpr, error) {
+	ast, iss := StdEnv.Compile(value)
+	if iss.Err() != nil {
+		return nil, fmt.Errorf("failed to compile constant %q: %w", value, iss.Err())
+	}
+
+	expr, err := cel.AstToCheckedExpr(ast)
+	if err != nil {
+		return nil, fmt.Errorf("failed to convert constant %q to checked expression: %w", value, err)
+	}
+
+	return expr, nil
 }
 
 func Fqn(s string) string {
