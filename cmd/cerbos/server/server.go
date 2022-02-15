@@ -8,8 +8,10 @@ import (
 	"fmt"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 
+	"github.com/alecthomas/kong"
 	"github.com/google/gops/agent"
 	"go.uber.org/automaxprocs/maxprocs"
 	"go.uber.org/zap"
@@ -32,16 +34,28 @@ cerbos server --config=/path/to/config.yaml
 
 cerbos server --config=/path/to/config.yaml --set=server.adminAPI.enabled=true --set=storage.driver=sqlite3 --set=storage.sqlite3.dsn=':memory:'`
 
+type LogLevelFlag string
+
+func (ll *LogLevelFlag) Decode(ctx *kong.DecodeContext) error {
+	var loglevel LogLevelFlag
+	if err := ctx.Scan.PopValueInto("log-level", &loglevel); err != nil {
+		return err
+	}
+
+	*ll = LogLevelFlag(strings.ToLower(string(loglevel)))
+	return nil
+}
+
 type Cmd struct {
-	DebugListenAddr string   `help:"Address to start the gops listener" placeholder:":6666"`
-	LogLevel        string   `help:"Log level (${enum})" default:"info" enum:"debug,info,warn,error"`
-	Config          string   `help:"Path to config file" type:"existingfile" required:"" placeholder:"./config.yaml"`
-	Set             []string `help:"Config overrides" placeholder:"server.adminAPI.enabled=true"`
-	ZPagesEnabled   bool     `help:"Enable zpages" hidden:""`
+	DebugListenAddr string       `help:"Address to start the gops listener" placeholder:":6666"`
+	LogLevel        LogLevelFlag `help:"Log level (${enum})" default:"info" enum:"debug,info,warn,error"`
+	Config          string       `help:"Path to config file" type:"existingfile" required:"" placeholder:"./config.yaml"`
+	Set             []string     `help:"Config overrides" placeholder:"server.adminAPI.enabled=true"`
+	ZPagesEnabled   bool         `help:"Enable zpages" hidden:""`
 }
 
 func (c *Cmd) Run() error {
-	logging.InitLogging(c.LogLevel)
+	logging.InitLogging(string(c.LogLevel))
 	defer zap.L().Sync() //nolint:errcheck
 
 	log := zap.S().Named("server")
