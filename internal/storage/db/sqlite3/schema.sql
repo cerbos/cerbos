@@ -21,6 +21,7 @@ CREATE TABLE IF NOT EXISTS policy_dependency (
     FOREIGN KEY (policy_id) REFERENCES policy(id) ON DELETE CASCADE
 );
 
+
 -- name: policy_revision
 CREATE TABLE IF NOT EXISTS policy_revision (
     revision_id INTEGER PRIMARY KEY AUTOINCREMENT,

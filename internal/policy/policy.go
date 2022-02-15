@@ -213,6 +213,7 @@ type Wrapper struct {
 	Kind         string
 	Name         string
 	Version      string
+	Scope        string
 	Dependencies []namer.ModuleID
 	ID           namer.ModuleID
 }
@@ -228,6 +229,7 @@ func Wrap(p *policyv1.Policy) Wrapper {
 		w.ID = namer.GenModuleIDFromFQN(w.FQN)
 		w.Name = pt.ResourcePolicy.Resource
 		w.Version = pt.ResourcePolicy.Version
+		w.Scope = pt.ResourcePolicy.Scope
 
 		imports := pt.ResourcePolicy.ImportDerivedRoles
 		if len(imports) > 0 {
@@ -243,6 +245,7 @@ func Wrap(p *policyv1.Policy) Wrapper {
 		w.ID = namer.GenModuleIDFromFQN(w.FQN)
 		w.Name = pt.PrincipalPolicy.Principal
 		w.Version = pt.PrincipalPolicy.Version
+		w.Scope = pt.PrincipalPolicy.Scope
 
 	case *policyv1.Policy_DerivedRoles:
 		w.Kind = DerivedRolesKind.String()

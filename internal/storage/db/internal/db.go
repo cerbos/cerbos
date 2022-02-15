@@ -208,6 +208,7 @@ func (s *dbStorage) AddOrUpdate(ctx context.Context, policies ...policy.Wrapper)
 				Kind:        p.Kind,
 				Name:        p.Name,
 				Version:     p.Version,
+				Scope:       p.Scope,
 				Description: p.Description,
 				Disabled:    p.Disabled,
 				Definition:  PolicyDefWrapper{Policy: p.Policy},
@@ -251,6 +252,30 @@ func (s *dbStorage) AddOrUpdate(ctx context.Context, policies ...policy.Wrapper)
 				}
 			}
 
+			ancestors := policy.Ancestors(p.Policy)
+			if len(ancestors) > 0 {
+				// delete the existing ancestor records
+				if _, err := tx.Delete(PolicyAncestorTbl).
+					Prepared(true).
+					Where(goqu.I(PolicyAncestorTblPolicyIDCol).Eq(p.ID)).
+					Executor().ExecContext(ctx); err != nil {
+					return fmt.Errorf("failed to delete ancestors of %s: %w", p.FQN, err)
+				}
+
+				// insert the new ancestry records
+				ancRows := make([]interface{}, len(ancestors))
+				for i, a := range ancestors {
+					ancRows[i] = PolicyAncestor{PolicyID: p.ID, AncestorID: a}
+				}
+
+				if _, err := tx.Insert(PolicyAncestorTbl).
+					Prepared(true).
+					Rows(ancRows...).
+					Executor().ExecContext(ctx); err != nil {
+					return fmt.Errorf("failed to insert ancestors of %s: %w", p.FQN, err)
+				}
+			}
+
 			events[i] = storage.Event{Kind: storage.EventAddOrUpdatePolicy, PolicyID: p.ID}
 		}
 
@@ -265,6 +290,16 @@ func (s *dbStorage) AddOrUpdate(ctx context.Context, policies ...policy.Wrapper)
 }
 
 func (s *dbStorage) GetCompilationUnits(ctx context.Context, ids ...namer.ModuleID) (map[namer.ModuleID]*policy.CompilationUnit, error) {
+	// SELECT ancestor_id as pid FROM policy_ancestor WHERE policy_id IN (?)
+	// UNION ALL SELECT policy_id as pid FROM policy WHERE policy_id IN (?)
+	withAncestors := s.db.Select(goqu.C(PolicyAncestorTblAncestorIDCol).As("pid")).
+		From(PolicyAncestorTbl).
+		Where(goqu.C(PolicyAncestorTblPolicyIDCol).In(ids)).
+		UnionAll(
+			s.db.Select(goqu.C(PolicyTblIDCol).As("pid")).
+				From(PolicyTbl).
+				Where(goqu.C(PolicyTblIDCol).In(ids)))
+
 	// SELECT pd.policy_id as parent, p.id, p.definition
 	// FROM policy_dependency pd
 	// JOIN policy p ON (pd.dependency_id = p.id)
@@ -280,7 +315,7 @@ func (s *dbStorage) GetCompilationUnits(ctx context.Context, ids ...namer.Module
 		).
 		Where(
 			goqu.And(
-				goqu.C(PolicyDepTblPolicyIDCol).Table("pd").In(ids),
+				goqu.C(PolicyDepTblPolicyIDCol).Table("pd").In(goqu.T("ancestors")),
 				goqu.C(PolicyTblDisabledCol).Table("p").Eq(goqu.V(false)),
 			),
 		)
@@ -294,9 +329,10 @@ func (s *dbStorage) GetCompilationUnits(ctx context.Context, ids ...namer.Module
 		goqu.C(PolicyTblIDCol),
 		goqu.C(PolicyTblDefinitionCol)).
 		From(PolicyTbl).
+		With("ancestors", withAncestors).
 		Where(
 			goqu.And(
-				goqu.I(PolicyTblIDCol).In(ids),
+				goqu.I(PolicyTblIDCol).In(goqu.T("ancestors")),
 				goqu.I(PolicyTblDisabledCol).Eq(goqu.V(false)),
 			),
 		).
