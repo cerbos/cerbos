@@ -1,6 +1,9 @@
 // Copyright 2021-2022 Zenauth Ltd.
 // SPDX-License-Identifier: Apache-2.0
 
+//go:build loadtest
+// +build loadtest
+
 package main
 
 import (
@@ -10,8 +13,8 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/alecthomas/kong"
 	"github.com/mattn/go-isatty"
-	"github.com/spf13/cobra"
 	"go.elastic.co/ecszap"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
@@ -33,17 +36,16 @@ const (
 	numDerivedRolesPerFile = 10
 
 	fileWritePerm = 0o600
-
-	flagOutputDir = "output-dir"
-	flagPolicySet = "policy-set-count"
 )
 
 var (
 	logger *zap.SugaredLogger
-
-	flagOutputValue    = ""
-	flagPolicySetValue = 0
 )
+
+var cli struct {
+	OutputDir      string `help:"Directory to write generated policy files" type:"path"`
+	PolicySetCount int    `help:"Number of policy sets to generate"`
+}
 
 func init() {
 	if envLevel := os.Getenv("GENRES_LOG_LEVEL"); envLevel != "" {
@@ -54,40 +56,14 @@ func init() {
 }
 
 func main() {
-	cmd := &cobra.Command{
-		Use:           "genres",
-		Short:         "Generate policies and corresponding HTTP requests for load testing",
-		SilenceUsage:  true,
-		SilenceErrors: true,
-		RunE:          RunE,
-	}
+	kong.Parse(&cli,
+		kong.Description("Painless access controls for cloud-native applications"),
+		kong.UsageOnError(),
+	)
 
-	err := initFlags(cmd)
+	policies, requests, err := mkPolicies(cli.PolicySetCount, 1)
 	if err != nil {
-		logger.Fatalf("failed to initialize flags: %v", err)
-	}
-
-	if err := cmd.Execute(); err != nil {
-		logger.Fatalf("failed to execute: %v", err)
-	}
-}
-
-func initFlags(cmd *cobra.Command) error {
-	cmd.Flags().StringVar(&flagOutputValue, flagOutputDir, "", "Absolute path to put the generated resources into")
-	cmd.Flags().IntVar(&flagPolicySetValue, flagPolicySet, 1, "Number of policy sets to generate")
-
-	err := cmd.MarkFlagRequired(flagOutputDir)
-	if err != nil {
-		return fmt.Errorf("failed to make flag required: %w", err)
-	}
-
-	return nil
-}
-
-func RunE(_ *cobra.Command, _ []string) error {
-	policies, requests, err := mkPolicies(flagPolicySetValue, 1)
-	if err != nil {
-		return fmt.Errorf("failed to generate policies and http requests: %w", err)
+		logger.Fatalf("failed to generate policies and http requests: %v", err)
 	}
 
 	policyIdx := make([]string, len(policies))
@@ -95,12 +71,12 @@ func RunE(_ *cobra.Command, _ []string) error {
 	for idx, p := range policies {
 		data, err := protojson.Marshal(p)
 		if err != nil {
-			return fmt.Errorf("failed to marshal the policy: %w", err)
+			logger.Fatalf("failed to marshal the policy: %v", err)
 		}
 
-		err = os.WriteFile(filepath.Join(flagOutputValue, "policies", fmt.Sprintf("%d.json", idx)), data, fileWritePerm)
+		err = os.WriteFile(filepath.Join(cli.OutputDir, "policies", fmt.Sprintf("%d.json", idx)), data, fileWritePerm)
 		if err != nil {
-			return fmt.Errorf("failed to write generated policy to the file system: %w", err)
+			logger.Fatalf("failed to write generated policy to the file system: %v", err)
 		}
 
 		policyIdx[idx] = fmt.Sprintf("%d.json", idx)
@@ -109,12 +85,12 @@ func RunE(_ *cobra.Command, _ []string) error {
 	for idx, r := range requests {
 		data, err := protojson.Marshal(r)
 		if err != nil {
-			return fmt.Errorf("failed to marshal the request: %w", err)
+			logger.Fatalf("failed to marshal the request: %v", err)
 		}
 
-		err = os.WriteFile(filepath.Join(flagOutputValue, "requests", fmt.Sprintf("%d.json", idx)), data, fileWritePerm)
+		err = os.WriteFile(filepath.Join(cli.OutputDir, "requests", fmt.Sprintf("%d.json", idx)), data, fileWritePerm)
 		if err != nil {
-			return fmt.Errorf("failed to write generated request to the file system: %w", err)
+			logger.Fatalf("failed to write generated request to the file system: %v", err)
 		}
 
 		requestIdx[idx] = fmt.Sprintf("%d.json", idx)
@@ -122,25 +98,23 @@ func RunE(_ *cobra.Command, _ []string) error {
 
 	policyIdxBytes, err := json.Marshal(policyIdx)
 	if err != nil {
-		return fmt.Errorf("failed to marshal policy index: %w", err)
+		logger.Fatalf("failed to marshal policy index: %v", err)
 	}
 
 	requestIdxBytes, err := json.Marshal(policyIdx)
 	if err != nil {
-		return fmt.Errorf("failed to marshal request index: %w", err)
+		logger.Fatalf("failed to marshal request index: %v", err)
 	}
 
-	err = os.WriteFile(filepath.Join(flagOutputValue, "policy-index.json"), policyIdxBytes, fileWritePerm)
+	err = os.WriteFile(filepath.Join(cli.OutputDir, "policy-index.json"), policyIdxBytes, fileWritePerm)
 	if err != nil {
-		return fmt.Errorf("failed to policy index to the file system: %w", err)
+		logger.Fatalf("failed to policy index to the file system: %v", err)
 	}
 
-	err = os.WriteFile(filepath.Join(flagOutputValue, "request-index.json"), requestIdxBytes, fileWritePerm)
+	err = os.WriteFile(filepath.Join(cli.OutputDir, "request-index.json"), requestIdxBytes, fileWritePerm)
 	if err != nil {
-		return fmt.Errorf("failed to request index to the file system: %w", err)
+		logger.Fatalf("failed to request index to the file system: %v", err)
 	}
-
-	return nil
 }
 
 type namer func() string

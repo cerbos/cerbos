@@ -8,7 +8,10 @@ set -euo pipefail
 trap onExit EXIT
 clean() {
   printf "Cleaning up\n"
-  rm -rf ./bin ./k6/gen ./conf/cerbos/config.yml ./data_postgres
+  rm -rf ./bin
+  rm -rf ./k6/gen
+  rm -rf ./conf/cerbos/config.yml
+  rm -rf ./data_postgres
 }
 
 onExit() {
@@ -19,7 +22,7 @@ onExit() {
 generateResources() {
   printf "Generating %s of policy sets\n" "${1}"
   mkdir -p ./k6/gen/policies ./k6/gen/requests
-  ./bin/genres --output-dir ./k6/gen --policy-set-count "${1}"
+  go run ./genres.go --output-dir ./k6/gen --policy-set-count "${1}"
 }
 
 setupStore() {
@@ -52,9 +55,6 @@ executeTest() {
 down
 clean
 rm -rf ./results
-
-printf "Compiling genres tool\n"
-make build
 
 printf "Creating results folder\n"
 mkdir ./results

@@ -41,7 +41,9 @@ services:
     container_name: grafana
     image: grafana/grafana:latest
     volumes:
-      - ./data_grafana:/var/lib/grafana
+      - ./conf/grafana/dashboards.yaml:/etc/grafana/provisioning/dashboards/dashboards.yaml
+      - ./conf/grafana/datasources.yaml:/etc/grafana/provisioning/datasources/datasources.yaml
+      - ./conf/grafana/dashboards:/var/lib/grafana/dashboards
     ports:
       - "3000:3000"
     restart: always
