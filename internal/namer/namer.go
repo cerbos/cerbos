@@ -17,12 +17,17 @@ import (
 
 var invalidIdentifierChars = regexp.MustCompile(`[^\w.]+`)
 
+// validKinds holds valid policy kinds and the minimum number of components that must be contained in the policy key.
+//nolint:gomnd
+var validKinds = map[string]int{"derived_roles": 2, "principal": 3, "resource": 3}
+
 const (
 	DerivedRolesPrefix      = "cerbos.derived_roles"
 	PrincipalPoliciesPrefix = "cerbos.principal"
 	ResourcePoliciesPrefix  = "cerbos.resource"
 
 	DefaultVersion = "default"
+	fqnPrefix      = "cerbos."
 )
 
 // ModuleID is a unique identifier for modules.
@@ -127,12 +132,12 @@ func PolicyKey(p *policyv1.Policy) string {
 
 // PolicyKeyFromFQN returns a policy key from the module name.
 func PolicyKeyFromFQN(m string) string {
-	return strings.TrimPrefix(m, "cerbos.")
+	return strings.TrimPrefix(m, fqnPrefix)
 }
 
 // FQNFromPolicyKey returns FQN from the policy key.
 func FQNFromPolicyKey(s string) string {
-	return "cerbos." + s
+	return fqnPrefix + s
 }
 
 // ResourcePolicyFQN returns the fully-qualified name for the resource policy with given resource, version and scope.
@@ -201,4 +206,85 @@ func PrincipalResourceActionRuleName(rule *policyv1.PrincipalRule_Action, resour
 	}
 
 	return fmt.Sprintf("%s_rule-%03d", resource, idx)
+}
+
+type PolicyCoords struct {
+	Kind    string
+	Name    string
+	Version string
+	Scope   string
+}
+
+//nolint:gomnd
+func PolicyCoordsFromPolicyKey(key string) (PolicyCoords, error) {
+	var pc PolicyCoords
+	var parts [4]string
+	idx := 0
+	ptr := 0
+
+loop:
+	for i, c := range key {
+		switch c {
+		case '.':
+			parts[idx] = key[ptr:i]
+			ptr = i + 1
+			idx++
+
+			if idx == 1 {
+				if _, ok := validKinds[parts[0]]; !ok {
+					return pc, fmt.Errorf("invalid kind in policy key %q", key)
+				}
+			}
+		case '/':
+			if idx != 2 {
+				return pc, fmt.Errorf("missing components in policy key %q", key)
+			}
+			parts[idx] = key[ptr:i]
+			ptr = i + 1
+			idx++
+			break loop
+		}
+
+		if idx >= 4 {
+			return pc, fmt.Errorf("invalid policy key %q", key)
+		}
+	}
+
+	if ptr < len(key) {
+		parts[idx] = key[ptr:]
+		idx++
+	}
+
+	if minParts, ok := validKinds[parts[0]]; !ok || idx < minParts {
+		return pc, fmt.Errorf("invalid policy key %q", key)
+	}
+
+	pc.Kind = strings.ToUpper(parts[0])
+	pc.Name = parts[1]
+	pc.Version = strings.TrimPrefix(parts[2], "v")
+	pc.Scope = parts[3]
+
+	return pc, nil
+}
+
+func (pc PolicyCoords) FQN() string {
+	prefix := fqnPrefix + strings.ToLower(pc.Kind)
+	switch prefix {
+	case DerivedRolesPrefix:
+		return DerivedRolesFQN(pc.Name)
+	case PrincipalPoliciesPrefix:
+		return PrincipalPolicyFQN(pc.Name, pc.Version, pc.Scope)
+	case ResourcePoliciesPrefix:
+		return ResourcePolicyFQN(pc.Name, pc.Version, pc.Scope)
+	default:
+		panic(fmt.Errorf("unknown kind %q", pc.Kind))
+	}
+}
+
+func (pc PolicyCoords) PolicyKey() string {
+	return PolicyKeyFromFQN(pc.FQN())
+}
+
+func (pc PolicyCoords) ModuleID() ModuleID {
+	return GenModuleIDFromFQN(pc.FQN())
 }

@@ -15,7 +15,6 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/testing/protocmp"
-	"google.golang.org/protobuf/types/known/wrapperspb"
 
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
 	schemav1 "github.com/cerbos/cerbos/api/genpb/cerbos/schema/v1"
@@ -23,7 +22,6 @@ import (
 	"github.com/cerbos/cerbos/internal/policy"
 	"github.com/cerbos/cerbos/internal/storage"
 	"github.com/cerbos/cerbos/internal/test"
-	"github.com/cerbos/cerbos/internal/util"
 )
 
 const timeout = 2 * time.Second
@@ -46,12 +44,14 @@ func TestSuite(store DBStorage) func(*testing.T) {
 		ppAcme := withScope(test.GenPrincipalPolicy(test.NoMod()), "acme")
 		ppAcmeHR := withScope(test.GenPrincipalPolicy(test.NoMod()), "acme.hr")
 
+		policyList := []policy.Wrapper{rp, pp, dr, rpx, drx, rpAcme, rpAcmeHR, rpAcmeHRUK, ppAcme, ppAcmeHR}
+
 		sch := test.ReadSchemaFromFile(t, test.PathToDir(t, "store/_schemas/leave_request.json"))
 		const schID = "leave_request"
 
 		t.Run("add", func(t *testing.T) {
 			checkEvents := storage.TestSubscription(store)
-			require.NoError(t, store.AddOrUpdate(ctx, rp, pp, dr, rpx, drx, rpAcme, rpAcmeHR, rpAcmeHRUK, ppAcme, ppAcmeHR))
+			require.NoError(t, store.AddOrUpdate(ctx, policyList...))
 
 			wantEvents := []storage.Event{
 				{Kind: storage.EventAddOrUpdatePolicy, PolicyID: rp.ID},
@@ -191,29 +191,34 @@ func TestSuite(store DBStorage) func(*testing.T) {
 		})
 
 		t.Run("get_policy", func(t *testing.T) {
-			t.Run("should be able to get policy", func(t *testing.T) {
-				t.Log(namer.PolicyKeyFromFQN(dr.FQN))
-				p, err := store.LoadPolicy(ctx, namer.PolicyKeyFromFQN(dr.FQN))
-				require.NoError(t, err)
-				require.NotEmpty(t, p)
-			})
+			for _, want := range policyList {
+				want := want
+				t.Run(want.FQN, func(t *testing.T) {
+					haveRes, err := store.LoadPolicy(ctx, namer.PolicyKeyFromFQN(want.FQN))
+					require.NoError(t, err)
+					require.Len(t, haveRes, 1)
 
-			t.Run("should have correct metadata", func(t *testing.T) {
-				t.Log(namer.PolicyKeyFromFQN(dr.FQN))
-				policies, err := store.LoadPolicy(ctx, namer.PolicyKeyFromFQN(dr.FQN))
-				require.NoError(t, err)
-				require.NotEmpty(t, policies)
-				require.NotEmpty(t, policies[0].Metadata)
-				require.Equal(t, policies[0].Metadata.StoreIdentifer, namer.PolicyKeyFromFQN(dr.FQN))
-				require.Equal(t, policies[0].Metadata.Hash, wrapperspb.UInt64(util.HashPB(policies[0], policy.IgnoreHashFields)))
-			})
+					have := haveRes[0]
+					require.Empty(t, cmp.Diff(want.Policy, have.Policy,
+						protocmp.Transform(), protocmp.IgnoreMessages(&policyv1.Metadata{})))
+					require.NotNil(t, have.Metadata)
+					require.Equal(t, namer.PolicyKeyFromFQN(want.FQN), have.Metadata.StoreIdentifer)
+				})
+			}
 		})
 
 		t.Run("list_policies", func(t *testing.T) {
 			t.Run("should be able to list policies", func(t *testing.T) {
-				policies, err := store.ListPolicyIDs(ctx)
+				have, err := store.ListPolicyIDs(ctx)
 				require.NoError(t, err)
-				require.NotEmpty(t, policies)
+				require.Len(t, have, len(policyList))
+
+				want := make([]string, len(policyList))
+				for i, p := range policyList {
+					want[i] = namer.PolicyKeyFromFQN(p.FQN)
+				}
+
+				require.ElementsMatch(t, want, have)
 			})
 		})
 

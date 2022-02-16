@@ -19,6 +19,7 @@ import (
 	responsev1 "github.com/cerbos/cerbos/api/genpb/cerbos/response/v1"
 	svcv1 "github.com/cerbos/cerbos/api/genpb/cerbos/svc/v1"
 	"github.com/cerbos/cerbos/client/testutil"
+	"github.com/cerbos/cerbos/internal/namer"
 	"github.com/cerbos/cerbos/internal/test"
 )
 
@@ -117,19 +118,29 @@ func TestListPolicies(t *testing.T) {
 	require.NoError(t, ac.AddOrUpdatePolicy(context.Background(), ps))
 
 	t.Run("should get the list of policies", func(t *testing.T) {
-		policies, err := ac.ListPolicies(context.Background())
+		have, err := ac.ListPolicies(context.Background())
 		require.NoError(t, err)
-		require.NotEmpty(t, policies)
+		require.NotEmpty(t, have)
+
+		policyList := ps.GetPolicies()
+		want := make([]string, len(policyList))
+		for i, p := range policyList {
+			want[i] = namer.PolicyKey(p)
+		}
+		require.ElementsMatch(t, want, have)
 	})
 
 	t.Run("policy metadata should include store identifier", func(t *testing.T) {
-		testCases := []string{"derived_roles.alpha", "principal.donald_duck.20210210", "resource.leave_request.20210210"}
-
-		for _, testCase := range testCases {
-			policies, err := ac.GetPolicy(context.Background(), testCase)
-			require.NoError(t, err)
-			require.Len(t, policies, 1)
-			require.Equal(t, testCase, policies[0].Metadata.StoreIdentifer)
+		policyList := ps.GetPolicies()
+		for _, p := range policyList {
+			want := namer.PolicyKey(p)
+			t.Run(want, func(t *testing.T) {
+				have, err := ac.GetPolicy(context.Background(), want)
+				require.NoError(t, err)
+				require.Len(t, have, 1)
+				require.NotNil(t, have[0].Metadata)
+				require.Equal(t, want, have[0].Metadata.StoreIdentifer)
+			})
 		}
 	})
 }

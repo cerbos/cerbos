@@ -20,6 +20,7 @@ const (
 	PolicyTblKindCol       = "kind"
 	PolicyTblNameCol       = "name"
 	PolicyTblVerCol        = "version"
+	PolicyTblScopeCol      = "scope"
 	PolicyTblDefinitionCol = "definition"
 	PolicyTblDisabledCol   = "disabled"
 
@@ -96,6 +97,7 @@ type PolicyRevision struct {
 	Definition  PolicyDefWrapper
 	Action      string
 	Version     string
+	Scope       string
 	Description string
 	Kind        string
 	Name        string
