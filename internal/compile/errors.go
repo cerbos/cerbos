@@ -18,6 +18,7 @@ var (
 	errImportNotFound       = errors.New("import not found")
 	errInvalidResourceRule  = errors.New("invalid resource rule")
 	errInvalidSchema        = errors.New("invalid schema")
+	errMissingDefinition    = errors.New("missing policy definition")
 	errScriptsUnsupported   = errors.New("scripts in conditions are no longer supported")
 	errUnexpectedErr        = errors.New("unexpected error")
 	errUnknownDerivedRole   = errors.New("unknown derived role")

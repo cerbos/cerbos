@@ -75,7 +75,13 @@ func compileResourcePolicySet(modCtx *moduleCtx, schemaMgr schema.Manager) *runt
 	rrps.Policies[0] = compiled
 
 	for i, ancestor := range ancestors {
-		compiled := compileResourcePolicy(modCtx.moduleCtx(ancestor), schemaMgr)
+		ancModCtx := modCtx.moduleCtx(ancestor)
+		if ancModCtx == nil {
+			reportMissingAncestors(modCtx)
+			return nil
+		}
+
+		compiled := compileResourcePolicy(ancModCtx, schemaMgr)
 		if compiled == nil {
 			return nil
 		}
@@ -84,8 +90,9 @@ func compileResourcePolicySet(modCtx *moduleCtx, schemaMgr schema.Manager) *runt
 
 	// Only schema in effect is the schema defined by the "root" policy.
 	rrps.Schemas = rrps.Policies[len(rrps.Policies)-1].Schemas
-	// TODO(cell) Check for inconsistent schema references in the policy tree and make that an error
-	// For example: policies requiring different schemas from others, child having a schema but the parent not having one.
+	// TODO(cell) Check for inconsistent schema references in the policy tree.
+	// Either all policies must have the same schema references or only the "root" policy must have one and others should be empty.
+	// This should be a compiler warning instead of an error.
 
 	return &runtimev1.RunnablePolicySet{
 		Fqn: modCtx.fqn,
@@ -326,7 +333,13 @@ func compilePrincipalPolicySet(modCtx *moduleCtx) *runtimev1.RunnablePolicySet {
 	rpps.Policies[0] = compilePrincipalPolicy(modCtx)
 
 	for i, ancestor := range ancestors {
-		rpps.Policies[i+1] = compilePrincipalPolicy(modCtx.moduleCtx(ancestor))
+		ancModCtx := modCtx.moduleCtx(ancestor)
+		if ancModCtx == nil {
+			reportMissingAncestors(modCtx)
+			return nil
+		}
+
+		rpps.Policies[i+1] = compilePrincipalPolicy(ancModCtx)
 	}
 
 	return &runtimev1.RunnablePolicySet{
@@ -370,4 +383,15 @@ func compilePrincipalPolicy(modCtx *moduleCtx) *runtimev1.RunnablePrincipalPolic
 	}
 
 	return rpp
+}
+
+func reportMissingAncestors(modCtx *moduleCtx) {
+	required := policy.RequiredAncestors(modCtx.def)
+	defs := modCtx.unit.Definitions
+
+	for modID, fqn := range required {
+		if _, ok := defs[modID]; !ok {
+			modCtx.addErrWithDesc(errMissingDefinition, "Missing ancestor policy %q", namer.PolicyKeyFromFQN(fqn))
+		}
+	}
 }

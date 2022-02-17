@@ -9,6 +9,8 @@ CREATE TABLE IF NOT EXISTS policy_ancestor (
 
 GRANT SELECT,INSERT,UPDATE,DELETE ON cerbos.policy_ancestor TO cerbos_user; 
 
+DROP INDEX IF EXISTS policy_knv_idx;
+
 CREATE OR REPLACE FUNCTION process_policy_audit() RETURNS TRIGGER AS $policy_audit$
     BEGIN
         IF (TG_OP = 'DELETE') THEN
