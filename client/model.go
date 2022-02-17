@@ -477,6 +477,11 @@ func (ps *PolicySet) GetPolicies() []*policyv1.Policy {
 	return ps.policies
 }
 
+// Size returns the number of policies in this set.
+func (ps *PolicySet) Size() int {
+	return len(ps.policies)
+}
+
 func (ps *PolicySet) add(b interface {
 	build() (*policyv1.Policy, error)
 }) error {

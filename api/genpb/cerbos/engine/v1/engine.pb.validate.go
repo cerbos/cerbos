@@ -916,6 +916,17 @@ func (m *Resource) validate(all bool) error {
 		}
 	}
 
+	if !_Resource_Scope_Pattern.MatchString(m.GetScope()) {
+		err := ResourceValidationError{
+			field:  "Scope",
+			reason: "value does not match regex pattern \"^([[:alpha:]][[:word:]\\\\-]+(\\\\.[[:alpha:]][[:word:]\\\\-]*)*)*$\"",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
 	if len(errors) > 0 {
 		return ResourceMultiError(errors)
 	}
@@ -995,6 +1006,8 @@ var _ interface {
 var _Resource_Kind_Pattern = regexp.MustCompile("^[[:alpha:]][[:word:]\\@\\.\\-/]*(\\:[[:alpha:]][[:word:]\\@\\.\\-/]*)*$")
 
 var _Resource_PolicyVersion_Pattern = regexp.MustCompile("^[[:word:]]*$")
+
+var _Resource_Scope_Pattern = regexp.MustCompile("^([[:alpha:]][[:word:]\\-]+(\\.[[:alpha:]][[:word:]\\-]*)*)*$")
 
 // Validate checks the field values on Principal with the rules defined in the
 // proto definition for this message. If any rules are violated, the first
@@ -1139,6 +1152,17 @@ func (m *Principal) validate(all bool) error {
 		}
 	}
 
+	if !_Principal_Scope_Pattern.MatchString(m.GetScope()) {
+		err := PrincipalValidationError{
+			field:  "Scope",
+			reason: "value does not match regex pattern \"^([[:alpha:]][[:word:]\\\\-]+(\\\\.[[:alpha:]][[:word:]\\\\-]*)*)*$\"",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
 	if len(errors) > 0 {
 		return PrincipalMultiError(errors)
 	}
@@ -1218,6 +1242,8 @@ var _ interface {
 var _Principal_PolicyVersion_Pattern = regexp.MustCompile("^[[:word:]]*$")
 
 var _Principal_Roles_Pattern = regexp.MustCompile("^[[:word:]\\-\\.]+$")
+
+var _Principal_Scope_Pattern = regexp.MustCompile("^([[:alpha:]][[:word:]\\-]+(\\.[[:alpha:]][[:word:]\\-]*)*)*$")
 
 // Validate checks the field values on AuxData with the rules defined in the
 // proto definition for this message. If any rules are violated, the first
@@ -1475,6 +1501,17 @@ func (m *ResourcesQueryPlanRequest_Resource) validate(all bool) error {
 		errors = append(errors, err)
 	}
 
+	if !_ResourcesQueryPlanRequest_Resource_Scope_Pattern.MatchString(m.GetScope()) {
+		err := ResourcesQueryPlanRequest_ResourceValidationError{
+			field:  "Scope",
+			reason: "value does not match regex pattern \"^([[:alpha:]][[:word:]\\\\-]+(\\\\.[[:alpha:]][[:word:]\\\\-]*)*)*$\"",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
 	if len(errors) > 0 {
 		return ResourcesQueryPlanRequest_ResourceMultiError(errors)
 	}
@@ -1560,6 +1597,8 @@ var _ResourcesQueryPlanRequest_Resource_Kind_Pattern = regexp.MustCompile("^[[:a
 
 var _ResourcesQueryPlanRequest_Resource_PolicyVersion_Pattern = regexp.MustCompile("^[[:word:]]*$")
 
+var _ResourcesQueryPlanRequest_Resource_Scope_Pattern = regexp.MustCompile("^([[:alpha:]][[:word:]\\-]+(\\.[[:alpha:]][[:word:]\\-]*)*)*$")
+
 // Validate checks the field values on CheckOutput_ActionEffect with the rules
 // defined in the proto definition for this message. If any rules are
 // violated, the first error encountered is returned, or nil if there are no violations.
@@ -1585,6 +1624,8 @@ func (m *CheckOutput_ActionEffect) validate(all bool) error {
 	// no validation rules for Effect
 
 	// no validation rules for Policy
+
+	// no validation rules for Scope
 
 	if len(errors) > 0 {
 		return CheckOutput_ActionEffectMultiError(errors)

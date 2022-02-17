@@ -57,6 +57,7 @@ func (resp *checkResourceSetResponseBuilder) addResultMeta(resourceKey string, r
 	for action, actionEffect := range result.Actions {
 		meta.Actions[action] = &responsev1.CheckResourceSetResponse_Meta_EffectMeta{
 			MatchedPolicy: actionEffect.Policy,
+			MatchedScope:  actionEffect.Scope,
 		}
 	}
 

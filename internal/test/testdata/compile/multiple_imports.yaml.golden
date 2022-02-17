@@ -8,9 +8,6 @@
     },
     "policies": [
       {
-        "scope": [
-          ""
-        ],
         "derivedRoles": {
           "any_employee": {
             "name": "any_employee",

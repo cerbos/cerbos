@@ -12,6 +12,7 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
 	"testing"
 
@@ -19,6 +20,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	privatev1 "github.com/cerbos/cerbos/api/genpb/cerbos/private/v1"
+	"github.com/cerbos/cerbos/internal/namer"
 	"github.com/cerbos/cerbos/internal/policy"
 	"github.com/cerbos/cerbos/internal/storage"
 	"github.com/cerbos/cerbos/internal/test"
@@ -39,22 +41,36 @@ func TestBuildIndexWithDisk(t *testing.T) {
 
 	t.Run("check_contents", func(t *testing.T) {
 		data := idxImpl.Inspect()
-		require.Len(t, data, 9)
+		require.Len(t, data, 14)
 
 		rp1 := filepath.Join("resource_policies", "policy_01.yaml")
 		rp2 := filepath.Join("resource_policies", "policy_02.yaml")
 		rp3 := filepath.Join("resource_policies", "policy_03.yaml")
 		rp4 := filepath.Join("resource_policies", "policy_04.yaml")
-		pp := filepath.Join("principal_policies", "policy_01.yaml")
+		rp5 := filepath.Join("resource_policies", "policy_05_acme.yaml")
+		rp6 := filepath.Join("resource_policies", "policy_05_acme.hr.yaml")
+		rp7 := filepath.Join("resource_policies", "policy_05_acme.hr.uk.yaml")
+		pp1 := filepath.Join("principal_policies", "policy_01.yaml")
+		pp2 := filepath.Join("principal_policies", "policy_02_acme.yaml")
+		pp3 := filepath.Join("principal_policies", "policy_02_acme.hr.yaml")
 		drCommon := filepath.Join("derived_roles", "common_roles.yaml")
 		dr1 := filepath.Join("derived_roles", "derived_roles_01.yaml")
 		dr2 := filepath.Join("derived_roles", "derived_roles_02.yaml")
 		dr3 := filepath.Join("derived_roles", "derived_roles_03.yaml")
 
-		require.Contains(t, data, rp1)
-		require.Len(t, data[rp1].Dependencies, 2)
-		require.Contains(t, data[rp1].Dependencies, dr1)
-		require.Empty(t, data[rp1].References)
+		for _, rp := range []string{rp1, rp5, rp6, rp7} {
+			require.Contains(t, data, rp)
+			require.Len(t, data[rp].Dependencies, 2)
+			require.Contains(t, data[rp].Dependencies, dr1)
+			require.Contains(t, data[rp].Dependencies, dr2)
+			require.Empty(t, data[rp].References)
+
+			require.Contains(t, data[dr1].References, rp)
+			require.Contains(t, data[dr1].References, rp)
+
+			require.Contains(t, data[dr2].References, rp)
+			require.Contains(t, data[dr2].References, rp)
+		}
 
 		require.Contains(t, data, rp2)
 		require.Len(t, data[rp2].Dependencies, 0)
@@ -69,9 +85,11 @@ func TestBuildIndexWithDisk(t *testing.T) {
 		require.Contains(t, data[rp3].Dependencies, dr3)
 		require.Empty(t, data[rp3].References)
 
-		require.Contains(t, data, pp)
-		require.Empty(t, data[pp].Dependencies)
-		require.Empty(t, data[pp].References)
+		for _, pp := range []string{pp1, pp2, pp3} {
+			require.Contains(t, data, pp)
+			require.Empty(t, data[pp].Dependencies)
+			require.Empty(t, data[pp].References)
+		}
 
 		require.Contains(t, data, drCommon)
 		require.Empty(t, data[drCommon].Dependencies)
@@ -79,13 +97,11 @@ func TestBuildIndexWithDisk(t *testing.T) {
 
 		require.Contains(t, data, dr1)
 		require.Empty(t, data[dr1].Dependencies)
-		require.Len(t, data[dr1].References, 1)
-		require.Contains(t, data[dr1].References, rp1)
+		require.Len(t, data[dr1].References, 4)
 
 		require.Contains(t, data, dr2)
 		require.Empty(t, data[dr2].Dependencies)
-		require.Len(t, data[dr2].References, 1)
-		require.Contains(t, data[dr2].References, rp1)
+		require.Len(t, data[dr2].References, 4)
 
 		require.Contains(t, data, dr3)
 		require.Empty(t, data[dr3].Dependencies)
@@ -121,11 +137,13 @@ func TestBuildIndex(t *testing.T) {
 			tc := readTestCase(t, tcase.Input)
 			fs := toFS(t, tc)
 
-			_, haveErr := Build(context.Background(), fs)
+			idx, haveErr := Build(context.Background(), fs)
 			switch {
 			case tc.WantErrJson != "":
 				errList := new(BuildError)
 				require.True(t, errors.As(haveErr, &errList))
+
+				sort.Slice(errList.MissingScopes, func(i, j int) bool { return errList.MissingScopes[i] < errList.MissingScopes[j] })
 
 				haveErrJSON, err := json.Marshal(errList)
 				require.NoError(t, err)
@@ -138,6 +156,32 @@ func TestBuildIndex(t *testing.T) {
 				require.EqualError(t, haveErr, tc.WantErr)
 			default:
 				require.NoError(t, haveErr)
+				for _, wantCU := range tc.WantCompilationUnits {
+					mainModID := namer.GenModuleIDFromFQN(wantCU.MainFqn)
+					cus, err := idx.GetCompilationUnits(mainModID)
+					require.NoError(t, err, "Failed to load compilation unit for %q", wantCU.MainFqn)
+					require.NotEmpty(t, cus, "No results for compilation unit %q", wantCU.MainFqn)
+
+					haveCU := cus[mainModID]
+					require.NotNil(t, haveCU, "Compilation unit for %q is missing", wantCU.MainFqn)
+
+					require.Equal(t, mainModID, haveCU.ModID)
+					require.Equal(t, len(wantCU.DefinitionFqns), len(haveCU.Definitions))
+					for _, defFQN := range wantCU.DefinitionFqns {
+						_, ok := haveCU.Definitions[namer.GenModuleIDFromFQN(defFQN)]
+						require.True(t, ok, "Definition %q is missing", defFQN)
+					}
+
+					haveAncestors := haveCU.Ancestors()
+					require.Equal(t, len(wantCU.AncestorFqns), len(haveAncestors))
+					if len(wantCU.AncestorFqns) > 0 {
+						wantAncestors := make([]namer.ModuleID, len(wantCU.AncestorFqns))
+						for i, af := range wantCU.AncestorFqns {
+							wantAncestors[i] = namer.GenModuleIDFromFQN(af)
+						}
+						require.ElementsMatch(t, wantAncestors, haveAncestors)
+					}
+				}
 			}
 		})
 	}

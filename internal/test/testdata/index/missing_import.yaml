@@ -9,7 +9,8 @@ wantErrJson: |-
         "importingFile": "resource.yaml",
         "desc": "Import 'my_derived_roles' not found"
       }
-    ]
+    ],
+    "missingScopes": null
   }
 files:
   "test.txt": |-

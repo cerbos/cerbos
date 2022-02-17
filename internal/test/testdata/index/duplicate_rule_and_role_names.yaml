@@ -17,7 +17,8 @@ wantErrJson: |-
         "file": "resource.yaml"
       }
     ],
-    "missingImports": null
+    "missingImports": null,
+    "missingScopes": null
   }
 files:
   "test.txt": |-

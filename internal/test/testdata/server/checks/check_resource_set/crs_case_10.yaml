@@ -1,0 +1,74 @@
+---
+description: "Scoped policies"
+wantStatus:
+  httpStatusCode: 200
+  grpcStatusCode: 0
+checkResourceSet:
+  input: {
+    "requestId": "test",
+    "includeMeta": true,
+    "actions": [
+      "view:public",
+      "delete",
+      "approve"
+    ],
+    "principal": {
+      "id": "john",
+      "roles": [
+        "employee"
+      ],
+      "attr": {
+        "department": "marketing",
+        "geography": "GB",
+        "team": "design",
+        "ip_address": "10.20.0.5"
+      }
+    },
+    "resource": {
+      "kind": "leave_request",
+      "scope": "acme.hr.uk",
+      "instances": {
+        "XX125": {
+          "attr": {
+            "department": "marketing",
+            "geography": "GB",
+            "id": "XX125",
+            "owner": "john",
+            "team": "design"
+          }
+        }
+      }
+    }
+  }
+  wantResponse: {
+    "requestId": "test",
+    "resourceInstances": {
+      "XX125": {
+        "actions": {
+          "view:public": "EFFECT_ALLOW",
+          "delete": "EFFECT_ALLOW",
+          "approve": "EFFECT_DENY"
+        }
+      }
+    },
+    "meta": {
+      "resourceInstances": {
+        "XX125": {
+          "actions": {
+            "view:public": {
+              "matchedPolicy": "resource.leave_request.vdefault/acme.hr.uk",
+              "matchedScope": "acme.hr"
+            },
+            "delete": {
+              "matchedPolicy": "resource.leave_request.vdefault/acme.hr.uk",
+              "matchedScope": "acme.hr.uk"
+            },
+            "approve": {
+              "matchedPolicy": "resource.leave_request.vdefault/acme.hr.uk",
+            }
+          },
+          "effectiveDerivedRoles": ["employee_that_owns_the_record", "any_employee"]
+        }
+      }
+    }
+  }

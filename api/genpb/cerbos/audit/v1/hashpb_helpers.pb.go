@@ -197,6 +197,10 @@ func cerbos_engine_v1_CheckOutput_ActionEffect_hashpb_sum(m *v1.CheckOutput_Acti
 		_, _ = hasher.Write(protowire.AppendString(nil, m.Policy))
 
 	}
+	if _, ok := ignore["cerbos.engine.v1.CheckOutput.ActionEffect.scope"]; !ok {
+		_, _ = hasher.Write(protowire.AppendString(nil, m.Scope))
+
+	}
 }
 
 func cerbos_engine_v1_CheckOutput_hashpb_sum(m *v1.CheckOutput, hasher hash.Hash, ignore map[string]struct{}) {
@@ -283,6 +287,10 @@ func cerbos_engine_v1_Principal_hashpb_sum(m *v1.Principal, hasher hash.Hash, ig
 			}
 		}
 	}
+	if _, ok := ignore["cerbos.engine.v1.Principal.scope"]; !ok {
+		_, _ = hasher.Write(protowire.AppendString(nil, m.Scope))
+
+	}
 }
 
 func cerbos_engine_v1_Resource_hashpb_sum(m *v1.Resource, hasher hash.Hash, ignore map[string]struct{}) {
@@ -316,6 +324,10 @@ func cerbos_engine_v1_Resource_hashpb_sum(m *v1.Resource, hasher hash.Hash, igno
 
 			}
 		}
+	}
+	if _, ok := ignore["cerbos.engine.v1.Resource.scope"]; !ok {
+		_, _ = hasher.Write(protowire.AppendString(nil, m.Scope))
+
 	}
 }
 

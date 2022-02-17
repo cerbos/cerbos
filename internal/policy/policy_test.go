@@ -14,6 +14,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
+	"github.com/cerbos/cerbos/internal/namer"
 	"github.com/cerbos/cerbos/internal/policy"
 	"github.com/cerbos/cerbos/internal/test"
 	"github.com/cerbos/cerbos/internal/util"
@@ -57,4 +58,82 @@ func TestWith(t *testing.T) {
 		require.Equal(t, source, p.Metadata.SourceFile)
 		require.Equal(t, keyVal, p.Metadata.Annotations[keyVal])
 	})
+}
+
+func TestAncestors(t *testing.T) {
+	testCases := []struct {
+		scope string
+		want  []namer.ModuleID
+	}{
+		{
+			scope: "",
+			want:  nil,
+		},
+		{
+			scope: "foo",
+			want:  nil,
+		},
+		{
+			scope: "foo.bar",
+			want: []namer.ModuleID{
+				namer.GenModuleIDFromFQN("cerbos.resource.leave_request.vdefault/foo"),
+			},
+		},
+		{
+			scope: "foo.bar.baz",
+			want: []namer.ModuleID{
+				namer.GenModuleIDFromFQN("cerbos.resource.leave_request.vdefault/foo.bar"),
+				namer.GenModuleIDFromFQN("cerbos.resource.leave_request.vdefault/foo"),
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		tc := tc
+		t.Run(fmt.Sprintf("scope=%q", tc.scope), func(t *testing.T) {
+			p := test.GenResourcePolicy(test.NoMod())
+			p.GetResourcePolicy().Scope = tc.scope
+			have := policy.Ancestors(p)
+			require.Equal(t, tc.want, have)
+		})
+	}
+}
+
+func TestRequiredAncestors(t *testing.T) {
+	testCases := []struct {
+		scope string
+		want  map[namer.ModuleID]string
+	}{
+		{
+			scope: "",
+			want:  nil,
+		},
+		{
+			scope: "foo",
+			want:  nil,
+		},
+		{
+			scope: "foo.bar",
+			want: map[namer.ModuleID]string{
+				namer.GenModuleIDFromFQN("cerbos.resource.leave_request.vdefault/foo"): "cerbos.resource.leave_request.vdefault/foo",
+			},
+		},
+		{
+			scope: "foo.bar.baz",
+			want: map[namer.ModuleID]string{
+				namer.GenModuleIDFromFQN("cerbos.resource.leave_request.vdefault/foo.bar"): "cerbos.resource.leave_request.vdefault/foo.bar",
+				namer.GenModuleIDFromFQN("cerbos.resource.leave_request.vdefault/foo"):     "cerbos.resource.leave_request.vdefault/foo",
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		tc := tc
+		t.Run(fmt.Sprintf("scope=%q", tc.scope), func(t *testing.T) {
+			p := test.GenResourcePolicy(test.NoMod())
+			p.GetResourcePolicy().Scope = tc.scope
+			have := policy.RequiredAncestors(p)
+			require.Equal(t, tc.want, have)
+		})
+	}
 }

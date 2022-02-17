@@ -8,9 +8,6 @@
     },
     "policies": [
       {
-        "scope": [
-          ""
-        ],
         "derivedRoles": {
           "any_employee": {
             "name": "any_employee",
@@ -566,6 +563,14 @@
           }
         }
       }
-    ]
+    ],
+    "schemas": {
+      "principalSchema": {
+        "ref": "cerbos:///complex_object.json"
+      },
+      "resourceSchema": {
+        "ref": "cerbos:///complex_object.json"
+      }
+    }
   }
 }

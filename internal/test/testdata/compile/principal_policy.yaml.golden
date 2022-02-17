@@ -8,9 +8,6 @@
     },
     "policies": [
       {
-        "scope": [
-          ""
-        ],
         "resourceRules": {
           "leave_request": {
             "actionRules": {

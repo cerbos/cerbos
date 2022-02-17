@@ -3175,6 +3175,8 @@ func (m *CheckResourceSetResponse_Meta_EffectMeta) validate(all bool) error {
 
 	// no validation rules for MatchedPolicy
 
+	// no validation rules for MatchedScope
+
 	if len(errors) > 0 {
 		return CheckResourceSetResponse_Meta_EffectMetaMultiError(errors)
 	}

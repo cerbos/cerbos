@@ -37,11 +37,11 @@ func Compile(unit *policy.CompilationUnit, schemaMgr schema.Manager) (rps *runti
 
 	switch pt := mc.def.PolicyType.(type) {
 	case *policyv1.Policy_ResourcePolicy:
-		rps = compileResourcePolicy(mc, pt.ResourcePolicy, schemaMgr)
+		rps = compileResourcePolicySet(mc, schemaMgr)
 	case *policyv1.Policy_PrincipalPolicy:
-		rps = compilePrincipalPolicy(mc, pt.PrincipalPolicy)
+		rps = compilePrincipalPolicySet(mc)
 	case *policyv1.Policy_DerivedRoles:
-		rps = compileDerivedRoles(mc, pt.DerivedRoles)
+		rps = compileDerivedRoles(mc)
 	default:
 		mc.addErrWithDesc(fmt.Errorf("unknown policy type %T", pt), "Unexpected error")
 	}
@@ -49,7 +49,59 @@ func Compile(unit *policy.CompilationUnit, schemaMgr schema.Manager) (rps *runti
 	return rps, uc.error()
 }
 
-func compileResourcePolicy(modCtx *moduleCtx, rp *policyv1.ResourcePolicy, schemaMgr schema.Manager) *runtimev1.RunnablePolicySet {
+func compileResourcePolicySet(modCtx *moduleCtx, schemaMgr schema.Manager) *runtimev1.RunnablePolicySet {
+	rp := modCtx.def.GetResourcePolicy()
+	if rp == nil {
+		modCtx.addErrWithDesc(errUnexpectedErr, "Not a resource policy definition")
+		return nil
+	}
+
+	ancestors := modCtx.unit.Ancestors()
+
+	rrps := &runtimev1.RunnableResourcePolicySet{
+		Meta: &runtimev1.RunnableResourcePolicySet_Metadata{
+			Fqn:      modCtx.fqn,
+			Resource: rp.Resource,
+			Version:  rp.Version,
+		},
+		Policies: make([]*runtimev1.RunnableResourcePolicySet_Policy, len(ancestors)+1),
+	}
+
+	compiled := compileResourcePolicy(modCtx, schemaMgr)
+	if compiled == nil {
+		return nil
+	}
+
+	rrps.Policies[0] = compiled
+
+	for i, ancestor := range ancestors {
+		compiled := compileResourcePolicy(modCtx.moduleCtx(ancestor), schemaMgr)
+		if compiled == nil {
+			return nil
+		}
+		rrps.Policies[i+1] = compiled
+	}
+
+	// Only schema in effect is the schema defined by the "root" policy.
+	rrps.Schemas = rrps.Policies[len(rrps.Policies)-1].Schemas
+	// TODO(cell) Check for inconsistent schema references in the policy tree and make that an error
+	// For example: policies requiring different schemas from others, child having a schema but the parent not having one.
+
+	return &runtimev1.RunnablePolicySet{
+		Fqn: modCtx.fqn,
+		PolicySet: &runtimev1.RunnablePolicySet_ResourcePolicy{
+			ResourcePolicy: rrps,
+		},
+	}
+}
+
+func compileResourcePolicy(modCtx *moduleCtx, schemaMgr schema.Manager) *runtimev1.RunnableResourcePolicySet_Policy {
+	rp := modCtx.def.GetResourcePolicy()
+	if rp == nil {
+		modCtx.addErrWithDesc(errUnexpectedErr, "Not a resource policy definition")
+		return nil
+	}
+
 	referencedRoles, err := compileImportedDerivedRoles(modCtx, rp)
 	if err != nil {
 		return nil
@@ -61,7 +113,7 @@ func compileResourcePolicy(modCtx *moduleCtx, rp *policyv1.ResourcePolicy, schem
 
 	rrp := &runtimev1.RunnableResourcePolicySet_Policy{
 		DerivedRoles: referencedRoles,
-		Scope:        strings.Split(rp.Scope, "."),
+		Scope:        rp.Scope,
 		Rules:        make([]*runtimev1.RunnableResourcePolicySet_Policy_Rule, len(rp.Rules)),
 		Variables:    compileVariables(modCtx, modCtx.def.Variables),
 		Schemas:      rp.Schemas,
@@ -77,21 +129,7 @@ func compileResourcePolicy(modCtx *moduleCtx, rp *policyv1.ResourcePolicy, schem
 		rrp.Rules[i] = cr
 	}
 
-	rrps := &runtimev1.RunnableResourcePolicySet{
-		Meta: &runtimev1.RunnableResourcePolicySet_Metadata{
-			Fqn:      modCtx.fqn,
-			Resource: rp.Resource,
-			Version:  rp.Version,
-		},
-		Policies: []*runtimev1.RunnableResourcePolicySet_Policy{rrp},
-	}
-
-	return &runtimev1.RunnablePolicySet{
-		Fqn: modCtx.fqn,
-		PolicySet: &runtimev1.RunnablePolicySet_ResourcePolicy{
-			ResourcePolicy: rrps,
-		},
-	}
+	return rrp
 }
 
 func compileImportedDerivedRoles(modCtx *moduleCtx, rp *policyv1.ResourcePolicy) (map[string]*runtimev1.RunnableDerivedRole, error) {
@@ -112,19 +150,13 @@ func compileImportedDerivedRoles(modCtx *moduleCtx, rp *policyv1.ResourcePolicy)
 			continue
 		}
 
-		dr, ok := drModCtx.def.PolicyType.(*policyv1.Policy_DerivedRoles)
-		if !ok {
-			modCtx.addErrWithDesc(errUnexpectedErr, "Module '%s' is not a derived roles definition", impID.String())
-			continue
-		}
-
-		compiledRoles := doCompileDerivedRoles(drModCtx, dr.DerivedRoles)
+		compiledRoles := doCompileDerivedRoles(drModCtx)
 		if compiledRoles == nil {
 			continue
 		}
 
-		for _, rd := range dr.DerivedRoles.Definitions {
-			roleImports[rd.Name] = append(roleImports[rd.Name], derivedRoleInfo{
+		for name := range compiledRoles.DerivedRoles {
+			roleImports[name] = append(roleImports[name], derivedRoleInfo{
 				importName:    imp,
 				sourceFile:    drModCtx.sourceFile,
 				compiledRoles: compiledRoles,
@@ -174,17 +206,22 @@ func compileImportedDerivedRoles(modCtx *moduleCtx, rp *policyv1.ResourcePolicy)
 	return referencedRoles, modCtx.error()
 }
 
-func compileDerivedRoles(modCtx *moduleCtx, dr *policyv1.DerivedRoles) *runtimev1.RunnablePolicySet {
-	rdr := doCompileDerivedRoles(modCtx, dr)
+func compileDerivedRoles(modCtx *moduleCtx) *runtimev1.RunnablePolicySet {
 	return &runtimev1.RunnablePolicySet{
 		Fqn: modCtx.fqn,
 		PolicySet: &runtimev1.RunnablePolicySet_DerivedRoles{
-			DerivedRoles: rdr,
+			DerivedRoles: doCompileDerivedRoles(modCtx),
 		},
 	}
 }
 
-func doCompileDerivedRoles(modCtx *moduleCtx, dr *policyv1.DerivedRoles) *runtimev1.RunnableDerivedRolesSet {
+func doCompileDerivedRoles(modCtx *moduleCtx) *runtimev1.RunnableDerivedRolesSet {
+	dr := modCtx.def.GetDerivedRoles()
+	if dr == nil {
+		modCtx.addErrWithDesc(errUnexpectedErr, "Not a derived roles definition")
+		return nil
+	}
+
 	// TODO(cell) Because derived roles can be imported many times, cache the result to avoid repeating the work
 	compiled := &runtimev1.RunnableDerivedRolesSet{
 		Meta: &runtimev1.RunnableDerivedRolesSet_Metadata{
@@ -268,9 +305,47 @@ func compileResourceRule(modCtx *moduleCtx, rule *policyv1.ResourceRule) *runtim
 	return cr
 }
 
-func compilePrincipalPolicy(modCtx *moduleCtx, pp *policyv1.PrincipalPolicy) *runtimev1.RunnablePolicySet {
+func compilePrincipalPolicySet(modCtx *moduleCtx) *runtimev1.RunnablePolicySet {
+	pp := modCtx.def.GetPrincipalPolicy()
+	if pp == nil {
+		modCtx.addErrWithDesc(errUnexpectedErr, "Not a principal policy definition")
+		return nil
+	}
+
+	ancestors := modCtx.unit.Ancestors()
+
+	rpps := &runtimev1.RunnablePrincipalPolicySet{
+		Meta: &runtimev1.RunnablePrincipalPolicySet_Metadata{
+			Fqn:       modCtx.fqn,
+			Principal: pp.Principal,
+			Version:   pp.Version,
+		},
+		Policies: make([]*runtimev1.RunnablePrincipalPolicySet_Policy, len(ancestors)+1),
+	}
+
+	rpps.Policies[0] = compilePrincipalPolicy(modCtx)
+
+	for i, ancestor := range ancestors {
+		rpps.Policies[i+1] = compilePrincipalPolicy(modCtx.moduleCtx(ancestor))
+	}
+
+	return &runtimev1.RunnablePolicySet{
+		Fqn: modCtx.fqn,
+		PolicySet: &runtimev1.RunnablePolicySet_PrincipalPolicy{
+			PrincipalPolicy: rpps,
+		},
+	}
+}
+
+func compilePrincipalPolicy(modCtx *moduleCtx) *runtimev1.RunnablePrincipalPolicySet_Policy {
+	pp := modCtx.def.GetPrincipalPolicy()
+	if pp == nil {
+		modCtx.addErrWithDesc(errUnexpectedErr, "Not a principal policy definition")
+		return nil
+	}
+
 	rpp := &runtimev1.RunnablePrincipalPolicySet_Policy{
-		Scope:         strings.Split(pp.Scope, "."),
+		Scope:         pp.Scope,
 		ResourceRules: make(map[string]*runtimev1.RunnablePrincipalPolicySet_Policy_ResourceRules, len(pp.Rules)),
 		Variables:     compileVariables(modCtx, modCtx.def.Variables),
 	}
@@ -294,19 +369,5 @@ func compilePrincipalPolicy(modCtx *moduleCtx, pp *policyv1.PrincipalPolicy) *ru
 		rpp.ResourceRules[rule.Resource] = rr
 	}
 
-	rpps := &runtimev1.RunnablePrincipalPolicySet{
-		Meta: &runtimev1.RunnablePrincipalPolicySet_Metadata{
-			Fqn:       modCtx.fqn,
-			Principal: pp.Principal,
-			Version:   pp.Version,
-		},
-		Policies: []*runtimev1.RunnablePrincipalPolicySet_Policy{rpp},
-	}
-
-	return &runtimev1.RunnablePolicySet{
-		Fqn: modCtx.fqn,
-		PolicySet: &runtimev1.RunnablePolicySet_PrincipalPolicy{
-			PrincipalPolicy: rpps,
-		},
-	}
+	return rpp
 }

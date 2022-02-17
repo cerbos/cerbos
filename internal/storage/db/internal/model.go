@@ -20,12 +20,17 @@ const (
 	PolicyTblKindCol       = "kind"
 	PolicyTblNameCol       = "name"
 	PolicyTblVerCol        = "version"
+	PolicyTblScopeCol      = "scope"
 	PolicyTblDefinitionCol = "definition"
 	PolicyTblDisabledCol   = "disabled"
 
 	PolicyDepTbl            = "policy_dependency"
 	PolicyDepTblPolicyIDCol = "policy_id"
 	PolicyDepTblDepIDCol    = "dependency_id"
+
+	PolicyAncestorTbl              = "policy_ancestor"
+	PolicyAncestorTblPolicyIDCol   = "policy_id"
+	PolicyAncestorTblAncestorIDCol = "ancestor_id"
 
 	SchemaTbl              = "attr_schema_defs"
 	SchemaTblIDCol         = "id"
@@ -42,6 +47,7 @@ type Policy struct {
 	Kind        string
 	Name        string
 	Version     string
+	Scope       string
 	Description string
 	ID          namer.ModuleID
 	Disabled    bool
@@ -50,6 +56,11 @@ type Policy struct {
 type PolicyDependency struct {
 	PolicyID     namer.ModuleID `db:"policy_id"`
 	DependencyID namer.ModuleID `db:"dependency_id"`
+}
+
+type PolicyAncestor struct {
+	PolicyID   namer.ModuleID `db:"policy_id"`
+	AncestorID namer.ModuleID `db:"ancestor_id"`
 }
 
 type PolicyDefWrapper struct {
@@ -86,6 +97,7 @@ type PolicyRevision struct {
 	Definition  PolicyDefWrapper
 	Action      string
 	Version     string
+	Scope       string
 	Description string
 	Kind        string
 	Name        string

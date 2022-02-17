@@ -43,6 +43,14 @@ message ResourcesQueryPlanRequest {
                 example: "\"default\""
             }
         ];
+        string scope = 4 [
+            (validate.rules).string.pattern = "^([[:alpha:]][[:word:]\\-]+(\\.[[:alpha:]][[:word:]\\-]*)*)*$",
+            (google.api.field_behavior) = OPTIONAL,
+            (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = { 
+                description: "A dot-separated scope that describes the hierarchy this resource belongs to. This is used for determining policy inheritance."
+                pattern: "^([[:alpha:]][[:word:]\\-]+(\\.[[:alpha:]][[:word:]\\-]*)*)*$"
+            }
+        ];
     }
 
     string request_id = 1;
@@ -65,6 +73,7 @@ message CheckOutput {
     message ActionEffect {
         cerbos.effect.v1.Effect effect = 1;
         string policy = 2;
+        string scope = 3;
     }
 
     string request_id = 1;
@@ -133,6 +142,14 @@ message Resource {
             example: "{\"owner\": \"bugs_bunny\"}"
         }
     ];
+    string scope = 5 [
+        (validate.rules).string.pattern = "^([[:alpha:]][[:word:]\\-]+(\\.[[:alpha:]][[:word:]\\-]*)*)*$",
+        (google.api.field_behavior) = OPTIONAL,
+        (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = { 
+            description: "A dot-separated scope that describes the hierarchy this resource belongs to. This is used for determining policy inheritance."
+            pattern: "^([[:alpha:]][[:word:]\\-]+(\\.[[:alpha:]][[:word:]\\-]*)*)*$"
+        }
+    ];
 }
 
 message Principal {
@@ -175,6 +192,14 @@ message Principal {
         (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = { 
             description: "Key-value pairs of contextual data about this principal that should be used during policy evaluation."
             example: "{\"beta_tester\": true}"
+        }
+    ];
+    string scope = 5 [
+        (validate.rules).string.pattern = "^([[:alpha:]][[:word:]\\-]+(\\.[[:alpha:]][[:word:]\\-]*)*)*$",
+        (google.api.field_behavior) = OPTIONAL,
+        (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = { 
+            description: "A dot-separated scope that describes the hierarchy this principal belongs to. This is used for determining policy inheritance."
+            pattern: "^([[:alpha:]][[:word:]\\-]+(\\.[[:alpha:]][[:word:]\\-]*)*)*$"
         }
     ];
 }

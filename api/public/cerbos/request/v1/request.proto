@@ -132,6 +132,14 @@ message ResourceSet {
             example: "{\"XX125\":{\"attr\":{\"owner\":\"bugs_bunny\", \"public\": false, \"flagged\": false}}, \"XX225\":{\"attr\":{\"owner\":\"daffy_duck\", \"public\": true, \"flagged\": false}}}"
         }
     ];
+    string scope = 4 [
+        (validate.rules).string.pattern = "^([[:alpha:]][[:word:]\\-]+(\\.[[:alpha:]][[:word:]\\-]*)*)*$",
+        (google.api.field_behavior) = OPTIONAL,
+        (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = { 
+            description: "A dot-separated scope that describes the hierarchy these resources belong to. This is used for determining policy inheritance."
+            pattern: "^([[:alpha:]][[:word:]\\-]+(\\.[[:alpha:]][[:word:]\\-]*)*)*$"
+        }
+    ];
 }
 
 message AttributesMap {

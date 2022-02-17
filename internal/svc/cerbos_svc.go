@@ -95,6 +95,7 @@ func (cs *CerbosService) CheckResourceSet(ctx context.Context, req *requestv1.Ch
 			Resource: &enginev1.Resource{
 				Kind:          req.Resource.Kind,
 				PolicyVersion: req.Resource.PolicyVersion,
+				Scope:         req.Resource.Scope,
 				Id:            key,
 				Attr:          res.Attr,
 			},

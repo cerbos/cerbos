@@ -697,6 +697,9 @@
         },
         "policy": {
           "type": "string"
+        },
+        "scope": {
+          "type": "string"
         }
       }
     },
@@ -819,6 +822,11 @@
           "type": "string",
           "example": "album:object:default",
           "description": "Policy that matched to produce this effect."
+        },
+        "matchedScope": {
+          "type": "string",
+          "example": "acme.corp.base",
+          "description": "Policy scope that matched to produce this effect."
         }
       },
       "description": "Name of the action."
@@ -1067,6 +1075,11 @@
             "type": "object"
           },
           "description": "Kay-value pairs of contextual data about this resource that should be used during policy evaluation."
+        },
+        "scope": {
+          "type": "string",
+          "description": "A dot-separated scope that describes the hierarchy this resource belongs to. This is used for determining policy inheritance.",
+          "pattern": "^([[:alpha:]][[:word:]\\-]+(\\.[[:alpha:]][[:word:]\\-]*)*)*$"
         }
       },
       "required": [
@@ -1972,6 +1985,11 @@
             "type": "object"
           },
           "description": "Key-value pairs of contextual data about this principal that should be used during policy evaluation."
+        },
+        "scope": {
+          "type": "string",
+          "description": "A dot-separated scope that describes the hierarchy this principal belongs to. This is used for determining policy inheritance.",
+          "pattern": "^([[:alpha:]][[:word:]\\-]+(\\.[[:alpha:]][[:word:]\\-]*)*)*$"
         }
       },
       "description": "A person or application attempting to perform the actions on the set of resources.",
@@ -2120,6 +2138,11 @@
           "required": [
             "instances"
           ]
+        },
+        "scope": {
+          "type": "string",
+          "description": "A dot-separated scope that describes the hierarchy these resources belong to. This is used for determining policy inheritance.",
+          "pattern": "^([[:alpha:]][[:word:]\\-]+(\\.[[:alpha:]][[:word:]\\-]*)*)*$"
         }
       },
       "description": "Set of resources to check",
@@ -2152,6 +2175,11 @@
           "example": "default",
           "description": "The policy version to use to evaluate this request. If not specified, will default to the server-configured default version.",
           "pattern": "^[[:word:]]*$"
+        },
+        "scope": {
+          "type": "string",
+          "description": "A dot-separated scope that describes the hierarchy this resource belongs to. This is used for determining policy inheritance.",
+          "pattern": "^([[:alpha:]][[:word:]\\-]+(\\.[[:alpha:]][[:word:]\\-]*)*)*$"
         }
       },
       "required": [
