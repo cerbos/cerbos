@@ -22,9 +22,9 @@ var invalidIdentifierChars = regexp.MustCompile(`[^\w.]+`)
 var validKinds = map[string]int{"derived_roles": 2, "principal": 3, "resource": 3}
 
 const (
-	DerivedRolesPrefix      = "cerbos.derived_roles"
-	PrincipalPoliciesPrefix = "cerbos.principal"
-	ResourcePoliciesPrefix  = "cerbos.resource"
+	DerivedRolesPrefix      = fqnPrefix + "derived_roles"
+	PrincipalPoliciesPrefix = fqnPrefix + "principal"
+	ResourcePoliciesPrefix  = fqnPrefix + "resource"
 
 	DefaultVersion = "default"
 	fqnPrefix      = "cerbos."
