@@ -35,6 +35,10 @@ func Compile(unit *policy.CompilationUnit, schemaMgr schema.Manager) (rps *runti
 	uc := newUnitCtx(unit)
 	mc := uc.moduleCtx(unit.ModID)
 
+	if mc == nil || mc.def == nil {
+		return nil, fmt.Errorf("missing policy definition %d: %w", unit.ModID, errInvalidCompilationUnit)
+	}
+
 	switch pt := mc.def.PolicyType.(type) {
 	case *policyv1.Policy_ResourcePolicy:
 		rps = compileResourcePolicySet(mc, schemaMgr)

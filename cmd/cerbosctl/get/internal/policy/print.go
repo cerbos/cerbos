@@ -71,5 +71,5 @@ func getHeaders(kind policy.Kind) []string {
 	if kind == policy.DerivedRolesKind {
 		return []string{"POLICY ID", "NAME"}
 	}
-	return []string{"POLICY ID", "NAME", "VERSION"}
+	return []string{"POLICY ID", "NAME", "VERSION", "SCOPE"}
 }

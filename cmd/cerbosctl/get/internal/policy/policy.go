@@ -45,6 +45,8 @@ func List(c client.AdminClient, cmd *cobra.Command, filters *flagset.Filters, fo
 		tw.SetHeader(getHeaders(kind))
 	}
 
+	fd := newFilterDef(kind, filters.Name, filters.Version)
+
 	for idx := range policyIds {
 		if idx%internal.MaxIDPerReq == 0 {
 			idxEnd := internal.MinInt(idx+internal.MaxIDPerReq, len(policyIds))
@@ -53,19 +55,22 @@ func List(c client.AdminClient, cmd *cobra.Command, filters *flagset.Filters, fo
 				return fmt.Errorf("error while requesting policy: %w", err)
 			}
 
-			wp := make([]policy.Wrapper, len(policies))
-			for i, p := range policies {
-				wp[i] = policy.Wrap(p)
+			filtered := make([]policy.Wrapper, 0, len(policies))
+			for _, p := range policies {
+				wp := policy.Wrap(p)
+				if fd.filter(wp) {
+					filtered = append(filtered, wp)
+				}
 			}
 
-			filtered := filter(wp, filters.Name, filters.Version, kind)
 			sorted := sort(filtered, flagset.SortByValue(sortFlags.SortBy))
 			for _, p := range sorted {
-				row := make([]string, 2, 3) //nolint:gomnd
+				row := make([]string, 2, 4) //nolint:gomnd
 				row[0] = p.Metadata.StoreIdentifer
 				row[1] = p.Name
 				if kind != policy.DerivedRolesKind {
 					row = append(row, p.Version)
+					row = append(row, p.Scope)
 				}
 				tw.Append(row)
 			}
@@ -78,6 +83,8 @@ func List(c client.AdminClient, cmd *cobra.Command, filters *flagset.Filters, fo
 
 func Get(c client.AdminClient, cmd *cobra.Command, format *flagset.Format, kind policy.Kind, ids ...string) error {
 	foundPolicy := false
+	fd := newFilterDef(kind, nil, nil)
+
 	for idx := range ids {
 		if idx%internal.MaxIDPerReq == 0 {
 			idxEnd := internal.MinInt(idx+internal.MaxIDPerReq, len(ids))
@@ -86,12 +93,14 @@ func Get(c client.AdminClient, cmd *cobra.Command, format *flagset.Format, kind 
 				return fmt.Errorf("error while requesting policy: %w", err)
 			}
 
-			wp := make([]policy.Wrapper, len(policies))
-			for i, p := range policies {
-				wp[i] = policy.Wrap(p)
+			filtered := make([]policy.Wrapper, 0, len(policies))
+			for _, p := range policies {
+				wp := policy.Wrap(p)
+				if fd.filter(wp) {
+					filtered = append(filtered, wp)
+				}
 			}
 
-			filtered := filter(wp, nil, nil, kind)
 			if len(filtered) != 0 {
 				foundPolicy = true
 			}

@@ -186,7 +186,7 @@ func (idx *indexBuilder) addPolicy(file string, p policy.Wrapper) {
 	delete(idx.missing, p.ID)
 	delete(idx.missingScopes, p.ID)
 
-	if p.Kind != policy.DerivedRolesKindStr {
+	if p.Kind != policy.DerivedRolesKind {
 		idx.executables[p.ID] = struct{}{}
 	}
 

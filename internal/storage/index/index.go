@@ -222,11 +222,11 @@ func (idx *index) AddOrUpdate(entry Entry) (evt storage.Event, err error) {
 	idx.fileToModID[entry.File] = modID
 	idx.modIDToFile[modID] = entry.File
 
-	if entry.Policy.Kind != policy.DerivedRolesKindStr {
+	if entry.Policy.Kind != policy.DerivedRolesKind {
 		idx.executables[modID] = struct{}{}
 	}
 
-	for _, dep := range entry.Policy.Dependencies {
+	for _, dep := range entry.Policy.Dependencies() {
 		idx.addDep(modID, dep)
 	}
 

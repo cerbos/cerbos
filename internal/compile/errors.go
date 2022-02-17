@@ -14,14 +14,15 @@ import (
 )
 
 var (
-	errAmbiguousDerivedRole = errors.New("ambiguous derived role")
-	errImportNotFound       = errors.New("import not found")
-	errInvalidResourceRule  = errors.New("invalid resource rule")
-	errInvalidSchema        = errors.New("invalid schema")
-	errMissingDefinition    = errors.New("missing policy definition")
-	errScriptsUnsupported   = errors.New("scripts in conditions are no longer supported")
-	errUnexpectedErr        = errors.New("unexpected error")
-	errUnknownDerivedRole   = errors.New("unknown derived role")
+	errAmbiguousDerivedRole   = errors.New("ambiguous derived role")
+	errImportNotFound         = errors.New("import not found")
+	errInvalidCompilationUnit = errors.New("invalid compilation unit")
+	errInvalidResourceRule    = errors.New("invalid resource rule")
+	errInvalidSchema          = errors.New("invalid schema")
+        errMissingDefinition      = errors.New("missing policy definition")
+	errScriptsUnsupported     = errors.New("scripts in conditions are no longer supported")
+	errUnexpectedErr          = errors.New("unexpected error")
+	errUnknownDerivedRole     = errors.New("unknown derived role")
 )
 
 type ErrorList []*Error
