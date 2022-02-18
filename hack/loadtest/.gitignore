@@ -1,0 +1,5 @@
+bin/
+k6/gen
+data_postgres/
+results/
+conf/cerbos/config.yml
