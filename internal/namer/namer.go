@@ -92,7 +92,8 @@ func FQN(p *policyv1.Policy) string {
 // For example, if the policy has scope a.b.c, the returned tree will contain the FQNs in the following order:
 // - a.b.c
 // - a.b
-// - a.
+// - a
+// - "" (empty scope).
 func FQNTree(p *policyv1.Policy) []string {
 	var fqn string
 	var scope string
@@ -121,6 +122,9 @@ func FQNTree(p *policyv1.Policy) []string {
 			fqnTree = append(fqnTree, withScope(fqn, scope[:i]))
 		}
 	}
+
+	// add the no scope FQN as the root
+	fqnTree = append(fqnTree, fqn)
 
 	return fqnTree
 }

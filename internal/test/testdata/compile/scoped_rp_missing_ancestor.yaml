@@ -4,6 +4,11 @@ wantErrors:
     error: missing policy definition
     desc: |-
       Missing ancestor policy "resource.leave_request.v20210210/acme.hr"
+
+  - file: leave_request.acme.hr.uk.yaml
+    error: missing policy definition
+    desc: |-
+      Missing ancestor policy "resource.leave_request.v20210210"
 mainDef: "leave_request.acme.hr.uk.yaml"
 inputDefs:
   "leave_request.acme.yaml":

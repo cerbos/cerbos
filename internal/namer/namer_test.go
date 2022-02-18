@@ -90,6 +90,7 @@ func TestFQNTree(t *testing.T) {
 				"cerbos.resource.leave_request.vdefault/acme.base.cloud",
 				"cerbos.resource.leave_request.vdefault/acme.base",
 				"cerbos.resource.leave_request.vdefault/acme",
+				"cerbos.resource.leave_request.vdefault",
 			},
 		},
 		{
@@ -108,6 +109,7 @@ func TestFQNTree(t *testing.T) {
 				"cerbos.principal.donald_duck.vdefault/acme.base.cloud",
 				"cerbos.principal.donald_duck.vdefault/acme.base",
 				"cerbos.principal.donald_duck.vdefault/acme",
+				"cerbos.principal.donald_duck.vdefault",
 			},
 		},
 	}

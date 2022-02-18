@@ -9,6 +9,7 @@ adminAddOrUpdatePolicy:
       {{- readPolicy "store/derived_roles/derived_roles_01.yaml" | toPolicyJSON  }},
       {{- readPolicy "store/derived_roles/derived_roles_02.yaml" | toPolicyJSON }},
       {{- readPolicy "store/resource_policies/policy_01.yaml" | toPolicyJSON }},
+      {{- readPolicy "store/resource_policies/policy_05.yaml" | toPolicyJSON }},
       {{- readPolicy "store/resource_policies/policy_05_acme.yaml" | toPolicyJSON }},
       {{- readPolicy "store/resource_policies/policy_05_acme.hr.yaml" | toPolicyJSON }},
       {{- readPolicy "store/resource_policies/policy_05_acme.hr.uk.yaml" | toPolicyJSON }},

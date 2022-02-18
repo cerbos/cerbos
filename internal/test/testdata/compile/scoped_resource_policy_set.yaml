@@ -1,6 +1,25 @@
 ---
 mainDef: "leave_request.acme.hr.uk.yaml"
 inputDefs:
+  "leave_request.yaml":
+     apiVersion: api.cerbos.dev/v1
+     resourcePolicy:
+       resource: leave_request
+       version: "20210210"
+       importDerivedRoles:
+         - my_derived_roles
+       schemas:
+         principalSchema:
+           ref: cerbos:///complex_object.json
+         resourceSchema:
+           ref: cerbos:///complex_object.json
+       rules:
+         - actions: ['*']
+           effect: EFFECT_ALLOW
+           roles:
+             - admin
+           name: wildcard
+
   "leave_request.acme.yaml":
      apiVersion: api.cerbos.dev/v1
      resourcePolicy:
@@ -15,11 +34,6 @@ inputDefs:
          resourceSchema:
            ref: cerbos:///complex_object.json
        rules:
-         - actions: ['*']
-           effect: EFFECT_ALLOW
-           roles:
-             - admin
-           name: wildcard
          - actions: ["create"]
            derivedRoles:
              - employee_that_owns_the_record

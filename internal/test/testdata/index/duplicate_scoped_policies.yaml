@@ -77,21 +77,6 @@ files:
         effect: EFFECT_ALLOW
       version: "20210210"
 
-  "resource_acme_default.yaml": |-
-    ---
-    apiVersion: api.cerbos.dev/v1
-    resourcePolicy:
-      importDerivedRoles:
-      - my_derived_roles
-      resource: leave_request
-      scope: "acme"
-      rules:
-      - actions: ["view:public"]
-        derivedRoles:
-        - any_employee
-        effect: EFFECT_ALLOW
-      version: "default"
-
   "derived.yaml": |-
     ---
     apiVersion: "api.cerbos.dev/v1"

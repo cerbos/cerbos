@@ -107,13 +107,15 @@ func TestSuite(store DBStorage) func(*testing.T) {
 
 			haveRec := have[rpAcmeHRUK.ID]
 			require.Equal(t, rpAcmeHRUK.ID, haveRec.ModID)
-			require.Len(t, haveRec.Definitions, 4)
+			require.Len(t, haveRec.Definitions, 5)
 			require.Contains(t, haveRec.Definitions, rpAcmeHRUK.ID)
 			require.Empty(t, cmp.Diff(rpAcmeHRUK, haveRec.Definitions[rpAcmeHRUK.ID], protocmp.Transform()))
 			require.Contains(t, haveRec.Definitions, rpAcmeHR.ID)
 			require.Empty(t, cmp.Diff(rpAcmeHR, haveRec.Definitions[rpAcmeHR.ID], protocmp.Transform()))
 			require.Contains(t, haveRec.Definitions, rpAcme.ID)
 			require.Empty(t, cmp.Diff(rpAcme, haveRec.Definitions[rpAcme.ID], protocmp.Transform()))
+			require.Contains(t, haveRec.Definitions, rp.ID)
+			require.Empty(t, cmp.Diff(rp, haveRec.Definitions[rp.ID], protocmp.Transform()))
 			require.Contains(t, haveRec.Definitions, dr.ID)
 			require.Empty(t, cmp.Diff(dr, haveRec.Definitions[dr.ID], protocmp.Transform()))
 		})
@@ -126,11 +128,13 @@ func TestSuite(store DBStorage) func(*testing.T) {
 
 			haveRec := have[ppAcmeHR.ID]
 			require.Equal(t, ppAcmeHR.ID, haveRec.ModID)
-			require.Len(t, haveRec.Definitions, 2)
+			require.Len(t, haveRec.Definitions, 3)
 			require.Contains(t, haveRec.Definitions, ppAcmeHR.ID)
 			require.Empty(t, cmp.Diff(ppAcmeHR, haveRec.Definitions[ppAcmeHR.ID], protocmp.Transform()))
 			require.Contains(t, haveRec.Definitions, ppAcme.ID)
 			require.Empty(t, cmp.Diff(ppAcme, haveRec.Definitions[ppAcme.ID], protocmp.Transform()))
+			require.Contains(t, haveRec.Definitions, pp.ID)
+			require.Empty(t, cmp.Diff(pp, haveRec.Definitions[pp.ID], protocmp.Transform()))
 		})
 
 		t.Run("get_multiple_compilation_units", func(t *testing.T) {
@@ -157,13 +161,15 @@ func TestSuite(store DBStorage) func(*testing.T) {
 
 			haveRPAcmeHRUK := have[rpAcmeHRUK.ID]
 			require.Equal(t, rpAcmeHRUK.ID, haveRPAcmeHRUK.ModID)
-			require.Len(t, haveRPAcmeHRUK.Definitions, 4)
+			require.Len(t, haveRPAcmeHRUK.Definitions, 5)
 			require.Contains(t, haveRPAcmeHRUK.Definitions, rpAcmeHRUK.ID)
 			require.Empty(t, cmp.Diff(rpAcmeHRUK, haveRPAcmeHRUK.Definitions[rpAcmeHRUK.ID], protocmp.Transform()))
 			require.Contains(t, haveRPAcmeHRUK.Definitions, rpAcmeHR.ID)
 			require.Empty(t, cmp.Diff(rpAcmeHR, haveRPAcmeHRUK.Definitions[rpAcmeHR.ID], protocmp.Transform()))
 			require.Contains(t, haveRPAcmeHRUK.Definitions, rpAcme.ID)
 			require.Empty(t, cmp.Diff(rpAcme, haveRPAcmeHRUK.Definitions[rpAcme.ID], protocmp.Transform()))
+			require.Contains(t, haveRPAcmeHRUK.Definitions, rp.ID)
+			require.Empty(t, cmp.Diff(rp, haveRPAcmeHRUK.Definitions[rp.ID], protocmp.Transform()))
 			require.Contains(t, haveRPAcmeHRUK.Definitions, dr.ID)
 			require.Empty(t, cmp.Diff(dr, haveRPAcmeHRUK.Definitions[dr.ID], protocmp.Transform()))
 		})

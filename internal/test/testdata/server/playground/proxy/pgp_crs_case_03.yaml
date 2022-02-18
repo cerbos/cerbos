@@ -16,6 +16,10 @@ playgroundProxy:
         "contents": "{{ fileString `store/derived_roles/derived_roles_02.yaml` | b64enc }}",
       },
       {
+        "fileName": "policy_05.yaml",
+        "contents": "{{ fileString `store/resource_policies/policy_05.yaml` | b64enc }}",
+      },
+      {
         "fileName": "policy_05_acme.yaml",
         "contents": "{{ fileString `store/resource_policies/policy_05_acme.yaml` | b64enc }}",
       },
