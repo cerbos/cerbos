@@ -76,7 +76,7 @@ Checks permissions for a set of homogeneous resources.
     }
   },
   "includeMeta": true, <14>
-  "auxData": { <14>
+  "auxData": { <15>
     "jwt": {
         "token": "xxx.yyy.zzz", <16>
         "keySetId": "ks1" <17>

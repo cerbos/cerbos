@@ -24,8 +24,8 @@ principalPolicy:
     - resource: employee_profile
       actions:
         - name: view_employee_profile
-          action: "*" <7>
-          condition: <8>
+          action: "*" 
+          condition: 
             match:
               all:
                 of:
