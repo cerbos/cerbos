@@ -1,5 +1,5 @@
 ---
-description: "auxData is used in policies"
+description: "Harry defers; scoped request 'acme.hr'"
 wantStatus:
   httpStatusCode: 200
   grpcStatusCode: 0
@@ -35,6 +35,7 @@ resourcesQueryPlan:
       "kind": "KIND_ALWAYS_ALLOWED",
     },
     "meta": {
-      "filter_debug": "(true)"
+      "filter_debug": "(true)",
+      "matched_scope": "acme.hr"
     }
   }

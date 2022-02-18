@@ -1,5 +1,5 @@
 ---
-description: "Harry defers; scoped request 'acme.hr.uk'"
+description: "Harry wants to create;scoped request fallback to parent scope"
 wantStatus:
   httpStatusCode: 200
   grpcStatusCode: 0
@@ -7,7 +7,7 @@ resourcesQueryPlan:
   input: {
     "requestId": "test",
     "includeMeta": true,
-    "action": "defer",
+    "action": "create",
     "principal": {
       "id": "harry",
       "policyVersion": "default",
@@ -18,7 +18,7 @@ resourcesQueryPlan:
     "resource": {
       "kind": "leave_request",
       "policyVersion": "default",
-      "scope": "acme.hr.uk"
+      "scope": "acme.hr"
     },
     "auxData": {
       "jwt": {
@@ -28,7 +28,7 @@ resourcesQueryPlan:
   }
   wantResponse: {
     "requestId": "test",
-    "action": "defer",
+    "action": "create",
     "resourceKind": "leave_request",
     "policyVersion": "default",
     "filter": {
@@ -45,6 +45,6 @@ resourcesQueryPlan:
     },
     "meta": {
       "filter_debug": "(R.attr.owner == \"harry\")",
-      "matched_scope": "acme.hr.uk"
+      "matched_scope": "acme"
     }
   }

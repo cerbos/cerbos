@@ -2603,6 +2603,8 @@ func (m *ResourcesQueryPlanResponse_Meta) validate(all bool) error {
 
 	// no validation rules for FilterDebug
 
+	// no validation rules for MatchedScope
+
 	if len(errors) > 0 {
 		return ResourcesQueryPlanResponse_MetaMultiError(errors)
 	}

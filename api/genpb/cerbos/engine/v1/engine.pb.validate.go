@@ -685,6 +685,8 @@ func (m *ResourcesQueryPlanOutput) validate(all bool) error {
 
 	// no validation rules for PolicyVersion
 
+	// no validation rules for Scope
+
 	if all {
 		switch v := interface{}(m.GetFilter()).(type) {
 		case interface{ ValidateAll() error }:

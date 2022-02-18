@@ -88,6 +88,7 @@ message ResourcesQueryPlanOutput {
     string action = 2;
     string kind = 3;
     string policy_version = 4;
+    string scope = 5;
     message Node {
         oneof node {
             LogicalOperation logical_operation = 1;
@@ -105,7 +106,7 @@ message ResourcesQueryPlanOutput {
         repeated Node nodes = 2;
     }
 
-    Node filter = 5;
+    Node filter = 6;
 }
 
 message Resource {
