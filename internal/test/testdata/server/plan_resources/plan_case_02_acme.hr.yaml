@@ -1,5 +1,5 @@
 ---
-description: "Harry wants to create;scoped request fallback to parent scope"
+description: "Harry wants to create;scoped request matched by parent scope"
 wantStatus:
   httpStatusCode: 200
   grpcStatusCode: 0
