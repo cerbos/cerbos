@@ -2227,6 +2227,11 @@
         "filterDebug": {
           "type": "string",
           "description": "Filter textual representation for debugging purposes."
+        },
+        "matchedScope": {
+          "type": "string",
+          "example": "acme.corp.base",
+          "description": "Policy scope that matched to produce this effect."
         }
       },
       "description": "Metadata about request evaluation."

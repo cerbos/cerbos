@@ -1169,6 +1169,10 @@ func cerbos_response_v1_ResourcesQueryPlanResponse_Meta_hashpb_sum(m *ResourcesQ
 		_, _ = hasher.Write(protowire.AppendString(nil, m.FilterDebug))
 
 	}
+	if _, ok := ignore["cerbos.response.v1.ResourcesQueryPlanResponse.Meta.matched_scope"]; !ok {
+		_, _ = hasher.Write(protowire.AppendString(nil, m.MatchedScope))
+
+	}
 }
 
 func cerbos_response_v1_ResourcesQueryPlanResponse_hashpb_sum(m *ResourcesQueryPlanResponse, hasher hash.Hash, ignore map[string]struct{}) {

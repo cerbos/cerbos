@@ -107,6 +107,12 @@ message ResourcesQueryPlanResponse {
                 description: "Filter textual representation for debugging purposes.",
             }
         ];
+        string matched_scope = 2 [
+            (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+                description: "Policy scope that matched to produce this effect."
+                example: "\"acme.corp.base\""
+            }
+        ];
     }
 
     Meta meta = 6 [

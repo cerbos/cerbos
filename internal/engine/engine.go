@@ -320,6 +320,7 @@ func (engine *Engine) ResourcesQueryPlan(ctx context.Context, input *enginev1.Re
 		if input.IncludeMeta {
 			response.Meta = new(responsev1.ResourcesQueryPlanResponse_Meta)
 			response.Meta.FilterDebug, err = String(plan.Filter)
+			response.Meta.MatchedScope = plan.Scope
 		}
 		if err != nil {
 			return nil, err
