@@ -14,26 +14,6 @@ files:
         effect: EFFECT_ALLOW
         roles:
         - admin
-      - actions: ["create"]
-        derivedRoles:
-        - employee_that_owns_the_record
-        effect: EFFECT_ALLOW
-      - actions: ["view:*"]
-        derivedRoles:
-        - employee_that_owns_the_record
-        - direct_manager
-        effect: EFFECT_ALLOW
-      - actions: ["view:public"]
-        derivedRoles:
-        - any_employee
-        effect: EFFECT_ALLOW
-      - actions: ["approve"]
-        condition:
-          match:
-            expr: request.resource.attr.status == "PENDING_APPROVAL"
-        derivedRoles:
-        - direct_manager
-        effect: EFFECT_ALLOW
       version: "20210210"
 
   "resource_acme.yaml": |-
@@ -45,10 +25,6 @@ files:
       resource: leave_request
       scope: "acme"
       rules:
-      - actions: ['*']
-        effect: EFFECT_ALLOW
-        roles:
-        - admin
       - actions: ["create"]
         derivedRoles:
         - employee_that_owns_the_record
@@ -189,13 +165,18 @@ wantCompilationUnits:
   - mainFqn: cerbos.principal.donald_duck.v20210210/acme
     definitionFqns: 
       - cerbos.principal.donald_duck.v20210210/acme
+      - cerbos.principal.donald_duck.v20210210
+    ancestorFqns:
+      - cerbos.principal.donald_duck.v20210210
 
   - mainFqn: cerbos.principal.donald_duck.v20210210/acme.corp
     definitionFqns: 
       - cerbos.principal.donald_duck.v20210210/acme.corp
       - cerbos.principal.donald_duck.v20210210/acme
+      - cerbos.principal.donald_duck.v20210210
     ancestorFqns:
       - cerbos.principal.donald_duck.v20210210/acme
+      - cerbos.principal.donald_duck.v20210210
 
   - mainFqn: cerbos.resource.leave_request.v20210210
     definitionFqns:
@@ -205,22 +186,29 @@ wantCompilationUnits:
   - mainFqn: cerbos.resource.leave_request.v20210210/acme
     definitionFqns:
       - cerbos.resource.leave_request.v20210210/acme
+      - cerbos.resource.leave_request.v20210210
       - cerbos.derived_roles.my_derived_roles
+    ancestorFqns:
+      - cerbos.resource.leave_request.v20210210
 
   - mainFqn: cerbos.resource.leave_request.v20210210/acme.hr
     definitionFqns:
       - cerbos.resource.leave_request.v20210210/acme.hr
       - cerbos.resource.leave_request.v20210210/acme
+      - cerbos.resource.leave_request.v20210210
       - cerbos.derived_roles.my_derived_roles
     ancestorFqns:
       - cerbos.resource.leave_request.v20210210/acme
+      - cerbos.resource.leave_request.v20210210
 
   - mainFqn: cerbos.resource.leave_request.v20210210/acme.hr.uk
     definitionFqns:
       - cerbos.resource.leave_request.v20210210/acme.hr.uk
       - cerbos.resource.leave_request.v20210210/acme.hr
       - cerbos.resource.leave_request.v20210210/acme
+      - cerbos.resource.leave_request.v20210210
       - cerbos.derived_roles.my_derived_roles
     ancestorFqns:
       - cerbos.resource.leave_request.v20210210/acme.hr
       - cerbos.resource.leave_request.v20210210/acme
+      - cerbos.resource.leave_request.v20210210

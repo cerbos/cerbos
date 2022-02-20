@@ -22,5 +22,5 @@ func TestCloneResult(t *testing.T) {
 	is.NoError(err)
 	result, err := cloner.Clone(ctx)
 	is.NoError(err)
-	is.Len(result.updateOrAdd, 18)
+	is.Len(result.updateOrAdd, 20)
 }

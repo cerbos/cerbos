@@ -1,151 +1,151 @@
 {
-  "fqn": "cerbos.resource.leave_request.v20210210/acme.hr.uk",
-  "resourcePolicy": {
-    "meta": {
-      "fqn": "cerbos.resource.leave_request.v20210210/acme.hr.uk",
-      "resource": "leave_request",
-      "version": "20210210"
+  "fqn":  "cerbos.resource.leave_request.v20210210/acme.hr.uk",
+  "resourcePolicy":  {
+    "meta":  {
+      "fqn":  "cerbos.resource.leave_request.v20210210/acme.hr.uk",
+      "resource":  "leave_request",
+      "version":  "20210210"
     },
-    "policies": [
+    "policies":  [
       {
-        "scope": "acme.hr.uk",
-        "derivedRoles": {
-          "direct_manager": {
-            "name": "direct_manager",
-            "parentRoles": {
-              "manager": {}
+        "scope":  "acme.hr.uk",
+        "derivedRoles":  {
+          "direct_manager":  {
+            "name":  "direct_manager",
+            "parentRoles":  {
+              "manager":  {}
             },
-            "condition": {
-              "all": {
-                "expr": [
+            "condition":  {
+              "all":  {
+                "expr":  [
                   {
-                    "expr": {
-                      "original": "request.resource.attr.geography == request.principal.attr.geography",
-                      "checked": {
-                        "referenceMap": {
-                          "1": {
-                            "name": "request"
+                    "expr":  {
+                      "original":  "request.resource.attr.geography == request.principal.attr.geography",
+                      "checked":  {
+                        "referenceMap":  {
+                          "1":  {
+                            "name":  "request"
                           },
-                          "5": {
-                            "overloadId": [
+                          "5":  {
+                            "overloadId":  [
                               "equals"
                             ]
                           },
-                          "6": {
-                            "name": "request"
+                          "6":  {
+                            "name":  "request"
                           }
                         },
-                        "typeMap": {
-                          "1": {
-                            "messageType": "cerbos.engine.v1.CheckInput"
+                        "typeMap":  {
+                          "1":  {
+                            "messageType":  "cerbos.engine.v1.CheckInput"
                           },
-                          "2": {
-                            "messageType": "cerbos.engine.v1.Resource"
+                          "2":  {
+                            "messageType":  "cerbos.engine.v1.Resource"
                           },
-                          "3": {
-                            "mapType": {
-                              "keyType": {
-                                "primitive": "STRING"
+                          "3":  {
+                            "mapType":  {
+                              "keyType":  {
+                                "primitive":  "STRING"
                               },
-                              "valueType": {
-                                "dyn": {}
+                              "valueType":  {
+                                "dyn":  {}
                               }
                             }
                           },
-                          "4": {
-                            "dyn": {}
+                          "4":  {
+                            "dyn":  {}
                           },
-                          "5": {
-                            "primitive": "BOOL"
+                          "5":  {
+                            "primitive":  "BOOL"
                           },
-                          "6": {
-                            "messageType": "cerbos.engine.v1.CheckInput"
+                          "6":  {
+                            "messageType":  "cerbos.engine.v1.CheckInput"
                           },
-                          "7": {
-                            "messageType": "cerbos.engine.v1.Principal"
+                          "7":  {
+                            "messageType":  "cerbos.engine.v1.Principal"
                           },
-                          "8": {
-                            "mapType": {
-                              "keyType": {
-                                "primitive": "STRING"
+                          "8":  {
+                            "mapType":  {
+                              "keyType":  {
+                                "primitive":  "STRING"
                               },
-                              "valueType": {
-                                "dyn": {}
+                              "valueType":  {
+                                "dyn":  {}
                               }
                             }
                           },
-                          "9": {
-                            "dyn": {}
+                          "9":  {
+                            "dyn":  {}
                           }
                         },
-                        "sourceInfo": {
-                          "location": "<input>",
-                          "lineOffsets": [
+                        "sourceInfo":  {
+                          "location":  "<input>",
+                          "lineOffsets":  [
                             68
                           ],
-                          "positions": {
-                            "1": 0,
-                            "2": 7,
-                            "3": 16,
-                            "4": 21,
-                            "5": 32,
-                            "6": 35,
-                            "7": 42,
-                            "8": 52,
-                            "9": 57
+                          "positions":  {
+                            "1":  0,
+                            "2":  7,
+                            "3":  16,
+                            "4":  21,
+                            "5":  32,
+                            "6":  35,
+                            "7":  42,
+                            "8":  52,
+                            "9":  57
                           }
                         },
-                        "expr": {
-                          "id": "5",
-                          "callExpr": {
-                            "function": "_==_",
-                            "args": [
+                        "expr":  {
+                          "id":  "5",
+                          "callExpr":  {
+                            "function":  "_==_",
+                            "args":  [
                               {
-                                "id": "4",
-                                "selectExpr": {
-                                  "operand": {
-                                    "id": "3",
-                                    "selectExpr": {
-                                      "operand": {
-                                        "id": "2",
-                                        "selectExpr": {
-                                          "operand": {
-                                            "id": "1",
-                                            "identExpr": {
-                                              "name": "request"
+                                "id":  "4",
+                                "selectExpr":  {
+                                  "operand":  {
+                                    "id":  "3",
+                                    "selectExpr":  {
+                                      "operand":  {
+                                        "id":  "2",
+                                        "selectExpr":  {
+                                          "operand":  {
+                                            "id":  "1",
+                                            "identExpr":  {
+                                              "name":  "request"
                                             }
                                           },
-                                          "field": "resource"
+                                          "field":  "resource"
                                         }
                                       },
-                                      "field": "attr"
+                                      "field":  "attr"
                                     }
                                   },
-                                  "field": "geography"
+                                  "field":  "geography"
                                 }
                               },
                               {
-                                "id": "9",
-                                "selectExpr": {
-                                  "operand": {
-                                    "id": "8",
-                                    "selectExpr": {
-                                      "operand": {
-                                        "id": "7",
-                                        "selectExpr": {
-                                          "operand": {
-                                            "id": "6",
-                                            "identExpr": {
-                                              "name": "request"
+                                "id":  "9",
+                                "selectExpr":  {
+                                  "operand":  {
+                                    "id":  "8",
+                                    "selectExpr":  {
+                                      "operand":  {
+                                        "id":  "7",
+                                        "selectExpr":  {
+                                          "operand":  {
+                                            "id":  "6",
+                                            "identExpr":  {
+                                              "name":  "request"
                                             }
                                           },
-                                          "field": "principal"
+                                          "field":  "principal"
                                         }
                                       },
-                                      "field": "attr"
+                                      "field":  "attr"
                                     }
                                   },
-                                  "field": "geography"
+                                  "field":  "geography"
                                 }
                               }
                             ]
@@ -155,133 +155,133 @@
                     }
                   },
                   {
-                    "expr": {
-                      "original": "request.resource.attr.geography == request.principal.attr.managed_geographies",
-                      "checked": {
-                        "referenceMap": {
-                          "1": {
-                            "name": "request"
+                    "expr":  {
+                      "original":  "request.resource.attr.geography == request.principal.attr.managed_geographies",
+                      "checked":  {
+                        "referenceMap":  {
+                          "1":  {
+                            "name":  "request"
                           },
-                          "5": {
-                            "overloadId": [
+                          "5":  {
+                            "overloadId":  [
                               "equals"
                             ]
                           },
-                          "6": {
-                            "name": "request"
+                          "6":  {
+                            "name":  "request"
                           }
                         },
-                        "typeMap": {
-                          "1": {
-                            "messageType": "cerbos.engine.v1.CheckInput"
+                        "typeMap":  {
+                          "1":  {
+                            "messageType":  "cerbos.engine.v1.CheckInput"
                           },
-                          "2": {
-                            "messageType": "cerbos.engine.v1.Resource"
+                          "2":  {
+                            "messageType":  "cerbos.engine.v1.Resource"
                           },
-                          "3": {
-                            "mapType": {
-                              "keyType": {
-                                "primitive": "STRING"
+                          "3":  {
+                            "mapType":  {
+                              "keyType":  {
+                                "primitive":  "STRING"
                               },
-                              "valueType": {
-                                "dyn": {}
+                              "valueType":  {
+                                "dyn":  {}
                               }
                             }
                           },
-                          "4": {
-                            "dyn": {}
+                          "4":  {
+                            "dyn":  {}
                           },
-                          "5": {
-                            "primitive": "BOOL"
+                          "5":  {
+                            "primitive":  "BOOL"
                           },
-                          "6": {
-                            "messageType": "cerbos.engine.v1.CheckInput"
+                          "6":  {
+                            "messageType":  "cerbos.engine.v1.CheckInput"
                           },
-                          "7": {
-                            "messageType": "cerbos.engine.v1.Principal"
+                          "7":  {
+                            "messageType":  "cerbos.engine.v1.Principal"
                           },
-                          "8": {
-                            "mapType": {
-                              "keyType": {
-                                "primitive": "STRING"
+                          "8":  {
+                            "mapType":  {
+                              "keyType":  {
+                                "primitive":  "STRING"
                               },
-                              "valueType": {
-                                "dyn": {}
+                              "valueType":  {
+                                "dyn":  {}
                               }
                             }
                           },
-                          "9": {
-                            "dyn": {}
+                          "9":  {
+                            "dyn":  {}
                           }
                         },
-                        "sourceInfo": {
-                          "location": "<input>",
-                          "lineOffsets": [
+                        "sourceInfo":  {
+                          "location":  "<input>",
+                          "lineOffsets":  [
                             78
                           ],
-                          "positions": {
-                            "1": 0,
-                            "2": 7,
-                            "3": 16,
-                            "4": 21,
-                            "5": 32,
-                            "6": 35,
-                            "7": 42,
-                            "8": 52,
-                            "9": 57
+                          "positions":  {
+                            "1":  0,
+                            "2":  7,
+                            "3":  16,
+                            "4":  21,
+                            "5":  32,
+                            "6":  35,
+                            "7":  42,
+                            "8":  52,
+                            "9":  57
                           }
                         },
-                        "expr": {
-                          "id": "5",
-                          "callExpr": {
-                            "function": "_==_",
-                            "args": [
+                        "expr":  {
+                          "id":  "5",
+                          "callExpr":  {
+                            "function":  "_==_",
+                            "args":  [
                               {
-                                "id": "4",
-                                "selectExpr": {
-                                  "operand": {
-                                    "id": "3",
-                                    "selectExpr": {
-                                      "operand": {
-                                        "id": "2",
-                                        "selectExpr": {
-                                          "operand": {
-                                            "id": "1",
-                                            "identExpr": {
-                                              "name": "request"
+                                "id":  "4",
+                                "selectExpr":  {
+                                  "operand":  {
+                                    "id":  "3",
+                                    "selectExpr":  {
+                                      "operand":  {
+                                        "id":  "2",
+                                        "selectExpr":  {
+                                          "operand":  {
+                                            "id":  "1",
+                                            "identExpr":  {
+                                              "name":  "request"
                                             }
                                           },
-                                          "field": "resource"
+                                          "field":  "resource"
                                         }
                                       },
-                                      "field": "attr"
+                                      "field":  "attr"
                                     }
                                   },
-                                  "field": "geography"
+                                  "field":  "geography"
                                 }
                               },
                               {
-                                "id": "9",
-                                "selectExpr": {
-                                  "operand": {
-                                    "id": "8",
-                                    "selectExpr": {
-                                      "operand": {
-                                        "id": "7",
-                                        "selectExpr": {
-                                          "operand": {
-                                            "id": "6",
-                                            "identExpr": {
-                                              "name": "request"
+                                "id":  "9",
+                                "selectExpr":  {
+                                  "operand":  {
+                                    "id":  "8",
+                                    "selectExpr":  {
+                                      "operand":  {
+                                        "id":  "7",
+                                        "selectExpr":  {
+                                          "operand":  {
+                                            "id":  "6",
+                                            "identExpr":  {
+                                              "name":  "request"
                                             }
                                           },
-                                          "field": "principal"
+                                          "field":  "principal"
                                         }
                                       },
-                                      "field": "attr"
+                                      "field":  "attr"
                                     }
                                   },
-                                  "field": "managed_geographies"
+                                  "field":  "managed_geographies"
                                 }
                               }
                             ]
@@ -295,106 +295,106 @@
             }
           }
         },
-        "rules": [
+        "rules":  [
           {
-            "name": "rule-001",
-            "actions": {
-              "approve": {}
+            "name":  "rule-001",
+            "actions":  {
+              "approve":  {}
             },
-            "derivedRoles": {
-              "direct_manager": {}
+            "derivedRoles":  {
+              "direct_manager":  {}
             },
-            "roles": {
-              "hr_bp": {}
+            "roles":  {
+              "hr_bp":  {}
             },
-            "condition": {
-              "expr": {
-                "original": "request.resource.attr.status == \"PENDING_APPROVAL\"",
-                "checked": {
-                  "referenceMap": {
-                    "1": {
-                      "name": "request"
+            "condition":  {
+              "expr":  {
+                "original":  "request.resource.attr.status == \"PENDING_APPROVAL\"",
+                "checked":  {
+                  "referenceMap":  {
+                    "1":  {
+                      "name":  "request"
                     },
-                    "5": {
-                      "overloadId": [
+                    "5":  {
+                      "overloadId":  [
                         "equals"
                       ]
                     }
                   },
-                  "typeMap": {
-                    "1": {
-                      "messageType": "cerbos.engine.v1.CheckInput"
+                  "typeMap":  {
+                    "1":  {
+                      "messageType":  "cerbos.engine.v1.CheckInput"
                     },
-                    "2": {
-                      "messageType": "cerbos.engine.v1.Resource"
+                    "2":  {
+                      "messageType":  "cerbos.engine.v1.Resource"
                     },
-                    "3": {
-                      "mapType": {
-                        "keyType": {
-                          "primitive": "STRING"
+                    "3":  {
+                      "mapType":  {
+                        "keyType":  {
+                          "primitive":  "STRING"
                         },
-                        "valueType": {
-                          "dyn": {}
+                        "valueType":  {
+                          "dyn":  {}
                         }
                       }
                     },
-                    "4": {
-                      "dyn": {}
+                    "4":  {
+                      "dyn":  {}
                     },
-                    "5": {
-                      "primitive": "BOOL"
+                    "5":  {
+                      "primitive":  "BOOL"
                     },
-                    "6": {
-                      "primitive": "STRING"
+                    "6":  {
+                      "primitive":  "STRING"
                     }
                   },
-                  "sourceInfo": {
-                    "location": "<input>",
-                    "lineOffsets": [
+                  "sourceInfo":  {
+                    "location":  "<input>",
+                    "lineOffsets":  [
                       51
                     ],
-                    "positions": {
-                      "1": 0,
-                      "2": 7,
-                      "3": 16,
-                      "4": 21,
-                      "5": 29,
-                      "6": 32
+                    "positions":  {
+                      "1":  0,
+                      "2":  7,
+                      "3":  16,
+                      "4":  21,
+                      "5":  29,
+                      "6":  32
                     }
                   },
-                  "expr": {
-                    "id": "5",
-                    "callExpr": {
-                      "function": "_==_",
-                      "args": [
+                  "expr":  {
+                    "id":  "5",
+                    "callExpr":  {
+                      "function":  "_==_",
+                      "args":  [
                         {
-                          "id": "4",
-                          "selectExpr": {
-                            "operand": {
-                              "id": "3",
-                              "selectExpr": {
-                                "operand": {
-                                  "id": "2",
-                                  "selectExpr": {
-                                    "operand": {
-                                      "id": "1",
-                                      "identExpr": {
-                                        "name": "request"
+                          "id":  "4",
+                          "selectExpr":  {
+                            "operand":  {
+                              "id":  "3",
+                              "selectExpr":  {
+                                "operand":  {
+                                  "id":  "2",
+                                  "selectExpr":  {
+                                    "operand":  {
+                                      "id":  "1",
+                                      "identExpr":  {
+                                        "name":  "request"
                                       }
                                     },
-                                    "field": "resource"
+                                    "field":  "resource"
                                   }
                                 },
-                                "field": "attr"
+                                "field":  "attr"
                               }
                             },
-                            "field": "status"
+                            "field":  "status"
                           }
                         },
                         {
-                          "id": "6",
-                          "constExpr": {
-                            "stringValue": "PENDING_APPROVAL"
+                          "id":  "6",
+                          "constExpr":  {
+                            "stringValue":  "PENDING_APPROVAL"
                           }
                         }
                       ]
@@ -403,171 +403,171 @@
                 }
               }
             },
-            "effect": "EFFECT_ALLOW"
+            "effect":  "EFFECT_ALLOW"
           }
         ]
       },
       {
-        "scope": "acme.hr",
-        "rules": [
+        "scope":  "acme.hr",
+        "rules":  [
           {
-            "name": "wildcard",
-            "actions": {
-              "*": {}
+            "name":  "wildcard",
+            "actions":  {
+              "*":  {}
             },
-            "roles": {
-              "admin": {},
-              "hr_admin": {}
+            "roles":  {
+              "admin":  {},
+              "hr_admin":  {}
             },
-            "effect": "EFFECT_ALLOW"
+            "effect":  "EFFECT_ALLOW"
           }
         ]
       },
       {
-        "scope": "acme",
-        "derivedRoles": {
-          "any_employee": {
-            "name": "any_employee",
-            "parentRoles": {
-              "employee": {}
+        "scope":  "acme",
+        "derivedRoles":  {
+          "any_employee":  {
+            "name":  "any_employee",
+            "parentRoles":  {
+              "employee":  {}
             }
           },
-          "direct_manager": {
-            "name": "direct_manager",
-            "parentRoles": {
-              "manager": {}
+          "direct_manager":  {
+            "name":  "direct_manager",
+            "parentRoles":  {
+              "manager":  {}
             },
-            "condition": {
-              "all": {
-                "expr": [
+            "condition":  {
+              "all":  {
+                "expr":  [
                   {
-                    "expr": {
-                      "original": "request.resource.attr.geography == request.principal.attr.geography",
-                      "checked": {
-                        "referenceMap": {
-                          "1": {
-                            "name": "request"
+                    "expr":  {
+                      "original":  "request.resource.attr.geography == request.principal.attr.geography",
+                      "checked":  {
+                        "referenceMap":  {
+                          "1":  {
+                            "name":  "request"
                           },
-                          "5": {
-                            "overloadId": [
+                          "5":  {
+                            "overloadId":  [
                               "equals"
                             ]
                           },
-                          "6": {
-                            "name": "request"
+                          "6":  {
+                            "name":  "request"
                           }
                         },
-                        "typeMap": {
-                          "1": {
-                            "messageType": "cerbos.engine.v1.CheckInput"
+                        "typeMap":  {
+                          "1":  {
+                            "messageType":  "cerbos.engine.v1.CheckInput"
                           },
-                          "2": {
-                            "messageType": "cerbos.engine.v1.Resource"
+                          "2":  {
+                            "messageType":  "cerbos.engine.v1.Resource"
                           },
-                          "3": {
-                            "mapType": {
-                              "keyType": {
-                                "primitive": "STRING"
+                          "3":  {
+                            "mapType":  {
+                              "keyType":  {
+                                "primitive":  "STRING"
                               },
-                              "valueType": {
-                                "dyn": {}
+                              "valueType":  {
+                                "dyn":  {}
                               }
                             }
                           },
-                          "4": {
-                            "dyn": {}
+                          "4":  {
+                            "dyn":  {}
                           },
-                          "5": {
-                            "primitive": "BOOL"
+                          "5":  {
+                            "primitive":  "BOOL"
                           },
-                          "6": {
-                            "messageType": "cerbos.engine.v1.CheckInput"
+                          "6":  {
+                            "messageType":  "cerbos.engine.v1.CheckInput"
                           },
-                          "7": {
-                            "messageType": "cerbos.engine.v1.Principal"
+                          "7":  {
+                            "messageType":  "cerbos.engine.v1.Principal"
                           },
-                          "8": {
-                            "mapType": {
-                              "keyType": {
-                                "primitive": "STRING"
+                          "8":  {
+                            "mapType":  {
+                              "keyType":  {
+                                "primitive":  "STRING"
                               },
-                              "valueType": {
-                                "dyn": {}
+                              "valueType":  {
+                                "dyn":  {}
                               }
                             }
                           },
-                          "9": {
-                            "dyn": {}
+                          "9":  {
+                            "dyn":  {}
                           }
                         },
-                        "sourceInfo": {
-                          "location": "<input>",
-                          "lineOffsets": [
+                        "sourceInfo":  {
+                          "location":  "<input>",
+                          "lineOffsets":  [
                             68
                           ],
-                          "positions": {
-                            "1": 0,
-                            "2": 7,
-                            "3": 16,
-                            "4": 21,
-                            "5": 32,
-                            "6": 35,
-                            "7": 42,
-                            "8": 52,
-                            "9": 57
+                          "positions":  {
+                            "1":  0,
+                            "2":  7,
+                            "3":  16,
+                            "4":  21,
+                            "5":  32,
+                            "6":  35,
+                            "7":  42,
+                            "8":  52,
+                            "9":  57
                           }
                         },
-                        "expr": {
-                          "id": "5",
-                          "callExpr": {
-                            "function": "_==_",
-                            "args": [
+                        "expr":  {
+                          "id":  "5",
+                          "callExpr":  {
+                            "function":  "_==_",
+                            "args":  [
                               {
-                                "id": "4",
-                                "selectExpr": {
-                                  "operand": {
-                                    "id": "3",
-                                    "selectExpr": {
-                                      "operand": {
-                                        "id": "2",
-                                        "selectExpr": {
-                                          "operand": {
-                                            "id": "1",
-                                            "identExpr": {
-                                              "name": "request"
+                                "id":  "4",
+                                "selectExpr":  {
+                                  "operand":  {
+                                    "id":  "3",
+                                    "selectExpr":  {
+                                      "operand":  {
+                                        "id":  "2",
+                                        "selectExpr":  {
+                                          "operand":  {
+                                            "id":  "1",
+                                            "identExpr":  {
+                                              "name":  "request"
                                             }
                                           },
-                                          "field": "resource"
+                                          "field":  "resource"
                                         }
                                       },
-                                      "field": "attr"
+                                      "field":  "attr"
                                     }
                                   },
-                                  "field": "geography"
+                                  "field":  "geography"
                                 }
                               },
                               {
-                                "id": "9",
-                                "selectExpr": {
-                                  "operand": {
-                                    "id": "8",
-                                    "selectExpr": {
-                                      "operand": {
-                                        "id": "7",
-                                        "selectExpr": {
-                                          "operand": {
-                                            "id": "6",
-                                            "identExpr": {
-                                              "name": "request"
+                                "id":  "9",
+                                "selectExpr":  {
+                                  "operand":  {
+                                    "id":  "8",
+                                    "selectExpr":  {
+                                      "operand":  {
+                                        "id":  "7",
+                                        "selectExpr":  {
+                                          "operand":  {
+                                            "id":  "6",
+                                            "identExpr":  {
+                                              "name":  "request"
                                             }
                                           },
-                                          "field": "principal"
+                                          "field":  "principal"
                                         }
                                       },
-                                      "field": "attr"
+                                      "field":  "attr"
                                     }
                                   },
-                                  "field": "geography"
+                                  "field":  "geography"
                                 }
                               }
                             ]
@@ -577,133 +577,133 @@
                     }
                   },
                   {
-                    "expr": {
-                      "original": "request.resource.attr.geography == request.principal.attr.managed_geographies",
-                      "checked": {
-                        "referenceMap": {
-                          "1": {
-                            "name": "request"
+                    "expr":  {
+                      "original":  "request.resource.attr.geography == request.principal.attr.managed_geographies",
+                      "checked":  {
+                        "referenceMap":  {
+                          "1":  {
+                            "name":  "request"
                           },
-                          "5": {
-                            "overloadId": [
+                          "5":  {
+                            "overloadId":  [
                               "equals"
                             ]
                           },
-                          "6": {
-                            "name": "request"
+                          "6":  {
+                            "name":  "request"
                           }
                         },
-                        "typeMap": {
-                          "1": {
-                            "messageType": "cerbos.engine.v1.CheckInput"
+                        "typeMap":  {
+                          "1":  {
+                            "messageType":  "cerbos.engine.v1.CheckInput"
                           },
-                          "2": {
-                            "messageType": "cerbos.engine.v1.Resource"
+                          "2":  {
+                            "messageType":  "cerbos.engine.v1.Resource"
                           },
-                          "3": {
-                            "mapType": {
-                              "keyType": {
-                                "primitive": "STRING"
+                          "3":  {
+                            "mapType":  {
+                              "keyType":  {
+                                "primitive":  "STRING"
                               },
-                              "valueType": {
-                                "dyn": {}
+                              "valueType":  {
+                                "dyn":  {}
                               }
                             }
                           },
-                          "4": {
-                            "dyn": {}
+                          "4":  {
+                            "dyn":  {}
                           },
-                          "5": {
-                            "primitive": "BOOL"
+                          "5":  {
+                            "primitive":  "BOOL"
                           },
-                          "6": {
-                            "messageType": "cerbos.engine.v1.CheckInput"
+                          "6":  {
+                            "messageType":  "cerbos.engine.v1.CheckInput"
                           },
-                          "7": {
-                            "messageType": "cerbos.engine.v1.Principal"
+                          "7":  {
+                            "messageType":  "cerbos.engine.v1.Principal"
                           },
-                          "8": {
-                            "mapType": {
-                              "keyType": {
-                                "primitive": "STRING"
+                          "8":  {
+                            "mapType":  {
+                              "keyType":  {
+                                "primitive":  "STRING"
                               },
-                              "valueType": {
-                                "dyn": {}
+                              "valueType":  {
+                                "dyn":  {}
                               }
                             }
                           },
-                          "9": {
-                            "dyn": {}
+                          "9":  {
+                            "dyn":  {}
                           }
                         },
-                        "sourceInfo": {
-                          "location": "<input>",
-                          "lineOffsets": [
+                        "sourceInfo":  {
+                          "location":  "<input>",
+                          "lineOffsets":  [
                             78
                           ],
-                          "positions": {
-                            "1": 0,
-                            "2": 7,
-                            "3": 16,
-                            "4": 21,
-                            "5": 32,
-                            "6": 35,
-                            "7": 42,
-                            "8": 52,
-                            "9": 57
+                          "positions":  {
+                            "1":  0,
+                            "2":  7,
+                            "3":  16,
+                            "4":  21,
+                            "5":  32,
+                            "6":  35,
+                            "7":  42,
+                            "8":  52,
+                            "9":  57
                           }
                         },
-                        "expr": {
-                          "id": "5",
-                          "callExpr": {
-                            "function": "_==_",
-                            "args": [
+                        "expr":  {
+                          "id":  "5",
+                          "callExpr":  {
+                            "function":  "_==_",
+                            "args":  [
                               {
-                                "id": "4",
-                                "selectExpr": {
-                                  "operand": {
-                                    "id": "3",
-                                    "selectExpr": {
-                                      "operand": {
-                                        "id": "2",
-                                        "selectExpr": {
-                                          "operand": {
-                                            "id": "1",
-                                            "identExpr": {
-                                              "name": "request"
+                                "id":  "4",
+                                "selectExpr":  {
+                                  "operand":  {
+                                    "id":  "3",
+                                    "selectExpr":  {
+                                      "operand":  {
+                                        "id":  "2",
+                                        "selectExpr":  {
+                                          "operand":  {
+                                            "id":  "1",
+                                            "identExpr":  {
+                                              "name":  "request"
                                             }
                                           },
-                                          "field": "resource"
+                                          "field":  "resource"
                                         }
                                       },
-                                      "field": "attr"
+                                      "field":  "attr"
                                     }
                                   },
-                                  "field": "geography"
+                                  "field":  "geography"
                                 }
                               },
                               {
-                                "id": "9",
-                                "selectExpr": {
-                                  "operand": {
-                                    "id": "8",
-                                    "selectExpr": {
-                                      "operand": {
-                                        "id": "7",
-                                        "selectExpr": {
-                                          "operand": {
-                                            "id": "6",
-                                            "identExpr": {
-                                              "name": "request"
+                                "id":  "9",
+                                "selectExpr":  {
+                                  "operand":  {
+                                    "id":  "8",
+                                    "selectExpr":  {
+                                      "operand":  {
+                                        "id":  "7",
+                                        "selectExpr":  {
+                                          "operand":  {
+                                            "id":  "6",
+                                            "identExpr":  {
+                                              "name":  "request"
                                             }
                                           },
-                                          "field": "principal"
+                                          "field":  "principal"
                                         }
                                       },
-                                      "field": "attr"
+                                      "field":  "attr"
                                     }
                                   },
-                                  "field": "managed_geographies"
+                                  "field":  "managed_geographies"
                                 }
                               }
                             ]
@@ -716,102 +716,102 @@
               }
             }
           },
-          "employee_that_owns_the_record": {
-            "name": "employee_that_owns_the_record",
-            "parentRoles": {
-              "employee": {}
+          "employee_that_owns_the_record":  {
+            "name":  "employee_that_owns_the_record",
+            "parentRoles":  {
+              "employee":  {}
             },
-            "condition": {
-              "expr": {
-                "original": "R.attr.owner == P.id",
-                "checked": {
-                  "referenceMap": {
-                    "1": {
-                      "name": "R"
+            "condition":  {
+              "expr":  {
+                "original":  "R.attr.owner == P.id",
+                "checked":  {
+                  "referenceMap":  {
+                    "1":  {
+                      "name":  "R"
                     },
-                    "4": {
-                      "overloadId": [
+                    "4":  {
+                      "overloadId":  [
                         "equals"
                       ]
                     },
-                    "5": {
-                      "name": "P"
+                    "5":  {
+                      "name":  "P"
                     }
                   },
-                  "typeMap": {
-                    "1": {
-                      "messageType": "cerbos.engine.v1.Resource"
+                  "typeMap":  {
+                    "1":  {
+                      "messageType":  "cerbos.engine.v1.Resource"
                     },
-                    "2": {
-                      "mapType": {
-                        "keyType": {
-                          "primitive": "STRING"
+                    "2":  {
+                      "mapType":  {
+                        "keyType":  {
+                          "primitive":  "STRING"
                         },
-                        "valueType": {
-                          "dyn": {}
+                        "valueType":  {
+                          "dyn":  {}
                         }
                       }
                     },
-                    "3": {
-                      "dyn": {}
+                    "3":  {
+                      "dyn":  {}
                     },
-                    "4": {
-                      "primitive": "BOOL"
+                    "4":  {
+                      "primitive":  "BOOL"
                     },
-                    "5": {
-                      "messageType": "cerbos.engine.v1.Principal"
+                    "5":  {
+                      "messageType":  "cerbos.engine.v1.Principal"
                     },
-                    "6": {
-                      "primitive": "STRING"
+                    "6":  {
+                      "primitive":  "STRING"
                     }
                   },
-                  "sourceInfo": {
-                    "location": "<input>",
-                    "lineOffsets": [
+                  "sourceInfo":  {
+                    "location":  "<input>",
+                    "lineOffsets":  [
                       21
                     ],
-                    "positions": {
-                      "1": 0,
-                      "2": 1,
-                      "3": 6,
-                      "4": 13,
-                      "5": 16,
-                      "6": 17
+                    "positions":  {
+                      "1":  0,
+                      "2":  1,
+                      "3":  6,
+                      "4":  13,
+                      "5":  16,
+                      "6":  17
                     }
                   },
-                  "expr": {
-                    "id": "4",
-                    "callExpr": {
-                      "function": "_==_",
-                      "args": [
+                  "expr":  {
+                    "id":  "4",
+                    "callExpr":  {
+                      "function":  "_==_",
+                      "args":  [
                         {
-                          "id": "3",
-                          "selectExpr": {
-                            "operand": {
-                              "id": "2",
-                              "selectExpr": {
-                                "operand": {
-                                  "id": "1",
-                                  "identExpr": {
-                                    "name": "R"
+                          "id":  "3",
+                          "selectExpr":  {
+                            "operand":  {
+                              "id":  "2",
+                              "selectExpr":  {
+                                "operand":  {
+                                  "id":  "1",
+                                  "identExpr":  {
+                                    "name":  "R"
                                   }
                                 },
-                                "field": "attr"
+                                "field":  "attr"
                               }
                             },
-                            "field": "owner"
+                            "field":  "owner"
                           }
                         },
                         {
-                          "id": "6",
-                          "selectExpr": {
-                            "operand": {
-                              "id": "5",
-                              "identExpr": {
-                                "name": "P"
+                          "id":  "6",
+                          "selectExpr":  {
+                            "operand":  {
+                              "id":  "5",
+                              "identExpr":  {
+                                "name":  "P"
                               }
                             },
-                            "field": "id"
+                            "field":  "id"
                           }
                         }
                       ]
@@ -822,144 +822,134 @@
             }
           }
         },
-        "rules": [
+        "rules":  [
           {
-            "name": "wildcard",
-            "actions": {
-              "*": {}
+            "name":  "rule-001",
+            "actions":  {
+              "create":  {}
             },
-            "roles": {
-              "admin": {}
+            "derivedRoles":  {
+              "employee_that_owns_the_record":  {}
             },
-            "effect": "EFFECT_ALLOW"
+            "effect":  "EFFECT_ALLOW"
           },
           {
-            "name": "rule-002",
-            "actions": {
-              "create": {}
+            "name":  "rule-002",
+            "actions":  {
+              "view:*":  {}
             },
-            "derivedRoles": {
-              "employee_that_owns_the_record": {}
+            "derivedRoles":  {
+              "direct_manager":  {},
+              "employee_that_owns_the_record":  {}
             },
-            "effect": "EFFECT_ALLOW"
+            "effect":  "EFFECT_ALLOW"
           },
           {
-            "name": "rule-003",
-            "actions": {
-              "view:*": {}
+            "name":  "rule-003",
+            "actions":  {
+              "view:public":  {}
             },
-            "derivedRoles": {
-              "direct_manager": {},
-              "employee_that_owns_the_record": {}
+            "derivedRoles":  {
+              "any_employee":  {}
             },
-            "effect": "EFFECT_ALLOW"
+            "effect":  "EFFECT_ALLOW"
           },
           {
-            "name": "rule-004",
-            "actions": {
-              "view:public": {}
+            "name":  "rule-004",
+            "actions":  {
+              "approve":  {}
             },
-            "derivedRoles": {
-              "any_employee": {}
+            "derivedRoles":  {
+              "direct_manager":  {}
             },
-            "effect": "EFFECT_ALLOW"
-          },
-          {
-            "name": "rule-005",
-            "actions": {
-              "approve": {}
-            },
-            "derivedRoles": {
-              "direct_manager": {}
-            },
-            "condition": {
-              "expr": {
-                "original": "request.resource.attr.status == \"PENDING_APPROVAL\"",
-                "checked": {
-                  "referenceMap": {
-                    "1": {
-                      "name": "request"
+            "condition":  {
+              "expr":  {
+                "original":  "request.resource.attr.status == \"PENDING_APPROVAL\"",
+                "checked":  {
+                  "referenceMap":  {
+                    "1":  {
+                      "name":  "request"
                     },
-                    "5": {
-                      "overloadId": [
+                    "5":  {
+                      "overloadId":  [
                         "equals"
                       ]
                     }
                   },
-                  "typeMap": {
-                    "1": {
-                      "messageType": "cerbos.engine.v1.CheckInput"
+                  "typeMap":  {
+                    "1":  {
+                      "messageType":  "cerbos.engine.v1.CheckInput"
                     },
-                    "2": {
-                      "messageType": "cerbos.engine.v1.Resource"
+                    "2":  {
+                      "messageType":  "cerbos.engine.v1.Resource"
                     },
-                    "3": {
-                      "mapType": {
-                        "keyType": {
-                          "primitive": "STRING"
+                    "3":  {
+                      "mapType":  {
+                        "keyType":  {
+                          "primitive":  "STRING"
                         },
-                        "valueType": {
-                          "dyn": {}
+                        "valueType":  {
+                          "dyn":  {}
                         }
                       }
                     },
-                    "4": {
-                      "dyn": {}
+                    "4":  {
+                      "dyn":  {}
                     },
-                    "5": {
-                      "primitive": "BOOL"
+                    "5":  {
+                      "primitive":  "BOOL"
                     },
-                    "6": {
-                      "primitive": "STRING"
+                    "6":  {
+                      "primitive":  "STRING"
                     }
                   },
-                  "sourceInfo": {
-                    "location": "<input>",
-                    "lineOffsets": [
+                  "sourceInfo":  {
+                    "location":  "<input>",
+                    "lineOffsets":  [
                       51
                     ],
-                    "positions": {
-                      "1": 0,
-                      "2": 7,
-                      "3": 16,
-                      "4": 21,
-                      "5": 29,
-                      "6": 32
+                    "positions":  {
+                      "1":  0,
+                      "2":  7,
+                      "3":  16,
+                      "4":  21,
+                      "5":  29,
+                      "6":  32
                     }
                   },
-                  "expr": {
-                    "id": "5",
-                    "callExpr": {
-                      "function": "_==_",
-                      "args": [
+                  "expr":  {
+                    "id":  "5",
+                    "callExpr":  {
+                      "function":  "_==_",
+                      "args":  [
                         {
-                          "id": "4",
-                          "selectExpr": {
-                            "operand": {
-                              "id": "3",
-                              "selectExpr": {
-                                "operand": {
-                                  "id": "2",
-                                  "selectExpr": {
-                                    "operand": {
-                                      "id": "1",
-                                      "identExpr": {
-                                        "name": "request"
+                          "id":  "4",
+                          "selectExpr":  {
+                            "operand":  {
+                              "id":  "3",
+                              "selectExpr":  {
+                                "operand":  {
+                                  "id":  "2",
+                                  "selectExpr":  {
+                                    "operand":  {
+                                      "id":  "1",
+                                      "identExpr":  {
+                                        "name":  "request"
                                       }
                                     },
-                                    "field": "resource"
+                                    "field":  "resource"
                                   }
                                 },
-                                "field": "attr"
+                                "field":  "attr"
                               }
                             },
-                            "field": "status"
+                            "field":  "status"
                           }
                         },
                         {
-                          "id": "6",
-                          "constExpr": {
-                            "stringValue": "PENDING_APPROVAL"
+                          "id":  "6",
+                          "constExpr":  {
+                            "stringValue":  "PENDING_APPROVAL"
                           }
                         }
                       ]
@@ -968,25 +958,47 @@
                 }
               }
             },
-            "effect": "EFFECT_ALLOW"
+            "effect":  "EFFECT_ALLOW"
           }
         ],
-        "schemas": {
-          "principalSchema": {
-            "ref": "cerbos:///complex_object.json"
+        "schemas":  {
+          "principalSchema":  {
+            "ref":  "cerbos:///complex_object.json"
           },
-          "resourceSchema": {
-            "ref": "cerbos:///complex_object.json"
+          "resourceSchema":  {
+            "ref":  "cerbos:///complex_object.json"
+          }
+        }
+      },
+      {
+        "rules":  [
+          {
+            "name":  "wildcard",
+            "actions":  {
+              "*":  {}
+            },
+            "roles":  {
+              "admin":  {}
+            },
+            "effect":  "EFFECT_ALLOW"
+          }
+        ],
+        "schemas":  {
+          "principalSchema":  {
+            "ref":  "cerbos:///complex_object.json"
+          },
+          "resourceSchema":  {
+            "ref":  "cerbos:///complex_object.json"
           }
         }
       }
     ],
-    "schemas": {
-      "principalSchema": {
-        "ref": "cerbos:///complex_object.json"
+    "schemas":  {
+      "principalSchema":  {
+        "ref":  "cerbos:///complex_object.json"
       },
-      "resourceSchema": {
-        "ref": "cerbos:///complex_object.json"
+      "resourceSchema":  {
+        "ref":  "cerbos:///complex_object.json"
       }
     }
   }

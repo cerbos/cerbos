@@ -4,6 +4,10 @@ wantErrors:
     error: missing policy definition
     desc: |-
       Missing ancestor policy "principal.donald_duck.v20210210/acme"
+  - file: donald_duck.acme.hr.uk.yaml
+    error: missing policy definition
+    desc: |-
+      Missing ancestor policy "principal.donald_duck.v20210210"
 mainDef: "donald_duck.acme.hr.uk.yaml"
 inputDefs:
   "donald_duck.acme.hr.yaml":

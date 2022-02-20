@@ -24,6 +24,7 @@ checkResourceSet:
     },
     "resource": {
       "kind": "leave_request",
+      "policyVersion": "xxx",
       "instances": {
         "XX125": {
           "attr": {

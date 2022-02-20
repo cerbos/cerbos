@@ -2,7 +2,6 @@
 apiVersion: api.cerbos.dev/v1
 resourcePolicy:
   version: "default"
-  scope: "acme"
   importDerivedRoles:
     - alpha
     - beta
@@ -13,14 +12,8 @@ resourcePolicy:
       ref: cerbos:///leave_request.json
   resource: leave_request
   rules:
-    - actions: ["create"]
-      derivedRoles:
-        - employee_that_owns_the_record
+    - actions: ['*']
       effect: EFFECT_ALLOW
-
-    - actions: ["view:public"]
-      derivedRoles:
-        - any_employee
-      effect: EFFECT_ALLOW
-      name: public-view
-
+      roles:
+        - admin
+      name: wildcard

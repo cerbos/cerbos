@@ -71,12 +71,15 @@ func TestAncestors(t *testing.T) {
 		},
 		{
 			scope: "foo",
-			want:  nil,
+			want: []namer.ModuleID{
+				namer.GenModuleIDFromFQN("cerbos.resource.leave_request.vdefault"),
+			},
 		},
 		{
 			scope: "foo.bar",
 			want: []namer.ModuleID{
 				namer.GenModuleIDFromFQN("cerbos.resource.leave_request.vdefault/foo"),
+				namer.GenModuleIDFromFQN("cerbos.resource.leave_request.vdefault"),
 			},
 		},
 		{
@@ -84,6 +87,7 @@ func TestAncestors(t *testing.T) {
 			want: []namer.ModuleID{
 				namer.GenModuleIDFromFQN("cerbos.resource.leave_request.vdefault/foo.bar"),
 				namer.GenModuleIDFromFQN("cerbos.resource.leave_request.vdefault/foo"),
+				namer.GenModuleIDFromFQN("cerbos.resource.leave_request.vdefault"),
 			},
 		},
 	}
@@ -110,12 +114,15 @@ func TestRequiredAncestors(t *testing.T) {
 		},
 		{
 			scope: "foo",
-			want:  nil,
+			want: map[namer.ModuleID]string{
+				namer.GenModuleIDFromFQN("cerbos.resource.leave_request.vdefault"): "cerbos.resource.leave_request.vdefault",
+			},
 		},
 		{
 			scope: "foo.bar",
 			want: map[namer.ModuleID]string{
 				namer.GenModuleIDFromFQN("cerbos.resource.leave_request.vdefault/foo"): "cerbos.resource.leave_request.vdefault/foo",
+				namer.GenModuleIDFromFQN("cerbos.resource.leave_request.vdefault"):     "cerbos.resource.leave_request.vdefault",
 			},
 		},
 		{
@@ -123,6 +130,7 @@ func TestRequiredAncestors(t *testing.T) {
 			want: map[namer.ModuleID]string{
 				namer.GenModuleIDFromFQN("cerbos.resource.leave_request.vdefault/foo.bar"): "cerbos.resource.leave_request.vdefault/foo.bar",
 				namer.GenModuleIDFromFQN("cerbos.resource.leave_request.vdefault/foo"):     "cerbos.resource.leave_request.vdefault/foo",
+				namer.GenModuleIDFromFQN("cerbos.resource.leave_request.vdefault"):         "cerbos.resource.leave_request.vdefault",
 			},
 		},
 	}
