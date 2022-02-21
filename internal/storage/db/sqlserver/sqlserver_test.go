@@ -4,6 +4,7 @@
 package sqlserver
 
 import (
+	"bytes"
 	"context"
 	_ "embed"
 	"fmt"
@@ -15,7 +16,6 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/cerbos/cerbos/internal/storage/db/internal"
-	"bytes"
 )
 
 //go:embed schema.sql

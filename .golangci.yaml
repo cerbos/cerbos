@@ -14,9 +14,6 @@ linters-settings:
   exhaustive:
     default-signifies-exhaustive: true
 
-  gci:
-    local-prefixes: github.com/cerbos/cerbos
-
   gofumpt:
     extra-rules: true
 
@@ -29,7 +26,7 @@ linters-settings:
       SPDX-License-Identifier: Apache-2.0
 
   govet:
-    enable-all: true 
+    enable-all: true
     disable:
       - shadow
 
@@ -58,7 +55,6 @@ linters:
     - exportloopref
     - forbidigo
     - forcetypeassert
-    - gci
     - goconst
     - gocritic
     - godot

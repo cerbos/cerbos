@@ -4,9 +4,16 @@
 package sqlserver
 
 import (
+	"bufio"
+	"bytes"
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
+	"io"
+	"path/filepath"
+	"runtime"
+	"strings"
 
 	// Import the mssql driver.
 	_ "github.com/denisenkom/go-mssqldb"
@@ -21,13 +28,6 @@ import (
 	"github.com/cerbos/cerbos/internal/policy"
 	"github.com/cerbos/cerbos/internal/storage"
 	"github.com/cerbos/cerbos/internal/storage/db/internal"
-	"bufio"
-	"bytes"
-	"strings"
-	"io"
-	"runtime"
-	"path/filepath"
-	"errors"
 )
 
 const DriverName = "sqlserver"
