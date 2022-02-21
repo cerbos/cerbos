@@ -64,7 +64,7 @@ jobs:
         uses: bufbuild/buf-setup-action@v1.0.0
 
       - name: Push to BSR 
-        uses: bufbuild/buf-push-action@v1.0.0
+        uses: bufbuild/buf-push-action@v1.0.1
         with:
           buf_token: ${{ secrets.BUF_TOKEN }}
           input: api/public
