@@ -11,7 +11,7 @@ HTTP/* 200
 # Valid CheckResourceSet request
 POST {{protocol}}://{{host}}:{{port}}/api/check
 Content-Type: application/json
-file,requests/check_resource_set/resource_set.json;
+file,requests/check_resource_set/req01.json;
 HTTP/* 200
 [Asserts]
 header "Content-Type" == "application/json"
@@ -71,6 +71,27 @@ jsonpath "$.meta.resourceInstances['YY200'].actions['approve'].matchedPolicy" ==
 jsonpath "$.meta.resourceInstances['YY200'].actions['create'].matchedPolicy" == "principal.donald_duck.v20210210"
 jsonpath "$.meta.resourceInstances['YY200'].actions['defer'].matchedPolicy" == "principal.donald_duck.v20210210"
 jsonpath "$.meta.resourceInstances['YY200'].actions['view:public'].matchedPolicy" == "principal.donald_duck.v20210210"
+
+# Valid CheckResourceSet request (scoped policies)
+POST {{protocol}}://{{host}}:{{port}}/api/check
+Content-Type: application/json
+file,requests/check_resource_set/req02.json;
+HTTP/* 200
+[Asserts]
+header "Content-Type" == "application/json"
+jsonpath "$.resourceInstances['XX125'].actions[*]" count == 3
+jsonpath "$.resourceInstances['XX125'].actions['approve']" == "EFFECT_DENY"
+jsonpath "$.resourceInstances['XX125'].actions['delete']" == "EFFECT_ALLOW"
+jsonpath "$.resourceInstances['XX125'].actions['view:public']" == "EFFECT_ALLOW"
+jsonpath "$.meta.resourceInstances['XX125'].effectiveDerivedRoles" count == 2
+jsonpath "$.meta.resourceInstances['XX125'].effectiveDerivedRoles" includes "employee_that_owns_the_record"
+jsonpath "$.meta.resourceInstances['XX125'].effectiveDerivedRoles" includes "any_employee"
+jsonpath "$.meta.resourceInstances['XX125'].actions['approve'].matchedPolicy" == "resource.leave_request.vdefault/acme.hr.uk"
+jsonpath "$.meta.resourceInstances['XX125'].actions['delete'].matchedPolicy" == "resource.leave_request.vdefault/acme.hr.uk"
+jsonpath "$.meta.resourceInstances['XX125'].actions['delete'].matchedScope" == "acme.hr.uk"
+jsonpath "$.meta.resourceInstances['XX125'].actions['view:public'].matchedPolicy" == "resource.leave_request.vdefault/acme.hr.uk"
+jsonpath "$.meta.resourceInstances['XX125'].actions['view:public'].matchedScope" == "acme.hr"
+
 
 # Invalid CheckResourceSet request
 POST {{protocol}}://{{host}}:{{port}}/api/check
@@ -134,11 +155,10 @@ jsonpath "$.meta.resourceInstances['YY200'].actions['defer'].matchedPolicy" == "
 jsonpath "$.meta.resourceInstances['YY200'].actions['view:public'].matchedPolicy" == "principal.donald_duck.v20210210"
 
 
-
 # Valid CheckResourceBatch request
 POST {{protocol}}://{{host}}:{{port}}/api/check_resource_batch
 Content-Type: application/json
-file,requests/check_resource_batch/resource_batch.json;
+file,requests/check_resource_batch/req01.json;
 HTTP/* 200
 [Asserts]
 header "Content-Type" == "application/json"
@@ -172,3 +192,21 @@ jsonpath "$.results[?(@.resourceId == 'XX150')].validationErrors" count == 2
 jsonpath "$.results[?(@.resourceId == 'XX150')].actions['approve']" == "EFFECT_DENY"
 jsonpath "$.results[?(@.resourceId == 'XX150')].actions['create']" == "EFFECT_DENY"
 jsonpath "$.results[?(@.resourceId == 'XX150')].actions['view:public']" == "EFFECT_DENY"
+
+
+# Valid CheckResourceBatch request (scoped policies)
+POST {{protocol}}://{{host}}:{{port}}/api/check_resource_batch
+Content-Type: application/json
+file,requests/check_resource_batch/req02.json;
+HTTP/* 200
+[Asserts]
+header "Content-Type" == "application/json"
+jsonpath "$.results" count == 2
+jsonpath "$.results[?(@.resourceId == 'XX125')].actions[*]" count == 3
+jsonpath "$.results[?(@.resourceId == 'XX125')].actions['create']" == "EFFECT_ALLOW"
+jsonpath "$.results[?(@.resourceId == 'XX125')].actions['delete']" == "EFFECT_ALLOW"
+jsonpath "$.results[?(@.resourceId == 'XX125')].actions['view:public']" == "EFFECT_ALLOW"
+jsonpath "$.results[?(@.resourceId == 'XX225')].actions[*]" count == 3
+jsonpath "$.results[?(@.resourceId == 'XX225')].actions['create']" == "EFFECT_ALLOW"
+jsonpath "$.results[?(@.resourceId == 'XX225')].actions['delete']" == "EFFECT_DENY"
+jsonpath "$.results[?(@.resourceId == 'XX225')].actions['view:public']" == "EFFECT_ALLOW"
