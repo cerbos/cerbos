@@ -11,24 +11,25 @@ variables: <1>
     P.attr.ip_address.inIPAddrRange("10.20.0.0/16")
 resourcePolicy:
   version: "default" <2>
+  scope: "acme.corp" <3>
   importDerivedRoles:
-    - apatr_common_roles <3>
-  resource: "album:object"  <4>
+    - apatr_common_roles <4>
+  resource: "album:object"  <5>
   rules:
-    - actions: ['*'] <5>
+    - actions: ['*'] <6>
       effect: EFFECT_ALLOW
       derivedRoles:
-        - owner <6>
+        - owner <7>
 
     - actions: ['view']
       effect: EFFECT_ALLOW
       roles:
-        - user <7>
+        - user <8>
       condition:
         match:
           expr: request.resource.attr.public == true
 
-    - name: moderator_rule <8>
+    - name: moderator_rule <9>
       actions: ['view', 'delete']
       effect: EFFECT_ALLOW
       condition:
@@ -36,21 +37,22 @@ resourcePolicy:
           expr: V.is_corporate_network
       derivedRoles:
         - abuse_moderator
-  schemas: <9>
+  schemas: <10>
     principalSchema:
-      ref: cerbos:///principal.json <10>
+      ref: cerbos:///principal.json <11>
     resourceSchema:
-      ref: cerbos:///album/object.json <11>
+      ref: cerbos:///album/object.json <12>
 ----
 <1> Optional variables section. Each variable is evaluated before any rule condition.
 A variable expression can contain anything that condition expression can have.
 <2> Version of this policy. Policies are uniquely identified by the resource name and version pair. You can have multiple policy versions for the same resource (e.g. production vs. staging). The version value `default` is special as it is the default fallback when no version is specified in the request.
-<3> Import a set of derived roles.
-<4> Name of the resource to which this policy applies.
-<5> Actions can contain wildcards. Wildcards honour the ``:`` delimiter. E.g. ``a:*:d`` would match ``a:x:d`` but not ``a:x``.
-<6> This rule applies to a derived role.
-<7> Rules can also refer directly to static roles.
-<8> Optional name for the rule.
-<9> Optional section for defining schemas that apply to this resource kind.
-<10> Optional schema for validating the principal attributes.
-<11> Optional schema for validating the resource attributes.
+<3> Optional scope for this policy. See xref:scoped_policies.adoc[].
+<4> Import a set of derived roles.
+<5> Name of the resource to which this policy applies.
+<6> Actions can contain wildcards. Wildcards honour the ``:`` delimiter. E.g. ``a:*:d`` would match ``a:x:d`` but not ``a:x``.
+<7> This rule applies to a derived role.
+<8> Rules can also refer directly to static roles.
+<9> Optional name for the rule.
+<10> Optional section for defining schemas that apply to this resource kind.
+<11> Optional schema for validating the principal attributes.
+<12> Optional schema for validating the resource attributes.
