@@ -68,3 +68,8 @@ files:
           id: XX125
           owner: john
           team: design
+
+wantCompilationUnits:
+  - mainFqn: cerbos.principal.donald_duck.v20210210
+    definitionFqns: 
+      - cerbos.principal.donald_duck.v20210210

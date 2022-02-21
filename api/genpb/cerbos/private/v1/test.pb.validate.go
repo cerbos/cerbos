@@ -620,6 +620,40 @@ func (m *IndexBuilderTestCase) validate(all bool) error {
 
 	// no validation rules for WantErr
 
+	for idx, item := range m.GetWantCompilationUnits() {
+		_, _ = idx, item
+
+		if all {
+			switch v := interface{}(item).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, IndexBuilderTestCaseValidationError{
+						field:  fmt.Sprintf("WantCompilationUnits[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, IndexBuilderTestCaseValidationError{
+						field:  fmt.Sprintf("WantCompilationUnits[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(item).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return IndexBuilderTestCaseValidationError{
+					field:  fmt.Sprintf("WantCompilationUnits[%v]", idx),
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	}
+
 	if len(errors) > 0 {
 		return IndexBuilderTestCaseMultiError(errors)
 	}
@@ -3216,6 +3250,112 @@ var _ interface {
 	Cause() error
 	ErrorName() string
 } = ServerTestCase_StatusValidationError{}
+
+// Validate checks the field values on IndexBuilderTestCase_CompilationUnit
+// with the rules defined in the proto definition for this message. If any
+// rules are violated, the first error encountered is returned, or nil if
+// there are no violations.
+func (m *IndexBuilderTestCase_CompilationUnit) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on IndexBuilderTestCase_CompilationUnit
+// with the rules defined in the proto definition for this message. If any
+// rules are violated, the result is a list of violation errors wrapped in
+// IndexBuilderTestCase_CompilationUnitMultiError, or nil if none found.
+func (m *IndexBuilderTestCase_CompilationUnit) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *IndexBuilderTestCase_CompilationUnit) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for MainFqn
+
+	if len(errors) > 0 {
+		return IndexBuilderTestCase_CompilationUnitMultiError(errors)
+	}
+	return nil
+}
+
+// IndexBuilderTestCase_CompilationUnitMultiError is an error wrapping multiple
+// validation errors returned by
+// IndexBuilderTestCase_CompilationUnit.ValidateAll() if the designated
+// constraints aren't met.
+type IndexBuilderTestCase_CompilationUnitMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m IndexBuilderTestCase_CompilationUnitMultiError) Error() string {
+	var msgs []string
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m IndexBuilderTestCase_CompilationUnitMultiError) AllErrors() []error { return m }
+
+// IndexBuilderTestCase_CompilationUnitValidationError is the validation error
+// returned by IndexBuilderTestCase_CompilationUnit.Validate if the designated
+// constraints aren't met.
+type IndexBuilderTestCase_CompilationUnitValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e IndexBuilderTestCase_CompilationUnitValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e IndexBuilderTestCase_CompilationUnitValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e IndexBuilderTestCase_CompilationUnitValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e IndexBuilderTestCase_CompilationUnitValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e IndexBuilderTestCase_CompilationUnitValidationError) ErrorName() string {
+	return "IndexBuilderTestCase_CompilationUnitValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e IndexBuilderTestCase_CompilationUnitValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sIndexBuilderTestCase_CompilationUnit.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = IndexBuilderTestCase_CompilationUnitValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = IndexBuilderTestCase_CompilationUnitValidationError{}
 
 // Validate checks the field values on CompileTestCase_Error with the rules
 // defined in the proto definition for this message. If any rules are

@@ -12,7 +12,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-const eventBufferSize = 16
+const eventBufferSize = 32
 
 type SubscriptionManager struct {
 	eventChan   chan Event
@@ -97,7 +97,7 @@ func (sm *SubscriptionManager) shutdown() {
 
 // TestSubscription is a helper to test subscriptions.
 func TestSubscription(s Subscribable) func(*testing.T, time.Duration, ...Event) {
-	stream := make(chan Event, 8) //nolint:gomnd
+	stream := make(chan Event, eventBufferSize)
 
 	sub := &subscriber{stream: stream}
 	s.Subscribe(sub)

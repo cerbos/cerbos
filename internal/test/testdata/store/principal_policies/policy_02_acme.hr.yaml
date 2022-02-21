@@ -1,0 +1,11 @@
+---
+apiVersion: "api.cerbos.dev/v1"
+principalPolicy:
+  principal: donald_duck
+  version: "default"
+  scope: "acme.hr"
+  rules:
+    - resource: salary_record
+      actions:
+      - action: "view:*"
+        effect: EFFECT_ALLOW

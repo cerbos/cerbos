@@ -53,9 +53,10 @@ Checks permissions for a set of homogeneous resources.
   "resource":  {
     "policyVersion": "dev", <3>
     "kind":  "album:object", <4>
-    "instances": { <5>
-      "XX125": { <6>
-        "attr":  { <7>
+    "scope": "acme.corp", <5>
+    "instances": { <6>
+      "XX125": { <7>
+        "attr":  { <8>
           "owner":  "alicia",
           "id":  "XX125",
           "public": false,
@@ -66,18 +67,19 @@ Checks permissions for a set of homogeneous resources.
     }
   },
   "principal":  {
-    "id":  "alicia", <8>
-    "policyVersion": "dev", <9>
-    "roles":  ["user"], <10>
-    "attr": { <11>
+    "id":  "alicia", <9>
+    "policyVersion": "dev", <10>
+    "scope": "acme.corp", <11>
+    "roles":  ["user"], <12>
+    "attr": { <13>
       "geography": "GB"
     }
   },
-  "includeMeta": true, <12>
-  "auxData": { <13>
+  "includeMeta": true, <14>
+  "auxData": { <15>
     "jwt": {
-        "token": "xxx.yyy.zzz", <14>
-        "keySetId": "ks1" <15>
+        "token": "xxx.yyy.zzz", <16>
+        "keySetId": "ks1" <17>
     }
   }
 }
@@ -86,17 +88,19 @@ Checks permissions for a set of homogeneous resources.
 <2> Actions being performed on the resource instances. Required.
 <3> Resource policy version. Optional. The server falls back to the xref:configuration:engine.adoc[configured default version] if this is not specified.
 <4> Resource kind. Required. This value is used to determine the resource policy to evaluate. 
-<5> Container for the set of resource instances to check. You can check access to multiple resource instances in a single request by adding them under this field. 
-<6> A unique identifier for a resource instance. This identifier will be used in the response to indicate the result of the policy evaluation.
-<7> Free-form context data about this resource instance. Policy rule conditions are evaluated based on these values.
-<8> ID of the principal performing the actions. Required.
-<9> Principal policy version. Optional. The server falls back to the xref:configuration:engine.adoc[configured default version] if this is not specified.
-<10> Static roles that are assigned to this principal by your identity management system. Required.
-<11> Free-form context data about this principal. Policy rule conditions are evaluated based on these values.
-<12> An optional flag to signal that the response should include metadata about policy evaluation. Useful for debugging.
-<13> Optional section for providing auxiliary data.
-<14> JWT to use as an auxiliary data source. 
-<15> ID of the keyset to use to verify the JWT. Optional if only a single xref:configuration:auxdata.adoc[keyset is configured].
+<5> Resource scope. Optional. See xref:policies:scoped_policies.adoc[].
+<6> Container for the set of resource instances to check. You can check access to multiple resource instances in a single request by adding them under this field. 
+<7> A unique identifier for a resource instance. This identifier will be used in the response to indicate the result of the policy evaluation.
+<8> Free-form context data about this resource instance. Policy rule conditions are evaluated based on these values.
+<9> ID of the principal performing the actions. Required.
+<10> Principal policy version. Optional. The server falls back to the xref:configuration:engine.adoc[configured default version] if this is not specified.
+<11> Principal scope. Optional. See xref:policies:scoped_policies.adoc[].
+<12> Static roles that are assigned to this principal by your identity management system. Required.
+<13> Free-form context data about this principal. Policy rule conditions are evaluated based on these values.
+<14> An optional flag to signal that the response should include metadata about policy evaluation. Useful for debugging.
+<15> Optional section for providing auxiliary data.
+<16> JWT to use as an auxiliary data source. 
+<17> ID of the keyset to use to verify the JWT. Optional if only a single xref:configuration:auxdata.adoc[keyset is configured].
 
 
 .Response
@@ -123,10 +127,11 @@ Checks permissions for a set of homogeneous resources.
       "XX125": {
         "actions": {
           "view": {
-            "matchedPolicy": "album:object:default" <6>
+            "matchedPolicy": "album:object:default", <6>
+            "matchedScope": "acme.corp" <7>
           }
         },
-        "effectiveDerivedRoles": [ <7>
+        "effectiveDerivedRoles": [ <8>
           "owner"
         ]
       }
@@ -140,7 +145,8 @@ Checks permissions for a set of homogeneous resources.
 <4> Optional validation errors if schema enforcement is enabled.
 <5> Optional metadata about request evaluation.
 <6> The policy that matched to make the decision for the given action.
-<7> Derived roles that were activated.
+<7> The policy scope that was active when the decision was made.
+<8> Derived roles that were activated.
 
 === `CheckResourceBatch` (`/api/check_resource_batch`)
 
@@ -154,6 +160,7 @@ Unlike `CheckResourceSet` -- which checks access to resource instances of the _s
   "principal": {
     "id": "donald_duck",
     "policyVersion": "20210210",
+    "scope": "acme.corp",
     "roles": [
       "employee"
     ],
@@ -173,6 +180,7 @@ Unlike `CheckResourceSet` -- which checks access to resource instances of the _s
       "resource": {
         "kind": "leave_request",
         "policyVersion": "20210210",
+        "scope": "acme.corp",
         "id": "XX125",
         "attr": {
           "department": "marketing",
@@ -262,22 +270,24 @@ IMPORTANT: This is an experimental API without any backward compatibility guaran
   "resource":  {
     "policyVersion": "dev", <3>
     "kind":  "leave_request", <4>
-    "attr":  { <5>
+    "scope": "acme.corp", <5>
+    "attr":  { <6>
       "owner":  "alicia"
     }
   },
   "principal":  {
-    "id":  "alicia", <6>
-    "policyVersion": "dev", <7>
-    "roles":  ["user"], <8>
-    "attr": { <9>
+    "id":  "alicia", <7>
+    "policyVersion": "dev", <8>
+    "scope": "acme.corp", <9>
+    "roles":  ["user"], <10>
+    "attr": { <11>
       "geography": "GB"
     }
   },
-  "includeMeta": true, <10>
-  "auxData": { <11>
+  "includeMeta": true, <12>
+  "auxData": { <13>
     "jwt": {
-      "token": "xxx.yyy.zzz", <12>
+      "token": "xxx.yyy.zzz", <14>
       "keySetId": "ks-1" <15>
     }
   }
@@ -287,15 +297,17 @@ IMPORTANT: This is an experimental API without any backward compatibility guaran
 <2> Action being performed on the resource instances. Required.
 <3> Resource policy version. Optional. The server falls back to the xref:configuration:engine.adoc[configured default version] if this is not specified.
 <4> Resource kind. Required. This value is used to determine the resource policy to evaluate.
-<5> Free-form context data about the resources under consideration. The object holds all attributes known about the resource at the time the request. Optional. Policy rule conditions will be (partially) evaluated based on these values. If an effective policy rule condition(s) requires a resource attribute not present in this object, then the response will contain the condition(s) abstract syntax tree.
-<6> ID of the principal performing the actions. Required.
-<7> Principal policy version. Optional. The server falls back to the xref:configuration:engine.adoc[configured default version] if this is not specified.
-<8> Static roles that are assigned to this principal by your identity management system. Required.
-<9> Free-form context data about this principal. Policy rule conditions are evaluated based on these values.
-<10> An optional flag to signal that the response should include metadata about evaluation. Useful for debugging.
-<11> Optional section for providing auxiliary data.
-<12> JWT to use as an auxiliary data source.
-<13> ID of the keyset to use to verify the JWT. Optional if only a single xref:configuration:auxdata.adoc[keyset is configured].
+<5> Resource scope. Optional. See xref:policies:scoped_policies.adoc[].
+<6> Free-form context data about the resources under consideration. The object holds all attributes known about the resource at the time the request. Optional. Policy rule conditions will be (partially) evaluated based on these values. If an effective policy rule condition(s) requires a resource attribute not present in this object, then the response will contain the condition(s) abstract syntax tree.
+<7> ID of the principal performing the actions. Required.
+<8> Principal policy version. Optional. The server falls back to the xref:configuration:engine.adoc[configured default version] if this is not specified.
+<9> Principal scope. Optional. See xref:policies:scoped_policies.adoc[].
+<10> Static roles that are assigned to this principal by your identity management system. Required.
+<11> Free-form context data about this principal. Policy rule conditions are evaluated based on these values.
+<12> An optional flag to signal that the response should include metadata about evaluation. Useful for debugging.
+<13> Optional section for providing auxiliary data.
+<14> JWT to use as an auxiliary data source.
+<15> ID of the keyset to use to verify the JWT. Optional if only a single xref:configuration:auxdata.adoc[keyset is configured].
 
 
 .Response

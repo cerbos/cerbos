@@ -11,20 +11,21 @@ variables: <1>
 principalPolicy:
   principal: daffy_duck <2>
   version: "dev" <3>
+  scope: "acme.corp" <4>
   rules:
-    - resource: leave_request <4>
+    - resource: leave_request <5>
       actions:
-        - name: dev_record_wildcard <5>
-          action: "*" <6>
-          condition: <7>
+        - name: dev_record_wildcard <6>
+          action: "*" <7>
+          condition: <8>
             match:
               expr: variables.is_dev_record
           effect: EFFECT_ALLOW
     - resource: employee_profile
       actions:
         - name: view_employee_profile
-          action: "*" <6>
-          condition: <7>
+          action: "*" 
+          condition: 
             match:
               all:
                 of:
@@ -40,8 +41,9 @@ principalPolicy:
 A variable expression can contain anything that condition expression can have.
 <2> Principal to whom this policy applies.
 <3> Version of this policy. Policies are uniquely identified by the principal name and version pair. You can have multiple policy versions for the same principal (e.g. production vs. staging). The version value `default` is special as it is the default fallback when no version is specified in the request.
-<4> Resource to which this override applies. Wildcards are supported here.
-<5> Optional name for the rule.
-<6> Actions that can be performed on the resource. Wildcards are supported here.
-<7> Optional conditions required to match this rule.
+<4> Optional scope for this policy. See xref:scoped_policies.adoc[].
+<5> Resource to which this override applies. Wildcards are supported here.
+<6> Optional name for the rule.
+<7> Actions that can be performed on the resource. Wildcards are supported here.
+<8> Optional conditions required to match this rule.
 

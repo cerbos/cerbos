@@ -1,0 +1,80 @@
+include::ROOT:partial$attributes.adoc[]
+
+= Scoped Policies
+
+Scoped policies offer a way to model hierarchical relationships that regularly occur in many situations. Typically the requirement is to have a base set of policies that can then be overridden for specific cases. For example, a multi-tenant SaaS system could have a standard set of access rules that can then be customised to suit the requirements of the different tenants. Another example is a large organization that might want to have regional or departmental customisations to their global access rules.
+
+image::hierarchy.png[]
+
+
+Cerbos resource and principal policies have an optional `scope` field that can be used to indicate that they are part of a set of policies that must be evaluated together.
+
+[source,yaml,linenums]
+----
+apiVersion: api.cerbos.dev/v1
+resourcePolicy:
+  version: "default" 
+  scope: "acme.corp" <1>
+  resource: "album:object"  
+  rules:
+    - actions: ['*'] 
+      effect: EFFECT_ALLOW
+      roles: ["admin"]
+----
+<1> Scope definition
+
+The value of `scope` is a dot-separated string where each dotted segment defines an ancestor. During policy evaluation the Cerbos engine starts with the most specific scoped policy and goes up the tree by narrowing the scope string by one segment from the right side each time. When all actions in the request have a decision from the policies evaluated so far, the engine stops and returns the response back to the user. For example, consider a policy with the scope `a.b.c`. The Cerbos engine could process up to four policies to arrive at the final decision:
+
+* scope `a.b.c`
+* scope `a.b`
+* scope `a`
+* scope `` (no scope)
+
+To illustrate, consider the following Check request:
+
+[source,json,linenums]
+----
+{
+  "requestId":  "test01", 
+  "actions":  ["view", "comment"], 
+  "resource":  {
+    "kind":  "album:object", 
+    "policyVersion": "default",
+    "scope": "customer.abc", <1>
+    "instances": { 
+      "XX125": { 
+        "attr":  { 
+          "owner":  "alicia",
+          "public": false,
+          "tags": ["x", "y"],
+        }
+      }
+    }
+  },
+  "principal":  {
+    "id":  "alicia", 
+    "policyVersion": "default",
+    "scope": "customer", <2>
+    "roles":  ["user"], 
+    "attr": { 
+      "geography": "GB"
+    }
+  }
+}
+----
+<1> Optional resource scope
+<2> Optional principal scope
+
+When processing the above request, the decision flow chart for the Cerbos engine would look like the following:
+
+image::decision_flow.png[]
+
+
+== Working with scoped policies
+
+* The policy without any scope defined is always the base policy. It is the policy used by default if a request does not specify any scope.
+* There must be no gaps in the policy chain. For example, if you define a policy with scope `a.b.c`, then policies with scopes `a.b`, `a`, and no-scope should also exist in the policy repository.
+* xref:schemas.adoc[Schemas] must be the same among all the policies in the chain. The schemas used to validate the request are taken from the base policy (policy without a scope). Schemas defined in other policies of the chain will be ignored.
+* Variables and derived roles imports are not inherited between policies. Explicitly import any derived roles and re-define any variables in each policy that requires them.
+* First match wins. As illustrated in the flow chart above, scoped policies are evaluated from the most specific to the least specific. The first policy to produce a decision (ALLOW/DENY) for an action is the winner. The remaining policies cannot override the decision for that particular action (but they will still be evaluated if there are other actions that don't yet have a decision). 
+

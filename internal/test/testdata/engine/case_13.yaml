@@ -1,0 +1,53 @@
+---
+description: "Scoped policy: first match wins (view is allowed by override)"
+inputs: [
+  {
+    "requestId": "test",
+    "actions": [
+      "view:public",
+      "delete"
+    ],
+    "principal": {
+      "id": "donald_duck",
+      "scope": "acme.hr",
+      "roles": [
+        "employee"
+      ],
+      "attr": {
+        "department": "marketing",
+        "geography": "GB",
+        "team": "design",
+        "managed_geographies": "GB"
+      }
+    },
+    "resource": {
+      "kind": "salary_record",
+      "id": "XX125",
+      "attr": {
+        "department": "marketing",
+        "geography": "GB",
+        "id": "XX125",
+        "owner": "john",
+        "team": "design"
+      }
+    }
+  }
+]
+wantOutputs: [
+  {
+    "requestId": "test",
+    "resourceId": "XX125",
+    "actions": {
+      "view:public": {
+        "effect": "EFFECT_ALLOW",
+        "policy": "principal.donald_duck.vdefault/acme.hr",
+        "scope": "acme.hr"
+      },
+      "delete": {
+        "effect": "EFFECT_DENY",
+        "policy": "principal.donald_duck.vdefault/acme.hr",
+        "scope": "acme"
+      }
+    }
+  }
+]

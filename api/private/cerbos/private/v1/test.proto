@@ -84,9 +84,16 @@ message ServerTestCase {
 }
 
 message IndexBuilderTestCase {
+    message CompilationUnit {
+        string main_fqn = 1;
+        repeated string definition_fqns = 2;
+        repeated string ancestor_fqns = 3;
+    }
+
     map<string, string> files = 1;
     string want_err_json = 2;
     string want_err = 3;
+    repeated CompilationUnit want_compilation_units = 4;
 }
 
 message CompileTestCase {

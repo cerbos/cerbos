@@ -1,0 +1,114 @@
+---
+description: "Scoped policies"
+wantStatus:
+  httpStatusCode: 200
+  grpcStatusCode: 0
+playgroundProxy:
+  input: {
+    "playgroundId": "test",
+    "policyFiles": [
+      {
+        "fileName": "derived_roles_01.yaml",
+        "contents": "{{ fileString `store/derived_roles/derived_roles_01.yaml` | b64enc }}",
+      },
+      {
+        "fileName": "derived_roles_02.yaml",
+        "contents": "{{ fileString `store/derived_roles/derived_roles_02.yaml` | b64enc }}",
+      },
+      {
+        "fileName": "policy_05.yaml",
+        "contents": "{{ fileString `store/resource_policies/policy_05.yaml` | b64enc }}",
+      },
+      {
+        "fileName": "policy_05_acme.yaml",
+        "contents": "{{ fileString `store/resource_policies/policy_05_acme.yaml` | b64enc }}",
+      },
+      {
+        "fileName": "policy_05_acme.hr.yaml",
+        "contents": "{{ fileString `store/resource_policies/policy_05_acme.hr.yaml` | b64enc }}",
+      },
+      {
+        "fileName": "policy_05_acme.hr.uk.yaml",
+        "contents": "{{ fileString `store/resource_policies/policy_05_acme.hr.uk.yaml` | b64enc }}",
+      },
+      {
+        "fileName": "_schemas/principal.json",
+        "contents": "{{ fileString `store/_schemas/principal.json` | b64enc }}",
+      },
+      {
+        "fileName": "_schemas/leave_request.json",
+        "contents": "{{ fileString `store/_schemas/leave_request.json` | b64enc }}",
+      }
+    ],
+    "checkResourceSet": {
+      "requestId": "test",
+      "includeMeta": true,
+      "actions": [
+        "view:public",
+        "delete",
+        "approve"
+      ],
+      "principal": {
+        "id": "john",
+        "roles": [
+          "employee"
+        ],
+        "attr": {
+          "department": "marketing",
+          "geography": "GB",
+          "team": "design",
+          "ip_address": "10.20.0.5"
+        }
+      },
+      "resource": {
+        "kind": "leave_request",
+        "scope": "acme.hr.uk",
+        "instances": {
+          "XX125": {
+            "attr": {
+              "department": "marketing",
+              "geography": "GB",
+              "id": "XX125",
+              "owner": "john",
+              "team": "design"
+            }
+          }
+        }
+      }
+    }
+  }
+  wantResponse: {
+    "playgroundId": "test",
+    "checkResourceSet": {
+        "requestId": "test",
+        "resourceInstances": {
+          "XX125": {
+            "actions": {
+              "view:public": "EFFECT_ALLOW",
+              "delete": "EFFECT_ALLOW",
+              "approve": "EFFECT_DENY"
+            }
+          }
+        },
+        "meta": {
+          "resourceInstances": {
+            "XX125": {
+              "actions": {
+                "view:public": {
+                  "matchedPolicy": "resource.leave_request.vdefault/acme.hr.uk",
+                  "matchedScope": "acme.hr"
+                },
+                "delete": {
+                  "matchedPolicy": "resource.leave_request.vdefault/acme.hr.uk",
+                  "matchedScope": "acme.hr.uk"
+                },
+                "approve": {
+                  "matchedPolicy": "resource.leave_request.vdefault/acme.hr.uk",
+                }
+              },
+              "effectiveDerivedRoles": ["employee_that_owns_the_record", "any_employee"]
+            }
+          }
+        }
+      }
+    }

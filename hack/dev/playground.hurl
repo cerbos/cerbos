@@ -40,17 +40,15 @@ HTTP/* 200
 [Asserts]
 header "Content-Type" == "application/json"
 jsonpath "$.success.results" count == 2
-jsonpath "$.success.results[0].action" == "view"
-jsonpath "$.success.results[0].effect" == "EFFECT_ALLOW"
-jsonpath "$.success.results[0].policy" == "resource.album_object.vdefault"
-jsonpath "$.success.results[0].effectiveDerivedRoles" count == 1 
-jsonpath "$.success.results[0].effectiveDerivedRoles[0]" == "owner" 
+jsonpath "$.success.results[?(@.action == 'view')].effect" == "EFFECT_ALLOW"
+jsonpath "$.success.results[?(@.action == 'view')].policy" == "resource.album_object.vdefault"
+jsonpath "$.success.results[?(@.action == 'view')].effectiveDerivedRoles" count == 1 
+jsonpath "$.success.results[?(@.action == 'view')].effectiveDerivedRoles[0]" == "owner" 
 
-jsonpath "$.success.results[1].action" == "delete"
-jsonpath "$.success.results[1].effect" == "EFFECT_ALLOW"
-jsonpath "$.success.results[1].policy" == "resource.album_object.vdefault"
-jsonpath "$.success.results[1].effectiveDerivedRoles" count == 1 
-jsonpath "$.success.results[1].effectiveDerivedRoles[0]" == "owner" 
+jsonpath "$.success.results[?(@.action == 'delete')].effect" == "EFFECT_ALLOW"
+jsonpath "$.success.results[?(@.action == 'delete')].policy" == "resource.album_object.vdefault"
+jsonpath "$.success.results[?(@.action == 'delete')].effectiveDerivedRoles" count == 1 
+jsonpath "$.success.results[?(@.action == 'delete')].effectiveDerivedRoles[0]" == "owner" 
 
 
 # Playground evaluate request 2

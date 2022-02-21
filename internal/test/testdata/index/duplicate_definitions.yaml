@@ -9,7 +9,8 @@ wantErrJson: |-
       }
     ],
     "loadFailures": null,
-    "missingImports": null
+    "missingImports": null,
+    "missingScopes": null
   }
 files:
   "derived1.yaml": |-

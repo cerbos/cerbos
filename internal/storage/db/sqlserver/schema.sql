@@ -19,6 +19,7 @@ CREATE TABLE [dbo].[policy] (
     kind VARCHAR(128) NOT NULL,
     name VARCHAR(1024) NOT NULL,
     version VARCHAR(128) NOT NULL,
+    scope VARCHAR(512),
     description NVARCHAR(MAX),
     disabled BIT default 'FALSE',
     definition VARBINARY(MAX));
@@ -30,6 +31,13 @@ CREATE TABLE [dbo].[policy_dependency] (
     PRIMARY KEY (policy_id, dependency_id),
     FOREIGN KEY (policy_id) REFERENCES [policy](id) ON DELETE CASCADE);
 
+IF OBJECT_ID('[dbo].[policy_ancestor]', 'U') IS NULL
+CREATE TABLE [dbo].[policy_ancestor] (
+    policy_id BIGINT NOT NULL,
+    ancestor_id BIGINT  NOT NULL,
+    PRIMARY KEY (policy_id, ancestor_id),
+    FOREIGN KEY (policy_id) REFERENCES [policy](id) ON DELETE CASCADE);
+
 IF OBJECT_ID('[dbo].[policy_revision]', 'U') IS NULL
 CREATE TABLE [dbo].[policy_revision] (
     revision_id INT NOT NULL IDENTITY PRIMARY KEY,
@@ -38,6 +46,7 @@ CREATE TABLE [dbo].[policy_revision] (
     kind VARCHAR(128),
     name VARCHAR(1024),
     version VARCHAR(128),
+    scope VARCHAR(512),
     description NVARCHAR(MAX),
     disabled BIT,
     definition VARBINARY(MAX),
@@ -62,6 +71,7 @@ CREATE USER cerbos_user for LOGIN cerbos_user;
 GRANT SELECT,INSERT,UPDATE,DELETE ON [dbo].[policy] TO cerbos_user;
 GRANT SELECT,INSERT,UPDATE,DELETE ON dbo.attr_schema_defs TO cerbos_user;
 GRANT SELECT,INSERT,UPDATE,DELETE ON dbo.policy_dependency TO cerbos_user;
+GRANT SELECT,INSERT,UPDATE,DELETE ON dbo.policy_ancestor TO cerbos_user;
 GRANT SELECT,INSERT ON dbo.policy_revision TO cerbos_user;
 
 GO
@@ -70,9 +80,9 @@ CREATE TRIGGER dbo.policy_on_insert ON dbo.[policy] AFTER INSERT
 AS
 BEGIN
     SET NOCOUNT ON;
-    INSERT INTO dbo.policy_revision(action, id, kind, name, version, description, disabled, definition)
+    INSERT INTO dbo.policy_revision(action, id, kind, name, version, scope, description, disabled, definition)
     SELECT
-        'INSERT', i.id, i.kind, i.name, i.version, i.description, i.disabled, i.definition
+        'INSERT', i.id, i.kind, i.name, i.version, i.scope, i.description, i.disabled, i.definition
     FROM inserted i
 END;
 
@@ -82,9 +92,9 @@ CREATE TRIGGER dbo.policy_on_update ON dbo.[policy] AFTER UPDATE
 AS
 BEGIN
     SET NOCOUNT ON;
-    INSERT INTO dbo.policy_revision(action, id, kind, name, version, description, disabled, definition)
+    INSERT INTO dbo.policy_revision(action, id, kind, name, version, scope, description, disabled, definition)
     SELECT
-        'UPDATE', i.id, i.kind, i.name, i.version, i.description, i.disabled, i.definition
+        'UPDATE', i.id, i.kind, i.name, i.version, i.scope, i.description, i.disabled, i.definition
     FROM inserted i
 END;
 
@@ -94,9 +104,9 @@ CREATE TRIGGER dbo.policy_on_delete ON dbo.[policy] AFTER DELETE
 AS
 BEGIN
     SET NOCOUNT ON;
-    INSERT INTO dbo.policy_revision(action, id, kind, name, version, description, disabled, definition)
+    INSERT INTO dbo.policy_revision(action, id, kind, name, version, scope, description, disabled, definition)
     SELECT
-        'DELETE', d.id, d.kind, d.name, d.version, d.description, d.disabled, d.definition
+        'DELETE', d.id, d.kind, d.name, d.version, d.scope, d.description, d.disabled, d.definition
     FROM deleted d
 END;
 

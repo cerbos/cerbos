@@ -99,6 +99,17 @@ func TestFilter(t *testing.T) {
 	})
 }
 
+func filter(policies []policy.Wrapper, names, versions []string, kind policy.Kind) []policy.Wrapper {
+	fd := newFilterDef(kind, names, versions)
+	filtered := make([]policy.Wrapper, 0, len(policies))
+	for _, p := range policies {
+		if fd.filter(p) {
+			filtered = append(filtered, p)
+		}
+	}
+	return filtered
+}
+
 func mkDerivedRolesForFilter(t *testing.T, noOfPolicies int) []policy.Wrapper {
 	t.Helper()
 

@@ -1,0 +1,13 @@
+---
+apiVersion: "api.cerbos.dev/v1"
+variables:
+  is_dev_record: request.resource.attr.dev_record == true
+principalPolicy:
+  principal: donald_duck
+  version: "default"
+  rules:
+    - resource: leave_request
+      actions:
+        - action: "*"
+          effect: EFFECT_ALLOW
+          name: wildcard

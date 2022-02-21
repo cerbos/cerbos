@@ -14,6 +14,17 @@ files:
         effect: EFFECT_ALLOW
         roles:
         - admin
+      version: "20210210"
+
+  "resource_acme.yaml": |-
+    ---
+    apiVersion: api.cerbos.dev/v1
+    resourcePolicy:
+      importDerivedRoles:
+      - my_derived_roles
+      resource: leave_request
+      scope: "acme"
+      rules:
       - actions: ["create"]
         derivedRoles:
         - employee_that_owns_the_record
@@ -34,6 +45,36 @@ files:
         derivedRoles:
         - direct_manager
         effect: EFFECT_ALLOW
+      version: "20210210"
+
+  "resource_acme_hr.yaml": |-
+    ---
+    apiVersion: api.cerbos.dev/v1
+    resourcePolicy:
+      importDerivedRoles:
+      - my_derived_roles
+      resource: leave_request
+      scope: "acme.hr"
+      rules:
+      - actions: ["view:public"]
+        derivedRoles:
+        - direct_manager
+        effect: EFFECT_ALLOW
+      version: "20210210"
+
+  "resource_acme_hr_uk.yaml": |-
+    ---
+    apiVersion: api.cerbos.dev/v1
+    resourcePolicy:
+      importDerivedRoles:
+      - my_derived_roles
+      resource: leave_request
+      scope: "acme.hr.uk"
+      rules:
+      - actions: ["view:public"]
+        derivedRoles:
+        - direct_manager
+        effect: EFFECT_DENY
       version: "20210210"
 
   "derived.yaml": |-
@@ -85,3 +126,89 @@ files:
           actions:
             - action: "*"
               effect: EFFECT_DENY
+
+  "principal_acme.yaml": |-
+    ---
+    apiVersion: "api.cerbos.dev/v1"
+    principalPolicy:
+      principal: donald_duck
+      version: "20210210"
+      scope: "acme"
+      rules:
+        - resource: leave_request
+          actions:
+            - action: "*"
+              condition:
+                match:
+                  expr: "request.resource.attr.dev_record == true"
+              effect: EFFECT_ALLOW
+
+  "principal_acme_corp.yaml": |-
+    ---
+    apiVersion: "api.cerbos.dev/v1"
+    principalPolicy:
+      principal: donald_duck
+      version: "20210210"
+      scope: "acme.corp"
+      rules:
+        - resource: leave_request
+          actions:
+            - action: "*"
+              effect: EFFECT_ALLOW
+
+
+wantCompilationUnits:
+  - mainFqn: cerbos.principal.donald_duck.v20210210
+    definitionFqns: 
+      - cerbos.principal.donald_duck.v20210210
+
+  - mainFqn: cerbos.principal.donald_duck.v20210210/acme
+    definitionFqns: 
+      - cerbos.principal.donald_duck.v20210210/acme
+      - cerbos.principal.donald_duck.v20210210
+    ancestorFqns:
+      - cerbos.principal.donald_duck.v20210210
+
+  - mainFqn: cerbos.principal.donald_duck.v20210210/acme.corp
+    definitionFqns: 
+      - cerbos.principal.donald_duck.v20210210/acme.corp
+      - cerbos.principal.donald_duck.v20210210/acme
+      - cerbos.principal.donald_duck.v20210210
+    ancestorFqns:
+      - cerbos.principal.donald_duck.v20210210/acme
+      - cerbos.principal.donald_duck.v20210210
+
+  - mainFqn: cerbos.resource.leave_request.v20210210
+    definitionFqns:
+      - cerbos.resource.leave_request.v20210210
+      - cerbos.derived_roles.my_derived_roles
+
+  - mainFqn: cerbos.resource.leave_request.v20210210/acme
+    definitionFqns:
+      - cerbos.resource.leave_request.v20210210/acme
+      - cerbos.resource.leave_request.v20210210
+      - cerbos.derived_roles.my_derived_roles
+    ancestorFqns:
+      - cerbos.resource.leave_request.v20210210
+
+  - mainFqn: cerbos.resource.leave_request.v20210210/acme.hr
+    definitionFqns:
+      - cerbos.resource.leave_request.v20210210/acme.hr
+      - cerbos.resource.leave_request.v20210210/acme
+      - cerbos.resource.leave_request.v20210210
+      - cerbos.derived_roles.my_derived_roles
+    ancestorFqns:
+      - cerbos.resource.leave_request.v20210210/acme
+      - cerbos.resource.leave_request.v20210210
+
+  - mainFqn: cerbos.resource.leave_request.v20210210/acme.hr.uk
+    definitionFqns:
+      - cerbos.resource.leave_request.v20210210/acme.hr.uk
+      - cerbos.resource.leave_request.v20210210/acme.hr
+      - cerbos.resource.leave_request.v20210210/acme
+      - cerbos.resource.leave_request.v20210210
+      - cerbos.derived_roles.my_derived_roles
+    ancestorFqns:
+      - cerbos.resource.leave_request.v20210210/acme.hr
+      - cerbos.resource.leave_request.v20210210/acme
+      - cerbos.resource.leave_request.v20210210

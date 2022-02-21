@@ -201,6 +201,10 @@ func cerbos_engine_v1_CheckOutput_ActionEffect_hashpb_sum(m *v11.CheckOutput_Act
 		_, _ = hasher.Write(protowire.AppendString(nil, m.Policy))
 
 	}
+	if _, ok := ignore["cerbos.engine.v1.CheckOutput.ActionEffect.scope"]; !ok {
+		_, _ = hasher.Write(protowire.AppendString(nil, m.Scope))
+
+	}
 }
 
 func cerbos_engine_v1_CheckOutput_hashpb_sum(m *v11.CheckOutput, hasher hash.Hash, ignore map[string]struct{}) {
@@ -287,6 +291,10 @@ func cerbos_engine_v1_Principal_hashpb_sum(m *v11.Principal, hasher hash.Hash, i
 			}
 		}
 	}
+	if _, ok := ignore["cerbos.engine.v1.Principal.scope"]; !ok {
+		_, _ = hasher.Write(protowire.AppendString(nil, m.Scope))
+
+	}
 }
 
 func cerbos_engine_v1_Resource_hashpb_sum(m *v11.Resource, hasher hash.Hash, ignore map[string]struct{}) {
@@ -320,6 +328,10 @@ func cerbos_engine_v1_Resource_hashpb_sum(m *v11.Resource, hasher hash.Hash, ign
 
 			}
 		}
+	}
+	if _, ok := ignore["cerbos.engine.v1.Resource.scope"]; !ok {
+		_, _ = hasher.Write(protowire.AppendString(nil, m.Scope))
+
 	}
 }
 
@@ -821,6 +833,10 @@ func cerbos_response_v1_CheckResourceSetResponse_Meta_EffectMeta_hashpb_sum(m *C
 		_, _ = hasher.Write(protowire.AppendString(nil, m.MatchedPolicy))
 
 	}
+	if _, ok := ignore["cerbos.response.v1.CheckResourceSetResponse.Meta.EffectMeta.matched_scope"]; !ok {
+		_, _ = hasher.Write(protowire.AppendString(nil, m.MatchedScope))
+
+	}
 }
 
 func cerbos_response_v1_CheckResourceSetResponse_Meta_hashpb_sum(m *CheckResourceSetResponse_Meta, hasher hash.Hash, ignore map[string]struct{}) {
@@ -1151,6 +1167,10 @@ func cerbos_response_v1_ResourcesQueryPlanResponse_Filter_hashpb_sum(m *Resource
 func cerbos_response_v1_ResourcesQueryPlanResponse_Meta_hashpb_sum(m *ResourcesQueryPlanResponse_Meta, hasher hash.Hash, ignore map[string]struct{}) {
 	if _, ok := ignore["cerbos.response.v1.ResourcesQueryPlanResponse.Meta.filter_debug"]; !ok {
 		_, _ = hasher.Write(protowire.AppendString(nil, m.FilterDebug))
+
+	}
+	if _, ok := ignore["cerbos.response.v1.ResourcesQueryPlanResponse.Meta.matched_scope"]; !ok {
+		_, _ = hasher.Write(protowire.AppendString(nil, m.MatchedScope))
 
 	}
 }

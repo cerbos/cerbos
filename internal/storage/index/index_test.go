@@ -21,7 +21,7 @@ import (
 	"github.com/cerbos/cerbos/internal/util"
 )
 
-func TestIndex(t *testing.T) {
+func TestIndexLoadPolicy(t *testing.T) {
 	base := test.PathToDir(t, "store")
 	fsys := os.DirFS(base)
 	idx, err := index.Build(context.Background(), fsys)

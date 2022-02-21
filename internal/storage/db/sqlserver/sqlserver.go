@@ -74,10 +74,10 @@ func (s *Store) Driver() string {
 
 func upsertPolicy(ctx context.Context, tx *goqu.TxDatabase, p policy.Wrapper) error {
 	stm, err := tx.Prepare(`
-UPDATE dbo.[policy] WITH (UPDLOCK, SERIALIZABLE) SET "definition"=@definition, "description"=@description,"disabled"=@disabled,"kind"=@kind,"name"=@name,"version"=@version where [id] = @id 
+UPDATE dbo.[policy] WITH (UPDLOCK, SERIALIZABLE) SET "definition"=@definition, "description"=@description,"disabled"=@disabled,"kind"=@kind,"name"=@name,"version"=@version,"scope"=@scope where [id] = @id 
 IF @@ROWCOUNT = 0
 BEGIN
-  INSERT INTO dbo.[policy] ("definition", "description", "disabled", "kind", "name", "version", "id") VALUES (@definition, @description, @disabled, @kind, @name, @version, @id)
+  INSERT INTO dbo.[policy] ("definition", "description", "disabled", "kind", "name", "version", "scope", "id") VALUES (@definition, @description, @disabled, @kind, @name, @version, @scope, @id)
 END
 `)
 	if err != nil {
@@ -93,9 +93,15 @@ END
 
 	id, _ := p.ID.Value()
 
-	_, err = stm.ExecContext(ctx, sql.Named("definition", definition),
-		sql.Named("description", p.Description), sql.Named("disabled", p.Disabled),
-		sql.Named("kind", p.Kind), sql.Named("name", p.Name), sql.Named("version", p.Version), sql.Named("id", int64(id.(uint64))))
+	_, err = stm.ExecContext(ctx,
+		sql.Named("definition", definition),
+		sql.Named("description", p.Description),
+		sql.Named("disabled", p.Disabled),
+		sql.Named("kind", p.Kind.String()),
+		sql.Named("name", p.Name),
+		sql.Named("version", p.Version),
+		sql.Named("scope", p.Scope),
+		sql.Named("id", int64(id.(uint64))))
 
 	return err
 }

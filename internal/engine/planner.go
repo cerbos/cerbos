@@ -52,6 +52,7 @@ func (ppe *principalPolicyEvaluator) EvaluateResourcesQueryPlan(ctx context.Cont
 
 	nodeBoolTrue := &qpN{Node: &qpNE{Expression: conditions.TrueExpr}}
 	for _, p := range ppe.policy.Policies { // zero or one policy in the set
+		result.Scope = p.Scope
 		for resource, resourceRules := range p.ResourceRules {
 			if !util.MatchesGlob(resource, input.Resource.Kind) {
 				continue
@@ -107,7 +108,13 @@ func (rpe *resourcePolicyEvaluator) EvaluateResourcesQueryPlan(ctx context.Conte
 	result.Action = input.Action
 	var allowFilter, denyFilter []*qpN
 
-	for _, p := range rpe.policy.Policies { // zero or one policy in the set
+	for _, p := range rpe.policy.Policies { // there might be more than 1 policy if there are scoped policies
+		// if previous iteration has found a matching policy, then quit the loop
+		if len(allowFilter) > 0 || len(denyFilter) > 0 {
+			break
+		}
+		result.Scope = p.Scope
+
 		var derivedRoles []rN
 
 		for drName, dr := range p.DerivedRoles {

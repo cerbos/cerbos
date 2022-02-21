@@ -279,12 +279,8 @@ func cerbos_runtime_v1_RunnablePrincipalPolicySet_Policy_ResourceRules_hashpb_su
 
 func cerbos_runtime_v1_RunnablePrincipalPolicySet_Policy_hashpb_sum(m *RunnablePrincipalPolicySet_Policy, hasher hash.Hash, ignore map[string]struct{}) {
 	if _, ok := ignore["cerbos.runtime.v1.RunnablePrincipalPolicySet.Policy.scope"]; !ok {
-		if len(m.Scope) > 0 {
-			for _, v := range m.Scope {
-				_, _ = hasher.Write(protowire.AppendString(nil, v))
+		_, _ = hasher.Write(protowire.AppendString(nil, m.Scope))
 
-			}
-		}
 	}
 	if _, ok := ignore["cerbos.runtime.v1.RunnablePrincipalPolicySet.Policy.variables"]; !ok {
 		if len(m.Variables) > 0 {
@@ -436,12 +432,8 @@ func cerbos_runtime_v1_RunnableResourcePolicySet_Policy_Rule_hashpb_sum(m *Runna
 
 func cerbos_runtime_v1_RunnableResourcePolicySet_Policy_hashpb_sum(m *RunnableResourcePolicySet_Policy, hasher hash.Hash, ignore map[string]struct{}) {
 	if _, ok := ignore["cerbos.runtime.v1.RunnableResourcePolicySet.Policy.scope"]; !ok {
-		if len(m.Scope) > 0 {
-			for _, v := range m.Scope {
-				_, _ = hasher.Write(protowire.AppendString(nil, v))
+		_, _ = hasher.Write(protowire.AppendString(nil, m.Scope))
 
-			}
-		}
 	}
 	if _, ok := ignore["cerbos.runtime.v1.RunnableResourcePolicySet.Policy.derived_roles"]; !ok {
 		if len(m.DerivedRoles) > 0 {
@@ -515,6 +507,12 @@ func cerbos_runtime_v1_RunnableResourcePolicySet_hashpb_sum(m *RunnableResourceP
 
 			}
 		}
+	}
+	if _, ok := ignore["cerbos.runtime.v1.RunnableResourcePolicySet.schemas"]; !ok {
+		if m.Schemas != nil {
+			cerbos_policy_v1_Schemas_hashpb_sum(m.Schemas, hasher, ignore)
+		}
+
 	}
 }
 

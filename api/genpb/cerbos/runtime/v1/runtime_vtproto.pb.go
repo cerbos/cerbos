@@ -452,13 +452,11 @@ func (m *RunnableResourcePolicySet_Policy) MarshalToSizedBufferVT(dAtA []byte) (
 		}
 	}
 	if len(m.Scope) > 0 {
-		for iNdEx := len(m.Scope) - 1; iNdEx >= 0; iNdEx-- {
-			i -= len(m.Scope[iNdEx])
-			copy(dAtA[i:], m.Scope[iNdEx])
-			i = encodeVarint(dAtA, i, uint64(len(m.Scope[iNdEx])))
-			i--
-			dAtA[i] = 0xa
-		}
+		i -= len(m.Scope)
+		copy(dAtA[i:], m.Scope)
+		i = encodeVarint(dAtA, i, uint64(len(m.Scope)))
+		i--
+		dAtA[i] = 0xa
 	}
 	return len(dAtA) - i, nil
 }
@@ -492,6 +490,28 @@ func (m *RunnableResourcePolicySet) MarshalToSizedBufferVT(dAtA []byte) (int, er
 	if m.unknownFields != nil {
 		i -= len(m.unknownFields)
 		copy(dAtA[i:], m.unknownFields)
+	}
+	if m.Schemas != nil {
+		if marshalto, ok := interface{}(m.Schemas).(interface {
+			MarshalToSizedBufferVT([]byte) (int, error)
+		}); ok {
+			size, err := marshalto.MarshalToSizedBufferVT(dAtA[:i])
+			if err != nil {
+				return 0, err
+			}
+			i -= size
+			i = encodeVarint(dAtA, i, uint64(size))
+		} else {
+			encoded, err := proto.Marshal(m.Schemas)
+			if err != nil {
+				return 0, err
+			}
+			i -= len(encoded)
+			copy(dAtA[i:], encoded)
+			i = encodeVarint(dAtA, i, uint64(len(encoded)))
+		}
+		i--
+		dAtA[i] = 0x1a
 	}
 	if len(m.Policies) > 0 {
 		for iNdEx := len(m.Policies) - 1; iNdEx >= 0; iNdEx-- {
@@ -968,13 +988,11 @@ func (m *RunnablePrincipalPolicySet_Policy) MarshalToSizedBufferVT(dAtA []byte) 
 		}
 	}
 	if len(m.Scope) > 0 {
-		for iNdEx := len(m.Scope) - 1; iNdEx >= 0; iNdEx-- {
-			i -= len(m.Scope[iNdEx])
-			copy(dAtA[i:], m.Scope[iNdEx])
-			i = encodeVarint(dAtA, i, uint64(len(m.Scope[iNdEx])))
-			i--
-			dAtA[i] = 0xa
-		}
+		i -= len(m.Scope)
+		copy(dAtA[i:], m.Scope)
+		i = encodeVarint(dAtA, i, uint64(len(m.Scope)))
+		i--
+		dAtA[i] = 0xa
 	}
 	return len(dAtA) - i, nil
 }
@@ -1438,11 +1456,9 @@ func (m *RunnableResourcePolicySet_Policy) SizeVT() (n int) {
 	}
 	var l int
 	_ = l
-	if len(m.Scope) > 0 {
-		for _, s := range m.Scope {
-			l = len(s)
-			n += 1 + l + sov(uint64(l))
-		}
+	l = len(m.Scope)
+	if l > 0 {
+		n += 1 + l + sov(uint64(l))
 	}
 	if len(m.DerivedRoles) > 0 {
 		for k, v := range m.DerivedRoles {
@@ -1507,6 +1523,16 @@ func (m *RunnableResourcePolicySet) SizeVT() (n int) {
 			l = e.SizeVT()
 			n += 1 + l + sov(uint64(l))
 		}
+	}
+	if m.Schemas != nil {
+		if size, ok := interface{}(m.Schemas).(interface {
+			SizeVT() int
+		}); ok {
+			l = size.SizeVT()
+		} else {
+			l = proto.Size(m.Schemas)
+		}
+		n += 1 + l + sov(uint64(l))
 	}
 	if m.unknownFields != nil {
 		n += len(m.unknownFields)
@@ -1689,11 +1715,9 @@ func (m *RunnablePrincipalPolicySet_Policy) SizeVT() (n int) {
 	}
 	var l int
 	_ = l
-	if len(m.Scope) > 0 {
-		for _, s := range m.Scope {
-			l = len(s)
-			n += 1 + l + sov(uint64(l))
-		}
+	l = len(m.Scope)
+	if l > 0 {
+		n += 1 + l + sov(uint64(l))
 	}
 	if len(m.Variables) > 0 {
 		for k, v := range m.Variables {
@@ -2824,7 +2848,7 @@ func (m *RunnableResourcePolicySet_Policy) UnmarshalVT(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.Scope = append(m.Scope, string(dAtA[iNdEx:postIndex]))
+			m.Scope = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
 		case 2:
 			if wireType != 2 {
@@ -3281,6 +3305,50 @@ func (m *RunnableResourcePolicySet) UnmarshalVT(dAtA []byte) error {
 			m.Policies = append(m.Policies, &RunnableResourcePolicySet_Policy{})
 			if err := m.Policies[len(m.Policies)-1].UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
 				return err
+			}
+			iNdEx = postIndex
+		case 3:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Schemas", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLength
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLength
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.Schemas == nil {
+				m.Schemas = &v11.Schemas{}
+			}
+			if unmarshal, ok := interface{}(m.Schemas).(interface {
+				UnmarshalVT([]byte) error
+			}); ok {
+				if err := unmarshal.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
+					return err
+				}
+			} else {
+				if err := proto.Unmarshal(dAtA[iNdEx:postIndex], m.Schemas); err != nil {
+					return err
+				}
 			}
 			iNdEx = postIndex
 		default:
@@ -4513,7 +4581,7 @@ func (m *RunnablePrincipalPolicySet_Policy) UnmarshalVT(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.Scope = append(m.Scope, string(dAtA[iNdEx:postIndex]))
+			m.Scope = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
 		case 2:
 			if wireType != 2 {

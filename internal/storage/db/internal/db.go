@@ -24,8 +24,6 @@ import (
 	"github.com/cerbos/cerbos/internal/storage"
 )
 
-const policyKeySep = "."
-
 type DBStorage interface {
 	storage.Subscribable
 	AddOrUpdate(ctx context.Context, policies ...policy.Wrapper) error
@@ -142,27 +140,22 @@ func (s *dbStorage) DeleteSchema(ctx context.Context, ids ...string) error {
 }
 
 func (s *dbStorage) LoadPolicy(ctx context.Context, policyKey ...string) ([]*policy.Wrapper, error) {
-	for i := 0; i < len(policyKey); i++ {
-		if strings.Count(policyKey[i], policyKeySep) == 1 {
-			policyKey[i] += policyKeySep
-		}
+	moduleIDs := make([]namer.ModuleID, len(policyKey))
+	for i, pk := range policyKey {
+		moduleIDs[i] = namer.GenModuleIDFromFQN(namer.FQNFromPolicyKey(pk))
 	}
 
-	concat := ConcatWithSepFunc(s.db.Dialect())
-
 	var recs []Policy
-	err := s.db.From(PolicyTbl).
-		Where(
-			goqu.V(concat(policyKeySep, goqu.Func("LOWER", goqu.C(PolicyTblKindCol)), goqu.C(PolicyTblNameCol), goqu.C(PolicyTblVerCol))).
-				In(policyKey)).
-		ScanStructsContext(ctx, &recs)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get policy: %w", err)
+	if err := s.db.From(PolicyTbl).
+		Where(goqu.C(PolicyTblIDCol).In(moduleIDs)).
+		ScanStructsContext(ctx, &recs); err != nil {
+		return nil, fmt.Errorf("failed to get policies: %w", err)
 	}
 
 	policies := make([]*policy.Wrapper, len(recs))
 	for i, rec := range recs {
-		wp := policy.Wrap(policy.WithMetadata(rec.Definition.Policy, "", nil, strings.TrimSuffix(strings.ToLower(fmt.Sprintf("%s.%s.%s", rec.Kind, rec.Name, rec.Version)), policyKeySep)))
+		pk := namer.PolicyKey(rec.Definition.Policy)
+		wp := policy.Wrap(policy.WithMetadata(rec.Definition.Policy, "", nil, pk))
 		policies[i] = &wp
 	}
 
@@ -205,9 +198,10 @@ func (s *dbStorage) AddOrUpdate(ctx context.Context, policies ...policy.Wrapper)
 		for i, p := range policies {
 			policyRecord := Policy{
 				ID:          p.ID,
-				Kind:        p.Kind,
+				Kind:        p.Kind.String(),
 				Name:        p.Name,
 				Version:     p.Version,
+				Scope:       p.Scope,
 				Description: p.Description,
 				Disabled:    p.Disabled,
 				Definition:  PolicyDefWrapper{Policy: p.Policy},
@@ -228,7 +222,8 @@ func (s *dbStorage) AddOrUpdate(ctx context.Context, policies ...policy.Wrapper)
 				return fmt.Errorf("failed to upsert %s: %w", p.FQN, err)
 			}
 
-			if len(p.Dependencies) > 0 {
+			dependencies := p.Dependencies()
+			if len(dependencies) > 0 {
 				// delete the existing dependency records
 				if _, err := tx.Delete(PolicyDepTbl).
 					Prepared(true).
@@ -238,9 +233,9 @@ func (s *dbStorage) AddOrUpdate(ctx context.Context, policies ...policy.Wrapper)
 				}
 
 				// insert the new dependency records
-				depRows := make([]interface{}, len(p.Dependencies))
-				for i, d := range p.Dependencies {
-					depRows[i] = PolicyDependency{PolicyID: p.ID, DependencyID: d}
+				depRows := make([]interface{}, len(dependencies))
+				for ix, d := range dependencies {
+					depRows[ix] = PolicyDependency{PolicyID: p.ID, DependencyID: d}
 				}
 
 				if _, err := tx.Insert(PolicyDepTbl).
@@ -248,6 +243,30 @@ func (s *dbStorage) AddOrUpdate(ctx context.Context, policies ...policy.Wrapper)
 					Rows(depRows...).
 					Executor().ExecContext(ctx); err != nil {
 					return fmt.Errorf("failed to insert dependencies of %s: %w", p.FQN, err)
+				}
+			}
+
+			ancestors := policy.Ancestors(p.Policy)
+			if len(ancestors) > 0 {
+				// delete the existing ancestor records
+				if _, err := tx.Delete(PolicyAncestorTbl).
+					Prepared(true).
+					Where(goqu.I(PolicyAncestorTblPolicyIDCol).Eq(p.ID)).
+					Executor().ExecContext(ctx); err != nil {
+					return fmt.Errorf("failed to delete ancestors of %s: %w", p.FQN, err)
+				}
+
+				// insert the new ancestry records
+				ancRows := make([]interface{}, len(ancestors))
+				for ix, a := range ancestors {
+					ancRows[ix] = PolicyAncestor{PolicyID: p.ID, AncestorID: a}
+				}
+
+				if _, err := tx.Insert(PolicyAncestorTbl).
+					Prepared(true).
+					Rows(ancRows...).
+					Executor().ExecContext(ctx); err != nil {
+					return fmt.Errorf("failed to insert ancestors of %s: %w", p.FQN, err)
 				}
 			}
 
@@ -265,30 +284,9 @@ func (s *dbStorage) AddOrUpdate(ctx context.Context, policies ...policy.Wrapper)
 }
 
 func (s *dbStorage) GetCompilationUnits(ctx context.Context, ids ...namer.ModuleID) (map[namer.ModuleID]*policy.CompilationUnit, error) {
-	// SELECT pd.policy_id as parent, p.id, p.definition
-	// FROM policy_dependency pd
-	// JOIN policy p ON (pd.dependency_id = p.id)
-	// WHERE pd.policy_id IN (?) AND p.disabled = false
-	depsQuery := s.db.Select(
-		goqu.C(PolicyDepTblPolicyIDCol).Table("pd").As("parent"),
-		goqu.C(PolicyTblIDCol).Table("p"),
-		goqu.C(PolicyTblDefinitionCol).Table("p")).
-		From(goqu.T(PolicyDepTbl).As("pd")).
-		Join(
-			goqu.T(PolicyTbl).As("p"),
-			goqu.On(goqu.C(PolicyDepTblDepIDCol).Table("pd").Eq(goqu.C(PolicyTblIDCol).Table("p"))),
-		).
-		Where(
-			goqu.And(
-				goqu.C(PolicyDepTblPolicyIDCol).Table("pd").In(ids),
-				goqu.C(PolicyTblDisabledCol).Table("p").Eq(goqu.V(false)),
-			),
-		)
-
-	// SELECT id as parent, id,definition
-	// FROM policy WHERE id IN ? AND disabled = false
-	// UNION ALL <deps_query>
-	// ORDER BY parent
+	// SELECT p.id as parent, p.id, p.definition
+	// FROM policy p
+	// WHERE p.id IN (?) AND p.disabled = false
 	policiesQuery := s.db.Select(
 		goqu.C(PolicyTblIDCol).As("parent"),
 		goqu.C(PolicyTblIDCol),
@@ -299,11 +297,98 @@ func (s *dbStorage) GetCompilationUnits(ctx context.Context, ids ...namer.Module
 				goqu.I(PolicyTblIDCol).In(ids),
 				goqu.I(PolicyTblDisabledCol).Eq(goqu.V(false)),
 			),
+		)
+
+	// SELECT pd.policy_id as parent, p.id, p.definition
+	// FROM policy_dependency pd
+	// JOIN policy p ON (pd.dependency_id = p.id AND p.disabled = false )
+	// WHERE pd.policy_id IN (?)
+	depsQuery := s.db.Select(
+		goqu.C(PolicyDepTblPolicyIDCol).Table("pd").As("parent"),
+		goqu.C(PolicyTblIDCol).Table("p"),
+		goqu.C(PolicyTblDefinitionCol).Table("p")).
+		From(goqu.T(PolicyDepTbl).As("pd")).
+		Join(
+			goqu.T(PolicyTbl).As("p"),
+			goqu.On(goqu.And(
+				goqu.C(PolicyDepTblDepIDCol).Table("pd").Eq(goqu.C(PolicyTblIDCol).Table("p"))),
+				goqu.C(PolicyTblDisabledCol).Table("p").Eq(goqu.V(false)),
+			),
 		).
+		Where(goqu.C(PolicyDepTblPolicyIDCol).Table("pd").In(ids))
+
+	// SELECT pa.policy_id as parent, p.id, p.definition
+	// FROM policy_ancestor pa
+	// JOIN policy p ON (pa.ancestor_id = p.id AND p.disabled = false )
+	// WHERE pa.policy_id IN (?)
+	ancestorsQuery := s.db.Select(
+		goqu.C(PolicyAncestorTblPolicyIDCol).Table("pa").As("parent"),
+		goqu.C(PolicyTblIDCol).Table("p"),
+		goqu.C(PolicyTblDefinitionCol).Table("p")).
+		From(goqu.T(PolicyAncestorTbl).As("pa")).
+		Join(
+			goqu.T(PolicyTbl).As("p"),
+			goqu.On(goqu.And(
+				goqu.C(PolicyAncestorTblAncestorIDCol).Table("pa").Eq(goqu.C(PolicyTblIDCol).Table("p"))),
+				goqu.C(PolicyTblDisabledCol).Table("p").Eq(goqu.V(false)),
+			),
+		).
+		Where(goqu.C(PolicyAncestorTblPolicyIDCol).Table("pa").In(ids))
+
+	// SELECT pa.policy_id as parent, p.id, p.definition
+	// FROM policy_ancestor pa
+	// JOIN policy_dependency pd ON (pa.ancestor_id = pd.policy_id)
+	// JOIN policy p ON (pd.dependency_id = p.id AND p.disabled = false )
+	// WHERE pa.policy_id IN (?)
+	ancestorDepsQuery := s.db.Select(
+		goqu.C(PolicyAncestorTblPolicyIDCol).Table("pa").As("parent"),
+		goqu.C(PolicyTblIDCol).Table("p"),
+		goqu.C(PolicyTblDefinitionCol).Table("p")).
+		From(goqu.T(PolicyAncestorTbl).As("pa")).
+		Join(
+			goqu.T(PolicyDepTbl).As("pd"),
+			goqu.On(goqu.C(PolicyAncestorTblAncestorIDCol).Table("pa").Eq(goqu.C(PolicyDepTblPolicyIDCol).Table("pd"))),
+		).
+		Join(
+			goqu.T(PolicyTbl).As("p"),
+			goqu.On(goqu.And(
+				goqu.C(PolicyDepTblDepIDCol).Table("pd").Eq(goqu.C(PolicyTblIDCol).Table("p"))),
+				goqu.C(PolicyTblDisabledCol).Table("p").Eq(goqu.V(false)),
+			),
+		).
+		Where(goqu.C(PolicyAncestorTblPolicyIDCol).Table("pa").In(ids))
+
+	// -- Select the policies requested
+	// SELECT p.id as parent,p.id, p.definition
+	// FROM policy p
+	// WHERE p.id IN (?) AND p.disabled = false
+	// UNION ALL
+	// -- Select the dependencies of those policies
+	// SELECT pd.policy_id as parent, p.id, p.definition
+	// FROM policy_dependency pd
+	// JOIN policy p ON (pd.dependency_id = p.id AND p.disabled = false )
+	// WHERE pd.policy_id IN (?)
+	// UNION ALL
+	// -- Select the ancestors of the policies requested
+	// SELECT pa.policy_id as parent, p.id, p.definition
+	// FROM policy_ancestor pa
+	// JOIN policy p ON (pa.ancestor_id = p.id AND p.disabled = false )
+	// WHERE pa.policy_id IN (?)
+	// UNION ALL
+	// -- Select the dependencies of the ancestors
+	// SELECT pa.policy_id as parent, p.id, p.definition
+	// FROM policy_ancestor pa
+	// JOIN policy_dependency pd ON (pa.ancestor_id = pd.policy_id)
+	// JOIN policy p ON (pd.dependency_id = p.id AND p.disabled = false )
+	// WHERE pa.policy_id IN (?)
+	// ORDER BY parent
+	fullQuery := policiesQuery.
 		UnionAll(depsQuery).
+		UnionAll(ancestorsQuery).
+		UnionAll(ancestorDepsQuery).
 		Order(goqu.C("parent").Asc())
 
-	results, err := policiesQuery.Executor().ScannerContext(ctx)
+	results, err := fullQuery.Executor().ScannerContext(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -403,28 +488,33 @@ func (s *dbStorage) Delete(ctx context.Context, ids ...namer.ModuleID) error {
 }
 
 func (s *dbStorage) ListPolicyIDs(ctx context.Context) ([]string, error) {
-	concat := ConcatWithSepFunc(s.db.Dialect())
-
-	res, err := s.db.From(PolicyTbl).
+	var policyCoords []namer.PolicyCoords
+	err := s.db.From(PolicyTbl).
 		Select(
-			concat(policyKeySep, goqu.Func("LOWER", goqu.C(PolicyTblKindCol)), goqu.C(PolicyTblNameCol), goqu.C(PolicyTblVerCol)),
+			goqu.C(PolicyTblKindCol),
+			goqu.C(PolicyTblNameCol),
+			goqu.C(PolicyTblVerCol),
+			goqu.C(PolicyTblScopeCol),
+		).
+		Where(goqu.C(PolicyTblDisabledCol).Neq(goqu.V(true))).
+		Order(
+			goqu.C(PolicyTblKindCol).Asc(),
+			goqu.C(PolicyTblNameCol).Asc(),
+			goqu.C(PolicyTblVerCol).Asc(),
+			goqu.C(PolicyTblScopeCol).Asc(),
 		).
 		Executor().
-		ScannerContext(ctx)
+		ScanStructsContext(ctx, &policyCoords)
 	if err != nil {
 		return nil, fmt.Errorf("could not execute %q query: %w", "ListPolicyIDs", err)
 	}
-	defer res.Close()
 
-	var policyKeys []string
-	if err = res.ScanVals(&policyKeys); err != nil {
-		return nil, fmt.Errorf("could not scan row: %w", err)
-	}
-	for i := 0; i < len(policyKeys); i++ {
-		policyKeys[i] = strings.TrimSuffix(policyKeys[i], ".")
+	policyIDs := make([]string, len(policyCoords))
+	for i := 0; i < len(policyCoords); i++ {
+		policyIDs[i] = policyCoords[i].PolicyKey()
 	}
 
-	return policyKeys, nil
+	return policyIDs, nil
 }
 
 func (s *dbStorage) ListSchemaIDs(ctx context.Context) ([]string, error) {

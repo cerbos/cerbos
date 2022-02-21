@@ -29,6 +29,7 @@ const (
 	policyComponent      = "policy=%s"
 	resourceComponent    = "resource=%s"
 	ruleComponent        = "rule=%s"
+	scopeComponent       = "scope=%q"
 	varComponent         = "%s:=%s"
 	variablesComponent   = "variables"
 

@@ -272,8 +272,8 @@ func (engine *Engine) ResourcesQueryPlan(ctx context.Context, input *enginev1.Re
 	checkOpts := newCheckOptions(ctx)
 
 	// get the principal policy check
-	ppName, ppVersion := engine.policyAttr(input.Principal.Id, input.Principal.PolicyVersion)
-	policyEvaluator, err := engine.getPrincipalPolicyEvaluator(ctx, ppName, ppVersion, checkOpts)
+	ppName, ppVersion, ppScope := engine.policyAttr(input.Principal.Id, input.Principal.PolicyVersion, input.Principal.Scope)
+	policyEvaluator, err := engine.getPrincipalPolicyEvaluator(ctx, ppName, ppVersion, ppScope, checkOpts)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get check for [%s.%s]: %w", ppName, ppVersion, err)
 	}
@@ -287,8 +287,8 @@ func (engine *Engine) ResourcesQueryPlan(ctx context.Context, input *enginev1.Re
 	}
 	if plan == nil {
 		// get the resource policy check
-		rpName, rpVersion := engine.policyAttr(input.Resource.Kind, input.Resource.PolicyVersion)
-		policyEvaluator, err = engine.getResourcePolicyEvaluator(ctx, rpName, rpVersion, checkOpts)
+		rpName, rpVersion, rpScope := engine.policyAttr(input.Resource.Kind, input.Resource.PolicyVersion, input.Resource.Scope)
+		policyEvaluator, err = engine.getResourcePolicyEvaluator(ctx, rpName, rpVersion, rpScope, checkOpts)
 		if err != nil {
 			return nil, fmt.Errorf("failed to get check for [%s.%s]: %w", rpName, rpVersion, err)
 		}
@@ -320,6 +320,7 @@ func (engine *Engine) ResourcesQueryPlan(ctx context.Context, input *enginev1.Re
 		if input.IncludeMeta {
 			response.Meta = new(responsev1.ResourcesQueryPlanResponse_Meta)
 			response.Meta.FilterDebug, err = String(plan.Filter)
+			response.Meta.MatchedScope = plan.Scope
 		}
 		if err != nil {
 			return nil, err
@@ -405,12 +406,11 @@ func (engine *Engine) evaluate(ctx context.Context, input *enginev1.CheckInput, 
 			Policy: noPolicyMatch,
 		}
 
-		if effect, ok := result.effects[action]; ok {
-			output.Actions[action].Effect = effect
-		}
-
-		if policyMatch, ok := result.matchedPolicies[action]; ok {
-			output.Actions[action].Policy = policyMatch
+		if einfo, ok := result.effects[action]; ok {
+			ae := output.Actions[action]
+			ae.Effect = einfo.Effect
+			ae.Policy = einfo.Policy
+			ae.Scope = einfo.Scope
 		}
 	}
 
@@ -424,16 +424,16 @@ func (engine *Engine) buildEvaluationCtx(ctx context.Context, input *enginev1.Ch
 	ec := &evaluationCtx{}
 
 	// get the principal policy check
-	ppName, ppVersion := engine.policyAttr(input.Principal.Id, input.Principal.PolicyVersion)
-	ppCheck, err := engine.getPrincipalPolicyEvaluator(ctx, ppName, ppVersion, checkOpts)
+	ppName, ppVersion, ppScope := engine.policyAttr(input.Principal.Id, input.Principal.PolicyVersion, input.Principal.Scope)
+	ppCheck, err := engine.getPrincipalPolicyEvaluator(ctx, ppName, ppVersion, ppScope, checkOpts)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get check for [%s.%s]: %w", ppName, ppVersion, err)
 	}
 	ec.addCheck(ppCheck)
 
 	// get the resource policy check
-	rpName, rpVersion := engine.policyAttr(input.Resource.Kind, input.Resource.PolicyVersion)
-	rpCheck, err := engine.getResourcePolicyEvaluator(ctx, rpName, rpVersion, checkOpts)
+	rpName, rpVersion, rpScope := engine.policyAttr(input.Resource.Kind, input.Resource.PolicyVersion, input.Resource.Scope)
+	rpCheck, err := engine.getResourcePolicyEvaluator(ctx, rpName, rpVersion, rpScope, checkOpts)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get check for [%s.%s]: %w", rpName, rpVersion, err)
 	}
@@ -442,8 +442,8 @@ func (engine *Engine) buildEvaluationCtx(ctx context.Context, input *enginev1.Ch
 	return ec, nil
 }
 
-func (engine *Engine) getPrincipalPolicyEvaluator(ctx context.Context, principal, policyVersion string, checkOpts *checkOptions) (Evaluator, error) {
-	principalModID := namer.PrincipalPolicyModuleID(principal, policyVersion)
+func (engine *Engine) getPrincipalPolicyEvaluator(ctx context.Context, principal, policyVer, scope string, checkOpts *checkOptions) (Evaluator, error) {
+	principalModID := namer.PrincipalPolicyModuleID(principal, policyVer, scope)
 	rps, err := engine.compileMgr.Get(ctx, principalModID)
 	if err != nil {
 		return nil, err
@@ -456,8 +456,8 @@ func (engine *Engine) getPrincipalPolicyEvaluator(ctx context.Context, principal
 	return NewEvaluator(rps, checkOpts.tracer, engine.schemaMgr), nil
 }
 
-func (engine *Engine) getResourcePolicyEvaluator(ctx context.Context, resource, policyVersion string, checkOpts *checkOptions) (Evaluator, error) {
-	resourceModID := namer.ResourcePolicyModuleID(resource, policyVersion)
+func (engine *Engine) getResourcePolicyEvaluator(ctx context.Context, resource, policyVer, scope string, checkOpts *checkOptions) (Evaluator, error) {
+	resourceModID := namer.ResourcePolicyModuleID(resource, policyVer, scope)
 	rps, err := engine.compileMgr.Get(ctx, resourceModID)
 	if err != nil {
 		return nil, err
@@ -470,15 +470,16 @@ func (engine *Engine) getResourcePolicyEvaluator(ctx context.Context, resource, 
 	return NewEvaluator(rps, checkOpts.tracer, engine.schemaMgr), nil
 }
 
-func (engine *Engine) policyAttr(name, version string) (pName, pVersion string) {
+func (engine *Engine) policyAttr(name, version, scope string) (pName, pVersion, pScope string) {
 	pName = name
 	pVersion = version
+	pScope = scope
 
 	if version == "" {
 		pVersion = engine.conf.DefaultPolicyVersion
 	}
 
-	return pName, pVersion
+	return pName, pVersion, pScope
 }
 
 type evaluationCtx struct {
@@ -528,8 +529,7 @@ func (ec *evaluationCtx) evaluate(ctx context.Context, input *enginev1.CheckInpu
 }
 
 type evaluationResult struct {
-	effects               map[string]effectv1.Effect
-	matchedPolicies       map[string]string
+	effects               map[string]EffectInfo
 	effectiveDerivedRoles []string
 	validationErrors      []*schemav1.ValidationError
 }
@@ -539,8 +539,7 @@ func (er *evaluationResult) merge(res *PolicyEvalResult) bool {
 	hasNoMatches := false
 
 	if er.effects == nil {
-		er.effects = make(map[string]effectv1.Effect, len(res.Effects))
-		er.matchedPolicies = make(map[string]string, len(res.Effects))
+		er.effects = make(map[string]EffectInfo, len(res.Effects))
 	}
 
 	if len(res.EffectiveDerivedRoles) > 0 {
@@ -555,14 +554,12 @@ func (er *evaluationResult) merge(res *PolicyEvalResult) bool {
 
 	for action, effect := range res.Effects {
 		// if the action doesn't already exist or if it has a no_match effect, update it.
-		if currEffect, ok := er.effects[action]; !ok || currEffect == effectv1.Effect_EFFECT_NO_MATCH {
+		if currEffect, ok := er.effects[action]; !ok || currEffect.Effect == effectv1.Effect_EFFECT_NO_MATCH {
 			er.effects[action] = effect
 
 			// if this effect is a no_match, we still need to traverse the policy hierarchy until we find a definitive answer
-			if effect == effectv1.Effect_EFFECT_NO_MATCH {
+			if effect.Effect == effectv1.Effect_EFFECT_NO_MATCH {
 				hasNoMatches = true
-			} else {
-				er.matchedPolicies[action] = res.PolicyKey
 			}
 		}
 	}

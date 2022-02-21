@@ -20,6 +20,7 @@ inputs: [
     },
     "resource": {
       "kind": "leave_request",
+      "policyVersion": "xxx",
       "id": "XX125",
       "attr": {
         "department": "marketing",

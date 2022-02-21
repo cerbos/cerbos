@@ -82,6 +82,42 @@ func Dependencies(p *policyv1.Policy) []string {
 	}
 }
 
+// Ancestors returns the module IDs of the ancestors of this policy from most recent to oldest.
+func Ancestors(p *policyv1.Policy) []namer.ModuleID {
+	fqnTree := namer.FQNTree(p)
+	n := len(fqnTree)
+
+	// first element is the policy itself so we ignore that
+	if n <= 1 {
+		return nil
+	}
+
+	ancestors := make([]namer.ModuleID, n-1)
+	for i, fqn := range fqnTree[1:] {
+		ancestors[i] = namer.GenModuleIDFromFQN(fqn)
+	}
+
+	return ancestors
+}
+
+// RequiredAncestors returns the moduleID to FQN mapping of required ancestors of the policy.
+func RequiredAncestors(p *policyv1.Policy) map[namer.ModuleID]string {
+	fqnTree := namer.FQNTree(p)
+	n := len(fqnTree)
+
+	// first element is the policy itself so we ignore that
+	if n <= 1 {
+		return nil
+	}
+
+	ancestors := make(map[namer.ModuleID]string, n-1)
+	for _, fqn := range fqnTree[1:] {
+		ancestors[namer.GenModuleIDFromFQN(fqn)] = fqn
+	}
+
+	return ancestors
+}
+
 // SchemaReferences returns references to the schemas found in the policy.
 func SchemaReferences(p *policyv1.Policy) []string {
 	switch pt := p.PolicyType.(type) {
@@ -173,12 +209,12 @@ func GetSourceFile(p *policyv1.Policy) string {
 // Wrapper is a convenience layer over the policy definition.
 type Wrapper struct {
 	*policyv1.Policy
-	FQN          string
-	Kind         string
-	Name         string
-	Version      string
-	Dependencies []namer.ModuleID
-	ID           namer.ModuleID
+	FQN     string
+	Name    string
+	Version string
+	Scope   string
+	ID      namer.ModuleID
+	Kind    Kind
 }
 
 // Wrap augments a policy with useful information about itself.
@@ -187,29 +223,23 @@ func Wrap(p *policyv1.Policy) Wrapper {
 
 	switch pt := p.PolicyType.(type) {
 	case *policyv1.Policy_ResourcePolicy:
-		w.Kind = ResourceKind.String()
-		w.FQN = namer.ResourcePolicyFQN(pt.ResourcePolicy.Resource, pt.ResourcePolicy.Version)
+		w.Kind = ResourceKind
+		w.FQN = namer.ResourcePolicyFQN(pt.ResourcePolicy.Resource, pt.ResourcePolicy.Version, pt.ResourcePolicy.Scope)
 		w.ID = namer.GenModuleIDFromFQN(w.FQN)
 		w.Name = pt.ResourcePolicy.Resource
 		w.Version = pt.ResourcePolicy.Version
-
-		imports := pt.ResourcePolicy.ImportDerivedRoles
-		if len(imports) > 0 {
-			w.Dependencies = make([]namer.ModuleID, len(imports))
-			for i, imp := range imports {
-				w.Dependencies[i] = namer.GenModuleIDFromFQN(namer.DerivedRolesFQN(imp))
-			}
-		}
+		w.Scope = pt.ResourcePolicy.Scope
 
 	case *policyv1.Policy_PrincipalPolicy:
-		w.Kind = PrincipalKind.String()
-		w.FQN = namer.PrincipalPolicyFQN(pt.PrincipalPolicy.Principal, pt.PrincipalPolicy.Version)
+		w.Kind = PrincipalKind
+		w.FQN = namer.PrincipalPolicyFQN(pt.PrincipalPolicy.Principal, pt.PrincipalPolicy.Version, pt.PrincipalPolicy.Scope)
 		w.ID = namer.GenModuleIDFromFQN(w.FQN)
 		w.Name = pt.PrincipalPolicy.Principal
 		w.Version = pt.PrincipalPolicy.Version
+		w.Scope = pt.PrincipalPolicy.Scope
 
 	case *policyv1.Policy_DerivedRoles:
-		w.Kind = DerivedRolesKind.String()
+		w.Kind = DerivedRolesKind
 		w.FQN = namer.DerivedRolesFQN(pt.DerivedRoles.Name)
 		w.ID = namer.GenModuleIDFromFQN(w.FQN)
 		w.Name = pt.DerivedRoles.Name
@@ -219,6 +249,20 @@ func Wrap(p *policyv1.Policy) Wrapper {
 	}
 
 	return w
+}
+
+func (pw Wrapper) Dependencies() []namer.ModuleID {
+	if pw.Kind == ResourceKind {
+		imports := pw.GetResourcePolicy().ImportDerivedRoles
+		if len(imports) > 0 {
+			dependencies := make([]namer.ModuleID, len(imports))
+			for i, imp := range imports {
+				dependencies[i] = namer.GenModuleIDFromFQN(namer.DerivedRolesFQN(imp))
+			}
+			return dependencies
+		}
+	}
+	return nil
 }
 
 // CompilationUnit is the set of policies that need to be compiled together.
@@ -243,6 +287,10 @@ func (cu *CompilationUnit) MainSourceFile() string {
 
 func (cu *CompilationUnit) MainPolicy() *policyv1.Policy {
 	return cu.Definitions[cu.ModID]
+}
+
+func (cu *CompilationUnit) Ancestors() []namer.ModuleID {
+	return Ancestors(cu.Definitions[cu.ModID])
 }
 
 // Key returns the human readable identifier for the main module.
