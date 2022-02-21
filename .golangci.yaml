@@ -14,12 +14,6 @@ linters-settings:
   exhaustive:
     default-signifies-exhaustive: true
 
-  gci:
-    sections:
-      - standard
-      - default
-      - prefix(github.com/cerbos/cerbos)
-
   gofumpt:
     extra-rules: true
 
@@ -61,7 +55,6 @@ linters:
     - exportloopref
     - forbidigo
     - forcetypeassert
-    - gci
     - goconst
     - gocritic
     - godot
