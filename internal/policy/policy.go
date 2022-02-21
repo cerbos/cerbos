@@ -209,13 +209,12 @@ func GetSourceFile(p *policyv1.Policy) string {
 // Wrapper is a convenience layer over the policy definition.
 type Wrapper struct {
 	*policyv1.Policy
-	FQN          string
-	Kind         string
-	Name         string
-	Version      string
-	Scope        string
-	Dependencies []namer.ModuleID
-	ID           namer.ModuleID
+	FQN     string
+	Name    string
+	Version string
+	Scope   string
+	ID      namer.ModuleID
+	Kind    Kind
 }
 
 // Wrap augments a policy with useful information about itself.
@@ -224,23 +223,15 @@ func Wrap(p *policyv1.Policy) Wrapper {
 
 	switch pt := p.PolicyType.(type) {
 	case *policyv1.Policy_ResourcePolicy:
-		w.Kind = ResourceKind.String()
+		w.Kind = ResourceKind
 		w.FQN = namer.ResourcePolicyFQN(pt.ResourcePolicy.Resource, pt.ResourcePolicy.Version, pt.ResourcePolicy.Scope)
 		w.ID = namer.GenModuleIDFromFQN(w.FQN)
 		w.Name = pt.ResourcePolicy.Resource
 		w.Version = pt.ResourcePolicy.Version
 		w.Scope = pt.ResourcePolicy.Scope
 
-		imports := pt.ResourcePolicy.ImportDerivedRoles
-		if len(imports) > 0 {
-			w.Dependencies = make([]namer.ModuleID, len(imports))
-			for i, imp := range imports {
-				w.Dependencies[i] = namer.GenModuleIDFromFQN(namer.DerivedRolesFQN(imp))
-			}
-		}
-
 	case *policyv1.Policy_PrincipalPolicy:
-		w.Kind = PrincipalKind.String()
+		w.Kind = PrincipalKind
 		w.FQN = namer.PrincipalPolicyFQN(pt.PrincipalPolicy.Principal, pt.PrincipalPolicy.Version, pt.PrincipalPolicy.Scope)
 		w.ID = namer.GenModuleIDFromFQN(w.FQN)
 		w.Name = pt.PrincipalPolicy.Principal
@@ -248,7 +239,7 @@ func Wrap(p *policyv1.Policy) Wrapper {
 		w.Scope = pt.PrincipalPolicy.Scope
 
 	case *policyv1.Policy_DerivedRoles:
-		w.Kind = DerivedRolesKind.String()
+		w.Kind = DerivedRolesKind
 		w.FQN = namer.DerivedRolesFQN(pt.DerivedRoles.Name)
 		w.ID = namer.GenModuleIDFromFQN(w.FQN)
 		w.Name = pt.DerivedRoles.Name
@@ -258,6 +249,20 @@ func Wrap(p *policyv1.Policy) Wrapper {
 	}
 
 	return w
+}
+
+func (pw Wrapper) Dependencies() []namer.ModuleID {
+	if pw.Kind == ResourceKind {
+		imports := pw.GetResourcePolicy().ImportDerivedRoles
+		if len(imports) > 0 {
+			dependencies := make([]namer.ModuleID, len(imports))
+			for i, imp := range imports {
+				dependencies[i] = namer.GenModuleIDFromFQN(namer.DerivedRolesFQN(imp))
+			}
+			return dependencies
+		}
+	}
+	return nil
 }
 
 // CompilationUnit is the set of policies that need to be compiled together.

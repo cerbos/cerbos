@@ -97,7 +97,7 @@ END
 		sql.Named("definition", definition),
 		sql.Named("description", p.Description),
 		sql.Named("disabled", p.Disabled),
-		sql.Named("kind", p.Kind),
+		sql.Named("kind", p.Kind.String()),
 		sql.Named("name", p.Name),
 		sql.Named("version", p.Version),
 		sql.Named("scope", p.Scope),

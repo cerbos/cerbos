@@ -12,7 +12,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-const eventBufferSize = 16
+const eventBufferSize = 32
 
 type SubscriptionManager struct {
 	eventChan   chan Event

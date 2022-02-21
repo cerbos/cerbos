@@ -1,8 +1,7 @@
 // Copyright 2021-2022 Zenauth Ltd.
 // SPDX-License-Identifier: Apache-2.0
 
-//go:build tests
-// +build tests
+//go:build !race
 
 package main_test
 
@@ -256,8 +255,9 @@ func noOfPoliciesInCmdOutput(t *testing.T, cmdOut string) int {
 func loadPolicies(t *testing.T, ac client.AdminClient) {
 	t.Helper()
 
-	ps := client.NewPolicySet()
 	for i := 0; i < policiesPerType; i++ {
+		ps := client.NewPolicySet()
+
 		ps.AddPolicies(test.GenPrincipalPolicy(test.Suffix(strconv.Itoa(i))))
 		ps.AddPolicies(test.GenResourcePolicy(test.Suffix(strconv.Itoa(i))))
 		ps.AddPolicies(test.GenDerivedRoles(test.Suffix(strconv.Itoa(i))))
@@ -266,9 +266,9 @@ func loadPolicies(t *testing.T, ac client.AdminClient) {
 		ps.AddPolicies(withScope(test.GenResourcePolicy(test.Suffix(strconv.Itoa(i))), "acme.hr.uk"))
 		ps.AddPolicies(withScope(test.GenPrincipalPolicy(test.Suffix(strconv.Itoa(i))), "acme"))
 		ps.AddPolicies(withScope(test.GenPrincipalPolicy(test.Suffix(strconv.Itoa(i))), "acme.hr"))
-	}
 
-	require.NoError(t, ac.AddOrUpdatePolicy(context.Background(), ps))
+		require.NoError(t, ac.AddOrUpdatePolicy(context.Background(), ps))
+	}
 }
 
 func withTestAdminClient(fn internal.AdminCommand) func(cmd *cobra.Command, args []string) error {

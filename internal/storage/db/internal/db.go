@@ -198,7 +198,7 @@ func (s *dbStorage) AddOrUpdate(ctx context.Context, policies ...policy.Wrapper)
 		for i, p := range policies {
 			policyRecord := Policy{
 				ID:          p.ID,
-				Kind:        p.Kind,
+				Kind:        p.Kind.String(),
 				Name:        p.Name,
 				Version:     p.Version,
 				Scope:       p.Scope,
@@ -222,7 +222,8 @@ func (s *dbStorage) AddOrUpdate(ctx context.Context, policies ...policy.Wrapper)
 				return fmt.Errorf("failed to upsert %s: %w", p.FQN, err)
 			}
 
-			if len(p.Dependencies) > 0 {
+			dependencies := p.Dependencies()
+			if len(dependencies) > 0 {
 				// delete the existing dependency records
 				if _, err := tx.Delete(PolicyDepTbl).
 					Prepared(true).
@@ -232,8 +233,8 @@ func (s *dbStorage) AddOrUpdate(ctx context.Context, policies ...policy.Wrapper)
 				}
 
 				// insert the new dependency records
-				depRows := make([]interface{}, len(p.Dependencies))
-				for ix, d := range p.Dependencies {
+				depRows := make([]interface{}, len(dependencies))
+				for ix, d := range dependencies {
 					depRows[ix] = PolicyDependency{PolicyID: p.ID, DependencyID: d}
 				}
 
@@ -361,19 +362,19 @@ func (s *dbStorage) GetCompilationUnits(ctx context.Context, ids ...namer.Module
 	// SELECT p.id as parent,p.id, p.definition
 	// FROM policy p
 	// WHERE p.id IN (?) AND p.disabled = false
-	// UNION
+	// UNION ALL
 	// -- Select the dependencies of those policies
 	// SELECT pd.policy_id as parent, p.id, p.definition
 	// FROM policy_dependency pd
 	// JOIN policy p ON (pd.dependency_id = p.id AND p.disabled = false )
 	// WHERE pd.policy_id IN (?)
-	// UNION
+	// UNION ALL
 	// -- Select the ancestors of the policies requested
 	// SELECT pa.policy_id as parent, p.id, p.definition
 	// FROM policy_ancestor pa
 	// JOIN policy p ON (pa.ancestor_id = p.id AND p.disabled = false )
 	// WHERE pa.policy_id IN (?)
-	// UNION
+	// UNION ALL
 	// -- Select the dependencies of the ancestors
 	// SELECT pa.policy_id as parent, p.id, p.definition
 	// FROM policy_ancestor pa
@@ -382,9 +383,9 @@ func (s *dbStorage) GetCompilationUnits(ctx context.Context, ids ...namer.Module
 	// WHERE pa.policy_id IN (?)
 	// ORDER BY parent
 	fullQuery := policiesQuery.
-		Union(depsQuery).
-		Union(ancestorsQuery).
-		Union(ancestorDepsQuery).
+		UnionAll(depsQuery).
+		UnionAll(ancestorsQuery).
+		UnionAll(ancestorDepsQuery).
 		Order(goqu.C("parent").Asc())
 
 	results, err := fullQuery.Executor().ScannerContext(ctx)
