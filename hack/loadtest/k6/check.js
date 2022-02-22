@@ -14,7 +14,7 @@ export const options = {
 };
 
 const authHeader = "Basic Y2VyYm9zOmNlcmJvc0FkbWlu"
-const baseDir = "./gen"
+const baseDir = "../work/k6"
 const idxFile = baseDir + "/request-index.json"
 const url = "http://127.0.0.1:3592/api/check"
 

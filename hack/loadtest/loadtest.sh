@@ -5,35 +5,20 @@
 
 set -euo pipefail
 
-trap onExit EXIT
+STORE="disk"
+NUM_POLICIES="1000"
+WORK_DIR="work"
+
 clean() {
   printf "Cleaning up\n"
   rm -rf ./bin
-  rm -rf ./k6/gen
-  rm -rf ./conf/cerbos/config.yml
-  rm -rf ./data_postgres
-}
-
-onExit() {
-  down
-  clean
+  rm -rf work
 }
 
 generateResources() {
-  printf "Generating %s of policy sets\n" "${1}"
-  mkdir -p ./k6/gen/policies ./k6/gen/requests
-  go run ./genres.go --output-dir ./k6/gen --policy-set-count "${1}"
-}
-
-setupStore() {
-  printf "Setting configuration for store %s\n" "${1}"
-  cp ./conf/cerbos/"${1}".yml ./conf/cerbos/config.yml
-}
-
-setupPostgres() {
-  printf "Setting up the postgres schema\n"
-  docker cp ../../internal/storage/db/postgres/schema.sql postgres:/docker-entrypoint-initdb.d/schema.sql
-  docker exec -u postgres postgres psql cerbos cerbos -f docker-entrypoint-initdb.d/schema.sql
+  printf "Generating %s policy sets\n" "$NUM_POLICIES"
+  mkdir -p "${WORK_DIR}"/k6/{policies,requests}
+  go run ./genres.go --output-dir "${WORK_DIR}/k6" --policy-set-count "$NUM_POLICIES"
 }
 
 down() {
@@ -44,48 +29,69 @@ down() {
 up() {
   printf "Starting all services\n"
   docker-compose up -d
-  sleep "${1}"
+
+  while [[ "$(curl -s -o /dev/null -w '%{http_code}' 'http://localhost:3592/_cerbos/health')" != "200" ]]; do 
+      echo "Waiting for Cerbos..."
+      sleep 1 
+  done
 }
 
 executeTest() {
-  generateResources "${1}"
-  k6 run ./k6/check.js>./results/"${2}"_"${1}".log 2>&1
+  mkdir -p results
+  k6 run --out json="results/${STORE}_${NUM_POLICIES}.json" ./k6/check.js
 }
 
-down
-clean
-rm -rf ./results
+usage() {
+  printf "Usage:\n%s [[-n <num_policies>] [-s <store>]] [-c]\n", "$0"
+  exit 2
+}
 
-printf "Creating results folder\n"
-mkdir ./results
 
-setupStore "disk"
-generateResources 1
-up 20
-setupPostgres
-down
-
-stores=("disk" "postgres")
-scenarios=( 5 50 500 5000 )
-
-printf "Starting the load tests\n\n"
-
-for store in "${stores[@]}"
-do
-  down
-
-  printf "Preparing for the load test with %s store\n" "${store}"
-  setupStore "${store}"
-
-  printf "Starting all services\n"
-  up 5
-
-  for i in "${scenarios[@]}"
-  do
-    :
-    printf "Executing the load test with %s store and %s number of policy sets\n" "${store}" "${i}"
-    executeTest "${i}" "${store}"
-  done
-
-  printf "Load test with %s store finalized\n\n\n" "${store}"
+while getopts ":hcn:s:" opt; do 
+  case "$opt" in
+    h)
+      usage
+      ;;
+    c) 
+      down
+      clean
+      ;;
+    n)
+      NUM_POLICIES="$OPTARG"
+      ;;
+    s)
+      STORE="$OPTARG"
+      ;;
+    \?)
+      echo "Unknown option $OPTARG"
+      usage
+      ;;
+    :)  
+      echo "Flag $OPTARG requires an argument"
+      usage
+      ;;
+  esac
 done
+
+mkdir -p "${WORK_DIR}/cerbos"
+mkdir -p "${WORK_DIR}"/postgres/{init,data}
+cp ../../internal/storage/db/postgres/schema.sql "${WORK_DIR}/postgres/init/schema.sql"
+
+case "$STORE" in 
+  disk)
+    cp conf/cerbos/disk.yml "${WORK_DIR}/cerbos/config.yml"
+    ;;
+
+  postgres)
+    cp conf/cerbos/postgres.yml "${WORK_DIR}/cerbos/config.yml"
+    ;;
+
+  *)
+    echo "Unknown store '$STORE'. Valid values are: 'disk', 'postgres'"
+    usage
+    ;;
+esac
+
+generateResources
+up
+executeTest
