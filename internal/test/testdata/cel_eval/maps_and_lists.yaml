@@ -31,9 +31,13 @@ condition:
       - expr: |-
           has_intersection(["design", "engineering"], P.attr.teams)
       - expr: |-
+          hasIntersection(["design", "engineering"], P.attr.teams)
+      - expr: |-
           intersect(["design", "engineering"], P.attr.teams) == ["design"]
       - expr: |-
           ["design", "engineering"].is_subset(P.attr.teams) == false
+      - expr: |-
+          ["design", "engineering"].isSubset(P.attr.teams) == false
       - expr: |-
           P.attr.teams.except(["design", "engineering"]) == ["communications", "product", "commercial"]
 input: {
