@@ -117,8 +117,6 @@ linters:
 issues:
   max-same-issues: 30
 
-  fix: true
-
   exclude-rules:
     - path: _test\.go
       linters:

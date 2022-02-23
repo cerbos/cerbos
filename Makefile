@@ -28,7 +28,7 @@ clean-tools:
 
 .PHONY: lint
 lint: $(GOLANGCI_LINT) $(BUF)
-	@ $(GOLANGCI_LINT) run --config=.golangci.yaml 
+	@ $(GOLANGCI_LINT) run --config=.golangci.yaml --fix
 	@ $(BUF) lint
 
 .PHONY: lint-helm
