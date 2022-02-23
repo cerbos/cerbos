@@ -4,13 +4,9 @@
 package conditions_test
 
 import (
-	"fmt"
 	"log"
-	"math/rand"
 	"reflect"
-	"strings"
 	"testing"
-	"time"
 
 	"github.com/ghodss/yaml"
 	"github.com/google/cel-go/cel"
@@ -87,6 +83,8 @@ func TestCerbosLib(t *testing.T) {
 		{expr: `hierarchy("a.b.c.d").overlaps(hierarchy("a.b.c")) == true`},
 		{expr: `hierarchy("a.b").overlaps(hierarchy("a.b.c.d")) == true`},
 		{expr: `hierarchy("a.b.x").overlaps(hierarchy("a.b.c.d")) == false`},
+		{expr: `now().timeSince() == duration("0")`},
+		{expr: `now() == now()`},
 	}
 	env, err := cel.NewEnv(conditions.CerbosCELLib())
 	require.NoError(t, err)
@@ -97,10 +95,7 @@ func TestCerbosLib(t *testing.T) {
 			ast, issues := env.Compile(tc.expr)
 			is.NoError(issues.Err())
 
-			prg, err := env.Program(ast)
-			is.NoError(err)
-
-			have, _, err := prg.Eval(cel.NoVars())
+			have, _, err := conditions.Eval(env, ast, cel.NoVars())
 			if tc.wantErr {
 				is.Error(err)
 			} else {
@@ -108,58 +103,6 @@ func TestCerbosLib(t *testing.T) {
 				is.Equal(true, have.Value())
 			}
 		})
-	}
-}
-
-func prepareProgram(tb testing.TB, expr string) cel.Program {
-	tb.Helper()
-	is := require.New(tb)
-	env, err := cel.NewEnv(conditions.CerbosCELLib())
-	is.NoError(err)
-	ast, issues := env.Compile(expr)
-	is.NoError(issues.Err())
-
-	prg, err := env.Program(ast)
-	is.NoError(err)
-	return prg
-}
-
-func generateExpr(size int) string {
-	lhs := make([]string, size)
-	for i := 0; i < size; i++ {
-		lhs[i] = fmt.Sprintf("'%05d'", i)
-	}
-	rhs := make([]string, size)
-	copy(rhs, lhs)
-	rand.Seed(time.Now().UnixNano())
-	rand.Shuffle(len(rhs), func(i, j int) { rhs[i], rhs[j] = rhs[j], rhs[i] })
-	return fmt.Sprintf("intersect([%s], [%s])", strings.Join(lhs, ","), strings.Join(rhs, ","))
-}
-
-func BenchmarkIntersect50(b *testing.B) {
-	benchmarkIntersect(b, 50)
-}
-
-func BenchmarkIntersect25(b *testing.B) {
-	benchmarkIntersect(b, 25)
-}
-
-func BenchmarkIntersect15(b *testing.B) {
-	benchmarkIntersect(b, 15)
-}
-
-func BenchmarkIntersect5(b *testing.B) {
-	benchmarkIntersect(b, 5)
-}
-
-func benchmarkIntersect(b *testing.B, size int) {
-	b.Helper()
-	expr := generateExpr(size)
-	prg := prepareProgram(b, expr)
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		_, _, err := prg.Eval(cel.NoVars())
-		require.NoError(b, err)
 	}
 }
 
@@ -220,10 +163,8 @@ func TestPartialEvaluationWithMacroGlobalVars(t *testing.T) {
 	if issues != nil {
 		is.NoError(issues.Err())
 	}
-	prg, err := env.Program(ast, cel.EvalOptions(cel.OptTrackState, cel.OptPartialEval))
-	is.NoError(err)
 
-	out, det, err := prg.Eval(vars)
+	out, det, err := conditions.Eval(env, ast, vars, cel.EvalOptions(cel.OptTrackState, cel.OptPartialEval))
 	is.NoError(err)
 	is.True(types.IsUnknown(out))
 	residual, err := env.ResidualAst(ast, det)
@@ -303,10 +244,8 @@ func TestPartialEvaluation(t *testing.T) {
 			if issues != nil {
 				is.NoError(issues.Err())
 			}
-			prg, err := env.Program(ast, cel.EvalOptions(cel.OptTrackState, cel.OptPartialEval))
-			is.NoError(err)
 
-			out, det, err := prg.Eval(vars)
+			out, det, err := conditions.Eval(env, ast, vars, cel.EvalOptions(cel.OptTrackState, cel.OptPartialEval))
 			is.NotNil(det) // It is not nil if cel.OptTrackState is included in the cel.EvalOptions
 			t.Log(out.Type())
 			is.NoError(err)

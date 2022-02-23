@@ -211,9 +211,8 @@ func TestPartialEvaluationWithGlobalVars(t *testing.T) {
 			e, err = replaceVars(e, variables)
 			is.NoError(err)
 			ast = cel.ParsedExprToAst(&expr.ParsedExpr{Expr: e})
-			prg, err := env.Program(ast, cel.EvalOptions(cel.OptTrackState, cel.OptPartialEval))
+			out, det, err := conditions.Eval(env, ast, pvars, cel.EvalOptions(cel.OptTrackState, cel.OptPartialEval))
 			is.NoError(err)
-			out, det, err := prg.Eval(pvars)
 			t.Log(types.IsUnknown(out))
 			is.NoError(err)
 

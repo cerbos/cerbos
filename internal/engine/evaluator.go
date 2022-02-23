@@ -353,12 +353,7 @@ func evaluateCELExpr(expr *exprpb.CheckedExpr, variables map[string]interface{},
 		return nil, nil
 	}
 
-	prg, err := conditions.StdEnv.Program(cel.CheckedExprToAst(expr))
-	if err != nil {
-		return nil, err
-	}
-
-	result, _, err := prg.Eval(map[string]interface{}{
+	result, _, err := conditions.Eval(conditions.StdEnv, cel.CheckedExprToAst(expr), map[string]interface{}{
 		conditions.CELRequestIdent:    input,
 		conditions.CELResourceAbbrev:  input.Resource,
 		conditions.CELPrincipalAbbrev: input.Principal,

@@ -25,6 +25,7 @@ const (
 	inIPAddrRangeFn   = "inIPAddrRange"
 	intersectFn       = "intersect"
 	isSubsetFn        = "is_subset"
+	nowFn             = "now"
 	timeSinceFn       = "timeSince"
 )
 
@@ -47,9 +48,17 @@ func (clib cerbosLib) CompileOptions() []cel.EnvOption {
 			),
 		),
 
+		decls.NewFunction(nowFn,
+			decls.NewOverload(
+				nowFn,
+				nil,
+				decls.Timestamp,
+			),
+		),
+
 		decls.NewFunction(timeSinceFn,
 			decls.NewInstanceOverload(
-				fmt.Sprintf("%s_timestamp", timeSinceFn),
+				timeSinceFn,
 				[]*exprpb.Type{decls.Timestamp},
 				decls.Duration,
 			),
@@ -105,16 +114,6 @@ func (clib cerbosLib) ProgramOptions() []cel.ProgramOption {
 			},
 
 			&functions.Overload{
-				Operator: timeSinceFn,
-				Unary:    callInTimestampOutDuration(clib.timeSinceFunc),
-			},
-
-			&functions.Overload{
-				Operator: fmt.Sprintf("%s_timestamp", timeSinceFn),
-				Unary:    callInTimestampOutDuration(clib.timeSinceFunc),
-			},
-
-			&functions.Overload{
 				Operator: hasIntersectionFn,
 				Binary:   hasIntersection,
 			},
@@ -137,6 +136,41 @@ func (clib cerbosLib) ProgramOptions() []cel.ProgramOption {
 			customtypes.HierarchyOverload,
 		),
 	}
+}
+
+// Eval returns the result of an evaluation of the ast and environment against the input vars,
+// providing time-based functions with a static definition of the current time.
+//
+// See https://pkg.go.dev/github.com/google/cel-go/cel#Program.Eval.
+func Eval(env *cel.Env, ast *cel.Ast, vars interface{}, opts ...cel.ProgramOption) (ref.Val, *cel.EvalDetails, error) {
+	prg, err := program(env, ast, opts...)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return prg.Eval(vars)
+}
+
+// program generates an evaluable instance of the ast within the environment,
+// providing time-based functions with a static definition of the current time.
+func program(env *cel.Env, ast *cel.Ast, opts ...cel.ProgramOption) (cel.Program, error) {
+	now := time.Now()
+
+	opts = append(opts, cel.Functions(
+		&functions.Overload{
+			Operator: nowFn,
+			Function: callInNothingOutTimestamp(func() time.Time {
+				return now
+			}),
+		},
+
+		&functions.Overload{
+			Operator: timeSinceFn,
+			Unary: callInTimestampOutDuration(now.Sub),
+		},
+	))
+
+	return env.Program(ast, opts...)
 }
 
 // hashable checks whether the type is hashable, i.e. can be used in a Go map.
@@ -326,10 +360,6 @@ func (clib cerbosLib) inIPAddrRangeFunc(ipAddrVal, cidrVal string) (bool, error)
 	return cidr.Contains(ipAddr), nil
 }
 
-func (clib cerbosLib) timeSinceFunc(ts time.Time) time.Duration {
-	return time.Since(ts)
-}
-
 func callInStringStringOutBool(fn func(string, string) (bool, error)) functions.BinaryOp {
 	return func(lhsVal, rhsVal ref.Val) ref.Val {
 		lhs, ok := lhsVal.(types.String)
@@ -359,5 +389,11 @@ func callInTimestampOutDuration(fn func(time.Time) time.Duration) functions.Unar
 		}
 
 		return types.DefaultTypeAdapter.NativeToValue(fn(ts.Time))
+	}
+}
+
+func callInNothingOutTimestamp(fn func() time.Time) functions.FunctionOp {
+	return func(_ ...ref.Val) ref.Val {
+		return types.DefaultTypeAdapter.NativeToValue(fn())
 	}
 }
