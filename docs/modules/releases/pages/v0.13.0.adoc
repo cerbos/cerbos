@@ -1,0 +1,107 @@
+include::ROOT:partial$attributes.adoc[]
+
+[#v0.13.0]
+= Cerbos v0.13.0
+
+IMPORTANT: This release requires existing MySQL or Postgres users to perform a migration step before upgrading. More information can be found in the xref:v0.13.0/migration.adoc[migration documentation].
+
+== Highlights
+
+This release introduces the concept of xref:0.13.0@policies:scoped_policies.adoc[scoped policies] to address the common usecase of modelling hierarchical relationships. The new `scope` field of resource and principal policies allows you to define a dot-separated string describing their position in the hierarchy. At runtime, based on the scope defined by the API request, the Cerbos engine moves upwards through the set of policies in the hierarchy until one of them produces a decision. With this feature you can define a base set of access policies that can then be overridden for particular departments, tenants or any other unit of access control that makes sense for your application.
+
+Another new feature in this release is the introduction of the `cerbos run` command. This command can be used as a test runner or even as a quick way to try out Cerbos. It launches a Cerbos instance in the background (loading any policies found in the `policies` directory) and then runs the user-provided command. Two environment variables named `CERBOS_HTTP` and `CERBOS_GRPC` are injected to the environment of the child process so that it can discover the Cerbos PDP.  When the child process exits, the Cerbos instance is automatically shutdown as well. For more information, see the xref:0.13.0@cli:cerbos.adoc#run[`cerbos run` documentation]. 
+
+This release also adds support for using xref:0.13.0@configuration:storage.adoc#sqlserver[Microsoft SQL Server as a storage backend].
+
+
+== Changelog
+
+
+=== Bug Fixes
+
+* Dangling quotes in helmfiles (link:https://github.com/cerbos/cerbos/pull/576[#576])
+* cerbosctl get subcommands retrieve unmatching policy types (link:https://github.com/cerbos/cerbos/pull/594[#594])
+
+=== Features
+
+* Add --sort-by flag to cerbosctl get subcommands (link:https://github.com/cerbos/cerbos/pull/606[#606])
+* Add SQL Server support (link:https://github.com/cerbos/cerbos/pull/575[#575])
+* Add cerbos run command (link:https://github.com/cerbos/cerbos/pull/625[#625])
+* Scoped policies (link:https://github.com/cerbos/cerbos/pull/660[#660])
+
+=== Enhancements
+
+* Add query plan API to Playground (link:https://github.com/cerbos/cerbos/pull/607[#607])
+* Allow aux_data to be accessed as auxData (link:https://github.com/cerbos/cerbos/pull/623[#623])
+
+=== Documentation
+
+* Add Okta & FusionAuth tutorials (link:https://github.com/cerbos/cerbos/pull/609[#609])
+* Add links to guide (link:https://github.com/cerbos/cerbos/pull/611[#611])
+* Add service model explanation (link:https://github.com/cerbos/cerbos/pull/587[#587])
+* Update CLI docs (link:https://github.com/cerbos/cerbos/pull/591[#591])
+
+=== Chores
+
+* Add golden files for compile results (link:https://github.com/cerbos/cerbos/pull/596[#596])
+* Bump EndBug/add-and-commit from 7 to 8.0.1 (link:https://github.com/cerbos/cerbos/pull/578[#578])
+* Bump EndBug/add-and-commit from 8.0.1 to 8.0.2 (link:https://github.com/cerbos/cerbos/pull/628[#628])
+* Bump amannn/action-semantic-pull-request from 3 to 4.1.0 (link:https://github.com/cerbos/cerbos/pull/615[#615])
+* Bump amannn/action-semantic-pull-request from 4.1.0 to 4.2.0 (link:https://github.com/cerbos/cerbos/pull/627[#627])
+* Bump azure/setup-helm from 1 to 2.0 (link:https://github.com/cerbos/cerbos/pull/598[#598])
+* Bump bufbuild/buf-push-action from 1.0.0 to 1.0.1 (link:https://github.com/cerbos/cerbos/pull/649[#649])
+* Bump bufbuild/buf-setup-action from 0.7.0 to 1.0.0 (link:https://github.com/cerbos/cerbos/pull/648[#648])
+* Bump github.com/alecthomas/kong from 0.4.0 to 0.4.1 (link:https://github.com/cerbos/cerbos/pull/664[#664])
+* Bump github.com/aws/aws-sdk-go from 1.42.23 to 1.43.2 (link:https://github.com/cerbos/cerbos/pull/651[#651])
+* Bump github.com/bojand/ghz in /tools (link:https://github.com/cerbos/cerbos/pull/605[#605])
+* Bump github.com/bojand/ghz in /tools (link:https://github.com/cerbos/cerbos/pull/620[#620])
+* Bump github.com/bufbuild/buf from 0.56.0 to 1.0.0 in /tools (link:https://github.com/cerbos/cerbos/pull/656[#656])
+* Bump github.com/denisenkom/go-mssqldb from 0.11.0 to 0.12.0 (link:https://github.com/cerbos/cerbos/pull/583[#583])
+* Bump github.com/fergusstrange/embedded-postgres from 1.13.0 to 1.14.0 (link:https://github.com/cerbos/cerbos/pull/618[#618])
+* Bump github.com/fullstorydev/grpcurl in /tools (link:https://github.com/cerbos/cerbos/pull/635[#635])
+* Bump github.com/golangci/golangci-lint in /tools (link:https://github.com/cerbos/cerbos/pull/657[#657])
+* Bump github.com/google/go-cmp from 0.5.6 to 0.5.7 (link:https://github.com/cerbos/cerbos/pull/580[#580])
+* Bump github.com/goreleaser/goreleaser from 1.4.1 to 1.5.0 (link:https://github.com/cerbos/cerbos/pull/634[#634])
+* Bump github.com/goreleaser/goreleaser in /tools (link:https://github.com/cerbos/cerbos/pull/603[#603])
+* Bump github.com/grpc-ecosystem/grpc-gateway/v2 from 2.7.2 to 2.7.3 (link:https://github.com/cerbos/cerbos/pull/582[#582])
+* Bump github.com/grpc-ecosystem/grpc-gateway/v2 in /tools (link:https://github.com/cerbos/cerbos/pull/584[#584])
+* Bump github.com/jackc/pgtype from 1.9.1 to 1.10.0 (link:https://github.com/cerbos/cerbos/pull/630[#630])
+* Bump github.com/jackc/pgx/v4 from 4.14.1 to 4.15.0 (link:https://github.com/cerbos/cerbos/pull/633[#633])
+* Bump github.com/lestrrat-go/jwx from 1.2.17 to 1.2.18 (link:https://github.com/cerbos/cerbos/pull/585[#585])
+* Bump github.com/minio/minio-go/v7 from 7.0.21 to 7.0.22 (link:https://github.com/cerbos/cerbos/pull/654[#654])
+* Bump github.com/prometheus/client_golang from 1.11.0 to 1.12.0 (link:https://github.com/cerbos/cerbos/pull/581[#581])
+* Bump github.com/prometheus/client_golang from 1.12.0 to 1.12.1 (link:https://github.com/cerbos/cerbos/pull/599[#599])
+* Bump github.com/spf13/afero from 1.8.0 to 1.8.1 (link:https://github.com/cerbos/cerbos/pull/616[#616])
+* Bump github.com/tidwall/gjson from 1.13.0 to 1.14.0 (link:https://github.com/cerbos/cerbos/pull/619[#619])
+* Bump github.com/vektra/mockery/v2 from 2.9.4 to 2.10.0 in /tools (link:https://github.com/cerbos/cerbos/pull/604[#604])
+* Bump go.elastic.co/ecszap from 1.0.0 to 1.0.1 (link:https://github.com/cerbos/cerbos/pull/652[#652])
+* Bump go.opentelemetry.io/otel/bridge/opencensus from 0.26.0 to 0.27.0 (link:https://github.com/cerbos/cerbos/pull/638[#638])
+* Bump go.opentelemetry.io/otel/bridge/opencensus from 0.27.0 to 0.27.1 (link:https://github.com/cerbos/cerbos/pull/655[#655])
+* Bump go.opentelemetry.io/otel/exporters/jaeger from 1.3.0 to 1.4.0 (link:https://github.com/cerbos/cerbos/pull/632[#632])
+* Bump go.opentelemetry.io/otel/exporters/jaeger from 1.4.0 to 1.4.1 (link:https://github.com/cerbos/cerbos/pull/662[#662])
+* Bump go.opentelemetry.io/otel/sdk from 1.3.0 to 1.4.0 (link:https://github.com/cerbos/cerbos/pull/631[#631])
+* Bump go.opentelemetry.io/otel/sdk from 1.4.0 to 1.4.1 (link:https://github.com/cerbos/cerbos/pull/653[#653])
+* Bump go.uber.org/zap from 1.20.0 to 1.21.0 (link:https://github.com/cerbos/cerbos/pull/629[#629])
+* Bump golang.org/x/tools from 0.1.8 to 0.1.9 (link:https://github.com/cerbos/cerbos/pull/602[#602])
+* Bump google-github-actions/setup-gcloud from 0.3 to 0.4.0 (link:https://github.com/cerbos/cerbos/pull/577[#577])
+* Bump google-github-actions/setup-gcloud from 0.4.0 to 0.5.0 (link:https://github.com/cerbos/cerbos/pull/614[#614])
+* Bump google-github-actions/setup-gcloud from 0.5.0 to 0.5.1 (link:https://github.com/cerbos/cerbos/pull/650[#650])
+* Bump google.golang.org/grpc from 1.43.0 to 1.44.0 (link:https://github.com/cerbos/cerbos/pull/600[#600])
+* Bump helm.sh/helm/v3 from 3.7.2 to 3.8.0 (link:https://github.com/cerbos/cerbos/pull/601[#601])
+* Bump modernc.org/sqlite from 1.14.4 to 1.14.5 (link:https://github.com/cerbos/cerbos/pull/579[#579])
+* Bump modernc.org/sqlite from 1.14.5 to 1.14.6 (link:https://github.com/cerbos/cerbos/pull/617[#617])
+* Bump version to 0.13.0
+* Disable gci and run linters (link:https://github.com/cerbos/cerbos/pull/658[#658])
+* Fix lint issues (link:https://github.com/cerbos/cerbos/pull/588[#588])
+* Increase Telepresence timeout for E2E tests (link:https://github.com/cerbos/cerbos/pull/613[#613])
+* Make log level flag case insensitive (link:https://github.com/cerbos/cerbos/pull/639[#639])
+* Replace conventional commit check (link:https://github.com/cerbos/cerbos/pull/612[#612])
+* Update Antora and Goreleaser config (link:https://github.com/cerbos/cerbos/pull/590[#590])
+* Update Postgres E2E deploy script (link:https://github.com/cerbos/cerbos/pull/621[#621])
+* Update generated code (link:https://github.com/cerbos/cerbos/pull/610[#610])
+* Update to xxhash v2 and add policy hash functions (link:https://github.com/cerbos/cerbos/pull/597[#597])
+
+=== Other
+
+* Add MS SQL E2E test (link:https://github.com/cerbos/cerbos/pull/586[#586])
+* Load testing script (link:https://github.com/cerbos/cerbos/pull/640[#640])
