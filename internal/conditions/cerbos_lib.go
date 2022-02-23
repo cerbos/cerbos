@@ -20,13 +20,15 @@ import (
 )
 
 const (
-	exceptFn          = "except"
-	hasIntersectionFn = "has_intersection"
-	inIPAddrRangeFn   = "inIPAddrRange"
-	intersectFn       = "intersect"
-	isSubsetFn        = "is_subset"
-	nowFn             = "now"
-	timeSinceFn       = "timeSince"
+	exceptFn                    = "except"
+	hasIntersectionFnDeprecated = "has_intersection"
+	hasIntersectionFn           = "hasIntersection"
+	inIPAddrRangeFn             = "inIPAddrRange"
+	intersectFn                 = "intersect"
+	isSubsetFnDeprecated        = "is_subset"
+	isSubsetFn                  = "isSubset"
+	nowFn                       = "now"
+	timeSinceFn                 = "timeSince"
 )
 
 // CerbosCELLib returns the custom CEL functions provided by Cerbos.
@@ -38,6 +40,20 @@ type cerbosLib struct{}
 
 func (clib cerbosLib) CompileOptions() []cel.EnvOption {
 	listType := decls.NewListType(decls.NewTypeParamType("A"))
+
+	hasIntersectionOverload := decls.NewParameterizedOverload(
+		hasIntersectionFn,
+		[]*exprpb.Type{listType, listType},
+		decls.Bool,
+		[]string{"A"},
+	)
+
+	isSubsetOverload := decls.NewParameterizedInstanceOverload(
+		isSubsetFn,
+		[]*exprpb.Type{listType, listType},
+		decls.Bool,
+		[]string{"A"},
+	)
 
 	decls := []*exprpb.Decl{
 		decls.NewFunction(inIPAddrRangeFn,
@@ -73,28 +89,20 @@ func (clib cerbosLib) CompileOptions() []cel.EnvOption {
 			),
 		),
 
-		decls.NewFunction(isSubsetFn,
-			decls.NewParameterizedInstanceOverload(
-				isSubsetFn,
-				[]*exprpb.Type{listType, listType},
-				decls.Bool,
-				[]string{"A"},
-			),
-		),
+		decls.NewFunction(isSubsetFnDeprecated, isSubsetOverload),
+		decls.NewFunction(isSubsetFn, isSubsetOverload),
 
-		decls.NewFunction(hasIntersectionFn,
-			decls.NewParameterizedOverload(
-				hasIntersectionFn,
-				[]*exprpb.Type{listType, listType},
-				decls.Bool,
-				[]string{"A"})),
+		decls.NewFunction(hasIntersectionFnDeprecated, hasIntersectionOverload),
+		decls.NewFunction(hasIntersectionFn, hasIntersectionOverload),
 
 		decls.NewFunction(intersectFn,
 			decls.NewParameterizedOverload(
 				intersectFn,
 				[]*exprpb.Type{listType, listType},
 				listType,
-				[]string{"A"})),
+				[]string{"A"},
+			),
+		),
 	}
 
 	decls = append(decls, customtypes.HierarchyDeclrations...)
