@@ -7,7 +7,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/spf13/cobra"
+	"github.com/alecthomas/kong"
 
 	"github.com/cerbos/cerbos/client"
 	"github.com/cerbos/cerbos/cmd/cerbosctl/get/internal/flagset"
@@ -16,31 +16,29 @@ import (
 	"github.com/cerbos/cerbos/internal/policy"
 )
 
-func MakeGetCmd(kind policy.Kind, filters *flagset.Filters, format *flagset.Format, sort *flagset.Sort) internal.AdminCommand {
-	return func(c client.AdminClient, cmd *cobra.Command, args []string) error {
-		if len(args) == 0 {
-			if err := List(c, cmd, filters, format, sort, kind); err != nil {
-				return fmt.Errorf("failed to list: %w", err)
-			}
-
-			return nil
-		}
-
-		if err := Get(c, cmd, format, kind, args...); err != nil {
-			return fmt.Errorf("failed to get: %w", err)
+func DoCmd(k *kong.Kong, ac client.AdminClient, kind policy.Kind, filters *flagset.Filters, format *flagset.Format, sort *flagset.Sort, args []string) error {
+	if len(args) == 0 {
+		if err := List(k, ac, filters, format, sort, kind); err != nil {
+			return fmt.Errorf("failed to list: %w", err)
 		}
 
 		return nil
 	}
+
+	if err := Get(k, ac, format, kind, args...); err != nil {
+		return fmt.Errorf("failed to get: %w", err)
+	}
+
+	return nil
 }
 
-func List(c client.AdminClient, cmd *cobra.Command, filters *flagset.Filters, format *flagset.Format, sortFlags *flagset.Sort, kind policy.Kind) error {
+func List(k *kong.Kong, c client.AdminClient, filters *flagset.Filters, format *flagset.Format, sortFlags *flagset.Sort, kind policy.Kind) error {
 	policyIds, err := c.ListPolicies(context.Background())
 	if err != nil {
 		return fmt.Errorf("error while requesting policies: %w", err)
 	}
 
-	tw := printer.NewTableWriter(cmd.OutOrStdout())
+	tw := printer.NewTableWriter(k.Stdout)
 	if !format.NoHeaders {
 		tw.SetHeader(getHeaders(kind))
 	}
@@ -63,7 +61,7 @@ func List(c client.AdminClient, cmd *cobra.Command, filters *flagset.Filters, fo
 				}
 			}
 
-			sorted := sort(filtered, flagset.SortByValue(sortFlags.SortBy))
+			sorted := sort(filtered, sortFlags.SortBy)
 			for _, p := range sorted {
 				row := make([]string, 2, 4) //nolint:gomnd
 				row[0] = p.Metadata.StoreIdentifer
@@ -81,7 +79,7 @@ func List(c client.AdminClient, cmd *cobra.Command, filters *flagset.Filters, fo
 	return nil
 }
 
-func Get(c client.AdminClient, cmd *cobra.Command, format *flagset.Format, kind policy.Kind, ids ...string) error {
+func Get(k *kong.Kong, c client.AdminClient, format *flagset.Format, kind policy.Kind, ids ...string) error {
 	foundPolicy := false
 	fd := newFilterDef(kind, nil, nil)
 
@@ -105,7 +103,7 @@ func Get(c client.AdminClient, cmd *cobra.Command, format *flagset.Format, kind 
 				foundPolicy = true
 			}
 
-			if err = printPolicy(cmd.OutOrStdout(), filtered, format.Output); err != nil {
+			if err = printPolicy(k.Stdout, filtered, format.Output); err != nil {
 				return fmt.Errorf("could not print policies: %w", err)
 			}
 		}

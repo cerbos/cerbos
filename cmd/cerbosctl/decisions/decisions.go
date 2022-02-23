@@ -11,33 +11,31 @@ import (
 	"strings"
 	"time"
 
+	"github.com/alecthomas/kong"
+	cmdclient "github.com/cerbos/cerbos/cmd/cerbosctl/internal/client"
+	"github.com/cerbos/cerbos/cmd/cerbosctl/internal/flagset"
+
 	"github.com/alecthomas/chroma"
 	"github.com/alecthomas/chroma/formatters"
 	"github.com/alecthomas/chroma/lexers"
 	"github.com/alecthomas/chroma/styles"
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
-	"github.com/spf13/cobra"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"
 
 	auditv1 "github.com/cerbos/cerbos/api/genpb/cerbos/audit/v1"
 	effectv1 "github.com/cerbos/cerbos/api/genpb/cerbos/effect/v1"
 	"github.com/cerbos/cerbos/client"
-	"github.com/cerbos/cerbos/cmd/cerbosctl/internal"
 )
 
-var auditFilterFlags = internal.NewAuditLogFilterDef()
-
-var longDesc = `Interactive decision log viewer.
-Requires audit logging to be enabled on the server. Supports several ways of filtering the data.
+var help = `Requires audit logging to be enabled on the server. Supports several ways of filtering the data.
 
 tail: View the last N records
 between: View records captured between two timestamps. The timestamps must be formatted as ISO-8601
 since: View records from X hours/minutes/seconds ago to now. Unit suffixes are: h=hours, m=minutes s=seconds
-lookup: View a specific record using the Cerbos Call ID`
+lookup: View a specific record using the Cerbos Call ID
 
-var exampleDesc = `
 # View the last 10 records
 cerbosctl decisions --tail=10
 
@@ -51,33 +49,17 @@ cerbosctl decisions --between=2021-07-01T00:00:00Z
 cerbosctl decisions --since=3h --raw
 
 # View a specific log entry by call ID
-cerbosctl decisions--lookup=01F9Y5MFYTX7Y87A30CTJ2FB0S
-`
+cerbosctl decisions--lookup=01F9Y5MFYTX7Y87A30CTJ2FB0S`
 
-func NewDecisionsCmd(fn internal.WithClient) *cobra.Command {
-	cmd := &cobra.Command{
-		Use:     "decisions",
-		Short:   "Interactive decision log viewer",
-		Long:    longDesc,
-		Example: exampleDesc,
-		PreRunE: checkDecisionsFlags,
-		RunE:    fn(runDecisionsCmd),
-	}
-
-	cmd.Flags().AddFlagSet(auditFilterFlags.FlagSet())
-
-	return cmd
+type Cmd struct {
+	flagset.AuditFilters
 }
 
-func checkDecisionsFlags(_ *cobra.Command, _ []string) error {
-	return auditFilterFlags.Validate()
-}
-
-func runDecisionsCmd(c client.AdminClient, _ *cobra.Command, _ []string) error {
-	logOptions := internal.GenAuditLogOptions(auditFilterFlags)
+func (c *Cmd) Run(k *kong.Kong, ctx *cmdclient.Context) error {
+	logOptions := c.AuditFilters.GenOptions()
 	logOptions.Type = client.DecisionLogs
 
-	entries, err := c.AuditLogs(context.Background(), logOptions)
+	entries, err := ctx.AdminClient.AuditLogs(context.Background(), logOptions)
 	if err != nil {
 		return err
 	}
@@ -94,6 +76,14 @@ func runDecisionsCmd(c client.AdminClient, _ *cobra.Command, _ []string) error {
 
 	ui := mkUI(decisions)
 	return ui.Start()
+}
+
+func (c *Cmd) Help() string {
+	return help
+}
+
+func (c *Cmd) Validate() error {
+	return c.AuditFilters.Validate()
 }
 
 const (

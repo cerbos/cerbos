@@ -10,9 +10,9 @@ import (
 	"github.com/cerbos/cerbos/internal/policy"
 )
 
-func sort(policies []policy.Wrapper, sortBy flagset.SortByValue) []policy.Wrapper {
+func sort(policies []policy.Wrapper, sortBy flagset.SortBy) []policy.Wrapper {
 	switch sortBy {
-	case flagset.SortByPolicyID:
+	case flagset.SortByPolicyID, flagset.SortByNone:
 		gosort.SliceStable(policies, func(i, j int) bool {
 			return policies[i].Metadata.StoreIdentifer < policies[j].Metadata.StoreIdentifer
 		})

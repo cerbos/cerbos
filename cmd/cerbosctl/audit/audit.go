@@ -14,38 +14,29 @@ import (
 	"github.com/alecthomas/chroma/formatters"
 	"github.com/alecthomas/chroma/lexers"
 	"github.com/alecthomas/chroma/styles"
+	"github.com/alecthomas/kong"
 	"github.com/jwalton/gchalk"
-	"github.com/spf13/cobra"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"
 
 	auditv1 "github.com/cerbos/cerbos/api/genpb/cerbos/audit/v1"
-	requestv1 "github.com/cerbos/cerbos/api/genpb/cerbos/request/v1"
 	"github.com/cerbos/cerbos/client"
-	"github.com/cerbos/cerbos/cmd/cerbosctl/internal"
+	cmdclient "github.com/cerbos/cerbos/cmd/cerbosctl/internal/client"
+	"github.com/cerbos/cerbos/cmd/cerbosctl/internal/flagset"
 )
 
-const dashLen = 54
+var newline = []byte("\n")
 
-var (
-	auditFlags struct {
-		kind internal.KindFlag
-		raw  bool
-	}
-
-	auditFilterFlags = internal.NewAuditLogFilterDef()
-	newline          = []byte("\n")
-)
-
-var longDesc = `View audit logs.
+const (
+	dashLen = 54
+	help    = `View audit logs.
 Requires audit logging to be enabled on the server. Supports several ways of filtering the data.
 
 tail: View the last N records
 between: View records captured between two timestamps. The timestamps must be formatted as ISO-8601
 since: View records from X hours/minutes/seconds ago to now. Unit suffixes are: h=hours, m=minutes s=seconds
-lookup: View a specific record using the Cerbos Call ID`
+lookup: View a specific record using the Cerbos Call ID
 
-var exampleDesc = `
 # View the last 10 access logs 
 cerbosctl audit --kind=access --tail=10
 
@@ -59,49 +50,34 @@ cerbosctl audit --kind=decision --between=2021-07-01T00:00:00Z
 cerbosctl audit --kind=access --since=3h --raw
 
 # View a specific access log entry by call ID
-cerbosctl audit --kind=access --lookup=01F9Y5MFYTX7Y87A30CTJ2FB0S
-`
+cerbosctl audit --kind=access --lookup=01F9Y5MFYTX7Y87A30CTJ2FB0S`
+)
 
-func NewAuditCmd(fn internal.WithClient) *cobra.Command {
-	cmd := &cobra.Command{
-		Use:     "audit",
-		Short:   "View audit logs",
-		Long:    longDesc,
-		Example: exampleDesc,
-		PreRunE: checkAuditFlags,
-		RunE:    fn(runAuditCmdF),
-	}
-
-	cmd.Flags().Var(&auditFlags.kind, "kind", "Kind of log entry ('access' or 'decision')")
-	cmd.Flags().BoolVar(&auditFlags.raw, "raw", false, "Output results without formatting or colours")
-	cmd.Flags().AddFlagSet(auditFilterFlags.FlagSet())
-
-	return cmd
+type Cmd struct {
+	Kind string `default:"access" enum:"access,decision" help:"Kind of log entry (${enum})"`
+	flagset.AuditFilters
+	Raw bool `help:"Output results without formatting or colours"`
 }
 
-func checkAuditFlags(_ *cobra.Command, _ []string) error {
-	return auditFilterFlags.Validate()
-}
-
-func runAuditCmdF(c client.AdminClient, cmd *cobra.Command, _ []string) error {
+func (c *Cmd) Run(k *kong.Kong, ctx *cmdclient.Context) error {
 	var writer auditLogWriter
-	if auditFlags.raw {
-		writer = newRawAuditLogWriter(cmd.OutOrStdout())
+	if c.Raw {
+		writer = newRawAuditLogWriter(k.Stdout)
 	} else {
-		writer = newRichAuditLogWriter(cmd.OutOrStdout())
+		writer = newRichAuditLogWriter(k.Stdout)
 	}
 	defer writer.flush()
 
-	logOptions := internal.GenAuditLogOptions(auditFilterFlags)
+	logOptions := c.AuditFilters.GenOptions()
 
-	switch kind := auditFlags.kind.Kind(); kind {
-	case requestv1.ListAuditLogEntriesRequest_KIND_DECISION, requestv1.ListAuditLogEntriesRequest_KIND_UNSPECIFIED:
+	switch kind := c.Kind; kind {
+	case "access":
 		logOptions.Type = client.AccessLogs
-	case requestv1.ListAuditLogEntriesRequest_KIND_ACCESS:
+	case "decision":
 		logOptions.Type = client.DecisionLogs
 	}
 
-	logs, err := c.AuditLogs(context.Background(), logOptions)
+	logs, err := ctx.AdminClient.AuditLogs(context.Background(), logOptions)
 	if err != nil {
 		return fmt.Errorf("could not get decision logs: %w", err)
 	}
@@ -110,6 +86,14 @@ func runAuditCmdF(c client.AdminClient, cmd *cobra.Command, _ []string) error {
 		return fmt.Errorf("could not write decision logs: %w", err)
 	}
 	return nil
+}
+
+func (c *Cmd) Help() string {
+	return help
+}
+
+func (c *Cmd) Validate() error {
+	return c.AuditFilters.Validate()
 }
 
 func streamLogsToWriter(writer auditLogWriter, entries <-chan *client.AuditLogEntry) error {
