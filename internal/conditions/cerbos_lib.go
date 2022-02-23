@@ -174,7 +174,7 @@ func program(env *cel.Env, ast *cel.Ast, opts ...cel.ProgramOption) (cel.Program
 
 		&functions.Overload{
 			Operator: timeSinceFn,
-			Unary: callInTimestampOutDuration(now.Sub),
+			Unary:    callInTimestampOutDuration(now.Sub),
 		},
 	))
 
