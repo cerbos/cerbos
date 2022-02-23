@@ -12,7 +12,7 @@ import (
 	"time"
 
 	"github.com/alecthomas/kong"
-	client2 "github.com/cerbos/cerbos/cmd/cerbosctl/internal/client"
+	cmdclient "github.com/cerbos/cerbos/cmd/cerbosctl/internal/client"
 	"github.com/cerbos/cerbos/cmd/cerbosctl/internal/flagset"
 
 	"github.com/alecthomas/chroma"
@@ -29,8 +29,12 @@ import (
 	"github.com/cerbos/cerbos/client"
 )
 
-var help = `Interactive decision log viewer.
-Requires audit logging to be enabled on the server. Supports several ways of filtering the data.
+var help = `Requires audit logging to be enabled on the server. Supports several ways of filtering the data.
+
+tail: View the last N records
+between: View records captured between two timestamps. The timestamps must be formatted as ISO-8601
+since: View records from X hours/minutes/seconds ago to now. Unit suffixes are: h=hours, m=minutes s=seconds
+lookup: View a specific record using the Cerbos Call ID
 
 # View the last 10 records
 cerbosctl decisions --tail=10
@@ -51,7 +55,7 @@ type Cmd struct {
 	flagset.AuditFilters
 }
 
-func (c *Cmd) Run(k *kong.Kong, ctx *client2.Context) error {
+func (c *Cmd) Run(k *kong.Kong, ctx *cmdclient.Context) error {
 	logOptions := c.AuditFilters.GenOptions()
 	logOptions.Type = client.DecisionLogs
 

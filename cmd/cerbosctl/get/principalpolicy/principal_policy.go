@@ -7,9 +7,9 @@ import (
 	"github.com/alecthomas/kong"
 
 	"github.com/cerbos/cerbos/cmd/cerbosctl/get/internal/flagset"
-	"github.com/cerbos/cerbos/cmd/cerbosctl/get/internal/policy"
+	cmdpolicy "github.com/cerbos/cerbos/cmd/cerbosctl/get/internal/policy"
 	"github.com/cerbos/cerbos/cmd/cerbosctl/internal/client"
-	policy2 "github.com/cerbos/cerbos/internal/policy"
+	"github.com/cerbos/cerbos/internal/policy"
 )
 
 const help = `# List principal policies
@@ -49,7 +49,7 @@ type Cmd struct {
 }
 
 func (c *Cmd) Run(k *kong.Kong, ctx *client.Context) error {
-	err := policy.DoCmd(k, ctx.AdminClient, policy2.PrincipalKind, &c.Filters, &c.Format, &c.Sort, c.PolicyIds)
+	err := cmdpolicy.DoCmd(k, ctx.AdminClient, policy.PrincipalKind, &c.Filters, &c.Format, &c.Sort, c.PolicyIds)
 	if err != nil {
 		return err
 	}
@@ -58,7 +58,7 @@ func (c *Cmd) Run(k *kong.Kong, ctx *client.Context) error {
 }
 
 func (c *Cmd) Validate() error {
-	err := c.Filters.Validate(policy2.PrincipalKind, len(c.PolicyIds) == 0)
+	err := c.Filters.Validate(policy.PrincipalKind, len(c.PolicyIds) == 0)
 	if err != nil {
 		return err
 	}
@@ -68,7 +68,7 @@ func (c *Cmd) Validate() error {
 		return err
 	}
 
-	err = c.Sort.Validate(policy2.PrincipalKind, len(c.PolicyIds) == 0)
+	err = c.Sort.Validate(policy.PrincipalKind, len(c.PolicyIds) == 0)
 	if err != nil {
 		return err
 	}

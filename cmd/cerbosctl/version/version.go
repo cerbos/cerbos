@@ -9,13 +9,13 @@ import (
 
 	"github.com/alecthomas/kong"
 
-	client2 "github.com/cerbos/cerbos/cmd/cerbosctl/internal/client"
+	cmdclient "github.com/cerbos/cerbos/cmd/cerbosctl/internal/client"
 	"github.com/cerbos/cerbos/internal/util"
 )
 
 type Cmd struct{}
 
-func (c *Cmd) Run(k *kong.Kong, ctx *client2.Context) error {
+func (c *Cmd) Run(k *kong.Kong, ctx *cmdclient.Context) error {
 	r, err := ctx.Client.ServerInfo(context.Background())
 	if err != nil {
 		return err

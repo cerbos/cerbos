@@ -23,7 +23,7 @@ import (
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
 	"github.com/cerbos/cerbos/client"
 	"github.com/cerbos/cerbos/client/testutil"
-	client2 "github.com/cerbos/cerbos/cmd/cerbosctl/internal/client"
+	cmdclient "github.com/cerbos/cerbos/cmd/cerbosctl/internal/client"
 	"github.com/cerbos/cerbos/cmd/cerbosctl/internal/flagset"
 	"github.com/cerbos/cerbos/cmd/cerbosctl/root"
 	"github.com/cerbos/cerbos/internal/namer"
@@ -51,7 +51,7 @@ func TestGetCmd(t *testing.T) {
 	testGetCmd(ctx, globals)(t)
 }
 
-func testGetCmd(clientCtx *client2.Context, globals *flagset.Globals) func(*testing.T) {
+func testGetCmd(clientCtx *cmdclient.Context, globals *flagset.Globals) func(*testing.T) {
 	//nolint:thelper
 	return func(t *testing.T) {
 		t.Run("cerbosctl get", func(t *testing.T) {
@@ -322,16 +322,16 @@ func mkGlobals(t *testing.T, address string) *flagset.Globals {
 	}
 }
 
-func mkClients(t *testing.T, globals *flagset.Globals) *client2.Context {
+func mkClients(t *testing.T, globals *flagset.Globals) *cmdclient.Context {
 	t.Helper()
 
-	c, err := client2.GetClient(globals)
+	c, err := cmdclient.GetClient(globals)
 	require.NoError(t, err)
 
-	ac, err := client2.GetAdminClient(globals)
+	ac, err := cmdclient.GetAdminClient(globals)
 	require.NoError(t, err)
 
-	return &client2.Context{Client: c, AdminClient: ac}
+	return &cmdclient.Context{Client: c, AdminClient: ac}
 }
 
 func mustNew(t *testing.T, cli interface{}) *kong.Kong {

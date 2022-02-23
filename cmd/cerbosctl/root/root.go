@@ -32,8 +32,8 @@ cerbosctl --server=localhost:3593 --username=user --password=password --insecure
 cerbosctl --server=localhost:3593 --username=user --password=password --plaintext decisions`
 
 type Cli struct {
-	Version version.Cmd `cmd:"" help:"Detailed information of the ctl and server version"`
-	Get     get.Cmd     `cmd:""`
+	Version version.Cmd `cmd:"" help:"Show cerbosctl and PDP version"`
+	Get     get.Cmd     `cmd:"" help:"List or view policies and schemas"`
 	flagset.Globals
 	Decisions decisions.Cmd `cmd:"" help:"Interactive decision log viewer"`
 	Audit     audit.Cmd     `cmd:"" help:"View audit logs"`

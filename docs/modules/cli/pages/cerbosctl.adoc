@@ -42,7 +42,7 @@ Available Commands:
   decisions   Interactive decision log viewer
   get         
   help        Help about any command
-  version     Detailed information of the ctl and server version
+  version     Show cerbosctl and PDP version
 
 Flags:
       --ca-cert string       Path to the CA certificate for verifying server identity

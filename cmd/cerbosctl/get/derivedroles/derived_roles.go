@@ -7,9 +7,9 @@ import (
 	"github.com/alecthomas/kong"
 
 	"github.com/cerbos/cerbos/cmd/cerbosctl/get/internal/flagset"
-	"github.com/cerbos/cerbos/cmd/cerbosctl/get/internal/policy"
+	cmdpolicy "github.com/cerbos/cerbos/cmd/cerbosctl/get/internal/policy"
 	"github.com/cerbos/cerbos/cmd/cerbosctl/internal/client"
-	policy2 "github.com/cerbos/cerbos/internal/policy"
+	"github.com/cerbos/cerbos/internal/policy"
 )
 
 const help = `# List derived roles
@@ -48,7 +48,7 @@ type Cmd struct {
 }
 
 func (c *Cmd) Run(k *kong.Kong, ctx *client.Context) error {
-	err := policy.DoCmd(k, ctx.AdminClient, policy2.DerivedRolesKind, &c.Filters, &c.Format, &c.Sort, c.PolicyIds)
+	err := cmdpolicy.DoCmd(k, ctx.AdminClient, policy.DerivedRolesKind, &c.Filters, &c.Format, &c.Sort, c.PolicyIds)
 	if err != nil {
 		return err
 	}
@@ -57,7 +57,7 @@ func (c *Cmd) Run(k *kong.Kong, ctx *client.Context) error {
 }
 
 func (c *Cmd) Validate() error {
-	err := c.Filters.Validate(policy2.DerivedRolesKind, len(c.PolicyIds) == 0)
+	err := c.Filters.Validate(policy.DerivedRolesKind, len(c.PolicyIds) == 0)
 	if err != nil {
 		return err
 	}
@@ -67,7 +67,7 @@ func (c *Cmd) Validate() error {
 		return err
 	}
 
-	err = c.Sort.Validate(policy2.DerivedRolesKind, len(c.PolicyIds) == 0)
+	err = c.Sort.Validate(policy.DerivedRolesKind, len(c.PolicyIds) == 0)
 	if err != nil {
 		return err
 	}
