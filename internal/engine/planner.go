@@ -428,10 +428,6 @@ func evaluateCELExprPartially(expr *exprpb.CheckedExpr, input *enginev1.Resource
 			return nil, nil, err
 		}
 	}
-	prg, err := env.Program(ast, cel.EvalOptions(cel.OptPartialEval, cel.OptTrackState))
-	if err != nil {
-		return nil, nil, err
-	}
 
 	knownVars[conditions.CELRequestIdent] = input
 	knownVars[conditions.CELPrincipalAbbrev] = input.Principal
@@ -444,7 +440,7 @@ func evaluateCELExprPartially(expr *exprpb.CheckedExpr, input *enginev1.Resource
 		return nil, nil, err
 	}
 
-	val, details, err := prg.Eval(vars)
+	val, details, err := conditions.Eval(env, ast, vars, cel.EvalOptions(cel.OptPartialEval, cel.OptTrackState))
 	if err != nil {
 		if strings.HasPrefix(err.Error(), "no such key:") {
 			return nil, nil, &NoSuchKeyError{msg: fmt.Sprintf("missing principal attribute %q", strings.TrimPrefix(err.Error(), "no such key: "))}

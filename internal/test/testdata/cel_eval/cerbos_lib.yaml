@@ -8,6 +8,8 @@ condition:
           P.attr.ipv6Address.inIPAddrRange("2001:db8::/48")
       - expr: |-
           timestamp(P.attr.lastLogin).timeSince() > duration("24h")
+      - expr: |-
+          now() > timestamp(P.attr.lastLogin)
 input: {
   "requestId": "test",
   "actions": ["*"],
