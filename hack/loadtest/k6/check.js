@@ -6,11 +6,28 @@
 
 import { SharedArray } from 'k6/data';
 import http from 'k6/http';
+import { randomSeed, check } from 'k6';
 import { randomIntBetween } from 'https://jslib.k6.io/k6-utils/1.1.0/index.js';
 
 export const options = {
-    vus: 300,
-    duration: '60s',
+    scenarios: {
+        constant_load: {
+            executor: 'constant-vus',
+            vus: __ENV.MIN_VUS,
+            duration: __ENV.DURATION,
+        },
+        constant_rps: {
+            executor: 'constant-arrival-rate',
+            rate: __ENV.RPS,
+            duration: __ENV.DURATION,
+            preAllocatedVUs: __ENV.MIN_VUS,
+            maxVUs: __ENV.MAX_VUS,
+        },
+    },
+    thresholds: {
+        http_req_failed: ['rate<0.01'], // http errors should be less than 1%
+        http_req_duration: ['p(95)<300'], // 95% of requests should be below 300ms
+    },
 };
 
 const authHeader = "Basic Y2VyYm9zOmNlcmJvc0FkbWlu"
@@ -32,11 +49,16 @@ const requests = new SharedArray('requests', function () {
 });
 
 export default function () {
+    randomSeed(999333666);
     const idx = randomIntBetween(0, requests.length-1);
-    http.post(url, requests[idx], {
+    const res = http.post(url, requests[idx], {
         headers: {
             'Content-Type': 'application/json',
             'Authorization': authHeader,
         },
+    });
+
+    check(res, {
+        'status is 200': (r) => r.status === 200,
     });
 }
