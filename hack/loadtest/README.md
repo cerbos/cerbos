@@ -16,13 +16,13 @@ The following environment variables are used to determine the test parameters.
 Start the Cerbos instance
 
 ```sh
-./loadtest.sh -u
+NUM_POLICIES=1000 ./loadtest.sh -u
 ```
 
 In another shell: generate test data and run the test
 
 ```sh
-NUM_POLICIES=1000 RPS=250 ./loadtest.sh -e
+RPS=250 ./loadtest.sh -e
 ```
 
 Stop the Cerbos instance after the test.

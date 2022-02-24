@@ -99,7 +99,6 @@ while getopts ":cdehu" opt; do
       exit 0
       ;;
     e)
-      generateResources
       executeTest
       exit 0
       ;;
@@ -108,6 +107,7 @@ while getopts ":cdehu" opt; do
       exit 0
       ;;
     u)
+      generateResources
       up
       exit 0
       ;;
