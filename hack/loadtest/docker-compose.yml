@@ -2,14 +2,14 @@ version: "3.9"
 services:
   cerbos:
     container_name: cerbos
-    image: ghcr.io/cerbos/cerbos:0.12.0
+    image: ghcr.io/cerbos/cerbos:0.13.0
     restart: always
-    command: [ "server", "--config=/config.yml", "--debug-listen-addr=:6666" ]
+    command: ["server", "--config=/conf/config.yml", "--log-level=warn", "--debug-listen-addr=:6666"]
     depends_on:
       - postgres
     volumes:
-      - ./conf/cerbos/config.yml:/config.yml
-      - ./k6/gen/policies:/policies
+      - ./work/cerbos:/conf
+      - ./work/k6/policies:/policies
     ports:
       - "3592:3592"
       - "3593:3593"
@@ -24,7 +24,8 @@ services:
       - POSTGRES_PASSWORD=cerbos
       - POSTGRES_DB=cerbos
     volumes:
-      - ./data_postgres:/var/lib/postgresql/data
+      - ./work/postgres/init:/docker-entrypoint-initdb.d
+      - ./work/postgres/data:/var/lib/postgresql/data
     ports:
       - "5432:5432"
 
