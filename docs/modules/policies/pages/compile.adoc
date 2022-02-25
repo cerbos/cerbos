@@ -27,11 +27,11 @@ name: AlbumObjectTestSuite <1>
 description: Tests for verifying the album:object resource policy <2>
 resources: <3>
   alicia_album:
-    kind: "album:object",
+    kind: "album:object"
     attr:
-      owner: aliciaID,
-      id: XX125,
-      public: false,
+      owner: aliciaID
+      id: XX125
+      public: false
       flagged: false
 principals: <4>
   bradley:
@@ -109,11 +109,11 @@ principals:
 ---
 resources:
   alicia_album:
-    kind: "album:object",
+    kind: "album:object"
     attr:
-      owner: aliciaID,
-      id: XX125,
-      public: false,
+      owner: aliciaID
+      id: XX125
+      public: false
       flagged: false
 ----
 
