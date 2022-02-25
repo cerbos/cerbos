@@ -40,8 +40,9 @@ Available Commands:
   audit       View audit logs
   completion  Generate the autocompletion script for the specified shell
   decisions   Interactive decision log viewer
-  get         
+  get         List or view policies and schemas
   help        Help about any command
+  put         Put policies or schemas
   version     Show cerbosctl and PDP version
 
 Flags:
@@ -213,4 +214,55 @@ cerbosctl get derived_roles my_derived_roles --format=json
 .Get YAML
 ----
 cerbosctl get derived_roles my_derived_roles --format=yaml
+----
+
+[#put]
+== `put`
+
+This command puts the given policies or schemas to the configured policy repository.
+
+.Put policies
+----
+cerbosctl put policies ./path/to/policy.yaml
+cerbosctl put policy ./path/to/policy.yaml
+cerbosctl put p ./path/to/policy.yaml
+----
+
+.Put multiple policies
+----
+cerbosctl put policy ./path/to/policy.yaml ./path/to/other/policy.yaml
+----
+
+.Put policies under a directory
+----
+cerbosctl put policy ./dir/to/policies ./other/dir/to/policies
+----
+
+.Put policies under a directory recursively
+----
+cerbosctl put policy --recursive ./dir/to/policies
+cerbosctl put policy -R ./dir/to/policies
+----
+
+.Put schemas
+----
+cerbosctl put schemas ./path/to/schema.json
+cerbosctl put schema ./path/to/schema.json
+cerbosctl put s ./path/to/schema.json
+----
+
+.Put multiple schemas
+----
+cerbosctl put schema ./path/to/schema.json ./path/to/other/schema.json
+----
+
+.Put schemas under a directory
+----
+cerbosctl put schema ./dir/to/schemas ./other/dir/to/schemas
+----
+
+.Put schemas under a directory recursively
+----
+cerbosctl put schema --recursive ./dir/to/schemas
+cerbosctl put schema -R ./dir/to/schemas
 ----

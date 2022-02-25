@@ -1,8 +1,7 @@
 // Copyright 2021-2022 Zenauth Ltd.
 // SPDX-License-Identifier: Apache-2.0
 
-//go:build tests
-// +build tests
+//go:build !race
 
 package main
 
@@ -146,8 +145,6 @@ func getSchema(t *testing.T, clientCtx *cmdclient.Context, globals *flagset.Glob
 
 	err = ctx.Run(clientCtx, globals)
 	require.NoError(t, err)
-
-	fmt.Println(out.String())
 
 	return out.String()
 }
