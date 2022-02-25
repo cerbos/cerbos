@@ -15,9 +15,11 @@ import (
 
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
 	"github.com/cerbos/cerbos/internal/namer"
+	"github.com/cerbos/cerbos/internal/observability/metrics"
 	"github.com/cerbos/cerbos/internal/policy"
 	"github.com/cerbos/cerbos/internal/schema"
 	"github.com/cerbos/cerbos/internal/storage"
+	"go.opencensus.io/stats"
 )
 
 var (
@@ -230,6 +232,8 @@ func (idx *index) AddOrUpdate(entry Entry) (evt storage.Event, err error) {
 		idx.addDep(modID, dep)
 	}
 
+	stats.Record(context.Background(), metrics.IndexEntryCount.M(int64(len(idx.modIDToFile))))
+
 	return evt, nil
 }
 
@@ -271,6 +275,8 @@ func (idx *index) Delete(entry Entry) (storage.Event, error) {
 	delete(idx.modIDToFile, modID)
 	delete(idx.dependencies, modID)
 	delete(idx.executables, modID)
+
+	stats.Record(context.Background(), metrics.IndexEntryCount.M(int64(len(idx.modIDToFile))))
 
 	return evt, nil
 }

@@ -9,10 +9,12 @@ import (
 	"fmt"
 	"io/fs"
 
+	"go.opencensus.io/stats"
 	"go.uber.org/zap"
 
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
 	"github.com/cerbos/cerbos/internal/namer"
+	"github.com/cerbos/cerbos/internal/observability/metrics"
 	"github.com/cerbos/cerbos/internal/policy"
 	"github.com/cerbos/cerbos/internal/schema"
 	"github.com/cerbos/cerbos/internal/util"
@@ -259,6 +261,8 @@ func (idx *indexBuilder) build(fsys fs.FS, rootDir string) (*index, error) {
 	}
 
 	logger.Info(fmt.Sprintf("Found %d executable policies", len(idx.executables)))
+
+	stats.Record(context.Background(), metrics.IndexEntryCount.M(int64(len(idx.modIDToFile))))
 
 	return &index{
 		fsys:         fsys,

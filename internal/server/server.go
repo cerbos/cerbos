@@ -107,6 +107,13 @@ func Start(ctx context.Context, zpagesEnabled bool) error {
 		return fmt.Errorf("invalid configuration: %w", err)
 	}
 
+	// create Prom exporter.
+	// this is done early to prevent metrics from other components from being discarded because there's no exporter registered.
+	ocExporter, err := initOCPromExporter(conf)
+	if err != nil {
+		return fmt.Errorf("failed to create Prometheus exporter: %w", err)
+	}
+
 	// create audit log
 	auditLog, err := audit.NewLog(ctx)
 	if err != nil {
@@ -142,6 +149,8 @@ func Start(ctx context.Context, zpagesEnabled bool) error {
 	}
 
 	s := NewServer(conf)
+	s.ocExporter = ocExporter
+
 	return s.Start(ctx, Param{AuditLog: auditLog, AuxData: auxData, Engine: eng, Store: store, ZPagesEnabled: zpagesEnabled})
 }
 
@@ -178,16 +187,6 @@ func (s *Server) Start(ctx context.Context, param Param) error {
 	defer s.cancelFunc()
 
 	log := zap.L().Named("server")
-
-	if s.conf.MetricsEnabled {
-		ocExporter, err := initOCPromExporter()
-		if err != nil {
-			log.Error("Failed to initialize Prometheus exporter", zap.Error(err))
-			return err
-		}
-
-		s.ocExporter = ocExporter
-	}
 
 	// It would be nice to have a single port to serve both gRPC and HTTP. Unfortunately, cmux
 	// can't deal effectively with both gRPC and HTTP/2 when TLS is enabled (see https://github.com/soheilhy/cmux/issues/68).
@@ -564,7 +563,11 @@ func parseAndOpen(listenAddr string) (net.Listener, error) {
 	return reuseport.NewReusablePortListener(network, addr)
 }
 
-func initOCPromExporter() (*prometheus.Exporter, error) {
+func initOCPromExporter(conf *Conf) (*prometheus.Exporter, error) {
+	if !conf.MetricsEnabled {
+		return nil, nil
+	}
+
 	if err := view.Register(ocgrpc.DefaultServerViews...); err != nil {
 		return nil, fmt.Errorf("failed to register gRPC server views: %w", err)
 	}

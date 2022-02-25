@@ -43,8 +43,9 @@ var (
 )
 
 var cli struct {
-	OutputDir      string `help:"Directory to write generated policy files" type:"path"`
-	PolicySetCount int    `help:"Number of policy sets to generate"`
+	OutputDir            string `help:"Directory to write generated policy files" type:"path"`
+	PolicySetCount       int    `help:"Number of policy sets to generate"`
+	NumDerivedRolesFiles int    `help:"Number of derived roles files to import" default:"1"`
 }
 
 func init() {
@@ -61,7 +62,7 @@ func main() {
 		kong.UsageOnError(),
 	)
 
-	policies, requests, err := mkPolicies(cli.PolicySetCount, 1)
+	policies, requests, err := mkPolicies(cli.PolicySetCount, cli.NumDerivedRolesFiles)
 	if err != nil {
 		logger.Fatalf("failed to generate policies and http requests: %v", err)
 	}
@@ -74,12 +75,12 @@ func main() {
 			logger.Fatalf("failed to marshal the policy: %v", err)
 		}
 
-		err = os.WriteFile(filepath.Join(cli.OutputDir, "policies", fmt.Sprintf("%d.json", idx)), data, fileWritePerm)
+		err = os.WriteFile(filepath.Join(cli.OutputDir, "policies", fmt.Sprintf("%05d.json", idx)), data, fileWritePerm)
 		if err != nil {
 			logger.Fatalf("failed to write generated policy to the file system: %v", err)
 		}
 
-		policyIdx[idx] = fmt.Sprintf("%d.json", idx)
+		policyIdx[idx] = fmt.Sprintf("%05d.json", idx)
 	}
 
 	for idx, r := range requests {
@@ -88,12 +89,12 @@ func main() {
 			logger.Fatalf("failed to marshal the request: %v", err)
 		}
 
-		err = os.WriteFile(filepath.Join(cli.OutputDir, "requests", fmt.Sprintf("%d.json", idx)), data, fileWritePerm)
+		err = os.WriteFile(filepath.Join(cli.OutputDir, "requests", fmt.Sprintf("%05d.json", idx)), data, fileWritePerm)
 		if err != nil {
 			logger.Fatalf("failed to write generated request to the file system: %v", err)
 		}
 
-		requestIdx[idx] = fmt.Sprintf("%d.json", idx)
+		requestIdx[idx] = fmt.Sprintf("%05d.json", idx)
 	}
 
 	policyIdxBytes, err := json.Marshal(policyIdx)

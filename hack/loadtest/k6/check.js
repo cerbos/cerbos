@@ -7,7 +7,7 @@
 import { SharedArray } from 'k6/data';
 import http from 'k6/http';
 import { randomSeed, check } from 'k6';
-import { randomIntBetween } from 'https://jslib.k6.io/k6-utils/1.1.0/index.js';
+import { randomItem } from 'https://jslib.k6.io/k6-utils/1.1.0/index.js';
 
 export const options = {
     scenarios: {
@@ -50,8 +50,8 @@ const requests = new SharedArray('requests', function () {
 
 export default function () {
     randomSeed(999333666);
-    const idx = randomIntBetween(0, requests.length-1);
-    const res = http.post(url, requests[idx], {
+    const req = randomItem(requests);
+    const res = http.post(url, req, {
         headers: {
             'Content-Type': 'application/json',
             'Authorization': authHeader,

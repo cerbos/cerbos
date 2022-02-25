@@ -2,7 +2,7 @@ version: "3.9"
 services:
   cerbos:
     container_name: cerbos
-    image: ghcr.io/cerbos/cerbos:0.13.0
+    image: ghcr.io/cerbos/cerbos:dev
     restart: always
     command: ["server", "--config=/conf/config.yml", "--log-level=warn", "--debug-listen-addr=:6666"]
     depends_on:

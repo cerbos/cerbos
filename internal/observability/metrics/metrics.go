@@ -48,12 +48,24 @@ var (
 		Measure:     EngineCheckBatchSize,
 		Aggregation: view.Distribution(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 14, 16, 18, 20, 25, 30, 35, 40, 45, 50), //nolint:gomnd
 	}
+
+	IndexEntryCount = stats.Int64(
+		"cerbos.dev/index/entry_count",
+		"Number of entries in the index",
+		stats.UnitDimensionless,
+	)
+
+	IndexEntryCountView = &view.View{
+		Measure:     IndexEntryCount,
+		Aggregation: view.LastValue(),
+	}
 )
 
 var DefaultCerbosViews = []*view.View{
 	CompileDurationView,
 	EngineCheckLatencyView,
 	EngineCheckBatchSizeView,
+	IndexEntryCountView,
 }
 
 func defaultLatencyDistribution() *view.Aggregation {
