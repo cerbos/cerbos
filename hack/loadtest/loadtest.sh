@@ -23,6 +23,7 @@ clean() {
 
 generateResources() {
   printf "Generating %s policy sets\n" "$NUM_POLICIES"
+  rm -rf "${WORK_DIR}/k6"
   mkdir -p "${WORK_DIR}"/k6/{policies,requests}
   go run ./genres.go --output-dir "${WORK_DIR}/k6" --policy-set-count "$NUM_POLICIES"
 }
