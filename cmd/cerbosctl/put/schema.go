@@ -9,6 +9,7 @@ import (
 	"io"
 	"io/fs"
 	"os"
+	"path/filepath"
 
 	schemav1 "github.com/cerbos/cerbos/api/genpb/cerbos/schema/v1"
 	cmdclient "github.com/cerbos/cerbos/cmd/cerbosctl/internal/client"
@@ -101,7 +102,7 @@ func (sc *SchemaCmd) findFiles(paths []string, recursive bool) ([]*schemav1.Sche
 				}
 
 				schemas = append(schemas, &schemav1.Schema{
-					Id:         path,
+					Id:         filepath.Base(path),
 					Definition: definition,
 				})
 
@@ -131,7 +132,7 @@ func (sc *SchemaCmd) findFiles(paths []string, recursive bool) ([]*schemav1.Sche
 			}
 
 			schemas = append(schemas, &schemav1.Schema{
-				Id:         path,
+				Id:         filepath.Base(path),
 				Definition: definition,
 			})
 		}
