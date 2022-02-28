@@ -9,7 +9,7 @@ services:
       - postgres
     volumes:
       - ./work/cerbos:/conf
-      - ./work/k6/policies:/policies
+      - ./work/policies:/policies
     ports:
       - "3592:3592"
       - "3593:3593"

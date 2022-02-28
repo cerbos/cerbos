@@ -31,17 +31,19 @@ export const options = {
 };
 
 const authHeader = "Basic Y2VyYm9zOmNlcmJvc0FkbWlu"
-const baseDir = "../work/k6"
-const idxFile = baseDir + "/request-index.json"
-const url = "http://127.0.0.1:3592/api/check"
+const requestsDir = "work/requests"
+const host = "http://127.0.0.1:3592"
+const reqKind = __ENV.REQ_KIND
 
 const requests = new SharedArray('requests', function () {
-    const idx = JSON.parse(open(idxFile));
+    const idx = JSON.parse(open(requestsDir + "/index.json"));
+    const kindIdx = idx[reqKind]
+
     let reqs = []
 
-    idx.forEach(fileName => {
-        const path = baseDir + "/requests/" + fileName
-        const r = open(path)
+    kindIdx.forEach(fileName => {
+        const path = requestsDir + "/" + fileName
+        const r = JSON.parse(open(path))
         reqs.push(r)
     })
 
@@ -51,7 +53,8 @@ const requests = new SharedArray('requests', function () {
 export default function () {
     randomSeed(999333666);
     const req = randomItem(requests);
-    const res = http.post(url, req, {
+    const url = host + req.url;
+    const res = http.post(url, req.request, {
         headers: {
             'Content-Type': 'application/json',
             'Authorization': authHeader,
