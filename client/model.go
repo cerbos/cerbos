@@ -412,6 +412,22 @@ func (ps *PolicySet) AddPolicyFromFile(file string) *PolicySet {
 	return ps.AddPolicyFromReader(f)
 }
 
+// AddPolicyFromFileWithErr adds a policy from the given file to the set and returns the error.
+func (ps *PolicySet) AddPolicyFromFileWithErr(file string) (*PolicySet, error) {
+	f, err := os.Open(file)
+	if err != nil {
+		return nil, fmt.Errorf("failed to open file %s: %w", file, err)
+	}
+	defer f.Close()
+
+	p, err := policy.ReadPolicy(f)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read policy: %w", err)
+	}
+
+	return ps.AddPolicies(p), nil
+}
+
 // AddPolicyFromReader adds a policy from the given reader to the set.
 func (ps *PolicySet) AddPolicyFromReader(r io.Reader) *PolicySet {
 	p, err := policy.ReadPolicy(r)
@@ -543,6 +559,27 @@ func (ss *SchemaSet) AddSchemaFromFile(file string, ignorePathInID bool) *Schema
 	return ss.AddSchemaFromReader(f, name)
 }
 
+// AddSchemaFromFileWithErr adds a schema from the given file to the set and returns the error.
+func (ss *SchemaSet) AddSchemaFromFileWithErr(file string, ignorePathInID bool) (*SchemaSet, error) {
+	f, err := os.Open(file)
+	if err != nil {
+		return nil, fmt.Errorf("failed to open file %s: %w", file, err)
+	}
+	defer f.Close()
+
+	name := file
+	if ignorePathInID {
+		name = filepath.Base(name)
+	}
+
+	s, err := schema.ReadSchema(f, name)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read schema: %w", err)
+	}
+
+	return ss.AddSchemas(s), nil
+}
+
 // AddSchemaFromReader adds a schema from the given reader to the set.
 func (ss *SchemaSet) AddSchemaFromReader(r io.Reader, id string) *SchemaSet {
 	s, err := schema.ReadSchema(r, id)
@@ -559,6 +596,16 @@ func (ss *SchemaSet) AddSchemaFromReader(r io.Reader, id string) *SchemaSet {
 func (ss *SchemaSet) AddSchemas(schemas ...*schemav1.Schema) *SchemaSet {
 	ss.schemas = append(ss.schemas, schemas...)
 	return ss
+}
+
+// GetSchemas returns all of the schemas in the set.
+func (ss *SchemaSet) GetSchemas() []*schemav1.Schema {
+	return ss.schemas
+}
+
+// Size returns the number of schemas in this set.
+func (ss *SchemaSet) Size() int {
+	return len(ss.schemas)
 }
 
 // Err returns the errors accumulated during the construction of the schema set.

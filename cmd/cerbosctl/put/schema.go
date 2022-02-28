@@ -7,9 +7,11 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/alecthomas/kong"
+	"go.uber.org/zap"
+
 	"github.com/cerbos/cerbos/client"
 	cmdclient "github.com/cerbos/cerbos/cmd/cerbosctl/internal/client"
+	"github.com/cerbos/cerbos/cmd/cerbosctl/put/internal/errors"
 	"github.com/cerbos/cerbos/cmd/cerbosctl/put/internal/files"
 	"github.com/cerbos/cerbos/internal/util"
 )
@@ -33,14 +35,20 @@ type SchemaCmd struct {
 	Paths []string `arg:"" type:"path" help:"Path to schema file or directory"`
 }
 
-func (sc *SchemaCmd) Run(k *kong.Kong, put *Cmd, ctx *cmdclient.Context) error {
+func (sc *SchemaCmd) Run(log *zap.SugaredLogger, put *Cmd, ctx *cmdclient.Context) error {
 	if len(sc.Paths) == 0 {
 		return fmt.Errorf("no filename(s) provided")
 	}
 
 	schemas := client.NewSchemaSet()
+	var errs []error
 	err := files.Find(sc.Paths, put.Recursive, func(filePath string) error {
-		return schemas.AddSchemaFromFile(filePath, true).Err()
+		_, err := schemas.AddSchemaFromFileWithErr(filePath, true)
+		if err != nil {
+			errs = append(errs, errors.NewPutError(filePath, err.Error()))
+		}
+
+		return nil
 	}, util.IsJSONFileTypeExt)
 	if err != nil {
 		return err
@@ -49,6 +57,14 @@ func (sc *SchemaCmd) Run(k *kong.Kong, put *Cmd, ctx *cmdclient.Context) error {
 	err = ctx.AdminClient.AddOrUpdateSchema(context.TODO(), schemas)
 	if err != nil {
 		return fmt.Errorf("failed to add or update the schemas: %w", err)
+	}
+
+	log.Infof("Uploaded: %d - Ignored: %d", schemas.Size(), len(errs))
+	if len(errs) != 0 {
+		log.Infof("Errors for the ignored files;")
+	}
+	for _, putErr := range errs {
+		log.Errorf("- %s", putErr.Error())
 	}
 
 	return nil

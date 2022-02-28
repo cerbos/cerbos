@@ -7,9 +7,10 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/alecthomas/kong"
+	"github.com/cerbos/cerbos/cmd/cerbosctl/put/internal/errors"
 	"github.com/cerbos/cerbos/cmd/cerbosctl/put/internal/files"
 	"github.com/cerbos/cerbos/internal/util"
+	"go.uber.org/zap"
 
 	"github.com/cerbos/cerbos/client"
 	cmdclient "github.com/cerbos/cerbos/cmd/cerbosctl/internal/client"
@@ -34,14 +35,20 @@ type PolicyCmd struct {
 	Paths []string `arg:"" type:"path" help:"Path to policy file or directory"`
 }
 
-func (pc *PolicyCmd) Run(k *kong.Kong, put *Cmd, ctx *cmdclient.Context) error {
+func (pc *PolicyCmd) Run(log *zap.SugaredLogger, put *Cmd, ctx *cmdclient.Context) error {
 	if len(pc.Paths) == 0 {
 		return fmt.Errorf("no filename(s) provided")
 	}
 
 	policies := client.NewPolicySet()
+	var errs []error
 	err := files.Find(pc.Paths, put.Recursive, func(filePath string) error {
-		return policies.AddPolicyFromFile(filePath).Err()
+		_, err := policies.AddPolicyFromFileWithErr(filePath)
+		if err != nil {
+			errs = append(errs, errors.NewPutError(filePath, err.Error()))
+		}
+
+		return nil
 	}, util.IsSupportedFileType)
 	if err != nil {
 		return err
@@ -50,6 +57,14 @@ func (pc *PolicyCmd) Run(k *kong.Kong, put *Cmd, ctx *cmdclient.Context) error {
 	err = ctx.AdminClient.AddOrUpdatePolicy(context.TODO(), policies)
 	if err != nil {
 		return fmt.Errorf("failed to add or update the policies: %w", err)
+	}
+
+	log.Infof("Uploaded: %d - Ignored: %d", policies.Size(), len(errs))
+	if len(errs) != 0 {
+		log.Infof("Errors for the ignored files;")
+	}
+	for _, putErr := range errs {
+		log.Errorf("- %s", putErr.Error())
 	}
 
 	return nil

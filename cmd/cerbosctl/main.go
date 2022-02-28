@@ -4,11 +4,20 @@
 package main
 
 import (
+	"io"
+	"os"
+
 	"github.com/alecthomas/kong"
+	"go.uber.org/zap"
 
 	"github.com/cerbos/cerbos/cmd/cerbosctl/internal/client"
+	"github.com/cerbos/cerbos/cmd/cerbosctl/internal/logging"
 	"github.com/cerbos/cerbos/cmd/cerbosctl/root"
 )
+
+const defaultLogLevel = "INFO"
+
+var log *zap.SugaredLogger
 
 func main() {
 	cli := &root.Cli{}
@@ -18,18 +27,28 @@ func main() {
 		kong.UsageOnError(),
 	)
 
+	doInitLogging(ctx.Stdout, ctx.Stderr)
+
 	c, err := client.GetClient(&cli.Globals)
 	if err != nil {
-		ctx.Fatalf("failed to get the client: %v", err)
+		log.Fatalf("failed to get the client: %v", err)
 	}
 
 	ac, err := client.GetAdminClient(&cli.Globals)
 	if err != nil {
-		ctx.Fatalf("failed to get the admin client: %v", err)
+		log.Fatalf("failed to get the admin client: %v", err)
 	}
 
-	ctx.FatalIfErrorf(ctx.Run(&cli.Globals, &client.Context{
+	ctx.FatalIfErrorf(ctx.Run(log, &cli.Globals, &client.Context{
 		Client:      c,
 		AdminClient: ac,
 	}))
+}
+
+func doInitLogging(stdout, stderr io.Writer) {
+	if envLevel := os.Getenv("CERBOSCTL_LOG_LEVEL"); envLevel != "" {
+		log = logging.Init(envLevel, stdout, stderr)
+		return
+	}
+	log = logging.Init(defaultLogLevel, stdout, stderr)
 }
