@@ -1,7 +1,8 @@
 // Copyright 2021-2022 Zenauth Ltd.
 // SPDX-License-Identifier: Apache-2.0
 
-//go:build !race
+//go:build tests
+// +build tests
 
 package main
 
@@ -21,6 +22,7 @@ import (
 	"github.com/cerbos/cerbos/client/testutil"
 	cmdclient "github.com/cerbos/cerbos/cmd/cerbosctl/internal/client"
 	"github.com/cerbos/cerbos/cmd/cerbosctl/internal/flagset"
+	"github.com/cerbos/cerbos/cmd/cerbosctl/internal/logging"
 	"github.com/cerbos/cerbos/cmd/cerbosctl/root"
 	"github.com/cerbos/cerbos/internal/namer"
 	"github.com/cerbos/cerbos/internal/policy"
@@ -103,7 +105,9 @@ func put(t *testing.T, clientCtx *cmdclient.Context, globals *flagset.Globals, k
 	ctx, err := p.Parse([]string{"put", string(kind), path})
 	require.NoError(t, err)
 
-	err = ctx.Run(clientCtx, globals)
+	log := logging.Init(defaultLogLevel, ctx.Stdout, ctx.Stderr)
+
+	err = ctx.Run(log, clientCtx, globals)
 	require.NoError(t, err)
 }
 
