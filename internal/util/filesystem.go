@@ -37,6 +37,12 @@ func IsSupportedFileTypeExt(fileName string) (string, bool) {
 	return ext, exists
 }
 
+// IsJSONFileTypeExt returns true if the given file has a json file extension.
+func IsJSONFileTypeExt(fileName string) bool {
+	ext := strings.ToLower(filepath.Ext(fileName))
+	return ext == ".json"
+}
+
 // IsSupportedFileType returns true if the given file has a supported file extension.
 func IsSupportedFileType(fileName string) bool {
 	_, ok := IsSupportedFileTypeExt(fileName)

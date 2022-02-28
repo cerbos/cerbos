@@ -6,16 +6,14 @@ package put
 import (
 	"context"
 	"fmt"
-	"io"
 	"io/fs"
 	"os"
-	"path/filepath"
-
-	schemav1 "github.com/cerbos/cerbos/api/genpb/cerbos/schema/v1"
-	cmdclient "github.com/cerbos/cerbos/cmd/cerbosctl/internal/client"
-	"github.com/cerbos/cerbos/internal/util"
 
 	"github.com/alecthomas/kong"
+
+	"github.com/cerbos/cerbos/client"
+	cmdclient "github.com/cerbos/cerbos/cmd/cerbosctl/internal/client"
+	"github.com/cerbos/cerbos/internal/util"
 )
 
 const schemaCmdHelp = `# Put schemas
@@ -59,8 +57,8 @@ func (sc *SchemaCmd) Help() string {
 	return schemaCmdHelp
 }
 
-func (sc *SchemaCmd) findFiles(paths []string, recursive bool) ([]*schemav1.Schema, error) {
-	var schemas []*schemav1.Schema
+func (sc *SchemaCmd) findFiles(paths []string, recursive bool) (*client.SchemaSet, error) {
+	schemas := client.NewSchemaSet()
 	for _, path := range paths {
 		fileInfo, err := os.Stat(path)
 		if err != nil {
@@ -85,26 +83,11 @@ func (sc *SchemaCmd) findFiles(paths []string, recursive bool) ([]*schemav1.Sche
 					return nil
 				}
 
-				if !util.IsSupportedFileType(d.Name()) {
+				if !util.IsJSONFileTypeExt(d.Name()) {
 					return nil
 				}
 
-				f, err := fsys.Open(path)
-				if err != nil {
-					return nil //nolint:nilerr
-				}
-
-				defer f.Close()
-
-				definition, err := io.ReadAll(io.Reader(f))
-				if err != nil {
-					return nil //nolint:nilerr
-				}
-
-				schemas = append(schemas, &schemav1.Schema{
-					Id:         filepath.Base(path),
-					Definition: definition,
-				})
+				schemas.AddSchemaFromFS(fsys, path, true)
 
 				return nil
 			})
@@ -116,25 +99,7 @@ func (sc *SchemaCmd) findFiles(paths []string, recursive bool) ([]*schemav1.Sche
 				return nil, fmt.Errorf("unsupported file type %q: %w", path, err)
 			}
 
-			f, err := os.Open(path)
-			if err != nil {
-				return nil, fmt.Errorf("failed to open file %q: %w", path, err)
-			}
-
-			definition, err := io.ReadAll(io.Reader(f))
-			if err != nil {
-				return nil, err
-			}
-
-			err = f.Close()
-			if err != nil {
-				return nil, err
-			}
-
-			schemas = append(schemas, &schemav1.Schema{
-				Id:         filepath.Base(path),
-				Definition: definition,
-			})
+			schemas.AddSchemaFromFile(path, true)
 		}
 	}
 

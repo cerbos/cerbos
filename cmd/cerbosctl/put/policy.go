@@ -11,10 +11,8 @@ import (
 
 	"github.com/alecthomas/kong"
 
-	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
 	"github.com/cerbos/cerbos/client"
 	cmdclient "github.com/cerbos/cerbos/cmd/cerbosctl/internal/client"
-	"github.com/cerbos/cerbos/internal/policy"
 	"github.com/cerbos/cerbos/internal/util"
 )
 
@@ -47,10 +45,7 @@ func (pc *PolicyCmd) Run(k *kong.Kong, put *Cmd, ctx *cmdclient.Context) error {
 		return err
 	}
 
-	ps := client.NewPolicySet()
-	ps.AddPolicies(policies...)
-
-	err = ctx.AdminClient.AddOrUpdatePolicy(context.TODO(), ps)
+	err = ctx.AdminClient.AddOrUpdatePolicy(context.TODO(), policies)
 	if err != nil {
 		return fmt.Errorf("failed to add or update the policies: %w", err)
 	}
@@ -62,8 +57,8 @@ func (pc *PolicyCmd) Help() string {
 	return policyCmdHelp
 }
 
-func (pc *PolicyCmd) findFiles(paths []string, recursive bool) ([]*policyv1.Policy, error) {
-	var policies []*policyv1.Policy
+func (pc *PolicyCmd) findFiles(paths []string, recursive bool) (*client.PolicySet, error) {
+	policies := client.NewPolicySet()
 	for _, path := range paths {
 		fileInfo, err := os.Stat(path)
 		if err != nil {
@@ -78,29 +73,20 @@ func (pc *PolicyCmd) findFiles(paths []string, recursive bool) ([]*policyv1.Poli
 					return err
 				}
 
-				if d.IsDir() && recursive {
-					return nil
-				} else if d.IsDir() && !recursive && d.Name() != "." {
-					return fs.SkipDir
-				}
-
 				if d.IsDir() {
-					return nil
+					switch {
+					case recursive:
+						return nil
+					case d.Name() != ".":
+						return fs.SkipDir
+					}
 				}
 
 				if !util.IsSupportedFileType(d.Name()) {
 					return nil
 				}
 
-				p := &policyv1.Policy{}
-				if err := util.LoadFromJSONOrYAML(fsys, path, p); err != nil {
-					return nil //nolint:nilerr
-				}
-
-				if err := policy.Validate(p); err != nil {
-					return nil //nolint:nilerr
-				}
-				policies = append(policies, p)
+				policies.AddPolicyFromFS(fsys, path)
 
 				return nil
 			})
@@ -112,22 +98,12 @@ func (pc *PolicyCmd) findFiles(paths []string, recursive bool) ([]*policyv1.Poli
 				return nil, fmt.Errorf("unsupported file type %q: %w", path, err)
 			}
 
-			f, err := os.Open(path)
-			if err != nil {
-				return nil, fmt.Errorf("failed to open file %q: %w", path, err)
-			}
-
-			p, err := policy.ReadPolicy(f)
-			if err != nil {
-				return nil, fmt.Errorf("failed to read policy file %q: %w", path, err)
-			}
-
-			if err := policy.Validate(p); err != nil {
-				return nil, fmt.Errorf("failed to validate policy file %q: %w", path, err)
-			}
-
-			policies = append(policies, p)
+			policies.AddPolicyFromFile(path)
 		}
+	}
+
+	if err := policies.Validate(); err != nil {
+		return nil, fmt.Errorf("failed to validate policy set: %w", err)
 	}
 
 	return policies, nil

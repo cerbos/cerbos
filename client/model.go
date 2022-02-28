@@ -7,7 +7,9 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"io/fs"
 	"os"
+	"path/filepath"
 	"sync"
 	"time"
 
@@ -21,7 +23,9 @@ import (
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
 	requestv1 "github.com/cerbos/cerbos/api/genpb/cerbos/request/v1"
 	responsev1 "github.com/cerbos/cerbos/api/genpb/cerbos/response/v1"
+	schemav1 "github.com/cerbos/cerbos/api/genpb/cerbos/schema/v1"
 	"github.com/cerbos/cerbos/internal/policy"
+	"github.com/cerbos/cerbos/internal/schema"
 	"github.com/cerbos/cerbos/internal/util"
 )
 
@@ -409,6 +413,18 @@ func (ps *PolicySet) AddPolicyFromFile(file string) *PolicySet {
 	return ps.AddPolicyFromReader(f)
 }
 
+// AddPolicyFromFS adds a policy from the given filesystem and path to the set.
+func (ps *PolicySet) AddPolicyFromFS(fsys fs.FS, path string) *PolicySet {
+	f, err := fsys.Open(path)
+	if err != nil {
+		ps.err = multierr.Append(ps.err, fmt.Errorf("failed to add policy from file system '%s': %w", path, err))
+		return ps
+	}
+
+	defer f.Close()
+	return ps.AddPolicyFromReader(f)
+}
+
 // AddPolicyFromReader adds a policy from the given reader to the set.
 func (ps *PolicySet) AddPolicyFromReader(r io.Reader) *PolicySet {
 	p, err := policy.ReadPolicy(r)
@@ -510,6 +526,69 @@ func (ps *PolicySet) Validate() error {
 	}
 
 	return nil
+}
+
+// SchemaSet is a container for a set of schemas.
+type SchemaSet struct {
+	err     error
+	schemas []*schemav1.Schema
+}
+
+// NewSchemaSet creates a new schema set.
+func NewSchemaSet() *SchemaSet {
+	return &SchemaSet{}
+}
+
+// AddSchemaFromFile adds a schema from the given file to the set.
+func (ss *SchemaSet) AddSchemaFromFile(file string, ignorePathInID bool) *SchemaSet {
+	f, err := os.Open(file)
+	if err != nil {
+		ss.err = multierr.Append(ss.err, fmt.Errorf("failed to add schema from file '%s': %w", file, err))
+		return ss
+	}
+
+	name := file
+	if ignorePathInID {
+		name = filepath.Base(name)
+	}
+
+	defer f.Close()
+	return ss.AddSchemaFromReader(f, name)
+}
+
+// AddSchemaFromFS adds a schema from the given file system and path to the set.
+func (ss *SchemaSet) AddSchemaFromFS(fsys fs.FS, path string, ignorePathInID bool) *SchemaSet {
+	f, err := fsys.Open(path)
+	if err != nil {
+		ss.err = multierr.Append(ss.err, fmt.Errorf("failed to add schema from file '%s': %w", path, err))
+		return ss
+	}
+
+	name := path
+	if ignorePathInID {
+		name = filepath.Base(name)
+	}
+
+	defer f.Close()
+	return ss.AddSchemaFromReader(f, name)
+}
+
+// AddSchemaFromReader adds a schema from the given reader to the set.
+func (ss *SchemaSet) AddSchemaFromReader(r io.Reader, id string) *SchemaSet {
+	s, err := schema.ReadSchema(r, id)
+	if err != nil {
+		ss.err = multierr.Append(ss.err, fmt.Errorf("failed to add schema from reader: %w", err))
+		return ss
+	}
+	ss.schemas = append(ss.schemas, s)
+
+	return nil
+}
+
+// AddSchemas adds the given schemas to the set.
+func (ss *SchemaSet) AddSchemas(schemas ...*schemav1.Schema) *SchemaSet {
+	ss.schemas = append(ss.schemas, schemas...)
+	return ss
 }
 
 // ResourcePolicy is a builder for resource policies.

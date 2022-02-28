@@ -30,7 +30,7 @@ type AdminClient interface {
 	AuditLogs(ctx context.Context, opts AuditLogOptions) (<-chan *AuditLogEntry, error)
 	ListPolicies(ctx context.Context) ([]string, error)
 	GetPolicy(ctx context.Context, ids ...string) ([]*policyv1.Policy, error)
-	AddOrUpdateSchema(ctx context.Context, schemas []*schemav1.Schema) error
+	AddOrUpdateSchema(ctx context.Context, schemas *SchemaSet) error
 	ListSchemas(ctx context.Context) ([]string, error)
 	GetSchema(ctx context.Context, ids ...string) ([]*schemav1.Schema, error)
 }
@@ -202,14 +202,15 @@ func (c *GrpcAdminClient) GetPolicy(ctx context.Context, ids ...string) ([]*poli
 	return res.Policies, nil
 }
 
-func (c *GrpcAdminClient) AddOrUpdateSchema(ctx context.Context, schemas []*schemav1.Schema) error {
-	for bs := 0; bs < len(schemas); bs += addSchemaBatchSize {
+func (c *GrpcAdminClient) AddOrUpdateSchema(ctx context.Context, schemas *SchemaSet) error {
+	all := schemas.schemas
+	for bs := 0; bs < len(all); bs += addSchemaBatchSize {
 		be := bs + addSchemaBatchSize
-		if be >= len(schemas) {
-			be = len(schemas)
+		if be >= len(all) {
+			be = len(all)
 		}
 
-		req := &requestv1.AddOrUpdateSchemaRequest{Schemas: schemas[bs:be]}
+		req := &requestv1.AddOrUpdateSchemaRequest{Schemas: all[bs:be]}
 		if _, err := c.client.AddOrUpdateSchema(ctx, req, grpc.PerRPCCredentials(c.creds)); err != nil {
 			return fmt.Errorf("failed to send batch [%d,%d): %w", bs, be, err)
 		}
