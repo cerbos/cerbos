@@ -6,13 +6,11 @@ package put
 import (
 	"context"
 	"fmt"
-	"io/fs"
-	"os"
 
 	"github.com/alecthomas/kong"
-
 	"github.com/cerbos/cerbos/client"
 	cmdclient "github.com/cerbos/cerbos/cmd/cerbosctl/internal/client"
+	"github.com/cerbos/cerbos/cmd/cerbosctl/put/internal/files"
 	"github.com/cerbos/cerbos/internal/util"
 )
 
@@ -40,7 +38,10 @@ func (sc *SchemaCmd) Run(k *kong.Kong, put *Cmd, ctx *cmdclient.Context) error {
 		return fmt.Errorf("no filename(s) provided")
 	}
 
-	schemas, err := sc.findFiles(sc.Paths, put.Recursive)
+	schemas := client.NewSchemaSet()
+	err := files.Find(sc.Paths, put.Recursive, func(filePath string) error {
+		return schemas.AddSchemaFromFile(filePath, true).Err()
+	}, util.IsJSONFileTypeExt)
 	if err != nil {
 		return err
 	}
@@ -55,53 +56,4 @@ func (sc *SchemaCmd) Run(k *kong.Kong, put *Cmd, ctx *cmdclient.Context) error {
 
 func (sc *SchemaCmd) Help() string {
 	return schemaCmdHelp
-}
-
-func (sc *SchemaCmd) findFiles(paths []string, recursive bool) (*client.SchemaSet, error) {
-	schemas := client.NewSchemaSet()
-	for _, path := range paths {
-		fileInfo, err := os.Stat(path)
-		if err != nil {
-			return nil, err
-		}
-
-		//nolint:nestif
-		if fileInfo.IsDir() {
-			fsys := os.DirFS(path)
-			err := fs.WalkDir(fsys, ".", func(path string, d fs.DirEntry, err error) error {
-				if err != nil {
-					return err
-				}
-
-				if d.IsDir() && recursive {
-					return nil
-				} else if d.IsDir() && !recursive && d.Name() != "." {
-					return fs.SkipDir
-				}
-
-				if d.IsDir() {
-					return nil
-				}
-
-				if !util.IsJSONFileTypeExt(d.Name()) {
-					return nil
-				}
-
-				schemas.AddSchemaFromFS(fsys, path, true)
-
-				return nil
-			})
-			if err != nil {
-				return nil, err
-			}
-		} else {
-			if !util.IsSupportedFileType(fileInfo.Name()) {
-				return nil, fmt.Errorf("unsupported file type %q: %w", path, err)
-			}
-
-			schemas.AddSchemaFromFile(path, true)
-		}
-	}
-
-	return schemas, nil
 }

@@ -7,7 +7,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/fs"
 	"os"
 	"path/filepath"
 	"sync"
@@ -413,18 +412,6 @@ func (ps *PolicySet) AddPolicyFromFile(file string) *PolicySet {
 	return ps.AddPolicyFromReader(f)
 }
 
-// AddPolicyFromFS adds a policy from the given filesystem and path to the set.
-func (ps *PolicySet) AddPolicyFromFS(fsys fs.FS, path string) *PolicySet {
-	f, err := fsys.Open(path)
-	if err != nil {
-		ps.err = multierr.Append(ps.err, fmt.Errorf("failed to add policy from file system '%s': %w", path, err))
-		return ps
-	}
-
-	defer f.Close()
-	return ps.AddPolicyFromReader(f)
-}
-
 // AddPolicyFromReader adds a policy from the given reader to the set.
 func (ps *PolicySet) AddPolicyFromReader(r io.Reader) *PolicySet {
 	p, err := policy.ReadPolicy(r)
@@ -434,7 +421,7 @@ func (ps *PolicySet) AddPolicyFromReader(r io.Reader) *PolicySet {
 	}
 
 	ps.policies = append(ps.policies, p)
-	return nil
+	return ps
 }
 
 // AddPolicies adds the given policies to the set.
@@ -556,23 +543,6 @@ func (ss *SchemaSet) AddSchemaFromFile(file string, ignorePathInID bool) *Schema
 	return ss.AddSchemaFromReader(f, name)
 }
 
-// AddSchemaFromFS adds a schema from the given file system and path to the set.
-func (ss *SchemaSet) AddSchemaFromFS(fsys fs.FS, path string, ignorePathInID bool) *SchemaSet {
-	f, err := fsys.Open(path)
-	if err != nil {
-		ss.err = multierr.Append(ss.err, fmt.Errorf("failed to add schema from file '%s': %w", path, err))
-		return ss
-	}
-
-	name := path
-	if ignorePathInID {
-		name = filepath.Base(name)
-	}
-
-	defer f.Close()
-	return ss.AddSchemaFromReader(f, name)
-}
-
 // AddSchemaFromReader adds a schema from the given reader to the set.
 func (ss *SchemaSet) AddSchemaFromReader(r io.Reader, id string) *SchemaSet {
 	s, err := schema.ReadSchema(r, id)
@@ -582,13 +552,18 @@ func (ss *SchemaSet) AddSchemaFromReader(r io.Reader, id string) *SchemaSet {
 	}
 	ss.schemas = append(ss.schemas, s)
 
-	return nil
+	return ss
 }
 
 // AddSchemas adds the given schemas to the set.
 func (ss *SchemaSet) AddSchemas(schemas ...*schemav1.Schema) *SchemaSet {
 	ss.schemas = append(ss.schemas, schemas...)
 	return ss
+}
+
+// Err returns the errors accumulated during the construction of the schema set.
+func (ss *SchemaSet) Err() error {
+	return ss.err
 }
 
 // ResourcePolicy is a builder for resource policies.

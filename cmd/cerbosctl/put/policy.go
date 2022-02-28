@@ -6,14 +6,13 @@ package put
 import (
 	"context"
 	"fmt"
-	"io/fs"
-	"os"
 
 	"github.com/alecthomas/kong"
+	"github.com/cerbos/cerbos/cmd/cerbosctl/put/internal/files"
+	"github.com/cerbos/cerbos/internal/util"
 
 	"github.com/cerbos/cerbos/client"
 	cmdclient "github.com/cerbos/cerbos/cmd/cerbosctl/internal/client"
-	"github.com/cerbos/cerbos/internal/util"
 )
 
 const policyCmdHelp = `# Put policies
@@ -40,7 +39,10 @@ func (pc *PolicyCmd) Run(k *kong.Kong, put *Cmd, ctx *cmdclient.Context) error {
 		return fmt.Errorf("no filename(s) provided")
 	}
 
-	policies, err := pc.findFiles(pc.Paths, put.Recursive)
+	policies := client.NewPolicySet()
+	err := files.Find(pc.Paths, put.Recursive, func(filePath string) error {
+		return policies.AddPolicyFromFile(filePath).Err()
+	}, util.IsSupportedFileType)
 	if err != nil {
 		return err
 	}
@@ -55,56 +57,4 @@ func (pc *PolicyCmd) Run(k *kong.Kong, put *Cmd, ctx *cmdclient.Context) error {
 
 func (pc *PolicyCmd) Help() string {
 	return policyCmdHelp
-}
-
-func (pc *PolicyCmd) findFiles(paths []string, recursive bool) (*client.PolicySet, error) {
-	policies := client.NewPolicySet()
-	for _, path := range paths {
-		fileInfo, err := os.Stat(path)
-		if err != nil {
-			return nil, err
-		}
-
-		//nolint:nestif
-		if fileInfo.IsDir() {
-			fsys := os.DirFS(path)
-			err := fs.WalkDir(fsys, ".", func(path string, d fs.DirEntry, err error) error {
-				if err != nil {
-					return err
-				}
-
-				if d.IsDir() {
-					switch {
-					case recursive:
-						return nil
-					case d.Name() != ".":
-						return fs.SkipDir
-					}
-				}
-
-				if !util.IsSupportedFileType(d.Name()) {
-					return nil
-				}
-
-				policies.AddPolicyFromFS(fsys, path)
-
-				return nil
-			})
-			if err != nil {
-				return nil, err
-			}
-		} else {
-			if !util.IsSupportedFileType(fileInfo.Name()) {
-				return nil, fmt.Errorf("unsupported file type %q: %w", path, err)
-			}
-
-			policies.AddPolicyFromFile(path)
-		}
-	}
-
-	if err := policies.Validate(); err != nil {
-		return nil, fmt.Errorf("failed to validate policy set: %w", err)
-	}
-
-	return policies, nil
 }
