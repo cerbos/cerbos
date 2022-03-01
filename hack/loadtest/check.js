@@ -9,19 +9,29 @@ import http from 'k6/http';
 import { randomSeed, check } from 'k6';
 import { randomItem } from 'https://jslib.k6.io/k6-utils/1.1.0/index.js';
 
+randomSeed(999333666);
+
 export const options = {
     scenarios: {
         constant_load: {
             executor: 'constant-vus',
             vus: __ENV.MIN_VUS,
-            duration: __ENV.DURATION,
+            duration: `${__ENV.DURATION_SECS}s`,
+            startTime: '0s'
         },
         constant_rps: {
             executor: 'constant-arrival-rate',
             rate: __ENV.RPS,
-            duration: __ENV.DURATION,
+            duration: `${__ENV.DURATION_SECS}s`,
             preAllocatedVUs: __ENV.MIN_VUS,
             maxVUs: __ENV.MAX_VUS,
+            startTime: `${__ENV.DURATION_SECS}s`,
+        },
+        shared_iters: {
+            executor: 'shared-iterations',
+            vus: __ENV.MAX_VUS,
+            iterations: __ENV.ITERATIONS,
+            startTime: `${2 * __ENV.DURATION_SECS}s`,
         },
     },
     thresholds: {
@@ -30,34 +40,31 @@ export const options = {
     },
 };
 
-const authHeader = "Basic Y2VyYm9zOmNlcmJvc0FkbWlu"
 const requestsDir = "work/requests"
 const host = "http://127.0.0.1:3592"
-const reqKind = __ENV.REQ_KIND
+
+const fileName = (prefix, num) => `${requestsDir}/${prefix}_${num.toString().padStart(5, 0)}.json`;
 
 const requests = new SharedArray('requests', function () {
-    const idx = JSON.parse(open(requestsDir + "/index.json"));
-    const kindIdx = idx[reqKind]
-
+    const reqKind = __ENV.REQ_KIND
+    const reqCount = __ENV.REQ_COUNT
     let reqs = []
 
-    kindIdx.forEach(fileName => {
-        const path = requestsDir + "/" + fileName
-        const r = JSON.parse(open(path))
+    for (let i = 0; i < reqCount; i++) {
+        const f = fileName(reqKind, i);
+        const r = JSON.parse(open(f));
         reqs.push(r)
-    })
+    }
 
-    return reqs;
+    return reqs
 });
 
 export default function () {
-    randomSeed(999333666);
-    const req = randomItem(requests);
-    const url = host + req.url;
-    const res = http.post(url, req.request, {
+    const req = randomItem(requests)
+    const url = `${host}${req.url}`;
+    const res = http.post(url, JSON.stringify(req.request), {
         headers: {
             'Content-Type': 'application/json',
-            'Authorization': authHeader,
         },
     });
 
@@ -65,3 +72,4 @@ export default function () {
         'status is 200': (r) => r.status === 200,
     });
 }
+
