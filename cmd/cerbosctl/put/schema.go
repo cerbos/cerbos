@@ -7,7 +7,7 @@ import (
 	"context"
 	"fmt"
 
-	"go.uber.org/zap"
+	"github.com/alecthomas/kong"
 
 	"github.com/cerbos/cerbos/client"
 	cmdclient "github.com/cerbos/cerbos/cmd/cerbosctl/internal/client"
@@ -35,7 +35,7 @@ type SchemaCmd struct {
 	Paths []string `arg:"" type:"path" help:"Path to schema file or directory"`
 }
 
-func (sc *SchemaCmd) Run(log *zap.SugaredLogger, put *Cmd, ctx *cmdclient.Context) error {
+func (sc *SchemaCmd) Run(k *kong.Kong, put *Cmd, ctx *cmdclient.Context) error {
 	if len(sc.Paths) == 0 {
 		return fmt.Errorf("no filename(s) provided")
 	}
@@ -59,12 +59,21 @@ func (sc *SchemaCmd) Run(log *zap.SugaredLogger, put *Cmd, ctx *cmdclient.Contex
 		return fmt.Errorf("failed to add or update the schemas: %w", err)
 	}
 
-	log.Infof("Uploaded: %d - Ignored: %d", schemas.Size(), len(errs))
+	_, err = fmt.Fprintf(k.Stdout, "Uploaded: %d - Ignored: %d\n", schemas.Size(), len(errs))
+	if err != nil {
+		return fmt.Errorf("failed to print: %w", err)
+	}
 	if len(errs) != 0 {
-		log.Infof("Errors for the ignored files;")
+		_, err = fmt.Fprintln(k.Stdout, "Errors for the ignored files;")
+		if err != nil {
+			return fmt.Errorf("failed to print: %w", err)
+		}
 	}
 	for _, putErr := range errs {
-		log.Errorf("- %s", putErr.Error())
+		_, err = fmt.Fprintf(k.Stdout, "- %s\n", putErr.Error())
+		if err != nil {
+			return fmt.Errorf("failed to print: %w", err)
+		}
 	}
 
 	return nil

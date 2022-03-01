@@ -22,7 +22,6 @@ import (
 	"github.com/cerbos/cerbos/client/testutil"
 	cmdclient "github.com/cerbos/cerbos/cmd/cerbosctl/internal/client"
 	"github.com/cerbos/cerbos/cmd/cerbosctl/internal/flagset"
-	"github.com/cerbos/cerbos/cmd/cerbosctl/internal/logging"
 	"github.com/cerbos/cerbos/cmd/cerbosctl/root"
 	"github.com/cerbos/cerbos/internal/namer"
 	"github.com/cerbos/cerbos/internal/policy"
@@ -105,9 +104,7 @@ func put(t *testing.T, clientCtx *cmdclient.Context, globals *flagset.Globals, k
 	ctx, err := p.Parse([]string{"put", string(kind), path})
 	require.NoError(t, err)
 
-	log := logging.Init(defaultLogLevel, ctx.Stdout, ctx.Stderr)
-
-	err = ctx.Run(log, clientCtx, globals)
+	err = ctx.Run(clientCtx, globals)
 	require.NoError(t, err)
 }
 
