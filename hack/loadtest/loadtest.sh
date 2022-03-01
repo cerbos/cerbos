@@ -8,10 +8,13 @@ set -euo pipefail
 WORK_DIR="work"
 
 # Test parameters
-DURATION=${DURATION:-"120s"}
+DURATION_SECS=${DURATION_SECS:-"120"}
+ITERATIONS=${ITERATIONS:-"1000000"}
 MAX_VUS=${MAX_VUS:-"100"}
 MIN_VUS=${MIN_VUS:-"25"}
 NUM_POLICIES=${NUM_POLICIES:-"1000"}
+REQ_COUNT=${REQ_COUNT:-"$NUM_POLICIES"}
+REQ_KIND=${REQ_KIND:-"crs_req01"}
 RPS=${RPS:-"200"}
 STORE=${STORE:-"disk"}
 
@@ -23,9 +26,7 @@ clean() {
 
 generateResources() {
   printf "Generating %s policy sets\n" "$NUM_POLICIES"
-  rm -rf "${WORK_DIR}/k6"
-  mkdir -p "${WORK_DIR}"/k6/{policies,requests}
-  go run ./genres.go --output-dir "${WORK_DIR}/k6" --policy-set-count "$NUM_POLICIES"
+  go run ./generate.go --out="${WORK_DIR}" --count="$NUM_POLICIES"
 }
 
 down() {
@@ -66,15 +67,17 @@ up() {
 }
 
 executeTest() {
-  printf "Store=%s NumPolicies=%s RPS=%s DURATION=%s MIN_VUS=%s MAX_VUS=%s\n", $STORE, $NUM_POLICIES, $RPS, $DURATION, $MIN_VUS, $MAX_VUS
   mkdir -p results
   k6 run \
     --out json="results/${STORE}_${NUM_POLICIES}.json" \
-    -e DURATION="$DURATION" \
+    -e DURATION_SECS="$DURATION_SECS" \
+    -e ITERATIONS="$ITERATIONS" \
     -e MAX_VUS="$MAX_VUS" \
     -e MIN_VUS="$MIN_VUS" \
+    -e REQ_COUNT="$REQ_COUNT" \
+    -e REQ_KIND="$REQ_KIND" \
     -e RPS="$RPS" \
-    ./k6/check.js
+    check.js
 }
 
 usage() {
