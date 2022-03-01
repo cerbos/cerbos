@@ -8,6 +8,7 @@ import (
 	"github.com/cerbos/cerbos/cmd/cerbosctl/decisions"
 	"github.com/cerbos/cerbos/cmd/cerbosctl/get"
 	"github.com/cerbos/cerbos/cmd/cerbosctl/internal/flagset"
+	"github.com/cerbos/cerbos/cmd/cerbosctl/put"
 	"github.com/cerbos/cerbos/cmd/cerbosctl/version"
 )
 
@@ -35,6 +36,7 @@ type Cli struct {
 	Version version.Cmd `cmd:"" help:"Show cerbosctl and PDP version"`
 	Get     get.Cmd     `cmd:"" help:"List or view policies and schemas"`
 	flagset.Globals
+	Put       put.Cmd       `cmd:"" help:"Put policies or schemas"`
 	Decisions decisions.Cmd `cmd:"" help:"Interactive decision log viewer"`
 	Audit     audit.Cmd     `cmd:"" help:"View audit logs"`
 }

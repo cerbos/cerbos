@@ -15,9 +15,9 @@ import (
 
 func printSchema(w io.Writer, schemas []*schemav1.Schema, output flagset.OutputFormat) error {
 	switch output {
-	case "json":
+	case flagset.OutputFormatNone, flagset.OutputFormatJSON:
 		return printSchemaJSON(w, schemas)
-	case "prettyjson", "pretty-json":
+	case flagset.OutputFormatPrettyJSON:
 		return printSchemaPrettyJSON(w, schemas)
 	default:
 		return fmt.Errorf("only json and prettyjson formats are supported")

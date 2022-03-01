@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"path/filepath"
 	"sync"
 	"time"
 
@@ -21,7 +22,9 @@ import (
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
 	requestv1 "github.com/cerbos/cerbos/api/genpb/cerbos/request/v1"
 	responsev1 "github.com/cerbos/cerbos/api/genpb/cerbos/response/v1"
+	schemav1 "github.com/cerbos/cerbos/api/genpb/cerbos/schema/v1"
 	"github.com/cerbos/cerbos/internal/policy"
+	"github.com/cerbos/cerbos/internal/schema"
 	"github.com/cerbos/cerbos/internal/util"
 )
 
@@ -409,6 +412,22 @@ func (ps *PolicySet) AddPolicyFromFile(file string) *PolicySet {
 	return ps.AddPolicyFromReader(f)
 }
 
+// AddPolicyFromFileWithErr adds a policy from the given file to the set and returns the error.
+func (ps *PolicySet) AddPolicyFromFileWithErr(file string) (*PolicySet, error) {
+	f, err := os.Open(file)
+	if err != nil {
+		return nil, fmt.Errorf("failed to open file %s: %w", file, err)
+	}
+	defer f.Close()
+
+	p, err := policy.ReadPolicy(f)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read policy: %w", err)
+	}
+
+	return ps.AddPolicies(p), nil
+}
+
 // AddPolicyFromReader adds a policy from the given reader to the set.
 func (ps *PolicySet) AddPolicyFromReader(r io.Reader) *PolicySet {
 	p, err := policy.ReadPolicy(r)
@@ -418,7 +437,7 @@ func (ps *PolicySet) AddPolicyFromReader(r io.Reader) *PolicySet {
 	}
 
 	ps.policies = append(ps.policies, p)
-	return nil
+	return ps
 }
 
 // AddPolicies adds the given policies to the set.
@@ -510,6 +529,88 @@ func (ps *PolicySet) Validate() error {
 	}
 
 	return nil
+}
+
+// SchemaSet is a container for a set of schemas.
+type SchemaSet struct {
+	err     error
+	schemas []*schemav1.Schema
+}
+
+// NewSchemaSet creates a new schema set.
+func NewSchemaSet() *SchemaSet {
+	return &SchemaSet{}
+}
+
+// AddSchemaFromFile adds a schema from the given file to the set.
+func (ss *SchemaSet) AddSchemaFromFile(file string, ignorePathInID bool) *SchemaSet {
+	f, err := os.Open(file)
+	if err != nil {
+		ss.err = multierr.Append(ss.err, fmt.Errorf("failed to add schema from file '%s': %w", file, err))
+		return ss
+	}
+
+	name := file
+	if ignorePathInID {
+		name = filepath.Base(name)
+	}
+
+	defer f.Close()
+	return ss.AddSchemaFromReader(f, name)
+}
+
+// AddSchemaFromFileWithErr adds a schema from the given file to the set and returns the error.
+func (ss *SchemaSet) AddSchemaFromFileWithErr(file string, ignorePathInID bool) (*SchemaSet, error) {
+	f, err := os.Open(file)
+	if err != nil {
+		return nil, fmt.Errorf("failed to open file %s: %w", file, err)
+	}
+	defer f.Close()
+
+	name := file
+	if ignorePathInID {
+		name = filepath.Base(name)
+	}
+
+	s, err := schema.ReadSchema(f, name)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read schema: %w", err)
+	}
+
+	return ss.AddSchemas(s), nil
+}
+
+// AddSchemaFromReader adds a schema from the given reader to the set.
+func (ss *SchemaSet) AddSchemaFromReader(r io.Reader, id string) *SchemaSet {
+	s, err := schema.ReadSchema(r, id)
+	if err != nil {
+		ss.err = multierr.Append(ss.err, fmt.Errorf("failed to add schema from reader: %w", err))
+		return ss
+	}
+	ss.schemas = append(ss.schemas, s)
+
+	return ss
+}
+
+// AddSchemas adds the given schemas to the set.
+func (ss *SchemaSet) AddSchemas(schemas ...*schemav1.Schema) *SchemaSet {
+	ss.schemas = append(ss.schemas, schemas...)
+	return ss
+}
+
+// GetSchemas returns all of the schemas in the set.
+func (ss *SchemaSet) GetSchemas() []*schemav1.Schema {
+	return ss.schemas
+}
+
+// Size returns the number of schemas in this set.
+func (ss *SchemaSet) Size() int {
+	return len(ss.schemas)
+}
+
+// Err returns the errors accumulated during the construction of the schema set.
+func (ss *SchemaSet) Err() error {
+	return ss.err
 }
 
 // ResourcePolicy is a builder for resource policies.

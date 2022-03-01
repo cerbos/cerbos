@@ -69,3 +69,27 @@ func TestOpenOneOfSupportedFiles(t *testing.T) {
 		})
 	}
 }
+
+func TestIsJSONFileTypeExt(t *testing.T) {
+	tests := []struct {
+		fileName string
+		want     bool
+	}{
+		{"e_test.json", true},
+		{"_test.json", true},
+		// Unsupported files
+		{"e_test.yml", false},
+		{"e_test.yaml", false},
+		{"e_test.yl", false},
+		{"e_test", false},
+		{"e_bar.yaml", false},
+		{".yaml", false},
+	}
+	for _, tt := range tests {
+		t.Run(tt.fileName, func(t *testing.T) {
+			if got := IsJSONFileTypeExt(tt.fileName); got != tt.want {
+				t.Errorf("IsJSONFileTypeExt() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}

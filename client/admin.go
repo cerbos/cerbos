@@ -20,13 +20,17 @@ import (
 	svcv1 "github.com/cerbos/cerbos/api/genpb/cerbos/svc/v1"
 )
 
-const addPolicyBatchSize = 10
+const (
+	addPolicyBatchSize = 10
+	addSchemaBatchSize = 10
+)
 
 type AdminClient interface {
 	AddOrUpdatePolicy(context.Context, *PolicySet) error
 	AuditLogs(ctx context.Context, opts AuditLogOptions) (<-chan *AuditLogEntry, error)
 	ListPolicies(ctx context.Context) ([]string, error)
 	GetPolicy(ctx context.Context, ids ...string) ([]*policyv1.Policy, error)
+	AddOrUpdateSchema(ctx context.Context, schemas *SchemaSet) error
 	ListSchemas(ctx context.Context) ([]string, error)
 	GetSchema(ctx context.Context, ids ...string) ([]*schemav1.Schema, error)
 }
@@ -196,6 +200,23 @@ func (c *GrpcAdminClient) GetPolicy(ctx context.Context, ids ...string) ([]*poli
 	}
 
 	return res.Policies, nil
+}
+
+func (c *GrpcAdminClient) AddOrUpdateSchema(ctx context.Context, schemas *SchemaSet) error {
+	all := schemas.schemas
+	for bs := 0; bs < len(all); bs += addSchemaBatchSize {
+		be := bs + addSchemaBatchSize
+		if be >= len(all) {
+			be = len(all)
+		}
+
+		req := &requestv1.AddOrUpdateSchemaRequest{Schemas: all[bs:be]}
+		if _, err := c.client.AddOrUpdateSchema(ctx, req, grpc.PerRPCCredentials(c.creds)); err != nil {
+			return fmt.Errorf("failed to send batch [%d,%d): %w", bs, be, err)
+		}
+	}
+
+	return nil
 }
 
 func (c *GrpcAdminClient) ListSchemas(ctx context.Context) ([]string, error) {
