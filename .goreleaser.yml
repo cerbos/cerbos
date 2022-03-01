@@ -142,6 +142,7 @@ brews:
       name: homebrew-tap
       branch: main
       token: "{{ .Env.HOMEBREW_GITHUB_TOKEN }}"
+    folder: Formula
     ids:
       - cerbos
     homepage: "https://cerbos.dev"
