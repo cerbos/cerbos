@@ -59,21 +59,12 @@ func (sc *SchemaCmd) Run(k *kong.Kong, put *Cmd, ctx *cmdclient.Context) error {
 		return fmt.Errorf("failed to add or update the schemas: %w", err)
 	}
 
-	_, err = fmt.Fprintf(k.Stdout, "Uploaded: %d - Ignored: %d\n", schemas.Size(), len(errs))
-	if err != nil {
-		return fmt.Errorf("failed to print: %w", err)
-	}
+	_, _ = fmt.Fprintf(k.Stdout, "Uploaded: %d\nIgnored: %d\n", schemas.Size(), len(errs))
 	if len(errs) != 0 {
-		_, err = fmt.Fprintln(k.Stdout, "Errors for the ignored files;")
-		if err != nil {
-			return fmt.Errorf("failed to print: %w", err)
-		}
+		_, _ = fmt.Fprintln(k.Stdout, "Errors:")
 	}
 	for _, putErr := range errs {
-		_, err = fmt.Fprintf(k.Stdout, "- %s\n", putErr.Error())
-		if err != nil {
-			return fmt.Errorf("failed to print: %w", err)
-		}
+		_, _ = fmt.Fprintf(k.Stdout, "- %s\n", putErr.Error())
 	}
 
 	return nil
