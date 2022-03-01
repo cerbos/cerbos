@@ -26,6 +26,8 @@ import (
 var (
 	// ErrFailed is the error returned when compilation fails.
 	ErrFailed = errors.New("failed to compile")
+	// ErrTestsFailed is the error returned when tests fail.
+	ErrTestsFailed = errors.New("tests failed")
 
 	header         = color.New(color.FgHiWhite, color.Bold).SprintFunc()
 	fileName       = color.New(color.FgHiCyan).SprintFunc()
@@ -244,6 +246,11 @@ func displayVerificationResult(p *printer, result *verify.Result) error {
 	p.Println(header("Test results"))
 	for _, sr := range result.Results {
 		p.Printf("= %s %s ", testName(sr.Suite), fileName("(", sr.File, ")"))
+		if sr.Failed {
+			p.Println(failedTest("[FAILED]"))
+			continue
+		}
+
 		if sr.Skipped {
 			p.Println(skippedTest("[SKIPPED]"))
 			continue
@@ -268,10 +275,13 @@ func displayVerificationResult(p *printer, result *verify.Result) error {
 
 			p.Println(successfulTest("[OK]"))
 		}
+		if sr.Failed {
+			p.Println(errorMsg("Invalid test suite"))
+		}
 	}
 
 	if result.Failed {
-		return ErrFailed
+		return ErrTestsFailed
 	}
 
 	return nil
