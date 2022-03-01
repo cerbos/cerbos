@@ -130,8 +130,9 @@ func doVerify(ctx context.Context, fsys fs.FS, eng *engine.Engine, conf Config) 
 			result.Results = append(result.Results, SuiteResult{
 				File:    sd,
 				Suite:   fmt.Sprintf("UNKNOWN: failed to load test suite: %v", err),
-				Skipped: true,
+				Skipped: false,
 			})
+			result.Failed = true
 			continue
 		}
 
