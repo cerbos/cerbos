@@ -7,9 +7,10 @@ See xref:ROOT:installation/binary.adoc[] or xref:ROOT:installation/container.ado
 
 This binary provides the following sub commands:
 
-`server`:: Start the PDP server
 `compile`:: Validate, compile and run tests on a policy repo
+`healthcheck`:: Perform a healthcheck on a Cerbos PDP
 `run`:: Start a PDP and run a command within its context
+`server`:: Start the PDP server
 
 .Example: Running `compile` using the binary
 [source,sh,subs="attributes"]
@@ -23,36 +24,6 @@ This binary provides the following sub commands:
 docker run -i -t {app-docker-img} compile --help 
 ----
 
-[#server]
-== `server` Command
-
-Starts the Cerbos PDP. 
-
-[source]
-----
-Usage: cerbos server --config=./config.yaml
-
-Start Cerbos server (PDP)
-
-Examples:
-
-# Start the server
-
-cerbos server --config=/path/to/config.yaml
-
-# Start the server with the Admin API enabled and the 'sqlite' storage driver
-
-cerbos server --config=/path/to/config.yaml --set=server.adminAPI.enabled=true --set=storage.driver=sqlite3 --set=storage.sqlite3.dsn=':memory:'
-
-Flags:
-  -h, --help                                    Show context-sensitive help.
-      --version
-
-      --debug-listen-addr=:6666                 Address to start the gops listener
-      --log-level="info"                        Log level (debug,info,warn,error)
-      --config=./config.yaml                    Path to config file
-      --set=server.adminAPI.enabled=true,...    Config overrides
-----
 
 [#compile]
 == `compile` Command
@@ -92,6 +63,50 @@ Flags:
       --skip-tests         Skip tests
       --ignore-schemas     Ignore schemas during compilation
       --verbose            Verbose output on test failure
+----
+
+[#healthcheck]
+== `healthcheck` Command
+
+Utility to perform healthchecks on a Cerbos PDP. Can be used as a link:https://docs.docker.com/engine/reference/builder/#healthcheck[Docker HEALTHCHECK] command.
+
+[source]
+----
+Usage: cerbos healthcheck (hc)
+
+Healthcheck utility
+
+Performs a healthcheck on a Cerbos PDP. This can be used as a Docker HEALTHCHECK command. By default, the local Cerbos gRPC endpoint (127.0.0.1:3593) will be checked using the gRPC healthcheck protocol. This is usually
+sufficient for most cases as the Cerbos REST API is built on top of the gRPC API as well.
+
+Examples:
+
+# Check gRPC endpoint
+
+cerbos healthcheck
+
+# Check gRPC endpoint and ignore server certificate verification
+
+cerbos healthcheck --insecure
+
+# Check https endpoint, ignoring server certificate verification and with a custom timeout
+
+cerbos healthcheck --kind=https --insecure --timeout=2s
+
+# Use a different host address
+
+cerbos healthcheck --kind=http --host-port=10.0.1.5:3592
+
+Flags:
+  -h, --help                Show context-sensitive help.
+      --version
+
+      --kind="grpc"         Healthcheck kind (grpc,http,https) ($CERBOS_HC_KIND)
+      --host-port=STRING    Host and port to check. Defaults to 127.0.0.1:3592 for http/https and 127.0.0.1:3593 for grpc ($CERBOS_HC_HOST)
+      --ca-cert=STRING      CA Certificate to use to verify the server certificate
+      --insecure            Do not verify server certificate
+      --plaintext           No TLS (gRPC only)
+      --timeout=10s         Healthcheck timeout ($CERBOS_HC_TIMEOUT)
 ----
 
 [#run]
@@ -146,4 +161,36 @@ Flags:
       --config=./cerbos.yaml                    Path to config file
       --set=server.adminAPI.enabled=true,...    Config overrides
       --timeout=30s                             Cerbos startup timeout
+----
+
+
+[#server]
+== `server` Command
+
+Starts the Cerbos PDP. 
+
+[source]
+----
+Usage: cerbos server --config=./config.yaml
+
+Start Cerbos server (PDP)
+
+Examples:
+
+# Start the server
+
+cerbos server --config=/path/to/config.yaml
+
+# Start the server with the Admin API enabled and the 'sqlite' storage driver
+
+cerbos server --config=/path/to/config.yaml --set=server.adminAPI.enabled=true --set=storage.driver=sqlite3 --set=storage.sqlite3.dsn=':memory:'
+
+Flags:
+  -h, --help                                    Show context-sensitive help.
+      --version
+
+      --debug-listen-addr=:6666                 Address to start the gops listener
+      --log-level="info"                        Log level (debug,info,warn,error)
+      --config=./config.yaml                    Path to config file
+      --set=server.adminAPI.enabled=true,...    Config overrides
 ----

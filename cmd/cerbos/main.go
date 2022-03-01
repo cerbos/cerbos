@@ -7,6 +7,7 @@ import (
 	"github.com/alecthomas/kong"
 
 	"github.com/cerbos/cerbos/cmd/cerbos/compile"
+	"github.com/cerbos/cerbos/cmd/cerbos/healthcheck"
 	"github.com/cerbos/cerbos/cmd/cerbos/run"
 	"github.com/cerbos/cerbos/cmd/cerbos/server"
 	"github.com/cerbos/cerbos/internal/util"
@@ -14,10 +15,11 @@ import (
 
 func main() {
 	var cli struct {
-		Server  server.Cmd  `cmd:"" help:"Start Cerbos server (PDP)"`
-		Compile compile.Cmd `cmd:"" help:"Compile and test policies"`
-		Run     run.Cmd     `cmd:"" help:"Run a command in the context of a Cerbos PDP"`
-		Version kong.VersionFlag
+		Compile     compile.Cmd     `cmd:"" help:"Compile and test policies"`
+		Server      server.Cmd      `cmd:"" help:"Start Cerbos server (PDP)"`
+		Healthcheck healthcheck.Cmd `cmd:"" help:"Healthcheck utility" aliases:"hc"`
+		Run         run.Cmd         `cmd:"" help:"Run a command in the context of a Cerbos PDP"`
+		Version     kong.VersionFlag
 	}
 
 	ctx := kong.Parse(&cli,
