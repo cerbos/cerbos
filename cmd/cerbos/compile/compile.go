@@ -246,6 +246,11 @@ func displayVerificationResult(p *printer, result *verify.Result) error {
 	p.Println(header("Test results"))
 	for _, sr := range result.Results {
 		p.Printf("= %s %s ", testName(sr.Suite), fileName("(", sr.File, ")"))
+		if sr.Failed {
+			p.Println(failedTest("[FAILED]"))
+			continue
+		}
+
 		if sr.Skipped {
 			p.Println(skippedTest("[SKIPPED]"))
 			continue
