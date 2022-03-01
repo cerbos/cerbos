@@ -702,6 +702,17 @@ func (m *ResourceRule) validate(all bool) error {
 
 	var errors []error
 
+	if len(m.GetActions()) < 1 {
+		err := ResourceRuleValidationError{
+			field:  "Actions",
+			reason: "value must contain at least 1 item(s)",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
 	_ResourceRule_Actions_Unique := make(map[string]struct{}, len(m.GetActions()))
 
 	for idx, item := range m.GetActions() {
