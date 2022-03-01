@@ -81,22 +81,18 @@ func TestVerify(t *testing.T) {
 		is := require.New(t)
 		is.NoError(err)
 		is.True(result.Failed)
-		is.Len(result.Results, 3)
+		is.Len(result.Results, 2)
 
 		for _, sr := range result.Results {
 			switch sr.File {
 			case "invalid_test.yaml":
 				is.False(sr.Skipped)
+				is.True(sr.Failed)
 				is.True(strings.HasPrefix(sr.Suite, "UNKNOWN: failed to load test suite"))
 				is.Empty(sr.Tests)
-			case "suite_test.yaml":
-				is.False(sr.Skipped)
-				is.Len(sr.Tests, 1)
-				is.False(sr.Tests[0].Skipped)
-				is.False(sr.Tests[0].Failed)
-				is.Empty(sr.Tests[0].Error)
 			case "did_not_expected_key_test.yaml":
 				is.False(sr.Skipped)
+				is.True(sr.Failed)
 				is.True(strings.HasPrefix(sr.Suite, "UNKNOWN: failed to load test suite: failed to convert YAML to JSON"))
 				is.True(strings.Contains(sr.Suite, "did not find expected key"))
 				is.Empty(sr.Tests)

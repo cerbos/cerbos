@@ -32,6 +32,7 @@ type SuiteResult struct {
 	Suite   string       `json:"suite"`
 	Tests   []TestResult `json:"tests"`
 	Skipped bool         `json:"skipped,omitempty"`
+	Failed  bool         `json:"failed,omitempty"`
 }
 
 type TestName struct {
@@ -100,6 +101,9 @@ func doVerify(ctx context.Context, fsys fs.FS, eng *engine.Engine, conf Config) 
 
 		return nil
 	})
+	if err != nil {
+		return nil, err
+	}
 
 	fixtures := make(map[string]*testFixture, len(fixtureDefs))
 
@@ -131,6 +135,7 @@ func doVerify(ctx context.Context, fsys fs.FS, eng *engine.Engine, conf Config) 
 				File:    sd,
 				Suite:   fmt.Sprintf("UNKNOWN: failed to load test suite: %v", err),
 				Skipped: false,
+				Failed:  true,
 			})
 			result.Failed = true
 			continue
@@ -140,8 +145,9 @@ func doVerify(ctx context.Context, fsys fs.FS, eng *engine.Engine, conf Config) 
 		fixture, err := getFixture(fixtureDir)
 		if err != nil {
 			result.Results = append(result.Results, SuiteResult{
-				File:  sd,
-				Suite: suite.Name,
+				File:   sd,
+				Suite:  suite.Name,
+				Failed: true,
 				Tests: []TestResult{
 					{
 						Name:   TestName{TableTestName: "*", PrincipalKey: "*"},
