@@ -25,10 +25,7 @@ import (
 	"github.com/cerbos/cerbos/internal/util"
 )
 
-var (
-	ErrPolicyNotExecutable = errors.New("policy not executable")
-	ErrUnexpectedResult    = errors.New("unexpected result")
-)
+var ErrPolicyNotExecutable = errors.New("policy not executable")
 
 type Evaluator interface {
 	Evaluate(context.Context, *enginev1.CheckInput) (*PolicyEvalResult, error)
@@ -342,7 +339,7 @@ func evaluateBoolCELExpr(expr *exprpb.CheckedExpr, variables map[string]interfac
 
 	boolVal, ok := val.(bool)
 	if !ok {
-		return false, ErrUnexpectedResult
+		return false, fmt.Errorf("unexpected result: wanted bool, got %T", val)
 	}
 
 	return boolVal, nil
