@@ -7,9 +7,10 @@ See xref:ROOT:installation/binary.adoc[] or xref:ROOT:installation/container.ado
 
 This binary provides the following sub commands:
 
-`server`:: Start the PDP server
 `compile`:: Validate, compile and run tests on a policy repo
+`healthcheck`:: Perform a healthcheck on a Cerbos PDP
 `run`:: Start a PDP and run a command within its context
+`server`:: Start the PDP server
 
 .Example: Running `compile` using the binary
 [source,sh,subs="attributes"]
@@ -23,36 +24,6 @@ This binary provides the following sub commands:
 docker run -i -t {app-docker-img} compile --help 
 ----
 
-[#server]
-== `server` Command
-
-Starts the Cerbos PDP. 
-
-[source]
-----
-Usage: cerbos server --config=./config.yaml
-
-Start Cerbos server (PDP)
-
-Examples:
-
-# Start the server
-
-cerbos server --config=/path/to/config.yaml
-
-# Start the server with the Admin API enabled and the 'sqlite' storage driver
-
-cerbos server --config=/path/to/config.yaml --set=server.adminAPI.enabled=true --set=storage.driver=sqlite3 --set=storage.sqlite3.dsn=':memory:'
-
-Flags:
-  -h, --help                                    Show context-sensitive help.
-      --version
-
-      --debug-listen-addr=:6666                 Address to start the gops listener
-      --log-level="info"                        Log level (debug,info,warn,error)
-      --config=./config.yaml                    Path to config file
-      --set=server.adminAPI.enabled=true,...    Config overrides
-----
 
 [#compile]
 == `compile` Command
@@ -92,6 +63,63 @@ Flags:
       --skip-tests         Skip tests
       --ignore-schemas     Ignore schemas during compilation
       --verbose            Verbose output on test failure
+----
+
+[#healthcheck]
+== `healthcheck` Command
+
+Utility to perform healthchecks on a Cerbos PDP. Can be used as a link:https://docs.docker.com/engine/reference/builder/#healthcheck[Docker HEALTHCHECK] command. 
+
+You can share the configuration between Cerbos PDP and the healthcheck by using the `CERBOS_CONFIG` environment variable to define the path to the config file.
+
+.Example: Docker healthcheck based on mounted config file
+[source,sh,subs="attributes"]
+----
+docker run -i -t -p 3592:3592 -p 3593:3593 \
+    -v /path/to/conf/dir:/config \
+    -e CERBOS_CONFIG=/config/conf.yaml \
+    {app-docker-img}
+----
+
+[source]
+----
+Usage: cerbos healthcheck (hc)
+
+Healthcheck utility
+
+Performs a healthcheck on a Cerbos PDP. This can be used as a Docker HEALTHCHECK command. When the path to the Cerbos config file is provided via the '--config' flag or the CERBOS_CONFIG environment variable, the
+healthcheck will be automatically configured based on the settings from the file. By default, the gRPC endpoint will be checked using the gRPC healthcheck protocol. This is usually sufficient for most cases as the Cerbos
+REST API is built on top of the gRPC API as well.
+
+Examples:
+
+# Check gRPC endpoint
+
+cerbos healthcheck --config=/path/to/config.yaml
+
+# Check HTTP endpoint and ignore server certificate verification
+
+cerbos healthcheck --config=/path/to/config.yaml --kind=http --insecure
+
+# Check the HTTP endpoint of a specific host with no TLS.
+
+cerbos healthcheck --kind=http --host-port=10.0.1.5:3592 --no-tls
+
+Flags:
+  -h, --help           Show context-sensitive help.
+      --version
+
+      --kind="grpc"    Healthcheck kind (grpc,http) ($CERBOS_HC_KIND)
+      --insecure       Do not verify server certificate ($CERBOS_HC_INSECURE)
+      --timeout=10s    Healthcheck timeout ($CERBOS_HC_TIMEOUT)
+
+config
+  --config=STRING    Cerbos config file ($CERBOS_CONFIG)
+
+manual
+  --host-port=STRING    Host and port to connect to ($CERBOS_HC_HOSTPORT)
+  --ca-cert=STRING      Path to CA cert for validating server cert ($CERBOS_HC_CACERT)
+  --no-tls              Don't use TLS ($CERBOS_HC_NOTLS)
 ----
 
 [#run]
@@ -146,4 +174,36 @@ Flags:
       --config=./cerbos.yaml                    Path to config file
       --set=server.adminAPI.enabled=true,...    Config overrides
       --timeout=30s                             Cerbos startup timeout
+----
+
+
+[#server]
+== `server` Command
+
+Starts the Cerbos PDP. 
+
+[source]
+----
+Usage: cerbos server --config=./config.yaml
+
+Start Cerbos server (PDP)
+
+Examples:
+
+# Start the server
+
+cerbos server --config=/path/to/config.yaml
+
+# Start the server with the Admin API enabled and the 'sqlite' storage driver
+
+cerbos server --config=/path/to/config.yaml --set=server.adminAPI.enabled=true --set=storage.driver=sqlite3 --set=storage.sqlite3.dsn=':memory:'
+
+Flags:
+  -h, --help                                    Show context-sensitive help.
+      --version
+
+      --debug-listen-addr=:6666                 Address to start the gops listener
+      --log-level="info"                        Log level (debug,info,warn,error)
+      --config=./config.yaml                    Path to config file
+      --set=server.adminAPI.enabled=true,...    Config overrides
 ----
