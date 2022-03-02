@@ -49,7 +49,7 @@ func (ll *LogLevelFlag) Decode(ctx *kong.DecodeContext) error {
 type Cmd struct {
 	DebugListenAddr string       `help:"Address to start the gops listener" placeholder:":6666"`
 	LogLevel        LogLevelFlag `help:"Log level (${enum})" default:"info" enum:"debug,info,warn,error"`
-	Config          string       `help:"Path to config file" type:"existingfile" required:"" placeholder:"./config.yaml"`
+	Config          string       `help:"Path to config file" type:"existingfile" required:"" placeholder:"./config.yaml" env:"CERBOS_CONFIG"`
 	Set             []string     `help:"Config overrides" placeholder:"server.adminAPI.enabled=true"`
 	ZPagesEnabled   bool         `help:"Enable zpages" hidden:""`
 }
@@ -84,6 +84,7 @@ func (c *Cmd) Run() error {
 	}
 
 	// load configuration
+	log.Infof("Loading configuration from %s", c.Config)
 	if err := config.Load(c.Config, confOverrides); err != nil {
 		log.Errorw("Failed to load configuration", "error", err)
 		return err

@@ -68,7 +68,18 @@ Flags:
 [#healthcheck]
 == `healthcheck` Command
 
-Utility to perform healthchecks on a Cerbos PDP. Can be used as a link:https://docs.docker.com/engine/reference/builder/#healthcheck[Docker HEALTHCHECK] command.
+Utility to perform healthchecks on a Cerbos PDP. Can be used as a link:https://docs.docker.com/engine/reference/builder/#healthcheck[Docker HEALTHCHECK] command. 
+
+You can share the configuration between Cerbos PDP and the healthcheck by using the `CERBOS_CONFIG` environment variable to define the path to the config file.
+
+.Example: Docker healthcheck based on mounted config file
+[source,sh,subs="attributes"]
+----
+docker run -i -t -p 3592:3592 -p 3593:3593 \
+    -v /path/to/conf/dir:/config \
+    -e CERBOS_CONFIG=/config/conf.yaml \
+    {app-docker-img}
+----
 
 [source]
 ----
@@ -76,37 +87,39 @@ Usage: cerbos healthcheck (hc)
 
 Healthcheck utility
 
-Performs a healthcheck on a Cerbos PDP. This can be used as a Docker HEALTHCHECK command. By default, the local Cerbos gRPC endpoint (127.0.0.1:3593) will be checked using the gRPC healthcheck protocol. This is usually
-sufficient for most cases as the Cerbos REST API is built on top of the gRPC API as well.
+Performs a healthcheck on a Cerbos PDP. This can be used as a Docker HEALTHCHECK command. When the path to the Cerbos config file is provided via the '--config' flag or the CERBOS_CONFIG environment variable, the
+healthcheck will be automatically configured based on the settings from the file. By default, the gRPC endpoint will be checked using the gRPC healthcheck protocol. This is usually sufficient for most cases as the Cerbos
+REST API is built on top of the gRPC API as well.
 
 Examples:
 
 # Check gRPC endpoint
 
-cerbos healthcheck
+cerbos healthcheck --config=/path/to/config.yaml
 
-# Check gRPC endpoint and ignore server certificate verification
+# Check HTTP endpoint and ignore server certificate verification
 
-cerbos healthcheck --insecure
+cerbos healthcheck --config=/path/to/config.yaml --kind=http --insecure
 
-# Check https endpoint, ignoring server certificate verification and with a custom timeout
+# Check the HTTP endpoint of a specific host with no TLS.
 
-cerbos healthcheck --kind=https --insecure --timeout=2s
-
-# Use a different host address
-
-cerbos healthcheck --kind=http --host-port=10.0.1.5:3592
+cerbos healthcheck --kind=http --host-port=10.0.1.5:3592 --no-tls
 
 Flags:
-  -h, --help                Show context-sensitive help.
+  -h, --help           Show context-sensitive help.
       --version
 
-      --kind="grpc"         Healthcheck kind (grpc,http,https) ($CERBOS_HC_KIND)
-      --host-port=STRING    Host and port to check. Defaults to 127.0.0.1:3592 for http/https and 127.0.0.1:3593 for grpc ($CERBOS_HC_HOST)
-      --ca-cert=STRING      CA Certificate to use to verify the server certificate
-      --insecure            Do not verify server certificate
-      --plaintext           No TLS (gRPC only)
-      --timeout=10s         Healthcheck timeout ($CERBOS_HC_TIMEOUT)
+      --kind="grpc"    Healthcheck kind (grpc,http) ($CERBOS_HC_KIND)
+      --insecure       Do not verify server certificate ($CERBOS_HC_INSECURE)
+      --timeout=10s    Healthcheck timeout ($CERBOS_HC_TIMEOUT)
+
+config
+  --config=STRING    Cerbos config file ($CERBOS_CONFIG)
+
+manual
+  --host-port=STRING    Host and port to connect to ($CERBOS_HC_HOSTPORT)
+  --ca-cert=STRING      Path to CA cert for validating server cert ($CERBOS_HC_CACERT)
+  --no-tls              Don't use TLS ($CERBOS_HC_NOTLS)
 ----
 
 [#run]
