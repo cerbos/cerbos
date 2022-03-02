@@ -510,17 +510,6 @@ func (m *ResourcePolicy) validate(all bool) error {
 
 	}
 
-	if len(m.GetRules()) < 1 {
-		err := ResourcePolicyValidationError{
-			field:  "Rules",
-			reason: "value must contain at least 1 item(s)",
-		}
-		if !all {
-			return err
-		}
-		errors = append(errors, err)
-	}
-
 	for idx, item := range m.GetRules() {
 		_, _ = idx, item
 
@@ -992,17 +981,6 @@ func (m *PrincipalPolicy) validate(all bool) error {
 		err := PrincipalPolicyValidationError{
 			field:  "Version",
 			reason: "value does not match regex pattern \"^[[:word:]]+$\"",
-		}
-		if !all {
-			return err
-		}
-		errors = append(errors, err)
-	}
-
-	if len(m.GetRules()) < 1 {
-		err := PrincipalPolicyValidationError{
-			field:  "Rules",
-			reason: "value must contain at least 1 item(s)",
 		}
 		if !all {
 			return err
