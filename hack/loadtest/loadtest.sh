@@ -17,7 +17,7 @@ REQ_COUNT=${REQ_COUNT:-"$NUM_POLICIES"}
 REQ_KIND=${REQ_KIND:-"crs_req01"}
 RPS=${RPS:-"200"}
 STORE=${STORE:-"disk"}
-SERVER=${SERVER:-"localhost:3593"}
+SERVER=${SERVER:-"localhost:3592"}
 USERNAME=${USERNAME:-"cerbos"}
 PASSWORD=${PASSWORD:-"cerbosAdmin"}
 
@@ -65,7 +65,7 @@ up() {
   printf "Starting all services\n"
   docker-compose up -d
 
-  while [[ "$(curl -s -o /dev/null -w '%{http_code}' 'http://localhost:3592/_cerbos/health')" != "200" ]]; do
+  while [[ "$(curl -s -o /dev/null -w '%{http_code}' "http://${SERVER}/_cerbos/health")" != "200" ]]; do
     echo "Waiting for Cerbos..."
     sleep 1
   done
@@ -91,6 +91,7 @@ executeTest() {
     -e REQ_COUNT="$REQ_COUNT" \
     -e REQ_KIND="$REQ_KIND" \
     -e RPS="$RPS" \
+    -e SERVER="$SERVER" \
     check.js
 }
 
