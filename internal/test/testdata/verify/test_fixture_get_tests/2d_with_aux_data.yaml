@@ -1,0 +1,220 @@
+table:
+  name: Two-dimensional table test
+  description: A test for multiple principals and resources, with aux data.
+  input:
+    principals:
+      - employee
+      - manager
+      - department_head
+    resources:
+      - employee_leave_request
+      - manager_leave_request
+      - department_head_leave_request
+    actions:
+      - view
+      - approve
+    auxData: test_aux_data
+  expected:
+    - principal: employee
+      resource: employee_leave_request
+      actions:
+        view: EFFECT_ALLOW
+        approve: EFFECT_DENY
+    - principal: manager
+      resource: employee_leave_request
+      actions:
+        view: EFFECT_ALLOW
+        approve: EFFECT_ALLOW
+    - principal: manager
+      resource: manager_leave_request
+      actions:
+        view: EFFECT_ALLOW
+        approve: EFFECT_DENY
+    - principal: department_head
+      resource: employee_leave_request
+      actions:
+        view: EFFECT_ALLOW
+        approve: EFFECT_ALLOW
+    - principal: department_head
+      resource: manager_leave_request
+      actions:
+        view: EFFECT_ALLOW
+        approve: EFFECT_ALLOW
+    - principal: department_head
+      resource: department_head_leave_request
+      actions:
+        view: EFFECT_ALLOW
+        approve: EFFECT_ALLOW
+
+wantTests:
+  - name:
+      testTableName: Two-dimensional table test
+      principalKey: employee
+      resourceKey: employee_leave_request
+    description: A test for multiple principals and resources, with aux data.
+    input:
+      principal:
+        id: user:employee
+      resource:
+        id: leave_request:employee
+      actions:
+        - view
+        - approve
+      auxData:
+        jwt:
+          answer: 42
+    expected:
+      view: EFFECT_ALLOW
+      approve: EFFECT_DENY
+  - name:
+      testTableName: Two-dimensional table test
+      principalKey: employee
+      resourceKey: manager_leave_request
+    description: A test for multiple principals and resources, with aux data.
+    input:
+      principal:
+        id: user:employee
+      resource:
+        id: leave_request:manager
+      actions:
+        - view
+        - approve
+      auxData:
+        jwt:
+          answer: 42
+    expected:
+      view: EFFECT_DENY
+      approve: EFFECT_DENY
+  - name:
+      testTableName: Two-dimensional table test
+      principalKey: employee
+      resourceKey: department_head_leave_request
+    description: A test for multiple principals and resources, with aux data.
+    input:
+      principal:
+        id: user:employee
+      resource:
+        id: leave_request:department_head
+      actions:
+        - view
+        - approve
+      auxData:
+        jwt:
+          answer: 42
+    expected:
+      view: EFFECT_DENY
+      approve: EFFECT_DENY
+  - name:
+      testTableName: Two-dimensional table test
+      principalKey: manager
+      resourceKey: employee_leave_request
+    description: A test for multiple principals and resources, with aux data.
+    input:
+      principal:
+        id: user:manager
+      resource:
+        id: leave_request:employee
+      actions:
+        - view
+        - approve
+      auxData:
+        jwt:
+          answer: 42
+    expected:
+      view: EFFECT_ALLOW
+      approve: EFFECT_ALLOW
+  - name:
+      testTableName: Two-dimensional table test
+      principalKey: manager
+      resourceKey: manager_leave_request
+    description: A test for multiple principals and resources, with aux data.
+    input:
+      principal:
+        id: user:manager
+      resource:
+        id: leave_request:manager
+      actions:
+        - view
+        - approve
+      auxData:
+        jwt:
+          answer: 42
+    expected:
+      view: EFFECT_ALLOW
+      approve: EFFECT_DENY
+  - name:
+      testTableName: Two-dimensional table test
+      principalKey: manager
+      resourceKey: department_head_leave_request
+    description: A test for multiple principals and resources, with aux data.
+    input:
+      principal:
+        id: user:manager
+      resource:
+        id: leave_request:department_head
+      actions:
+        - view
+        - approve
+      auxData:
+        jwt:
+          answer: 42
+    expected:
+      view: EFFECT_DENY
+      approve: EFFECT_DENY
+  - name:
+      testTableName: Two-dimensional table test
+      principalKey: department_head
+      resourceKey: employee_leave_request
+    description: A test for multiple principals and resources, with aux data.
+    input:
+      principal:
+        id: user:department_head
+      resource:
+        id: leave_request:employee
+      actions:
+        - view
+        - approve
+      auxData:
+        jwt:
+          answer: 42
+    expected:
+      view: EFFECT_ALLOW
+      approve: EFFECT_ALLOW
+  - name:
+      testTableName: Two-dimensional table test
+      principalKey: department_head
+      resourceKey: manager_leave_request
+    description: A test for multiple principals and resources, with aux data.
+    input:
+      principal:
+        id: user:department_head
+      resource:
+        id: leave_request:manager
+      actions:
+        - view
+        - approve
+      auxData:
+        jwt:
+          answer: 42
+    expected:
+      view: EFFECT_ALLOW
+      approve: EFFECT_ALLOW
+  - name:
+      testTableName: Two-dimensional table test
+      principalKey: department_head
+      resourceKey: department_head_leave_request
+    description: A test for multiple principals and resources, with aux data.
+    input:
+      principal:
+        id: user:department_head
+      resource:
+        id: leave_request:department_head
+      actions:
+        - view
+        - approve
+      auxData:
+        jwt:
+          answer: 42
+    expected:
+      view: EFFECT_ALLOW
+      approve: EFFECT_ALLOW

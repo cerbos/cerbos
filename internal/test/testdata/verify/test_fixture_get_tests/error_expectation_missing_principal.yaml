@@ -1,0 +1,23 @@
+table:
+  name: Expectation missing principal
+  description: When testing multiple principals, you have to specify the principal in each expectation.
+  input:
+    principals:
+      - employee
+      - manager
+      - department_head
+    resource: manager_leave_request
+    actions:
+      - view
+      - approve
+  expected:
+    - principal: manager
+      actions:
+        view: EFFECT_ALLOW
+        approve: EFFECT_DENY
+    - actions:
+        view: EFFECT_ALLOW
+        approve: EFFECT_ALLOW
+
+wantErr: |-
+  invalid test "Expectation missing principal": missing principal in expected at index 1

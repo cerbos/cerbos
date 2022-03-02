@@ -620,6 +620,167 @@ func cerbos_policy_v1_Schemas_hashpb_sum(m *v11.Schemas, hasher hash.Hash, ignor
 	}
 }
 
+func cerbos_policy_v1_TestTable_Expectation_hashpb_sum(m *v11.TestTable_Expectation, hasher hash.Hash, ignore map[string]struct{}) {
+	if _, ok := ignore["cerbos.policy.v1.TestTable.Expectation.principal"]; !ok {
+		_, _ = hasher.Write(protowire.AppendString(nil, m.Principal))
+
+	}
+	if _, ok := ignore["cerbos.policy.v1.TestTable.Expectation.resource"]; !ok {
+		_, _ = hasher.Write(protowire.AppendString(nil, m.Resource))
+
+	}
+	if _, ok := ignore["cerbos.policy.v1.TestTable.Expectation.actions"]; !ok {
+		if len(m.Actions) > 0 {
+			keys := make([]string, len(m.Actions))
+			i := 0
+			for k := range m.Actions {
+				keys[i] = k
+				i++
+			}
+
+			sort.Slice(keys, func(i, j int) bool { return keys[i] < keys[j] })
+
+			for _, k := range keys {
+				_, _ = hasher.Write(protowire.AppendVarint(nil, uint64(m.Actions[k])))
+
+			}
+		}
+	}
+}
+
+func cerbos_policy_v1_TestTable_Input_hashpb_sum(m *v11.TestTable_Input, hasher hash.Hash, ignore map[string]struct{}) {
+	if _, ok := ignore["cerbos.policy.v1.TestTable.Input.principal"]; !ok {
+		_, _ = hasher.Write(protowire.AppendString(nil, m.Principal))
+
+	}
+	if _, ok := ignore["cerbos.policy.v1.TestTable.Input.principals"]; !ok {
+		if len(m.Principals) > 0 {
+			for _, v := range m.Principals {
+				_, _ = hasher.Write(protowire.AppendString(nil, v))
+
+			}
+		}
+	}
+	if _, ok := ignore["cerbos.policy.v1.TestTable.Input.resource"]; !ok {
+		_, _ = hasher.Write(protowire.AppendString(nil, m.Resource))
+
+	}
+	if _, ok := ignore["cerbos.policy.v1.TestTable.Input.resources"]; !ok {
+		if len(m.Resources) > 0 {
+			for _, v := range m.Resources {
+				_, _ = hasher.Write(protowire.AppendString(nil, v))
+
+			}
+		}
+	}
+	if _, ok := ignore["cerbos.policy.v1.TestTable.Input.actions"]; !ok {
+		if len(m.Actions) > 0 {
+			for _, v := range m.Actions {
+				_, _ = hasher.Write(protowire.AppendString(nil, v))
+
+			}
+		}
+	}
+	if _, ok := ignore["cerbos.policy.v1.TestTable.Input.aux_data"]; !ok {
+		_, _ = hasher.Write(protowire.AppendString(nil, m.AuxData))
+
+	}
+}
+
+func cerbos_policy_v1_TestTable_hashpb_sum(m *v11.TestTable, hasher hash.Hash, ignore map[string]struct{}) {
+	if _, ok := ignore["cerbos.policy.v1.TestTable.name"]; !ok {
+		_, _ = hasher.Write(protowire.AppendString(nil, m.Name))
+
+	}
+	if _, ok := ignore["cerbos.policy.v1.TestTable.description"]; !ok {
+		_, _ = hasher.Write(protowire.AppendString(nil, m.Description))
+
+	}
+	if _, ok := ignore["cerbos.policy.v1.TestTable.skip"]; !ok {
+		_, _ = hasher.Write(protowire.AppendVarint(nil, protowire.EncodeBool(m.Skip)))
+
+	}
+	if _, ok := ignore["cerbos.policy.v1.TestTable.skip_reason"]; !ok {
+		_, _ = hasher.Write(protowire.AppendString(nil, m.SkipReason))
+
+	}
+	if _, ok := ignore["cerbos.policy.v1.TestTable.input"]; !ok {
+		if m.Input != nil {
+			cerbos_policy_v1_TestTable_Input_hashpb_sum(m.Input, hasher, ignore)
+		}
+
+	}
+	if _, ok := ignore["cerbos.policy.v1.TestTable.expected"]; !ok {
+		if len(m.Expected) > 0 {
+			for _, v := range m.Expected {
+				if v != nil {
+					cerbos_policy_v1_TestTable_Expectation_hashpb_sum(v, hasher, ignore)
+				}
+
+			}
+		}
+	}
+}
+
+func cerbos_policy_v1_Test_TestName_hashpb_sum(m *v11.Test_TestName, hasher hash.Hash, ignore map[string]struct{}) {
+	if _, ok := ignore["cerbos.policy.v1.Test.TestName.test_table_name"]; !ok {
+		_, _ = hasher.Write(protowire.AppendString(nil, m.TestTableName))
+
+	}
+	if _, ok := ignore["cerbos.policy.v1.Test.TestName.principal_key"]; !ok {
+		_, _ = hasher.Write(protowire.AppendString(nil, m.PrincipalKey))
+
+	}
+	if _, ok := ignore["cerbos.policy.v1.Test.TestName.resource_key"]; !ok {
+		_, _ = hasher.Write(protowire.AppendString(nil, m.ResourceKey))
+
+	}
+}
+
+func cerbos_policy_v1_Test_hashpb_sum(m *v11.Test, hasher hash.Hash, ignore map[string]struct{}) {
+	if _, ok := ignore["cerbos.policy.v1.Test.name"]; !ok {
+		if m.Name != nil {
+			cerbos_policy_v1_Test_TestName_hashpb_sum(m.Name, hasher, ignore)
+		}
+
+	}
+	if _, ok := ignore["cerbos.policy.v1.Test.description"]; !ok {
+		_, _ = hasher.Write(protowire.AppendString(nil, m.Description))
+
+	}
+	if _, ok := ignore["cerbos.policy.v1.Test.skip"]; !ok {
+		_, _ = hasher.Write(protowire.AppendVarint(nil, protowire.EncodeBool(m.Skip)))
+
+	}
+	if _, ok := ignore["cerbos.policy.v1.Test.skip_reason"]; !ok {
+		_, _ = hasher.Write(protowire.AppendString(nil, m.SkipReason))
+
+	}
+	if _, ok := ignore["cerbos.policy.v1.Test.input"]; !ok {
+		if m.Input != nil {
+			cerbos_engine_v1_CheckInput_hashpb_sum(m.Input, hasher, ignore)
+		}
+
+	}
+	if _, ok := ignore["cerbos.policy.v1.Test.expected"]; !ok {
+		if len(m.Expected) > 0 {
+			keys := make([]string, len(m.Expected))
+			i := 0
+			for k := range m.Expected {
+				keys[i] = k
+				i++
+			}
+
+			sort.Slice(keys, func(i, j int) bool { return keys[i] < keys[j] })
+
+			for _, k := range keys {
+				_, _ = hasher.Write(protowire.AppendVarint(nil, uint64(m.Expected[k])))
+
+			}
+		}
+	}
+}
+
 func cerbos_private_v1_AttrWrapper_hashpb_sum(m *AttrWrapper, hasher hash.Hash, ignore map[string]struct{}) {
 	if _, ok := ignore["cerbos.private.v1.AttrWrapper.attr"]; !ok {
 		if len(m.Attr) > 0 {
@@ -1116,6 +1277,29 @@ func cerbos_private_v1_ValidationErrContainer_hashpb_sum(m *ValidationErrContain
 
 			}
 		}
+	}
+}
+
+func cerbos_private_v1_VerifyTestFixtureGetTestsTestCase_hashpb_sum(m *VerifyTestFixtureGetTestsTestCase, hasher hash.Hash, ignore map[string]struct{}) {
+	if _, ok := ignore["cerbos.private.v1.VerifyTestFixtureGetTestsTestCase.table"]; !ok {
+		if m.Table != nil {
+			cerbos_policy_v1_TestTable_hashpb_sum(m.Table, hasher, ignore)
+		}
+
+	}
+	if _, ok := ignore["cerbos.private.v1.VerifyTestFixtureGetTestsTestCase.want_tests"]; !ok {
+		if len(m.WantTests) > 0 {
+			for _, v := range m.WantTests {
+				if v != nil {
+					cerbos_policy_v1_Test_hashpb_sum(v, hasher, ignore)
+				}
+
+			}
+		}
+	}
+	if _, ok := ignore["cerbos.private.v1.VerifyTestFixtureGetTestsTestCase.want_err"]; !ok {
+		_, _ = hasher.Write(protowire.AppendString(nil, m.WantErr))
+
 	}
 }
 

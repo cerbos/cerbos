@@ -38,10 +38,11 @@ type SuiteResult struct {
 type TestName struct {
 	TableTestName string `json:"name"`
 	PrincipalKey  string `json:"principal"`
+	ResourceKey   string `json:"resource"`
 }
 
 func (r TestName) String() string {
-	return fmt.Sprintf("'%s' by principal '%s'", r.TableTestName, r.PrincipalKey)
+	return fmt.Sprintf("'%s' for resource '%s' by principal '%s'", r.TableTestName, r.ResourceKey, r.PrincipalKey)
 }
 
 type TestResult struct {
@@ -150,7 +151,7 @@ func doVerify(ctx context.Context, fsys fs.FS, eng *engine.Engine, conf Config) 
 				Failed: true,
 				Tests: []TestResult{
 					{
-						Name:   TestName{TableTestName: "*", PrincipalKey: "*"},
+						Name:   TestName{TableTestName: "*", PrincipalKey: "*", ResourceKey: "*"},
 						Failed: true,
 						Error:  fmt.Sprintf("failed to load test fixtures from %s: %v", fixtureDir, err),
 					},

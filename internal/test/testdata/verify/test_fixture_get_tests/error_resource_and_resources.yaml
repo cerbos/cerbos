@@ -1,0 +1,18 @@
+table:
+  name: Resource and resources
+  description: You can't specify both resource and resources in input.
+  input:
+    principal: employee
+    resource: employee_leave_request
+    resources:
+      - manager_leave_request
+    actions:
+      - view
+      - approve
+  expected:
+    - actions:
+        view: EFFECT_ALLOW
+        approve: EFFECT_DENY
+
+wantErr: |-
+  invalid test "Resource and resources": wanted one of "resource" or "resources" in input; got both

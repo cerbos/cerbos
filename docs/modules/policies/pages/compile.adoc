@@ -25,23 +25,30 @@ Tests are defined using the familiar YAML format as well. Make sure that your te
 ---
 name: AlbumObjectTestSuite <1>
 description: Tests for verifying the album:object resource policy <2>
-resources: <3>
+principals: <3>
+  alicia:
+    id: aliciaID
+    roles:
+      - user
+  bradley:
+    id: bradleyID
+    roles:
+      - user
+resources: <4>
   alicia_album:
-    kind: "album:object"
+    kind: album:object
     attr:
       owner: aliciaID
       id: XX125
       public: false
       flagged: false
-principals: <4>
-  bradley:
-    id: bradleyID
-    roles:
-      - user
-  alicia:
-    id: aliciaID
-    roles:
-      - user
+  bradley_album:
+    kind: album:object
+    attr:
+      owner: bradleyID
+      id: XX250
+      public: false
+      flagged: false
 auxData: <5>
   validJWT:
     jwt:
@@ -49,31 +56,50 @@ auxData: <5>
       aud: ["x", "y"]
       myField: value
 tests: <6>
-  - name: Alicia tries to view her own private album <7>
+  - name: Accessing an album <7>
     input: <8>
-      requestId: "test"
-      actions: ["view", "delete"]
-      resource: "alicia_album"
-      auxData: "validJWT"
-    expected: <9>
-      - principal: alicia
-        actions:
+      principal: alicia <9>
+      principals: <10>
+        - alicia
+        - bradley
+      resource: alicia_album <11>
+      resources: <12>
+        - alicia_album
+        - bradley_album
+      actions: <13>
+        - view
+        - delete
+      auxData: validJWT <14>
+    expected: <15>
+      - principal: alicia <16>
+        resource: alicia_album <17>
+        actions: <18>
           view: EFFECT_ALLOW
           delete: EFFECT_ALLOW
       - principal: bradley
+        resource: bradley_album
         actions:
-          view: EFFECT_DENY
-          delete: EFFECT_DENY
+          view: EFFECT_ALLOW
+          delete: EFFECT_ALLOW
 ----
 <1> Name of the test suite
 <2> Description of the test suite
-<3> Map of resources. The key is a string that can be used to refer to the associated resource
-<4> Map of principals. The key is a string that can be used to refer to the associated principal
-<5> Map of (optional) auxiliary data blocks required to evaluate some requests. The key is a string that can be used to refer to the associated auxData.
+<3> Map of principal fixtures. The key is a string that can be used to refer to the associated principal.
+<4> Map of resource fixtures. The key is a string that can be used to refer to the associated resource.
+<5> Map of (optional) auxiliary data fixtures required to evaluate some requests. The key is a string that can be used to refer to the associated auxData.
 <6> List of tests in this suite
 <7> Name of the test
 <8> Input to the policy engine
-<9> List of outcomes expected for a specified principal and a given action.
+<9> A single principal to test. The value refers to the key of a principal in the test fixtures. Cannot be specified in combination with `principals`.
+<10> Multiple principals to test. The values refer to the keys of principals in the test fixtures. Cannot be specified in combination with `principal`.
+<11> A single resource to test. The value refers to the key of a resource in the test fixtures. Cannot be specified in combination with `resources`.
+<12> Multiple resources to test. The values refer to the keys of resources in the test fixtures. Cannot be specified in combination with `resource`.
+<13> Actions to test
+<14> Auxiliary data to test. The value refers to the key of an auxData in the test fixtures.
+<15> List of outcomes expected for each principal and resource. If a principal-resource pairing specified in `input` is not listed in `expected`, then `EFFECT_DENY` is expected for all actions for that pair.
+<16> The principal under test. Only required when testing multiple principals.
+<17> The resource under test. Only required when testing multiple resources.
+<18> The expected outcomes for each action for the principal-resource pairing
 
 === Sharing test fixtures
 
@@ -238,12 +264,11 @@ tests:
     skip: true
     skipReason: "Policy under review"
     input:
-      requestId: "test01"
-      actions: ["view"]
+      principal: alicia
       resource: alicia_private_album
+      actions: ["view"]
     expected:
-      - principal: alicia
-        actions:
+      - actions:
           view: EFFECT_ALLOW
 ----
 

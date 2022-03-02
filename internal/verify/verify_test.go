@@ -153,12 +153,14 @@ description: Tests for verifying something
 tests:
   - name: Harry's draft leave request
     input: &input
-      requestId: "test"
       actions:
         - create
         - "view:public"
         - approve
       resource: draft_leave_request
+      principals:
+        - harry
+        - maggie
     expected:
       -
         principal: harry

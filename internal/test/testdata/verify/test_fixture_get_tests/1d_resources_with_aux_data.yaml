@@ -1,0 +1,81 @@
+table:
+  name: One-dimensional table test
+  description: A test for a single principal and multiple resources, with aux data.
+  input:
+    principal: manager
+    resources:
+      - employee_leave_request
+      - manager_leave_request
+      - department_head_leave_request
+    actions:
+      - view
+      - approve
+    auxData: test_aux_data
+  expected:
+    - resource: employee_leave_request
+      actions:
+        view: EFFECT_ALLOW
+        approve: EFFECT_ALLOW
+    - resource: manager_leave_request
+      actions:
+        view: EFFECT_ALLOW
+        approve: EFFECT_DENY
+
+wantTests:
+  - name:
+      testTableName: One-dimensional table test
+      principalKey: manager
+      resourceKey: employee_leave_request
+    description: A test for a single principal and multiple resources, with aux data.
+    input:
+      principal:
+        id: user:manager
+      resource:
+        id: leave_request:employee
+      actions:
+        - view
+        - approve
+      auxData:
+        jwt:
+          answer: 42
+    expected:
+      view: EFFECT_ALLOW
+      approve: EFFECT_ALLOW
+  - name:
+      testTableName: One-dimensional table test
+      principalKey: manager
+      resourceKey: manager_leave_request
+    description: A test for a single principal and multiple resources, with aux data.
+    input:
+      principal:
+        id: user:manager
+      resource:
+        id: leave_request:manager
+      actions:
+        - view
+        - approve
+      auxData:
+        jwt:
+          answer: 42
+    expected:
+      view: EFFECT_ALLOW
+      approve: EFFECT_DENY
+  - name:
+      testTableName: One-dimensional table test
+      principalKey: manager
+      resourceKey: department_head_leave_request
+    description: A test for a single principal and multiple resources, with aux data.
+    input:
+      principal:
+        id: user:manager
+      resource:
+        id: leave_request:department_head
+      actions:
+        - view
+        - approve
+      auxData:
+        jwt:
+          answer: 42
+    expected:
+      view: EFFECT_DENY
+      approve: EFFECT_DENY

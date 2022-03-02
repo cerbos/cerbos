@@ -607,35 +607,16 @@ func cerbos_policy_v1_TestSuite_hashpb_sum(m *TestSuite, hasher hash.Hash, ignor
 	}
 }
 
-func cerbos_policy_v1_TestTable_CheckInput_hashpb_sum(m *TestTable_CheckInput, hasher hash.Hash, ignore map[string]struct{}) {
-	if _, ok := ignore["cerbos.policy.v1.TestTable.CheckInput.request_id"]; !ok {
-		_, _ = hasher.Write(protowire.AppendString(nil, m.RequestId))
-
-	}
-	if _, ok := ignore["cerbos.policy.v1.TestTable.CheckInput.resource"]; !ok {
-		_, _ = hasher.Write(protowire.AppendString(nil, m.Resource))
-
-	}
-	if _, ok := ignore["cerbos.policy.v1.TestTable.CheckInput.actions"]; !ok {
-		if len(m.Actions) > 0 {
-			for _, v := range m.Actions {
-				_, _ = hasher.Write(protowire.AppendString(nil, v))
-
-			}
-		}
-	}
-	if _, ok := ignore["cerbos.policy.v1.TestTable.CheckInput.aux_data"]; !ok {
-		_, _ = hasher.Write(protowire.AppendString(nil, m.AuxData))
-
-	}
-}
-
-func cerbos_policy_v1_TestTable_ExpectedItem_hashpb_sum(m *TestTable_ExpectedItem, hasher hash.Hash, ignore map[string]struct{}) {
-	if _, ok := ignore["cerbos.policy.v1.TestTable.ExpectedItem.principal"]; !ok {
+func cerbos_policy_v1_TestTable_Expectation_hashpb_sum(m *TestTable_Expectation, hasher hash.Hash, ignore map[string]struct{}) {
+	if _, ok := ignore["cerbos.policy.v1.TestTable.Expectation.principal"]; !ok {
 		_, _ = hasher.Write(protowire.AppendString(nil, m.Principal))
 
 	}
-	if _, ok := ignore["cerbos.policy.v1.TestTable.ExpectedItem.actions"]; !ok {
+	if _, ok := ignore["cerbos.policy.v1.TestTable.Expectation.resource"]; !ok {
+		_, _ = hasher.Write(protowire.AppendString(nil, m.Resource))
+
+	}
+	if _, ok := ignore["cerbos.policy.v1.TestTable.Expectation.actions"]; !ok {
 		if len(m.Actions) > 0 {
 			keys := make([]string, len(m.Actions))
 			i := 0
@@ -651,6 +632,45 @@ func cerbos_policy_v1_TestTable_ExpectedItem_hashpb_sum(m *TestTable_ExpectedIte
 
 			}
 		}
+	}
+}
+
+func cerbos_policy_v1_TestTable_Input_hashpb_sum(m *TestTable_Input, hasher hash.Hash, ignore map[string]struct{}) {
+	if _, ok := ignore["cerbos.policy.v1.TestTable.Input.principal"]; !ok {
+		_, _ = hasher.Write(protowire.AppendString(nil, m.Principal))
+
+	}
+	if _, ok := ignore["cerbos.policy.v1.TestTable.Input.principals"]; !ok {
+		if len(m.Principals) > 0 {
+			for _, v := range m.Principals {
+				_, _ = hasher.Write(protowire.AppendString(nil, v))
+
+			}
+		}
+	}
+	if _, ok := ignore["cerbos.policy.v1.TestTable.Input.resource"]; !ok {
+		_, _ = hasher.Write(protowire.AppendString(nil, m.Resource))
+
+	}
+	if _, ok := ignore["cerbos.policy.v1.TestTable.Input.resources"]; !ok {
+		if len(m.Resources) > 0 {
+			for _, v := range m.Resources {
+				_, _ = hasher.Write(protowire.AppendString(nil, v))
+
+			}
+		}
+	}
+	if _, ok := ignore["cerbos.policy.v1.TestTable.Input.actions"]; !ok {
+		if len(m.Actions) > 0 {
+			for _, v := range m.Actions {
+				_, _ = hasher.Write(protowire.AppendString(nil, v))
+
+			}
+		}
+	}
+	if _, ok := ignore["cerbos.policy.v1.TestTable.Input.aux_data"]; !ok {
+		_, _ = hasher.Write(protowire.AppendString(nil, m.AuxData))
+
 	}
 }
 
@@ -673,7 +693,7 @@ func cerbos_policy_v1_TestTable_hashpb_sum(m *TestTable, hasher hash.Hash, ignor
 	}
 	if _, ok := ignore["cerbos.policy.v1.TestTable.input"]; !ok {
 		if m.Input != nil {
-			cerbos_policy_v1_TestTable_CheckInput_hashpb_sum(m.Input, hasher, ignore)
+			cerbos_policy_v1_TestTable_Input_hashpb_sum(m.Input, hasher, ignore)
 		}
 
 	}
@@ -681,7 +701,7 @@ func cerbos_policy_v1_TestTable_hashpb_sum(m *TestTable, hasher hash.Hash, ignor
 		if len(m.Expected) > 0 {
 			for _, v := range m.Expected {
 				if v != nil {
-					cerbos_policy_v1_TestTable_ExpectedItem_hashpb_sum(v, hasher, ignore)
+					cerbos_policy_v1_TestTable_Expectation_hashpb_sum(v, hasher, ignore)
 				}
 
 			}
@@ -696,6 +716,10 @@ func cerbos_policy_v1_Test_TestName_hashpb_sum(m *Test_TestName, hasher hash.Has
 	}
 	if _, ok := ignore["cerbos.policy.v1.Test.TestName.principal_key"]; !ok {
 		_, _ = hasher.Write(protowire.AppendString(nil, m.PrincipalKey))
+
+	}
+	if _, ok := ignore["cerbos.policy.v1.Test.TestName.resource_key"]; !ok {
+		_, _ = hasher.Write(protowire.AppendString(nil, m.ResourceKey))
 
 	}
 }

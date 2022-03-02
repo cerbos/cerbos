@@ -146,17 +146,17 @@ func (m *TestTable) HashPB(hasher hash.Hash, ignore map[string]struct{}) {
 
 // HashPB computes a hash of the message using the given hash function
 // The ignore set must contain fully-qualified field names (pkg.msg.field) that should be ignored from the hash
-func (m *TestTable_CheckInput) HashPB(hasher hash.Hash, ignore map[string]struct{}) {
+func (m *TestTable_Input) HashPB(hasher hash.Hash, ignore map[string]struct{}) {
 	if m != nil {
-		cerbos_policy_v1_TestTable_CheckInput_hashpb_sum(m, hasher, ignore)
+		cerbos_policy_v1_TestTable_Input_hashpb_sum(m, hasher, ignore)
 	}
 }
 
 // HashPB computes a hash of the message using the given hash function
 // The ignore set must contain fully-qualified field names (pkg.msg.field) that should be ignored from the hash
-func (m *TestTable_ExpectedItem) HashPB(hasher hash.Hash, ignore map[string]struct{}) {
+func (m *TestTable_Expectation) HashPB(hasher hash.Hash, ignore map[string]struct{}) {
 	if m != nil {
-		cerbos_policy_v1_TestTable_ExpectedItem_hashpb_sum(m, hasher, ignore)
+		cerbos_policy_v1_TestTable_Expectation_hashpb_sum(m, hasher, ignore)
 	}
 }
 

@@ -4,10 +4,12 @@ description: Tests for verifying something
 tests:
   - name: John and his leave request
     input:
-      requestId: "test"
       actions:
         - "delete"
         - "approve"
+      principals:
+        - bev
+        - matt
       resource: "pending_leave_request"
     expected:
       -

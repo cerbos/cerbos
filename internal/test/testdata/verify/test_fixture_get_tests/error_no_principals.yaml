@@ -1,0 +1,15 @@
+table:
+  name: No principals
+  description: Either principal or principals is required in input.
+  input:
+    resource: employee_leave_request
+    actions:
+      - view
+      - approve
+  expected:
+    - actions:
+        view: EFFECT_ALLOW
+        approve: EFFECT_DENY
+
+wantErr: |-
+  invalid test "No principals": wanted one of "principal" or "principals" in input; got neither
