@@ -60,7 +60,7 @@ type Cmd struct {
 	CACert   string        `help:"Path to CA cert for validating server cert" type:"existingfile" group:"manual" xor:"cacert" env:"CERBOS_HC_CACERT"`
 	NoTLS    bool          `help:"Don't use TLS" group:"manual" xor:"notls" env:"CERBOS_HC_NOTLS"`
 	Insecure bool          `help:"Do not verify server certificate" default:"false" env:"CERBOS_HC_INSECURE"`
-	Timeout  time.Duration `help:"Healthcheck timeout" default:"10s" env:"CERBOS_HC_TIMEOUT"`
+	Timeout  time.Duration `help:"Healthcheck timeout" default:"2s" env:"CERBOS_HC_TIMEOUT"`
 }
 
 type checker interface {
