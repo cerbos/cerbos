@@ -41,7 +41,7 @@ export const options = {
 };
 
 const requestsDir = "work/requests"
-const host = "http://127.0.0.1:3592"
+const host = `http://${__ENV.SERVER}`
 
 const fileName = (prefix, num) => `${requestsDir}/${prefix}_${num.toString().padStart(5, 0)}.json`;
 

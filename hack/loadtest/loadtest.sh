@@ -17,6 +17,9 @@ REQ_COUNT=${REQ_COUNT:-"$NUM_POLICIES"}
 REQ_KIND=${REQ_KIND:-"crs_req01"}
 RPS=${RPS:-"200"}
 STORE=${STORE:-"disk"}
+SERVER=${SERVER:-"localhost:3592"}
+USERNAME=${USERNAME:-"cerbos"}
+PASSWORD=${PASSWORD:-"cerbosAdmin"}
 
 clean() {
   printf "Cleaning up\n"
@@ -27,6 +30,10 @@ clean() {
 generateResources() {
   printf "Generating %s policy sets\n" "$NUM_POLICIES"
   go run ./generate.go --out="${WORK_DIR}" --count="$NUM_POLICIES"
+}
+
+put() {
+  cerbosctl --server="${SERVER}" --username="${USERNAME}" --password="${PASSWORD}" --plaintext put "${1}" "${2}"
 }
 
 down() {
@@ -58,10 +65,17 @@ up() {
   printf "Starting all services\n"
   docker-compose up -d
 
-  while [[ "$(curl -s -o /dev/null -w '%{http_code}' 'http://localhost:3592/_cerbos/health')" != "200" ]]; do 
-      echo "Waiting for Cerbos..."
-      sleep 1 
+  while [[ "$(curl -s -o /dev/null -w '%{http_code}' "http://${SERVER}/_cerbos/health")" != "200" ]]; do
+    echo "Waiting for Cerbos..."
+    sleep 1
   done
+
+  if [[ "${STORE}" == "postgres" ]]; then
+    printf "Putting schemas\n"
+    put schemas ./"${WORK_DIR}"/policies/_schemas
+    printf "Putting policies\n"
+    put policies ./"${WORK_DIR}"/policies
+  fi
 
   docker-compose logs -f 
 }
@@ -77,6 +91,7 @@ executeTest() {
     -e REQ_COUNT="$REQ_COUNT" \
     -e REQ_KIND="$REQ_KIND" \
     -e RPS="$RPS" \
+    -e SERVER="$SERVER" \
     check.js
 }
 
