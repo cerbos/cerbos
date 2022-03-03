@@ -132,9 +132,15 @@ func Start(ctx context.Context, zpagesEnabled bool) error {
 		return fmt.Errorf("failed to create schema manager: %w", err)
 	}
 
+	// create compile manager
+	compileMgr, err := compile.NewManager(ctx, store, schemaMgr)
+	if err != nil {
+		return fmt.Errorf("failed to create compile manager: %w", err)
+	}
+
 	// create engine
 	eng, err := engine.New(ctx, engine.Components{
-		CompileMgr: compile.NewManager(ctx, store, schemaMgr),
+		CompileMgr: compileMgr,
 		SchemaMgr:  schemaMgr,
 		AuditLog:   auditLog,
 	})

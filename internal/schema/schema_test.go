@@ -93,7 +93,7 @@ func TestValidate(t *testing.T) {
 		enforcement := enforcement
 		t.Run(fmt.Sprintf("enforcement=%s", enforcement), func(t *testing.T) {
 			store := mkStore(t)
-			conf := &schema.Conf{Enforcement: enforcement}
+			conf := schema.NewConf(enforcement)
 			mgr := schema.NewWithConf(context.Background(), store, conf)
 
 			for _, tcase := range testCases {
@@ -130,7 +130,7 @@ func TestValidate(t *testing.T) {
 			t.Run(tcase.Name, func(t *testing.T) {
 				tc := readTestCase(t, tcase.Input)
 				store := mkStore(t)
-				conf := &schema.Conf{Enforcement: schema.EnforcementNone}
+				conf := schema.NewConf(schema.EnforcementNone)
 				mgr := schema.NewWithConf(context.Background(), store, conf)
 
 				have, err := mgr.Validate(context.Background(), tc.SchemaRefs, tc.Input)
@@ -150,7 +150,7 @@ func TestCache(t *testing.T) {
 	require.NoError(t, err)
 
 	store := disk.NewFromIndexWithConf(index, &disk.Conf{})
-	conf := &schema.Conf{Enforcement: schema.EnforcementReject}
+	conf := schema.NewConf(schema.EnforcementReject)
 	mgr := schema.NewWithConf(context.Background(), store, conf)
 
 	s, ok := mgr.(storage.Subscriber)
@@ -238,13 +238,13 @@ func mkMgrs(t *testing.T, fsDir string) map[string]schema.Manager {
 	idx, err := index.Build(ctx, fsys)
 	require.NoError(t, err)
 	diskStore := disk.NewFromIndexWithConf(idx, &disk.Conf{})
-	diskMgr := schema.NewWithConf(ctx, diskStore, &schema.Conf{Enforcement: schema.EnforcementReject})
+	diskMgr := schema.NewWithConf(ctx, diskStore, schema.NewConf(schema.EnforcementReject))
 
 	// Create mgr with sqlite3 store
 	sqlite3Store, err := sqlite3.NewStore(ctx, &sqlite3.Conf{DSN: "file::memory:?_fk=true"})
 	require.NoError(t, err)
 	test.AddSchemasToStore(t, schemasDir, sqlite3Store)
-	sqlite3Mgr := schema.NewWithConf(ctx, sqlite3Store, &schema.Conf{Enforcement: schema.EnforcementReject})
+	sqlite3Mgr := schema.NewWithConf(ctx, sqlite3Store, schema.NewConf(schema.EnforcementReject))
 
 	// Add each created store to mgrs map
 	mgrs[disk.DriverName] = diskMgr

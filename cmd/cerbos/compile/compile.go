@@ -91,7 +91,7 @@ func (c *Cmd) Run(k *kong.Kong) error {
 	if c.IgnoreSchemas {
 		enforcement = schema.EnforcementNone
 	}
-	schemaMgr := schema.NewWithConf(ctx, store, &schema.Conf{Enforcement: enforcement})
+	schemaMgr := schema.NewWithConf(ctx, store, schema.NewConf(enforcement))
 
 	if err := compile.BatchCompile(idx.GetAllCompilationUnits(ctx), schemaMgr); err != nil {
 		compErr := new(compile.ErrorList)
@@ -112,7 +112,7 @@ func (c *Cmd) Run(k *kong.Kong) error {
 			verifyConf.TestsDir = c.Dir
 		}
 
-		compiler := compile.NewManager(ctx, store, schemaMgr)
+		compiler := compile.NewManagerWithDefaultConf(ctx, store, schemaMgr)
 		eng, err := engine.NewEphemeral(ctx, compiler, schemaMgr)
 		if err != nil {
 			return fmt.Errorf("failed to create engine: %w", err)

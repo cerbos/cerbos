@@ -30,10 +30,9 @@ import (
 )
 
 const (
-	Directory    = "_schemas"
-	URLScheme    = "cerbos"
-	attrPath     = "attr"
-	maxCacheSize = 64
+	Directory = "_schemas"
+	URLScheme = "cerbos"
+	attrPath  = "attr"
 )
 
 var alwaysValidResult = &ValidationResult{Reject: false}
@@ -96,7 +95,7 @@ func NewWithConf(ctx context.Context, loader Loader, conf *Conf) Manager {
 		conf:   conf,
 		log:    zap.L().Named("schema"),
 		loader: loader,
-		cache:  gcache.New(maxCacheSize).ARC().Build(),
+		cache:  gcache.New(int(conf.CacheSize)).ARC().Build(),
 	}
 
 	loader.Subscribe(mgr)

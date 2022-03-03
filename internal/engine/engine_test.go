@@ -178,10 +178,10 @@ func mkEngine(tb testing.TB, p param) (*Engine, context.CancelFunc) {
 	store, err := disk.NewStore(ctx, &disk.Conf{Directory: dir})
 	require.NoError(tb, err)
 
-	schemaConf := &schema.Conf{Enforcement: p.schemaEnforcement}
+	schemaConf := schema.NewConf(p.schemaEnforcement)
 	schemaMgr := schema.NewWithConf(ctx, store, schemaConf)
 
-	compiler := compile.NewManager(ctx, store, schemaMgr)
+	compiler := compile.NewManagerWithDefaultConf(ctx, store, schemaMgr)
 
 	var auditLog audit.Log
 	if p.enableAuditLog {
