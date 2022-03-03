@@ -2,6 +2,8 @@ include::ROOT:partial$attributes.adoc[]
 
 = Resource policies
 
+Resource policies define rules for actions that can be performed on a given resource. A resource is an application-specific concept that applies to anything that requires access rules. For example, in an HR application, a resource can be as coarse-grained as a full employee record or as fine-grained as a single field in the record.
+
 [source,yaml,linenums]
 ----
 ---
