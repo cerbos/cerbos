@@ -13,25 +13,19 @@ randomSeed(999333666);
 
 export const options = {
     scenarios: {
-        constant_load: {
-            executor: 'constant-vus',
-            vus: __ENV.MIN_VUS,
-            duration: `${__ENV.DURATION_SECS}s`,
-            startTime: '0s'
-        },
         constant_rps: {
             executor: 'constant-arrival-rate',
             rate: __ENV.RPS,
             duration: `${__ENV.DURATION_SECS}s`,
             preAllocatedVUs: __ENV.MIN_VUS,
             maxVUs: __ENV.MAX_VUS,
-            startTime: `${__ENV.DURATION_SECS}s`,
+            startTime: "0s",
         },
         shared_iters: {
             executor: 'shared-iterations',
             vus: __ENV.MAX_VUS,
             iterations: __ENV.ITERATIONS,
-            startTime: `${2 * __ENV.DURATION_SECS}s`,
+            startTime: `${__ENV.DURATION_SECS}s`,
         },
     },
     thresholds: {

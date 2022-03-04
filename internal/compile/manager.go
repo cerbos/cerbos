@@ -14,6 +14,7 @@ import (
 	"go.uber.org/zap"
 
 	runtimev1 "github.com/cerbos/cerbos/api/genpb/cerbos/runtime/v1"
+	"github.com/cerbos/cerbos/internal/config"
 	"github.com/cerbos/cerbos/internal/namer"
 	"github.com/cerbos/cerbos/internal/observability/metrics"
 	"github.com/cerbos/cerbos/internal/policy"
@@ -22,7 +23,6 @@ import (
 )
 
 const (
-	maxCacheSize          = 128
 	negativeCacheEntryTTL = 10 * time.Second
 	storeFetchTimeout     = 2 * time.Second
 	updateQueueSize       = 32
@@ -36,13 +36,26 @@ type Manager struct {
 	cache       gcache.Cache
 }
 
-func NewManager(ctx context.Context, store storage.Store, schemaMgr schema.Manager) *Manager {
+func NewManager(ctx context.Context, store storage.Store, schemaMgr schema.Manager) (*Manager, error) {
+	conf := &Conf{}
+	if err := config.GetSection(conf); err != nil {
+		return nil, err
+	}
+
+	return NewManagerWithConf(ctx, conf, store, schemaMgr), nil
+}
+
+func NewManagerWithDefaultConf(ctx context.Context, store storage.Store, schemaMgr schema.Manager) *Manager {
+	return NewManagerWithConf(ctx, DefaultConf(), store, schemaMgr)
+}
+
+func NewManagerWithConf(ctx context.Context, conf *Conf, store storage.Store, schemaMgr schema.Manager) *Manager {
 	c := &Manager{
 		log:         zap.S().Named("compiler"),
 		store:       store,
 		schemaMgr:   schemaMgr,
 		updateQueue: make(chan storage.Event, updateQueueSize),
-		cache:       gcache.New(maxCacheSize).ARC().Build(),
+		cache:       gcache.New(int(conf.CacheSize)).ARC().Build(),
 	}
 
 	go c.processUpdateQueue(ctx)

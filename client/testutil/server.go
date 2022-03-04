@@ -276,8 +276,13 @@ func startServer(ctx context.Context, g *errgroup.Group, sopt *serverOpt) (err e
 		return fmt.Errorf("failed to create schema manager: %w", err)
 	}
 
+	compileMgr, err := compile.NewManager(ctx, store, schemaMgr)
+	if err != nil {
+		return fmt.Errorf("failed to create compile manager: %w", err)
+	}
+
 	eng, err := engine.New(ctx, engine.Components{
-		CompileMgr: compile.NewManager(ctx, store, schemaMgr),
+		CompileMgr: compileMgr,
 		SchemaMgr:  schemaMgr,
 		AuditLog:   auditLog,
 	})
