@@ -115,6 +115,7 @@ func (tf *testFixture) runTestSuite(ctx context.Context, eng *engine.Engine, sho
 		sr.Skipped = true
 		return sr, failed
 	}
+
 	tests, err := tf.getTests(ts)
 	if err != nil {
 		failed = true
@@ -126,12 +127,13 @@ func (tf *testFixture) runTestSuite(ctx context.Context, eng *engine.Engine, sho
 		}}
 		return sr, failed
 	}
+
 	for _, test := range tests {
 		if err := ctx.Err(); err != nil {
 			return sr, failed
 		}
 
-		testResult := TestResult{Name: TestName{TableTestName: test.Name.TestTableName, PrincipalKey: test.Name.PrincipalKey}}
+		testResult := TestResult{Name: TestName{TableTestName: test.Name.TestTableName, PrincipalKey: test.Name.PrincipalKey, ResourceKey: test.Name.ResourceKey}}
 		if test.Skip || !shouldRun(fmt.Sprintf("%s/%s", ts.Name, test.Name.String())) {
 			testResult.Skipped = true
 			sr.Tests = append(sr.Tests, testResult)
@@ -179,83 +181,118 @@ func (tf *testFixture) runTestSuite(ctx context.Context, eng *engine.Engine, sho
 	return sr, failed
 }
 
-var (
-	ErrAuxDataNotFound   = errors.New("auxData not found")
-	ErrPrincipalNotFound = errors.New("principal not found")
-	ErrResourceNotFound  = errors.New("resource not found")
-)
+func (tf *testFixture) getTests(suite *policyv1.TestSuite) ([]*policyv1.Test, error) {
+	var allTests []*policyv1.Test
 
-func (tf *testFixture) lookupResource(k string) (*enginev1.Resource, bool) {
-	if tf == nil {
-		return nil, false
+	for _, table := range suite.Tests {
+		tests, err := tf.buildTests(suite, table)
+		if err != nil {
+			return nil, fmt.Errorf("invalid test %q: %w", table.Name, err)
+		}
+
+		allTests = append(allTests, tests...)
 	}
-	v, ok := tf.resources[k]
-	return v, ok
+
+	return allTests, nil
 }
 
-func (tf *testFixture) lookupPrincipal(k string) (*enginev1.Principal, bool) {
-	if tf == nil {
-		return nil, false
+func (tf *testFixture) buildTests(suite *policyv1.TestSuite, table *policyv1.TestTable) ([]*policyv1.Test, error) {
+	matrix, err := buildTestMatrix(table)
+	if err != nil {
+		return nil, err
 	}
-	v, ok := tf.principals[k]
-	return v, ok
-}
 
-func (tf *testFixture) lookupAuxData(k string) (*enginev1.AuxData, bool) {
-	if tf == nil {
-		return nil, false
-	}
-	v, ok := tf.auxData[k]
-	return v, ok
-}
+	tests := make([]*policyv1.Test, len(matrix))
 
-func (tf *testFixture) getTests(ts *policyv1.TestSuite) (tests []*policyv1.Test, err error) {
-	for _, table := range ts.Tests {
-		for _, expected := range table.Expected {
-			principal, ok := ts.Principals[expected.Principal]
-			if !ok {
-				principal, ok = tf.lookupPrincipal(expected.Principal)
-				if !ok {
-					return nil, fmt.Errorf("%w:%q", ErrPrincipalNotFound, expected.Principal)
-				}
-			}
-
-			resource, ok := ts.Resources[table.Input.Resource]
-			if !ok {
-				resource, ok = tf.lookupResource(table.Input.Resource)
-				if !ok {
-					return nil, fmt.Errorf("%w:%q", ErrResourceNotFound, table.Input.Resource)
-				}
-			}
-
-			var auxData *enginev1.AuxData
-			if adKey := table.Input.AuxData; adKey != "" {
-				auxData, ok = ts.AuxData[adKey]
-				if !ok {
-					auxData, ok = tf.lookupAuxData(adKey)
-					if !ok {
-						return nil, fmt.Errorf("%w:%q", ErrAuxDataNotFound, adKey)
-					}
-				}
-			}
-
-			test := &policyv1.Test{
-				Name:        &policyv1.Test_TestName{TestTableName: table.Name, PrincipalKey: expected.Principal},
-				Description: table.Description,
-				Skip:        table.Skip,
-				SkipReason:  table.SkipReason,
-				Input: &enginev1.CheckInput{
-					RequestId: table.Input.RequestId,
-					Resource:  resource,
-					Principal: principal,
-					AuxData:   auxData,
-					Actions:   table.Input.Actions,
-				},
-				Expected: expected.Actions,
-			}
-			tests = append(tests, test)
+	for i, element := range matrix {
+		tests[i], err = tf.buildTest(suite, table, element)
+		if err != nil {
+			return nil, err
 		}
 	}
 
 	return tests, nil
+}
+
+func (tf *testFixture) buildTest(suite *policyv1.TestSuite, table *policyv1.TestTable, matrixElement testMatrixElement) (*policyv1.Test, error) {
+	name := &policyv1.Test_TestName{
+		TestTableName: table.Name,
+		PrincipalKey:  matrixElement.Principal,
+		ResourceKey:   matrixElement.Resource,
+	}
+
+	principal, err := tf.lookupPrincipal(suite, matrixElement.Principal)
+	if err != nil {
+		return nil, err
+	}
+
+	resource, err := tf.lookupResource(suite, matrixElement.Resource)
+	if err != nil {
+		return nil, err
+	}
+
+	auxData, err := tf.lookupAuxData(suite, table.Input.AuxData)
+	if err != nil {
+		return nil, err
+	}
+
+	return &policyv1.Test{
+		Name:        name,
+		Description: table.Description,
+		Skip:        table.Skip,
+		SkipReason:  table.SkipReason,
+		Input: &enginev1.CheckInput{
+			Principal: principal,
+			Resource:  resource,
+			Actions:   table.Input.Actions,
+			AuxData:   auxData,
+		},
+		Expected: matrixElement.Expected,
+	}, nil
+}
+
+func (tf *testFixture) lookupPrincipal(ts *policyv1.TestSuite, k string) (*enginev1.Principal, error) {
+	if v, ok := ts.Principals[k]; ok {
+		return v, nil
+	}
+
+	if tf != nil {
+		if v, ok := tf.principals[k]; ok {
+			return v, nil
+		}
+	}
+
+	return nil, fmt.Errorf("principal %q not found", k)
+}
+
+func (tf *testFixture) lookupResource(ts *policyv1.TestSuite, k string) (*enginev1.Resource, error) {
+	if v, ok := ts.Resources[k]; ok {
+		return v, nil
+	}
+
+	if tf != nil {
+		if v, ok := tf.resources[k]; ok {
+			return v, nil
+		}
+	}
+
+	return nil, fmt.Errorf("resource %q not found", k)
+}
+
+func (tf *testFixture) lookupAuxData(ts *policyv1.TestSuite, k string) (*enginev1.AuxData, error) {
+	if k == "" {
+		return nil, nil
+	}
+
+	if v, ok := ts.AuxData[k]; ok {
+		return v, nil
+	}
+
+	if tf != nil {
+		if v, ok := tf.auxData[k]; ok {
+			return v, nil
+		}
+	}
+
+	return nil, fmt.Errorf("auxData %q not found", k)
 }

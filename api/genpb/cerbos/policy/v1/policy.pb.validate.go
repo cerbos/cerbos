@@ -2845,7 +2845,43 @@ func (m *Test) validate(all bool) error {
 		}
 	}
 
-	// no validation rules for Expected
+	if len(m.GetExpected()) < 1 {
+		err := TestValidationError{
+			field:  "Expected",
+			reason: "value must contain at least 1 pair(s)",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	{
+		sorted_keys := make([]string, len(m.GetExpected()))
+		i := 0
+		for key := range m.GetExpected() {
+			sorted_keys[i] = key
+			i++
+		}
+		sort.Slice(sorted_keys, func(i, j int) bool { return sorted_keys[i] < sorted_keys[j] })
+		for _, key := range sorted_keys {
+			val := m.GetExpected()[key]
+			_ = val
+
+			if utf8.RuneCountInString(key) < 1 {
+				err := TestValidationError{
+					field:  fmt.Sprintf("Expected[%v]", key),
+					reason: "value length must be at least 1 runes",
+				}
+				if !all {
+					return err
+				}
+				errors = append(errors, err)
+			}
+
+			// no validation rules for Expected[key]
+		}
+	}
 
 	if len(errors) > 0 {
 		return TestMultiError(errors)
@@ -3960,34 +3996,32 @@ var _ interface {
 	ErrorName() string
 } = TestFixture_AuxDataValidationError{}
 
-// Validate checks the field values on TestTable_CheckInput with the rules
-// defined in the proto definition for this message. If any rules are
-// violated, the first error encountered is returned, or nil if there are no violations.
-func (m *TestTable_CheckInput) Validate() error {
+// Validate checks the field values on TestTable_Input with the rules defined
+// in the proto definition for this message. If any rules are violated, the
+// first error encountered is returned, or nil if there are no violations.
+func (m *TestTable_Input) Validate() error {
 	return m.validate(false)
 }
 
-// ValidateAll checks the field values on TestTable_CheckInput with the rules
+// ValidateAll checks the field values on TestTable_Input with the rules
 // defined in the proto definition for this message. If any rules are
 // violated, the result is a list of violation errors wrapped in
-// TestTable_CheckInputMultiError, or nil if none found.
-func (m *TestTable_CheckInput) ValidateAll() error {
+// TestTable_InputMultiError, or nil if none found.
+func (m *TestTable_Input) ValidateAll() error {
 	return m.validate(true)
 }
 
-func (m *TestTable_CheckInput) validate(all bool) error {
+func (m *TestTable_Input) validate(all bool) error {
 	if m == nil {
 		return nil
 	}
 
 	var errors []error
 
-	// no validation rules for RequestId
-
-	if utf8.RuneCountInString(m.GetResource()) < 1 {
-		err := TestTable_CheckInputValidationError{
-			field:  "Resource",
-			reason: "value length must be at least 1 runes",
+	if len(m.GetPrincipals()) < 1 {
+		err := TestTable_InputValidationError{
+			field:  "Principals",
+			reason: "value must contain at least 1 item(s)",
 		}
 		if !all {
 			return err
@@ -3995,13 +4029,97 @@ func (m *TestTable_CheckInput) validate(all bool) error {
 		errors = append(errors, err)
 	}
 
-	_TestTable_CheckInput_Actions_Unique := make(map[string]struct{}, len(m.GetActions()))
+	_TestTable_Input_Principals_Unique := make(map[string]struct{}, len(m.GetPrincipals()))
+
+	for idx, item := range m.GetPrincipals() {
+		_, _ = idx, item
+
+		if _, exists := _TestTable_Input_Principals_Unique[item]; exists {
+			err := TestTable_InputValidationError{
+				field:  fmt.Sprintf("Principals[%v]", idx),
+				reason: "repeated value must contain unique items",
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
+		} else {
+			_TestTable_Input_Principals_Unique[item] = struct{}{}
+		}
+
+		if utf8.RuneCountInString(item) < 1 {
+			err := TestTable_InputValidationError{
+				field:  fmt.Sprintf("Principals[%v]", idx),
+				reason: "value length must be at least 1 runes",
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
+		}
+
+	}
+
+	if len(m.GetResources()) < 1 {
+		err := TestTable_InputValidationError{
+			field:  "Resources",
+			reason: "value must contain at least 1 item(s)",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	_TestTable_Input_Resources_Unique := make(map[string]struct{}, len(m.GetResources()))
+
+	for idx, item := range m.GetResources() {
+		_, _ = idx, item
+
+		if _, exists := _TestTable_Input_Resources_Unique[item]; exists {
+			err := TestTable_InputValidationError{
+				field:  fmt.Sprintf("Resources[%v]", idx),
+				reason: "repeated value must contain unique items",
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
+		} else {
+			_TestTable_Input_Resources_Unique[item] = struct{}{}
+		}
+
+		if utf8.RuneCountInString(item) < 1 {
+			err := TestTable_InputValidationError{
+				field:  fmt.Sprintf("Resources[%v]", idx),
+				reason: "value length must be at least 1 runes",
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
+		}
+
+	}
+
+	if len(m.GetActions()) < 1 {
+		err := TestTable_InputValidationError{
+			field:  "Actions",
+			reason: "value must contain at least 1 item(s)",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	_TestTable_Input_Actions_Unique := make(map[string]struct{}, len(m.GetActions()))
 
 	for idx, item := range m.GetActions() {
 		_, _ = idx, item
 
-		if _, exists := _TestTable_CheckInput_Actions_Unique[item]; exists {
-			err := TestTable_CheckInputValidationError{
+		if _, exists := _TestTable_Input_Actions_Unique[item]; exists {
+			err := TestTable_InputValidationError{
 				field:  fmt.Sprintf("Actions[%v]", idx),
 				reason: "repeated value must contain unique items",
 			}
@@ -4010,11 +4128,11 @@ func (m *TestTable_CheckInput) validate(all bool) error {
 			}
 			errors = append(errors, err)
 		} else {
-			_TestTable_CheckInput_Actions_Unique[item] = struct{}{}
+			_TestTable_Input_Actions_Unique[item] = struct{}{}
 		}
 
 		if utf8.RuneCountInString(item) < 1 {
-			err := TestTable_CheckInputValidationError{
+			err := TestTable_InputValidationError{
 				field:  fmt.Sprintf("Actions[%v]", idx),
 				reason: "value length must be at least 1 runes",
 			}
@@ -4029,18 +4147,18 @@ func (m *TestTable_CheckInput) validate(all bool) error {
 	// no validation rules for AuxData
 
 	if len(errors) > 0 {
-		return TestTable_CheckInputMultiError(errors)
+		return TestTable_InputMultiError(errors)
 	}
 	return nil
 }
 
-// TestTable_CheckInputMultiError is an error wrapping multiple validation
-// errors returned by TestTable_CheckInput.ValidateAll() if the designated
-// constraints aren't met.
-type TestTable_CheckInputMultiError []error
+// TestTable_InputMultiError is an error wrapping multiple validation errors
+// returned by TestTable_Input.ValidateAll() if the designated constraints
+// aren't met.
+type TestTable_InputMultiError []error
 
 // Error returns a concatenation of all the error messages it wraps.
-func (m TestTable_CheckInputMultiError) Error() string {
+func (m TestTable_InputMultiError) Error() string {
 	var msgs []string
 	for _, err := range m {
 		msgs = append(msgs, err.Error())
@@ -4049,11 +4167,11 @@ func (m TestTable_CheckInputMultiError) Error() string {
 }
 
 // AllErrors returns a list of validation violation errors.
-func (m TestTable_CheckInputMultiError) AllErrors() []error { return m }
+func (m TestTable_InputMultiError) AllErrors() []error { return m }
 
-// TestTable_CheckInputValidationError is the validation error returned by
-// TestTable_CheckInput.Validate if the designated constraints aren't met.
-type TestTable_CheckInputValidationError struct {
+// TestTable_InputValidationError is the validation error returned by
+// TestTable_Input.Validate if the designated constraints aren't met.
+type TestTable_InputValidationError struct {
 	field  string
 	reason string
 	cause  error
@@ -4061,24 +4179,22 @@ type TestTable_CheckInputValidationError struct {
 }
 
 // Field function returns field value.
-func (e TestTable_CheckInputValidationError) Field() string { return e.field }
+func (e TestTable_InputValidationError) Field() string { return e.field }
 
 // Reason function returns reason value.
-func (e TestTable_CheckInputValidationError) Reason() string { return e.reason }
+func (e TestTable_InputValidationError) Reason() string { return e.reason }
 
 // Cause function returns cause value.
-func (e TestTable_CheckInputValidationError) Cause() error { return e.cause }
+func (e TestTable_InputValidationError) Cause() error { return e.cause }
 
 // Key function returns key value.
-func (e TestTable_CheckInputValidationError) Key() bool { return e.key }
+func (e TestTable_InputValidationError) Key() bool { return e.key }
 
 // ErrorName returns error name.
-func (e TestTable_CheckInputValidationError) ErrorName() string {
-	return "TestTable_CheckInputValidationError"
-}
+func (e TestTable_InputValidationError) ErrorName() string { return "TestTable_InputValidationError" }
 
 // Error satisfies the builtin error interface
-func (e TestTable_CheckInputValidationError) Error() string {
+func (e TestTable_InputValidationError) Error() string {
 	cause := ""
 	if e.cause != nil {
 		cause = fmt.Sprintf(" | caused by: %v", e.cause)
@@ -4090,14 +4206,14 @@ func (e TestTable_CheckInputValidationError) Error() string {
 	}
 
 	return fmt.Sprintf(
-		"invalid %sTestTable_CheckInput.%s: %s%s",
+		"invalid %sTestTable_Input.%s: %s%s",
 		key,
 		e.field,
 		e.reason,
 		cause)
 }
 
-var _ error = TestTable_CheckInputValidationError{}
+var _ error = TestTable_InputValidationError{}
 
 var _ interface {
 	Field() string
@@ -4105,24 +4221,24 @@ var _ interface {
 	Key() bool
 	Cause() error
 	ErrorName() string
-} = TestTable_CheckInputValidationError{}
+} = TestTable_InputValidationError{}
 
-// Validate checks the field values on TestTable_ExpectedItem with the rules
+// Validate checks the field values on TestTable_Expectation with the rules
 // defined in the proto definition for this message. If any rules are
 // violated, the first error encountered is returned, or nil if there are no violations.
-func (m *TestTable_ExpectedItem) Validate() error {
+func (m *TestTable_Expectation) Validate() error {
 	return m.validate(false)
 }
 
-// ValidateAll checks the field values on TestTable_ExpectedItem with the rules
+// ValidateAll checks the field values on TestTable_Expectation with the rules
 // defined in the proto definition for this message. If any rules are
 // violated, the result is a list of violation errors wrapped in
-// TestTable_ExpectedItemMultiError, or nil if none found.
-func (m *TestTable_ExpectedItem) ValidateAll() error {
+// TestTable_ExpectationMultiError, or nil if none found.
+func (m *TestTable_Expectation) ValidateAll() error {
 	return m.validate(true)
 }
 
-func (m *TestTable_ExpectedItem) validate(all bool) error {
+func (m *TestTable_Expectation) validate(all bool) error {
 	if m == nil {
 		return nil
 	}
@@ -4130,7 +4246,7 @@ func (m *TestTable_ExpectedItem) validate(all bool) error {
 	var errors []error
 
 	if utf8.RuneCountInString(m.GetPrincipal()) < 1 {
-		err := TestTable_ExpectedItemValidationError{
+		err := TestTable_ExpectationValidationError{
 			field:  "Principal",
 			reason: "value length must be at least 1 runes",
 		}
@@ -4140,8 +4256,19 @@ func (m *TestTable_ExpectedItem) validate(all bool) error {
 		errors = append(errors, err)
 	}
 
+	if utf8.RuneCountInString(m.GetResource()) < 1 {
+		err := TestTable_ExpectationValidationError{
+			field:  "Resource",
+			reason: "value length must be at least 1 runes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
 	if len(m.GetActions()) < 1 {
-		err := TestTable_ExpectedItemValidationError{
+		err := TestTable_ExpectationValidationError{
 			field:  "Actions",
 			reason: "value must contain at least 1 pair(s)",
 		}
@@ -4151,19 +4278,46 @@ func (m *TestTable_ExpectedItem) validate(all bool) error {
 		errors = append(errors, err)
 	}
 
+	{
+		sorted_keys := make([]string, len(m.GetActions()))
+		i := 0
+		for key := range m.GetActions() {
+			sorted_keys[i] = key
+			i++
+		}
+		sort.Slice(sorted_keys, func(i, j int) bool { return sorted_keys[i] < sorted_keys[j] })
+		for _, key := range sorted_keys {
+			val := m.GetActions()[key]
+			_ = val
+
+			if utf8.RuneCountInString(key) < 1 {
+				err := TestTable_ExpectationValidationError{
+					field:  fmt.Sprintf("Actions[%v]", key),
+					reason: "value length must be at least 1 runes",
+				}
+				if !all {
+					return err
+				}
+				errors = append(errors, err)
+			}
+
+			// no validation rules for Actions[key]
+		}
+	}
+
 	if len(errors) > 0 {
-		return TestTable_ExpectedItemMultiError(errors)
+		return TestTable_ExpectationMultiError(errors)
 	}
 	return nil
 }
 
-// TestTable_ExpectedItemMultiError is an error wrapping multiple validation
-// errors returned by TestTable_ExpectedItem.ValidateAll() if the designated
+// TestTable_ExpectationMultiError is an error wrapping multiple validation
+// errors returned by TestTable_Expectation.ValidateAll() if the designated
 // constraints aren't met.
-type TestTable_ExpectedItemMultiError []error
+type TestTable_ExpectationMultiError []error
 
 // Error returns a concatenation of all the error messages it wraps.
-func (m TestTable_ExpectedItemMultiError) Error() string {
+func (m TestTable_ExpectationMultiError) Error() string {
 	var msgs []string
 	for _, err := range m {
 		msgs = append(msgs, err.Error())
@@ -4172,11 +4326,11 @@ func (m TestTable_ExpectedItemMultiError) Error() string {
 }
 
 // AllErrors returns a list of validation violation errors.
-func (m TestTable_ExpectedItemMultiError) AllErrors() []error { return m }
+func (m TestTable_ExpectationMultiError) AllErrors() []error { return m }
 
-// TestTable_ExpectedItemValidationError is the validation error returned by
-// TestTable_ExpectedItem.Validate if the designated constraints aren't met.
-type TestTable_ExpectedItemValidationError struct {
+// TestTable_ExpectationValidationError is the validation error returned by
+// TestTable_Expectation.Validate if the designated constraints aren't met.
+type TestTable_ExpectationValidationError struct {
 	field  string
 	reason string
 	cause  error
@@ -4184,24 +4338,24 @@ type TestTable_ExpectedItemValidationError struct {
 }
 
 // Field function returns field value.
-func (e TestTable_ExpectedItemValidationError) Field() string { return e.field }
+func (e TestTable_ExpectationValidationError) Field() string { return e.field }
 
 // Reason function returns reason value.
-func (e TestTable_ExpectedItemValidationError) Reason() string { return e.reason }
+func (e TestTable_ExpectationValidationError) Reason() string { return e.reason }
 
 // Cause function returns cause value.
-func (e TestTable_ExpectedItemValidationError) Cause() error { return e.cause }
+func (e TestTable_ExpectationValidationError) Cause() error { return e.cause }
 
 // Key function returns key value.
-func (e TestTable_ExpectedItemValidationError) Key() bool { return e.key }
+func (e TestTable_ExpectationValidationError) Key() bool { return e.key }
 
 // ErrorName returns error name.
-func (e TestTable_ExpectedItemValidationError) ErrorName() string {
-	return "TestTable_ExpectedItemValidationError"
+func (e TestTable_ExpectationValidationError) ErrorName() string {
+	return "TestTable_ExpectationValidationError"
 }
 
 // Error satisfies the builtin error interface
-func (e TestTable_ExpectedItemValidationError) Error() string {
+func (e TestTable_ExpectationValidationError) Error() string {
 	cause := ""
 	if e.cause != nil {
 		cause = fmt.Sprintf(" | caused by: %v", e.cause)
@@ -4213,14 +4367,14 @@ func (e TestTable_ExpectedItemValidationError) Error() string {
 	}
 
 	return fmt.Sprintf(
-		"invalid %sTestTable_ExpectedItem.%s: %s%s",
+		"invalid %sTestTable_Expectation.%s: %s%s",
 		key,
 		e.field,
 		e.reason,
 		cause)
 }
 
-var _ error = TestTable_ExpectedItemValidationError{}
+var _ error = TestTable_ExpectationValidationError{}
 
 var _ interface {
 	Field() string
@@ -4228,7 +4382,7 @@ var _ interface {
 	Key() bool
 	Cause() error
 	ErrorName() string
-} = TestTable_ExpectedItemValidationError{}
+} = TestTable_ExpectationValidationError{}
 
 // Validate checks the field values on Test_TestName with the rules defined in
 // the proto definition for this message. If any rules are violated, the first
@@ -4266,6 +4420,17 @@ func (m *Test_TestName) validate(all bool) error {
 	if utf8.RuneCountInString(m.GetPrincipalKey()) < 1 {
 		err := Test_TestNameValidationError{
 			field:  "PrincipalKey",
+			reason: "value length must be at least 1 runes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if utf8.RuneCountInString(m.GetResourceKey()) < 1 {
+		err := Test_TestNameValidationError{
+			field:  "ResourceKey",
 			reason: "value length must be at least 1 runes",
 		}
 		if !all {

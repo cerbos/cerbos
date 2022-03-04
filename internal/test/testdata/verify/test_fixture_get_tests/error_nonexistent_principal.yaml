@@ -1,0 +1,20 @@
+table:
+  name: Nonexistent principal
+  description: Principals must exist in test fixtures.
+  input:
+    principals:
+      - ceo
+    resources:
+      - employee_leave_request
+    actions:
+      - view
+      - approve
+  expected:
+    - principal: ceo
+      resource: employee_leave_request
+      actions:
+        view: EFFECT_ALLOW
+        approve: EFFECT_ALLOW
+
+wantErr: |-
+  invalid test "Nonexistent principal": principal "ceo" not found

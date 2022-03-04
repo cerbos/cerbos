@@ -4,6 +4,7 @@
 package verify
 
 import (
+	"bytes"
 	"testing"
 	"testing/fstest"
 
@@ -12,9 +13,10 @@ import (
 	"google.golang.org/protobuf/testing/protocmp"
 	"google.golang.org/protobuf/types/known/structpb"
 
-	effectv1 "github.com/cerbos/cerbos/api/genpb/cerbos/effect/v1"
 	v1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
+	privatev1 "github.com/cerbos/cerbos/api/genpb/cerbos/private/v1"
+	"github.com/cerbos/cerbos/internal/test"
 	"github.com/cerbos/cerbos/internal/util"
 )
 
@@ -70,73 +72,47 @@ principals:
 }
 
 func Test_testFixture_getTests(t *testing.T) {
-	harry := &v1.Principal{Id: "harry"}
-	maggie := &v1.Principal{Id: "maggie"}
-	harryLeaveRequest := &v1.Resource{Id: "harry_leave_request"}
-
 	tf := &testFixture{
 		principals: map[string]*v1.Principal{
-			"harry":  harry,
-			"maggie": maggie,
+			"employee":        {Id: "user:employee"},
+			"manager":         {Id: "user:manager"},
+			"department_head": {Id: "user:department_head"},
 		},
 		resources: map[string]*v1.Resource{
-			"harry_leave_request": harryLeaveRequest,
+			"employee_leave_request":        {Id: "leave_request:employee"},
+			"manager_leave_request":         {Id: "leave_request:manager"},
+			"department_head_leave_request": {Id: "leave_request:department_head"},
+		},
+		auxData: map[string]*v1.AuxData{
+			"test_aux_data": {Jwt: map[string]*structpb.Value{"answer": structpb.NewNumberValue(42)}},
 		},
 	}
-	requestID := "requestID"
-	name := "harry leave request"
-	actions := []string{"view", "approve"}
-	table := &policyv1.TestTable{
-		Name: name,
-		Input: &policyv1.TestTable_CheckInput{
-			RequestId: requestID,
-			Resource:  harryLeaveRequest.Id,
-			Actions:   actions,
-		},
-		Expected: []*policyv1.TestTable_ExpectedItem{
-			{
-				Principal: "harry",
-				Actions: map[string]effectv1.Effect{
-					"view":    effectv1.Effect_EFFECT_ALLOW,
-					"approve": effectv1.Effect_EFFECT_DENY,
-				},
-			},
-			{
-				Principal: "maggie",
-				Actions: map[string]effectv1.Effect{
-					"view":    effectv1.Effect_EFFECT_ALLOW,
-					"approve": effectv1.Effect_EFFECT_ALLOW,
-				},
-			},
-		},
-	}
-	ts := &policyv1.TestSuite{Tests: []*policyv1.TestTable{table}}
-	expectedTests := []*policyv1.Test{
-		{
-			Name: &policyv1.Test_TestName{TestTableName: name, PrincipalKey: harry.Id},
-			Input: &v1.CheckInput{
-				RequestId: requestID,
-				Resource:  harryLeaveRequest,
-				Principal: harry,
-				Actions:   actions,
-			},
-			Expected: table.Expected[0].Actions,
-		},
-		{
-			Name: &policyv1.Test_TestName{TestTableName: name, PrincipalKey: maggie.Id},
-			Input: &v1.CheckInput{
-				RequestId: requestID,
-				Resource:  harryLeaveRequest,
-				Principal: maggie,
-				Actions:   actions,
-			},
-			Expected: table.Expected[1].Actions,
-		},
-	}
-	got, err := tf.getTests(ts)
-	require.NoError(t, err)
 
-	if diff := cmp.Diff(got, expectedTests, protocmp.Transform()); diff != "" {
-		t.Errorf("getTests: diff = %s", diff)
+	for _, tt := range test.LoadTestCases(t, "verify/test_fixture_get_tests") {
+		t.Run(tt.Name, func(t *testing.T) {
+			tc := readTestCase(t, tt.Input)
+			ts := &policyv1.TestSuite{Tests: []*policyv1.TestTable{tc.Table}}
+
+			gotTests, gotErr := tf.getTests(ts)
+
+			if tc.WantErr == "" {
+				require.NoError(t, gotErr)
+			} else {
+				require.EqualError(t, gotErr, tc.WantErr)
+			}
+
+			if diff := cmp.Diff(tc.WantTests, gotTests, protocmp.Transform()); diff != "" {
+				t.Errorf("didn't get expected tests: diff = %s", diff)
+			}
+		})
 	}
+}
+
+func readTestCase(t *testing.T, data []byte) *privatev1.VerifyTestFixtureGetTestsTestCase {
+	t.Helper()
+
+	tc := &privatev1.VerifyTestFixtureGetTestsTestCase{}
+	require.NoError(t, util.ReadJSONOrYAML(bytes.NewReader(data), tc))
+
+	return tc
 }

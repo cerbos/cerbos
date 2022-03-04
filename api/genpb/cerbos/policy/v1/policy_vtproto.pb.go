@@ -1519,7 +1519,7 @@ func (m *TestSuite) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 	return len(dAtA) - i, nil
 }
 
-func (m *TestTable_CheckInput) MarshalVT() (dAtA []byte, err error) {
+func (m *TestTable_Input) MarshalVT() (dAtA []byte, err error) {
 	if m == nil {
 		return nil, nil
 	}
@@ -1532,12 +1532,12 @@ func (m *TestTable_CheckInput) MarshalVT() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *TestTable_CheckInput) MarshalToVT(dAtA []byte) (int, error) {
+func (m *TestTable_Input) MarshalToVT(dAtA []byte) (int, error) {
 	size := m.SizeVT()
 	return m.MarshalToSizedBufferVT(dAtA[:size])
 }
 
-func (m *TestTable_CheckInput) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
+func (m *TestTable_Input) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 	if m == nil {
 		return 0, nil
 	}
@@ -1565,24 +1565,28 @@ func (m *TestTable_CheckInput) MarshalToSizedBufferVT(dAtA []byte) (int, error) 
 			dAtA[i] = 0x1a
 		}
 	}
-	if len(m.Resource) > 0 {
-		i -= len(m.Resource)
-		copy(dAtA[i:], m.Resource)
-		i = encodeVarint(dAtA, i, uint64(len(m.Resource)))
-		i--
-		dAtA[i] = 0x12
+	if len(m.Resources) > 0 {
+		for iNdEx := len(m.Resources) - 1; iNdEx >= 0; iNdEx-- {
+			i -= len(m.Resources[iNdEx])
+			copy(dAtA[i:], m.Resources[iNdEx])
+			i = encodeVarint(dAtA, i, uint64(len(m.Resources[iNdEx])))
+			i--
+			dAtA[i] = 0x12
+		}
 	}
-	if len(m.RequestId) > 0 {
-		i -= len(m.RequestId)
-		copy(dAtA[i:], m.RequestId)
-		i = encodeVarint(dAtA, i, uint64(len(m.RequestId)))
-		i--
-		dAtA[i] = 0xa
+	if len(m.Principals) > 0 {
+		for iNdEx := len(m.Principals) - 1; iNdEx >= 0; iNdEx-- {
+			i -= len(m.Principals[iNdEx])
+			copy(dAtA[i:], m.Principals[iNdEx])
+			i = encodeVarint(dAtA, i, uint64(len(m.Principals[iNdEx])))
+			i--
+			dAtA[i] = 0xa
+		}
 	}
 	return len(dAtA) - i, nil
 }
 
-func (m *TestTable_ExpectedItem) MarshalVT() (dAtA []byte, err error) {
+func (m *TestTable_Expectation) MarshalVT() (dAtA []byte, err error) {
 	if m == nil {
 		return nil, nil
 	}
@@ -1595,12 +1599,12 @@ func (m *TestTable_ExpectedItem) MarshalVT() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *TestTable_ExpectedItem) MarshalToVT(dAtA []byte) (int, error) {
+func (m *TestTable_Expectation) MarshalToVT(dAtA []byte) (int, error) {
 	size := m.SizeVT()
 	return m.MarshalToSizedBufferVT(dAtA[:size])
 }
 
-func (m *TestTable_ExpectedItem) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
+func (m *TestTable_Expectation) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 	if m == nil {
 		return 0, nil
 	}
@@ -1626,8 +1630,15 @@ func (m *TestTable_ExpectedItem) MarshalToSizedBufferVT(dAtA []byte) (int, error
 			dAtA[i] = 0xa
 			i = encodeVarint(dAtA, i, uint64(baseI-i))
 			i--
-			dAtA[i] = 0x12
+			dAtA[i] = 0x1a
 		}
+	}
+	if len(m.Resource) > 0 {
+		i -= len(m.Resource)
+		copy(dAtA[i:], m.Resource)
+		i = encodeVarint(dAtA, i, uint64(len(m.Resource)))
+		i--
+		dAtA[i] = 0x12
 	}
 	if len(m.Principal) > 0 {
 		i -= len(m.Principal)
@@ -1754,6 +1765,13 @@ func (m *Test_TestName) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 	if m.unknownFields != nil {
 		i -= len(m.unknownFields)
 		copy(dAtA[i:], m.unknownFields)
+	}
+	if len(m.ResourceKey) > 0 {
+		i -= len(m.ResourceKey)
+		copy(dAtA[i:], m.ResourceKey)
+		i = encodeVarint(dAtA, i, uint64(len(m.ResourceKey)))
+		i--
+		dAtA[i] = 0x1a
 	}
 	if len(m.PrincipalKey) > 0 {
 		i -= len(m.PrincipalKey)
@@ -2578,19 +2596,23 @@ func (m *TestSuite) SizeVT() (n int) {
 	return n
 }
 
-func (m *TestTable_CheckInput) SizeVT() (n int) {
+func (m *TestTable_Input) SizeVT() (n int) {
 	if m == nil {
 		return 0
 	}
 	var l int
 	_ = l
-	l = len(m.RequestId)
-	if l > 0 {
-		n += 1 + l + sov(uint64(l))
+	if len(m.Principals) > 0 {
+		for _, s := range m.Principals {
+			l = len(s)
+			n += 1 + l + sov(uint64(l))
+		}
 	}
-	l = len(m.Resource)
-	if l > 0 {
-		n += 1 + l + sov(uint64(l))
+	if len(m.Resources) > 0 {
+		for _, s := range m.Resources {
+			l = len(s)
+			n += 1 + l + sov(uint64(l))
+		}
 	}
 	if len(m.Actions) > 0 {
 		for _, s := range m.Actions {
@@ -2608,13 +2630,17 @@ func (m *TestTable_CheckInput) SizeVT() (n int) {
 	return n
 }
 
-func (m *TestTable_ExpectedItem) SizeVT() (n int) {
+func (m *TestTable_Expectation) SizeVT() (n int) {
 	if m == nil {
 		return 0
 	}
 	var l int
 	_ = l
 	l = len(m.Principal)
+	if l > 0 {
+		n += 1 + l + sov(uint64(l))
+	}
+	l = len(m.Resource)
 	if l > 0 {
 		n += 1 + l + sov(uint64(l))
 	}
@@ -2680,6 +2706,10 @@ func (m *Test_TestName) SizeVT() (n int) {
 		n += 1 + l + sov(uint64(l))
 	}
 	l = len(m.PrincipalKey)
+	if l > 0 {
+		n += 1 + l + sov(uint64(l))
+	}
+	l = len(m.ResourceKey)
 	if l > 0 {
 		n += 1 + l + sov(uint64(l))
 	}
@@ -6633,7 +6663,7 @@ func (m *TestSuite) UnmarshalVT(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *TestTable_CheckInput) UnmarshalVT(dAtA []byte) error {
+func (m *TestTable_Input) UnmarshalVT(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -6656,15 +6686,15 @@ func (m *TestTable_CheckInput) UnmarshalVT(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: TestTable_CheckInput: wiretype end group for non-group")
+			return fmt.Errorf("proto: TestTable_Input: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: TestTable_CheckInput: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: TestTable_Input: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field RequestId", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field Principals", wireType)
 			}
 			var stringLen uint64
 			for shift := uint(0); ; shift += 7 {
@@ -6692,11 +6722,11 @@ func (m *TestTable_CheckInput) UnmarshalVT(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.RequestId = string(dAtA[iNdEx:postIndex])
+			m.Principals = append(m.Principals, string(dAtA[iNdEx:postIndex]))
 			iNdEx = postIndex
 		case 2:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Resource", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field Resources", wireType)
 			}
 			var stringLen uint64
 			for shift := uint(0); ; shift += 7 {
@@ -6724,7 +6754,7 @@ func (m *TestTable_CheckInput) UnmarshalVT(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.Resource = string(dAtA[iNdEx:postIndex])
+			m.Resources = append(m.Resources, string(dAtA[iNdEx:postIndex]))
 			iNdEx = postIndex
 		case 3:
 			if wireType != 2 {
@@ -6812,7 +6842,7 @@ func (m *TestTable_CheckInput) UnmarshalVT(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *TestTable_ExpectedItem) UnmarshalVT(dAtA []byte) error {
+func (m *TestTable_Expectation) UnmarshalVT(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -6835,10 +6865,10 @@ func (m *TestTable_ExpectedItem) UnmarshalVT(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: TestTable_ExpectedItem: wiretype end group for non-group")
+			return fmt.Errorf("proto: TestTable_Expectation: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: TestTable_ExpectedItem: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: TestTable_Expectation: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
@@ -6874,6 +6904,38 @@ func (m *TestTable_ExpectedItem) UnmarshalVT(dAtA []byte) error {
 			m.Principal = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
 		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Resource", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLength
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLength
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Resource = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 3:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field Actions", wireType)
 			}
@@ -7183,7 +7245,7 @@ func (m *TestTable) UnmarshalVT(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if m.Input == nil {
-				m.Input = &TestTable_CheckInput{}
+				m.Input = &TestTable_Input{}
 			}
 			if err := m.Input.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
 				return err
@@ -7218,7 +7280,7 @@ func (m *TestTable) UnmarshalVT(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.Expected = append(m.Expected, &TestTable_ExpectedItem{})
+			m.Expected = append(m.Expected, &TestTable_Expectation{})
 			if err := m.Expected[len(m.Expected)-1].UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
@@ -7337,6 +7399,38 @@ func (m *Test_TestName) UnmarshalVT(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			m.PrincipalKey = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 3:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field ResourceKey", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLength
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLength
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.ResourceKey = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
 		default:
 			iNdEx = preIndex
