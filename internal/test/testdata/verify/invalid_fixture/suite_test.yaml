@@ -4,12 +4,16 @@ description: Tests for verifying something
 tests:
   - name: John and his leave request
     input:
+      principals:
+        - john
+      resources:
+        - john_leave_request
       actions:
-        - "view:public"
-        - "approve"
-      principal: john
-      resource: "john_leave_request"
+        - view:public
+        - approve
     expected:
-      - actions:
-          "view:public": "EFFECT_ALLOW"
-          "approve": "EFFECT_DENY"
+      - principal: john
+        resource: john_leave_request
+        actions:
+          view:public: EFFECT_ALLOW
+          approve: EFFECT_DENY

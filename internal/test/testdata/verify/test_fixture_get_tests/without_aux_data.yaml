@@ -1,6 +1,6 @@
 table:
-  name: Two-dimensional table test
-  description: A test for multiple principals and resources, with aux data.
+  name: Without auxData
+  description: A test for multiple principals and resources, without auxiliary data.
   input:
     principals:
       - employee
@@ -13,7 +13,6 @@ table:
     actions:
       - view
       - approve
-    auxData: test_aux_data
   expected:
     - principal: employee
       resource: employee_leave_request
@@ -48,10 +47,10 @@ table:
 
 wantTests:
   - name:
-      testTableName: Two-dimensional table test
+      testTableName: Without auxData
       principalKey: employee
       resourceKey: employee_leave_request
-    description: A test for multiple principals and resources, with aux data.
+    description: A test for multiple principals and resources, without auxiliary data.
     input:
       principal:
         id: user:employee
@@ -60,17 +59,14 @@ wantTests:
       actions:
         - view
         - approve
-      auxData:
-        jwt:
-          answer: 42
     expected:
       view: EFFECT_ALLOW
       approve: EFFECT_DENY
   - name:
-      testTableName: Two-dimensional table test
+      testTableName: Without auxData
       principalKey: employee
       resourceKey: manager_leave_request
-    description: A test for multiple principals and resources, with aux data.
+    description: A test for multiple principals and resources, without auxiliary data.
     input:
       principal:
         id: user:employee
@@ -79,17 +75,14 @@ wantTests:
       actions:
         - view
         - approve
-      auxData:
-        jwt:
-          answer: 42
     expected:
       view: EFFECT_DENY
       approve: EFFECT_DENY
   - name:
-      testTableName: Two-dimensional table test
+      testTableName: Without auxData
       principalKey: employee
       resourceKey: department_head_leave_request
-    description: A test for multiple principals and resources, with aux data.
+    description: A test for multiple principals and resources, without auxiliary data.
     input:
       principal:
         id: user:employee
@@ -98,17 +91,14 @@ wantTests:
       actions:
         - view
         - approve
-      auxData:
-        jwt:
-          answer: 42
     expected:
       view: EFFECT_DENY
       approve: EFFECT_DENY
   - name:
-      testTableName: Two-dimensional table test
+      testTableName: Without auxData
       principalKey: manager
       resourceKey: employee_leave_request
-    description: A test for multiple principals and resources, with aux data.
+    description: A test for multiple principals and resources, without auxiliary data.
     input:
       principal:
         id: user:manager
@@ -117,17 +107,14 @@ wantTests:
       actions:
         - view
         - approve
-      auxData:
-        jwt:
-          answer: 42
     expected:
       view: EFFECT_ALLOW
       approve: EFFECT_ALLOW
   - name:
-      testTableName: Two-dimensional table test
+      testTableName: Without auxData
       principalKey: manager
       resourceKey: manager_leave_request
-    description: A test for multiple principals and resources, with aux data.
+    description: A test for multiple principals and resources, without auxiliary data.
     input:
       principal:
         id: user:manager
@@ -136,17 +123,14 @@ wantTests:
       actions:
         - view
         - approve
-      auxData:
-        jwt:
-          answer: 42
     expected:
       view: EFFECT_ALLOW
       approve: EFFECT_DENY
   - name:
-      testTableName: Two-dimensional table test
+      testTableName: Without auxData
       principalKey: manager
       resourceKey: department_head_leave_request
-    description: A test for multiple principals and resources, with aux data.
+    description: A test for multiple principals and resources, without auxiliary data.
     input:
       principal:
         id: user:manager
@@ -155,17 +139,14 @@ wantTests:
       actions:
         - view
         - approve
-      auxData:
-        jwt:
-          answer: 42
     expected:
       view: EFFECT_DENY
       approve: EFFECT_DENY
   - name:
-      testTableName: Two-dimensional table test
+      testTableName: Without auxData
       principalKey: department_head
       resourceKey: employee_leave_request
-    description: A test for multiple principals and resources, with aux data.
+    description: A test for multiple principals and resources, without auxiliary data.
     input:
       principal:
         id: user:department_head
@@ -174,17 +155,14 @@ wantTests:
       actions:
         - view
         - approve
-      auxData:
-        jwt:
-          answer: 42
     expected:
       view: EFFECT_ALLOW
       approve: EFFECT_ALLOW
   - name:
-      testTableName: Two-dimensional table test
+      testTableName: Without auxData
       principalKey: department_head
       resourceKey: manager_leave_request
-    description: A test for multiple principals and resources, with aux data.
+    description: A test for multiple principals and resources, without auxiliary data.
     input:
       principal:
         id: user:department_head
@@ -193,17 +171,14 @@ wantTests:
       actions:
         - view
         - approve
-      auxData:
-        jwt:
-          answer: 42
     expected:
       view: EFFECT_ALLOW
       approve: EFFECT_ALLOW
   - name:
-      testTableName: Two-dimensional table test
+      testTableName: Without auxData
       principalKey: department_head
       resourceKey: department_head_leave_request
-    description: A test for multiple principals and resources, with aux data.
+    description: A test for multiple principals and resources, without auxiliary data.
     input:
       principal:
         id: user:department_head
@@ -212,9 +187,6 @@ wantTests:
       actions:
         - view
         - approve
-      auxData:
-        jwt:
-          answer: 42
     expected:
       view: EFFECT_ALLOW
       approve: EFFECT_ALLOW

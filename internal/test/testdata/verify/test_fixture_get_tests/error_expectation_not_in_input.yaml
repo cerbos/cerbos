@@ -5,12 +5,14 @@ table:
     principals:
       - employee
       - manager
-    resource: employee_leave_request
+    resources:
+      - employee_leave_request
     actions:
       - view
       - approve
   expected:
     - principal: department_head
+      resource: employee_leave_request
       actions:
         view: EFFECT_ALLOW
         approve: EFFECT_ALLOW

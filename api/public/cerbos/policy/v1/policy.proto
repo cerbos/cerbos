@@ -144,17 +144,15 @@ message TestSuite {
 
 message TestTable {
     message Input {
-        string principal = 1;
-        repeated string principals = 2 [(validate.rules).repeated = {unique: true, items: {string: {min_len: 1}}}];
-        string resource = 3;
-        repeated string resources = 4 [(validate.rules).repeated = {unique: true, items: {string: {min_len: 1}}}];
-        repeated string actions = 5 [(validate.rules).repeated = {min_items: 1, unique: true, items: {string: {min_len: 1}}}];
-        string aux_data = 6;
+        repeated string principals = 1 [(validate.rules).repeated = {min_items: 1, unique: true, items: {string: {min_len: 1}}}];
+        repeated string resources = 2 [(validate.rules).repeated = {min_items: 1, unique: true, items: {string: {min_len: 1}}}];
+        repeated string actions = 3 [(validate.rules).repeated = {min_items: 1, unique: true, items: {string: {min_len: 1}}}];
+        string aux_data = 4;
     }
 
     message Expectation {
-        string principal = 1;
-        string resource = 2;
+        string principal = 1 [(validate.rules).string.min_len = 1];
+        string resource = 2 [(validate.rules).string.min_len = 1];
         map<string, cerbos.effect.v1.Effect> actions = 3 [(validate.rules).map = {min_pairs: 1, keys: {string: {min_len: 1}}}];
     }
 

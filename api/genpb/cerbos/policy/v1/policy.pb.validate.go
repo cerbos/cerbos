@@ -4018,7 +4018,16 @@ func (m *TestTable_Input) validate(all bool) error {
 
 	var errors []error
 
-	// no validation rules for Principal
+	if len(m.GetPrincipals()) < 1 {
+		err := TestTable_InputValidationError{
+			field:  "Principals",
+			reason: "value must contain at least 1 item(s)",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
 
 	_TestTable_Input_Principals_Unique := make(map[string]struct{}, len(m.GetPrincipals()))
 
@@ -4051,7 +4060,16 @@ func (m *TestTable_Input) validate(all bool) error {
 
 	}
 
-	// no validation rules for Resource
+	if len(m.GetResources()) < 1 {
+		err := TestTable_InputValidationError{
+			field:  "Resources",
+			reason: "value must contain at least 1 item(s)",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
 
 	_TestTable_Input_Resources_Unique := make(map[string]struct{}, len(m.GetResources()))
 
@@ -4227,9 +4245,27 @@ func (m *TestTable_Expectation) validate(all bool) error {
 
 	var errors []error
 
-	// no validation rules for Principal
+	if utf8.RuneCountInString(m.GetPrincipal()) < 1 {
+		err := TestTable_ExpectationValidationError{
+			field:  "Principal",
+			reason: "value length must be at least 1 runes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
 
-	// no validation rules for Resource
+	if utf8.RuneCountInString(m.GetResource()) < 1 {
+		err := TestTable_ExpectationValidationError{
+			field:  "Resource",
+			reason: "value length must be at least 1 runes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
 
 	if len(m.GetActions()) < 1 {
 		err := TestTable_ExpectationValidationError{

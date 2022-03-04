@@ -4,15 +4,19 @@ description: Tests for verifying something
 tests:
   - name: John and his leave request
     input:
+      principals:
+        - john
+      resources:
+        - john_leave_request
       actions:
-        - "view:public"
-        - "approve"
-        - "defer"
-      principal: john
-      resource: "john_leave_request"
-      auxData: "myJWT"
+        - view:public
+        - approve
+        - defer
+      auxData: myJWT
     expected:
-      - actions:
-          "view:public": "EFFECT_ALLOW"
-          "approve": "EFFECT_DENY"
-          "defer": "EFFECT_ALLOW"
+      - principal: john
+        resource: john_leave_request
+        actions:
+          view:public: EFFECT_ALLOW
+          approve: EFFECT_DENY
+          defer: EFFECT_ALLOW

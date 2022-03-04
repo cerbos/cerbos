@@ -17,20 +17,22 @@ auxData:
       iss: cerbos-test-suite
       aud: [cerbos-jwt-tests]
       customArray: [A, B]
-
-
 tests:
   - name: John and his leave request
     input:
       actions:
-        - "view:public"
-        - "approve"
-        - "defer"
-      principal: johnny
-      resource: "john_leave_request"
-      auxData: "johnJWT"
+        - view:public
+        - approve
+        - defer
+      principals:
+        - johnny
+      resources:
+        - john_leave_request
+      auxData: johnJWT
     expected:
-      - actions:
-          "view:public": "EFFECT_ALLOW"
-          "approve": "EFFECT_DENY"
-          "defer": "EFFECT_ALLOW"
+      - principal: johnny
+        resource: john_leave_request
+        actions:
+          view:public: EFFECT_ALLOW
+          approve: EFFECT_DENY
+          defer: EFFECT_ALLOW

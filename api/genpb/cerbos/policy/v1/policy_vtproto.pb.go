@@ -1554,7 +1554,7 @@ func (m *TestTable_Input) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 		copy(dAtA[i:], m.AuxData)
 		i = encodeVarint(dAtA, i, uint64(len(m.AuxData)))
 		i--
-		dAtA[i] = 0x32
+		dAtA[i] = 0x22
 	}
 	if len(m.Actions) > 0 {
 		for iNdEx := len(m.Actions) - 1; iNdEx >= 0; iNdEx-- {
@@ -1562,7 +1562,7 @@ func (m *TestTable_Input) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 			copy(dAtA[i:], m.Actions[iNdEx])
 			i = encodeVarint(dAtA, i, uint64(len(m.Actions[iNdEx])))
 			i--
-			dAtA[i] = 0x2a
+			dAtA[i] = 0x1a
 		}
 	}
 	if len(m.Resources) > 0 {
@@ -1571,15 +1571,8 @@ func (m *TestTable_Input) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 			copy(dAtA[i:], m.Resources[iNdEx])
 			i = encodeVarint(dAtA, i, uint64(len(m.Resources[iNdEx])))
 			i--
-			dAtA[i] = 0x22
+			dAtA[i] = 0x12
 		}
-	}
-	if len(m.Resource) > 0 {
-		i -= len(m.Resource)
-		copy(dAtA[i:], m.Resource)
-		i = encodeVarint(dAtA, i, uint64(len(m.Resource)))
-		i--
-		dAtA[i] = 0x1a
 	}
 	if len(m.Principals) > 0 {
 		for iNdEx := len(m.Principals) - 1; iNdEx >= 0; iNdEx-- {
@@ -1587,15 +1580,8 @@ func (m *TestTable_Input) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 			copy(dAtA[i:], m.Principals[iNdEx])
 			i = encodeVarint(dAtA, i, uint64(len(m.Principals[iNdEx])))
 			i--
-			dAtA[i] = 0x12
+			dAtA[i] = 0xa
 		}
-	}
-	if len(m.Principal) > 0 {
-		i -= len(m.Principal)
-		copy(dAtA[i:], m.Principal)
-		i = encodeVarint(dAtA, i, uint64(len(m.Principal)))
-		i--
-		dAtA[i] = 0xa
 	}
 	return len(dAtA) - i, nil
 }
@@ -2616,19 +2602,11 @@ func (m *TestTable_Input) SizeVT() (n int) {
 	}
 	var l int
 	_ = l
-	l = len(m.Principal)
-	if l > 0 {
-		n += 1 + l + sov(uint64(l))
-	}
 	if len(m.Principals) > 0 {
 		for _, s := range m.Principals {
 			l = len(s)
 			n += 1 + l + sov(uint64(l))
 		}
-	}
-	l = len(m.Resource)
-	if l > 0 {
-		n += 1 + l + sov(uint64(l))
 	}
 	if len(m.Resources) > 0 {
 		for _, s := range m.Resources {
@@ -6716,38 +6694,6 @@ func (m *TestTable_Input) UnmarshalVT(dAtA []byte) error {
 		switch fieldNum {
 		case 1:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Principal", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflow
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return ErrInvalidLength
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex < 0 {
-				return ErrInvalidLength
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.Principal = string(dAtA[iNdEx:postIndex])
-			iNdEx = postIndex
-		case 2:
-			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field Principals", wireType)
 			}
 			var stringLen uint64
@@ -6778,39 +6724,7 @@ func (m *TestTable_Input) UnmarshalVT(dAtA []byte) error {
 			}
 			m.Principals = append(m.Principals, string(dAtA[iNdEx:postIndex]))
 			iNdEx = postIndex
-		case 3:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Resource", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflow
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return ErrInvalidLength
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex < 0 {
-				return ErrInvalidLength
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.Resource = string(dAtA[iNdEx:postIndex])
-			iNdEx = postIndex
-		case 4:
+		case 2:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field Resources", wireType)
 			}
@@ -6842,7 +6756,7 @@ func (m *TestTable_Input) UnmarshalVT(dAtA []byte) error {
 			}
 			m.Resources = append(m.Resources, string(dAtA[iNdEx:postIndex]))
 			iNdEx = postIndex
-		case 5:
+		case 3:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field Actions", wireType)
 			}
@@ -6874,7 +6788,7 @@ func (m *TestTable_Input) UnmarshalVT(dAtA []byte) error {
 			}
 			m.Actions = append(m.Actions, string(dAtA[iNdEx:postIndex]))
 			iNdEx = postIndex
-		case 6:
+		case 4:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field AuxData", wireType)
 			}

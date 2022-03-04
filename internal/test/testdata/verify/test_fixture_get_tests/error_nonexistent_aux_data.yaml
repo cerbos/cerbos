@@ -2,14 +2,18 @@ table:
   name: Nonexistent aux data
   description: Aux data must exist in test fixtures.
   input:
-    principal: employee
-    resource: employee_leave_request
+    principals:
+      - employee
+    resources:
+      - employee_leave_request
     actions:
       - view
       - approve
     auxData: does_not_exist
   expected:
-    - actions:
+    - principal: employee
+      resource: employee_leave_request
+      actions:
         view: EFFECT_ALLOW
         approve: EFFECT_DENY
 

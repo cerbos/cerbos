@@ -58,22 +58,20 @@ auxData: <5>
 tests: <6>
   - name: Accessing an album <7>
     input: <8>
-      principal: alicia <9>
-      principals: <10>
+      principals: <9>
         - alicia
         - bradley
-      resource: alicia_album <11>
-      resources: <12>
+      resources: <10>
         - alicia_album
         - bradley_album
-      actions: <13>
+      actions: <11>
         - view
         - delete
-      auxData: validJWT <14>
-    expected: <15>
-      - principal: alicia <16>
-        resource: alicia_album <17>
-        actions: <18>
+      auxData: validJWT <12>
+    expected: <13>
+      - principal: alicia <14>
+        resource: alicia_album <15>
+        actions: <16>
           view: EFFECT_ALLOW
           delete: EFFECT_ALLOW
       - principal: bradley
@@ -90,16 +88,14 @@ tests: <6>
 <6> List of tests in this suite
 <7> Name of the test
 <8> Input to the policy engine
-<9> A single principal to test. The value refers to the key of a principal in the test fixtures. Cannot be specified in combination with `principals`.
-<10> Multiple principals to test. The values refer to the keys of principals in the test fixtures. Cannot be specified in combination with `principal`.
-<11> A single resource to test. The value refers to the key of a resource in the test fixtures. Cannot be specified in combination with `resources`.
-<12> Multiple resources to test. The values refer to the keys of resources in the test fixtures. Cannot be specified in combination with `resource`.
-<13> Actions to test
-<14> Auxiliary data to test. The value refers to the key of an auxData in the test fixtures.
-<15> List of outcomes expected for each principal and resource. If a principal-resource pairing specified in `input` is not listed in `expected`, then `EFFECT_DENY` is expected for all actions for that pair.
-<16> The principal under test. Only required when testing multiple principals.
-<17> The resource under test. Only required when testing multiple resources.
-<18> The expected outcomes for each action for the principal-resource pairing
+<9> List of keys of principal fixtures to test
+<10> List of keys of resource fixtures to test
+<11> List of actions to test
+<12> Key of auxiliary data fixture to test (optional)
+<13> List of outcomes expected for each principal and resource. If a principal+resource pair specified in `input` is not listed in `expected`, then `EFFECT_DENY` is expected for all actions for that pair.
+<14> Key of the principal fixture under test
+<15> Key of the resource fixture under test
+<16> Expected outcomes for each action for the principal+resource pair
 
 === Sharing test fixtures
 
@@ -264,11 +260,13 @@ tests:
     skip: true
     skipReason: "Policy under review"
     input:
-      principal: alicia
-      resource: alicia_private_album
+      principals: ["alicia"]
+      resources: ["alicia_private_album"]
       actions: ["view"]
     expected:
-      - actions:
+      - principal: alicia
+        resource: alicia_private_album
+        actions:
           view: EFFECT_ALLOW
 ----
 

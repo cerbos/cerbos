@@ -4,21 +4,22 @@ description: Tests for verifying something
 tests:
   - name: John and his leave request
     input:
-      actions:
-        - "delete"
-        - "approve"
       principals:
         - bev
         - matt
-      resource: "pending_leave_request"
+      resources:
+        - pending_leave_request
+      actions:
+        - delete
+        - approve
     expected:
-      -
-        principal: bev
+      - principal: bev
+        resource: pending_leave_request
         actions:
-          "delete": "EFFECT_ALLOW"
-          "approve": "EFFECT_ALLOW"
-      -
-        principal: matt
+          delete: EFFECT_ALLOW
+          approve: EFFECT_ALLOW
+      - principal: matt
+        resource: pending_leave_request
         actions:
-          "delete": "EFFECT_DENY"
-          "approve": "EFFECT_ALLOW"
+          delete: EFFECT_DENY
+          approve: EFFECT_ALLOW

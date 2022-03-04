@@ -140,7 +140,7 @@ resources:
       owner: harry
       status: DRAFT
       team: design
-  pending_leave_request: 
+  pending_leave_request:
     << : *leave_request
     attr:
       << : *leave_request_attr
@@ -157,19 +157,20 @@ tests:
         - create
         - "view:public"
         - approve
-      resource: draft_leave_request
+      resources:
+        - draft_leave_request
       principals:
         - harry
         - maggie
     expected:
-      -
-        principal: harry
+      - principal: harry
+        resource: draft_leave_request
         actions:
           create: EFFECT_ALLOW
           "view:public": EFFECT_ALLOW
           approve: EFFECT_DENY
-      -
-        principal: maggie
+      - principal: maggie
+        resource: draft_leave_request
         actions:
           create: EFFECT_DENY
           "view:public": EFFECT_ALLOW
@@ -177,16 +178,17 @@ tests:
   - name: Harry's pending leave request
     input:
       << : *input
-      resource: pending_leave_request
+      resources:
+        - pending_leave_request
     expected:
-      -
-        principal: harry
+      - principal: harry
+        resource: pending_leave_request
         actions:
           create: EFFECT_ALLOW
           "view:public": EFFECT_ALLOW
           approve: EFFECT_DENY
-      -
-        principal: maggie
+      - principal: maggie
+        resource: pending_leave_request
         actions:
           create: EFFECT_DENY
           "view:public": EFFECT_ALLOW

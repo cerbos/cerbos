@@ -649,10 +649,6 @@ func cerbos_policy_v1_TestTable_Expectation_hashpb_sum(m *v11.TestTable_Expectat
 }
 
 func cerbos_policy_v1_TestTable_Input_hashpb_sum(m *v11.TestTable_Input, hasher hash.Hash, ignore map[string]struct{}) {
-	if _, ok := ignore["cerbos.policy.v1.TestTable.Input.principal"]; !ok {
-		_, _ = hasher.Write(protowire.AppendString(nil, m.Principal))
-
-	}
 	if _, ok := ignore["cerbos.policy.v1.TestTable.Input.principals"]; !ok {
 		if len(m.Principals) > 0 {
 			for _, v := range m.Principals {
@@ -660,10 +656,6 @@ func cerbos_policy_v1_TestTable_Input_hashpb_sum(m *v11.TestTable_Input, hasher 
 
 			}
 		}
-	}
-	if _, ok := ignore["cerbos.policy.v1.TestTable.Input.resource"]; !ok {
-		_, _ = hasher.Write(protowire.AppendString(nil, m.Resource))
-
 	}
 	if _, ok := ignore["cerbos.policy.v1.TestTable.Input.resources"]; !ok {
 		if len(m.Resources) > 0 {

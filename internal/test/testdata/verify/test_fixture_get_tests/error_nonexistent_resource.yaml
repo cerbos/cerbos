@@ -2,13 +2,17 @@ table:
   name: Nonexistent resource
   description: Resources must exist in test fixtures.
   input:
-    principal: employee
-    resource: ceo_leave_request
+    principals:
+      - employee
+    resources:
+      - ceo_leave_request
     actions:
       - view
       - approve
   expected:
-    - actions:
+    - principal: employee
+      resource: ceo_leave_request
+      actions:
         view: EFFECT_DENY
         approve: EFFECT_DENY
 
