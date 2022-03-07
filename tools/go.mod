@@ -11,7 +11,7 @@ require (
 	github.com/golangci/golangci-lint v1.44.2
 	github.com/google/go-licenses v0.0.0-20210715153004-8751804a5b80
 	github.com/goreleaser/goreleaser v1.6.1
-	github.com/grpc-ecosystem/grpc-gateway/v2 v2.7.3
+	github.com/grpc-ecosystem/grpc-gateway/v2 v2.8.0
 	github.com/planetscale/vtprotobuf v0.2.0
 	github.com/vektra/mockery/v2 v2.10.0
 	go.elastic.co/go-licence-detector v0.5.0
@@ -294,7 +294,7 @@ require (
 	golang.org/x/lint v0.0.0-20210508222113-6edffad5e616 // indirect
 	golang.org/x/mod v0.5.1 // indirect
 	golang.org/x/net v0.0.0-20220225172249-27dd8689420f // indirect
-	golang.org/x/oauth2 v0.0.0-20211104180415-d3ed0bb246c8 // indirect
+	golang.org/x/oauth2 v0.0.0-20220223155221-ee480838109b // indirect
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c // indirect
 	golang.org/x/sys v0.0.0-20220227234510-4e6760a101f9 // indirect
 	golang.org/x/term v0.0.0-20210927222741-03fcf44c2211 // indirect
@@ -304,7 +304,7 @@ require (
 	golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1 // indirect
 	google.golang.org/api v0.63.0 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
-	google.golang.org/genproto v0.0.0-20220228195345-15d65a4533f7 // indirect
+	google.golang.org/genproto v0.0.0-20220302033224-9aa15565e42a // indirect
 	google.golang.org/grpc v1.45.0-dev.0.20220209221444-a354b1eec350 // indirect
 	gopkg.in/alexcesaro/quotedprintable.v3 v3.0.0-20150716171945-2caba252f4dc // indirect
 	gopkg.in/ini.v1 v1.66.3 // indirect

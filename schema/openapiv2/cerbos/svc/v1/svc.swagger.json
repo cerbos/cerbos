@@ -1736,7 +1736,7 @@
           "maxItems": 10,
           "minItems": 1,
           "required": [
-            "policy_files"
+            "policyFiles"
           ]
         },
         "principal": {
@@ -1810,7 +1810,7 @@
           "maxItems": 10,
           "minItems": 1,
           "required": [
-            "policy_files"
+            "policyFiles"
           ]
         },
         "checkResourceSet": {
@@ -1864,7 +1864,7 @@
           "maxItems": 10,
           "minItems": 1,
           "required": [
-            "policy_files"
+            "policyFiles"
           ]
         }
       },
@@ -1926,7 +1926,7 @@
         "fileName": {
           "type": "string",
           "required": [
-            "file_name"
+            "fileName"
           ]
         },
         "contents": {
