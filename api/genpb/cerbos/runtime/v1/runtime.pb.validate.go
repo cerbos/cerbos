@@ -37,8 +37,6 @@ var (
 	_ = sort.Sort
 
 	_ = effectv1.Effect(0)
-
-	_ = effectv1.Effect(0)
 )
 
 // Validate checks the field values on RunnablePolicySet with the rules defined
@@ -165,6 +163,7 @@ func (m *RunnablePolicySet) validate(all bool) error {
 	if len(errors) > 0 {
 		return RunnablePolicySetMultiError(errors)
 	}
+
 	return nil
 }
 
@@ -358,6 +357,7 @@ func (m *RunnableResourcePolicySet) validate(all bool) error {
 	if len(errors) > 0 {
 		return RunnableResourcePolicySetMultiError(errors)
 	}
+
 	return nil
 }
 
@@ -582,6 +582,7 @@ func (m *RunnableDerivedRole) validate(all bool) error {
 	if len(errors) > 0 {
 		return RunnableDerivedRoleMultiError(errors)
 	}
+
 	return nil
 }
 
@@ -758,6 +759,7 @@ func (m *RunnableDerivedRolesSet) validate(all bool) error {
 	if len(errors) > 0 {
 		return RunnableDerivedRolesSetMultiError(errors)
 	}
+
 	return nil
 }
 
@@ -922,6 +924,7 @@ func (m *RunnablePrincipalPolicySet) validate(all bool) error {
 	if len(errors) > 0 {
 		return RunnablePrincipalPolicySetMultiError(errors)
 	}
+
 	return nil
 }
 
@@ -1053,6 +1056,7 @@ func (m *Expr) validate(all bool) error {
 	if len(errors) > 0 {
 		return ExprMultiError(errors)
 	}
+
 	return nil
 }
 
@@ -1279,6 +1283,7 @@ func (m *Condition) validate(all bool) error {
 	if len(errors) > 0 {
 		return ConditionMultiError(errors)
 	}
+
 	return nil
 }
 
@@ -1384,6 +1389,7 @@ func (m *RunnableResourcePolicySet_Metadata) validate(all bool) error {
 	if len(errors) > 0 {
 		return RunnableResourcePolicySet_MetadataMultiError(errors)
 	}
+
 	return nil
 }
 
@@ -1645,6 +1651,7 @@ func (m *RunnableResourcePolicySet_Policy) validate(all bool) error {
 	if len(errors) > 0 {
 		return RunnableResourcePolicySet_PolicyMultiError(errors)
 	}
+
 	return nil
 }
 
@@ -1920,6 +1927,7 @@ func (m *RunnableResourcePolicySet_Policy_Rule) validate(all bool) error {
 	if len(errors) > 0 {
 		return RunnableResourcePolicySet_Policy_RuleMultiError(errors)
 	}
+
 	return nil
 }
 
@@ -2026,6 +2034,7 @@ func (m *RunnableDerivedRolesSet_Metadata) validate(all bool) error {
 	if len(errors) > 0 {
 		return RunnableDerivedRolesSet_MetadataMultiError(errors)
 	}
+
 	return nil
 }
 
@@ -2136,6 +2145,7 @@ func (m *RunnablePrincipalPolicySet_Metadata) validate(all bool) error {
 	if len(errors) > 0 {
 		return RunnablePrincipalPolicySet_MetadataMultiError(errors)
 	}
+
 	return nil
 }
 
@@ -2334,6 +2344,7 @@ func (m *RunnablePrincipalPolicySet_Policy) validate(all bool) error {
 	if len(errors) > 0 {
 		return RunnablePrincipalPolicySet_PolicyMultiError(errors)
 	}
+
 	return nil
 }
 
@@ -2472,6 +2483,7 @@ func (m *RunnablePrincipalPolicySet_Policy_ActionRule) validate(all bool) error 
 	if len(errors) > 0 {
 		return RunnablePrincipalPolicySet_Policy_ActionRuleMultiError(errors)
 	}
+
 	return nil
 }
 
@@ -2624,6 +2636,7 @@ func (m *RunnablePrincipalPolicySet_Policy_ResourceRules) validate(all bool) err
 	if len(errors) > 0 {
 		return RunnablePrincipalPolicySet_Policy_ResourceRulesMultiError(errors)
 	}
+
 	return nil
 }
 
@@ -2766,6 +2779,7 @@ func (m *Condition_ExprList) validate(all bool) error {
 	if len(errors) > 0 {
 		return Condition_ExprListMultiError(errors)
 	}
+
 	return nil
 }
 

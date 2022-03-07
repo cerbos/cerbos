@@ -132,6 +132,7 @@ func (m *EngineTestCase) validate(all bool) error {
 	if len(errors) > 0 {
 		return EngineTestCaseMultiError(errors)
 	}
+
 	return nil
 }
 
@@ -518,6 +519,7 @@ func (m *ServerTestCase) validate(all bool) error {
 	if len(errors) > 0 {
 		return ServerTestCaseMultiError(errors)
 	}
+
 	return nil
 }
 
@@ -657,6 +659,7 @@ func (m *IndexBuilderTestCase) validate(all bool) error {
 	if len(errors) > 0 {
 		return IndexBuilderTestCaseMultiError(errors)
 	}
+
 	return nil
 }
 
@@ -840,6 +843,7 @@ func (m *CompileTestCase) validate(all bool) error {
 	if len(errors) > 0 {
 		return CompileTestCaseMultiError(errors)
 	}
+
 	return nil
 }
 
@@ -974,6 +978,7 @@ func (m *CodeGenTestCase) validate(all bool) error {
 	if len(errors) > 0 {
 		return CodeGenTestCaseMultiError(errors)
 	}
+
 	return nil
 }
 
@@ -1135,6 +1140,7 @@ func (m *CelTestCase) validate(all bool) error {
 	if len(errors) > 0 {
 		return CelTestCaseMultiError(errors)
 	}
+
 	return nil
 }
 
@@ -1329,6 +1335,7 @@ func (m *SchemaTestCase) validate(all bool) error {
 	if len(errors) > 0 {
 		return SchemaTestCaseMultiError(errors)
 	}
+
 	return nil
 }
 
@@ -1462,6 +1469,7 @@ func (m *ValidationErrContainer) validate(all bool) error {
 	if len(errors) > 0 {
 		return ValidationErrContainerMultiError(errors)
 	}
+
 	return nil
 }
 
@@ -1609,6 +1617,7 @@ func (m *AttrWrapper) validate(all bool) error {
 	if len(errors) > 0 {
 		return AttrWrapperMultiError(errors)
 	}
+
 	return nil
 }
 
@@ -1772,6 +1781,7 @@ func (m *QueryPlannerTestSuite) validate(all bool) error {
 	if len(errors) > 0 {
 		return QueryPlannerTestSuiteMultiError(errors)
 	}
+
 	return nil
 }
 
@@ -1939,6 +1949,7 @@ func (m *VerifyTestFixtureGetTestsTestCase) validate(all bool) error {
 	if len(errors) > 0 {
 		return VerifyTestFixtureGetTestsTestCaseMultiError(errors)
 	}
+
 	return nil
 }
 
@@ -2101,6 +2112,7 @@ func (m *ServerTestCase_ResourcesQueryPlanCall) validate(all bool) error {
 	if len(errors) > 0 {
 		return ServerTestCase_ResourcesQueryPlanCallMultiError(errors)
 	}
+
 	return nil
 }
 
@@ -2263,6 +2275,7 @@ func (m *ServerTestCase_CheckResourceSetCall) validate(all bool) error {
 	if len(errors) > 0 {
 		return ServerTestCase_CheckResourceSetCallMultiError(errors)
 	}
+
 	return nil
 }
 
@@ -2425,6 +2438,7 @@ func (m *ServerTestCase_CheckResourceBatchCall) validate(all bool) error {
 	if len(errors) > 0 {
 		return ServerTestCase_CheckResourceBatchCallMultiError(errors)
 	}
+
 	return nil
 }
 
@@ -2587,6 +2601,7 @@ func (m *ServerTestCase_PlaygroundValidateCall) validate(all bool) error {
 	if len(errors) > 0 {
 		return ServerTestCase_PlaygroundValidateCallMultiError(errors)
 	}
+
 	return nil
 }
 
@@ -2749,6 +2764,7 @@ func (m *ServerTestCase_PlaygroundEvaluateCall) validate(all bool) error {
 	if len(errors) > 0 {
 		return ServerTestCase_PlaygroundEvaluateCallMultiError(errors)
 	}
+
 	return nil
 }
 
@@ -2911,6 +2927,7 @@ func (m *ServerTestCase_PlaygroundProxyCall) validate(all bool) error {
 	if len(errors) > 0 {
 		return ServerTestCase_PlaygroundProxyCallMultiError(errors)
 	}
+
 	return nil
 }
 
@@ -3074,6 +3091,7 @@ func (m *ServerTestCase_AdminAddOrUpdatePolicyCall) validate(all bool) error {
 	if len(errors) > 0 {
 		return ServerTestCase_AdminAddOrUpdatePolicyCallMultiError(errors)
 	}
+
 	return nil
 }
 
@@ -3237,6 +3255,7 @@ func (m *ServerTestCase_AdminAddOrUpdateSchemaCall) validate(all bool) error {
 	if len(errors) > 0 {
 		return ServerTestCase_AdminAddOrUpdateSchemaCallMultiError(errors)
 	}
+
 	return nil
 }
 
@@ -3344,6 +3363,7 @@ func (m *ServerTestCase_Status) validate(all bool) error {
 	if len(errors) > 0 {
 		return ServerTestCase_StatusMultiError(errors)
 	}
+
 	return nil
 }
 
@@ -3448,6 +3468,7 @@ func (m *IndexBuilderTestCase_CompilationUnit) validate(all bool) error {
 	if len(errors) > 0 {
 		return IndexBuilderTestCase_CompilationUnitMultiError(errors)
 	}
+
 	return nil
 }
 
@@ -3557,6 +3578,7 @@ func (m *CompileTestCase_Error) validate(all bool) error {
 	if len(errors) > 0 {
 		return CompileTestCase_ErrorMultiError(errors)
 	}
+
 	return nil
 }
 
@@ -3720,6 +3742,7 @@ func (m *QueryPlannerTestSuite_Test) validate(all bool) error {
 	if len(errors) > 0 {
 		return QueryPlannerTestSuite_TestMultiError(errors)
 	}
+
 	return nil
 }
 

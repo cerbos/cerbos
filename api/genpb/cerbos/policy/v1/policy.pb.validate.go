@@ -37,8 +37,6 @@ var (
 	_ = sort.Sort
 
 	_ = effectv1.Effect(0)
-
-	_ = effectv1.Effect(0)
 )
 
 // Validate checks the field values on Policy with the rules defined in the
@@ -218,6 +216,7 @@ func (m *Policy) validate(all bool) error {
 	if len(errors) > 0 {
 		return PolicyMultiError(errors)
 	}
+
 	return nil
 }
 
@@ -351,6 +350,7 @@ func (m *Metadata) validate(all bool) error {
 	if len(errors) > 0 {
 		return MetadataMultiError(errors)
 	}
+
 	return nil
 }
 
@@ -587,6 +587,7 @@ func (m *ResourcePolicy) validate(all bool) error {
 	if len(errors) > 0 {
 		return ResourcePolicyMultiError(errors)
 	}
+
 	return nil
 }
 
@@ -849,6 +850,7 @@ func (m *ResourceRule) validate(all bool) error {
 	if len(errors) > 0 {
 		return ResourceRuleMultiError(errors)
 	}
+
 	return nil
 }
 
@@ -1036,6 +1038,7 @@ func (m *PrincipalPolicy) validate(all bool) error {
 	if len(errors) > 0 {
 		return PrincipalPolicyMultiError(errors)
 	}
+
 	return nil
 }
 
@@ -1208,6 +1211,7 @@ func (m *PrincipalRule) validate(all bool) error {
 	if len(errors) > 0 {
 		return PrincipalRuleMultiError(errors)
 	}
+
 	return nil
 }
 
@@ -1376,6 +1380,7 @@ func (m *DerivedRoles) validate(all bool) error {
 	if len(errors) > 0 {
 		return DerivedRolesMultiError(errors)
 	}
+
 	return nil
 }
 
@@ -1557,6 +1562,7 @@ func (m *RoleDef) validate(all bool) error {
 	if len(errors) > 0 {
 		return RoleDefMultiError(errors)
 	}
+
 	return nil
 }
 
@@ -1707,6 +1713,7 @@ func (m *Condition) validate(all bool) error {
 	if len(errors) > 0 {
 		return ConditionMultiError(errors)
 	}
+
 	return nil
 }
 
@@ -1914,6 +1921,7 @@ func (m *Match) validate(all bool) error {
 	if len(errors) > 0 {
 		return MatchMultiError(errors)
 	}
+
 	return nil
 }
 
@@ -2069,6 +2077,7 @@ func (m *Schemas) validate(all bool) error {
 	if len(errors) > 0 {
 		return SchemasMultiError(errors)
 	}
+
 	return nil
 }
 
@@ -2167,6 +2176,7 @@ func (m *TestFixture) validate(all bool) error {
 	if len(errors) > 0 {
 		return TestFixtureMultiError(errors)
 	}
+
 	return nil
 }
 
@@ -2465,6 +2475,7 @@ func (m *TestSuite) validate(all bool) error {
 	if len(errors) > 0 {
 		return TestSuiteMultiError(errors)
 	}
+
 	return nil
 }
 
@@ -2665,6 +2676,7 @@ func (m *TestTable) validate(all bool) error {
 	if len(errors) > 0 {
 		return TestTableMultiError(errors)
 	}
+
 	return nil
 }
 
@@ -2886,6 +2898,7 @@ func (m *Test) validate(all bool) error {
 	if len(errors) > 0 {
 		return TestMultiError(errors)
 	}
+
 	return nil
 }
 
@@ -3046,6 +3059,7 @@ func (m *PrincipalRule_Action) validate(all bool) error {
 	if len(errors) > 0 {
 		return PrincipalRule_ActionMultiError(errors)
 	}
+
 	return nil
 }
 
@@ -3199,6 +3213,7 @@ func (m *Match_ExprList) validate(all bool) error {
 	if len(errors) > 0 {
 		return Match_ExprListMultiError(errors)
 	}
+
 	return nil
 }
 
@@ -3340,6 +3355,7 @@ func (m *Schemas_IgnoreWhen) validate(all bool) error {
 	if len(errors) > 0 {
 		return Schemas_IgnoreWhenMultiError(errors)
 	}
+
 	return nil
 }
 
@@ -3481,6 +3497,7 @@ func (m *Schemas_Schema) validate(all bool) error {
 	if len(errors) > 0 {
 		return Schemas_SchemaMultiError(errors)
 	}
+
 	return nil
 }
 
@@ -3626,6 +3643,7 @@ func (m *TestFixture_Principals) validate(all bool) error {
 	if len(errors) > 0 {
 		return TestFixture_PrincipalsMultiError(errors)
 	}
+
 	return nil
 }
 
@@ -3773,6 +3791,7 @@ func (m *TestFixture_Resources) validate(all bool) error {
 	if len(errors) > 0 {
 		return TestFixture_ResourcesMultiError(errors)
 	}
+
 	return nil
 }
 
@@ -3920,6 +3939,7 @@ func (m *TestFixture_AuxData) validate(all bool) error {
 	if len(errors) > 0 {
 		return TestFixture_AuxDataMultiError(errors)
 	}
+
 	return nil
 }
 
@@ -4149,6 +4169,7 @@ func (m *TestTable_Input) validate(all bool) error {
 	if len(errors) > 0 {
 		return TestTable_InputMultiError(errors)
 	}
+
 	return nil
 }
 
@@ -4308,6 +4329,7 @@ func (m *TestTable_Expectation) validate(all bool) error {
 	if len(errors) > 0 {
 		return TestTable_ExpectationMultiError(errors)
 	}
+
 	return nil
 }
 
@@ -4442,6 +4464,7 @@ func (m *Test_TestName) validate(all bool) error {
 	if len(errors) > 0 {
 		return Test_TestNameMultiError(errors)
 	}
+
 	return nil
 }
 
