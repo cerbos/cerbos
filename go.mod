@@ -41,7 +41,7 @@ require (
 	github.com/jmoiron/sqlx v1.3.4
 	github.com/jwalton/gchalk v1.2.1
 	github.com/kavu/go_reuseport v1.5.0
-	github.com/lestrrat-go/jwx v1.2.19
+	github.com/lestrrat-go/jwx v1.2.20
 	github.com/mattn/go-isatty v0.0.14
 	github.com/minio/minio-go/v7 v7.0.23
 	github.com/oklog/ulid/v2 v2.0.2
@@ -68,7 +68,7 @@ require (
 	go.uber.org/multierr v1.7.0
 	go.uber.org/zap v1.21.0
 	gocloud.dev v0.24.0
-	golang.org/x/crypto v0.0.0-20211117183948-ae814b36b871
+	golang.org/x/crypto v0.0.0-20220214200702-86341886e292
 	golang.org/x/net v0.0.0-20220107192237-5cfca573fb4d
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
 	golang.org/x/tools v0.1.9
