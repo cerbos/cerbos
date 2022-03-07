@@ -170,6 +170,7 @@ func (m *AccessLogEntry) validate(all bool) error {
 	if len(errors) > 0 {
 		return AccessLogEntryMultiError(errors)
 	}
+
 	return nil
 }
 
@@ -399,6 +400,7 @@ func (m *DecisionLogEntry) validate(all bool) error {
 	if len(errors) > 0 {
 		return DecisionLogEntryMultiError(errors)
 	}
+
 	return nil
 }
 
@@ -498,6 +500,7 @@ func (m *MetaValues) validate(all bool) error {
 	if len(errors) > 0 {
 		return MetaValuesMultiError(errors)
 	}
+
 	return nil
 }
 
@@ -603,6 +606,7 @@ func (m *Peer) validate(all bool) error {
 	if len(errors) > 0 {
 		return PeerMultiError(errors)
 	}
+
 	return nil
 }
 

@@ -157,6 +157,7 @@ func (m *ResourcesQueryPlanRequest) validate(all bool) error {
 	if len(errors) > 0 {
 		return ResourcesQueryPlanRequestMultiError(errors)
 	}
+
 	return nil
 }
 
@@ -400,6 +401,7 @@ func (m *CheckInput) validate(all bool) error {
 	if len(errors) > 0 {
 		return CheckInputMultiError(errors)
 	}
+
 	return nil
 }
 
@@ -582,6 +584,7 @@ func (m *CheckOutput) validate(all bool) error {
 	if len(errors) > 0 {
 		return CheckOutputMultiError(errors)
 	}
+
 	return nil
 }
 
@@ -719,6 +722,7 @@ func (m *ResourcesQueryPlanOutput) validate(all bool) error {
 	if len(errors) > 0 {
 		return ResourcesQueryPlanOutputMultiError(errors)
 	}
+
 	return nil
 }
 
@@ -932,6 +936,7 @@ func (m *Resource) validate(all bool) error {
 	if len(errors) > 0 {
 		return ResourceMultiError(errors)
 	}
+
 	return nil
 }
 
@@ -1168,6 +1173,7 @@ func (m *Principal) validate(all bool) error {
 	if len(errors) > 0 {
 		return PrincipalMultiError(errors)
 	}
+
 	return nil
 }
 
@@ -1317,6 +1323,7 @@ func (m *AuxData) validate(all bool) error {
 	if len(errors) > 0 {
 		return AuxDataMultiError(errors)
 	}
+
 	return nil
 }
 
@@ -1517,6 +1524,7 @@ func (m *ResourcesQueryPlanRequest_Resource) validate(all bool) error {
 	if len(errors) > 0 {
 		return ResourcesQueryPlanRequest_ResourceMultiError(errors)
 	}
+
 	return nil
 }
 
@@ -1632,6 +1640,7 @@ func (m *CheckOutput_ActionEffect) validate(all bool) error {
 	if len(errors) > 0 {
 		return CheckOutput_ActionEffectMultiError(errors)
 	}
+
 	return nil
 }
 
@@ -1799,6 +1808,7 @@ func (m *ResourcesQueryPlanOutput_Node) validate(all bool) error {
 	if len(errors) > 0 {
 		return ResourcesQueryPlanOutput_NodeMultiError(errors)
 	}
+
 	return nil
 }
 
@@ -1939,6 +1949,7 @@ func (m *ResourcesQueryPlanOutput_LogicalOperation) validate(all bool) error {
 	if len(errors) > 0 {
 		return ResourcesQueryPlanOutput_LogicalOperationMultiError(errors)
 	}
+
 	return nil
 }
 

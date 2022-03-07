@@ -164,6 +164,7 @@ func (m *ResourcesQueryPlanRequest) validate(all bool) error {
 	if len(errors) > 0 {
 		return ResourcesQueryPlanRequestMultiError(errors)
 	}
+
 	return nil
 }
 
@@ -420,6 +421,7 @@ func (m *CheckResourceSetRequest) validate(all bool) error {
 	if len(errors) > 0 {
 		return CheckResourceSetRequestMultiError(errors)
 	}
+
 	return nil
 }
 
@@ -633,6 +635,7 @@ func (m *ResourceSet) validate(all bool) error {
 	if len(errors) > 0 {
 		return ResourceSetMultiError(errors)
 	}
+
 	return nil
 }
 
@@ -794,6 +797,7 @@ func (m *AttributesMap) validate(all bool) error {
 	if len(errors) > 0 {
 		return AttributesMapMultiError(errors)
 	}
+
 	return nil
 }
 
@@ -1009,6 +1013,7 @@ func (m *CheckResourceBatchRequest) validate(all bool) error {
 	if len(errors) > 0 {
 		return CheckResourceBatchRequestMultiError(errors)
 	}
+
 	return nil
 }
 
@@ -1138,6 +1143,7 @@ func (m *AuxData) validate(all bool) error {
 	if len(errors) > 0 {
 		return AuxDataMultiError(errors)
 	}
+
 	return nil
 }
 
@@ -1258,6 +1264,7 @@ func (m *PolicyFile) validate(all bool) error {
 	if len(errors) > 0 {
 		return PolicyFileMultiError(errors)
 	}
+
 	return nil
 }
 
@@ -1403,6 +1410,7 @@ func (m *PlaygroundValidateRequest) validate(all bool) error {
 	if len(errors) > 0 {
 		return PlaygroundValidateRequestMultiError(errors)
 	}
+
 	return nil
 }
 
@@ -1702,6 +1710,7 @@ func (m *PlaygroundEvaluateRequest) validate(all bool) error {
 	if len(errors) > 0 {
 		return PlaygroundEvaluateRequestMultiError(errors)
 	}
+
 	return nil
 }
 
@@ -1957,6 +1966,7 @@ func (m *PlaygroundProxyRequest) validate(all bool) error {
 	if len(errors) > 0 {
 		return PlaygroundProxyRequestMultiError(errors)
 	}
+
 	return nil
 }
 
@@ -2103,6 +2113,7 @@ func (m *AddOrUpdatePolicyRequest) validate(all bool) error {
 	if len(errors) > 0 {
 		return AddOrUpdatePolicyRequestMultiError(errors)
 	}
+
 	return nil
 }
 
@@ -2317,6 +2328,7 @@ func (m *ListAuditLogEntriesRequest) validate(all bool) error {
 	if len(errors) > 0 {
 		return ListAuditLogEntriesRequestMultiError(errors)
 	}
+
 	return nil
 }
 
@@ -2425,6 +2437,7 @@ func (m *ServerInfoRequest) validate(all bool) error {
 	if len(errors) > 0 {
 		return ServerInfoRequestMultiError(errors)
 	}
+
 	return nil
 }
 
@@ -2526,6 +2539,7 @@ func (m *ListPoliciesRequest) validate(all bool) error {
 	if len(errors) > 0 {
 		return ListPoliciesRequestMultiError(errors)
 	}
+
 	return nil
 }
 
@@ -2669,6 +2683,7 @@ func (m *GetPolicyRequest) validate(all bool) error {
 	if len(errors) > 0 {
 		return GetPolicyRequestMultiError(errors)
 	}
+
 	return nil
 }
 
@@ -2813,6 +2828,7 @@ func (m *AddOrUpdateSchemaRequest) validate(all bool) error {
 	if len(errors) > 0 {
 		return AddOrUpdateSchemaRequestMultiError(errors)
 	}
+
 	return nil
 }
 
@@ -2914,6 +2930,7 @@ func (m *ListSchemasRequest) validate(all bool) error {
 	if len(errors) > 0 {
 		return ListSchemasRequestMultiError(errors)
 	}
+
 	return nil
 }
 
@@ -3057,6 +3074,7 @@ func (m *GetSchemaRequest) validate(all bool) error {
 	if len(errors) > 0 {
 		return GetSchemaRequestMultiError(errors)
 	}
+
 	return nil
 }
 
@@ -3198,6 +3216,7 @@ func (m *DeleteSchemaRequest) validate(all bool) error {
 	if len(errors) > 0 {
 		return DeleteSchemaRequestMultiError(errors)
 	}
+
 	return nil
 }
 
@@ -3382,6 +3401,7 @@ func (m *CheckResourceBatchRequest_BatchEntry) validate(all bool) error {
 	if len(errors) > 0 {
 		return CheckResourceBatchRequest_BatchEntryMultiError(errors)
 	}
+
 	return nil
 }
 
@@ -3498,6 +3518,7 @@ func (m *AuxData_JWT) validate(all bool) error {
 	if len(errors) > 0 {
 		return AuxData_JWTMultiError(errors)
 	}
+
 	return nil
 }
 
@@ -3679,6 +3700,7 @@ func (m *ListAuditLogEntriesRequest_TimeRange) validate(all bool) error {
 	if len(errors) > 0 {
 		return ListAuditLogEntriesRequest_TimeRangeMultiError(errors)
 	}
+
 	return nil
 }
 

@@ -66,6 +66,7 @@ func (m *ValidationError) validate(all bool) error {
 	if len(errors) > 0 {
 		return ValidationErrorMultiError(errors)
 	}
+
 	return nil
 }
 
@@ -186,6 +187,7 @@ func (m *Schema) validate(all bool) error {
 	if len(errors) > 0 {
 		return SchemaMultiError(errors)
 	}
+
 	return nil
 }
 
