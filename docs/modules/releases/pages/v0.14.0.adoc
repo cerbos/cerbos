@@ -1,0 +1,79 @@
+include::ROOT:partial$attributes.adoc[]
+
+[#v0.14.0]
+= Cerbos v0.14.0
+
+IMPORTANT: This release requires updating existing policy tests to match the new matrix test format. See xref:v0.14.0/upgrade.adoc[upgrade documentation] for more information.
+
+== Highlights
+
+This release includes many improvements that enhance policy authoring and testing along with updates that make deployment, management, and monitoring of Cerbos easier.
+
+The policy testing framework is updated to support writing matrix tests and to treat invalid test files as failures. You can now define a set of principals, resources, and actions in a test case and the test runner automatically runs tests against all combinations of principal, resource, and action tuples. Only the tuples that are expected to produce an `ALLOW` response needs to be defined in the expectations list. Every other tuple is assumed to produce a `DENY` response and the tests fail if they don't. This is one of the rare cases where a breaking change was necessary to make the developer experience better. Existing test suites must be updated to work with this version of Cerbos. See xref:v0.14.0/upgrade.adoc[upgrade documentation] for more information.
+
+Deploying Cerbos to environments that utilise the Docker HEALTHCHECK directive (AWS Elastic Container Service, for example) is now easier using the built-in `cerbos healthcheck` command. The Cerbos container image ships with a default HEALTHCHECK configured using this command and it can be tuned using environment variables or command-line flags. See xref:0.14.0@cli:cerbos.adoc#healthcheck[cerbos healthcheck] documentation for details.
+
+The `cerbosctl` management tool now supports adding or updating policies and schemas to a running Cerbos instance using the new `put` subcommand. The xref:0.14.0@api:admin_api.adoc[Admin API] must be enabled on the Cerbos instance and it must be configured to use one of the database storage backends such as Postgres or MySQL in order for this command to work. For more information see xref:0.14.0@cli:cerbosctl.adoc#put[cerbosctl put documentation]. 
+
+You can write policy conditions that make use of the current time using the newly introduced `now` function. It's designed to provide a stable timestamp value that returns the time that particular policy started executing. The semantics of the `timeSince` function has changed to use this stable definition of `now` as well. 
+ 
+The size of the in-memory caches that hold compiled policies and schemas have a significant impact on the performance of Cerbos PDPs. This release introduces two new configuration options to tune the sizes of these caches. If you are running Cerbos on Kubernetes or other orchestration system that imposes memory resource limits on containers, make sure to consider the cache sizes when configuring those limits. By default Cerbos holds 1024 compiled policies and 1024 schemas in its cache. The size and usage metrics of caches are available through the metrics endpoint (`/_cerbos/metrics`). 
+
+
+== Changelog
+
+
+=== Bug Fixes
+
+* Configure GoReleaser to generate Homebrew formula in tap's `Formula` subdirectory (link:https://github.com/cerbos/cerbos/pull/685[#685])
+* Require at least one action in every rule (link:https://github.com/cerbos/cerbos/pull/690[#690])
+
+=== Features
+
+* Add `now` function that returns the current timestamp (link:https://github.com/cerbos/cerbos/pull/670[#670])
+* Add healthcheck command (link:https://github.com/cerbos/cerbos/pull/692[#692])
+* #**BREAKING**# Add matrix tests (link:https://github.com/cerbos/cerbos/pull/701[#701])
+* Introduce `cerbosctl put` (link:https://github.com/cerbos/cerbos/pull/676[#676])
+
+=== Enhancements
+
+* Add cache metrics (link:https://github.com/cerbos/cerbos/pull/706[#706])
+* Add index entry count metric (link:https://github.com/cerbos/cerbos/pull/677[#677])
+* Allow compile and schema cache sizes to be configured (link:https://github.com/cerbos/cerbos/pull/700[#700])
+* Allow policies to be empty (link:https://github.com/cerbos/cerbos/pull/694[#694])
+* Do not ignore invalid test suites (link:https://github.com/cerbos/cerbos/pull/686[#686])
+* Include type of unexpected result in error message (link:https://github.com/cerbos/cerbos/pull/693[#693])
+* Use camel case for custom functions (link:https://github.com/cerbos/cerbos/pull/672[#672])
+
+=== Documentation
+
+* Add context to policy documentation (link:https://github.com/cerbos/cerbos/pull/699[#699])
+* Fix YAML syntax in testing documentation (link:https://github.com/cerbos/cerbos/pull/678[#678])
+
+=== Chores
+
+* Add response and wantedResponse check for the load tests (link:https://github.com/cerbos/cerbos/pull/691[#691])
+* Add support for load testing with the postgres store (link:https://github.com/cerbos/cerbos/pull/698[#698])
+* Bump actions/checkout from 2 to 3 (link:https://github.com/cerbos/cerbos/pull/709[#709])
+* Bump bufbuild/buf-setup-action from 1.0.0 to 1.1.0 (link:https://github.com/cerbos/cerbos/pull/708[#708])
+* Bump github.com/bufbuild/buf from 1.0.0 to 1.1.0 in /tools (link:https://github.com/cerbos/cerbos/pull/717[#717])
+* Bump github.com/envoyproxy/protoc-gen-validate from 0.6.2 to 0.6.7 in /tools (link:https://github.com/cerbos/cerbos/pull/716[#716])
+* Bump github.com/envoyproxy/protoc-gen-validate from 0.6.3 to 0.6.7 (link:https://github.com/cerbos/cerbos/pull/713[#713])
+* Bump github.com/fergusstrange/embedded-postgres from 1.14.0 to 1.15.0 (link:https://github.com/cerbos/cerbos/pull/711[#711])
+* Bump github.com/goreleaser/goreleaser in /tools (link:https://github.com/cerbos/cerbos/pull/715[#715])
+* Bump github.com/grpc-ecosystem/grpc-gateway/v2 from 2.7.3 to 2.8.0 (link:https://github.com/cerbos/cerbos/pull/720[#720])
+* Bump github.com/grpc-ecosystem/grpc-gateway/v2 from 2.7.3 to 2.8.0 in /tools (link:https://github.com/cerbos/cerbos/pull/718[#718])
+* Bump github.com/lestrrat-go/jwx from 1.2.18 to 1.2.19 (link:https://github.com/cerbos/cerbos/pull/680[#680])
+* Bump github.com/lestrrat-go/jwx from 1.2.19 to 1.2.20 (link:https://github.com/cerbos/cerbos/pull/710[#710])
+* Bump github.com/minio/minio-go/v7 from 7.0.22 to 7.0.23 (link:https://github.com/cerbos/cerbos/pull/682[#682])
+* Bump go.uber.org/multierr from 1.7.0 to 1.8.0 (link:https://github.com/cerbos/cerbos/pull/712[#712])
+* Bump golangci/golangci-lint-action from 2 to 3.1.0 (link:https://github.com/cerbos/cerbos/pull/679[#679])
+* Bump modernc.org/sqlite from 1.14.6 to 1.14.7 (link:https://github.com/cerbos/cerbos/pull/681[#681])
+* Bump modernc.org/sqlite from 1.14.7 to 1.14.8 (link:https://github.com/cerbos/cerbos/pull/714[#714])
+* Bump version to 0.14.0
+* Don't reuse the DB for client tests (link:https://github.com/cerbos/cerbos/pull/719[#719])
+* Fix linter issues when running `make lint`, but not in CI (link:https://github.com/cerbos/cerbos/pull/673[#673])
+* Modify policy generator to use templates (link:https://github.com/cerbos/cerbos/pull/683[#683])
+* Rename Helm chart README to README.md (link:https://github.com/cerbos/cerbos/pull/671[#671])
+* Replace cobra with kong in cerbosctl (link:https://github.com/cerbos/cerbos/pull/668[#668])
+* Tweak load test script (link:https://github.com/cerbos/cerbos/pull/675[#675])
