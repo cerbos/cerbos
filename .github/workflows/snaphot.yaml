@@ -17,7 +17,7 @@ jobs:
           go-version: 1.17.x
 
       - name: Checkout code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           fetch-depth: 0
 
@@ -87,7 +87,7 @@ jobs:
     name: Publish Protobufs
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
 
       - name: Setup Buf
         uses: bufbuild/buf-setup-action@v1.1.0
