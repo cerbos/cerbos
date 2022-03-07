@@ -53,7 +53,7 @@ type checkOptions struct {
 
 func newCheckOptions(ctx context.Context, opts ...CheckOpt) *checkOptions {
 	tracer := defaultTracer
-	if debugEnabled, ok := os.LookupEnv("CERBOS_ENGINE_DEBUG"); ok && debugEnabled != "false" {
+	if debugEnabled, ok := os.LookupEnv("CERBOS_DEBUG_ENGINE"); ok && debugEnabled != "false" {
 		tracer = newTracer(NewZapTraceSink(logging.FromContext(ctx).Named("tracer")))
 	}
 
