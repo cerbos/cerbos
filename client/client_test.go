@@ -112,8 +112,10 @@ func TestClient(t *testing.T) {
 func mkServerOpts(t *testing.T, withTLS bool) []testutil.ServerOpt {
 	t.Helper()
 
+	dbName := test.RandomStr(5)
+
 	serverOpts := []testutil.ServerOpt{
-		testutil.WithPolicyRepositoryDatabase("sqlite3", fmt.Sprintf("%s?_fk=true", filepath.Join(t.TempDir(), "cerbos.db"))),
+		testutil.WithPolicyRepositoryDatabase("sqlite3", fmt.Sprintf("%s?_fk=true", filepath.Join(t.TempDir(), dbName))),
 		testutil.WithAdminAPI(adminUsername, adminPassword),
 	}
 

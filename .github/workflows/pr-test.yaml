@@ -59,6 +59,10 @@ jobs:
 
       - name: Test
         run: make test-all
+        env:
+          CERBOS_TEST_LOG_LEVEL: "debug"
+          CERBOS_DEBUG_DB: "true"
+          CERBOS_DEBUG_ENGINE: "true"
 
       - name: Upload to CodeCov
         uses: codecov/codecov-action@v2
