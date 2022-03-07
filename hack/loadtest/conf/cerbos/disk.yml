@@ -6,6 +6,9 @@ server:
     enabled: true
   metricsEnabled: true
 
+schema:
+  enforcement: reject
+
 storage:
   driver: "disk"
   disk:

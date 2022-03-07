@@ -23,6 +23,7 @@ import (
 )
 
 const (
+	cacheKind             = "compile"
 	negativeCacheEntryTTL = 10 * time.Second
 	storeFetchTimeout     = 2 * time.Second
 	updateQueueSize       = 32
@@ -55,7 +56,7 @@ func NewManagerWithConf(ctx context.Context, conf *Conf, store storage.Store, sc
 		store:       store,
 		schemaMgr:   schemaMgr,
 		updateQueue: make(chan storage.Event, updateQueueSize),
-		cache:       gcache.New(int(conf.CacheSize)).ARC().Build(),
+		cache:       mkCache(int(conf.CacheSize)),
 	}
 
 	go c.processUpdateQueue(ctx)
@@ -182,6 +183,8 @@ func (c *Manager) evict(modID namer.ModuleID) {
 func (c *Manager) Get(ctx context.Context, modID namer.ModuleID) (*runtimev1.RunnablePolicySet, error) {
 	rps, err := c.cache.GetIFPresent(modID)
 	if err == nil {
+		cacheHit()
+
 		// If the value is nil, it indicates a negative cache entry (see below)
 		// Essentially, we tried to find this evaluator before and it wasn't found.
 		// We don't want to hit the store over and over again because we know it doesn't exist.
@@ -191,6 +194,8 @@ func (c *Manager) Get(ctx context.Context, modID namer.ModuleID) (*runtimev1.Run
 
 		return rps.(*runtimev1.RunnablePolicySet), nil //nolint:forcetypeassert
 	}
+
+	cacheMiss()
 
 	compileUnits, err := c.store.GetCompilationUnits(ctx, modID)
 	if err != nil {
@@ -216,6 +221,37 @@ func (c *Manager) Get(ctx context.Context, modID namer.ModuleID) (*runtimev1.Run
 	}
 
 	return retVal, nil
+}
+
+func mkCache(size int) gcache.Cache {
+	_ = stats.RecordWithTags(context.Background(),
+		[]tag.Mutator{tag.Upsert(metrics.KeyCacheKind, cacheKind)},
+		metrics.CacheMaxSize.M(int64(size)),
+	)
+
+	gauge := metrics.MakeCacheGauge(cacheKind)
+	return gcache.New(size).
+		ARC().
+		AddedFunc(func(_, _ interface{}) {
+			gauge.Add(1)
+		}).
+		EvictedFunc(func(_, _ interface{}) {
+			gauge.Add(-1)
+		}).Build()
+}
+
+func cacheHit() {
+	_ = stats.RecordWithTags(context.Background(),
+		[]tag.Mutator{tag.Upsert(metrics.KeyCacheKind, cacheKind), tag.Upsert(metrics.KeyCacheResult, "hit")},
+		metrics.CacheAccessCount.M(1),
+	)
+}
+
+func cacheMiss() {
+	_ = stats.RecordWithTags(context.Background(),
+		[]tag.Mutator{tag.Upsert(metrics.KeyCacheKind, cacheKind), tag.Upsert(metrics.KeyCacheResult, "miss")},
+		metrics.CacheAccessCount.M(1),
+	)
 }
 
 type PolicyCompilationErr struct {
