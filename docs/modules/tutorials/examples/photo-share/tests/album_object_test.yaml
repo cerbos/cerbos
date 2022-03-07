@@ -40,74 +40,65 @@ principals:
     roles: ["moderator", "user"]
 
 tests:
-  - name: View private album
-    input:
-      requestId: "test01"
-      actions: ["view"]
-      resource: alicia_private_album
+  - name: View album
+    input: &testInput
+      principals:
+        - alicia
+        - bradley
+        - maria
+      actions:
+        - view
+      resources:
+        - alicia_private_album
+        - alicia_public_album
+        - alicia_flagged_album
     expected:
-      - principal: alicia
+      - &viewExp
+        principal: alicia
+        resource: alicia_private_album
         actions:
           view: EFFECT_ALLOW
 
-      - principal: bradley
-        actions:
-          view: EFFECT_DENY
+      - <<: *viewExp
+        resource: alicia_public_album
 
-      - principal: maria
-        actions:
-          view: EFFECT_DENY
+      - <<: *viewExp
+        resource: alicia_flagged_album
 
-  - name: View public album
+      - <<: *viewExp
+        principal: bradley
+        resource: alicia_public_album
+
+      - <<: *viewExp
+        principal: bradley
+        resource: alicia_flagged_album
+
+      - <<: *viewExp
+        principal: maria
+        resource: alicia_public_album
+
+      - <<: *viewExp
+        principal: maria
+        resource: alicia_flagged_album
+
+  - name: Delete album
     input:
-      requestId: "test02"
-      actions: ["view"]
-      resource: alicia_public_album
+      <<: *testInput
+      actions:
+        - delete
     expected:
-      - principal: alicia
-        actions:
-          view: EFFECT_ALLOW
-
-      - principal: bradley
-        actions:
-          view: EFFECT_ALLOW
-
-      - principal: maria
-        actions:
-          view: EFFECT_ALLOW
-
-  - name: Delete unflagged album
-    input:
-      requestId: "test03"
-      actions: ["delete"]
-      resource: alicia_public_album
-    expected:
-      - principal: alicia
+      - &deleteExp
+        principal: alicia
+        resource: alicia_private_album
         actions:
           delete: EFFECT_ALLOW
 
-      - principal: bradley
-        actions:
-          delete: EFFECT_DENY
+      - <<: *deleteExp
+        resource: alicia_public_album
 
-      - principal: maria
-        actions:
-          delete: EFFECT_DENY
+      - <<: *deleteExp
+        resource: alicia_flagged_album
 
-  - name: Delete flagged album
-    input:
-      requestId: "test04"
-      actions: ["delete"]
-      resource: alicia_flagged_album
-    expected:
-      - principal: alicia
-        actions:
-          delete: EFFECT_ALLOW
-
-      - principal: bradley
-        actions:
-          delete: EFFECT_DENY
-
-      - principal: maria
-        actions:
-          delete: EFFECT_ALLOW
+      - <<: *deleteExp
+        principal: maria
+        resource: alicia_flagged_album

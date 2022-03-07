@@ -285,19 +285,25 @@ docker run -it -v $(pwd):/photo-share {app-docker-img} \
 
 ----
 Test results
-= AlbumObjectTestSuite (album_object_test.yaml)
-== 'View private album' by principal 'alicia' [OK]
-== 'View private album' by principal 'bradley' [OK]
-== 'View private album' by principal 'maria' [OK]
-== 'View public album' by principal 'alicia' [OK]
-== 'View public album' by principal 'bradley' [OK]
-== 'View public album' by principal 'maria' [OK]
-== 'Delete unflagged album' by principal 'alicia' [OK]
-== 'Delete unflagged album' by principal 'bradley' [OK]
-== 'Delete unflagged album' by principal 'maria' [OK]
-== 'Delete flagged album' by principal 'alicia' [OK]
-== 'Delete flagged album' by principal 'bradley' [OK]
-== 'Delete flagged album' by principal 'maria' [OK]
+= AlbumObjectTestSuite (album_object_test.yaml) 
+== 'View album' for resource 'alicia_private_album' by principal 'alicia' [OK]
+== 'View album' for resource 'alicia_public_album' by principal 'alicia' [OK]
+== 'View album' for resource 'alicia_flagged_album' by principal 'alicia' [OK]
+== 'View album' for resource 'alicia_private_album' by principal 'bradley' [OK]
+== 'View album' for resource 'alicia_public_album' by principal 'bradley' [OK]
+== 'View album' for resource 'alicia_flagged_album' by principal 'bradley' [OK]
+== 'View album' for resource 'alicia_private_album' by principal 'maria' [OK]
+== 'View album' for resource 'alicia_public_album' by principal 'maria' [OK]
+== 'View album' for resource 'alicia_flagged_album' by principal 'maria' [OK]
+== 'Delete album' for resource 'alicia_private_album' by principal 'alicia' [OK]
+== 'Delete album' for resource 'alicia_public_album' by principal 'alicia' [OK]
+== 'Delete album' for resource 'alicia_flagged_album' by principal 'alicia' [OK]
+== 'Delete album' for resource 'alicia_private_album' by principal 'bradley' [OK]
+== 'Delete album' for resource 'alicia_public_album' by principal 'bradley' [OK]
+== 'Delete album' for resource 'alicia_flagged_album' by principal 'bradley' [OK]
+== 'Delete album' for resource 'alicia_private_album' by principal 'maria' [OK]
+== 'Delete album' for resource 'alicia_public_album' by principal 'maria' [OK]
+== 'Delete album' for resource 'alicia_flagged_album' by principal 'maria' [OK]
 ----
 
 NOTE: See https://github.com/cerbos/photo-share-tutorial for an example of using Cerbos GitHub Actions in a CI workflow to compile and test policies. 
