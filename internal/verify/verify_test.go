@@ -72,7 +72,7 @@ func TestVerify(t *testing.T) {
 
 		is.Len(result.Results[0].Tests, 1)
 		is.True(result.Results[0].Tests[0].Failed)
-		is.NotEmpty(result.Results[0].Tests[0].Error)
+		is.Contains(result.Results[0].Tests[0].Error, "invalid Principal.Id")
 	})
 
 	t.Run("invalid_test", func(t *testing.T) {
@@ -93,8 +93,7 @@ func TestVerify(t *testing.T) {
 			case "did_not_expected_key_test.yaml":
 				is.False(sr.Skipped)
 				is.True(sr.Failed)
-				is.True(strings.HasPrefix(sr.Suite, "UNKNOWN: failed to load test suite: failed to convert YAML to JSON"))
-				is.True(strings.Contains(sr.Suite, "did not find expected key"))
+				is.Equal(sr.Suite, "UNKNOWN: failed to load test suite: invalid TestSuite.Tests: value must contain at least 1 item(s)")
 				is.Empty(sr.Tests)
 			}
 		}

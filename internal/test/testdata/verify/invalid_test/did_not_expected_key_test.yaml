@@ -4,5 +4,5 @@ principals:
   john:
     id: john
     policyVersion: '20210210'
-      roles:
-        - employee
+    roles:
+      - employee
