@@ -131,7 +131,11 @@ func doVerify(ctx context.Context, fsys fs.FS, eng *engine.Engine, conf Config) 
 
 	for _, sd := range suiteDefs {
 		suite := &policyv1.TestSuite{}
-		if err := util.LoadFromJSONOrYAML(fsys, sd, suite); err != nil {
+		err := util.LoadFromJSONOrYAML(fsys, sd, suite)
+		if err == nil {
+			err = suite.Validate()
+		}
+		if err != nil {
 			result.Results = append(result.Results, SuiteResult{
 				File:    sd,
 				Suite:   fmt.Sprintf("UNKNOWN: failed to load test suite: %v", err),

@@ -27,6 +27,11 @@ type testFixture struct {
 	auxData    map[string]*enginev1.AuxData
 }
 
+type validatableMessage interface {
+	proto.Message
+	Validate() error
+}
+
 const (
 	principalsFileName = "principals"
 	resourcesFileName  = "resources"
@@ -97,14 +102,19 @@ func loadAuxData(fsys fs.FS, path string) (map[string]*enginev1.AuxData, error) 
 	return nil, nil
 }
 
-func loadFixtureElement(fsys fs.FS, path string, pb proto.Message) error {
+func loadFixtureElement(fsys fs.FS, path string, pb validatableMessage) error {
 	file, err := util.OpenOneOfSupportedFiles(fsys, path)
 	if err != nil || file == nil {
 		return err
 	}
 
 	defer file.Close()
-	return util.ReadJSONOrYAML(file, pb)
+	err = util.ReadJSONOrYAML(file, pb)
+	if err != nil {
+		return err
+	}
+
+	return pb.Validate()
 }
 
 func (tf *testFixture) runTestSuite(ctx context.Context, eng *engine.Engine, shouldRun func(string) bool, file string, ts *policyv1.TestSuite) (SuiteResult, bool) {
