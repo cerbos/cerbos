@@ -1,0 +1,108 @@
+include::ROOT:partial$attributes.adoc[]
+
+= Upgrading to Cerbos 0.14.0
+
+This release introduces matrix tests for policy tests and existing test files require minor changes to be compatible with the new test runner.
+
+.`input` section
+- `resource` field has been replaced with a list field named `resources` that must contain one or more resources to use as input to the test.
+- A new list field named `principals` has been added to define the list of principals to be used as input to the test.
+- `requestID` field has been removed.
+
+.`expected` section
+- `resource` is a new, required field that must be populated to indicate which resource is being referred to in the expectation.
+- Only resource and principal combinations that are expected to produce an `ALLOW` result needs to be defined in the `expected` section. If no pair is defined, it is assumed to produce a `DENY` result.
+
+
+The example below illustrates how to convert an existing test to the new format.
+
+
+[options="header",cols="a,a"]
+|===
+| Before Cerbos 0.14.0
+| After Cerbos 0.14.0
+|
+[source,yaml]
+----
+---
+name: AlbumObjectTestSuite
+resources:
+  alicia_private_album:
+    kind: "album:object"
+    attr:
+      owner: "alicia"
+      id: "XX125"
+      public: false
+      flagged: false
+
+principals:
+  alicia:
+    id: "alicia"
+    roles: ["user"]
+
+  bradley:
+    id: "bradley"
+    roles: ["user"]
+
+  maria:
+    id: "maria"
+    roles: ["moderator", "user"]
+
+tests:
+  - name: View album
+    input:
+      actions: ["view"]
+      resource: alicia_private_album
+    expected:
+      - principal: alicia
+        actions:
+          view: EFFECT_ALLOW
+
+      - principal: bradley
+        actions:
+          view: EFFECT_DENY
+
+      - principal: maria
+        actions:
+          view: EFFECT_DENY
+----
+|
+[source,yaml]
+----
+---
+name: AlbumObjectTestSuite
+resources:
+  alicia_private_album:
+    kind: "album:object"
+    attr:
+      owner: "alicia"
+      id: "XX125"
+      public: false
+      flagged: false
+
+principals:
+  alicia:
+    id: "alicia"
+    roles: ["user"]
+
+  bradley:
+    id: "bradley"
+    roles: ["user"]
+
+  maria:
+    id: "maria"
+    roles: ["moderator", "user"]
+
+tests:
+  - name: View album
+    input:
+      actions: ["view"]
+      principals: ["alicia", "bradley", "maria"]
+      resources: ["alicia_private_album"]
+    expected:
+      - principal: alicia
+        actions:
+          view: EFFECT_ALLOW
+----
+|===
+
