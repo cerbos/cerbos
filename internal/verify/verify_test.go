@@ -35,28 +35,34 @@ func TestVerify(t *testing.T) {
 	t.Run("valid", func(t *testing.T) {
 		result, err := runSuite("valid")
 		require.NoError(t, err)
-		require.Len(t, result.Results, 4)
+		require.Len(t, result.Suites, 4)
 
-		for _, sr := range result.Results {
+		for _, sr := range result.Suites {
 			t.Run(sr.File, func(t *testing.T) {
 				is := assert.New(t)
 				switch sr.File {
 				case "empty_test.yaml":
 					is.False(sr.Skipped)
-					is.Empty(sr.Tests)
+					is.Empty(sr.Principals)
 				case "suite_test.yaml", "inline_fixture_test.yaml":
 					is.False(sr.Skipped)
-					is.Len(sr.Tests, 1)
-					is.False(sr.Tests[0].Skipped)
-					is.False(sr.Tests[0].Failed, "Trace:\n%s\n", sr.Tests[0].EngineTrace)
-					is.Empty(sr.Tests[0].Error)
+					is.Len(sr.Principals, 1)
+					for _, action := range sr.Principals[0].Resources[0].Actions {
+						is.False(action.Data.Skipped)
+						is.False(action.Data.Failed, "Trace:\n%s\n", action.Data.EngineTrace)
+						is.Empty(action.Data.Error)
+					}
 				case "udf_test.yaml":
 					is.False(sr.Skipped)
-					is.Len(sr.Tests, 2)
-					for i := 0; i < 2; i++ {
-						is.False(sr.Tests[i].Skipped)
-						is.False(sr.Tests[i].Failed, "Trace:\n%s\n", sr.Tests[i].EngineTrace)
-						is.Empty(sr.Tests[i].Error, sr.Tests[i])
+					is.Len(sr.Principals, 2)
+					for _, principal := range sr.Principals {
+						for _, resource := range principal.Resources {
+							for _, action := range resource.Actions {
+								is.False(action.Data.Skipped)
+								is.False(action.Data.Failed, "Trace:\n%s\n", action.Data.EngineTrace)
+								is.Empty(action.Data.Error, fmt.Sprintf("%s | %s | %s", principal.Name, resource.Name, action.Name))
+							}
+						}
 					}
 				}
 			})
@@ -68,11 +74,8 @@ func TestVerify(t *testing.T) {
 		is := require.New(t)
 		is.NoError(err)
 		is.True(result.Failed)
-		is.Len(result.Results, 1)
-
-		is.Len(result.Results[0].Tests, 1)
-		is.True(result.Results[0].Tests[0].Failed)
-		is.Contains(result.Results[0].Tests[0].Error, "invalid Principal.Id")
+		is.Len(result.Suites, 1)
+		is.True(strings.HasPrefix(result.Suites[0].Status, "failed to load test fixtures from testdata:"))
 	})
 
 	t.Run("invalid_test", func(t *testing.T) {
@@ -81,20 +84,20 @@ func TestVerify(t *testing.T) {
 		is := require.New(t)
 		is.NoError(err)
 		is.True(result.Failed)
-		is.Len(result.Results, 2)
+		is.Len(result.Suites, 2)
 
-		for _, sr := range result.Results {
+		for _, sr := range result.Suites {
 			switch sr.File {
 			case "invalid_test.yaml":
 				is.False(sr.Skipped)
 				is.True(sr.Failed)
-				is.True(strings.HasPrefix(sr.Suite, "UNKNOWN: failed to load test suite"))
-				is.Empty(sr.Tests)
+				is.True(strings.HasPrefix(sr.Status, "failed to load test suite"))
+				is.Empty(sr.Principals)
 			case "did_not_expected_key_test.yaml":
 				is.False(sr.Skipped)
 				is.True(sr.Failed)
-				is.Equal(sr.Suite, "UNKNOWN: failed to load test suite: invalid TestSuite.Tests: value must contain at least 1 item(s)")
-				is.Empty(sr.Tests)
+				is.Equal(sr.Status, "failed to load test suite: invalid TestSuite.Tests: value must contain at least 1 item(s)")
+				is.Empty(sr.Principals)
 			}
 		}
 	})
@@ -269,9 +272,9 @@ func Test_doVerify(t *testing.T) {
 				result, err := doVerify(context.Background(), fsys, eng, Config{})
 				is := require.New(t)
 				is.NoError(err)
-				is.Len(result.Results, 1)
-				is.False(result.Results[0].Skipped)
-				is.False(result.Failed, "%+v", result.Results)
+				is.Len(result.Suites, 1)
+				is.False(result.Suites[0].Skipped)
+				is.False(result.Failed, "%+v", result.Suites)
 			})
 		}
 	}
@@ -285,8 +288,8 @@ func Test_doVerify(t *testing.T) {
 		result, err := doVerify(context.Background(), fsys, eng, Config{})
 		is := require.New(t)
 		is.NoError(err)
-		is.Len(result.Results, 1)
-		is.False(result.Results[0].Skipped)
+		is.Len(result.Suites, 1)
+		is.False(result.Suites[0].Skipped)
 		is.True(result.Failed)
 	})
 	t.Run("Should fail for faux resources", func(t *testing.T) {
@@ -299,8 +302,8 @@ func Test_doVerify(t *testing.T) {
 		result, err := doVerify(context.Background(), fsys, eng, Config{})
 		is := require.New(t)
 		is.NoError(err)
-		is.Len(result.Results, 1)
-		is.False(result.Results[0].Skipped)
+		is.Len(result.Suites, 1)
+		is.False(result.Suites[0].Skipped)
 		is.True(result.Failed)
 	})
 	t.Run("Several subdirectories with test fixtures", func(t *testing.T) {
@@ -316,11 +319,12 @@ func Test_doVerify(t *testing.T) {
 		result, err := doVerify(context.Background(), fsys, eng, Config{})
 		is := require.New(t)
 		is.NoError(err)
-		is.Len(result.Results, 3)
-		for i := 0; i < len(result.Results); i++ {
-			is.Len(result.Results[i].Tests, 2*2) // 2 principals * 2 resources
+		is.Len(result.Suites, 3)
+		for i := 0; i < len(result.Suites); i++ {
+			is.Len(result.Suites[i].Principals, 2)
+			is.Len(result.Suites[i].Principals[0].Resources, 2)
 		}
-		is.False(result.Failed, "%+v", result.Results)
+		is.False(result.Failed, "%+v", result.Suites)
 	})
 	t.Run("Simple test", func(t *testing.T) {
 		fsys := make(fstest.MapFS)
@@ -332,9 +336,9 @@ func Test_doVerify(t *testing.T) {
 		result, err := doVerify(context.Background(), fsys, eng, Config{})
 		is := require.New(t)
 		is.NoError(err)
-		is.Len(result.Results, 1)
-		is.False(result.Results[0].Skipped)
-		is.False(result.Failed, "%+v", result.Results)
+		is.Len(result.Suites, 1)
+		is.False(result.Suites[0].Skipped)
+		is.False(result.Failed, "%+v", result.Suites)
 	})
 }
 

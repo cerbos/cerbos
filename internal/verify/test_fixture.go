@@ -11,10 +11,11 @@ import (
 	"io/fs"
 	"path/filepath"
 
+	effectv1 "github.com/cerbos/cerbos/api/genpb/cerbos/effect/v1"
 	"github.com/google/go-cmp/cmp"
+
 	"google.golang.org/protobuf/proto"
 
-	effectv1 "github.com/cerbos/cerbos/api/genpb/cerbos/effect/v1"
 	enginev1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
 	"github.com/cerbos/cerbos/internal/engine"
@@ -31,6 +32,9 @@ type validatableMessage interface {
 	proto.Message
 	Validate() error
 }
+
+// EffectsMatch is a type created to make the diff output nicer.
+type EffectsMatch map[string]effectv1.Effect
 
 const (
 	principalsFileName = "principals"
@@ -117,78 +121,77 @@ func loadFixtureElement(fsys fs.FS, path string, pb validatableMessage) error {
 	return pb.Validate()
 }
 
-func (tf *testFixture) runTestSuite(ctx context.Context, eng *engine.Engine, shouldRun func(string) bool, file string, ts *policyv1.TestSuite) (SuiteResult, bool) {
+func (tf *testFixture) runTestSuite(ctx context.Context, eng *engine.Engine, shouldRun func(string) bool, file string, ts *policyv1.TestSuite) (SuiteNode, bool) {
 	failed := false
 
-	sr := SuiteResult{File: file, Suite: ts.Name}
+	sn := SuiteNode{
+		File: file,
+		Name: ts.Name,
+	}
 	if ts.Skip {
-		sr.Skipped = true
-		return sr, failed
+		sn.Skipped = true
+		return sn, failed
 	}
 
 	tests, err := tf.getTests(ts)
 	if err != nil {
 		failed = true
-		sr.Tests = []TestResult{{
-			Name:    TestName{TableTestName: "Failed to load the test suite"},
-			Skipped: false,
-			Failed:  true,
-			Error:   err.Error(),
-		}}
-		return sr, failed
+
+		sn.Name = suiteNameWithErrors
+		sn.Status = fmt.Sprintf("Failed to load the test suite: %s", err.Error())
+		sn.Failed = true
+
+		return sn, failed
 	}
 
 	for _, test := range tests {
 		if err := ctx.Err(); err != nil {
-			return sr, failed
+			return sn, failed
 		}
 
-		testResult := TestResult{Name: TestName{TableTestName: test.Name.TestTableName, PrincipalKey: test.Name.PrincipalKey, ResourceKey: test.Name.ResourceKey}}
-		if test.Skip || !shouldRun(fmt.Sprintf("%s/%s", ts.Name, test.Name.String())) {
-			testResult.Skipped = true
-			sr.Tests = append(sr.Tests, testResult)
+		skipped := false
+		for _, action := range test.Input.Actions {
+			testData := sn.Add(test.Name.PrincipalKey, test.Name.ResourceKey, action).Data
+
+			if test.Skip || !shouldRun(fmt.Sprintf("%s/%s", ts.Name, test.Name.String())) {
+				testData.Skipped = true
+				skipped = true
+				continue
+			}
+
+			inputs := []*enginev1.CheckInput{{RequestId: test.Input.RequestId, Resource: test.Input.Resource, Principal: test.Input.Principal, Actions: []string{action}, AuxData: test.Input.AuxData}}
+
+			traceBuf := new(bytes.Buffer)
+			actual, err := eng.Check(ctx, inputs, engine.WithWriterTraceSink(traceBuf))
+			if err != nil {
+				testData.Failed = true
+				testData.Error = err.Error()
+				testData.EngineTrace = traceBuf.String()
+				failed = true
+				continue
+			}
+
+			if len(actual) == 0 {
+				testData.Failed = true
+				testData.Error = "Empty response from server"
+				failed = true
+				continue
+			}
+
+			if diff := cmp.Diff(test.Expected[action].String(), actual[0].Actions[action].Effect.String()); diff != "" {
+				testData.Failed = true
+				testData.Error = diff
+				testData.EngineTrace = traceBuf.String()
+				failed = true
+			}
+		}
+
+		if skipped {
 			continue
 		}
-
-		traceBuf := new(bytes.Buffer)
-		actual, err := eng.Check(ctx, []*enginev1.CheckInput{test.Input}, engine.WithWriterTraceSink(traceBuf))
-		if err != nil {
-			testResult.Failed = true
-			testResult.Error = err.Error()
-			testResult.EngineTrace = traceBuf.String()
-			failed = true
-			sr.Tests = append(sr.Tests, testResult)
-			continue
-		}
-
-		if len(actual) == 0 {
-			testResult.Failed = true
-			testResult.Error = "Empty response from server"
-			failed = true
-			sr.Tests = append(sr.Tests, testResult)
-			continue
-		}
-
-		// EffectsMatch is a type created to make the diff output nicer.
-		type EffectsMatch map[string]effectv1.Effect
-		expectedResult := EffectsMatch(test.Expected)
-
-		actualResult := make(EffectsMatch, len(actual[0].Actions))
-		for key, actionEffect := range actual[0].Actions {
-			actualResult[key] = actionEffect.Effect
-		}
-
-		if diff := cmp.Diff(expectedResult, actualResult); diff != "" {
-			testResult.Failed = true
-			testResult.Error = diff
-			testResult.EngineTrace = traceBuf.String()
-			failed = true
-		}
-
-		sr.Tests = append(sr.Tests, testResult)
 	}
 
-	return sr, failed
+	return sn, failed
 }
 
 func (tf *testFixture) getTests(suite *policyv1.TestSuite) ([]*policyv1.Test, error) {

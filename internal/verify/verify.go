@@ -17,40 +17,99 @@ import (
 	"github.com/cerbos/cerbos/internal/util"
 )
 
+const suiteNameWithErrors = "[ERROR]"
+
 type Config struct {
 	TestsDir string
 	Run      string
 }
 
 type Result struct {
-	Results []SuiteResult `json:"results"`
-	Failed  bool          `json:"-"`
+	Suites []SuiteNode `json:"suites"`
+	Failed bool        `json:"-"`
 }
 
-type SuiteResult struct {
-	File    string       `json:"file"`
-	Suite   string       `json:"suite"`
-	Tests   []TestResult `json:"tests"`
-	Skipped bool         `json:"skipped,omitempty"`
-	Failed  bool         `json:"failed,omitempty"`
+type SuiteNode struct {
+	File       string           `json:"file"`
+	Status     string           `json:"status"`
+	Name       string           `json:"name"`
+	Principals []*PrincipalNode `json:"principals,omitempty"`
+	Skipped    bool             `json:"skipped,omitempty"`
+	Failed     bool             `json:"failed,omitempty"`
 }
 
-type TestName struct {
-	TableTestName string `json:"name"`
-	PrincipalKey  string `json:"principal"`
-	ResourceKey   string `json:"resource"`
+func (sn *SuiteNode) Principal(name string) *PrincipalNode {
+	for _, p := range sn.Principals {
+		if p.Name == name {
+			return p
+		}
+	}
+
+	p := &PrincipalNode{
+		Name:      name,
+		Resources: nil,
+	}
+	sn.Principals = append(sn.Principals, p)
+
+	return p
 }
 
-func (r TestName) String() string {
-	return fmt.Sprintf("'%s' for resource '%s' by principal '%s'", r.TableTestName, r.ResourceKey, r.PrincipalKey)
+func (sn *SuiteNode) Add(principal, resource, action string) *ActionNode {
+	return sn.Principal(principal).Resource(resource).Action(action)
 }
 
-type TestResult struct {
-	Error       string   `json:"error,omitempty"`
-	EngineTrace string   `json:"engineTrace,omitempty"`
-	Name        TestName `json:"case"`
-	Skipped     bool     `json:"skipped,omitempty"`
-	Failed      bool     `json:"failed"`
+type PrincipalNode struct {
+	Name      string          `json:"name"`
+	Resources []*ResourceNode `json:"resources"`
+}
+
+func (pn *PrincipalNode) Resource(name string) *ResourceNode {
+	for _, r := range pn.Resources {
+		if r.Name == name {
+			return r
+		}
+	}
+
+	r := &ResourceNode{
+		Name:    name,
+		Actions: nil,
+	}
+	pn.Resources = append(pn.Resources, r)
+
+	return r
+}
+
+type ResourceNode struct {
+	Name    string        `json:"name"`
+	Actions []*ActionNode `json:"actions"`
+}
+
+func (rn *ResourceNode) Action(name string) *ActionNode {
+	for _, a := range rn.Actions {
+		if a.Name == name {
+			return a
+		}
+	}
+
+	a := &ActionNode{
+		Name: name,
+		Data: &DataNode{},
+	}
+	rn.Actions = append(rn.Actions, a)
+
+	return a
+}
+
+type ActionNode struct {
+	Data *DataNode `json:"data"`
+	Name string    `json:"name"`
+}
+
+type DataNode struct {
+	Error       string `json:"error,omitempty"`
+	EngineTrace string `json:"engineTrace,omitempty"`
+	Skipped     bool   `json:"skipped,omitempty"`
+	Failed      bool   `json:"failed"`
 }
 
 var ErrTestFixtureNotFound = errors.New("test fixture not found")
@@ -136,9 +195,10 @@ func doVerify(ctx context.Context, fsys fs.FS, eng *engine.Engine, conf Config) 
 			err = suite.Validate()
 		}
 		if err != nil {
-			result.Results = append(result.Results, SuiteResult{
+			result.Suites = append(result.Suites, SuiteNode{
 				File:    sd,
-				Suite:   fmt.Sprintf("UNKNOWN: failed to load test suite: %v", err),
+				Name:    suiteNameWithErrors,
+				Status:  fmt.Sprintf("failed to load test suite: %v", err),
 				Skipped: false,
 				Failed:  true,
 			})
@@ -149,24 +209,18 @@ func doVerify(ctx context.Context, fsys fs.FS, eng *engine.Engine, conf Config) 
 		fixtureDir := filepath.Join(filepath.Dir(sd), util.TestDataDirectory)
 		fixture, err := getFixture(fixtureDir)
 		if err != nil {
-			result.Results = append(result.Results, SuiteResult{
+			result.Suites = append(result.Suites, SuiteNode{
 				File:   sd,
-				Suite:  suite.Name,
+				Name:   suiteNameWithErrors,
+				Status: fmt.Sprintf("failed to load test fixtures from %s: %v", fixtureDir, err),
 				Failed: true,
-				Tests: []TestResult{
-					{
-						Name:   TestName{TableTestName: "*", PrincipalKey: "*", ResourceKey: "*"},
-						Failed: true,
-						Error:  fmt.Sprintf("failed to load test fixtures from %s: %v", fixtureDir, err),
-					},
-				},
 			})
 			result.Failed = true
 			continue
 		}
 
 		suiteResult, failed := fixture.runTestSuite(ctx, eng, shouldRun, sd, suite)
-		result.Results = append(result.Results, suiteResult)
+		result.Suites = append(result.Suites, suiteResult)
 		if failed {
 			result.Failed = true
 		}
