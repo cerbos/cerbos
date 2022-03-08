@@ -3,26 +3,26 @@ name: AlbumObjectTestSuite
 description: Tests for verifying the album:object resource policy
 resources:
   alicia_private_album:
+    id: "XX125"
     kind: "album:object"
     attr:
       owner: "alicia"
-      id: "XX125"
       public: false
       flagged: false
 
   alicia_public_album:
+    id: "XX525"
     kind: "album:object"
     attr:
       owner: "alicia"
-      id: "XX525"
       public: true
       flagged: false
 
   alicia_flagged_album:
+    id: "XX666"
     kind: "album:object"
     attr:
       owner: "alicia"
-      id: "XX666"
       public: true
       flagged: true
 
