@@ -39,7 +39,7 @@ var ErrNoPoliciesMatched = errors.New("no matching policies")
 const (
 	defaultEffect        = effectv1.Effect_EFFECT_DENY
 	noPolicyMatch        = "NO_MATCH"
-	parallelismThreshold = 2
+	parallelismThreshold = 5
 	workerQueueSize      = 4
 	workerResetJitter    = 1 << 4
 	workerResetThreshold = 1 << 16

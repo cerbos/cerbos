@@ -8,8 +8,8 @@ services:
     depends_on:
       - postgres
     volumes:
-      - ./work/cerbos:/conf
-      - ./work/policies:/policies
+      - ${WORK_DIR}/cerbos:/conf
+      - ${WORK_DIR}/policies:/policies
     ports:
       - "3592:3592"
       - "3593:3593"
@@ -24,8 +24,8 @@ services:
       - POSTGRES_PASSWORD=cerbos
       - POSTGRES_DB=cerbos
     volumes:
-      - ./work/postgres/init:/docker-entrypoint-initdb.d
-      - ./work/postgres/data:/var/lib/postgresql/data
+      - ${WORK_DIR}/postgres/init:/docker-entrypoint-initdb.d
+      - ${WORK_DIR}/postgres/data:/var/lib/postgresql/data
     ports:
       - "5432:5432"
 

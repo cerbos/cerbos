@@ -5,7 +5,6 @@
 
 set -euo pipefail
 
-WORK_DIR="work"
 
 # Test parameters
 DURATION_SECS=${DURATION_SECS:-"120"}
@@ -20,11 +19,11 @@ STORE=${STORE:-"disk"}
 SERVER=${SERVER:-"localhost:3592"}
 USERNAME=${USERNAME:-"cerbos"}
 PASSWORD=${PASSWORD:-"cerbosAdmin"}
+WORK_DIR=${WORK_DIR:-"work"}
 
 clean() {
   printf "Cleaning up\n"
-  rm -rf ./bin
-  rm -rf work
+  rm -rf "$WORK_DIR"
 }
 
 generateResources() {
@@ -92,6 +91,7 @@ executeTest() {
     -e REQ_KIND="$REQ_KIND" \
     -e RPS="$RPS" \
     -e SERVER="$SERVER" \
+    -e WORK_DIR="$WORK_DIR" \
     check.js
 }
 
