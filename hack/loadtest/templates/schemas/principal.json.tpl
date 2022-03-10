@@ -6,7 +6,8 @@
       "type": "string",
       "enum": [
         "marketing",
-        "engineering"
+        "engineering",
+        "finance"
       ]
     },
     "geography": {

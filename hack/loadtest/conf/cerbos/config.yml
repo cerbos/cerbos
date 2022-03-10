@@ -1,0 +1,30 @@
+---
+server:
+  httpListenAddr: ":3592"
+  grpcListenAddr: ":3593"
+  adminAPI:
+    enabled: true
+  metricsEnabled: true
+
+schema:
+  enforcement: ${SCHEMA_ENFORCEMENT}
+
+storage:
+  driver: ${STORE}
+
+  disk:
+    directory: /policies
+    watchForChanges: false
+
+  postgres:
+    url: "postgres://cerbos:cerbos@postgres:5432/cerbos"
+
+audit:
+  enabled: ${AUDIT_ENABLED}
+  accessLogsEnabled: true
+  decisionLogsEnabled: true
+  backend: "local"
+  local:
+    storagePath: /audit/cerbos_auditlog
+    advanced:
+      flushInterval: 5s
