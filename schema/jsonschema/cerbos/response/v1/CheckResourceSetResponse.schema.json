@@ -1,0 +1,114 @@
+{
+  "$id": "https://api.cerbos.dev/cerbos/response/v1/CheckResourceSetResponse.schema.json",
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "definitions": {
+    "cerbos.effect.v1.Effect": {
+      "type": "string",
+      "enum": [
+        "EFFECT_UNSPECIFIED",
+        "EFFECT_ALLOW",
+        "EFFECT_DENY",
+        "EFFECT_NO_MATCH"
+      ]
+    },
+    "cerbos.response.v1.CheckResourceSetResponse.ActionEffectMap": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "actions": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/cerbos.effect.v1.Effect"
+          }
+        },
+        "validationErrors": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/cerbos.schema.v1.ValidationError"
+          }
+        }
+      }
+    },
+    "cerbos.response.v1.CheckResourceSetResponse.Meta": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "resourceInstances": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/cerbos.response.v1.CheckResourceSetResponse.Meta.ActionMeta"
+          }
+        }
+      }
+    },
+    "cerbos.response.v1.CheckResourceSetResponse.Meta.ActionMeta": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "actions": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/cerbos.response.v1.CheckResourceSetResponse.Meta.EffectMeta"
+          }
+        },
+        "effectiveDerivedRoles": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "cerbos.response.v1.CheckResourceSetResponse.Meta.EffectMeta": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "matchedPolicy": {
+          "type": "string"
+        },
+        "matchedScope": {
+          "type": "string"
+        }
+      }
+    },
+    "cerbos.schema.v1.ValidationError": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "message": {
+          "type": "string"
+        },
+        "path": {
+          "type": "string"
+        },
+        "source": {
+          "$ref": "#/definitions/cerbos.schema.v1.ValidationError.Source"
+        }
+      }
+    },
+    "cerbos.schema.v1.ValidationError.Source": {
+      "type": "string",
+      "enum": [
+        "SOURCE_UNSPECIFIED",
+        "SOURCE_PRINCIPAL",
+        "SOURCE_RESOURCE"
+      ]
+    }
+  },
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "meta": {
+      "$ref": "#/definitions/cerbos.response.v1.CheckResourceSetResponse.Meta"
+    },
+    "requestId": {
+      "type": "string"
+    },
+    "resourceInstances": {
+      "type": "object",
+      "additionalProperties": {
+        "$ref": "#/definitions/cerbos.response.v1.CheckResourceSetResponse.ActionEffectMap"
+      }
+    }
+  }
+}

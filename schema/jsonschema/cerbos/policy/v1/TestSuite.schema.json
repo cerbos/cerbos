@@ -1,0 +1,253 @@
+{
+  "$id": "https://api.cerbos.dev/cerbos/policy/v1/TestSuite.schema.json",
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "definitions": {
+    "cerbos.effect.v1.Effect": {
+      "type": "string",
+      "enum": [
+        "EFFECT_UNSPECIFIED",
+        "EFFECT_ALLOW",
+        "EFFECT_DENY",
+        "EFFECT_NO_MATCH"
+      ]
+    },
+    "cerbos.engine.v1.AuxData": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "jwt": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/google.protobuf.Value"
+          }
+        }
+      }
+    },
+    "cerbos.engine.v1.Principal": {
+      "type": "object",
+      "required": [
+        "id",
+        "roles"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "attr": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/google.protobuf.Value"
+          }
+        },
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "policyVersion": {
+          "type": "string",
+          "pattern": "^[[:word:]]*$"
+        },
+        "roles": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[[:word:]\\-\\.]+$"
+          },
+          "maxItems": 20,
+          "minItems": 1,
+          "uniqueItems": true
+        },
+        "scope": {
+          "type": "string",
+          "pattern": "^([[:alpha:]][[:word:]\\-]+(\\.[[:alpha:]][[:word:]\\-]*)*)*$"
+        }
+      }
+    },
+    "cerbos.engine.v1.Resource": {
+      "type": "object",
+      "required": [
+        "kind",
+        "id"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "attr": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/google.protobuf.Value"
+          }
+        },
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "kind": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^[[:alpha:]][[:word:]\\@\\.\\-/]*(\\:[[:alpha:]][[:word:]\\@\\.\\-/]*)*$"
+        },
+        "policyVersion": {
+          "type": "string",
+          "pattern": "^[[:word:]]*$"
+        },
+        "scope": {
+          "type": "string",
+          "pattern": "^([[:alpha:]][[:word:]\\-]+(\\.[[:alpha:]][[:word:]\\-]*)*)*$"
+        }
+      }
+    },
+    "cerbos.policy.v1.TestTable": {
+      "type": "object",
+      "required": [
+        "name",
+        "input",
+        "expected"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "description": {
+          "type": "string"
+        },
+        "expected": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/cerbos.policy.v1.TestTable.Expectation"
+          },
+          "minItems": 1
+        },
+        "input": {
+          "$ref": "#/definitions/cerbos.policy.v1.TestTable.Input"
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "skip": {
+          "type": "boolean"
+        },
+        "skipReason": {
+          "type": "string"
+        }
+      }
+    },
+    "cerbos.policy.v1.TestTable.Expectation": {
+      "type": "object",
+      "required": [
+        "principal",
+        "resource",
+        "actions"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "actions": {
+          "type": "object",
+          "minProperties": 1,
+          "additionalProperties": {
+            "$ref": "#/definitions/cerbos.effect.v1.Effect"
+          },
+          "propertyNames": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "principal": {
+          "type": "string",
+          "minLength": 1
+        },
+        "resource": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "cerbos.policy.v1.TestTable.Input": {
+      "type": "object",
+      "required": [
+        "principals",
+        "resources",
+        "actions"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "actions": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "minItems": 1,
+          "uniqueItems": true
+        },
+        "auxData": {
+          "type": "string"
+        },
+        "principals": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "minItems": 1,
+          "uniqueItems": true
+        },
+        "resources": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "minItems": 1,
+          "uniqueItems": true
+        }
+      }
+    },
+    "google.protobuf.Value": {
+      "title": "Value",
+      "description": "A dynamically-typed value."
+    }
+  },
+  "type": "object",
+  "required": [
+    "name",
+    "tests"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "auxData": {
+      "type": "object",
+      "additionalProperties": {
+        "$ref": "#/definitions/cerbos.engine.v1.AuxData"
+      }
+    },
+    "description": {
+      "type": "string"
+    },
+    "name": {
+      "type": "string",
+      "minLength": 1
+    },
+    "principals": {
+      "type": "object",
+      "additionalProperties": {
+        "$ref": "#/definitions/cerbos.engine.v1.Principal"
+      }
+    },
+    "resources": {
+      "type": "object",
+      "additionalProperties": {
+        "$ref": "#/definitions/cerbos.engine.v1.Resource"
+      }
+    },
+    "skip": {
+      "type": "boolean"
+    },
+    "skipReason": {
+      "type": "string"
+    },
+    "tests": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/cerbos.policy.v1.TestTable"
+      },
+      "minItems": 1
+    }
+  }
+}

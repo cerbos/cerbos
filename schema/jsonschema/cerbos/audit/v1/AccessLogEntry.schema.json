@@ -1,0 +1,68 @@
+{
+  "$id": "https://api.cerbos.dev/cerbos/audit/v1/AccessLogEntry.schema.json",
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "definitions": {
+    "cerbos.audit.v1.MetaValues": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "values": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "cerbos.audit.v1.Peer": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "address": {
+          "type": "string"
+        },
+        "authInfo": {
+          "type": "string"
+        },
+        "forwardedFor": {
+          "type": "string"
+        },
+        "userAgent": {
+          "type": "string"
+        }
+      }
+    },
+    "google.protobuf.Timestamp": {
+      "title": "Timestamp",
+      "description": "A point in time, independent of any time zone or calendar.",
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "callId": {
+      "type": "string"
+    },
+    "metadata": {
+      "type": "object",
+      "additionalProperties": {
+        "$ref": "#/definitions/cerbos.audit.v1.MetaValues"
+      }
+    },
+    "method": {
+      "type": "string"
+    },
+    "peer": {
+      "$ref": "#/definitions/cerbos.audit.v1.Peer"
+    },
+    "statusCode": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "timestamp": {
+      "$ref": "#/definitions/google.protobuf.Timestamp"
+    }
+  }
+}

@@ -1,0 +1,49 @@
+{
+  "$id": "https://api.cerbos.dev/cerbos/private/v1/IndexBuilderTestCase.schema.json",
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "definitions": {
+    "cerbos.private.v1.IndexBuilderTestCase.CompilationUnit": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "ancestorFqns": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "definitionFqns": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "mainFqn": {
+          "type": "string"
+        }
+      }
+    }
+  },
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "files": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "string"
+      }
+    },
+    "wantCompilationUnits": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/cerbos.private.v1.IndexBuilderTestCase.CompilationUnit"
+      }
+    },
+    "wantErr": {
+      "type": "string"
+    },
+    "wantErrJson": {
+      "type": "string"
+    }
+  }
+}

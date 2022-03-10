@@ -1,0 +1,175 @@
+{
+  "$id": "https://api.cerbos.dev/cerbos/request/v1/PlaygroundEvaluateRequest.schema.json",
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "definitions": {
+    "cerbos.engine.v1.Principal": {
+      "type": "object",
+      "required": [
+        "id",
+        "roles"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "attr": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/google.protobuf.Value"
+          }
+        },
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "policyVersion": {
+          "type": "string",
+          "pattern": "^[[:word:]]*$"
+        },
+        "roles": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[[:word:]\\-\\.]+$"
+          },
+          "maxItems": 20,
+          "minItems": 1,
+          "uniqueItems": true
+        },
+        "scope": {
+          "type": "string",
+          "pattern": "^([[:alpha:]][[:word:]\\-]+(\\.[[:alpha:]][[:word:]\\-]*)*)*$"
+        }
+      }
+    },
+    "cerbos.engine.v1.Resource": {
+      "type": "object",
+      "required": [
+        "kind",
+        "id"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "attr": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/google.protobuf.Value"
+          }
+        },
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "kind": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^[[:alpha:]][[:word:]\\@\\.\\-/]*(\\:[[:alpha:]][[:word:]\\@\\.\\-/]*)*$"
+        },
+        "policyVersion": {
+          "type": "string",
+          "pattern": "^[[:word:]]*$"
+        },
+        "scope": {
+          "type": "string",
+          "pattern": "^([[:alpha:]][[:word:]\\-]+(\\.[[:alpha:]][[:word:]\\-]*)*)*$"
+        }
+      }
+    },
+    "cerbos.request.v1.AuxData": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "jwt": {
+          "$ref": "#/definitions/cerbos.request.v1.AuxData.JWT"
+        }
+      }
+    },
+    "cerbos.request.v1.AuxData.JWT": {
+      "type": "object",
+      "required": [
+        "token"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "keySetId": {
+          "type": "string"
+        },
+        "token": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "cerbos.request.v1.PolicyFile": {
+      "type": "object",
+      "required": [
+        "fileName",
+        "contents"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "contents": {
+          "type": "string",
+          "oneOf": [
+            {
+              "title": "Standard base64 encoding",
+              "type": "string",
+              "pattern": "^[\\r\\nA-Za-z0-9+/]*$"
+            },
+            {
+              "title": "URL-safe base64 encoding",
+              "type": "string",
+              "pattern": "^[\\r\\nA-Za-z0-9_-]*$"
+            }
+          ]
+        },
+        "fileName": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "google.protobuf.Value": {
+      "title": "Value",
+      "description": "A dynamically-typed value."
+    }
+  },
+  "type": "object",
+  "required": [
+    "policyFiles",
+    "principal",
+    "resource",
+    "actions"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "actions": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "maxItems": 10,
+      "minItems": 1,
+      "uniqueItems": true
+    },
+    "auxData": {
+      "$ref": "#/definitions/cerbos.request.v1.AuxData"
+    },
+    "playgroundId": {
+      "type": "string"
+    },
+    "policyFiles": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/cerbos.request.v1.PolicyFile"
+      },
+      "maxItems": 10,
+      "minItems": 1
+    },
+    "principal": {
+      "$ref": "#/definitions/cerbos.engine.v1.Principal"
+    },
+    "resource": {
+      "$ref": "#/definitions/cerbos.engine.v1.Resource"
+    }
+  }
+}

@@ -1,0 +1,32 @@
+{
+  "$id": "https://api.cerbos.dev/cerbos/policy/v1/Metadata.schema.json",
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "annotations": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "string"
+      }
+    },
+    "hash": {
+      "oneOf": [
+        {
+          "type": "integer",
+          "minimum": 0
+        },
+        {
+          "type": "string",
+          "pattern": "^(?:0|[1-9]\\d*)(?:\\.\\d+)?(?:[eE][+-]?\\d+)?$"
+        }
+      ]
+    },
+    "sourceFile": {
+      "type": "string"
+    },
+    "storeIdentifer": {
+      "type": "string"
+    }
+  }
+}

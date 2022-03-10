@@ -1,0 +1,17 @@
+{
+  "$id": "https://api.cerbos.dev/cerbos/response/v1/ServerInfoResponse.schema.json",
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "buildDate": {
+      "type": "string"
+    },
+    "commit": {
+      "type": "string"
+    },
+    "version": {
+      "type": "string"
+    }
+  }
+}

@@ -1,0 +1,110 @@
+{
+  "$id": "https://api.cerbos.dev/cerbos/request/v1/ListAuditLogEntriesRequest.schema.json",
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "definitions": {
+    "cerbos.request.v1.ListAuditLogEntriesRequest.Kind": {
+      "type": "string",
+      "enum": [
+        "KIND_UNSPECIFIED",
+        "KIND_ACCESS",
+        "KIND_DECISION"
+      ]
+    },
+    "cerbos.request.v1.ListAuditLogEntriesRequest.TimeRange": {
+      "type": "object",
+      "required": [
+        "start",
+        "end"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "end": {
+          "$ref": "#/definitions/google.protobuf.Timestamp"
+        },
+        "start": {
+          "$ref": "#/definitions/google.protobuf.Timestamp"
+        }
+      }
+    },
+    "google.protobuf.Duration": {
+      "title": "Duration",
+      "description": "A signed, fixed-length span of time represented as a count of seconds and fractions of seconds at nanosecond resolution.",
+      "type": "string",
+      "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?s$"
+    },
+    "google.protobuf.Timestamp": {
+      "title": "Timestamp",
+      "description": "A point in time, independent of any time zone or calendar.",
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "allOf": [
+    {
+      "type": "object",
+      "required": [
+        "kind"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "between": {
+          "$ref": "#/definitions/cerbos.request.v1.ListAuditLogEntriesRequest.TimeRange"
+        },
+        "kind": {
+          "allOf": [
+            {
+              "$ref": "#/definitions/cerbos.request.v1.ListAuditLogEntriesRequest.Kind"
+            },
+            {
+              "type": "string",
+              "enum": [
+                "KIND_ACCESS",
+                "KIND_DECISION"
+              ]
+            }
+          ]
+        },
+        "lookup": {
+          "type": "string",
+          "pattern": "^[0123456789ABCDEFGHJKMNPQRSTVWXYZ]{26}$"
+        },
+        "since": {
+          "$ref": "#/definitions/google.protobuf.Duration"
+        },
+        "tail": {
+          "type": "integer",
+          "maximum": 1000,
+          "minimum": 0
+        }
+      }
+    },
+    {
+      "oneOf": [
+        {
+          "type": "object",
+          "required": [
+            "tail"
+          ]
+        },
+        {
+          "type": "object",
+          "required": [
+            "between"
+          ]
+        },
+        {
+          "type": "object",
+          "required": [
+            "since"
+          ]
+        },
+        {
+          "type": "object",
+          "required": [
+            "lookup"
+          ]
+        }
+      ]
+    }
+  ]
+}
