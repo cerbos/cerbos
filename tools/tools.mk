@@ -16,12 +16,17 @@ PROTOC_GEN_GO_GRPC := $(TOOLS_BIN_DIR)/protoc-gen-go-grpc
 PROTOC_GEN_GO_HASHPB := $(TOOLS_BIN_DIR)/protoc-gen-go-hashpb
 PROTOC_GEN_GO_VTPROTO := $(TOOLS_BIN_DIR)/protoc-gen-go-vtproto
 PROTOC_GEN_GRPC_GATEWAY := $(TOOLS_BIN_DIR)/protoc-gen-grpc-gateway
+PROTOC_GEN_JSONSCHEMA := $(TOOLS_BIN_DIR)/protoc-gen-jsonschema
 PROTOC_GEN_OPENAPIV2 := $(TOOLS_BIN_DIR)/protoc-gen-openapiv2
 PROTOC_GEN_VALIDATE := $(TOOLS_BIN_DIR)/protoc-gen-validate
 
 GEN_DIR := api/genpb
+JSONSCHEMA_DIR := schema/jsonschema
 OPENAPI_DIR := schema/openapiv2
 MOCK_DIR := internal/test/mocks
+
+PROTOC_GEN_JSONSCHEMA_SRC_DIR := hack/tools/protoc-gen-jsonschema
+PROTOC_GEN_JSONSCHEMA_SRC_FILES := go.mod go.sum $(shell find $(PROTOC_GEN_JSONSCHEMA_SRC_DIR) -type f -name '*.go')
 
 define BUF_GEN_TEMPLATE
 {\
@@ -74,6 +79,12 @@ define BUF_GEN_TEMPLATE
       "out": "$(OPENAPI_DIR)",\
       "path": "$(PROTOC_GEN_OPENAPIV2)"\
     },\
+    {\
+      "name": "jsonschema",\
+      "out": "$(JSONSCHEMA_DIR)",\
+      "path": "$(PROTOC_GEN_JSONSCHEMA)",\
+      "strategy": "all"\
+    },\
   ]\
 }
 endef
@@ -123,6 +134,9 @@ $(PROTOC_GEN_GO_VTPROTO): $(TOOLS_BIN_DIR)
 $(PROTOC_GEN_GRPC_GATEWAY): $(TOOLS_BIN_DIR) 
 	@ GOBIN=$(TOOLS_BIN_DIR) go install -modfile=$(TOOLS_MOD) github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-grpc-gateway
 
+$(PROTOC_GEN_JSONSCHEMA): $(TOOLS_BIN_DIR) $(PROTOC_GEN_JSONSCHEMA_SRC_FILES)
+	@ GOBIN=$(TOOLS_BIN_DIR) go install -tags=protocgenjsonschema ./$(PROTOC_GEN_JSONSCHEMA_SRC_DIR)
+
 $(PROTOC_GEN_OPENAPIV2): $(TOOLS_BIN_DIR) 
 	@ GOBIN=$(TOOLS_BIN_DIR) go install -modfile=$(TOOLS_MOD) github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-openapiv2
 
@@ -130,7 +144,7 @@ $(PROTOC_GEN_VALIDATE): $(TOOLS_BIN_DIR)
 	@ GOBIN=$(TOOLS_BIN_DIR) go install -modfile=$(TOOLS_MOD) github.com/envoyproxy/protoc-gen-validate
 
 .PHONY: proto-gen-deps
-proto-gen-deps: $(BUF) $(PROTOC_GEN_GO) $(PROTOC_GEN_GO_VTPROTO) $(PROTOC_GEN_GO_GRPC) $(PROTOC_GEN_GRPC_GATEWAY) $(PROTOC_GEN_OPENAPIV2) $(PROTOC_GEN_VALIDATE) $(PROTOC_GEN_GO_HASHPB)
+proto-gen-deps: $(BUF) $(PROTOC_GEN_GO) $(PROTOC_GEN_GO_VTPROTO) $(PROTOC_GEN_GO_GRPC) $(PROTOC_GEN_GRPC_GATEWAY) $(PROTOC_GEN_JSONSCHEMA) $(PROTOC_GEN_OPENAPIV2) $(PROTOC_GEN_VALIDATE) $(PROTOC_GEN_GO_HASHPB)
 
 swagger-editor:
 	@ docker run -it -p 8080:8080 -v $(shell pwd)/$(OPENAPI_DIR):/tmp -e SWAGGER_FILE=/tmp/svc/v1/svc.swagger.json swaggerapi/swagger-editor
