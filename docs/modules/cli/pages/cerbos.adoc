@@ -54,15 +54,16 @@ Arguments:
   <dir>    Policy directory
 
 Flags:
-  -h, --help               Show context-sensitive help.
+  -h, --help              Show context-sensitive help.
       --version
 
-  -f, --format="pretty"    Output format (pretty,plain,json)
-      --tests=STRING       Path to the directory containing tests. Defaults to policy directory.
-      --run=STRING         Run only tests that match this regex
-      --skip-tests         Skip tests
-      --ignore-schemas     Ignore schemas during compilation
-      --verbose            Verbose output on test failure
+  -o, --output="tree"     Output format (tree,pretty,json)
+      --tests=STRING      Path to the directory containing tests. Defaults to policy directory.
+      --run=STRING        Run only tests that match this regex
+      --skip-tests        Skip tests
+      --ignore-schemas    Ignore schemas during compilation
+      --verbose           Verbose output on test failure
+      --color             Enable or disable colored output
 ----
 
 [#healthcheck]
