@@ -10,9 +10,9 @@ import (
 	"os"
 	"os/signal"
 
+	"github.com/alecthomas/kong"
 	"github.com/fatih/color"
 
-	"github.com/alecthomas/kong"
 	internalcompile "github.com/cerbos/cerbos/cmd/cerbos/compile/internal/compile"
 	"github.com/cerbos/cerbos/cmd/cerbos/compile/internal/flagset"
 	"github.com/cerbos/cerbos/cmd/cerbos/compile/internal/lint"
