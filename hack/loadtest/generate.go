@@ -97,7 +97,10 @@ func prepOutDirs(out string) error {
 		if err := os.RemoveAll(path); err != nil {
 			return fmt.Errorf("failed to remove %q: %w", path, err)
 		}
+	}
 
+	for _, outDir := range tmplOutConf {
+		path := filepath.Join(out, outDir)
 		//nolint:gomnd
 		if err := os.MkdirAll(path, 0o755); err != nil {
 			return fmt.Errorf("failed to create %q: %w", path, err)
