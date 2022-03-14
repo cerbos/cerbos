@@ -3,6 +3,8 @@
 
 package schema
 
+import "github.com/cerbos/cerbos/internal/config"
+
 const (
 	confKey            = "schema"
 	defaultEnforcement = EnforcementNone
@@ -41,4 +43,11 @@ func NewConf(enforcement Enforcement) *Conf {
 
 	c.Enforcement = enforcement
 	return c
+}
+
+func GetConf() (*Conf, error) {
+	conf := &Conf{}
+	err := config.GetSection(conf)
+
+	return conf, err
 }

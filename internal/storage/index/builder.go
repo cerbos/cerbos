@@ -150,6 +150,7 @@ type indexBuilder struct {
 	duplicates    []DuplicateDef
 	loadFailures  []LoadFailure
 	disabled      []string
+	stats         *statsCollector
 }
 
 func newIndexBuilder() *indexBuilder {
@@ -161,6 +162,7 @@ func newIndexBuilder() *indexBuilder {
 		dependencies:  make(map[namer.ModuleID]map[namer.ModuleID]struct{}),
 		missing:       make(map[namer.ModuleID][]MissingImport),
 		missingScopes: make(map[namer.ModuleID]string),
+		stats:         newStatsCollector(),
 	}
 }
 
@@ -187,6 +189,8 @@ func (idx *indexBuilder) addPolicy(file string, p policy.Wrapper) {
 	idx.modIDToFile[p.ID] = file
 	delete(idx.missing, p.ID)
 	delete(idx.missingScopes, p.ID)
+
+	idx.stats.add(p)
 
 	if p.Kind != policy.DerivedRolesKind {
 		idx.executables[p.ID] = struct{}{}
@@ -272,6 +276,7 @@ func (idx *indexBuilder) build(fsys fs.FS, rootDir string) (*index, error) {
 		dependents:   idx.dependents,
 		dependencies: idx.dependencies,
 		schemaLoader: NewSchemaLoader(fsys, rootDir),
+		stats:        idx.stats.collate(),
 	}, nil
 }
 

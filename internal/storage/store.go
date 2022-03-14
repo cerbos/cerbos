@@ -10,7 +10,6 @@ import (
 	"sync"
 
 	schemav1 "github.com/cerbos/cerbos/api/genpb/cerbos/schema/v1"
-	"github.com/cerbos/cerbos/internal/config"
 	"github.com/cerbos/cerbos/internal/namer"
 	"github.com/cerbos/cerbos/internal/policy"
 )
@@ -69,8 +68,8 @@ func RegisterDriver(name string, cons Constructor) {
 
 // New returns a storage driver implementation based on the configured driver.
 func New(ctx context.Context) (Store, error) {
-	conf := &Conf{}
-	if err := config.Get(driverConfKey, &conf.Driver); err != nil {
+	conf, err := GetConf()
+	if err != nil {
 		return nil, fmt.Errorf("failed to get storage driver configuration: %w", err)
 	}
 
@@ -111,6 +110,11 @@ type MutableStore interface {
 	AddOrUpdateSchema(context.Context, ...*schemav1.Schema) error
 	DeleteSchema(context.Context, ...string) error
 	Delete(context.Context, ...namer.ModuleID) error
+}
+
+// Instrumented stores expose repository stats.
+type Instrumented interface {
+	RepoStats(context.Context) RepoStats
 }
 
 // Subscribable is an interface for managing subscriptions to storage events.
@@ -176,4 +180,11 @@ func NewPolicyEvent(kind EventKind, policyID namer.ModuleID) Event {
 // NewSchemaEvent creates a new storage event for a schema.
 func NewSchemaEvent(kind EventKind, schemaFile string) Event {
 	return Event{Kind: kind, SchemaFile: schemaFile}
+}
+
+type RepoStats struct {
+	PolicyCount       map[policy.Kind]int
+	AvgRuleCount      map[policy.Kind]float64
+	AvgConditionCount map[policy.Kind]float64
+	SchemaCount       int
 }

@@ -32,6 +32,7 @@ func TestSuite(store DBStorage) func(*testing.T) {
 	return func(t *testing.T) {
 		ctx, cancelFunc := context.WithCancel(context.Background())
 		defer cancelFunc()
+
 		rp := policy.Wrap(test.GenResourcePolicy(test.NoMod()))
 		pp := policy.Wrap(test.GenPrincipalPolicy(test.NoMod()))
 		dr := policy.Wrap(test.GenDerivedRoles(test.NoMod()))
@@ -66,6 +67,11 @@ func TestSuite(store DBStorage) func(*testing.T) {
 				{Kind: storage.EventAddOrUpdatePolicy, PolicyID: ppAcmeHR.ID},
 			}
 			checkEvents(t, timeout, wantEvents...)
+
+			stats := store.RepoStats(ctx)
+			require.Equal(t, 5, stats.PolicyCount[policy.ResourceKind])
+			require.Equal(t, 3, stats.PolicyCount[policy.PrincipalKind])
+			require.Equal(t, 2, stats.PolicyCount[policy.DerivedRolesKind])
 		})
 
 		t.Run("get_compilation_unit_with_deps", func(t *testing.T) {
@@ -246,6 +252,9 @@ func TestSuite(store DBStorage) func(*testing.T) {
 			require.NoError(t, store.AddOrUpdateSchema(ctx, &schemav1.Schema{Id: schID, Definition: sch}))
 
 			checkEvents(t, timeout, storage.NewSchemaEvent(storage.EventAddOrUpdateSchema, schID))
+
+			stats := store.RepoStats(ctx)
+			require.Equal(t, 1, stats.SchemaCount)
 		})
 
 		t.Run("get_schema", func(t *testing.T) {

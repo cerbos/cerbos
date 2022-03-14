@@ -16,6 +16,7 @@ import (
 	"github.com/go-git/go-git/v5/plumbing/transport/ssh"
 	"go.uber.org/multierr"
 
+	"github.com/cerbos/cerbos/internal/config"
 	"github.com/cerbos/cerbos/internal/storage"
 	"github.com/cerbos/cerbos/internal/util"
 )
@@ -148,4 +149,11 @@ func (conf *Conf) getOpCtx(parent context.Context) (context.Context, context.Can
 	}
 
 	return context.WithTimeout(parent, *conf.OperationTimeout)
+}
+
+func GetConf() (*Conf, error) {
+	conf := &Conf{}
+	err := config.GetSection(conf)
+
+	return conf, err
 }

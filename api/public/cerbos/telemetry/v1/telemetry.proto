@@ -1,0 +1,84 @@
+// Copyright 2021-2022 Zenauth Ltd.
+// SPDX-License-Identifier: Apache-2.0
+
+syntax = "proto3";
+
+package cerbos.telemetry.v1;
+
+option go_package = "github.com/cerbos/cerbos/api/genpb/cerbos/telemetry/v1;telemetryv1";
+option java_package = "dev.cerbos.api.v1.telemetry";
+option csharp_namespace = "Cerbos.Api.V1.Telemetry";
+
+import "google/protobuf/duration.proto";
+
+message Ping {
+    message Cerbos {
+        string version = 1;
+        string commit = 2;
+        string build_date = 3;
+        string module_version = 4;
+        string module_checksum = 5;
+    }
+
+    message Source {
+        Cerbos cerbos = 1;
+        string os = 2;
+        string arch = 3;
+        uint32 num_cpus = 4;
+        uint64 ip_address_hash = 5;
+    }
+
+    message Features {
+        message Audit {
+            bool enabled = 1;
+            string backend = 2;
+        }
+
+        message Schema {
+            string enforcement = 1;
+        }
+
+        message AdminApi {
+            bool enabled = 1;
+        }
+
+        message Storage {
+            message Disk {
+                bool watch = 1;
+            }
+
+            message Git {
+                string protocol = 1;
+                bool auth = 2;
+                google.protobuf.Duration poll_interval = 3;
+            }
+
+            message Blob {
+                string provider = 1;
+                google.protobuf.Duration poll_interval = 2;
+            }
+
+            string driver = 1;
+            Disk disk = 2;
+            Git git = 3;
+            Blob blob = 4;
+        }
+
+        Audit audit = 1;
+        Schema schema = 2;
+        AdminApi admin_api = 3;
+        Storage storage = 4;
+    }
+
+    message Stats {
+        map<string,uint32> policy_count = 1;
+        map<string,double> avg_rule_count = 2;
+        map<string,double> avg_condition_count = 3;
+        uint32 schema_count = 4;
+    }
+
+    string version = 1;
+    Source source = 2;
+    Features features = 3;
+    Stats stats = 4;
+}

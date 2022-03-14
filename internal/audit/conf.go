@@ -6,6 +6,7 @@ package audit
 import (
 	"fmt"
 
+	"github.com/cerbos/cerbos/internal/config"
 	"gopkg.in/yaml.v2"
 )
 
@@ -67,4 +68,11 @@ func (c *Conf) Key() string {
 func (c *Conf) SetDefaults() {
 	c.AccessLogsEnabled = true
 	c.DecisionLogsEnabled = true
+}
+
+func GetConf() (*Conf, error) {
+	conf := &Conf{}
+	err := config.GetSection(conf)
+
+	return conf, err
 }

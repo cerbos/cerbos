@@ -105,3 +105,8 @@ type PolicyRevision struct {
 	RevisionID  int64 `db:"revision_id"`
 	Disabled    bool
 }
+
+type PolicyCount struct {
+	Kind  string
+	Count int
+}

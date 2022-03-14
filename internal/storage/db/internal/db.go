@@ -26,6 +26,7 @@ import (
 
 type DBStorage interface {
 	storage.Subscribable
+	storage.Instrumented
 	AddOrUpdate(ctx context.Context, policies ...policy.Wrapper) error
 	GetCompilationUnits(ctx context.Context, ids ...namer.ModuleID) (map[namer.ModuleID]*policy.CompilationUnit, error)
 	GetDependents(ctx context.Context, ids ...namer.ModuleID) (map[namer.ModuleID][]namer.ModuleID, error)
@@ -535,4 +536,41 @@ func (s *dbStorage) ListSchemaIDs(ctx context.Context) ([]string, error) {
 	}
 
 	return schemaIds, nil
+}
+
+func (s *dbStorage) RepoStats(ctx context.Context) storage.RepoStats {
+	stats := storage.RepoStats{}
+
+	var results []PolicyCount
+	err := s.db.Select(
+		goqu.C(PolicyTblKindCol),
+		goqu.COUNT(goqu.C(PolicyTblIDCol)).As("count"),
+	).From(PolicyTbl).
+		GroupBy(goqu.C(PolicyTblKindCol)).
+		Executor().
+		ScanStructs(&results)
+
+	if err != nil {
+		return stats
+	}
+
+	stats.PolicyCount = make(map[policy.Kind]int, len(results))
+
+	for _, r := range results {
+		switch r.Kind {
+		case policy.DerivedRolesKindStr:
+			stats.PolicyCount[policy.DerivedRolesKind] = r.Count
+		case policy.PrincipalKindStr:
+			stats.PolicyCount[policy.PrincipalKind] = r.Count
+		case policy.ResourceKindStr:
+			stats.PolicyCount[policy.ResourceKind] = r.Count
+		}
+	}
+
+	_, _ = s.db.Select(goqu.COUNT(SchemaTblIDCol)).
+		From(SchemaTbl).
+		Executor().
+		ScanValContext(ctx, &stats.SchemaCount)
+
+	return stats
 }

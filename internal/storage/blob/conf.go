@@ -13,6 +13,7 @@ import (
 
 	"go.uber.org/multierr"
 
+	"github.com/cerbos/cerbos/internal/config"
 	"github.com/cerbos/cerbos/internal/storage"
 	"github.com/cerbos/cerbos/internal/util"
 )
@@ -86,4 +87,11 @@ func (conf *Conf) SetDefaults() {
 
 func (conf *Conf) getCloneCtx(parent context.Context) (context.Context, context.CancelFunc) {
 	return context.WithTimeout(parent, *conf.DownloadTimeout)
+}
+
+func GetConf() (*Conf, error) {
+	conf := &Conf{}
+	err := config.GetSection(conf)
+
+	return conf, err
 }

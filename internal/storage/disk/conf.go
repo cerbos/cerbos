@@ -4,6 +4,7 @@
 package disk
 
 import (
+	"github.com/cerbos/cerbos/internal/config"
 	"github.com/cerbos/cerbos/internal/storage"
 )
 
@@ -22,4 +23,11 @@ type Conf struct {
 
 func (conf *Conf) Key() string {
 	return confKey
+}
+
+func GetConf() (*Conf, error) {
+	conf := &Conf{}
+	err := config.GetSection(conf)
+
+	return conf, err
 }

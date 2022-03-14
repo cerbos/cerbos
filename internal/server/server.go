@@ -48,12 +48,12 @@ import (
 
 	svcv1 "github.com/cerbos/cerbos/api/genpb/cerbos/svc/v1"
 	"github.com/cerbos/cerbos/internal/audit"
+	"github.com/cerbos/cerbos/internal/telemetry"
 
 	// Import to register the Badger audit log backend.
 	_ "github.com/cerbos/cerbos/internal/audit/local"
 	"github.com/cerbos/cerbos/internal/auxdata"
 	"github.com/cerbos/cerbos/internal/compile"
-	"github.com/cerbos/cerbos/internal/config"
 	"github.com/cerbos/cerbos/internal/engine"
 	"github.com/cerbos/cerbos/internal/observability/metrics"
 	"github.com/cerbos/cerbos/internal/observability/tracing"
@@ -102,9 +102,9 @@ const (
 
 func Start(ctx context.Context, zpagesEnabled bool) error {
 	// get configuration
-	conf := &Conf{}
-	if err := config.GetSection(conf); err != nil {
-		return fmt.Errorf("invalid configuration: %w", err)
+	conf, err := GetConf()
+	if err != nil {
+		return fmt.Errorf("failed to read server configuration: %w", err)
 	}
 
 	// create Prom exporter.
@@ -156,6 +156,8 @@ func Start(ctx context.Context, zpagesEnabled bool) error {
 
 	s := NewServer(conf)
 	s.ocExporter = ocExporter
+
+	telemetry.Report(ctx, store)
 
 	return s.Start(ctx, Param{AuditLog: auditLog, AuxData: auxData, Engine: eng, Store: store, ZPagesEnabled: zpagesEnabled})
 }

@@ -24,7 +24,6 @@ import (
 	enginev1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
 	privatev1 "github.com/cerbos/cerbos/api/genpb/cerbos/private/v1"
-	"github.com/cerbos/cerbos/internal/config"
 	"github.com/cerbos/cerbos/internal/observability/logging"
 	"github.com/cerbos/cerbos/internal/observability/metrics"
 	"github.com/cerbos/cerbos/internal/observability/tracing"
@@ -82,8 +81,8 @@ type manager struct {
 }
 
 func New(ctx context.Context, loader Loader) (Manager, error) {
-	conf := &Conf{}
-	if err := config.GetSection(conf); err != nil {
+	conf, err := GetConf()
+	if err != nil {
 		return nil, fmt.Errorf("failed to get config section %q: %w", confKey, err)
 	}
 

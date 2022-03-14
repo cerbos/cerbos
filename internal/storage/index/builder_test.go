@@ -27,6 +27,7 @@ import (
 	"github.com/cerbos/cerbos/internal/util"
 )
 
+//TODO(cell) Refactor because this test is brittle (files can be added to store all the time)
 func TestBuildIndexWithDisk(t *testing.T) {
 	dir := test.PathToDir(t, "store")
 
@@ -109,6 +110,19 @@ func TestBuildIndexWithDisk(t *testing.T) {
 		require.Empty(t, data[dr3].Dependencies)
 		require.Len(t, data[dr3].References, 1)
 		require.Contains(t, data[dr3].References, rp3)
+	})
+
+	t.Run("check_stats", func(t *testing.T) {
+		stats := idx.RepoStats(context.Background())
+		require.GreaterOrEqual(t, 3, stats.SchemaCount)
+
+		for _, k := range []policy.Kind{policy.DerivedRolesKind, policy.PrincipalKind, policy.ResourceKind} {
+			t.Run(k.String(), func(t *testing.T) {
+				require.Greater(t, stats.PolicyCount[k], 2)
+				require.Greater(t, stats.AvgConditionCount[k], float64(0.1))
+				require.Greater(t, stats.AvgRuleCount[k], float64(1.0))
+			})
+		}
 	})
 
 	t.Run("add_empty", func(t *testing.T) {

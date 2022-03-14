@@ -269,3 +269,17 @@ func (_m *Index) LoadSchema(_a0 context.Context, _a1 string) (io.ReadCloser, err
 
 	return r0, r1
 }
+
+// RepoStats provides a mock function with given fields: _a0
+func (_m *Index) RepoStats(_a0 context.Context) storage.RepoStats {
+	ret := _m.Called(_a0)
+
+	var r0 storage.RepoStats
+	if rf, ok := ret.Get(0).(func(context.Context) storage.RepoStats); ok {
+		r0 = rf(_a0)
+	} else {
+		r0 = ret.Get(0).(storage.RepoStats)
+	}
+
+	return r0
+}

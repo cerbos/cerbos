@@ -11,6 +11,7 @@ import (
 
 	"go.uber.org/multierr"
 
+	"github.com/cerbos/cerbos/internal/config"
 	"github.com/cerbos/cerbos/internal/util"
 )
 
@@ -129,4 +130,11 @@ func (c *Conf) Validate() (errs error) {
 	}
 
 	return errs
+}
+
+func GetConf() (*Conf, error) {
+	conf := &Conf{}
+	err := config.GetSection(conf)
+
+	return conf, err
 }
