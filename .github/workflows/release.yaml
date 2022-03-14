@@ -108,7 +108,7 @@ jobs:
         uses: azure/setup-helm@v2.0
 
       - name: Install Cloud SDK
-        uses: google-github-actions/setup-gcloud@v0.5.1
+        uses: google-github-actions/setup-gcloud@v0.6.0
         with:
           project_id: ${{ secrets.GCP_PROJECT }}
           service_account_key: ${{ secrets.GCP_SA_KEY }}
