@@ -5,13 +5,16 @@ package verification
 
 import (
 	"fmt"
+	"strings"
+
+	"github.com/pterm/pterm"
 
 	"github.com/cerbos/cerbos/cmd/cerbos/compile/internal/colored"
 	"github.com/cerbos/cerbos/cmd/cerbos/compile/internal/errors"
 	"github.com/cerbos/cerbos/cmd/cerbos/compile/internal/flagset"
 	"github.com/cerbos/cerbos/cmd/cerbos/compile/internal/printer"
+	"github.com/cerbos/cerbos/cmd/cerbos/compile/internal/verification/internal/traces"
 	"github.com/cerbos/cerbos/internal/verify"
-	"github.com/pterm/pterm"
 )
 
 func Display(p *printer.Printer, result *verify.Result, output flagset.OutputFormat, verbose bool) error {
@@ -28,7 +31,7 @@ func Display(p *printer.Printer, result *verify.Result, output flagset.OutputFor
 		return nil
 	case flagset.OutputFormatTree:
 		return displayTree(p, result, verbose)
-	case flagset.OutputFormatPretty:
+	case flagset.OutputFormatList:
 		return displayPretty(p, result, verbose)
 	}
 
@@ -37,11 +40,12 @@ func Display(p *printer.Printer, result *verify.Result, output flagset.OutputFor
 
 func displayPretty(p *printer.Printer, result *verify.Result, verbose bool) error {
 	p.Println(colored.Header("Test results"))
+	traceMap := make(traces.Map)
 	for _, sn := range result.Suites {
-		p.Printf("= %s %s ", colored.Suite(sn.Name), colored.FileName("(", sn.File, ")"))
+		p.Printf("%s %s ", colored.Suite(sn.Name), colored.FileName("(", sn.File, ")"))
 		if sn.Failed {
 			p.Println(colored.FailedTest("[FAILED]"))
-			p.Printf("== %s\n", colored.ErrorMsg(sn.Status))
+			p.Printf("%s%s\n", tabs(1), colored.ErrorMsg(sn.Status))
 			continue
 		}
 
@@ -52,13 +56,11 @@ func displayPretty(p *printer.Printer, result *verify.Result, verbose bool) erro
 
 		p.Println()
 		for _, principal := range sn.Principals {
-			p.Println()
-			p.Printf("== %s\n", colored.Principal(principal.Name))
+			p.Printf("%s%s\n", tabs(1), colored.Principal(principal.Name))
 			for _, resource := range principal.Resources {
-				p.Println()
-				p.Printf("=== %s\n", colored.Resource(resource.Name))
+				p.Printf("%s%s\n", tabs(2), colored.Resource(resource.Name)) //nolint:gomnd
 				for _, action := range resource.Actions {
-					p.Printf("==== %s ", colored.Action(action.Name))
+					p.Printf("%s%s ", tabs(3), colored.Action(action.Name)) //nolint:gomnd
 					if action.Data.Skipped {
 						p.Println(colored.SkippedTest("[SKIPPED]"))
 						continue
@@ -67,8 +69,8 @@ func displayPretty(p *printer.Printer, result *verify.Result, verbose bool) erro
 					if action.Data.Failed {
 						p.Println(colored.FailedTest("[FAILED]"))
 						p.Printf("\tError: %s\n", action.Data.Error)
-						if verbose {
-							p.Printf("\tTrace: \n%s\n", action.Data.EngineTrace)
+						if verbose && action.Data.EngineTrace != "" {
+							traceMap.Add(sn.Name, principal.Name, resource.Name, action.Name, action.Data.EngineTrace)
 						}
 						continue
 					}
@@ -83,6 +85,8 @@ func displayPretty(p *printer.Printer, result *verify.Result, verbose bool) erro
 		}
 	}
 
+	traceMap.Print(p)
+
 	if result.Failed {
 		return errors.ErrTestsFailed
 	}
@@ -94,6 +98,7 @@ func displayTree(p *printer.Printer, result *verify.Result, verbose bool) error 
 	tree := pterm.LeveledList{}
 
 	p.Println(colored.Header("Test results"))
+	traceMap := make(traces.Map)
 	for _, sn := range result.Suites {
 		suiteText := fmt.Sprintf("%s (%s)", colored.Suite(sn.Name), colored.FileName(sn.File))
 		if sn.Failed {
@@ -159,10 +164,7 @@ func displayTree(p *printer.Printer, result *verify.Result, verbose bool) error 
 							Text:  fmt.Sprintf("%s %s", colored.ErrorMsg("ERROR:"), action.Data.Error),
 						})
 						if verbose && action.Data.EngineTrace != "" {
-							tree = append(tree, pterm.LeveledListItem{
-								Level: 4, //nolint:gomnd
-								Text:  fmt.Sprintf("%s %s", colored.Trace("TRACE:"), action.Data.EngineTrace),
-							})
+							traceMap.Add(sn.Name, principal.Name, resource.Name, action.Name, action.Data.EngineTrace)
 						}
 					}
 				}
@@ -176,9 +178,15 @@ func displayTree(p *printer.Printer, result *verify.Result, verbose bool) error 
 		return errors.ErrFailed
 	}
 
+	traceMap.Print(p)
+
 	if result.Failed {
 		return errors.ErrTestsFailed
 	}
 
 	return nil
+}
+
+func tabs(numberOf int) string {
+	return strings.Repeat("  ", numberOf)
 }

@@ -4,9 +4,16 @@
 package printer
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"io"
+
+	"github.com/alecthomas/chroma"
+	"github.com/alecthomas/chroma/formatters"
+	"github.com/alecthomas/chroma/lexers"
+	"github.com/alecthomas/chroma/styles"
+	"github.com/jwalton/gchalk"
 )
 
 func New(stdout, stderr io.Writer) *Printer {
@@ -27,7 +34,32 @@ func (p *Printer) Printf(format string, args ...interface{}) {
 }
 
 func (p *Printer) PrintJSON(val interface{}) error {
-	enc := json.NewEncoder(p.stdout)
+	lexer := chroma.Coalesce(lexers.Get("json"))
+	if lexer == nil {
+		lexer = lexers.Fallback
+	}
+
+	var formatter chroma.Formatter
+	switch gchalk.GetLevel() {
+	case gchalk.LevelAnsi256:
+		formatter = formatters.TTY256
+	case gchalk.LevelAnsi16m:
+		formatter = formatters.TTY16m
+	default:
+		formatter = formatters.TTY
+	}
+
+	var data bytes.Buffer
+	enc := json.NewEncoder(&data)
 	enc.SetIndent("", "  ")
-	return enc.Encode(val)
+	if err := enc.Encode(val); err != nil {
+		return fmt.Errorf("failed to encode json: %w", err)
+	}
+
+	iterator, err := lexer.Tokenise(nil, data.String())
+	if err != nil {
+		return fmt.Errorf("failed to tokenise json: %w", err)
+	}
+
+	return formatter.Format(p.stdout, styles.SolarizedDark256, iterator)
 }

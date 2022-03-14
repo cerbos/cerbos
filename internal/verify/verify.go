@@ -17,7 +17,7 @@ import (
 	"github.com/cerbos/cerbos/internal/util"
 )
 
-const suiteNameWithErrors = "[ERROR]"
+const suiteNameWithErrors = "Unknown"
 
 type Config struct {
 	TestsDir string

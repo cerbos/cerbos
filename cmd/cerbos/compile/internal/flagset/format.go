@@ -6,7 +6,7 @@ package flagset
 type OutputFormat string
 
 const (
-	OutputFormatTree   OutputFormat = "tree"
-	OutputFormatPretty OutputFormat = "pretty"
-	OutputFormatJSON   OutputFormat = "json"
+	OutputFormatTree OutputFormat = "tree"
+	OutputFormatList OutputFormat = "list"
+	OutputFormatJSON OutputFormat = "json"
 )

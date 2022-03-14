@@ -1,7 +1,7 @@
 // Copyright 2021-2022 Zenauth Ltd.
 // SPDX-License-Identifier: Apache-2.0
 
-package compile
+package compilation
 
 import (
 	"github.com/cerbos/cerbos/cmd/cerbos/compile/internal/colored"
@@ -15,7 +15,7 @@ func Display(p *printer.Printer, errs compile.ErrorList, output flagset.OutputFo
 	switch output {
 	case flagset.OutputFormatJSON:
 		return displayJSON(p, errs)
-	case flagset.OutputFormatPretty, flagset.OutputFormatTree:
+	case flagset.OutputFormatList, flagset.OutputFormatTree:
 		return displayPretty(p, errs)
 	}
 

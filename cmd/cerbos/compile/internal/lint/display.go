@@ -15,7 +15,7 @@ func Display(p *printer.Printer, errs *index.BuildError, output flagset.OutputFo
 	switch output {
 	case flagset.OutputFormatJSON:
 		return displayJSON(p, errs)
-	case flagset.OutputFormatPretty, flagset.OutputFormatTree:
+	case flagset.OutputFormatList, flagset.OutputFormatTree:
 		return displayPretty(p, errs)
 	}
 

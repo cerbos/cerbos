@@ -11,11 +11,9 @@ import (
 	"io/fs"
 	"path/filepath"
 
-	effectv1 "github.com/cerbos/cerbos/api/genpb/cerbos/effect/v1"
-	"github.com/google/go-cmp/cmp"
-
 	"google.golang.org/protobuf/proto"
 
+	effectv1 "github.com/cerbos/cerbos/api/genpb/cerbos/effect/v1"
 	enginev1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
 	"github.com/cerbos/cerbos/internal/engine"
@@ -178,9 +176,9 @@ func (tf *testFixture) runTestSuite(ctx context.Context, eng *engine.Engine, sho
 				continue
 			}
 
-			if diff := cmp.Diff(test.Expected[action].String(), actual[0].Actions[action].Effect.String()); diff != "" {
+			if test.Expected[action].String() != actual[0].Actions[action].Effect.String() {
 				testData.Failed = true
-				testData.Error = diff
+				testData.Error = fmt.Sprintf("Expected: %s Actual: %s", test.Expected[action].String(), actual[0].Actions[action].Effect.String())
 				testData.EngineTrace = traceBuf.String()
 				failed = true
 			}

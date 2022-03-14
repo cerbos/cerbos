@@ -13,7 +13,7 @@ import (
 	"github.com/alecthomas/kong"
 	"github.com/fatih/color"
 
-	internalcompile "github.com/cerbos/cerbos/cmd/cerbos/compile/internal/compile"
+	internalcompile "github.com/cerbos/cerbos/cmd/cerbos/compile/internal/compilation"
 	"github.com/cerbos/cerbos/cmd/cerbos/compile/internal/flagset"
 	"github.com/cerbos/cerbos/cmd/cerbos/compile/internal/lint"
 	"github.com/cerbos/cerbos/cmd/cerbos/compile/internal/printer"
@@ -44,20 +44,20 @@ cerbos compile --skip-tests /path/to/policy/repo
 
 type Cmd struct {
 	Dir           string               `help:"Policy directory" arg:"" required:"" type:"existingdir"`
-	Output        flagset.OutputFormat `help:"Output format (${enum})" default:"tree" enum:"tree,pretty,json" short:"o"`
+	Output        flagset.OutputFormat `help:"Output format (${enum})" default:"tree" enum:"tree,list,json" short:"o"`
 	Tests         string               `help:"Path to the directory containing tests. Defaults to policy directory." type:"existingdir"`
 	RunRegex      string               `help:"Run only tests that match this regex" name:"run"`
 	SkipTests     bool                 `help:"Skip tests"`
 	IgnoreSchemas bool                 `help:"Ignore schemas during compilation"`
 	Verbose       bool                 `help:"Verbose output on test failure"`
-	Color         bool                 `help:"Enable or disable colored output" default:"true"`
+	NoColor       bool                 `help:"Disable colored output"`
 }
 
 func (c *Cmd) Run(k *kong.Kong) error {
 	ctx, stopFunc := signal.NotifyContext(context.Background(), os.Interrupt)
 	defer stopFunc()
 
-	color.NoColor = !c.Color
+	color.NoColor = c.NoColor
 	p := printer.New(k.Stdout, k.Stderr)
 
 	idx, err := index.Build(ctx, os.DirFS(c.Dir))
