@@ -21,7 +21,7 @@ STORE=${STORE:-"disk"}
 SERVER=${SERVER:-"localhost:3592"}
 USERNAME=${USERNAME:-"cerbos"}
 PASSWORD=${PASSWORD:-"cerbosAdmin"}
-WORK_DIR=${WORK_DIR:-"work"}
+WORK_DIR=${WORK_DIR:-"./work"}
 
 clean() {
   printf "Cleaning up\n"
@@ -51,7 +51,7 @@ up() {
   cp conf/cerbos/config.yml "${WORK_DIR}/cerbos/config.yml"
 
   printf "Starting all services\n"
-  AUDIT_ENABLED="$AUDIT_ENABLED" SCHEMA_ENFORCEMENT="$SCHEMA_ENFORCEMENT" STORE="$STORE" docker-compose up -d
+  AUDIT_ENABLED="$AUDIT_ENABLED" SCHEMA_ENFORCEMENT="$SCHEMA_ENFORCEMENT" STORE="$STORE" WORK_DIR="$WORK_DIR" docker-compose up -d
 
   while [[ "$(curl -s -o /dev/null -w '%{http_code}' "http://${SERVER}/_cerbos/health")" != "200" ]]; do
     echo "Waiting for Cerbos..."
