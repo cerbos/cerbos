@@ -7,9 +7,14 @@ services:
     command: ["server", "--config=/conf/config.yml", "--log-level=warn", "--debug-listen-addr=:6666"]
     depends_on:
       - postgres
+    environment:
+      - AUDIT_ENABLED=${AUDIT_ENABLED}
+      - SCHEMA_ENFORCEMENT=${SCHEMA_ENFORCEMENT}
+      - STORE=${STORE}
     volumes:
-      - ./work/cerbos:/conf
-      - ./work/policies:/policies
+      - ${WORK_DIR}/cerbos:/conf
+      - ${WORK_DIR}/policies:/policies
+      - ${WORK_DIR}/audit:/audit
     ports:
       - "3592:3592"
       - "3593:3593"
@@ -24,8 +29,8 @@ services:
       - POSTGRES_PASSWORD=cerbos
       - POSTGRES_DB=cerbos
     volumes:
-      - ./work/postgres/init:/docker-entrypoint-initdb.d
-      - ./work/postgres/data:/var/lib/postgresql/data
+      - ${WORK_DIR}/postgres/init:/docker-entrypoint-initdb.d
+      - ${WORK_DIR}/postgres/data:/var/lib/postgresql/data
     ports:
       - "5432:5432"
 

@@ -5,9 +5,9 @@
 
 set -euo pipefail
 
-WORK_DIR="work"
 
 # Test parameters
+AUDIT_ENABLED=${AUDIT_ENABLED:-"false"}
 DURATION_SECS=${DURATION_SECS:-"120"}
 ITERATIONS=${ITERATIONS:-"1000000"}
 MAX_VUS=${MAX_VUS:-"100"}
@@ -16,15 +16,16 @@ NUM_POLICIES=${NUM_POLICIES:-"1000"}
 REQ_COUNT=${REQ_COUNT:-"$NUM_POLICIES"}
 REQ_KIND=${REQ_KIND:-"crs_req01"}
 RPS=${RPS:-"500"}
+SCHEMA_ENFORCEMENT=${SCHEMA_ENFORCEMENT:-"none"}
 STORE=${STORE:-"disk"}
 SERVER=${SERVER:-"localhost:3592"}
 USERNAME=${USERNAME:-"cerbos"}
 PASSWORD=${PASSWORD:-"cerbosAdmin"}
+WORK_DIR=${WORK_DIR:-"./work"}
 
 clean() {
   printf "Cleaning up\n"
-  rm -rf ./bin
-  rm -rf work
+  rm -rf "$WORK_DIR"
 }
 
 generateResources() {
@@ -43,27 +44,14 @@ down() {
 
 up() {
   printf "Preparing config\n"
-  mkdir -p "${WORK_DIR}/cerbos"
+  mkdir -p "${WORK_DIR}"/{audit,cerbos}
   mkdir -p "${WORK_DIR}"/postgres/{init,data}
   cp ../../internal/storage/db/postgres/schema.sql "${WORK_DIR}/postgres/init/schema.sql"
-
-  case "$STORE" in 
-    disk)
-      cp conf/cerbos/disk.yml "${WORK_DIR}/cerbos/config.yml"
-      ;;
-
-    postgres)
-      cp conf/cerbos/postgres.yml "${WORK_DIR}/cerbos/config.yml"
-      ;;
-
-    *)
-      echo "Unknown store '$STORE'. Valid values are: 'disk', 'postgres'"
-      usage
-      ;;
-  esac
+  
+  cp conf/cerbos/config.yml "${WORK_DIR}/cerbos/config.yml"
 
   printf "Starting all services\n"
-  docker-compose up -d
+  AUDIT_ENABLED="$AUDIT_ENABLED" SCHEMA_ENFORCEMENT="$SCHEMA_ENFORCEMENT" STORE="$STORE" WORK_DIR="$WORK_DIR" docker-compose up -d
 
   while [[ "$(curl -s -o /dev/null -w '%{http_code}' "http://${SERVER}/_cerbos/health")" != "200" ]]; do
     echo "Waiting for Cerbos..."
@@ -72,9 +60,9 @@ up() {
 
   if [[ "${STORE}" == "postgres" ]]; then
     printf "Putting schemas\n"
-    put schemas ./"${WORK_DIR}"/policies/_schemas
+    put schemas "${WORK_DIR}"/policies/_schemas
     printf "Putting policies\n"
-    put policies ./"${WORK_DIR}"/policies
+    put policies "${WORK_DIR}"/policies
   fi
 
   docker-compose logs -f 
@@ -92,21 +80,23 @@ executeTest() {
     -e REQ_KIND="$REQ_KIND" \
     -e RPS="$RPS" \
     -e SERVER="$SERVER" \
+    -e WORK_DIR="$WORK_DIR" \
     check.js
 }
 
 usage() {
-  printf "Usage:\n%s [-c | -d | -e | -h | -u ]\n", "$0"
+  printf "Usage:\n%s [-c | -d | -e | -g | -h | -u ]\n", "$0"
   printf "Flags:\n"
   printf "\t-c Cleanup\n"
   printf "\t-d Down (stop services)\n"
   printf "\t-e Execute test\n"
+  printf "\t-g Generate test data\n"
   printf "\t-h Help\n"
   printf "\t-u Up (start services)\n"
 }
 
 
-while getopts ":cdehu" opt; do 
+while getopts ":cdeghu" opt; do 
   case "$opt" in
     c) 
       down
@@ -121,12 +111,14 @@ while getopts ":cdehu" opt; do
       executeTest
       exit 0
       ;;
+    g) 
+      generateResources
+      ;;
     h)
       usage
       exit 0
       ;;
     u)
-      generateResources
       up
       exit 0
       ;;

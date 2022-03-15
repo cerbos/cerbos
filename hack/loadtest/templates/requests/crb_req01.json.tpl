@@ -54,19 +54,54 @@
       {
         "actions": [
           "view:public",
-          "delete",
-          "edit"
+          "approve"
         ],
         "resource": {
-          "kind": "{{ .NameMod `salary_record` }}",
+          "kind": "{{ .NameMod `leave_request` }}",
           "policyVersion": "20210210",
-          "id": "YY525",
+          "id": "ZZ125",
+          "attr": {
+            "department": "finance",
+            "geography": "GB",
+            "id": "ZZ125",
+            "owner": "dani",
+            "team": "accounting"
+          }
+        }
+      },
+      {
+        "actions": [
+          "view:public",
+          "approve"
+        ],
+        "resource": {
+          "kind": "{{ .NameMod `leave_request` }}",
+          "policyVersion": "20210210",
+          "id": "AA125",
+          "attr": {
+            "department": "finance",
+            "geography": "GB",
+            "id": "AA125",
+            "owner": "robert",
+            "team": "accounting"
+          }
+        }
+      },
+      {
+        "actions": [
+          "view:public",
+          "approve"
+        ],
+        "resource": {
+          "kind": "{{ .NameMod `leave_request` }}",
+          "policyVersion": "20210210",
+          "id": "BB125",
           "attr": {
             "department": "engineering",
-            "geography": "GB",
-            "id": "YY525",
-            "owner": "mark",
-            "team": "backend"
+            "geography": "US",
+            "id": "BB125",
+            "owner": "anya",
+            "team": "sre"
           }
         }
       }
@@ -90,11 +125,24 @@
         }
       },
       {
-        "resourceId": "YY525",
+        "resourceId": "ZZ125",
         "actions": {
-          "view:public": "EFFECT_DENY",
-          "delete": "EFFECT_DENY",
-          "edit": "EFFECT_DENY"
+          "view:public": "EFFECT_ALLOW",
+          "approve": "EFFECT_DENY"
+        }
+      },
+      {
+        "resourceId": "AA125",
+        "actions": {
+          "view:public": "EFFECT_ALLOW",
+          "approve": "EFFECT_DENY"
+        }
+      },
+      {
+        "resourceId": "BB125",
+        "actions": {
+          "view:public": "EFFECT_ALLOW",
+          "approve": "EFFECT_DENY"
         }
       }
     ]
