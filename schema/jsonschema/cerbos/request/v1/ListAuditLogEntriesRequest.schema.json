@@ -66,7 +66,7 @@
         },
         "lookup": {
           "type": "string",
-          "pattern": "^[0123456789ABCDEFGHJKMNPQRSTVWXYZ]{26}$"
+          "pattern": "^[0-9A-HJ-KM-NP-TV-Z]{26}$"
         },
         "since": {
           "$ref": "#/definitions/google.protobuf.Duration"

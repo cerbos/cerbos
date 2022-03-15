@@ -127,7 +127,7 @@
         "resource": {
           "type": "string",
           "minLength": 1,
-          "pattern": "^[[:alpha:]][[:word:]\\@\\.\\-/]*(\\:[[:alpha:]][[:word:]\\@\\.\\-/]*)*$"
+          "pattern": "^[A-Za-z][\\--9@-Z_a-z]*(:[A-Za-z][\\--9@-Z_a-z]*)*$"
         }
       }
     },
@@ -162,7 +162,7 @@
         },
         "name": {
           "type": "string",
-          "pattern": "^([[:alpha:]][[:word:]\\@\\.\\-]*)*$"
+          "pattern": "^([A-Za-z][\\--\\.0-9@-Z_a-z]*)*$"
         }
       }
     }
@@ -177,7 +177,7 @@
     "principal": {
       "type": "string",
       "minLength": 1,
-      "pattern": "^[[:alpha:]][[:word:]\\@\\.\\-]*(\\:[[:alpha:]][[:word:]\\@\\.\\-]*)*$"
+      "pattern": "^[A-Za-z][\\--\\.0-9@-Z_a-z]*(:[A-Za-z][\\--\\.0-9@-Z_a-z]*)*$"
     },
     "rules": {
       "type": "array",
@@ -187,11 +187,11 @@
     },
     "scope": {
       "type": "string",
-      "pattern": "^([[:alpha:]][[:word:]\\-]+(\\.[[:alpha:]][[:word:]\\-]*)*)*$"
+      "pattern": "^([A-Za-z][\\-0-9A-Z_a-z]+(\\.[A-Za-z][\\-0-9A-Z_a-z]*)*)*$"
     },
     "version": {
       "type": "string",
-      "pattern": "^[[:word:]]+$"
+      "pattern": "^[0-9A-Z_a-z]+$"
     }
   }
 }
