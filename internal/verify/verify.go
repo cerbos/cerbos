@@ -92,8 +92,8 @@ func (rn *ResourceNode) Action(name string) *ActionNode {
 	}
 
 	a := &ActionNode{
-		Name: name,
-		Data: &DataNode{},
+		Name:    name,
+		Details: &DetailsNode{},
 	}
 	rn.Actions = append(rn.Actions, a)
 
@@ -101,15 +101,15 @@ func (rn *ResourceNode) Action(name string) *ActionNode {
 }
 
 type ActionNode struct {
-	Data *DataNode `json:"data"`
-	Name string    `json:"name"`
+	Details *DetailsNode `json:"details"`
+	Name    string       `json:"name"`
 }
 
-type DataNode struct {
-	Error       string `json:"error,omitempty"`
-	EngineTrace string `json:"engineTrace,omitempty"`
-	Skipped     bool   `json:"skipped,omitempty"`
-	Failed      bool   `json:"failed"`
+type DetailsNode struct {
+	Error       interface{} `json:"error,omitempty"`
+	EngineTrace string      `json:"engineTrace,omitempty"`
+	Skipped     bool        `json:"skipped,omitempty"`
+	Failed      bool        `json:"failed"`
 }
 
 var ErrTestFixtureNotFound = errors.New("test fixture not found")

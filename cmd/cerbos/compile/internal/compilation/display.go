@@ -11,10 +11,10 @@ import (
 	"github.com/cerbos/cerbos/internal/compile"
 )
 
-func Display(p *printer.Printer, errs compile.ErrorList, output flagset.OutputFormat) error {
+func Display(p *printer.Printer, errs compile.ErrorList, output flagset.OutputFormat, noColor bool) error {
 	switch output {
 	case flagset.OutputFormatJSON:
-		return displayJSON(p, errs)
+		return displayJSON(p, errs, noColor)
 	case flagset.OutputFormatList, flagset.OutputFormatTree:
 		return displayPretty(p, errs)
 	}
@@ -22,8 +22,8 @@ func Display(p *printer.Printer, errs compile.ErrorList, output flagset.OutputFo
 	return internalerrors.ErrFailed
 }
 
-func displayJSON(p *printer.Printer, errs compile.ErrorList) error {
-	if err := p.PrintJSON(map[string]compile.ErrorList{"compileErrors": errs}); err != nil {
+func displayJSON(p *printer.Printer, errs compile.ErrorList, noColor bool) error {
+	if err := p.PrintJSON(map[string]compile.ErrorList{"compileErrors": errs}, noColor); err != nil {
 		return err
 	}
 

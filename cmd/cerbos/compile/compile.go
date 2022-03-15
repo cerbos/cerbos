@@ -64,7 +64,7 @@ func (c *Cmd) Run(k *kong.Kong) error {
 	if err != nil {
 		idxErr := new(index.BuildError)
 		if errors.As(err, &idxErr) {
-			return lint.Display(p, idxErr, c.Output)
+			return lint.Display(p, idxErr, c.Output, c.NoColor)
 		}
 
 		return fmt.Errorf("failed to open directory %s: %w", c.Dir, err)
@@ -81,7 +81,7 @@ func (c *Cmd) Run(k *kong.Kong) error {
 	if err := compile.BatchCompile(idx.GetAllCompilationUnits(ctx), schemaMgr); err != nil {
 		compErr := new(compile.ErrorList)
 		if errors.As(err, compErr) {
-			return internalcompile.Display(p, *compErr, c.Output)
+			return internalcompile.Display(p, *compErr, c.Output, c.NoColor)
 		}
 
 		return fmt.Errorf("failed to create engine: %w", err)
@@ -108,7 +108,7 @@ func (c *Cmd) Run(k *kong.Kong) error {
 			return fmt.Errorf("failed to run tests: %w", err)
 		}
 
-		return verification.Display(p, result, c.Output, c.Verbose)
+		return verification.Display(p, result, c.Output, c.Verbose, c.NoColor)
 	}
 
 	return nil

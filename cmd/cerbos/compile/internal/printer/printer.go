@@ -33,7 +33,7 @@ func (p *Printer) Printf(format string, args ...interface{}) {
 	fmt.Fprintf(p.stdout, format, args...)
 }
 
-func (p *Printer) PrintJSON(val interface{}) error {
+func (p *Printer) coloredJSON(data string) error {
 	lexer := chroma.Coalesce(lexers.Get("json"))
 	if lexer == nil {
 		lexer = lexers.Fallback
@@ -49,17 +49,31 @@ func (p *Printer) PrintJSON(val interface{}) error {
 		formatter = formatters.TTY
 	}
 
-	var data bytes.Buffer
-	enc := json.NewEncoder(&data)
-	enc.SetIndent("", "  ")
-	if err := enc.Encode(val); err != nil {
-		return fmt.Errorf("failed to encode json: %w", err)
-	}
-
-	iterator, err := lexer.Tokenise(nil, data.String())
+	iterator, err := lexer.Tokenise(nil, data)
 	if err != nil {
 		return fmt.Errorf("failed to tokenise json: %w", err)
 	}
 
 	return formatter.Format(p.stdout, styles.SolarizedDark256, iterator)
+}
+
+func (p *Printer) PrintJSON(val interface{}, noColor bool) error {
+	var data bytes.Buffer
+	var enc *json.Encoder
+	if noColor {
+		enc = json.NewEncoder(p.stdout)
+	} else {
+		enc = json.NewEncoder(&data)
+	}
+
+	enc.SetIndent("", "  ")
+	if err := enc.Encode(val); err != nil {
+		return fmt.Errorf("failed to encode json: %w", err)
+	}
+
+	if !noColor {
+		return p.coloredJSON(data.String())
+	}
+
+	return nil
 }

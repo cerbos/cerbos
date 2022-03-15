@@ -48,9 +48,9 @@ func TestVerify(t *testing.T) {
 					is.False(sr.Skipped)
 					is.Len(sr.Principals, 1)
 					for _, action := range sr.Principals[0].Resources[0].Actions {
-						is.False(action.Data.Skipped)
-						is.False(action.Data.Failed, "Trace:\n%s\n", action.Data.EngineTrace)
-						is.Empty(action.Data.Error)
+						is.False(action.Details.Skipped)
+						is.False(action.Details.Failed, "Trace:\n%s\n", action.Details.EngineTrace)
+						is.Empty(action.Details.Error)
 					}
 				case "udf_test.yaml":
 					is.False(sr.Skipped)
@@ -58,9 +58,9 @@ func TestVerify(t *testing.T) {
 					for _, principal := range sr.Principals {
 						for _, resource := range principal.Resources {
 							for _, action := range resource.Actions {
-								is.False(action.Data.Skipped)
-								is.False(action.Data.Failed, "Trace:\n%s\n", action.Data.EngineTrace)
-								is.Empty(action.Data.Error, fmt.Sprintf("%s | %s | %s", principal.Name, resource.Name, action.Name))
+								is.False(action.Details.Skipped)
+								is.False(action.Details.Failed, "Trace:\n%s\n", action.Details.EngineTrace)
+								is.Empty(action.Details.Error, fmt.Sprintf("%s | %s | %s", principal.Name, resource.Name, action.Name))
 							}
 						}
 					}

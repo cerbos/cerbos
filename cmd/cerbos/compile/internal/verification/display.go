@@ -17,10 +17,10 @@ import (
 	"github.com/cerbos/cerbos/internal/verify"
 )
 
-func Display(p *printer.Printer, result *verify.Result, output flagset.OutputFormat, verbose bool) error {
+func Display(p *printer.Printer, result *verify.Result, output flagset.OutputFormat, verbose, noColor bool) error {
 	switch output {
 	case flagset.OutputFormatJSON:
-		if err := p.PrintJSON(result); err != nil {
+		if err := p.PrintJSON(result, noColor); err != nil {
 			return err
 		}
 
@@ -61,16 +61,16 @@ func displayPretty(p *printer.Printer, result *verify.Result, verbose bool) erro
 				p.Printf("%s%s\n", tabs(2), colored.Resource(resource.Name)) //nolint:gomnd
 				for _, action := range resource.Actions {
 					p.Printf("%s%s ", tabs(3), colored.Action(action.Name)) //nolint:gomnd
-					if action.Data.Skipped {
+					if action.Details.Skipped {
 						p.Println(colored.SkippedTest("[SKIPPED]"))
 						continue
 					}
 
-					if action.Data.Failed {
+					if action.Details.Failed {
 						p.Println(colored.FailedTest("[FAILED]"))
-						p.Printf("\tError: %s\n", action.Data.Error)
-						if verbose && action.Data.EngineTrace != "" {
-							traceMap.Add(sn.Name, principal.Name, resource.Name, action.Name, action.Data.EngineTrace)
+						p.Printf("\tError: %s\n", action.Details.Error)
+						if verbose && action.Details.EngineTrace != "" {
+							traceMap.Add(sn.Name, principal.Name, resource.Name, action.Name, action.Details.EngineTrace)
 						}
 						continue
 					}
@@ -141,15 +141,15 @@ func displayTree(p *printer.Printer, result *verify.Result, verbose bool) error 
 				for _, action := range resource.Actions {
 					actionText := colored.Action(action.Name)
 
-					if action.Data.Failed {
+					if action.Details.Failed {
 						actionText = fmt.Sprintf("%s %s", actionText, colored.FailedTest("[FAILED]"))
 					}
 
-					if action.Data.Skipped {
+					if action.Details.Skipped {
 						actionText = fmt.Sprintf("%s %s", actionText, colored.SkippedTest("[SKIPPED]"))
 					}
 
-					if !action.Data.Failed && !action.Data.Skipped {
+					if !action.Details.Failed && !action.Details.Skipped {
 						actionText = fmt.Sprintf("%s %s", actionText, colored.SuccessfulTest("[OK]"))
 					}
 
@@ -158,13 +158,13 @@ func displayTree(p *printer.Printer, result *verify.Result, verbose bool) error 
 						Text:  actionText,
 					})
 
-					if action.Data.Failed {
+					if action.Details.Failed {
 						tree = append(tree, pterm.LeveledListItem{
 							Level: 4, //nolint:gomnd
-							Text:  fmt.Sprintf("%s %s", colored.ErrorMsg("ERROR:"), action.Data.Error),
+							Text:  fmt.Sprintf("%s %s", colored.ErrorMsg("ERROR:"), action.Details.Error),
 						})
-						if verbose && action.Data.EngineTrace != "" {
-							traceMap.Add(sn.Name, principal.Name, resource.Name, action.Name, action.Data.EngineTrace)
+						if verbose && action.Details.EngineTrace != "" {
+							traceMap.Add(sn.Name, principal.Name, resource.Name, action.Name, action.Details.EngineTrace)
 						}
 					}
 				}

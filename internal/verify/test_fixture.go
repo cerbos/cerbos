@@ -13,7 +13,6 @@ import (
 
 	"google.golang.org/protobuf/proto"
 
-	effectv1 "github.com/cerbos/cerbos/api/genpb/cerbos/effect/v1"
 	enginev1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
 	"github.com/cerbos/cerbos/internal/engine"
@@ -30,9 +29,6 @@ type validatableMessage interface {
 	proto.Message
 	Validate() error
 }
-
-// EffectsMatch is a type created to make the diff output nicer.
-type EffectsMatch map[string]effectv1.Effect
 
 const (
 	principalsFileName = "principals"
@@ -149,7 +145,7 @@ func (tf *testFixture) runTestSuite(ctx context.Context, eng *engine.Engine, sho
 
 		skipped := false
 		for _, action := range test.Input.Actions {
-			testData := sn.Add(test.Name.PrincipalKey, test.Name.ResourceKey, action).Data
+			testData := sn.Add(test.Name.PrincipalKey, test.Name.ResourceKey, action).Details
 
 			if test.Skip || !shouldRun(fmt.Sprintf("%s/%s", ts.Name, test.Name.String())) {
 				testData.Skipped = true
@@ -178,7 +174,7 @@ func (tf *testFixture) runTestSuite(ctx context.Context, eng *engine.Engine, sho
 
 			if test.Expected[action].String() != actual[0].Actions[action].Effect.String() {
 				testData.Failed = true
-				testData.Error = fmt.Sprintf("Expected: %s Actual: %s", test.Expected[action].String(), actual[0].Actions[action].Effect.String())
+				testData.Error = map[string]string{"expected": test.Expected[action].String(), "actual": actual[0].Actions[action].Effect.String()}
 				testData.EngineTrace = traceBuf.String()
 				failed = true
 			}
