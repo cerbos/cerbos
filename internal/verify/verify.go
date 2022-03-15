@@ -5,6 +5,7 @@ package verify
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io/fs"
@@ -12,6 +13,7 @@ import (
 	"path/filepath"
 	"regexp"
 
+	effectv1 "github.com/cerbos/cerbos/api/genpb/cerbos/effect/v1"
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
 	"github.com/cerbos/cerbos/internal/engine"
 	"github.com/cerbos/cerbos/internal/util"
@@ -106,10 +108,33 @@ type ActionNode struct {
 }
 
 type DetailsNode struct {
-	Error       interface{} `json:"error,omitempty"`
-	EngineTrace string      `json:"engineTrace,omitempty"`
-	Skipped     bool        `json:"skipped,omitempty"`
-	Failed      bool        `json:"failed"`
+	Error       string   `json:"error,omitempty"`
+	Outcome     *Outcome `json:"outcome,omitempty"`
+	EngineTrace string   `json:"engineTrace,omitempty"`
+	Skipped     bool     `json:"skipped,omitempty"`
+	Failed      bool     `json:"failed"`
+}
+
+type (
+	sprintFn func(a ...interface{}) string
+	Outcome  struct {
+		Actual   effectv1.Effect `json:"actual"`
+		Expected effectv1.Effect `json:"expected"`
+	}
+)
+
+func (o *Outcome) MarshalJSON() ([]byte, error) {
+	return json.Marshal(&struct {
+		Actual   string `json:"actual"`
+		Expected string `json:"expected"`
+	}{
+		Actual:   o.Actual.String(),
+		Expected: o.Expected.String(),
+	})
+}
+
+func (o *Outcome) Display(coloredSprint sprintFn) string {
+	return fmt.Sprintf("Expected: %s Actual: %s", coloredSprint(o.Expected.String()), coloredSprint(o.Actual.String()))
 }
 
 var ErrTestFixtureNotFound = errors.New("test fixture not found")

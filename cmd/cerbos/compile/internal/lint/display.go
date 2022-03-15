@@ -16,7 +16,7 @@ func Display(p *printer.Printer, errs *index.BuildError, output flagset.OutputFo
 	case flagset.OutputFormatJSON:
 		return displayJSON(p, errs, noColor)
 	case flagset.OutputFormatList, flagset.OutputFormatTree:
-		return displayPretty(p, errs)
+		return displayList(p, errs)
 	}
 
 	return internalerrors.ErrFailed
@@ -30,7 +30,7 @@ func displayJSON(p *printer.Printer, errs *index.BuildError, noColor bool) error
 	return internalerrors.ErrFailed
 }
 
-func displayPretty(p *printer.Printer, errs *index.BuildError) error {
+func displayList(p *printer.Printer, errs *index.BuildError) error {
 	if len(errs.DuplicateDefs) > 0 {
 		p.Println(colored.Header("Duplicate definitions"))
 		for _, dd := range errs.DuplicateDefs {

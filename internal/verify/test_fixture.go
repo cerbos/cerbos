@@ -174,7 +174,11 @@ func (tf *testFixture) runTestSuite(ctx context.Context, eng *engine.Engine, sho
 
 			if test.Expected[action].String() != actual[0].Actions[action].Effect.String() {
 				testData.Failed = true
-				testData.Error = map[string]string{"expected": test.Expected[action].String(), "actual": actual[0].Actions[action].Effect.String()}
+				testData.Error = "Expected result and actual result differs"
+				testData.Outcome = &Outcome{
+					Expected: test.Expected[action],
+					Actual:   actual[0].Actions[action].Effect,
+				}
 				testData.EngineTrace = traceBuf.String()
 				failed = true
 			}

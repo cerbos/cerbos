@@ -16,7 +16,7 @@ func Display(p *printer.Printer, errs compile.ErrorList, output flagset.OutputFo
 	case flagset.OutputFormatJSON:
 		return displayJSON(p, errs, noColor)
 	case flagset.OutputFormatList, flagset.OutputFormatTree:
-		return displayPretty(p, errs)
+		return displayList(p, errs)
 	}
 
 	return internalerrors.ErrFailed
@@ -30,7 +30,7 @@ func displayJSON(p *printer.Printer, errs compile.ErrorList, noColor bool) error
 	return internalerrors.ErrFailed
 }
 
-func displayPretty(p *printer.Printer, errs compile.ErrorList) error {
+func displayList(p *printer.Printer, errs compile.ErrorList) error {
 	p.Println(colored.Header("Compilation errors"))
 	for _, err := range errs {
 		p.Printf("%s: %s (%s)\n", colored.FileName(err.File), colored.ErrorMsg(err.Description), err.Err.Error())

@@ -25,20 +25,20 @@ func Display(p *printer.Printer, result *verify.Result, output flagset.OutputFor
 		}
 
 		if result.Failed {
-			return errors.ErrFailed
+			return errors.ErrTestsFailed
 		}
 
 		return nil
 	case flagset.OutputFormatTree:
 		return displayTree(p, result, verbose)
 	case flagset.OutputFormatList:
-		return displayPretty(p, result, verbose)
+		return displayList(p, result, verbose)
 	}
 
-	return errors.ErrFailed
+	return errors.ErrTestsFailed
 }
 
-func displayPretty(p *printer.Printer, result *verify.Result, verbose bool) error {
+func displayList(p *printer.Printer, result *verify.Result, verbose bool) error {
 	p.Println(colored.Header("Test results"))
 	traceMap := make(traces.Map)
 	for _, sn := range result.Suites {
@@ -68,7 +68,10 @@ func displayPretty(p *printer.Printer, result *verify.Result, verbose bool) erro
 
 					if action.Details.Failed {
 						p.Println(colored.FailedTest("[FAILED]"))
-						p.Printf("\tError: %s\n", action.Details.Error)
+						p.Printf("\t%s %s\n", colored.ErrorMsg("ERROR:"), action.Details.Error)
+						if action.Details.Outcome != nil {
+							p.Printf("\t%s %s\n", colored.ErrorMsg("OUTCOME:"), action.Details.Outcome.Display(colored.FailedTest))
+						}
 						if verbose && action.Details.EngineTrace != "" {
 							traceMap.Add(sn.Name, principal.Name, resource.Name, action.Name, action.Details.EngineTrace)
 						}
@@ -163,6 +166,12 @@ func displayTree(p *printer.Printer, result *verify.Result, verbose bool) error 
 							Level: 4, //nolint:gomnd
 							Text:  fmt.Sprintf("%s %s", colored.ErrorMsg("ERROR:"), action.Details.Error),
 						})
+						if action.Details.Outcome != nil {
+							tree = append(tree, pterm.LeveledListItem{
+								Level: 4, //nolint:gomnd
+								Text:  fmt.Sprintf("%s %s", colored.ErrorMsg("OUTCOME:"), action.Details.Outcome.Display(colored.FailedTest)),
+							})
+						}
 						if verbose && action.Details.EngineTrace != "" {
 							traceMap.Add(sn.Name, principal.Name, resource.Name, action.Name, action.Details.EngineTrace)
 						}
@@ -175,7 +184,7 @@ func displayTree(p *printer.Printer, result *verify.Result, verbose bool) error 
 	root := pterm.NewTreeFromLeveledList(tree)
 	err := pterm.DefaultTree.WithRoot(root).Render()
 	if err != nil {
-		return errors.ErrFailed
+		return errors.ErrTestsFailed
 	}
 
 	traceMap.Print(p)
