@@ -1,0 +1,51 @@
+{
+  "$id": "https://api.cerbos.dev/cerbos/request/v1/ResourceSet.schema.json",
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "definitions": {
+    "cerbos.request.v1.AttributesMap": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "attr": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/google.protobuf.Value"
+          }
+        }
+      }
+    },
+    "google.protobuf.Value": {
+      "title": "Value",
+      "description": "A dynamically-typed value."
+    }
+  },
+  "type": "object",
+  "required": [
+    "kind",
+    "instances"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "instances": {
+      "type": "object",
+      "maxProperties": 20,
+      "minProperties": 1,
+      "additionalProperties": {
+        "$ref": "#/definitions/cerbos.request.v1.AttributesMap"
+      }
+    },
+    "kind": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^[[:alpha:]][[:word:]\\@\\.\\-/]*(\\:[[:alpha:]][[:word:]\\@\\.\\-/]*)*$"
+    },
+    "policyVersion": {
+      "type": "string",
+      "pattern": "^[[:word:]]*$"
+    },
+    "scope": {
+      "type": "string",
+      "pattern": "^([[:alpha:]][[:word:]\\-]+(\\.[[:alpha:]][[:word:]\\-]*)*)*$"
+    }
+  }
+}

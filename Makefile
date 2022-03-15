@@ -20,6 +20,7 @@ clean:
 	@-rm -rf $(GEN_DIR)
 	@-rm -rf $(MOCK_DIR)
 	@-rm -rf $(DOCS_OUT_DIR)
+	@-rm -rf $(JSONSCHEMA_DIR)
 	@-rm -rf $(OPENAPI_DIR)
 
 .PHONY: clean-tools

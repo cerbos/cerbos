@@ -1,0 +1,32 @@
+{
+  "$id": "https://api.cerbos.dev/cerbos/schema/v1/Schema.schema.json",
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "required": [
+    "id",
+    "definition"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "definition": {
+      "type": "string",
+      "oneOf": [
+        {
+          "title": "Standard base64 encoding",
+          "type": "string",
+          "pattern": "^[\\r\\nA-Za-z0-9+/]*$"
+        },
+        {
+          "title": "URL-safe base64 encoding",
+          "type": "string",
+          "pattern": "^[\\r\\nA-Za-z0-9_-]*$"
+        }
+      ]
+    },
+    "id": {
+      "type": "string",
+      "maxLength": 255,
+      "minLength": 1
+    }
+  }
+}
