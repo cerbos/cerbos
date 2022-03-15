@@ -4,7 +4,11 @@
 package module
 
 import (
+	"io"
 	"regexp"
+	"regexp/syntax"
+	"strconv"
+	"strings"
 
 	"github.com/cerbos/cerbos/hack/tools/protoc-gen-jsonschema/jsonschema"
 	"github.com/envoyproxy/protoc-gen-validate/validate"
@@ -129,7 +133,7 @@ func (m *Module) schemaForString(rules *validate.StringRules) (jsonschema.Schema
 		}
 
 		if rules.Pattern != nil {
-			patterns = append(patterns, rules.GetPattern())
+			patterns = append(patterns, m.makeRegexpCompatibleWithECMAScript(rules.GetPattern()))
 			if !m.matchesEmptyString(rules.GetPattern()) {
 				required = !rules.GetIgnoreEmpty()
 			}
@@ -199,6 +203,90 @@ func (m *Module) schemaForStringFormats(formats ...jsonschema.StringFormat) json
 	}
 
 	return jsonschema.AnyOf(schemas...)
+}
+
+func (m *Module) makeRegexpCompatibleWithECMAScript(pattern string) string {
+	expression, err := syntax.Parse(pattern, syntax.Perl)
+	m.CheckErr(err, "failed to parse regular expression")
+
+	var builder strings.Builder
+	writeECMAScriptCompatibleRegexp(&builder, expression)
+	return builder.String()
+}
+
+func writeECMAScriptCompatibleRegexp(w io.StringWriter, expression *syntax.Regexp) {
+	switch expression.Op {
+	case syntax.OpAnyCharNotNL:
+		w.WriteString(`.`)
+
+	case syntax.OpAnyChar:
+		w.WriteString(`[\s\S]`)
+
+	case syntax.OpBeginLine, syntax.OpBeginText:
+		w.WriteString(`^`)
+
+	case syntax.OpEndLine, syntax.OpEndText:
+		w.WriteString(`$`)
+
+	case syntax.OpCapture:
+		w.WriteString(`(`)
+		writeECMAScriptCompatibleRegexp(w, expression.Sub[0])
+		w.WriteString(`)`)
+
+	case syntax.OpStar, syntax.OpPlus, syntax.OpQuest, syntax.OpRepeat:
+		subexpression := expression.Sub[0]
+		if subexpression.Op > syntax.OpCapture || (subexpression.Op == syntax.OpLiteral && len(subexpression.Rune) > 1) {
+			w.WriteString(`(?:`)
+			writeECMAScriptCompatibleRegexp(w, subexpression)
+			w.WriteString(`)`)
+		} else {
+			writeECMAScriptCompatibleRegexp(w, subexpression)
+		}
+
+		switch expression.Op {
+		case syntax.OpStar:
+			w.WriteString(`*`)
+
+		case syntax.OpPlus:
+			w.WriteString(`+`)
+
+		case syntax.OpQuest:
+			w.WriteString(`?`)
+
+		case syntax.OpRepeat:
+			w.WriteString(`{`)
+			w.WriteString(strconv.Itoa(expression.Min))
+			if expression.Max != expression.Min {
+				w.WriteString(`,`)
+				if expression.Max >= 0 {
+					w.WriteString(strconv.Itoa(expression.Max))
+				}
+			}
+			w.WriteString(`}`)
+		}
+
+	case syntax.OpConcat:
+		for _, subexpression := range expression.Sub {
+			if subexpression.Op == syntax.OpAlternate {
+				w.WriteString(`(?:`)
+				writeECMAScriptCompatibleRegexp(w, subexpression)
+				w.WriteString(`)`)
+			} else {
+				writeECMAScriptCompatibleRegexp(w, subexpression)
+			}
+		}
+
+	case syntax.OpAlternate:
+		for i, subexpression := range expression.Sub {
+			if i > 0 {
+				w.WriteString(`|`)
+			}
+			writeECMAScriptCompatibleRegexp(w, subexpression)
+		}
+
+	default:
+		w.WriteString(expression.String())
+	}
 }
 
 func (m *Module) matchesEmptyString(pattern string) bool {
