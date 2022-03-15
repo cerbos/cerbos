@@ -42,7 +42,6 @@ require (
 	github.com/jwalton/gchalk v1.2.1
 	github.com/kavu/go_reuseport v1.5.0
 	github.com/lestrrat-go/jwx v1.2.20
-	github.com/lyft/protoc-gen-star v0.6.0
 	github.com/mattn/go-isatty v0.0.14
 	github.com/minio/minio-go/v7 v7.0.23
 	github.com/oklog/ulid/v2 v2.0.2

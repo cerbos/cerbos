@@ -26,7 +26,7 @@ OPENAPI_DIR := schema/openapiv2
 MOCK_DIR := internal/test/mocks
 
 PROTOC_GEN_JSONSCHEMA_SRC_DIR := hack/tools/protoc-gen-jsonschema
-PROTOC_GEN_JSONSCHEMA_SRC_FILES := go.mod go.sum $(shell find $(PROTOC_GEN_JSONSCHEMA_SRC_DIR) -type f -name '*.go')
+PROTOC_GEN_JSONSCHEMA_SRC_FILES := $(PROTOC_GEN_JSONSCHEMA_SRC_DIR)/go.mod $(PROTOC_GEN_JSONSCHEMA_SRC_DIR)/go.sum $(shell find $(PROTOC_GEN_JSONSCHEMA_SRC_DIR) -type f -name '*.go')
 
 define BUF_GEN_TEMPLATE
 {\
@@ -135,7 +135,7 @@ $(PROTOC_GEN_GRPC_GATEWAY): $(TOOLS_BIN_DIR)
 	@ GOBIN=$(TOOLS_BIN_DIR) go install -modfile=$(TOOLS_MOD) github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-grpc-gateway
 
 $(PROTOC_GEN_JSONSCHEMA): $(TOOLS_BIN_DIR) $(PROTOC_GEN_JSONSCHEMA_SRC_FILES)
-	@ GOBIN=$(TOOLS_BIN_DIR) go install -tags=protocgenjsonschema ./$(PROTOC_GEN_JSONSCHEMA_SRC_DIR)
+	@ cd $(PROTOC_GEN_JSONSCHEMA_SRC_DIR) && GOBIN=$(TOOLS_BIN_DIR) go install .
 
 $(PROTOC_GEN_OPENAPIV2): $(TOOLS_BIN_DIR) 
 	@ GOBIN=$(TOOLS_BIN_DIR) go install -modfile=$(TOOLS_MOD) github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-openapiv2
