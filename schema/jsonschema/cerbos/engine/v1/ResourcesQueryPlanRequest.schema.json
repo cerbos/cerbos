@@ -34,13 +34,13 @@
         },
         "policyVersion": {
           "type": "string",
-          "pattern": "^[[:word:]]*$"
+          "pattern": "^[0-9A-Z_a-z]*$"
         },
         "roles": {
           "type": "array",
           "items": {
             "type": "string",
-            "pattern": "^[[:word:]\\-\\.]+$"
+            "pattern": "^[\\--\\.0-9A-Z_a-z]+$"
           },
           "maxItems": 20,
           "minItems": 1,
@@ -48,7 +48,7 @@
         },
         "scope": {
           "type": "string",
-          "pattern": "^([[:alpha:]][[:word:]\\-]+(\\.[[:alpha:]][[:word:]\\-]*)*)*$"
+          "pattern": "^([A-Za-z][\\-0-9A-Z_a-z]+(\\.[A-Za-z][\\-0-9A-Z_a-z]*)*)*$"
         }
       }
     },
@@ -68,15 +68,15 @@
         "kind": {
           "type": "string",
           "minLength": 1,
-          "pattern": "^[[:alpha:]][[:word:]\\@\\.\\-/]*(\\:[[:alpha:]][[:word:]\\@\\.\\-/]*)*$"
+          "pattern": "^[A-Za-z][\\--9@-Z_a-z]*(:[A-Za-z][\\--9@-Z_a-z]*)*$"
         },
         "policyVersion": {
           "type": "string",
-          "pattern": "^[[:word:]]*$"
+          "pattern": "^[0-9A-Z_a-z]*$"
         },
         "scope": {
           "type": "string",
-          "pattern": "^([[:alpha:]][[:word:]\\-]+(\\.[[:alpha:]][[:word:]\\-]*)*)*$"
+          "pattern": "^([A-Za-z][\\-0-9A-Z_a-z]+(\\.[A-Za-z][\\-0-9A-Z_a-z]*)*)*$"
         }
       }
     },

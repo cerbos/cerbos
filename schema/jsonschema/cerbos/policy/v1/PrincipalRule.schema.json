@@ -140,7 +140,7 @@
         },
         "name": {
           "type": "string",
-          "pattern": "^([[:alpha:]][[:word:]\\@\\.\\-]*)*$"
+          "pattern": "^([A-Za-z][\\--\\.0-9@-Z_a-z]*)*$"
         }
       }
     }
@@ -162,7 +162,7 @@
     "resource": {
       "type": "string",
       "minLength": 1,
-      "pattern": "^[[:alpha:]][[:word:]\\@\\.\\-/]*(\\:[[:alpha:]][[:word:]\\@\\.\\-/]*)*$"
+      "pattern": "^[A-Za-z][\\--9@-Z_a-z]*(:[A-Za-z][\\--9@-Z_a-z]*)*$"
     }
   }
 }
