@@ -22,7 +22,7 @@ There are multiple ways in which you can disable telemetry collection.
 
 === Use the configuration file
 
-Set `telemetry.disabled: true` in the Cerbos configuration file.
+Set `telemetry.disabled: true` in the xref:configuration:index.adoc[Cerbos configuration file].
 
 [source,yaml]
 ----
@@ -63,6 +63,6 @@ Start Cerbos with `--set=telemetry.disabled=true` command line flag.
 ----
 docker run -i -t -p 3592:3592 \
     {app-docker-img} \
-    server --config=/conf.default.yaml --set=telemetry.disabled=true
+    server --set=telemetry.disabled=true
 ----
 

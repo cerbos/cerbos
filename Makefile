@@ -1,6 +1,8 @@
 include tools/tools.mk
 include hack/dev/dev.mk
 
+SEGMENT_WRITE_KEY ?= ""
+
 VERSION := $(shell git describe --abbrev=0)
 COMMIT_SHA := $(shell git rev-parse HEAD)
 BUILD_DATE := $(shell date -u +"%Y-%m-%dT%H:%M:%SZ")
@@ -98,7 +100,7 @@ build: generate lint test package
 
 .PHONY: package
 package: $(GORELEASER)
-	@ SEGMENT_WRITE_KEY="" $(GORELEASER) release --config=.goreleaser.yml --snapshot --skip-publish --rm-dist
+	@ SEGMENT_WRITE_KEY=$(SEGMENT_WRITE_KEY) $(GORELEASER) release --config=.goreleaser.yml --snapshot --skip-publish --rm-dist
 
 .PHONY: docs
 docs: confdocs

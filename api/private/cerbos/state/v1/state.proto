@@ -7,7 +7,6 @@ package cerbos.state.v1;
 
 option go_package = "github.com/cerbos/cerbos/api/genpb/cerbos/state/v1;statev1";
 
-import "cerbos/telemetry/v1/telemetry.proto";
 import "google/protobuf/timestamp.proto";
 
 message TelemetryState {
