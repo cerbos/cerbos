@@ -388,8 +388,6 @@ func (m *Ping_Source) validate(all bool) error {
 
 	// no validation rules for NumCpus
 
-	// no validation rules for IpAddressHash
-
 	if len(errors) > 0 {
 		return Ping_SourceMultiError(errors)
 	}
@@ -705,13 +703,63 @@ func (m *Ping_Stats) validate(all bool) error {
 
 	var errors []error
 
-	// no validation rules for PolicyCount
+	if all {
+		switch v := interface{}(m.GetPolicy()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, Ping_StatsValidationError{
+					field:  "Policy",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, Ping_StatsValidationError{
+					field:  "Policy",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetPolicy()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return Ping_StatsValidationError{
+				field:  "Policy",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
 
-	// no validation rules for AvgRuleCount
-
-	// no validation rules for AvgConditionCount
-
-	// no validation rules for SchemaCount
+	if all {
+		switch v := interface{}(m.GetSchema()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, Ping_StatsValidationError{
+					field:  "Schema",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, Ping_StatsValidationError{
+					field:  "Schema",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetSchema()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return Ping_StatsValidationError{
+				field:  "Schema",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
 
 	if len(errors) > 0 {
 		return Ping_StatsMultiError(errors)
@@ -1128,91 +1176,101 @@ func (m *Ping_Features_Storage) validate(all bool) error {
 
 	// no validation rules for Driver
 
-	if all {
-		switch v := interface{}(m.GetDisk()).(type) {
-		case interface{ ValidateAll() error }:
-			if err := v.ValidateAll(); err != nil {
-				errors = append(errors, Ping_Features_StorageValidationError{
+	switch m.Store.(type) {
+
+	case *Ping_Features_Storage_Disk_:
+
+		if all {
+			switch v := interface{}(m.GetDisk()).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, Ping_Features_StorageValidationError{
+						field:  "Disk",
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, Ping_Features_StorageValidationError{
+						field:  "Disk",
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(m.GetDisk()).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return Ping_Features_StorageValidationError{
 					field:  "Disk",
 					reason: "embedded message failed validation",
 					cause:  err,
-				})
-			}
-		case interface{ Validate() error }:
-			if err := v.Validate(); err != nil {
-				errors = append(errors, Ping_Features_StorageValidationError{
-					field:  "Disk",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
+				}
 			}
 		}
-	} else if v, ok := interface{}(m.GetDisk()).(interface{ Validate() error }); ok {
-		if err := v.Validate(); err != nil {
-			return Ping_Features_StorageValidationError{
-				field:  "Disk",
-				reason: "embedded message failed validation",
-				cause:  err,
-			}
-		}
-	}
 
-	if all {
-		switch v := interface{}(m.GetGit()).(type) {
-		case interface{ ValidateAll() error }:
-			if err := v.ValidateAll(); err != nil {
-				errors = append(errors, Ping_Features_StorageValidationError{
+	case *Ping_Features_Storage_Git_:
+
+		if all {
+			switch v := interface{}(m.GetGit()).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, Ping_Features_StorageValidationError{
+						field:  "Git",
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, Ping_Features_StorageValidationError{
+						field:  "Git",
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(m.GetGit()).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return Ping_Features_StorageValidationError{
 					field:  "Git",
 					reason: "embedded message failed validation",
 					cause:  err,
-				})
-			}
-		case interface{ Validate() error }:
-			if err := v.Validate(); err != nil {
-				errors = append(errors, Ping_Features_StorageValidationError{
-					field:  "Git",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
+				}
 			}
 		}
-	} else if v, ok := interface{}(m.GetGit()).(interface{ Validate() error }); ok {
-		if err := v.Validate(); err != nil {
-			return Ping_Features_StorageValidationError{
-				field:  "Git",
-				reason: "embedded message failed validation",
-				cause:  err,
-			}
-		}
-	}
 
-	if all {
-		switch v := interface{}(m.GetBlob()).(type) {
-		case interface{ ValidateAll() error }:
-			if err := v.ValidateAll(); err != nil {
-				errors = append(errors, Ping_Features_StorageValidationError{
-					field:  "Blob",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
+	case *Ping_Features_Storage_Blob_:
+
+		if all {
+			switch v := interface{}(m.GetBlob()).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, Ping_Features_StorageValidationError{
+						field:  "Blob",
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, Ping_Features_StorageValidationError{
+						field:  "Blob",
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
 			}
-		case interface{ Validate() error }:
+		} else if v, ok := interface{}(m.GetBlob()).(interface{ Validate() error }); ok {
 			if err := v.Validate(); err != nil {
-				errors = append(errors, Ping_Features_StorageValidationError{
+				return Ping_Features_StorageValidationError{
 					field:  "Blob",
 					reason: "embedded message failed validation",
 					cause:  err,
-				})
+				}
 			}
 		}
-	} else if v, ok := interface{}(m.GetBlob()).(interface{ Validate() error }); ok {
-		if err := v.Validate(); err != nil {
-			return Ping_Features_StorageValidationError{
-				field:  "Blob",
-				reason: "embedded message failed validation",
-				cause:  err,
-			}
-		}
+
 	}
 
 	if len(errors) > 0 {
@@ -1666,3 +1724,215 @@ var _ interface {
 	Cause() error
 	ErrorName() string
 } = Ping_Features_Storage_BlobValidationError{}
+
+// Validate checks the field values on Ping_Stats_Policy with the rules defined
+// in the proto definition for this message. If any rules are violated, the
+// first error encountered is returned, or nil if there are no violations.
+func (m *Ping_Stats_Policy) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on Ping_Stats_Policy with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// Ping_Stats_PolicyMultiError, or nil if none found.
+func (m *Ping_Stats_Policy) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *Ping_Stats_Policy) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for Count
+
+	// no validation rules for AvgRuleCount
+
+	// no validation rules for AvgConditionCount
+
+	if len(errors) > 0 {
+		return Ping_Stats_PolicyMultiError(errors)
+	}
+
+	return nil
+}
+
+// Ping_Stats_PolicyMultiError is an error wrapping multiple validation errors
+// returned by Ping_Stats_Policy.ValidateAll() if the designated constraints
+// aren't met.
+type Ping_Stats_PolicyMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m Ping_Stats_PolicyMultiError) Error() string {
+	var msgs []string
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m Ping_Stats_PolicyMultiError) AllErrors() []error { return m }
+
+// Ping_Stats_PolicyValidationError is the validation error returned by
+// Ping_Stats_Policy.Validate if the designated constraints aren't met.
+type Ping_Stats_PolicyValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e Ping_Stats_PolicyValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e Ping_Stats_PolicyValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e Ping_Stats_PolicyValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e Ping_Stats_PolicyValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e Ping_Stats_PolicyValidationError) ErrorName() string {
+	return "Ping_Stats_PolicyValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e Ping_Stats_PolicyValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sPing_Stats_Policy.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = Ping_Stats_PolicyValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = Ping_Stats_PolicyValidationError{}
+
+// Validate checks the field values on Ping_Stats_Schema with the rules defined
+// in the proto definition for this message. If any rules are violated, the
+// first error encountered is returned, or nil if there are no violations.
+func (m *Ping_Stats_Schema) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on Ping_Stats_Schema with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// Ping_Stats_SchemaMultiError, or nil if none found.
+func (m *Ping_Stats_Schema) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *Ping_Stats_Schema) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for Count
+
+	if len(errors) > 0 {
+		return Ping_Stats_SchemaMultiError(errors)
+	}
+
+	return nil
+}
+
+// Ping_Stats_SchemaMultiError is an error wrapping multiple validation errors
+// returned by Ping_Stats_Schema.ValidateAll() if the designated constraints
+// aren't met.
+type Ping_Stats_SchemaMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m Ping_Stats_SchemaMultiError) Error() string {
+	var msgs []string
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m Ping_Stats_SchemaMultiError) AllErrors() []error { return m }
+
+// Ping_Stats_SchemaValidationError is the validation error returned by
+// Ping_Stats_Schema.Validate if the designated constraints aren't met.
+type Ping_Stats_SchemaValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e Ping_Stats_SchemaValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e Ping_Stats_SchemaValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e Ping_Stats_SchemaValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e Ping_Stats_SchemaValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e Ping_Stats_SchemaValidationError) ErrorName() string {
+	return "Ping_Stats_SchemaValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e Ping_Stats_SchemaValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sPing_Stats_Schema.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = Ping_Stats_SchemaValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = Ping_Stats_SchemaValidationError{}

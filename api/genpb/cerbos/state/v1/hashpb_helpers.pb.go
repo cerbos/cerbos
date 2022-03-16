@@ -122,23 +122,26 @@ func cerbos_telemetry_v1_Ping_Features_Storage_hashpb_sum(m *v1.Ping_Features_St
 		_, _ = hasher.Write(protowire.AppendString(nil, m.Driver))
 
 	}
-	if _, ok := ignore["cerbos.telemetry.v1.Ping.Features.Storage.disk"]; !ok {
-		if m.Disk != nil {
-			cerbos_telemetry_v1_Ping_Features_Storage_Disk_hashpb_sum(m.Disk, hasher, ignore)
-		}
+	if m.Store != nil {
+		if _, ok := ignore["cerbos.telemetry.v1.Ping.Features.Storage.store"]; !ok {
+			switch t := m.Store.(type) {
+			case *v1.Ping_Features_Storage_Disk_:
+				if t.Disk != nil {
+					cerbos_telemetry_v1_Ping_Features_Storage_Disk_hashpb_sum(t.Disk, hasher, ignore)
+				}
 
-	}
-	if _, ok := ignore["cerbos.telemetry.v1.Ping.Features.Storage.git"]; !ok {
-		if m.Git != nil {
-			cerbos_telemetry_v1_Ping_Features_Storage_Git_hashpb_sum(m.Git, hasher, ignore)
-		}
+			case *v1.Ping_Features_Storage_Git_:
+				if t.Git != nil {
+					cerbos_telemetry_v1_Ping_Features_Storage_Git_hashpb_sum(t.Git, hasher, ignore)
+				}
 
-	}
-	if _, ok := ignore["cerbos.telemetry.v1.Ping.Features.Storage.blob"]; !ok {
-		if m.Blob != nil {
-			cerbos_telemetry_v1_Ping_Features_Storage_Blob_hashpb_sum(m.Blob, hasher, ignore)
-		}
+			case *v1.Ping_Features_Storage_Blob_:
+				if t.Blob != nil {
+					cerbos_telemetry_v1_Ping_Features_Storage_Blob_hashpb_sum(t.Blob, hasher, ignore)
+				}
 
+			}
+		}
 	}
 }
 
@@ -188,18 +191,14 @@ func cerbos_telemetry_v1_Ping_Source_hashpb_sum(m *v1.Ping_Source, hasher hash.H
 		_, _ = hasher.Write(protowire.AppendVarint(nil, uint64(m.NumCpus)))
 
 	}
-	if _, ok := ignore["cerbos.telemetry.v1.Ping.Source.ip_address_hash"]; !ok {
-		_, _ = hasher.Write(protowire.AppendVarint(nil, m.IpAddressHash))
-
-	}
 }
 
-func cerbos_telemetry_v1_Ping_Stats_hashpb_sum(m *v1.Ping_Stats, hasher hash.Hash, ignore map[string]struct{}) {
-	if _, ok := ignore["cerbos.telemetry.v1.Ping.Stats.policy_count"]; !ok {
-		if len(m.PolicyCount) > 0 {
-			keys := make([]string, len(m.PolicyCount))
+func cerbos_telemetry_v1_Ping_Stats_Policy_hashpb_sum(m *v1.Ping_Stats_Policy, hasher hash.Hash, ignore map[string]struct{}) {
+	if _, ok := ignore["cerbos.telemetry.v1.Ping.Stats.Policy.count"]; !ok {
+		if len(m.Count) > 0 {
+			keys := make([]string, len(m.Count))
 			i := 0
-			for k := range m.PolicyCount {
+			for k := range m.Count {
 				keys[i] = k
 				i++
 			}
@@ -207,12 +206,12 @@ func cerbos_telemetry_v1_Ping_Stats_hashpb_sum(m *v1.Ping_Stats, hasher hash.Has
 			sort.Slice(keys, func(i, j int) bool { return keys[i] < keys[j] })
 
 			for _, k := range keys {
-				_, _ = hasher.Write(protowire.AppendVarint(nil, uint64(m.PolicyCount[k])))
+				_, _ = hasher.Write(protowire.AppendVarint(nil, uint64(m.Count[k])))
 
 			}
 		}
 	}
-	if _, ok := ignore["cerbos.telemetry.v1.Ping.Stats.avg_rule_count"]; !ok {
+	if _, ok := ignore["cerbos.telemetry.v1.Ping.Stats.Policy.avg_rule_count"]; !ok {
 		if len(m.AvgRuleCount) > 0 {
 			keys := make([]string, len(m.AvgRuleCount))
 			i := 0
@@ -229,7 +228,7 @@ func cerbos_telemetry_v1_Ping_Stats_hashpb_sum(m *v1.Ping_Stats, hasher hash.Has
 			}
 		}
 	}
-	if _, ok := ignore["cerbos.telemetry.v1.Ping.Stats.avg_condition_count"]; !ok {
+	if _, ok := ignore["cerbos.telemetry.v1.Ping.Stats.Policy.avg_condition_count"]; !ok {
 		if len(m.AvgConditionCount) > 0 {
 			keys := make([]string, len(m.AvgConditionCount))
 			i := 0
@@ -246,8 +245,26 @@ func cerbos_telemetry_v1_Ping_Stats_hashpb_sum(m *v1.Ping_Stats, hasher hash.Has
 			}
 		}
 	}
-	if _, ok := ignore["cerbos.telemetry.v1.Ping.Stats.schema_count"]; !ok {
-		_, _ = hasher.Write(protowire.AppendVarint(nil, uint64(m.SchemaCount)))
+}
+
+func cerbos_telemetry_v1_Ping_Stats_Schema_hashpb_sum(m *v1.Ping_Stats_Schema, hasher hash.Hash, ignore map[string]struct{}) {
+	if _, ok := ignore["cerbos.telemetry.v1.Ping.Stats.Schema.count"]; !ok {
+		_, _ = hasher.Write(protowire.AppendVarint(nil, uint64(m.Count)))
+
+	}
+}
+
+func cerbos_telemetry_v1_Ping_Stats_hashpb_sum(m *v1.Ping_Stats, hasher hash.Hash, ignore map[string]struct{}) {
+	if _, ok := ignore["cerbos.telemetry.v1.Ping.Stats.policy"]; !ok {
+		if m.Policy != nil {
+			cerbos_telemetry_v1_Ping_Stats_Policy_hashpb_sum(m.Policy, hasher, ignore)
+		}
+
+	}
+	if _, ok := ignore["cerbos.telemetry.v1.Ping.Stats.schema"]; !ok {
+		if m.Schema != nil {
+			cerbos_telemetry_v1_Ping_Stats_Schema_hashpb_sum(m.Schema, hasher, ignore)
+		}
 
 	}
 }

@@ -103,3 +103,19 @@ func (m *Ping_Stats) HashPB(hasher hash.Hash, ignore map[string]struct{}) {
 		cerbos_telemetry_v1_Ping_Stats_hashpb_sum(m, hasher, ignore)
 	}
 }
+
+// HashPB computes a hash of the message using the given hash function
+// The ignore set must contain fully-qualified field names (pkg.msg.field) that should be ignored from the hash
+func (m *Ping_Stats_Policy) HashPB(hasher hash.Hash, ignore map[string]struct{}) {
+	if m != nil {
+		cerbos_telemetry_v1_Ping_Stats_Policy_hashpb_sum(m, hasher, ignore)
+	}
+}
+
+// HashPB computes a hash of the message using the given hash function
+// The ignore set must contain fully-qualified field names (pkg.msg.field) that should be ignored from the hash
+func (m *Ping_Stats_Schema) HashPB(hasher hash.Hash, ignore map[string]struct{}) {
+	if m != nil {
+		cerbos_telemetry_v1_Ping_Stats_Schema_hashpb_sum(m, hasher, ignore)
+	}
+}

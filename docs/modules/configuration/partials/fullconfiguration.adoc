@@ -118,6 +118,7 @@ storage:
     url: "sqlserver://username:password@host/instance?param1=value&param2=value" # Required. URL is the SQL Server connection URL. See https://github.com/denisenkom/go-mssqldb#connection-parameters-and-dsn
 telemetry:
   disabled: false # Disabled switches off telemetry reporting.
+  stateDir: ${HOME}/.config/cerbos # StateDir sets the directory for persisting state. Defaults to user config directory of the OS.
 tracing:
   exporter: jaeger # Exporter is the type of trace exporter to use.
   jaeger: # Jaeger configures the Jaeger exporter.

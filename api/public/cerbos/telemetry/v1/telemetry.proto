@@ -25,7 +25,6 @@ message Ping {
         string os = 2;
         string arch = 3;
         uint32 num_cpus = 4;
-        uint64 ip_address_hash = 5;
     }
 
     message Features {
@@ -59,9 +58,11 @@ message Ping {
             }
 
             string driver = 1;
-            Disk disk = 2;
-            Git git = 3;
-            Blob blob = 4;
+            oneof store {
+                Disk disk = 2;
+                Git git = 3;
+                Blob blob = 4;
+            }
         }
 
         Audit audit = 1;
@@ -71,10 +72,18 @@ message Ping {
     }
 
     message Stats {
-        map<string,uint32> policy_count = 1;
-        map<string,double> avg_rule_count = 2;
-        map<string,double> avg_condition_count = 3;
-        uint32 schema_count = 4;
+        message Policy {
+            map<string,uint32> count = 1;
+            map<string,double> avg_rule_count = 2;
+            map<string,double> avg_condition_count = 3;
+        }
+
+        message Schema {
+            uint32 count = 1;
+        }
+
+        Policy policy = 1;
+        Schema schema = 2;
     }
 
     string version = 1;

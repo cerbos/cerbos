@@ -13,14 +13,17 @@ import (
 	"github.com/cerbos/cerbos/internal/test/mocks"
 	"github.com/spf13/afero"
 	"github.com/stretchr/testify/require"
+	"go.uber.org/zap"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 func TestState(t *testing.T) {
+	logger := zap.L().Named("telemetry")
+
 	t.Run("fresh_state", func(t *testing.T) {
 		fsys := afero.NewMemMapFs()
-		r := newReporterWithArgs(&Conf{}, &mocks.Store{}, fsys)
+		r := newReporter(&mocks.Store{}, fsys, logger)
 		require.True(t, r.report(context.Background(), false))
 
 		exists, err := afero.Exists(fsys, stateFile)
@@ -28,7 +31,7 @@ func TestState(t *testing.T) {
 		require.True(t, exists)
 
 		// don't report again because state was created recently
-		r = newReporterWithArgs(&Conf{}, &mocks.Store{}, fsys)
+		r = newReporter(&mocks.Store{}, fsys, logger)
 		require.False(t, r.report(context.Background(), false))
 	})
 
@@ -41,7 +44,7 @@ func TestState(t *testing.T) {
 			require.NoError(t, err)
 			require.NoError(t, afero.WriteFile(fsys, stateFile, stateBytes, 0o600))
 
-			r := newReporterWithArgs(&Conf{}, &mocks.Store{}, fsys)
+			r := newReporter(&mocks.Store{}, fsys, logger)
 			require.True(t, r.report(context.Background(), false))
 		})
 
@@ -50,14 +53,14 @@ func TestState(t *testing.T) {
 
 			require.NoError(t, afero.WriteFile(fsys, stateFile, []byte("rubbish"), 0o600))
 
-			r := newReporterWithArgs(&Conf{}, &mocks.Store{}, fsys)
+			r := newReporter(&mocks.Store{}, fsys, logger)
 			require.True(t, r.report(context.Background(), false))
 		})
 	})
 
 	t.Run("read_only_fs", func(t *testing.T) {
 		fsys := afero.NewReadOnlyFs(afero.NewMemMapFs())
-		r := newReporterWithArgs(&Conf{}, &mocks.Store{}, fsys)
+		r := newReporter(&mocks.Store{}, fsys, logger)
 		require.True(t, r.report(context.Background(), false))
 
 		exists, err := afero.Exists(fsys, stateFile)
@@ -67,22 +70,13 @@ func TestState(t *testing.T) {
 }
 
 func TestReporter(t *testing.T) {
-	t.Run("disabled_by_conf", func(t *testing.T) {
-		fsys := afero.NewMemMapFs()
-		r := newReporterWithArgs(&Conf{Disabled: true}, &mocks.Store{}, fsys)
-
-		require.False(t, r.report(context.Background(), false))
-
-		exists, err := afero.Exists(fsys, stateFile)
-		require.NoError(t, err)
-		require.False(t, exists)
-	})
+	logger := zap.L().Named("telemetry")
 
 	for _, envVar := range []string{noTelemetryEnvVar, doNotTrackEnvVar} {
 		t.Run(fmt.Sprintf("disabled_by_%s", envVar), func(t *testing.T) {
 			t.Setenv(envVar, "true")
 			fsys := afero.NewMemMapFs()
-			r := newReporterWithArgs(&Conf{Disabled: true}, &mocks.Store{}, fsys)
+			r := newReporter(&mocks.Store{}, fsys, logger)
 
 			require.False(t, r.report(context.Background(), false))
 

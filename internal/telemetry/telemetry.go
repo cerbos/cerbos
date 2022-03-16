@@ -5,8 +5,8 @@ package telemetry
 
 import (
 	"context"
+	"errors"
 	"fmt"
-	"net"
 	"net/url"
 	"os"
 	"path/filepath"
@@ -41,57 +41,75 @@ const (
 )
 
 func Report(ctx context.Context, store storage.Store) {
-	r := newReporter(store)
-	go r.report(ctx, true)
+	logger := zap.L().Named("telemetry")
+
+	conf := &Conf{}
+	_ = config.GetSection(conf)
+
+	if conf.Disabled {
+		logger.Info("Telemetry disabled")
+		return
+	}
+
+	go doReport(ctx, store, conf, logger)
+}
+
+func doReport(ctx context.Context, store storage.Store, conf *Conf, logger *zap.Logger) {
+	defer func() {
+		// don't let a panic in this goroutine crash the whole app.
+		if err := recover(); err != nil {
+			logger.Debug("Telemetry panic", zap.Any("cause", err))
+		}
+	}()
+
+	fs := initStateFS(conf.StateDir)
+	r := newReporter(store, fs, logger)
+	r.report(ctx, true)
+}
+
+func initStateFS(dir string) afero.Fs {
+	if dir == "" {
+		confDir, err := os.UserConfigDir()
+		if err != nil {
+			confDir = os.TempDir()
+		}
+
+		dir = filepath.Join(confDir, util.AppName)
+	}
+
+	finfo, err := os.Stat(dir)
+	if err != nil {
+		if !errors.Is(err, os.ErrNotExist) {
+			return afero.NewMemMapFs()
+		}
+
+		if err := os.MkdirAll(dir, 0o700); err != nil {
+			return afero.NewMemMapFs()
+		}
+	}
+
+	if finfo != nil && !finfo.IsDir() {
+		return afero.NewMemMapFs()
+	}
+
+	return afero.NewBasePathFs(afero.NewOsFs(), dir)
 }
 
 type reporter struct {
-	conf   *Conf
 	fsys   afero.Fs
 	store  storage.Store
 	logger *zap.Logger
 }
 
-func newReporter(store storage.Store) *reporter {
-	fs := afero.NewBasePathFs(afero.NewOsFs(), stateDir())
-
-	conf := &Conf{}
-	_ = config.GetSection(conf)
-
-	return newReporterWithArgs(conf, store, fs)
-}
-
-func newReporterWithArgs(conf *Conf, store storage.Store, fsys afero.Fs) *reporter {
+func newReporter(store storage.Store, fsys afero.Fs, logger *zap.Logger) *reporter {
 	return &reporter{
-		conf:   conf,
 		fsys:   fsys,
 		store:  store,
-		logger: zap.L().Named("telemetry"),
+		logger: logger,
 	}
-}
-
-func stateDir() string {
-	confDir, err := os.UserConfigDir()
-	if err != nil {
-		confDir = os.TempDir()
-	}
-
-	sdir := filepath.Join(confDir, util.AppName)
-	if err := os.MkdirAll(sdir, 0o700); err != nil {
-		return confDir
-	}
-
-	return sdir
 }
 
 func (r *reporter) report(ctx context.Context, publish bool) bool {
-	defer func() {
-		// don't let a panic in this goroutine crash the whole app.
-		if err := recover(); err != nil {
-			r.logger.Debug("Telemetry panic", zap.Any("cause", err))
-		}
-	}()
-
 	if !r.shouldReport() {
 		return false
 	}
@@ -111,17 +129,12 @@ func (r *reporter) report(ctx context.Context, publish bool) bool {
 func (r *reporter) shouldReport() bool {
 	for _, v := range []string{noTelemetryEnvVar, doNotTrackEnvVar} {
 		if disabledByEnvVar(v) {
-			r.logger.Info(fmt.Sprintf("Telemetry disabled by %s environment variable", v))
+			r.logger.Info("Telemetry disabled")
 			return false
 		}
 	}
 
-	if r.conf != nil && r.conf.Disabled {
-		r.logger.Info("Telemetry disabled by configuration")
-		return false
-	}
-
-	r.logger.Info("Anonymous telemetry enabled. Disable via the config file or by setting the CERBOS_NO_TELEMETRY=1 environment variable")
+	r.logger.Info(fmt.Sprintf("Anonymous telemetry enabled. Disable via the config file or by setting the %s=1 environment variable", noTelemetryEnvVar))
 
 	return r.reportIsDue()
 }
@@ -145,12 +158,12 @@ func disabledByEnvVar(name string) bool {
 func (r *reporter) reportIsDue() bool {
 	state := r.readState()
 
-	if state == nil || state.GetLastTimestamp() == nil {
+	if state == nil || state.LastTimestamp == nil {
 		return true
 	}
 
-	lastTS := state.GetLastTimestamp()
-	return time.Since(lastTS.AsTime()) > minReportInterval
+	lastTS := state.LastTimestamp.AsTime()
+	return time.Since(lastTS) > minReportInterval
 }
 
 func (r *reporter) readState() *statev1.TelemetryState {
@@ -214,18 +227,6 @@ func extractSource() *telemetryv1.Ping_Source {
 		s.Cerbos.ModuleChecksum = info.Main.Sum
 	}
 
-	addrs, err := net.InterfaceAddrs()
-	if err != nil {
-		return s
-	}
-
-	for _, a := range addrs {
-		ipNet, ok := a.(*net.IPNet)
-		if ok && !ipNet.IP.IsLoopback() {
-			s.IpAddressHash = util.HashStr(ipNet.IP.String())
-		}
-	}
-
 	return s
 }
 
@@ -259,30 +260,35 @@ func extractFeatures() *telemetryv1.Ping_Features {
 		}
 
 		switch storageConf.Driver {
-		case "disk":
+		case disk.DriverName:
 			if diskConf, err := disk.GetConf(); err == nil {
-				feats.Storage.Disk = &telemetryv1.Ping_Features_Storage_Disk{
-					Watch: diskConf.WatchForChanges,
+				feats.Storage.Store = &telemetryv1.Ping_Features_Storage_Disk_{
+					Disk: &telemetryv1.Ping_Features_Storage_Disk{
+						Watch: diskConf.WatchForChanges,
+					},
 				}
 			}
-
-		case "git":
+		case git.DriverName:
 			if gitConf, err := git.GetConf(); err == nil {
-				feats.Storage.Git = &telemetryv1.Ping_Features_Storage_Git{
-					Protocol:     gitConf.Protocol,
-					PollInterval: durationpb.New(gitConf.UpdatePollInterval),
-					Auth:         gitConf.SSH != nil || gitConf.HTTPS != nil,
+				feats.Storage.Store = &telemetryv1.Ping_Features_Storage_Git_{
+					Git: &telemetryv1.Ping_Features_Storage_Git{
+						Protocol:     gitConf.Protocol,
+						PollInterval: durationpb.New(gitConf.UpdatePollInterval),
+						Auth:         gitConf.SSH != nil || gitConf.HTTPS != nil,
+					},
 				}
 			}
-		case "blob":
+		case blob.DriverName:
 			if blobConf, err := blob.GetConf(); err == nil {
-				feats.Storage.Blob = &telemetryv1.Ping_Features_Storage_Blob{
+				b := &telemetryv1.Ping_Features_Storage_Blob{
 					PollInterval: durationpb.New(blobConf.UpdatePollInterval),
 				}
 
 				if scheme, err := url.Parse(blobConf.Bucket); err == nil {
-					feats.Storage.Blob.Provider = scheme.Scheme
+					b.Provider = scheme.Scheme
 				}
+
+				feats.Storage.Store = &telemetryv1.Ping_Features_Storage_Blob_{Blob: b}
 			}
 		}
 	}
@@ -292,22 +298,26 @@ func extractFeatures() *telemetryv1.Ping_Features {
 
 func extractStats(stats storage.RepoStats) *telemetryv1.Ping_Stats {
 	pb := &telemetryv1.Ping_Stats{
-		PolicyCount:       make(map[string]uint32, len(stats.PolicyCount)),
-		AvgRuleCount:      make(map[string]float64, len(stats.AvgRuleCount)),
-		AvgConditionCount: make(map[string]float64, len(stats.AvgConditionCount)),
-		SchemaCount:       uint32(stats.SchemaCount),
+		Policy: &telemetryv1.Ping_Stats_Policy{
+			Count:             make(map[string]uint32, len(stats.PolicyCount)),
+			AvgRuleCount:      make(map[string]float64, len(stats.AvgRuleCount)),
+			AvgConditionCount: make(map[string]float64, len(stats.AvgConditionCount)),
+		},
+		Schema: &telemetryv1.Ping_Stats_Schema{
+			Count: uint32(stats.SchemaCount),
+		},
 	}
 
 	for k, v := range stats.PolicyCount {
-		pb.PolicyCount[k.String()] = uint32(v)
+		pb.Policy.Count[k.String()] = uint32(v)
 	}
 
 	for k, v := range stats.AvgConditionCount {
-		pb.AvgConditionCount[k.String()] = v
+		pb.Policy.AvgConditionCount[k.String()] = v
 	}
 
 	for k, v := range stats.AvgRuleCount {
-		pb.AvgRuleCount[k.String()] = v
+		pb.Policy.AvgRuleCount[k.String()] = v
 	}
 
 	return pb
