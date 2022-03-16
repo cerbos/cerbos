@@ -69,6 +69,26 @@ jobs:
           buf_token: ${{ secrets.BUF_TOKEN }}
           input: api/public
 
+  releaseJSONSchemas:
+    name: Release JSON schemas
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v3
+
+      - name: Install Cloud SDK
+        uses: google-github-actions/setup-gcloud@v0.6.0
+        with:
+          project_id: ${{ secrets.GCP_PROJECT }}
+          service_account_key: ${{ secrets.GCP_SA_KEY }}
+          export_default_credentials: true
+
+      - name: Publish JSON schemas
+        run: |-
+          VERSION="${GITHUB_REF#refs/tags/}"
+          GCS_BUCKET="${{ secrets.API_GCS_BUCKET }}"
+          hack/scripts/publish-json-schemas.sh "${VERSION}" "${GCS_BUCKET}"
+          gsutil -m rsync -r "gs://${GCS_BUCKET}/${VERSION}" "gs://${GCS_BUCKET}/latest"
 
   releaseDocs:
     name: Release Documentation
@@ -121,9 +141,9 @@ jobs:
 
       - name: Publish to download site
         run: |-
-          gsutil cp ${{ secrets.GCS_BUCKET }}/helm-charts/index.yaml ${{ env.CHARTS_DIR }}/index.yaml
+          gsutil cp ${{ secrets.DOWNLOAD_GCS_BUCKET }}/helm-charts/index.yaml ${{ env.CHARTS_DIR }}/index.yaml
           helm repo index --url=https://download.cerbos.dev/helm-charts --merge=${{ env.CHARTS_DIR }}/index.yaml ${{ env.CHARTS_DIR }}
-          gsutil rsync -r ${{ env.CHARTS_DIR }}/ ${{ secrets.GCS_BUCKET }}/helm-charts/
+          gsutil rsync -r ${{ env.CHARTS_DIR }}/ ${{ secrets.DOWNLOAD_GCS_BUCKET }}/helm-charts/
 
       - name: Publish to OCI registry
         run: |-
