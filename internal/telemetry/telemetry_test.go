@@ -9,7 +9,6 @@ import (
 	"testing"
 	"time"
 
-	statev1 "github.com/cerbos/cerbos/api/genpb/cerbos/state/v1"
 	"github.com/cerbos/cerbos/internal/test/mocks"
 	"github.com/spf13/afero"
 	"github.com/stretchr/testify/require"
@@ -24,7 +23,7 @@ func TestState(t *testing.T) {
 	t.Run("fresh_state", func(t *testing.T) {
 		fsys := afero.NewMemMapFs()
 		r := newReporter(&mocks.Store{}, fsys, logger)
-		require.True(t, r.report(context.Background(), false))
+		require.True(t, r.report(context.Background()))
 
 		exists, err := afero.Exists(fsys, stateFile)
 		require.NoError(t, err)
@@ -32,20 +31,22 @@ func TestState(t *testing.T) {
 
 		// don't report again because state was created recently
 		r = newReporter(&mocks.Store{}, fsys, logger)
-		require.False(t, r.report(context.Background(), false))
+		require.False(t, r.report(context.Background()))
 	})
 
 	t.Run("existing_state", func(t *testing.T) {
 		t.Run("valid_but_old", func(t *testing.T) {
 			fsys := afero.NewMemMapFs()
 
-			state := &statev1.TelemetryState{LastTimestamp: timestamppb.New(time.Date(2020, 1, 1, 0, 0, 0, 0, time.Local))}
+			state := newState()
+			state.LastTimestamp = timestamppb.New(time.Date(2020, 1, 1, 0, 0, 0, 0, time.Local))
+
 			stateBytes, err := protojson.Marshal(state)
 			require.NoError(t, err)
 			require.NoError(t, afero.WriteFile(fsys, stateFile, stateBytes, 0o600))
 
 			r := newReporter(&mocks.Store{}, fsys, logger)
-			require.True(t, r.report(context.Background(), false))
+			require.True(t, r.report(context.Background()))
 		})
 
 		t.Run("corrupt", func(t *testing.T) {
@@ -54,14 +55,14 @@ func TestState(t *testing.T) {
 			require.NoError(t, afero.WriteFile(fsys, stateFile, []byte("rubbish"), 0o600))
 
 			r := newReporter(&mocks.Store{}, fsys, logger)
-			require.True(t, r.report(context.Background(), false))
+			require.True(t, r.report(context.Background()))
 		})
 	})
 
 	t.Run("read_only_fs", func(t *testing.T) {
 		fsys := afero.NewReadOnlyFs(afero.NewMemMapFs())
 		r := newReporter(&mocks.Store{}, fsys, logger)
-		require.True(t, r.report(context.Background(), false))
+		require.True(t, r.report(context.Background()))
 
 		exists, err := afero.Exists(fsys, stateFile)
 		require.NoError(t, err)
@@ -78,7 +79,7 @@ func TestReporter(t *testing.T) {
 			fsys := afero.NewMemMapFs()
 			r := newReporter(&mocks.Store{}, fsys, logger)
 
-			require.False(t, r.report(context.Background(), false))
+			require.False(t, r.report(context.Background()))
 
 			exists, err := afero.Exists(fsys, stateFile)
 			require.NoError(t, err)

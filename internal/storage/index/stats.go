@@ -10,6 +10,8 @@ import (
 	"github.com/cerbos/cerbos/internal/util"
 )
 
+const numPolicyKinds = 3
+
 type statsCollector struct {
 	policyCount    map[policy.Kind]int
 	ruleCount      map[policy.Kind]int
@@ -24,9 +26,9 @@ type policyStats struct {
 
 func newStatsCollector() *statsCollector {
 	return &statsCollector{
-		policyCount:    make(map[policy.Kind]int, 3),
-		ruleCount:      make(map[policy.Kind]int, 3),
-		conditionCount: make(map[policy.Kind]int, 3),
+		policyCount:    make(map[policy.Kind]int, numPolicyKinds),
+		ruleCount:      make(map[policy.Kind]int, numPolicyKinds),
+		conditionCount: make(map[policy.Kind]int, numPolicyKinds),
 		schemaRefs:     make(map[uint64]struct{}),
 	}
 }
@@ -51,7 +53,7 @@ func (s *statsCollector) collate() storage.RepoStats {
 }
 
 func (s *statsCollector) add(p policy.Wrapper) {
-	s.policyCount[p.Kind] += 1
+	s.policyCount[p.Kind]++
 
 	var ps policyStats
 	switch p.Kind {

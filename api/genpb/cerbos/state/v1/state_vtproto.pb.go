@@ -6,7 +6,6 @@ package statev1
 
 import (
 	fmt "fmt"
-	v1 "github.com/cerbos/cerbos/api/genpb/cerbos/telemetry/v1"
 	proto "google.golang.org/protobuf/proto"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
@@ -51,28 +50,6 @@ func (m *TelemetryState) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 		i -= len(m.unknownFields)
 		copy(dAtA[i:], m.unknownFields)
 	}
-	if m.LastPayload != nil {
-		if marshalto, ok := interface{}(m.LastPayload).(interface {
-			MarshalToSizedBufferVT([]byte) (int, error)
-		}); ok {
-			size, err := marshalto.MarshalToSizedBufferVT(dAtA[:i])
-			if err != nil {
-				return 0, err
-			}
-			i -= size
-			i = encodeVarint(dAtA, i, uint64(size))
-		} else {
-			encoded, err := proto.Marshal(m.LastPayload)
-			if err != nil {
-				return 0, err
-			}
-			i -= len(encoded)
-			copy(dAtA[i:], encoded)
-			i = encodeVarint(dAtA, i, uint64(len(encoded)))
-		}
-		i--
-		dAtA[i] = 0x1a
-	}
 	if m.LastTimestamp != nil {
 		if marshalto, ok := interface{}(m.LastTimestamp).(interface {
 			MarshalToSizedBufferVT([]byte) (int, error)
@@ -95,15 +72,12 @@ func (m *TelemetryState) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 		i--
 		dAtA[i] = 0x12
 	}
-	if m.Suspend {
+	if len(m.Uuid) > 0 {
+		i -= len(m.Uuid)
+		copy(dAtA[i:], m.Uuid)
+		i = encodeVarint(dAtA, i, uint64(len(m.Uuid)))
 		i--
-		if m.Suspend {
-			dAtA[i] = 1
-		} else {
-			dAtA[i] = 0
-		}
-		i--
-		dAtA[i] = 0x8
+		dAtA[i] = 0xa
 	}
 	return len(dAtA) - i, nil
 }
@@ -125,8 +99,9 @@ func (m *TelemetryState) SizeVT() (n int) {
 	}
 	var l int
 	_ = l
-	if m.Suspend {
-		n += 2
+	l = len(m.Uuid)
+	if l > 0 {
+		n += 1 + l + sov(uint64(l))
 	}
 	if m.LastTimestamp != nil {
 		if size, ok := interface{}(m.LastTimestamp).(interface {
@@ -135,16 +110,6 @@ func (m *TelemetryState) SizeVT() (n int) {
 			l = size.SizeVT()
 		} else {
 			l = proto.Size(m.LastTimestamp)
-		}
-		n += 1 + l + sov(uint64(l))
-	}
-	if m.LastPayload != nil {
-		if size, ok := interface{}(m.LastPayload).(interface {
-			SizeVT() int
-		}); ok {
-			l = size.SizeVT()
-		} else {
-			l = proto.Size(m.LastPayload)
 		}
 		n += 1 + l + sov(uint64(l))
 	}
@@ -190,10 +155,10 @@ func (m *TelemetryState) UnmarshalVT(dAtA []byte) error {
 		}
 		switch fieldNum {
 		case 1:
-			if wireType != 0 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Suspend", wireType)
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Uuid", wireType)
 			}
-			var v int
+			var stringLen uint64
 			for shift := uint(0); ; shift += 7 {
 				if shift >= 64 {
 					return ErrIntOverflow
@@ -203,12 +168,24 @@ func (m *TelemetryState) UnmarshalVT(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				v |= int(b&0x7F) << shift
+				stringLen |= uint64(b&0x7F) << shift
 				if b < 0x80 {
 					break
 				}
 			}
-			m.Suspend = bool(v != 0)
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLength
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLength
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Uuid = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
 		case 2:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field LastTimestamp", wireType)
@@ -249,50 +226,6 @@ func (m *TelemetryState) UnmarshalVT(dAtA []byte) error {
 				}
 			} else {
 				if err := proto.Unmarshal(dAtA[iNdEx:postIndex], m.LastTimestamp); err != nil {
-					return err
-				}
-			}
-			iNdEx = postIndex
-		case 3:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field LastPayload", wireType)
-			}
-			var msglen int
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflow
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				msglen |= int(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			if msglen < 0 {
-				return ErrInvalidLength
-			}
-			postIndex := iNdEx + msglen
-			if postIndex < 0 {
-				return ErrInvalidLength
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			if m.LastPayload == nil {
-				m.LastPayload = &v1.Ping{}
-			}
-			if unmarshal, ok := interface{}(m.LastPayload).(interface {
-				UnmarshalVT([]byte) error
-			}); ok {
-				if err := unmarshal.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
-					return err
-				}
-			} else {
-				if err := proto.Unmarshal(dAtA[iNdEx:postIndex], m.LastPayload); err != nil {
 					return err
 				}
 			}

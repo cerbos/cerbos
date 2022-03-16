@@ -5,6 +5,7 @@ package telemetry
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net/url"
@@ -25,23 +26,32 @@ import (
 	"github.com/cerbos/cerbos/internal/storage/disk"
 	"github.com/cerbos/cerbos/internal/storage/git"
 	"github.com/cerbos/cerbos/internal/util"
+	"github.com/google/uuid"
 	"github.com/spf13/afero"
+	"go.uber.org/multierr"
 	"go.uber.org/zap"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/types/known/durationpb"
 	"google.golang.org/protobuf/types/known/timestamppb"
+	analytics "gopkg.in/segmentio/analytics-go.v3"
 )
 
 const (
 	doNotTrackEnvVar  = "DO_NOT_TRACK"
 	noTelemetryEnvVar = "CERBOS_NO_TELEMETRY"
 
-	minReportInterval = 24 * time.Hour
+	minReportInterval = 8 * time.Hour
 	stateFile         = "cerbos.telemetry.json"
 )
 
+var SegmentWriteKey string
+
 func Report(ctx context.Context, store storage.Store) {
 	logger := zap.L().Named("telemetry")
+	if SegmentWriteKey == "" {
+		logger.Info("Telemetry disabled")
+		return
+	}
 
 	conf := &Conf{}
 	_ = config.GetSection(conf)
@@ -64,7 +74,7 @@ func doReport(ctx context.Context, store storage.Store, conf *Conf, logger *zap.
 
 	fs := initStateFS(conf.StateDir)
 	r := newReporter(store, fs, logger)
-	r.report(ctx, true)
+	r.report(ctx)
 }
 
 func initStateFS(dir string) afero.Fs {
@@ -83,6 +93,7 @@ func initStateFS(dir string) afero.Fs {
 			return afero.NewMemMapFs()
 		}
 
+		//nolint:gomnd
 		if err := os.MkdirAll(dir, 0o700); err != nil {
 			return afero.NewMemMapFs()
 		}
@@ -109,24 +120,59 @@ func newReporter(store storage.Store, fsys afero.Fs, logger *zap.Logger) *report
 	}
 }
 
-func (r *reporter) report(ctx context.Context, publish bool) bool {
-	if !r.shouldReport() {
+func (r *reporter) report(ctx context.Context) bool {
+	state := r.readState()
+	if state == nil {
+		state = newState()
+	}
+
+	if !r.shouldReport(state) {
 		return false
 	}
 
 	ping := buildPing(ctx, r.store)
-	if publish {
-		//TODO send ping
+	if err := r.send(state.Uuid, ping); err != nil {
+		return false
 	}
 
-	if err := r.writeState(ping); err != nil {
+	state.LastTimestamp = timestamppb.Now()
+
+	if err := r.writeState(state); err != nil {
 		r.logger.Debug("Failed to persist telemetry state", zap.Error(err))
 	}
 
 	return true
 }
 
-func (r *reporter) shouldReport() bool {
+func (r *reporter) readState() *statev1.TelemetryState {
+	stateBytes, err := afero.ReadFile(r.fsys, stateFile)
+	if err != nil {
+		return newState()
+	}
+
+	var state statev1.TelemetryState
+	if err := protojson.Unmarshal(stateBytes, &state); err != nil {
+		return newState()
+	}
+
+	return &state
+}
+
+func newState() *statev1.TelemetryState {
+	var uuidStr string
+
+	if id, err := uuid.NewRandom(); err != nil {
+		uuidStr = "unknown"
+	} else {
+		uuidStr = id.String()
+	}
+
+	return &statev1.TelemetryState{
+		Uuid: uuidStr,
+	}
+}
+
+func (r *reporter) shouldReport(state *statev1.TelemetryState) bool {
 	for _, v := range []string{noTelemetryEnvVar, doNotTrackEnvVar} {
 		if disabledByEnvVar(v) {
 			r.logger.Info("Telemetry disabled")
@@ -136,7 +182,12 @@ func (r *reporter) shouldReport() bool {
 
 	r.logger.Info(fmt.Sprintf("Anonymous telemetry enabled. Disable via the config file or by setting the %s=1 environment variable", noTelemetryEnvVar))
 
-	return r.reportIsDue()
+	if state == nil || state.LastTimestamp == nil {
+		return true
+	}
+
+	lastTS := state.LastTimestamp.AsTime()
+	return time.Since(lastTS) > minReportInterval
 }
 
 func disabledByEnvVar(name string) bool {
@@ -155,46 +206,52 @@ func disabledByEnvVar(name string) bool {
 	return set
 }
 
-func (r *reporter) reportIsDue() bool {
-	state := r.readState()
-
-	if state == nil || state.LastTimestamp == nil {
-		return true
-	}
-
-	lastTS := state.LastTimestamp.AsTime()
-	return time.Since(lastTS) > minReportInterval
-}
-
-func (r *reporter) readState() *statev1.TelemetryState {
-	state := &statev1.TelemetryState{}
-
-	stateBytes, err := afero.ReadFile(r.fsys, stateFile)
-	if err != nil {
-		return state
-	}
-
-	_ = protojson.Unmarshal(stateBytes, state)
-
-	return state
-}
-
-func (r *reporter) writeState(ping *telemetryv1.Ping) error {
-	state := &statev1.TelemetryState{
-		LastTimestamp: timestamppb.Now(),
-		LastPayload:   ping,
-	}
-
+func (r *reporter) writeState(state *statev1.TelemetryState) error {
 	stateBytes, err := protojson.Marshal(state)
 	if err != nil {
 		return fmt.Errorf("failed to marshal proto: %w", err)
 	}
 
+	//nolint:gomnd
 	if err := afero.WriteFile(r.fsys, stateFile, stateBytes, 0o600); err != nil {
 		return fmt.Errorf("failed to write state: %w", err)
 	}
 
 	return nil
+}
+
+func (r *reporter) send(id string, ping *telemetryv1.Ping) (pubErr error) {
+	if SegmentWriteKey == "" {
+		return nil
+	}
+
+	props, err := mkProps(ping)
+	if err != nil {
+		return fmt.Errorf("failed to create properties: %w", err)
+	}
+
+	client := analytics.New(SegmentWriteKey)
+	defer multierr.AppendInvoke(&pubErr, multierr.Close(client))
+
+	return client.Enqueue(analytics.Track{
+		AnonymousId: id,
+		Event:       "server_launch",
+		Properties:  props,
+	})
+}
+
+func mkProps(ping *telemetryv1.Ping) (analytics.Properties, error) {
+	pingBytes, err := protojson.Marshal(ping)
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal ping: %w", err)
+	}
+
+	var props map[string]interface{}
+	if err := json.Unmarshal(pingBytes, &props); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal ping: %w", err)
+	}
+
+	return analytics.Properties(props), nil
 }
 
 func buildPing(ctx context.Context, store storage.Store) *telemetryv1.Ping {
@@ -254,6 +311,7 @@ func extractFeatures() *telemetryv1.Ping_Features {
 		}
 	}
 
+	//nolint:nestif
 	if storageConf, err := storage.GetConf(); err == nil {
 		feats.Storage = &telemetryv1.Ping_Features_Storage{
 			Driver: storageConf.Driver,

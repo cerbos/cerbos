@@ -27,7 +27,6 @@ import (
 	"github.com/cerbos/cerbos/internal/util"
 )
 
-//TODO(cell) Refactor because this test is brittle (files can be added to store all the time)
 func TestBuildIndexWithDisk(t *testing.T) {
 	dir := test.PathToDir(t, "store")
 

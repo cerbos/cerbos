@@ -11,7 +11,6 @@ import "cerbos/telemetry/v1/telemetry.proto";
 import "google/protobuf/timestamp.proto";
 
 message TelemetryState {
-    bool suspend = 1;
+    string uuid = 1;
     google.protobuf.Timestamp last_timestamp = 2;
-    cerbos.telemetry.v1.Ping last_payload = 3;
 }

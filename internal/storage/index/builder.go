@@ -147,10 +147,10 @@ type indexBuilder struct {
 	dependencies  map[namer.ModuleID]map[namer.ModuleID]struct{}
 	missing       map[namer.ModuleID][]MissingImport
 	missingScopes map[namer.ModuleID]string
+	stats         *statsCollector
 	duplicates    []DuplicateDef
 	loadFailures  []LoadFailure
 	disabled      []string
-	stats         *statsCollector
 }
 
 func newIndexBuilder() *indexBuilder {

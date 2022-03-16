@@ -7,10 +7,8 @@ const confKey = "telemetry"
 
 // Conf for telemetry reporting.
 type Conf struct {
-	// Disabled switches off telemetry reporting.
-	Disabled bool `yaml:"disabled" conf:",example=false"`
-	// StateDir sets the directory for persisting state. Defaults to user config directory of the OS.
 	StateDir string `yaml:"stateDir" conf:",example=${HOME}/.config/cerbos"`
+	Disabled bool   `yaml:"disabled" conf:",example=false"`
 }
 
 func (c *Conf) Key() string {

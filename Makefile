@@ -98,7 +98,7 @@ build: generate lint test package
 
 .PHONY: package
 package: $(GORELEASER)
-	@ $(GORELEASER) release --config=.goreleaser.yml --snapshot --skip-publish --rm-dist
+	@ SEGMENT_WRITE_KEY="" $(GORELEASER) release --config=.goreleaser.yml --snapshot --skip-publish --rm-dist
 
 .PHONY: docs
 docs: confdocs

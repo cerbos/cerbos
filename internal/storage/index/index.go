@@ -59,8 +59,8 @@ type index struct {
 	dependencies map[namer.ModuleID]map[namer.ModuleID]struct{}
 	modIDToFile  map[namer.ModuleID]string
 	schemaLoader *SchemaLoader
-	mu           sync.RWMutex
 	stats        storage.RepoStats
+	mu           sync.RWMutex
 }
 
 func (idx *index) GetFiles() []string {

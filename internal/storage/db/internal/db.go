@@ -549,7 +549,6 @@ func (s *dbStorage) RepoStats(ctx context.Context) storage.RepoStats {
 		GroupBy(goqu.C(PolicyTblKindCol)).
 		Executor().
 		ScanStructs(&results)
-
 	if err != nil {
 		return stats
 	}
