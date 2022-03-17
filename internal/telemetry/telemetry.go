@@ -122,9 +122,6 @@ func newReporter(store storage.Store, fsys afero.Fs, logger *zap.Logger) *report
 
 func (r *reporter) report(ctx context.Context) bool {
 	state := r.readState()
-	if state == nil {
-		state = newState()
-	}
 
 	if !r.shouldReport(state) {
 		return false
