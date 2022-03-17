@@ -11,7 +11,6 @@ import (
 	"time"
 
 	auditv1 "github.com/cerbos/cerbos/api/genpb/cerbos/audit/v1"
-	"github.com/cerbos/cerbos/internal/config"
 )
 
 var (
@@ -59,9 +58,8 @@ func RegisterBackend(name string, cons Constructor) {
 
 // NewLog creates a new audit log.
 func NewLog(ctx context.Context) (Log, error) {
-	conf := &Conf{}
-
-	if err := config.GetSection(conf); err != nil {
+	conf, err := GetConf()
+	if err != nil {
 		return nil, fmt.Errorf("failed to read audit configuration: %w", err)
 	}
 

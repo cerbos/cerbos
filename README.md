@@ -131,6 +131,10 @@ EOF
 }
 ```
 
+Telemetry
+---------
+
+We collect anonymous usage data to help us improve the product. You can opt out by setting the `CERBOS_NO_TELEMETRY=1` environment variable. For more information about what data we collect and other ways to opt out, see the [telemetry documentation](https://docs.cerbos.dev/cerbos/latest/telemetry.html).
 
 Stargazers
 -----------

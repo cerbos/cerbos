@@ -75,6 +75,7 @@ jobs:
           args: release --config=.goreleaser.yml --rm-dist --snapshot --skip-publish
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SEGMENT_WRITE_KEY: ${{ secrets.SEGMENT_WRITE_KEY }}
 
       - name: Push dev images
         run: |

@@ -1,0 +1,22 @@
+{
+  "$id": "https://api.cerbos.dev/cerbos/state/v1/TelemetryState.schema.json",
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "definitions": {
+    "google.protobuf.Timestamp": {
+      "title": "Timestamp",
+      "description": "A point in time, independent of any time zone or calendar.",
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "lastTimestamp": {
+      "$ref": "#/definitions/google.protobuf.Timestamp"
+    },
+    "uuid": {
+      "type": "string"
+    }
+  }
+}

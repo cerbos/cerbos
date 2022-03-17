@@ -23,9 +23,9 @@ var _ storage.Store = (*Store)(nil)
 
 func init() {
 	storage.RegisterDriver(DriverName, func(ctx context.Context) (storage.Store, error) {
-		conf := &Conf{}
-		if err := config.GetSection(conf); err != nil {
-			return nil, err
+		conf, err := GetConf()
+		if err != nil {
+			return nil, fmt.Errorf("failed to read disk configuration: %w", err)
 		}
 
 		return NewStore(ctx, conf)
@@ -98,4 +98,8 @@ func (s *Store) LoadSchema(ctx context.Context, url string) (io.ReadCloser, erro
 
 func (s *Store) LoadPolicy(ctx context.Context, file ...string) ([]*policy.Wrapper, error) {
 	return s.idx.LoadPolicy(ctx, file...)
+}
+
+func (s *Store) RepoStats(ctx context.Context) storage.RepoStats {
+	return s.idx.RepoStats(ctx)
 }

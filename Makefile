@@ -1,8 +1,7 @@
-DOCKER := docker
-MOCK_INTERFACES := 'Index'
-
 include tools/tools.mk
 include hack/dev/dev.mk
+
+SEGMENT_WRITE_KEY ?= ""
 
 VERSION := $(shell git describe --abbrev=0)
 COMMIT_SHA := $(shell git rev-parse HEAD)
@@ -47,7 +46,8 @@ generate-proto-code: proto-gen-deps
 .PHONY: generate-mocks
 generate-mocks: $(MOCKERY)
 	@-rm -rf $(MOCK_DIR)
-	@ $(MOCKERY) --recursive --quiet --name=$(MOCK_INTERFACES) --output $(MOCK_DIR) --boilerplate-file=hack/copyright_header.txt
+	@ $(MOCKERY) --quiet --srcpkg=./internal/storage/index --name=Index --output=$(MOCK_DIR) --boilerplate-file=hack/copyright_header.txt
+	@ $(MOCKERY) --quiet --srcpkg=./internal/storage --name=Store --output=$(MOCK_DIR) --boilerplate-file=hack/copyright_header.txt
 
 .PHONY: generate-notice
 generate-notice: $(GO_LICENCE_DETECTOR)
@@ -100,7 +100,7 @@ build: generate lint test package
 
 .PHONY: package
 package: $(GORELEASER)
-	@ $(GORELEASER) release --config=.goreleaser.yml --snapshot --skip-publish --rm-dist
+	@ SEGMENT_WRITE_KEY=$(SEGMENT_WRITE_KEY) $(GORELEASER) release --config=.goreleaser.yml --snapshot --skip-publish --rm-dist
 
 .PHONY: docs
 docs: confdocs

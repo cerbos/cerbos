@@ -53,7 +53,7 @@ server:
     key: /path/to/private_key # Key is the path to the TLS private key file.
 storage:
   # This section is required. The field driver must be set to indicate which driver to use.
-  driver: "disk" # Required. Driver states which storage driver to use. Possible values are blob, mysql, postgres, sqlite3, disk and git.
+  driver: "disk" # Required. Driver defines which storage driver to use.
   blob:
     # This section is required only if storage.driver is blob.
     bucket: "s3://my-bucket-name?region=us-east-2" # Required. Bucket URL (Examples: s3://my-bucket?region=us-west-1 gs://my-bucket azblob://my-container).
@@ -116,6 +116,9 @@ storage:
       maxOpen: 4
       maxIdle: 1 
     url: "sqlserver://username:password@host/instance?param1=value&param2=value" # Required. URL is the SQL Server connection URL. See https://github.com/denisenkom/go-mssqldb#connection-parameters-and-dsn
+telemetry:
+  disabled: false # Disabled sets whether telemetry collection is disabled or not.
+  stateDir: ${HOME}/.config/cerbos # StateDir is used to persist state to avoid repeatedly sending the data over and over again.
 tracing:
   exporter: jaeger # Exporter is the type of trace exporter to use.
   jaeger: # Jaeger configures the Jaeger exporter.

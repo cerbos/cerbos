@@ -37,6 +37,7 @@ type Entry struct {
 }
 
 type Index interface {
+	storage.Instrumented
 	GetCompilationUnits(...namer.ModuleID) (map[namer.ModuleID]*policy.CompilationUnit, error)
 	GetDependents(...namer.ModuleID) (map[namer.ModuleID][]namer.ModuleID, error)
 	AddOrUpdate(Entry) (storage.Event, error)
@@ -58,6 +59,7 @@ type index struct {
 	dependencies map[namer.ModuleID]map[namer.ModuleID]struct{}
 	modIDToFile  map[namer.ModuleID]string
 	schemaLoader *SchemaLoader
+	stats        storage.RepoStats
 	mu           sync.RWMutex
 }
 
@@ -421,4 +423,8 @@ func (idx *index) LoadPolicy(_ context.Context, file ...string) ([]*policy.Wrapp
 	}
 
 	return policies, nil
+}
+
+func (idx *index) RepoStats(_ context.Context) storage.RepoStats {
+	return idx.stats
 }
