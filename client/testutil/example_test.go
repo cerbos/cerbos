@@ -14,7 +14,7 @@ import (
 
 //nolint:gocritic,errcheck
 func ExampleStartCerbosServer() {
-	s, err := testutil.StartCerbosServer(testutil.WithPolicyRepositoryDatabase("sqlite3", ":memory:"))
+	s, err := testutil.StartCerbosServer()
 	if err != nil {
 		log.Fatalf("Failed to start Cerbos server: %v", err)
 	}

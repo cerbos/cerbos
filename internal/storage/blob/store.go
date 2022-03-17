@@ -26,6 +26,7 @@ import (
 	"gocloud.dev/gcp"
 
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
+	"github.com/cerbos/cerbos/internal/config"
 	"github.com/cerbos/cerbos/internal/namer"
 	"github.com/cerbos/cerbos/internal/policy"
 	"github.com/cerbos/cerbos/internal/schema"
@@ -40,9 +41,9 @@ var _ storage.Store = (*Store)(nil)
 var ErrUnsupportedBucketScheme = errors.New("currently only \"s3\" and \"gs\" bucket URL schemes are supported")
 
 func init() {
-	storage.RegisterDriver(DriverName, func(ctx context.Context) (storage.Store, error) {
-		conf, err := GetConf()
-		if err != nil {
+	storage.RegisterDriver(DriverName, func(ctx context.Context, confW *config.Wrapper) (storage.Store, error) {
+		conf := new(Conf)
+		if err := confW.GetSection(conf); err != nil {
 			return nil, fmt.Errorf("failed to read blob configuration: %w", err)
 		}
 

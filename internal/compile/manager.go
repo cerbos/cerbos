@@ -43,14 +43,14 @@ func NewManager(ctx context.Context, store storage.Store, schemaMgr schema.Manag
 		return nil, err
 	}
 
-	return NewManagerWithConf(ctx, conf, store, schemaMgr), nil
+	return NewManagerFromConf(ctx, conf, store, schemaMgr), nil
 }
 
-func NewManagerWithDefaultConf(ctx context.Context, store storage.Store, schemaMgr schema.Manager) *Manager {
-	return NewManagerWithConf(ctx, DefaultConf(), store, schemaMgr)
+func NewManagerFromDefaultConf(ctx context.Context, store storage.Store, schemaMgr schema.Manager) *Manager {
+	return NewManagerFromConf(ctx, DefaultConf(), store, schemaMgr)
 }
 
-func NewManagerWithConf(ctx context.Context, conf *Conf, store storage.Store, schemaMgr schema.Manager) *Manager {
+func NewManagerFromConf(ctx context.Context, conf *Conf, store storage.Store, schemaMgr schema.Manager) *Manager {
 	c := &Manager{
 		log:         zap.S().Named("compiler"),
 		store:       store,

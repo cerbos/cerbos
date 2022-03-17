@@ -11,6 +11,7 @@ import (
 	"time"
 
 	auditv1 "github.com/cerbos/cerbos/api/genpb/cerbos/audit/v1"
+	"github.com/cerbos/cerbos/internal/config"
 )
 
 var (
@@ -47,7 +48,7 @@ type DecisionLogIterator interface {
 }
 
 // Constructor for backends.
-type Constructor func(context.Context) (Log, error)
+type Constructor func(context.Context, *config.Wrapper) (Log, error)
 
 // RegisterBackend registers an audit log backend.
 func RegisterBackend(name string, cons Constructor) {
@@ -58,8 +59,12 @@ func RegisterBackend(name string, cons Constructor) {
 
 // NewLog creates a new audit log.
 func NewLog(ctx context.Context) (Log, error) {
-	conf, err := GetConf()
-	if err != nil {
+	return NewLogFromConf(ctx, config.Global())
+}
+
+func NewLogFromConf(ctx context.Context, confW *config.Wrapper) (Log, error) {
+	conf := new(Conf)
+	if err := confW.GetSection(conf); err != nil {
 		return nil, fmt.Errorf("failed to read audit configuration: %w", err)
 	}
 
@@ -75,7 +80,7 @@ func NewLog(ctx context.Context) (Log, error) {
 		return nil, fmt.Errorf("unknown backend [%s]", conf.Backend)
 	}
 
-	backend, err := cons(ctx)
+	backend, err := cons(ctx, confW)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create backend: %w", err)
 	}

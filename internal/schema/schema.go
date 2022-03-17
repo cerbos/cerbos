@@ -86,10 +86,10 @@ func New(ctx context.Context, loader Loader) (Manager, error) {
 		return nil, fmt.Errorf("failed to get config section %q: %w", confKey, err)
 	}
 
-	return NewWithConf(ctx, loader, conf), nil
+	return NewFromConf(ctx, loader, conf), nil
 }
 
-func NewWithConf(_ context.Context, loader Loader, conf *Conf) Manager {
+func NewFromConf(_ context.Context, loader Loader, conf *Conf) Manager {
 	if conf.Enforcement == EnforcementNone {
 		return NopManager{}
 	}

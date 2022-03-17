@@ -10,6 +10,7 @@ import (
 	"sync"
 
 	schemav1 "github.com/cerbos/cerbos/api/genpb/cerbos/schema/v1"
+	"github.com/cerbos/cerbos/internal/config"
 	"github.com/cerbos/cerbos/internal/namer"
 	"github.com/cerbos/cerbos/internal/policy"
 )
@@ -56,7 +57,7 @@ func NewInvalidSchemaError(err error, msg string, args ...interface{}) InvalidSc
 }
 
 // Constructor is a constructor function for a storage driver.
-type Constructor func(context.Context) (Store, error)
+type Constructor func(context.Context, *config.Wrapper) (Store, error)
 
 // RegisterDriver registers a storage driver.
 func RegisterDriver(name string, cons Constructor) {
@@ -68,8 +69,13 @@ func RegisterDriver(name string, cons Constructor) {
 
 // New returns a storage driver implementation based on the configured driver.
 func New(ctx context.Context) (Store, error) {
-	conf, err := GetConf()
-	if err != nil {
+	return NewFromConf(ctx, config.Global())
+}
+
+// NewFromConf returns a storage driver implementation based on the provided configuration.
+func NewFromConf(ctx context.Context, confWrapper *config.Wrapper) (Store, error) {
+	conf := new(Conf)
+	if err := confWrapper.GetSection(conf); err != nil {
 		return nil, fmt.Errorf("failed to get storage driver configuration: %w", err)
 	}
 
@@ -81,7 +87,7 @@ func New(ctx context.Context) (Store, error) {
 		return nil, fmt.Errorf("unknown storage driver [%s]", conf.Driver)
 	}
 
-	return cons(ctx)
+	return cons(ctx, confWrapper)
 }
 
 // Store is the common interface implemented by storage backends.

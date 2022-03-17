@@ -46,10 +46,10 @@ func TestServer(t *testing.T) {
 	store, err := disk.NewStore(ctx, &disk.Conf{Directory: dir})
 	require.NoError(t, err)
 
-	schemaMgr := schema.NewWithConf(ctx, store, schema.NewConf(schema.EnforcementReject))
+	schemaMgr := schema.NewFromConf(ctx, store, schema.NewConf(schema.EnforcementReject))
 
 	eng, err := engine.New(ctx, engine.Components{
-		CompileMgr: compile.NewManagerWithDefaultConf(ctx, store, schemaMgr),
+		CompileMgr: compile.NewManagerFromDefaultConf(ctx, store, schemaMgr),
 		SchemaMgr:  schemaMgr,
 		AuditLog:   auditLog,
 	})
@@ -164,10 +164,10 @@ func TestAdminService(t *testing.T) {
 	store, err := sqlite3.NewStore(ctx, &sqlite3.Conf{DSN: fmt.Sprintf("%s?_fk=true", filepath.Join(t.TempDir(), "cerbos.db"))})
 	require.NoError(t, err)
 
-	schemaMgr := schema.NewWithConf(ctx, store, schema.NewConf(schema.EnforcementReject))
+	schemaMgr := schema.NewFromConf(ctx, store, schema.NewConf(schema.EnforcementReject))
 
 	eng, err := engine.New(ctx, engine.Components{
-		CompileMgr: compile.NewManagerWithDefaultConf(ctx, store, schemaMgr),
+		CompileMgr: compile.NewManagerFromDefaultConf(ctx, store, schemaMgr),
 		SchemaMgr:  schemaMgr,
 		AuditLog:   auditLog,
 	})

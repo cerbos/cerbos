@@ -226,7 +226,7 @@ func mkManager() (*compile.Manager, *MockStore, context.CancelFunc) {
 	mockStore := &MockStore{}
 	mockStore.On("Subscribe", mock.Anything)
 
-	mgr := compile.NewManagerWithDefaultConf(ctx, mockStore, schema.NewNopManager())
+	mgr := compile.NewManagerFromDefaultConf(ctx, mockStore, schema.NewNopManager())
 
 	return mgr, mockStore, cancelFunc
 }

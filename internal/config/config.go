@@ -4,7 +4,6 @@
 package config
 
 import (
-	"context"
 	"errors"
 	"fmt"
 	"io"
@@ -12,14 +11,12 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/fsnotify/fsnotify"
 	"go.uber.org/config"
-	"go.uber.org/zap"
 )
 
 var ErrConfigNotLoaded = errors.New("config not loaded")
 
-var conf = &configHolder{}
+var conf = &Wrapper{}
 
 type Section interface {
 	Key() string
@@ -56,79 +53,31 @@ func LoadMap(m map[string]interface{}) error {
 }
 
 func doLoad(sources ...config.YAMLOption) error {
+	provider, err := mkProvider(sources...)
+	if err != nil {
+		return err
+	}
+
+	conf.replaceProvider(provider)
+	return nil
+}
+
+func mkProvider(sources ...config.YAMLOption) (config.Provider, error) {
 	opts := append(sources, config.Expand(os.LookupEnv)) //nolint:gocritic
 	provider, err := config.NewYAML(opts...)
 	if err != nil {
 		if strings.Contains(err.Error(), "couldn't expand environment") {
-			return fmt.Errorf("error loading configuration due to unknown environment variable. Config values containing '$' are interpreted as environment variables. Use '$$' to escape literal '$' values: [%w]", err)
+			return nil, fmt.Errorf("error loading configuration due to unknown environment variable. Config values containing '$' are interpreted as environment variables. Use '$$' to escape literal '$' values: [%w]", err)
 		}
-		return fmt.Errorf("failed to load config: %w", err)
+		return nil, fmt.Errorf("failed to load config: %w", err)
 	}
 
-	conf.replaceProvider(provider)
-
-	return nil
+	return provider, err
 }
 
-// LoadAndWatch automatically reloads configuration if the config file changes.
-func LoadAndWatch(ctx context.Context, confFile string, overrides map[string]interface{}) error {
-	if err := Load(confFile, overrides); err != nil {
-		return err
-	}
-
-	watcher, err := fsnotify.NewWatcher()
-	if err != nil {
-		return fmt.Errorf("failed to start file watcher: %w", err)
-	}
-
-	if err := watcher.Add(confFile); err != nil {
-		return fmt.Errorf("failed to add watch to %s: %w", confFile, err)
-	}
-
-	go func() {
-		defer watcher.Close()
-
-		log := zap.S().Named("config.watch").With("file", confFile)
-		log.Info("Watching config file for changes")
-
-		for {
-			select {
-			case <-ctx.Done():
-				log.Info("Stopping config file watch")
-
-				return
-			case event, ok := <-watcher.Events:
-				if !ok {
-					log.Info("Stopping config file watch")
-					return
-				}
-
-				switch {
-				case event.Op&fsnotify.Create == fsnotify.Create:
-					fallthrough
-				case event.Op&fsnotify.Write == fsnotify.Write:
-					if err := Load(confFile, overrides); err != nil {
-						log.Warnw("Failed to reload config file", "error", err)
-					} else {
-						log.Info("Config file reloaded")
-					}
-				case event.Op&fsnotify.Remove == fsnotify.Remove:
-					log.Warn("Config file removed")
-				case event.Op&fsnotify.Rename == fsnotify.Rename:
-					log.Warn("Config file renamed")
-				}
-			case err, ok := <-watcher.Errors:
-				if !ok {
-					log.Info("Stopping config file watch")
-					return
-				}
-
-				log.Warnw("Error watching config file", "error", err)
-			}
-		}
-	}()
-
-	return nil
+// Global returns the default global config wrapper.
+func Global() *Wrapper {
+	return conf
 }
 
 // Get populates out with the configuration at the given key.
@@ -139,19 +88,36 @@ func Get(key string, out interface{}) error {
 
 // GetSection populates a config section.
 func GetSection(section Section) error {
-	return conf.Get(section.Key(), section)
+	return conf.GetSection(section)
 }
 
-type configHolder struct {
+func WrapperFromReader(reader io.Reader, overrides map[string]interface{}) (*Wrapper, error) {
+	return newWrapper(config.Source(reader), config.Static(overrides))
+}
+
+func WrapperFromMap(m map[string]interface{}) (*Wrapper, error) {
+	return newWrapper(config.Static(m))
+}
+
+func newWrapper(sources ...config.YAMLOption) (*Wrapper, error) {
+	provider, err := mkProvider(sources...)
+	if err != nil {
+		return nil, err
+	}
+
+	return &Wrapper{provider: provider}, nil
+}
+
+type Wrapper struct {
 	provider config.Provider
 	mu       sync.RWMutex
 }
 
-func (ch *configHolder) Get(key string, out interface{}) error {
-	ch.mu.RLock()
-	defer ch.mu.RUnlock()
+func (w *Wrapper) Get(key string, out interface{}) error {
+	w.mu.RLock()
+	defer w.mu.RUnlock()
 
-	if ch.provider == nil {
+	if w.provider == nil {
 		if d, ok := out.(Defaulter); ok {
 			d.SetDefaults()
 			return nil
@@ -165,7 +131,7 @@ func (ch *configHolder) Get(key string, out interface{}) error {
 		d.SetDefaults()
 	}
 
-	if err := ch.provider.Get(key).Populate(out); err != nil {
+	if err := w.provider.Get(key).Populate(out); err != nil {
 		return err
 	}
 
@@ -177,9 +143,13 @@ func (ch *configHolder) Get(key string, out interface{}) error {
 	return nil
 }
 
-func (ch *configHolder) replaceProvider(provider config.Provider) {
-	ch.mu.Lock()
-	defer ch.mu.Unlock()
+func (w *Wrapper) GetSection(section Section) error {
+	return w.Get(section.Key(), section)
+}
 
-	ch.provider = provider
+func (w *Wrapper) replaceProvider(provider config.Provider) {
+	w.mu.Lock()
+	defer w.mu.Unlock()
+
+	w.provider = provider
 }

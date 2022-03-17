@@ -11,6 +11,7 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
+	"io"
 	"os"
 	"runtime"
 	"time"
@@ -22,18 +23,18 @@ import (
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/local"
 	healthpb "google.golang.org/grpc/health/grpc_health_v1"
+	"helm.sh/helm/v3/pkg/strvals"
 
 	svcv1 "github.com/cerbos/cerbos/api/genpb/cerbos/svc/v1"
 	"github.com/cerbos/cerbos/internal/audit"
 	"github.com/cerbos/cerbos/internal/auxdata"
 	"github.com/cerbos/cerbos/internal/compile"
+	"github.com/cerbos/cerbos/internal/config"
 	"github.com/cerbos/cerbos/internal/engine"
 	"github.com/cerbos/cerbos/internal/schema"
 	"github.com/cerbos/cerbos/internal/server"
 	"github.com/cerbos/cerbos/internal/storage"
-	"github.com/cerbos/cerbos/internal/storage/db/postgres"
 	"github.com/cerbos/cerbos/internal/storage/db/sqlite3"
-	"github.com/cerbos/cerbos/internal/storage/disk"
 	"github.com/cerbos/cerbos/internal/util"
 )
 
@@ -45,38 +46,46 @@ const (
 
 type ServerOpt func(*serverOpt)
 
+// WithConfig sets the source to read Cerbos configuration data.
+func WithConfig(src io.Reader) ServerOpt {
+	return func(so *serverOpt) {
+		so.configSrc = src
+	}
+}
+
+// WithConfigKeyValue sets the given config key to the provided value.
+func WithConfigKeyValue(key, value string) ServerOpt {
+	return func(so *serverOpt) {
+		so.addOverride(key, value)
+	}
+}
+
 // WithHTTPListenAddr sets the listener address for HTTP. Default is to find a random, unused port.
 func WithHTTPListenAddr(httpListenAddr string) ServerOpt {
 	return func(so *serverOpt) {
-		so.serverConf.HTTPListenAddr = httpListenAddr
+		so.addOverride("server.httpListenAddr", httpListenAddr)
 	}
 }
 
 // WithGRPCListenAddr sets the listener address for gRPC. Default is to find a random, unused port.
 func WithGRPCListenAddr(grpcListenAddr string) ServerOpt {
 	return func(so *serverOpt) {
-		so.serverConf.GRPCListenAddr = grpcListenAddr
+		so.addOverride("server.grpcListenAddr", grpcListenAddr)
 	}
 }
 
 // WithTLSCertAndKey sets the TLS certificate and key to use. Defaults to no TLS.
 func WithTLSCertAndKey(cert, key string) ServerOpt {
 	return func(so *serverOpt) {
-		if so.serverConf.TLS == nil {
-			so.serverConf.TLS = &server.TLSConf{}
-		}
-		so.serverConf.TLS.Cert = cert
-		so.serverConf.TLS.Key = key
+		so.addOverride("server.tls.cert", cert)
+		so.addOverride("server.tls.key", key)
 	}
 }
 
 // WithTLSCACert sets the TLS CA certicate to use. Defaults to none.
 func WithTLSCACert(caCert string) ServerOpt {
 	return func(so *serverOpt) {
-		if so.serverConf.TLS == nil {
-			so.serverConf.TLS = &server.TLSConf{}
-		}
-		so.serverConf.TLS.CACert = caCert
+		so.addOverride("server.tls.caCert", caCert)
 	}
 }
 
@@ -88,90 +97,286 @@ func WithAdminAPI(username, password string) ServerOpt {
 			panic(fmt.Errorf("failed to generate hash for password: %w", err))
 		}
 
-		so.serverConf.AdminAPI.Enabled = true
-		so.serverConf.AdminAPI.AdminCredentials = &server.AdminCredentialsConf{
-			Username:     username,
-			PasswordHash: base64.StdEncoding.EncodeToString(hashBytes),
-		}
+		so.addOverride("server.adminAPI.enabled", "true")
+		so.addOverride("server.adminAPI.adminCredentials.username", username)
+		so.addOverride("server.adminAPI.adminCredentials.passwordHash", base64.StdEncoding.EncodeToString(hashBytes))
 	}
 }
 
 // WithPolicyRepositoryDirectory sets the directory to use as the policy repository. Defaults to none.
-// Cannot be used together with WithPolicyRepositoryDatabase.
+// Cannot be used together with WithPolicyRepositorySQLite3.
 func WithPolicyRepositoryDirectory(dir string) ServerOpt {
 	return func(so *serverOpt) {
-		so.policyRepoDir = dir
+		so.addOverride("storage.driver", "disk")
+		so.addOverride("storage.disk.directory", dir)
 	}
 }
 
-// WithPolicyRepositoryDatabase sets the database to use as the policy repository. Defaults to SQLite3 in-memory database.
-// Cannot be used together with WithPolicyRepositoryDirectory. Currently only 'sqlite3' is supported.
-func WithPolicyRepositoryDatabase(driver, connStr string) ServerOpt {
+// WithPolicyRepositorySQLite3 sets the policy repository to the given SQLite3 database.
+// Cannot be used together with WithPolicyRepositoryDirectory.
+func WithPolicyRepositorySQLite3(dsn string) ServerOpt {
 	return func(so *serverOpt) {
-		so.policyRepoDBDriver = driver
-		so.policyRepoDBConnStr = connStr
+		so.addOverride("storage.driver", sqlite3.DriverName)
+		so.addOverride("storage.sqlite3.dsn", dsn)
 	}
 }
 
 // WithDefaultPolicyVersion sets the default policy version to use when none is specified. Default to the "default".
 func WithDefaultPolicyVersion(version string) ServerOpt {
 	return func(so *serverOpt) {
-		so.defaultPolicyVersion = version
-	}
-}
-
-// WithPlaygroundAPI enables the Playground API. Defaults to disabled.
-func WithPlaygroundAPI() ServerOpt {
-	return func(so *serverOpt) {
-		so.serverConf.PlaygroundEnabled = true
+		so.addOverride("engine.defaultPolicyVersion", version)
 	}
 }
 
 type serverOpt struct {
-	serverConf           *server.Conf
-	defaultPolicyVersion string
-	policyRepoDir        string
-	policyRepoDBDriver   string
-	policyRepoDBConnStr  string
+	configSrc io.Reader
+	overrides map[string]string
 }
 
-func (so *serverOpt) setDefaultsAndValidate() error {
-	if so.serverConf.HTTPListenAddr == "" {
-		addr, err := util.GetFreeListenAddr()
-		if err != nil {
-			return fmt.Errorf("failed to find free listen address: %w", err)
-		}
-		so.serverConf.HTTPListenAddr = addr
+func (so *serverOpt) addOverride(key, value string) {
+	if so.overrides == nil {
+		so.overrides = make(map[string]string)
 	}
-
-	if so.serverConf.GRPCListenAddr == "" {
-		addr, err := util.GetFreeListenAddr()
-		if err != nil {
-			return fmt.Errorf("failed to find free listen address: %w", err)
-		}
-		so.serverConf.GRPCListenAddr = addr
-	}
-
-	if so.serverConf.TLS != nil {
-		if so.serverConf.TLS.Cert == "" || so.serverConf.TLS.Key == "" {
-			return errors.New("invalid TLS configuration: both TLS certificate and key must be specified")
-		}
-	}
-
-	if so.policyRepoDir != "" && so.policyRepoDBConnStr != "" {
-		return errors.New("only one of PolicyRepositoryDirectory or PolicyRepositoryDatabase is allowed")
-	}
-
-	// if none is specified, default to in-mem db.
-	if so.policyRepoDir == "" && so.policyRepoDBConnStr == "" {
-		so.policyRepoDBDriver = "sqlite3"
-		so.policyRepoDBConnStr = ":memory:"
-	}
-
-	return nil
+	so.overrides[key] = value
 }
 
-func (so *serverOpt) mkGRPCConn(ctx context.Context) (grpc.ClientConnInterface, error) {
+func (so *serverOpt) toConfigWrapper() (*config.Wrapper, error) {
+	confOverrides := map[string]interface{}{}
+
+	if so.configSrc == nil {
+		defaults := map[string]string{
+			"auxData.jwt.disableVerification": "true",
+			"storage.driver":                  sqlite3.DriverName,
+			"storage.sqlite3.dsn":             "file:cerbos.db?mode=memory&_fk=true",
+		}
+
+		httpAddr, err := util.GetFreeListenAddr()
+		if err != nil {
+			return nil, fmt.Errorf("failed to find free listen address: %w", err)
+		}
+		defaults["server.httpListenAddr"] = httpAddr
+
+		grpcAddr, err := util.GetFreeListenAddr()
+		if err != nil {
+			return nil, fmt.Errorf("failed to find free listen address: %w", err)
+		}
+		defaults["server.grpcListenAddr"] = grpcAddr
+
+		for k, v := range defaults {
+			if err := strvals.ParseInto(fmt.Sprintf("%s=%s", k, v), confOverrides); err != nil {
+				return nil, fmt.Errorf("failed to parse default config [%s=%s]: %w", k, v, err)
+			}
+		}
+	}
+
+	for k, v := range so.overrides {
+		if err := strvals.ParseInto(fmt.Sprintf("%s=%s", k, v), confOverrides); err != nil {
+			return nil, fmt.Errorf("failed to parse config override [%s=%s]: %w", k, v, err)
+		}
+	}
+
+	if so.configSrc != nil {
+		return config.WrapperFromReader(so.configSrc, confOverrides)
+	}
+
+	return config.WrapperFromMap(confOverrides)
+}
+
+// StartCerbosServer starts a new Cerbos server that can be used for testing a client integration locally with test data.
+// If no options are passed, the server will be started with the http and gRPC endpoints available on a random free port
+// and the storage backend configured to use an in-memory database. Use the methods on the returned ServerInfo object to
+// find the listening addresses and stop the server when tests are done.
+func StartCerbosServer(opts ...ServerOpt) (*ServerInfo, error) {
+	sopt := &serverOpt{}
+	for _, o := range opts {
+		if o != nil {
+			o(sopt)
+		}
+	}
+
+	conf, err := sopt.toConfigWrapper()
+	if err != nil {
+		return nil, err
+	}
+
+	return startServer(conf)
+}
+
+func startServer(conf *config.Wrapper) (*ServerInfo, error) {
+	ctx, cancelFunc := context.WithCancel(context.Background())
+
+	sb := &serverBldr{ctx: ctx, conf: conf}
+	sb.mkStore().mkAuditLog().mkAuxData().mkSchemaMgr().mkCompileMgr().mkEngine().mkServer()
+	if sb.err != nil {
+		cancelFunc()
+		return nil, sb.err
+	}
+
+	g, _ := errgroup.WithContext(ctx)
+	g.Go(func() error {
+		return sb.server.Start(ctx, server.Param{Store: sb.store, Engine: sb.engine, AuditLog: sb.auditLog, AuxData: sb.auxData})
+	})
+	runtime.Gosched()
+
+	return &ServerInfo{conf: sb.serverConf, g: g, cancelFunc: cancelFunc}, nil
+}
+
+type serverBldr struct {
+	ctx        context.Context
+	conf       *config.Wrapper
+	store      storage.Store
+	auditLog   audit.Log
+	auxData    *auxdata.AuxData
+	schemaMgr  schema.Manager
+	compileMgr *compile.Manager
+	engine     *engine.Engine
+	serverConf *server.Conf
+	server     *server.Server
+	err        error
+}
+
+func (sb *serverBldr) mkStore() *serverBldr {
+	if sb.err != nil {
+		return sb
+	}
+
+	sb.store, sb.err = storage.NewFromConf(sb.ctx, sb.conf)
+	return sb
+}
+
+func (sb *serverBldr) mkAuditLog() *serverBldr {
+	if sb.err != nil {
+		return sb
+	}
+
+	sb.auditLog, sb.err = audit.NewLogFromConf(sb.ctx, sb.conf)
+	return sb
+}
+
+func (sb *serverBldr) mkAuxData() *serverBldr {
+	if sb.err != nil {
+		return sb
+	}
+
+	adConf := new(auxdata.Conf)
+	if err := sb.conf.GetSection(adConf); err != nil {
+		sb.err = fmt.Errorf("failed to load auxData configuration: %w", err)
+		return sb
+	}
+
+	sb.auxData = auxdata.NewFromConf(sb.ctx, adConf)
+	return sb
+}
+
+func (sb *serverBldr) mkSchemaMgr() *serverBldr {
+	if sb.err != nil {
+		return sb
+	}
+
+	schemaConf := new(schema.Conf)
+	if err := sb.conf.GetSection(schemaConf); err != nil {
+		sb.err = fmt.Errorf("failed to load schema configuration: %w", err)
+		return sb
+	}
+
+	sb.schemaMgr = schema.NewFromConf(sb.ctx, sb.store, schemaConf)
+	return sb
+}
+
+func (sb *serverBldr) mkCompileMgr() *serverBldr {
+	if sb.err != nil {
+		return sb
+	}
+
+	compileConf := new(compile.Conf)
+	if err := sb.conf.GetSection(compileConf); err != nil {
+		sb.err = fmt.Errorf("failed to load compile configuration: %w", err)
+		return sb
+	}
+
+	sb.compileMgr = compile.NewManagerFromConf(sb.ctx, compileConf, sb.store, sb.schemaMgr)
+	return sb
+}
+
+func (sb *serverBldr) mkEngine() *serverBldr {
+	if sb.err != nil {
+		return sb
+	}
+
+	engineConf := new(engine.Conf)
+	if err := sb.conf.GetSection(engineConf); err != nil {
+		sb.err = fmt.Errorf("failed to load engine configuration: %w", err)
+		return sb
+	}
+
+	sb.engine = engine.NewFromConf(sb.ctx, engineConf, engine.Components{
+		CompileMgr: sb.compileMgr,
+		SchemaMgr:  sb.schemaMgr,
+		AuditLog:   sb.auditLog,
+	})
+
+	return sb
+}
+
+func (sb *serverBldr) mkServer() *serverBldr {
+	if sb.err != nil {
+		return sb
+	}
+
+	sb.serverConf = new(server.Conf)
+	if err := sb.conf.GetSection(sb.serverConf); err != nil {
+		sb.err = fmt.Errorf("failed to load server configuration: %w", err)
+		return sb
+	}
+
+	sb.server = server.NewServer(sb.serverConf)
+	return sb
+}
+
+type ServerInfo struct {
+	conf       *server.Conf
+	g          *errgroup.Group
+	cancelFunc context.CancelFunc
+}
+
+// Stop the running server.
+func (s *ServerInfo) Stop() error {
+	s.cancelFunc()
+	return s.g.Wait()
+}
+
+// HTTPAddr returns the HTTP listen address of the running server.
+func (s *ServerInfo) HTTPAddr() string {
+	return s.conf.HTTPListenAddr
+}
+
+// GRPCAddr returns the GRPC listen address of the running server.
+func (s *ServerInfo) GRPCAddr() string {
+	return s.conf.GRPCListenAddr
+}
+
+// IsReady returns true if the server health check is successful.
+func (s *ServerInfo) IsReady(ctx context.Context) (bool, error) {
+	conn, err := mkGRPCConn(ctx, s.conf)
+	if err != nil {
+		return false, err
+	}
+
+	hc := healthpb.NewHealthClient(conn)
+	resp, err := hc.Check(ctx, &healthpb.HealthCheckRequest{Service: svcv1.CerbosService_ServiceDesc.ServiceName})
+	if err != nil {
+		return false, err
+	}
+
+	switch resp.Status {
+	case healthpb.HealthCheckResponse_SERVING, healthpb.HealthCheckResponse_UNKNOWN:
+		return true, nil
+	default:
+		return false, nil
+	}
+}
+
+func mkGRPCConn(ctx context.Context, serverConf *server.Conf) (grpc.ClientConnInterface, error) {
 	dialOpts := []grpc.DialOption{
 		grpc.WithConnectParams(grpc.ConnectParams{MinConnectTimeout: minConnectTimeout}),
 		grpc.WithChainStreamInterceptor(
@@ -189,7 +394,7 @@ func (so *serverOpt) mkGRPCConn(ctx context.Context) (grpc.ClientConnInterface, 
 	}
 
 	//nolint:nestif
-	if conf := so.serverConf.TLS; conf != nil {
+	if conf := serverConf.TLS; conf != nil {
 		certificate, err := tls.LoadX509KeyPair(conf.Cert, conf.Key)
 		if err != nil {
 			return nil, fmt.Errorf("failed to load certificate and key: %w", err)
@@ -220,124 +425,5 @@ func (so *serverOpt) mkGRPCConn(ctx context.Context) (grpc.ClientConnInterface, 
 		dialOpts = append(dialOpts, grpc.WithTransportCredentials(local.NewCredentials()))
 	}
 
-	return grpc.DialContext(ctx, so.serverConf.GRPCListenAddr, dialOpts...)
-}
-
-// StartCerbosServer starts a new Cerbos server that can be used for testing a client integration locally with test data.
-// If no options are passed, the server will be started with the http and gRPC endpoints available on a random free port
-// and the storage backend configured to use an in-memory database. Use the methods on the returned ServerInfo object to
-// find the listening addresses and stop the server when tests are done.
-func StartCerbosServer(opts ...ServerOpt) (*ServerInfo, error) {
-	sopt := &serverOpt{serverConf: &server.Conf{}}
-	for _, o := range opts {
-		if o != nil {
-			o(sopt)
-		}
-	}
-
-	if err := sopt.setDefaultsAndValidate(); err != nil {
-		return nil, err
-	}
-
-	ctx, cancelFunc := context.WithCancel(context.Background())
-	g, _ := errgroup.WithContext(ctx)
-	if err := startServer(ctx, g, sopt); err != nil {
-		cancelFunc()
-		return nil, err
-	}
-
-	return &ServerInfo{sopt: sopt, g: g, cancelFunc: cancelFunc}, nil
-}
-
-func startServer(ctx context.Context, g *errgroup.Group, sopt *serverOpt) (err error) {
-	var store storage.Store
-	if sopt.policyRepoDir != "" {
-		store, err = disk.NewStore(ctx, &disk.Conf{Directory: sopt.policyRepoDir})
-	} else {
-		switch sopt.policyRepoDBDriver {
-		case sqlite3.DriverName:
-			store, err = sqlite3.NewStore(ctx, &sqlite3.Conf{DSN: sopt.policyRepoDBConnStr})
-		case postgres.DriverName:
-			store, err = postgres.NewStore(ctx, &postgres.Conf{URL: sopt.policyRepoDBConnStr})
-		default:
-			err = fmt.Errorf("unknown database driver: %s", sopt.policyRepoDBDriver)
-		}
-	}
-
-	if err != nil {
-		return err
-	}
-
-	auditLog := audit.NewNopLog()
-	auxData := auxdata.NewWithoutVerification(ctx)
-
-	schemaMgr, err := schema.New(ctx, store)
-	if err != nil {
-		return fmt.Errorf("failed to create schema manager: %w", err)
-	}
-
-	compileMgr, err := compile.NewManager(ctx, store, schemaMgr)
-	if err != nil {
-		return fmt.Errorf("failed to create compile manager: %w", err)
-	}
-
-	eng, err := engine.New(ctx, engine.Components{
-		CompileMgr: compileMgr,
-		SchemaMgr:  schemaMgr,
-		AuditLog:   auditLog,
-	})
-	if err != nil {
-		return fmt.Errorf("failed to create engine: %w", err)
-	}
-
-	s := server.NewServer(sopt.serverConf)
-	g.Go(func() error {
-		return s.Start(ctx, server.Param{Store: store, Engine: eng, AuditLog: auditLog, AuxData: auxData})
-	})
-	runtime.Gosched()
-
-	return nil
-}
-
-type ServerInfo struct {
-	sopt       *serverOpt
-	g          *errgroup.Group
-	cancelFunc context.CancelFunc
-}
-
-// Stop the running server.
-func (s *ServerInfo) Stop() error {
-	s.cancelFunc()
-	return s.g.Wait()
-}
-
-// HTTPAddr returns the HTTP listen address of the running server.
-func (s *ServerInfo) HTTPAddr() string {
-	return s.sopt.serverConf.HTTPListenAddr
-}
-
-// GRPCAddr returns the GRPC listen address of the running server.
-func (s *ServerInfo) GRPCAddr() string {
-	return s.sopt.serverConf.GRPCListenAddr
-}
-
-// IsReady returns true if the server health check is successful.
-func (s *ServerInfo) IsReady(ctx context.Context) (bool, error) {
-	conn, err := s.sopt.mkGRPCConn(ctx)
-	if err != nil {
-		return false, err
-	}
-
-	hc := healthpb.NewHealthClient(conn)
-	resp, err := hc.Check(ctx, &healthpb.HealthCheckRequest{Service: svcv1.CerbosService_ServiceDesc.ServiceName})
-	if err != nil {
-		return false, err
-	}
-
-	switch resp.Status {
-	case healthpb.HealthCheckResponse_SERVING, healthpb.HealthCheckResponse_UNKNOWN:
-		return true, nil
-	default:
-		return false, nil
-	}
+	return grpc.DialContext(ctx, serverConf.GRPCListenAddr, dialOpts...)
 }
