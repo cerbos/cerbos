@@ -36,6 +36,7 @@ type Store struct {
 	conf *Conf
 	idx  index.Index
 	*storage.SubscriptionManager
+	dir string
 }
 
 func NewStore(ctx context.Context, conf *Conf) (*Store, error) {
@@ -49,7 +50,7 @@ func NewStore(ctx context.Context, conf *Conf) (*Store, error) {
 		return nil, err
 	}
 
-	s := &Store{conf: conf, idx: idx, SubscriptionManager: storage.NewSubscriptionManager(ctx)}
+	s := &Store{conf: conf, dir: dir, idx: idx, SubscriptionManager: storage.NewSubscriptionManager(ctx)}
 	if conf.WatchForChanges {
 		if err := watchDir(ctx, dir, s.idx, s.SubscriptionManager, defaultCooldownPeriod); err != nil {
 			return nil, err
@@ -70,6 +71,17 @@ func NewFromIndex(idx index.Index) (*Store, error) {
 
 func NewFromIndexWithConf(idx index.Index, conf *Conf) *Store {
 	return &Store{idx: idx, conf: conf}
+}
+
+func (s *Store) Reload(ctx context.Context) error {
+	idx, err := index.Build(ctx, os.DirFS(s.dir))
+	if err != nil {
+		return err
+	}
+
+	s.idx = idx
+
+	return nil
 }
 
 func (s *Store) Driver() string {

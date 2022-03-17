@@ -220,6 +220,21 @@ service CerbosAdminService {
             }
         };
     }
+
+    rpc ReloadStore(cerbos.request.v1.ReloadStoreRequest) returns (cerbos.response.v1.ReloadStoreResponse) {
+        option (google.api.http) = {
+            post: "/admin/store/reload",
+        };
+        option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+            summary: "Reload store",
+            security: {
+                security_requirement: {
+                    key: "BasicAuth";
+                    value: {};
+                }
+            }
+        };
+    }
 }
 
 service CerbosPlaygroundService {

@@ -1403,6 +1403,9 @@ func cerbos_response_v1_PlaygroundValidateResponse_hashpb_sum(m *PlaygroundValid
 	}
 }
 
+func cerbos_response_v1_ReloadStoreResponse_hashpb_sum(m *ReloadStoreResponse, hasher hash.Hash, ignore map[string]struct{}) {
+}
+
 func cerbos_response_v1_ResourcesQueryPlanResponse_Expression_Operand_hashpb_sum(m *ResourcesQueryPlanResponse_Expression_Operand, hasher hash.Hash, ignore map[string]struct{}) {
 	if m.Node != nil {
 		if _, ok := ignore["cerbos.response.v1.ResourcesQueryPlanResponse.Expression.Operand.node"]; !ok {

@@ -27,6 +27,7 @@ import (
 var (
 	minioUsername = "minioadmin"
 	minioPassword = "minioadmin"
+	bucketName    = "test"
 )
 
 const timeout = 5 * time.Minute
@@ -83,7 +84,6 @@ func newMinioBucket(ctx context.Context, t *testing.T, prefix string) *blob.Buck
 	ctx, cancelFunc := context.WithDeadline(ctx, deadline)
 	defer cancelFunc()
 
-	bucketName := "test"
 	endpoint := startMinio(ctx, t, bucketName)
 
 	param := UploadParam{
@@ -97,7 +97,7 @@ func newMinioBucket(ctx context.Context, t *testing.T, prefix string) *blob.Buck
 	return CopyDirToBucket(t, ctx, param)
 }
 
-//nolint:revive
+//nolint:revive,unparam
 func uploadDirToBucket(tb testing.TB, ctx context.Context, dir string, bucket *blob.Bucket) ([]string, error) {
 	tb.Helper()
 

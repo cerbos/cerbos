@@ -516,3 +516,7 @@ func (s *Store) pollForUpdates(ctx context.Context) {
 		}
 	}
 }
+
+func (s *Store) Reload(ctx context.Context) error {
+	return s.updateIndex(ctx)
+}

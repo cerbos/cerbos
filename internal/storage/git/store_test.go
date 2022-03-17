@@ -27,16 +27,18 @@ import (
 	"github.com/cerbos/cerbos/internal/schema"
 	"github.com/cerbos/cerbos/internal/storage"
 	"github.com/cerbos/cerbos/internal/storage/index"
+	"github.com/cerbos/cerbos/internal/storage/internal"
 	"github.com/cerbos/cerbos/internal/test"
 	"github.com/cerbos/cerbos/internal/test/mocks"
 )
 
 const (
-	namePrefix   = "git"
-	policyDir    = "policies"
-	ignoredDir   = "ignore"
-	schemaSubDir = "subdir"
-	timeout      = 1 * time.Second
+	namePrefix         = "git"
+	policyDir          = "policies"
+	ignoredDir         = "ignore"
+	schemaSubDir       = "subdir"
+	timeout            = 1 * time.Second
+	updatePollInterval = 2 * time.Second
 )
 
 // TODO (cell) Test HTTPS and SSH auth
@@ -50,7 +52,7 @@ func TestNewStore(t *testing.T) {
 	// the checkout directory does not exist so the remote repo will be cloned.
 	t.Run("directory does not exist", func(t *testing.T) {
 		checkoutDir := filepath.Join(t.TempDir(), "clone")
-		conf := mkConf(t, sourceGitDir, checkoutDir)
+		conf := mkConf(t, sourceGitDir, checkoutDir, true)
 
 		store, err := NewStore(context.Background(), conf)
 		require.NoError(t, err)
@@ -61,7 +63,7 @@ func TestNewStore(t *testing.T) {
 	// the checkout directory is empty so the remote repo will be cloned.
 	t.Run("directory is empty", func(t *testing.T) {
 		checkoutDir := t.TempDir()
-		conf := mkConf(t, sourceGitDir, checkoutDir)
+		conf := mkConf(t, sourceGitDir, checkoutDir, true)
 
 		store, err := NewStore(context.Background(), conf)
 		require.NoError(t, err)
@@ -79,7 +81,7 @@ func TestNewStore(t *testing.T) {
 		})
 		require.NoError(t, err, "Failed to clone repo")
 
-		conf := mkConf(t, sourceGitDir, checkoutDir)
+		conf := mkConf(t, sourceGitDir, checkoutDir, true)
 
 		store, err := NewStore(context.Background(), conf)
 		require.NoError(t, err)
@@ -96,7 +98,7 @@ func TestNewStore(t *testing.T) {
 			require.NoError(t, os.WriteFile(file, []byte("some data"), 0o600))
 		}
 
-		conf := mkConf(t, sourceGitDir, checkoutDir)
+		conf := mkConf(t, sourceGitDir, checkoutDir, true)
 
 		store, err := NewStore(context.Background(), conf)
 		require.Nil(t, store)
@@ -119,7 +121,7 @@ func TestUpdateStore(t *testing.T) {
 
 	_ = createGitRepo(t, sourceGitDir, numPolicySets)
 
-	conf := mkConf(t, sourceGitDir, checkoutDir)
+	conf := mkConf(t, sourceGitDir, checkoutDir, true)
 	store, err := NewStore(context.Background(), conf)
 	require.NoError(t, err)
 
@@ -431,6 +433,50 @@ func TestUpdateStore(t *testing.T) {
 	})
 }
 
+func TestReloadable(t *testing.T) {
+	ps := genPolicySet(1)
+
+	sourceGitDir := t.TempDir()
+	checkoutDir := t.TempDir()
+	store := mkEmptyStoreAndRepo(t, false, sourceGitDir, checkoutDir)
+	internal.TestSuiteReloadable(store, false, mkPoliciesToStoreFn(t, sourceGitDir, ps))(t)
+
+	sourceGitDir = t.TempDir()
+	checkoutDir = t.TempDir()
+	watchingStore := mkEmptyStoreAndRepo(t, true, sourceGitDir, checkoutDir)
+	internal.TestSuiteReloadable(watchingStore, true, mkPoliciesToStoreFn(t, sourceGitDir, ps))(t)
+}
+
+func mkEmptyStoreAndRepo(t *testing.T, watchForChanges bool, sourceGitDir, checkoutDir string) *Store {
+	t.Helper()
+
+	_ = createGitRepo(t, sourceGitDir, 0)
+	store, err := NewStore(context.Background(), mkConf(t, sourceGitDir, checkoutDir, watchForChanges))
+	require.NoError(t, err)
+
+	return store
+}
+
+func mkPoliciesToStoreFn(t *testing.T, sourceGitDir string, ps policySet) internal.PoliciesToStoreFn {
+	t.Helper()
+
+	return func() error {
+		err := commitToGitRepo(sourceGitDir, "Add policy", func(wt *git.Worktree) error {
+			if err := writePolicySet(filepath.Join(sourceGitDir, policyDir), ps); err != nil {
+				return err
+			}
+
+			_, err := wt.Add(".")
+			return err
+		})
+		if err != nil {
+			return err
+		}
+
+		return nil
+	}
+}
+
 func anyIndexEntry(_ index.Entry) bool { return true }
 
 func requireIndexContains(t *testing.T, store *Store, wantFiles []string) {
@@ -440,15 +486,21 @@ func requireIndexContains(t *testing.T, store *Store, wantFiles []string) {
 	require.ElementsMatch(t, wantFiles, haveFiles)
 }
 
-func mkConf(t *testing.T, gitRepo, checkoutDir string) *Conf {
+func mkConf(t *testing.T, gitRepo, checkoutDir string, watchForChanges bool) *Conf {
 	t.Helper()
 
+	upi := updatePollInterval
+	if !watchForChanges {
+		upi = 0
+	}
+
 	return &Conf{
-		Protocol:    "file",
-		URL:         fmt.Sprintf("file://%s", gitRepo),
-		CheckoutDir: checkoutDir,
-		Branch:      "policies",
-		SubDir:      "policies",
+		Protocol:           "file",
+		URL:                fmt.Sprintf("file://%s", gitRepo),
+		CheckoutDir:        checkoutDir,
+		Branch:             "policies",
+		SubDir:             "policies",
+		UpdatePollInterval: upi,
 	}
 }
 

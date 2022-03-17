@@ -226,6 +226,7 @@ type CerbosAdminServiceClient interface {
 	ListSchemas(ctx context.Context, in *v1.ListSchemasRequest, opts ...grpc.CallOption) (*v11.ListSchemasResponse, error)
 	GetSchema(ctx context.Context, in *v1.GetSchemaRequest, opts ...grpc.CallOption) (*v11.GetSchemaResponse, error)
 	DeleteSchema(ctx context.Context, in *v1.DeleteSchemaRequest, opts ...grpc.CallOption) (*v11.DeleteSchemaResponse, error)
+	ReloadStore(ctx context.Context, in *v1.ReloadStoreRequest, opts ...grpc.CallOption) (*v11.ReloadStoreResponse, error)
 }
 
 type cerbosAdminServiceClient struct {
@@ -331,6 +332,15 @@ func (c *cerbosAdminServiceClient) DeleteSchema(ctx context.Context, in *v1.Dele
 	return out, nil
 }
 
+func (c *cerbosAdminServiceClient) ReloadStore(ctx context.Context, in *v1.ReloadStoreRequest, opts ...grpc.CallOption) (*v11.ReloadStoreResponse, error) {
+	out := new(v11.ReloadStoreResponse)
+	err := c.cc.Invoke(ctx, "/cerbos.svc.v1.CerbosAdminService/ReloadStore", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // CerbosAdminServiceServer is the server API for CerbosAdminService service.
 // All implementations must embed UnimplementedCerbosAdminServiceServer
 // for forward compatibility
@@ -343,6 +353,7 @@ type CerbosAdminServiceServer interface {
 	ListSchemas(context.Context, *v1.ListSchemasRequest) (*v11.ListSchemasResponse, error)
 	GetSchema(context.Context, *v1.GetSchemaRequest) (*v11.GetSchemaResponse, error)
 	DeleteSchema(context.Context, *v1.DeleteSchemaRequest) (*v11.DeleteSchemaResponse, error)
+	ReloadStore(context.Context, *v1.ReloadStoreRequest) (*v11.ReloadStoreResponse, error)
 	mustEmbedUnimplementedCerbosAdminServiceServer()
 }
 
@@ -373,6 +384,9 @@ func (UnimplementedCerbosAdminServiceServer) GetSchema(context.Context, *v1.GetS
 }
 func (UnimplementedCerbosAdminServiceServer) DeleteSchema(context.Context, *v1.DeleteSchemaRequest) (*v11.DeleteSchemaResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DeleteSchema not implemented")
+}
+func (UnimplementedCerbosAdminServiceServer) ReloadStore(context.Context, *v1.ReloadStoreRequest) (*v11.ReloadStoreResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ReloadStore not implemented")
 }
 func (UnimplementedCerbosAdminServiceServer) mustEmbedUnimplementedCerbosAdminServiceServer() {}
 
@@ -534,6 +548,24 @@ func _CerbosAdminService_DeleteSchema_Handler(srv interface{}, ctx context.Conte
 	return interceptor(ctx, in, info, handler)
 }
 
+func _CerbosAdminService_ReloadStore_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(v1.ReloadStoreRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CerbosAdminServiceServer).ReloadStore(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/cerbos.svc.v1.CerbosAdminService/ReloadStore",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CerbosAdminServiceServer).ReloadStore(ctx, req.(*v1.ReloadStoreRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // CerbosAdminService_ServiceDesc is the grpc.ServiceDesc for CerbosAdminService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -568,6 +600,10 @@ var CerbosAdminService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "DeleteSchema",
 			Handler:    _CerbosAdminService_DeleteSchema_Handler,
+		},
+		{
+			MethodName: "ReloadStore",
+			Handler:    _CerbosAdminService_ReloadStore_Handler,
 		},
 	},
 	Streams: []grpc.StreamDesc{
