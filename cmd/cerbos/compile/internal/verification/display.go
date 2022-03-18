@@ -67,12 +67,12 @@ func displayList(p *printer.Printer, results *policyv1.TestResults, verbose bool
 						traceMap.Add(suite.Name, principal.Name, resource.Name, action.Name, action.Details.EngineTrace)
 						failure := action.Details.GetFailure()
 						p.Println(colored.FailedTest("[FAILED]"))
-						p.Printf("%s%s expected: %s, actual: %s\n", tabs(4), colored.ErrorMsg("OUTCOME:"), colored.FailedTest(failure.Expected), colored.FailedTest(failure.Actual))
+						p.Printf("%s%s expected: %s, actual: %s\n", tabs(4), colored.ErrorMsg("OUTCOME:"), colored.FailedTest(failure.Expected), colored.FailedTest(failure.Actual)) //nolint:gomnd
 
 					case policyv1.TestResults_RESULT_ERRORED:
 						traceMap.Add(suite.Name, principal.Name, resource.Name, action.Name, action.Details.EngineTrace)
 						p.Println(colored.FailedTest("[ERROR]"))
-						p.Printf("%s%s %s\n", tabs(4), colored.ErrorMsg("ERROR:"), action.Details.GetError())
+						p.Printf("%s%s %s\n", tabs(4), colored.ErrorMsg("ERROR:"), action.Details.GetError()) //nolint:gomnd
 
 					default:
 						return fmt.Errorf("unexpected test result %v", action.Details.Result)
