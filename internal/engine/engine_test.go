@@ -292,6 +292,7 @@ type testTraceSink struct {
 }
 
 func newTestTraceSink(t *testing.T) *testTraceSink {
+	t.Helper()
 	return &testTraceSink{t: t}
 }
 
