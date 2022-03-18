@@ -1733,7 +1733,7 @@
             "$ref": "#/definitions/v1PolicyFile"
           },
           "description": "List of policy files.",
-          "maxItems": 10,
+          "maxItems": 30,
           "minItems": 1,
           "required": [
             "policyFiles"
@@ -1807,7 +1807,7 @@
             "$ref": "#/definitions/v1PolicyFile"
           },
           "description": "List of policy files.",
-          "maxItems": 10,
+          "maxItems": 30,
           "minItems": 1,
           "required": [
             "policyFiles"
@@ -1861,7 +1861,7 @@
             "$ref": "#/definitions/v1PolicyFile"
           },
           "description": "List of policy files.",
-          "maxItems": 10,
+          "maxItems": 30,
           "minItems": 1,
           "required": [
             "policyFiles"

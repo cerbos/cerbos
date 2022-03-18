@@ -267,7 +267,7 @@ message PlaygroundValidateRequest {
         (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = { 
             description: "List of policy files."
             min_items: 1
-            max_items: 10
+            max_items: 30
         } 
     ];
 }
@@ -287,7 +287,7 @@ message PlaygroundEvaluateRequest {
         (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = { 
             description: "List of policy files."
             min_items: 1
-            max_items: 10
+            max_items: 30
         } 
     ];
 
@@ -330,7 +330,7 @@ message PlaygroundProxyRequest {
         (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = { 
             description: "List of policy files."
             min_items: 1
-            max_items: 10
+            max_items: 30
         } 
     ];
 
