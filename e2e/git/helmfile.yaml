@@ -98,3 +98,5 @@ releases:
                 subDir: internal/test/testdata/store
                 checkoutDir: /data
                 updatePollInterval: 60s
+            telemetry:
+              disabled: true
