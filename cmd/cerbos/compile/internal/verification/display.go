@@ -10,10 +10,10 @@ import (
 	"github.com/pterm/pterm"
 
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
-	"github.com/cerbos/cerbos/cmd/cerbos/compile/internal/colored"
 	"github.com/cerbos/cerbos/cmd/cerbos/compile/internal/flagset"
-	"github.com/cerbos/cerbos/cmd/cerbos/compile/internal/printer"
 	"github.com/cerbos/cerbos/cmd/cerbos/compile/internal/verification/internal/traces"
+	"github.com/cerbos/cerbos/internal/printer"
+	"github.com/cerbos/cerbos/internal/printer/colored"
 )
 
 func Display(p *printer.Printer, results *policyv1.TestResults, output flagset.OutputFormat, verbose, noColor bool) error {

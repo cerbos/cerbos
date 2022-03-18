@@ -4,11 +4,11 @@
 package compilation
 
 import (
-	"github.com/cerbos/cerbos/cmd/cerbos/compile/internal/colored"
 	internalerrors "github.com/cerbos/cerbos/cmd/cerbos/compile/internal/errors"
 	"github.com/cerbos/cerbos/cmd/cerbos/compile/internal/flagset"
-	"github.com/cerbos/cerbos/cmd/cerbos/compile/internal/printer"
 	"github.com/cerbos/cerbos/internal/compile"
+	"github.com/cerbos/cerbos/internal/printer"
+	"github.com/cerbos/cerbos/internal/printer/colored"
 )
 
 func Display(p *printer.Printer, errs compile.ErrorList, output flagset.OutputFormat, noColor bool) error {

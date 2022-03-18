@@ -7,12 +7,12 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"io"
 	"path/filepath"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/stretchr/testify/require"
-	"go.uber.org/zap/zaptest"
 	"google.golang.org/protobuf/testing/protocmp"
 	"google.golang.org/protobuf/types/known/structpb"
 
@@ -24,6 +24,7 @@ import (
 	"github.com/cerbos/cerbos/internal/audit/local"
 	"github.com/cerbos/cerbos/internal/compile"
 	"github.com/cerbos/cerbos/internal/engine/tracer"
+	"github.com/cerbos/cerbos/internal/printer"
 	"github.com/cerbos/cerbos/internal/schema"
 	"github.com/cerbos/cerbos/internal/storage/disk"
 	"github.com/cerbos/cerbos/internal/test"
@@ -44,7 +45,8 @@ func TestCheck(t *testing.T) {
 		t.Run(tcase.Name, func(t *testing.T) {
 			tc := readTestCase(t, tcase.Input)
 
-			haveOutputs, err := eng.Check(context.Background(), tc.Inputs, WithZapTraceSink(zaptest.NewLogger(t)))
+			traceCollector := tracer.NewCollector()
+			haveOutputs, err := eng.Check(context.Background(), tc.Inputs, WithTraceSink(traceCollector))
 
 			if tc.WantError {
 				require.Error(t, err)
@@ -79,7 +81,7 @@ func TestSchemaValidation(t *testing.T) {
 				t.Run(tcase.Name, func(t *testing.T) {
 					tc := readTestCase(t, tcase.Input)
 
-					haveOutputs, err := eng.Check(context.Background(), tc.Inputs, WithZapTraceSink(zaptest.NewLogger(t)))
+					haveOutputs, err := eng.Check(context.Background(), tc.Inputs, WithTraceSink(newTestTraceSink(t)))
 
 					if tc.WantError {
 						require.Error(t, err)
@@ -210,7 +212,7 @@ func TestSatisfiesCondition(t *testing.T) {
 			cond, err := compile.Condition(&policyv1.Condition{Condition: &policyv1.Condition_Match{Match: tc.Condition}})
 			require.NoError(t, err)
 
-			tctx := tracer.Start(tracer.NewZapSink(zaptest.NewLogger(t)))
+			tctx := tracer.Start(newTestTraceSink(t))
 			retVal, err := satisfiesCondition(tctx.StartCondition(), cond, nil, tc.Input)
 
 			if tc.WantError {
@@ -283,4 +285,22 @@ func TestQueryPlan(t *testing.T) {
 			}
 		})
 	}
+}
+
+type testTraceSink struct {
+	t *testing.T
+}
+
+func newTestTraceSink(t *testing.T) *testTraceSink {
+	return &testTraceSink{t: t}
+}
+
+func (*testTraceSink) Enabled() bool {
+	return true
+}
+
+func (s *testTraceSink) AddTrace(trace *enginev1.Trace) {
+	var stdout bytes.Buffer
+	printer.New(&stdout, io.Discard).PrintTrace(trace)
+	s.t.Logf("%s\n", stdout.String())
 }
