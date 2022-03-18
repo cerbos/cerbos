@@ -125,3 +125,5 @@ releases:
               driver: "postgres"
               postgres: 
                 url: 'postgres://cerbos_user:changeme@{{ requiredEnv "E2E_CONTEXT_ID" }}.{{ requiredEnv "E2E_NS" }}.svc.cluster.local:5432/postgres?sslmode=disable&search_path=cerbos'
+            telemetry:
+              disabled: true

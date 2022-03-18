@@ -93,3 +93,5 @@ releases:
               driver: "sqlite3"
               sqlite3:
                 dsn: "file:/data/cerbos.sqlite?mode=rwc&_fk=true"  
+            telemetry:
+              disabled: true

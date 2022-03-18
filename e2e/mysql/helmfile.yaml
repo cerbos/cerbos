@@ -124,3 +124,5 @@ releases:
               driver: "mysql"
               mysql:
                 dsn: 'cerbos_user:changeme@tcp({{ requiredEnv "E2E_CONTEXT_ID" }}.{{ requiredEnv "E2E_NS" }}.svc.cluster.local:3306)/cerbos?parseTime=true'
+            telemetry:
+              disabled: true
