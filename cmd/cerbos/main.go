@@ -10,6 +10,7 @@ import (
 	"github.com/cerbos/cerbos/cmd/cerbos/healthcheck"
 	"github.com/cerbos/cerbos/cmd/cerbos/run"
 	"github.com/cerbos/cerbos/cmd/cerbos/server"
+	"github.com/cerbos/cerbos/internal/outputcolor"
 	"github.com/cerbos/cerbos/internal/util"
 )
 
@@ -27,6 +28,7 @@ func main() {
 		kong.Description("Painless access controls for cloud-native applications"),
 		kong.UsageOnError(),
 		kong.Vars{"version": util.AppVersion()},
+		outputcolor.TypeMapper,
 	)
 
 	ctx.FatalIfErrorf(ctx.Run())

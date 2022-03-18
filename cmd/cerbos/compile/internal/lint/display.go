@@ -6,15 +6,16 @@ package lint
 import (
 	internalerrors "github.com/cerbos/cerbos/cmd/cerbos/compile/internal/errors"
 	"github.com/cerbos/cerbos/cmd/cerbos/compile/internal/flagset"
+	"github.com/cerbos/cerbos/internal/outputcolor"
 	"github.com/cerbos/cerbos/internal/printer"
 	"github.com/cerbos/cerbos/internal/printer/colored"
 	"github.com/cerbos/cerbos/internal/storage/index"
 )
 
-func Display(p *printer.Printer, errs *index.BuildError, output flagset.OutputFormat, noColor bool) error {
+func Display(p *printer.Printer, errs *index.BuildError, output flagset.OutputFormat, colorLevel outputcolor.Level) error {
 	switch output {
 	case flagset.OutputFormatJSON:
-		return displayJSON(p, errs, noColor)
+		return displayJSON(p, errs, colorLevel)
 	case flagset.OutputFormatList, flagset.OutputFormatTree:
 		return displayList(p, errs)
 	}
@@ -22,8 +23,8 @@ func Display(p *printer.Printer, errs *index.BuildError, output flagset.OutputFo
 	return internalerrors.ErrFailed
 }
 
-func displayJSON(p *printer.Printer, errs *index.BuildError, noColor bool) error {
-	if err := p.PrintJSON(map[string]*index.BuildError{"lintErrors": errs}, noColor); err != nil {
+func displayJSON(p *printer.Printer, errs *index.BuildError, colorLevel outputcolor.Level) error {
+	if err := p.PrintJSON(map[string]*index.BuildError{"lintErrors": errs}, colorLevel); err != nil {
 		return err
 	}
 

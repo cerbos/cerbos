@@ -7,14 +7,15 @@ import (
 	internalerrors "github.com/cerbos/cerbos/cmd/cerbos/compile/internal/errors"
 	"github.com/cerbos/cerbos/cmd/cerbos/compile/internal/flagset"
 	"github.com/cerbos/cerbos/internal/compile"
+	"github.com/cerbos/cerbos/internal/outputcolor"
 	"github.com/cerbos/cerbos/internal/printer"
 	"github.com/cerbos/cerbos/internal/printer/colored"
 )
 
-func Display(p *printer.Printer, errs compile.ErrorList, output flagset.OutputFormat, noColor bool) error {
+func Display(p *printer.Printer, errs compile.ErrorList, output flagset.OutputFormat, colorLevel outputcolor.Level) error {
 	switch output {
 	case flagset.OutputFormatJSON:
-		return displayJSON(p, errs, noColor)
+		return displayJSON(p, errs, colorLevel)
 	case flagset.OutputFormatList, flagset.OutputFormatTree:
 		return displayList(p, errs)
 	}
@@ -22,8 +23,8 @@ func Display(p *printer.Printer, errs compile.ErrorList, output flagset.OutputFo
 	return internalerrors.ErrFailed
 }
 
-func displayJSON(p *printer.Printer, errs compile.ErrorList, noColor bool) error {
-	if err := p.PrintJSON(map[string]compile.ErrorList{"compileErrors": errs}, noColor); err != nil {
+func displayJSON(p *printer.Printer, errs compile.ErrorList, colorLevel outputcolor.Level) error {
+	if err := p.PrintJSON(map[string]compile.ErrorList{"compileErrors": errs}, colorLevel); err != nil {
 		return err
 	}
 

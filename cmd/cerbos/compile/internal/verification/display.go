@@ -12,14 +12,15 @@ import (
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
 	"github.com/cerbos/cerbos/cmd/cerbos/compile/internal/flagset"
 	"github.com/cerbos/cerbos/cmd/cerbos/compile/internal/verification/internal/traces"
+	"github.com/cerbos/cerbos/internal/outputcolor"
 	"github.com/cerbos/cerbos/internal/printer"
 	"github.com/cerbos/cerbos/internal/printer/colored"
 )
 
-func Display(p *printer.Printer, results *policyv1.TestResults, output flagset.OutputFormat, verbose, noColor bool) error {
+func Display(p *printer.Printer, results *policyv1.TestResults, output flagset.OutputFormat, verbose bool, colorLevel outputcolor.Level) error {
 	switch output {
 	case flagset.OutputFormatJSON:
-		return p.PrintProtoJSON(results, noColor)
+		return p.PrintProtoJSON(results, colorLevel)
 	case flagset.OutputFormatTree:
 		return displayTree(p, results, verbose)
 	case flagset.OutputFormatList:
