@@ -13,7 +13,9 @@ import (
 	"github.com/alecthomas/kong"
 	"github.com/fatih/color"
 
+	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
 	internalcompile "github.com/cerbos/cerbos/cmd/cerbos/compile/internal/compilation"
+	internalerrors "github.com/cerbos/cerbos/cmd/cerbos/compile/internal/errors"
 	"github.com/cerbos/cerbos/cmd/cerbos/compile/internal/flagset"
 	"github.com/cerbos/cerbos/cmd/cerbos/compile/internal/lint"
 	"github.com/cerbos/cerbos/cmd/cerbos/compile/internal/printer"
@@ -91,6 +93,7 @@ func (c *Cmd) Run(k *kong.Kong) error {
 		verifyConf := verify.Config{
 			TestsDir: c.Tests,
 			Run:      c.RunRegex,
+			Trace:    c.Verbose,
 		}
 
 		if verifyConf.TestsDir == "" {
@@ -103,12 +106,20 @@ func (c *Cmd) Run(k *kong.Kong) error {
 			return fmt.Errorf("failed to create engine: %w", err)
 		}
 
-		result, err := verify.Verify(ctx, eng, verifyConf)
+		results, err := verify.Verify(ctx, eng, verifyConf)
 		if err != nil {
 			return fmt.Errorf("failed to run tests: %w", err)
 		}
 
-		return verification.Display(p, result, c.Output, c.Verbose, c.NoColor)
+		err = verification.Display(p, results, c.Output, c.Verbose, c.NoColor)
+		if err != nil {
+			return fmt.Errorf("failed to display test results: %w", err)
+		}
+
+		switch results.Result {
+		case policyv1.TestResults_RESULT_FAILED, policyv1.TestResults_RESULT_ERRORED:
+			return internalerrors.ErrTestsFailed
+		}
 	}
 
 	return nil

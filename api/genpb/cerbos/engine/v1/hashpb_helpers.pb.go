@@ -346,6 +346,103 @@ func cerbos_engine_v1_ResourcesQueryPlanRequest_hashpb_sum(m *ResourcesQueryPlan
 	}
 }
 
+func cerbos_engine_v1_Trace_Component_Variable_hashpb_sum(m *Trace_Component_Variable, hasher hash.Hash, ignore map[string]struct{}) {
+	if _, ok := ignore["cerbos.engine.v1.Trace.Component.Variable.name"]; !ok {
+		_, _ = hasher.Write(protowire.AppendString(nil, m.Name))
+
+	}
+	if _, ok := ignore["cerbos.engine.v1.Trace.Component.Variable.expr"]; !ok {
+		_, _ = hasher.Write(protowire.AppendString(nil, m.Expr))
+
+	}
+}
+
+func cerbos_engine_v1_Trace_Component_hashpb_sum(m *Trace_Component, hasher hash.Hash, ignore map[string]struct{}) {
+	if _, ok := ignore["cerbos.engine.v1.Trace.Component.kind"]; !ok {
+		_, _ = hasher.Write(protowire.AppendVarint(nil, uint64(m.Kind)))
+
+	}
+	if m.Details != nil {
+		if _, ok := ignore["cerbos.engine.v1.Trace.Component.details"]; !ok {
+			switch t := m.Details.(type) {
+			case *Trace_Component_Action:
+				_, _ = hasher.Write(protowire.AppendString(nil, t.Action))
+
+			case *Trace_Component_DerivedRole:
+				_, _ = hasher.Write(protowire.AppendString(nil, t.DerivedRole))
+
+			case *Trace_Component_Expr:
+				_, _ = hasher.Write(protowire.AppendString(nil, t.Expr))
+
+			case *Trace_Component_Index:
+				_, _ = hasher.Write(protowire.AppendVarint(nil, uint64(t.Index)))
+
+			case *Trace_Component_Policy:
+				_, _ = hasher.Write(protowire.AppendString(nil, t.Policy))
+
+			case *Trace_Component_Resource:
+				_, _ = hasher.Write(protowire.AppendString(nil, t.Resource))
+
+			case *Trace_Component_Rule:
+				_, _ = hasher.Write(protowire.AppendString(nil, t.Rule))
+
+			case *Trace_Component_Scope:
+				_, _ = hasher.Write(protowire.AppendString(nil, t.Scope))
+
+			case *Trace_Component_Variable_:
+				if t.Variable != nil {
+					cerbos_engine_v1_Trace_Component_Variable_hashpb_sum(t.Variable, hasher, ignore)
+				}
+
+			}
+		}
+	}
+}
+
+func cerbos_engine_v1_Trace_Event_hashpb_sum(m *Trace_Event, hasher hash.Hash, ignore map[string]struct{}) {
+	if _, ok := ignore["cerbos.engine.v1.Trace.Event.status"]; !ok {
+		_, _ = hasher.Write(protowire.AppendVarint(nil, uint64(m.Status)))
+
+	}
+	if _, ok := ignore["cerbos.engine.v1.Trace.Event.effect"]; !ok {
+		_, _ = hasher.Write(protowire.AppendVarint(nil, uint64(m.Effect)))
+
+	}
+	if _, ok := ignore["cerbos.engine.v1.Trace.Event.error"]; !ok {
+		_, _ = hasher.Write(protowire.AppendString(nil, m.Error))
+
+	}
+	if _, ok := ignore["cerbos.engine.v1.Trace.Event.message"]; !ok {
+		_, _ = hasher.Write(protowire.AppendString(nil, m.Message))
+
+	}
+	if _, ok := ignore["cerbos.engine.v1.Trace.Event.result"]; !ok {
+		if m.Result != nil {
+			google_protobuf_Value_hashpb_sum(m.Result, hasher, ignore)
+		}
+
+	}
+}
+
+func cerbos_engine_v1_Trace_hashpb_sum(m *Trace, hasher hash.Hash, ignore map[string]struct{}) {
+	if _, ok := ignore["cerbos.engine.v1.Trace.components"]; !ok {
+		if len(m.Components) > 0 {
+			for _, v := range m.Components {
+				if v != nil {
+					cerbos_engine_v1_Trace_Component_hashpb_sum(v, hasher, ignore)
+				}
+
+			}
+		}
+	}
+	if _, ok := ignore["cerbos.engine.v1.Trace.event"]; !ok {
+		if m.Event != nil {
+			cerbos_engine_v1_Trace_Event_hashpb_sum(m.Event, hasher, ignore)
+		}
+
+	}
+}
+
 func cerbos_schema_v1_ValidationError_hashpb_sum(m *v1.ValidationError, hasher hash.Hash, ignore map[string]struct{}) {
 	if _, ok := ignore["cerbos.schema.v1.ValidationError.path"]; !ok {
 		_, _ = hasher.Write(protowire.AppendString(nil, m.Path))

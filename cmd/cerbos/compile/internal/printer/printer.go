@@ -14,6 +14,8 @@ import (
 	"github.com/alecthomas/chroma/lexers"
 	"github.com/alecthomas/chroma/styles"
 	"github.com/jwalton/gchalk"
+	"google.golang.org/protobuf/encoding/protojson"
+	"google.golang.org/protobuf/proto"
 )
 
 func New(stdout, stderr io.Writer) *Printer {
@@ -68,12 +70,28 @@ func (p *Printer) PrintJSON(val interface{}, noColor bool) error {
 
 	enc.SetIndent("", "  ")
 	if err := enc.Encode(val); err != nil {
-		return fmt.Errorf("failed to encode json: %w", err)
+		return fmt.Errorf("failed to encode JSON: %w", err)
 	}
 
 	if !noColor {
 		return p.coloredJSON(data.String())
 	}
 
+	return nil
+}
+
+func (p *Printer) PrintProtoJSON(message proto.Message, noColor bool) error {
+	data, err := protojson.MarshalOptions{Multiline: true}.Marshal(message)
+	if err != nil {
+		return fmt.Errorf("failed to encode JSON: %w", err)
+	}
+
+	output := fmt.Sprintf("%s\n", data)
+
+	if !noColor {
+		return p.coloredJSON(output)
+	}
+
+	fmt.Fprint(p.stdout, output)
 	return nil
 }

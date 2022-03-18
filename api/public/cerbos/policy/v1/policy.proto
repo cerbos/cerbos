@@ -178,3 +178,53 @@ message Test {
     cerbos.engine.v1.CheckInput input = 5 [(validate.rules).message.required = true];
     map<string, cerbos.effect.v1.Effect> expected = 6 [(validate.rules).map = {min_pairs: 1, keys: {string: {min_len: 1}}}];
 }
+
+message TestResults {
+    enum Result {
+        RESULT_UNSPECIFIED = 0;
+        RESULT_SKIPPED = 1;
+        RESULT_PASSED = 2;
+        RESULT_FAILED = 3;
+        RESULT_ERRORED = 4;
+    }
+
+    message Suite {
+        string file = 1;
+        string name = 2;
+        repeated Principal principals = 3;
+        Result result = 4;
+        string error = 5;
+    }
+
+    message Principal {
+        string name = 1;
+        repeated Resource resources = 2;
+    }
+
+    message Resource {
+        string name = 1;
+        repeated Action actions = 2;
+    }
+
+    message Action {
+        string name = 1;
+        Details details = 2;
+    }
+
+    message Details {
+        Result result = 1;
+        oneof outcome {
+            Failure failure = 2;
+            string error = 3;
+        }
+        repeated cerbos.engine.v1.Trace engine_trace = 4;
+    }
+
+    message Failure {
+        cerbos.effect.v1.Effect expected = 1;
+        cerbos.effect.v1.Effect actual = 2;
+    }
+
+    repeated Suite suites = 1;
+    Result result = 2;
+}

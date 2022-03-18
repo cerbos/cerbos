@@ -12,6 +12,7 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/stretchr/testify/require"
+	"go.uber.org/zap/zaptest"
 	"google.golang.org/protobuf/testing/protocmp"
 	"google.golang.org/protobuf/types/known/structpb"
 
@@ -22,6 +23,7 @@ import (
 	"github.com/cerbos/cerbos/internal/audit"
 	"github.com/cerbos/cerbos/internal/audit/local"
 	"github.com/cerbos/cerbos/internal/compile"
+	"github.com/cerbos/cerbos/internal/engine/tracer"
 	"github.com/cerbos/cerbos/internal/schema"
 	"github.com/cerbos/cerbos/internal/storage/disk"
 	"github.com/cerbos/cerbos/internal/test"
@@ -41,10 +43,8 @@ func TestCheck(t *testing.T) {
 		tcase := tcase
 		t.Run(tcase.Name, func(t *testing.T) {
 			tc := readTestCase(t, tcase.Input)
-			buf := new(bytes.Buffer)
 
-			haveOutputs, err := eng.Check(context.Background(), tc.Inputs, WithWriterTraceSink(buf))
-			t.Logf("TRACE =>\n%s", buf.String())
+			haveOutputs, err := eng.Check(context.Background(), tc.Inputs, WithZapTraceSink(zaptest.NewLogger(t)))
 
 			if tc.WantError {
 				require.Error(t, err)
@@ -78,10 +78,8 @@ func TestSchemaValidation(t *testing.T) {
 				tcase := tcase
 				t.Run(tcase.Name, func(t *testing.T) {
 					tc := readTestCase(t, tcase.Input)
-					buf := new(bytes.Buffer)
 
-					haveOutputs, err := eng.Check(context.Background(), tc.Inputs, WithWriterTraceSink(buf))
-					t.Logf("TRACE =>\n%s", buf.String())
+					haveOutputs, err := eng.Check(context.Background(), tc.Inputs, WithZapTraceSink(zaptest.NewLogger(t)))
 
 					if tc.WantError {
 						require.Error(t, err)
@@ -212,11 +210,8 @@ func TestSatisfiesCondition(t *testing.T) {
 			cond, err := compile.Condition(&policyv1.Condition{Condition: &policyv1.Condition_Match{Match: tc.Condition}})
 			require.NoError(t, err)
 
-			buf := new(bytes.Buffer)
-			tcr := newTracer(NewWriterTraceSink(buf))
-
-			retVal, err := satisfiesCondition(tcr.beginTrace(conditionComponent), cond, nil, tc.Input)
-			t.Logf("TRACE =>\n%s", buf.String())
+			tctx := tracer.Start(tracer.NewZapSink(zaptest.NewLogger(t)))
+			retVal, err := satisfiesCondition(tctx.StartCondition(), cond, nil, tc.Input)
 
 			if tc.WantError {
 				require.Error(t, err)

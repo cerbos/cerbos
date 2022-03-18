@@ -4,7 +4,6 @@
 package verify
 
 import (
-	"bytes"
 	"context"
 	"errors"
 	"fmt"
@@ -16,6 +15,7 @@ import (
 	enginev1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
 	"github.com/cerbos/cerbos/internal/engine"
+	"github.com/cerbos/cerbos/internal/engine/tracer"
 	"github.com/cerbos/cerbos/internal/util"
 )
 
@@ -115,81 +115,142 @@ func loadFixtureElement(fsys fs.FS, path string, pb validatableMessage) error {
 	return pb.Validate()
 }
 
-func (tf *testFixture) runTestSuite(ctx context.Context, eng *engine.Engine, shouldRun func(string) bool, file string, ts *policyv1.TestSuite) (SuiteNode, bool) {
-	failed := false
+type testResultKey struct {
+	Principal string
+	Resource  string
+	Action    string
+}
 
-	sn := SuiteNode{
+func (tf *testFixture) runTestSuite(ctx context.Context, eng *engine.Engine, shouldRun func(string) bool, file string, suite *policyv1.TestSuite, trace bool) *policyv1.TestResults_Suite {
+	suiteResult := &policyv1.TestResults_Suite{
 		File: file,
-		Name: ts.Name,
-	}
-	if ts.Skip {
-		sn.Skipped = true
-		return sn, failed
+		Name: suite.Name,
 	}
 
-	tests, err := tf.getTests(ts)
+	if suite.Skip {
+		suiteResult.Result = policyv1.TestResults_RESULT_SKIPPED
+		return suiteResult
+	}
+
+	tests, err := tf.getTests(suite)
 	if err != nil {
-		failed = true
-
-		sn.Name = suiteNameWithErrors
-		sn.Status = fmt.Sprintf("Failed to load the test suite: %s", err.Error())
-		sn.Failed = true
-
-		return sn, failed
+		suiteResult.Result = policyv1.TestResults_RESULT_ERRORED
+		suiteResult.Error = fmt.Sprintf("Failed to load the test suite: %s", err.Error())
+		return suiteResult
 	}
 
 	for _, test := range tests {
 		if err := ctx.Err(); err != nil {
-			return sn, failed
+			return suiteResult
 		}
 
-		skipped := false
 		for _, action := range test.Input.Actions {
-			testData := sn.Add(test.Name.PrincipalKey, test.Name.ResourceKey, action).Details
-
-			if test.Skip || !shouldRun(fmt.Sprintf("%s/%s", ts.Name, test.Name.String())) {
-				testData.Skipped = true
-				skipped = true
-				continue
-			}
-
-			inputs := []*enginev1.CheckInput{{RequestId: test.Input.RequestId, Resource: test.Input.Resource, Principal: test.Input.Principal, Actions: []string{action}, AuxData: test.Input.AuxData}}
-
-			traceBuf := new(bytes.Buffer)
-			actual, err := eng.Check(ctx, inputs, engine.WithWriterTraceSink(traceBuf))
-			if err != nil {
-				testData.Failed = true
-				testData.Error = err.Error()
-				testData.EngineTrace = traceBuf.String()
-				failed = true
-				continue
-			}
-
-			if len(actual) == 0 {
-				testData.Failed = true
-				testData.Error = "Empty response from server"
-				failed = true
-				continue
-			}
-
-			if test.Expected[action].String() != actual[0].Actions[action].Effect.String() {
-				testData.Failed = true
-				testData.Error = "Expected result and actual result differs"
-				testData.Outcome = &Outcome{
-					Expected: test.Expected[action],
-					Actual:   actual[0].Actions[action].Effect,
-				}
-				testData.EngineTrace = traceBuf.String()
-				failed = true
-			}
-		}
-
-		if skipped {
-			continue
+			testResult := runTest(ctx, eng, test, action, shouldRun, suite, trace)
+			addTestResult(suiteResult, test.Name.PrincipalKey, test.Name.ResourceKey, action, testResult)
 		}
 	}
 
-	return sn, failed
+	return suiteResult
+}
+
+func runTest(ctx context.Context, eng *engine.Engine, test *policyv1.Test, action string, shouldRun func(string) bool, suite *policyv1.TestSuite, trace bool) *policyv1.TestResults_Details {
+	details := &policyv1.TestResults_Details{}
+
+	if test.Skip || !shouldRun(fmt.Sprintf("%s/%s", suite.Name, test.Name.String())) {
+		details.Result = policyv1.TestResults_RESULT_SKIPPED
+		return details
+	}
+
+	inputs := []*enginev1.CheckInput{{
+		RequestId: test.Input.RequestId,
+		Resource:  test.Input.Resource,
+		Principal: test.Input.Principal,
+		Actions:   []string{action},
+		AuxData:   test.Input.AuxData,
+	}}
+
+	actual, traces, err := performCheck(ctx, eng, inputs, trace)
+	details.EngineTrace = traces
+
+	if err != nil {
+		details.Result = policyv1.TestResults_RESULT_ERRORED
+		details.Outcome = &policyv1.TestResults_Details_Error{Error: err.Error()}
+		return details
+	}
+
+	if len(actual) == 0 {
+		details.Result = policyv1.TestResults_RESULT_ERRORED
+		details.Outcome = &policyv1.TestResults_Details_Error{Error: "Empty response from server"}
+		return details
+	}
+
+	if test.Expected[action] != actual[0].Actions[action].Effect {
+		details.Result = policyv1.TestResults_RESULT_FAILED
+		details.Outcome = &policyv1.TestResults_Details_Failure{
+			Failure: &policyv1.TestResults_Failure{
+				Expected: test.Expected[action],
+				Actual:   actual[0].Actions[action].Effect,
+			},
+		}
+		return details
+	}
+
+	details.Result = policyv1.TestResults_RESULT_PASSED
+	return details
+}
+
+func performCheck(ctx context.Context, eng *engine.Engine, inputs []*enginev1.CheckInput, trace bool) ([]*enginev1.CheckOutput, []*enginev1.Trace, error) {
+	if !trace {
+		output, err := eng.Check(ctx, inputs)
+		return output, nil, err
+	}
+
+	traceCollector := tracer.NewCollector()
+	output, err := eng.Check(ctx, inputs, engine.WithTraceSink(traceCollector))
+	return output, traceCollector.Traces, err
+}
+
+func addTestResult(suite *policyv1.TestResults_Suite, principal, resource, action string, details *policyv1.TestResults_Details) {
+	addAction(addResource(addPrincipal(suite, principal), resource), action).Details = details
+	if details.Result > suite.Result {
+		suite.Result = details.Result
+	}
+}
+
+func addPrincipal(suite *policyv1.TestResults_Suite, name string) *policyv1.TestResults_Principal {
+	for _, principal := range suite.Principals {
+		if principal.Name == name {
+			return principal
+		}
+	}
+
+	principal := &policyv1.TestResults_Principal{Name: name}
+	suite.Principals = append(suite.Principals, principal)
+	return principal
+}
+
+func addResource(principal *policyv1.TestResults_Principal, name string) *policyv1.TestResults_Resource {
+	for _, resource := range principal.Resources {
+		if resource.Name == name {
+			return resource
+		}
+	}
+
+	resource := &policyv1.TestResults_Resource{Name: name}
+	principal.Resources = append(principal.Resources, resource)
+	return resource
+}
+
+func addAction(resource *policyv1.TestResults_Resource, name string) *policyv1.TestResults_Action {
+	for _, action := range resource.Actions {
+		if action.Name == name {
+			return action
+		}
+	}
+
+	action := &policyv1.TestResults_Action{Name: name, Details: &policyv1.TestResults_Details{}}
+	resource.Actions = append(resource.Actions, action)
+	return action
 }
 
 func (tf *testFixture) getTests(suite *policyv1.TestSuite) ([]*policyv1.Test, error) {
