@@ -7,6 +7,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"io"
 	"path/filepath"
 	"testing"
 
@@ -22,6 +23,8 @@ import (
 	"github.com/cerbos/cerbos/internal/audit"
 	"github.com/cerbos/cerbos/internal/audit/local"
 	"github.com/cerbos/cerbos/internal/compile"
+	"github.com/cerbos/cerbos/internal/engine/tracer"
+	"github.com/cerbos/cerbos/internal/printer"
 	"github.com/cerbos/cerbos/internal/schema"
 	"github.com/cerbos/cerbos/internal/storage/disk"
 	"github.com/cerbos/cerbos/internal/test"
@@ -41,10 +44,9 @@ func TestCheck(t *testing.T) {
 		tcase := tcase
 		t.Run(tcase.Name, func(t *testing.T) {
 			tc := readTestCase(t, tcase.Input)
-			buf := new(bytes.Buffer)
 
-			haveOutputs, err := eng.Check(context.Background(), tc.Inputs, WithWriterTraceSink(buf))
-			t.Logf("TRACE =>\n%s", buf.String())
+			traceCollector := tracer.NewCollector()
+			haveOutputs, err := eng.Check(context.Background(), tc.Inputs, WithTraceSink(traceCollector))
 
 			if tc.WantError {
 				require.Error(t, err)
@@ -78,10 +80,8 @@ func TestSchemaValidation(t *testing.T) {
 				tcase := tcase
 				t.Run(tcase.Name, func(t *testing.T) {
 					tc := readTestCase(t, tcase.Input)
-					buf := new(bytes.Buffer)
 
-					haveOutputs, err := eng.Check(context.Background(), tc.Inputs, WithWriterTraceSink(buf))
-					t.Logf("TRACE =>\n%s", buf.String())
+					haveOutputs, err := eng.Check(context.Background(), tc.Inputs, WithTraceSink(newTestTraceSink(t)))
 
 					if tc.WantError {
 						require.Error(t, err)
@@ -212,11 +212,8 @@ func TestSatisfiesCondition(t *testing.T) {
 			cond, err := compile.Condition(&policyv1.Condition{Condition: &policyv1.Condition_Match{Match: tc.Condition}})
 			require.NoError(t, err)
 
-			buf := new(bytes.Buffer)
-			tcr := newTracer(NewWriterTraceSink(buf))
-
-			retVal, err := satisfiesCondition(tcr.beginTrace(conditionComponent), cond, nil, tc.Input)
-			t.Logf("TRACE =>\n%s", buf.String())
+			tctx := tracer.Start(newTestTraceSink(t))
+			retVal, err := satisfiesCondition(tctx.StartCondition(), cond, nil, tc.Input)
 
 			if tc.WantError {
 				require.Error(t, err)
@@ -288,4 +285,23 @@ func TestQueryPlan(t *testing.T) {
 			}
 		})
 	}
+}
+
+type testTraceSink struct {
+	t *testing.T
+}
+
+func newTestTraceSink(t *testing.T) *testTraceSink {
+	t.Helper()
+	return &testTraceSink{t: t}
+}
+
+func (*testTraceSink) Enabled() bool {
+	return true
+}
+
+func (s *testTraceSink) AddTrace(trace *enginev1.Trace) {
+	var stdout bytes.Buffer
+	printer.New(&stdout, io.Discard).PrintTrace(trace)
+	s.t.Logf("%s\n", stdout.String())
 }

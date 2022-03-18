@@ -46,7 +46,7 @@
                   "$ref": "#/definitions/v1ListAuditLogEntriesResponse"
                 },
                 "error": {
-                  "$ref": "#/definitions/rpcStatus"
+                  "$ref": "#/definitions/googlerpcStatus"
                 }
               },
               "title": "Stream result of v1ListAuditLogEntriesResponse"
@@ -55,7 +55,7 @@
           "default": {
             "description": "An unexpected error response.",
             "schema": {
-              "$ref": "#/definitions/rpcStatus"
+              "$ref": "#/definitions/googlerpcStatus"
             }
           }
         },
@@ -136,7 +136,7 @@
           "default": {
             "description": "An unexpected error response.",
             "schema": {
-              "$ref": "#/definitions/rpcStatus"
+              "$ref": "#/definitions/googlerpcStatus"
             }
           }
         },
@@ -164,7 +164,7 @@
           "default": {
             "description": "An unexpected error response.",
             "schema": {
-              "$ref": "#/definitions/rpcStatus"
+              "$ref": "#/definitions/googlerpcStatus"
             }
           }
         },
@@ -203,7 +203,7 @@
           "default": {
             "description": "An unexpected error response.",
             "schema": {
-              "$ref": "#/definitions/rpcStatus"
+              "$ref": "#/definitions/googlerpcStatus"
             }
           }
         },
@@ -239,7 +239,7 @@
           "default": {
             "description": "An unexpected error response.",
             "schema": {
-              "$ref": "#/definitions/rpcStatus"
+              "$ref": "#/definitions/googlerpcStatus"
             }
           }
         },
@@ -277,7 +277,7 @@
           "default": {
             "description": "An unexpected error response.",
             "schema": {
-              "$ref": "#/definitions/rpcStatus"
+              "$ref": "#/definitions/googlerpcStatus"
             }
           }
         },
@@ -316,7 +316,7 @@
           "default": {
             "description": "An unexpected error response.",
             "schema": {
-              "$ref": "#/definitions/rpcStatus"
+              "$ref": "#/definitions/googlerpcStatus"
             }
           }
         },
@@ -355,7 +355,7 @@
           "default": {
             "description": "An unexpected error response.",
             "schema": {
-              "$ref": "#/definitions/rpcStatus"
+              "$ref": "#/definitions/googlerpcStatus"
             }
           }
         },
@@ -391,7 +391,7 @@
           "default": {
             "description": "An unexpected error response.",
             "schema": {
-              "$ref": "#/definitions/rpcStatus"
+              "$ref": "#/definitions/googlerpcStatus"
             }
           }
         },
@@ -429,7 +429,7 @@
           "default": {
             "description": "An unexpected error response.",
             "schema": {
-              "$ref": "#/definitions/rpcStatus"
+              "$ref": "#/definitions/googlerpcStatus"
             }
           }
         },
@@ -458,7 +458,7 @@
           "default": {
             "description": "An unexpected error response.",
             "schema": {
-              "$ref": "#/definitions/rpcStatus"
+              "$ref": "#/definitions/googlerpcStatus"
             }
           }
         },
@@ -492,7 +492,7 @@
           "default": {
             "description": "An unexpected error response.",
             "schema": {
-              "$ref": "#/definitions/rpcStatus"
+              "$ref": "#/definitions/googlerpcStatus"
             }
           }
         },
@@ -524,7 +524,7 @@
           "default": {
             "description": "An unexpected error response.",
             "schema": {
-              "$ref": "#/definitions/rpcStatus"
+              "$ref": "#/definitions/googlerpcStatus"
             }
           }
         },
@@ -556,7 +556,7 @@
           "default": {
             "description": "An unexpected error response.",
             "schema": {
-              "$ref": "#/definitions/rpcStatus"
+              "$ref": "#/definitions/googlerpcStatus"
             }
           }
         },
@@ -588,7 +588,7 @@
           "default": {
             "description": "An unexpected error response.",
             "schema": {
-              "$ref": "#/definitions/rpcStatus"
+              "$ref": "#/definitions/googlerpcStatus"
             }
           }
         },
@@ -622,7 +622,7 @@
           "default": {
             "description": "An unexpected error response.",
             "schema": {
-              "$ref": "#/definitions/rpcStatus"
+              "$ref": "#/definitions/googlerpcStatus"
             }
           }
         },
@@ -646,7 +646,7 @@
           "default": {
             "description": "An unexpected error response.",
             "schema": {
-              "$ref": "#/definitions/rpcStatus"
+              "$ref": "#/definitions/googlerpcStatus"
             }
           }
         },
@@ -879,23 +879,6 @@
         }
       }
     },
-    "PrincipalRuleAction": {
-      "type": "object",
-      "properties": {
-        "action": {
-          "type": "string"
-        },
-        "condition": {
-          "$ref": "#/definitions/v1Condition"
-        },
-        "effect": {
-          "$ref": "#/definitions/v1Effect"
-        },
-        "name": {
-          "type": "string"
-        }
-      }
-    },
     "ResourcesQueryPlanResponseExpression": {
       "type": "object",
       "properties": {
@@ -993,7 +976,7 @@
           ]
         },
         "principal": {
-          "$ref": "#/definitions/v1Principal"
+          "$ref": "#/definitions/enginev1Principal"
         },
         "resource": {
           "$ref": "#/definitions/v1ResourcesQueryPlanRequestResource"
@@ -1009,6 +992,62 @@
       "description": "PDP Resources Query Plan Request",
       "required": [
         "action"
+      ]
+    },
+    "enginev1Principal": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "example": "bugs_bunny",
+          "description": "ID of the principal",
+          "required": [
+            "id"
+          ]
+        },
+        "policyVersion": {
+          "type": "string",
+          "example": "default",
+          "description": "The policy version to use to evaluate this request. If not specified, will default to the server-configured default version.",
+          "pattern": "^[[:word:]]*$"
+        },
+        "roles": {
+          "type": "array",
+          "example": [
+            "user"
+          ],
+          "items": {
+            "type": "string"
+          },
+          "description": "Roles assigned to this principal from your identity management system.",
+          "pattern": "^[[:word:]\\-\\.]+$",
+          "maxItems": 20,
+          "minItems": 1,
+          "uniqueItems": true,
+          "required": [
+            "roles"
+          ]
+        },
+        "attr": {
+          "type": "object",
+          "example": {
+            "beta_tester": true
+          },
+          "additionalProperties": {
+            "type": "object"
+          },
+          "description": "Key-value pairs of contextual data about this principal that should be used during policy evaluation."
+        },
+        "scope": {
+          "type": "string",
+          "description": "A dot-separated scope that describes the hierarchy this principal belongs to. This is used for determining policy inheritance.",
+          "pattern": "^([[:alpha:]][[:word:]\\-]+(\\.[[:alpha:]][[:word:]\\-]*)*)*$"
+        }
+      },
+      "description": "A person or application attempting to perform the actions on the set of resources.",
+      "required": [
+        "id",
+        "roles"
       ]
     },
     "enginev1Resource": {
@@ -1058,24 +1097,7 @@
         "id"
       ]
     },
-    "protobufAny": {
-      "type": "object",
-      "properties": {
-        "@type": {
-          "type": "string"
-        }
-      },
-      "additionalProperties": {}
-    },
-    "protobufNullValue": {
-      "type": "string",
-      "enum": [
-        "NULL_VALUE"
-      ],
-      "default": "NULL_VALUE",
-      "description": "`NullValue` is a singleton enumeration to represent the null value for the\n`Value` type union.\n\n The JSON representation for `NullValue` is JSON `null`.\n\n - NULL_VALUE: Null value."
-    },
-    "rpcStatus": {
+    "googlerpcStatus": {
       "type": "object",
       "properties": {
         "code": {
@@ -1092,6 +1114,23 @@
           }
         }
       }
+    },
+    "protobufAny": {
+      "type": "object",
+      "properties": {
+        "@type": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": {}
+    },
+    "protobufNullValue": {
+      "type": "string",
+      "enum": [
+        "NULL_VALUE"
+      ],
+      "default": "NULL_VALUE",
+      "description": "`NullValue` is a singleton enumeration to represent the null value for the\n`Value` type union.\n\n The JSON representation for `NullValue` is JSON `null`.\n\n - NULL_VALUE: Null value."
     },
     "schemav1Schema": {
       "type": "object",
@@ -1228,7 +1267,7 @@
           "$ref": "#/definitions/enginev1Resource"
         },
         "principal": {
-          "$ref": "#/definitions/v1Principal"
+          "$ref": "#/definitions/enginev1Principal"
         },
         "actions": {
           "type": "array",
@@ -1285,7 +1324,7 @@
           "description": "Optional application-specific ID useful for correlating logs for analysis."
         },
         "principal": {
-          "$ref": "#/definitions/v1Principal"
+          "$ref": "#/definitions/enginev1Principal"
         },
         "resources": {
           "type": "array",
@@ -1406,7 +1445,7 @@
           ]
         },
         "principal": {
-          "$ref": "#/definitions/v1Principal"
+          "$ref": "#/definitions/enginev1Principal"
         },
         "resource": {
           "$ref": "#/definitions/v1ResourceSet"
@@ -1740,7 +1779,7 @@
           ]
         },
         "principal": {
-          "$ref": "#/definitions/v1Principal"
+          "$ref": "#/definitions/enginev1Principal"
         },
         "resource": {
           "$ref": "#/definitions/enginev1Resource"
@@ -1942,62 +1981,6 @@
         "contents"
       ]
     },
-    "v1Principal": {
-      "type": "object",
-      "properties": {
-        "id": {
-          "type": "string",
-          "example": "bugs_bunny",
-          "description": "ID of the principal",
-          "required": [
-            "id"
-          ]
-        },
-        "policyVersion": {
-          "type": "string",
-          "example": "default",
-          "description": "The policy version to use to evaluate this request. If not specified, will default to the server-configured default version.",
-          "pattern": "^[[:word:]]*$"
-        },
-        "roles": {
-          "type": "array",
-          "example": [
-            "user"
-          ],
-          "items": {
-            "type": "string"
-          },
-          "description": "Roles assigned to this principal from your identity management system.",
-          "pattern": "^[[:word:]\\-\\.]+$",
-          "maxItems": 20,
-          "minItems": 1,
-          "uniqueItems": true,
-          "required": [
-            "roles"
-          ]
-        },
-        "attr": {
-          "type": "object",
-          "example": {
-            "beta_tester": true
-          },
-          "additionalProperties": {
-            "type": "object"
-          },
-          "description": "Key-value pairs of contextual data about this principal that should be used during policy evaluation."
-        },
-        "scope": {
-          "type": "string",
-          "description": "A dot-separated scope that describes the hierarchy this principal belongs to. This is used for determining policy inheritance.",
-          "pattern": "^([[:alpha:]][[:word:]\\-]+(\\.[[:alpha:]][[:word:]\\-]*)*)*$"
-        }
-      },
-      "description": "A person or application attempting to perform the actions on the set of resources.",
-      "required": [
-        "id",
-        "roles"
-      ]
-    },
     "v1PrincipalPolicy": {
       "type": "object",
       "properties": {
@@ -2027,8 +2010,25 @@
         "actions": {
           "type": "array",
           "items": {
-            "$ref": "#/definitions/PrincipalRuleAction"
+            "$ref": "#/definitions/v1PrincipalRuleAction"
           }
+        }
+      }
+    },
+    "v1PrincipalRuleAction": {
+      "type": "object",
+      "properties": {
+        "action": {
+          "type": "string"
+        },
+        "condition": {
+          "$ref": "#/definitions/v1Condition"
+        },
+        "effect": {
+          "$ref": "#/definitions/v1Effect"
+        },
+        "name": {
+          "type": "string"
         }
       }
     },

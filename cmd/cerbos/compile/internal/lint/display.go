@@ -4,10 +4,10 @@
 package lint
 
 import (
-	"github.com/cerbos/cerbos/cmd/cerbos/compile/internal/colored"
 	internalerrors "github.com/cerbos/cerbos/cmd/cerbos/compile/internal/errors"
 	"github.com/cerbos/cerbos/cmd/cerbos/compile/internal/flagset"
-	"github.com/cerbos/cerbos/cmd/cerbos/compile/internal/printer"
+	"github.com/cerbos/cerbos/internal/printer"
+	"github.com/cerbos/cerbos/internal/printer/colored"
 	"github.com/cerbos/cerbos/internal/storage/index"
 )
 

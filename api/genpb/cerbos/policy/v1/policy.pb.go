@@ -27,6 +27,61 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
+type TestResults_Result int32
+
+const (
+	TestResults_RESULT_UNSPECIFIED TestResults_Result = 0
+	TestResults_RESULT_SKIPPED     TestResults_Result = 1
+	TestResults_RESULT_PASSED      TestResults_Result = 2
+	TestResults_RESULT_FAILED      TestResults_Result = 3
+	TestResults_RESULT_ERRORED     TestResults_Result = 4
+)
+
+// Enum value maps for TestResults_Result.
+var (
+	TestResults_Result_name = map[int32]string{
+		0: "RESULT_UNSPECIFIED",
+		1: "RESULT_SKIPPED",
+		2: "RESULT_PASSED",
+		3: "RESULT_FAILED",
+		4: "RESULT_ERRORED",
+	}
+	TestResults_Result_value = map[string]int32{
+		"RESULT_UNSPECIFIED": 0,
+		"RESULT_SKIPPED":     1,
+		"RESULT_PASSED":      2,
+		"RESULT_FAILED":      3,
+		"RESULT_ERRORED":     4,
+	}
+)
+
+func (x TestResults_Result) Enum() *TestResults_Result {
+	p := new(TestResults_Result)
+	*p = x
+	return p
+}
+
+func (x TestResults_Result) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (TestResults_Result) Descriptor() protoreflect.EnumDescriptor {
+	return file_cerbos_policy_v1_policy_proto_enumTypes[0].Descriptor()
+}
+
+func (TestResults_Result) Type() protoreflect.EnumType {
+	return &file_cerbos_policy_v1_policy_proto_enumTypes[0]
+}
+
+func (x TestResults_Result) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use TestResults_Result.Descriptor instead.
+func (TestResults_Result) EnumDescriptor() ([]byte, []int) {
+	return file_cerbos_policy_v1_policy_proto_rawDescGZIP(), []int{15, 0}
+}
+
 type Policy struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -1208,6 +1263,61 @@ func (x *Test) GetExpected() map[string]v1.Effect {
 	return nil
 }
 
+type TestResults struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Suites []*TestResults_Suite `protobuf:"bytes,1,rep,name=suites,proto3" json:"suites,omitempty"`
+	Result TestResults_Result   `protobuf:"varint,2,opt,name=result,proto3,enum=cerbos.policy.v1.TestResults_Result" json:"result,omitempty"`
+}
+
+func (x *TestResults) Reset() {
+	*x = TestResults{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_cerbos_policy_v1_policy_proto_msgTypes[15]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *TestResults) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*TestResults) ProtoMessage() {}
+
+func (x *TestResults) ProtoReflect() protoreflect.Message {
+	mi := &file_cerbos_policy_v1_policy_proto_msgTypes[15]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use TestResults.ProtoReflect.Descriptor instead.
+func (*TestResults) Descriptor() ([]byte, []int) {
+	return file_cerbos_policy_v1_policy_proto_rawDescGZIP(), []int{15}
+}
+
+func (x *TestResults) GetSuites() []*TestResults_Suite {
+	if x != nil {
+		return x.Suites
+	}
+	return nil
+}
+
+func (x *TestResults) GetResult() TestResults_Result {
+	if x != nil {
+		return x.Result
+	}
+	return TestResults_RESULT_UNSPECIFIED
+}
+
 type PrincipalRule_Action struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -1222,7 +1332,7 @@ type PrincipalRule_Action struct {
 func (x *PrincipalRule_Action) Reset() {
 	*x = PrincipalRule_Action{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_cerbos_policy_v1_policy_proto_msgTypes[17]
+		mi := &file_cerbos_policy_v1_policy_proto_msgTypes[18]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1235,7 +1345,7 @@ func (x *PrincipalRule_Action) String() string {
 func (*PrincipalRule_Action) ProtoMessage() {}
 
 func (x *PrincipalRule_Action) ProtoReflect() protoreflect.Message {
-	mi := &file_cerbos_policy_v1_policy_proto_msgTypes[17]
+	mi := &file_cerbos_policy_v1_policy_proto_msgTypes[18]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1290,7 +1400,7 @@ type Match_ExprList struct {
 func (x *Match_ExprList) Reset() {
 	*x = Match_ExprList{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_cerbos_policy_v1_policy_proto_msgTypes[18]
+		mi := &file_cerbos_policy_v1_policy_proto_msgTypes[19]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1303,7 +1413,7 @@ func (x *Match_ExprList) String() string {
 func (*Match_ExprList) ProtoMessage() {}
 
 func (x *Match_ExprList) ProtoReflect() protoreflect.Message {
-	mi := &file_cerbos_policy_v1_policy_proto_msgTypes[18]
+	mi := &file_cerbos_policy_v1_policy_proto_msgTypes[19]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1337,7 +1447,7 @@ type Schemas_IgnoreWhen struct {
 func (x *Schemas_IgnoreWhen) Reset() {
 	*x = Schemas_IgnoreWhen{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_cerbos_policy_v1_policy_proto_msgTypes[19]
+		mi := &file_cerbos_policy_v1_policy_proto_msgTypes[20]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1350,7 +1460,7 @@ func (x *Schemas_IgnoreWhen) String() string {
 func (*Schemas_IgnoreWhen) ProtoMessage() {}
 
 func (x *Schemas_IgnoreWhen) ProtoReflect() protoreflect.Message {
-	mi := &file_cerbos_policy_v1_policy_proto_msgTypes[19]
+	mi := &file_cerbos_policy_v1_policy_proto_msgTypes[20]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1385,7 +1495,7 @@ type Schemas_Schema struct {
 func (x *Schemas_Schema) Reset() {
 	*x = Schemas_Schema{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_cerbos_policy_v1_policy_proto_msgTypes[20]
+		mi := &file_cerbos_policy_v1_policy_proto_msgTypes[21]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1398,7 +1508,7 @@ func (x *Schemas_Schema) String() string {
 func (*Schemas_Schema) ProtoMessage() {}
 
 func (x *Schemas_Schema) ProtoReflect() protoreflect.Message {
-	mi := &file_cerbos_policy_v1_policy_proto_msgTypes[20]
+	mi := &file_cerbos_policy_v1_policy_proto_msgTypes[21]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1439,7 +1549,7 @@ type TestFixture_Principals struct {
 func (x *TestFixture_Principals) Reset() {
 	*x = TestFixture_Principals{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_cerbos_policy_v1_policy_proto_msgTypes[21]
+		mi := &file_cerbos_policy_v1_policy_proto_msgTypes[22]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1452,7 +1562,7 @@ func (x *TestFixture_Principals) String() string {
 func (*TestFixture_Principals) ProtoMessage() {}
 
 func (x *TestFixture_Principals) ProtoReflect() protoreflect.Message {
-	mi := &file_cerbos_policy_v1_policy_proto_msgTypes[21]
+	mi := &file_cerbos_policy_v1_policy_proto_msgTypes[22]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1486,7 +1596,7 @@ type TestFixture_Resources struct {
 func (x *TestFixture_Resources) Reset() {
 	*x = TestFixture_Resources{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_cerbos_policy_v1_policy_proto_msgTypes[22]
+		mi := &file_cerbos_policy_v1_policy_proto_msgTypes[23]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1499,7 +1609,7 @@ func (x *TestFixture_Resources) String() string {
 func (*TestFixture_Resources) ProtoMessage() {}
 
 func (x *TestFixture_Resources) ProtoReflect() protoreflect.Message {
-	mi := &file_cerbos_policy_v1_policy_proto_msgTypes[22]
+	mi := &file_cerbos_policy_v1_policy_proto_msgTypes[23]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1533,7 +1643,7 @@ type TestFixture_AuxData struct {
 func (x *TestFixture_AuxData) Reset() {
 	*x = TestFixture_AuxData{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_cerbos_policy_v1_policy_proto_msgTypes[23]
+		mi := &file_cerbos_policy_v1_policy_proto_msgTypes[24]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1546,7 +1656,7 @@ func (x *TestFixture_AuxData) String() string {
 func (*TestFixture_AuxData) ProtoMessage() {}
 
 func (x *TestFixture_AuxData) ProtoReflect() protoreflect.Message {
-	mi := &file_cerbos_policy_v1_policy_proto_msgTypes[23]
+	mi := &file_cerbos_policy_v1_policy_proto_msgTypes[24]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1583,7 +1693,7 @@ type TestTable_Input struct {
 func (x *TestTable_Input) Reset() {
 	*x = TestTable_Input{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_cerbos_policy_v1_policy_proto_msgTypes[30]
+		mi := &file_cerbos_policy_v1_policy_proto_msgTypes[31]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1596,7 +1706,7 @@ func (x *TestTable_Input) String() string {
 func (*TestTable_Input) ProtoMessage() {}
 
 func (x *TestTable_Input) ProtoReflect() protoreflect.Message {
-	mi := &file_cerbos_policy_v1_policy_proto_msgTypes[30]
+	mi := &file_cerbos_policy_v1_policy_proto_msgTypes[31]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1653,7 +1763,7 @@ type TestTable_Expectation struct {
 func (x *TestTable_Expectation) Reset() {
 	*x = TestTable_Expectation{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_cerbos_policy_v1_policy_proto_msgTypes[31]
+		mi := &file_cerbos_policy_v1_policy_proto_msgTypes[32]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1666,7 +1776,7 @@ func (x *TestTable_Expectation) String() string {
 func (*TestTable_Expectation) ProtoMessage() {}
 
 func (x *TestTable_Expectation) ProtoReflect() protoreflect.Message {
-	mi := &file_cerbos_policy_v1_policy_proto_msgTypes[31]
+	mi := &file_cerbos_policy_v1_policy_proto_msgTypes[32]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1716,7 +1826,7 @@ type Test_TestName struct {
 func (x *Test_TestName) Reset() {
 	*x = Test_TestName{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_cerbos_policy_v1_policy_proto_msgTypes[33]
+		mi := &file_cerbos_policy_v1_policy_proto_msgTypes[34]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1729,7 +1839,7 @@ func (x *Test_TestName) String() string {
 func (*Test_TestName) ProtoMessage() {}
 
 func (x *Test_TestName) ProtoReflect() protoreflect.Message {
-	mi := &file_cerbos_policy_v1_policy_proto_msgTypes[33]
+	mi := &file_cerbos_policy_v1_policy_proto_msgTypes[34]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1764,6 +1874,401 @@ func (x *Test_TestName) GetResourceKey() string {
 		return x.ResourceKey
 	}
 	return ""
+}
+
+type TestResults_Suite struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	File       string                   `protobuf:"bytes,1,opt,name=file,proto3" json:"file,omitempty"`
+	Name       string                   `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
+	Principals []*TestResults_Principal `protobuf:"bytes,3,rep,name=principals,proto3" json:"principals,omitempty"`
+	Result     TestResults_Result       `protobuf:"varint,4,opt,name=result,proto3,enum=cerbos.policy.v1.TestResults_Result" json:"result,omitempty"`
+	Error      string                   `protobuf:"bytes,5,opt,name=error,proto3" json:"error,omitempty"`
+}
+
+func (x *TestResults_Suite) Reset() {
+	*x = TestResults_Suite{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_cerbos_policy_v1_policy_proto_msgTypes[36]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *TestResults_Suite) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*TestResults_Suite) ProtoMessage() {}
+
+func (x *TestResults_Suite) ProtoReflect() protoreflect.Message {
+	mi := &file_cerbos_policy_v1_policy_proto_msgTypes[36]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use TestResults_Suite.ProtoReflect.Descriptor instead.
+func (*TestResults_Suite) Descriptor() ([]byte, []int) {
+	return file_cerbos_policy_v1_policy_proto_rawDescGZIP(), []int{15, 0}
+}
+
+func (x *TestResults_Suite) GetFile() string {
+	if x != nil {
+		return x.File
+	}
+	return ""
+}
+
+func (x *TestResults_Suite) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+func (x *TestResults_Suite) GetPrincipals() []*TestResults_Principal {
+	if x != nil {
+		return x.Principals
+	}
+	return nil
+}
+
+func (x *TestResults_Suite) GetResult() TestResults_Result {
+	if x != nil {
+		return x.Result
+	}
+	return TestResults_RESULT_UNSPECIFIED
+}
+
+func (x *TestResults_Suite) GetError() string {
+	if x != nil {
+		return x.Error
+	}
+	return ""
+}
+
+type TestResults_Principal struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Name      string                  `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	Resources []*TestResults_Resource `protobuf:"bytes,2,rep,name=resources,proto3" json:"resources,omitempty"`
+}
+
+func (x *TestResults_Principal) Reset() {
+	*x = TestResults_Principal{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_cerbos_policy_v1_policy_proto_msgTypes[37]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *TestResults_Principal) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*TestResults_Principal) ProtoMessage() {}
+
+func (x *TestResults_Principal) ProtoReflect() protoreflect.Message {
+	mi := &file_cerbos_policy_v1_policy_proto_msgTypes[37]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use TestResults_Principal.ProtoReflect.Descriptor instead.
+func (*TestResults_Principal) Descriptor() ([]byte, []int) {
+	return file_cerbos_policy_v1_policy_proto_rawDescGZIP(), []int{15, 1}
+}
+
+func (x *TestResults_Principal) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+func (x *TestResults_Principal) GetResources() []*TestResults_Resource {
+	if x != nil {
+		return x.Resources
+	}
+	return nil
+}
+
+type TestResults_Resource struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Name    string                `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	Actions []*TestResults_Action `protobuf:"bytes,2,rep,name=actions,proto3" json:"actions,omitempty"`
+}
+
+func (x *TestResults_Resource) Reset() {
+	*x = TestResults_Resource{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_cerbos_policy_v1_policy_proto_msgTypes[38]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *TestResults_Resource) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*TestResults_Resource) ProtoMessage() {}
+
+func (x *TestResults_Resource) ProtoReflect() protoreflect.Message {
+	mi := &file_cerbos_policy_v1_policy_proto_msgTypes[38]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use TestResults_Resource.ProtoReflect.Descriptor instead.
+func (*TestResults_Resource) Descriptor() ([]byte, []int) {
+	return file_cerbos_policy_v1_policy_proto_rawDescGZIP(), []int{15, 2}
+}
+
+func (x *TestResults_Resource) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+func (x *TestResults_Resource) GetActions() []*TestResults_Action {
+	if x != nil {
+		return x.Actions
+	}
+	return nil
+}
+
+type TestResults_Action struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Name    string               `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	Details *TestResults_Details `protobuf:"bytes,2,opt,name=details,proto3" json:"details,omitempty"`
+}
+
+func (x *TestResults_Action) Reset() {
+	*x = TestResults_Action{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_cerbos_policy_v1_policy_proto_msgTypes[39]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *TestResults_Action) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*TestResults_Action) ProtoMessage() {}
+
+func (x *TestResults_Action) ProtoReflect() protoreflect.Message {
+	mi := &file_cerbos_policy_v1_policy_proto_msgTypes[39]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use TestResults_Action.ProtoReflect.Descriptor instead.
+func (*TestResults_Action) Descriptor() ([]byte, []int) {
+	return file_cerbos_policy_v1_policy_proto_rawDescGZIP(), []int{15, 3}
+}
+
+func (x *TestResults_Action) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+func (x *TestResults_Action) GetDetails() *TestResults_Details {
+	if x != nil {
+		return x.Details
+	}
+	return nil
+}
+
+type TestResults_Details struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Result TestResults_Result `protobuf:"varint,1,opt,name=result,proto3,enum=cerbos.policy.v1.TestResults_Result" json:"result,omitempty"`
+	// Types that are assignable to Outcome:
+	//	*TestResults_Details_Failure
+	//	*TestResults_Details_Error
+	Outcome     isTestResults_Details_Outcome `protobuf_oneof:"outcome"`
+	EngineTrace []*v11.Trace                  `protobuf:"bytes,4,rep,name=engine_trace,json=engineTrace,proto3" json:"engine_trace,omitempty"`
+}
+
+func (x *TestResults_Details) Reset() {
+	*x = TestResults_Details{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_cerbos_policy_v1_policy_proto_msgTypes[40]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *TestResults_Details) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*TestResults_Details) ProtoMessage() {}
+
+func (x *TestResults_Details) ProtoReflect() protoreflect.Message {
+	mi := &file_cerbos_policy_v1_policy_proto_msgTypes[40]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use TestResults_Details.ProtoReflect.Descriptor instead.
+func (*TestResults_Details) Descriptor() ([]byte, []int) {
+	return file_cerbos_policy_v1_policy_proto_rawDescGZIP(), []int{15, 4}
+}
+
+func (x *TestResults_Details) GetResult() TestResults_Result {
+	if x != nil {
+		return x.Result
+	}
+	return TestResults_RESULT_UNSPECIFIED
+}
+
+func (m *TestResults_Details) GetOutcome() isTestResults_Details_Outcome {
+	if m != nil {
+		return m.Outcome
+	}
+	return nil
+}
+
+func (x *TestResults_Details) GetFailure() *TestResults_Failure {
+	if x, ok := x.GetOutcome().(*TestResults_Details_Failure); ok {
+		return x.Failure
+	}
+	return nil
+}
+
+func (x *TestResults_Details) GetError() string {
+	if x, ok := x.GetOutcome().(*TestResults_Details_Error); ok {
+		return x.Error
+	}
+	return ""
+}
+
+func (x *TestResults_Details) GetEngineTrace() []*v11.Trace {
+	if x != nil {
+		return x.EngineTrace
+	}
+	return nil
+}
+
+type isTestResults_Details_Outcome interface {
+	isTestResults_Details_Outcome()
+}
+
+type TestResults_Details_Failure struct {
+	Failure *TestResults_Failure `protobuf:"bytes,2,opt,name=failure,proto3,oneof"`
+}
+
+type TestResults_Details_Error struct {
+	Error string `protobuf:"bytes,3,opt,name=error,proto3,oneof"`
+}
+
+func (*TestResults_Details_Failure) isTestResults_Details_Outcome() {}
+
+func (*TestResults_Details_Error) isTestResults_Details_Outcome() {}
+
+type TestResults_Failure struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Expected v1.Effect `protobuf:"varint,1,opt,name=expected,proto3,enum=cerbos.effect.v1.Effect" json:"expected,omitempty"`
+	Actual   v1.Effect `protobuf:"varint,2,opt,name=actual,proto3,enum=cerbos.effect.v1.Effect" json:"actual,omitempty"`
+}
+
+func (x *TestResults_Failure) Reset() {
+	*x = TestResults_Failure{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_cerbos_policy_v1_policy_proto_msgTypes[41]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *TestResults_Failure) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*TestResults_Failure) ProtoMessage() {}
+
+func (x *TestResults_Failure) ProtoReflect() protoreflect.Message {
+	mi := &file_cerbos_policy_v1_policy_proto_msgTypes[41]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use TestResults_Failure.ProtoReflect.Descriptor instead.
+func (*TestResults_Failure) Descriptor() ([]byte, []int) {
+	return file_cerbos_policy_v1_policy_proto_rawDescGZIP(), []int{15, 5}
+}
+
+func (x *TestResults_Failure) GetExpected() v1.Effect {
+	if x != nil {
+		return x.Expected
+	}
+	return v1.Effect(0)
+}
+
+func (x *TestResults_Failure) GetActual() v1.Effect {
+	if x != nil {
+		return x.Actual
+	}
+	return v1.Effect(0)
 }
 
 var File_cerbos_policy_v1_policy_proto protoreflect.FileDescriptor
@@ -2152,15 +2657,84 @@ var file_cerbos_policy_v1_policy_proto_rawDesc = []byte{
 	0x09, 0x52, 0x03, 0x6b, 0x65, 0x79, 0x12, 0x2e, 0x0a, 0x05, 0x76, 0x61, 0x6c, 0x75, 0x65, 0x18,
 	0x02, 0x20, 0x01, 0x28, 0x0e, 0x32, 0x18, 0x2e, 0x63, 0x65, 0x72, 0x62, 0x6f, 0x73, 0x2e, 0x65,
 	0x66, 0x66, 0x65, 0x63, 0x74, 0x2e, 0x76, 0x31, 0x2e, 0x45, 0x66, 0x66, 0x65, 0x63, 0x74, 0x52,
-	0x05, 0x76, 0x61, 0x6c, 0x75, 0x65, 0x3a, 0x02, 0x38, 0x01, 0x42, 0x6f, 0x0a, 0x18, 0x64, 0x65,
-	0x76, 0x2e, 0x63, 0x65, 0x72, 0x62, 0x6f, 0x73, 0x2e, 0x61, 0x70, 0x69, 0x2e, 0x76, 0x31, 0x2e,
-	0x70, 0x6f, 0x6c, 0x69, 0x63, 0x79, 0x5a, 0x3c, 0x67, 0x69, 0x74, 0x68, 0x75, 0x62, 0x2e, 0x63,
-	0x6f, 0x6d, 0x2f, 0x63, 0x65, 0x72, 0x62, 0x6f, 0x73, 0x2f, 0x63, 0x65, 0x72, 0x62, 0x6f, 0x73,
-	0x2f, 0x61, 0x70, 0x69, 0x2f, 0x67, 0x65, 0x6e, 0x70, 0x62, 0x2f, 0x63, 0x65, 0x72, 0x62, 0x6f,
-	0x73, 0x2f, 0x70, 0x6f, 0x6c, 0x69, 0x63, 0x79, 0x2f, 0x76, 0x31, 0x3b, 0x70, 0x6f, 0x6c, 0x69,
-	0x63, 0x79, 0x76, 0x31, 0xaa, 0x02, 0x14, 0x43, 0x65, 0x72, 0x62, 0x6f, 0x73, 0x2e, 0x41, 0x70,
-	0x69, 0x2e, 0x56, 0x31, 0x2e, 0x50, 0x6f, 0x6c, 0x69, 0x63, 0x79, 0x62, 0x06, 0x70, 0x72, 0x6f,
-	0x74, 0x6f, 0x33,
+	0x05, 0x76, 0x61, 0x6c, 0x75, 0x65, 0x3a, 0x02, 0x38, 0x01, 0x22, 0xcc, 0x08, 0x0a, 0x0b, 0x54,
+	0x65, 0x73, 0x74, 0x52, 0x65, 0x73, 0x75, 0x6c, 0x74, 0x73, 0x12, 0x3b, 0x0a, 0x06, 0x73, 0x75,
+	0x69, 0x74, 0x65, 0x73, 0x18, 0x01, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x23, 0x2e, 0x63, 0x65, 0x72,
+	0x62, 0x6f, 0x73, 0x2e, 0x70, 0x6f, 0x6c, 0x69, 0x63, 0x79, 0x2e, 0x76, 0x31, 0x2e, 0x54, 0x65,
+	0x73, 0x74, 0x52, 0x65, 0x73, 0x75, 0x6c, 0x74, 0x73, 0x2e, 0x53, 0x75, 0x69, 0x74, 0x65, 0x52,
+	0x06, 0x73, 0x75, 0x69, 0x74, 0x65, 0x73, 0x12, 0x3c, 0x0a, 0x06, 0x72, 0x65, 0x73, 0x75, 0x6c,
+	0x74, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0e, 0x32, 0x24, 0x2e, 0x63, 0x65, 0x72, 0x62, 0x6f, 0x73,
+	0x2e, 0x70, 0x6f, 0x6c, 0x69, 0x63, 0x79, 0x2e, 0x76, 0x31, 0x2e, 0x54, 0x65, 0x73, 0x74, 0x52,
+	0x65, 0x73, 0x75, 0x6c, 0x74, 0x73, 0x2e, 0x52, 0x65, 0x73, 0x75, 0x6c, 0x74, 0x52, 0x06, 0x72,
+	0x65, 0x73, 0x75, 0x6c, 0x74, 0x1a, 0xcc, 0x01, 0x0a, 0x05, 0x53, 0x75, 0x69, 0x74, 0x65, 0x12,
+	0x12, 0x0a, 0x04, 0x66, 0x69, 0x6c, 0x65, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x04, 0x66,
+	0x69, 0x6c, 0x65, 0x12, 0x12, 0x0a, 0x04, 0x6e, 0x61, 0x6d, 0x65, 0x18, 0x02, 0x20, 0x01, 0x28,
+	0x09, 0x52, 0x04, 0x6e, 0x61, 0x6d, 0x65, 0x12, 0x47, 0x0a, 0x0a, 0x70, 0x72, 0x69, 0x6e, 0x63,
+	0x69, 0x70, 0x61, 0x6c, 0x73, 0x18, 0x03, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x27, 0x2e, 0x63, 0x65,
+	0x72, 0x62, 0x6f, 0x73, 0x2e, 0x70, 0x6f, 0x6c, 0x69, 0x63, 0x79, 0x2e, 0x76, 0x31, 0x2e, 0x54,
+	0x65, 0x73, 0x74, 0x52, 0x65, 0x73, 0x75, 0x6c, 0x74, 0x73, 0x2e, 0x50, 0x72, 0x69, 0x6e, 0x63,
+	0x69, 0x70, 0x61, 0x6c, 0x52, 0x0a, 0x70, 0x72, 0x69, 0x6e, 0x63, 0x69, 0x70, 0x61, 0x6c, 0x73,
+	0x12, 0x3c, 0x0a, 0x06, 0x72, 0x65, 0x73, 0x75, 0x6c, 0x74, 0x18, 0x04, 0x20, 0x01, 0x28, 0x0e,
+	0x32, 0x24, 0x2e, 0x63, 0x65, 0x72, 0x62, 0x6f, 0x73, 0x2e, 0x70, 0x6f, 0x6c, 0x69, 0x63, 0x79,
+	0x2e, 0x76, 0x31, 0x2e, 0x54, 0x65, 0x73, 0x74, 0x52, 0x65, 0x73, 0x75, 0x6c, 0x74, 0x73, 0x2e,
+	0x52, 0x65, 0x73, 0x75, 0x6c, 0x74, 0x52, 0x06, 0x72, 0x65, 0x73, 0x75, 0x6c, 0x74, 0x12, 0x14,
+	0x0a, 0x05, 0x65, 0x72, 0x72, 0x6f, 0x72, 0x18, 0x05, 0x20, 0x01, 0x28, 0x09, 0x52, 0x05, 0x65,
+	0x72, 0x72, 0x6f, 0x72, 0x1a, 0x65, 0x0a, 0x09, 0x50, 0x72, 0x69, 0x6e, 0x63, 0x69, 0x70, 0x61,
+	0x6c, 0x12, 0x12, 0x0a, 0x04, 0x6e, 0x61, 0x6d, 0x65, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52,
+	0x04, 0x6e, 0x61, 0x6d, 0x65, 0x12, 0x44, 0x0a, 0x09, 0x72, 0x65, 0x73, 0x6f, 0x75, 0x72, 0x63,
+	0x65, 0x73, 0x18, 0x02, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x26, 0x2e, 0x63, 0x65, 0x72, 0x62, 0x6f,
+	0x73, 0x2e, 0x70, 0x6f, 0x6c, 0x69, 0x63, 0x79, 0x2e, 0x76, 0x31, 0x2e, 0x54, 0x65, 0x73, 0x74,
+	0x52, 0x65, 0x73, 0x75, 0x6c, 0x74, 0x73, 0x2e, 0x52, 0x65, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65,
+	0x52, 0x09, 0x72, 0x65, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x73, 0x1a, 0x5e, 0x0a, 0x08, 0x52,
+	0x65, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x12, 0x12, 0x0a, 0x04, 0x6e, 0x61, 0x6d, 0x65, 0x18,
+	0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x04, 0x6e, 0x61, 0x6d, 0x65, 0x12, 0x3e, 0x0a, 0x07, 0x61,
+	0x63, 0x74, 0x69, 0x6f, 0x6e, 0x73, 0x18, 0x02, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x24, 0x2e, 0x63,
+	0x65, 0x72, 0x62, 0x6f, 0x73, 0x2e, 0x70, 0x6f, 0x6c, 0x69, 0x63, 0x79, 0x2e, 0x76, 0x31, 0x2e,
+	0x54, 0x65, 0x73, 0x74, 0x52, 0x65, 0x73, 0x75, 0x6c, 0x74, 0x73, 0x2e, 0x41, 0x63, 0x74, 0x69,
+	0x6f, 0x6e, 0x52, 0x07, 0x61, 0x63, 0x74, 0x69, 0x6f, 0x6e, 0x73, 0x1a, 0x5d, 0x0a, 0x06, 0x41,
+	0x63, 0x74, 0x69, 0x6f, 0x6e, 0x12, 0x12, 0x0a, 0x04, 0x6e, 0x61, 0x6d, 0x65, 0x18, 0x01, 0x20,
+	0x01, 0x28, 0x09, 0x52, 0x04, 0x6e, 0x61, 0x6d, 0x65, 0x12, 0x3f, 0x0a, 0x07, 0x64, 0x65, 0x74,
+	0x61, 0x69, 0x6c, 0x73, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x25, 0x2e, 0x63, 0x65, 0x72,
+	0x62, 0x6f, 0x73, 0x2e, 0x70, 0x6f, 0x6c, 0x69, 0x63, 0x79, 0x2e, 0x76, 0x31, 0x2e, 0x54, 0x65,
+	0x73, 0x74, 0x52, 0x65, 0x73, 0x75, 0x6c, 0x74, 0x73, 0x2e, 0x44, 0x65, 0x74, 0x61, 0x69, 0x6c,
+	0x73, 0x52, 0x07, 0x64, 0x65, 0x74, 0x61, 0x69, 0x6c, 0x73, 0x1a, 0xe9, 0x01, 0x0a, 0x07, 0x44,
+	0x65, 0x74, 0x61, 0x69, 0x6c, 0x73, 0x12, 0x3c, 0x0a, 0x06, 0x72, 0x65, 0x73, 0x75, 0x6c, 0x74,
+	0x18, 0x01, 0x20, 0x01, 0x28, 0x0e, 0x32, 0x24, 0x2e, 0x63, 0x65, 0x72, 0x62, 0x6f, 0x73, 0x2e,
+	0x70, 0x6f, 0x6c, 0x69, 0x63, 0x79, 0x2e, 0x76, 0x31, 0x2e, 0x54, 0x65, 0x73, 0x74, 0x52, 0x65,
+	0x73, 0x75, 0x6c, 0x74, 0x73, 0x2e, 0x52, 0x65, 0x73, 0x75, 0x6c, 0x74, 0x52, 0x06, 0x72, 0x65,
+	0x73, 0x75, 0x6c, 0x74, 0x12, 0x41, 0x0a, 0x07, 0x66, 0x61, 0x69, 0x6c, 0x75, 0x72, 0x65, 0x18,
+	0x02, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x25, 0x2e, 0x63, 0x65, 0x72, 0x62, 0x6f, 0x73, 0x2e, 0x70,
+	0x6f, 0x6c, 0x69, 0x63, 0x79, 0x2e, 0x76, 0x31, 0x2e, 0x54, 0x65, 0x73, 0x74, 0x52, 0x65, 0x73,
+	0x75, 0x6c, 0x74, 0x73, 0x2e, 0x46, 0x61, 0x69, 0x6c, 0x75, 0x72, 0x65, 0x48, 0x00, 0x52, 0x07,
+	0x66, 0x61, 0x69, 0x6c, 0x75, 0x72, 0x65, 0x12, 0x16, 0x0a, 0x05, 0x65, 0x72, 0x72, 0x6f, 0x72,
+	0x18, 0x03, 0x20, 0x01, 0x28, 0x09, 0x48, 0x00, 0x52, 0x05, 0x65, 0x72, 0x72, 0x6f, 0x72, 0x12,
+	0x3a, 0x0a, 0x0c, 0x65, 0x6e, 0x67, 0x69, 0x6e, 0x65, 0x5f, 0x74, 0x72, 0x61, 0x63, 0x65, 0x18,
+	0x04, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x17, 0x2e, 0x63, 0x65, 0x72, 0x62, 0x6f, 0x73, 0x2e, 0x65,
+	0x6e, 0x67, 0x69, 0x6e, 0x65, 0x2e, 0x76, 0x31, 0x2e, 0x54, 0x72, 0x61, 0x63, 0x65, 0x52, 0x0b,
+	0x65, 0x6e, 0x67, 0x69, 0x6e, 0x65, 0x54, 0x72, 0x61, 0x63, 0x65, 0x42, 0x09, 0x0a, 0x07, 0x6f,
+	0x75, 0x74, 0x63, 0x6f, 0x6d, 0x65, 0x1a, 0x71, 0x0a, 0x07, 0x46, 0x61, 0x69, 0x6c, 0x75, 0x72,
+	0x65, 0x12, 0x34, 0x0a, 0x08, 0x65, 0x78, 0x70, 0x65, 0x63, 0x74, 0x65, 0x64, 0x18, 0x01, 0x20,
+	0x01, 0x28, 0x0e, 0x32, 0x18, 0x2e, 0x63, 0x65, 0x72, 0x62, 0x6f, 0x73, 0x2e, 0x65, 0x66, 0x66,
+	0x65, 0x63, 0x74, 0x2e, 0x76, 0x31, 0x2e, 0x45, 0x66, 0x66, 0x65, 0x63, 0x74, 0x52, 0x08, 0x65,
+	0x78, 0x70, 0x65, 0x63, 0x74, 0x65, 0x64, 0x12, 0x30, 0x0a, 0x06, 0x61, 0x63, 0x74, 0x75, 0x61,
+	0x6c, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0e, 0x32, 0x18, 0x2e, 0x63, 0x65, 0x72, 0x62, 0x6f, 0x73,
+	0x2e, 0x65, 0x66, 0x66, 0x65, 0x63, 0x74, 0x2e, 0x76, 0x31, 0x2e, 0x45, 0x66, 0x66, 0x65, 0x63,
+	0x74, 0x52, 0x06, 0x61, 0x63, 0x74, 0x75, 0x61, 0x6c, 0x22, 0x6e, 0x0a, 0x06, 0x52, 0x65, 0x73,
+	0x75, 0x6c, 0x74, 0x12, 0x16, 0x0a, 0x12, 0x52, 0x45, 0x53, 0x55, 0x4c, 0x54, 0x5f, 0x55, 0x4e,
+	0x53, 0x50, 0x45, 0x43, 0x49, 0x46, 0x49, 0x45, 0x44, 0x10, 0x00, 0x12, 0x12, 0x0a, 0x0e, 0x52,
+	0x45, 0x53, 0x55, 0x4c, 0x54, 0x5f, 0x53, 0x4b, 0x49, 0x50, 0x50, 0x45, 0x44, 0x10, 0x01, 0x12,
+	0x11, 0x0a, 0x0d, 0x52, 0x45, 0x53, 0x55, 0x4c, 0x54, 0x5f, 0x50, 0x41, 0x53, 0x53, 0x45, 0x44,
+	0x10, 0x02, 0x12, 0x11, 0x0a, 0x0d, 0x52, 0x45, 0x53, 0x55, 0x4c, 0x54, 0x5f, 0x46, 0x41, 0x49,
+	0x4c, 0x45, 0x44, 0x10, 0x03, 0x12, 0x12, 0x0a, 0x0e, 0x52, 0x45, 0x53, 0x55, 0x4c, 0x54, 0x5f,
+	0x45, 0x52, 0x52, 0x4f, 0x52, 0x45, 0x44, 0x10, 0x04, 0x42, 0x6f, 0x0a, 0x18, 0x64, 0x65, 0x76,
+	0x2e, 0x63, 0x65, 0x72, 0x62, 0x6f, 0x73, 0x2e, 0x61, 0x70, 0x69, 0x2e, 0x76, 0x31, 0x2e, 0x70,
+	0x6f, 0x6c, 0x69, 0x63, 0x79, 0x5a, 0x3c, 0x67, 0x69, 0x74, 0x68, 0x75, 0x62, 0x2e, 0x63, 0x6f,
+	0x6d, 0x2f, 0x63, 0x65, 0x72, 0x62, 0x6f, 0x73, 0x2f, 0x63, 0x65, 0x72, 0x62, 0x6f, 0x73, 0x2f,
+	0x61, 0x70, 0x69, 0x2f, 0x67, 0x65, 0x6e, 0x70, 0x62, 0x2f, 0x63, 0x65, 0x72, 0x62, 0x6f, 0x73,
+	0x2f, 0x70, 0x6f, 0x6c, 0x69, 0x63, 0x79, 0x2f, 0x76, 0x31, 0x3b, 0x70, 0x6f, 0x6c, 0x69, 0x63,
+	0x79, 0x76, 0x31, 0xaa, 0x02, 0x14, 0x43, 0x65, 0x72, 0x62, 0x6f, 0x73, 0x2e, 0x41, 0x70, 0x69,
+	0x2e, 0x56, 0x31, 0x2e, 0x50, 0x6f, 0x6c, 0x69, 0x63, 0x79, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74,
+	0x6f, 0x33,
 }
 
 var (
@@ -2175,102 +2749,124 @@ func file_cerbos_policy_v1_policy_proto_rawDescGZIP() []byte {
 	return file_cerbos_policy_v1_policy_proto_rawDescData
 }
 
-var file_cerbos_policy_v1_policy_proto_msgTypes = make([]protoimpl.MessageInfo, 35)
+var file_cerbos_policy_v1_policy_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
+var file_cerbos_policy_v1_policy_proto_msgTypes = make([]protoimpl.MessageInfo, 42)
 var file_cerbos_policy_v1_policy_proto_goTypes = []interface{}{
-	(*Policy)(nil),                 // 0: cerbos.policy.v1.Policy
-	(*Metadata)(nil),               // 1: cerbos.policy.v1.Metadata
-	(*ResourcePolicy)(nil),         // 2: cerbos.policy.v1.ResourcePolicy
-	(*ResourceRule)(nil),           // 3: cerbos.policy.v1.ResourceRule
-	(*PrincipalPolicy)(nil),        // 4: cerbos.policy.v1.PrincipalPolicy
-	(*PrincipalRule)(nil),          // 5: cerbos.policy.v1.PrincipalRule
-	(*DerivedRoles)(nil),           // 6: cerbos.policy.v1.DerivedRoles
-	(*RoleDef)(nil),                // 7: cerbos.policy.v1.RoleDef
-	(*Condition)(nil),              // 8: cerbos.policy.v1.Condition
-	(*Match)(nil),                  // 9: cerbos.policy.v1.Match
-	(*Schemas)(nil),                // 10: cerbos.policy.v1.Schemas
-	(*TestFixture)(nil),            // 11: cerbos.policy.v1.TestFixture
-	(*TestSuite)(nil),              // 12: cerbos.policy.v1.TestSuite
-	(*TestTable)(nil),              // 13: cerbos.policy.v1.TestTable
-	(*Test)(nil),                   // 14: cerbos.policy.v1.Test
-	nil,                            // 15: cerbos.policy.v1.Policy.VariablesEntry
-	nil,                            // 16: cerbos.policy.v1.Metadata.AnnotationsEntry
-	(*PrincipalRule_Action)(nil),   // 17: cerbos.policy.v1.PrincipalRule.Action
-	(*Match_ExprList)(nil),         // 18: cerbos.policy.v1.Match.ExprList
-	(*Schemas_IgnoreWhen)(nil),     // 19: cerbos.policy.v1.Schemas.IgnoreWhen
-	(*Schemas_Schema)(nil),         // 20: cerbos.policy.v1.Schemas.Schema
-	(*TestFixture_Principals)(nil), // 21: cerbos.policy.v1.TestFixture.Principals
-	(*TestFixture_Resources)(nil),  // 22: cerbos.policy.v1.TestFixture.Resources
-	(*TestFixture_AuxData)(nil),    // 23: cerbos.policy.v1.TestFixture.AuxData
-	nil,                            // 24: cerbos.policy.v1.TestFixture.Principals.PrincipalsEntry
-	nil,                            // 25: cerbos.policy.v1.TestFixture.Resources.ResourcesEntry
-	nil,                            // 26: cerbos.policy.v1.TestFixture.AuxData.AuxDataEntry
-	nil,                            // 27: cerbos.policy.v1.TestSuite.PrincipalsEntry
-	nil,                            // 28: cerbos.policy.v1.TestSuite.ResourcesEntry
-	nil,                            // 29: cerbos.policy.v1.TestSuite.AuxDataEntry
-	(*TestTable_Input)(nil),        // 30: cerbos.policy.v1.TestTable.Input
-	(*TestTable_Expectation)(nil),  // 31: cerbos.policy.v1.TestTable.Expectation
-	nil,                            // 32: cerbos.policy.v1.TestTable.Expectation.ActionsEntry
-	(*Test_TestName)(nil),          // 33: cerbos.policy.v1.Test.TestName
-	nil,                            // 34: cerbos.policy.v1.Test.ExpectedEntry
-	(*wrapperspb.UInt64Value)(nil), // 35: google.protobuf.UInt64Value
-	(v1.Effect)(0),                 // 36: cerbos.effect.v1.Effect
-	(*v11.CheckInput)(nil),         // 37: cerbos.engine.v1.CheckInput
-	(*v11.Principal)(nil),          // 38: cerbos.engine.v1.Principal
-	(*v11.Resource)(nil),           // 39: cerbos.engine.v1.Resource
-	(*v11.AuxData)(nil),            // 40: cerbos.engine.v1.AuxData
+	(TestResults_Result)(0),        // 0: cerbos.policy.v1.TestResults.Result
+	(*Policy)(nil),                 // 1: cerbos.policy.v1.Policy
+	(*Metadata)(nil),               // 2: cerbos.policy.v1.Metadata
+	(*ResourcePolicy)(nil),         // 3: cerbos.policy.v1.ResourcePolicy
+	(*ResourceRule)(nil),           // 4: cerbos.policy.v1.ResourceRule
+	(*PrincipalPolicy)(nil),        // 5: cerbos.policy.v1.PrincipalPolicy
+	(*PrincipalRule)(nil),          // 6: cerbos.policy.v1.PrincipalRule
+	(*DerivedRoles)(nil),           // 7: cerbos.policy.v1.DerivedRoles
+	(*RoleDef)(nil),                // 8: cerbos.policy.v1.RoleDef
+	(*Condition)(nil),              // 9: cerbos.policy.v1.Condition
+	(*Match)(nil),                  // 10: cerbos.policy.v1.Match
+	(*Schemas)(nil),                // 11: cerbos.policy.v1.Schemas
+	(*TestFixture)(nil),            // 12: cerbos.policy.v1.TestFixture
+	(*TestSuite)(nil),              // 13: cerbos.policy.v1.TestSuite
+	(*TestTable)(nil),              // 14: cerbos.policy.v1.TestTable
+	(*Test)(nil),                   // 15: cerbos.policy.v1.Test
+	(*TestResults)(nil),            // 16: cerbos.policy.v1.TestResults
+	nil,                            // 17: cerbos.policy.v1.Policy.VariablesEntry
+	nil,                            // 18: cerbos.policy.v1.Metadata.AnnotationsEntry
+	(*PrincipalRule_Action)(nil),   // 19: cerbos.policy.v1.PrincipalRule.Action
+	(*Match_ExprList)(nil),         // 20: cerbos.policy.v1.Match.ExprList
+	(*Schemas_IgnoreWhen)(nil),     // 21: cerbos.policy.v1.Schemas.IgnoreWhen
+	(*Schemas_Schema)(nil),         // 22: cerbos.policy.v1.Schemas.Schema
+	(*TestFixture_Principals)(nil), // 23: cerbos.policy.v1.TestFixture.Principals
+	(*TestFixture_Resources)(nil),  // 24: cerbos.policy.v1.TestFixture.Resources
+	(*TestFixture_AuxData)(nil),    // 25: cerbos.policy.v1.TestFixture.AuxData
+	nil,                            // 26: cerbos.policy.v1.TestFixture.Principals.PrincipalsEntry
+	nil,                            // 27: cerbos.policy.v1.TestFixture.Resources.ResourcesEntry
+	nil,                            // 28: cerbos.policy.v1.TestFixture.AuxData.AuxDataEntry
+	nil,                            // 29: cerbos.policy.v1.TestSuite.PrincipalsEntry
+	nil,                            // 30: cerbos.policy.v1.TestSuite.ResourcesEntry
+	nil,                            // 31: cerbos.policy.v1.TestSuite.AuxDataEntry
+	(*TestTable_Input)(nil),        // 32: cerbos.policy.v1.TestTable.Input
+	(*TestTable_Expectation)(nil),  // 33: cerbos.policy.v1.TestTable.Expectation
+	nil,                            // 34: cerbos.policy.v1.TestTable.Expectation.ActionsEntry
+	(*Test_TestName)(nil),          // 35: cerbos.policy.v1.Test.TestName
+	nil,                            // 36: cerbos.policy.v1.Test.ExpectedEntry
+	(*TestResults_Suite)(nil),      // 37: cerbos.policy.v1.TestResults.Suite
+	(*TestResults_Principal)(nil),  // 38: cerbos.policy.v1.TestResults.Principal
+	(*TestResults_Resource)(nil),   // 39: cerbos.policy.v1.TestResults.Resource
+	(*TestResults_Action)(nil),     // 40: cerbos.policy.v1.TestResults.Action
+	(*TestResults_Details)(nil),    // 41: cerbos.policy.v1.TestResults.Details
+	(*TestResults_Failure)(nil),    // 42: cerbos.policy.v1.TestResults.Failure
+	(*wrapperspb.UInt64Value)(nil), // 43: google.protobuf.UInt64Value
+	(v1.Effect)(0),                 // 44: cerbos.effect.v1.Effect
+	(*v11.CheckInput)(nil),         // 45: cerbos.engine.v1.CheckInput
+	(*v11.Principal)(nil),          // 46: cerbos.engine.v1.Principal
+	(*v11.Resource)(nil),           // 47: cerbos.engine.v1.Resource
+	(*v11.AuxData)(nil),            // 48: cerbos.engine.v1.AuxData
+	(*v11.Trace)(nil),              // 49: cerbos.engine.v1.Trace
 }
 var file_cerbos_policy_v1_policy_proto_depIdxs = []int32{
-	1,  // 0: cerbos.policy.v1.Policy.metadata:type_name -> cerbos.policy.v1.Metadata
-	2,  // 1: cerbos.policy.v1.Policy.resource_policy:type_name -> cerbos.policy.v1.ResourcePolicy
-	4,  // 2: cerbos.policy.v1.Policy.principal_policy:type_name -> cerbos.policy.v1.PrincipalPolicy
-	6,  // 3: cerbos.policy.v1.Policy.derived_roles:type_name -> cerbos.policy.v1.DerivedRoles
-	15, // 4: cerbos.policy.v1.Policy.variables:type_name -> cerbos.policy.v1.Policy.VariablesEntry
-	16, // 5: cerbos.policy.v1.Metadata.annotations:type_name -> cerbos.policy.v1.Metadata.AnnotationsEntry
-	35, // 6: cerbos.policy.v1.Metadata.hash:type_name -> google.protobuf.UInt64Value
-	3,  // 7: cerbos.policy.v1.ResourcePolicy.rules:type_name -> cerbos.policy.v1.ResourceRule
-	10, // 8: cerbos.policy.v1.ResourcePolicy.schemas:type_name -> cerbos.policy.v1.Schemas
-	8,  // 9: cerbos.policy.v1.ResourceRule.condition:type_name -> cerbos.policy.v1.Condition
-	36, // 10: cerbos.policy.v1.ResourceRule.effect:type_name -> cerbos.effect.v1.Effect
-	5,  // 11: cerbos.policy.v1.PrincipalPolicy.rules:type_name -> cerbos.policy.v1.PrincipalRule
-	17, // 12: cerbos.policy.v1.PrincipalRule.actions:type_name -> cerbos.policy.v1.PrincipalRule.Action
-	7,  // 13: cerbos.policy.v1.DerivedRoles.definitions:type_name -> cerbos.policy.v1.RoleDef
-	8,  // 14: cerbos.policy.v1.RoleDef.condition:type_name -> cerbos.policy.v1.Condition
-	9,  // 15: cerbos.policy.v1.Condition.match:type_name -> cerbos.policy.v1.Match
-	18, // 16: cerbos.policy.v1.Match.all:type_name -> cerbos.policy.v1.Match.ExprList
-	18, // 17: cerbos.policy.v1.Match.any:type_name -> cerbos.policy.v1.Match.ExprList
-	18, // 18: cerbos.policy.v1.Match.none:type_name -> cerbos.policy.v1.Match.ExprList
-	20, // 19: cerbos.policy.v1.Schemas.principal_schema:type_name -> cerbos.policy.v1.Schemas.Schema
-	20, // 20: cerbos.policy.v1.Schemas.resource_schema:type_name -> cerbos.policy.v1.Schemas.Schema
-	13, // 21: cerbos.policy.v1.TestSuite.tests:type_name -> cerbos.policy.v1.TestTable
-	27, // 22: cerbos.policy.v1.TestSuite.principals:type_name -> cerbos.policy.v1.TestSuite.PrincipalsEntry
-	28, // 23: cerbos.policy.v1.TestSuite.resources:type_name -> cerbos.policy.v1.TestSuite.ResourcesEntry
-	29, // 24: cerbos.policy.v1.TestSuite.aux_data:type_name -> cerbos.policy.v1.TestSuite.AuxDataEntry
-	30, // 25: cerbos.policy.v1.TestTable.input:type_name -> cerbos.policy.v1.TestTable.Input
-	31, // 26: cerbos.policy.v1.TestTable.expected:type_name -> cerbos.policy.v1.TestTable.Expectation
-	33, // 27: cerbos.policy.v1.Test.name:type_name -> cerbos.policy.v1.Test.TestName
-	37, // 28: cerbos.policy.v1.Test.input:type_name -> cerbos.engine.v1.CheckInput
-	34, // 29: cerbos.policy.v1.Test.expected:type_name -> cerbos.policy.v1.Test.ExpectedEntry
-	8,  // 30: cerbos.policy.v1.PrincipalRule.Action.condition:type_name -> cerbos.policy.v1.Condition
-	36, // 31: cerbos.policy.v1.PrincipalRule.Action.effect:type_name -> cerbos.effect.v1.Effect
-	9,  // 32: cerbos.policy.v1.Match.ExprList.of:type_name -> cerbos.policy.v1.Match
-	19, // 33: cerbos.policy.v1.Schemas.Schema.ignore_when:type_name -> cerbos.policy.v1.Schemas.IgnoreWhen
-	24, // 34: cerbos.policy.v1.TestFixture.Principals.principals:type_name -> cerbos.policy.v1.TestFixture.Principals.PrincipalsEntry
-	25, // 35: cerbos.policy.v1.TestFixture.Resources.resources:type_name -> cerbos.policy.v1.TestFixture.Resources.ResourcesEntry
-	26, // 36: cerbos.policy.v1.TestFixture.AuxData.aux_data:type_name -> cerbos.policy.v1.TestFixture.AuxData.AuxDataEntry
-	38, // 37: cerbos.policy.v1.TestFixture.Principals.PrincipalsEntry.value:type_name -> cerbos.engine.v1.Principal
-	39, // 38: cerbos.policy.v1.TestFixture.Resources.ResourcesEntry.value:type_name -> cerbos.engine.v1.Resource
-	40, // 39: cerbos.policy.v1.TestFixture.AuxData.AuxDataEntry.value:type_name -> cerbos.engine.v1.AuxData
-	38, // 40: cerbos.policy.v1.TestSuite.PrincipalsEntry.value:type_name -> cerbos.engine.v1.Principal
-	39, // 41: cerbos.policy.v1.TestSuite.ResourcesEntry.value:type_name -> cerbos.engine.v1.Resource
-	40, // 42: cerbos.policy.v1.TestSuite.AuxDataEntry.value:type_name -> cerbos.engine.v1.AuxData
-	32, // 43: cerbos.policy.v1.TestTable.Expectation.actions:type_name -> cerbos.policy.v1.TestTable.Expectation.ActionsEntry
-	36, // 44: cerbos.policy.v1.TestTable.Expectation.ActionsEntry.value:type_name -> cerbos.effect.v1.Effect
-	36, // 45: cerbos.policy.v1.Test.ExpectedEntry.value:type_name -> cerbos.effect.v1.Effect
-	46, // [46:46] is the sub-list for method output_type
-	46, // [46:46] is the sub-list for method input_type
-	46, // [46:46] is the sub-list for extension type_name
-	46, // [46:46] is the sub-list for extension extendee
-	0,  // [0:46] is the sub-list for field type_name
+	2,  // 0: cerbos.policy.v1.Policy.metadata:type_name -> cerbos.policy.v1.Metadata
+	3,  // 1: cerbos.policy.v1.Policy.resource_policy:type_name -> cerbos.policy.v1.ResourcePolicy
+	5,  // 2: cerbos.policy.v1.Policy.principal_policy:type_name -> cerbos.policy.v1.PrincipalPolicy
+	7,  // 3: cerbos.policy.v1.Policy.derived_roles:type_name -> cerbos.policy.v1.DerivedRoles
+	17, // 4: cerbos.policy.v1.Policy.variables:type_name -> cerbos.policy.v1.Policy.VariablesEntry
+	18, // 5: cerbos.policy.v1.Metadata.annotations:type_name -> cerbos.policy.v1.Metadata.AnnotationsEntry
+	43, // 6: cerbos.policy.v1.Metadata.hash:type_name -> google.protobuf.UInt64Value
+	4,  // 7: cerbos.policy.v1.ResourcePolicy.rules:type_name -> cerbos.policy.v1.ResourceRule
+	11, // 8: cerbos.policy.v1.ResourcePolicy.schemas:type_name -> cerbos.policy.v1.Schemas
+	9,  // 9: cerbos.policy.v1.ResourceRule.condition:type_name -> cerbos.policy.v1.Condition
+	44, // 10: cerbos.policy.v1.ResourceRule.effect:type_name -> cerbos.effect.v1.Effect
+	6,  // 11: cerbos.policy.v1.PrincipalPolicy.rules:type_name -> cerbos.policy.v1.PrincipalRule
+	19, // 12: cerbos.policy.v1.PrincipalRule.actions:type_name -> cerbos.policy.v1.PrincipalRule.Action
+	8,  // 13: cerbos.policy.v1.DerivedRoles.definitions:type_name -> cerbos.policy.v1.RoleDef
+	9,  // 14: cerbos.policy.v1.RoleDef.condition:type_name -> cerbos.policy.v1.Condition
+	10, // 15: cerbos.policy.v1.Condition.match:type_name -> cerbos.policy.v1.Match
+	20, // 16: cerbos.policy.v1.Match.all:type_name -> cerbos.policy.v1.Match.ExprList
+	20, // 17: cerbos.policy.v1.Match.any:type_name -> cerbos.policy.v1.Match.ExprList
+	20, // 18: cerbos.policy.v1.Match.none:type_name -> cerbos.policy.v1.Match.ExprList
+	22, // 19: cerbos.policy.v1.Schemas.principal_schema:type_name -> cerbos.policy.v1.Schemas.Schema
+	22, // 20: cerbos.policy.v1.Schemas.resource_schema:type_name -> cerbos.policy.v1.Schemas.Schema
+	14, // 21: cerbos.policy.v1.TestSuite.tests:type_name -> cerbos.policy.v1.TestTable
+	29, // 22: cerbos.policy.v1.TestSuite.principals:type_name -> cerbos.policy.v1.TestSuite.PrincipalsEntry
+	30, // 23: cerbos.policy.v1.TestSuite.resources:type_name -> cerbos.policy.v1.TestSuite.ResourcesEntry
+	31, // 24: cerbos.policy.v1.TestSuite.aux_data:type_name -> cerbos.policy.v1.TestSuite.AuxDataEntry
+	32, // 25: cerbos.policy.v1.TestTable.input:type_name -> cerbos.policy.v1.TestTable.Input
+	33, // 26: cerbos.policy.v1.TestTable.expected:type_name -> cerbos.policy.v1.TestTable.Expectation
+	35, // 27: cerbos.policy.v1.Test.name:type_name -> cerbos.policy.v1.Test.TestName
+	45, // 28: cerbos.policy.v1.Test.input:type_name -> cerbos.engine.v1.CheckInput
+	36, // 29: cerbos.policy.v1.Test.expected:type_name -> cerbos.policy.v1.Test.ExpectedEntry
+	37, // 30: cerbos.policy.v1.TestResults.suites:type_name -> cerbos.policy.v1.TestResults.Suite
+	0,  // 31: cerbos.policy.v1.TestResults.result:type_name -> cerbos.policy.v1.TestResults.Result
+	9,  // 32: cerbos.policy.v1.PrincipalRule.Action.condition:type_name -> cerbos.policy.v1.Condition
+	44, // 33: cerbos.policy.v1.PrincipalRule.Action.effect:type_name -> cerbos.effect.v1.Effect
+	10, // 34: cerbos.policy.v1.Match.ExprList.of:type_name -> cerbos.policy.v1.Match
+	21, // 35: cerbos.policy.v1.Schemas.Schema.ignore_when:type_name -> cerbos.policy.v1.Schemas.IgnoreWhen
+	26, // 36: cerbos.policy.v1.TestFixture.Principals.principals:type_name -> cerbos.policy.v1.TestFixture.Principals.PrincipalsEntry
+	27, // 37: cerbos.policy.v1.TestFixture.Resources.resources:type_name -> cerbos.policy.v1.TestFixture.Resources.ResourcesEntry
+	28, // 38: cerbos.policy.v1.TestFixture.AuxData.aux_data:type_name -> cerbos.policy.v1.TestFixture.AuxData.AuxDataEntry
+	46, // 39: cerbos.policy.v1.TestFixture.Principals.PrincipalsEntry.value:type_name -> cerbos.engine.v1.Principal
+	47, // 40: cerbos.policy.v1.TestFixture.Resources.ResourcesEntry.value:type_name -> cerbos.engine.v1.Resource
+	48, // 41: cerbos.policy.v1.TestFixture.AuxData.AuxDataEntry.value:type_name -> cerbos.engine.v1.AuxData
+	46, // 42: cerbos.policy.v1.TestSuite.PrincipalsEntry.value:type_name -> cerbos.engine.v1.Principal
+	47, // 43: cerbos.policy.v1.TestSuite.ResourcesEntry.value:type_name -> cerbos.engine.v1.Resource
+	48, // 44: cerbos.policy.v1.TestSuite.AuxDataEntry.value:type_name -> cerbos.engine.v1.AuxData
+	34, // 45: cerbos.policy.v1.TestTable.Expectation.actions:type_name -> cerbos.policy.v1.TestTable.Expectation.ActionsEntry
+	44, // 46: cerbos.policy.v1.TestTable.Expectation.ActionsEntry.value:type_name -> cerbos.effect.v1.Effect
+	44, // 47: cerbos.policy.v1.Test.ExpectedEntry.value:type_name -> cerbos.effect.v1.Effect
+	38, // 48: cerbos.policy.v1.TestResults.Suite.principals:type_name -> cerbos.policy.v1.TestResults.Principal
+	0,  // 49: cerbos.policy.v1.TestResults.Suite.result:type_name -> cerbos.policy.v1.TestResults.Result
+	39, // 50: cerbos.policy.v1.TestResults.Principal.resources:type_name -> cerbos.policy.v1.TestResults.Resource
+	40, // 51: cerbos.policy.v1.TestResults.Resource.actions:type_name -> cerbos.policy.v1.TestResults.Action
+	41, // 52: cerbos.policy.v1.TestResults.Action.details:type_name -> cerbos.policy.v1.TestResults.Details
+	0,  // 53: cerbos.policy.v1.TestResults.Details.result:type_name -> cerbos.policy.v1.TestResults.Result
+	42, // 54: cerbos.policy.v1.TestResults.Details.failure:type_name -> cerbos.policy.v1.TestResults.Failure
+	49, // 55: cerbos.policy.v1.TestResults.Details.engine_trace:type_name -> cerbos.engine.v1.Trace
+	44, // 56: cerbos.policy.v1.TestResults.Failure.expected:type_name -> cerbos.effect.v1.Effect
+	44, // 57: cerbos.policy.v1.TestResults.Failure.actual:type_name -> cerbos.effect.v1.Effect
+	58, // [58:58] is the sub-list for method output_type
+	58, // [58:58] is the sub-list for method input_type
+	58, // [58:58] is the sub-list for extension type_name
+	58, // [58:58] is the sub-list for extension extendee
+	0,  // [0:58] is the sub-list for field type_name
 }
 
 func init() { file_cerbos_policy_v1_policy_proto_init() }
@@ -2459,8 +3055,8 @@ func file_cerbos_policy_v1_policy_proto_init() {
 				return nil
 			}
 		}
-		file_cerbos_policy_v1_policy_proto_msgTypes[17].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*PrincipalRule_Action); i {
+		file_cerbos_policy_v1_policy_proto_msgTypes[15].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*TestResults); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -2472,7 +3068,7 @@ func file_cerbos_policy_v1_policy_proto_init() {
 			}
 		}
 		file_cerbos_policy_v1_policy_proto_msgTypes[18].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*Match_ExprList); i {
+			switch v := v.(*PrincipalRule_Action); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -2484,7 +3080,7 @@ func file_cerbos_policy_v1_policy_proto_init() {
 			}
 		}
 		file_cerbos_policy_v1_policy_proto_msgTypes[19].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*Schemas_IgnoreWhen); i {
+			switch v := v.(*Match_ExprList); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -2496,7 +3092,7 @@ func file_cerbos_policy_v1_policy_proto_init() {
 			}
 		}
 		file_cerbos_policy_v1_policy_proto_msgTypes[20].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*Schemas_Schema); i {
+			switch v := v.(*Schemas_IgnoreWhen); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -2508,7 +3104,7 @@ func file_cerbos_policy_v1_policy_proto_init() {
 			}
 		}
 		file_cerbos_policy_v1_policy_proto_msgTypes[21].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*TestFixture_Principals); i {
+			switch v := v.(*Schemas_Schema); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -2520,7 +3116,7 @@ func file_cerbos_policy_v1_policy_proto_init() {
 			}
 		}
 		file_cerbos_policy_v1_policy_proto_msgTypes[22].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*TestFixture_Resources); i {
+			switch v := v.(*TestFixture_Principals); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -2532,6 +3128,18 @@ func file_cerbos_policy_v1_policy_proto_init() {
 			}
 		}
 		file_cerbos_policy_v1_policy_proto_msgTypes[23].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*TestFixture_Resources); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_cerbos_policy_v1_policy_proto_msgTypes[24].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*TestFixture_AuxData); i {
 			case 0:
 				return &v.state
@@ -2543,7 +3151,7 @@ func file_cerbos_policy_v1_policy_proto_init() {
 				return nil
 			}
 		}
-		file_cerbos_policy_v1_policy_proto_msgTypes[30].Exporter = func(v interface{}, i int) interface{} {
+		file_cerbos_policy_v1_policy_proto_msgTypes[31].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*TestTable_Input); i {
 			case 0:
 				return &v.state
@@ -2555,7 +3163,7 @@ func file_cerbos_policy_v1_policy_proto_init() {
 				return nil
 			}
 		}
-		file_cerbos_policy_v1_policy_proto_msgTypes[31].Exporter = func(v interface{}, i int) interface{} {
+		file_cerbos_policy_v1_policy_proto_msgTypes[32].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*TestTable_Expectation); i {
 			case 0:
 				return &v.state
@@ -2567,8 +3175,80 @@ func file_cerbos_policy_v1_policy_proto_init() {
 				return nil
 			}
 		}
-		file_cerbos_policy_v1_policy_proto_msgTypes[33].Exporter = func(v interface{}, i int) interface{} {
+		file_cerbos_policy_v1_policy_proto_msgTypes[34].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*Test_TestName); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_cerbos_policy_v1_policy_proto_msgTypes[36].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*TestResults_Suite); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_cerbos_policy_v1_policy_proto_msgTypes[37].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*TestResults_Principal); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_cerbos_policy_v1_policy_proto_msgTypes[38].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*TestResults_Resource); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_cerbos_policy_v1_policy_proto_msgTypes[39].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*TestResults_Action); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_cerbos_policy_v1_policy_proto_msgTypes[40].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*TestResults_Details); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_cerbos_policy_v1_policy_proto_msgTypes[41].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*TestResults_Failure); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -2595,18 +3275,23 @@ func file_cerbos_policy_v1_policy_proto_init() {
 		(*Match_None)(nil),
 		(*Match_Expr)(nil),
 	}
+	file_cerbos_policy_v1_policy_proto_msgTypes[40].OneofWrappers = []interface{}{
+		(*TestResults_Details_Failure)(nil),
+		(*TestResults_Details_Error)(nil),
+	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_cerbos_policy_v1_policy_proto_rawDesc,
-			NumEnums:      0,
-			NumMessages:   35,
+			NumEnums:      1,
+			NumMessages:   42,
 			NumExtensions: 0,
 			NumServices:   0,
 		},
 		GoTypes:           file_cerbos_policy_v1_policy_proto_goTypes,
 		DependencyIndexes: file_cerbos_policy_v1_policy_proto_depIdxs,
+		EnumInfos:         file_cerbos_policy_v1_policy_proto_enumTypes,
 		MessageInfos:      file_cerbos_policy_v1_policy_proto_msgTypes,
 	}.Build()
 	File_cerbos_policy_v1_policy_proto = out.File

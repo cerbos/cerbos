@@ -9,115 +9,109 @@ import (
 
 	"github.com/pterm/pterm"
 
-	"github.com/cerbos/cerbos/cmd/cerbos/compile/internal/colored"
-	"github.com/cerbos/cerbos/cmd/cerbos/compile/internal/errors"
+	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
 	"github.com/cerbos/cerbos/cmd/cerbos/compile/internal/flagset"
-	"github.com/cerbos/cerbos/cmd/cerbos/compile/internal/printer"
 	"github.com/cerbos/cerbos/cmd/cerbos/compile/internal/verification/internal/traces"
-	"github.com/cerbos/cerbos/internal/verify"
+	"github.com/cerbos/cerbos/internal/printer"
+	"github.com/cerbos/cerbos/internal/printer/colored"
 )
 
-func Display(p *printer.Printer, result *verify.Result, output flagset.OutputFormat, verbose, noColor bool) error {
+func Display(p *printer.Printer, results *policyv1.TestResults, output flagset.OutputFormat, verbose, noColor bool) error {
 	switch output {
 	case flagset.OutputFormatJSON:
-		if err := p.PrintJSON(result, noColor); err != nil {
-			return err
-		}
-
-		if result.Failed {
-			return errors.ErrTestsFailed
-		}
-
-		return nil
+		return p.PrintProtoJSON(results, noColor)
 	case flagset.OutputFormatTree:
-		return displayTree(p, result, verbose)
+		return displayTree(p, results, verbose)
 	case flagset.OutputFormatList:
-		return displayList(p, result, verbose)
+		return displayList(p, results, verbose)
+	default:
+		return nil
 	}
-
-	return errors.ErrTestsFailed
 }
 
-func displayList(p *printer.Printer, result *verify.Result, verbose bool) error {
-	p.Println(colored.Header("Test results"))
+func displayList(p *printer.Printer, results *policyv1.TestResults, verbose bool) error {
 	traceMap := make(traces.Map)
-	for _, sn := range result.Suites {
-		p.Printf("%s %s ", colored.Suite(sn.Name), colored.FileName("(", sn.File, ")"))
-		if sn.Failed {
-			p.Println(colored.FailedTest("[FAILED]"))
-			p.Printf("%s%s\n", tabs(1), colored.ErrorMsg(sn.Status))
+
+	p.Println(colored.Header("Test results"))
+
+	for _, suite := range results.Suites {
+		p.Printf("%s %s ", colored.Suite(suite.Name), colored.FileName("(", suite.File, ")"))
+
+		if suite.Error != "" {
+			p.Println(colored.FailedTest("[ERROR]"))
+			p.Printf("%s%s\n", tabs(1), colored.ErrorMsg(suite.Error))
 			continue
 		}
 
-		if sn.Skipped {
+		if suite.Result == policyv1.TestResults_RESULT_SKIPPED {
 			p.Println(colored.SkippedTest("[SKIPPED]"))
 			continue
 		}
 
 		p.Println()
-		for _, principal := range sn.Principals {
+		for _, principal := range suite.Principals {
 			p.Printf("%s%s\n", tabs(1), colored.Principal(principal.Name))
 			for _, resource := range principal.Resources {
 				p.Printf("%s%s\n", tabs(2), colored.Resource(resource.Name)) //nolint:gomnd
 				for _, action := range resource.Actions {
 					p.Printf("%s%s ", tabs(3), colored.Action(action.Name)) //nolint:gomnd
-					if action.Details.Skipped {
+
+					switch action.Details.Result {
+					case policyv1.TestResults_RESULT_PASSED:
+						p.Println(colored.SuccessfulTest("[OK]"))
+
+					case policyv1.TestResults_RESULT_SKIPPED:
 						p.Println(colored.SkippedTest("[SKIPPED]"))
-						continue
-					}
 
-					if action.Details.Failed {
+					case policyv1.TestResults_RESULT_FAILED:
+						traceMap.Add(suite.Name, principal.Name, resource.Name, action.Name, action.Details.EngineTrace)
+						failure := action.Details.GetFailure()
 						p.Println(colored.FailedTest("[FAILED]"))
-						p.Printf("\t%s %s\n", colored.ErrorMsg("ERROR:"), action.Details.Error)
-						if action.Details.Outcome != nil {
-							p.Printf("\t%s %s\n", colored.ErrorMsg("OUTCOME:"), action.Details.Outcome.Display(colored.FailedTest))
-						}
-						if verbose && action.Details.EngineTrace != "" {
-							traceMap.Add(sn.Name, principal.Name, resource.Name, action.Name, action.Details.EngineTrace)
-						}
-						continue
-					}
+						p.Printf("%s%s expected: %s, actual: %s\n", tabs(4), colored.ErrorMsg("OUTCOME:"), colored.FailedTest(failure.Expected), colored.FailedTest(failure.Actual)) //nolint:gomnd
 
-					p.Println(colored.SuccessfulTest("[OK]"))
+					case policyv1.TestResults_RESULT_ERRORED:
+						traceMap.Add(suite.Name, principal.Name, resource.Name, action.Name, action.Details.EngineTrace)
+						p.Println(colored.FailedTest("[ERROR]"))
+						p.Printf("%s%s %s\n", tabs(4), colored.ErrorMsg("ERROR:"), action.Details.GetError()) //nolint:gomnd
+
+					default:
+						return fmt.Errorf("unexpected test result %v", action.Details.Result)
+					}
 				}
 			}
 		}
-
-		if sn.Failed {
-			p.Println(colored.ErrorMsg("Invalid test suite"))
-		}
 	}
 
-	traceMap.Print(p)
-
-	if result.Failed {
-		return errors.ErrTestsFailed
+	if verbose {
+		traceMap.Print(p)
 	}
 
 	return nil
 }
 
-func displayTree(p *printer.Printer, result *verify.Result, verbose bool) error {
+func displayTree(p *printer.Printer, results *policyv1.TestResults, verbose bool) error {
 	tree := pterm.LeveledList{}
+	traceMap := make(traces.Map)
 
 	p.Println(colored.Header("Test results"))
-	traceMap := make(traces.Map)
-	for _, sn := range result.Suites {
-		suiteText := fmt.Sprintf("%s (%s)", colored.Suite(sn.Name), colored.FileName(sn.File))
-		if sn.Failed {
-			suiteText = fmt.Sprintf("%s %s", suiteText, colored.FailedTest("[FAILED]"))
+
+	for _, suite := range results.Suites {
+		suiteText := fmt.Sprintf("%s (%s)", colored.Suite(suite.Name), colored.FileName(suite.File))
+
+		if suite.Error != "" {
+			suiteText = fmt.Sprintf("%s %s", suiteText, colored.FailedTest("[ERROR]"))
 			tree = append(tree, pterm.LeveledListItem{
 				Level: 0,
 				Text:  suiteText,
 			})
 			tree = append(tree, pterm.LeveledListItem{
 				Level: 1,
-				Text:  colored.ErrorMsg(sn.Status),
+				Text:  colored.ErrorMsg(suite.Error),
 			})
 			continue
 		}
 
-		if sn.Skipped {
+		if suite.Result == policyv1.TestResults_RESULT_SKIPPED {
 			suiteText = fmt.Sprintf("%s %s", suiteText, colored.SkippedTest("[SKIPPED]"))
 			tree = append(tree, pterm.LeveledListItem{
 				Level: 0,
@@ -131,7 +125,7 @@ func displayTree(p *printer.Printer, result *verify.Result, verbose bool) error 
 			Text:  suiteText,
 		})
 
-		for _, principal := range sn.Principals {
+		for _, principal := range suite.Principals {
 			tree = append(tree, pterm.LeveledListItem{
 				Level: 1,
 				Text:  colored.Principal(principal.Name),
@@ -144,37 +138,50 @@ func displayTree(p *printer.Printer, result *verify.Result, verbose bool) error 
 				for _, action := range resource.Actions {
 					actionText := colored.Action(action.Name)
 
-					if action.Details.Failed {
-						actionText = fmt.Sprintf("%s %s", actionText, colored.FailedTest("[FAILED]"))
-					}
-
-					if action.Details.Skipped {
-						actionText = fmt.Sprintf("%s %s", actionText, colored.SkippedTest("[SKIPPED]"))
-					}
-
-					if !action.Details.Failed && !action.Details.Skipped {
-						actionText = fmt.Sprintf("%s %s", actionText, colored.SuccessfulTest("[OK]"))
-					}
-
-					tree = append(tree, pterm.LeveledListItem{
-						Level: 3, //nolint:gomnd
-						Text:  actionText,
-					})
-
-					if action.Details.Failed {
+					switch action.Details.Result {
+					case policyv1.TestResults_RESULT_PASSED:
 						tree = append(tree, pterm.LeveledListItem{
-							Level: 4, //nolint:gomnd
-							Text:  fmt.Sprintf("%s %s", colored.ErrorMsg("ERROR:"), action.Details.Error),
+							Level: 3, //nolint:gomnd
+							Text:  fmt.Sprintf("%s %s", actionText, colored.SuccessfulTest("[OK]")),
 						})
-						if action.Details.Outcome != nil {
-							tree = append(tree, pterm.LeveledListItem{
+
+					case policyv1.TestResults_RESULT_SKIPPED:
+						tree = append(tree, pterm.LeveledListItem{
+							Level: 3, //nolint:gomnd
+							Text:  fmt.Sprintf("%s %s", actionText, colored.SkippedTest("[SKIPPED]")),
+						})
+
+					case policyv1.TestResults_RESULT_FAILED:
+						traceMap.Add(suite.Name, principal.Name, resource.Name, action.Name, action.Details.EngineTrace)
+						failure := action.Details.GetFailure()
+						tree = append(
+							tree,
+							pterm.LeveledListItem{
+								Level: 3, //nolint:gomnd
+								Text:  fmt.Sprintf("%s %s", actionText, colored.FailedTest("[FAILED]")),
+							},
+							pterm.LeveledListItem{
 								Level: 4, //nolint:gomnd
-								Text:  fmt.Sprintf("%s %s", colored.ErrorMsg("OUTCOME:"), action.Details.Outcome.Display(colored.FailedTest)),
-							})
-						}
-						if verbose && action.Details.EngineTrace != "" {
-							traceMap.Add(sn.Name, principal.Name, resource.Name, action.Name, action.Details.EngineTrace)
-						}
+								Text:  fmt.Sprintf("%s expected: %s, actual: %s", colored.ErrorMsg("OUTCOME:"), colored.FailedTest(failure.Expected), colored.FailedTest(failure.Actual)),
+							},
+						)
+
+					case policyv1.TestResults_RESULT_ERRORED:
+						traceMap.Add(suite.Name, principal.Name, resource.Name, action.Name, action.Details.EngineTrace)
+						tree = append(
+							tree,
+							pterm.LeveledListItem{
+								Level: 3, //nolint:gomnd
+								Text:  fmt.Sprintf("%s %s", actionText, colored.FailedTest("[ERROR]")),
+							},
+							pterm.LeveledListItem{
+								Level: 4, //nolint:gomnd
+								Text:  fmt.Sprintf("%s %s", colored.ErrorMsg("ERROR:"), action.Details.GetError()),
+							},
+						)
+
+					default:
+						return fmt.Errorf("unexpected test result %v", action.Details.Result)
 					}
 				}
 			}
@@ -184,13 +191,11 @@ func displayTree(p *printer.Printer, result *verify.Result, verbose bool) error 
 	root := pterm.NewTreeFromLeveledList(tree)
 	err := pterm.DefaultTree.WithRoot(root).Render()
 	if err != nil {
-		return errors.ErrTestsFailed
+		return err
 	}
 
-	traceMap.Print(p)
-
-	if result.Failed {
-		return errors.ErrTestsFailed
+	if verbose {
+		traceMap.Print(p)
 	}
 
 	return nil

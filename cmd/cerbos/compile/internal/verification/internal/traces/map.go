@@ -6,26 +6,37 @@ package traces
 import (
 	"fmt"
 
-	"github.com/cerbos/cerbos/cmd/cerbos/compile/internal/colored"
-	"github.com/cerbos/cerbos/cmd/cerbos/compile/internal/printer"
+	enginev1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
+	"github.com/cerbos/cerbos/internal/printer"
+	"github.com/cerbos/cerbos/internal/printer/colored"
 )
 
-type Map map[string]string
+type Map map[string][]*enginev1.Trace
 
-func (m *Map) Add(suiteName, principalName, resourceName, actionName, trace string) {
+func (m *Map) Add(suiteName, principalName, resourceName, actionName string, traces []*enginev1.Trace) {
+	if len(traces) == 0 {
+		return
+	}
+
 	key := fmt.Sprintf("%s - %s.%s.%s", colored.Suite(suiteName), colored.Principal(principalName), colored.Resource(resourceName), colored.Action(actionName))
-	ptr := *m
-	ptr[key] = trace
+	(*m)[key] = traces
 }
 
 func (m *Map) Print(p *printer.Printer) {
 	if len(*m) == 0 {
 		return
 	}
+
 	p.Println()
 	p.Println(colored.Trace("TRACES"))
-	for key, trace := range *m {
+	for key, traces := range *m {
 		p.Println(key)
-		p.Println(trace)
+		for i, trace := range traces {
+			if i > 0 {
+				p.Println()
+			}
+			p.PrintTrace(trace)
+		}
+		p.Println()
 	}
 }

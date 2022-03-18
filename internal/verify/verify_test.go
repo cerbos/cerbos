@@ -16,6 +16,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
 	"github.com/cerbos/cerbos/internal/audit"
 	"github.com/cerbos/cerbos/internal/compile"
 	"github.com/cerbos/cerbos/internal/engine"
@@ -27,40 +28,33 @@ import (
 
 func TestVerify(t *testing.T) {
 	eng := mkEngine(t)
-	runSuite := func(dir string) (*Result, error) {
+	runSuites := func(dir string) (*policyv1.TestResults, error) {
 		conf := Config{TestsDir: test.PathToDir(t, filepath.Join("verify", dir))}
 		return Verify(context.Background(), eng, conf)
 	}
 
 	t.Run("valid", func(t *testing.T) {
-		result, err := runSuite("valid")
+		result, err := runSuites("valid")
 		require.NoError(t, err)
-		require.Len(t, result.Suites, 4)
+		require.Len(t, result.Suites, 3)
 
 		for _, sr := range result.Suites {
 			t.Run(sr.File, func(t *testing.T) {
 				is := assert.New(t)
 				switch sr.File {
-				case "empty_test.yaml":
-					is.False(sr.Skipped)
-					is.Empty(sr.Principals)
 				case "suite_test.yaml", "inline_fixture_test.yaml":
-					is.False(sr.Skipped)
-					is.Len(sr.Principals, 1)
+					is.Equal(policyv1.TestResults_RESULT_PASSED, sr.Result, "unexpected result for %s", sr.File)
+					is.Len(sr.Principals, 1, "unexpected principals for %s", sr.File)
 					for _, action := range sr.Principals[0].Resources[0].Actions {
-						is.False(action.Details.Skipped)
-						is.False(action.Details.Failed, "Trace:\n%s\n", action.Details.EngineTrace)
-						is.Empty(action.Details.Error)
+						is.Equal(policyv1.TestResults_RESULT_PASSED, action.Details.Result, "unexpected result for %s in %s", action.Name, sr.File)
 					}
 				case "udf_test.yaml":
-					is.False(sr.Skipped)
+					is.Equal(policyv1.TestResults_RESULT_PASSED, sr.Result)
 					is.Len(sr.Principals, 2)
 					for _, principal := range sr.Principals {
 						for _, resource := range principal.Resources {
 							for _, action := range resource.Actions {
-								is.False(action.Details.Skipped)
-								is.False(action.Details.Failed, "Trace:\n%s\n", action.Details.EngineTrace)
-								is.Empty(action.Details.Error, fmt.Sprintf("%s | %s | %s", principal.Name, resource.Name, action.Name))
+								is.Equal(policyv1.TestResults_RESULT_PASSED, action.Details.Result, "unexpected result for %s/%s/%s in %s", principal.Name, resource.Name, action.Name, sr.File)
 							}
 						}
 					}
@@ -70,33 +64,31 @@ func TestVerify(t *testing.T) {
 	})
 
 	t.Run("invalid_fixture", func(t *testing.T) {
-		result, err := runSuite("invalid_fixture")
-		is := require.New(t)
+		result, err := runSuites("invalid_fixture")
+		is := assert.New(t)
 		is.NoError(err)
-		is.True(result.Failed)
+		is.Equal(policyv1.TestResults_RESULT_ERRORED, result.Result)
 		is.Len(result.Suites, 1)
-		is.True(strings.HasPrefix(result.Suites[0].Status, "failed to load test fixtures from testdata:"))
+		is.True(strings.HasPrefix(result.Suites[0].Error, "failed to load test fixtures from testdata:"))
 	})
 
 	t.Run("invalid_test", func(t *testing.T) {
-		result, err := runSuite("invalid_test")
+		result, err := runSuites("invalid_test")
 
 		is := require.New(t)
 		is.NoError(err)
-		is.True(result.Failed)
+		is.Equal(policyv1.TestResults_RESULT_ERRORED, result.Result)
 		is.Len(result.Suites, 2)
 
 		for _, sr := range result.Suites {
 			switch sr.File {
 			case "invalid_test.yaml":
-				is.False(sr.Skipped)
-				is.True(sr.Failed)
-				is.True(strings.HasPrefix(sr.Status, "failed to load test suite"))
+				is.Equal(policyv1.TestResults_RESULT_ERRORED, sr.Result)
+				is.True(strings.HasPrefix(sr.Error, "failed to load test suite"))
 				is.Empty(sr.Principals)
 			case "did_not_expected_key_test.yaml":
-				is.False(sr.Skipped)
-				is.True(sr.Failed)
-				is.Equal(sr.Status, "failed to load test suite: invalid TestSuite.Tests: value must contain at least 1 item(s)")
+				is.Equal(policyv1.TestResults_RESULT_ERRORED, sr.Result)
+				is.Equal(sr.Error, "failed to load test suite: invalid TestSuite.Tests: value must contain at least 1 item(s)")
 				is.Empty(sr.Principals)
 			}
 		}
@@ -273,8 +265,8 @@ func Test_doVerify(t *testing.T) {
 				is := require.New(t)
 				is.NoError(err)
 				is.Len(result.Suites, 1)
-				is.False(result.Suites[0].Skipped)
-				is.False(result.Failed, "%+v", result.Suites)
+				is.Equal(policyv1.TestResults_RESULT_PASSED, result.Suites[0].Result)
+				is.Equal(policyv1.TestResults_RESULT_PASSED, result.Result)
 			})
 		}
 	}
@@ -289,8 +281,8 @@ func Test_doVerify(t *testing.T) {
 		is := require.New(t)
 		is.NoError(err)
 		is.Len(result.Suites, 1)
-		is.False(result.Suites[0].Skipped)
-		is.True(result.Failed)
+		is.Equal(policyv1.TestResults_RESULT_ERRORED, result.Suites[0].Result)
+		is.Equal(policyv1.TestResults_RESULT_ERRORED, result.Result)
 	})
 	t.Run("Should fail for faux resources", func(t *testing.T) {
 		fsys := make(fstest.MapFS)
@@ -303,8 +295,8 @@ func Test_doVerify(t *testing.T) {
 		is := require.New(t)
 		is.NoError(err)
 		is.Len(result.Suites, 1)
-		is.False(result.Suites[0].Skipped)
-		is.True(result.Failed)
+		is.Equal(policyv1.TestResults_RESULT_ERRORED, result.Suites[0].Result)
+		is.Equal(policyv1.TestResults_RESULT_ERRORED, result.Result)
 	})
 	t.Run("Several subdirectories with test fixtures", func(t *testing.T) {
 		fsys := make(fstest.MapFS)
@@ -324,7 +316,7 @@ func Test_doVerify(t *testing.T) {
 			is.Len(result.Suites[i].Principals, 2)
 			is.Len(result.Suites[i].Principals[0].Resources, 2)
 		}
-		is.False(result.Failed, "%+v", result.Suites)
+		is.Equal(policyv1.TestResults_RESULT_PASSED, result.Result)
 	})
 	t.Run("Simple test", func(t *testing.T) {
 		fsys := make(fstest.MapFS)
@@ -337,8 +329,8 @@ func Test_doVerify(t *testing.T) {
 		is := require.New(t)
 		is.NoError(err)
 		is.Len(result.Suites, 1)
-		is.False(result.Suites[0].Skipped)
-		is.False(result.Failed, "%+v", result.Suites)
+		is.Equal(policyv1.TestResults_RESULT_PASSED, result.Suites[0].Result)
+		is.Equal(policyv1.TestResults_RESULT_PASSED, result.Result)
 	})
 }
 

@@ -214,3 +214,59 @@ message AuxData {
 
     map<string, google.protobuf.Value> jwt = 1;
 }
+
+message Trace {
+    message Component {
+        enum Kind {
+            KIND_UNSPECIFIED = 0;
+            KIND_ACTION = 1;
+            KIND_CONDITION_ALL = 2;
+            KIND_CONDITION_ANY = 3;
+            KIND_CONDITION_NONE = 4;
+            KIND_CONDITION = 5;
+            KIND_DERIVED_ROLE = 6;
+            KIND_EXPR = 7;
+            KIND_POLICY = 8;
+            KIND_RESOURCE = 9;
+            KIND_RULE = 10;
+            KIND_SCOPE = 11;
+            KIND_VARIABLE = 12;
+            KIND_VARIABLES = 13;
+        }
+
+        message Variable {
+            string name = 1;
+            string expr = 2;
+        }
+
+        Kind kind = 1;
+        oneof details {
+          string action = 2;
+          string derived_role = 3;
+          string expr = 4;
+          uint32 index = 5;
+          string policy = 6;
+          string resource = 7;
+          string rule = 8;
+          string scope = 9;
+          Variable variable = 10;
+        }
+    }
+
+    message Event {
+        enum Status {
+            STATUS_UNSPECIFIED = 0;
+            STATUS_ACTIVATED = 1;
+            STATUS_SKIPPED = 2;
+        }
+
+        Status status = 1;
+        cerbos.effect.v1.Effect effect = 2;
+        string error = 3;
+        string message = 4;
+        google.protobuf.Value result = 5;
+    }
+
+    repeated Component components = 1;
+    Event event = 2;
+}

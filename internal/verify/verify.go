@@ -5,7 +5,6 @@ package verify
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"io/fs"
@@ -13,139 +12,26 @@ import (
 	"path/filepath"
 	"regexp"
 
-	effectv1 "github.com/cerbos/cerbos/api/genpb/cerbos/effect/v1"
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
 	"github.com/cerbos/cerbos/internal/engine"
 	"github.com/cerbos/cerbos/internal/util"
 )
 
-const suiteNameWithErrors = "Unknown"
-
 type Config struct {
 	TestsDir string
 	Run      string
-}
-
-type Result struct {
-	Suites []SuiteNode `json:"suites"`
-	Failed bool        `json:"-"`
-}
-
-type SuiteNode struct {
-	File       string           `json:"file"`
-	Status     string           `json:"status"`
-	Name       string           `json:"name"`
-	Principals []*PrincipalNode `json:"principals,omitempty"`
-	Skipped    bool             `json:"skipped,omitempty"`
-	Failed     bool             `json:"failed,omitempty"`
-}
-
-func (sn *SuiteNode) Principal(name string) *PrincipalNode {
-	for _, p := range sn.Principals {
-		if p.Name == name {
-			return p
-		}
-	}
-
-	p := &PrincipalNode{
-		Name:      name,
-		Resources: nil,
-	}
-	sn.Principals = append(sn.Principals, p)
-
-	return p
-}
-
-func (sn *SuiteNode) Add(principal, resource, action string) *ActionNode {
-	return sn.Principal(principal).Resource(resource).Action(action)
-}
-
-type PrincipalNode struct {
-	Name      string          `json:"name"`
-	Resources []*ResourceNode `json:"resources"`
-}
-
-func (pn *PrincipalNode) Resource(name string) *ResourceNode {
-	for _, r := range pn.Resources {
-		if r.Name == name {
-			return r
-		}
-	}
-
-	r := &ResourceNode{
-		Name:    name,
-		Actions: nil,
-	}
-	pn.Resources = append(pn.Resources, r)
-
-	return r
-}
-
-type ResourceNode struct {
-	Name    string        `json:"name"`
-	Actions []*ActionNode `json:"actions"`
-}
-
-func (rn *ResourceNode) Action(name string) *ActionNode {
-	for _, a := range rn.Actions {
-		if a.Name == name {
-			return a
-		}
-	}
-
-	a := &ActionNode{
-		Name:    name,
-		Details: &DetailsNode{},
-	}
-	rn.Actions = append(rn.Actions, a)
-
-	return a
-}
-
-type ActionNode struct {
-	Details *DetailsNode `json:"details"`
-	Name    string       `json:"name"`
-}
-
-type DetailsNode struct {
-	Error       string   `json:"error,omitempty"`
-	Outcome     *Outcome `json:"outcome,omitempty"`
-	EngineTrace string   `json:"engineTrace,omitempty"`
-	Skipped     bool     `json:"skipped,omitempty"`
-	Failed      bool     `json:"failed"`
-}
-
-type (
-	sprintFn func(a ...interface{}) string
-	Outcome  struct {
-		Actual   effectv1.Effect `json:"actual"`
-		Expected effectv1.Effect `json:"expected"`
-	}
-)
-
-func (o *Outcome) MarshalJSON() ([]byte, error) {
-	return json.Marshal(&struct {
-		Actual   string `json:"actual"`
-		Expected string `json:"expected"`
-	}{
-		Actual:   o.Actual.String(),
-		Expected: o.Expected.String(),
-	})
-}
-
-func (o *Outcome) Display(coloredSprint sprintFn) string {
-	return fmt.Sprintf("Expected: %s Actual: %s", coloredSprint(o.Expected.String()), coloredSprint(o.Actual.String()))
+	Trace    bool
 }
 
 var ErrTestFixtureNotFound = errors.New("test fixture not found")
 
 // Verify runs the test suites from the provided directory.
-func Verify(ctx context.Context, eng *engine.Engine, conf Config) (*Result, error) {
+func Verify(ctx context.Context, eng *engine.Engine, conf Config) (*policyv1.TestResults, error) {
 	fsys := os.DirFS(conf.TestsDir)
 	return doVerify(ctx, fsys, eng, conf)
 }
 
-func doVerify(ctx context.Context, fsys fs.FS, eng *engine.Engine, conf Config) (*Result, error) {
+func doVerify(ctx context.Context, fsys fs.FS, eng *engine.Engine, conf Config) (*policyv1.TestResults, error) {
 	var shouldRun func(string) bool
 
 	if conf.Run == "" {
@@ -211,45 +97,44 @@ func doVerify(ctx context.Context, fsys fs.FS, eng *engine.Engine, conf Config) 
 		return nil, nil
 	}
 
-	result := &Result{}
-
-	for _, sd := range suiteDefs {
+	runTestSuite := func(file string) *policyv1.TestResults_Suite {
 		suite := &policyv1.TestSuite{}
-		err := util.LoadFromJSONOrYAML(fsys, sd, suite)
+		err := util.LoadFromJSONOrYAML(fsys, file, suite)
 		if err == nil {
 			err = suite.Validate()
 		}
 		if err != nil {
-			result.Suites = append(result.Suites, SuiteNode{
-				File:    sd,
-				Name:    suiteNameWithErrors,
-				Status:  fmt.Sprintf("failed to load test suite: %v", err),
-				Skipped: false,
-				Failed:  true,
-			})
-			result.Failed = true
-			continue
+			return &policyv1.TestResults_Suite{
+				File:   file,
+				Name:   "Unknown",
+				Result: policyv1.TestResults_RESULT_ERRORED,
+				Error:  fmt.Sprintf("failed to load test suite: %v", err),
+			}
 		}
 
-		fixtureDir := filepath.Join(filepath.Dir(sd), util.TestDataDirectory)
+		fixtureDir := filepath.Join(filepath.Dir(file), util.TestDataDirectory)
 		fixture, err := getFixture(fixtureDir)
 		if err != nil {
-			result.Suites = append(result.Suites, SuiteNode{
-				File:   sd,
-				Name:   suiteNameWithErrors,
-				Status: fmt.Sprintf("failed to load test fixtures from %s: %v", fixtureDir, err),
-				Failed: true,
-			})
-			result.Failed = true
-			continue
+			return &policyv1.TestResults_Suite{
+				File:   file,
+				Name:   suite.Name,
+				Result: policyv1.TestResults_RESULT_ERRORED,
+				Error:  fmt.Sprintf("failed to load test fixtures from %s: %v", fixtureDir, err),
+			}
 		}
 
-		suiteResult, failed := fixture.runTestSuite(ctx, eng, shouldRun, sd, suite)
-		result.Suites = append(result.Suites, suiteResult)
-		if failed {
-			result.Failed = true
+		return fixture.runTestSuite(ctx, eng, shouldRun, file, suite, conf.Trace)
+	}
+
+	results := &policyv1.TestResults{}
+
+	for _, sd := range suiteDefs {
+		suiteResult := runTestSuite(sd)
+		results.Suites = append(results.Suites, suiteResult)
+		if suiteResult.Result > results.Result {
+			results.Result = suiteResult.Result
 		}
 	}
 
-	return result, err
+	return results, err
 }

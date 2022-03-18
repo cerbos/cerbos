@@ -1397,6 +1397,167 @@ var _ interface {
 	ErrorName() string
 } = AuxDataValidationError{}
 
+// Validate checks the field values on Trace with the rules defined in the
+// proto definition for this message. If any rules are violated, the first
+// error encountered is returned, or nil if there are no violations.
+func (m *Trace) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on Trace with the rules defined in the
+// proto definition for this message. If any rules are violated, the result is
+// a list of violation errors wrapped in TraceMultiError, or nil if none found.
+func (m *Trace) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *Trace) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	for idx, item := range m.GetComponents() {
+		_, _ = idx, item
+
+		if all {
+			switch v := interface{}(item).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, TraceValidationError{
+						field:  fmt.Sprintf("Components[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, TraceValidationError{
+						field:  fmt.Sprintf("Components[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(item).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return TraceValidationError{
+					field:  fmt.Sprintf("Components[%v]", idx),
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	}
+
+	if all {
+		switch v := interface{}(m.GetEvent()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, TraceValidationError{
+					field:  "Event",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, TraceValidationError{
+					field:  "Event",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetEvent()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return TraceValidationError{
+				field:  "Event",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if len(errors) > 0 {
+		return TraceMultiError(errors)
+	}
+
+	return nil
+}
+
+// TraceMultiError is an error wrapping multiple validation errors returned by
+// Trace.ValidateAll() if the designated constraints aren't met.
+type TraceMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m TraceMultiError) Error() string {
+	var msgs []string
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m TraceMultiError) AllErrors() []error { return m }
+
+// TraceValidationError is the validation error returned by Trace.Validate if
+// the designated constraints aren't met.
+type TraceValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e TraceValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e TraceValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e TraceValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e TraceValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e TraceValidationError) ErrorName() string { return "TraceValidationError" }
+
+// Error satisfies the builtin error interface
+func (e TraceValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sTrace.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = TraceValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = TraceValidationError{}
+
 // Validate checks the field values on ResourcesQueryPlanRequest_Resource with
 // the rules defined in the proto definition for this message. If any rules
 // are violated, the first error encountered is returned, or nil if there are
@@ -2027,3 +2188,406 @@ var _ interface {
 	Cause() error
 	ErrorName() string
 } = ResourcesQueryPlanOutput_LogicalOperationValidationError{}
+
+// Validate checks the field values on Trace_Component with the rules defined
+// in the proto definition for this message. If any rules are violated, the
+// first error encountered is returned, or nil if there are no violations.
+func (m *Trace_Component) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on Trace_Component with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// Trace_ComponentMultiError, or nil if none found.
+func (m *Trace_Component) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *Trace_Component) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for Kind
+
+	switch m.Details.(type) {
+
+	case *Trace_Component_Action:
+		// no validation rules for Action
+
+	case *Trace_Component_DerivedRole:
+		// no validation rules for DerivedRole
+
+	case *Trace_Component_Expr:
+		// no validation rules for Expr
+
+	case *Trace_Component_Index:
+		// no validation rules for Index
+
+	case *Trace_Component_Policy:
+		// no validation rules for Policy
+
+	case *Trace_Component_Resource:
+		// no validation rules for Resource
+
+	case *Trace_Component_Rule:
+		// no validation rules for Rule
+
+	case *Trace_Component_Scope:
+		// no validation rules for Scope
+
+	case *Trace_Component_Variable_:
+
+		if all {
+			switch v := interface{}(m.GetVariable()).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, Trace_ComponentValidationError{
+						field:  "Variable",
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, Trace_ComponentValidationError{
+						field:  "Variable",
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(m.GetVariable()).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return Trace_ComponentValidationError{
+					field:  "Variable",
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	}
+
+	if len(errors) > 0 {
+		return Trace_ComponentMultiError(errors)
+	}
+
+	return nil
+}
+
+// Trace_ComponentMultiError is an error wrapping multiple validation errors
+// returned by Trace_Component.ValidateAll() if the designated constraints
+// aren't met.
+type Trace_ComponentMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m Trace_ComponentMultiError) Error() string {
+	var msgs []string
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m Trace_ComponentMultiError) AllErrors() []error { return m }
+
+// Trace_ComponentValidationError is the validation error returned by
+// Trace_Component.Validate if the designated constraints aren't met.
+type Trace_ComponentValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e Trace_ComponentValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e Trace_ComponentValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e Trace_ComponentValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e Trace_ComponentValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e Trace_ComponentValidationError) ErrorName() string { return "Trace_ComponentValidationError" }
+
+// Error satisfies the builtin error interface
+func (e Trace_ComponentValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sTrace_Component.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = Trace_ComponentValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = Trace_ComponentValidationError{}
+
+// Validate checks the field values on Trace_Event with the rules defined in
+// the proto definition for this message. If any rules are violated, the first
+// error encountered is returned, or nil if there are no violations.
+func (m *Trace_Event) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on Trace_Event with the rules defined in
+// the proto definition for this message. If any rules are violated, the
+// result is a list of violation errors wrapped in Trace_EventMultiError, or
+// nil if none found.
+func (m *Trace_Event) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *Trace_Event) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for Status
+
+	// no validation rules for Effect
+
+	// no validation rules for Error
+
+	// no validation rules for Message
+
+	if all {
+		switch v := interface{}(m.GetResult()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, Trace_EventValidationError{
+					field:  "Result",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, Trace_EventValidationError{
+					field:  "Result",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetResult()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return Trace_EventValidationError{
+				field:  "Result",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if len(errors) > 0 {
+		return Trace_EventMultiError(errors)
+	}
+
+	return nil
+}
+
+// Trace_EventMultiError is an error wrapping multiple validation errors
+// returned by Trace_Event.ValidateAll() if the designated constraints aren't met.
+type Trace_EventMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m Trace_EventMultiError) Error() string {
+	var msgs []string
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m Trace_EventMultiError) AllErrors() []error { return m }
+
+// Trace_EventValidationError is the validation error returned by
+// Trace_Event.Validate if the designated constraints aren't met.
+type Trace_EventValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e Trace_EventValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e Trace_EventValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e Trace_EventValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e Trace_EventValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e Trace_EventValidationError) ErrorName() string { return "Trace_EventValidationError" }
+
+// Error satisfies the builtin error interface
+func (e Trace_EventValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sTrace_Event.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = Trace_EventValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = Trace_EventValidationError{}
+
+// Validate checks the field values on Trace_Component_Variable with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *Trace_Component_Variable) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on Trace_Component_Variable with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// Trace_Component_VariableMultiError, or nil if none found.
+func (m *Trace_Component_Variable) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *Trace_Component_Variable) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for Name
+
+	// no validation rules for Expr
+
+	if len(errors) > 0 {
+		return Trace_Component_VariableMultiError(errors)
+	}
+
+	return nil
+}
+
+// Trace_Component_VariableMultiError is an error wrapping multiple validation
+// errors returned by Trace_Component_Variable.ValidateAll() if the designated
+// constraints aren't met.
+type Trace_Component_VariableMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m Trace_Component_VariableMultiError) Error() string {
+	var msgs []string
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m Trace_Component_VariableMultiError) AllErrors() []error { return m }
+
+// Trace_Component_VariableValidationError is the validation error returned by
+// Trace_Component_Variable.Validate if the designated constraints aren't met.
+type Trace_Component_VariableValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e Trace_Component_VariableValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e Trace_Component_VariableValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e Trace_Component_VariableValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e Trace_Component_VariableValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e Trace_Component_VariableValidationError) ErrorName() string {
+	return "Trace_Component_VariableValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e Trace_Component_VariableValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sTrace_Component_Variable.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = Trace_Component_VariableValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = Trace_Component_VariableValidationError{}
