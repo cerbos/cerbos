@@ -406,7 +406,8 @@ func (gc *grpcClient) IsAllowed(ctx context.Context, principal *Principal, resou
 func isValid(obj interface {
 	Err() error
 	Validate() error
-}) error {
+},
+) error {
 	if err := obj.Err(); err != nil {
 		return err
 	}
