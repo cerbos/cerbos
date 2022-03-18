@@ -119,6 +119,7 @@ func (c *Cmd) Run(k *kong.Kong) error {
 		switch results.Result {
 		case policyv1.TestResults_RESULT_FAILED, policyv1.TestResults_RESULT_ERRORED:
 			return internalerrors.ErrTestsFailed
+		default:
 		}
 	}
 

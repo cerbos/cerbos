@@ -25,9 +25,8 @@ type Context interface {
 	StartResource(kind string) Context
 	StartRule(name string) Context
 	StartScope(scope string) Context
-	StartVariable(name string, expr string) Context
+	StartVariable(name, expr string) Context
 	StartVariables() Context
-
 	Activated()
 	AppliedEffect(effect effectv1.Effect, message string)
 	ComputedBoolResult(result bool, err error, message string)
@@ -121,7 +120,7 @@ func (c *context) StartScope(scope string) Context {
 	})
 }
 
-func (c *context) StartVariable(name string, expr string) Context {
+func (c *context) StartVariable(name, expr string) Context {
 	return c.start(&enginev1.Trace_Component{
 		Kind: enginev1.Trace_Component_KIND_VARIABLE,
 		Details: &enginev1.Trace_Component_Variable_{
@@ -242,7 +241,7 @@ func (c noopContext) StartRule(name string) Context { return c }
 
 func (c noopContext) StartScope(scope string) Context { return c }
 
-func (c noopContext) StartVariable(name string, expr string) Context { return c }
+func (c noopContext) StartVariable(name, expr string) Context { return c }
 
 func (c noopContext) StartVariables() Context { return c }
 

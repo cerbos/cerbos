@@ -115,12 +115,6 @@ func loadFixtureElement(fsys fs.FS, path string, pb validatableMessage) error {
 	return pb.Validate()
 }
 
-type testResultKey struct {
-	Principal string
-	Resource  string
-	Action    string
-}
-
 func (tf *testFixture) runTestSuite(ctx context.Context, eng *engine.Engine, shouldRun func(string) bool, file string, suite *policyv1.TestSuite, trace bool) *policyv1.TestResults_Suite {
 	suiteResult := &policyv1.TestResults_Suite{
 		File: file,

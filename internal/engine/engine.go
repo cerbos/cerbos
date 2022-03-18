@@ -264,11 +264,9 @@ func (engine *Engine) ResourcesQueryPlan(ctx context.Context, input *enginev1.Re
 		return nil, err
 	}
 
-	checkOpts := newCheckOptions(ctx)
-
 	// get the principal policy check
 	ppName, ppVersion, ppScope := engine.policyAttr(input.Principal.Id, input.Principal.PolicyVersion, input.Principal.Scope)
-	policyEvaluator, err := engine.getPrincipalPolicyEvaluator(ctx, ppName, ppVersion, ppScope, checkOpts)
+	policyEvaluator, err := engine.getPrincipalPolicyEvaluator(ctx, ppName, ppVersion, ppScope)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get check for [%s.%s]: %w", ppName, ppVersion, err)
 	}
@@ -283,7 +281,7 @@ func (engine *Engine) ResourcesQueryPlan(ctx context.Context, input *enginev1.Re
 	if plan == nil {
 		// get the resource policy check
 		rpName, rpVersion, rpScope := engine.policyAttr(input.Resource.Kind, input.Resource.PolicyVersion, input.Resource.Scope)
-		policyEvaluator, err = engine.getResourcePolicyEvaluator(ctx, rpName, rpVersion, rpScope, checkOpts)
+		policyEvaluator, err = engine.getResourcePolicyEvaluator(ctx, rpName, rpVersion, rpScope)
 		if err != nil {
 			return nil, fmt.Errorf("failed to get check for [%s.%s]: %w", rpName, rpVersion, err)
 		}
@@ -369,7 +367,7 @@ func (engine *Engine) evaluate(ctx context.Context, input *enginev1.CheckInput, 
 		Actions:    make(map[string]*enginev1.CheckOutput_ActionEffect, len(input.Actions)),
 	}
 
-	ec, err := engine.buildEvaluationCtx(ctx, input, checkOpts)
+	ec, err := engine.buildEvaluationCtx(ctx, input)
 	if err != nil {
 		return nil, err
 	}
@@ -415,12 +413,12 @@ func (engine *Engine) evaluate(ctx context.Context, input *enginev1.CheckInput, 
 	return output, nil
 }
 
-func (engine *Engine) buildEvaluationCtx(ctx context.Context, input *enginev1.CheckInput, checkOpts *checkOptions) (*evaluationCtx, error) {
+func (engine *Engine) buildEvaluationCtx(ctx context.Context, input *enginev1.CheckInput) (*evaluationCtx, error) {
 	ec := &evaluationCtx{}
 
 	// get the principal policy check
 	ppName, ppVersion, ppScope := engine.policyAttr(input.Principal.Id, input.Principal.PolicyVersion, input.Principal.Scope)
-	ppCheck, err := engine.getPrincipalPolicyEvaluator(ctx, ppName, ppVersion, ppScope, checkOpts)
+	ppCheck, err := engine.getPrincipalPolicyEvaluator(ctx, ppName, ppVersion, ppScope)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get check for [%s.%s]: %w", ppName, ppVersion, err)
 	}
@@ -428,7 +426,7 @@ func (engine *Engine) buildEvaluationCtx(ctx context.Context, input *enginev1.Ch
 
 	// get the resource policy check
 	rpName, rpVersion, rpScope := engine.policyAttr(input.Resource.Kind, input.Resource.PolicyVersion, input.Resource.Scope)
-	rpCheck, err := engine.getResourcePolicyEvaluator(ctx, rpName, rpVersion, rpScope, checkOpts)
+	rpCheck, err := engine.getResourcePolicyEvaluator(ctx, rpName, rpVersion, rpScope)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get check for [%s.%s]: %w", rpName, rpVersion, err)
 	}
@@ -437,7 +435,7 @@ func (engine *Engine) buildEvaluationCtx(ctx context.Context, input *enginev1.Ch
 	return ec, nil
 }
 
-func (engine *Engine) getPrincipalPolicyEvaluator(ctx context.Context, principal, policyVer, scope string, checkOpts *checkOptions) (Evaluator, error) {
+func (engine *Engine) getPrincipalPolicyEvaluator(ctx context.Context, principal, policyVer, scope string) (Evaluator, error) {
 	principalModID := namer.PrincipalPolicyModuleID(principal, policyVer, scope)
 	rps, err := engine.compileMgr.Get(ctx, principalModID)
 	if err != nil {
@@ -451,7 +449,7 @@ func (engine *Engine) getPrincipalPolicyEvaluator(ctx context.Context, principal
 	return NewEvaluator(rps, engine.schemaMgr), nil
 }
 
-func (engine *Engine) getResourcePolicyEvaluator(ctx context.Context, resource, policyVer, scope string, checkOpts *checkOptions) (Evaluator, error) {
+func (engine *Engine) getResourcePolicyEvaluator(ctx context.Context, resource, policyVer, scope string) (Evaluator, error) {
 	resourceModID := namer.ResourcePolicyModuleID(resource, policyVer, scope)
 	rps, err := engine.compileMgr.Get(ctx, resourceModID)
 	if err != nil {

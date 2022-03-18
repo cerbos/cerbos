@@ -117,6 +117,8 @@ func printTraceEvent(p *printer.Printer, event *enginev1.Trace_Event) {
 
 	case enginev1.Trace_Event_STATUS_SKIPPED:
 		p.Printf("    %s\n", colored.TraceEventSkipped("skipped"))
+
+	default:
 	}
 
 	switch event.Effect {
@@ -125,6 +127,8 @@ func printTraceEvent(p *printer.Printer, event *enginev1.Trace_Event) {
 
 	case effectv1.Effect_EFFECT_DENY:
 		p.Printf("    effect → %s\n", colored.TraceEventEffectDeny("deny"))
+
+	default:
 	}
 
 	if event.Result != nil {
