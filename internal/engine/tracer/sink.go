@@ -6,6 +6,7 @@ package tracer
 import (
 	"encoding/json"
 	"fmt"
+	"sync"
 
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
@@ -20,7 +21,8 @@ type Sink interface {
 }
 
 type Collector struct {
-	Traces []*enginev1.Trace
+	traces []*enginev1.Trace
+	mutex  sync.RWMutex
 }
 
 func NewCollector() *Collector {
@@ -32,7 +34,15 @@ func (c *Collector) Enabled() bool {
 }
 
 func (c *Collector) AddTrace(trace *enginev1.Trace) {
-	c.Traces = append(c.Traces, trace)
+	c.mutex.Lock()
+	defer c.mutex.Unlock()
+	c.traces = append(c.traces, trace)
+}
+
+func (c *Collector) Traces() []*enginev1.Trace {
+	c.mutex.RLock()
+	defer c.mutex.RUnlock()
+	return c.traces
 }
 
 type ZapSink struct {

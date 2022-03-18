@@ -201,7 +201,7 @@ func performCheck(ctx context.Context, eng *engine.Engine, inputs []*enginev1.Ch
 
 	traceCollector := tracer.NewCollector()
 	output, err := eng.Check(ctx, inputs, engine.WithTraceSink(traceCollector))
-	return output, traceCollector.Traces, err
+	return output, traceCollector.Traces(), err
 }
 
 func addTestResult(suite *policyv1.TestResults_Suite, principal, resource, action string, details *policyv1.TestResults_Details) {
