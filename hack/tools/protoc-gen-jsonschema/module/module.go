@@ -27,7 +27,7 @@ func (*Module) Name() string {
 }
 
 func (m *Module) Execute(targets map[string]pgs.File, pkgs map[string]pgs.Package) []pgs.Artifact {
-	baseURL := m.Parameters().StrDefault("baseurl", "https://api.cerbos.dev/")
+	baseURL := m.Parameters().StrDefault("baseurl", "https://protoc-gen-jsonschema.cerbos.dev/")
 	if !strings.HasSuffix(baseURL, "/") {
 		baseURL += "/"
 	}
