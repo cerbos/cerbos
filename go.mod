@@ -18,7 +18,6 @@ require (
 	github.com/fatih/color v1.13.0
 	github.com/fatih/structtag v1.2.0
 	github.com/fergusstrange/embedded-postgres v1.15.0
-	github.com/fsnotify/fsnotify v1.5.1
 	github.com/gdamore/tcell/v2 v2.4.0
 	github.com/ghodss/yaml v1.0.0
 	github.com/go-cmd/cmd v1.4.0

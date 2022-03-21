@@ -8,6 +8,7 @@ import (
 	"runtime"
 	"strings"
 
+	"github.com/cerbos/cerbos/internal/config"
 	"github.com/cerbos/cerbos/internal/namer"
 )
 
@@ -37,4 +38,11 @@ func (c *Conf) Validate() error {
 	}
 
 	return nil
+}
+
+func GetConf() (*Conf, error) {
+	conf := &Conf{}
+	err := config.GetSection(conf)
+
+	return conf, err
 }

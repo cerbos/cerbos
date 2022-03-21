@@ -7,6 +7,7 @@ import (
 	"context"
 	"fmt"
 	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 
@@ -16,37 +17,16 @@ import (
 	"github.com/cerbos/cerbos/internal/test"
 )
 
-func TestStartServerInvalidOptions(t *testing.T) {
-	testCases := []struct {
-		name string
-		opts []testutil.ServerOpt
-	}{
-		{
-			name: "Empty TLS cert",
-			opts: []testutil.ServerOpt{testutil.WithTLSCertAndKey("", "test.key")},
-		},
-		{
-			name: "Empty TLS key",
-			opts: []testutil.ServerOpt{testutil.WithTLSCertAndKey("test.crt", "")},
-		},
-		{
-			name: "Both repository dir and database specified",
-			opts: []testutil.ServerOpt{
-				testutil.WithPolicyRepositoryDatabase("sqlite3", ":memory:"),
-				testutil.WithPolicyRepositoryDirectory("/tmp"),
-			},
-		},
-	}
+var configYAML = `
+server:
+  httpListenAddr: 127.0.0.1:3592
+  grpcListenAddr: 127.0.0.1:3593
 
-	for _, tc := range testCases {
-		tc := tc
-		t.Run(tc.name, func(t *testing.T) {
-			s, err := testutil.StartCerbosServer(tc.opts...)
-			require.Error(t, err)
-			require.Nil(t, s)
-		})
-	}
-}
+storage:
+  driver: sqlite3
+  sqlite3:
+    dsn: ":memory:"
+`
 
 func TestStartServer(t *testing.T) {
 	certDir := test.PathToDir(t, "server")
@@ -69,10 +49,10 @@ func TestStartServer(t *testing.T) {
 		{name: "None"},
 		{name: "TLS", opt: testutil.WithTLSCertAndKey(tlsCert, tlsKey)},
 		{name: "Policy Dir", opt: testutil.WithPolicyRepositoryDirectory(policyDir)},
-		{name: "Policy DB", opt: testutil.WithPolicyRepositoryDatabase("sqlite3", ":memory:")},
 		{name: "UDS gRPC", opt: testutil.WithGRPCListenAddr(fmt.Sprintf("unix:%s", filepath.Join(tempDir, "grpc.sock")))},
 		{name: "UDS HTTP", opt: testutil.WithHTTPListenAddr(fmt.Sprintf("unix:%s", filepath.Join(tempDir, "http.sock")))},
 		{name: "Admin API", opt: testutil.WithAdminAPI("test", "test")},
+		{name: "Config Reader", opt: testutil.WithConfig(strings.NewReader(configYAML))},
 	}
 
 	for _, tc := range testCases {

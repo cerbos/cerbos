@@ -115,7 +115,7 @@ func mkServerOpts(t *testing.T, withTLS bool) []testutil.ServerOpt {
 	dbName := test.RandomStr(5)
 
 	serverOpts := []testutil.ServerOpt{
-		testutil.WithPolicyRepositoryDatabase("sqlite3", fmt.Sprintf("%s?_fk=true", filepath.Join(t.TempDir(), dbName))),
+		testutil.WithPolicyRepositorySQLite3(fmt.Sprintf("%s?_fk=true", filepath.Join(t.TempDir(), dbName))),
 		testutil.WithAdminAPI(adminUsername, adminPassword),
 	}
 

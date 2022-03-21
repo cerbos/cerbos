@@ -165,7 +165,7 @@ func mkSchemaMgr(t *testing.T) schema.Manager {
 	store, err := disk.NewStore(ctx, &disk.Conf{Directory: dir})
 	require.NoError(t, err)
 
-	return schema.NewWithConf(ctx, store, schema.NewConf(schema.EnforcementReject))
+	return schema.NewFromConf(ctx, store, schema.NewConf(schema.EnforcementReject))
 }
 
 func BenchmarkCompile(b *testing.B) {

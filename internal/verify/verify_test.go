@@ -349,7 +349,7 @@ func mkEngine(t *testing.T) *engine.Engine {
 	require.NoError(t, err)
 
 	eng, err := engine.New(ctx, engine.Components{
-		CompileMgr: compile.NewManagerWithDefaultConf(ctx, store, schemaMgr),
+		CompileMgr: compile.NewManagerFromDefaultConf(ctx, store, schemaMgr),
 		SchemaMgr:  schemaMgr,
 		AuditLog:   audit.NewNopLog(),
 	})

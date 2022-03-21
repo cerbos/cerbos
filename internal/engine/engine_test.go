@@ -179,9 +179,9 @@ func mkEngine(tb testing.TB, p param) (*Engine, context.CancelFunc) {
 	require.NoError(tb, err)
 
 	schemaConf := schema.NewConf(p.schemaEnforcement)
-	schemaMgr := schema.NewWithConf(ctx, store, schemaConf)
+	schemaMgr := schema.NewFromConf(ctx, store, schemaConf)
 
-	compiler := compile.NewManagerWithDefaultConf(ctx, store, schemaMgr)
+	compiler := compile.NewManagerFromDefaultConf(ctx, store, schemaMgr)
 
 	var auditLog audit.Log
 	if p.enableAuditLog {

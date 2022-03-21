@@ -19,6 +19,7 @@ import (
 	"go.uber.org/zap"
 
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
+	"github.com/cerbos/cerbos/internal/config"
 	"github.com/cerbos/cerbos/internal/namer"
 	"github.com/cerbos/cerbos/internal/policy"
 	"github.com/cerbos/cerbos/internal/schema"
@@ -32,9 +33,9 @@ const DriverName = "git"
 var _ storage.Store = (*Store)(nil)
 
 func init() {
-	storage.RegisterDriver(DriverName, func(ctx context.Context) (storage.Store, error) {
-		conf, err := GetConf()
-		if err != nil {
+	storage.RegisterDriver(DriverName, func(ctx context.Context, confW *config.Wrapper) (storage.Store, error) {
+		conf := new(Conf)
+		if err := confW.GetSection(conf); err != nil {
 			return nil, fmt.Errorf("failed to read git configuration: %w", err)
 		}
 

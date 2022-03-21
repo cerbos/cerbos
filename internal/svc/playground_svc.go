@@ -210,7 +210,7 @@ func doCompile(ctx context.Context, log *zap.Logger, files []*requestv1.PolicyFi
 	}
 
 	store := disk.NewFromIndexWithConf(idx, &disk.Conf{})
-	schemaMgr := schema.NewWithConf(ctx, store, schema.NewConf(schema.EnforcementWarn))
+	schemaMgr := schema.NewFromConf(ctx, store, schema.NewConf(schema.EnforcementWarn))
 
 	if err := compile.BatchCompile(idx.GetAllCompilationUnits(ctx), schemaMgr); err != nil {
 		compErr := new(compile.ErrorList)
@@ -326,5 +326,5 @@ func (c *components) mkEngine(ctx context.Context) (*engine.Engine, error) {
 		return nil, err
 	}
 
-	return engine.NewEphemeral(ctx, cm, c.schemaMgr)
+	return engine.NewEphemeral(cm, c.schemaMgr)
 }

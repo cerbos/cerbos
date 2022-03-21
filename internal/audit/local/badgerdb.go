@@ -34,19 +34,14 @@ var (
 )
 
 func init() {
-	audit.RegisterBackend("local", func(_ context.Context) (audit.Log, error) {
-		return New()
+	audit.RegisterBackend("local", func(_ context.Context, confW *config.Wrapper) (audit.Log, error) {
+		conf := new(Conf)
+		if err := confW.GetSection(conf); err != nil {
+			return nil, fmt.Errorf("failed to read local audit log configuration: %w", err)
+		}
+
+		return NewLog(conf)
 	})
-}
-
-// New reads the configuration and returns a new instance of the Log.
-func New() (*Log, error) {
-	conf := &Conf{}
-	if err := config.GetSection(conf); err != nil {
-		return nil, fmt.Errorf("failed to read configuration: %w", err)
-	}
-
-	return NewLog(conf)
 }
 
 // Log implements the decisionlog interface with Badger as the backing store.

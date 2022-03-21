@@ -25,7 +25,6 @@ import (
 	schemav1 "github.com/cerbos/cerbos/api/genpb/cerbos/schema/v1"
 	"github.com/cerbos/cerbos/internal/audit"
 	"github.com/cerbos/cerbos/internal/compile"
-	"github.com/cerbos/cerbos/internal/config"
 	"github.com/cerbos/cerbos/internal/engine/tracer"
 	"github.com/cerbos/cerbos/internal/namer"
 	"github.com/cerbos/cerbos/internal/observability/logging"
@@ -93,12 +92,18 @@ type Components struct {
 }
 
 func New(ctx context.Context, components Components) (*Engine, error) {
-	engine, err := newEngine(components)
+	conf, err := GetConf()
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to read engine configuration: %w", err)
 	}
 
-	if numWorkers := engine.conf.NumWorkers; numWorkers > 0 {
+	return NewFromConf(ctx, conf, components), nil
+}
+
+func NewFromConf(ctx context.Context, conf *Conf, components Components) *Engine {
+	engine := newEngine(conf, components)
+
+	if numWorkers := conf.NumWorkers; numWorkers > 0 {
 		engine.workerPool = make([]chan<- workIn, numWorkers)
 
 		for i := 0; i < int(numWorkers); i++ {
@@ -108,27 +113,25 @@ func New(ctx context.Context, components Components) (*Engine, error) {
 		}
 	}
 
-	return engine, nil
+	return engine
 }
 
-func NewEphemeral(ctx context.Context, compileMgr *compile.Manager, schemaMgr schema.Manager) (*Engine, error) {
-	return newEngine(Components{CompileMgr: compileMgr, SchemaMgr: schemaMgr, AuditLog: audit.NewNopLog()})
-}
-
-func newEngine(c Components) (*Engine, error) {
-	conf := &Conf{}
-	if err := config.GetSection(conf); err != nil {
-		return nil, err
+func NewEphemeral(compileMgr *compile.Manager, schemaMgr schema.Manager) (*Engine, error) {
+	conf, err := GetConf()
+	if err != nil {
+		return nil, fmt.Errorf("failed to read engine configuration: %w", err)
 	}
 
-	engine := &Engine{
+	return newEngine(conf, Components{CompileMgr: compileMgr, SchemaMgr: schemaMgr, AuditLog: audit.NewNopLog()}), nil
+}
+
+func newEngine(conf *Conf, c Components) *Engine {
+	return &Engine{
 		conf:       conf,
 		compileMgr: c.CompileMgr,
 		schemaMgr:  c.SchemaMgr,
 		auditLog:   c.AuditLog,
 	}
-
-	return engine, nil
 }
 
 func (engine *Engine) startWorker(ctx context.Context, num int, inputChan <-chan workIn) {

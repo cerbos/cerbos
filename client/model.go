@@ -503,7 +503,8 @@ func (ps *PolicySet) Size() int {
 
 func (ps *PolicySet) add(b interface {
 	build() (*policyv1.Policy, error)
-}) error {
+},
+) error {
 	p, err := b.build()
 	if err != nil {
 		return err

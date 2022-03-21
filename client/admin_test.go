@@ -94,7 +94,7 @@ func TestListPolicies(t *testing.T) {
 	)
 
 	serverOpts := []testutil.ServerOpt{
-		testutil.WithPolicyRepositoryDatabase("sqlite3", fmt.Sprintf("%s?_fk=true", filepath.Join(t.TempDir(), "cerbos.db"))),
+		testutil.WithPolicyRepositorySQLite3(fmt.Sprintf("%s?_fk=true", filepath.Join(t.TempDir(), "cerbos.db"))),
 		testutil.WithAdminAPI(adminUsername, adminPassword),
 	}
 
