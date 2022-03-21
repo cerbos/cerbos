@@ -3,7 +3,7 @@ module github.com/cerbos/cerbos
 go 1.17
 
 require (
-	contrib.go.opencensus.io/exporter/prometheus v0.4.0
+	contrib.go.opencensus.io/exporter/prometheus v0.4.1
 	github.com/Masterminds/sprig/v3 v3.2.2
 	github.com/alecthomas/chroma v0.10.0
 	github.com/alecthomas/kong v0.5.0
