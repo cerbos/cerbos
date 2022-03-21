@@ -71,7 +71,7 @@ require (
 	golang.org/x/crypto v0.0.0-20220214200702-86341886e292
 	golang.org/x/net v0.0.0-20220127200216-cd36cc0744dd
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
-	golang.org/x/tools v0.1.9
+	golang.org/x/tools v0.1.10
 	google.golang.org/genproto v0.0.0-20220314164441-57ef72a4c106
 	google.golang.org/grpc v1.45.0
 	google.golang.org/protobuf v1.27.1
@@ -213,7 +213,7 @@ require (
 	go.opentelemetry.io/otel/sdk/metric v0.27.0 // indirect
 	go.uber.org/atomic v1.9.0 // indirect
 	golang.org/x/lint v0.0.0-20210508222113-6edffad5e616 // indirect
-	golang.org/x/mod v0.5.1 // indirect
+	golang.org/x/mod v0.6.0-dev.0.20220106191415-9b9b3d81d5e3 // indirect
 	golang.org/x/oauth2 v0.0.0-20220309155454-6242fa91716a // indirect
 	golang.org/x/sys v0.0.0-20220114195835-da31bd327af9 // indirect
 	golang.org/x/term v0.0.0-20210927222741-03fcf44c2211 // indirect
