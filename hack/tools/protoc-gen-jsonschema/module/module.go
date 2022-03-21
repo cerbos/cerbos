@@ -6,6 +6,7 @@ package module
 import (
 	"encoding/json"
 	"fmt"
+	"path"
 	"strings"
 
 	"github.com/cerbos/cerbos/hack/tools/protoc-gen-jsonschema/jsonschema"
@@ -27,6 +28,8 @@ func (*Module) Name() string {
 }
 
 func (m *Module) Execute(targets map[string]pgs.File, pkgs map[string]pgs.Package) []pgs.Artifact {
+	baseURL := m.Parameters().StrDefault("baseurl", "https://api.cerbos.dev")
+
 	for _, file := range targets {
 		m.Push(fmt.Sprintf("file:%s", file.Name()))
 
@@ -34,7 +37,7 @@ func (m *Module) Execute(targets map[string]pgs.File, pkgs map[string]pgs.Packag
 			filename := m.filename(message)
 
 			schema := m.defineMessage(message)
-			schema.TopLevel("https://api.cerbos.dev/" + filename)
+			schema.TopLevel(path.Join(baseURL, filename))
 
 			content, err := json.MarshalIndent(schema, "", "  ")
 			m.CheckErr(err, "failed to marshal JSON schema")
