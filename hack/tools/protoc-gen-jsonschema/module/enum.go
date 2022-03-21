@@ -40,7 +40,9 @@ func (m *Module) schemaForEnum(enum pgs.Enum, rules *validate.EnumRules) (jsonsc
 			required = true
 		}
 
-		return jsonschema.AllOf(schemas...), required
+		if len(schemas) > 0 {
+			return jsonschema.AllOf(schemas...), required
+		}
 	}
 
 	return m.enumRef(enum), required
