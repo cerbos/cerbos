@@ -21,9 +21,10 @@ func (m *Module) defineEnum(enum pgs.Enum) *jsonschema.StringSchema {
 
 func (m *Module) schemaForEnum(enum pgs.Enum, rules *validate.EnumRules) (jsonschema.Schema, bool) {
 	required := false
-	schemas := []jsonschema.NonTrivialSchema{m.enumRef(enum)}
 
 	if rules != nil {
+		var schemas []jsonschema.NonTrivialSchema
+
 		if rules.Const != nil {
 			schemas = append(schemas, m.schemaForEnumConst(enum, rules.GetConst()))
 			required = true
@@ -36,10 +37,13 @@ func (m *Module) schemaForEnum(enum pgs.Enum, rules *validate.EnumRules) (jsonsc
 
 		if len(rules.NotIn) > 0 {
 			schemas = append(schemas, jsonschema.Not(m.schemaForEnumIn(enum, rules.NotIn)))
+			required = true
 		}
+
+		return jsonschema.AllOf(schemas...), required
 	}
 
-	return jsonschema.AllOf(schemas...), required
+	return m.enumRef(enum), required
 }
 
 func (m *Module) schemaForEnumConst(enum pgs.Enum, value int32) *jsonschema.StringSchema {

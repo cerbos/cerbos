@@ -2,14 +2,6 @@
   "$id": "https://api.cerbos.dev/cerbos/request/v1/ListAuditLogEntriesRequest.schema.json",
   "$schema": "http://json-schema.org/draft-07/schema#",
   "definitions": {
-    "cerbos.request.v1.ListAuditLogEntriesRequest.Kind": {
-      "type": "string",
-      "enum": [
-        "KIND_UNSPECIFIED",
-        "KIND_ACCESS",
-        "KIND_DECISION"
-      ]
-    },
     "cerbos.request.v1.ListAuditLogEntriesRequest.TimeRange": {
       "type": "object",
       "required": [
@@ -51,17 +43,10 @@
           "$ref": "#/definitions/cerbos.request.v1.ListAuditLogEntriesRequest.TimeRange"
         },
         "kind": {
-          "allOf": [
-            {
-              "$ref": "#/definitions/cerbos.request.v1.ListAuditLogEntriesRequest.Kind"
-            },
-            {
-              "type": "string",
-              "enum": [
-                "KIND_ACCESS",
-                "KIND_DECISION"
-              ]
-            }
+          "type": "string",
+          "enum": [
+            "KIND_ACCESS",
+            "KIND_DECISION"
           ]
         },
         "lookup": {
