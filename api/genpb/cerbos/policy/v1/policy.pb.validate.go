@@ -3028,7 +3028,34 @@ func (m *TestResults) validate(all bool) error {
 
 	}
 
-	// no validation rules for Result
+	if all {
+		switch v := interface{}(m.GetSummary()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, TestResultsValidationError{
+					field:  "Summary",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, TestResultsValidationError{
+					field:  "Summary",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetSummary()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return TestResultsValidationError{
+				field:  "Summary",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
 
 	if len(errors) > 0 {
 		return TestResultsMultiError(errors)
@@ -4674,6 +4701,252 @@ var _ interface {
 	ErrorName() string
 } = Test_TestNameValidationError{}
 
+// Validate checks the field values on TestResults_Tally with the rules defined
+// in the proto definition for this message. If any rules are violated, the
+// first error encountered is returned, or nil if there are no violations.
+func (m *TestResults_Tally) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on TestResults_Tally with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// TestResults_TallyMultiError, or nil if none found.
+func (m *TestResults_Tally) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *TestResults_Tally) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for Result
+
+	// no validation rules for Count
+
+	if len(errors) > 0 {
+		return TestResults_TallyMultiError(errors)
+	}
+
+	return nil
+}
+
+// TestResults_TallyMultiError is an error wrapping multiple validation errors
+// returned by TestResults_Tally.ValidateAll() if the designated constraints
+// aren't met.
+type TestResults_TallyMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m TestResults_TallyMultiError) Error() string {
+	var msgs []string
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m TestResults_TallyMultiError) AllErrors() []error { return m }
+
+// TestResults_TallyValidationError is the validation error returned by
+// TestResults_Tally.Validate if the designated constraints aren't met.
+type TestResults_TallyValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e TestResults_TallyValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e TestResults_TallyValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e TestResults_TallyValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e TestResults_TallyValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e TestResults_TallyValidationError) ErrorName() string {
+	return "TestResults_TallyValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e TestResults_TallyValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sTestResults_Tally.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = TestResults_TallyValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = TestResults_TallyValidationError{}
+
+// Validate checks the field values on TestResults_Summary with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *TestResults_Summary) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on TestResults_Summary with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// TestResults_SummaryMultiError, or nil if none found.
+func (m *TestResults_Summary) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *TestResults_Summary) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for OverallResult
+
+	// no validation rules for TestsCount
+
+	for idx, item := range m.GetResultCounts() {
+		_, _ = idx, item
+
+		if all {
+			switch v := interface{}(item).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, TestResults_SummaryValidationError{
+						field:  fmt.Sprintf("ResultCounts[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, TestResults_SummaryValidationError{
+						field:  fmt.Sprintf("ResultCounts[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(item).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return TestResults_SummaryValidationError{
+					field:  fmt.Sprintf("ResultCounts[%v]", idx),
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	}
+
+	if len(errors) > 0 {
+		return TestResults_SummaryMultiError(errors)
+	}
+
+	return nil
+}
+
+// TestResults_SummaryMultiError is an error wrapping multiple validation
+// errors returned by TestResults_Summary.ValidateAll() if the designated
+// constraints aren't met.
+type TestResults_SummaryMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m TestResults_SummaryMultiError) Error() string {
+	var msgs []string
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m TestResults_SummaryMultiError) AllErrors() []error { return m }
+
+// TestResults_SummaryValidationError is the validation error returned by
+// TestResults_Summary.Validate if the designated constraints aren't met.
+type TestResults_SummaryValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e TestResults_SummaryValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e TestResults_SummaryValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e TestResults_SummaryValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e TestResults_SummaryValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e TestResults_SummaryValidationError) ErrorName() string {
+	return "TestResults_SummaryValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e TestResults_SummaryValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sTestResults_Summary.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = TestResults_SummaryValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = TestResults_SummaryValidationError{}
+
 // Validate checks the field values on TestResults_Suite with the rules defined
 // in the proto definition for this message. If any rules are violated, the
 // first error encountered is returned, or nil if there are no violations.
@@ -4734,7 +5007,34 @@ func (m *TestResults_Suite) validate(all bool) error {
 
 	}
 
-	// no validation rules for Result
+	if all {
+		switch v := interface{}(m.GetSummary()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, TestResults_SuiteValidationError{
+					field:  "Summary",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, TestResults_SuiteValidationError{
+					field:  "Summary",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetSummary()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return TestResults_SuiteValidationError{
+				field:  "Summary",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
 
 	// no validation rules for Error
 

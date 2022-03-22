@@ -227,6 +227,38 @@
             "$ref": "#/definitions/cerbos.policy.v1.TestResults.Principal"
           }
         },
+        "summary": {
+          "$ref": "#/definitions/cerbos.policy.v1.TestResults.Summary"
+        }
+      }
+    },
+    "cerbos.policy.v1.TestResults.Summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "overallResult": {
+          "$ref": "#/definitions/cerbos.policy.v1.TestResults.Result"
+        },
+        "resultCounts": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/cerbos.policy.v1.TestResults.Tally"
+          }
+        },
+        "testsCount": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    },
+    "cerbos.policy.v1.TestResults.Tally": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "count": {
+          "type": "integer",
+          "minimum": 0
+        },
         "result": {
           "$ref": "#/definitions/cerbos.policy.v1.TestResults.Result"
         }
@@ -240,14 +272,14 @@
   "type": "object",
   "additionalProperties": false,
   "properties": {
-    "result": {
-      "$ref": "#/definitions/cerbos.policy.v1.TestResults.Result"
-    },
     "suites": {
       "type": "array",
       "items": {
         "$ref": "#/definitions/cerbos.policy.v1.TestResults.Suite"
       }
+    },
+    "summary": {
+      "$ref": "#/definitions/cerbos.policy.v1.TestResults.Summary"
     }
   }
 }

@@ -117,18 +117,19 @@ func loadFixtureElement(fsys fs.FS, path string, pb validatableMessage) error {
 
 func (tf *testFixture) runTestSuite(ctx context.Context, eng *engine.Engine, shouldRun func(string) bool, file string, suite *policyv1.TestSuite, trace bool) *policyv1.TestResults_Suite {
 	suiteResult := &policyv1.TestResults_Suite{
-		File: file,
-		Name: suite.Name,
+		File:    file,
+		Name:    suite.Name,
+		Summary: &policyv1.TestResults_Summary{},
 	}
 
 	if suite.Skip {
-		suiteResult.Result = policyv1.TestResults_RESULT_SKIPPED
+		suiteResult.Summary.OverallResult = policyv1.TestResults_RESULT_SKIPPED
 		return suiteResult
 	}
 
 	tests, err := tf.getTests(suite)
 	if err != nil {
-		suiteResult.Result = policyv1.TestResults_RESULT_ERRORED
+		suiteResult.Summary.OverallResult = policyv1.TestResults_RESULT_ERRORED
 		suiteResult.Error = fmt.Sprintf("Failed to load the test suite: %s", err.Error())
 		return suiteResult
 	}
@@ -206,8 +207,12 @@ func performCheck(ctx context.Context, eng *engine.Engine, inputs []*enginev1.Ch
 
 func addTestResult(suite *policyv1.TestResults_Suite, principal, resource, action string, details *policyv1.TestResults_Details) {
 	addAction(addResource(addPrincipal(suite, principal), resource), action).Details = details
-	if details.Result > suite.Result {
-		suite.Result = details.Result
+
+	suite.Summary.TestsCount++
+	incrementTally(suite.Summary, details.Result, 1)
+
+	if details.Result > suite.Summary.OverallResult {
+		suite.Summary.OverallResult = details.Result
 	}
 }
 

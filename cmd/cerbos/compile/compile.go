@@ -128,7 +128,7 @@ func (c *Cmd) Run(k *kong.Kong) error {
 			return fmt.Errorf("failed to display test results: %w", err)
 		}
 
-		switch results.Result {
+		switch results.Summary.OverallResult {
 		case policyv1.TestResults_RESULT_FAILED, policyv1.TestResults_RESULT_ERRORED:
 			return internalerrors.ErrTestsFailed
 		default:
