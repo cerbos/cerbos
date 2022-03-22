@@ -726,12 +726,46 @@ func cerbos_policy_v1_TestResults_Suite_hashpb_sum(m *TestResults_Suite, hasher 
 			}
 		}
 	}
-	if _, ok := ignore["cerbos.policy.v1.TestResults.Suite.result"]; !ok {
-		_, _ = hasher.Write(protowire.AppendVarint(nil, uint64(m.Result)))
+	if _, ok := ignore["cerbos.policy.v1.TestResults.Suite.summary"]; !ok {
+		if m.Summary != nil {
+			cerbos_policy_v1_TestResults_Summary_hashpb_sum(m.Summary, hasher, ignore)
+		}
 
 	}
 	if _, ok := ignore["cerbos.policy.v1.TestResults.Suite.error"]; !ok {
 		_, _ = hasher.Write(protowire.AppendString(nil, m.Error))
+
+	}
+}
+
+func cerbos_policy_v1_TestResults_Summary_hashpb_sum(m *TestResults_Summary, hasher hash.Hash, ignore map[string]struct{}) {
+	if _, ok := ignore["cerbos.policy.v1.TestResults.Summary.overall_result"]; !ok {
+		_, _ = hasher.Write(protowire.AppendVarint(nil, uint64(m.OverallResult)))
+
+	}
+	if _, ok := ignore["cerbos.policy.v1.TestResults.Summary.tests_count"]; !ok {
+		_, _ = hasher.Write(protowire.AppendVarint(nil, uint64(m.TestsCount)))
+
+	}
+	if _, ok := ignore["cerbos.policy.v1.TestResults.Summary.result_counts"]; !ok {
+		if len(m.ResultCounts) > 0 {
+			for _, v := range m.ResultCounts {
+				if v != nil {
+					cerbos_policy_v1_TestResults_Tally_hashpb_sum(v, hasher, ignore)
+				}
+
+			}
+		}
+	}
+}
+
+func cerbos_policy_v1_TestResults_Tally_hashpb_sum(m *TestResults_Tally, hasher hash.Hash, ignore map[string]struct{}) {
+	if _, ok := ignore["cerbos.policy.v1.TestResults.Tally.result"]; !ok {
+		_, _ = hasher.Write(protowire.AppendVarint(nil, uint64(m.Result)))
+
+	}
+	if _, ok := ignore["cerbos.policy.v1.TestResults.Tally.count"]; !ok {
+		_, _ = hasher.Write(protowire.AppendVarint(nil, uint64(m.Count)))
 
 	}
 }
@@ -747,8 +781,10 @@ func cerbos_policy_v1_TestResults_hashpb_sum(m *TestResults, hasher hash.Hash, i
 			}
 		}
 	}
-	if _, ok := ignore["cerbos.policy.v1.TestResults.result"]; !ok {
-		_, _ = hasher.Write(protowire.AppendVarint(nil, uint64(m.Result)))
+	if _, ok := ignore["cerbos.policy.v1.TestResults.summary"]; !ok {
+		if m.Summary != nil {
+			cerbos_policy_v1_TestResults_Summary_hashpb_sum(m.Summary, hasher, ignore)
+		}
 
 	}
 }

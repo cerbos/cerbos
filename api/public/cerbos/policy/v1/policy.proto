@@ -188,11 +188,22 @@ message TestResults {
         RESULT_ERRORED = 4;
     }
 
+    message Tally {
+        Result result = 1;
+        uint32 count = 2;
+    }
+
+    message Summary {
+        Result overall_result = 1;
+        uint32 tests_count = 2;
+        repeated Tally result_counts = 3;
+    }
+
     message Suite {
         string file = 1;
         string name = 2;
         repeated Principal principals = 3;
-        Result result = 4;
+        Summary summary = 4;
         string error = 5;
     }
 
@@ -226,5 +237,5 @@ message TestResults {
     }
 
     repeated Suite suites = 1;
-    Result result = 2;
+    Summary summary = 2;
 }

@@ -5,7 +5,6 @@ package verification
 
 import (
 	"fmt"
-	"strings"
 
 	"github.com/pterm/pterm"
 
@@ -17,191 +16,197 @@ import (
 	"github.com/cerbos/cerbos/internal/printer/colored"
 )
 
+const (
+	suiteLevel     = 0
+	principalLevel = 1
+	resourceLevel  = 2
+	actionLevel    = 3
+	resultLevel    = 4
+
+	listIndent = 2
+)
+
+var (
+	labelColors = map[policyv1.TestResults_Result]func(...interface{}) string{
+		policyv1.TestResults_RESULT_PASSED:  colored.PassedTest,
+		policyv1.TestResults_RESULT_SKIPPED: colored.SkippedTest,
+		policyv1.TestResults_RESULT_FAILED:  colored.FailedTest,
+		policyv1.TestResults_RESULT_ERRORED: colored.ErroredTest,
+	}
+
+	labels = map[policyv1.TestResults_Result]string{
+		policyv1.TestResults_RESULT_PASSED:  "OK",
+		policyv1.TestResults_RESULT_SKIPPED: "SKIPPED",
+		policyv1.TestResults_RESULT_FAILED:  "FAILED",
+		policyv1.TestResults_RESULT_ERRORED: "ERROR",
+	}
+)
+
 func Display(p *printer.Printer, results *policyv1.TestResults, output flagset.OutputFormat, verbose bool, colorLevel outputcolor.Level) error {
 	switch output {
 	case flagset.OutputFormatJSON:
 		return p.PrintProtoJSON(results, colorLevel)
 	case flagset.OutputFormatTree:
-		return displayTree(p, results, verbose)
+		return displayTree(p, pterm.DefaultTree, results, verbose)
 	case flagset.OutputFormatList:
-		return displayList(p, results, verbose)
+		return displayTree(p, pterm.TreePrinter{Indent: listIndent, VerticalString: " "}, results, verbose)
 	default:
 		return nil
 	}
 }
 
-func displayList(p *printer.Printer, results *policyv1.TestResults, verbose bool) error {
-	traceMap := make(traces.Map)
+func displayTree(p *printer.Printer, tp pterm.TreePrinter, results *policyv1.TestResults, verbose bool) error {
+	output := buildTestOutput(results, verbose)
 
 	p.Println(colored.Header("Test results"))
 
-	for _, suite := range results.Suites {
-		p.Printf("%s %s ", colored.Suite(suite.Name), colored.FileName("(", suite.File, ")"))
-
-		if suite.Error != "" {
-			p.Println(colored.FailedTest("[ERROR]"))
-			p.Printf("%s%s\n", tabs(1), colored.ErrorMsg(suite.Error))
-			continue
-		}
-
-		if suite.Result == policyv1.TestResults_RESULT_SKIPPED {
-			p.Println(colored.SkippedTest("[SKIPPED]"))
-			continue
-		}
-
-		p.Println()
-		for _, principal := range suite.Principals {
-			p.Printf("%s%s\n", tabs(1), colored.Principal(principal.Name))
-			for _, resource := range principal.Resources {
-				p.Printf("%s%s\n", tabs(2), colored.Resource(resource.Name)) //nolint:gomnd
-				for _, action := range resource.Actions {
-					p.Printf("%s%s ", tabs(3), colored.Action(action.Name)) //nolint:gomnd
-
-					switch action.Details.Result {
-					case policyv1.TestResults_RESULT_PASSED:
-						p.Println(colored.SuccessfulTest("[OK]"))
-
-					case policyv1.TestResults_RESULT_SKIPPED:
-						p.Println(colored.SkippedTest("[SKIPPED]"))
-
-					case policyv1.TestResults_RESULT_FAILED:
-						traceMap.Add(suite.Name, principal.Name, resource.Name, action.Name, action.Details.EngineTrace)
-						failure := action.Details.GetFailure()
-						p.Println(colored.FailedTest("[FAILED]"))
-						p.Printf("%s%s expected: %s, actual: %s\n", tabs(4), colored.ErrorMsg("OUTCOME:"), colored.FailedTest(failure.Expected), colored.FailedTest(failure.Actual)) //nolint:gomnd
-
-					case policyv1.TestResults_RESULT_ERRORED:
-						traceMap.Add(suite.Name, principal.Name, resource.Name, action.Name, action.Details.EngineTrace)
-						p.Println(colored.FailedTest("[ERROR]"))
-						p.Printf("%s%s %s\n", tabs(4), colored.ErrorMsg("ERROR:"), action.Details.GetError()) //nolint:gomnd
-
-					default:
-						return fmt.Errorf("unexpected test result %v", action.Details.Result)
-					}
-				}
-			}
-		}
-	}
-
-	if verbose {
-		traceMap.Print(p)
-	}
-
-	return nil
-}
-
-func displayTree(p *printer.Printer, results *policyv1.TestResults, verbose bool) error {
-	tree := pterm.LeveledList{}
-	traceMap := make(traces.Map)
-
-	p.Println(colored.Header("Test results"))
-
-	for _, suite := range results.Suites {
-		suiteText := fmt.Sprintf("%s (%s)", colored.Suite(suite.Name), colored.FileName(suite.File))
-
-		if suite.Error != "" {
-			suiteText = fmt.Sprintf("%s %s", suiteText, colored.FailedTest("[ERROR]"))
-			tree = append(tree, pterm.LeveledListItem{
-				Level: 0,
-				Text:  suiteText,
-			})
-			tree = append(tree, pterm.LeveledListItem{
-				Level: 1,
-				Text:  colored.ErrorMsg(suite.Error),
-			})
-			continue
-		}
-
-		if suite.Result == policyv1.TestResults_RESULT_SKIPPED {
-			suiteText = fmt.Sprintf("%s %s", suiteText, colored.SkippedTest("[SKIPPED]"))
-			tree = append(tree, pterm.LeveledListItem{
-				Level: 0,
-				Text:  suiteText,
-			})
-			continue
-		}
-
-		tree = append(tree, pterm.LeveledListItem{
-			Level: 0,
-			Text:  suiteText,
-		})
-
-		for _, principal := range suite.Principals {
-			tree = append(tree, pterm.LeveledListItem{
-				Level: 1,
-				Text:  colored.Principal(principal.Name),
-			})
-			for _, resource := range principal.Resources {
-				tree = append(tree, pterm.LeveledListItem{
-					Level: 2, //nolint:gomnd
-					Text:  colored.Resource(resource.Name),
-				})
-				for _, action := range resource.Actions {
-					actionText := colored.Action(action.Name)
-
-					switch action.Details.Result {
-					case policyv1.TestResults_RESULT_PASSED:
-						tree = append(tree, pterm.LeveledListItem{
-							Level: 3, //nolint:gomnd
-							Text:  fmt.Sprintf("%s %s", actionText, colored.SuccessfulTest("[OK]")),
-						})
-
-					case policyv1.TestResults_RESULT_SKIPPED:
-						tree = append(tree, pterm.LeveledListItem{
-							Level: 3, //nolint:gomnd
-							Text:  fmt.Sprintf("%s %s", actionText, colored.SkippedTest("[SKIPPED]")),
-						})
-
-					case policyv1.TestResults_RESULT_FAILED:
-						traceMap.Add(suite.Name, principal.Name, resource.Name, action.Name, action.Details.EngineTrace)
-						failure := action.Details.GetFailure()
-						tree = append(
-							tree,
-							pterm.LeveledListItem{
-								Level: 3, //nolint:gomnd
-								Text:  fmt.Sprintf("%s %s", actionText, colored.FailedTest("[FAILED]")),
-							},
-							pterm.LeveledListItem{
-								Level: 4, //nolint:gomnd
-								Text:  fmt.Sprintf("%s expected: %s, actual: %s", colored.ErrorMsg("OUTCOME:"), colored.FailedTest(failure.Expected), colored.FailedTest(failure.Actual)),
-							},
-						)
-
-					case policyv1.TestResults_RESULT_ERRORED:
-						traceMap.Add(suite.Name, principal.Name, resource.Name, action.Name, action.Details.EngineTrace)
-						tree = append(
-							tree,
-							pterm.LeveledListItem{
-								Level: 3, //nolint:gomnd
-								Text:  fmt.Sprintf("%s %s", actionText, colored.FailedTest("[ERROR]")),
-							},
-							pterm.LeveledListItem{
-								Level: 4, //nolint:gomnd
-								Text:  fmt.Sprintf("%s %s", colored.ErrorMsg("ERROR:"), action.Details.GetError()),
-							},
-						)
-
-					default:
-						return fmt.Errorf("unexpected test result %v", action.Details.Result)
-					}
-				}
-			}
-		}
-	}
-
-	root := pterm.NewTreeFromLeveledList(tree)
-	err := pterm.DefaultTree.WithRoot(root).Render()
+	err := tp.WithRoot(pterm.NewTreeFromLeveledList(output.tree)).Render()
 	if err != nil {
 		return err
 	}
 
 	if verbose {
-		traceMap.Print(p)
+		output.traces.Print(p)
 	}
+
+	p.Printf("%d tests executed", results.Summary.TestsCount)
+	for _, tally := range results.Summary.ResultCounts {
+		p.Printf(" %s", tallyLabel(tally))
+	}
+	p.Println()
 
 	return nil
 }
 
-func tabs(numberOf int) string {
-	return strings.Repeat("  ", numberOf)
+type testOutput struct {
+	traces  traces.Map
+	tree    pterm.LeveledList
+	verbose bool
+}
+
+func buildTestOutput(results *policyv1.TestResults, verbose bool) *testOutput {
+	output := &testOutput{
+		traces:  make(traces.Map),
+		verbose: verbose,
+	}
+
+	for _, suite := range results.Suites {
+		output.addSuite(suite)
+	}
+
+	return output
+}
+
+func (o *testOutput) addSuite(suite *policyv1.TestResults_Suite) {
+	suiteText := fmt.Sprintf("%s %s", colored.Suite(suite.Name), fmt.Sprintf("(%s)", colored.FileName(suite.File)))
+
+	if suite.Error != "" {
+		o.appendNode(suiteLevel, fmt.Sprintf("%s %s", suiteText, resultLabel(policyv1.TestResults_RESULT_ERRORED)))
+		o.appendNode(suiteLevel+1, colored.ErrorMsg(suite.Error))
+		return
+	}
+
+	if suite.Summary.OverallResult == policyv1.TestResults_RESULT_SKIPPED {
+		o.appendNode(suiteLevel, fmt.Sprintf("%s %s", suiteText, resultLabel(policyv1.TestResults_RESULT_SKIPPED)))
+		return
+	}
+
+	for _, tally := range suite.Summary.ResultCounts {
+		suiteText = fmt.Sprintf("%s %s", suiteText, tallyLabel(tally))
+	}
+
+	o.appendNode(suiteLevel, suiteText)
+
+	for _, principal := range suite.Principals {
+		o.addPrincipal(suite, principal)
+	}
+}
+
+func (o *testOutput) addPrincipal(suite *policyv1.TestResults_Suite, principal *policyv1.TestResults_Principal) {
+	if !o.shouldAddPrincipal(principal) {
+		return
+	}
+
+	o.appendNode(principalLevel, colored.Principal(principal.Name))
+
+	for _, resource := range principal.Resources {
+		o.addResource(suite, principal, resource)
+	}
+}
+
+func (o *testOutput) shouldAddPrincipal(principal *policyv1.TestResults_Principal) bool {
+	if o.verbose {
+		return true
+	}
+
+	for _, resource := range principal.Resources {
+		if o.shouldAddResource(resource) {
+			return true
+		}
+	}
+
+	return false
+}
+
+func (o *testOutput) addResource(suite *policyv1.TestResults_Suite, principal *policyv1.TestResults_Principal, resource *policyv1.TestResults_Resource) {
+	if !o.shouldAddResource(resource) {
+		return
+	}
+
+	o.appendNode(resourceLevel, colored.Resource(resource.Name))
+
+	for _, action := range resource.Actions {
+		o.addAction(suite, principal, resource, action)
+	}
+}
+
+func (o *testOutput) shouldAddResource(resource *policyv1.TestResults_Resource) bool {
+	if o.verbose {
+		return true
+	}
+
+	for _, action := range resource.Actions {
+		if o.shouldAddAction(action) {
+			return true
+		}
+	}
+
+	return false
+}
+
+func (o *testOutput) addAction(suite *policyv1.TestResults_Suite, principal *policyv1.TestResults_Principal, resource *policyv1.TestResults_Resource, action *policyv1.TestResults_Action) {
+	if !o.shouldAddAction(action) {
+		return
+	}
+
+	o.appendNode(actionLevel, fmt.Sprintf("%s %s", colored.Action(action.Name), resultLabel(action.Details.Result)))
+
+	switch action.Details.Result {
+	case policyv1.TestResults_RESULT_FAILED:
+		failure := action.Details.GetFailure()
+		o.traces.Add(suite.Name, principal.Name, resource.Name, action.Name, action.Details.EngineTrace)
+		o.appendNode(resultLevel, fmt.Sprintf("%s expected: %s, actual: %s", colored.ErrorMsg("OUTCOME:"), failure.Expected, colored.FailedTest(failure.Actual)))
+
+	case policyv1.TestResults_RESULT_ERRORED:
+		o.traces.Add(suite.Name, principal.Name, resource.Name, action.Name, action.Details.EngineTrace)
+		o.appendNode(resultLevel, fmt.Sprintf("%s %s", colored.ErrorMsg("ERROR:"), action.Details.GetError()))
+
+	default:
+	}
+}
+
+func (o *testOutput) shouldAddAction(action *policyv1.TestResults_Action) bool {
+	return o.verbose || action.Details.Result != policyv1.TestResults_RESULT_PASSED
+}
+
+func (o *testOutput) appendNode(level int, text string) {
+	o.tree = append(o.tree, pterm.LeveledListItem{Level: level, Text: text})
+}
+
+func resultLabel(result policyv1.TestResults_Result) string {
+	return labelColors[result](fmt.Sprintf("[%s]", labels[result]))
+}
+
+func tallyLabel(tally *policyv1.TestResults_Tally) string {
+	return labelColors[tally.Result](fmt.Sprintf("[%d %s]", tally.Count, labels[tally.Result]))
 }
