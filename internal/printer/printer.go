@@ -15,8 +15,8 @@ import (
 	"github.com/alecthomas/chroma/styles"
 	effectv1 "github.com/cerbos/cerbos/api/genpb/cerbos/effect/v1"
 	enginev1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
+	"github.com/cerbos/cerbos/internal/outputcolor"
 	"github.com/cerbos/cerbos/internal/printer/colored"
-	"github.com/jwalton/gchalk"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"
 )
@@ -38,20 +38,22 @@ func (p *Printer) Printf(format string, args ...interface{}) {
 	fmt.Fprintf(p.stdout, format, args...)
 }
 
-func (p *Printer) coloredJSON(data string) error {
+func (p *Printer) coloredJSON(data string, colorLevel outputcolor.Level) error {
 	lexer := chroma.Coalesce(lexers.Get("json"))
 	if lexer == nil {
 		lexer = lexers.Fallback
 	}
 
 	var formatter chroma.Formatter
-	switch gchalk.GetLevel() {
-	case gchalk.LevelAnsi256:
+	switch colorLevel {
+	case outputcolor.Basic:
+		formatter = formatters.TTY
+	case outputcolor.Ansi256:
 		formatter = formatters.TTY256
-	case gchalk.LevelAnsi16m:
+	case outputcolor.Ansi16m:
 		formatter = formatters.TTY16m
 	default:
-		formatter = formatters.TTY
+		formatter = formatters.NoOp
 	}
 
 	iterator, err := lexer.Tokenise(nil, data)
@@ -62,13 +64,13 @@ func (p *Printer) coloredJSON(data string) error {
 	return formatter.Format(p.stdout, styles.SolarizedDark256, iterator)
 }
 
-func (p *Printer) PrintJSON(val interface{}, noColor bool) error {
+func (p *Printer) PrintJSON(val interface{}, colorLevel outputcolor.Level) error {
 	var data bytes.Buffer
 	var enc *json.Encoder
-	if noColor {
-		enc = json.NewEncoder(p.stdout)
-	} else {
+	if colorLevel.Enabled() {
 		enc = json.NewEncoder(&data)
+	} else {
+		enc = json.NewEncoder(p.stdout)
 	}
 
 	enc.SetIndent("", "  ")
@@ -76,14 +78,14 @@ func (p *Printer) PrintJSON(val interface{}, noColor bool) error {
 		return fmt.Errorf("failed to encode JSON: %w", err)
 	}
 
-	if !noColor {
-		return p.coloredJSON(data.String())
+	if colorLevel.Enabled() {
+		return p.coloredJSON(data.String(), colorLevel)
 	}
 
 	return nil
 }
 
-func (p *Printer) PrintProtoJSON(message proto.Message, noColor bool) error {
+func (p *Printer) PrintProtoJSON(message proto.Message, colorLevel outputcolor.Level) error {
 	data, err := protojson.MarshalOptions{Multiline: true}.Marshal(message)
 	if err != nil {
 		return fmt.Errorf("failed to encode JSON: %w", err)
@@ -91,8 +93,8 @@ func (p *Printer) PrintProtoJSON(message proto.Message, noColor bool) error {
 
 	output := fmt.Sprintf("%s\n", data)
 
-	if !noColor {
-		return p.coloredJSON(output)
+	if colorLevel.Enabled() {
+		return p.coloredJSON(output, colorLevel)
 	}
 
 	fmt.Fprint(p.stdout, output)
