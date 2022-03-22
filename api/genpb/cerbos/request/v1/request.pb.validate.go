@@ -1362,10 +1362,10 @@ func (m *PlaygroundValidateRequest) validate(all bool) error {
 
 	// no validation rules for PlaygroundId
 
-	if l := len(m.GetPolicyFiles()); l < 1 || l > 10 {
+	if l := len(m.GetPolicyFiles()); l < 1 || l > 30 {
 		err := PlaygroundValidateRequestValidationError{
 			field:  "PolicyFiles",
-			reason: "value must contain between 1 and 10 items, inclusive",
+			reason: "value must contain between 1 and 30 items, inclusive",
 		}
 		if !all {
 			return err
