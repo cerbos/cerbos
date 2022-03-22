@@ -43,7 +43,6 @@ import (
 	healthpb "google.golang.org/grpc/health/grpc_health_v1"
 	"google.golang.org/grpc/keepalive"
 	"google.golang.org/grpc/reflection"
-	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/encoding/protojson"
 
 	svcv1 "github.com/cerbos/cerbos/api/genpb/cerbos/svc/v1"
@@ -412,6 +411,11 @@ func (s *Server) mkGRPCServer(log *zap.Logger, auditLog audit.Log) *grpc.Server 
 func (s *Server) startHTTPServer(ctx context.Context, l net.Listener, grpcSrv *grpc.Server, zpagesEnabled bool) (*http.Server, error) {
 	log := zap.S().Named("http")
 
+	grpcConn, err := s.mkGRPCConn(ctx)
+	if err != nil {
+		return nil, err
+	}
+
 	gwmux := runtime.NewServeMux(
 		runtime.WithForwardResponseOption(customHTTPResponseCode),
 		runtime.WithMarshalerOption("application/json+pretty", &runtime.JSONPb{
@@ -422,12 +426,8 @@ func (s *Server) startHTTPServer(ctx context.Context, l net.Listener, grpcSrv *g
 			UnmarshalOptions: protojson.UnmarshalOptions{DiscardUnknown: false},
 		}),
 		runtime.WithRoutingErrorHandler(handleRoutingError),
+		runtime.WithHealthEndpointAt(healthpb.NewHealthClient(grpcConn), healthEndpoint),
 	)
-
-	grpcConn, err := s.mkGRPCConn(ctx)
-	if err != nil {
-		return nil, err
-	}
 
 	if err := svcv1.RegisterCerbosServiceHandler(ctx, gwmux, grpcConn); err != nil {
 		log.Errorw("Failed to register Cerbos HTTP service", "error", err)
@@ -455,8 +455,8 @@ func (s *Server) startHTTPServer(ctx context.Context, l net.Listener, grpcSrv *g
 
 	cerbosMux.PathPrefix(adminEndpoint).Handler(tracing.HTTPHandler(prettyJSON(gwmux)))
 	cerbosMux.PathPrefix(apiEndpoint).Handler(tracing.HTTPHandler(prettyJSON(gwmux)))
+	cerbosMux.Path(healthEndpoint).Handler(prettyJSON(gwmux))
 	cerbosMux.Path(schemaEndpoint).HandlerFunc(schema.ServeSvcSwagger)
-	cerbosMux.Path(healthEndpoint).HandlerFunc(s.handleHTTPHealthCheck(grpcConn))
 
 	if s.conf.MetricsEnabled && s.ocExporter != nil {
 		cerbosMux.Path(metricsEndpoint).Handler(s.ocExporter)
@@ -501,25 +501,6 @@ func defaultGRPCDialOpts() []grpc.DialOption {
 	return []grpc.DialOption{
 		grpc.WithConnectParams(grpc.ConnectParams{MinConnectTimeout: minGRPCConnectTimeout}),
 		grpc.WithStatsHandler(&ocgrpc.ClientHandler{}),
-	}
-}
-
-func (s *Server) handleHTTPHealthCheck(conn grpc.ClientConnInterface) http.HandlerFunc {
-	healthClient := healthpb.NewHealthClient(conn)
-	return func(w http.ResponseWriter, r *http.Request) {
-		resp, err := healthClient.Check(r.Context(), &healthpb.HealthCheckRequest{})
-		if err != nil {
-			statusCode := runtime.HTTPStatusFromCode(status.Code(err))
-			http.Error(w, "HealthCheck failure", statusCode)
-			return
-		}
-
-		switch resp.Status {
-		case healthpb.HealthCheckResponse_SERVING, healthpb.HealthCheckResponse_UNKNOWN:
-			fmt.Fprintln(w, resp.Status.String())
-		default:
-			http.Error(w, resp.Status.String(), http.StatusServiceUnavailable)
-		}
 	}
 }
 
