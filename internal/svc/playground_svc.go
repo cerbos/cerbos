@@ -83,7 +83,7 @@ func (cs *CerbosPlaygroundService) PlaygroundTest(ctx context.Context, req *requ
 	procCtx, cancelFunc := context.WithTimeout(ctx, playgroundRequestTimeout)
 	defer cancelFunc()
 
-	comps, fail, err := doCompile(procCtx, log, req.PolicyFiles)
+	comps, fail, err := doCompile(procCtx, log, req.Files)
 	if err != nil {
 		return nil, err
 	}
@@ -103,7 +103,7 @@ func (cs *CerbosPlaygroundService) PlaygroundTest(ctx context.Context, req *requ
 		return nil, status.Errorf(codes.Internal, "failed to create engine")
 	}
 
-	fsys, err := buildFS(log, req.PolicyFiles)
+	fsys, err := buildFS(log, req.Files)
 	if err != nil {
 		return nil, err
 	}

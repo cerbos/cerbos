@@ -1210,20 +1210,20 @@
     "cerbos.request.v1.PlaygroundTestRequest": {
       "type": "object",
       "required": [
-        "policyFiles"
+        "files"
       ],
       "additionalProperties": false,
       "properties": {
-        "playgroundId": {
-          "type": "string"
-        },
-        "policyFiles": {
+        "files": {
           "type": "array",
           "items": {
             "$ref": "#/definitions/cerbos.request.v1.PolicyFile"
           },
           "maxItems": 30,
           "minItems": 1
+        },
+        "playgroundId": {
+          "type": "string"
         }
       }
     },

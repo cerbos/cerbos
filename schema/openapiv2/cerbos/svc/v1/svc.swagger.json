@@ -2117,7 +2117,7 @@
         "playgroundId": {
           "type": "string"
         },
-        "policyFiles": {
+        "files": {
           "type": "array",
           "items": {
             "$ref": "#/definitions/v1PolicyFile"
@@ -2126,13 +2126,13 @@
           "maxItems": 30,
           "minItems": 1,
           "required": [
-            "policyFiles"
+            "files"
           ]
         }
       },
       "description": "Playground test request",
       "required": [
-        "policyFiles"
+        "files"
       ]
     },
     "v1PlaygroundTestResponse": {

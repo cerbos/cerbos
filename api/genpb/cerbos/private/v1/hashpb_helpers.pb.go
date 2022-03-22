@@ -1820,9 +1820,9 @@ func cerbos_request_v1_PlaygroundTestRequest_hashpb_sum(m *v12.PlaygroundTestReq
 		_, _ = hasher.Write(protowire.AppendString(nil, m.PlaygroundId))
 
 	}
-	if _, ok := ignore["cerbos.request.v1.PlaygroundTestRequest.policy_files"]; !ok {
-		if len(m.PolicyFiles) > 0 {
-			for _, v := range m.PolicyFiles {
+	if _, ok := ignore["cerbos.request.v1.PlaygroundTestRequest.files"]; !ok {
+		if len(m.Files) > 0 {
+			for _, v := range m.Files {
 				if v != nil {
 					cerbos_request_v1_PolicyFile_hashpb_sum(v, hasher, ignore)
 				}
