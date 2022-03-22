@@ -942,7 +942,7 @@
           "items": {
             "$ref": "#/definitions/cerbos.request.v1.PolicyFile"
           },
-          "maxItems": 10,
+          "maxItems": 30,
           "minItems": 1
         }
       }
