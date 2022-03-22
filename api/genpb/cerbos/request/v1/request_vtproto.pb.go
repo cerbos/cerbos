@@ -747,18 +747,6 @@ func (m *PlaygroundTestRequest) MarshalToSizedBufferVT(dAtA []byte) (int, error)
 		i -= len(m.unknownFields)
 		copy(dAtA[i:], m.unknownFields)
 	}
-	if len(m.TestFiles) > 0 {
-		for iNdEx := len(m.TestFiles) - 1; iNdEx >= 0; iNdEx-- {
-			size, err := m.TestFiles[iNdEx].MarshalToSizedBufferVT(dAtA[:i])
-			if err != nil {
-				return 0, err
-			}
-			i -= size
-			i = encodeVarint(dAtA, i, uint64(size))
-			i--
-			dAtA[i] = 0x1a
-		}
-	}
 	if len(m.PolicyFiles) > 0 {
 		for iNdEx := len(m.PolicyFiles) - 1; iNdEx >= 0; iNdEx-- {
 			size, err := m.PolicyFiles[iNdEx].MarshalToSizedBufferVT(dAtA[:i])
@@ -1882,12 +1870,6 @@ func (m *PlaygroundTestRequest) SizeVT() (n int) {
 	}
 	if len(m.PolicyFiles) > 0 {
 		for _, e := range m.PolicyFiles {
-			l = e.SizeVT()
-			n += 1 + l + sov(uint64(l))
-		}
-	}
-	if len(m.TestFiles) > 0 {
-		for _, e := range m.TestFiles {
 			l = e.SizeVT()
 			n += 1 + l + sov(uint64(l))
 		}
@@ -4080,40 +4062,6 @@ func (m *PlaygroundTestRequest) UnmarshalVT(dAtA []byte) error {
 			}
 			m.PolicyFiles = append(m.PolicyFiles, &PolicyFile{})
 			if err := m.PolicyFiles[len(m.PolicyFiles)-1].UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
-				return err
-			}
-			iNdEx = postIndex
-		case 3:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field TestFiles", wireType)
-			}
-			var msglen int
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflow
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				msglen |= int(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			if msglen < 0 {
-				return ErrInvalidLength
-			}
-			postIndex := iNdEx + msglen
-			if postIndex < 0 {
-				return ErrInvalidLength
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.TestFiles = append(m.TestFiles, &PolicyFile{})
-			if err := m.TestFiles[len(m.TestFiles)-1].UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
 			iNdEx = postIndex

@@ -34,8 +34,7 @@
   },
   "type": "object",
   "required": [
-    "policyFiles",
-    "testFiles"
+    "policyFiles"
   ],
   "additionalProperties": false,
   "properties": {
@@ -43,14 +42,6 @@
       "type": "string"
     },
     "policyFiles": {
-      "type": "array",
-      "items": {
-        "$ref": "#/definitions/cerbos.request.v1.PolicyFile"
-      },
-      "maxItems": 30,
-      "minItems": 1
-    },
-    "testFiles": {
       "type": "array",
       "items": {
         "$ref": "#/definitions/cerbos.request.v1.PolicyFile"

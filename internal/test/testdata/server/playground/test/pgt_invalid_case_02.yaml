@@ -14,9 +14,7 @@ playgroundTest:
       {
         "fileName": "policy_04.yaml",
         "contents": "{{ fileString `store/resource_policies/policy_04.yaml` | b64enc }}",
-      }
-    ],
-    "testFiles": [
+      },
       {
         "fileName": "policy_04_test.yaml",
         "contents": "rubbish"

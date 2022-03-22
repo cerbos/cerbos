@@ -2122,30 +2122,17 @@
           "items": {
             "$ref": "#/definitions/v1PolicyFile"
           },
-          "description": "List of policy files.",
+          "description": "List of policy and test files.",
           "maxItems": 30,
           "minItems": 1,
           "required": [
             "policyFiles"
           ]
-        },
-        "testFiles": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/v1PolicyFile"
-          },
-          "description": "List of test files.",
-          "maxItems": 30,
-          "minItems": 1,
-          "required": [
-            "testFiles"
-          ]
         }
       },
       "description": "Playground test request",
       "required": [
-        "policyFiles",
-        "testFiles"
+        "policyFiles"
       ]
     },
     "v1PlaygroundTestResponse": {

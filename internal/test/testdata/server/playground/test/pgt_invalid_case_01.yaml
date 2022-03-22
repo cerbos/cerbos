@@ -14,9 +14,7 @@ playgroundTest:
       {
         "fileName": "resource.yaml",
         "contents": "rubbish"
-      }
-    ],
-    "testFiles": [
+      },
       {
         "fileName": "policy_04_test.yaml",
         "contents": "{{ fileString `store/tests/policy_04_test.yaml` | b64enc }}"

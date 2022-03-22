@@ -103,7 +103,7 @@ func (cs *CerbosPlaygroundService) PlaygroundTest(ctx context.Context, req *requ
 		return nil, status.Errorf(codes.Internal, "failed to create engine")
 	}
 
-	fsys, err := buildFS(log, req.TestFiles)
+	fsys, err := buildFS(log, req.PolicyFiles)
 	if err != nil {
 		return nil, err
 	}

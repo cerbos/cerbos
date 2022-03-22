@@ -831,16 +831,6 @@ func cerbos_request_v1_PlaygroundTestRequest_hashpb_sum(m *PlaygroundTestRequest
 			}
 		}
 	}
-	if _, ok := ignore["cerbos.request.v1.PlaygroundTestRequest.test_files"]; !ok {
-		if len(m.TestFiles) > 0 {
-			for _, v := range m.TestFiles {
-				if v != nil {
-					cerbos_request_v1_PolicyFile_hashpb_sum(v, hasher, ignore)
-				}
-
-			}
-		}
-	}
 }
 
 func cerbos_request_v1_PlaygroundValidateRequest_hashpb_sum(m *PlaygroundValidateRequest, hasher hash.Hash, ignore map[string]struct{}) {

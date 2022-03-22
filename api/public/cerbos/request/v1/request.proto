@@ -285,17 +285,7 @@ message PlaygroundTestRequest {
         (validate.rules).repeated = { min_items: 1, max_items: 30 },
         (google.api.field_behavior) = REQUIRED,
         (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
-            description: "List of policy files."
-            min_items: 1
-            max_items: 30
-        }
-    ];
-
-    repeated PolicyFile test_files = 3 [
-        (validate.rules).repeated = { min_items: 1, max_items: 30 },
-        (google.api.field_behavior) = REQUIRED,
-        (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
-            description: "List of test files."
+            description: "List of policy and test files."
             min_items: 1
             max_items: 30
         }
