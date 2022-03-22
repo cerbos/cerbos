@@ -575,6 +575,38 @@
         ]
       }
     },
+    "/api/playground/test": {
+      "post": {
+        "operationId": "CerbosPlaygroundService_PlaygroundTest",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1PlaygroundTestResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/googlerpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/v1PlaygroundTestRequest"
+            }
+          }
+        ],
+        "tags": [
+          "CerbosPlaygroundService"
+        ]
+      }
+    },
     "/api/playground/validate": {
       "post": {
         "operationId": "CerbosPlaygroundService_PlaygroundValidate",
@@ -730,6 +762,17 @@
       "required": [
         "actions"
       ]
+    },
+    "ComponentVariable": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "expr": {
+          "type": "string"
+        }
+      }
     },
     "ExpressionOperand": {
       "type": "object",
@@ -928,6 +971,186 @@
           }
         }
       }
+    },
+    "TestResultsDetails": {
+      "type": "object",
+      "properties": {
+        "result": {
+          "$ref": "#/definitions/TestResultsResult"
+        },
+        "failure": {
+          "$ref": "#/definitions/TestResultsFailure"
+        },
+        "error": {
+          "type": "string"
+        },
+        "engineTrace": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/v1Trace"
+          }
+        }
+      }
+    },
+    "TestResultsFailure": {
+      "type": "object",
+      "properties": {
+        "expected": {
+          "$ref": "#/definitions/v1Effect"
+        },
+        "actual": {
+          "$ref": "#/definitions/v1Effect"
+        }
+      }
+    },
+    "TestResultsResult": {
+      "type": "string",
+      "enum": [
+        "RESULT_UNSPECIFIED",
+        "RESULT_SKIPPED",
+        "RESULT_PASSED",
+        "RESULT_FAILED",
+        "RESULT_ERRORED"
+      ],
+      "default": "RESULT_UNSPECIFIED"
+    },
+    "TestResultsSuite": {
+      "type": "object",
+      "properties": {
+        "file": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "principals": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/v1TestResultsPrincipal"
+          }
+        },
+        "summary": {
+          "$ref": "#/definitions/TestResultsSummary"
+        },
+        "error": {
+          "type": "string"
+        }
+      }
+    },
+    "TestResultsSummary": {
+      "type": "object",
+      "properties": {
+        "overallResult": {
+          "$ref": "#/definitions/TestResultsResult"
+        },
+        "testsCount": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "resultCounts": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/TestResultsTally"
+          }
+        }
+      }
+    },
+    "TestResultsTally": {
+      "type": "object",
+      "properties": {
+        "result": {
+          "$ref": "#/definitions/TestResultsResult"
+        },
+        "count": {
+          "type": "integer",
+          "format": "int64"
+        }
+      }
+    },
+    "TraceComponent": {
+      "type": "object",
+      "properties": {
+        "kind": {
+          "$ref": "#/definitions/TraceComponentKind"
+        },
+        "action": {
+          "type": "string"
+        },
+        "derivedRole": {
+          "type": "string"
+        },
+        "expr": {
+          "type": "string"
+        },
+        "index": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "policy": {
+          "type": "string"
+        },
+        "resource": {
+          "type": "string"
+        },
+        "rule": {
+          "type": "string"
+        },
+        "scope": {
+          "type": "string"
+        },
+        "variable": {
+          "$ref": "#/definitions/ComponentVariable"
+        }
+      }
+    },
+    "TraceComponentKind": {
+      "type": "string",
+      "enum": [
+        "KIND_UNSPECIFIED",
+        "KIND_ACTION",
+        "KIND_CONDITION_ALL",
+        "KIND_CONDITION_ANY",
+        "KIND_CONDITION_NONE",
+        "KIND_CONDITION",
+        "KIND_DERIVED_ROLE",
+        "KIND_EXPR",
+        "KIND_POLICY",
+        "KIND_RESOURCE",
+        "KIND_RULE",
+        "KIND_SCOPE",
+        "KIND_VARIABLE",
+        "KIND_VARIABLES"
+      ],
+      "default": "KIND_UNSPECIFIED"
+    },
+    "TraceEvent": {
+      "type": "object",
+      "properties": {
+        "status": {
+          "$ref": "#/definitions/TraceEventStatus"
+        },
+        "effect": {
+          "$ref": "#/definitions/v1Effect"
+        },
+        "error": {
+          "type": "string"
+        },
+        "message": {
+          "type": "string"
+        },
+        "result": {
+          "type": "object"
+        }
+      }
+    },
+    "TraceEventStatus": {
+      "type": "string",
+      "enum": [
+        "STATUS_UNSPECIFIED",
+        "STATUS_ACTIVATED",
+        "STATUS_SKIPPED"
+      ],
+      "default": "STATUS_UNSPECIFIED"
     },
     "ValidationErrorSource": {
       "type": "string",
@@ -1888,6 +2111,58 @@
       },
       "description": "Playground proxy response"
     },
+    "v1PlaygroundTestRequest": {
+      "type": "object",
+      "properties": {
+        "playgroundId": {
+          "type": "string"
+        },
+        "policyFiles": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/v1PolicyFile"
+          },
+          "description": "List of policy files.",
+          "maxItems": 30,
+          "minItems": 1,
+          "required": [
+            "policyFiles"
+          ]
+        },
+        "testFiles": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/v1PolicyFile"
+          },
+          "description": "List of test files.",
+          "maxItems": 30,
+          "minItems": 1,
+          "required": [
+            "testFiles"
+          ]
+        }
+      },
+      "description": "Playground test request",
+      "required": [
+        "policyFiles",
+        "testFiles"
+      ]
+    },
+    "v1PlaygroundTestResponse": {
+      "type": "object",
+      "properties": {
+        "playgroundId": {
+          "type": "string"
+        },
+        "failure": {
+          "$ref": "#/definitions/v1PlaygroundFailure"
+        },
+        "results": {
+          "$ref": "#/definitions/v1TestResults"
+        }
+      },
+      "description": "Playground test response"
+    },
     "v1PlaygroundValidateRequest": {
       "type": "object",
       "properties": {
@@ -2289,6 +2564,73 @@
         }
       },
       "description": "Server info response"
+    },
+    "v1TestResults": {
+      "type": "object",
+      "properties": {
+        "suites": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/TestResultsSuite"
+          }
+        },
+        "summary": {
+          "$ref": "#/definitions/TestResultsSummary"
+        }
+      }
+    },
+    "v1TestResultsAction": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "details": {
+          "$ref": "#/definitions/TestResultsDetails"
+        }
+      }
+    },
+    "v1TestResultsPrincipal": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "resources": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/v1TestResultsResource"
+          }
+        }
+      }
+    },
+    "v1TestResultsResource": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "actions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/v1TestResultsAction"
+          }
+        }
+      }
+    },
+    "v1Trace": {
+      "type": "object",
+      "properties": {
+        "components": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/TraceComponent"
+          }
+        },
+        "event": {
+          "$ref": "#/definitions/TraceEvent"
+        }
+      }
     },
     "v1ValidationError": {
       "type": "object",

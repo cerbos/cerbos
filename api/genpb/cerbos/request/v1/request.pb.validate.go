@@ -1487,6 +1487,200 @@ var _ interface {
 	ErrorName() string
 } = PlaygroundValidateRequestValidationError{}
 
+// Validate checks the field values on PlaygroundTestRequest with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *PlaygroundTestRequest) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on PlaygroundTestRequest with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// PlaygroundTestRequestMultiError, or nil if none found.
+func (m *PlaygroundTestRequest) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *PlaygroundTestRequest) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for PlaygroundId
+
+	if l := len(m.GetPolicyFiles()); l < 1 || l > 30 {
+		err := PlaygroundTestRequestValidationError{
+			field:  "PolicyFiles",
+			reason: "value must contain between 1 and 30 items, inclusive",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	for idx, item := range m.GetPolicyFiles() {
+		_, _ = idx, item
+
+		if all {
+			switch v := interface{}(item).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, PlaygroundTestRequestValidationError{
+						field:  fmt.Sprintf("PolicyFiles[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, PlaygroundTestRequestValidationError{
+						field:  fmt.Sprintf("PolicyFiles[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(item).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return PlaygroundTestRequestValidationError{
+					field:  fmt.Sprintf("PolicyFiles[%v]", idx),
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	}
+
+	if l := len(m.GetTestFiles()); l < 1 || l > 30 {
+		err := PlaygroundTestRequestValidationError{
+			field:  "TestFiles",
+			reason: "value must contain between 1 and 30 items, inclusive",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	for idx, item := range m.GetTestFiles() {
+		_, _ = idx, item
+
+		if all {
+			switch v := interface{}(item).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, PlaygroundTestRequestValidationError{
+						field:  fmt.Sprintf("TestFiles[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, PlaygroundTestRequestValidationError{
+						field:  fmt.Sprintf("TestFiles[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(item).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return PlaygroundTestRequestValidationError{
+					field:  fmt.Sprintf("TestFiles[%v]", idx),
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	}
+
+	if len(errors) > 0 {
+		return PlaygroundTestRequestMultiError(errors)
+	}
+
+	return nil
+}
+
+// PlaygroundTestRequestMultiError is an error wrapping multiple validation
+// errors returned by PlaygroundTestRequest.ValidateAll() if the designated
+// constraints aren't met.
+type PlaygroundTestRequestMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m PlaygroundTestRequestMultiError) Error() string {
+	var msgs []string
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m PlaygroundTestRequestMultiError) AllErrors() []error { return m }
+
+// PlaygroundTestRequestValidationError is the validation error returned by
+// PlaygroundTestRequest.Validate if the designated constraints aren't met.
+type PlaygroundTestRequestValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e PlaygroundTestRequestValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e PlaygroundTestRequestValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e PlaygroundTestRequestValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e PlaygroundTestRequestValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e PlaygroundTestRequestValidationError) ErrorName() string {
+	return "PlaygroundTestRequestValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e PlaygroundTestRequestValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sPlaygroundTestRequest.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = PlaygroundTestRequestValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = PlaygroundTestRequestValidationError{}
+
 // Validate checks the field values on PlaygroundEvaluateRequest with the rules
 // defined in the proto definition for this message. If any rules are
 // violated, the first error encountered is returned, or nil if there are no violations.

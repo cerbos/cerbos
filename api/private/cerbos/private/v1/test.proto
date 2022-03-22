@@ -42,6 +42,11 @@ message ServerTestCase {
         cerbos.response.v1.PlaygroundValidateResponse want_response = 2;
     }
 
+    message PlaygroundTestCall {
+        cerbos.request.v1.PlaygroundTestRequest input = 1;
+        cerbos.response.v1.PlaygroundTestResponse want_response = 2;
+    }
+
     message PlaygroundEvaluateCall {
         cerbos.request.v1.PlaygroundEvaluateRequest input = 1;
         cerbos.response.v1.PlaygroundEvaluateResponse want_response = 2;
@@ -80,6 +85,7 @@ message ServerTestCase {
         PlaygroundProxyCall playground_proxy = 10;
         ResourcesQueryPlanCall resources_query_plan = 11;
         AdminAddOrUpdateSchemaCall admin_add_or_update_schema = 12;
+        PlaygroundTestCall playground_test = 13;
     }
 }
 

@@ -1,0 +1,40 @@
+---
+description: "Corrupt policy data"
+wantStatus:
+  httpStatusCode: 400
+  grpcStatusCode: 0
+playgroundTest:
+  input: {
+    "playgroundId": "test",
+    "policyFiles": [
+      {
+        "fileName": "common_roles.yaml",
+        "contents": "rubbish"
+      },
+      {
+        "fileName": "resource.yaml",
+        "contents": "rubbish"
+      }
+    ],
+    "testFiles": [
+      {
+        "fileName": "policy_04_test.yaml",
+        "contents": "{{ fileString `store/tests/policy_04_test.yaml` | b64enc }}"
+      }
+    ]
+  }
+  wantResponse: {
+    "playgroundId": "test",
+    "failure": {
+      "errors": [
+        {
+          "file": "resource.yaml",
+          "error": "Failed to read: failed to convert YAML to JSON: yaml: invalid leading UTF-8 octet"
+        },
+        {
+          "file": "common_roles.yaml",
+          "error": "Failed to read: failed to convert YAML to JSON: yaml: invalid leading UTF-8 octet"
+        }
+      ]
+    }
+  }

@@ -816,6 +816,33 @@ func cerbos_request_v1_PlaygroundProxyRequest_hashpb_sum(m *PlaygroundProxyReque
 	}
 }
 
+func cerbos_request_v1_PlaygroundTestRequest_hashpb_sum(m *PlaygroundTestRequest, hasher hash.Hash, ignore map[string]struct{}) {
+	if _, ok := ignore["cerbos.request.v1.PlaygroundTestRequest.playground_id"]; !ok {
+		_, _ = hasher.Write(protowire.AppendString(nil, m.PlaygroundId))
+
+	}
+	if _, ok := ignore["cerbos.request.v1.PlaygroundTestRequest.policy_files"]; !ok {
+		if len(m.PolicyFiles) > 0 {
+			for _, v := range m.PolicyFiles {
+				if v != nil {
+					cerbos_request_v1_PolicyFile_hashpb_sum(v, hasher, ignore)
+				}
+
+			}
+		}
+	}
+	if _, ok := ignore["cerbos.request.v1.PlaygroundTestRequest.test_files"]; !ok {
+		if len(m.TestFiles) > 0 {
+			for _, v := range m.TestFiles {
+				if v != nil {
+					cerbos_request_v1_PolicyFile_hashpb_sum(v, hasher, ignore)
+				}
+
+			}
+		}
+	}
+}
+
 func cerbos_request_v1_PlaygroundValidateRequest_hashpb_sum(m *PlaygroundValidateRequest, hasher hash.Hash, ignore map[string]struct{}) {
 	if _, ok := ignore["cerbos.request.v1.PlaygroundValidateRequest.playground_id"]; !ok {
 		_, _ = hasher.Write(protowire.AppendString(nil, m.PlaygroundId))

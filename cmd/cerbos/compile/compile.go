@@ -7,6 +7,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io/fs"
 	"os"
 	"os/signal"
 
@@ -103,13 +104,8 @@ func (c *Cmd) Run(k *kong.Kong) error {
 
 	if !c.SkipTests {
 		verifyConf := verify.Config{
-			TestsDir: c.Tests,
-			Run:      c.RunRegex,
-			Trace:    c.Verbose,
-		}
-
-		if verifyConf.TestsDir == "" {
-			verifyConf.TestsDir = c.Dir
+			Run:   c.RunRegex,
+			Trace: c.Verbose,
 		}
 
 		compiler := compile.NewManagerFromDefaultConf(ctx, store, schemaMgr)
@@ -118,7 +114,7 @@ func (c *Cmd) Run(k *kong.Kong) error {
 			return fmt.Errorf("failed to create engine: %w", err)
 		}
 
-		results, err := verify.Verify(ctx, eng, verifyConf)
+		results, err := verify.Verify(ctx, c.testsDir(), eng, verifyConf)
 		if err != nil {
 			return fmt.Errorf("failed to run tests: %w", err)
 		}
@@ -136,6 +132,14 @@ func (c *Cmd) Run(k *kong.Kong) error {
 	}
 
 	return nil
+}
+
+func (c *Cmd) testsDir() fs.FS {
+	if c.Tests == "" {
+		return os.DirFS(c.Dir)
+	}
+
+	return os.DirFS(c.Tests)
 }
 
 func (c *Cmd) Help() string {

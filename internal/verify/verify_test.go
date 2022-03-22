@@ -6,6 +6,7 @@ package verify
 import (
 	"context"
 	"fmt"
+	"os"
 	"path/filepath"
 	"strings"
 	"sync"
@@ -29,8 +30,7 @@ import (
 func TestVerify(t *testing.T) {
 	eng := mkEngine(t)
 	runSuites := func(dir string) (*policyv1.TestResults, error) {
-		conf := Config{TestsDir: test.PathToDir(t, filepath.Join("verify", dir))}
-		return Verify(context.Background(), eng, conf)
+		return Verify(context.Background(), os.DirFS(test.PathToDir(t, filepath.Join("verify", dir))), eng, Config{})
 	}
 
 	t.Run("valid", func(t *testing.T) {
@@ -269,7 +269,7 @@ func Test_doVerify(t *testing.T) {
 				}
 				table := genTable(t, optionResources != external, optionPrincipals != external)
 				fsys["leave_request_test.yaml"] = newMapFile(table)
-				result, err := doVerify(context.Background(), fsys, eng, Config{})
+				result, err := Verify(context.Background(), fsys, eng, Config{})
 				is := require.New(t)
 				is.NoError(err)
 				is.Len(result.Suites, 1)
@@ -285,7 +285,7 @@ func Test_doVerify(t *testing.T) {
 
 		table := genTable(t, false, false)
 		fsys["leave_request_test.yaml"] = newMapFile(table)
-		result, err := doVerify(context.Background(), fsys, eng, Config{})
+		result, err := Verify(context.Background(), fsys, eng, Config{})
 		is := require.New(t)
 		is.NoError(err)
 		is.Len(result.Suites, 1)
@@ -299,7 +299,7 @@ func Test_doVerify(t *testing.T) {
 
 		table := genTable(t, false, false)
 		fsys["leave_request_test.yaml"] = newMapFile(table)
-		result, err := doVerify(context.Background(), fsys, eng, Config{})
+		result, err := Verify(context.Background(), fsys, eng, Config{})
 		is := require.New(t)
 		is.NoError(err)
 		is.Len(result.Suites, 1)
@@ -316,7 +316,7 @@ func Test_doVerify(t *testing.T) {
 			fsys[dir+"/leave_request_test.yaml"] = newMapFile(ts)
 		}
 
-		result, err := doVerify(context.Background(), fsys, eng, Config{})
+		result, err := Verify(context.Background(), fsys, eng, Config{})
 		is := require.New(t)
 		is.NoError(err)
 		is.Len(result.Suites, 3)
@@ -333,7 +333,7 @@ func Test_doVerify(t *testing.T) {
 		fsys[filepath.Join(util.TestDataDirectory, principalsFileName)+".yaml"] = newMapFile(principals)
 		fsys["leave_request_test.yaml"] = newMapFile(ts)
 
-		result, err := doVerify(context.Background(), fsys, eng, Config{})
+		result, err := Verify(context.Background(), fsys, eng, Config{})
 		is := require.New(t)
 		is.NoError(err)
 		is.Len(result.Suites, 1)
