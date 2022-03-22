@@ -1,5 +1,5 @@
 {
-  "$id": "https://api.cerbos.dev/cerbos/request/v1/PolicyFile.schema.json",
+  "$id": "https://api.cerbos.dev/cerbos/request/v1/File.schema.json",
   "$schema": "http://json-schema.org/draft-07/schema#",
   "type": "object",
   "required": [

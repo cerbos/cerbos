@@ -1110,10 +1110,39 @@
         }
       }
     },
+    "cerbos.request.v1.File": {
+      "type": "object",
+      "required": [
+        "fileName",
+        "contents"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "contents": {
+          "type": "string",
+          "oneOf": [
+            {
+              "title": "Standard base64 encoding",
+              "type": "string",
+              "pattern": "^[\\r\\nA-Za-z0-9+/]*$"
+            },
+            {
+              "title": "URL-safe base64 encoding",
+              "type": "string",
+              "pattern": "^[\\r\\nA-Za-z0-9_-]*$"
+            }
+          ]
+        },
+        "fileName": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
     "cerbos.request.v1.PlaygroundEvaluateRequest": {
       "type": "object",
       "required": [
-        "policyFiles",
+        "files",
         "principal",
         "resource",
         "actions"
@@ -1133,16 +1162,16 @@
         "auxData": {
           "$ref": "#/definitions/cerbos.request.v1.AuxData"
         },
-        "playgroundId": {
-          "type": "string"
-        },
-        "policyFiles": {
+        "files": {
           "type": "array",
           "items": {
-            "$ref": "#/definitions/cerbos.request.v1.PolicyFile"
+            "$ref": "#/definitions/cerbos.request.v1.File"
           },
           "maxItems": 10,
           "minItems": 1
+        },
+        "playgroundId": {
+          "type": "string"
         },
         "principal": {
           "$ref": "#/definitions/cerbos.engine.v1.Principal"
@@ -1157,7 +1186,7 @@
         {
           "type": "object",
           "required": [
-            "policyFiles"
+            "files"
           ],
           "additionalProperties": false,
           "properties": {
@@ -1167,16 +1196,16 @@
             "checkResourceSet": {
               "$ref": "#/definitions/cerbos.request.v1.CheckResourceSetRequest"
             },
-            "playgroundId": {
-              "type": "string"
-            },
-            "policyFiles": {
+            "files": {
               "type": "array",
               "items": {
-                "$ref": "#/definitions/cerbos.request.v1.PolicyFile"
+                "$ref": "#/definitions/cerbos.request.v1.File"
               },
               "maxItems": 10,
               "minItems": 1
+            },
+            "playgroundId": {
+              "type": "string"
             },
             "resourcesQueryPlan": {
               "$ref": "#/definitions/cerbos.request.v1.ResourcesQueryPlanRequest"
@@ -1217,7 +1246,7 @@
         "files": {
           "type": "array",
           "items": {
-            "$ref": "#/definitions/cerbos.request.v1.PolicyFile"
+            "$ref": "#/definitions/cerbos.request.v1.File"
           },
           "maxItems": 30,
           "minItems": 1
@@ -1230,49 +1259,20 @@
     "cerbos.request.v1.PlaygroundValidateRequest": {
       "type": "object",
       "required": [
-        "policyFiles"
+        "files"
       ],
       "additionalProperties": false,
       "properties": {
-        "playgroundId": {
-          "type": "string"
-        },
-        "policyFiles": {
+        "files": {
           "type": "array",
           "items": {
-            "$ref": "#/definitions/cerbos.request.v1.PolicyFile"
+            "$ref": "#/definitions/cerbos.request.v1.File"
           },
           "maxItems": 30,
           "minItems": 1
-        }
-      }
-    },
-    "cerbos.request.v1.PolicyFile": {
-      "type": "object",
-      "required": [
-        "fileName",
-        "contents"
-      ],
-      "additionalProperties": false,
-      "properties": {
-        "contents": {
-          "type": "string",
-          "oneOf": [
-            {
-              "title": "Standard base64 encoding",
-              "type": "string",
-              "pattern": "^[\\r\\nA-Za-z0-9+/]*$"
-            },
-            {
-              "title": "URL-safe base64 encoding",
-              "type": "string",
-              "pattern": "^[\\r\\nA-Za-z0-9_-]*$"
-            }
-          ]
         },
-        "fileName": {
-          "type": "string",
-          "minLength": 1
+        "playgroundId": {
+          "type": "string"
         }
       }
     },

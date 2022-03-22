@@ -2,7 +2,7 @@
   "$id": "https://api.cerbos.dev/cerbos/request/v1/PlaygroundTestRequest.schema.json",
   "$schema": "http://json-schema.org/draft-07/schema#",
   "definitions": {
-    "cerbos.request.v1.PolicyFile": {
+    "cerbos.request.v1.File": {
       "type": "object",
       "required": [
         "fileName",
@@ -41,7 +41,7 @@
     "files": {
       "type": "array",
       "items": {
-        "$ref": "#/definitions/cerbos.request.v1.PolicyFile"
+        "$ref": "#/definitions/cerbos.request.v1.File"
       },
       "maxItems": 30,
       "minItems": 1

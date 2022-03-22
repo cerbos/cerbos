@@ -6,7 +6,7 @@ wantStatus:
 playgroundEvaluate:
   input: {
     "playgroundId": "test",
-    "policyFiles": [
+    "files": [
       {
         "fileName": "common_roles.yaml",
         "contents": "rubbish"

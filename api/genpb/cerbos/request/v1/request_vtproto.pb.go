@@ -618,7 +618,7 @@ func (m *AuxData) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 	return len(dAtA) - i, nil
 }
 
-func (m *PolicyFile) MarshalVT() (dAtA []byte, err error) {
+func (m *File) MarshalVT() (dAtA []byte, err error) {
 	if m == nil {
 		return nil, nil
 	}
@@ -631,12 +631,12 @@ func (m *PolicyFile) MarshalVT() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *PolicyFile) MarshalToVT(dAtA []byte) (int, error) {
+func (m *File) MarshalToVT(dAtA []byte) (int, error) {
 	size := m.SizeVT()
 	return m.MarshalToSizedBufferVT(dAtA[:size])
 }
 
-func (m *PolicyFile) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
+func (m *File) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 	if m == nil {
 		return 0, nil
 	}
@@ -695,9 +695,9 @@ func (m *PlaygroundValidateRequest) MarshalToSizedBufferVT(dAtA []byte) (int, er
 		i -= len(m.unknownFields)
 		copy(dAtA[i:], m.unknownFields)
 	}
-	if len(m.PolicyFiles) > 0 {
-		for iNdEx := len(m.PolicyFiles) - 1; iNdEx >= 0; iNdEx-- {
-			size, err := m.PolicyFiles[iNdEx].MarshalToSizedBufferVT(dAtA[:i])
+	if len(m.Files) > 0 {
+		for iNdEx := len(m.Files) - 1; iNdEx >= 0; iNdEx-- {
+			size, err := m.Files[iNdEx].MarshalToSizedBufferVT(dAtA[:i])
 			if err != nil {
 				return 0, err
 			}
@@ -862,9 +862,9 @@ func (m *PlaygroundEvaluateRequest) MarshalToSizedBufferVT(dAtA []byte) (int, er
 		i--
 		dAtA[i] = 0x1a
 	}
-	if len(m.PolicyFiles) > 0 {
-		for iNdEx := len(m.PolicyFiles) - 1; iNdEx >= 0; iNdEx-- {
-			size, err := m.PolicyFiles[iNdEx].MarshalToSizedBufferVT(dAtA[:i])
+	if len(m.Files) > 0 {
+		for iNdEx := len(m.Files) - 1; iNdEx >= 0; iNdEx-- {
+			size, err := m.Files[iNdEx].MarshalToSizedBufferVT(dAtA[:i])
 			if err != nil {
 				return 0, err
 			}
@@ -926,9 +926,9 @@ func (m *PlaygroundProxyRequest) MarshalToSizedBufferVT(dAtA []byte) (int, error
 			}
 		}
 	}
-	if len(m.PolicyFiles) > 0 {
-		for iNdEx := len(m.PolicyFiles) - 1; iNdEx >= 0; iNdEx-- {
-			size, err := m.PolicyFiles[iNdEx].MarshalToSizedBufferVT(dAtA[:i])
+	if len(m.Files) > 0 {
+		for iNdEx := len(m.Files) - 1; iNdEx >= 0; iNdEx-- {
+			size, err := m.Files[iNdEx].MarshalToSizedBufferVT(dAtA[:i])
 			if err != nil {
 				return 0, err
 			}
@@ -1816,7 +1816,7 @@ func (m *AuxData) SizeVT() (n int) {
 	return n
 }
 
-func (m *PolicyFile) SizeVT() (n int) {
+func (m *File) SizeVT() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -1846,8 +1846,8 @@ func (m *PlaygroundValidateRequest) SizeVT() (n int) {
 	if l > 0 {
 		n += 1 + l + sov(uint64(l))
 	}
-	if len(m.PolicyFiles) > 0 {
-		for _, e := range m.PolicyFiles {
+	if len(m.Files) > 0 {
+		for _, e := range m.Files {
 			l = e.SizeVT()
 			n += 1 + l + sov(uint64(l))
 		}
@@ -1890,8 +1890,8 @@ func (m *PlaygroundEvaluateRequest) SizeVT() (n int) {
 	if l > 0 {
 		n += 1 + l + sov(uint64(l))
 	}
-	if len(m.PolicyFiles) > 0 {
-		for _, e := range m.PolicyFiles {
+	if len(m.Files) > 0 {
+		for _, e := range m.Files {
 			l = e.SizeVT()
 			n += 1 + l + sov(uint64(l))
 		}
@@ -1942,8 +1942,8 @@ func (m *PlaygroundProxyRequest) SizeVT() (n int) {
 	if l > 0 {
 		n += 1 + l + sov(uint64(l))
 	}
-	if len(m.PolicyFiles) > 0 {
-		for _, e := range m.PolicyFiles {
+	if len(m.Files) > 0 {
+		for _, e := range m.Files {
 			l = e.SizeVT()
 			n += 1 + l + sov(uint64(l))
 		}
@@ -3736,7 +3736,7 @@ func (m *AuxData) UnmarshalVT(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *PolicyFile) UnmarshalVT(dAtA []byte) error {
+func (m *File) UnmarshalVT(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -3759,10 +3759,10 @@ func (m *PolicyFile) UnmarshalVT(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: PolicyFile: wiretype end group for non-group")
+			return fmt.Errorf("proto: File: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: PolicyFile: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: File: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
@@ -3916,7 +3916,7 @@ func (m *PlaygroundValidateRequest) UnmarshalVT(dAtA []byte) error {
 			iNdEx = postIndex
 		case 2:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field PolicyFiles", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field Files", wireType)
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
@@ -3943,8 +3943,8 @@ func (m *PlaygroundValidateRequest) UnmarshalVT(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.PolicyFiles = append(m.PolicyFiles, &PolicyFile{})
-			if err := m.PolicyFiles[len(m.PolicyFiles)-1].UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
+			m.Files = append(m.Files, &File{})
+			if err := m.Files[len(m.Files)-1].UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
 			iNdEx = postIndex
@@ -4060,7 +4060,7 @@ func (m *PlaygroundTestRequest) UnmarshalVT(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.Files = append(m.Files, &PolicyFile{})
+			m.Files = append(m.Files, &File{})
 			if err := m.Files[len(m.Files)-1].UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
@@ -4150,7 +4150,7 @@ func (m *PlaygroundEvaluateRequest) UnmarshalVT(dAtA []byte) error {
 			iNdEx = postIndex
 		case 2:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field PolicyFiles", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field Files", wireType)
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
@@ -4177,8 +4177,8 @@ func (m *PlaygroundEvaluateRequest) UnmarshalVT(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.PolicyFiles = append(m.PolicyFiles, &PolicyFile{})
-			if err := m.PolicyFiles[len(m.PolicyFiles)-1].UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
+			m.Files = append(m.Files, &File{})
+			if err := m.Files[len(m.Files)-1].UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
 			iNdEx = postIndex
@@ -4423,7 +4423,7 @@ func (m *PlaygroundProxyRequest) UnmarshalVT(dAtA []byte) error {
 			iNdEx = postIndex
 		case 2:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field PolicyFiles", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field Files", wireType)
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
@@ -4450,8 +4450,8 @@ func (m *PlaygroundProxyRequest) UnmarshalVT(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.PolicyFiles = append(m.PolicyFiles, &PolicyFile{})
-			if err := m.PolicyFiles[len(m.PolicyFiles)-1].UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
+			m.Files = append(m.Files, &File{})
+			if err := m.Files[len(m.Files)-1].UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
 			iNdEx = postIndex

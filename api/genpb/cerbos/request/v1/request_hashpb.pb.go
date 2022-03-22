@@ -74,9 +74,9 @@ func (m *AuxData_JWT) HashPB(hasher hash.Hash, ignore map[string]struct{}) {
 
 // HashPB computes a hash of the message using the given hash function
 // The ignore set must contain fully-qualified field names (pkg.msg.field) that should be ignored from the hash
-func (m *PolicyFile) HashPB(hasher hash.Hash, ignore map[string]struct{}) {
+func (m *File) HashPB(hasher hash.Hash, ignore map[string]struct{}) {
 	if m != nil {
-		cerbos_request_v1_PolicyFile_hashpb_sum(m, hasher, ignore)
+		cerbos_request_v1_File_hashpb_sum(m, hasher, ignore)
 	}
 }
 

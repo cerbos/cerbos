@@ -6,7 +6,7 @@ wantStatus:
 playgroundValidate:
   input: {
     "playgroundId": "test",
-    "policyFiles": [
+    "files": [
       {
         "fileName": "resource.yaml",
         "contents": "{{ fileString `store/resource_policies/policy_04.yaml` | b64enc }}",

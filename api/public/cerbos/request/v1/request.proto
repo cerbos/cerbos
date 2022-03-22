@@ -240,7 +240,7 @@ message AuxData {
 }
 
 
-message PolicyFile {
+message File {
     string file_name = 1 [
         (validate.rules).string.min_len = 1,
         (google.api.field_behavior) = REQUIRED
@@ -261,14 +261,14 @@ message PlaygroundValidateRequest {
 
     string playground_id = 1;
 
-    repeated PolicyFile policy_files = 2 [
+    repeated File files = 2 [
         (validate.rules).repeated = { min_items: 1, max_items: 30 },
         (google.api.field_behavior) = REQUIRED,
-        (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = { 
-            description: "List of policy files."
+        (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+            description: "List of files."
             min_items: 1
             max_items: 30
-        } 
+        }
     ];
 }
 
@@ -281,11 +281,11 @@ message PlaygroundTestRequest {
 
     string playground_id = 1;
 
-    repeated PolicyFile files = 2 [
+    repeated File files = 2 [
         (validate.rules).repeated = { min_items: 1, max_items: 30 },
         (google.api.field_behavior) = REQUIRED,
         (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
-            description: "List of policy and test files."
+            description: "List of files."
             min_items: 1
             max_items: 30
         }
@@ -301,14 +301,14 @@ message PlaygroundEvaluateRequest {
 
     string playground_id = 1;
 
-    repeated PolicyFile policy_files = 2 [
+    repeated File files = 2 [
         (validate.rules).repeated = { min_items: 1, max_items: 10 },
         (google.api.field_behavior) = REQUIRED,
-        (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = { 
-            description: "List of policy files."
+        (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+            description: "List of files."
             min_items: 1
             max_items: 30
-        } 
+        }
     ];
 
     cerbos.engine.v1.Principal principal = 3 [
@@ -344,14 +344,14 @@ message PlaygroundProxyRequest {
 
     string playground_id = 1;
 
-    repeated PolicyFile policy_files = 2 [
+    repeated File files = 2 [
         (validate.rules).repeated = { min_items: 1, max_items: 10 },
         (google.api.field_behavior) = REQUIRED,
-        (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = { 
-            description: "List of policy files."
+        (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+            description: "List of files."
             min_items: 1
             max_items: 30
-        } 
+        }
     ];
 
     oneof proxy_request {

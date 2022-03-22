@@ -1848,6 +1848,28 @@
       ],
       "default": "EFFECT_UNSPECIFIED"
     },
+    "v1File": {
+      "type": "object",
+      "properties": {
+        "fileName": {
+          "type": "string",
+          "required": [
+            "fileName"
+          ]
+        },
+        "contents": {
+          "type": "string",
+          "format": "byte",
+          "required": [
+            "contents"
+          ]
+        }
+      },
+      "required": [
+        "fileName",
+        "contents"
+      ]
+    },
     "v1GetPolicyResponse": {
       "type": "object",
       "properties": {
@@ -1989,16 +2011,16 @@
         "playgroundId": {
           "type": "string"
         },
-        "policyFiles": {
+        "files": {
           "type": "array",
           "items": {
-            "$ref": "#/definitions/v1PolicyFile"
+            "$ref": "#/definitions/v1File"
           },
-          "description": "List of policy files.",
+          "description": "List of files.",
           "maxItems": 30,
           "minItems": 1,
           "required": [
-            "policyFiles"
+            "files"
           ]
         },
         "principal": {
@@ -2026,7 +2048,7 @@
       },
       "description": "Playground evaluate request",
       "required": [
-        "policyFiles",
+        "files",
         "actions"
       ]
     },
@@ -2063,16 +2085,16 @@
         "playgroundId": {
           "type": "string"
         },
-        "policyFiles": {
+        "files": {
           "type": "array",
           "items": {
-            "$ref": "#/definitions/v1PolicyFile"
+            "$ref": "#/definitions/v1File"
           },
-          "description": "List of policy files.",
+          "description": "List of files.",
           "maxItems": 30,
           "minItems": 1,
           "required": [
-            "policyFiles"
+            "files"
           ]
         },
         "checkResourceSet": {
@@ -2087,7 +2109,7 @@
       },
       "description": "Playground proxy request",
       "required": [
-        "policyFiles"
+        "files"
       ]
     },
     "v1PlaygroundProxyResponse": {
@@ -2120,9 +2142,9 @@
         "files": {
           "type": "array",
           "items": {
-            "$ref": "#/definitions/v1PolicyFile"
+            "$ref": "#/definitions/v1File"
           },
-          "description": "List of policy and test files.",
+          "description": "List of files.",
           "maxItems": 30,
           "minItems": 1,
           "required": [
@@ -2156,22 +2178,22 @@
         "playgroundId": {
           "type": "string"
         },
-        "policyFiles": {
+        "files": {
           "type": "array",
           "items": {
-            "$ref": "#/definitions/v1PolicyFile"
+            "$ref": "#/definitions/v1File"
           },
-          "description": "List of policy files.",
+          "description": "List of files.",
           "maxItems": 30,
           "minItems": 1,
           "required": [
-            "policyFiles"
+            "files"
           ]
         }
       },
       "description": "Playground validate request",
       "required": [
-        "policyFiles"
+        "files"
       ]
     },
     "v1PlaygroundValidateResponse": {
@@ -2220,28 +2242,6 @@
           }
         }
       }
-    },
-    "v1PolicyFile": {
-      "type": "object",
-      "properties": {
-        "fileName": {
-          "type": "string",
-          "required": [
-            "fileName"
-          ]
-        },
-        "contents": {
-          "type": "string",
-          "format": "byte",
-          "required": [
-            "contents"
-          ]
-        }
-      },
-      "required": [
-        "fileName",
-        "contents"
-      ]
     },
     "v1PrincipalPolicy": {
       "type": "object",
