@@ -2,15 +2,6 @@
   "$id": "https://api.cerbos.dev/cerbos/policy/v1/PrincipalPolicy.schema.json",
   "$schema": "http://json-schema.org/draft-07/schema#",
   "definitions": {
-    "cerbos.effect.v1.Effect": {
-      "type": "string",
-      "enum": [
-        "EFFECT_UNSPECIFIED",
-        "EFFECT_ALLOW",
-        "EFFECT_DENY",
-        "EFFECT_NO_MATCH"
-      ]
-    },
     "cerbos.policy.v1.Condition": {
       "allOf": [
         {
@@ -147,17 +138,10 @@
           "$ref": "#/definitions/cerbos.policy.v1.Condition"
         },
         "effect": {
-          "allOf": [
-            {
-              "$ref": "#/definitions/cerbos.effect.v1.Effect"
-            },
-            {
-              "type": "string",
-              "enum": [
-                "EFFECT_ALLOW",
-                "EFFECT_DENY"
-              ]
-            }
+          "type": "string",
+          "enum": [
+            "EFFECT_ALLOW",
+            "EFFECT_DENY"
           ]
         },
         "name": {

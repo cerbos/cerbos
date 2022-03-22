@@ -390,17 +390,10 @@
           "$ref": "#/definitions/cerbos.policy.v1.Condition"
         },
         "effect": {
-          "allOf": [
-            {
-              "$ref": "#/definitions/cerbos.effect.v1.Effect"
-            },
-            {
-              "type": "string",
-              "enum": [
-                "EFFECT_ALLOW",
-                "EFFECT_DENY"
-              ]
-            }
+          "type": "string",
+          "enum": [
+            "EFFECT_ALLOW",
+            "EFFECT_DENY"
           ]
         },
         "name": {
@@ -478,17 +471,10 @@
           "uniqueItems": true
         },
         "effect": {
-          "allOf": [
-            {
-              "$ref": "#/definitions/cerbos.effect.v1.Effect"
-            },
-            {
-              "type": "string",
-              "enum": [
-                "EFFECT_ALLOW",
-                "EFFECT_DENY"
-              ]
-            }
+          "type": "string",
+          "enum": [
+            "EFFECT_ALLOW",
+            "EFFECT_DENY"
           ]
         },
         "name": {

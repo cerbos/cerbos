@@ -81,6 +81,9 @@ define BUF_GEN_TEMPLATE
     },\
     {\
       "name": "jsonschema",\
+      "opt": [\
+	    "baseurl=https://api.cerbos.dev"\
+      ],\
       "out": "$(JSONSCHEMA_DIR)",\
       "path": "$(PROTOC_GEN_JSONSCHEMA)",\
       "strategy": "all"\
