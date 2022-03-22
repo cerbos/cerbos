@@ -6,16 +6,14 @@ package repl
 import (
 	"errors"
 	"fmt"
-	"io"
 	"os"
 	"path/filepath"
-	"strings"
 
 	"github.com/alecthomas/kong"
+	"github.com/cerbos/cerbos/cmd/cerbos/repl/internal"
+	"github.com/cerbos/cerbos/internal/printer"
 	"github.com/peterh/liner"
 )
-
-var errExit = errors.New("exit")
 
 type Cmd struct {
 	History string `help:"Path to history file" type:"path"`
@@ -37,7 +35,12 @@ func (c *Cmd) Run(k *kong.Kong) error {
 		fmt.Fprintf(os.Stderr, "Failed to read history: %v", err)
 	}
 
-	return repl(reader)
+	r, err := internal.NewREPL(reader, printer.New(k.Stdout, k.Stderr))
+	if err != nil {
+		return fmt.Errorf("failed to initialize the REPL: %w", err)
+	}
+
+	return r.Loop()
 }
 
 func getHistoryFile(path string) string {
@@ -95,56 +98,4 @@ func writeHistory(reader *liner.State, histFile string) error {
 
 	_, err = reader.WriteHistory(f)
 	return err
-}
-
-func repl(reader *liner.State) error {
-	for {
-		line, err := reader.Prompt("> ")
-		if err != nil && !errors.Is(err, io.EOF) {
-			printErr("Error reading input", err)
-			continue
-		}
-
-		line = strings.TrimSpace(line)
-		if line == "" {
-			continue
-		}
-
-		switch line[0] {
-		case ':':
-			if err := processCmd(line); err != nil {
-				if errors.Is(err, errExit) {
-					return nil
-				}
-
-				printErr("Failed to parse command", err)
-			}
-		case '#':
-			continue
-		default:
-			processExpr(line)
-		}
-	}
-}
-
-func printErr(msg string, err error) {
-	fmt.Printf("ERROR: %s\n", msg)
-	if err != nil {
-		fmt.Printf("  cause: %v", err)
-	}
-}
-
-func processCmd(line string) error {
-	cmd := strings.TrimPrefix(line, ":")
-	switch cmd {
-	case "q", "quit", "exit":
-		return errExit
-	default:
-		return nil
-
-	}
-}
-
-func processExpr(line string) error {
-	return nil
 }
