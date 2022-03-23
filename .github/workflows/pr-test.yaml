@@ -123,6 +123,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
 
       - name: Check backwards compatibility
-        uses: bufbuild/buf-breaking-action@v1.0.0
+        uses: cerbos/buf-breaking-action@since
         with:
-          against: 'https://github.com/cerbos/cerbos.git#tag=${{ steps.latest-release.outputs.tag }}'
+          against: https://github.com/cerbos/cerbos.git#tag=${{ steps.latest-release.outputs.tag }}
+          since: https://github.com/cerbos/cerbos.git#branch=main
