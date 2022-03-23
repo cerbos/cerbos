@@ -1,0 +1,72 @@
+{
+  "$id": "https://api.cerbos.dev/cerbos/engine/v1/Trace/Component.schema.json",
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "definitions": {
+    "cerbos.engine.v1.Trace.Component.Kind": {
+      "type": "string",
+      "enum": [
+        "KIND_UNSPECIFIED",
+        "KIND_ACTION",
+        "KIND_CONDITION_ALL",
+        "KIND_CONDITION_ANY",
+        "KIND_CONDITION_NONE",
+        "KIND_CONDITION",
+        "KIND_DERIVED_ROLE",
+        "KIND_EXPR",
+        "KIND_POLICY",
+        "KIND_RESOURCE",
+        "KIND_RULE",
+        "KIND_SCOPE",
+        "KIND_VARIABLE",
+        "KIND_VARIABLES"
+      ]
+    },
+    "cerbos.engine.v1.Trace.Component.Variable": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "expr": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        }
+      }
+    }
+  },
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "action": {
+      "type": "string"
+    },
+    "derivedRole": {
+      "type": "string"
+    },
+    "expr": {
+      "type": "string"
+    },
+    "index": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "kind": {
+      "$ref": "#/definitions/cerbos.engine.v1.Trace.Component.Kind"
+    },
+    "policy": {
+      "type": "string"
+    },
+    "resource": {
+      "type": "string"
+    },
+    "rule": {
+      "type": "string"
+    },
+    "scope": {
+      "type": "string"
+    },
+    "variable": {
+      "$ref": "#/definitions/cerbos.engine.v1.Trace.Component.Variable"
+    }
+  }
+}

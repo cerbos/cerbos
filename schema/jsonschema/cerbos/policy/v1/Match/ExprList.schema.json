@@ -1,0 +1,70 @@
+{
+  "$id": "https://api.cerbos.dev/cerbos/policy/v1/Match/ExprList.schema.json",
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "definitions": {
+    "cerbos.policy.v1.Match": {
+      "allOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "all": {
+              "$ref": "#"
+            },
+            "any": {
+              "$ref": "#"
+            },
+            "expr": {
+              "type": "string"
+            },
+            "none": {
+              "$ref": "#"
+            }
+          }
+        },
+        {
+          "oneOf": [
+            {
+              "type": "object",
+              "required": [
+                "all"
+              ]
+            },
+            {
+              "type": "object",
+              "required": [
+                "any"
+              ]
+            },
+            {
+              "type": "object",
+              "required": [
+                "none"
+              ]
+            },
+            {
+              "type": "object",
+              "required": [
+                "expr"
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "type": "object",
+  "required": [
+    "of"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "of": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/cerbos.policy.v1.Match"
+      },
+      "minItems": 1
+    }
+  }
+}

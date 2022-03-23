@@ -1,0 +1,75 @@
+{
+  "$id": "https://api.cerbos.dev/cerbos/response/v1/PlaygroundEvaluateResponse/EvalResultList.schema.json",
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "definitions": {
+    "cerbos.effect.v1.Effect": {
+      "type": "string",
+      "enum": [
+        "EFFECT_UNSPECIFIED",
+        "EFFECT_ALLOW",
+        "EFFECT_DENY",
+        "EFFECT_NO_MATCH"
+      ]
+    },
+    "cerbos.response.v1.PlaygroundEvaluateResponse.EvalResult": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "action": {
+          "type": "string"
+        },
+        "effect": {
+          "$ref": "#/definitions/cerbos.effect.v1.Effect"
+        },
+        "effectiveDerivedRoles": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "policy": {
+          "type": "string"
+        },
+        "validationErrors": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/cerbos.schema.v1.ValidationError"
+          }
+        }
+      }
+    },
+    "cerbos.schema.v1.ValidationError": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "message": {
+          "type": "string"
+        },
+        "path": {
+          "type": "string"
+        },
+        "source": {
+          "$ref": "#/definitions/cerbos.schema.v1.ValidationError.Source"
+        }
+      }
+    },
+    "cerbos.schema.v1.ValidationError.Source": {
+      "type": "string",
+      "enum": [
+        "SOURCE_UNSPECIFIED",
+        "SOURCE_PRINCIPAL",
+        "SOURCE_RESOURCE"
+      ]
+    }
+  },
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "results": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/cerbos.response.v1.PlaygroundEvaluateResponse.EvalResult"
+      }
+    }
+  }
+}

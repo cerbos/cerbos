@@ -1,0 +1,14 @@
+{
+  "$id": "https://api.cerbos.dev/cerbos/response/v1/PlaygroundFailure/Error.schema.json",
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "error": {
+      "type": "string"
+    },
+    "file": {
+      "type": "string"
+    }
+  }
+}

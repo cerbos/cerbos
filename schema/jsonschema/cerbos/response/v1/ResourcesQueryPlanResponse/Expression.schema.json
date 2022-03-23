@@ -1,0 +1,38 @@
+{
+  "$id": "https://api.cerbos.dev/cerbos/response/v1/ResourcesQueryPlanResponse/Expression.schema.json",
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "definitions": {
+    "cerbos.response.v1.ResourcesQueryPlanResponse.Expression.Operand": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "expression": {
+          "$ref": "#"
+        },
+        "value": {
+          "$ref": "#/definitions/google.protobuf.Value"
+        },
+        "variable": {
+          "type": "string"
+        }
+      }
+    },
+    "google.protobuf.Value": {
+      "title": "Value",
+      "description": "A dynamically-typed value."
+    }
+  },
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "operands": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/cerbos.response.v1.ResourcesQueryPlanResponse.Expression.Operand"
+      }
+    },
+    "operator": {
+      "type": "string"
+    }
+  }
+}

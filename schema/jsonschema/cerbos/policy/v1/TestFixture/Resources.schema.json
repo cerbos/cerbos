@@ -1,0 +1,53 @@
+{
+  "$id": "https://api.cerbos.dev/cerbos/policy/v1/TestFixture/Resources.schema.json",
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "definitions": {
+    "cerbos.engine.v1.Resource": {
+      "type": "object",
+      "required": [
+        "kind",
+        "id"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "attr": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/google.protobuf.Value"
+          }
+        },
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "kind": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^[A-Za-z][\\--9@-Z_a-z]*(:[A-Za-z][\\--9@-Z_a-z]*)*$"
+        },
+        "policyVersion": {
+          "type": "string",
+          "pattern": "^[0-9A-Z_a-z]*$"
+        },
+        "scope": {
+          "type": "string",
+          "pattern": "^([A-Za-z][\\-0-9A-Z_a-z]+(\\.[A-Za-z][\\-0-9A-Z_a-z]*)*)*$"
+        }
+      }
+    },
+    "google.protobuf.Value": {
+      "title": "Value",
+      "description": "A dynamically-typed value."
+    }
+  },
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "resources": {
+      "type": "object",
+      "additionalProperties": {
+        "$ref": "#/definitions/cerbos.engine.v1.Resource"
+      }
+    }
+  }
+}

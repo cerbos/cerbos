@@ -1,0 +1,23 @@
+{
+  "$id": "https://api.cerbos.dev/cerbos/telemetry/v1/Ping/Cerbos.schema.json",
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "buildDate": {
+      "type": "string"
+    },
+    "commit": {
+      "type": "string"
+    },
+    "moduleChecksum": {
+      "type": "string"
+    },
+    "moduleVersion": {
+      "type": "string"
+    },
+    "version": {
+      "type": "string"
+    }
+  }
+}

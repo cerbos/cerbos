@@ -1,0 +1,25 @@
+{
+  "$id": "https://api.cerbos.dev/cerbos/policy/v1/Test/TestName.schema.json",
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "required": [
+    "testTableName",
+    "principalKey",
+    "resourceKey"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "principalKey": {
+      "type": "string",
+      "minLength": 1
+    },
+    "resourceKey": {
+      "type": "string",
+      "minLength": 1
+    },
+    "testTableName": {
+      "type": "string",
+      "minLength": 1
+    }
+  }
+}
