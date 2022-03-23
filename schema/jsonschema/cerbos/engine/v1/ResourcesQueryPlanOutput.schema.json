@@ -45,6 +45,9 @@
         "expr": {
           "$ref": "#/definitions/google.api.expr.v1alpha1.Expr"
         },
+        "exprVersion": {
+          "type": "string"
+        },
         "referenceMap": {
           "type": "object",
           "additionalProperties": {

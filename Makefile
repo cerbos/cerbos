@@ -36,12 +36,17 @@ lint-helm:
 	@ deploy/charts/validate.sh
 
 .PHONY: generate
-generate: clean generate-proto-code generate-mocks deps confdocs
+generate: clean generate-proto-code generate-json-schemas generate-mocks deps confdocs
 
 .PHONY: generate-proto-code
 generate-proto-code: proto-gen-deps
 	@-rm -rf $(GEN_DIR)
 	@ $(BUF) generate --template '$(BUF_GEN_TEMPLATE)' .
+
+.PHONY: generate-json-schemas
+generate-json-schemas: proto-gen-deps
+	@-rm -rf $(JSONSCHEMA_DIR)
+	@ $(BUF) generate --template '$(JSONSCHEMA_BUF_GEN_TEMPLATE)' api/public
 
 .PHONY: generate-mocks
 generate-mocks: $(MOCKERY)

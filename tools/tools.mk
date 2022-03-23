@@ -79,10 +79,18 @@ define BUF_GEN_TEMPLATE
       "out": "$(OPENAPI_DIR)",\
       "path": "$(PROTOC_GEN_OPENAPIV2)"\
     },\
+  ]\
+}
+endef
+
+define JSONSCHEMA_BUF_GEN_TEMPLATE
+{\
+  "version": "v1",\
+  "plugins": [\
     {\
       "name": "jsonschema",\
       "opt": [\
-	    "baseurl=https://api.cerbos.dev"\
+        "baseurl=https://api.cerbos.dev"\
       ],\
       "out": "$(JSONSCHEMA_DIR)",\
       "path": "$(PROTOC_GEN_JSONSCHEMA)",\
