@@ -98,7 +98,7 @@
         }
       }
     },
-    "cerbos.request.v1.PolicyFile": {
+    "cerbos.request.v1.File": {
       "type": "object",
       "required": [
         "fileName",
@@ -134,7 +134,7 @@
   },
   "type": "object",
   "required": [
-    "policyFiles",
+    "files",
     "principal",
     "resource",
     "actions"
@@ -154,16 +154,16 @@
     "auxData": {
       "$ref": "#/definitions/cerbos.request.v1.AuxData"
     },
-    "playgroundId": {
-      "type": "string"
-    },
-    "policyFiles": {
+    "files": {
       "type": "array",
       "items": {
-        "$ref": "#/definitions/cerbos.request.v1.PolicyFile"
+        "$ref": "#/definitions/cerbos.request.v1.File"
       },
       "maxItems": 10,
       "minItems": 1
+    },
+    "playgroundId": {
+      "type": "string"
     },
     "principal": {
       "$ref": "#/definitions/cerbos.engine.v1.Principal"

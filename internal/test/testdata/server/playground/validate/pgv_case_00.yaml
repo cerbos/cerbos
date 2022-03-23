@@ -6,7 +6,7 @@ wantStatus:
 playgroundValidate:
   input: {
     "playgroundId": "test",
-    "policyFiles": [
+    "files": [
       {
         "fileName": "common_roles.yaml",
         "contents": "{{ fileString `store/derived_roles/common_roles.yaml` | b64enc }}",

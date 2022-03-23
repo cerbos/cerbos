@@ -830,6 +830,176 @@ var _ interface {
 	ErrorName() string
 } = PlaygroundValidateResponseValidationError{}
 
+// Validate checks the field values on PlaygroundTestResponse with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *PlaygroundTestResponse) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on PlaygroundTestResponse with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// PlaygroundTestResponseMultiError, or nil if none found.
+func (m *PlaygroundTestResponse) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *PlaygroundTestResponse) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for PlaygroundId
+
+	switch m.Outcome.(type) {
+
+	case *PlaygroundTestResponse_Failure:
+
+		if all {
+			switch v := interface{}(m.GetFailure()).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, PlaygroundTestResponseValidationError{
+						field:  "Failure",
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, PlaygroundTestResponseValidationError{
+						field:  "Failure",
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(m.GetFailure()).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return PlaygroundTestResponseValidationError{
+					field:  "Failure",
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	case *PlaygroundTestResponse_Results:
+
+		if all {
+			switch v := interface{}(m.GetResults()).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, PlaygroundTestResponseValidationError{
+						field:  "Results",
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, PlaygroundTestResponseValidationError{
+						field:  "Results",
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(m.GetResults()).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return PlaygroundTestResponseValidationError{
+					field:  "Results",
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	}
+
+	if len(errors) > 0 {
+		return PlaygroundTestResponseMultiError(errors)
+	}
+
+	return nil
+}
+
+// PlaygroundTestResponseMultiError is an error wrapping multiple validation
+// errors returned by PlaygroundTestResponse.ValidateAll() if the designated
+// constraints aren't met.
+type PlaygroundTestResponseMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m PlaygroundTestResponseMultiError) Error() string {
+	var msgs []string
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m PlaygroundTestResponseMultiError) AllErrors() []error { return m }
+
+// PlaygroundTestResponseValidationError is the validation error returned by
+// PlaygroundTestResponse.Validate if the designated constraints aren't met.
+type PlaygroundTestResponseValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e PlaygroundTestResponseValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e PlaygroundTestResponseValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e PlaygroundTestResponseValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e PlaygroundTestResponseValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e PlaygroundTestResponseValidationError) ErrorName() string {
+	return "PlaygroundTestResponseValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e PlaygroundTestResponseValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sPlaygroundTestResponse.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = PlaygroundTestResponseValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = PlaygroundTestResponseValidationError{}
+
 // Validate checks the field values on PlaygroundEvaluateResponse with the
 // rules defined in the proto definition for this message. If any rules are
 // violated, the first error encountered is returned, or nil if there are no violations.

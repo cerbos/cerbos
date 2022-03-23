@@ -663,6 +663,17 @@ func cerbos_request_v1_DeleteSchemaRequest_hashpb_sum(m *DeleteSchemaRequest, ha
 	}
 }
 
+func cerbos_request_v1_File_hashpb_sum(m *File, hasher hash.Hash, ignore map[string]struct{}) {
+	if _, ok := ignore["cerbos.request.v1.File.file_name"]; !ok {
+		_, _ = hasher.Write(protowire.AppendString(nil, m.FileName))
+
+	}
+	if _, ok := ignore["cerbos.request.v1.File.contents"]; !ok {
+		_, _ = hasher.Write(protowire.AppendBytes(nil, m.Contents))
+
+	}
+}
+
 func cerbos_request_v1_GetPolicyRequest_hashpb_sum(m *GetPolicyRequest, hasher hash.Hash, ignore map[string]struct{}) {
 	if _, ok := ignore["cerbos.request.v1.GetPolicyRequest.id"]; !ok {
 		if len(m.Id) > 0 {
@@ -740,11 +751,11 @@ func cerbos_request_v1_PlaygroundEvaluateRequest_hashpb_sum(m *PlaygroundEvaluat
 		_, _ = hasher.Write(protowire.AppendString(nil, m.PlaygroundId))
 
 	}
-	if _, ok := ignore["cerbos.request.v1.PlaygroundEvaluateRequest.policy_files"]; !ok {
-		if len(m.PolicyFiles) > 0 {
-			for _, v := range m.PolicyFiles {
+	if _, ok := ignore["cerbos.request.v1.PlaygroundEvaluateRequest.files"]; !ok {
+		if len(m.Files) > 0 {
+			for _, v := range m.Files {
 				if v != nil {
-					cerbos_request_v1_PolicyFile_hashpb_sum(v, hasher, ignore)
+					cerbos_request_v1_File_hashpb_sum(v, hasher, ignore)
 				}
 
 			}
@@ -783,11 +794,11 @@ func cerbos_request_v1_PlaygroundProxyRequest_hashpb_sum(m *PlaygroundProxyReque
 		_, _ = hasher.Write(protowire.AppendString(nil, m.PlaygroundId))
 
 	}
-	if _, ok := ignore["cerbos.request.v1.PlaygroundProxyRequest.policy_files"]; !ok {
-		if len(m.PolicyFiles) > 0 {
-			for _, v := range m.PolicyFiles {
+	if _, ok := ignore["cerbos.request.v1.PlaygroundProxyRequest.files"]; !ok {
+		if len(m.Files) > 0 {
+			for _, v := range m.Files {
 				if v != nil {
-					cerbos_request_v1_PolicyFile_hashpb_sum(v, hasher, ignore)
+					cerbos_request_v1_File_hashpb_sum(v, hasher, ignore)
 				}
 
 			}
@@ -816,16 +827,16 @@ func cerbos_request_v1_PlaygroundProxyRequest_hashpb_sum(m *PlaygroundProxyReque
 	}
 }
 
-func cerbos_request_v1_PlaygroundValidateRequest_hashpb_sum(m *PlaygroundValidateRequest, hasher hash.Hash, ignore map[string]struct{}) {
-	if _, ok := ignore["cerbos.request.v1.PlaygroundValidateRequest.playground_id"]; !ok {
+func cerbos_request_v1_PlaygroundTestRequest_hashpb_sum(m *PlaygroundTestRequest, hasher hash.Hash, ignore map[string]struct{}) {
+	if _, ok := ignore["cerbos.request.v1.PlaygroundTestRequest.playground_id"]; !ok {
 		_, _ = hasher.Write(protowire.AppendString(nil, m.PlaygroundId))
 
 	}
-	if _, ok := ignore["cerbos.request.v1.PlaygroundValidateRequest.policy_files"]; !ok {
-		if len(m.PolicyFiles) > 0 {
-			for _, v := range m.PolicyFiles {
+	if _, ok := ignore["cerbos.request.v1.PlaygroundTestRequest.files"]; !ok {
+		if len(m.Files) > 0 {
+			for _, v := range m.Files {
 				if v != nil {
-					cerbos_request_v1_PolicyFile_hashpb_sum(v, hasher, ignore)
+					cerbos_request_v1_File_hashpb_sum(v, hasher, ignore)
 				}
 
 			}
@@ -833,14 +844,20 @@ func cerbos_request_v1_PlaygroundValidateRequest_hashpb_sum(m *PlaygroundValidat
 	}
 }
 
-func cerbos_request_v1_PolicyFile_hashpb_sum(m *PolicyFile, hasher hash.Hash, ignore map[string]struct{}) {
-	if _, ok := ignore["cerbos.request.v1.PolicyFile.file_name"]; !ok {
-		_, _ = hasher.Write(protowire.AppendString(nil, m.FileName))
+func cerbos_request_v1_PlaygroundValidateRequest_hashpb_sum(m *PlaygroundValidateRequest, hasher hash.Hash, ignore map[string]struct{}) {
+	if _, ok := ignore["cerbos.request.v1.PlaygroundValidateRequest.playground_id"]; !ok {
+		_, _ = hasher.Write(protowire.AppendString(nil, m.PlaygroundId))
 
 	}
-	if _, ok := ignore["cerbos.request.v1.PolicyFile.contents"]; !ok {
-		_, _ = hasher.Write(protowire.AppendBytes(nil, m.Contents))
+	if _, ok := ignore["cerbos.request.v1.PlaygroundValidateRequest.files"]; !ok {
+		if len(m.Files) > 0 {
+			for _, v := range m.Files {
+				if v != nil {
+					cerbos_request_v1_File_hashpb_sum(v, hasher, ignore)
+				}
 
+			}
+		}
 	}
 }
 

@@ -288,6 +288,20 @@ message PlaygroundValidateResponse {
     }
 }
 
+message PlaygroundTestResponse {
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
+		json_schema: {
+			description: "Playground test response"
+		}
+    };
+
+    string playground_id = 1;
+    oneof outcome {
+        PlaygroundFailure failure = 2;
+        cerbos.policy.v1.TestResults results = 3;
+    }
+}
+
 message PlaygroundEvaluateResponse {
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
 		json_schema: {

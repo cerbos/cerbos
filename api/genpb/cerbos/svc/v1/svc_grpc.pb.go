@@ -585,6 +585,7 @@ var CerbosAdminService_ServiceDesc = grpc.ServiceDesc{
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type CerbosPlaygroundServiceClient interface {
 	PlaygroundValidate(ctx context.Context, in *v1.PlaygroundValidateRequest, opts ...grpc.CallOption) (*v11.PlaygroundValidateResponse, error)
+	PlaygroundTest(ctx context.Context, in *v1.PlaygroundTestRequest, opts ...grpc.CallOption) (*v11.PlaygroundTestResponse, error)
 	PlaygroundEvaluate(ctx context.Context, in *v1.PlaygroundEvaluateRequest, opts ...grpc.CallOption) (*v11.PlaygroundEvaluateResponse, error)
 	PlaygroundProxy(ctx context.Context, in *v1.PlaygroundProxyRequest, opts ...grpc.CallOption) (*v11.PlaygroundProxyResponse, error)
 }
@@ -600,6 +601,15 @@ func NewCerbosPlaygroundServiceClient(cc grpc.ClientConnInterface) CerbosPlaygro
 func (c *cerbosPlaygroundServiceClient) PlaygroundValidate(ctx context.Context, in *v1.PlaygroundValidateRequest, opts ...grpc.CallOption) (*v11.PlaygroundValidateResponse, error) {
 	out := new(v11.PlaygroundValidateResponse)
 	err := c.cc.Invoke(ctx, "/cerbos.svc.v1.CerbosPlaygroundService/PlaygroundValidate", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *cerbosPlaygroundServiceClient) PlaygroundTest(ctx context.Context, in *v1.PlaygroundTestRequest, opts ...grpc.CallOption) (*v11.PlaygroundTestResponse, error) {
+	out := new(v11.PlaygroundTestResponse)
+	err := c.cc.Invoke(ctx, "/cerbos.svc.v1.CerbosPlaygroundService/PlaygroundTest", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -629,6 +639,7 @@ func (c *cerbosPlaygroundServiceClient) PlaygroundProxy(ctx context.Context, in 
 // for forward compatibility
 type CerbosPlaygroundServiceServer interface {
 	PlaygroundValidate(context.Context, *v1.PlaygroundValidateRequest) (*v11.PlaygroundValidateResponse, error)
+	PlaygroundTest(context.Context, *v1.PlaygroundTestRequest) (*v11.PlaygroundTestResponse, error)
 	PlaygroundEvaluate(context.Context, *v1.PlaygroundEvaluateRequest) (*v11.PlaygroundEvaluateResponse, error)
 	PlaygroundProxy(context.Context, *v1.PlaygroundProxyRequest) (*v11.PlaygroundProxyResponse, error)
 	mustEmbedUnimplementedCerbosPlaygroundServiceServer()
@@ -640,6 +651,9 @@ type UnimplementedCerbosPlaygroundServiceServer struct {
 
 func (UnimplementedCerbosPlaygroundServiceServer) PlaygroundValidate(context.Context, *v1.PlaygroundValidateRequest) (*v11.PlaygroundValidateResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method PlaygroundValidate not implemented")
+}
+func (UnimplementedCerbosPlaygroundServiceServer) PlaygroundTest(context.Context, *v1.PlaygroundTestRequest) (*v11.PlaygroundTestResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method PlaygroundTest not implemented")
 }
 func (UnimplementedCerbosPlaygroundServiceServer) PlaygroundEvaluate(context.Context, *v1.PlaygroundEvaluateRequest) (*v11.PlaygroundEvaluateResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method PlaygroundEvaluate not implemented")
@@ -675,6 +689,24 @@ func _CerbosPlaygroundService_PlaygroundValidate_Handler(srv interface{}, ctx co
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(CerbosPlaygroundServiceServer).PlaygroundValidate(ctx, req.(*v1.PlaygroundValidateRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _CerbosPlaygroundService_PlaygroundTest_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(v1.PlaygroundTestRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CerbosPlaygroundServiceServer).PlaygroundTest(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/cerbos.svc.v1.CerbosPlaygroundService/PlaygroundTest",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CerbosPlaygroundServiceServer).PlaygroundTest(ctx, req.(*v1.PlaygroundTestRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -725,6 +757,10 @@ var CerbosPlaygroundService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "PlaygroundValidate",
 			Handler:    _CerbosPlaygroundService_PlaygroundValidate_Handler,
+		},
+		{
+			MethodName: "PlaygroundTest",
+			Handler:    _CerbosPlaygroundService_PlaygroundTest_Handler,
 		},
 		{
 			MethodName: "PlaygroundEvaluate",

@@ -26,6 +26,7 @@ import (
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/testing/protocmp"
 
+	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
 	privatev1 "github.com/cerbos/cerbos/api/genpb/cerbos/private/v1"
 	responsev1 "github.com/cerbos/cerbos/api/genpb/cerbos/response/v1"
 	schemav1 "github.com/cerbos/cerbos/api/genpb/cerbos/schema/v1"
@@ -137,6 +138,10 @@ func (tr *TestRunner) executeGRPCTestCase(grpcConn *grpc.ClientConn, tc *private
 			playgroundClient := svcv1.NewCerbosPlaygroundServiceClient(grpcConn)
 			want = call.PlaygroundValidate.WantResponse
 			have, err = playgroundClient.PlaygroundValidate(ctx, call.PlaygroundValidate.Input)
+		case *privatev1.ServerTestCase_PlaygroundTest:
+			playgroundClient := svcv1.NewCerbosPlaygroundServiceClient(grpcConn)
+			want = call.PlaygroundTest.WantResponse
+			have, err = playgroundClient.PlaygroundTest(ctx, call.PlaygroundTest.Input)
 		case *privatev1.ServerTestCase_PlaygroundEvaluate:
 			playgroundClient := svcv1.NewCerbosPlaygroundServiceClient(grpcConn)
 			want = call.PlaygroundEvaluate.WantResponse
@@ -221,6 +226,11 @@ func (tr *TestRunner) executeHTTPTestCase(c *http.Client, hostAddr string, creds
 			input = call.PlaygroundValidate.Input
 			want = call.PlaygroundValidate.WantResponse
 			have = &responsev1.PlaygroundValidateResponse{}
+		case *privatev1.ServerTestCase_PlaygroundTest:
+			addr = fmt.Sprintf("%s/api/playground/test", hostAddr)
+			input = call.PlaygroundTest.Input
+			want = call.PlaygroundTest.WantResponse
+			have = &responsev1.PlaygroundTestResponse{}
 		case *privatev1.ServerTestCase_PlaygroundEvaluate:
 			addr = fmt.Sprintf("%s/api/playground/evaluate", hostAddr)
 			input = call.PlaygroundEvaluate.Input
@@ -298,6 +308,7 @@ func compareProto(t *testing.T, want, have interface{}) {
 		protocmp.Transform(),
 		protocmp.SortRepeatedFields(&responsev1.CheckResourceSetResponse_Meta_ActionMeta{}, "effective_derived_roles"),
 		protocmp.SortRepeatedFields(&responsev1.PlaygroundEvaluateResponse_EvalResult{}, "effective_derived_roles"),
+		protocmp.SortRepeatedFields(&policyv1.TestResults_Details{}, "engine_trace"),
 		protocmp.SortRepeated(cmpPlaygroundEvalResult),
 		protocmp.SortRepeated(cmpPlaygroundError),
 		protocmp.SortRepeated(cmpValidationError),

@@ -130,6 +130,14 @@ func (m *PlaygroundValidateResponse) HashPB(hasher hash.Hash, ignore map[string]
 
 // HashPB computes a hash of the message using the given hash function
 // The ignore set must contain fully-qualified field names (pkg.msg.field) that should be ignored from the hash
+func (m *PlaygroundTestResponse) HashPB(hasher hash.Hash, ignore map[string]struct{}) {
+	if m != nil {
+		cerbos_response_v1_PlaygroundTestResponse_hashpb_sum(m, hasher, ignore)
+	}
+}
+
+// HashPB computes a hash of the message using the given hash function
+// The ignore set must contain fully-qualified field names (pkg.msg.field) that should be ignored from the hash
 func (m *PlaygroundEvaluateResponse) HashPB(hasher hash.Hash, ignore map[string]struct{}) {
 	if m != nil {
 		cerbos_response_v1_PlaygroundEvaluateResponse_hashpb_sum(m, hasher, ignore)

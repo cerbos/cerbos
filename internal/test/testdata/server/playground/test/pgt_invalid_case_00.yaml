@@ -3,13 +3,17 @@ description: "Missing derived roles definition"
 wantStatus:
   httpStatusCode: 400
   grpcStatusCode: 0
-playgroundValidate:
+playgroundTest:
   input: {
     "playgroundId": "test",
     "files": [
       {
         "fileName": "resource.yaml",
         "contents": "{{ fileString `store/resource_policies/policy_04.yaml` | b64enc }}",
+      },
+      {
+        "fileName": "policy_04_test.yaml",
+        "contents": "{{ fileString `store/tests/policy_04_test.yaml` | b64enc }}"
       }
     ]
   }

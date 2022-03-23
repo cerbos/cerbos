@@ -3,7 +3,7 @@ description: "Corrupt policy data"
 wantStatus:
   httpStatusCode: 400
   grpcStatusCode: 0
-playgroundEvaluate:
+playgroundTest:
   input: {
     "playgroundId": "test",
     "files": [
@@ -14,21 +14,12 @@ playgroundEvaluate:
       {
         "fileName": "resource.yaml",
         "contents": "rubbish"
+      },
+      {
+        "fileName": "policy_04_test.yaml",
+        "contents": "{{ fileString `store/tests/policy_04_test.yaml` | b64enc }}"
       }
-    ],
-    "actions": ["view", "delete"],
-    "principal": {
-      "id": "eduardo",
-      "roles": ["user"]
-    },
-    "resource": {
-      "kind": "album:object",
-      "id": "XX125",
-      "attr": {
-        "owner": "alicia",
-        "public": false
-      }
-    }
+    ]
   }
   wantResponse: {
     "playgroundId": "test",

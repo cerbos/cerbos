@@ -514,6 +514,37 @@ func (m *ServerTestCase) validate(all bool) error {
 			}
 		}
 
+	case *ServerTestCase_PlaygroundTest:
+
+		if all {
+			switch v := interface{}(m.GetPlaygroundTest()).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, ServerTestCaseValidationError{
+						field:  "PlaygroundTest",
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, ServerTestCaseValidationError{
+						field:  "PlaygroundTest",
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(m.GetPlaygroundTest()).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return ServerTestCaseValidationError{
+					field:  "PlaygroundTest",
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
 	}
 
 	if len(errors) > 0 {
@@ -2679,6 +2710,169 @@ var _ interface {
 	Cause() error
 	ErrorName() string
 } = ServerTestCase_PlaygroundValidateCallValidationError{}
+
+// Validate checks the field values on ServerTestCase_PlaygroundTestCall with
+// the rules defined in the proto definition for this message. If any rules
+// are violated, the first error encountered is returned, or nil if there are
+// no violations.
+func (m *ServerTestCase_PlaygroundTestCall) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on ServerTestCase_PlaygroundTestCall
+// with the rules defined in the proto definition for this message. If any
+// rules are violated, the result is a list of violation errors wrapped in
+// ServerTestCase_PlaygroundTestCallMultiError, or nil if none found.
+func (m *ServerTestCase_PlaygroundTestCall) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *ServerTestCase_PlaygroundTestCall) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if all {
+		switch v := interface{}(m.GetInput()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, ServerTestCase_PlaygroundTestCallValidationError{
+					field:  "Input",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, ServerTestCase_PlaygroundTestCallValidationError{
+					field:  "Input",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetInput()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return ServerTestCase_PlaygroundTestCallValidationError{
+				field:  "Input",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if all {
+		switch v := interface{}(m.GetWantResponse()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, ServerTestCase_PlaygroundTestCallValidationError{
+					field:  "WantResponse",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, ServerTestCase_PlaygroundTestCallValidationError{
+					field:  "WantResponse",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetWantResponse()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return ServerTestCase_PlaygroundTestCallValidationError{
+				field:  "WantResponse",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if len(errors) > 0 {
+		return ServerTestCase_PlaygroundTestCallMultiError(errors)
+	}
+
+	return nil
+}
+
+// ServerTestCase_PlaygroundTestCallMultiError is an error wrapping multiple
+// validation errors returned by
+// ServerTestCase_PlaygroundTestCall.ValidateAll() if the designated
+// constraints aren't met.
+type ServerTestCase_PlaygroundTestCallMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m ServerTestCase_PlaygroundTestCallMultiError) Error() string {
+	var msgs []string
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m ServerTestCase_PlaygroundTestCallMultiError) AllErrors() []error { return m }
+
+// ServerTestCase_PlaygroundTestCallValidationError is the validation error
+// returned by ServerTestCase_PlaygroundTestCall.Validate if the designated
+// constraints aren't met.
+type ServerTestCase_PlaygroundTestCallValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e ServerTestCase_PlaygroundTestCallValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e ServerTestCase_PlaygroundTestCallValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e ServerTestCase_PlaygroundTestCallValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e ServerTestCase_PlaygroundTestCallValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e ServerTestCase_PlaygroundTestCallValidationError) ErrorName() string {
+	return "ServerTestCase_PlaygroundTestCallValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e ServerTestCase_PlaygroundTestCallValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sServerTestCase_PlaygroundTestCall.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = ServerTestCase_PlaygroundTestCallValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = ServerTestCase_PlaygroundTestCallValidationError{}
 
 // Validate checks the field values on ServerTestCase_PlaygroundEvaluateCall
 // with the rules defined in the proto definition for this message. If any

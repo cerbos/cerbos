@@ -8,7 +8,6 @@ import (
 	"errors"
 	"fmt"
 	"io/fs"
-	"os"
 	"path/filepath"
 	"regexp"
 	"sort"
@@ -19,20 +18,14 @@ import (
 )
 
 type Config struct {
-	TestsDir string
-	Run      string
-	Trace    bool
+	Run   string
+	Trace bool
 }
 
 var ErrTestFixtureNotFound = errors.New("test fixture not found")
 
 // Verify runs the test suites from the provided directory.
-func Verify(ctx context.Context, eng *engine.Engine, conf Config) (*policyv1.TestResults, error) {
-	fsys := os.DirFS(conf.TestsDir)
-	return doVerify(ctx, fsys, eng, conf)
-}
-
-func doVerify(ctx context.Context, fsys fs.FS, eng *engine.Engine, conf Config) (*policyv1.TestResults, error) {
+func Verify(ctx context.Context, fsys fs.FS, eng *engine.Engine, conf Config) (*policyv1.TestResults, error) {
 	var shouldRun func(string) bool
 
 	if conf.Run == "" {

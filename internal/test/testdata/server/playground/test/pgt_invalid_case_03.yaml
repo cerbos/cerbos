@@ -3,7 +3,7 @@ description: "Missing schema file"
 wantStatus:
   httpStatusCode: 400
   grpcStatusCode: 0
-playgroundEvaluate:
+playgroundTest:
   input: {
     "playgroundId": "test",
     "files": [
@@ -22,33 +22,12 @@ playgroundEvaluate:
       {
         "fileName": "_schemas/principal.json",
         "contents": "{{ fileString `store/_schemas/principal.json` | b64enc }}",
+      },
+      {
+        "fileName": "policy_04_test.yaml",
+        "contents": "{{ fileString `store/tests/policy_04_test.yaml` | b64enc }}"
       }
-    ],
-  "actions": ["approve", "view:public"],
-    "principal": {
-      "id": "john",
-      "policyVersion": "20210210",
-      "roles": [
-        "employee"
-      ],
-      "attr": {
-        "department": "accounting",
-        "geography": "GB",
-        "team": "design"
-      }
-    },
-    "resource": {
-      "id": "XX125",
-      "kind": "leave_request",
-      "policyVersion": "20210210",
-      "attr": {
-        "department": "accounting",
-        "geography": "GB",
-        "id": "XX125",
-        "owner": "john",
-        "team": "design"
-      }
-    }
+    ]
   }
   wantResponse: {
     "playgroundId": "test",

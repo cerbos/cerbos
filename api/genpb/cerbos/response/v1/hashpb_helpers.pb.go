@@ -335,6 +335,103 @@ func cerbos_engine_v1_Resource_hashpb_sum(m *v11.Resource, hasher hash.Hash, ign
 	}
 }
 
+func cerbos_engine_v1_Trace_Component_Variable_hashpb_sum(m *v11.Trace_Component_Variable, hasher hash.Hash, ignore map[string]struct{}) {
+	if _, ok := ignore["cerbos.engine.v1.Trace.Component.Variable.name"]; !ok {
+		_, _ = hasher.Write(protowire.AppendString(nil, m.Name))
+
+	}
+	if _, ok := ignore["cerbos.engine.v1.Trace.Component.Variable.expr"]; !ok {
+		_, _ = hasher.Write(protowire.AppendString(nil, m.Expr))
+
+	}
+}
+
+func cerbos_engine_v1_Trace_Component_hashpb_sum(m *v11.Trace_Component, hasher hash.Hash, ignore map[string]struct{}) {
+	if _, ok := ignore["cerbos.engine.v1.Trace.Component.kind"]; !ok {
+		_, _ = hasher.Write(protowire.AppendVarint(nil, uint64(m.Kind)))
+
+	}
+	if m.Details != nil {
+		if _, ok := ignore["cerbos.engine.v1.Trace.Component.details"]; !ok {
+			switch t := m.Details.(type) {
+			case *v11.Trace_Component_Action:
+				_, _ = hasher.Write(protowire.AppendString(nil, t.Action))
+
+			case *v11.Trace_Component_DerivedRole:
+				_, _ = hasher.Write(protowire.AppendString(nil, t.DerivedRole))
+
+			case *v11.Trace_Component_Expr:
+				_, _ = hasher.Write(protowire.AppendString(nil, t.Expr))
+
+			case *v11.Trace_Component_Index:
+				_, _ = hasher.Write(protowire.AppendVarint(nil, uint64(t.Index)))
+
+			case *v11.Trace_Component_Policy:
+				_, _ = hasher.Write(protowire.AppendString(nil, t.Policy))
+
+			case *v11.Trace_Component_Resource:
+				_, _ = hasher.Write(protowire.AppendString(nil, t.Resource))
+
+			case *v11.Trace_Component_Rule:
+				_, _ = hasher.Write(protowire.AppendString(nil, t.Rule))
+
+			case *v11.Trace_Component_Scope:
+				_, _ = hasher.Write(protowire.AppendString(nil, t.Scope))
+
+			case *v11.Trace_Component_Variable_:
+				if t.Variable != nil {
+					cerbos_engine_v1_Trace_Component_Variable_hashpb_sum(t.Variable, hasher, ignore)
+				}
+
+			}
+		}
+	}
+}
+
+func cerbos_engine_v1_Trace_Event_hashpb_sum(m *v11.Trace_Event, hasher hash.Hash, ignore map[string]struct{}) {
+	if _, ok := ignore["cerbos.engine.v1.Trace.Event.status"]; !ok {
+		_, _ = hasher.Write(protowire.AppendVarint(nil, uint64(m.Status)))
+
+	}
+	if _, ok := ignore["cerbos.engine.v1.Trace.Event.effect"]; !ok {
+		_, _ = hasher.Write(protowire.AppendVarint(nil, uint64(m.Effect)))
+
+	}
+	if _, ok := ignore["cerbos.engine.v1.Trace.Event.error"]; !ok {
+		_, _ = hasher.Write(protowire.AppendString(nil, m.Error))
+
+	}
+	if _, ok := ignore["cerbos.engine.v1.Trace.Event.message"]; !ok {
+		_, _ = hasher.Write(protowire.AppendString(nil, m.Message))
+
+	}
+	if _, ok := ignore["cerbos.engine.v1.Trace.Event.result"]; !ok {
+		if m.Result != nil {
+			google_protobuf_Value_hashpb_sum(m.Result, hasher, ignore)
+		}
+
+	}
+}
+
+func cerbos_engine_v1_Trace_hashpb_sum(m *v11.Trace, hasher hash.Hash, ignore map[string]struct{}) {
+	if _, ok := ignore["cerbos.engine.v1.Trace.components"]; !ok {
+		if len(m.Components) > 0 {
+			for _, v := range m.Components {
+				if v != nil {
+					cerbos_engine_v1_Trace_Component_hashpb_sum(v, hasher, ignore)
+				}
+
+			}
+		}
+	}
+	if _, ok := ignore["cerbos.engine.v1.Trace.event"]; !ok {
+		if m.Event != nil {
+			cerbos_engine_v1_Trace_Event_hashpb_sum(m.Event, hasher, ignore)
+		}
+
+	}
+}
+
 func cerbos_policy_v1_Condition_hashpb_sum(m *v12.Condition, hasher hash.Hash, ignore map[string]struct{}) {
 	if m.Condition != nil {
 		if _, ok := ignore["cerbos.policy.v1.Condition.condition"]; !ok {
@@ -700,6 +797,177 @@ func cerbos_policy_v1_Schemas_hashpb_sum(m *v12.Schemas, hasher hash.Hash, ignor
 	if _, ok := ignore["cerbos.policy.v1.Schemas.resource_schema"]; !ok {
 		if m.ResourceSchema != nil {
 			cerbos_policy_v1_Schemas_Schema_hashpb_sum(m.ResourceSchema, hasher, ignore)
+		}
+
+	}
+}
+
+func cerbos_policy_v1_TestResults_Action_hashpb_sum(m *v12.TestResults_Action, hasher hash.Hash, ignore map[string]struct{}) {
+	if _, ok := ignore["cerbos.policy.v1.TestResults.Action.name"]; !ok {
+		_, _ = hasher.Write(protowire.AppendString(nil, m.Name))
+
+	}
+	if _, ok := ignore["cerbos.policy.v1.TestResults.Action.details"]; !ok {
+		if m.Details != nil {
+			cerbos_policy_v1_TestResults_Details_hashpb_sum(m.Details, hasher, ignore)
+		}
+
+	}
+}
+
+func cerbos_policy_v1_TestResults_Details_hashpb_sum(m *v12.TestResults_Details, hasher hash.Hash, ignore map[string]struct{}) {
+	if _, ok := ignore["cerbos.policy.v1.TestResults.Details.result"]; !ok {
+		_, _ = hasher.Write(protowire.AppendVarint(nil, uint64(m.Result)))
+
+	}
+	if m.Outcome != nil {
+		if _, ok := ignore["cerbos.policy.v1.TestResults.Details.outcome"]; !ok {
+			switch t := m.Outcome.(type) {
+			case *v12.TestResults_Details_Failure:
+				if t.Failure != nil {
+					cerbos_policy_v1_TestResults_Failure_hashpb_sum(t.Failure, hasher, ignore)
+				}
+
+			case *v12.TestResults_Details_Error:
+				_, _ = hasher.Write(protowire.AppendString(nil, t.Error))
+
+			}
+		}
+	}
+	if _, ok := ignore["cerbos.policy.v1.TestResults.Details.engine_trace"]; !ok {
+		if len(m.EngineTrace) > 0 {
+			for _, v := range m.EngineTrace {
+				if v != nil {
+					cerbos_engine_v1_Trace_hashpb_sum(v, hasher, ignore)
+				}
+
+			}
+		}
+	}
+}
+
+func cerbos_policy_v1_TestResults_Failure_hashpb_sum(m *v12.TestResults_Failure, hasher hash.Hash, ignore map[string]struct{}) {
+	if _, ok := ignore["cerbos.policy.v1.TestResults.Failure.expected"]; !ok {
+		_, _ = hasher.Write(protowire.AppendVarint(nil, uint64(m.Expected)))
+
+	}
+	if _, ok := ignore["cerbos.policy.v1.TestResults.Failure.actual"]; !ok {
+		_, _ = hasher.Write(protowire.AppendVarint(nil, uint64(m.Actual)))
+
+	}
+}
+
+func cerbos_policy_v1_TestResults_Principal_hashpb_sum(m *v12.TestResults_Principal, hasher hash.Hash, ignore map[string]struct{}) {
+	if _, ok := ignore["cerbos.policy.v1.TestResults.Principal.name"]; !ok {
+		_, _ = hasher.Write(protowire.AppendString(nil, m.Name))
+
+	}
+	if _, ok := ignore["cerbos.policy.v1.TestResults.Principal.resources"]; !ok {
+		if len(m.Resources) > 0 {
+			for _, v := range m.Resources {
+				if v != nil {
+					cerbos_policy_v1_TestResults_Resource_hashpb_sum(v, hasher, ignore)
+				}
+
+			}
+		}
+	}
+}
+
+func cerbos_policy_v1_TestResults_Resource_hashpb_sum(m *v12.TestResults_Resource, hasher hash.Hash, ignore map[string]struct{}) {
+	if _, ok := ignore["cerbos.policy.v1.TestResults.Resource.name"]; !ok {
+		_, _ = hasher.Write(protowire.AppendString(nil, m.Name))
+
+	}
+	if _, ok := ignore["cerbos.policy.v1.TestResults.Resource.actions"]; !ok {
+		if len(m.Actions) > 0 {
+			for _, v := range m.Actions {
+				if v != nil {
+					cerbos_policy_v1_TestResults_Action_hashpb_sum(v, hasher, ignore)
+				}
+
+			}
+		}
+	}
+}
+
+func cerbos_policy_v1_TestResults_Suite_hashpb_sum(m *v12.TestResults_Suite, hasher hash.Hash, ignore map[string]struct{}) {
+	if _, ok := ignore["cerbos.policy.v1.TestResults.Suite.file"]; !ok {
+		_, _ = hasher.Write(protowire.AppendString(nil, m.File))
+
+	}
+	if _, ok := ignore["cerbos.policy.v1.TestResults.Suite.name"]; !ok {
+		_, _ = hasher.Write(protowire.AppendString(nil, m.Name))
+
+	}
+	if _, ok := ignore["cerbos.policy.v1.TestResults.Suite.principals"]; !ok {
+		if len(m.Principals) > 0 {
+			for _, v := range m.Principals {
+				if v != nil {
+					cerbos_policy_v1_TestResults_Principal_hashpb_sum(v, hasher, ignore)
+				}
+
+			}
+		}
+	}
+	if _, ok := ignore["cerbos.policy.v1.TestResults.Suite.summary"]; !ok {
+		if m.Summary != nil {
+			cerbos_policy_v1_TestResults_Summary_hashpb_sum(m.Summary, hasher, ignore)
+		}
+
+	}
+	if _, ok := ignore["cerbos.policy.v1.TestResults.Suite.error"]; !ok {
+		_, _ = hasher.Write(protowire.AppendString(nil, m.Error))
+
+	}
+}
+
+func cerbos_policy_v1_TestResults_Summary_hashpb_sum(m *v12.TestResults_Summary, hasher hash.Hash, ignore map[string]struct{}) {
+	if _, ok := ignore["cerbos.policy.v1.TestResults.Summary.overall_result"]; !ok {
+		_, _ = hasher.Write(protowire.AppendVarint(nil, uint64(m.OverallResult)))
+
+	}
+	if _, ok := ignore["cerbos.policy.v1.TestResults.Summary.tests_count"]; !ok {
+		_, _ = hasher.Write(protowire.AppendVarint(nil, uint64(m.TestsCount)))
+
+	}
+	if _, ok := ignore["cerbos.policy.v1.TestResults.Summary.result_counts"]; !ok {
+		if len(m.ResultCounts) > 0 {
+			for _, v := range m.ResultCounts {
+				if v != nil {
+					cerbos_policy_v1_TestResults_Tally_hashpb_sum(v, hasher, ignore)
+				}
+
+			}
+		}
+	}
+}
+
+func cerbos_policy_v1_TestResults_Tally_hashpb_sum(m *v12.TestResults_Tally, hasher hash.Hash, ignore map[string]struct{}) {
+	if _, ok := ignore["cerbos.policy.v1.TestResults.Tally.result"]; !ok {
+		_, _ = hasher.Write(protowire.AppendVarint(nil, uint64(m.Result)))
+
+	}
+	if _, ok := ignore["cerbos.policy.v1.TestResults.Tally.count"]; !ok {
+		_, _ = hasher.Write(protowire.AppendVarint(nil, uint64(m.Count)))
+
+	}
+}
+
+func cerbos_policy_v1_TestResults_hashpb_sum(m *v12.TestResults, hasher hash.Hash, ignore map[string]struct{}) {
+	if _, ok := ignore["cerbos.policy.v1.TestResults.suites"]; !ok {
+		if len(m.Suites) > 0 {
+			for _, v := range m.Suites {
+				if v != nil {
+					cerbos_policy_v1_TestResults_Suite_hashpb_sum(v, hasher, ignore)
+				}
+
+			}
+		}
+	}
+	if _, ok := ignore["cerbos.policy.v1.TestResults.summary"]; !ok {
+		if m.Summary != nil {
+			cerbos_policy_v1_TestResults_Summary_hashpb_sum(m.Summary, hasher, ignore)
 		}
 
 	}
@@ -1082,6 +1350,29 @@ func cerbos_response_v1_PlaygroundProxyResponse_hashpb_sum(m *PlaygroundProxyRes
 			case *PlaygroundProxyResponse_ResourcesQueryPlan:
 				if t.ResourcesQueryPlan != nil {
 					cerbos_response_v1_ResourcesQueryPlanResponse_hashpb_sum(t.ResourcesQueryPlan, hasher, ignore)
+				}
+
+			}
+		}
+	}
+}
+
+func cerbos_response_v1_PlaygroundTestResponse_hashpb_sum(m *PlaygroundTestResponse, hasher hash.Hash, ignore map[string]struct{}) {
+	if _, ok := ignore["cerbos.response.v1.PlaygroundTestResponse.playground_id"]; !ok {
+		_, _ = hasher.Write(protowire.AppendString(nil, m.PlaygroundId))
+
+	}
+	if m.Outcome != nil {
+		if _, ok := ignore["cerbos.response.v1.PlaygroundTestResponse.outcome"]; !ok {
+			switch t := m.Outcome.(type) {
+			case *PlaygroundTestResponse_Failure:
+				if t.Failure != nil {
+					cerbos_response_v1_PlaygroundFailure_hashpb_sum(t.Failure, hasher, ignore)
+				}
+
+			case *PlaygroundTestResponse_Results:
+				if t.Results != nil {
+					cerbos_policy_v1_TestResults_hashpb_sum(t.Results, hasher, ignore)
 				}
 
 			}

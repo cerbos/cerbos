@@ -254,7 +254,7 @@ func FindPolicyFiles(t *testing.T, dir string, callback func(string) error) erro
 			}
 		}
 
-		if !util.IsSupportedFileType(d.Name()) {
+		if !util.IsSupportedFileType(d.Name()) || util.IsSupportedTestFile(d.Name()) {
 			return nil
 		}
 

@@ -7,7 +7,7 @@ wantError: true
 playgroundProxy:
   input: {
     "playgroundId": "test",
-    "policyFiles": [
+    "files": [
       {
         "fileName": "derived_roles_01.yaml",
         "contents": "{{ fileString `store/derived_roles/derived_roles_01.yaml` | b64enc }}",

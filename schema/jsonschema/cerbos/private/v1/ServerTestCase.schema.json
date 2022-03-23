@@ -110,6 +110,118 @@
         }
       }
     },
+    "cerbos.engine.v1.Trace": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "components": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/cerbos.engine.v1.Trace.Component"
+          }
+        },
+        "event": {
+          "$ref": "#/definitions/cerbos.engine.v1.Trace.Event"
+        }
+      }
+    },
+    "cerbos.engine.v1.Trace.Component": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "action": {
+          "type": "string"
+        },
+        "derivedRole": {
+          "type": "string"
+        },
+        "expr": {
+          "type": "string"
+        },
+        "index": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "kind": {
+          "$ref": "#/definitions/cerbos.engine.v1.Trace.Component.Kind"
+        },
+        "policy": {
+          "type": "string"
+        },
+        "resource": {
+          "type": "string"
+        },
+        "rule": {
+          "type": "string"
+        },
+        "scope": {
+          "type": "string"
+        },
+        "variable": {
+          "$ref": "#/definitions/cerbos.engine.v1.Trace.Component.Variable"
+        }
+      }
+    },
+    "cerbos.engine.v1.Trace.Component.Kind": {
+      "type": "string",
+      "enum": [
+        "KIND_UNSPECIFIED",
+        "KIND_ACTION",
+        "KIND_CONDITION_ALL",
+        "KIND_CONDITION_ANY",
+        "KIND_CONDITION_NONE",
+        "KIND_CONDITION",
+        "KIND_DERIVED_ROLE",
+        "KIND_EXPR",
+        "KIND_POLICY",
+        "KIND_RESOURCE",
+        "KIND_RULE",
+        "KIND_SCOPE",
+        "KIND_VARIABLE",
+        "KIND_VARIABLES"
+      ]
+    },
+    "cerbos.engine.v1.Trace.Component.Variable": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "expr": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        }
+      }
+    },
+    "cerbos.engine.v1.Trace.Event": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "effect": {
+          "$ref": "#/definitions/cerbos.effect.v1.Effect"
+        },
+        "error": {
+          "type": "string"
+        },
+        "message": {
+          "type": "string"
+        },
+        "result": {
+          "$ref": "#/definitions/google.protobuf.Value"
+        },
+        "status": {
+          "$ref": "#/definitions/cerbos.engine.v1.Trace.Event.Status"
+        }
+      }
+    },
+    "cerbos.engine.v1.Trace.Event.Status": {
+      "type": "string",
+      "enum": [
+        "STATUS_UNSPECIFIED",
+        "STATUS_ACTIVATED",
+        "STATUS_SKIPPED"
+      ]
+    },
     "cerbos.policy.v1.Condition": {
       "allOf": [
         {
@@ -563,6 +675,162 @@
         }
       }
     },
+    "cerbos.policy.v1.TestResults": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "suites": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/cerbos.policy.v1.TestResults.Suite"
+          }
+        },
+        "summary": {
+          "$ref": "#/definitions/cerbos.policy.v1.TestResults.Summary"
+        }
+      }
+    },
+    "cerbos.policy.v1.TestResults.Action": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "details": {
+          "$ref": "#/definitions/cerbos.policy.v1.TestResults.Details"
+        },
+        "name": {
+          "type": "string"
+        }
+      }
+    },
+    "cerbos.policy.v1.TestResults.Details": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "engineTrace": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/cerbos.engine.v1.Trace"
+          }
+        },
+        "error": {
+          "type": "string"
+        },
+        "failure": {
+          "$ref": "#/definitions/cerbos.policy.v1.TestResults.Failure"
+        },
+        "result": {
+          "$ref": "#/definitions/cerbos.policy.v1.TestResults.Result"
+        }
+      }
+    },
+    "cerbos.policy.v1.TestResults.Failure": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "actual": {
+          "$ref": "#/definitions/cerbos.effect.v1.Effect"
+        },
+        "expected": {
+          "$ref": "#/definitions/cerbos.effect.v1.Effect"
+        }
+      }
+    },
+    "cerbos.policy.v1.TestResults.Principal": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "resources": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/cerbos.policy.v1.TestResults.Resource"
+          }
+        }
+      }
+    },
+    "cerbos.policy.v1.TestResults.Resource": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "actions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/cerbos.policy.v1.TestResults.Action"
+          }
+        },
+        "name": {
+          "type": "string"
+        }
+      }
+    },
+    "cerbos.policy.v1.TestResults.Result": {
+      "type": "string",
+      "enum": [
+        "RESULT_UNSPECIFIED",
+        "RESULT_SKIPPED",
+        "RESULT_PASSED",
+        "RESULT_FAILED",
+        "RESULT_ERRORED"
+      ]
+    },
+    "cerbos.policy.v1.TestResults.Suite": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "error": {
+          "type": "string"
+        },
+        "file": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "principals": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/cerbos.policy.v1.TestResults.Principal"
+          }
+        },
+        "summary": {
+          "$ref": "#/definitions/cerbos.policy.v1.TestResults.Summary"
+        }
+      }
+    },
+    "cerbos.policy.v1.TestResults.Summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "overallResult": {
+          "$ref": "#/definitions/cerbos.policy.v1.TestResults.Result"
+        },
+        "resultCounts": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/cerbos.policy.v1.TestResults.Tally"
+          }
+        },
+        "testsCount": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    },
+    "cerbos.policy.v1.TestResults.Tally": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "result": {
+          "$ref": "#/definitions/cerbos.policy.v1.TestResults.Result"
+        }
+      }
+    },
     "cerbos.private.v1.ServerTestCase.AdminAddOrUpdatePolicyCall": {
       "type": "object",
       "additionalProperties": false,
@@ -632,6 +900,18 @@
         },
         "wantResponse": {
           "$ref": "#/definitions/cerbos.response.v1.PlaygroundProxyResponse"
+        }
+      }
+    },
+    "cerbos.private.v1.ServerTestCase.PlaygroundTestCall": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "input": {
+          "$ref": "#/definitions/cerbos.request.v1.PlaygroundTestRequest"
+        },
+        "wantResponse": {
+          "$ref": "#/definitions/cerbos.response.v1.PlaygroundTestResponse"
         }
       }
     },
@@ -830,10 +1110,39 @@
         }
       }
     },
+    "cerbos.request.v1.File": {
+      "type": "object",
+      "required": [
+        "fileName",
+        "contents"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "contents": {
+          "type": "string",
+          "oneOf": [
+            {
+              "title": "Standard base64 encoding",
+              "type": "string",
+              "pattern": "^[\\r\\nA-Za-z0-9+/]*$"
+            },
+            {
+              "title": "URL-safe base64 encoding",
+              "type": "string",
+              "pattern": "^[\\r\\nA-Za-z0-9_-]*$"
+            }
+          ]
+        },
+        "fileName": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
     "cerbos.request.v1.PlaygroundEvaluateRequest": {
       "type": "object",
       "required": [
-        "policyFiles",
+        "files",
         "principal",
         "resource",
         "actions"
@@ -853,16 +1162,16 @@
         "auxData": {
           "$ref": "#/definitions/cerbos.request.v1.AuxData"
         },
-        "playgroundId": {
-          "type": "string"
-        },
-        "policyFiles": {
+        "files": {
           "type": "array",
           "items": {
-            "$ref": "#/definitions/cerbos.request.v1.PolicyFile"
+            "$ref": "#/definitions/cerbos.request.v1.File"
           },
           "maxItems": 10,
           "minItems": 1
+        },
+        "playgroundId": {
+          "type": "string"
         },
         "principal": {
           "$ref": "#/definitions/cerbos.engine.v1.Principal"
@@ -877,7 +1186,7 @@
         {
           "type": "object",
           "required": [
-            "policyFiles"
+            "files"
           ],
           "additionalProperties": false,
           "properties": {
@@ -887,16 +1196,16 @@
             "checkResourceSet": {
               "$ref": "#/definitions/cerbos.request.v1.CheckResourceSetRequest"
             },
-            "playgroundId": {
-              "type": "string"
-            },
-            "policyFiles": {
+            "files": {
               "type": "array",
               "items": {
-                "$ref": "#/definitions/cerbos.request.v1.PolicyFile"
+                "$ref": "#/definitions/cerbos.request.v1.File"
               },
               "maxItems": 10,
               "minItems": 1
+            },
+            "playgroundId": {
+              "type": "string"
             },
             "resourcesQueryPlan": {
               "$ref": "#/definitions/cerbos.request.v1.ResourcesQueryPlanRequest"
@@ -927,52 +1236,43 @@
         }
       ]
     },
-    "cerbos.request.v1.PlaygroundValidateRequest": {
+    "cerbos.request.v1.PlaygroundTestRequest": {
       "type": "object",
       "required": [
-        "policyFiles"
+        "files"
       ],
       "additionalProperties": false,
       "properties": {
-        "playgroundId": {
-          "type": "string"
-        },
-        "policyFiles": {
+        "files": {
           "type": "array",
           "items": {
-            "$ref": "#/definitions/cerbos.request.v1.PolicyFile"
+            "$ref": "#/definitions/cerbos.request.v1.File"
           },
           "maxItems": 30,
           "minItems": 1
+        },
+        "playgroundId": {
+          "type": "string"
         }
       }
     },
-    "cerbos.request.v1.PolicyFile": {
+    "cerbos.request.v1.PlaygroundValidateRequest": {
       "type": "object",
       "required": [
-        "fileName",
-        "contents"
+        "files"
       ],
       "additionalProperties": false,
       "properties": {
-        "contents": {
-          "type": "string",
-          "oneOf": [
-            {
-              "title": "Standard base64 encoding",
-              "type": "string",
-              "pattern": "^[\\r\\nA-Za-z0-9+/]*$"
-            },
-            {
-              "title": "URL-safe base64 encoding",
-              "type": "string",
-              "pattern": "^[\\r\\nA-Za-z0-9_-]*$"
-            }
-          ]
+        "files": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/cerbos.request.v1.File"
+          },
+          "maxItems": 30,
+          "minItems": 1
         },
-        "fileName": {
-          "type": "string",
-          "minLength": 1
+        "playgroundId": {
+          "type": "string"
         }
       }
     },
@@ -1260,6 +1560,21 @@
         }
       }
     },
+    "cerbos.response.v1.PlaygroundTestResponse": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "failure": {
+          "$ref": "#/definitions/cerbos.response.v1.PlaygroundFailure"
+        },
+        "playgroundId": {
+          "type": "string"
+        },
+        "results": {
+          "$ref": "#/definitions/cerbos.policy.v1.TestResults"
+        }
+      }
+    },
     "cerbos.response.v1.PlaygroundValidateResponse": {
       "type": "object",
       "additionalProperties": false,
@@ -1452,6 +1767,9 @@
     },
     "playgroundProxy": {
       "$ref": "#/definitions/cerbos.private.v1.ServerTestCase.PlaygroundProxyCall"
+    },
+    "playgroundTest": {
+      "$ref": "#/definitions/cerbos.private.v1.ServerTestCase.PlaygroundTestCall"
     },
     "playgroundValidate": {
       "$ref": "#/definitions/cerbos.private.v1.ServerTestCase.PlaygroundValidateCall"

@@ -230,6 +230,13 @@ service CerbosPlaygroundService {
         };
     }
 
+    rpc PlaygroundTest(cerbos.request.v1.PlaygroundTestRequest) returns (cerbos.response.v1.PlaygroundTestResponse) {
+        option (google.api.http) = {
+            post: "/api/playground/test",
+            body: "*"
+        };
+    }
+
     rpc PlaygroundEvaluate(cerbos.request.v1.PlaygroundEvaluateRequest) returns (cerbos.response.v1.PlaygroundEvaluateResponse) {
         option (google.api.http) = {
             post: "/api/playground/evaluate",

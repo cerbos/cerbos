@@ -1,0 +1,30 @@
+---
+name: album:object resource policy tests
+
+principals:
+  user:
+    id: user
+    roles:
+      - user
+
+resources:
+  album:
+    id: album
+    kind: album:object
+    attr:
+      public: true
+
+tests:
+  - name: User can view public album
+    input:
+      principals:
+        - user
+      resources:
+        - album
+      actions:
+        - view
+    expected:
+      - principal: user
+        resource: album
+        actions:
+          view: EFFECT_ALLOW

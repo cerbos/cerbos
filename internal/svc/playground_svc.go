@@ -7,6 +7,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io/fs"
 	"net/http"
 	"time"
 
@@ -28,6 +29,7 @@ import (
 	"github.com/cerbos/cerbos/internal/storage"
 	"github.com/cerbos/cerbos/internal/storage/disk"
 	"github.com/cerbos/cerbos/internal/storage/index"
+	"github.com/cerbos/cerbos/internal/verify"
 )
 
 const playgroundRequestTimeout = 60 * time.Second
@@ -53,7 +55,7 @@ func (cs *CerbosPlaygroundService) PlaygroundValidate(ctx context.Context, req *
 	procCtx, cancelFunc := context.WithTimeout(ctx, playgroundRequestTimeout)
 	defer cancelFunc()
 
-	_, fail, err := doCompile(procCtx, log, req.PolicyFiles)
+	_, fail, err := doCompile(procCtx, log, req.Files)
 	if err != nil {
 		return nil, err
 	}
@@ -75,13 +77,56 @@ func (cs *CerbosPlaygroundService) PlaygroundValidate(ctx context.Context, req *
 	}, nil
 }
 
+func (cs *CerbosPlaygroundService) PlaygroundTest(ctx context.Context, req *requestv1.PlaygroundTestRequest) (*responsev1.PlaygroundTestResponse, error) {
+	log := ctxzap.Extract(ctx).Named("playground")
+
+	procCtx, cancelFunc := context.WithTimeout(ctx, playgroundRequestTimeout)
+	defer cancelFunc()
+
+	comps, fail, err := doCompile(procCtx, log, req.Files)
+	if err != nil {
+		return nil, err
+	}
+
+	if fail != nil {
+		return &responsev1.PlaygroundTestResponse{
+			PlaygroundId: req.PlaygroundId,
+			Outcome: &responsev1.PlaygroundTestResponse_Failure{
+				Failure: fail,
+			},
+		}, nil
+	}
+
+	eng, err := comps.mkEngine(procCtx)
+	if err != nil {
+		log.Error("Failed to create engine", zap.Error(err))
+		return nil, status.Errorf(codes.Internal, "failed to create engine")
+	}
+
+	fsys, err := buildFS(log, req.Files)
+	if err != nil {
+		return nil, err
+	}
+
+	results, err := verify.Verify(procCtx, fsys, eng, verify.Config{Trace: true})
+	if err != nil {
+		log.Error("Failed to run tests", zap.Error(err))
+		return nil, status.Errorf(codes.Internal, "failed to run tests")
+	}
+
+	return &responsev1.PlaygroundTestResponse{
+		PlaygroundId: req.PlaygroundId,
+		Outcome:      &responsev1.PlaygroundTestResponse_Results{Results: results},
+	}, nil
+}
+
 func (cs *CerbosPlaygroundService) PlaygroundEvaluate(ctx context.Context, req *requestv1.PlaygroundEvaluateRequest) (*responsev1.PlaygroundEvaluateResponse, error) {
 	log := ctxzap.Extract(ctx).Named("playground")
 
 	procCtx, cancelFunc := context.WithTimeout(ctx, playgroundRequestTimeout)
 	defer cancelFunc()
 
-	comps, fail, err := doCompile(procCtx, log, req.PolicyFiles)
+	comps, fail, err := doCompile(procCtx, log, req.Files)
 	if err != nil {
 		return nil, err
 	}
@@ -132,7 +177,7 @@ func (cs *CerbosPlaygroundService) PlaygroundProxy(ctx context.Context, req *req
 	procCtx, cancelFunc := context.WithTimeout(ctx, playgroundRequestTimeout)
 	defer cancelFunc()
 
-	comps, fail, err := doCompile(procCtx, log, req.PolicyFiles)
+	comps, fail, err := doCompile(procCtx, log, req.Files)
 	if err != nil {
 		return nil, err
 	}
@@ -196,7 +241,7 @@ func (cs *CerbosPlaygroundService) PlaygroundProxy(ctx context.Context, req *req
 	}
 }
 
-func doCompile(ctx context.Context, log *zap.Logger, files []*requestv1.PolicyFile) (*components, *responsev1.PlaygroundFailure, error) {
+func doCompile(ctx context.Context, log *zap.Logger, files []*requestv1.File) (*components, *responsev1.PlaygroundFailure, error) {
 	idx, err := buildIndex(ctx, log, files)
 	if err != nil {
 		idxErr := new(index.BuildError)
@@ -226,16 +271,25 @@ func doCompile(ctx context.Context, log *zap.Logger, files []*requestv1.PolicyFi
 	return &components{idx: idx, store: store, schemaMgr: schemaMgr}, nil, nil
 }
 
-func buildIndex(ctx context.Context, log *zap.Logger, files []*requestv1.PolicyFile) (index.Index, error) {
-	fs := afero.NewMemMapFs()
-	for _, pf := range files {
-		if err := afero.WriteFile(fs, pf.FileName, pf.Contents, 0o644); err != nil { //nolint:gomnd
-			log.Error("Failed to create in-mem policy file", zap.String("policy_file", pf.FileName), zap.Error(err))
-			return nil, status.Errorf(codes.Internal, "failed to create policy file %s", pf.FileName)
+func buildIndex(ctx context.Context, log *zap.Logger, files []*requestv1.File) (index.Index, error) {
+	fsys, err := buildFS(log, files)
+	if err != nil {
+		return nil, err
+	}
+
+	return index.Build(ctx, fsys)
+}
+
+func buildFS(log *zap.Logger, files []*requestv1.File) (fs.FS, error) {
+	fsys := afero.NewMemMapFs()
+	for _, file := range files {
+		if err := afero.WriteFile(fsys, file.FileName, file.Contents, 0o644); err != nil { //nolint:gomnd
+			log.Error("Failed to create in-mem file", zap.String("file", file.FileName), zap.Error(err))
+			return nil, status.Errorf(codes.Internal, "failed to create file %s", file.FileName)
 		}
 	}
 
-	return index.Build(ctx, afero.NewIOFS(fs))
+	return afero.NewIOFS(fsys), nil
 }
 
 func processLintErrors(ctx context.Context, errs *index.BuildError) *responsev1.PlaygroundFailure {
