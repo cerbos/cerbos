@@ -4,12 +4,10 @@
 package internal
 
 import (
+	"strings"
 	"testing"
 
-	"github.com/google/go-cmp/cmp"
 	"github.com/stretchr/testify/require"
-	"google.golang.org/protobuf/testing/protocmp"
-	"google.golang.org/protobuf/types/known/structpb"
 )
 
 func TestDirectiveParser(t *testing.T) {
@@ -101,20 +99,7 @@ func TestDirectiveParser(t *testing.T) {
 				t.Helper()
 				checkLetIsDefined(t, rd)
 				require.Equal(t, "x", rd.Let.Name)
-
-				have := rd.Let.Value.ToProto()
-				require.Empty(t, cmp.Diff(structpb.NewBoolValue(true), have, protocmp.Transform()))
-			},
-		},
-		{
-			directive: "let x = false",
-			check: func(t *testing.T, rd *REPLDirective) {
-				t.Helper()
-				checkLetIsDefined(t, rd)
-				require.Equal(t, "x", rd.Let.Name)
-
-				have := rd.Let.Value.ToProto()
-				require.Empty(t, cmp.Diff(structpb.NewBoolValue(false), have, protocmp.Transform()))
+				require.Equal(t, "true", strings.TrimSpace(rd.Let.Expr))
 			},
 		},
 		{
@@ -123,9 +108,7 @@ func TestDirectiveParser(t *testing.T) {
 				t.Helper()
 				checkLetIsDefined(t, rd)
 				require.Equal(t, "num", rd.Let.Name)
-
-				have := rd.Let.Value.ToProto()
-				require.Empty(t, cmp.Diff(structpb.NewNumberValue(25), have, protocmp.Transform()))
+				require.Equal(t, "25", strings.TrimSpace(rd.Let.Expr))
 			},
 		},
 		{
@@ -134,9 +117,7 @@ func TestDirectiveParser(t *testing.T) {
 				t.Helper()
 				checkLetIsDefined(t, rd)
 				require.Equal(t, "num", rd.Let.Name)
-
-				have := rd.Let.Value.ToProto()
-				require.Empty(t, cmp.Diff(structpb.NewNumberValue(25.12), have, protocmp.Transform()))
+				require.Equal(t, "25.12", strings.TrimSpace(rd.Let.Expr))
 			},
 		},
 		{
@@ -145,9 +126,7 @@ func TestDirectiveParser(t *testing.T) {
 				t.Helper()
 				checkLetIsDefined(t, rd)
 				require.Equal(t, "str", rd.Let.Name)
-
-				have := rd.Let.Value.ToProto()
-				require.Empty(t, cmp.Diff(structpb.NewStringValue("wibble wobble"), have, protocmp.Transform()))
+				require.Equal(t, `"wibble wobble"`, strings.TrimSpace(rd.Let.Expr))
 			},
 		},
 		{
@@ -156,40 +135,7 @@ func TestDirectiveParser(t *testing.T) {
 				t.Helper()
 				checkLetIsDefined(t, rd)
 				require.Equal(t, "array", rd.Let.Name)
-
-				want, err := structpb.NewList([]interface{}{"wibble", "wobble"})
-				require.NoError(t, err)
-
-				have := rd.Let.Value.ToProto()
-				require.Empty(t, cmp.Diff(structpb.NewListValue(want), have, protocmp.Transform()))
-			},
-		},
-		{
-			directive: `let array = ["wibble", [true, false], {"k": true}, 12]`,
-			check: func(t *testing.T, rd *REPLDirective) {
-				t.Helper()
-				checkLetIsDefined(t, rd)
-				require.Equal(t, "array", rd.Let.Name)
-
-				want, err := structpb.NewList([]interface{}{"wibble", []interface{}{true, false}, map[string]interface{}{"k": true}, 12})
-				require.NoError(t, err)
-
-				have := rd.Let.Value.ToProto()
-				require.Empty(t, cmp.Diff(structpb.NewListValue(want), have, protocmp.Transform()))
-			},
-		},
-		{
-			directive: `let empty_array = []`,
-			check: func(t *testing.T, rd *REPLDirective) {
-				t.Helper()
-				checkLetIsDefined(t, rd)
-				require.Equal(t, "empty_array", rd.Let.Name)
-
-				want, err := structpb.NewList([]interface{}{})
-				require.NoError(t, err)
-
-				have := rd.Let.Value.ToProto()
-				require.Empty(t, cmp.Diff(structpb.NewListValue(want), have, protocmp.Transform()))
+				require.Equal(t, `["wibble", "wobble"]`, strings.TrimSpace(rd.Let.Expr))
 			},
 		},
 		{
@@ -198,74 +144,8 @@ func TestDirectiveParser(t *testing.T) {
 				t.Helper()
 				checkLetIsDefined(t, rd)
 				require.Equal(t, "nested_map", rd.Let.Name)
-
-				want, err := structpb.NewStruct(map[string]interface{}{
-					"k1": []interface{}{true, false},
-					"k2": map[string]interface{}{"kk1": true},
-					"k3": 12,
-				})
-				require.NoError(t, err)
-
-				have := rd.Let.Value.ToProto()
-				require.Empty(t, cmp.Diff(structpb.NewStructValue(want), have, protocmp.Transform()))
+				require.Equal(t, `{"k1": [true, false], "k2": {"kk1": true}, "k3": 12}`, strings.TrimSpace(rd.Let.Expr))
 			},
-		},
-		{
-			directive: `let empty_map = {}`,
-			check: func(t *testing.T, rd *REPLDirective) {
-				t.Helper()
-				checkLetIsDefined(t, rd)
-				require.Equal(t, "empty_map", rd.Let.Name)
-
-				want, err := structpb.NewStruct(map[string]interface{}{})
-				require.NoError(t, err)
-
-				have := rd.Let.Value.ToProto()
-				require.Empty(t, cmp.Diff(structpb.NewStructValue(want), have, protocmp.Transform()))
-			},
-		},
-		{
-			directive: `let x = $(int(10))`,
-			check: func(t *testing.T, rd *REPLDirective) {
-				t.Helper()
-				checkLetIsDefined(t, rd)
-				require.Equal(t, "x", rd.Let.Name)
-				require.Equal(t, Expr("int(10)"), *rd.Let.Value.Expr)
-			},
-		},
-		{
-			directive: `let x = $( "test".indexOf("e"))`,
-			check: func(t *testing.T, rd *REPLDirective) {
-				t.Helper()
-				checkLetIsDefined(t, rd)
-				require.Equal(t, "x", rd.Let.Name)
-				require.Equal(t, Expr(`"test".indexOf("e")`), *rd.Let.Value.Expr)
-			},
-		},
-		{
-			directive: `let x = $(1 in [1,2,3])`,
-			check: func(t *testing.T, rd *REPLDirective) {
-				t.Helper()
-				checkLetIsDefined(t, rd)
-				require.Equal(t, "x", rd.Let.Name)
-				require.Equal(t, Expr("1 in [1,2,3]"), *rd.Let.Value.Expr)
-			},
-		},
-		{
-			directive: `let = `,
-			wantErr:   true,
-		},
-		{
-			directive: `let x = `,
-			wantErr:   true,
-		},
-		{
-			directive: `let x = {"unclosed": true`,
-			wantErr:   true,
-		},
-		{
-			directive: `let x = $(()`,
-			wantErr:   true,
 		},
 	}
 

@@ -7,7 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"math"
+	"reflect"
 	"strings"
 
 	participle "github.com/alecthomas/participle/v2"
@@ -17,15 +17,19 @@ import (
 	"github.com/google/cel-go/cel"
 	"github.com/google/cel-go/checker/decls"
 	"github.com/google/cel-go/common"
+	"github.com/google/cel-go/common/types"
 	"github.com/google/cel-go/common/types/ref"
+	"github.com/google/cel-go/interpreter"
 	"github.com/peterh/liner"
 	exprpb "google.golang.org/genproto/googleapis/api/expr/v1alpha1"
-	"google.golang.org/protobuf/types/known/structpb"
 )
 
 var (
 	errExit        = errors.New("exit")
 	errInvalidExpr = errors.New("invalid expr")
+
+	listType = reflect.TypeOf([]interface{}{})
+	mapType  = reflect.TypeOf(map[string]interface{}{})
 )
 
 const (
@@ -33,14 +37,23 @@ const (
 	directivePrefix = ':'
 	lastResult      = "_"
 	prompt          = "-> "
+
+	banner = `
+                  __              
+  ________  _____/ /_  ____  _____
+ / ___/ _ \/ ___/ __ \/ __ \/ ___/
+/ /__/  __/ /  / /_/ / /_/ (__  ) 
+\___/\___/_/  /_.___/\____/____/  
+
+`
 )
 
 type REPL struct {
-	variables map[string]interface{}
-	reader    *liner.State
-	env       *cel.Env
-	parser    *participle.Parser
-	printer   *printer.Printer
+	vars    variables
+	decls   map[string]*exprpb.Decl
+	reader  *liner.State
+	parser  *participle.Parser
+	printer *printer.Printer
 }
 
 func NewREPL(reader *liner.State, printer *printer.Printer) (*REPL, error) {
@@ -59,9 +72,17 @@ func NewREPL(reader *liner.State, printer *printer.Printer) (*REPL, error) {
 }
 
 func (r *REPL) Loop() error {
+	r.printer.Println(banner)
+	r.printer.Println(fmt.Sprintf("Type %s to get help", colored.REPLCmd(":help")))
+	r.printer.Println()
+
 	for {
 		line, err := r.reader.Prompt(prompt)
-		if err != nil && !errors.Is(err, io.EOF) {
+		if err != nil {
+			if errors.Is(err, io.EOF) || errors.Is(err, liner.ErrPromptAborted) {
+				continue
+			}
+
 			r.printErr("Failed to read input", err)
 			continue
 		}
@@ -71,6 +92,8 @@ func (r *REPL) Loop() error {
 			continue
 		}
 
+		r.reader.AppendHistory(line)
+
 		switch line[0] {
 		case directivePrefix:
 			if err := r.processDirective(line[1:]); err != nil {
@@ -78,12 +101,14 @@ func (r *REPL) Loop() error {
 					return nil
 				}
 
-				r.printErr("Failed to parse directive", err)
+				if !errors.Is(err, errInvalidExpr) {
+					r.printErr("Failed to process directive", err)
+				}
 			}
 		case commentPrefix:
 			continue
 		default:
-			if err := r.processExpr(line); err != nil && !errors.Is(err, errInvalidExpr) {
+			if err := r.processExpr(lastResult, line); err != nil && !errors.Is(err, errInvalidExpr) {
 				r.printErr("Failed to evaluate expression", err)
 			}
 		}
@@ -102,100 +127,23 @@ func (r *REPL) processDirective(line string) error {
 	case directive.Reset:
 		return r.reset()
 	case directive.Vars:
-		return r.vars()
+		for name, value := range r.vars {
+			r.printResult(name, value)
+		}
+		return nil
 	case directive.Help:
 		return r.help()
 	case directive.Let != nil:
-		return r.let(directive.Let.Name, directive.Let.Value)
+		return r.processExpr(directive.Let.Name, directive.Let.Expr)
 	default:
 		return fmt.Errorf("unknown directive %q", line)
 	}
 }
 
-func (r *REPL) let(name string, v *Value) error {
-	var value interface{}
-	var tpe *exprpb.Type
-
-	switch {
-	case v == nil:
-		tpe = decls.Null
-
-	case v.Expr != nil:
-		val, err := r.evalExpr(string(*v.Expr))
-		if err != nil {
-			return fmt.Errorf("failed to evaluate expression: %w", err)
-		}
-
-		value = val
-
-		if exprType, ok := r.env.TypeProvider().FindType(val.Type().TypeName()); ok {
-			tpe = exprType
-		} else {
-			tpe = decls.Dyn
-		}
-	case v.Bool != nil:
-		value = bool(*v.Bool)
-		tpe = decls.Bool
-
-	case v.Number != nil:
-		if math.Trunc(*v.Number) == *v.Number {
-			tpe = decls.Int
-			value = int64(*v.Number)
-		} else {
-			tpe = decls.Double
-			value = *v.Number
-		}
-
-	case v.String != nil:
-		tpe = decls.String
-		value = *v.String
-
-	case v.Collection != nil && v.Collection.List:
-		tpe = decls.NewObjectType("google.protobuf.ListValue")
-
-		list := make([]*structpb.Value, len(v.Collection.ListItems))
-		for i, item := range v.Collection.ListItems {
-			list[i] = item.ToProto()
-		}
-		value = structpb.NewListValue(&structpb.ListValue{Values: list})
-
-	case v.Collection != nil && v.Collection.Map:
-		tpe = decls.NewObjectType("google.protobuf.Struct")
-
-		fields := make(map[string]*structpb.Value, len(v.Collection.MapItems))
-		for _, f := range v.Collection.MapItems {
-			fields[f.Key] = f.Value.ToProto()
-		}
-		value = structpb.NewStructValue(&structpb.Struct{Fields: fields})
-	}
-
-	env, err := r.env.Extend(cel.Declarations(decls.NewVar(name, tpe)))
-	if err != nil {
-		return fmt.Errorf("failed to add variable to environment: %w", err)
-	}
-
-	r.env = env
-	r.variables[name] = value
-
-	r.printResult(name, value)
-
-	return nil
-}
-
 func (r *REPL) reset() error {
-	env, err := conditions.StdEnv.Extend(cel.Declarations(decls.NewVar(lastResult, decls.Dyn)))
-	if err != nil {
-		return fmt.Errorf("failed to create CEL environment: %w", err)
-	}
+	r.vars = variables{lastResult: types.NullValue}
+	r.decls = map[string]*exprpb.Decl{lastResult: decls.NewVar(lastResult, decls.Dyn)}
 
-	r.env = env
-	r.variables = map[string]interface{}{lastResult: nil}
-
-	return nil
-}
-
-func (r *REPL) vars() error {
-	r.printJSON(r.variables)
 	return nil
 }
 
@@ -205,43 +153,58 @@ func (r *REPL) help() error {
 	return nil
 }
 
-func (r *REPL) processExpr(line string) error {
-	val, err := r.evalExpr(line)
+func (r *REPL) processExpr(name, expr string) error {
+	val, tpe, err := r.evalExpr(expr)
 	if err != nil {
 		return err
 	}
 
-	r.printResult(lastResult, val)
-	r.variables[lastResult] = val
+	r.printResult(name, val)
+	r.vars[name] = val
+	r.decls[name] = decls.NewVar(name, tpe)
 
 	return nil
 }
 
-func (r *REPL) evalExpr(expr string) (ref.Val, error) {
-	ast, err := r.compileExpr(expr)
+func (r *REPL) evalExpr(expr string) (ref.Val, *exprpb.Type, error) {
+	env, err := r.mkEnv()
 	if err != nil {
-		return nil, err
+		return nil, nil, fmt.Errorf("failed to create environment: %w", err)
 	}
 
-	val, _, err := conditions.Eval(r.env, ast, r.variables)
-	if err != nil {
-		return nil, err
-	}
-
-	return val, nil
-}
-
-func (r *REPL) compileExpr(expr string) (*cel.Ast, error) {
-	celAST, issues := r.env.Compile(expr)
+	ast, issues := env.Compile(expr)
 	if issues != nil && issues.Err() != nil {
 		src := common.NewTextSource(expr)
 		for _, ce := range issues.Errors() {
 			r.print(colored.REPLError(ce.ToDisplayString(src)))
 		}
-		return nil, errInvalidExpr
+		r.printer.Println()
+
+		return nil, nil, errInvalidExpr
 	}
 
-	return celAST, nil
+	val, _, err := conditions.Eval(env, ast, r.vars)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	tpe := decls.Dyn
+	if t, ok := env.TypeProvider().FindType(val.Type().TypeName()); ok {
+		tpe = t
+	}
+
+	return val, tpe, nil
+}
+
+func (r *REPL) mkEnv() (*cel.Env, error) {
+	decls := make([]*exprpb.Decl, len(r.decls))
+	i := 0
+	for _, d := range r.decls {
+		decls[i] = d
+		i++
+	}
+
+	return conditions.StdEnv.Extend(cel.Declarations(decls...))
 }
 
 func (r *REPL) print(format string, args ...interface{}) {
@@ -249,13 +212,35 @@ func (r *REPL) print(format string, args ...interface{}) {
 	r.printer.Println()
 }
 
-func (r *REPL) printResult(name string, value interface{}) {
+func (r *REPL) printResult(name string, value ref.Val) {
 	r.printer.Printf("%s = ", colored.REPLVar(name))
-	r.printJSON(value)
+
+	if types.IsPrimitiveType(value) {
+		r.printJSON(value.Value())
+		return
+	}
+
+	switch value.Type() {
+	case types.MapType:
+		if v, err := value.ConvertToNative(mapType); err == nil {
+			r.printJSON(v)
+			return
+		}
+	case types.ListType:
+		if v, err := value.ConvertToNative(listType); err == nil {
+			r.printJSON(v)
+			return
+		}
+	}
+
+	r.printer.Printf("%+v\n", value.Value())
+	r.printer.Println()
 }
 
 func (r *REPL) printJSON(obj interface{}) {
-	r.printer.PrintJSON(obj, false)
+	if err := r.printer.PrintJSON(obj, false); err != nil {
+		r.printer.Println("<...>")
+	}
 	r.printer.Println()
 }
 
@@ -265,4 +250,16 @@ func (r *REPL) printErr(msg string, err error) {
 		r.printer.Printf(" %v\n", err)
 	}
 	r.printer.Println()
+}
+
+// variables is a type that provides the interpreter.Activation interface
+type variables map[string]ref.Val
+
+func (v variables) ResolveName(name string) (interface{}, bool) {
+	val, ok := v[name]
+	return val, ok
+}
+
+func (v variables) Parent() interpreter.Activation {
+	return nil
 }

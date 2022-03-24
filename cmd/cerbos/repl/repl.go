@@ -23,6 +23,8 @@ func (c *Cmd) Run(k *kong.Kong) error {
 	histFile := getHistoryFile(c.History)
 
 	reader := liner.NewLiner()
+	reader.SetMultiLineMode(true)
+
 	defer func() {
 		if err := writeHistory(reader, histFile); err != nil {
 			fmt.Fprintf(os.Stderr, "Failed to persist history: %v", err)
