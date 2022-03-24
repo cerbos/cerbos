@@ -275,6 +275,7 @@ func (idx *indexBuilder) build(fsys fs.FS, rootDir string) (*index, error) {
 		fileToModID:  idx.fileToModID,
 		dependents:   idx.dependents,
 		dependencies: idx.dependencies,
+		rootDir:      rootDir,
 		schemaLoader: NewSchemaLoader(fsys, rootDir),
 		stats:        idx.stats.collate(),
 	}, nil

@@ -299,10 +299,6 @@ func (s *Store) pollForUpdates(ctx context.Context) {
 	}
 }
 
-func (s *Store) Reload(ctx context.Context) error {
-	return s.updateIndex(ctx)
-}
-
 func (s *Store) Driver() string {
 	return DriverName
 }
@@ -333,4 +329,28 @@ func (s *Store) LoadPolicy(ctx context.Context, file ...string) ([]*policy.Wrapp
 
 func (s *Store) RepoStats(ctx context.Context) storage.RepoStats {
 	return s.idx.RepoStats(ctx)
+}
+
+func (s *Store) Reload(ctx context.Context) error {
+	s.log.Debug("Checking for updates")
+
+	changes, err := s.clone(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to clone: %w", err)
+	}
+
+	if failures := changes.failures(); failures > 0 {
+		s.log.Warnf("Failed to download (%d) files", failures)
+	}
+
+	evts, err := s.idx.Reload(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to reload the index: %w", err)
+	}
+
+	for _, evt := range evts {
+		s.NotifySubscribers(evt)
+	}
+
+	return nil
 }

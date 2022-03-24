@@ -8,8 +8,10 @@ import (
 	"fmt"
 	"io"
 	"io/fs"
+	"io/ioutil"
 	"math/rand"
 	"os"
+	"path"
 	"path/filepath"
 	"testing"
 	"time"
@@ -52,7 +54,7 @@ func TestNewStore(t *testing.T) {
 	// the checkout directory does not exist so the remote repo will be cloned.
 	t.Run("directory does not exist", func(t *testing.T) {
 		checkoutDir := filepath.Join(t.TempDir(), "clone")
-		conf := mkConf(t, sourceGitDir, checkoutDir, true)
+		conf := mkConf(t, sourceGitDir, checkoutDir, false)
 
 		store, err := NewStore(context.Background(), conf)
 		require.NoError(t, err)
@@ -63,7 +65,7 @@ func TestNewStore(t *testing.T) {
 	// the checkout directory is empty so the remote repo will be cloned.
 	t.Run("directory is empty", func(t *testing.T) {
 		checkoutDir := t.TempDir()
-		conf := mkConf(t, sourceGitDir, checkoutDir, true)
+		conf := mkConf(t, sourceGitDir, checkoutDir, false)
 
 		store, err := NewStore(context.Background(), conf)
 		require.NoError(t, err)
@@ -81,7 +83,7 @@ func TestNewStore(t *testing.T) {
 		})
 		require.NoError(t, err, "Failed to clone repo")
 
-		conf := mkConf(t, sourceGitDir, checkoutDir, true)
+		conf := mkConf(t, sourceGitDir, checkoutDir, false)
 
 		store, err := NewStore(context.Background(), conf)
 		require.NoError(t, err)
@@ -98,7 +100,7 @@ func TestNewStore(t *testing.T) {
 			require.NoError(t, os.WriteFile(file, []byte("some data"), 0o600))
 		}
 
-		conf := mkConf(t, sourceGitDir, checkoutDir, true)
+		conf := mkConf(t, sourceGitDir, checkoutDir, false)
 
 		store, err := NewStore(context.Background(), conf)
 		require.Nil(t, store)
@@ -121,7 +123,7 @@ func TestUpdateStore(t *testing.T) {
 
 	_ = createGitRepo(t, sourceGitDir, numPolicySets)
 
-	conf := mkConf(t, sourceGitDir, checkoutDir, true)
+	conf := mkConf(t, sourceGitDir, checkoutDir, false)
 	store, err := NewStore(context.Background(), conf)
 	require.NoError(t, err)
 
@@ -438,26 +440,47 @@ func TestReloadable(t *testing.T) {
 
 	sourceGitDir := t.TempDir()
 	checkoutDir := t.TempDir()
-	store := mkEmptyStoreAndRepo(t, false, sourceGitDir, checkoutDir)
-	internal.TestSuiteReloadable(store, false, mkPoliciesToStoreFn(t, sourceGitDir, ps))(t)
+	store := mkEmptyStoreAndRepo(t, sourceGitDir, checkoutDir, false)
+	internal.TestSuiteReloadable(store, mkAddFn(t, sourceGitDir, ps), mkDeleteFn(t, sourceGitDir))(t)
 
 	sourceGitDir = t.TempDir()
 	checkoutDir = t.TempDir()
-	watchingStore := mkEmptyStoreAndRepo(t, true, sourceGitDir, checkoutDir)
-	internal.TestSuiteReloadable(watchingStore, true, mkPoliciesToStoreFn(t, sourceGitDir, ps))(t)
+	watchingStore := mkEmptyStoreAndRepo(t, sourceGitDir, checkoutDir, true)
+	internal.TestSuiteReloadable(watchingStore, mkAddFn(t, sourceGitDir, ps), mkDeleteFn(t, sourceGitDir))(t)
 }
 
-func mkEmptyStoreAndRepo(t *testing.T, watchForChanges bool, sourceGitDir, checkoutDir string) *Store {
+func mkDeleteFn(t *testing.T, sourceGitDir string) internal.MutateStoreFn {
 	t.Helper()
 
-	_ = createGitRepo(t, sourceGitDir, 0)
-	store, err := NewStore(context.Background(), mkConf(t, sourceGitDir, checkoutDir, watchForChanges))
-	require.NoError(t, err)
+	return func() error {
+		err := commitToGitRepo(sourceGitDir, "Delete all", func(wt *git.Worktree) error {
+			dir, err := ioutil.ReadDir(sourceGitDir)
+			if err != nil {
+				return fmt.Errorf("failed to read directory while deleting from the store: %w", err)
+			}
 
-	return store
+			for _, d := range dir {
+				if d.Name() == ".git" {
+					continue
+				}
+				err = os.RemoveAll(path.Join([]string{sourceGitDir, d.Name()}...))
+				if err != nil {
+					return fmt.Errorf("failed to remove contents while deleting from the store: %w", err)
+				}
+			}
+
+			_, err = wt.Add(".")
+			return err
+		})
+		if err != nil {
+			return err
+		}
+
+		return nil
+	}
 }
 
-func mkPoliciesToStoreFn(t *testing.T, sourceGitDir string, ps policySet) internal.PoliciesToStoreFn {
+func mkAddFn(t *testing.T, sourceGitDir string, ps policySet) internal.MutateStoreFn {
 	t.Helper()
 
 	return func() error {
@@ -475,6 +498,16 @@ func mkPoliciesToStoreFn(t *testing.T, sourceGitDir string, ps policySet) intern
 
 		return nil
 	}
+}
+
+func mkEmptyStoreAndRepo(t *testing.T, sourceGitDir, checkoutDir string, watchForChanges bool) *Store {
+	t.Helper()
+
+	_ = createGitRepo(t, sourceGitDir, 0)
+	store, err := NewStore(context.Background(), mkConf(t, sourceGitDir, checkoutDir, watchForChanges))
+	require.NoError(t, err)
+
+	return store
 }
 
 func anyIndexEntry(_ index.Entry) bool { return true }

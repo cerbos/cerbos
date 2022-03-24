@@ -5,9 +5,12 @@ package disk
 
 import (
 	"context"
+	"fmt"
 	"io"
 	"io/fs"
+	"io/ioutil"
 	"os"
+	"path"
 	"path/filepath"
 	"testing"
 
@@ -26,8 +29,8 @@ func TestReloadable(t *testing.T) {
 	watchingStoreDir := t.TempDir()
 	watchingStore := mkStore(t, watchingStoreDir, true)
 
-	internal.TestSuiteReloadable(store, false, mkPoliciesToStoreFn(t, storeDir))(t)
-	internal.TestSuiteReloadable(watchingStore, true, mkPoliciesToStoreFn(t, watchingStoreDir))(t)
+	internal.TestSuiteReloadable(store, mkAddFn(t, storeDir), mkDeleteFn(t, storeDir))(t)
+	internal.TestSuiteReloadable(watchingStore, mkAddFn(t, watchingStoreDir), mkDeleteFn(t, watchingStoreDir))(t)
 }
 
 func mkStore(t *testing.T, dir string, watchForChanges bool) *Store {
@@ -40,8 +43,28 @@ func mkStore(t *testing.T, dir string, watchForChanges bool) *Store {
 	return store
 }
 
-func mkPoliciesToStoreFn(t *testing.T, destStoreDir string) internal.PoliciesToStoreFn {
+func mkDeleteFn(t *testing.T, storeDir string) internal.MutateStoreFn {
 	t.Helper()
+
+	return func() error {
+		dir, err := ioutil.ReadDir(storeDir)
+		if err != nil {
+			return fmt.Errorf("failed to read directory while deleting from the store: %w", err)
+		}
+		for _, d := range dir {
+			err = os.RemoveAll(path.Join([]string{storeDir, d.Name()}...))
+			if err != nil {
+				return fmt.Errorf("failed to remove contents while deleting from the store: %w", err)
+			}
+		}
+
+		return nil
+	}
+}
+
+func mkAddFn(t *testing.T, storeDir string) internal.MutateStoreFn {
+	t.Helper()
+
 	policiesDir := test.PathToDir(t, "store")
 	return func() error {
 		err := filepath.WalkDir(policiesDir, func(path string, d fs.DirEntry, err error) error {
@@ -64,7 +87,7 @@ func mkPoliciesToStoreFn(t *testing.T, destStoreDir string) internal.PoliciesToS
 			}
 			defer in.Close()
 
-			out, err := os.Create(filepath.Join(destStoreDir, filepath.Base(filepath.Dir(path)), filepath.Base(path)))
+			out, err := os.Create(filepath.Join(storeDir, filepath.Base(filepath.Dir(path)), filepath.Base(path)))
 			if err != nil {
 				return err
 			}
@@ -95,5 +118,7 @@ func mkDirs(t *testing.T, storeDir string) {
 	err = os.Mkdir(filepath.Join(storeDir, "principal_policies"), os.ModePerm)
 	require.NoError(t, err)
 	err = os.Mkdir(filepath.Join(storeDir, "resource_policies"), os.ModePerm)
+	require.NoError(t, err)
+	err = os.Mkdir(filepath.Join(storeDir, "tests"), os.ModePerm)
 	require.NoError(t, err)
 }

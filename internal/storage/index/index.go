@@ -13,13 +13,17 @@ import (
 	"sort"
 	"sync"
 
+	"github.com/grpc-ecosystem/go-grpc-middleware/logging/zap/ctxzap"
+	"go.opencensus.io/stats"
+	"golang.org/x/sync/singleflight"
+
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
 	"github.com/cerbos/cerbos/internal/namer"
 	"github.com/cerbos/cerbos/internal/observability/metrics"
 	"github.com/cerbos/cerbos/internal/policy"
 	"github.com/cerbos/cerbos/internal/schema"
 	"github.com/cerbos/cerbos/internal/storage"
-	"go.opencensus.io/stats"
+	"github.com/cerbos/cerbos/internal/util"
 )
 
 var (
@@ -49,6 +53,7 @@ type Index interface {
 	ListSchemaIDs(context.Context) ([]string, error)
 	LoadSchema(context.Context, string) (io.ReadCloser, error)
 	LoadPolicy(context.Context, ...string) ([]*policy.Wrapper, error)
+	Reload(ctx context.Context) ([]storage.Event, error)
 }
 
 type index struct {
@@ -58,7 +63,9 @@ type index struct {
 	dependents   map[namer.ModuleID]map[namer.ModuleID]struct{}
 	dependencies map[namer.ModuleID]map[namer.ModuleID]struct{}
 	modIDToFile  map[namer.ModuleID]string
+	rootDir      string
 	schemaLoader *SchemaLoader
+	sfGroup      singleflight.Group
 	stats        storage.RepoStats
 	mu           sync.RWMutex
 }
@@ -427,4 +434,106 @@ func (idx *index) LoadPolicy(_ context.Context, file ...string) ([]*policy.Wrapp
 
 func (idx *index) RepoStats(_ context.Context) storage.RepoStats {
 	return idx.stats
+}
+
+func (idx *index) Reload(ctx context.Context) ([]storage.Event, error) {
+	log := ctxzap.Extract(ctx).Sugar()
+	ievts, err, shared := idx.sfGroup.Do("reload", func() (interface{}, error) {
+		ib := newIndexBuilder()
+		err := fs.WalkDir(idx.fsys, idx.rootDir, func(path string, d fs.DirEntry, err error) error {
+			if err := ctx.Err(); err != nil {
+				return err
+			}
+
+			if err != nil {
+				return err
+			}
+
+			if d.IsDir() {
+				switch d.Name() {
+				case util.TestDataDirectory:
+					return fs.SkipDir
+				case schema.Directory:
+					return fs.SkipDir
+				default:
+					return nil
+				}
+			}
+
+			if !util.IsSupportedFileType(d.Name()) {
+				return nil
+			}
+
+			if util.IsSupportedTestFile(d.Name()) {
+				return nil
+			}
+
+			p := &policyv1.Policy{}
+			if err := util.LoadFromJSONOrYAML(idx.fsys, path, p); err != nil {
+				ib.addLoadFailure(path, err)
+				return nil
+			}
+
+			if err := policy.Validate(p); err != nil {
+				ib.addLoadFailure(path, err)
+				return nil
+			}
+
+			if p.Disabled {
+				ib.addDisabled(path)
+				return nil
+			}
+
+			ib.addPolicy(path, policy.Wrap(policy.WithMetadata(p, path, nil, path)))
+
+			return nil
+		})
+		if err != nil {
+			return nil, err
+		}
+
+		newIdx, err := ib.build(idx.fsys, idx.rootDir)
+		if err != nil {
+			return nil, err
+		}
+
+		var evts []storage.Event
+		for mID := range newIdx.modIDToFile {
+			if _, ok := idx.modIDToFile[mID]; !ok {
+				log.Debugf("Detected added policy with module ID %s while re-indexing", mID.String())
+				evts = append(evts, storage.NewPolicyEvent(storage.EventAddOrUpdatePolicy, mID))
+			}
+		}
+		for mID := range idx.modIDToFile {
+			if _, ok := newIdx.modIDToFile[mID]; !ok {
+				log.Debugf("Detected deleted policy with module ID %s while re-indexing with module ID", mID.String())
+				evts = append(evts, storage.NewPolicyEvent(storage.EventDeletePolicy, mID))
+			}
+		}
+
+		idx.mu.RLock()
+		defer idx.mu.RUnlock()
+		idx.fileToModID = newIdx.fileToModID
+		idx.executables = newIdx.executables
+		idx.dependents = newIdx.dependents
+		idx.dependencies = newIdx.dependencies
+		idx.modIDToFile = newIdx.modIDToFile
+		idx.schemaLoader = newIdx.schemaLoader
+		idx.stats = newIdx.stats
+
+		return evts, nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	if shared {
+		log.Debug("shared multiple calls to the reload index function")
+	}
+
+	evts, ok := ievts.([]storage.Event)
+	if !ok {
+		return nil, fmt.Errorf("failed to type assert storage events")
+	}
+
+	return evts, nil
 }

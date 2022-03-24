@@ -17,6 +17,7 @@ import (
 	"github.com/grpc-ecosystem/go-grpc-middleware/logging/zap/ctxzap"
 	"go.uber.org/zap"
 	"golang.org/x/crypto/bcrypt"
+	"golang.org/x/sync/singleflight"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
@@ -37,6 +38,7 @@ var _ svcv1.CerbosAdminServiceServer = (*CerbosAdminService)(nil)
 var (
 	errAuthRequired = status.Error(codes.Unauthenticated, "authentication required")
 	authSep         = []byte(":")
+	sfGroup         singleflight.Group
 )
 
 // CerbosAdminService implements the Cerbos administration service.
@@ -234,18 +236,29 @@ func (cas *CerbosAdminService) DeleteSchema(ctx context.Context, req *requestv1.
 }
 
 func (cas *CerbosAdminService) ReloadStore(ctx context.Context, _ *requestv1.ReloadStoreRequest) (*responsev1.ReloadStoreResponse, error) {
+	log := ctxzap.Extract(ctx)
 	if err := cas.checkCredentials(ctx); err != nil {
 		return nil, err
 	}
 
-	rs, ok := cas.store.(storage.ReloadableStore)
-	if !ok {
-		return nil, status.Error(codes.Unimplemented, "Configured store is not reloadable")
-	}
+	_, err, shared := sfGroup.Do("reload", func() (interface{}, error) {
+		rs, ok := cas.store.(storage.ReloadableStore)
+		if !ok {
+			return nil, status.Error(codes.Unimplemented, "Configured store is not reloadable")
+		}
 
-	if err := rs.Reload(ctx); err != nil {
-		ctxzap.Extract(ctx).Error("Failed to reload the store", zap.Error(err))
-		return nil, status.Errorf(codes.Internal, "Failed to reload the store")
+		if err := rs.Reload(ctx); err != nil {
+			log.Error("Failed to reload the store", zap.Error(err))
+			return nil, status.Errorf(codes.Internal, "Failed to reload the store")
+		}
+
+		return nil, nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	if shared {
+		log.Debug("shared multiple calls to the reload store API")
 	}
 
 	return &responsev1.ReloadStoreResponse{}, nil

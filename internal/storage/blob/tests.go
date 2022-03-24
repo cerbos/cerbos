@@ -97,7 +97,7 @@ func newMinioBucket(ctx context.Context, t *testing.T, prefix string) *blob.Buck
 	return CopyDirToBucket(t, ctx, param)
 }
 
-//nolint:revive,unparam
+//nolint:revive
 func uploadDirToBucket(tb testing.TB, ctx context.Context, dir string, bucket *blob.Bucket) ([]string, error) {
 	tb.Helper()
 

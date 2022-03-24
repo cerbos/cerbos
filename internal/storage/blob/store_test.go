@@ -6,6 +6,7 @@ package blob
 import (
 	"context"
 	"errors"
+	"fmt"
 	"path/filepath"
 	"testing"
 	"time"
@@ -19,6 +20,8 @@ import (
 	"github.com/cerbos/cerbos/internal/storage/internal"
 	"github.com/cerbos/cerbos/internal/test"
 )
+
+var keysInStore []string
 
 type clonerFunc func(ctx context.Context) (*CloneResult, error)
 
@@ -78,11 +81,39 @@ func TestReloadable(t *testing.T) {
 
 	dir := t.TempDir()
 	store, bucket := mkStore(t, dir, false)
-	internal.TestSuiteReloadable(store, false, mkPoliciesToStoreFn(t, bucket))(t)
+	internal.TestSuiteReloadable(store, mkAddFn(t, bucket), mkDeleteFn(t, bucket))(t)
 
 	dir = t.TempDir()
 	store, bucket = mkStore(t, dir, true)
-	internal.TestSuiteReloadable(store, true, mkPoliciesToStoreFn(t, bucket))(t)
+	internal.TestSuiteReloadable(store, mkAddFn(t, bucket), mkDeleteFn(t, bucket))(t)
+}
+
+func mkDeleteFn(t *testing.T, bucket *blob.Bucket) internal.MutateStoreFn {
+	t.Helper()
+
+	return func() error {
+		for _, key := range keysInStore {
+			err := bucket.Delete(context.Background(), key)
+			if err != nil {
+				return fmt.Errorf("failed to delete from the store: %w", err)
+			}
+		}
+
+		return nil
+	}
+}
+
+func mkAddFn(t *testing.T, bucket *blob.Bucket) internal.MutateStoreFn {
+	t.Helper()
+
+	return func() error {
+		var err error
+		keysInStore, err = uploadDirToBucket(t, context.Background(), test.PathToDir(t, "store"), bucket)
+		if err != nil {
+			return fmt.Errorf("failed to add to the store: %w", err)
+		}
+		return nil
+	}
 }
 
 func mkStore(t *testing.T, dir string, watchForChanges bool) (*Store, *blob.Bucket) {
@@ -98,18 +129,6 @@ func mkStore(t *testing.T, dir string, watchForChanges bool) (*Store, *blob.Buck
 	require.NoError(t, err)
 
 	return store, bucket
-}
-
-func mkPoliciesToStoreFn(t *testing.T, bucket *blob.Bucket) internal.PoliciesToStoreFn {
-	t.Helper()
-
-	return func() error {
-		_, err := uploadDirToBucket(t, context.Background(), test.PathToDir(t, "store"), bucket)
-		if err != nil {
-			return err
-		}
-		return nil
-	}
 }
 
 func mkConf(t *testing.T, dir, bucketName, endpoint string, watchForChanges bool) *Conf {
