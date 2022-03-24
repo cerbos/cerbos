@@ -83,7 +83,7 @@ func (r *REPL) Loop() error {
 		case commentPrefix:
 			continue
 		default:
-			if err := r.processExpr(line); err != nil {
+			if err := r.processExpr(line); err != nil && !errors.Is(err, errInvalidExpr) {
 				r.printErr("Failed to evaluate expression", err)
 			}
 		}
@@ -101,6 +101,10 @@ func (r *REPL) processDirective(line string) error {
 		return errExit
 	case directive.Reset:
 		return r.reset()
+	case directive.Vars:
+		return r.vars()
+	case directive.Help:
+		return r.help()
 	case directive.Let != nil:
 		return r.let(directive.Let.Name, directive.Let.Value)
 	default:
@@ -122,9 +126,13 @@ func (r *REPL) let(name string, v *Value) error {
 			return fmt.Errorf("failed to evaluate expression: %w", err)
 		}
 
-		value = val.Value()
-		tpe = decls.Dyn
+		value = val
 
+		if exprType, ok := r.env.TypeProvider().FindType(val.Type().TypeName()); ok {
+			tpe = exprType
+		} else {
+			tpe = decls.Dyn
+		}
 	case v.Bool != nil:
 		value = bool(*v.Bool)
 		tpe = decls.Bool
@@ -169,7 +177,7 @@ func (r *REPL) let(name string, v *Value) error {
 	r.env = env
 	r.variables[name] = value
 
-	r.printJSON(map[string]interface{}{name: value})
+	r.printResult(name, value)
 
 	return nil
 }
@@ -186,15 +194,25 @@ func (r *REPL) reset() error {
 	return nil
 }
 
+func (r *REPL) vars() error {
+	r.printJSON(r.variables)
+	return nil
+}
+
+func (r *REPL) help() error {
+	r.printer.Println("HELP")
+	r.printer.Println()
+	return nil
+}
+
 func (r *REPL) processExpr(line string) error {
 	val, err := r.evalExpr(line)
 	if err != nil {
 		return err
 	}
 
-	r.printJSON(map[string]interface{}{lastResult: val})
-
-	r.variables[lastResult] = val.Value()
+	r.printResult(lastResult, val)
+	r.variables[lastResult] = val
 
 	return nil
 }
@@ -218,7 +236,7 @@ func (r *REPL) compileExpr(expr string) (*cel.Ast, error) {
 	if issues != nil && issues.Err() != nil {
 		src := common.NewTextSource(expr)
 		for _, ce := range issues.Errors() {
-			r.print(colored.ErrorMsg(ce.ToDisplayString(src)))
+			r.print(colored.REPLError(ce.ToDisplayString(src)))
 		}
 		return nil, errInvalidExpr
 	}
@@ -231,13 +249,18 @@ func (r *REPL) print(format string, args ...interface{}) {
 	r.printer.Println()
 }
 
+func (r *REPL) printResult(name string, value interface{}) {
+	r.printer.Printf("%s = ", colored.REPLVar(name))
+	r.printJSON(value)
+}
+
 func (r *REPL) printJSON(obj interface{}) {
 	r.printer.PrintJSON(obj, false)
 	r.printer.Println()
 }
 
 func (r *REPL) printErr(msg string, err error) {
-	r.printer.Println(colored.ErrorMsg(fmt.Sprintf("Error: %s", msg)))
+	r.printer.Println(colored.REPLError(fmt.Sprintf("Error: %s", msg)))
 	if err != nil {
 		r.printer.Printf(" %v\n", err)
 	}

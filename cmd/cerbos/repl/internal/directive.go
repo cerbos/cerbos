@@ -64,7 +64,8 @@ func NewParser() (*participle.Parser, error) {
 type REPLDirective struct {
 	Exit  bool          `parser:"@('q'|'quit'|'exit')"`
 	Reset bool          `parser:"| @'reset'"`
-	Vars  bool          `parser:"| @'vars'`
+	Vars  bool          `parser:"| @'vars'"`
+	Help  bool          `parser:"| @('h' | 'help')"`
 	Let   *LetDirective `parser:"| @@"`
 }
 

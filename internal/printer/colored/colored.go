@@ -12,6 +12,8 @@ var (
 	FileName                = color.New(color.FgCyan).SprintFunc()
 	Header                  = color.New(color.FgHiWhite, color.Bold).SprintFunc()
 	Principal               = color.New(color.FgCyan).SprintFunc()
+	REPLError               = color.New(color.FgRed).SprintFunc()
+	REPLVar                 = color.New(color.FgCyan).SprintFunc()
 	Resource                = color.New(color.FgBlue).SprintFunc()
 	SkippedTest             = color.New(color.FgHiWhite).SprintFunc()
 	SuccessfulTest          = color.New(color.FgGreen).SprintFunc()
