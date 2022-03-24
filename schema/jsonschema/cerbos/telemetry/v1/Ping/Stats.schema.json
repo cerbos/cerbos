@@ -1,0 +1,51 @@
+{
+  "$id": "https://api.cerbos.dev/cerbos/telemetry/v1/Ping/Stats.schema.json",
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "definitions": {
+    "cerbos.telemetry.v1.Ping.Stats.Policy": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "avgConditionCount": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "number"
+          }
+        },
+        "avgRuleCount": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "number"
+          }
+        },
+        "count": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "integer",
+            "minimum": 0
+          }
+        }
+      }
+    },
+    "cerbos.telemetry.v1.Ping.Stats.Schema": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "count": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    }
+  },
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "policy": {
+      "$ref": "#/definitions/cerbos.telemetry.v1.Ping.Stats.Policy"
+    },
+    "schema": {
+      "$ref": "#/definitions/cerbos.telemetry.v1.Ping.Stats.Schema"
+    }
+  }
+}

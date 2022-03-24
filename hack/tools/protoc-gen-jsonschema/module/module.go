@@ -35,7 +35,7 @@ func (m *Module) Execute(targets map[string]pgs.File, pkgs map[string]pgs.Packag
 	for _, file := range targets {
 		m.Push(fmt.Sprintf("file:%s", file.Name()))
 
-		for _, message := range file.Messages() {
+		for _, message := range file.AllMessages() {
 			filename := m.filename(message)
 
 			schema := m.defineMessage(message)

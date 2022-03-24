@@ -1,5 +1,5 @@
 {
-  "$id": "https://api.cerbos.dev/cerbos/engine/v1/ResourcesQueryPlanOutput.schema.json",
+  "$id": "https://api.cerbos.dev/cerbos/engine/v1/ResourcesQueryPlanOutput/Node.schema.json",
   "$schema": "http://json-schema.org/draft-07/schema#",
   "definitions": {
     "cerbos.engine.v1.ResourcesQueryPlanOutput.LogicalOperation": {
@@ -9,7 +9,7 @@
         "nodes": {
           "type": "array",
           "items": {
-            "$ref": "#/definitions/cerbos.engine.v1.ResourcesQueryPlanOutput.Node"
+            "$ref": "#"
           }
         },
         "operator": {
@@ -25,18 +25,6 @@
         "OPERATOR_OR",
         "OPERATOR_NOT"
       ]
-    },
-    "cerbos.engine.v1.ResourcesQueryPlanOutput.Node": {
-      "type": "object",
-      "additionalProperties": false,
-      "properties": {
-        "expression": {
-          "$ref": "#/definitions/google.api.expr.v1alpha1.CheckedExpr"
-        },
-        "logicalOperation": {
-          "$ref": "#/definitions/cerbos.engine.v1.ResourcesQueryPlanOutput.LogicalOperation"
-        }
-      }
     },
     "google.api.expr.v1alpha1.CheckedExpr": {
       "type": "object",
@@ -480,23 +468,11 @@
   "type": "object",
   "additionalProperties": false,
   "properties": {
-    "action": {
-      "type": "string"
+    "expression": {
+      "$ref": "#/definitions/google.api.expr.v1alpha1.CheckedExpr"
     },
-    "filter": {
-      "$ref": "#/definitions/cerbos.engine.v1.ResourcesQueryPlanOutput.Node"
-    },
-    "kind": {
-      "type": "string"
-    },
-    "policyVersion": {
-      "type": "string"
-    },
-    "requestId": {
-      "type": "string"
-    },
-    "scope": {
-      "type": "string"
+    "logicalOperation": {
+      "$ref": "#/definitions/cerbos.engine.v1.ResourcesQueryPlanOutput.LogicalOperation"
     }
   }
 }

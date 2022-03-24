@@ -1,0 +1,54 @@
+{
+  "$id": "https://api.cerbos.dev/cerbos/response/v1/CheckResourceSetResponse/ActionEffectMap.schema.json",
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "definitions": {
+    "cerbos.effect.v1.Effect": {
+      "type": "string",
+      "enum": [
+        "EFFECT_UNSPECIFIED",
+        "EFFECT_ALLOW",
+        "EFFECT_DENY",
+        "EFFECT_NO_MATCH"
+      ]
+    },
+    "cerbos.schema.v1.ValidationError": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "message": {
+          "type": "string"
+        },
+        "path": {
+          "type": "string"
+        },
+        "source": {
+          "$ref": "#/definitions/cerbos.schema.v1.ValidationError.Source"
+        }
+      }
+    },
+    "cerbos.schema.v1.ValidationError.Source": {
+      "type": "string",
+      "enum": [
+        "SOURCE_UNSPECIFIED",
+        "SOURCE_PRINCIPAL",
+        "SOURCE_RESOURCE"
+      ]
+    }
+  },
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "actions": {
+      "type": "object",
+      "additionalProperties": {
+        "$ref": "#/definitions/cerbos.effect.v1.Effect"
+      }
+    },
+    "validationErrors": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/cerbos.schema.v1.ValidationError"
+      }
+    }
+  }
+}

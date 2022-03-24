@@ -1,0 +1,112 @@
+{
+  "$id": "https://api.cerbos.dev/cerbos/telemetry/v1/Ping/Features.schema.json",
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "definitions": {
+    "cerbos.telemetry.v1.Ping.Features.AdminApi": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        }
+      }
+    },
+    "cerbos.telemetry.v1.Ping.Features.Audit": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "backend": {
+          "type": "string"
+        },
+        "enabled": {
+          "type": "boolean"
+        }
+      }
+    },
+    "cerbos.telemetry.v1.Ping.Features.Schema": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "enforcement": {
+          "type": "string"
+        }
+      }
+    },
+    "cerbos.telemetry.v1.Ping.Features.Storage": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "blob": {
+          "$ref": "#/definitions/cerbos.telemetry.v1.Ping.Features.Storage.Blob"
+        },
+        "disk": {
+          "$ref": "#/definitions/cerbos.telemetry.v1.Ping.Features.Storage.Disk"
+        },
+        "driver": {
+          "type": "string"
+        },
+        "git": {
+          "$ref": "#/definitions/cerbos.telemetry.v1.Ping.Features.Storage.Git"
+        }
+      }
+    },
+    "cerbos.telemetry.v1.Ping.Features.Storage.Blob": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "pollInterval": {
+          "$ref": "#/definitions/google.protobuf.Duration"
+        },
+        "provider": {
+          "type": "string"
+        }
+      }
+    },
+    "cerbos.telemetry.v1.Ping.Features.Storage.Disk": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "watch": {
+          "type": "boolean"
+        }
+      }
+    },
+    "cerbos.telemetry.v1.Ping.Features.Storage.Git": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "auth": {
+          "type": "boolean"
+        },
+        "pollInterval": {
+          "$ref": "#/definitions/google.protobuf.Duration"
+        },
+        "protocol": {
+          "type": "string"
+        }
+      }
+    },
+    "google.protobuf.Duration": {
+      "title": "Duration",
+      "description": "A signed, fixed-length span of time represented as a count of seconds and fractions of seconds at nanosecond resolution.",
+      "type": "string",
+      "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?s$"
+    }
+  },
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "adminApi": {
+      "$ref": "#/definitions/cerbos.telemetry.v1.Ping.Features.AdminApi"
+    },
+    "audit": {
+      "$ref": "#/definitions/cerbos.telemetry.v1.Ping.Features.Audit"
+    },
+    "schema": {
+      "$ref": "#/definitions/cerbos.telemetry.v1.Ping.Features.Schema"
+    },
+    "storage": {
+      "$ref": "#/definitions/cerbos.telemetry.v1.Ping.Features.Storage"
+    }
+  }
+}
