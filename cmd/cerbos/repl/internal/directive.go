@@ -20,7 +20,7 @@ func NewParser() (*participle.Parser, error) {
 			{Name: "Boolean", Pattern: `(true|false)`},
 			{Name: "String", Pattern: `"[^"]*"`},
 			{Name: "Ident", Pattern: `[a-zA-Z]\w*`},
-			{Name: "Assign", Pattern: `:=`},
+			{Name: "Operator", Pattern: `=`},
 			{Name: "Sep", Pattern: `[,:]`},
 			{Name: "Whitespace", Pattern: `\s+`},
 			{Name: "ListStart", Pattern: `\[`, Action: lexer.Push("List")},
@@ -72,7 +72,7 @@ type REPLDirective struct {
 //nolint:govet
 type LetDirective struct {
 	Name  string `parser:"'let' @Ident"`
-	Value *Value `parser:"':=' @@"`
+	Value *Value `parser:"'=' @@"`
 }
 
 type Value struct {

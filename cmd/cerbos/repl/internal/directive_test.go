@@ -96,7 +96,7 @@ func TestDirectiveParser(t *testing.T) {
 			},
 		},
 		{
-			directive: "let x := true",
+			directive: "let x = true",
 			check: func(t *testing.T, rd *REPLDirective) {
 				t.Helper()
 				checkLetIsDefined(t, rd)
@@ -107,7 +107,7 @@ func TestDirectiveParser(t *testing.T) {
 			},
 		},
 		{
-			directive: "let x := false",
+			directive: "let x = false",
 			check: func(t *testing.T, rd *REPLDirective) {
 				t.Helper()
 				checkLetIsDefined(t, rd)
@@ -118,7 +118,7 @@ func TestDirectiveParser(t *testing.T) {
 			},
 		},
 		{
-			directive: "let num := 25",
+			directive: "let num = 25",
 			check: func(t *testing.T, rd *REPLDirective) {
 				t.Helper()
 				checkLetIsDefined(t, rd)
@@ -129,7 +129,7 @@ func TestDirectiveParser(t *testing.T) {
 			},
 		},
 		{
-			directive: "let num := 25.12",
+			directive: "let num=25.12",
 			check: func(t *testing.T, rd *REPLDirective) {
 				t.Helper()
 				checkLetIsDefined(t, rd)
@@ -140,7 +140,7 @@ func TestDirectiveParser(t *testing.T) {
 			},
 		},
 		{
-			directive: `let str := "wibble wobble"`,
+			directive: `let str = "wibble wobble"`,
 			check: func(t *testing.T, rd *REPLDirective) {
 				t.Helper()
 				checkLetIsDefined(t, rd)
@@ -151,7 +151,7 @@ func TestDirectiveParser(t *testing.T) {
 			},
 		},
 		{
-			directive: `let array := ["wibble", "wobble"]`,
+			directive: `let array = ["wibble", "wobble"]`,
 			check: func(t *testing.T, rd *REPLDirective) {
 				t.Helper()
 				checkLetIsDefined(t, rd)
@@ -165,7 +165,7 @@ func TestDirectiveParser(t *testing.T) {
 			},
 		},
 		{
-			directive: `let array := ["wibble", [true, false], {"k": true}, 12]`,
+			directive: `let array = ["wibble", [true, false], {"k": true}, 12]`,
 			check: func(t *testing.T, rd *REPLDirective) {
 				t.Helper()
 				checkLetIsDefined(t, rd)
@@ -179,7 +179,7 @@ func TestDirectiveParser(t *testing.T) {
 			},
 		},
 		{
-			directive: `let empty_array := []`,
+			directive: `let empty_array = []`,
 			check: func(t *testing.T, rd *REPLDirective) {
 				t.Helper()
 				checkLetIsDefined(t, rd)
@@ -193,7 +193,7 @@ func TestDirectiveParser(t *testing.T) {
 			},
 		},
 		{
-			directive: `let nested_map := {"k1": [true, false], "k2": {"kk1": true}, "k3": 12}`,
+			directive: `let nested_map = {"k1": [true, false], "k2": {"kk1": true}, "k3": 12}`,
 			check: func(t *testing.T, rd *REPLDirective) {
 				t.Helper()
 				checkLetIsDefined(t, rd)
@@ -211,7 +211,7 @@ func TestDirectiveParser(t *testing.T) {
 			},
 		},
 		{
-			directive: `let empty_map := {}`,
+			directive: `let empty_map = {}`,
 			check: func(t *testing.T, rd *REPLDirective) {
 				t.Helper()
 				checkLetIsDefined(t, rd)
@@ -225,7 +225,7 @@ func TestDirectiveParser(t *testing.T) {
 			},
 		},
 		{
-			directive: `let x := $(int(10))`,
+			directive: `let x = $(int(10))`,
 			check: func(t *testing.T, rd *REPLDirective) {
 				t.Helper()
 				checkLetIsDefined(t, rd)
@@ -234,7 +234,7 @@ func TestDirectiveParser(t *testing.T) {
 			},
 		},
 		{
-			directive: `let x := $( "test".indexOf("e"))`,
+			directive: `let x = $( "test".indexOf("e"))`,
 			check: func(t *testing.T, rd *REPLDirective) {
 				t.Helper()
 				checkLetIsDefined(t, rd)
@@ -243,7 +243,7 @@ func TestDirectiveParser(t *testing.T) {
 			},
 		},
 		{
-			directive: `let x := $(1 in [1,2,3])`,
+			directive: `let x = $(1 in [1,2,3])`,
 			check: func(t *testing.T, rd *REPLDirective) {
 				t.Helper()
 				checkLetIsDefined(t, rd)
@@ -252,19 +252,19 @@ func TestDirectiveParser(t *testing.T) {
 			},
 		},
 		{
-			directive: `let := `,
+			directive: `let = `,
 			wantErr:   true,
 		},
 		{
-			directive: `let x := `,
+			directive: `let x = `,
 			wantErr:   true,
 		},
 		{
-			directive: `let x := {"unclosed": true`,
+			directive: `let x = {"unclosed": true`,
 			wantErr:   true,
 		},
 		{
-			directive: `let x := $(()`,
+			directive: `let x = $(()`,
 			wantErr:   true,
 		},
 	}
