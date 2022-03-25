@@ -1,0 +1,61 @@
+# Cerbos REPL
+
+This program provides an interactive environment to quickly develop CEL conditions to be used in Cerbos policies.
+See https://docs.cerbos.dev/cerbos/latest/policies/conditions.html for details of all available CEL functions that
+you can try out here.
+
+Type any valid CEL expression at the prompt and hit enter to evaluate it and output the result.
+
+You can also define variables, inspect current state and perform other special operation using directives.
+Directives are commands prefixed with a colon (":") character. The following directives are available:
+
+  :h                | Show this help
+  :help             | Show this help
+  :let              | Define variables
+  :q                | Exit the program
+  :quit             | Exit the program
+  :reset            | Clear all variables
+  :vars             | View defined variables
+
+## Evaluating CEL conditions
+You can type in any valid CEL expression at the prompt to immediately evaluate it.
+
+  1 + 1             | outputs 2
+  "test".charAt(1)  | outputs "e"
+
+The result of evaluating the last expression is stored in the special variable "_".
+
+  1 + 1             | outputs 2 and sets _ to 2 
+  _ + 5             | outputs 7 and sets _ to 7
+
+
+## Define variables
+You can define variables using the :let directive. These variables can then be used in subsequent expressions.
+
+  :let x = 12       | declares a variable named x with the value set to 12
+  :let y = 1 + 5    | declares a variable named y with the result of evaluating 1 + 5
+  x + y             | outputs 18
+
+You can also use the :let directive to set the special Cerbos variables "request", "request.resource", 
+"request.principal", "R", "P", "variables" and "V". In these cases, the value must be a valid JSON string.
+
+  :let request = {"principal":{"id":"john","roles":["employee"],"attr":{"scope":"foo.bar.baz.qux"}},"resource":{"id":"x1","kind":"leave_request","attr":{"scope":"foo.bar"}}}
+
+  :let P = {"id":"john","roles":["employee"],"attr":{"scope":"foo.bar.baz.qux"}}
+
+
+## View variables
+You can view the currently defined variables by using the :vars directive.
+
+  :vars             | prints all defined variables
+
+
+## Clear state
+You can destroy all variables and reset the REPL with the :reset directive.
+
+  :reset            | removes all variables and reset the REPL state.
+
+
+## Exit the REPL
+
+Type :quit, :q or :exit to exit the REPL.

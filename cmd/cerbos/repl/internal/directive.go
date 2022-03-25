@@ -13,7 +13,7 @@ import (
 func NewParser() (*participle.Parser, error) {
 	lex, err := lexer.New(lexer.Rules{
 		"Root": {
-			{Name: "Ident", Pattern: `[a-zA-Z]\w*`},
+			{Name: "Ident", Pattern: `[a-zA-Z]\w*(\.\w+)*`},
 			{Name: "Assign", Pattern: `=`, Action: lexer.Push("Assign")},
 			{Name: "Whitespace", Pattern: `\s+`},
 		},

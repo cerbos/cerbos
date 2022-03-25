@@ -4,13 +4,17 @@
 package internal
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
 	"reflect"
 	"strings"
 
+	_ "embed"
+
 	participle "github.com/alecthomas/participle/v2"
+	enginev1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
 	"github.com/cerbos/cerbos/internal/conditions"
 	"github.com/cerbos/cerbos/internal/printer"
 	"github.com/cerbos/cerbos/internal/printer/colored"
@@ -22,9 +26,16 @@ import (
 	"github.com/google/cel-go/interpreter"
 	"github.com/peterh/liner"
 	exprpb "google.golang.org/genproto/googleapis/api/expr/v1alpha1"
+	"google.golang.org/protobuf/encoding/protojson"
+	"google.golang.org/protobuf/proto"
 )
 
 var (
+	//go:embed banner.txt
+	banner string
+	//go:embed help.txt
+	helpText string
+
 	errExit        = errors.New("exit")
 	errInvalidExpr = errors.New("invalid expr")
 
@@ -35,25 +46,16 @@ var (
 const (
 	commentPrefix   = '#'
 	directivePrefix = ':'
-	lastResult      = "_"
 	prompt          = "-> "
-
-	banner = `
-                  __              
-  ________  _____/ /_  ____  _____
- / ___/ _ \/ ___/ __ \/ __ \/ ___/
-/ /__/  __/ /  / /_/ / /_/ (__  ) 
-\___/\___/_/  /_.___/\____/____/  
-
-`
 )
 
 type REPL struct {
-	vars    variables
-	decls   map[string]*exprpb.Decl
-	reader  *liner.State
-	parser  *participle.Parser
-	printer *printer.Printer
+	vars        variables
+	decls       map[string]*exprpb.Decl
+	reader      *liner.State
+	parser      *participle.Parser
+	printer     *printer.Printer
+	typeAdapter ref.TypeAdapter
 }
 
 func NewREPL(reader *liner.State, printer *printer.Printer) (*REPL, error) {
@@ -63,9 +65,10 @@ func NewREPL(reader *liner.State, printer *printer.Printer) (*REPL, error) {
 	}
 
 	repl := &REPL{
-		reader:  reader,
-		parser:  parser,
-		printer: printer,
+		reader:      reader,
+		parser:      parser,
+		printer:     printer,
+		typeAdapter: conditions.StdEnv.TypeAdapter(),
 	}
 
 	return repl, repl.reset()
@@ -108,7 +111,7 @@ func (r *REPL) Loop() error {
 		case commentPrefix:
 			continue
 		default:
-			if err := r.processExpr(lastResult, line); err != nil && !errors.Is(err, errInvalidExpr) {
+			if err := r.processExpr(lastResultVar, line); err != nil && !errors.Is(err, errInvalidExpr) {
 				r.printErr("Failed to evaluate expression", err)
 			}
 		}
@@ -134,6 +137,10 @@ func (r *REPL) processDirective(line string) error {
 	case directive.Help:
 		return r.help()
 	case directive.Let != nil:
+		prefix, _, _ := strings.Cut(directive.Let.Name, ".")
+		if _, ok := specialVars[prefix]; ok {
+			return r.setSpecialVar(directive.Let.Name, directive.Let.Expr)
+		}
 		return r.processExpr(directive.Let.Name, directive.Let.Expr)
 	default:
 		return fmt.Errorf("unknown directive %q", line)
@@ -141,15 +148,91 @@ func (r *REPL) processDirective(line string) error {
 }
 
 func (r *REPL) reset() error {
-	r.vars = variables{lastResult: types.NullValue}
-	r.decls = map[string]*exprpb.Decl{lastResult: decls.NewVar(lastResult, decls.Dyn)}
+	r.vars, r.decls = resetVarsAndDecls()
 
 	return nil
 }
 
 func (r *REPL) help() error {
-	r.printer.Println("HELP")
+	r.printer.Println(helpText)
 	r.printer.Println()
+	return nil
+}
+
+func (r *REPL) setSpecialVar(name, value string) error {
+	switch name {
+	case lastResultVar:
+		return fmt.Errorf("%s is a read-only variable", lastResultVar)
+
+	case conditions.CELRequestIdent:
+		request := &enginev1.CheckInput{}
+		if err := protojson.Unmarshal([]byte(value), request); err != nil {
+			return fmt.Errorf("failed to unmarhsal JSON as %q: %w", name, err)
+		}
+
+		requestVal := r.typeAdapter.NativeToValue(request)
+		r.printResult(name, requestVal)
+
+		r.vars[conditions.CELRequestIdent] = requestVal
+		r.vars[conditions.CELPrincipalAbbrev] = r.typeAdapter.NativeToValue(request.Principal)
+		r.vars[conditions.CELResourceAbbrev] = r.typeAdapter.NativeToValue(request.Resource)
+
+	case conditions.CELPrincipalAbbrev, qualifiedPrincipal:
+		request, err := getCheckInput(r.vars)
+		if err != nil {
+			return err
+		}
+
+		principal := &enginev1.Principal{}
+		if err := protojson.Unmarshal([]byte(value), principal); err != nil {
+			return fmt.Errorf("failed to unmarhsal JSON as %q: %w", name, err)
+		}
+
+		request.Principal = principal
+
+		principalVal := r.typeAdapter.NativeToValue(request.Principal)
+		r.printResult(name, principalVal)
+
+		r.vars[conditions.CELRequestIdent] = r.typeAdapter.NativeToValue(request)
+		r.vars[conditions.CELPrincipalAbbrev] = principalVal
+		r.vars[conditions.CELResourceAbbrev] = r.typeAdapter.NativeToValue(request.Resource)
+
+	case conditions.CELResourceAbbrev, qualifiedResource:
+		request, err := getCheckInput(r.vars)
+		if err != nil {
+			return err
+		}
+
+		resource := &enginev1.Resource{}
+		if err := protojson.Unmarshal([]byte(value), resource); err != nil {
+			return fmt.Errorf("failed to unmarhsal JSON as %q: %w", name, err)
+		}
+
+		request.Resource = resource
+
+		resourceVal := r.typeAdapter.NativeToValue(request.Resource)
+		r.printResult(name, resourceVal)
+
+		r.vars[conditions.CELRequestIdent] = r.typeAdapter.NativeToValue(request)
+		r.vars[conditions.CELPrincipalAbbrev] = r.typeAdapter.NativeToValue(request.Principal)
+		r.vars[conditions.CELResourceAbbrev] = resourceVal
+
+	case conditions.CELVariablesIdent, conditions.CELVariablesAbbrev:
+		var v map[string]interface{}
+		if err := json.Unmarshal([]byte(value), &v); err != nil {
+			return fmt.Errorf("failed to unmarshal JSON as %q: %w", name, err)
+		}
+
+		varsVal := r.typeAdapter.NativeToValue(v)
+		r.printResult(name, varsVal)
+
+		r.vars[conditions.CELVariablesIdent] = varsVal
+		r.vars[conditions.CELVariablesAbbrev] = varsVal
+
+	default:
+		return fmt.Errorf("setting %q is unsupported", name)
+	}
+
 	return nil
 }
 
@@ -233,7 +316,13 @@ func (r *REPL) printResult(name string, value ref.Val) {
 		}
 	}
 
-	r.printer.Printf("%+v\n", value.Value())
+	goVal := value.Value()
+	if v, ok := goVal.(proto.Message); ok {
+		r.printer.PrintProtoJSON(v, false)
+	} else {
+		r.printJSON(goVal)
+	}
+
 	r.printer.Println()
 }
 
