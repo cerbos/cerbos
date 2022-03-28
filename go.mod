@@ -20,7 +20,7 @@ require (
 	github.com/fergusstrange/embedded-postgres v1.15.0
 	github.com/gdamore/tcell/v2 v2.4.0
 	github.com/ghodss/yaml v1.0.0
-	github.com/go-cmd/cmd v1.4.0
+	github.com/go-cmd/cmd v1.4.1
 	github.com/go-git/go-git/v5 v5.4.2
 	github.com/go-sql-driver/mysql v1.6.0
 	github.com/gobwas/glob v0.2.3
