@@ -241,12 +241,12 @@ func (cas *CerbosAdminService) ReloadStore(ctx context.Context, _ *requestv1.Rel
 		return nil, err
 	}
 
-	_, err, shared := sfGroup.Do("reload", func() (interface{}, error) {
-		rs, ok := cas.store.(storage.ReloadableStore)
-		if !ok {
-			return nil, status.Error(codes.Unimplemented, "Configured store is not reloadable")
-		}
+	rs, ok := cas.store.(storage.ReloadableStore)
+	if !ok {
+		return nil, status.Error(codes.Unimplemented, "Configured store is not reloadable")
+	}
 
+	_, err, shared := sfGroup.Do("admin_reload", func() (interface{}, error) {
 		if err := rs.Reload(ctx); err != nil {
 			log.Error("Failed to reload the store", zap.Error(err))
 			return nil, status.Errorf(codes.Internal, "Failed to reload the store")

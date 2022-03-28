@@ -24,7 +24,7 @@ import (
 	"github.com/cerbos/cerbos/internal/test"
 )
 
-var (
+const (
 	minioUsername = "minioadmin"
 	minioPassword = "minioadmin"
 	bucketName    = "test"

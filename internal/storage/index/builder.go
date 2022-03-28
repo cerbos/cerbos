@@ -71,12 +71,18 @@ func WithRootDir(rootDir string) BuildOpt {
 	}
 }
 
-// Build builds an index from the policy files stored in a directory.
-func Build(ctx context.Context, fsys fs.FS, opts ...BuildOpt) (Index, error) {
+func mkBuildOpts(opts ...BuildOpt) buildOptions {
 	o := buildOptions{rootDir: "."}
 	for _, optFn := range opts {
 		optFn(&o)
 	}
+
+	return o
+}
+
+// Build builds an index from the policy files stored in a directory.
+func Build(ctx context.Context, fsys fs.FS, opts ...BuildOpt) (Index, error) {
+	o := mkBuildOpts(opts...)
 
 	if err := checkValidDir(fsys, o.rootDir); err != nil {
 		return nil, err
@@ -136,7 +142,7 @@ func Build(ctx context.Context, fsys fs.FS, opts ...BuildOpt) (Index, error) {
 		return nil, err
 	}
 
-	return ib.build(fsys, o.rootDir)
+	return ib.build(fsys, opts...)
 }
 
 type indexBuilder struct {
@@ -232,7 +238,7 @@ func (idx *indexBuilder) addDep(child, parent namer.ModuleID) {
 	idx.dependents[parent][child] = struct{}{}
 }
 
-func (idx *indexBuilder) build(fsys fs.FS, rootDir string) (*index, error) {
+func (idx *indexBuilder) build(fsys fs.FS, opts ...BuildOpt) (*index, error) {
 	logger := zap.L().Named("index")
 
 	nErr := len(idx.missing) + len(idx.duplicates) + len(idx.loadFailures) + len(idx.missingScopes)
@@ -275,8 +281,8 @@ func (idx *indexBuilder) build(fsys fs.FS, rootDir string) (*index, error) {
 		fileToModID:  idx.fileToModID,
 		dependents:   idx.dependents,
 		dependencies: idx.dependencies,
-		rootDir:      rootDir,
-		schemaLoader: NewSchemaLoader(fsys, rootDir),
+		buildOpts:    opts,
+		schemaLoader: NewSchemaLoader(fsys, mkBuildOpts(opts...).rootDir),
 		stats:        idx.stats.collate(),
 	}, nil
 }

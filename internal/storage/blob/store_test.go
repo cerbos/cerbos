@@ -80,11 +80,7 @@ func TestReloadable(t *testing.T) {
 	t.Setenv("AWS_SECRET_ACCESS_KEY", minioPassword)
 
 	dir := t.TempDir()
-	store, bucket := mkStore(t, dir, false)
-	internal.TestSuiteReloadable(store, mkAddFn(t, bucket), mkDeleteFn(t, bucket))(t)
-
-	dir = t.TempDir()
-	store, bucket = mkStore(t, dir, true)
+	store, bucket := mkStore(t, dir)
 	internal.TestSuiteReloadable(store, mkAddFn(t, bucket), mkDeleteFn(t, bucket))(t)
 }
 
@@ -116,11 +112,11 @@ func mkAddFn(t *testing.T, bucket *blob.Bucket) internal.MutateStoreFn {
 	}
 }
 
-func mkStore(t *testing.T, dir string, watchForChanges bool) (*Store, *blob.Bucket) {
+func mkStore(t *testing.T, dir string) (*Store, *blob.Bucket) {
 	t.Helper()
 
 	endpoint := startMinio(context.Background(), t, bucketName)
-	conf := mkConf(t, dir, bucketName, endpoint, watchForChanges)
+	conf := mkConf(t, dir, bucketName, endpoint)
 	bucket, err := newBucket(context.Background(), conf)
 	require.NoError(t, err)
 	cloner, err := NewCloner(bucket, storeFS{dir})
@@ -131,17 +127,11 @@ func mkStore(t *testing.T, dir string, watchForChanges bool) (*Store, *blob.Buck
 	return store, bucket
 }
 
-func mkConf(t *testing.T, dir, bucketName, endpoint string, watchForChanges bool) *Conf {
+func mkConf(t *testing.T, dir, bucketName, endpoint string) *Conf {
 	t.Helper()
-
-	upi := 2 * time.Second
-	if !watchForChanges {
-		upi = 0
-	}
 
 	conf := &Conf{WorkDir: dir}
 	conf.SetDefaults()
-	conf.UpdatePollInterval = upi
 	conf.Bucket = MinioBucketURL(bucketName, endpoint)
 
 	return conf

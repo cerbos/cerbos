@@ -23,7 +23,6 @@ import (
 	"github.com/cerbos/cerbos/internal/policy"
 	"github.com/cerbos/cerbos/internal/schema"
 	"github.com/cerbos/cerbos/internal/storage"
-	"github.com/cerbos/cerbos/internal/util"
 )
 
 var (
@@ -63,10 +62,10 @@ type index struct {
 	dependents   map[namer.ModuleID]map[namer.ModuleID]struct{}
 	dependencies map[namer.ModuleID]map[namer.ModuleID]struct{}
 	modIDToFile  map[namer.ModuleID]string
-	rootDir      string
 	schemaLoader *SchemaLoader
 	sfGroup      singleflight.Group
 	stats        storage.RepoStats
+	buildOpts    []BuildOpt
 	mu           sync.RWMutex
 }
 
@@ -439,61 +438,14 @@ func (idx *index) RepoStats(_ context.Context) storage.RepoStats {
 func (idx *index) Reload(ctx context.Context) ([]storage.Event, error) {
 	log := ctxzap.Extract(ctx).Sugar()
 	ievts, err, shared := idx.sfGroup.Do("reload", func() (interface{}, error) {
-		ib := newIndexBuilder()
-		err := fs.WalkDir(idx.fsys, idx.rootDir, func(path string, d fs.DirEntry, err error) error {
-			if err := ctx.Err(); err != nil {
-				return err
-			}
-
-			if err != nil {
-				return err
-			}
-
-			if d.IsDir() {
-				switch d.Name() {
-				case util.TestDataDirectory:
-					return fs.SkipDir
-				case schema.Directory:
-					return fs.SkipDir
-				default:
-					return nil
-				}
-			}
-
-			if !util.IsSupportedFileType(d.Name()) {
-				return nil
-			}
-
-			if util.IsSupportedTestFile(d.Name()) {
-				return nil
-			}
-
-			p := &policyv1.Policy{}
-			if err := util.LoadFromJSONOrYAML(idx.fsys, path, p); err != nil {
-				ib.addLoadFailure(path, err)
-				return nil
-			}
-
-			if err := policy.Validate(p); err != nil {
-				ib.addLoadFailure(path, err)
-				return nil
-			}
-
-			if p.Disabled {
-				ib.addDisabled(path)
-				return nil
-			}
-
-			ib.addPolicy(path, policy.Wrap(policy.WithMetadata(p, path, nil, path)))
-
-			return nil
-		})
+		idxIface, err := Build(ctx, idx.fsys, idx.buildOpts...)
 		if err != nil {
+			log.Error("Failed to build index while re-indexing")
 			return nil, err
 		}
 
-		newIdx, err := ib.build(idx.fsys, idx.rootDir)
-		if err != nil {
+		newIdx, ok := idxIface.(*index)
+		if !ok {
 			return nil, err
 		}
 

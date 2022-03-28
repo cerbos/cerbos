@@ -7,7 +7,6 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"io/fs"
 	"io/ioutil"
 	"os"
 	"path"
@@ -16,28 +15,21 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/cerbos/cerbos/internal/schema"
 	"github.com/cerbos/cerbos/internal/storage/internal"
 	"github.com/cerbos/cerbos/internal/test"
-	"github.com/cerbos/cerbos/internal/util"
 )
 
 func TestReloadable(t *testing.T) {
 	storeDir := t.TempDir()
-	store := mkStore(t, storeDir, false)
-
-	watchingStoreDir := t.TempDir()
-	watchingStore := mkStore(t, watchingStoreDir, true)
+	store := mkStore(t, storeDir)
 
 	internal.TestSuiteReloadable(store, mkAddFn(t, storeDir), mkDeleteFn(t, storeDir))(t)
-	internal.TestSuiteReloadable(watchingStore, mkAddFn(t, watchingStoreDir), mkDeleteFn(t, watchingStoreDir))(t)
 }
 
-func mkStore(t *testing.T, dir string, watchForChanges bool) *Store {
+func mkStore(t *testing.T, dir string) *Store {
 	t.Helper()
 
-	mkDirs(t, dir)
-	store, err := NewStore(context.Background(), &Conf{Directory: dir, WatchForChanges: watchForChanges})
+	store, err := NewStore(context.Background(), &Conf{Directory: dir})
 	require.NoError(t, err)
 
 	return store
@@ -65,29 +57,21 @@ func mkDeleteFn(t *testing.T, storeDir string) internal.MutateStoreFn {
 func mkAddFn(t *testing.T, storeDir string) internal.MutateStoreFn {
 	t.Helper()
 
-	policiesDir := test.PathToDir(t, "store")
 	return func() error {
-		err := filepath.WalkDir(policiesDir, func(path string, d fs.DirEntry, err error) error {
-			if err != nil {
-				return err
-			}
-
-			if d.IsDir() {
-				switch d.Name() {
-				case util.TestDataDirectory:
-					return fs.SkipDir
-				default:
-					return nil
-				}
-			}
-
+		err := test.FindPolicyFiles(t, "store", func(path string) error {
 			in, err := os.Open(path)
 			if err != nil {
 				return err
 			}
 			defer in.Close()
 
-			out, err := os.Create(filepath.Join(storeDir, filepath.Base(filepath.Dir(path)), filepath.Base(path)))
+			pathToFile := filepath.Join(storeDir, filepath.Base(filepath.Dir(path)), filepath.Base(path))
+			err = os.MkdirAll(filepath.Dir(pathToFile), 0o744)
+			if err != nil {
+				return err
+			}
+
+			out, err := os.Create(pathToFile)
 			if err != nil {
 				return err
 			}
@@ -106,19 +90,4 @@ func mkAddFn(t *testing.T, storeDir string) internal.MutateStoreFn {
 
 		return nil
 	}
-}
-
-func mkDirs(t *testing.T, storeDir string) {
-	t.Helper()
-
-	err := os.Mkdir(filepath.Join(storeDir, schema.Directory), os.ModePerm)
-	require.NoError(t, err)
-	err = os.Mkdir(filepath.Join(storeDir, "derived_roles"), os.ModePerm)
-	require.NoError(t, err)
-	err = os.Mkdir(filepath.Join(storeDir, "principal_policies"), os.ModePerm)
-	require.NoError(t, err)
-	err = os.Mkdir(filepath.Join(storeDir, "resource_policies"), os.ModePerm)
-	require.NoError(t, err)
-	err = os.Mkdir(filepath.Join(storeDir, "tests"), os.ModePerm)
-	require.NoError(t, err)
 }

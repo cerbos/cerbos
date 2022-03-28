@@ -110,9 +110,7 @@ func (s *Store) Reload(ctx context.Context) error {
 		return fmt.Errorf("failed to reload the index: %w", err)
 	}
 
-	for _, evt := range evts {
-		s.NotifySubscribers(evt)
-	}
+	s.NotifySubscribers(evts...)
 
 	return nil
 }
