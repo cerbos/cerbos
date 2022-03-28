@@ -267,3 +267,28 @@ curl -k -u cerbos:cerbosAdmin -X DELETE \
 ----
 {}
 ----
+
+[#store-management]
+== Store Management
+
+=== Reload store
+
+----
+POST /admin/store/reload
+----
+
+Issue a POST request to the endpoint to reload the store.
+
+[source,shell]
+----
+curl -k -u cerbos:cerbosAdmin -X POST \
+    'https://localhost:3592/admin/store/reload'
+----
+
+.Response
+[source,json,linenums]
+----
+{}
+----
+
+NOTE: This endpoint requires a reloadable storage driver such as xref:configuration:storage.adoc#blob[blob], xref:configuration:storage.adoc#disk[disk] and xref:configuration:storage.adoc#git[git] to be configured.

@@ -4,6 +4,7 @@ include::ROOT:partial$attributes.adoc[]
 
 Cerbos supports multiple backends for storing policies. Which storage driver to use is defined by the `driver` setting.
 
+[#disk]
 == Disk driver
 
 The disk driver is a way to serve the policies from a directory on the filesystem. Any `.yaml`, `.yml` or `.json` files in the directory tree rooted at the given path will be read and parsed as policies.
@@ -32,6 +33,7 @@ storage:
 CAUTION: On some platforms the automatic change detection feature can be inefficient and resource-intensive if the watched directory contains many files or gets updated frequently.
 
 [id="blob-driver"]
+[#blob]
 == Blob driver
 
 Cerbos policies can be stored in AWS S3, Google Cloud Storage, or any other S3-compatible storage systems such as link:https://www.minio.io[Minio].
@@ -86,6 +88,7 @@ storage:
     workDir: ${HOME}/tmp/cerbos/work
     updatePollInterval: 10s
 ----
+[#git]
 == Git driver
 
 Git is the preferred method of storing Cerbos policies. The server is smart enough to detect when new commits are made to the git repository and refresh its state based on the changes.
