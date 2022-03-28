@@ -38,7 +38,7 @@ require (
 	github.com/jackc/pgx/v4 v4.15.0
 	github.com/jdxcode/netrc v0.0.0-20210204082910-926c7f70242a
 	github.com/jmoiron/sqlx v1.3.4
-	github.com/jwalton/gchalk v1.2.1
+	github.com/jwalton/gchalk v1.3.0
 	github.com/jwalton/go-supportscolor v1.1.0
 	github.com/kavu/go_reuseport v1.5.0
 	github.com/lestrrat-go/jwx v1.2.20
