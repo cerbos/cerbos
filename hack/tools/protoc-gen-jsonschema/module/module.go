@@ -8,8 +8,9 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/cerbos/cerbos/hack/tools/protoc-gen-jsonschema/jsonschema"
 	pgs "github.com/lyft/protoc-gen-star"
+
+	"github.com/cerbos/cerbos/hack/tools/protoc-gen-jsonschema/jsonschema"
 )
 
 type Module struct {

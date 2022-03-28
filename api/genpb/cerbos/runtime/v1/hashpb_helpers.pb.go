@@ -4,15 +4,17 @@
 package runtimev1
 
 import (
-	v1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
+	hash "hash"
+	math "math"
+	sort "sort"
+
 	v1alpha1 "google.golang.org/genproto/googleapis/api/expr/v1alpha1"
 	protowire "google.golang.org/protobuf/encoding/protowire"
 	durationpb "google.golang.org/protobuf/types/known/durationpb"
 	emptypb "google.golang.org/protobuf/types/known/emptypb"
 	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
-	hash "hash"
-	math "math"
-	sort "sort"
+
+	v1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
 )
 
 func cerbos_policy_v1_Schemas_IgnoreWhen_hashpb_sum(m *v1.Schemas_IgnoreWhen, hasher hash.Hash, ignore map[string]struct{}) {

@@ -10,6 +10,7 @@ import (
 	_ "github.com/bojand/ghz/cmd/ghz"
 	_ "github.com/bufbuild/buf/cmd/buf"
 	_ "github.com/cerbos/protoc-gen-go-hashpb"
+	_ "github.com/daixiang0/gci"
 	_ "github.com/envoyproxy/protoc-gen-validate"
 	_ "github.com/fullstorydev/grpcurl/cmd/grpcurl"
 	_ "github.com/golangci/golangci-lint/cmd/golangci-lint"

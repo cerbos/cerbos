@@ -13,7 +13,6 @@ import (
 	"io"
 	"net/http"
 
-	"github.com/cerbos/cerbos/api/genpb/cerbos/request/v1"
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"github.com/grpc-ecosystem/grpc-gateway/v2/utilities"
 	"google.golang.org/grpc"
@@ -22,6 +21,8 @@ import (
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/proto"
+
+	"github.com/cerbos/cerbos/api/genpb/cerbos/request/v1"
 )
 
 // Suppress "imported and not used" errors

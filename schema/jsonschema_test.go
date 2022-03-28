@@ -10,13 +10,14 @@ import (
 	"strings"
 	"testing"
 
-	effectv1 "github.com/cerbos/cerbos/api/genpb/cerbos/effect/v1"
-	"github.com/cerbos/cerbos/internal/test"
 	"github.com/santhosh-tekuri/jsonschema/v5"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"
+
+	effectv1 "github.com/cerbos/cerbos/api/genpb/cerbos/effect/v1"
+	"github.com/cerbos/cerbos/internal/test"
 )
 
 func TestJSONSchemasAreValid(t *testing.T) {

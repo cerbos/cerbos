@@ -4,13 +4,15 @@
 package policyv1
 
 import (
-	v1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
-	protowire "google.golang.org/protobuf/encoding/protowire"
-	structpb "google.golang.org/protobuf/types/known/structpb"
-	wrapperspb "google.golang.org/protobuf/types/known/wrapperspb"
 	hash "hash"
 	math "math"
 	sort "sort"
+
+	protowire "google.golang.org/protobuf/encoding/protowire"
+	structpb "google.golang.org/protobuf/types/known/structpb"
+	wrapperspb "google.golang.org/protobuf/types/known/wrapperspb"
+
+	v1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
 )
 
 func cerbos_engine_v1_AuxData_hashpb_sum(m *v1.AuxData, hasher hash.Hash, ignore map[string]struct{}) {

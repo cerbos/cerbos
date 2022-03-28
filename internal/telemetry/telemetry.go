@@ -16,6 +16,15 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/google/uuid"
+	"github.com/spf13/afero"
+	"go.uber.org/multierr"
+	"go.uber.org/zap"
+	"google.golang.org/protobuf/encoding/protojson"
+	"google.golang.org/protobuf/types/known/durationpb"
+	"google.golang.org/protobuf/types/known/timestamppb"
+	analytics "gopkg.in/segmentio/analytics-go.v3"
+
 	statev1 "github.com/cerbos/cerbos/api/genpb/cerbos/state/v1"
 	telemetryv1 "github.com/cerbos/cerbos/api/genpb/cerbos/telemetry/v1"
 	"github.com/cerbos/cerbos/internal/audit"
@@ -26,14 +35,6 @@ import (
 	"github.com/cerbos/cerbos/internal/storage/disk"
 	"github.com/cerbos/cerbos/internal/storage/git"
 	"github.com/cerbos/cerbos/internal/util"
-	"github.com/google/uuid"
-	"github.com/spf13/afero"
-	"go.uber.org/multierr"
-	"go.uber.org/zap"
-	"google.golang.org/protobuf/encoding/protojson"
-	"google.golang.org/protobuf/types/known/durationpb"
-	"google.golang.org/protobuf/types/known/timestamppb"
-	analytics "gopkg.in/segmentio/analytics-go.v3"
 )
 
 const (

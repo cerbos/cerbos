@@ -10,7 +10,6 @@ import (
 	"time"
 
 	"github.com/alecthomas/kong"
-
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 

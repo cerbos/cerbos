@@ -4,9 +4,10 @@
 package statev1
 
 import (
+	hash "hash"
+
 	protowire "google.golang.org/protobuf/encoding/protowire"
 	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
-	hash "hash"
 )
 
 func cerbos_state_v1_TelemetryState_hashpb_sum(m *TelemetryState, hasher hash.Hash, ignore map[string]struct{}) {

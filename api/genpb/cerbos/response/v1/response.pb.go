@@ -10,17 +10,19 @@
 package responsev1
 
 import (
-	v11 "github.com/cerbos/cerbos/api/genpb/cerbos/audit/v1"
-	v13 "github.com/cerbos/cerbos/api/genpb/cerbos/effect/v1"
-	v1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
-	v12 "github.com/cerbos/cerbos/api/genpb/cerbos/schema/v1"
+	reflect "reflect"
+	sync "sync"
+
 	_ "github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-openapiv2/options"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	emptypb "google.golang.org/protobuf/types/known/emptypb"
 	structpb "google.golang.org/protobuf/types/known/structpb"
-	reflect "reflect"
-	sync "sync"
+
+	v11 "github.com/cerbos/cerbos/api/genpb/cerbos/audit/v1"
+	v13 "github.com/cerbos/cerbos/api/genpb/cerbos/effect/v1"
+	v1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
+	v12 "github.com/cerbos/cerbos/api/genpb/cerbos/schema/v1"
 )
 
 const (

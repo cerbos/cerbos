@@ -12,9 +12,7 @@ import (
 	mock "github.com/stretchr/testify/mock"
 
 	namer "github.com/cerbos/cerbos/internal/namer"
-
 	policy "github.com/cerbos/cerbos/internal/policy"
-
 	storage "github.com/cerbos/cerbos/internal/storage"
 )
 

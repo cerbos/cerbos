@@ -17,11 +17,11 @@ import (
 
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/jmoiron/sqlx"
+	"github.com/ory/dockertest/v3"
 	"github.com/stretchr/testify/require"
 
 	"github.com/cerbos/cerbos/internal/storage/db/internal"
 	"github.com/cerbos/cerbos/internal/storage/db/mysql"
-	"github.com/ory/dockertest/v3"
 )
 
 //go:embed schema.sql

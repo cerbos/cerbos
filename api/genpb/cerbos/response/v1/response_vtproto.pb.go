@@ -6,16 +6,18 @@ package responsev1
 
 import (
 	fmt "fmt"
-	v13 "github.com/cerbos/cerbos/api/genpb/cerbos/audit/v1"
-	v1 "github.com/cerbos/cerbos/api/genpb/cerbos/effect/v1"
-	v12 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
-	v11 "github.com/cerbos/cerbos/api/genpb/cerbos/schema/v1"
+	io "io"
+	bits "math/bits"
+
 	proto "google.golang.org/protobuf/proto"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	emptypb "google.golang.org/protobuf/types/known/emptypb"
 	structpb "google.golang.org/protobuf/types/known/structpb"
-	io "io"
-	bits "math/bits"
+
+	v13 "github.com/cerbos/cerbos/api/genpb/cerbos/audit/v1"
+	v1 "github.com/cerbos/cerbos/api/genpb/cerbos/effect/v1"
+	v12 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
+	v11 "github.com/cerbos/cerbos/api/genpb/cerbos/schema/v1"
 )
 
 const (

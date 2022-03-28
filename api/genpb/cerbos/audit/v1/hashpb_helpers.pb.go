@@ -4,14 +4,16 @@
 package auditv1
 
 import (
-	v1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
-	v11 "github.com/cerbos/cerbos/api/genpb/cerbos/schema/v1"
-	protowire "google.golang.org/protobuf/encoding/protowire"
-	structpb "google.golang.org/protobuf/types/known/structpb"
-	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
 	hash "hash"
 	math "math"
 	sort "sort"
+
+	protowire "google.golang.org/protobuf/encoding/protowire"
+	structpb "google.golang.org/protobuf/types/known/structpb"
+	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
+
+	v1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
+	v11 "github.com/cerbos/cerbos/api/genpb/cerbos/schema/v1"
 )
 
 func cerbos_audit_v1_AccessLogEntry_hashpb_sum(m *AccessLogEntry, hasher hash.Hash, ignore map[string]struct{}) {

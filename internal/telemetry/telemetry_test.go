@@ -9,12 +9,13 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cerbos/cerbos/internal/test/mocks"
 	"github.com/spf13/afero"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/types/known/timestamppb"
+
+	"github.com/cerbos/cerbos/internal/test/mocks"
 )
 
 func TestState(t *testing.T) {

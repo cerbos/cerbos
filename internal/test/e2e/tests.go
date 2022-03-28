@@ -10,10 +10,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cerbos/cerbos/internal/server"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
+
+	"github.com/cerbos/cerbos/internal/server"
 )
 
 const (

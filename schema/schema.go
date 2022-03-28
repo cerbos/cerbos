@@ -4,7 +4,6 @@
 package schema
 
 import (
-
 	// signal to the compiler that files need to be embedded.
 	_ "embed"
 	"io"

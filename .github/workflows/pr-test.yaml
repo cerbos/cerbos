@@ -48,6 +48,9 @@ jobs:
       - name: Generate
         run: make generate
 
+      - name: Lint
+        run: make lint
+
       - name: Check repo status
         run: |-
           REPO_STATUS="$(git status --porcelain)"

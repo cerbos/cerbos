@@ -3,6 +3,7 @@ TOOLS_BIN_DIR := $(abspath $(XDG_CACHE_HOME)/cerbos/bin)
 TOOLS_MOD := tools/go.mod
 
 BUF := $(TOOLS_BIN_DIR)/buf
+GCI := $(TOOLS_BIN_DIR)/gci
 GHZ := $(TOOLS_BIN_DIR)/ghz
 GOLANGCI_LINT := $(TOOLS_BIN_DIR)/golangci-lint
 GO_LICENSES := $(TOOLS_BIN_DIR)/go-licenses
@@ -106,7 +107,10 @@ $(TOOLS_BIN_DIR):
 $(BUF): $(TOOLS_BIN_DIR) 
 	@ GOBIN=$(TOOLS_BIN_DIR) go install -modfile=$(TOOLS_MOD) github.com/bufbuild/buf/cmd/buf
 
-$(GHZ): $(TOOLS_BIN_DIR) 
+$(GCI): $(TOOLS_BIN_DIR)
+	@ GOBIN=$(TOOLS_BIN_DIR) go install -modfile=$(TOOLS_MOD) github.com/daixiang0/gci
+
+$(GHZ): $(TOOLS_BIN_DIR)
 	@ GOBIN=$(TOOLS_BIN_DIR) go install -modfile=$(TOOLS_MOD) github.com/bojand/ghz/cmd/ghz@latest
 
 $(GO_LICENSES): $(TOOLS_BIN_DIR)

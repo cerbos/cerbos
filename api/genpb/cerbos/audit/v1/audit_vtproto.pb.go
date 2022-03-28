@@ -6,12 +6,14 @@ package auditv1
 
 import (
 	fmt "fmt"
-	v1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
+	io "io"
+	bits "math/bits"
+
 	proto "google.golang.org/protobuf/proto"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
-	io "io"
-	bits "math/bits"
+
+	v1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
 )
 
 const (

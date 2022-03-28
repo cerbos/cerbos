@@ -6,10 +6,11 @@ package tracer
 import (
 	"encoding/json"
 
-	effectv1 "github.com/cerbos/cerbos/api/genpb/cerbos/effect/v1"
-	enginev1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/types/known/structpb"
+
+	effectv1 "github.com/cerbos/cerbos/api/genpb/cerbos/effect/v1"
+	enginev1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
 )
 
 type Context interface {

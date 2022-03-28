@@ -8,7 +8,6 @@ import (
 	"fmt"
 
 	"github.com/doug-martin/goqu/v9"
-
 	// Import the postgres dialect.
 	_ "github.com/doug-martin/goqu/v9/dialect/postgres"
 	"github.com/jackc/pgx/v4"

@@ -11,7 +11,6 @@ import (
 	"fmt"
 
 	"github.com/doug-martin/goqu/v9"
-
 	// import sqlite3 dialect.
 	_ "github.com/doug-martin/goqu/v9/dialect/sqlite3"
 	migrate "github.com/golang-migrate/migrate/v4"

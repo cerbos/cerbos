@@ -7,12 +7,13 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/cerbos/cerbos/hack/tools/protoc-gen-jsonschema/jsonschema"
 	"github.com/envoyproxy/protoc-gen-validate/validate"
 	pgs "github.com/lyft/protoc-gen-star"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"
 	duration "google.golang.org/protobuf/types/known/durationpb"
+
+	"github.com/cerbos/cerbos/hack/tools/protoc-gen-jsonschema/jsonschema"
 )
 
 type wellKnownType pgs.WellKnownType

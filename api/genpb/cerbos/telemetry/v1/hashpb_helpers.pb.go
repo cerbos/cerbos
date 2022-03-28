@@ -4,11 +4,12 @@
 package telemetryv1
 
 import (
-	protowire "google.golang.org/protobuf/encoding/protowire"
-	durationpb "google.golang.org/protobuf/types/known/durationpb"
 	hash "hash"
 	math "math"
 	sort "sort"
+
+	protowire "google.golang.org/protobuf/encoding/protowire"
+	durationpb "google.golang.org/protobuf/types/known/durationpb"
 )
 
 func cerbos_telemetry_v1_Ping_Cerbos_hashpb_sum(m *Ping_Cerbos, hasher hash.Hash, ignore map[string]struct{}) {

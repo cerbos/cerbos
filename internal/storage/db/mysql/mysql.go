@@ -14,7 +14,6 @@ import (
 	"os"
 
 	"github.com/doug-martin/goqu/v9"
-
 	// Import the MySQL dialect.
 	_ "github.com/doug-martin/goqu/v9/dialect/mysql"
 	"github.com/go-sql-driver/mysql"

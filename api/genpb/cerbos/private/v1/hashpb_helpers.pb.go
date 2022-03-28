@@ -4,18 +4,20 @@
 package privatev1
 
 import (
+	hash "hash"
+	math "math"
+	sort "sort"
+
+	protowire "google.golang.org/protobuf/encoding/protowire"
+	emptypb "google.golang.org/protobuf/types/known/emptypb"
+	structpb "google.golang.org/protobuf/types/known/structpb"
+	wrapperspb "google.golang.org/protobuf/types/known/wrapperspb"
+
 	v1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
 	v11 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
 	v12 "github.com/cerbos/cerbos/api/genpb/cerbos/request/v1"
 	v13 "github.com/cerbos/cerbos/api/genpb/cerbos/response/v1"
 	v14 "github.com/cerbos/cerbos/api/genpb/cerbos/schema/v1"
-	protowire "google.golang.org/protobuf/encoding/protowire"
-	emptypb "google.golang.org/protobuf/types/known/emptypb"
-	structpb "google.golang.org/protobuf/types/known/structpb"
-	wrapperspb "google.golang.org/protobuf/types/known/wrapperspb"
-	hash "hash"
-	math "math"
-	sort "sort"
 )
 
 func cerbos_engine_v1_AuxData_hashpb_sum(m *v1.AuxData, hasher hash.Hash, ignore map[string]struct{}) {

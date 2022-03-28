@@ -6,16 +6,18 @@ package privatev1
 
 import (
 	fmt "fmt"
+	io "io"
+	bits "math/bits"
+
+	proto "google.golang.org/protobuf/proto"
+	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
+	structpb "google.golang.org/protobuf/types/known/structpb"
+
 	v1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
 	v13 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
 	v11 "github.com/cerbos/cerbos/api/genpb/cerbos/request/v1"
 	v12 "github.com/cerbos/cerbos/api/genpb/cerbos/response/v1"
 	v14 "github.com/cerbos/cerbos/api/genpb/cerbos/schema/v1"
-	proto "google.golang.org/protobuf/proto"
-	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
-	structpb "google.golang.org/protobuf/types/known/structpb"
-	io "io"
-	bits "math/bits"
 )
 
 const (

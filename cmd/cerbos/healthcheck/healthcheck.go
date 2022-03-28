@@ -16,14 +16,15 @@ import (
 	"time"
 
 	"github.com/alecthomas/kong"
-	svcv1 "github.com/cerbos/cerbos/api/genpb/cerbos/svc/v1"
-	"github.com/cerbos/cerbos/internal/config"
-	"github.com/cerbos/cerbos/internal/server"
-	"github.com/cerbos/cerbos/internal/util"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/local"
 	healthpb "google.golang.org/grpc/health/grpc_health_v1"
+
+	svcv1 "github.com/cerbos/cerbos/api/genpb/cerbos/svc/v1"
+	"github.com/cerbos/cerbos/internal/config"
+	"github.com/cerbos/cerbos/internal/server"
+	"github.com/cerbos/cerbos/internal/util"
 )
 
 const (

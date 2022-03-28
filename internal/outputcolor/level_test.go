@@ -9,9 +9,10 @@ import (
 	"testing"
 
 	"github.com/alecthomas/kong"
-	"github.com/cerbos/cerbos/internal/outputcolor"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/cerbos/cerbos/internal/outputcolor"
 )
 
 func TestLevelEnabled(t *testing.T) {

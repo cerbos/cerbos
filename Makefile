@@ -27,7 +27,8 @@ clean-tools:
 	@-rm -rf $(TOOLS_BIN_DIR)
 
 .PHONY: lint
-lint: $(GOLANGCI_LINT) $(BUF)
+lint: $(GCI) $(GOLANGCI_LINT) $(BUF)
+	@ $(GCI) write --Section Standard --Section Default --Section "Prefix(github.com/cerbos/cerbos)" .
 	@ $(GOLANGCI_LINT) run --config=.golangci.yaml --fix
 	@ $(BUF) lint
 

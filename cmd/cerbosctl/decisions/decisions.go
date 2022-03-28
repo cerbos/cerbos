@@ -11,14 +11,11 @@ import (
 	"strings"
 	"time"
 
-	"github.com/alecthomas/kong"
-	cmdclient "github.com/cerbos/cerbos/cmd/cerbosctl/internal/client"
-	"github.com/cerbos/cerbos/cmd/cerbosctl/internal/flagset"
-
 	"github.com/alecthomas/chroma"
 	"github.com/alecthomas/chroma/formatters"
 	"github.com/alecthomas/chroma/lexers"
 	"github.com/alecthomas/chroma/styles"
+	"github.com/alecthomas/kong"
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
 	"google.golang.org/protobuf/encoding/protojson"
@@ -27,6 +24,8 @@ import (
 	auditv1 "github.com/cerbos/cerbos/api/genpb/cerbos/audit/v1"
 	effectv1 "github.com/cerbos/cerbos/api/genpb/cerbos/effect/v1"
 	"github.com/cerbos/cerbos/client"
+	cmdclient "github.com/cerbos/cerbos/cmd/cerbosctl/internal/client"
+	"github.com/cerbos/cerbos/cmd/cerbosctl/internal/flagset"
 )
 
 var help = `Requires audit logging to be enabled on the server. Supports several ways of filtering the data.

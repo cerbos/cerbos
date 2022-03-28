@@ -6,10 +6,11 @@ package module
 import (
 	"encoding/json"
 
-	"github.com/cerbos/cerbos/hack/tools/protoc-gen-jsonschema/jsonschema"
 	"github.com/envoyproxy/protoc-gen-validate/validate"
 	pgs "github.com/lyft/protoc-gen-star"
 	"google.golang.org/protobuf/proto"
+
+	"github.com/cerbos/cerbos/hack/tools/protoc-gen-jsonschema/jsonschema"
 )
 
 const (

@@ -47,7 +47,6 @@ import (
 
 	svcv1 "github.com/cerbos/cerbos/api/genpb/cerbos/svc/v1"
 	"github.com/cerbos/cerbos/internal/audit"
-	"github.com/cerbos/cerbos/internal/telemetry"
 
 	// Import to register the Badger audit log backend.
 	_ "github.com/cerbos/cerbos/internal/audit/local"
@@ -61,25 +60,20 @@ import (
 
 	// Import cloud to register the storage driver.
 	_ "github.com/cerbos/cerbos/internal/storage/blob"
-
 	// Import mysql to register the storage driver.
 	_ "github.com/cerbos/cerbos/internal/storage/db/mysql"
-
 	// Import postgres to register the storage driver.
 	_ "github.com/cerbos/cerbos/internal/storage/db/postgres"
-
 	// Import sqlite3 to register the storage driver.
 	_ "github.com/cerbos/cerbos/internal/storage/db/sqlite3"
-
 	// Import sqlserver to register the storage driver.
 	_ "github.com/cerbos/cerbos/internal/storage/db/sqlserver"
-
 	// Import disk to register the storage driver.
 	_ "github.com/cerbos/cerbos/internal/storage/disk"
-
 	// Import git to register the storage driver.
 	_ "github.com/cerbos/cerbos/internal/storage/git"
 	"github.com/cerbos/cerbos/internal/svc"
+	"github.com/cerbos/cerbos/internal/telemetry"
 	"github.com/cerbos/cerbos/internal/util"
 	"github.com/cerbos/cerbos/schema"
 )

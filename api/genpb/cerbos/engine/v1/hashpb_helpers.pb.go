@@ -4,16 +4,18 @@
 package enginev1
 
 import (
-	v1 "github.com/cerbos/cerbos/api/genpb/cerbos/schema/v1"
+	hash "hash"
+	math "math"
+	sort "sort"
+
 	v1alpha1 "google.golang.org/genproto/googleapis/api/expr/v1alpha1"
 	protowire "google.golang.org/protobuf/encoding/protowire"
 	durationpb "google.golang.org/protobuf/types/known/durationpb"
 	emptypb "google.golang.org/protobuf/types/known/emptypb"
 	structpb "google.golang.org/protobuf/types/known/structpb"
 	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
-	hash "hash"
-	math "math"
-	sort "sort"
+
+	v1 "github.com/cerbos/cerbos/api/genpb/cerbos/schema/v1"
 )
 
 func cerbos_engine_v1_AuxData_hashpb_sum(m *AuxData, hasher hash.Hash, ignore map[string]struct{}) {

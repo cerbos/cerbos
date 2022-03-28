@@ -10,14 +10,16 @@
 package runtimev1
 
 import (
-	v11 "github.com/cerbos/cerbos/api/genpb/cerbos/effect/v1"
-	v1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
+	reflect "reflect"
+	sync "sync"
+
 	v1alpha1 "google.golang.org/genproto/googleapis/api/expr/v1alpha1"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	emptypb "google.golang.org/protobuf/types/known/emptypb"
-	reflect "reflect"
-	sync "sync"
+
+	v11 "github.com/cerbos/cerbos/api/genpb/cerbos/effect/v1"
+	v1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
 )
 
 const (

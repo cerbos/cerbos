@@ -6,11 +6,12 @@ package statev1
 
 import (
 	fmt "fmt"
+	io "io"
+	bits "math/bits"
+
 	proto "google.golang.org/protobuf/proto"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
-	io "io"
-	bits "math/bits"
 )
 
 const (

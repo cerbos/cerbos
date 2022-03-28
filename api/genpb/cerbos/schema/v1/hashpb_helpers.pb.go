@@ -4,8 +4,9 @@
 package schemav1
 
 import (
-	protowire "google.golang.org/protobuf/encoding/protowire"
 	hash "hash"
+
+	protowire "google.golang.org/protobuf/encoding/protowire"
 )
 
 func cerbos_schema_v1_Schema_hashpb_sum(m *Schema, hasher hash.Hash, ignore map[string]struct{}) {

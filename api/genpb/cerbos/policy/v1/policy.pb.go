@@ -10,14 +10,16 @@
 package policyv1
 
 import (
-	v1 "github.com/cerbos/cerbos/api/genpb/cerbos/effect/v1"
-	v11 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
+	reflect "reflect"
+	sync "sync"
+
 	_ "github.com/envoyproxy/protoc-gen-validate/validate"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	wrapperspb "google.golang.org/protobuf/types/known/wrapperspb"
-	reflect "reflect"
-	sync "sync"
+
+	v1 "github.com/cerbos/cerbos/api/genpb/cerbos/effect/v1"
+	v11 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
 )
 
 const (

@@ -4,18 +4,20 @@
 package responsev1
 
 import (
-	v1 "github.com/cerbos/cerbos/api/genpb/cerbos/audit/v1"
-	v11 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
-	v12 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
-	v13 "github.com/cerbos/cerbos/api/genpb/cerbos/schema/v1"
+	hash "hash"
+	math "math"
+	sort "sort"
+
 	protowire "google.golang.org/protobuf/encoding/protowire"
 	emptypb "google.golang.org/protobuf/types/known/emptypb"
 	structpb "google.golang.org/protobuf/types/known/structpb"
 	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
 	wrapperspb "google.golang.org/protobuf/types/known/wrapperspb"
-	hash "hash"
-	math "math"
-	sort "sort"
+
+	v1 "github.com/cerbos/cerbos/api/genpb/cerbos/audit/v1"
+	v11 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
+	v12 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
+	v13 "github.com/cerbos/cerbos/api/genpb/cerbos/schema/v1"
 )
 
 func cerbos_audit_v1_AccessLogEntry_hashpb_sum(m *v1.AccessLogEntry, hasher hash.Hash, ignore map[string]struct{}) {

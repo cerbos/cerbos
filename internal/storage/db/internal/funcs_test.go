@@ -8,13 +8,10 @@ import (
 	"testing"
 
 	"github.com/doug-martin/goqu/v9"
-
 	// Import the MySQL dialect.
 	_ "github.com/doug-martin/goqu/v9/dialect/mysql"
-
 	// Import the postgres dialect.
 	_ "github.com/doug-martin/goqu/v9/dialect/postgres"
-
 	// import sqlite3 dialect.
 	_ "github.com/doug-martin/goqu/v9/dialect/sqlite3"
 	"github.com/stretchr/testify/require"

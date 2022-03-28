@@ -6,9 +6,10 @@ package module
 import (
 	"fmt"
 
-	"github.com/cerbos/cerbos/hack/tools/protoc-gen-jsonschema/jsonschema"
 	"github.com/envoyproxy/protoc-gen-validate/validate"
 	pgs "github.com/lyft/protoc-gen-star"
+
+	"github.com/cerbos/cerbos/hack/tools/protoc-gen-jsonschema/jsonschema"
 )
 
 func (m *Module) defineMessage(message pgs.Message) jsonschema.NonTrivialSchema {

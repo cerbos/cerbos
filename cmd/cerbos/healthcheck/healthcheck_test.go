@@ -7,9 +7,10 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/stretchr/testify/require"
+
 	"github.com/cerbos/cerbos/internal/server"
 	"github.com/cerbos/cerbos/internal/test"
-	"github.com/stretchr/testify/require"
 )
 
 func TestBuildFromServerConf(t *testing.T) {

@@ -18,6 +18,7 @@ require (
 	google.golang.org/grpc/cmd/protoc-gen-go-grpc v1.2.0
 	google.golang.org/protobuf v1.27.1
 	gotest.tools/gotestsum v1.7.0
+	github.com/daixiang0/gci v0.3.3
 )
 
 require (
