@@ -332,8 +332,7 @@ func (s *Store) RepoStats(ctx context.Context) storage.RepoStats {
 }
 
 func (s *Store) Reload(ctx context.Context) error {
-	s.log.Debug("Checking for updates")
-
+	s.log.Info("Initiated a store reload")
 	changes, err := s.clone(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to clone: %w", err)
@@ -349,6 +348,7 @@ func (s *Store) Reload(ctx context.Context) error {
 	}
 
 	s.NotifySubscribers(evts...)
+	s.log.Info("Successfully reloaded the store")
 
 	return nil
 }

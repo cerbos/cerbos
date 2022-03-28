@@ -156,7 +156,7 @@ func (s *Store) RepoStats(ctx context.Context) storage.RepoStats {
 }
 
 func (s *Store) Reload(ctx context.Context) error {
-	s.log.Debug("Checking for new commits")
+	s.log.Info("Initiated a store reload")
 
 	changes, err := s.pullAndCompare(ctx)
 	if err != nil {
@@ -174,6 +174,7 @@ func (s *Store) Reload(ctx context.Context) error {
 	}
 
 	s.NotifySubscribers(evts...)
+	s.log.Info("Successfully reloaded the store")
 
 	return nil
 }

@@ -236,7 +236,7 @@ func (cas *CerbosAdminService) DeleteSchema(ctx context.Context, req *requestv1.
 }
 
 func (cas *CerbosAdminService) ReloadStore(ctx context.Context, _ *requestv1.ReloadStoreRequest) (*responsev1.ReloadStoreResponse, error) {
-	log := ctxzap.Extract(ctx)
+	log := ctxzap.Extract(ctx).Sugar()
 	if err := cas.checkCredentials(ctx); err != nil {
 		return nil, err
 	}
@@ -246,20 +246,22 @@ func (cas *CerbosAdminService) ReloadStore(ctx context.Context, _ *requestv1.Rel
 		return nil, status.Error(codes.Unimplemented, "Configured store is not reloadable")
 	}
 
-	_, err, shared := sfGroup.Do("admin_reload", func() (interface{}, error) {
-		if err := rs.Reload(ctx); err != nil {
-			log.Error("Failed to reload the store", zap.Error(err))
-			return nil, status.Errorf(codes.Internal, "Failed to reload the store")
+	go func() {
+		_, err, shared := sfGroup.Do("admin_reload", func() (interface{}, error) {
+			if err := rs.Reload(context.Background()); err != nil {
+				log.Error("Failed to reload the store", zap.Error(err))
+				return nil, fmt.Errorf("failed to reload the store: %w", err)
+			}
+			return nil, nil
+		})
+		if err != nil {
+			log.Errorf("Failed to reload the store due to an error in singleflight function: %v", err)
+			return
 		}
-
-		return nil, nil
-	})
-	if err != nil {
-		return nil, err
-	}
-	if shared {
-		log.Debug("shared multiple calls to the reload store API")
-	}
+		if shared {
+			log.Debug("shared multiple calls to the reload store API")
+		}
+	}()
 
 	return &responsev1.ReloadStoreResponse{}, nil
 }

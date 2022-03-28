@@ -13,8 +13,8 @@ import (
 	"sort"
 	"sync"
 
-	"github.com/grpc-ecosystem/go-grpc-middleware/logging/zap/ctxzap"
 	"go.opencensus.io/stats"
+	"go.uber.org/zap"
 	"golang.org/x/sync/singleflight"
 
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
@@ -436,7 +436,7 @@ func (idx *index) RepoStats(_ context.Context) storage.RepoStats {
 }
 
 func (idx *index) Reload(ctx context.Context) ([]storage.Event, error) {
-	log := ctxzap.Extract(ctx).Sugar()
+	log := zap.L().Named("index").Sugar()
 	ievts, err, shared := idx.sfGroup.Do("reload", func() (interface{}, error) {
 		idxIface, err := Build(ctx, idx.fsys, idx.buildOpts...)
 		if err != nil {

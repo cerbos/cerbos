@@ -10,6 +10,8 @@ import (
 	"os"
 	"path/filepath"
 
+	"go.uber.org/zap"
+
 	"github.com/cerbos/cerbos/internal/config"
 	"github.com/cerbos/cerbos/internal/namer"
 	"github.com/cerbos/cerbos/internal/policy"
@@ -34,6 +36,7 @@ func init() {
 
 type Store struct {
 	conf *Conf
+	log  *zap.SugaredLogger
 	idx  index.Index
 	*storage.SubscriptionManager
 }
@@ -49,7 +52,12 @@ func NewStore(ctx context.Context, conf *Conf) (*Store, error) {
 		return nil, err
 	}
 
-	s := &Store{conf: conf, idx: idx, SubscriptionManager: storage.NewSubscriptionManager(ctx)}
+	s := &Store{
+		conf:                conf,
+		idx:                 idx,
+		log:                 zap.S().Named(DriverName),
+		SubscriptionManager: storage.NewSubscriptionManager(ctx),
+	}
 	if conf.WatchForChanges {
 		if err := watchDir(ctx, dir, s.idx, s.SubscriptionManager, defaultCooldownPeriod); err != nil {
 			return nil, err
@@ -105,12 +113,13 @@ func (s *Store) RepoStats(ctx context.Context) storage.RepoStats {
 }
 
 func (s *Store) Reload(ctx context.Context) error {
+	s.log.Info("Initiated a store reload")
 	evts, err := s.idx.Reload(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to reload the index: %w", err)
 	}
-
 	s.NotifySubscribers(evts...)
+	s.log.Info("Successfully reloaded the store")
 
 	return nil
 }
