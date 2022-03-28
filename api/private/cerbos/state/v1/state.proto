@@ -5,11 +5,11 @@ syntax = "proto3";
 
 package cerbos.state.v1;
 
-option go_package = "github.com/cerbos/cerbos/api/genpb/cerbos/state/v1;statev1";
-
 import "google/protobuf/timestamp.proto";
 
+option go_package = "github.com/cerbos/cerbos/api/genpb/cerbos/state/v1;statev1";
+
 message TelemetryState {
-    string uuid = 1;
-    google.protobuf.Timestamp last_timestamp = 2;
+  string uuid = 1;
+  google.protobuf.Timestamp last_timestamp = 2;
 }
