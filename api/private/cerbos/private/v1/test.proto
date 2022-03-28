@@ -5,139 +5,139 @@ syntax = "proto3";
 
 package cerbos.private.v1;
 
-option go_package = "github.com/cerbos/cerbos/api/genpb/cerbos/private/v1;privatev1";
-
-import "google/protobuf/struct.proto";
 import "cerbos/engine/v1/engine.proto";
 import "cerbos/policy/v1/policy.proto";
 import "cerbos/request/v1/request.proto";
 import "cerbos/response/v1/response.proto";
 import "cerbos/schema/v1/schema.proto";
+import "google/protobuf/struct.proto";
+
+option go_package = "github.com/cerbos/cerbos/api/genpb/cerbos/private/v1;privatev1";
 
 message EngineTestCase {
-    string description = 1;
-    repeated cerbos.engine.v1.CheckInput inputs = 2;
-    repeated cerbos.engine.v1.CheckOutput want_outputs = 3;
-    bool want_error = 4;
+  string description = 1;
+  repeated cerbos.engine.v1.CheckInput inputs = 2;
+  repeated cerbos.engine.v1.CheckOutput want_outputs = 3;
+  bool want_error = 4;
 }
 
 message ServerTestCase {
-    message ResourcesQueryPlanCall {
-        cerbos.request.v1.ResourcesQueryPlanRequest input = 1;
-        cerbos.response.v1.ResourcesQueryPlanResponse want_response = 2;
-    }
+  message ResourcesQueryPlanCall {
+    cerbos.request.v1.ResourcesQueryPlanRequest input = 1;
+    cerbos.response.v1.ResourcesQueryPlanResponse want_response = 2;
+  }
 
-    message CheckResourceSetCall {
-        cerbos.request.v1.CheckResourceSetRequest input = 1;
-        cerbos.response.v1.CheckResourceSetResponse want_response = 2;
-    }
+  message CheckResourceSetCall {
+    cerbos.request.v1.CheckResourceSetRequest input = 1;
+    cerbos.response.v1.CheckResourceSetResponse want_response = 2;
+  }
 
-    message CheckResourceBatchCall {
-        cerbos.request.v1.CheckResourceBatchRequest input = 1;
-        cerbos.response.v1.CheckResourceBatchResponse want_response = 2;
-    }
+  message CheckResourceBatchCall {
+    cerbos.request.v1.CheckResourceBatchRequest input = 1;
+    cerbos.response.v1.CheckResourceBatchResponse want_response = 2;
+  }
 
-    message PlaygroundValidateCall {
-        cerbos.request.v1.PlaygroundValidateRequest input = 1;
-        cerbos.response.v1.PlaygroundValidateResponse want_response = 2;
-    }
+  message PlaygroundValidateCall {
+    cerbos.request.v1.PlaygroundValidateRequest input = 1;
+    cerbos.response.v1.PlaygroundValidateResponse want_response = 2;
+  }
 
-    message PlaygroundTestCall {
-        cerbos.request.v1.PlaygroundTestRequest input = 1;
-        cerbos.response.v1.PlaygroundTestResponse want_response = 2;
-    }
+  message PlaygroundTestCall {
+    cerbos.request.v1.PlaygroundTestRequest input = 1;
+    cerbos.response.v1.PlaygroundTestResponse want_response = 2;
+  }
 
-    message PlaygroundEvaluateCall {
-        cerbos.request.v1.PlaygroundEvaluateRequest input = 1;
-        cerbos.response.v1.PlaygroundEvaluateResponse want_response = 2;
-    }
+  message PlaygroundEvaluateCall {
+    cerbos.request.v1.PlaygroundEvaluateRequest input = 1;
+    cerbos.response.v1.PlaygroundEvaluateResponse want_response = 2;
+  }
 
-    message PlaygroundProxyCall {
-        cerbos.request.v1.PlaygroundProxyRequest input = 1;
-        cerbos.response.v1.PlaygroundProxyResponse want_response = 2;
-    }
+  message PlaygroundProxyCall {
+    cerbos.request.v1.PlaygroundProxyRequest input = 1;
+    cerbos.response.v1.PlaygroundProxyResponse want_response = 2;
+  }
 
-    message AdminAddOrUpdatePolicyCall {
-        cerbos.request.v1.AddOrUpdatePolicyRequest input = 1;
-        cerbos.response.v1.AddOrUpdatePolicyResponse want_response = 2;
-    }
+  message AdminAddOrUpdatePolicyCall {
+    cerbos.request.v1.AddOrUpdatePolicyRequest input = 1;
+    cerbos.response.v1.AddOrUpdatePolicyResponse want_response = 2;
+  }
 
-    message AdminAddOrUpdateSchemaCall {
-        cerbos.request.v1.AddOrUpdateSchemaRequest input = 1;
-        cerbos.response.v1.AddOrUpdateSchemaResponse want_response = 2;
-    }
+  message AdminAddOrUpdateSchemaCall {
+    cerbos.request.v1.AddOrUpdateSchemaRequest input = 1;
+    cerbos.response.v1.AddOrUpdateSchemaResponse want_response = 2;
+  }
 
-    message Status {
-        uint32 http_status_code = 1;
-        uint32 grpc_status_code = 2;
-    }
+  message Status {
+    uint32 http_status_code = 1;
+    uint32 grpc_status_code = 2;
+  }
 
-    string name = 1;
-    string description = 2;
-    bool want_error = 3;
-    Status want_status = 4;
-    oneof call_kind {
-        CheckResourceSetCall check_resource_set = 5;
-        CheckResourceBatchCall check_resource_batch = 6;
-        PlaygroundValidateCall playground_validate = 7;
-        PlaygroundEvaluateCall playground_evaluate = 8;
-        AdminAddOrUpdatePolicyCall admin_add_or_update_policy = 9;
-        PlaygroundProxyCall playground_proxy = 10;
-        ResourcesQueryPlanCall resources_query_plan = 11;
-        AdminAddOrUpdateSchemaCall admin_add_or_update_schema = 12;
-        PlaygroundTestCall playground_test = 13;
-    }
+  string name = 1;
+  string description = 2;
+  bool want_error = 3;
+  Status want_status = 4;
+  oneof call_kind {
+    CheckResourceSetCall check_resource_set = 5;
+    CheckResourceBatchCall check_resource_batch = 6;
+    PlaygroundValidateCall playground_validate = 7;
+    PlaygroundEvaluateCall playground_evaluate = 8;
+    AdminAddOrUpdatePolicyCall admin_add_or_update_policy = 9;
+    PlaygroundProxyCall playground_proxy = 10;
+    ResourcesQueryPlanCall resources_query_plan = 11;
+    AdminAddOrUpdateSchemaCall admin_add_or_update_schema = 12;
+    PlaygroundTestCall playground_test = 13;
+  }
 }
 
 message IndexBuilderTestCase {
-    message CompilationUnit {
-        string main_fqn = 1;
-        repeated string definition_fqns = 2;
-        repeated string ancestor_fqns = 3;
-    }
+  message CompilationUnit {
+    string main_fqn = 1;
+    repeated string definition_fqns = 2;
+    repeated string ancestor_fqns = 3;
+  }
 
-    map<string, string> files = 1;
-    string want_err_json = 2;
-    string want_err = 3;
-    repeated CompilationUnit want_compilation_units = 4;
+  map<string, string> files = 1;
+  string want_err_json = 2;
+  string want_err = 3;
+  repeated CompilationUnit want_compilation_units = 4;
 }
 
 message CompileTestCase {
-    message Error {
-        string file = 1;
-        string error = 2;
-        string desc = 3;
-    }
+  message Error {
+    string file = 1;
+    string error = 2;
+    string desc = 3;
+  }
 
-    string main_def = 1;
-    map<string, cerbos.policy.v1.Policy> input_defs = 2;
-    repeated Error want_errors = 3;
+  string main_def = 1;
+  map<string, cerbos.policy.v1.Policy> input_defs = 2;
+  repeated Error want_errors = 3;
 }
 
 message CodeGenTestCase {
-    cerbos.policy.v1.Policy input_policy = 1;
-    bool want_error = 2;
-    string want_rego = 3;
-    int32 want_num_conditions = 4;
+  cerbos.policy.v1.Policy input_policy = 1;
+  bool want_error = 2;
+  string want_rego = 3;
+  int32 want_num_conditions = 4;
 }
 
 message CelTestCase {
-    cerbos.policy.v1.Match condition = 1;
-    cerbos.engine.v1.CheckInput input = 2;
-    bool want = 3;
-    bool want_error = 4;
+  cerbos.policy.v1.Match condition = 1;
+  cerbos.engine.v1.CheckInput input = 2;
+  bool want = 3;
+  bool want_error = 4;
 }
 
 message SchemaTestCase {
-    string description = 1;
-    cerbos.policy.v1.Schemas schema_refs = 2;
-    cerbos.engine.v1.CheckInput input = 3;
-    bool want_error = 4;
-    repeated cerbos.schema.v1.ValidationError want_validation_errors = 5;
+  string description = 1;
+  cerbos.policy.v1.Schemas schema_refs = 2;
+  cerbos.engine.v1.CheckInput input = 3;
+  bool want_error = 4;
+  repeated cerbos.schema.v1.ValidationError want_validation_errors = 5;
 }
 
 message ValidationErrContainer {
-    repeated cerbos.schema.v1.ValidationError errors = 1;
+  repeated cerbos.schema.v1.ValidationError errors = 1;
 }
 
 message AttrWrapper {
@@ -145,19 +145,19 @@ message AttrWrapper {
 }
 
 message QueryPlannerTestSuite {
-    string description = 1;
-    cerbos.engine.v1.Principal principal = 2;
-    message Test {
-        string action = 1;
-        cerbos.response.v1.ResourcesQueryPlanResponse.Filter want = 2;
-        cerbos.engine.v1.ResourcesQueryPlanRequest.Resource resource = 3;
-        bool want_err = 4;
-    }
-    repeated Test tests = 3;
+  string description = 1;
+  cerbos.engine.v1.Principal principal = 2;
+  message Test {
+    string action = 1;
+    cerbos.response.v1.ResourcesQueryPlanResponse.Filter want = 2;
+    cerbos.engine.v1.ResourcesQueryPlanRequest.Resource resource = 3;
+    bool want_err = 4;
+  }
+  repeated Test tests = 3;
 }
 
 message VerifyTestFixtureGetTestsTestCase {
-    cerbos.policy.v1.TestTable table = 1;
-    repeated cerbos.policy.v1.Test want_tests = 2;
-    string want_err = 3;
+  cerbos.policy.v1.TestTable table = 1;
+  repeated cerbos.policy.v1.Test want_tests = 2;
+  string want_err = 3;
 }
