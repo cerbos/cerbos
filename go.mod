@@ -25,7 +25,7 @@ require (
 	github.com/go-sql-driver/mysql v1.6.0
 	github.com/gobwas/glob v0.2.3
 	github.com/golang-migrate/migrate/v4 v4.15.1
-	github.com/google/cel-go v0.10.1
+	github.com/google/cel-go v0.11.2
 	github.com/google/go-cmp v0.5.7
 	github.com/google/gops v0.3.22
 	github.com/google/uuid v1.3.0
