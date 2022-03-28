@@ -30,6 +30,7 @@ clean-tools:
 lint: $(GOLANGCI_LINT) $(BUF)
 	@ $(GOLANGCI_LINT) run --config=.golangci.yaml --fix
 	@ $(BUF) lint
+	@ $(BUF) format -w
 
 .PHONY: lint-helm
 lint-helm:
@@ -42,6 +43,7 @@ generate: clean generate-proto-code generate-json-schemas generate-mocks deps co
 generate-proto-code: proto-gen-deps
 	@-rm -rf $(GEN_DIR)
 	@ $(BUF) generate --template '$(BUF_GEN_TEMPLATE)' .
+	@ $(BUF) format -w
 
 .PHONY: generate-json-schemas
 generate-json-schemas: proto-gen-deps

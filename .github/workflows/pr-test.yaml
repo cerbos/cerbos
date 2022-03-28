@@ -116,6 +116,9 @@ jobs:
       - name: Lint protos
         uses: bufbuild/buf-lint-action@v1.0.0
 
+      - name: Check formatting
+        run: buf format --diff --exit-code
+
       - name: Find latest release
         id: latest-release
         run: gh release view --json tagName --jq '"::set-output name=tag::\(.tagName)"'
