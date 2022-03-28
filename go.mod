@@ -61,7 +61,7 @@ require (
 	go.opencensus.io v0.23.0
 	go.opentelemetry.io/otel v1.6.0
 	go.opentelemetry.io/otel/bridge/opencensus v0.28.0
-	go.opentelemetry.io/otel/exporters/jaeger v1.5.0
+	go.opentelemetry.io/otel/exporters/jaeger v1.6.0
 	go.opentelemetry.io/otel/sdk v1.6.0
 	go.opentelemetry.io/otel/trace v1.6.0
 	go.uber.org/automaxprocs v1.4.0
