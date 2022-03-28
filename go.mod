@@ -25,7 +25,7 @@ require (
 	github.com/go-sql-driver/mysql v1.6.0
 	github.com/gobwas/glob v0.2.3
 	github.com/golang-migrate/migrate/v4 v4.15.1
-	github.com/google/cel-go v0.10.1
+	github.com/google/cel-go v0.11.2
 	github.com/google/go-cmp v0.5.7
 	github.com/google/gops v0.3.22
 	github.com/google/uuid v1.3.0
@@ -59,11 +59,11 @@ require (
 	github.com/tidwall/sjson v1.2.4
 	go.elastic.co/ecszap v1.0.1
 	go.opencensus.io v0.23.0
-	go.opentelemetry.io/otel v1.5.0
+	go.opentelemetry.io/otel v1.6.0
 	go.opentelemetry.io/otel/bridge/opencensus v0.27.1
 	go.opentelemetry.io/otel/exporters/jaeger v1.5.0
 	go.opentelemetry.io/otel/sdk v1.5.0
-	go.opentelemetry.io/otel/trace v1.5.0
+	go.opentelemetry.io/otel/trace v1.6.0
 	go.uber.org/automaxprocs v1.4.0
 	go.uber.org/config v1.4.0
 	go.uber.org/multierr v1.8.0
@@ -79,7 +79,7 @@ require (
 	gopkg.in/segmentio/analytics-go.v3 v3.1.0
 	gopkg.in/yaml.v2 v2.4.0
 	helm.sh/helm/v3 v3.8.1
-	modernc.org/sqlite v1.15.2
+	modernc.org/sqlite v1.15.3
 )
 
 require (
@@ -128,7 +128,7 @@ require (
 	github.com/go-git/go-billy/v5 v5.3.1 // indirect
 	github.com/go-kit/log v0.1.0 // indirect
 	github.com/go-logfmt/logfmt v0.5.0 // indirect
-	github.com/go-logr/logr v1.2.2 // indirect
+	github.com/go-logr/logr v1.2.3 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/goccy/go-json v0.9.4 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
@@ -227,9 +227,9 @@ require (
 	lukechampine.com/uint128 v1.1.1 // indirect
 	modernc.org/cc/v3 v3.35.24 // indirect
 	modernc.org/ccgo/v3 v3.15.17 // indirect
-	modernc.org/libc v1.14.11 // indirect
+	modernc.org/libc v1.14.12 // indirect
 	modernc.org/mathutil v1.4.1 // indirect
-	modernc.org/memory v1.0.6 // indirect
+	modernc.org/memory v1.0.7 // indirect
 	modernc.org/opt v0.1.1 // indirect
 	modernc.org/strutil v1.1.1 // indirect
 	modernc.org/token v1.0.0 // indirect
