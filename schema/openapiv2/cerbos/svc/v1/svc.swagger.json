@@ -444,7 +444,7 @@
       }
     },
     "/admin/store/reload": {
-      "post": {
+      "get": {
         "summary": "Reload store",
         "operationId": "CerbosAdminService_ReloadStore",
         "responses": {
@@ -461,6 +461,15 @@
             }
           }
         },
+        "parameters": [
+          {
+            "name": "wait",
+            "description": "Wait until the reloading process finalizes",
+            "in": "query",
+            "required": false,
+            "type": "boolean"
+          }
+        ],
         "tags": [
           "CerbosAdminService"
         ],

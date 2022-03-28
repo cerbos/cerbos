@@ -274,15 +274,23 @@ curl -k -u cerbos:cerbosAdmin -X DELETE \
 === Reload store
 
 ----
-POST /admin/store/reload
+GET /admin/store/reload
 ----
 
-Issue a POST request to the endpoint to reload the store.
+Issue a GET request to the endpoint to reload the store.
 
+.Reload the store
 [source,shell]
 ----
-curl -k -u cerbos:cerbosAdmin -X POST \
+curl -k -u cerbos:cerbosAdmin -X GET \
     'https://localhost:3592/admin/store/reload'
+----
+
+.Reload the store and block until it finishes
+[source,shell]
+----
+curl -k -u cerbos:cerbosAdmin -X GET \
+    'https://localhost:3592/admin/store/reload?wait=true'
 ----
 
 .Response

@@ -3463,6 +3463,8 @@ func (m *ReloadStoreRequest) validate(all bool) error {
 
 	var errors []error
 
+	// no validation rules for Wait
+
 	if len(errors) > 0 {
 		return ReloadStoreRequestMultiError(errors)
 	}

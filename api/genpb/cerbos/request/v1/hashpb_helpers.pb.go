@@ -862,6 +862,10 @@ func cerbos_request_v1_PlaygroundValidateRequest_hashpb_sum(m *PlaygroundValidat
 }
 
 func cerbos_request_v1_ReloadStoreRequest_hashpb_sum(m *ReloadStoreRequest, hasher hash.Hash, ignore map[string]struct{}) {
+	if _, ok := ignore["cerbos.request.v1.ReloadStoreRequest.wait"]; !ok {
+		_, _ = hasher.Write(protowire.AppendVarint(nil, protowire.EncodeBool(m.Wait)))
+
+	}
 }
 
 func cerbos_request_v1_ResourceSet_hashpb_sum(m *ResourceSet, hasher hash.Hash, ignore map[string]struct{}) {

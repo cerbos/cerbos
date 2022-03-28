@@ -17,7 +17,6 @@ import (
 	"github.com/grpc-ecosystem/go-grpc-middleware/logging/zap/ctxzap"
 	"go.uber.org/zap"
 	"golang.org/x/crypto/bcrypt"
-	"golang.org/x/sync/singleflight"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
@@ -38,7 +37,6 @@ var _ svcv1.CerbosAdminServiceServer = (*CerbosAdminService)(nil)
 var (
 	errAuthRequired = status.Error(codes.Unauthenticated, "authentication required")
 	authSep         = []byte(":")
-	sfGroup         singleflight.Group
 )
 
 // CerbosAdminService implements the Cerbos administration service.
@@ -235,7 +233,7 @@ func (cas *CerbosAdminService) DeleteSchema(ctx context.Context, req *requestv1.
 	return &responsev1.DeleteSchemaResponse{}, nil
 }
 
-func (cas *CerbosAdminService) ReloadStore(ctx context.Context, _ *requestv1.ReloadStoreRequest) (*responsev1.ReloadStoreResponse, error) {
+func (cas *CerbosAdminService) ReloadStore(ctx context.Context, req *requestv1.ReloadStoreRequest) (*responsev1.ReloadStoreResponse, error) {
 	log := ctxzap.Extract(ctx).Sugar()
 	if err := cas.checkCredentials(ctx); err != nil {
 		return nil, err
@@ -246,22 +244,20 @@ func (cas *CerbosAdminService) ReloadStore(ctx context.Context, _ *requestv1.Rel
 		return nil, status.Error(codes.Unimplemented, "Configured store is not reloadable")
 	}
 
-	go func() {
-		_, err, shared := sfGroup.Do("admin_reload", func() (interface{}, error) {
-			if err := rs.Reload(context.Background()); err != nil {
-				log.Error("Failed to reload the store", zap.Error(err))
-				return nil, fmt.Errorf("failed to reload the store: %w", err)
-			}
-			return nil, nil
-		})
+	if req.Wait {
+		err := storage.Reload(ctx, log, rs)
 		if err != nil {
-			log.Errorf("Failed to reload the store due to an error in singleflight function: %v", err)
-			return
+			log.Error("failed to reload the store due to an error: %w", err)
+			return nil, status.Error(codes.Internal, "failed to reload the store")
 		}
-		if shared {
-			log.Debug("shared multiple calls to the reload store API")
-		}
-	}()
+	} else {
+		go func() {
+			err := storage.Reload(context.Background(), log, rs)
+			if err != nil {
+				log.Error("failed to reload the store due to an error: %w", err)
+			}
+		}()
+	}
 
 	return &responsev1.ReloadStoreResponse{}, nil
 }
