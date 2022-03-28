@@ -59,11 +59,11 @@ require (
 	github.com/tidwall/sjson v1.2.4
 	go.elastic.co/ecszap v1.0.1
 	go.opencensus.io v0.23.0
-	go.opentelemetry.io/otel v1.5.0
+	go.opentelemetry.io/otel v1.6.0
 	go.opentelemetry.io/otel/bridge/opencensus v0.27.1
 	go.opentelemetry.io/otel/exporters/jaeger v1.5.0
 	go.opentelemetry.io/otel/sdk v1.5.0
-	go.opentelemetry.io/otel/trace v1.5.0
+	go.opentelemetry.io/otel/trace v1.6.0
 	go.uber.org/automaxprocs v1.4.0
 	go.uber.org/config v1.4.0
 	go.uber.org/multierr v1.8.0
@@ -128,7 +128,7 @@ require (
 	github.com/go-git/go-billy/v5 v5.3.1 // indirect
 	github.com/go-kit/log v0.1.0 // indirect
 	github.com/go-logfmt/logfmt v0.5.0 // indirect
-	github.com/go-logr/logr v1.2.2 // indirect
+	github.com/go-logr/logr v1.2.3 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/goccy/go-json v0.9.4 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
