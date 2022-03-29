@@ -16,6 +16,7 @@ import (
 )
 
 func main() {
+	//nolint: govet
 	var cli struct {
 		Compile     compile.Cmd     `cmd:"" help:"Compile and test policies"`
 		Server      server.Cmd      `cmd:"" help:"Start Cerbos server (PDP)"`

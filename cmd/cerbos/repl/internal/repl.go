@@ -54,11 +54,11 @@ type REPL struct {
 	decls       map[string]*exprpb.Decl
 	reader      *liner.State
 	parser      *participle.Parser
-	printer     *printer.Printer
+	output      Output
 	typeAdapter ref.TypeAdapter
 }
 
-func NewREPL(reader *liner.State, printer *printer.Printer) (*REPL, error) {
+func NewREPL(reader *liner.State, output Output) (*REPL, error) {
 	parser, err := NewParser()
 	if err != nil {
 		return nil, err
@@ -67,7 +67,7 @@ func NewREPL(reader *liner.State, printer *printer.Printer) (*REPL, error) {
 	repl := &REPL{
 		reader:      reader,
 		parser:      parser,
-		printer:     printer,
+		output:      output,
 		typeAdapter: conditions.StdEnv.TypeAdapter(),
 	}
 
@@ -75,9 +75,9 @@ func NewREPL(reader *liner.State, printer *printer.Printer) (*REPL, error) {
 }
 
 func (r *REPL) Loop() error {
-	r.printer.Println(banner)
-	r.printer.Println(fmt.Sprintf("Type %s to get help", colored.REPLCmd(":help")))
-	r.printer.Println()
+	r.output.Println(banner)
+	r.output.Println(fmt.Sprintf("Type %s to get help", colored.REPLCmd(":help")))
+	r.output.Println()
 
 	for {
 		line, err := r.reader.Prompt(prompt)
@@ -86,7 +86,7 @@ func (r *REPL) Loop() error {
 				continue
 			}
 
-			r.printErr("Failed to read input", err)
+			r.output.PrintErr("Failed to read input", err)
 			continue
 		}
 
@@ -96,25 +96,26 @@ func (r *REPL) Loop() error {
 		}
 
 		r.reader.AppendHistory(line)
-
-		switch line[0] {
-		case directivePrefix:
-			if err := r.processDirective(line[1:]); err != nil {
-				if errors.Is(err, errExit) {
-					return nil
-				}
-
-				if !errors.Is(err, errInvalidExpr) {
-					r.printErr("Failed to process directive", err)
-				}
+		if err := r.handleInput(line); err != nil {
+			if errors.Is(err, errExit) {
+				return nil
 			}
-		case commentPrefix:
-			continue
-		default:
-			if err := r.processExpr(lastResultVar, line); err != nil && !errors.Is(err, errInvalidExpr) {
-				r.printErr("Failed to evaluate expression", err)
+
+			if !errors.Is(err, errInvalidExpr) {
+				r.output.PrintErr("Failed to process input", err)
 			}
 		}
+	}
+}
+
+func (r *REPL) handleInput(line string) error {
+	switch line[0] {
+	case directivePrefix:
+		return r.processDirective(line[1:])
+	case commentPrefix:
+		return nil
+	default:
+		return r.processExpr(lastResultVar, line)
 	}
 }
 
@@ -131,7 +132,7 @@ func (r *REPL) processDirective(line string) error {
 		return r.reset()
 	case directive.Vars:
 		for name, value := range r.vars {
-			r.printResult(name, value)
+			r.output.PrintResult(name, value)
 		}
 		return nil
 	case directive.Help:
@@ -149,13 +150,14 @@ func (r *REPL) processDirective(line string) error {
 
 func (r *REPL) reset() error {
 	r.vars, r.decls = resetVarsAndDecls()
+	r.output.Println()
 
 	return nil
 }
 
 func (r *REPL) help() error {
-	r.printer.Println(helpText)
-	r.printer.Println()
+	r.output.Println(helpText)
+	r.output.Println()
 	return nil
 }
 
@@ -171,7 +173,7 @@ func (r *REPL) setSpecialVar(name, value string) error {
 		}
 
 		requestVal := r.typeAdapter.NativeToValue(request)
-		r.printResult(name, requestVal)
+		r.output.PrintResult(name, requestVal)
 
 		r.vars[conditions.CELRequestIdent] = requestVal
 		r.vars[conditions.CELPrincipalAbbrev] = r.typeAdapter.NativeToValue(request.Principal)
@@ -191,7 +193,7 @@ func (r *REPL) setSpecialVar(name, value string) error {
 		request.Principal = principal
 
 		principalVal := r.typeAdapter.NativeToValue(request.Principal)
-		r.printResult(name, principalVal)
+		r.output.PrintResult(name, principalVal)
 
 		r.vars[conditions.CELRequestIdent] = r.typeAdapter.NativeToValue(request)
 		r.vars[conditions.CELPrincipalAbbrev] = principalVal
@@ -211,7 +213,7 @@ func (r *REPL) setSpecialVar(name, value string) error {
 		request.Resource = resource
 
 		resourceVal := r.typeAdapter.NativeToValue(request.Resource)
-		r.printResult(name, resourceVal)
+		r.output.PrintResult(name, resourceVal)
 
 		r.vars[conditions.CELRequestIdent] = r.typeAdapter.NativeToValue(request)
 		r.vars[conditions.CELPrincipalAbbrev] = r.typeAdapter.NativeToValue(request.Principal)
@@ -224,7 +226,7 @@ func (r *REPL) setSpecialVar(name, value string) error {
 		}
 
 		varsVal := r.typeAdapter.NativeToValue(v)
-		r.printResult(name, varsVal)
+		r.output.PrintResult(name, varsVal)
 
 		r.vars[conditions.CELVariablesIdent] = varsVal
 		r.vars[conditions.CELVariablesAbbrev] = varsVal
@@ -242,7 +244,7 @@ func (r *REPL) processExpr(name, expr string) error {
 		return err
 	}
 
-	r.printResult(name, val)
+	r.output.PrintResult(name, val)
 	r.vars[name] = val
 	r.decls[name] = decls.NewVar(name, tpe)
 
@@ -259,9 +261,9 @@ func (r *REPL) evalExpr(expr string) (ref.Val, *exprpb.Type, error) {
 	if issues != nil && issues.Err() != nil {
 		src := common.NewTextSource(expr)
 		for _, ce := range issues.Errors() {
-			r.print(colored.REPLError(ce.ToDisplayString(src)))
+			r.output.Print(colored.REPLError(ce.ToDisplayString(src)))
 		}
-		r.printer.Println()
+		r.output.Println()
 
 		return nil, nil, errInvalidExpr
 	}
@@ -290,58 +292,7 @@ func (r *REPL) mkEnv() (*cel.Env, error) {
 	return conditions.StdEnv.Extend(cel.Declarations(decls...))
 }
 
-func (r *REPL) print(format string, args ...interface{}) {
-	r.printer.Printf(format, args...)
-	r.printer.Println()
-}
-
-func (r *REPL) printResult(name string, value ref.Val) {
-	r.printer.Printf("%s = ", colored.REPLVar(name))
-
-	if types.IsPrimitiveType(value) {
-		r.printJSON(value.Value())
-		return
-	}
-
-	switch value.Type() {
-	case types.MapType:
-		if v, err := value.ConvertToNative(mapType); err == nil {
-			r.printJSON(v)
-			return
-		}
-	case types.ListType:
-		if v, err := value.ConvertToNative(listType); err == nil {
-			r.printJSON(v)
-			return
-		}
-	}
-
-	goVal := value.Value()
-	if v, ok := goVal.(proto.Message); ok {
-		r.printer.PrintProtoJSON(v, false)
-	} else {
-		r.printJSON(goVal)
-	}
-
-	r.printer.Println()
-}
-
-func (r *REPL) printJSON(obj interface{}) {
-	if err := r.printer.PrintJSON(obj, false); err != nil {
-		r.printer.Println("<...>")
-	}
-	r.printer.Println()
-}
-
-func (r *REPL) printErr(msg string, err error) {
-	r.printer.Println(colored.REPLError(fmt.Sprintf("Error: %s", msg)))
-	if err != nil {
-		r.printer.Printf(" %v\n", err)
-	}
-	r.printer.Println()
-}
-
-// variables is a type that provides the interpreter.Activation interface
+// variables is a type that provides the interpreter.Activation interface.
 type variables map[string]ref.Val
 
 func (v variables) ResolveName(name string) (interface{}, bool) {
@@ -351,4 +302,75 @@ func (v variables) ResolveName(name string) (interface{}, bool) {
 
 func (v variables) Parent() interpreter.Activation {
 	return nil
+}
+
+type Output interface {
+	Print(string, ...interface{})
+	Println(...interface{})
+	PrintResult(string, ref.Val)
+	PrintJSON(interface{})
+	PrintErr(string, error)
+}
+
+type PrinterOutput struct {
+	*printer.Printer
+}
+
+func NewPrinterOutput(stdout, stderr io.Writer) *PrinterOutput {
+	return &PrinterOutput{
+		Printer: printer.New(stdout, stderr),
+	}
+}
+
+func (po *PrinterOutput) Print(format string, args ...interface{}) {
+	po.Printf(format, args...)
+	po.Println()
+}
+
+func (po *PrinterOutput) PrintResult(name string, value ref.Val) {
+	po.Printf("%s = ", colored.REPLVar(name))
+
+	if types.IsPrimitiveType(value) {
+		po.PrintJSON(value.Value())
+		return
+	}
+
+	switch value.Type() {
+	case types.MapType:
+		if v, err := value.ConvertToNative(mapType); err == nil {
+			po.PrintJSON(v)
+			return
+		}
+	case types.ListType:
+		if v, err := value.ConvertToNative(listType); err == nil {
+			po.PrintJSON(v)
+			return
+		}
+	}
+
+	//nolint: ifshort
+	goVal := value.Value()
+	if v, ok := goVal.(proto.Message); ok {
+		if err := po.PrintProtoJSON(v, false); err != nil {
+			po.Println("<...>")
+		}
+		po.Println()
+	} else {
+		po.PrintJSON(goVal)
+	}
+}
+
+func (po *PrinterOutput) PrintJSON(obj interface{}) {
+	if err := po.Printer.PrintJSON(obj, false); err != nil {
+		po.Println("<...>")
+	}
+	po.Println()
+}
+
+func (po *PrinterOutput) PrintErr(msg string, err error) {
+	po.Println(colored.REPLError(fmt.Sprintf("Error: %s", msg)))
+	if err != nil {
+		po.Printf(" %v\n", err)
+	}
+	po.Println()
 }

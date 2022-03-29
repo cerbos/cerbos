@@ -11,7 +11,6 @@ import (
 
 	"github.com/alecthomas/kong"
 	"github.com/cerbos/cerbos/cmd/cerbos/repl/internal"
-	"github.com/cerbos/cerbos/internal/printer"
 	"github.com/peterh/liner"
 )
 
@@ -37,7 +36,7 @@ func (c *Cmd) Run(k *kong.Kong) error {
 		fmt.Fprintf(os.Stderr, "Failed to read history: %v", err)
 	}
 
-	r, err := internal.NewREPL(reader, printer.New(k.Stdout, k.Stderr))
+	r, err := internal.NewREPL(reader, internal.NewPrinterOutput(k.Stdout, k.Stderr))
 	if err != nil {
 		return fmt.Errorf("failed to initialize the REPL: %w", err)
 	}
