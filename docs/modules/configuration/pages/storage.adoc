@@ -4,6 +4,7 @@ include::ROOT:partial$attributes.adoc[]
 
 Cerbos supports multiple backends for storing policies. Which storage driver to use is defined by the `driver` setting.
 
+[id="disk-driver"]
 == Disk driver
 
 The disk driver is a way to serve the policies from a directory on the filesystem. Any `.yaml`, `.yml` or `.json` files in the directory tree rooted at the given path will be read and parsed as policies.
@@ -86,6 +87,7 @@ storage:
     workDir: ${HOME}/tmp/cerbos/work
     updatePollInterval: 10s
 ----
+[id="git-driver"]
 == Git driver
 
 Git is the preferred method of storing Cerbos policies. The server is smart enough to detect when new commits are made to the git repository and refresh its state based on the changes.

@@ -6,17 +6,22 @@ package blob
 import (
 	"context"
 	"errors"
+	"fmt"
 	"path/filepath"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/require"
+	"gocloud.dev/blob"
 
 	"github.com/cerbos/cerbos/internal/schema"
 	"github.com/cerbos/cerbos/internal/storage"
 	"github.com/cerbos/cerbos/internal/storage/index"
+	"github.com/cerbos/cerbos/internal/storage/internal"
 	"github.com/cerbos/cerbos/internal/test"
 )
+
+var keysInStore []string
 
 type clonerFunc func(ctx context.Context) (*CloneResult, error)
 
@@ -68,6 +73,68 @@ func TestNewStore(t *testing.T) {
 		_, err = NewStore(ctx, conf, cloner)
 		must.NoError(err)
 	})
+}
+
+func TestReloadable(t *testing.T) {
+	t.Setenv("AWS_ACCESS_KEY_ID", minioUsername)
+	t.Setenv("AWS_SECRET_ACCESS_KEY", minioPassword)
+
+	dir := t.TempDir()
+	store, bucket := mkStore(t, dir)
+	internal.TestSuiteReloadable(store, mkAddFn(t, bucket), mkDeleteFn(t, bucket))(t)
+}
+
+func mkDeleteFn(t *testing.T, bucket *blob.Bucket) internal.MutateStoreFn {
+	t.Helper()
+
+	return func() error {
+		for _, key := range keysInStore {
+			err := bucket.Delete(context.Background(), key)
+			if err != nil {
+				return fmt.Errorf("failed to delete from the store: %w", err)
+			}
+		}
+
+		return nil
+	}
+}
+
+func mkAddFn(t *testing.T, bucket *blob.Bucket) internal.MutateStoreFn {
+	t.Helper()
+
+	return func() error {
+		var err error
+		keysInStore, err = uploadDirToBucket(t, context.Background(), test.PathToDir(t, "store"), bucket)
+		if err != nil {
+			return fmt.Errorf("failed to add to the store: %w", err)
+		}
+		return nil
+	}
+}
+
+func mkStore(t *testing.T, dir string) (*Store, *blob.Bucket) {
+	t.Helper()
+
+	endpoint := startMinio(context.Background(), t, bucketName)
+	conf := mkConf(t, dir, bucketName, endpoint)
+	bucket, err := newBucket(context.Background(), conf)
+	require.NoError(t, err)
+	cloner, err := NewCloner(bucket, storeFS{dir})
+	require.NoError(t, err)
+	store, err := NewStore(context.Background(), conf, cloner)
+	require.NoError(t, err)
+
+	return store, bucket
+}
+
+func mkConf(t *testing.T, dir, bucketName, endpoint string) *Conf {
+	t.Helper()
+
+	conf := &Conf{WorkDir: dir}
+	conf.SetDefaults()
+	conf.Bucket = MinioBucketURL(bucketName, endpoint)
+
+	return conf
 }
 
 type mockIndex struct {

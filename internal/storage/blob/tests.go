@@ -24,9 +24,10 @@ import (
 	"github.com/cerbos/cerbos/internal/test"
 )
 
-var (
+const (
 	minioUsername = "minioadmin"
 	minioPassword = "minioadmin"
+	bucketName    = "test"
 )
 
 const timeout = 5 * time.Minute
@@ -83,7 +84,6 @@ func newMinioBucket(ctx context.Context, t *testing.T, prefix string) *blob.Buck
 	ctx, cancelFunc := context.WithDeadline(ctx, deadline)
 	defer cancelFunc()
 
-	bucketName := "test"
 	endpoint := startMinio(ctx, t, bucketName)
 
 	param := UploadParam{

@@ -8,8 +8,10 @@ import (
 	"fmt"
 	"io"
 	"io/fs"
+	"io/ioutil"
 	"math/rand"
 	"os"
+	"path"
 	"path/filepath"
 	"testing"
 	"time"
@@ -27,6 +29,7 @@ import (
 	"github.com/cerbos/cerbos/internal/schema"
 	"github.com/cerbos/cerbos/internal/storage"
 	"github.com/cerbos/cerbos/internal/storage/index"
+	"github.com/cerbos/cerbos/internal/storage/internal"
 	"github.com/cerbos/cerbos/internal/test"
 	"github.com/cerbos/cerbos/internal/test/mocks"
 )
@@ -429,6 +432,76 @@ func TestUpdateStore(t *testing.T) {
 
 		checkEvents(t, timeout, storage.NewSchemaEvent(storage.EventDeleteSchema, "invalid.json"))
 	})
+}
+
+func TestReloadable(t *testing.T) {
+	ps := genPolicySet(1)
+	sourceGitDir := t.TempDir()
+	checkoutDir := t.TempDir()
+	store := mkEmptyStoreAndRepo(t, sourceGitDir, checkoutDir)
+
+	internal.TestSuiteReloadable(store, mkAddFn(t, sourceGitDir, ps), mkDeleteFn(t, sourceGitDir))(t)
+}
+
+func mkDeleteFn(t *testing.T, sourceGitDir string) internal.MutateStoreFn {
+	t.Helper()
+
+	return func() error {
+		err := commitToGitRepo(sourceGitDir, "Delete all", func(wt *git.Worktree) error {
+			dir, err := ioutil.ReadDir(sourceGitDir)
+			if err != nil {
+				return fmt.Errorf("failed to read directory while deleting from the store: %w", err)
+			}
+
+			for _, d := range dir {
+				if d.Name() == ".git" {
+					continue
+				}
+				err = os.RemoveAll(path.Join([]string{sourceGitDir, d.Name()}...))
+				if err != nil {
+					return fmt.Errorf("failed to remove contents while deleting from the store: %w", err)
+				}
+			}
+
+			_, err = wt.Add(".")
+			return err
+		})
+		if err != nil {
+			return err
+		}
+
+		return nil
+	}
+}
+
+func mkAddFn(t *testing.T, sourceGitDir string, ps policySet) internal.MutateStoreFn {
+	t.Helper()
+
+	return func() error {
+		err := commitToGitRepo(sourceGitDir, "Add policy", func(wt *git.Worktree) error {
+			if err := writePolicySet(filepath.Join(sourceGitDir, policyDir), ps); err != nil {
+				return err
+			}
+
+			_, err := wt.Add(".")
+			return err
+		})
+		if err != nil {
+			return err
+		}
+
+		return nil
+	}
+}
+
+func mkEmptyStoreAndRepo(t *testing.T, sourceGitDir, checkoutDir string) *Store {
+	t.Helper()
+
+	_ = createGitRepo(t, sourceGitDir, 0)
+	store, err := NewStore(context.Background(), mkConf(t, sourceGitDir, checkoutDir))
+	require.NoError(t, err)
+
+	return store
 }
 
 func anyIndexEntry(_ index.Entry) bool { return true }

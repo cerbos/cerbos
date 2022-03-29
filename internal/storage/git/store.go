@@ -16,6 +16,7 @@ import (
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-git/go-git/v5/plumbing/object"
+	"github.com/grpc-ecosystem/go-grpc-middleware/logging/zap/ctxzap"
 	"go.uber.org/zap"
 
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
@@ -153,6 +154,27 @@ func (s *Store) LoadPolicy(ctx context.Context, file ...string) ([]*policy.Wrapp
 
 func (s *Store) RepoStats(ctx context.Context) storage.RepoStats {
 	return s.idx.RepoStats(ctx)
+}
+
+func (s *Store) Reload(ctx context.Context) error {
+	changes, err := s.pullAndCompare(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to pull: %w", err)
+	}
+
+	if changes == nil {
+		ctxzap.Extract(ctx).Info("No new commits: reload not required")
+		return nil
+	}
+
+	evts, err := s.idx.Reload(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to reload the index: %w", err)
+	}
+
+	s.NotifySubscribers(evts...)
+
+	return nil
 }
 
 func isEmptyDir(dir string) (bool, error) {

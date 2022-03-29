@@ -233,6 +233,38 @@ func (cas *CerbosAdminService) DeleteSchema(ctx context.Context, req *requestv1.
 	return &responsev1.DeleteSchemaResponse{}, nil
 }
 
+func (cas *CerbosAdminService) ReloadStore(ctx context.Context, req *requestv1.ReloadStoreRequest) (*responsev1.ReloadStoreResponse, error) {
+	log := ctxzap.Extract(ctx)
+	if err := cas.checkCredentials(ctx); err != nil {
+		return nil, err
+	}
+
+	rs, ok := cas.store.(storage.ReloadableStore)
+	if !ok {
+		return nil, status.Error(codes.Unimplemented, "Configured store is not reloadable")
+	}
+
+	reload := func(ctx context.Context) error {
+		if err := storage.Reload(ctx, rs); err != nil {
+			log.Error("failed to reload store", zap.Error(err))
+			return err
+		}
+		return nil
+	}
+
+	if !req.Wait {
+		//nolint:errcheck
+		go reload(ctxzap.ToContext(context.Background(), log))
+		return &responsev1.ReloadStoreResponse{}, nil
+	}
+
+	if err := reload(ctx); err != nil {
+		return nil, status.Error(codes.Internal, "failed to reload store")
+	}
+
+	return &responsev1.ReloadStoreResponse{}, nil
+}
+
 func (cas *CerbosAdminService) ListAuditLogEntries(req *requestv1.ListAuditLogEntriesRequest, stream svcv1.CerbosAdminService_ListAuditLogEntriesServer) error {
 	ctx := stream.Context()
 

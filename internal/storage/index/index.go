@@ -13,13 +13,17 @@ import (
 	"sort"
 	"sync"
 
+	"go.opencensus.io/stats"
+	"go.uber.org/zap"
+	"golang.org/x/sync/singleflight"
+
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
 	"github.com/cerbos/cerbos/internal/namer"
 	"github.com/cerbos/cerbos/internal/observability/metrics"
 	"github.com/cerbos/cerbos/internal/policy"
 	"github.com/cerbos/cerbos/internal/schema"
 	"github.com/cerbos/cerbos/internal/storage"
-	"go.opencensus.io/stats"
+	"github.com/grpc-ecosystem/go-grpc-middleware/logging/zap/ctxzap"
 )
 
 var (
@@ -49,6 +53,7 @@ type Index interface {
 	ListSchemaIDs(context.Context) ([]string, error)
 	LoadSchema(context.Context, string) (io.ReadCloser, error)
 	LoadPolicy(context.Context, ...string) ([]*policy.Wrapper, error)
+	Reload(ctx context.Context) ([]storage.Event, error)
 }
 
 type index struct {
@@ -59,7 +64,9 @@ type index struct {
 	dependencies map[namer.ModuleID]map[namer.ModuleID]struct{}
 	modIDToFile  map[namer.ModuleID]string
 	schemaLoader *SchemaLoader
+	sfGroup      singleflight.Group
 	stats        storage.RepoStats
+	buildOpts    []BuildOpt
 	mu           sync.RWMutex
 }
 
@@ -427,4 +434,61 @@ func (idx *index) LoadPolicy(_ context.Context, file ...string) ([]*policy.Wrapp
 
 func (idx *index) RepoStats(_ context.Context) storage.RepoStats {
 	return idx.stats
+}
+
+func (idx *index) Reload(ctx context.Context) ([]storage.Event, error) {
+	log := ctxzap.Extract(ctx)
+	log.Info("Initiated a store reload")
+	ievts, err, shared := idx.sfGroup.Do("reload", func() (interface{}, error) {
+		idxIface, err := Build(ctx, idx.fsys, idx.buildOpts...)
+		if err != nil {
+			log.Error("Failed to build index while re-indexing")
+			return nil, err
+		}
+
+		newIdx, ok := idxIface.(*index)
+		if !ok {
+			return nil, err
+		}
+
+		var evts []storage.Event
+		for mID := range newIdx.modIDToFile {
+			if _, ok := idx.modIDToFile[mID]; !ok {
+				log.Debug("Detected added policy with while re-indexing", zap.String("moduleID", mID.String()))
+				evts = append(evts, storage.NewPolicyEvent(storage.EventAddOrUpdatePolicy, mID))
+			}
+		}
+		for mID := range idx.modIDToFile {
+			if _, ok := newIdx.modIDToFile[mID]; !ok {
+				log.Debug("Detected deleted policy while re-indexing", zap.String("moduleID", mID.String()))
+				evts = append(evts, storage.NewPolicyEvent(storage.EventDeletePolicy, mID))
+			}
+		}
+
+		idx.mu.RLock()
+		defer idx.mu.RUnlock()
+		idx.fileToModID = newIdx.fileToModID
+		idx.executables = newIdx.executables
+		idx.dependents = newIdx.dependents
+		idx.dependencies = newIdx.dependencies
+		idx.modIDToFile = newIdx.modIDToFile
+		idx.schemaLoader = newIdx.schemaLoader
+		idx.stats = newIdx.stats
+
+		return evts, nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	if shared {
+		log.Debug("shared multiple calls to the reload index function")
+	}
+	log.Info("Successfully reloaded the store")
+
+	evts, ok := ievts.([]storage.Event)
+	if !ok {
+		return nil, fmt.Errorf("failed to type assert storage events")
+	}
+
+	return evts, nil
 }

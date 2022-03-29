@@ -49,7 +49,11 @@ func NewStore(ctx context.Context, conf *Conf) (*Store, error) {
 		return nil, err
 	}
 
-	s := &Store{conf: conf, idx: idx, SubscriptionManager: storage.NewSubscriptionManager(ctx)}
+	s := &Store{
+		conf:                conf,
+		idx:                 idx,
+		SubscriptionManager: storage.NewSubscriptionManager(ctx),
+	}
 	if conf.WatchForChanges {
 		if err := watchDir(ctx, dir, s.idx, s.SubscriptionManager, defaultCooldownPeriod); err != nil {
 			return nil, err
@@ -102,4 +106,14 @@ func (s *Store) LoadPolicy(ctx context.Context, file ...string) ([]*policy.Wrapp
 
 func (s *Store) RepoStats(ctx context.Context) storage.RepoStats {
 	return s.idx.RepoStats(ctx)
+}
+
+func (s *Store) Reload(ctx context.Context) error {
+	evts, err := s.idx.Reload(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to reload the index: %w", err)
+	}
+	s.NotifySubscribers(evts...)
+
+	return nil
 }

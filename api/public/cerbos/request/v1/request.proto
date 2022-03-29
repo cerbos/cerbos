@@ -625,3 +625,18 @@ message DeleteSchemaRequest {
     }
   ];
 }
+
+message ReloadStoreRequest {
+  option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
+    json_schema: {
+      description: "Reload store request"
+    }
+  };
+
+  bool wait = 1 [
+    (google.api.field_behavior) = OPTIONAL,
+    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+      description: "Wait until the reloading process finalizes"
+    }
+  ];
+}

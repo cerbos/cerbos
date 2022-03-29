@@ -6,8 +6,9 @@ package storage
 import (
 	"fmt"
 
-	"github.com/cerbos/cerbos/internal/config"
 	"gopkg.in/yaml.v2"
+
+	"github.com/cerbos/cerbos/internal/config"
 )
 
 const ConfKey = "storage"

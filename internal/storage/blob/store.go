@@ -17,6 +17,7 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/grpc-ecosystem/go-grpc-middleware/logging/zap/ctxzap"
 	"go.uber.org/zap"
 	"gocloud.dev/blob"
 
@@ -329,4 +330,24 @@ func (s *Store) LoadPolicy(ctx context.Context, file ...string) ([]*policy.Wrapp
 
 func (s *Store) RepoStats(ctx context.Context) storage.RepoStats {
 	return s.idx.RepoStats(ctx)
+}
+
+func (s *Store) Reload(ctx context.Context) error {
+	changes, err := s.clone(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to clone: %w", err)
+	}
+
+	if failures := changes.failures(); failures > 0 {
+		ctxzap.Extract(ctx).Warn(fmt.Sprintf("Failed to download (%d) files", failures))
+	}
+
+	evts, err := s.idx.Reload(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to reload the index: %w", err)
+	}
+
+	s.NotifySubscribers(evts...)
+
+	return nil
 }

@@ -33,6 +33,7 @@ type AdminClient interface {
 	AddOrUpdateSchema(ctx context.Context, schemas *SchemaSet) error
 	ListSchemas(ctx context.Context) ([]string, error)
 	GetSchema(ctx context.Context, ids ...string) ([]*schemav1.Schema, error)
+	ReloadStore(ctx context.Context, wait bool) error
 }
 
 // NewAdminClient creates a new admin client.
@@ -247,4 +248,20 @@ func (c *GrpcAdminClient) GetSchema(ctx context.Context, ids ...string) ([]*sche
 	}
 
 	return res.Schemas, nil
+}
+
+func (c *GrpcAdminClient) ReloadStore(ctx context.Context, wait bool) error {
+	req := &requestv1.ReloadStoreRequest{
+		Wait: wait,
+	}
+	if err := req.Validate(); err != nil {
+		return fmt.Errorf("could not validate reload store request: %w", err)
+	}
+
+	_, err := c.client.ReloadStore(ctx, req, grpc.PerRPCCredentials(c.creds))
+	if err != nil {
+		return fmt.Errorf("could not reload store: %w", err)
+	}
+
+	return nil
 }

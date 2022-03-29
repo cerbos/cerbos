@@ -118,6 +118,12 @@ type MutableStore interface {
 	Delete(context.Context, ...namer.ModuleID) error
 }
 
+// ReloadableStore is a store that allows reloading (blob, disk, git).
+type ReloadableStore interface {
+	Store
+	Reload(context.Context) error
+}
+
 // Instrumented stores expose repository stats.
 type Instrumented interface {
 	RepoStats(context.Context) RepoStats

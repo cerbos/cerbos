@@ -43,6 +43,7 @@ Available Commands:
   get         List or view policies and schemas
   help        Help about any command
   put         Put policies or schemas
+  store       Store operations
   version     Show cerbosctl and PDP version
 
 Flags:
@@ -265,4 +266,24 @@ cerbosctl put schema ./dir/to/schemas ./other/dir/to/schemas
 ----
 cerbosctl put schema --recursive ./dir/to/schemas
 cerbosctl put schema -R ./dir/to/schemas
+----
+
+[#store]
+== `store`
+
+Trigger operations on the policy store of the PDP
+
+[#reload]
+=== `reload`
+
+Reloads the store.
+
+.Reload the store
+----
+cerbosctl store reload
+----
+
+.Reload the store and wait until it finishes
+----
+cerbosctl store reload --wait`
 ----
