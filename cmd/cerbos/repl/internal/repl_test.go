@@ -21,9 +21,6 @@ type DirectiveTest struct {
 	WantErr   bool
 }
 
-func TestCELEval(t *testing.T) {
-}
-
 func TestREPL(t *testing.T) {
 	toRefVal := conditions.StdEnv.TypeAdapter().NativeToValue
 

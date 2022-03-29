@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"io"
 	"reflect"
+	"sort"
 	"strings"
 
 	_ "embed"
@@ -47,15 +48,16 @@ const (
 	commentPrefix   = '#'
 	directivePrefix = ':'
 	prompt          = "-> "
+	secondaryPrompt = "> "
 )
 
 type REPL struct {
-	vars        variables
-	decls       map[string]*exprpb.Decl
-	reader      *liner.State
-	parser      *participle.Parser
-	output      Output
-	typeAdapter ref.TypeAdapter
+	vars     variables
+	decls    map[string]*exprpb.Decl
+	reader   *liner.State
+	parser   *participle.Parser
+	output   Output
+	toRefVal func(interface{}) ref.Val
 }
 
 func NewREPL(reader *liner.State, output Output) (*REPL, error) {
@@ -65,10 +67,10 @@ func NewREPL(reader *liner.State, output Output) (*REPL, error) {
 	}
 
 	repl := &REPL{
-		reader:      reader,
-		parser:      parser,
-		output:      output,
-		typeAdapter: conditions.StdEnv.TypeAdapter(),
+		reader:   reader,
+		parser:   parser,
+		output:   output,
+		toRefVal: conditions.StdEnv.TypeAdapter().NativeToValue,
 	}
 
 	return repl, repl.reset()
@@ -80,23 +82,13 @@ func (r *REPL) Loop() error {
 	r.output.Println()
 
 	for {
-		line, err := r.reader.Prompt(prompt)
-		if err != nil {
-			if errors.Is(err, io.EOF) || errors.Is(err, liner.ErrPromptAborted) {
-				continue
-			}
-
-			r.output.PrintErr("Failed to read input", err)
+		input := r.readInput()
+		if input == "" {
 			continue
 		}
 
-		line = strings.TrimSpace(line)
-		if line == "" {
-			continue
-		}
-
-		r.reader.AppendHistory(line)
-		if err := r.handleInput(line); err != nil {
+		r.reader.AppendHistory(input)
+		if err := r.handleInput(input); err != nil {
 			if errors.Is(err, errExit) {
 				return nil
 			}
@@ -108,14 +100,45 @@ func (r *REPL) Loop() error {
 	}
 }
 
-func (r *REPL) handleInput(line string) error {
-	switch line[0] {
+func (r *REPL) readInput() string {
+	var input strings.Builder
+	currPrompt := prompt
+
+	for {
+		line, err := r.reader.Prompt(currPrompt)
+		if err != nil {
+			if errors.Is(err, io.EOF) || errors.Is(err, liner.ErrPromptAborted) {
+				return ""
+			}
+
+			r.output.PrintErr("Failed to read input", err)
+			return ""
+		}
+
+		line = strings.TrimSpace(line)
+		if line == "" {
+			return input.String()
+		}
+
+		if strings.HasSuffix(line, "\\") {
+			input.WriteString(strings.TrimSuffix(line, "\\"))
+			input.WriteString(" ")
+			currPrompt = secondaryPrompt
+		} else {
+			input.WriteString(line)
+			return input.String()
+		}
+	}
+}
+
+func (r *REPL) handleInput(input string) error {
+	switch input[0] {
 	case directivePrefix:
-		return r.processDirective(line[1:])
+		return r.processDirective(input[1:])
 	case commentPrefix:
 		return nil
 	default:
-		return r.processExpr(lastResultVar, line)
+		return r.processExpr(lastResultVar, input)
 	}
 }
 
@@ -131,10 +154,7 @@ func (r *REPL) processDirective(line string) error {
 	case directive.Reset:
 		return r.reset()
 	case directive.Vars:
-		for name, value := range r.vars {
-			r.output.PrintResult(name, value)
-		}
-		return nil
+		return r.showVars()
 	case directive.Help:
 		return r.help()
 	case directive.Let != nil:
@@ -161,6 +181,22 @@ func (r *REPL) help() error {
 	return nil
 }
 
+func (r *REPL) showVars() error {
+	varNames := make([]string, len(r.vars))
+	i := 0
+	for name := range r.vars {
+		varNames[i] = name
+		i++
+	}
+
+	sort.Strings(varNames)
+	for _, name := range varNames {
+		r.output.PrintResult(name, r.vars[name])
+	}
+
+	return nil
+}
+
 func (r *REPL) setSpecialVar(name, value string) error {
 	switch name {
 	case lastResultVar:
@@ -172,12 +208,12 @@ func (r *REPL) setSpecialVar(name, value string) error {
 			return fmt.Errorf("failed to unmarhsal JSON as %q: %w", name, err)
 		}
 
-		requestVal := r.typeAdapter.NativeToValue(request)
+		requestVal := r.toRefVal(request)
 		r.output.PrintResult(name, requestVal)
 
 		r.vars[conditions.CELRequestIdent] = requestVal
-		r.vars[conditions.CELPrincipalAbbrev] = r.typeAdapter.NativeToValue(request.Principal)
-		r.vars[conditions.CELResourceAbbrev] = r.typeAdapter.NativeToValue(request.Resource)
+		r.vars[conditions.CELPrincipalAbbrev] = r.toRefVal(request.Principal)
+		r.vars[conditions.CELResourceAbbrev] = r.toRefVal(request.Resource)
 
 	case conditions.CELPrincipalAbbrev, qualifiedPrincipal:
 		request, err := getCheckInput(r.vars)
@@ -192,12 +228,12 @@ func (r *REPL) setSpecialVar(name, value string) error {
 
 		request.Principal = principal
 
-		principalVal := r.typeAdapter.NativeToValue(request.Principal)
+		principalVal := r.toRefVal(request.Principal)
 		r.output.PrintResult(name, principalVal)
 
-		r.vars[conditions.CELRequestIdent] = r.typeAdapter.NativeToValue(request)
+		r.vars[conditions.CELRequestIdent] = r.toRefVal(request)
 		r.vars[conditions.CELPrincipalAbbrev] = principalVal
-		r.vars[conditions.CELResourceAbbrev] = r.typeAdapter.NativeToValue(request.Resource)
+		r.vars[conditions.CELResourceAbbrev] = r.toRefVal(request.Resource)
 
 	case conditions.CELResourceAbbrev, qualifiedResource:
 		request, err := getCheckInput(r.vars)
@@ -212,11 +248,11 @@ func (r *REPL) setSpecialVar(name, value string) error {
 
 		request.Resource = resource
 
-		resourceVal := r.typeAdapter.NativeToValue(request.Resource)
+		resourceVal := r.toRefVal(request.Resource)
 		r.output.PrintResult(name, resourceVal)
 
-		r.vars[conditions.CELRequestIdent] = r.typeAdapter.NativeToValue(request)
-		r.vars[conditions.CELPrincipalAbbrev] = r.typeAdapter.NativeToValue(request.Principal)
+		r.vars[conditions.CELRequestIdent] = r.toRefVal(request)
+		r.vars[conditions.CELPrincipalAbbrev] = r.toRefVal(request.Principal)
 		r.vars[conditions.CELResourceAbbrev] = resourceVal
 
 	case conditions.CELVariablesIdent, conditions.CELVariablesAbbrev:
@@ -225,7 +261,7 @@ func (r *REPL) setSpecialVar(name, value string) error {
 			return fmt.Errorf("failed to unmarshal JSON as %q: %w", name, err)
 		}
 
-		varsVal := r.typeAdapter.NativeToValue(v)
+		varsVal := r.toRefVal(v)
 		r.output.PrintResult(name, varsVal)
 
 		r.vars[conditions.CELVariablesIdent] = varsVal
