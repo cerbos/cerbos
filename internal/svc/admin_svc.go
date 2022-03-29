@@ -253,12 +253,8 @@ func (cas *CerbosAdminService) ReloadStore(ctx context.Context, req *requestv1.R
 	}
 
 	if !req.Wait {
-		go func() {
-			err := reload(ctxzap.ToContext(context.Background(), ctxzap.Extract(ctx)))
-			if err != nil {
-				log.Error("failed to reload store", zap.Error(err))
-			}
-		}()
+		//nolint:errcheck
+		go reload(ctxzap.ToContext(context.Background(), log))
 		return &responsev1.ReloadStoreResponse{}, nil
 	}
 

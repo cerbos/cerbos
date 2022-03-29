@@ -16,12 +16,12 @@ import (
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-git/go-git/v5/plumbing/object"
+	"github.com/grpc-ecosystem/go-grpc-middleware/logging/zap/ctxzap"
 	"go.uber.org/zap"
 
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
 	"github.com/cerbos/cerbos/internal/config"
 	"github.com/cerbos/cerbos/internal/namer"
-	"github.com/cerbos/cerbos/internal/observability/logging"
 	"github.com/cerbos/cerbos/internal/policy"
 	"github.com/cerbos/cerbos/internal/schema"
 	"github.com/cerbos/cerbos/internal/storage"
@@ -163,11 +163,11 @@ func (s *Store) Reload(ctx context.Context) error {
 	}
 
 	if changes == nil {
-		s.log.Info("No new commits, ignoring store reload request")
+		ctxzap.Extract(ctx).Info("No new commits: reload not required")
 		return nil
 	}
 
-	evts, err := s.idx.Reload(logging.ToContext(ctx, s.log.Desugar()))
+	evts, err := s.idx.Reload(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to reload the index: %w", err)
 	}

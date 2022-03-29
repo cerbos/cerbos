@@ -19,11 +19,11 @@ import (
 
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
 	"github.com/cerbos/cerbos/internal/namer"
-	"github.com/cerbos/cerbos/internal/observability/logging"
 	"github.com/cerbos/cerbos/internal/observability/metrics"
 	"github.com/cerbos/cerbos/internal/policy"
 	"github.com/cerbos/cerbos/internal/schema"
 	"github.com/cerbos/cerbos/internal/storage"
+	"github.com/grpc-ecosystem/go-grpc-middleware/logging/zap/ctxzap"
 )
 
 var (
@@ -437,7 +437,7 @@ func (idx *index) RepoStats(_ context.Context) storage.RepoStats {
 }
 
 func (idx *index) Reload(ctx context.Context) ([]storage.Event, error) {
-	log := logging.FromContext(ctx)
+	log := ctxzap.Extract(ctx)
 	log.Info("Initiated a store reload")
 	ievts, err, shared := idx.sfGroup.Do("reload", func() (interface{}, error) {
 		idxIface, err := Build(ctx, idx.fsys, idx.buildOpts...)
