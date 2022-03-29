@@ -189,6 +189,8 @@ Type `:vars` to display the values of all the variables currently defined in the
 
 Type `:help` or `:h` to display help. Type `:quit`, `:q` or `:exit` to exit the REPL. 
 
+TIP: Use the up/down arrow keys (or kbd:[Ctrl+P]/kbd:[Ctrl+N]) to navigate command history. Most of the standard line-editing commands such as kbd:[Ctrl+a], kbd:[Ctrl+h], kbd:[Ctrl+r] are supported as well. 
+
 
 [#run]
 == `run` Command

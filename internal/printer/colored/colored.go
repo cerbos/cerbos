@@ -8,9 +8,11 @@ import "github.com/fatih/color"
 var (
 	Action                  = color.New(color.FgYellow).SprintFunc()
 	ErrorMsg                = color.New(color.FgRed).SprintFunc()
+	ErroredTest             = color.New(color.FgRed).SprintFunc()
 	FailedTest              = color.New(color.FgRed).SprintFunc()
 	FileName                = color.New(color.FgCyan).SprintFunc()
 	Header                  = color.New(color.FgHiWhite, color.Bold).SprintFunc()
+	PassedTest              = color.New(color.FgGreen).SprintFunc()
 	Principal               = color.New(color.FgCyan).SprintFunc()
 	REPLCmd                 = color.New(color.FgYellow).SprintFunc()
 	REPLError               = color.New(color.FgRed).SprintFunc()

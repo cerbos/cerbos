@@ -21,6 +21,10 @@ const (
 	Ansi16m = Level(supportscolor.Ansi16m)
 )
 
+func DefaultLevel() Level {
+	return Level(supportscolor.SupportsColor(os.Stdout.Fd(), supportscolor.SniffFlagsOption(false)).Level)
+}
+
 var TypeMapper = kong.TypeMapper(reflect.TypeOf((*Level)(nil)), kong.MapperFunc(decode))
 
 func (l *Level) Resolve(disable bool) Level {
@@ -32,7 +36,7 @@ func (l *Level) Resolve(disable bool) Level {
 		return *l
 	}
 
-	return Level(supportscolor.SupportsColor(os.Stdout.Fd(), supportscolor.SniffFlagsOption(false)).Level)
+	return DefaultLevel()
 }
 
 func (l Level) Enabled() bool {

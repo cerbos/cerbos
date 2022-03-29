@@ -17,6 +17,7 @@ import (
 	participle "github.com/alecthomas/participle/v2"
 	enginev1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
 	"github.com/cerbos/cerbos/internal/conditions"
+	"github.com/cerbos/cerbos/internal/outputcolor"
 	"github.com/cerbos/cerbos/internal/printer"
 	"github.com/cerbos/cerbos/internal/printer/colored"
 	"github.com/google/cel-go/cel"
@@ -350,11 +351,13 @@ type Output interface {
 
 type PrinterOutput struct {
 	*printer.Printer
+	level outputcolor.Level
 }
 
 func NewPrinterOutput(stdout, stderr io.Writer) *PrinterOutput {
 	return &PrinterOutput{
 		Printer: printer.New(stdout, stderr),
+		level:   outputcolor.DefaultLevel(),
 	}
 }
 
@@ -387,7 +390,7 @@ func (po *PrinterOutput) PrintResult(name string, value ref.Val) {
 	//nolint: ifshort
 	goVal := value.Value()
 	if v, ok := goVal.(proto.Message); ok {
-		if err := po.PrintProtoJSON(v, false); err != nil {
+		if err := po.PrintProtoJSON(v, po.level); err != nil {
 			po.Println("<...>")
 		}
 		po.Println()
@@ -397,7 +400,7 @@ func (po *PrinterOutput) PrintResult(name string, value ref.Val) {
 }
 
 func (po *PrinterOutput) PrintJSON(obj interface{}) {
-	if err := po.Printer.PrintJSON(obj, false); err != nil {
+	if err := po.Printer.PrintJSON(obj, po.level); err != nil {
 		po.Println("<...>")
 	}
 	po.Println()
