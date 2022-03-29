@@ -14,6 +14,7 @@ import (
 
 	"github.com/cerbos/cerbos/internal/config"
 	"github.com/cerbos/cerbos/internal/namer"
+	"github.com/cerbos/cerbos/internal/observability/logging"
 	"github.com/cerbos/cerbos/internal/policy"
 	"github.com/cerbos/cerbos/internal/storage"
 	"github.com/cerbos/cerbos/internal/storage/index"
@@ -36,8 +37,8 @@ func init() {
 
 type Store struct {
 	conf *Conf
-	log  *zap.SugaredLogger
 	idx  index.Index
+	log  *zap.Logger
 	*storage.SubscriptionManager
 }
 
@@ -55,7 +56,7 @@ func NewStore(ctx context.Context, conf *Conf) (*Store, error) {
 	s := &Store{
 		conf:                conf,
 		idx:                 idx,
-		log:                 zap.S().Named(DriverName),
+		log:                 zap.L().Named("disk.store").With(zap.String("dir", conf.Directory), zap.Bool("watchForChanges", conf.WatchForChanges)),
 		SubscriptionManager: storage.NewSubscriptionManager(ctx),
 	}
 	if conf.WatchForChanges {
@@ -113,13 +114,11 @@ func (s *Store) RepoStats(ctx context.Context) storage.RepoStats {
 }
 
 func (s *Store) Reload(ctx context.Context) error {
-	s.log.Info("Initiated a store reload")
-	evts, err := s.idx.Reload(ctx)
+	evts, err := s.idx.Reload(logging.ToContext(ctx, s.log))
 	if err != nil {
 		return fmt.Errorf("failed to reload the index: %w", err)
 	}
 	s.NotifySubscribers(evts...)
-	s.log.Info("Successfully reloaded the store")
 
 	return nil
 }

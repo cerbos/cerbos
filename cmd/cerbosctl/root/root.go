@@ -40,7 +40,7 @@ type Cli struct {
 	Put       put.Cmd       `cmd:"" help:"Put policies or schemas"`
 	Decisions decisions.Cmd `cmd:"" help:"Interactive decision log viewer"`
 	Audit     audit.Cmd     `cmd:"" help:"View audit logs"`
-	Store     store.Cmd     `cmd:"" help:"Modify store"`
+	Store     store.Cmd     `cmd:"" help:"Store operations"`
 }
 
 func (c *Cli) Help() string {

@@ -7,13 +7,14 @@ import (
 	"context"
 	"fmt"
 
-	"go.uber.org/zap"
+	"github.com/grpc-ecosystem/go-grpc-middleware/logging/zap/ctxzap"
+
 	"golang.org/x/sync/singleflight"
 )
 
 var sfGroup singleflight.Group
 
-func Reload(ctx context.Context, log *zap.SugaredLogger, rs ReloadableStore) error {
+func Reload(ctx context.Context, rs ReloadableStore) error {
 	_, err, shared := sfGroup.Do("admin_reload", func() (interface{}, error) {
 		if err := rs.Reload(ctx); err != nil {
 			return nil, fmt.Errorf("failed to reload the store: %w", err)
@@ -24,7 +25,7 @@ func Reload(ctx context.Context, log *zap.SugaredLogger, rs ReloadableStore) err
 		return err
 	}
 	if shared {
-		log.Debug("shared multiple calls to the reload store API")
+		ctxzap.Extract(ctx).Debug("shared multiple calls to the reload store API")
 	}
 
 	return nil

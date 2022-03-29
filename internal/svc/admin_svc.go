@@ -234,7 +234,7 @@ func (cas *CerbosAdminService) DeleteSchema(ctx context.Context, req *requestv1.
 }
 
 func (cas *CerbosAdminService) ReloadStore(ctx context.Context, req *requestv1.ReloadStoreRequest) (*responsev1.ReloadStoreResponse, error) {
-	log := ctxzap.Extract(ctx).Sugar()
+	log := ctxzap.Extract(ctx)
 	if err := cas.checkCredentials(ctx); err != nil {
 		return nil, err
 	}
@@ -244,19 +244,26 @@ func (cas *CerbosAdminService) ReloadStore(ctx context.Context, req *requestv1.R
 		return nil, status.Error(codes.Unimplemented, "Configured store is not reloadable")
 	}
 
-	if req.Wait {
-		err := storage.Reload(ctx, log, rs)
-		if err != nil {
-			log.Error("failed to reload the store due to an error: %w", err)
-			return nil, status.Error(codes.Internal, "failed to reload the store")
+	reload := func(ctx context.Context) error {
+		if err := storage.Reload(ctx, rs); err != nil {
+			log.Error("failed to reload store", zap.Error(err))
+			return err
 		}
-	} else {
+		return nil
+	}
+
+	if !req.Wait {
 		go func() {
-			err := storage.Reload(context.Background(), log, rs)
+			err := reload(ctxzap.ToContext(context.Background(), ctxzap.Extract(ctx)))
 			if err != nil {
-				log.Error("failed to reload the store due to an error: %w", err)
+				log.Error("failed to reload store", zap.Error(err))
 			}
 		}()
+		return &responsev1.ReloadStoreResponse{}, nil
+	}
+
+	if err := reload(ctx); err != nil {
+		return nil, status.Error(codes.Internal, "failed to reload store")
 	}
 
 	return &responsev1.ReloadStoreResponse{}, nil

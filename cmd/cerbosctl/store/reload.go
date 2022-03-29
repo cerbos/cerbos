@@ -24,10 +24,6 @@ type ReloadCmd struct {
 
 func (rc *ReloadCmd) Run(k *kong.Kong, ctx *cmdclient.Context) error {
 	_, _ = fmt.Fprint(k.Stdout, "Initiated a store reload\n")
-	if rc.Wait {
-		_, _ = fmt.Fprint(k.Stdout, "Waiting until the reloading process completes\n")
-	}
-
 	err := ctx.AdminClient.ReloadStore(context.Background(), rc.Wait)
 	if err != nil {
 		return err
@@ -36,7 +32,7 @@ func (rc *ReloadCmd) Run(k *kong.Kong, ctx *cmdclient.Context) error {
 	if rc.Wait {
 		_, _ = fmt.Fprint(k.Stdout, "Successfully reloaded the store\n")
 	} else {
-		_, _ = fmt.Fprint(k.Stdout, "Successfully transmitted the reload store call to the Admin API\n")
+		_, _ = fmt.Fprint(k.Stdout, "Reload request submitted\n")
 	}
 
 	return nil

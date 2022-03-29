@@ -21,6 +21,7 @@ import (
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
 	"github.com/cerbos/cerbos/internal/config"
 	"github.com/cerbos/cerbos/internal/namer"
+	"github.com/cerbos/cerbos/internal/observability/logging"
 	"github.com/cerbos/cerbos/internal/policy"
 	"github.com/cerbos/cerbos/internal/schema"
 	"github.com/cerbos/cerbos/internal/storage"
@@ -156,25 +157,22 @@ func (s *Store) RepoStats(ctx context.Context) storage.RepoStats {
 }
 
 func (s *Store) Reload(ctx context.Context) error {
-	s.log.Info("Initiated a store reload")
-
 	changes, err := s.pullAndCompare(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to pull: %w", err)
 	}
 
 	if changes == nil {
-		s.log.Debug("No new commits")
+		s.log.Info("No new commits, ignoring store reload request")
 		return nil
 	}
 
-	evts, err := s.idx.Reload(ctx)
+	evts, err := s.idx.Reload(logging.ToContext(ctx, s.log.Desugar()))
 	if err != nil {
 		return fmt.Errorf("failed to reload the index: %w", err)
 	}
 
 	s.NotifySubscribers(evts...)
-	s.log.Info("Successfully reloaded the store")
 
 	return nil
 }

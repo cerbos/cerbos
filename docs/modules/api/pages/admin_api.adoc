@@ -277,7 +277,7 @@ curl -k -u cerbos:cerbosAdmin -X DELETE \
 GET /admin/store/reload
 ----
 
-Issue a GET request to the endpoint to reload the store.
+Issue a GET request to the endpoint to force a reload of the store.
 
 .Reload the store
 [source,shell]

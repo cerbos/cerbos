@@ -19,6 +19,7 @@ import (
 
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
 	"github.com/cerbos/cerbos/internal/namer"
+	"github.com/cerbos/cerbos/internal/observability/logging"
 	"github.com/cerbos/cerbos/internal/observability/metrics"
 	"github.com/cerbos/cerbos/internal/policy"
 	"github.com/cerbos/cerbos/internal/schema"
@@ -436,7 +437,8 @@ func (idx *index) RepoStats(_ context.Context) storage.RepoStats {
 }
 
 func (idx *index) Reload(ctx context.Context) ([]storage.Event, error) {
-	log := zap.L().Named("index").Sugar()
+	log := logging.FromContext(ctx)
+	log.Info("Initiated a store reload")
 	ievts, err, shared := idx.sfGroup.Do("reload", func() (interface{}, error) {
 		idxIface, err := Build(ctx, idx.fsys, idx.buildOpts...)
 		if err != nil {
@@ -452,13 +454,13 @@ func (idx *index) Reload(ctx context.Context) ([]storage.Event, error) {
 		var evts []storage.Event
 		for mID := range newIdx.modIDToFile {
 			if _, ok := idx.modIDToFile[mID]; !ok {
-				log.Debugf("Detected added policy with module ID %s while re-indexing", mID.String())
+				log.Debug("Detected added policy with while re-indexing", zap.String("moduleID", mID.String()))
 				evts = append(evts, storage.NewPolicyEvent(storage.EventAddOrUpdatePolicy, mID))
 			}
 		}
 		for mID := range idx.modIDToFile {
 			if _, ok := newIdx.modIDToFile[mID]; !ok {
-				log.Debugf("Detected deleted policy with module ID %s while re-indexing with module ID", mID.String())
+				log.Debug("Detected deleted policy while re-indexing", zap.String("moduleID", mID.String()))
 				evts = append(evts, storage.NewPolicyEvent(storage.EventDeletePolicy, mID))
 			}
 		}
@@ -481,6 +483,7 @@ func (idx *index) Reload(ctx context.Context) ([]storage.Event, error) {
 	if shared {
 		log.Debug("shared multiple calls to the reload index function")
 	}
+	log.Info("Successfully reloaded the store")
 
 	evts, ok := ievts.([]storage.Event)
 	if !ok {
