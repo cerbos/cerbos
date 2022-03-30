@@ -5,8 +5,10 @@ go 1.17
 require (
 	contrib.go.opencensus.io/exporter/prometheus v0.4.1
 	github.com/Masterminds/sprig/v3 v3.2.2
+	github.com/adrg/xdg v0.4.0
 	github.com/alecthomas/chroma v0.10.0
 	github.com/alecthomas/kong v0.5.0
+	github.com/alecthomas/participle/v2 v2.0.0-alpha7
 	github.com/aws/aws-sdk-go v1.43.2
 	github.com/bluele/gcache v0.0.2
 	github.com/cespare/xxhash v1.1.0
@@ -47,6 +49,7 @@ require (
 	github.com/oklog/ulid/v2 v2.0.2
 	github.com/olekukonko/tablewriter v0.0.5
 	github.com/ory/dockertest/v3 v3.8.1
+	github.com/peterh/liner v1.2.2
 	github.com/planetscale/vtprotobuf v0.0.0-20210616093554-9236f7c7b8ca
 	github.com/prometheus/client_golang v1.12.1
 	github.com/pterm/pterm v0.12.39

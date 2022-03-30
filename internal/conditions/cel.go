@@ -35,6 +35,14 @@ var (
 	FalseExpr     *exprpb.CheckedExpr
 )
 
+var StdEnvDecls = []*exprpb.Decl{
+	decls.NewVar(CELRequestIdent, decls.NewObjectType("cerbos.engine.v1.CheckInput")),
+	decls.NewVar(CELPrincipalAbbrev, decls.NewObjectType("cerbos.engine.v1.Principal")),
+	decls.NewVar(CELResourceAbbrev, decls.NewObjectType("cerbos.engine.v1.Resource")),
+	decls.NewVar(CELVariablesIdent, decls.NewMapType(decls.String, decls.Dyn)),
+	decls.NewVar(CELVariablesAbbrev, decls.NewMapType(decls.String, decls.Dyn)),
+}
+
 func init() {
 	var err error
 
@@ -96,6 +104,7 @@ func ResourceAttributeNames(s string) []string {
 
 func newCELQueryPlanEnvOptions() []cel.EnvOption {
 	return []cel.EnvOption{
+		cel.CrossTypeNumericComparisons(true),
 		cel.Types(&requestv1.ResourcesQueryPlanRequest{}, &enginev1.Principal{}, &enginev1.Resource{}),
 		cel.Declarations(
 			decls.NewVar(CELRequestIdent, decls.NewObjectType("cerbos.request.v1.ResourcesQueryPlanRequest")),
@@ -115,14 +124,9 @@ func newCELQueryPlanEnvOptions() []cel.EnvOption {
 
 func newCELEnvOptions() []cel.EnvOption {
 	return []cel.EnvOption{
+		cel.CrossTypeNumericComparisons(true),
 		cel.Types(&enginev1.CheckInput{}, &enginev1.Principal{}, &enginev1.Resource{}),
-		cel.Declarations(
-			decls.NewVar(CELRequestIdent, decls.NewObjectType("cerbos.engine.v1.CheckInput")),
-			decls.NewVar(CELPrincipalAbbrev, decls.NewObjectType("cerbos.engine.v1.Principal")),
-			decls.NewVar(CELResourceAbbrev, decls.NewObjectType("cerbos.engine.v1.Resource")),
-			decls.NewVar(CELVariablesIdent, decls.NewMapType(decls.String, decls.Dyn)),
-			decls.NewVar(CELVariablesAbbrev, decls.NewMapType(decls.String, decls.Dyn)),
-		),
+		cel.Declarations(StdEnvDecls...),
 		ext.Strings(),
 		ext.Encoders(),
 		CerbosCELLib(),

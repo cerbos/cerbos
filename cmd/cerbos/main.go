@@ -8,6 +8,7 @@ import (
 
 	"github.com/cerbos/cerbos/cmd/cerbos/compile"
 	"github.com/cerbos/cerbos/cmd/cerbos/healthcheck"
+	"github.com/cerbos/cerbos/cmd/cerbos/repl"
 	"github.com/cerbos/cerbos/cmd/cerbos/run"
 	"github.com/cerbos/cerbos/cmd/cerbos/server"
 	"github.com/cerbos/cerbos/internal/outputcolor"
@@ -15,11 +16,13 @@ import (
 )
 
 func main() {
+	//nolint: govet
 	var cli struct {
 		Compile     compile.Cmd     `cmd:"" help:"Compile and test policies"`
 		Server      server.Cmd      `cmd:"" help:"Start Cerbos server (PDP)"`
 		Healthcheck healthcheck.Cmd `cmd:"" help:"Healthcheck utility" aliases:"hc"`
 		Run         run.Cmd         `cmd:"" help:"Run a command in the context of a Cerbos PDP"`
+		Repl        repl.Cmd        `cmd:"" help:"Start a REPL to try out conditions"`
 		Version     kong.VersionFlag
 	}
 

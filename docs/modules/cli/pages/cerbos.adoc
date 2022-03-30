@@ -9,6 +9,7 @@ This binary provides the following sub commands:
 
 `compile`:: Validate, compile and run tests on a policy repo
 `healthcheck`:: Perform a healthcheck on a Cerbos PDP
+`repl`:: An interactive REPL (read-evaluate-print-loop) for CEL conditions
 `run`:: Start a PDP and run a command within its context
 `server`:: Start the PDP server
 
@@ -122,6 +123,74 @@ manual
   --ca-cert=STRING      Path to CA cert for validating server cert ($CERBOS_HC_CACERT)
   --no-tls              Don't use TLS ($CERBOS_HC_NOTLS)
 ----
+
+[#repl]
+== `repl` Command
+
+The REPL is an interactive utility to experiment with xref:policies:conditions.adoc[CEL conditions] used in Cerbos policy rules. All Cerbos library functions and special variables (`request`, `R`, `P` and so on) are available in this environment. 
+
+You can type in valid CEL expressions at the prompt to instantly evaluate them.
+
+[listing]
+----
+-> 5 + 1
+_ = 6
+
+-> "test".charAt(1)
+_ = "e"
+----
+
+The special variable `_` holds the result of the last expression evaluated.
+
+[listing]
+----
+-> 5 + 5
+_ = 10
+
+-> _ * 10
+_ = 100
+----
+
+You can define variables using the `:let` directive.
+
+[listing]
+----
+-> :let x = hierarchy("a.b.c")
+x = [
+  "a",
+  "b",
+  "c"
+]
+
+-> :let y = hierarchy("a.b")
+y = [
+  "a",
+  "b"
+]
+
+-> x.immediateChildOf(y)
+_ = true
+----
+
+You can also set special variables used in Cerbos policies (`request`, `variables`, `R`, `P`, `V`) and try out CEL expressions using them.
+
+[listing]
+----
+-> :let request = {\
+>   "principal":{"id":"john","roles":["employee"],"attr":{"scope":"foo.bar.baz.qux"}},\
+>   "resource":{"id":"x1","kind":"leave_request","attr":{"scope":"foo.bar"}}\
+> }
+
+-> hierarchy(R.attr.scope).ancestorOf(hierarchy(P.attr.scope))
+_ = true
+----
+
+Type `:vars` to display the values of all the variables currently defined in the environment.
+
+Type `:help` or `:h` to display help. Type `:quit`, `:q` or `:exit` to exit the REPL. 
+
+TIP: Use the up/down arrow keys (or kbd:[Ctrl+P]/kbd:[Ctrl+N]) to navigate command history. Most of the standard line-editing commands such as kbd:[Ctrl+a], kbd:[Ctrl+h], kbd:[Ctrl+r] are supported as well. 
+
 
 [#run]
 == `run` Command
