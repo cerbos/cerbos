@@ -5,4 +5,6 @@
 :app-github-download-page: {app-github-url}/releases/download/v{app-version}
 :app-github-releases-page: {app-github-url}/releases/tag/v{app-version}
 :app-helm-chart-repo: https://download.cerbos.dev/helm-charts
+:app-schema-url-current: https://api.cerbos.dev/v{app-version}/cerbos
+:app-schema-url-latest: https://api.cerbos.dev/latest/cerbos
 :cerbos-openapi-schema: /schema/swagger.json 

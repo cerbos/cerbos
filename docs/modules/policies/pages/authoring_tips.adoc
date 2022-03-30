@@ -1,11 +1,15 @@
 include::ROOT:partial$attributes.adoc[]
 
+:schema-file: /policy/v1/Policy.schema.json
+:current-schema-url: {app-schema-url-current}{schema-file}
+:latest-schema-url: {app-schema-url-latest}{schema-file}
+
 = Policy authoring 
 
 == Tips for working with policies
 
 * Policies can be in either YAML or JSON formats. Accepted file extensions are `.yml`, `.yaml` or `.json`. All other extensions are ignored.
-* The JSON schema for Cerbos policies is available at `https://api.cerbos.dev/v{app-version}/cerbos/policy/v1/Policy.schema.json`. If you prefer to always use the latest version, it can be accessed at `https://api.cerbos.dev/latest/cerbos/policy/v1/Policy.schema.json` as well. 
+* The JSON schema for Cerbos policies is available at `{current-schema-url}`. If you prefer to always use the latest version, it can be accessed at `{latest-schema-url}` as well. 
 * The policy header is common for all policy types:
 ** `apiVersion`: Required. Must be `api.cerbos.dev/v1`.
 ** `description`: Optional. Description of the policy.
@@ -27,18 +31,18 @@ The quickest and the easiest way to get familiar with Cerbos policies is to use 
 
 Editors with support for the link:https://microsoft.github.io/language-server-protocol/[Language Server Protocol (LSP)] can make use of the link:https://github.com/redhat-developer/yaml-language-server[YAML language server] implementation when working with Cerbos policies. Simply add the following line at the beginning of your policy file to get context-sensitive code suggestions and validation messages from the editor.
 
-[source,yaml]
+[source,yaml,subs="+attributes"]
 ----
-# yaml-language-server: $schema=https://api.cerbos.dev/latest/cerbos/policy/v1/Policy.schema.json
+# yaml-language-server: $schema={latest-schema-url}
 ----
 
 YAML language server also supports per-directory settings. If all your Cerbos policies are contained in a specific directory, you can configure the editor to always use the correct schema for the YAML files in that directory. Refer to the link:https://github.com/redhat-developer/yaml-language-server#language-server-settings=[YAML language server documentation] for more information.
 
 .Example: Apply the schema to all files in the /cerbos directory 
-[source,yaml]
+[source,yaml,subs="+attributes"]
 ----
 yaml.schemas: {
-    "https://api.cerbos.dev/latest/cerbos/policy/v1/Policy.schema.json": "/cerbos/*"
+    "{latest-schema-url}": "/cerbos/*"
 }
 ----
 
@@ -46,7 +50,7 @@ yaml.schemas: {
 
 Easiest way to get started is to install the link:https://github.com/lspcontainers/lspcontainers.nvim[lspcontainer.nvim] plugin. With link:https://github.com/wbthomason/packer.nvim[Packer], you can use a configuration similar to the following:
 
-[source,lua]
+[source,lua,subs="+attributes"]
 ----
 use({ 'lspcontainers/lspcontainers.nvim' })
 
@@ -67,7 +71,7 @@ use({
             settings = {
                 yaml = {
                     schemas = {
-                        "https://api.cerbos.dev/latest/cerbos/policy/v1/Policy.schema.json": "/cerbos/*"
+                        "{latest-schema-url}": "/cerbos/*"
                     },
                 },
             },
