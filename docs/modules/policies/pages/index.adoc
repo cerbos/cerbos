@@ -15,17 +15,3 @@ Policies are evaluated based on the metadata passed in the request to the Cerbos
 NOTE: View the latest documentation and example requests by accessing a running Cerbos instance using a browser (http://localhost:3592/). The OpenAPI (Swagger) schema can be obtained by accessing `{cerbos-openapi-schema}` as well. 
 
 
-== Policy authoring tips
-
-* Policies can be in either YAML or JSON formats. Accepted file extensions are `.yml`, `.yaml` or `.json`. All other extensions are ignored.
-* The policy header is common for all policy types:
-** `apiVersion`: Required. Must be `api.cerbos.dev/v1`.
-** `description`: Optional. Description of the policy.
-** `disabled`: Optional. Set to `true` to make the Cerbos engine ignore this policy file.
-** `metadata.sourceFile`: Optional. Set to the source of the policy data for auditing purposes.
-** `metadata.annotations`: Optional. Key-value pairs of strings holding free-form data for auditing purposes.
-* Resource names, actions, and principal names can be hierarchical. Use `:` as the delimiter. For example: `app:component:resource`.
-* Wildcard matches are allowed on certain fields. Wildcards respect the hierarchy delimiter `:`.
-* xref:scoped_policies.adoc[Scoped policies] are handy for use cases like multi-tenancy where you may want to override particular rules for some tenants.   
-* See xref:conditions.adoc[Conditions] to learn how to write conditions in policy rules.
-* See xref:schemas.adoc[Schemas] to learn how you can define schemas for validating requests.
