@@ -38,7 +38,7 @@ Editors with support for the link:https://microsoft.github.io/language-server-pr
 
 YAML language server also supports per-directory settings. If all your Cerbos policies are contained in a specific directory, you can configure the editor to always use the correct schema for the YAML files in that directory. Refer to the link:https://github.com/redhat-developer/yaml-language-server#language-server-settings=[YAML language server documentation] for more information.
 
-.Example: Apply the schema to all files in the /cerbos directory 
+.Example: Apply the schema to all files in the /cerbos directory
 [source,yaml,subs="+attributes"]
 ----
 yaml.schemas: {
@@ -79,3 +79,44 @@ use({
     end,
 })
 ----
+
+==== JetBrains IDEs
+
+Go into the Preferences of JetBrains IDE of choice and navigate to the `JSON Schema Mappings` menu.
+
+----
+Preferences > Languages & Frameworks > Schemas and DTDs > JSON Schema Mappings
+----
+
+Add an entry with the following configuration
+
+[subs="attributes"]
+----
+Name: Cerbos
+Schema file or URL: {latest-schema-url}
+Schema version: JSON Schema Version 7
+File path pattern: cerbos/*
+----
+image:jetbrains-menu.png[alt="JetBrains JSON Schema Mappings menu",role="center-img"]
+
+NOTE: In the example above, the schema is applied to all files in the /cerbos directory.
+
+==== Visual Studio Code
+
+Before starting, make sure you know how to modify Visual Studio Code settings by taking a look at the link:https://code.visualstudio.com/docs/getstarted/settings[VSCode documentation].
+
+For Visual Studio Code, an extension is required to work with the schema.
+Please install the extension from link:https://marketplace.visualstudio.com/items?itemName=redhat.vscode-yaml[here]
+
+After the required extension is ready, please navigate to the Visual Studio Code's `settings.json` and add the following part.
+
+[source,json,subs="attributes"]
+----
+{
+  "yaml.schemas": {
+    "{latest-schema-url}": "cerbos/*"
+  }
+}
+----
+
+NOTE: In the example above, the schema is applied to all files in the /cerbos directory.
