@@ -5,6 +5,7 @@ go 1.17
 require (
 	contrib.go.opencensus.io/exporter/prometheus v0.4.1
 	github.com/Masterminds/sprig/v3 v3.2.2
+	github.com/adrg/xdg v0.4.0
 	github.com/alecthomas/chroma v0.10.0
 	github.com/alecthomas/kong v0.5.0
 	github.com/alecthomas/participle/v2 v2.0.0-alpha7

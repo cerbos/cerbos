@@ -9,6 +9,7 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/adrg/xdg"
 	"github.com/alecthomas/kong"
 	"github.com/cerbos/cerbos/cmd/cerbos/repl/internal"
 	"github.com/peterh/liner"
@@ -46,21 +47,24 @@ func (c *Cmd) Run(k *kong.Kong) error {
 
 func getHistoryFile(path string) string {
 	if path == "" {
-		homeDir, err := os.UserHomeDir()
-		if err != nil {
+		dir := filepath.Join(xdg.DataHome, "cerbos")
+		//nolint:gomnd
+		if err := os.MkdirAll(dir, 0o744); err != nil {
+			fmt.Fprintf(os.Stderr, "Failed to create directory %q (%v): history is disabled", dir, err)
 			return ""
 		}
 
-		return filepath.Join(homeDir, ".cerbos_history")
+		return filepath.Join(dir, ".cerbos_repl_history")
 	}
 
 	finfo, err := os.Stat(path)
 	if err != nil && !errors.Is(err, os.ErrNotExist) {
+		fmt.Fprintf(os.Stderr, "Failed to stat history file %q (%v): history is disabled", path, err)
 		return ""
 	}
 
 	if finfo != nil && finfo.IsDir() {
-		return filepath.Join(path, ".cerbos_history")
+		return filepath.Join(path, ".cerbos_repl_history")
 	}
 
 	return path
