@@ -41,7 +41,7 @@ body:
         - **OS**: Ubuntu 20.04
         - **Cerbos version**: 0.4.0
         - **Docker version (if used)**: 20.10
-        - **Go version (if compiled)**: 1.17
+        - **Go version (if compiled)**: 1.18
     value: |
         - OS:
         - Cerbos version:

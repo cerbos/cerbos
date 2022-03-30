@@ -1,6 +1,6 @@
 module github.com/cerbos/cerbos/tools
 
-go 1.17
+go 1.18
 
 require (
 	github.com/bojand/ghz v0.106.1
