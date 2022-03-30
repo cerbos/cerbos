@@ -82,13 +82,9 @@ use({
 
 ==== JetBrains IDEs
 
-Go into the Preferences of JetBrains IDE of choice and navigate to the `JSON Schema Mappings` menu.
+Navigate to the menu:Preferences[Languages & Frameworks > Schemas and DTDs > JSON Schema Mappings] in JetBrains IDE of your choice.
 
-----
-Preferences > Languages & Frameworks > Schemas and DTDs > JSON Schema Mappings
-----
-
-Add an entry with the following configuration
+Add an entry with the following configuration:
 
 [subs="attributes"]
 ----
@@ -99,16 +95,16 @@ File path pattern: cerbos/*
 ----
 image:jetbrains-menu.png[alt="JetBrains JSON Schema Mappings menu",role="center-img"]
 
-NOTE: In the example above, the schema is applied to all files in the /cerbos directory.
+NOTE: In the example above, the schema is applied to all files in the cerbos directory.
 
 ==== Visual Studio Code
 
-Before starting, make sure you know how to modify Visual Studio Code settings by taking a look at the link:https://code.visualstudio.com/docs/getstarted/settings[VSCode documentation].
+If you are new to Visual Studio Code, refer to the
+link:https://code.visualstudio.com/docs/getstarted/settings[documentation] for more information about how to change settings.
 
-For Visual Studio Code, an extension is required to work with the schema.
-Please install the extension from link:https://marketplace.visualstudio.com/items?itemName=redhat.vscode-yaml[here]
+Install the YAML language server extension from https://marketplace.visualstudio.com/items?itemName=redhat.vscode-yaml
 
-After the required extension is ready, please navigate to the Visual Studio Code's `settings.json` and add the following part.
+After the extension is installed, hit kbd:[Ctrl+,] or menu:File[Preferences > Settings] to edit settings. Expand menu:Extensions[YAML], click `Edit in settings.json` under `Yaml: Schemas`. and add the following snippet:
 
 [source,json,subs="attributes"]
 ----
@@ -119,4 +115,4 @@ After the required extension is ready, please navigate to the Visual Studio Code
 }
 ----
 
-NOTE: In the example above, the schema is applied to all files in the /cerbos directory.
+NOTE: In the example above, the schema is applied to all files in the cerbos directory.
