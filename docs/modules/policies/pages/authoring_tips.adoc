@@ -38,7 +38,7 @@ Editors with support for the link:https://microsoft.github.io/language-server-pr
 
 YAML language server also supports per-directory settings. If all your Cerbos policies are contained in a specific directory, you can configure the editor to always use the correct schema for the YAML files in that directory. Refer to the link:https://github.com/redhat-developer/yaml-language-server#language-server-settings=[YAML language server documentation] for more information.
 
-.Example: Apply the schema to all files in the /cerbos directory 
+.Example: Apply the schema to all files in the /cerbos directory
 [source,yaml,subs="+attributes"]
 ----
 yaml.schemas: {
@@ -79,3 +79,40 @@ use({
     end,
 })
 ----
+
+==== JetBrains IDEs
+
+Navigate to the menu:Preferences[Languages & Frameworks > Schemas and DTDs > JSON Schema Mappings] in JetBrains IDE of your choice.
+
+Add an entry with the following configuration:
+
+[subs="attributes"]
+----
+Name: Cerbos
+Schema file or URL: {latest-schema-url}
+Schema version: JSON Schema Version 7
+File path pattern: cerbos/*
+----
+image:jetbrains-menu.png[alt="JetBrains JSON Schema Mappings menu",role="center-img"]
+
+NOTE: In the example above, the schema is applied to all files in the cerbos directory.
+
+==== Visual Studio Code
+
+If you are new to Visual Studio Code, refer to the
+link:https://code.visualstudio.com/docs/getstarted/settings[documentation] for more information about how to change settings.
+
+Install the YAML language server extension from https://marketplace.visualstudio.com/items?itemName=redhat.vscode-yaml
+
+After the extension is installed, hit kbd:[Ctrl+,] or menu:File[Preferences > Settings] to edit settings. Expand menu:Extensions[YAML], click `Edit in settings.json` under `Yaml: Schemas`. and add the following snippet:
+
+[source,json,subs="attributes"]
+----
+{
+  "yaml.schemas": {
+    "{latest-schema-url}": "cerbos/*"
+  }
+}
+----
+
+NOTE: In the example above, the schema is applied to all files in the cerbos directory.
