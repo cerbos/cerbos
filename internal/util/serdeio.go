@@ -79,14 +79,15 @@ func newYAMLDecoder(src *bufio.Reader) decoderFunc {
 		seenContent := false
 		for s.Scan() {
 			line := s.Bytes()
+			trimmedLine := bytes.TrimSpace(line)
 
 			// ignore comments
-			if bytes.HasPrefix(line, yamlComment) {
+			if bytes.HasPrefix(trimmedLine, yamlComment) {
 				continue
 			}
 
 			// ignore empty lines at the beginning of the file
-			if !seenContent && len(bytes.TrimSpace(line)) == 0 {
+			if !seenContent && len(trimmedLine) == 0 {
 				continue
 			}
 			seenContent = true
