@@ -6,13 +6,14 @@ package internal
 import (
 	"testing"
 
-	enginev1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
-	"github.com/cerbos/cerbos/internal/conditions"
 	"github.com/google/cel-go/common/types/ref"
 	"github.com/google/go-cmp/cmp"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/testing/protocmp"
 	"google.golang.org/protobuf/types/known/structpb"
+
+	enginev1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
+	"github.com/cerbos/cerbos/internal/conditions"
 )
 
 type DirectiveTest struct {

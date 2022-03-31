@@ -4,6 +4,7 @@
 package internal
 
 import (
+	_ "embed"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -12,14 +13,7 @@ import (
 	"sort"
 	"strings"
 
-	_ "embed"
-
 	participle "github.com/alecthomas/participle/v2"
-	enginev1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
-	"github.com/cerbos/cerbos/internal/conditions"
-	"github.com/cerbos/cerbos/internal/outputcolor"
-	"github.com/cerbos/cerbos/internal/printer"
-	"github.com/cerbos/cerbos/internal/printer/colored"
 	"github.com/google/cel-go/cel"
 	"github.com/google/cel-go/checker/decls"
 	"github.com/google/cel-go/common"
@@ -30,6 +24,12 @@ import (
 	exprpb "google.golang.org/genproto/googleapis/api/expr/v1alpha1"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"
+
+	enginev1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
+	"github.com/cerbos/cerbos/internal/conditions"
+	"github.com/cerbos/cerbos/internal/outputcolor"
+	"github.com/cerbos/cerbos/internal/printer"
+	"github.com/cerbos/cerbos/internal/printer/colored"
 )
 
 var (
