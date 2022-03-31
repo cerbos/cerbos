@@ -13,7 +13,7 @@ import (
 	"sort"
 	"strings"
 
-	participle "github.com/alecthomas/participle/v2"
+	"github.com/alecthomas/participle/v2"
 	"github.com/google/cel-go/cel"
 	"github.com/google/cel-go/checker/decls"
 	"github.com/google/cel-go/common"
@@ -158,12 +158,24 @@ func (r *REPL) processDirective(line string) error {
 		return r.showVars()
 	case directive.Help:
 		return r.help()
+	case directive.Rules:
+		// TODO: Implement rules directive
+		r.output.Println("Rules")
+		return nil
 	case directive.Let != nil:
 		prefix, _, _ := strings.Cut(directive.Let.Name, ".")
 		if _, ok := specialVars[prefix]; ok {
 			return r.setSpecialVar(directive.Let.Name, directive.Let.Expr)
 		}
 		return r.processExpr(directive.Let.Name, directive.Let.Expr)
+	case directive.Load != nil:
+		// TODO: Implement load directive
+		r.output.Println(fmt.Sprintf("Load the file: %s", directive.Load.FileName))
+		return nil
+	case directive.Exec != nil:
+		// TODO: Implement exec directive
+		r.output.Println("Exec")
+		return nil
 	default:
 		return fmt.Errorf("unknown directive %q", line)
 	}

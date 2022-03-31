@@ -38,14 +38,25 @@ func NewParser() (*participle.Parser, error) {
 
 //nolint:govet
 type REPLDirective struct {
-	Exit  bool          `parser:"@('q'|'quit'|'exit')"`
-	Reset bool          `parser:"| @'reset'"`
-	Vars  bool          `parser:"| @'vars'"`
-	Help  bool          `parser:"| @('h' | 'help')"`
-	Let   *LetDirective `parser:"| @@"`
+	Exit  bool           `parser:"@('q'|'quit'|'exit')"`
+	Reset bool           `parser:"| @'reset'"`
+	Vars  bool           `parser:"| @'vars'"`
+	Help  bool           `parser:"| @('h' | 'help')"`
+	Rules bool           `parser:"| @'rules'"`
+	Let   *LetDirective  `parser:"| @@"`
+	Load  *LoadDirective `parser:"| @@"`
+	Exec  *ExecDirective `parser:"| @@"`
 }
 
 type LetDirective struct {
 	Name string `parser:"'let' @Ident"`
 	Expr string `parser:"'=' @Any"`
+}
+
+type LoadDirective struct {
+	FileName string `parser:"'load' @Ident"`
+}
+
+type ExecDirective struct {
+	RuleName string `parser:"'exec' @Ident"`
 }
