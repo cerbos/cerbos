@@ -1,3 +1,4 @@
+# yaml-language-server: $schema=https://api.cerbos.dev/latest/cerbos/policy/v1/Policy.schema.json
 ---
 apiVersion: "api.cerbos.dev/v1"
 derivedRoles:
