@@ -25,6 +25,7 @@ const (
 var (
 	jsonStart           = []byte("{")
 	yamlSep             = []byte("---")
+	yamlComment         = []byte("#")
 	ErrMultipleYAMLDocs = errors.New("more than one YAML document detected")
 )
 
@@ -78,6 +79,11 @@ func newYAMLDecoder(src *bufio.Reader) decoderFunc {
 		seenContent := false
 		for s.Scan() {
 			line := s.Bytes()
+
+			// ignore comments
+			if bytes.HasPrefix(line, yamlComment) {
+				continue
+			}
 
 			// ignore empty lines at the beginning of the file
 			if !seenContent && len(bytes.TrimSpace(line)) == 0 {
