@@ -129,6 +129,18 @@ manual
 
 The REPL is an interactive utility to experiment with xref:policies:conditions.adoc[CEL conditions] used in Cerbos policy rules. All Cerbos library functions and special variables (`request`, `R`, `P` and so on) are available in this environment. 
 
+.Example: Running the REPL using the binary
+[source,sh,subs="attributes"]
+----
+./{app-name} repl
+----
+
+.Example: Running the REPL using the container
+[source,sh,subs="attributes"]
+----
+docker run -i -t {app-docker-img} repl
+----
+
 You can type in valid CEL expressions at the prompt to instantly evaluate them.
 
 [listing]
