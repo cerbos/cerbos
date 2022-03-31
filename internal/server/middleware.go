@@ -7,14 +7,15 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"os"
 	"strconv"
 	"strings"
 
-	"github.com/gorilla/handlers"
 	grpc_logging "github.com/grpc-ecosystem/go-grpc-middleware/logging"
 	"github.com/grpc-ecosystem/go-grpc-middleware/logging/zap/ctxzap"
 	grpc_ctxtags "github.com/grpc-ecosystem/go-grpc-middleware/tags"
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
+	"github.com/rs/cors"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 	"google.golang.org/grpc"
@@ -120,18 +121,26 @@ func withCORS(conf *Conf, handler http.Handler) http.Handler {
 		return handler
 	}
 
-	var opts []handlers.CORSOption
-	if len(conf.CORS.AllowedOrigins) > 0 {
-		opts = append(opts, handlers.AllowedOrigins(conf.CORS.AllowedOrigins))
-	} else {
-		opts = append(opts, handlers.AllowedOrigins([]string{"*"}))
+	opts := cors.Options{
+		AllowedOrigins: conf.CORS.AllowedOrigins,
+		AllowedHeaders: conf.CORS.AllowedHeaders,
 	}
 
-	if len(conf.CORS.AllowedHeaders) > 0 {
-		opts = append(opts, handlers.AllowedHeaders(conf.CORS.AllowedHeaders))
+	var logger cors.Logger
+	if enabled, err := strconv.ParseBool(os.Getenv("CERBOS_DEBUG_CORS")); err == nil && enabled {
+		l, err := zap.NewStdLogAt(zap.L().Named("cors"), zap.DebugLevel)
+		if err != nil {
+			l = zap.NewStdLog(zap.L().Named("cors"))
+		}
+
+		opts.Debug = true
+		logger = l
 	}
 
-	return handlers.CORS(opts...)(handler)
+	c := cors.New(opts)
+	c.Log = logger
+
+	return c.Handler(handler)
 }
 
 func handleUnknownServices(_ interface{}, stream grpc.ServerStream) error {

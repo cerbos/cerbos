@@ -31,7 +31,6 @@ require (
 	github.com/google/go-cmp v0.5.7
 	github.com/google/gops v0.3.22
 	github.com/google/uuid v1.3.0
-	github.com/gorilla/handlers v1.5.1
 	github.com/gorilla/mux v1.8.0
 	github.com/grpc-ecosystem/go-grpc-middleware v1.3.0
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.10.0
@@ -55,6 +54,7 @@ require (
 	github.com/pterm/pterm v0.12.39
 	github.com/rivo/tview v0.0.0-20210624165335-29d673af0ce2
 	github.com/rjeczalik/notify v0.9.3-0.20201210012515-e2a77dcc14cf
+	github.com/rs/cors v1.8.2
 	github.com/santhosh-tekuri/jsonschema/v5 v5.0.0
 	github.com/spf13/afero v1.8.2
 	github.com/stretchr/testify v1.7.1
@@ -125,7 +125,6 @@ require (
 	github.com/dustin/go-humanize v1.0.0 // indirect
 	github.com/emirpasic/gods v1.12.0 // indirect
 	github.com/envoyproxy/go-control-plane v0.10.1 // indirect
-	github.com/felixge/httpsnoop v1.0.2 // indirect
 	github.com/gdamore/encoding v1.0.0 // indirect
 	github.com/go-git/gcfg v1.5.0 // indirect
 	github.com/go-git/go-billy/v5 v5.3.1 // indirect
