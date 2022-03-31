@@ -124,6 +124,14 @@ func withCORS(conf *Conf, handler http.Handler) http.Handler {
 	opts := cors.Options{
 		AllowedOrigins: conf.CORS.AllowedOrigins,
 		AllowedHeaders: conf.CORS.AllowedHeaders,
+		AllowedMethods: []string{
+			http.MethodHead,
+			http.MethodGet,
+			http.MethodPost,
+			http.MethodPut,
+			http.MethodPatch,
+			http.MethodDelete,
+		},
 	}
 
 	var logger cors.Logger
