@@ -243,7 +243,7 @@ func mkProps(ping *telemetryv1.Ping) (analytics.Properties, error) {
 		return nil, fmt.Errorf("failed to marshal ping: %w", err)
 	}
 
-	var props map[string]interface{}
+	var props map[string]any
 	if err := json.Unmarshal(pingBytes, &props); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal ping: %w", err)
 	}

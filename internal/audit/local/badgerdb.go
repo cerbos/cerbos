@@ -479,6 +479,6 @@ type zapLogger struct {
 	*zap.SugaredLogger
 }
 
-func (zl zapLogger) Warningf(msg string, args ...interface{}) {
+func (zl zapLogger) Warningf(msg string, args ...any) {
 	zl.Warnf(msg, args...)
 }

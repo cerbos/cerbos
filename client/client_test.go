@@ -153,14 +153,14 @@ func testGRPCClient(c client.Client) func(*testing.T) {
 				client.NewPrincipal("john").
 					WithRoles("employee").
 					WithPolicyVersion("20210210").
-					WithAttributes(map[string]interface{}{
+					WithAttributes(map[string]any{
 						"department": "marketing",
 						"geography":  "GB",
 						"team":       "design",
 					}),
 				client.NewResourceSet("leave_request").
 					WithPolicyVersion("20210210").
-					AddResourceInstance("XX125", map[string]interface{}{
+					AddResourceInstance("XX125", map[string]any{
 						"department": "marketing",
 						"geography":  "GB",
 						"id":         "XX125",
@@ -184,7 +184,7 @@ func testGRPCClient(c client.Client) func(*testing.T) {
 				client.NewPrincipal("john").
 					WithRoles("employee").
 					WithPolicyVersion("20210210").
-					WithAttributes(map[string]interface{}{
+					WithAttributes(map[string]any{
 						"department": "marketing",
 						"geography":  "GB",
 						"team":       "design",
@@ -193,7 +193,7 @@ func testGRPCClient(c client.Client) func(*testing.T) {
 					Add(client.
 						NewResource("leave_request", "XX125").
 						WithPolicyVersion("20210210").
-						WithAttributes(map[string]interface{}{
+						WithAttributes(map[string]any{
 							"department": "marketing",
 							"geography":  "GB",
 							"id":         "XX125",
@@ -203,7 +203,7 @@ func testGRPCClient(c client.Client) func(*testing.T) {
 					Add(client.
 						NewResource("leave_request", "XX125").
 						WithPolicyVersion("20210210").
-						WithAttributes(map[string]interface{}{
+						WithAttributes(map[string]any{
 							"department": "marketing",
 							"geography":  "GB",
 							"id":         "XX125",
@@ -213,7 +213,7 @@ func testGRPCClient(c client.Client) func(*testing.T) {
 					Add(client.
 						NewResource("leave_request", "XX225").
 						WithPolicyVersion("20210210").
-						WithAttributes(map[string]interface{}{
+						WithAttributes(map[string]any{
 							"department": "engineering",
 							"geography":  "GB",
 							"id":         "XX225",
@@ -238,14 +238,14 @@ func testGRPCClient(c client.Client) func(*testing.T) {
 				client.NewPrincipal("john").
 					WithRoles("employee").
 					WithPolicyVersion("20210210").
-					WithAttributes(map[string]interface{}{
+					WithAttributes(map[string]any{
 						"department": "marketing",
 						"geography":  "GB",
 						"team":       "design",
 					}),
 				client.NewResource("leave_request", "XX125").
 					WithPolicyVersion("20210210").
-					WithAttributes(map[string]interface{}{
+					WithAttributes(map[string]any{
 						"department": "marketing",
 						"geography":  "GB",
 						"id":         "XX125",

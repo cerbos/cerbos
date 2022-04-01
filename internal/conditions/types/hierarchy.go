@@ -173,7 +173,7 @@ var (
 type Hierarchy []string
 
 // ConvertToNative implements ref.Val.ConvertToNative.
-func (h Hierarchy) ConvertToNative(typeDesc reflect.Type) (interface{}, error) {
+func (h Hierarchy) ConvertToNative(typeDesc reflect.Type) (any, error) {
 	//nolint:exhaustive
 	switch typeDesc.Kind() {
 	case reflect.String:
@@ -210,7 +210,7 @@ func (h Hierarchy) Type() ref.Type {
 }
 
 // Value implements ref.Val.Value.
-func (h Hierarchy) Value() interface{} {
+func (h Hierarchy) Value() any {
 	return []string(h)
 }
 

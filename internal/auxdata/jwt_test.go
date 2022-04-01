@@ -318,7 +318,7 @@ func mkSignedToken(t *testing.T, expiry time.Time) string {
 	require.NoError(t, token.Set("customString", "foobar"))
 	require.NoError(t, token.Set("customInt", 42))
 	require.NoError(t, token.Set("customArray", []string{"A", "B", "C"}))
-	require.NoError(t, token.Set("customMap", map[string]interface{}{"A": "AA", "B": "BB", "C": "CC"}))
+	require.NoError(t, token.Set("customMap", map[string]any{"A": "AA", "B": "BB", "C": "CC"}))
 
 	keyData, err := os.ReadFile(filepath.Join(test.PathToDir(t, "auxdata"), "signing_key.jwk"))
 	require.NoError(t, err)
@@ -335,13 +335,13 @@ func mkSignedToken(t *testing.T, expiry time.Time) string {
 func mkExpectedTokenData(t *testing.T, expiry time.Time) map[string]*structpb.Value {
 	t.Helper()
 
-	wantAud, err := structpb.NewList([]interface{}{"cerbos-jwt-tests"})
+	wantAud, err := structpb.NewList([]any{"cerbos-jwt-tests"})
 	require.NoError(t, err)
 
-	wantArray, err := structpb.NewList([]interface{}{"A", "B", "C"})
+	wantArray, err := structpb.NewList([]any{"A", "B", "C"})
 	require.NoError(t, err)
 
-	wantMap, err := structpb.NewStruct(map[string]interface{}{"A": "AA", "B": "BB", "C": "CC"})
+	wantMap, err := structpb.NewStruct(map[string]any{"A": "AA", "B": "BB", "C": "CC"})
 	require.NoError(t, err)
 
 	return map[string]*structpb.Value{

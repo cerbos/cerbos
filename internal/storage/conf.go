@@ -29,13 +29,13 @@ func (c *Conf) Key() string {
 	return ConfKey
 }
 
-func (c *Conf) UnmarshalYAML(unmarshal func(interface{}) error) error {
+func (c *Conf) UnmarshalYAML(unmarshal func(any) error) error {
 	// We want to avoid defining all the storage driver configuration structs as fields of the Conf
 	// struct to maintain the "plugin" nature of those drivers (and avoid circular package references).
 	// However, the strict YAML parser throws an error if it sees undefined fields. This is a slightly
 	// inefficient workaround to get over that issue.
 
-	var confMap map[string]interface{}
+	var confMap map[string]any
 	if err := unmarshal(&confMap); err != nil {
 		return fmt.Errorf("failed to unmarshal storage config: %w", err)
 	}

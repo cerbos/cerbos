@@ -76,10 +76,10 @@ func TestLoad(t *testing.T) {
 }
 
 func TestOverride(t *testing.T) {
-	overrides := map[string]interface{}{
-		"server": map[string]interface{}{
+	overrides := map[string]any{
+		"server": map[string]any{
 			"listenAddr": ":6666",
-			"tls": map[string]interface{}{
+			"tls": map[string]any{
 				"certificate": "newCert",
 			},
 		},
@@ -153,16 +153,16 @@ func TestCerbosConfig(t *testing.T) {
 
 func TestStrictParsing(t *testing.T) {
 	testCases := []struct {
-		conf    map[string]interface{}
+		conf    map[string]any
 		name    string
 		wantErr bool
 	}{
 		{
 			name: "valid config",
-			conf: map[string]interface{}{
-				"server": map[string]interface{}{
+			conf: map[string]any{
+				"server": map[string]any{
 					"listenAddr": ":6666",
-					"tls": map[string]interface{}{
+					"tls": map[string]any{
 						"certificate": "newCert",
 					},
 				},
@@ -170,10 +170,10 @@ func TestStrictParsing(t *testing.T) {
 		},
 		{
 			name: "undeclared field",
-			conf: map[string]interface{}{
-				"server": map[string]interface{}{
+			conf: map[string]any{
+				"server": map[string]any{
 					"listenAddr": ":6666",
-					"tls": map[string]interface{}{
+					"tls": map[string]any{
 						"certificate": "newCert",
 					},
 					"wibble": "wobble",
@@ -183,10 +183,10 @@ func TestStrictParsing(t *testing.T) {
 		},
 		{
 			name: "wrong case for field",
-			conf: map[string]interface{}{
-				"server": map[string]interface{}{
+			conf: map[string]any{
+				"server": map[string]any{
 					"listenaddr": ":6666",
-					"tls": map[string]interface{}{
+					"tls": map[string]any{
 						"certificate": "newCert",
 					},
 				},

@@ -30,7 +30,7 @@ func (c Codec) Name() string {
 	return name
 }
 
-func (c Codec) Marshal(v interface{}) ([]byte, error) {
+func (c Codec) Marshal(v any) ([]byte, error) {
 	if b, err := c.vtcodec.Marshal(v); err == nil {
 		return b, nil
 	}
@@ -42,7 +42,7 @@ func (c Codec) Marshal(v interface{}) ([]byte, error) {
 	return proto.Marshal(vv)
 }
 
-func (c Codec) Unmarshal(data []byte, v interface{}) error {
+func (c Codec) Unmarshal(data []byte, v any) error {
 	if err := c.vtcodec.Unmarshal(data, v); err == nil {
 		return nil
 	}

@@ -241,9 +241,9 @@ func (ppe *principalPolicyEvaluator) Evaluate(ctx context.Context, tctx tracer.C
 	return result, nil
 }
 
-func evaluateVariables(tctx tracer.Context, variables map[string]*runtimev1.Expr, input *enginev1.CheckInput) (map[string]interface{}, error) {
+func evaluateVariables(tctx tracer.Context, variables map[string]*runtimev1.Expr, input *enginev1.CheckInput) (map[string]any, error) {
 	var errs error
-	evalVars := make(map[string]interface{}, len(variables))
+	evalVars := make(map[string]any, len(variables))
 	for varName, varExpr := range variables {
 		vctx := tctx.StartVariable(varName, varExpr.Original)
 		val, err := evaluateCELExpr(varExpr.Checked, evalVars, input)
@@ -260,7 +260,7 @@ func evaluateVariables(tctx tracer.Context, variables map[string]*runtimev1.Expr
 	return evalVars, errs
 }
 
-func satisfiesCondition(tctx tracer.Context, cond *runtimev1.Condition, variables map[string]interface{}, input *enginev1.CheckInput) (bool, error) {
+func satisfiesCondition(tctx tracer.Context, cond *runtimev1.Condition, variables map[string]any, input *enginev1.CheckInput) (bool, error) {
 	if cond == nil {
 		tctx.ComputedBoolResult(true, nil, "")
 		return true, nil
@@ -339,7 +339,7 @@ func satisfiesCondition(tctx tracer.Context, cond *runtimev1.Condition, variable
 	}
 }
 
-func evaluateBoolCELExpr(expr *exprpb.CheckedExpr, variables map[string]interface{}, input *enginev1.CheckInput) (bool, error) {
+func evaluateBoolCELExpr(expr *exprpb.CheckedExpr, variables map[string]any, input *enginev1.CheckInput) (bool, error) {
 	val, err := evaluateCELExpr(expr, variables, input)
 	if err != nil {
 		return false, err
@@ -353,12 +353,12 @@ func evaluateBoolCELExpr(expr *exprpb.CheckedExpr, variables map[string]interfac
 	return boolVal, nil
 }
 
-func evaluateCELExpr(expr *exprpb.CheckedExpr, variables map[string]interface{}, input *enginev1.CheckInput) (interface{}, error) {
+func evaluateCELExpr(expr *exprpb.CheckedExpr, variables map[string]any, input *enginev1.CheckInput) (any, error) {
 	if expr == nil {
 		return nil, nil
 	}
 
-	result, _, err := conditions.Eval(conditions.StdEnv, cel.CheckedExprToAst(expr), map[string]interface{}{
+	result, _, err := conditions.Eval(conditions.StdEnv, cel.CheckedExprToAst(expr), map[string]any{
 		conditions.CELRequestIdent:    input,
 		conditions.CELResourceAbbrev:  input.Resource,
 		conditions.CELPrincipalAbbrev: input.Principal,

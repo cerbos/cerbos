@@ -39,7 +39,7 @@ func (m ModuleID) Value() (driver.Value, error) {
 	return m.hash, nil
 }
 
-func (m *ModuleID) Scan(src interface{}) error {
+func (m *ModuleID) Scan(src any) error {
 	switch v := src.(type) {
 	case uint64:
 		m.hash = v

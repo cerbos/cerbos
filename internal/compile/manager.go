@@ -232,10 +232,10 @@ func mkCache(size int) gcache.Cache {
 	gauge := metrics.MakeCacheGauge(cacheKind)
 	return gcache.New(size).
 		ARC().
-		AddedFunc(func(_, _ interface{}) {
+		AddedFunc(func(_, _ any) {
 			gauge.Add(1)
 		}).
-		EvictedFunc(func(_, _ interface{}) {
+		EvictedFunc(func(_, _ any) {
 			gauge.Add(-1)
 		}).Build()
 }

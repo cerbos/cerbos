@@ -141,7 +141,7 @@ func (so *serverOpt) addOverride(key, value string) {
 }
 
 func (so *serverOpt) toConfigWrapper() (*config.Wrapper, error) {
-	confOverrides := map[string]interface{}{}
+	confOverrides := map[string]any{}
 
 	if so.configSrc == nil {
 		defaults := map[string]string{

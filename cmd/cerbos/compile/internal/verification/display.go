@@ -27,7 +27,7 @@ const (
 )
 
 var (
-	labelColors = map[policyv1.TestResults_Result]func(...interface{}) string{
+	labelColors = map[policyv1.TestResults_Result]func(...any) string{
 		policyv1.TestResults_RESULT_PASSED:  colored.PassedTest,
 		policyv1.TestResults_RESULT_SKIPPED: colored.SkippedTest,
 		policyv1.TestResults_RESULT_FAILED:  colored.FailedTest,
