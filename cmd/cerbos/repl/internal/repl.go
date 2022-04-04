@@ -9,6 +9,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"os"
 	"reflect"
 	"sort"
 	"strings"
@@ -26,8 +27,10 @@ import (
 	"google.golang.org/protobuf/proto"
 
 	enginev1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
+	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
 	"github.com/cerbos/cerbos/internal/conditions"
 	"github.com/cerbos/cerbos/internal/outputcolor"
+	"github.com/cerbos/cerbos/internal/policy"
 	"github.com/cerbos/cerbos/internal/printer"
 	"github.com/cerbos/cerbos/internal/printer/colored"
 )
@@ -50,11 +53,14 @@ const (
 	directivePrefix = ':'
 	prompt          = "-> "
 	secondaryPrompt = "> "
+	rulePrefix      = "rule_"
 )
 
 type REPL struct {
 	vars     variables
 	decls    map[string]*exprpb.Decl
+	rules    []any
+	mkRuleID func() int
 	reader   *liner.State
 	parser   *participle.Parser
 	output   Output
@@ -70,6 +76,7 @@ func NewREPL(reader *liner.State, output Output) (*REPL, error) {
 	repl := &REPL{
 		reader:   reader,
 		parser:   parser,
+		mkRuleID: newCounter(),
 		output:   output,
 		toRefVal: conditions.StdEnv.TypeAdapter().NativeToValue,
 	}
@@ -159,9 +166,7 @@ func (r *REPL) processDirective(line string) error {
 	case directive.Help:
 		return r.help()
 	case directive.Rules:
-		// TODO: Implement rules directive
-		r.output.Println("Rules")
-		return nil
+		return r.showRules()
 	case directive.Let != nil:
 		prefix, _, _ := strings.Cut(directive.Let.Name, ".")
 		if _, ok := specialVars[prefix]; ok {
@@ -169,9 +174,7 @@ func (r *REPL) processDirective(line string) error {
 		}
 		return r.processExpr(directive.Let.Name, directive.Let.Expr)
 	case directive.Load != nil:
-		// TODO: Implement load directive
-		r.output.Println(fmt.Sprintf("Load the file: %s", directive.Load.FileName))
-		return nil
+		return r.loadRulesFromPolicy(directive.Load.Path)
 	case directive.Exec != nil:
 		// TODO: Implement exec directive
 		r.output.Println("Exec")
@@ -207,6 +210,18 @@ func (r *REPL) showVars() error {
 		r.output.PrintResult(name, r.vars[name])
 	}
 
+	return nil
+}
+
+func (r *REPL) showRules() error {
+	for idx, rule := range r.rules {
+		switch rule.(type) {
+		case *policyv1.ResourceRule:
+			r.output.Println(fmt.Sprintf("%s %s", colored.REPLVar(fmt.Sprintf("%s%d", rulePrefix, idx)), colored.REPLPolicyType("(resource_policies)")))
+		case *policyv1.RoleDef:
+			r.output.Println(fmt.Sprintf("%s %s", colored.REPLVar(fmt.Sprintf("%s%d", rulePrefix, idx)), colored.REPLPolicyType("(derived_roles)")))
+		}
+	}
 	return nil
 }
 
@@ -330,6 +345,40 @@ func (r *REPL) evalExpr(expr string) (ref.Val, *exprpb.Type, error) {
 	return val, tpe, nil
 }
 
+func (r *REPL) loadRulesFromPolicy(path string) error {
+	f, err := os.Open(path)
+	if err != nil {
+		return fmt.Errorf("failed to open policy file at %s: %w", path, err)
+	}
+
+	p, err := policy.ReadPolicy(f)
+	if err != nil {
+		return fmt.Errorf("failed to read policy file: %w", err)
+	}
+
+	switch pt := p.PolicyType.(type) {
+	case *policyv1.Policy_ResourcePolicy:
+		for _, rule := range pt.ResourcePolicy.Rules {
+			r.rules = append(r.rules, rule)
+		}
+
+		res := pt.ResourcePolicy.Resource
+		if pt.ResourcePolicy.Scope != "" {
+			res = fmt.Sprintf("%s.%s", pt.ResourcePolicy.Scope, pt.ResourcePolicy.Resource)
+		}
+
+		r.output.Println(fmt.Sprintf("Resource policy '%s' loaded", res))
+	case *policyv1.Policy_DerivedRoles:
+		for _, def := range pt.DerivedRoles.Definitions {
+			r.rules = append(r.rules, def)
+		}
+
+		r.output.Println(fmt.Sprintf("Derived roles '%s' loaded", pt.DerivedRoles.Name))
+	}
+
+	return nil
+}
+
 func (r *REPL) mkEnv() (*cel.Env, error) {
 	decls := make([]*exprpb.Decl, len(r.decls))
 	i := 0
@@ -424,4 +473,12 @@ func (po *PrinterOutput) PrintErr(msg string, err error) {
 		po.Printf(" %v\n", err)
 	}
 	po.Println()
+}
+
+func newCounter() func() int {
+	counter := 0
+	return func() int {
+		counter++
+		return counter
+	}
 }

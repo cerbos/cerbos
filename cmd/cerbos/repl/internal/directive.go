@@ -14,6 +14,7 @@ func NewParser() (*participle.Parser, error) {
 	lex, err := lexer.New(lexer.Rules{
 		"Root": {
 			{Name: "Ident", Pattern: `[a-zA-Z]\w*(\.\w+)*`},
+			{Name: "Path", Pattern: `(\/.*|[a-zA-Z]:\\(?:([^<>:"\/\\|?*]*[^<>:"\/\\|?*.]\\|..\\)*([^<>:"\/\\|?*]*[^<>:"\/\\|?*.]\\?|..\\))?)`},
 			{Name: "Assign", Pattern: `=`, Action: lexer.Push("Assign")},
 			{Name: "Whitespace", Pattern: `\s+`},
 		},
@@ -54,7 +55,7 @@ type LetDirective struct {
 }
 
 type LoadDirective struct {
-	FileName string `parser:"'load' @Ident"`
+	Path string `parser:"'load' @Path"`
 }
 
 type ExecDirective struct {
