@@ -189,9 +189,12 @@ func (tr *TestRunner) RunHTTPTests(hostAddr string, creds *AuthCreds) func(*test
 		require.Eventually(t,
 			httpHealthCheckPasses(c, fmt.Sprintf("%s/_cerbos/health", hostAddr), tr.HealthPollInterval),
 			tr.Timeout, tr.HealthPollInterval, "Server did not come up on time")
+
 		for _, tc := range tr.Cases {
 			t.Run(tc.Name, tr.executeHTTPTestCase(c, hostAddr, creds, tc))
 		}
+
+		t.Run("cors", tr.checkCORS(c, hostAddr))
 	}
 }
 
@@ -298,6 +301,66 @@ func (tr *TestRunner) executeHTTPTestCase(c *http.Client, hostAddr string, creds
 
 		require.NoError(t, protojson.Unmarshal(respBytes, have), "Failed to unmarshal response [%s]", string(respBytes))
 		compareProto(t, want, have)
+	}
+}
+
+func (tr *TestRunner) checkCORS(c *http.Client, hostAddr string) func(*testing.T) {
+	paths := []string{
+		"/api/check",
+		"/api/check_resource_batch",
+		"/api/playground/validate",
+		"/api/playground/test",
+		"/api/playground/evaluate",
+		"/api/playground/proxy",
+		"/admin/policy",
+		"/admin/schema",
+		"/admin/store",
+		"/api/x/plan/resources",
+	}
+
+	methods := []string{
+		http.MethodHead,
+		http.MethodGet,
+		http.MethodPost,
+		http.MethodPut,
+		http.MethodPatch,
+		http.MethodDelete,
+	}
+
+	//nolint:thelper
+	return func(t *testing.T) {
+		for _, path := range paths {
+			path := path
+			t.Run(path, func(t *testing.T) {
+				for _, method := range methods {
+					method := method
+					t.Run(method, func(t *testing.T) {
+						ctx, cancelFunc := context.WithTimeout(context.Background(), tr.Timeout)
+						defer cancelFunc()
+
+						req, err := http.NewRequestWithContext(ctx, http.MethodOptions, fmt.Sprintf("%s%s", hostAddr, path), http.NoBody)
+						require.NoError(t, err, "Failed to create request")
+
+						req.Header.Set("Content-Type", "application/json")
+						req.Header.Set("Origin", "https://cerbos.dev")
+						req.Header.Set("Access-Control-Request-Method", method)
+
+						resp, err := c.Do(req)
+						require.NoError(t, err, "HTTP request failed")
+
+						defer func() {
+							if resp.Body != nil {
+								_, _ = io.Copy(io.Discard, resp.Body)
+								resp.Body.Close()
+							}
+						}()
+
+						require.Equal(t, "*", resp.Header.Get("access-control-allow-origin"), "access-control-allow-origin missing")
+						require.Equal(t, method, resp.Header.Get("access-control-allow-methods"), "access-control-allow-methods missing")
+					})
+				}
+			})
+		}
 	}
 }
 
