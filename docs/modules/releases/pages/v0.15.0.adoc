@@ -105,6 +105,7 @@ Anonymous usage information collection is introduced in this release to help Cer
 * Make playground file limit consistent (link:https://github.com/cerbos/cerbos/pull/772[#772])
 * Only report newly-introduced backwards-compatibility breakage (link:https://github.com/cerbos/cerbos/pull/777[#777])
 * Remove casts from CEL numeric expressions (link:https://github.com/cerbos/cerbos/pull/741[#741])
+* Replace CORS handler (link:https://github.com/cerbos/cerbos/pull/805[#805])
 * Restrict set of JSON schema enums to match validation rule (link:https://github.com/cerbos/cerbos/pull/767[#767])
 * Set minimum Go version to 1.18 (link:https://github.com/cerbos/cerbos/pull/802[#802])
 * Tweaks to load test scripts (link:https://github.com/cerbos/cerbos/pull/728[#728])
