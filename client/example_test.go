@@ -92,10 +92,7 @@ func ExampleClient_CheckResources() {
 				"team":       "frontend",
 			}), "approve")
 
-	ctx, cancelFunc := context.WithTimeout(context.Background(), timeout)
-	defer cancelFunc()
-
-	result, err := cc.CheckResources(ctx, resources)
+	result, err := cc.CheckResources(context.TODO(), resources)
 	if err != nil {
 		log.Fatalf("Request failed: %v", err)
 	}

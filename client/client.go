@@ -507,5 +507,4 @@ func (gcpc *grpcClientPrincipalCtx) CheckResources(ctx context.Context, batch *R
 
 func (gcpc *grpcClientPrincipalCtx) ResourcesQueryPlan(ctx context.Context, resource *Resource, action string) (*ResourcesQueryPlanResponse, error) {
 	return gcpc.client.ResourcesQueryPlan(ctx, gcpc.principal, resource, action)
-
 }
