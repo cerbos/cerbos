@@ -15,3 +15,4 @@
 {"name": "github.com/xeipuuv/gojsonreference", "licenceType": "Apache-2.0"}
 {"name": "github.com/xeipuuv/gojsonschema", "licenceType": "Apache-2.0"}
 {"name": "github.com/xi2/xz", "licenceType": "Public Domain"}
+{"name": "github.com/segmentio/backo-go", "licenceTextOverrideFile": "licences/github.com/segmentio/backo-go/LICENSE"}
