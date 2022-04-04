@@ -20,8 +20,8 @@ import (
 var dummy uint64
 
 var (
-	strPool = &sync.Pool{New: func() interface{} { return xxhashv2.New() }}
-	pbPool  = &sync.Pool{New: func() interface{} { return xxhashv2.New() }}
+	strPool = &sync.Pool{New: func() any { return xxhashv2.New() }}
+	pbPool  = &sync.Pool{New: func() any { return xxhashv2.New() }}
 )
 
 func TestXXHashV2(t *testing.T) {

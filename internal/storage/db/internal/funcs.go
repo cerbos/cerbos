@@ -10,7 +10,7 @@ import (
 	"github.com/doug-martin/goqu/v9/exp"
 )
 
-func ConcatWithSepFunc(dialect string) func(string, ...interface{}) exp.Expression {
+func ConcatWithSepFunc(dialect string) func(string, ...any) exp.Expression {
 	switch dialect {
 	case "mysql", "mysql8", "sqlserver":
 		return mysqlConcatWithSep
@@ -19,8 +19,8 @@ func ConcatWithSepFunc(dialect string) func(string, ...interface{}) exp.Expressi
 	}
 }
 
-func mysqlConcatWithSep(sep string, args ...interface{}) exp.Expression {
-	a := make([]interface{}, len(args)+1)
+func mysqlConcatWithSep(sep string, args ...any) exp.Expression {
+	a := make([]any, len(args)+1)
 	a[0] = sep
 	for i, arg := range args {
 		a[i+1] = arg
@@ -30,7 +30,7 @@ func mysqlConcatWithSep(sep string, args ...interface{}) exp.Expression {
 }
 
 //nolint:gomnd
-func ansiConcatWithSep(sep string, args ...interface{}) exp.Expression {
+func ansiConcatWithSep(sep string, args ...any) exp.Expression {
 	n := len(args)
 	switch n {
 	case 0:
@@ -39,7 +39,7 @@ func ansiConcatWithSep(sep string, args ...interface{}) exp.Expression {
 		return goqu.L("? || ?", args[0], sep)
 	default:
 		f := strings.Repeat("? || ? || ", n-1) + "?"
-		a := make([]interface{}, (2*n)-1)
+		a := make([]any, (2*n)-1)
 		for i := 0; i < n-1; i++ {
 			a[i*2] = args[i]
 			a[(i*2)+1] = sep

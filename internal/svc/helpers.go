@@ -19,7 +19,7 @@ const (
 	playgroundIDTagKey = "playground_id"
 )
 
-func ExtractRequestFields(fullMethod string, req interface{}) map[string]interface{} {
+func ExtractRequestFields(fullMethod string, req any) map[string]any {
 	if req == nil {
 		return nil
 	}
@@ -31,7 +31,7 @@ func ExtractRequestFields(fullMethod string, req interface{}) map[string]interfa
 			return nil
 		}
 
-		return map[string]interface{}{
+		return map[string]any{
 			metaTagKey: map[string]string{requestIDTagKey: crsReq.RequestId},
 		}
 
@@ -41,7 +41,7 @@ func ExtractRequestFields(fullMethod string, req interface{}) map[string]interfa
 			return nil
 		}
 
-		return map[string]interface{}{
+		return map[string]any{
 			metaTagKey: map[string]string{requestIDTagKey: crbReq.RequestId},
 		}
 
@@ -51,7 +51,7 @@ func ExtractRequestFields(fullMethod string, req interface{}) map[string]interfa
 			return nil
 		}
 
-		return map[string]interface{}{
+		return map[string]any{
 			metaTagKey: map[string]string{playgroundIDTagKey: pgReq.PlaygroundId},
 		}
 
@@ -61,7 +61,7 @@ func ExtractRequestFields(fullMethod string, req interface{}) map[string]interfa
 			return nil
 		}
 
-		return map[string]interface{}{
+		return map[string]any{
 			metaTagKey: map[string]string{playgroundIDTagKey: pgReq.PlaygroundId},
 		}
 

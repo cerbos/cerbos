@@ -10,7 +10,7 @@ import (
 	"google.golang.org/protobuf/types/known/structpb"
 )
 
-func ToStructPB(v interface{}) (*structpb.Value, error) {
+func ToStructPB(v any) (*structpb.Value, error) {
 	val, err := structpb.NewValue(v)
 	if err == nil {
 		return val, nil
@@ -23,7 +23,7 @@ func ToStructPB(v interface{}) (*structpb.Value, error) {
 	vv := reflect.ValueOf(v)
 	switch vv.Kind() {
 	case reflect.Array, reflect.Slice:
-		arr := make([]interface{}, vv.Len())
+		arr := make([]any, vv.Len())
 		for i := 0; i < vv.Len(); i++ {
 			el := vv.Index(i)
 			// TODO (cell) Recurse
@@ -33,7 +33,7 @@ func ToStructPB(v interface{}) (*structpb.Value, error) {
 		return structpb.NewValue(arr)
 	case reflect.Map:
 		if vv.Type().Key().Kind() == reflect.String {
-			m := make(map[string]interface{})
+			m := make(map[string]any)
 
 			iter := vv.MapRange()
 			for iter.Next() {

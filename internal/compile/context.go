@@ -49,6 +49,6 @@ func (mc *moduleCtx) error() error {
 	return mc.errors.ErrOrNil()
 }
 
-func (mc *moduleCtx) addErrWithDesc(err error, description string, params ...interface{}) {
+func (mc *moduleCtx) addErrWithDesc(err error, description string, params ...any) {
 	mc.errors.Add(newError(mc.sourceFile, fmt.Sprintf(description, params...), err))
 }

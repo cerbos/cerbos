@@ -15,17 +15,17 @@ import (
 func TestConfigValidate(t *testing.T) {
 	testCases := []struct {
 		name    string
-		conf    map[string]interface{}
+		conf    map[string]any
 		wantErr bool
 	}{
 		{
 			name: "valid jwt",
-			conf: map[string]interface{}{
-				"auxData": map[string]interface{}{
-					"jwt": map[string]interface{}{
-						"keySets": []map[string]interface{}{
-							{"id": "foo", "remote": map[string]interface{}{"url": "https://domain.tld/.well-known/foo.jwks"}},
-							{"id": "bar", "local": map[string]interface{}{"data": "data"}},
+			conf: map[string]any{
+				"auxData": map[string]any{
+					"jwt": map[string]any{
+						"keySets": []map[string]any{
+							{"id": "foo", "remote": map[string]any{"url": "https://domain.tld/.well-known/foo.jwks"}},
+							{"id": "bar", "local": map[string]any{"data": "data"}},
 						},
 					},
 				},
@@ -33,12 +33,12 @@ func TestConfigValidate(t *testing.T) {
 		},
 		{
 			name: "duplicate jwt keyset ID",
-			conf: map[string]interface{}{
-				"auxData": map[string]interface{}{
-					"jwt": map[string]interface{}{
-						"keySets": []map[string]interface{}{
-							{"id": "foo", "remote": map[string]interface{}{"url": "https://domain.tld/.well-known/foo.jwks"}},
-							{"id": "foo", "local": map[string]interface{}{"data": "data"}},
+			conf: map[string]any{
+				"auxData": map[string]any{
+					"jwt": map[string]any{
+						"keySets": []map[string]any{
+							{"id": "foo", "remote": map[string]any{"url": "https://domain.tld/.well-known/foo.jwks"}},
+							{"id": "foo", "local": map[string]any{"data": "data"}},
 						},
 					},
 				},
@@ -47,12 +47,12 @@ func TestConfigValidate(t *testing.T) {
 		},
 		{
 			name: "empty jwt keyset",
-			conf: map[string]interface{}{
-				"auxData": map[string]interface{}{
-					"jwt": map[string]interface{}{
-						"keySets": []map[string]interface{}{
+			conf: map[string]any{
+				"auxData": map[string]any{
+					"jwt": map[string]any{
+						"keySets": []map[string]any{
 							{"id": "foo"},
-							{"id": "bar", "local": map[string]interface{}{"data": "data"}},
+							{"id": "bar", "local": map[string]any{"data": "data"}},
 						},
 					},
 				},
@@ -61,18 +61,18 @@ func TestConfigValidate(t *testing.T) {
 		},
 		{
 			name: "both remote and local defined in jwt keyset",
-			conf: map[string]interface{}{
-				"auxData": map[string]interface{}{
-					"jwt": map[string]interface{}{
-						"keySets": []map[string]interface{}{
+			conf: map[string]any{
+				"auxData": map[string]any{
+					"jwt": map[string]any{
+						"keySets": []map[string]any{
 							{
 								"id": "foo",
-								"remote": map[string]interface{}{
+								"remote": map[string]any{
 									"url":   "https://domain.tld/.well-known/foo.jwks",
-									"local": map[string]interface{}{"data": "data"},
+									"local": map[string]any{"data": "data"},
 								},
 							},
-							{"id": "bar", "local": map[string]interface{}{"data": "data"}},
+							{"id": "bar", "local": map[string]any{"data": "data"}},
 						},
 					},
 				},
@@ -81,12 +81,12 @@ func TestConfigValidate(t *testing.T) {
 		},
 		{
 			name: "empty remote URL in jwt keyset",
-			conf: map[string]interface{}{
-				"auxData": map[string]interface{}{
-					"jwt": map[string]interface{}{
-						"keySets": []map[string]interface{}{
-							{"id": "foo", "remote": map[string]interface{}{"url": ""}},
-							{"id": "bar", "local": map[string]interface{}{"data": "data"}},
+			conf: map[string]any{
+				"auxData": map[string]any{
+					"jwt": map[string]any{
+						"keySets": []map[string]any{
+							{"id": "foo", "remote": map[string]any{"url": ""}},
+							{"id": "bar", "local": map[string]any{"data": "data"}},
 						},
 					},
 				},
@@ -95,12 +95,12 @@ func TestConfigValidate(t *testing.T) {
 		},
 		{
 			name: "both local data and file defined in jwt keyset",
-			conf: map[string]interface{}{
-				"auxData": map[string]interface{}{
-					"jwt": map[string]interface{}{
-						"keySets": []map[string]interface{}{
-							{"id": "foo", "remote": map[string]interface{}{"url": "https://domain.tld/.well-known/foo.jwks"}},
-							{"id": "bar", "local": map[string]interface{}{"data": "data", "file": "/path"}},
+			conf: map[string]any{
+				"auxData": map[string]any{
+					"jwt": map[string]any{
+						"keySets": []map[string]any{
+							{"id": "foo", "remote": map[string]any{"url": "https://domain.tld/.well-known/foo.jwks"}},
+							{"id": "bar", "local": map[string]any{"data": "data", "file": "/path"}},
 						},
 					},
 				},
@@ -109,12 +109,12 @@ func TestConfigValidate(t *testing.T) {
 		},
 		{
 			name: "both local data and file not defined in jwt keyset",
-			conf: map[string]interface{}{
-				"auxData": map[string]interface{}{
-					"jwt": map[string]interface{}{
-						"keySets": []map[string]interface{}{
-							{"id": "foo", "remote": map[string]interface{}{"url": "https://domain.tld/.well-known/foo.jwks"}},
-							{"id": "bar", "local": map[string]interface{}{"data": "", "file": ""}},
+			conf: map[string]any{
+				"auxData": map[string]any{
+					"jwt": map[string]any{
+						"keySets": []map[string]any{
+							{"id": "foo", "remote": map[string]any{"url": "https://domain.tld/.well-known/foo.jwks"}},
+							{"id": "bar", "local": map[string]any{"data": "", "file": ""}},
 						},
 					},
 				},

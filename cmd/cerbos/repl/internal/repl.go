@@ -41,8 +41,8 @@ var (
 	errExit        = errors.New("exit")
 	errInvalidExpr = errors.New("invalid expr")
 
-	listType = reflect.TypeOf([]interface{}{})
-	mapType  = reflect.TypeOf(map[string]interface{}{})
+	listType = reflect.TypeOf([]any{})
+	mapType  = reflect.TypeOf(map[string]any{})
 )
 
 const (
@@ -58,7 +58,7 @@ type REPL struct {
 	reader   *liner.State
 	parser   *participle.Parser
 	output   Output
-	toRefVal func(interface{}) ref.Val
+	toRefVal func(any) ref.Val
 }
 
 func NewREPL(reader *liner.State, output Output) (*REPL, error) {
@@ -257,7 +257,7 @@ func (r *REPL) setSpecialVar(name, value string) error {
 		r.vars[conditions.CELResourceAbbrev] = resourceVal
 
 	case conditions.CELVariablesIdent, conditions.CELVariablesAbbrev:
-		var v map[string]interface{}
+		var v map[string]any
 		if err := json.Unmarshal([]byte(value), &v); err != nil {
 			return fmt.Errorf("failed to unmarshal JSON as %q: %w", name, err)
 		}
@@ -332,7 +332,7 @@ func (r *REPL) mkEnv() (*cel.Env, error) {
 // variables is a type that provides the interpreter.Activation interface.
 type variables map[string]ref.Val
 
-func (v variables) ResolveName(name string) (interface{}, bool) {
+func (v variables) ResolveName(name string) (any, bool) {
 	val, ok := v[name]
 	return val, ok
 }
@@ -342,10 +342,10 @@ func (v variables) Parent() interpreter.Activation {
 }
 
 type Output interface {
-	Print(string, ...interface{})
-	Println(...interface{})
+	Print(string, ...any)
+	Println(...any)
 	PrintResult(string, ref.Val)
-	PrintJSON(interface{})
+	PrintJSON(any)
 	PrintErr(string, error)
 }
 
@@ -361,7 +361,7 @@ func NewPrinterOutput(stdout, stderr io.Writer) *PrinterOutput {
 	}
 }
 
-func (po *PrinterOutput) Print(format string, args ...interface{}) {
+func (po *PrinterOutput) Print(format string, args ...any) {
 	po.Printf(format, args...)
 	po.Println()
 }
@@ -399,7 +399,7 @@ func (po *PrinterOutput) PrintResult(name string, value ref.Val) {
 	}
 }
 
-func (po *PrinterOutput) PrintJSON(obj interface{}) {
+func (po *PrinterOutput) PrintJSON(obj any) {
 	if err := po.Printer.PrintJSON(obj, po.level); err != nil {
 		po.Println("<...>")
 	}

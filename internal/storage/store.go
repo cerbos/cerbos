@@ -34,7 +34,7 @@ func (ipe InvalidPolicyError) Unwrap() error {
 	return ipe.Err
 }
 
-func NewInvalidPolicyError(err error, msg string, args ...interface{}) InvalidPolicyError {
+func NewInvalidPolicyError(err error, msg string, args ...any) InvalidPolicyError {
 	return InvalidPolicyError{Message: fmt.Sprintf(msg, args...), Err: err}
 }
 
@@ -52,7 +52,7 @@ func (ise InvalidSchemaError) Unwrap() error {
 	return ise.Err
 }
 
-func NewInvalidSchemaError(err error, msg string, args ...interface{}) InvalidSchemaError {
+func NewInvalidSchemaError(err error, msg string, args ...any) InvalidSchemaError {
 	return InvalidSchemaError{Message: fmt.Sprintf(msg, args...), Err: err}
 }
 

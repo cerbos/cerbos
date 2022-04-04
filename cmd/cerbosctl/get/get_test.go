@@ -334,7 +334,7 @@ func mkClients(t *testing.T, globals *flagset.Globals) *cmdclient.Context {
 	return &cmdclient.Context{Client: c, AdminClient: ac}
 }
 
-func mustNew(t *testing.T, cli interface{}) *kong.Kong {
+func mustNew(t *testing.T, cli any) *kong.Kong {
 	t.Helper()
 	options := []kong.Option{
 		kong.Name("cerbosctl"),

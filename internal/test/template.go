@@ -18,7 +18,7 @@ import (
 	"github.com/cerbos/cerbos/internal/policy"
 )
 
-func RenderTemplate(tb testing.TB, path string, data interface{}) []byte {
+func RenderTemplate(tb testing.TB, path string, data any) []byte {
 	tb.Helper()
 
 	tmpl, err := template.New(filepath.Base(path)).Funcs(TemplateFuncs()).ParseFiles(path)
@@ -35,7 +35,7 @@ func RenderTemplate(tb testing.TB, path string, data interface{}) []byte {
 }
 
 func TemplateFuncs() template.FuncMap {
-	funcs := make(map[string]interface{})
+	funcs := make(map[string]any)
 	for n, f := range sprig.FuncMap() {
 		funcs[n] = f
 	}

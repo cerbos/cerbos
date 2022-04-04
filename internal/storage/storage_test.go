@@ -15,10 +15,10 @@ import (
 )
 
 func TestDriverInstantiation(t *testing.T) {
-	conf := map[string]interface{}{
-		"storage": map[string]interface{}{
+	conf := map[string]any{
+		"storage": map[string]any{
 			"driver": "disk",
-			"disk": map[string]interface{}{
+			"disk": map[string]any{
 				"directory": t.TempDir(),
 			},
 		},

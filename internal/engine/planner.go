@@ -413,7 +413,7 @@ func evaluateCELExprPartially(expr *exprpb.CheckedExpr, input *enginev1.Resource
 		return nil, nil, err
 	}
 	ast := cel.ParsedExprToAst(&exprpb.ParsedExpr{Expr: e})
-	knownVars := make(map[string]interface{})
+	knownVars := make(map[string]any)
 	env := conditions.StdPartialEnv
 	if len(input.Resource.GetAttr()) > 0 {
 		var ds []*exprpb.Decl

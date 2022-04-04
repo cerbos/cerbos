@@ -160,10 +160,10 @@ func TestPartialEvaluationWithMacroGlobalVars(t *testing.T) {
 		ext.Strings(),
 		cel.Macros(geo))
 
-	vars, _ := cel.PartialVars(map[string]interface{}{
+	vars, _ := cel.PartialVars(map[string]any{
 		"y": []string{"GB", "US"},
 		"z": "ca",
-		"v": map[string]interface{}{},
+		"v": map[string]any{},
 	}, cel.AttributePattern("R"))
 
 	expr := "v.geo() in (y + [z]).map(t, t.upperAscii())"
@@ -197,12 +197,12 @@ func TestPartialEvaluation(t *testing.T) {
 			decls.NewVar("R.attr.department", decls.String)),
 		ext.Strings())
 
-	vars, _ := cel.PartialVars(map[string]interface{}{
+	vars, _ := cel.PartialVars(map[string]any{
 		"y":                 []string{"GB", "US"},
 		"z":                 "ca",
 		"R.attr.department": "marketing",
-		"request.principal": map[string]interface{}{
-			"attr": map[string]interface{}{
+		"request.principal": map[string]any{
+			"attr": map[string]any{
 				"country": "NZ",
 			},
 		},

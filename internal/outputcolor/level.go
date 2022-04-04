@@ -73,7 +73,7 @@ func scan(ctx *kong.DecodeContext) (*Level, error) {
 	return pointer(Basic), nil
 }
 
-func parse(v interface{}) (*Level, error) {
+func parse(v any) (*Level, error) {
 	s, ok := v.(string)
 	if !ok {
 		return nil, fmt.Errorf("invalid flag value (expected string, got %T)", v)

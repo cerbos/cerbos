@@ -30,11 +30,11 @@ type Printer struct {
 	stderr io.Writer
 }
 
-func (p *Printer) Println(args ...interface{}) {
+func (p *Printer) Println(args ...any) {
 	fmt.Fprintln(p.stdout, args...)
 }
 
-func (p *Printer) Printf(format string, args ...interface{}) {
+func (p *Printer) Printf(format string, args ...any) {
 	fmt.Fprintf(p.stdout, format, args...)
 }
 
@@ -64,7 +64,7 @@ func (p *Printer) coloredJSON(data string, colorLevel outputcolor.Level) error {
 	return formatter.Format(p.stdout, styles.SolarizedDark256, iterator)
 }
 
-func (p *Printer) PrintJSON(val interface{}, colorLevel outputcolor.Level) error {
+func (p *Printer) PrintJSON(val any, colorLevel outputcolor.Level) error {
 	var data bytes.Buffer
 	var enc *json.Encoder
 	if colorLevel.Enabled() {

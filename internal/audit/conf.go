@@ -30,7 +30,7 @@ type confHolder struct {
 	DecisionLogsEnabled bool `yaml:"decisionLogsEnabled" conf:",example=true"`
 }
 
-func (c *Conf) UnmarshalYAML(unmarshal func(interface{}) error) error {
+func (c *Conf) UnmarshalYAML(unmarshal func(any) error) error {
 	// This is a workaround to circumvent strict config parsing.
 	// Consider the following:
 	//
@@ -47,7 +47,7 @@ func (c *Conf) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	// This hack is slightly inefficient because it marshals and unmarshals YAML twice. It is an
 	// acceptable sacrifice to make because config is only read once on startup.
 
-	var confMap map[string]interface{}
+	var confMap map[string]any
 	if err := unmarshal(&confMap); err != nil {
 		return fmt.Errorf("failed to unmarshal audit config: %w", err)
 	}

@@ -76,7 +76,7 @@ func (c *Cmd) Run() error {
 	defer stopFunc()
 
 	// load any config overrides
-	confOverrides := map[string]interface{}{}
+	confOverrides := map[string]any{}
 	for _, override := range c.Set {
 		if err := strvals.ParseInto(override, confOverrides); err != nil {
 			return fmt.Errorf("failed to parse config override [%s]: %w", override, err)

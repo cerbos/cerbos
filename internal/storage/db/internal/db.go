@@ -234,7 +234,7 @@ func (s *dbStorage) AddOrUpdate(ctx context.Context, policies ...policy.Wrapper)
 				}
 
 				// insert the new dependency records
-				depRows := make([]interface{}, len(dependencies))
+				depRows := make([]any, len(dependencies))
 				for ix, d := range dependencies {
 					depRows[ix] = PolicyDependency{PolicyID: p.ID, DependencyID: d}
 				}
@@ -258,7 +258,7 @@ func (s *dbStorage) AddOrUpdate(ctx context.Context, policies ...policy.Wrapper)
 				}
 
 				// insert the new ancestry records
-				ancRows := make([]interface{}, len(ancestors))
+				ancRows := make([]any, len(ancestors))
 				for ix, a := range ancestors {
 					ancRows[ix] = PolicyAncestor{PolicyID: p.ID, AncestorID: a}
 				}
@@ -470,7 +470,7 @@ func (s *dbStorage) Delete(ctx context.Context, ids ...namer.ModuleID) error {
 		return nil
 	}
 
-	idList := make([]interface{}, len(ids))
+	idList := make([]any, len(ids))
 	events := make([]storage.Event, len(ids))
 
 	for i, id := range ids {

@@ -33,13 +33,13 @@ const (
 	unknownSvc            = "Unknown service"
 )
 
-func XForwardedHostUnaryServerInterceptor(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
+func XForwardedHostUnaryServerInterceptor(ctx context.Context, req any, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (any, error) {
 	md, ok := metadata.FromIncomingContext(ctx)
 	if !ok {
 		return handler(ctx, req)
 	}
 
-	headers := make(map[string]interface{}, 2) //nolint:gomnd
+	headers := make(map[string]any, 2) //nolint:gomnd
 
 	xfh, ok := md["x-forwarded-host"]
 	if ok {
@@ -71,7 +71,7 @@ func loggingDecider(fullMethodName string, _ error) bool {
 
 // payloadLoggingDecider decides whether to log request payloads.
 func payloadLoggingDecider(conf *Conf) grpc_logging.ServerPayloadLoggingDecider {
-	return func(ctx context.Context, fullMethodName string, servingObject interface{}) bool {
+	return func(ctx context.Context, fullMethodName string, servingObject any) bool {
 		return conf.LogRequestPayloads && strings.HasPrefix(fullMethodName, "/cerbos.svc.v1")
 	}
 }
@@ -151,7 +151,7 @@ func withCORS(conf *Conf, handler http.Handler) http.Handler {
 	return c.Handler(handler)
 }
 
-func handleUnknownServices(_ interface{}, stream grpc.ServerStream) error {
+func handleUnknownServices(_ any, stream grpc.ServerStream) error {
 	errFn := func(msg string) error {
 		return status.Errorf(codes.Unimplemented, msg)
 	}

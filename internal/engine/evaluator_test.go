@@ -148,7 +148,7 @@ func TestPartialEvaluationWithGlobalVars(t *testing.T) {
 	))
 	is.NoError(err)
 
-	pvars, _ := cel.PartialVars(map[string]interface{}{
+	pvars, _ := cel.PartialVars(map[string]any{
 		"gbLoc": "en_GB",
 		"gb_us": []string{"GB", "US"},
 		"ca":    "ca",

@@ -16,14 +16,14 @@ import (
 func TestConfigValidate(t *testing.T) {
 	testCases := []struct {
 		name        string
-		conf        map[string]interface{}
+		conf        map[string]any
 		wantLoadErr bool
 		wantErr     bool
 	}{
 		{
 			name: "valid config",
-			conf: map[string]interface{}{
-				"server": map[string]interface{}{
+			conf: map[string]any{
+				"server": map[string]any{
 					"httpListenAddr": ":6666",
 					"grpcListenAddr": ":6667",
 				},
@@ -31,8 +31,8 @@ func TestConfigValidate(t *testing.T) {
 		},
 		{
 			name: "invalid httpListenAddr",
-			conf: map[string]interface{}{
-				"server": map[string]interface{}{
+			conf: map[string]any{
+				"server": map[string]any{
 					"httpListenAddr": "wibble",
 					"grpcListenAddr": ":6667",
 				},
@@ -41,8 +41,8 @@ func TestConfigValidate(t *testing.T) {
 		},
 		{
 			name: "invalid grpcListenAddr",
-			conf: map[string]interface{}{
-				"server": map[string]interface{}{
+			conf: map[string]any{
+				"server": map[string]any{
 					"httpListenAddr": ":6666",
 					"grpcListenAddr": "wibble",
 				},
@@ -51,11 +51,11 @@ func TestConfigValidate(t *testing.T) {
 		},
 		{
 			name: "unencodedAdminPasswordHash",
-			conf: map[string]interface{}{
-				"server": map[string]interface{}{
-					"adminAPI": map[string]interface{}{
+			conf: map[string]any{
+				"server": map[string]any{
+					"adminAPI": map[string]any{
 						"enabled": true,
-						"adminCredentials": map[string]interface{}{
+						"adminCredentials": map[string]any{
 							"username":     defaultAdminUsername,
 							"passwordHash": defaultRawAdminPasswordHash,
 						},
@@ -98,7 +98,7 @@ func TestAdminAPICredentials(t *testing.T) {
 
 	testCases := []struct {
 		name           string
-		conf           map[string]interface{}
+		conf           map[string]any
 		unsafe         bool
 		wantUsername   string
 		wantPasswdHash []byte
@@ -106,9 +106,9 @@ func TestAdminAPICredentials(t *testing.T) {
 	}{
 		{
 			name: "defaults",
-			conf: map[string]interface{}{
-				"server": map[string]interface{}{
-					"adminAPI": map[string]interface{}{
+			conf: map[string]any{
+				"server": map[string]any{
+					"adminAPI": map[string]any{
 						"enabled": true,
 					},
 				},
@@ -119,11 +119,11 @@ func TestAdminAPICredentials(t *testing.T) {
 		},
 		{
 			name: "userProvidedNonDefault",
-			conf: map[string]interface{}{
-				"server": map[string]interface{}{
-					"adminAPI": map[string]interface{}{
+			conf: map[string]any{
+				"server": map[string]any{
+					"adminAPI": map[string]any{
 						"enabled": true,
-						"adminCredentials": map[string]interface{}{
+						"adminCredentials": map[string]any{
 							"username":     nonDefaultUsername,
 							"passwordHash": nonDefaultPasswordHashEncoded,
 						},
@@ -135,11 +135,11 @@ func TestAdminAPICredentials(t *testing.T) {
 		},
 		{
 			name: "userProvidedDefaultUsername",
-			conf: map[string]interface{}{
-				"server": map[string]interface{}{
-					"adminAPI": map[string]interface{}{
+			conf: map[string]any{
+				"server": map[string]any{
+					"adminAPI": map[string]any{
 						"enabled": true,
-						"adminCredentials": map[string]interface{}{
+						"adminCredentials": map[string]any{
 							"username":     defaultAdminUsername,
 							"passwordHash": nonDefaultPasswordHashEncoded,
 						},
@@ -152,11 +152,11 @@ func TestAdminAPICredentials(t *testing.T) {
 		},
 		{
 			name: "userProvidedDefaultPasswordHash",
-			conf: map[string]interface{}{
-				"server": map[string]interface{}{
-					"adminAPI": map[string]interface{}{
+			conf: map[string]any{
+				"server": map[string]any{
+					"adminAPI": map[string]any{
 						"enabled": true,
-						"adminCredentials": map[string]interface{}{
+						"adminCredentials": map[string]any{
 							"username":     nonDefaultUsername,
 							"passwordHash": defaultAdminPasswordHash,
 						},
