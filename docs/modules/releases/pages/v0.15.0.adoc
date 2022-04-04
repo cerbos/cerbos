@@ -1,0 +1,112 @@
+include::ROOT:partial$attributes.adoc[]
+
+[#v0.15.0]
+= Cerbos v0.15.0
+
+This release is full of new features and enhancements to increase developer productivity while working with Cerbos.
+
+== Highlights
+
+Cerbos now ships with a REPL (read-evaluate-print-loop) for developing conditions for policies. It provides an interactive environment where all the Cerbos special variables like `request` can be set and referenced in CEL expressions to get immediate feedback about the effects of executing those expressions. When developing complex logic, the REPL should help policy authors save a lot of time in the prototyping stage. It's available as a sub command of the Cerbos executable and can be run from the binary or the container by invoking `cerbos repl`. See the xref:0.15.0@cli:cerbos.adoc#repl[REPL documentation] for more information.   
+
+image::repl.gif[]
+
+Schemas describing the structure of the Cerbos policies are now publicly available and can be used with editors that support schemas to make the policy editing experience better. Most editors, when configured with the schema URL, can provide context-sensitive hints, validation and other rich editing features for policies. See xref:0.15.0@policies:authoring_tips.adoc[] for more information about how to configure your editor.  
+
+image::schema_edit.gif[]
+
+One of the core features of Cerbos is the policy testing framework. This release includes many improvements to the test runner to make the test output easy to consume by both humans and automated tools. The default output produces a summarised view of the test run which is much more compact and easy to read. Failures and other details are rendered in a natural tree structure and the output can be customised in many ways. Engine traces for failed tests are now properly rendered as JSON for consumption by automated tools as well. 
+
+image::test_output.png[]
+
+The Admin API has a new endpoint to force a reload of some of the disk-based stores such as `disk`, `git` and `blob`. This is useful when policies rarely change and polling the store for updates isn't necessary. Using the Admin API or the `cerbosctl` utility, the store can now be manually refreshed to pickup any changes. See xref:0.15.0@api:admin_api.adoc#store-management[Admin API] documentation and xref:0.15.0@cli:cerbosctl.adoc#store[`cerbosctl` documentation] for details.   
+
+The test server provided by the Go SDK can now be configured with all available Cerbos configuration options. This should be particularly useful in integration testing scenarios where the server needs to be configured as close to the actual production server as possible. 
+ 
+Anonymous usage information collection is introduced in this release to help Cerbos developers prioritise new features and improve existing ones. No personal information is ever collected and opting out is easy. See xref:0.15.0@ROOT:telemetry.adoc[] for more information about the kind of data collected and how to opt out.
+
+
+== Changelog
+
+
+=== Bug Fixes
+
+* Handle comments at the beginning of YAML files (link:https://github.com/cerbos/cerbos/pull/803[#803])
+* Validate that test files match schema (link:https://github.com/cerbos/cerbos/pull/724[#724])
+
+=== Features
+
+* Add an API to execute tests from the playground (link:https://github.com/cerbos/cerbos/pull/775[#775])
+* Add immediate reloading from the store with Admin API (link:https://github.com/cerbos/cerbos/pull/769[#769])
+* Provide JSON schemas (link:https://github.com/cerbos/cerbos/pull/727[#727])
+* Publish JSON schemas (link:https://github.com/cerbos/cerbos/pull/744[#744])
+* REPL for conditions (link:https://github.com/cerbos/cerbos/pull/799[#799])
+
+=== Enhancements
+
+* Add `--color` flag to `cerbos compile` (link:https://github.com/cerbos/cerbos/pull/754[#754])
+* Add protobufs for engine traces and test results (link:https://github.com/cerbos/cerbos/pull/749[#749])
+* Add telemetry (link:https://github.com/cerbos/cerbos/pull/743[#743])
+* #**BREAKING**# Add tree output functionality to the `cerbos compile` command (link:https://github.com/cerbos/cerbos/pull/729[#729])
+* Improve HTTP health check (link:https://github.com/cerbos/cerbos/pull/771[#771])
+* #**BREAKING**# Make the test server fully configurable (link:https://github.com/cerbos/cerbos/pull/747[#747])
+* Publish JSON schemas for nested messages (link:https://github.com/cerbos/cerbos/pull/778[#778])
+* Reduce verbosity of test results (link:https://github.com/cerbos/cerbos/pull/768[#768])
+
+=== Documentation
+
+* Add JetBrains and VSCode authoring tips (link:https://github.com/cerbos/cerbos/pull/801[#801])
+* Add editor configuration docs (link:https://github.com/cerbos/cerbos/pull/800[#800])
+* Fix photo-share example (link:https://github.com/cerbos/cerbos/pull/725[#725])
+
+=== Chores
+
+* Add buf format (link:https://github.com/cerbos/cerbos/pull/797[#797])
+* Bump EndBug/add-and-commit from 8.0.2 to 9 (link:https://github.com/cerbos/cerbos/pull/732[#732])
+* Bump actions/cache from 2 to 3 (link:https://github.com/cerbos/cerbos/pull/755[#755])
+* Bump bufbuild/buf-setup-action from 1.1.0 to 1.3.0 (link:https://github.com/cerbos/cerbos/pull/780[#780])
+* Bump contrib.go.opencensus.io/exporter/prometheus (link:https://github.com/cerbos/cerbos/pull/764[#764])
+* Bump github.com/alecthomas/kong from 0.4.1 to 0.5.0 (link:https://github.com/cerbos/cerbos/pull/733[#733])
+* Bump github.com/bufbuild/buf from 1.1.0 to 1.3.0 in /tools (link:https://github.com/cerbos/cerbos/pull/788[#788])
+* Bump github.com/go-cmd/cmd from 1.4.0 to 1.4.1 (link:https://github.com/cerbos/cerbos/pull/793[#793])
+* Bump github.com/golangci/golangci-lint from 1.45.0 to 1.45.2 in /tools (link:https://github.com/cerbos/cerbos/pull/786[#786])
+* Bump github.com/google/cel-go from 0.10.1 to 0.11.2 (link:https://github.com/cerbos/cerbos/pull/782[#782])
+* Bump github.com/google/cel-go from 0.9.0 to 0.10.1 (link:https://github.com/cerbos/cerbos/pull/736[#736])
+* Bump github.com/goreleaser/goreleaser in /tools (link:https://github.com/cerbos/cerbos/pull/738[#738])
+* Bump github.com/goreleaser/goreleaser in /tools (link:https://github.com/cerbos/cerbos/pull/762[#762])
+* Bump github.com/grpc-ecosystem/grpc-gateway/v2 from 2.8.0 to 2.9.0 (link:https://github.com/cerbos/cerbos/pull/757[#757])
+* Bump github.com/grpc-ecosystem/grpc-gateway/v2 from 2.8.0 to 2.9.0 in /tools (link:https://github.com/cerbos/cerbos/pull/761[#761])
+* Bump github.com/grpc-ecosystem/grpc-gateway/v2 from 2.9.0 to 2.10.0 (link:https://github.com/cerbos/cerbos/pull/783[#783])
+* Bump github.com/grpc-ecosystem/grpc-gateway/v2 from 2.9.0 to 2.10.0 in /tools (link:https://github.com/cerbos/cerbos/pull/787[#787])
+* Bump github.com/jwalton/gchalk from 1.2.1 to 1.3.0 (link:https://github.com/cerbos/cerbos/pull/796[#796])
+* Bump github.com/pterm/pterm from 0.12.38 to 0.12.39 (link:https://github.com/cerbos/cerbos/pull/763[#763])
+* Bump github.com/spf13/afero from 1.8.1 to 1.8.2 (link:https://github.com/cerbos/cerbos/pull/739[#739])
+* Bump github.com/stretchr/testify from 1.7.0 to 1.7.1 (link:https://github.com/cerbos/cerbos/pull/756[#756])
+* Bump go.opentelemetry.io/otel/bridge/opencensus from 0.27.1 to 0.28.0 (link:https://github.com/cerbos/cerbos/pull/785[#785])
+* Bump go.opentelemetry.io/otel/exporters/jaeger from 1.4.1 to 1.5.0 (link:https://github.com/cerbos/cerbos/pull/765[#765])
+* Bump go.opentelemetry.io/otel/exporters/jaeger from 1.5.0 to 1.6.0 (link:https://github.com/cerbos/cerbos/pull/795[#795])
+* Bump go.opentelemetry.io/otel/sdk from 1.4.1 to 1.5.0 (link:https://github.com/cerbos/cerbos/pull/758[#758])
+* Bump go.opentelemetry.io/otel/trace from 1.5.0 to 1.6.0 (link:https://github.com/cerbos/cerbos/pull/784[#784])
+* Bump golang.org/x/tools from 0.1.9 to 0.1.10 (link:https://github.com/cerbos/cerbos/pull/759[#759])
+* Bump google-github-actions/setup-gcloud from 0.5.1 to 0.6.0 (link:https://github.com/cerbos/cerbos/pull/731[#731])
+* Bump google.golang.org/grpc from 1.44.0 to 1.45.0 (link:https://github.com/cerbos/cerbos/pull/734[#734])
+* Bump google.golang.org/protobuf from 1.27.1 to 1.28.0 (link:https://github.com/cerbos/cerbos/pull/791[#791])
+* Bump google.golang.org/protobuf from 1.27.1 to 1.28.0 in /tools (link:https://github.com/cerbos/cerbos/pull/789[#789])
+* Bump helm.sh/helm/v3 from 3.8.0 to 3.8.1 (link:https://github.com/cerbos/cerbos/pull/735[#735])
+* Bump modernc.org/sqlite from 1.14.8 to 1.15.1 (link:https://github.com/cerbos/cerbos/pull/740[#740])
+* Bump modernc.org/sqlite from 1.15.1 to 1.15.2 (link:https://github.com/cerbos/cerbos/pull/760[#760])
+* Bump modernc.org/sqlite from 1.15.2 to 1.15.3 (link:https://github.com/cerbos/cerbos/pull/781[#781])
+* Bump version to 0.15.0
+* Convert regular expressions to ECMAScript-compatible syntax in JSON schemas (link:https://github.com/cerbos/cerbos/pull/742[#742])
+* Delete JSON schemas from latest when removed in a release (link:https://github.com/cerbos/cerbos/pull/779[#779])
+* Disable telemetry in E2E tests (link:https://github.com/cerbos/cerbos/pull/748[#748])
+* Handle non-deterministic ordering of output directory deletion (link:https://github.com/cerbos/cerbos/pull/730[#730])
+* Increase playground file limit (link:https://github.com/cerbos/cerbos/pull/750[#750])
+* Make playground file limit consistent (link:https://github.com/cerbos/cerbos/pull/772[#772])
+* Only report newly-introduced backwards-compatibility breakage (link:https://github.com/cerbos/cerbos/pull/777[#777])
+* Remove casts from CEL numeric expressions (link:https://github.com/cerbos/cerbos/pull/741[#741])
+* Replace CORS handler (link:https://github.com/cerbos/cerbos/pull/805[#805])
+* Restrict set of JSON schema enums to match validation rule (link:https://github.com/cerbos/cerbos/pull/767[#767])
+* Set minimum Go version to 1.18 (link:https://github.com/cerbos/cerbos/pull/802[#802])
+* Tweaks to load test scripts (link:https://github.com/cerbos/cerbos/pull/728[#728])
+* Upgrade to Go 1.18 on CI (link:https://github.com/cerbos/cerbos/pull/745[#745])
