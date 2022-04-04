@@ -1090,6 +1090,226 @@ var _ interface {
 	ErrorName() string
 } = CheckResourceBatchRequestValidationError{}
 
+// Validate checks the field values on CheckResourcesRequest with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *CheckResourcesRequest) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on CheckResourcesRequest with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// CheckResourcesRequestMultiError, or nil if none found.
+func (m *CheckResourcesRequest) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *CheckResourcesRequest) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for RequestId
+
+	// no validation rules for IncludeMeta
+
+	if m.GetPrincipal() == nil {
+		err := CheckResourcesRequestValidationError{
+			field:  "Principal",
+			reason: "value is required",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if all {
+		switch v := interface{}(m.GetPrincipal()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, CheckResourcesRequestValidationError{
+					field:  "Principal",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, CheckResourcesRequestValidationError{
+					field:  "Principal",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetPrincipal()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return CheckResourcesRequestValidationError{
+				field:  "Principal",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if l := len(m.GetResources()); l < 1 || l > 20 {
+		err := CheckResourcesRequestValidationError{
+			field:  "Resources",
+			reason: "value must contain between 1 and 20 items, inclusive",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	for idx, item := range m.GetResources() {
+		_, _ = idx, item
+
+		if all {
+			switch v := interface{}(item).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, CheckResourcesRequestValidationError{
+						field:  fmt.Sprintf("Resources[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, CheckResourcesRequestValidationError{
+						field:  fmt.Sprintf("Resources[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(item).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return CheckResourcesRequestValidationError{
+					field:  fmt.Sprintf("Resources[%v]", idx),
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	}
+
+	if all {
+		switch v := interface{}(m.GetAuxData()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, CheckResourcesRequestValidationError{
+					field:  "AuxData",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, CheckResourcesRequestValidationError{
+					field:  "AuxData",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetAuxData()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return CheckResourcesRequestValidationError{
+				field:  "AuxData",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if len(errors) > 0 {
+		return CheckResourcesRequestMultiError(errors)
+	}
+
+	return nil
+}
+
+// CheckResourcesRequestMultiError is an error wrapping multiple validation
+// errors returned by CheckResourcesRequest.ValidateAll() if the designated
+// constraints aren't met.
+type CheckResourcesRequestMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m CheckResourcesRequestMultiError) Error() string {
+	var msgs []string
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m CheckResourcesRequestMultiError) AllErrors() []error { return m }
+
+// CheckResourcesRequestValidationError is the validation error returned by
+// CheckResourcesRequest.Validate if the designated constraints aren't met.
+type CheckResourcesRequestValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e CheckResourcesRequestValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e CheckResourcesRequestValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e CheckResourcesRequestValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e CheckResourcesRequestValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e CheckResourcesRequestValidationError) ErrorName() string {
+	return "CheckResourcesRequestValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e CheckResourcesRequestValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sCheckResourcesRequest.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = CheckResourcesRequestValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = CheckResourcesRequestValidationError{}
+
 // Validate checks the field values on AuxData with the rules defined in the
 // proto definition for this message. If any rules are violated, the first
 // error encountered is returned, or nil if there are no violations.
@@ -3731,6 +3951,193 @@ var _ interface {
 	Cause() error
 	ErrorName() string
 } = CheckResourceBatchRequest_BatchEntryValidationError{}
+
+// Validate checks the field values on CheckResourcesRequest_ResourceEntry with
+// the rules defined in the proto definition for this message. If any rules
+// are violated, the first error encountered is returned, or nil if there are
+// no violations.
+func (m *CheckResourcesRequest_ResourceEntry) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on CheckResourcesRequest_ResourceEntry
+// with the rules defined in the proto definition for this message. If any
+// rules are violated, the result is a list of violation errors wrapped in
+// CheckResourcesRequest_ResourceEntryMultiError, or nil if none found.
+func (m *CheckResourcesRequest_ResourceEntry) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *CheckResourcesRequest_ResourceEntry) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if l := len(m.GetActions()); l < 1 || l > 10 {
+		err := CheckResourcesRequest_ResourceEntryValidationError{
+			field:  "Actions",
+			reason: "value must contain between 1 and 10 items, inclusive",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	_CheckResourcesRequest_ResourceEntry_Actions_Unique := make(map[string]struct{}, len(m.GetActions()))
+
+	for idx, item := range m.GetActions() {
+		_, _ = idx, item
+
+		if _, exists := _CheckResourcesRequest_ResourceEntry_Actions_Unique[item]; exists {
+			err := CheckResourcesRequest_ResourceEntryValidationError{
+				field:  fmt.Sprintf("Actions[%v]", idx),
+				reason: "repeated value must contain unique items",
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
+		} else {
+			_CheckResourcesRequest_ResourceEntry_Actions_Unique[item] = struct{}{}
+		}
+
+		if utf8.RuneCountInString(item) < 1 {
+			err := CheckResourcesRequest_ResourceEntryValidationError{
+				field:  fmt.Sprintf("Actions[%v]", idx),
+				reason: "value length must be at least 1 runes",
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
+		}
+
+	}
+
+	if m.GetResource() == nil {
+		err := CheckResourcesRequest_ResourceEntryValidationError{
+			field:  "Resource",
+			reason: "value is required",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if all {
+		switch v := interface{}(m.GetResource()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, CheckResourcesRequest_ResourceEntryValidationError{
+					field:  "Resource",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, CheckResourcesRequest_ResourceEntryValidationError{
+					field:  "Resource",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetResource()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return CheckResourcesRequest_ResourceEntryValidationError{
+				field:  "Resource",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if len(errors) > 0 {
+		return CheckResourcesRequest_ResourceEntryMultiError(errors)
+	}
+
+	return nil
+}
+
+// CheckResourcesRequest_ResourceEntryMultiError is an error wrapping multiple
+// validation errors returned by
+// CheckResourcesRequest_ResourceEntry.ValidateAll() if the designated
+// constraints aren't met.
+type CheckResourcesRequest_ResourceEntryMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m CheckResourcesRequest_ResourceEntryMultiError) Error() string {
+	var msgs []string
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m CheckResourcesRequest_ResourceEntryMultiError) AllErrors() []error { return m }
+
+// CheckResourcesRequest_ResourceEntryValidationError is the validation error
+// returned by CheckResourcesRequest_ResourceEntry.Validate if the designated
+// constraints aren't met.
+type CheckResourcesRequest_ResourceEntryValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e CheckResourcesRequest_ResourceEntryValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e CheckResourcesRequest_ResourceEntryValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e CheckResourcesRequest_ResourceEntryValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e CheckResourcesRequest_ResourceEntryValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e CheckResourcesRequest_ResourceEntryValidationError) ErrorName() string {
+	return "CheckResourcesRequest_ResourceEntryValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e CheckResourcesRequest_ResourceEntryValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sCheckResourcesRequest_ResourceEntry.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = CheckResourcesRequest_ResourceEntryValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = CheckResourcesRequest_ResourceEntryValidationError{}
 
 // Validate checks the field values on AuxData_JWT with the rules defined in
 // the proto definition for this message. If any rules are violated, the first

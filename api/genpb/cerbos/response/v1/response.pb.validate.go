@@ -524,6 +524,144 @@ var _ interface {
 	ErrorName() string
 } = CheckResourceBatchResponseValidationError{}
 
+// Validate checks the field values on CheckResourcesResponse with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *CheckResourcesResponse) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on CheckResourcesResponse with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// CheckResourcesResponseMultiError, or nil if none found.
+func (m *CheckResourcesResponse) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *CheckResourcesResponse) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for RequestId
+
+	for idx, item := range m.GetResults() {
+		_, _ = idx, item
+
+		if all {
+			switch v := interface{}(item).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, CheckResourcesResponseValidationError{
+						field:  fmt.Sprintf("Results[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, CheckResourcesResponseValidationError{
+						field:  fmt.Sprintf("Results[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(item).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return CheckResourcesResponseValidationError{
+					field:  fmt.Sprintf("Results[%v]", idx),
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	}
+
+	if len(errors) > 0 {
+		return CheckResourcesResponseMultiError(errors)
+	}
+
+	return nil
+}
+
+// CheckResourcesResponseMultiError is an error wrapping multiple validation
+// errors returned by CheckResourcesResponse.ValidateAll() if the designated
+// constraints aren't met.
+type CheckResourcesResponseMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m CheckResourcesResponseMultiError) Error() string {
+	var msgs []string
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m CheckResourcesResponseMultiError) AllErrors() []error { return m }
+
+// CheckResourcesResponseValidationError is the validation error returned by
+// CheckResourcesResponse.Validate if the designated constraints aren't met.
+type CheckResourcesResponseValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e CheckResourcesResponseValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e CheckResourcesResponseValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e CheckResourcesResponseValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e CheckResourcesResponseValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e CheckResourcesResponseValidationError) ErrorName() string {
+	return "CheckResourcesResponseValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e CheckResourcesResponseValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sCheckResourcesResponse.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = CheckResourcesResponseValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = CheckResourcesResponseValidationError{}
+
 // Validate checks the field values on PlaygroundFailure with the rules defined
 // in the proto definition for this message. If any rules are violated, the
 // first error encountered is returned, or nil if there are no violations.
@@ -3850,6 +3988,585 @@ var _ interface {
 	Cause() error
 	ErrorName() string
 } = CheckResourceBatchResponse_ActionEffectMapValidationError{}
+
+// Validate checks the field values on CheckResourcesResponse_ResultEntry with
+// the rules defined in the proto definition for this message. If any rules
+// are violated, the first error encountered is returned, or nil if there are
+// no violations.
+func (m *CheckResourcesResponse_ResultEntry) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on CheckResourcesResponse_ResultEntry
+// with the rules defined in the proto definition for this message. If any
+// rules are violated, the result is a list of violation errors wrapped in
+// CheckResourcesResponse_ResultEntryMultiError, or nil if none found.
+func (m *CheckResourcesResponse_ResultEntry) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *CheckResourcesResponse_ResultEntry) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if all {
+		switch v := interface{}(m.GetResource()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, CheckResourcesResponse_ResultEntryValidationError{
+					field:  "Resource",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, CheckResourcesResponse_ResultEntryValidationError{
+					field:  "Resource",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetResource()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return CheckResourcesResponse_ResultEntryValidationError{
+				field:  "Resource",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	// no validation rules for Actions
+
+	for idx, item := range m.GetValidationErrors() {
+		_, _ = idx, item
+
+		if all {
+			switch v := interface{}(item).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, CheckResourcesResponse_ResultEntryValidationError{
+						field:  fmt.Sprintf("ValidationErrors[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, CheckResourcesResponse_ResultEntryValidationError{
+						field:  fmt.Sprintf("ValidationErrors[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(item).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return CheckResourcesResponse_ResultEntryValidationError{
+					field:  fmt.Sprintf("ValidationErrors[%v]", idx),
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	}
+
+	if all {
+		switch v := interface{}(m.GetMeta()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, CheckResourcesResponse_ResultEntryValidationError{
+					field:  "Meta",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, CheckResourcesResponse_ResultEntryValidationError{
+					field:  "Meta",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetMeta()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return CheckResourcesResponse_ResultEntryValidationError{
+				field:  "Meta",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if len(errors) > 0 {
+		return CheckResourcesResponse_ResultEntryMultiError(errors)
+	}
+
+	return nil
+}
+
+// CheckResourcesResponse_ResultEntryMultiError is an error wrapping multiple
+// validation errors returned by
+// CheckResourcesResponse_ResultEntry.ValidateAll() if the designated
+// constraints aren't met.
+type CheckResourcesResponse_ResultEntryMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m CheckResourcesResponse_ResultEntryMultiError) Error() string {
+	var msgs []string
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m CheckResourcesResponse_ResultEntryMultiError) AllErrors() []error { return m }
+
+// CheckResourcesResponse_ResultEntryValidationError is the validation error
+// returned by CheckResourcesResponse_ResultEntry.Validate if the designated
+// constraints aren't met.
+type CheckResourcesResponse_ResultEntryValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e CheckResourcesResponse_ResultEntryValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e CheckResourcesResponse_ResultEntryValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e CheckResourcesResponse_ResultEntryValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e CheckResourcesResponse_ResultEntryValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e CheckResourcesResponse_ResultEntryValidationError) ErrorName() string {
+	return "CheckResourcesResponse_ResultEntryValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e CheckResourcesResponse_ResultEntryValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sCheckResourcesResponse_ResultEntry.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = CheckResourcesResponse_ResultEntryValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = CheckResourcesResponse_ResultEntryValidationError{}
+
+// Validate checks the field values on
+// CheckResourcesResponse_ResultEntry_Resource with the rules defined in the
+// proto definition for this message. If any rules are violated, the first
+// error encountered is returned, or nil if there are no violations.
+func (m *CheckResourcesResponse_ResultEntry_Resource) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on
+// CheckResourcesResponse_ResultEntry_Resource with the rules defined in the
+// proto definition for this message. If any rules are violated, the result is
+// a list of violation errors wrapped in
+// CheckResourcesResponse_ResultEntry_ResourceMultiError, or nil if none found.
+func (m *CheckResourcesResponse_ResultEntry_Resource) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *CheckResourcesResponse_ResultEntry_Resource) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for Id
+
+	// no validation rules for Kind
+
+	if len(errors) > 0 {
+		return CheckResourcesResponse_ResultEntry_ResourceMultiError(errors)
+	}
+
+	return nil
+}
+
+// CheckResourcesResponse_ResultEntry_ResourceMultiError is an error wrapping
+// multiple validation errors returned by
+// CheckResourcesResponse_ResultEntry_Resource.ValidateAll() if the designated
+// constraints aren't met.
+type CheckResourcesResponse_ResultEntry_ResourceMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m CheckResourcesResponse_ResultEntry_ResourceMultiError) Error() string {
+	var msgs []string
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m CheckResourcesResponse_ResultEntry_ResourceMultiError) AllErrors() []error { return m }
+
+// CheckResourcesResponse_ResultEntry_ResourceValidationError is the validation
+// error returned by CheckResourcesResponse_ResultEntry_Resource.Validate if
+// the designated constraints aren't met.
+type CheckResourcesResponse_ResultEntry_ResourceValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e CheckResourcesResponse_ResultEntry_ResourceValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e CheckResourcesResponse_ResultEntry_ResourceValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e CheckResourcesResponse_ResultEntry_ResourceValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e CheckResourcesResponse_ResultEntry_ResourceValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e CheckResourcesResponse_ResultEntry_ResourceValidationError) ErrorName() string {
+	return "CheckResourcesResponse_ResultEntry_ResourceValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e CheckResourcesResponse_ResultEntry_ResourceValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sCheckResourcesResponse_ResultEntry_Resource.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = CheckResourcesResponse_ResultEntry_ResourceValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = CheckResourcesResponse_ResultEntry_ResourceValidationError{}
+
+// Validate checks the field values on CheckResourcesResponse_ResultEntry_Meta
+// with the rules defined in the proto definition for this message. If any
+// rules are violated, the first error encountered is returned, or nil if
+// there are no violations.
+func (m *CheckResourcesResponse_ResultEntry_Meta) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on
+// CheckResourcesResponse_ResultEntry_Meta with the rules defined in the proto
+// definition for this message. If any rules are violated, the result is a
+// list of violation errors wrapped in
+// CheckResourcesResponse_ResultEntry_MetaMultiError, or nil if none found.
+func (m *CheckResourcesResponse_ResultEntry_Meta) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *CheckResourcesResponse_ResultEntry_Meta) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	{
+		sorted_keys := make([]string, len(m.GetActions()))
+		i := 0
+		for key := range m.GetActions() {
+			sorted_keys[i] = key
+			i++
+		}
+		sort.Slice(sorted_keys, func(i, j int) bool { return sorted_keys[i] < sorted_keys[j] })
+		for _, key := range sorted_keys {
+			val := m.GetActions()[key]
+			_ = val
+
+			// no validation rules for Actions[key]
+
+			if all {
+				switch v := interface{}(val).(type) {
+				case interface{ ValidateAll() error }:
+					if err := v.ValidateAll(); err != nil {
+						errors = append(errors, CheckResourcesResponse_ResultEntry_MetaValidationError{
+							field:  fmt.Sprintf("Actions[%v]", key),
+							reason: "embedded message failed validation",
+							cause:  err,
+						})
+					}
+				case interface{ Validate() error }:
+					if err := v.Validate(); err != nil {
+						errors = append(errors, CheckResourcesResponse_ResultEntry_MetaValidationError{
+							field:  fmt.Sprintf("Actions[%v]", key),
+							reason: "embedded message failed validation",
+							cause:  err,
+						})
+					}
+				}
+			} else if v, ok := interface{}(val).(interface{ Validate() error }); ok {
+				if err := v.Validate(); err != nil {
+					return CheckResourcesResponse_ResultEntry_MetaValidationError{
+						field:  fmt.Sprintf("Actions[%v]", key),
+						reason: "embedded message failed validation",
+						cause:  err,
+					}
+				}
+			}
+
+		}
+	}
+
+	if len(errors) > 0 {
+		return CheckResourcesResponse_ResultEntry_MetaMultiError(errors)
+	}
+
+	return nil
+}
+
+// CheckResourcesResponse_ResultEntry_MetaMultiError is an error wrapping
+// multiple validation errors returned by
+// CheckResourcesResponse_ResultEntry_Meta.ValidateAll() if the designated
+// constraints aren't met.
+type CheckResourcesResponse_ResultEntry_MetaMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m CheckResourcesResponse_ResultEntry_MetaMultiError) Error() string {
+	var msgs []string
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m CheckResourcesResponse_ResultEntry_MetaMultiError) AllErrors() []error { return m }
+
+// CheckResourcesResponse_ResultEntry_MetaValidationError is the validation
+// error returned by CheckResourcesResponse_ResultEntry_Meta.Validate if the
+// designated constraints aren't met.
+type CheckResourcesResponse_ResultEntry_MetaValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e CheckResourcesResponse_ResultEntry_MetaValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e CheckResourcesResponse_ResultEntry_MetaValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e CheckResourcesResponse_ResultEntry_MetaValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e CheckResourcesResponse_ResultEntry_MetaValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e CheckResourcesResponse_ResultEntry_MetaValidationError) ErrorName() string {
+	return "CheckResourcesResponse_ResultEntry_MetaValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e CheckResourcesResponse_ResultEntry_MetaValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sCheckResourcesResponse_ResultEntry_Meta.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = CheckResourcesResponse_ResultEntry_MetaValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = CheckResourcesResponse_ResultEntry_MetaValidationError{}
+
+// Validate checks the field values on
+// CheckResourcesResponse_ResultEntry_Meta_EffectMeta with the rules defined
+// in the proto definition for this message. If any rules are violated, the
+// first error encountered is returned, or nil if there are no violations.
+func (m *CheckResourcesResponse_ResultEntry_Meta_EffectMeta) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on
+// CheckResourcesResponse_ResultEntry_Meta_EffectMeta with the rules defined
+// in the proto definition for this message. If any rules are violated, the
+// result is a list of violation errors wrapped in
+// CheckResourcesResponse_ResultEntry_Meta_EffectMetaMultiError, or nil if
+// none found.
+func (m *CheckResourcesResponse_ResultEntry_Meta_EffectMeta) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *CheckResourcesResponse_ResultEntry_Meta_EffectMeta) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for MatchedPolicy
+
+	// no validation rules for MatchedScope
+
+	if len(errors) > 0 {
+		return CheckResourcesResponse_ResultEntry_Meta_EffectMetaMultiError(errors)
+	}
+
+	return nil
+}
+
+// CheckResourcesResponse_ResultEntry_Meta_EffectMetaMultiError is an error
+// wrapping multiple validation errors returned by
+// CheckResourcesResponse_ResultEntry_Meta_EffectMeta.ValidateAll() if the
+// designated constraints aren't met.
+type CheckResourcesResponse_ResultEntry_Meta_EffectMetaMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m CheckResourcesResponse_ResultEntry_Meta_EffectMetaMultiError) Error() string {
+	var msgs []string
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m CheckResourcesResponse_ResultEntry_Meta_EffectMetaMultiError) AllErrors() []error { return m }
+
+// CheckResourcesResponse_ResultEntry_Meta_EffectMetaValidationError is the
+// validation error returned by
+// CheckResourcesResponse_ResultEntry_Meta_EffectMeta.Validate if the
+// designated constraints aren't met.
+type CheckResourcesResponse_ResultEntry_Meta_EffectMetaValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e CheckResourcesResponse_ResultEntry_Meta_EffectMetaValidationError) Field() string {
+	return e.field
+}
+
+// Reason function returns reason value.
+func (e CheckResourcesResponse_ResultEntry_Meta_EffectMetaValidationError) Reason() string {
+	return e.reason
+}
+
+// Cause function returns cause value.
+func (e CheckResourcesResponse_ResultEntry_Meta_EffectMetaValidationError) Cause() error {
+	return e.cause
+}
+
+// Key function returns key value.
+func (e CheckResourcesResponse_ResultEntry_Meta_EffectMetaValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e CheckResourcesResponse_ResultEntry_Meta_EffectMetaValidationError) ErrorName() string {
+	return "CheckResourcesResponse_ResultEntry_Meta_EffectMetaValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e CheckResourcesResponse_ResultEntry_Meta_EffectMetaValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sCheckResourcesResponse_ResultEntry_Meta_EffectMeta.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = CheckResourcesResponse_ResultEntry_Meta_EffectMetaValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = CheckResourcesResponse_ResultEntry_Meta_EffectMetaValidationError{}
 
 // Validate checks the field values on PlaygroundFailure_Error with the rules
 // defined in the proto definition for this message. If any rules are

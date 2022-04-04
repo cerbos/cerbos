@@ -26,6 +26,7 @@ const _ = grpc.SupportPackageIsVersion7
 type CerbosServiceClient interface {
 	CheckResourceSet(ctx context.Context, in *v1.CheckResourceSetRequest, opts ...grpc.CallOption) (*v11.CheckResourceSetResponse, error)
 	CheckResourceBatch(ctx context.Context, in *v1.CheckResourceBatchRequest, opts ...grpc.CallOption) (*v11.CheckResourceBatchResponse, error)
+	CheckResources(ctx context.Context, in *v1.CheckResourcesRequest, opts ...grpc.CallOption) (*v11.CheckResourcesResponse, error)
 	ServerInfo(ctx context.Context, in *v1.ServerInfoRequest, opts ...grpc.CallOption) (*v11.ServerInfoResponse, error)
 	ResourcesQueryPlan(ctx context.Context, in *v1.ResourcesQueryPlanRequest, opts ...grpc.CallOption) (*v11.ResourcesQueryPlanResponse, error)
 }
@@ -56,6 +57,15 @@ func (c *cerbosServiceClient) CheckResourceBatch(ctx context.Context, in *v1.Che
 	return out, nil
 }
 
+func (c *cerbosServiceClient) CheckResources(ctx context.Context, in *v1.CheckResourcesRequest, opts ...grpc.CallOption) (*v11.CheckResourcesResponse, error) {
+	out := new(v11.CheckResourcesResponse)
+	err := c.cc.Invoke(ctx, "/cerbos.svc.v1.CerbosService/CheckResources", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *cerbosServiceClient) ServerInfo(ctx context.Context, in *v1.ServerInfoRequest, opts ...grpc.CallOption) (*v11.ServerInfoResponse, error) {
 	out := new(v11.ServerInfoResponse)
 	err := c.cc.Invoke(ctx, "/cerbos.svc.v1.CerbosService/ServerInfo", in, out, opts...)
@@ -80,6 +90,7 @@ func (c *cerbosServiceClient) ResourcesQueryPlan(ctx context.Context, in *v1.Res
 type CerbosServiceServer interface {
 	CheckResourceSet(context.Context, *v1.CheckResourceSetRequest) (*v11.CheckResourceSetResponse, error)
 	CheckResourceBatch(context.Context, *v1.CheckResourceBatchRequest) (*v11.CheckResourceBatchResponse, error)
+	CheckResources(context.Context, *v1.CheckResourcesRequest) (*v11.CheckResourcesResponse, error)
 	ServerInfo(context.Context, *v1.ServerInfoRequest) (*v11.ServerInfoResponse, error)
 	ResourcesQueryPlan(context.Context, *v1.ResourcesQueryPlanRequest) (*v11.ResourcesQueryPlanResponse, error)
 	mustEmbedUnimplementedCerbosServiceServer()
@@ -94,6 +105,9 @@ func (UnimplementedCerbosServiceServer) CheckResourceSet(context.Context, *v1.Ch
 }
 func (UnimplementedCerbosServiceServer) CheckResourceBatch(context.Context, *v1.CheckResourceBatchRequest) (*v11.CheckResourceBatchResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CheckResourceBatch not implemented")
+}
+func (UnimplementedCerbosServiceServer) CheckResources(context.Context, *v1.CheckResourcesRequest) (*v11.CheckResourcesResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CheckResources not implemented")
 }
 func (UnimplementedCerbosServiceServer) ServerInfo(context.Context, *v1.ServerInfoRequest) (*v11.ServerInfoResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ServerInfo not implemented")
@@ -150,6 +164,24 @@ func _CerbosService_CheckResourceBatch_Handler(srv interface{}, ctx context.Cont
 	return interceptor(ctx, in, info, handler)
 }
 
+func _CerbosService_CheckResources_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(v1.CheckResourcesRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CerbosServiceServer).CheckResources(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/cerbos.svc.v1.CerbosService/CheckResources",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CerbosServiceServer).CheckResources(ctx, req.(*v1.CheckResourcesRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _CerbosService_ServerInfo_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(v1.ServerInfoRequest)
 	if err := dec(in); err != nil {
@@ -200,6 +232,10 @@ var CerbosService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "CheckResourceBatch",
 			Handler:    _CerbosService_CheckResourceBatch_Handler,
+		},
+		{
+			MethodName: "CheckResources",
+			Handler:    _CerbosService_CheckResources_Handler,
 		},
 		{
 			MethodName: "ServerInfo",

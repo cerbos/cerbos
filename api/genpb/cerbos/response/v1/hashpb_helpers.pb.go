@@ -1161,6 +1161,117 @@ func cerbos_response_v1_CheckResourceSetResponse_hashpb_sum(m *CheckResourceSetR
 	}
 }
 
+func cerbos_response_v1_CheckResourcesResponse_ResultEntry_Meta_EffectMeta_hashpb_sum(m *CheckResourcesResponse_ResultEntry_Meta_EffectMeta, hasher hash.Hash, ignore map[string]struct{}) {
+	if _, ok := ignore["cerbos.response.v1.CheckResourcesResponse.ResultEntry.Meta.EffectMeta.matched_policy"]; !ok {
+		_, _ = hasher.Write(protowire.AppendString(nil, m.MatchedPolicy))
+
+	}
+	if _, ok := ignore["cerbos.response.v1.CheckResourcesResponse.ResultEntry.Meta.EffectMeta.matched_scope"]; !ok {
+		_, _ = hasher.Write(protowire.AppendString(nil, m.MatchedScope))
+
+	}
+}
+
+func cerbos_response_v1_CheckResourcesResponse_ResultEntry_Meta_hashpb_sum(m *CheckResourcesResponse_ResultEntry_Meta, hasher hash.Hash, ignore map[string]struct{}) {
+	if _, ok := ignore["cerbos.response.v1.CheckResourcesResponse.ResultEntry.Meta.actions"]; !ok {
+		if len(m.Actions) > 0 {
+			keys := make([]string, len(m.Actions))
+			i := 0
+			for k := range m.Actions {
+				keys[i] = k
+				i++
+			}
+
+			sort.Slice(keys, func(i, j int) bool { return keys[i] < keys[j] })
+
+			for _, k := range keys {
+				if m.Actions[k] != nil {
+					cerbos_response_v1_CheckResourcesResponse_ResultEntry_Meta_EffectMeta_hashpb_sum(m.Actions[k], hasher, ignore)
+				}
+
+			}
+		}
+	}
+	if _, ok := ignore["cerbos.response.v1.CheckResourcesResponse.ResultEntry.Meta.effective_derived_roles"]; !ok {
+		if len(m.EffectiveDerivedRoles) > 0 {
+			for _, v := range m.EffectiveDerivedRoles {
+				_, _ = hasher.Write(protowire.AppendString(nil, v))
+
+			}
+		}
+	}
+}
+
+func cerbos_response_v1_CheckResourcesResponse_ResultEntry_Resource_hashpb_sum(m *CheckResourcesResponse_ResultEntry_Resource, hasher hash.Hash, ignore map[string]struct{}) {
+	if _, ok := ignore["cerbos.response.v1.CheckResourcesResponse.ResultEntry.Resource.id"]; !ok {
+		_, _ = hasher.Write(protowire.AppendString(nil, m.Id))
+
+	}
+	if _, ok := ignore["cerbos.response.v1.CheckResourcesResponse.ResultEntry.Resource.kind"]; !ok {
+		_, _ = hasher.Write(protowire.AppendString(nil, m.Kind))
+
+	}
+}
+
+func cerbos_response_v1_CheckResourcesResponse_ResultEntry_hashpb_sum(m *CheckResourcesResponse_ResultEntry, hasher hash.Hash, ignore map[string]struct{}) {
+	if _, ok := ignore["cerbos.response.v1.CheckResourcesResponse.ResultEntry.resource"]; !ok {
+		if m.Resource != nil {
+			cerbos_response_v1_CheckResourcesResponse_ResultEntry_Resource_hashpb_sum(m.Resource, hasher, ignore)
+		}
+
+	}
+	if _, ok := ignore["cerbos.response.v1.CheckResourcesResponse.ResultEntry.actions"]; !ok {
+		if len(m.Actions) > 0 {
+			keys := make([]string, len(m.Actions))
+			i := 0
+			for k := range m.Actions {
+				keys[i] = k
+				i++
+			}
+
+			sort.Slice(keys, func(i, j int) bool { return keys[i] < keys[j] })
+
+			for _, k := range keys {
+				_, _ = hasher.Write(protowire.AppendVarint(nil, uint64(m.Actions[k])))
+
+			}
+		}
+	}
+	if _, ok := ignore["cerbos.response.v1.CheckResourcesResponse.ResultEntry.validation_errors"]; !ok {
+		if len(m.ValidationErrors) > 0 {
+			for _, v := range m.ValidationErrors {
+				if v != nil {
+					cerbos_schema_v1_ValidationError_hashpb_sum(v, hasher, ignore)
+				}
+
+			}
+		}
+	}
+	if _, ok := ignore["cerbos.response.v1.CheckResourcesResponse.ResultEntry.meta"]; !ok {
+		if m.Meta != nil {
+			cerbos_response_v1_CheckResourcesResponse_ResultEntry_Meta_hashpb_sum(m.Meta, hasher, ignore)
+		}
+
+	}
+}
+
+func cerbos_response_v1_CheckResourcesResponse_hashpb_sum(m *CheckResourcesResponse, hasher hash.Hash, ignore map[string]struct{}) {
+	if _, ok := ignore["cerbos.response.v1.CheckResourcesResponse.request_id"]; !ok {
+		_, _ = hasher.Write(protowire.AppendString(nil, m.RequestId))
+
+	}
+	if _, ok := ignore["cerbos.response.v1.CheckResourcesResponse.results"]; !ok {
+		if len(m.Results) > 0 {
+			for _, v := range m.Results {
+				if v != nil {
+					cerbos_response_v1_CheckResourcesResponse_ResultEntry_hashpb_sum(v, hasher, ignore)
+				}
+
+			}
+		}
+	}
+}
+
 func cerbos_response_v1_DeleteSchemaResponse_hashpb_sum(m *DeleteSchemaResponse, hasher hash.Hash, ignore map[string]struct{}) {
 }
 

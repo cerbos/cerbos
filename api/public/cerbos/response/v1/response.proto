@@ -100,6 +100,7 @@ message ResourcesQueryPlanResponse {
   }];
 }
 
+// Deprecated. See CheckResourcesResponse.
 message CheckResourceSetResponse {
   option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
     json_schema: {
@@ -174,6 +175,7 @@ message CheckResourceSetResponse {
   }];
 }
 
+// Deprecated. See CheckResourcesResponse.
 message CheckResourceBatchResponse {
   option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
     json_schema: {
@@ -202,6 +204,83 @@ message CheckResourceBatchResponse {
   repeated ActionEffectMap results = 2 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
     description: "Result for each resource"
     example: "[{\"resourceId\":\"XX125\",\"actions\":{\"view\":\"EFFECT_ALLOW\"}}]"
+  }];
+}
+
+message CheckResourcesResponse {
+  option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
+    json_schema: {
+      description: "Response from the check resources API call."
+    }
+  };
+
+  message ResultEntry {
+    message Resource {
+      string id = 1 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+        description: "ID of the resource instance"
+        example: "\"XX125\""
+      }];
+      string kind = 2 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+        description: "Name of the resource kind being accessed.",
+        example: "\"album:photo\"",
+        pattern: "^[[:alpha:]][[:word:]\\@\\.\\-]*(\\:[[:alpha:]][[:word:]\\@\\.\\-]*)*$"
+      }];
+    }
+
+    message Meta {
+      option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
+        json_schema: {
+          description: "Metadata about request evaluation."
+        }
+      };
+
+      message EffectMeta {
+        option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
+          json_schema: {
+            description: "Name of the action."
+          }
+        };
+        string matched_policy = 1 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+          description: "Policy that matched to produce this effect."
+          example: "\"album:object:default\""
+        }];
+        string matched_scope = 2 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+          description: "Policy scope that matched to produce this effect."
+          example: "\"acme.corp.base\""
+        }];
+      }
+
+      map<string, EffectMeta> actions = 1 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+        description: "Metadata about the effect calculated for each action on this resource instance."
+        example: "{\"view:*\":{\"matched_policy\": \"album:object:default\"},\"comment\":{\"matched_policy\": \"album:object:default\"}}"
+      }];
+      repeated string effective_derived_roles = 2 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+        description: "Derived roles that were effective during policy evaluation."
+        example: "[\"owner\"]"
+      }];
+    }
+
+    Resource resource = 1;
+    map<string, cerbos.effect.v1.Effect> actions = 2 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+      description: "Mapping of each action to an effect."
+      example: "{\"view\":\"EFFECT_ALLOW\"}"
+    }];
+    repeated cerbos.schema.v1.ValidationError validation_errors = 3 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+      description: "List of validation errors (if schema validation is enabled)"
+    }];
+    Meta meta = 4 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+      description: "Metadata about policy evaluation"
+      example: "{\"actions\": {\"view:*\":{\"matched_policy\": \"album:object:default\"},\"comment\":{\"matched_policy\": \"album:object:default\"}}, \"effective_derived_roles\": [\"owner\"]}"
+    }];
+  }
+
+  string request_id = 1 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+    description: "Request ID provided in the request."
+    example: "\"c2db17b8-4f9f-4fb1-acfd-9162a02be42b\""
+  }];
+  repeated ResultEntry results = 2 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+    description: "Result for each resource"
+    example: "[{\"resource\": {\"Id\":\"XX125\", \"kind\":\"album:object\"}, \"actions\":{\"view\":\"EFFECT_ALLOW\",\"comment\":\"EFFECT_DENY\"}}]"
   }];
 }
 
