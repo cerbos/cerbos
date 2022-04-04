@@ -4216,6 +4216,10 @@ func (m *CheckResourcesResponse_ResultEntry_Resource) validate(all bool) error {
 
 	// no validation rules for Kind
 
+	// no validation rules for PolicyVersion
+
+	// no validation rules for Scope
+
 	if len(errors) > 0 {
 		return CheckResourcesResponse_ResultEntry_ResourceMultiError(errors)
 	}

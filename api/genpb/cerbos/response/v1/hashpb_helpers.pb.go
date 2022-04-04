@@ -1211,6 +1211,14 @@ func cerbos_response_v1_CheckResourcesResponse_ResultEntry_Resource_hashpb_sum(m
 		_, _ = hasher.Write(protowire.AppendString(nil, m.Kind))
 
 	}
+	if _, ok := ignore["cerbos.response.v1.CheckResourcesResponse.ResultEntry.Resource.policy_version"]; !ok {
+		_, _ = hasher.Write(protowire.AppendString(nil, m.PolicyVersion))
+
+	}
+	if _, ok := ignore["cerbos.response.v1.CheckResourcesResponse.ResultEntry.Resource.scope"]; !ok {
+		_, _ = hasher.Write(protowire.AppendString(nil, m.Scope))
+
+	}
 }
 
 func cerbos_response_v1_CheckResourcesResponse_ResultEntry_hashpb_sum(m *CheckResourcesResponse_ResultEntry, hasher hash.Hash, ignore map[string]struct{}) {

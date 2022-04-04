@@ -206,10 +206,13 @@ func (cs *CerbosService) CheckResources(ctx context.Context, req *requestv1.Chec
 	}
 
 	for i, out := range outputs {
+		resource := inputs[i].Resource
 		entry := &responsev1.CheckResourcesResponse_ResultEntry{
 			Resource: &responsev1.CheckResourcesResponse_ResultEntry_Resource{
-				Id:   inputs[i].Resource.Id,
-				Kind: inputs[i].Resource.Kind,
+				Id:            resource.Id,
+				Kind:          resource.Kind,
+				PolicyVersion: resource.PolicyVersion,
+				Scope:         resource.Scope,
 			},
 			ValidationErrors: out.ValidationErrors,
 			Actions:          make(map[string]effectv1.Effect, len(out.Actions)),

@@ -966,6 +966,17 @@
           "example": "album:photo",
           "description": "Name of the resource kind being accessed.",
           "pattern": "^[[:alpha:]][[:word:]\\@\\.\\-]*(\\:[[:alpha:]][[:word:]\\@\\.\\-]*)*$"
+        },
+        "policyVersion": {
+          "type": "string",
+          "example": "default",
+          "description": "The policy version to use to evaluate this request. If not specified, will default to the server-configured default version.",
+          "pattern": "^[[:word:]]*$"
+        },
+        "scope": {
+          "type": "string",
+          "description": "A dot-separated scope that describes the hierarchy this resource belongs to. This is used for determining policy inheritance.",
+          "pattern": "^([[:alpha:]][[:word:]\\-]+(\\.[[:alpha:]][[:word:]\\-]*)*)*$"
         }
       }
     },
