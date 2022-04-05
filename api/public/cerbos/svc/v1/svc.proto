@@ -10,6 +10,9 @@ import "cerbos/response/v1/response.proto";
 import "google/api/annotations.proto";
 import "protoc-gen-openapiv2/options/annotations.proto";
 
+option csharp_namespace = "Cerbos.Api.V1.Svc";
+option go_package = "github.com/cerbos/cerbos/api/genpb/cerbos/svc/v1;svcv1";
+option java_package = "dev.cerbos.api.v1.svc";
 option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_swagger) = {
   info: {
     title: "Cerbos";
@@ -32,9 +35,6 @@ option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_swagger) = {
     }
   };
 };
-option csharp_namespace = "Cerbos.Api.V1.Svc";
-option go_package = "github.com/cerbos/cerbos/api/genpb/cerbos/svc/v1;svcv1";
-option java_package = "dev.cerbos.api.v1.svc";
 
 service CerbosService {
   option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_tag) = {

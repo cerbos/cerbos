@@ -150,7 +150,7 @@ func (clib cerbosLib) ProgramOptions() []cel.ProgramOption {
 // providing time-based functions with a static definition of the current time.
 //
 // See https://pkg.go.dev/github.com/google/cel-go/cel#Program.Eval.
-func Eval(env *cel.Env, ast *cel.Ast, vars interface{}, opts ...cel.ProgramOption) (ref.Val, *cel.EvalDetails, error) {
+func Eval(env *cel.Env, ast *cel.Ast, vars any, opts ...cel.ProgramOption) (ref.Val, *cel.EvalDetails, error) {
 	prg, err := program(env, ast, opts...)
 	if err != nil {
 		return nil, nil, err

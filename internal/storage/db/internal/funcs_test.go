@@ -25,7 +25,7 @@ import (
 func TestConcatWithSep(t *testing.T) {
 	testCases := []struct {
 		want map[string]string
-		args []interface{}
+		args []any
 	}{
 		{
 			want: map[string]string{
@@ -36,7 +36,7 @@ func TestConcatWithSep(t *testing.T) {
 			},
 		},
 		{
-			args: []interface{}{"a"},
+			args: []any{"a"},
 			want: map[string]string{
 				"sqlserver": "SELECT CONCAT_WS('.', 'a') FROM \"table\"",
 				"mysql":     "SELECT CONCAT_WS('.', 'a') FROM `table`",
@@ -45,7 +45,7 @@ func TestConcatWithSep(t *testing.T) {
 			},
 		},
 		{
-			args: []interface{}{"a", "b"},
+			args: []any{"a", "b"},
 			want: map[string]string{
 				"sqlserver": "SELECT CONCAT_WS('.', 'a', 'b') FROM \"table\"",
 				"mysql":     "SELECT CONCAT_WS('.', 'a', 'b') FROM `table`",
@@ -54,7 +54,7 @@ func TestConcatWithSep(t *testing.T) {
 			},
 		},
 		{
-			args: []interface{}{"a", "b", "c"},
+			args: []any{"a", "b", "c"},
 			want: map[string]string{
 				"sqlserver": `SELECT CONCAT_WS('.', 'a', 'b', 'c') FROM "table"`,
 				"mysql":     "SELECT CONCAT_WS('.', 'a', 'b', 'c') FROM `table`",
@@ -63,7 +63,7 @@ func TestConcatWithSep(t *testing.T) {
 			},
 		},
 		{
-			args: []interface{}{goqu.C("a"), goqu.C("b"), "c", "d"},
+			args: []any{goqu.C("a"), goqu.C("b"), "c", "d"},
 			want: map[string]string{
 				"sqlserver": `SELECT CONCAT_WS('.', "a", "b", 'c', 'd') FROM "table"`,
 				"mysql":     "SELECT CONCAT_WS('.', `a`, `b`, 'c', 'd') FROM `table`",

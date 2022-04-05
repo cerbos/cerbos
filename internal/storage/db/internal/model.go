@@ -71,7 +71,7 @@ func (pdw PolicyDefWrapper) Value() (driver.Value, error) {
 	return pdw.Policy.MarshalVT()
 }
 
-func (pdw *PolicyDefWrapper) Scan(src interface{}) error {
+func (pdw *PolicyDefWrapper) Scan(src any) error {
 	var source []byte
 	switch t := src.(type) {
 	case nil:

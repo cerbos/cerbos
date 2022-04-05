@@ -29,7 +29,7 @@ var callIDCtxKey = callIDCtxKeyType{}
 
 func NewContextWithCallID(ctx context.Context, id ID) context.Context {
 	tags := grpc_ctxtags.Extract(ctx)
-	tagCtx := grpc_ctxtags.SetInContext(ctx, tags.Set(util.AppName, map[string]interface{}{callIDTagKey: id}))
+	tagCtx := grpc_ctxtags.SetInContext(ctx, tags.Set(util.AppName, map[string]any{callIDTagKey: id}))
 
 	return context.WithValue(tagCtx, callIDCtxKey, id)
 }

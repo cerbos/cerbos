@@ -358,7 +358,7 @@ func walkFields(out io.Writer, fields []FieldInfo, indent int) error {
 	return nil
 }
 
-func indentf(out io.Writer, n int, format string, args ...interface{}) error {
+func indentf(out io.Writer, n int, format string, args ...any) error {
 	if _, err := fmt.Fprint(out, strings.Repeat("  ", n)); err != nil {
 		return err
 	}

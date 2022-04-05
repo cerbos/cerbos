@@ -33,7 +33,7 @@ func ExampleStartCerbosServer() {
 			WithAttr("department", "marketing").
 			WithAttr("geography", "GB"),
 		client.NewResourceSet("leave_request").
-			AddResourceInstance("XX125", map[string]interface{}{
+			AddResourceInstance("XX125", map[string]any{
 				"department": "marketing",
 				"geography":  "GB",
 				"owner":      "harry",

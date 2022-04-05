@@ -30,7 +30,7 @@ type Context interface {
 	Activated()
 	AppliedEffect(effect effectv1.Effect, message string)
 	ComputedBoolResult(result bool, err error, message string)
-	ComputedResult(result interface{})
+	ComputedResult(result any)
 	Failed(err error, message string)
 	Skipped(err error, message string)
 }
@@ -163,14 +163,14 @@ func (c *context) ComputedBoolResult(result bool, err error, message string) {
 	})
 }
 
-func (c *context) ComputedResult(result interface{}) {
+func (c *context) ComputedResult(result any) {
 	c.addTrace(&enginev1.Trace_Event{
 		Status: enginev1.Trace_Event_STATUS_ACTIVATED,
 		Result: protobufValue(result),
 	})
 }
 
-func protobufValue(goValue interface{}) *structpb.Value {
+func protobufValue(goValue any) *structpb.Value {
 	data, err := json.Marshal(goValue)
 	if err != nil {
 		return structpb.NewStringValue("<failed to marshal value to JSON>")
@@ -251,7 +251,7 @@ func (noopContext) AppliedEffect(effect effectv1.Effect, message string) {}
 
 func (noopContext) ComputedBoolResult(result bool, err error, message string) {}
 
-func (noopContext) ComputedResult(result interface{}) {}
+func (noopContext) ComputedResult(result any) {}
 
 func (noopContext) Failed(err error, message string) {}
 

@@ -59,7 +59,7 @@ func (p *Principal) WithRoles(roles ...string) *Principal {
 }
 
 // WithAttributes merges the given attributes to principal's existing attributes.
-func (p *Principal) WithAttributes(attr map[string]interface{}) *Principal {
+func (p *Principal) WithAttributes(attr map[string]any) *Principal {
 	if p.p.Attr == nil {
 		p.p.Attr = make(map[string]*structpb.Value, len(attr))
 	}
@@ -78,7 +78,7 @@ func (p *Principal) WithAttributes(attr map[string]interface{}) *Principal {
 
 // WithAttr adds a new attribute to the principal.
 // It will overwrite any existing attribute having the same key.
-func (p *Principal) WithAttr(key string, value interface{}) *Principal {
+func (p *Principal) WithAttr(key string, value any) *Principal {
 	if p.p.Attr == nil {
 		p.p.Attr = make(map[string]*structpb.Value)
 	}
@@ -127,7 +127,7 @@ func (r *Resource) WithPolicyVersion(policyVersion string) *Resource {
 }
 
 // WithAttributes merges the given attributes to the resource's existing attributes.
-func (r *Resource) WithAttributes(attr map[string]interface{}) *Resource {
+func (r *Resource) WithAttributes(attr map[string]any) *Resource {
 	if r.r.Attr == nil {
 		r.r.Attr = make(map[string]*structpb.Value, len(attr))
 	}
@@ -146,7 +146,7 @@ func (r *Resource) WithAttributes(attr map[string]interface{}) *Resource {
 
 // WithAttr adds a new attribute to the resource.
 // It will overwrite any existing attribute having the same key.
-func (r *Resource) WithAttr(key string, value interface{}) *Resource {
+func (r *Resource) WithAttr(key string, value any) *Resource {
 	if r.r.Attr == nil {
 		r.r.Attr = make(map[string]*structpb.Value)
 	}
@@ -195,7 +195,7 @@ func (rs *ResourceSet) WithPolicyVersion(policyVersion string) *ResourceSet {
 }
 
 // AddResourceInstance adds a new resource instance to the resource set.
-func (rs *ResourceSet) AddResourceInstance(id string, attr map[string]interface{}) *ResourceSet {
+func (rs *ResourceSet) AddResourceInstance(id string, attr map[string]any) *ResourceSet {
 	if rs.rs.Instances == nil {
 		rs.rs.Instances = make(map[string]*requestv1.AttributesMap)
 	}

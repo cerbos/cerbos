@@ -142,9 +142,9 @@ jobs:
 
       - name: Publish to download site
         run: |-
-          gsutil cp ${{ secrets.DOWNLOAD_GCS_BUCKET }}/helm-charts/index.yaml ${{ env.CHARTS_DIR }}/index.yaml
+          gsutil cp "gs://${{ secrets.DOWNLOAD_GCS_BUCKET }}/helm-charts/index.yaml" "${{ env.CHARTS_DIR }}/index.yaml"
           helm repo index --url=https://download.cerbos.dev/helm-charts --merge=${{ env.CHARTS_DIR }}/index.yaml ${{ env.CHARTS_DIR }}
-          gsutil rsync -r ${{ env.CHARTS_DIR }}/ ${{ secrets.DOWNLOAD_GCS_BUCKET }}/helm-charts/
+          gsutil rsync -r ${{ env.CHARTS_DIR }}/ "gs://${{ secrets.DOWNLOAD_GCS_BUCKET }}/helm-charts/"
 
       - name: Publish to OCI registry
         run: |-

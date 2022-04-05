@@ -245,7 +245,7 @@ func TestREPL(t *testing.T) {
 						t.Helper()
 						require.Equal(t, "V", m.resultName)
 
-						want := map[string]interface{}{"foo": "bar"}
+						want := map[string]any{"foo": "bar"}
 						require.Equal(t, want, m.resultVal.Value())
 					},
 				},
@@ -286,19 +286,19 @@ func TestREPL(t *testing.T) {
 
 type mockOutput struct {
 	msg        string
-	args       []interface{}
-	jsonObj    interface{}
+	args       []any
+	jsonObj    any
 	resultName string
 	resultVal  ref.Val
 	err        error
 }
 
-func (mo *mockOutput) Print(msg string, args ...interface{}) {
+func (mo *mockOutput) Print(msg string, args ...any) {
 	mo.msg = msg
 	mo.args = args
 }
 
-func (mo *mockOutput) Println(args ...interface{}) {
+func (mo *mockOutput) Println(args ...any) {
 	mo.args = args
 }
 
@@ -307,7 +307,7 @@ func (mo *mockOutput) PrintResult(name string, val ref.Val) {
 	mo.resultVal = val
 }
 
-func (mo *mockOutput) PrintJSON(obj interface{}) {
+func (mo *mockOutput) PrintJSON(obj any) {
 	mo.jsonObj = obj
 }
 

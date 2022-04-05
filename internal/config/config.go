@@ -31,7 +31,7 @@ type Validator interface {
 }
 
 // Load loads the config file at the given path.
-func Load(confFile string, overrides map[string]interface{}) error {
+func Load(confFile string, overrides map[string]any) error {
 	finfo, err := os.Stat(confFile)
 	if err != nil {
 		return fmt.Errorf("failed to stat %s: %w", confFile, err)
@@ -44,11 +44,11 @@ func Load(confFile string, overrides map[string]interface{}) error {
 	return doLoad(config.File(confFile), config.Static(overrides))
 }
 
-func LoadReader(reader io.Reader, overrides map[string]interface{}) error {
+func LoadReader(reader io.Reader, overrides map[string]any) error {
 	return doLoad(config.Source(reader), config.Static(overrides))
 }
 
-func LoadMap(m map[string]interface{}) error {
+func LoadMap(m map[string]any) error {
 	return doLoad(config.Static(m))
 }
 
@@ -82,7 +82,7 @@ func Global() *Wrapper {
 
 // Get populates out with the configuration at the given key.
 // Populate out with default values before calling this function to ensure sane defaults if there are any.
-func Get(key string, out interface{}) error {
+func Get(key string, out any) error {
 	return conf.Get(key, out)
 }
 
@@ -91,11 +91,11 @@ func GetSection(section Section) error {
 	return conf.GetSection(section)
 }
 
-func WrapperFromReader(reader io.Reader, overrides map[string]interface{}) (*Wrapper, error) {
+func WrapperFromReader(reader io.Reader, overrides map[string]any) (*Wrapper, error) {
 	return newWrapper(config.Source(reader), config.Static(overrides))
 }
 
-func WrapperFromMap(m map[string]interface{}) (*Wrapper, error) {
+func WrapperFromMap(m map[string]any) (*Wrapper, error) {
 	return newWrapper(config.Static(m))
 }
 
@@ -113,7 +113,7 @@ type Wrapper struct {
 	mu       sync.RWMutex
 }
 
-func (w *Wrapper) Get(key string, out interface{}) error {
+func (w *Wrapper) Get(key string, out any) error {
 	w.mu.RLock()
 	defer w.mu.RUnlock()
 

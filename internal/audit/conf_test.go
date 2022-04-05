@@ -13,11 +13,11 @@ import (
 )
 
 func TestLenientConfigLoad(t *testing.T) {
-	conf := map[string]interface{}{
-		"audit": map[string]interface{}{
+	conf := map[string]any{
+		"audit": map[string]any{
 			"enabled": true,
 			"backend": "local",
-			"local": map[string]interface{}{
+			"local": map[string]any{
 				"storagePath": t.TempDir(),
 			},
 			"wibble": "wobble",

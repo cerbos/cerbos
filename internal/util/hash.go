@@ -10,7 +10,7 @@ import (
 	"github.com/cespare/xxhash/v2"
 )
 
-var hashPool = &sync.Pool{New: func() interface{} { return xxhash.New() }}
+var hashPool = &sync.Pool{New: func() any { return xxhash.New() }}
 
 type Hashable interface {
 	HashPB(hash.Hash, map[string]struct{})
