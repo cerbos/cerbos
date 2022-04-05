@@ -57,14 +57,14 @@ const (
 )
 
 type REPL struct {
+	output   Output
 	vars     variables
 	decls    map[string]*exprpb.Decl
-	rules    []any
-	mkRuleID func() int
 	reader   *liner.State
 	parser   *participle.Parser
-	output   Output
 	toRefVal func(interface{}) ref.Val
+	mkRuleID func() int
+	rules    []any
 }
 
 func NewREPL(reader *liner.State, output Output) (*REPL, error) {
@@ -215,12 +215,13 @@ func (r *REPL) showVars() error {
 
 func (r *REPL) showRules() error {
 	for idx, rule := range r.rules {
-		switch rule.(type) {
-		case *policyv1.ResourceRule:
-			r.output.Println(fmt.Sprintf("%s %s", colored.REPLVar(fmt.Sprintf("%s%d", rulePrefix, idx)), colored.REPLPolicyType("(resource_policies)")))
-		case *policyv1.RoleDef:
-			r.output.Println(fmt.Sprintf("%s %s", colored.REPLVar(fmt.Sprintf("%s%d", rulePrefix, idx)), colored.REPLPolicyType("(derived_roles)")))
+		msg, ok := rule.(proto.Message)
+		if !ok {
+			return fmt.Errorf("failed to type assert rule with id: %s", fmt.Sprintf("%s%.03d", rulePrefix, idx))
 		}
+
+		r.output.Println(fmt.Sprintf("%s %s", colored.REPLVar(fmt.Sprintf("%s%.03d", rulePrefix, idx)), colored.REPLPolicyType("(derived_roles)")))
+		r.output.Println(protojson.Format(msg))
 	}
 	return nil
 }
@@ -350,6 +351,7 @@ func (r *REPL) loadRulesFromPolicy(path string) error {
 	if err != nil {
 		return fmt.Errorf("failed to open policy file at %s: %w", path, err)
 	}
+	defer f.Close()
 
 	p, err := policy.ReadPolicy(f)
 	if err != nil {
@@ -359,7 +361,9 @@ func (r *REPL) loadRulesFromPolicy(path string) error {
 	switch pt := p.PolicyType.(type) {
 	case *policyv1.Policy_ResourcePolicy:
 		for _, rule := range pt.ResourcePolicy.Rules {
-			r.rules = append(r.rules, rule)
+			if rule.Condition != nil {
+				r.rules = append(r.rules, rule)
+			}
 		}
 
 		res := pt.ResourcePolicy.Resource
@@ -370,7 +374,9 @@ func (r *REPL) loadRulesFromPolicy(path string) error {
 		r.output.Println(fmt.Sprintf("Resource policy '%s' loaded", res))
 	case *policyv1.Policy_DerivedRoles:
 		for _, def := range pt.DerivedRoles.Definitions {
-			r.rules = append(r.rules, def)
+			if def.Condition != nil {
+				r.rules = append(r.rules, def)
+			}
 		}
 
 		r.output.Println(fmt.Sprintf("Derived roles '%s' loaded", pt.DerivedRoles.Name))

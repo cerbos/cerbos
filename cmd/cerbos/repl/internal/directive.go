@@ -6,7 +6,7 @@ package internal
 import (
 	"fmt"
 
-	participle "github.com/alecthomas/participle/v2"
+	"github.com/alecthomas/participle/v2"
 	"github.com/alecthomas/participle/v2/lexer"
 )
 
@@ -44,9 +44,9 @@ type REPLDirective struct {
 	Vars  bool           `parser:"| @'vars'"`
 	Help  bool           `parser:"| @('h' | 'help')"`
 	Rules bool           `parser:"| @'rules'"`
-	Let   *LetDirective  `parser:"| @@"`
 	Load  *LoadDirective `parser:"| @@"`
 	Exec  *ExecDirective `parser:"| @@"`
+	Let   *LetDirective  `parser:"| @@"`
 }
 
 type LetDirective struct {
