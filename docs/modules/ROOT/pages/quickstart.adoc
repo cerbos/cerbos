@@ -62,7 +62,7 @@ This is the response from the server:
 ----
 
 
-Bugs Bunny is not allowed to view or comment on any of the album resources — even the ones that belong to him. This is because currently there are no policies defined for the `album:object` resourc resource.
+Bugs Bunny is not allowed to view or comment on any of the album resources — even the ones that belong to him. This is because currently there are no policies defined for the `album:object` resource.
 
 Now create a xref:policies:derived_roles.adoc[derived roles] definition that assigns the `owner` dynamic role to a user if the `owner` attribute of the resource they're trying to access is equal to their ID.
 

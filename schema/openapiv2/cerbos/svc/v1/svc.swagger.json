@@ -785,6 +785,7 @@
         },
         "keySetId": {
           "type": "string",
+          "example": "my-keyset",
           "description": "Key ID to use when decoding the token (defined in the Cerbos server configuration)"
         }
       },
@@ -974,6 +975,7 @@
         },
         "scope": {
           "type": "string",
+          "example": "acme.corp",
           "description": "A dot-separated scope that describes the hierarchy this resource belongs to. This is used for determining policy inheritance.",
           "pattern": "^([[:alpha:]][[:word:]\\-]+(\\.[[:alpha:]][[:word:]\\-]*)*)*$"
         }
