@@ -12,6 +12,7 @@ import (
 	"os"
 	"reflect"
 	"sort"
+	"strconv"
 	"strings"
 
 	"github.com/alecthomas/participle/v2"
@@ -28,6 +29,8 @@ import (
 
 	enginev1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
+	runtimev1 "github.com/cerbos/cerbos/api/genpb/cerbos/runtime/v1"
+	"github.com/cerbos/cerbos/internal/compile"
 	"github.com/cerbos/cerbos/internal/conditions"
 	"github.com/cerbos/cerbos/internal/outputcolor"
 	"github.com/cerbos/cerbos/internal/policy"
@@ -176,9 +179,7 @@ func (r *REPL) processDirective(line string) error {
 	case directive.Load != nil:
 		return r.loadRulesFromPolicy(directive.Load.Path)
 	case directive.Exec != nil:
-		// TODO: Implement exec directive
-		r.output.Println("Exec")
-		return nil
+		return r.execRule(directive.Exec.RuleName)
 	default:
 		return fmt.Errorf("unknown directive %q", line)
 	}
@@ -217,10 +218,18 @@ func (r *REPL) showRules() error {
 	for idx, rule := range r.rules {
 		msg, ok := rule.(proto.Message)
 		if !ok {
-			return fmt.Errorf("failed to type assert rule with id: %s", fmt.Sprintf("%s%.03d", rulePrefix, idx))
+			return fmt.Errorf("failed to type assert rule with id: %s", fmt.Sprintf("%s%d", rulePrefix, idx))
 		}
 
-		r.output.Println(fmt.Sprintf("%s %s", colored.REPLVar(fmt.Sprintf("%s%.03d", rulePrefix, idx)), colored.REPLPolicyType("(derived_roles)")))
+		t := ""
+		switch rule.(type) {
+		case *policyv1.ResourceRule:
+			t = "(resource_policies)"
+		case *policyv1.RoleDef:
+			t = "(derived_roles)"
+		}
+
+		r.output.Println(fmt.Sprintf("%s %s", colored.REPLVar(fmt.Sprintf("%s%d", rulePrefix, idx)), colored.REPLPolicyType(t)))
 		r.output.Println(protojson.Format(msg))
 	}
 	return nil
@@ -361,7 +370,11 @@ func (r *REPL) loadRulesFromPolicy(path string) error {
 	switch pt := p.PolicyType.(type) {
 	case *policyv1.Policy_ResourcePolicy:
 		for _, rule := range pt.ResourcePolicy.Rules {
-			if rule.Condition != nil {
+			if rule.Condition != nil && rule.Condition.Condition != nil {
+				_, ok := rule.Condition.Condition.(*policyv1.Condition_Match)
+				if !ok {
+					continue
+				}
 				r.rules = append(r.rules, rule)
 			}
 		}
@@ -380,6 +393,69 @@ func (r *REPL) loadRulesFromPolicy(path string) error {
 		}
 
 		r.output.Println(fmt.Sprintf("Derived roles '%s' loaded", pt.DerivedRoles.Name))
+	}
+
+	return nil
+}
+
+func (r *REPL) execRule(name string) error {
+	_, after, ok := strings.Cut(name, rulePrefix)
+	if !ok {
+		return fmt.Errorf("invalid rule name: %s", name)
+	}
+
+	//nolint:gomnd
+	id, err := strconv.ParseInt(after, 10, 64)
+	if err != nil {
+		return fmt.Errorf("invalid id format")
+	}
+
+	if int(id) >= len(r.rules) {
+		return fmt.Errorf("failed to find the rule %s", name)
+	}
+
+	var cond *policyv1.Condition
+	switch rt := r.rules[id].(type) {
+	case *policyv1.ResourceRule:
+		cond = rt.Condition
+	case *policyv1.RoleDef:
+		cond = rt.Condition
+	}
+
+	condition, err := compile.Condition(cond)
+	if err != nil {
+		return fmt.Errorf("failed to compile condition: %w", err)
+	}
+
+	return r.evalCondition(condition)
+}
+
+func (r *REPL) evalCondition(condition *runtimev1.Condition) error {
+	switch c := condition.Op.(type) {
+	case *runtimev1.Condition_Expr:
+		r.output.Print("Executing: %s", colored.REPLExpr(c.Expr.Original))
+		return r.processExpr(lastResultVar, c.Expr.Original)
+	case *runtimev1.Condition_All:
+		for _, expr := range c.All.GetExpr() {
+			err := r.evalCondition(expr)
+			if err != nil {
+				return fmt.Errorf("failed to execute condition: %w", err)
+			}
+		}
+	case *runtimev1.Condition_Any:
+		for _, expr := range c.Any.GetExpr() {
+			err := r.evalCondition(expr)
+			if err != nil {
+				return fmt.Errorf("failed to execute condition: %w", err)
+			}
+		}
+	case *runtimev1.Condition_None:
+		for _, expr := range c.None.GetExpr() {
+			err := r.evalCondition(expr)
+			if err != nil {
+				return fmt.Errorf("failed to execute condition: %w", err)
+			}
+		}
 	}
 
 	return nil

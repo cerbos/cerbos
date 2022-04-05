@@ -16,6 +16,7 @@ var (
 	Principal               = color.New(color.FgCyan).SprintFunc()
 	REPLCmd                 = color.New(color.FgYellow).SprintFunc()
 	REPLError               = color.New(color.FgRed).SprintFunc()
+	REPLExpr                = color.New(color.FgCyan).SprintFunc()
 	REPLPolicyType          = color.New(color.FgWhite).SprintFunc()
 	REPLVar                 = color.New(color.FgCyan).SprintFunc()
 	Resource                = color.New(color.FgBlue).SprintFunc()
