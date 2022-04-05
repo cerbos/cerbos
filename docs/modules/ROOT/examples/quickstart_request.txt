@@ -1,0 +1,46 @@
+cat <<EOF | curl --silent "http://localhost:3592/api/check/resources?pretty" -d @-
+{
+  "requestId": "quickstart",
+  "principal": {
+    "id": "bugs_bunny",
+    "roles": [
+      "user"
+    ],
+    "attr": {
+      "beta_tester": true
+    }
+  },
+  "resources": [
+    {
+      "actions": [
+        "view:public",
+        "comment"
+      ],
+      "resource": {
+        "kind": "album:object",
+        "id": "BUGS001",
+        "attr": {
+          "owner": "bugs_bunny",
+          "public": false,
+          "flagged": false
+        }
+      }
+    },
+    {
+      "actions": [
+        "view:public",
+        "comment"
+      ],
+      "resource": {
+        "kind": "album:object",
+        "id": "DAFFY002",
+        "attr": {
+          "owner": "daffy_duck",
+          "public": true,
+          "flagged": false
+        }
+      }
+    }
+  ]
+}
+EOF
