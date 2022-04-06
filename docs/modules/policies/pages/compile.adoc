@@ -36,17 +36,17 @@ principals: <3>
       - user
 resources: <4>
   alicia_album:
+    id: XX125
     kind: album:object
     attr:
       owner: aliciaID
-      id: XX125
       public: false
       flagged: false
   bradley_album:
+    id: XX250
     kind: album:object
     attr:
       owner: bradleyID
-      id: XX250
       public: false
       flagged: false
 auxData: <5>
@@ -131,10 +131,10 @@ principals:
 ---
 resources:
   alicia_album:
+    id: XX125
     kind: "album:object"
     attr:
       owner: aliciaID
-      id: XX125
       public: false
       flagged: false
 ----
@@ -168,26 +168,26 @@ For example, the following definitions are equivalent:
 ----
 resources:
   alicias_album1:
+    id: "XX125"
     kind: "album:object"
     attr: 
       owner: "alicia"
-      id: "XX125"
       public: false
       flagged: false
 
   alicias_album2:
+    id: "XX525"
     kind: "album:object"
     attr: 
       owner: "alicia"
-      id: "XX525"
       public: false
       flagged: false
 
   alicias_album3:
+    id: "XX925"
     kind: "album:object"
     attr: 
       owner: "alicia"
-      id: "XX925"
       public: false
       flagged: false
 ----
@@ -196,24 +196,24 @@ resources:
 ----
 resources:
   alicias_album1:
+    id: "XX125"
     kind: "album:object"
     attr: &alicia_album_attr
       owner: "alicia"
-      id: "XX125"
       public: false
       flagged: false
 
   alicias_album2:
+    id: "XX525"
     kind: "album:object"
     attr:
       <<: *alicia_album_attr
-      id: "XX525"
 
   alicias_album3:
+    id: "XX925"
     kind: "album:object"
     attr:
       <<: *alicia_album_attr
-      id: "XX925"
 ----
 |===
 
