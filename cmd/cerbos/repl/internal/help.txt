@@ -16,6 +16,9 @@ Directives are commands prefixed with a colon (":") character. The following dir
   :quit             | Exit the program
   :reset            | Clear all variables
   :vars             | View defined variables
+  :load             | Load rules from a policy
+  :rules            | View rules loaded from policies
+  :exec             | Execute rules loaded from policies
 
 ## Evaluating CEL conditions
 You can type in any valid CEL expression at the prompt to immediately evaluate it.
@@ -49,6 +52,26 @@ You can view the currently defined variables by using the :vars directive.
 
   :vars             | prints all defined variables
 
+
+## Load rules from policies
+You can load rules from policies using :load directive.
+
+  :load /policies/resource_policies/policy_01.yaml
+  :load /policies/derived_roles/derived_01.yaml
+
+## View rules
+You can view rules loaded from policies. This command displays the id for the rules, and you can use that later in :exec
+
+  :rules            | prints all rules
+
+## Execute rules
+
+You can execute rules loaded from policies by their id. See :rules for the ids.
+
+  :exec             | execute rules
+
+  :exec #1
+  :exec #5
 
 ## Clear state
 You can destroy all variables and reset the REPL with the :reset directive.

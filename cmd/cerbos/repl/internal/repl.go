@@ -23,6 +23,7 @@ import (
 	"github.com/google/cel-go/common/types/ref"
 	"github.com/google/cel-go/interpreter"
 	"github.com/peterh/liner"
+	"github.com/pterm/pterm"
 	exprpb "google.golang.org/genproto/googleapis/api/expr/v1alpha1"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"
@@ -32,6 +33,7 @@ import (
 	runtimev1 "github.com/cerbos/cerbos/api/genpb/cerbos/runtime/v1"
 	"github.com/cerbos/cerbos/internal/compile"
 	"github.com/cerbos/cerbos/internal/conditions"
+	"github.com/cerbos/cerbos/internal/namer"
 	"github.com/cerbos/cerbos/internal/outputcolor"
 	"github.com/cerbos/cerbos/internal/policy"
 	"github.com/cerbos/cerbos/internal/printer"
@@ -55,8 +57,8 @@ const (
 	commentPrefix   = '#'
 	directivePrefix = ':'
 	prompt          = "-> "
+	rulePrefix      = "#"
 	secondaryPrompt = "> "
-	rulePrefix      = "rule_"
 )
 
 type REPL struct {
@@ -149,7 +151,7 @@ func (r *REPL) handleInput(input string) error {
 	case commentPrefix:
 		return nil
 	default:
-		return r.processExpr(lastResultVar, input)
+		return r.processExpr(lastResultVar, input, true)
 	}
 }
 
@@ -175,7 +177,7 @@ func (r *REPL) processDirective(line string) error {
 		if _, ok := specialVars[prefix]; ok {
 			return r.setSpecialVar(directive.Let.Name, directive.Let.Expr)
 		}
-		return r.processExpr(directive.Let.Name, directive.Let.Expr)
+		return r.processExpr(directive.Let.Name, directive.Let.Expr, true)
 	case directive.Load != nil:
 		return r.loadRulesFromPolicy(directive.Load.Path)
 	case directive.Exec != nil:
@@ -231,7 +233,9 @@ func (r *REPL) showRules() error {
 
 		r.output.Println(fmt.Sprintf("%s %s", colored.REPLVar(fmt.Sprintf("%s%d", rulePrefix, idx)), colored.REPLPolicyType(t)))
 		r.output.Println(protojson.Format(msg))
+		r.output.Println()
 	}
+
 	return nil
 }
 
@@ -312,13 +316,15 @@ func (r *REPL) setSpecialVar(name, value string) error {
 	return nil
 }
 
-func (r *REPL) processExpr(name, expr string) error {
+func (r *REPL) processExpr(name, expr string, log bool) error {
 	val, tpe, err := r.evalExpr(expr)
 	if err != nil {
 		return err
 	}
 
-	r.output.PrintResult(name, val)
+	if log {
+		r.output.PrintResult(name, val)
+	}
 	r.vars[name] = val
 	r.decls[name] = decls.NewVar(name, tpe)
 
@@ -367,6 +373,9 @@ func (r *REPL) loadRulesFromPolicy(path string) error {
 		return fmt.Errorf("failed to read policy file: %w", err)
 	}
 
+	r.output.Println(protojson.Format(p))
+	r.output.Println()
+
 	switch pt := p.PolicyType.(type) {
 	case *policyv1.Policy_ResourcePolicy:
 		for _, rule := range pt.ResourcePolicy.Rules {
@@ -379,12 +388,7 @@ func (r *REPL) loadRulesFromPolicy(path string) error {
 			}
 		}
 
-		res := pt.ResourcePolicy.Resource
-		if pt.ResourcePolicy.Scope != "" {
-			res = fmt.Sprintf("%s.%s", pt.ResourcePolicy.Scope, pt.ResourcePolicy.Resource)
-		}
-
-		r.output.Println(fmt.Sprintf("Resource policy '%s' loaded", res))
+		r.output.Println(fmt.Sprintf("Resource policy '%s' loaded", colored.REPLPolicyName(namer.PolicyKey(p))))
 	case *policyv1.Policy_DerivedRoles:
 		for _, def := range pt.DerivedRoles.Definitions {
 			if def.Condition != nil {
@@ -392,8 +396,9 @@ func (r *REPL) loadRulesFromPolicy(path string) error {
 			}
 		}
 
-		r.output.Println(fmt.Sprintf("Derived roles '%s' loaded", pt.DerivedRoles.Name))
+		r.output.Println(fmt.Sprintf("Derived roles '%s' loaded", colored.REPLPolicyName(namer.PolicyKey(p))))
 	}
+	r.output.Println()
 
 	return nil
 }
@@ -414,6 +419,10 @@ func (r *REPL) execRule(name string) error {
 		return fmt.Errorf("failed to find the rule %s", name)
 	}
 
+	return r.evalCondition(int(id))
+}
+
+func (r *REPL) evalCondition(id int) error {
 	var cond *policyv1.Condition
 	switch rt := r.rules[id].(type) {
 	case *policyv1.ResourceRule:
@@ -427,35 +436,46 @@ func (r *REPL) execRule(name string) error {
 		return fmt.Errorf("failed to compile condition: %w", err)
 	}
 
-	return r.evalCondition(condition)
+	e := r.doEvalCondition(condition)
+	eo := buildEvalOutput(e)
+
+	err = pterm.DefaultTree.WithRoot(pterm.NewTreeFromLeveledList(eo.tree)).Render()
+	if err != nil {
+		return fmt.Errorf("failed to render tree: %w", err)
+	}
+
+	return nil
 }
 
-func (r *REPL) evalCondition(condition *runtimev1.Condition) error {
+func (r *REPL) doEvalCondition(condition *runtimev1.Condition) *eval {
 	switch c := condition.Op.(type) {
 	case *runtimev1.Condition_Expr:
-		r.output.Print("Executing: %s", colored.REPLExpr(c.Expr.Original))
-		return r.processExpr(lastResultVar, c.Expr.Original)
+		err := r.processExpr(lastResultVar, c.Expr.Original, false)
+		if err != nil {
+			return &eval{err: err, success: false, evalType: evalTypeExpr, evals: nil, expr: c.Expr.Original}
+		}
+		return &eval{err: nil, success: true, evalType: evalTypeExpr, evals: nil, expr: c.Expr.Original}
 	case *runtimev1.Condition_All:
+		eval := &eval{err: nil, success: true, evalType: evalTypeAll, evals: nil}
 		for _, expr := range c.All.GetExpr() {
-			err := r.evalCondition(expr)
-			if err != nil {
-				return fmt.Errorf("failed to execute condition: %w", err)
-			}
+			e := r.doEvalCondition(expr)
+			eval.append(e)
 		}
+		return eval
 	case *runtimev1.Condition_Any:
+		eval := &eval{err: nil, success: true, evalType: evalTypeAny, evals: nil}
 		for _, expr := range c.Any.GetExpr() {
-			err := r.evalCondition(expr)
-			if err != nil {
-				return fmt.Errorf("failed to execute condition: %w", err)
-			}
+			e := r.doEvalCondition(expr)
+			eval.append(e)
 		}
+		return eval
 	case *runtimev1.Condition_None:
+		eval := &eval{err: nil, success: true, evalType: evalTypeNone, evals: nil}
 		for _, expr := range c.None.GetExpr() {
-			err := r.evalCondition(expr)
-			if err != nil {
-				return fmt.Errorf("failed to execute condition: %w", err)
-			}
+			e := r.doEvalCondition(expr)
+			eval.append(e)
 		}
+		return eval
 	}
 
 	return nil
