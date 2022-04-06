@@ -159,9 +159,15 @@ release:
 
 changelog:
   sort: asc
-  filters:
-    exclude:
-      - '^ci:'
-      - '^chore'
-      - '^docs:'
-      - '^test:'
+  groups:
+    - title: Features
+      regexp: '^feat.+'
+      order: 5
+    - title: Enhancements
+      regexp: '^enhancement.+'
+      order: 10
+    - title: Bug fixes
+      regexp: '^fix.+'
+      order: 15
+    - title: Others
+      order: 20
