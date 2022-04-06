@@ -259,7 +259,6 @@ func (s *Store) pullAndCompare(ctx context.Context) (object.Changes, error) {
 
 	branch := s.conf.getBranch()
 
-	s.log.Debugw("Pulling from remote", "branch", branch)
 	auth, err := s.conf.getAuth()
 	if err != nil {
 		return nil, fmt.Errorf("failed to create git auth credentials: %w", err)
@@ -267,13 +266,16 @@ func (s *Store) pullAndCompare(ctx context.Context) (object.Changes, error) {
 
 	// Now pull from remote
 	opts := &git.PullOptions{
-		Auth: auth,
+		Auth:          auth,
+		ReferenceName: plumbing.NewBranchReferenceName(branch),
+		SingleBranch:  true,
 	}
 
-	ctx, cancelFunc := s.conf.getOpCtx(ctx)
-	defer cancelFunc()
+	pullCtx, pullCancel := s.conf.getOpCtx(ctx)
+	defer pullCancel()
 
-	if err := wt.PullContext(ctx, opts); err != nil {
+	s.log.Debugw("Pulling from remote", "branch", branch)
+	if err := wt.PullContext(pullCtx, opts); err != nil {
 		if !errors.Is(err, git.NoErrAlreadyUpToDate) {
 			s.log.Errorw("Failed to pull from remote", "error", err)
 			return nil, fmt.Errorf("failed to pull from remote: %w", err)
