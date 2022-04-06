@@ -465,6 +465,7 @@ message PlaygroundProxyRequest {
     CheckResourceSetRequest check_resource_set = 3;
     CheckResourceBatchRequest check_resource_batch = 4;
     ResourcesQueryPlanRequest resources_query_plan = 5;
+    CheckResourcesRequest check_resources = 6;
   }
 }
 

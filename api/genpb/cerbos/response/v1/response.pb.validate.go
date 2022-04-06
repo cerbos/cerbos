@@ -1458,6 +1458,37 @@ func (m *PlaygroundProxyResponse) validate(all bool) error {
 			}
 		}
 
+	case *PlaygroundProxyResponse_CheckResources:
+
+		if all {
+			switch v := interface{}(m.GetCheckResources()).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, PlaygroundProxyResponseValidationError{
+						field:  "CheckResources",
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, PlaygroundProxyResponseValidationError{
+						field:  "CheckResources",
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(m.GetCheckResources()).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return PlaygroundProxyResponseValidationError{
+					field:  "CheckResources",
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
 	}
 
 	if len(errors) > 0 {

@@ -1,0 +1,168 @@
+---
+description: "Validation errors"
+wantStatus:
+  httpStatusCode: 200
+  grpcStatusCode: 0
+playgroundProxy:
+  input: {
+    "playgroundId": "test",
+    "files": [
+      {
+        "fileName": "derived_roles_01.yaml",
+        "contents": "{{ fileString `store/derived_roles/derived_roles_01.yaml` | b64enc }}",
+      },
+      {
+        "fileName": "derived_roles_02.yaml",
+        "contents": "{{ fileString `store/derived_roles/derived_roles_02.yaml` | b64enc }}",
+      },
+      {
+        "fileName": "policy_01.yaml",
+        "contents": "{{ fileString `store/resource_policies/policy_01.yaml` | b64enc }}",
+      },
+      {
+        "fileName": "policy_02.yaml",
+        "contents": "{{ fileString `store/principal_policies/policy_01.yaml` | b64enc }}",
+      },
+      {
+        "fileName": "_schemas/principal.json",
+        "contents": "{{ fileString `store/_schemas/principal.json` | b64enc }}",
+      },
+      {
+        "fileName": "_schemas/leave_request.json",
+        "contents": "{{ fileString `store/_schemas/leave_request.json` | b64enc }}",
+      }
+    ],
+    "checkResources": {
+      "requestId": "test",
+      "principal": {
+        "id": "john",
+        "policyVersion": "20210210",
+        "roles": [
+          "employee"
+        ],
+        "attr": {
+          "department": "accounting",
+          "geography": "GB",
+          "team": "design"
+        }
+      },
+      "resources": [
+        {
+          "actions": [
+            "view:public",
+            "approve"
+          ],
+          "resource": {
+            "kind": "leave_request",
+            "policyVersion": "20210210",
+            "id": "XX125",
+            "attr": {
+              "department": "accounting",
+              "geography": "GB",
+              "id": "XX125",
+              "owner": "john",
+              "team": "design"
+            }
+          }
+        },
+        {
+          "actions": [
+            "view:public",
+            "approve"
+          ],
+          "resource": {
+            "kind": "leave_request",
+            "policyVersion": "20210210",
+            "id": "YY125",
+            "attr": {
+              "department": "engineering",
+              "geography": "GB",
+              "id": "YY125",
+              "owner": "jenny",
+              "team": "backend"
+            }
+          }
+        },
+        {
+          "actions": [
+            "view:public",
+            "delete",
+            "edit"
+          ],
+          "resource": {
+            "kind": "salary_record",
+            "policyVersion": "20210210",
+            "id": "YY525",
+            "attr": {
+              "department": "engineering",
+              "geography": "GB",
+              "id": "YY525",
+              "owner": "mark",
+              "team": "backend"
+            }
+          }
+        }
+      ]
+    }
+  }
+  wantResponse: {
+    "playgroundId": "test",
+    "checkResources": {
+      "requestId": "test",
+      "results": [
+        {
+          "resource": {
+            "id": "XX125",
+            "kind": "leave_request",
+            "policyVersion": "20210210"
+          },
+          "actions": {
+            "view:public": "EFFECT_ALLOW",
+            "approve": "EFFECT_DENY"
+          },
+          "validationErrors": [
+            {
+              "path": "/department",
+              "message": "value must be one of \"marketing\", \"engineering\"",
+              "source": "SOURCE_PRINCIPAL"
+            },
+            {
+              "path": "/department",
+              "message": "value must be one of \"marketing\", \"engineering\"",
+              "source": "SOURCE_RESOURCE"
+            }
+          ]
+        },
+        {
+          "resource": {
+            "id": "YY125",
+            "kind": "leave_request",
+            "policyVersion": "20210210"
+          },
+          "actions": {
+            "view:public": "EFFECT_ALLOW",
+            "approve": "EFFECT_DENY"
+          },
+          "validationErrors": [
+            {
+              "path": "/department",
+              "message": "value must be one of \"marketing\", \"engineering\"",
+              "source": "SOURCE_PRINCIPAL"
+            }
+          ]
+        },
+        {
+          "resource": {
+            "id": "YY525",
+            "kind": "salary_record",
+            "policyVersion": "20210210"
+          },
+          "actions": {
+            "view:public": "EFFECT_DENY",
+            "delete": "EFFECT_DENY",
+            "edit": "EFFECT_DENY"
+          }
+        }
+      ]
+    }
+  }

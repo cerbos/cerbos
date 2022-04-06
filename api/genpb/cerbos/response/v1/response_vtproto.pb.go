@@ -1769,6 +1769,25 @@ func (m *PlaygroundProxyResponse_ResourcesQueryPlan) MarshalToSizedBufferVT(dAtA
 	}
 	return len(dAtA) - i, nil
 }
+func (m *PlaygroundProxyResponse_CheckResources) MarshalToVT(dAtA []byte) (int, error) {
+	size := m.SizeVT()
+	return m.MarshalToSizedBufferVT(dAtA[:size])
+}
+
+func (m *PlaygroundProxyResponse_CheckResources) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	if m.CheckResources != nil {
+		size, err := m.CheckResources.MarshalToSizedBufferVT(dAtA[:i])
+		if err != nil {
+			return 0, err
+		}
+		i -= size
+		i = encodeVarint(dAtA, i, uint64(size))
+		i--
+		dAtA[i] = 0x32
+	}
+	return len(dAtA) - i, nil
+}
 func (m *AddOrUpdatePolicyResponse) MarshalVT() (dAtA []byte, err error) {
 	if m == nil {
 		return nil, nil
@@ -3086,6 +3105,18 @@ func (m *PlaygroundProxyResponse_ResourcesQueryPlan) SizeVT() (n int) {
 	_ = l
 	if m.ResourcesQueryPlan != nil {
 		l = m.ResourcesQueryPlan.SizeVT()
+		n += 1 + l + sov(uint64(l))
+	}
+	return n
+}
+func (m *PlaygroundProxyResponse_CheckResources) SizeVT() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	if m.CheckResources != nil {
+		l = m.CheckResources.SizeVT()
 		n += 1 + l + sov(uint64(l))
 	}
 	return n
@@ -7543,6 +7574,47 @@ func (m *PlaygroundProxyResponse) UnmarshalVT(dAtA []byte) error {
 					return err
 				}
 				m.Outcome = &PlaygroundProxyResponse_ResourcesQueryPlan{v}
+			}
+			iNdEx = postIndex
+		case 6:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field CheckResources", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLength
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLength
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if oneof, ok := m.Outcome.(*PlaygroundProxyResponse_CheckResources); ok {
+				if err := oneof.CheckResources.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
+					return err
+				}
+			} else {
+				v := &CheckResourcesResponse{}
+				if err := v.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
+					return err
+				}
+				m.Outcome = &PlaygroundProxyResponse_CheckResources{v}
 			}
 			iNdEx = postIndex
 		default:

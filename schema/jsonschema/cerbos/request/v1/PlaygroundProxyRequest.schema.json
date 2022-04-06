@@ -224,6 +224,59 @@
         }
       }
     },
+    "cerbos.request.v1.CheckResourcesRequest": {
+      "type": "object",
+      "required": [
+        "principal",
+        "resources"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "auxData": {
+          "$ref": "#/definitions/cerbos.request.v1.AuxData"
+        },
+        "includeMeta": {
+          "type": "boolean"
+        },
+        "principal": {
+          "$ref": "#/definitions/cerbos.engine.v1.Principal"
+        },
+        "requestId": {
+          "type": "string"
+        },
+        "resources": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/cerbos.request.v1.CheckResourcesRequest.ResourceEntry"
+          },
+          "maxItems": 20,
+          "minItems": 1
+        }
+      }
+    },
+    "cerbos.request.v1.CheckResourcesRequest.ResourceEntry": {
+      "type": "object",
+      "required": [
+        "actions",
+        "resource"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "actions": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "maxItems": 10,
+          "minItems": 1,
+          "uniqueItems": true
+        },
+        "resource": {
+          "$ref": "#/definitions/cerbos.engine.v1.Resource"
+        }
+      }
+    },
     "cerbos.request.v1.File": {
       "type": "object",
       "required": [
@@ -330,6 +383,9 @@
         "checkResourceSet": {
           "$ref": "#/definitions/cerbos.request.v1.CheckResourceSetRequest"
         },
+        "checkResources": {
+          "$ref": "#/definitions/cerbos.request.v1.CheckResourcesRequest"
+        },
         "files": {
           "type": "array",
           "items": {
@@ -364,6 +420,12 @@
           "type": "object",
           "required": [
             "resourcesQueryPlan"
+          ]
+        },
+        {
+          "type": "object",
+          "required": [
+            "checkResources"
           ]
         }
       ]

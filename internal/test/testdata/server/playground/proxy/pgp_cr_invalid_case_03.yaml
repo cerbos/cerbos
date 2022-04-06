@@ -1,0 +1,51 @@
+---
+description: "Empty resources"
+wantStatus:
+  httpStatusCode: 400
+  grpcStatusCode: 3
+wantError: true
+playgroundProxy:
+  input: {
+    "playgroundId": "test",
+    "files": [
+      {
+        "fileName": "derived_roles_01.yaml",
+        "contents": "{{ fileString `store/derived_roles/derived_roles_01.yaml` | b64enc }}",
+      },
+      {
+        "fileName": "derived_roles_02.yaml",
+        "contents": "{{ fileString `store/derived_roles/derived_roles_02.yaml` | b64enc }}",
+      },
+      {
+        "fileName": "policy_05.yaml",
+        "contents": "{{ fileString `store/resource_policies/policy_01.yaml` | b64enc }}",
+      },
+      {
+        "fileName": "principal.yaml",
+        "contents": "{{ fileString `store/principal_policies/policy_01.yaml` | b64enc }}",
+      },
+      {
+        "fileName": "_schemas/principal.json",
+        "contents": "{{ fileString `store/_schemas/principal.json` | b64enc }}",
+      },
+      {
+        "fileName": "_schemas/leave_request.json",
+        "contents": "{{ fileString `store/_schemas/leave_request.json` | b64enc }}",
+      }
+    ],
+    "checkResources": {
+      "requestId": "test",
+      "principal": {
+        "id": "john",
+        "policyVersion": "20210210",
+        "roles": [
+          "employee"
+        ],
+        "attr": {
+          "department": "marketing",
+          "geography": "GB",
+          "team": "design"
+        }
+      }
+    }
+  }

@@ -2410,6 +2410,9 @@
         },
         "resourcesQueryPlan": {
           "$ref": "#/definitions/cerbosrequestv1ResourcesQueryPlanRequest"
+        },
+        "checkResources": {
+          "$ref": "#/definitions/v1CheckResourcesRequest"
         }
       },
       "description": "Playground proxy request",
@@ -2434,6 +2437,9 @@
         },
         "resourcesQueryPlan": {
           "$ref": "#/definitions/v1ResourcesQueryPlanResponse"
+        },
+        "checkResources": {
+          "$ref": "#/definitions/v1CheckResourcesResponse"
         }
       },
       "description": "Playground proxy response"
