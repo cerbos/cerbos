@@ -40,9 +40,148 @@ Other languages coming soon
 
 == Request and response formats
 
+[#check-resources]
+=== `CheckResources` (`/api/check/resources`)
+
+This is the main API entrypoint for checking permissions for a set of resources. 
+
+.Request
+[source,json,linenums]
+----
+{
+  "requestId": "test", <1>
+  "principal": { 
+    "id": "alice", <2>
+    "policyVersion": "20210210", <3>
+    "scope": "acme.corp", <4>
+    "roles": [ <5>
+      "employee"
+    ],
+    "attr": { <6>
+      "department": "accounting",
+      "geography": "GB",
+      "team": "design"
+    }
+  },
+  "resources": [ <7>
+    {
+      "resource": { 
+        "id": "XX125", <8> 
+        "kind": "leave_request", <9>
+        "policyVersion": "20210210", <10>
+        "scope": "acme.corp", <11>
+        "attr": { <12>
+          "department": "accounting",
+          "geography": "GB",
+          "id": "XX125",
+          "owner": "john",
+          "team": "design"
+        }
+      },
+      "actions": [ <13> 
+        "view:public",
+        "approve",
+        "create"
+      ]
+    }
+  ],
+  "auxData": { <14> 
+    "jwt": {
+        "token": "xxx.yyy.zzz", <15> 
+        "keySetId": "ks1" <16>
+    }
+  },
+  "includeMeta": true <17>
+}
+----
+<1> Request ID is an optional, application-provided identifier useful for correlating logs.
+<2> ID of the principal whose permissions are being checked. This usually comes from the identity provider (IdP).
+<3> Principal policy version. Optional. The server falls back to the xref:configuration:engine.adoc[configured default version] if this is not specified. 
+<4> Principal policy scope. Optional. See xref:policies:scoped_policies.adoc[].
+<5> The roles attached to this principal by the identity provider.
+<6> Free-form context data about this principal. Policy rule conditions are evaluated based on these values.
+<7> List of resources the principal is attempting to access.
+<8> ID of the resource.
+<9> Resource kind. This is used to determine the resource policy that applies to this resource.
+<10> Resource policy version. Optional. The server falls back to the xref:configuration:engine.adoc[configured default version] if this is not specified. 
+<11> Resource policy scope. Optional. See xref:policies:scoped_policies.adoc[].
+<12> Free-form context data about this resource. Policy rule conditions are evaluated based on these values.
+<13> List of actions being performed on the resource.
+<14> Optional section for providing auxiliary data.
+<15> JWT to use as an auxiliary data source. 
+<16> ID of the keyset to use to verify the JWT. Optional if only a single xref:configuration:auxdata.adoc[keyset is configured].
+<17> Optional flag to receive metadata about request evaluation.
+
+
+.Response
+[source,json,linenums]
+----
+{
+  "requestId": "test", <1>
+  "results": [ <2>
+    {
+      "resource": { <3>
+        "id": "XX125",
+        "kind": "leave_request",
+        "policyVersion": "20210210",
+        "scope": "acme.corp" 
+      },
+      "actions": { <4>
+        "view:public": "EFFECT_ALLOW",
+        "approve": "EFFECT_DENY"
+      },
+      "validationErrors": [ <5>
+        {
+          "path": "/department",
+          "message": "value must be one of \"marketing\", \"engineering\"",
+          "source": "SOURCE_PRINCIPAL"
+        },
+        {
+          "path": "/department",
+          "message": "value must be one of \"marketing\", \"engineering\"",
+          "source": "SOURCE_RESOURCE"
+        }
+      ],
+      "meta": { <6>
+        "actions": {
+          "view:public": {
+            "matchedPolicy": "resource.leave_request.v20210210/acme.corp", <7>
+            "matchedScope": "acme" <8>
+          },
+          "approve": {
+            "matchedPolicy": "resource.leave_request.v20210210/acme.corp"
+          }
+        },
+        "effectiveDerivedRoles": [ <9>
+          "employee_that_owns_the_record",
+          "any_employee"
+        ]
+      }
+    }
+  ]
+}
+----
+<1> Request ID that was sent with the request.
+<2> List of results. Items are in the same order as they were sent in the request.
+<3> Resource identifiers.
+<4> Access decisions for each of the actions.
+<5> Validation errors, if xref:policies:schemas.adoc[schema enforcement] is enabled and the request didn't conform to the schema. 
+<6> Metadata (if `includeMeta` was true in the request)
+<7> Name of the policy that produced the decision for this action.
+<8> Name of the scope that was active when the decision was made for the action.
+<9> List of derived roles that were activated.
+
+
 === `CheckResourceSet` (`/api/check`)
 
+NOTE: Deprecated since Cerbos 0.16.0. Use xref:index.adoc#check-resources[CheckResources] instead. 
+
 Checks permissions for a set of homogeneous resources.
+
+
+.Request and Response
+[%collapsible]
+====
 
 .Request
 [source,json,linenums]
@@ -148,9 +287,18 @@ Checks permissions for a set of homogeneous resources.
 <7> The policy scope that was active when the decision was made.
 <8> Derived roles that were activated.
 
+====
+
 === `CheckResourceBatch` (`/api/check_resource_batch`)
 
+NOTE: Deprecated since Cerbos 0.16.0. Use xref:index.adoc#check-resources[CheckResources] instead. 
+
 Unlike `CheckResourceSet` -- which checks access to resource instances of the _same_ kind, `CheckResourceBatch` allows checking access to multiple heterogeneous resource instances.  
+
+
+.Request and Response
+[%collapsible]
+====
 
 .Request
 [source,json,linenums]
@@ -253,6 +401,8 @@ Unlike `CheckResourceSet` -- which checks access to resource instances of the _s
   ]
 }
 ----
+
+====
 
 [#resources-query-plan]
 === `ResourcesQueryPlan` (`/api/x/plan/resources`)
@@ -440,30 +590,38 @@ NOTE: Some advanced CEL features like `map` over a list cannot be directly trans
 
 [source,sh,linenums]
 ----
-cat <<EOF | curl --silent "localhost:3592/api/check?pretty" -d @-
+cat <<EOF | curl --silent "localhost:3592/api/check/resources?pretty" -d @-
 {
-  "requestId":  "test01",
-  "includeMeta": true,
-  "actions":  ["view"],
-  "resource":  {
-    "policyVersion": "default",
-    "kind":  "album:object",
-    "instances": {
-    "XX125": {
-      "attr":  {
-          "owner":  "alicia",
-          "id":  "XX125",
-          "public": false,
-          "flagged": false
-        }
-      }
+  "requestId": "test",
+  "principal": { 
+    "id": "alice",
+    "roles": ["employee"],
+    "attr": { 
+      "department": "accounting",
+      "geography": "GB",
+      "team": "design"
     }
   },
-  "principal":  {
-    "id":  "alicia",
-    "policyVersion": "default",
-    "roles":  ["user"]
-  }
+  "resources": [
+    {
+      "resource": { 
+        "id": "XX125",
+        "kind": "leave_request",
+        "attr": {
+          "department": "accounting",
+          "geography": "GB",
+          "id": "XX125",
+          "owner": "john",
+          "team": "design"
+        }
+      },
+      "actions": [
+        "view:public",
+        "approve",
+        "create"
+      ]
+    }
+  ]
 }
 EOF
 ----
@@ -472,31 +630,40 @@ EOF
 
 [source,sh,linenums]
 ----
-cat <<EOF | grpcurl -plaintext -d @ localhost:3593 cerbos.svc.v1.CerbosService/CheckResourceSet
+cat <<EOF | grpcurl -plaintext -d @ localhost:3593 cerbos.svc.v1.CerbosService/CheckResources
 {
-  "requestId":  "test01",
-  "includeMeta": true,
-  "actions":  ["view"],
-  "resource":  {
-    "policyVersion": "default",
-    "kind":  "album:object",
-    "instances": {
-      "XX125": {
-        "attr":  {
-          "owner":  "alicia",
-          "id":  "XX125",
-          "public": false,
-          "flagged": false
-        }
-      }
+  "requestId": "test",
+  "principal": { 
+    "id": "alice",
+    "roles": ["employee"],
+    "attr": { 
+      "department": "accounting",
+      "geography": "GB",
+      "team": "design"
     }
   },
-  "principal":  {
-    "id":  "alicia",
-    "policyVersion": "default",
-    "roles":  ["user"]
-  }
+  "resources": [
+    {
+      "resource": { 
+        "id": "XX125",
+        "kind": "leave_request",
+        "attr": {
+          "department": "accounting",
+          "geography": "GB",
+          "id": "XX125",
+          "owner": "john",
+          "team": "design"
+        }
+      },
+      "actions": [
+        "view:public",
+        "approve",
+        "create"
+      ]
+    }
+  ]
 }
+EOF
 ----
 
 
@@ -540,7 +707,7 @@ You can access the Cerbos protobuf definitions from the link:https://github.com/
 
 * You can now use link:https://docs.buf.build/generate-usage[`buf generate`] or `protoc` to generate code using the protobufs available in the `proto` directory.
 
-* If you don't want to download protobufs and then to generate code using `buf` or `protoc`, you can use the link:https://github.com/cerbos/grpc-tools[Cerbos grpc-tools container] to easily generate code for languages like Java, NodeJS, Python, C# etc.
+* If you don't want to download protobufs and then to generate code using `buf` or `protoc`, you can use the link:https://github.com/cerbos/grpc-tools[Cerbos grpc-tools container] to generate code for languages like Java, NodeJS, Python, C# etc.
 
 
 

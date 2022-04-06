@@ -134,6 +134,10 @@ func (tr *TestRunner) executeGRPCTestCase(grpcConn *grpc.ClientConn, tc *private
 			cerbosClient := svcv1.NewCerbosServiceClient(grpcConn)
 			want = call.CheckResourceBatch.WantResponse
 			have, err = cerbosClient.CheckResourceBatch(ctx, call.CheckResourceBatch.Input)
+		case *privatev1.ServerTestCase_CheckResources:
+			cerbosClient := svcv1.NewCerbosServiceClient(grpcConn)
+			want = call.CheckResources.WantResponse
+			have, err = cerbosClient.CheckResources(ctx, call.CheckResources.Input)
 		case *privatev1.ServerTestCase_PlaygroundValidate:
 			playgroundClient := svcv1.NewCerbosPlaygroundServiceClient(grpcConn)
 			want = call.PlaygroundValidate.WantResponse
@@ -224,6 +228,11 @@ func (tr *TestRunner) executeHTTPTestCase(c *http.Client, hostAddr string, creds
 			input = call.CheckResourceBatch.Input
 			want = call.CheckResourceBatch.WantResponse
 			have = &responsev1.CheckResourceBatchResponse{}
+		case *privatev1.ServerTestCase_CheckResources:
+			addr = fmt.Sprintf("%s/api/check/resources", hostAddr)
+			input = call.CheckResources.Input
+			want = call.CheckResources.WantResponse
+			have = &responsev1.CheckResourcesResponse{}
 		case *privatev1.ServerTestCase_PlaygroundValidate:
 			addr = fmt.Sprintf("%s/api/playground/validate", hostAddr)
 			input = call.PlaygroundValidate.Input
@@ -308,6 +317,7 @@ func (tr *TestRunner) checkCORS(c *http.Client, hostAddr string) func(*testing.T
 	paths := []string{
 		"/api/check",
 		"/api/check_resource_batch",
+		"/api/check/resources",
 		"/api/playground/validate",
 		"/api/playground/test",
 		"/api/playground/evaluate",
@@ -370,6 +380,7 @@ func compareProto(t *testing.T, want, have interface{}) {
 	require.Empty(t, cmp.Diff(want, have,
 		protocmp.Transform(),
 		protocmp.SortRepeatedFields(&responsev1.CheckResourceSetResponse_Meta_ActionMeta{}, "effective_derived_roles"),
+		protocmp.SortRepeatedFields(&responsev1.CheckResourcesResponse_ResultEntry_Meta{}, "effective_derived_roles"),
 		protocmp.SortRepeatedFields(&responsev1.PlaygroundEvaluateResponse_EvalResult{}, "effective_derived_roles"),
 		protocmp.SortRepeatedFields(&policyv1.TestResults_Details{}, "engine_trace"),
 		protocmp.SortRepeated(cmpPlaygroundEvalResult),

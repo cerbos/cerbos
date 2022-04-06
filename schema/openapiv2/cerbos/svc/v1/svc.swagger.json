@@ -483,7 +483,7 @@
     "/api/check": {
       "post": {
         "summary": "Check",
-        "description": "Check whether a principal has permissions to perform the given actions on a set of resource instances.",
+        "description": "[Deprecated: Use CheckResources API instead] Check whether a principal has permissions to perform the given actions on a set of resource instances.",
         "operationId": "CerbosService_CheckResourceSet",
         "responses": {
           "200": {
@@ -511,13 +511,48 @@
         ],
         "tags": [
           "CerbosService"
+        ],
+        "deprecated": true
+      }
+    },
+    "/api/check/resources": {
+      "post": {
+        "summary": "Check resources",
+        "description": "Check a principal's permissions to a batch of heterogeneous resources and actions.",
+        "operationId": "CerbosService_CheckResources",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1CheckResourcesResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/googlerpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/v1CheckResourcesRequest"
+            }
+          }
+        ],
+        "tags": [
+          "CerbosService"
         ]
       }
     },
     "/api/check_resource_batch": {
       "post": {
         "summary": "Check resource batch",
-        "description": "Check a principal's permissions to a batch of heterogeneous resources and actions.",
+        "description": "[Deprecated: Use CheckResources API instead] Check a principal's permissions to a batch of heterogeneous resources and actions.",
         "operationId": "CerbosService_CheckResourceBatch",
         "responses": {
           "200": {
@@ -545,7 +580,8 @@
         ],
         "tags": [
           "CerbosService"
-        ]
+        ],
+        "deprecated": true
       }
     },
     "/api/playground/evaluate": {
@@ -800,6 +836,151 @@
         "actions"
       ]
     },
+    "CheckResourcesRequestResourceEntry": {
+      "type": "object",
+      "properties": {
+        "actions": {
+          "type": "array",
+          "example": [
+            "view:public",
+            "comment"
+          ],
+          "items": {
+            "type": "string"
+          },
+          "description": "List of actions being performed on the resource.",
+          "maxItems": 10,
+          "minItems": 1,
+          "uniqueItems": true,
+          "required": [
+            "actions"
+          ]
+        },
+        "resource": {
+          "$ref": "#/definitions/enginev1Resource"
+        }
+      },
+      "required": [
+        "actions"
+      ]
+    },
+    "CheckResourcesResponseResultEntry": {
+      "type": "object",
+      "properties": {
+        "resource": {
+          "$ref": "#/definitions/CheckResourcesResponseResultEntryResource"
+        },
+        "actions": {
+          "type": "object",
+          "example": {
+            "view": "EFFECT_ALLOW"
+          },
+          "additionalProperties": {
+            "$ref": "#/definitions/v1Effect"
+          },
+          "description": "Mapping of each action to an effect."
+        },
+        "validationErrors": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/v1ValidationError"
+          },
+          "description": "List of validation errors (if schema validation is enabled)"
+        },
+        "meta": {
+          "$ref": "#/definitions/CheckResourcesResponseResultEntryMeta",
+          "example": {
+            "actions": {
+              "view:*": {
+                "matched_policy": "album:object:default"
+              },
+              "comment": {
+                "matched_policy": "album:object:default"
+              }
+            },
+            "effective_derived_roles": [
+              "owner"
+            ]
+          },
+          "description": "Metadata about policy evaluation"
+        }
+      }
+    },
+    "CheckResourcesResponseResultEntryMeta": {
+      "type": "object",
+      "properties": {
+        "actions": {
+          "type": "object",
+          "example": {
+            "view:*": {
+              "matched_policy": "album:object:default"
+            },
+            "comment": {
+              "matched_policy": "album:object:default"
+            }
+          },
+          "additionalProperties": {
+            "$ref": "#/definitions/CheckResourcesResponseResultEntryMetaEffectMeta"
+          },
+          "description": "Metadata about the effect calculated for each action on this resource instance."
+        },
+        "effectiveDerivedRoles": {
+          "type": "array",
+          "example": [
+            "owner"
+          ],
+          "items": {
+            "type": "string"
+          },
+          "description": "Derived roles that were effective during policy evaluation."
+        }
+      },
+      "description": "Metadata about request evaluation."
+    },
+    "CheckResourcesResponseResultEntryMetaEffectMeta": {
+      "type": "object",
+      "properties": {
+        "matchedPolicy": {
+          "type": "string",
+          "example": "album:object:default",
+          "description": "Policy that matched to produce this effect."
+        },
+        "matchedScope": {
+          "type": "string",
+          "example": "acme.corp.base",
+          "description": "Policy scope that matched to produce this effect."
+        }
+      },
+      "description": "Name of the action."
+    },
+    "CheckResourcesResponseResultEntryResource": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "example": "XX125",
+          "description": "ID of the resource instance"
+        },
+        "kind": {
+          "type": "string",
+          "example": "album:photo",
+          "description": "Name of the resource kind being accessed.",
+          "pattern": "^[[:alpha:]][[:word:]\\@\\.\\-]*(\\:[[:alpha:]][[:word:]\\@\\.\\-]*)*$"
+        },
+        "policyVersion": {
+          "type": "string",
+          "example": "default",
+          "description": "The policy version to use to evaluate this request. If not specified, will default to the server-configured default version.",
+          "pattern": "^[[:word:]]*$"
+        },
+        "scope": {
+          "type": "string",
+          "example": "acme.corp",
+          "description": "A dot-separated scope that describes the hierarchy this resource belongs to. This is used for determining policy inheritance.",
+          "pattern": "^([[:alpha:]][[:word:]\\-]+(\\.[[:alpha:]][[:word:]\\-]*)*)*$"
+        }
+      }
+    },
     "ComponentVariable": {
       "type": "object",
       "properties": {
@@ -878,7 +1059,7 @@
             }
           },
           "additionalProperties": {
-            "$ref": "#/definitions/MetaEffectMeta"
+            "$ref": "#/definitions/v1CheckResourceSetResponseMetaEffectMeta"
           },
           "description": "Metadata about the effect calculated for each action on this resource instance."
         },
@@ -894,22 +1075,6 @@
         }
       },
       "description": "Unique resource instance ID supplied in the request."
-    },
-    "MetaEffectMeta": {
-      "type": "object",
-      "properties": {
-        "matchedPolicy": {
-          "type": "string",
-          "example": "album:object:default",
-          "description": "Policy that matched to produce this effect."
-        },
-        "matchedScope": {
-          "type": "string",
-          "example": "acme.corp.base",
-          "description": "Policy scope that matched to produce this effect."
-        }
-      },
-      "description": "Name of the action."
     },
     "PlaygroundEvaluateResponseEvalResult": {
       "type": "object",
@@ -1300,6 +1465,7 @@
         },
         "scope": {
           "type": "string",
+          "example": "acme.corp",
           "description": "A dot-separated scope that describes the hierarchy this principal belongs to. This is used for determining policy inheritance.",
           "pattern": "^([[:alpha:]][[:word:]\\-]+(\\.[[:alpha:]][[:word:]\\-]*)*)*$"
         }
@@ -1348,6 +1514,7 @@
         },
         "scope": {
           "type": "string",
+          "example": "acme.corp",
           "description": "A dot-separated scope that describes the hierarchy this resource belongs to. This is used for determining policy inheritance.",
           "pattern": "^([[:alpha:]][[:word:]\\-]+(\\.[[:alpha:]][[:word:]\\-]*)*)*$"
         }
@@ -1815,6 +1982,107 @@
         }
       },
       "description": "Metadata about request evaluation."
+    },
+    "v1CheckResourceSetResponseMetaEffectMeta": {
+      "type": "object",
+      "properties": {
+        "matchedPolicy": {
+          "type": "string",
+          "example": "album:object:default",
+          "description": "Policy that matched to produce this effect."
+        },
+        "matchedScope": {
+          "type": "string",
+          "example": "acme.corp.base",
+          "description": "Policy scope that matched to produce this effect."
+        }
+      },
+      "description": "Name of the action."
+    },
+    "v1CheckResourcesRequest": {
+      "type": "object",
+      "properties": {
+        "requestId": {
+          "type": "string",
+          "example": "c2db17b8-4f9f-4fb1-acfd-9162a02be42b",
+          "description": "Optional application-specific ID useful for correlating logs for analysis."
+        },
+        "includeMeta": {
+          "type": "boolean",
+          "description": "Add request processing metadata to the response."
+        },
+        "principal": {
+          "$ref": "#/definitions/enginev1Principal"
+        },
+        "resources": {
+          "type": "array",
+          "example": [
+            {
+              "actions": [
+                "view",
+                "comment"
+              ],
+              "resource": {
+                "kind": "album:object",
+                "policyVersion": "default",
+                "id": "XX125",
+                "attr": {
+                  "owner": "bugs_bunny",
+                  "public": false,
+                  "flagged": false
+                }
+              }
+            }
+          ],
+          "items": {
+            "$ref": "#/definitions/CheckResourcesRequestResourceEntry"
+          },
+          "description": "List of resources and actions.",
+          "maxItems": 20,
+          "minItems": 1,
+          "uniqueItems": true,
+          "required": [
+            "resources"
+          ]
+        },
+        "auxData": {
+          "$ref": "#/definitions/cerbosrequestv1AuxData"
+        }
+      },
+      "description": "Check resources request",
+      "required": [
+        "resources"
+      ]
+    },
+    "v1CheckResourcesResponse": {
+      "type": "object",
+      "properties": {
+        "requestId": {
+          "type": "string",
+          "example": "c2db17b8-4f9f-4fb1-acfd-9162a02be42b",
+          "description": "Request ID provided in the request."
+        },
+        "results": {
+          "type": "array",
+          "example": [
+            {
+              "resource": {
+                "Id": "XX125",
+                "kind": "album:object"
+              },
+              "actions": {
+                "view": "EFFECT_ALLOW",
+                "comment": "EFFECT_DENY"
+              }
+            }
+          ],
+          "items": {
+            "$ref": "#/definitions/CheckResourcesResponseResultEntry"
+          },
+          "description": "Result for each resource"
+        }
+      },
+      "description": "Response from the check resources API call."
     },
     "v1Condition": {
       "type": "object",

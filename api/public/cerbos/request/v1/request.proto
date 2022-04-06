@@ -53,6 +53,7 @@ message ResourcesQueryPlanRequest {
   }];
 }
 
+// Deprecated. See CheckResourcesRequest.
 message CheckResourceSetRequest {
   option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
     json_schema: {
@@ -165,6 +166,7 @@ message AttributesMap {
   ];
 }
 
+// Deprecated. See CheckResourcesRequest.
 message CheckResourceBatchRequest {
   option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
     json_schema: {
@@ -222,6 +224,69 @@ message CheckResourceBatchRequest {
     }
   ];
   AuxData aux_data = 4;
+}
+
+// Structure of the request for the check resources API call.
+message CheckResourcesRequest {
+  option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
+    json_schema: {
+      description: "Check resources request"
+    }
+  };
+
+  message ResourceEntry {
+    repeated string actions = 1 [
+      (validate.rules).repeated = {
+        unique: true,
+        min_items: 1,
+        max_items: 10,
+        items {
+          string {
+            min_len: 1
+          }
+        }
+      },
+      (google.api.field_behavior) = REQUIRED,
+      (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+        description: "List of actions being performed on the resource."
+        min_items: 1
+        max_items: 10
+        unique_items: true
+        example: "[\"view:public\", \"comment\"]"
+      }
+    ];
+    cerbos.engine.v1.Resource resource = 2 [
+      (validate.rules).message.required = true,
+      (google.api.field_behavior) = REQUIRED
+    ];
+  }
+
+  string request_id = 1 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+    description: "Optional application-specific ID useful for correlating logs for analysis."
+    example: "\"c2db17b8-4f9f-4fb1-acfd-9162a02be42b\""
+  }];
+  bool include_meta = 2 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+    description: "Add request processing metadata to the response."
+  }];
+  cerbos.engine.v1.Principal principal = 3 [
+    (validate.rules).message.required = true,
+    (google.api.field_behavior) = REQUIRED
+  ];
+  repeated ResourceEntry resources = 4 [
+    (validate.rules).repeated = {
+      min_items: 1,
+      max_items: 20
+    },
+    (google.api.field_behavior) = REQUIRED,
+    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+      description: "List of resources and actions."
+      min_items: 1
+      max_items: 20
+      unique_items: true
+      example: "[{\"actions\":[\"view\",\"comment\"], \"resource\":{\"kind\":\"album:object\",\"policyVersion\":\"default\",\"id\":\"XX125\",\"attr\":{\"owner\":\"bugs_bunny\", \"public\": false, \"flagged\": false}}}]"
+    }
+  ];
+  AuxData aux_data = 5;
 }
 
 message AuxData {

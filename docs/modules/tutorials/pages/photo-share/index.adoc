@@ -206,32 +206,36 @@ NOTE: If you like to use link:https://www.postman.com[Postman], link:https://ins
 
 
 .Alicia trying to view her own album
-[source,shell,linenums,highlight=2..20]
+[source,shell,linenums]
 ----
-cat <<EOF | curl --silent "http://localhost:3592/api/check?pretty" -d @-
+cat <<EOF | curl --silent "http://localhost:3592/api/check/resources?pretty" -d @-
 {
-  "requestId":  "test01",
+  "requestId": "test01",
   "includeMeta": true,
-  "principal":  {
-    "id":  "alicia",
+  "principal": {
+    "id": "alicia",
     "policyVersion": "default",
-    "roles":  ["user"]
+    "roles": [
+      "user"
+    ]
   },
-  "actions":  ["view"],
-  "resource":  {
-    "policyVersion": "default",
-    "kind":  "album:object",
-    "instances": {
-      "XX125": {
-        "attr":  {
-          "owner":  "alicia",
-          "id":  "XX125",
+  "resources": [
+    {
+      "actions": [
+        "view"
+      ],
+      "resource": {
+        "id": "XX125",
+        "policyVersion": "default",
+        "kind": "album:object",
+        "attr": {
+          "owner": "alicia",
           "public": false,
           "flagged": false
         }
       }
     }
-  }
+  ]
 }
 EOF
 ----
@@ -239,16 +243,17 @@ EOF
 ----
 {
   "requestId": "test01",
-  "resourceInstances": {
-    "XX125": {
+  "results": [
+    {
+      "resource": {
+        "id": "XX125",
+        "kind": "album:object",
+        "policyVersion": "default"
+      },
       "actions": {
         "view": "EFFECT_ALLOW"
-      }
-    }
-  },
-  "meta": {
-    "resourceInstances": {
-      "XX125": {
+      },
+      "meta": {
         "actions": {
           "view": {
             "matchedPolicy": "resource.album_object.vdefault"
@@ -259,7 +264,7 @@ EOF
         ]
       }
     }
-  }
+  ]
 }
 ----
 
@@ -285,25 +290,9 @@ docker run -it -v $(pwd):/photo-share {app-docker-img} \
 
 ----
 Test results
-= AlbumObjectTestSuite (album_object_test.yaml) 
-== 'View album' for resource 'alicia_private_album' by principal 'alicia' [OK]
-== 'View album' for resource 'alicia_public_album' by principal 'alicia' [OK]
-== 'View album' for resource 'alicia_flagged_album' by principal 'alicia' [OK]
-== 'View album' for resource 'alicia_private_album' by principal 'bradley' [OK]
-== 'View album' for resource 'alicia_public_album' by principal 'bradley' [OK]
-== 'View album' for resource 'alicia_flagged_album' by principal 'bradley' [OK]
-== 'View album' for resource 'alicia_private_album' by principal 'maria' [OK]
-== 'View album' for resource 'alicia_public_album' by principal 'maria' [OK]
-== 'View album' for resource 'alicia_flagged_album' by principal 'maria' [OK]
-== 'Delete album' for resource 'alicia_private_album' by principal 'alicia' [OK]
-== 'Delete album' for resource 'alicia_public_album' by principal 'alicia' [OK]
-== 'Delete album' for resource 'alicia_flagged_album' by principal 'alicia' [OK]
-== 'Delete album' for resource 'alicia_private_album' by principal 'bradley' [OK]
-== 'Delete album' for resource 'alicia_public_album' by principal 'bradley' [OK]
-== 'Delete album' for resource 'alicia_flagged_album' by principal 'bradley' [OK]
-== 'Delete album' for resource 'alicia_private_album' by principal 'maria' [OK]
-== 'Delete album' for resource 'alicia_public_album' by principal 'maria' [OK]
-== 'Delete album' for resource 'alicia_flagged_album' by principal 'maria' [OK]
+└──AlbumObjectTestSuite (album_object_test.yaml) [18 OK]
+
+18 tests executed [18 OK]
 ----
 
 NOTE: See https://github.com/cerbos/photo-share-tutorial for an example of using Cerbos GitHub Actions in a CI workflow to compile and test policies. 
@@ -410,29 +399,33 @@ docker run -it -v $(pwd):/photo-share -p 3592:3592 {app-docker-img} \
 .Invalid request
 [source,shell,linenums]
 ----
-cat <<EOF | curl --silent "http://localhost:3592/api/check?pretty" -d @-
+cat <<EOF | curl --silent "http://localhost:3592/api/check/resources?pretty" -d @-
 {
-  "requestId":  "test02",
+  "requestId": "test02",
   "includeMeta": true,
-  "principal":  {
-    "id":  "alicia",
+  "principal": {
+    "id": "alicia",
     "policyVersion": "default",
-    "roles":  ["user"]
+    "roles": [
+      "user"
+    ]
   },
-  "actions":  ["view"],
-  "resource":  {
-    "policyVersion": "default",
-    "kind":  "album:object",
-    "instances": {
-      "XX125": {
-        "attr":  {
-          "id":  "XX125",
+  "resources": [
+    {
+      "actions": [
+        "view"
+      ],
+      "resource": {
+        "id": "XX125",
+        "policyVersion": "default",
+        "kind": "album:object",
+        "attr": {
           "public": "false",
           "flagged": "false"
         }
       }
     }
-  }
+  ]
 }
 EOF
 ----
@@ -440,8 +433,13 @@ EOF
 ----
 {
   "requestId": "test02",
-  "resourceInstances": {
-    "XX125": {
+  "results": [
+    {
+      "resource": {
+        "id": "XX125",
+        "kind": "album:object",
+        "policyVersion": "default"
+      },
       "actions": {
         "view": "EFFECT_DENY"
       },
@@ -460,12 +458,8 @@ EOF
           "message": "expected boolean, but got string",
           "source": "SOURCE_RESOURCE"
         }
-      ]
-    }
-  },
-  "meta": {
-    "resourceInstances": {
-      "XX125": {
+      ],
+      "meta": {
         "actions": {
           "view": {
             "matchedPolicy": "resource.album_object.vdefault"
@@ -473,6 +467,6 @@ EOF
         }
       }
     }
-  }
+  ]
 }
 ----

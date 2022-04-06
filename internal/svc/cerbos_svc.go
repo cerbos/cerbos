@@ -74,6 +74,8 @@ func (cs *CerbosService) ResourcesQueryPlan(ctx context.Context, request *reques
 	return response, nil
 }
 
+// CheckResourceSet checks a batch of homogenous resources.
+// Deprecated: Since 0.16.0. Use CheckResources instead.
 func (cs *CerbosService) CheckResourceSet(ctx context.Context, req *requestv1.CheckResourceSetRequest) (*responsev1.CheckResourceSetResponse, error) {
 	log := ctxzap.Extract(ctx)
 
@@ -122,6 +124,8 @@ func (cs *CerbosService) CheckResourceSet(ctx context.Context, req *requestv1.Ch
 	return result.build(), nil
 }
 
+// CheckResourceBatch checks a batch of heterogenous resources.
+// Deprecated: Since 0.16.0. Use CheckResources instead.
 func (cs *CerbosService) CheckResourceBatch(ctx context.Context, req *requestv1.CheckResourceBatchRequest) (*responsev1.CheckResourceBatchResponse, error) {
 	log := ctxzap.Extract(ctx)
 
@@ -164,6 +168,74 @@ func (cs *CerbosService) CheckResourceBatch(ctx context.Context, req *requestv1.
 			Actions:          aem,
 			ValidationErrors: out.ValidationErrors,
 		}
+	}
+
+	return result, nil
+}
+
+// CheckResources checks a batch of heterogenous resources.
+func (cs *CerbosService) CheckResources(ctx context.Context, req *requestv1.CheckResourcesRequest) (*responsev1.CheckResourcesResponse, error) {
+	log := ctxzap.Extract(ctx)
+
+	auxData, err := cs.auxData.Extract(ctx, req.AuxData)
+	if err != nil {
+		log.Error("Failed to extract auxData", zap.Error(err))
+		return nil, status.Error(codes.InvalidArgument, "failed to extract auxData")
+	}
+
+	inputs := make([]*enginev1.CheckInput, len(req.Resources))
+	for i, res := range req.Resources {
+		inputs[i] = &enginev1.CheckInput{
+			RequestId: req.RequestId,
+			Actions:   res.Actions,
+			Principal: req.Principal,
+			Resource:  res.Resource,
+			AuxData:   auxData,
+		}
+	}
+
+	outputs, err := cs.eng.Check(logging.ToContext(ctx, log), inputs)
+	if err != nil {
+		log.Error("Policy check failed", zap.Error(err))
+		return nil, status.Errorf(codes.Internal, "Policy check failed")
+	}
+
+	result := &responsev1.CheckResourcesResponse{
+		RequestId: req.RequestId,
+		Results:   make([]*responsev1.CheckResourcesResponse_ResultEntry, len(outputs)),
+	}
+
+	for i, out := range outputs {
+		resource := inputs[i].Resource
+		entry := &responsev1.CheckResourcesResponse_ResultEntry{
+			Resource: &responsev1.CheckResourcesResponse_ResultEntry_Resource{
+				Id:            resource.Id,
+				Kind:          resource.Kind,
+				PolicyVersion: resource.PolicyVersion,
+				Scope:         resource.Scope,
+			},
+			ValidationErrors: out.ValidationErrors,
+			Actions:          make(map[string]effectv1.Effect, len(out.Actions)),
+		}
+
+		if req.IncludeMeta {
+			entry.Meta = &responsev1.CheckResourcesResponse_ResultEntry_Meta{
+				EffectiveDerivedRoles: out.EffectiveDerivedRoles,
+				Actions:               make(map[string]*responsev1.CheckResourcesResponse_ResultEntry_Meta_EffectMeta, len(out.Actions)),
+			}
+		}
+
+		for action, actionEffect := range out.Actions {
+			entry.Actions[action] = actionEffect.Effect
+			if req.IncludeMeta {
+				entry.Meta.Actions[action] = &responsev1.CheckResourcesResponse_ResultEntry_Meta_EffectMeta{
+					MatchedPolicy: actionEffect.Policy,
+					MatchedScope:  actionEffect.Scope,
+				}
+			}
+		}
+
+		result.Results[i] = entry
 	}
 
 	return result, nil

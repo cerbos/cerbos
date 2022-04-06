@@ -48,7 +48,8 @@ service CerbosService {
     };
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
       summary: "Check"
-      description: "Check whether a principal has permissions to perform the given actions on a set of resource instances."
+      description: "[Deprecated: Use CheckResources API instead] Check whether a principal has permissions to perform the given actions on a set of resource instances."
+      deprecated: true
     };
   }
 
@@ -59,6 +60,18 @@ service CerbosService {
     };
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
       summary: "Check resource batch"
+      description: "[Deprecated: Use CheckResources API instead] Check a principal's permissions to a batch of heterogeneous resources and actions."
+      deprecated: true
+    };
+  }
+
+  rpc CheckResources(cerbos.request.v1.CheckResourcesRequest) returns (cerbos.response.v1.CheckResourcesResponse) {
+    option (google.api.http) = {
+      post: "/api/check/resources",
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Check resources"
       description: "Check a principal's permissions to a batch of heterogeneous resources and actions."
     };
   }

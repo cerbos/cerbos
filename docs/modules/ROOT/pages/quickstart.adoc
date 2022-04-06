@@ -17,19 +17,54 @@ Now start the Cerbos server. We are using the container image in this guide but 
 docker run --rm --name cerbos -d -v $(pwd)/cerbos-quickstart/policies:/policies -p 3592:3592 {app-docker-img} 
 ----
 
-Launch a browser and navigate to http://localhost:3592/. You will be presented with a webpage with documentation about the Cerbos API. Click on the `/api/check` endpoint to follow the rest of this quickstart guide.
+Time to try out a simple request.
 
-Click on btn:[Example] tab to view an example of a request you can make to Cerbos. In the example, the `bugs_bunny` principal is trying to perform two actions (`view:public` and `comment`) on two `album:object` resource instances. The resource instance with the ID `XX125` belongs to `bugs_bunny` and is private (`public` attribute is `false`). The other resource instance with the ID `XX225` belongs to `daffy_duck` and is public.
+NOTE: If you prefer to use link:https://www.postman.com[Postman], link:https://insomnia.rest[Insomnia] or any other software that supports OpenAPI, you can follow this guide along on those tools by downloading the OpenAPI definitions from http://localhost:3592{cerbos-openapi-schema}. You can also use the built-in API browser by pointing your browser to http://localhost:3592.
 
-Click on the btn:[Try] button to try out the example request.
 
-NOTE: If you prefer to use link:https://www.postman.com[Postman], link:https://insomnia.rest[Insomnia] or any other software that supports OpenAPI, you can follow this guide along on those tools by downloading the OpenAPI definitions from http://localhost:3592{cerbos-openapi-schema}. 
+[source,shell,linenums]
+----
+include::example$quickstart_request.txt[]
+----
 
-image::request_00.png[Request]
+In this example, the `bugs_bunny` principal is trying to perform two actions (`view:public` and `comment`) on two `album:object` resources. The resource instance with the ID `BUGS001` belongs to `bugs_bunny` and is private (`public` attribute is `false`). The other resource instance with the ID `DAFFY002` belongs to `daffy_duck` and is public.
 
-The response from the server denies `bugs_bunny` from viewing or commenting on any of the album resources — even the ones that belong to him. This is because currently there no policies defined for the `album:object`.
+This is the response from the server:
 
-Let's create a xref:policies:derived_roles.adoc[derived roles] definition that assigns the `owner` dynamic role to a user if the `owner` attribute of the resource they are trying to access is equal to their ID.
+.Response
+[source,json]
+----
+{
+  "requestId": "quickstart",
+  "results": [
+    {
+      "resource": {
+        "id": "BUGS001",
+        "kind": "album:object"
+      },
+      "actions": {
+        "comment": "EFFECT_DENY",
+        "view:public": "EFFECT_DENY"
+      }
+    },
+    {
+      "resource": {
+        "id": "DAFFY002",
+        "kind": "album:object"
+      },
+      "actions": {
+        "comment": "EFFECT_DENY",
+        "view:public": "EFFECT_DENY"
+      }
+    }
+  ]
+}
+----
+
+
+Bugs Bunny is not allowed to view or comment on any of the album resources — even the ones that belong to him. This is because currently there are no policies defined for the `album:object` resource.
+
+Now create a xref:policies:derived_roles.adoc[derived roles] definition that assigns the `owner` dynamic role to a user if the `owner` attribute of the resource they're trying to access is equal to their ID.
 
 [source,sh]
 ----
@@ -47,7 +82,7 @@ derivedRoles:
 EOF
 ----
 
-Let's also create a resource policy that gives ``owner``s full access to their own albums. 
+Also create a resource policy that gives ``owner``s full access to their own albums. 
 
 [source,sh]
 ----
@@ -69,9 +104,48 @@ EOF
 
 Try the request again. This time `bugs_bunny` should be allowed access to his own album but denied access to the album owned by `daffy_duck`. 
 
-image::request_01.png[Request]
+.Request
+[%collapsible]
+====
 
-Now let's add a rule to the policy to allow users to view public albums.
+[source,shell,linenums]
+----
+include::example$quickstart_request.txt[]
+----
+
+====
+
+.Response
+[source,json]
+----
+{
+  "requestId": "quickstart",
+  "results": [
+    {
+      "resource": {
+        "id": "BUGS001",
+        "kind": "album:object"
+      },
+      "actions": {
+        "comment": "EFFECT_ALLOW",
+        "view:public": "EFFECT_ALLOW"
+      }
+    },
+    {
+      "resource": {
+        "id": "DAFFY002",
+        "kind": "album:object"
+      },
+      "actions": {
+        "comment": "EFFECT_DENY",
+        "view:public": "EFFECT_DENY"
+      }
+    }
+  ]
+}
+----
+
+Now add a rule to the policy to allow users to view public albums.
 
 [source,sh]
 ----
@@ -101,7 +175,49 @@ EOF
 
 If you try the request again, `bugs_bunny` now has `view:public` access to the album owned by `daffy_duck` but not `comment` access. Can you figure out how to update the policy to give him `comment` access as well?
 
-image::request_02.png[Request]
+
+.Request and response
+[%collapsible]
+====
+
+.Request
+[source,shell,linenums]
+----
+include::example$quickstart_request.txt[]
+----
+
+
+.Response
+[source,json]
+----
+{
+  "requestId": "quickstart",
+  "results": [
+    {
+      "resource": {
+        "id": "BUGS001",
+        "kind": "album:object"
+      },
+      "actions": {
+        "comment": "EFFECT_ALLOW",
+        "view:public": "EFFECT_ALLOW"
+      }
+    },
+    {
+      "resource": {
+        "id": "DAFFY002",
+        "kind": "album:object"
+      },
+      "actions": {
+        "comment": "EFFECT_DENY",
+        "view:public": "EFFECT_ALLOW"
+      }
+    }
+  ]
+}
+----
+
+====
 
 Once you are done experimenting, the Cerbos server can be stopped with the following command:
 
