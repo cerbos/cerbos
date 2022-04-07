@@ -6,11 +6,11 @@ package internal
 import (
 	"fmt"
 
-	enginev1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
 	"github.com/google/cel-go/checker/decls"
 	"github.com/google/cel-go/common/types"
 	exprpb "google.golang.org/genproto/googleapis/api/expr/v1alpha1"
 
+	enginev1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
 	"github.com/cerbos/cerbos/internal/conditions"
 )
 

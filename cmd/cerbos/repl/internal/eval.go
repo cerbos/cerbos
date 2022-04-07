@@ -7,9 +7,9 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/cerbos/cerbos/internal/printer/colored"
-
 	"github.com/pterm/pterm"
+
+	"github.com/cerbos/cerbos/internal/printer/colored"
 )
 
 var errEvalErrorPresent = errors.New("failed expression(s) present")
