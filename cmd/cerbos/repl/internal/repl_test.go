@@ -33,7 +33,9 @@ type DirectiveTest struct {
 func TestREPL(t *testing.T) {
 	toRefVal := conditions.StdEnv.TypeAdapter().NativeToValue
 	drPath := filepath.Join(test.PathToDir(t, "store"), "derived_roles", "derived_roles_01.yaml")
-	drConds := loadConditionsFromDerivedRoles(t, drPath)
+	rpPath := filepath.Join(test.PathToDir(t, "store"), "resource_policies", "policy_01.yaml")
+	drConds := loadConditionsFromPolicy(t, drPath)
+	rpConds := loadConditionsFromPolicy(t, rpPath)
 
 	testCases := []struct {
 		name       string
@@ -270,18 +272,37 @@ func TestREPL(t *testing.T) {
 			},
 		},
 		{
-			name: "load_policy",
+			name: "load_derived_roles",
 			directives: []DirectiveTest{
 				{
 					Directive: fmt.Sprintf(":load %s", drPath),
 					Check: func(t *testing.T, output *mockOutput) {
 						t.Helper()
-						r := output.rules[0]
-						rd, ok := r.(*policyv1.RoleDef)
-						require.True(t, ok)
-						condition, err := compile.Condition(rd.Condition)
-						require.NoError(t, err)
-						require.JSONEq(t, protojson.Format(drConds[2]), protojson.Format(condition))
+						for idx, r := range output.rules {
+							rd, ok := r.(*policyv1.RoleDef)
+							require.True(t, ok)
+							condition, err := compile.Condition(rd.Condition)
+							require.NoError(t, err)
+							require.JSONEq(t, protojson.Format(drConds[idx]), protojson.Format(condition))
+						}
+					},
+				},
+			},
+		},
+		{
+			name: "load_resource_policy",
+			directives: []DirectiveTest{
+				{
+					Directive: fmt.Sprintf(":load %s", rpPath),
+					Check: func(t *testing.T, output *mockOutput) {
+						t.Helper()
+						for idx, r := range output.rules {
+							rr, ok := r.(*policyv1.ResourceRule)
+							require.True(t, ok)
+							condition, err := compile.Condition(rr.Condition)
+							require.NoError(t, err)
+							require.JSONEq(t, protojson.Format(rpConds[idx]), protojson.Format(condition))
+						}
 					},
 				},
 			},
@@ -349,18 +370,29 @@ func (mo *mockOutput) PrintErr(msg string, err error) {
 	mo.err = err
 }
 
-func loadConditionsFromDerivedRoles(t *testing.T, path string) []*runtimev1.Condition {
+func loadConditionsFromPolicy(t *testing.T, path string) []*runtimev1.Condition {
 	t.Helper()
 
 	p := test.LoadPolicy(t, path)
-	dr, ok := p.PolicyType.(*policyv1.Policy_DerivedRoles)
-	require.True(t, ok)
 
-	conds := make([]*runtimev1.Condition, len(dr.DerivedRoles.Definitions))
-	for idx, rd := range dr.DerivedRoles.Definitions {
-		cond, err := compile.Condition(rd.Condition)
-		require.NoError(t, err)
-		conds[idx] = cond
+	var conds []*runtimev1.Condition
+	switch pt := p.PolicyType.(type) {
+	case *policyv1.Policy_ResourcePolicy:
+		for _, rule := range pt.ResourcePolicy.Rules {
+			if rule.Condition != nil {
+				cond, err := compile.Condition(rule.Condition)
+				require.NoError(t, err)
+				conds = append(conds, cond)
+			}
+		}
+	case *policyv1.Policy_DerivedRoles:
+		for _, def := range pt.DerivedRoles.Definitions {
+			if def.Condition != nil {
+				cond, err := compile.Condition(def.Condition)
+				require.NoError(t, err)
+				conds = append(conds, cond)
+			}
+		}
 	}
 
 	return conds
