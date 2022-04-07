@@ -4,16 +4,24 @@
 package internal
 
 import (
+	"fmt"
+	"path/filepath"
 	"testing"
+
+	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
+	runtimev1 "github.com/cerbos/cerbos/api/genpb/cerbos/runtime/v1"
+	"github.com/cerbos/cerbos/internal/compile"
 
 	"github.com/google/cel-go/common/types/ref"
 	"github.com/google/go-cmp/cmp"
 	"github.com/stretchr/testify/require"
+	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/testing/protocmp"
 	"google.golang.org/protobuf/types/known/structpb"
 
 	enginev1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
 	"github.com/cerbos/cerbos/internal/conditions"
+	"github.com/cerbos/cerbos/internal/test"
 )
 
 type DirectiveTest struct {
@@ -24,6 +32,8 @@ type DirectiveTest struct {
 
 func TestREPL(t *testing.T) {
 	toRefVal := conditions.StdEnv.TypeAdapter().NativeToValue
+	drPath := filepath.Join(test.PathToDir(t, "store"), "derived_roles", "derived_roles_01.yaml")
+	drConds := loadConditionsFromDerivedRoles(t, drPath)
 
 	testCases := []struct {
 		name       string
@@ -259,6 +269,23 @@ func TestREPL(t *testing.T) {
 				},
 			},
 		},
+		{
+			name: "load_policy",
+			directives: []DirectiveTest{
+				{
+					Directive: fmt.Sprintf(":load %s", drPath),
+					Check: func(t *testing.T, output *mockOutput) {
+						t.Helper()
+						r := output.rules[0]
+						rd, ok := r.(*policyv1.RoleDef)
+						require.True(t, ok)
+						condition, err := compile.Condition(rd.Condition)
+						require.NoError(t, err)
+						require.JSONEq(t, protojson.Format(drConds[2]), protojson.Format(condition))
+					},
+				},
+			},
+		},
 	}
 
 	for _, tc := range testCases {
@@ -290,6 +317,7 @@ type mockOutput struct {
 	jsonObj    any
 	resultName string
 	resultVal  ref.Val
+	rules      []any
 	err        error
 }
 
@@ -307,6 +335,11 @@ func (mo *mockOutput) PrintResult(name string, val ref.Val) {
 	mo.resultVal = val
 }
 
+func (mo *mockOutput) PrintRule(_ int, rule any) error {
+	mo.rules = append(mo.rules, rule)
+	return nil
+}
+
 func (mo *mockOutput) PrintJSON(obj any) {
 	mo.jsonObj = obj
 }
@@ -314,4 +347,21 @@ func (mo *mockOutput) PrintJSON(obj any) {
 func (mo *mockOutput) PrintErr(msg string, err error) {
 	mo.msg = msg
 	mo.err = err
+}
+
+func loadConditionsFromDerivedRoles(t *testing.T, path string) []*runtimev1.Condition {
+	t.Helper()
+
+	p := test.LoadPolicy(t, path)
+	dr, ok := p.PolicyType.(*policyv1.Policy_DerivedRoles)
+	require.True(t, ok)
+
+	conds := make([]*runtimev1.Condition, len(dr.DerivedRoles.Definitions))
+	for idx, rd := range dr.DerivedRoles.Definitions {
+		cond, err := compile.Condition(rd.Condition)
+		require.NoError(t, err)
+		conds[idx] = cond
+	}
+
+	return conds
 }

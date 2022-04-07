@@ -218,21 +218,10 @@ func (r *REPL) showVars() error {
 
 func (r *REPL) showRules() error {
 	for idx, rule := range r.rules {
-		msg, ok := rule.(proto.Message)
-		if !ok {
-			return fmt.Errorf("failed to type assert rule with id: %s", fmt.Sprintf("%s%d", rulePrefix, idx))
+		err := r.output.PrintRule(idx, rule)
+		if err != nil {
+			return err
 		}
-
-		t := ""
-		switch rule.(type) {
-		case *policyv1.ResourceRule:
-			t = "(resource_policies)"
-		case *policyv1.RoleDef:
-			t = "(derived_roles)"
-		}
-
-		r.output.Println(fmt.Sprintf("%s %s", colored.REPLVar(fmt.Sprintf("%s%d", rulePrefix, idx)), colored.REPLPolicyType(t)))
-		r.output.Println(protojson.Format(msg))
 		r.output.Println()
 	}
 
@@ -373,6 +362,7 @@ func (r *REPL) loadRulesFromPolicy(path string) error {
 		return fmt.Errorf("failed to read policy file: %w", err)
 	}
 
+	r.output.Println(colored.REPLPolicyName("Policy being loaded"))
 	r.output.Println(protojson.Format(p))
 	r.output.Println()
 
@@ -385,17 +375,27 @@ func (r *REPL) loadRulesFromPolicy(path string) error {
 					continue
 				}
 				r.rules = append(r.rules, rule)
+				err = r.output.PrintRule(len(r.rules)-1, rule)
+				if err != nil {
+					return fmt.Errorf("failed to print rule: %w", err)
+				}
 			}
 		}
 
+		r.output.Println()
 		r.output.Println(fmt.Sprintf("Resource policy '%s' loaded", colored.REPLPolicyName(namer.PolicyKey(p))))
 	case *policyv1.Policy_DerivedRoles:
 		for _, def := range pt.DerivedRoles.Definitions {
 			if def.Condition != nil {
 				r.rules = append(r.rules, def)
+				err = r.output.PrintRule(len(r.rules)-1, def)
+				if err != nil {
+					return fmt.Errorf("failed to print rule: %w", err)
+				}
 			}
 		}
 
+		r.output.Println()
 		r.output.Println(fmt.Sprintf("Derived roles '%s' loaded", colored.REPLPolicyName(namer.PolicyKey(p))))
 	}
 	r.output.Println()
@@ -508,6 +508,7 @@ type Output interface {
 	Print(string, ...any)
 	Println(...any)
 	PrintResult(string, ref.Val)
+	PrintRule(int, any) error
 	PrintJSON(any)
 	PrintErr(string, error)
 }
@@ -527,6 +528,26 @@ func NewPrinterOutput(stdout, stderr io.Writer) *PrinterOutput {
 func (po *PrinterOutput) Print(format string, args ...any) {
 	po.Printf(format, args...)
 	po.Println()
+}
+
+func (po *PrinterOutput) PrintRule(id int, rule any) error {
+	msg, ok := rule.(proto.Message)
+	if !ok {
+		return fmt.Errorf("failed to type assert rule with id: %s", fmt.Sprintf("%s%d", rulePrefix, id))
+	}
+
+	t := ""
+	switch rule.(type) {
+	case *policyv1.ResourceRule:
+		t = "(resource_policies)"
+	case *policyv1.RoleDef:
+		t = "(derived_roles)"
+	}
+
+	po.Println(fmt.Sprintf("rule %s %s", colored.REPLVar(fmt.Sprintf("%s%d", rulePrefix, id)), colored.REPLPolicyType(t)))
+	po.Println(protojson.Format(msg))
+
+	return nil
 }
 
 func (po *PrinterOutput) PrintResult(name string, value ref.Val) {
