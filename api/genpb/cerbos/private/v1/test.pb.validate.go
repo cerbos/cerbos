@@ -545,6 +545,37 @@ func (m *ServerTestCase) validate(all bool) error {
 			}
 		}
 
+	case *ServerTestCase_CheckResources:
+
+		if all {
+			switch v := interface{}(m.GetCheckResources()).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, ServerTestCaseValidationError{
+						field:  "CheckResources",
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, ServerTestCaseValidationError{
+						field:  "CheckResources",
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(m.GetCheckResources()).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return ServerTestCaseValidationError{
+					field:  "CheckResources",
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
 	}
 
 	if len(errors) > 0 {
@@ -2547,6 +2578,169 @@ var _ interface {
 	Cause() error
 	ErrorName() string
 } = ServerTestCase_CheckResourceBatchCallValidationError{}
+
+// Validate checks the field values on ServerTestCase_CheckResourcesCall with
+// the rules defined in the proto definition for this message. If any rules
+// are violated, the first error encountered is returned, or nil if there are
+// no violations.
+func (m *ServerTestCase_CheckResourcesCall) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on ServerTestCase_CheckResourcesCall
+// with the rules defined in the proto definition for this message. If any
+// rules are violated, the result is a list of violation errors wrapped in
+// ServerTestCase_CheckResourcesCallMultiError, or nil if none found.
+func (m *ServerTestCase_CheckResourcesCall) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *ServerTestCase_CheckResourcesCall) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if all {
+		switch v := interface{}(m.GetInput()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, ServerTestCase_CheckResourcesCallValidationError{
+					field:  "Input",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, ServerTestCase_CheckResourcesCallValidationError{
+					field:  "Input",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetInput()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return ServerTestCase_CheckResourcesCallValidationError{
+				field:  "Input",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if all {
+		switch v := interface{}(m.GetWantResponse()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, ServerTestCase_CheckResourcesCallValidationError{
+					field:  "WantResponse",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, ServerTestCase_CheckResourcesCallValidationError{
+					field:  "WantResponse",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetWantResponse()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return ServerTestCase_CheckResourcesCallValidationError{
+				field:  "WantResponse",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if len(errors) > 0 {
+		return ServerTestCase_CheckResourcesCallMultiError(errors)
+	}
+
+	return nil
+}
+
+// ServerTestCase_CheckResourcesCallMultiError is an error wrapping multiple
+// validation errors returned by
+// ServerTestCase_CheckResourcesCall.ValidateAll() if the designated
+// constraints aren't met.
+type ServerTestCase_CheckResourcesCallMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m ServerTestCase_CheckResourcesCallMultiError) Error() string {
+	var msgs []string
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m ServerTestCase_CheckResourcesCallMultiError) AllErrors() []error { return m }
+
+// ServerTestCase_CheckResourcesCallValidationError is the validation error
+// returned by ServerTestCase_CheckResourcesCall.Validate if the designated
+// constraints aren't met.
+type ServerTestCase_CheckResourcesCallValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e ServerTestCase_CheckResourcesCallValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e ServerTestCase_CheckResourcesCallValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e ServerTestCase_CheckResourcesCallValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e ServerTestCase_CheckResourcesCallValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e ServerTestCase_CheckResourcesCallValidationError) ErrorName() string {
+	return "ServerTestCase_CheckResourcesCallValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e ServerTestCase_CheckResourcesCallValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sServerTestCase_CheckResourcesCall.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = ServerTestCase_CheckResourcesCallValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = ServerTestCase_CheckResourcesCallValidationError{}
 
 // Validate checks the field values on ServerTestCase_PlaygroundValidateCall
 // with the rules defined in the proto definition for this message. If any

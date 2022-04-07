@@ -1,0 +1,19 @@
+include::ROOT:partial$attributes.adoc[]
+
+[#v0.15.1]
+= Cerbos v0.15.1
+
+This is a small patch release to fix an issue with Git pulls when there are multiple branches present in the remote repo. See xref:v0.15.0.adoc[v0.15.0 release notes] for details about all the new features available in 0.15.x.
+
+
+
+== Changelog
+
+=== Bug Fixes
+
+* Use the branch name in git pull (link:https://github.com/cerbos/cerbos/pull/823[#823])
+
+=== Documentation
+
+* Fix ID attribute in testing docs (link:https://github.com/cerbos/cerbos/pull/822[#822])
+

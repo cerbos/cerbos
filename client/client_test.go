@@ -229,21 +229,19 @@ func testGRPCClient(c client.Client) func(*testing.T) {
 			require.False(t, have.IsAllowed("XX225", "approve"))
 		})
 
-		t.Run("IsAllowed", func(t *testing.T) {
-			ctx, cancelFunc := context.WithTimeout(context.Background(), timeout)
-			defer cancelFunc()
+		t.Run("CheckResources", func(t *testing.T) {
+			principal := client.NewPrincipal("john").
+				WithRoles("employee").
+				WithPolicyVersion("20210210").
+				WithAttributes(map[string]any{
+					"department": "marketing",
+					"geography":  "GB",
+					"team":       "design",
+				})
 
-			have, err := c.IsAllowed(
-				ctx,
-				client.NewPrincipal("john").
-					WithRoles("employee").
-					WithPolicyVersion("20210210").
-					WithAttributes(map[string]any{
-						"department": "marketing",
-						"geography":  "GB",
-						"team":       "design",
-					}),
-				client.NewResource("leave_request", "XX125").
+			resources := client.NewResourceBatch().
+				Add(client.
+					NewResource("leave_request", "XX125").
 					WithPolicyVersion("20210210").
 					WithAttributes(map[string]any{
 						"department": "marketing",
@@ -251,38 +249,140 @@ func testGRPCClient(c client.Client) func(*testing.T) {
 						"id":         "XX125",
 						"owner":      "john",
 						"team":       "design",
-					}),
-				"defer")
+					}), "view:public", "defer").
+				Add(client.
+					NewResource("leave_request", "XX125").
+					WithPolicyVersion("20210210").
+					WithAttributes(map[string]any{
+						"department": "marketing",
+						"geography":  "GB",
+						"id":         "XX125",
+						"owner":      "john",
+						"team":       "design",
+					}), "approve").
+				Add(client.
+					NewResource("leave_request", "XX225").
+					WithPolicyVersion("20210210").
+					WithAttributes(map[string]any{
+						"department": "engineering",
+						"geography":  "GB",
+						"id":         "XX225",
+						"owner":      "mary",
+						"team":       "frontend",
+					}), "approve")
 
-			require.NoError(t, err)
-			require.True(t, have)
+			check := func(t *testing.T, have *client.CheckResourcesResponse, err error) {
+				t.Helper()
+				require.NoError(t, err)
+
+				haveXX125 := have.GetResource("XX125", client.MatchResourceKind("leave_request"))
+				require.NoError(t, haveXX125.Err())
+				require.True(t, haveXX125.IsAllowed("view:public"))
+				require.False(t, haveXX125.IsAllowed("approve"))
+				require.True(t, haveXX125.IsAllowed("defer"))
+
+				haveXX225 := have.GetResource("XX225")
+				require.NoError(t, haveXX225.Err())
+				require.False(t, haveXX225.IsAllowed("approve"))
+			}
+
+			t.Run("Direct", func(t *testing.T) {
+				ctx, cancelFunc := context.WithTimeout(context.Background(), timeout)
+				defer cancelFunc()
+
+				have, err := c.CheckResources(ctx, principal, resources)
+				check(t, have, err)
+			})
+
+			t.Run("WithPrincipal", func(t *testing.T) {
+				ctx, cancelFunc := context.WithTimeout(context.Background(), timeout)
+				defer cancelFunc()
+
+				have, err := c.WithPrincipal(principal).CheckResources(ctx, resources)
+				check(t, have, err)
+			})
+		})
+
+		t.Run("IsAllowed", func(t *testing.T) {
+			principal := client.NewPrincipal("john").
+				WithRoles("employee").
+				WithPolicyVersion("20210210").
+				WithAttributes(map[string]any{
+					"department": "marketing",
+					"geography":  "GB",
+					"team":       "design",
+				})
+
+			resource := client.NewResource("leave_request", "XX125").
+				WithPolicyVersion("20210210").
+				WithAttributes(map[string]any{
+					"department": "marketing",
+					"geography":  "GB",
+					"id":         "XX125",
+					"owner":      "john",
+					"team":       "design",
+				})
+
+			t.Run("Direct", func(t *testing.T) {
+				ctx, cancelFunc := context.WithTimeout(context.Background(), timeout)
+				defer cancelFunc()
+
+				have, err := c.IsAllowed(ctx, principal, resource, "defer")
+				require.NoError(t, err)
+				require.True(t, have)
+			})
+
+			t.Run("WithPrincipal", func(t *testing.T) {
+				ctx, cancelFunc := context.WithTimeout(context.Background(), timeout)
+				defer cancelFunc()
+
+				have, err := c.WithPrincipal(principal).IsAllowed(ctx, resource, "defer")
+				require.NoError(t, err)
+				require.True(t, have)
+			})
 		})
 
 		t.Run("ResourcesQueryPlan", func(t *testing.T) {
-			is := require.New(t)
-			ctx, cancelFunc := context.WithTimeout(context.Background(), timeout)
-			defer cancelFunc()
+			principal := client.NewPrincipal("maggie").
+				WithRoles("manager").
+				WithAttr("geography", "US").
+				WithAttr("managed_geographies", "US")
 
-			c1 := c.With(client.IncludeMeta(true))
-			have, err := c1.ResourcesQueryPlan(
-				ctx,
-				client.NewPrincipal("maggie").
-					WithRoles("manager").
-					WithAttr("geography", "US").
-					WithAttr("managed_geographies", "US"),
-				client.NewResource("leave_request", "").
-					WithPolicyVersion("20210210").
-					WithAttr("geography", "US"),
-				"approve")
+			resource := client.NewResource("leave_request", "").
+				WithPolicyVersion("20210210").
+				WithAttr("geography", "US")
 
-			is.NoError(err)
-			is.Equal(have.Filter.Kind, responsev1.ResourcesQueryPlanResponse_Filter_KIND_CONDITIONAL)
-			expression := have.Filter.Condition.GetExpression()
-			is.NotNil(expression)
-			is.Equal(expression.Operator, "eq")
-			is.Equal(expression.Operands[0].GetVariable(), "request.resource.attr.status")
-			is.Equal(expression.Operands[1].GetValue().GetStringValue(), "PENDING_APPROVAL")
-			t.Log(have.Meta.FilterDebug)
+			cc := c.With(client.IncludeMeta(true))
+
+			check := func(t *testing.T, have *client.ResourcesQueryPlanResponse, err error) {
+				t.Helper()
+				is := require.New(t)
+
+				is.NoError(err)
+				is.Equal(have.Filter.Kind, responsev1.ResourcesQueryPlanResponse_Filter_KIND_CONDITIONAL)
+				expression := have.Filter.Condition.GetExpression()
+				is.NotNil(expression)
+				is.Equal(expression.Operator, "eq")
+				is.Equal(expression.Operands[0].GetVariable(), "request.resource.attr.status")
+				is.Equal(expression.Operands[1].GetValue().GetStringValue(), "PENDING_APPROVAL")
+				t.Log(have.Meta.FilterDebug)
+			}
+
+			t.Run("Direct", func(t *testing.T) {
+				ctx, cancelFunc := context.WithTimeout(context.Background(), timeout)
+				defer cancelFunc()
+
+				have, err := cc.ResourcesQueryPlan(ctx, principal, resource, "approve")
+				check(t, have, err)
+			})
+
+			t.Run("WithPrincipal", func(t *testing.T) {
+				ctx, cancelFunc := context.WithTimeout(context.Background(), timeout)
+				defer cancelFunc()
+
+				have, err := cc.WithPrincipal(principal).ResourcesQueryPlan(ctx, resource, "approve")
+				check(t, have, err)
+			})
 		})
 	}
 }

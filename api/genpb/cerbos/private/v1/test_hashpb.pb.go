@@ -50,6 +50,14 @@ func (m *ServerTestCase_CheckResourceBatchCall) HashPB(hasher hash.Hash, ignore 
 
 // HashPB computes a hash of the message using the given hash function
 // The ignore set must contain fully-qualified field names (pkg.msg.field) that should be ignored from the hash
+func (m *ServerTestCase_CheckResourcesCall) HashPB(hasher hash.Hash, ignore map[string]struct{}) {
+	if m != nil {
+		cerbos_private_v1_ServerTestCase_CheckResourcesCall_hashpb_sum(m, hasher, ignore)
+	}
+}
+
+// HashPB computes a hash of the message using the given hash function
+// The ignore set must contain fully-qualified field names (pkg.msg.field) that should be ignored from the hash
 func (m *ServerTestCase_PlaygroundValidateCall) HashPB(hasher hash.Hash, ignore map[string]struct{}) {
 	if m != nil {
 		cerbos_private_v1_ServerTestCase_PlaygroundValidateCall_hashpb_sum(m, hasher, ignore)

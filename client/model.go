@@ -274,7 +274,7 @@ func (crsr *CheckResourceSetResponse) MarshalJSON() ([]byte, error) {
 // ResourceBatch is a container for a batch of heterogeneous resources.
 type ResourceBatch struct {
 	err   error
-	batch []*requestv1.CheckResourceBatchRequest_BatchEntry
+	batch []*requestv1.CheckResourcesRequest_ResourceEntry
 }
 
 // NewResourceBatch creates a new resource batch.
@@ -288,7 +288,7 @@ func (rb *ResourceBatch) Add(resource *Resource, actions ...string) *ResourceBat
 		return rb
 	}
 
-	entry := &requestv1.CheckResourceBatchRequest_BatchEntry{
+	entry := &requestv1.CheckResourcesRequest_ResourceEntry{
 		Actions:  actions,
 		Resource: resource.r,
 	}
@@ -325,6 +325,18 @@ func (rb *ResourceBatch) Validate() error {
 	}
 
 	return errList
+}
+
+func (rb *ResourceBatch) toResourceBatchEntry() []*requestv1.CheckResourceBatchRequest_BatchEntry {
+	b := make([]*requestv1.CheckResourceBatchRequest_BatchEntry, len(rb.batch))
+	for i, r := range rb.batch {
+		b[i] = &requestv1.CheckResourceBatchRequest_BatchEntry{
+			Resource: r.Resource,
+			Actions:  r.Actions,
+		}
+	}
+
+	return b
 }
 
 // CheckResourceBatchResponse is the response from the CheckResourceBatch API call.
@@ -387,6 +399,126 @@ func (crbr *CheckResourceBatchResponse) String() string {
 
 func (crbr *CheckResourceBatchResponse) MarshalJSON() ([]byte, error) {
 	return protojson.Marshal(crbr.CheckResourceBatchResponse)
+}
+
+type ResourceResult struct {
+	*responsev1.CheckResourcesResponse_ResultEntry
+	err error
+}
+
+func (rr *ResourceResult) Err() error {
+	return rr.err
+}
+
+// IsAllowed returns true if the given action is allowed.
+// Returns false if the action is not in the response of if there was an error getting this result.
+func (rr *ResourceResult) IsAllowed(action string) bool {
+	if rr != nil && rr.err == nil {
+		return rr.Actions[action] == effectv1.Effect_EFFECT_ALLOW
+	}
+
+	return false
+}
+
+// MatchResource is a function that returns true if the given resource is of interest.
+// This is useful when you have more than one resource with the same ID and need to distinguish
+// between them in the response.
+type MatchResource func(*responsev1.CheckResourcesResponse_ResultEntry_Resource) bool
+
+// MatchResourceKind is a matcher that checks that the resource kind matches the given value.
+func MatchResourceKind(kind string) MatchResource {
+	return func(r *responsev1.CheckResourcesResponse_ResultEntry_Resource) bool {
+		return r.Kind == kind
+	}
+}
+
+// MatchResourceScope is a matcher that checks that the resource scope matches the given value.
+func MatchResourceScope(scope string) MatchResource {
+	return func(r *responsev1.CheckResourcesResponse_ResultEntry_Resource) bool {
+		return r.Scope == scope
+	}
+}
+
+// MatchResourcePolicyVersion is a matcher that checks that the resource policy version matches the given value.
+func MatchResourcePolicyVersion(version string) MatchResource {
+	return func(r *responsev1.CheckResourcesResponse_ResultEntry_Resource) bool {
+		return r.PolicyVersion == version
+	}
+}
+
+// MatchResourceKindVersionScope is a matcher that checks that the resource policy kind, version and scope matches the given values.
+func MatchResourcePolicyKindScopeVersion(kind, version, scope string) MatchResource {
+	return func(r *responsev1.CheckResourcesResponse_ResultEntry_Resource) bool {
+		return r.Kind == kind && r.PolicyVersion == version && r.Scope == scope
+	}
+}
+
+// CheckResourcesResponse is the response from the CheckResources API call.
+type CheckResourcesResponse struct {
+	*responsev1.CheckResourcesResponse
+	idx  map[string][]int
+	once sync.Once
+}
+
+func (crr *CheckResourcesResponse) buildIdx() {
+	crr.once.Do(func() {
+		crr.idx = make(map[string][]int, len(crr.Results))
+		for i, r := range crr.Results {
+			v := crr.idx[r.Resource.Id]
+			crr.idx[r.Resource.Id] = append(v, i)
+		}
+	})
+}
+
+// GetResource finds the resource with the given ID and optional properties from the result list.
+// Returns a ResourceResult object with the Err field set if the resource is not found.
+func (crr *CheckResourcesResponse) GetResource(resourceID string, match ...MatchResource) *ResourceResult {
+	crr.buildIdx()
+
+	indexes, ok := crr.idx[resourceID]
+	if !ok {
+		return &ResourceResult{err: fmt.Errorf("resource with ID %q does not exist in the response", resourceID)}
+	}
+
+	for _, i := range indexes {
+		r := crr.Results[i]
+		if r == nil {
+			continue
+		}
+
+		found := true
+		for _, m := range match {
+			found = found && m(r.Resource)
+		}
+
+		if found {
+			return &ResourceResult{CheckResourcesResponse_ResultEntry: r}
+		}
+	}
+
+	return &ResourceResult{err: fmt.Errorf("resource with ID %q does not exist in the response", resourceID)}
+}
+
+// Errors returns any validation errors returned by the server.
+func (crr *CheckResourcesResponse) Errors() error {
+	var err error
+	for _, result := range crr.Results {
+		for _, verr := range result.ValidationErrors {
+			err = multierr.Append(err,
+				fmt.Errorf("resource %q failed validation: source=%s path=%s msg=%s", result.Resource.Id, verr.Source, verr.Path, verr.Message),
+			)
+		}
+	}
+
+	return err
+}
+
+func (crr *CheckResourcesResponse) String() string {
+	return protojson.Format(crr.CheckResourcesResponse)
+}
+
+func (crr *CheckResourcesResponse) MarshalJSON() ([]byte, error) {
+	return protojson.Marshal(crr.CheckResourcesResponse)
 }
 
 // PolicySet is a container for a set of policies.

@@ -37,6 +37,11 @@ message ServerTestCase {
     cerbos.response.v1.CheckResourceBatchResponse want_response = 2;
   }
 
+  message CheckResourcesCall {
+    cerbos.request.v1.CheckResourcesRequest input = 1;
+    cerbos.response.v1.CheckResourcesResponse want_response = 2;
+  }
+
   message PlaygroundValidateCall {
     cerbos.request.v1.PlaygroundValidateRequest input = 1;
     cerbos.response.v1.PlaygroundValidateResponse want_response = 2;
@@ -86,6 +91,7 @@ message ServerTestCase {
     ResourcesQueryPlanCall resources_query_plan = 11;
     AdminAddOrUpdateSchemaCall admin_add_or_update_schema = 12;
     PlaygroundTestCall playground_test = 13;
+    CheckResourcesCall check_resources = 14;
   }
 }
 

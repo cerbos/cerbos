@@ -13,7 +13,7 @@ Cerbos helps you super-charge your authorization implementation by writing conte
 * [Try online with the Cerbos playground](https://play.cerbos.dev)
 * [Explore demo repositories](https://github.com/cerbos)
 * [Read the documentation](https://docs.cerbos.dev)
-* [Subscribe to our newsletter](https://cerbos.dev/subscribe)
+* [Subscribe to the newsletter](https://cerbos.dev/subscribe)
 * [Join the community on Slack](http://go.cerbos.io/slack)
 * Install Cerbos
     * [Container](https://docs.cerbos.dev/cerbos/latest/installation/container.html)
@@ -91,27 +91,32 @@ resourcePolicy:
 **API request**
 
 ```sh
-cat <<EOF | curl --silent "http://localhost:3592/api/check?pretty" -d @-
+cat <<EOF | curl --silent "http://localhost:3592/api/check/resources?pretty" -d @-
 {
-  "requestId":  "test01",
-  "actions":  ["view"],
-  "resource":  {
-    "kind":  "album:object",
-    "instances": {
-      "XX125": {
-        "attr":  {
-          "owner":  "alicia",
-          "id":  "XX125",
+  "requestId": "test01",
+  "includeMeta": true,
+  "principal": {
+    "id": "alicia",
+    "roles": [
+      "user"
+    ]
+  },
+  "resources": [
+    {
+      "actions": [
+        "view"
+      ],
+      "resource": {
+        "id": "XX125",
+        "kind": "album:object",
+        "attr": {
+          "owner": "alicia",
           "public": false,
           "flagged": false
         }
       }
     }
-  },
-  "principal":  {
-    "id":  "alicia",
-    "roles":  ["user"]
-  }
+  ]
 }
 EOF
 ```
@@ -121,13 +126,28 @@ EOF
 ```json
 {
   "requestId": "test01",
-  "resourceInstances": {
-    "XX125": {
+  "results": [
+    {
+      "resource": {
+        "id": "XX125",
+        "kind": "album:object",
+        "policyVersion": "default"
+      },
       "actions": {
         "view": "EFFECT_ALLOW"
+      },
+      "meta": {
+        "actions": {
+          "view": {
+            "matchedPolicy": "resource.album_object.vdefault"
+          }
+        },
+        "effectiveDerivedRoles": [
+          "owner"
+        ]
       }
     }
-  }
+  ]
 }
 ```
 

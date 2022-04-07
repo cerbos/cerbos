@@ -29,17 +29,35 @@ import (
 // Client provides access to the Cerbos API.
 type Client interface {
 	// IsAllowed checks access to a single resource by a principal and returns true if access is granted.
-	IsAllowed(context.Context, *Principal, *Resource, string) (bool, error)
+	IsAllowed(ctx context.Context, principal *Principal, resource *Resource, action string) (bool, error)
 	// CheckResourceSet checks access to a set of resources of the same kind.
-	CheckResourceSet(context.Context, *Principal, *ResourceSet, ...string) (*CheckResourceSetResponse, error)
+	// Deprecated: Use CheckResources instead.
+	CheckResourceSet(ctx context.Context, principal *Principal, resources *ResourceSet, actions ...string) (*CheckResourceSetResponse, error)
 	// CheckResourceBatch checks access to a batch of resources of different kinds.
-	CheckResourceBatch(context.Context, *Principal, *ResourceBatch) (*CheckResourceBatchResponse, error)
+	// Deprecated: Use CheckResources instead.
+	CheckResourceBatch(ctx context.Context, principal *Principal, resources *ResourceBatch) (*CheckResourceBatchResponse, error)
+	// CheckResources checks access to a batch of resources of different kinds.
+	CheckResources(ctx context.Context, principal *Principal, resources *ResourceBatch) (*CheckResourcesResponse, error)
 	// ServerInfo retrieves server information.
-	ServerInfo(context.Context) (*ServerInfo, error)
+	ServerInfo(ctx context.Context) (*ServerInfo, error)
 	// With sets per-request options for the client.
 	With(opts ...RequestOpt) Client
-	// ResourcesQueryPlan gets resources query plan for the given principal and resource description
+	// ResourcesQueryPlan gets resources query plan for the given principal, resource and action.
 	ResourcesQueryPlan(ctx context.Context, principal *Principal, resource *Resource, action string) (*ResourcesQueryPlanResponse, error)
+	// WithPrincipal sets the principal to be used for subsequent API calls.
+	WithPrincipal(principal *Principal) PrincipalContext
+}
+
+// PrincipalContext provides convenience methods to access the Cerbos API in the context of a single principal.
+type PrincipalContext interface {
+	// Principal returns the principal attached to this context.
+	Principal() *Principal
+	// IsAllowed checks access to a single resource by the principal and returns true if access is granted.
+	IsAllowed(ctx context.Context, resource *Resource, action string) (bool, error)
+	// CheckResources checks access to a batch of resources of different kinds.
+	CheckResources(ctx context.Context, resources *ResourceBatch) (*CheckResourcesResponse, error)
+	// ResourcesQueryPlan gets resources query plan for the given resource and action.
+	ResourcesQueryPlan(ctx context.Context, resource *Resource, action string) (*ResourcesQueryPlanResponse, error)
 }
 
 type config struct {
@@ -350,7 +368,7 @@ func (gc *grpcClient) CheckResourceBatch(ctx context.Context, principal *Princip
 	req := &requestv1.CheckResourceBatchRequest{
 		RequestId: reqID.String(),
 		Principal: principal.p,
-		Resources: resourceBatch.batch,
+		Resources: resourceBatch.toResourceBatchEntry(),
 	}
 
 	if gc.opts != nil {
@@ -363,6 +381,38 @@ func (gc *grpcClient) CheckResourceBatch(ctx context.Context, principal *Princip
 	}
 
 	return &CheckResourceBatchResponse{CheckResourceBatchResponse: result}, nil
+}
+
+func (gc *grpcClient) CheckResources(ctx context.Context, principal *Principal, resourceBatch *ResourceBatch) (*CheckResourcesResponse, error) {
+	if err := isValid(principal); err != nil {
+		return nil, fmt.Errorf("invalid principal: %w", err)
+	}
+
+	if err := isValid(resourceBatch); err != nil {
+		return nil, fmt.Errorf("invalid resource batch; %w", err)
+	}
+
+	reqID, err := uuid.NewRandom()
+	if err != nil {
+		return nil, fmt.Errorf("failed to generate request ID: %w", err)
+	}
+
+	req := &requestv1.CheckResourcesRequest{
+		RequestId: reqID.String(),
+		Principal: principal.p,
+		Resources: resourceBatch.batch,
+	}
+
+	if gc.opts != nil {
+		req.AuxData = gc.opts.auxData
+	}
+
+	result, err := gc.stub.CheckResources(ctx, req)
+	if err != nil {
+		return nil, fmt.Errorf("request failed: %w", err)
+	}
+
+	return &CheckResourcesResponse{CheckResourcesResponse: result}, nil
 }
 
 func (gc *grpcClient) IsAllowed(ctx context.Context, principal *Principal, resource *Resource, action string) (bool, error) {
@@ -379,10 +429,10 @@ func (gc *grpcClient) IsAllowed(ctx context.Context, principal *Principal, resou
 		return false, fmt.Errorf("failed to generate request ID: %w", err)
 	}
 
-	req := &requestv1.CheckResourceBatchRequest{
+	req := &requestv1.CheckResourcesRequest{
 		RequestId: reqID.String(),
 		Principal: principal.p,
-		Resources: []*requestv1.CheckResourceBatchRequest_BatchEntry{
+		Resources: []*requestv1.CheckResourcesRequest_ResourceEntry{
 			{Actions: []string{action}, Resource: resource.r},
 		},
 	}
@@ -391,7 +441,7 @@ func (gc *grpcClient) IsAllowed(ctx context.Context, principal *Principal, resou
 		req.AuxData = gc.opts.auxData
 	}
 
-	result, err := gc.stub.CheckResourceBatch(ctx, req)
+	result, err := gc.stub.CheckResources(ctx, req)
 	if err != nil {
 		return false, fmt.Errorf("request failed: %w", err)
 	}
@@ -432,4 +482,29 @@ func (gc *grpcClient) With(reqOpts ...RequestOpt) Client {
 	}
 
 	return &grpcClient{opts: opts, stub: gc.stub}
+}
+
+func (gc *grpcClient) WithPrincipal(p *Principal) PrincipalContext {
+	return &grpcClientPrincipalCtx{client: gc, principal: p}
+}
+
+type grpcClientPrincipalCtx struct {
+	client    *grpcClient
+	principal *Principal
+}
+
+func (gcpc *grpcClientPrincipalCtx) Principal() *Principal {
+	return gcpc.principal
+}
+
+func (gcpc *grpcClientPrincipalCtx) IsAllowed(ctx context.Context, resource *Resource, action string) (bool, error) {
+	return gcpc.client.IsAllowed(ctx, gcpc.principal, resource, action)
+}
+
+func (gcpc *grpcClientPrincipalCtx) CheckResources(ctx context.Context, batch *ResourceBatch) (*CheckResourcesResponse, error) {
+	return gcpc.client.CheckResources(ctx, gcpc.principal, batch)
+}
+
+func (gcpc *grpcClientPrincipalCtx) ResourcesQueryPlan(ctx context.Context, resource *Resource, action string) (*ResourcesQueryPlanResponse, error) {
+	return gcpc.client.ResourcesQueryPlan(ctx, gcpc.principal, resource, action)
 }

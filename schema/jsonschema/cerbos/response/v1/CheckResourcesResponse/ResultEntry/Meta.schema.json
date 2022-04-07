@@ -1,0 +1,34 @@
+{
+  "$id": "https://api.cerbos.dev/cerbos/response/v1/CheckResourcesResponse/ResultEntry/Meta.schema.json",
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "definitions": {
+    "cerbos.response.v1.CheckResourcesResponse.ResultEntry.Meta.EffectMeta": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "matchedPolicy": {
+          "type": "string"
+        },
+        "matchedScope": {
+          "type": "string"
+        }
+      }
+    }
+  },
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "actions": {
+      "type": "object",
+      "additionalProperties": {
+        "$ref": "#/definitions/cerbos.response.v1.CheckResourcesResponse.ResultEntry.Meta.EffectMeta"
+      }
+    },
+    "effectiveDerivedRoles": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  }
+}

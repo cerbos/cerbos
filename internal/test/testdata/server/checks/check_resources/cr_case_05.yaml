@@ -1,0 +1,111 @@
+---
+description: "Principal policy"
+wantStatus:
+  httpStatusCode: 200
+  grpcStatusCode: 0
+checkResources:
+  input: {
+    "requestId": "test",
+    "includeMeta": true,
+    "principal": {
+      "id": "donald_duck",
+      "policyVersion": "20210210",
+      "roles": [
+        "employee",
+      ],
+      "attr": {
+        "department": "marketing",
+        "geography": "GB",
+        "team": "design",
+        "managed_geographies": "GB"
+      }
+    },
+    "resources": [
+      {
+        "actions": [
+          "view:public",
+          "approve"
+        ],
+        "resource": {
+          "kind": "leave_request",
+          "policyVersion": "20210210",
+          "id": "XX125",
+          "attr": {
+            "department": "marketing",
+            "geography": "GB",
+            "id": "XX125",
+            "owner": "john",
+            "team": "design"
+          }
+        }
+      },
+      {
+        "actions": [
+          "view:public",
+          "approve"
+        ],
+        "resource": {
+          "kind": "leave_request",
+          "policyVersion": "20210210",
+          "id": "YY125",
+          "attr": {
+            "department": "marketing",
+            "geography": "GB",
+            "id": "YY125",
+            "owner": "john",
+            "team": "design",
+            "status": "PENDING_APPROVAL",
+            "dev_record": true
+          }
+        }
+      }
+    ]
+  }
+  wantResponse: {
+    "requestId": "test",
+    "results": [
+      {
+        "resource": {
+          "id": "XX125",
+          "kind": "leave_request",
+          "policyVersion": "20210210"
+        },
+        "actions": {
+          "view:public": "EFFECT_ALLOW",
+          "approve": "EFFECT_DENY"
+        },
+        "meta": {
+          "actions": {
+            "view:public": {
+              "matchedPolicy": "resource.leave_request.v20210210"
+            },
+            "approve": {
+              "matchedPolicy": "resource.leave_request.v20210210"
+            }
+          },
+          "effectiveDerivedRoles": ["any_employee"]
+        }
+      },
+      {
+        "resource": {
+          "id": "YY125",
+          "kind": "leave_request",
+          "policyVersion": "20210210"
+        },
+        "actions": {
+          "view:public": "EFFECT_ALLOW",
+          "approve": "EFFECT_ALLOW"
+        },
+        "meta": {
+          "actions": {
+            "view:public": {
+              "matchedPolicy": "principal.donald_duck.v20210210"
+            },
+            "approve": {
+              "matchedPolicy": "principal.donald_duck.v20210210"
+            }
+          }
+        }
+      }
+    ]
+  }
