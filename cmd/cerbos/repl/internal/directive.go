@@ -13,9 +13,10 @@ import (
 func NewParser() (*participle.Parser, error) {
 	lex, err := lexer.New(lexer.Rules{
 		"Root": {
-			{Name: "Id", Pattern: `#[0-9]+`},
 			{Name: "Ident", Pattern: `[a-zA-Z]\w*(\.\w+)*`},
-			{Name: "Path", Pattern: `(\/.*|[a-zA-Z]:\\(?:([^<>:"\/\\|?*]*[^<>:"\/\\|?*.]\\|..\\)*([^<>:"\/\\|?*]*[^<>:"\/\\|?*.]\\?|..\\))?)`},
+			{Name: "#", Pattern: `#`},
+			{Name: "Int", Pattern: `[0-9]+`},
+			{Name: "Path", Pattern: `(?:((?:[\/]?)(?:[^\/]+\/)+)([^\/]+))`},
 			{Name: "Assign", Pattern: `=`, Action: lexer.Push("Assign")},
 			{Name: "Whitespace", Pattern: `\s+`},
 		},
@@ -60,5 +61,5 @@ type LoadDirective struct {
 }
 
 type ExecDirective struct {
-	RuleName string `parser:"'exec' @Id"`
+	RuleID int `parser:"'exec' '#'@Int"`
 }

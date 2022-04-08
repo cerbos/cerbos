@@ -53,25 +53,22 @@ You can view the currently defined variables by using the :vars directive.
   :vars             | prints all defined variables
 
 
-## Load rules from policies
-You can load rules from policies using :load directive.
+## Load rules from a policy
+You can load rules from a Cerbos policy using the :load directive.
 
   :load /policies/resource_policies/policy_01.yaml
-  :load /policies/derived_roles/derived_01.yaml
 
-## View rules
-You can view rules loaded from policies. This command displays the id for the rules, and you can use that later in :exec
+## View loaded rules
+You can view the currently loaded policy rules using the :rules directive. Each rule has an ID assigned by the REPL. You can use that ID in an :exec directive to execute the condition attached to that rule. 
 
-  :rules            | prints all rules
+  :rules            | prints currently loaded policy rules
 
 ## Execute rules
 
-You can execute rules loaded from policies by their id. See :rules for the ids.
+You can execute a loaded rule using its ID. Use the :rules directive to view the IDs for rules.
 
-  :exec             | execute rules
+  :exec  #1           |  execute rule with ID #1
 
-  :exec #1
-  :exec #5
 
 ## Clear state
 You can destroy all variables and reset the REPL with the :reset directive.

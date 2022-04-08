@@ -13,12 +13,14 @@ import (
 	"github.com/alecthomas/chroma/formatters"
 	"github.com/alecthomas/chroma/lexers"
 	"github.com/alecthomas/chroma/styles"
+	"github.com/ghodss/yaml"
+	"google.golang.org/protobuf/encoding/protojson"
+	"google.golang.org/protobuf/proto"
+
 	effectv1 "github.com/cerbos/cerbos/api/genpb/cerbos/effect/v1"
 	enginev1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
 	"github.com/cerbos/cerbos/internal/outputcolor"
 	"github.com/cerbos/cerbos/internal/printer/colored"
-	"google.golang.org/protobuf/encoding/protojson"
-	"google.golang.org/protobuf/proto"
 )
 
 func New(stdout, stderr io.Writer) *Printer {
@@ -82,6 +84,51 @@ func (p *Printer) PrintJSON(val any, colorLevel outputcolor.Level) error {
 		return p.coloredJSON(data.String(), colorLevel)
 	}
 
+	return nil
+}
+
+func (p *Printer) coloredYAML(data string, colorLevel outputcolor.Level) error {
+	lexer := chroma.Coalesce(lexers.Get("yaml"))
+	if lexer == nil {
+		lexer = lexers.Fallback
+	}
+
+	var formatter chroma.Formatter
+	switch colorLevel {
+	case outputcolor.Basic:
+		formatter = formatters.TTY
+	case outputcolor.Ansi256:
+		formatter = formatters.TTY256
+	case outputcolor.Ansi16m:
+		formatter = formatters.TTY16m
+	default:
+		formatter = formatters.NoOp
+	}
+
+	iterator, err := lexer.Tokenise(nil, data)
+	if err != nil {
+		return fmt.Errorf("failed to tokenise YAML: %w", err)
+	}
+
+	return formatter.Format(p.stdout, styles.SolarizedDark256, iterator)
+}
+
+func (p *Printer) PrintProtoYAML(message proto.Message, colorLevel outputcolor.Level) error {
+	data, err := protojson.MarshalOptions{Multiline: true}.Marshal(message)
+	if err != nil {
+		return fmt.Errorf("failed to encode JSON: %w", err)
+	}
+
+	yamlBytes, err := yaml.JSONToYAML(data)
+	if err != nil {
+		return fmt.Errorf("failed to convert data to YAML: %w", err)
+	}
+
+	if colorLevel.Enabled() {
+		return p.coloredYAML(string(yamlBytes), colorLevel)
+	}
+
+	fmt.Fprint(p.stdout, string(yamlBytes))
 	return nil
 }
 
