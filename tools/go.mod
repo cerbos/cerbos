@@ -13,7 +13,7 @@ require (
 	github.com/goreleaser/goreleaser v1.7.0
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.10.0
 	github.com/planetscale/vtprotobuf v0.2.0
-	github.com/vektra/mockery/v2 v2.10.2
+	github.com/vektra/mockery/v2 v2.10.4
 	go.elastic.co/go-licence-detector v0.5.0
 	google.golang.org/grpc/cmd/protoc-gen-go-grpc v1.2.0
 	google.golang.org/protobuf v1.28.0
