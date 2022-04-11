@@ -67,7 +67,7 @@ require (
 	go.opentelemetry.io/otel/exporters/jaeger v1.6.1
 	go.opentelemetry.io/otel/sdk v1.6.1
 	go.opentelemetry.io/otel/trace v1.6.1
-	go.uber.org/automaxprocs v1.4.0
+	go.uber.org/automaxprocs v1.5.1
 	go.uber.org/config v1.4.0
 	go.uber.org/multierr v1.8.0
 	go.uber.org/zap v1.21.0
