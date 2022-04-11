@@ -295,8 +295,8 @@ github.com/blakesmith/ar v0.0.0-20190502131153-809d4375e1fb h1:m935MPodAbYS46DG4
 github.com/blakesmith/ar v0.0.0-20190502131153-809d4375e1fb/go.mod h1:PkYb9DJNAwrSvRx5DYA+gUcOIgTGVMNkfSCbZM8cWpI=
 github.com/blizzy78/varnamelen v0.7.0 h1:Y7LzPAysnU3YAabhqXkP9/G9/r7Ks9fUEvOjXoXStlY=
 github.com/blizzy78/varnamelen v0.7.0/go.mod h1:V9TzQZ4fLJ1DSrjVDfl89H7aMnTvKkApdHeyESmyR7k=
-github.com/bojand/ghz v0.106.1 h1:u9RmtTVuPqk1Pg5s3dw3XxkNERmNDZRRpciTza4sOgU=
-github.com/bojand/ghz v0.106.1/go.mod h1:l3GXrJtJB3KbuhJ3Inr4Osu2fVwIEvJ5U69I2YA1h14=
+github.com/bojand/ghz v0.108.0 h1:rpLA8MKhF0FhrZx22ufTsMGBl4J99LJMKMl6RrW4ExM=
+github.com/bojand/ghz v0.108.0/go.mod h1:mAEf0dbMwX2vXQBIMPR0UUSlMyqJKvcH+lVJj2tYk/w=
 github.com/bojand/hri v1.1.0/go.mod h1:qwGosuHpNn1S0nyw/mExN0+WZrDf4bQyWjhWh51y3VY=
 github.com/bombsimon/wsl/v3 v3.1.0/go.mod h1:st10JtZYLE4D5sC7b8xV4zTKZwAQjCH/Hy2Pm1FNZIc=
 github.com/bombsimon/wsl/v3 v3.3.0 h1:Mka/+kRLoQJq7g2rggtgQsjuI/K5Efd87WX96EWFxjM=
