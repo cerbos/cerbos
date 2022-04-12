@@ -16,6 +16,9 @@ Directives are commands prefixed with a colon (":") character. The following dir
   :quit             | Exit the program
   :reset            | Clear all variables
   :vars             | View defined variables
+  :load             | Load rules from a policy
+  :rules            | View rules loaded from policies
+  :exec             | Execute rules loaded from policies
 
 ## Evaluating CEL conditions
 You can type in any valid CEL expression at the prompt to immediately evaluate it.
@@ -48,6 +51,23 @@ You can also use the :let directive to set the special Cerbos variables "request
 You can view the currently defined variables by using the :vars directive.
 
   :vars             | prints all defined variables
+
+
+## Load rules from a policy
+You can load rules from a Cerbos policy using the :load directive.
+
+  :load /policies/resource_policies/policy_01.yaml
+
+## View loaded rules
+You can view the currently loaded policy rules using the :rules directive. Each rule has an ID assigned by the REPL. You can use that ID in an :exec directive to execute the condition attached to that rule. 
+
+  :rules            | prints currently loaded policy rules
+
+## Execute rules
+
+You can execute a loaded rule using its ID. Use the :rules directive to view the IDs for rules.
+
+  :exec  #1           |  execute rule with ID #1
 
 
 ## Clear state

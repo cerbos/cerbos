@@ -203,6 +203,41 @@ Type `:help` or `:h` to display help. Type `:quit`, `:q` or `:exit` to exit the 
 
 TIP: Use the up/down arrow keys (or kbd:[Ctrl+P]/kbd:[Ctrl+N]) to navigate command history. Most of the standard line-editing commands such as kbd:[Ctrl+a], kbd:[Ctrl+h], kbd:[Ctrl+r] are supported as well. 
 
+You can load rules from a policies.
+
+[listing]
+----
+-> :load /policies/resource_policies/policy_01.yaml
+Resource policy 'resource.leave_request.v20210210' loaded
+
+-> :load /policies/derived_roles/derived_01.yaml
+Derived roles 'derived_roles.alpha' loaded
+----
+
+Type `:rules` to display the rules loaded from policies.
+
+Type `:exec` to execute the rules using the environment of the REPL.
+
+[listing]
+----
+-> :rules
+#0 (derived_roles)
+{
+  "name": "employee_that_owns_the_record",
+  "parentRoles": [
+    "employee"
+  ],
+  "condition": {
+    "match": {
+      "expr": "R.attr.owner == P.id"
+    }
+  }
+}
+
+-> :exec #0
+Executing: R.attr.owner == P.id
+_ = true
+----
 
 [#run]
 == `run` Command

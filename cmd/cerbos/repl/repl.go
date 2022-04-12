@@ -6,20 +6,28 @@ package repl
 import (
 	"errors"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 
 	"github.com/adrg/xdg"
 	"github.com/alecthomas/kong"
-	"github.com/cerbos/cerbos/cmd/cerbos/repl/internal"
 	"github.com/peterh/liner"
+
+	"github.com/cerbos/cerbos/cmd/cerbos/repl/internal"
 )
 
 type Cmd struct {
 	History string `help:"Path to history file" type:"path"`
 }
 
+func (c *Cmd) clear(stdout io.Writer) {
+	fmt.Fprintf(stdout, "\033[H\033[2J")
+}
+
 func (c *Cmd) Run(k *kong.Kong) error {
+	c.clear(k.Stdout)
+
 	histFile := getHistoryFile(c.History)
 
 	reader := liner.NewLiner()

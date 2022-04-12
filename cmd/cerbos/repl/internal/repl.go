@@ -4,22 +4,17 @@
 package internal
 
 import (
+	_ "embed"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
+	"os"
 	"reflect"
 	"sort"
 	"strings"
 
-	_ "embed"
-
-	participle "github.com/alecthomas/participle/v2"
-	enginev1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
-	"github.com/cerbos/cerbos/internal/conditions"
-	"github.com/cerbos/cerbos/internal/outputcolor"
-	"github.com/cerbos/cerbos/internal/printer"
-	"github.com/cerbos/cerbos/internal/printer/colored"
+	"github.com/alecthomas/participle/v2"
 	"github.com/google/cel-go/cel"
 	"github.com/google/cel-go/checker/decls"
 	"github.com/google/cel-go/common"
@@ -27,9 +22,21 @@ import (
 	"github.com/google/cel-go/common/types/ref"
 	"github.com/google/cel-go/interpreter"
 	"github.com/peterh/liner"
+	"github.com/pterm/pterm"
 	exprpb "google.golang.org/genproto/googleapis/api/expr/v1alpha1"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"
+
+	enginev1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
+	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
+	runtimev1 "github.com/cerbos/cerbos/api/genpb/cerbos/runtime/v1"
+	"github.com/cerbos/cerbos/internal/compile"
+	"github.com/cerbos/cerbos/internal/conditions"
+	"github.com/cerbos/cerbos/internal/namer"
+	"github.com/cerbos/cerbos/internal/outputcolor"
+	"github.com/cerbos/cerbos/internal/policy"
+	"github.com/cerbos/cerbos/internal/printer"
+	"github.com/cerbos/cerbos/internal/printer/colored"
 )
 
 var (
@@ -49,16 +56,20 @@ const (
 	commentPrefix   = '#'
 	directivePrefix = ':'
 	prompt          = "-> "
+	rulePrefix      = "#"
 	secondaryPrompt = "> "
+	yamlIndent      = 2
 )
 
 type REPL struct {
-	vars     variables
-	decls    map[string]*exprpb.Decl
-	reader   *liner.State
-	parser   *participle.Parser
-	output   Output
-	toRefVal func(any) ref.Val
+	policyKey string
+	output    Output
+	vars      variables
+	decls     map[string]*exprpb.Decl
+	reader    *liner.State
+	parser    *participle.Parser
+	toRefVal  func(any) ref.Val
+	rules     []any
 }
 
 func NewREPL(reader *liner.State, output Output) (*REPL, error) {
@@ -158,12 +169,18 @@ func (r *REPL) processDirective(line string) error {
 		return r.showVars()
 	case directive.Help:
 		return r.help()
+	case directive.Rules:
+		return r.showRules()
 	case directive.Let != nil:
 		prefix, _, _ := strings.Cut(directive.Let.Name, ".")
 		if _, ok := specialVars[prefix]; ok {
 			return r.setSpecialVar(directive.Let.Name, directive.Let.Expr)
 		}
 		return r.processExpr(directive.Let.Name, directive.Let.Expr)
+	case directive.Load != nil:
+		return r.loadRulesFromPolicy(directive.Load.Path)
+	case directive.Exec != nil:
+		return r.execRule(directive.Exec.RuleID)
 	default:
 		return fmt.Errorf("unknown directive %q", line)
 	}
@@ -193,6 +210,23 @@ func (r *REPL) showVars() error {
 	sort.Strings(varNames)
 	for _, name := range varNames {
 		r.output.PrintResult(name, r.vars[name])
+	}
+
+	return nil
+}
+
+func (r *REPL) showRules() error {
+	if r.rules == nil {
+		r.output.Println()
+		return nil
+	}
+
+	r.output.Print(fmt.Sprintf("Showing rules for the policy '%s'\n", colored.REPLPolicyName(r.policyKey)))
+	for idx, rule := range r.rules {
+		err := r.output.PrintRule(idx, rule)
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil
@@ -318,6 +352,150 @@ func (r *REPL) evalExpr(expr string) (ref.Val, *exprpb.Type, error) {
 	return val, tpe, nil
 }
 
+func (r *REPL) loadRulesFromPolicy(path string) error {
+	f, err := os.Open(strings.Trim(path, " "))
+	if err != nil {
+		return fmt.Errorf("failed to open policy file at %s: %w", path, err)
+	}
+	defer f.Close()
+
+	p, err := policy.ReadPolicy(f)
+	if err != nil {
+		return fmt.Errorf("failed to read policy file: %w", err)
+	}
+
+	r.vars[conditions.CELVariablesIdent] = r.toRefVal(p.Variables)
+	r.vars[conditions.CELVariablesAbbrev] = r.toRefVal(p.Variables)
+
+	r.rules = nil
+	switch pt := p.PolicyType.(type) {
+	case *policyv1.Policy_ResourcePolicy:
+		for _, rule := range pt.ResourcePolicy.Rules {
+			if rule.Condition != nil && rule.Condition.Condition != nil {
+				_, ok := rule.Condition.Condition.(*policyv1.Condition_Match)
+				if !ok {
+					continue
+				}
+				r.rules = append(r.rules, rule)
+			}
+		}
+
+		r.policyKey = namer.PolicyKey(p)
+		r.output.Println(fmt.Sprintf("Resource policy '%s' loaded", colored.REPLPolicyName(namer.PolicyKey(p))))
+	case *policyv1.Policy_DerivedRoles:
+		for _, def := range pt.DerivedRoles.Definitions {
+			if def.Condition != nil {
+				r.rules = append(r.rules, def)
+			}
+		}
+
+		r.policyKey = namer.PolicyKey(p)
+		r.output.Println(fmt.Sprintf("Derived roles '%s' loaded", colored.REPLPolicyName(namer.PolicyKey(p))))
+	case *policyv1.Policy_PrincipalPolicy:
+		for _, rule := range pt.PrincipalPolicy.Rules {
+			for _, action := range rule.Actions {
+				if action.Condition != nil {
+					pr := &policyv1.PrincipalRule{
+						Resource: rule.Resource,
+						Actions: []*policyv1.PrincipalRule_Action{
+							action,
+						},
+					}
+					r.rules = append(r.rules, pr)
+				}
+			}
+		}
+
+		r.policyKey = namer.PolicyKey(p)
+		r.output.Println(fmt.Sprintf("Principal policy '%s' loaded", colored.REPLPolicyName(namer.PolicyKey(p))))
+	}
+
+	r.output.Println()
+	err = r.showRules()
+	if err != nil {
+		return fmt.Errorf("failed to display rules after loading a policy: %w", err)
+	}
+
+	return nil
+}
+
+func (r *REPL) execRule(id int) error {
+	if id >= len(r.rules) {
+		return fmt.Errorf("failed to find rule with id %d", id)
+	}
+
+	return r.evalCondition(id)
+}
+
+func (r *REPL) evalCondition(id int) error {
+	var cond *policyv1.Condition
+	switch rt := r.rules[id].(type) {
+	case *policyv1.ResourceRule:
+		cond = rt.Condition
+	case *policyv1.RoleDef:
+		cond = rt.Condition
+	case *policyv1.PrincipalRule:
+		cond = rt.Actions[0].Condition
+	}
+
+	condition, err := compile.Condition(cond)
+	if err != nil {
+		return fmt.Errorf("failed to compile condition: %w", err)
+	}
+
+	e := r.doEvalCondition(condition)
+	eo := buildEvalOutput(e)
+
+	err = pterm.DefaultTree.WithRoot(pterm.NewTreeFromLeveledList(eo.tree)).Render()
+	if err != nil {
+		return fmt.Errorf("failed to render tree: %w", err)
+	}
+
+	return nil
+}
+
+func (r *REPL) doEvalCondition(condition *runtimev1.Condition) *eval {
+	switch c := condition.Op.(type) {
+	case *runtimev1.Condition_Expr:
+		val, tpe, err := r.evalExpr(c.Expr.Original)
+		if err != nil {
+			return &eval{err: err, success: false, evalType: evalTypeExpr, evals: nil, expr: c.Expr.Original}
+		}
+
+		r.vars[lastResultVar] = val
+		r.decls[lastResultVar] = decls.NewVar(lastResultVar, tpe)
+
+		if success, ok := val.Value().(bool); ok {
+			return &eval{err: nil, success: success, evalType: evalTypeExpr, evals: nil, expr: c.Expr.Original}
+		}
+
+		return &eval{err: err, success: false, evalType: evalTypeExpr, evals: nil, expr: c.Expr.Original}
+	case *runtimev1.Condition_All:
+		eval := &eval{err: nil, success: true, evalType: evalTypeAll, evals: nil}
+		for _, expr := range c.All.GetExpr() {
+			e := r.doEvalCondition(expr)
+			eval.append(e)
+		}
+		return eval
+	case *runtimev1.Condition_Any:
+		eval := &eval{err: nil, success: true, evalType: evalTypeAny, evals: nil}
+		for _, expr := range c.Any.GetExpr() {
+			e := r.doEvalCondition(expr)
+			eval.append(e)
+		}
+		return eval
+	case *runtimev1.Condition_None:
+		eval := &eval{err: nil, success: true, evalType: evalTypeNone, evals: nil}
+		for _, expr := range c.None.GetExpr() {
+			e := r.doEvalCondition(expr)
+			eval.append(e)
+		}
+		return eval
+	}
+
+	return nil
+}
+
 func (r *REPL) mkEnv() (*cel.Env, error) {
 	decls := make([]*exprpb.Decl, len(r.decls))
 	i := 0
@@ -345,7 +523,9 @@ type Output interface {
 	Print(string, ...any)
 	Println(...any)
 	PrintResult(string, ref.Val)
+	PrintRule(int, any) error
 	PrintJSON(any)
+	PrintYAML(proto.Message, int)
 	PrintErr(string, error)
 }
 
@@ -364,6 +544,18 @@ func NewPrinterOutput(stdout, stderr io.Writer) *PrinterOutput {
 func (po *PrinterOutput) Print(format string, args ...any) {
 	po.Printf(format, args...)
 	po.Println()
+}
+
+func (po *PrinterOutput) PrintRule(id int, rule any) error {
+	msg, ok := rule.(proto.Message)
+	if !ok {
+		return fmt.Errorf("failed to type assert rule with id: %s", fmt.Sprintf("%s%d", rulePrefix, id))
+	}
+
+	po.Println(fmt.Sprintf("[%s]", colored.REPLRule(fmt.Sprintf("%s%d", rulePrefix, id))))
+	po.PrintYAML(msg, yamlIndent)
+
+	return nil
 }
 
 func (po *PrinterOutput) PrintResult(name string, value ref.Val) {
@@ -401,6 +593,13 @@ func (po *PrinterOutput) PrintResult(name string, value ref.Val) {
 
 func (po *PrinterOutput) PrintJSON(obj any) {
 	if err := po.Printer.PrintJSON(obj, po.level); err != nil {
+		po.Println("<...>")
+	}
+	po.Println()
+}
+
+func (po *PrinterOutput) PrintYAML(obj proto.Message, indent int) {
+	if err := po.Printer.PrintProtoYAML(obj, po.level, indent); err != nil {
 		po.Println("<...>")
 	}
 	po.Println()

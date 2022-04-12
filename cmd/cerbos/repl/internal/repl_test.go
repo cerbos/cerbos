@@ -4,15 +4,24 @@
 package internal
 
 import (
+	"fmt"
+	"path/filepath"
 	"testing"
 
-	enginev1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
-	"github.com/cerbos/cerbos/internal/conditions"
 	"github.com/google/cel-go/common/types/ref"
 	"github.com/google/go-cmp/cmp"
 	"github.com/stretchr/testify/require"
+	"google.golang.org/protobuf/encoding/protojson"
+	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/testing/protocmp"
 	"google.golang.org/protobuf/types/known/structpb"
+
+	enginev1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
+	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
+	runtimev1 "github.com/cerbos/cerbos/api/genpb/cerbos/runtime/v1"
+	"github.com/cerbos/cerbos/internal/compile"
+	"github.com/cerbos/cerbos/internal/conditions"
+	"github.com/cerbos/cerbos/internal/test"
 )
 
 type DirectiveTest struct {
@@ -23,6 +32,12 @@ type DirectiveTest struct {
 
 func TestREPL(t *testing.T) {
 	toRefVal := conditions.StdEnv.TypeAdapter().NativeToValue
+	drPath := filepath.Join(test.PathToDir(t, "store"), "derived_roles", "derived_roles_01.yaml")
+	rpPath := filepath.Join(test.PathToDir(t, "store"), "resource_policies", "policy_01.yaml")
+	ppPath := filepath.Join(test.PathToDir(t, "store"), "principal_policies", "policy_01.yaml")
+	drConds := loadConditionsFromPolicy(t, drPath)
+	rpConds := loadConditionsFromPolicy(t, rpPath)
+	ppConds := loadConditionsFromPolicy(t, ppPath)
 
 	testCases := []struct {
 		name       string
@@ -258,6 +273,62 @@ func TestREPL(t *testing.T) {
 				},
 			},
 		},
+		{
+			name: "load_derived_roles",
+			directives: []DirectiveTest{
+				{
+					Directive: fmt.Sprintf(":load %s", drPath),
+					Check: func(t *testing.T, output *mockOutput) {
+						t.Helper()
+						for idx, r := range output.rules {
+							rd, ok := r.(*policyv1.RoleDef)
+							require.True(t, ok)
+							condition, err := compile.Condition(rd.Condition)
+							require.NoError(t, err)
+							require.JSONEq(t, protojson.Format(drConds[idx]), protojson.Format(condition))
+						}
+					},
+				},
+			},
+		},
+		{
+			name: "load_resource_policy",
+			directives: []DirectiveTest{
+				{
+					Directive: fmt.Sprintf(":load %s", rpPath),
+					Check: func(t *testing.T, output *mockOutput) {
+						t.Helper()
+						for idx, r := range output.rules {
+							rr, ok := r.(*policyv1.ResourceRule)
+							require.True(t, ok)
+							condition, err := compile.Condition(rr.Condition)
+							require.NoError(t, err)
+							require.JSONEq(t, protojson.Format(rpConds[idx]), protojson.Format(condition))
+						}
+					},
+				},
+			},
+		},
+		{
+			name: "load_principal_policy",
+			directives: []DirectiveTest{
+				{
+					Directive: fmt.Sprintf(":load %s", ppPath),
+					Check: func(t *testing.T, output *mockOutput) {
+						t.Helper()
+						for idx, r := range output.rules {
+							pr, ok := r.(*policyv1.PrincipalRule)
+							for _, action := range pr.Actions {
+								require.True(t, ok)
+								condition, err := compile.Condition(action.Condition)
+								require.NoError(t, err)
+								require.JSONEq(t, protojson.Format(ppConds[idx]), protojson.Format(condition))
+							}
+						}
+					},
+				},
+			},
+		},
 	}
 
 	for _, tc := range testCases {
@@ -287,8 +358,10 @@ type mockOutput struct {
 	msg        string
 	args       []any
 	jsonObj    any
+	yamlObj    any
 	resultName string
 	resultVal  ref.Val
+	rules      []any
 	err        error
 }
 
@@ -306,11 +379,58 @@ func (mo *mockOutput) PrintResult(name string, val ref.Val) {
 	mo.resultVal = val
 }
 
+func (mo *mockOutput) PrintRule(_ int, rule any) error {
+	mo.rules = append(mo.rules, rule)
+	return nil
+}
+
 func (mo *mockOutput) PrintJSON(obj any) {
 	mo.jsonObj = obj
+}
+
+func (mo *mockOutput) PrintYAML(obj proto.Message, _ int) {
+	mo.yamlObj = obj
 }
 
 func (mo *mockOutput) PrintErr(msg string, err error) {
 	mo.msg = msg
 	mo.err = err
+}
+
+func loadConditionsFromPolicy(t *testing.T, path string) []*runtimev1.Condition {
+	t.Helper()
+
+	p := test.LoadPolicy(t, path)
+
+	var conds []*runtimev1.Condition
+	switch pt := p.PolicyType.(type) {
+	case *policyv1.Policy_ResourcePolicy:
+		for _, rule := range pt.ResourcePolicy.Rules {
+			if rule.Condition != nil {
+				cond, err := compile.Condition(rule.Condition)
+				require.NoError(t, err)
+				conds = append(conds, cond)
+			}
+		}
+	case *policyv1.Policy_DerivedRoles:
+		for _, def := range pt.DerivedRoles.Definitions {
+			if def.Condition != nil {
+				cond, err := compile.Condition(def.Condition)
+				require.NoError(t, err)
+				conds = append(conds, cond)
+			}
+		}
+	case *policyv1.Policy_PrincipalPolicy:
+		for _, rule := range pt.PrincipalPolicy.Rules {
+			for _, action := range rule.Actions {
+				if action.Condition != nil {
+					cond, err := compile.Condition(action.Condition)
+					require.NoError(t, err)
+					conds = append(conds, cond)
+				}
+			}
+		}
+	}
+
+	return conds
 }

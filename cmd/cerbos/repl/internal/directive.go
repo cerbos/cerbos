@@ -6,7 +6,7 @@ package internal
 import (
 	"fmt"
 
-	participle "github.com/alecthomas/participle/v2"
+	"github.com/alecthomas/participle/v2"
 	"github.com/alecthomas/participle/v2/lexer"
 )
 
@@ -14,6 +14,9 @@ func NewParser() (*participle.Parser, error) {
 	lex, err := lexer.New(lexer.Rules{
 		"Root": {
 			{Name: "Ident", Pattern: `[a-zA-Z]\w*(\.\w+)*`},
+			{Name: "#", Pattern: `#`},
+			{Name: "Int", Pattern: `[0-9]+`},
+			{Name: "Path", Pattern: `(?:((?:[\/]?)(?:[^\/]+\/)+)([^\/]+))`},
 			{Name: "Assign", Pattern: `=`, Action: lexer.Push("Assign")},
 			{Name: "Whitespace", Pattern: `\s+`},
 		},
@@ -38,14 +41,25 @@ func NewParser() (*participle.Parser, error) {
 
 //nolint:govet
 type REPLDirective struct {
-	Exit  bool          `parser:"@('q'|'quit'|'exit')"`
-	Reset bool          `parser:"| @'reset'"`
-	Vars  bool          `parser:"| @'vars'"`
-	Help  bool          `parser:"| @('h' | 'help')"`
-	Let   *LetDirective `parser:"| @@"`
+	Exit  bool           `parser:"@('q'|'quit'|'exit')"`
+	Reset bool           `parser:"| @'reset'"`
+	Vars  bool           `parser:"| @'vars'"`
+	Help  bool           `parser:"| @('h' | 'help')"`
+	Rules bool           `parser:"| @'rules'"`
+	Load  *LoadDirective `parser:"| @@"`
+	Exec  *ExecDirective `parser:"| @@"`
+	Let   *LetDirective  `parser:"| @@"`
 }
 
 type LetDirective struct {
 	Name string `parser:"'let' @Ident"`
 	Expr string `parser:"'=' @Any"`
+}
+
+type LoadDirective struct {
+	Path string `parser:"'load' @Path"`
+}
+
+type ExecDirective struct {
+	RuleID int `parser:"'exec' '#'@Int"`
 }
