@@ -388,7 +388,7 @@ func (mo *mockOutput) PrintJSON(obj any) {
 	mo.jsonObj = obj
 }
 
-func (mo *mockOutput) PrintYAML(obj proto.Message) {
+func (mo *mockOutput) PrintYAML(obj proto.Message, _ int) {
 	mo.yamlObj = obj
 }
 

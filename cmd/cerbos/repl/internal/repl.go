@@ -53,25 +53,23 @@ var (
 )
 
 const (
-	commentPrefix        = '#'
-	directivePrefix      = ':'
-	prompt               = "-> "
-	rulePrefix           = "#"
-	secondaryPrompt      = "> "
-	variablesShortPrefix = "V."
-	variablesPrefix      = "variables."
+	commentPrefix   = '#'
+	directivePrefix = ':'
+	prompt          = "-> "
+	rulePrefix      = "#"
+	secondaryPrompt = "> "
+	yamlIndent      = 2
 )
 
 type REPL struct {
-	output     Output
-	vars       variables
-	policyVars map[string]string
-	decls      map[string]*exprpb.Decl
-	reader     *liner.State
-	parser     *participle.Parser
-	toRefVal   func(any) ref.Val
-	mkRuleID   func() int
-	rules      []any
+	policyKey string
+	output    Output
+	vars      variables
+	decls     map[string]*exprpb.Decl
+	reader    *liner.State
+	parser    *participle.Parser
+	toRefVal  func(any) ref.Val
+	rules     []any
 }
 
 func NewREPL(reader *liner.State, output Output) (*REPL, error) {
@@ -81,12 +79,10 @@ func NewREPL(reader *liner.State, output Output) (*REPL, error) {
 	}
 
 	repl := &REPL{
-		reader:     reader,
-		parser:     parser,
-		mkRuleID:   newCounter(),
-		policyVars: make(map[string]string),
-		output:     output,
-		toRefVal:   conditions.StdEnv.TypeAdapter().NativeToValue,
+		reader:   reader,
+		parser:   parser,
+		output:   output,
+		toRefVal: conditions.StdEnv.TypeAdapter().NativeToValue,
 	}
 
 	return repl, repl.reset()
@@ -154,7 +150,7 @@ func (r *REPL) handleInput(input string) error {
 	case commentPrefix:
 		return nil
 	default:
-		return r.processExpr(lastResultVar, input, true)
+		return r.processExpr(lastResultVar, input)
 	}
 }
 
@@ -180,7 +176,7 @@ func (r *REPL) processDirective(line string) error {
 		if _, ok := specialVars[prefix]; ok {
 			return r.setSpecialVar(directive.Let.Name, directive.Let.Expr)
 		}
-		return r.processExpr(directive.Let.Name, directive.Let.Expr, true)
+		return r.processExpr(directive.Let.Name, directive.Let.Expr)
 	case directive.Load != nil:
 		return r.loadRulesFromPolicy(directive.Load.Path)
 	case directive.Exec != nil:
@@ -220,13 +216,18 @@ func (r *REPL) showVars() error {
 }
 
 func (r *REPL) showRules() error {
+	if r.rules == nil {
+		r.output.Println()
+		return nil
+	}
+
+	r.output.Print(fmt.Sprintf("Showing rules for the policy '%s'\n", colored.REPLPolicyName(r.policyKey)))
 	for idx, rule := range r.rules {
 		err := r.output.PrintRule(idx, rule)
 		if err != nil {
 			return err
 		}
 	}
-	r.output.Println()
 
 	return nil
 }
@@ -308,15 +309,13 @@ func (r *REPL) setSpecialVar(name, value string) error {
 	return nil
 }
 
-func (r *REPL) processExpr(name, expr string, log bool) error {
+func (r *REPL) processExpr(name, expr string) error {
 	val, tpe, err := r.evalExpr(expr)
 	if err != nil {
 		return err
 	}
 
-	if log {
-		r.output.PrintResult(name, val)
-	}
+	r.output.PrintResult(name, val)
 	r.vars[name] = val
 	r.decls[name] = decls.NewVar(name, tpe)
 
@@ -365,9 +364,10 @@ func (r *REPL) loadRulesFromPolicy(path string) error {
 		return fmt.Errorf("failed to read policy file: %w", err)
 	}
 
-	r.rules = nil
-	r.policyVars = p.Variables
+	r.vars[conditions.CELVariablesIdent] = r.toRefVal(p.Variables)
+	r.vars[conditions.CELVariablesAbbrev] = r.toRefVal(p.Variables)
 
+	r.rules = nil
 	switch pt := p.PolicyType.(type) {
 	case *policyv1.Policy_ResourcePolicy:
 		for _, rule := range pt.ResourcePolicy.Rules {
@@ -380,6 +380,7 @@ func (r *REPL) loadRulesFromPolicy(path string) error {
 			}
 		}
 
+		r.policyKey = namer.PolicyKey(p)
 		r.output.Println(fmt.Sprintf("Resource policy '%s' loaded", colored.REPLPolicyName(namer.PolicyKey(p))))
 	case *policyv1.Policy_DerivedRoles:
 		for _, def := range pt.DerivedRoles.Definitions {
@@ -388,6 +389,7 @@ func (r *REPL) loadRulesFromPolicy(path string) error {
 			}
 		}
 
+		r.policyKey = namer.PolicyKey(p)
 		r.output.Println(fmt.Sprintf("Derived roles '%s' loaded", colored.REPLPolicyName(namer.PolicyKey(p))))
 	case *policyv1.Policy_PrincipalPolicy:
 		for _, rule := range pt.PrincipalPolicy.Rules {
@@ -403,6 +405,8 @@ func (r *REPL) loadRulesFromPolicy(path string) error {
 				}
 			}
 		}
+
+		r.policyKey = namer.PolicyKey(p)
 		r.output.Println(fmt.Sprintf("Principal policy '%s' loaded", colored.REPLPolicyName(namer.PolicyKey(p))))
 	}
 
@@ -418,18 +422,6 @@ func (r *REPL) loadRulesFromPolicy(path string) error {
 func (r *REPL) execRule(id int) error {
 	if id >= len(r.rules) {
 		return fmt.Errorf("failed to find rule with id %d", id)
-	}
-
-	for key, val := range r.policyVars {
-		err := r.processExpr(fmt.Sprintf("%s%s", variablesPrefix, key), val, false)
-		if err != nil {
-			return fmt.Errorf("failed to process the variable %s in the policy: %w", key, err)
-		}
-
-		err = r.processExpr(fmt.Sprintf("%s%s", variablesShortPrefix, key), val, false)
-		if err != nil {
-			return fmt.Errorf("failed to process the variable (V) %s in the policy: %w", key, err)
-		}
 	}
 
 	return r.evalCondition(id)
@@ -465,11 +457,19 @@ func (r *REPL) evalCondition(id int) error {
 func (r *REPL) doEvalCondition(condition *runtimev1.Condition) *eval {
 	switch c := condition.Op.(type) {
 	case *runtimev1.Condition_Expr:
-		err := r.processExpr(lastResultVar, c.Expr.Original, false)
+		val, tpe, err := r.evalExpr(c.Expr.Original)
 		if err != nil {
 			return &eval{err: err, success: false, evalType: evalTypeExpr, evals: nil, expr: c.Expr.Original}
 		}
-		return &eval{err: nil, success: true, evalType: evalTypeExpr, evals: nil, expr: c.Expr.Original}
+
+		r.vars[lastResultVar] = val
+		r.decls[lastResultVar] = decls.NewVar(lastResultVar, tpe)
+
+		if success, ok := val.Value().(bool); ok {
+			return &eval{err: nil, success: success, evalType: evalTypeExpr, evals: nil, expr: c.Expr.Original}
+		}
+
+		return &eval{err: err, success: false, evalType: evalTypeExpr, evals: nil, expr: c.Expr.Original}
 	case *runtimev1.Condition_All:
 		eval := &eval{err: nil, success: true, evalType: evalTypeAll, evals: nil}
 		for _, expr := range c.All.GetExpr() {
@@ -525,7 +525,7 @@ type Output interface {
 	PrintResult(string, ref.Val)
 	PrintRule(int, any) error
 	PrintJSON(any)
-	PrintYAML(proto.Message)
+	PrintYAML(proto.Message, int)
 	PrintErr(string, error)
 }
 
@@ -552,16 +552,8 @@ func (po *PrinterOutput) PrintRule(id int, rule any) error {
 		return fmt.Errorf("failed to type assert rule with id: %s", fmt.Sprintf("%s%d", rulePrefix, id))
 	}
 
-	t := ""
-	switch rule.(type) {
-	case *policyv1.ResourceRule:
-		t = "(resource_policies)"
-	case *policyv1.RoleDef:
-		t = "(derived_roles)"
-	}
-
-	po.Println(fmt.Sprintf("rule %s %s", colored.REPLVar(fmt.Sprintf("%s%d", rulePrefix, id)), colored.REPLPolicyType(t)))
-	po.PrintYAML(msg)
+	po.Println(fmt.Sprintf("[%s]", colored.REPLRule(fmt.Sprintf("%s%d", rulePrefix, id))))
+	po.PrintYAML(msg, yamlIndent)
 
 	return nil
 }
@@ -606,8 +598,8 @@ func (po *PrinterOutput) PrintJSON(obj any) {
 	po.Println()
 }
 
-func (po *PrinterOutput) PrintYAML(obj proto.Message) {
-	if err := po.Printer.PrintProtoYAML(obj, po.level); err != nil {
+func (po *PrinterOutput) PrintYAML(obj proto.Message, indent int) {
+	if err := po.Printer.PrintProtoYAML(obj, po.level, indent); err != nil {
 		po.Println("<...>")
 	}
 	po.Println()
@@ -619,12 +611,4 @@ func (po *PrinterOutput) PrintErr(msg string, err error) {
 		po.Printf(" %v\n", err)
 	}
 	po.Println()
-}
-
-func newCounter() func() int {
-	counter := 0
-	return func() int {
-		counter++
-		return counter
-	}
 }

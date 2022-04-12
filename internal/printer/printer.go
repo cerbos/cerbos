@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"strings"
 
 	"github.com/alecthomas/chroma"
 	"github.com/alecthomas/chroma/formatters"
@@ -87,7 +88,7 @@ func (p *Printer) PrintJSON(val any, colorLevel outputcolor.Level) error {
 	return nil
 }
 
-func (p *Printer) coloredYAML(data string, colorLevel outputcolor.Level) error {
+func (p *Printer) coloredYAML(data string, colorLevel outputcolor.Level) ([]byte, error) {
 	lexer := chroma.Coalesce(lexers.Get("yaml"))
 	if lexer == nil {
 		lexer = lexers.Fallback
@@ -107,13 +108,19 @@ func (p *Printer) coloredYAML(data string, colorLevel outputcolor.Level) error {
 
 	iterator, err := lexer.Tokenise(nil, data)
 	if err != nil {
-		return fmt.Errorf("failed to tokenise YAML: %w", err)
+		return nil, fmt.Errorf("failed to tokenise YAML: %w", err)
 	}
 
-	return formatter.Format(p.stdout, styles.SolarizedDark256, iterator)
+	var yml bytes.Buffer
+	err = formatter.Format(&yml, styles.SolarizedDark256, iterator)
+	if err != nil {
+		return nil, fmt.Errorf("failed to format yaml: %w", err)
+	}
+
+	return yml.Bytes(), nil
 }
 
-func (p *Printer) PrintProtoYAML(message proto.Message, colorLevel outputcolor.Level) error {
+func (p *Printer) PrintProtoYAML(message proto.Message, colorLevel outputcolor.Level, indent int) error {
 	data, err := protojson.MarshalOptions{Multiline: true}.Marshal(message)
 	if err != nil {
 		return fmt.Errorf("failed to encode JSON: %w", err)
@@ -125,10 +132,16 @@ func (p *Printer) PrintProtoYAML(message proto.Message, colorLevel outputcolor.L
 	}
 
 	if colorLevel.Enabled() {
-		return p.coloredYAML(string(yamlBytes), colorLevel)
+		yamlBytes, err = p.coloredYAML(string(yamlBytes), colorLevel)
+		if err != nil {
+			return err
+		}
 	}
 
-	fmt.Fprint(p.stdout, string(yamlBytes))
+	for _, line := range strings.Split(strings.TrimSuffix(string(yamlBytes), "\n"), "\n") {
+		fmt.Fprintf(p.stdout, "%s%s\n", strings.Repeat("  ", indent), line)
+	}
+
 	return nil
 }
 

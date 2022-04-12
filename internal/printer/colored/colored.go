@@ -18,7 +18,7 @@ var (
 	REPLError               = color.New(color.FgRed).SprintFunc()
 	REPLExpr                = color.New(color.FgCyan).SprintFunc()
 	REPLPolicyName          = color.New(color.FgCyan).SprintFunc()
-	REPLPolicyType          = color.New(color.FgWhite).SprintFunc()
+	REPLRule                = color.New(color.FgCyan, color.Bold).SprintFunc()
 	REPLSuccess             = color.New(color.FgGreen).SprintFunc()
 	REPLVar                 = color.New(color.FgCyan).SprintFunc()
 	Resource                = color.New(color.FgBlue).SprintFunc()
