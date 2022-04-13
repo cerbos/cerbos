@@ -377,6 +377,7 @@ message PlaygroundProxyResponse {
     CheckResourceSetResponse check_resource_set = 3;
     CheckResourceBatchResponse check_resource_batch = 4;
     ResourcesQueryPlanResponse resources_query_plan = 5;
+    CheckResourcesResponse check_resources = 6;
   }
 }
 

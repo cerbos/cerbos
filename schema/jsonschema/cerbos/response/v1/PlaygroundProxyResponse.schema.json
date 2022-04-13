@@ -125,6 +125,93 @@
         }
       }
     },
+    "cerbos.response.v1.CheckResourcesResponse": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "requestId": {
+          "type": "string"
+        },
+        "results": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/cerbos.response.v1.CheckResourcesResponse.ResultEntry"
+          }
+        }
+      }
+    },
+    "cerbos.response.v1.CheckResourcesResponse.ResultEntry": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "actions": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/cerbos.effect.v1.Effect"
+          }
+        },
+        "meta": {
+          "$ref": "#/definitions/cerbos.response.v1.CheckResourcesResponse.ResultEntry.Meta"
+        },
+        "resource": {
+          "$ref": "#/definitions/cerbos.response.v1.CheckResourcesResponse.ResultEntry.Resource"
+        },
+        "validationErrors": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/cerbos.schema.v1.ValidationError"
+          }
+        }
+      }
+    },
+    "cerbos.response.v1.CheckResourcesResponse.ResultEntry.Meta": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "actions": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/cerbos.response.v1.CheckResourcesResponse.ResultEntry.Meta.EffectMeta"
+          }
+        },
+        "effectiveDerivedRoles": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "cerbos.response.v1.CheckResourcesResponse.ResultEntry.Meta.EffectMeta": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "matchedPolicy": {
+          "type": "string"
+        },
+        "matchedScope": {
+          "type": "string"
+        }
+      }
+    },
+    "cerbos.response.v1.CheckResourcesResponse.ResultEntry.Resource": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "kind": {
+          "type": "string"
+        },
+        "policyVersion": {
+          "type": "string"
+        },
+        "scope": {
+          "type": "string"
+        }
+      }
+    },
     "cerbos.response.v1.PlaygroundFailure": {
       "type": "object",
       "additionalProperties": false,
@@ -272,6 +359,9 @@
     },
     "checkResourceSet": {
       "$ref": "#/definitions/cerbos.response.v1.CheckResourceSetResponse"
+    },
+    "checkResources": {
+      "$ref": "#/definitions/cerbos.response.v1.CheckResourcesResponse"
     },
     "failure": {
       "$ref": "#/definitions/cerbos.response.v1.PlaygroundFailure"
