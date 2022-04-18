@@ -38,7 +38,7 @@ require (
 	github.com/jackc/pgtype v1.10.0
 	github.com/jackc/pgx/v4 v4.15.0
 	github.com/jdxcode/netrc v0.0.0-20210204082910-926c7f70242a
-	github.com/jmoiron/sqlx v1.3.4
+	github.com/jmoiron/sqlx v1.3.5
 	github.com/jwalton/gchalk v1.3.0
 	github.com/jwalton/go-supportscolor v1.1.0
 	github.com/kavu/go_reuseport v1.5.0
@@ -51,7 +51,7 @@ require (
 	github.com/peterh/liner v1.2.2
 	github.com/planetscale/vtprotobuf v0.0.0-20210616093554-9236f7c7b8ca
 	github.com/prometheus/client_golang v1.12.1
-	github.com/pterm/pterm v0.12.40
+	github.com/pterm/pterm v0.12.41
 	github.com/rivo/tview v0.0.0-20210624165335-29d673af0ce2
 	github.com/rjeczalik/notify v0.9.3-0.20201210012515-e2a77dcc14cf
 	github.com/rs/cors v1.8.2
