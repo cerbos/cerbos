@@ -307,6 +307,33 @@ func TestREPL(t *testing.T) {
 						}
 					},
 				},
+				{
+					Directive: `V.principal_location`,
+					WantErr:   true,
+				},
+				{
+					Directive: `:let P = {"id":"john","roles":["employee"],"attr":{"ip_address":"10.20.1.2"}}`,
+					Check: func(t *testing.T, m *mockOutput) {
+						t.Helper()
+						require.Equal(t, "P", m.resultName)
+
+						want := &enginev1.Principal{
+							Id:    "john",
+							Roles: []string{"employee"},
+							Attr:  map[string]*structpb.Value{"ip_address": structpb.NewStringValue("10.20.1.2")},
+						}
+
+						require.Empty(t, cmp.Diff(want, m.resultVal.Value(), protocmp.Transform()))
+					},
+				},
+				{
+					Directive: `V.principal_location`,
+					Check: func(t *testing.T, m *mockOutput) {
+						t.Helper()
+						require.Equal(t, lastResultVar, m.resultName)
+						require.Equal(t, "GB", m.resultVal.Value())
+					},
+				},
 			},
 		},
 		{
@@ -361,7 +388,7 @@ type mockOutput struct {
 	yamlObj    any
 	resultName string
 	resultVal  ref.Val
-	rules      []any
+	rules      []proto.Message
 	err        error
 }
 
@@ -379,7 +406,7 @@ func (mo *mockOutput) PrintResult(name string, val ref.Val) {
 	mo.resultVal = val
 }
 
-func (mo *mockOutput) PrintRule(_ int, rule any) error {
+func (mo *mockOutput) PrintRule(_ int, rule proto.Message) error {
 	mo.rules = append(mo.rules, rule)
 	return nil
 }
