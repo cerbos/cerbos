@@ -5,6 +5,7 @@ package engine
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 
@@ -19,6 +20,7 @@ import (
 	"github.com/cerbos/cerbos/internal/conditions"
 	"github.com/cerbos/cerbos/internal/observability/tracing"
 	"github.com/cerbos/cerbos/internal/util"
+	"github.com/google/cel-go/interpreter"
 )
 
 type (
@@ -447,23 +449,92 @@ func evaluateCELExprPartially(expr *exprpb.CheckedExpr, input *enginev1.Resource
 		}
 		return nil, nil, err
 	}
-	residual, err := env.ResidualAst(ast, details)
-	if err != nil {
-		return nil, nil, err
-	}
-	ast, iss := env.Check(residual)
-	if iss != nil {
-		return nil, nil, fmt.Errorf("failed to check residual express: %w", iss.Err())
-	}
-	checkedExpr, err := cel.AstToCheckedExpr(ast)
-	if err != nil {
-		return nil, nil, err
-	}
+	residual := ResidualExpr(ast, details)
 	if types.IsUnknown(val) {
+		err = evalComprehensionBody(env, vars, residual)
+		if err != nil {
+			return nil, nil, err
+		}
+		checkedExpr := &exprpb.CheckedExpr{Expr: residual}
+
 		return nil, checkedExpr, nil
 	}
+	checkedExpr := &exprpb.CheckedExpr{Expr: residual}
 	if b, ok := val.Value().(bool); ok {
 		return &b, checkedExpr, nil
 	}
 	return nil, checkedExpr, fmt.Errorf("unexpected result type %T", val.Value())
+}
+
+func evalComprehensionBody(env *cel.Env, pvars interpreter.PartialActivation, e *exprpb.Expr) (err error) {
+	if e == nil {
+		return nil
+	}
+	impl := func(e1 *exprpb.Expr) {
+		if err == nil {
+			err = evalComprehensionBody(env, pvars, e1)
+		}
+	}
+	switch e := e.ExprKind.(type) {
+	case *exprpb.Expr_SelectExpr:
+		impl(e.SelectExpr.Operand)
+	case *exprpb.Expr_CallExpr:
+		impl(e.CallExpr.Target)
+		for _, arg := range e.CallExpr.Args {
+			impl(arg)
+		}
+	case *exprpb.Expr_StructExpr:
+		for _, entry := range e.StructExpr.Entries {
+			impl(entry.GetMapKey())
+			impl(entry.GetValue())
+		}
+	case *exprpb.Expr_ComprehensionExpr:
+		ce := e.ComprehensionExpr
+		loopStep, ok := ce.LoopStep.ExprKind.(*exprpb.Expr_CallExpr)
+		if !ok {
+			return errors.New("expected call expr")
+		}
+		var i int
+		if loopStep.CallExpr.Args[i].GetIdentExpr().GetName() == ce.AccuVar {
+			i++
+		}
+		le := loopStep.CallExpr.Args[i]
+		env1, err := env.Extend(cel.Declarations(decls.NewVar(ce.IterVar, decls.Dyn)))
+		if err != nil {
+			return err
+		}
+		updateIds(le)
+		ast := cel.ParsedExprToAst(&exprpb.ParsedExpr{Expr: le})
+		partialVars, err := cel.PartialVars(pvars, cel.AttributePattern(ce.IterVar))
+		if err != nil {
+			return err
+		}
+		var prg cel.Program
+		prg, err = env1.Program(ast, cel.EvalOptions(cel.OptTrackState, cel.OptPartialEval))
+		if err != nil {
+			return err
+		}
+		_, det, err := prg.Eval(partialVars)
+		if err != nil {
+			return err
+		}
+		le = ResidualExpr(ast, det)
+		loopStep.CallExpr.Args[i] = le
+		err = evalComprehensionBody(env1, partialVars, le)
+		if err != nil {
+			return err
+		}
+		impl(ce.IterRange)
+	case *exprpb.Expr_ListExpr:
+		for _, element := range e.ListExpr.Elements {
+			impl(element)
+		}
+	}
+
+	return err
+}
+
+func ResidualExpr(a *cel.Ast, details *cel.EvalDetails) *exprpb.Expr {
+	pruned := interpreter.PruneAst(a.Expr(), details.State())
+	return pruned
 }

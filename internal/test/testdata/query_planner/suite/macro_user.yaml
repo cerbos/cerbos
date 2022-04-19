@@ -1,0 +1,153 @@
+---
+description: Macros tests
+principal:
+  id: macro_user
+  policyVersion: default
+  roles:
+    - employee
+    - user
+  attr:
+    forbidden:
+      - "US"
+      - "UK"
+tests:
+  - action: map
+    resource:
+      kind: macro
+      policyVersion: default
+    want:
+      kind: KIND_CONDITIONAL
+      condition:
+        expression:
+          operator: in
+          operands:
+            - value: "US"
+            - expression:
+                operator: map
+                operands:
+                  - variable: R.attr.geos
+                  - expression:
+                      operator: lambda
+                      operands:
+                        - expression:
+                            operator: upperAscii
+                            operands:
+                              - variable: t
+                        - variable: t
+  - action: filter
+    resource:
+      kind: macro
+      policyVersion: default
+    want:
+      kind: KIND_CONDITIONAL
+      condition:
+        expression:
+          operator: in
+          operands:
+            - value: "US"
+            - expression:
+                operator: filter
+                operands:
+                  - variable: R.attr.geos
+                  - expression:
+                      operator: lambda
+                      operands:
+                        - expression:
+                            operator: startsWith
+                            operands:
+                              - variable: t
+                              - value: "U"
+                        - variable: t
+  - action: all
+    resource:
+      kind: macro
+      policyVersion: default
+    want:
+      kind: KIND_CONDITIONAL
+      condition:
+        expression:
+          operator: all
+          operands:
+            - variable: R.attr.geos
+            - expression:
+                operator: lambda
+                operands:
+                  - expression:
+                      operator: in
+                      operands:
+                        - value: "US"
+                        - variable: x.countries
+                  - variable: x
+  - action: exists
+    resource:
+      kind: macro
+      policyVersion: default
+    want:
+      kind: KIND_CONDITIONAL
+      condition:
+        expression:
+          operator: exists
+          operands:
+            - variable: R.attr.geos
+            - expression:
+                operator: lambda
+                operands:
+                  - expression:
+                      operator: in
+                      operands:
+                        - value: "US"
+                        - variable: x.countries
+                  - variable: x
+  - action: exists_one
+    resource:
+      kind: macro
+      policyVersion: default
+    want:
+      kind: KIND_CONDITIONAL
+      condition:
+        expression:
+          operator: exists_one
+          operands:
+            - variable: R.attr.geos
+            - expression:
+                operator: lambda
+                operands:
+                  - expression:
+                      operator: in
+                      operands:
+                        - value: "US"
+                        - variable: x.countries
+                  - variable: x
+  - action: embedded
+    resource:
+      kind: macro
+      policyVersion: default
+    want:
+      kind: KIND_CONDITIONAL
+      condition:
+        expression:
+          operator: all
+          operands:
+            - variable: R.attr.geos
+            - expression:
+                operator: lambda
+                operands:
+                  - expression:
+                      operator: not
+                      operands:
+                        - expression:
+                            operator: exists
+                            operands:
+                              - variable: x.countries
+                              - expression:
+                                  operator: lambda
+                                  operands:
+                                    - expression:
+                                        operator: in
+                                        operands:
+                                          - variable: t
+                                          - value:
+                                              - "US"
+                                              - "UK"
+                                    - variable: t
+                  - variable: x
