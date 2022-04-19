@@ -24,6 +24,9 @@ func TestDirectiveParser(t *testing.T) {
 				require.False(t, rd.Reset)
 				require.False(t, rd.Vars)
 				require.False(t, rd.Help)
+				require.False(t, rd.Rules)
+				require.Nil(t, rd.Exec)
+				require.Nil(t, rd.Load)
 				require.Nil(t, rd.Let)
 			},
 		},
@@ -35,6 +38,9 @@ func TestDirectiveParser(t *testing.T) {
 				require.False(t, rd.Reset)
 				require.False(t, rd.Vars)
 				require.False(t, rd.Help)
+				require.False(t, rd.Rules)
+				require.Nil(t, rd.Exec)
+				require.Nil(t, rd.Load)
 				require.Nil(t, rd.Let)
 			},
 		},
@@ -46,6 +52,9 @@ func TestDirectiveParser(t *testing.T) {
 				require.False(t, rd.Reset)
 				require.False(t, rd.Vars)
 				require.False(t, rd.Help)
+				require.False(t, rd.Rules)
+				require.Nil(t, rd.Exec)
+				require.Nil(t, rd.Load)
 				require.Nil(t, rd.Let)
 			},
 		},
@@ -57,6 +66,9 @@ func TestDirectiveParser(t *testing.T) {
 				require.True(t, rd.Reset)
 				require.False(t, rd.Vars)
 				require.False(t, rd.Help)
+				require.False(t, rd.Rules)
+				require.Nil(t, rd.Exec)
+				require.Nil(t, rd.Load)
 				require.Nil(t, rd.Let)
 			},
 		},
@@ -68,6 +80,9 @@ func TestDirectiveParser(t *testing.T) {
 				require.False(t, rd.Reset)
 				require.True(t, rd.Vars)
 				require.False(t, rd.Help)
+				require.False(t, rd.Rules)
+				require.Nil(t, rd.Exec)
+				require.Nil(t, rd.Load)
 				require.Nil(t, rd.Let)
 			},
 		},
@@ -79,6 +94,9 @@ func TestDirectiveParser(t *testing.T) {
 				require.False(t, rd.Reset)
 				require.False(t, rd.Vars)
 				require.True(t, rd.Help)
+				require.False(t, rd.Rules)
+				require.Nil(t, rd.Exec)
+				require.Nil(t, rd.Load)
 				require.Nil(t, rd.Let)
 			},
 		},
@@ -90,6 +108,23 @@ func TestDirectiveParser(t *testing.T) {
 				require.False(t, rd.Reset)
 				require.False(t, rd.Vars)
 				require.True(t, rd.Help)
+				require.False(t, rd.Rules)
+				require.Nil(t, rd.Exec)
+				require.Nil(t, rd.Load)
+				require.Nil(t, rd.Let)
+			},
+		},
+		{
+			directive: "rules",
+			check: func(t *testing.T, rd *REPLDirective) {
+				t.Helper()
+				require.False(t, rd.Exit)
+				require.False(t, rd.Reset)
+				require.False(t, rd.Vars)
+				require.False(t, rd.Help)
+				require.True(t, rd.Rules)
+				require.Nil(t, rd.Exec)
+				require.Nil(t, rd.Load)
 				require.Nil(t, rd.Let)
 			},
 		},
@@ -147,6 +182,30 @@ func TestDirectiveParser(t *testing.T) {
 				require.Equal(t, `{"k1": [true, false], "k2": {"kk1": true}, "k3": 12}`, strings.TrimSpace(rd.Let.Expr))
 			},
 		},
+		{
+			directive: `load /policies/policy.yaml`,
+			check: func(t *testing.T, rd *REPLDirective) {
+				t.Helper()
+				checkLoadIsDefined(t, rd)
+				require.Equal(t, `/policies/policy.yaml`, strings.TrimSpace(rd.Load.Path))
+			},
+		},
+		{
+			directive: `load ../policies/policy.yaml`,
+			check: func(t *testing.T, rd *REPLDirective) {
+				t.Helper()
+				checkLoadIsDefined(t, rd)
+				require.Equal(t, `../policies/policy.yaml`, strings.TrimSpace(rd.Load.Path))
+			},
+		},
+		{
+			directive: `exec #12`,
+			check: func(t *testing.T, rd *REPLDirective) {
+				t.Helper()
+				checkExecIsDefined(t, rd)
+				require.Equal(t, 12, rd.Exec.RuleID)
+			},
+		},
 	}
 
 	parser, err := NewParser()
@@ -174,5 +233,32 @@ func checkLetIsDefined(t *testing.T, rd *REPLDirective) {
 	require.False(t, rd.Reset)
 	require.False(t, rd.Vars)
 	require.False(t, rd.Help)
+	require.False(t, rd.Rules)
+	require.Nil(t, rd.Exec)
+	require.Nil(t, rd.Load)
 	require.NotNil(t, rd.Let)
+}
+
+func checkLoadIsDefined(t *testing.T, rd *REPLDirective) {
+	t.Helper()
+	require.False(t, rd.Exit)
+	require.False(t, rd.Reset)
+	require.False(t, rd.Vars)
+	require.False(t, rd.Help)
+	require.False(t, rd.Rules)
+	require.Nil(t, rd.Exec)
+	require.Nil(t, rd.Let)
+	require.NotNil(t, rd.Load)
+}
+
+func checkExecIsDefined(t *testing.T, rd *REPLDirective) {
+	t.Helper()
+	require.False(t, rd.Exit)
+	require.False(t, rd.Reset)
+	require.False(t, rd.Vars)
+	require.False(t, rd.Help)
+	require.False(t, rd.Rules)
+	require.Nil(t, rd.Let)
+	require.Nil(t, rd.Load)
+	require.NotNil(t, rd.Exec)
 }
