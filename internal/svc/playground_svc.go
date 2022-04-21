@@ -116,7 +116,11 @@ func (cs *CerbosPlaygroundService) PlaygroundTest(ctx context.Context, req *requ
 
 	return &responsev1.PlaygroundTestResponse{
 		PlaygroundId: req.PlaygroundId,
-		Outcome:      &responsev1.PlaygroundTestResponse_Results{Results: results},
+		Outcome: &responsev1.PlaygroundTestResponse_Success{
+			Success: &responsev1.PlaygroundTestResponse_TestResults{
+				Results: results,
+			},
+		},
 	}, nil
 }
 

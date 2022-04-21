@@ -23,19 +23,21 @@ playgroundTest:
   }
   wantResponse: {
     "playgroundId": "test",
-    "results": {
-      "suites": [
-        {
-          "file": "policy_04_test.yaml",
-          "name": "Unknown",
-          "error": "failed to load test suite: failed to convert YAML to JSON: yaml: invalid leading UTF-8 octet",
-          "summary": {
-            "overallResult": "RESULT_ERRORED"
+    "success": {
+      "results": {
+        "suites": [
+          {
+            "file": "policy_04_test.yaml",
+            "name": "Unknown",
+            "error": "failed to load test suite: failed to convert YAML to JSON: yaml: invalid leading UTF-8 octet",
+            "summary": {
+              "overallResult": "RESULT_ERRORED"
+            }
           }
+        ],
+        "summary": {
+          "overallResult": "RESULT_ERRORED"
         }
-      ],
-      "summary": {
-        "overallResult": "RESULT_ERRORED"
       }
     }
   }

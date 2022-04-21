@@ -2440,6 +2440,15 @@ func cerbos_response_v1_PlaygroundProxyResponse_hashpb_sum(m *v13.PlaygroundProx
 	}
 }
 
+func cerbos_response_v1_PlaygroundTestResponse_TestResults_hashpb_sum(m *v13.PlaygroundTestResponse_TestResults, hasher hash.Hash, ignore map[string]struct{}) {
+	if _, ok := ignore["cerbos.response.v1.PlaygroundTestResponse.TestResults.results"]; !ok {
+		if m.Results != nil {
+			cerbos_policy_v1_TestResults_hashpb_sum(m.Results, hasher, ignore)
+		}
+
+	}
+}
+
 func cerbos_response_v1_PlaygroundTestResponse_hashpb_sum(m *v13.PlaygroundTestResponse, hasher hash.Hash, ignore map[string]struct{}) {
 	if _, ok := ignore["cerbos.response.v1.PlaygroundTestResponse.playground_id"]; !ok {
 		_, _ = hasher.Write(protowire.AppendString(nil, m.PlaygroundId))
@@ -2453,9 +2462,9 @@ func cerbos_response_v1_PlaygroundTestResponse_hashpb_sum(m *v13.PlaygroundTestR
 					cerbos_response_v1_PlaygroundFailure_hashpb_sum(t.Failure, hasher, ignore)
 				}
 
-			case *v13.PlaygroundTestResponse_Results:
-				if t.Results != nil {
-					cerbos_policy_v1_TestResults_hashpb_sum(t.Results, hasher, ignore)
+			case *v13.PlaygroundTestResponse_Success:
+				if t.Success != nil {
+					cerbos_response_v1_PlaygroundTestResponse_TestResults_hashpb_sum(t.Success, hasher, ignore)
 				}
 
 			}

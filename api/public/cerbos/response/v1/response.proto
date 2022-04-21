@@ -331,10 +331,14 @@ message PlaygroundTestResponse {
     }
   };
 
+  message TestResults {
+    cerbos.policy.v1.TestResults results = 1;
+  }
+
   string playground_id = 1;
   oneof outcome {
     PlaygroundFailure failure = 2;
-    cerbos.policy.v1.TestResults results = 3;
+    TestResults success = 3;
   }
 }
 
