@@ -1542,6 +1542,20 @@
         }
       }
     },
+    "policyv1TestResults": {
+      "type": "object",
+      "properties": {
+        "suites": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/TestResultsSuite"
+          }
+        },
+        "summary": {
+          "$ref": "#/definitions/TestResultsSummary"
+        }
+      }
+    },
     "protobufAny": {
       "type": "object",
       "properties": {
@@ -2477,11 +2491,19 @@
         "failure": {
           "$ref": "#/definitions/v1PlaygroundFailure"
         },
-        "results": {
-          "$ref": "#/definitions/v1TestResults"
+        "success": {
+          "$ref": "#/definitions/v1PlaygroundTestResponseTestResults"
         }
       },
       "description": "Playground test response"
+    },
+    "v1PlaygroundTestResponseTestResults": {
+      "type": "object",
+      "properties": {
+        "results": {
+          "$ref": "#/definitions/policyv1TestResults"
+        }
+      }
     },
     "v1PlaygroundValidateRequest": {
       "type": "object",
@@ -2866,20 +2888,6 @@
         }
       },
       "description": "Server info response"
-    },
-    "v1TestResults": {
-      "type": "object",
-      "properties": {
-        "suites": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/TestResultsSuite"
-          }
-        },
-        "summary": {
-          "$ref": "#/definitions/TestResultsSummary"
-        }
-      }
     },
     "v1TestResultsAction": {
       "type": "object",

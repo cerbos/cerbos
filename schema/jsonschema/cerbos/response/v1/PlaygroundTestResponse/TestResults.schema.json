@@ -1,5 +1,5 @@
 {
-  "$id": "https://api.cerbos.dev/cerbos/response/v1/PlaygroundTestResponse.schema.json",
+  "$id": "https://api.cerbos.dev/cerbos/response/v1/PlaygroundTestResponse/TestResults.schema.json",
   "$schema": "http://json-schema.org/draft-07/schema#",
   "definitions": {
     "cerbos.effect.v1.Effect": {
@@ -279,39 +279,6 @@
         }
       }
     },
-    "cerbos.response.v1.PlaygroundFailure": {
-      "type": "object",
-      "additionalProperties": false,
-      "properties": {
-        "errors": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/cerbos.response.v1.PlaygroundFailure.Error"
-          }
-        }
-      }
-    },
-    "cerbos.response.v1.PlaygroundFailure.Error": {
-      "type": "object",
-      "additionalProperties": false,
-      "properties": {
-        "error": {
-          "type": "string"
-        },
-        "file": {
-          "type": "string"
-        }
-      }
-    },
-    "cerbos.response.v1.PlaygroundTestResponse.TestResults": {
-      "type": "object",
-      "additionalProperties": false,
-      "properties": {
-        "results": {
-          "$ref": "#/definitions/cerbos.policy.v1.TestResults"
-        }
-      }
-    },
     "google.protobuf.Value": {
       "title": "Value",
       "description": "A dynamically-typed value."
@@ -320,14 +287,8 @@
   "type": "object",
   "additionalProperties": false,
   "properties": {
-    "failure": {
-      "$ref": "#/definitions/cerbos.response.v1.PlaygroundFailure"
-    },
-    "playgroundId": {
-      "type": "string"
-    },
-    "success": {
-      "$ref": "#/definitions/cerbos.response.v1.PlaygroundTestResponse.TestResults"
+    "results": {
+      "$ref": "#/definitions/cerbos.policy.v1.TestResults"
     }
   }
 }
