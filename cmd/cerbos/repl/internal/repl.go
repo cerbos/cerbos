@@ -128,7 +128,7 @@ func (r *REPL) readInput() string {
 	var input strings.Builder
 	currPrompt := prompt
 
-	stack := runeStack{}
+	stack := &runeStack{}
 	for {
 		line, err := r.reader.Prompt(currPrompt)
 		if err != nil {
@@ -145,41 +145,7 @@ func (r *REPL) readInput() string {
 			return input.String()
 		}
 
-		isStr := false
-		for idx, r := range line {
-			switch r {
-			case '"':
-				if idx-1 >= 0 && line[idx-1] == '\\' {
-					continue
-				}
-
-				if p, ok := stack.Peek(); ok {
-					if p == '"' {
-						stack.Pop()
-					}
-				} else {
-					stack.Push(r)
-				}
-
-				isStr = !isStr
-			case '(', '{', '[':
-				if isStr {
-					continue
-				}
-				stack.Push(r)
-			case ')', '}', ']':
-				if isStr {
-					continue
-				}
-				if p, ok := stack.Peek(); ok {
-					if oppositeChars[r] == p {
-						stack.Pop()
-					}
-				}
-			}
-		}
-
-		if !stack.IsEmpty() {
+		if !isTerminated(line, stack) {
 			input.WriteString(line)
 			input.WriteString(" ")
 			currPrompt = secondaryPrompt
@@ -573,6 +539,48 @@ func (r *REPL) mkEnv() (*cel.Env, error) {
 	}
 
 	return conditions.StdEnv.Extend(cel.Declarations(decls...))
+}
+
+func isTerminated(line string, stack *runeStack) bool {
+	if line[len(line)-1] == '\\' {
+		return false
+	}
+
+	inQuote := false
+	for idx, r := range line {
+		switch r {
+		case '"', '\'':
+			if idx-1 >= 0 && line[idx-1] == '\\' {
+				continue
+			}
+
+			if p, ok := stack.Peek(); ok {
+				if p == r {
+					stack.Pop()
+				}
+			} else {
+				stack.Push(r)
+			}
+
+			inQuote = !inQuote
+		case '(', '{', '[':
+			if inQuote {
+				continue
+			}
+			stack.Push(r)
+		case ')', '}', ']':
+			if inQuote {
+				continue
+			}
+			if p, ok := stack.Peek(); ok {
+				if oppositeChars[r] == p {
+					stack.Pop()
+				}
+			}
+		}
+	}
+
+	return stack.IsEmpty()
 }
 
 // variables is a type that provides the interpreter.Activation interface.

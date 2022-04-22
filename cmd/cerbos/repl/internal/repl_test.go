@@ -381,6 +381,39 @@ func TestREPL(t *testing.T) {
 	}
 }
 
+func TestIsTerminated(t *testing.T) {
+	testCases := []struct {
+		input    string
+		expected bool
+	}{
+		{"{foo: bar}", true},
+		{"[foo: bar]", true},
+		{"(foo: bar)", true},
+		{"{'foo': 'bar'}", true},
+		{"['foo': 'bar']", true},
+		{"('foo': 'bar')", true},
+		{"{\"foo\": \"bar\"}", true},
+		{"[\"foo\": \"bar\"]", true},
+		{"(\"foo\": \"bar\")", true},
+		{"{\"foo\": \"bar\"}", true},
+		{"foo\"bar\" ('baz')", true},
+		{"\"foo\\\"bar\\\" ('baz'\"", true},
+		{"\"foo_'_bar_\\\"_baz\"", true},
+		{"{foo: bar}\\", false},
+		{"foo_'_bar_\\\"_baz", false},
+		{"foo_'_bar_baz", false},
+		{"foo\\\"bar\\\" ('baz'", false},
+		{"{'foo': 'bar'", false},
+	}
+
+	for idx, tc := range testCases {
+		t.Run(fmt.Sprintf("TestCase_%d", idx), func(t *testing.T) {
+			stack := &runeStack{}
+			require.True(t, isTerminated(tc.input, stack) == tc.expected, tc.input)
+		})
+	}
+}
+
 type mockOutput struct {
 	msg        string
 	args       []any
