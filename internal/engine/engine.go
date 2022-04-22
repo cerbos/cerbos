@@ -375,21 +375,24 @@ func (engine *Engine) evaluate(ctx context.Context, input *enginev1.CheckInput, 
 		return nil, err
 	}
 
-	// If there are no checks, set the default effect and return.
-	if ec.numChecks == 0 {
-		for _, action := range input.Actions {
-			output.Actions[action] = &enginev1.CheckOutput_ActionEffect{
-				Effect: defaultEffect,
-				Policy: noPolicyMatch,
-			}
-		}
-
-		return output, nil
-	}
+	tctx := tracer.Start(checkOpts.tracerSink)
 
 	// evaluate the policies
-	result, err := ec.evaluate(ctx, input, checkOpts)
+	result, err := ec.evaluate(ctx, tctx, input)
 	if err != nil {
+		if errors.Is(err, ErrNoPoliciesMatched) {
+			for _, action := range input.Actions {
+				tctx.StartAction(action).AppliedEffect(defaultEffect, "No matching policies")
+
+				output.Actions[action] = &enginev1.CheckOutput_ActionEffect{
+					Effect: defaultEffect,
+					Policy: noPolicyMatch,
+				}
+			}
+
+			return output, nil
+		}
+
 		logging.FromContext(ctx).Error("Failed to evaluate policies", zap.Error(err))
 
 		return nil, fmt.Errorf("failed to evaluate policies: %w", err)
@@ -490,11 +493,9 @@ func (ec *evaluationCtx) addCheck(eval Evaluator) {
 	}
 }
 
-func (ec *evaluationCtx) evaluate(ctx context.Context, input *enginev1.CheckInput, checkOpts *checkOptions) (*evaluationResult, error) {
+func (ec *evaluationCtx) evaluate(ctx context.Context, tctx tracer.Context, input *enginev1.CheckInput) (*evaluationResult, error) {
 	ctx, span := tracing.StartSpan(ctx, "engine.EvalCtxEvaluate")
 	defer span.End()
-
-	tctx := tracer.Start(checkOpts.tracerSink)
 
 	if ec.numChecks == 0 {
 		tracing.MarkFailed(span, trace.StatusCodeNotFound, ErrNoPoliciesMatched)
