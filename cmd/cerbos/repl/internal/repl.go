@@ -50,6 +50,12 @@ var (
 
 	listType = reflect.TypeOf([]any{})
 	mapType  = reflect.TypeOf(map[string]any{})
+
+	oppositeChars = map[rune]rune{
+		')': '(',
+		'}': '{',
+		']': '[',
+	}
 )
 
 const (
@@ -122,6 +128,7 @@ func (r *REPL) readInput() string {
 	var input strings.Builder
 	currPrompt := prompt
 
+	stack := &runeStack{}
 	for {
 		line, err := r.reader.Prompt(currPrompt)
 		if err != nil {
@@ -138,12 +145,13 @@ func (r *REPL) readInput() string {
 			return input.String()
 		}
 
-		if strings.HasSuffix(line, "\\") {
-			input.WriteString(strings.TrimSuffix(line, "\\"))
+		l, terminated := isTerminated(line, stack)
+		if !terminated {
+			input.WriteString(l)
 			input.WriteString(" ")
 			currPrompt = secondaryPrompt
 		} else {
-			input.WriteString(line)
+			input.WriteString(l)
 			return input.String()
 		}
 	}
@@ -532,6 +540,48 @@ func (r *REPL) mkEnv() (*cel.Env, error) {
 	}
 
 	return conditions.StdEnv.Extend(cel.Declarations(decls...))
+}
+
+func isTerminated(line string, stack *runeStack) (string, bool) {
+	if line[len(line)-1] == '\\' {
+		return line[:len(line)-1], false
+	}
+
+	inQuote := false
+	for idx, r := range line {
+		switch r {
+		case '"', '\'':
+			if idx-1 >= 0 && line[idx-1] == '\\' {
+				continue
+			}
+
+			if p, ok := stack.Peek(); ok {
+				if p == r {
+					stack.Pop()
+				}
+			} else {
+				stack.Push(r)
+			}
+
+			inQuote = !inQuote
+		case '(', '{', '[':
+			if inQuote {
+				continue
+			}
+			stack.Push(r)
+		case ')', '}', ']':
+			if inQuote {
+				continue
+			}
+			if p, ok := stack.Peek(); ok {
+				if oppositeChars[r] == p {
+					stack.Pop()
+				}
+			}
+		}
+	}
+
+	return line, stack.IsEmpty()
 }
 
 // variables is a type that provides the interpreter.Activation interface.
