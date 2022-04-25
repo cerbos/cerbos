@@ -10,7 +10,7 @@ require (
 	github.com/fullstorydev/grpcurl v1.8.6
 	github.com/golangci/golangci-lint v1.45.2
 	github.com/google/go-licenses v0.0.0-20210715153004-8751804a5b80
-	github.com/goreleaser/goreleaser v1.8.2
+	github.com/goreleaser/goreleaser v1.8.3
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.10.0
 	github.com/planetscale/vtprotobuf v0.3.0
 	github.com/vektra/mockery/v2 v2.10.6
