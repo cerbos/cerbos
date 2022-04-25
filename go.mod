@@ -58,7 +58,7 @@ require (
 	github.com/santhosh-tekuri/jsonschema/v5 v5.0.0
 	github.com/spf13/afero v1.8.2
 	github.com/stretchr/testify v1.7.1
-	github.com/tidwall/gjson v1.14.0
+	github.com/tidwall/gjson v1.14.1
 	github.com/tidwall/sjson v1.2.4
 	go.elastic.co/ecszap v1.0.1
 	go.opencensus.io v0.23.0
