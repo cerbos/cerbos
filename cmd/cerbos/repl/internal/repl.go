@@ -145,12 +145,13 @@ func (r *REPL) readInput() string {
 			return input.String()
 		}
 
-		if !isTerminated(line, stack) {
-			input.WriteString(line)
+		l, terminated := isTerminated(line, stack)
+		if !terminated {
+			input.WriteString(l)
 			input.WriteString(" ")
 			currPrompt = secondaryPrompt
 		} else {
-			input.WriteString(line)
+			input.WriteString(l)
 			return input.String()
 		}
 	}
@@ -541,9 +542,9 @@ func (r *REPL) mkEnv() (*cel.Env, error) {
 	return conditions.StdEnv.Extend(cel.Declarations(decls...))
 }
 
-func isTerminated(line string, stack *runeStack) bool {
+func isTerminated(line string, stack *runeStack) (string, bool) {
 	if line[len(line)-1] == '\\' {
-		return false
+		return line[:len(line)-1], false
 	}
 
 	inQuote := false
@@ -580,7 +581,7 @@ func isTerminated(line string, stack *runeStack) bool {
 		}
 	}
 
-	return stack.IsEmpty()
+	return line, stack.IsEmpty()
 }
 
 // variables is a type that provides the interpreter.Activation interface.

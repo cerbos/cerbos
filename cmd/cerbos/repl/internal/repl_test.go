@@ -409,7 +409,8 @@ func TestIsTerminated(t *testing.T) {
 	for idx, tc := range testCases {
 		t.Run(fmt.Sprintf("TestCase_%d", idx), func(t *testing.T) {
 			stack := &runeStack{}
-			require.True(t, isTerminated(tc.input, stack) == tc.expected, tc.input)
+			_, actual := isTerminated(tc.input, stack)
+			require.True(t, actual == tc.expected, tc.input)
 		})
 	}
 }
