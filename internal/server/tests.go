@@ -259,7 +259,7 @@ func (tr *TestRunner) executeHTTPTestCase(c *http.Client, hostAddr string, creds
 			want = call.AdminAddOrUpdatePolicy.WantResponse
 			have = &responsev1.AddOrUpdatePolicyResponse{}
 		case *privatev1.ServerTestCase_ResourcesQueryPlan:
-			addr = fmt.Sprintf("%s/api/x/plan/resources", hostAddr)
+			addr = fmt.Sprintf("%s/api/plan/resources", hostAddr)
 			input = call.ResourcesQueryPlan.Input
 			want = call.ResourcesQueryPlan.WantResponse
 			have = &responsev1.ResourcesQueryPlanResponse{}
@@ -326,6 +326,7 @@ func (tr *TestRunner) checkCORS(c *http.Client, hostAddr string) func(*testing.T
 		"/admin/schema",
 		"/admin/store",
 		"/api/x/plan/resources",
+		"/api/plan/resources",
 	}
 
 	methods := []string{

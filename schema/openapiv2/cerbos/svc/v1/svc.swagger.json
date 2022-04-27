@@ -584,6 +584,40 @@
         "deprecated": true
       }
     },
+    "/api/plan/resources": {
+      "post": {
+        "summary": "Resources query plan",
+        "description": "Resources query plan",
+        "operationId": "CerbosService_ResourcesQueryPlan",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1ResourcesQueryPlanResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/googlerpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/cerbosrequestv1ResourcesQueryPlanRequest"
+            }
+          }
+        ],
+        "tags": [
+          "CerbosService"
+        ]
+      }
+    },
     "/api/playground/evaluate": {
       "post": {
         "operationId": "CerbosPlaygroundService_PlaygroundEvaluate",
@@ -740,7 +774,7 @@
       "post": {
         "summary": "Resources query plan",
         "description": "Resources query plan",
-        "operationId": "CerbosService_ResourcesQueryPlan",
+        "operationId": "CerbosService_ResourcesQueryPlan2",
         "responses": {
           "200": {
             "description": "A successful response.",

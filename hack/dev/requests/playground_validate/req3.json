@@ -1,6 +1,6 @@
 {
     "playgroundId": "test",
-    "policyFiles": [
+    "files": [
         {
             "fileName": "common_roles.yaml",
             "contents": "LS0tCmFwaVZlcnNpb246IGFwaS5jZXJib3MuZGV2L3YxCg=="
