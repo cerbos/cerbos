@@ -1,0 +1,45 @@
+---
+description: "Wildcard roles on account resource"
+inputs: [
+  {
+    "requestId": "test",
+    "actions": [
+      "create",
+      "delete",
+      "edit"
+    ],
+    "principal": {
+      "id": "john",
+      "roles": [
+        "user"
+      ],
+      "attr": {}
+    },
+    "resource": {
+      "policyVersion": "default",
+      "kind": "account",
+      "id": "XX125",
+      "attr": {}
+    }
+  }
+]
+wantOutputs: [
+  {
+    "requestId": "test",
+    "resourceId": "XX125",
+    "actions": {
+      "create": {
+        "effect": "EFFECT_DENY",
+        "policy": "resource.account.vdefault",
+      },
+      "delete": {
+        "effect": "EFFECT_ALLOW",
+        "policy": "resource.account.vdefault",
+      },
+      "edit": {
+        "effect": "EFFECT_ALLOW",
+        "policy": "resource.account.vdefault",
+      },
+    }
+  }
+]

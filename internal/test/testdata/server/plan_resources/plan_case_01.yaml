@@ -13,7 +13,10 @@ planResources:
       "policyVersion": "20210210",
       "roles": [
           "employee"
-      ]
+      ],
+      "attr": {
+        "reader": false
+      }
     },
     "resource": {
       "kind": "leave_request",
