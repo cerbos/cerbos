@@ -27,6 +27,18 @@ resourcePolicy:
         - employee_that_owns_the_record
       effect: EFFECT_ALLOW
 
+    - actions: ["view"]
+      condition:
+        match:
+          expr: request.resource.attr.public == true
+      roles: ["*"]
+      effect: EFFECT_ALLOW
+
+    - actions: ["view"]
+      derivedRoles:
+        - reader
+      effect: EFFECT_ALLOW
+
     - actions: ["view:*"]
       derivedRoles:
         - employee_that_owns_the_record

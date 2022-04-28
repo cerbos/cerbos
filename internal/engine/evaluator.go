@@ -391,8 +391,22 @@ func toSet(values []string) stringSet {
 }
 
 func setIntersects(s1 protoSet, s2 stringSet) bool {
+	if hasWildcard(s1) {
+		return true
+	}
+
 	for v := range s2 {
 		if _, ok := s1[v]; ok {
+			return true
+		}
+	}
+
+	return false
+}
+
+func hasWildcard(set protoSet) bool {
+	for v := range set {
+		if v == "*" {
 			return true
 		}
 	}

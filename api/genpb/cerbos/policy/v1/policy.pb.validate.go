@@ -786,7 +786,7 @@ func (m *ResourceRule) validate(all bool) error {
 		if !_ResourceRule_Roles_Pattern.MatchString(item) {
 			err := ResourceRuleValidationError{
 				field:  fmt.Sprintf("Roles[%v]", idx),
-				reason: "value does not match regex pattern \"^[[:word:]\\\\-\\\\.]+$\"",
+				reason: "value does not match regex pattern \"^[[:word:]\\\\*\\\\-\\\\.]+$\"",
 			}
 			if !all {
 				return err
@@ -926,7 +926,7 @@ var _ interface {
 
 var _ResourceRule_DerivedRoles_Pattern = regexp.MustCompile("^[[:word:]\\-\\.]+$")
 
-var _ResourceRule_Roles_Pattern = regexp.MustCompile("^[[:word:]\\-\\.]+$")
+var _ResourceRule_Roles_Pattern = regexp.MustCompile("^[[:word:]\\*\\-\\.]+$")
 
 var _ResourceRule_Effect_InLookup = map[effectv1.Effect]struct{}{
 	1: {},
@@ -1520,7 +1520,7 @@ func (m *RoleDef) validate(all bool) error {
 		if !_RoleDef_ParentRoles_Pattern.MatchString(item) {
 			err := RoleDefValidationError{
 				field:  fmt.Sprintf("ParentRoles[%v]", idx),
-				reason: "value does not match regex pattern \"^[[:word:]\\\\-\\\\.]+$\"",
+				reason: "value does not match regex pattern \"^[[:word:]\\\\*\\\\-\\\\.]+$\"",
 			}
 			if !all {
 				return err
@@ -1638,7 +1638,7 @@ var _ interface {
 
 var _RoleDef_Name_Pattern = regexp.MustCompile("^[[:word:]\\-\\.]+$")
 
-var _RoleDef_ParentRoles_Pattern = regexp.MustCompile("^[[:word:]\\-\\.]+$")
+var _RoleDef_ParentRoles_Pattern = regexp.MustCompile("^[[:word:]\\*\\-\\.]+$")
 
 // Validate checks the field values on Condition with the rules defined in the
 // proto definition for this message. If any rules are violated, the first

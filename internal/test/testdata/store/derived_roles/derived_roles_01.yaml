@@ -14,3 +14,9 @@ derivedRoles:
       condition:
         match:
           expr: R.attr.owner == P.id
+
+    - name: reader
+      parentRoles: ["*"]
+      condition:
+        match:
+          expr: request.principal.attr.reader == true
