@@ -513,6 +513,7 @@ The `condition` field holds the AST of the condition that must be satisfied. It 
 | gt                | Greater than (>)
 | in                | List membership (in)
 | index             | Array or map index 
+| lambda            | Anonymous function
 | le                | Less than or equal (<=)
 | list              | List constructor
 | lt                | Less than (<)
@@ -524,10 +525,7 @@ The `condition` field holds the AST of the condition that must be satisfied. It 
 | sub               | Subtract (-)
 |===
 
-NOTE: Some advanced CEL features like `map` over a list cannot be directly translated into a simple AST and the `operator` field can contain other CEL-specific operators other than those listed above.
-
-
-.Example: `request.resource.attr.status == "PENDING_APPROVAL"
+.Example: `request.resource.attr.status == "PENDING_APPROVAL"`
 [source,json,linenums]
 ----
 {
@@ -545,7 +543,7 @@ NOTE: Some advanced CEL features like `map` over a list cannot be directly trans
 }
 ----
 
-.Example: `(request.resource.attr.department == "marketing") && (request.resource.attr.team != "design")
+.Example: `(request.resource.attr.department == "marketing") && (request.resource.attr.team != "design")`
 [source,json,linenums]
 ----
 {
@@ -583,6 +581,44 @@ NOTE: Some advanced CEL features like `map` over a list cannot be directly trans
 }
 ----
 
+.Example: `request.resource.attr.values.filter(t, t > 0)`
+[source,json,linenums]
+----
+{
+  "expression": {
+    "operator": "filter",
+    "operands": [
+      {
+        "variable": "request.resource.attr.values"
+      },
+      {
+        "expression": {
+          "operator": "lambda",
+          "operands": [
+            {
+              "variable": "t"
+            },
+            {
+              "expression": {
+                "operator": "gt",
+                "operands": [
+                  {
+                    "variable": "t"
+                  },
+                  {
+                    "value": 0
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      }
+    ]
+  }
+}
+
+----
 == Accessing the API
 
 === Using curl to access the REST API

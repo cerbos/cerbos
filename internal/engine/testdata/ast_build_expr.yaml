@@ -27,97 +27,80 @@
                   - variable: b
             - variable: c
       - variable: d
-"x.filter(t, t > 0)":
+
+"x.all(t, t > 0)":
   expression:
-    operator: loop
+    operator: all
     operands:
+      - variable: x
       - expression:
+          operator: lambda
           operands:
             - expression:
+                operator: gt
                 operands:
-                  - expression:
-                      operands:
-                        - variable: t
-                        - value: 0
-                      operator: gt
-                  - expression:
-                      operands:
-                        - variable: __result__
-                        - expression:
-                            operands:
-                              - variable: t
-                            operator: list
-                      operator: add
-                  - variable: __result__
-                operator: _?_:_
-          operator: loop-step
-      - expression:
-          operands:
-            - value: true
-          operator: loop-condition
-      - expression:
-          operands:
-            - variable: __result__
-          operator: loop-result
-      - expression:
-          operands:
-            - value: []
-          operator: loop-accu-init
-      - expression:
-          operands:
-            - variable: x
-          operator: loop-iter-range
-      - expression:
-          operands:
+                  - variable: t
+                  - value: 0
             - variable: t
-          operator: loop-iter-var
+
+"x.filter(t, t > 0)":
+  expression:
+    operator: filter
+    operands:
+      - variable: x
       - expression:
+          operator: lambda
           operands:
-            - variable: __result__
-          operator: loop-accu-var
+            - expression:
+                operator: gt
+                operands:
+                  - variable: t
+                  - value: 0
+            - variable: t
+
+"x.exists_one(t, t > 0)":
+  expression:
+    operator: exists_one
+    operands:
+      - variable: x
+      - expression:
+          operator: lambda
+          operands:
+            - expression:
+                operator: gt
+                operands:
+                  - variable: t
+                  - value: 0
+            - variable: t
+
+"x.exists(t, t > 0)":
+  expression:
+    operator: exists
+    operands:
+      - variable: x
+      - expression:
+          operator: lambda
+          operands:
+            - expression:
+                operator: gt
+                operands:
+                  - variable: t
+                  - value: 0
+            - variable: t
 
 "x.map(t, t.upperAscii())":
   expression:
+    operator: map
     operands:
+      - variable: x
       - expression:
+          operator: lambda
           operands:
             - expression:
                 operands:
-                  - variable: __result__
-                  - expression:
-                      operands:
-                        - expression:
-                            operands:
-                              - variable: t
-                            operator: upperAscii
-                      operator: list
-                operator: add
-          operator: loop-step
-      - expression:
-          operands:
-            - value: true
-          operator: loop-condition
-      - expression:
-          operands:
-            - variable: __result__
-          operator: loop-result
-      - expression:
-          operands:
-            - value: []
-          operator: loop-accu-init
-      - expression:
-          operands:
-            - variable: x
-          operator: loop-iter-range
-      - expression:
-          operands:
+                  - variable: t
+                operator: upperAscii
             - variable: t
-          operator: loop-iter-var
-      - expression:
-          operands:
-            - variable: __result__
-          operator: loop-accu-var
-    operator: loop
 
 "x.f(a,3)":
   expression:

@@ -9,7 +9,6 @@ import (
 
 	"github.com/google/cel-go/cel"
 	"github.com/google/cel-go/checker/decls"
-	"github.com/google/cel-go/common/types"
 	"github.com/google/cel-go/parser"
 	"github.com/stretchr/testify/require"
 	expr "google.golang.org/genproto/googleapis/api/expr/v1alpha1"
@@ -18,6 +17,10 @@ import (
 	enginev1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
 	runtimev1 "github.com/cerbos/cerbos/api/genpb/cerbos/runtime/v1"
 	"github.com/cerbos/cerbos/internal/conditions"
+	"github.com/google/go-cmp/cmp"
+	"github.com/google/go-cmp/cmp/cmpopts"
+	"google.golang.org/protobuf/encoding/protojson"
+	"google.golang.org/protobuf/testing/protocmp"
 )
 
 func Test_evaluateCondition(t *testing.T) {
@@ -145,6 +148,7 @@ func TestPartialEvaluationWithGlobalVars(t *testing.T) {
 		decls.NewVar("gb_us", decls.NewListType(decls.String)),
 		decls.NewVar("gbLoc", decls.String),
 		decls.NewVar("ca", decls.String),
+		decls.NewVar("T", decls.Int),
 	))
 	is.NoError(err)
 
@@ -152,6 +156,7 @@ func TestPartialEvaluationWithGlobalVars(t *testing.T) {
 		"gbLoc": "en_GB",
 		"gb_us": []string{"GB", "US"},
 		"ca":    "ca",
+		"T":     100,
 	}, cel.AttributePattern("R"))
 
 	variables := make(map[string]*expr.Expr)
@@ -201,7 +206,12 @@ func TestPartialEvaluationWithGlobalVars(t *testing.T) {
 			expr: "has(V.info.language)",
 			want: "true",
 		},
+		{
+			expr: "R.attr.items.filter(x, x.price > T)",
+			want: "R.attr.items.filter(x, x.price > 100)",
+		},
 	}
+	ignoreID := cmpopts.IgnoreMapEntries(func(k string, _ any) bool { return k == "id" })
 	for _, tt := range tests {
 		t.Run(tt.expr, func(t *testing.T) {
 			is := require.New(t)
@@ -211,18 +221,20 @@ func TestPartialEvaluationWithGlobalVars(t *testing.T) {
 			e, err = replaceVars(e, variables)
 			is.NoError(err)
 			ast = cel.ParsedExprToAst(&expr.ParsedExpr{Expr: e})
-			out, det, err := conditions.Eval(env, ast, pvars, cel.EvalOptions(cel.OptTrackState, cel.OptPartialEval))
-			is.NoError(err)
-			t.Log(types.IsUnknown(out))
+			_, det, err := conditions.Eval(env, ast, pvars, cel.EvalOptions(cel.OptTrackState, cel.OptPartialEval))
 			is.NoError(err)
 
-			residual, err := env.ResidualAst(ast, det)
+			residualExpr := ResidualExpr(ast, det)
+			err = evalComprehensionBody(env, pvars, residualExpr)
 			is.NoError(err)
-			astToString, err := cel.AstToString(residual)
+			updateIds(residualExpr)
 			is.NoError(err)
-			is.Equal(tt.want, astToString)
-			_, iss = env.Check(residual)
+			wantAst, iss := env.Parse(tt.want)
+			wantExpr := wantAst.Expr()
+			updateIds(wantExpr)
 			is.Nil(iss, iss.Err())
+			is.Empty(cmp.Diff(residualExpr, wantExpr, protocmp.Transform(), ignoreID),
+				"{\"got\": %s,\n\"want\": %s}", protojson.Format(residualExpr), protojson.Format(wantExpr))
 		})
 	}
 }

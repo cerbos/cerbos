@@ -316,10 +316,10 @@ func (engine *Engine) ResourcesQueryPlan(ctx context.Context, input *enginev1.Re
 		if input.IncludeMeta {
 			response.Meta = new(responsev1.ResourcesQueryPlanResponse_Meta)
 			response.Meta.FilterDebug, err = String(plan.Filter)
+			if err != nil {
+				response.Meta.FilterDebug = "can't render filter string representation"
+			}
 			response.Meta.MatchedScope = plan.Scope
-		}
-		if err != nil {
-			return nil, err
 		}
 
 		return response, nil

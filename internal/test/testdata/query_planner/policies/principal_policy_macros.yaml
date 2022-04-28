@@ -1,0 +1,50 @@
+---
+apiVersion: "api.cerbos.dev/v1"
+principalPolicy:
+  principal: macro_user
+  version: default
+  rules:
+    - resource: macro
+      actions:
+        - action: map
+          condition:
+            match:
+              expr: |-
+                "US" in R.attr.geos.map(t, t.upperAscii())
+          effect: EFFECT_ALLOW
+          name: map
+        - action: filter
+          condition:
+            match:
+              expr: |-
+                "US" in R.attr.geos.filter(t, t.startsWith("U"))
+          effect: EFFECT_ALLOW
+          name: filter
+        - action: all
+          condition:
+            match:
+              expr: |-
+                R.attr.geos.all(x, "US" in x.countries)
+          effect: EFFECT_ALLOW
+          name: all
+        - action: exists
+          condition:
+            match:
+              expr: |-
+                R.attr.geos.exists(x, "US" in x.countries)
+          effect: EFFECT_ALLOW
+          name: exists
+        - action: exists_one
+          condition:
+            match:
+              expr: |-
+                R.attr.geos.exists_one(x, "US" in x.countries)
+          effect: EFFECT_ALLOW
+          name: exists_one
+        - action: embedded
+          condition:
+            match:
+              expr: |-
+                R.attr.geos.all(x, !x.countries.exists(t, t in P.attr.forbidden))
+          effect: EFFECT_ALLOW
+          name: embedded

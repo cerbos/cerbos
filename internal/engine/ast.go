@@ -41,14 +41,12 @@ const (
 	SetField           = "set-field"
 	GetField           = "get-field"
 	Index              = "index"
-	Comprehension      = "loop"
-	LoopStep           = "loop-step"
-	LoopCondition      = "loop-condition"
-	LoopResult         = "loop-result"
-	LoopAccuInit       = "loop-accu-init"
-	LoopIterRange      = "loop-iter-range"
-	LoopIterVar        = "loop-iter-var"
-	LoopAccuVar        = "loop-accu-var"
+	All                = "all"
+	Filter             = "filter"
+	Exists             = "exists"
+	ExistsOne          = "exists_one"
+	Map                = "map"
+	Lambda             = "lambda"
 )
 
 var ErrUnknownOperator = errors.New("unknown operator")
@@ -81,6 +79,8 @@ func opFromCLE(fn string) (string, error) {
 		return Mod, nil
 	case operators.Index:
 		return Index, nil
+	case operators.LogicalNot:
+		return Not, nil
 	default:
 		return fn, ErrUnknownOperator
 	}
@@ -88,14 +88,21 @@ func opFromCLE(fn string) (string, error) {
 
 func updateIds(e *exprpb.Expr) {
 	var n int64
+	ids := make(map[*exprpb.Expr]int64)
 
 	var impl func(e *exprpb.Expr)
 	impl = func(e *exprpb.Expr) {
 		if e == nil {
 			return
 		}
-		n++
-		e.Id = n
+		if id, ok := ids[e]; ok {
+			e.Id = id
+		} else {
+			n++
+			ids[e] = n
+			e.Id = n
+		}
+
 		switch e := e.ExprKind.(type) {
 		case *exprpb.Expr_SelectExpr:
 			impl(e.SelectExpr.Operand)
@@ -407,35 +414,58 @@ func buildExpr(expr *exprpb.Expr, acc *responsev1.ResourcesQueryPlanResponse_Exp
 		acc.Node = mkExprOpExpr(Struct, operands...)
 	case *exprpb.Expr_ComprehensionExpr:
 		x := expr.ComprehensionExpr
-		var operands []*ExprOp
-
-		for _, r := range []struct {
-			x *exprpb.Expr
-			n string
-			v string
-		}{
-			{n: LoopStep, x: x.LoopStep},
-			{n: LoopCondition, x: x.LoopCondition},
-			{n: LoopResult, x: x.Result},
-			{n: LoopAccuInit, x: x.AccuInit},
-			{n: LoopIterRange, x: x.IterRange},
-			{n: LoopIterVar, v: x.IterVar},
-			{n: LoopAccuVar, v: x.AccuVar},
-		} {
-			op := new(ExprOp)
-			if r.x != nil {
-				err := buildExpr(r.x, op)
-				if err != nil {
-					return err
-				}
-			} else if r.v != "" {
-				op.Node = &ExprOpVar{Variable: r.v}
-			}
-			operands = append(operands, &ExprOp{Node: mkExprOpExpr(r.n, op)})
+		var operator string
+		var step *exprpb.Expr_CallExpr
+		var ok bool
+		if step, ok = x.LoopStep.ExprKind.(*exprpb.Expr_CallExpr); !ok {
+			return fmt.Errorf("expected loop-step expression type CallExpr, got: %T", x.LoopStep.ExprKind)
 		}
-		acc.Node = mkExprOpExpr(Comprehension, operands...)
+		var le *exprpb.Expr
+		switch step.CallExpr.Function {
+		case operators.LogicalAnd:
+			operator = All
+			le = step.CallExpr.Args[1]
+		case operators.LogicalOr:
+			operator = Exists
+			le = step.CallExpr.Args[1]
+		case operators.Add:
+			operator = Map
+			if elements := step.CallExpr.Args[1].GetListExpr().GetElements(); len(elements) > 0 {
+				le = elements[0]
+			}
+		case operators.Conditional:
+			switch x.AccuInit.ExprKind.(type) {
+			case *exprpb.Expr_ListExpr:
+				operator = Filter
+			case *exprpb.Expr_ConstExpr:
+				operator = ExistsOne
+			default:
+				return fmt.Errorf("expected loop-accu-init expression type ConstExpr or ListExpr, got: %T", x.AccuInit.ExprKind)
+			}
+			le = step.CallExpr.Args[0]
+		default:
+			return fmt.Errorf("unexpected loop-step function: %q", step.CallExpr.Function)
+		}
+		lambda := new(ExprOp)
+		err := buildExpr(le, lambda)
+		if err != nil {
+			return err
+		}
+		_, ok = lambda.Node.(*ExprOpExpr)
+		if !ok {
+			return fmt.Errorf("expect expression, got %T", lambda.Node)
+		}
+
+		op := new(ExprOp)
+		err = buildExpr(x.IterRange, op)
+		if err != nil {
+			return err
+		}
+
+		acc.Node = mkExprOpExpr(operator, op,
+			&ExprOp{Node: mkExprOpExpr(Lambda, lambda, &ExprOp{Node: &ExprOpVar{Variable: x.IterVar}})})
 	default:
-		return fmt.Errorf("unsupported expression: %v", expr)
+		return fmt.Errorf("buildExpr: unsupported expression: %v", expr)
 	}
 
 	return nil

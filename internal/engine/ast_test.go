@@ -47,20 +47,22 @@ func getExpectedExpressions(t *testing.T) map[string]*exOp {
 }
 
 func Test_buildExpr(t *testing.T) {
-	is := require.New(t)
 	parse := func(s string) *exprpb.Expr {
 		ast, iss := conditions.StdEnv.Parse(s)
-		is.Nil(iss, iss.Err())
+		require.Nil(t, iss, iss.Err())
 		return ast.Expr()
 	}
 
 	for k, v := range getExpectedExpressions(t) {
-		t.Run(k, func(t *testing.T) {
+		name := k
+		want := v
+		t.Run(name, func(t *testing.T) {
+			is := require.New(t)
 			acc := new(exOp)
 			err := buildExpr(parse(k), acc)
 			is.NoError(err)
 
-			is.Empty(cmp.Diff(v, acc, protocmp.Transform()))
+			is.Empty(cmp.Diff(want, acc, protocmp.Transform()))
 		})
 	}
 }
