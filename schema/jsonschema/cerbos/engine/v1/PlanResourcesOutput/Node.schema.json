@@ -1,8 +1,23 @@
 {
-  "$id": "https://api.cerbos.dev/cerbos/engine/v1/ResourcesQueryPlanOutput/LogicalOperation.schema.json",
+  "$id": "https://api.cerbos.dev/cerbos/engine/v1/PlanResourcesOutput/Node.schema.json",
   "$schema": "http://json-schema.org/draft-07/schema#",
   "definitions": {
-    "cerbos.engine.v1.ResourcesQueryPlanOutput.LogicalOperation.Operator": {
+    "cerbos.engine.v1.PlanResourcesOutput.LogicalOperation": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "nodes": {
+          "type": "array",
+          "items": {
+            "$ref": "#"
+          }
+        },
+        "operator": {
+          "$ref": "#/definitions/cerbos.engine.v1.PlanResourcesOutput.LogicalOperation.Operator"
+        }
+      }
+    },
+    "cerbos.engine.v1.PlanResourcesOutput.LogicalOperation.Operator": {
       "type": "string",
       "enum": [
         "OPERATOR_UNSPECIFIED",
@@ -10,18 +25,6 @@
         "OPERATOR_OR",
         "OPERATOR_NOT"
       ]
-    },
-    "cerbos.engine.v1.ResourcesQueryPlanOutput.Node": {
-      "type": "object",
-      "additionalProperties": false,
-      "properties": {
-        "expression": {
-          "$ref": "#/definitions/google.api.expr.v1alpha1.CheckedExpr"
-        },
-        "logicalOperation": {
-          "$ref": "#"
-        }
-      }
     },
     "google.api.expr.v1alpha1.CheckedExpr": {
       "type": "object",
@@ -465,14 +468,11 @@
   "type": "object",
   "additionalProperties": false,
   "properties": {
-    "nodes": {
-      "type": "array",
-      "items": {
-        "$ref": "#/definitions/cerbos.engine.v1.ResourcesQueryPlanOutput.Node"
-      }
+    "expression": {
+      "$ref": "#/definitions/google.api.expr.v1alpha1.CheckedExpr"
     },
-    "operator": {
-      "$ref": "#/definitions/cerbos.engine.v1.ResourcesQueryPlanOutput.LogicalOperation.Operator"
+    "logicalOperation": {
+      "$ref": "#/definitions/cerbos.engine.v1.PlanResourcesOutput.LogicalOperation"
     }
   }
 }

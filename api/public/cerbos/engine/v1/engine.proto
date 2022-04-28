@@ -17,7 +17,7 @@ option csharp_namespace = "Cerbos.Api.V1.Engine";
 option go_package = "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1;enginev1";
 option java_package = "dev.cerbos.api.v1.engine";
 
-message ResourcesQueryPlanRequest {
+message PlanResourcesRequest {
   message Resource {
     string kind = 1 [
       (validate.rules).string = {
@@ -31,12 +31,14 @@ message ResourcesQueryPlanRequest {
         pattern: "^[[:alpha:]][[:word:]\\@\\.\\-]*(\\:[[:alpha:]][[:word:]\\@\\.\\-]*)*$"
       }
     ];
+
     map<string, google.protobuf.Value> attr = 2 [
       (validate.rules).map.no_sparse = true,
       (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
         description: "Key-value pairs of contextual data about the resource that are known at a time of the request."
       }
     ];
+
     string policy_version = 3 [
       (validate.rules).string.pattern = "^[[:word:]]*$",
       (google.api.field_behavior) = OPTIONAL,
@@ -46,6 +48,7 @@ message ResourcesQueryPlanRequest {
         example: "\"default\""
       }
     ];
+
     string scope = 4 [
       (validate.rules).string.pattern = "^([[:alpha:]][[:word:]\\-]+(\\.[[:alpha:]][[:word:]\\-]*)*)*$",
       (google.api.field_behavior) = OPTIONAL,
@@ -102,18 +105,14 @@ message CheckOutput {
   repeated cerbos.schema.v1.ValidationError validation_errors = 5;
 }
 
-message ResourcesQueryPlanOutput {
-  string request_id = 1;
-  string action = 2;
-  string kind = 3;
-  string policy_version = 4;
-  string scope = 5;
+message PlanResourcesOutput {
   message Node {
     oneof node {
       LogicalOperation logical_operation = 1;
       google.api.expr.v1alpha1.CheckedExpr expression = 2;
     }
   }
+
   message LogicalOperation {
     enum Operator {
       OPERATOR_UNSPECIFIED = 0;
@@ -125,6 +124,11 @@ message ResourcesQueryPlanOutput {
     repeated Node nodes = 2;
   }
 
+  string request_id = 1;
+  string action = 2;
+  string kind = 3;
+  string policy_version = 4;
+  string scope = 5;
   Node filter = 6;
 }
 

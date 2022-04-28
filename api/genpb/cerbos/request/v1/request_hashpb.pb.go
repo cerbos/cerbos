@@ -10,9 +10,9 @@ import (
 
 // HashPB computes a hash of the message using the given hash function
 // The ignore set must contain fully-qualified field names (pkg.msg.field) that should be ignored from the hash
-func (m *ResourcesQueryPlanRequest) HashPB(hasher hash.Hash, ignore map[string]struct{}) {
+func (m *PlanResourcesRequest) HashPB(hasher hash.Hash, ignore map[string]struct{}) {
 	if m != nil {
-		cerbos_request_v1_ResourcesQueryPlanRequest_hashpb_sum(m, hasher, ignore)
+		cerbos_request_v1_PlanResourcesRequest_hashpb_sum(m, hasher, ignore)
 	}
 }
 

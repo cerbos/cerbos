@@ -354,12 +354,12 @@ func testGRPCClient(c client.Client) func(*testing.T) {
 
 			cc := c.With(client.IncludeMeta(true))
 
-			check := func(t *testing.T, have *client.ResourcesQueryPlanResponse, err error) {
+			check := func(t *testing.T, have *client.PlanResourcesResponse, err error) {
 				t.Helper()
 				is := require.New(t)
 
 				is.NoError(err)
-				is.Equal(have.Filter.Kind, responsev1.ResourcesQueryPlanResponse_Filter_KIND_CONDITIONAL)
+				is.Equal(have.Filter.Kind, responsev1.PlanResourcesResponse_Filter_KIND_CONDITIONAL)
 				expression := have.Filter.Condition.GetExpression()
 				is.NotNil(expression)
 				is.Equal(expression.Operator, "eq")
@@ -372,7 +372,7 @@ func testGRPCClient(c client.Client) func(*testing.T) {
 				ctx, cancelFunc := context.WithTimeout(context.Background(), timeout)
 				defer cancelFunc()
 
-				have, err := cc.ResourcesQueryPlan(ctx, principal, resource, "approve")
+				have, err := cc.PlanResources(ctx, principal, resource, "approve")
 				check(t, have, err)
 			})
 
@@ -380,7 +380,7 @@ func testGRPCClient(c client.Client) func(*testing.T) {
 				ctx, cancelFunc := context.WithTimeout(context.Background(), timeout)
 				defer cancelFunc()
 
-				have, err := cc.WithPrincipal(principal).ResourcesQueryPlan(ctx, resource, "approve")
+				have, err := cc.WithPrincipal(principal).PlanResources(ctx, resource, "approve")
 				check(t, have, err)
 			})
 		})

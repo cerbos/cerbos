@@ -1,5 +1,5 @@
 {
-  "$id": "https://api.cerbos.dev/cerbos/response/v1/ResourcesQueryPlanResponse/Meta.schema.json",
+  "$id": "https://api.cerbos.dev/cerbos/response/v1/PlanResourcesResponse/Meta.schema.json",
   "$schema": "http://json-schema.org/draft-07/schema#",
   "type": "object",
   "additionalProperties": false,

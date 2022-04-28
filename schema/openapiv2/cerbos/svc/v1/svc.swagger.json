@@ -586,14 +586,14 @@
     },
     "/api/plan/resources": {
       "post": {
-        "summary": "Resources query plan",
-        "description": "Resources query plan",
-        "operationId": "CerbosService_ResourcesQueryPlan",
+        "summary": "Plan resources",
+        "description": "Produce a query plan with conditions that must be satisfied for accessing a set of instances of a resource",
+        "operationId": "CerbosService_PlanResources",
         "responses": {
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/v1ResourcesQueryPlanResponse"
+              "$ref": "#/definitions/v1PlanResourcesResponse"
             }
           },
           "default": {
@@ -609,7 +609,7 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/cerbosrequestv1ResourcesQueryPlanRequest"
+              "$ref": "#/definitions/cerbosrequestv1PlanResourcesRequest"
             }
           }
         ],
@@ -772,14 +772,14 @@
     },
     "/api/x/plan/resources": {
       "post": {
-        "summary": "Resources query plan",
-        "description": "Resources query plan",
-        "operationId": "CerbosService_ResourcesQueryPlan2",
+        "summary": "Plan resources",
+        "description": "Produce a query plan with conditions that must be satisfied for accessing a set of instances of a resource",
+        "operationId": "CerbosService_PlanResources2",
         "responses": {
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/v1ResourcesQueryPlanResponse"
+              "$ref": "#/definitions/v1PlanResourcesResponse"
             }
           },
           "default": {
@@ -795,7 +795,7 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/cerbosrequestv1ResourcesQueryPlanRequest"
+              "$ref": "#/definitions/cerbosrequestv1PlanResourcesRequest"
             }
           }
         ],
@@ -1033,7 +1033,7 @@
           "type": "object"
         },
         "expression": {
-          "$ref": "#/definitions/ResourcesQueryPlanResponseExpression"
+          "$ref": "#/definitions/PlanResourcesResponseExpression"
         },
         "variable": {
           "type": "string"
@@ -1110,6 +1110,45 @@
       },
       "description": "Unique resource instance ID supplied in the request."
     },
+    "PlanResourcesResponseExpression": {
+      "type": "object",
+      "properties": {
+        "operator": {
+          "type": "string",
+          "description": "Operator"
+        },
+        "operands": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ExpressionOperand"
+          }
+        }
+      },
+      "description": "CEL expression"
+    },
+    "PlanResourcesResponseFilter": {
+      "type": "object",
+      "properties": {
+        "kind": {
+          "$ref": "#/definitions/PlanResourcesResponseFilterKind",
+          "description": "Filter kind. Defines whether the given action is always allowed, always denied or allowed conditionally."
+        },
+        "condition": {
+          "$ref": "#/definitions/ExpressionOperand",
+          "description": "Filter condition. Only populated if kind is KIND_CONDITIONAL."
+        }
+      }
+    },
+    "PlanResourcesResponseFilterKind": {
+      "type": "string",
+      "enum": [
+        "KIND_UNSPECIFIED",
+        "KIND_ALWAYS_ALLOWED",
+        "KIND_ALWAYS_DENIED",
+        "KIND_CONDITIONAL"
+      ],
+      "default": "KIND_UNSPECIFIED"
+    },
     "PlaygroundEvaluateResponseEvalResult": {
       "type": "object",
       "properties": {
@@ -1157,45 +1196,6 @@
           "type": "string"
         }
       }
-    },
-    "ResourcesQueryPlanResponseExpression": {
-      "type": "object",
-      "properties": {
-        "operator": {
-          "type": "string",
-          "description": "Operator"
-        },
-        "operands": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/ExpressionOperand"
-          }
-        }
-      },
-      "description": "CEL expression"
-    },
-    "ResourcesQueryPlanResponseFilter": {
-      "type": "object",
-      "properties": {
-        "kind": {
-          "$ref": "#/definitions/ResourcesQueryPlanResponseFilterKind",
-          "description": "Filter kind. Defines whether the given action is always allowed, always denied or allowed conditionally."
-        },
-        "condition": {
-          "$ref": "#/definitions/ExpressionOperand",
-          "description": "Filter condition. Only populated if kind is KIND_CONDITIONAL."
-        }
-      }
-    },
-    "ResourcesQueryPlanResponseFilterKind": {
-      "type": "string",
-      "enum": [
-        "KIND_UNSPECIFIED",
-        "KIND_ALWAYS_ALLOWED",
-        "KIND_ALWAYS_DENIED",
-        "KIND_CONDITIONAL"
-      ],
-      "default": "KIND_UNSPECIFIED"
     },
     "SchemasIgnoreWhen": {
       "type": "object",
@@ -1418,7 +1418,7 @@
       },
       "description": "Structured auxiliary data useful for evaluating the request"
     },
-    "cerbosrequestv1ResourcesQueryPlanRequest": {
+    "cerbosrequestv1PlanResourcesRequest": {
       "type": "object",
       "properties": {
         "requestId": {
@@ -1438,7 +1438,7 @@
           "$ref": "#/definitions/enginev1Principal"
         },
         "resource": {
-          "$ref": "#/definitions/v1ResourcesQueryPlanRequestResource"
+          "$ref": "#/definitions/v1PlanResourcesRequestResource"
         },
         "auxData": {
           "$ref": "#/definitions/cerbosrequestv1AuxData"
@@ -2358,6 +2358,91 @@
         }
       }
     },
+    "v1PlanResourcesRequestResource": {
+      "type": "object",
+      "properties": {
+        "kind": {
+          "type": "string",
+          "example": "album:object",
+          "description": "Resource kind.",
+          "pattern": "^[[:alpha:]][[:word:]\\@\\.\\-]*(\\:[[:alpha:]][[:word:]\\@\\.\\-]*)*$",
+          "required": [
+            "kind"
+          ]
+        },
+        "attr": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "object"
+          },
+          "description": "Key-value pairs of contextual data about the resource that are known at a time of the request."
+        },
+        "policyVersion": {
+          "type": "string",
+          "example": "default",
+          "description": "The policy version to use to evaluate this request. If not specified, will default to the server-configured default version.",
+          "pattern": "^[[:word:]]*$"
+        },
+        "scope": {
+          "type": "string",
+          "description": "A dot-separated scope that describes the hierarchy this resource belongs to. This is used for determining policy inheritance.",
+          "pattern": "^([[:alpha:]][[:word:]\\-]+(\\.[[:alpha:]][[:word:]\\-]*)*)*$"
+        }
+      },
+      "required": [
+        "kind"
+      ]
+    },
+    "v1PlanResourcesResponse": {
+      "type": "object",
+      "properties": {
+        "requestId": {
+          "type": "string",
+          "example": "c2db17b8-4f9f-4fb1-acfd-9162a02be42b",
+          "description": "Request ID provided in the request."
+        },
+        "action": {
+          "type": "string",
+          "example": "view:public",
+          "description": "Action"
+        },
+        "resourceKind": {
+          "type": "string",
+          "example": "album:object",
+          "description": "Resource kind.",
+          "pattern": "^[[:alpha:]][[:word:]\\@\\.\\-]*(\\:[[:alpha:]][[:word:]\\@\\.\\-]*)*$"
+        },
+        "policyVersion": {
+          "type": "string",
+          "example": "default",
+          "description": "The policy version."
+        },
+        "filter": {
+          "$ref": "#/definitions/PlanResourcesResponseFilter",
+          "description": "Filter"
+        },
+        "meta": {
+          "$ref": "#/definitions/v1PlanResourcesResponseMeta",
+          "description": "Optional metadata about the request evaluation process"
+        }
+      },
+      "description": "Resources query plan response for a set of resources."
+    },
+    "v1PlanResourcesResponseMeta": {
+      "type": "object",
+      "properties": {
+        "filterDebug": {
+          "type": "string",
+          "description": "Filter textual representation for debugging purposes."
+        },
+        "matchedScope": {
+          "type": "string",
+          "example": "acme.corp.base",
+          "description": "Policy scope that matched to produce this effect."
+        }
+      },
+      "description": "Metadata about request evaluation."
+    },
     "v1PlaygroundEvaluateRequest": {
       "type": "object",
       "properties": {
@@ -2456,8 +2541,8 @@
         "checkResourceBatch": {
           "$ref": "#/definitions/v1CheckResourceBatchRequest"
         },
-        "resourcesQueryPlan": {
-          "$ref": "#/definitions/cerbosrequestv1ResourcesQueryPlanRequest"
+        "planResources": {
+          "$ref": "#/definitions/cerbosrequestv1PlanResourcesRequest"
         },
         "checkResources": {
           "$ref": "#/definitions/v1CheckResourcesRequest"
@@ -2483,8 +2568,8 @@
         "checkResourceBatch": {
           "$ref": "#/definitions/v1CheckResourceBatchResponse"
         },
-        "resourcesQueryPlan": {
-          "$ref": "#/definitions/v1ResourcesQueryPlanResponse"
+        "planResources": {
+          "$ref": "#/definitions/v1PlanResourcesResponse"
         },
         "checkResources": {
           "$ref": "#/definitions/v1CheckResourcesResponse"
@@ -2783,91 +2868,6 @@
         "kind",
         "instances"
       ]
-    },
-    "v1ResourcesQueryPlanRequestResource": {
-      "type": "object",
-      "properties": {
-        "kind": {
-          "type": "string",
-          "example": "album:object",
-          "description": "Resource kind.",
-          "pattern": "^[[:alpha:]][[:word:]\\@\\.\\-]*(\\:[[:alpha:]][[:word:]\\@\\.\\-]*)*$",
-          "required": [
-            "kind"
-          ]
-        },
-        "attr": {
-          "type": "object",
-          "additionalProperties": {
-            "type": "object"
-          },
-          "description": "Key-value pairs of contextual data about the resource that are known at a time of the request."
-        },
-        "policyVersion": {
-          "type": "string",
-          "example": "default",
-          "description": "The policy version to use to evaluate this request. If not specified, will default to the server-configured default version.",
-          "pattern": "^[[:word:]]*$"
-        },
-        "scope": {
-          "type": "string",
-          "description": "A dot-separated scope that describes the hierarchy this resource belongs to. This is used for determining policy inheritance.",
-          "pattern": "^([[:alpha:]][[:word:]\\-]+(\\.[[:alpha:]][[:word:]\\-]*)*)*$"
-        }
-      },
-      "required": [
-        "kind"
-      ]
-    },
-    "v1ResourcesQueryPlanResponse": {
-      "type": "object",
-      "properties": {
-        "requestId": {
-          "type": "string",
-          "example": "c2db17b8-4f9f-4fb1-acfd-9162a02be42b",
-          "description": "Request ID provided in the request."
-        },
-        "action": {
-          "type": "string",
-          "example": "view:public",
-          "description": "Action"
-        },
-        "resourceKind": {
-          "type": "string",
-          "example": "album:object",
-          "description": "Resource kind.",
-          "pattern": "^[[:alpha:]][[:word:]\\@\\.\\-]*(\\:[[:alpha:]][[:word:]\\@\\.\\-]*)*$"
-        },
-        "policyVersion": {
-          "type": "string",
-          "example": "default",
-          "description": "The policy version."
-        },
-        "filter": {
-          "$ref": "#/definitions/ResourcesQueryPlanResponseFilter",
-          "description": "Filter"
-        },
-        "meta": {
-          "$ref": "#/definitions/v1ResourcesQueryPlanResponseMeta",
-          "description": "Optional metadata about the request evaluation process"
-        }
-      },
-      "description": "Resources query plan response for a set of resources."
-    },
-    "v1ResourcesQueryPlanResponseMeta": {
-      "type": "object",
-      "properties": {
-        "filterDebug": {
-          "type": "string",
-          "description": "Filter textual representation for debugging purposes."
-        },
-        "matchedScope": {
-          "type": "string",
-          "example": "acme.corp.base",
-          "description": "Policy scope that matched to produce this effect."
-        }
-      },
-      "description": "Metadata about request evaluation."
     },
     "v1RoleDef": {
       "type": "object",

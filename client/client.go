@@ -42,8 +42,9 @@ type Client interface {
 	ServerInfo(ctx context.Context) (*ServerInfo, error)
 	// With sets per-request options for the client.
 	With(opts ...RequestOpt) Client
-	// ResourcesQueryPlan gets resources query plan for the given principal, resource and action.
-	ResourcesQueryPlan(ctx context.Context, principal *Principal, resource *Resource, action string) (*ResourcesQueryPlanResponse, error)
+	// PlanResources creates a query plan for performing the given action on a set of resources of the given kind.
+	PlanResources(ctx context.Context, principal *Principal, resource *Resource, action string) (*PlanResourcesResponse, error)
+	// WithPrincipal sets the principal to be used for subsequent API calls.
 	// WithPrincipal sets the principal to be used for subsequent API calls.
 	WithPrincipal(principal *Principal) PrincipalContext
 }
@@ -56,8 +57,8 @@ type PrincipalContext interface {
 	IsAllowed(ctx context.Context, resource *Resource, action string) (bool, error)
 	// CheckResources checks access to a batch of resources of different kinds.
 	CheckResources(ctx context.Context, resources *ResourceBatch) (*CheckResourcesResponse, error)
-	// ResourcesQueryPlan gets resources query plan for the given resource and action.
-	ResourcesQueryPlan(ctx context.Context, resource *Resource, action string) (*ResourcesQueryPlanResponse, error)
+	// PlanResources creates a query plan for performing the given action on a set of resources of the given kind.
+	PlanResources(ctx context.Context, resource *Resource, action string) (*PlanResourcesResponse, error)
 }
 
 type config struct {
@@ -269,7 +270,7 @@ type grpcClient struct {
 	opts *reqOpt
 }
 
-func (gc *grpcClient) ResourcesQueryPlan(ctx context.Context, principal *Principal, resource *Resource, action string) (*ResourcesQueryPlanResponse, error) {
+func (gc *grpcClient) PlanResources(ctx context.Context, principal *Principal, resource *Resource, action string) (*PlanResourcesResponse, error) {
 	if err := isValid(principal); err != nil {
 		return nil, fmt.Errorf("invalid principal: %w", err)
 	}
@@ -290,11 +291,11 @@ func (gc *grpcClient) ResourcesQueryPlan(ctx context.Context, principal *Princip
 		return nil, fmt.Errorf("failed to generate request ID: %w", err)
 	}
 
-	req := &requestv1.ResourcesQueryPlanRequest{
+	req := &requestv1.PlanResourcesRequest{
 		RequestId: reqID.String(),
 		Action:    action,
 		Principal: principal.p,
-		Resource: &enginev1.ResourcesQueryPlanRequest_Resource{
+		Resource: &enginev1.PlanResourcesRequest_Resource{
 			Kind:          resource.r.Kind,
 			Attr:          resource.r.Attr,
 			PolicyVersion: resource.r.PolicyVersion,
@@ -306,12 +307,12 @@ func (gc *grpcClient) ResourcesQueryPlan(ctx context.Context, principal *Princip
 		req.IncludeMeta = gc.opts.includeMeta
 	}
 
-	result, err := gc.stub.ResourcesQueryPlan(ctx, req)
+	result, err := gc.stub.PlanResources(ctx, req)
 	if err != nil {
 		return nil, fmt.Errorf("request failed: %w", err)
 	}
 
-	return &ResourcesQueryPlanResponse{ResourcesQueryPlanResponse: result}, nil
+	return &PlanResourcesResponse{PlanResourcesResponse: result}, nil
 }
 
 func (gc *grpcClient) CheckResourceSet(ctx context.Context, principal *Principal, resourceSet *ResourceSet, actions ...string) (*CheckResourceSetResponse, error) {
@@ -505,6 +506,6 @@ func (gcpc *grpcClientPrincipalCtx) CheckResources(ctx context.Context, batch *R
 	return gcpc.client.CheckResources(ctx, gcpc.principal, batch)
 }
 
-func (gcpc *grpcClientPrincipalCtx) ResourcesQueryPlan(ctx context.Context, resource *Resource, action string) (*ResourcesQueryPlanResponse, error) {
-	return gcpc.client.ResourcesQueryPlan(ctx, gcpc.principal, resource, action)
+func (gcpc *grpcClientPrincipalCtx) PlanResources(ctx context.Context, resource *Resource, action string) (*PlanResourcesResponse, error) {
+	return gcpc.client.PlanResources(ctx, gcpc.principal, resource, action)
 }

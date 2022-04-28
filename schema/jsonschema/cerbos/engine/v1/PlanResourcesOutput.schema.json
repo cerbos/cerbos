@@ -1,23 +1,23 @@
 {
-  "$id": "https://api.cerbos.dev/cerbos/engine/v1/ResourcesQueryPlanOutput.schema.json",
+  "$id": "https://api.cerbos.dev/cerbos/engine/v1/PlanResourcesOutput.schema.json",
   "$schema": "http://json-schema.org/draft-07/schema#",
   "definitions": {
-    "cerbos.engine.v1.ResourcesQueryPlanOutput.LogicalOperation": {
+    "cerbos.engine.v1.PlanResourcesOutput.LogicalOperation": {
       "type": "object",
       "additionalProperties": false,
       "properties": {
         "nodes": {
           "type": "array",
           "items": {
-            "$ref": "#/definitions/cerbos.engine.v1.ResourcesQueryPlanOutput.Node"
+            "$ref": "#/definitions/cerbos.engine.v1.PlanResourcesOutput.Node"
           }
         },
         "operator": {
-          "$ref": "#/definitions/cerbos.engine.v1.ResourcesQueryPlanOutput.LogicalOperation.Operator"
+          "$ref": "#/definitions/cerbos.engine.v1.PlanResourcesOutput.LogicalOperation.Operator"
         }
       }
     },
-    "cerbos.engine.v1.ResourcesQueryPlanOutput.LogicalOperation.Operator": {
+    "cerbos.engine.v1.PlanResourcesOutput.LogicalOperation.Operator": {
       "type": "string",
       "enum": [
         "OPERATOR_UNSPECIFIED",
@@ -26,7 +26,7 @@
         "OPERATOR_NOT"
       ]
     },
-    "cerbos.engine.v1.ResourcesQueryPlanOutput.Node": {
+    "cerbos.engine.v1.PlanResourcesOutput.Node": {
       "type": "object",
       "additionalProperties": false,
       "properties": {
@@ -34,7 +34,7 @@
           "$ref": "#/definitions/google.api.expr.v1alpha1.CheckedExpr"
         },
         "logicalOperation": {
-          "$ref": "#/definitions/cerbos.engine.v1.ResourcesQueryPlanOutput.LogicalOperation"
+          "$ref": "#/definitions/cerbos.engine.v1.PlanResourcesOutput.LogicalOperation"
         }
       }
     },
@@ -484,7 +484,7 @@
       "type": "string"
     },
     "filter": {
-      "$ref": "#/definitions/cerbos.engine.v1.ResourcesQueryPlanOutput.Node"
+      "$ref": "#/definitions/cerbos.engine.v1.PlanResourcesOutput.Node"
     },
     "kind": {
       "type": "string"

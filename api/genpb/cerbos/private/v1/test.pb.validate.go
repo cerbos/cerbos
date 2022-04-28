@@ -452,14 +452,14 @@ func (m *ServerTestCase) validate(all bool) error {
 			}
 		}
 
-	case *ServerTestCase_ResourcesQueryPlan:
+	case *ServerTestCase_PlanResources:
 
 		if all {
-			switch v := interface{}(m.GetResourcesQueryPlan()).(type) {
+			switch v := interface{}(m.GetPlanResources()).(type) {
 			case interface{ ValidateAll() error }:
 				if err := v.ValidateAll(); err != nil {
 					errors = append(errors, ServerTestCaseValidationError{
-						field:  "ResourcesQueryPlan",
+						field:  "PlanResources",
 						reason: "embedded message failed validation",
 						cause:  err,
 					})
@@ -467,16 +467,16 @@ func (m *ServerTestCase) validate(all bool) error {
 			case interface{ Validate() error }:
 				if err := v.Validate(); err != nil {
 					errors = append(errors, ServerTestCaseValidationError{
-						field:  "ResourcesQueryPlan",
+						field:  "PlanResources",
 						reason: "embedded message failed validation",
 						cause:  err,
 					})
 				}
 			}
-		} else if v, ok := interface{}(m.GetResourcesQueryPlan()).(interface{ Validate() error }); ok {
+		} else if v, ok := interface{}(m.GetPlanResources()).(interface{ Validate() error }); ok {
 			if err := v.Validate(); err != nil {
 				return ServerTestCaseValidationError{
-					field:  "ResourcesQueryPlan",
+					field:  "PlanResources",
 					reason: "embedded message failed validation",
 					cause:  err,
 				}
@@ -2090,23 +2090,23 @@ var _ interface {
 	ErrorName() string
 } = VerifyTestFixtureGetTestsTestCaseValidationError{}
 
-// Validate checks the field values on ServerTestCase_ResourcesQueryPlanCall
-// with the rules defined in the proto definition for this message. If any
-// rules are violated, the first error encountered is returned, or nil if
-// there are no violations.
-func (m *ServerTestCase_ResourcesQueryPlanCall) Validate() error {
+// Validate checks the field values on ServerTestCase_PlanResourcesCall with
+// the rules defined in the proto definition for this message. If any rules
+// are violated, the first error encountered is returned, or nil if there are
+// no violations.
+func (m *ServerTestCase_PlanResourcesCall) Validate() error {
 	return m.validate(false)
 }
 
-// ValidateAll checks the field values on ServerTestCase_ResourcesQueryPlanCall
-// with the rules defined in the proto definition for this message. If any
-// rules are violated, the result is a list of violation errors wrapped in
-// ServerTestCase_ResourcesQueryPlanCallMultiError, or nil if none found.
-func (m *ServerTestCase_ResourcesQueryPlanCall) ValidateAll() error {
+// ValidateAll checks the field values on ServerTestCase_PlanResourcesCall with
+// the rules defined in the proto definition for this message. If any rules
+// are violated, the result is a list of violation errors wrapped in
+// ServerTestCase_PlanResourcesCallMultiError, or nil if none found.
+func (m *ServerTestCase_PlanResourcesCall) ValidateAll() error {
 	return m.validate(true)
 }
 
-func (m *ServerTestCase_ResourcesQueryPlanCall) validate(all bool) error {
+func (m *ServerTestCase_PlanResourcesCall) validate(all bool) error {
 	if m == nil {
 		return nil
 	}
@@ -2117,7 +2117,7 @@ func (m *ServerTestCase_ResourcesQueryPlanCall) validate(all bool) error {
 		switch v := interface{}(m.GetInput()).(type) {
 		case interface{ ValidateAll() error }:
 			if err := v.ValidateAll(); err != nil {
-				errors = append(errors, ServerTestCase_ResourcesQueryPlanCallValidationError{
+				errors = append(errors, ServerTestCase_PlanResourcesCallValidationError{
 					field:  "Input",
 					reason: "embedded message failed validation",
 					cause:  err,
@@ -2125,7 +2125,7 @@ func (m *ServerTestCase_ResourcesQueryPlanCall) validate(all bool) error {
 			}
 		case interface{ Validate() error }:
 			if err := v.Validate(); err != nil {
-				errors = append(errors, ServerTestCase_ResourcesQueryPlanCallValidationError{
+				errors = append(errors, ServerTestCase_PlanResourcesCallValidationError{
 					field:  "Input",
 					reason: "embedded message failed validation",
 					cause:  err,
@@ -2134,7 +2134,7 @@ func (m *ServerTestCase_ResourcesQueryPlanCall) validate(all bool) error {
 		}
 	} else if v, ok := interface{}(m.GetInput()).(interface{ Validate() error }); ok {
 		if err := v.Validate(); err != nil {
-			return ServerTestCase_ResourcesQueryPlanCallValidationError{
+			return ServerTestCase_PlanResourcesCallValidationError{
 				field:  "Input",
 				reason: "embedded message failed validation",
 				cause:  err,
@@ -2146,7 +2146,7 @@ func (m *ServerTestCase_ResourcesQueryPlanCall) validate(all bool) error {
 		switch v := interface{}(m.GetWantResponse()).(type) {
 		case interface{ ValidateAll() error }:
 			if err := v.ValidateAll(); err != nil {
-				errors = append(errors, ServerTestCase_ResourcesQueryPlanCallValidationError{
+				errors = append(errors, ServerTestCase_PlanResourcesCallValidationError{
 					field:  "WantResponse",
 					reason: "embedded message failed validation",
 					cause:  err,
@@ -2154,7 +2154,7 @@ func (m *ServerTestCase_ResourcesQueryPlanCall) validate(all bool) error {
 			}
 		case interface{ Validate() error }:
 			if err := v.Validate(); err != nil {
-				errors = append(errors, ServerTestCase_ResourcesQueryPlanCallValidationError{
+				errors = append(errors, ServerTestCase_PlanResourcesCallValidationError{
 					field:  "WantResponse",
 					reason: "embedded message failed validation",
 					cause:  err,
@@ -2163,7 +2163,7 @@ func (m *ServerTestCase_ResourcesQueryPlanCall) validate(all bool) error {
 		}
 	} else if v, ok := interface{}(m.GetWantResponse()).(interface{ Validate() error }); ok {
 		if err := v.Validate(); err != nil {
-			return ServerTestCase_ResourcesQueryPlanCallValidationError{
+			return ServerTestCase_PlanResourcesCallValidationError{
 				field:  "WantResponse",
 				reason: "embedded message failed validation",
 				cause:  err,
@@ -2172,20 +2172,20 @@ func (m *ServerTestCase_ResourcesQueryPlanCall) validate(all bool) error {
 	}
 
 	if len(errors) > 0 {
-		return ServerTestCase_ResourcesQueryPlanCallMultiError(errors)
+		return ServerTestCase_PlanResourcesCallMultiError(errors)
 	}
 
 	return nil
 }
 
-// ServerTestCase_ResourcesQueryPlanCallMultiError is an error wrapping
-// multiple validation errors returned by
-// ServerTestCase_ResourcesQueryPlanCall.ValidateAll() if the designated
+// ServerTestCase_PlanResourcesCallMultiError is an error wrapping multiple
+// validation errors returned by
+// ServerTestCase_PlanResourcesCall.ValidateAll() if the designated
 // constraints aren't met.
-type ServerTestCase_ResourcesQueryPlanCallMultiError []error
+type ServerTestCase_PlanResourcesCallMultiError []error
 
 // Error returns a concatenation of all the error messages it wraps.
-func (m ServerTestCase_ResourcesQueryPlanCallMultiError) Error() string {
+func (m ServerTestCase_PlanResourcesCallMultiError) Error() string {
 	var msgs []string
 	for _, err := range m {
 		msgs = append(msgs, err.Error())
@@ -2194,12 +2194,12 @@ func (m ServerTestCase_ResourcesQueryPlanCallMultiError) Error() string {
 }
 
 // AllErrors returns a list of validation violation errors.
-func (m ServerTestCase_ResourcesQueryPlanCallMultiError) AllErrors() []error { return m }
+func (m ServerTestCase_PlanResourcesCallMultiError) AllErrors() []error { return m }
 
-// ServerTestCase_ResourcesQueryPlanCallValidationError is the validation error
-// returned by ServerTestCase_ResourcesQueryPlanCall.Validate if the
-// designated constraints aren't met.
-type ServerTestCase_ResourcesQueryPlanCallValidationError struct {
+// ServerTestCase_PlanResourcesCallValidationError is the validation error
+// returned by ServerTestCase_PlanResourcesCall.Validate if the designated
+// constraints aren't met.
+type ServerTestCase_PlanResourcesCallValidationError struct {
 	field  string
 	reason string
 	cause  error
@@ -2207,24 +2207,24 @@ type ServerTestCase_ResourcesQueryPlanCallValidationError struct {
 }
 
 // Field function returns field value.
-func (e ServerTestCase_ResourcesQueryPlanCallValidationError) Field() string { return e.field }
+func (e ServerTestCase_PlanResourcesCallValidationError) Field() string { return e.field }
 
 // Reason function returns reason value.
-func (e ServerTestCase_ResourcesQueryPlanCallValidationError) Reason() string { return e.reason }
+func (e ServerTestCase_PlanResourcesCallValidationError) Reason() string { return e.reason }
 
 // Cause function returns cause value.
-func (e ServerTestCase_ResourcesQueryPlanCallValidationError) Cause() error { return e.cause }
+func (e ServerTestCase_PlanResourcesCallValidationError) Cause() error { return e.cause }
 
 // Key function returns key value.
-func (e ServerTestCase_ResourcesQueryPlanCallValidationError) Key() bool { return e.key }
+func (e ServerTestCase_PlanResourcesCallValidationError) Key() bool { return e.key }
 
 // ErrorName returns error name.
-func (e ServerTestCase_ResourcesQueryPlanCallValidationError) ErrorName() string {
-	return "ServerTestCase_ResourcesQueryPlanCallValidationError"
+func (e ServerTestCase_PlanResourcesCallValidationError) ErrorName() string {
+	return "ServerTestCase_PlanResourcesCallValidationError"
 }
 
 // Error satisfies the builtin error interface
-func (e ServerTestCase_ResourcesQueryPlanCallValidationError) Error() string {
+func (e ServerTestCase_PlanResourcesCallValidationError) Error() string {
 	cause := ""
 	if e.cause != nil {
 		cause = fmt.Sprintf(" | caused by: %v", e.cause)
@@ -2236,14 +2236,14 @@ func (e ServerTestCase_ResourcesQueryPlanCallValidationError) Error() string {
 	}
 
 	return fmt.Sprintf(
-		"invalid %sServerTestCase_ResourcesQueryPlanCall.%s: %s%s",
+		"invalid %sServerTestCase_PlanResourcesCall.%s: %s%s",
 		key,
 		e.field,
 		e.reason,
 		cause)
 }
 
-var _ error = ServerTestCase_ResourcesQueryPlanCallValidationError{}
+var _ error = ServerTestCase_PlanResourcesCallValidationError{}
 
 var _ interface {
 	Field() string
@@ -2251,7 +2251,7 @@ var _ interface {
 	Key() bool
 	Cause() error
 	ErrorName() string
-} = ServerTestCase_ResourcesQueryPlanCallValidationError{}
+} = ServerTestCase_PlanResourcesCallValidationError{}
 
 // Validate checks the field values on ServerTestCase_CheckResourceSetCall with
 // the rules defined in the proto definition for this message. If any rules

@@ -1140,6 +1140,6 @@ func (e *AuditLogEntry) DecisionLog() (*auditv1.DecisionLogEntry, error) {
 	return e.decisionLog, e.err
 }
 
-type ResourcesQueryPlanResponse struct {
-	*responsev1.ResourcesQueryPlanResponse
+type PlanResourcesResponse struct {
+	*responsev1.PlanResourcesResponse
 }

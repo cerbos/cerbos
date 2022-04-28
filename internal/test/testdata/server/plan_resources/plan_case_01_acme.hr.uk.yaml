@@ -3,7 +3,7 @@ description: "Harry defers; scoped request 'acme.hr.uk'"
 wantStatus:
   httpStatusCode: 200
   grpcStatusCode: 0
-resourcesQueryPlan:
+planResources:
   input: {
     "requestId": "test",
     "includeMeta": true,

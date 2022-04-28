@@ -32,7 +32,7 @@ playgroundProxy:
         "contents": "{{ fileString `store/_schemas/leave_request.json` | b64enc }}",
       }
     ],
-    "resourcesQueryPlan": {
+    "planResources": {
       "requestId": "test",
       "includeMeta": true,
       "action": "approve",
@@ -60,7 +60,7 @@ playgroundProxy:
   }
   wantResponse: {
     "playgroundId": "test",
-    "resourcesQueryPlan": {
+    "planResources": {
       "requestId": "test",
       "action": "approve",
       "resourceKind": "leave_request",

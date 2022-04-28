@@ -259,11 +259,11 @@ func TestQueryPlan(t *testing.T) {
 			for _, tt := range ts.Tests {
 				t.Run(tt.Action, func(t *testing.T) {
 					is := require.New(t)
-					request := &enginev1.ResourcesQueryPlanRequest{
+					request := &enginev1.PlanResourcesRequest{
 						RequestId: "requestId",
 						Action:    tt.Action,
 						Principal: ts.Principal,
-						Resource: &enginev1.ResourcesQueryPlanRequest_Resource{
+						Resource: &enginev1.PlanResourcesRequest_Resource{
 							Kind:          tt.Resource.Kind,
 							Attr:          tt.Resource.Attr,
 							PolicyVersion: tt.Resource.PolicyVersion,
@@ -272,7 +272,7 @@ func TestQueryPlan(t *testing.T) {
 						AuxData:     auxData,
 					}
 
-					response, err := eng.ResourcesQueryPlan(context.Background(), request)
+					response, err := eng.PlanResources(context.Background(), request)
 					if tt.WantErr {
 						is.Error(err)
 					} else {

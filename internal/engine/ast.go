@@ -187,19 +187,19 @@ func replaceVars(e *exprpb.Expr, vars map[string]*exprpb.Expr) (output *exprpb.E
 	return output, err
 }
 
-func String(expr *enginev1.ResourcesQueryPlanOutput_Node) (source string, err error) {
+func String(expr *enginev1.PlanResourcesOutput_Node) (source string, err error) {
 	if expr == nil {
 		return "", nil
 	}
 	switch node := expr.Node.(type) {
-	case *enginev1.ResourcesQueryPlanOutput_Node_Expression:
+	case *enginev1.PlanResourcesOutput_Node_Expression:
 		expr := node.Expression
 		source, err = parser.Unparse(expr.Expr, expr.SourceInfo)
 		if err != nil {
 			return "", err
 		}
-	case *enginev1.ResourcesQueryPlanOutput_Node_LogicalOperation:
-		op := enginev1.ResourcesQueryPlanOutput_LogicalOperation_Operator_name[int32(node.LogicalOperation.Operator)]
+	case *enginev1.PlanResourcesOutput_Node_LogicalOperation:
+		op := enginev1.PlanResourcesOutput_LogicalOperation_Operator_name[int32(node.LogicalOperation.Operator)]
 		s := make([]string, 0, len(node.LogicalOperation.Nodes))
 		for _, n := range node.LogicalOperation.Nodes {
 			source, err = String(n)
@@ -209,12 +209,12 @@ func String(expr *enginev1.ResourcesQueryPlanOutput_Node) (source string, err er
 			s = append(s, source)
 		}
 
-		if node.LogicalOperation.Operator == enginev1.ResourcesQueryPlanOutput_LogicalOperation_OPERATOR_NOT {
-			op = enginev1.ResourcesQueryPlanOutput_LogicalOperation_Operator_name[int32(enginev1.ResourcesQueryPlanOutput_LogicalOperation_OPERATOR_AND)]
+		if node.LogicalOperation.Operator == enginev1.PlanResourcesOutput_LogicalOperation_OPERATOR_NOT {
+			op = enginev1.PlanResourcesOutput_LogicalOperation_Operator_name[int32(enginev1.PlanResourcesOutput_LogicalOperation_OPERATOR_AND)]
 		}
 		source = strings.Join(s, " "+strings.TrimPrefix(op, "OPERATOR_")+" ")
 
-		if node.LogicalOperation.Operator == enginev1.ResourcesQueryPlanOutput_LogicalOperation_OPERATOR_NOT {
+		if node.LogicalOperation.Operator == enginev1.PlanResourcesOutput_LogicalOperation_OPERATOR_NOT {
 			if len(node.LogicalOperation.Nodes) == 1 {
 				source = "NOT " + source
 			} else {
@@ -226,13 +226,13 @@ func String(expr *enginev1.ResourcesQueryPlanOutput_Node) (source string, err er
 	return "(" + source + ")", nil
 }
 
-func convert(expr *enginev1.ResourcesQueryPlanOutput_Node, acc *responsev1.ResourcesQueryPlanResponse_Expression_Operand) error {
+func convert(expr *enginev1.PlanResourcesOutput_Node, acc *responsev1.PlanResourcesResponse_Expression_Operand) error {
 	type (
-		Expr        = responsev1.ResourcesQueryPlanResponse_Expression
-		ExprOp      = responsev1.ResourcesQueryPlanResponse_Expression_Operand
-		ExprOpExpr  = responsev1.ResourcesQueryPlanResponse_Expression_Operand_Expression
-		ExprOpValue = responsev1.ResourcesQueryPlanResponse_Expression_Operand_Value
-		ExprOpVar   = responsev1.ResourcesQueryPlanResponse_Expression_Operand_Variable
+		Expr        = responsev1.PlanResourcesResponse_Expression
+		ExprOp      = responsev1.PlanResourcesResponse_Expression_Operand
+		ExprOpExpr  = responsev1.PlanResourcesResponse_Expression_Operand_Expression
+		ExprOpValue = responsev1.PlanResourcesResponse_Expression_Operand_Value
+		ExprOpVar   = responsev1.PlanResourcesResponse_Expression_Operand_Variable
 	)
 
 	if expr == nil || expr.Node == nil {
@@ -240,12 +240,12 @@ func convert(expr *enginev1.ResourcesQueryPlanOutput_Node, acc *responsev1.Resou
 	}
 
 	switch node := expr.Node.(type) {
-	case *enginev1.ResourcesQueryPlanOutput_Node_Expression:
+	case *enginev1.PlanResourcesOutput_Node_Expression:
 		err := buildExpr(node.Expression.Expr, acc)
 		if err != nil {
 			return err
 		}
-	case *enginev1.ResourcesQueryPlanOutput_Node_LogicalOperation:
+	case *enginev1.PlanResourcesOutput_Node_LogicalOperation:
 		operands := make([]*ExprOp, len(node.LogicalOperation.Nodes))
 		for i, n := range node.LogicalOperation.Nodes {
 			operands[i] = new(ExprOp)
@@ -256,14 +256,14 @@ func convert(expr *enginev1.ResourcesQueryPlanOutput_Node, acc *responsev1.Resou
 		}
 		var operation string
 		switch node.LogicalOperation.Operator {
-		case enginev1.ResourcesQueryPlanOutput_LogicalOperation_OPERATOR_AND:
+		case enginev1.PlanResourcesOutput_LogicalOperation_OPERATOR_AND:
 			operation = And
-		case enginev1.ResourcesQueryPlanOutput_LogicalOperation_OPERATOR_OR:
+		case enginev1.PlanResourcesOutput_LogicalOperation_OPERATOR_OR:
 			operation = Or
-		case enginev1.ResourcesQueryPlanOutput_LogicalOperation_OPERATOR_NOT:
+		case enginev1.PlanResourcesOutput_LogicalOperation_OPERATOR_NOT:
 			operation = Not
 		default:
-			if name, ok := enginev1.ResourcesQueryPlanOutput_LogicalOperation_Operator_name[int32(node.LogicalOperation.Operator)]; ok {
+			if name, ok := enginev1.PlanResourcesOutput_LogicalOperation_Operator_name[int32(node.LogicalOperation.Operator)]; ok {
 				return fmt.Errorf("unknown logical operator: %v", name)
 			}
 
@@ -275,19 +275,19 @@ func convert(expr *enginev1.ResourcesQueryPlanOutput_Node, acc *responsev1.Resou
 	return nil
 }
 
-func mkExprOpExpr(op string, args ...*responsev1.ResourcesQueryPlanResponse_Expression_Operand) *responsev1.ResourcesQueryPlanResponse_Expression_Operand_Expression {
-	return &responsev1.ResourcesQueryPlanResponse_Expression_Operand_Expression{
-		Expression: &responsev1.ResourcesQueryPlanResponse_Expression{Operator: op, Operands: args},
+func mkExprOpExpr(op string, args ...*responsev1.PlanResourcesResponse_Expression_Operand) *responsev1.PlanResourcesResponse_Expression_Operand_Expression {
+	return &responsev1.PlanResourcesResponse_Expression_Operand_Expression{
+		Expression: &responsev1.PlanResourcesResponse_Expression{Operator: op, Operands: args},
 	}
 }
 
-func buildExpr(expr *exprpb.Expr, acc *responsev1.ResourcesQueryPlanResponse_Expression_Operand) error {
+func buildExpr(expr *exprpb.Expr, acc *responsev1.PlanResourcesResponse_Expression_Operand) error {
 	type (
-		Expr        = responsev1.ResourcesQueryPlanResponse_Expression
-		ExprOp      = responsev1.ResourcesQueryPlanResponse_Expression_Operand
-		ExprOpExpr  = responsev1.ResourcesQueryPlanResponse_Expression_Operand_Expression
-		ExprOpValue = responsev1.ResourcesQueryPlanResponse_Expression_Operand_Value
-		ExprOpVar   = responsev1.ResourcesQueryPlanResponse_Expression_Operand_Variable
+		Expr        = responsev1.PlanResourcesResponse_Expression
+		ExprOp      = responsev1.PlanResourcesResponse_Expression_Operand
+		ExprOpExpr  = responsev1.PlanResourcesResponse_Expression_Operand_Expression
+		ExprOpValue = responsev1.PlanResourcesResponse_Expression_Operand_Value
+		ExprOpVar   = responsev1.PlanResourcesResponse_Expression_Operand_Variable
 	)
 	switch expr := expr.ExprKind.(type) {
 	case *exprpb.Expr_CallExpr:

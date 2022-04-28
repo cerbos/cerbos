@@ -26,9 +26,9 @@ func (m *ServerTestCase) HashPB(hasher hash.Hash, ignore map[string]struct{}) {
 
 // HashPB computes a hash of the message using the given hash function
 // The ignore set must contain fully-qualified field names (pkg.msg.field) that should be ignored from the hash
-func (m *ServerTestCase_ResourcesQueryPlanCall) HashPB(hasher hash.Hash, ignore map[string]struct{}) {
+func (m *ServerTestCase_PlanResourcesCall) HashPB(hasher hash.Hash, ignore map[string]struct{}) {
 	if m != nil {
-		cerbos_private_v1_ServerTestCase_ResourcesQueryPlanCall_hashpb_sum(m, hasher, ignore)
+		cerbos_private_v1_ServerTestCase_PlanResourcesCall_hashpb_sum(m, hasher, ignore)
 	}
 }
 

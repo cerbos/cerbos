@@ -39,22 +39,22 @@ var (
 	_ = effectv1.Effect(0)
 )
 
-// Validate checks the field values on ResourcesQueryPlanRequest with the rules
+// Validate checks the field values on PlanResourcesRequest with the rules
 // defined in the proto definition for this message. If any rules are
 // violated, the first error encountered is returned, or nil if there are no violations.
-func (m *ResourcesQueryPlanRequest) Validate() error {
+func (m *PlanResourcesRequest) Validate() error {
 	return m.validate(false)
 }
 
-// ValidateAll checks the field values on ResourcesQueryPlanRequest with the
-// rules defined in the proto definition for this message. If any rules are
+// ValidateAll checks the field values on PlanResourcesRequest with the rules
+// defined in the proto definition for this message. If any rules are
 // violated, the result is a list of violation errors wrapped in
-// ResourcesQueryPlanRequestMultiError, or nil if none found.
-func (m *ResourcesQueryPlanRequest) ValidateAll() error {
+// PlanResourcesRequestMultiError, or nil if none found.
+func (m *PlanResourcesRequest) ValidateAll() error {
 	return m.validate(true)
 }
 
-func (m *ResourcesQueryPlanRequest) validate(all bool) error {
+func (m *PlanResourcesRequest) validate(all bool) error {
 	if m == nil {
 		return nil
 	}
@@ -69,7 +69,7 @@ func (m *ResourcesQueryPlanRequest) validate(all bool) error {
 		switch v := interface{}(m.GetPrincipal()).(type) {
 		case interface{ ValidateAll() error }:
 			if err := v.ValidateAll(); err != nil {
-				errors = append(errors, ResourcesQueryPlanRequestValidationError{
+				errors = append(errors, PlanResourcesRequestValidationError{
 					field:  "Principal",
 					reason: "embedded message failed validation",
 					cause:  err,
@@ -77,7 +77,7 @@ func (m *ResourcesQueryPlanRequest) validate(all bool) error {
 			}
 		case interface{ Validate() error }:
 			if err := v.Validate(); err != nil {
-				errors = append(errors, ResourcesQueryPlanRequestValidationError{
+				errors = append(errors, PlanResourcesRequestValidationError{
 					field:  "Principal",
 					reason: "embedded message failed validation",
 					cause:  err,
@@ -86,7 +86,7 @@ func (m *ResourcesQueryPlanRequest) validate(all bool) error {
 		}
 	} else if v, ok := interface{}(m.GetPrincipal()).(interface{ Validate() error }); ok {
 		if err := v.Validate(); err != nil {
-			return ResourcesQueryPlanRequestValidationError{
+			return PlanResourcesRequestValidationError{
 				field:  "Principal",
 				reason: "embedded message failed validation",
 				cause:  err,
@@ -98,7 +98,7 @@ func (m *ResourcesQueryPlanRequest) validate(all bool) error {
 		switch v := interface{}(m.GetResource()).(type) {
 		case interface{ ValidateAll() error }:
 			if err := v.ValidateAll(); err != nil {
-				errors = append(errors, ResourcesQueryPlanRequestValidationError{
+				errors = append(errors, PlanResourcesRequestValidationError{
 					field:  "Resource",
 					reason: "embedded message failed validation",
 					cause:  err,
@@ -106,7 +106,7 @@ func (m *ResourcesQueryPlanRequest) validate(all bool) error {
 			}
 		case interface{ Validate() error }:
 			if err := v.Validate(); err != nil {
-				errors = append(errors, ResourcesQueryPlanRequestValidationError{
+				errors = append(errors, PlanResourcesRequestValidationError{
 					field:  "Resource",
 					reason: "embedded message failed validation",
 					cause:  err,
@@ -115,7 +115,7 @@ func (m *ResourcesQueryPlanRequest) validate(all bool) error {
 		}
 	} else if v, ok := interface{}(m.GetResource()).(interface{ Validate() error }); ok {
 		if err := v.Validate(); err != nil {
-			return ResourcesQueryPlanRequestValidationError{
+			return PlanResourcesRequestValidationError{
 				field:  "Resource",
 				reason: "embedded message failed validation",
 				cause:  err,
@@ -127,7 +127,7 @@ func (m *ResourcesQueryPlanRequest) validate(all bool) error {
 		switch v := interface{}(m.GetAuxData()).(type) {
 		case interface{ ValidateAll() error }:
 			if err := v.ValidateAll(); err != nil {
-				errors = append(errors, ResourcesQueryPlanRequestValidationError{
+				errors = append(errors, PlanResourcesRequestValidationError{
 					field:  "AuxData",
 					reason: "embedded message failed validation",
 					cause:  err,
@@ -135,7 +135,7 @@ func (m *ResourcesQueryPlanRequest) validate(all bool) error {
 			}
 		case interface{ Validate() error }:
 			if err := v.Validate(); err != nil {
-				errors = append(errors, ResourcesQueryPlanRequestValidationError{
+				errors = append(errors, PlanResourcesRequestValidationError{
 					field:  "AuxData",
 					reason: "embedded message failed validation",
 					cause:  err,
@@ -144,7 +144,7 @@ func (m *ResourcesQueryPlanRequest) validate(all bool) error {
 		}
 	} else if v, ok := interface{}(m.GetAuxData()).(interface{ Validate() error }); ok {
 		if err := v.Validate(); err != nil {
-			return ResourcesQueryPlanRequestValidationError{
+			return PlanResourcesRequestValidationError{
 				field:  "AuxData",
 				reason: "embedded message failed validation",
 				cause:  err,
@@ -155,19 +155,19 @@ func (m *ResourcesQueryPlanRequest) validate(all bool) error {
 	// no validation rules for IncludeMeta
 
 	if len(errors) > 0 {
-		return ResourcesQueryPlanRequestMultiError(errors)
+		return PlanResourcesRequestMultiError(errors)
 	}
 
 	return nil
 }
 
-// ResourcesQueryPlanRequestMultiError is an error wrapping multiple validation
-// errors returned by ResourcesQueryPlanRequest.ValidateAll() if the
-// designated constraints aren't met.
-type ResourcesQueryPlanRequestMultiError []error
+// PlanResourcesRequestMultiError is an error wrapping multiple validation
+// errors returned by PlanResourcesRequest.ValidateAll() if the designated
+// constraints aren't met.
+type PlanResourcesRequestMultiError []error
 
 // Error returns a concatenation of all the error messages it wraps.
-func (m ResourcesQueryPlanRequestMultiError) Error() string {
+func (m PlanResourcesRequestMultiError) Error() string {
 	var msgs []string
 	for _, err := range m {
 		msgs = append(msgs, err.Error())
@@ -176,11 +176,11 @@ func (m ResourcesQueryPlanRequestMultiError) Error() string {
 }
 
 // AllErrors returns a list of validation violation errors.
-func (m ResourcesQueryPlanRequestMultiError) AllErrors() []error { return m }
+func (m PlanResourcesRequestMultiError) AllErrors() []error { return m }
 
-// ResourcesQueryPlanRequestValidationError is the validation error returned by
-// ResourcesQueryPlanRequest.Validate if the designated constraints aren't met.
-type ResourcesQueryPlanRequestValidationError struct {
+// PlanResourcesRequestValidationError is the validation error returned by
+// PlanResourcesRequest.Validate if the designated constraints aren't met.
+type PlanResourcesRequestValidationError struct {
 	field  string
 	reason string
 	cause  error
@@ -188,24 +188,24 @@ type ResourcesQueryPlanRequestValidationError struct {
 }
 
 // Field function returns field value.
-func (e ResourcesQueryPlanRequestValidationError) Field() string { return e.field }
+func (e PlanResourcesRequestValidationError) Field() string { return e.field }
 
 // Reason function returns reason value.
-func (e ResourcesQueryPlanRequestValidationError) Reason() string { return e.reason }
+func (e PlanResourcesRequestValidationError) Reason() string { return e.reason }
 
 // Cause function returns cause value.
-func (e ResourcesQueryPlanRequestValidationError) Cause() error { return e.cause }
+func (e PlanResourcesRequestValidationError) Cause() error { return e.cause }
 
 // Key function returns key value.
-func (e ResourcesQueryPlanRequestValidationError) Key() bool { return e.key }
+func (e PlanResourcesRequestValidationError) Key() bool { return e.key }
 
 // ErrorName returns error name.
-func (e ResourcesQueryPlanRequestValidationError) ErrorName() string {
-	return "ResourcesQueryPlanRequestValidationError"
+func (e PlanResourcesRequestValidationError) ErrorName() string {
+	return "PlanResourcesRequestValidationError"
 }
 
 // Error satisfies the builtin error interface
-func (e ResourcesQueryPlanRequestValidationError) Error() string {
+func (e PlanResourcesRequestValidationError) Error() string {
 	cause := ""
 	if e.cause != nil {
 		cause = fmt.Sprintf(" | caused by: %v", e.cause)
@@ -217,14 +217,14 @@ func (e ResourcesQueryPlanRequestValidationError) Error() string {
 	}
 
 	return fmt.Sprintf(
-		"invalid %sResourcesQueryPlanRequest.%s: %s%s",
+		"invalid %sPlanResourcesRequest.%s: %s%s",
 		key,
 		e.field,
 		e.reason,
 		cause)
 }
 
-var _ error = ResourcesQueryPlanRequestValidationError{}
+var _ error = PlanResourcesRequestValidationError{}
 
 var _ interface {
 	Field() string
@@ -232,7 +232,7 @@ var _ interface {
 	Key() bool
 	Cause() error
 	ErrorName() string
-} = ResourcesQueryPlanRequestValidationError{}
+} = PlanResourcesRequestValidationError{}
 
 // Validate checks the field values on CheckInput with the rules defined in the
 // proto definition for this message. If any rules are violated, the first
@@ -658,22 +658,22 @@ var _ interface {
 	ErrorName() string
 } = CheckOutputValidationError{}
 
-// Validate checks the field values on ResourcesQueryPlanOutput with the rules
+// Validate checks the field values on PlanResourcesOutput with the rules
 // defined in the proto definition for this message. If any rules are
 // violated, the first error encountered is returned, or nil if there are no violations.
-func (m *ResourcesQueryPlanOutput) Validate() error {
+func (m *PlanResourcesOutput) Validate() error {
 	return m.validate(false)
 }
 
-// ValidateAll checks the field values on ResourcesQueryPlanOutput with the
-// rules defined in the proto definition for this message. If any rules are
+// ValidateAll checks the field values on PlanResourcesOutput with the rules
+// defined in the proto definition for this message. If any rules are
 // violated, the result is a list of violation errors wrapped in
-// ResourcesQueryPlanOutputMultiError, or nil if none found.
-func (m *ResourcesQueryPlanOutput) ValidateAll() error {
+// PlanResourcesOutputMultiError, or nil if none found.
+func (m *PlanResourcesOutput) ValidateAll() error {
 	return m.validate(true)
 }
 
-func (m *ResourcesQueryPlanOutput) validate(all bool) error {
+func (m *PlanResourcesOutput) validate(all bool) error {
 	if m == nil {
 		return nil
 	}
@@ -694,7 +694,7 @@ func (m *ResourcesQueryPlanOutput) validate(all bool) error {
 		switch v := interface{}(m.GetFilter()).(type) {
 		case interface{ ValidateAll() error }:
 			if err := v.ValidateAll(); err != nil {
-				errors = append(errors, ResourcesQueryPlanOutputValidationError{
+				errors = append(errors, PlanResourcesOutputValidationError{
 					field:  "Filter",
 					reason: "embedded message failed validation",
 					cause:  err,
@@ -702,7 +702,7 @@ func (m *ResourcesQueryPlanOutput) validate(all bool) error {
 			}
 		case interface{ Validate() error }:
 			if err := v.Validate(); err != nil {
-				errors = append(errors, ResourcesQueryPlanOutputValidationError{
+				errors = append(errors, PlanResourcesOutputValidationError{
 					field:  "Filter",
 					reason: "embedded message failed validation",
 					cause:  err,
@@ -711,7 +711,7 @@ func (m *ResourcesQueryPlanOutput) validate(all bool) error {
 		}
 	} else if v, ok := interface{}(m.GetFilter()).(interface{ Validate() error }); ok {
 		if err := v.Validate(); err != nil {
-			return ResourcesQueryPlanOutputValidationError{
+			return PlanResourcesOutputValidationError{
 				field:  "Filter",
 				reason: "embedded message failed validation",
 				cause:  err,
@@ -720,19 +720,19 @@ func (m *ResourcesQueryPlanOutput) validate(all bool) error {
 	}
 
 	if len(errors) > 0 {
-		return ResourcesQueryPlanOutputMultiError(errors)
+		return PlanResourcesOutputMultiError(errors)
 	}
 
 	return nil
 }
 
-// ResourcesQueryPlanOutputMultiError is an error wrapping multiple validation
-// errors returned by ResourcesQueryPlanOutput.ValidateAll() if the designated
+// PlanResourcesOutputMultiError is an error wrapping multiple validation
+// errors returned by PlanResourcesOutput.ValidateAll() if the designated
 // constraints aren't met.
-type ResourcesQueryPlanOutputMultiError []error
+type PlanResourcesOutputMultiError []error
 
 // Error returns a concatenation of all the error messages it wraps.
-func (m ResourcesQueryPlanOutputMultiError) Error() string {
+func (m PlanResourcesOutputMultiError) Error() string {
 	var msgs []string
 	for _, err := range m {
 		msgs = append(msgs, err.Error())
@@ -741,11 +741,11 @@ func (m ResourcesQueryPlanOutputMultiError) Error() string {
 }
 
 // AllErrors returns a list of validation violation errors.
-func (m ResourcesQueryPlanOutputMultiError) AllErrors() []error { return m }
+func (m PlanResourcesOutputMultiError) AllErrors() []error { return m }
 
-// ResourcesQueryPlanOutputValidationError is the validation error returned by
-// ResourcesQueryPlanOutput.Validate if the designated constraints aren't met.
-type ResourcesQueryPlanOutputValidationError struct {
+// PlanResourcesOutputValidationError is the validation error returned by
+// PlanResourcesOutput.Validate if the designated constraints aren't met.
+type PlanResourcesOutputValidationError struct {
 	field  string
 	reason string
 	cause  error
@@ -753,24 +753,24 @@ type ResourcesQueryPlanOutputValidationError struct {
 }
 
 // Field function returns field value.
-func (e ResourcesQueryPlanOutputValidationError) Field() string { return e.field }
+func (e PlanResourcesOutputValidationError) Field() string { return e.field }
 
 // Reason function returns reason value.
-func (e ResourcesQueryPlanOutputValidationError) Reason() string { return e.reason }
+func (e PlanResourcesOutputValidationError) Reason() string { return e.reason }
 
 // Cause function returns cause value.
-func (e ResourcesQueryPlanOutputValidationError) Cause() error { return e.cause }
+func (e PlanResourcesOutputValidationError) Cause() error { return e.cause }
 
 // Key function returns key value.
-func (e ResourcesQueryPlanOutputValidationError) Key() bool { return e.key }
+func (e PlanResourcesOutputValidationError) Key() bool { return e.key }
 
 // ErrorName returns error name.
-func (e ResourcesQueryPlanOutputValidationError) ErrorName() string {
-	return "ResourcesQueryPlanOutputValidationError"
+func (e PlanResourcesOutputValidationError) ErrorName() string {
+	return "PlanResourcesOutputValidationError"
 }
 
 // Error satisfies the builtin error interface
-func (e ResourcesQueryPlanOutputValidationError) Error() string {
+func (e PlanResourcesOutputValidationError) Error() string {
 	cause := ""
 	if e.cause != nil {
 		cause = fmt.Sprintf(" | caused by: %v", e.cause)
@@ -782,14 +782,14 @@ func (e ResourcesQueryPlanOutputValidationError) Error() string {
 	}
 
 	return fmt.Sprintf(
-		"invalid %sResourcesQueryPlanOutput.%s: %s%s",
+		"invalid %sPlanResourcesOutput.%s: %s%s",
 		key,
 		e.field,
 		e.reason,
 		cause)
 }
 
-var _ error = ResourcesQueryPlanOutputValidationError{}
+var _ error = PlanResourcesOutputValidationError{}
 
 var _ interface {
 	Field() string
@@ -797,7 +797,7 @@ var _ interface {
 	Key() bool
 	Cause() error
 	ErrorName() string
-} = ResourcesQueryPlanOutputValidationError{}
+} = PlanResourcesOutputValidationError{}
 
 // Validate checks the field values on Resource with the rules defined in the
 // proto definition for this message. If any rules are violated, the first
@@ -1558,23 +1558,22 @@ var _ interface {
 	ErrorName() string
 } = TraceValidationError{}
 
-// Validate checks the field values on ResourcesQueryPlanRequest_Resource with
-// the rules defined in the proto definition for this message. If any rules
-// are violated, the first error encountered is returned, or nil if there are
-// no violations.
-func (m *ResourcesQueryPlanRequest_Resource) Validate() error {
+// Validate checks the field values on PlanResourcesRequest_Resource with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *PlanResourcesRequest_Resource) Validate() error {
 	return m.validate(false)
 }
 
-// ValidateAll checks the field values on ResourcesQueryPlanRequest_Resource
-// with the rules defined in the proto definition for this message. If any
-// rules are violated, the result is a list of violation errors wrapped in
-// ResourcesQueryPlanRequest_ResourceMultiError, or nil if none found.
-func (m *ResourcesQueryPlanRequest_Resource) ValidateAll() error {
+// ValidateAll checks the field values on PlanResourcesRequest_Resource with
+// the rules defined in the proto definition for this message. If any rules
+// are violated, the result is a list of violation errors wrapped in
+// PlanResourcesRequest_ResourceMultiError, or nil if none found.
+func (m *PlanResourcesRequest_Resource) ValidateAll() error {
 	return m.validate(true)
 }
 
-func (m *ResourcesQueryPlanRequest_Resource) validate(all bool) error {
+func (m *PlanResourcesRequest_Resource) validate(all bool) error {
 	if m == nil {
 		return nil
 	}
@@ -1582,7 +1581,7 @@ func (m *ResourcesQueryPlanRequest_Resource) validate(all bool) error {
 	var errors []error
 
 	if utf8.RuneCountInString(m.GetKind()) < 1 {
-		err := ResourcesQueryPlanRequest_ResourceValidationError{
+		err := PlanResourcesRequest_ResourceValidationError{
 			field:  "Kind",
 			reason: "value length must be at least 1 runes",
 		}
@@ -1592,8 +1591,8 @@ func (m *ResourcesQueryPlanRequest_Resource) validate(all bool) error {
 		errors = append(errors, err)
 	}
 
-	if !_ResourcesQueryPlanRequest_Resource_Kind_Pattern.MatchString(m.GetKind()) {
-		err := ResourcesQueryPlanRequest_ResourceValidationError{
+	if !_PlanResourcesRequest_Resource_Kind_Pattern.MatchString(m.GetKind()) {
+		err := PlanResourcesRequest_ResourceValidationError{
 			field:  "Kind",
 			reason: "value does not match regex pattern \"^[[:alpha:]][[:word:]\\\\@\\\\.\\\\-/]*(\\\\:[[:alpha:]][[:word:]\\\\@\\\\.\\\\-/]*)*$\"",
 		}
@@ -1616,7 +1615,7 @@ func (m *ResourcesQueryPlanRequest_Resource) validate(all bool) error {
 			_ = val
 
 			if val == nil {
-				err := ResourcesQueryPlanRequest_ResourceValidationError{
+				err := PlanResourcesRequest_ResourceValidationError{
 					field:  fmt.Sprintf("Attr[%v]", key),
 					reason: "value cannot be sparse, all pairs must be non-nil",
 				}
@@ -1632,7 +1631,7 @@ func (m *ResourcesQueryPlanRequest_Resource) validate(all bool) error {
 				switch v := interface{}(val).(type) {
 				case interface{ ValidateAll() error }:
 					if err := v.ValidateAll(); err != nil {
-						errors = append(errors, ResourcesQueryPlanRequest_ResourceValidationError{
+						errors = append(errors, PlanResourcesRequest_ResourceValidationError{
 							field:  fmt.Sprintf("Attr[%v]", key),
 							reason: "embedded message failed validation",
 							cause:  err,
@@ -1640,7 +1639,7 @@ func (m *ResourcesQueryPlanRequest_Resource) validate(all bool) error {
 					}
 				case interface{ Validate() error }:
 					if err := v.Validate(); err != nil {
-						errors = append(errors, ResourcesQueryPlanRequest_ResourceValidationError{
+						errors = append(errors, PlanResourcesRequest_ResourceValidationError{
 							field:  fmt.Sprintf("Attr[%v]", key),
 							reason: "embedded message failed validation",
 							cause:  err,
@@ -1649,7 +1648,7 @@ func (m *ResourcesQueryPlanRequest_Resource) validate(all bool) error {
 				}
 			} else if v, ok := interface{}(val).(interface{ Validate() error }); ok {
 				if err := v.Validate(); err != nil {
-					return ResourcesQueryPlanRequest_ResourceValidationError{
+					return PlanResourcesRequest_ResourceValidationError{
 						field:  fmt.Sprintf("Attr[%v]", key),
 						reason: "embedded message failed validation",
 						cause:  err,
@@ -1660,8 +1659,8 @@ func (m *ResourcesQueryPlanRequest_Resource) validate(all bool) error {
 		}
 	}
 
-	if !_ResourcesQueryPlanRequest_Resource_PolicyVersion_Pattern.MatchString(m.GetPolicyVersion()) {
-		err := ResourcesQueryPlanRequest_ResourceValidationError{
+	if !_PlanResourcesRequest_Resource_PolicyVersion_Pattern.MatchString(m.GetPolicyVersion()) {
+		err := PlanResourcesRequest_ResourceValidationError{
 			field:  "PolicyVersion",
 			reason: "value does not match regex pattern \"^[[:word:]]*$\"",
 		}
@@ -1671,8 +1670,8 @@ func (m *ResourcesQueryPlanRequest_Resource) validate(all bool) error {
 		errors = append(errors, err)
 	}
 
-	if !_ResourcesQueryPlanRequest_Resource_Scope_Pattern.MatchString(m.GetScope()) {
-		err := ResourcesQueryPlanRequest_ResourceValidationError{
+	if !_PlanResourcesRequest_Resource_Scope_Pattern.MatchString(m.GetScope()) {
+		err := PlanResourcesRequest_ResourceValidationError{
 			field:  "Scope",
 			reason: "value does not match regex pattern \"^([[:alpha:]][[:word:]\\\\-]+(\\\\.[[:alpha:]][[:word:]\\\\-]*)*)*$\"",
 		}
@@ -1683,20 +1682,19 @@ func (m *ResourcesQueryPlanRequest_Resource) validate(all bool) error {
 	}
 
 	if len(errors) > 0 {
-		return ResourcesQueryPlanRequest_ResourceMultiError(errors)
+		return PlanResourcesRequest_ResourceMultiError(errors)
 	}
 
 	return nil
 }
 
-// ResourcesQueryPlanRequest_ResourceMultiError is an error wrapping multiple
-// validation errors returned by
-// ResourcesQueryPlanRequest_Resource.ValidateAll() if the designated
-// constraints aren't met.
-type ResourcesQueryPlanRequest_ResourceMultiError []error
+// PlanResourcesRequest_ResourceMultiError is an error wrapping multiple
+// validation errors returned by PlanResourcesRequest_Resource.ValidateAll()
+// if the designated constraints aren't met.
+type PlanResourcesRequest_ResourceMultiError []error
 
 // Error returns a concatenation of all the error messages it wraps.
-func (m ResourcesQueryPlanRequest_ResourceMultiError) Error() string {
+func (m PlanResourcesRequest_ResourceMultiError) Error() string {
 	var msgs []string
 	for _, err := range m {
 		msgs = append(msgs, err.Error())
@@ -1705,12 +1703,12 @@ func (m ResourcesQueryPlanRequest_ResourceMultiError) Error() string {
 }
 
 // AllErrors returns a list of validation violation errors.
-func (m ResourcesQueryPlanRequest_ResourceMultiError) AllErrors() []error { return m }
+func (m PlanResourcesRequest_ResourceMultiError) AllErrors() []error { return m }
 
-// ResourcesQueryPlanRequest_ResourceValidationError is the validation error
-// returned by ResourcesQueryPlanRequest_Resource.Validate if the designated
+// PlanResourcesRequest_ResourceValidationError is the validation error
+// returned by PlanResourcesRequest_Resource.Validate if the designated
 // constraints aren't met.
-type ResourcesQueryPlanRequest_ResourceValidationError struct {
+type PlanResourcesRequest_ResourceValidationError struct {
 	field  string
 	reason string
 	cause  error
@@ -1718,24 +1716,24 @@ type ResourcesQueryPlanRequest_ResourceValidationError struct {
 }
 
 // Field function returns field value.
-func (e ResourcesQueryPlanRequest_ResourceValidationError) Field() string { return e.field }
+func (e PlanResourcesRequest_ResourceValidationError) Field() string { return e.field }
 
 // Reason function returns reason value.
-func (e ResourcesQueryPlanRequest_ResourceValidationError) Reason() string { return e.reason }
+func (e PlanResourcesRequest_ResourceValidationError) Reason() string { return e.reason }
 
 // Cause function returns cause value.
-func (e ResourcesQueryPlanRequest_ResourceValidationError) Cause() error { return e.cause }
+func (e PlanResourcesRequest_ResourceValidationError) Cause() error { return e.cause }
 
 // Key function returns key value.
-func (e ResourcesQueryPlanRequest_ResourceValidationError) Key() bool { return e.key }
+func (e PlanResourcesRequest_ResourceValidationError) Key() bool { return e.key }
 
 // ErrorName returns error name.
-func (e ResourcesQueryPlanRequest_ResourceValidationError) ErrorName() string {
-	return "ResourcesQueryPlanRequest_ResourceValidationError"
+func (e PlanResourcesRequest_ResourceValidationError) ErrorName() string {
+	return "PlanResourcesRequest_ResourceValidationError"
 }
 
 // Error satisfies the builtin error interface
-func (e ResourcesQueryPlanRequest_ResourceValidationError) Error() string {
+func (e PlanResourcesRequest_ResourceValidationError) Error() string {
 	cause := ""
 	if e.cause != nil {
 		cause = fmt.Sprintf(" | caused by: %v", e.cause)
@@ -1747,14 +1745,14 @@ func (e ResourcesQueryPlanRequest_ResourceValidationError) Error() string {
 	}
 
 	return fmt.Sprintf(
-		"invalid %sResourcesQueryPlanRequest_Resource.%s: %s%s",
+		"invalid %sPlanResourcesRequest_Resource.%s: %s%s",
 		key,
 		e.field,
 		e.reason,
 		cause)
 }
 
-var _ error = ResourcesQueryPlanRequest_ResourceValidationError{}
+var _ error = PlanResourcesRequest_ResourceValidationError{}
 
 var _ interface {
 	Field() string
@@ -1762,13 +1760,13 @@ var _ interface {
 	Key() bool
 	Cause() error
 	ErrorName() string
-} = ResourcesQueryPlanRequest_ResourceValidationError{}
+} = PlanResourcesRequest_ResourceValidationError{}
 
-var _ResourcesQueryPlanRequest_Resource_Kind_Pattern = regexp.MustCompile("^[[:alpha:]][[:word:]\\@\\.\\-/]*(\\:[[:alpha:]][[:word:]\\@\\.\\-/]*)*$")
+var _PlanResourcesRequest_Resource_Kind_Pattern = regexp.MustCompile("^[[:alpha:]][[:word:]\\@\\.\\-/]*(\\:[[:alpha:]][[:word:]\\@\\.\\-/]*)*$")
 
-var _ResourcesQueryPlanRequest_Resource_PolicyVersion_Pattern = regexp.MustCompile("^[[:word:]]*$")
+var _PlanResourcesRequest_Resource_PolicyVersion_Pattern = regexp.MustCompile("^[[:word:]]*$")
 
-var _ResourcesQueryPlanRequest_Resource_Scope_Pattern = regexp.MustCompile("^([[:alpha:]][[:word:]\\-]+(\\.[[:alpha:]][[:word:]\\-]*)*)*$")
+var _PlanResourcesRequest_Resource_Scope_Pattern = regexp.MustCompile("^([[:alpha:]][[:word:]\\-]+(\\.[[:alpha:]][[:word:]\\-]*)*)*$")
 
 // Validate checks the field values on CheckOutput_ActionEffect with the rules
 // defined in the proto definition for this message. If any rules are
@@ -1878,22 +1876,22 @@ var _ interface {
 	ErrorName() string
 } = CheckOutput_ActionEffectValidationError{}
 
-// Validate checks the field values on ResourcesQueryPlanOutput_Node with the
-// rules defined in the proto definition for this message. If any rules are
+// Validate checks the field values on PlanResourcesOutput_Node with the rules
+// defined in the proto definition for this message. If any rules are
 // violated, the first error encountered is returned, or nil if there are no violations.
-func (m *ResourcesQueryPlanOutput_Node) Validate() error {
+func (m *PlanResourcesOutput_Node) Validate() error {
 	return m.validate(false)
 }
 
-// ValidateAll checks the field values on ResourcesQueryPlanOutput_Node with
-// the rules defined in the proto definition for this message. If any rules
-// are violated, the result is a list of violation errors wrapped in
-// ResourcesQueryPlanOutput_NodeMultiError, or nil if none found.
-func (m *ResourcesQueryPlanOutput_Node) ValidateAll() error {
+// ValidateAll checks the field values on PlanResourcesOutput_Node with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// PlanResourcesOutput_NodeMultiError, or nil if none found.
+func (m *PlanResourcesOutput_Node) ValidateAll() error {
 	return m.validate(true)
 }
 
-func (m *ResourcesQueryPlanOutput_Node) validate(all bool) error {
+func (m *PlanResourcesOutput_Node) validate(all bool) error {
 	if m == nil {
 		return nil
 	}
@@ -1902,13 +1900,13 @@ func (m *ResourcesQueryPlanOutput_Node) validate(all bool) error {
 
 	switch m.Node.(type) {
 
-	case *ResourcesQueryPlanOutput_Node_LogicalOperation:
+	case *PlanResourcesOutput_Node_LogicalOperation:
 
 		if all {
 			switch v := interface{}(m.GetLogicalOperation()).(type) {
 			case interface{ ValidateAll() error }:
 				if err := v.ValidateAll(); err != nil {
-					errors = append(errors, ResourcesQueryPlanOutput_NodeValidationError{
+					errors = append(errors, PlanResourcesOutput_NodeValidationError{
 						field:  "LogicalOperation",
 						reason: "embedded message failed validation",
 						cause:  err,
@@ -1916,7 +1914,7 @@ func (m *ResourcesQueryPlanOutput_Node) validate(all bool) error {
 				}
 			case interface{ Validate() error }:
 				if err := v.Validate(); err != nil {
-					errors = append(errors, ResourcesQueryPlanOutput_NodeValidationError{
+					errors = append(errors, PlanResourcesOutput_NodeValidationError{
 						field:  "LogicalOperation",
 						reason: "embedded message failed validation",
 						cause:  err,
@@ -1925,7 +1923,7 @@ func (m *ResourcesQueryPlanOutput_Node) validate(all bool) error {
 			}
 		} else if v, ok := interface{}(m.GetLogicalOperation()).(interface{ Validate() error }); ok {
 			if err := v.Validate(); err != nil {
-				return ResourcesQueryPlanOutput_NodeValidationError{
+				return PlanResourcesOutput_NodeValidationError{
 					field:  "LogicalOperation",
 					reason: "embedded message failed validation",
 					cause:  err,
@@ -1933,13 +1931,13 @@ func (m *ResourcesQueryPlanOutput_Node) validate(all bool) error {
 			}
 		}
 
-	case *ResourcesQueryPlanOutput_Node_Expression:
+	case *PlanResourcesOutput_Node_Expression:
 
 		if all {
 			switch v := interface{}(m.GetExpression()).(type) {
 			case interface{ ValidateAll() error }:
 				if err := v.ValidateAll(); err != nil {
-					errors = append(errors, ResourcesQueryPlanOutput_NodeValidationError{
+					errors = append(errors, PlanResourcesOutput_NodeValidationError{
 						field:  "Expression",
 						reason: "embedded message failed validation",
 						cause:  err,
@@ -1947,7 +1945,7 @@ func (m *ResourcesQueryPlanOutput_Node) validate(all bool) error {
 				}
 			case interface{ Validate() error }:
 				if err := v.Validate(); err != nil {
-					errors = append(errors, ResourcesQueryPlanOutput_NodeValidationError{
+					errors = append(errors, PlanResourcesOutput_NodeValidationError{
 						field:  "Expression",
 						reason: "embedded message failed validation",
 						cause:  err,
@@ -1956,7 +1954,7 @@ func (m *ResourcesQueryPlanOutput_Node) validate(all bool) error {
 			}
 		} else if v, ok := interface{}(m.GetExpression()).(interface{ Validate() error }); ok {
 			if err := v.Validate(); err != nil {
-				return ResourcesQueryPlanOutput_NodeValidationError{
+				return PlanResourcesOutput_NodeValidationError{
 					field:  "Expression",
 					reason: "embedded message failed validation",
 					cause:  err,
@@ -1967,19 +1965,19 @@ func (m *ResourcesQueryPlanOutput_Node) validate(all bool) error {
 	}
 
 	if len(errors) > 0 {
-		return ResourcesQueryPlanOutput_NodeMultiError(errors)
+		return PlanResourcesOutput_NodeMultiError(errors)
 	}
 
 	return nil
 }
 
-// ResourcesQueryPlanOutput_NodeMultiError is an error wrapping multiple
-// validation errors returned by ResourcesQueryPlanOutput_Node.ValidateAll()
-// if the designated constraints aren't met.
-type ResourcesQueryPlanOutput_NodeMultiError []error
+// PlanResourcesOutput_NodeMultiError is an error wrapping multiple validation
+// errors returned by PlanResourcesOutput_Node.ValidateAll() if the designated
+// constraints aren't met.
+type PlanResourcesOutput_NodeMultiError []error
 
 // Error returns a concatenation of all the error messages it wraps.
-func (m ResourcesQueryPlanOutput_NodeMultiError) Error() string {
+func (m PlanResourcesOutput_NodeMultiError) Error() string {
 	var msgs []string
 	for _, err := range m {
 		msgs = append(msgs, err.Error())
@@ -1988,12 +1986,11 @@ func (m ResourcesQueryPlanOutput_NodeMultiError) Error() string {
 }
 
 // AllErrors returns a list of validation violation errors.
-func (m ResourcesQueryPlanOutput_NodeMultiError) AllErrors() []error { return m }
+func (m PlanResourcesOutput_NodeMultiError) AllErrors() []error { return m }
 
-// ResourcesQueryPlanOutput_NodeValidationError is the validation error
-// returned by ResourcesQueryPlanOutput_Node.Validate if the designated
-// constraints aren't met.
-type ResourcesQueryPlanOutput_NodeValidationError struct {
+// PlanResourcesOutput_NodeValidationError is the validation error returned by
+// PlanResourcesOutput_Node.Validate if the designated constraints aren't met.
+type PlanResourcesOutput_NodeValidationError struct {
 	field  string
 	reason string
 	cause  error
@@ -2001,24 +1998,24 @@ type ResourcesQueryPlanOutput_NodeValidationError struct {
 }
 
 // Field function returns field value.
-func (e ResourcesQueryPlanOutput_NodeValidationError) Field() string { return e.field }
+func (e PlanResourcesOutput_NodeValidationError) Field() string { return e.field }
 
 // Reason function returns reason value.
-func (e ResourcesQueryPlanOutput_NodeValidationError) Reason() string { return e.reason }
+func (e PlanResourcesOutput_NodeValidationError) Reason() string { return e.reason }
 
 // Cause function returns cause value.
-func (e ResourcesQueryPlanOutput_NodeValidationError) Cause() error { return e.cause }
+func (e PlanResourcesOutput_NodeValidationError) Cause() error { return e.cause }
 
 // Key function returns key value.
-func (e ResourcesQueryPlanOutput_NodeValidationError) Key() bool { return e.key }
+func (e PlanResourcesOutput_NodeValidationError) Key() bool { return e.key }
 
 // ErrorName returns error name.
-func (e ResourcesQueryPlanOutput_NodeValidationError) ErrorName() string {
-	return "ResourcesQueryPlanOutput_NodeValidationError"
+func (e PlanResourcesOutput_NodeValidationError) ErrorName() string {
+	return "PlanResourcesOutput_NodeValidationError"
 }
 
 // Error satisfies the builtin error interface
-func (e ResourcesQueryPlanOutput_NodeValidationError) Error() string {
+func (e PlanResourcesOutput_NodeValidationError) Error() string {
 	cause := ""
 	if e.cause != nil {
 		cause = fmt.Sprintf(" | caused by: %v", e.cause)
@@ -2030,14 +2027,14 @@ func (e ResourcesQueryPlanOutput_NodeValidationError) Error() string {
 	}
 
 	return fmt.Sprintf(
-		"invalid %sResourcesQueryPlanOutput_Node.%s: %s%s",
+		"invalid %sPlanResourcesOutput_Node.%s: %s%s",
 		key,
 		e.field,
 		e.reason,
 		cause)
 }
 
-var _ error = ResourcesQueryPlanOutput_NodeValidationError{}
+var _ error = PlanResourcesOutput_NodeValidationError{}
 
 var _ interface {
 	Field() string
@@ -2045,26 +2042,25 @@ var _ interface {
 	Key() bool
 	Cause() error
 	ErrorName() string
-} = ResourcesQueryPlanOutput_NodeValidationError{}
+} = PlanResourcesOutput_NodeValidationError{}
 
-// Validate checks the field values on
-// ResourcesQueryPlanOutput_LogicalOperation with the rules defined in the
-// proto definition for this message. If any rules are violated, the first
-// error encountered is returned, or nil if there are no violations.
-func (m *ResourcesQueryPlanOutput_LogicalOperation) Validate() error {
+// Validate checks the field values on PlanResourcesOutput_LogicalOperation
+// with the rules defined in the proto definition for this message. If any
+// rules are violated, the first error encountered is returned, or nil if
+// there are no violations.
+func (m *PlanResourcesOutput_LogicalOperation) Validate() error {
 	return m.validate(false)
 }
 
-// ValidateAll checks the field values on
-// ResourcesQueryPlanOutput_LogicalOperation with the rules defined in the
-// proto definition for this message. If any rules are violated, the result is
-// a list of violation errors wrapped in
-// ResourcesQueryPlanOutput_LogicalOperationMultiError, or nil if none found.
-func (m *ResourcesQueryPlanOutput_LogicalOperation) ValidateAll() error {
+// ValidateAll checks the field values on PlanResourcesOutput_LogicalOperation
+// with the rules defined in the proto definition for this message. If any
+// rules are violated, the result is a list of violation errors wrapped in
+// PlanResourcesOutput_LogicalOperationMultiError, or nil if none found.
+func (m *PlanResourcesOutput_LogicalOperation) ValidateAll() error {
 	return m.validate(true)
 }
 
-func (m *ResourcesQueryPlanOutput_LogicalOperation) validate(all bool) error {
+func (m *PlanResourcesOutput_LogicalOperation) validate(all bool) error {
 	if m == nil {
 		return nil
 	}
@@ -2080,7 +2076,7 @@ func (m *ResourcesQueryPlanOutput_LogicalOperation) validate(all bool) error {
 			switch v := interface{}(item).(type) {
 			case interface{ ValidateAll() error }:
 				if err := v.ValidateAll(); err != nil {
-					errors = append(errors, ResourcesQueryPlanOutput_LogicalOperationValidationError{
+					errors = append(errors, PlanResourcesOutput_LogicalOperationValidationError{
 						field:  fmt.Sprintf("Nodes[%v]", idx),
 						reason: "embedded message failed validation",
 						cause:  err,
@@ -2088,7 +2084,7 @@ func (m *ResourcesQueryPlanOutput_LogicalOperation) validate(all bool) error {
 				}
 			case interface{ Validate() error }:
 				if err := v.Validate(); err != nil {
-					errors = append(errors, ResourcesQueryPlanOutput_LogicalOperationValidationError{
+					errors = append(errors, PlanResourcesOutput_LogicalOperationValidationError{
 						field:  fmt.Sprintf("Nodes[%v]", idx),
 						reason: "embedded message failed validation",
 						cause:  err,
@@ -2097,7 +2093,7 @@ func (m *ResourcesQueryPlanOutput_LogicalOperation) validate(all bool) error {
 			}
 		} else if v, ok := interface{}(item).(interface{ Validate() error }); ok {
 			if err := v.Validate(); err != nil {
-				return ResourcesQueryPlanOutput_LogicalOperationValidationError{
+				return PlanResourcesOutput_LogicalOperationValidationError{
 					field:  fmt.Sprintf("Nodes[%v]", idx),
 					reason: "embedded message failed validation",
 					cause:  err,
@@ -2108,20 +2104,20 @@ func (m *ResourcesQueryPlanOutput_LogicalOperation) validate(all bool) error {
 	}
 
 	if len(errors) > 0 {
-		return ResourcesQueryPlanOutput_LogicalOperationMultiError(errors)
+		return PlanResourcesOutput_LogicalOperationMultiError(errors)
 	}
 
 	return nil
 }
 
-// ResourcesQueryPlanOutput_LogicalOperationMultiError is an error wrapping
-// multiple validation errors returned by
-// ResourcesQueryPlanOutput_LogicalOperation.ValidateAll() if the designated
+// PlanResourcesOutput_LogicalOperationMultiError is an error wrapping multiple
+// validation errors returned by
+// PlanResourcesOutput_LogicalOperation.ValidateAll() if the designated
 // constraints aren't met.
-type ResourcesQueryPlanOutput_LogicalOperationMultiError []error
+type PlanResourcesOutput_LogicalOperationMultiError []error
 
 // Error returns a concatenation of all the error messages it wraps.
-func (m ResourcesQueryPlanOutput_LogicalOperationMultiError) Error() string {
+func (m PlanResourcesOutput_LogicalOperationMultiError) Error() string {
 	var msgs []string
 	for _, err := range m {
 		msgs = append(msgs, err.Error())
@@ -2130,12 +2126,12 @@ func (m ResourcesQueryPlanOutput_LogicalOperationMultiError) Error() string {
 }
 
 // AllErrors returns a list of validation violation errors.
-func (m ResourcesQueryPlanOutput_LogicalOperationMultiError) AllErrors() []error { return m }
+func (m PlanResourcesOutput_LogicalOperationMultiError) AllErrors() []error { return m }
 
-// ResourcesQueryPlanOutput_LogicalOperationValidationError is the validation
-// error returned by ResourcesQueryPlanOutput_LogicalOperation.Validate if the
-// designated constraints aren't met.
-type ResourcesQueryPlanOutput_LogicalOperationValidationError struct {
+// PlanResourcesOutput_LogicalOperationValidationError is the validation error
+// returned by PlanResourcesOutput_LogicalOperation.Validate if the designated
+// constraints aren't met.
+type PlanResourcesOutput_LogicalOperationValidationError struct {
 	field  string
 	reason string
 	cause  error
@@ -2143,24 +2139,24 @@ type ResourcesQueryPlanOutput_LogicalOperationValidationError struct {
 }
 
 // Field function returns field value.
-func (e ResourcesQueryPlanOutput_LogicalOperationValidationError) Field() string { return e.field }
+func (e PlanResourcesOutput_LogicalOperationValidationError) Field() string { return e.field }
 
 // Reason function returns reason value.
-func (e ResourcesQueryPlanOutput_LogicalOperationValidationError) Reason() string { return e.reason }
+func (e PlanResourcesOutput_LogicalOperationValidationError) Reason() string { return e.reason }
 
 // Cause function returns cause value.
-func (e ResourcesQueryPlanOutput_LogicalOperationValidationError) Cause() error { return e.cause }
+func (e PlanResourcesOutput_LogicalOperationValidationError) Cause() error { return e.cause }
 
 // Key function returns key value.
-func (e ResourcesQueryPlanOutput_LogicalOperationValidationError) Key() bool { return e.key }
+func (e PlanResourcesOutput_LogicalOperationValidationError) Key() bool { return e.key }
 
 // ErrorName returns error name.
-func (e ResourcesQueryPlanOutput_LogicalOperationValidationError) ErrorName() string {
-	return "ResourcesQueryPlanOutput_LogicalOperationValidationError"
+func (e PlanResourcesOutput_LogicalOperationValidationError) ErrorName() string {
+	return "PlanResourcesOutput_LogicalOperationValidationError"
 }
 
 // Error satisfies the builtin error interface
-func (e ResourcesQueryPlanOutput_LogicalOperationValidationError) Error() string {
+func (e PlanResourcesOutput_LogicalOperationValidationError) Error() string {
 	cause := ""
 	if e.cause != nil {
 		cause = fmt.Sprintf(" | caused by: %v", e.cause)
@@ -2172,14 +2168,14 @@ func (e ResourcesQueryPlanOutput_LogicalOperationValidationError) Error() string
 	}
 
 	return fmt.Sprintf(
-		"invalid %sResourcesQueryPlanOutput_LogicalOperation.%s: %s%s",
+		"invalid %sPlanResourcesOutput_LogicalOperation.%s: %s%s",
 		key,
 		e.field,
 		e.reason,
 		cause)
 }
 
-var _ error = ResourcesQueryPlanOutput_LogicalOperationValidationError{}
+var _ error = PlanResourcesOutput_LogicalOperationValidationError{}
 
 var _ interface {
 	Field() string
@@ -2187,7 +2183,7 @@ var _ interface {
 	Key() bool
 	Cause() error
 	ErrorName() string
-} = ResourcesQueryPlanOutput_LogicalOperationValidationError{}
+} = PlanResourcesOutput_LogicalOperationValidationError{}
 
 // Validate checks the field values on Trace_Component with the rules defined
 // in the proto definition for this message. If any rules are violated, the

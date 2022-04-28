@@ -1,8 +1,8 @@
 {
-  "$id": "https://api.cerbos.dev/cerbos/response/v1/ResourcesQueryPlanResponse/Expression/Operand.schema.json",
+  "$id": "https://api.cerbos.dev/cerbos/response/v1/PlanResourcesResponse/Expression/Operand.schema.json",
   "$schema": "http://json-schema.org/draft-07/schema#",
   "definitions": {
-    "cerbos.response.v1.ResourcesQueryPlanResponse.Expression": {
+    "cerbos.response.v1.PlanResourcesResponse.Expression": {
       "type": "object",
       "additionalProperties": false,
       "properties": {
@@ -26,7 +26,7 @@
   "additionalProperties": false,
   "properties": {
     "expression": {
-      "$ref": "#/definitions/cerbos.response.v1.ResourcesQueryPlanResponse.Expression"
+      "$ref": "#/definitions/cerbos.response.v1.PlanResourcesResponse.Expression"
     },
     "value": {
       "$ref": "#/definitions/google.protobuf.Value"

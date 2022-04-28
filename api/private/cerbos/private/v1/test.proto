@@ -22,9 +22,9 @@ message EngineTestCase {
 }
 
 message ServerTestCase {
-  message ResourcesQueryPlanCall {
-    cerbos.request.v1.ResourcesQueryPlanRequest input = 1;
-    cerbos.response.v1.ResourcesQueryPlanResponse want_response = 2;
+  message PlanResourcesCall {
+    cerbos.request.v1.PlanResourcesRequest input = 1;
+    cerbos.response.v1.PlanResourcesResponse want_response = 2;
   }
 
   message CheckResourceSetCall {
@@ -88,7 +88,7 @@ message ServerTestCase {
     PlaygroundEvaluateCall playground_evaluate = 8;
     AdminAddOrUpdatePolicyCall admin_add_or_update_policy = 9;
     PlaygroundProxyCall playground_proxy = 10;
-    ResourcesQueryPlanCall resources_query_plan = 11;
+    PlanResourcesCall plan_resources = 11;
     AdminAddOrUpdateSchemaCall admin_add_or_update_schema = 12;
     PlaygroundTestCall playground_test = 13;
     CheckResourcesCall check_resources = 14;
@@ -155,8 +155,8 @@ message QueryPlannerTestSuite {
   cerbos.engine.v1.Principal principal = 2;
   message Test {
     string action = 1;
-    cerbos.response.v1.ResourcesQueryPlanResponse.Filter want = 2;
-    cerbos.engine.v1.ResourcesQueryPlanRequest.Resource resource = 3;
+    cerbos.response.v1.PlanResourcesResponse.Filter want = 2;
+    cerbos.engine.v1.PlanResourcesRequest.Resource resource = 3;
     bool want_err = 4;
   }
   repeated Test tests = 3;

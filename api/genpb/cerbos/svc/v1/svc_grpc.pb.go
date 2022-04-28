@@ -28,7 +28,7 @@ type CerbosServiceClient interface {
 	CheckResourceBatch(ctx context.Context, in *v1.CheckResourceBatchRequest, opts ...grpc.CallOption) (*v11.CheckResourceBatchResponse, error)
 	CheckResources(ctx context.Context, in *v1.CheckResourcesRequest, opts ...grpc.CallOption) (*v11.CheckResourcesResponse, error)
 	ServerInfo(ctx context.Context, in *v1.ServerInfoRequest, opts ...grpc.CallOption) (*v11.ServerInfoResponse, error)
-	ResourcesQueryPlan(ctx context.Context, in *v1.ResourcesQueryPlanRequest, opts ...grpc.CallOption) (*v11.ResourcesQueryPlanResponse, error)
+	PlanResources(ctx context.Context, in *v1.PlanResourcesRequest, opts ...grpc.CallOption) (*v11.PlanResourcesResponse, error)
 }
 
 type cerbosServiceClient struct {
@@ -75,9 +75,9 @@ func (c *cerbosServiceClient) ServerInfo(ctx context.Context, in *v1.ServerInfoR
 	return out, nil
 }
 
-func (c *cerbosServiceClient) ResourcesQueryPlan(ctx context.Context, in *v1.ResourcesQueryPlanRequest, opts ...grpc.CallOption) (*v11.ResourcesQueryPlanResponse, error) {
-	out := new(v11.ResourcesQueryPlanResponse)
-	err := c.cc.Invoke(ctx, "/cerbos.svc.v1.CerbosService/ResourcesQueryPlan", in, out, opts...)
+func (c *cerbosServiceClient) PlanResources(ctx context.Context, in *v1.PlanResourcesRequest, opts ...grpc.CallOption) (*v11.PlanResourcesResponse, error) {
+	out := new(v11.PlanResourcesResponse)
+	err := c.cc.Invoke(ctx, "/cerbos.svc.v1.CerbosService/PlanResources", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -92,7 +92,7 @@ type CerbosServiceServer interface {
 	CheckResourceBatch(context.Context, *v1.CheckResourceBatchRequest) (*v11.CheckResourceBatchResponse, error)
 	CheckResources(context.Context, *v1.CheckResourcesRequest) (*v11.CheckResourcesResponse, error)
 	ServerInfo(context.Context, *v1.ServerInfoRequest) (*v11.ServerInfoResponse, error)
-	ResourcesQueryPlan(context.Context, *v1.ResourcesQueryPlanRequest) (*v11.ResourcesQueryPlanResponse, error)
+	PlanResources(context.Context, *v1.PlanResourcesRequest) (*v11.PlanResourcesResponse, error)
 	mustEmbedUnimplementedCerbosServiceServer()
 }
 
@@ -112,8 +112,8 @@ func (UnimplementedCerbosServiceServer) CheckResources(context.Context, *v1.Chec
 func (UnimplementedCerbosServiceServer) ServerInfo(context.Context, *v1.ServerInfoRequest) (*v11.ServerInfoResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ServerInfo not implemented")
 }
-func (UnimplementedCerbosServiceServer) ResourcesQueryPlan(context.Context, *v1.ResourcesQueryPlanRequest) (*v11.ResourcesQueryPlanResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method ResourcesQueryPlan not implemented")
+func (UnimplementedCerbosServiceServer) PlanResources(context.Context, *v1.PlanResourcesRequest) (*v11.PlanResourcesResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method PlanResources not implemented")
 }
 func (UnimplementedCerbosServiceServer) mustEmbedUnimplementedCerbosServiceServer() {}
 
@@ -200,20 +200,20 @@ func _CerbosService_ServerInfo_Handler(srv interface{}, ctx context.Context, dec
 	return interceptor(ctx, in, info, handler)
 }
 
-func _CerbosService_ResourcesQueryPlan_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(v1.ResourcesQueryPlanRequest)
+func _CerbosService_PlanResources_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(v1.PlanResourcesRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(CerbosServiceServer).ResourcesQueryPlan(ctx, in)
+		return srv.(CerbosServiceServer).PlanResources(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/cerbos.svc.v1.CerbosService/ResourcesQueryPlan",
+		FullMethod: "/cerbos.svc.v1.CerbosService/PlanResources",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(CerbosServiceServer).ResourcesQueryPlan(ctx, req.(*v1.ResourcesQueryPlanRequest))
+		return srv.(CerbosServiceServer).PlanResources(ctx, req.(*v1.PlanResourcesRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -242,8 +242,8 @@ var CerbosService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _CerbosService_ServerInfo_Handler,
 		},
 		{
-			MethodName: "ResourcesQueryPlan",
-			Handler:    _CerbosService_ResourcesQueryPlan_Handler,
+			MethodName: "PlanResources",
+			Handler:    _CerbosService_PlanResources_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

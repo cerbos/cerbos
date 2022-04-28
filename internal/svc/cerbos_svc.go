@@ -41,7 +41,7 @@ func NewCerbosService(eng *engine.Engine, auxData *auxdata.AuxData) *CerbosServi
 	}
 }
 
-func (cs *CerbosService) ResourcesQueryPlan(ctx context.Context, request *requestv1.ResourcesQueryPlanRequest) (*responsev1.ResourcesQueryPlanResponse, error) {
+func (cs *CerbosService) PlanResources(ctx context.Context, request *requestv1.PlanResourcesRequest) (*responsev1.PlanResourcesResponse, error) {
 	log := ctxzap.Extract(ctx)
 
 	auxData, err := cs.auxData.Extract(ctx, request.AuxData)
@@ -50,7 +50,7 @@ func (cs *CerbosService) ResourcesQueryPlan(ctx context.Context, request *reques
 		return nil, status.Error(codes.InvalidArgument, "failed to extract auxData")
 	}
 
-	input := &enginev1.ResourcesQueryPlanRequest{
+	input := &enginev1.PlanResourcesRequest{
 		RequestId:   request.RequestId,
 		Action:      request.Action,
 		Principal:   request.Principal,
@@ -58,7 +58,7 @@ func (cs *CerbosService) ResourcesQueryPlan(ctx context.Context, request *reques
 		AuxData:     auxData,
 		IncludeMeta: request.IncludeMeta,
 	}
-	response, err := cs.eng.ResourcesQueryPlan(logging.ToContext(ctx, log), input)
+	response, err := cs.eng.PlanResources(logging.ToContext(ctx, log), input)
 	if err != nil {
 		log.Error("Resources query plan request failed", zap.Error(err))
 		var e *engine.NoSuchKeyError
