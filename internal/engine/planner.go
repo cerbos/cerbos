@@ -509,15 +509,7 @@ func evalComprehensionBody(env *cel.Env, pvars interpreter.PartialActivation, e 
 		if err != nil {
 			return err
 		}
-		var prg cel.Program
-		prg, err = env1.Program(ast, cel.EvalOptions(cel.OptTrackState, cel.OptPartialEval))
-		if err != nil {
-			return err
-		}
-		_, det, err := prg.Eval(partialVars)
-		if err != nil {
-			return err
-		}
+		_, det, err := conditions.Eval(env1, ast, partialVars, cel.EvalOptions(cel.OptTrackState, cel.OptPartialEval))
 		le = ResidualExpr(ast, det)
 		loopStep.CallExpr.Args[i] = le
 		err = evalComprehensionBody(env1, partialVars, le)
@@ -534,6 +526,11 @@ func evalComprehensionBody(env *cel.Env, pvars interpreter.PartialActivation, e 
 	return err
 }
 
+// ResidualExpr evaluates `residual expression` of the partial evaluation.
+// There are two approaches for this:
+// 1. ast := env.ResidualAst(); ast.Expr()
+// 2. ResidualExpr()
+// The former is the built-in approach, but unlike the latter doesn't support CEL comprehensions.
 func ResidualExpr(a *cel.Ast, details *cel.EvalDetails) *exprpb.Expr {
 	pruned := interpreter.PruneAst(a.Expr(), details.State())
 	return pruned
