@@ -38,7 +38,7 @@ type JaegerConf struct {
 	// AgentEndpoint is the Jaeger agent endpoint to report to.
 	AgentEndpoint string `yaml:"agentEndpoint" conf:",example=\"localhost:6831\""`
 	// CollectorEndpoint is the Jaeger collector endpoint to report to.
-	CollectorEndpoint string `yaml:"collectorEndpoint" conf:",example=\"http://localhost:14268\""`
+	CollectorEndpoint string `yaml:"collectorEndpoint" conf:",example=\"http://localhost:14268/api/traces\""`
 }
 
 func (c *Conf) Key() string {

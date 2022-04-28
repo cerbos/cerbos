@@ -4,7 +4,7 @@ include::ROOT:partial$attributes.adoc[]
 
 Cerbos supports distributed tracing to provide insights into application performance and request lifecycle. To enable tracing, set `sampleProbability` to a value between 0.0 and 1.0. Setting the probability to 1.0 makes Cerbos capture tracing information for all requests and setting it to 0.0 disables capturing any traces. 
 
-The system to export the trace data must be specified using the `exporter` setting. Currently only link:https://www.jaegertracing.io[Jaeger] is supported. 
+The system to export the trace data must be specified using the `exporter` setting. Currently only link:https://www.jaegertracing.io[Jaeger] is supported. Traces can be sent to either Jaeger Agent (compact Thrift format) or Jaeger Collector (Thrift format). 
 
 
 .OpenTelemetry
@@ -32,7 +32,7 @@ otel.SetTextMapPropagator(b3.New(b3.WithInjectEncoding(b3.B3MultipleHeader | b3.
 
 == Jaeger
 
-.Send trace data to Jaeger exporter
+.Send trace data to Jaeger Agent (compact Thrift)
 [source,yaml,linenums]
 ----
 tracing:
@@ -44,7 +44,7 @@ tracing:
     agentEndpoint: "localhost:6831" 
 ----
 
-.Send trace data to Jaeger collector
+.Send trace data to Jaeger Collector (Thrift)
 [source,yaml,linenums]
 ----
 tracing:
@@ -52,6 +52,6 @@ tracing:
   exporter: jaeger
   jaeger: 
     serviceName: cerbos 
-    collectorEndpoint: "http://localhost:14268"
+    collectorEndpoint: "http://localhost:14268/api/traces"
 ----
 
