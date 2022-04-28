@@ -19,7 +19,7 @@ option csharp_namespace = "Cerbos.Api.V1.Request";
 option go_package = "github.com/cerbos/cerbos/api/genpb/cerbos/request/v1;requestv1";
 option java_package = "dev.cerbos.api.v1.request";
 
-message ResourcesQueryPlanRequest {
+message PlanResourcesRequest {
   option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
     json_schema: {
       description: "PDP Resources Query Plan Request"
@@ -44,7 +44,7 @@ message ResourcesQueryPlanRequest {
     (google.api.field_behavior) = REQUIRED
   ];
 
-  cerbos.engine.v1.ResourcesQueryPlanRequest.Resource resource = 4 [(google.api.field_behavior) = REQUIRED];
+  cerbos.engine.v1.PlanResourcesRequest.Resource resource = 4 [(google.api.field_behavior) = REQUIRED];
 
   AuxData aux_data = 5 [(google.api.field_behavior) = OPTIONAL];
 
@@ -464,7 +464,7 @@ message PlaygroundProxyRequest {
     option (validate.required) = true;
     CheckResourceSetRequest check_resource_set = 3;
     CheckResourceBatchRequest check_resource_batch = 4;
-    ResourcesQueryPlanRequest resources_query_plan = 5;
+    PlanResourcesRequest plan_resources = 5;
     CheckResourcesRequest check_resources = 6;
   }
 }

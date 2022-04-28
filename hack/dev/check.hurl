@@ -210,3 +210,28 @@ jsonpath "$.results[?(@.resourceId == 'XX225')].actions[*]" count == 3
 jsonpath "$.results[?(@.resourceId == 'XX225')].actions['create']" == "EFFECT_ALLOW"
 jsonpath "$.results[?(@.resourceId == 'XX225')].actions['delete']" == "EFFECT_DENY"
 jsonpath "$.results[?(@.resourceId == 'XX225')].actions['view:public']" == "EFFECT_ALLOW"
+
+
+# Valid CheckResources request
+POST {{protocol}}://{{host}}:{{port}}/api/check/resources
+Content-Type: application/json
+file,requests/check_resources/req01.json;
+HTTP/* 200
+[Asserts]
+header "Content-Type" == "application/json"
+jsonpath "$.results" count == 2
+jsonpath "$.results[0].resource.id" == "XX125"
+jsonpath "$.results[0].resource.kind" == "leave_request"
+jsonpath "$.results[0].resource.policyVersion" == "20210210"
+jsonpath "$.results[0].actions[*]" count == 4
+jsonpath "$.results[0].actions['approve']" == "EFFECT_DENY"
+jsonpath "$.results[0].actions['create']" == "EFFECT_DENY"
+jsonpath "$.results[0].actions['defer']" == "EFFECT_ALLOW"
+jsonpath "$.results[0].actions['view:public']" == "EFFECT_ALLOW"
+jsonpath "$.results[1].resource.id" == "XX150"
+jsonpath "$.results[1].resource.kind" == "leave_request"
+jsonpath "$.results[1].resource.policyVersion" == "20210210"
+jsonpath "$.results[1].actions[*]" count == 3
+jsonpath "$.results[1].actions['approve']" == "EFFECT_DENY"
+jsonpath "$.results[1].actions['create']" == "EFFECT_DENY"
+jsonpath "$.results[1].actions['view:public']" == "EFFECT_ALLOW"

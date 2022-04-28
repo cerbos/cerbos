@@ -158,10 +158,10 @@ func (tr *TestRunner) executeGRPCTestCase(grpcConn *grpc.ClientConn, tc *private
 			adminClient := svcv1.NewCerbosAdminServiceClient(grpcConn)
 			want = call.AdminAddOrUpdatePolicy.WantResponse
 			have, err = adminClient.AddOrUpdatePolicy(ctx, call.AdminAddOrUpdatePolicy.Input)
-		case *privatev1.ServerTestCase_ResourcesQueryPlan:
+		case *privatev1.ServerTestCase_PlanResources:
 			cerbosClient := svcv1.NewCerbosServiceClient(grpcConn)
-			want = call.ResourcesQueryPlan.WantResponse
-			have, err = cerbosClient.ResourcesQueryPlan(ctx, call.ResourcesQueryPlan.Input)
+			want = call.PlanResources.WantResponse
+			have, err = cerbosClient.PlanResources(ctx, call.PlanResources.Input)
 		case *privatev1.ServerTestCase_AdminAddOrUpdateSchema:
 			adminClient := svcv1.NewCerbosAdminServiceClient(grpcConn)
 			want = call.AdminAddOrUpdateSchema.WantResponse
@@ -258,11 +258,11 @@ func (tr *TestRunner) executeHTTPTestCase(c *http.Client, hostAddr string, creds
 			input = call.AdminAddOrUpdatePolicy.Input
 			want = call.AdminAddOrUpdatePolicy.WantResponse
 			have = &responsev1.AddOrUpdatePolicyResponse{}
-		case *privatev1.ServerTestCase_ResourcesQueryPlan:
-			addr = fmt.Sprintf("%s/api/x/plan/resources", hostAddr)
-			input = call.ResourcesQueryPlan.Input
-			want = call.ResourcesQueryPlan.WantResponse
-			have = &responsev1.ResourcesQueryPlanResponse{}
+		case *privatev1.ServerTestCase_PlanResources:
+			addr = fmt.Sprintf("%s/api/plan/resources", hostAddr)
+			input = call.PlanResources.Input
+			want = call.PlanResources.WantResponse
+			have = &responsev1.PlanResourcesResponse{}
 		case *privatev1.ServerTestCase_AdminAddOrUpdateSchema:
 			addr = fmt.Sprintf("%s/admin/schema", hostAddr)
 			input = call.AdminAddOrUpdateSchema.Input
@@ -326,6 +326,7 @@ func (tr *TestRunner) checkCORS(c *http.Client, hostAddr string) func(*testing.T
 		"/admin/schema",
 		"/admin/store",
 		"/api/x/plan/resources",
+		"/api/plan/resources",
 	}
 
 	methods := []string{

@@ -10,41 +10,41 @@ import (
 
 // HashPB computes a hash of the message using the given hash function
 // The ignore set must contain fully-qualified field names (pkg.msg.field) that should be ignored from the hash
-func (m *ResourcesQueryPlanResponse) HashPB(hasher hash.Hash, ignore map[string]struct{}) {
+func (m *PlanResourcesResponse) HashPB(hasher hash.Hash, ignore map[string]struct{}) {
 	if m != nil {
-		cerbos_response_v1_ResourcesQueryPlanResponse_hashpb_sum(m, hasher, ignore)
+		cerbos_response_v1_PlanResourcesResponse_hashpb_sum(m, hasher, ignore)
 	}
 }
 
 // HashPB computes a hash of the message using the given hash function
 // The ignore set must contain fully-qualified field names (pkg.msg.field) that should be ignored from the hash
-func (m *ResourcesQueryPlanResponse_Expression) HashPB(hasher hash.Hash, ignore map[string]struct{}) {
+func (m *PlanResourcesResponse_Expression) HashPB(hasher hash.Hash, ignore map[string]struct{}) {
 	if m != nil {
-		cerbos_response_v1_ResourcesQueryPlanResponse_Expression_hashpb_sum(m, hasher, ignore)
+		cerbos_response_v1_PlanResourcesResponse_Expression_hashpb_sum(m, hasher, ignore)
 	}
 }
 
 // HashPB computes a hash of the message using the given hash function
 // The ignore set must contain fully-qualified field names (pkg.msg.field) that should be ignored from the hash
-func (m *ResourcesQueryPlanResponse_Expression_Operand) HashPB(hasher hash.Hash, ignore map[string]struct{}) {
+func (m *PlanResourcesResponse_Expression_Operand) HashPB(hasher hash.Hash, ignore map[string]struct{}) {
 	if m != nil {
-		cerbos_response_v1_ResourcesQueryPlanResponse_Expression_Operand_hashpb_sum(m, hasher, ignore)
+		cerbos_response_v1_PlanResourcesResponse_Expression_Operand_hashpb_sum(m, hasher, ignore)
 	}
 }
 
 // HashPB computes a hash of the message using the given hash function
 // The ignore set must contain fully-qualified field names (pkg.msg.field) that should be ignored from the hash
-func (m *ResourcesQueryPlanResponse_Filter) HashPB(hasher hash.Hash, ignore map[string]struct{}) {
+func (m *PlanResourcesResponse_Filter) HashPB(hasher hash.Hash, ignore map[string]struct{}) {
 	if m != nil {
-		cerbos_response_v1_ResourcesQueryPlanResponse_Filter_hashpb_sum(m, hasher, ignore)
+		cerbos_response_v1_PlanResourcesResponse_Filter_hashpb_sum(m, hasher, ignore)
 	}
 }
 
 // HashPB computes a hash of the message using the given hash function
 // The ignore set must contain fully-qualified field names (pkg.msg.field) that should be ignored from the hash
-func (m *ResourcesQueryPlanResponse_Meta) HashPB(hasher hash.Hash, ignore map[string]struct{}) {
+func (m *PlanResourcesResponse_Meta) HashPB(hasher hash.Hash, ignore map[string]struct{}) {
 	if m != nil {
-		cerbos_response_v1_ResourcesQueryPlanResponse_Meta_hashpb_sum(m, hasher, ignore)
+		cerbos_response_v1_PlanResourcesResponse_Meta_hashpb_sum(m, hasher, ignore)
 	}
 }
 

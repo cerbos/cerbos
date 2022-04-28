@@ -105,7 +105,7 @@ func ResourceAttributeNames(s string) []string {
 func newCELQueryPlanEnvOptions() []cel.EnvOption {
 	return []cel.EnvOption{
 		cel.CrossTypeNumericComparisons(true),
-		cel.Types(&requestv1.ResourcesQueryPlanRequest{}, &enginev1.Principal{}, &enginev1.Resource{}),
+		cel.Types(&requestv1.PlanResourcesRequest{}, &enginev1.Principal{}, &enginev1.Resource{}),
 		cel.Declarations(
 			decls.NewVar(CELRequestIdent, decls.NewObjectType("cerbos.request.v1.ResourcesQueryPlanRequest")),
 			decls.NewVar(Fqn(CELPrincipalField), decls.NewObjectType("cerbos.engine.v1.Principal")),

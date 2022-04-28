@@ -17,6 +17,40 @@ import (
 	sort "sort"
 )
 
+func cerbos_engine_v1_PlanResourcesRequest_Resource_hashpb_sum(m *v1.PlanResourcesRequest_Resource, hasher hash.Hash, ignore map[string]struct{}) {
+	if _, ok := ignore["cerbos.engine.v1.PlanResourcesRequest.Resource.kind"]; !ok {
+		_, _ = hasher.Write(protowire.AppendString(nil, m.Kind))
+
+	}
+	if _, ok := ignore["cerbos.engine.v1.PlanResourcesRequest.Resource.attr"]; !ok {
+		if len(m.Attr) > 0 {
+			keys := make([]string, len(m.Attr))
+			i := 0
+			for k := range m.Attr {
+				keys[i] = k
+				i++
+			}
+
+			sort.Slice(keys, func(i, j int) bool { return keys[i] < keys[j] })
+
+			for _, k := range keys {
+				if m.Attr[k] != nil {
+					google_protobuf_Value_hashpb_sum(m.Attr[k], hasher, ignore)
+				}
+
+			}
+		}
+	}
+	if _, ok := ignore["cerbos.engine.v1.PlanResourcesRequest.Resource.policy_version"]; !ok {
+		_, _ = hasher.Write(protowire.AppendString(nil, m.PolicyVersion))
+
+	}
+	if _, ok := ignore["cerbos.engine.v1.PlanResourcesRequest.Resource.scope"]; !ok {
+		_, _ = hasher.Write(protowire.AppendString(nil, m.Scope))
+
+	}
+}
+
 func cerbos_engine_v1_Principal_hashpb_sum(m *v1.Principal, hasher hash.Hash, ignore map[string]struct{}) {
 	if _, ok := ignore["cerbos.engine.v1.Principal.id"]; !ok {
 		_, _ = hasher.Write(protowire.AppendString(nil, m.Id))
@@ -92,40 +126,6 @@ func cerbos_engine_v1_Resource_hashpb_sum(m *v1.Resource, hasher hash.Hash, igno
 		}
 	}
 	if _, ok := ignore["cerbos.engine.v1.Resource.scope"]; !ok {
-		_, _ = hasher.Write(protowire.AppendString(nil, m.Scope))
-
-	}
-}
-
-func cerbos_engine_v1_ResourcesQueryPlanRequest_Resource_hashpb_sum(m *v1.ResourcesQueryPlanRequest_Resource, hasher hash.Hash, ignore map[string]struct{}) {
-	if _, ok := ignore["cerbos.engine.v1.ResourcesQueryPlanRequest.Resource.kind"]; !ok {
-		_, _ = hasher.Write(protowire.AppendString(nil, m.Kind))
-
-	}
-	if _, ok := ignore["cerbos.engine.v1.ResourcesQueryPlanRequest.Resource.attr"]; !ok {
-		if len(m.Attr) > 0 {
-			keys := make([]string, len(m.Attr))
-			i := 0
-			for k := range m.Attr {
-				keys[i] = k
-				i++
-			}
-
-			sort.Slice(keys, func(i, j int) bool { return keys[i] < keys[j] })
-
-			for _, k := range keys {
-				if m.Attr[k] != nil {
-					google_protobuf_Value_hashpb_sum(m.Attr[k], hasher, ignore)
-				}
-
-			}
-		}
-	}
-	if _, ok := ignore["cerbos.engine.v1.ResourcesQueryPlanRequest.Resource.policy_version"]; !ok {
-		_, _ = hasher.Write(protowire.AppendString(nil, m.PolicyVersion))
-
-	}
-	if _, ok := ignore["cerbos.engine.v1.ResourcesQueryPlanRequest.Resource.scope"]; !ok {
 		_, _ = hasher.Write(protowire.AppendString(nil, m.Scope))
 
 	}
@@ -796,6 +796,39 @@ func cerbos_request_v1_ListPoliciesRequest_hashpb_sum(m *ListPoliciesRequest, ha
 func cerbos_request_v1_ListSchemasRequest_hashpb_sum(m *ListSchemasRequest, hasher hash.Hash, ignore map[string]struct{}) {
 }
 
+func cerbos_request_v1_PlanResourcesRequest_hashpb_sum(m *PlanResourcesRequest, hasher hash.Hash, ignore map[string]struct{}) {
+	if _, ok := ignore["cerbos.request.v1.PlanResourcesRequest.request_id"]; !ok {
+		_, _ = hasher.Write(protowire.AppendString(nil, m.RequestId))
+
+	}
+	if _, ok := ignore["cerbos.request.v1.PlanResourcesRequest.action"]; !ok {
+		_, _ = hasher.Write(protowire.AppendString(nil, m.Action))
+
+	}
+	if _, ok := ignore["cerbos.request.v1.PlanResourcesRequest.principal"]; !ok {
+		if m.Principal != nil {
+			cerbos_engine_v1_Principal_hashpb_sum(m.Principal, hasher, ignore)
+		}
+
+	}
+	if _, ok := ignore["cerbos.request.v1.PlanResourcesRequest.resource"]; !ok {
+		if m.Resource != nil {
+			cerbos_engine_v1_PlanResourcesRequest_Resource_hashpb_sum(m.Resource, hasher, ignore)
+		}
+
+	}
+	if _, ok := ignore["cerbos.request.v1.PlanResourcesRequest.aux_data"]; !ok {
+		if m.AuxData != nil {
+			cerbos_request_v1_AuxData_hashpb_sum(m.AuxData, hasher, ignore)
+		}
+
+	}
+	if _, ok := ignore["cerbos.request.v1.PlanResourcesRequest.include_meta"]; !ok {
+		_, _ = hasher.Write(protowire.AppendVarint(nil, protowire.EncodeBool(m.IncludeMeta)))
+
+	}
+}
+
 func cerbos_request_v1_PlaygroundEvaluateRequest_hashpb_sum(m *PlaygroundEvaluateRequest, hasher hash.Hash, ignore map[string]struct{}) {
 	if _, ok := ignore["cerbos.request.v1.PlaygroundEvaluateRequest.playground_id"]; !ok {
 		_, _ = hasher.Write(protowire.AppendString(nil, m.PlaygroundId))
@@ -867,9 +900,9 @@ func cerbos_request_v1_PlaygroundProxyRequest_hashpb_sum(m *PlaygroundProxyReque
 					cerbos_request_v1_CheckResourceBatchRequest_hashpb_sum(t.CheckResourceBatch, hasher, ignore)
 				}
 
-			case *PlaygroundProxyRequest_ResourcesQueryPlan:
-				if t.ResourcesQueryPlan != nil {
-					cerbos_request_v1_ResourcesQueryPlanRequest_hashpb_sum(t.ResourcesQueryPlan, hasher, ignore)
+			case *PlaygroundProxyRequest_PlanResources:
+				if t.PlanResources != nil {
+					cerbos_request_v1_PlanResourcesRequest_hashpb_sum(t.PlanResources, hasher, ignore)
 				}
 
 			case *PlaygroundProxyRequest_CheckResources:
@@ -953,39 +986,6 @@ func cerbos_request_v1_ResourceSet_hashpb_sum(m *ResourceSet, hasher hash.Hash, 
 	}
 	if _, ok := ignore["cerbos.request.v1.ResourceSet.scope"]; !ok {
 		_, _ = hasher.Write(protowire.AppendString(nil, m.Scope))
-
-	}
-}
-
-func cerbos_request_v1_ResourcesQueryPlanRequest_hashpb_sum(m *ResourcesQueryPlanRequest, hasher hash.Hash, ignore map[string]struct{}) {
-	if _, ok := ignore["cerbos.request.v1.ResourcesQueryPlanRequest.request_id"]; !ok {
-		_, _ = hasher.Write(protowire.AppendString(nil, m.RequestId))
-
-	}
-	if _, ok := ignore["cerbos.request.v1.ResourcesQueryPlanRequest.action"]; !ok {
-		_, _ = hasher.Write(protowire.AppendString(nil, m.Action))
-
-	}
-	if _, ok := ignore["cerbos.request.v1.ResourcesQueryPlanRequest.principal"]; !ok {
-		if m.Principal != nil {
-			cerbos_engine_v1_Principal_hashpb_sum(m.Principal, hasher, ignore)
-		}
-
-	}
-	if _, ok := ignore["cerbos.request.v1.ResourcesQueryPlanRequest.resource"]; !ok {
-		if m.Resource != nil {
-			cerbos_engine_v1_ResourcesQueryPlanRequest_Resource_hashpb_sum(m.Resource, hasher, ignore)
-		}
-
-	}
-	if _, ok := ignore["cerbos.request.v1.ResourcesQueryPlanRequest.aux_data"]; !ok {
-		if m.AuxData != nil {
-			cerbos_request_v1_AuxData_hashpb_sum(m.AuxData, hasher, ignore)
-		}
-
-	}
-	if _, ok := ignore["cerbos.request.v1.ResourcesQueryPlanRequest.include_meta"]; !ok {
-		_, _ = hasher.Write(protowire.AppendVarint(nil, protowire.EncodeBool(m.IncludeMeta)))
 
 	}
 }

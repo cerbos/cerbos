@@ -23,7 +23,7 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
-func (m *ResourcesQueryPlanRequest_Resource) MarshalVT() (dAtA []byte, err error) {
+func (m *PlanResourcesRequest_Resource) MarshalVT() (dAtA []byte, err error) {
 	if m == nil {
 		return nil, nil
 	}
@@ -36,12 +36,12 @@ func (m *ResourcesQueryPlanRequest_Resource) MarshalVT() (dAtA []byte, err error
 	return dAtA[:n], nil
 }
 
-func (m *ResourcesQueryPlanRequest_Resource) MarshalToVT(dAtA []byte) (int, error) {
+func (m *PlanResourcesRequest_Resource) MarshalToVT(dAtA []byte) (int, error) {
 	size := m.SizeVT()
 	return m.MarshalToSizedBufferVT(dAtA[:size])
 }
 
-func (m *ResourcesQueryPlanRequest_Resource) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
+func (m *PlanResourcesRequest_Resource) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 	if m == nil {
 		return 0, nil
 	}
@@ -111,7 +111,7 @@ func (m *ResourcesQueryPlanRequest_Resource) MarshalToSizedBufferVT(dAtA []byte)
 	return len(dAtA) - i, nil
 }
 
-func (m *ResourcesQueryPlanRequest) MarshalVT() (dAtA []byte, err error) {
+func (m *PlanResourcesRequest) MarshalVT() (dAtA []byte, err error) {
 	if m == nil {
 		return nil, nil
 	}
@@ -124,12 +124,12 @@ func (m *ResourcesQueryPlanRequest) MarshalVT() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *ResourcesQueryPlanRequest) MarshalToVT(dAtA []byte) (int, error) {
+func (m *PlanResourcesRequest) MarshalToVT(dAtA []byte) (int, error) {
 	size := m.SizeVT()
 	return m.MarshalToSizedBufferVT(dAtA[:size])
 }
 
-func (m *ResourcesQueryPlanRequest) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
+func (m *PlanResourcesRequest) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 	if m == nil {
 		return 0, nil
 	}
@@ -431,7 +431,7 @@ func (m *CheckOutput) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 	return len(dAtA) - i, nil
 }
 
-func (m *ResourcesQueryPlanOutput_Node) MarshalVT() (dAtA []byte, err error) {
+func (m *PlanResourcesOutput_Node) MarshalVT() (dAtA []byte, err error) {
 	if m == nil {
 		return nil, nil
 	}
@@ -444,12 +444,12 @@ func (m *ResourcesQueryPlanOutput_Node) MarshalVT() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *ResourcesQueryPlanOutput_Node) MarshalToVT(dAtA []byte) (int, error) {
+func (m *PlanResourcesOutput_Node) MarshalToVT(dAtA []byte) (int, error) {
 	size := m.SizeVT()
 	return m.MarshalToSizedBufferVT(dAtA[:size])
 }
 
-func (m *ResourcesQueryPlanOutput_Node) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
+func (m *PlanResourcesOutput_Node) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 	if m == nil {
 		return 0, nil
 	}
@@ -476,12 +476,12 @@ func (m *ResourcesQueryPlanOutput_Node) MarshalToSizedBufferVT(dAtA []byte) (int
 	return len(dAtA) - i, nil
 }
 
-func (m *ResourcesQueryPlanOutput_Node_LogicalOperation) MarshalToVT(dAtA []byte) (int, error) {
+func (m *PlanResourcesOutput_Node_LogicalOperation) MarshalToVT(dAtA []byte) (int, error) {
 	size := m.SizeVT()
 	return m.MarshalToSizedBufferVT(dAtA[:size])
 }
 
-func (m *ResourcesQueryPlanOutput_Node_LogicalOperation) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
+func (m *PlanResourcesOutput_Node_LogicalOperation) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 	i := len(dAtA)
 	if m.LogicalOperation != nil {
 		size, err := m.LogicalOperation.MarshalToSizedBufferVT(dAtA[:i])
@@ -495,12 +495,12 @@ func (m *ResourcesQueryPlanOutput_Node_LogicalOperation) MarshalToSizedBufferVT(
 	}
 	return len(dAtA) - i, nil
 }
-func (m *ResourcesQueryPlanOutput_Node_Expression) MarshalToVT(dAtA []byte) (int, error) {
+func (m *PlanResourcesOutput_Node_Expression) MarshalToVT(dAtA []byte) (int, error) {
 	size := m.SizeVT()
 	return m.MarshalToSizedBufferVT(dAtA[:size])
 }
 
-func (m *ResourcesQueryPlanOutput_Node_Expression) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
+func (m *PlanResourcesOutput_Node_Expression) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 	i := len(dAtA)
 	if m.Expression != nil {
 		if marshalto, ok := interface{}(m.Expression).(interface {
@@ -526,7 +526,7 @@ func (m *ResourcesQueryPlanOutput_Node_Expression) MarshalToSizedBufferVT(dAtA [
 	}
 	return len(dAtA) - i, nil
 }
-func (m *ResourcesQueryPlanOutput_LogicalOperation) MarshalVT() (dAtA []byte, err error) {
+func (m *PlanResourcesOutput_LogicalOperation) MarshalVT() (dAtA []byte, err error) {
 	if m == nil {
 		return nil, nil
 	}
@@ -539,12 +539,12 @@ func (m *ResourcesQueryPlanOutput_LogicalOperation) MarshalVT() (dAtA []byte, er
 	return dAtA[:n], nil
 }
 
-func (m *ResourcesQueryPlanOutput_LogicalOperation) MarshalToVT(dAtA []byte) (int, error) {
+func (m *PlanResourcesOutput_LogicalOperation) MarshalToVT(dAtA []byte) (int, error) {
 	size := m.SizeVT()
 	return m.MarshalToSizedBufferVT(dAtA[:size])
 }
 
-func (m *ResourcesQueryPlanOutput_LogicalOperation) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
+func (m *PlanResourcesOutput_LogicalOperation) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 	if m == nil {
 		return 0, nil
 	}
@@ -576,7 +576,7 @@ func (m *ResourcesQueryPlanOutput_LogicalOperation) MarshalToSizedBufferVT(dAtA 
 	return len(dAtA) - i, nil
 }
 
-func (m *ResourcesQueryPlanOutput) MarshalVT() (dAtA []byte, err error) {
+func (m *PlanResourcesOutput) MarshalVT() (dAtA []byte, err error) {
 	if m == nil {
 		return nil, nil
 	}
@@ -589,12 +589,12 @@ func (m *ResourcesQueryPlanOutput) MarshalVT() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *ResourcesQueryPlanOutput) MarshalToVT(dAtA []byte) (int, error) {
+func (m *PlanResourcesOutput) MarshalToVT(dAtA []byte) (int, error) {
 	size := m.SizeVT()
 	return m.MarshalToSizedBufferVT(dAtA[:size])
 }
 
-func (m *ResourcesQueryPlanOutput) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
+func (m *PlanResourcesOutput) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 	if m == nil {
 		return 0, nil
 	}
@@ -1284,7 +1284,7 @@ func encodeVarint(dAtA []byte, offset int, v uint64) int {
 	dAtA[offset] = uint8(v)
 	return base
 }
-func (m *ResourcesQueryPlanRequest_Resource) SizeVT() (n int) {
+func (m *PlanResourcesRequest_Resource) SizeVT() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -1327,7 +1327,7 @@ func (m *ResourcesQueryPlanRequest_Resource) SizeVT() (n int) {
 	return n
 }
 
-func (m *ResourcesQueryPlanRequest) SizeVT() (n int) {
+func (m *PlanResourcesRequest) SizeVT() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -1470,7 +1470,7 @@ func (m *CheckOutput) SizeVT() (n int) {
 	return n
 }
 
-func (m *ResourcesQueryPlanOutput_Node) SizeVT() (n int) {
+func (m *PlanResourcesOutput_Node) SizeVT() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -1485,7 +1485,7 @@ func (m *ResourcesQueryPlanOutput_Node) SizeVT() (n int) {
 	return n
 }
 
-func (m *ResourcesQueryPlanOutput_Node_LogicalOperation) SizeVT() (n int) {
+func (m *PlanResourcesOutput_Node_LogicalOperation) SizeVT() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -1497,7 +1497,7 @@ func (m *ResourcesQueryPlanOutput_Node_LogicalOperation) SizeVT() (n int) {
 	}
 	return n
 }
-func (m *ResourcesQueryPlanOutput_Node_Expression) SizeVT() (n int) {
+func (m *PlanResourcesOutput_Node_Expression) SizeVT() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -1515,7 +1515,7 @@ func (m *ResourcesQueryPlanOutput_Node_Expression) SizeVT() (n int) {
 	}
 	return n
 }
-func (m *ResourcesQueryPlanOutput_LogicalOperation) SizeVT() (n int) {
+func (m *PlanResourcesOutput_LogicalOperation) SizeVT() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -1536,7 +1536,7 @@ func (m *ResourcesQueryPlanOutput_LogicalOperation) SizeVT() (n int) {
 	return n
 }
 
-func (m *ResourcesQueryPlanOutput) SizeVT() (n int) {
+func (m *PlanResourcesOutput) SizeVT() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -1892,7 +1892,7 @@ func sov(x uint64) (n int) {
 func soz(x uint64) (n int) {
 	return sov(uint64((x << 1) ^ uint64((int64(x) >> 63))))
 }
-func (m *ResourcesQueryPlanRequest_Resource) UnmarshalVT(dAtA []byte) error {
+func (m *PlanResourcesRequest_Resource) UnmarshalVT(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -1915,10 +1915,10 @@ func (m *ResourcesQueryPlanRequest_Resource) UnmarshalVT(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: ResourcesQueryPlanRequest_Resource: wiretype end group for non-group")
+			return fmt.Errorf("proto: PlanResourcesRequest_Resource: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: ResourcesQueryPlanRequest_Resource: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: PlanResourcesRequest_Resource: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
@@ -2176,7 +2176,7 @@ func (m *ResourcesQueryPlanRequest_Resource) UnmarshalVT(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *ResourcesQueryPlanRequest) UnmarshalVT(dAtA []byte) error {
+func (m *PlanResourcesRequest) UnmarshalVT(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -2199,10 +2199,10 @@ func (m *ResourcesQueryPlanRequest) UnmarshalVT(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: ResourcesQueryPlanRequest: wiretype end group for non-group")
+			return fmt.Errorf("proto: PlanResourcesRequest: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: ResourcesQueryPlanRequest: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: PlanResourcesRequest: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
@@ -2335,7 +2335,7 @@ func (m *ResourcesQueryPlanRequest) UnmarshalVT(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if m.Resource == nil {
-				m.Resource = &ResourcesQueryPlanRequest_Resource{}
+				m.Resource = &PlanResourcesRequest_Resource{}
 			}
 			if err := m.Resource.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
 				return err
@@ -3094,7 +3094,7 @@ func (m *CheckOutput) UnmarshalVT(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *ResourcesQueryPlanOutput_Node) UnmarshalVT(dAtA []byte) error {
+func (m *PlanResourcesOutput_Node) UnmarshalVT(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -3117,10 +3117,10 @@ func (m *ResourcesQueryPlanOutput_Node) UnmarshalVT(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: ResourcesQueryPlanOutput_Node: wiretype end group for non-group")
+			return fmt.Errorf("proto: PlanResourcesOutput_Node: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: ResourcesQueryPlanOutput_Node: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: PlanResourcesOutput_Node: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
@@ -3152,16 +3152,16 @@ func (m *ResourcesQueryPlanOutput_Node) UnmarshalVT(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			if oneof, ok := m.Node.(*ResourcesQueryPlanOutput_Node_LogicalOperation); ok {
+			if oneof, ok := m.Node.(*PlanResourcesOutput_Node_LogicalOperation); ok {
 				if err := oneof.LogicalOperation.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
 					return err
 				}
 			} else {
-				v := &ResourcesQueryPlanOutput_LogicalOperation{}
+				v := &PlanResourcesOutput_LogicalOperation{}
 				if err := v.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
 					return err
 				}
-				m.Node = &ResourcesQueryPlanOutput_Node_LogicalOperation{v}
+				m.Node = &PlanResourcesOutput_Node_LogicalOperation{v}
 			}
 			iNdEx = postIndex
 		case 2:
@@ -3193,7 +3193,7 @@ func (m *ResourcesQueryPlanOutput_Node) UnmarshalVT(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			if oneof, ok := m.Node.(*ResourcesQueryPlanOutput_Node_Expression); ok {
+			if oneof, ok := m.Node.(*PlanResourcesOutput_Node_Expression); ok {
 				if unmarshal, ok := interface{}(oneof.Expression).(interface {
 					UnmarshalVT([]byte) error
 				}); ok {
@@ -3218,7 +3218,7 @@ func (m *ResourcesQueryPlanOutput_Node) UnmarshalVT(dAtA []byte) error {
 						return err
 					}
 				}
-				m.Node = &ResourcesQueryPlanOutput_Node_Expression{v}
+				m.Node = &PlanResourcesOutput_Node_Expression{v}
 			}
 			iNdEx = postIndex
 		default:
@@ -3243,7 +3243,7 @@ func (m *ResourcesQueryPlanOutput_Node) UnmarshalVT(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *ResourcesQueryPlanOutput_LogicalOperation) UnmarshalVT(dAtA []byte) error {
+func (m *PlanResourcesOutput_LogicalOperation) UnmarshalVT(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -3266,10 +3266,10 @@ func (m *ResourcesQueryPlanOutput_LogicalOperation) UnmarshalVT(dAtA []byte) err
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: ResourcesQueryPlanOutput_LogicalOperation: wiretype end group for non-group")
+			return fmt.Errorf("proto: PlanResourcesOutput_LogicalOperation: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: ResourcesQueryPlanOutput_LogicalOperation: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: PlanResourcesOutput_LogicalOperation: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
@@ -3286,7 +3286,7 @@ func (m *ResourcesQueryPlanOutput_LogicalOperation) UnmarshalVT(dAtA []byte) err
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				m.Operator |= ResourcesQueryPlanOutput_LogicalOperation_Operator(b&0x7F) << shift
+				m.Operator |= PlanResourcesOutput_LogicalOperation_Operator(b&0x7F) << shift
 				if b < 0x80 {
 					break
 				}
@@ -3320,7 +3320,7 @@ func (m *ResourcesQueryPlanOutput_LogicalOperation) UnmarshalVT(dAtA []byte) err
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.Nodes = append(m.Nodes, &ResourcesQueryPlanOutput_Node{})
+			m.Nodes = append(m.Nodes, &PlanResourcesOutput_Node{})
 			if err := m.Nodes[len(m.Nodes)-1].UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
@@ -3347,7 +3347,7 @@ func (m *ResourcesQueryPlanOutput_LogicalOperation) UnmarshalVT(dAtA []byte) err
 	}
 	return nil
 }
-func (m *ResourcesQueryPlanOutput) UnmarshalVT(dAtA []byte) error {
+func (m *PlanResourcesOutput) UnmarshalVT(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -3370,10 +3370,10 @@ func (m *ResourcesQueryPlanOutput) UnmarshalVT(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: ResourcesQueryPlanOutput: wiretype end group for non-group")
+			return fmt.Errorf("proto: PlanResourcesOutput: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: ResourcesQueryPlanOutput: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: PlanResourcesOutput: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
@@ -3566,7 +3566,7 @@ func (m *ResourcesQueryPlanOutput) UnmarshalVT(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if m.Filter == nil {
-				m.Filter = &ResourcesQueryPlanOutput_Node{}
+				m.Filter = &PlanResourcesOutput_Node{}
 			}
 			if err := m.Filter.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
 				return err

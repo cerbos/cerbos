@@ -24,7 +24,7 @@ import (
 var astBuildExprBlob []byte
 
 type (
-	exOp = responsev1.ResourcesQueryPlanResponse_Expression_Operand
+	exOp = responsev1.PlanResourcesResponse_Expression_Operand
 )
 
 func getExpectedExpressions(t *testing.T) map[string]*exOp {

@@ -1,6 +1,6 @@
 {
   "playgroundId": "test",
-  "policyFiles": [
+  "files": [
     {
       "fileName": "common_roles.yaml",
       "contents": "LS0tCmFwaVZlcnNpb246ICJhcGkuY2VyYm9zLmRldi92MSIKZGVzY3JpcHRpb246IHwtCiAgQ29tbW9uIGR5bmFtaWMgcm9sZXMgdXNlZCB3aXRoaW4gdGhlIEFwYXRyIGFwcApkZXJpdmVkX3JvbGVzOgogIG5hbWU6IGFwYXRyX2NvbW1vbl9yb2xlcwogIGRlZmluaXRpb25zOgogICAgLSBuYW1lOiBvd25lcgogICAgICBwYXJlbnRSb2xlczogWyJ1c2VyIl0KICAgICAgY29uZGl0aW9uOgogICAgICAgIG1hdGNoOgogICAgICAgICAgZXhwcjogcmVxdWVzdC5yZXNvdXJjZS5hdHRyLm93bmVyID09IHJlcXVlc3QucHJpbmNpcGFsLmlkCgogICAgLSBuYW1lOiBhYnVzZV9tb2RlcmF0b3IKICAgICAgcGFyZW50Um9sZXM6IFsibW9kZXJhdG9yIl0KICAgICAgY29uZGl0aW9uOgogICAgICAgIG1hdGNoOgogICAgICAgICAgZXhwcjogcmVxdWVzdC5yZXNvdXJjZS5hdHRyLmZsYWdnZWQgPT0gdHJ1ZQo="

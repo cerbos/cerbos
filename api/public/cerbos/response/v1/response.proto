@@ -17,12 +17,68 @@ option csharp_namespace = "Cerbos.Api.V1.Response";
 option go_package = "github.com/cerbos/cerbos/api/genpb/cerbos/response/v1;responsev1";
 option java_package = "dev.cerbos.api.v1.response";
 
-message ResourcesQueryPlanResponse {
+message PlanResourcesResponse {
   option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
     json_schema: {
       description: "Resources query plan response for a set of resources."
     }
   };
+
+  message Expression {
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
+      json_schema: {
+        description: "CEL expression"
+      }
+    };
+
+    string operator = 1 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+      description: "Operator",
+    }];
+
+    message Operand {
+      oneof node {
+        google.protobuf.Value value = 1;
+        Expression expression = 2;
+        string variable = 3;
+      }
+    }
+
+    repeated Operand operands = 2;
+  }
+
+  message Filter {
+    enum Kind {
+      KIND_UNSPECIFIED = 0;
+      KIND_ALWAYS_ALLOWED = 1;
+      KIND_ALWAYS_DENIED = 2;
+      KIND_CONDITIONAL = 3;
+    }
+
+    Kind kind = 1 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+      description: "Filter kind. Defines whether the given action is always allowed, always denied or allowed conditionally.",
+    }];
+
+    Expression.Operand condition = 2 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+      description: "Filter condition. Only populated if kind is KIND_CONDITIONAL.",
+    }];
+  }
+
+  message Meta {
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
+      json_schema: {
+        description: "Metadata about request evaluation."
+      }
+    };
+
+    string filter_debug = 1 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+      description: "Filter textual representation for debugging purposes.",
+    }];
+
+    string matched_scope = 2 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+      description: "Policy scope that matched to produce this effect."
+      example: "\"acme.corp.base\""
+    }];
+  }
 
   string request_id = 1 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
     description: "Request ID provided in the request."
@@ -44,56 +100,10 @@ message ResourcesQueryPlanResponse {
     description: "The policy version.",
     example: "\"default\""
   }];
-  message Expression {
-    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
-      json_schema: {
-        description: "CEL expression"
-      }
-    };
-    string operator = 1 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
-      description: "Operator",
-    }];
-    message Operand {
-      oneof node {
-        google.protobuf.Value value = 1;
-        Expression expression = 2;
-        string variable = 3;
-      }
-    }
-    repeated Operand operands = 2;
-  }
-  message Filter {
-    enum Kind {
-      KIND_UNSPECIFIED = 0;
-      KIND_ALWAYS_ALLOWED = 1;
-      KIND_ALWAYS_DENIED = 2;
-      KIND_CONDITIONAL = 3;
-    }
-    Kind kind = 1 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
-      description: "Filter kind. Defines whether the given action is always allowed, always denied or allowed conditionally.",
-    }];
-    Expression.Operand condition = 2 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
-      description: "Filter condition. Only populated if kind is KIND_CONDITIONAL.",
-    }];
-  }
+
   Filter filter = 5 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
     description: "Filter",
   }];
-  message Meta {
-    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
-      json_schema: {
-        description: "Metadata about request evaluation."
-      }
-    };
-
-    string filter_debug = 1 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
-      description: "Filter textual representation for debugging purposes.",
-    }];
-    string matched_scope = 2 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
-      description: "Policy scope that matched to produce this effect."
-      example: "\"acme.corp.base\""
-    }];
-  }
 
   Meta meta = 6 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
     description: "Optional metadata about the request evaluation process"
@@ -380,7 +390,7 @@ message PlaygroundProxyResponse {
     PlaygroundFailure failure = 2;
     CheckResourceSetResponse check_resource_set = 3;
     CheckResourceBatchResponse check_resource_batch = 4;
-    ResourcesQueryPlanResponse resources_query_plan = 5;
+    PlanResourcesResponse plan_resources = 5;
     CheckResourcesResponse check_resources = 6;
   }
 }

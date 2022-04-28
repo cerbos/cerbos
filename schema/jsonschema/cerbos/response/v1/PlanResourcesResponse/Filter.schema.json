@@ -1,15 +1,15 @@
 {
-  "$id": "https://api.cerbos.dev/cerbos/response/v1/ResourcesQueryPlanResponse/Filter.schema.json",
+  "$id": "https://api.cerbos.dev/cerbos/response/v1/PlanResourcesResponse/Filter.schema.json",
   "$schema": "http://json-schema.org/draft-07/schema#",
   "definitions": {
-    "cerbos.response.v1.ResourcesQueryPlanResponse.Expression": {
+    "cerbos.response.v1.PlanResourcesResponse.Expression": {
       "type": "object",
       "additionalProperties": false,
       "properties": {
         "operands": {
           "type": "array",
           "items": {
-            "$ref": "#/definitions/cerbos.response.v1.ResourcesQueryPlanResponse.Expression.Operand"
+            "$ref": "#/definitions/cerbos.response.v1.PlanResourcesResponse.Expression.Operand"
           }
         },
         "operator": {
@@ -17,12 +17,12 @@
         }
       }
     },
-    "cerbos.response.v1.ResourcesQueryPlanResponse.Expression.Operand": {
+    "cerbos.response.v1.PlanResourcesResponse.Expression.Operand": {
       "type": "object",
       "additionalProperties": false,
       "properties": {
         "expression": {
-          "$ref": "#/definitions/cerbos.response.v1.ResourcesQueryPlanResponse.Expression"
+          "$ref": "#/definitions/cerbos.response.v1.PlanResourcesResponse.Expression"
         },
         "value": {
           "$ref": "#/definitions/google.protobuf.Value"
@@ -32,7 +32,7 @@
         }
       }
     },
-    "cerbos.response.v1.ResourcesQueryPlanResponse.Filter.Kind": {
+    "cerbos.response.v1.PlanResourcesResponse.Filter.Kind": {
       "type": "string",
       "enum": [
         "KIND_UNSPECIFIED",
@@ -50,10 +50,10 @@
   "additionalProperties": false,
   "properties": {
     "condition": {
-      "$ref": "#/definitions/cerbos.response.v1.ResourcesQueryPlanResponse.Expression.Operand"
+      "$ref": "#/definitions/cerbos.response.v1.PlanResourcesResponse.Expression.Operand"
     },
     "kind": {
-      "$ref": "#/definitions/cerbos.response.v1.ResourcesQueryPlanResponse.Filter.Kind"
+      "$ref": "#/definitions/cerbos.response.v1.PlanResourcesResponse.Filter.Kind"
     }
   }
 }

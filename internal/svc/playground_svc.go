@@ -227,16 +227,16 @@ func (cs *CerbosPlaygroundService) PlaygroundProxy(ctx context.Context, req *req
 				CheckResourceBatch: resp,
 			},
 		}, nil
-	case *requestv1.PlaygroundProxyRequest_ResourcesQueryPlan:
-		resp, err := cerbosSvc.ResourcesQueryPlan(ctx, proxyReq.ResourcesQueryPlan)
+	case *requestv1.PlaygroundProxyRequest_PlanResources:
+		resp, err := cerbosSvc.PlanResources(ctx, proxyReq.PlanResources)
 		if err != nil {
 			return nil, err
 		}
 
 		return &responsev1.PlaygroundProxyResponse{
 			PlaygroundId: req.PlaygroundId,
-			Outcome: &responsev1.PlaygroundProxyResponse_ResourcesQueryPlan{
-				ResourcesQueryPlan: resp,
+			Outcome: &responsev1.PlaygroundProxyResponse_PlanResources{
+				PlanResources: resp,
 			},
 		}, nil
 	case *requestv1.PlaygroundProxyRequest_CheckResources:

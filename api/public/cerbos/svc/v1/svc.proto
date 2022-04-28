@@ -86,14 +86,18 @@ service CerbosService {
     };
   }
 
-  rpc ResourcesQueryPlan(cerbos.request.v1.ResourcesQueryPlanRequest) returns (cerbos.response.v1.ResourcesQueryPlanResponse) {
+  rpc PlanResources(cerbos.request.v1.PlanResourcesRequest) returns (cerbos.response.v1.PlanResourcesResponse) {
     option (google.api.http) = {
-      post: "/api/x/plan/resources",
+      post: "/api/plan/resources",
       body: "*"
+      additional_bindings: {
+        post: "/api/x/plan/resources",
+        body: "*"
+      }
     };
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
-      summary: "Resources query plan"
-      description: "Resources query plan"
+      summary: "Plan resources"
+      description: "Produce a query plan with conditions that must be satisfied for accessing a set of instances of a resource"
     };
   }
 }

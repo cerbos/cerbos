@@ -261,7 +261,7 @@ func (engine *Engine) checkParallel(ctx context.Context, inputs []*enginev1.Chec
 	return outputs, nil
 }
 
-func (engine *Engine) ResourcesQueryPlan(ctx context.Context, input *enginev1.ResourcesQueryPlanRequest) (*responsev1.ResourcesQueryPlanResponse, error) {
+func (engine *Engine) PlanResources(ctx context.Context, input *enginev1.PlanResourcesRequest) (*responsev1.PlanResourcesResponse, error) {
 	// exit early if the context is cancelled
 	if err := ctx.Err(); err != nil {
 		return nil, err
@@ -274,7 +274,7 @@ func (engine *Engine) ResourcesQueryPlan(ctx context.Context, input *enginev1.Re
 		return nil, fmt.Errorf("failed to get check for [%s.%s]: %w", ppName, ppVersion, err)
 	}
 
-	var plan *enginev1.ResourcesQueryPlanOutput
+	var plan *enginev1.PlanResourcesOutput
 	if policyEvaluator != nil {
 		plan, err = policyEvaluator.EvaluateResourcesQueryPlan(ctx, input)
 		if err != nil {
@@ -296,7 +296,7 @@ func (engine *Engine) ResourcesQueryPlan(ctx context.Context, input *enginev1.Re
 		}
 	}
 
-	response := &responsev1.ResourcesQueryPlanResponse{
+	response := &responsev1.PlanResourcesResponse{
 		RequestId:     input.RequestId,
 		Action:        input.Action,
 		ResourceKind:  input.Resource.Kind,
@@ -304,9 +304,9 @@ func (engine *Engine) ResourcesQueryPlan(ctx context.Context, input *enginev1.Re
 	}
 
 	if plan != nil {
-		response.Filter = &responsev1.ResourcesQueryPlanResponse_Filter{
-			Kind:      responsev1.ResourcesQueryPlanResponse_Filter_KIND_CONDITIONAL,
-			Condition: new(responsev1.ResourcesQueryPlanResponse_Expression_Operand),
+		response.Filter = &responsev1.PlanResourcesResponse_Filter{
+			Kind:      responsev1.PlanResourcesResponse_Filter_KIND_CONDITIONAL,
+			Condition: new(responsev1.PlanResourcesResponse_Expression_Operand),
 		}
 		err = convert(plan.Filter, response.Filter.Condition)
 		if err != nil {
@@ -314,7 +314,7 @@ func (engine *Engine) ResourcesQueryPlan(ctx context.Context, input *enginev1.Re
 		}
 		normaliseFilter(response.Filter)
 		if input.IncludeMeta {
-			response.Meta = new(responsev1.ResourcesQueryPlanResponse_Meta)
+			response.Meta = new(responsev1.PlanResourcesResponse_Meta)
 			response.Meta.FilterDebug, err = String(plan.Filter)
 			if err != nil {
 				response.Meta.FilterDebug = "can't render filter string representation"
@@ -328,14 +328,14 @@ func (engine *Engine) ResourcesQueryPlan(ctx context.Context, input *enginev1.Re
 	return nil, ErrNoPoliciesMatched
 }
 
-func normaliseFilter(filter *responsev1.ResourcesQueryPlanResponse_Filter) {
+func normaliseFilter(filter *responsev1.PlanResourcesResponse_Filter) {
 	if filter.Condition == nil {
-		filter.Kind = responsev1.ResourcesQueryPlanResponse_Filter_KIND_ALWAYS_ALLOWED
+		filter.Kind = responsev1.PlanResourcesResponse_Filter_KIND_ALWAYS_ALLOWED
 		return
 	}
 	if filter.Condition.Node == nil {
 		filter.Condition = nil
-		filter.Kind = responsev1.ResourcesQueryPlanResponse_Filter_KIND_ALWAYS_ALLOWED
+		filter.Kind = responsev1.PlanResourcesResponse_Filter_KIND_ALWAYS_ALLOWED
 		return
 	}
 	v := filter.Condition.GetValue()
@@ -345,9 +345,9 @@ func normaliseFilter(filter *responsev1.ResourcesQueryPlanResponse_Filter) {
 	if b, ok := v.Kind.(*structpb.Value_BoolValue); ok {
 		filter.Condition = nil
 		if b.BoolValue {
-			filter.Kind = responsev1.ResourcesQueryPlanResponse_Filter_KIND_ALWAYS_ALLOWED
+			filter.Kind = responsev1.PlanResourcesResponse_Filter_KIND_ALWAYS_ALLOWED
 		} else {
-			filter.Kind = responsev1.ResourcesQueryPlanResponse_Filter_KIND_ALWAYS_DENIED
+			filter.Kind = responsev1.PlanResourcesResponse_Filter_KIND_ALWAYS_DENIED
 		}
 	}
 }

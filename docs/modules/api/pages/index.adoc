@@ -405,11 +405,9 @@ Unlike `CheckResourceSet` -- which checks access to resource instances of the _s
 ====
 
 [#resources-query-plan]
-=== `ResourcesQueryPlan` (`/api/x/plan/resources`)
+=== `PlanResources` (`/api/plan/resources`)
 
 Produces a query plan that can be used to obtain a list of resources that a principal is allowed to perform a particular action on. 
-
-IMPORTANT: This is an experimental API without any backward compatibility guarantees. 
 
 .Request
 [source,json,linenums]

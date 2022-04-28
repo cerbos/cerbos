@@ -3,7 +3,7 @@ description: "auxData is used in policies"
 wantStatus:
   httpStatusCode: 200
   grpcStatusCode: 0
-resourcesQueryPlan:
+planResources:
   input: {
     "requestId": "test",
     "includeMeta": true,

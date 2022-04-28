@@ -24,9 +24,9 @@ import (
 )
 
 type (
-	qpN   = enginev1.ResourcesQueryPlanOutput_Node
-	qpNLO = enginev1.ResourcesQueryPlanOutput_Node_LogicalOperation
-	qpNE  = enginev1.ResourcesQueryPlanOutput_Node_Expression
+	qpN   = enginev1.PlanResourcesOutput_Node
+	qpNLO = enginev1.PlanResourcesOutput_Node_LogicalOperation
+	qpNE  = enginev1.PlanResourcesOutput_Node_Expression
 	rN    = struct {
 		f    func() (*qpN, error)
 		node *qpN
@@ -41,13 +41,13 @@ func (e *NoSuchKeyError) Error() string {
 	return e.msg
 }
 
-func (ppe *principalPolicyEvaluator) EvaluateResourcesQueryPlan(ctx context.Context, input *enginev1.ResourcesQueryPlanRequest) (*enginev1.ResourcesQueryPlanOutput, error) {
+func (ppe *principalPolicyEvaluator) EvaluateResourcesQueryPlan(ctx context.Context, input *enginev1.PlanResourcesRequest) (*enginev1.PlanResourcesOutput, error) {
 	_, span := tracing.StartSpan(ctx, "principal_policy.EvaluateResourcesQueryPlan")
 	span.SetAttributes(tracing.PolicyFQN(ppe.policy.Meta.Fqn))
 	defer span.End()
 
 	inputActions := []string{input.Action}
-	result := &enginev1.ResourcesQueryPlanOutput{}
+	result := &enginev1.PlanResourcesOutput{}
 	result.RequestId = input.RequestId
 	result.Kind = input.Resource.Kind
 	result.Action = input.Action
@@ -97,14 +97,14 @@ func (ppe *principalPolicyEvaluator) EvaluateResourcesQueryPlan(ctx context.Cont
 	return result, nil
 }
 
-func (rpe *resourcePolicyEvaluator) EvaluateResourcesQueryPlan(ctx context.Context, input *enginev1.ResourcesQueryPlanRequest) (*enginev1.ResourcesQueryPlanOutput, error) {
+func (rpe *resourcePolicyEvaluator) EvaluateResourcesQueryPlan(ctx context.Context, input *enginev1.PlanResourcesRequest) (*enginev1.PlanResourcesOutput, error) {
 	_, span := tracing.StartSpan(ctx, "resource_policy.EvaluateResourcesQueryPlan")
 	span.SetAttributes(tracing.PolicyFQN(rpe.policy.Meta.Fqn))
 	defer span.End()
 
 	effectiveRoles := toSet(input.Principal.Roles)
 	inputActions := []string{input.Action}
-	result := &enginev1.ResourcesQueryPlanOutput{}
+	result := &enginev1.PlanResourcesOutput{}
 	result.RequestId = input.RequestId
 	result.Kind = input.Resource.Kind
 	result.Action = input.Action
@@ -266,8 +266,8 @@ func getDerivedRoleConditions(derivedRoles []rN, rule *runtimev1.RunnableResourc
 	return nodes, nil
 }
 
-func isNodeConstBool(node *enginev1.ResourcesQueryPlanOutput_Node) (bool, bool) {
-	if e, ok := node.Node.(*enginev1.ResourcesQueryPlanOutput_Node_Expression); ok {
+func isNodeConstBool(node *enginev1.PlanResourcesOutput_Node) (bool, bool) {
+	if e, ok := node.Node.(*enginev1.PlanResourcesOutput_Node_Expression); ok {
 		if e1 := e.Expression.GetExpr().GetConstExpr(); e1 != nil {
 			if b, ok := e1.ConstantKind.(*exprpb.Constant_BoolValue); ok {
 				return b.BoolValue, true
@@ -278,34 +278,34 @@ func isNodeConstBool(node *enginev1.ResourcesQueryPlanOutput_Node) (bool, bool) 
 	return false, false
 }
 
-func mkNodeFromLO(lo *enginev1.ResourcesQueryPlanOutput_LogicalOperation) *enginev1.ResourcesQueryPlanOutput_Node {
+func mkNodeFromLO(lo *enginev1.PlanResourcesOutput_LogicalOperation) *enginev1.PlanResourcesOutput_Node {
 	// node AND drNode
 	return &qpN{Node: &qpNLO{LogicalOperation: lo}}
 }
 
-func mkOrLogicalOperation(nodes []*enginev1.ResourcesQueryPlanOutput_Node) *enginev1.ResourcesQueryPlanOutput_LogicalOperation {
-	return &enginev1.ResourcesQueryPlanOutput_LogicalOperation{
-		Operator: enginev1.ResourcesQueryPlanOutput_LogicalOperation_OPERATOR_OR,
+func mkOrLogicalOperation(nodes []*enginev1.PlanResourcesOutput_Node) *enginev1.PlanResourcesOutput_LogicalOperation {
+	return &enginev1.PlanResourcesOutput_LogicalOperation{
+		Operator: enginev1.PlanResourcesOutput_LogicalOperation_OPERATOR_OR,
 		Nodes:    nodes,
 	}
 }
 
-func mkAndLogicalOperation(nodes []*enginev1.ResourcesQueryPlanOutput_Node) *enginev1.ResourcesQueryPlanOutput_LogicalOperation {
-	return &enginev1.ResourcesQueryPlanOutput_LogicalOperation{
-		Operator: enginev1.ResourcesQueryPlanOutput_LogicalOperation_OPERATOR_AND,
+func mkAndLogicalOperation(nodes []*enginev1.PlanResourcesOutput_Node) *enginev1.PlanResourcesOutput_LogicalOperation {
+	return &enginev1.PlanResourcesOutput_LogicalOperation{
+		Operator: enginev1.PlanResourcesOutput_LogicalOperation_OPERATOR_AND,
 		Nodes:    nodes,
 	}
 }
 
-func invertNodeBooleanValue(node *enginev1.ResourcesQueryPlanOutput_Node) *enginev1.ResourcesQueryPlanOutput_Node {
-	lo := &enginev1.ResourcesQueryPlanOutput_LogicalOperation{
-		Operator: enginev1.ResourcesQueryPlanOutput_LogicalOperation_OPERATOR_NOT,
-		Nodes:    []*enginev1.ResourcesQueryPlanOutput_Node{node},
+func invertNodeBooleanValue(node *enginev1.PlanResourcesOutput_Node) *enginev1.PlanResourcesOutput_Node {
+	lo := &enginev1.PlanResourcesOutput_LogicalOperation{
+		Operator: enginev1.PlanResourcesOutput_LogicalOperation_OPERATOR_NOT,
+		Nodes:    []*enginev1.PlanResourcesOutput_Node{node},
 	}
 	return &qpN{Node: &qpNLO{LogicalOperation: lo}}
 }
 
-func evaluateCondition(condition *runtimev1.Condition, input *enginev1.ResourcesQueryPlanRequest, variables map[string]*exprpb.Expr) (*enginev1.ResourcesQueryPlanOutput_Node, error) {
+func evaluateCondition(condition *runtimev1.Condition, input *enginev1.PlanResourcesRequest, variables map[string]*exprpb.Expr) (*enginev1.PlanResourcesOutput_Node, error) {
 	res := new(qpN)
 	switch t := condition.Op.(type) {
 	case *runtimev1.Condition_Any:
@@ -408,7 +408,7 @@ func evaluateCondition(condition *runtimev1.Condition, input *enginev1.Resources
 	return res, nil
 }
 
-func evaluateCELExprPartially(expr *exprpb.CheckedExpr, input *enginev1.ResourcesQueryPlanRequest, variables map[string]*exprpb.Expr) (*bool, *exprpb.CheckedExpr, error) {
+func evaluateCELExprPartially(expr *exprpb.CheckedExpr, input *enginev1.PlanResourcesRequest, variables map[string]*exprpb.Expr) (*bool, *exprpb.CheckedExpr, error) {
 	e := expr.Expr
 	e, err := replaceVars(e, variables)
 	if err != nil {
