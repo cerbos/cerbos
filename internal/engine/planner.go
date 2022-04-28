@@ -510,6 +510,9 @@ func evalComprehensionBody(env *cel.Env, pvars interpreter.PartialActivation, e 
 			return err
 		}
 		_, det, err := conditions.Eval(env1, ast, partialVars, cel.EvalOptions(cel.OptTrackState, cel.OptPartialEval))
+		if err != nil {
+			return err
+		}
 		le = ResidualExpr(ast, det)
 		loopStep.CallExpr.Args[i] = le
 		err = evalComprehensionBody(env1, partialVars, le)

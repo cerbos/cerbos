@@ -17,11 +17,11 @@ import (
 	enginev1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
 	runtimev1 "github.com/cerbos/cerbos/api/genpb/cerbos/runtime/v1"
 	"github.com/cerbos/cerbos/internal/conditions"
+	"github.com/google/cel-go/interpreter"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/testing/protocmp"
-	"github.com/google/cel-go/interpreter"
 )
 
 func Test_evaluateCondition(t *testing.T) {
@@ -231,16 +231,16 @@ func TestPartialEvaluationWithGlobalVars(t *testing.T) {
 			want: "R.attr.items.filter(x, x.price > 100)",
 		},
 		{
-			expr: "R.attr.items.filter(x, x.price > now())",
-			want: "R.attr.items.filter(x, x.price > 100)",
-		},
-		{
 			expr: `now() > timestamp("2021-04-20") && R.attr.geo in ["GB", "US"]`,
 			want: `R.attr.geo in ["GB", "US"]`,
 		},
 		{
+			expr: "R.attr.items.filter(x, x.price > now())",
+			want: "R.attr.items.filter(x, x.price > now())",
+		},
+		{
 			expr: `timestamp(R.attr.lastAccessed) > now()`,
-			want: `timestamp(R.attr.lastAccessed) > 0`,
+			want: `timestamp(R.attr.lastAccessed) > now()`,
 		},
 	}
 
@@ -259,11 +259,8 @@ func TestPartialEvaluationWithGlobalVars(t *testing.T) {
 			_, det, err := conditions.Eval(env, ast, pvars, cel.EvalOptions(cel.OptTrackState, cel.OptPartialEval))
 			is.NoError(err)
 
-			//residualExpr := ResidualExpr(ast, det)
-			//err = evalComprehensionBody(env, pvars, residualExpr)
-			ast1, err := env.ResidualAst(ast, det)
-			is.NoError(err)
-			residualExpr := ast1.Expr()
+			residualExpr := ResidualExpr(ast, det)
+			err = evalComprehensionBody(env, pvars, residualExpr)
 			updateIds(residualExpr)
 			is.NoError(err)
 			wantAst, iss := env.Parse(tt.want)
@@ -277,6 +274,8 @@ func TestPartialEvaluationWithGlobalVars(t *testing.T) {
 }
 
 func setupEnv(t *testing.T) (*cel.Env, interpreter.PartialActivation, map[string]*expr.Expr) {
+	t.Helper()
+
 	env, err := conditions.StdPartialEnv.Extend(cel.Declarations(
 		decls.NewVar("gb_us", decls.NewListType(decls.String)),
 		decls.NewVar("gbLoc", decls.String),
