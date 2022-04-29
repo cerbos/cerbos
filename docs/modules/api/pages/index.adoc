@@ -21,6 +21,8 @@ Alternatively, you can explore the API using the following methods as well:
 * link:https://pkg.go.dev/github.com/cerbos/cerbos/client[Go] image:go.svg[alt="Go",opts="interactive",width=40,height=40,link="https://pkg.go.dev/github.com/cerbos/cerbos/client"] 
 * link:https://github.com/cerbos/cerbos-sdk-java[Java] image:java.svg[alt="Java",opts="interactive",width=40,height=40,link="https://github.com/cerbos/cerbos-sdk-java"]
 * link:https://github.com/cerbos/cerbos-sdk-node[NodeJS] image:nodejs.svg[alt="NodeJS",opts="interactive",width=40,height=40,link="https://github.com/cerbos/cerbos-sdk-node"]
+* link:https://github.com/cerbos/cerbos-sdk-python[Python] image:python.svg[alt="Python",opts="interactive",width=40,height=40,link="https://github.com/cerbos/cerbos-sdk-python"]
+* link:https://github.com/cerbos/cerbos-sdk-rust[Rust] image:rust.svg[alt="Rust",opts="interactive",width=40,height=40,link="https://github.com/cerbos/cerbos-sdk-rust"]
 
 Other languages coming soon
 
