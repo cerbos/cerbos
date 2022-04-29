@@ -8,7 +8,7 @@
     "roles":  [
       "user"
     ],
-    "attr": { "a":  1 }
+    "attr": { "a":  1, "vip-misspelled":  true }
   },
   "resource": {
     "kind": "album:object",
