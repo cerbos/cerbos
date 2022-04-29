@@ -170,3 +170,13 @@
       - variable: a
       - value: 2
     operator: mod
+
+"duration(\"1h\")":
+  expression:
+    operator: duration
+    operands:
+      - value: "1h"
+
+"now()":
+ expression:
+   operator: now

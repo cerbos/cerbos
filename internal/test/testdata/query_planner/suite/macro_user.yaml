@@ -151,3 +151,37 @@ tests:
                                               - "UK"
                                     - variable: t
                   - variable: x
+  - action: timestamp
+    resource:
+      kind: macro
+      policyVersion: default
+    want:
+      kind: KIND_CONDITIONAL
+      condition:
+        expression:
+          operator: all
+          operands:
+            - variable: R.attr.sessions
+            - expression:
+                operator: lambda
+                operands:
+                  - expression:
+                      operator: lt
+                      operands:
+                        - expression:
+                            operator: timestamp
+                            operands:
+                              - variable: x.lastAccessed
+                        - expression:
+                            operator: now
+                  - variable: x
+  - action: timeline
+    resource:
+      kind: macro
+      policyVersion: default
+      attr:
+        timeline:
+          - "2012-01-21T17:34:12.024Z"
+          - "2014-01-21T08:10:12.534Z"
+    want:
+      kind: KIND_ALWAYS_ALLOWED

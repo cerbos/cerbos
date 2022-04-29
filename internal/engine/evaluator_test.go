@@ -17,6 +17,7 @@ import (
 	enginev1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
 	runtimev1 "github.com/cerbos/cerbos/api/genpb/cerbos/runtime/v1"
 	"github.com/cerbos/cerbos/internal/conditions"
+	"github.com/google/cel-go/interpreter"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"google.golang.org/protobuf/encoding/protojson"
@@ -141,36 +142,55 @@ func Test_evaluateCondition(t *testing.T) {
 	}
 }
 
-func TestPartialEvaluationWithGlobalVars(t *testing.T) {
-	is := require.New(t)
-
-	env, err := conditions.StdPartialEnv.Extend(cel.Declarations(
-		decls.NewVar("gb_us", decls.NewListType(decls.String)),
-		decls.NewVar("gbLoc", decls.String),
-		decls.NewVar("ca", decls.String),
-		decls.NewVar("T", decls.Int),
-	))
-	is.NoError(err)
-
-	pvars, _ := cel.PartialVars(map[string]any{
-		"gbLoc": "en_GB",
-		"gb_us": []string{"GB", "US"},
-		"ca":    "ca",
-		"T":     100,
-	}, cel.AttributePattern("R"))
-
-	variables := make(map[string]*expr.Expr)
-	for k, txt := range map[string]string{
-		"locale": `R.attr.language + "_" + R.attr.country`,
-		"geo":    "R.attr.geo",
-		"gb_us2": "gb_us",
-		"gb_us":  `["gb", "us"].map(t, t.upperAscii())`,
-		"info":   `{"country": "GB", "language": "en"}`,
-	} {
-		e, iss := env.Compile(txt)
-		is.Nil(iss, iss.Err())
-		variables[k] = e.Expr()
+// TestResidualExpr compares two approaches to evaluate `residual expression`.
+// 1. ast := env.ResidualAst(); ast.Expr()
+// 2. ResidualExpr()
+// The former is the built-in approach, but unlike the latter doesn't support CEL comprehensions.
+func TestResidualExpr(t *testing.T) {
+	tests := []string{
+		"V.geo",
+		"V.locale == gbLoc",
+		"V.geo in (gb_us + [ca]).map(t, t.upperAscii())",
+		"V.geo in (V.gb_us2 + [ca]).map(t, t.upperAscii())",
+		"V.geo in (variables.gb_us + [ca]).map(t, t.upperAscii())",
+		`V.info.language + "_" + V.info.country == gbLoc`,
+		`has(R.attr.geo) && R.attr.geo in ["GB", "US"]`,
+		"has(V.info.language)",
+		`now() > timestamp("2021-04-20") && R.attr.geo in ["GB", "US"]`,
+		`timestamp(R.attr.lastAccessed) > now()`,
 	}
+
+	env, pvars, variables := setupEnv(t)
+	ignoreID := cmpopts.IgnoreMapEntries(func(k string, _ any) bool { return k == "id" })
+	for _, tt := range tests {
+		s := tt
+		t.Run(s, func(t *testing.T) {
+			var err error
+			is := require.New(t)
+			ast, iss := env.Compile(s)
+			is.Nil(iss, iss.Err())
+			e := ast.Expr()
+			e, err = replaceVars(e, variables)
+			is.NoError(err)
+			ast = cel.ParsedExprToAst(&expr.ParsedExpr{Expr: e})
+			_, det, err := conditions.Eval(env, ast, pvars, cel.EvalOptions(cel.OptTrackState, cel.OptPartialEval))
+			is.NoError(err)
+
+			residualAst, err := env.ResidualAst(ast, det)
+			is.NoError(err)
+			ast = cel.ParsedExprToAst(&expr.ParsedExpr{Expr: e})
+			_, det, err = conditions.Eval(env, ast, pvars, cel.EvalOptions(cel.OptTrackState, cel.OptPartialEval))
+			is.NoError(err)
+			residualExpr := ResidualExpr(ast, det)
+			is.NoError(err)
+			err = evalComprehensionBody(env, pvars, residualExpr)
+			is.NoError(err)
+			is.Empty(cmp.Diff(residualExpr, residualAst.Expr(), protocmp.Transform(), ignoreID))
+		})
+	}
+}
+
+func TestPartialEvaluationWithGlobalVars(t *testing.T) {
 	tests := []struct {
 		expr, want string
 	}{
@@ -210,10 +230,25 @@ func TestPartialEvaluationWithGlobalVars(t *testing.T) {
 			expr: "R.attr.items.filter(x, x.price > T)",
 			want: "R.attr.items.filter(x, x.price > 100)",
 		},
+		{
+			expr: `now() > timestamp("2021-04-20") && R.attr.geo in ["GB", "US"]`,
+			want: `R.attr.geo in ["GB", "US"]`,
+		},
+		{
+			expr: "R.attr.items.filter(x, x.price > now())",
+			want: "R.attr.items.filter(x, x.price > now())",
+		},
+		{
+			expr: `timestamp(R.attr.lastAccessed) > now()`,
+			want: `timestamp(R.attr.lastAccessed) > now()`,
+		},
 	}
+
+	env, pvars, variables := setupEnv(t)
 	ignoreID := cmpopts.IgnoreMapEntries(func(k string, _ any) bool { return k == "id" })
 	for _, tt := range tests {
 		t.Run(tt.expr, func(t *testing.T) {
+			var err error
 			is := require.New(t)
 			ast, iss := env.Compile(tt.expr)
 			is.Nil(iss, iss.Err())
@@ -226,7 +261,6 @@ func TestPartialEvaluationWithGlobalVars(t *testing.T) {
 
 			residualExpr := ResidualExpr(ast, det)
 			err = evalComprehensionBody(env, pvars, residualExpr)
-			is.NoError(err)
 			updateIds(residualExpr)
 			is.NoError(err)
 			wantAst, iss := env.Parse(tt.want)
@@ -237,4 +271,37 @@ func TestPartialEvaluationWithGlobalVars(t *testing.T) {
 				"{\"got\": %s,\n\"want\": %s}", protojson.Format(residualExpr), protojson.Format(wantExpr))
 		})
 	}
+}
+
+func setupEnv(t *testing.T) (*cel.Env, interpreter.PartialActivation, map[string]*expr.Expr) {
+	t.Helper()
+
+	env, err := conditions.StdPartialEnv.Extend(cel.Declarations(
+		decls.NewVar("gb_us", decls.NewListType(decls.String)),
+		decls.NewVar("gbLoc", decls.String),
+		decls.NewVar("ca", decls.String),
+		decls.NewVar("T", decls.Int),
+	))
+	require.NoError(t, err)
+
+	pvars, _ := cel.PartialVars(map[string]any{
+		"gbLoc": "en_GB",
+		"gb_us": []string{"GB", "US"},
+		"ca":    "ca",
+		"T":     100,
+	}, cel.AttributePattern("R"))
+
+	variables := make(map[string]*expr.Expr)
+	for k, txt := range map[string]string{
+		"locale": `R.attr.language + "_" + R.attr.country`,
+		"geo":    "R.attr.geo",
+		"gb_us2": "gb_us",
+		"gb_us":  `["gb", "us"].map(t, t.upperAscii())`,
+		"info":   `{"country": "GB", "language": "en"}`,
+	} {
+		e, iss := env.Compile(txt)
+		require.Nil(t, iss, iss.Err())
+		variables[k] = e.Expr()
+	}
+	return env, pvars, variables
 }

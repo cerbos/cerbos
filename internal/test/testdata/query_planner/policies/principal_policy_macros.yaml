@@ -48,3 +48,17 @@ principalPolicy:
                 R.attr.geos.all(x, !x.countries.exists(t, t in P.attr.forbidden))
           effect: EFFECT_ALLOW
           name: embedded
+        - action: timestamp
+          condition:
+            match:
+              expr: |-
+                R.attr.sessions.all(x, timestamp(x.lastAccessed) < now())
+          effect: EFFECT_ALLOW
+          name: timestamp
+        - action: timeline
+          condition:
+            match:
+              expr: |-
+                R.attr.timeline.all(x, timestamp(x) < now())
+          effect: EFFECT_ALLOW
+          name: timeline
