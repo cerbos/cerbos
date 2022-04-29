@@ -1,0 +1,92 @@
+include::ROOT:partial$attributes.adoc[]
+
+[#v0.16.0]
+= Cerbos v0.16.0
+
+This release consolidates the different `Check` APIs into a simpler API, promotes the query plan API to stable status, and adds exciting new features to the REPL to make policy development easier and more interactive.   
+
+== Highlights
+
+This release introduces a new RPC (API entrypoint) named xref:0.16.0@api:index.adoc#check-resources[`CheckResources`] (REST: `/api/check/resources`) for performing access checks. This supersedes the existing `CheckResourceSet` (REST: `/api/check`) and `CheckResourceBatch` (REST: `/api/check_resource_batch`) RPCs and simplifies the Cerbos API surface by removing the need to understand the subtle differences between the different calls. The old RPCs have been deprecated and are planned for removal in a future release of Cerbos.     
+
+Filtering and selecting a set of items from a datastore while making sure that the logged in user has access to each element in the resultset is a common problem in many applications. Given a user and the action they wish to perform on a resource category, the Cerbos query plan API produces a datastore-agnostic representation of constraints that must be satisfied by the resource instances in order to comply with access rules defined in Cerbos policies. It was introduced as an unstable API in Cerbos 0.12.0 and in this release it is promoted to stable status. The new stable RPC is named xref:0.16.0@api:index.adoc#resources-query-plan[`PlanResources`] (REST: `/api/plan/resources`) and includes refinements to the representation format of complex expressions to make them simpler and easier to translate into programming language constructs. This is a breaking change for gRPC clients because the RPC has been renamed.
+
+The Cerbos REPL gains the ability to load policies and interactively evaluate the conditions defined in them. This empowers policy authors to debug, develop, and test complex conditions with rapid feedback and no context switching. The REPL prompt is now smarter and is able to handle copy-pasting of large chunks of multi-line text without the need to explicitly escape newlines as well. 
+
+When no policies apply to a request, Cerbos produces a DENY response by default. This is now recorded in the engine traces so that policy tests can be debugged much more easily. 
+
+== Changelog
+
+
+=== Features
+
+* #**BREAKING**# Promote PlanResources API to stable (link:https://github.com/cerbos/cerbos/pull/872[#872])
+* Simplify QueryPlanner AST for CEL comprehensions (link:https://github.com/cerbos/cerbos/pull/870[#870])
+* Unified check API (link:https://github.com/cerbos/cerbos/pull/819[#819])
+
+=== Enhancements
+
+* Add trace for denial due to no matching policies (link:https://github.com/cerbos/cerbos/pull/858[#858])
+* Auto-detect end of input in REPL (link:https://github.com/cerbos/cerbos/pull/859[#859])
+* Execute policy conditions in the CEL REPL (link:https://github.com/cerbos/cerbos/pull/820[#820])
+* Policy variables in the REPL (link:https://github.com/cerbos/cerbos/pull/853[#853])
+
+=== Documentation
+
+* Document Jaeger trace format (link:https://github.com/cerbos/cerbos/pull/871[#871])
+
+=== Chores
+
+* Add 0.15.1 release notes (link:https://github.com/cerbos/cerbos/pull/825[#825])
+* Add CheckResources API to Playground (link:https://github.com/cerbos/cerbos/pull/821[#821])
+* Bump actions/setup-go from 2 to 3 (link:https://github.com/cerbos/cerbos/pull/829[#829])
+* Bump amannn/action-semantic-pull-request (link:https://github.com/cerbos/cerbos/pull/844[#844])
+* Bump amannn/action-semantic-pull-request (link:https://github.com/cerbos/cerbos/pull/860[#860])
+* Bump azure/setup-helm from 2.0 to 2.1 (link:https://github.com/cerbos/cerbos/pull/843[#843])
+* Bump bufbuild/buf-setup-action from 1.3.0 to 1.3.1 (link:https://github.com/cerbos/cerbos/pull/808[#808])
+* Bump bufbuild/buf-setup-action from 1.3.1 to 1.4.0 (link:https://github.com/cerbos/cerbos/pull/861[#861])
+* Bump codecov/codecov-action from 2 to 3 (link:https://github.com/cerbos/cerbos/pull/830[#830])
+* Bump github.com/alecthomas/participle/v2 (link:https://github.com/cerbos/cerbos/pull/834[#834])
+* Bump github.com/bojand/ghz in /tools (link:https://github.com/cerbos/cerbos/pull/837[#837])
+* Bump github.com/bufbuild/buf from 1.3.0 to 1.3.1 in /tools (link:https://github.com/cerbos/cerbos/pull/815[#815])
+* Bump github.com/bufbuild/buf from 1.3.1 to 1.4.0 in /tools (link:https://github.com/cerbos/cerbos/pull/868[#868])
+* Bump github.com/gdamore/tcell/v2 from 2.4.0 to 2.5.0 (link:https://github.com/cerbos/cerbos/pull/817[#817])
+* Bump github.com/gdamore/tcell/v2 from 2.5.0 to 2.5.1 (link:https://github.com/cerbos/cerbos/pull/848[#848])
+* Bump github.com/goreleaser/goreleaser in /tools (link:https://github.com/cerbos/cerbos/pull/851[#851])
+* Bump github.com/goreleaser/goreleaser in /tools (link:https://github.com/cerbos/cerbos/pull/867[#867])
+* Bump github.com/jackc/pgx/v4 from 4.15.0 to 4.16.0 (link:https://github.com/cerbos/cerbos/pull/862[#862])
+* Bump github.com/jmoiron/sqlx from 1.3.4 to 1.3.5 (link:https://github.com/cerbos/cerbos/pull/854[#854])
+* Bump github.com/lestrrat-go/jwx from 1.2.20 to 1.2.21 (link:https://github.com/cerbos/cerbos/pull/811[#811])
+* Bump github.com/lestrrat-go/jwx from 1.2.21 to 1.2.22 (link:https://github.com/cerbos/cerbos/pull/831[#831])
+* Bump github.com/lestrrat-go/jwx from 1.2.22 to 1.2.23 (link:https://github.com/cerbos/cerbos/pull/849[#849])
+* Bump github.com/minio/minio-go/v7 from 7.0.23 to 7.0.24 (link:https://github.com/cerbos/cerbos/pull/847[#847])
+* Bump github.com/planetscale/vtprotobuf from 0.2.0 to 0.3.0 in /tools (link:https://github.com/cerbos/cerbos/pull/850[#850])
+* Bump github.com/pterm/pterm from 0.12.39 to 0.12.40 (link:https://github.com/cerbos/cerbos/pull/818[#818])
+* Bump github.com/pterm/pterm from 0.12.40 to 0.12.41 (link:https://github.com/cerbos/cerbos/pull/845[#845])
+* Bump github.com/tidwall/gjson from 1.14.0 to 1.14.1 (link:https://github.com/cerbos/cerbos/pull/864[#864])
+* Bump github.com/vektra/mockery/v2 from 2.10.0 to 2.10.2 in /tools (link:https://github.com/cerbos/cerbos/pull/814[#814])
+* Bump github.com/vektra/mockery/v2 from 2.10.2 to 2.10.4 in /tools (link:https://github.com/cerbos/cerbos/pull/838[#838])
+* Bump github.com/vektra/mockery/v2 from 2.10.4 to 2.10.6 in /tools (link:https://github.com/cerbos/cerbos/pull/852[#852])
+* Bump github.com/vektra/mockery/v2 from 2.10.6 to 2.12.0 in /tools (link:https://github.com/cerbos/cerbos/pull/869[#869])
+* Bump go.opentelemetry.io/otel from 1.6.1 to 1.6.3 (link:https://github.com/cerbos/cerbos/pull/833[#833])
+* Bump go.opentelemetry.io/otel/bridge/opencensus (link:https://github.com/cerbos/cerbos/pull/855[#855])
+* Bump go.opentelemetry.io/otel/exporters/jaeger (link:https://github.com/cerbos/cerbos/pull/810[#810])
+* Bump go.opentelemetry.io/otel/exporters/jaeger (link:https://github.com/cerbos/cerbos/pull/839[#839])
+* Bump go.opentelemetry.io/otel/sdk from 1.6.0 to 1.6.1 (link:https://github.com/cerbos/cerbos/pull/809[#809])
+* Bump go.uber.org/automaxprocs from 1.4.0 to 1.5.1 (link:https://github.com/cerbos/cerbos/pull/832[#832])
+* Bump gocloud.dev from 0.24.0 to 0.25.0 (link:https://github.com/cerbos/cerbos/pull/816[#816])
+* Bump google.golang.org/grpc from 1.45.0 to 1.46.0 (link:https://github.com/cerbos/cerbos/pull/865[#865])
+* Bump gotest.tools/gotestsum from 1.7.0 to 1.8.0 in /tools (link:https://github.com/cerbos/cerbos/pull/836[#836])
+* Bump helm.sh/helm/v3 from 3.8.1 to 3.8.2 (link:https://github.com/cerbos/cerbos/pull/846[#846])
+* Bump modernc.org/sqlite from 1.15.3 to 1.15.4 (link:https://github.com/cerbos/cerbos/pull/813[#813])
+* Bump modernc.org/sqlite from 1.15.4 to 1.16.0 (link:https://github.com/cerbos/cerbos/pull/835[#835])
+* Bump modernc.org/sqlite from 1.16.0 to 1.17.0 (link:https://github.com/cerbos/cerbos/pull/863[#863])
+* Bump version to 0.16.0
+* Group changelog items (link:https://github.com/cerbos/cerbos/pull/826[#826])
+* Make playground test API response match validate and evaluate (link:https://github.com/cerbos/cerbos/pull/857[#857])
+* Rename interface{} to any and use Go build info (link:https://github.com/cerbos/cerbos/pull/807[#807])
+* Use the same format for GCS buckets (link:https://github.com/cerbos/cerbos/pull/806[#806])
+
+=== Other
+
+* Add the query planner tests (link:https://github.com/cerbos/cerbos/pull/873[#873])

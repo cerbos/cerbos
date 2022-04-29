@@ -1,4 +1,5 @@
 .Release Notes
+* xref:v0.16.0.adoc[v0.16.0]
 * xref:v0.15.1.adoc[v0.15.1]
 * xref:v0.15.0.adoc[v0.15.0]
 * xref:v0.14.0.adoc[v0.14.0]

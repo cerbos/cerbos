@@ -188,9 +188,9 @@ You can also set special variables used in Cerbos policies (`request`, `variable
 
 [listing]
 ----
--> :let request = {\
->   "principal":{"id":"john","roles":["employee"],"attr":{"scope":"foo.bar.baz.qux"}},\
->   "resource":{"id":"x1","kind":"leave_request","attr":{"scope":"foo.bar"}}\
+-> :let request = {
+>   "principal":{"id":"john","roles":["employee"],"attr":{"scope":"foo.bar.baz.qux"}},
+>   "resource":{"id":"x1","kind":"leave_request","attr":{"scope":"foo.bar"}}
 > }
 
 -> hierarchy(R.attr.scope).ancestorOf(hierarchy(P.attr.scope))
@@ -199,45 +199,40 @@ _ = true
 
 Type `:vars` to display the values of all the variables currently defined in the environment.
 
+You can load a Cerbos policy into the REPL by typing `:load path/to/policy_file.yaml`. This will read the policy and load any rules that have conditions attached. These can be viewed by typing `:rules`. Execute any rule by providing its number to the `:exec` directive (for example, `:exec #2`). Rules are executed using the variables defined in the current REPL session. You can set or update them using the `:let` directive and re-execute the rules to see the effects.  
+
+[listing]
+----
+-> :load store/leave_request.yaml
+Loaded resource.leave_request.v20210210
+
+Policy variables:
+{
+  "pending_approval": "(\"PENDING_APPROVAL\")",
+  "principal_location": "(P.attr.ip_address.inIPAddrRange(\"10.20.0.0/16\") ? \"GB\" : \"\")"
+}
+
+Conditional rules in 'resource.leave_request.v20210210'
+
+[#0]
+    actions:
+    - approve
+    condition:
+      match:
+        expr: request.resource.attr.status == V.pending_approval
+    derivedRoles:
+    - direct_manager
+    effect: EFFECT_ALLOW
+
+
+-> :exec #0
+└──request.resource.attr.status == V.pending_approval [false]
+----
+
 Type `:help` or `:h` to display help. Type `:quit`, `:q` or `:exit` to exit the REPL. 
 
 TIP: Use the up/down arrow keys (or kbd:[Ctrl+P]/kbd:[Ctrl+N]) to navigate command history. Most of the standard line-editing commands such as kbd:[Ctrl+a], kbd:[Ctrl+h], kbd:[Ctrl+r] are supported as well. 
 
-You can load rules from a policies.
-
-[listing]
-----
--> :load /policies/resource_policies/policy_01.yaml
-Resource policy 'resource.leave_request.v20210210' loaded
-
--> :load /policies/derived_roles/derived_01.yaml
-Derived roles 'derived_roles.alpha' loaded
-----
-
-Type `:rules` to display the rules loaded from policies.
-
-Type `:exec` to execute the rules using the environment of the REPL.
-
-[listing]
-----
--> :rules
-#0 (derived_roles)
-{
-  "name": "employee_that_owns_the_record",
-  "parentRoles": [
-    "employee"
-  ],
-  "condition": {
-    "match": {
-      "expr": "R.attr.owner == P.id"
-    }
-  }
-}
-
--> :exec #0
-Executing: R.attr.owner == P.id
-_ = true
-----
 
 [#run]
 == `run` Command
