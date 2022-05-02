@@ -9,7 +9,7 @@ require (
 	github.com/alecthomas/chroma v0.10.0
 	github.com/alecthomas/kong v0.5.0
 	github.com/alecthomas/participle/v2 v2.0.0-alpha8
-	github.com/aws/aws-sdk-go v1.43.31
+	github.com/aws/aws-sdk-go v1.44.4
 	github.com/bluele/gcache v0.0.2
 	github.com/cespare/xxhash v1.1.0
 	github.com/cespare/xxhash/v2 v2.1.2
