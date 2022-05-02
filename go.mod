@@ -26,7 +26,7 @@ require (
 	github.com/go-git/go-git/v5 v5.4.2
 	github.com/go-sql-driver/mysql v1.6.0
 	github.com/gobwas/glob v0.2.3
-	github.com/golang-migrate/migrate/v4 v4.15.1
+	github.com/golang-migrate/migrate/v4 v4.15.2
 	github.com/google/cel-go v0.11.2
 	github.com/google/go-cmp v0.5.7
 	github.com/google/gops v0.3.22
@@ -93,7 +93,7 @@ require (
 	github.com/Azure/go-ansiterm v0.0.0-20210617225240-d185dfc1b5a1 // indirect
 	github.com/Masterminds/goutils v1.1.1 // indirect
 	github.com/Masterminds/semver/v3 v3.1.1 // indirect
-	github.com/Microsoft/go-winio v0.5.1 // indirect
+	github.com/Microsoft/go-winio v0.5.2 // indirect
 	github.com/Nvveen/Gotty v0.0.0-20120604004816-cd527374f1e5 // indirect
 	github.com/OneOfOne/xxhash v1.2.8 // indirect
 	github.com/ProtonMail/go-crypto v0.0.0-20210512092938-c05353c2d58c // indirect
@@ -126,7 +126,7 @@ require (
 	github.com/dgryski/go-farm v0.0.0-20200201041132-a6ae2369ad13 // indirect
 	github.com/dlclark/regexp2 v1.4.0 // indirect
 	github.com/docker/cli v20.10.11+incompatible // indirect
-	github.com/docker/docker v20.10.12+incompatible // indirect
+	github.com/docker/docker v20.10.13+incompatible // indirect
 	github.com/docker/go-connections v0.4.0 // indirect
 	github.com/docker/go-units v0.4.0 // indirect
 	github.com/dustin/go-humanize v1.0.0 // indirect
