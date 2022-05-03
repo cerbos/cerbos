@@ -1,0 +1,32 @@
+include::ROOT:partial$attributes.adoc[]
+
+[glossary]
+= Glossary of Cerbos terms
+
+[glossary]
+
+ACTION::
+Any application-defined operation that could be performed on a `*RESOURCE*`. Actions could be coarse-grained like `create`, `update`, `delete`, `view` or fine-grained like `view:public`, `update:invoice_amt`. What actions are possible is determined by the application developers and they can use xref:policies:index.adoc[Cerbos policies] to define the rules that must be satisfied in order for a given `*PRINCIPAL*` to perform one of those actions on a `*RESOURCE INSTANCE*`. 
+
+ATTRIBUTE::
+A piece of information about a `*PRINCIPAL*` or a `*RESOURCE INSTANCE*` that is useful for making an access decision. Cerbos is stateless and has no access to your application data. In order to make access decisions, Cerbos needs to know relevant information about the users and the objects they are trying to access. This information is sent as `attributes` in the Cerbos API request. For example, if you want to restrict users from a particular geography to access only objects from that same geography, you might define a Cerbos rule condition like `request.resource.attr.geography == request.principal.attr.geography`. Then, in the Cerbos API request, you must send the `geography` attribute (as determined by your application) for both the principal and the resource instance.
+
+CONDITION::
+Cerbos policy rules can make dynamic, context-aware decisions by evaluating conditional logic against the `*ATTRIBUTES*` sent through the API request. See xref:policies:conditions.adoc[] for details.
+
+DERIVED ROLE::
+Most applications have a statically defined set of roles such as `admin`, `writer`, `employee` and so on. Cerbos derived roles are a feature in which these static roles can be dynamically augmented with context-awareness. For example, someone with the `employee` role can be augmented to `us_employee` by checking whether their location is in the USA. Cerbos policies can then be written to target the `us_employee` derived role instead of the `employee` role -- which removes repetition of logic across policy files. See xref:policies:derived_roles.adoc[] for details. 
+
+PDP::
+Policy decision point. Essentially, where policies are executed and decisions are made. When you start a Cerbos server through one of the distribution artefacts (binary, container, Helm chart), you start a PDP.
+
+PRINCIPAL::
+A human or an automated process that wants to perform one or more `*ACTIONS*` on one or more `*RESOURCE INSTANCES*`. Typically called a "user" in most settings but Cerbos uses the term `Principal` to avoid any ambiguity about whether the user is human or not. You can create xref:policies:principal_policies.adoc[principal policies] to create exceptions for particular users.  
+
+RESOURCE::
+A kind or a category of application objects with similar characteristics. The concept is very similar to a `class` in object-oriented programming. For example, in an inventory system, `Invoice` is a resource. Your system might have thousands or millions of invoices (`*RESOURCE INSTANCES*`: similar to `objects` in object-oriented programming) but there would only be a single Cerbos xref:policies:resource_policies.adoc[resource policy] for `Invoice` which encodes all the access rules.
++
+NOTE: Sometimes the term `resource` is used to refer to a `*RESOURCE INSTANCE*` when the meaning is obvious from the context (the xref:api:index.adoc[API request fields] are a good example of this). 
+
+RESOURCE INSTANCE::
+A specific item of a `*RESOURCE*` kind. If a `*RESOURCE*` is a `class`, a `*RESOURCE INSTANCE*` is an `object` of that class. For example, an invoice that was issued to "Acme Corp." with ID "I23456" is a `*RESOURCE INSTANCE*`. When making access decisions using Cerbos, you need to send information about the _resource instances_ to the Cerbos `CheckResources` API endpoint. The Cerbos `*PDP*` would then use the appropriate resource policy (determined by the `kind` specified in the resource instance) to process the information and make an access decision.  

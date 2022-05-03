@@ -1,0 +1,3 @@
+.xref:index.adoc[Glossary]
+- xref:index.adoc[Glossary of Cerbos terms]
+
