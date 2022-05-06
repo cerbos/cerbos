@@ -51,6 +51,8 @@ import (
 
 	// Import to register the Badger audit log backend.
 	_ "github.com/cerbos/cerbos/internal/audit/local"
+	// Import to register the file audit log backend.
+	_ "github.com/cerbos/cerbos/internal/audit/file"
 	"github.com/cerbos/cerbos/internal/auxdata"
 	"github.com/cerbos/cerbos/internal/compile"
 	"github.com/cerbos/cerbos/internal/engine"
