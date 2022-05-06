@@ -111,6 +111,18 @@ Cerbos expects the password to be hashed with bcrypt and encoded with base64. Th
 echo "cerbosAdmin" | htpasswd -niBC 10 cerbos | cut -d ':' -f 2 | base64 -w0
 ----
 
+[NOTE]
+====
+On MacOS, the `base64` utility does not require the `-w0` argument.
+
+[source, sh]
+----
+echo "cerbosAdmin" | htpasswd -niBC 10 cerbos | cut -d ':' -f 2 | base64
+----
+
+====
+
+NOTE: The output of the above command for a given password value is not deterministic. It will vary between invocations or between different machines. This is because the `bcrypt` algorithm uses a salt (random noise) to make password cracking harder. 
 
 == Enable Playground
 

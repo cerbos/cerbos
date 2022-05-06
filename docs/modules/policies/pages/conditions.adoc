@@ -181,6 +181,26 @@ NOTE: CEL has many builtin functions and operators. The fully up-to-date list ca
 
 == Durations
 
+[NOTE]
+====
+
+Duration values must be specified in one of the following units. Larger units like days, weeks or years are not supported because of ambiguity around their meaning due to factors such as daylight saving time transitions.
+
+[caption=]
+[%header,cols=".^1m,.^4",grid=rows]
+|===
+| Suffix | Unit 
+| ns     | Nanoseconds
+| us     | Microseconds
+| ms     | Milliseconds
+| s      | Seconds
+| m      | Minutes
+| h      | Hours
+|===
+
+
+====
+
 .Test data
 [source,json,linenums]
 ----
