@@ -1360,8 +1360,8 @@ github.com/valyala/fasthttp v1.15.1/go.mod h1:YOKImeEosDdBPnxc0gy7INqi3m1zK6A+xl
 github.com/valyala/fasttemplate v1.0.1/go.mod h1:UQGH1tvbgY+Nz5t2n7tXsz52dQxojPUpymEIMZ47gx8=
 github.com/valyala/quicktemplate v1.6.2/go.mod h1:mtEJpQtUiBV0SHhMX6RtiJtqxncgrfmjcUy5T68X8TM=
 github.com/valyala/tcplisten v0.0.0-20161114210144-ceec8f93295a/go.mod h1:v3UYOV9WzVtRmSR+PDvWpU/qWl4Wa5LApYYX4ZtKbio=
-github.com/vektra/mockery/v2 v2.12.1 h1:BAJk2fGjVg/P9Fi+BxZD1/ZeKTOclpeAb/SKCc12zXc=
-github.com/vektra/mockery/v2 v2.12.1/go.mod h1:8vf4KDDUptfkyypzdHLuE7OE2xA7Gdt60WgIS8PgD+U=
+github.com/vektra/mockery/v2 v2.12.2 h1:JbRx9F+XcCJiDTyCm3V5lXYwl56m5ZouV6I9eZa1Dj0=
+github.com/vektra/mockery/v2 v2.12.2/go.mod h1:8vf4KDDUptfkyypzdHLuE7OE2xA7Gdt60WgIS8PgD+U=
 github.com/viki-org/dnscache v0.0.0-20130720023526-c70c1f23c5d8/go.mod h1:dniwbG03GafCjFohMDmz6Zc6oCuiqgH6tGNyXTkHzXE=
 github.com/xanzy/go-gitlab v0.63.0 h1:a9fXpKWykUS6dowapFej/2Wjf4aOAEFC1q2ZIcz4IpI=
 github.com/xanzy/go-gitlab v0.63.0/go.mod h1:F0QEXwmqiBUxCgJm8fE9S+1veX4XC9Z4cfaAbqwk4YM=
