@@ -11,3 +11,4 @@ nav:
   - modules/cli/nav.adoc
   - modules/tutorials/nav.adoc
   - modules/releases/nav.adoc
+  - modules/glossary/nav.adoc
