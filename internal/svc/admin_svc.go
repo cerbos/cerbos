@@ -300,28 +300,33 @@ func (cas *CerbosAdminService) ListAuditLogEntries(req *requestv1.ListAuditLogEn
 }
 
 func (cas *CerbosAdminService) getAuditLogStream(ctx context.Context, req *requestv1.ListAuditLogEntriesRequest) (auditLogStream, error) {
+	queryableLog, ok := cas.auditLog.(audit.QueryableLog)
+	if !ok {
+		return nil, status.Error(codes.Unimplemented, "Audit log backend does not support querying")
+	}
+
 	switch req.Kind {
 	case requestv1.ListAuditLogEntriesRequest_KIND_ACCESS:
 		switch f := req.Filter.(type) {
 		case *requestv1.ListAuditLogEntriesRequest_Tail:
-			return mkAccessLogStream(cas.auditLog.LastNAccessLogEntries(ctx, uint(f.Tail))), nil
+			return mkAccessLogStream(queryableLog.LastNAccessLogEntries(ctx, uint(f.Tail))), nil
 		case *requestv1.ListAuditLogEntriesRequest_Between:
-			return mkAccessLogStream(cas.auditLog.AccessLogEntriesBetween(ctx, f.Between.Start.AsTime(), f.Between.End.AsTime())), nil
+			return mkAccessLogStream(queryableLog.AccessLogEntriesBetween(ctx, f.Between.Start.AsTime(), f.Between.End.AsTime())), nil
 		case *requestv1.ListAuditLogEntriesRequest_Since:
-			return mkAccessLogStream(cas.auditLog.AccessLogEntriesBetween(ctx, time.Now().Add(-f.Since.AsDuration()), time.Now())), nil
+			return mkAccessLogStream(queryableLog.AccessLogEntriesBetween(ctx, time.Now().Add(-f.Since.AsDuration()), time.Now())), nil
 		case *requestv1.ListAuditLogEntriesRequest_Lookup:
-			return mkAccessLogStream(cas.auditLog.AccessLogEntryByID(ctx, audit.ID(f.Lookup))), nil
+			return mkAccessLogStream(queryableLog.AccessLogEntryByID(ctx, audit.ID(f.Lookup))), nil
 		}
 	case requestv1.ListAuditLogEntriesRequest_KIND_DECISION:
 		switch f := req.Filter.(type) {
 		case *requestv1.ListAuditLogEntriesRequest_Tail:
-			return mkDecisionLogStream(cas.auditLog.LastNDecisionLogEntries(ctx, uint(f.Tail))), nil
+			return mkDecisionLogStream(queryableLog.LastNDecisionLogEntries(ctx, uint(f.Tail))), nil
 		case *requestv1.ListAuditLogEntriesRequest_Between:
-			return mkDecisionLogStream(cas.auditLog.DecisionLogEntriesBetween(ctx, f.Between.Start.AsTime(), f.Between.End.AsTime())), nil
+			return mkDecisionLogStream(queryableLog.DecisionLogEntriesBetween(ctx, f.Between.Start.AsTime(), f.Between.End.AsTime())), nil
 		case *requestv1.ListAuditLogEntriesRequest_Since:
-			return mkDecisionLogStream(cas.auditLog.DecisionLogEntriesBetween(ctx, time.Now().Add(-f.Since.AsDuration()), time.Now())), nil
+			return mkDecisionLogStream(queryableLog.DecisionLogEntriesBetween(ctx, time.Now().Add(-f.Since.AsDuration()), time.Now())), nil
 		case *requestv1.ListAuditLogEntriesRequest_Lookup:
-			return mkDecisionLogStream(cas.auditLog.DecisionLogEntryByID(ctx, audit.ID(f.Lookup))), nil
+			return mkDecisionLogStream(queryableLog.DecisionLogEntryByID(ctx, audit.ID(f.Lookup))), nil
 		}
 	default:
 		return nil, status.Error(codes.InvalidArgument, "Unknown log stream kind")
