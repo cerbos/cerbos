@@ -1,9 +1,10 @@
 ---
 name: E2E Tests
 on:
-  workflow_dispatch:
-  schedule:
-    - cron: 0 1 * * 1-5
+  pull_request:
+    branches:
+      - main
+      - 'v*'
 jobs:
   runE2ETests:
     name: Run E2E Tests
