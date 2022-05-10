@@ -10,12 +10,9 @@ import (
 	"github.com/cerbos/cerbos/internal/audit"
 )
 
-const (
-	confKey   = audit.ConfKey + ".file"
-	stderrStr = "stderr"
-	stdoutStr = "stdout"
-)
+const confKey = audit.ConfKey + ".file"
 
+// Conf is optional configuration for file Audit.
 type Conf struct {
 	// Path to the log file to use as output. The special values stdout and stderr can be used to write to stdout or stderr respectively.
 	Path string `yaml:"path" conf:",example=/path/to/file.log"`
@@ -26,7 +23,7 @@ func (c *Conf) Key() string {
 }
 
 func (c *Conf) SetDefaults() {
-	c.Path = stdoutStr
+	c.Path = "stdout"
 }
 
 func (c *Conf) Validate() error {
