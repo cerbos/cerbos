@@ -24,13 +24,17 @@ var (
 type Log interface {
 	WriteAccessLogEntry(context.Context, AccessLogEntryMaker) error
 	WriteDecisionLogEntry(context.Context, DecisionLogEntryMaker) error
+	Close()
+}
+
+type QueryableLog interface {
+	Log
 	LastNAccessLogEntries(context.Context, uint) AccessLogIterator
 	LastNDecisionLogEntries(context.Context, uint) DecisionLogIterator
 	AccessLogEntriesBetween(context.Context, time.Time, time.Time) AccessLogIterator
 	DecisionLogEntriesBetween(context.Context, time.Time, time.Time) DecisionLogIterator
 	AccessLogEntryByID(context.Context, ID) AccessLogIterator
 	DecisionLogEntryByID(context.Context, ID) DecisionLogIterator
-	Close()
 }
 
 // AccessLogEntryMaker is a lazy constructor for access log entries.
@@ -85,7 +89,13 @@ func NewLogFromConf(ctx context.Context, confW *config.Wrapper) (Log, error) {
 		return nil, fmt.Errorf("failed to create backend: %w", err)
 	}
 
-	return &logWrapper{conf: conf, backend: backend}, nil
+	lw := &logWrapper{conf: conf, backend: backend}
+
+	if q, ok := backend.(QueryableLog); ok {
+		return &queryableLogWrapper{logWrapper: lw, queryable: q}, nil
+	}
+
+	return lw, nil
 }
 
 // NewNopLog returns an audit log that does nothing.
@@ -116,58 +126,63 @@ func (lw *logWrapper) WriteDecisionLogEntry(ctx context.Context, entry DecisionL
 	return lw.backend.WriteDecisionLogEntry(ctx, entry)
 }
 
-func (lw *logWrapper) LastNAccessLogEntries(ctx context.Context, n uint) AccessLogIterator {
-	if !lw.conf.AccessLogsEnabled {
-		return nopAccessLogIterator{}
-	}
-
-	return lw.backend.LastNAccessLogEntries(ctx, n)
-}
-
-func (lw *logWrapper) LastNDecisionLogEntries(ctx context.Context, n uint) DecisionLogIterator {
-	if !lw.conf.DecisionLogsEnabled {
-		return nopDecisionLogIterator{}
-	}
-
-	return lw.backend.LastNDecisionLogEntries(ctx, n)
-}
-
-func (lw *logWrapper) AccessLogEntriesBetween(ctx context.Context, from, to time.Time) AccessLogIterator {
-	if !lw.conf.AccessLogsEnabled {
-		return nopAccessLogIterator{}
-	}
-
-	return lw.backend.AccessLogEntriesBetween(ctx, from, to)
-}
-
-func (lw *logWrapper) DecisionLogEntriesBetween(ctx context.Context, from, to time.Time) DecisionLogIterator {
-	if !lw.conf.DecisionLogsEnabled {
-		return nopDecisionLogIterator{}
-	}
-
-	return lw.backend.DecisionLogEntriesBetween(ctx, from, to)
-}
-
-func (lw *logWrapper) AccessLogEntryByID(ctx context.Context, id ID) AccessLogIterator {
-	if !lw.conf.AccessLogsEnabled {
-		return nopAccessLogIterator{}
-	}
-
-	return lw.backend.AccessLogEntryByID(ctx, id)
-}
-
-func (lw *logWrapper) DecisionLogEntryByID(ctx context.Context, id ID) DecisionLogIterator {
-	if !lw.conf.DecisionLogsEnabled {
-		return nopDecisionLogIterator{}
-	}
-
-	return lw.backend.DecisionLogEntryByID(ctx, id)
-}
-
 func (lw *logWrapper) Close() {
 	if lw.backend != nil {
 		lw.backend.Close()
 	}
+}
+
+type queryableLogWrapper struct {
+	*logWrapper
+	queryable QueryableLog
+}
+
+func (qlw *queryableLogWrapper) LastNAccessLogEntries(ctx context.Context, n uint) AccessLogIterator {
+	if !qlw.conf.AccessLogsEnabled {
+		return nopAccessLogIterator{}
+	}
+
+	return qlw.queryable.LastNAccessLogEntries(ctx, n)
+}
+
+func (qlw *queryableLogWrapper) LastNDecisionLogEntries(ctx context.Context, n uint) DecisionLogIterator {
+	if !qlw.conf.DecisionLogsEnabled {
+		return nopDecisionLogIterator{}
+	}
+
+	return qlw.queryable.LastNDecisionLogEntries(ctx, n)
+}
+
+func (qlw *queryableLogWrapper) AccessLogEntriesBetween(ctx context.Context, from, to time.Time) AccessLogIterator {
+	if !qlw.conf.AccessLogsEnabled {
+		return nopAccessLogIterator{}
+	}
+
+	return qlw.queryable.AccessLogEntriesBetween(ctx, from, to)
+}
+
+func (qlw *queryableLogWrapper) DecisionLogEntriesBetween(ctx context.Context, from, to time.Time) DecisionLogIterator {
+	if !qlw.conf.DecisionLogsEnabled {
+		return nopDecisionLogIterator{}
+	}
+
+	return qlw.queryable.DecisionLogEntriesBetween(ctx, from, to)
+}
+
+func (qlw *queryableLogWrapper) AccessLogEntryByID(ctx context.Context, id ID) AccessLogIterator {
+	if !qlw.conf.AccessLogsEnabled {
+		return nopAccessLogIterator{}
+	}
+
+	return qlw.queryable.AccessLogEntryByID(ctx, id)
+}
+
+func (qlw *queryableLogWrapper) DecisionLogEntryByID(ctx context.Context, id ID) DecisionLogIterator {
+	if !qlw.conf.DecisionLogsEnabled {
+		return nopDecisionLogIterator{}
+	}
+
+	return qlw.queryable.DecisionLogEntryByID(ctx, id)
 }
 
 // nopAccessLogIterator implements an AccessLogIterator that always returns nothing.

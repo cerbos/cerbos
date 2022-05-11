@@ -3,6 +3,8 @@ audit:
   backend: local # Backend states which backend to use for Audits.
   decisionLogsEnabled: true # DecisionLogsEnabled defines whether logging of policy decisions is enabled.
   enabled: false # Enabled defines whether audit logging is enabled.
+  file:
+    path: /path/to/file.log # Path to the log file to use as output. The special values stdout and stderr can be used to write to stdout or stderr respectively.
   local:
     advanced: 
       bufferSize: 256 
