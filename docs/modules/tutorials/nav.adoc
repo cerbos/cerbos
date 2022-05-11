@@ -2,6 +2,8 @@
 * link:https://book.cerbos.dev[Cerbos guide]
 * Example Apps
 ** xref:photo-share/index.adoc[Photo-share application]
+** link:https://github.com/cerbos/demo-rest[Demo of securing a REST API with Cerbos]
+** link:https://github.com/cerbos/demo-multitenant-saas[Modelling a multi-tenant SaaS with Cerbos]
 * Authentication Integration
 ** xref:authentication/auth0/index.adoc[Auth0]
 ** xref:authentication/fusionauth/index.adoc[FusionAuth]
