@@ -408,6 +408,9 @@ func parseTag(tag string) (*TagInfo, error) {
 }
 
 func parseDescMarker(cg *ast.CommentGroup) (string, bool) {
+	if cg == nil {
+		return "", false
+	}
 	for _, c := range cg.List {
 		submatches := descRegex.FindAllStringSubmatch(c.Text, -1)
 		if submatches != nil && submatches[0] != nil {
