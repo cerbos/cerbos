@@ -7,7 +7,7 @@ This is still a WIP.
 - [kind](https://kind.sigs.k8s.io)
 - [kubectl](https://kubernetes.io/docs/tasks/tools/#kubectl)
 - [Helm](https://helm.sh)
-- [Helmfile](https://github.com/roboll/helmfile)
+- [Helmfile](https://github.com/helmfile/helmfile)
 - [Telepresence](https://www.telepresence.io/docs/latest/install/)
 
 ## Running tests
