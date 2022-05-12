@@ -158,7 +158,8 @@ func Start(ctx context.Context, zpagesEnabled bool) error {
 	s := NewServer(conf)
 	s.ocExporter = ocExporter
 
-	telemetry.Report(ctx, store)
+	telemetry.Start(ctx, store)
+	defer telemetry.Stop()
 
 	return s.Start(ctx, Param{AuditLog: auditLog, AuxData: auxData, Engine: eng, Store: store, ZPagesEnabled: zpagesEnabled})
 }

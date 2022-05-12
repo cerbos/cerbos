@@ -1,11 +1,11 @@
 {
-  "$id": "https://api.cerbos.dev/cerbos/telemetry/v1/Ping/Features/Schema.schema.json",
+  "$id": "https://api.cerbos.dev/cerbos/telemetry/v1/ServerLaunch/Features/AdminApi.schema.json",
   "$schema": "http://json-schema.org/draft-07/schema#",
   "type": "object",
   "additionalProperties": false,
   "properties": {
-    "enforcement": {
-      "type": "string"
+    "enabled": {
+      "type": "boolean"
     }
   }
 }

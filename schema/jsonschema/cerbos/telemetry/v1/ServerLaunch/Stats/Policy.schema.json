@@ -1,5 +1,5 @@
 {
-  "$id": "https://api.cerbos.dev/cerbos/telemetry/v1/Ping/Stats/Policy.schema.json",
+  "$id": "https://api.cerbos.dev/cerbos/telemetry/v1/ServerLaunch/Stats/Policy.schema.json",
   "$schema": "http://json-schema.org/draft-07/schema#",
   "type": "object",
   "additionalProperties": false,

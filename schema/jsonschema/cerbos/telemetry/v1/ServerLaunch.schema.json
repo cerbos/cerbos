@@ -1,8 +1,8 @@
 {
-  "$id": "https://api.cerbos.dev/cerbos/telemetry/v1/Ping.schema.json",
+  "$id": "https://api.cerbos.dev/cerbos/telemetry/v1/ServerLaunch.schema.json",
   "$schema": "http://json-schema.org/draft-07/schema#",
   "definitions": {
-    "cerbos.telemetry.v1.Ping.Cerbos": {
+    "cerbos.telemetry.v1.ServerLaunch.Cerbos": {
       "type": "object",
       "additionalProperties": false,
       "properties": {
@@ -23,25 +23,25 @@
         }
       }
     },
-    "cerbos.telemetry.v1.Ping.Features": {
+    "cerbos.telemetry.v1.ServerLaunch.Features": {
       "type": "object",
       "additionalProperties": false,
       "properties": {
         "adminApi": {
-          "$ref": "#/definitions/cerbos.telemetry.v1.Ping.Features.AdminApi"
+          "$ref": "#/definitions/cerbos.telemetry.v1.ServerLaunch.Features.AdminApi"
         },
         "audit": {
-          "$ref": "#/definitions/cerbos.telemetry.v1.Ping.Features.Audit"
+          "$ref": "#/definitions/cerbos.telemetry.v1.ServerLaunch.Features.Audit"
         },
         "schema": {
-          "$ref": "#/definitions/cerbos.telemetry.v1.Ping.Features.Schema"
+          "$ref": "#/definitions/cerbos.telemetry.v1.ServerLaunch.Features.Schema"
         },
         "storage": {
-          "$ref": "#/definitions/cerbos.telemetry.v1.Ping.Features.Storage"
+          "$ref": "#/definitions/cerbos.telemetry.v1.ServerLaunch.Features.Storage"
         }
       }
     },
-    "cerbos.telemetry.v1.Ping.Features.AdminApi": {
+    "cerbos.telemetry.v1.ServerLaunch.Features.AdminApi": {
       "type": "object",
       "additionalProperties": false,
       "properties": {
@@ -50,7 +50,7 @@
         }
       }
     },
-    "cerbos.telemetry.v1.Ping.Features.Audit": {
+    "cerbos.telemetry.v1.ServerLaunch.Features.Audit": {
       "type": "object",
       "additionalProperties": false,
       "properties": {
@@ -62,7 +62,7 @@
         }
       }
     },
-    "cerbos.telemetry.v1.Ping.Features.Schema": {
+    "cerbos.telemetry.v1.ServerLaunch.Features.Schema": {
       "type": "object",
       "additionalProperties": false,
       "properties": {
@@ -71,25 +71,25 @@
         }
       }
     },
-    "cerbos.telemetry.v1.Ping.Features.Storage": {
+    "cerbos.telemetry.v1.ServerLaunch.Features.Storage": {
       "type": "object",
       "additionalProperties": false,
       "properties": {
         "blob": {
-          "$ref": "#/definitions/cerbos.telemetry.v1.Ping.Features.Storage.Blob"
+          "$ref": "#/definitions/cerbos.telemetry.v1.ServerLaunch.Features.Storage.Blob"
         },
         "disk": {
-          "$ref": "#/definitions/cerbos.telemetry.v1.Ping.Features.Storage.Disk"
+          "$ref": "#/definitions/cerbos.telemetry.v1.ServerLaunch.Features.Storage.Disk"
         },
         "driver": {
           "type": "string"
         },
         "git": {
-          "$ref": "#/definitions/cerbos.telemetry.v1.Ping.Features.Storage.Git"
+          "$ref": "#/definitions/cerbos.telemetry.v1.ServerLaunch.Features.Storage.Git"
         }
       }
     },
-    "cerbos.telemetry.v1.Ping.Features.Storage.Blob": {
+    "cerbos.telemetry.v1.ServerLaunch.Features.Storage.Blob": {
       "type": "object",
       "additionalProperties": false,
       "properties": {
@@ -101,7 +101,7 @@
         }
       }
     },
-    "cerbos.telemetry.v1.Ping.Features.Storage.Disk": {
+    "cerbos.telemetry.v1.ServerLaunch.Features.Storage.Disk": {
       "type": "object",
       "additionalProperties": false,
       "properties": {
@@ -110,7 +110,7 @@
         }
       }
     },
-    "cerbos.telemetry.v1.Ping.Features.Storage.Git": {
+    "cerbos.telemetry.v1.ServerLaunch.Features.Storage.Git": {
       "type": "object",
       "additionalProperties": false,
       "properties": {
@@ -125,7 +125,7 @@
         }
       }
     },
-    "cerbos.telemetry.v1.Ping.Source": {
+    "cerbos.telemetry.v1.ServerLaunch.Source": {
       "type": "object",
       "additionalProperties": false,
       "properties": {
@@ -133,7 +133,7 @@
           "type": "string"
         },
         "cerbos": {
-          "$ref": "#/definitions/cerbos.telemetry.v1.Ping.Cerbos"
+          "$ref": "#/definitions/cerbos.telemetry.v1.ServerLaunch.Cerbos"
         },
         "numCpus": {
           "type": "integer",
@@ -144,19 +144,19 @@
         }
       }
     },
-    "cerbos.telemetry.v1.Ping.Stats": {
+    "cerbos.telemetry.v1.ServerLaunch.Stats": {
       "type": "object",
       "additionalProperties": false,
       "properties": {
         "policy": {
-          "$ref": "#/definitions/cerbos.telemetry.v1.Ping.Stats.Policy"
+          "$ref": "#/definitions/cerbos.telemetry.v1.ServerLaunch.Stats.Policy"
         },
         "schema": {
-          "$ref": "#/definitions/cerbos.telemetry.v1.Ping.Stats.Schema"
+          "$ref": "#/definitions/cerbos.telemetry.v1.ServerLaunch.Stats.Schema"
         }
       }
     },
-    "cerbos.telemetry.v1.Ping.Stats.Policy": {
+    "cerbos.telemetry.v1.ServerLaunch.Stats.Policy": {
       "type": "object",
       "additionalProperties": false,
       "properties": {
@@ -181,7 +181,7 @@
         }
       }
     },
-    "cerbos.telemetry.v1.Ping.Stats.Schema": {
+    "cerbos.telemetry.v1.ServerLaunch.Stats.Schema": {
       "type": "object",
       "additionalProperties": false,
       "properties": {
@@ -202,13 +202,13 @@
   "additionalProperties": false,
   "properties": {
     "features": {
-      "$ref": "#/definitions/cerbos.telemetry.v1.Ping.Features"
+      "$ref": "#/definitions/cerbos.telemetry.v1.ServerLaunch.Features"
     },
     "source": {
-      "$ref": "#/definitions/cerbos.telemetry.v1.Ping.Source"
+      "$ref": "#/definitions/cerbos.telemetry.v1.ServerLaunch.Source"
     },
     "stats": {
-      "$ref": "#/definitions/cerbos.telemetry.v1.Ping.Stats"
+      "$ref": "#/definitions/cerbos.telemetry.v1.ServerLaunch.Stats"
     },
     "version": {
       "type": "string"

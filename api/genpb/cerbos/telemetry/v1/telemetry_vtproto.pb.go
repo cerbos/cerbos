@@ -22,7 +22,7 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
-func (m *Ping_Cerbos) MarshalVT() (dAtA []byte, err error) {
+func (m *ServerLaunch_Cerbos) MarshalVT() (dAtA []byte, err error) {
 	if m == nil {
 		return nil, nil
 	}
@@ -35,12 +35,12 @@ func (m *Ping_Cerbos) MarshalVT() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *Ping_Cerbos) MarshalToVT(dAtA []byte) (int, error) {
+func (m *ServerLaunch_Cerbos) MarshalToVT(dAtA []byte) (int, error) {
 	size := m.SizeVT()
 	return m.MarshalToSizedBufferVT(dAtA[:size])
 }
 
-func (m *Ping_Cerbos) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
+func (m *ServerLaunch_Cerbos) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 	if m == nil {
 		return 0, nil
 	}
@@ -90,7 +90,7 @@ func (m *Ping_Cerbos) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 	return len(dAtA) - i, nil
 }
 
-func (m *Ping_Source) MarshalVT() (dAtA []byte, err error) {
+func (m *ServerLaunch_Source) MarshalVT() (dAtA []byte, err error) {
 	if m == nil {
 		return nil, nil
 	}
@@ -103,12 +103,12 @@ func (m *Ping_Source) MarshalVT() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *Ping_Source) MarshalToVT(dAtA []byte) (int, error) {
+func (m *ServerLaunch_Source) MarshalToVT(dAtA []byte) (int, error) {
 	size := m.SizeVT()
 	return m.MarshalToSizedBufferVT(dAtA[:size])
 }
 
-func (m *Ping_Source) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
+func (m *ServerLaunch_Source) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 	if m == nil {
 		return 0, nil
 	}
@@ -152,7 +152,7 @@ func (m *Ping_Source) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 	return len(dAtA) - i, nil
 }
 
-func (m *Ping_Features_Audit) MarshalVT() (dAtA []byte, err error) {
+func (m *ServerLaunch_Features_Audit) MarshalVT() (dAtA []byte, err error) {
 	if m == nil {
 		return nil, nil
 	}
@@ -165,12 +165,12 @@ func (m *Ping_Features_Audit) MarshalVT() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *Ping_Features_Audit) MarshalToVT(dAtA []byte) (int, error) {
+func (m *ServerLaunch_Features_Audit) MarshalToVT(dAtA []byte) (int, error) {
 	size := m.SizeVT()
 	return m.MarshalToSizedBufferVT(dAtA[:size])
 }
 
-func (m *Ping_Features_Audit) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
+func (m *ServerLaunch_Features_Audit) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 	if m == nil {
 		return 0, nil
 	}
@@ -202,7 +202,7 @@ func (m *Ping_Features_Audit) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 	return len(dAtA) - i, nil
 }
 
-func (m *Ping_Features_Schema) MarshalVT() (dAtA []byte, err error) {
+func (m *ServerLaunch_Features_Schema) MarshalVT() (dAtA []byte, err error) {
 	if m == nil {
 		return nil, nil
 	}
@@ -215,12 +215,12 @@ func (m *Ping_Features_Schema) MarshalVT() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *Ping_Features_Schema) MarshalToVT(dAtA []byte) (int, error) {
+func (m *ServerLaunch_Features_Schema) MarshalToVT(dAtA []byte) (int, error) {
 	size := m.SizeVT()
 	return m.MarshalToSizedBufferVT(dAtA[:size])
 }
 
-func (m *Ping_Features_Schema) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
+func (m *ServerLaunch_Features_Schema) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 	if m == nil {
 		return 0, nil
 	}
@@ -242,7 +242,7 @@ func (m *Ping_Features_Schema) MarshalToSizedBufferVT(dAtA []byte) (int, error) 
 	return len(dAtA) - i, nil
 }
 
-func (m *Ping_Features_AdminApi) MarshalVT() (dAtA []byte, err error) {
+func (m *ServerLaunch_Features_AdminApi) MarshalVT() (dAtA []byte, err error) {
 	if m == nil {
 		return nil, nil
 	}
@@ -255,12 +255,12 @@ func (m *Ping_Features_AdminApi) MarshalVT() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *Ping_Features_AdminApi) MarshalToVT(dAtA []byte) (int, error) {
+func (m *ServerLaunch_Features_AdminApi) MarshalToVT(dAtA []byte) (int, error) {
 	size := m.SizeVT()
 	return m.MarshalToSizedBufferVT(dAtA[:size])
 }
 
-func (m *Ping_Features_AdminApi) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
+func (m *ServerLaunch_Features_AdminApi) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 	if m == nil {
 		return 0, nil
 	}
@@ -285,7 +285,7 @@ func (m *Ping_Features_AdminApi) MarshalToSizedBufferVT(dAtA []byte) (int, error
 	return len(dAtA) - i, nil
 }
 
-func (m *Ping_Features_Storage_Disk) MarshalVT() (dAtA []byte, err error) {
+func (m *ServerLaunch_Features_Storage_Disk) MarshalVT() (dAtA []byte, err error) {
 	if m == nil {
 		return nil, nil
 	}
@@ -298,12 +298,12 @@ func (m *Ping_Features_Storage_Disk) MarshalVT() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *Ping_Features_Storage_Disk) MarshalToVT(dAtA []byte) (int, error) {
+func (m *ServerLaunch_Features_Storage_Disk) MarshalToVT(dAtA []byte) (int, error) {
 	size := m.SizeVT()
 	return m.MarshalToSizedBufferVT(dAtA[:size])
 }
 
-func (m *Ping_Features_Storage_Disk) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
+func (m *ServerLaunch_Features_Storage_Disk) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 	if m == nil {
 		return 0, nil
 	}
@@ -328,7 +328,7 @@ func (m *Ping_Features_Storage_Disk) MarshalToSizedBufferVT(dAtA []byte) (int, e
 	return len(dAtA) - i, nil
 }
 
-func (m *Ping_Features_Storage_Git) MarshalVT() (dAtA []byte, err error) {
+func (m *ServerLaunch_Features_Storage_Git) MarshalVT() (dAtA []byte, err error) {
 	if m == nil {
 		return nil, nil
 	}
@@ -341,12 +341,12 @@ func (m *Ping_Features_Storage_Git) MarshalVT() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *Ping_Features_Storage_Git) MarshalToVT(dAtA []byte) (int, error) {
+func (m *ServerLaunch_Features_Storage_Git) MarshalToVT(dAtA []byte) (int, error) {
 	size := m.SizeVT()
 	return m.MarshalToSizedBufferVT(dAtA[:size])
 }
 
-func (m *Ping_Features_Storage_Git) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
+func (m *ServerLaunch_Features_Storage_Git) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 	if m == nil {
 		return 0, nil
 	}
@@ -400,7 +400,7 @@ func (m *Ping_Features_Storage_Git) MarshalToSizedBufferVT(dAtA []byte) (int, er
 	return len(dAtA) - i, nil
 }
 
-func (m *Ping_Features_Storage_Blob) MarshalVT() (dAtA []byte, err error) {
+func (m *ServerLaunch_Features_Storage_Blob) MarshalVT() (dAtA []byte, err error) {
 	if m == nil {
 		return nil, nil
 	}
@@ -413,12 +413,12 @@ func (m *Ping_Features_Storage_Blob) MarshalVT() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *Ping_Features_Storage_Blob) MarshalToVT(dAtA []byte) (int, error) {
+func (m *ServerLaunch_Features_Storage_Blob) MarshalToVT(dAtA []byte) (int, error) {
 	size := m.SizeVT()
 	return m.MarshalToSizedBufferVT(dAtA[:size])
 }
 
-func (m *Ping_Features_Storage_Blob) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
+func (m *ServerLaunch_Features_Storage_Blob) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 	if m == nil {
 		return 0, nil
 	}
@@ -462,7 +462,7 @@ func (m *Ping_Features_Storage_Blob) MarshalToSizedBufferVT(dAtA []byte) (int, e
 	return len(dAtA) - i, nil
 }
 
-func (m *Ping_Features_Storage) MarshalVT() (dAtA []byte, err error) {
+func (m *ServerLaunch_Features_Storage) MarshalVT() (dAtA []byte, err error) {
 	if m == nil {
 		return nil, nil
 	}
@@ -475,12 +475,12 @@ func (m *Ping_Features_Storage) MarshalVT() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *Ping_Features_Storage) MarshalToVT(dAtA []byte) (int, error) {
+func (m *ServerLaunch_Features_Storage) MarshalToVT(dAtA []byte) (int, error) {
 	size := m.SizeVT()
 	return m.MarshalToSizedBufferVT(dAtA[:size])
 }
 
-func (m *Ping_Features_Storage) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
+func (m *ServerLaunch_Features_Storage) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 	if m == nil {
 		return 0, nil
 	}
@@ -514,12 +514,12 @@ func (m *Ping_Features_Storage) MarshalToSizedBufferVT(dAtA []byte) (int, error)
 	return len(dAtA) - i, nil
 }
 
-func (m *Ping_Features_Storage_Disk_) MarshalToVT(dAtA []byte) (int, error) {
+func (m *ServerLaunch_Features_Storage_Disk_) MarshalToVT(dAtA []byte) (int, error) {
 	size := m.SizeVT()
 	return m.MarshalToSizedBufferVT(dAtA[:size])
 }
 
-func (m *Ping_Features_Storage_Disk_) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
+func (m *ServerLaunch_Features_Storage_Disk_) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 	i := len(dAtA)
 	if m.Disk != nil {
 		size, err := m.Disk.MarshalToSizedBufferVT(dAtA[:i])
@@ -533,12 +533,12 @@ func (m *Ping_Features_Storage_Disk_) MarshalToSizedBufferVT(dAtA []byte) (int, 
 	}
 	return len(dAtA) - i, nil
 }
-func (m *Ping_Features_Storage_Git_) MarshalToVT(dAtA []byte) (int, error) {
+func (m *ServerLaunch_Features_Storage_Git_) MarshalToVT(dAtA []byte) (int, error) {
 	size := m.SizeVT()
 	return m.MarshalToSizedBufferVT(dAtA[:size])
 }
 
-func (m *Ping_Features_Storage_Git_) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
+func (m *ServerLaunch_Features_Storage_Git_) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 	i := len(dAtA)
 	if m.Git != nil {
 		size, err := m.Git.MarshalToSizedBufferVT(dAtA[:i])
@@ -552,12 +552,12 @@ func (m *Ping_Features_Storage_Git_) MarshalToSizedBufferVT(dAtA []byte) (int, e
 	}
 	return len(dAtA) - i, nil
 }
-func (m *Ping_Features_Storage_Blob_) MarshalToVT(dAtA []byte) (int, error) {
+func (m *ServerLaunch_Features_Storage_Blob_) MarshalToVT(dAtA []byte) (int, error) {
 	size := m.SizeVT()
 	return m.MarshalToSizedBufferVT(dAtA[:size])
 }
 
-func (m *Ping_Features_Storage_Blob_) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
+func (m *ServerLaunch_Features_Storage_Blob_) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 	i := len(dAtA)
 	if m.Blob != nil {
 		size, err := m.Blob.MarshalToSizedBufferVT(dAtA[:i])
@@ -571,7 +571,7 @@ func (m *Ping_Features_Storage_Blob_) MarshalToSizedBufferVT(dAtA []byte) (int, 
 	}
 	return len(dAtA) - i, nil
 }
-func (m *Ping_Features) MarshalVT() (dAtA []byte, err error) {
+func (m *ServerLaunch_Features) MarshalVT() (dAtA []byte, err error) {
 	if m == nil {
 		return nil, nil
 	}
@@ -584,12 +584,12 @@ func (m *Ping_Features) MarshalVT() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *Ping_Features) MarshalToVT(dAtA []byte) (int, error) {
+func (m *ServerLaunch_Features) MarshalToVT(dAtA []byte) (int, error) {
 	size := m.SizeVT()
 	return m.MarshalToSizedBufferVT(dAtA[:size])
 }
 
-func (m *Ping_Features) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
+func (m *ServerLaunch_Features) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 	if m == nil {
 		return 0, nil
 	}
@@ -644,7 +644,7 @@ func (m *Ping_Features) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 	return len(dAtA) - i, nil
 }
 
-func (m *Ping_Stats_Policy) MarshalVT() (dAtA []byte, err error) {
+func (m *ServerLaunch_Stats_Policy) MarshalVT() (dAtA []byte, err error) {
 	if m == nil {
 		return nil, nil
 	}
@@ -657,12 +657,12 @@ func (m *Ping_Stats_Policy) MarshalVT() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *Ping_Stats_Policy) MarshalToVT(dAtA []byte) (int, error) {
+func (m *ServerLaunch_Stats_Policy) MarshalToVT(dAtA []byte) (int, error) {
 	size := m.SizeVT()
 	return m.MarshalToSizedBufferVT(dAtA[:size])
 }
 
-func (m *Ping_Stats_Policy) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
+func (m *ServerLaunch_Stats_Policy) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 	if m == nil {
 		return 0, nil
 	}
@@ -730,7 +730,7 @@ func (m *Ping_Stats_Policy) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 	return len(dAtA) - i, nil
 }
 
-func (m *Ping_Stats_Schema) MarshalVT() (dAtA []byte, err error) {
+func (m *ServerLaunch_Stats_Schema) MarshalVT() (dAtA []byte, err error) {
 	if m == nil {
 		return nil, nil
 	}
@@ -743,12 +743,12 @@ func (m *Ping_Stats_Schema) MarshalVT() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *Ping_Stats_Schema) MarshalToVT(dAtA []byte) (int, error) {
+func (m *ServerLaunch_Stats_Schema) MarshalToVT(dAtA []byte) (int, error) {
 	size := m.SizeVT()
 	return m.MarshalToSizedBufferVT(dAtA[:size])
 }
 
-func (m *Ping_Stats_Schema) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
+func (m *ServerLaunch_Stats_Schema) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 	if m == nil {
 		return 0, nil
 	}
@@ -768,7 +768,7 @@ func (m *Ping_Stats_Schema) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 	return len(dAtA) - i, nil
 }
 
-func (m *Ping_Stats) MarshalVT() (dAtA []byte, err error) {
+func (m *ServerLaunch_Stats) MarshalVT() (dAtA []byte, err error) {
 	if m == nil {
 		return nil, nil
 	}
@@ -781,12 +781,12 @@ func (m *Ping_Stats) MarshalVT() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *Ping_Stats) MarshalToVT(dAtA []byte) (int, error) {
+func (m *ServerLaunch_Stats) MarshalToVT(dAtA []byte) (int, error) {
 	size := m.SizeVT()
 	return m.MarshalToSizedBufferVT(dAtA[:size])
 }
 
-func (m *Ping_Stats) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
+func (m *ServerLaunch_Stats) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 	if m == nil {
 		return 0, nil
 	}
@@ -821,7 +821,7 @@ func (m *Ping_Stats) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 	return len(dAtA) - i, nil
 }
 
-func (m *Ping) MarshalVT() (dAtA []byte, err error) {
+func (m *ServerLaunch) MarshalVT() (dAtA []byte, err error) {
 	if m == nil {
 		return nil, nil
 	}
@@ -834,12 +834,12 @@ func (m *Ping) MarshalVT() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *Ping) MarshalToVT(dAtA []byte) (int, error) {
+func (m *ServerLaunch) MarshalToVT(dAtA []byte) (int, error) {
 	size := m.SizeVT()
 	return m.MarshalToSizedBufferVT(dAtA[:size])
 }
 
-func (m *Ping) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
+func (m *ServerLaunch) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 	if m == nil {
 		return 0, nil
 	}
@@ -891,6 +891,228 @@ func (m *Ping) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 	return len(dAtA) - i, nil
 }
 
+func (m *ServerStop) MarshalVT() (dAtA []byte, err error) {
+	if m == nil {
+		return nil, nil
+	}
+	size := m.SizeVT()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBufferVT(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *ServerStop) MarshalToVT(dAtA []byte) (int, error) {
+	size := m.SizeVT()
+	return m.MarshalToSizedBufferVT(dAtA[:size])
+}
+
+func (m *ServerStop) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
+	if m == nil {
+		return 0, nil
+	}
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if m.unknownFields != nil {
+		i -= len(m.unknownFields)
+		copy(dAtA[i:], m.unknownFields)
+	}
+	if m.Uptime != nil {
+		if marshalto, ok := interface{}(m.Uptime).(interface {
+			MarshalToSizedBufferVT([]byte) (int, error)
+		}); ok {
+			size, err := marshalto.MarshalToSizedBufferVT(dAtA[:i])
+			if err != nil {
+				return 0, err
+			}
+			i -= size
+			i = encodeVarint(dAtA, i, uint64(size))
+		} else {
+			encoded, err := proto.Marshal(m.Uptime)
+			if err != nil {
+				return 0, err
+			}
+			i -= len(encoded)
+			copy(dAtA[i:], encoded)
+			i = encodeVarint(dAtA, i, uint64(len(encoded)))
+		}
+		i--
+		dAtA[i] = 0x12
+	}
+	if len(m.Version) > 0 {
+		i -= len(m.Version)
+		copy(dAtA[i:], m.Version)
+		i = encodeVarint(dAtA, i, uint64(len(m.Version)))
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *Event_ApiActivity) MarshalVT() (dAtA []byte, err error) {
+	if m == nil {
+		return nil, nil
+	}
+	size := m.SizeVT()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBufferVT(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *Event_ApiActivity) MarshalToVT(dAtA []byte) (int, error) {
+	size := m.SizeVT()
+	return m.MarshalToSizedBufferVT(dAtA[:size])
+}
+
+func (m *Event_ApiActivity) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
+	if m == nil {
+		return 0, nil
+	}
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if m.unknownFields != nil {
+		i -= len(m.unknownFields)
+		copy(dAtA[i:], m.unknownFields)
+	}
+	if len(m.UserAgents) > 0 {
+		for k := range m.UserAgents {
+			v := m.UserAgents[k]
+			baseI := i
+			i = encodeVarint(dAtA, i, uint64(v))
+			i--
+			dAtA[i] = 0x10
+			i -= len(k)
+			copy(dAtA[i:], k)
+			i = encodeVarint(dAtA, i, uint64(len(k)))
+			i--
+			dAtA[i] = 0xa
+			i = encodeVarint(dAtA, i, uint64(baseI-i))
+			i--
+			dAtA[i] = 0x22
+		}
+	}
+	if len(m.MethodCalls) > 0 {
+		for k := range m.MethodCalls {
+			v := m.MethodCalls[k]
+			baseI := i
+			i = encodeVarint(dAtA, i, uint64(v))
+			i--
+			dAtA[i] = 0x10
+			i -= len(k)
+			copy(dAtA[i:], k)
+			i = encodeVarint(dAtA, i, uint64(len(k)))
+			i--
+			dAtA[i] = 0xa
+			i = encodeVarint(dAtA, i, uint64(baseI-i))
+			i--
+			dAtA[i] = 0x1a
+		}
+	}
+	if m.Uptime != nil {
+		if marshalto, ok := interface{}(m.Uptime).(interface {
+			MarshalToSizedBufferVT([]byte) (int, error)
+		}); ok {
+			size, err := marshalto.MarshalToSizedBufferVT(dAtA[:i])
+			if err != nil {
+				return 0, err
+			}
+			i -= size
+			i = encodeVarint(dAtA, i, uint64(size))
+		} else {
+			encoded, err := proto.Marshal(m.Uptime)
+			if err != nil {
+				return 0, err
+			}
+			i -= len(encoded)
+			copy(dAtA[i:], encoded)
+			i = encodeVarint(dAtA, i, uint64(len(encoded)))
+		}
+		i--
+		dAtA[i] = 0x12
+	}
+	if len(m.Version) > 0 {
+		i -= len(m.Version)
+		copy(dAtA[i:], m.Version)
+		i = encodeVarint(dAtA, i, uint64(len(m.Version)))
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *Event) MarshalVT() (dAtA []byte, err error) {
+	if m == nil {
+		return nil, nil
+	}
+	size := m.SizeVT()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBufferVT(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *Event) MarshalToVT(dAtA []byte) (int, error) {
+	size := m.SizeVT()
+	return m.MarshalToSizedBufferVT(dAtA[:size])
+}
+
+func (m *Event) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
+	if m == nil {
+		return 0, nil
+	}
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if m.unknownFields != nil {
+		i -= len(m.unknownFields)
+		copy(dAtA[i:], m.unknownFields)
+	}
+	if vtmsg, ok := m.Data.(interface {
+		MarshalToVT([]byte) (int, error)
+		SizeVT() int
+	}); ok {
+		{
+			size := vtmsg.SizeVT()
+			i -= size
+			if _, err := vtmsg.MarshalToVT(dAtA[i:]); err != nil {
+				return 0, err
+			}
+		}
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *Event_ApiActivity_) MarshalToVT(dAtA []byte) (int, error) {
+	size := m.SizeVT()
+	return m.MarshalToSizedBufferVT(dAtA[:size])
+}
+
+func (m *Event_ApiActivity_) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	if m.ApiActivity != nil {
+		size, err := m.ApiActivity.MarshalToSizedBufferVT(dAtA[:i])
+		if err != nil {
+			return 0, err
+		}
+		i -= size
+		i = encodeVarint(dAtA, i, uint64(size))
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
 func encodeVarint(dAtA []byte, offset int, v uint64) int {
 	offset -= sov(v)
 	base := offset
@@ -902,7 +1124,7 @@ func encodeVarint(dAtA []byte, offset int, v uint64) int {
 	dAtA[offset] = uint8(v)
 	return base
 }
-func (m *Ping_Cerbos) SizeVT() (n int) {
+func (m *ServerLaunch_Cerbos) SizeVT() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -934,7 +1156,7 @@ func (m *Ping_Cerbos) SizeVT() (n int) {
 	return n
 }
 
-func (m *Ping_Source) SizeVT() (n int) {
+func (m *ServerLaunch_Source) SizeVT() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -961,7 +1183,7 @@ func (m *Ping_Source) SizeVT() (n int) {
 	return n
 }
 
-func (m *Ping_Features_Audit) SizeVT() (n int) {
+func (m *ServerLaunch_Features_Audit) SizeVT() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -980,7 +1202,7 @@ func (m *Ping_Features_Audit) SizeVT() (n int) {
 	return n
 }
 
-func (m *Ping_Features_Schema) SizeVT() (n int) {
+func (m *ServerLaunch_Features_Schema) SizeVT() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -996,7 +1218,7 @@ func (m *Ping_Features_Schema) SizeVT() (n int) {
 	return n
 }
 
-func (m *Ping_Features_AdminApi) SizeVT() (n int) {
+func (m *ServerLaunch_Features_AdminApi) SizeVT() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -1011,7 +1233,7 @@ func (m *Ping_Features_AdminApi) SizeVT() (n int) {
 	return n
 }
 
-func (m *Ping_Features_Storage_Disk) SizeVT() (n int) {
+func (m *ServerLaunch_Features_Storage_Disk) SizeVT() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -1026,7 +1248,7 @@ func (m *Ping_Features_Storage_Disk) SizeVT() (n int) {
 	return n
 }
 
-func (m *Ping_Features_Storage_Git) SizeVT() (n int) {
+func (m *ServerLaunch_Features_Storage_Git) SizeVT() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -1055,7 +1277,7 @@ func (m *Ping_Features_Storage_Git) SizeVT() (n int) {
 	return n
 }
 
-func (m *Ping_Features_Storage_Blob) SizeVT() (n int) {
+func (m *ServerLaunch_Features_Storage_Blob) SizeVT() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -1081,7 +1303,7 @@ func (m *Ping_Features_Storage_Blob) SizeVT() (n int) {
 	return n
 }
 
-func (m *Ping_Features_Storage) SizeVT() (n int) {
+func (m *ServerLaunch_Features_Storage) SizeVT() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -1100,7 +1322,7 @@ func (m *Ping_Features_Storage) SizeVT() (n int) {
 	return n
 }
 
-func (m *Ping_Features_Storage_Disk_) SizeVT() (n int) {
+func (m *ServerLaunch_Features_Storage_Disk_) SizeVT() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -1112,7 +1334,7 @@ func (m *Ping_Features_Storage_Disk_) SizeVT() (n int) {
 	}
 	return n
 }
-func (m *Ping_Features_Storage_Git_) SizeVT() (n int) {
+func (m *ServerLaunch_Features_Storage_Git_) SizeVT() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -1124,7 +1346,7 @@ func (m *Ping_Features_Storage_Git_) SizeVT() (n int) {
 	}
 	return n
 }
-func (m *Ping_Features_Storage_Blob_) SizeVT() (n int) {
+func (m *ServerLaunch_Features_Storage_Blob_) SizeVT() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -1136,7 +1358,7 @@ func (m *Ping_Features_Storage_Blob_) SizeVT() (n int) {
 	}
 	return n
 }
-func (m *Ping_Features) SizeVT() (n int) {
+func (m *ServerLaunch_Features) SizeVT() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -1164,7 +1386,7 @@ func (m *Ping_Features) SizeVT() (n int) {
 	return n
 }
 
-func (m *Ping_Stats_Policy) SizeVT() (n int) {
+func (m *ServerLaunch_Stats_Policy) SizeVT() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -1200,7 +1422,7 @@ func (m *Ping_Stats_Policy) SizeVT() (n int) {
 	return n
 }
 
-func (m *Ping_Stats_Schema) SizeVT() (n int) {
+func (m *ServerLaunch_Stats_Schema) SizeVT() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -1215,7 +1437,7 @@ func (m *Ping_Stats_Schema) SizeVT() (n int) {
 	return n
 }
 
-func (m *Ping_Stats) SizeVT() (n int) {
+func (m *ServerLaunch_Stats) SizeVT() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -1235,7 +1457,7 @@ func (m *Ping_Stats) SizeVT() (n int) {
 	return n
 }
 
-func (m *Ping) SizeVT() (n int) {
+func (m *ServerLaunch) SizeVT() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -1263,13 +1485,109 @@ func (m *Ping) SizeVT() (n int) {
 	return n
 }
 
+func (m *ServerStop) SizeVT() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = len(m.Version)
+	if l > 0 {
+		n += 1 + l + sov(uint64(l))
+	}
+	if m.Uptime != nil {
+		if size, ok := interface{}(m.Uptime).(interface {
+			SizeVT() int
+		}); ok {
+			l = size.SizeVT()
+		} else {
+			l = proto.Size(m.Uptime)
+		}
+		n += 1 + l + sov(uint64(l))
+	}
+	if m.unknownFields != nil {
+		n += len(m.unknownFields)
+	}
+	return n
+}
+
+func (m *Event_ApiActivity) SizeVT() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = len(m.Version)
+	if l > 0 {
+		n += 1 + l + sov(uint64(l))
+	}
+	if m.Uptime != nil {
+		if size, ok := interface{}(m.Uptime).(interface {
+			SizeVT() int
+		}); ok {
+			l = size.SizeVT()
+		} else {
+			l = proto.Size(m.Uptime)
+		}
+		n += 1 + l + sov(uint64(l))
+	}
+	if len(m.MethodCalls) > 0 {
+		for k, v := range m.MethodCalls {
+			_ = k
+			_ = v
+			mapEntrySize := 1 + len(k) + sov(uint64(len(k))) + 1 + sov(uint64(v))
+			n += mapEntrySize + 1 + sov(uint64(mapEntrySize))
+		}
+	}
+	if len(m.UserAgents) > 0 {
+		for k, v := range m.UserAgents {
+			_ = k
+			_ = v
+			mapEntrySize := 1 + len(k) + sov(uint64(len(k))) + 1 + sov(uint64(v))
+			n += mapEntrySize + 1 + sov(uint64(mapEntrySize))
+		}
+	}
+	if m.unknownFields != nil {
+		n += len(m.unknownFields)
+	}
+	return n
+}
+
+func (m *Event) SizeVT() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	if vtmsg, ok := m.Data.(interface{ SizeVT() int }); ok {
+		n += vtmsg.SizeVT()
+	}
+	if m.unknownFields != nil {
+		n += len(m.unknownFields)
+	}
+	return n
+}
+
+func (m *Event_ApiActivity_) SizeVT() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	if m.ApiActivity != nil {
+		l = m.ApiActivity.SizeVT()
+		n += 1 + l + sov(uint64(l))
+	}
+	return n
+}
+
 func sov(x uint64) (n int) {
 	return (bits.Len64(x|1) + 6) / 7
 }
 func soz(x uint64) (n int) {
 	return sov(uint64((x << 1) ^ uint64((int64(x) >> 63))))
 }
-func (m *Ping_Cerbos) UnmarshalVT(dAtA []byte) error {
+func (m *ServerLaunch_Cerbos) UnmarshalVT(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -1292,10 +1610,10 @@ func (m *Ping_Cerbos) UnmarshalVT(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: Ping_Cerbos: wiretype end group for non-group")
+			return fmt.Errorf("proto: ServerLaunch_Cerbos: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: Ping_Cerbos: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: ServerLaunch_Cerbos: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
@@ -1480,7 +1798,7 @@ func (m *Ping_Cerbos) UnmarshalVT(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *Ping_Source) UnmarshalVT(dAtA []byte) error {
+func (m *ServerLaunch_Source) UnmarshalVT(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -1503,10 +1821,10 @@ func (m *Ping_Source) UnmarshalVT(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: Ping_Source: wiretype end group for non-group")
+			return fmt.Errorf("proto: ServerLaunch_Source: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: Ping_Source: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: ServerLaunch_Source: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
@@ -1539,7 +1857,7 @@ func (m *Ping_Source) UnmarshalVT(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if m.Cerbos == nil {
-				m.Cerbos = &Ping_Cerbos{}
+				m.Cerbos = &ServerLaunch_Cerbos{}
 			}
 			if err := m.Cerbos.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
 				return err
@@ -1650,7 +1968,7 @@ func (m *Ping_Source) UnmarshalVT(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *Ping_Features_Audit) UnmarshalVT(dAtA []byte) error {
+func (m *ServerLaunch_Features_Audit) UnmarshalVT(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -1673,10 +1991,10 @@ func (m *Ping_Features_Audit) UnmarshalVT(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: Ping_Features_Audit: wiretype end group for non-group")
+			return fmt.Errorf("proto: ServerLaunch_Features_Audit: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: Ping_Features_Audit: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: ServerLaunch_Features_Audit: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
@@ -1753,7 +2071,7 @@ func (m *Ping_Features_Audit) UnmarshalVT(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *Ping_Features_Schema) UnmarshalVT(dAtA []byte) error {
+func (m *ServerLaunch_Features_Schema) UnmarshalVT(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -1776,10 +2094,10 @@ func (m *Ping_Features_Schema) UnmarshalVT(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: Ping_Features_Schema: wiretype end group for non-group")
+			return fmt.Errorf("proto: ServerLaunch_Features_Schema: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: Ping_Features_Schema: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: ServerLaunch_Features_Schema: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
@@ -1836,7 +2154,7 @@ func (m *Ping_Features_Schema) UnmarshalVT(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *Ping_Features_AdminApi) UnmarshalVT(dAtA []byte) error {
+func (m *ServerLaunch_Features_AdminApi) UnmarshalVT(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -1859,10 +2177,10 @@ func (m *Ping_Features_AdminApi) UnmarshalVT(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: Ping_Features_AdminApi: wiretype end group for non-group")
+			return fmt.Errorf("proto: ServerLaunch_Features_AdminApi: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: Ping_Features_AdminApi: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: ServerLaunch_Features_AdminApi: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
@@ -1907,7 +2225,7 @@ func (m *Ping_Features_AdminApi) UnmarshalVT(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *Ping_Features_Storage_Disk) UnmarshalVT(dAtA []byte) error {
+func (m *ServerLaunch_Features_Storage_Disk) UnmarshalVT(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -1930,10 +2248,10 @@ func (m *Ping_Features_Storage_Disk) UnmarshalVT(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: Ping_Features_Storage_Disk: wiretype end group for non-group")
+			return fmt.Errorf("proto: ServerLaunch_Features_Storage_Disk: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: Ping_Features_Storage_Disk: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: ServerLaunch_Features_Storage_Disk: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
@@ -1978,7 +2296,7 @@ func (m *Ping_Features_Storage_Disk) UnmarshalVT(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *Ping_Features_Storage_Git) UnmarshalVT(dAtA []byte) error {
+func (m *ServerLaunch_Features_Storage_Git) UnmarshalVT(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -2001,10 +2319,10 @@ func (m *Ping_Features_Storage_Git) UnmarshalVT(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: Ping_Features_Storage_Git: wiretype end group for non-group")
+			return fmt.Errorf("proto: ServerLaunch_Features_Storage_Git: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: Ping_Features_Storage_Git: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: ServerLaunch_Features_Storage_Git: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
@@ -2125,7 +2443,7 @@ func (m *Ping_Features_Storage_Git) UnmarshalVT(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *Ping_Features_Storage_Blob) UnmarshalVT(dAtA []byte) error {
+func (m *ServerLaunch_Features_Storage_Blob) UnmarshalVT(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -2148,10 +2466,10 @@ func (m *Ping_Features_Storage_Blob) UnmarshalVT(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: Ping_Features_Storage_Blob: wiretype end group for non-group")
+			return fmt.Errorf("proto: ServerLaunch_Features_Storage_Blob: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: Ping_Features_Storage_Blob: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: ServerLaunch_Features_Storage_Blob: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
@@ -2252,7 +2570,7 @@ func (m *Ping_Features_Storage_Blob) UnmarshalVT(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *Ping_Features_Storage) UnmarshalVT(dAtA []byte) error {
+func (m *ServerLaunch_Features_Storage) UnmarshalVT(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -2275,10 +2593,10 @@ func (m *Ping_Features_Storage) UnmarshalVT(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: Ping_Features_Storage: wiretype end group for non-group")
+			return fmt.Errorf("proto: ServerLaunch_Features_Storage: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: Ping_Features_Storage: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: ServerLaunch_Features_Storage: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
@@ -2342,16 +2660,16 @@ func (m *Ping_Features_Storage) UnmarshalVT(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			if oneof, ok := m.Store.(*Ping_Features_Storage_Disk_); ok {
+			if oneof, ok := m.Store.(*ServerLaunch_Features_Storage_Disk_); ok {
 				if err := oneof.Disk.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
 					return err
 				}
 			} else {
-				v := &Ping_Features_Storage_Disk{}
+				v := &ServerLaunch_Features_Storage_Disk{}
 				if err := v.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
 					return err
 				}
-				m.Store = &Ping_Features_Storage_Disk_{v}
+				m.Store = &ServerLaunch_Features_Storage_Disk_{v}
 			}
 			iNdEx = postIndex
 		case 3:
@@ -2383,16 +2701,16 @@ func (m *Ping_Features_Storage) UnmarshalVT(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			if oneof, ok := m.Store.(*Ping_Features_Storage_Git_); ok {
+			if oneof, ok := m.Store.(*ServerLaunch_Features_Storage_Git_); ok {
 				if err := oneof.Git.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
 					return err
 				}
 			} else {
-				v := &Ping_Features_Storage_Git{}
+				v := &ServerLaunch_Features_Storage_Git{}
 				if err := v.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
 					return err
 				}
-				m.Store = &Ping_Features_Storage_Git_{v}
+				m.Store = &ServerLaunch_Features_Storage_Git_{v}
 			}
 			iNdEx = postIndex
 		case 4:
@@ -2424,16 +2742,16 @@ func (m *Ping_Features_Storage) UnmarshalVT(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			if oneof, ok := m.Store.(*Ping_Features_Storage_Blob_); ok {
+			if oneof, ok := m.Store.(*ServerLaunch_Features_Storage_Blob_); ok {
 				if err := oneof.Blob.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
 					return err
 				}
 			} else {
-				v := &Ping_Features_Storage_Blob{}
+				v := &ServerLaunch_Features_Storage_Blob{}
 				if err := v.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
 					return err
 				}
-				m.Store = &Ping_Features_Storage_Blob_{v}
+				m.Store = &ServerLaunch_Features_Storage_Blob_{v}
 			}
 			iNdEx = postIndex
 		default:
@@ -2458,7 +2776,7 @@ func (m *Ping_Features_Storage) UnmarshalVT(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *Ping_Features) UnmarshalVT(dAtA []byte) error {
+func (m *ServerLaunch_Features) UnmarshalVT(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -2481,10 +2799,10 @@ func (m *Ping_Features) UnmarshalVT(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: Ping_Features: wiretype end group for non-group")
+			return fmt.Errorf("proto: ServerLaunch_Features: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: Ping_Features: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: ServerLaunch_Features: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
@@ -2517,7 +2835,7 @@ func (m *Ping_Features) UnmarshalVT(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if m.Audit == nil {
-				m.Audit = &Ping_Features_Audit{}
+				m.Audit = &ServerLaunch_Features_Audit{}
 			}
 			if err := m.Audit.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
 				return err
@@ -2553,7 +2871,7 @@ func (m *Ping_Features) UnmarshalVT(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if m.Schema == nil {
-				m.Schema = &Ping_Features_Schema{}
+				m.Schema = &ServerLaunch_Features_Schema{}
 			}
 			if err := m.Schema.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
 				return err
@@ -2589,7 +2907,7 @@ func (m *Ping_Features) UnmarshalVT(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if m.AdminApi == nil {
-				m.AdminApi = &Ping_Features_AdminApi{}
+				m.AdminApi = &ServerLaunch_Features_AdminApi{}
 			}
 			if err := m.AdminApi.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
 				return err
@@ -2625,7 +2943,7 @@ func (m *Ping_Features) UnmarshalVT(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if m.Storage == nil {
-				m.Storage = &Ping_Features_Storage{}
+				m.Storage = &ServerLaunch_Features_Storage{}
 			}
 			if err := m.Storage.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
 				return err
@@ -2653,7 +2971,7 @@ func (m *Ping_Features) UnmarshalVT(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *Ping_Stats_Policy) UnmarshalVT(dAtA []byte) error {
+func (m *ServerLaunch_Stats_Policy) UnmarshalVT(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -2676,10 +2994,10 @@ func (m *Ping_Stats_Policy) UnmarshalVT(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: Ping_Stats_Policy: wiretype end group for non-group")
+			return fmt.Errorf("proto: ServerLaunch_Stats_Policy: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: Ping_Stats_Policy: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: ServerLaunch_Stats_Policy: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
@@ -3029,7 +3347,7 @@ func (m *Ping_Stats_Policy) UnmarshalVT(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *Ping_Stats_Schema) UnmarshalVT(dAtA []byte) error {
+func (m *ServerLaunch_Stats_Schema) UnmarshalVT(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -3052,10 +3370,10 @@ func (m *Ping_Stats_Schema) UnmarshalVT(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: Ping_Stats_Schema: wiretype end group for non-group")
+			return fmt.Errorf("proto: ServerLaunch_Stats_Schema: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: Ping_Stats_Schema: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: ServerLaunch_Stats_Schema: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
@@ -3099,7 +3417,7 @@ func (m *Ping_Stats_Schema) UnmarshalVT(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *Ping_Stats) UnmarshalVT(dAtA []byte) error {
+func (m *ServerLaunch_Stats) UnmarshalVT(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -3122,10 +3440,10 @@ func (m *Ping_Stats) UnmarshalVT(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: Ping_Stats: wiretype end group for non-group")
+			return fmt.Errorf("proto: ServerLaunch_Stats: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: Ping_Stats: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: ServerLaunch_Stats: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
@@ -3158,7 +3476,7 @@ func (m *Ping_Stats) UnmarshalVT(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if m.Policy == nil {
-				m.Policy = &Ping_Stats_Policy{}
+				m.Policy = &ServerLaunch_Stats_Policy{}
 			}
 			if err := m.Policy.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
 				return err
@@ -3194,7 +3512,7 @@ func (m *Ping_Stats) UnmarshalVT(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if m.Schema == nil {
-				m.Schema = &Ping_Stats_Schema{}
+				m.Schema = &ServerLaunch_Stats_Schema{}
 			}
 			if err := m.Schema.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
 				return err
@@ -3222,7 +3540,7 @@ func (m *Ping_Stats) UnmarshalVT(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *Ping) UnmarshalVT(dAtA []byte) error {
+func (m *ServerLaunch) UnmarshalVT(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -3245,10 +3563,10 @@ func (m *Ping) UnmarshalVT(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: Ping: wiretype end group for non-group")
+			return fmt.Errorf("proto: ServerLaunch: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: Ping: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: ServerLaunch: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
@@ -3313,7 +3631,7 @@ func (m *Ping) UnmarshalVT(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if m.Source == nil {
-				m.Source = &Ping_Source{}
+				m.Source = &ServerLaunch_Source{}
 			}
 			if err := m.Source.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
 				return err
@@ -3349,7 +3667,7 @@ func (m *Ping) UnmarshalVT(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if m.Features == nil {
-				m.Features = &Ping_Features{}
+				m.Features = &ServerLaunch_Features{}
 			}
 			if err := m.Features.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
 				return err
@@ -3385,10 +3703,582 @@ func (m *Ping) UnmarshalVT(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if m.Stats == nil {
-				m.Stats = &Ping_Stats{}
+				m.Stats = &ServerLaunch_Stats{}
 			}
 			if err := m.Stats.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
 				return err
+			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skip(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLength
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.unknownFields = append(m.unknownFields, dAtA[iNdEx:iNdEx+skippy]...)
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *ServerStop) UnmarshalVT(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflow
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: ServerStop: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: ServerStop: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Version", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLength
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLength
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Version = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Uptime", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLength
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLength
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.Uptime == nil {
+				m.Uptime = &durationpb.Duration{}
+			}
+			if unmarshal, ok := interface{}(m.Uptime).(interface {
+				UnmarshalVT([]byte) error
+			}); ok {
+				if err := unmarshal.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
+					return err
+				}
+			} else {
+				if err := proto.Unmarshal(dAtA[iNdEx:postIndex], m.Uptime); err != nil {
+					return err
+				}
+			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skip(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLength
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.unknownFields = append(m.unknownFields, dAtA[iNdEx:iNdEx+skippy]...)
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *Event_ApiActivity) UnmarshalVT(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflow
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: Event_ApiActivity: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: Event_ApiActivity: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Version", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLength
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLength
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Version = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Uptime", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLength
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLength
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.Uptime == nil {
+				m.Uptime = &durationpb.Duration{}
+			}
+			if unmarshal, ok := interface{}(m.Uptime).(interface {
+				UnmarshalVT([]byte) error
+			}); ok {
+				if err := unmarshal.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
+					return err
+				}
+			} else {
+				if err := proto.Unmarshal(dAtA[iNdEx:postIndex], m.Uptime); err != nil {
+					return err
+				}
+			}
+			iNdEx = postIndex
+		case 3:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field MethodCalls", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLength
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLength
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.MethodCalls == nil {
+				m.MethodCalls = make(map[string]uint64)
+			}
+			var mapkey string
+			var mapvalue uint64
+			for iNdEx < postIndex {
+				entryPreIndex := iNdEx
+				var wire uint64
+				for shift := uint(0); ; shift += 7 {
+					if shift >= 64 {
+						return ErrIntOverflow
+					}
+					if iNdEx >= l {
+						return io.ErrUnexpectedEOF
+					}
+					b := dAtA[iNdEx]
+					iNdEx++
+					wire |= uint64(b&0x7F) << shift
+					if b < 0x80 {
+						break
+					}
+				}
+				fieldNum := int32(wire >> 3)
+				if fieldNum == 1 {
+					var stringLenmapkey uint64
+					for shift := uint(0); ; shift += 7 {
+						if shift >= 64 {
+							return ErrIntOverflow
+						}
+						if iNdEx >= l {
+							return io.ErrUnexpectedEOF
+						}
+						b := dAtA[iNdEx]
+						iNdEx++
+						stringLenmapkey |= uint64(b&0x7F) << shift
+						if b < 0x80 {
+							break
+						}
+					}
+					intStringLenmapkey := int(stringLenmapkey)
+					if intStringLenmapkey < 0 {
+						return ErrInvalidLength
+					}
+					postStringIndexmapkey := iNdEx + intStringLenmapkey
+					if postStringIndexmapkey < 0 {
+						return ErrInvalidLength
+					}
+					if postStringIndexmapkey > l {
+						return io.ErrUnexpectedEOF
+					}
+					mapkey = string(dAtA[iNdEx:postStringIndexmapkey])
+					iNdEx = postStringIndexmapkey
+				} else if fieldNum == 2 {
+					for shift := uint(0); ; shift += 7 {
+						if shift >= 64 {
+							return ErrIntOverflow
+						}
+						if iNdEx >= l {
+							return io.ErrUnexpectedEOF
+						}
+						b := dAtA[iNdEx]
+						iNdEx++
+						mapvalue |= uint64(b&0x7F) << shift
+						if b < 0x80 {
+							break
+						}
+					}
+				} else {
+					iNdEx = entryPreIndex
+					skippy, err := skip(dAtA[iNdEx:])
+					if err != nil {
+						return err
+					}
+					if (skippy < 0) || (iNdEx+skippy) < 0 {
+						return ErrInvalidLength
+					}
+					if (iNdEx + skippy) > postIndex {
+						return io.ErrUnexpectedEOF
+					}
+					iNdEx += skippy
+				}
+			}
+			m.MethodCalls[mapkey] = mapvalue
+			iNdEx = postIndex
+		case 4:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field UserAgents", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLength
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLength
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.UserAgents == nil {
+				m.UserAgents = make(map[string]uint64)
+			}
+			var mapkey string
+			var mapvalue uint64
+			for iNdEx < postIndex {
+				entryPreIndex := iNdEx
+				var wire uint64
+				for shift := uint(0); ; shift += 7 {
+					if shift >= 64 {
+						return ErrIntOverflow
+					}
+					if iNdEx >= l {
+						return io.ErrUnexpectedEOF
+					}
+					b := dAtA[iNdEx]
+					iNdEx++
+					wire |= uint64(b&0x7F) << shift
+					if b < 0x80 {
+						break
+					}
+				}
+				fieldNum := int32(wire >> 3)
+				if fieldNum == 1 {
+					var stringLenmapkey uint64
+					for shift := uint(0); ; shift += 7 {
+						if shift >= 64 {
+							return ErrIntOverflow
+						}
+						if iNdEx >= l {
+							return io.ErrUnexpectedEOF
+						}
+						b := dAtA[iNdEx]
+						iNdEx++
+						stringLenmapkey |= uint64(b&0x7F) << shift
+						if b < 0x80 {
+							break
+						}
+					}
+					intStringLenmapkey := int(stringLenmapkey)
+					if intStringLenmapkey < 0 {
+						return ErrInvalidLength
+					}
+					postStringIndexmapkey := iNdEx + intStringLenmapkey
+					if postStringIndexmapkey < 0 {
+						return ErrInvalidLength
+					}
+					if postStringIndexmapkey > l {
+						return io.ErrUnexpectedEOF
+					}
+					mapkey = string(dAtA[iNdEx:postStringIndexmapkey])
+					iNdEx = postStringIndexmapkey
+				} else if fieldNum == 2 {
+					for shift := uint(0); ; shift += 7 {
+						if shift >= 64 {
+							return ErrIntOverflow
+						}
+						if iNdEx >= l {
+							return io.ErrUnexpectedEOF
+						}
+						b := dAtA[iNdEx]
+						iNdEx++
+						mapvalue |= uint64(b&0x7F) << shift
+						if b < 0x80 {
+							break
+						}
+					}
+				} else {
+					iNdEx = entryPreIndex
+					skippy, err := skip(dAtA[iNdEx:])
+					if err != nil {
+						return err
+					}
+					if (skippy < 0) || (iNdEx+skippy) < 0 {
+						return ErrInvalidLength
+					}
+					if (iNdEx + skippy) > postIndex {
+						return io.ErrUnexpectedEOF
+					}
+					iNdEx += skippy
+				}
+			}
+			m.UserAgents[mapkey] = mapvalue
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skip(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLength
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.unknownFields = append(m.unknownFields, dAtA[iNdEx:iNdEx+skippy]...)
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *Event) UnmarshalVT(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflow
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: Event: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: Event: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field ApiActivity", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLength
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLength
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if oneof, ok := m.Data.(*Event_ApiActivity_); ok {
+				if err := oneof.ApiActivity.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
+					return err
+				}
+			} else {
+				v := &Event_ApiActivity{}
+				if err := v.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
+					return err
+				}
+				m.Data = &Event_ApiActivity_{v}
 			}
 			iNdEx = postIndex
 		default:

@@ -1,0 +1,25 @@
+{
+  "$id": "https://api.cerbos.dev/cerbos/telemetry/v1/ServerLaunch/Features/Storage/Git.schema.json",
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "definitions": {
+    "google.protobuf.Duration": {
+      "title": "Duration",
+      "description": "A signed, fixed-length span of time represented as a count of seconds and fractions of seconds at nanosecond resolution.",
+      "type": "string",
+      "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?s$"
+    }
+  },
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "auth": {
+      "type": "boolean"
+    },
+    "pollInterval": {
+      "$ref": "#/definitions/google.protobuf.Duration"
+    },
+    "protocol": {
+      "type": "string"
+    }
+  }
+}

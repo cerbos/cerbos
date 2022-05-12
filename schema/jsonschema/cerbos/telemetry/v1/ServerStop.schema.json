@@ -1,5 +1,5 @@
 {
-  "$id": "https://api.cerbos.dev/cerbos/telemetry/v1/Ping/Features/Storage/Git.schema.json",
+  "$id": "https://api.cerbos.dev/cerbos/telemetry/v1/ServerStop.schema.json",
   "$schema": "http://json-schema.org/draft-07/schema#",
   "definitions": {
     "google.protobuf.Duration": {
@@ -12,13 +12,10 @@
   "type": "object",
   "additionalProperties": false,
   "properties": {
-    "auth": {
-      "type": "boolean"
-    },
-    "pollInterval": {
+    "uptime": {
       "$ref": "#/definitions/google.protobuf.Duration"
     },
-    "protocol": {
+    "version": {
       "type": "string"
     }
   }

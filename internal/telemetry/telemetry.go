@@ -8,29 +8,22 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"net/url"
 	"os"
 	"path/filepath"
-	"runtime"
-	"runtime/debug"
 	"strconv"
+	"sync"
 	"time"
 
 	statev1 "github.com/cerbos/cerbos/api/genpb/cerbos/state/v1"
 	telemetryv1 "github.com/cerbos/cerbos/api/genpb/cerbos/telemetry/v1"
-	"github.com/cerbos/cerbos/internal/audit"
 	"github.com/cerbos/cerbos/internal/config"
-	"github.com/cerbos/cerbos/internal/schema"
 	"github.com/cerbos/cerbos/internal/storage"
-	"github.com/cerbos/cerbos/internal/storage/blob"
-	"github.com/cerbos/cerbos/internal/storage/disk"
-	"github.com/cerbos/cerbos/internal/storage/git"
 	"github.com/cerbos/cerbos/internal/util"
 	"github.com/google/uuid"
 	"github.com/spf13/afero"
-	"go.uber.org/multierr"
 	"go.uber.org/zap"
 	"google.golang.org/protobuf/encoding/protojson"
+	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/durationpb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 	analytics "gopkg.in/segmentio/analytics-go.v3"
@@ -40,17 +33,29 @@ const (
 	doNotTrackEnvVar  = "DO_NOT_TRACK"
 	noTelemetryEnvVar = "CERBOS_NO_TELEMETRY"
 
-	minReportInterval = 8 * time.Hour
-	stateFile         = "cerbos.telemetry.json"
+	eventBufferSize = 8
+	stateFile       = "cerbos.telemetry.json"
 )
 
-var SegmentWriteKey string
+var (
+	SegmentWriteKey string
 
-func Report(ctx context.Context, store storage.Store) {
+	reporter  Reporter = nopReporter{}
+	startTime          = time.Now()
+)
+
+func Start(ctx context.Context, store storage.Store) {
 	logger := zap.L().Named("telemetry")
 	if SegmentWriteKey == "" {
 		logger.Info("Telemetry disabled")
 		return
+	}
+
+	for _, v := range []string{noTelemetryEnvVar, doNotTrackEnvVar} {
+		if disabledByEnvVar(v) {
+			logger.Info("Telemetry disabled")
+			return
+		}
 	}
 
 	conf := &Conf{}
@@ -61,20 +66,37 @@ func Report(ctx context.Context, store storage.Store) {
 		return
 	}
 
-	go doReport(ctx, store, conf, logger)
-}
-
-func doReport(ctx context.Context, store storage.Store, conf *Conf, logger *zap.Logger) {
-	defer func() {
-		// don't let a panic in this goroutine crash the whole app.
-		if err := recover(); err != nil {
-			logger.Debug("Telemetry panic", zap.Any("cause", err))
-		}
-	}()
+	logger.Info(fmt.Sprintf("Anonymous telemetry enabled. Disable via the config file or by setting the %s=1 environment variable", noTelemetryEnvVar))
 
 	fs := initStateFS(conf.StateDir)
-	r := newReporter(store, fs, logger)
-	r.report(ctx)
+	r := newSegmentReporter(store, fs, logger)
+	go r.start(ctx)
+
+	reporter = r
+}
+
+func disabledByEnvVar(name string) bool {
+	v, ok := os.LookupEnv(name)
+	// if the var is not defined, assume consent.
+	if !ok {
+		return false
+	}
+
+	set, err := strconv.ParseBool(v)
+	if err != nil {
+		// err on the side of caution and assume no consent.
+		return true
+	}
+
+	return set
+}
+
+func Stop() {
+	reporter.Stop()
+}
+
+func Report(event *telemetryv1.Event) bool {
+	return reporter.Report(event)
 }
 
 func initStateFS(dir string) afero.Fs {
@@ -106,43 +128,44 @@ func initStateFS(dir string) afero.Fs {
 	return afero.NewBasePathFs(afero.NewOsFs(), dir)
 }
 
-type reporter struct {
-	fsys   afero.Fs
-	store  storage.Store
-	logger *zap.Logger
+type Reporter interface {
+	Report(*telemetryv1.Event) bool
+	Stop() error
 }
 
-func newReporter(store storage.Store, fsys afero.Fs, logger *zap.Logger) *reporter {
-	return &reporter{
-		fsys:   fsys,
-		store:  store,
-		logger: logger,
-	}
-}
+type nopReporter struct{}
 
-func (r *reporter) report(ctx context.Context) bool {
-	state := r.readState()
-
-	if !r.shouldReport(state) {
-		return false
-	}
-
-	ping := buildPing(ctx, r.store)
-	if err := r.send(state.Uuid, ping); err != nil {
-		return false
-	}
-
-	state.LastTimestamp = timestamppb.Now()
-
-	if err := r.writeState(state); err != nil {
-		r.logger.Debug("Failed to persist telemetry state", zap.Error(err))
-	}
-
+func (nopReporter) Report(_ *telemetryv1.Event) bool {
 	return true
 }
 
-func (r *reporter) readState() *statev1.TelemetryState {
-	stateBytes, err := afero.ReadFile(r.fsys, stateFile)
+func (nopReporter) Stop() error {
+	return nil
+}
+
+type segmentReporter struct {
+	state     *statev1.TelemetryState
+	fsys      afero.Fs
+	store     storage.Store
+	eventChan chan *telemetryv1.Event
+	client    analytics.Client
+	logger    *zap.Logger
+	closeOnce sync.Once
+}
+
+func newSegmentReporter(store storage.Store, fsys afero.Fs, logger *zap.Logger) *segmentReporter {
+	return &segmentReporter{
+		state:     readState(fsys),
+		fsys:      fsys,
+		store:     store,
+		logger:    logger,
+		client:    analytics.New(SegmentWriteKey),
+		eventChan: make(chan *telemetryv1.Event, eventBufferSize),
+	}
+}
+
+func readState(fsys afero.Fs) *statev1.TelemetryState {
+	stateBytes, err := afero.ReadFile(fsys, stateFile)
 	if err != nil {
 		return newState()
 	}
@@ -169,42 +192,70 @@ func newState() *statev1.TelemetryState {
 	}
 }
 
-func (r *reporter) shouldReport(state *statev1.TelemetryState) bool {
-	for _, v := range []string{noTelemetryEnvVar, doNotTrackEnvVar} {
-		if disabledByEnvVar(v) {
-			r.logger.Info("Telemetry disabled")
-			return false
+func (r *segmentReporter) start(ctx context.Context) {
+	defer func() {
+		// don't let a panic in this goroutine crash the whole app.
+		if err := recover(); err != nil {
+			r.logger.Debug("Telemetry panic", zap.Any("cause", err))
+		}
+	}()
+
+	r.reportServerLaunch()
+
+	for event := range r.eventChan {
+		switch t := event.Data.(type) {
+		case *telemetryv1.Event_ApiActivity_:
+			r.reportAPIActivity(t.ApiActivity)
+		default:
+			r.logger.Debug(fmt.Sprintf("Unhandled telemetry event type %T", t))
 		}
 	}
-
-	r.logger.Info(fmt.Sprintf("Anonymous telemetry enabled. Disable via the config file or by setting the %s=1 environment variable", noTelemetryEnvVar))
-
-	if state == nil || state.LastTimestamp == nil {
-		return true
-	}
-
-	lastTS := state.LastTimestamp.AsTime()
-	return time.Since(lastTS) > minReportInterval
 }
 
-func disabledByEnvVar(name string) bool {
-	v, ok := os.LookupEnv(name)
-	// if the var is not defined, assume consent.
-	if !ok {
+func (r *segmentReporter) reportServerLaunch() {
+	event := buildServerLaunch(r.store)
+	if err := r.send("server_launch", event); err != nil {
+		r.logger.Debug("Failed to send server launch event", zap.Error(err))
+	}
+}
+
+func (r *segmentReporter) Report(event *telemetryv1.Event) bool {
+	select {
+	case r.eventChan <- event:
+		return true
+	default:
 		return false
 	}
-
-	set, err := strconv.ParseBool(v)
-	if err != nil {
-		// err on the side of caution and assume no consent.
-		return true
-	}
-
-	return set
 }
 
-func (r *reporter) writeState(state *statev1.TelemetryState) error {
-	stateBytes, err := protojson.Marshal(state)
+func (r *segmentReporter) reportAPIActivity(event *telemetryv1.Event_ApiActivity) {
+	if err := r.send("api_activity", event); err != nil {
+		r.logger.Debug("Failed to send API activity event", zap.Error(err))
+	}
+}
+
+func (r *segmentReporter) Stop() error {
+	var err error
+	r.closeOnce.Do(func() {
+		close(r.eventChan)
+		r.reportServerStop()
+		err = r.client.Close()
+
+		_ = r.writeState()
+	})
+
+	return err
+}
+
+func (r *segmentReporter) reportServerStop() {
+	event := &telemetryv1.ServerStop{Version: "1.0.0", Uptime: durationpb.New(time.Since(startTime))}
+	if err := r.send("server_stop", event); err != nil {
+		r.logger.Debug("Failed to send server stop event", zap.Error(err))
+	}
+}
+
+func (r *segmentReporter) writeState() error {
+	stateBytes, err := protojson.Marshal(r.state)
 	if err != nil {
 		return fmt.Errorf("failed to marshal proto: %w", err)
 	}
@@ -217,163 +268,34 @@ func (r *reporter) writeState(state *statev1.TelemetryState) error {
 	return nil
 }
 
-func (r *reporter) send(id string, ping *telemetryv1.Ping) (pubErr error) {
-	if SegmentWriteKey == "" {
-		return nil
-	}
-
-	props, err := mkProps(ping)
+func (r *segmentReporter) send(kind string, event proto.Message) error {
+	props, err := mkProps(event)
 	if err != nil {
 		return fmt.Errorf("failed to create properties: %w", err)
 	}
 
-	client := analytics.New(SegmentWriteKey)
-	defer multierr.AppendInvoke(&pubErr, multierr.Close(client))
-
-	return client.Enqueue(analytics.Track{
-		AnonymousId: id,
-		Event:       "server_launch",
+	if err := r.client.Enqueue(analytics.Track{
+		AnonymousId: r.state.Uuid,
+		Event:       kind,
 		Properties:  props,
-	})
+	}); err != nil {
+		return fmt.Errorf("failed to enqueue event: %w", err)
+	}
+
+	r.state.LastTimestamp = timestamppb.Now()
+	return nil
 }
 
-func mkProps(ping *telemetryv1.Ping) (analytics.Properties, error) {
-	pingBytes, err := protojson.Marshal(ping)
+func mkProps(event proto.Message) (analytics.Properties, error) {
+	evtBytes, err := protojson.Marshal(event)
 	if err != nil {
-		return nil, fmt.Errorf("failed to marshal ping: %w", err)
+		return nil, fmt.Errorf("failed to marshal event: %w", err)
 	}
 
 	var props map[string]any
-	if err := json.Unmarshal(pingBytes, &props); err != nil {
-		return nil, fmt.Errorf("failed to unmarshal ping: %w", err)
+	if err := json.Unmarshal(evtBytes, &props); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal evt: %w", err)
 	}
 
 	return analytics.Properties(props), nil
-}
-
-func buildPing(ctx context.Context, store storage.Store) *telemetryv1.Ping {
-	ping := &telemetryv1.Ping{Version: "1.0.0"}
-	ping.Source = extractSource()
-	ping.Features = extractFeatures()
-
-	if is, ok := store.(storage.Instrumented); ok {
-		stats := is.RepoStats(ctx)
-		ping.Stats = extractStats(stats)
-	}
-
-	return ping
-}
-
-func extractSource() *telemetryv1.Ping_Source {
-	s := &telemetryv1.Ping_Source{
-		Cerbos: &telemetryv1.Ping_Cerbos{
-			Version:   util.Version,
-			Commit:    util.Commit,
-			BuildDate: util.BuildDate,
-		},
-		Os:      runtime.GOOS,
-		Arch:    runtime.GOARCH,
-		NumCpus: uint32(runtime.NumCPU()),
-	}
-
-	if info, ok := debug.ReadBuildInfo(); ok && info.Main.Sum != "" {
-		s.Cerbos.ModuleVersion = info.Main.Version
-		s.Cerbos.ModuleChecksum = info.Main.Sum
-	}
-
-	return s
-}
-
-func extractFeatures() *telemetryv1.Ping_Features {
-	feats := &telemetryv1.Ping_Features{}
-
-	if auditConf, err := audit.GetConf(); err == nil {
-		feats.Audit = &telemetryv1.Ping_Features_Audit{
-			Backend: auditConf.Backend,
-			Enabled: auditConf.Enabled,
-		}
-	}
-
-	if schemaConf, err := schema.GetConf(); err == nil {
-		feats.Schema = &telemetryv1.Ping_Features_Schema{
-			Enforcement: string(schemaConf.Enforcement),
-		}
-	}
-
-	// avoid an import cycle by not using server.Conf to retrieve this value
-	var adminAPIEnabled bool
-	if err := config.Get("server.adminAPI.enabled", &adminAPIEnabled); err != nil {
-		feats.AdminApi = &telemetryv1.Ping_Features_AdminApi{
-			Enabled: adminAPIEnabled,
-		}
-	}
-
-	//nolint:nestif
-	if storageConf, err := storage.GetConf(); err == nil {
-		feats.Storage = &telemetryv1.Ping_Features_Storage{
-			Driver: storageConf.Driver,
-		}
-
-		switch storageConf.Driver {
-		case disk.DriverName:
-			if diskConf, err := disk.GetConf(); err == nil {
-				feats.Storage.Store = &telemetryv1.Ping_Features_Storage_Disk_{
-					Disk: &telemetryv1.Ping_Features_Storage_Disk{
-						Watch: diskConf.WatchForChanges,
-					},
-				}
-			}
-		case git.DriverName:
-			if gitConf, err := git.GetConf(); err == nil {
-				feats.Storage.Store = &telemetryv1.Ping_Features_Storage_Git_{
-					Git: &telemetryv1.Ping_Features_Storage_Git{
-						Protocol:     gitConf.Protocol,
-						PollInterval: durationpb.New(gitConf.UpdatePollInterval),
-						Auth:         gitConf.SSH != nil || gitConf.HTTPS != nil,
-					},
-				}
-			}
-		case blob.DriverName:
-			if blobConf, err := blob.GetConf(); err == nil {
-				b := &telemetryv1.Ping_Features_Storage_Blob{
-					PollInterval: durationpb.New(blobConf.UpdatePollInterval),
-				}
-
-				if scheme, err := url.Parse(blobConf.Bucket); err == nil {
-					b.Provider = scheme.Scheme
-				}
-
-				feats.Storage.Store = &telemetryv1.Ping_Features_Storage_Blob_{Blob: b}
-			}
-		}
-	}
-
-	return feats
-}
-
-func extractStats(stats storage.RepoStats) *telemetryv1.Ping_Stats {
-	pb := &telemetryv1.Ping_Stats{
-		Policy: &telemetryv1.Ping_Stats_Policy{
-			Count:             make(map[string]uint32, len(stats.PolicyCount)),
-			AvgRuleCount:      make(map[string]float64, len(stats.AvgRuleCount)),
-			AvgConditionCount: make(map[string]float64, len(stats.AvgConditionCount)),
-		},
-		Schema: &telemetryv1.Ping_Stats_Schema{
-			Count: uint32(stats.SchemaCount),
-		},
-	}
-
-	for k, v := range stats.PolicyCount {
-		pb.Policy.Count[k.String()] = uint32(v)
-	}
-
-	for k, v := range stats.AvgConditionCount {
-		pb.Policy.AvgConditionCount[k.String()] = v
-	}
-
-	for k, v := range stats.AvgRuleCount {
-		pb.Policy.AvgRuleCount[k.String()] = v
-	}
-
-	return pb
 }
