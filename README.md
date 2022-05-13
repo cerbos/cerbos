@@ -17,12 +17,15 @@ Cerbos helps you super-charge your authorization implementation by writing conte
 * [Join the community on Slack](http://go.cerbos.io/slack)
 * Install Cerbos
     * [Container](https://docs.cerbos.dev/cerbos/latest/installation/container.html)
-    * [Binary](https://docs.cerbos.dev/cerbos/latest/installation/binary.html)
+    * [Binary/OS packages](https://docs.cerbos.dev/cerbos/latest/installation/binary.html)
     * [Helm Chart](https://docs.cerbos.dev/cerbos/latest/installation/helm.html)
 * Get the client SDKs
     * [Go](client/README.md)
     * [Java](https://github.com/cerbos/cerbos-sdk-java)
     * [NodeJS](https://github.com/cerbos/cerbos-sdk-node)
+    * [Python](https://github.com/cerbos/cerbos-sdk-python)
+    * [Ruby](https://github.com/cerbos/cerbos-sdk-ruby)
+    * [Rust](https://github.com/cerbos/cerbos-sdk-rust)
 * [Contribute](CONTRIBUTING.md)
 
 
