@@ -230,6 +230,7 @@ docker kill cerbos
 .Next steps
 ****
 
+* link:https://github.com/cerbos?q=demo&type=all&language=&sort=[Explore the demo apps built with Cerbos]
 * xref:policies:index.adoc[Read more about Cerbos policies]
 * link:https://book.cerbos.dev[Read the Cerbos guide]
 * link:http://go.cerbos.io/slack[Join the Cerbos community on Slack]
