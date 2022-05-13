@@ -1,9 +1,8 @@
 ---
-description: "Invalid resources query plan request"
+description: "Unknown resource"
 wantStatus:
-  httpStatusCode: 400
-  grpcStatusCode: 3
-wantError: true
+  httpStatusCode: 200
+  grpcStatusCode: 0
 playgroundProxy:
   input: {
     "playgroundId": "test",
@@ -47,6 +46,21 @@ playgroundProxy:
       "resource": {
         "kind": "contact",
         "policyVersion": "default"
+      }
+    }
+  }
+  wantResponse: {
+    "playgroundId": "test",
+    "planResources": {
+      "requestId": "test",
+      "action": "read",
+      "resourceKind": "contact",
+      "policyVersion": "default",
+      "filter": {
+        "kind": "KIND_ALWAYS_DENIED"
+      },
+      "meta": {
+        "filter_debug": "NO_MATCH"
       }
     }
   }

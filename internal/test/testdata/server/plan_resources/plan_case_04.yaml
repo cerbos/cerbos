@@ -1,0 +1,32 @@
+---
+description: Undefined action
+wantStatus:
+  httpStatusCode: 200
+  grpcStatusCode: 0
+planResources:
+  input:
+    requestId: test
+    includeMeta: true
+    action: foo_action
+    principal:
+      id: maggie
+      policyVersion: '20210210'
+      roles:
+        - manager
+      attr:
+        department: marketing
+        managed_geographies: GB
+        geography: GB
+        team: design
+    resource:
+      kind: leave_request
+      policyVersion: '20210210'
+  wantResponse:
+    requestId: test
+    action: foo_action
+    resourceKind: leave_request
+    policyVersion: '20210210'
+    filter:
+      kind: KIND_ALWAYS_DENIED
+    meta:
+      filter_debug: (false) 

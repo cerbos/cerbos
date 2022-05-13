@@ -36,4 +36,10 @@ tests:
       kind: leave_request
       policyVersion: default
     want:
-      kind: KIND_ALWAYS_ALLOWED
+      kind: KIND_ALWAYS_DENIED
+  - action: some-action
+    resource:
+      kind: non-existent-resource
+      policyVersion: default
+    want:
+      kind: KIND_ALWAYS_DENIED
