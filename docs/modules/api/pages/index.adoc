@@ -22,6 +22,7 @@ Alternatively, you can explore the API using the following methods as well:
 * link:https://github.com/cerbos/cerbos-sdk-java[Java] image:java.svg[alt="Java",opts="interactive",width=40,height=40,link="https://github.com/cerbos/cerbos-sdk-java"]
 * link:https://github.com/cerbos/cerbos-sdk-node[NodeJS] image:nodejs.svg[alt="NodeJS",opts="interactive",width=40,height=40,link="https://github.com/cerbos/cerbos-sdk-node"]
 * link:https://github.com/cerbos/cerbos-sdk-python[Python] image:python.svg[alt="Python",opts="interactive",width=40,height=40,link="https://github.com/cerbos/cerbos-sdk-python"]
+* link:https://github.com/cerbos/cerbos-sdk-ruby[Ruby] image:ruby.svg[alt="Ruby",opts="interactive",width=40,height=40,link="https://github.com/cerbos/cerbos-sdk-ruby"]
 * link:https://github.com/cerbos/cerbos-sdk-rust[Rust] image:rust.svg[alt="Rust",opts="interactive",width=40,height=40,link="https://github.com/cerbos/cerbos-sdk-rust"]
 
 Other languages coming soon
