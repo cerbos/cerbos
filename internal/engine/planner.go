@@ -92,7 +92,7 @@ func (ppe *principalPolicyEvaluator) EvaluateResourcesQueryPlan(ctx context.Cont
 	}
 
 	if result.Filter == nil {
-		result.Filter = nodeBoolTrue // No restrictions on this resource
+		result.Filter = &qpN{Node: &qpNE{Expression: conditions.FalseExpr}}
 	}
 	return result, nil
 }
@@ -215,7 +215,7 @@ func (rpe *resourcePolicyEvaluator) EvaluateResourcesQueryPlan(ctx context.Conte
 	case 0:
 		switch d {
 		case 0:
-			result.Filter = &qpN{Node: &qpNE{Expression: conditions.TrueExpr}} // default value sets no restrictions on this resource
+			result.Filter = &qpN{Node: &qpNE{Expression: conditions.FalseExpr}} // default to DENY
 		case 1:
 			result.Filter = denyFilter[0]
 		default:

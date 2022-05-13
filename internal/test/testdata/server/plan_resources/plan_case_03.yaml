@@ -1,9 +1,8 @@
 ---
 description: "Missing policy"
 wantStatus:
-  httpStatusCode: 400
-  grpcStatusCode: 3
-wantError: true
+  httpStatusCode: 200
+  grpcStatusCode: 0
 planResources:
   input: {
     "requestId": "test",
@@ -21,3 +20,12 @@ planResources:
       "policyVersion": "default"
     }
   }
+  wantResponse:
+    requestId: test
+    action: read
+    resourceKind: contact
+    policyVersion: 'default'
+    filter:
+      kind: KIND_ALWAYS_DENIED
+    meta:
+      filter_debug: NO_MATCH

@@ -303,29 +303,40 @@ func (engine *Engine) PlanResources(ctx context.Context, input *enginev1.PlanRes
 		PolicyVersion: input.Resource.PolicyVersion,
 	}
 
-	if plan != nil {
+	// default to ALWAYS_DENIED
+	if plan == nil {
 		response.Filter = &responsev1.PlanResourcesResponse_Filter{
-			Kind:      responsev1.PlanResourcesResponse_Filter_KIND_CONDITIONAL,
-			Condition: new(responsev1.PlanResourcesResponse_Expression_Operand),
+			Kind: responsev1.PlanResourcesResponse_Filter_KIND_ALWAYS_DENIED,
 		}
-		err = convert(plan.Filter, response.Filter.Condition)
-		if err != nil {
-			return nil, err
-		}
-		normaliseFilter(response.Filter)
+
 		if input.IncludeMeta {
-			response.Meta = new(responsev1.PlanResourcesResponse_Meta)
-			response.Meta.FilterDebug, err = String(plan.Filter)
-			if err != nil {
-				response.Meta.FilterDebug = "can't render filter string representation"
+			response.Meta = &responsev1.PlanResourcesResponse_Meta{
+				FilterDebug: noPolicyMatch,
 			}
-			response.Meta.MatchedScope = plan.Scope
 		}
 
 		return response, nil
 	}
 
-	return nil, ErrNoPoliciesMatched
+	response.Filter = &responsev1.PlanResourcesResponse_Filter{
+		Kind:      responsev1.PlanResourcesResponse_Filter_KIND_CONDITIONAL,
+		Condition: new(responsev1.PlanResourcesResponse_Expression_Operand),
+	}
+	err = convert(plan.Filter, response.Filter.Condition)
+	if err != nil {
+		return nil, err
+	}
+	normaliseFilter(response.Filter)
+	if input.IncludeMeta {
+		response.Meta = new(responsev1.PlanResourcesResponse_Meta)
+		response.Meta.FilterDebug, err = String(plan.Filter)
+		if err != nil {
+			response.Meta.FilterDebug = "can't render filter string representation"
+		}
+		response.Meta.MatchedScope = plan.Scope
+	}
+
+	return response, nil
 }
 
 func normaliseFilter(filter *responsev1.PlanResourcesResponse_Filter) {

@@ -30,3 +30,9 @@ tests:
           operator: not
           operands:
             - value: true
+  - action: non-existent-action
+    resource:
+      kind: non-existent-resource
+      policyVersion: default
+    want:
+      kind: KIND_ALWAYS_DENIED
