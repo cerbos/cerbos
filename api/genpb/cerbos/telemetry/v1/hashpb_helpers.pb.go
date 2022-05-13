@@ -345,6 +345,10 @@ func cerbos_telemetry_v1_ServerStop_hashpb_sum(m *ServerStop, hasher hash.Hash, 
 		}
 
 	}
+	if _, ok := ignore["cerbos.telemetry.v1.ServerStop.requests_total"]; !ok {
+		_, _ = hasher.Write(protowire.AppendVarint(nil, m.RequestsTotal))
+
+	}
 }
 
 func google_protobuf_Duration_hashpb_sum(m *durationpb.Duration, hasher hash.Hash, ignore map[string]struct{}) {

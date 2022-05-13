@@ -6,6 +6,7 @@ package telemetry
 import (
 	"context"
 	"strings"
+	"sync/atomic"
 	"time"
 
 	telemetryv1 "github.com/cerbos/cerbos/api/genpb/cerbos/telemetry/v1"
@@ -15,31 +16,89 @@ import (
 	"google.golang.org/protobuf/types/known/durationpb"
 )
 
+const collectorBufferSize = 64
+
+var totalReqCount uint64
+
+type Interceptors interface {
+	UnaryServerInterceptor() grpc.UnaryServerInterceptor
+	StreamServerInterceptor() grpc.StreamServerInterceptor
+}
+
+type nopInterceptors struct{}
+
+func (nopInterceptors) UnaryServerInterceptor() grpc.UnaryServerInterceptor {
+	return func(ctx context.Context, req any, _ *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (any, error) {
+		return handler(ctx, req)
+	}
+}
+
+func (nopInterceptors) StreamServerInterceptor() grpc.StreamServerInterceptor {
+	return func(srv any, ss grpc.ServerStream, _ *grpc.StreamServerInfo, handler grpc.StreamHandler) error {
+		return handler(srv, ss)
+	}
+}
+
 type methodInfo struct {
 	name      string
 	userAgent string
 }
 
-type Interceptor struct {
-	infoChan    chan methodInfo
+type statsInterceptors struct {
+	reporter    Reporter
+	collector   chan methodInfo
 	methodTally map[string]uint64
 	uaTally     map[string]uint64
-	totalReq    uint64
 }
 
-func NewInterceptor(ctx context.Context) *Interceptor {
-	i := &Interceptor{
-		infoChan:    make(chan methodInfo, 64),
+func newStatsInterceptors(reporter Reporter, shutdown <-chan struct{}) *statsInterceptors {
+	i := &statsInterceptors{
+		reporter:    reporter,
+		collector:   make(chan methodInfo, collectorBufferSize),
 		methodTally: make(map[string]uint64),
 		uaTally:     make(map[string]uint64),
 	}
 
-	go i.doTally(ctx)
+	go i.doTally(shutdown)
 
 	return i
 }
 
-func (i *Interceptor) doTally(ctx context.Context) {
+func (i *statsInterceptors) UnaryServerInterceptor() grpc.UnaryServerInterceptor {
+	return func(ctx context.Context, req any, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (any, error) {
+		i.collectStats(ctx, info.FullMethod)
+		return handler(ctx, req)
+	}
+}
+
+func (i *statsInterceptors) StreamServerInterceptor() grpc.StreamServerInterceptor {
+	return func(srv any, ss grpc.ServerStream, info *grpc.StreamServerInfo, handler grpc.StreamHandler) error {
+		i.collectStats(ss.Context(), info.FullMethod)
+		return handler(srv, ss)
+	}
+}
+
+func (i *statsInterceptors) collectStats(ctx context.Context, method string) {
+	if strings.HasPrefix(method, "/grpc.") {
+		return
+	}
+
+	mInfo := methodInfo{name: method, userAgent: "unknown"}
+
+	md, ok := metadata.FromIncomingContext(ctx)
+	if ok {
+		if v := md.Get("user-agent"); len(v) > 0 {
+			mInfo.userAgent = v[0]
+		}
+	}
+
+	select {
+	case i.collector <- mInfo:
+	default:
+	}
+}
+
+func (i *statsInterceptors) doTally(shutdown <-chan struct{}) {
 	conf := &Conf{}
 	_ = config.GetSection(conf)
 
@@ -48,21 +107,20 @@ func (i *Interceptor) doTally(ctx context.Context) {
 
 	for {
 		select {
-		case <-ctx.Done():
-			i.report()
+		case <-shutdown:
 			return
 		case <-ticker.C:
 			i.report()
-		case m := <-i.infoChan:
+		case m := <-i.collector:
 			i.methodTally[m.name]++
 			i.uaTally[m.userAgent]++
-			i.totalReq++
+			atomic.AddUint64(&totalReqCount, 1)
 		}
 	}
 }
 
-func (i *Interceptor) report() {
-	Report(&telemetryv1.Event{
+func (i *statsInterceptors) report() {
+	i.reporter.Report(&telemetryv1.Event{
 		Data: &telemetryv1.Event_ApiActivity_{
 			ApiActivity: &telemetryv1.Event_ApiActivity{
 				Version:     "1.0.0",
@@ -81,24 +139,4 @@ func copyMap(m map[string]uint64) map[string]uint64 {
 	}
 
 	return c
-}
-
-func (i *Interceptor) UnaryServerInterceptor(ctx context.Context, req any, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (any, error) {
-	if !strings.HasPrefix(info.FullMethod, "/grpc.") {
-		mInfo := methodInfo{name: info.FullMethod, userAgent: "unknown"}
-
-		md, ok := metadata.FromIncomingContext(ctx)
-		if ok {
-			if v := md.Get("user-agent"); len(v) > 0 {
-				mInfo.userAgent = v[0]
-			}
-		}
-
-		select {
-		case i.infoChan <- mInfo:
-		default:
-		}
-	}
-
-	return handler(ctx, req)
 }

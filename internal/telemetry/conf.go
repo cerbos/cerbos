@@ -27,3 +27,11 @@ func (c *Conf) Key() string {
 func (c *Conf) SetDefaults() {
 	c.ReportInterval = defaultReportInterval
 }
+
+func (c *Conf) Validate() (errs error) {
+	if c.ReportInterval == 0 {
+		c.ReportInterval = defaultReportInterval
+	}
+
+	return nil
+}

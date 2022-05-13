@@ -95,6 +95,7 @@ message ServerLaunch {
 message ServerStop {
   string version = 1;
   google.protobuf.Duration uptime = 2;
+  uint64 requests_total = 3;
 }
 
 message Event {

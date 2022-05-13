@@ -276,6 +276,8 @@ func (m *ServerStop) validate(all bool) error {
 		}
 	}
 
+	// no validation rules for RequestsTotal
+
 	if len(errors) > 0 {
 		return ServerStopMultiError(errors)
 	}

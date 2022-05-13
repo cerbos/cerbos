@@ -12,6 +12,18 @@
   "type": "object",
   "additionalProperties": false,
   "properties": {
+    "requestsTotal": {
+      "oneOf": [
+        {
+          "type": "integer",
+          "minimum": 0
+        },
+        {
+          "type": "string",
+          "pattern": "^(?:0|[1-9]\\d*)(?:\\.\\d+)?(?:[eE][+-]?\\d+)?$"
+        }
+      ]
+    },
     "uptime": {
       "$ref": "#/definitions/google.protobuf.Duration"
     },

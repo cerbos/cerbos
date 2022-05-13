@@ -12,6 +12,7 @@ import (
 	"path/filepath"
 	"strconv"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	statev1 "github.com/cerbos/cerbos/api/genpb/cerbos/state/v1"
@@ -44,35 +45,54 @@ var (
 	startTime          = time.Now()
 )
 
+type Reporter interface {
+	Report(*telemetryv1.Event) bool
+	Intercept() Interceptors
+	Stop() error
+}
+
+type nopReporter struct{}
+
+func (nopReporter) Report(_ *telemetryv1.Event) bool {
+	return true
+}
+
+func (nopReporter) Intercept() Interceptors {
+	return nopInterceptors{}
+}
+
+func (nopReporter) Stop() error {
+	return nil
+}
+
 func Start(ctx context.Context, store storage.Store) {
 	logger := zap.L().Named("telemetry")
-	if SegmentWriteKey == "" {
-		logger.Info("Telemetry disabled")
-		return
-	}
-
-	for _, v := range []string{noTelemetryEnvVar, doNotTrackEnvVar} {
-		if disabledByEnvVar(v) {
-			logger.Info("Telemetry disabled")
-			return
-		}
-	}
 
 	conf := &Conf{}
 	_ = config.GetSection(conf)
 
-	if conf.Disabled {
+	if !isEnabled(conf) || SegmentWriteKey == "" {
 		logger.Info("Telemetry disabled")
 		return
 	}
 
-	logger.Info(fmt.Sprintf("Anonymous telemetry enabled. Disable via the config file or by setting the %s=1 environment variable", noTelemetryEnvVar))
+	if r := startReporter(ctx, conf, store, logger); r != nil {
+		reporter = r
+	}
+}
 
-	fs := initStateFS(conf.StateDir)
-	r := newSegmentReporter(store, fs, logger)
-	go r.start(ctx)
+func isEnabled(conf *Conf) bool {
+	if conf.Disabled {
+		return false
+	}
 
-	reporter = r
+	for _, v := range []string{noTelemetryEnvVar, doNotTrackEnvVar} {
+		if disabledByEnvVar(v) {
+			return false
+		}
+	}
+
+	return true
 }
 
 func disabledByEnvVar(name string) bool {
@@ -91,12 +111,18 @@ func disabledByEnvVar(name string) bool {
 	return set
 }
 
-func Stop() {
-	reporter.Stop()
-}
+func startReporter(_ context.Context, conf *Conf, store storage.Store, logger *zap.Logger) *segmentReporter {
+	logger.Info(fmt.Sprintf("Anonymous telemetry enabled. Disable via the config file or by setting the %s=1 environment variable", noTelemetryEnvVar))
 
-func Report(event *telemetryv1.Event) bool {
-	return reporter.Report(event)
+	fs := initStateFS(conf.StateDir)
+	r, err := newSegmentReporter(store, fs, logger)
+	if err != nil {
+		logger.Debug("Failed to create telemetry reporter", zap.Error(err))
+		return nil
+	}
+
+	go r.start()
+	return r
 }
 
 func initStateFS(dir string) afero.Fs {
@@ -128,39 +154,49 @@ func initStateFS(dir string) afero.Fs {
 	return afero.NewBasePathFs(afero.NewOsFs(), dir)
 }
 
-type Reporter interface {
-	Report(*telemetryv1.Event) bool
-	Stop() error
+func Stop() {
+	_ = reporter.Stop()
 }
 
-type nopReporter struct{}
-
-func (nopReporter) Report(_ *telemetryv1.Event) bool {
-	return true
+func Report(event *telemetryv1.Event) bool {
+	return reporter.Report(event)
 }
 
-func (nopReporter) Stop() error {
-	return nil
+func Intercept() Interceptors {
+	return reporter.Intercept()
 }
 
 type segmentReporter struct {
-	state     *statev1.TelemetryState
-	fsys      afero.Fs
-	store     storage.Store
-	eventChan chan *telemetryv1.Event
-	client    analytics.Client
-	logger    *zap.Logger
-	closeOnce sync.Once
+	state        *statev1.TelemetryState
+	fsys         afero.Fs
+	store        storage.Store
+	eventChan    chan *telemetryv1.Event
+	client       analytics.Client
+	logger       *zap.Logger
+	shutdownChan chan struct{}
+	closeOnce    sync.Once
 }
 
-func newSegmentReporter(store storage.Store, fsys afero.Fs, logger *zap.Logger) *segmentReporter {
+func newSegmentReporter(store storage.Store, fsys afero.Fs, logger *zap.Logger) (*segmentReporter, error) {
+	client, err := analytics.NewWithConfig(SegmentWriteKey, analytics.Config{
+		Logger: zapLogWrapper{logger: logger.Sugar()},
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to instantiate Segment client: %w", err)
+	}
+
+	return newSegmentReporterWithClient(client, store, fsys, logger), nil
+}
+
+func newSegmentReporterWithClient(client analytics.Client, store storage.Store, fsys afero.Fs, logger *zap.Logger) *segmentReporter {
 	return &segmentReporter{
-		state:     readState(fsys),
-		fsys:      fsys,
-		store:     store,
-		logger:    logger,
-		client:    analytics.New(SegmentWriteKey),
-		eventChan: make(chan *telemetryv1.Event, eventBufferSize),
+		state:        readState(fsys),
+		fsys:         fsys,
+		store:        store,
+		logger:       logger,
+		client:       client,
+		eventChan:    make(chan *telemetryv1.Event, eventBufferSize),
+		shutdownChan: make(chan struct{}),
 	}
 }
 
@@ -192,7 +228,7 @@ func newState() *statev1.TelemetryState {
 	}
 }
 
-func (r *segmentReporter) start(ctx context.Context) {
+func (r *segmentReporter) start() {
 	defer func() {
 		// don't let a panic in this goroutine crash the whole app.
 		if err := recover(); err != nil {
@@ -210,6 +246,10 @@ func (r *segmentReporter) start(ctx context.Context) {
 			r.logger.Debug(fmt.Sprintf("Unhandled telemetry event type %T", t))
 		}
 	}
+}
+
+func (r *segmentReporter) Intercept() Interceptors {
+	return newStatsInterceptors(r, r.shutdownChan)
 }
 
 func (r *segmentReporter) reportServerLaunch() {
@@ -237,6 +277,7 @@ func (r *segmentReporter) reportAPIActivity(event *telemetryv1.Event_ApiActivity
 func (r *segmentReporter) Stop() error {
 	var err error
 	r.closeOnce.Do(func() {
+		close(r.shutdownChan)
 		close(r.eventChan)
 		r.reportServerStop()
 		err = r.client.Close()
@@ -248,7 +289,12 @@ func (r *segmentReporter) Stop() error {
 }
 
 func (r *segmentReporter) reportServerStop() {
-	event := &telemetryv1.ServerStop{Version: "1.0.0", Uptime: durationpb.New(time.Since(startTime))}
+	event := &telemetryv1.ServerStop{
+		Version:       "1.0.0",
+		Uptime:        durationpb.New(time.Since(startTime)),
+		RequestsTotal: atomic.LoadUint64(&totalReqCount),
+	}
+
 	if err := r.send("server_stop", event); err != nil {
 		r.logger.Debug("Failed to send server stop event", zap.Error(err))
 	}
@@ -298,4 +344,16 @@ func mkProps(event proto.Message) (analytics.Properties, error) {
 	}
 
 	return analytics.Properties(props), nil
+}
+
+type zapLogWrapper struct {
+	logger *zap.SugaredLogger
+}
+
+func (zlw zapLogWrapper) Logf(fmt string, args ...any) {
+	zlw.logger.Debugf(fmt, args...)
+}
+
+func (zlw zapLogWrapper) Errorf(fmt string, args ...any) {
+	zlw.logger.Warnf(fmt, args...)
 }

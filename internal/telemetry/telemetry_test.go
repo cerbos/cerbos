@@ -4,86 +4,125 @@
 package telemetry
 
 import (
-	"context"
 	"fmt"
+	"sync"
 	"testing"
-	"time"
 
 	"github.com/cerbos/cerbos/internal/test/mocks"
 	"github.com/spf13/afero"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
-	"google.golang.org/protobuf/encoding/protojson"
-	"google.golang.org/protobuf/types/known/timestamppb"
+	"gopkg.in/segmentio/analytics-go.v3"
 )
 
-func TestState(t *testing.T) {
+func TestSegmentReporter(t *testing.T) {
 	logger := zap.L().Named("telemetry")
 
-	t.Run("fresh_state", func(t *testing.T) {
-		fsys := afero.NewMemMapFs()
-		r := newReporter(&mocks.Store{}, fsys, logger)
-		require.True(t, r.report(context.Background()))
-
-		exists, err := afero.Exists(fsys, stateFile)
-		require.NoError(t, err)
-		require.True(t, exists)
-
-		// don't report again because state was created recently
-		r = newReporter(&mocks.Store{}, fsys, logger)
-		require.False(t, r.report(context.Background()))
-	})
-
-	t.Run("existing_state", func(t *testing.T) {
-		t.Run("valid_but_old", func(t *testing.T) {
+	t.Run("state", func(t *testing.T) {
+		t.Run("no_state", func(t *testing.T) {
 			fsys := afero.NewMemMapFs()
+			mockClient := newMockAnalyticsClient()
 
-			state := newState()
-			state.LastTimestamp = timestamppb.New(time.Date(2020, 1, 1, 0, 0, 0, 0, time.Local))
+			r := newSegmentReporterWithClient(mockClient, &mocks.Store{}, fsys, logger)
+			r.reportServerLaunch()
+			require.NoError(t, r.Stop())
 
-			stateBytes, err := protojson.Marshal(state)
+			mockClient.WaitForClose()
+			require.Len(t, mockClient.Events(), 2)
+
+			exists, err := afero.Exists(fsys, stateFile)
 			require.NoError(t, err)
-			require.NoError(t, afero.WriteFile(fsys, stateFile, stateBytes, 0o600))
-
-			r := newReporter(&mocks.Store{}, fsys, logger)
-			require.True(t, r.report(context.Background()))
+			require.True(t, exists)
 		})
 
-		t.Run("corrupt", func(t *testing.T) {
+		t.Run("corrupt_state", func(t *testing.T) {
 			fsys := afero.NewMemMapFs()
-
 			require.NoError(t, afero.WriteFile(fsys, stateFile, []byte("rubbish"), 0o600))
 
-			r := newReporter(&mocks.Store{}, fsys, logger)
-			require.True(t, r.report(context.Background()))
+			mockClient := newMockAnalyticsClient()
+			r := newSegmentReporterWithClient(mockClient, &mocks.Store{}, fsys, logger)
+			r.reportServerLaunch()
+			require.NoError(t, r.Stop())
+
+			mockClient.WaitForClose()
+			require.Len(t, mockClient.Events(), 2)
+
+			state, err := afero.ReadFile(fsys, stateFile)
+			require.NoError(t, err)
+			require.NotEqual(t, []byte("rubbish"), state)
 		})
-	})
 
-	t.Run("read_only_fs", func(t *testing.T) {
-		fsys := afero.NewReadOnlyFs(afero.NewMemMapFs())
-		r := newReporter(&mocks.Store{}, fsys, logger)
-		require.True(t, r.report(context.Background()))
+		t.Run("read_only_fs", func(t *testing.T) {
+			fsys := afero.NewReadOnlyFs(afero.NewMemMapFs())
+			mockClient := newMockAnalyticsClient()
 
-		exists, err := afero.Exists(fsys, stateFile)
-		require.NoError(t, err)
-		require.False(t, exists)
-	})
-}
+			r := newSegmentReporterWithClient(mockClient, &mocks.Store{}, fsys, logger)
+			r.reportServerLaunch()
+			require.NoError(t, r.Stop())
 
-func TestReporter(t *testing.T) {
-	logger := zap.L().Named("telemetry")
-
-	for _, envVar := range []string{noTelemetryEnvVar, doNotTrackEnvVar} {
-		t.Run(fmt.Sprintf("disabled_by_%s", envVar), func(t *testing.T) {
-			t.Setenv(envVar, "true")
-			fsys := afero.NewMemMapFs()
-			r := newReporter(&mocks.Store{}, fsys, logger)
-
-			require.False(t, r.report(context.Background()))
+			mockClient.WaitForClose()
+			require.Len(t, mockClient.Events(), 2)
 
 			exists, err := afero.Exists(fsys, stateFile)
 			require.NoError(t, err)
 			require.False(t, exists)
 		})
+	})
+}
+
+func TestIsEnabled(t *testing.T) {
+	for _, envVar := range []string{noTelemetryEnvVar, doNotTrackEnvVar} {
+		t.Run(fmt.Sprintf("disabled_by_%s", envVar), func(t *testing.T) {
+			t.Setenv(envVar, "true")
+
+			conf := &Conf{}
+			conf.SetDefaults()
+
+			require.False(t, isEnabled(conf))
+		})
 	}
+
+	t.Run("disabled_by_conf", func(t *testing.T) {
+		conf := &Conf{Disabled: true}
+
+		require.False(t, isEnabled(conf))
+	})
+}
+
+type mockAnalytics struct {
+	shutdown chan struct{}
+	events   []analytics.Message
+	mu       sync.RWMutex
+}
+
+func newMockAnalyticsClient() *mockAnalytics {
+	return &mockAnalytics{
+		shutdown: make(chan struct{}),
+	}
+}
+
+func (ma *mockAnalytics) Close() error {
+	close(ma.shutdown)
+	return nil
+}
+
+func (ma *mockAnalytics) Enqueue(event analytics.Message) error {
+	ma.mu.Lock()
+	ma.events = append(ma.events, event)
+	ma.mu.Unlock()
+
+	return nil
+}
+
+func (ma *mockAnalytics) Events() []analytics.Message {
+	ma.mu.RLock()
+	c := make([]analytics.Message, len(ma.events))
+	copy(c, ma.events)
+	ma.mu.RUnlock()
+
+	return c
+}
+
+func (ma *mockAnalytics) WaitForClose() {
+	<-ma.shutdown
 }
