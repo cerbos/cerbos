@@ -391,11 +391,16 @@ func toSet(values []string) stringSet {
 }
 
 func setIntersects(s1 protoSet, s2 stringSet) bool {
-	for k1 := range s1 {
-		for k2 := range s2 {
-			if util.MatchesGlob(k1, k2) {
+	for v := range s1 {
+		if util.IsGlobExpr(v) {
+			if util.ContainsGlob(v, s2) {
 				return true
 			}
+			continue
+		}
+
+		if _, ok := s2[v]; ok {
+			return true
 		}
 	}
 
