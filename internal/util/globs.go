@@ -90,7 +90,7 @@ func ContainsGlob(g string, set map[string]struct{}) bool {
 	return false
 }
 
-// IsGlobExpr returns true if the string is a glob expression
+// IsGlobExpr returns true if the string is a glob expression.
 func IsGlobExpr(g string) bool {
 	// see https://tldp.org/LDP/GNU-Linux-Tools-Summary/html/x11655.htm
 	return strings.ContainsAny(g, "*?!{[")

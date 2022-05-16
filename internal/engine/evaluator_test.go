@@ -35,7 +35,7 @@ func BenchmarkSetIntersects(b *testing.B) {
 		checkSet := protoSet{"wibble": {}, "foobar": {}, "*": {}}
 		for i := 0; i < b.N; i++ {
 			if setIntersects(checkSet, inputs[i%n]) {
-				dummyVar = rand.Intn(10) << 2
+				dummyVar = rand.Intn(10) << 2 //nolint:gosec
 			}
 		}
 	})
@@ -45,7 +45,7 @@ func BenchmarkSetIntersects(b *testing.B) {
 		checkSet := protoSet{"wibble": {}, "foobar": {}, "wobble": {}}
 		for i := 0; i < b.N; i++ {
 			if setIntersects(checkSet, inputs[i%n]) {
-				dummyVar = rand.Intn(10) << 2
+				dummyVar = rand.Intn(10) << 2 //nolint:gosec
 			}
 		}
 	})
