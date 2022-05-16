@@ -10,7 +10,6 @@ import (
 	"time"
 
 	telemetryv1 "github.com/cerbos/cerbos/api/genpb/cerbos/telemetry/v1"
-	"github.com/cerbos/cerbos/internal/config"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/protobuf/types/known/durationpb"
@@ -51,7 +50,7 @@ type statsInterceptors struct {
 	uaTally     map[string]uint64
 }
 
-func newStatsInterceptors(reporter Reporter, shutdown <-chan struct{}) *statsInterceptors {
+func newStatsInterceptors(reporter Reporter, interval time.Duration, shutdown <-chan struct{}) *statsInterceptors {
 	i := &statsInterceptors{
 		reporter:    reporter,
 		collector:   make(chan methodInfo, collectorBufferSize),
@@ -59,7 +58,7 @@ func newStatsInterceptors(reporter Reporter, shutdown <-chan struct{}) *statsInt
 		uaTally:     make(map[string]uint64),
 	}
 
-	go i.doTally(shutdown)
+	go i.doTally(interval, shutdown)
 
 	return i
 }
@@ -98,11 +97,8 @@ func (i *statsInterceptors) collectStats(ctx context.Context, method string) {
 	}
 }
 
-func (i *statsInterceptors) doTally(shutdown <-chan struct{}) {
-	conf := &Conf{}
-	_ = config.GetSection(conf)
-
-	ticker := time.NewTicker(conf.ReportInterval)
+func (i *statsInterceptors) doTally(interval time.Duration, shutdown <-chan struct{}) {
+	ticker := time.NewTicker(interval)
 	defer ticker.Stop()
 
 	for {

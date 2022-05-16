@@ -11,6 +11,7 @@ Cerbos developers rely on anonymous usage data to help prioritise new features a
 - Operating system type and architecture
 - Enabled Cerbos features (storage backend type and schema enforcement level are some examples of this information)
 - Aggregated statistics about the policies like the total number of policies and average number of rules in a policy
+- Aggregated statistics about Cerbos API calls and the gRPC user agents. 
 
 You can view the full schema of the telemetry data on link:https://github.com/cerbos/cerbos/tree/main/api/public/cerbos/telemetry/v1/telemetry.proto[GitHub] or on the link:https://buf.build/cerbos/cerbos-api/docs/main/cerbos.telemetry.v1[Buf schema registry].
 

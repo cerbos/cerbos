@@ -115,7 +115,7 @@ func startReporter(_ context.Context, conf *Conf, store storage.Store, logger *z
 	logger.Info(fmt.Sprintf("Anonymous telemetry enabled. Disable via the config file or by setting the %s=1 environment variable", noTelemetryEnvVar))
 
 	fs := initStateFS(conf.StateDir)
-	r, err := newSegmentReporter(store, fs, logger)
+	r, err := newSegmentReporter(conf, store, fs, logger)
 	if err != nil {
 		logger.Debug("Failed to create telemetry reporter", zap.Error(err))
 		return nil
@@ -167,17 +167,18 @@ func Intercept() Interceptors {
 }
 
 type segmentReporter struct {
-	state        *statev1.TelemetryState
-	fsys         afero.Fs
-	store        storage.Store
-	eventChan    chan *telemetryv1.Event
-	client       analytics.Client
-	logger       *zap.Logger
-	shutdownChan chan struct{}
-	closeOnce    sync.Once
+	state          *statev1.TelemetryState
+	fsys           afero.Fs
+	store          storage.Store
+	eventChan      chan *telemetryv1.Event
+	client         analytics.Client
+	logger         *zap.Logger
+	shutdownChan   chan struct{}
+	reportInterval time.Duration
+	closeOnce      sync.Once
 }
 
-func newSegmentReporter(store storage.Store, fsys afero.Fs, logger *zap.Logger) (*segmentReporter, error) {
+func newSegmentReporter(conf *Conf, store storage.Store, fsys afero.Fs, logger *zap.Logger) (*segmentReporter, error) {
 	client, err := analytics.NewWithConfig(SegmentWriteKey, analytics.Config{
 		Logger: zapLogWrapper{logger: logger.Sugar()},
 	})
@@ -185,18 +186,19 @@ func newSegmentReporter(store storage.Store, fsys afero.Fs, logger *zap.Logger) 
 		return nil, fmt.Errorf("failed to instantiate Segment client: %w", err)
 	}
 
-	return newSegmentReporterWithClient(client, store, fsys, logger), nil
+	return newSegmentReporterWithClient(client, conf, store, fsys, logger), nil
 }
 
-func newSegmentReporterWithClient(client analytics.Client, store storage.Store, fsys afero.Fs, logger *zap.Logger) *segmentReporter {
+func newSegmentReporterWithClient(client analytics.Client, conf *Conf, store storage.Store, fsys afero.Fs, logger *zap.Logger) *segmentReporter {
 	return &segmentReporter{
-		state:        readState(fsys),
-		fsys:         fsys,
-		store:        store,
-		logger:       logger,
-		client:       client,
-		eventChan:    make(chan *telemetryv1.Event, eventBufferSize),
-		shutdownChan: make(chan struct{}),
+		state:          readState(fsys),
+		fsys:           fsys,
+		store:          store,
+		logger:         logger,
+		client:         client,
+		reportInterval: conf.ReportInterval,
+		eventChan:      make(chan *telemetryv1.Event, eventBufferSize),
+		shutdownChan:   make(chan struct{}),
 	}
 }
 
@@ -249,7 +251,7 @@ func (r *segmentReporter) start() {
 }
 
 func (r *segmentReporter) Intercept() Interceptors {
-	return newStatsInterceptors(r, r.shutdownChan)
+	return newStatsInterceptors(r, r.reportInterval, r.shutdownChan)
 }
 
 func (r *segmentReporter) reportServerLaunch() {

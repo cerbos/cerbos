@@ -1,0 +1,94 @@
+// Copyright 2021-2022 Zenauth Ltd.
+// SPDX-License-Identifier: Apache-2.0
+
+package telemetry
+
+import (
+	"context"
+	"fmt"
+	"sync"
+	"testing"
+	"time"
+
+	telemetryv1 "github.com/cerbos/cerbos/api/genpb/cerbos/telemetry/v1"
+	"github.com/stretchr/testify/require"
+	"golang.org/x/sync/errgroup"
+	"google.golang.org/grpc/metadata"
+)
+
+func TestMiddleware(t *testing.T) {
+	mock := &mockReporter{}
+	shutdown := make(chan struct{})
+	middleware := newStatsInterceptors(mock, 1*time.Millisecond, shutdown)
+
+	ctx, cancelFunc := context.WithCancel(context.Background())
+	t.Cleanup(cancelFunc)
+
+	g, _ := errgroup.WithContext(ctx)
+
+	for i := 0; i < 100; i++ {
+		g.Go(func() error {
+			methods := []string{
+				"/cerbos.svc.v1.CerbosService/CheckResources",
+				"/cerbos.svc.v1.CerbosService/CheckResourceBatch",
+				"/cerbos.svc.v1.CerbosAdminService/ListPolicies",
+				"/grpc.health.svc/health",
+			}
+
+			md := metadata.New(map[string]string{"user-agent": "grpc/v1.14.6"})
+			ctx := metadata.NewIncomingContext(context.Background(), md)
+
+			for j := 0; j < 10_000; j++ {
+				idx := j % len(methods)
+				middleware.collectStats(ctx, methods[idx])
+			}
+
+			return nil
+		})
+	}
+
+	require.NoError(t, g.Wait())
+
+	time.Sleep(3 * time.Millisecond)
+	close(shutdown)
+
+	mock.mu.RLock()
+	total := mock.count
+	methodCalls := copyMap(mock.lastEvent.MethodCalls)
+	userAgents := copyMap(mock.lastEvent.UserAgents)
+	mock.mu.RUnlock()
+
+	require.True(t, total > 0)
+	require.Contains(t, methodCalls, "/cerbos.svc.v1.CerbosService/CheckResources")
+	require.True(t, methodCalls["/cerbos.svc.v1.CerbosService/CheckResources"] > 0)
+	require.NotContains(t, methodCalls, "/grpc.health.svc/health")
+	require.True(t, userAgents["grpc/v1.14.6"] > 0)
+}
+
+type mockReporter struct {
+	mu        sync.RWMutex
+	count     uint64
+	lastEvent *telemetryv1.Event_ApiActivity
+}
+
+func (m *mockReporter) Report(event *telemetryv1.Event) bool {
+	apiActivity := event.GetApiActivity()
+	if apiActivity == nil {
+		panic(fmt.Errorf("unexpected event: %T", event.Data))
+	}
+
+	m.mu.Lock()
+	m.count++
+	m.lastEvent = apiActivity
+	m.mu.Unlock()
+
+	return true
+}
+
+func (m *mockReporter) Intercept() Interceptors {
+	return nil
+}
+
+func (m *mockReporter) Stop() error {
+	return nil
+}

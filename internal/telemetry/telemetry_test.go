@@ -17,13 +17,14 @@ import (
 
 func TestSegmentReporter(t *testing.T) {
 	logger := zap.L().Named("telemetry")
+	conf := &Conf{}
 
 	t.Run("state", func(t *testing.T) {
 		t.Run("no_state", func(t *testing.T) {
 			fsys := afero.NewMemMapFs()
 			mockClient := newMockAnalyticsClient()
 
-			r := newSegmentReporterWithClient(mockClient, &mocks.Store{}, fsys, logger)
+			r := newSegmentReporterWithClient(mockClient, conf, &mocks.Store{}, fsys, logger)
 			r.reportServerLaunch()
 			require.NoError(t, r.Stop())
 
@@ -40,7 +41,7 @@ func TestSegmentReporter(t *testing.T) {
 			require.NoError(t, afero.WriteFile(fsys, stateFile, []byte("rubbish"), 0o600))
 
 			mockClient := newMockAnalyticsClient()
-			r := newSegmentReporterWithClient(mockClient, &mocks.Store{}, fsys, logger)
+			r := newSegmentReporterWithClient(mockClient, conf, &mocks.Store{}, fsys, logger)
 			r.reportServerLaunch()
 			require.NoError(t, r.Stop())
 
@@ -56,7 +57,7 @@ func TestSegmentReporter(t *testing.T) {
 			fsys := afero.NewReadOnlyFs(afero.NewMemMapFs())
 			mockClient := newMockAnalyticsClient()
 
-			r := newSegmentReporterWithClient(mockClient, &mocks.Store{}, fsys, logger)
+			r := newSegmentReporterWithClient(mockClient, conf, &mocks.Store{}, fsys, logger)
 			r.reportServerLaunch()
 			require.NoError(t, r.Stop())
 
