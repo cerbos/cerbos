@@ -18,6 +18,7 @@ planResources:
         managed_geographies: GB
         geography: GB
         team: design
+        reader: false
     resource:
       kind: leave_request
       policyVersion: '20210210'

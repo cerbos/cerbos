@@ -41,7 +41,10 @@ playgroundProxy:
         "policyVersion": "default",
         "roles": [
           "employee"
-        ]
+        ],
+        "attr": {
+          "reader": false
+        }
       },
       "resource": {
         "kind": "contact",
