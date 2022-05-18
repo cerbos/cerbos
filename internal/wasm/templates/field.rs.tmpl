@@ -1,4 +1,1 @@
-{{define "field" -}}
-    {{if eq .Type "Vec"}} {{.Name}}: Vec<{{.ItemType}}>,
-    {{- else}} {{.Name}}: {{.Type}}, {{end}}
-{{- end}}
+{{define "field"}} {{.Name}}: {{.Type}}, {{end}}
