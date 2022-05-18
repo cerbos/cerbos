@@ -7,49 +7,10 @@
 package engine
 
 import (
-	"math/rand"
 	"testing"
 
-	"github.com/cerbos/cerbos/internal/test"
 	"github.com/stretchr/testify/require"
 )
-
-var dummyVar int
-
-func BenchmarkSetIntersects(b *testing.B) {
-	n := 1000
-	nItems := 10
-
-	inputs := make([]stringSet, n)
-	for i := 0; i < n; i++ {
-		m := make(stringSet, nItems)
-		for j := 0; j < nItems; j++ {
-			item := test.RandomStr(15)
-			m[item] = struct{}{}
-		}
-		inputs[i] = m
-	}
-
-	b.Run("with_globs", func(b *testing.B) {
-		b.ReportAllocs()
-		checkSet := protoSet{"wibble": {}, "foobar": {}, "*": {}}
-		for i := 0; i < b.N; i++ {
-			if setIntersects(checkSet, inputs[i%n]) {
-				dummyVar = rand.Intn(10) << 2 //nolint:gosec
-			}
-		}
-	})
-
-	b.Run("without_globs", func(b *testing.B) {
-		b.ReportAllocs()
-		checkSet := protoSet{"wibble": {}, "foobar": {}, "wobble": {}}
-		for i := 0; i < b.N; i++ {
-			if setIntersects(checkSet, inputs[i%n]) {
-				dummyVar = rand.Intn(10) << 2 //nolint:gosec
-			}
-		}
-	})
-}
 
 func TestSetIntersects(t *testing.T) {
 	t.Parallel()
@@ -72,7 +33,7 @@ func TestSetIntersects(t *testing.T) {
 		},
 		{
 			name: "intersects/wildcard",
-			s1:   protoSet{"*": {}, "bar": {}, "baz": {}},
+			s1:   protoSet{"*": {}},
 			s2:   stringSet{"wibble": {}, "wobble": {}, "wubble": {}},
 			want: true,
 		},

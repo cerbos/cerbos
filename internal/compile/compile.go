@@ -17,6 +17,8 @@ import (
 	"github.com/cerbos/cerbos/internal/schema"
 )
 
+const AnyRoleVal = "*"
+
 var emptyVal = &emptypb.Empty{}
 
 func BatchCompile(queue <-chan *policy.CompilationUnit, schemaMgr schema.Manager) error {
@@ -251,6 +253,10 @@ func doCompileDerivedRoles(modCtx *moduleCtx) *runtimev1.RunnableDerivedRolesSet
 		}
 
 		for _, pr := range def.ParentRoles {
+			if pr == AnyRoleVal {
+				rdr.ParentRoles = map[string]*emptypb.Empty{AnyRoleVal: {}}
+				break
+			}
 			rdr.ParentRoles[pr] = emptyVal
 		}
 
@@ -302,6 +308,10 @@ func compileResourceRule(modCtx *moduleCtx, rule *policyv1.ResourceRule) *runtim
 	if len(rule.Roles) > 0 {
 		cr.Roles = make(map[string]*emptypb.Empty, len(rule.Roles))
 		for _, r := range rule.Roles {
+			if r == AnyRoleVal {
+				cr.Roles = map[string]*emptypb.Empty{AnyRoleVal: {}}
+				break
+			}
 			cr.Roles[r] = emptyVal
 		}
 	}

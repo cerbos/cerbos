@@ -4,8 +4,6 @@
 package util
 
 import (
-	"strings"
-
 	"github.com/bluele/gcache"
 	"github.com/gobwas/glob"
 	"go.uber.org/zap"
@@ -75,23 +73,4 @@ func fixGlob(g string) string {
 	}
 
 	return g
-}
-
-// ContainsGlob returns true if any of the items in the set matches the given glob.
-func ContainsGlob(g string, set map[string]struct{}) bool {
-	globExp := fixGlob(g)
-
-	for v := range set {
-		if globs.matches(globExp, v) {
-			return true
-		}
-	}
-
-	return false
-}
-
-// IsGlobExpr returns true if the string is a glob expression.
-func IsGlobExpr(g string) bool {
-	// see https://tldp.org/LDP/GNU-Linux-Tools-Summary/html/x11655.htm
-	return strings.ContainsAny(g, "*?!{[")
 }
