@@ -1,0 +1,50 @@
+{{define "common"}}
+    fn action_matched(s: &str, globs: &Vec<&str>) -> bool {
+       globs.iter().any(|x| match_glob(s, x))
+    }
+
+    fn match_glob(s: &str, g: &str) -> bool {
+        if g == "*" {
+            return true;
+        }
+        let ps = g.split(":");
+        let ss = s.split(":");
+
+        ps.clone().count() == ss.clone().count() &&
+        ps.zip(ss).all(| (x, y)| x == "*" || x == y)
+    }
+
+    fn intersect<T: PartialEq>(a: &Vec<T>, b: &Vec<T>) -> bool {
+        a.iter().any(|x| b.iter().any(|y| x == y))
+    }
+
+    #[cfg(test)]
+    mod tests {
+        #[test]
+        fn intersect_string() {
+            let v = vec!["a", "b"];
+            let b: Vec<_> = v.iter().map(|x| x.to_string()).collect();
+
+            assert!(super::intersect(&b, &b));
+        }
+
+        #[test]
+        fn intersect_slice() {
+            assert!(super::intersect(&vec!["user", "admin"], &vec!["employee", "manager", "lead", "user"]));
+        }
+
+        #[test]
+        fn intersect_slice_not_ok() {
+            assert_eq!(super::intersect(&vec!["user", "admin"], &vec!["employee"]), false);
+        }
+
+        #[test]
+        fn match_glob_ok() {
+            let tc = vec![("user", "admin", false), ("admin", "admin", true), ("admin:read", "admin:*", true), ("admin:read", "*", true)];
+            for (s,g,r) in tc {
+               assert_eq!(super::match_glob(s, g), r, "string: {}, glob: {}", s, g);
+            }
+        }
+    }
+{{end}}
+

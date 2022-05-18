@@ -26,5 +26,5 @@ func TestClasses(t *testing.T) {
 	is.NoError(err)
 	props, err := convert(s)
 	is.NoError(err)
-	tmpl.ExecuteTemplate(os.Stdout, "request", props)
+	tmpl.ExecuteTemplate(os.Stdout, "lib", props)
 }

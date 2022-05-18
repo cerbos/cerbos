@@ -1,5 +1,4 @@
 {{define "request"}}
-
 #[derive(Serialize, Deserialize)]
 struct resourceAttr {
 {{ range $prop := . }} {{template "field" $prop}}
@@ -26,5 +25,4 @@ struct Request {
     principal: Principal,
     resource: Resource,
 }
-
 {{end}}

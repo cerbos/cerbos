@@ -1,0 +1,7 @@
+{{define "lib"}}
+use wasm_bindgen::prelude::*;
+use serde::{Serialize, Deserialize};
+
+{{template "common"}}
+{{template "request" .}}
+{{end}}
