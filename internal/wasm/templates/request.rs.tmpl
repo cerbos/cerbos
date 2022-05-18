@@ -2,9 +2,8 @@
 
 #[derive(Serialize, Deserialize)]
 struct resourceAttr {
-{{ range $prop := . -}}
-{{template "field" $prop}}
-{{- end -}}
+{{ range $prop := . }} {{template "field" $prop}}
+{{end -}}
 }
 
 #[derive(Serialize, Deserialize)]
