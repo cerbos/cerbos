@@ -1,0 +1,31 @@
+{{define "request"}}
+
+#[derive(Serialize, Deserialize)]
+struct resourceAttr {
+{{ range $prop := . -}}
+{{template "field" $prop}}
+{{- end -}}
+}
+
+#[derive(Serialize, Deserialize)]
+struct Resource {
+    id: String,
+    attr: resourceAttr,
+}
+
+#[derive(Serialize, Deserialize)]
+struct Principal {
+    id: String,
+    roles: Vec<String>,
+    attr: principalAttr,
+}
+
+#[derive(Serialize, Deserialize)]
+struct Request {
+    request_id: String,
+    action: String,
+    principal: Principal,
+    resource: Resource,
+}
+
+{{end}}
