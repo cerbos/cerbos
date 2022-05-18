@@ -505,6 +505,7 @@ func (s *Server) startHTTPServer(ctx context.Context, l net.Listener, grpcSrv *g
 func defaultGRPCDialOpts() []grpc.DialOption {
 	// see https://github.com/grpc/grpc/blob/master/doc/connection-backoff.md
 	return []grpc.DialOption{
+		grpc.WithUserAgent("grpc-gateway"),
 		grpc.WithConnectParams(grpc.ConnectParams{MinConnectTimeout: minGRPCConnectTimeout}),
 		grpc.WithStatsHandler(&ocgrpc.ClientHandler{}),
 	}
