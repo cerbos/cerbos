@@ -24,19 +24,19 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
-type Ping struct {
+type ServerLaunch struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Version  string         `protobuf:"bytes,1,opt,name=version,proto3" json:"version,omitempty"`
-	Source   *Ping_Source   `protobuf:"bytes,2,opt,name=source,proto3" json:"source,omitempty"`
-	Features *Ping_Features `protobuf:"bytes,3,opt,name=features,proto3" json:"features,omitempty"`
-	Stats    *Ping_Stats    `protobuf:"bytes,4,opt,name=stats,proto3" json:"stats,omitempty"`
+	Version  string                 `protobuf:"bytes,1,opt,name=version,proto3" json:"version,omitempty"`
+	Source   *ServerLaunch_Source   `protobuf:"bytes,2,opt,name=source,proto3" json:"source,omitempty"`
+	Features *ServerLaunch_Features `protobuf:"bytes,3,opt,name=features,proto3" json:"features,omitempty"`
+	Stats    *ServerLaunch_Stats    `protobuf:"bytes,4,opt,name=stats,proto3" json:"stats,omitempty"`
 }
 
-func (x *Ping) Reset() {
-	*x = Ping{}
+func (x *ServerLaunch) Reset() {
+	*x = ServerLaunch{}
 	if protoimpl.UnsafeEnabled {
 		mi := &file_cerbos_telemetry_v1_telemetry_proto_msgTypes[0]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -44,13 +44,13 @@ func (x *Ping) Reset() {
 	}
 }
 
-func (x *Ping) String() string {
+func (x *ServerLaunch) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*Ping) ProtoMessage() {}
+func (*ServerLaunch) ProtoMessage() {}
 
-func (x *Ping) ProtoReflect() protoreflect.Message {
+func (x *ServerLaunch) ProtoReflect() protoreflect.Message {
 	mi := &file_cerbos_telemetry_v1_telemetry_proto_msgTypes[0]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -62,53 +62,51 @@ func (x *Ping) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use Ping.ProtoReflect.Descriptor instead.
-func (*Ping) Descriptor() ([]byte, []int) {
+// Deprecated: Use ServerLaunch.ProtoReflect.Descriptor instead.
+func (*ServerLaunch) Descriptor() ([]byte, []int) {
 	return file_cerbos_telemetry_v1_telemetry_proto_rawDescGZIP(), []int{0}
 }
 
-func (x *Ping) GetVersion() string {
+func (x *ServerLaunch) GetVersion() string {
 	if x != nil {
 		return x.Version
 	}
 	return ""
 }
 
-func (x *Ping) GetSource() *Ping_Source {
+func (x *ServerLaunch) GetSource() *ServerLaunch_Source {
 	if x != nil {
 		return x.Source
 	}
 	return nil
 }
 
-func (x *Ping) GetFeatures() *Ping_Features {
+func (x *ServerLaunch) GetFeatures() *ServerLaunch_Features {
 	if x != nil {
 		return x.Features
 	}
 	return nil
 }
 
-func (x *Ping) GetStats() *Ping_Stats {
+func (x *ServerLaunch) GetStats() *ServerLaunch_Stats {
 	if x != nil {
 		return x.Stats
 	}
 	return nil
 }
 
-type Ping_Cerbos struct {
+type ServerStop struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Version        string `protobuf:"bytes,1,opt,name=version,proto3" json:"version,omitempty"`
-	Commit         string `protobuf:"bytes,2,opt,name=commit,proto3" json:"commit,omitempty"`
-	BuildDate      string `protobuf:"bytes,3,opt,name=build_date,json=buildDate,proto3" json:"build_date,omitempty"`
-	ModuleVersion  string `protobuf:"bytes,4,opt,name=module_version,json=moduleVersion,proto3" json:"module_version,omitempty"`
-	ModuleChecksum string `protobuf:"bytes,5,opt,name=module_checksum,json=moduleChecksum,proto3" json:"module_checksum,omitempty"`
+	Version       string               `protobuf:"bytes,1,opt,name=version,proto3" json:"version,omitempty"`
+	Uptime        *durationpb.Duration `protobuf:"bytes,2,opt,name=uptime,proto3" json:"uptime,omitempty"`
+	RequestsTotal uint64               `protobuf:"varint,3,opt,name=requests_total,json=requestsTotal,proto3" json:"requests_total,omitempty"`
 }
 
-func (x *Ping_Cerbos) Reset() {
-	*x = Ping_Cerbos{}
+func (x *ServerStop) Reset() {
+	*x = ServerStop{}
 	if protoimpl.UnsafeEnabled {
 		mi := &file_cerbos_telemetry_v1_telemetry_proto_msgTypes[1]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -116,13 +114,13 @@ func (x *Ping_Cerbos) Reset() {
 	}
 }
 
-func (x *Ping_Cerbos) String() string {
+func (x *ServerStop) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*Ping_Cerbos) ProtoMessage() {}
+func (*ServerStop) ProtoMessage() {}
 
-func (x *Ping_Cerbos) ProtoReflect() protoreflect.Message {
+func (x *ServerStop) ProtoReflect() protoreflect.Message {
 	mi := &file_cerbos_telemetry_v1_telemetry_proto_msgTypes[1]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -134,59 +132,44 @@ func (x *Ping_Cerbos) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use Ping_Cerbos.ProtoReflect.Descriptor instead.
-func (*Ping_Cerbos) Descriptor() ([]byte, []int) {
-	return file_cerbos_telemetry_v1_telemetry_proto_rawDescGZIP(), []int{0, 0}
+// Deprecated: Use ServerStop.ProtoReflect.Descriptor instead.
+func (*ServerStop) Descriptor() ([]byte, []int) {
+	return file_cerbos_telemetry_v1_telemetry_proto_rawDescGZIP(), []int{1}
 }
 
-func (x *Ping_Cerbos) GetVersion() string {
+func (x *ServerStop) GetVersion() string {
 	if x != nil {
 		return x.Version
 	}
 	return ""
 }
 
-func (x *Ping_Cerbos) GetCommit() string {
+func (x *ServerStop) GetUptime() *durationpb.Duration {
 	if x != nil {
-		return x.Commit
+		return x.Uptime
 	}
-	return ""
+	return nil
 }
 
-func (x *Ping_Cerbos) GetBuildDate() string {
+func (x *ServerStop) GetRequestsTotal() uint64 {
 	if x != nil {
-		return x.BuildDate
+		return x.RequestsTotal
 	}
-	return ""
+	return 0
 }
 
-func (x *Ping_Cerbos) GetModuleVersion() string {
-	if x != nil {
-		return x.ModuleVersion
-	}
-	return ""
-}
-
-func (x *Ping_Cerbos) GetModuleChecksum() string {
-	if x != nil {
-		return x.ModuleChecksum
-	}
-	return ""
-}
-
-type Ping_Source struct {
+type Event struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Cerbos  *Ping_Cerbos `protobuf:"bytes,1,opt,name=cerbos,proto3" json:"cerbos,omitempty"`
-	Os      string       `protobuf:"bytes,2,opt,name=os,proto3" json:"os,omitempty"`
-	Arch    string       `protobuf:"bytes,3,opt,name=arch,proto3" json:"arch,omitempty"`
-	NumCpus uint32       `protobuf:"varint,4,opt,name=num_cpus,json=numCpus,proto3" json:"num_cpus,omitempty"`
+	// Types that are assignable to Data:
+	//	*Event_ApiActivity_
+	Data isEvent_Data `protobuf_oneof:"data"`
 }
 
-func (x *Ping_Source) Reset() {
-	*x = Ping_Source{}
+func (x *Event) Reset() {
+	*x = Event{}
 	if protoimpl.UnsafeEnabled {
 		mi := &file_cerbos_telemetry_v1_telemetry_proto_msgTypes[2]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -194,13 +177,13 @@ func (x *Ping_Source) Reset() {
 	}
 }
 
-func (x *Ping_Source) String() string {
+func (x *Event) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*Ping_Source) ProtoMessage() {}
+func (*Event) ProtoMessage() {}
 
-func (x *Ping_Source) ProtoReflect() protoreflect.Message {
+func (x *Event) ProtoReflect() protoreflect.Message {
 	mi := &file_cerbos_telemetry_v1_telemetry_proto_msgTypes[2]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -212,52 +195,49 @@ func (x *Ping_Source) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use Ping_Source.ProtoReflect.Descriptor instead.
-func (*Ping_Source) Descriptor() ([]byte, []int) {
-	return file_cerbos_telemetry_v1_telemetry_proto_rawDescGZIP(), []int{0, 1}
+// Deprecated: Use Event.ProtoReflect.Descriptor instead.
+func (*Event) Descriptor() ([]byte, []int) {
+	return file_cerbos_telemetry_v1_telemetry_proto_rawDescGZIP(), []int{2}
 }
 
-func (x *Ping_Source) GetCerbos() *Ping_Cerbos {
-	if x != nil {
-		return x.Cerbos
+func (m *Event) GetData() isEvent_Data {
+	if m != nil {
+		return m.Data
 	}
 	return nil
 }
 
-func (x *Ping_Source) GetOs() string {
-	if x != nil {
-		return x.Os
+func (x *Event) GetApiActivity() *Event_ApiActivity {
+	if x, ok := x.GetData().(*Event_ApiActivity_); ok {
+		return x.ApiActivity
 	}
-	return ""
+	return nil
 }
 
-func (x *Ping_Source) GetArch() string {
-	if x != nil {
-		return x.Arch
-	}
-	return ""
+type isEvent_Data interface {
+	isEvent_Data()
 }
 
-func (x *Ping_Source) GetNumCpus() uint32 {
-	if x != nil {
-		return x.NumCpus
-	}
-	return 0
+type Event_ApiActivity_ struct {
+	ApiActivity *Event_ApiActivity `protobuf:"bytes,1,opt,name=api_activity,json=apiActivity,proto3,oneof"`
 }
 
-type Ping_Features struct {
+func (*Event_ApiActivity_) isEvent_Data() {}
+
+type ServerLaunch_Cerbos struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Audit    *Ping_Features_Audit    `protobuf:"bytes,1,opt,name=audit,proto3" json:"audit,omitempty"`
-	Schema   *Ping_Features_Schema   `protobuf:"bytes,2,opt,name=schema,proto3" json:"schema,omitempty"`
-	AdminApi *Ping_Features_AdminApi `protobuf:"bytes,3,opt,name=admin_api,json=adminApi,proto3" json:"admin_api,omitempty"`
-	Storage  *Ping_Features_Storage  `protobuf:"bytes,4,opt,name=storage,proto3" json:"storage,omitempty"`
+	Version        string `protobuf:"bytes,1,opt,name=version,proto3" json:"version,omitempty"`
+	Commit         string `protobuf:"bytes,2,opt,name=commit,proto3" json:"commit,omitempty"`
+	BuildDate      string `protobuf:"bytes,3,opt,name=build_date,json=buildDate,proto3" json:"build_date,omitempty"`
+	ModuleVersion  string `protobuf:"bytes,4,opt,name=module_version,json=moduleVersion,proto3" json:"module_version,omitempty"`
+	ModuleChecksum string `protobuf:"bytes,5,opt,name=module_checksum,json=moduleChecksum,proto3" json:"module_checksum,omitempty"`
 }
 
-func (x *Ping_Features) Reset() {
-	*x = Ping_Features{}
+func (x *ServerLaunch_Cerbos) Reset() {
+	*x = ServerLaunch_Cerbos{}
 	if protoimpl.UnsafeEnabled {
 		mi := &file_cerbos_telemetry_v1_telemetry_proto_msgTypes[3]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -265,13 +245,13 @@ func (x *Ping_Features) Reset() {
 	}
 }
 
-func (x *Ping_Features) String() string {
+func (x *ServerLaunch_Cerbos) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*Ping_Features) ProtoMessage() {}
+func (*ServerLaunch_Cerbos) ProtoMessage() {}
 
-func (x *Ping_Features) ProtoReflect() protoreflect.Message {
+func (x *ServerLaunch_Cerbos) ProtoReflect() protoreflect.Message {
 	mi := &file_cerbos_telemetry_v1_telemetry_proto_msgTypes[3]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -283,50 +263,59 @@ func (x *Ping_Features) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use Ping_Features.ProtoReflect.Descriptor instead.
-func (*Ping_Features) Descriptor() ([]byte, []int) {
-	return file_cerbos_telemetry_v1_telemetry_proto_rawDescGZIP(), []int{0, 2}
+// Deprecated: Use ServerLaunch_Cerbos.ProtoReflect.Descriptor instead.
+func (*ServerLaunch_Cerbos) Descriptor() ([]byte, []int) {
+	return file_cerbos_telemetry_v1_telemetry_proto_rawDescGZIP(), []int{0, 0}
 }
 
-func (x *Ping_Features) GetAudit() *Ping_Features_Audit {
+func (x *ServerLaunch_Cerbos) GetVersion() string {
 	if x != nil {
-		return x.Audit
+		return x.Version
 	}
-	return nil
+	return ""
 }
 
-func (x *Ping_Features) GetSchema() *Ping_Features_Schema {
+func (x *ServerLaunch_Cerbos) GetCommit() string {
 	if x != nil {
-		return x.Schema
+		return x.Commit
 	}
-	return nil
+	return ""
 }
 
-func (x *Ping_Features) GetAdminApi() *Ping_Features_AdminApi {
+func (x *ServerLaunch_Cerbos) GetBuildDate() string {
 	if x != nil {
-		return x.AdminApi
+		return x.BuildDate
 	}
-	return nil
+	return ""
 }
 
-func (x *Ping_Features) GetStorage() *Ping_Features_Storage {
+func (x *ServerLaunch_Cerbos) GetModuleVersion() string {
 	if x != nil {
-		return x.Storage
+		return x.ModuleVersion
 	}
-	return nil
+	return ""
 }
 
-type Ping_Stats struct {
+func (x *ServerLaunch_Cerbos) GetModuleChecksum() string {
+	if x != nil {
+		return x.ModuleChecksum
+	}
+	return ""
+}
+
+type ServerLaunch_Source struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Policy *Ping_Stats_Policy `protobuf:"bytes,1,opt,name=policy,proto3" json:"policy,omitempty"`
-	Schema *Ping_Stats_Schema `protobuf:"bytes,2,opt,name=schema,proto3" json:"schema,omitempty"`
+	Cerbos  *ServerLaunch_Cerbos `protobuf:"bytes,1,opt,name=cerbos,proto3" json:"cerbos,omitempty"`
+	Os      string               `protobuf:"bytes,2,opt,name=os,proto3" json:"os,omitempty"`
+	Arch    string               `protobuf:"bytes,3,opt,name=arch,proto3" json:"arch,omitempty"`
+	NumCpus uint32               `protobuf:"varint,4,opt,name=num_cpus,json=numCpus,proto3" json:"num_cpus,omitempty"`
 }
 
-func (x *Ping_Stats) Reset() {
-	*x = Ping_Stats{}
+func (x *ServerLaunch_Source) Reset() {
+	*x = ServerLaunch_Source{}
 	if protoimpl.UnsafeEnabled {
 		mi := &file_cerbos_telemetry_v1_telemetry_proto_msgTypes[4]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -334,13 +323,13 @@ func (x *Ping_Stats) Reset() {
 	}
 }
 
-func (x *Ping_Stats) String() string {
+func (x *ServerLaunch_Source) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*Ping_Stats) ProtoMessage() {}
+func (*ServerLaunch_Source) ProtoMessage() {}
 
-func (x *Ping_Stats) ProtoReflect() protoreflect.Message {
+func (x *ServerLaunch_Source) ProtoReflect() protoreflect.Message {
 	mi := &file_cerbos_telemetry_v1_telemetry_proto_msgTypes[4]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -352,36 +341,52 @@ func (x *Ping_Stats) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use Ping_Stats.ProtoReflect.Descriptor instead.
-func (*Ping_Stats) Descriptor() ([]byte, []int) {
-	return file_cerbos_telemetry_v1_telemetry_proto_rawDescGZIP(), []int{0, 3}
+// Deprecated: Use ServerLaunch_Source.ProtoReflect.Descriptor instead.
+func (*ServerLaunch_Source) Descriptor() ([]byte, []int) {
+	return file_cerbos_telemetry_v1_telemetry_proto_rawDescGZIP(), []int{0, 1}
 }
 
-func (x *Ping_Stats) GetPolicy() *Ping_Stats_Policy {
+func (x *ServerLaunch_Source) GetCerbos() *ServerLaunch_Cerbos {
 	if x != nil {
-		return x.Policy
+		return x.Cerbos
 	}
 	return nil
 }
 
-func (x *Ping_Stats) GetSchema() *Ping_Stats_Schema {
+func (x *ServerLaunch_Source) GetOs() string {
 	if x != nil {
-		return x.Schema
+		return x.Os
 	}
-	return nil
+	return ""
 }
 
-type Ping_Features_Audit struct {
+func (x *ServerLaunch_Source) GetArch() string {
+	if x != nil {
+		return x.Arch
+	}
+	return ""
+}
+
+func (x *ServerLaunch_Source) GetNumCpus() uint32 {
+	if x != nil {
+		return x.NumCpus
+	}
+	return 0
+}
+
+type ServerLaunch_Features struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Enabled bool   `protobuf:"varint,1,opt,name=enabled,proto3" json:"enabled,omitempty"`
-	Backend string `protobuf:"bytes,2,opt,name=backend,proto3" json:"backend,omitempty"`
+	Audit    *ServerLaunch_Features_Audit    `protobuf:"bytes,1,opt,name=audit,proto3" json:"audit,omitempty"`
+	Schema   *ServerLaunch_Features_Schema   `protobuf:"bytes,2,opt,name=schema,proto3" json:"schema,omitempty"`
+	AdminApi *ServerLaunch_Features_AdminApi `protobuf:"bytes,3,opt,name=admin_api,json=adminApi,proto3" json:"admin_api,omitempty"`
+	Storage  *ServerLaunch_Features_Storage  `protobuf:"bytes,4,opt,name=storage,proto3" json:"storage,omitempty"`
 }
 
-func (x *Ping_Features_Audit) Reset() {
-	*x = Ping_Features_Audit{}
+func (x *ServerLaunch_Features) Reset() {
+	*x = ServerLaunch_Features{}
 	if protoimpl.UnsafeEnabled {
 		mi := &file_cerbos_telemetry_v1_telemetry_proto_msgTypes[5]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -389,13 +394,13 @@ func (x *Ping_Features_Audit) Reset() {
 	}
 }
 
-func (x *Ping_Features_Audit) String() string {
+func (x *ServerLaunch_Features) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*Ping_Features_Audit) ProtoMessage() {}
+func (*ServerLaunch_Features) ProtoMessage() {}
 
-func (x *Ping_Features_Audit) ProtoReflect() protoreflect.Message {
+func (x *ServerLaunch_Features) ProtoReflect() protoreflect.Message {
 	mi := &file_cerbos_telemetry_v1_telemetry_proto_msgTypes[5]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -407,35 +412,50 @@ func (x *Ping_Features_Audit) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use Ping_Features_Audit.ProtoReflect.Descriptor instead.
-func (*Ping_Features_Audit) Descriptor() ([]byte, []int) {
-	return file_cerbos_telemetry_v1_telemetry_proto_rawDescGZIP(), []int{0, 2, 0}
+// Deprecated: Use ServerLaunch_Features.ProtoReflect.Descriptor instead.
+func (*ServerLaunch_Features) Descriptor() ([]byte, []int) {
+	return file_cerbos_telemetry_v1_telemetry_proto_rawDescGZIP(), []int{0, 2}
 }
 
-func (x *Ping_Features_Audit) GetEnabled() bool {
+func (x *ServerLaunch_Features) GetAudit() *ServerLaunch_Features_Audit {
 	if x != nil {
-		return x.Enabled
+		return x.Audit
 	}
-	return false
+	return nil
 }
 
-func (x *Ping_Features_Audit) GetBackend() string {
+func (x *ServerLaunch_Features) GetSchema() *ServerLaunch_Features_Schema {
 	if x != nil {
-		return x.Backend
+		return x.Schema
 	}
-	return ""
+	return nil
 }
 
-type Ping_Features_Schema struct {
+func (x *ServerLaunch_Features) GetAdminApi() *ServerLaunch_Features_AdminApi {
+	if x != nil {
+		return x.AdminApi
+	}
+	return nil
+}
+
+func (x *ServerLaunch_Features) GetStorage() *ServerLaunch_Features_Storage {
+	if x != nil {
+		return x.Storage
+	}
+	return nil
+}
+
+type ServerLaunch_Stats struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Enforcement string `protobuf:"bytes,1,opt,name=enforcement,proto3" json:"enforcement,omitempty"`
+	Policy *ServerLaunch_Stats_Policy `protobuf:"bytes,1,opt,name=policy,proto3" json:"policy,omitempty"`
+	Schema *ServerLaunch_Stats_Schema `protobuf:"bytes,2,opt,name=schema,proto3" json:"schema,omitempty"`
 }
 
-func (x *Ping_Features_Schema) Reset() {
-	*x = Ping_Features_Schema{}
+func (x *ServerLaunch_Stats) Reset() {
+	*x = ServerLaunch_Stats{}
 	if protoimpl.UnsafeEnabled {
 		mi := &file_cerbos_telemetry_v1_telemetry_proto_msgTypes[6]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -443,13 +463,13 @@ func (x *Ping_Features_Schema) Reset() {
 	}
 }
 
-func (x *Ping_Features_Schema) String() string {
+func (x *ServerLaunch_Stats) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*Ping_Features_Schema) ProtoMessage() {}
+func (*ServerLaunch_Stats) ProtoMessage() {}
 
-func (x *Ping_Features_Schema) ProtoReflect() protoreflect.Message {
+func (x *ServerLaunch_Stats) ProtoReflect() protoreflect.Message {
 	mi := &file_cerbos_telemetry_v1_telemetry_proto_msgTypes[6]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -461,28 +481,36 @@ func (x *Ping_Features_Schema) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use Ping_Features_Schema.ProtoReflect.Descriptor instead.
-func (*Ping_Features_Schema) Descriptor() ([]byte, []int) {
-	return file_cerbos_telemetry_v1_telemetry_proto_rawDescGZIP(), []int{0, 2, 1}
+// Deprecated: Use ServerLaunch_Stats.ProtoReflect.Descriptor instead.
+func (*ServerLaunch_Stats) Descriptor() ([]byte, []int) {
+	return file_cerbos_telemetry_v1_telemetry_proto_rawDescGZIP(), []int{0, 3}
 }
 
-func (x *Ping_Features_Schema) GetEnforcement() string {
+func (x *ServerLaunch_Stats) GetPolicy() *ServerLaunch_Stats_Policy {
 	if x != nil {
-		return x.Enforcement
+		return x.Policy
 	}
-	return ""
+	return nil
 }
 
-type Ping_Features_AdminApi struct {
+func (x *ServerLaunch_Stats) GetSchema() *ServerLaunch_Stats_Schema {
+	if x != nil {
+		return x.Schema
+	}
+	return nil
+}
+
+type ServerLaunch_Features_Audit struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Enabled bool `protobuf:"varint,1,opt,name=enabled,proto3" json:"enabled,omitempty"`
+	Enabled bool   `protobuf:"varint,1,opt,name=enabled,proto3" json:"enabled,omitempty"`
+	Backend string `protobuf:"bytes,2,opt,name=backend,proto3" json:"backend,omitempty"`
 }
 
-func (x *Ping_Features_AdminApi) Reset() {
-	*x = Ping_Features_AdminApi{}
+func (x *ServerLaunch_Features_Audit) Reset() {
+	*x = ServerLaunch_Features_Audit{}
 	if protoimpl.UnsafeEnabled {
 		mi := &file_cerbos_telemetry_v1_telemetry_proto_msgTypes[7]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -490,13 +518,13 @@ func (x *Ping_Features_AdminApi) Reset() {
 	}
 }
 
-func (x *Ping_Features_AdminApi) String() string {
+func (x *ServerLaunch_Features_Audit) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*Ping_Features_AdminApi) ProtoMessage() {}
+func (*ServerLaunch_Features_Audit) ProtoMessage() {}
 
-func (x *Ping_Features_AdminApi) ProtoReflect() protoreflect.Message {
+func (x *ServerLaunch_Features_Audit) ProtoReflect() protoreflect.Message {
 	mi := &file_cerbos_telemetry_v1_telemetry_proto_msgTypes[7]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -508,33 +536,35 @@ func (x *Ping_Features_AdminApi) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use Ping_Features_AdminApi.ProtoReflect.Descriptor instead.
-func (*Ping_Features_AdminApi) Descriptor() ([]byte, []int) {
-	return file_cerbos_telemetry_v1_telemetry_proto_rawDescGZIP(), []int{0, 2, 2}
+// Deprecated: Use ServerLaunch_Features_Audit.ProtoReflect.Descriptor instead.
+func (*ServerLaunch_Features_Audit) Descriptor() ([]byte, []int) {
+	return file_cerbos_telemetry_v1_telemetry_proto_rawDescGZIP(), []int{0, 2, 0}
 }
 
-func (x *Ping_Features_AdminApi) GetEnabled() bool {
+func (x *ServerLaunch_Features_Audit) GetEnabled() bool {
 	if x != nil {
 		return x.Enabled
 	}
 	return false
 }
 
-type Ping_Features_Storage struct {
+func (x *ServerLaunch_Features_Audit) GetBackend() string {
+	if x != nil {
+		return x.Backend
+	}
+	return ""
+}
+
+type ServerLaunch_Features_Schema struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Driver string `protobuf:"bytes,1,opt,name=driver,proto3" json:"driver,omitempty"`
-	// Types that are assignable to Store:
-	//	*Ping_Features_Storage_Disk_
-	//	*Ping_Features_Storage_Git_
-	//	*Ping_Features_Storage_Blob_
-	Store isPing_Features_Storage_Store `protobuf_oneof:"store"`
+	Enforcement string `protobuf:"bytes,1,opt,name=enforcement,proto3" json:"enforcement,omitempty"`
 }
 
-func (x *Ping_Features_Storage) Reset() {
-	*x = Ping_Features_Storage{}
+func (x *ServerLaunch_Features_Schema) Reset() {
+	*x = ServerLaunch_Features_Schema{}
 	if protoimpl.UnsafeEnabled {
 		mi := &file_cerbos_telemetry_v1_telemetry_proto_msgTypes[8]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -542,13 +572,13 @@ func (x *Ping_Features_Storage) Reset() {
 	}
 }
 
-func (x *Ping_Features_Storage) String() string {
+func (x *ServerLaunch_Features_Schema) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*Ping_Features_Storage) ProtoMessage() {}
+func (*ServerLaunch_Features_Schema) ProtoMessage() {}
 
-func (x *Ping_Features_Storage) ProtoReflect() protoreflect.Message {
+func (x *ServerLaunch_Features_Schema) ProtoReflect() protoreflect.Message {
 	mi := &file_cerbos_telemetry_v1_telemetry_proto_msgTypes[8]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -560,78 +590,28 @@ func (x *Ping_Features_Storage) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use Ping_Features_Storage.ProtoReflect.Descriptor instead.
-func (*Ping_Features_Storage) Descriptor() ([]byte, []int) {
-	return file_cerbos_telemetry_v1_telemetry_proto_rawDescGZIP(), []int{0, 2, 3}
+// Deprecated: Use ServerLaunch_Features_Schema.ProtoReflect.Descriptor instead.
+func (*ServerLaunch_Features_Schema) Descriptor() ([]byte, []int) {
+	return file_cerbos_telemetry_v1_telemetry_proto_rawDescGZIP(), []int{0, 2, 1}
 }
 
-func (x *Ping_Features_Storage) GetDriver() string {
+func (x *ServerLaunch_Features_Schema) GetEnforcement() string {
 	if x != nil {
-		return x.Driver
+		return x.Enforcement
 	}
 	return ""
 }
 
-func (m *Ping_Features_Storage) GetStore() isPing_Features_Storage_Store {
-	if m != nil {
-		return m.Store
-	}
-	return nil
-}
-
-func (x *Ping_Features_Storage) GetDisk() *Ping_Features_Storage_Disk {
-	if x, ok := x.GetStore().(*Ping_Features_Storage_Disk_); ok {
-		return x.Disk
-	}
-	return nil
-}
-
-func (x *Ping_Features_Storage) GetGit() *Ping_Features_Storage_Git {
-	if x, ok := x.GetStore().(*Ping_Features_Storage_Git_); ok {
-		return x.Git
-	}
-	return nil
-}
-
-func (x *Ping_Features_Storage) GetBlob() *Ping_Features_Storage_Blob {
-	if x, ok := x.GetStore().(*Ping_Features_Storage_Blob_); ok {
-		return x.Blob
-	}
-	return nil
-}
-
-type isPing_Features_Storage_Store interface {
-	isPing_Features_Storage_Store()
-}
-
-type Ping_Features_Storage_Disk_ struct {
-	Disk *Ping_Features_Storage_Disk `protobuf:"bytes,2,opt,name=disk,proto3,oneof"`
-}
-
-type Ping_Features_Storage_Git_ struct {
-	Git *Ping_Features_Storage_Git `protobuf:"bytes,3,opt,name=git,proto3,oneof"`
-}
-
-type Ping_Features_Storage_Blob_ struct {
-	Blob *Ping_Features_Storage_Blob `protobuf:"bytes,4,opt,name=blob,proto3,oneof"`
-}
-
-func (*Ping_Features_Storage_Disk_) isPing_Features_Storage_Store() {}
-
-func (*Ping_Features_Storage_Git_) isPing_Features_Storage_Store() {}
-
-func (*Ping_Features_Storage_Blob_) isPing_Features_Storage_Store() {}
-
-type Ping_Features_Storage_Disk struct {
+type ServerLaunch_Features_AdminApi struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Watch bool `protobuf:"varint,1,opt,name=watch,proto3" json:"watch,omitempty"`
+	Enabled bool `protobuf:"varint,1,opt,name=enabled,proto3" json:"enabled,omitempty"`
 }
 
-func (x *Ping_Features_Storage_Disk) Reset() {
-	*x = Ping_Features_Storage_Disk{}
+func (x *ServerLaunch_Features_AdminApi) Reset() {
+	*x = ServerLaunch_Features_AdminApi{}
 	if protoimpl.UnsafeEnabled {
 		mi := &file_cerbos_telemetry_v1_telemetry_proto_msgTypes[9]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -639,13 +619,13 @@ func (x *Ping_Features_Storage_Disk) Reset() {
 	}
 }
 
-func (x *Ping_Features_Storage_Disk) String() string {
+func (x *ServerLaunch_Features_AdminApi) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*Ping_Features_Storage_Disk) ProtoMessage() {}
+func (*ServerLaunch_Features_AdminApi) ProtoMessage() {}
 
-func (x *Ping_Features_Storage_Disk) ProtoReflect() protoreflect.Message {
+func (x *ServerLaunch_Features_AdminApi) ProtoReflect() protoreflect.Message {
 	mi := &file_cerbos_telemetry_v1_telemetry_proto_msgTypes[9]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -657,30 +637,33 @@ func (x *Ping_Features_Storage_Disk) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use Ping_Features_Storage_Disk.ProtoReflect.Descriptor instead.
-func (*Ping_Features_Storage_Disk) Descriptor() ([]byte, []int) {
-	return file_cerbos_telemetry_v1_telemetry_proto_rawDescGZIP(), []int{0, 2, 3, 0}
+// Deprecated: Use ServerLaunch_Features_AdminApi.ProtoReflect.Descriptor instead.
+func (*ServerLaunch_Features_AdminApi) Descriptor() ([]byte, []int) {
+	return file_cerbos_telemetry_v1_telemetry_proto_rawDescGZIP(), []int{0, 2, 2}
 }
 
-func (x *Ping_Features_Storage_Disk) GetWatch() bool {
+func (x *ServerLaunch_Features_AdminApi) GetEnabled() bool {
 	if x != nil {
-		return x.Watch
+		return x.Enabled
 	}
 	return false
 }
 
-type Ping_Features_Storage_Git struct {
+type ServerLaunch_Features_Storage struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Protocol     string               `protobuf:"bytes,1,opt,name=protocol,proto3" json:"protocol,omitempty"`
-	Auth         bool                 `protobuf:"varint,2,opt,name=auth,proto3" json:"auth,omitempty"`
-	PollInterval *durationpb.Duration `protobuf:"bytes,3,opt,name=poll_interval,json=pollInterval,proto3" json:"poll_interval,omitempty"`
+	Driver string `protobuf:"bytes,1,opt,name=driver,proto3" json:"driver,omitempty"`
+	// Types that are assignable to Store:
+	//	*ServerLaunch_Features_Storage_Disk_
+	//	*ServerLaunch_Features_Storage_Git_
+	//	*ServerLaunch_Features_Storage_Blob_
+	Store isServerLaunch_Features_Storage_Store `protobuf_oneof:"store"`
 }
 
-func (x *Ping_Features_Storage_Git) Reset() {
-	*x = Ping_Features_Storage_Git{}
+func (x *ServerLaunch_Features_Storage) Reset() {
+	*x = ServerLaunch_Features_Storage{}
 	if protoimpl.UnsafeEnabled {
 		mi := &file_cerbos_telemetry_v1_telemetry_proto_msgTypes[10]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -688,13 +671,13 @@ func (x *Ping_Features_Storage_Git) Reset() {
 	}
 }
 
-func (x *Ping_Features_Storage_Git) String() string {
+func (x *ServerLaunch_Features_Storage) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*Ping_Features_Storage_Git) ProtoMessage() {}
+func (*ServerLaunch_Features_Storage) ProtoMessage() {}
 
-func (x *Ping_Features_Storage_Git) ProtoReflect() protoreflect.Message {
+func (x *ServerLaunch_Features_Storage) ProtoReflect() protoreflect.Message {
 	mi := &file_cerbos_telemetry_v1_telemetry_proto_msgTypes[10]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -706,43 +689,78 @@ func (x *Ping_Features_Storage_Git) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use Ping_Features_Storage_Git.ProtoReflect.Descriptor instead.
-func (*Ping_Features_Storage_Git) Descriptor() ([]byte, []int) {
-	return file_cerbos_telemetry_v1_telemetry_proto_rawDescGZIP(), []int{0, 2, 3, 1}
+// Deprecated: Use ServerLaunch_Features_Storage.ProtoReflect.Descriptor instead.
+func (*ServerLaunch_Features_Storage) Descriptor() ([]byte, []int) {
+	return file_cerbos_telemetry_v1_telemetry_proto_rawDescGZIP(), []int{0, 2, 3}
 }
 
-func (x *Ping_Features_Storage_Git) GetProtocol() string {
+func (x *ServerLaunch_Features_Storage) GetDriver() string {
 	if x != nil {
-		return x.Protocol
+		return x.Driver
 	}
 	return ""
 }
 
-func (x *Ping_Features_Storage_Git) GetAuth() bool {
-	if x != nil {
-		return x.Auth
-	}
-	return false
-}
-
-func (x *Ping_Features_Storage_Git) GetPollInterval() *durationpb.Duration {
-	if x != nil {
-		return x.PollInterval
+func (m *ServerLaunch_Features_Storage) GetStore() isServerLaunch_Features_Storage_Store {
+	if m != nil {
+		return m.Store
 	}
 	return nil
 }
 
-type Ping_Features_Storage_Blob struct {
+func (x *ServerLaunch_Features_Storage) GetDisk() *ServerLaunch_Features_Storage_Disk {
+	if x, ok := x.GetStore().(*ServerLaunch_Features_Storage_Disk_); ok {
+		return x.Disk
+	}
+	return nil
+}
+
+func (x *ServerLaunch_Features_Storage) GetGit() *ServerLaunch_Features_Storage_Git {
+	if x, ok := x.GetStore().(*ServerLaunch_Features_Storage_Git_); ok {
+		return x.Git
+	}
+	return nil
+}
+
+func (x *ServerLaunch_Features_Storage) GetBlob() *ServerLaunch_Features_Storage_Blob {
+	if x, ok := x.GetStore().(*ServerLaunch_Features_Storage_Blob_); ok {
+		return x.Blob
+	}
+	return nil
+}
+
+type isServerLaunch_Features_Storage_Store interface {
+	isServerLaunch_Features_Storage_Store()
+}
+
+type ServerLaunch_Features_Storage_Disk_ struct {
+	Disk *ServerLaunch_Features_Storage_Disk `protobuf:"bytes,2,opt,name=disk,proto3,oneof"`
+}
+
+type ServerLaunch_Features_Storage_Git_ struct {
+	Git *ServerLaunch_Features_Storage_Git `protobuf:"bytes,3,opt,name=git,proto3,oneof"`
+}
+
+type ServerLaunch_Features_Storage_Blob_ struct {
+	Blob *ServerLaunch_Features_Storage_Blob `protobuf:"bytes,4,opt,name=blob,proto3,oneof"`
+}
+
+func (*ServerLaunch_Features_Storage_Disk_) isServerLaunch_Features_Storage_Store() {}
+
+func (*ServerLaunch_Features_Storage_Git_) isServerLaunch_Features_Storage_Store() {}
+
+func (*ServerLaunch_Features_Storage_Blob_) isServerLaunch_Features_Storage_Store() {}
+
+type ServerLaunch_Features_Storage_Disk struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Provider     string               `protobuf:"bytes,1,opt,name=provider,proto3" json:"provider,omitempty"`
-	PollInterval *durationpb.Duration `protobuf:"bytes,2,opt,name=poll_interval,json=pollInterval,proto3" json:"poll_interval,omitempty"`
+	Watch bool `protobuf:"varint,1,opt,name=watch,proto3" json:"watch,omitempty"`
 }
 
-func (x *Ping_Features_Storage_Blob) Reset() {
-	*x = Ping_Features_Storage_Blob{}
+func (x *ServerLaunch_Features_Storage_Disk) Reset() {
+	*x = ServerLaunch_Features_Storage_Disk{}
 	if protoimpl.UnsafeEnabled {
 		mi := &file_cerbos_telemetry_v1_telemetry_proto_msgTypes[11]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -750,13 +768,13 @@ func (x *Ping_Features_Storage_Blob) Reset() {
 	}
 }
 
-func (x *Ping_Features_Storage_Blob) String() string {
+func (x *ServerLaunch_Features_Storage_Disk) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*Ping_Features_Storage_Blob) ProtoMessage() {}
+func (*ServerLaunch_Features_Storage_Disk) ProtoMessage() {}
 
-func (x *Ping_Features_Storage_Blob) ProtoReflect() protoreflect.Message {
+func (x *ServerLaunch_Features_Storage_Disk) ProtoReflect() protoreflect.Message {
 	mi := &file_cerbos_telemetry_v1_telemetry_proto_msgTypes[11]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -768,37 +786,30 @@ func (x *Ping_Features_Storage_Blob) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use Ping_Features_Storage_Blob.ProtoReflect.Descriptor instead.
-func (*Ping_Features_Storage_Blob) Descriptor() ([]byte, []int) {
-	return file_cerbos_telemetry_v1_telemetry_proto_rawDescGZIP(), []int{0, 2, 3, 2}
+// Deprecated: Use ServerLaunch_Features_Storage_Disk.ProtoReflect.Descriptor instead.
+func (*ServerLaunch_Features_Storage_Disk) Descriptor() ([]byte, []int) {
+	return file_cerbos_telemetry_v1_telemetry_proto_rawDescGZIP(), []int{0, 2, 3, 0}
 }
 
-func (x *Ping_Features_Storage_Blob) GetProvider() string {
+func (x *ServerLaunch_Features_Storage_Disk) GetWatch() bool {
 	if x != nil {
-		return x.Provider
+		return x.Watch
 	}
-	return ""
+	return false
 }
 
-func (x *Ping_Features_Storage_Blob) GetPollInterval() *durationpb.Duration {
-	if x != nil {
-		return x.PollInterval
-	}
-	return nil
-}
-
-type Ping_Stats_Policy struct {
+type ServerLaunch_Features_Storage_Git struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Count             map[string]uint32  `protobuf:"bytes,1,rep,name=count,proto3" json:"count,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"varint,2,opt,name=value,proto3"`
-	AvgRuleCount      map[string]float64 `protobuf:"bytes,2,rep,name=avg_rule_count,json=avgRuleCount,proto3" json:"avg_rule_count,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"fixed64,2,opt,name=value,proto3"`
-	AvgConditionCount map[string]float64 `protobuf:"bytes,3,rep,name=avg_condition_count,json=avgConditionCount,proto3" json:"avg_condition_count,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"fixed64,2,opt,name=value,proto3"`
+	Protocol     string               `protobuf:"bytes,1,opt,name=protocol,proto3" json:"protocol,omitempty"`
+	Auth         bool                 `protobuf:"varint,2,opt,name=auth,proto3" json:"auth,omitempty"`
+	PollInterval *durationpb.Duration `protobuf:"bytes,3,opt,name=poll_interval,json=pollInterval,proto3" json:"poll_interval,omitempty"`
 }
 
-func (x *Ping_Stats_Policy) Reset() {
-	*x = Ping_Stats_Policy{}
+func (x *ServerLaunch_Features_Storage_Git) Reset() {
+	*x = ServerLaunch_Features_Storage_Git{}
 	if protoimpl.UnsafeEnabled {
 		mi := &file_cerbos_telemetry_v1_telemetry_proto_msgTypes[12]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -806,13 +817,13 @@ func (x *Ping_Stats_Policy) Reset() {
 	}
 }
 
-func (x *Ping_Stats_Policy) String() string {
+func (x *ServerLaunch_Features_Storage_Git) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*Ping_Stats_Policy) ProtoMessage() {}
+func (*ServerLaunch_Features_Storage_Git) ProtoMessage() {}
 
-func (x *Ping_Stats_Policy) ProtoReflect() protoreflect.Message {
+func (x *ServerLaunch_Features_Storage_Git) ProtoReflect() protoreflect.Message {
 	mi := &file_cerbos_telemetry_v1_telemetry_proto_msgTypes[12]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -824,42 +835,43 @@ func (x *Ping_Stats_Policy) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use Ping_Stats_Policy.ProtoReflect.Descriptor instead.
-func (*Ping_Stats_Policy) Descriptor() ([]byte, []int) {
-	return file_cerbos_telemetry_v1_telemetry_proto_rawDescGZIP(), []int{0, 3, 0}
+// Deprecated: Use ServerLaunch_Features_Storage_Git.ProtoReflect.Descriptor instead.
+func (*ServerLaunch_Features_Storage_Git) Descriptor() ([]byte, []int) {
+	return file_cerbos_telemetry_v1_telemetry_proto_rawDescGZIP(), []int{0, 2, 3, 1}
 }
 
-func (x *Ping_Stats_Policy) GetCount() map[string]uint32 {
+func (x *ServerLaunch_Features_Storage_Git) GetProtocol() string {
 	if x != nil {
-		return x.Count
+		return x.Protocol
+	}
+	return ""
+}
+
+func (x *ServerLaunch_Features_Storage_Git) GetAuth() bool {
+	if x != nil {
+		return x.Auth
+	}
+	return false
+}
+
+func (x *ServerLaunch_Features_Storage_Git) GetPollInterval() *durationpb.Duration {
+	if x != nil {
+		return x.PollInterval
 	}
 	return nil
 }
 
-func (x *Ping_Stats_Policy) GetAvgRuleCount() map[string]float64 {
-	if x != nil {
-		return x.AvgRuleCount
-	}
-	return nil
-}
-
-func (x *Ping_Stats_Policy) GetAvgConditionCount() map[string]float64 {
-	if x != nil {
-		return x.AvgConditionCount
-	}
-	return nil
-}
-
-type Ping_Stats_Schema struct {
+type ServerLaunch_Features_Storage_Blob struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Count uint32 `protobuf:"varint,1,opt,name=count,proto3" json:"count,omitempty"`
+	Provider     string               `protobuf:"bytes,1,opt,name=provider,proto3" json:"provider,omitempty"`
+	PollInterval *durationpb.Duration `protobuf:"bytes,2,opt,name=poll_interval,json=pollInterval,proto3" json:"poll_interval,omitempty"`
 }
 
-func (x *Ping_Stats_Schema) Reset() {
-	*x = Ping_Stats_Schema{}
+func (x *ServerLaunch_Features_Storage_Blob) Reset() {
+	*x = ServerLaunch_Features_Storage_Blob{}
 	if protoimpl.UnsafeEnabled {
 		mi := &file_cerbos_telemetry_v1_telemetry_proto_msgTypes[13]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -867,13 +879,13 @@ func (x *Ping_Stats_Schema) Reset() {
 	}
 }
 
-func (x *Ping_Stats_Schema) String() string {
+func (x *ServerLaunch_Features_Storage_Blob) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*Ping_Stats_Schema) ProtoMessage() {}
+func (*ServerLaunch_Features_Storage_Blob) ProtoMessage() {}
 
-func (x *Ping_Stats_Schema) ProtoReflect() protoreflect.Message {
+func (x *ServerLaunch_Features_Storage_Blob) ProtoReflect() protoreflect.Message {
 	mi := &file_cerbos_telemetry_v1_telemetry_proto_msgTypes[13]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -885,16 +897,204 @@ func (x *Ping_Stats_Schema) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use Ping_Stats_Schema.ProtoReflect.Descriptor instead.
-func (*Ping_Stats_Schema) Descriptor() ([]byte, []int) {
+// Deprecated: Use ServerLaunch_Features_Storage_Blob.ProtoReflect.Descriptor instead.
+func (*ServerLaunch_Features_Storage_Blob) Descriptor() ([]byte, []int) {
+	return file_cerbos_telemetry_v1_telemetry_proto_rawDescGZIP(), []int{0, 2, 3, 2}
+}
+
+func (x *ServerLaunch_Features_Storage_Blob) GetProvider() string {
+	if x != nil {
+		return x.Provider
+	}
+	return ""
+}
+
+func (x *ServerLaunch_Features_Storage_Blob) GetPollInterval() *durationpb.Duration {
+	if x != nil {
+		return x.PollInterval
+	}
+	return nil
+}
+
+type ServerLaunch_Stats_Policy struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Count             map[string]uint32  `protobuf:"bytes,1,rep,name=count,proto3" json:"count,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"varint,2,opt,name=value,proto3"`
+	AvgRuleCount      map[string]float64 `protobuf:"bytes,2,rep,name=avg_rule_count,json=avgRuleCount,proto3" json:"avg_rule_count,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"fixed64,2,opt,name=value,proto3"`
+	AvgConditionCount map[string]float64 `protobuf:"bytes,3,rep,name=avg_condition_count,json=avgConditionCount,proto3" json:"avg_condition_count,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"fixed64,2,opt,name=value,proto3"`
+}
+
+func (x *ServerLaunch_Stats_Policy) Reset() {
+	*x = ServerLaunch_Stats_Policy{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_cerbos_telemetry_v1_telemetry_proto_msgTypes[14]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *ServerLaunch_Stats_Policy) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ServerLaunch_Stats_Policy) ProtoMessage() {}
+
+func (x *ServerLaunch_Stats_Policy) ProtoReflect() protoreflect.Message {
+	mi := &file_cerbos_telemetry_v1_telemetry_proto_msgTypes[14]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ServerLaunch_Stats_Policy.ProtoReflect.Descriptor instead.
+func (*ServerLaunch_Stats_Policy) Descriptor() ([]byte, []int) {
+	return file_cerbos_telemetry_v1_telemetry_proto_rawDescGZIP(), []int{0, 3, 0}
+}
+
+func (x *ServerLaunch_Stats_Policy) GetCount() map[string]uint32 {
+	if x != nil {
+		return x.Count
+	}
+	return nil
+}
+
+func (x *ServerLaunch_Stats_Policy) GetAvgRuleCount() map[string]float64 {
+	if x != nil {
+		return x.AvgRuleCount
+	}
+	return nil
+}
+
+func (x *ServerLaunch_Stats_Policy) GetAvgConditionCount() map[string]float64 {
+	if x != nil {
+		return x.AvgConditionCount
+	}
+	return nil
+}
+
+type ServerLaunch_Stats_Schema struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Count uint32 `protobuf:"varint,1,opt,name=count,proto3" json:"count,omitempty"`
+}
+
+func (x *ServerLaunch_Stats_Schema) Reset() {
+	*x = ServerLaunch_Stats_Schema{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_cerbos_telemetry_v1_telemetry_proto_msgTypes[15]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *ServerLaunch_Stats_Schema) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ServerLaunch_Stats_Schema) ProtoMessage() {}
+
+func (x *ServerLaunch_Stats_Schema) ProtoReflect() protoreflect.Message {
+	mi := &file_cerbos_telemetry_v1_telemetry_proto_msgTypes[15]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ServerLaunch_Stats_Schema.ProtoReflect.Descriptor instead.
+func (*ServerLaunch_Stats_Schema) Descriptor() ([]byte, []int) {
 	return file_cerbos_telemetry_v1_telemetry_proto_rawDescGZIP(), []int{0, 3, 1}
 }
 
-func (x *Ping_Stats_Schema) GetCount() uint32 {
+func (x *ServerLaunch_Stats_Schema) GetCount() uint32 {
 	if x != nil {
 		return x.Count
 	}
 	return 0
+}
+
+type Event_ApiActivity struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Version     string               `protobuf:"bytes,1,opt,name=version,proto3" json:"version,omitempty"`
+	Uptime      *durationpb.Duration `protobuf:"bytes,2,opt,name=uptime,proto3" json:"uptime,omitempty"`
+	MethodCalls map[string]uint64    `protobuf:"bytes,3,rep,name=method_calls,json=methodCalls,proto3" json:"method_calls,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"varint,2,opt,name=value,proto3"`
+	UserAgents  map[string]uint64    `protobuf:"bytes,4,rep,name=user_agents,json=userAgents,proto3" json:"user_agents,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"varint,2,opt,name=value,proto3"`
+}
+
+func (x *Event_ApiActivity) Reset() {
+	*x = Event_ApiActivity{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_cerbos_telemetry_v1_telemetry_proto_msgTypes[19]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *Event_ApiActivity) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Event_ApiActivity) ProtoMessage() {}
+
+func (x *Event_ApiActivity) ProtoReflect() protoreflect.Message {
+	mi := &file_cerbos_telemetry_v1_telemetry_proto_msgTypes[19]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Event_ApiActivity.ProtoReflect.Descriptor instead.
+func (*Event_ApiActivity) Descriptor() ([]byte, []int) {
+	return file_cerbos_telemetry_v1_telemetry_proto_rawDescGZIP(), []int{2, 0}
+}
+
+func (x *Event_ApiActivity) GetVersion() string {
+	if x != nil {
+		return x.Version
+	}
+	return ""
+}
+
+func (x *Event_ApiActivity) GetUptime() *durationpb.Duration {
+	if x != nil {
+		return x.Uptime
+	}
+	return nil
+}
+
+func (x *Event_ApiActivity) GetMethodCalls() map[string]uint64 {
+	if x != nil {
+		return x.MethodCalls
+	}
+	return nil
+}
+
+func (x *Event_ApiActivity) GetUserAgents() map[string]uint64 {
+	if x != nil {
+		return x.UserAgents
+	}
+	return nil
 }
 
 var File_cerbos_telemetry_v1_telemetry_proto protoreflect.FileDescriptor
@@ -905,20 +1105,22 @@ var file_cerbos_telemetry_v1_telemetry_proto_rawDesc = []byte{
 	0x70, 0x72, 0x6f, 0x74, 0x6f, 0x12, 0x13, 0x63, 0x65, 0x72, 0x62, 0x6f, 0x73, 0x2e, 0x74, 0x65,
 	0x6c, 0x65, 0x6d, 0x65, 0x74, 0x72, 0x79, 0x2e, 0x76, 0x31, 0x1a, 0x1e, 0x67, 0x6f, 0x6f, 0x67,
 	0x6c, 0x65, 0x2f, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x62, 0x75, 0x66, 0x2f, 0x64, 0x75, 0x72, 0x61,
-	0x74, 0x69, 0x6f, 0x6e, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x22, 0xb6, 0x10, 0x0a, 0x04, 0x50,
-	0x69, 0x6e, 0x67, 0x12, 0x18, 0x0a, 0x07, 0x76, 0x65, 0x72, 0x73, 0x69, 0x6f, 0x6e, 0x18, 0x01,
-	0x20, 0x01, 0x28, 0x09, 0x52, 0x07, 0x76, 0x65, 0x72, 0x73, 0x69, 0x6f, 0x6e, 0x12, 0x38, 0x0a,
-	0x06, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x20, 0x2e,
-	0x63, 0x65, 0x72, 0x62, 0x6f, 0x73, 0x2e, 0x74, 0x65, 0x6c, 0x65, 0x6d, 0x65, 0x74, 0x72, 0x79,
-	0x2e, 0x76, 0x31, 0x2e, 0x50, 0x69, 0x6e, 0x67, 0x2e, 0x53, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x52,
-	0x06, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x12, 0x3e, 0x0a, 0x08, 0x66, 0x65, 0x61, 0x74, 0x75,
-	0x72, 0x65, 0x73, 0x18, 0x03, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x22, 0x2e, 0x63, 0x65, 0x72, 0x62,
+	0x74, 0x69, 0x6f, 0x6e, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x22, 0xbe, 0x11, 0x0a, 0x0c, 0x53,
+	0x65, 0x72, 0x76, 0x65, 0x72, 0x4c, 0x61, 0x75, 0x6e, 0x63, 0x68, 0x12, 0x18, 0x0a, 0x07, 0x76,
+	0x65, 0x72, 0x73, 0x69, 0x6f, 0x6e, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x07, 0x76, 0x65,
+	0x72, 0x73, 0x69, 0x6f, 0x6e, 0x12, 0x40, 0x0a, 0x06, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x18,
+	0x02, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x28, 0x2e, 0x63, 0x65, 0x72, 0x62, 0x6f, 0x73, 0x2e, 0x74,
+	0x65, 0x6c, 0x65, 0x6d, 0x65, 0x74, 0x72, 0x79, 0x2e, 0x76, 0x31, 0x2e, 0x53, 0x65, 0x72, 0x76,
+	0x65, 0x72, 0x4c, 0x61, 0x75, 0x6e, 0x63, 0x68, 0x2e, 0x53, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x52,
+	0x06, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x12, 0x46, 0x0a, 0x08, 0x66, 0x65, 0x61, 0x74, 0x75,
+	0x72, 0x65, 0x73, 0x18, 0x03, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x2a, 0x2e, 0x63, 0x65, 0x72, 0x62,
 	0x6f, 0x73, 0x2e, 0x74, 0x65, 0x6c, 0x65, 0x6d, 0x65, 0x74, 0x72, 0x79, 0x2e, 0x76, 0x31, 0x2e,
-	0x50, 0x69, 0x6e, 0x67, 0x2e, 0x46, 0x65, 0x61, 0x74, 0x75, 0x72, 0x65, 0x73, 0x52, 0x08, 0x66,
-	0x65, 0x61, 0x74, 0x75, 0x72, 0x65, 0x73, 0x12, 0x35, 0x0a, 0x05, 0x73, 0x74, 0x61, 0x74, 0x73,
-	0x18, 0x04, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x1f, 0x2e, 0x63, 0x65, 0x72, 0x62, 0x6f, 0x73, 0x2e,
-	0x74, 0x65, 0x6c, 0x65, 0x6d, 0x65, 0x74, 0x72, 0x79, 0x2e, 0x76, 0x31, 0x2e, 0x50, 0x69, 0x6e,
-	0x67, 0x2e, 0x53, 0x74, 0x61, 0x74, 0x73, 0x52, 0x05, 0x73, 0x74, 0x61, 0x74, 0x73, 0x1a, 0xa9,
+	0x53, 0x65, 0x72, 0x76, 0x65, 0x72, 0x4c, 0x61, 0x75, 0x6e, 0x63, 0x68, 0x2e, 0x46, 0x65, 0x61,
+	0x74, 0x75, 0x72, 0x65, 0x73, 0x52, 0x08, 0x66, 0x65, 0x61, 0x74, 0x75, 0x72, 0x65, 0x73, 0x12,
+	0x3d, 0x0a, 0x05, 0x73, 0x74, 0x61, 0x74, 0x73, 0x18, 0x04, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x27,
+	0x2e, 0x63, 0x65, 0x72, 0x62, 0x6f, 0x73, 0x2e, 0x74, 0x65, 0x6c, 0x65, 0x6d, 0x65, 0x74, 0x72,
+	0x79, 0x2e, 0x76, 0x31, 0x2e, 0x53, 0x65, 0x72, 0x76, 0x65, 0x72, 0x4c, 0x61, 0x75, 0x6e, 0x63,
+	0x68, 0x2e, 0x53, 0x74, 0x61, 0x74, 0x73, 0x52, 0x05, 0x73, 0x74, 0x61, 0x74, 0x73, 0x1a, 0xa9,
 	0x01, 0x0a, 0x06, 0x43, 0x65, 0x72, 0x62, 0x6f, 0x73, 0x12, 0x18, 0x0a, 0x07, 0x76, 0x65, 0x72,
 	0x73, 0x69, 0x6f, 0x6e, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x07, 0x76, 0x65, 0x72, 0x73,
 	0x69, 0x6f, 0x6e, 0x12, 0x16, 0x0a, 0x06, 0x63, 0x6f, 0x6d, 0x6d, 0x69, 0x74, 0x18, 0x02, 0x20,
@@ -929,56 +1131,60 @@ var file_cerbos_telemetry_v1_telemetry_proto_rawDesc = []byte{
 	0x28, 0x09, 0x52, 0x0d, 0x6d, 0x6f, 0x64, 0x75, 0x6c, 0x65, 0x56, 0x65, 0x72, 0x73, 0x69, 0x6f,
 	0x6e, 0x12, 0x27, 0x0a, 0x0f, 0x6d, 0x6f, 0x64, 0x75, 0x6c, 0x65, 0x5f, 0x63, 0x68, 0x65, 0x63,
 	0x6b, 0x73, 0x75, 0x6d, 0x18, 0x05, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0e, 0x6d, 0x6f, 0x64, 0x75,
-	0x6c, 0x65, 0x43, 0x68, 0x65, 0x63, 0x6b, 0x73, 0x75, 0x6d, 0x1a, 0x81, 0x01, 0x0a, 0x06, 0x53,
-	0x6f, 0x75, 0x72, 0x63, 0x65, 0x12, 0x38, 0x0a, 0x06, 0x63, 0x65, 0x72, 0x62, 0x6f, 0x73, 0x18,
-	0x01, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x20, 0x2e, 0x63, 0x65, 0x72, 0x62, 0x6f, 0x73, 0x2e, 0x74,
-	0x65, 0x6c, 0x65, 0x6d, 0x65, 0x74, 0x72, 0x79, 0x2e, 0x76, 0x31, 0x2e, 0x50, 0x69, 0x6e, 0x67,
-	0x2e, 0x43, 0x65, 0x72, 0x62, 0x6f, 0x73, 0x52, 0x06, 0x63, 0x65, 0x72, 0x62, 0x6f, 0x73, 0x12,
-	0x0e, 0x0a, 0x02, 0x6f, 0x73, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x02, 0x6f, 0x73, 0x12,
-	0x12, 0x0a, 0x04, 0x61, 0x72, 0x63, 0x68, 0x18, 0x03, 0x20, 0x01, 0x28, 0x09, 0x52, 0x04, 0x61,
-	0x72, 0x63, 0x68, 0x12, 0x19, 0x0a, 0x08, 0x6e, 0x75, 0x6d, 0x5f, 0x63, 0x70, 0x75, 0x73, 0x18,
-	0x04, 0x20, 0x01, 0x28, 0x0d, 0x52, 0x07, 0x6e, 0x75, 0x6d, 0x43, 0x70, 0x75, 0x73, 0x1a, 0xa4,
-	0x07, 0x0a, 0x08, 0x46, 0x65, 0x61, 0x74, 0x75, 0x72, 0x65, 0x73, 0x12, 0x3e, 0x0a, 0x05, 0x61,
-	0x75, 0x64, 0x69, 0x74, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x28, 0x2e, 0x63, 0x65, 0x72,
-	0x62, 0x6f, 0x73, 0x2e, 0x74, 0x65, 0x6c, 0x65, 0x6d, 0x65, 0x74, 0x72, 0x79, 0x2e, 0x76, 0x31,
-	0x2e, 0x50, 0x69, 0x6e, 0x67, 0x2e, 0x46, 0x65, 0x61, 0x74, 0x75, 0x72, 0x65, 0x73, 0x2e, 0x41,
-	0x75, 0x64, 0x69, 0x74, 0x52, 0x05, 0x61, 0x75, 0x64, 0x69, 0x74, 0x12, 0x41, 0x0a, 0x06, 0x73,
-	0x63, 0x68, 0x65, 0x6d, 0x61, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x29, 0x2e, 0x63, 0x65,
+	0x6c, 0x65, 0x43, 0x68, 0x65, 0x63, 0x6b, 0x73, 0x75, 0x6d, 0x1a, 0x89, 0x01, 0x0a, 0x06, 0x53,
+	0x6f, 0x75, 0x72, 0x63, 0x65, 0x12, 0x40, 0x0a, 0x06, 0x63, 0x65, 0x72, 0x62, 0x6f, 0x73, 0x18,
+	0x01, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x28, 0x2e, 0x63, 0x65, 0x72, 0x62, 0x6f, 0x73, 0x2e, 0x74,
+	0x65, 0x6c, 0x65, 0x6d, 0x65, 0x74, 0x72, 0x79, 0x2e, 0x76, 0x31, 0x2e, 0x53, 0x65, 0x72, 0x76,
+	0x65, 0x72, 0x4c, 0x61, 0x75, 0x6e, 0x63, 0x68, 0x2e, 0x43, 0x65, 0x72, 0x62, 0x6f, 0x73, 0x52,
+	0x06, 0x63, 0x65, 0x72, 0x62, 0x6f, 0x73, 0x12, 0x0e, 0x0a, 0x02, 0x6f, 0x73, 0x18, 0x02, 0x20,
+	0x01, 0x28, 0x09, 0x52, 0x02, 0x6f, 0x73, 0x12, 0x12, 0x0a, 0x04, 0x61, 0x72, 0x63, 0x68, 0x18,
+	0x03, 0x20, 0x01, 0x28, 0x09, 0x52, 0x04, 0x61, 0x72, 0x63, 0x68, 0x12, 0x19, 0x0a, 0x08, 0x6e,
+	0x75, 0x6d, 0x5f, 0x63, 0x70, 0x75, 0x73, 0x18, 0x04, 0x20, 0x01, 0x28, 0x0d, 0x52, 0x07, 0x6e,
+	0x75, 0x6d, 0x43, 0x70, 0x75, 0x73, 0x1a, 0xdc, 0x07, 0x0a, 0x08, 0x46, 0x65, 0x61, 0x74, 0x75,
+	0x72, 0x65, 0x73, 0x12, 0x46, 0x0a, 0x05, 0x61, 0x75, 0x64, 0x69, 0x74, 0x18, 0x01, 0x20, 0x01,
+	0x28, 0x0b, 0x32, 0x30, 0x2e, 0x63, 0x65, 0x72, 0x62, 0x6f, 0x73, 0x2e, 0x74, 0x65, 0x6c, 0x65,
+	0x6d, 0x65, 0x74, 0x72, 0x79, 0x2e, 0x76, 0x31, 0x2e, 0x53, 0x65, 0x72, 0x76, 0x65, 0x72, 0x4c,
+	0x61, 0x75, 0x6e, 0x63, 0x68, 0x2e, 0x46, 0x65, 0x61, 0x74, 0x75, 0x72, 0x65, 0x73, 0x2e, 0x41,
+	0x75, 0x64, 0x69, 0x74, 0x52, 0x05, 0x61, 0x75, 0x64, 0x69, 0x74, 0x12, 0x49, 0x0a, 0x06, 0x73,
+	0x63, 0x68, 0x65, 0x6d, 0x61, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x31, 0x2e, 0x63, 0x65,
 	0x72, 0x62, 0x6f, 0x73, 0x2e, 0x74, 0x65, 0x6c, 0x65, 0x6d, 0x65, 0x74, 0x72, 0x79, 0x2e, 0x76,
-	0x31, 0x2e, 0x50, 0x69, 0x6e, 0x67, 0x2e, 0x46, 0x65, 0x61, 0x74, 0x75, 0x72, 0x65, 0x73, 0x2e,
-	0x53, 0x63, 0x68, 0x65, 0x6d, 0x61, 0x52, 0x06, 0x73, 0x63, 0x68, 0x65, 0x6d, 0x61, 0x12, 0x48,
-	0x0a, 0x09, 0x61, 0x64, 0x6d, 0x69, 0x6e, 0x5f, 0x61, 0x70, 0x69, 0x18, 0x03, 0x20, 0x01, 0x28,
-	0x0b, 0x32, 0x2b, 0x2e, 0x63, 0x65, 0x72, 0x62, 0x6f, 0x73, 0x2e, 0x74, 0x65, 0x6c, 0x65, 0x6d,
-	0x65, 0x74, 0x72, 0x79, 0x2e, 0x76, 0x31, 0x2e, 0x50, 0x69, 0x6e, 0x67, 0x2e, 0x46, 0x65, 0x61,
-	0x74, 0x75, 0x72, 0x65, 0x73, 0x2e, 0x41, 0x64, 0x6d, 0x69, 0x6e, 0x41, 0x70, 0x69, 0x52, 0x08,
-	0x61, 0x64, 0x6d, 0x69, 0x6e, 0x41, 0x70, 0x69, 0x12, 0x44, 0x0a, 0x07, 0x73, 0x74, 0x6f, 0x72,
-	0x61, 0x67, 0x65, 0x18, 0x04, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x2a, 0x2e, 0x63, 0x65, 0x72, 0x62,
+	0x31, 0x2e, 0x53, 0x65, 0x72, 0x76, 0x65, 0x72, 0x4c, 0x61, 0x75, 0x6e, 0x63, 0x68, 0x2e, 0x46,
+	0x65, 0x61, 0x74, 0x75, 0x72, 0x65, 0x73, 0x2e, 0x53, 0x63, 0x68, 0x65, 0x6d, 0x61, 0x52, 0x06,
+	0x73, 0x63, 0x68, 0x65, 0x6d, 0x61, 0x12, 0x50, 0x0a, 0x09, 0x61, 0x64, 0x6d, 0x69, 0x6e, 0x5f,
+	0x61, 0x70, 0x69, 0x18, 0x03, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x33, 0x2e, 0x63, 0x65, 0x72, 0x62,
 	0x6f, 0x73, 0x2e, 0x74, 0x65, 0x6c, 0x65, 0x6d, 0x65, 0x74, 0x72, 0x79, 0x2e, 0x76, 0x31, 0x2e,
-	0x50, 0x69, 0x6e, 0x67, 0x2e, 0x46, 0x65, 0x61, 0x74, 0x75, 0x72, 0x65, 0x73, 0x2e, 0x53, 0x74,
-	0x6f, 0x72, 0x61, 0x67, 0x65, 0x52, 0x07, 0x73, 0x74, 0x6f, 0x72, 0x61, 0x67, 0x65, 0x1a, 0x3b,
-	0x0a, 0x05, 0x41, 0x75, 0x64, 0x69, 0x74, 0x12, 0x18, 0x0a, 0x07, 0x65, 0x6e, 0x61, 0x62, 0x6c,
-	0x65, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x08, 0x52, 0x07, 0x65, 0x6e, 0x61, 0x62, 0x6c, 0x65,
-	0x64, 0x12, 0x18, 0x0a, 0x07, 0x62, 0x61, 0x63, 0x6b, 0x65, 0x6e, 0x64, 0x18, 0x02, 0x20, 0x01,
-	0x28, 0x09, 0x52, 0x07, 0x62, 0x61, 0x63, 0x6b, 0x65, 0x6e, 0x64, 0x1a, 0x2a, 0x0a, 0x06, 0x53,
-	0x63, 0x68, 0x65, 0x6d, 0x61, 0x12, 0x20, 0x0a, 0x0b, 0x65, 0x6e, 0x66, 0x6f, 0x72, 0x63, 0x65,
-	0x6d, 0x65, 0x6e, 0x74, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0b, 0x65, 0x6e, 0x66, 0x6f,
-	0x72, 0x63, 0x65, 0x6d, 0x65, 0x6e, 0x74, 0x1a, 0x24, 0x0a, 0x08, 0x41, 0x64, 0x6d, 0x69, 0x6e,
-	0x41, 0x70, 0x69, 0x12, 0x18, 0x0a, 0x07, 0x65, 0x6e, 0x61, 0x62, 0x6c, 0x65, 0x64, 0x18, 0x01,
-	0x20, 0x01, 0x28, 0x08, 0x52, 0x07, 0x65, 0x6e, 0x61, 0x62, 0x6c, 0x65, 0x64, 0x1a, 0xf5, 0x03,
-	0x0a, 0x07, 0x53, 0x74, 0x6f, 0x72, 0x61, 0x67, 0x65, 0x12, 0x16, 0x0a, 0x06, 0x64, 0x72, 0x69,
-	0x76, 0x65, 0x72, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x06, 0x64, 0x72, 0x69, 0x76, 0x65,
-	0x72, 0x12, 0x45, 0x0a, 0x04, 0x64, 0x69, 0x73, 0x6b, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0b, 0x32,
-	0x2f, 0x2e, 0x63, 0x65, 0x72, 0x62, 0x6f, 0x73, 0x2e, 0x74, 0x65, 0x6c, 0x65, 0x6d, 0x65, 0x74,
-	0x72, 0x79, 0x2e, 0x76, 0x31, 0x2e, 0x50, 0x69, 0x6e, 0x67, 0x2e, 0x46, 0x65, 0x61, 0x74, 0x75,
+	0x53, 0x65, 0x72, 0x76, 0x65, 0x72, 0x4c, 0x61, 0x75, 0x6e, 0x63, 0x68, 0x2e, 0x46, 0x65, 0x61,
+	0x74, 0x75, 0x72, 0x65, 0x73, 0x2e, 0x41, 0x64, 0x6d, 0x69, 0x6e, 0x41, 0x70, 0x69, 0x52, 0x08,
+	0x61, 0x64, 0x6d, 0x69, 0x6e, 0x41, 0x70, 0x69, 0x12, 0x4c, 0x0a, 0x07, 0x73, 0x74, 0x6f, 0x72,
+	0x61, 0x67, 0x65, 0x18, 0x04, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x32, 0x2e, 0x63, 0x65, 0x72, 0x62,
+	0x6f, 0x73, 0x2e, 0x74, 0x65, 0x6c, 0x65, 0x6d, 0x65, 0x74, 0x72, 0x79, 0x2e, 0x76, 0x31, 0x2e,
+	0x53, 0x65, 0x72, 0x76, 0x65, 0x72, 0x4c, 0x61, 0x75, 0x6e, 0x63, 0x68, 0x2e, 0x46, 0x65, 0x61,
+	0x74, 0x75, 0x72, 0x65, 0x73, 0x2e, 0x53, 0x74, 0x6f, 0x72, 0x61, 0x67, 0x65, 0x52, 0x07, 0x73,
+	0x74, 0x6f, 0x72, 0x61, 0x67, 0x65, 0x1a, 0x3b, 0x0a, 0x05, 0x41, 0x75, 0x64, 0x69, 0x74, 0x12,
+	0x18, 0x0a, 0x07, 0x65, 0x6e, 0x61, 0x62, 0x6c, 0x65, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x08,
+	0x52, 0x07, 0x65, 0x6e, 0x61, 0x62, 0x6c, 0x65, 0x64, 0x12, 0x18, 0x0a, 0x07, 0x62, 0x61, 0x63,
+	0x6b, 0x65, 0x6e, 0x64, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x07, 0x62, 0x61, 0x63, 0x6b,
+	0x65, 0x6e, 0x64, 0x1a, 0x2a, 0x0a, 0x06, 0x53, 0x63, 0x68, 0x65, 0x6d, 0x61, 0x12, 0x20, 0x0a,
+	0x0b, 0x65, 0x6e, 0x66, 0x6f, 0x72, 0x63, 0x65, 0x6d, 0x65, 0x6e, 0x74, 0x18, 0x01, 0x20, 0x01,
+	0x28, 0x09, 0x52, 0x0b, 0x65, 0x6e, 0x66, 0x6f, 0x72, 0x63, 0x65, 0x6d, 0x65, 0x6e, 0x74, 0x1a,
+	0x24, 0x0a, 0x08, 0x41, 0x64, 0x6d, 0x69, 0x6e, 0x41, 0x70, 0x69, 0x12, 0x18, 0x0a, 0x07, 0x65,
+	0x6e, 0x61, 0x62, 0x6c, 0x65, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x08, 0x52, 0x07, 0x65, 0x6e,
+	0x61, 0x62, 0x6c, 0x65, 0x64, 0x1a, 0x8d, 0x04, 0x0a, 0x07, 0x53, 0x74, 0x6f, 0x72, 0x61, 0x67,
+	0x65, 0x12, 0x16, 0x0a, 0x06, 0x64, 0x72, 0x69, 0x76, 0x65, 0x72, 0x18, 0x01, 0x20, 0x01, 0x28,
+	0x09, 0x52, 0x06, 0x64, 0x72, 0x69, 0x76, 0x65, 0x72, 0x12, 0x4d, 0x0a, 0x04, 0x64, 0x69, 0x73,
+	0x6b, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x37, 0x2e, 0x63, 0x65, 0x72, 0x62, 0x6f, 0x73,
+	0x2e, 0x74, 0x65, 0x6c, 0x65, 0x6d, 0x65, 0x74, 0x72, 0x79, 0x2e, 0x76, 0x31, 0x2e, 0x53, 0x65,
+	0x72, 0x76, 0x65, 0x72, 0x4c, 0x61, 0x75, 0x6e, 0x63, 0x68, 0x2e, 0x46, 0x65, 0x61, 0x74, 0x75,
 	0x72, 0x65, 0x73, 0x2e, 0x53, 0x74, 0x6f, 0x72, 0x61, 0x67, 0x65, 0x2e, 0x44, 0x69, 0x73, 0x6b,
-	0x48, 0x00, 0x52, 0x04, 0x64, 0x69, 0x73, 0x6b, 0x12, 0x42, 0x0a, 0x03, 0x67, 0x69, 0x74, 0x18,
-	0x03, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x2e, 0x2e, 0x63, 0x65, 0x72, 0x62, 0x6f, 0x73, 0x2e, 0x74,
-	0x65, 0x6c, 0x65, 0x6d, 0x65, 0x74, 0x72, 0x79, 0x2e, 0x76, 0x31, 0x2e, 0x50, 0x69, 0x6e, 0x67,
-	0x2e, 0x46, 0x65, 0x61, 0x74, 0x75, 0x72, 0x65, 0x73, 0x2e, 0x53, 0x74, 0x6f, 0x72, 0x61, 0x67,
-	0x65, 0x2e, 0x47, 0x69, 0x74, 0x48, 0x00, 0x52, 0x03, 0x67, 0x69, 0x74, 0x12, 0x45, 0x0a, 0x04,
-	0x62, 0x6c, 0x6f, 0x62, 0x18, 0x04, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x2f, 0x2e, 0x63, 0x65, 0x72,
-	0x62, 0x6f, 0x73, 0x2e, 0x74, 0x65, 0x6c, 0x65, 0x6d, 0x65, 0x74, 0x72, 0x79, 0x2e, 0x76, 0x31,
-	0x2e, 0x50, 0x69, 0x6e, 0x67, 0x2e, 0x46, 0x65, 0x61, 0x74, 0x75, 0x72, 0x65, 0x73, 0x2e, 0x53,
+	0x48, 0x00, 0x52, 0x04, 0x64, 0x69, 0x73, 0x6b, 0x12, 0x4a, 0x0a, 0x03, 0x67, 0x69, 0x74, 0x18,
+	0x03, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x36, 0x2e, 0x63, 0x65, 0x72, 0x62, 0x6f, 0x73, 0x2e, 0x74,
+	0x65, 0x6c, 0x65, 0x6d, 0x65, 0x74, 0x72, 0x79, 0x2e, 0x76, 0x31, 0x2e, 0x53, 0x65, 0x72, 0x76,
+	0x65, 0x72, 0x4c, 0x61, 0x75, 0x6e, 0x63, 0x68, 0x2e, 0x46, 0x65, 0x61, 0x74, 0x75, 0x72, 0x65,
+	0x73, 0x2e, 0x53, 0x74, 0x6f, 0x72, 0x61, 0x67, 0x65, 0x2e, 0x47, 0x69, 0x74, 0x48, 0x00, 0x52,
+	0x03, 0x67, 0x69, 0x74, 0x12, 0x4d, 0x0a, 0x04, 0x62, 0x6c, 0x6f, 0x62, 0x18, 0x04, 0x20, 0x01,
+	0x28, 0x0b, 0x32, 0x37, 0x2e, 0x63, 0x65, 0x72, 0x62, 0x6f, 0x73, 0x2e, 0x74, 0x65, 0x6c, 0x65,
+	0x6d, 0x65, 0x74, 0x72, 0x79, 0x2e, 0x76, 0x31, 0x2e, 0x53, 0x65, 0x72, 0x76, 0x65, 0x72, 0x4c,
+	0x61, 0x75, 0x6e, 0x63, 0x68, 0x2e, 0x46, 0x65, 0x61, 0x74, 0x75, 0x72, 0x65, 0x73, 0x2e, 0x53,
 	0x74, 0x6f, 0x72, 0x61, 0x67, 0x65, 0x2e, 0x42, 0x6c, 0x6f, 0x62, 0x48, 0x00, 0x52, 0x04, 0x62,
 	0x6c, 0x6f, 0x62, 0x1a, 0x1c, 0x0a, 0x04, 0x44, 0x69, 0x73, 0x6b, 0x12, 0x14, 0x0a, 0x05, 0x77,
 	0x61, 0x74, 0x63, 0x68, 0x18, 0x01, 0x20, 0x01, 0x28, 0x08, 0x52, 0x05, 0x77, 0x61, 0x74, 0x63,
@@ -996,56 +1202,98 @@ var file_cerbos_telemetry_v1_telemetry_proto_rawDesc = []byte{
 	0x01, 0x28, 0x0b, 0x32, 0x19, 0x2e, 0x67, 0x6f, 0x6f, 0x67, 0x6c, 0x65, 0x2e, 0x70, 0x72, 0x6f,
 	0x74, 0x6f, 0x62, 0x75, 0x66, 0x2e, 0x44, 0x75, 0x72, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x52, 0x0c,
 	0x70, 0x6f, 0x6c, 0x6c, 0x49, 0x6e, 0x74, 0x65, 0x72, 0x76, 0x61, 0x6c, 0x42, 0x07, 0x0a, 0x05,
-	0x73, 0x74, 0x6f, 0x72, 0x65, 0x1a, 0x8b, 0x05, 0x0a, 0x05, 0x53, 0x74, 0x61, 0x74, 0x73, 0x12,
-	0x3e, 0x0a, 0x06, 0x70, 0x6f, 0x6c, 0x69, 0x63, 0x79, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0b, 0x32,
-	0x26, 0x2e, 0x63, 0x65, 0x72, 0x62, 0x6f, 0x73, 0x2e, 0x74, 0x65, 0x6c, 0x65, 0x6d, 0x65, 0x74,
-	0x72, 0x79, 0x2e, 0x76, 0x31, 0x2e, 0x50, 0x69, 0x6e, 0x67, 0x2e, 0x53, 0x74, 0x61, 0x74, 0x73,
-	0x2e, 0x50, 0x6f, 0x6c, 0x69, 0x63, 0x79, 0x52, 0x06, 0x70, 0x6f, 0x6c, 0x69, 0x63, 0x79, 0x12,
-	0x3e, 0x0a, 0x06, 0x73, 0x63, 0x68, 0x65, 0x6d, 0x61, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0b, 0x32,
-	0x26, 0x2e, 0x63, 0x65, 0x72, 0x62, 0x6f, 0x73, 0x2e, 0x74, 0x65, 0x6c, 0x65, 0x6d, 0x65, 0x74,
-	0x72, 0x79, 0x2e, 0x76, 0x31, 0x2e, 0x50, 0x69, 0x6e, 0x67, 0x2e, 0x53, 0x74, 0x61, 0x74, 0x73,
+	0x73, 0x74, 0x6f, 0x72, 0x65, 0x1a, 0xb3, 0x05, 0x0a, 0x05, 0x53, 0x74, 0x61, 0x74, 0x73, 0x12,
+	0x46, 0x0a, 0x06, 0x70, 0x6f, 0x6c, 0x69, 0x63, 0x79, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0b, 0x32,
+	0x2e, 0x2e, 0x63, 0x65, 0x72, 0x62, 0x6f, 0x73, 0x2e, 0x74, 0x65, 0x6c, 0x65, 0x6d, 0x65, 0x74,
+	0x72, 0x79, 0x2e, 0x76, 0x31, 0x2e, 0x53, 0x65, 0x72, 0x76, 0x65, 0x72, 0x4c, 0x61, 0x75, 0x6e,
+	0x63, 0x68, 0x2e, 0x53, 0x74, 0x61, 0x74, 0x73, 0x2e, 0x50, 0x6f, 0x6c, 0x69, 0x63, 0x79, 0x52,
+	0x06, 0x70, 0x6f, 0x6c, 0x69, 0x63, 0x79, 0x12, 0x46, 0x0a, 0x06, 0x73, 0x63, 0x68, 0x65, 0x6d,
+	0x61, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x2e, 0x2e, 0x63, 0x65, 0x72, 0x62, 0x6f, 0x73,
+	0x2e, 0x74, 0x65, 0x6c, 0x65, 0x6d, 0x65, 0x74, 0x72, 0x79, 0x2e, 0x76, 0x31, 0x2e, 0x53, 0x65,
+	0x72, 0x76, 0x65, 0x72, 0x4c, 0x61, 0x75, 0x6e, 0x63, 0x68, 0x2e, 0x53, 0x74, 0x61, 0x74, 0x73,
 	0x2e, 0x53, 0x63, 0x68, 0x65, 0x6d, 0x61, 0x52, 0x06, 0x73, 0x63, 0x68, 0x65, 0x6d, 0x61, 0x1a,
-	0xe1, 0x03, 0x0a, 0x06, 0x50, 0x6f, 0x6c, 0x69, 0x63, 0x79, 0x12, 0x47, 0x0a, 0x05, 0x63, 0x6f,
-	0x75, 0x6e, 0x74, 0x18, 0x01, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x31, 0x2e, 0x63, 0x65, 0x72, 0x62,
+	0xf9, 0x03, 0x0a, 0x06, 0x50, 0x6f, 0x6c, 0x69, 0x63, 0x79, 0x12, 0x4f, 0x0a, 0x05, 0x63, 0x6f,
+	0x75, 0x6e, 0x74, 0x18, 0x01, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x39, 0x2e, 0x63, 0x65, 0x72, 0x62,
 	0x6f, 0x73, 0x2e, 0x74, 0x65, 0x6c, 0x65, 0x6d, 0x65, 0x74, 0x72, 0x79, 0x2e, 0x76, 0x31, 0x2e,
-	0x50, 0x69, 0x6e, 0x67, 0x2e, 0x53, 0x74, 0x61, 0x74, 0x73, 0x2e, 0x50, 0x6f, 0x6c, 0x69, 0x63,
-	0x79, 0x2e, 0x43, 0x6f, 0x75, 0x6e, 0x74, 0x45, 0x6e, 0x74, 0x72, 0x79, 0x52, 0x05, 0x63, 0x6f,
-	0x75, 0x6e, 0x74, 0x12, 0x5e, 0x0a, 0x0e, 0x61, 0x76, 0x67, 0x5f, 0x72, 0x75, 0x6c, 0x65, 0x5f,
-	0x63, 0x6f, 0x75, 0x6e, 0x74, 0x18, 0x02, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x38, 0x2e, 0x63, 0x65,
-	0x72, 0x62, 0x6f, 0x73, 0x2e, 0x74, 0x65, 0x6c, 0x65, 0x6d, 0x65, 0x74, 0x72, 0x79, 0x2e, 0x76,
-	0x31, 0x2e, 0x50, 0x69, 0x6e, 0x67, 0x2e, 0x53, 0x74, 0x61, 0x74, 0x73, 0x2e, 0x50, 0x6f, 0x6c,
+	0x53, 0x65, 0x72, 0x76, 0x65, 0x72, 0x4c, 0x61, 0x75, 0x6e, 0x63, 0x68, 0x2e, 0x53, 0x74, 0x61,
+	0x74, 0x73, 0x2e, 0x50, 0x6f, 0x6c, 0x69, 0x63, 0x79, 0x2e, 0x43, 0x6f, 0x75, 0x6e, 0x74, 0x45,
+	0x6e, 0x74, 0x72, 0x79, 0x52, 0x05, 0x63, 0x6f, 0x75, 0x6e, 0x74, 0x12, 0x66, 0x0a, 0x0e, 0x61,
+	0x76, 0x67, 0x5f, 0x72, 0x75, 0x6c, 0x65, 0x5f, 0x63, 0x6f, 0x75, 0x6e, 0x74, 0x18, 0x02, 0x20,
+	0x03, 0x28, 0x0b, 0x32, 0x40, 0x2e, 0x63, 0x65, 0x72, 0x62, 0x6f, 0x73, 0x2e, 0x74, 0x65, 0x6c,
+	0x65, 0x6d, 0x65, 0x74, 0x72, 0x79, 0x2e, 0x76, 0x31, 0x2e, 0x53, 0x65, 0x72, 0x76, 0x65, 0x72,
+	0x4c, 0x61, 0x75, 0x6e, 0x63, 0x68, 0x2e, 0x53, 0x74, 0x61, 0x74, 0x73, 0x2e, 0x50, 0x6f, 0x6c,
 	0x69, 0x63, 0x79, 0x2e, 0x41, 0x76, 0x67, 0x52, 0x75, 0x6c, 0x65, 0x43, 0x6f, 0x75, 0x6e, 0x74,
 	0x45, 0x6e, 0x74, 0x72, 0x79, 0x52, 0x0c, 0x61, 0x76, 0x67, 0x52, 0x75, 0x6c, 0x65, 0x43, 0x6f,
-	0x75, 0x6e, 0x74, 0x12, 0x6d, 0x0a, 0x13, 0x61, 0x76, 0x67, 0x5f, 0x63, 0x6f, 0x6e, 0x64, 0x69,
+	0x75, 0x6e, 0x74, 0x12, 0x75, 0x0a, 0x13, 0x61, 0x76, 0x67, 0x5f, 0x63, 0x6f, 0x6e, 0x64, 0x69,
 	0x74, 0x69, 0x6f, 0x6e, 0x5f, 0x63, 0x6f, 0x75, 0x6e, 0x74, 0x18, 0x03, 0x20, 0x03, 0x28, 0x0b,
-	0x32, 0x3d, 0x2e, 0x63, 0x65, 0x72, 0x62, 0x6f, 0x73, 0x2e, 0x74, 0x65, 0x6c, 0x65, 0x6d, 0x65,
-	0x74, 0x72, 0x79, 0x2e, 0x76, 0x31, 0x2e, 0x50, 0x69, 0x6e, 0x67, 0x2e, 0x53, 0x74, 0x61, 0x74,
-	0x73, 0x2e, 0x50, 0x6f, 0x6c, 0x69, 0x63, 0x79, 0x2e, 0x41, 0x76, 0x67, 0x43, 0x6f, 0x6e, 0x64,
-	0x69, 0x74, 0x69, 0x6f, 0x6e, 0x43, 0x6f, 0x75, 0x6e, 0x74, 0x45, 0x6e, 0x74, 0x72, 0x79, 0x52,
-	0x11, 0x61, 0x76, 0x67, 0x43, 0x6f, 0x6e, 0x64, 0x69, 0x74, 0x69, 0x6f, 0x6e, 0x43, 0x6f, 0x75,
-	0x6e, 0x74, 0x1a, 0x38, 0x0a, 0x0a, 0x43, 0x6f, 0x75, 0x6e, 0x74, 0x45, 0x6e, 0x74, 0x72, 0x79,
-	0x12, 0x10, 0x0a, 0x03, 0x6b, 0x65, 0x79, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x03, 0x6b,
-	0x65, 0x79, 0x12, 0x14, 0x0a, 0x05, 0x76, 0x61, 0x6c, 0x75, 0x65, 0x18, 0x02, 0x20, 0x01, 0x28,
-	0x0d, 0x52, 0x05, 0x76, 0x61, 0x6c, 0x75, 0x65, 0x3a, 0x02, 0x38, 0x01, 0x1a, 0x3f, 0x0a, 0x11,
-	0x41, 0x76, 0x67, 0x52, 0x75, 0x6c, 0x65, 0x43, 0x6f, 0x75, 0x6e, 0x74, 0x45, 0x6e, 0x74, 0x72,
-	0x79, 0x12, 0x10, 0x0a, 0x03, 0x6b, 0x65, 0x79, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x03,
-	0x6b, 0x65, 0x79, 0x12, 0x14, 0x0a, 0x05, 0x76, 0x61, 0x6c, 0x75, 0x65, 0x18, 0x02, 0x20, 0x01,
-	0x28, 0x01, 0x52, 0x05, 0x76, 0x61, 0x6c, 0x75, 0x65, 0x3a, 0x02, 0x38, 0x01, 0x1a, 0x44, 0x0a,
-	0x16, 0x41, 0x76, 0x67, 0x43, 0x6f, 0x6e, 0x64, 0x69, 0x74, 0x69, 0x6f, 0x6e, 0x43, 0x6f, 0x75,
-	0x6e, 0x74, 0x45, 0x6e, 0x74, 0x72, 0x79, 0x12, 0x10, 0x0a, 0x03, 0x6b, 0x65, 0x79, 0x18, 0x01,
-	0x20, 0x01, 0x28, 0x09, 0x52, 0x03, 0x6b, 0x65, 0x79, 0x12, 0x14, 0x0a, 0x05, 0x76, 0x61, 0x6c,
-	0x75, 0x65, 0x18, 0x02, 0x20, 0x01, 0x28, 0x01, 0x52, 0x05, 0x76, 0x61, 0x6c, 0x75, 0x65, 0x3a,
-	0x02, 0x38, 0x01, 0x1a, 0x1e, 0x0a, 0x06, 0x53, 0x63, 0x68, 0x65, 0x6d, 0x61, 0x12, 0x14, 0x0a,
-	0x05, 0x63, 0x6f, 0x75, 0x6e, 0x74, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0d, 0x52, 0x05, 0x63, 0x6f,
-	0x75, 0x6e, 0x74, 0x42, 0x7b, 0x0a, 0x1b, 0x64, 0x65, 0x76, 0x2e, 0x63, 0x65, 0x72, 0x62, 0x6f,
-	0x73, 0x2e, 0x61, 0x70, 0x69, 0x2e, 0x76, 0x31, 0x2e, 0x74, 0x65, 0x6c, 0x65, 0x6d, 0x65, 0x74,
-	0x72, 0x79, 0x5a, 0x42, 0x67, 0x69, 0x74, 0x68, 0x75, 0x62, 0x2e, 0x63, 0x6f, 0x6d, 0x2f, 0x63,
-	0x65, 0x72, 0x62, 0x6f, 0x73, 0x2f, 0x63, 0x65, 0x72, 0x62, 0x6f, 0x73, 0x2f, 0x61, 0x70, 0x69,
-	0x2f, 0x67, 0x65, 0x6e, 0x70, 0x62, 0x2f, 0x63, 0x65, 0x72, 0x62, 0x6f, 0x73, 0x2f, 0x74, 0x65,
-	0x6c, 0x65, 0x6d, 0x65, 0x74, 0x72, 0x79, 0x2f, 0x76, 0x31, 0x3b, 0x74, 0x65, 0x6c, 0x65, 0x6d,
-	0x65, 0x74, 0x72, 0x79, 0x76, 0x31, 0xaa, 0x02, 0x17, 0x43, 0x65, 0x72, 0x62, 0x6f, 0x73, 0x2e,
-	0x41, 0x70, 0x69, 0x2e, 0x56, 0x31, 0x2e, 0x54, 0x65, 0x6c, 0x65, 0x6d, 0x65, 0x74, 0x72, 0x79,
-	0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
+	0x32, 0x45, 0x2e, 0x63, 0x65, 0x72, 0x62, 0x6f, 0x73, 0x2e, 0x74, 0x65, 0x6c, 0x65, 0x6d, 0x65,
+	0x74, 0x72, 0x79, 0x2e, 0x76, 0x31, 0x2e, 0x53, 0x65, 0x72, 0x76, 0x65, 0x72, 0x4c, 0x61, 0x75,
+	0x6e, 0x63, 0x68, 0x2e, 0x53, 0x74, 0x61, 0x74, 0x73, 0x2e, 0x50, 0x6f, 0x6c, 0x69, 0x63, 0x79,
+	0x2e, 0x41, 0x76, 0x67, 0x43, 0x6f, 0x6e, 0x64, 0x69, 0x74, 0x69, 0x6f, 0x6e, 0x43, 0x6f, 0x75,
+	0x6e, 0x74, 0x45, 0x6e, 0x74, 0x72, 0x79, 0x52, 0x11, 0x61, 0x76, 0x67, 0x43, 0x6f, 0x6e, 0x64,
+	0x69, 0x74, 0x69, 0x6f, 0x6e, 0x43, 0x6f, 0x75, 0x6e, 0x74, 0x1a, 0x38, 0x0a, 0x0a, 0x43, 0x6f,
+	0x75, 0x6e, 0x74, 0x45, 0x6e, 0x74, 0x72, 0x79, 0x12, 0x10, 0x0a, 0x03, 0x6b, 0x65, 0x79, 0x18,
+	0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x03, 0x6b, 0x65, 0x79, 0x12, 0x14, 0x0a, 0x05, 0x76, 0x61,
+	0x6c, 0x75, 0x65, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0d, 0x52, 0x05, 0x76, 0x61, 0x6c, 0x75, 0x65,
+	0x3a, 0x02, 0x38, 0x01, 0x1a, 0x3f, 0x0a, 0x11, 0x41, 0x76, 0x67, 0x52, 0x75, 0x6c, 0x65, 0x43,
+	0x6f, 0x75, 0x6e, 0x74, 0x45, 0x6e, 0x74, 0x72, 0x79, 0x12, 0x10, 0x0a, 0x03, 0x6b, 0x65, 0x79,
+	0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x03, 0x6b, 0x65, 0x79, 0x12, 0x14, 0x0a, 0x05, 0x76,
+	0x61, 0x6c, 0x75, 0x65, 0x18, 0x02, 0x20, 0x01, 0x28, 0x01, 0x52, 0x05, 0x76, 0x61, 0x6c, 0x75,
+	0x65, 0x3a, 0x02, 0x38, 0x01, 0x1a, 0x44, 0x0a, 0x16, 0x41, 0x76, 0x67, 0x43, 0x6f, 0x6e, 0x64,
+	0x69, 0x74, 0x69, 0x6f, 0x6e, 0x43, 0x6f, 0x75, 0x6e, 0x74, 0x45, 0x6e, 0x74, 0x72, 0x79, 0x12,
+	0x10, 0x0a, 0x03, 0x6b, 0x65, 0x79, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x03, 0x6b, 0x65,
+	0x79, 0x12, 0x14, 0x0a, 0x05, 0x76, 0x61, 0x6c, 0x75, 0x65, 0x18, 0x02, 0x20, 0x01, 0x28, 0x01,
+	0x52, 0x05, 0x76, 0x61, 0x6c, 0x75, 0x65, 0x3a, 0x02, 0x38, 0x01, 0x1a, 0x1e, 0x0a, 0x06, 0x53,
+	0x63, 0x68, 0x65, 0x6d, 0x61, 0x12, 0x14, 0x0a, 0x05, 0x63, 0x6f, 0x75, 0x6e, 0x74, 0x18, 0x01,
+	0x20, 0x01, 0x28, 0x0d, 0x52, 0x05, 0x63, 0x6f, 0x75, 0x6e, 0x74, 0x22, 0x80, 0x01, 0x0a, 0x0a,
+	0x53, 0x65, 0x72, 0x76, 0x65, 0x72, 0x53, 0x74, 0x6f, 0x70, 0x12, 0x18, 0x0a, 0x07, 0x76, 0x65,
+	0x72, 0x73, 0x69, 0x6f, 0x6e, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x07, 0x76, 0x65, 0x72,
+	0x73, 0x69, 0x6f, 0x6e, 0x12, 0x31, 0x0a, 0x06, 0x75, 0x70, 0x74, 0x69, 0x6d, 0x65, 0x18, 0x02,
+	0x20, 0x01, 0x28, 0x0b, 0x32, 0x19, 0x2e, 0x67, 0x6f, 0x6f, 0x67, 0x6c, 0x65, 0x2e, 0x70, 0x72,
+	0x6f, 0x74, 0x6f, 0x62, 0x75, 0x66, 0x2e, 0x44, 0x75, 0x72, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x52,
+	0x06, 0x75, 0x70, 0x74, 0x69, 0x6d, 0x65, 0x12, 0x25, 0x0a, 0x0e, 0x72, 0x65, 0x71, 0x75, 0x65,
+	0x73, 0x74, 0x73, 0x5f, 0x74, 0x6f, 0x74, 0x61, 0x6c, 0x18, 0x03, 0x20, 0x01, 0x28, 0x04, 0x52,
+	0x0d, 0x72, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x73, 0x54, 0x6f, 0x74, 0x61, 0x6c, 0x22, 0xed,
+	0x03, 0x0a, 0x05, 0x45, 0x76, 0x65, 0x6e, 0x74, 0x12, 0x4b, 0x0a, 0x0c, 0x61, 0x70, 0x69, 0x5f,
+	0x61, 0x63, 0x74, 0x69, 0x76, 0x69, 0x74, 0x79, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x26,
+	0x2e, 0x63, 0x65, 0x72, 0x62, 0x6f, 0x73, 0x2e, 0x74, 0x65, 0x6c, 0x65, 0x6d, 0x65, 0x74, 0x72,
+	0x79, 0x2e, 0x76, 0x31, 0x2e, 0x45, 0x76, 0x65, 0x6e, 0x74, 0x2e, 0x41, 0x70, 0x69, 0x41, 0x63,
+	0x74, 0x69, 0x76, 0x69, 0x74, 0x79, 0x48, 0x00, 0x52, 0x0b, 0x61, 0x70, 0x69, 0x41, 0x63, 0x74,
+	0x69, 0x76, 0x69, 0x74, 0x79, 0x1a, 0x8e, 0x03, 0x0a, 0x0b, 0x41, 0x70, 0x69, 0x41, 0x63, 0x74,
+	0x69, 0x76, 0x69, 0x74, 0x79, 0x12, 0x18, 0x0a, 0x07, 0x76, 0x65, 0x72, 0x73, 0x69, 0x6f, 0x6e,
+	0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x07, 0x76, 0x65, 0x72, 0x73, 0x69, 0x6f, 0x6e, 0x12,
+	0x31, 0x0a, 0x06, 0x75, 0x70, 0x74, 0x69, 0x6d, 0x65, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0b, 0x32,
+	0x19, 0x2e, 0x67, 0x6f, 0x6f, 0x67, 0x6c, 0x65, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x62, 0x75,
+	0x66, 0x2e, 0x44, 0x75, 0x72, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x52, 0x06, 0x75, 0x70, 0x74, 0x69,
+	0x6d, 0x65, 0x12, 0x5a, 0x0a, 0x0c, 0x6d, 0x65, 0x74, 0x68, 0x6f, 0x64, 0x5f, 0x63, 0x61, 0x6c,
+	0x6c, 0x73, 0x18, 0x03, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x37, 0x2e, 0x63, 0x65, 0x72, 0x62, 0x6f,
+	0x73, 0x2e, 0x74, 0x65, 0x6c, 0x65, 0x6d, 0x65, 0x74, 0x72, 0x79, 0x2e, 0x76, 0x31, 0x2e, 0x45,
+	0x76, 0x65, 0x6e, 0x74, 0x2e, 0x41, 0x70, 0x69, 0x41, 0x63, 0x74, 0x69, 0x76, 0x69, 0x74, 0x79,
+	0x2e, 0x4d, 0x65, 0x74, 0x68, 0x6f, 0x64, 0x43, 0x61, 0x6c, 0x6c, 0x73, 0x45, 0x6e, 0x74, 0x72,
+	0x79, 0x52, 0x0b, 0x6d, 0x65, 0x74, 0x68, 0x6f, 0x64, 0x43, 0x61, 0x6c, 0x6c, 0x73, 0x12, 0x57,
+	0x0a, 0x0b, 0x75, 0x73, 0x65, 0x72, 0x5f, 0x61, 0x67, 0x65, 0x6e, 0x74, 0x73, 0x18, 0x04, 0x20,
+	0x03, 0x28, 0x0b, 0x32, 0x36, 0x2e, 0x63, 0x65, 0x72, 0x62, 0x6f, 0x73, 0x2e, 0x74, 0x65, 0x6c,
+	0x65, 0x6d, 0x65, 0x74, 0x72, 0x79, 0x2e, 0x76, 0x31, 0x2e, 0x45, 0x76, 0x65, 0x6e, 0x74, 0x2e,
+	0x41, 0x70, 0x69, 0x41, 0x63, 0x74, 0x69, 0x76, 0x69, 0x74, 0x79, 0x2e, 0x55, 0x73, 0x65, 0x72,
+	0x41, 0x67, 0x65, 0x6e, 0x74, 0x73, 0x45, 0x6e, 0x74, 0x72, 0x79, 0x52, 0x0a, 0x75, 0x73, 0x65,
+	0x72, 0x41, 0x67, 0x65, 0x6e, 0x74, 0x73, 0x1a, 0x3e, 0x0a, 0x10, 0x4d, 0x65, 0x74, 0x68, 0x6f,
+	0x64, 0x43, 0x61, 0x6c, 0x6c, 0x73, 0x45, 0x6e, 0x74, 0x72, 0x79, 0x12, 0x10, 0x0a, 0x03, 0x6b,
+	0x65, 0x79, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x03, 0x6b, 0x65, 0x79, 0x12, 0x14, 0x0a,
+	0x05, 0x76, 0x61, 0x6c, 0x75, 0x65, 0x18, 0x02, 0x20, 0x01, 0x28, 0x04, 0x52, 0x05, 0x76, 0x61,
+	0x6c, 0x75, 0x65, 0x3a, 0x02, 0x38, 0x01, 0x1a, 0x3d, 0x0a, 0x0f, 0x55, 0x73, 0x65, 0x72, 0x41,
+	0x67, 0x65, 0x6e, 0x74, 0x73, 0x45, 0x6e, 0x74, 0x72, 0x79, 0x12, 0x10, 0x0a, 0x03, 0x6b, 0x65,
+	0x79, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x03, 0x6b, 0x65, 0x79, 0x12, 0x14, 0x0a, 0x05,
+	0x76, 0x61, 0x6c, 0x75, 0x65, 0x18, 0x02, 0x20, 0x01, 0x28, 0x04, 0x52, 0x05, 0x76, 0x61, 0x6c,
+	0x75, 0x65, 0x3a, 0x02, 0x38, 0x01, 0x42, 0x06, 0x0a, 0x04, 0x64, 0x61, 0x74, 0x61, 0x42, 0x7b,
+	0x0a, 0x1b, 0x64, 0x65, 0x76, 0x2e, 0x63, 0x65, 0x72, 0x62, 0x6f, 0x73, 0x2e, 0x61, 0x70, 0x69,
+	0x2e, 0x76, 0x31, 0x2e, 0x74, 0x65, 0x6c, 0x65, 0x6d, 0x65, 0x74, 0x72, 0x79, 0x5a, 0x42, 0x67,
+	0x69, 0x74, 0x68, 0x75, 0x62, 0x2e, 0x63, 0x6f, 0x6d, 0x2f, 0x63, 0x65, 0x72, 0x62, 0x6f, 0x73,
+	0x2f, 0x63, 0x65, 0x72, 0x62, 0x6f, 0x73, 0x2f, 0x61, 0x70, 0x69, 0x2f, 0x67, 0x65, 0x6e, 0x70,
+	0x62, 0x2f, 0x63, 0x65, 0x72, 0x62, 0x6f, 0x73, 0x2f, 0x74, 0x65, 0x6c, 0x65, 0x6d, 0x65, 0x74,
+	0x72, 0x79, 0x2f, 0x76, 0x31, 0x3b, 0x74, 0x65, 0x6c, 0x65, 0x6d, 0x65, 0x74, 0x72, 0x79, 0x76,
+	0x31, 0xaa, 0x02, 0x17, 0x43, 0x65, 0x72, 0x62, 0x6f, 0x73, 0x2e, 0x41, 0x70, 0x69, 0x2e, 0x56,
+	0x31, 0x2e, 0x54, 0x65, 0x6c, 0x65, 0x6d, 0x65, 0x74, 0x72, 0x79, 0x62, 0x06, 0x70, 0x72, 0x6f,
+	0x74, 0x6f, 0x33,
 }
 
 var (
@@ -1060,51 +1308,61 @@ func file_cerbos_telemetry_v1_telemetry_proto_rawDescGZIP() []byte {
 	return file_cerbos_telemetry_v1_telemetry_proto_rawDescData
 }
 
-var file_cerbos_telemetry_v1_telemetry_proto_msgTypes = make([]protoimpl.MessageInfo, 17)
+var file_cerbos_telemetry_v1_telemetry_proto_msgTypes = make([]protoimpl.MessageInfo, 22)
 var file_cerbos_telemetry_v1_telemetry_proto_goTypes = []interface{}{
-	(*Ping)(nil),                       // 0: cerbos.telemetry.v1.Ping
-	(*Ping_Cerbos)(nil),                // 1: cerbos.telemetry.v1.Ping.Cerbos
-	(*Ping_Source)(nil),                // 2: cerbos.telemetry.v1.Ping.Source
-	(*Ping_Features)(nil),              // 3: cerbos.telemetry.v1.Ping.Features
-	(*Ping_Stats)(nil),                 // 4: cerbos.telemetry.v1.Ping.Stats
-	(*Ping_Features_Audit)(nil),        // 5: cerbos.telemetry.v1.Ping.Features.Audit
-	(*Ping_Features_Schema)(nil),       // 6: cerbos.telemetry.v1.Ping.Features.Schema
-	(*Ping_Features_AdminApi)(nil),     // 7: cerbos.telemetry.v1.Ping.Features.AdminApi
-	(*Ping_Features_Storage)(nil),      // 8: cerbos.telemetry.v1.Ping.Features.Storage
-	(*Ping_Features_Storage_Disk)(nil), // 9: cerbos.telemetry.v1.Ping.Features.Storage.Disk
-	(*Ping_Features_Storage_Git)(nil),  // 10: cerbos.telemetry.v1.Ping.Features.Storage.Git
-	(*Ping_Features_Storage_Blob)(nil), // 11: cerbos.telemetry.v1.Ping.Features.Storage.Blob
-	(*Ping_Stats_Policy)(nil),          // 12: cerbos.telemetry.v1.Ping.Stats.Policy
-	(*Ping_Stats_Schema)(nil),          // 13: cerbos.telemetry.v1.Ping.Stats.Schema
-	nil,                                // 14: cerbos.telemetry.v1.Ping.Stats.Policy.CountEntry
-	nil,                                // 15: cerbos.telemetry.v1.Ping.Stats.Policy.AvgRuleCountEntry
-	nil,                                // 16: cerbos.telemetry.v1.Ping.Stats.Policy.AvgConditionCountEntry
-	(*durationpb.Duration)(nil),        // 17: google.protobuf.Duration
+	(*ServerLaunch)(nil),                       // 0: cerbos.telemetry.v1.ServerLaunch
+	(*ServerStop)(nil),                         // 1: cerbos.telemetry.v1.ServerStop
+	(*Event)(nil),                              // 2: cerbos.telemetry.v1.Event
+	(*ServerLaunch_Cerbos)(nil),                // 3: cerbos.telemetry.v1.ServerLaunch.Cerbos
+	(*ServerLaunch_Source)(nil),                // 4: cerbos.telemetry.v1.ServerLaunch.Source
+	(*ServerLaunch_Features)(nil),              // 5: cerbos.telemetry.v1.ServerLaunch.Features
+	(*ServerLaunch_Stats)(nil),                 // 6: cerbos.telemetry.v1.ServerLaunch.Stats
+	(*ServerLaunch_Features_Audit)(nil),        // 7: cerbos.telemetry.v1.ServerLaunch.Features.Audit
+	(*ServerLaunch_Features_Schema)(nil),       // 8: cerbos.telemetry.v1.ServerLaunch.Features.Schema
+	(*ServerLaunch_Features_AdminApi)(nil),     // 9: cerbos.telemetry.v1.ServerLaunch.Features.AdminApi
+	(*ServerLaunch_Features_Storage)(nil),      // 10: cerbos.telemetry.v1.ServerLaunch.Features.Storage
+	(*ServerLaunch_Features_Storage_Disk)(nil), // 11: cerbos.telemetry.v1.ServerLaunch.Features.Storage.Disk
+	(*ServerLaunch_Features_Storage_Git)(nil),  // 12: cerbos.telemetry.v1.ServerLaunch.Features.Storage.Git
+	(*ServerLaunch_Features_Storage_Blob)(nil), // 13: cerbos.telemetry.v1.ServerLaunch.Features.Storage.Blob
+	(*ServerLaunch_Stats_Policy)(nil),          // 14: cerbos.telemetry.v1.ServerLaunch.Stats.Policy
+	(*ServerLaunch_Stats_Schema)(nil),          // 15: cerbos.telemetry.v1.ServerLaunch.Stats.Schema
+	nil,                                        // 16: cerbos.telemetry.v1.ServerLaunch.Stats.Policy.CountEntry
+	nil,                                        // 17: cerbos.telemetry.v1.ServerLaunch.Stats.Policy.AvgRuleCountEntry
+	nil,                                        // 18: cerbos.telemetry.v1.ServerLaunch.Stats.Policy.AvgConditionCountEntry
+	(*Event_ApiActivity)(nil),                  // 19: cerbos.telemetry.v1.Event.ApiActivity
+	nil,                                        // 20: cerbos.telemetry.v1.Event.ApiActivity.MethodCallsEntry
+	nil,                                        // 21: cerbos.telemetry.v1.Event.ApiActivity.UserAgentsEntry
+	(*durationpb.Duration)(nil),                // 22: google.protobuf.Duration
 }
 var file_cerbos_telemetry_v1_telemetry_proto_depIdxs = []int32{
-	2,  // 0: cerbos.telemetry.v1.Ping.source:type_name -> cerbos.telemetry.v1.Ping.Source
-	3,  // 1: cerbos.telemetry.v1.Ping.features:type_name -> cerbos.telemetry.v1.Ping.Features
-	4,  // 2: cerbos.telemetry.v1.Ping.stats:type_name -> cerbos.telemetry.v1.Ping.Stats
-	1,  // 3: cerbos.telemetry.v1.Ping.Source.cerbos:type_name -> cerbos.telemetry.v1.Ping.Cerbos
-	5,  // 4: cerbos.telemetry.v1.Ping.Features.audit:type_name -> cerbos.telemetry.v1.Ping.Features.Audit
-	6,  // 5: cerbos.telemetry.v1.Ping.Features.schema:type_name -> cerbos.telemetry.v1.Ping.Features.Schema
-	7,  // 6: cerbos.telemetry.v1.Ping.Features.admin_api:type_name -> cerbos.telemetry.v1.Ping.Features.AdminApi
-	8,  // 7: cerbos.telemetry.v1.Ping.Features.storage:type_name -> cerbos.telemetry.v1.Ping.Features.Storage
-	12, // 8: cerbos.telemetry.v1.Ping.Stats.policy:type_name -> cerbos.telemetry.v1.Ping.Stats.Policy
-	13, // 9: cerbos.telemetry.v1.Ping.Stats.schema:type_name -> cerbos.telemetry.v1.Ping.Stats.Schema
-	9,  // 10: cerbos.telemetry.v1.Ping.Features.Storage.disk:type_name -> cerbos.telemetry.v1.Ping.Features.Storage.Disk
-	10, // 11: cerbos.telemetry.v1.Ping.Features.Storage.git:type_name -> cerbos.telemetry.v1.Ping.Features.Storage.Git
-	11, // 12: cerbos.telemetry.v1.Ping.Features.Storage.blob:type_name -> cerbos.telemetry.v1.Ping.Features.Storage.Blob
-	17, // 13: cerbos.telemetry.v1.Ping.Features.Storage.Git.poll_interval:type_name -> google.protobuf.Duration
-	17, // 14: cerbos.telemetry.v1.Ping.Features.Storage.Blob.poll_interval:type_name -> google.protobuf.Duration
-	14, // 15: cerbos.telemetry.v1.Ping.Stats.Policy.count:type_name -> cerbos.telemetry.v1.Ping.Stats.Policy.CountEntry
-	15, // 16: cerbos.telemetry.v1.Ping.Stats.Policy.avg_rule_count:type_name -> cerbos.telemetry.v1.Ping.Stats.Policy.AvgRuleCountEntry
-	16, // 17: cerbos.telemetry.v1.Ping.Stats.Policy.avg_condition_count:type_name -> cerbos.telemetry.v1.Ping.Stats.Policy.AvgConditionCountEntry
-	18, // [18:18] is the sub-list for method output_type
-	18, // [18:18] is the sub-list for method input_type
-	18, // [18:18] is the sub-list for extension type_name
-	18, // [18:18] is the sub-list for extension extendee
-	0,  // [0:18] is the sub-list for field type_name
+	4,  // 0: cerbos.telemetry.v1.ServerLaunch.source:type_name -> cerbos.telemetry.v1.ServerLaunch.Source
+	5,  // 1: cerbos.telemetry.v1.ServerLaunch.features:type_name -> cerbos.telemetry.v1.ServerLaunch.Features
+	6,  // 2: cerbos.telemetry.v1.ServerLaunch.stats:type_name -> cerbos.telemetry.v1.ServerLaunch.Stats
+	22, // 3: cerbos.telemetry.v1.ServerStop.uptime:type_name -> google.protobuf.Duration
+	19, // 4: cerbos.telemetry.v1.Event.api_activity:type_name -> cerbos.telemetry.v1.Event.ApiActivity
+	3,  // 5: cerbos.telemetry.v1.ServerLaunch.Source.cerbos:type_name -> cerbos.telemetry.v1.ServerLaunch.Cerbos
+	7,  // 6: cerbos.telemetry.v1.ServerLaunch.Features.audit:type_name -> cerbos.telemetry.v1.ServerLaunch.Features.Audit
+	8,  // 7: cerbos.telemetry.v1.ServerLaunch.Features.schema:type_name -> cerbos.telemetry.v1.ServerLaunch.Features.Schema
+	9,  // 8: cerbos.telemetry.v1.ServerLaunch.Features.admin_api:type_name -> cerbos.telemetry.v1.ServerLaunch.Features.AdminApi
+	10, // 9: cerbos.telemetry.v1.ServerLaunch.Features.storage:type_name -> cerbos.telemetry.v1.ServerLaunch.Features.Storage
+	14, // 10: cerbos.telemetry.v1.ServerLaunch.Stats.policy:type_name -> cerbos.telemetry.v1.ServerLaunch.Stats.Policy
+	15, // 11: cerbos.telemetry.v1.ServerLaunch.Stats.schema:type_name -> cerbos.telemetry.v1.ServerLaunch.Stats.Schema
+	11, // 12: cerbos.telemetry.v1.ServerLaunch.Features.Storage.disk:type_name -> cerbos.telemetry.v1.ServerLaunch.Features.Storage.Disk
+	12, // 13: cerbos.telemetry.v1.ServerLaunch.Features.Storage.git:type_name -> cerbos.telemetry.v1.ServerLaunch.Features.Storage.Git
+	13, // 14: cerbos.telemetry.v1.ServerLaunch.Features.Storage.blob:type_name -> cerbos.telemetry.v1.ServerLaunch.Features.Storage.Blob
+	22, // 15: cerbos.telemetry.v1.ServerLaunch.Features.Storage.Git.poll_interval:type_name -> google.protobuf.Duration
+	22, // 16: cerbos.telemetry.v1.ServerLaunch.Features.Storage.Blob.poll_interval:type_name -> google.protobuf.Duration
+	16, // 17: cerbos.telemetry.v1.ServerLaunch.Stats.Policy.count:type_name -> cerbos.telemetry.v1.ServerLaunch.Stats.Policy.CountEntry
+	17, // 18: cerbos.telemetry.v1.ServerLaunch.Stats.Policy.avg_rule_count:type_name -> cerbos.telemetry.v1.ServerLaunch.Stats.Policy.AvgRuleCountEntry
+	18, // 19: cerbos.telemetry.v1.ServerLaunch.Stats.Policy.avg_condition_count:type_name -> cerbos.telemetry.v1.ServerLaunch.Stats.Policy.AvgConditionCountEntry
+	22, // 20: cerbos.telemetry.v1.Event.ApiActivity.uptime:type_name -> google.protobuf.Duration
+	20, // 21: cerbos.telemetry.v1.Event.ApiActivity.method_calls:type_name -> cerbos.telemetry.v1.Event.ApiActivity.MethodCallsEntry
+	21, // 22: cerbos.telemetry.v1.Event.ApiActivity.user_agents:type_name -> cerbos.telemetry.v1.Event.ApiActivity.UserAgentsEntry
+	23, // [23:23] is the sub-list for method output_type
+	23, // [23:23] is the sub-list for method input_type
+	23, // [23:23] is the sub-list for extension type_name
+	23, // [23:23] is the sub-list for extension extendee
+	0,  // [0:23] is the sub-list for field type_name
 }
 
 func init() { file_cerbos_telemetry_v1_telemetry_proto_init() }
@@ -1114,7 +1372,7 @@ func file_cerbos_telemetry_v1_telemetry_proto_init() {
 	}
 	if !protoimpl.UnsafeEnabled {
 		file_cerbos_telemetry_v1_telemetry_proto_msgTypes[0].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*Ping); i {
+			switch v := v.(*ServerLaunch); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -1126,7 +1384,7 @@ func file_cerbos_telemetry_v1_telemetry_proto_init() {
 			}
 		}
 		file_cerbos_telemetry_v1_telemetry_proto_msgTypes[1].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*Ping_Cerbos); i {
+			switch v := v.(*ServerStop); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -1138,7 +1396,7 @@ func file_cerbos_telemetry_v1_telemetry_proto_init() {
 			}
 		}
 		file_cerbos_telemetry_v1_telemetry_proto_msgTypes[2].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*Ping_Source); i {
+			switch v := v.(*Event); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -1150,7 +1408,7 @@ func file_cerbos_telemetry_v1_telemetry_proto_init() {
 			}
 		}
 		file_cerbos_telemetry_v1_telemetry_proto_msgTypes[3].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*Ping_Features); i {
+			switch v := v.(*ServerLaunch_Cerbos); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -1162,7 +1420,7 @@ func file_cerbos_telemetry_v1_telemetry_proto_init() {
 			}
 		}
 		file_cerbos_telemetry_v1_telemetry_proto_msgTypes[4].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*Ping_Stats); i {
+			switch v := v.(*ServerLaunch_Source); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -1174,7 +1432,7 @@ func file_cerbos_telemetry_v1_telemetry_proto_init() {
 			}
 		}
 		file_cerbos_telemetry_v1_telemetry_proto_msgTypes[5].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*Ping_Features_Audit); i {
+			switch v := v.(*ServerLaunch_Features); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -1186,7 +1444,7 @@ func file_cerbos_telemetry_v1_telemetry_proto_init() {
 			}
 		}
 		file_cerbos_telemetry_v1_telemetry_proto_msgTypes[6].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*Ping_Features_Schema); i {
+			switch v := v.(*ServerLaunch_Stats); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -1198,7 +1456,7 @@ func file_cerbos_telemetry_v1_telemetry_proto_init() {
 			}
 		}
 		file_cerbos_telemetry_v1_telemetry_proto_msgTypes[7].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*Ping_Features_AdminApi); i {
+			switch v := v.(*ServerLaunch_Features_Audit); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -1210,7 +1468,7 @@ func file_cerbos_telemetry_v1_telemetry_proto_init() {
 			}
 		}
 		file_cerbos_telemetry_v1_telemetry_proto_msgTypes[8].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*Ping_Features_Storage); i {
+			switch v := v.(*ServerLaunch_Features_Schema); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -1222,7 +1480,7 @@ func file_cerbos_telemetry_v1_telemetry_proto_init() {
 			}
 		}
 		file_cerbos_telemetry_v1_telemetry_proto_msgTypes[9].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*Ping_Features_Storage_Disk); i {
+			switch v := v.(*ServerLaunch_Features_AdminApi); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -1234,7 +1492,7 @@ func file_cerbos_telemetry_v1_telemetry_proto_init() {
 			}
 		}
 		file_cerbos_telemetry_v1_telemetry_proto_msgTypes[10].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*Ping_Features_Storage_Git); i {
+			switch v := v.(*ServerLaunch_Features_Storage); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -1246,7 +1504,7 @@ func file_cerbos_telemetry_v1_telemetry_proto_init() {
 			}
 		}
 		file_cerbos_telemetry_v1_telemetry_proto_msgTypes[11].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*Ping_Features_Storage_Blob); i {
+			switch v := v.(*ServerLaunch_Features_Storage_Disk); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -1258,7 +1516,7 @@ func file_cerbos_telemetry_v1_telemetry_proto_init() {
 			}
 		}
 		file_cerbos_telemetry_v1_telemetry_proto_msgTypes[12].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*Ping_Stats_Policy); i {
+			switch v := v.(*ServerLaunch_Features_Storage_Git); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -1270,7 +1528,43 @@ func file_cerbos_telemetry_v1_telemetry_proto_init() {
 			}
 		}
 		file_cerbos_telemetry_v1_telemetry_proto_msgTypes[13].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*Ping_Stats_Schema); i {
+			switch v := v.(*ServerLaunch_Features_Storage_Blob); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_cerbos_telemetry_v1_telemetry_proto_msgTypes[14].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*ServerLaunch_Stats_Policy); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_cerbos_telemetry_v1_telemetry_proto_msgTypes[15].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*ServerLaunch_Stats_Schema); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_cerbos_telemetry_v1_telemetry_proto_msgTypes[19].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*Event_ApiActivity); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -1282,10 +1576,13 @@ func file_cerbos_telemetry_v1_telemetry_proto_init() {
 			}
 		}
 	}
-	file_cerbos_telemetry_v1_telemetry_proto_msgTypes[8].OneofWrappers = []interface{}{
-		(*Ping_Features_Storage_Disk_)(nil),
-		(*Ping_Features_Storage_Git_)(nil),
-		(*Ping_Features_Storage_Blob_)(nil),
+	file_cerbos_telemetry_v1_telemetry_proto_msgTypes[2].OneofWrappers = []interface{}{
+		(*Event_ApiActivity_)(nil),
+	}
+	file_cerbos_telemetry_v1_telemetry_proto_msgTypes[10].OneofWrappers = []interface{}{
+		(*ServerLaunch_Features_Storage_Disk_)(nil),
+		(*ServerLaunch_Features_Storage_Git_)(nil),
+		(*ServerLaunch_Features_Storage_Blob_)(nil),
 	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
@@ -1293,7 +1590,7 @@ func file_cerbos_telemetry_v1_telemetry_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_cerbos_telemetry_v1_telemetry_proto_rawDesc,
 			NumEnums:      0,
-			NumMessages:   17,
+			NumMessages:   22,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

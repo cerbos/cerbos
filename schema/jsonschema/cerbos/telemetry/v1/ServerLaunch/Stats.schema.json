@@ -1,8 +1,8 @@
 {
-  "$id": "https://api.cerbos.dev/cerbos/telemetry/v1/Ping/Stats.schema.json",
+  "$id": "https://api.cerbos.dev/cerbos/telemetry/v1/ServerLaunch/Stats.schema.json",
   "$schema": "http://json-schema.org/draft-07/schema#",
   "definitions": {
-    "cerbos.telemetry.v1.Ping.Stats.Policy": {
+    "cerbos.telemetry.v1.ServerLaunch.Stats.Policy": {
       "type": "object",
       "additionalProperties": false,
       "properties": {
@@ -27,7 +27,7 @@
         }
       }
     },
-    "cerbos.telemetry.v1.Ping.Stats.Schema": {
+    "cerbos.telemetry.v1.ServerLaunch.Stats.Schema": {
       "type": "object",
       "additionalProperties": false,
       "properties": {
@@ -42,10 +42,10 @@
   "additionalProperties": false,
   "properties": {
     "policy": {
-      "$ref": "#/definitions/cerbos.telemetry.v1.Ping.Stats.Policy"
+      "$ref": "#/definitions/cerbos.telemetry.v1.ServerLaunch.Stats.Policy"
     },
     "schema": {
-      "$ref": "#/definitions/cerbos.telemetry.v1.Ping.Stats.Schema"
+      "$ref": "#/definitions/cerbos.telemetry.v1.ServerLaunch.Stats.Schema"
     }
   }
 }

@@ -120,6 +120,7 @@ storage:
     url: "sqlserver://username:password@host/instance?param1=value&param2=value" # Required. URL is the SQL Server connection URL. See https://github.com/denisenkom/go-mssqldb#connection-parameters-and-dsn
 telemetry:
   disabled: false # Disabled sets whether telemetry collection is disabled or not.
+  reportInterval: 1h # ReportInterval is the interval between telemetry pings.
   stateDir: ${HOME}/.config/cerbos # StateDir is used to persist state to avoid repeatedly sending the data over and over again.
 tracing:
   exporter: jaeger # Exporter is the type of trace exporter to use.

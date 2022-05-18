@@ -1,8 +1,8 @@
 {
-  "$id": "https://api.cerbos.dev/cerbos/telemetry/v1/Ping/Source.schema.json",
+  "$id": "https://api.cerbos.dev/cerbos/telemetry/v1/ServerLaunch/Source.schema.json",
   "$schema": "http://json-schema.org/draft-07/schema#",
   "definitions": {
-    "cerbos.telemetry.v1.Ping.Cerbos": {
+    "cerbos.telemetry.v1.ServerLaunch.Cerbos": {
       "type": "object",
       "additionalProperties": false,
       "properties": {
@@ -31,7 +31,7 @@
       "type": "string"
     },
     "cerbos": {
-      "$ref": "#/definitions/cerbos.telemetry.v1.Ping.Cerbos"
+      "$ref": "#/definitions/cerbos.telemetry.v1.ServerLaunch.Cerbos"
     },
     "numCpus": {
       "type": "integer",

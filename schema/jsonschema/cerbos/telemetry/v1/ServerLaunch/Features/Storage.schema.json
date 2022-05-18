@@ -1,8 +1,8 @@
 {
-  "$id": "https://api.cerbos.dev/cerbos/telemetry/v1/Ping/Features/Storage.schema.json",
+  "$id": "https://api.cerbos.dev/cerbos/telemetry/v1/ServerLaunch/Features/Storage.schema.json",
   "$schema": "http://json-schema.org/draft-07/schema#",
   "definitions": {
-    "cerbos.telemetry.v1.Ping.Features.Storage.Blob": {
+    "cerbos.telemetry.v1.ServerLaunch.Features.Storage.Blob": {
       "type": "object",
       "additionalProperties": false,
       "properties": {
@@ -14,7 +14,7 @@
         }
       }
     },
-    "cerbos.telemetry.v1.Ping.Features.Storage.Disk": {
+    "cerbos.telemetry.v1.ServerLaunch.Features.Storage.Disk": {
       "type": "object",
       "additionalProperties": false,
       "properties": {
@@ -23,7 +23,7 @@
         }
       }
     },
-    "cerbos.telemetry.v1.Ping.Features.Storage.Git": {
+    "cerbos.telemetry.v1.ServerLaunch.Features.Storage.Git": {
       "type": "object",
       "additionalProperties": false,
       "properties": {
@@ -49,16 +49,16 @@
   "additionalProperties": false,
   "properties": {
     "blob": {
-      "$ref": "#/definitions/cerbos.telemetry.v1.Ping.Features.Storage.Blob"
+      "$ref": "#/definitions/cerbos.telemetry.v1.ServerLaunch.Features.Storage.Blob"
     },
     "disk": {
-      "$ref": "#/definitions/cerbos.telemetry.v1.Ping.Features.Storage.Disk"
+      "$ref": "#/definitions/cerbos.telemetry.v1.ServerLaunch.Features.Storage.Disk"
     },
     "driver": {
       "type": "string"
     },
     "git": {
-      "$ref": "#/definitions/cerbos.telemetry.v1.Ping.Features.Storage.Git"
+      "$ref": "#/definitions/cerbos.telemetry.v1.ServerLaunch.Features.Storage.Git"
     }
   }
 }

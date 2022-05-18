@@ -35,21 +35,22 @@ var (
 	_ = sort.Sort
 )
 
-// Validate checks the field values on Ping with the rules defined in the proto
-// definition for this message. If any rules are violated, the first error
-// encountered is returned, or nil if there are no violations.
-func (m *Ping) Validate() error {
+// Validate checks the field values on ServerLaunch with the rules defined in
+// the proto definition for this message. If any rules are violated, the first
+// error encountered is returned, or nil if there are no violations.
+func (m *ServerLaunch) Validate() error {
 	return m.validate(false)
 }
 
-// ValidateAll checks the field values on Ping with the rules defined in the
-// proto definition for this message. If any rules are violated, the result is
-// a list of violation errors wrapped in PingMultiError, or nil if none found.
-func (m *Ping) ValidateAll() error {
+// ValidateAll checks the field values on ServerLaunch with the rules defined
+// in the proto definition for this message. If any rules are violated, the
+// result is a list of violation errors wrapped in ServerLaunchMultiError, or
+// nil if none found.
+func (m *ServerLaunch) ValidateAll() error {
 	return m.validate(true)
 }
 
-func (m *Ping) validate(all bool) error {
+func (m *ServerLaunch) validate(all bool) error {
 	if m == nil {
 		return nil
 	}
@@ -62,7 +63,7 @@ func (m *Ping) validate(all bool) error {
 		switch v := interface{}(m.GetSource()).(type) {
 		case interface{ ValidateAll() error }:
 			if err := v.ValidateAll(); err != nil {
-				errors = append(errors, PingValidationError{
+				errors = append(errors, ServerLaunchValidationError{
 					field:  "Source",
 					reason: "embedded message failed validation",
 					cause:  err,
@@ -70,7 +71,7 @@ func (m *Ping) validate(all bool) error {
 			}
 		case interface{ Validate() error }:
 			if err := v.Validate(); err != nil {
-				errors = append(errors, PingValidationError{
+				errors = append(errors, ServerLaunchValidationError{
 					field:  "Source",
 					reason: "embedded message failed validation",
 					cause:  err,
@@ -79,7 +80,7 @@ func (m *Ping) validate(all bool) error {
 		}
 	} else if v, ok := interface{}(m.GetSource()).(interface{ Validate() error }); ok {
 		if err := v.Validate(); err != nil {
-			return PingValidationError{
+			return ServerLaunchValidationError{
 				field:  "Source",
 				reason: "embedded message failed validation",
 				cause:  err,
@@ -91,7 +92,7 @@ func (m *Ping) validate(all bool) error {
 		switch v := interface{}(m.GetFeatures()).(type) {
 		case interface{ ValidateAll() error }:
 			if err := v.ValidateAll(); err != nil {
-				errors = append(errors, PingValidationError{
+				errors = append(errors, ServerLaunchValidationError{
 					field:  "Features",
 					reason: "embedded message failed validation",
 					cause:  err,
@@ -99,7 +100,7 @@ func (m *Ping) validate(all bool) error {
 			}
 		case interface{ Validate() error }:
 			if err := v.Validate(); err != nil {
-				errors = append(errors, PingValidationError{
+				errors = append(errors, ServerLaunchValidationError{
 					field:  "Features",
 					reason: "embedded message failed validation",
 					cause:  err,
@@ -108,7 +109,7 @@ func (m *Ping) validate(all bool) error {
 		}
 	} else if v, ok := interface{}(m.GetFeatures()).(interface{ Validate() error }); ok {
 		if err := v.Validate(); err != nil {
-			return PingValidationError{
+			return ServerLaunchValidationError{
 				field:  "Features",
 				reason: "embedded message failed validation",
 				cause:  err,
@@ -120,7 +121,7 @@ func (m *Ping) validate(all bool) error {
 		switch v := interface{}(m.GetStats()).(type) {
 		case interface{ ValidateAll() error }:
 			if err := v.ValidateAll(); err != nil {
-				errors = append(errors, PingValidationError{
+				errors = append(errors, ServerLaunchValidationError{
 					field:  "Stats",
 					reason: "embedded message failed validation",
 					cause:  err,
@@ -128,7 +129,7 @@ func (m *Ping) validate(all bool) error {
 			}
 		case interface{ Validate() error }:
 			if err := v.Validate(); err != nil {
-				errors = append(errors, PingValidationError{
+				errors = append(errors, ServerLaunchValidationError{
 					field:  "Stats",
 					reason: "embedded message failed validation",
 					cause:  err,
@@ -137,7 +138,7 @@ func (m *Ping) validate(all bool) error {
 		}
 	} else if v, ok := interface{}(m.GetStats()).(interface{ Validate() error }); ok {
 		if err := v.Validate(); err != nil {
-			return PingValidationError{
+			return ServerLaunchValidationError{
 				field:  "Stats",
 				reason: "embedded message failed validation",
 				cause:  err,
@@ -146,18 +147,18 @@ func (m *Ping) validate(all bool) error {
 	}
 
 	if len(errors) > 0 {
-		return PingMultiError(errors)
+		return ServerLaunchMultiError(errors)
 	}
 
 	return nil
 }
 
-// PingMultiError is an error wrapping multiple validation errors returned by
-// Ping.ValidateAll() if the designated constraints aren't met.
-type PingMultiError []error
+// ServerLaunchMultiError is an error wrapping multiple validation errors
+// returned by ServerLaunch.ValidateAll() if the designated constraints aren't met.
+type ServerLaunchMultiError []error
 
 // Error returns a concatenation of all the error messages it wraps.
-func (m PingMultiError) Error() string {
+func (m ServerLaunchMultiError) Error() string {
 	var msgs []string
 	for _, err := range m {
 		msgs = append(msgs, err.Error())
@@ -166,11 +167,11 @@ func (m PingMultiError) Error() string {
 }
 
 // AllErrors returns a list of validation violation errors.
-func (m PingMultiError) AllErrors() []error { return m }
+func (m ServerLaunchMultiError) AllErrors() []error { return m }
 
-// PingValidationError is the validation error returned by Ping.Validate if the
-// designated constraints aren't met.
-type PingValidationError struct {
+// ServerLaunchValidationError is the validation error returned by
+// ServerLaunch.Validate if the designated constraints aren't met.
+type ServerLaunchValidationError struct {
 	field  string
 	reason string
 	cause  error
@@ -178,22 +179,22 @@ type PingValidationError struct {
 }
 
 // Field function returns field value.
-func (e PingValidationError) Field() string { return e.field }
+func (e ServerLaunchValidationError) Field() string { return e.field }
 
 // Reason function returns reason value.
-func (e PingValidationError) Reason() string { return e.reason }
+func (e ServerLaunchValidationError) Reason() string { return e.reason }
 
 // Cause function returns cause value.
-func (e PingValidationError) Cause() error { return e.cause }
+func (e ServerLaunchValidationError) Cause() error { return e.cause }
 
 // Key function returns key value.
-func (e PingValidationError) Key() bool { return e.key }
+func (e ServerLaunchValidationError) Key() bool { return e.key }
 
 // ErrorName returns error name.
-func (e PingValidationError) ErrorName() string { return "PingValidationError" }
+func (e ServerLaunchValidationError) ErrorName() string { return "ServerLaunchValidationError" }
 
 // Error satisfies the builtin error interface
-func (e PingValidationError) Error() string {
+func (e ServerLaunchValidationError) Error() string {
 	cause := ""
 	if e.cause != nil {
 		cause = fmt.Sprintf(" | caused by: %v", e.cause)
@@ -205,14 +206,14 @@ func (e PingValidationError) Error() string {
 	}
 
 	return fmt.Sprintf(
-		"invalid %sPing.%s: %s%s",
+		"invalid %sServerLaunch.%s: %s%s",
 		key,
 		e.field,
 		e.reason,
 		cause)
 }
 
-var _ error = PingValidationError{}
+var _ error = ServerLaunchValidationError{}
 
 var _ interface {
 	Field() string
@@ -220,24 +221,289 @@ var _ interface {
 	Key() bool
 	Cause() error
 	ErrorName() string
-} = PingValidationError{}
+} = ServerLaunchValidationError{}
 
-// Validate checks the field values on Ping_Cerbos with the rules defined in
-// the proto definition for this message. If any rules are violated, the first
+// Validate checks the field values on ServerStop with the rules defined in the
+// proto definition for this message. If any rules are violated, the first
 // error encountered is returned, or nil if there are no violations.
-func (m *Ping_Cerbos) Validate() error {
+func (m *ServerStop) Validate() error {
 	return m.validate(false)
 }
 
-// ValidateAll checks the field values on Ping_Cerbos with the rules defined in
+// ValidateAll checks the field values on ServerStop with the rules defined in
 // the proto definition for this message. If any rules are violated, the
-// result is a list of violation errors wrapped in Ping_CerbosMultiError, or
+// result is a list of violation errors wrapped in ServerStopMultiError, or
 // nil if none found.
-func (m *Ping_Cerbos) ValidateAll() error {
+func (m *ServerStop) ValidateAll() error {
 	return m.validate(true)
 }
 
-func (m *Ping_Cerbos) validate(all bool) error {
+func (m *ServerStop) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for Version
+
+	if all {
+		switch v := interface{}(m.GetUptime()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, ServerStopValidationError{
+					field:  "Uptime",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, ServerStopValidationError{
+					field:  "Uptime",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetUptime()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return ServerStopValidationError{
+				field:  "Uptime",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	// no validation rules for RequestsTotal
+
+	if len(errors) > 0 {
+		return ServerStopMultiError(errors)
+	}
+
+	return nil
+}
+
+// ServerStopMultiError is an error wrapping multiple validation errors
+// returned by ServerStop.ValidateAll() if the designated constraints aren't met.
+type ServerStopMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m ServerStopMultiError) Error() string {
+	var msgs []string
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m ServerStopMultiError) AllErrors() []error { return m }
+
+// ServerStopValidationError is the validation error returned by
+// ServerStop.Validate if the designated constraints aren't met.
+type ServerStopValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e ServerStopValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e ServerStopValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e ServerStopValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e ServerStopValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e ServerStopValidationError) ErrorName() string { return "ServerStopValidationError" }
+
+// Error satisfies the builtin error interface
+func (e ServerStopValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sServerStop.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = ServerStopValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = ServerStopValidationError{}
+
+// Validate checks the field values on Event with the rules defined in the
+// proto definition for this message. If any rules are violated, the first
+// error encountered is returned, or nil if there are no violations.
+func (m *Event) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on Event with the rules defined in the
+// proto definition for this message. If any rules are violated, the result is
+// a list of violation errors wrapped in EventMultiError, or nil if none found.
+func (m *Event) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *Event) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	switch m.Data.(type) {
+
+	case *Event_ApiActivity_:
+
+		if all {
+			switch v := interface{}(m.GetApiActivity()).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, EventValidationError{
+						field:  "ApiActivity",
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, EventValidationError{
+						field:  "ApiActivity",
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(m.GetApiActivity()).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return EventValidationError{
+					field:  "ApiActivity",
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	}
+
+	if len(errors) > 0 {
+		return EventMultiError(errors)
+	}
+
+	return nil
+}
+
+// EventMultiError is an error wrapping multiple validation errors returned by
+// Event.ValidateAll() if the designated constraints aren't met.
+type EventMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m EventMultiError) Error() string {
+	var msgs []string
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m EventMultiError) AllErrors() []error { return m }
+
+// EventValidationError is the validation error returned by Event.Validate if
+// the designated constraints aren't met.
+type EventValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e EventValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e EventValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e EventValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e EventValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e EventValidationError) ErrorName() string { return "EventValidationError" }
+
+// Error satisfies the builtin error interface
+func (e EventValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sEvent.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = EventValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = EventValidationError{}
+
+// Validate checks the field values on ServerLaunch_Cerbos with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *ServerLaunch_Cerbos) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on ServerLaunch_Cerbos with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// ServerLaunch_CerbosMultiError, or nil if none found.
+func (m *ServerLaunch_Cerbos) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *ServerLaunch_Cerbos) validate(all bool) error {
 	if m == nil {
 		return nil
 	}
@@ -255,18 +521,19 @@ func (m *Ping_Cerbos) validate(all bool) error {
 	// no validation rules for ModuleChecksum
 
 	if len(errors) > 0 {
-		return Ping_CerbosMultiError(errors)
+		return ServerLaunch_CerbosMultiError(errors)
 	}
 
 	return nil
 }
 
-// Ping_CerbosMultiError is an error wrapping multiple validation errors
-// returned by Ping_Cerbos.ValidateAll() if the designated constraints aren't met.
-type Ping_CerbosMultiError []error
+// ServerLaunch_CerbosMultiError is an error wrapping multiple validation
+// errors returned by ServerLaunch_Cerbos.ValidateAll() if the designated
+// constraints aren't met.
+type ServerLaunch_CerbosMultiError []error
 
 // Error returns a concatenation of all the error messages it wraps.
-func (m Ping_CerbosMultiError) Error() string {
+func (m ServerLaunch_CerbosMultiError) Error() string {
 	var msgs []string
 	for _, err := range m {
 		msgs = append(msgs, err.Error())
@@ -275,11 +542,11 @@ func (m Ping_CerbosMultiError) Error() string {
 }
 
 // AllErrors returns a list of validation violation errors.
-func (m Ping_CerbosMultiError) AllErrors() []error { return m }
+func (m ServerLaunch_CerbosMultiError) AllErrors() []error { return m }
 
-// Ping_CerbosValidationError is the validation error returned by
-// Ping_Cerbos.Validate if the designated constraints aren't met.
-type Ping_CerbosValidationError struct {
+// ServerLaunch_CerbosValidationError is the validation error returned by
+// ServerLaunch_Cerbos.Validate if the designated constraints aren't met.
+type ServerLaunch_CerbosValidationError struct {
 	field  string
 	reason string
 	cause  error
@@ -287,22 +554,24 @@ type Ping_CerbosValidationError struct {
 }
 
 // Field function returns field value.
-func (e Ping_CerbosValidationError) Field() string { return e.field }
+func (e ServerLaunch_CerbosValidationError) Field() string { return e.field }
 
 // Reason function returns reason value.
-func (e Ping_CerbosValidationError) Reason() string { return e.reason }
+func (e ServerLaunch_CerbosValidationError) Reason() string { return e.reason }
 
 // Cause function returns cause value.
-func (e Ping_CerbosValidationError) Cause() error { return e.cause }
+func (e ServerLaunch_CerbosValidationError) Cause() error { return e.cause }
 
 // Key function returns key value.
-func (e Ping_CerbosValidationError) Key() bool { return e.key }
+func (e ServerLaunch_CerbosValidationError) Key() bool { return e.key }
 
 // ErrorName returns error name.
-func (e Ping_CerbosValidationError) ErrorName() string { return "Ping_CerbosValidationError" }
+func (e ServerLaunch_CerbosValidationError) ErrorName() string {
+	return "ServerLaunch_CerbosValidationError"
+}
 
 // Error satisfies the builtin error interface
-func (e Ping_CerbosValidationError) Error() string {
+func (e ServerLaunch_CerbosValidationError) Error() string {
 	cause := ""
 	if e.cause != nil {
 		cause = fmt.Sprintf(" | caused by: %v", e.cause)
@@ -314,14 +583,14 @@ func (e Ping_CerbosValidationError) Error() string {
 	}
 
 	return fmt.Sprintf(
-		"invalid %sPing_Cerbos.%s: %s%s",
+		"invalid %sServerLaunch_Cerbos.%s: %s%s",
 		key,
 		e.field,
 		e.reason,
 		cause)
 }
 
-var _ error = Ping_CerbosValidationError{}
+var _ error = ServerLaunch_CerbosValidationError{}
 
 var _ interface {
 	Field() string
@@ -329,24 +598,24 @@ var _ interface {
 	Key() bool
 	Cause() error
 	ErrorName() string
-} = Ping_CerbosValidationError{}
+} = ServerLaunch_CerbosValidationError{}
 
-// Validate checks the field values on Ping_Source with the rules defined in
-// the proto definition for this message. If any rules are violated, the first
-// error encountered is returned, or nil if there are no violations.
-func (m *Ping_Source) Validate() error {
+// Validate checks the field values on ServerLaunch_Source with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *ServerLaunch_Source) Validate() error {
 	return m.validate(false)
 }
 
-// ValidateAll checks the field values on Ping_Source with the rules defined in
-// the proto definition for this message. If any rules are violated, the
-// result is a list of violation errors wrapped in Ping_SourceMultiError, or
-// nil if none found.
-func (m *Ping_Source) ValidateAll() error {
+// ValidateAll checks the field values on ServerLaunch_Source with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// ServerLaunch_SourceMultiError, or nil if none found.
+func (m *ServerLaunch_Source) ValidateAll() error {
 	return m.validate(true)
 }
 
-func (m *Ping_Source) validate(all bool) error {
+func (m *ServerLaunch_Source) validate(all bool) error {
 	if m == nil {
 		return nil
 	}
@@ -357,7 +626,7 @@ func (m *Ping_Source) validate(all bool) error {
 		switch v := interface{}(m.GetCerbos()).(type) {
 		case interface{ ValidateAll() error }:
 			if err := v.ValidateAll(); err != nil {
-				errors = append(errors, Ping_SourceValidationError{
+				errors = append(errors, ServerLaunch_SourceValidationError{
 					field:  "Cerbos",
 					reason: "embedded message failed validation",
 					cause:  err,
@@ -365,7 +634,7 @@ func (m *Ping_Source) validate(all bool) error {
 			}
 		case interface{ Validate() error }:
 			if err := v.Validate(); err != nil {
-				errors = append(errors, Ping_SourceValidationError{
+				errors = append(errors, ServerLaunch_SourceValidationError{
 					field:  "Cerbos",
 					reason: "embedded message failed validation",
 					cause:  err,
@@ -374,7 +643,7 @@ func (m *Ping_Source) validate(all bool) error {
 		}
 	} else if v, ok := interface{}(m.GetCerbos()).(interface{ Validate() error }); ok {
 		if err := v.Validate(); err != nil {
-			return Ping_SourceValidationError{
+			return ServerLaunch_SourceValidationError{
 				field:  "Cerbos",
 				reason: "embedded message failed validation",
 				cause:  err,
@@ -389,18 +658,19 @@ func (m *Ping_Source) validate(all bool) error {
 	// no validation rules for NumCpus
 
 	if len(errors) > 0 {
-		return Ping_SourceMultiError(errors)
+		return ServerLaunch_SourceMultiError(errors)
 	}
 
 	return nil
 }
 
-// Ping_SourceMultiError is an error wrapping multiple validation errors
-// returned by Ping_Source.ValidateAll() if the designated constraints aren't met.
-type Ping_SourceMultiError []error
+// ServerLaunch_SourceMultiError is an error wrapping multiple validation
+// errors returned by ServerLaunch_Source.ValidateAll() if the designated
+// constraints aren't met.
+type ServerLaunch_SourceMultiError []error
 
 // Error returns a concatenation of all the error messages it wraps.
-func (m Ping_SourceMultiError) Error() string {
+func (m ServerLaunch_SourceMultiError) Error() string {
 	var msgs []string
 	for _, err := range m {
 		msgs = append(msgs, err.Error())
@@ -409,11 +679,11 @@ func (m Ping_SourceMultiError) Error() string {
 }
 
 // AllErrors returns a list of validation violation errors.
-func (m Ping_SourceMultiError) AllErrors() []error { return m }
+func (m ServerLaunch_SourceMultiError) AllErrors() []error { return m }
 
-// Ping_SourceValidationError is the validation error returned by
-// Ping_Source.Validate if the designated constraints aren't met.
-type Ping_SourceValidationError struct {
+// ServerLaunch_SourceValidationError is the validation error returned by
+// ServerLaunch_Source.Validate if the designated constraints aren't met.
+type ServerLaunch_SourceValidationError struct {
 	field  string
 	reason string
 	cause  error
@@ -421,22 +691,24 @@ type Ping_SourceValidationError struct {
 }
 
 // Field function returns field value.
-func (e Ping_SourceValidationError) Field() string { return e.field }
+func (e ServerLaunch_SourceValidationError) Field() string { return e.field }
 
 // Reason function returns reason value.
-func (e Ping_SourceValidationError) Reason() string { return e.reason }
+func (e ServerLaunch_SourceValidationError) Reason() string { return e.reason }
 
 // Cause function returns cause value.
-func (e Ping_SourceValidationError) Cause() error { return e.cause }
+func (e ServerLaunch_SourceValidationError) Cause() error { return e.cause }
 
 // Key function returns key value.
-func (e Ping_SourceValidationError) Key() bool { return e.key }
+func (e ServerLaunch_SourceValidationError) Key() bool { return e.key }
 
 // ErrorName returns error name.
-func (e Ping_SourceValidationError) ErrorName() string { return "Ping_SourceValidationError" }
+func (e ServerLaunch_SourceValidationError) ErrorName() string {
+	return "ServerLaunch_SourceValidationError"
+}
 
 // Error satisfies the builtin error interface
-func (e Ping_SourceValidationError) Error() string {
+func (e ServerLaunch_SourceValidationError) Error() string {
 	cause := ""
 	if e.cause != nil {
 		cause = fmt.Sprintf(" | caused by: %v", e.cause)
@@ -448,14 +720,14 @@ func (e Ping_SourceValidationError) Error() string {
 	}
 
 	return fmt.Sprintf(
-		"invalid %sPing_Source.%s: %s%s",
+		"invalid %sServerLaunch_Source.%s: %s%s",
 		key,
 		e.field,
 		e.reason,
 		cause)
 }
 
-var _ error = Ping_SourceValidationError{}
+var _ error = ServerLaunch_SourceValidationError{}
 
 var _ interface {
 	Field() string
@@ -463,24 +735,24 @@ var _ interface {
 	Key() bool
 	Cause() error
 	ErrorName() string
-} = Ping_SourceValidationError{}
+} = ServerLaunch_SourceValidationError{}
 
-// Validate checks the field values on Ping_Features with the rules defined in
-// the proto definition for this message. If any rules are violated, the first
-// error encountered is returned, or nil if there are no violations.
-func (m *Ping_Features) Validate() error {
+// Validate checks the field values on ServerLaunch_Features with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *ServerLaunch_Features) Validate() error {
 	return m.validate(false)
 }
 
-// ValidateAll checks the field values on Ping_Features with the rules defined
-// in the proto definition for this message. If any rules are violated, the
-// result is a list of violation errors wrapped in Ping_FeaturesMultiError, or
-// nil if none found.
-func (m *Ping_Features) ValidateAll() error {
+// ValidateAll checks the field values on ServerLaunch_Features with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// ServerLaunch_FeaturesMultiError, or nil if none found.
+func (m *ServerLaunch_Features) ValidateAll() error {
 	return m.validate(true)
 }
 
-func (m *Ping_Features) validate(all bool) error {
+func (m *ServerLaunch_Features) validate(all bool) error {
 	if m == nil {
 		return nil
 	}
@@ -491,7 +763,7 @@ func (m *Ping_Features) validate(all bool) error {
 		switch v := interface{}(m.GetAudit()).(type) {
 		case interface{ ValidateAll() error }:
 			if err := v.ValidateAll(); err != nil {
-				errors = append(errors, Ping_FeaturesValidationError{
+				errors = append(errors, ServerLaunch_FeaturesValidationError{
 					field:  "Audit",
 					reason: "embedded message failed validation",
 					cause:  err,
@@ -499,7 +771,7 @@ func (m *Ping_Features) validate(all bool) error {
 			}
 		case interface{ Validate() error }:
 			if err := v.Validate(); err != nil {
-				errors = append(errors, Ping_FeaturesValidationError{
+				errors = append(errors, ServerLaunch_FeaturesValidationError{
 					field:  "Audit",
 					reason: "embedded message failed validation",
 					cause:  err,
@@ -508,7 +780,7 @@ func (m *Ping_Features) validate(all bool) error {
 		}
 	} else if v, ok := interface{}(m.GetAudit()).(interface{ Validate() error }); ok {
 		if err := v.Validate(); err != nil {
-			return Ping_FeaturesValidationError{
+			return ServerLaunch_FeaturesValidationError{
 				field:  "Audit",
 				reason: "embedded message failed validation",
 				cause:  err,
@@ -520,7 +792,7 @@ func (m *Ping_Features) validate(all bool) error {
 		switch v := interface{}(m.GetSchema()).(type) {
 		case interface{ ValidateAll() error }:
 			if err := v.ValidateAll(); err != nil {
-				errors = append(errors, Ping_FeaturesValidationError{
+				errors = append(errors, ServerLaunch_FeaturesValidationError{
 					field:  "Schema",
 					reason: "embedded message failed validation",
 					cause:  err,
@@ -528,7 +800,7 @@ func (m *Ping_Features) validate(all bool) error {
 			}
 		case interface{ Validate() error }:
 			if err := v.Validate(); err != nil {
-				errors = append(errors, Ping_FeaturesValidationError{
+				errors = append(errors, ServerLaunch_FeaturesValidationError{
 					field:  "Schema",
 					reason: "embedded message failed validation",
 					cause:  err,
@@ -537,7 +809,7 @@ func (m *Ping_Features) validate(all bool) error {
 		}
 	} else if v, ok := interface{}(m.GetSchema()).(interface{ Validate() error }); ok {
 		if err := v.Validate(); err != nil {
-			return Ping_FeaturesValidationError{
+			return ServerLaunch_FeaturesValidationError{
 				field:  "Schema",
 				reason: "embedded message failed validation",
 				cause:  err,
@@ -549,7 +821,7 @@ func (m *Ping_Features) validate(all bool) error {
 		switch v := interface{}(m.GetAdminApi()).(type) {
 		case interface{ ValidateAll() error }:
 			if err := v.ValidateAll(); err != nil {
-				errors = append(errors, Ping_FeaturesValidationError{
+				errors = append(errors, ServerLaunch_FeaturesValidationError{
 					field:  "AdminApi",
 					reason: "embedded message failed validation",
 					cause:  err,
@@ -557,7 +829,7 @@ func (m *Ping_Features) validate(all bool) error {
 			}
 		case interface{ Validate() error }:
 			if err := v.Validate(); err != nil {
-				errors = append(errors, Ping_FeaturesValidationError{
+				errors = append(errors, ServerLaunch_FeaturesValidationError{
 					field:  "AdminApi",
 					reason: "embedded message failed validation",
 					cause:  err,
@@ -566,7 +838,7 @@ func (m *Ping_Features) validate(all bool) error {
 		}
 	} else if v, ok := interface{}(m.GetAdminApi()).(interface{ Validate() error }); ok {
 		if err := v.Validate(); err != nil {
-			return Ping_FeaturesValidationError{
+			return ServerLaunch_FeaturesValidationError{
 				field:  "AdminApi",
 				reason: "embedded message failed validation",
 				cause:  err,
@@ -578,7 +850,7 @@ func (m *Ping_Features) validate(all bool) error {
 		switch v := interface{}(m.GetStorage()).(type) {
 		case interface{ ValidateAll() error }:
 			if err := v.ValidateAll(); err != nil {
-				errors = append(errors, Ping_FeaturesValidationError{
+				errors = append(errors, ServerLaunch_FeaturesValidationError{
 					field:  "Storage",
 					reason: "embedded message failed validation",
 					cause:  err,
@@ -586,7 +858,7 @@ func (m *Ping_Features) validate(all bool) error {
 			}
 		case interface{ Validate() error }:
 			if err := v.Validate(); err != nil {
-				errors = append(errors, Ping_FeaturesValidationError{
+				errors = append(errors, ServerLaunch_FeaturesValidationError{
 					field:  "Storage",
 					reason: "embedded message failed validation",
 					cause:  err,
@@ -595,7 +867,7 @@ func (m *Ping_Features) validate(all bool) error {
 		}
 	} else if v, ok := interface{}(m.GetStorage()).(interface{ Validate() error }); ok {
 		if err := v.Validate(); err != nil {
-			return Ping_FeaturesValidationError{
+			return ServerLaunch_FeaturesValidationError{
 				field:  "Storage",
 				reason: "embedded message failed validation",
 				cause:  err,
@@ -604,19 +876,19 @@ func (m *Ping_Features) validate(all bool) error {
 	}
 
 	if len(errors) > 0 {
-		return Ping_FeaturesMultiError(errors)
+		return ServerLaunch_FeaturesMultiError(errors)
 	}
 
 	return nil
 }
 
-// Ping_FeaturesMultiError is an error wrapping multiple validation errors
-// returned by Ping_Features.ValidateAll() if the designated constraints
-// aren't met.
-type Ping_FeaturesMultiError []error
+// ServerLaunch_FeaturesMultiError is an error wrapping multiple validation
+// errors returned by ServerLaunch_Features.ValidateAll() if the designated
+// constraints aren't met.
+type ServerLaunch_FeaturesMultiError []error
 
 // Error returns a concatenation of all the error messages it wraps.
-func (m Ping_FeaturesMultiError) Error() string {
+func (m ServerLaunch_FeaturesMultiError) Error() string {
 	var msgs []string
 	for _, err := range m {
 		msgs = append(msgs, err.Error())
@@ -625,11 +897,11 @@ func (m Ping_FeaturesMultiError) Error() string {
 }
 
 // AllErrors returns a list of validation violation errors.
-func (m Ping_FeaturesMultiError) AllErrors() []error { return m }
+func (m ServerLaunch_FeaturesMultiError) AllErrors() []error { return m }
 
-// Ping_FeaturesValidationError is the validation error returned by
-// Ping_Features.Validate if the designated constraints aren't met.
-type Ping_FeaturesValidationError struct {
+// ServerLaunch_FeaturesValidationError is the validation error returned by
+// ServerLaunch_Features.Validate if the designated constraints aren't met.
+type ServerLaunch_FeaturesValidationError struct {
 	field  string
 	reason string
 	cause  error
@@ -637,22 +909,24 @@ type Ping_FeaturesValidationError struct {
 }
 
 // Field function returns field value.
-func (e Ping_FeaturesValidationError) Field() string { return e.field }
+func (e ServerLaunch_FeaturesValidationError) Field() string { return e.field }
 
 // Reason function returns reason value.
-func (e Ping_FeaturesValidationError) Reason() string { return e.reason }
+func (e ServerLaunch_FeaturesValidationError) Reason() string { return e.reason }
 
 // Cause function returns cause value.
-func (e Ping_FeaturesValidationError) Cause() error { return e.cause }
+func (e ServerLaunch_FeaturesValidationError) Cause() error { return e.cause }
 
 // Key function returns key value.
-func (e Ping_FeaturesValidationError) Key() bool { return e.key }
+func (e ServerLaunch_FeaturesValidationError) Key() bool { return e.key }
 
 // ErrorName returns error name.
-func (e Ping_FeaturesValidationError) ErrorName() string { return "Ping_FeaturesValidationError" }
+func (e ServerLaunch_FeaturesValidationError) ErrorName() string {
+	return "ServerLaunch_FeaturesValidationError"
+}
 
 // Error satisfies the builtin error interface
-func (e Ping_FeaturesValidationError) Error() string {
+func (e ServerLaunch_FeaturesValidationError) Error() string {
 	cause := ""
 	if e.cause != nil {
 		cause = fmt.Sprintf(" | caused by: %v", e.cause)
@@ -664,14 +938,14 @@ func (e Ping_FeaturesValidationError) Error() string {
 	}
 
 	return fmt.Sprintf(
-		"invalid %sPing_Features.%s: %s%s",
+		"invalid %sServerLaunch_Features.%s: %s%s",
 		key,
 		e.field,
 		e.reason,
 		cause)
 }
 
-var _ error = Ping_FeaturesValidationError{}
+var _ error = ServerLaunch_FeaturesValidationError{}
 
 var _ interface {
 	Field() string
@@ -679,24 +953,24 @@ var _ interface {
 	Key() bool
 	Cause() error
 	ErrorName() string
-} = Ping_FeaturesValidationError{}
+} = ServerLaunch_FeaturesValidationError{}
 
-// Validate checks the field values on Ping_Stats with the rules defined in the
-// proto definition for this message. If any rules are violated, the first
-// error encountered is returned, or nil if there are no violations.
-func (m *Ping_Stats) Validate() error {
+// Validate checks the field values on ServerLaunch_Stats with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *ServerLaunch_Stats) Validate() error {
 	return m.validate(false)
 }
 
-// ValidateAll checks the field values on Ping_Stats with the rules defined in
-// the proto definition for this message. If any rules are violated, the
-// result is a list of violation errors wrapped in Ping_StatsMultiError, or
-// nil if none found.
-func (m *Ping_Stats) ValidateAll() error {
+// ValidateAll checks the field values on ServerLaunch_Stats with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// ServerLaunch_StatsMultiError, or nil if none found.
+func (m *ServerLaunch_Stats) ValidateAll() error {
 	return m.validate(true)
 }
 
-func (m *Ping_Stats) validate(all bool) error {
+func (m *ServerLaunch_Stats) validate(all bool) error {
 	if m == nil {
 		return nil
 	}
@@ -707,7 +981,7 @@ func (m *Ping_Stats) validate(all bool) error {
 		switch v := interface{}(m.GetPolicy()).(type) {
 		case interface{ ValidateAll() error }:
 			if err := v.ValidateAll(); err != nil {
-				errors = append(errors, Ping_StatsValidationError{
+				errors = append(errors, ServerLaunch_StatsValidationError{
 					field:  "Policy",
 					reason: "embedded message failed validation",
 					cause:  err,
@@ -715,7 +989,7 @@ func (m *Ping_Stats) validate(all bool) error {
 			}
 		case interface{ Validate() error }:
 			if err := v.Validate(); err != nil {
-				errors = append(errors, Ping_StatsValidationError{
+				errors = append(errors, ServerLaunch_StatsValidationError{
 					field:  "Policy",
 					reason: "embedded message failed validation",
 					cause:  err,
@@ -724,7 +998,7 @@ func (m *Ping_Stats) validate(all bool) error {
 		}
 	} else if v, ok := interface{}(m.GetPolicy()).(interface{ Validate() error }); ok {
 		if err := v.Validate(); err != nil {
-			return Ping_StatsValidationError{
+			return ServerLaunch_StatsValidationError{
 				field:  "Policy",
 				reason: "embedded message failed validation",
 				cause:  err,
@@ -736,7 +1010,7 @@ func (m *Ping_Stats) validate(all bool) error {
 		switch v := interface{}(m.GetSchema()).(type) {
 		case interface{ ValidateAll() error }:
 			if err := v.ValidateAll(); err != nil {
-				errors = append(errors, Ping_StatsValidationError{
+				errors = append(errors, ServerLaunch_StatsValidationError{
 					field:  "Schema",
 					reason: "embedded message failed validation",
 					cause:  err,
@@ -744,7 +1018,7 @@ func (m *Ping_Stats) validate(all bool) error {
 			}
 		case interface{ Validate() error }:
 			if err := v.Validate(); err != nil {
-				errors = append(errors, Ping_StatsValidationError{
+				errors = append(errors, ServerLaunch_StatsValidationError{
 					field:  "Schema",
 					reason: "embedded message failed validation",
 					cause:  err,
@@ -753,7 +1027,7 @@ func (m *Ping_Stats) validate(all bool) error {
 		}
 	} else if v, ok := interface{}(m.GetSchema()).(interface{ Validate() error }); ok {
 		if err := v.Validate(); err != nil {
-			return Ping_StatsValidationError{
+			return ServerLaunch_StatsValidationError{
 				field:  "Schema",
 				reason: "embedded message failed validation",
 				cause:  err,
@@ -762,18 +1036,19 @@ func (m *Ping_Stats) validate(all bool) error {
 	}
 
 	if len(errors) > 0 {
-		return Ping_StatsMultiError(errors)
+		return ServerLaunch_StatsMultiError(errors)
 	}
 
 	return nil
 }
 
-// Ping_StatsMultiError is an error wrapping multiple validation errors
-// returned by Ping_Stats.ValidateAll() if the designated constraints aren't met.
-type Ping_StatsMultiError []error
+// ServerLaunch_StatsMultiError is an error wrapping multiple validation errors
+// returned by ServerLaunch_Stats.ValidateAll() if the designated constraints
+// aren't met.
+type ServerLaunch_StatsMultiError []error
 
 // Error returns a concatenation of all the error messages it wraps.
-func (m Ping_StatsMultiError) Error() string {
+func (m ServerLaunch_StatsMultiError) Error() string {
 	var msgs []string
 	for _, err := range m {
 		msgs = append(msgs, err.Error())
@@ -782,11 +1057,11 @@ func (m Ping_StatsMultiError) Error() string {
 }
 
 // AllErrors returns a list of validation violation errors.
-func (m Ping_StatsMultiError) AllErrors() []error { return m }
+func (m ServerLaunch_StatsMultiError) AllErrors() []error { return m }
 
-// Ping_StatsValidationError is the validation error returned by
-// Ping_Stats.Validate if the designated constraints aren't met.
-type Ping_StatsValidationError struct {
+// ServerLaunch_StatsValidationError is the validation error returned by
+// ServerLaunch_Stats.Validate if the designated constraints aren't met.
+type ServerLaunch_StatsValidationError struct {
 	field  string
 	reason string
 	cause  error
@@ -794,22 +1069,24 @@ type Ping_StatsValidationError struct {
 }
 
 // Field function returns field value.
-func (e Ping_StatsValidationError) Field() string { return e.field }
+func (e ServerLaunch_StatsValidationError) Field() string { return e.field }
 
 // Reason function returns reason value.
-func (e Ping_StatsValidationError) Reason() string { return e.reason }
+func (e ServerLaunch_StatsValidationError) Reason() string { return e.reason }
 
 // Cause function returns cause value.
-func (e Ping_StatsValidationError) Cause() error { return e.cause }
+func (e ServerLaunch_StatsValidationError) Cause() error { return e.cause }
 
 // Key function returns key value.
-func (e Ping_StatsValidationError) Key() bool { return e.key }
+func (e ServerLaunch_StatsValidationError) Key() bool { return e.key }
 
 // ErrorName returns error name.
-func (e Ping_StatsValidationError) ErrorName() string { return "Ping_StatsValidationError" }
+func (e ServerLaunch_StatsValidationError) ErrorName() string {
+	return "ServerLaunch_StatsValidationError"
+}
 
 // Error satisfies the builtin error interface
-func (e Ping_StatsValidationError) Error() string {
+func (e ServerLaunch_StatsValidationError) Error() string {
 	cause := ""
 	if e.cause != nil {
 		cause = fmt.Sprintf(" | caused by: %v", e.cause)
@@ -821,14 +1098,14 @@ func (e Ping_StatsValidationError) Error() string {
 	}
 
 	return fmt.Sprintf(
-		"invalid %sPing_Stats.%s: %s%s",
+		"invalid %sServerLaunch_Stats.%s: %s%s",
 		key,
 		e.field,
 		e.reason,
 		cause)
 }
 
-var _ error = Ping_StatsValidationError{}
+var _ error = ServerLaunch_StatsValidationError{}
 
 var _ interface {
 	Field() string
@@ -836,24 +1113,24 @@ var _ interface {
 	Key() bool
 	Cause() error
 	ErrorName() string
-} = Ping_StatsValidationError{}
+} = ServerLaunch_StatsValidationError{}
 
-// Validate checks the field values on Ping_Features_Audit with the rules
-// defined in the proto definition for this message. If any rules are
+// Validate checks the field values on ServerLaunch_Features_Audit with the
+// rules defined in the proto definition for this message. If any rules are
 // violated, the first error encountered is returned, or nil if there are no violations.
-func (m *Ping_Features_Audit) Validate() error {
+func (m *ServerLaunch_Features_Audit) Validate() error {
 	return m.validate(false)
 }
 
-// ValidateAll checks the field values on Ping_Features_Audit with the rules
-// defined in the proto definition for this message. If any rules are
+// ValidateAll checks the field values on ServerLaunch_Features_Audit with the
+// rules defined in the proto definition for this message. If any rules are
 // violated, the result is a list of violation errors wrapped in
-// Ping_Features_AuditMultiError, or nil if none found.
-func (m *Ping_Features_Audit) ValidateAll() error {
+// ServerLaunch_Features_AuditMultiError, or nil if none found.
+func (m *ServerLaunch_Features_Audit) ValidateAll() error {
 	return m.validate(true)
 }
 
-func (m *Ping_Features_Audit) validate(all bool) error {
+func (m *ServerLaunch_Features_Audit) validate(all bool) error {
 	if m == nil {
 		return nil
 	}
@@ -865,19 +1142,19 @@ func (m *Ping_Features_Audit) validate(all bool) error {
 	// no validation rules for Backend
 
 	if len(errors) > 0 {
-		return Ping_Features_AuditMultiError(errors)
+		return ServerLaunch_Features_AuditMultiError(errors)
 	}
 
 	return nil
 }
 
-// Ping_Features_AuditMultiError is an error wrapping multiple validation
-// errors returned by Ping_Features_Audit.ValidateAll() if the designated
-// constraints aren't met.
-type Ping_Features_AuditMultiError []error
+// ServerLaunch_Features_AuditMultiError is an error wrapping multiple
+// validation errors returned by ServerLaunch_Features_Audit.ValidateAll() if
+// the designated constraints aren't met.
+type ServerLaunch_Features_AuditMultiError []error
 
 // Error returns a concatenation of all the error messages it wraps.
-func (m Ping_Features_AuditMultiError) Error() string {
+func (m ServerLaunch_Features_AuditMultiError) Error() string {
 	var msgs []string
 	for _, err := range m {
 		msgs = append(msgs, err.Error())
@@ -886,11 +1163,12 @@ func (m Ping_Features_AuditMultiError) Error() string {
 }
 
 // AllErrors returns a list of validation violation errors.
-func (m Ping_Features_AuditMultiError) AllErrors() []error { return m }
+func (m ServerLaunch_Features_AuditMultiError) AllErrors() []error { return m }
 
-// Ping_Features_AuditValidationError is the validation error returned by
-// Ping_Features_Audit.Validate if the designated constraints aren't met.
-type Ping_Features_AuditValidationError struct {
+// ServerLaunch_Features_AuditValidationError is the validation error returned
+// by ServerLaunch_Features_Audit.Validate if the designated constraints
+// aren't met.
+type ServerLaunch_Features_AuditValidationError struct {
 	field  string
 	reason string
 	cause  error
@@ -898,24 +1176,24 @@ type Ping_Features_AuditValidationError struct {
 }
 
 // Field function returns field value.
-func (e Ping_Features_AuditValidationError) Field() string { return e.field }
+func (e ServerLaunch_Features_AuditValidationError) Field() string { return e.field }
 
 // Reason function returns reason value.
-func (e Ping_Features_AuditValidationError) Reason() string { return e.reason }
+func (e ServerLaunch_Features_AuditValidationError) Reason() string { return e.reason }
 
 // Cause function returns cause value.
-func (e Ping_Features_AuditValidationError) Cause() error { return e.cause }
+func (e ServerLaunch_Features_AuditValidationError) Cause() error { return e.cause }
 
 // Key function returns key value.
-func (e Ping_Features_AuditValidationError) Key() bool { return e.key }
+func (e ServerLaunch_Features_AuditValidationError) Key() bool { return e.key }
 
 // ErrorName returns error name.
-func (e Ping_Features_AuditValidationError) ErrorName() string {
-	return "Ping_Features_AuditValidationError"
+func (e ServerLaunch_Features_AuditValidationError) ErrorName() string {
+	return "ServerLaunch_Features_AuditValidationError"
 }
 
 // Error satisfies the builtin error interface
-func (e Ping_Features_AuditValidationError) Error() string {
+func (e ServerLaunch_Features_AuditValidationError) Error() string {
 	cause := ""
 	if e.cause != nil {
 		cause = fmt.Sprintf(" | caused by: %v", e.cause)
@@ -927,14 +1205,14 @@ func (e Ping_Features_AuditValidationError) Error() string {
 	}
 
 	return fmt.Sprintf(
-		"invalid %sPing_Features_Audit.%s: %s%s",
+		"invalid %sServerLaunch_Features_Audit.%s: %s%s",
 		key,
 		e.field,
 		e.reason,
 		cause)
 }
 
-var _ error = Ping_Features_AuditValidationError{}
+var _ error = ServerLaunch_Features_AuditValidationError{}
 
 var _ interface {
 	Field() string
@@ -942,24 +1220,24 @@ var _ interface {
 	Key() bool
 	Cause() error
 	ErrorName() string
-} = Ping_Features_AuditValidationError{}
+} = ServerLaunch_Features_AuditValidationError{}
 
-// Validate checks the field values on Ping_Features_Schema with the rules
-// defined in the proto definition for this message. If any rules are
+// Validate checks the field values on ServerLaunch_Features_Schema with the
+// rules defined in the proto definition for this message. If any rules are
 // violated, the first error encountered is returned, or nil if there are no violations.
-func (m *Ping_Features_Schema) Validate() error {
+func (m *ServerLaunch_Features_Schema) Validate() error {
 	return m.validate(false)
 }
 
-// ValidateAll checks the field values on Ping_Features_Schema with the rules
-// defined in the proto definition for this message. If any rules are
+// ValidateAll checks the field values on ServerLaunch_Features_Schema with the
+// rules defined in the proto definition for this message. If any rules are
 // violated, the result is a list of violation errors wrapped in
-// Ping_Features_SchemaMultiError, or nil if none found.
-func (m *Ping_Features_Schema) ValidateAll() error {
+// ServerLaunch_Features_SchemaMultiError, or nil if none found.
+func (m *ServerLaunch_Features_Schema) ValidateAll() error {
 	return m.validate(true)
 }
 
-func (m *Ping_Features_Schema) validate(all bool) error {
+func (m *ServerLaunch_Features_Schema) validate(all bool) error {
 	if m == nil {
 		return nil
 	}
@@ -969,19 +1247,19 @@ func (m *Ping_Features_Schema) validate(all bool) error {
 	// no validation rules for Enforcement
 
 	if len(errors) > 0 {
-		return Ping_Features_SchemaMultiError(errors)
+		return ServerLaunch_Features_SchemaMultiError(errors)
 	}
 
 	return nil
 }
 
-// Ping_Features_SchemaMultiError is an error wrapping multiple validation
-// errors returned by Ping_Features_Schema.ValidateAll() if the designated
-// constraints aren't met.
-type Ping_Features_SchemaMultiError []error
+// ServerLaunch_Features_SchemaMultiError is an error wrapping multiple
+// validation errors returned by ServerLaunch_Features_Schema.ValidateAll() if
+// the designated constraints aren't met.
+type ServerLaunch_Features_SchemaMultiError []error
 
 // Error returns a concatenation of all the error messages it wraps.
-func (m Ping_Features_SchemaMultiError) Error() string {
+func (m ServerLaunch_Features_SchemaMultiError) Error() string {
 	var msgs []string
 	for _, err := range m {
 		msgs = append(msgs, err.Error())
@@ -990,11 +1268,12 @@ func (m Ping_Features_SchemaMultiError) Error() string {
 }
 
 // AllErrors returns a list of validation violation errors.
-func (m Ping_Features_SchemaMultiError) AllErrors() []error { return m }
+func (m ServerLaunch_Features_SchemaMultiError) AllErrors() []error { return m }
 
-// Ping_Features_SchemaValidationError is the validation error returned by
-// Ping_Features_Schema.Validate if the designated constraints aren't met.
-type Ping_Features_SchemaValidationError struct {
+// ServerLaunch_Features_SchemaValidationError is the validation error returned
+// by ServerLaunch_Features_Schema.Validate if the designated constraints
+// aren't met.
+type ServerLaunch_Features_SchemaValidationError struct {
 	field  string
 	reason string
 	cause  error
@@ -1002,24 +1281,24 @@ type Ping_Features_SchemaValidationError struct {
 }
 
 // Field function returns field value.
-func (e Ping_Features_SchemaValidationError) Field() string { return e.field }
+func (e ServerLaunch_Features_SchemaValidationError) Field() string { return e.field }
 
 // Reason function returns reason value.
-func (e Ping_Features_SchemaValidationError) Reason() string { return e.reason }
+func (e ServerLaunch_Features_SchemaValidationError) Reason() string { return e.reason }
 
 // Cause function returns cause value.
-func (e Ping_Features_SchemaValidationError) Cause() error { return e.cause }
+func (e ServerLaunch_Features_SchemaValidationError) Cause() error { return e.cause }
 
 // Key function returns key value.
-func (e Ping_Features_SchemaValidationError) Key() bool { return e.key }
+func (e ServerLaunch_Features_SchemaValidationError) Key() bool { return e.key }
 
 // ErrorName returns error name.
-func (e Ping_Features_SchemaValidationError) ErrorName() string {
-	return "Ping_Features_SchemaValidationError"
+func (e ServerLaunch_Features_SchemaValidationError) ErrorName() string {
+	return "ServerLaunch_Features_SchemaValidationError"
 }
 
 // Error satisfies the builtin error interface
-func (e Ping_Features_SchemaValidationError) Error() string {
+func (e ServerLaunch_Features_SchemaValidationError) Error() string {
 	cause := ""
 	if e.cause != nil {
 		cause = fmt.Sprintf(" | caused by: %v", e.cause)
@@ -1031,14 +1310,14 @@ func (e Ping_Features_SchemaValidationError) Error() string {
 	}
 
 	return fmt.Sprintf(
-		"invalid %sPing_Features_Schema.%s: %s%s",
+		"invalid %sServerLaunch_Features_Schema.%s: %s%s",
 		key,
 		e.field,
 		e.reason,
 		cause)
 }
 
-var _ error = Ping_Features_SchemaValidationError{}
+var _ error = ServerLaunch_Features_SchemaValidationError{}
 
 var _ interface {
 	Field() string
@@ -1046,24 +1325,24 @@ var _ interface {
 	Key() bool
 	Cause() error
 	ErrorName() string
-} = Ping_Features_SchemaValidationError{}
+} = ServerLaunch_Features_SchemaValidationError{}
 
-// Validate checks the field values on Ping_Features_AdminApi with the rules
-// defined in the proto definition for this message. If any rules are
+// Validate checks the field values on ServerLaunch_Features_AdminApi with the
+// rules defined in the proto definition for this message. If any rules are
 // violated, the first error encountered is returned, or nil if there are no violations.
-func (m *Ping_Features_AdminApi) Validate() error {
+func (m *ServerLaunch_Features_AdminApi) Validate() error {
 	return m.validate(false)
 }
 
-// ValidateAll checks the field values on Ping_Features_AdminApi with the rules
-// defined in the proto definition for this message. If any rules are
-// violated, the result is a list of violation errors wrapped in
-// Ping_Features_AdminApiMultiError, or nil if none found.
-func (m *Ping_Features_AdminApi) ValidateAll() error {
+// ValidateAll checks the field values on ServerLaunch_Features_AdminApi with
+// the rules defined in the proto definition for this message. If any rules
+// are violated, the result is a list of violation errors wrapped in
+// ServerLaunch_Features_AdminApiMultiError, or nil if none found.
+func (m *ServerLaunch_Features_AdminApi) ValidateAll() error {
 	return m.validate(true)
 }
 
-func (m *Ping_Features_AdminApi) validate(all bool) error {
+func (m *ServerLaunch_Features_AdminApi) validate(all bool) error {
 	if m == nil {
 		return nil
 	}
@@ -1073,19 +1352,19 @@ func (m *Ping_Features_AdminApi) validate(all bool) error {
 	// no validation rules for Enabled
 
 	if len(errors) > 0 {
-		return Ping_Features_AdminApiMultiError(errors)
+		return ServerLaunch_Features_AdminApiMultiError(errors)
 	}
 
 	return nil
 }
 
-// Ping_Features_AdminApiMultiError is an error wrapping multiple validation
-// errors returned by Ping_Features_AdminApi.ValidateAll() if the designated
-// constraints aren't met.
-type Ping_Features_AdminApiMultiError []error
+// ServerLaunch_Features_AdminApiMultiError is an error wrapping multiple
+// validation errors returned by ServerLaunch_Features_AdminApi.ValidateAll()
+// if the designated constraints aren't met.
+type ServerLaunch_Features_AdminApiMultiError []error
 
 // Error returns a concatenation of all the error messages it wraps.
-func (m Ping_Features_AdminApiMultiError) Error() string {
+func (m ServerLaunch_Features_AdminApiMultiError) Error() string {
 	var msgs []string
 	for _, err := range m {
 		msgs = append(msgs, err.Error())
@@ -1094,11 +1373,12 @@ func (m Ping_Features_AdminApiMultiError) Error() string {
 }
 
 // AllErrors returns a list of validation violation errors.
-func (m Ping_Features_AdminApiMultiError) AllErrors() []error { return m }
+func (m ServerLaunch_Features_AdminApiMultiError) AllErrors() []error { return m }
 
-// Ping_Features_AdminApiValidationError is the validation error returned by
-// Ping_Features_AdminApi.Validate if the designated constraints aren't met.
-type Ping_Features_AdminApiValidationError struct {
+// ServerLaunch_Features_AdminApiValidationError is the validation error
+// returned by ServerLaunch_Features_AdminApi.Validate if the designated
+// constraints aren't met.
+type ServerLaunch_Features_AdminApiValidationError struct {
 	field  string
 	reason string
 	cause  error
@@ -1106,24 +1386,24 @@ type Ping_Features_AdminApiValidationError struct {
 }
 
 // Field function returns field value.
-func (e Ping_Features_AdminApiValidationError) Field() string { return e.field }
+func (e ServerLaunch_Features_AdminApiValidationError) Field() string { return e.field }
 
 // Reason function returns reason value.
-func (e Ping_Features_AdminApiValidationError) Reason() string { return e.reason }
+func (e ServerLaunch_Features_AdminApiValidationError) Reason() string { return e.reason }
 
 // Cause function returns cause value.
-func (e Ping_Features_AdminApiValidationError) Cause() error { return e.cause }
+func (e ServerLaunch_Features_AdminApiValidationError) Cause() error { return e.cause }
 
 // Key function returns key value.
-func (e Ping_Features_AdminApiValidationError) Key() bool { return e.key }
+func (e ServerLaunch_Features_AdminApiValidationError) Key() bool { return e.key }
 
 // ErrorName returns error name.
-func (e Ping_Features_AdminApiValidationError) ErrorName() string {
-	return "Ping_Features_AdminApiValidationError"
+func (e ServerLaunch_Features_AdminApiValidationError) ErrorName() string {
+	return "ServerLaunch_Features_AdminApiValidationError"
 }
 
 // Error satisfies the builtin error interface
-func (e Ping_Features_AdminApiValidationError) Error() string {
+func (e ServerLaunch_Features_AdminApiValidationError) Error() string {
 	cause := ""
 	if e.cause != nil {
 		cause = fmt.Sprintf(" | caused by: %v", e.cause)
@@ -1135,14 +1415,14 @@ func (e Ping_Features_AdminApiValidationError) Error() string {
 	}
 
 	return fmt.Sprintf(
-		"invalid %sPing_Features_AdminApi.%s: %s%s",
+		"invalid %sServerLaunch_Features_AdminApi.%s: %s%s",
 		key,
 		e.field,
 		e.reason,
 		cause)
 }
 
-var _ error = Ping_Features_AdminApiValidationError{}
+var _ error = ServerLaunch_Features_AdminApiValidationError{}
 
 var _ interface {
 	Field() string
@@ -1150,24 +1430,24 @@ var _ interface {
 	Key() bool
 	Cause() error
 	ErrorName() string
-} = Ping_Features_AdminApiValidationError{}
+} = ServerLaunch_Features_AdminApiValidationError{}
 
-// Validate checks the field values on Ping_Features_Storage with the rules
-// defined in the proto definition for this message. If any rules are
+// Validate checks the field values on ServerLaunch_Features_Storage with the
+// rules defined in the proto definition for this message. If any rules are
 // violated, the first error encountered is returned, or nil if there are no violations.
-func (m *Ping_Features_Storage) Validate() error {
+func (m *ServerLaunch_Features_Storage) Validate() error {
 	return m.validate(false)
 }
 
-// ValidateAll checks the field values on Ping_Features_Storage with the rules
-// defined in the proto definition for this message. If any rules are
-// violated, the result is a list of violation errors wrapped in
-// Ping_Features_StorageMultiError, or nil if none found.
-func (m *Ping_Features_Storage) ValidateAll() error {
+// ValidateAll checks the field values on ServerLaunch_Features_Storage with
+// the rules defined in the proto definition for this message. If any rules
+// are violated, the result is a list of violation errors wrapped in
+// ServerLaunch_Features_StorageMultiError, or nil if none found.
+func (m *ServerLaunch_Features_Storage) ValidateAll() error {
 	return m.validate(true)
 }
 
-func (m *Ping_Features_Storage) validate(all bool) error {
+func (m *ServerLaunch_Features_Storage) validate(all bool) error {
 	if m == nil {
 		return nil
 	}
@@ -1178,13 +1458,13 @@ func (m *Ping_Features_Storage) validate(all bool) error {
 
 	switch m.Store.(type) {
 
-	case *Ping_Features_Storage_Disk_:
+	case *ServerLaunch_Features_Storage_Disk_:
 
 		if all {
 			switch v := interface{}(m.GetDisk()).(type) {
 			case interface{ ValidateAll() error }:
 				if err := v.ValidateAll(); err != nil {
-					errors = append(errors, Ping_Features_StorageValidationError{
+					errors = append(errors, ServerLaunch_Features_StorageValidationError{
 						field:  "Disk",
 						reason: "embedded message failed validation",
 						cause:  err,
@@ -1192,7 +1472,7 @@ func (m *Ping_Features_Storage) validate(all bool) error {
 				}
 			case interface{ Validate() error }:
 				if err := v.Validate(); err != nil {
-					errors = append(errors, Ping_Features_StorageValidationError{
+					errors = append(errors, ServerLaunch_Features_StorageValidationError{
 						field:  "Disk",
 						reason: "embedded message failed validation",
 						cause:  err,
@@ -1201,7 +1481,7 @@ func (m *Ping_Features_Storage) validate(all bool) error {
 			}
 		} else if v, ok := interface{}(m.GetDisk()).(interface{ Validate() error }); ok {
 			if err := v.Validate(); err != nil {
-				return Ping_Features_StorageValidationError{
+				return ServerLaunch_Features_StorageValidationError{
 					field:  "Disk",
 					reason: "embedded message failed validation",
 					cause:  err,
@@ -1209,13 +1489,13 @@ func (m *Ping_Features_Storage) validate(all bool) error {
 			}
 		}
 
-	case *Ping_Features_Storage_Git_:
+	case *ServerLaunch_Features_Storage_Git_:
 
 		if all {
 			switch v := interface{}(m.GetGit()).(type) {
 			case interface{ ValidateAll() error }:
 				if err := v.ValidateAll(); err != nil {
-					errors = append(errors, Ping_Features_StorageValidationError{
+					errors = append(errors, ServerLaunch_Features_StorageValidationError{
 						field:  "Git",
 						reason: "embedded message failed validation",
 						cause:  err,
@@ -1223,7 +1503,7 @@ func (m *Ping_Features_Storage) validate(all bool) error {
 				}
 			case interface{ Validate() error }:
 				if err := v.Validate(); err != nil {
-					errors = append(errors, Ping_Features_StorageValidationError{
+					errors = append(errors, ServerLaunch_Features_StorageValidationError{
 						field:  "Git",
 						reason: "embedded message failed validation",
 						cause:  err,
@@ -1232,7 +1512,7 @@ func (m *Ping_Features_Storage) validate(all bool) error {
 			}
 		} else if v, ok := interface{}(m.GetGit()).(interface{ Validate() error }); ok {
 			if err := v.Validate(); err != nil {
-				return Ping_Features_StorageValidationError{
+				return ServerLaunch_Features_StorageValidationError{
 					field:  "Git",
 					reason: "embedded message failed validation",
 					cause:  err,
@@ -1240,13 +1520,13 @@ func (m *Ping_Features_Storage) validate(all bool) error {
 			}
 		}
 
-	case *Ping_Features_Storage_Blob_:
+	case *ServerLaunch_Features_Storage_Blob_:
 
 		if all {
 			switch v := interface{}(m.GetBlob()).(type) {
 			case interface{ ValidateAll() error }:
 				if err := v.ValidateAll(); err != nil {
-					errors = append(errors, Ping_Features_StorageValidationError{
+					errors = append(errors, ServerLaunch_Features_StorageValidationError{
 						field:  "Blob",
 						reason: "embedded message failed validation",
 						cause:  err,
@@ -1254,7 +1534,7 @@ func (m *Ping_Features_Storage) validate(all bool) error {
 				}
 			case interface{ Validate() error }:
 				if err := v.Validate(); err != nil {
-					errors = append(errors, Ping_Features_StorageValidationError{
+					errors = append(errors, ServerLaunch_Features_StorageValidationError{
 						field:  "Blob",
 						reason: "embedded message failed validation",
 						cause:  err,
@@ -1263,7 +1543,7 @@ func (m *Ping_Features_Storage) validate(all bool) error {
 			}
 		} else if v, ok := interface{}(m.GetBlob()).(interface{ Validate() error }); ok {
 			if err := v.Validate(); err != nil {
-				return Ping_Features_StorageValidationError{
+				return ServerLaunch_Features_StorageValidationError{
 					field:  "Blob",
 					reason: "embedded message failed validation",
 					cause:  err,
@@ -1274,19 +1554,19 @@ func (m *Ping_Features_Storage) validate(all bool) error {
 	}
 
 	if len(errors) > 0 {
-		return Ping_Features_StorageMultiError(errors)
+		return ServerLaunch_Features_StorageMultiError(errors)
 	}
 
 	return nil
 }
 
-// Ping_Features_StorageMultiError is an error wrapping multiple validation
-// errors returned by Ping_Features_Storage.ValidateAll() if the designated
-// constraints aren't met.
-type Ping_Features_StorageMultiError []error
+// ServerLaunch_Features_StorageMultiError is an error wrapping multiple
+// validation errors returned by ServerLaunch_Features_Storage.ValidateAll()
+// if the designated constraints aren't met.
+type ServerLaunch_Features_StorageMultiError []error
 
 // Error returns a concatenation of all the error messages it wraps.
-func (m Ping_Features_StorageMultiError) Error() string {
+func (m ServerLaunch_Features_StorageMultiError) Error() string {
 	var msgs []string
 	for _, err := range m {
 		msgs = append(msgs, err.Error())
@@ -1295,11 +1575,12 @@ func (m Ping_Features_StorageMultiError) Error() string {
 }
 
 // AllErrors returns a list of validation violation errors.
-func (m Ping_Features_StorageMultiError) AllErrors() []error { return m }
+func (m ServerLaunch_Features_StorageMultiError) AllErrors() []error { return m }
 
-// Ping_Features_StorageValidationError is the validation error returned by
-// Ping_Features_Storage.Validate if the designated constraints aren't met.
-type Ping_Features_StorageValidationError struct {
+// ServerLaunch_Features_StorageValidationError is the validation error
+// returned by ServerLaunch_Features_Storage.Validate if the designated
+// constraints aren't met.
+type ServerLaunch_Features_StorageValidationError struct {
 	field  string
 	reason string
 	cause  error
@@ -1307,24 +1588,24 @@ type Ping_Features_StorageValidationError struct {
 }
 
 // Field function returns field value.
-func (e Ping_Features_StorageValidationError) Field() string { return e.field }
+func (e ServerLaunch_Features_StorageValidationError) Field() string { return e.field }
 
 // Reason function returns reason value.
-func (e Ping_Features_StorageValidationError) Reason() string { return e.reason }
+func (e ServerLaunch_Features_StorageValidationError) Reason() string { return e.reason }
 
 // Cause function returns cause value.
-func (e Ping_Features_StorageValidationError) Cause() error { return e.cause }
+func (e ServerLaunch_Features_StorageValidationError) Cause() error { return e.cause }
 
 // Key function returns key value.
-func (e Ping_Features_StorageValidationError) Key() bool { return e.key }
+func (e ServerLaunch_Features_StorageValidationError) Key() bool { return e.key }
 
 // ErrorName returns error name.
-func (e Ping_Features_StorageValidationError) ErrorName() string {
-	return "Ping_Features_StorageValidationError"
+func (e ServerLaunch_Features_StorageValidationError) ErrorName() string {
+	return "ServerLaunch_Features_StorageValidationError"
 }
 
 // Error satisfies the builtin error interface
-func (e Ping_Features_StorageValidationError) Error() string {
+func (e ServerLaunch_Features_StorageValidationError) Error() string {
 	cause := ""
 	if e.cause != nil {
 		cause = fmt.Sprintf(" | caused by: %v", e.cause)
@@ -1336,14 +1617,14 @@ func (e Ping_Features_StorageValidationError) Error() string {
 	}
 
 	return fmt.Sprintf(
-		"invalid %sPing_Features_Storage.%s: %s%s",
+		"invalid %sServerLaunch_Features_Storage.%s: %s%s",
 		key,
 		e.field,
 		e.reason,
 		cause)
 }
 
-var _ error = Ping_Features_StorageValidationError{}
+var _ error = ServerLaunch_Features_StorageValidationError{}
 
 var _ interface {
 	Field() string
@@ -1351,24 +1632,25 @@ var _ interface {
 	Key() bool
 	Cause() error
 	ErrorName() string
-} = Ping_Features_StorageValidationError{}
+} = ServerLaunch_Features_StorageValidationError{}
 
-// Validate checks the field values on Ping_Features_Storage_Disk with the
-// rules defined in the proto definition for this message. If any rules are
-// violated, the first error encountered is returned, or nil if there are no violations.
-func (m *Ping_Features_Storage_Disk) Validate() error {
+// Validate checks the field values on ServerLaunch_Features_Storage_Disk with
+// the rules defined in the proto definition for this message. If any rules
+// are violated, the first error encountered is returned, or nil if there are
+// no violations.
+func (m *ServerLaunch_Features_Storage_Disk) Validate() error {
 	return m.validate(false)
 }
 
-// ValidateAll checks the field values on Ping_Features_Storage_Disk with the
-// rules defined in the proto definition for this message. If any rules are
-// violated, the result is a list of violation errors wrapped in
-// Ping_Features_Storage_DiskMultiError, or nil if none found.
-func (m *Ping_Features_Storage_Disk) ValidateAll() error {
+// ValidateAll checks the field values on ServerLaunch_Features_Storage_Disk
+// with the rules defined in the proto definition for this message. If any
+// rules are violated, the result is a list of violation errors wrapped in
+// ServerLaunch_Features_Storage_DiskMultiError, or nil if none found.
+func (m *ServerLaunch_Features_Storage_Disk) ValidateAll() error {
 	return m.validate(true)
 }
 
-func (m *Ping_Features_Storage_Disk) validate(all bool) error {
+func (m *ServerLaunch_Features_Storage_Disk) validate(all bool) error {
 	if m == nil {
 		return nil
 	}
@@ -1378,19 +1660,20 @@ func (m *Ping_Features_Storage_Disk) validate(all bool) error {
 	// no validation rules for Watch
 
 	if len(errors) > 0 {
-		return Ping_Features_Storage_DiskMultiError(errors)
+		return ServerLaunch_Features_Storage_DiskMultiError(errors)
 	}
 
 	return nil
 }
 
-// Ping_Features_Storage_DiskMultiError is an error wrapping multiple
-// validation errors returned by Ping_Features_Storage_Disk.ValidateAll() if
-// the designated constraints aren't met.
-type Ping_Features_Storage_DiskMultiError []error
+// ServerLaunch_Features_Storage_DiskMultiError is an error wrapping multiple
+// validation errors returned by
+// ServerLaunch_Features_Storage_Disk.ValidateAll() if the designated
+// constraints aren't met.
+type ServerLaunch_Features_Storage_DiskMultiError []error
 
 // Error returns a concatenation of all the error messages it wraps.
-func (m Ping_Features_Storage_DiskMultiError) Error() string {
+func (m ServerLaunch_Features_Storage_DiskMultiError) Error() string {
 	var msgs []string
 	for _, err := range m {
 		msgs = append(msgs, err.Error())
@@ -1399,11 +1682,12 @@ func (m Ping_Features_Storage_DiskMultiError) Error() string {
 }
 
 // AllErrors returns a list of validation violation errors.
-func (m Ping_Features_Storage_DiskMultiError) AllErrors() []error { return m }
+func (m ServerLaunch_Features_Storage_DiskMultiError) AllErrors() []error { return m }
 
-// Ping_Features_Storage_DiskValidationError is the validation error returned
-// by Ping_Features_Storage_Disk.Validate if the designated constraints aren't met.
-type Ping_Features_Storage_DiskValidationError struct {
+// ServerLaunch_Features_Storage_DiskValidationError is the validation error
+// returned by ServerLaunch_Features_Storage_Disk.Validate if the designated
+// constraints aren't met.
+type ServerLaunch_Features_Storage_DiskValidationError struct {
 	field  string
 	reason string
 	cause  error
@@ -1411,24 +1695,24 @@ type Ping_Features_Storage_DiskValidationError struct {
 }
 
 // Field function returns field value.
-func (e Ping_Features_Storage_DiskValidationError) Field() string { return e.field }
+func (e ServerLaunch_Features_Storage_DiskValidationError) Field() string { return e.field }
 
 // Reason function returns reason value.
-func (e Ping_Features_Storage_DiskValidationError) Reason() string { return e.reason }
+func (e ServerLaunch_Features_Storage_DiskValidationError) Reason() string { return e.reason }
 
 // Cause function returns cause value.
-func (e Ping_Features_Storage_DiskValidationError) Cause() error { return e.cause }
+func (e ServerLaunch_Features_Storage_DiskValidationError) Cause() error { return e.cause }
 
 // Key function returns key value.
-func (e Ping_Features_Storage_DiskValidationError) Key() bool { return e.key }
+func (e ServerLaunch_Features_Storage_DiskValidationError) Key() bool { return e.key }
 
 // ErrorName returns error name.
-func (e Ping_Features_Storage_DiskValidationError) ErrorName() string {
-	return "Ping_Features_Storage_DiskValidationError"
+func (e ServerLaunch_Features_Storage_DiskValidationError) ErrorName() string {
+	return "ServerLaunch_Features_Storage_DiskValidationError"
 }
 
 // Error satisfies the builtin error interface
-func (e Ping_Features_Storage_DiskValidationError) Error() string {
+func (e ServerLaunch_Features_Storage_DiskValidationError) Error() string {
 	cause := ""
 	if e.cause != nil {
 		cause = fmt.Sprintf(" | caused by: %v", e.cause)
@@ -1440,14 +1724,14 @@ func (e Ping_Features_Storage_DiskValidationError) Error() string {
 	}
 
 	return fmt.Sprintf(
-		"invalid %sPing_Features_Storage_Disk.%s: %s%s",
+		"invalid %sServerLaunch_Features_Storage_Disk.%s: %s%s",
 		key,
 		e.field,
 		e.reason,
 		cause)
 }
 
-var _ error = Ping_Features_Storage_DiskValidationError{}
+var _ error = ServerLaunch_Features_Storage_DiskValidationError{}
 
 var _ interface {
 	Field() string
@@ -1455,24 +1739,25 @@ var _ interface {
 	Key() bool
 	Cause() error
 	ErrorName() string
-} = Ping_Features_Storage_DiskValidationError{}
+} = ServerLaunch_Features_Storage_DiskValidationError{}
 
-// Validate checks the field values on Ping_Features_Storage_Git with the rules
-// defined in the proto definition for this message. If any rules are
-// violated, the first error encountered is returned, or nil if there are no violations.
-func (m *Ping_Features_Storage_Git) Validate() error {
+// Validate checks the field values on ServerLaunch_Features_Storage_Git with
+// the rules defined in the proto definition for this message. If any rules
+// are violated, the first error encountered is returned, or nil if there are
+// no violations.
+func (m *ServerLaunch_Features_Storage_Git) Validate() error {
 	return m.validate(false)
 }
 
-// ValidateAll checks the field values on Ping_Features_Storage_Git with the
-// rules defined in the proto definition for this message. If any rules are
-// violated, the result is a list of violation errors wrapped in
-// Ping_Features_Storage_GitMultiError, or nil if none found.
-func (m *Ping_Features_Storage_Git) ValidateAll() error {
+// ValidateAll checks the field values on ServerLaunch_Features_Storage_Git
+// with the rules defined in the proto definition for this message. If any
+// rules are violated, the result is a list of violation errors wrapped in
+// ServerLaunch_Features_Storage_GitMultiError, or nil if none found.
+func (m *ServerLaunch_Features_Storage_Git) ValidateAll() error {
 	return m.validate(true)
 }
 
-func (m *Ping_Features_Storage_Git) validate(all bool) error {
+func (m *ServerLaunch_Features_Storage_Git) validate(all bool) error {
 	if m == nil {
 		return nil
 	}
@@ -1487,7 +1772,7 @@ func (m *Ping_Features_Storage_Git) validate(all bool) error {
 		switch v := interface{}(m.GetPollInterval()).(type) {
 		case interface{ ValidateAll() error }:
 			if err := v.ValidateAll(); err != nil {
-				errors = append(errors, Ping_Features_Storage_GitValidationError{
+				errors = append(errors, ServerLaunch_Features_Storage_GitValidationError{
 					field:  "PollInterval",
 					reason: "embedded message failed validation",
 					cause:  err,
@@ -1495,7 +1780,7 @@ func (m *Ping_Features_Storage_Git) validate(all bool) error {
 			}
 		case interface{ Validate() error }:
 			if err := v.Validate(); err != nil {
-				errors = append(errors, Ping_Features_Storage_GitValidationError{
+				errors = append(errors, ServerLaunch_Features_Storage_GitValidationError{
 					field:  "PollInterval",
 					reason: "embedded message failed validation",
 					cause:  err,
@@ -1504,7 +1789,7 @@ func (m *Ping_Features_Storage_Git) validate(all bool) error {
 		}
 	} else if v, ok := interface{}(m.GetPollInterval()).(interface{ Validate() error }); ok {
 		if err := v.Validate(); err != nil {
-			return Ping_Features_Storage_GitValidationError{
+			return ServerLaunch_Features_Storage_GitValidationError{
 				field:  "PollInterval",
 				reason: "embedded message failed validation",
 				cause:  err,
@@ -1513,19 +1798,20 @@ func (m *Ping_Features_Storage_Git) validate(all bool) error {
 	}
 
 	if len(errors) > 0 {
-		return Ping_Features_Storage_GitMultiError(errors)
+		return ServerLaunch_Features_Storage_GitMultiError(errors)
 	}
 
 	return nil
 }
 
-// Ping_Features_Storage_GitMultiError is an error wrapping multiple validation
-// errors returned by Ping_Features_Storage_Git.ValidateAll() if the
-// designated constraints aren't met.
-type Ping_Features_Storage_GitMultiError []error
+// ServerLaunch_Features_Storage_GitMultiError is an error wrapping multiple
+// validation errors returned by
+// ServerLaunch_Features_Storage_Git.ValidateAll() if the designated
+// constraints aren't met.
+type ServerLaunch_Features_Storage_GitMultiError []error
 
 // Error returns a concatenation of all the error messages it wraps.
-func (m Ping_Features_Storage_GitMultiError) Error() string {
+func (m ServerLaunch_Features_Storage_GitMultiError) Error() string {
 	var msgs []string
 	for _, err := range m {
 		msgs = append(msgs, err.Error())
@@ -1534,11 +1820,12 @@ func (m Ping_Features_Storage_GitMultiError) Error() string {
 }
 
 // AllErrors returns a list of validation violation errors.
-func (m Ping_Features_Storage_GitMultiError) AllErrors() []error { return m }
+func (m ServerLaunch_Features_Storage_GitMultiError) AllErrors() []error { return m }
 
-// Ping_Features_Storage_GitValidationError is the validation error returned by
-// Ping_Features_Storage_Git.Validate if the designated constraints aren't met.
-type Ping_Features_Storage_GitValidationError struct {
+// ServerLaunch_Features_Storage_GitValidationError is the validation error
+// returned by ServerLaunch_Features_Storage_Git.Validate if the designated
+// constraints aren't met.
+type ServerLaunch_Features_Storage_GitValidationError struct {
 	field  string
 	reason string
 	cause  error
@@ -1546,24 +1833,24 @@ type Ping_Features_Storage_GitValidationError struct {
 }
 
 // Field function returns field value.
-func (e Ping_Features_Storage_GitValidationError) Field() string { return e.field }
+func (e ServerLaunch_Features_Storage_GitValidationError) Field() string { return e.field }
 
 // Reason function returns reason value.
-func (e Ping_Features_Storage_GitValidationError) Reason() string { return e.reason }
+func (e ServerLaunch_Features_Storage_GitValidationError) Reason() string { return e.reason }
 
 // Cause function returns cause value.
-func (e Ping_Features_Storage_GitValidationError) Cause() error { return e.cause }
+func (e ServerLaunch_Features_Storage_GitValidationError) Cause() error { return e.cause }
 
 // Key function returns key value.
-func (e Ping_Features_Storage_GitValidationError) Key() bool { return e.key }
+func (e ServerLaunch_Features_Storage_GitValidationError) Key() bool { return e.key }
 
 // ErrorName returns error name.
-func (e Ping_Features_Storage_GitValidationError) ErrorName() string {
-	return "Ping_Features_Storage_GitValidationError"
+func (e ServerLaunch_Features_Storage_GitValidationError) ErrorName() string {
+	return "ServerLaunch_Features_Storage_GitValidationError"
 }
 
 // Error satisfies the builtin error interface
-func (e Ping_Features_Storage_GitValidationError) Error() string {
+func (e ServerLaunch_Features_Storage_GitValidationError) Error() string {
 	cause := ""
 	if e.cause != nil {
 		cause = fmt.Sprintf(" | caused by: %v", e.cause)
@@ -1575,14 +1862,14 @@ func (e Ping_Features_Storage_GitValidationError) Error() string {
 	}
 
 	return fmt.Sprintf(
-		"invalid %sPing_Features_Storage_Git.%s: %s%s",
+		"invalid %sServerLaunch_Features_Storage_Git.%s: %s%s",
 		key,
 		e.field,
 		e.reason,
 		cause)
 }
 
-var _ error = Ping_Features_Storage_GitValidationError{}
+var _ error = ServerLaunch_Features_Storage_GitValidationError{}
 
 var _ interface {
 	Field() string
@@ -1590,24 +1877,25 @@ var _ interface {
 	Key() bool
 	Cause() error
 	ErrorName() string
-} = Ping_Features_Storage_GitValidationError{}
+} = ServerLaunch_Features_Storage_GitValidationError{}
 
-// Validate checks the field values on Ping_Features_Storage_Blob with the
-// rules defined in the proto definition for this message. If any rules are
-// violated, the first error encountered is returned, or nil if there are no violations.
-func (m *Ping_Features_Storage_Blob) Validate() error {
+// Validate checks the field values on ServerLaunch_Features_Storage_Blob with
+// the rules defined in the proto definition for this message. If any rules
+// are violated, the first error encountered is returned, or nil if there are
+// no violations.
+func (m *ServerLaunch_Features_Storage_Blob) Validate() error {
 	return m.validate(false)
 }
 
-// ValidateAll checks the field values on Ping_Features_Storage_Blob with the
-// rules defined in the proto definition for this message. If any rules are
-// violated, the result is a list of violation errors wrapped in
-// Ping_Features_Storage_BlobMultiError, or nil if none found.
-func (m *Ping_Features_Storage_Blob) ValidateAll() error {
+// ValidateAll checks the field values on ServerLaunch_Features_Storage_Blob
+// with the rules defined in the proto definition for this message. If any
+// rules are violated, the result is a list of violation errors wrapped in
+// ServerLaunch_Features_Storage_BlobMultiError, or nil if none found.
+func (m *ServerLaunch_Features_Storage_Blob) ValidateAll() error {
 	return m.validate(true)
 }
 
-func (m *Ping_Features_Storage_Blob) validate(all bool) error {
+func (m *ServerLaunch_Features_Storage_Blob) validate(all bool) error {
 	if m == nil {
 		return nil
 	}
@@ -1620,7 +1908,7 @@ func (m *Ping_Features_Storage_Blob) validate(all bool) error {
 		switch v := interface{}(m.GetPollInterval()).(type) {
 		case interface{ ValidateAll() error }:
 			if err := v.ValidateAll(); err != nil {
-				errors = append(errors, Ping_Features_Storage_BlobValidationError{
+				errors = append(errors, ServerLaunch_Features_Storage_BlobValidationError{
 					field:  "PollInterval",
 					reason: "embedded message failed validation",
 					cause:  err,
@@ -1628,7 +1916,7 @@ func (m *Ping_Features_Storage_Blob) validate(all bool) error {
 			}
 		case interface{ Validate() error }:
 			if err := v.Validate(); err != nil {
-				errors = append(errors, Ping_Features_Storage_BlobValidationError{
+				errors = append(errors, ServerLaunch_Features_Storage_BlobValidationError{
 					field:  "PollInterval",
 					reason: "embedded message failed validation",
 					cause:  err,
@@ -1637,7 +1925,7 @@ func (m *Ping_Features_Storage_Blob) validate(all bool) error {
 		}
 	} else if v, ok := interface{}(m.GetPollInterval()).(interface{ Validate() error }); ok {
 		if err := v.Validate(); err != nil {
-			return Ping_Features_Storage_BlobValidationError{
+			return ServerLaunch_Features_Storage_BlobValidationError{
 				field:  "PollInterval",
 				reason: "embedded message failed validation",
 				cause:  err,
@@ -1646,19 +1934,20 @@ func (m *Ping_Features_Storage_Blob) validate(all bool) error {
 	}
 
 	if len(errors) > 0 {
-		return Ping_Features_Storage_BlobMultiError(errors)
+		return ServerLaunch_Features_Storage_BlobMultiError(errors)
 	}
 
 	return nil
 }
 
-// Ping_Features_Storage_BlobMultiError is an error wrapping multiple
-// validation errors returned by Ping_Features_Storage_Blob.ValidateAll() if
-// the designated constraints aren't met.
-type Ping_Features_Storage_BlobMultiError []error
+// ServerLaunch_Features_Storage_BlobMultiError is an error wrapping multiple
+// validation errors returned by
+// ServerLaunch_Features_Storage_Blob.ValidateAll() if the designated
+// constraints aren't met.
+type ServerLaunch_Features_Storage_BlobMultiError []error
 
 // Error returns a concatenation of all the error messages it wraps.
-func (m Ping_Features_Storage_BlobMultiError) Error() string {
+func (m ServerLaunch_Features_Storage_BlobMultiError) Error() string {
 	var msgs []string
 	for _, err := range m {
 		msgs = append(msgs, err.Error())
@@ -1667,11 +1956,12 @@ func (m Ping_Features_Storage_BlobMultiError) Error() string {
 }
 
 // AllErrors returns a list of validation violation errors.
-func (m Ping_Features_Storage_BlobMultiError) AllErrors() []error { return m }
+func (m ServerLaunch_Features_Storage_BlobMultiError) AllErrors() []error { return m }
 
-// Ping_Features_Storage_BlobValidationError is the validation error returned
-// by Ping_Features_Storage_Blob.Validate if the designated constraints aren't met.
-type Ping_Features_Storage_BlobValidationError struct {
+// ServerLaunch_Features_Storage_BlobValidationError is the validation error
+// returned by ServerLaunch_Features_Storage_Blob.Validate if the designated
+// constraints aren't met.
+type ServerLaunch_Features_Storage_BlobValidationError struct {
 	field  string
 	reason string
 	cause  error
@@ -1679,24 +1969,24 @@ type Ping_Features_Storage_BlobValidationError struct {
 }
 
 // Field function returns field value.
-func (e Ping_Features_Storage_BlobValidationError) Field() string { return e.field }
+func (e ServerLaunch_Features_Storage_BlobValidationError) Field() string { return e.field }
 
 // Reason function returns reason value.
-func (e Ping_Features_Storage_BlobValidationError) Reason() string { return e.reason }
+func (e ServerLaunch_Features_Storage_BlobValidationError) Reason() string { return e.reason }
 
 // Cause function returns cause value.
-func (e Ping_Features_Storage_BlobValidationError) Cause() error { return e.cause }
+func (e ServerLaunch_Features_Storage_BlobValidationError) Cause() error { return e.cause }
 
 // Key function returns key value.
-func (e Ping_Features_Storage_BlobValidationError) Key() bool { return e.key }
+func (e ServerLaunch_Features_Storage_BlobValidationError) Key() bool { return e.key }
 
 // ErrorName returns error name.
-func (e Ping_Features_Storage_BlobValidationError) ErrorName() string {
-	return "Ping_Features_Storage_BlobValidationError"
+func (e ServerLaunch_Features_Storage_BlobValidationError) ErrorName() string {
+	return "ServerLaunch_Features_Storage_BlobValidationError"
 }
 
 // Error satisfies the builtin error interface
-func (e Ping_Features_Storage_BlobValidationError) Error() string {
+func (e ServerLaunch_Features_Storage_BlobValidationError) Error() string {
 	cause := ""
 	if e.cause != nil {
 		cause = fmt.Sprintf(" | caused by: %v", e.cause)
@@ -1708,14 +1998,14 @@ func (e Ping_Features_Storage_BlobValidationError) Error() string {
 	}
 
 	return fmt.Sprintf(
-		"invalid %sPing_Features_Storage_Blob.%s: %s%s",
+		"invalid %sServerLaunch_Features_Storage_Blob.%s: %s%s",
 		key,
 		e.field,
 		e.reason,
 		cause)
 }
 
-var _ error = Ping_Features_Storage_BlobValidationError{}
+var _ error = ServerLaunch_Features_Storage_BlobValidationError{}
 
 var _ interface {
 	Field() string
@@ -1723,24 +2013,24 @@ var _ interface {
 	Key() bool
 	Cause() error
 	ErrorName() string
-} = Ping_Features_Storage_BlobValidationError{}
+} = ServerLaunch_Features_Storage_BlobValidationError{}
 
-// Validate checks the field values on Ping_Stats_Policy with the rules defined
-// in the proto definition for this message. If any rules are violated, the
-// first error encountered is returned, or nil if there are no violations.
-func (m *Ping_Stats_Policy) Validate() error {
+// Validate checks the field values on ServerLaunch_Stats_Policy with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *ServerLaunch_Stats_Policy) Validate() error {
 	return m.validate(false)
 }
 
-// ValidateAll checks the field values on Ping_Stats_Policy with the rules
-// defined in the proto definition for this message. If any rules are
+// ValidateAll checks the field values on ServerLaunch_Stats_Policy with the
+// rules defined in the proto definition for this message. If any rules are
 // violated, the result is a list of violation errors wrapped in
-// Ping_Stats_PolicyMultiError, or nil if none found.
-func (m *Ping_Stats_Policy) ValidateAll() error {
+// ServerLaunch_Stats_PolicyMultiError, or nil if none found.
+func (m *ServerLaunch_Stats_Policy) ValidateAll() error {
 	return m.validate(true)
 }
 
-func (m *Ping_Stats_Policy) validate(all bool) error {
+func (m *ServerLaunch_Stats_Policy) validate(all bool) error {
 	if m == nil {
 		return nil
 	}
@@ -1754,19 +2044,19 @@ func (m *Ping_Stats_Policy) validate(all bool) error {
 	// no validation rules for AvgConditionCount
 
 	if len(errors) > 0 {
-		return Ping_Stats_PolicyMultiError(errors)
+		return ServerLaunch_Stats_PolicyMultiError(errors)
 	}
 
 	return nil
 }
 
-// Ping_Stats_PolicyMultiError is an error wrapping multiple validation errors
-// returned by Ping_Stats_Policy.ValidateAll() if the designated constraints
-// aren't met.
-type Ping_Stats_PolicyMultiError []error
+// ServerLaunch_Stats_PolicyMultiError is an error wrapping multiple validation
+// errors returned by ServerLaunch_Stats_Policy.ValidateAll() if the
+// designated constraints aren't met.
+type ServerLaunch_Stats_PolicyMultiError []error
 
 // Error returns a concatenation of all the error messages it wraps.
-func (m Ping_Stats_PolicyMultiError) Error() string {
+func (m ServerLaunch_Stats_PolicyMultiError) Error() string {
 	var msgs []string
 	for _, err := range m {
 		msgs = append(msgs, err.Error())
@@ -1775,11 +2065,11 @@ func (m Ping_Stats_PolicyMultiError) Error() string {
 }
 
 // AllErrors returns a list of validation violation errors.
-func (m Ping_Stats_PolicyMultiError) AllErrors() []error { return m }
+func (m ServerLaunch_Stats_PolicyMultiError) AllErrors() []error { return m }
 
-// Ping_Stats_PolicyValidationError is the validation error returned by
-// Ping_Stats_Policy.Validate if the designated constraints aren't met.
-type Ping_Stats_PolicyValidationError struct {
+// ServerLaunch_Stats_PolicyValidationError is the validation error returned by
+// ServerLaunch_Stats_Policy.Validate if the designated constraints aren't met.
+type ServerLaunch_Stats_PolicyValidationError struct {
 	field  string
 	reason string
 	cause  error
@@ -1787,24 +2077,24 @@ type Ping_Stats_PolicyValidationError struct {
 }
 
 // Field function returns field value.
-func (e Ping_Stats_PolicyValidationError) Field() string { return e.field }
+func (e ServerLaunch_Stats_PolicyValidationError) Field() string { return e.field }
 
 // Reason function returns reason value.
-func (e Ping_Stats_PolicyValidationError) Reason() string { return e.reason }
+func (e ServerLaunch_Stats_PolicyValidationError) Reason() string { return e.reason }
 
 // Cause function returns cause value.
-func (e Ping_Stats_PolicyValidationError) Cause() error { return e.cause }
+func (e ServerLaunch_Stats_PolicyValidationError) Cause() error { return e.cause }
 
 // Key function returns key value.
-func (e Ping_Stats_PolicyValidationError) Key() bool { return e.key }
+func (e ServerLaunch_Stats_PolicyValidationError) Key() bool { return e.key }
 
 // ErrorName returns error name.
-func (e Ping_Stats_PolicyValidationError) ErrorName() string {
-	return "Ping_Stats_PolicyValidationError"
+func (e ServerLaunch_Stats_PolicyValidationError) ErrorName() string {
+	return "ServerLaunch_Stats_PolicyValidationError"
 }
 
 // Error satisfies the builtin error interface
-func (e Ping_Stats_PolicyValidationError) Error() string {
+func (e ServerLaunch_Stats_PolicyValidationError) Error() string {
 	cause := ""
 	if e.cause != nil {
 		cause = fmt.Sprintf(" | caused by: %v", e.cause)
@@ -1816,14 +2106,14 @@ func (e Ping_Stats_PolicyValidationError) Error() string {
 	}
 
 	return fmt.Sprintf(
-		"invalid %sPing_Stats_Policy.%s: %s%s",
+		"invalid %sServerLaunch_Stats_Policy.%s: %s%s",
 		key,
 		e.field,
 		e.reason,
 		cause)
 }
 
-var _ error = Ping_Stats_PolicyValidationError{}
+var _ error = ServerLaunch_Stats_PolicyValidationError{}
 
 var _ interface {
 	Field() string
@@ -1831,24 +2121,24 @@ var _ interface {
 	Key() bool
 	Cause() error
 	ErrorName() string
-} = Ping_Stats_PolicyValidationError{}
+} = ServerLaunch_Stats_PolicyValidationError{}
 
-// Validate checks the field values on Ping_Stats_Schema with the rules defined
-// in the proto definition for this message. If any rules are violated, the
-// first error encountered is returned, or nil if there are no violations.
-func (m *Ping_Stats_Schema) Validate() error {
+// Validate checks the field values on ServerLaunch_Stats_Schema with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *ServerLaunch_Stats_Schema) Validate() error {
 	return m.validate(false)
 }
 
-// ValidateAll checks the field values on Ping_Stats_Schema with the rules
-// defined in the proto definition for this message. If any rules are
+// ValidateAll checks the field values on ServerLaunch_Stats_Schema with the
+// rules defined in the proto definition for this message. If any rules are
 // violated, the result is a list of violation errors wrapped in
-// Ping_Stats_SchemaMultiError, or nil if none found.
-func (m *Ping_Stats_Schema) ValidateAll() error {
+// ServerLaunch_Stats_SchemaMultiError, or nil if none found.
+func (m *ServerLaunch_Stats_Schema) ValidateAll() error {
 	return m.validate(true)
 }
 
-func (m *Ping_Stats_Schema) validate(all bool) error {
+func (m *ServerLaunch_Stats_Schema) validate(all bool) error {
 	if m == nil {
 		return nil
 	}
@@ -1858,19 +2148,19 @@ func (m *Ping_Stats_Schema) validate(all bool) error {
 	// no validation rules for Count
 
 	if len(errors) > 0 {
-		return Ping_Stats_SchemaMultiError(errors)
+		return ServerLaunch_Stats_SchemaMultiError(errors)
 	}
 
 	return nil
 }
 
-// Ping_Stats_SchemaMultiError is an error wrapping multiple validation errors
-// returned by Ping_Stats_Schema.ValidateAll() if the designated constraints
-// aren't met.
-type Ping_Stats_SchemaMultiError []error
+// ServerLaunch_Stats_SchemaMultiError is an error wrapping multiple validation
+// errors returned by ServerLaunch_Stats_Schema.ValidateAll() if the
+// designated constraints aren't met.
+type ServerLaunch_Stats_SchemaMultiError []error
 
 // Error returns a concatenation of all the error messages it wraps.
-func (m Ping_Stats_SchemaMultiError) Error() string {
+func (m ServerLaunch_Stats_SchemaMultiError) Error() string {
 	var msgs []string
 	for _, err := range m {
 		msgs = append(msgs, err.Error())
@@ -1879,11 +2169,11 @@ func (m Ping_Stats_SchemaMultiError) Error() string {
 }
 
 // AllErrors returns a list of validation violation errors.
-func (m Ping_Stats_SchemaMultiError) AllErrors() []error { return m }
+func (m ServerLaunch_Stats_SchemaMultiError) AllErrors() []error { return m }
 
-// Ping_Stats_SchemaValidationError is the validation error returned by
-// Ping_Stats_Schema.Validate if the designated constraints aren't met.
-type Ping_Stats_SchemaValidationError struct {
+// ServerLaunch_Stats_SchemaValidationError is the validation error returned by
+// ServerLaunch_Stats_Schema.Validate if the designated constraints aren't met.
+type ServerLaunch_Stats_SchemaValidationError struct {
 	field  string
 	reason string
 	cause  error
@@ -1891,24 +2181,24 @@ type Ping_Stats_SchemaValidationError struct {
 }
 
 // Field function returns field value.
-func (e Ping_Stats_SchemaValidationError) Field() string { return e.field }
+func (e ServerLaunch_Stats_SchemaValidationError) Field() string { return e.field }
 
 // Reason function returns reason value.
-func (e Ping_Stats_SchemaValidationError) Reason() string { return e.reason }
+func (e ServerLaunch_Stats_SchemaValidationError) Reason() string { return e.reason }
 
 // Cause function returns cause value.
-func (e Ping_Stats_SchemaValidationError) Cause() error { return e.cause }
+func (e ServerLaunch_Stats_SchemaValidationError) Cause() error { return e.cause }
 
 // Key function returns key value.
-func (e Ping_Stats_SchemaValidationError) Key() bool { return e.key }
+func (e ServerLaunch_Stats_SchemaValidationError) Key() bool { return e.key }
 
 // ErrorName returns error name.
-func (e Ping_Stats_SchemaValidationError) ErrorName() string {
-	return "Ping_Stats_SchemaValidationError"
+func (e ServerLaunch_Stats_SchemaValidationError) ErrorName() string {
+	return "ServerLaunch_Stats_SchemaValidationError"
 }
 
 // Error satisfies the builtin error interface
-func (e Ping_Stats_SchemaValidationError) Error() string {
+func (e ServerLaunch_Stats_SchemaValidationError) Error() string {
 	cause := ""
 	if e.cause != nil {
 		cause = fmt.Sprintf(" | caused by: %v", e.cause)
@@ -1920,14 +2210,14 @@ func (e Ping_Stats_SchemaValidationError) Error() string {
 	}
 
 	return fmt.Sprintf(
-		"invalid %sPing_Stats_Schema.%s: %s%s",
+		"invalid %sServerLaunch_Stats_Schema.%s: %s%s",
 		key,
 		e.field,
 		e.reason,
 		cause)
 }
 
-var _ error = Ping_Stats_SchemaValidationError{}
+var _ error = ServerLaunch_Stats_SchemaValidationError{}
 
 var _ interface {
 	Field() string
@@ -1935,4 +2225,141 @@ var _ interface {
 	Key() bool
 	Cause() error
 	ErrorName() string
-} = Ping_Stats_SchemaValidationError{}
+} = ServerLaunch_Stats_SchemaValidationError{}
+
+// Validate checks the field values on Event_ApiActivity with the rules defined
+// in the proto definition for this message. If any rules are violated, the
+// first error encountered is returned, or nil if there are no violations.
+func (m *Event_ApiActivity) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on Event_ApiActivity with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// Event_ApiActivityMultiError, or nil if none found.
+func (m *Event_ApiActivity) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *Event_ApiActivity) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for Version
+
+	if all {
+		switch v := interface{}(m.GetUptime()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, Event_ApiActivityValidationError{
+					field:  "Uptime",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, Event_ApiActivityValidationError{
+					field:  "Uptime",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetUptime()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return Event_ApiActivityValidationError{
+				field:  "Uptime",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	// no validation rules for MethodCalls
+
+	// no validation rules for UserAgents
+
+	if len(errors) > 0 {
+		return Event_ApiActivityMultiError(errors)
+	}
+
+	return nil
+}
+
+// Event_ApiActivityMultiError is an error wrapping multiple validation errors
+// returned by Event_ApiActivity.ValidateAll() if the designated constraints
+// aren't met.
+type Event_ApiActivityMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m Event_ApiActivityMultiError) Error() string {
+	var msgs []string
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m Event_ApiActivityMultiError) AllErrors() []error { return m }
+
+// Event_ApiActivityValidationError is the validation error returned by
+// Event_ApiActivity.Validate if the designated constraints aren't met.
+type Event_ApiActivityValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e Event_ApiActivityValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e Event_ApiActivityValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e Event_ApiActivityValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e Event_ApiActivityValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e Event_ApiActivityValidationError) ErrorName() string {
+	return "Event_ApiActivityValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e Event_ApiActivityValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sEvent_ApiActivity.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = Event_ApiActivityValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = Event_ApiActivityValidationError{}

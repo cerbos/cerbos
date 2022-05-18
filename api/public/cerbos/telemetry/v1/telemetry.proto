@@ -11,7 +11,7 @@ option csharp_namespace = "Cerbos.Api.V1.Telemetry";
 option go_package = "github.com/cerbos/cerbos/api/genpb/cerbos/telemetry/v1;telemetryv1";
 option java_package = "dev.cerbos.api.v1.telemetry";
 
-message Ping {
+message ServerLaunch {
   message Cerbos {
     string version = 1;
     string commit = 2;
@@ -90,4 +90,23 @@ message Ping {
   Source source = 2;
   Features features = 3;
   Stats stats = 4;
+}
+
+message ServerStop {
+  string version = 1;
+  google.protobuf.Duration uptime = 2;
+  uint64 requests_total = 3;
+}
+
+message Event {
+  message ApiActivity {
+    string version = 1;
+    google.protobuf.Duration uptime = 2;
+    map<string, uint64> method_calls = 3;
+    map<string, uint64> user_agents = 4;
+  }
+
+  oneof data {
+    ApiActivity api_activity = 1;
+  }
 }

@@ -158,7 +158,8 @@ func Start(ctx context.Context, zpagesEnabled bool) error {
 	s := NewServer(conf)
 	s.ocExporter = ocExporter
 
-	telemetry.Report(ctx, store)
+	telemetry.Start(ctx, store)
+	defer telemetry.Stop()
 
 	return s.Start(ctx, Param{AuditLog: auditLog, AuxData: auxData, Engine: eng, Store: store, ZPagesEnabled: zpagesEnabled})
 }
@@ -378,10 +379,12 @@ func (s *Server) startGRPCServer(l net.Listener, param Param) (*grpc.Server, err
 
 func (s *Server) mkGRPCServer(log *zap.Logger, auditLog audit.Log) *grpc.Server {
 	payloadLog := zap.L().Named("payload")
+	telemetryInt := telemetry.Intercept()
 
 	opts := []grpc.ServerOption{
 		grpc.ChainStreamInterceptor(
 			grpc_recovery.StreamServerInterceptor(),
+			telemetryInt.StreamServerInterceptor(),
 			grpc_validator.StreamServerInterceptor(),
 			grpc_ctxtags.StreamServerInterceptor(grpc_ctxtags.WithFieldExtractorForInitialReq(svc.ExtractRequestFields)),
 			grpc_zap.StreamServerInterceptor(log,
@@ -392,6 +395,7 @@ func (s *Server) mkGRPCServer(log *zap.Logger, auditLog audit.Log) *grpc.Server 
 		),
 		grpc.ChainUnaryInterceptor(
 			grpc_recovery.UnaryServerInterceptor(),
+			telemetryInt.UnaryServerInterceptor(),
 			grpc_validator.UnaryServerInterceptor(),
 			grpc_ctxtags.UnaryServerInterceptor(grpc_ctxtags.WithFieldExtractor(svc.ExtractRequestFields)),
 			XForwardedHostUnaryServerInterceptor,
@@ -501,6 +505,7 @@ func (s *Server) startHTTPServer(ctx context.Context, l net.Listener, grpcSrv *g
 func defaultGRPCDialOpts() []grpc.DialOption {
 	// see https://github.com/grpc/grpc/blob/master/doc/connection-backoff.md
 	return []grpc.DialOption{
+		grpc.WithUserAgent("grpc-gateway"),
 		grpc.WithConnectParams(grpc.ConnectParams{MinConnectTimeout: minGRPCConnectTimeout}),
 		grpc.WithStatsHandler(&ocgrpc.ClientHandler{}),
 	}

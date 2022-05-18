@@ -1,10 +1,13 @@
 {
-  "$id": "https://api.cerbos.dev/cerbos/telemetry/v1/Ping/Features/Storage/Disk.schema.json",
+  "$id": "https://api.cerbos.dev/cerbos/telemetry/v1/ServerLaunch/Features/Audit.schema.json",
   "$schema": "http://json-schema.org/draft-07/schema#",
   "type": "object",
   "additionalProperties": false,
   "properties": {
-    "watch": {
+    "backend": {
+      "type": "string"
+    },
+    "enabled": {
       "type": "boolean"
     }
   }

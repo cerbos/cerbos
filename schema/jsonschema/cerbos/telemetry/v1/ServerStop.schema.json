@@ -1,0 +1,34 @@
+{
+  "$id": "https://api.cerbos.dev/cerbos/telemetry/v1/ServerStop.schema.json",
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "definitions": {
+    "google.protobuf.Duration": {
+      "title": "Duration",
+      "description": "A signed, fixed-length span of time represented as a count of seconds and fractions of seconds at nanosecond resolution.",
+      "type": "string",
+      "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?s$"
+    }
+  },
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "requestsTotal": {
+      "oneOf": [
+        {
+          "type": "integer",
+          "minimum": 0
+        },
+        {
+          "type": "string",
+          "pattern": "^(?:0|[1-9]\\d*)(?:\\.\\d+)?(?:[eE][+-]?\\d+)?$"
+        }
+      ]
+    },
+    "uptime": {
+      "$ref": "#/definitions/google.protobuf.Duration"
+    },
+    "version": {
+      "type": "string"
+    }
+  }
+}
