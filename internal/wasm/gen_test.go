@@ -8,6 +8,7 @@ import (
 	"os"
 	"github.com/santhosh-tekuri/jsonschema/v5"
 	"path"
+	runtimev1 "github.com/cerbos/cerbos/api/genpb/cerbos/runtime/v1"
 )
 
 //go:embed templates/*.tmpl
@@ -23,7 +24,8 @@ func TestClasses(t *testing.T) {
 	is.NoError(err)
 	props, err := convert(s)
 	is.NoError(err)
-	tmpl.ExecuteTemplate(os.Stdout, "lib", props)
+	err = tmpl.ExecuteTemplate(os.Stdout, "lib", props)
+	is.NoError(err)
 }
 
 func TestCheck(t *testing.T) {
@@ -35,10 +37,12 @@ func TestCheck(t *testing.T) {
 
 	policy := Policy{
 		Rules: []Rule{{
-			Roles:   []string{"admin", "manager"},
-			Actions: []string{"read", "update"},
-			Effect:  "EFFECT_ALLOW",
+			Roles:     []string{"admin", "manager"},
+			Actions:   []string{"read", "update"},
+			Effect:    "EFFECT_ALLOW",
+			Condition: &runtimev1.Condition{},
 		}},
 	}
-	tmpl.ExecuteTemplate(os.Stdout, "check", policy)
+	err = tmpl.ExecuteTemplate(os.Stdout, "check", policy)
+	is.NoError(err)
 }
