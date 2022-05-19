@@ -1,0 +1,20 @@
+{{define "check"}}
+    #[wasm_bindgen]
+    pub fn check(val: JsValue) -> Result<String, JsValue> {
+        match val.into_serde::<Request>() {
+            Ok(req) => Ok(check_impl(req)),
+            Err(e) => Err(JsValue::from_str(&e.to_string()))
+        }
+    }
+    fn check_impl(request: Request) -> String {
+        let P = request.principal;
+        let R = request.resource;
+
+        {{range $rule := .Rules -}}
+            if intersect(P.roles, vec![{{template "join-string-slice" $rule.Roles}}]) {
+                if action_matched(request.action, vec![{{template "join-string-slice" $rule.Actions}}]) {
+                }
+            }
+        {{- end}}
+    }
+{{end}}
