@@ -7,14 +7,19 @@
         }
     }
     fn check_impl(request: Request) -> String {
-        let P = request.principal;
-        let R = request.resource;
-
-        {{range $rule := .Rules -}}
-            if intersect(P.roles, vec![{{template "join-string-slice" $rule.Roles}}]) {
-                if action_matched(request.action, vec![{{template "join-string-slice" $rule.Actions}}]) {
-                }
+        let p = request.principal;
+        let roles: Vec<_> = p.roles.iter().map(AsRef::as_ref).collect();
+        let r = request.resource;
+        {{range $rule := .Rules }}
+        if intersect(&roles, &vec![{{template "join-string-slice" $rule.Roles}}]) {
+            if action_matched(&request.action, &vec![{{template "join-string-slice" $rule.Actions}}]) {
+            {{if $rule.Condition}}
+                {{$rule.RenderCondition template "condition" $rule.Condition}}
+            {{else}}    return {{printf "%q" $rule.Effect}}.to_owned(); {{end}}
             }
+        }
         {{- end}}
+
+        return "EFFECT_DENY".to_owned();
     }
 {{end}}

@@ -1,6 +1,6 @@
 {{define "request"}}
 #[derive(Serialize, Deserialize)]
-struct resourceAttr {
+struct ResourceAttr {
 {{ range $prop := . }} {{template "field" $prop}}
 {{end -}}
 }
@@ -8,14 +8,14 @@ struct resourceAttr {
 #[derive(Serialize, Deserialize)]
 struct Resource {
     id: String,
-    attr: resourceAttr,
+    attr: ResourceAttr,
 }
 
 #[derive(Serialize, Deserialize)]
 struct Principal {
     id: String,
     roles: Vec<String>,
-    attr: principalAttr,
+{{/*    attr: PrincipalAttr,*/}}
 }
 
 #[derive(Serialize, Deserialize)]

@@ -1,0 +1,11 @@
+{{define "condition"}}
+    {{if (eq .Type "All")}}
+        ({{range $index, $item := .Expressions}}{{if $index}} && {{end}}$item{{end}})
+    {{else if (eq .Type "Any")}}
+        ({{range $index, $item := .Expressions}}{{if $index}} || {{end}}$item{{end}})
+    {{else if (eq .Type "None")}}
+        !({{range $index, $item := .Expressions}}{{if $index}} && {{end}}$item{{end}})
+    {{else if (eq .Type "Expr")}}
+        {{index .Expressions 0}}
+    {{end}}
+{{end}}

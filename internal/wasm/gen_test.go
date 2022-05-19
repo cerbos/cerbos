@@ -26,15 +26,6 @@ func TestClasses(t *testing.T) {
 	tmpl.ExecuteTemplate(os.Stdout, "lib", props)
 }
 
-type Policy struct {
-	Rules []Rule
-}
-
-type Rule struct {
-	Roles   []string
-	Actions []string
-}
-
 func TestCheck(t *testing.T) {
 	is := require.New(t)
 	tmpl, err := template.ParseFS(templatesFS, "templates/*.tmpl")
@@ -46,6 +37,7 @@ func TestCheck(t *testing.T) {
 		Rules: []Rule{{
 			Roles:   []string{"admin", "manager"},
 			Actions: []string{"read", "update"},
+			Effect:  "EFFECT_ALLOW",
 		}},
 	}
 	tmpl.ExecuteTemplate(os.Stdout, "check", policy)
