@@ -18,6 +18,7 @@ import (
 	enginev1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
 	runtimev1 "github.com/cerbos/cerbos/api/genpb/cerbos/runtime/v1"
 	schemav1 "github.com/cerbos/cerbos/api/genpb/cerbos/schema/v1"
+	"github.com/cerbos/cerbos/internal/compile"
 	"github.com/cerbos/cerbos/internal/conditions"
 	"github.com/cerbos/cerbos/internal/engine/tracer"
 	"github.com/cerbos/cerbos/internal/namer"
@@ -391,8 +392,12 @@ func toSet(values []string) stringSet {
 }
 
 func setIntersects(s1 protoSet, s2 stringSet) bool {
-	for v := range s2 {
-		if _, ok := s1[v]; ok {
+	for v := range s1 {
+		if v == compile.AnyRoleVal {
+			return true
+		}
+
+		if _, ok := s2[v]; ok {
 			return true
 		}
 	}

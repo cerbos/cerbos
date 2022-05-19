@@ -1,0 +1,38 @@
+---
+description: "Wildcard roles"
+inputs: [
+  {
+    "requestId": "test",
+    "actions": [
+      "view",
+    ],
+    "principal": {
+      "id": "john",
+      "roles": [
+        "employee"
+      ],
+      "attr": {
+        "reader": true
+      }
+    },
+    "resource": {
+      "policyVersion": "20210210",
+      "kind": "leave_request",
+      "id": "XX125",
+      "attr": {}
+    }
+  }
+]
+wantOutputs: [
+  {
+    "requestId": "test",
+    "resourceId": "XX125",
+    "effective_derived_roles": ["reader", "any_employee"],
+    "actions": {
+      "view": {
+        "effect": "EFFECT_ALLOW",
+        "policy": "resource.leave_request.v20210210",
+      },
+    }
+  }
+]

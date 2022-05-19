@@ -31,6 +31,6 @@ derivedRoles:
 A variable expression can contain anything that condition expression can have.
 <2> Name to use when importing this set of derived roles.
 <3> Descriptive name for this derived role.
-<4> The static roles (from the identity provider) to which this derived role applies to.
+<4> The static roles (from the identity provider) to which this derived role applies to. The special value ``*`` can be used to match any role.
 <5> An (optional) set of expressions that should evaluate to true for this role to activate.
 

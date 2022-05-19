@@ -346,7 +346,8 @@ func testGRPCClient(c client.Client) func(*testing.T) {
 			principal := client.NewPrincipal("maggie").
 				WithRoles("manager").
 				WithAttr("geography", "US").
-				WithAttr("managed_geographies", "US")
+				WithAttr("managed_geographies", "US").
+				WithAttr("reader", false)
 
 			resource := client.NewResource("leave_request", "").
 				WithPolicyVersion("20210210").

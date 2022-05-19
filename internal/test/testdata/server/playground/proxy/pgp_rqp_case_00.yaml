@@ -44,7 +44,8 @@ playgroundProxy:
           "department": "marketing",
           "managed_geographies": "GB",
           "geography": "GB",
-          "team": "design"
+          "team": "design",
+          "reader": false
         }
       },
       "resource": {

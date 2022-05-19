@@ -1,0 +1,13 @@
+---
+apiVersion: api.cerbos.dev/v1
+resourcePolicy:
+  version: "default"
+  resource: account
+  rules:
+    - actions: ["*"]
+      effect: EFFECT_ALLOW
+      roles: ["*"]
+
+    - actions: ["create"]
+      roles: ["user"]
+      effect: EFFECT_DENY

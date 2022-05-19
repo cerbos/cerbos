@@ -53,7 +53,7 @@ A variable expression can contain anything that condition expression can have.
 <5> Name of the resource to which this policy applies.
 <6> Actions can contain wildcards. Wildcards honour the ``:`` delimiter. E.g. ``a:*:d`` would match ``a:x:d`` but not ``a:x``.
 <7> This rule applies to a derived role.
-<8> Rules can also refer directly to static roles.
+<8> Rules can also refer directly to static roles. The special value ``*`` can be used to disregard roles when evaluating the rule.
 <9> Optional name for the rule.
 <10> Optional section for defining schemas that apply to this resource kind.
 <11> Optional schema for validating the principal attributes.

@@ -76,7 +76,7 @@ message ResourceRule {
     unique: true,
     items {
       string {
-        pattern: "^[[:word:]\\-\\.]+$"
+        pattern: "^([[:word:]\\-\\.]+|\\*)$"
       }
     }
   }];
@@ -135,7 +135,7 @@ message RoleDef {
     min_items: 1,
     items {
       string {
-        pattern: "^[[:word:]\\-\\.]+$"
+        pattern: "^([[:word:]\\-\\.]+|\\*)$"
       }
     }
   }];
