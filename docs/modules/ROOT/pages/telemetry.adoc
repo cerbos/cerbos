@@ -15,7 +15,7 @@ Cerbos developers rely on anonymous usage data to help prioritise new features a
 
 You can view the full schema of the telemetry data on link:https://github.com/cerbos/cerbos/tree/main/api/public/cerbos/telemetry/v1/telemetry.proto[GitHub] or on the link:https://buf.build/cerbos/cerbos-api/docs/main/cerbos.telemetry.v1[Buf schema registry].
 
-We use link:https://segment.com[Segment] to collect the data. Only a small number of Zenauth (the company leading the development of Cerbos) employees have access to the data. 
+We use link:https://www.rudderstack.com[Rudderstack] to collect the data. Only a small number of Zenauth (the company leading the development of Cerbos) employees have access to the data. 
 
 == How to disable telemetry collection
 

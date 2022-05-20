@@ -1,7 +1,8 @@
 include tools/tools.mk
 include hack/dev/dev.mk
 
-SEGMENT_WRITE_KEY ?= ""
+TELEMETRY_WRITE_KEY ?= ""
+TELEMETRY_URL ?= ""
 
 VERSION := $(shell git describe --abbrev=0)
 COMMIT_SHA := $(shell git rev-parse HEAD)
@@ -107,7 +108,7 @@ build: generate lint test package
 
 .PHONY: package
 package: $(GORELEASER)
-	@ SEGMENT_WRITE_KEY=$(SEGMENT_WRITE_KEY) $(GORELEASER) release --config=.goreleaser.yml --snapshot --skip-publish --rm-dist
+	@ TELEMETRY_WRITE_KEY=$(TELEMETRY_WRITE_KEY) TELEMETRY_URL=$(TELEMETRY_URL) $(GORELEASER) release --config=.goreleaser.yml --snapshot --skip-publish --rm-dist
 
 .PHONY: docs
 docs: confdocs
