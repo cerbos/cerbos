@@ -9,6 +9,9 @@ import (
 	"github.com/santhosh-tekuri/jsonschema/v5"
 	"path"
 	runtimev1 "github.com/cerbos/cerbos/api/genpb/cerbos/runtime/v1"
+	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
+	"google.golang.org/protobuf/encoding/protojson"
+	"github.com/cerbos/cerbos/internal/compile"
 )
 
 //go:embed templates/*.tmpl
@@ -40,9 +43,24 @@ func TestCheck(t *testing.T) {
 			Roles:     []string{"admin", "manager"},
 			Actions:   []string{"read", "update"},
 			Effect:    "EFFECT_ALLOW",
-			Condition: &runtimev1.Condition{},
+			Condition: getCondition(t),
 		}},
 	}
 	err = tmpl.ExecuteTemplate(os.Stdout, "check", policy)
 	is.NoError(err)
+}
+
+func getCondition(t *testing.T) *runtimev1.Condition {
+	t.Helper()
+
+	buf := []byte(`{ "match": { "expr": "request.resource.attr.geography == \"UK\"" } }`)
+	c := new(policyv1.Condition)
+	err := protojson.Unmarshal(buf, c)
+	require.NoError(t, err)
+
+	cond, err := compile.Condition(c)
+	require.NoError(t, err)
+	require.NotNil(t, cond)
+
+	return cond
 }

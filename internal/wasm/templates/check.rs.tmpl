@@ -13,9 +13,11 @@
         {{range $rule := .Rules }}
         if intersect(&roles, &vec![{{template "join-string-slice" $rule.Roles}}]) {
             if action_matched(&request.action, &vec![{{template "join-string-slice" $rule.Actions}}]) {
-            {{if $rule.Condition}}
-                {{$rule.RenderCondition}}
-            {{else}}    return {{printf "%q" $rule.Effect}}.to_owned(); {{end}}
+            {{- if $rule.Condition }}
+                if {{$rule.RenderCondition}} {
+                    return {{printf "%q" $rule.Effect}}.to_owned();
+                }
+            {{- else}}    return {{printf "%q" $rule.Effect}}.to_owned(); {{end}}
             }
         }
         {{- end}}

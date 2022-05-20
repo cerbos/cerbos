@@ -5,6 +5,7 @@ import (
 	"golang.org/x/exp/maps"
 	"fmt"
 	"errors"
+	"strings"
 )
 
 type (
@@ -28,14 +29,13 @@ func (r *Rule) RenderCondition() (string, error) {
 	if r.Condition == nil {
 		return "", fmt.Errorf("%q rule: %w", r.Name, ErrNilCondition)
 	}
-	return "here goes a condition", nil
-	//sb := new(strings.Builder)
-	//err := saveCondition(sb, r.Condition)
-	//if err != nil {
-	//	return "", err
-	//}
-	//
-	//return sb.String(), nil
+	sb := new(strings.Builder)
+	err := saveCondition(sb, r.Condition)
+	if err != nil {
+		return "", err
+	}
+
+	return sb.String(), nil
 }
 
 func convertPolicy(rps *runtimev1.RunnableResourcePolicySet) (*Policy, error) {
