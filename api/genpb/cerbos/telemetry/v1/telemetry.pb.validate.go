@@ -2227,6 +2227,110 @@ var _ interface {
 	ErrorName() string
 } = ServerLaunch_Stats_SchemaValidationError{}
 
+// Validate checks the field values on Event_CountStat with the rules defined
+// in the proto definition for this message. If any rules are violated, the
+// first error encountered is returned, or nil if there are no violations.
+func (m *Event_CountStat) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on Event_CountStat with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// Event_CountStatMultiError, or nil if none found.
+func (m *Event_CountStat) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *Event_CountStat) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for Key
+
+	// no validation rules for Count
+
+	if len(errors) > 0 {
+		return Event_CountStatMultiError(errors)
+	}
+
+	return nil
+}
+
+// Event_CountStatMultiError is an error wrapping multiple validation errors
+// returned by Event_CountStat.ValidateAll() if the designated constraints
+// aren't met.
+type Event_CountStatMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m Event_CountStatMultiError) Error() string {
+	var msgs []string
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m Event_CountStatMultiError) AllErrors() []error { return m }
+
+// Event_CountStatValidationError is the validation error returned by
+// Event_CountStat.Validate if the designated constraints aren't met.
+type Event_CountStatValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e Event_CountStatValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e Event_CountStatValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e Event_CountStatValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e Event_CountStatValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e Event_CountStatValidationError) ErrorName() string { return "Event_CountStatValidationError" }
+
+// Error satisfies the builtin error interface
+func (e Event_CountStatValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sEvent_CountStat.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = Event_CountStatValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = Event_CountStatValidationError{}
+
 // Validate checks the field values on Event_ApiActivity with the rules defined
 // in the proto definition for this message. If any rules are violated, the
 // first error encountered is returned, or nil if there are no violations.
@@ -2280,9 +2384,73 @@ func (m *Event_ApiActivity) validate(all bool) error {
 		}
 	}
 
-	// no validation rules for MethodCalls
+	for idx, item := range m.GetMethodCalls() {
+		_, _ = idx, item
 
-	// no validation rules for UserAgents
+		if all {
+			switch v := interface{}(item).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, Event_ApiActivityValidationError{
+						field:  fmt.Sprintf("MethodCalls[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, Event_ApiActivityValidationError{
+						field:  fmt.Sprintf("MethodCalls[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(item).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return Event_ApiActivityValidationError{
+					field:  fmt.Sprintf("MethodCalls[%v]", idx),
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	}
+
+	for idx, item := range m.GetUserAgents() {
+		_, _ = idx, item
+
+		if all {
+			switch v := interface{}(item).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, Event_ApiActivityValidationError{
+						field:  fmt.Sprintf("UserAgents[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, Event_ApiActivityValidationError{
+						field:  fmt.Sprintf("UserAgents[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(item).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return Event_ApiActivityValidationError{
+					field:  fmt.Sprintf("UserAgents[%v]", idx),
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	}
 
 	if len(errors) > 0 {
 		return Event_ApiActivityMultiError(errors)

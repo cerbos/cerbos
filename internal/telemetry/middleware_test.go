@@ -54,8 +54,8 @@ func TestMiddleware(t *testing.T) {
 
 	mock.mu.RLock()
 	total := mock.count
-	methodCalls := copyMap(mock.lastEvent.MethodCalls)
-	userAgents := copyMap(mock.lastEvent.UserAgents)
+	methodCalls := toMap(mock.lastEvent.MethodCalls)
+	userAgents := toMap(mock.lastEvent.UserAgents)
 	mock.mu.RUnlock()
 
 	require.True(t, total > 0)
@@ -63,6 +63,15 @@ func TestMiddleware(t *testing.T) {
 	require.True(t, methodCalls["/cerbos.svc.v1.CerbosService/CheckResources"] > 0)
 	require.NotContains(t, methodCalls, "/grpc.health.svc/health")
 	require.True(t, userAgents["grpc/v1.14.6"] > 0)
+}
+
+func toMap(c []*telemetryv1.Event_CountStat) map[string]uint64 {
+	m := make(map[string]uint64, len(c))
+	for _, v := range c {
+		m[v.Key] = v.Count
+	}
+
+	return m
 }
 
 type mockReporter struct {

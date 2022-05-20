@@ -123,17 +123,20 @@ func (i *statsInterceptors) report() {
 			ApiActivity: &telemetryv1.Event_ApiActivity{
 				Version:     "1.0.0",
 				Uptime:      durationpb.New(time.Since(startTime)),
-				MethodCalls: copyMap(i.methodTally),
-				UserAgents:  copyMap(i.uaTally),
+				MethodCalls: toCountStats(i.methodTally),
+				UserAgents:  toCountStats(i.uaTally),
 			},
 		},
 	})
 }
 
-func copyMap(m map[string]uint64) map[string]uint64 {
-	c := make(map[string]uint64, len(m))
+func toCountStats(m map[string]uint64) []*telemetryv1.Event_CountStat {
+	c := make([]*telemetryv1.Event_CountStat, len(m))
+	i := 0
+
 	for k, v := range m {
-		c[k] = v
+		c[i] = &telemetryv1.Event_CountStat{Key: k, Count: v}
+		i++
 	}
 
 	return c

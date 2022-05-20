@@ -24,37 +24,34 @@ func cerbos_telemetry_v1_Event_ApiActivity_hashpb_sum(m *Event_ApiActivity, hash
 	}
 	if _, ok := ignore["cerbos.telemetry.v1.Event.ApiActivity.method_calls"]; !ok {
 		if len(m.MethodCalls) > 0 {
-			keys := make([]string, len(m.MethodCalls))
-			i := 0
-			for k := range m.MethodCalls {
-				keys[i] = k
-				i++
-			}
-
-			sort.Slice(keys, func(i, j int) bool { return keys[i] < keys[j] })
-
-			for _, k := range keys {
-				_, _ = hasher.Write(protowire.AppendVarint(nil, m.MethodCalls[k]))
+			for _, v := range m.MethodCalls {
+				if v != nil {
+					cerbos_telemetry_v1_Event_CountStat_hashpb_sum(v, hasher, ignore)
+				}
 
 			}
 		}
 	}
 	if _, ok := ignore["cerbos.telemetry.v1.Event.ApiActivity.user_agents"]; !ok {
 		if len(m.UserAgents) > 0 {
-			keys := make([]string, len(m.UserAgents))
-			i := 0
-			for k := range m.UserAgents {
-				keys[i] = k
-				i++
-			}
-
-			sort.Slice(keys, func(i, j int) bool { return keys[i] < keys[j] })
-
-			for _, k := range keys {
-				_, _ = hasher.Write(protowire.AppendVarint(nil, m.UserAgents[k]))
+			for _, v := range m.UserAgents {
+				if v != nil {
+					cerbos_telemetry_v1_Event_CountStat_hashpb_sum(v, hasher, ignore)
+				}
 
 			}
 		}
+	}
+}
+
+func cerbos_telemetry_v1_Event_CountStat_hashpb_sum(m *Event_CountStat, hasher hash.Hash, ignore map[string]struct{}) {
+	if _, ok := ignore["cerbos.telemetry.v1.Event.CountStat.key"]; !ok {
+		_, _ = hasher.Write(protowire.AppendString(nil, m.Key))
+
+	}
+	if _, ok := ignore["cerbos.telemetry.v1.Event.CountStat.count"]; !ok {
+		_, _ = hasher.Write(protowire.AppendVarint(nil, m.Count))
+
 	}
 }
 

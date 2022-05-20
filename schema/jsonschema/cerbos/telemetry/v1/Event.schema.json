@@ -7,39 +7,42 @@
       "additionalProperties": false,
       "properties": {
         "methodCalls": {
-          "type": "object",
-          "additionalProperties": {
-            "oneOf": [
-              {
-                "type": "integer",
-                "minimum": 0
-              },
-              {
-                "type": "string",
-                "pattern": "^(?:0|[1-9]\\d*)(?:\\.\\d+)?(?:[eE][+-]?\\d+)?$"
-              }
-            ]
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/cerbos.telemetry.v1.Event.CountStat"
           }
         },
         "uptime": {
           "$ref": "#/definitions/google.protobuf.Duration"
         },
         "userAgents": {
-          "type": "object",
-          "additionalProperties": {
-            "oneOf": [
-              {
-                "type": "integer",
-                "minimum": 0
-              },
-              {
-                "type": "string",
-                "pattern": "^(?:0|[1-9]\\d*)(?:\\.\\d+)?(?:[eE][+-]?\\d+)?$"
-              }
-            ]
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/cerbos.telemetry.v1.Event.CountStat"
           }
         },
         "version": {
+          "type": "string"
+        }
+      }
+    },
+    "cerbos.telemetry.v1.Event.CountStat": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "count": {
+          "oneOf": [
+            {
+              "type": "integer",
+              "minimum": 0
+            },
+            {
+              "type": "string",
+              "pattern": "^(?:0|[1-9]\\d*)(?:\\.\\d+)?(?:[eE][+-]?\\d+)?$"
+            }
+          ]
+        },
+        "key": {
           "type": "string"
         }
       }

@@ -1,0 +1,23 @@
+{
+  "$id": "https://api.cerbos.dev/cerbos/telemetry/v1/Event/CountStat.schema.json",
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "count": {
+      "oneOf": [
+        {
+          "type": "integer",
+          "minimum": 0
+        },
+        {
+          "type": "string",
+          "pattern": "^(?:0|[1-9]\\d*)(?:\\.\\d+)?(?:[eE][+-]?\\d+)?$"
+        }
+      ]
+    },
+    "key": {
+      "type": "string"
+    }
+  }
+}
