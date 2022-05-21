@@ -9,6 +9,13 @@ import (
 	"testing"
 	"runtime"
 	"context"
+	"github.com/cerbos/cerbos/internal/namer"
+	"os"
+	"github.com/santhosh-tekuri/jsonschema/v5"
+	"io"
+	"text/template"
+	"strings"
+	"net/url"
 )
 
 func pathToDir(tb testing.TB, dir string) string {
@@ -47,30 +54,45 @@ func TestNewCompiler(t *testing.T) {
 	is.NotNil(compiler)
 }
 
-//func TestGenPolicy(t *testing.T) {
-//	resource, policyVer, scope := "leave_request", "staging", ""
-//	resourceModID := namer.ResourcePolicyModuleID(resource, policyVer, scope)
-//	compiler, schLdr := mkCompiler(t)
-//	ctx := context.Background()
-//	rps, err := compiler.Get(ctx, resourceModID)
-//	is := require.New(t)
-//	is.NoError(err)
-//	is.NotNil(rps)
-//	rp := rps.GetResourcePolicy()
-//	is.NotNil(rp)
-//
-//	reader, err := schLdr.LoadSchema(ctx, rp.Schemas.ResourceSchema.Ref)
-//	is.NoError(err)
-//	is.NotNil(schema)
-//	rProps, err := convert(io.Re)
-//	tmpl, err := template.ParseFS(templatesFS, "templates/*.tmpl")
-//	is.NoError(err)
-//
-//	schema, err = schLdr.LoadSchema(ctx, rp.Schemas.PrincipalSchema.Ref)
-//	is.NoError(err)
-//	is.NotNil(schema)
-//	props, err := convert(s)
-//	is.NoError(err)
-//	err = tmpl.ExecuteTemplate(os.Stdout, "lib", struct{ Resource []*Field }{props})
-//	is.NoError(err)
-//}
+func TestGenPolicy(t *testing.T) {
+	tmpl, err := template.ParseFS(templatesFS, "templates/*.tmpl")
+
+	resource, policyVer, scope := "leave_request", "staging", ""
+	resourceModID := namer.ResourcePolicyModuleID(resource, policyVer, scope)
+	mngr, schLdr := mkCompiler(t)
+	ctx := context.Background()
+	rps, err := mngr.Get(ctx, resourceModID)
+	is := require.New(t)
+	is.NoError(err)
+	is.NotNil(rps)
+	rp := rps.GetResourcePolicy()
+	is.NotNil(rp)
+
+	compiler := jsonschema.NewCompiler()
+	compiler.AssertFormat = true
+	compiler.AssertContent = true
+	compiler.LoadURL = func(path string) (io.ReadCloser, error) {
+		u, err := url.Parse(path)
+		if err != nil {
+			return nil, err
+		}
+		p := strings.TrimPrefix(u.Path, "/")
+		return schLdr.LoadSchema(ctx, p)
+	}
+	schema, err := compiler.Compile(rp.Schemas.ResourceSchema.Ref)
+	is.NoError(err)
+
+	r, err := convert(schema)
+	is.NoError(err)
+
+	schema, err = compiler.Compile(rp.Schemas.PrincipalSchema.Ref)
+	is.NoError(err)
+	p, err := convert(schema)
+	is.NoError(err)
+
+	err = tmpl.ExecuteTemplate(os.Stdout, "lib", struct {
+		Resource  []*Field
+		Principal []*Field
+	}{r, p})
+	is.NoError(err)
+}
