@@ -30,7 +30,7 @@ func pathToDir(tb testing.TB, dir string) string {
 	return filepath.Join(filepath.Dir(currFile), "testdata", dir)
 }
 
-func mkCompiler(t *testing.T) (*compile.Manager, schema.Loader) {
+func mkCompiler(t *testing.T) (*compile.Manager, *jsonschema.Compiler) {
 	t.Helper()
 
 	dir := pathToDir(t, "store")
@@ -44,7 +44,19 @@ func mkCompiler(t *testing.T) (*compile.Manager, schema.Loader) {
 	schemaConf := schema.NewConf(schema.EnforcementReject)
 	schemaMgr := schema.NewFromConf(ctx, store, schemaConf)
 
-	return compile.NewManagerFromDefaultConf(ctx, store, schemaMgr), store
+	compiler := jsonschema.NewCompiler()
+	compiler.AssertFormat = true
+	compiler.AssertContent = true
+	compiler.LoadURL = func(path string) (io.ReadCloser, error) {
+		u, err := url.Parse(path)
+		if err != nil {
+			return nil, err
+		}
+		p := strings.TrimPrefix(u.Path, "/")
+		return store.LoadSchema(ctx, p)
+	}
+
+	return compile.NewManagerFromDefaultConf(ctx, store, schemaMgr), compiler
 }
 
 func TestNewCompiler(t *testing.T) {
@@ -59,7 +71,7 @@ func TestGenPolicy(t *testing.T) {
 
 	resource, policyVer, scope := "leave_request", "staging", ""
 	resourceModID := namer.ResourcePolicyModuleID(resource, policyVer, scope)
-	mngr, schLdr := mkCompiler(t)
+	mngr, compiler := mkCompiler(t)
 	ctx := context.Background()
 	rps, err := mngr.Get(ctx, resourceModID)
 	is := require.New(t)
@@ -68,17 +80,6 @@ func TestGenPolicy(t *testing.T) {
 	rp := rps.GetResourcePolicy()
 	is.NotNil(rp)
 
-	compiler := jsonschema.NewCompiler()
-	compiler.AssertFormat = true
-	compiler.AssertContent = true
-	compiler.LoadURL = func(path string) (io.ReadCloser, error) {
-		u, err := url.Parse(path)
-		if err != nil {
-			return nil, err
-		}
-		p := strings.TrimPrefix(u.Path, "/")
-		return schLdr.LoadSchema(ctx, p)
-	}
 	schema, err := compiler.Compile(rp.Schemas.ResourceSchema.Ref)
 	is.NoError(err)
 

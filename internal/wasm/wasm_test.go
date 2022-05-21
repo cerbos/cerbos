@@ -27,7 +27,10 @@ func TestClasses(t *testing.T) {
 	is.NoError(err)
 	props, err := convert(s)
 	is.NoError(err)
-	err = tmpl.ExecuteTemplate(os.Stdout, "lib", struct{ Resource []*Field }{props})
+	err = tmpl.ExecuteTemplate(os.Stdout, "request", struct {
+		Resource  []*Field
+		Principal []*Field
+	}{props, nil})
 	is.NoError(err)
 }
 
