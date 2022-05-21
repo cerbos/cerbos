@@ -30,7 +30,7 @@ func (r *Rule) RenderCondition() (string, error) {
 		return "", fmt.Errorf("%q rule: %w", r.Name, ErrNilCondition)
 	}
 	sb := new(strings.Builder)
-	err := saveCondition(sb, r.Condition)
+	err := renderCondition(sb, r.Condition)
 	if err != nil {
 		return "", err
 	}

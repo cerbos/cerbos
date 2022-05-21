@@ -1,21 +1,36 @@
 {{define "request"}}
+
+{{if .Resource -}}
 #[derive(Serialize, Deserialize)]
 struct ResourceAttr {
-{{ range $prop := . }} {{template "field" $prop}}
+{{ range $prop := .Resource }} {{template "field" $prop}}
 {{end -}}
 }
+{{- end}}
 
 #[derive(Serialize, Deserialize)]
 struct Resource {
     id: String,
+{{- if .Resource }}
     attr: ResourceAttr,
+{{- end}}
 }
+
+{{if .Principal -}}
+#[derive(Serialize, Deserialize)]
+struct PrincipalAttr {
+{{ range $prop := .Principal }} {{template "field" $prop}}
+{{end -}}
+}
+{{- end}}
 
 #[derive(Serialize, Deserialize)]
 struct Principal {
     id: String,
     roles: Vec<String>,
-{{/*    attr: PrincipalAttr,*/}}
+{{- if .Principal }}
+    attr: PrincipalAttr,
+{{- end}}
 }
 
 #[derive(Serialize, Deserialize)]

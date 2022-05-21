@@ -83,7 +83,7 @@ func renderConstExpr(w io.Writer, c *exprpb.Constant) error {
 	return nil
 }
 
-func saveCondition(w io.Writer, condition *runtimev1.Condition) error {
+func renderCondition(w io.Writer, condition *runtimev1.Condition) error {
 	f0 := func(format string, a ...any) { // no indentation
 		fmt.Fprintf(w, format, a...)
 	}
@@ -94,13 +94,13 @@ func saveCondition(w io.Writer, condition *runtimev1.Condition) error {
 		n := len(c.All.Expr)
 		for i := 0; i < n-1; i++ {
 			f0("(")
-			saveCondition(w, c.All.Expr[i])
+			renderCondition(w, c.All.Expr[i])
 			f0(") && ")
 		}
 		if n > 1 {
 			f0("(")
 		}
-		saveCondition(w, c.All.Expr[n-1])
+		renderCondition(w, c.All.Expr[n-1])
 		if n > 1 {
 			f0(")")
 		}
