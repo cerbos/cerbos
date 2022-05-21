@@ -42,7 +42,7 @@ func TestCheck(t *testing.T) {
 	is.NotNil(tmpl)
 
 	policy := Policy{
-		Rules: []Rule{{
+		Rules: []*Rule{{
 			Roles:     []string{"admin", "manager"},
 			Actions:   []string{"read", "update"},
 			Effect:    "EFFECT_ALLOW",

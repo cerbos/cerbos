@@ -10,18 +10,21 @@
         let p = request.principal;
         let roles: Vec<_> = p.roles.iter().map(AsRef::as_ref).collect();
         let r = request.resource;
+        let allow = "EFFECT_ALLOW".to_owned();
+        let deny = "EFFECT_DENY".to_owned();
         {{range $rule := .Rules }}
         if intersect(&roles, &vec![{{template "join-string-slice" $rule.Roles}}]) {
             if action_matched(&request.action, &vec![{{template "join-string-slice" $rule.Actions}}]) {
             {{- if $rule.Condition }}
                 if {{$rule.RenderCondition}} {
-                    return {{printf "%q" $rule.Effect}}.to_owned();
+                    return {{template "effect" $rule.Effect}};
                 }
-            {{- else}}    return {{printf "%q" $rule.Effect}}.to_owned(); {{end}}
+            {{- else}}
+                return {{template "effect" $rule.Effect}};{{end}}
             }
         }
         {{- end}}
 
-        return "EFFECT_DENY".to_owned();
+        return deny;
     }
 {{end}}

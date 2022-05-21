@@ -17,18 +17,19 @@ func convert(s *jsonschema.Schema) ([]*Field, error) {
 	for n, schema := range s.Properties {
 		required := slices.Index(s.Required, n) > 0
 		var f *Field
-		switch schema.Types[0] {
-		case "number":
-			f = fromNumber(n, required)
-		case "integer":
-			f = fromInteger(n, required)
-		case "boolean":
-			f = fromBoolean(n, required)
-		case "string":
-			f = fromString(n, required)
-		case "array":
-			f = fromArray(n, schema.Items2020.Types[0], required)
-		default:
+		if t1, ok := mapTypes[schema.Types[0]]; ok {
+			if t1 == "Vec" {
+				if t2, ok := mapTypes[schema.Items2020.Types[0]]; ok {
+					t1 = fmt.Sprintf("Vec<%s>", t2)
+				} else {
+					return nil, fmt.Errorf("array item type %q: %w", n, ErrUnsupportedType)
+				}
+			}
+			f = &Field{
+				Type: wrapOptional(t1, required),
+				Name: n,
+			}
+		} else {
 			return nil, fmt.Errorf("type %q: %w", n, ErrUnsupportedType)
 		}
 
@@ -41,6 +42,14 @@ func convert(s *jsonschema.Schema) ([]*Field, error) {
 type Field struct {
 	Type string
 	Name string
+}
+
+var mapTypes = map[string]string{
+	"number":  "f64",
+	"integer": "i64",
+	"string":  "String",
+	"boolean": "bool",
+	"array":   "Vec",
 }
 
 func wrapOptional(t string, required bool) string {

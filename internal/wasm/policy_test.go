@@ -80,20 +80,37 @@ func TestGenPolicy(t *testing.T) {
 	rp := rps.GetResourcePolicy()
 	is.NotNil(rp)
 
-	schema, err := compiler.Compile(rp.Schemas.ResourceSchema.Ref)
+	s, err := compiler.Compile(rp.Schemas.ResourceSchema.Ref)
 	is.NoError(err)
 
-	r, err := convert(schema)
+	r, err := convert(s)
 	is.NoError(err)
 
-	schema, err = compiler.Compile(rp.Schemas.PrincipalSchema.Ref)
+	s, err = compiler.Compile(rp.Schemas.PrincipalSchema.Ref)
 	is.NoError(err)
-	p, err := convert(schema)
+	p, err := convert(s)
 	is.NoError(err)
 
-	err = tmpl.ExecuteTemplate(os.Stdout, "lib", struct {
-		Resource  []*Field
-		Principal []*Field
-	}{r, p})
+	rules, err := convertPolicy(rp)
+	is.NoError(err)
+
+	policy := Policy{
+		Rules: rules,
+		Schema: &Schema{
+			Principal: p,
+			Resource:  r,
+		},
+	}
+	f, err := os.Create("/Users/dennis/Sandbox/wasmbndg/src/lib.rs")
+	var w io.Writer
+	if err == nil {
+		defer f.Close()
+		w = io.MultiWriter(os.Stdout, f)
+	} else {
+		w = os.Stdout
+	}
+
+	err = tmpl.ExecuteTemplate(w, "lib", &policy)
+
 	is.NoError(err)
 }

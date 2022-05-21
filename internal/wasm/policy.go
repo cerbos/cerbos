@@ -9,8 +9,13 @@ import (
 )
 
 type (
+	Schema struct {
+		Resource  []*Field
+		Principal []*Field
+	}
 	Policy struct {
-		Rules []Rule
+		Rules  []*Rule
+		Schema *Schema
 	}
 	Rule struct {
 		Name      string
@@ -38,8 +43,8 @@ func (r *Rule) RenderCondition() (string, error) {
 	return sb.String(), nil
 }
 
-func convertPolicy(rps *runtimev1.RunnableResourcePolicySet) (*Policy, error) {
-	policy := new(Policy)
+func convertPolicy(rps *runtimev1.RunnableResourcePolicySet) ([]*Rule, error) {
+	rules := make([]*Rule, 0, len(rps.Policies[0].Rules))
 	for _, r := range rps.Policies[0].Rules {
 		rule := Rule{
 			Roles:     maps.Keys(r.Roles),
@@ -47,8 +52,8 @@ func convertPolicy(rps *runtimev1.RunnableResourcePolicySet) (*Policy, error) {
 			Effect:    r.Effect.String(),
 			Condition: r.Condition,
 		}
-		policy.Rules = append(policy.Rules, rule)
+		rules = append(rules, &rule)
 	}
 
-	return policy, nil
+	return rules, nil
 }
