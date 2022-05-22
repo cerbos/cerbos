@@ -13,7 +13,7 @@ import (
 	"strings"
 
 	"github.com/bluele/gcache"
-	jsonschema "github.com/santhosh-tekuri/jsonschema/v5"
+	"github.com/santhosh-tekuri/jsonschema/v5"
 	"github.com/tidwall/gjson"
 	"go.opencensus.io/stats"
 	"go.opencensus.io/tag"

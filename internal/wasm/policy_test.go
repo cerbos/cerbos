@@ -30,12 +30,12 @@ func pathToDir(tb testing.TB, dir string) string {
 	return filepath.Join(filepath.Dir(currFile), "testdata", dir)
 }
 
-func mkCompiler(t *testing.T) (*compile.Manager, *jsonschema.Compiler) {
+func mkCompiler(ctx context.Context, t *testing.T) (*compile.Manager, *jsonschema.Compiler) {
 	t.Helper()
 
 	dir := pathToDir(t, "store")
 
-	ctx, cancelFunc := context.WithCancel(context.Background())
+	ctx, cancelFunc := context.WithCancel(ctx)
 	t.Cleanup(cancelFunc)
 
 	store, err := disk.NewStore(ctx, &disk.Conf{Directory: dir})
@@ -62,7 +62,7 @@ func mkCompiler(t *testing.T) (*compile.Manager, *jsonschema.Compiler) {
 func TestNewCompiler(t *testing.T) {
 	is := require.New(t)
 
-	compiler, _ := mkCompiler(t)
+	compiler, _ := mkCompiler(context.Background(), t)
 	is.NotNil(compiler)
 }
 
@@ -71,8 +71,8 @@ func TestGenPolicy(t *testing.T) {
 
 	resource, policyVer, scope := "leave_request", "staging", ""
 	resourceModID := namer.ResourcePolicyModuleID(resource, policyVer, scope)
-	mngr, compiler := mkCompiler(t)
 	ctx := context.Background()
+	mngr, compiler := mkCompiler(ctx, t)
 	rps, err := mngr.Get(ctx, resourceModID)
 	is := require.New(t)
 	is.NoError(err)
