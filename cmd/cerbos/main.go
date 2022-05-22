@@ -13,12 +13,14 @@ import (
 	"github.com/cerbos/cerbos/cmd/cerbos/server"
 	"github.com/cerbos/cerbos/internal/outputcolor"
 	"github.com/cerbos/cerbos/internal/util"
+	"github.com/cerbos/cerbos/cmd/cerbos/build"
 )
 
 func main() {
 	//nolint: govet
 	var cli struct {
 		Compile     compile.Cmd     `cmd:"" help:"Compile and test policies"`
+		Build       build.Cmd       `cmd:"" help:"Build policies into Wasm"`
 		Server      server.Cmd      `cmd:"" help:"Start Cerbos server (PDP)"`
 		Healthcheck healthcheck.Cmd `cmd:"" help:"Healthcheck utility" aliases:"hc"`
 		Run         run.Cmd         `cmd:"" help:"Run a command in the context of a Cerbos PDP"`

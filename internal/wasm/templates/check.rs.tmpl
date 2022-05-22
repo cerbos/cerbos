@@ -7,9 +7,7 @@
         }
     }
     fn check_impl(request: Request) -> String {
-        let p = request.principal;
-        let roles: Vec<_> = p.roles.iter().map(AsRef::as_ref).collect();
-        let r = request.resource;
+        let roles: Vec<_> = request.principal.roles.iter().map(AsRef::as_ref).collect();
         let allow = "EFFECT_ALLOW".to_owned();
         let deny = "EFFECT_DENY".to_owned();
         {{range $rule := .Rules }}
