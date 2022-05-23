@@ -79,7 +79,7 @@ func (c *Cmd) Run(k *kong.Kong) error {
 
 	store := disk.NewFromIndexWithConf(idx, &disk.Conf{})
 	builder, err := wasm.NewBuilder(store, c.workDir(), c.OutputDir)
-	_, err = builder.FromPolicy(ctx, c.Resource, c.PolicyVer, c.Scope)
+	_, err = builder.FromPolicy(ctx, c.Resource, c.PolicyVer, c.Scope, c.Target.Os)
 	if err != nil {
 		return err
 	}

@@ -10,9 +10,10 @@ import (
 	"github.com/cerbos/cerbos/internal/storage"
 	"os"
 	"path/filepath"
-	_ "embed"
 	"text/template"
 	"embed"
+	"os/exec"
+	"fmt"
 )
 
 type Config struct {
@@ -41,8 +42,14 @@ type Builder struct {
 	tmpl      *template.Template
 }
 
-//go:embed templates/*.tmpl
-var templatesFS embed.FS
+var (
+	//go:embed files/Cargo.lock
+	cargoLock []byte
+	//go:embed files/Cargo.toml
+	cargoToml []byte
+	//go:embed templates/*.tmpl
+	templatesFS embed.FS
+)
 
 func NewBuilder(store storage.Store, workDir, outputDir string) (*Builder, error) {
 	tmpl, err := template.ParseFS(templatesFS, "templates/*.tmpl")
@@ -58,7 +65,7 @@ func NewBuilder(store storage.Store, workDir, outputDir string) (*Builder, error
 	}, nil
 }
 
-func (b *Builder) FromPolicy(ctx context.Context, resource, version, scope string) (*Policy, error) {
+func (b *Builder) FromPolicy(ctx context.Context, resource, version, scope, targetOs string) (*Policy, error) {
 	schemaConf := schema.NewConf(schema.EnforcementReject)
 	schemaMgr := schema.NewFromConf(ctx, b.store, schemaConf)
 	manager := compile.NewManagerFromDefaultConf(ctx, b.store, schemaMgr)
@@ -104,36 +111,46 @@ func (b *Builder) FromPolicy(ctx context.Context, resource, version, scope strin
 	if err != nil {
 		return nil, err
 	}
+	err = buildRustProject(ctx, filepath.Clean(filepath.Join(srcDir, "..")), targetOs)
+	if err != nil {
+		return nil, err
+	}
 	return policy, nil
 }
 
-var (
-	//go:embed files/Cargo.lock
-	cargoLock []byte
-	//go:embed files/Cargo.toml
-	cargoToml []byte
-)
+func buildRustProject(ctx context.Context, workDir string, targetOs string) error {
+	argv := []string{"build", "--target", targetOs}
+	// TODO: Set timeout
+	cmd := exec.CommandContext(ctx, "wasm-pack", argv...)
+	cmd.Dir = workDir
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+
+	if err := cmd.Run(); err != nil {
+		return fmt.Errorf("failed to build policy code: %w", err)
+	}
+	return nil
+}
 
 func createRustProject(workDir string) (string, error) {
 	temp, err := os.MkdirTemp(workDir, "cerbos*")
 	if err != nil {
 		return "", err
 	}
-
 	srcDir := filepath.Join(temp, "src")
-	err = os.Mkdir(srcDir, 0750)
+	err = os.Mkdir(srcDir, 0755)
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("failed to create a \"src\" directory: %w", err)
 	}
 
-	err = os.WriteFile(filepath.Join(temp, "Cargo.lock"), cargoLock, 0750)
+	err = os.WriteFile(filepath.Join(temp, "Cargo.lock"), cargoLock, 0755)
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("failed to write Cargo.lock file: %w", err)
 	}
 
-	err = os.WriteFile(filepath.Join(temp, "Cargo.toml"), cargoToml, 0750)
+	err = os.WriteFile(filepath.Join(temp, "Cargo.toml"), cargoToml, 0755)
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("failed to write Cargo.toml file: %w", err)
 	}
 
 	return srcDir, nil
