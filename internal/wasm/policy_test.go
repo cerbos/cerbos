@@ -11,11 +11,9 @@ import (
 	"context"
 	"github.com/cerbos/cerbos/internal/namer"
 	"os"
-	"github.com/santhosh-tekuri/jsonschema/v5"
 	"io"
 	"text/template"
-	"strings"
-	"net/url"
+	"github.com/cerbos/cerbos/internal/storage"
 )
 
 func pathToDir(tb testing.TB, dir string) string {
@@ -30,7 +28,7 @@ func pathToDir(tb testing.TB, dir string) string {
 	return filepath.Join(filepath.Dir(currFile), "testdata", dir)
 }
 
-func mkCompiler(ctx context.Context, t *testing.T) (*compile.Manager, *jsonschema.Compiler) {
+func mkCompiler(ctx context.Context, t *testing.T) (*compile.Manager, storage.Store) {
 	t.Helper()
 
 	dir := pathToDir(t, "store")
@@ -44,19 +42,7 @@ func mkCompiler(ctx context.Context, t *testing.T) (*compile.Manager, *jsonschem
 	schemaConf := schema.NewConf(schema.EnforcementReject)
 	schemaMgr := schema.NewFromConf(ctx, store, schemaConf)
 
-	compiler := jsonschema.NewCompiler()
-	compiler.AssertFormat = true
-	compiler.AssertContent = true
-	compiler.LoadURL = func(path string) (io.ReadCloser, error) {
-		u, err := url.Parse(path)
-		if err != nil {
-			return nil, err
-		}
-		p := strings.TrimPrefix(u.Path, "/")
-		return store.LoadSchema(ctx, p)
-	}
-
-	return compile.NewManagerFromDefaultConf(ctx, store, schemaMgr), compiler
+	return compile.NewManagerFromDefaultConf(ctx, store, schemaMgr), store
 }
 
 func TestNewCompiler(t *testing.T) {
@@ -72,7 +58,7 @@ func TestGenPolicy(t *testing.T) {
 	resource, policyVer, scope := "leave_request", "staging", ""
 	resourceModID := namer.ResourcePolicyModuleID(resource, policyVer, scope)
 	ctx := context.Background()
-	mngr, compiler := mkCompiler(ctx, t)
+	mngr, store := mkCompiler(ctx, t)
 	rps, err := mngr.Get(ctx, resourceModID)
 	is := require.New(t)
 	is.NoError(err)
@@ -80,27 +66,15 @@ func TestGenPolicy(t *testing.T) {
 	rp := rps.GetResourcePolicy()
 	is.NotNil(rp)
 
-	s, err := compiler.Compile(rp.Schemas.ResourceSchema.Ref)
+	rs, err := schema.LoadSchemaFromStore(ctx, rp.Schemas.ResourceSchema.Ref, store)
 	is.NoError(err)
 
-	r, err := convert(s)
+	ps, err := schema.LoadSchemaFromStore(ctx, rp.Schemas.ResourceSchema.Ref, store)
 	is.NoError(err)
 
-	s, err = compiler.Compile(rp.Schemas.PrincipalSchema.Ref)
-	is.NoError(err)
-	p, err := convert(s)
+	policy, err := NewPolicy(ps, rs, rp)
 	is.NoError(err)
 
-	rules, err := convertPolicy(rp)
-	is.NoError(err)
-
-	policy := Policy{
-		Rules: rules,
-		Schema: &Schema{
-			Principal: p,
-			Resource:  r,
-		},
-	}
 	f, err := os.Create("/Users/dennis/Sandbox/wasmbndg/src/lib.rs")
 	var w io.Writer
 	if err == nil {
@@ -110,7 +84,7 @@ func TestGenPolicy(t *testing.T) {
 		w = os.Stdout
 	}
 
-	err = tmpl.ExecuteTemplate(w, "lib", &policy)
+	err = tmpl.ExecuteTemplate(w, "lib", policy)
 
 	is.NoError(err)
 }

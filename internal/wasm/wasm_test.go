@@ -25,7 +25,7 @@ func TestClasses(t *testing.T) {
 	is.NotNil(tmpl)
 	s, err := jsonschema.Compile(path.Join("testdata", "leave_request.json"))
 	is.NoError(err)
-	props, err := convert(s)
+	props, err := ConvertSchema(s)
 	is.NoError(err)
 	err = tmpl.ExecuteTemplate(os.Stdout, "request", struct {
 		Resource  []*Field

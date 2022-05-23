@@ -71,7 +71,7 @@ func (c *Cmd) Run(k *kong.Kong) error {
 	}
 
 	store := disk.NewFromIndexWithConf(idx, &disk.Conf{})
-	err = builder.FromPolicy(ctx, &builder.Config{
+	_, err = builder.FromPolicy(ctx, &builder.Config{
 		Store:     store,
 		WorkDirFS: c.workDir(),
 		OutputDir: c.OutputDir,

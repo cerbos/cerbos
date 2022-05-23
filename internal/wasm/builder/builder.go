@@ -1,17 +1,18 @@
 package builder
 
 import (
-	"github.com/cerbos/cerbos/internal/storage/disk"
 	"io/fs"
 	"github.com/cerbos/cerbos/internal/schema"
 	"context"
 	"github.com/cerbos/cerbos/internal/compile"
 	"github.com/cerbos/cerbos/internal/namer"
 	"errors"
+	"github.com/cerbos/cerbos/internal/wasm"
+	"github.com/cerbos/cerbos/internal/storage"
 )
 
 type Config struct {
-	Store     *disk.Store
+	Store     storage.Store
 	OutputDir string
 	Version   string
 	Resource  string
@@ -28,21 +29,35 @@ var (
 	ErrPolicyMustHaveSchemas = errors.New("policy must have schemas")
 )
 
-func FromPolicy(ctx context.Context, c *Config) error {
+func FromPolicy(ctx context.Context, c *Config) (*wasm.Policy, error) {
 	schemaConf := schema.NewConf(schema.EnforcementReject)
 	schemaMgr := schema.NewFromConf(ctx, c.Store, schemaConf)
 	manager := compile.NewManagerFromDefaultConf(ctx, c.Store, schemaMgr)
 
 	rps, err := manager.Get(ctx, namer.ResourcePolicyModuleID(c.Resource, c.Version, c.Scope))
 	if err != nil {
-		return err
+		return nil, err
 	}
 	rp := rps.GetResourcePolicy()
 	if rp == nil {
-		return ErrUnsupportedPolicy
+		return nil, ErrUnsupportedPolicy
 	}
 	if rp.Schemas == nil || rp.Schemas.PrincipalSchema == nil || rp.Schemas.ResourceSchema == nil {
-		return ErrPolicyMustHaveSchemas
+		return nil, ErrPolicyMustHaveSchemas
 	}
-	return nil
+
+	ps, err := schema.LoadSchemaFromStore(ctx, rp.Schemas.PrincipalSchema.Ref, c.Store)
+	if err != nil {
+		return nil, err
+	}
+	rs, err := schema.LoadSchemaFromStore(ctx, rp.Schemas.ResourceSchema.Ref, c.Store)
+	if err != nil {
+		return nil, err
+	}
+	policy, err := wasm.NewPolicy(ps, rs, rp)
+	if err != nil {
+		return nil, err
+	}
+
+	return policy, nil
 }

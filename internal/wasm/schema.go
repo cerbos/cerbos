@@ -11,7 +11,7 @@ var (
 	ErrUnsupportedType = errors.New("unsupported jsonschema type")
 )
 
-func convert(s *jsonschema.Schema) ([]*Field, error) {
+func ConvertSchema(s *jsonschema.Schema) ([]*Field, error) {
 	fields := make([]*Field, 0, len(s.Properties))
 
 	for n, schema := range s.Properties {

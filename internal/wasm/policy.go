@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"errors"
 	"strings"
+	"github.com/santhosh-tekuri/jsonschema/v5"
 )
 
 type (
@@ -43,7 +44,7 @@ func (r *Rule) RenderCondition() (string, error) {
 	return sb.String(), nil
 }
 
-func convertPolicy(rps *runtimev1.RunnableResourcePolicySet) ([]*Rule, error) {
+func ConvertPolicy(rps *runtimev1.RunnableResourcePolicySet) ([]*Rule, error) {
 	rules := make([]*Rule, 0, len(rps.Policies[0].Rules))
 	for _, r := range rps.Policies[0].Rules {
 		rule := Rule{
@@ -56,4 +57,28 @@ func convertPolicy(rps *runtimev1.RunnableResourcePolicySet) ([]*Rule, error) {
 	}
 
 	return rules, nil
+}
+
+func NewPolicy(ps, rs *jsonschema.Schema, rp *runtimev1.RunnableResourcePolicySet) (*Policy, error) {
+	pf, err := ConvertSchema(ps)
+	if err != nil {
+		return nil, err
+	}
+	rf, err := ConvertSchema(rs)
+	if err != nil {
+		return nil, err
+	}
+	rules, err := ConvertPolicy(rp)
+	if err != nil {
+		return nil, err
+	}
+	policy := &Policy{
+		Rules: rules,
+		Schema: &Schema{
+			Principal: pf,
+			Resource:  rf,
+		},
+	}
+
+	return policy, nil
 }

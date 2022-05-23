@@ -210,6 +210,10 @@ func (m *manager) loadSchema(ctx context.Context, url string) (*jsonschema.Schem
 }
 
 func (m *manager) loadSchemaFromStore(ctx context.Context, schemaURL string) (*jsonschema.Schema, error) {
+	return LoadSchemaFromStore(ctx, schemaURL, m.loader)
+}
+
+func LoadSchemaFromStore(ctx context.Context, schemaURL string, loader Loader) (*jsonschema.Schema, error) {
 	compiler := jsonschema.NewCompiler()
 	compiler.AssertFormat = true
 	compiler.AssertContent = true
@@ -221,7 +225,7 @@ func (m *manager) loadSchemaFromStore(ctx context.Context, schemaURL string) (*j
 
 		if u.Scheme == "" || u.Scheme == URLScheme {
 			relativePath := strings.TrimPrefix(u.Path, "/")
-			return m.loader.LoadSchema(ctx, relativePath)
+			return loader.LoadSchema(ctx, relativePath)
 		}
 
 		loader, ok := jsonschema.Loaders[u.Scheme]
