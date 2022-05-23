@@ -20,11 +20,14 @@ const help = `
 Examples:
 
 # Build policies found in the specified local store
+
 cerbos build --store /path/to/policy/repo
 
 Environment must provide:
-- Rust toolchain.
-- wasm-pack (https://rustwasm.github.io/wasm-pack/)
+
+* Rust toolchain.
+
+* wasm-pack (https://rustwasm.github.io/wasm-pack/)
 `
 
 type Cmd struct {

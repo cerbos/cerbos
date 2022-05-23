@@ -115,23 +115,23 @@ var (
 )
 
 func createRustProject(workDir string) (string, error) {
-	temp, err := os.CreateTemp(workDir, "cerbos*")
+	temp, err := os.MkdirTemp(workDir, "cerbos*")
 	if err != nil {
 		return "", err
 	}
 
-	srcDir := filepath.Join(temp.Name(), "src")
+	srcDir := filepath.Join(temp, "src")
 	err = os.Mkdir(srcDir, 0750)
 	if err != nil {
 		return "", err
 	}
 
-	err = os.WriteFile(filepath.Join(temp.Name(), "Cargo.lock"), cargoLock, 0750)
+	err = os.WriteFile(filepath.Join(temp, "Cargo.lock"), cargoLock, 0750)
 	if err != nil {
 		return "", err
 	}
 
-	err = os.WriteFile(filepath.Join(temp.Name(), "Cargo.toml"), cargoToml, 0750)
+	err = os.WriteFile(filepath.Join(temp, "Cargo.toml"), cargoToml, 0750)
 	if err != nil {
 		return "", err
 	}

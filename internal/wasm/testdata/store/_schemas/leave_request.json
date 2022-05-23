@@ -32,6 +32,7 @@
     "department",
     "geography",
     "team",
+    "status",
     "id"
   ]
 }
