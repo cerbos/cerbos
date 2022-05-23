@@ -29,12 +29,25 @@ var (
 	ErrPolicyMustHaveSchemas = errors.New("policy must have schemas")
 )
 
-func FromPolicy(ctx context.Context, c *Config) (*wasm.Policy, error) {
-	schemaConf := schema.NewConf(schema.EnforcementReject)
-	schemaMgr := schema.NewFromConf(ctx, c.Store, schemaConf)
-	manager := compile.NewManagerFromDefaultConf(ctx, c.Store, schemaMgr)
+type Builder struct {
+	store     storage.Store
+	outputDir fs.FS
+	workDirFS fs.FS
+}
 
-	rps, err := manager.Get(ctx, namer.ResourcePolicyModuleID(c.Resource, c.Version, c.Scope))
+func NewBuilder(store storage.Store, workDir, outputDir fs.FS) *Builder {
+	return &Builder{
+		store:     store,
+		workDirFS: workDir,
+		outputDir: outputDir,
+	}
+}
+func (b *Builder) FromPolicy(ctx context.Context, resource, version, scope string) (*wasm.Policy, error) {
+	schemaConf := schema.NewConf(schema.EnforcementReject)
+	schemaMgr := schema.NewFromConf(ctx, b.store, schemaConf)
+	manager := compile.NewManagerFromDefaultConf(ctx, b.store, schemaMgr)
+
+	rps, err := manager.Get(ctx, namer.ResourcePolicyModuleID(resource, version, scope))
 	if err != nil {
 		return nil, err
 	}
@@ -46,11 +59,11 @@ func FromPolicy(ctx context.Context, c *Config) (*wasm.Policy, error) {
 		return nil, ErrPolicyMustHaveSchemas
 	}
 
-	ps, err := schema.LoadSchemaFromStore(ctx, rp.Schemas.PrincipalSchema.Ref, c.Store)
+	ps, err := schema.LoadSchemaFromStore(ctx, rp.Schemas.PrincipalSchema.Ref, b.store)
 	if err != nil {
 		return nil, err
 	}
-	rs, err := schema.LoadSchemaFromStore(ctx, rp.Schemas.ResourceSchema.Ref, c.Store)
+	rs, err := schema.LoadSchemaFromStore(ctx, rp.Schemas.ResourceSchema.Ref, b.store)
 	if err != nil {
 		return nil, err
 	}

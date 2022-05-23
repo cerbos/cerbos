@@ -59,6 +59,11 @@ func (c *Cmd) Run(k *kong.Kong) error {
 
 	p := printer.New(k.Stdout, k.Stderr)
 
+	if c.Scope != "" {
+		// TODO: Support scoped policies
+		return fmt.Errorf("scopes aren't supported")
+	}
+
 	idx, err := index.Build(ctx, os.DirFS(c.Store))
 	if err != nil {
 		idxErr := new(index.BuildError)
@@ -71,18 +76,8 @@ func (c *Cmd) Run(k *kong.Kong) error {
 	}
 
 	store := disk.NewFromIndexWithConf(idx, &disk.Conf{})
-	_, err = builder.FromPolicy(ctx, &builder.Config{
-		Store:     store,
-		WorkDirFS: c.workDir(),
-		OutputDir: c.OutputDir,
-		Version:   "",
-		Resource:  "",
-		Scope:     "",
-		Target: struct {
-			Os   string
-			Arch string
-		}{},
-	})
+	builder := builder.NewBuilder(store, c.workDir(), os.DirFS(c.OutputDir))
+	_, err = builder.FromPolicy(ctx, c.Resource, c.Version, c.Scope)
 	return nil
 }
 
