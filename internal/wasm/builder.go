@@ -14,6 +14,7 @@ import (
 	"embed"
 	"os/exec"
 	"fmt"
+	"io"
 )
 
 type Config struct {
@@ -116,8 +117,62 @@ func (b *Builder) FromPolicy(ctx context.Context, resource, version, scope, targ
 	if err != nil {
 		return nil, err
 	}
-
+	err = copyBuild(filepath.Join(projDir, "pkg"), b.outputDir)
+	if err != nil {
+		return nil, err
+	}
 	return policy, nil
+}
+
+func copy(src, dst string) (int64, error) {
+	fmt.Printf("copying %q to %q\n", src, dst)
+
+	sourceFileStat, err := os.Stat(src)
+	if err != nil {
+		return 0, err
+	}
+
+	if !sourceFileStat.Mode().IsRegular() {
+		return 0, fmt.Errorf("%s is not a regular file", src)
+	}
+
+	source, err := os.Open(src)
+	if err != nil {
+		return 0, err
+	}
+	defer source.Close()
+
+	destination, err := os.Create(dst)
+	if err != nil {
+		return 0, err
+	}
+	defer destination.Close()
+	nBytes, err := io.Copy(destination, source)
+	return nBytes, err
+}
+
+func copyBuild(projDir string, outputDir string) error {
+	err := filepath.WalkDir(projDir, func(path string, d fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+		if d.IsDir() {
+			if path == projDir {
+				return nil
+			}
+			return fs.SkipDir
+		}
+		_, err = copy(path, filepath.Join(outputDir, d.Name()))
+		if err != nil {
+			return err
+		}
+
+		return nil
+	})
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func buildRustProject(ctx context.Context, workDir string, targetOs string) error {
