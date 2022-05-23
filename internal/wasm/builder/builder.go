@@ -27,6 +27,7 @@ type Config struct {
 var (
 	ErrUnsupportedPolicy     = errors.New("unsupported policy type")
 	ErrPolicyMustHaveSchemas = errors.New("policy must have schemas")
+	ErrPolicyNotFound        = errors.New("policy not found")
 )
 
 type Builder struct {
@@ -42,6 +43,7 @@ func NewBuilder(store storage.Store, workDir, outputDir fs.FS) *Builder {
 		outputDir: outputDir,
 	}
 }
+
 func (b *Builder) FromPolicy(ctx context.Context, resource, version, scope string) (*wasm.Policy, error) {
 	schemaConf := schema.NewConf(schema.EnforcementReject)
 	schemaMgr := schema.NewFromConf(ctx, b.store, schemaConf)
@@ -50,6 +52,9 @@ func (b *Builder) FromPolicy(ctx context.Context, resource, version, scope strin
 	rps, err := manager.Get(ctx, namer.ResourcePolicyModuleID(resource, version, scope))
 	if err != nil {
 		return nil, err
+	}
+	if rps == nil {
+		return nil, ErrPolicyNotFound
 	}
 	rp := rps.GetResourcePolicy()
 	if rp == nil {

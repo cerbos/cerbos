@@ -78,6 +78,9 @@ func (c *Cmd) Run(k *kong.Kong) error {
 	store := disk.NewFromIndexWithConf(idx, &disk.Conf{})
 	builder := builder.NewBuilder(store, c.workDir(), os.DirFS(c.OutputDir))
 	_, err = builder.FromPolicy(ctx, c.Resource, c.Version, c.Scope)
+	if err != nil {
+		return err
+	}
 	return nil
 }
 
