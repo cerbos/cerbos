@@ -3,7 +3,6 @@ package build
 import (
 	"github.com/alecthomas/kong"
 	"os"
-	"io/fs"
 	"github.com/cerbos/cerbos/internal/storage/index"
 	"fmt"
 	"github.com/cerbos/cerbos/internal/storage/disk"
@@ -14,7 +13,7 @@ import (
 	"github.com/fatih/color"
 	"github.com/pterm/pterm"
 	"github.com/cerbos/cerbos/internal/printer"
-	"github.com/cerbos/cerbos/internal/wasm/builder"
+	"github.com/cerbos/cerbos/internal/wasm"
 )
 
 const help = `
@@ -32,7 +31,7 @@ type Cmd struct {
 	Store     string `help:"Directory containing policies" required:"" type:"existingdir"`
 	WorkDir   string `help:"Working directory. Defaults to OS temp directory" type:"existingdir"`
 	OutputDir string `help:"Output directory" required:"" type:"existingdir"`
-	Version   string `help:"Policy version"`
+	PolicyVer string `help:"Policy version"`
 	Resource  string `help:"Resource kind" required:""`
 	Scope     string `help:"Scope" default:""`
 	Target    struct {
@@ -76,21 +75,22 @@ func (c *Cmd) Run(k *kong.Kong) error {
 	}
 
 	store := disk.NewFromIndexWithConf(idx, &disk.Conf{})
-	builder := builder.NewBuilder(store, c.workDir(), os.DirFS(c.OutputDir))
-	_, err = builder.FromPolicy(ctx, c.Resource, c.Version, c.Scope)
+	builder, err := wasm.NewBuilder(store, c.workDir(), c.OutputDir)
+	_, err = builder.FromPolicy(ctx, c.Resource, c.PolicyVer, c.Scope)
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func (c *Cmd) workDir() fs.FS {
+func (c *Cmd) workDir() string {
 	if c.WorkDir != "" {
-		return os.DirFS(c.WorkDir)
+		return c.WorkDir
 	}
 
-	return os.DirFS(os.TempDir())
+	return os.TempDir()
 }
+
 func (c *Cmd) Help() string {
 	return help
 }

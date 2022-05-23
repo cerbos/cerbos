@@ -2,7 +2,6 @@ package wasm
 
 import (
 	"testing"
-	"embed"
 	"text/template"
 	"github.com/stretchr/testify/require"
 	"os"
@@ -13,9 +12,6 @@ import (
 	"google.golang.org/protobuf/encoding/protojson"
 	"github.com/cerbos/cerbos/internal/compile"
 )
-
-//go:embed templates/*.tmpl
-var templatesFS embed.FS
 
 func TestClasses(t *testing.T) {
 	is := require.New(t)
