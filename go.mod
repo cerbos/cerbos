@@ -82,7 +82,7 @@ require (
 	gopkg.in/segmentio/analytics-go.v3 v3.1.0
 	gopkg.in/yaml.v2 v2.4.0
 	helm.sh/helm/v3 v3.9.0
-	modernc.org/sqlite v1.17.2
+	modernc.org/sqlite v1.17.3
 )
 
 require (
