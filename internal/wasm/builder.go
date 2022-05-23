@@ -97,7 +97,7 @@ func (b *Builder) FromPolicy(ctx context.Context, resource, version, scope, targ
 	if err != nil {
 		return nil, err
 	}
-	srcDir, err := createRustProject(b.workDir)
+	srcDir, projDir, err := createRustProject(b.workDir)
 	if err != nil {
 		return nil, err
 	}
@@ -111,10 +111,12 @@ func (b *Builder) FromPolicy(ctx context.Context, resource, version, scope, targ
 	if err != nil {
 		return nil, err
 	}
-	err = buildRustProject(ctx, filepath.Clean(filepath.Join(srcDir, "..")), targetOs)
+
+	err = buildRustProject(ctx, projDir, targetOs)
 	if err != nil {
 		return nil, err
 	}
+
 	return policy, nil
 }
 
@@ -132,26 +134,28 @@ func buildRustProject(ctx context.Context, workDir string, targetOs string) erro
 	return nil
 }
 
-func createRustProject(workDir string) (string, error) {
+func createRustProject(workDir string) (string, string, error) {
 	temp, err := os.MkdirTemp(workDir, "cerbos*")
 	if err != nil {
-		return "", err
+		return "", "", err
 	}
 	srcDir := filepath.Join(temp, "src")
 	err = os.Mkdir(srcDir, 0755)
 	if err != nil {
-		return "", fmt.Errorf("failed to create a \"src\" directory: %w", err)
+		return "", "", fmt.Errorf("failed to create a \"src\" directory: %w", err)
 	}
+
+	projDir := filepath.Clean(filepath.Join(srcDir, ".."))
 
 	err = os.WriteFile(filepath.Join(temp, "Cargo.lock"), cargoLock, 0755)
 	if err != nil {
-		return "", fmt.Errorf("failed to write Cargo.lock file: %w", err)
+		return "", "", fmt.Errorf("failed to write Cargo.lock file: %w", err)
 	}
 
 	err = os.WriteFile(filepath.Join(temp, "Cargo.toml"), cargoToml, 0755)
 	if err != nil {
-		return "", fmt.Errorf("failed to write Cargo.toml file: %w", err)
+		return "", "", fmt.Errorf("failed to write Cargo.toml file: %w", err)
 	}
 
-	return srcDir, nil
+	return srcDir, projDir, nil
 }
