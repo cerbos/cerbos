@@ -46,7 +46,7 @@ jobs:
           key: ${{ runner.os }}-go-${{ hashFiles('**/go.mod') }}
 
       - name: GoReleaser
-        uses: goreleaser/goreleaser-action@v2
+        uses: goreleaser/goreleaser-action@v3
         with:
           version: latest
           args: release --config=.goreleaser.yml --rm-dist
