@@ -15,26 +15,16 @@ import (
 	"os/exec"
 	"fmt"
 	"io"
+	"strings"
 )
-
-type Config struct {
-	Store     storage.Store
-	OutputDir string
-	Version   string
-	Resource  string
-	Scope     string
-	Target    struct {
-		Os   string
-		Arch string
-	}
-	WorkDirFS fs.FS
-}
 
 var (
 	ErrUnsupportedPolicy     = errors.New("unsupported policy type")
 	ErrPolicyMustHaveSchemas = errors.New("policy must have schemas")
 	ErrPolicyNotFound        = errors.New("policy not found")
 )
+
+const policyProject = "wasmpolicy"
 
 type Builder struct {
 	store     storage.Store
@@ -162,9 +152,11 @@ func copyBuild(projDir string, outputDir string) error {
 			}
 			return fs.SkipDir
 		}
-		_, err = copy(path, filepath.Join(outputDir, d.Name()))
-		if err != nil {
-			return err
+		if strings.HasPrefix(d.Name(), policyProject) {
+			_, err = copy(path, filepath.Join(outputDir, d.Name()))
+			if err != nil {
+				return err
+			}
 		}
 
 		return nil
