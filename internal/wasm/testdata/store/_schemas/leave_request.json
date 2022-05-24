@@ -31,8 +31,6 @@
   "required": [
     "department",
     "geography",
-    "team",
-    "status",
-    "id"
+    "team"
   ]
 }

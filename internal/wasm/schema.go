@@ -26,8 +26,9 @@ func ConvertSchema(s *jsonschema.Schema) ([]*Field, error) {
 				}
 			}
 			f = &Field{
-				Type: wrapOptional(t1, required),
-				Name: n,
+				Type:     wrapOptional(t1, required),
+				Name:     n,
+				Required: required,
 			}
 		} else {
 			return nil, fmt.Errorf("type %q: %w", n, ErrUnsupportedType)
@@ -40,8 +41,9 @@ func ConvertSchema(s *jsonschema.Schema) ([]*Field, error) {
 }
 
 type Field struct {
-	Type string
-	Name string
+	Type     string
+	Name     string
+	Required bool
 }
 
 var mapTypes = map[string]string{

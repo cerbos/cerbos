@@ -16,6 +16,7 @@ import (
 	"fmt"
 	"io"
 	"strings"
+	"github.com/iancoleman/strcase"
 )
 
 var (
@@ -43,7 +44,10 @@ var (
 )
 
 func NewBuilder(store storage.Store, workDir, outputDir string) (*Builder, error) {
-	tmpl, err := template.ParseFS(templatesFS, "templates/*.tmpl")
+	tmpl, err := template.New("lib").
+		Funcs(template.FuncMap{"toSnake": strcase.ToSnake}).
+		ParseFS(templatesFS, "templates/*.tmpl")
+
 	if err != nil {
 		return nil, err
 	}

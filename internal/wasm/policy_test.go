@@ -14,6 +14,7 @@ import (
 	"io"
 	"text/template"
 	"github.com/cerbos/cerbos/internal/storage"
+	"github.com/iancoleman/strcase"
 )
 
 func pathToDir(tb testing.TB, dir string) string {
@@ -53,14 +54,19 @@ func TestNewCompiler(t *testing.T) {
 }
 
 func TestGenPolicy(t *testing.T) {
-	tmpl, err := template.ParseFS(templatesFS, "templates/*.tmpl")
+	is := require.New(t)
+
+	tmpl, err := template.New("lib").
+		Funcs(template.FuncMap{"toSnake": strcase.ToSnake}).
+		ParseFS(templatesFS, "templates/*.tmpl")
+
+	is.NoError(err)
 
 	resource, policyVer, scope := "leave_request", "staging", ""
 	resourceModID := namer.ResourcePolicyModuleID(resource, policyVer, scope)
 	ctx := context.Background()
 	mngr, store := mkCompiler(ctx, t)
 	rps, err := mngr.Get(ctx, resourceModID)
-	is := require.New(t)
 	is.NoError(err)
 	is.NotNil(rps)
 	rp := rps.GetResourcePolicy()

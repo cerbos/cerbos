@@ -37,7 +37,8 @@ func (r *Rule) RenderCondition() (string, error) {
 		return "", fmt.Errorf("%q rule: %w", r.Name, ErrNilCondition)
 	}
 	sb := new(strings.Builder)
-	err := renderCondition(sb, r.Condition)
+	tr := conditionTranspiler{schema: r.Parent.Schema}
+	err := tr.renderCondition(sb, r.Condition)
 	if err != nil {
 		return "", err
 	}
