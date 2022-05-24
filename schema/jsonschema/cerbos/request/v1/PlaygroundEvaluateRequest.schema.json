@@ -147,7 +147,7 @@
         "type": "string",
         "minLength": 1
       },
-      "maxItems": 10,
+      "maxItems": 50,
       "minItems": 1,
       "uniqueItems": true
     },
@@ -159,7 +159,7 @@
       "items": {
         "$ref": "#/definitions/cerbos.request.v1.File"
       },
-      "maxItems": 10,
+      "maxItems": 30,
       "minItems": 1
     },
     "playgroundId": {

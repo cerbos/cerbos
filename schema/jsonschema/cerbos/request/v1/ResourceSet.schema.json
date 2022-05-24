@@ -28,7 +28,7 @@
   "properties": {
     "instances": {
       "type": "object",
-      "maxProperties": 20,
+      "maxProperties": 50,
       "minProperties": 1,
       "additionalProperties": {
         "$ref": "#/definitions/cerbos.request.v1.AttributesMap"

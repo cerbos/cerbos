@@ -112,7 +112,7 @@
             "type": "string",
             "minLength": 1
           },
-          "maxItems": 10,
+          "maxItems": 50,
           "minItems": 1,
           "uniqueItems": true
         },
@@ -147,7 +147,7 @@
       "items": {
         "$ref": "#/definitions/cerbos.request.v1.CheckResourceBatchRequest.BatchEntry"
       },
-      "maxItems": 20,
+      "maxItems": 50,
       "minItems": 1
     }
   }
