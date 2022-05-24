@@ -59,38 +59,3 @@ func wrapOptional(t string, required bool) string {
 		return fmt.Sprintf("Option<%s>", t)
 	}
 }
-
-func fromBoolean(name string, required bool) *Field {
-	return &Field{
-		Type: wrapOptional("bool", required),
-		Name: name,
-	}
-}
-
-func fromString(name string, required bool) *Field {
-	return &Field{
-		Type: wrapOptional("String", required),
-		Name: name,
-	}
-}
-
-func fromArray(name string, itemType string, required bool) *Field {
-	return &Field{
-		Type: wrapOptional(fmt.Sprintf("Vec<%s>", itemType), required),
-		Name: name,
-	}
-}
-
-func fromNumber(name string, required bool) *Field {
-	return &Field{
-		Type: wrapOptional("f64", required),
-		Name: name,
-	}
-}
-
-func fromInteger(name string, required bool) *Field {
-	return &Field{
-		Type: wrapOptional("i64", required),
-		Name: name,
-	}
-}

@@ -24,6 +24,7 @@ type (
 		Actions   []string
 		Condition *runtimev1.Condition
 		Effect    string
+		Parent    *Policy
 	}
 )
 
@@ -44,22 +45,8 @@ func (r *Rule) RenderCondition() (string, error) {
 	return sb.String(), nil
 }
 
-func ConvertPolicy(rps *runtimev1.RunnableResourcePolicySet) ([]*Rule, error) {
-	rules := make([]*Rule, 0, len(rps.Policies[0].Rules))
-	for _, r := range rps.Policies[0].Rules {
-		rule := Rule{
-			Roles:     maps.Keys(r.Roles),
-			Actions:   maps.Keys(r.Actions),
-			Effect:    r.Effect.String(),
-			Condition: r.Condition,
-		}
-		rules = append(rules, &rule)
-	}
-
-	return rules, nil
-}
-
 func NewPolicy(ps, rs *jsonschema.Schema, rp *runtimev1.RunnableResourcePolicySet) (*Policy, error) {
+	policy := new(Policy)
 	pf, err := ConvertSchema(ps)
 	if err != nil {
 		return nil, err
@@ -68,17 +55,27 @@ func NewPolicy(ps, rs *jsonschema.Schema, rp *runtimev1.RunnableResourcePolicySe
 	if err != nil {
 		return nil, err
 	}
-	rules, err := ConvertPolicy(rp)
+	policy.Schema = &Schema{Principal: pf, Resource: rf}
+	policy.Rules, err = getRules(policy, rp)
 	if err != nil {
 		return nil, err
 	}
-	policy := &Policy{
-		Rules: rules,
-		Schema: &Schema{
-			Principal: pf,
-			Resource:  rf,
-		},
-	}
 
 	return policy, nil
+}
+
+func getRules(policy *Policy, rps *runtimev1.RunnableResourcePolicySet) ([]*Rule, error) {
+	rules := make([]*Rule, 0, len(rps.Policies[0].Rules))
+	for _, r := range rps.Policies[0].Rules {
+		rule := Rule{
+			Roles:     maps.Keys(r.Roles),
+			Actions:   maps.Keys(r.Actions),
+			Effect:    r.Effect.String(),
+			Condition: r.Condition,
+			Parent:    policy,
+		}
+		rules = append(rules, &rule)
+	}
+
+	return rules, nil
 }
