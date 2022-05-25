@@ -160,7 +160,6 @@
           "items": {
             "$ref": "#/definitions/cerbos.request.v1.CheckResourceBatchRequest.BatchEntry"
           },
-          "maxItems": 20,
           "minItems": 1
         }
       }
@@ -179,7 +178,6 @@
             "type": "string",
             "minLength": 1
           },
-          "maxItems": 10,
           "minItems": 1,
           "uniqueItems": true
         },
@@ -203,7 +201,6 @@
             "type": "string",
             "minLength": 1
           },
-          "maxItems": 10,
           "minItems": 1,
           "uniqueItems": true
         },
@@ -249,7 +246,6 @@
           "items": {
             "$ref": "#/definitions/cerbos.request.v1.CheckResourcesRequest.ResourceEntry"
           },
-          "maxItems": 20,
           "minItems": 1
         }
       }
@@ -268,7 +264,6 @@
             "type": "string",
             "minLength": 1
           },
-          "maxItems": 10,
           "minItems": 1,
           "uniqueItems": true
         },
@@ -343,7 +338,6 @@
       "properties": {
         "instances": {
           "type": "object",
-          "maxProperties": 20,
           "minProperties": 1,
           "additionalProperties": {
             "$ref": "#/definitions/cerbos.request.v1.AttributesMap"
@@ -391,7 +385,7 @@
           "items": {
             "$ref": "#/definitions/cerbos.request.v1.File"
           },
-          "maxItems": 10,
+          "maxItems": 30,
           "minItems": 1
         },
         "planResources": {

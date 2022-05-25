@@ -69,7 +69,6 @@ message CheckResourceSetRequest {
     (validate.rules).repeated = {
       unique: true,
       min_items: 1,
-      max_items: 10,
       items {
         string {
           min_len: 1
@@ -80,7 +79,6 @@ message CheckResourceSetRequest {
     (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
       description: "List of actions being performed on the set of resources."
       min_items: 1
-      max_items: 10
       unique_items: true
       example: "[\"view:public\", \"comment\"]"
     }
@@ -130,14 +128,12 @@ message ResourceSet {
   map<string, AttributesMap> instances = 3 [
     (validate.rules).map = {
       min_pairs: 1,
-      max_pairs: 20,
       no_sparse: true
     },
     (google.api.field_behavior) = REQUIRED,
     (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
       description: "Set of resource instances to check. Each instance must be keyed by an application-specific unique identifier.",
       min_properties: 1
-      max_properties: 20
       example: "{\"XX125\":{\"attr\":{\"owner\":\"bugs_bunny\", \"public\": false, \"flagged\": false}}, \"XX225\":{\"attr\":{\"owner\":\"daffy_duck\", \"public\": true, \"flagged\": false}}}"
     }
   ];
@@ -179,7 +175,6 @@ message CheckResourceBatchRequest {
       (validate.rules).repeated = {
         unique: true,
         min_items: 1,
-        max_items: 10,
         items {
           string {
             min_len: 1
@@ -190,7 +185,6 @@ message CheckResourceBatchRequest {
       (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
         description: "List of actions being performed on the resource."
         min_items: 1
-        max_items: 10
         unique_items: true
         example: "[\"view:public\", \"comment\"]"
       }
@@ -212,13 +206,11 @@ message CheckResourceBatchRequest {
   repeated BatchEntry resources = 3 [
     (validate.rules).repeated = {
       min_items: 1,
-      max_items: 20
     },
     (google.api.field_behavior) = REQUIRED,
     (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
       description: "List of resources and actions."
       min_items: 1
-      max_items: 20
       unique_items: true
       example: "[{\"actions\":[\"view\",\"comment\"], \"resource\":{\"kind\":\"album:object\",\"policyVersion\":\"default\",\"id\":\"XX125\",\"attr\":{\"owner\":\"bugs_bunny\", \"public\": false, \"flagged\": false}}}]"
     }
@@ -239,7 +231,6 @@ message CheckResourcesRequest {
       (validate.rules).repeated = {
         unique: true,
         min_items: 1,
-        max_items: 10,
         items {
           string {
             min_len: 1
@@ -250,7 +241,6 @@ message CheckResourcesRequest {
       (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
         description: "List of actions being performed on the resource."
         min_items: 1
-        max_items: 10
         unique_items: true
         example: "[\"view:public\", \"comment\"]"
       }
@@ -275,13 +265,11 @@ message CheckResourcesRequest {
   repeated ResourceEntry resources = 4 [
     (validate.rules).repeated = {
       min_items: 1,
-      max_items: 20
     },
     (google.api.field_behavior) = REQUIRED,
     (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
       description: "List of resources and actions."
       min_items: 1
-      max_items: 20
       unique_items: true
       example: "[{\"actions\":[\"view\",\"comment\"], \"resource\":{\"kind\":\"album:object\",\"policyVersion\":\"default\",\"id\":\"XX125\",\"attr\":{\"owner\":\"bugs_bunny\", \"public\": false, \"flagged\": false}}}]"
     }
@@ -395,7 +383,7 @@ message PlaygroundEvaluateRequest {
   repeated File files = 2 [
     (validate.rules).repeated = {
       min_items: 1,
-      max_items: 10
+      max_items: 30
     },
     (google.api.field_behavior) = REQUIRED,
     (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
@@ -419,7 +407,7 @@ message PlaygroundEvaluateRequest {
     (validate.rules).repeated = {
       unique: true,
       min_items: 1,
-      max_items: 10,
+      max_items: 50,
       items {
         string {
           min_len: 1
@@ -430,7 +418,7 @@ message PlaygroundEvaluateRequest {
     (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
       description: "List of actions being performed on the resource."
       min_items: 1
-      max_items: 10
+      max_items: 50
       unique_items: true
     }
   ];
@@ -450,7 +438,7 @@ message PlaygroundProxyRequest {
   repeated File files = 2 [
     (validate.rules).repeated = {
       min_items: 1,
-      max_items: 10
+      max_items: 30
     },
     (google.api.field_behavior) = REQUIRED,
     (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {

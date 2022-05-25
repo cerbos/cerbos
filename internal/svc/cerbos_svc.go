@@ -31,12 +31,19 @@ type CerbosService struct {
 	eng     *engine.Engine
 	auxData *auxdata.AuxData
 	*svcv1.UnimplementedCerbosServiceServer
+	reqLimits RequestLimits
 }
 
-func NewCerbosService(eng *engine.Engine, auxData *auxdata.AuxData) *CerbosService {
+type RequestLimits struct {
+	MaxActionsPerResource  uint
+	MaxResourcesPerRequest uint
+}
+
+func NewCerbosService(eng *engine.Engine, auxData *auxdata.AuxData, reqLimits RequestLimits) *CerbosService {
 	return &CerbosService{
 		eng:                              eng,
 		auxData:                          auxData,
+		reqLimits:                        reqLimits,
 		UnimplementedCerbosServiceServer: &svcv1.UnimplementedCerbosServiceServer{},
 	}
 }
@@ -78,6 +85,15 @@ func (cs *CerbosService) PlanResources(ctx context.Context, request *requestv1.P
 // Deprecated: Since 0.16.0. Use CheckResources instead.
 func (cs *CerbosService) CheckResourceSet(ctx context.Context, req *requestv1.CheckResourceSetRequest) (*responsev1.CheckResourceSetResponse, error) {
 	log := ctxzap.Extract(ctx)
+	if err := cs.checkNumResourcesLimit(len(req.Resource.Instances)); err != nil {
+		log.Error("Request too large", zap.Error(err))
+		return nil, err
+	}
+
+	if err := cs.checkNumActionsLimit(len(req.Actions)); err != nil {
+		log.Error("Request too large", zap.Error(err))
+		return nil, err
+	}
 
 	auxData, err := cs.auxData.Extract(ctx, req.AuxData)
 	if err != nil {
@@ -128,6 +144,10 @@ func (cs *CerbosService) CheckResourceSet(ctx context.Context, req *requestv1.Ch
 // Deprecated: Since 0.16.0. Use CheckResources instead.
 func (cs *CerbosService) CheckResourceBatch(ctx context.Context, req *requestv1.CheckResourceBatchRequest) (*responsev1.CheckResourceBatchResponse, error) {
 	log := ctxzap.Extract(ctx)
+	if err := cs.checkNumResourcesLimit(len(req.Resources)); err != nil {
+		log.Error("Request too large", zap.Error(err))
+		return nil, err
+	}
 
 	auxData, err := cs.auxData.Extract(ctx, req.AuxData)
 	if err != nil {
@@ -137,6 +157,11 @@ func (cs *CerbosService) CheckResourceBatch(ctx context.Context, req *requestv1.
 
 	inputs := make([]*enginev1.CheckInput, len(req.Resources))
 	for i, res := range req.Resources {
+		if err := cs.checkNumActionsLimit(len(res.Actions)); err != nil {
+			log.Error("Request too large", zap.Error(err))
+			return nil, err
+		}
+
 		inputs[i] = &enginev1.CheckInput{
 			RequestId: req.RequestId,
 			Actions:   res.Actions,
@@ -176,6 +201,10 @@ func (cs *CerbosService) CheckResourceBatch(ctx context.Context, req *requestv1.
 // CheckResources checks a batch of heterogenous resources.
 func (cs *CerbosService) CheckResources(ctx context.Context, req *requestv1.CheckResourcesRequest) (*responsev1.CheckResourcesResponse, error) {
 	log := ctxzap.Extract(ctx)
+	if err := cs.checkNumResourcesLimit(len(req.Resources)); err != nil {
+		log.Error("Request too large", zap.Error(err))
+		return nil, err
+	}
 
 	auxData, err := cs.auxData.Extract(ctx, req.AuxData)
 	if err != nil {
@@ -185,6 +214,11 @@ func (cs *CerbosService) CheckResources(ctx context.Context, req *requestv1.Chec
 
 	inputs := make([]*enginev1.CheckInput, len(req.Resources))
 	for i, res := range req.Resources {
+		if err := cs.checkNumActionsLimit(len(res.Actions)); err != nil {
+			log.Error("Request too large", zap.Error(err))
+			return nil, err
+		}
+
 		inputs[i] = &enginev1.CheckInput{
 			RequestId: req.RequestId,
 			Actions:   res.Actions,
@@ -239,6 +273,24 @@ func (cs *CerbosService) CheckResources(ctx context.Context, req *requestv1.Chec
 	}
 
 	return result, nil
+}
+
+func (cs *CerbosService) checkNumResourcesLimit(n int) error {
+	if n > int(cs.reqLimits.MaxResourcesPerRequest) {
+		return status.Errorf(codes.InvalidArgument,
+			"number of resources in batch (%d) exceeds configured limit (%d)", n, cs.reqLimits.MaxResourcesPerRequest)
+	}
+
+	return nil
+}
+
+func (cs *CerbosService) checkNumActionsLimit(n int) error {
+	if n > int(cs.reqLimits.MaxActionsPerResource) {
+		return status.Errorf(codes.InvalidArgument,
+			"number of actions (%d) exceeds configured limit (%d)", n, cs.reqLimits.MaxActionsPerResource)
+	}
+
+	return nil
 }
 
 func (CerbosService) ServerInfo(ctx context.Context, req *requestv1.ServerInfoRequest) (*responsev1.ServerInfoResponse, error) {

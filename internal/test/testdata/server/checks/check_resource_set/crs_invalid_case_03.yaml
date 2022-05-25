@@ -1,0 +1,95 @@
+---
+description: "Too many resources"
+wantStatus:
+  httpStatusCode: 400
+  grpcStatusCode: 3
+wantError: true
+checkResourceSet:
+  input: {
+    "requestId": "test",
+    "actions": [
+      "view:public",
+      "approve"
+    ],
+    "principal": {
+      "id": "john",
+      "policyVersion": "20210210",
+      "roles": [
+        "employee"
+      ],
+      "attr": {
+        "department": "marketing",
+        "geography": "GB",
+        "team": "design"
+      }
+    },
+    "resource": {
+      "kind": "leave_request",
+      "policyVersion": "20210210",
+      "instances": {
+        "XX125": {
+          "attr": {
+            "department": "marketing",
+            "geography": "GB",
+            "id": "XX125",
+            "owner": "john",
+            "team": "design"
+          }
+        },
+        "XX225": {
+          "attr": {
+            "department": "marketing",
+            "geography": "GB",
+            "id": "XX225",
+            "owner": "john",
+            "team": "design"
+          }
+        },
+        "XX325": {
+          "attr": {
+            "department": "marketing",
+            "geography": "GB",
+            "id": "XX325",
+            "owner": "john",
+            "team": "design"
+          }
+        },
+        "XX425": {
+          "attr": {
+            "department": "marketing",
+            "geography": "GB",
+            "id": "XX425",
+            "owner": "john",
+            "team": "design"
+          }
+        },
+        "XX525": {
+          "attr": {
+            "department": "marketing",
+            "geography": "GB",
+            "id": "XX525",
+            "owner": "john",
+            "team": "design"
+          }
+        },
+        "XX625": {
+          "attr": {
+            "department": "marketing",
+            "geography": "GB",
+            "id": "XX625",
+            "owner": "john",
+            "team": "design"
+          }
+        },
+        "XX725": {
+          "attr": {
+            "department": "marketing",
+            "geography": "GB",
+            "id": "XX725",
+            "owner": "john",
+            "team": "design"
+          }
+        }
+      }
+    }
+  }

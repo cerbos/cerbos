@@ -855,7 +855,6 @@
             "type": "string"
           },
           "description": "List of actions being performed on the resource.",
-          "maxItems": 10,
           "minItems": 1,
           "uniqueItems": true,
           "required": [
@@ -883,7 +882,6 @@
             "type": "string"
           },
           "description": "List of actions being performed on the resource.",
-          "maxItems": 10,
           "minItems": 1,
           "uniqueItems": true,
           "required": [
@@ -1825,7 +1823,6 @@
             "$ref": "#/definitions/CheckResourceBatchRequestBatchEntry"
           },
           "description": "List of resources and actions.",
-          "maxItems": 20,
           "minItems": 1,
           "uniqueItems": true,
           "required": [
@@ -1912,7 +1909,6 @@
             "type": "string"
           },
           "description": "List of actions being performed on the set of resources.",
-          "maxItems": 10,
           "minItems": 1,
           "uniqueItems": true,
           "required": [
@@ -2086,7 +2082,6 @@
             "$ref": "#/definitions/CheckResourcesRequestResourceEntry"
           },
           "description": "List of resources and actions.",
-          "maxItems": 20,
           "minItems": 1,
           "uniqueItems": true,
           "required": [
@@ -2473,7 +2468,7 @@
             "type": "string"
           },
           "description": "List of actions being performed on the resource.",
-          "maxItems": 10,
+          "maxItems": 50,
           "minItems": 1,
           "uniqueItems": true,
           "required": [
@@ -2851,7 +2846,6 @@
             "$ref": "#/definitions/v1AttributesMap"
           },
           "description": "Set of resource instances to check. Each instance must be keyed by an application-specific unique identifier.",
-          "maxProperties": 20,
           "minProperties": 1,
           "required": [
             "instances"

@@ -328,7 +328,12 @@ func (s *Server) startGRPCServer(l net.Listener, param Param) (*grpc.Server, err
 	healthpb.RegisterHealthServer(server, s.health)
 	reflection.Register(server)
 
-	cerbosSvc := svc.NewCerbosService(param.Engine, param.AuxData)
+	reqLimits := svc.RequestLimits{
+		MaxActionsPerResource:  s.conf.RequestLimits.MaxActionsPerResource,
+		MaxResourcesPerRequest: s.conf.RequestLimits.MaxResourcesPerRequest,
+	}
+
+	cerbosSvc := svc.NewCerbosService(param.Engine, param.AuxData, reqLimits)
 	svcv1.RegisterCerbosServiceServer(server, cerbosSvc)
 	s.health.SetServingStatus(svcv1.CerbosService_ServiceDesc.ServiceName, healthpb.HealthCheckResponse_SERVING)
 
@@ -351,7 +356,7 @@ func (s *Server) startGRPCServer(l net.Listener, param Param) (*grpc.Server, err
 
 	if s.conf.PlaygroundEnabled {
 		log.Info("Starting playground service")
-		svcv1.RegisterCerbosPlaygroundServiceServer(server, svc.NewCerbosPlaygroundService())
+		svcv1.RegisterCerbosPlaygroundServiceServer(server, svc.NewCerbosPlaygroundService(reqLimits))
 		s.health.SetServingStatus(svcv1.CerbosPlaygroundService_ServiceDesc.ServiceName, healthpb.HealthCheckResponse_SERVING)
 	}
 

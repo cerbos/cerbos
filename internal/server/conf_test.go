@@ -64,6 +64,62 @@ func TestConfigValidate(t *testing.T) {
 			},
 			wantLoadErr: true,
 		},
+		{
+			name: "maxActionsPerResource is zero",
+			conf: map[string]any{
+				"server": map[string]any{
+					"httpListenAddr": ":6666",
+					"grpcListenAddr": ":6667",
+					"requests": map[string]any{
+						"maxActionsPerResource":  "0",
+						"maxResourcesPerRequest": "50",
+					},
+				},
+			},
+			wantErr: true,
+		},
+		{
+			name: "maxActionsPerResource is 1000",
+			conf: map[string]any{
+				"server": map[string]any{
+					"httpListenAddr": ":6666",
+					"grpcListenAddr": ":6667",
+					"requests": map[string]any{
+						"maxActionsPerResource":  "1000",
+						"maxResourcesPerRequest": "50",
+					},
+				},
+			},
+			wantErr: true,
+		},
+		{
+			name: "maxResourcesPerRequest is zero",
+			conf: map[string]any{
+				"server": map[string]any{
+					"httpListenAddr": ":6666",
+					"grpcListenAddr": ":6667",
+					"requests": map[string]any{
+						"maxActionsPerResource":  "50",
+						"maxResourcesPerRequest": "0",
+					},
+				},
+			},
+			wantErr: true,
+		},
+		{
+			name: "maxResourcesPerRequest is 1000",
+			conf: map[string]any{
+				"server": map[string]any{
+					"httpListenAddr": ":6666",
+					"grpcListenAddr": ":6667",
+					"requests": map[string]any{
+						"maxActionsPerResource":  "50",
+						"maxResourcesPerRequest": "1000",
+					},
+				},
+			},
+			wantErr: true,
+		},
 	}
 
 	for _, tc := range testCases {

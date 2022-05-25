@@ -112,7 +112,6 @@
             "type": "string",
             "minLength": 1
           },
-          "maxItems": 10,
           "minItems": 1,
           "uniqueItems": true
         },
@@ -150,7 +149,6 @@
       "items": {
         "$ref": "#/definitions/cerbos.request.v1.CheckResourcesRequest.ResourceEntry"
       },
-      "maxItems": 20,
       "minItems": 1
     }
   }

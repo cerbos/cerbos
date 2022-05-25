@@ -39,13 +39,15 @@ var _ svcv1.CerbosPlaygroundServiceServer = (*CerbosPlaygroundService)(nil)
 // CerbosPlaygroundService implements the playground API.
 type CerbosPlaygroundService struct {
 	*svcv1.UnimplementedCerbosPlaygroundServiceServer
-	auxData *auxdata.AuxData
+	auxData   *auxdata.AuxData
+	reqLimits RequestLimits
 }
 
-func NewCerbosPlaygroundService() *CerbosPlaygroundService {
+func NewCerbosPlaygroundService(reqLimits RequestLimits) *CerbosPlaygroundService {
 	return &CerbosPlaygroundService{
 		UnimplementedCerbosPlaygroundServiceServer: &svcv1.UnimplementedCerbosPlaygroundServiceServer{},
-		auxData: auxdata.NewWithoutVerification(context.Background()),
+		auxData:   auxdata.NewWithoutVerification(context.Background()),
+		reqLimits: reqLimits,
 	}
 }
 
@@ -201,7 +203,7 @@ func (cs *CerbosPlaygroundService) PlaygroundProxy(ctx context.Context, req *req
 		return nil, status.Error(codes.Internal, "failed to create engine")
 	}
 
-	cerbosSvc := NewCerbosService(eng, cs.auxData)
+	cerbosSvc := NewCerbosService(eng, cs.auxData, cs.reqLimits)
 	switch proxyReq := req.ProxyRequest.(type) {
 	case *requestv1.PlaygroundProxyRequest_CheckResourceSet:
 		resp, err := cerbosSvc.CheckResourceSet(ctx, proxyReq.CheckResourceSet)

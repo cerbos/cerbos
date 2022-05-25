@@ -265,10 +265,10 @@ func (m *CheckResourceSetRequest) validate(all bool) error {
 
 	// no validation rules for RequestId
 
-	if l := len(m.GetActions()); l < 1 || l > 10 {
+	if len(m.GetActions()) < 1 {
 		err := CheckResourceSetRequestValidationError{
 			field:  "Actions",
-			reason: "value must contain between 1 and 10 items, inclusive",
+			reason: "value must contain at least 1 item(s)",
 		}
 		if !all {
 			return err
@@ -553,10 +553,10 @@ func (m *ResourceSet) validate(all bool) error {
 		errors = append(errors, err)
 	}
 
-	if l := len(m.GetInstances()); l < 1 || l > 20 {
+	if len(m.GetInstances()) < 1 {
 		err := ResourceSetValidationError{
 			field:  "Instances",
-			reason: "value must contain between 1 and 20 pairs, inclusive",
+			reason: "value must contain at least 1 pair(s)",
 		}
 		if !all {
 			return err
@@ -936,10 +936,10 @@ func (m *CheckResourceBatchRequest) validate(all bool) error {
 		}
 	}
 
-	if l := len(m.GetResources()); l < 1 || l > 20 {
+	if len(m.GetResources()) < 1 {
 		err := CheckResourceBatchRequestValidationError{
 			field:  "Resources",
-			reason: "value must contain between 1 and 20 items, inclusive",
+			reason: "value must contain at least 1 item(s)",
 		}
 		if !all {
 			return err
@@ -1156,10 +1156,10 @@ func (m *CheckResourcesRequest) validate(all bool) error {
 		}
 	}
 
-	if l := len(m.GetResources()); l < 1 || l > 20 {
+	if len(m.GetResources()) < 1 {
 		err := CheckResourcesRequestValidationError{
 			field:  "Resources",
-			reason: "value must contain between 1 and 20 items, inclusive",
+			reason: "value must contain at least 1 item(s)",
 		}
 		if !all {
 			return err
@@ -1879,10 +1879,10 @@ func (m *PlaygroundEvaluateRequest) validate(all bool) error {
 
 	// no validation rules for PlaygroundId
 
-	if l := len(m.GetFiles()); l < 1 || l > 10 {
+	if l := len(m.GetFiles()); l < 1 || l > 30 {
 		err := PlaygroundEvaluateRequestValidationError{
 			field:  "Files",
-			reason: "value must contain between 1 and 10 items, inclusive",
+			reason: "value must contain between 1 and 30 items, inclusive",
 		}
 		if !all {
 			return err
@@ -2004,10 +2004,10 @@ func (m *PlaygroundEvaluateRequest) validate(all bool) error {
 		}
 	}
 
-	if l := len(m.GetActions()); l < 1 || l > 10 {
+	if l := len(m.GetActions()); l < 1 || l > 50 {
 		err := PlaygroundEvaluateRequestValidationError{
 			field:  "Actions",
-			reason: "value must contain between 1 and 10 items, inclusive",
+			reason: "value must contain between 1 and 50 items, inclusive",
 		}
 		if !all {
 			return err
@@ -2179,10 +2179,10 @@ func (m *PlaygroundProxyRequest) validate(all bool) error {
 
 	// no validation rules for PlaygroundId
 
-	if l := len(m.GetFiles()); l < 1 || l > 10 {
+	if l := len(m.GetFiles()); l < 1 || l > 30 {
 		err := PlaygroundProxyRequestValidationError{
 			field:  "Files",
-			reason: "value must contain between 1 and 10 items, inclusive",
+			reason: "value must contain between 1 and 30 items, inclusive",
 		}
 		if !all {
 			return err
@@ -3819,10 +3819,10 @@ func (m *CheckResourceBatchRequest_BatchEntry) validate(all bool) error {
 
 	var errors []error
 
-	if l := len(m.GetActions()); l < 1 || l > 10 {
+	if len(m.GetActions()) < 1 {
 		err := CheckResourceBatchRequest_BatchEntryValidationError{
 			field:  "Actions",
-			reason: "value must contain between 1 and 10 items, inclusive",
+			reason: "value must contain at least 1 item(s)",
 		}
 		if !all {
 			return err
@@ -4006,10 +4006,10 @@ func (m *CheckResourcesRequest_ResourceEntry) validate(all bool) error {
 
 	var errors []error
 
-	if l := len(m.GetActions()); l < 1 || l > 10 {
+	if len(m.GetActions()) < 1 {
 		err := CheckResourcesRequest_ResourceEntryValidationError{
 			field:  "Actions",
-			reason: "value must contain between 1 and 10 items, inclusive",
+			reason: "value must contain at least 1 item(s)",
 		}
 		if !all {
 			return err
