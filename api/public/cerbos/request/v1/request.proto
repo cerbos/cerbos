@@ -185,7 +185,6 @@ message CheckResourceBatchRequest {
       (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
         description: "List of actions being performed on the resource."
         min_items: 1
-        max_items: 50
         unique_items: true
         example: "[\"view:public\", \"comment\"]"
       }
