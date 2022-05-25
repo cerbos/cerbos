@@ -172,9 +172,17 @@ func copyBuild(projDir string, outputDir string) error {
 }
 
 func buildRustProject(ctx context.Context, workDir string, targetOs string) error {
+	cmd := exec.CommandContext(ctx, "cargo", "fmt")
+	cmd.Dir = workDir
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	if err := cmd.Run(); err != nil {
+		return fmt.Errorf("failed to format policy code: %w", err)
+	}
+
 	argv := []string{"build", "--target", targetOs}
 	// TODO: Set timeout
-	cmd := exec.CommandContext(ctx, "wasm-pack", argv...)
+	cmd = exec.CommandContext(ctx, "wasm-pack", argv...)
 	cmd.Dir = workDir
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
@@ -196,8 +204,6 @@ func createRustProject(workDir string) (string, string, error) {
 		return "", "", fmt.Errorf("failed to create a \"src\" directory: %w", err)
 	}
 
-	projDir := filepath.Clean(filepath.Join(srcDir, ".."))
-
 	err = os.WriteFile(filepath.Join(temp, "Cargo.lock"), cargoLock, 0755)
 	if err != nil {
 		return "", "", fmt.Errorf("failed to write Cargo.lock file: %w", err)
@@ -208,5 +214,5 @@ func createRustProject(workDir string) (string, string, error) {
 		return "", "", fmt.Errorf("failed to write Cargo.toml file: %w", err)
 	}
 
-	return srcDir, projDir, nil
+	return srcDir, temp, nil
 }
