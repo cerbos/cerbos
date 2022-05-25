@@ -855,7 +855,6 @@
             "type": "string"
           },
           "description": "List of actions being performed on the resource.",
-          "maxItems": 50,
           "minItems": 1,
           "uniqueItems": true,
           "required": [
