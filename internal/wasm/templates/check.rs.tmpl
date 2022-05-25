@@ -9,12 +9,23 @@
     fn check_impl(request: Request) -> String {
         let roles: Vec<_> = request.principal.roles.iter().map(AsRef::as_ref).collect();
         {{- if .DerivedRoles  }}
-        let dr = get_derived_roles(&request, &roles);
+        let mut dr: Vec<&str> = Vec::new();
+        {{ range $dr := .DerivedRoles }}
+        if intersect(&roles, &vec![{{template "join-string-slice" $dr.ParentRoles}}]) {
+        {{- if $dr.Condition }}
+            if {{$dr.RenderCondition}} {
+                dr.push({{printf "%q" $dr.Name}})
+            }
+        {{- else}}
+            dr.push({{printf "%q" $dr.Name}}){{end}}
+        }
+        {{- end}}
         {{- end}}
         let allow = "EFFECT_ALLOW".to_owned();
         let deny = "EFFECT_DENY".to_owned();
         {{range $rule := .Rules }}
-        if intersect(&roles, &vec![{{template "join-string-slice" $rule.Roles}}]) {{- if .DerivedRoles }} || intersect(&dr, &vec![{{template "join-string-slice" $rule.DerivedRoles}}]){{end}} {
+        if {{ if $rule.Roles }}intersect(&roles, &vec![{{template "join-string-slice" $rule.Roles}}]){{end}}
+        {{- if $rule.DerivedRoles }}{{if $rule.Roles}} || {{end}}intersect(&dr, &vec![{{template "join-string-slice" $rule.DerivedRoles}}]){{end}} {
             if action_matched(&request.action, &vec![{{template "join-string-slice" $rule.Actions}}]) {
             {{- if $rule.Condition }}
                 if {{$rule.RenderCondition}} {
@@ -28,21 +39,4 @@
 
         return deny;
     }
-    {{- if .DerivedRoles  }}
-    fn get_derived_roles(request: &Request, roles: &Vec<&str>) -> Vec<&str> {
-        let mut effective_dr: Vec<&str> = Vec::new();
-        {{ range $dr := .DerivedRoles }}
-        if intersect(roles, &vec![{{template "join-string-slice" $dr.ParentRoles}}]) {
-            {{- if $dr.Condition }}
-                if {{$dr.RenderCondition}} {
-                    effective_dr.push({{print "%q" $dr.Name}})
-                }
-            {{- else}}
-                effective_dr.push({{print "%q" $dr.Name}}){{end}}
-            }
-        }
-        {{- end}}
-        return effective_dr;
-    }
-    {{- end}}
 {{end}}

@@ -4,6 +4,7 @@ resourcePolicy:
   version: "20210210"
   importDerivedRoles:
     - alpha
+    - beta
   schemas:
     principalSchema:
       ref: cerbos:///principal.json

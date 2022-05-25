@@ -18,6 +18,7 @@ type (
 		ParentRoles []string
 		Condition   *runtimev1.Condition
 		Name        string
+		Parent      *Policy
 	}
 	Policy struct {
 		Rules        []*Rule
@@ -53,6 +54,20 @@ func (r *Rule) RenderCondition() (string, error) {
 	return sb.String(), nil
 }
 
+func (r *DerivedRole) RenderCondition() (string, error) {
+	if r.Condition == nil {
+		return "", fmt.Errorf("%q rule: %w", r.Name, ErrNilCondition)
+	}
+	sb := new(strings.Builder)
+	tr := conditionTranspiler{schema: r.Parent.Schema}
+	err := tr.renderCondition(sb, r.Condition)
+	if err != nil {
+		return "", err
+	}
+
+	return sb.String(), nil
+}
+
 func NewPolicy(ps, rs *jsonschema.Schema, rp *runtimev1.RunnableResourcePolicySet) (*Policy, error) {
 	policy := new(Policy)
 	pf, err := ConvertSchema(ps)
@@ -65,7 +80,7 @@ func NewPolicy(ps, rs *jsonschema.Schema, rp *runtimev1.RunnableResourcePolicySe
 	}
 	policy.Schema = &Schema{Principal: pf, Resource: rf}
 	policy.Rules, err = getRules(policy, rp)
-	policy.DerivedRoles = getDerivedRoles(rp.Policies[0].DerivedRoles)
+	policy.DerivedRoles = getDerivedRoles(policy, rp.Policies[0].DerivedRoles)
 	if err != nil {
 		return nil, err
 	}
@@ -73,13 +88,14 @@ func NewPolicy(ps, rs *jsonschema.Schema, rp *runtimev1.RunnableResourcePolicySe
 	return policy, nil
 }
 
-func getDerivedRoles(dr map[string]*runtimev1.RunnableDerivedRole) []*DerivedRole {
+func getDerivedRoles(policy *Policy, dr map[string]*runtimev1.RunnableDerivedRole) []*DerivedRole {
 	r := make([]*DerivedRole, 0, len(dr))
 	for _, d := range dr {
 		r = append(r, &DerivedRole{
 			ParentRoles: maps.Keys(d.ParentRoles),
 			Condition:   d.Condition,
 			Name:        d.Name,
+			Parent:      policy,
 		})
 	}
 	return r

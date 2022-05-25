@@ -62,7 +62,9 @@ func TestGenPolicy(t *testing.T) {
 
 	is.NoError(err)
 
-	resource, policyVer, scope := "leave_request", "staging", ""
+	ver := "20210210"
+	//ver := "staging"
+	resource, policyVer, scope := "leave_request", ver, ""
 	resourceModID := namer.ResourcePolicyModuleID(resource, policyVer, scope)
 	ctx := context.Background()
 	mngr, store := mkCompiler(ctx, t)
