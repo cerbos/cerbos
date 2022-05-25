@@ -211,7 +211,6 @@ message Principal {
     (validate.rules).repeated = {
       unique: true,
       min_items: 1,
-      max_items: 20,
       items {
         string {
           pattern: "^[[:word:]\\-\\.]+$"
@@ -222,7 +221,6 @@ message Principal {
     (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
       description: "Roles assigned to this principal from your identity management system."
       min_items: 1
-      max_items: 20
       pattern: "^[[:word:]\\-\\.]+$"
       unique_items: true
       example: "[\"user\"]"
