@@ -265,10 +265,10 @@ func (m *CheckResourceSetRequest) validate(all bool) error {
 
 	// no validation rules for RequestId
 
-	if l := len(m.GetActions()); l < 1 || l > 50 {
+	if len(m.GetActions()) < 1 {
 		err := CheckResourceSetRequestValidationError{
 			field:  "Actions",
-			reason: "value must contain between 1 and 50 items, inclusive",
+			reason: "value must contain at least 1 item(s)",
 		}
 		if !all {
 			return err
@@ -553,10 +553,10 @@ func (m *ResourceSet) validate(all bool) error {
 		errors = append(errors, err)
 	}
 
-	if l := len(m.GetInstances()); l < 1 || l > 50 {
+	if len(m.GetInstances()) < 1 {
 		err := ResourceSetValidationError{
 			field:  "Instances",
-			reason: "value must contain between 1 and 50 pairs, inclusive",
+			reason: "value must contain at least 1 pair(s)",
 		}
 		if !all {
 			return err
@@ -936,10 +936,10 @@ func (m *CheckResourceBatchRequest) validate(all bool) error {
 		}
 	}
 
-	if l := len(m.GetResources()); l < 1 || l > 50 {
+	if len(m.GetResources()) < 1 {
 		err := CheckResourceBatchRequestValidationError{
 			field:  "Resources",
-			reason: "value must contain between 1 and 50 items, inclusive",
+			reason: "value must contain at least 1 item(s)",
 		}
 		if !all {
 			return err
@@ -3819,10 +3819,10 @@ func (m *CheckResourceBatchRequest_BatchEntry) validate(all bool) error {
 
 	var errors []error
 
-	if l := len(m.GetActions()); l < 1 || l > 50 {
+	if len(m.GetActions()) < 1 {
 		err := CheckResourceBatchRequest_BatchEntryValidationError{
 			field:  "Actions",
-			reason: "value must contain between 1 and 50 items, inclusive",
+			reason: "value must contain at least 1 item(s)",
 		}
 		if !all {
 			return err

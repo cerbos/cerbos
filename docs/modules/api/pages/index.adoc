@@ -103,13 +103,13 @@ This is the main API entrypoint for checking permissions for a set of resources.
 <4> Principal policy scope. Optional. See xref:policies:scoped_policies.adoc[].
 <5> The roles attached to this principal by the identity provider.
 <6> Free-form context data about this principal. Policy rule conditions are evaluated based on these values.
-<7> List of resources the principal is attempting to access. Up to 20 resources may be provided in a single request.
+<7> List of resources the principal is attempting to access. Up to 50 resources may be provided in a single request by default. This xref:configuration:server.adoc#request-limits[limit can be configured].
 <8> ID of the resource.
 <9> Resource kind. This is used to determine the resource policy that applies to this resource.
 <10> Resource policy version. Optional. The server falls back to the xref:configuration:engine.adoc[configured default version] if this is not specified. 
 <11> Resource policy scope. Optional. See xref:policies:scoped_policies.adoc[].
 <12> Free-form context data about this resource. Policy rule conditions are evaluated based on these values.
-<13> List of actions being performed on the resource. Up to 10 actions per resource may be provided.
+<13> List of actions being performed on the resource. Up to 50 actions per resource may be provided by default. This xref:configuration:server.adoc#request-limits[limit can be configured].
 <14> Optional section for providing auxiliary data.
 <15> JWT to use as an auxiliary data source. 
 <16> ID of the keyset to use to verify the JWT. Optional if only a single xref:configuration:auxdata.adoc[keyset is configured].

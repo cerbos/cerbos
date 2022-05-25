@@ -56,6 +56,10 @@ func TestServer(t *testing.T) {
 	require.NoError(t, err)
 
 	param := Param{AuditLog: auditLog, AuxData: auxData, Store: store, Engine: eng}
+	reqLimits := RequestLimitsConf{
+		MaxActionsPerResource:  5,
+		MaxResourcesPerRequest: 5,
+	}
 
 	tr := LoadTestCases(t, "checks", "playground", "plan_resources")
 
@@ -71,6 +75,7 @@ func TestServer(t *testing.T) {
 					Key:  filepath.Join(testdataDir, "tls.key"),
 				},
 				PlaygroundEnabled: true,
+				RequestLimits:     reqLimits,
 			}
 
 			ctx, cancelFunc := context.WithCancel(context.Background())
@@ -96,6 +101,7 @@ func TestServer(t *testing.T) {
 					Key:  filepath.Join(testdataDir, "tls.key"),
 				},
 				PlaygroundEnabled: true,
+				RequestLimits:     reqLimits,
 			}
 
 			ctx, cancelFunc := context.WithCancel(context.Background())
@@ -116,6 +122,7 @@ func TestServer(t *testing.T) {
 				HTTPListenAddr:    getFreeListenAddr(t),
 				GRPCListenAddr:    getFreeListenAddr(t),
 				PlaygroundEnabled: true,
+				RequestLimits:     reqLimits,
 			}
 
 			ctx, cancelFunc := context.WithCancel(context.Background())
@@ -135,6 +142,7 @@ func TestServer(t *testing.T) {
 				HTTPListenAddr:    fmt.Sprintf("unix:%s", filepath.Join(tempDir, "http.sock")),
 				GRPCListenAddr:    fmt.Sprintf("unix:%s", filepath.Join(tempDir, "grpc.sock")),
 				PlaygroundEnabled: true,
+				RequestLimits:     reqLimits,
 			}
 
 			ctx, cancelFunc := context.WithCancel(context.Background())
@@ -187,6 +195,10 @@ func TestAdminService(t *testing.T) {
 				Username:     "cerbos",
 				PasswordHash: base64.StdEncoding.EncodeToString([]byte("$2y$10$yOdMOoQq6g7s.ogYRBDG3e2JyJFCyncpOEmkEyV.mNGKNyg68uPZS")),
 			},
+		},
+		RequestLimits: RequestLimitsConf{
+			MaxActionsPerResource:  5,
+			MaxResourcesPerRequest: 5,
 		},
 	}
 

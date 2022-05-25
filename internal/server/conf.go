@@ -16,11 +16,14 @@ import (
 )
 
 const (
-	confKey                     = "server"
-	defaultHTTPListenAddr       = ":3592"
-	defaultGRPCListenAddr       = ":3593"
-	defaultAdminUsername        = "cerbos"
-	defaultRawAdminPasswordHash = "$2y$10$VlPwcwpgcGZ5KjTaN1Pzk.vpFiQVG6F2cSWzQa9RtrNo3IacbzsEi" //nolint:gosec
+	confKey                       = "server"
+	defaultHTTPListenAddr         = ":3592"
+	defaultGRPCListenAddr         = ":3593"
+	defaultAdminUsername          = "cerbos"
+	defaultRawAdminPasswordHash   = "$2y$10$VlPwcwpgcGZ5KjTaN1Pzk.vpFiQVG6F2cSWzQa9RtrNo3IacbzsEi" //nolint:gosec
+	defaultMaxActionsPerResource  = 50
+	defaultMaxResourcesPerRequest = 50
+	requestItemsMax               = 500
 )
 
 var (
@@ -46,6 +49,8 @@ type Conf struct {
 	LogRequestPayloads bool `yaml:"logRequestPayloads" conf:",example=false"`
 	// PlaygroundEnabled defines whether the playground API is enabled.
 	PlaygroundEnabled bool `yaml:"playgroundEnabled" conf:",example=false"`
+	// RequestLimits defines the limits for requests.
+	RequestLimits RequestLimitsConf `yaml:"requestLimits"`
 }
 
 // TLSConf holds TLS configuration.
@@ -104,6 +109,13 @@ func (a *AdminCredentialsConf) usernameAndPasswordHash() (string, []byte, error)
 	return a.Username, passwordHashBytes, nil
 }
 
+type RequestLimitsConf struct {
+	// MaxActionsPerResource sets the maximum number of actions that could be checked for a resource in a single request.
+	MaxActionsPerResource uint `yaml:"maxActionsPerResource" conf:",example=50"`
+	// MaxResourcesPerBatch sets the maximum number of resources that could be sent in a single request.
+	MaxResourcesPerRequest uint `yaml:"maxResourcesPerRequest" conf:",example=50"`
+}
+
 func (c *Conf) Key() string {
 	return confKey
 }
@@ -112,6 +124,11 @@ func (c *Conf) SetDefaults() {
 	c.HTTPListenAddr = defaultHTTPListenAddr
 	c.GRPCListenAddr = defaultGRPCListenAddr
 	c.MetricsEnabled = true
+	c.RequestLimits = RequestLimitsConf{
+		MaxActionsPerResource:  defaultMaxActionsPerResource,
+		MaxResourcesPerRequest: defaultMaxResourcesPerRequest,
+	}
+
 	if c.AdminAPI.AdminCredentials == nil {
 		c.AdminAPI.AdminCredentials = &AdminCredentialsConf{
 			Username:     defaultAdminUsername,
@@ -127,6 +144,14 @@ func (c *Conf) Validate() (errs error) {
 
 	if _, _, err := util.ParseListenAddress(c.GRPCListenAddr); err != nil {
 		errs = multierr.Append(errs, fmt.Errorf("invalid grpcListenAddr '%s': %w", c.GRPCListenAddr, err))
+	}
+
+	if c.RequestLimits.MaxActionsPerResource < 1 || c.RequestLimits.MaxActionsPerResource > requestItemsMax {
+		errs = multierr.Append(errs, fmt.Errorf("maxActionsPerResource must be between 1 and %d", requestItemsMax))
+	}
+
+	if c.RequestLimits.MaxResourcesPerRequest < 1 || c.RequestLimits.MaxResourcesPerRequest > requestItemsMax {
+		errs = multierr.Append(errs, fmt.Errorf("maxResourcesPerRequest must be between 1 and %d", requestItemsMax))
 	}
 
 	return errs

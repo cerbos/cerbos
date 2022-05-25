@@ -82,6 +82,21 @@ server:
       - X-CUSTOM
 ----
 
+[#request-limits]
+== Request limits
+
+By default, each Cerbos API request can include a batch of 50 resources with up to 50 actions to be checked for each resource. This limit is in place to prevent the server from being overloaded by very large requests -- which affects throughput and CPU,memory,I/O usage. 
+
+WARNING: Changing these settings could have a large impact on the performance and resource utilisation of Cerbos instances. 
+
+[source,yaml,linenums]
+----
+server:
+  requestLimits:
+    maxActionsPerResource: 50
+    maxResourcesPerRequest: 50
+----
+
 
 [#admin-api]
 == Enable Admin API

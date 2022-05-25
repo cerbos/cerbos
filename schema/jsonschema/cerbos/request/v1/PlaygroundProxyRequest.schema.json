@@ -160,7 +160,6 @@
           "items": {
             "$ref": "#/definitions/cerbos.request.v1.CheckResourceBatchRequest.BatchEntry"
           },
-          "maxItems": 50,
           "minItems": 1
         }
       }
@@ -179,7 +178,6 @@
             "type": "string",
             "minLength": 1
           },
-          "maxItems": 50,
           "minItems": 1,
           "uniqueItems": true
         },
@@ -203,7 +201,6 @@
             "type": "string",
             "minLength": 1
           },
-          "maxItems": 50,
           "minItems": 1,
           "uniqueItems": true
         },
@@ -341,7 +338,6 @@
       "properties": {
         "instances": {
           "type": "object",
-          "maxProperties": 50,
           "minProperties": 1,
           "additionalProperties": {
             "$ref": "#/definitions/cerbos.request.v1.AttributesMap"
