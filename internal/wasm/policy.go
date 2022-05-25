@@ -14,17 +14,24 @@ type (
 		Resource  []*Field
 		Principal []*Field
 	}
+	DerivedRole struct {
+		ParentRoles []string
+		Condition   *runtimev1.Condition
+		Name        string
+	}
 	Policy struct {
-		Rules  []*Rule
-		Schema *Schema
+		Rules        []*Rule
+		Schema       *Schema
+		DerivedRoles []*DerivedRole
 	}
 	Rule struct {
-		Name      string
-		Roles     []string
-		Actions   []string
-		Condition *runtimev1.Condition
-		Effect    string
-		Parent    *Policy
+		Name         string
+		Roles        []string
+		DerivedRoles []string
+		Actions      []string
+		Condition    *runtimev1.Condition
+		Effect       string
+		Parent       *Policy
 	}
 )
 
@@ -58,6 +65,7 @@ func NewPolicy(ps, rs *jsonschema.Schema, rp *runtimev1.RunnableResourcePolicySe
 	}
 	policy.Schema = &Schema{Principal: pf, Resource: rf}
 	policy.Rules, err = getRules(policy, rp)
+	policy.DerivedRoles = getDerivedRoles(rp.Policies[0].DerivedRoles)
 	if err != nil {
 		return nil, err
 	}
@@ -65,15 +73,28 @@ func NewPolicy(ps, rs *jsonschema.Schema, rp *runtimev1.RunnableResourcePolicySe
 	return policy, nil
 }
 
+func getDerivedRoles(dr map[string]*runtimev1.RunnableDerivedRole) []*DerivedRole {
+	r := make([]*DerivedRole, 0, len(dr))
+	for _, d := range dr {
+		r = append(r, &DerivedRole{
+			ParentRoles: maps.Keys(d.ParentRoles),
+			Condition:   d.Condition,
+			Name:        d.Name,
+		})
+	}
+	return r
+}
+
 func getRules(policy *Policy, rps *runtimev1.RunnableResourcePolicySet) ([]*Rule, error) {
 	rules := make([]*Rule, 0, len(rps.Policies[0].Rules))
 	for _, r := range rps.Policies[0].Rules {
 		rule := Rule{
-			Roles:     maps.Keys(r.Roles),
-			Actions:   maps.Keys(r.Actions),
-			Effect:    r.Effect.String(),
-			Condition: r.Condition,
-			Parent:    policy,
+			Roles:        maps.Keys(r.Roles),
+			DerivedRoles: maps.Keys(r.DerivedRoles),
+			Actions:      maps.Keys(r.Actions),
+			Effect:       r.Effect.String(),
+			Condition:    r.Condition,
+			Parent:       policy,
 		}
 		rules = append(rules, &rule)
 	}

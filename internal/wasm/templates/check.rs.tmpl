@@ -7,7 +7,14 @@
         }
     }
     fn check_impl(request: Request) -> String {
+        {{- if .DerivedRoles  }}
+        let mut roles: Vec<_> = request.principal.roles.iter().map(AsRef::as_ref).collect();
+        let dr = get_derived_roles(&request, &roles);
+        roles.extend(dr);
+        let roles = roles;
+        {{- else}}
         let roles: Vec<_> = request.principal.roles.iter().map(AsRef::as_ref).collect();
+        {{- end}}
         let allow = "EFFECT_ALLOW".to_owned();
         let deny = "EFFECT_DENY".to_owned();
         {{range $rule := .Rules }}
@@ -25,4 +32,21 @@
 
         return deny;
     }
+    {{- if .DerivedRoles  }}
+    fn get_derived_roles(request: &Request, roles: &Vec<&str>) -> Vec<&str> {
+        let mut effective_dr: Vec<&str> = Vec::new();
+        {{ range $dr := .DerivedRoles }}
+        if intersect(roles, &vec![{{template "join-string-slice" $dr.ParentRoles}}]) {
+            {{- if $dr.Condition }}
+                if {{$dr.RenderCondition}} {
+                    effective_dr.push({{print "%q" $dr.Name}})
+                }
+            {{- else}}
+                effective_dr.push({{print "%q" $dr.Name}}){{end}}
+            }
+        }
+        {{- end}}
+        return effective_dr;
+    }
+    {{- end}}
 {{end}}
