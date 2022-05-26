@@ -1060,10 +1060,10 @@ func (m *Principal) validate(all bool) error {
 		errors = append(errors, err)
 	}
 
-	if l := len(m.GetRoles()); l < 1 || l > 20 {
+	if len(m.GetRoles()) < 1 {
 		err := PrincipalValidationError{
 			field:  "Roles",
-			reason: "value must contain between 1 and 20 items, inclusive",
+			reason: "value must contain at least 1 item(s)",
 		}
 		if !all {
 			return err

@@ -1478,7 +1478,6 @@
           },
           "description": "Roles assigned to this principal from your identity management system.",
           "pattern": "^[[:word:]\\-\\.]+$",
-          "maxItems": 20,
           "minItems": 1,
           "uniqueItems": true,
           "required": [
