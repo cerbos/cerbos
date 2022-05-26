@@ -103,6 +103,9 @@ releases:
           config:
             server:
               playgroundEnabled: true
+              requestLimits:
+                maxActionsPerResource: 5
+                maxResourcesPerRequest: 5
               adminAPI:
                 enabled: true
                 adminCredentials: 
