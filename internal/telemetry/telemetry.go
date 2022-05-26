@@ -21,13 +21,13 @@ import (
 	"github.com/cerbos/cerbos/internal/storage"
 	"github.com/cerbos/cerbos/internal/util"
 	"github.com/google/uuid"
+	analytics "github.com/rudderlabs/analytics-go"
 	"github.com/spf13/afero"
 	"go.uber.org/zap"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/durationpb"
 	"google.golang.org/protobuf/types/known/timestamppb"
-	analytics "gopkg.in/segmentio/analytics-go.v3"
 )
 
 const (
@@ -39,7 +39,8 @@ const (
 )
 
 var (
-	SegmentWriteKey string
+	WriteKey     string
+	DataPlaneURL string
 
 	reporter  Reporter = nopReporter{}
 	startTime          = time.Now()
@@ -71,7 +72,7 @@ func Start(ctx context.Context, store storage.Store) {
 	conf := &Conf{}
 	_ = config.GetSection(conf)
 
-	if !isEnabled(conf) || SegmentWriteKey == "" {
+	if !isEnabled(conf) || WriteKey == "" || DataPlaneURL == "" {
 		logger.Info("Telemetry disabled")
 		return
 	}
@@ -111,11 +112,11 @@ func disabledByEnvVar(name string) bool {
 	return set
 }
 
-func startReporter(_ context.Context, conf *Conf, store storage.Store, logger *zap.Logger) *segmentReporter {
+func startReporter(_ context.Context, conf *Conf, store storage.Store, logger *zap.Logger) *analyticsReporter {
 	logger.Info(fmt.Sprintf("Anonymous telemetry enabled. Disable via the config file or by setting the %s=1 environment variable", noTelemetryEnvVar))
 
 	fs := initStateFS(conf.StateDir)
-	r, err := newSegmentReporter(conf, store, fs, logger)
+	r, err := newAnalyticsReporter(conf, store, fs, logger)
 	if err != nil {
 		logger.Debug("Failed to create telemetry reporter", zap.Error(err))
 		return nil
@@ -166,7 +167,7 @@ func Intercept() Interceptors {
 	return reporter.Intercept()
 }
 
-type segmentReporter struct {
+type analyticsReporter struct {
 	state          *statev1.TelemetryState
 	fsys           afero.Fs
 	store          storage.Store
@@ -178,19 +179,19 @@ type segmentReporter struct {
 	closeOnce      sync.Once
 }
 
-func newSegmentReporter(conf *Conf, store storage.Store, fsys afero.Fs, logger *zap.Logger) (*segmentReporter, error) {
-	client, err := analytics.NewWithConfig(SegmentWriteKey, analytics.Config{
+func newAnalyticsReporter(conf *Conf, store storage.Store, fsys afero.Fs, logger *zap.Logger) (*analyticsReporter, error) {
+	client, err := analytics.NewWithConfig(WriteKey, DataPlaneURL, analytics.Config{
 		Logger: zapLogWrapper{logger: logger.Sugar()},
 	})
 	if err != nil {
-		return nil, fmt.Errorf("failed to instantiate Segment client: %w", err)
+		return nil, fmt.Errorf("failed to instantiate Analytics client: %w", err)
 	}
 
-	return newSegmentReporterWithClient(client, conf, store, fsys, logger), nil
+	return newAnalyticsReporterWithClient(client, conf, store, fsys, logger), nil
 }
 
-func newSegmentReporterWithClient(client analytics.Client, conf *Conf, store storage.Store, fsys afero.Fs, logger *zap.Logger) *segmentReporter {
-	return &segmentReporter{
+func newAnalyticsReporterWithClient(client analytics.Client, conf *Conf, store storage.Store, fsys afero.Fs, logger *zap.Logger) *analyticsReporter {
+	return &analyticsReporter{
 		state:          readState(fsys),
 		fsys:           fsys,
 		store:          store,
@@ -230,7 +231,7 @@ func newState() *statev1.TelemetryState {
 	}
 }
 
-func (r *segmentReporter) start() {
+func (r *analyticsReporter) start() {
 	defer func() {
 		// don't let a panic in this goroutine crash the whole app.
 		if err := recover(); err != nil {
@@ -250,18 +251,18 @@ func (r *segmentReporter) start() {
 	}
 }
 
-func (r *segmentReporter) Intercept() Interceptors {
+func (r *analyticsReporter) Intercept() Interceptors {
 	return newStatsInterceptors(r, r.reportInterval, r.shutdownChan)
 }
 
-func (r *segmentReporter) reportServerLaunch() {
+func (r *analyticsReporter) reportServerLaunch() {
 	event := buildServerLaunch(r.store)
 	if err := r.send("server_launch", event); err != nil {
 		r.logger.Debug("Failed to send server launch event", zap.Error(err))
 	}
 }
 
-func (r *segmentReporter) Report(event *telemetryv1.Event) bool {
+func (r *analyticsReporter) Report(event *telemetryv1.Event) bool {
 	select {
 	case r.eventChan <- event:
 		return true
@@ -270,13 +271,13 @@ func (r *segmentReporter) Report(event *telemetryv1.Event) bool {
 	}
 }
 
-func (r *segmentReporter) reportAPIActivity(event *telemetryv1.Event_ApiActivity) {
+func (r *analyticsReporter) reportAPIActivity(event *telemetryv1.Event_ApiActivity) {
 	if err := r.send("api_activity", event); err != nil {
 		r.logger.Debug("Failed to send API activity event", zap.Error(err))
 	}
 }
 
-func (r *segmentReporter) Stop() error {
+func (r *analyticsReporter) Stop() error {
 	var err error
 	r.closeOnce.Do(func() {
 		close(r.shutdownChan)
@@ -290,7 +291,7 @@ func (r *segmentReporter) Stop() error {
 	return err
 }
 
-func (r *segmentReporter) reportServerStop() {
+func (r *analyticsReporter) reportServerStop() {
 	event := &telemetryv1.ServerStop{
 		Version:       "1.0.0",
 		Uptime:        durationpb.New(time.Since(startTime)),
@@ -302,7 +303,7 @@ func (r *segmentReporter) reportServerStop() {
 	}
 }
 
-func (r *segmentReporter) writeState() error {
+func (r *analyticsReporter) writeState() error {
 	stateBytes, err := protojson.Marshal(r.state)
 	if err != nil {
 		return fmt.Errorf("failed to marshal proto: %w", err)
@@ -316,7 +317,7 @@ func (r *segmentReporter) writeState() error {
 	return nil
 }
 
-func (r *segmentReporter) send(kind string, event proto.Message) error {
+func (r *analyticsReporter) send(kind string, event proto.Message) error {
 	props, err := mkProps(event)
 	if err != nil {
 		return fmt.Errorf("failed to create properties: %w", err)

@@ -99,11 +99,16 @@ message ServerStop {
 }
 
 message Event {
+  message CountStat {
+    string key = 1;
+    uint64 count = 2;
+  }
+
   message ApiActivity {
     string version = 1;
     google.protobuf.Duration uptime = 2;
-    map<string, uint64> method_calls = 3;
-    map<string, uint64> user_agents = 4;
+    repeated CountStat method_calls = 3;
+    repeated CountStat user_agents = 4;
   }
 
   oneof data {

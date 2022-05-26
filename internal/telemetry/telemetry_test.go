@@ -9,10 +9,10 @@ import (
 	"testing"
 
 	"github.com/cerbos/cerbos/internal/test/mocks"
+	analytics "github.com/rudderlabs/analytics-go"
 	"github.com/spf13/afero"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
-	"gopkg.in/segmentio/analytics-go.v3"
 )
 
 func TestSegmentReporter(t *testing.T) {
@@ -24,7 +24,7 @@ func TestSegmentReporter(t *testing.T) {
 			fsys := afero.NewMemMapFs()
 			mockClient := newMockAnalyticsClient()
 
-			r := newSegmentReporterWithClient(mockClient, conf, &mocks.Store{}, fsys, logger)
+			r := newAnalyticsReporterWithClient(mockClient, conf, &mocks.Store{}, fsys, logger)
 			r.reportServerLaunch()
 			require.NoError(t, r.Stop())
 
@@ -41,7 +41,7 @@ func TestSegmentReporter(t *testing.T) {
 			require.NoError(t, afero.WriteFile(fsys, stateFile, []byte("rubbish"), 0o600))
 
 			mockClient := newMockAnalyticsClient()
-			r := newSegmentReporterWithClient(mockClient, conf, &mocks.Store{}, fsys, logger)
+			r := newAnalyticsReporterWithClient(mockClient, conf, &mocks.Store{}, fsys, logger)
 			r.reportServerLaunch()
 			require.NoError(t, r.Stop())
 
@@ -57,7 +57,7 @@ func TestSegmentReporter(t *testing.T) {
 			fsys := afero.NewReadOnlyFs(afero.NewMemMapFs())
 			mockClient := newMockAnalyticsClient()
 
-			r := newSegmentReporterWithClient(mockClient, conf, &mocks.Store{}, fsys, logger)
+			r := newAnalyticsReporterWithClient(mockClient, conf, &mocks.Store{}, fsys, logger)
 			r.reportServerLaunch()
 			require.NoError(t, r.Stop())
 

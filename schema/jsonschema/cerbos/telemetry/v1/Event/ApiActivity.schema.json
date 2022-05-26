@@ -2,6 +2,27 @@
   "$id": "https://api.cerbos.dev/cerbos/telemetry/v1/Event/ApiActivity.schema.json",
   "$schema": "http://json-schema.org/draft-07/schema#",
   "definitions": {
+    "cerbos.telemetry.v1.Event.CountStat": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "count": {
+          "oneOf": [
+            {
+              "type": "integer",
+              "minimum": 0
+            },
+            {
+              "type": "string",
+              "pattern": "^(?:0|[1-9]\\d*)(?:\\.\\d+)?(?:[eE][+-]?\\d+)?$"
+            }
+          ]
+        },
+        "key": {
+          "type": "string"
+        }
+      }
+    },
     "google.protobuf.Duration": {
       "title": "Duration",
       "description": "A signed, fixed-length span of time represented as a count of seconds and fractions of seconds at nanosecond resolution.",
@@ -13,36 +34,18 @@
   "additionalProperties": false,
   "properties": {
     "methodCalls": {
-      "type": "object",
-      "additionalProperties": {
-        "oneOf": [
-          {
-            "type": "integer",
-            "minimum": 0
-          },
-          {
-            "type": "string",
-            "pattern": "^(?:0|[1-9]\\d*)(?:\\.\\d+)?(?:[eE][+-]?\\d+)?$"
-          }
-        ]
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/cerbos.telemetry.v1.Event.CountStat"
       }
     },
     "uptime": {
       "$ref": "#/definitions/google.protobuf.Duration"
     },
     "userAgents": {
-      "type": "object",
-      "additionalProperties": {
-        "oneOf": [
-          {
-            "type": "integer",
-            "minimum": 0
-          },
-          {
-            "type": "string",
-            "pattern": "^(?:0|[1-9]\\d*)(?:\\.\\d+)?(?:[eE][+-]?\\d+)?$"
-          }
-        ]
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/cerbos.telemetry.v1.Event.CountStat"
       }
     },
     "version": {
