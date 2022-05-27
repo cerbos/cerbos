@@ -1,0 +1,85 @@
+include::ROOT:partial$attributes.adoc[]
+
+[#v0.17.0]
+= Cerbos v0.17.0
+
+== Highlights
+
+This release introduces a new xref:0.17.0@configuration:audit.adoc#file[file-based audit logging backend] for structured logs that can be ingested by log aggregators. Having the audit trails from all Cerbos instances aggregated in a log management system provides system and security operators fine-grained visibility into all the resources secured by Cerbos. The collected audit data can be used to monitor live trends, create alerts for exceptional or suspicious patterns, and investigate past incidents.        
+
+Resource policies and derived role definitions now support the special ``*`` operator to be used with ``roles`` and ``parentRoles`` fields to match any role. Previously, in order for a derived role or a policy rule to activate, at least one of the principal's roles had to match the set of roles enumerated in the rule. With this change, derived roles or policy rules can be defined to effectively ignore the principal's role. One of the ways in which this feature can be used is to model capability-based access rules based on grants defined in a JWT. 
+
+
+== Changelog
+
+
+=== Bug Fixes
+
+* Fix confdocs panicking when no comment for a struct provided (link:https://github.com/cerbos/cerbos/pull/910[#910])
+* Return DENY from query plan when no policy or action matches (link:https://github.com/cerbos/cerbos/pull/918[#918])
+
+=== Features
+
+* Add file backend for audit logs (link:https://github.com/cerbos/cerbos/pull/909[#909])
+
+=== Enhancements
+
+* Allow rule match on any role (link:https://github.com/cerbos/cerbos/pull/920[#920])
+* Configurable request limits (link:https://github.com/cerbos/cerbos/pull/945[#945])
+* Remove limit on number of roles (link:https://github.com/cerbos/cerbos/pull/946[#946])
+
+=== Documentation
+
+* Add MacOS command variant for password generation (link:https://github.com/cerbos/cerbos/pull/891[#891])
+* Add glossary (link:https://github.com/cerbos/cerbos/pull/888[#888])
+* Add links to demos (link:https://github.com/cerbos/cerbos/pull/914[#914])
+* Add new SDK links to README and docs (link:https://github.com/cerbos/cerbos/pull/919[#919])
+* Document limits on `resources` and `actions` (link:https://github.com/cerbos/cerbos/pull/930[#930])
+
+=== Chores
+
+* Add API usage stats to telemetry (link:https://github.com/cerbos/cerbos/pull/924[#924])
+* Add E2E test with tracing enabled (link:https://github.com/cerbos/cerbos/pull/907[#907])
+* Bump amannn/action-semantic-pull-request (link:https://github.com/cerbos/cerbos/pull/896[#896])
+* Bump docker/login-action from 1 to 2 (link:https://github.com/cerbos/cerbos/pull/894[#894])
+* Bump docker/setup-buildx-action from 1 to 2 (link:https://github.com/cerbos/cerbos/pull/895[#895])
+* Bump docker/setup-qemu-action from 1 to 2 (link:https://github.com/cerbos/cerbos/pull/893[#893])
+* Bump github.com/alecthomas/participle/v2 (link:https://github.com/cerbos/cerbos/pull/935[#935])
+* Bump github.com/aws/aws-sdk-go from 1.43.31 to 1.44.4 (link:https://github.com/cerbos/cerbos/pull/879[#879])
+* Bump github.com/aws/aws-sdk-go from 1.43.31 to 1.44.5 (link:https://github.com/cerbos/cerbos/pull/884[#884])
+* Bump github.com/denisenkom/go-mssqldb from 0.12.0 to 0.12.2 (link:https://github.com/cerbos/cerbos/pull/934[#934])
+* Bump github.com/golang-migrate/migrate/v4 (link:https://github.com/cerbos/cerbos/pull/881[#881])
+* Bump github.com/golangci/golangci-lint in /tools (link:https://github.com/cerbos/cerbos/pull/929[#929])
+* Bump github.com/golangci/golangci-lint in /tools (link:https://github.com/cerbos/cerbos/pull/939[#939])
+* Bump github.com/google/cel-go from 0.11.2 to 0.11.3 (link:https://github.com/cerbos/cerbos/pull/900[#900])
+* Bump github.com/google/cel-go from 0.11.3 to 0.11.4 (link:https://github.com/cerbos/cerbos/pull/926[#926])
+* Bump github.com/google/go-cmp from 0.5.7 to 0.5.8 (link:https://github.com/cerbos/cerbos/pull/886[#886])
+* Bump github.com/google/gops from 0.3.22 to 0.3.23 (link:https://github.com/cerbos/cerbos/pull/904[#904])
+* Bump github.com/goreleaser/goreleaser in /tools (link:https://github.com/cerbos/cerbos/pull/940[#940])
+* Bump github.com/grpc-ecosystem/grpc-gateway/v2 (link:https://github.com/cerbos/cerbos/pull/942[#942])
+* Bump github.com/grpc-ecosystem/grpc-gateway/v2 from 2.10.0 to 2.10.1 (link:https://github.com/cerbos/cerbos/pull/933[#933])
+* Bump github.com/grpc-ecosystem/grpc-gateway/v2 in /tools (link:https://github.com/cerbos/cerbos/pull/938[#938])
+* Bump github.com/jackc/pgx/v4 from 4.16.0 to 4.16.1 (link:https://github.com/cerbos/cerbos/pull/901[#901])
+* Bump github.com/lestrrat-go/jwx from 1.2.23 to 1.2.24 (link:https://github.com/cerbos/cerbos/pull/899[#899])
+* Bump github.com/lestrrat-go/jwx from 1.2.24 to 1.2.25 (link:https://github.com/cerbos/cerbos/pull/941[#941])
+* Bump github.com/minio/minio-go/v7 from 7.0.24 to 7.0.26 (link:https://github.com/cerbos/cerbos/pull/898[#898])
+* Bump github.com/opencontainers/runc from 1.1.0 to 1.1.2 (link:https://github.com/cerbos/cerbos/pull/948[#948])
+* Bump github.com/prometheus/client_golang (link:https://github.com/cerbos/cerbos/pull/927[#927])
+* Bump github.com/vektra/mockery/v2 from 2.12.0 to 2.12.1 in /tools (link:https://github.com/cerbos/cerbos/pull/883[#883])
+* Bump github.com/vektra/mockery/v2 from 2.12.1 to 2.12.2 in /tools (link:https://github.com/cerbos/cerbos/pull/903[#903])
+* Bump go.opentelemetry.io/otel/bridge/opencensus (link:https://github.com/cerbos/cerbos/pull/880[#880])
+* Bump go.opentelemetry.io/otel/exporters/jaeger (link:https://github.com/cerbos/cerbos/pull/885[#885])
+* Bump go.opentelemetry.io/otel/sdk from 1.6.3 to 1.7.0 (link:https://github.com/cerbos/cerbos/pull/878[#878])
+* Bump golangci/golangci-lint-action from 3.1.0 to 3.2.0 (link:https://github.com/cerbos/cerbos/pull/925[#925])
+* Bump google.golang.org/grpc from 1.46.0 to 1.46.2 (link:https://github.com/cerbos/cerbos/pull/928[#928])
+* Bump goreleaser/goreleaser-action from 2 to 3 (link:https://github.com/cerbos/cerbos/pull/932[#932])
+* Bump gotest.tools/gotestsum from 1.8.0 to 1.8.1 in /tools (link:https://github.com/cerbos/cerbos/pull/902[#902])
+* Bump helm.sh/helm/v3 from 3.8.2 to 3.9.0 (link:https://github.com/cerbos/cerbos/pull/936[#936])
+* Bump modernc.org/sqlite from 1.17.0 to 1.17.2 (link:https://github.com/cerbos/cerbos/pull/897[#897])
+* Bump modernc.org/sqlite from 1.17.2 to 1.17.3 (link:https://github.com/cerbos/cerbos/pull/937[#937])
+* Bump version to 0.17.0
+* Update E2E test config for request limit tests (link:https://github.com/cerbos/cerbos/pull/947[#947])
+* Update Otel semconv version (link:https://github.com/cerbos/cerbos/pull/905[#905])
+* Update README of the E2E tests to reflect the change of the helmfile repository (link:https://github.com/cerbos/cerbos/pull/912[#912])
+* Update changelog grouping (link:https://github.com/cerbos/cerbos/pull/889[#889])
+* Update telemetry schema (link:https://github.com/cerbos/cerbos/pull/943[#943])
