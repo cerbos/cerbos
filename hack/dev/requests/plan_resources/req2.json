@@ -5,6 +5,9 @@
   "principal":  {
     "id":  "harry",
     "policyVersion":  "20210210",
+    "attr": {
+      "reader": false
+    },
     "roles":  [
       "employee"
     ]

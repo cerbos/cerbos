@@ -80,22 +80,28 @@ jsonpath "$.message" == "Bad request: missing principal attribute \"vip\""
 POST {{protocol}}://{{host}}:{{port}}/api/plan/resources
 Content-Type: application/json
 file,requests/plan_resources/req4.json;
-HTTP/* 400
+HTTP/* 200
 [Asserts]
 header "Content-Type" == "application/json"
-jsonpath "$.code" == 3
-jsonpath "$.message" == "Bad request: no matching policies"
+jsonpath "$.action" == "view"
+jsonpath "$.resourceKind" == "album:object"
+jsonpath "$.policyVersion" == "nonexistent"
+jsonpath "$.filter.kind" == "KIND_ALWAYS_DENIED"
+jsonpath "$.meta.filterDebug" == "NO_MATCH"
 
 
 # Plan resources request 4 (deprecated endpoint)
 POST {{protocol}}://{{host}}:{{port}}/api/x/plan/resources
 Content-Type: application/json
 file,requests/plan_resources/req4.json;
-HTTP/* 400
+HTTP/* 200
 [Asserts]
 header "Content-Type" == "application/json"
-jsonpath "$.code" == 3
-jsonpath "$.message" == "Bad request: no matching policies"
+jsonpath "$.action" == "view"
+jsonpath "$.resourceKind" == "album:object"
+jsonpath "$.policyVersion" == "nonexistent"
+jsonpath "$.filter.kind" == "KIND_ALWAYS_DENIED"
+jsonpath "$.meta.filterDebug" == "NO_MATCH"
 
 
 # Plan resources request 5 (scoped policies)

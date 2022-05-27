@@ -9,6 +9,7 @@
       "manager"
     ],
     "attr": {
+      "reader": false,
       "department": "marketing",
       "managed_geographies": "GB",
       "geography": "GB",
