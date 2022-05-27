@@ -32,6 +32,8 @@ The only required setting for the `local` backend is the `storagePath` field whi
 ----
 audit: 
   enabled: true 
+  accessLogsEnabled: true 
+  decisionLogsEnabled: true 
   backend: local 
   local: 
     storagePath: /path/to/dir 
@@ -57,6 +59,8 @@ NOTE: This backend cannot be queried using the Admin API, `cerbosctl audit` or `
 ----
 audit: 
   enabled: true 
+  accessLogsEnabled: true 
+  decisionLogsEnabled: true 
   backend: file
   file: 
     path: /path/to/audit.log

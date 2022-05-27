@@ -25,9 +25,9 @@ type confHolder struct {
 	// Enabled defines whether audit logging is enabled.
 	Enabled bool `yaml:"enabled" conf:",example=false"`
 	// AccessLogsEnabled defines whether access logging is enabled.
-	AccessLogsEnabled bool `yaml:"accessLogsEnabled" conf:",example=true"`
+	AccessLogsEnabled bool `yaml:"accessLogsEnabled" conf:",example=false"`
 	// DecisionLogsEnabled defines whether logging of policy decisions is enabled.
-	DecisionLogsEnabled bool `yaml:"decisionLogsEnabled" conf:",example=true"`
+	DecisionLogsEnabled bool `yaml:"decisionLogsEnabled" conf:",example=false"`
 }
 
 func (c *Conf) UnmarshalYAML(unmarshal func(any) error) error {
