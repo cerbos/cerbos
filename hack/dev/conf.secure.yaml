@@ -22,13 +22,13 @@ auxData:
 
 audit:
   enabled: true
-  accessLogsEnabled: true
-  decisionLogsEnabled: true
-  backend: "local"
+  backend: "file"
   local:
     storagePath: /tmp/cerbos_auditlog
     advanced:
       flushInterval: 5s
+  file:
+    path: stdout
 
 tracing:
   sampleProbability: 1.0

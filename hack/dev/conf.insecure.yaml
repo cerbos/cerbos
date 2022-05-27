@@ -19,9 +19,11 @@ auxData:
 
 audit:
   enabled: true
-  backend: "local"
+  backend: "file"
   local:
     storagePath: /tmp/cerbos_auditlog
+  file:
+    path: stdout
 
 tracing:
   sampleProbability: 1.0
