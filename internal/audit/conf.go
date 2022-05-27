@@ -57,7 +57,7 @@ func (c *Conf) UnmarshalYAML(unmarshal func(any) error) error {
 		return fmt.Errorf("failed to marshal audit config [%v]: %w", confMap, err)
 	}
 
-	c.confHolder = confHolder{}
+	c.confHolder = confHolder{AccessLogsEnabled: true, DecisionLogsEnabled: true}
 	return yaml.Unmarshal(yamlBytes, &c.confHolder)
 }
 
