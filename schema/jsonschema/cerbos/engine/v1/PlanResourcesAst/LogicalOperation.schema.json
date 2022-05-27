@@ -1,8 +1,8 @@
 {
-  "$id": "https://api.cerbos.dev/cerbos/engine/v1/PlanResourcesOutput/LogicalOperation.schema.json",
+  "$id": "https://api.cerbos.dev/cerbos/engine/v1/PlanResourcesAst/LogicalOperation.schema.json",
   "$schema": "http://json-schema.org/draft-07/schema#",
   "definitions": {
-    "cerbos.engine.v1.PlanResourcesOutput.LogicalOperation.Operator": {
+    "cerbos.engine.v1.PlanResourcesAst.LogicalOperation.Operator": {
       "type": "string",
       "enum": [
         "OPERATOR_UNSPECIFIED",
@@ -11,7 +11,7 @@
         "OPERATOR_NOT"
       ]
     },
-    "cerbos.engine.v1.PlanResourcesOutput.Node": {
+    "cerbos.engine.v1.PlanResourcesAst.Node": {
       "type": "object",
       "additionalProperties": false,
       "properties": {
@@ -468,11 +468,11 @@
     "nodes": {
       "type": "array",
       "items": {
-        "$ref": "#/definitions/cerbos.engine.v1.PlanResourcesOutput.Node"
+        "$ref": "#/definitions/cerbos.engine.v1.PlanResourcesAst.Node"
       }
     },
     "operator": {
-      "$ref": "#/definitions/cerbos.engine.v1.PlanResourcesOutput.LogicalOperation.Operator"
+      "$ref": "#/definitions/cerbos.engine.v1.PlanResourcesAst.LogicalOperation.Operator"
     }
   }
 }

@@ -28,7 +28,7 @@ func Test_evaluateCondition(t *testing.T) {
 	type args struct {
 		expr      string
 		condition *runtimev1.Condition
-		input     *enginev1.PlanResourcesRequest
+		input     *enginev1.PlanResourcesInput
 	}
 
 	unparse := func(t *testing.T, expr *expr.CheckedExpr) string {
@@ -39,7 +39,7 @@ func Test_evaluateCondition(t *testing.T) {
 		return source
 	}
 
-	compile := func(expr string, input *enginev1.PlanResourcesRequest) args {
+	compile := func(expr string, input *enginev1.PlanResourcesInput) args {
 		ast, iss := conditions.StdEnv.Compile(expr)
 		require.Nil(t, iss, "Error is %s", iss.Err())
 		checkedExpr, err := cel.AstToCheckedExpr(ast)
@@ -59,11 +59,11 @@ func Test_evaluateCondition(t *testing.T) {
 		wantExpression string
 	}{
 		{
-			args:           compile("false", &enginev1.PlanResourcesRequest{}),
+			args:           compile("false", &enginev1.PlanResourcesInput{}),
 			wantExpression: "false",
 		},
 		{
-			args: compile("P.attr.authenticated", &enginev1.PlanResourcesRequest{
+			args: compile("P.attr.authenticated", &enginev1.PlanResourcesInput{
 				Principal: &enginev1.Principal{
 					Attr: map[string]*structpb.Value{"authenticated": {Kind: &structpb.Value_BoolValue{BoolValue: true}}},
 				},
@@ -71,7 +71,7 @@ func Test_evaluateCondition(t *testing.T) {
 			wantExpression: "true",
 		},
 		{
-			args: compile("request.principal.attr.authenticated", &enginev1.PlanResourcesRequest{
+			args: compile("request.principal.attr.authenticated", &enginev1.PlanResourcesInput{
 				Principal: &enginev1.Principal{
 					Attr: map[string]*structpb.Value{"authenticated": {Kind: &structpb.Value_BoolValue{BoolValue: true}}},
 				},
@@ -79,11 +79,11 @@ func Test_evaluateCondition(t *testing.T) {
 			wantExpression: "true",
 		},
 		{
-			args:           compile(`R.attr.department == "marketing"`, &enginev1.PlanResourcesRequest{}),
+			args:           compile(`R.attr.department == "marketing"`, &enginev1.PlanResourcesInput{}),
 			wantExpression: `R.attr.department == "marketing"`,
 		},
 		{
-			args: compile("R.attr.owner == P.attr.name", &enginev1.PlanResourcesRequest{
+			args: compile("R.attr.owner == P.attr.name", &enginev1.PlanResourcesInput{
 				Principal: &enginev1.Principal{
 					Attr: map[string]*structpb.Value{"name": {Kind: &structpb.Value_StringValue{StringValue: "harry"}}},
 				},
@@ -102,18 +102,18 @@ func Test_evaluateCondition(t *testing.T) {
 	}
 
 	tests = tests[len(tests)-2:] // Skip degenerate cases
-	for _, op := range []enginev1.PlanResourcesOutput_LogicalOperation_Operator{enginev1.PlanResourcesOutput_LogicalOperation_OPERATOR_AND, enginev1.PlanResourcesOutput_LogicalOperation_OPERATOR_OR} {
+	for _, op := range []enginev1.PlanResourcesAst_LogicalOperation_Operator{enginev1.PlanResourcesAst_LogicalOperation_OPERATOR_AND, enginev1.PlanResourcesAst_LogicalOperation_OPERATOR_OR} {
 		attr := make(map[string]*structpb.Value)
 		conds := make([]*runtimev1.Condition, len(tests))
 
 		exprList := &runtimev1.Condition_ExprList{}
 		var c *runtimev1.Condition
-		if op == enginev1.PlanResourcesOutput_LogicalOperation_OPERATOR_AND {
+		if op == enginev1.PlanResourcesAst_LogicalOperation_OPERATOR_AND {
 			c = &runtimev1.Condition{Op: &runtimev1.Condition_All{All: exprList}}
 		} else {
 			c = &runtimev1.Condition{Op: &runtimev1.Condition_Any{Any: exprList}}
 		}
-		t.Run(enginev1.PlanResourcesOutput_LogicalOperation_Operator_name[int32(op)], func(t *testing.T) {
+		t.Run(enginev1.PlanResourcesAst_LogicalOperation_Operator_name[int32(op)], func(t *testing.T) {
 			is := require.New(t)
 			for i := 0; i < len(tests); i++ {
 				exprList.Expr = append(exprList.Expr, tests[i].args.condition)
@@ -128,7 +128,7 @@ func Test_evaluateCondition(t *testing.T) {
 					}
 				}
 			}
-			got, err := evaluateCondition(c, &enginev1.PlanResourcesRequest{Principal: &enginev1.Principal{Attr: attr}}, nil)
+			got, err := evaluateCondition(c, &enginev1.PlanResourcesInput{Principal: &enginev1.Principal{Attr: attr}}, nil)
 			is.NotNil(got)
 			is.NoError(err)
 			operation := got.GetLogicalOperation()

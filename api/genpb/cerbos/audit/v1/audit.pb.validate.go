@@ -397,6 +397,72 @@ func (m *DecisionLogEntry) validate(all bool) error {
 
 	// no validation rules for Error
 
+	switch m.Method.(type) {
+
+	case *DecisionLogEntry_CheckResources_:
+
+		if all {
+			switch v := interface{}(m.GetCheckResources()).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, DecisionLogEntryValidationError{
+						field:  "CheckResources",
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, DecisionLogEntryValidationError{
+						field:  "CheckResources",
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(m.GetCheckResources()).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return DecisionLogEntryValidationError{
+					field:  "CheckResources",
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	case *DecisionLogEntry_PlanResources_:
+
+		if all {
+			switch v := interface{}(m.GetPlanResources()).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, DecisionLogEntryValidationError{
+						field:  "PlanResources",
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, DecisionLogEntryValidationError{
+						field:  "PlanResources",
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(m.GetPlanResources()).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return DecisionLogEntryValidationError{
+					field:  "PlanResources",
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	}
+
 	if len(errors) > 0 {
 		return DecisionLogEntryMultiError(errors)
 	}
@@ -679,3 +745,339 @@ var _ interface {
 	Cause() error
 	ErrorName() string
 } = PeerValidationError{}
+
+// Validate checks the field values on DecisionLogEntry_CheckResources with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *DecisionLogEntry_CheckResources) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on DecisionLogEntry_CheckResources with
+// the rules defined in the proto definition for this message. If any rules
+// are violated, the result is a list of violation errors wrapped in
+// DecisionLogEntry_CheckResourcesMultiError, or nil if none found.
+func (m *DecisionLogEntry_CheckResources) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *DecisionLogEntry_CheckResources) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	for idx, item := range m.GetInputs() {
+		_, _ = idx, item
+
+		if all {
+			switch v := interface{}(item).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, DecisionLogEntry_CheckResourcesValidationError{
+						field:  fmt.Sprintf("Inputs[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, DecisionLogEntry_CheckResourcesValidationError{
+						field:  fmt.Sprintf("Inputs[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(item).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return DecisionLogEntry_CheckResourcesValidationError{
+					field:  fmt.Sprintf("Inputs[%v]", idx),
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	}
+
+	for idx, item := range m.GetOutputs() {
+		_, _ = idx, item
+
+		if all {
+			switch v := interface{}(item).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, DecisionLogEntry_CheckResourcesValidationError{
+						field:  fmt.Sprintf("Outputs[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, DecisionLogEntry_CheckResourcesValidationError{
+						field:  fmt.Sprintf("Outputs[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(item).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return DecisionLogEntry_CheckResourcesValidationError{
+					field:  fmt.Sprintf("Outputs[%v]", idx),
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	}
+
+	// no validation rules for Error
+
+	if len(errors) > 0 {
+		return DecisionLogEntry_CheckResourcesMultiError(errors)
+	}
+
+	return nil
+}
+
+// DecisionLogEntry_CheckResourcesMultiError is an error wrapping multiple
+// validation errors returned by DecisionLogEntry_CheckResources.ValidateAll()
+// if the designated constraints aren't met.
+type DecisionLogEntry_CheckResourcesMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m DecisionLogEntry_CheckResourcesMultiError) Error() string {
+	var msgs []string
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m DecisionLogEntry_CheckResourcesMultiError) AllErrors() []error { return m }
+
+// DecisionLogEntry_CheckResourcesValidationError is the validation error
+// returned by DecisionLogEntry_CheckResources.Validate if the designated
+// constraints aren't met.
+type DecisionLogEntry_CheckResourcesValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e DecisionLogEntry_CheckResourcesValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e DecisionLogEntry_CheckResourcesValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e DecisionLogEntry_CheckResourcesValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e DecisionLogEntry_CheckResourcesValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e DecisionLogEntry_CheckResourcesValidationError) ErrorName() string {
+	return "DecisionLogEntry_CheckResourcesValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e DecisionLogEntry_CheckResourcesValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sDecisionLogEntry_CheckResources.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = DecisionLogEntry_CheckResourcesValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = DecisionLogEntry_CheckResourcesValidationError{}
+
+// Validate checks the field values on DecisionLogEntry_PlanResources with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *DecisionLogEntry_PlanResources) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on DecisionLogEntry_PlanResources with
+// the rules defined in the proto definition for this message. If any rules
+// are violated, the result is a list of violation errors wrapped in
+// DecisionLogEntry_PlanResourcesMultiError, or nil if none found.
+func (m *DecisionLogEntry_PlanResources) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *DecisionLogEntry_PlanResources) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if all {
+		switch v := interface{}(m.GetInput()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, DecisionLogEntry_PlanResourcesValidationError{
+					field:  "Input",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, DecisionLogEntry_PlanResourcesValidationError{
+					field:  "Input",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetInput()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return DecisionLogEntry_PlanResourcesValidationError{
+				field:  "Input",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if all {
+		switch v := interface{}(m.GetOutput()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, DecisionLogEntry_PlanResourcesValidationError{
+					field:  "Output",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, DecisionLogEntry_PlanResourcesValidationError{
+					field:  "Output",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetOutput()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return DecisionLogEntry_PlanResourcesValidationError{
+				field:  "Output",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	// no validation rules for Error
+
+	if len(errors) > 0 {
+		return DecisionLogEntry_PlanResourcesMultiError(errors)
+	}
+
+	return nil
+}
+
+// DecisionLogEntry_PlanResourcesMultiError is an error wrapping multiple
+// validation errors returned by DecisionLogEntry_PlanResources.ValidateAll()
+// if the designated constraints aren't met.
+type DecisionLogEntry_PlanResourcesMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m DecisionLogEntry_PlanResourcesMultiError) Error() string {
+	var msgs []string
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m DecisionLogEntry_PlanResourcesMultiError) AllErrors() []error { return m }
+
+// DecisionLogEntry_PlanResourcesValidationError is the validation error
+// returned by DecisionLogEntry_PlanResources.Validate if the designated
+// constraints aren't met.
+type DecisionLogEntry_PlanResourcesValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e DecisionLogEntry_PlanResourcesValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e DecisionLogEntry_PlanResourcesValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e DecisionLogEntry_PlanResourcesValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e DecisionLogEntry_PlanResourcesValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e DecisionLogEntry_PlanResourcesValidationError) ErrorName() string {
+	return "DecisionLogEntry_PlanResourcesValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e DecisionLogEntry_PlanResourcesValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sDecisionLogEntry_PlanResources.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = DecisionLogEntry_PlanResourcesValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = DecisionLogEntry_PlanResourcesValidationError{}

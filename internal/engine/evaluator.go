@@ -31,7 +31,7 @@ var ErrPolicyNotExecutable = errors.New("policy not executable")
 
 type Evaluator interface {
 	Evaluate(context.Context, tracer.Context, *enginev1.CheckInput) (*PolicyEvalResult, error)
-	EvaluateResourcesQueryPlan(ctx context.Context, request *enginev1.PlanResourcesRequest) (*enginev1.PlanResourcesOutput, error)
+	EvaluateResourcesQueryPlan(ctx context.Context, request *enginev1.PlanResourcesInput) (*enginev1.PlanResourcesOutput, error)
 }
 
 func NewEvaluator(rps *runtimev1.RunnablePolicySet, schemaMgr schema.Manager) Evaluator {
@@ -47,7 +47,7 @@ func NewEvaluator(rps *runtimev1.RunnablePolicySet, schemaMgr schema.Manager) Ev
 
 type noopEvaluator struct{}
 
-func (e noopEvaluator) EvaluateResourcesQueryPlan(ctx context.Context, request *enginev1.PlanResourcesRequest) (*enginev1.PlanResourcesOutput, error) {
+func (e noopEvaluator) EvaluateResourcesQueryPlan(ctx context.Context, request *enginev1.PlanResourcesInput) (*enginev1.PlanResourcesOutput, error) {
 	return nil, ErrPolicyNotExecutable
 }
 

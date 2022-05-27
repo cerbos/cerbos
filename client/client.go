@@ -295,7 +295,7 @@ func (gc *grpcClient) PlanResources(ctx context.Context, principal *Principal, r
 		RequestId: reqID.String(),
 		Action:    action,
 		Principal: principal.p,
-		Resource: &enginev1.PlanResourcesRequest_Resource{
+		Resource: &enginev1.PlanResourcesInput_Resource{
 			Kind:          resource.r.Kind,
 			Attr:          resource.r.Attr,
 			PolicyVersion: resource.r.PolicyVersion,

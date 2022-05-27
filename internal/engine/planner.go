@@ -24,9 +24,9 @@ import (
 )
 
 type (
-	qpN   = enginev1.PlanResourcesOutput_Node
-	qpNLO = enginev1.PlanResourcesOutput_Node_LogicalOperation
-	qpNE  = enginev1.PlanResourcesOutput_Node_Expression
+	qpN   = enginev1.PlanResourcesAst_Node
+	qpNLO = enginev1.PlanResourcesAst_Node_LogicalOperation
+	qpNE  = enginev1.PlanResourcesAst_Node_Expression
 	rN    = struct {
 		f    func() (*qpN, error)
 		node *qpN
@@ -41,20 +41,18 @@ func (e *NoSuchKeyError) Error() string {
 	return e.msg
 }
 
-func (ppe *principalPolicyEvaluator) EvaluateResourcesQueryPlan(ctx context.Context, input *enginev1.PlanResourcesRequest) (*enginev1.PlanResourcesOutput, error) {
+func (ppe *principalPolicyEvaluator) EvaluateResourcesQueryPlan(ctx context.Context, input *enginev1.PlanResourcesInput) (*enginev1.PlanResourcesOutput, error) {
 	_, span := tracing.StartSpan(ctx, "principal_policy.EvaluateResourcesQueryPlan")
 	span.SetAttributes(tracing.PolicyFQN(ppe.policy.Meta.Fqn))
 	defer span.End()
 
 	inputActions := []string{input.Action}
-	result := &enginev1.PlanResourcesOutput{}
-	result.RequestId = input.RequestId
-	result.Kind = input.Resource.Kind
-	result.Action = input.Action
+	var filterAST *enginev1.PlanResourcesAst_Node
+	var scope string
 
-	nodeBoolTrue := &qpN{Node: &qpNE{Expression: conditions.TrueExpr}}
+	nodeBoolTrue := mkTrueNode()
 	for _, p := range ppe.policy.Policies { // zero or one policy in the set
-		result.Scope = p.Scope
+		scope = p.Scope
 		for resource, resourceRules := range p.ResourceRules {
 			if !util.MatchesGlob(resource, input.Resource.Kind) {
 				continue
@@ -75,47 +73,80 @@ func (ppe *principalPolicyEvaluator) EvaluateResourcesQueryPlan(ctx context.Cont
 					if err != nil {
 						return nil, err
 					}
-					result.Filter = node
+					filterAST = node
 				}
 
-				if result.Filter == nil {
-					result.Filter = nodeBoolTrue // No restrictions on this resource
+				if filterAST == nil {
+					filterAST = nodeBoolTrue // No restrictions on this resource
 				}
 
 				if rule.Effect == effectv1.Effect_EFFECT_DENY {
-					result.Filter = invertNodeBooleanValue(result.Filter)
+					filterAST = invertNodeBooleanValue(filterAST)
 				}
 
-				return result, nil
+				return mkPlanResourcesOutput(input, scope, filterAST)
 			}
 		}
 	}
 
-	if result.Filter == nil {
-		result.Filter = &qpN{Node: &qpNE{Expression: conditions.FalseExpr}}
+	if filterAST == nil {
+		filterAST = mkFalseNode()
 	}
-	return result, nil
+
+	return mkPlanResourcesOutput(input, scope, filterAST)
 }
 
-func (rpe *resourcePolicyEvaluator) EvaluateResourcesQueryPlan(ctx context.Context, input *enginev1.PlanResourcesRequest) (*enginev1.PlanResourcesOutput, error) {
+func mkPlanResourcesOutput(input *enginev1.PlanResourcesInput, scope string, filterAST *enginev1.PlanResourcesAst_Node) (*enginev1.PlanResourcesOutput, error) {
+	result := &enginev1.PlanResourcesOutput{
+		RequestId: input.RequestId,
+		Kind:      input.Resource.Kind,
+		Action:    input.Action,
+		Scope:     scope,
+	}
+
+	if filterAST == nil {
+		result.Filter = &enginev1.PlanResourcesFilter{
+			Kind: enginev1.PlanResourcesFilter_KIND_ALWAYS_DENIED,
+		}
+
+		if input.IncludeMeta {
+			result.FilterDebug = noPolicyMatch
+		}
+
+		return result, nil
+	}
+
+	if input.IncludeMeta {
+		fd, err := String(filterAST)
+		if err != nil {
+			fd = "can't render filter string representation"
+		}
+
+		result.FilterDebug = fd
+	}
+
+	var err error
+	result.Filter, err = toFilter(filterAST)
+	return result, err
+}
+
+func (rpe *resourcePolicyEvaluator) EvaluateResourcesQueryPlan(ctx context.Context, input *enginev1.PlanResourcesInput) (*enginev1.PlanResourcesOutput, error) {
 	_, span := tracing.StartSpan(ctx, "resource_policy.EvaluateResourcesQueryPlan")
 	span.SetAttributes(tracing.PolicyFQN(rpe.policy.Meta.Fqn))
 	defer span.End()
 
 	effectiveRoles := toSet(input.Principal.Roles)
 	inputActions := []string{input.Action}
-	result := &enginev1.PlanResourcesOutput{}
-	result.RequestId = input.RequestId
-	result.Kind = input.Resource.Kind
-	result.Action = input.Action
 	var allowFilter, denyFilter []*qpN
+	var filterAST *enginev1.PlanResourcesAst_Node
+	var scope string
 
 	for _, p := range rpe.policy.Policies { // there might be more than 1 policy if there are scoped policies
 		// if previous iteration has found a matching policy, then quit the loop
 		if len(allowFilter) > 0 || len(denyFilter) > 0 {
 			break
 		}
-		result.Scope = p.Scope
+		scope = p.Scope
 
 		var derivedRoles []rN
 
@@ -189,23 +220,24 @@ func (rpe *resourcePolicyEvaluator) EvaluateResourcesQueryPlan(ctx context.Conte
 						return nil, err
 					}
 				}
+
 				if drNode == nil {
-					result.Filter = node
+					filterAST = node
 				} else {
-					result.Filter = drNode
+					filterAST = drNode
 
 					if node != nil {
 						// node AND drNode
-						result.Filter = mkNodeFromLO(mkAndLogicalOperation([]*qpN{drNode, node}))
+						filterAST = mkNodeFromLO(mkAndLogicalOperation([]*qpN{drNode, node}))
 					}
 				}
 
 				//nolint:exhaustive
 				switch rule.Effect {
 				case effectv1.Effect_EFFECT_DENY:
-					denyFilter = append(denyFilter, invertNodeBooleanValue(result.Filter))
+					denyFilter = append(denyFilter, invertNodeBooleanValue(filterAST))
 				case effectv1.Effect_EFFECT_ALLOW:
-					allowFilter = append(allowFilter, result.Filter)
+					allowFilter = append(allowFilter, filterAST)
 				}
 			}
 		}
@@ -215,34 +247,34 @@ func (rpe *resourcePolicyEvaluator) EvaluateResourcesQueryPlan(ctx context.Conte
 	case 0:
 		switch d {
 		case 0:
-			result.Filter = &qpN{Node: &qpNE{Expression: conditions.FalseExpr}} // default to DENY
+			filterAST = mkFalseNode() // default to DENY
 		case 1:
-			result.Filter = denyFilter[0]
+			filterAST = denyFilter[0]
 		default:
-			result.Filter = mkNodeFromLO(mkAndLogicalOperation(denyFilter))
+			filterAST = mkNodeFromLO(mkAndLogicalOperation(denyFilter))
 		}
 	case 1:
 		if d == 0 {
-			result.Filter = allowFilter[0]
+			filterAST = allowFilter[0]
 		} else {
 			nodes := make([]*qpN, d+1)
 			copy(nodes, denyFilter)
 			nodes[len(nodes)-1] = allowFilter[0]
-			result.Filter = mkNodeFromLO(mkAndLogicalOperation(nodes))
+			filterAST = mkNodeFromLO(mkAndLogicalOperation(nodes))
 		}
 	default:
 		switch d {
 		case 0:
-			result.Filter = mkNodeFromLO(mkOrLogicalOperation(allowFilter))
+			filterAST = mkNodeFromLO(mkOrLogicalOperation(allowFilter))
 		default:
 			nodes := make([]*qpN, d+1)
 			copy(nodes, denyFilter)
 			nodes[len(nodes)-1] = mkNodeFromLO(mkOrLogicalOperation(allowFilter))
-			result.Filter = mkNodeFromLO(mkAndLogicalOperation(nodes))
+			filterAST = mkNodeFromLO(mkAndLogicalOperation(nodes))
 		}
 	}
 
-	return result, nil
+	return mkPlanResourcesOutput(input, scope, filterAST)
 }
 
 func getDerivedRoleConditions(derivedRoles []rN, rule *runtimev1.RunnableResourcePolicySet_Policy_Rule) ([]*qpN, error) {
@@ -266,8 +298,8 @@ func getDerivedRoleConditions(derivedRoles []rN, rule *runtimev1.RunnableResourc
 	return nodes, nil
 }
 
-func isNodeConstBool(node *enginev1.PlanResourcesOutput_Node) (bool, bool) {
-	if e, ok := node.Node.(*enginev1.PlanResourcesOutput_Node_Expression); ok {
+func isNodeConstBool(node *enginev1.PlanResourcesAst_Node) (bool, bool) {
+	if e, ok := node.Node.(*enginev1.PlanResourcesAst_Node_Expression); ok {
 		if e1 := e.Expression.GetExpr().GetConstExpr(); e1 != nil {
 			if b, ok := e1.ConstantKind.(*exprpb.Constant_BoolValue); ok {
 				return b.BoolValue, true
@@ -278,34 +310,42 @@ func isNodeConstBool(node *enginev1.PlanResourcesOutput_Node) (bool, bool) {
 	return false, false
 }
 
-func mkNodeFromLO(lo *enginev1.PlanResourcesOutput_LogicalOperation) *enginev1.PlanResourcesOutput_Node {
+func mkNodeFromLO(lo *enginev1.PlanResourcesAst_LogicalOperation) *enginev1.PlanResourcesAst_Node {
 	// node AND drNode
 	return &qpN{Node: &qpNLO{LogicalOperation: lo}}
 }
 
-func mkOrLogicalOperation(nodes []*enginev1.PlanResourcesOutput_Node) *enginev1.PlanResourcesOutput_LogicalOperation {
-	return &enginev1.PlanResourcesOutput_LogicalOperation{
-		Operator: enginev1.PlanResourcesOutput_LogicalOperation_OPERATOR_OR,
+func mkOrLogicalOperation(nodes []*enginev1.PlanResourcesAst_Node) *enginev1.PlanResourcesAst_LogicalOperation {
+	return &enginev1.PlanResourcesAst_LogicalOperation{
+		Operator: enginev1.PlanResourcesAst_LogicalOperation_OPERATOR_OR,
 		Nodes:    nodes,
 	}
 }
 
-func mkAndLogicalOperation(nodes []*enginev1.PlanResourcesOutput_Node) *enginev1.PlanResourcesOutput_LogicalOperation {
-	return &enginev1.PlanResourcesOutput_LogicalOperation{
-		Operator: enginev1.PlanResourcesOutput_LogicalOperation_OPERATOR_AND,
+func mkAndLogicalOperation(nodes []*enginev1.PlanResourcesAst_Node) *enginev1.PlanResourcesAst_LogicalOperation {
+	return &enginev1.PlanResourcesAst_LogicalOperation{
+		Operator: enginev1.PlanResourcesAst_LogicalOperation_OPERATOR_AND,
 		Nodes:    nodes,
 	}
 }
 
-func invertNodeBooleanValue(node *enginev1.PlanResourcesOutput_Node) *enginev1.PlanResourcesOutput_Node {
-	lo := &enginev1.PlanResourcesOutput_LogicalOperation{
-		Operator: enginev1.PlanResourcesOutput_LogicalOperation_OPERATOR_NOT,
-		Nodes:    []*enginev1.PlanResourcesOutput_Node{node},
+func mkFalseNode() *enginev1.PlanResourcesAst_Node {
+	return &qpN{Node: &qpNE{Expression: conditions.FalseExpr}}
+}
+
+func mkTrueNode() *enginev1.PlanResourcesAst_Node {
+	return &qpN{Node: &qpNE{Expression: conditions.TrueExpr}}
+}
+
+func invertNodeBooleanValue(node *enginev1.PlanResourcesAst_Node) *enginev1.PlanResourcesAst_Node {
+	lo := &enginev1.PlanResourcesAst_LogicalOperation{
+		Operator: enginev1.PlanResourcesAst_LogicalOperation_OPERATOR_NOT,
+		Nodes:    []*enginev1.PlanResourcesAst_Node{node},
 	}
 	return &qpN{Node: &qpNLO{LogicalOperation: lo}}
 }
 
-func evaluateCondition(condition *runtimev1.Condition, input *enginev1.PlanResourcesRequest, variables map[string]*exprpb.Expr) (*enginev1.PlanResourcesOutput_Node, error) {
+func evaluateCondition(condition *runtimev1.Condition, input *enginev1.PlanResourcesInput, variables map[string]*exprpb.Expr) (*enginev1.PlanResourcesAst_Node, error) {
 	res := new(qpN)
 	switch t := condition.Op.(type) {
 	case *runtimev1.Condition_Any:
@@ -408,7 +448,7 @@ func evaluateCondition(condition *runtimev1.Condition, input *enginev1.PlanResou
 	return res, nil
 }
 
-func evaluateCELExprPartially(expr *exprpb.CheckedExpr, input *enginev1.PlanResourcesRequest, variables map[string]*exprpb.Expr) (*bool, *exprpb.CheckedExpr, error) {
+func evaluateCELExprPartially(expr *exprpb.CheckedExpr, input *enginev1.PlanResourcesInput, variables map[string]*exprpb.Expr) (*bool, *exprpb.CheckedExpr, error) {
 	e := expr.Expr
 	e, err := replaceVars(e, variables)
 	if err != nil {

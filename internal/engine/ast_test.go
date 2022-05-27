@@ -15,7 +15,7 @@ import (
 	exprpb "google.golang.org/genproto/googleapis/api/expr/v1alpha1"
 	"google.golang.org/protobuf/testing/protocmp"
 
-	responsev1 "github.com/cerbos/cerbos/api/genpb/cerbos/response/v1"
+	enginev1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
 	"github.com/cerbos/cerbos/internal/conditions"
 	"github.com/cerbos/cerbos/internal/util"
 )
@@ -24,7 +24,7 @@ import (
 var astBuildExprBlob []byte
 
 type (
-	exOp = responsev1.PlanResourcesResponse_Expression_Operand
+	exOp = enginev1.PlanResourcesFilter_Expression_Operand
 )
 
 func getExpectedExpressions(t *testing.T) map[string]*exOp {

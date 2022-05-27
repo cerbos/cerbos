@@ -11,6 +11,57 @@
         "EFFECT_NO_MATCH"
       ]
     },
+    "cerbos.engine.v1.PlanResourcesFilter": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "condition": {
+          "$ref": "#/definitions/cerbos.engine.v1.PlanResourcesFilter.Expression.Operand"
+        },
+        "kind": {
+          "$ref": "#/definitions/cerbos.engine.v1.PlanResourcesFilter.Kind"
+        }
+      }
+    },
+    "cerbos.engine.v1.PlanResourcesFilter.Expression": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "operands": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/cerbos.engine.v1.PlanResourcesFilter.Expression.Operand"
+          }
+        },
+        "operator": {
+          "type": "string"
+        }
+      }
+    },
+    "cerbos.engine.v1.PlanResourcesFilter.Expression.Operand": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "expression": {
+          "$ref": "#/definitions/cerbos.engine.v1.PlanResourcesFilter.Expression"
+        },
+        "value": {
+          "$ref": "#/definitions/google.protobuf.Value"
+        },
+        "variable": {
+          "type": "string"
+        }
+      }
+    },
+    "cerbos.engine.v1.PlanResourcesFilter.Kind": {
+      "type": "string",
+      "enum": [
+        "KIND_UNSPECIFIED",
+        "KIND_ALWAYS_ALLOWED",
+        "KIND_ALWAYS_DENIED",
+        "KIND_CONDITIONAL"
+      ]
+    },
     "cerbos.response.v1.CheckResourceBatchResponse": {
       "type": "object",
       "additionalProperties": false,
@@ -220,7 +271,7 @@
           "type": "string"
         },
         "filter": {
-          "$ref": "#/definitions/cerbos.response.v1.PlanResourcesResponse.Filter"
+          "$ref": "#/definitions/cerbos.engine.v1.PlanResourcesFilter"
         },
         "meta": {
           "$ref": "#/definitions/cerbos.response.v1.PlanResourcesResponse.Meta"
@@ -235,57 +286,6 @@
           "type": "string"
         }
       }
-    },
-    "cerbos.response.v1.PlanResourcesResponse.Expression": {
-      "type": "object",
-      "additionalProperties": false,
-      "properties": {
-        "operands": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/cerbos.response.v1.PlanResourcesResponse.Expression.Operand"
-          }
-        },
-        "operator": {
-          "type": "string"
-        }
-      }
-    },
-    "cerbos.response.v1.PlanResourcesResponse.Expression.Operand": {
-      "type": "object",
-      "additionalProperties": false,
-      "properties": {
-        "expression": {
-          "$ref": "#/definitions/cerbos.response.v1.PlanResourcesResponse.Expression"
-        },
-        "value": {
-          "$ref": "#/definitions/google.protobuf.Value"
-        },
-        "variable": {
-          "type": "string"
-        }
-      }
-    },
-    "cerbos.response.v1.PlanResourcesResponse.Filter": {
-      "type": "object",
-      "additionalProperties": false,
-      "properties": {
-        "condition": {
-          "$ref": "#/definitions/cerbos.response.v1.PlanResourcesResponse.Expression.Operand"
-        },
-        "kind": {
-          "$ref": "#/definitions/cerbos.response.v1.PlanResourcesResponse.Filter.Kind"
-        }
-      }
-    },
-    "cerbos.response.v1.PlanResourcesResponse.Filter.Kind": {
-      "type": "string",
-      "enum": [
-        "KIND_UNSPECIFIED",
-        "KIND_ALWAYS_ALLOWED",
-        "KIND_ALWAYS_DENIED",
-        "KIND_CONDITIONAL"
-      ]
     },
     "cerbos.response.v1.PlanResourcesResponse.Meta": {
       "type": "object",

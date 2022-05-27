@@ -155,8 +155,8 @@ message QueryPlannerTestSuite {
   cerbos.engine.v1.Principal principal = 2;
   message Test {
     string action = 1;
-    cerbos.response.v1.PlanResourcesResponse.Filter want = 2;
-    cerbos.engine.v1.PlanResourcesRequest.Resource resource = 3;
+    cerbos.engine.v1.PlanResourcesFilter want = 2;
+    cerbos.engine.v1.PlanResourcesInput.Resource resource = 3;
     bool want_err = 4;
   }
   repeated Test tests = 3;

@@ -2,14 +2,26 @@
   "$id": "https://api.cerbos.dev/cerbos/response/v1/PlanResourcesResponse.schema.json",
   "$schema": "http://json-schema.org/draft-07/schema#",
   "definitions": {
-    "cerbos.response.v1.PlanResourcesResponse.Expression": {
+    "cerbos.engine.v1.PlanResourcesFilter": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "condition": {
+          "$ref": "#/definitions/cerbos.engine.v1.PlanResourcesFilter.Expression.Operand"
+        },
+        "kind": {
+          "$ref": "#/definitions/cerbos.engine.v1.PlanResourcesFilter.Kind"
+        }
+      }
+    },
+    "cerbos.engine.v1.PlanResourcesFilter.Expression": {
       "type": "object",
       "additionalProperties": false,
       "properties": {
         "operands": {
           "type": "array",
           "items": {
-            "$ref": "#/definitions/cerbos.response.v1.PlanResourcesResponse.Expression.Operand"
+            "$ref": "#/definitions/cerbos.engine.v1.PlanResourcesFilter.Expression.Operand"
           }
         },
         "operator": {
@@ -17,12 +29,12 @@
         }
       }
     },
-    "cerbos.response.v1.PlanResourcesResponse.Expression.Operand": {
+    "cerbos.engine.v1.PlanResourcesFilter.Expression.Operand": {
       "type": "object",
       "additionalProperties": false,
       "properties": {
         "expression": {
-          "$ref": "#/definitions/cerbos.response.v1.PlanResourcesResponse.Expression"
+          "$ref": "#/definitions/cerbos.engine.v1.PlanResourcesFilter.Expression"
         },
         "value": {
           "$ref": "#/definitions/google.protobuf.Value"
@@ -32,19 +44,7 @@
         }
       }
     },
-    "cerbos.response.v1.PlanResourcesResponse.Filter": {
-      "type": "object",
-      "additionalProperties": false,
-      "properties": {
-        "condition": {
-          "$ref": "#/definitions/cerbos.response.v1.PlanResourcesResponse.Expression.Operand"
-        },
-        "kind": {
-          "$ref": "#/definitions/cerbos.response.v1.PlanResourcesResponse.Filter.Kind"
-        }
-      }
-    },
-    "cerbos.response.v1.PlanResourcesResponse.Filter.Kind": {
+    "cerbos.engine.v1.PlanResourcesFilter.Kind": {
       "type": "string",
       "enum": [
         "KIND_UNSPECIFIED",
@@ -77,7 +77,7 @@
       "type": "string"
     },
     "filter": {
-      "$ref": "#/definitions/cerbos.response.v1.PlanResourcesResponse.Filter"
+      "$ref": "#/definitions/cerbos.engine.v1.PlanResourcesFilter"
     },
     "meta": {
       "$ref": "#/definitions/cerbos.response.v1.PlanResourcesResponse.Meta"

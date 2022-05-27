@@ -17,7 +17,7 @@ option csharp_namespace = "Cerbos.Api.V1.Engine";
 option go_package = "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1;enginev1";
 option java_package = "dev.cerbos.api.v1.engine";
 
-message PlanResourcesRequest {
+message PlanResourcesInput {
   message Resource {
     string kind = 1 [
       (validate.rules).string = {
@@ -67,6 +67,77 @@ message PlanResourcesRequest {
   bool include_meta = 6;
 }
 
+message PlanResourcesAst {
+  message Node {
+    oneof node {
+      LogicalOperation logical_operation = 1;
+      google.api.expr.v1alpha1.CheckedExpr expression = 2;
+    }
+  }
+
+  message LogicalOperation {
+    enum Operator {
+      OPERATOR_UNSPECIFIED = 0;
+      OPERATOR_AND = 1;
+      OPERATOR_OR = 2;
+      OPERATOR_NOT = 3;
+    }
+    Operator operator = 1;
+    repeated Node nodes = 2;
+  }
+
+  Node filter_ast = 1;
+}
+
+message PlanResourcesFilter {
+  message Expression {
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
+      json_schema: {
+        description: "CEL expression"
+      }
+    };
+
+    string operator = 1 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+      description: "Operator",
+    }];
+
+    message Operand {
+      oneof node {
+        google.protobuf.Value value = 1;
+        Expression expression = 2;
+        string variable = 3;
+      }
+    }
+
+    repeated Operand operands = 2;
+  }
+
+  enum Kind {
+    KIND_UNSPECIFIED = 0;
+    KIND_ALWAYS_ALLOWED = 1;
+    KIND_ALWAYS_DENIED = 2;
+    KIND_CONDITIONAL = 3;
+  }
+
+  Kind kind = 1 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+    description: "Filter kind. Defines whether the given action is always allowed, always denied or allowed conditionally.",
+  }];
+
+  Expression.Operand condition = 2 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+    description: "Filter condition. Only populated if kind is KIND_CONDITIONAL.",
+  }];
+}
+
+message PlanResourcesOutput {
+  string request_id = 1;
+  string action = 2;
+  string kind = 3;
+  string policy_version = 4;
+  string scope = 5;
+  PlanResourcesFilter filter = 6;
+  string filter_debug = 7;
+}
+
 message CheckInput {
   string request_id = 1;
   Resource resource = 2 [
@@ -103,33 +174,6 @@ message CheckOutput {
   map<string, ActionEffect> actions = 3;
   repeated string effective_derived_roles = 4;
   repeated cerbos.schema.v1.ValidationError validation_errors = 5;
-}
-
-message PlanResourcesOutput {
-  message Node {
-    oneof node {
-      LogicalOperation logical_operation = 1;
-      google.api.expr.v1alpha1.CheckedExpr expression = 2;
-    }
-  }
-
-  message LogicalOperation {
-    enum Operator {
-      OPERATOR_UNSPECIFIED = 0;
-      OPERATOR_AND = 1;
-      OPERATOR_OR = 2;
-      OPERATOR_NOT = 3;
-    }
-    Operator operator = 1;
-    repeated Node nodes = 2;
-  }
-
-  string request_id = 1;
-  string action = 2;
-  string kind = 3;
-  string policy_version = 4;
-  string scope = 5;
-  Node filter = 6;
 }
 
 message Resource {

@@ -2717,7 +2717,7 @@ func (m *PlanResourcesRequest) UnmarshalVT(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if m.Resource == nil {
-				m.Resource = &v1.PlanResourcesRequest_Resource{}
+				m.Resource = &v1.PlanResourcesInput_Resource{}
 			}
 			if unmarshal, ok := interface{}(m.Resource).(interface {
 				UnmarshalVT([]byte) error

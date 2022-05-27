@@ -2,7 +2,7 @@
   "$id": "https://api.cerbos.dev/cerbos/request/v1/PlanResourcesRequest.schema.json",
   "$schema": "http://json-schema.org/draft-07/schema#",
   "definitions": {
-    "cerbos.engine.v1.PlanResourcesRequest.Resource": {
+    "cerbos.engine.v1.PlanResourcesInput.Resource": {
       "type": "object",
       "required": [
         "kind"
@@ -119,7 +119,7 @@
       "type": "string"
     },
     "resource": {
-      "$ref": "#/definitions/cerbos.engine.v1.PlanResourcesRequest.Resource"
+      "$ref": "#/definitions/cerbos.engine.v1.PlanResourcesInput.Resource"
     }
   }
 }

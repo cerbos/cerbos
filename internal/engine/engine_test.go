@@ -259,11 +259,11 @@ func TestQueryPlan(t *testing.T) {
 			for _, tt := range ts.Tests {
 				t.Run(tt.Action, func(t *testing.T) {
 					is := require.New(t)
-					request := &enginev1.PlanResourcesRequest{
+					request := &enginev1.PlanResourcesInput{
 						RequestId: "requestId",
 						Action:    tt.Action,
 						Principal: ts.Principal,
-						Resource: &enginev1.PlanResourcesRequest_Resource{
+						Resource: &enginev1.PlanResourcesInput_Resource{
 							Kind:          tt.Resource.Kind,
 							Attr:          tt.Resource.Attr,
 							PolicyVersion: tt.Resource.PolicyVersion,
@@ -279,7 +279,7 @@ func TestQueryPlan(t *testing.T) {
 						is.NoError(err)
 						is.NotNil(response)
 						is.Empty(cmp.Diff(tt.Want, response.Filter, protocmp.Transform()))
-						t.Log(response.Meta.FilterDebug)
+						t.Log(response.FilterDebug)
 					}
 				})
 			}
