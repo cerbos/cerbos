@@ -10,7 +10,7 @@ require (
 	github.com/fullstorydev/grpcurl v1.8.6
 	github.com/golangci/golangci-lint v1.46.2
 	github.com/google/go-licenses v0.0.0-20210715153004-8751804a5b80
-	github.com/goreleaser/goreleaser v1.9.1
+	github.com/goreleaser/goreleaser v1.9.2
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.10.1
 	github.com/planetscale/vtprotobuf v0.3.0
 	github.com/vektra/mockery/v2 v2.12.2
@@ -321,7 +321,7 @@ require (
 	gopkg.in/src-d/go-git.v4 v4.13.1 // indirect
 	gopkg.in/warnings.v0 v0.1.2 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
-	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b // indirect
+	gopkg.in/yaml.v3 v3.0.0 // indirect
 	honnef.co/go/tools v0.3.1 // indirect
 	mvdan.cc/gofumpt v0.3.1 // indirect
 	mvdan.cc/interfacer v0.0.0-20180901003855-c20040233aed // indirect
