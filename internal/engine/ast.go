@@ -186,7 +186,7 @@ func replaceVars(e *exprpb.Expr, vars map[string]*exprpb.Expr) (output *exprpb.E
 	return output, err
 }
 
-func String(expr *enginev1.PlanResourcesAst_Node) (source string, err error) {
+func NodeToString(expr *enginev1.PlanResourcesAst_Node) (source string, err error) {
 	if expr == nil {
 		return "", nil
 	}
@@ -201,7 +201,7 @@ func String(expr *enginev1.PlanResourcesAst_Node) (source string, err error) {
 		op := enginev1.PlanResourcesAst_LogicalOperation_Operator_name[int32(node.LogicalOperation.Operator)]
 		s := make([]string, 0, len(node.LogicalOperation.Nodes))
 		for _, n := range node.LogicalOperation.Nodes {
-			source, err = String(n)
+			source, err = NodeToString(n)
 			if err != nil {
 				return "", err
 			}

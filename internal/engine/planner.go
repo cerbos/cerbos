@@ -89,35 +89,20 @@ func (ppe *principalPolicyEvaluator) EvaluateResourcesQueryPlan(ctx context.Cont
 		}
 	}
 
-	if filterAST == nil {
-		filterAST = mkFalseNode()
-	}
-
-	return mkPlanResourcesOutput(input, scope, filterAST)
+	return mkPlanResourcesOutput(input, scope, mkFalseNode())
 }
 
 func mkPlanResourcesOutput(input *enginev1.PlanResourcesInput, scope string, filterAST *enginev1.PlanResourcesAst_Node) (*enginev1.PlanResourcesOutput, error) {
 	result := &enginev1.PlanResourcesOutput{
-		RequestId: input.RequestId,
-		Kind:      input.Resource.Kind,
-		Action:    input.Action,
-		Scope:     scope,
-	}
-
-	if filterAST == nil {
-		result.Filter = &enginev1.PlanResourcesFilter{
-			Kind: enginev1.PlanResourcesFilter_KIND_ALWAYS_DENIED,
-		}
-
-		if input.IncludeMeta {
-			result.FilterDebug = noPolicyMatch
-		}
-
-		return result, nil
+		RequestId:     input.RequestId,
+		Kind:          input.Resource.Kind,
+		PolicyVersion: input.Resource.PolicyVersion,
+		Action:        input.Action,
+		Scope:         scope,
 	}
 
 	if input.IncludeMeta {
-		fd, err := String(filterAST)
+		fd, err := NodeToString(filterAST)
 		if err != nil {
 			fd = "can't render filter string representation"
 		}

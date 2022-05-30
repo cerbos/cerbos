@@ -296,11 +296,16 @@ func (engine *Engine) PlanResources(ctx context.Context, input *enginev1.PlanRes
 		return nil, fmt.Errorf("failed to get check for [%s.%s]: %w", rpName, rpVersion, err)
 	}
 
+	var output *enginev1.PlanResourcesOutput
 	if policyEvaluator == nil {
-		return mkPlanResourcesOutput(input, "", nil)
+		output, err = mkPlanResourcesOutput(input, "", mkFalseNode())
+		if err == nil && output != nil {
+			output.FilterDebug = noPolicyMatch
+		}
+	} else {
+		output, err = policyEvaluator.EvaluateResourcesQueryPlan(ctx, input)
 	}
 
-	output, err := policyEvaluator.EvaluateResourcesQueryPlan(ctx, input)
 	return engine.logPlanDecision(ctx, input, output, err)
 }
 
