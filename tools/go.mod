@@ -11,7 +11,7 @@ require (
 	github.com/golangci/golangci-lint v1.46.2
 	github.com/google/go-licenses v0.0.0-20210715153004-8751804a5b80
 	github.com/goreleaser/goreleaser v1.9.2
-	github.com/grpc-ecosystem/grpc-gateway/v2 v2.10.1
+	github.com/grpc-ecosystem/grpc-gateway/v2 v2.10.2
 	github.com/planetscale/vtprotobuf v0.3.0
 	github.com/vektra/mockery/v2 v2.12.2
 	go.elastic.co/go-licence-detector v0.5.0
