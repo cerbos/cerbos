@@ -44,7 +44,7 @@ require (
 	github.com/kavu/go_reuseport v1.5.0
 	github.com/lestrrat-go/jwx v1.2.25
 	github.com/mattn/go-isatty v0.0.14
-	github.com/minio/minio-go/v7 v7.0.26
+	github.com/minio/minio-go/v7 v7.0.27
 	github.com/oklog/ulid/v2 v2.0.2
 	github.com/olekukonko/tablewriter v0.0.5
 	github.com/ory/dockertest/v3 v3.8.1
