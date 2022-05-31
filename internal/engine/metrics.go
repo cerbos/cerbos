@@ -40,3 +40,24 @@ func measureCheckLatency(batchSize int, checkFn func() ([]*enginev1.CheckOutput,
 
 	return result, err
 }
+
+func measurePlanLatency(planFn func() (*enginev1.PlanResourcesOutput, error)) (*enginev1.PlanResourcesOutput, error) {
+	startTime := time.Now()
+	result, err := planFn()
+
+	latencyMs := float64(time.Since(startTime)) / float64(time.Millisecond)
+
+	status := statusSuccess
+	if err != nil {
+		status = statusFailure
+	}
+
+	_ = stats.RecordWithTags(context.Background(),
+		[]tag.Mutator{
+			tag.Upsert(metrics.KeyEnginePlanStatus, status),
+		},
+		metrics.EnginePlanLatency.M(latencyMs),
+	)
+
+	return result, err
+}
