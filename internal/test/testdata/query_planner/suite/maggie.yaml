@@ -41,12 +41,12 @@ tests:
                             - expression:
                                   operator: eq
                                   operands:
-                                      - variable: R.attr.status
+                                      - variable: request.resource.attr.status
                                       - value: "PENDING_APPROVAL"
                             - expression:
                                   operator: ne
                                   operands:
-                                      - variable: R.attr.owner
+                                      - variable: request.resource.attr.owner
                                       - value: "maggie"
 
     - action: "report:deny-deny"
@@ -62,11 +62,11 @@ tests:
               - expression:
                   operator: not
                   operands:
-                    - variable: R.attr.deleted
+                    - variable: request.resource.attr.deleted
               - expression:
                   operator: not
                   operands:
-                    - variable: R.attr.hidden
+                    - variable: request.resource.attr.hidden
 
     - action: "report:deny"
       resource:
@@ -78,7 +78,7 @@ tests:
           expression:
             operator: not
             operands:
-              - variable: R.attr.deleted
+              - variable: request.resource.attr.deleted
 
     - action: "approve:true-in-both-or-and-conditions"
       resource:
@@ -93,12 +93,12 @@ tests:
               - expression:
                   operator: eq
                   operands:
-                    - variable: R.attr.status
+                    - variable: request.resource.attr.status
                     - value: "PENDING_APPROVAL"
               - expression:
                   operator: ne
                   operands:
-                    - variable: R.attr.owner
+                    - variable: request.resource.attr.owner
                     - value: "maggie"
 
     - action: "approve:allow-allow-deny"
@@ -117,7 +117,7 @@ tests:
                     - expression:
                         operator: eq
                         operands:
-                          - variable: R.attr.owner
+                          - variable: request.resource.attr.owner
                           - value: "maggie"
               - expression:
                   operator: or
@@ -125,12 +125,12 @@ tests:
                     - expression:
                         operator: eq
                         operands:
-                          - variable: R.attr.status
+                          - variable: request.resource.attr.status
                           - value: "PENDING_APPROVAL"
                     - expression:
                         operator: eq
                         operands:
-                          - variable: R.attr.geography
+                          - variable: request.resource.attr.geography
                           - value: "US"
     - action: "approve:allow-allow"
       resource:
@@ -145,12 +145,12 @@ tests:
               - expression:
                   operator: eq
                   operands:
-                    - variable: R.attr.status
+                    - variable: request.resource.attr.status
                     - value: "PENDING_APPROVAL"
               - expression:
                   operator: eq
                   operands:
-                    - variable: R.attr.geography
+                    - variable: request.resource.attr.geography
                     - value: "US"
 
     - action: "approve:allow-deny"
@@ -169,12 +169,12 @@ tests:
                   - expression:
                       operator: eq
                       operands:
-                        - variable: R.attr.owner
+                        - variable: request.resource.attr.owner
                         - value: "maggie"
               - expression:
                   operator: eq
                   operands:
-                    - variable: R.attr.status
+                    - variable: request.resource.attr.status
                     - value: "PENDING_APPROVAL"
 
     - action: "approve:false-in-and-condition"
@@ -200,7 +200,7 @@ tests:
                     - expression:
                         operator: in
                         operands:
-                          - variable: R.attr.team
+                          - variable: request.resource.attr.team
                           - value: ["A", "B"]
               - expression:
                   operator: not
@@ -208,7 +208,7 @@ tests:
                     - expression:
                         operator: lt
                         operands:
-                          - variable: R.attr.GPA
+                          - variable: request.resource.attr.GPA
                           - value: 4.7
 
     - action: "approve:with-jwt"
@@ -221,7 +221,7 @@ tests:
           expression:
             operator: eq
             operands:
-              - variable: R.attr.groupID
+              - variable: request.resource.attr.groupID
               - value: 42
     - action: "approve:refer-derived-role"
       resource:
@@ -238,12 +238,12 @@ tests:
               - expression:
                   operator: eq
                   operands:
-                    - variable: R.attr.status
+                    - variable: request.resource.attr.status
                     - value: "PENDING_APPROVAL"
               - expression:
                   operator: ne
                   operands:
-                    - variable: R.attr.owner
+                    - variable: request.resource.attr.owner
                     - value: "maggie"
     - action: "approve"
       resource:
@@ -260,12 +260,12 @@ tests:
               - expression:
                   operator: eq
                   operands:
-                    - variable: R.attr.status
+                    - variable: request.resource.attr.status
                     - value: "PENDING_APPROVAL"
               - expression:
                   operator: ne
                   operands:
-                    - variable: R.attr.owner
+                    - variable: request.resource.attr.owner
                     - value: "maggie"
     - action: "approve"
       resource:
@@ -280,5 +280,5 @@ tests:
           expression:
             operator: eq
             operands:
-              - variable: R.attr.status
+              - variable: request.resource.attr.status
               - value: "PENDING_APPROVAL"

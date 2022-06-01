@@ -25,7 +25,7 @@ tests:
             - expression:
                 operator: map
                 operands:
-                  - variable: R.attr.geos
+                  - variable: request.resource.attr.geos
                   - expression:
                       operator: lambda
                       operands:
@@ -48,7 +48,7 @@ tests:
             - expression:
                 operator: filter
                 operands:
-                  - variable: R.attr.geos
+                  - variable: request.resource.attr.geos
                   - expression:
                       operator: lambda
                       operands:
@@ -68,7 +68,7 @@ tests:
         expression:
           operator: all
           operands:
-            - variable: R.attr.geos
+            - variable: request.resource.attr.geos
             - expression:
                 operator: lambda
                 operands:
@@ -88,7 +88,7 @@ tests:
         expression:
           operator: exists
           operands:
-            - variable: R.attr.geos
+            - variable: request.resource.attr.geos
             - expression:
                 operator: lambda
                 operands:
@@ -108,7 +108,7 @@ tests:
         expression:
           operator: exists_one
           operands:
-            - variable: R.attr.geos
+            - variable: request.resource.attr.geos
             - expression:
                 operator: lambda
                 operands:
@@ -128,7 +128,7 @@ tests:
         expression:
           operator: all
           operands:
-            - variable: R.attr.geos
+            - variable: request.resource.attr.geos
             - expression:
                 operator: lambda
                 operands:
@@ -161,7 +161,7 @@ tests:
         expression:
           operator: all
           operands:
-            - variable: R.attr.sessions
+            - variable: request.resource.attr.sessions
             - expression:
                 operator: lambda
                 operands:

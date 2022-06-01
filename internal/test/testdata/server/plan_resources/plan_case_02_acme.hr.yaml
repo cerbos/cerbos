@@ -37,7 +37,7 @@ planResources:
         "expression": {
           "operator": "eq",
           "operands": [
-            { "variable": "R.attr.owner" },
+            { "variable": "request.resource.attr.owner" },
             { "value": "harry"}
           ]
         }

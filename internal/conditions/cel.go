@@ -5,6 +5,7 @@ package conditions
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/google/cel-go/cel"
 	"github.com/google/cel-go/checker/decls"
@@ -100,6 +101,26 @@ func ResourceAttributeNames(s string) []string {
 		fmt.Sprintf("%s.%s.%s", CELResourceAbbrev, CELAttrField, s),     // R.attr.<s>
 		fmt.Sprintf("%s.%s.%s", Fqn(CELResourceField), CELAttrField, s), // request.resource.attr.<s>
 	}
+}
+
+func ExpandAbbrev(s string) string {
+	prefix, rest, ok := strings.Cut(s, ".")
+
+	expanded := prefix
+	switch prefix {
+	case CELPrincipalAbbrev:
+		expanded = Fqn(CELPrincipalField)
+	case CELResourceAbbrev:
+		expanded = Fqn(CELResourceField)
+	case CELVariablesAbbrev:
+		expanded = CELVariablesIdent
+	}
+
+	if ok {
+		return fmt.Sprintf("%s.%s", expanded, rest)
+	}
+
+	return expanded
 }
 
 func newCELQueryPlanEnvOptions() []cel.EnvOption {
