@@ -1,5 +1,5 @@
 {
-  "$id": "https://api.cerbos.dev/cerbos/engine/v1/PlanResourcesRequest/Resource.schema.json",
+  "$id": "https://api.cerbos.dev/cerbos/engine/v1/PlanResourcesInput/Resource.schema.json",
   "$schema": "http://json-schema.org/draft-07/schema#",
   "definitions": {
     "google.protobuf.Value": {

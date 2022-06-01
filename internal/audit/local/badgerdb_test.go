@@ -97,8 +97,10 @@ func TestBadgerLog(t *testing.T) {
 				break
 			}
 
-			require.Len(t, rec.Inputs, 1)
-			require.Equal(t, strconv.Itoa(numRecords-counter-1), rec.Inputs[0].RequestId)
+			haveEntry := rec.GetCheckResources()
+			require.NotNil(t, haveEntry)
+			require.Len(t, haveEntry.Inputs, 1)
+			require.Equal(t, strconv.Itoa(numRecords-counter-1), haveEntry.Inputs[0].RequestId)
 
 			counter++
 		}

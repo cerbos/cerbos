@@ -13,15 +13,12 @@ import (
 	"sync/atomic"
 	"time"
 
-	"go.opencensus.io/trace"
 	"go.uber.org/zap"
-	"google.golang.org/protobuf/types/known/structpb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	auditv1 "github.com/cerbos/cerbos/api/genpb/cerbos/audit/v1"
 	effectv1 "github.com/cerbos/cerbos/api/genpb/cerbos/effect/v1"
 	enginev1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
-	responsev1 "github.com/cerbos/cerbos/api/genpb/cerbos/response/v1"
 	schemav1 "github.com/cerbos/cerbos/api/genpb/cerbos/schema/v1"
 	"github.com/cerbos/cerbos/internal/audit"
 	"github.com/cerbos/cerbos/internal/compile"
@@ -171,7 +168,7 @@ func (engine *Engine) submitWork(ctx context.Context, work workIn) error {
 }
 
 func (engine *Engine) Check(ctx context.Context, inputs []*enginev1.CheckInput, opts ...CheckOpt) ([]*enginev1.CheckOutput, error) {
-	outputs, err := measureCheckLatency(len(inputs), func() ([]*enginev1.CheckOutput, error) {
+	outputs, err := measureCheckLatency(len(inputs), func() (outputs []*enginev1.CheckOutput, err error) {
 		ctx, span := tracing.StartSpan(ctx, "engine.Check")
 		defer span.End()
 
@@ -180,16 +177,22 @@ func (engine *Engine) Check(ctx context.Context, inputs []*enginev1.CheckInput, 
 		// if the number of inputs is less than the threshold, do a serial execution as it is usually faster.
 		// ditto if the worker pool is not initialized
 		if len(inputs) < parallelismThreshold || len(engine.workerPool) == 0 {
-			return engine.checkSerial(ctx, inputs, checkOpts)
+			outputs, err = engine.checkSerial(ctx, inputs, checkOpts)
+		} else {
+			outputs, err = engine.checkParallel(ctx, inputs, checkOpts)
 		}
 
-		return engine.checkParallel(ctx, inputs, checkOpts)
+		if err != nil {
+			tracing.MarkFailed(span, http.StatusBadRequest, err)
+		}
+
+		return outputs, err
 	})
 
-	return engine.logDecision(ctx, inputs, outputs, err)
+	return engine.logCheckDecision(ctx, inputs, outputs, err)
 }
 
-func (engine *Engine) logDecision(ctx context.Context, inputs []*enginev1.CheckInput, outputs []*enginev1.CheckOutput, checkErr error) ([]*enginev1.CheckOutput, error) {
+func (engine *Engine) logCheckDecision(ctx context.Context, inputs []*enginev1.CheckInput, outputs []*enginev1.CheckOutput, checkErr error) ([]*enginev1.CheckOutput, error) {
 	if err := engine.auditLog.WriteDecisionLogEntry(ctx, func() (*auditv1.DecisionLogEntry, error) {
 		callID, ok := audit.CallIDFromContext(ctx)
 		if !ok {
@@ -200,16 +203,22 @@ func (engine *Engine) logDecision(ctx context.Context, inputs []*enginev1.CheckI
 			}
 		}
 
+		checkRes := &auditv1.DecisionLogEntry_CheckResources{
+			Inputs:  inputs,
+			Outputs: outputs,
+		}
+
+		if checkErr != nil {
+			checkRes.Error = checkErr.Error()
+		}
+
 		entry := &auditv1.DecisionLogEntry{
 			CallId:    string(callID),
 			Timestamp: timestamppb.New(time.Now()),
 			Peer:      audit.PeerFromContext(ctx),
-			Inputs:    inputs,
-			Outputs:   outputs,
-		}
-
-		if checkErr != nil {
-			entry.Error = checkErr.Error()
+			Method: &auditv1.DecisionLogEntry_CheckResources_{
+				CheckResources: checkRes,
+			},
 		}
 
 		return entry, nil
@@ -261,7 +270,23 @@ func (engine *Engine) checkParallel(ctx context.Context, inputs []*enginev1.Chec
 	return outputs, nil
 }
 
-func (engine *Engine) PlanResources(ctx context.Context, input *enginev1.PlanResourcesRequest) (*responsev1.PlanResourcesResponse, error) {
+func (engine *Engine) PlanResources(ctx context.Context, input *enginev1.PlanResourcesInput) (*enginev1.PlanResourcesOutput, error) {
+	output, err := measurePlanLatency(func() (output *enginev1.PlanResourcesOutput, err error) {
+		ctx, span := tracing.StartSpan(ctx, "engine.Plan")
+		defer span.End()
+
+		output, err = engine.doPlanResources(ctx, input)
+		if err != nil {
+			tracing.MarkFailed(span, http.StatusBadRequest, err)
+		}
+
+		return output, err
+	})
+
+	return engine.logPlanDecision(ctx, input, output, err)
+}
+
+func (engine *Engine) doPlanResources(ctx context.Context, input *enginev1.PlanResourcesInput) (*enginev1.PlanResourcesOutput, error) {
 	// exit early if the context is cancelled
 	if err := ctx.Err(); err != nil {
 		return nil, err
@@ -274,93 +299,71 @@ func (engine *Engine) PlanResources(ctx context.Context, input *enginev1.PlanRes
 		return nil, fmt.Errorf("failed to get check for [%s.%s]: %w", ppName, ppVersion, err)
 	}
 
-	var plan *enginev1.PlanResourcesOutput
 	if policyEvaluator != nil {
-		plan, err = policyEvaluator.EvaluateResourcesQueryPlan(ctx, input)
+		plan, err := policyEvaluator.EvaluateResourcesQueryPlan(ctx, input)
 		if err != nil {
 			return nil, err
 		}
-	}
-	if plan == nil {
-		// get the resource policy check
-		rpName, rpVersion, rpScope := engine.policyAttr(input.Resource.Kind, input.Resource.PolicyVersion, input.Resource.Scope)
-		policyEvaluator, err = engine.getResourcePolicyEvaluator(ctx, rpName, rpVersion, rpScope)
-		if err != nil {
-			return nil, fmt.Errorf("failed to get check for [%s.%s]: %w", rpName, rpVersion, err)
+
+		if plan != nil {
+			return plan, nil
 		}
-		if policyEvaluator != nil {
-			plan, err = policyEvaluator.EvaluateResourcesQueryPlan(ctx, input)
+	}
+
+	// get the resource policy check
+	rpName, rpVersion, rpScope := engine.policyAttr(input.Resource.Kind, input.Resource.PolicyVersion, input.Resource.Scope)
+	policyEvaluator, err = engine.getResourcePolicyEvaluator(ctx, rpName, rpVersion, rpScope)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get check for [%s.%s]: %w", rpName, rpVersion, err)
+	}
+
+	if policyEvaluator == nil {
+		output, err := mkPlanResourcesOutput(input, "", mkFalseNode())
+		if err == nil && output != nil {
+			output.FilterDebug = noPolicyMatch
+		}
+
+		return output, err
+	}
+
+	return policyEvaluator.EvaluateResourcesQueryPlan(ctx, input)
+}
+
+func (engine *Engine) logPlanDecision(ctx context.Context, input *enginev1.PlanResourcesInput, output *enginev1.PlanResourcesOutput, planErr error) (*enginev1.PlanResourcesOutput, error) {
+	if err := engine.auditLog.WriteDecisionLogEntry(ctx, func() (*auditv1.DecisionLogEntry, error) {
+		callID, ok := audit.CallIDFromContext(ctx)
+		if !ok {
+			var err error
+			callID, err = audit.NewID()
 			if err != nil {
 				return nil, err
 			}
 		}
-	}
 
-	response := &responsev1.PlanResourcesResponse{
-		RequestId:     input.RequestId,
-		Action:        input.Action,
-		ResourceKind:  input.Resource.Kind,
-		PolicyVersion: input.Resource.PolicyVersion,
-	}
-
-	// default to ALWAYS_DENIED
-	if plan == nil {
-		response.Filter = &responsev1.PlanResourcesResponse_Filter{
-			Kind: responsev1.PlanResourcesResponse_Filter_KIND_ALWAYS_DENIED,
+		planRes := &auditv1.DecisionLogEntry_PlanResources{
+			Input:  input,
+			Output: output,
 		}
 
-		if input.IncludeMeta {
-			response.Meta = &responsev1.PlanResourcesResponse_Meta{
-				FilterDebug: noPolicyMatch,
-			}
+		if planErr != nil {
+			planRes.Error = planErr.Error()
 		}
 
-		return response, nil
-	}
-
-	response.Filter = &responsev1.PlanResourcesResponse_Filter{
-		Kind:      responsev1.PlanResourcesResponse_Filter_KIND_CONDITIONAL,
-		Condition: new(responsev1.PlanResourcesResponse_Expression_Operand),
-	}
-	err = convert(plan.Filter, response.Filter.Condition)
-	if err != nil {
-		return nil, err
-	}
-	normaliseFilter(response.Filter)
-	if input.IncludeMeta {
-		response.Meta = new(responsev1.PlanResourcesResponse_Meta)
-		response.Meta.FilterDebug, err = String(plan.Filter)
-		if err != nil {
-			response.Meta.FilterDebug = "can't render filter string representation"
+		entry := &auditv1.DecisionLogEntry{
+			CallId:    string(callID),
+			Timestamp: timestamppb.New(time.Now()),
+			Peer:      audit.PeerFromContext(ctx),
+			Method: &auditv1.DecisionLogEntry_PlanResources_{
+				PlanResources: planRes,
+			},
 		}
-		response.Meta.MatchedScope = plan.Scope
+
+		return entry, nil
+	}); err != nil {
+		logging.FromContext(ctx).Warn("Failed to log decision", zap.Error(err))
 	}
 
-	return response, nil
-}
-
-func normaliseFilter(filter *responsev1.PlanResourcesResponse_Filter) {
-	if filter.Condition == nil {
-		filter.Kind = responsev1.PlanResourcesResponse_Filter_KIND_ALWAYS_ALLOWED
-		return
-	}
-	if filter.Condition.Node == nil {
-		filter.Condition = nil
-		filter.Kind = responsev1.PlanResourcesResponse_Filter_KIND_ALWAYS_ALLOWED
-		return
-	}
-	v := filter.Condition.GetValue()
-	if v == nil {
-		return
-	}
-	if b, ok := v.Kind.(*structpb.Value_BoolValue); ok {
-		filter.Condition = nil
-		if b.BoolValue {
-			filter.Kind = responsev1.PlanResourcesResponse_Filter_KIND_ALWAYS_ALLOWED
-		} else {
-			filter.Kind = responsev1.PlanResourcesResponse_Filter_KIND_ALWAYS_DENIED
-		}
-	}
+	return output, planErr
 }
 
 func (engine *Engine) evaluate(ctx context.Context, input *enginev1.CheckInput, checkOpts *checkOptions) (*enginev1.CheckOutput, error) {
@@ -509,7 +512,7 @@ func (ec *evaluationCtx) evaluate(ctx context.Context, tctx tracer.Context, inpu
 	defer span.End()
 
 	if ec.numChecks == 0 {
-		tracing.MarkFailed(span, trace.StatusCodeNotFound, ErrNoPoliciesMatched)
+		tracing.MarkFailed(span, http.StatusNotFound, ErrNoPoliciesMatched)
 
 		return nil, ErrNoPoliciesMatched
 	}
@@ -522,7 +525,7 @@ func (ec *evaluationCtx) evaluate(ctx context.Context, tctx tracer.Context, inpu
 		result, err := c.Evaluate(ctx, tctx, input)
 		if err != nil {
 			logging.FromContext(ctx).Error("Failed to evaluate policy", zap.Error(err))
-			tracing.MarkFailed(span, trace.StatusCodeInternal, err)
+			tracing.MarkFailed(span, http.StatusInternalServerError, err)
 
 			return nil, fmt.Errorf("failed to execute policy: %w", err)
 		}
@@ -533,7 +536,7 @@ func (ec *evaluationCtx) evaluate(ctx context.Context, tctx tracer.Context, inpu
 		}
 	}
 
-	tracing.MarkFailed(span, trace.StatusCodeNotFound, ErrNoPoliciesMatched)
+	tracing.MarkFailed(span, http.StatusNotFound, ErrNoPoliciesMatched)
 
 	return resp, ErrNoPoliciesMatched
 }

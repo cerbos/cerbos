@@ -10,17 +10,73 @@ import (
 
 // HashPB computes a hash of the message using the given hash function
 // The ignore set must contain fully-qualified field names (pkg.msg.field) that should be ignored from the hash
-func (m *PlanResourcesRequest) HashPB(hasher hash.Hash, ignore map[string]struct{}) {
+func (m *PlanResourcesInput) HashPB(hasher hash.Hash, ignore map[string]struct{}) {
 	if m != nil {
-		cerbos_engine_v1_PlanResourcesRequest_hashpb_sum(m, hasher, ignore)
+		cerbos_engine_v1_PlanResourcesInput_hashpb_sum(m, hasher, ignore)
 	}
 }
 
 // HashPB computes a hash of the message using the given hash function
 // The ignore set must contain fully-qualified field names (pkg.msg.field) that should be ignored from the hash
-func (m *PlanResourcesRequest_Resource) HashPB(hasher hash.Hash, ignore map[string]struct{}) {
+func (m *PlanResourcesInput_Resource) HashPB(hasher hash.Hash, ignore map[string]struct{}) {
 	if m != nil {
-		cerbos_engine_v1_PlanResourcesRequest_Resource_hashpb_sum(m, hasher, ignore)
+		cerbos_engine_v1_PlanResourcesInput_Resource_hashpb_sum(m, hasher, ignore)
+	}
+}
+
+// HashPB computes a hash of the message using the given hash function
+// The ignore set must contain fully-qualified field names (pkg.msg.field) that should be ignored from the hash
+func (m *PlanResourcesAst) HashPB(hasher hash.Hash, ignore map[string]struct{}) {
+	if m != nil {
+		cerbos_engine_v1_PlanResourcesAst_hashpb_sum(m, hasher, ignore)
+	}
+}
+
+// HashPB computes a hash of the message using the given hash function
+// The ignore set must contain fully-qualified field names (pkg.msg.field) that should be ignored from the hash
+func (m *PlanResourcesAst_Node) HashPB(hasher hash.Hash, ignore map[string]struct{}) {
+	if m != nil {
+		cerbos_engine_v1_PlanResourcesAst_Node_hashpb_sum(m, hasher, ignore)
+	}
+}
+
+// HashPB computes a hash of the message using the given hash function
+// The ignore set must contain fully-qualified field names (pkg.msg.field) that should be ignored from the hash
+func (m *PlanResourcesAst_LogicalOperation) HashPB(hasher hash.Hash, ignore map[string]struct{}) {
+	if m != nil {
+		cerbos_engine_v1_PlanResourcesAst_LogicalOperation_hashpb_sum(m, hasher, ignore)
+	}
+}
+
+// HashPB computes a hash of the message using the given hash function
+// The ignore set must contain fully-qualified field names (pkg.msg.field) that should be ignored from the hash
+func (m *PlanResourcesFilter) HashPB(hasher hash.Hash, ignore map[string]struct{}) {
+	if m != nil {
+		cerbos_engine_v1_PlanResourcesFilter_hashpb_sum(m, hasher, ignore)
+	}
+}
+
+// HashPB computes a hash of the message using the given hash function
+// The ignore set must contain fully-qualified field names (pkg.msg.field) that should be ignored from the hash
+func (m *PlanResourcesFilter_Expression) HashPB(hasher hash.Hash, ignore map[string]struct{}) {
+	if m != nil {
+		cerbos_engine_v1_PlanResourcesFilter_Expression_hashpb_sum(m, hasher, ignore)
+	}
+}
+
+// HashPB computes a hash of the message using the given hash function
+// The ignore set must contain fully-qualified field names (pkg.msg.field) that should be ignored from the hash
+func (m *PlanResourcesFilter_Expression_Operand) HashPB(hasher hash.Hash, ignore map[string]struct{}) {
+	if m != nil {
+		cerbos_engine_v1_PlanResourcesFilter_Expression_Operand_hashpb_sum(m, hasher, ignore)
+	}
+}
+
+// HashPB computes a hash of the message using the given hash function
+// The ignore set must contain fully-qualified field names (pkg.msg.field) that should be ignored from the hash
+func (m *PlanResourcesOutput) HashPB(hasher hash.Hash, ignore map[string]struct{}) {
+	if m != nil {
+		cerbos_engine_v1_PlanResourcesOutput_hashpb_sum(m, hasher, ignore)
 	}
 }
 
@@ -45,30 +101,6 @@ func (m *CheckOutput) HashPB(hasher hash.Hash, ignore map[string]struct{}) {
 func (m *CheckOutput_ActionEffect) HashPB(hasher hash.Hash, ignore map[string]struct{}) {
 	if m != nil {
 		cerbos_engine_v1_CheckOutput_ActionEffect_hashpb_sum(m, hasher, ignore)
-	}
-}
-
-// HashPB computes a hash of the message using the given hash function
-// The ignore set must contain fully-qualified field names (pkg.msg.field) that should be ignored from the hash
-func (m *PlanResourcesOutput) HashPB(hasher hash.Hash, ignore map[string]struct{}) {
-	if m != nil {
-		cerbos_engine_v1_PlanResourcesOutput_hashpb_sum(m, hasher, ignore)
-	}
-}
-
-// HashPB computes a hash of the message using the given hash function
-// The ignore set must contain fully-qualified field names (pkg.msg.field) that should be ignored from the hash
-func (m *PlanResourcesOutput_Node) HashPB(hasher hash.Hash, ignore map[string]struct{}) {
-	if m != nil {
-		cerbos_engine_v1_PlanResourcesOutput_Node_hashpb_sum(m, hasher, ignore)
-	}
-}
-
-// HashPB computes a hash of the message using the given hash function
-// The ignore set must contain fully-qualified field names (pkg.msg.field) that should be ignored from the hash
-func (m *PlanResourcesOutput_LogicalOperation) HashPB(hasher hash.Hash, ignore map[string]struct{}) {
-	if m != nil {
-		cerbos_engine_v1_PlanResourcesOutput_LogicalOperation_hashpb_sum(m, hasher, ignore)
 	}
 }
 

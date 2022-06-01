@@ -22,12 +22,31 @@ message AccessLogEntry {
 }
 
 message DecisionLogEntry {
+  message CheckResources {
+    repeated cerbos.engine.v1.CheckInput inputs = 1;
+    repeated cerbos.engine.v1.CheckOutput outputs = 2;
+    string error = 3;
+  }
+
+  message PlanResources {
+    cerbos.engine.v1.PlanResourcesInput input = 1;
+    cerbos.engine.v1.PlanResourcesOutput output = 2;
+    string error = 3;
+  }
+
   string call_id = 1;
   google.protobuf.Timestamp timestamp = 2;
   Peer peer = 3;
+  // Deprecated. Use method.check_resources.inputs instead.
   repeated cerbos.engine.v1.CheckInput inputs = 4;
+  // Deprecated. Use method.check_resources.outputs instead.
   repeated cerbos.engine.v1.CheckOutput outputs = 5;
+  // Deprecated. Use method.check_resources.error instead.
   string error = 6;
+  oneof method {
+    CheckResources check_resources = 7;
+    PlanResources plan_resources = 8;
+  }
 }
 
 message MetaValues {

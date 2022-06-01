@@ -12,7 +12,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	responsev1 "github.com/cerbos/cerbos/api/genpb/cerbos/response/v1"
+	enginev1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
 	"github.com/cerbos/cerbos/client"
 	"github.com/cerbos/cerbos/client/testutil"
 	"github.com/cerbos/cerbos/internal/test"
@@ -360,7 +360,7 @@ func testGRPCClient(c client.Client) func(*testing.T) {
 				is := require.New(t)
 
 				is.NoError(err)
-				is.Equal(have.Filter.Kind, responsev1.PlanResourcesResponse_Filter_KIND_CONDITIONAL)
+				is.Equal(have.Filter.Kind, enginev1.PlanResourcesFilter_KIND_CONDITIONAL)
 				expression := have.Filter.Condition.GetExpression()
 				is.NotNil(expression)
 				is.Equal(expression.Operator, "eq")

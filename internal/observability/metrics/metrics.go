@@ -36,6 +36,7 @@ var (
 	KeyCacheResult          = tag.MustNewKey("result")
 	KeyCompileStatus        = tag.MustNewKey("status")
 	KeyEngineDecisionStatus = tag.MustNewKey("status")
+	KeyEnginePlanStatus     = tag.MustNewKey("status")
 )
 
 var (
@@ -98,6 +99,18 @@ var (
 		Aggregation: view.Distribution(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 14, 16, 18, 20, 25, 30, 35, 40, 45, 50), //nolint:gomnd
 	}
 
+	EnginePlanLatency = stats.Float64(
+		"cerbos.dev/engine/plan_latency",
+		"Time to produce a query plan",
+		stats.UnitMilliseconds,
+	)
+
+	EnginePlanLatencyView = &view.View{
+		Measure:     EnginePlanLatency,
+		TagKeys:     []tag.Key{KeyEnginePlanStatus},
+		Aggregation: defaultLatencyDistribution(),
+	}
+
 	IndexEntryCount = stats.Int64(
 		"cerbos.dev/index/entry_count",
 		"Number of entries in the index",
@@ -116,6 +129,7 @@ var DefaultCerbosViews = []*view.View{
 	CompileDurationView,
 	EngineCheckLatencyView,
 	EngineCheckBatchSizeView,
+	EnginePlanLatencyView,
 	IndexEntryCountView,
 }
 

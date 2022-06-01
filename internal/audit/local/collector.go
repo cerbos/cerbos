@@ -83,6 +83,21 @@ func (d *decisionLogEntryCollector) add(v []byte) error {
 		return err
 	}
 
+	// convert old format records to new format
+	if entry.GetInputs() != nil && entry.GetCheckResources() == nil {
+		entry.Method = &auditv1.DecisionLogEntry_CheckResources_{
+			CheckResources: &auditv1.DecisionLogEntry_CheckResources{
+				Inputs:  entry.GetInputs(),
+				Outputs: entry.GetOutputs(),
+				Error:   entry.GetError(),
+			},
+		}
+
+		entry.Inputs = nil
+		entry.Outputs = nil
+		entry.Error = ""
+	}
+
 	d.buffer <- entry
 	return nil
 }

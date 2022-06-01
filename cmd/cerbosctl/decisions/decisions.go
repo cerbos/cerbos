@@ -87,15 +87,17 @@ func (c *Cmd) Validate() error {
 }
 
 const (
-	browserKey = "browser"
-	detailsKey = "details"
+	browserKey      = "browser"
+	checkDetailsKey = "checkDetails"
+	planDetailsKey  = "planDetails"
 )
 
 type decisionsUI struct {
-	app     *tview.Application
-	tabs    *tview.Pages
-	browser *browserPanel
-	details *detailsPanel
+	app          *tview.Application
+	tabs         *tview.Pages
+	browser      *browserPanel
+	checkDetails *checkDetailsPanel
+	planDetails  *planDetailsPanel
 }
 
 type browserPanel struct {
@@ -104,13 +106,21 @@ type browserPanel struct {
 	focusOrder   []tview.Primitive
 }
 
-type detailsPanel struct {
+type checkDetailsPanel struct {
 	inputsList       *tview.List
 	principalView    *tview.TextView
 	resourceView     *tview.TextView
 	actionsTable     *tview.Table
 	derivedRolesView *tview.TextView
 	focusOrder       []tview.Primitive
+}
+
+type planDetailsPanel struct {
+	principalView *tview.TextView
+	resourceView  *tview.TextView
+	planView      *tview.TextView
+	debugView     *tview.TextView
+	focusOrder    []tview.Primitive
 }
 
 func mkUI(entries []*auditv1.DecisionLogEntry) *decisionsUI {
@@ -120,7 +130,8 @@ func mkUI(entries []*auditv1.DecisionLogEntry) *decisionsUI {
 	ui.tabs = tview.NewPages()
 
 	mkBrowserPanel(ui, entries)
-	mkDetailsPanel(ui)
+	mkCheckDetailsPanel(ui)
+	mkPlanDetailsPanel(ui)
 
 	ui.app.SetRoot(ui.tabs, true)
 	ui.app.SetInputCapture(func(evt *tcell.EventKey) *tcell.EventKey {
@@ -208,11 +219,18 @@ func populateEntriesTable(ui *decisionsUI, entries []*auditv1.DecisionLogEntry) 
 	for _, entry := range entries {
 		ui.browser.entriesTable.SetCell(rowIndex, 0, tview.NewTableCell(entry.CallId).SetReference(entry))
 		ui.browser.entriesTable.SetCell(rowIndex, 1, tview.NewTableCell(entry.Timestamp.AsTime().Format(time.RFC3339)))
-		if len(entry.Inputs) > 0 {
-			ui.browser.entriesTable.SetCell(rowIndex, 2, tview.NewTableCell(entry.Inputs[0].RequestId))
-		} else {
-			ui.browser.entriesTable.SetCell(rowIndex, 2, tview.NewTableCell("-"))
+
+		requestID := "-"
+		switch t := entry.Method.(type) {
+		case *auditv1.DecisionLogEntry_CheckResources_:
+			if len(t.CheckResources.Inputs) > 0 {
+				requestID = t.CheckResources.Inputs[0].RequestId
+			}
+		case *auditv1.DecisionLogEntry_PlanResources_:
+			requestID = t.PlanResources.Input.RequestId
 		}
+
+		ui.browser.entriesTable.SetCell(rowIndex, 2, tview.NewTableCell(requestID))
 		ui.browser.entriesTable.SetCell(rowIndex, 3, tview.NewTableCell(entry.Peer.Address))
 		ui.browser.entriesTable.SetCell(rowIndex, 4, tview.NewTableCell(entry.Peer.UserAgent))
 		ui.browser.entriesTable.SetCell(rowIndex, 5, tview.NewTableCell(entry.Peer.ForwardedFor))
@@ -235,8 +253,8 @@ func populateEntriesTable(ui *decisionsUI, entries []*auditv1.DecisionLogEntry) 
 }
 
 //nolint:gomnd
-func mkDetailsPanel(ui *decisionsUI) {
-	ui.details = &detailsPanel{
+func mkCheckDetailsPanel(ui *decisionsUI) {
+	ui.checkDetails = &checkDetailsPanel{
 		inputsList:    tview.NewList(),
 		principalView: tview.NewTextView().SetDynamicColors(true),
 		resourceView:  tview.NewTextView().SetDynamicColors(true),
@@ -248,18 +266,18 @@ func mkDetailsPanel(ui *decisionsUI) {
 			SetTextColor(tcell.ColorSeaGreen),
 	}
 
-	ui.details.focusOrder = []tview.Primitive{
-		ui.details.inputsList,
-		ui.details.principalView,
-		ui.details.resourceView,
-		ui.details.actionsTable,
+	ui.checkDetails.focusOrder = []tview.Primitive{
+		ui.checkDetails.inputsList,
+		ui.checkDetails.principalView,
+		ui.checkDetails.resourceView,
+		ui.checkDetails.actionsTable,
 	}
 
-	ui.details.inputsList.SetBorder(true).SetTitle(fmt.Sprintf("| %stems |", keyCode("I")))
-	ui.details.actionsTable.SetBorder(true).SetTitle(fmt.Sprintf("| %sctions |", keyCode("A")))
-	ui.details.principalView.SetBorder(true).SetTitle(fmt.Sprintf("| %srincipal |", keyCode("P")))
-	ui.details.resourceView.SetBorder(true).SetTitle(fmt.Sprintf("| %sesource |", keyCode("R")))
-	ui.details.derivedRolesView.SetBorder(true).SetTitle("| Effective Derived Roles |")
+	ui.checkDetails.inputsList.SetBorder(true).SetTitle(fmt.Sprintf("| %stems |", keyCode("I")))
+	ui.checkDetails.actionsTable.SetBorder(true).SetTitle(fmt.Sprintf("| %sctions |", keyCode("A")))
+	ui.checkDetails.principalView.SetBorder(true).SetTitle(fmt.Sprintf("| %srincipal |", keyCode("P")))
+	ui.checkDetails.resourceView.SetBorder(true).SetTitle(fmt.Sprintf("| %sesource |", keyCode("R")))
+	ui.checkDetails.derivedRolesView.SetBorder(true).SetTitle("| Effective Derived Roles |")
 
 	info := tview.NewTextView().SetDynamicColors(true).SetWrap(false)
 	fmt.Fprintf(info, "%s  %s  %s", keyDesc("⭾", "Switch between panes"), keyDesc("ESC", "Back"), keyDesc("Q", "Exit"))
@@ -267,23 +285,23 @@ func mkDetailsPanel(ui *decisionsUI) {
 	layout := tview.NewFlex().
 		SetDirection(tview.FlexRow).
 		AddItem(tview.NewFlex().
-			AddItem(ui.details.inputsList, 0, 1, true).
+			AddItem(ui.checkDetails.inputsList, 0, 1, true).
 			AddItem(tview.NewFlex().
 				SetDirection(tview.FlexRow).
 				AddItem(tview.NewFlex().
-					AddItem(ui.details.principalView, 0, 1, true).
-					AddItem(ui.details.resourceView, 0, 1, false), 0, 2, true).
-				AddItem(ui.details.actionsTable, 0, 1, false).
-				AddItem(ui.details.derivedRolesView, 3, 0, false), 0, 4, false), 0, 1, true).
+					AddItem(ui.checkDetails.principalView, 0, 1, true).
+					AddItem(ui.checkDetails.resourceView, 0, 1, false), 0, 2, true).
+				AddItem(ui.checkDetails.actionsTable, 0, 1, false).
+				AddItem(ui.checkDetails.derivedRolesView, 3, 0, false), 0, 4, false), 0, 1, true).
 		AddItem(info, 1, 0, false)
 
 	layout.SetInputCapture(func(key *tcell.EventKey) *tcell.EventKey {
 		switch key.Key() {
 		case tcell.KeyTab:
-			ui.app.SetFocus(ui.details.switchFocus(false))
+			ui.app.SetFocus(ui.checkDetails.switchFocus(false))
 			return nil
 		case tcell.KeyBacktab:
-			ui.app.SetFocus(ui.details.switchFocus(true))
+			ui.app.SetFocus(ui.checkDetails.switchFocus(true))
 			return nil
 		case tcell.KeyEsc:
 			ui.tabs.SwitchToPage(browserKey)
@@ -291,16 +309,16 @@ func mkDetailsPanel(ui *decisionsUI) {
 		case tcell.KeyRune:
 			switch key.Rune() {
 			case 'p', 'P':
-				ui.app.SetFocus(ui.details.principalView)
+				ui.app.SetFocus(ui.checkDetails.principalView)
 				return nil
 			case 'r', 'R':
-				ui.app.SetFocus(ui.details.resourceView)
+				ui.app.SetFocus(ui.checkDetails.resourceView)
 				return nil
 			case 'a', 'A':
-				ui.app.SetFocus(ui.details.actionsTable)
+				ui.app.SetFocus(ui.checkDetails.actionsTable)
 				return nil
 			case 'i', 'I':
-				ui.app.SetFocus(ui.details.inputsList)
+				ui.app.SetFocus(ui.checkDetails.inputsList)
 				return nil
 			default:
 				return key
@@ -310,7 +328,72 @@ func mkDetailsPanel(ui *decisionsUI) {
 		}
 	})
 
-	ui.tabs.AddPage(detailsKey, layout, true, false)
+	ui.tabs.AddPage(checkDetailsKey, layout, true, false)
+}
+
+//nolint:gomnd
+func mkPlanDetailsPanel(ui *decisionsUI) {
+	ui.planDetails = &planDetailsPanel{
+		principalView: tview.NewTextView().SetDynamicColors(true),
+		resourceView:  tview.NewTextView().SetDynamicColors(true),
+		planView:      tview.NewTextView().SetDynamicColors(true),
+		debugView:     tview.NewTextView().SetTextAlign(tview.AlignCenter).SetTextColor(tcell.ColorGreen),
+	}
+
+	ui.planDetails.focusOrder = []tview.Primitive{
+		ui.planDetails.principalView,
+		ui.planDetails.resourceView,
+		ui.planDetails.planView,
+	}
+
+	ui.planDetails.principalView.SetBorder(true).SetTitle(fmt.Sprintf("| %srincipal |", keyCode("P")))
+	ui.planDetails.resourceView.SetBorder(true).SetTitle(fmt.Sprintf("| %sesource |", keyCode("R")))
+	ui.planDetails.planView.SetBorder(true).SetTitle(fmt.Sprintf("| P%san |", keyCode("l")))
+	ui.planDetails.debugView.SetBorder(true).SetTitle("| Expression |")
+
+	info := tview.NewTextView().SetDynamicColors(true).SetWrap(false)
+	fmt.Fprintf(info, "%s  %s  %s", keyDesc("⭾", "Switch between panes"), keyDesc("ESC", "Back"), keyDesc("Q", "Exit"))
+
+	layout := tview.NewFlex().
+		SetDirection(tview.FlexRow).
+		AddItem(tview.NewFlex().
+			AddItem(ui.planDetails.principalView, 0, 1, false).
+			AddItem(ui.planDetails.resourceView, 0, 1, false), 0, 2, false).
+		AddItem(ui.planDetails.planView, 0, 4, true).
+		AddItem(ui.planDetails.debugView, 3, 0, false).
+		AddItem(info, 1, 0, false)
+
+	layout.SetInputCapture(func(key *tcell.EventKey) *tcell.EventKey {
+		switch key.Key() {
+		case tcell.KeyTab:
+			ui.app.SetFocus(ui.planDetails.switchFocus(false))
+			return nil
+		case tcell.KeyBacktab:
+			ui.app.SetFocus(ui.planDetails.switchFocus(true))
+			return nil
+		case tcell.KeyEsc:
+			ui.tabs.SwitchToPage(browserKey)
+			return nil
+		case tcell.KeyRune:
+			switch key.Rune() {
+			case 'p', 'P':
+				ui.app.SetFocus(ui.planDetails.principalView)
+				return nil
+			case 'r', 'R':
+				ui.app.SetFocus(ui.planDetails.resourceView)
+				return nil
+			case 'l', 'L':
+				ui.app.SetFocus(ui.planDetails.planView)
+				return nil
+			default:
+				return key
+			}
+		default:
+			return key
+		}
+	})
+
+	ui.tabs.AddPage(planDetailsKey, layout, true, false)
 }
 
 func (d *decisionsUI) Start() error {
@@ -326,38 +409,47 @@ func (d *decisionsUI) entrySelectedFunc(row, _ int) {
 	}
 }
 
-//nolint:gomnd
 func (d *decisionsUI) showDetailsPanel(entry *auditv1.DecisionLogEntry) {
-	d.details.inputsList.Clear()
+	switch t := entry.Method.(type) {
+	case *auditv1.DecisionLogEntry_CheckResources_:
+		d.showCheckDetailsPanel(t.CheckResources)
+	case *auditv1.DecisionLogEntry_PlanResources_:
+		d.showPlanDetailsPanel(t.PlanResources)
+	}
+}
+
+//nolint:gomnd
+func (d *decisionsUI) showCheckDetailsPanel(entry *auditv1.DecisionLogEntry_CheckResources) {
+	d.checkDetails.inputsList.Clear()
 
 	printer := newPrettyJSON()
 	for i, inp := range entry.Inputs {
 		text := fmt.Sprintf("%d. %s|%s|%s", i+1, inp.Principal.Id, inp.Resource.Kind, inp.Resource.Id)
-		d.details.inputsList.AddItem(text, "", 0, nil)
+		d.checkDetails.inputsList.AddItem(text, "", 0, nil)
 	}
 
 	changedFunc := func(index int, _, _ string, _ rune) {
 		inp := entry.Inputs[index]
 
-		d.details.principalView.Clear()
-		printer.write(tview.ANSIWriter(d.details.principalView), inp.Principal)
+		d.checkDetails.principalView.Clear()
+		printer.write(tview.ANSIWriter(d.checkDetails.principalView), inp.Principal)
 
-		d.details.resourceView.Clear()
-		printer.write(tview.ANSIWriter(d.details.resourceView), inp.Resource)
+		d.checkDetails.resourceView.Clear()
+		printer.write(tview.ANSIWriter(d.checkDetails.resourceView), inp.Resource)
 
 		output := entry.Outputs[index]
-		d.details.actionsTable.Clear()
+		d.checkDetails.actionsTable.Clear()
 
-		d.details.actionsTable.SetCell(0, 0, tview.NewTableCell(""))
-		d.details.actionsTable.SetCell(0, 1, tview.NewTableCell("Action").
+		d.checkDetails.actionsTable.SetCell(0, 0, tview.NewTableCell(""))
+		d.checkDetails.actionsTable.SetCell(0, 1, tview.NewTableCell("Action").
 			SetAttributes(tcell.AttrBold).
 			SetAlign(tview.AlignCenter).
 			SetExpansion(2))
-		d.details.actionsTable.SetCell(0, 2, tview.NewTableCell("Effect").
+		d.checkDetails.actionsTable.SetCell(0, 2, tview.NewTableCell("Effect").
 			SetAttributes(tcell.AttrBold).
 			SetAlign(tview.AlignCenter).
 			SetExpansion(1))
-		d.details.actionsTable.SetCell(0, 3, tview.NewTableCell("Policy").
+		d.checkDetails.actionsTable.SetCell(0, 3, tview.NewTableCell("Policy").
 			SetAttributes(tcell.AttrBold).
 			SetAlign(tview.AlignCenter).
 			SetExpansion(4))
@@ -371,32 +463,60 @@ func (d *decisionsUI) showDetailsPanel(entry *auditv1.DecisionLogEntry) {
 				fgColour = tcell.ColorGreen
 			}
 
-			d.details.actionsTable.SetCell(row, 0, tview.NewTableCell(icon).
+			d.checkDetails.actionsTable.SetCell(row, 0, tview.NewTableCell(icon).
 				SetAlign(tview.AlignCenter).
 				SetAttributes(tcell.AttrBold).
 				SetTextColor(fgColour))
-			d.details.actionsTable.SetCell(row, 1, tview.NewTableCell(action))
-			d.details.actionsTable.SetCell(row, 2, tview.NewTableCell(actionMeta.Effect.String()))
-			d.details.actionsTable.SetCell(row, 3, tview.NewTableCell(actionMeta.Policy))
+			d.checkDetails.actionsTable.SetCell(row, 1, tview.NewTableCell(action))
+			d.checkDetails.actionsTable.SetCell(row, 2, tview.NewTableCell(actionMeta.Effect.String()))
+			d.checkDetails.actionsTable.SetCell(row, 3, tview.NewTableCell(actionMeta.Policy))
 			row++
 		}
 
-		d.details.derivedRolesView.Clear()
-		fmt.Fprint(d.details.derivedRolesView, strings.Join(output.EffectiveDerivedRoles, ","))
+		d.checkDetails.derivedRolesView.Clear()
+		fmt.Fprint(d.checkDetails.derivedRolesView, strings.Join(output.EffectiveDerivedRoles, ","))
 	}
 
-	d.details.inputsList.SetChangedFunc(changedFunc)
+	d.checkDetails.inputsList.SetChangedFunc(changedFunc)
 	changedFunc(0, "", "", 0)
 
-	d.tabs.SwitchToPage(detailsKey)
+	d.tabs.SwitchToPage(checkDetailsKey)
+}
+
+func (d *decisionsUI) showPlanDetailsPanel(entry *auditv1.DecisionLogEntry_PlanResources) {
+	printer := newPrettyJSON()
+	inp := entry.Input
+
+	d.planDetails.principalView.Clear()
+	printer.write(tview.ANSIWriter(d.planDetails.principalView), inp.Principal)
+
+	d.planDetails.resourceView.Clear()
+	printer.write(tview.ANSIWriter(d.planDetails.resourceView), inp.Resource)
+
+	d.planDetails.planView.Clear()
+	d.planDetails.debugView.Clear()
+	if entry.Error != "" {
+		fmt.Fprintln(d.planDetails.planView, entry.Error)
+	} else {
+		if entry.Output.FilterDebug != "" {
+			fmt.Fprint(d.planDetails.debugView, entry.Output.FilterDebug)
+		}
+		printer.write(tview.ANSIWriter(d.planDetails.planView), entry.Output.Filter)
+	}
+
+	d.tabs.SwitchToPage(planDetailsKey)
 }
 
 func (bp *browserPanel) switchFocus(backward bool) tview.Primitive {
 	return switchFocus(bp.focusOrder, backward)
 }
 
-func (dp *detailsPanel) switchFocus(backward bool) tview.Primitive {
-	return switchFocus(dp.focusOrder, backward)
+func (cdp *checkDetailsPanel) switchFocus(backward bool) tview.Primitive {
+	return switchFocus(cdp.focusOrder, backward)
+}
+
+func (pdp *planDetailsPanel) switchFocus(backward bool) tview.Primitive {
+	return switchFocus(pdp.focusOrder, backward)
 }
 
 func switchFocus(items []tview.Primitive, backward bool) tview.Primitive {

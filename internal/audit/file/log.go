@@ -128,14 +128,17 @@ func encodeSingular(enc zapcore.ObjectEncoder, fieldName string, fd protoreflect
 		enc.AddBinary(fieldName, v.Bytes())
 	case protoreflect.MessageKind:
 		msg := v.Message()
-		// output timestamps as readable timestamps instead of constituent components (seconds and nanoseconds)
-		if msg.Descriptor().FullName() == "google.protobuf.Timestamp" {
+
+		// output readbale timestamps and values
+		switch msg.Descriptor().FullName() {
+		case "google.protobuf.Timestamp", "google.protobuf.Value":
 			if tsVal, err := protojson.Marshal(msg.Interface()); err == nil {
 				enc.AddByteString(fieldName, bytes.Trim(tsVal, `"`))
 				return
 			}
+		default:
+			_ = enc.AddObject(fieldName, protoMsg{msg: msg.Interface()})
 		}
-		_ = enc.AddObject(fieldName, protoMsg{msg: msg.Interface()})
 	default:
 		// do nothing
 	}

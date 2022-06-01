@@ -609,7 +609,7 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/cerbosrequestv1PlanResourcesRequest"
+              "$ref": "#/definitions/v1PlanResourcesRequest"
             }
           }
         ],
@@ -795,7 +795,7 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/cerbosrequestv1PlanResourcesRequest"
+              "$ref": "#/definitions/v1PlanResourcesRequest"
             }
           }
         ],
@@ -1024,6 +1024,40 @@
         }
       }
     },
+    "DecisionLogEntryCheckResources": {
+      "type": "object",
+      "properties": {
+        "inputs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/v1CheckInput"
+          }
+        },
+        "outputs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/v1CheckOutput"
+          }
+        },
+        "error": {
+          "type": "string"
+        }
+      }
+    },
+    "DecisionLogEntryPlanResources": {
+      "type": "object",
+      "properties": {
+        "input": {
+          "$ref": "#/definitions/v1PlanResourcesInput"
+        },
+        "output": {
+          "$ref": "#/definitions/v1PlanResourcesOutput"
+        },
+        "error": {
+          "type": "string"
+        }
+      }
+    },
     "ExpressionOperand": {
       "type": "object",
       "properties": {
@@ -1031,7 +1065,7 @@
           "type": "object"
         },
         "expression": {
-          "$ref": "#/definitions/PlanResourcesResponseExpression"
+          "$ref": "#/definitions/PlanResourcesFilterExpression"
         },
         "variable": {
           "type": "string"
@@ -1108,7 +1142,7 @@
       },
       "description": "Unique resource instance ID supplied in the request."
     },
-    "PlanResourcesResponseExpression": {
+    "PlanResourcesFilterExpression": {
       "type": "object",
       "properties": {
         "operator": {
@@ -1123,29 +1157,6 @@
         }
       },
       "description": "CEL expression"
-    },
-    "PlanResourcesResponseFilter": {
-      "type": "object",
-      "properties": {
-        "kind": {
-          "$ref": "#/definitions/PlanResourcesResponseFilterKind",
-          "description": "Filter kind. Defines whether the given action is always allowed, always denied or allowed conditionally."
-        },
-        "condition": {
-          "$ref": "#/definitions/ExpressionOperand",
-          "description": "Filter condition. Only populated if kind is KIND_CONDITIONAL."
-        }
-      }
-    },
-    "PlanResourcesResponseFilterKind": {
-      "type": "string",
-      "enum": [
-        "KIND_UNSPECIFIED",
-        "KIND_ALWAYS_ALLOWED",
-        "KIND_ALWAYS_DENIED",
-        "KIND_CONDITIONAL"
-      ],
-      "default": "KIND_UNSPECIFIED"
     },
     "PlaygroundEvaluateResponseEvalResult": {
       "type": "object",
@@ -1415,41 +1426,6 @@
         }
       },
       "description": "Structured auxiliary data useful for evaluating the request"
-    },
-    "cerbosrequestv1PlanResourcesRequest": {
-      "type": "object",
-      "properties": {
-        "requestId": {
-          "type": "string",
-          "example": "c2db17b8-4f9f-4fb1-acfd-9162a02be42b",
-          "description": "Optional application-specific ID useful for correlating logs for analysis."
-        },
-        "action": {
-          "type": "string",
-          "example": "view:public",
-          "description": "Action to be applied to each resource in the list.",
-          "required": [
-            "action"
-          ]
-        },
-        "principal": {
-          "$ref": "#/definitions/enginev1Principal"
-        },
-        "resource": {
-          "$ref": "#/definitions/v1PlanResourcesRequestResource"
-        },
-        "auxData": {
-          "$ref": "#/definitions/cerbosrequestv1AuxData"
-        },
-        "includeMeta": {
-          "type": "boolean",
-          "description": "Opt to receive request processing metadata in the response."
-        }
-      },
-      "description": "PDP Resources Query Plan Request",
-      "required": [
-        "action"
-      ]
     },
     "enginev1Principal": {
       "type": "object",
@@ -2154,16 +2130,25 @@
           "type": "array",
           "items": {
             "$ref": "#/definitions/v1CheckInput"
-          }
+          },
+          "description": "Deprecated. Use method.check_resources.inputs instead."
         },
         "outputs": {
           "type": "array",
           "items": {
             "$ref": "#/definitions/v1CheckOutput"
-          }
+          },
+          "description": "Deprecated. Use method.check_resources.outputs instead."
         },
         "error": {
-          "type": "string"
+          "type": "string",
+          "description": "Deprecated. Use method.check_resources.error instead."
+        },
+        "checkResources": {
+          "$ref": "#/definitions/DecisionLogEntryCheckResources"
+        },
+        "planResources": {
+          "$ref": "#/definitions/DecisionLogEntryPlanResources"
         }
       }
     },
@@ -2352,7 +2337,53 @@
         }
       }
     },
-    "v1PlanResourcesRequestResource": {
+    "v1PlanResourcesFilter": {
+      "type": "object",
+      "properties": {
+        "kind": {
+          "$ref": "#/definitions/v1PlanResourcesFilterKind",
+          "description": "Filter kind. Defines whether the given action is always allowed, always denied or allowed conditionally."
+        },
+        "condition": {
+          "$ref": "#/definitions/ExpressionOperand",
+          "description": "Filter condition. Only populated if kind is KIND_CONDITIONAL."
+        }
+      }
+    },
+    "v1PlanResourcesFilterKind": {
+      "type": "string",
+      "enum": [
+        "KIND_UNSPECIFIED",
+        "KIND_ALWAYS_ALLOWED",
+        "KIND_ALWAYS_DENIED",
+        "KIND_CONDITIONAL"
+      ],
+      "default": "KIND_UNSPECIFIED"
+    },
+    "v1PlanResourcesInput": {
+      "type": "object",
+      "properties": {
+        "requestId": {
+          "type": "string"
+        },
+        "action": {
+          "type": "string"
+        },
+        "principal": {
+          "$ref": "#/definitions/enginev1Principal"
+        },
+        "resource": {
+          "$ref": "#/definitions/v1PlanResourcesInputResource"
+        },
+        "auxData": {
+          "$ref": "#/definitions/cerbosenginev1AuxData"
+        },
+        "includeMeta": {
+          "type": "boolean"
+        }
+      }
+    },
+    "v1PlanResourcesInputResource": {
       "type": "object",
       "properties": {
         "kind": {
@@ -2387,6 +2418,67 @@
         "kind"
       ]
     },
+    "v1PlanResourcesOutput": {
+      "type": "object",
+      "properties": {
+        "requestId": {
+          "type": "string"
+        },
+        "action": {
+          "type": "string"
+        },
+        "kind": {
+          "type": "string"
+        },
+        "policyVersion": {
+          "type": "string"
+        },
+        "scope": {
+          "type": "string"
+        },
+        "filter": {
+          "$ref": "#/definitions/v1PlanResourcesFilter"
+        },
+        "filterDebug": {
+          "type": "string"
+        }
+      }
+    },
+    "v1PlanResourcesRequest": {
+      "type": "object",
+      "properties": {
+        "requestId": {
+          "type": "string",
+          "example": "c2db17b8-4f9f-4fb1-acfd-9162a02be42b",
+          "description": "Optional application-specific ID useful for correlating logs for analysis."
+        },
+        "action": {
+          "type": "string",
+          "example": "view:public",
+          "description": "Action to be applied to each resource in the list.",
+          "required": [
+            "action"
+          ]
+        },
+        "principal": {
+          "$ref": "#/definitions/enginev1Principal"
+        },
+        "resource": {
+          "$ref": "#/definitions/v1PlanResourcesInputResource"
+        },
+        "auxData": {
+          "$ref": "#/definitions/cerbosrequestv1AuxData"
+        },
+        "includeMeta": {
+          "type": "boolean",
+          "description": "Opt to receive request processing metadata in the response."
+        }
+      },
+      "description": "PDP Resources Query Plan Request",
+      "required": [
+        "action"
+      ]
+    },
     "v1PlanResourcesResponse": {
       "type": "object",
       "properties": {
@@ -2412,7 +2504,7 @@
           "description": "The policy version."
         },
         "filter": {
-          "$ref": "#/definitions/PlanResourcesResponseFilter",
+          "$ref": "#/definitions/v1PlanResourcesFilter",
           "description": "Filter"
         },
         "meta": {
@@ -2536,7 +2628,7 @@
           "$ref": "#/definitions/v1CheckResourceBatchRequest"
         },
         "planResources": {
-          "$ref": "#/definitions/cerbosrequestv1PlanResourcesRequest"
+          "$ref": "#/definitions/v1PlanResourcesRequest"
         },
         "checkResources": {
           "$ref": "#/definitions/v1CheckResourcesRequest"

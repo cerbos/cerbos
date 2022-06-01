@@ -6,14 +6,14 @@ package responsev1
 
 import (
 	fmt "fmt"
-	v13 "github.com/cerbos/cerbos/api/genpb/cerbos/audit/v1"
-	v1 "github.com/cerbos/cerbos/api/genpb/cerbos/effect/v1"
-	v12 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
-	v11 "github.com/cerbos/cerbos/api/genpb/cerbos/schema/v1"
+	v14 "github.com/cerbos/cerbos/api/genpb/cerbos/audit/v1"
+	v11 "github.com/cerbos/cerbos/api/genpb/cerbos/effect/v1"
+	v1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
+	v13 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
+	v12 "github.com/cerbos/cerbos/api/genpb/cerbos/schema/v1"
 	proto "google.golang.org/protobuf/proto"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	emptypb "google.golang.org/protobuf/types/known/emptypb"
-	structpb "google.golang.org/protobuf/types/known/structpb"
 	io "io"
 	bits "math/bits"
 )
@@ -24,215 +24,6 @@ const (
 	// Verify that runtime/protoimpl is sufficiently up-to-date.
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
-
-func (m *PlanResourcesResponse_Expression_Operand) MarshalVT() (dAtA []byte, err error) {
-	if m == nil {
-		return nil, nil
-	}
-	size := m.SizeVT()
-	dAtA = make([]byte, size)
-	n, err := m.MarshalToSizedBufferVT(dAtA[:size])
-	if err != nil {
-		return nil, err
-	}
-	return dAtA[:n], nil
-}
-
-func (m *PlanResourcesResponse_Expression_Operand) MarshalToVT(dAtA []byte) (int, error) {
-	size := m.SizeVT()
-	return m.MarshalToSizedBufferVT(dAtA[:size])
-}
-
-func (m *PlanResourcesResponse_Expression_Operand) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
-	if m == nil {
-		return 0, nil
-	}
-	i := len(dAtA)
-	_ = i
-	var l int
-	_ = l
-	if m.unknownFields != nil {
-		i -= len(m.unknownFields)
-		copy(dAtA[i:], m.unknownFields)
-	}
-	if vtmsg, ok := m.Node.(interface {
-		MarshalToVT([]byte) (int, error)
-		SizeVT() int
-	}); ok {
-		{
-			size := vtmsg.SizeVT()
-			i -= size
-			if _, err := vtmsg.MarshalToVT(dAtA[i:]); err != nil {
-				return 0, err
-			}
-		}
-	}
-	return len(dAtA) - i, nil
-}
-
-func (m *PlanResourcesResponse_Expression_Operand_Value) MarshalToVT(dAtA []byte) (int, error) {
-	size := m.SizeVT()
-	return m.MarshalToSizedBufferVT(dAtA[:size])
-}
-
-func (m *PlanResourcesResponse_Expression_Operand_Value) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
-	i := len(dAtA)
-	if m.Value != nil {
-		if marshalto, ok := interface{}(m.Value).(interface {
-			MarshalToSizedBufferVT([]byte) (int, error)
-		}); ok {
-			size, err := marshalto.MarshalToSizedBufferVT(dAtA[:i])
-			if err != nil {
-				return 0, err
-			}
-			i -= size
-			i = encodeVarint(dAtA, i, uint64(size))
-		} else {
-			encoded, err := proto.Marshal(m.Value)
-			if err != nil {
-				return 0, err
-			}
-			i -= len(encoded)
-			copy(dAtA[i:], encoded)
-			i = encodeVarint(dAtA, i, uint64(len(encoded)))
-		}
-		i--
-		dAtA[i] = 0xa
-	}
-	return len(dAtA) - i, nil
-}
-func (m *PlanResourcesResponse_Expression_Operand_Expression) MarshalToVT(dAtA []byte) (int, error) {
-	size := m.SizeVT()
-	return m.MarshalToSizedBufferVT(dAtA[:size])
-}
-
-func (m *PlanResourcesResponse_Expression_Operand_Expression) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
-	i := len(dAtA)
-	if m.Expression != nil {
-		size, err := m.Expression.MarshalToSizedBufferVT(dAtA[:i])
-		if err != nil {
-			return 0, err
-		}
-		i -= size
-		i = encodeVarint(dAtA, i, uint64(size))
-		i--
-		dAtA[i] = 0x12
-	}
-	return len(dAtA) - i, nil
-}
-func (m *PlanResourcesResponse_Expression_Operand_Variable) MarshalToVT(dAtA []byte) (int, error) {
-	size := m.SizeVT()
-	return m.MarshalToSizedBufferVT(dAtA[:size])
-}
-
-func (m *PlanResourcesResponse_Expression_Operand_Variable) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
-	i := len(dAtA)
-	i -= len(m.Variable)
-	copy(dAtA[i:], m.Variable)
-	i = encodeVarint(dAtA, i, uint64(len(m.Variable)))
-	i--
-	dAtA[i] = 0x1a
-	return len(dAtA) - i, nil
-}
-func (m *PlanResourcesResponse_Expression) MarshalVT() (dAtA []byte, err error) {
-	if m == nil {
-		return nil, nil
-	}
-	size := m.SizeVT()
-	dAtA = make([]byte, size)
-	n, err := m.MarshalToSizedBufferVT(dAtA[:size])
-	if err != nil {
-		return nil, err
-	}
-	return dAtA[:n], nil
-}
-
-func (m *PlanResourcesResponse_Expression) MarshalToVT(dAtA []byte) (int, error) {
-	size := m.SizeVT()
-	return m.MarshalToSizedBufferVT(dAtA[:size])
-}
-
-func (m *PlanResourcesResponse_Expression) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
-	if m == nil {
-		return 0, nil
-	}
-	i := len(dAtA)
-	_ = i
-	var l int
-	_ = l
-	if m.unknownFields != nil {
-		i -= len(m.unknownFields)
-		copy(dAtA[i:], m.unknownFields)
-	}
-	if len(m.Operands) > 0 {
-		for iNdEx := len(m.Operands) - 1; iNdEx >= 0; iNdEx-- {
-			size, err := m.Operands[iNdEx].MarshalToSizedBufferVT(dAtA[:i])
-			if err != nil {
-				return 0, err
-			}
-			i -= size
-			i = encodeVarint(dAtA, i, uint64(size))
-			i--
-			dAtA[i] = 0x12
-		}
-	}
-	if len(m.Operator) > 0 {
-		i -= len(m.Operator)
-		copy(dAtA[i:], m.Operator)
-		i = encodeVarint(dAtA, i, uint64(len(m.Operator)))
-		i--
-		dAtA[i] = 0xa
-	}
-	return len(dAtA) - i, nil
-}
-
-func (m *PlanResourcesResponse_Filter) MarshalVT() (dAtA []byte, err error) {
-	if m == nil {
-		return nil, nil
-	}
-	size := m.SizeVT()
-	dAtA = make([]byte, size)
-	n, err := m.MarshalToSizedBufferVT(dAtA[:size])
-	if err != nil {
-		return nil, err
-	}
-	return dAtA[:n], nil
-}
-
-func (m *PlanResourcesResponse_Filter) MarshalToVT(dAtA []byte) (int, error) {
-	size := m.SizeVT()
-	return m.MarshalToSizedBufferVT(dAtA[:size])
-}
-
-func (m *PlanResourcesResponse_Filter) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
-	if m == nil {
-		return 0, nil
-	}
-	i := len(dAtA)
-	_ = i
-	var l int
-	_ = l
-	if m.unknownFields != nil {
-		i -= len(m.unknownFields)
-		copy(dAtA[i:], m.unknownFields)
-	}
-	if m.Condition != nil {
-		size, err := m.Condition.MarshalToSizedBufferVT(dAtA[:i])
-		if err != nil {
-			return 0, err
-		}
-		i -= size
-		i = encodeVarint(dAtA, i, uint64(size))
-		i--
-		dAtA[i] = 0x12
-	}
-	if m.Kind != 0 {
-		i = encodeVarint(dAtA, i, uint64(m.Kind))
-		i--
-		dAtA[i] = 0x8
-	}
-	return len(dAtA) - i, nil
-}
 
 func (m *PlanResourcesResponse_Meta) MarshalVT() (dAtA []byte, err error) {
 	if m == nil {
@@ -322,12 +113,24 @@ func (m *PlanResourcesResponse) MarshalToSizedBufferVT(dAtA []byte) (int, error)
 		dAtA[i] = 0x32
 	}
 	if m.Filter != nil {
-		size, err := m.Filter.MarshalToSizedBufferVT(dAtA[:i])
-		if err != nil {
-			return 0, err
+		if marshalto, ok := interface{}(m.Filter).(interface {
+			MarshalToSizedBufferVT([]byte) (int, error)
+		}); ok {
+			size, err := marshalto.MarshalToSizedBufferVT(dAtA[:i])
+			if err != nil {
+				return 0, err
+			}
+			i -= size
+			i = encodeVarint(dAtA, i, uint64(size))
+		} else {
+			encoded, err := proto.Marshal(m.Filter)
+			if err != nil {
+				return 0, err
+			}
+			i -= len(encoded)
+			copy(dAtA[i:], encoded)
+			i = encodeVarint(dAtA, i, uint64(len(encoded)))
 		}
-		i -= size
-		i = encodeVarint(dAtA, i, uint64(size))
 		i--
 		dAtA[i] = 0x2a
 	}
@@ -2355,102 +2158,6 @@ func encodeVarint(dAtA []byte, offset int, v uint64) int {
 	dAtA[offset] = uint8(v)
 	return base
 }
-func (m *PlanResourcesResponse_Expression_Operand) SizeVT() (n int) {
-	if m == nil {
-		return 0
-	}
-	var l int
-	_ = l
-	if vtmsg, ok := m.Node.(interface{ SizeVT() int }); ok {
-		n += vtmsg.SizeVT()
-	}
-	if m.unknownFields != nil {
-		n += len(m.unknownFields)
-	}
-	return n
-}
-
-func (m *PlanResourcesResponse_Expression_Operand_Value) SizeVT() (n int) {
-	if m == nil {
-		return 0
-	}
-	var l int
-	_ = l
-	if m.Value != nil {
-		if size, ok := interface{}(m.Value).(interface {
-			SizeVT() int
-		}); ok {
-			l = size.SizeVT()
-		} else {
-			l = proto.Size(m.Value)
-		}
-		n += 1 + l + sov(uint64(l))
-	}
-	return n
-}
-func (m *PlanResourcesResponse_Expression_Operand_Expression) SizeVT() (n int) {
-	if m == nil {
-		return 0
-	}
-	var l int
-	_ = l
-	if m.Expression != nil {
-		l = m.Expression.SizeVT()
-		n += 1 + l + sov(uint64(l))
-	}
-	return n
-}
-func (m *PlanResourcesResponse_Expression_Operand_Variable) SizeVT() (n int) {
-	if m == nil {
-		return 0
-	}
-	var l int
-	_ = l
-	l = len(m.Variable)
-	n += 1 + l + sov(uint64(l))
-	return n
-}
-func (m *PlanResourcesResponse_Expression) SizeVT() (n int) {
-	if m == nil {
-		return 0
-	}
-	var l int
-	_ = l
-	l = len(m.Operator)
-	if l > 0 {
-		n += 1 + l + sov(uint64(l))
-	}
-	if len(m.Operands) > 0 {
-		for _, e := range m.Operands {
-			l = e.SizeVT()
-			n += 1 + l + sov(uint64(l))
-		}
-	}
-	if m.unknownFields != nil {
-		n += len(m.unknownFields)
-	}
-	return n
-}
-
-func (m *PlanResourcesResponse_Filter) SizeVT() (n int) {
-	if m == nil {
-		return 0
-	}
-	var l int
-	_ = l
-	if m.Kind != 0 {
-		n += 1 + sov(uint64(m.Kind))
-	}
-	if m.Condition != nil {
-		l = m.Condition.SizeVT()
-		n += 1 + l + sov(uint64(l))
-	}
-	if m.unknownFields != nil {
-		n += len(m.unknownFields)
-	}
-	return n
-}
-
 func (m *PlanResourcesResponse_Meta) SizeVT() (n int) {
 	if m == nil {
 		return 0
@@ -2494,7 +2201,13 @@ func (m *PlanResourcesResponse) SizeVT() (n int) {
 		n += 1 + l + sov(uint64(l))
 	}
 	if m.Filter != nil {
-		l = m.Filter.SizeVT()
+		if size, ok := interface{}(m.Filter).(interface {
+			SizeVT() int
+		}); ok {
+			l = size.SizeVT()
+		} else {
+			l = proto.Size(m.Filter)
+		}
 		n += 1 + l + sov(uint64(l))
 	}
 	if m.Meta != nil {
@@ -3403,410 +3116,6 @@ func sov(x uint64) (n int) {
 func soz(x uint64) (n int) {
 	return sov(uint64((x << 1) ^ uint64((int64(x) >> 63))))
 }
-func (m *PlanResourcesResponse_Expression_Operand) UnmarshalVT(dAtA []byte) error {
-	l := len(dAtA)
-	iNdEx := 0
-	for iNdEx < l {
-		preIndex := iNdEx
-		var wire uint64
-		for shift := uint(0); ; shift += 7 {
-			if shift >= 64 {
-				return ErrIntOverflow
-			}
-			if iNdEx >= l {
-				return io.ErrUnexpectedEOF
-			}
-			b := dAtA[iNdEx]
-			iNdEx++
-			wire |= uint64(b&0x7F) << shift
-			if b < 0x80 {
-				break
-			}
-		}
-		fieldNum := int32(wire >> 3)
-		wireType := int(wire & 0x7)
-		if wireType == 4 {
-			return fmt.Errorf("proto: PlanResourcesResponse_Expression_Operand: wiretype end group for non-group")
-		}
-		if fieldNum <= 0 {
-			return fmt.Errorf("proto: PlanResourcesResponse_Expression_Operand: illegal tag %d (wire type %d)", fieldNum, wire)
-		}
-		switch fieldNum {
-		case 1:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Value", wireType)
-			}
-			var msglen int
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflow
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				msglen |= int(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			if msglen < 0 {
-				return ErrInvalidLength
-			}
-			postIndex := iNdEx + msglen
-			if postIndex < 0 {
-				return ErrInvalidLength
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			if oneof, ok := m.Node.(*PlanResourcesResponse_Expression_Operand_Value); ok {
-				if unmarshal, ok := interface{}(oneof.Value).(interface {
-					UnmarshalVT([]byte) error
-				}); ok {
-					if err := unmarshal.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
-						return err
-					}
-				} else {
-					if err := proto.Unmarshal(dAtA[iNdEx:postIndex], oneof.Value); err != nil {
-						return err
-					}
-				}
-			} else {
-				v := &structpb.Value{}
-				if unmarshal, ok := interface{}(v).(interface {
-					UnmarshalVT([]byte) error
-				}); ok {
-					if err := unmarshal.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
-						return err
-					}
-				} else {
-					if err := proto.Unmarshal(dAtA[iNdEx:postIndex], v); err != nil {
-						return err
-					}
-				}
-				m.Node = &PlanResourcesResponse_Expression_Operand_Value{v}
-			}
-			iNdEx = postIndex
-		case 2:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Expression", wireType)
-			}
-			var msglen int
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflow
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				msglen |= int(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			if msglen < 0 {
-				return ErrInvalidLength
-			}
-			postIndex := iNdEx + msglen
-			if postIndex < 0 {
-				return ErrInvalidLength
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			if oneof, ok := m.Node.(*PlanResourcesResponse_Expression_Operand_Expression); ok {
-				if err := oneof.Expression.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
-					return err
-				}
-			} else {
-				v := &PlanResourcesResponse_Expression{}
-				if err := v.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
-					return err
-				}
-				m.Node = &PlanResourcesResponse_Expression_Operand_Expression{v}
-			}
-			iNdEx = postIndex
-		case 3:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Variable", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflow
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return ErrInvalidLength
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex < 0 {
-				return ErrInvalidLength
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.Node = &PlanResourcesResponse_Expression_Operand_Variable{string(dAtA[iNdEx:postIndex])}
-			iNdEx = postIndex
-		default:
-			iNdEx = preIndex
-			skippy, err := skip(dAtA[iNdEx:])
-			if err != nil {
-				return err
-			}
-			if (skippy < 0) || (iNdEx+skippy) < 0 {
-				return ErrInvalidLength
-			}
-			if (iNdEx + skippy) > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.unknownFields = append(m.unknownFields, dAtA[iNdEx:iNdEx+skippy]...)
-			iNdEx += skippy
-		}
-	}
-
-	if iNdEx > l {
-		return io.ErrUnexpectedEOF
-	}
-	return nil
-}
-func (m *PlanResourcesResponse_Expression) UnmarshalVT(dAtA []byte) error {
-	l := len(dAtA)
-	iNdEx := 0
-	for iNdEx < l {
-		preIndex := iNdEx
-		var wire uint64
-		for shift := uint(0); ; shift += 7 {
-			if shift >= 64 {
-				return ErrIntOverflow
-			}
-			if iNdEx >= l {
-				return io.ErrUnexpectedEOF
-			}
-			b := dAtA[iNdEx]
-			iNdEx++
-			wire |= uint64(b&0x7F) << shift
-			if b < 0x80 {
-				break
-			}
-		}
-		fieldNum := int32(wire >> 3)
-		wireType := int(wire & 0x7)
-		if wireType == 4 {
-			return fmt.Errorf("proto: PlanResourcesResponse_Expression: wiretype end group for non-group")
-		}
-		if fieldNum <= 0 {
-			return fmt.Errorf("proto: PlanResourcesResponse_Expression: illegal tag %d (wire type %d)", fieldNum, wire)
-		}
-		switch fieldNum {
-		case 1:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Operator", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflow
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return ErrInvalidLength
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex < 0 {
-				return ErrInvalidLength
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.Operator = string(dAtA[iNdEx:postIndex])
-			iNdEx = postIndex
-		case 2:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Operands", wireType)
-			}
-			var msglen int
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflow
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				msglen |= int(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			if msglen < 0 {
-				return ErrInvalidLength
-			}
-			postIndex := iNdEx + msglen
-			if postIndex < 0 {
-				return ErrInvalidLength
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.Operands = append(m.Operands, &PlanResourcesResponse_Expression_Operand{})
-			if err := m.Operands[len(m.Operands)-1].UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
-				return err
-			}
-			iNdEx = postIndex
-		default:
-			iNdEx = preIndex
-			skippy, err := skip(dAtA[iNdEx:])
-			if err != nil {
-				return err
-			}
-			if (skippy < 0) || (iNdEx+skippy) < 0 {
-				return ErrInvalidLength
-			}
-			if (iNdEx + skippy) > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.unknownFields = append(m.unknownFields, dAtA[iNdEx:iNdEx+skippy]...)
-			iNdEx += skippy
-		}
-	}
-
-	if iNdEx > l {
-		return io.ErrUnexpectedEOF
-	}
-	return nil
-}
-func (m *PlanResourcesResponse_Filter) UnmarshalVT(dAtA []byte) error {
-	l := len(dAtA)
-	iNdEx := 0
-	for iNdEx < l {
-		preIndex := iNdEx
-		var wire uint64
-		for shift := uint(0); ; shift += 7 {
-			if shift >= 64 {
-				return ErrIntOverflow
-			}
-			if iNdEx >= l {
-				return io.ErrUnexpectedEOF
-			}
-			b := dAtA[iNdEx]
-			iNdEx++
-			wire |= uint64(b&0x7F) << shift
-			if b < 0x80 {
-				break
-			}
-		}
-		fieldNum := int32(wire >> 3)
-		wireType := int(wire & 0x7)
-		if wireType == 4 {
-			return fmt.Errorf("proto: PlanResourcesResponse_Filter: wiretype end group for non-group")
-		}
-		if fieldNum <= 0 {
-			return fmt.Errorf("proto: PlanResourcesResponse_Filter: illegal tag %d (wire type %d)", fieldNum, wire)
-		}
-		switch fieldNum {
-		case 1:
-			if wireType != 0 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Kind", wireType)
-			}
-			m.Kind = 0
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflow
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				m.Kind |= PlanResourcesResponse_Filter_Kind(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-		case 2:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Condition", wireType)
-			}
-			var msglen int
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflow
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				msglen |= int(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			if msglen < 0 {
-				return ErrInvalidLength
-			}
-			postIndex := iNdEx + msglen
-			if postIndex < 0 {
-				return ErrInvalidLength
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			if m.Condition == nil {
-				m.Condition = &PlanResourcesResponse_Expression_Operand{}
-			}
-			if err := m.Condition.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
-				return err
-			}
-			iNdEx = postIndex
-		default:
-			iNdEx = preIndex
-			skippy, err := skip(dAtA[iNdEx:])
-			if err != nil {
-				return err
-			}
-			if (skippy < 0) || (iNdEx+skippy) < 0 {
-				return ErrInvalidLength
-			}
-			if (iNdEx + skippy) > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.unknownFields = append(m.unknownFields, dAtA[iNdEx:iNdEx+skippy]...)
-			iNdEx += skippy
-		}
-	}
-
-	if iNdEx > l {
-		return io.ErrUnexpectedEOF
-	}
-	return nil
-}
 func (m *PlanResourcesResponse_Meta) UnmarshalVT(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
@@ -4109,10 +3418,18 @@ func (m *PlanResourcesResponse) UnmarshalVT(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if m.Filter == nil {
-				m.Filter = &PlanResourcesResponse_Filter{}
+				m.Filter = &v1.PlanResourcesFilter{}
 			}
-			if err := m.Filter.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
-				return err
+			if unmarshal, ok := interface{}(m.Filter).(interface {
+				UnmarshalVT([]byte) error
+			}); ok {
+				if err := unmarshal.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
+					return err
+				}
+			} else {
+				if err := proto.Unmarshal(dAtA[iNdEx:postIndex], m.Filter); err != nil {
+					return err
+				}
 			}
 			iNdEx = postIndex
 		case 6:
@@ -4232,10 +3549,10 @@ func (m *CheckResourceSetResponse_ActionEffectMap) UnmarshalVT(dAtA []byte) erro
 				return io.ErrUnexpectedEOF
 			}
 			if m.Actions == nil {
-				m.Actions = make(map[string]v1.Effect)
+				m.Actions = make(map[string]v11.Effect)
 			}
 			var mapkey string
-			var mapvalue v1.Effect
+			var mapvalue v11.Effect
 			for iNdEx < postIndex {
 				entryPreIndex := iNdEx
 				var wire uint64
@@ -4293,7 +3610,7 @@ func (m *CheckResourceSetResponse_ActionEffectMap) UnmarshalVT(dAtA []byte) erro
 						}
 						b := dAtA[iNdEx]
 						iNdEx++
-						mapvalue |= v1.Effect(b&0x7F) << shift
+						mapvalue |= v11.Effect(b&0x7F) << shift
 						if b < 0x80 {
 							break
 						}
@@ -4344,7 +3661,7 @@ func (m *CheckResourceSetResponse_ActionEffectMap) UnmarshalVT(dAtA []byte) erro
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.ValidationErrors = append(m.ValidationErrors, &v11.ValidationError{})
+			m.ValidationErrors = append(m.ValidationErrors, &v12.ValidationError{})
 			if unmarshal, ok := interface{}(m.ValidationErrors[len(m.ValidationErrors)-1]).(interface {
 				UnmarshalVT([]byte) error
 			}); ok {
@@ -5225,10 +4542,10 @@ func (m *CheckResourceBatchResponse_ActionEffectMap) UnmarshalVT(dAtA []byte) er
 				return io.ErrUnexpectedEOF
 			}
 			if m.Actions == nil {
-				m.Actions = make(map[string]v1.Effect)
+				m.Actions = make(map[string]v11.Effect)
 			}
 			var mapkey string
-			var mapvalue v1.Effect
+			var mapvalue v11.Effect
 			for iNdEx < postIndex {
 				entryPreIndex := iNdEx
 				var wire uint64
@@ -5286,7 +4603,7 @@ func (m *CheckResourceBatchResponse_ActionEffectMap) UnmarshalVT(dAtA []byte) er
 						}
 						b := dAtA[iNdEx]
 						iNdEx++
-						mapvalue |= v1.Effect(b&0x7F) << shift
+						mapvalue |= v11.Effect(b&0x7F) << shift
 						if b < 0x80 {
 							break
 						}
@@ -5337,7 +4654,7 @@ func (m *CheckResourceBatchResponse_ActionEffectMap) UnmarshalVT(dAtA []byte) er
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.ValidationErrors = append(m.ValidationErrors, &v11.ValidationError{})
+			m.ValidationErrors = append(m.ValidationErrors, &v12.ValidationError{})
 			if unmarshal, ok := interface{}(m.ValidationErrors[len(m.ValidationErrors)-1]).(interface {
 				UnmarshalVT([]byte) error
 			}); ok {
@@ -6090,10 +5407,10 @@ func (m *CheckResourcesResponse_ResultEntry) UnmarshalVT(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if m.Actions == nil {
-				m.Actions = make(map[string]v1.Effect)
+				m.Actions = make(map[string]v11.Effect)
 			}
 			var mapkey string
-			var mapvalue v1.Effect
+			var mapvalue v11.Effect
 			for iNdEx < postIndex {
 				entryPreIndex := iNdEx
 				var wire uint64
@@ -6151,7 +5468,7 @@ func (m *CheckResourcesResponse_ResultEntry) UnmarshalVT(dAtA []byte) error {
 						}
 						b := dAtA[iNdEx]
 						iNdEx++
-						mapvalue |= v1.Effect(b&0x7F) << shift
+						mapvalue |= v11.Effect(b&0x7F) << shift
 						if b < 0x80 {
 							break
 						}
@@ -6202,7 +5519,7 @@ func (m *CheckResourcesResponse_ResultEntry) UnmarshalVT(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.ValidationErrors = append(m.ValidationErrors, &v11.ValidationError{})
+			m.ValidationErrors = append(m.ValidationErrors, &v12.ValidationError{})
 			if unmarshal, ok := interface{}(m.ValidationErrors[len(m.ValidationErrors)-1]).(interface {
 				UnmarshalVT([]byte) error
 			}); ok {
@@ -6830,7 +6147,7 @@ func (m *PlaygroundTestResponse_TestResults) UnmarshalVT(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if m.Results == nil {
-				m.Results = &v12.TestResults{}
+				m.Results = &v13.TestResults{}
 			}
 			if unmarshal, ok := interface{}(m.Results).(interface {
 				UnmarshalVT([]byte) error
@@ -7106,7 +6423,7 @@ func (m *PlaygroundEvaluateResponse_EvalResult) UnmarshalVT(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				m.Effect |= v1.Effect(b&0x7F) << shift
+				m.Effect |= v11.Effect(b&0x7F) << shift
 				if b < 0x80 {
 					break
 				}
@@ -7204,7 +6521,7 @@ func (m *PlaygroundEvaluateResponse_EvalResult) UnmarshalVT(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.ValidationErrors = append(m.ValidationErrors, &v11.ValidationError{})
+			m.ValidationErrors = append(m.ValidationErrors, &v12.ValidationError{})
 			if unmarshal, ok := interface{}(m.ValidationErrors[len(m.ValidationErrors)-1]).(interface {
 				UnmarshalVT([]byte) error
 			}); ok {
@@ -7943,7 +7260,7 @@ func (m *ListAuditLogEntriesResponse) UnmarshalVT(dAtA []byte) error {
 					}
 				}
 			} else {
-				v := &v13.AccessLogEntry{}
+				v := &v14.AccessLogEntry{}
 				if unmarshal, ok := interface{}(v).(interface {
 					UnmarshalVT([]byte) error
 				}); ok {
@@ -8000,7 +7317,7 @@ func (m *ListAuditLogEntriesResponse) UnmarshalVT(dAtA []byte) error {
 					}
 				}
 			} else {
-				v := &v13.DecisionLogEntry{}
+				v := &v14.DecisionLogEntry{}
 				if unmarshal, ok := interface{}(v).(interface {
 					UnmarshalVT([]byte) error
 				}); ok {
@@ -8325,7 +7642,7 @@ func (m *GetPolicyResponse) UnmarshalVT(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.Policies = append(m.Policies, &v12.Policy{})
+			m.Policies = append(m.Policies, &v13.Policy{})
 			if unmarshal, ok := interface{}(m.Policies[len(m.Policies)-1]).(interface {
 				UnmarshalVT([]byte) error
 			}); ok {
@@ -8552,7 +7869,7 @@ func (m *GetSchemaResponse) UnmarshalVT(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.Schemas = append(m.Schemas, &v11.Schema{})
+			m.Schemas = append(m.Schemas, &v12.Schema{})
 			if unmarshal, ok := interface{}(m.Schemas[len(m.Schemas)-1]).(interface {
 				UnmarshalVT([]byte) error
 			}); ok {
