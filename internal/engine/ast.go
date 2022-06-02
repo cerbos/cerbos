@@ -501,30 +501,146 @@ func toFilter(plan *enginev1.PlanResourcesAst_Node) (*enginev1.PlanResourcesFilt
 		return nil, err
 	}
 
-	normaliseFilter(filter)
-	return filter, nil
+	return normaliseFilter(filter), nil
 }
 
-func normaliseFilter(filter *enginev1.PlanResourcesFilter) {
+func normaliseFilter(filter *enginev1.PlanResourcesFilter) *enginev1.PlanResourcesFilter {
+	filter.Condition = normaliseFilterExprOp(filter.Condition)
+
 	if filter.Condition == nil {
 		filter.Kind = enginev1.PlanResourcesFilter_KIND_ALWAYS_ALLOWED
-		return
+		return filter
 	}
+
 	if filter.Condition.Node == nil {
 		filter.Condition = nil
 		filter.Kind = enginev1.PlanResourcesFilter_KIND_ALWAYS_ALLOWED
-		return
+		return filter
 	}
-	v := filter.Condition.GetValue()
-	if v == nil {
-		return
-	}
-	if b, ok := v.Kind.(*structpb.Value_BoolValue); ok {
+
+	if b, ok := asBoolValue(filter.Condition); ok {
 		filter.Condition = nil
-		if b.BoolValue {
+		if b {
 			filter.Kind = enginev1.PlanResourcesFilter_KIND_ALWAYS_ALLOWED
 		} else {
 			filter.Kind = enginev1.PlanResourcesFilter_KIND_ALWAYS_DENIED
 		}
 	}
+
+	return filter
+}
+
+func normaliseFilterExprOp(cond *enginev1.PlanResourcesFilter_Expression_Operand) *enginev1.PlanResourcesFilter_Expression_Operand {
+	if cond == nil {
+		return nil
+	}
+
+	switch t := cond.Node.(type) {
+	case *enginev1.PlanResourcesFilter_Expression_Operand_Expression:
+		return normaliseFilterExprOpExpr(t)
+	case *enginev1.PlanResourcesFilter_Expression_Operand_Value:
+		return cond
+	case *enginev1.PlanResourcesFilter_Expression_Operand_Variable:
+		return normaliseFilterExprOpVar(t)
+	}
+
+	return cond
+}
+
+func normaliseFilterExprOpExpr(expr *enginev1.PlanResourcesFilter_Expression_Operand_Expression) *enginev1.PlanResourcesFilter_Expression_Operand {
+	var logicalOperator string
+	if expr.Expression.Operator == And || expr.Expression.Operator == Or {
+		logicalOperator = expr.Expression.Operator
+	}
+
+	operands := make([]*enginev1.PlanResourcesFilter_Expression_Operand, 0, len(expr.Expression.Operands))
+	for _, op := range expr.Expression.Operands {
+		normalOp := normaliseFilterExprOp(op)
+		if normalOp == nil {
+			continue
+		}
+
+		if logicalOperator != "" {
+			if boolVal, ok := asBoolValue(normalOp); ok {
+				switch {
+				case logicalOperator == And && boolVal:
+					// Ignore literal true values because they don't matter
+					continue
+				case logicalOperator == Or && !boolVal:
+					// Ignore literal false values because they don't matter
+					continue
+				case logicalOperator == And && !boolVal:
+					// A literal false makes the whole AND expression return false
+					return &enginev1.PlanResourcesFilter_Expression_Operand{
+						Node: &enginev1.PlanResourcesFilter_Expression_Operand_Value{
+							Value: structpb.NewBoolValue(false),
+						},
+					}
+				case logicalOperator == Or && boolVal:
+					// A literal true makes the whole OR expression return true
+					return &enginev1.PlanResourcesFilter_Expression_Operand{
+						Node: &enginev1.PlanResourcesFilter_Expression_Operand_Value{
+							Value: structpb.NewBoolValue(true),
+						},
+					}
+				}
+			}
+		}
+
+		operands = append(operands, normalOp)
+	}
+
+	// AND or OR of a single value is the value itself
+	if logicalOperator != "" {
+		switch len(operands) {
+		case 0:
+			// because all true operands were removed, the result simplifies to true (true && true == true)
+			if logicalOperator == And {
+				return &enginev1.PlanResourcesFilter_Expression_Operand{
+					Node: &enginev1.PlanResourcesFilter_Expression_Operand_Value{
+						Value: structpb.NewBoolValue(true),
+					},
+				}
+			}
+
+			// because all false operands were removed, the result simplifies to false (false || false == false)
+			if logicalOperator == Or {
+				return &enginev1.PlanResourcesFilter_Expression_Operand{
+					Node: &enginev1.PlanResourcesFilter_Expression_Operand_Value{
+						Value: structpb.NewBoolValue(false),
+					},
+				}
+			}
+			return nil
+		case 1:
+			// AND or OR of a single value is the value itself
+			return operands[0]
+		}
+	}
+
+	expr.Expression.Operands = operands
+	return &enginev1.PlanResourcesFilter_Expression_Operand{Node: expr}
+}
+
+func normaliseFilterExprOpVar(v *enginev1.PlanResourcesFilter_Expression_Operand_Variable) *enginev1.PlanResourcesFilter_Expression_Operand {
+	if v == nil {
+		return nil
+	}
+
+	v.Variable = conditions.ExpandAbbrev(v.Variable)
+	return &enginev1.PlanResourcesFilter_Expression_Operand{Node: v}
+}
+
+func asBoolValue(op *enginev1.PlanResourcesFilter_Expression_Operand) (bool, bool) {
+	if op == nil {
+		return false, false
+	}
+
+	if v := op.GetValue(); v != nil {
+		if _, ok := v.Kind.(*structpb.Value_BoolValue); ok {
+			return v.GetBoolValue(), true
+		}
+	}
+
+	return false, false
 }
