@@ -18,6 +18,7 @@ import (
 	"github.com/minio/minio-go/v7"
 	"github.com/minio/minio-go/v7/pkg/credentials"
 	"github.com/ory/dockertest/v3"
+	"github.com/ory/dockertest/v3/docker"
 	"github.com/stretchr/testify/require"
 	"gocloud.dev/blob"
 
@@ -148,21 +149,50 @@ func startMinio(ctx context.Context, t *testing.T, bucketName string) string {
 	options := &dockertest.RunOptions{
 		Repository: "minio/minio",
 		Tag:        "latest",
-		Cmd:        []string{"server", t.TempDir()},
+		Cmd:        []string{"server", "/data"},
 		Env:        []string{"MINIO_ACCESS_KEY=" + minioUsername, "MINIO_SECRET_KEY=" + minioPassword},
 	}
 
 	resource, err := pool.RunWithOptions(options)
 	is.NoError(err, "Could not start resource: %s", err)
 
-	endpoint := fmt.Sprintf("localhost:%s", resource.GetPort("9000/tcp"))
+	go func() {
+		_ = pool.Client.Logs(docker.LogsOptions{
+			Context:      ctx,
+			Stderr:       true,
+			Stdout:       true,
+			Follow:       true,
+			Timestamps:   true,
+			RawTerminal:  true,
+			Container:    resource.Container.ID,
+			OutputStream: os.Stdout,
+		})
+	}()
 
-	// Minio health check request
-	req, err := http.NewRequestWithContext(ctx, "GET", fmt.Sprintf("http://%s/minio/health/live", endpoint), nil)
-	is.NoError(err)
+	endpoint := fmt.Sprintf("localhost:%s", resource.GetPort("9000/tcp"))
+	client, err := minio.New(endpoint, &minio.Options{
+		Creds:  credentials.NewStaticV4(minioUsername, minioPassword, ""),
+		Secure: false,
+	})
+	is.NoError(err, "Could not instantiate minio client", err)
+
+	cancelFn, err := client.HealthCheck(1 * time.Second)
+	is.NoError(err, "Failed to start healthcheck: %v", err)
+
+	t.Cleanup(cancelFn)
+
 	// exponential backoff-retry, because the application in the container might not be ready to accept connections yet
 	// the minio client does not do service discovery for you (i.e. it does not check if connection can be established), so we have to use the health check
 	err = pool.Retry(func() error {
+		if client.IsOffline() {
+			return fmt.Errorf("healthcheck fail")
+		}
+
+		req, err := http.NewRequestWithContext(ctx, "GET", fmt.Sprintf("http://%s/minio/health/ready", endpoint), nil)
+		if err != nil {
+			return err
+		}
+
 		resp, err := http.DefaultClient.Do(req)
 		if err != nil {
 			return err
@@ -176,20 +206,13 @@ func startMinio(ctx context.Context, t *testing.T, bucketName string) string {
 	})
 	is.NoError(err, "Could not connect to docker: %s", err)
 
-	// now we can instantiate minio client
-	client, err := minio.New(endpoint, &minio.Options{
-		Creds:  credentials.NewStaticV4(minioUsername, minioPassword, ""),
-		Secure: false,
-	})
-	is.NoError(err, "Could not instantiate minio client", err)
-
 	t.Cleanup(func() {
 		err = pool.Purge(resource)
 		is.NoError(err, "Could not purge resource: %s", err)
 	})
 
 	err = client.MakeBucket(ctx, bucketName, minio.MakeBucketOptions{})
-	is.NoError(err, "Failed to create bucket %q: %s", bucketName, err)
+	is.NoError(err, "Failed to create bucket %q: %v", bucketName, err)
 
 	return endpoint
 }

@@ -29,7 +29,7 @@ stop_kind() {
 run_tests() {
     (
         cd "$SCRIPT_DIR"
-        telepresence connect --no-report -- go test -v -failfast -p=2 --tags="tests e2e" "$@"
+        telepresence connect --no-report -- go test -v -failfast -p=1 --tags="tests e2e" "$@"
     )
 }
 
@@ -41,5 +41,5 @@ if [[ "$#" -gt "0" ]]; then
     # E.g. e2e/run.sh ./mysql/... -args -run-id=xxxxx -no-cleanup
     run_tests "$@"
 else
-    run_tests ./... -args -no-cleanup="$E2E_NO_CLEANUP"
+    run_tests ./... -args -no-cleanup="$E2E_NO_CLEANUP" -command-timeout=4m
 fi
