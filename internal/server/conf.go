@@ -7,6 +7,7 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
+	"strconv"
 	"time"
 
 	"go.uber.org/multierr"
@@ -23,6 +24,7 @@ const (
 	defaultRawAdminPasswordHash   = "$2y$10$VlPwcwpgcGZ5KjTaN1Pzk.vpFiQVG6F2cSWzQa9RtrNo3IacbzsEi" //nolint:gosec
 	defaultMaxActionsPerResource  = 50
 	defaultMaxResourcesPerRequest = 50
+	defaultUDSFileMode            = "0o766"
 	requestItemsMax               = 500
 )
 
@@ -51,6 +53,8 @@ type Conf struct {
 	PlaygroundEnabled bool `yaml:"playgroundEnabled" conf:",example=false"`
 	// RequestLimits defines the limits for requests.
 	RequestLimits RequestLimitsConf `yaml:"requestLimits"`
+	// UDSFileMode sets the file mode of the unix domain sockets created by the server.
+	UDSFileMode string `yaml:"udsFileMode" conf:",example=0o766"`
 }
 
 // TLSConf holds TLS configuration.
@@ -124,6 +128,7 @@ func (c *Conf) SetDefaults() {
 	c.HTTPListenAddr = defaultHTTPListenAddr
 	c.GRPCListenAddr = defaultGRPCListenAddr
 	c.MetricsEnabled = true
+	c.UDSFileMode = defaultUDSFileMode
 	c.RequestLimits = RequestLimitsConf{
 		MaxActionsPerResource:  defaultMaxActionsPerResource,
 		MaxResourcesPerRequest: defaultMaxResourcesPerRequest,
@@ -144,6 +149,13 @@ func (c *Conf) Validate() (errs error) {
 
 	if _, _, err := util.ParseListenAddress(c.GRPCListenAddr); err != nil {
 		errs = multierr.Append(errs, fmt.Errorf("invalid grpcListenAddr '%s': %w", c.GRPCListenAddr, err))
+	}
+
+	//nolint:gomnd
+	if mode, err := strconv.ParseInt(c.UDSFileMode, 0, 32); err != nil {
+		errs = multierr.Append(errs, fmt.Errorf("invalid udsFileMode %q: %w", c.UDSFileMode, err))
+	} else if mode <= 0 {
+		errs = multierr.Append(errs, fmt.Errorf("invalid udsFileMode %q", c.UDSFileMode))
 	}
 
 	if c.RequestLimits.MaxActionsPerResource < 1 || c.RequestLimits.MaxActionsPerResource > requestItemsMax {

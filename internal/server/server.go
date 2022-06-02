@@ -12,6 +12,7 @@ import (
 	"net"
 	"net/http"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 
@@ -265,7 +266,7 @@ func (s *Server) Start(ctx context.Context, param Param) error {
 }
 
 func (s *Server) createListener(listenAddr string) (net.Listener, error) {
-	l, err := parseAndOpen(listenAddr)
+	l, err := s.parseAndOpen(listenAddr)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create listener at '%s': %w", listenAddr, err)
 	}
@@ -540,7 +541,7 @@ func (s *Server) mkGRPCConn(ctx context.Context) (*grpc.ClientConn, error) {
 }
 
 // inspired by https://github.com/ghostunnel/ghostunnel/blob/6e58c75c8762fe371c1134e89dd55033a6d577a4/socket/net.go#L100
-func parseAndOpen(listenAddr string) (net.Listener, error) {
+func (s *Server) parseAndOpen(listenAddr string) (net.Listener, error) {
 	network, addr, err := util.ParseListenAddress(listenAddr)
 	if err != nil {
 		return nil, err
@@ -556,12 +557,30 @@ func parseAndOpen(listenAddr string) (net.Listener, error) {
 			return nil, err
 		}
 
+		if s.conf.UDSFileMode != defaultUDSFileMode {
+			fileMode := toUDSFileMode(s.conf.UDSFileMode)
+			if err := os.Chmod(addr, fileMode); err != nil {
+				return nil, fmt.Errorf("failed to change file mode of %q to %O: %w", addr, fileMode, err)
+			}
+		}
+
 		//nolint:forcetypeassert
 		listener.(*net.UnixListener).SetUnlinkOnClose(true)
 		return listener, nil
 	}
 
 	return reuseport.NewReusablePortListener(network, addr)
+}
+
+//nolint:gomnd
+func toUDSFileMode(modeStr string) os.FileMode {
+	m, err := strconv.ParseInt(modeStr, 0, 32)
+	if err != nil || m <= 0 {
+		return 0o766
+	}
+
+	// Ignore everything but the last 9 bits which hold the user, group and world perms.
+	return os.FileMode(m & 0x1FF)
 }
 
 func initOCPromExporter(conf *Conf) (*prometheus.Exporter, error) {
