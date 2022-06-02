@@ -547,6 +547,7 @@ func (s *Server) parseAndOpen(listenAddr string) (net.Listener, error) {
 		return nil, err
 	}
 
+	//nolint:nestif
 	if network == "unix" {
 		if err := os.RemoveAll(addr); err != nil {
 			return nil, err
