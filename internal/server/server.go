@@ -581,7 +581,7 @@ func toUDSFileMode(modeStr string) os.FileMode {
 	}
 
 	// Ignore everything but the last 9 bits which hold the user, group and world perms.
-	return os.FileMode(m & 0x1FF)
+	return os.FileMode(m & 0o777)
 }
 
 func initOCPromExporter(conf *Conf) (*prometheus.Exporter, error) {
