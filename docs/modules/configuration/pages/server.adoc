@@ -30,6 +30,15 @@ server:
   grpcListenAddr: "unix:/var/sock/cerbos.grpc"
 ----
 
+.Listen on a Unix domain socket with specific file mode
+[source,yaml,linenums]
+----
+server:
+  httpListenAddr: "unix:/var/sock/cerbos.http" 
+  grpcListenAddr: "unix:/var/sock/cerbos.grpc"
+  udsFileMode: 0o776
+----
+
 == Metrics 
 
 By default, Prometheus metrics are available to scrape from the `/_cerbos/metrics` HTTP endpoint. If you want to disable metrics reporting, set `metricsEnabled` to `false`.

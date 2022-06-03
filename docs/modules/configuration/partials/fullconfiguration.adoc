@@ -56,6 +56,7 @@ server:
     caCert: /path/to/CA_certificate # CACert is the path to the optional CA certificate for verifying client requests.
     cert: /path/to/certificate # Cert is the path to the TLS certificate file.
     key: /path/to/private_key # Key is the path to the TLS private key file.
+  udsFileMode: 0o766 # UDSFileMode sets the file mode of the unix domain sockets created by the server.
 storage:
   # This section is required. The field driver must be set to indicate which driver to use.
   driver: "disk" # Required. Driver defines which storage driver to use.
