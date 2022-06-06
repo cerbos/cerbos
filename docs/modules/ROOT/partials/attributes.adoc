@@ -8,3 +8,4 @@
 :app-schema-url-current: https://api.cerbos.dev/v{app-version}/cerbos
 :app-schema-url-latest: https://api.cerbos.dev/latest/cerbos
 :cerbos-openapi-schema: /schema/swagger.json 
+:cerbosctl-docker-img: {app-container-registry}/cerbos/cerbosctl:{app-version}

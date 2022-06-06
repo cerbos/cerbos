@@ -3,9 +3,33 @@ include::ROOT:partial$attributes.adoc[]
 = `cerbosctl` 
 :page-aliases: ctl.adoc
 
-This utility is included in the tar archives, Linux packages and the Homebrew tap. See xref:ROOT:installation/binary.adoc[] for instructions on how to install this binary from one of those sources.
+This utility can be downloaded as a separate container or a tar archive. It is automatically installed when installing Cerbos through xref:ROOT:installation/binary.adoc#linux-packages[Linux packages or the Homebrew tap].
 
-This utility requires the xref:configuration:server.adoc#admin-api[Admin API to be enabled] on the Cerbos server.
+
+.Run from the container
+[source,sh,subs="attributes"]
+----
+docker run -it {cerbosctl-docker-img} \
+    --server=192.168.1.10:3593 \
+    --username=user \
+    --password=password \
+    get rp  
+----
+
+.Download and run the appropriate binary from {app-github-releases-page}
+[caption=]
+[%header,cols=".^1,.^1,3m",grid=rows]
+|===
+|OS | Arch | Bundle 
+|Linux | x86-64 | cerbosctl_{app-version}_Linux_x86_64.tar.gz
+|Linux | arm64 | cerbosctl_{app-version}_Linux_arm64.tar.gz
+|MacOS | universal | cerbosctl_{app-version}_Darwin_all.tar.gz
+|MacOS | x86-64 | cerbosctl_{app-version}_Darwin_x86_64.tar.gz
+|MacOS | arm64 | cerbosctl_{app-version}_Darwin_arm64.tar.gz
+|===
+
+
+Cerbosctl requires the xref:configuration:server.adoc#admin-api[Admin API to be enabled] on the Cerbos server.
 
 The server address to connect to and the credentials to authenticate can be provided through environment variables or as arguments to the command.
 
