@@ -547,9 +547,10 @@ func normaliseFilterExprOp(cond *enginev1.PlanResourcesFilter_Expression_Operand
 	return cond
 }
 
+//nolint: nestif
 func normaliseFilterExprOpExpr(expr *enginev1.PlanResourcesFilter_Expression_Operand_Expression) *enginev1.PlanResourcesFilter_Expression_Operand {
 	var logicalOperator string
-	if expr.Expression.Operator == And || expr.Expression.Operator == Or {
+	if expr.Expression.Operator == And || expr.Expression.Operator == Or || expr.Expression.Operator == Not {
 		logicalOperator = expr.Expression.Operator
 	}
 
@@ -614,7 +615,20 @@ func normaliseFilterExprOpExpr(expr *enginev1.PlanResourcesFilter_Expression_Ope
 			return nil
 		case 1:
 			// AND or OR of a single value is the value itself
-			return operands[0]
+			if logicalOperator == And || logicalOperator == Or {
+				return operands[0]
+			}
+
+			// NOT of a single bool value
+			if logicalOperator == Not {
+				if boolVal, ok := asBoolValue(operands[0]); ok {
+					return &enginev1.PlanResourcesFilter_Expression_Operand{
+						Node: &enginev1.PlanResourcesFilter_Expression_Operand_Value{
+							Value: structpb.NewBoolValue(!boolVal),
+						},
+					}
+				}
+			}
 		}
 	}
 

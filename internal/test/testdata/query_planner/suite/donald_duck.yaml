@@ -24,12 +24,7 @@ tests:
       kind: salary_record
       policyVersion: default
     want:
-      kind: KIND_CONDITIONAL
-      condition:
-        expression:
-          operator: not
-          operands:
-            - value: true
+      kind: KIND_ALWAYS_DENIED
   - action: non-existent-action
     resource:
       kind: non-existent-resource
