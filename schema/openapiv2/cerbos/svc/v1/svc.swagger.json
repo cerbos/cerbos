@@ -1061,9 +1061,7 @@
     "ExpressionOperand": {
       "type": "object",
       "properties": {
-        "value": {
-          "type": "object"
-        },
+        "value": {},
         "expression": {
           "$ref": "#/definitions/PlanResourcesFilterExpression"
         },
@@ -1383,9 +1381,7 @@
         "message": {
           "type": "string"
         },
-        "result": {
-          "type": "object"
-        }
+        "result": {}
       }
     },
     "TraceEventStatus": {
@@ -1411,9 +1407,7 @@
       "properties": {
         "jwt": {
           "type": "object",
-          "additionalProperties": {
-            "type": "object"
-          }
+          "additionalProperties": {}
         }
       },
       "description": "Structured auxiliary data"
@@ -1465,9 +1459,7 @@
           "example": {
             "beta_tester": true
           },
-          "additionalProperties": {
-            "type": "object"
-          },
+          "additionalProperties": {},
           "description": "Key-value pairs of contextual data about this principal that should be used during policy evaluation."
         },
         "scope": {
@@ -1514,9 +1506,7 @@
           "example": {
             "owner": "bugs_bunny"
           },
-          "additionalProperties": {
-            "type": "object"
-          },
+          "additionalProperties": {},
           "description": "Kay-value pairs of contextual data about this resource that should be used during policy evaluation."
         },
         "scope": {
@@ -1662,6 +1652,7 @@
       "type": "object",
       "properties": {
         "success": {
+          "type": "object",
           "properties": {}
         }
       },
@@ -1697,9 +1688,7 @@
       "properties": {
         "attr": {
           "type": "object",
-          "additionalProperties": {
-            "type": "object"
-          },
+          "additionalProperties": {},
           "description": "Key-value pairs of contextual data about this instance that should be used during policy evaluation."
         }
       },
@@ -2397,9 +2386,7 @@
         },
         "attr": {
           "type": "object",
-          "additionalProperties": {
-            "type": "object"
-          },
+          "additionalProperties": {},
           "description": "Key-value pairs of contextual data about the resource that are known at a time of the request."
         },
         "policyVersion": {
@@ -2744,6 +2731,7 @@
           "$ref": "#/definitions/v1PlaygroundFailure"
         },
         "success": {
+          "type": "object",
           "properties": {}
         }
       },
