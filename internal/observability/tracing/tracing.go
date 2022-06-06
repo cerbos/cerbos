@@ -10,13 +10,14 @@ import (
 	"net/http"
 	"strings"
 
-	"go.opencensus.io/plugin/ochttp"
-	"go.opencensus.io/plugin/ochttp/propagation/tracecontext"
 	octrace "go.opencensus.io/trace"
-	"go.opencensus.io/trace/propagation"
+	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
+	"go.opentelemetry.io/contrib/propagators/autoprop"
+	otelpropb3 "go.opentelemetry.io/contrib/propagators/b3"
 	"go.opentelemetry.io/otel"
 	ocbridge "go.opentelemetry.io/otel/bridge/opencensus"
 	"go.opentelemetry.io/otel/exporters/jaeger"
+	otelprop "go.opentelemetry.io/otel/propagation"
 	"go.opentelemetry.io/otel/sdk/resource"
 	tracesdk "go.opentelemetry.io/otel/sdk/trace"
 	semconv "go.opentelemetry.io/otel/semconv/v1.10.0"
@@ -95,6 +96,7 @@ func configureOtel(ctx context.Context, exporter tracesdk.SpanExporter) error {
 	}))
 
 	otel.SetTracerProvider(traceProvider)
+	otel.SetTextMapPropagator(autoprop.NewTextMapPropagator(otelprop.TraceContext{}, otelprop.Baggage{}, otelpropb3.New()))
 	octrace.DefaultTracer = ocbridge.NewTracer(traceProvider.Tracer("cerbos"))
 
 	go func() {
@@ -138,16 +140,8 @@ func (s sampler) Description() string {
 	return "CerbosCustomSampler"
 }
 
-func HTTPHandler(handler http.Handler) http.Handler {
-	var prop propagation.HTTPFormat
-	if conf.PropagationFormat == propagationW3CTraceContext {
-		prop = &tracecontext.HTTPFormat{}
-	}
-
-	return &ochttp.Handler{
-		Handler:     handler,
-		Propagation: prop,
-	}
+func HTTPHandler(handler http.Handler, path string) http.Handler {
+	return otelhttp.NewHandler(handler, path)
 }
 
 func StartSpan(ctx context.Context, name string) (context.Context, trace.Span) {

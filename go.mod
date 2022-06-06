@@ -63,6 +63,9 @@ require (
 	github.com/tidwall/sjson v1.2.4
 	go.elastic.co/ecszap v1.0.1
 	go.opencensus.io v0.23.0
+	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.32.0
+	go.opentelemetry.io/contrib/propagators/autoprop v0.0.0-20220603191935-427146bc07f1
+	go.opentelemetry.io/contrib/propagators/b3 v1.7.0
 	go.opentelemetry.io/otel v1.7.0
 	go.opentelemetry.io/otel/bridge/opencensus v0.30.0
 	go.opentelemetry.io/otel/exporters/jaeger v1.7.0
@@ -131,6 +134,7 @@ require (
 	github.com/docker/go-units v0.4.0 // indirect
 	github.com/dustin/go-humanize v1.0.0 // indirect
 	github.com/emirpasic/gods v1.12.0 // indirect
+	github.com/felixge/httpsnoop v1.0.2 // indirect
 	github.com/gdamore/encoding v1.0.0 // indirect
 	github.com/go-git/gcfg v1.5.0 // indirect
 	github.com/go-git/go-billy/v5 v5.3.1 // indirect
@@ -218,6 +222,9 @@ require (
 	github.com/xi2/xz v0.0.0-20171230120015-48954b6210f8 // indirect
 	github.com/xo/terminfo v0.0.0-20210125001918-ca9a967f8778 // indirect
 	github.com/xtgo/uuid v0.0.0-20140804021211-a0b114877d4c // indirect
+	go.opentelemetry.io/contrib/propagators/aws v1.7.0 // indirect
+	go.opentelemetry.io/contrib/propagators/jaeger v1.7.0 // indirect
+	go.opentelemetry.io/contrib/propagators/ot v1.7.0 // indirect
 	go.opentelemetry.io/otel/metric v0.30.0 // indirect
 	go.opentelemetry.io/otel/sdk/metric v0.30.0 // indirect
 	go.uber.org/atomic v1.9.0 // indirect
