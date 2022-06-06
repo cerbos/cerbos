@@ -16,14 +16,19 @@ import (
 type Cmd struct{}
 
 func (c *Cmd) Run(k *kong.Kong, ctx *cmdclient.Context) error {
-	r, err := ctx.Client.ServerInfo(context.Background())
+	_, err := fmt.Fprintf(k.Stdout, "Client version %s; commit sha: %s, build date: %s\n", util.Version, util.Commit, util.BuildDate)
 	if err != nil {
 		return err
 	}
 
-	_, err = fmt.Fprintf(k.Stdout, "Client version %s; commit sha: %s, build date: %s\n", util.Version, util.Commit, util.BuildDate)
+	r, err := ctx.Client.ServerInfo(context.Background())
 	if err != nil {
-		return err
+		_, errPrint := fmt.Fprintf(k.Stdout, "Server version unknown; commit sha: unknown, build date: unknown\n")
+		if errPrint != nil {
+			return errPrint
+		}
+
+		return fmt.Errorf("failed to retrieve version information from the server: %w", err)
 	}
 
 	_, err = fmt.Fprintf(k.Stdout, "Server version %s; commit sha: %s, build date: %s\n", r.Version, r.Commit, r.BuildDate)
