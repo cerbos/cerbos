@@ -63,7 +63,7 @@ Cerbos is popular among large and small organizations:
   </tr>
 </table>
 
-_Using Cerbos? Open a PR to add yourself_
+_Using Cerbos? Open a PR to add your company._
 
 How it works
 ------------
