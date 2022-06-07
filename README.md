@@ -29,6 +29,47 @@ Cerbos helps you super-charge your authorization implementation by writing conte
 * [Contribute](CONTRIBUTING.md)
 
 
+Used by
+------------
+Cerbos is popular among large and small organizations:
+
+<table cellspacing="1" cellpadding="0">
+  <tr>
+    <td valign="center">
+      <a href="https://uw.co.uk">
+        <img src="https://cerbos.dev/assets/uw.svg" width="256" />
+      </a>
+    </td>
+    <td valign="center">
+      <a href="https://withloop.co/">
+        <img src="https://cerbos.dev/assets/loop.png"  width="256" />
+      </a>
+    </td>
+    <td valign="center">
+      <a href="https://9fin.com">
+        <img src="https://cerbos.dev/assets/9fin.svg" width="256" height="35" />
+      </a>
+    </td>
+    <td valign="center">
+      <a href="https://salesroom.com">
+        <img src="https://cerbos.dev/assets/salesroom.svg" width="256" />
+      </a>
+    </td>
+    <td valign="center">
+      <a href="https://refine.dev">
+        <img src="https://cerbos.dev/assets/refine.png" width="256" height="35" />
+      </a>
+    </td>  
+    <td valign="center">
+      <a href="https://www.doorfeed.com/">
+        <img src="https://cerbos.dev/assets/doorfeed.svg" width="256" />
+      </a>
+    </td>  
+  </tr>
+</table>
+
+_Using Cerbos? Open a PR to add your company._
+
 How it works
 ------------
 
