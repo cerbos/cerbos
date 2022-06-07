@@ -78,12 +78,19 @@ jobs:
           TELEMETRY_WRITE_KEY: ${{ secrets.TELEMETRY_WRITE_KEY }}
           TELEMETRY_URL: ${{ secrets.TELEMETRY_URL }}
 
-      - name: Push dev images
+      - name: Push Cerbos dev images
         run: |
           docker push ghcr.io/cerbos/cerbos:dev-amd64 
           docker push ghcr.io/cerbos/cerbos:dev-arm64
           docker manifest create ghcr.io/cerbos/cerbos:dev ghcr.io/cerbos/cerbos:dev-arm64 ghcr.io/cerbos/cerbos:dev-amd64
           docker manifest push ghcr.io/cerbos/cerbos:dev
+
+      - name: Push Cerbosctl dev images
+        run: |
+          docker push ghcr.io/cerbos/cerbosctl:dev-amd64 
+          docker push ghcr.io/cerbos/cerbosctl:dev-arm64
+          docker manifest create ghcr.io/cerbos/cerbosctl:dev ghcr.io/cerbos/cerbosctl:dev-arm64 ghcr.io/cerbos/cerbosctl:dev-amd64
+          docker manifest push ghcr.io/cerbos/cerbosctl:dev
 
   publishProtos:
     name: Publish Protobufs
