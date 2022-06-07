@@ -438,6 +438,11 @@ func (s *Store) applyIndexUpdate(ce object.ChangeEntry, eventKind storage.EventK
 		return nil
 	}
 
+	if util.IsSupportedTestFile(ce.Name) {
+		s.log.Infow("Ignoring test file", "path", ce.Name)
+		return nil
+	}
+
 	idxFn := s.idx.Delete
 	entry := index.Entry{File: ce.Name}
 
