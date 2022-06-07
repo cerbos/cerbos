@@ -463,10 +463,10 @@ func (s *Server) startHTTPServer(ctx context.Context, l net.Listener, grpcSrv *g
 	// handle gRPC requests that come over http
 	cerbosMux.MatcherFunc(func(r *http.Request, _ *mux.RouteMatch) bool {
 		return r.ProtoMajor == 2 && strings.Contains(r.Header.Get("Content-Type"), "application/grpc")
-	}).Handler(tracing.HTTPHandler(grpcSrv))
+	}).Handler(tracing.HTTPHandler(grpcSrv, "grpc"))
 
-	cerbosMux.PathPrefix(adminEndpoint).Handler(tracing.HTTPHandler(prettyJSON(gwmux)))
-	cerbosMux.PathPrefix(apiEndpoint).Handler(tracing.HTTPHandler(prettyJSON(gwmux)))
+	cerbosMux.PathPrefix(adminEndpoint).Handler(tracing.HTTPHandler(prettyJSON(gwmux), adminEndpoint))
+	cerbosMux.PathPrefix(apiEndpoint).Handler(tracing.HTTPHandler(prettyJSON(gwmux), apiEndpoint))
 	cerbosMux.Path(healthEndpoint).Handler(prettyJSON(gwmux))
 	cerbosMux.Path(schemaEndpoint).HandlerFunc(schema.ServeSvcSwagger)
 

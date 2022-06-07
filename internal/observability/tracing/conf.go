@@ -9,10 +9,8 @@ import (
 )
 
 const (
-	confKey                    = "tracing"
-	jaegerExporter             = "jaeger"
-	propagationW3CTraceContext = "w3c-tracecontext"
-	propagationB3              = "b3"
+	confKey        = "tracing"
+	jaegerExporter = "jaeger"
 )
 
 var (
@@ -24,7 +22,7 @@ var (
 type Conf struct {
 	// Jaeger configures the Jaeger exporter.
 	Jaeger *JaegerConf `yaml:"jaeger"`
-	// PropagationFormat is the trace propagation format to use. Valid values are w3c-tracecontext or b3.
+	// [Deprecated] PropagationFormat is no longer used. Traces in trace-context, baggage, or b3 formats are automatically detected and propagated.
 	PropagationFormat string `yaml:"propagationFormat" conf:",ignore"`
 	// Exporter is the type of trace exporter to use.
 	Exporter string `yaml:"exporter" conf:",example=jaeger"`
@@ -45,15 +43,7 @@ func (c *Conf) Key() string {
 	return confKey
 }
 
-func (c *Conf) SetDefaults() {
-	c.PropagationFormat = propagationW3CTraceContext
-}
-
 func (c *Conf) Validate() error {
-	if c.PropagationFormat != propagationW3CTraceContext && c.PropagationFormat != propagationB3 {
-		return fmt.Errorf("unsupported propagation format %q: valid values are %q or %q", c.PropagationFormat, propagationW3CTraceContext, propagationB3)
-	}
-
 	switch c.Exporter {
 	case "":
 		return nil
