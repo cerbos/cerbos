@@ -22,7 +22,7 @@ var (
 type Conf struct {
 	// Jaeger configures the Jaeger exporter.
 	Jaeger *JaegerConf `yaml:"jaeger"`
-	// [Deprecated] PropagationFormat is the trace propagation format to use. Valid values are w3c-tracecontext or b3.
+	// [Deprecated] PropagationFormat is no longer used. Traces in trace-context, baggage, or b3 formats are automatically detected and propagated.
 	PropagationFormat string `yaml:"propagationFormat" conf:",ignore"`
 	// Exporter is the type of trace exporter to use.
 	Exporter string `yaml:"exporter" conf:",example=jaeger"`
