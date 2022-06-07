@@ -37,27 +37,32 @@ Cerbos is popular among large and small organizations:
   <tr>
     <td valign="center">
       <a href="https://uw.co.uk">
-        <img src="https://cerbos.dev/assets/uw.svg" height="35" />
+        <img src="https://cerbos.dev/assets/uw.svg" style="max-height: 35px" />
       </a>
     </td>
     <td valign="center">
       <a href="https://withloop.co/">
-        <img src="https://cerbos.dev/assets/loop.png" height="35" />
+        <img src="https://cerbos.dev/assets/loop.png" style="max-height: 35px"/>
       </a>
     </td>
     <td valign="center">
       <a href="https://9fin.com">
-        <img src="https://cerbos.dev/assets/9fin.svg" height="35" />
+        <img src="https://cerbos.dev/assets/9fin.svg" style="max-height: 35px" />
       </a>
     </td>
     <td valign="center">
       <a href="https://salesroom.com">
-        <img src="https://cerbos.dev/assets/salesroom.svg" height="35" />
+        <img src="https://cerbos.dev/assets/salesroom.svg" style="max-height: 35px" />
       </a>
     </td>
     <td valign="center">
       <a href="https://refine.dev">
-        <img src="https://cerbos.dev/assets/refine.png" height="35" />
+        <img src="https://cerbos.dev/assets/refine.png" style="max-height: 35px" />
+      </a>
+    </td>  
+    <td valign="center">
+      <a href="https://www.doorfeed.com/">
+        <img src="https://cerbos.dev/assets/doorfeed.svg" style="max-height: 35px" />
       </a>
     </td>  
   </tr>
