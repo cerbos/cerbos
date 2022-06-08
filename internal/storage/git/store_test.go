@@ -350,6 +350,26 @@ func TestUpdateStore(t *testing.T) {
 		checkEvents(t, timeout)
 	})
 
+	t.Run("ignore test", func(t *testing.T) {
+		mockIdx := setupMock()
+		checkEvents := storage.TestSubscription(store)
+		require.NoError(t, commitToGitRepo(sourceGitDir, "Add test", func(wt *git.Worktree) error {
+			fp := filepath.Join(sourceGitDir, policyDir, "policy_test.yaml")
+			if err := os.WriteFile(fp, []byte("name: Test suite\n"), 0o600); err != nil {
+				return err
+			}
+
+			_, err := wt.Add(filepath.Join(policyDir, "policy_test.yaml"))
+
+			return err
+		}))
+
+		require.NoError(t, store.updateIndex(context.Background()))
+		mockIdx.AssertExpectations(t)
+		mockIdx.AssertNotCalled(t, "Delete", mock.MatchedBy(anyIndexEntry))
+		checkEvents(t, timeout)
+	})
+
 	t.Run("add schema", func(t *testing.T) {
 		mockIdx := setupMock()
 		checkEvents := storage.TestSubscription(store)
