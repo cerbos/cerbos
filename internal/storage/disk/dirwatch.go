@@ -13,9 +13,12 @@ import (
 	"time"
 
 	"github.com/rjeczalik/notify"
+	"go.opencensus.io/stats"
+	"go.opencensus.io/tag"
 	"go.uber.org/zap"
 
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
+	"github.com/cerbos/cerbos/internal/observability/metrics"
 	"github.com/cerbos/cerbos/internal/policy"
 	"github.com/cerbos/cerbos/internal/schema"
 	"github.com/cerbos/cerbos/internal/storage"
@@ -86,6 +89,10 @@ func (dw *dirWatch) handleEvents(ctx context.Context) {
 			dw.processEvent(evtInfo)
 		case <-ticker.C:
 			dw.triggerUpdate()
+			_ = stats.RecordWithTags(context.Background(), []tag.Mutator{
+				tag.Upsert(metrics.KeyStoreDriver, DriverName),
+				tag.Upsert(metrics.KeyStorePollStatus, "success"),
+			}, metrics.StorePollCount.M(1))
 		}
 	}
 }

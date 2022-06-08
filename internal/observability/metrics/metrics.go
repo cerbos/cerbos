@@ -37,6 +37,9 @@ var (
 	KeyCompileStatus        = tag.MustNewKey("status")
 	KeyEngineDecisionStatus = tag.MustNewKey("status")
 	KeyEnginePlanStatus     = tag.MustNewKey("status")
+	KeyIndexCRUDKind        = tag.MustNewKey("kind")
+	KeyStoreDriver          = tag.MustNewKey("driver")
+	KeyStorePollStatus      = tag.MustNewKey("status")
 )
 
 var (
@@ -111,6 +114,18 @@ var (
 		Aggregation: defaultLatencyDistribution(),
 	}
 
+	IndexCRUDCount = stats.Int64(
+		"cerbos.dev/index/crud_count",
+		"Number of create/update/delete operations",
+		stats.UnitDimensionless,
+	)
+
+	IndexCRUDCountView = &view.View{
+		Measure:     IndexCRUDCount,
+		TagKeys:     []tag.Key{KeyIndexCRUDKind},
+		Aggregation: view.Count(),
+	}
+
 	IndexEntryCount = stats.Int64(
 		"cerbos.dev/index/entry_count",
 		"Number of entries in the index",
@@ -121,6 +136,18 @@ var (
 		Measure:     IndexEntryCount,
 		Aggregation: view.LastValue(),
 	}
+
+	StorePollCount = stats.Int64(
+		"cerbos.dev/store/poll_count",
+		"Number of times the store was polled for updates",
+		stats.UnitDimensionless,
+	)
+
+	StorePollCountView = &view.View{
+		Measure:     StorePollCount,
+		TagKeys:     []tag.Key{KeyStoreDriver, KeyStorePollStatus},
+		Aggregation: view.Count(),
+	}
 )
 
 var DefaultCerbosViews = []*view.View{
@@ -130,7 +157,9 @@ var DefaultCerbosViews = []*view.View{
 	EngineCheckLatencyView,
 	EngineCheckBatchSizeView,
 	EnginePlanLatencyView,
+	IndexCRUDCountView,
 	IndexEntryCountView,
+	StorePollCountView,
 }
 
 func defaultLatencyDistribution() *view.Aggregation {

@@ -14,6 +14,7 @@ import (
 	"sync"
 
 	"go.opencensus.io/stats"
+	"go.opencensus.io/tag"
 	"go.uber.org/zap"
 	"golang.org/x/sync/singleflight"
 
@@ -205,6 +206,7 @@ func (idx *index) AddOrUpdate(entry Entry) (evt storage.Event, err error) {
 
 	modID := entry.Policy.ID
 	evt = storage.NewPolicyEvent(storage.EventAddOrUpdatePolicy, modID)
+	crudKind := "create"
 
 	idx.mu.Lock()
 	defer idx.mu.Unlock()
@@ -227,6 +229,7 @@ func (idx *index) AddOrUpdate(entry Entry) (evt storage.Event, err error) {
 
 		// remove the dependencies set because it could have changed.
 		delete(idx.dependencies, modID)
+		crudKind = "update"
 	}
 
 	// add to index
@@ -241,7 +244,9 @@ func (idx *index) AddOrUpdate(entry Entry) (evt storage.Event, err error) {
 		idx.addDep(modID, dep)
 	}
 
-	stats.Record(context.Background(), metrics.IndexEntryCount.M(int64(len(idx.modIDToFile))))
+	statsCtx := context.Background()
+	stats.Record(statsCtx, metrics.IndexEntryCount.M(int64(len(idx.modIDToFile))))
+	_ = stats.RecordWithTags(statsCtx, []tag.Mutator{tag.Upsert(metrics.KeyIndexCRUDKind, crudKind)}, metrics.IndexCRUDCount.M(1))
 
 	return evt, nil
 }
@@ -285,7 +290,9 @@ func (idx *index) Delete(entry Entry) (storage.Event, error) {
 	delete(idx.dependencies, modID)
 	delete(idx.executables, modID)
 
-	stats.Record(context.Background(), metrics.IndexEntryCount.M(int64(len(idx.modIDToFile))))
+	statsCtx := context.Background()
+	stats.Record(statsCtx, metrics.IndexEntryCount.M(int64(len(idx.modIDToFile))))
+	_ = stats.RecordWithTags(statsCtx, []tag.Mutator{tag.Upsert(metrics.KeyIndexCRUDKind, "delete")}, metrics.IndexCRUDCount.M(1))
 
 	return evt, nil
 }

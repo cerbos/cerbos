@@ -15,10 +15,13 @@ import (
 
 	"github.com/doug-martin/goqu/v9"
 	"github.com/jackc/pgtype"
+	"go.opencensus.io/stats"
+	"go.opencensus.io/tag"
 	"go.uber.org/zap"
 
 	schemav1 "github.com/cerbos/cerbos/api/genpb/cerbos/schema/v1"
 	"github.com/cerbos/cerbos/internal/namer"
+	"github.com/cerbos/cerbos/internal/observability/metrics"
 	"github.com/cerbos/cerbos/internal/policy"
 	"github.com/cerbos/cerbos/internal/schema"
 	"github.com/cerbos/cerbos/internal/storage"
@@ -279,6 +282,10 @@ func (s *dbStorage) AddOrUpdate(ctx context.Context, policies ...policy.Wrapper)
 	if err != nil {
 		return err
 	}
+
+	_ = stats.RecordWithTags(context.Background(), []tag.Mutator{
+		tag.Upsert(metrics.KeyIndexCRUDKind, "upsert"),
+	}, metrics.IndexCRUDCount.M(int64(len(policies))))
 
 	s.NotifySubscribers(events...)
 	return nil
