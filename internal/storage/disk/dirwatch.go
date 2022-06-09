@@ -91,7 +91,6 @@ func (dw *dirWatch) handleEvents(ctx context.Context) {
 			dw.triggerUpdate()
 			_ = stats.RecordWithTags(context.Background(), []tag.Mutator{
 				tag.Upsert(metrics.KeyStoreDriver, DriverName),
-				tag.Upsert(metrics.KeyStorePollStatus, "success"),
 			}, metrics.StorePollCount.M(1))
 		}
 	}
@@ -130,6 +129,7 @@ func (dw *dirWatch) triggerUpdate() {
 		dw.eventBatch = make(map[string]struct{})
 		dw.mu.Unlock()
 
+		errCount := 0
 		for f := range batch {
 			fullPath := filepath.Join(dw.dir, f)
 
@@ -139,6 +139,7 @@ func (dw *dirWatch) triggerUpdate() {
 					sf, err := schemaFileName(f)
 					if err != nil {
 						dw.log.Warnw("Failed to find relative path to schema file", "file", f, "error", err)
+						errCount++
 						continue
 					}
 					dw.NotifySubscribers(storage.NewSchemaEvent(storage.EventDeleteSchema, sf))
@@ -148,6 +149,7 @@ func (dw *dirWatch) triggerUpdate() {
 				evt, err := dw.idx.Delete(index.Entry{File: f})
 				if err != nil {
 					dw.log.Warnw("Failed to remove file from index", "file", f, "error", err)
+					errCount++
 					continue
 				}
 
@@ -160,6 +162,7 @@ func (dw *dirWatch) triggerUpdate() {
 				sf, err := schemaFileName(f)
 				if err != nil {
 					dw.log.Warnw("Failed to find relative path to schema file", "file", f, "error", err)
+					errCount++
 					continue
 				}
 				dw.NotifySubscribers(storage.NewSchemaEvent(storage.EventAddOrUpdateSchema, sf))
@@ -169,16 +172,24 @@ func (dw *dirWatch) triggerUpdate() {
 			p, err := readPolicy(fullPath)
 			if err != nil {
 				dw.log.Warnw("Failed to read policy from file", "file", f, "error", err)
+				errCount++
 				continue
 			}
 
 			evt, err := dw.idx.AddOrUpdate(index.Entry{File: f, Policy: policy.Wrap(p)})
 			if err != nil {
 				dw.log.Warnw("Failed to add file to index", "file", f, "error", err)
+				errCount++
 				continue
 			}
 
 			dw.NotifySubscribers(evt)
+		}
+
+		if errCount > 0 {
+			_ = stats.RecordWithTags(context.Background(), []tag.Mutator{
+				tag.Upsert(metrics.KeyStoreDriver, DriverName),
+			}, metrics.StoreSyncErrorCount.M(int64(errCount)))
 		}
 	}
 }

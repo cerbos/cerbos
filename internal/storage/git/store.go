@@ -542,15 +542,15 @@ func (s *Store) pollForUpdates(ctx context.Context) {
 			s.log.Info("Stopped polling for updates")
 			return
 		case <-ticker.C:
-			status := "success"
 			if err := s.updateIndex(ctx); err != nil {
 				s.log.Errorw("Failed to check for updates", "error", err)
-				status = "failure"
+				_ = stats.RecordWithTags(context.Background(), []tag.Mutator{
+					tag.Upsert(metrics.KeyStoreDriver, DriverName),
+				}, metrics.StoreSyncErrorCount.M(1))
 			}
 
 			_ = stats.RecordWithTags(context.Background(), []tag.Mutator{
 				tag.Upsert(metrics.KeyStoreDriver, DriverName),
-				tag.Upsert(metrics.KeyStorePollStatus, status),
 			}, metrics.StorePollCount.M(1))
 		}
 	}
