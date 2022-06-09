@@ -18,6 +18,8 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/grpc-ecosystem/go-grpc-middleware/logging/zap/ctxzap"
+	"go.opencensus.io/stats"
+	"go.opencensus.io/tag"
 	"go.uber.org/zap"
 	"gocloud.dev/blob"
 
@@ -29,6 +31,7 @@ import (
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
 	"github.com/cerbos/cerbos/internal/config"
 	"github.com/cerbos/cerbos/internal/namer"
+	"github.com/cerbos/cerbos/internal/observability/metrics"
 	"github.com/cerbos/cerbos/internal/policy"
 	"github.com/cerbos/cerbos/internal/schema"
 	"github.com/cerbos/cerbos/internal/storage"
@@ -295,7 +298,14 @@ func (s *Store) pollForUpdates(ctx context.Context) {
 		case <-ticker.C:
 			if err := s.updateIndex(ctx); err != nil {
 				s.log.Errorw("Failed to check for updates", "error", err)
+				_ = stats.RecordWithTags(context.Background(), []tag.Mutator{
+					tag.Upsert(metrics.KeyStoreDriver, DriverName),
+				}, metrics.StoreSyncErrorCount.M(1))
 			}
+
+			_ = stats.RecordWithTags(context.Background(), []tag.Mutator{
+				tag.Upsert(metrics.KeyStoreDriver, DriverName),
+			}, metrics.StorePollCount.M(1))
 		}
 	}
 }

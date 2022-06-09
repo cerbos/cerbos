@@ -37,6 +37,8 @@ var (
 	KeyCompileStatus        = tag.MustNewKey("status")
 	KeyEngineDecisionStatus = tag.MustNewKey("status")
 	KeyEnginePlanStatus     = tag.MustNewKey("status")
+	KeyIndexCRUDKind        = tag.MustNewKey("kind")
+	KeyStoreDriver          = tag.MustNewKey("driver")
 )
 
 var (
@@ -111,6 +113,18 @@ var (
 		Aggregation: defaultLatencyDistribution(),
 	}
 
+	IndexCRUDCount = stats.Int64(
+		"cerbos.dev/index/crud_count",
+		"Number of create/update/delete operations",
+		stats.UnitDimensionless,
+	)
+
+	IndexCRUDCountView = &view.View{
+		Measure:     IndexCRUDCount,
+		TagKeys:     []tag.Key{KeyIndexCRUDKind},
+		Aggregation: view.Count(),
+	}
+
 	IndexEntryCount = stats.Int64(
 		"cerbos.dev/index/entry_count",
 		"Number of entries in the index",
@@ -121,6 +135,30 @@ var (
 		Measure:     IndexEntryCount,
 		Aggregation: view.LastValue(),
 	}
+
+	StorePollCount = stats.Int64(
+		"cerbos.dev/store/poll_count",
+		"Number of times the remote store was polled for updates",
+		stats.UnitDimensionless,
+	)
+
+	StorePollCountView = &view.View{
+		Measure:     StorePollCount,
+		TagKeys:     []tag.Key{KeyStoreDriver},
+		Aggregation: view.Count(),
+	}
+
+	StoreSyncErrorCount = stats.Int64(
+		"cerbos.dev/store/sync_error_count",
+		"Number of errors encountered while syncing updates from the remote store",
+		stats.UnitDimensionless,
+	)
+
+	StoreSyncErrorCountView = &view.View{
+		Measure:     StoreSyncErrorCount,
+		TagKeys:     []tag.Key{KeyStoreDriver},
+		Aggregation: view.Count(),
+	}
 )
 
 var DefaultCerbosViews = []*view.View{
@@ -130,7 +168,10 @@ var DefaultCerbosViews = []*view.View{
 	EngineCheckLatencyView,
 	EngineCheckBatchSizeView,
 	EnginePlanLatencyView,
+	IndexCRUDCountView,
 	IndexEntryCountView,
+	StorePollCountView,
+	StoreSyncErrorCountView,
 }
 
 func defaultLatencyDistribution() *view.Aggregation {
