@@ -22,7 +22,7 @@ Cerbos helps you super-charge your authorization implementation by writing conte
 * Get the client SDKs
     * [Go](client/README.md)
     * [Java](https://github.com/cerbos/cerbos-sdk-java)
-    * [NodeJS](https://github.com/cerbos/cerbos-sdk-node)
+    * [JavaScript](https://github.com/cerbos/cerbos-sdk-javascript)
     * [Python](https://github.com/cerbos/cerbos-sdk-python)
     * [Ruby](https://github.com/cerbos/cerbos-sdk-ruby)
     * [Rust](https://github.com/cerbos/cerbos-sdk-rust)
