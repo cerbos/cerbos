@@ -47,7 +47,7 @@ func TestSuite(store DBStorage) func(*testing.T) {
 
 		policyList := []policy.Wrapper{rp, pp, dr, rpx, drx, rpAcme, rpAcmeHR, rpAcmeHRUK, ppAcme, ppAcmeHR}
 
-		sch := test.ReadSchemaFromFile(t, test.PathToDir(t, "store/_schemas/leave_request.json"))
+		sch := test.ReadSchemaFromFile(t, test.PathToDir(t, "store/_schemas/resources/leave_request.json"))
 		const schID = "leave_request"
 
 		t.Run("add", func(t *testing.T) {

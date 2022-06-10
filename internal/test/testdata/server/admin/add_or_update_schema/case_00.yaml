@@ -6,10 +6,10 @@ wantStatus:
 adminAddOrUpdateSchema:
   input: {
     "schemas": [
-      {"id": "leave_request.json", "definition": "{{ fileString `store/_schemas/leave_request.json` | b64enc }}"},
       {"id": "principal.json", "definition": "{{ fileString `store/_schemas/principal.json` | b64enc }}"},
-      {"id": "purchase_order.json", "definition": "{{ fileString `store/_schemas/purchase_order.json` | b64enc }}"},
-      {"id": "salary_record.json", "definition": "{{ fileString `store/_schemas/salary_record.json` | b64enc }}"}
+      {"id": "resources/leave_request.json", "definition": "{{ fileString `store/_schemas/resources/leave_request.json` | b64enc }}"},
+      {"id": "resources/purchase_order.json", "definition": "{{ fileString `store/_schemas/resources/purchase_order.json` | b64enc }}"},
+      {"id": "resources/salary_record.json", "definition": "{{ fileString `store/_schemas/resources/salary_record.json` | b64enc }}"}
     ]
   }
   wantResponse: {}

@@ -42,10 +42,10 @@ func (pc *PolicyCmd) Run(k *kong.Kong, put *Cmd, ctx *cmdclient.Context) error {
 
 	policies := client.NewPolicySet()
 	var errs []error
-	err := files.Find(pc.Paths, put.Recursive, util.FileTypePolicy, func(filePath string) error {
-		_, err := policies.AddPolicyFromFileWithErr(filePath)
+	err := files.Find(pc.Paths, put.Recursive, util.FileTypePolicy, func(file files.Found) error {
+		_, err := policies.AddPolicyFromFileWithErr(file.AbsolutePath)
 		if err != nil {
-			errs = append(errs, errors.NewPutError(filePath, err.Error()))
+			errs = append(errs, errors.NewPutError(file.AbsolutePath, err.Error()))
 		}
 
 		return nil

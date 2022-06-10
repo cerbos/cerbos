@@ -93,9 +93,9 @@ func TestIndexListSchemaIDs(t *testing.T) {
 	require.NoError(t, err)
 
 	require.Equal(t, []string{
-		"leave_request.json",
 		"principal.json",
-		"purchase_order.json",
-		"salary_record.json",
+		"resources/leave_request.json",
+		"resources/purchase_order.json",
+		"resources/salary_record.json",
 	}, ids)
 }

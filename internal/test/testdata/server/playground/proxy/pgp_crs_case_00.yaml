@@ -28,8 +28,8 @@ playgroundProxy:
         "contents": "{{ fileString `store/_schemas/principal.json` | b64enc }}",
       },
       {
-        "fileName": "_schemas/leave_request.json",
-        "contents": "{{ fileString `store/_schemas/leave_request.json` | b64enc }}",
+        "fileName": "_schemas/resources/leave_request.json",
+        "contents": "{{ fileString `store/_schemas/resources/leave_request.json` | b64enc }}",
       }
     ],
     "checkResourceSet": {

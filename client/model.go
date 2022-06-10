@@ -694,18 +694,23 @@ func (ss *SchemaSet) AddSchemaFromFile(file string, ignorePathInID bool) *Schema
 
 // AddSchemaFromFileWithErr adds a schema from the given file to the set and returns the error.
 func (ss *SchemaSet) AddSchemaFromFileWithErr(file string, ignorePathInID bool) (*SchemaSet, error) {
+	id := file
+	if ignorePathInID {
+		id = filepath.Base(id)
+	}
+
+	return ss.AddSchemaFromFileWithIDAndErr(file, id)
+}
+
+// AddSchemaFromFileWithErr adds a schema with the given id from the given file to the set and returns the error.
+func (ss *SchemaSet) AddSchemaFromFileWithIDAndErr(file, id string) (*SchemaSet, error) {
 	f, err := os.Open(file)
 	if err != nil {
 		return nil, fmt.Errorf("failed to open file %s: %w", file, err)
 	}
 	defer f.Close()
 
-	name := file
-	if ignorePathInID {
-		name = filepath.Base(name)
-	}
-
-	s, err := schema.ReadSchema(f, name)
+	s, err := schema.ReadSchema(f, id)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read schema: %w", err)
 	}

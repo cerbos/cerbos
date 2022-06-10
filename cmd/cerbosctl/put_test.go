@@ -118,10 +118,10 @@ func testPutCmd(clientCtx *cmdclient.Context, globals *flagset.Globals) func(*te
 			t.Run("put schemas recursive", func(t *testing.T) {
 				put(t, clientCtx, globals, schemaKind, "--recursive", test.PathToDir(t, "store/_schemas"))
 				require.Equal(t, []string{
-					"leave_request.json",
 					"principal.json",
-					"purchase_order.json",
-					"salary_record.json",
+					"resources/leave_request.json",
+					"resources/purchase_order.json",
+					"resources/salary_record.json",
 				}, listSchemas(t, clientCtx))
 			})
 

@@ -11,7 +11,12 @@ import (
 	"github.com/cerbos/cerbos/internal/util"
 )
 
-func Find(paths []string, recursive bool, fileType util.IndexedFileType, callback func(filePath string) error) error {
+type Found struct {
+	AbsolutePath string
+	RelativePath string
+}
+
+func Find(paths []string, recursive bool, fileType util.IndexedFileType, callback func(file Found) error) error {
 	for _, path := range paths {
 		fileInfo, err := os.Stat(path)
 		if err != nil {
@@ -36,7 +41,15 @@ func Find(paths []string, recursive bool, fileType util.IndexedFileType, callbac
 				}
 
 				if isSupportedFile(d.Name(), fileType) {
-					return callback(walkPath)
+					relativePath, err := filepath.Rel(path, walkPath)
+					if err != nil {
+						return err
+					}
+
+					return callback(Found{
+						AbsolutePath: walkPath,
+						RelativePath: filepath.ToSlash(relativePath),
+					})
 				}
 
 				return nil
@@ -45,7 +58,10 @@ func Find(paths []string, recursive bool, fileType util.IndexedFileType, callbac
 				return err
 			}
 		} else {
-			err = callback(path)
+			err = callback(Found{
+				AbsolutePath: path,
+				RelativePath: filepath.Base(path),
+			})
 			if err != nil {
 				return err
 			}

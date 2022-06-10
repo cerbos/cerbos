@@ -23,10 +23,10 @@ func TestCloneResult(t *testing.T) {
 	result, err := cloner.Clone(ctx)
 	is.NoError(err)
 	is.Equal([]string{
-		"_schemas/leave_request.json",
 		"_schemas/principal.json",
-		"_schemas/purchase_order.json",
-		"_schemas/salary_record.json",
+		"_schemas/resources/leave_request.json",
+		"_schemas/resources/purchase_order.json",
+		"_schemas/resources/salary_record.json",
 		"derived_roles/common_roles.yaml",
 		"derived_roles/derived_roles_01.yaml",
 		"derived_roles/derived_roles_02.yaml",
