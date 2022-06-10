@@ -52,3 +52,17 @@ auxData:
   jwt:
     disableVerification: true
 ----
+
+Cerbos maintains an in-memory cache of verified JWTs to avoid repeating the cryptographic verification step on each request. Cached tokens are still validated on each request to make sure they are still valid for use. You can increase the size of the cache by setting `cacheSize`.
+
+[source,yaml,linenums]
+----
+auxData:
+  jwt:
+    cacheSize: 256
+    keySets:
+      - id: default
+        remote: 
+          url: https://domain.tld/.well-known/keys.jwks
+----
+

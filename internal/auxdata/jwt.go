@@ -8,25 +8,40 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
+	"strings"
+	"time"
 
-	"github.com/lestrrat-go/jwx/jwk"
-	"github.com/lestrrat-go/jwx/jwt"
+	"github.com/bluele/gcache"
+	"github.com/lestrrat-go/httprc"
+	"github.com/lestrrat-go/jwx/v2/jwk"
+	"github.com/lestrrat-go/jwx/v2/jwt"
+	"go.opencensus.io/stats"
+	"go.opencensus.io/tag"
 	"go.uber.org/zap"
 	"google.golang.org/protobuf/types/known/structpb"
 
 	requestv1 "github.com/cerbos/cerbos/api/genpb/cerbos/request/v1"
 	"github.com/cerbos/cerbos/internal/observability/logging"
+	"github.com/cerbos/cerbos/internal/observability/metrics"
 	"github.com/cerbos/cerbos/internal/observability/tracing"
 	"github.com/cerbos/cerbos/internal/util"
 )
 
+const (
+	cacheKind          = "jwt"
+	defaultCacheExpiry = 10 * time.Minute
+	defaultCacheSize   = 256
+)
+
 var (
+	cacheEntry          = struct{}{}
 	errNilLocalKeySet   = errors.New("nil local keyset")
 	errNoKeySetToVerify = errors.New("cannot determine keyset to use for validating the JWT")
 )
 
 type jwtHelper struct {
 	keySets map[string]keySet
+	cache   gcache.Cache
 	verify  bool
 }
 
@@ -42,34 +57,27 @@ func newJWTHelper(ctx context.Context, conf *JWTConf) *jwtHelper {
 	if jh.verify {
 		jh.keySets = make(map[string]keySet, len(conf.KeySets))
 
-		var autoRefresh *jwk.AutoRefresh
+		var jwkCache *jwk.Cache
 		for _, ks := range conf.KeySets {
 			ks := ks
 			switch {
 			case ks.Remote != nil:
-				if autoRefresh == nil {
-					autoRefresh = jwk.NewAutoRefresh(ctx)
+				if jwkCache == nil {
+					log := logging.FromContext(ctx).Named("auxdata")
+					errSink := func(err error) {
+						log.Warn("Error refreshing keyset", zap.Error(err))
+					}
+
+					jwkCache = jwk.NewCache(ctx, jwk.WithErrSink(httprc.ErrSinkFunc(errSink)))
 				}
-				jh.keySets[ks.ID] = newRemoteKeySet(autoRefresh, ks.Remote)
+				jh.keySets[ks.ID] = newRemoteKeySet(jwkCache, ks.Remote)
 			case ks.Local != nil:
 				jh.keySets[ks.ID] = newLocalKeySet(ks.Local)
 			}
 		}
 
-		if autoRefresh != nil {
-			errChan := make(chan jwk.AutoRefreshError, 1)
-			autoRefresh.ErrorSink(errChan)
-			go func() {
-				log := logging.FromContext(ctx).Named("auxdata")
-				for {
-					select {
-					case <-ctx.Done():
-						return
-					case err := <-errChan:
-						log.Warn("Error refreshing keyset", zap.String("url", err.URL), zap.Error(err.Error))
-					}
-				}
-			}()
+		if conf.CacheSize > 0 {
+			jh.cache = mkCache(conf.CacheSize)
 		}
 	}
 
@@ -84,17 +92,34 @@ func (j *jwtHelper) extract(ctx context.Context, auxJWT *requestv1.AuxData_JWT) 
 	ctx, span := tracing.StartSpan(ctx, "aux_data.ExtractJWT")
 	defer span.End()
 
-	parseOpts, err := j.parseOptions(ctx, auxJWT)
+	cacheKey := ""
+	if j.cache != nil {
+		if lastIdx := strings.LastIndexByte(auxJWT.Token, '.'); lastIdx > 0 {
+			// use the token signature as the cache key
+			cacheKey = auxJWT.Token[lastIdx:]
+		}
+	}
+
+	parseOpts, err := j.parseOptions(ctx, auxJWT, cacheKey)
 	if err != nil {
 		return nil, err
 	}
 
-	return j.doExtract(ctx, auxJWT, parseOpts)
+	return j.doExtract(ctx, auxJWT, parseOpts, cacheKey)
 }
 
-func (j *jwtHelper) parseOptions(ctx context.Context, auxJWT *requestv1.AuxData_JWT) ([]jwt.ParseOption, error) {
+func (j *jwtHelper) parseOptions(ctx context.Context, auxJWT *requestv1.AuxData_JWT, cacheKey string) ([]jwt.ParseOption, error) {
 	if !j.verify {
-		return nil, nil
+		return []jwt.ParseOption{jwt.WithVerify(false), jwt.WithValidate(true)}, nil
+	}
+
+	// Check whether this token has already been verified
+	if cacheKey != "" {
+		if _, err := j.cache.GetIFPresent(cacheKey); err == nil {
+			cacheHit()
+			return []jwt.ParseOption{jwt.WithVerify(false), jwt.WithValidate(true)}, nil
+		}
+		cacheMiss()
 	}
 
 	var ks keySet
@@ -124,10 +149,19 @@ func (j *jwtHelper) parseOptions(ctx context.Context, auxJWT *requestv1.AuxData_
 	return []jwt.ParseOption{jwt.WithKeySet(jwks), jwt.WithValidate(true)}, nil
 }
 
-func (j *jwtHelper) doExtract(ctx context.Context, auxJWT *requestv1.AuxData_JWT, parseOpts []jwt.ParseOption) (map[string]*structpb.Value, error) {
+func (j *jwtHelper) doExtract(ctx context.Context, auxJWT *requestv1.AuxData_JWT, parseOpts []jwt.ParseOption, cacheKey string) (map[string]*structpb.Value, error) {
 	token, err := jwt.ParseString(auxJWT.Token, parseOpts...)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse JWT: %w", err)
+	}
+
+	if cacheKey != "" {
+		expiry := defaultCacheExpiry
+		if exp := time.Until(token.Expiration()); exp > 0 {
+			expiry = exp
+		}
+
+		_ = j.cache.SetWithExpire(cacheKey, cacheEntry, expiry)
 	}
 
 	jwtPBMap := make(map[string]*structpb.Value)
@@ -158,22 +192,22 @@ type keySet interface {
 
 // remoteKeySet holds an auto-refreshing remote keyset.
 type remoteKeySet struct {
-	*jwk.AutoRefresh
+	*jwk.Cache
 	url string
 }
 
-func newRemoteKeySet(ar *jwk.AutoRefresh, src *RemoteSource) *remoteKeySet {
+func newRemoteKeySet(cache *jwk.Cache, src *RemoteSource) *remoteKeySet {
 	if src.RefreshInterval > 0 {
-		ar.Configure(src.URL, jwk.WithRefreshInterval(src.RefreshInterval))
+		_ = cache.Register(src.URL, jwk.WithRefreshInterval(src.RefreshInterval))
 	} else {
-		ar.Configure(src.URL)
+		_ = cache.Register(src.URL)
 	}
 
-	return &remoteKeySet{AutoRefresh: ar, url: src.URL}
+	return &remoteKeySet{Cache: cache, url: src.URL}
 }
 
 func (rks *remoteKeySet) keySet(ctx context.Context) (jwk.Set, error) {
-	return rks.AutoRefresh.Fetch(ctx, rks.url)
+	return rks.Get(ctx, rks.url)
 }
 
 // localKeySet represents a keyset defined manually through the configuration.
@@ -214,4 +248,35 @@ func (lks localKeySet) keySet(ctx context.Context) (jwk.Set, error) {
 	}
 
 	return lks(ctx)
+}
+
+func mkCache(size int) gcache.Cache {
+	_ = stats.RecordWithTags(context.Background(),
+		[]tag.Mutator{tag.Upsert(metrics.KeyCacheKind, cacheKind)},
+		metrics.CacheMaxSize.M(int64(size)),
+	)
+
+	gauge := metrics.MakeCacheGauge(cacheKind)
+	return gcache.New(size).
+		ARC().
+		AddedFunc(func(_, _ any) {
+			gauge.Add(1)
+		}).
+		EvictedFunc(func(_, _ any) {
+			gauge.Add(-1)
+		}).Build()
+}
+
+func cacheHit() {
+	_ = stats.RecordWithTags(context.Background(),
+		[]tag.Mutator{tag.Upsert(metrics.KeyCacheKind, cacheKind), tag.Upsert(metrics.KeyCacheResult, "hit")},
+		metrics.CacheAccessCount.M(1),
+	)
+}
+
+func cacheMiss() {
+	_ = stats.RecordWithTags(context.Background(),
+		[]tag.Mutator{tag.Upsert(metrics.KeyCacheKind, cacheKind), tag.Upsert(metrics.KeyCacheResult, "miss")},
+		metrics.CacheAccessCount.M(1),
+	)
 }

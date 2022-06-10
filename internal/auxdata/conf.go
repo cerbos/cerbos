@@ -10,7 +10,9 @@ import (
 	"go.uber.org/multierr"
 )
 
-const confKey = "auxData"
+const (
+	confKey = "auxData"
+)
 
 // Conf is optional configuration for Auxdata.
 type Conf struct {
@@ -23,6 +25,8 @@ type JWTConf struct {
 	KeySets []JWTKeySet `yaml:"keySets"`
 	// DisableVerification disables JWT verification.
 	DisableVerification bool `yaml:"disableVerification" conf:",example=false"`
+	// CacheSize sets the number of verified tokens cached in memory. Set to negative value to disable caching.
+	CacheSize int `yaml:"cacheSize" conf:",example=256"`
 }
 
 type JWTKeySet struct {
@@ -57,6 +61,10 @@ func (c *Conf) Key() string {
 func (c *Conf) Validate() (errs error) {
 	if c.JWT == nil {
 		return nil
+	}
+
+	if c.JWT.CacheSize == 0 {
+		c.JWT.CacheSize = defaultCacheSize
 	}
 
 	idSet := make(map[string]struct{}, len(c.JWT.KeySets))
