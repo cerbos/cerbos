@@ -9,7 +9,6 @@ import (
 	"fmt"
 	"io"
 	"io/fs"
-	"path/filepath"
 	"sort"
 	"sync"
 
@@ -22,7 +21,6 @@ import (
 	"github.com/cerbos/cerbos/internal/namer"
 	"github.com/cerbos/cerbos/internal/observability/metrics"
 	"github.com/cerbos/cerbos/internal/policy"
-	"github.com/cerbos/cerbos/internal/schema"
 	"github.com/cerbos/cerbos/internal/storage"
 	"github.com/grpc-ecosystem/go-grpc-middleware/logging/zap/ctxzap"
 )
@@ -390,31 +388,8 @@ func (idx *index) ListPolicyIDs(_ context.Context) ([]string, error) {
 	return entries, nil
 }
 
-func (idx *index) ListSchemaIDs(_ context.Context) ([]string, error) {
-	var schemaIds []string
-	err := fs.WalkDir(idx.fsys, schema.Directory, func(path string, d fs.DirEntry, err error) error {
-		if err != nil {
-			return err
-		}
-
-		if d.IsDir() {
-			return nil
-		}
-
-		id, err := filepath.Rel(schema.Directory, path)
-		if err != nil {
-			return fmt.Errorf("failed to generate id from path %s: %w", path, err)
-		}
-
-		schemaIds = append(schemaIds, id)
-
-		return nil
-	})
-	if err != nil {
-		return nil, fmt.Errorf("failed to walk schemas directory: %w", err)
-	}
-
-	return schemaIds, nil
+func (idx *index) ListSchemaIDs(ctx context.Context) ([]string, error) {
+	return idx.schemaLoader.ListIDs(ctx)
 }
 
 func (idx *index) LoadSchema(ctx context.Context, url string) (io.ReadCloser, error) {

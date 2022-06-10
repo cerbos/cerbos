@@ -5,6 +5,7 @@ package index
 
 import (
 	"context"
+	"fmt"
 	"io"
 	"io/fs"
 	"path/filepath"
@@ -25,6 +26,28 @@ func NewSchemaLoader(fsys fs.FS, rootDir string) *SchemaLoader {
 	}
 
 	return &SchemaLoader{fsys: schemaFS}
+}
+
+func (sl *SchemaLoader) ListIDs(_ context.Context) ([]string, error) {
+	var schemaIds []string
+	err := fs.WalkDir(sl.fsys, ".", func(path string, d fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+
+		if d.IsDir() {
+			return nil
+		}
+
+		schemaIds = append(schemaIds, path)
+
+		return nil
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to walk schemas directory: %w", err)
+	}
+
+	return schemaIds, nil
 }
 
 func (sl *SchemaLoader) Load(_ context.Context, id string) (io.ReadCloser, error) {

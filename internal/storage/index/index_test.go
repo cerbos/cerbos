@@ -65,6 +65,24 @@ func TestIndexLoadPolicy(t *testing.T) {
 	})
 }
 
+func TestIndexListSchemaIDs(t *testing.T) {
+	ctx := context.Background()
+	fsys := os.DirFS(test.PathToDir(t, "."))
+
+	idx, err := index.Build(ctx, fsys, index.WithRootDir("store"))
+	require.NoError(t, err)
+
+	ids, err := idx.ListSchemaIDs(ctx)
+	require.NoError(t, err)
+
+	require.Equal(t, []string{
+		"leave_request.json",
+		"principal.json",
+		"purchase_order.json",
+		"salary_record.json",
+	}, ids)
+}
+
 // mkListOfFiles generates a list of policy files under the given filesystem and returns the list.
 func mkListOfFiles(t *testing.T, dir, base string) []string {
 	t.Helper()
