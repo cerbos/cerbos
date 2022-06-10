@@ -23,6 +23,41 @@ jobs:
               - 'docs/**'
             protos:
               - '**/*.proto'
+
+  generate:
+    needs: changes
+    if: ${{ needs.changes.outputs.code == 'true' }}
+    name: Generate
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install Go
+        uses: actions/setup-go@v3
+        with:
+          go-version: 1.18.x
+
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - uses: actions/cache@v3
+        with:
+          path: |
+            ~/go/pkg/mod
+            ~/.cache/go-build
+            ~/.cache/cerbos/bin
+          key: generate-${{ runner.os }}-go-${{ hashFiles('**/go.mod') }}
+
+      - name: Generate
+        run: make generate
+
+      - name: Check repo status
+        run: |-
+          REPO_STATUS="$(git status --porcelain)"
+          if [[ ! -z $REPO_STATUS ]]; then
+            echo "::error::Uncommitted changes detected"
+            echo "$REPO_STATUS"
+            exit 1
+          fi
+
   test:
     needs: changes
     if: ${{ needs.changes.outputs.code == 'true' }}
@@ -43,19 +78,7 @@ jobs:
             ~/go/pkg/mod
             ~/.cache/go-build
             ~/.cache/cerbos/bin
-          key: ${{ runner.os }}-go-${{ hashFiles('**/go.mod') }}
-
-      - name: Generate
-        run: make generate
-
-      - name: Check repo status
-        run: |-
-          REPO_STATUS="$(git status --porcelain)"
-          if [[ ! -z $REPO_STATUS ]]; then
-            echo "::error::Uncommitted changes detected"
-            echo "$REPO_STATUS"
-            exit 1
-          fi
+          key: test-${{ runner.os }}-go-${{ hashFiles('**/go.mod') }}
 
       - name: Test
         run: make test-all
