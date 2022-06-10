@@ -227,24 +227,19 @@ changelog:
   sort: asc
   groups:
     - title: Features
-      regexp: |
-        \bfeat(\(.+?\))?\!?:.+
+      regexp: 'feat(?:\(.+?\))?!?:'
       order: 5
     - title: Enhancements
-      regexp: |
-        \benhancement(\(.+?\))?\!?:.+
+      regexp: 'enhancement(?:\(.+?\))?!?:'
       order: 10
     - title: Bug fixes
-      regexp: |
-        \bfix(\(.+?\))?\!?:.+
+      regexp: 'fix(?:\(.+?\))?!?:'
       order: 15
     - title: Documentation
-      regexp: |
-        \bdocs(\(.+?\))?\!?:.+
+      regexp: 'docs(?:\(.+?\))?!?:'
       order: 20
     - title: Chores
-      regexp: |
-        \bchore(\(.+?\))?\!?:.+
+      regexp: 'chore(?:\(.+?\))?!?:'
       order: 25
     - title: Others
-      order: 30
+      order: 100
