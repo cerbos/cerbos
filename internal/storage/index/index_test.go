@@ -9,7 +9,6 @@ package index_test
 import (
 	"context"
 	"os"
-	"path/filepath"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -27,7 +26,25 @@ func TestIndexLoadPolicy(t *testing.T) {
 	idx, err := index.Build(context.Background(), fsys)
 	require.NoError(t, err)
 
-	policyFiles := mkListOfFiles(t, "store", base)
+	policyFiles := []string{
+		"derived_roles/common_roles.yaml",
+		"derived_roles/derived_roles_01.yaml",
+		"derived_roles/derived_roles_02.yaml",
+		"derived_roles/derived_roles_03.yaml",
+		"principal_policies/policy_01.yaml",
+		"principal_policies/policy_02.yaml",
+		"principal_policies/policy_02_acme.hr.yaml",
+		"principal_policies/policy_02_acme.yaml",
+		"resource_policies/policy_01.yaml",
+		"resource_policies/policy_02.yaml",
+		"resource_policies/policy_03.yaml",
+		"resource_policies/policy_04.yaml",
+		"resource_policies/policy_05.yaml",
+		"resource_policies/policy_05_acme.hr.uk.yaml",
+		"resource_policies/policy_05_acme.hr.yaml",
+		"resource_policies/policy_05_acme.yaml",
+		"resource_policies/policy_06.yaml",
+	}
 
 	t.Run("load policy", func(t *testing.T) {
 		t.Run("should load the policies", func(t *testing.T) {
@@ -81,20 +98,4 @@ func TestIndexListSchemaIDs(t *testing.T) {
 		"purchase_order.json",
 		"salary_record.json",
 	}, ids)
-}
-
-// mkListOfFiles generates a list of policy files under the given filesystem and returns the list.
-func mkListOfFiles(t *testing.T, dir, base string) []string {
-	t.Helper()
-
-	var list []string
-	err := test.FindPolicyFiles(t, dir, func(path string) error {
-		relPath, err := filepath.Rel(base, path)
-		require.NoError(t, err)
-		list = append(list, relPath)
-		return nil
-	})
-	require.NoError(t, err)
-
-	return list
 }

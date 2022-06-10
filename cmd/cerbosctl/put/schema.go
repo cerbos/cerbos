@@ -42,14 +42,14 @@ func (sc *SchemaCmd) Run(k *kong.Kong, put *Cmd, ctx *cmdclient.Context) error {
 
 	schemas := client.NewSchemaSet()
 	var errs []error
-	err := files.Find(sc.Paths, put.Recursive, func(filePath string) error {
+	err := files.Find(sc.Paths, put.Recursive, util.FileTypeSchema, func(filePath string) error {
 		_, err := schemas.AddSchemaFromFileWithErr(filePath, true)
 		if err != nil {
 			errs = append(errs, errors.NewPutError(filePath, err.Error()))
 		}
 
 		return nil
-	}, util.IsJSONFileTypeExt)
+	})
 	if err != nil {
 		return err
 	}

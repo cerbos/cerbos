@@ -42,14 +42,14 @@ func (pc *PolicyCmd) Run(k *kong.Kong, put *Cmd, ctx *cmdclient.Context) error {
 
 	policies := client.NewPolicySet()
 	var errs []error
-	err := files.Find(pc.Paths, put.Recursive, func(filePath string) error {
+	err := files.Find(pc.Paths, put.Recursive, util.FileTypePolicy, func(filePath string) error {
 		_, err := policies.AddPolicyFromFileWithErr(filePath)
 		if err != nil {
 			errs = append(errs, errors.NewPutError(filePath, err.Error()))
 		}
 
 		return nil
-	}, util.IsSupportedFileType)
+	})
 	if err != nil {
 		return err
 	}

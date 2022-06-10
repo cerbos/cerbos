@@ -12,7 +12,6 @@ import (
 	"net/http"
 	"net/url"
 	"os"
-	"path/filepath"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -33,9 +32,9 @@ import (
 	"github.com/cerbos/cerbos/internal/namer"
 	"github.com/cerbos/cerbos/internal/observability/metrics"
 	"github.com/cerbos/cerbos/internal/policy"
-	"github.com/cerbos/cerbos/internal/schema"
 	"github.com/cerbos/cerbos/internal/storage"
 	"github.com/cerbos/cerbos/internal/storage/index"
+	"github.com/cerbos/cerbos/internal/util"
 )
 
 const DriverName = "blob"
@@ -234,12 +233,7 @@ func (s *Store) updateIndex(ctx context.Context) error {
 	var p *policyv1.Policy
 	var event storage.Event
 	for _, f := range changes.updateOrAdd {
-		if filepath.Dir(f) == schema.Directory {
-			schemaFile, err := filepath.Rel(schema.Directory, f)
-			if err != nil {
-				s.log.Warnw("Failed to find relative path to schema file", "file", f, "error", err)
-				continue
-			}
+		if schemaFile, ok := util.RelativeSchemaPath(f); ok {
 			s.NotifySubscribers(storage.NewSchemaEvent(storage.EventAddOrUpdateSchema, schemaFile))
 			continue
 		}
@@ -257,12 +251,7 @@ func (s *Store) updateIndex(ctx context.Context) error {
 	}
 
 	for _, f := range changes.delete {
-		if filepath.Dir(f) == schema.Directory {
-			schemaFile, err := filepath.Rel(schema.Directory, f)
-			if err != nil {
-				s.log.Warnw("Failed to find relative path to schema file", "file", f, "error", err)
-				continue
-			}
+		if schemaFile, ok := util.RelativeSchemaPath(f); ok {
 			s.NotifySubscribers(storage.NewSchemaEvent(storage.EventDeleteSchema, schemaFile))
 			continue
 		}

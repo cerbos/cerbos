@@ -404,7 +404,7 @@ func (idx *index) LoadPolicy(_ context.Context, file ...string) ([]*policy.Wrapp
 	for i, f := range file {
 		p, err := idx.loadPolicy(idx.fileToModID[f])
 		if err != nil {
-			return nil, fmt.Errorf("failed to load policy file with file path %s: %w", file, err)
+			return nil, fmt.Errorf("failed to load policy file with file path %s: %w", f, err)
 		}
 
 		pw := policy.Wrap(p)

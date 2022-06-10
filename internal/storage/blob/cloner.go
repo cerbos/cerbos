@@ -88,7 +88,7 @@ func (c *Cloner) Clone(ctx context.Context) (*CloneResult, error) {
 		}
 		file := strings.TrimPrefix(obj.Key, "/")
 		eTag := obj.MD5
-		if !util.IsSupportedFileType(file) {
+		if util.FileType(file) == util.FileTypeNotIndexed {
 			continue
 		}
 		info[file] = eTag

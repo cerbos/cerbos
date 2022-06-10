@@ -11,6 +11,7 @@ import (
 	"path/filepath"
 
 	"github.com/cerbos/cerbos/internal/schema"
+	"github.com/cerbos/cerbos/internal/util"
 )
 
 type SchemaLoader struct {
@@ -36,10 +37,16 @@ func (sl *SchemaLoader) ListIDs(_ context.Context) ([]string, error) {
 		}
 
 		if d.IsDir() {
+			if util.IsHidden(d.Name()) {
+				return fs.SkipDir
+			}
+
 			return nil
 		}
 
-		schemaIds = append(schemaIds, path)
+		if !util.IsHidden(d.Name()) && util.IsJSONFileTypeExt(d.Name()) {
+			schemaIds = append(schemaIds, path)
+		}
 
 		return nil
 	})

@@ -22,7 +22,6 @@ import (
 	schemav1 "github.com/cerbos/cerbos/api/genpb/cerbos/schema/v1"
 	"github.com/cerbos/cerbos/internal/observability/logging"
 	"github.com/cerbos/cerbos/internal/policy"
-	"github.com/cerbos/cerbos/internal/schema"
 	"github.com/cerbos/cerbos/internal/storage"
 	"github.com/cerbos/cerbos/internal/util"
 )
@@ -237,27 +236,17 @@ func SkipIfGHActions(t *testing.T) {
 func FindPolicyFiles(t *testing.T, dir string, callback func(string) error) error {
 	t.Helper()
 
-	testdataDir := PathToDir(t, dir)
-	return filepath.WalkDir(testdataDir, func(path string, d fs.DirEntry, err error) error {
+	base := PathToDir(t, dir)
+
+	return fs.WalkDir(os.DirFS(base), ".", func(path string, _ fs.DirEntry, err error) error {
 		if err != nil {
 			return err
 		}
 
-		if d.IsDir() {
-			switch d.Name() {
-			case schema.Directory:
-				return fs.SkipDir
-			case util.TestDataDirectory:
-				return fs.SkipDir
-			default:
-				return nil
-			}
-		}
-
-		if !util.IsSupportedFileType(d.Name()) || util.IsSupportedTestFile(d.Name()) {
+		if util.FileType(path) != util.FileTypePolicy {
 			return nil
 		}
 
-		return callback(path)
+		return callback(filepath.Join(base, path))
 	})
 }

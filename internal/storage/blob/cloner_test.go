@@ -22,5 +22,27 @@ func TestCloneResult(t *testing.T) {
 	is.NoError(err)
 	result, err := cloner.Clone(ctx)
 	is.NoError(err)
-	is.Len(result.updateOrAdd, 22)
+	is.Equal([]string{
+		"_schemas/leave_request.json",
+		"_schemas/principal.json",
+		"_schemas/purchase_order.json",
+		"_schemas/salary_record.json",
+		"derived_roles/common_roles.yaml",
+		"derived_roles/derived_roles_01.yaml",
+		"derived_roles/derived_roles_02.yaml",
+		"derived_roles/derived_roles_03.yaml",
+		"principal_policies/policy_01.yaml",
+		"principal_policies/policy_02.yaml",
+		"principal_policies/policy_02_acme.hr.yaml",
+		"principal_policies/policy_02_acme.yaml",
+		"resource_policies/policy_01.yaml",
+		"resource_policies/policy_02.yaml",
+		"resource_policies/policy_03.yaml",
+		"resource_policies/policy_04.yaml",
+		"resource_policies/policy_05.yaml",
+		"resource_policies/policy_05_acme.hr.uk.yaml",
+		"resource_policies/policy_05_acme.hr.yaml",
+		"resource_policies/policy_05_acme.yaml",
+		"resource_policies/policy_06.yaml",
+	}, result.updateOrAdd)
 }
