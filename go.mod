@@ -19,7 +19,7 @@ require (
 	github.com/envoyproxy/protoc-gen-validate v0.6.7
 	github.com/fatih/color v1.13.0
 	github.com/fatih/structtag v1.2.0
-	github.com/fergusstrange/embedded-postgres v1.15.0
+	github.com/fergusstrange/embedded-postgres v1.16.0
 	github.com/gdamore/tcell/v2 v2.5.1
 	github.com/ghodss/yaml v1.0.0
 	github.com/go-cmd/cmd v1.4.1
