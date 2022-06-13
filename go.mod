@@ -7,7 +7,7 @@ require (
 	github.com/Masterminds/sprig/v3 v3.2.2
 	github.com/adrg/xdg v0.4.0
 	github.com/alecthomas/chroma v0.10.0
-	github.com/alecthomas/kong v0.5.0
+	github.com/alecthomas/kong v0.6.0
 	github.com/alecthomas/participle/v2 v2.0.0-alpha9
 	github.com/aws/aws-sdk-go v1.44.5
 	github.com/bluele/gcache v0.0.2
