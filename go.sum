@@ -1117,8 +1117,9 @@ github.com/lestrrat-go/blackmagic v1.0.1 h1:lS5Zts+5HIC/8og6cGHb0uCcNCa3OUt1ygh3
 github.com/lestrrat-go/blackmagic v1.0.1/go.mod h1:UrEqBzIR2U6CnzVyUtfM6oZNMt/7O7Vohk2J0OGSAtU=
 github.com/lestrrat-go/httpcc v1.0.1 h1:ydWCStUeJLkpYyjLDHihupbn2tYmZ7m22BGkcvZZrIE=
 github.com/lestrrat-go/httpcc v1.0.1/go.mod h1:qiltp3Mt56+55GPVCbTdM9MlqhvzyuL6W/NMDA8vA5E=
-github.com/lestrrat-go/httprc v1.0.1 h1:Cnc4NxIySph38pQPzKbjg5OkKsGR/Cf5xcWt5OlSUDI=
 github.com/lestrrat-go/httprc v1.0.1/go.mod h1:5Ml+nB++j6IC0e6LzefJnrpMQDKgDwDCaIQQzhbqhJM=
+github.com/lestrrat-go/httprc v1.0.2 h1:1hPZNeBRt9cvvYFR83XTkoQQidSFmAj3dqgR3AuQj9U=
+github.com/lestrrat-go/httprc v1.0.2/go.mod h1:5Ml+nB++j6IC0e6LzefJnrpMQDKgDwDCaIQQzhbqhJM=
 github.com/lestrrat-go/iter v1.0.2 h1:gMXo1q4c2pHmC3dn8LzRhJfP1ceCbgSiT9lUydIzltI=
 github.com/lestrrat-go/iter v1.0.2/go.mod h1:Momfcq3AnRlRjI5b5O8/G5/BvpzrhoFTZcn06fEOPt4=
 github.com/lestrrat-go/jwx/v2 v2.0.2 h1:wkq9jwCkF3xrykISzn0Eksd7NEMOZ9yvCdnEpovIJX8=
