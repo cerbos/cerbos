@@ -42,7 +42,7 @@ require (
 	github.com/jwalton/gchalk v1.3.0
 	github.com/jwalton/go-supportscolor v1.1.0
 	github.com/kavu/go_reuseport v1.5.0
-	github.com/lestrrat-go/httprc v1.0.1
+	github.com/lestrrat-go/httprc v1.0.2
 	github.com/lestrrat-go/jwx/v2 v2.0.2
 	github.com/mattn/go-isatty v0.0.14
 	github.com/minio/minio-go/v7 v7.0.27
