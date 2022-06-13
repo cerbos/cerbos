@@ -101,18 +101,17 @@ func mkPlanResourcesOutput(input *enginev1.PlanResourcesInput, scope string, fil
 		Scope:         scope,
 	}
 
-	if input.IncludeMeta {
-		fd, err := NodeToString(filterAST)
-		if err != nil {
-			fd = "can't render filter string representation"
-		}
-
-		result.FilterDebug = fd
-	}
-
 	var err error
 	result.Filter, err = toFilter(filterAST)
-	return result, err
+	if err != nil {
+		return nil, err
+	}
+
+	if input.IncludeMeta {
+		result.FilterDebug = filterToString(result.Filter)
+	}
+
+	return result, nil
 }
 
 func (rpe *resourcePolicyEvaluator) EvaluateResourcesQueryPlan(ctx context.Context, input *enginev1.PlanResourcesInput) (*enginev1.PlanResourcesOutput, error) {

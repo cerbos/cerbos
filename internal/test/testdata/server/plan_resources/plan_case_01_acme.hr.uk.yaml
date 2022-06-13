@@ -44,7 +44,7 @@ planResources:
       }
     },
     "meta": {
-      "filter_debug": "(R.attr.owner == \"harry\")",
+      "filter_debug": "(eq request.resource.attr.owner \"harry\")",
       "matched_scope": "acme.hr.uk"
     }
   }

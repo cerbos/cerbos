@@ -2090,6 +2090,170 @@ var _ interface {
 	ErrorName() string
 } = VerifyTestFixtureGetTestsTestCaseValidationError{}
 
+// Validate checks the field values on QueryPlannerFilterTestCase with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *QueryPlannerFilterTestCase) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on QueryPlannerFilterTestCase with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// QueryPlannerFilterTestCaseMultiError, or nil if none found.
+func (m *QueryPlannerFilterTestCase) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *QueryPlannerFilterTestCase) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for Description
+
+	if all {
+		switch v := interface{}(m.GetInput()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, QueryPlannerFilterTestCaseValidationError{
+					field:  "Input",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, QueryPlannerFilterTestCaseValidationError{
+					field:  "Input",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetInput()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return QueryPlannerFilterTestCaseValidationError{
+				field:  "Input",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if all {
+		switch v := interface{}(m.GetWantFilter()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, QueryPlannerFilterTestCaseValidationError{
+					field:  "WantFilter",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, QueryPlannerFilterTestCaseValidationError{
+					field:  "WantFilter",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetWantFilter()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return QueryPlannerFilterTestCaseValidationError{
+				field:  "WantFilter",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	// no validation rules for WantString
+
+	if len(errors) > 0 {
+		return QueryPlannerFilterTestCaseMultiError(errors)
+	}
+
+	return nil
+}
+
+// QueryPlannerFilterTestCaseMultiError is an error wrapping multiple
+// validation errors returned by QueryPlannerFilterTestCase.ValidateAll() if
+// the designated constraints aren't met.
+type QueryPlannerFilterTestCaseMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m QueryPlannerFilterTestCaseMultiError) Error() string {
+	var msgs []string
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m QueryPlannerFilterTestCaseMultiError) AllErrors() []error { return m }
+
+// QueryPlannerFilterTestCaseValidationError is the validation error returned
+// by QueryPlannerFilterTestCase.Validate if the designated constraints aren't met.
+type QueryPlannerFilterTestCaseValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e QueryPlannerFilterTestCaseValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e QueryPlannerFilterTestCaseValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e QueryPlannerFilterTestCaseValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e QueryPlannerFilterTestCaseValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e QueryPlannerFilterTestCaseValidationError) ErrorName() string {
+	return "QueryPlannerFilterTestCaseValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e QueryPlannerFilterTestCaseValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sQueryPlannerFilterTestCase.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = QueryPlannerFilterTestCaseValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = QueryPlannerFilterTestCaseValidationError{}
+
 // Validate checks the field values on ServerTestCase_PlanResourcesCall with
 // the rules defined in the proto definition for this message. If any rules
 // are violated, the first error encountered is returned, or nil if there are

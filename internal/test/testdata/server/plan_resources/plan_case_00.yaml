@@ -56,4 +56,4 @@ planResources:
                   - variable: request.resource.attr.status
                   - value: PENDING_APPROVAL
     meta:
-      filter_debug: (((request.resource.attr.geography == "GB") AND (request.resource.attr.geography == "GB")) AND (request.resource.attr.status == "PENDING_APPROVAL"))
+      filter_debug: "(and (and (eq request.resource.attr.geography \"GB\") (eq request.resource.attr.geography \"GB\")) (eq request.resource.attr.status \"PENDING_APPROVAL\"))"

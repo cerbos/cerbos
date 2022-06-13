@@ -1,0 +1,14 @@
+---
+description: NOT false
+input:
+  kind: KIND_CONDITIONAL
+  condition:
+    expression:
+      operator: not
+      operands:
+        - value: false
+wantFilter:
+  kind: KIND_ALWAYS_ALLOWED
+wantString: "(true)"
+
+

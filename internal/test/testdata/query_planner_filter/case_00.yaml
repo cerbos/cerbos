@@ -1,0 +1,9 @@
+---
+description: Nil condition
+input:
+  kind: KIND_CONDITIONAL
+wantFilter:
+  kind: KIND_ALWAYS_ALLOWED
+wantString: "(true)"
+
+

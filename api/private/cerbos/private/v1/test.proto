@@ -167,3 +167,10 @@ message VerifyTestFixtureGetTestsTestCase {
   repeated cerbos.policy.v1.Test want_tests = 2;
   string want_err = 3;
 }
+
+message QueryPlannerFilterTestCase {
+  string description = 1;
+  cerbos.engine.v1.PlanResourcesFilter input = 2;
+  cerbos.engine.v1.PlanResourcesFilter want_filter = 3;
+  string want_string = 4;
+}
