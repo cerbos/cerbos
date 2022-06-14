@@ -7,7 +7,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"strings"
 
 	"github.com/google/cel-go/cel"
 	"github.com/google/cel-go/checker/decls"
@@ -32,77 +31,53 @@ type (
 		node *qpN
 		role string
 	}
-	NoSuchKeyError struct {
-		msg string
+
+	PolicyPlanResult struct {
+		Scope       string
+		DenyFilter  []*qpN
+		AllowFilter []*qpN
 	}
 )
 
-func (e *NoSuchKeyError) Error() string {
-	return e.msg
-}
-
-func (ppe *principalPolicyEvaluator) EvaluateResourcesQueryPlan(ctx context.Context, input *enginev1.PlanResourcesInput) (*enginev1.PlanResourcesOutput, error) {
-	_, span := tracing.StartSpan(ctx, "principal_policy.EvaluateResourcesQueryPlan")
-	span.SetAttributes(tracing.PolicyFQN(ppe.policy.Meta.Fqn))
-	defer span.End()
-
-	inputActions := []string{input.Action}
-	var filterAST *enginev1.PlanResourcesAst_Node
-	var scope string
-
-	nodeBoolTrue := mkTrueNode()
-	for _, p := range ppe.policy.Policies { // zero or one policy in the set
-		scope = p.Scope
-		for resource, resourceRules := range p.ResourceRules {
-			if !util.MatchesGlob(resource, input.Resource.Kind) {
-				continue
-			}
-
-			for actionGlob, rule := range resourceRules.ActionRules {
-				matchedActions := util.FilterGlob(actionGlob, inputActions)
-				if len(matchedActions) == 0 {
-					continue
-				}
-				variables := make(map[string]*exprpb.Expr, len(p.Variables))
-				for k, v := range p.Variables {
-					variables[k] = v.Checked.Expr
-				}
-
-				if rule.Condition != nil {
-					node, err := evaluateCondition(rule.Condition, input, variables)
-					if err != nil {
-						return nil, err
-					}
-					filterAST = node
-				}
-
-				if filterAST == nil {
-					filterAST = nodeBoolTrue // No restrictions on this resource
-				}
-
-				if rule.Effect == effectv1.Effect_EFFECT_DENY {
-					filterAST = invertNodeBooleanValue(filterAST)
-				}
-
-				return mkPlanResourcesOutput(input, scope, filterAST)
-			}
-		}
+func combinePlans(principalPolicyPlan, resourcePolicyPlan *PolicyPlanResult) *PolicyPlanResult {
+	if principalPolicyPlan.Empty() {
+		return resourcePolicyPlan
 	}
 
-	return mkPlanResourcesOutput(input, scope, mkFalseNode())
+	if resourcePolicyPlan.Empty() {
+		return principalPolicyPlan
+	}
+
+	return &PolicyPlanResult{
+		Scope:       fmt.Sprintf("principal: %q; resource: %q", principalPolicyPlan.Scope, resourcePolicyPlan.Scope),
+		AllowFilter: append(principalPolicyPlan.AllowFilter, resourcePolicyPlan.toAST()),
+		DenyFilter:  principalPolicyPlan.DenyFilter,
+	}
 }
 
-func mkPlanResourcesOutput(input *enginev1.PlanResourcesInput, scope string, filterAST *enginev1.PlanResourcesAst_Node) (*enginev1.PlanResourcesOutput, error) {
+func (p *PolicyPlanResult) Add(filter *qpN, effect effectv1.Effect) {
+	if effect == effectv1.Effect_EFFECT_ALLOW {
+		p.AllowFilter = append(p.AllowFilter, filter)
+	} else {
+		p.DenyFilter = append(p.DenyFilter, invertNodeBooleanValue(filter))
+	}
+}
+
+func (p *PolicyPlanResult) Empty() bool {
+	return len(p.AllowFilter) == 0 && len(p.DenyFilter) == 0
+}
+
+func (p *PolicyPlanResult) ToPlanResourcesOutput(input *enginev1.PlanResourcesInput) (*enginev1.PlanResourcesOutput, error) {
 	result := &enginev1.PlanResourcesOutput{
 		RequestId:     input.RequestId,
 		Kind:          input.Resource.Kind,
 		PolicyVersion: input.Resource.PolicyVersion,
 		Action:        input.Action,
-		Scope:         scope,
+		Scope:         p.Scope,
 	}
 
 	var err error
-	result.Filter, err = toFilter(filterAST)
+	result.Filter, err = toFilter(p.toAST())
 	if err != nil {
 		return nil, err
 	}
@@ -114,23 +89,94 @@ func mkPlanResourcesOutput(input *enginev1.PlanResourcesInput, scope string, fil
 	return result, nil
 }
 
-func (rpe *resourcePolicyEvaluator) EvaluateResourcesQueryPlan(ctx context.Context, input *enginev1.PlanResourcesInput) (*enginev1.PlanResourcesOutput, error) {
+func (p *PolicyPlanResult) toAST() *qpN {
+	a := len(p.AllowFilter)
+	d := len(p.DenyFilter)
+
+	switch a {
+	case 0:
+		switch d {
+		case 0:
+			return mkFalseNode() // default to DENY
+		case 1:
+			return p.DenyFilter[0]
+		default:
+			return mkNodeFromLO(mkAndLogicalOperation(p.DenyFilter))
+		}
+
+	case 1:
+		if d == 0 {
+			return p.AllowFilter[0]
+		}
+
+		return mkNodeFromLO(mkAndLogicalOperation(append(p.DenyFilter, p.AllowFilter[0])))
+
+	default:
+		allowFilter := mkNodeFromLO(mkOrLogicalOperation(p.AllowFilter))
+
+		if d == 0 {
+			return allowFilter
+		}
+
+		return mkNodeFromLO(mkAndLogicalOperation(append(p.DenyFilter, allowFilter)))
+	}
+}
+
+func (ppe *principalPolicyEvaluator) EvaluateResourcesQueryPlan(ctx context.Context, input *enginev1.PlanResourcesInput) (*PolicyPlanResult, error) {
+	_, span := tracing.StartSpan(ctx, "principal_policy.EvaluateResourcesQueryPlan")
+	span.SetAttributes(tracing.PolicyFQN(ppe.policy.Meta.Fqn))
+	defer span.End()
+
+	result := &PolicyPlanResult{}
+	for _, p := range ppe.policy.Policies { // there might be more than 1 policy if there are scoped policies
+		// if previous iteration has found a matching policy, then quit the loop
+		if !result.Empty() {
+			break
+		}
+
+		result.Scope = p.Scope
+		for resource, resourceRules := range p.ResourceRules {
+			if !util.MatchesGlob(resource, input.Resource.Kind) {
+				continue
+			}
+
+			for actionGlob, rule := range resourceRules.ActionRules {
+				if !matchesActionGlob(actionGlob, input.Action) {
+					continue
+				}
+
+				variables := make(map[string]*exprpb.Expr, len(p.Variables))
+				for k, v := range p.Variables {
+					variables[k] = v.Checked.Expr
+				}
+
+				filter, err := evaluateCondition(rule.Condition, input, variables)
+				if err != nil {
+					return nil, err
+				}
+
+				result.Add(filter, rule.Effect)
+			}
+		}
+	}
+
+	return result, nil
+}
+
+func (rpe *resourcePolicyEvaluator) EvaluateResourcesQueryPlan(ctx context.Context, input *enginev1.PlanResourcesInput) (*PolicyPlanResult, error) {
 	_, span := tracing.StartSpan(ctx, "resource_policy.EvaluateResourcesQueryPlan")
 	span.SetAttributes(tracing.PolicyFQN(rpe.policy.Meta.Fqn))
 	defer span.End()
 
+	result := &PolicyPlanResult{}
 	effectiveRoles := toSet(input.Principal.Roles)
-	inputActions := []string{input.Action}
-	var allowFilter, denyFilter []*qpN
-	var filterAST *enginev1.PlanResourcesAst_Node
-	var scope string
-
 	for _, p := range rpe.policy.Policies { // there might be more than 1 policy if there are scoped policies
 		// if previous iteration has found a matching policy, then quit the loop
-		if len(allowFilter) > 0 || len(denyFilter) > 0 {
+		if !result.Empty() {
 			break
 		}
-		scope = p.Scope
+
+		result.Scope = p.Scope
 
 		var derivedRoles []rN
 
@@ -175,6 +221,7 @@ func (rpe *resourcePolicyEvaluator) EvaluateResourcesQueryPlan(ctx context.Conte
 						break
 					}
 				}
+
 				if !f {
 					switch len(nodes) {
 					case 0:
@@ -187,78 +234,40 @@ func (rpe *resourcePolicyEvaluator) EvaluateResourcesQueryPlan(ctx context.Conte
 					}
 				}
 			}
+
 			for actionGlob := range rule.Actions {
-				matchedActions := util.FilterGlob(actionGlob, inputActions)
-				if len(matchedActions) == 0 {
+				if !matchesActionGlob(actionGlob, input.Action) {
 					continue
 				}
+
 				variables := make(map[string]*exprpb.Expr, len(p.Variables))
 				for k, v := range p.Variables {
 					variables[k] = v.Checked.Expr
 				}
-				var node *qpN
-				var err error
-				if rule.Condition != nil {
-					node, err = evaluateCondition(rule.Condition, input, variables)
-					if err != nil {
-						return nil, err
-					}
+
+				node, err := evaluateCondition(rule.Condition, input, variables)
+				if err != nil {
+					return nil, err
 				}
 
+				var filter *qpN
 				if drNode == nil {
-					filterAST = node
+					filter = node
 				} else {
-					filterAST = drNode
-
-					if node != nil {
-						// node AND drNode
-						filterAST = mkNodeFromLO(mkAndLogicalOperation([]*qpN{drNode, node}))
-					}
+					filter = mkNodeFromLO(mkAndLogicalOperation([]*qpN{drNode, node}))
 				}
 
-				//nolint:exhaustive
-				switch rule.Effect {
-				case effectv1.Effect_EFFECT_DENY:
-					denyFilter = append(denyFilter, invertNodeBooleanValue(filterAST))
-				case effectv1.Effect_EFFECT_ALLOW:
-					allowFilter = append(allowFilter, filterAST)
-				}
+				result.Add(filter, rule.Effect)
 			}
 		}
 	}
 
-	switch a, d := len(allowFilter), len(denyFilter); a {
-	case 0:
-		switch d {
-		case 0:
-			filterAST = mkFalseNode() // default to DENY
-		case 1:
-			filterAST = denyFilter[0]
-		default:
-			filterAST = mkNodeFromLO(mkAndLogicalOperation(denyFilter))
-		}
-	case 1:
-		if d == 0 {
-			filterAST = allowFilter[0]
-		} else {
-			nodes := make([]*qpN, d+1)
-			copy(nodes, denyFilter)
-			nodes[len(nodes)-1] = allowFilter[0]
-			filterAST = mkNodeFromLO(mkAndLogicalOperation(nodes))
-		}
-	default:
-		switch d {
-		case 0:
-			filterAST = mkNodeFromLO(mkOrLogicalOperation(allowFilter))
-		default:
-			nodes := make([]*qpN, d+1)
-			copy(nodes, denyFilter)
-			nodes[len(nodes)-1] = mkNodeFromLO(mkOrLogicalOperation(allowFilter))
-			filterAST = mkNodeFromLO(mkAndLogicalOperation(nodes))
-		}
-	}
+	return result, nil
+}
 
-	return mkPlanResourcesOutput(input, scope, filterAST)
+func matchesActionGlob(actionGlob, action string) bool {
+	// need to use FilterGlob here so that "*" matches anything
+	return len(util.FilterGlob(actionGlob, []string{action})) > 0
 }
 
 func getDerivedRoleConditions(derivedRoles []rN, rule *runtimev1.RunnableResourcePolicySet_Policy_Rule) ([]*qpN, error) {
@@ -330,6 +339,10 @@ func invertNodeBooleanValue(node *enginev1.PlanResourcesAst_Node) *enginev1.Plan
 }
 
 func evaluateCondition(condition *runtimev1.Condition, input *enginev1.PlanResourcesInput, variables map[string]*exprpb.Expr) (*enginev1.PlanResourcesAst_Node, error) {
+	if condition == nil {
+		return mkTrueNode(), nil
+	}
+
 	res := new(qpN)
 	switch t := condition.Op.(type) {
 	case *runtimev1.Condition_Any:
@@ -421,7 +434,7 @@ func evaluateCondition(condition *runtimev1.Condition, input *enginev1.PlanResou
 			res.Node = &qpNLO{LogicalOperation: mkAndLogicalOperation(nodes)}
 		}
 	case *runtimev1.Condition_Expr:
-		_, residual, err := evaluateCELExprPartially(t.Expr.Checked, input, variables)
+		residual, err := evaluateCELExprPartially(t.Expr.Checked, input, variables)
 		if err != nil {
 			return nil, fmt.Errorf("error evaluating condition %q: %w", t.Expr.Original, err)
 		}
@@ -432,11 +445,11 @@ func evaluateCondition(condition *runtimev1.Condition, input *enginev1.PlanResou
 	return res, nil
 }
 
-func evaluateCELExprPartially(expr *exprpb.CheckedExpr, input *enginev1.PlanResourcesInput, variables map[string]*exprpb.Expr) (*bool, *exprpb.CheckedExpr, error) {
+func evaluateCELExprPartially(expr *exprpb.CheckedExpr, input *enginev1.PlanResourcesInput, variables map[string]*exprpb.Expr) (*exprpb.CheckedExpr, error) {
 	e := expr.Expr
 	e, err := replaceVars(e, variables)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 	ast := cel.ParsedExprToAst(&exprpb.ParsedExpr{Expr: e})
 	knownVars := make(map[string]any)
@@ -451,7 +464,7 @@ func evaluateCELExprPartially(expr *exprpb.CheckedExpr, input *enginev1.PlanReso
 		}
 		env, err = env.Extend(cel.Declarations(ds...))
 		if err != nil {
-			return nil, nil, err
+			return nil, err
 		}
 	}
 
@@ -463,31 +476,37 @@ func evaluateCELExprPartially(expr *exprpb.CheckedExpr, input *enginev1.PlanReso
 		cel.AttributePattern(conditions.CELResourceAbbrev),
 		cel.AttributePattern(conditions.CELRequestIdent).QualString(conditions.CELResourceField))
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
 	val, details, err := conditions.Eval(env, ast, vars, cel.EvalOptions(cel.OptPartialEval, cel.OptTrackState))
 	if err != nil {
-		if strings.HasPrefix(err.Error(), "no such key:") {
-			return nil, nil, &NoSuchKeyError{msg: fmt.Sprintf("missing principal attribute %q", strings.TrimPrefix(err.Error(), "no such key: "))}
+		// ignore expressions that access non-existent keys
+		noSuchKey := &conditions.NoSuchKeyError{}
+		if errors.As(err, &noSuchKey) {
+			return conditions.FalseExpr, nil
 		}
-		return nil, nil, err
+
+		return nil, err
 	}
+
 	residual := ResidualExpr(ast, details)
+	checkedExpr := &exprpb.CheckedExpr{Expr: residual}
+
 	if types.IsUnknown(val) {
 		err = evalComprehensionBody(env, vars, residual)
 		if err != nil {
-			return nil, nil, err
+			return nil, err
 		}
-		checkedExpr := &exprpb.CheckedExpr{Expr: residual}
 
-		return nil, checkedExpr, nil
+		return checkedExpr, nil
 	}
-	checkedExpr := &exprpb.CheckedExpr{Expr: residual}
-	if b, ok := val.Value().(bool); ok {
-		return &b, checkedExpr, nil
+
+	if _, ok := val.Value().(bool); ok {
+		return checkedExpr, nil
 	}
-	return nil, checkedExpr, fmt.Errorf("unexpected result type %T", val.Value())
+
+	return conditions.FalseExpr, nil
 }
 
 func evalComprehensionBody(env *cel.Env, pvars interpreter.PartialActivation, e *exprpb.Expr) (err error) {

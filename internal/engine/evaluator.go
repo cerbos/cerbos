@@ -7,7 +7,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"strings"
 
 	"github.com/google/cel-go/cel"
 	"go.uber.org/multierr"
@@ -31,7 +30,7 @@ var ErrPolicyNotExecutable = errors.New("policy not executable")
 
 type Evaluator interface {
 	Evaluate(context.Context, tracer.Context, *enginev1.CheckInput) (*PolicyEvalResult, error)
-	EvaluateResourcesQueryPlan(ctx context.Context, request *enginev1.PlanResourcesInput) (*enginev1.PlanResourcesOutput, error)
+	EvaluateResourcesQueryPlan(ctx context.Context, request *enginev1.PlanResourcesInput) (*PolicyPlanResult, error)
 }
 
 func NewEvaluator(rps *runtimev1.RunnablePolicySet, schemaMgr schema.Manager) Evaluator {
@@ -47,7 +46,7 @@ func NewEvaluator(rps *runtimev1.RunnablePolicySet, schemaMgr schema.Manager) Ev
 
 type noopEvaluator struct{}
 
-func (e noopEvaluator) EvaluateResourcesQueryPlan(ctx context.Context, request *enginev1.PlanResourcesInput) (*enginev1.PlanResourcesOutput, error) {
+func (e noopEvaluator) EvaluateResourcesQueryPlan(ctx context.Context, request *enginev1.PlanResourcesInput) (*PolicyPlanResult, error) {
 	return nil, ErrPolicyNotExecutable
 }
 
@@ -368,7 +367,8 @@ func evaluateCELExpr(expr *exprpb.CheckedExpr, variables map[string]any, input *
 	})
 	if err != nil {
 		// ignore expressions that access non-existent keys
-		if strings.Contains(err.Error(), "no such key") {
+		noSuchKey := &conditions.NoSuchKeyError{}
+		if errors.As(err, &noSuchKey) {
 			return nil, nil
 		}
 

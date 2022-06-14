@@ -29,8 +29,7 @@ import (
 	"github.com/cerbos/cerbos/internal/schema"
 )
 
-// ErrNoPoliciesMatched indicates that no policies were matched.
-var ErrNoPoliciesMatched = errors.New("no matching policies")
+var errNoPoliciesMatched = errors.New("no matching policies")
 
 const (
 	defaultEffect        = effectv1.Effect_EFFECT_DENY
@@ -299,14 +298,14 @@ func (engine *Engine) doPlanResources(ctx context.Context, input *enginev1.PlanR
 		return nil, fmt.Errorf("failed to get check for [%s.%s]: %w", ppName, ppVersion, err)
 	}
 
-	if policyEvaluator != nil {
-		plan, err := policyEvaluator.EvaluateResourcesQueryPlan(ctx, input)
+	var result *PolicyPlanResult
+
+	if policyEvaluator == nil {
+		result = &PolicyPlanResult{}
+	} else {
+		result, err = policyEvaluator.EvaluateResourcesQueryPlan(ctx, input)
 		if err != nil {
 			return nil, err
-		}
-
-		if plan != nil {
-			return plan, nil
 		}
 	}
 
@@ -317,16 +316,25 @@ func (engine *Engine) doPlanResources(ctx context.Context, input *enginev1.PlanR
 		return nil, fmt.Errorf("failed to get check for [%s.%s]: %w", rpName, rpVersion, err)
 	}
 
-	if policyEvaluator == nil {
-		output, err := mkPlanResourcesOutput(input, "", mkFalseNode())
-		if err == nil && output != nil {
-			output.FilterDebug = noPolicyMatch
+	if policyEvaluator != nil {
+		plan, err := policyEvaluator.EvaluateResourcesQueryPlan(ctx, input)
+		if err != nil {
+			return nil, err
 		}
 
-		return output, err
+		result = combinePlans(result, plan)
 	}
 
-	return policyEvaluator.EvaluateResourcesQueryPlan(ctx, input)
+	output, err := result.ToPlanResourcesOutput(input)
+	if err != nil {
+		return nil, err
+	}
+
+	if result.Empty() {
+		output.FilterDebug = noPolicyMatch
+	}
+
+	return output, nil
 }
 
 func (engine *Engine) logPlanDecision(ctx context.Context, input *enginev1.PlanResourcesInput, output *enginev1.PlanResourcesOutput, planErr error) (*enginev1.PlanResourcesOutput, error) {
@@ -394,7 +402,7 @@ func (engine *Engine) evaluate(ctx context.Context, input *enginev1.CheckInput, 
 	// evaluate the policies
 	result, err := ec.evaluate(ctx, tctx, input)
 	if err != nil {
-		if errors.Is(err, ErrNoPoliciesMatched) {
+		if errors.Is(err, errNoPoliciesMatched) {
 			for _, action := range input.Actions {
 				tctx.StartAction(action).AppliedEffect(defaultEffect, "No matching policies")
 
@@ -512,9 +520,9 @@ func (ec *evaluationCtx) evaluate(ctx context.Context, tctx tracer.Context, inpu
 	defer span.End()
 
 	if ec.numChecks == 0 {
-		tracing.MarkFailed(span, http.StatusNotFound, ErrNoPoliciesMatched)
+		tracing.MarkFailed(span, http.StatusNotFound, errNoPoliciesMatched)
 
-		return nil, ErrNoPoliciesMatched
+		return nil, errNoPoliciesMatched
 	}
 
 	resp := &evaluationResult{}
@@ -536,9 +544,9 @@ func (ec *evaluationCtx) evaluate(ctx context.Context, tctx tracer.Context, inpu
 		}
 	}
 
-	tracing.MarkFailed(span, http.StatusNotFound, ErrNoPoliciesMatched)
+	tracing.MarkFailed(span, http.StatusNotFound, errNoPoliciesMatched)
 
-	return resp, ErrNoPoliciesMatched
+	return resp, errNoPoliciesMatched
 }
 
 type evaluationResult struct {

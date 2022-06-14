@@ -15,10 +15,17 @@ tests:
       kind: KIND_CONDITIONAL
       condition:
         expression:
-          operator: eq
+          operator: and
           operands:
-            - variable: request.resource.attr.owner
-            - value: harry
+            - expression:
+                operator: not
+                operands:
+                  - variable: request.resource.attr.hidden_from_employee
+            - expression:
+                operator: eq
+                operands:
+                  - variable: request.resource.attr.owner
+                  - value: harry
   - action: view:refer-derived-role
     resource:
       kind: leave_request
