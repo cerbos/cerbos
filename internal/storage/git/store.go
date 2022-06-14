@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -430,7 +431,7 @@ func (s *Store) normalizePath(path string) (string, util.IndexedFileType) {
 	}
 
 	if s.conf.SubDir != "" {
-		relativePath := strings.TrimPrefix(path, strings.TrimSuffix(s.conf.SubDir, "/")+"/")
+		relativePath := strings.TrimPrefix(path, strings.TrimSuffix(filepath.ToSlash(s.conf.SubDir), "/")+"/")
 		if path == relativePath { // not in policies directory
 			return path, util.FileTypeNotIndexed
 		}
