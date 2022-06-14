@@ -10,7 +10,7 @@ resourcePolicy:
     principalSchema:
       ref: cerbos:///principal.json
     resourceSchema:
-      ref: cerbos:///leave_request.json
+      ref: cerbos:///resources/leave_request.json
   resource: leave_request
   rules:
     - actions: ["create"]
@@ -23,4 +23,3 @@ resourcePolicy:
         - any_employee
       effect: EFFECT_ALLOW
       name: public-view
-

@@ -7,9 +7,16 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
+
+	"github.com/cerbos/cerbos/internal/util"
 )
 
-func Find(paths []string, recursive bool, callback func(filePath string) error, checkFileType func(fileName string) bool) error {
+type Found struct {
+	AbsolutePath string
+	RelativePath string
+}
+
+func Find(paths []string, recursive bool, fileType util.IndexedFileType, callback func(file Found) error) error {
 	for _, path := range paths {
 		fileInfo, err := os.Stat(path)
 		if err != nil {
@@ -24,21 +31,25 @@ func Find(paths []string, recursive bool, callback func(filePath string) error, 
 				}
 
 				if d.IsDir() {
-					switch {
-					case recursive:
-						return nil
-					case walkPath != path:
+					if (walkPath != path && !recursive) ||
+						util.IsHidden(d.Name()) ||
+						(fileType == util.FileTypePolicy && d.Name() == util.TestDataDirectory) {
 						return fs.SkipDir
 					}
-				}
 
-				if !checkFileType(d.Name()) {
 					return nil
 				}
 
-				err = callback(walkPath)
-				if err != nil {
-					return err
+				if isSupportedFile(d.Name(), fileType) {
+					relativePath, err := filepath.Rel(path, walkPath)
+					if err != nil {
+						return err
+					}
+
+					return callback(Found{
+						AbsolutePath: walkPath,
+						RelativePath: filepath.ToSlash(relativePath),
+					})
 				}
 
 				return nil
@@ -47,7 +58,10 @@ func Find(paths []string, recursive bool, callback func(filePath string) error, 
 				return err
 			}
 		} else {
-			err = callback(path)
+			err = callback(Found{
+				AbsolutePath: path,
+				RelativePath: filepath.Base(path),
+			})
 			if err != nil {
 				return err
 			}
@@ -55,4 +69,21 @@ func Find(paths []string, recursive bool, callback func(filePath string) error, 
 	}
 
 	return nil
+}
+
+func isSupportedFile(fileName string, fileType util.IndexedFileType) bool {
+	if util.IsHidden(fileName) {
+		return false
+	}
+
+	switch fileType {
+	case util.FileTypePolicy:
+		return util.IsSupportedFileType(fileName) && !util.IsSupportedTestFile(fileName)
+
+	case util.FileTypeSchema:
+		return util.IsJSONFileTypeExt(fileName)
+
+	default:
+		return false
+	}
 }

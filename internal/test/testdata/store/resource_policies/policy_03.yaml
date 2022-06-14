@@ -9,7 +9,7 @@ resourcePolicy:
     principalSchema:
       ref: cerbos:///principal.json
     resourceSchema:
-      ref: cerbos:///purchase_order.json
+      ref: cerbos:///resources/purchase_order.json
   rules:
     - actions: ["*"]
       effect: EFFECT_ALLOW

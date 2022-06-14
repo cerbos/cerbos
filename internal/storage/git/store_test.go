@@ -13,6 +13,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 
@@ -275,6 +276,68 @@ func TestUpdateStore(t *testing.T) {
 		wantEvents := make([]storage.Event, 0, len(pset))
 		for _, p := range pset {
 			wantEvents = append(wantEvents, storage.Event{Kind: storage.EventDeletePolicy, PolicyID: namer.GenModuleID(p)})
+		}
+
+		checkEvents(t, timeout, wantEvents...)
+	})
+
+	t.Run("rename policy", func(t *testing.T) {
+		mockIdx := setupMock()
+
+		mockIdx.On("AddOrUpdate", mock.MatchedBy(anyIndexEntry)).Return(func(entry index.Entry) storage.Event {
+			evt, err := idx.AddOrUpdate(entry)
+			if err != nil {
+				panic(err)
+			}
+
+			return evt
+		}, nil)
+
+		mockIdx.On("Delete", mock.MatchedBy(anyIndexEntry)).Return(func(entry index.Entry) storage.Event {
+			evt, err := idx.Delete(entry)
+			if err != nil {
+				panic(err)
+			}
+
+			return evt
+		}, nil)
+
+		checkEvents := storage.TestSubscription(store)
+		moveFilesetNumber := rng.Intn(numPolicySets)
+		for {
+			if moveFilesetNumber != deletedFilesetNumber {
+				break
+			}
+			moveFilesetNumber = rng.Intn(numPolicySets)
+		}
+		pset := genPolicySet(moveFilesetNumber)
+
+		require.NoError(t, commitToGitRepo(sourceGitDir, "Rename policy", func(wt *git.Worktree) error {
+			for file := range pset {
+				from := filepath.Join(sourceGitDir, filepath.Join(policyDir, file))
+				to := filepath.Join(sourceGitDir, filepath.Join(policyDir, strings.Replace(file, ".yaml", ".renamed.yaml", 1)))
+				if err := os.Rename(from, to); err != nil {
+					return err
+				}
+
+				if _, err := wt.Remove(filepath.Join(policyDir, file)); err != nil {
+					return err
+				}
+			}
+
+			_, err := wt.Add(".")
+			return err
+		}))
+
+		require.NoError(t, store.updateIndex(context.Background()))
+		mockIdx.AssertExpectations(t)
+		mockIdx.AssertNumberOfCalls(t, "AddOrUpdate", len(pset))
+		mockIdx.AssertNumberOfCalls(t, "Delete", len(pset))
+
+		wantEvents := make([]storage.Event, 0, len(pset))
+		for _, p := range pset {
+			wantEvents = append(wantEvents, storage.Event{Kind: storage.EventDeletePolicy, PolicyID: namer.GenModuleID(p)})
+			wantEvents = append(wantEvents, storage.Event{Kind: storage.EventAddOrUpdatePolicy, PolicyID: namer.GenModuleID(p)})
 		}
 
 		checkEvents(t, timeout, wantEvents...)

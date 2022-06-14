@@ -74,6 +74,33 @@ func testPutCmd(clientCtx *cmdclient.Context, globals *flagset.Globals) func(*te
 				_, err := p.Parse([]string{"put"})
 				require.Error(t, err)
 			})
+
+			t.Run("put policies recursive", func(t *testing.T) {
+				put(t, clientCtx, globals, policyKind, "--recursive", test.PathToDir(t, "store/derived_roles"))
+				put(t, clientCtx, globals, policyKind, "--recursive", test.PathToDir(t, "store/principal_policies"))
+				put(t, clientCtx, globals, policyKind, "--recursive", test.PathToDir(t, "store/resource_policies"))
+
+				require.Equal(t, []string{
+					"derived_roles.alpha",
+					"derived_roles.apatr_common_roles",
+					"derived_roles.beta",
+					"derived_roles.buyer_derived_roles",
+					"principal.donald_duck.v20210210",
+					"principal.donald_duck.vdefault",
+					"principal.donald_duck.vdefault/acme",
+					"principal.donald_duck.vdefault/acme.hr",
+					"resource.account.vdefault",
+					"resource.album_object.vdefault",
+					"resource.leave_request.v20210210",
+					"resource.leave_request.vdefault",
+					"resource.leave_request.vdefault/acme",
+					"resource.leave_request.vdefault/acme.hr",
+					"resource.leave_request.vdefault/acme.hr.uk",
+					"resource.leave_request.vstaging",
+					"resource.purchase_order.vdefault",
+				}, listPolicies(t, clientCtx))
+			})
+
 			t.Run("put policies", func(t *testing.T) {
 				put(t, clientCtx, globals, policyKind, drPath)
 				put(t, clientCtx, globals, policyKind, ppPath)
@@ -87,6 +114,17 @@ func testPutCmd(clientCtx *cmdclient.Context, globals *flagset.Globals) func(*te
 				require.JSONEq(t, string(expectedPp), outPp)
 				require.JSONEq(t, string(expectedRp), outRp)
 			})
+
+			t.Run("put schemas recursive", func(t *testing.T) {
+				put(t, clientCtx, globals, schemaKind, "--recursive", test.PathToDir(t, "store/_schemas"))
+				require.Equal(t, []string{
+					"principal.json",
+					"resources/leave_request.json",
+					"resources/purchase_order.json",
+					"resources/salary_record.json",
+				}, listSchemas(t, clientCtx))
+			})
+
 			t.Run("put schema", func(t *testing.T) {
 				put(t, clientCtx, globals, schemaKind, pathToSchema)
 				outSchema := getSchema(t, clientCtx, globals, schemaFileName)
@@ -96,58 +134,75 @@ func testPutCmd(clientCtx *cmdclient.Context, globals *flagset.Globals) func(*te
 	}
 }
 
-func put(t *testing.T, clientCtx *cmdclient.Context, globals *flagset.Globals, kind putKind, path string) {
+func put(t *testing.T, clientCtx *cmdclient.Context, globals *flagset.Globals, args ...string) {
 	t.Helper()
 
 	p := mustNew(t, &root.Cli{})
 
-	ctx, err := p.Parse([]string{"put", string(kind), path})
+	var out bytes.Buffer
+	p.Stdout = &out
+
+	ctx, err := p.Parse(append([]string{"put"}, args...))
 	require.NoError(t, err)
 
 	err = ctx.Run(clientCtx, globals)
 	require.NoError(t, err)
+
+	require.NotContains(t, out.String(), "Errors:")
+}
+
+func listPolicies(t *testing.T, clientCtx *cmdclient.Context) []string {
+	t.Helper()
+	policies, err := clientCtx.AdminClient.ListPolicies(context.Background())
+	require.NoError(t, err, "failed to list policies")
+	return policies
+}
+
+func listSchemas(t *testing.T, clientCtx *cmdclient.Context) []string {
+	t.Helper()
+	schemas, err := clientCtx.AdminClient.ListSchemas(context.Background())
+	require.NoError(t, err, "failed to list schemas")
+	return schemas
+}
+
+func get(t *testing.T, clientCtx *cmdclient.Context, globals *flagset.Globals, args ...string) string {
+	t.Helper()
+
+	p := mustNew(t, &root.Cli{})
+
+	var out bytes.Buffer
+	p.Stdout = &out
+
+	ctx, err := p.Parse(append([]string{"get"}, args...))
+	require.NoError(t, err)
+
+	err = ctx.Run(clientCtx, globals)
+	require.NoError(t, err)
+
+	return out.String()
 }
 
 func getPolicy(t *testing.T, clientCtx *cmdclient.Context, globals *flagset.Globals, kind policy.Kind, policyID string) string {
 	t.Helper()
+	return get(t, clientCtx, globals, policyKindToGet(kind), policyID)
+}
 
-	var k string
+func policyKindToGet(kind policy.Kind) string {
 	switch kind {
 	case policy.DerivedRolesKind:
-		k = "dr"
+		return "dr"
 	case policy.PrincipalKind:
-		k = "pp"
+		return "pp"
 	case policy.ResourceKind:
-		k = "rp"
+		return "rp"
+	default:
+		panic(fmt.Errorf("unknown policy kind %d", kind))
 	}
-
-	p := mustNew(t, &root.Cli{})
-	out := bytes.NewBufferString("")
-	p.Stdout = out
-
-	ctx, err := p.Parse([]string{"get", k, policyID})
-	require.NoError(t, err)
-
-	err = ctx.Run(clientCtx, globals)
-	require.NoError(t, err)
-
-	return out.String()
 }
 
 func getSchema(t *testing.T, clientCtx *cmdclient.Context, globals *flagset.Globals, schemaID string) string {
 	t.Helper()
-
-	p := mustNew(t, &root.Cli{})
-	out := bytes.NewBufferString("")
-	p.Stdout = out
-
-	ctx, err := p.Parse([]string{"get", "schema", schemaID})
-	require.NoError(t, err)
-
-	err = ctx.Run(clientCtx, globals)
-	require.NoError(t, err)
-
-	return out.String()
+	return get(t, clientCtx, globals, "schema", schemaID)
 }
 
 func writeToTmpFile(t *testing.T, p *policyv1.Policy) string {
@@ -238,8 +293,6 @@ func mustNew(t *testing.T, cli any) *kong.Kong {
 func withMeta(p *policyv1.Policy) *policyv1.Policy {
 	return policy.WithMetadata(p, "", nil, namer.PolicyKey(p))
 }
-
-type putKind string
 
 const (
 	policyKind = "policy"

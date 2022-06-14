@@ -20,7 +20,6 @@ import (
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
 	"github.com/cerbos/cerbos/internal/observability/metrics"
 	"github.com/cerbos/cerbos/internal/policy"
-	"github.com/cerbos/cerbos/internal/schema"
 	"github.com/cerbos/cerbos/internal/storage"
 	"github.com/cerbos/cerbos/internal/storage/index"
 	"github.com/cerbos/cerbos/internal/util"
@@ -97,15 +96,17 @@ func (dw *dirWatch) handleEvents(ctx context.Context) {
 }
 
 func (dw *dirWatch) processEvent(evtInfo notify.EventInfo) {
-	if util.IsSupportedFileType(evtInfo.Path()) {
-		fileName, err := filepath.Rel(dw.dir, evtInfo.Path())
-		if err != nil {
-			dw.log.Warnw("Failed to determine relative path of file", "file", evtInfo.Path(), "error", err)
-			return
-		}
+	path, err := filepath.Rel(dw.dir, evtInfo.Path())
+	if err != nil {
+		dw.log.Warnw("Failed to determine relative path of file", "file", evtInfo.Path(), "error", err)
+		return
+	}
 
+	path = filepath.ToSlash(path)
+
+	if util.FileType(path) != util.FileTypeNotIndexed {
 		dw.mu.Lock()
-		dw.eventBatch[fileName] = struct{}{}
+		dw.eventBatch[path] = struct{}{}
 		dw.lastEventTime = time.Now()
 		dw.mu.Unlock()
 	}
@@ -135,13 +136,7 @@ func (dw *dirWatch) triggerUpdate() {
 
 			if _, err := os.Stat(fullPath); errors.Is(err, os.ErrNotExist) {
 				dw.log.Debugw("Detected file removal", "file", f)
-				if isSchemaFile(f) {
-					sf, err := schemaFileName(f)
-					if err != nil {
-						dw.log.Warnw("Failed to find relative path to schema file", "file", f, "error", err)
-						errCount++
-						continue
-					}
+				if sf, ok := util.RelativeSchemaPath(f); ok {
 					dw.NotifySubscribers(storage.NewSchemaEvent(storage.EventDeleteSchema, sf))
 					continue
 				}
@@ -158,13 +153,7 @@ func (dw *dirWatch) triggerUpdate() {
 			}
 
 			dw.log.Debugw("Detected file update", "file", f)
-			if isSchemaFile(f) {
-				sf, err := schemaFileName(f)
-				if err != nil {
-					dw.log.Warnw("Failed to find relative path to schema file", "file", f, "error", err)
-					errCount++
-					continue
-				}
+			if sf, ok := util.RelativeSchemaPath(f); ok {
 				dw.NotifySubscribers(storage.NewSchemaEvent(storage.EventAddOrUpdateSchema, sf))
 				continue
 			}
@@ -192,14 +181,6 @@ func (dw *dirWatch) triggerUpdate() {
 			}, metrics.StoreSyncErrorCount.M(int64(errCount)))
 		}
 	}
-}
-
-func isSchemaFile(f string) bool {
-	return filepath.Dir(f) == schema.Directory
-}
-
-func schemaFileName(f string) (string, error) {
-	return filepath.Rel(schema.Directory, f)
 }
 
 // TODO: use ReadPolicyFromFile instead.

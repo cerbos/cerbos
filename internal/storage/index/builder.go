@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/fs"
+	"path"
 
 	"go.opencensus.io/stats"
 	"go.uber.org/zap"
@@ -90,7 +91,7 @@ func Build(ctx context.Context, fsys fs.FS, opts ...BuildOpt) (Index, error) {
 
 	ib := newIndexBuilder()
 
-	err := fs.WalkDir(fsys, o.rootDir, func(path string, d fs.DirEntry, err error) error {
+	err := fs.WalkDir(fsys, o.rootDir, func(filePath string, d fs.DirEntry, err error) error {
 		if err := ctx.Err(); err != nil {
 			return err
 		}
@@ -100,41 +101,38 @@ func Build(ctx context.Context, fsys fs.FS, opts ...BuildOpt) (Index, error) {
 		}
 
 		if d.IsDir() {
-			switch d.Name() {
-			case util.TestDataDirectory:
+			if filePath == path.Join(o.rootDir, schema.Directory) ||
+				d.Name() == util.TestDataDirectory ||
+				util.IsHidden(d.Name()) {
 				return fs.SkipDir
-			case schema.Directory:
-				return fs.SkipDir
-			default:
-				return nil
 			}
-		}
 
-		if !util.IsSupportedFileType(d.Name()) {
 			return nil
 		}
 
-		if util.IsSupportedTestFile(d.Name()) {
+		if !util.IsSupportedFileType(d.Name()) ||
+			util.IsSupportedTestFile(d.Name()) ||
+			util.IsHidden(d.Name()) {
 			return nil
 		}
 
 		p := &policyv1.Policy{}
-		if err := util.LoadFromJSONOrYAML(fsys, path, p); err != nil {
-			ib.addLoadFailure(path, err)
+		if err := util.LoadFromJSONOrYAML(fsys, filePath, p); err != nil {
+			ib.addLoadFailure(filePath, err)
 			return nil
 		}
 
 		if err := policy.Validate(p); err != nil {
-			ib.addLoadFailure(path, err)
+			ib.addLoadFailure(filePath, err)
 			return nil
 		}
 
 		if p.Disabled {
-			ib.addDisabled(path)
+			ib.addDisabled(filePath)
 			return nil
 		}
 
-		ib.addPolicy(path, policy.Wrap(policy.WithMetadata(p, path, nil, path)))
+		ib.addPolicy(filePath, policy.Wrap(policy.WithMetadata(p, filePath, nil, filePath)))
 
 		return nil
 	})
