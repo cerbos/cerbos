@@ -1,0 +1,57 @@
+---
+description: nested expression that cannot be simplified
+input:
+  kind: KIND_CONDITIONAL
+  condition:
+    expression:
+      operator: or
+      operands:
+        - expression:
+            operator: gt
+            operands: 
+              - value: 3 
+              - expression:
+                  operator: sum
+                  operands: 
+                    - variable: P.attr.loginAttempts
+                    - value: 1 
+        - expression: 
+            operator: and
+            operands: 
+              - expression:
+                  operator: not
+                  operands: 
+                    - variable: V.frozen
+              - expression:
+                  operator: eq
+                  operands:
+                    - variable: R.attr.department
+                    - value: "accounting"
+wantFilter:
+  kind: KIND_CONDITIONAL
+  condition:
+    expression:
+      operator: or
+      operands:
+        - expression:
+            operator: gt
+            operands: 
+              - value: 3 
+              - expression:
+                  operator: sum
+                  operands: 
+                    - variable: request.principal.attr.loginAttempts
+                    - value: 1 
+        - expression: 
+            operator: and
+            operands: 
+              - expression:
+                  operator: not
+                  operands: 
+                    - variable: variables.frozen
+              - expression:
+                  operator: eq
+                  operands:
+                    - variable: request.resource.attr.department
+                    - value: "accounting"
+wantString: "(or (gt 3 (sum request.principal.attr.loginAttempts 1)) (and (not variables.frozen) (eq request.resource.attr.department \"accounting\")))"

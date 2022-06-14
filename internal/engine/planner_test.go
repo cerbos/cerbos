@@ -4,6 +4,7 @@
 package engine
 
 import (
+	"bytes"
 	"fmt"
 	"testing"
 
@@ -15,8 +16,11 @@ import (
 	"google.golang.org/protobuf/types/known/structpb"
 
 	enginev1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
+	privatev1 "github.com/cerbos/cerbos/api/genpb/cerbos/private/v1"
 	runtimev1 "github.com/cerbos/cerbos/api/genpb/cerbos/runtime/v1"
 	"github.com/cerbos/cerbos/internal/conditions"
+	"github.com/cerbos/cerbos/internal/test"
+	"github.com/cerbos/cerbos/internal/util"
 	"github.com/google/cel-go/interpreter"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
@@ -306,361 +310,27 @@ func setupEnv(t *testing.T) (*cel.Env, interpreter.PartialActivation, map[string
 	return env, pvars, variables
 }
 
-//nolint:dupl
 func TestNormaliseFilter(t *testing.T) {
-	testCases := []struct {
-		name  string
-		input *enginev1.PlanResourcesFilter
-		want  *enginev1.PlanResourcesFilter
-	}{
-		{
-			name: "Nil condition",
-			input: &enginev1.PlanResourcesFilter{
-				Kind: enginev1.PlanResourcesFilter_KIND_CONDITIONAL,
-			},
-			want: &enginev1.PlanResourcesFilter{
-				Kind: enginev1.PlanResourcesFilter_KIND_ALWAYS_ALLOWED,
-			},
-		},
-		{
-			name: "AND all true values",
-			input: &enginev1.PlanResourcesFilter{
-				Kind: enginev1.PlanResourcesFilter_KIND_CONDITIONAL,
-				Condition: &enginev1.PlanResourcesFilter_Expression_Operand{
-					Node: &enginev1.PlanResourcesFilter_Expression_Operand_Expression{
-						Expression: &enginev1.PlanResourcesFilter_Expression{
-							Operator: And,
-							Operands: []*enginev1.PlanResourcesFilter_Expression_Operand{
-								{
-									Node: &enginev1.PlanResourcesFilter_Expression_Operand_Value{Value: structpb.NewBoolValue(true)},
-								},
-								{
-									Node: &enginev1.PlanResourcesFilter_Expression_Operand_Value{Value: structpb.NewBoolValue(true)},
-								},
-								{
-									Node: &enginev1.PlanResourcesFilter_Expression_Operand_Value{Value: structpb.NewBoolValue(true)},
-								},
-							},
-						},
-					},
-				},
-			},
-			want: &enginev1.PlanResourcesFilter{
-				Kind: enginev1.PlanResourcesFilter_KIND_ALWAYS_ALLOWED,
-			},
-		},
-		{
-			name: "AND false value",
-			input: &enginev1.PlanResourcesFilter{
-				Kind: enginev1.PlanResourcesFilter_KIND_CONDITIONAL,
-				Condition: &enginev1.PlanResourcesFilter_Expression_Operand{
-					Node: &enginev1.PlanResourcesFilter_Expression_Operand_Expression{
-						Expression: &enginev1.PlanResourcesFilter_Expression{
-							Operator: And,
-							Operands: []*enginev1.PlanResourcesFilter_Expression_Operand{
-								{
-									Node: &enginev1.PlanResourcesFilter_Expression_Operand_Value{Value: structpb.NewBoolValue(false)},
-								},
-								{
-									Node: &enginev1.PlanResourcesFilter_Expression_Operand_Value{Value: structpb.NewBoolValue(true)},
-								},
-								{
-									Node: &enginev1.PlanResourcesFilter_Expression_Operand_Value{Value: structpb.NewBoolValue(true)},
-								},
-							},
-						},
-					},
-				},
-			},
-			want: &enginev1.PlanResourcesFilter{
-				Kind: enginev1.PlanResourcesFilter_KIND_ALWAYS_DENIED,
-			},
-		},
-		{
-			name: "AND true value with expr",
-			input: &enginev1.PlanResourcesFilter{
-				Kind: enginev1.PlanResourcesFilter_KIND_CONDITIONAL,
-				Condition: &enginev1.PlanResourcesFilter_Expression_Operand{
-					Node: &enginev1.PlanResourcesFilter_Expression_Operand_Expression{
-						Expression: &enginev1.PlanResourcesFilter_Expression{
-							Operator: And,
-							Operands: []*enginev1.PlanResourcesFilter_Expression_Operand{
-								{
-									Node: &enginev1.PlanResourcesFilter_Expression_Operand_Expression{
-										Expression: &enginev1.PlanResourcesFilter_Expression{
-											Operator: Equals,
-											Operands: []*enginev1.PlanResourcesFilter_Expression_Operand{
-												{
-													Node: &enginev1.PlanResourcesFilter_Expression_Operand_Variable{
-														Variable: "R.attr.department",
-													},
-												},
-												{
-													Node: &enginev1.PlanResourcesFilter_Expression_Operand_Value{
-														Value: structpb.NewStringValue("marketing"),
-													},
-												},
-											},
-										},
-									},
-								},
-								{
-									Node: &enginev1.PlanResourcesFilter_Expression_Operand_Value{Value: structpb.NewBoolValue(true)},
-								},
-							},
-						},
-					},
-				},
-			},
-			want: &enginev1.PlanResourcesFilter{
-				Kind: enginev1.PlanResourcesFilter_KIND_CONDITIONAL,
-				Condition: &enginev1.PlanResourcesFilter_Expression_Operand{
-					Node: &enginev1.PlanResourcesFilter_Expression_Operand_Expression{
-						Expression: &enginev1.PlanResourcesFilter_Expression{
-							Operator: Equals,
-							Operands: []*enginev1.PlanResourcesFilter_Expression_Operand{
-								{
-									Node: &enginev1.PlanResourcesFilter_Expression_Operand_Variable{
-										Variable: "request.resource.attr.department",
-									},
-								},
-								{
-									Node: &enginev1.PlanResourcesFilter_Expression_Operand_Value{
-										Value: structpb.NewStringValue("marketing"),
-									},
-								},
-							},
-						},
-					},
-				},
-			},
-		},
-		{
-			name: "OR all false values",
-			input: &enginev1.PlanResourcesFilter{
-				Kind: enginev1.PlanResourcesFilter_KIND_CONDITIONAL,
-				Condition: &enginev1.PlanResourcesFilter_Expression_Operand{
-					Node: &enginev1.PlanResourcesFilter_Expression_Operand_Expression{
-						Expression: &enginev1.PlanResourcesFilter_Expression{
-							Operator: Or,
-							Operands: []*enginev1.PlanResourcesFilter_Expression_Operand{
-								{
-									Node: &enginev1.PlanResourcesFilter_Expression_Operand_Value{Value: structpb.NewBoolValue(false)},
-								},
-								{
-									Node: &enginev1.PlanResourcesFilter_Expression_Operand_Value{Value: structpb.NewBoolValue(false)},
-								},
-								{
-									Node: &enginev1.PlanResourcesFilter_Expression_Operand_Value{Value: structpb.NewBoolValue(false)},
-								},
-							},
-						},
-					},
-				},
-			},
-			want: &enginev1.PlanResourcesFilter{
-				Kind: enginev1.PlanResourcesFilter_KIND_ALWAYS_DENIED,
-			},
-		},
-		{
-			name: "OR true value",
-			input: &enginev1.PlanResourcesFilter{
-				Kind: enginev1.PlanResourcesFilter_KIND_CONDITIONAL,
-				Condition: &enginev1.PlanResourcesFilter_Expression_Operand{
-					Node: &enginev1.PlanResourcesFilter_Expression_Operand_Expression{
-						Expression: &enginev1.PlanResourcesFilter_Expression{
-							Operator: Or,
-							Operands: []*enginev1.PlanResourcesFilter_Expression_Operand{
-								{
-									Node: &enginev1.PlanResourcesFilter_Expression_Operand_Value{Value: structpb.NewBoolValue(false)},
-								},
-								{
-									Node: &enginev1.PlanResourcesFilter_Expression_Operand_Value{Value: structpb.NewBoolValue(false)},
-								},
-								{
-									Node: &enginev1.PlanResourcesFilter_Expression_Operand_Value{Value: structpb.NewBoolValue(true)},
-								},
-							},
-						},
-					},
-				},
-			},
-			want: &enginev1.PlanResourcesFilter{
-				Kind: enginev1.PlanResourcesFilter_KIND_ALWAYS_ALLOWED,
-			},
-		},
-		{
-			name: "OR false value with expr",
-			input: &enginev1.PlanResourcesFilter{
-				Kind: enginev1.PlanResourcesFilter_KIND_CONDITIONAL,
-				Condition: &enginev1.PlanResourcesFilter_Expression_Operand{
-					Node: &enginev1.PlanResourcesFilter_Expression_Operand_Expression{
-						Expression: &enginev1.PlanResourcesFilter_Expression{
-							Operator: Or,
-							Operands: []*enginev1.PlanResourcesFilter_Expression_Operand{
-								{
-									Node: &enginev1.PlanResourcesFilter_Expression_Operand_Expression{
-										Expression: &enginev1.PlanResourcesFilter_Expression{
-											Operator: Equals,
-											Operands: []*enginev1.PlanResourcesFilter_Expression_Operand{
-												{
-													Node: &enginev1.PlanResourcesFilter_Expression_Operand_Variable{
-														Variable: "R.attr.department",
-													},
-												},
-												{
-													Node: &enginev1.PlanResourcesFilter_Expression_Operand_Value{
-														Value: structpb.NewStringValue("marketing"),
-													},
-												},
-											},
-										},
-									},
-								},
-								{
-									Node: &enginev1.PlanResourcesFilter_Expression_Operand_Value{Value: structpb.NewBoolValue(false)},
-								},
-							},
-						},
-					},
-				},
-			},
-			want: &enginev1.PlanResourcesFilter{
-				Kind: enginev1.PlanResourcesFilter_KIND_CONDITIONAL,
-				Condition: &enginev1.PlanResourcesFilter_Expression_Operand{
-					Node: &enginev1.PlanResourcesFilter_Expression_Operand_Expression{
-						Expression: &enginev1.PlanResourcesFilter_Expression{
-							Operator: Equals,
-							Operands: []*enginev1.PlanResourcesFilter_Expression_Operand{
-								{
-									Node: &enginev1.PlanResourcesFilter_Expression_Operand_Variable{
-										Variable: "request.resource.attr.department",
-									},
-								},
-								{
-									Node: &enginev1.PlanResourcesFilter_Expression_Operand_Value{
-										Value: structpb.NewStringValue("marketing"),
-									},
-								},
-							},
-						},
-					},
-				},
-			},
-		},
-		{
-			name: "NOT true",
-			input: &enginev1.PlanResourcesFilter{
-				Kind: enginev1.PlanResourcesFilter_KIND_CONDITIONAL,
-				Condition: &enginev1.PlanResourcesFilter_Expression_Operand{
-					Node: &enginev1.PlanResourcesFilter_Expression_Operand_Expression{
-						Expression: &enginev1.PlanResourcesFilter_Expression{
-							Operator: Not,
-							Operands: []*enginev1.PlanResourcesFilter_Expression_Operand{
-								{
-									Node: &enginev1.PlanResourcesFilter_Expression_Operand_Value{Value: structpb.NewBoolValue(true)},
-								},
-							},
-						},
-					},
-				},
-			},
-			want: &enginev1.PlanResourcesFilter{
-				Kind: enginev1.PlanResourcesFilter_KIND_ALWAYS_DENIED,
-			},
-		},
-		{
-			name: "NOT false",
-			input: &enginev1.PlanResourcesFilter{
-				Kind: enginev1.PlanResourcesFilter_KIND_CONDITIONAL,
-				Condition: &enginev1.PlanResourcesFilter_Expression_Operand{
-					Node: &enginev1.PlanResourcesFilter_Expression_Operand_Expression{
-						Expression: &enginev1.PlanResourcesFilter_Expression{
-							Operator: Not,
-							Operands: []*enginev1.PlanResourcesFilter_Expression_Operand{
-								{
-									Node: &enginev1.PlanResourcesFilter_Expression_Operand_Value{Value: structpb.NewBoolValue(false)},
-								},
-							},
-						},
-					},
-				},
-			},
-			want: &enginev1.PlanResourcesFilter{
-				Kind: enginev1.PlanResourcesFilter_KIND_ALWAYS_ALLOWED,
-			},
-		},
-		{
-			name: "NOT expr",
-			input: &enginev1.PlanResourcesFilter{
-				Kind: enginev1.PlanResourcesFilter_KIND_CONDITIONAL,
-				Condition: &enginev1.PlanResourcesFilter_Expression_Operand{
-					Node: &enginev1.PlanResourcesFilter_Expression_Operand_Expression{
-						Expression: &enginev1.PlanResourcesFilter_Expression{
-							Operator: Not,
-							Operands: []*enginev1.PlanResourcesFilter_Expression_Operand{
-								{
-									Node: &enginev1.PlanResourcesFilter_Expression_Operand_Expression{
-										Expression: &enginev1.PlanResourcesFilter_Expression{
-											Operator: Equals,
-											Operands: []*enginev1.PlanResourcesFilter_Expression_Operand{
-												{
-													Node: &enginev1.PlanResourcesFilter_Expression_Operand_Variable{
-														Variable: "R.attr.department",
-													},
-												},
-												{
-													Node: &enginev1.PlanResourcesFilter_Expression_Operand_Value{
-														Value: structpb.NewStringValue("marketing"),
-													},
-												},
-											},
-										},
-									},
-								},
-							},
-						},
-					},
-				},
-			},
-			want: &enginev1.PlanResourcesFilter{
-				Kind: enginev1.PlanResourcesFilter_KIND_CONDITIONAL,
-				Condition: &enginev1.PlanResourcesFilter_Expression_Operand{
-					Node: &enginev1.PlanResourcesFilter_Expression_Operand_Expression{
-						Expression: &enginev1.PlanResourcesFilter_Expression{
-							Operator: Not,
-							Operands: []*enginev1.PlanResourcesFilter_Expression_Operand{
-								{
-									Node: &enginev1.PlanResourcesFilter_Expression_Operand_Expression{
-										Expression: &enginev1.PlanResourcesFilter_Expression{
-											Operator: Equals,
-											Operands: []*enginev1.PlanResourcesFilter_Expression_Operand{
-												{
-													Node: &enginev1.PlanResourcesFilter_Expression_Operand_Variable{
-														Variable: "request.resource.attr.department",
-													},
-												},
-												{
-													Node: &enginev1.PlanResourcesFilter_Expression_Operand_Value{
-														Value: structpb.NewStringValue("marketing"),
-													},
-												},
-											},
-										},
-									},
-								},
-							},
-						},
-					},
-				},
-			},
-		},
-	}
+	tcases := test.LoadTestCases(t, "query_planner_filter")
 
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			have := normaliseFilter(tc.input)
-			require.Empty(t, cmp.Diff(tc.want, have, protocmp.Transform()))
+	for _, tcase := range tcases {
+		tcase := tcase
+		t.Run(tcase.Name, func(t *testing.T) {
+			tc := readQPFilterTestCase(t, tcase.Input)
+			haveFilter := normaliseFilter(tc.Input)
+			require.Empty(t, cmp.Diff(tc.WantFilter, haveFilter, protocmp.Transform()))
+
+			haveStr := filterToString(haveFilter)
+			require.Equal(t, tc.WantString, haveStr)
 		})
 	}
+}
+
+func readQPFilterTestCase(tb testing.TB, data []byte) *privatev1.QueryPlannerFilterTestCase {
+	tb.Helper()
+
+	tc := &privatev1.QueryPlannerFilterTestCase{}
+	require.NoError(tb, util.ReadJSONOrYAML(bytes.NewReader(data), tc))
+
+	return tc
 }

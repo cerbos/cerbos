@@ -9,9 +9,9 @@ import (
 	"strings"
 
 	"github.com/google/cel-go/common/operators"
-	"github.com/google/cel-go/parser"
 	"go.uber.org/multierr"
 	exprpb "google.golang.org/genproto/googleapis/api/expr/v1alpha1"
+	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/structpb"
 
@@ -184,45 +184,6 @@ func replaceVars(e *exprpb.Expr, vars map[string]*exprpb.Expr) (output *exprpb.E
 	updateIds(output)
 
 	return output, err
-}
-
-func NodeToString(expr *enginev1.PlanResourcesAst_Node) (source string, err error) {
-	if expr == nil {
-		return "", nil
-	}
-	switch node := expr.Node.(type) {
-	case *enginev1.PlanResourcesAst_Node_Expression:
-		expr := node.Expression
-		source, err = parser.Unparse(expr.Expr, expr.SourceInfo)
-		if err != nil {
-			return "", err
-		}
-	case *enginev1.PlanResourcesAst_Node_LogicalOperation:
-		op := enginev1.PlanResourcesAst_LogicalOperation_Operator_name[int32(node.LogicalOperation.Operator)]
-		s := make([]string, 0, len(node.LogicalOperation.Nodes))
-		for _, n := range node.LogicalOperation.Nodes {
-			source, err = NodeToString(n)
-			if err != nil {
-				return "", err
-			}
-			s = append(s, source)
-		}
-
-		if node.LogicalOperation.Operator == enginev1.PlanResourcesAst_LogicalOperation_OPERATOR_NOT {
-			op = enginev1.PlanResourcesAst_LogicalOperation_Operator_name[int32(enginev1.PlanResourcesAst_LogicalOperation_OPERATOR_AND)]
-		}
-		source = strings.Join(s, " "+strings.TrimPrefix(op, "OPERATOR_")+" ")
-
-		if node.LogicalOperation.Operator == enginev1.PlanResourcesAst_LogicalOperation_OPERATOR_NOT {
-			if len(node.LogicalOperation.Nodes) == 1 {
-				source = "NOT " + source
-			} else {
-				source = "NOT (" + source + ")"
-			}
-		}
-	}
-
-	return "(" + source + ")", nil
 }
 
 func convert(expr *enginev1.PlanResourcesAst_Node, acc *enginev1.PlanResourcesFilter_Expression_Operand) error {
@@ -657,4 +618,58 @@ func asBoolValue(op *enginev1.PlanResourcesFilter_Expression_Operand) (bool, boo
 	}
 
 	return false, false
+}
+
+func filterToString(filter *enginev1.PlanResourcesFilter) string {
+	switch filter.Kind {
+	case enginev1.PlanResourcesFilter_KIND_ALWAYS_ALLOWED:
+		return "(true)"
+	case enginev1.PlanResourcesFilter_KIND_ALWAYS_DENIED:
+		return "(false)"
+	case enginev1.PlanResourcesFilter_KIND_CONDITIONAL:
+		b := new(strings.Builder)
+		filterExprOpToString(b, filter.Condition)
+		return b.String()
+	default:
+		return ""
+	}
+}
+
+func filterExprOpToString(b *strings.Builder, cond *enginev1.PlanResourcesFilter_Expression_Operand) {
+	if cond == nil {
+		return
+	}
+
+	switch t := cond.Node.(type) {
+	case *enginev1.PlanResourcesFilter_Expression_Operand_Expression:
+		filterExprOpExprToString(b, t.Expression)
+	case *enginev1.PlanResourcesFilter_Expression_Operand_Value:
+		if val, err := protojson.Marshal(t.Value); err != nil {
+			b.WriteString("<ERROR>")
+		} else {
+			b.Write(val)
+		}
+	case *enginev1.PlanResourcesFilter_Expression_Operand_Variable:
+		b.WriteString(t.Variable)
+	}
+}
+
+func filterExprOpExprToString(b *strings.Builder, expr *enginev1.PlanResourcesFilter_Expression) {
+	if expr == nil {
+		return
+	}
+
+	b.WriteString("(")
+	b.WriteString(expr.Operator)
+	b.WriteString(" ")
+
+	numSpaces := len(expr.Operands) - 1
+	for i, op := range expr.Operands {
+		filterExprOpToString(b, op)
+		if i < numSpaces {
+			b.WriteString(" ")
+		}
+	}
+
+	b.WriteString(")")
 }

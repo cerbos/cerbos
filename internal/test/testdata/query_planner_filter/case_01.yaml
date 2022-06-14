@@ -1,0 +1,16 @@
+---
+description: AND all true cases
+input:
+  kind: KIND_CONDITIONAL
+  condition:
+    expression:
+      operator: and
+      operands:
+        - value: true
+        - value: true
+        - value: true
+wantFilter:
+  kind: KIND_ALWAYS_ALLOWED
+wantString: "(true)"
+
+

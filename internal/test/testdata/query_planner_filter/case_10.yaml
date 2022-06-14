@@ -1,0 +1,32 @@
+---
+description: nested expression that can be simplified
+input:
+  kind: KIND_CONDITIONAL
+  condition:
+    expression:
+      operator: or
+      operands:
+        - value: false
+        - expression: 
+            operator: and
+            operands: 
+              - expression:
+                  operator: not
+                  operands: 
+                    - value: false
+              - expression:
+                  operator: eq
+                  operands:
+                    - variable: R.attr.department
+                    - value: "marketing"
+wantFilter:
+  kind: KIND_CONDITIONAL
+  condition:
+    expression:
+      operator: eq
+      operands:
+        - variable: request.resource.attr.department
+        - value: "marketing"
+wantString: "(eq request.resource.attr.department \"marketing\")"
+
+

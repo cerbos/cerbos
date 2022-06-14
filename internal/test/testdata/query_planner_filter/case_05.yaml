@@ -1,0 +1,16 @@
+---
+description: OR all false values
+input:
+  kind: KIND_CONDITIONAL
+  condition:
+    expression:
+      operator: or
+      operands:
+        - value: false
+        - value: false
+        - value: false
+wantFilter:
+  kind: KIND_ALWAYS_DENIED
+wantString: "(false)"
+
+

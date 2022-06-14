@@ -1,0 +1,16 @@
+---
+description: OR with true value
+input:
+  kind: KIND_CONDITIONAL
+  condition:
+    expression:
+      operator: or
+      operands:
+        - value: false
+        - value: true
+        - value: false
+wantFilter:
+  kind: KIND_ALWAYS_ALLOWED
+wantString: "(true)"
+
+
