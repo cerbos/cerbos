@@ -38,22 +38,14 @@ planResources:
           operator: and
           operands:
             - expression:
-                operator: and
+                operator: eq
                 operands:
-                  - expression:
-                      operator: eq
-                      operands:
-                        - variable: request.resource.attr.geography
-                        - value: GB
-                  - expression:
-                      operator: eq
-                      operands:
-                        - variable: request.resource.attr.geography
-                        - value: GB
+                  - variable: request.resource.attr.geography
+                  - value: GB
             - expression:
                 operator: eq
                 operands:
                   - variable: request.resource.attr.status
                   - value: PENDING_APPROVAL
     meta:
-      filter_debug: "(and (and (eq request.resource.attr.geography \"GB\") (eq request.resource.attr.geography \"GB\")) (eq request.resource.attr.status \"PENDING_APPROVAL\"))"
+      filter_debug: "(and (eq request.resource.attr.geography \"GB\") (eq request.resource.attr.status \"PENDING_APPROVAL\"))"
