@@ -836,7 +836,7 @@ func (m *RunnablePrincipalPolicySet_Policy_ActionRule) MarshalToSizedBufferVT(dA
 	if m.Effect != 0 {
 		i = encodeVarint(dAtA, i, uint64(m.Effect))
 		i--
-		dAtA[i] = 0x18
+		dAtA[i] = 0x20
 	}
 	if m.Condition != nil {
 		size, err := m.Condition.MarshalToSizedBufferVT(dAtA[:i])
@@ -846,12 +846,19 @@ func (m *RunnablePrincipalPolicySet_Policy_ActionRule) MarshalToSizedBufferVT(dA
 		i -= size
 		i = encodeVarint(dAtA, i, uint64(size))
 		i--
-		dAtA[i] = 0x12
+		dAtA[i] = 0x1a
 	}
 	if len(m.Name) > 0 {
 		i -= len(m.Name)
 		copy(dAtA[i:], m.Name)
 		i = encodeVarint(dAtA, i, uint64(len(m.Name)))
+		i--
+		dAtA[i] = 0x12
+	}
+	if len(m.Action) > 0 {
+		i -= len(m.Action)
+		copy(dAtA[i:], m.Action)
+		i = encodeVarint(dAtA, i, uint64(len(m.Action)))
 		i--
 		dAtA[i] = 0xa
 	}
@@ -889,23 +896,13 @@ func (m *RunnablePrincipalPolicySet_Policy_ResourceRules) MarshalToSizedBufferVT
 		copy(dAtA[i:], m.unknownFields)
 	}
 	if len(m.ActionRules) > 0 {
-		for k := range m.ActionRules {
-			v := m.ActionRules[k]
-			baseI := i
-			size, err := v.MarshalToSizedBufferVT(dAtA[:i])
+		for iNdEx := len(m.ActionRules) - 1; iNdEx >= 0; iNdEx-- {
+			size, err := m.ActionRules[iNdEx].MarshalToSizedBufferVT(dAtA[:i])
 			if err != nil {
 				return 0, err
 			}
 			i -= size
 			i = encodeVarint(dAtA, i, uint64(size))
-			i--
-			dAtA[i] = 0x12
-			i -= len(k)
-			copy(dAtA[i:], k)
-			i = encodeVarint(dAtA, i, uint64(len(k)))
-			i--
-			dAtA[i] = 0xa
-			i = encodeVarint(dAtA, i, uint64(baseI-i))
 			i--
 			dAtA[i] = 0xa
 		}
@@ -1667,6 +1664,10 @@ func (m *RunnablePrincipalPolicySet_Policy_ActionRule) SizeVT() (n int) {
 	}
 	var l int
 	_ = l
+	l = len(m.Action)
+	if l > 0 {
+		n += 1 + l + sov(uint64(l))
+	}
 	l = len(m.Name)
 	if l > 0 {
 		n += 1 + l + sov(uint64(l))
@@ -1691,16 +1692,9 @@ func (m *RunnablePrincipalPolicySet_Policy_ResourceRules) SizeVT() (n int) {
 	var l int
 	_ = l
 	if len(m.ActionRules) > 0 {
-		for k, v := range m.ActionRules {
-			_ = k
-			_ = v
-			l = 0
-			if v != nil {
-				l = v.SizeVT()
-			}
-			l += 1 + sov(uint64(l))
-			mapEntrySize := 1 + len(k) + sov(uint64(len(k))) + l
-			n += mapEntrySize + 1 + sov(uint64(mapEntrySize))
+		for _, e := range m.ActionRules {
+			l = e.SizeVT()
+			n += 1 + l + sov(uint64(l))
 		}
 	}
 	if m.unknownFields != nil {
@@ -4235,6 +4229,38 @@ func (m *RunnablePrincipalPolicySet_Policy_ActionRule) UnmarshalVT(dAtA []byte) 
 		switch fieldNum {
 		case 1:
 			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Action", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLength
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLength
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Action = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field Name", wireType)
 			}
 			var stringLen uint64
@@ -4265,7 +4291,7 @@ func (m *RunnablePrincipalPolicySet_Policy_ActionRule) UnmarshalVT(dAtA []byte) 
 			}
 			m.Name = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
-		case 2:
+		case 3:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field Condition", wireType)
 			}
@@ -4301,7 +4327,7 @@ func (m *RunnablePrincipalPolicySet_Policy_ActionRule) UnmarshalVT(dAtA []byte) 
 				return err
 			}
 			iNdEx = postIndex
-		case 3:
+		case 4:
 			if wireType != 0 {
 				return fmt.Errorf("proto: wrong wireType = %d for field Effect", wireType)
 			}
@@ -4400,105 +4426,10 @@ func (m *RunnablePrincipalPolicySet_Policy_ResourceRules) UnmarshalVT(dAtA []byt
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			if m.ActionRules == nil {
-				m.ActionRules = make(map[string]*RunnablePrincipalPolicySet_Policy_ActionRule)
+			m.ActionRules = append(m.ActionRules, &RunnablePrincipalPolicySet_Policy_ActionRule{})
+			if err := m.ActionRules[len(m.ActionRules)-1].UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
+				return err
 			}
-			var mapkey string
-			var mapvalue *RunnablePrincipalPolicySet_Policy_ActionRule
-			for iNdEx < postIndex {
-				entryPreIndex := iNdEx
-				var wire uint64
-				for shift := uint(0); ; shift += 7 {
-					if shift >= 64 {
-						return ErrIntOverflow
-					}
-					if iNdEx >= l {
-						return io.ErrUnexpectedEOF
-					}
-					b := dAtA[iNdEx]
-					iNdEx++
-					wire |= uint64(b&0x7F) << shift
-					if b < 0x80 {
-						break
-					}
-				}
-				fieldNum := int32(wire >> 3)
-				if fieldNum == 1 {
-					var stringLenmapkey uint64
-					for shift := uint(0); ; shift += 7 {
-						if shift >= 64 {
-							return ErrIntOverflow
-						}
-						if iNdEx >= l {
-							return io.ErrUnexpectedEOF
-						}
-						b := dAtA[iNdEx]
-						iNdEx++
-						stringLenmapkey |= uint64(b&0x7F) << shift
-						if b < 0x80 {
-							break
-						}
-					}
-					intStringLenmapkey := int(stringLenmapkey)
-					if intStringLenmapkey < 0 {
-						return ErrInvalidLength
-					}
-					postStringIndexmapkey := iNdEx + intStringLenmapkey
-					if postStringIndexmapkey < 0 {
-						return ErrInvalidLength
-					}
-					if postStringIndexmapkey > l {
-						return io.ErrUnexpectedEOF
-					}
-					mapkey = string(dAtA[iNdEx:postStringIndexmapkey])
-					iNdEx = postStringIndexmapkey
-				} else if fieldNum == 2 {
-					var mapmsglen int
-					for shift := uint(0); ; shift += 7 {
-						if shift >= 64 {
-							return ErrIntOverflow
-						}
-						if iNdEx >= l {
-							return io.ErrUnexpectedEOF
-						}
-						b := dAtA[iNdEx]
-						iNdEx++
-						mapmsglen |= int(b&0x7F) << shift
-						if b < 0x80 {
-							break
-						}
-					}
-					if mapmsglen < 0 {
-						return ErrInvalidLength
-					}
-					postmsgIndex := iNdEx + mapmsglen
-					if postmsgIndex < 0 {
-						return ErrInvalidLength
-					}
-					if postmsgIndex > l {
-						return io.ErrUnexpectedEOF
-					}
-					mapvalue = &RunnablePrincipalPolicySet_Policy_ActionRule{}
-					if err := mapvalue.UnmarshalVT(dAtA[iNdEx:postmsgIndex]); err != nil {
-						return err
-					}
-					iNdEx = postmsgIndex
-				} else {
-					iNdEx = entryPreIndex
-					skippy, err := skip(dAtA[iNdEx:])
-					if err != nil {
-						return err
-					}
-					if (skippy < 0) || (iNdEx+skippy) < 0 {
-						return ErrInvalidLength
-					}
-					if (iNdEx + skippy) > postIndex {
-						return io.ErrUnexpectedEOF
-					}
-					iNdEx += skippy
-				}
-			}
-			m.ActionRules[mapkey] = mapvalue
 			iNdEx = postIndex
 		default:
 			iNdEx = preIndex

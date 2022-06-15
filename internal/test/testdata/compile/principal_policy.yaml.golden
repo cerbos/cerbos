@@ -10,8 +10,9 @@
       {
         "resourceRules":  {
           "leave_request":  {
-            "actionRules":  {
-              "*":  {
+            "actionRules":  [
+              {
+                "action":  "*",
                 "name":  "leave_request_rule-001",
                 "condition":  {
                   "expr":  {
@@ -111,15 +112,16 @@
                 },
                 "effect":  "EFFECT_ALLOW"
               }
-            }
+            ]
           },
           "salary_record":  {
-            "actionRules":  {
-              "*":  {
+            "actionRules":  [
+              {
+                "action":  "*",
                 "name":  "salary_record_rule-001",
                 "effect":  "EFFECT_DENY"
               }
-            }
+            ]
           }
         }
       }

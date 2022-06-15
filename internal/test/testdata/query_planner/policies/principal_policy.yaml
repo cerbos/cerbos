@@ -19,7 +19,7 @@ principalPolicy:
               expr: variables.is_dev_record
           effect: EFFECT_ALLOW
           name: dev_admin
-        - action: view
+        - action: "*"
           condition:
             match:
               expr: R.attr.owner == "mickey_mouse"

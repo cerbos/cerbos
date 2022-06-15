@@ -216,8 +216,8 @@ func (ppe *principalPolicyEvaluator) Evaluate(ctx context.Context, tctx tracer.C
 				continue
 			}
 
-			for actionGlob, rule := range resourceRules.ActionRules {
-				matchedActions := util.FilterGlob(actionGlob, actionsToResolve)
+			for _, rule := range resourceRules.ActionRules {
+				matchedActions := util.FilterGlob(rule.Action, actionsToResolve)
 				for _, action := range matchedActions {
 					actx := rctx.StartAction(action)
 					ok, err := satisfiesCondition(actx.StartCondition(), rule.Condition, variables, input)
