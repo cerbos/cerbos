@@ -6,6 +6,11 @@ principalPolicy:
   principal: donald_duck
   version: default
   rules:
+    - resource: contact
+      actions:
+        - action: read
+          effect: EFFECT_ALLOW
+
     - resource: leave_request
       actions:
         - action: "*"
@@ -14,6 +19,11 @@ principalPolicy:
               expr: variables.is_dev_record
           effect: EFFECT_ALLOW
           name: dev_admin
+        - action: view
+          condition:
+            match:
+              expr: R.attr.owner == "mickey_mouse"
+          effect: EFFECT_DENY
 
     - resource: salary_record
       actions:

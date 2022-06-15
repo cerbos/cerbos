@@ -21,6 +21,12 @@ resourcePolicy:
       condition:
         match:
           expr: V.is_owner
+    - actions: ["view"]
+      roles: ["employee"]
+      effect: EFFECT_DENY
+      condition:
+        match:
+          expr: R.attr.hidden_from_employee
     - actions: ["approve:allow-deny"]
       roles: ["manager"]
       effect: EFFECT_DENY
@@ -151,3 +157,9 @@ resourcePolicy:
       condition:
         match:
           expr: R.attr.groupID == request.aux_data.jwt.customInt
+    - actions: ["approve:non-boolean-condition"]
+      roles: ["manager"]
+      effect: EFFECT_ALLOW
+      condition:
+        match:
+          expr: "42"

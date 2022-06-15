@@ -6,6 +6,7 @@ package conditions
 import (
 	"fmt"
 	"net"
+	"strings"
 	"time"
 
 	"github.com/google/cel-go/cel"
@@ -29,7 +30,16 @@ const (
 	isSubsetFn                  = "isSubset"
 	nowFn                       = "now"
 	timeSinceFn                 = "timeSince"
+	noSuchKeyErrorPrefix        = "no such key: "
 )
+
+type NoSuchKeyError struct {
+	Key string
+}
+
+func (e *NoSuchKeyError) Error() string {
+	return noSuchKeyErrorPrefix + e.Key
+}
 
 // CerbosCELLib returns the custom CEL functions provided by Cerbos.
 func CerbosCELLib() cel.EnvOption {
@@ -156,7 +166,11 @@ func Eval(env *cel.Env, ast *cel.Ast, vars any, opts ...cel.ProgramOption) (ref.
 		return nil, nil, err
 	}
 
-	return prg.Eval(vars)
+	result, details, err := prg.Eval(vars)
+	if err != nil && strings.HasPrefix(err.Error(), noSuchKeyErrorPrefix) {
+		err = &NoSuchKeyError{Key: strings.TrimPrefix(err.Error(), noSuchKeyErrorPrefix)}
+	}
+	return result, details, err
 }
 
 // program generates an evaluable instance of the ast within the environment,
