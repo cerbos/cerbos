@@ -17,7 +17,9 @@ Calls to the `PlanResources` API are now captured by the audit logger and writte
 
 Cerbos now reports metrics about store synchronization attempts and any failures encountered. They can be used to create alerts to detect when the policy store is drifting from the remote source due to network issues or credential expiry.
 
-Hidden directories are now ignored by the disk-based storage backends like `disk`, `git` and `blob` in order to ignore system metadata directories and other control files. Furthermore, schema IDs are now based on the path of the schema file relative to the `_schema` directory instead of the file basename.   
+Hidden directories are now ignored by the disk-based storage backends like `disk`, `git` and `blob` in order to ignore system metadata directories and other control files.
+
+`cerbosctl put schema --recursive` now generates schema IDs from the path of the schema file relative to the starting directory, instead of just using the file basename.
 
 Distributed traces received in any of W3C trace context, B3 or Baggage propagation formats are now automatically detected and handled by the Cerbos server. The `propagationFormat` configuration option is now deprecated in favour of auto propagation. 
 
