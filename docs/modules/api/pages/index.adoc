@@ -21,6 +21,7 @@ Alternatively, you can explore the API using the following methods as well:
 * image:go.svg[alt="Go",width=40,height=40,link="https://pkg.go.dev/github.com/cerbos/cerbos/client"]link:https://pkg.go.dev/github.com/cerbos/cerbos/client[&ensp;Go]
 * image:java.svg[alt="Java",width=40,height=40,link="https://github.com/cerbos/cerbos-sdk-java"]link:https://github.com/cerbos/cerbos-sdk-java[&ensp;Java]
 * image:javascript.svg[alt="JavaScript",width=40,height=40,link="https://github.com/cerbos/cerbos-sdk-javascript"]link:https://github.com/cerbos/cerbos-sdk-javascript[&ensp;JavaScript]
+* image:dot-net.svg[alt=".NET",width=40,height=40,link="https://github.com/cerbos/cerbos-sdk-net"]link:https://github.com/cerbos/cerbos-sdk-net[&ensp;.NET]
 * image:python.svg[alt="Python",width=40,height=40,link="https://github.com/cerbos/cerbos-sdk-python"]link:https://github.com/cerbos/cerbos-sdk-python[&ensp;Python]
 * image:ruby.svg[alt="Ruby",width=40,height=40,link="https://github.com/cerbos/cerbos-sdk-ruby"]link:https://github.com/cerbos/cerbos-sdk-ruby[&ensp;Ruby]
 * image:rust.svg[alt="Rust",width=40,height=40,link="https://github.com/cerbos/cerbos-sdk-rust"]link:https://github.com/cerbos/cerbos-sdk-rust[&ensp;Rust]
