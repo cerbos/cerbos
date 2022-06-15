@@ -89,13 +89,14 @@ message RunnablePrincipalPolicySet {
 
   message Policy {
     message ActionRule {
-      string name = 1;
-      Condition condition = 2;
-      cerbos.effect.v1.Effect effect = 3;
+      string action = 1;
+      string name = 2;
+      Condition condition = 3;
+      cerbos.effect.v1.Effect effect = 4;
     }
 
     message ResourceRules {
-      map<string, ActionRule> action_rules = 1;
+      repeated ActionRule action_rules = 1;
     }
 
     string scope = 1;

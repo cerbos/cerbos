@@ -379,14 +379,15 @@ func compilePrincipalPolicy(modCtx *moduleCtx) *runtimev1.RunnablePrincipalPolic
 
 	for _, rule := range pp.Rules {
 		rr := &runtimev1.RunnablePrincipalPolicySet_Policy_ResourceRules{
-			ActionRules: make(map[string]*runtimev1.RunnablePrincipalPolicySet_Policy_ActionRule, len(rule.Actions)),
+			ActionRules: make([]*runtimev1.RunnablePrincipalPolicySet_Policy_ActionRule, len(rule.Actions)),
 		}
 
 		for i, action := range rule.Actions {
 			action.Name = namer.PrincipalResourceActionRuleName(action, rule.Resource, i+1)
 
 			ruleName := fmt.Sprintf("rule '%s' (#%d) of resource '%s'", action.Name, i+1, rule.Resource)
-			rr.ActionRules[action.Action] = &runtimev1.RunnablePrincipalPolicySet_Policy_ActionRule{
+			rr.ActionRules[i] = &runtimev1.RunnablePrincipalPolicySet_Policy_ActionRule{
+				Action:    action.Action,
 				Name:      action.Name,
 				Effect:    action.Effect,
 				Condition: compileCondition(modCtx, ruleName, action.Condition),

@@ -140,8 +140,8 @@ func (ppe *principalPolicyEvaluator) EvaluateResourcesQueryPlan(ctx context.Cont
 				continue
 			}
 
-			for actionGlob, rule := range resourceRules.ActionRules {
-				if !matchesActionGlob(actionGlob, input.Action) {
+			for _, rule := range resourceRules.ActionRules {
+				if !matchesActionGlob(rule.Action, input.Action) {
 					continue
 				}
 

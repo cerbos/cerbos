@@ -239,6 +239,10 @@ func cerbos_runtime_v1_RunnablePrincipalPolicySet_Metadata_hashpb_sum(m *Runnabl
 }
 
 func cerbos_runtime_v1_RunnablePrincipalPolicySet_Policy_ActionRule_hashpb_sum(m *RunnablePrincipalPolicySet_Policy_ActionRule, hasher hash.Hash, ignore map[string]struct{}) {
+	if _, ok := ignore["cerbos.runtime.v1.RunnablePrincipalPolicySet.Policy.ActionRule.action"]; !ok {
+		_, _ = hasher.Write(protowire.AppendString(nil, m.Action))
+
+	}
 	if _, ok := ignore["cerbos.runtime.v1.RunnablePrincipalPolicySet.Policy.ActionRule.name"]; !ok {
 		_, _ = hasher.Write(protowire.AppendString(nil, m.Name))
 
@@ -258,18 +262,9 @@ func cerbos_runtime_v1_RunnablePrincipalPolicySet_Policy_ActionRule_hashpb_sum(m
 func cerbos_runtime_v1_RunnablePrincipalPolicySet_Policy_ResourceRules_hashpb_sum(m *RunnablePrincipalPolicySet_Policy_ResourceRules, hasher hash.Hash, ignore map[string]struct{}) {
 	if _, ok := ignore["cerbos.runtime.v1.RunnablePrincipalPolicySet.Policy.ResourceRules.action_rules"]; !ok {
 		if len(m.ActionRules) > 0 {
-			keys := make([]string, len(m.ActionRules))
-			i := 0
-			for k := range m.ActionRules {
-				keys[i] = k
-				i++
-			}
-
-			sort.Slice(keys, func(i, j int) bool { return keys[i] < keys[j] })
-
-			for _, k := range keys {
-				if m.ActionRules[k] != nil {
-					cerbos_runtime_v1_RunnablePrincipalPolicySet_Policy_ActionRule_hashpb_sum(m.ActionRules[k], hasher, ignore)
+			for _, v := range m.ActionRules {
+				if v != nil {
+					cerbos_runtime_v1_RunnablePrincipalPolicySet_Policy_ActionRule_hashpb_sum(v, hasher, ignore)
 				}
 
 			}
