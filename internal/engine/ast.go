@@ -17,6 +17,7 @@ import (
 
 	enginev1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
 	"github.com/cerbos/cerbos/internal/conditions"
+	"github.com/cerbos/cerbos/internal/util"
 )
 
 const (
@@ -511,8 +512,13 @@ func normaliseFilterExprOp(cond *enginev1.PlanResourcesFilter_Expression_Operand
 //nolint: nestif
 func normaliseFilterExprOpExpr(expr *enginev1.PlanResourcesFilter_Expression_Operand_Expression) *enginev1.PlanResourcesFilter_Expression_Operand {
 	var logicalOperator string
+	var operandHashes map[uint64]struct{}
 	if expr.Expression.Operator == And || expr.Expression.Operator == Or || expr.Expression.Operator == Not {
 		logicalOperator = expr.Expression.Operator
+
+		if logicalOperator != Not {
+			operandHashes = make(map[uint64]struct{}, len(expr.Expression.Operands))
+		}
 	}
 
 	operands := make([]*enginev1.PlanResourcesFilter_Expression_Operand, 0, len(expr.Expression.Operands))
@@ -547,6 +553,15 @@ func normaliseFilterExprOpExpr(expr *enginev1.PlanResourcesFilter_Expression_Ope
 					}
 				}
 			}
+		}
+
+		if operandHashes != nil {
+			opHash := util.HashPB(op, nil)
+			if _, ok := operandHashes[opHash]; ok {
+				// Ignore repeated values in and/or
+				continue
+			}
+			operandHashes[opHash] = struct{}{}
 		}
 
 		operands = append(operands, normalOp)
