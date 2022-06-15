@@ -11,7 +11,7 @@ The `cerbosctl` utility is now available as a container. It makes it easier to p
 
 Cerbos now caches the verification state of JWTs in memory to avoid repeating the expensive cryptographic operations on each and every request. The tokens are still validated each time to ensure that they haven't expired and are valid for use. See xref:0.18.0@configuration:auxdata.adoc[AuxData configuration] for information on how to configure the cache.
 
-There are several improvements to the `PlanResources` API. An optimisation pass has been introduced to simplify some of the logical expressions in the query plan. For example, `NOT true` automatically gets simplified to just `false` and `true AND x == y` gets simplified to `x == y`. All aliases, such as `R` for `request.resource`, are expanded to their long form in the plan output to help make the API response predictable. The output of the `filterDebug` field in the query plan response is standardised to use S-expression format to ensure that it is easily verifiable by automated tools.  
+There are several improvements to the `PlanResources` API. An optimisation pass has been introduced to simplify some of the logical expressions in the query plan and eliminate redundant conditions. For example, `NOT true` automatically gets simplified to just `false` and `true AND x == y` gets simplified to `x == y`. All aliases, such as `R` for `request.resource`, are expanded to their long form in the plan output to help make the API response predictable. The output of the `filterDebug` field in the query plan response is standardised to use S-expression format to ensure that it is easily verifiable by automated tools.  
 
 Calls to the `PlanResources` API are now captured by the audit logger and written to the decision log with the full serialized request and response. Previously, only access logs were produced for this API call. This involves a rare -- but, necessary -- breaking change to the decision log format where the data previously available in the `inputs` and `outputs` fields are now available as `checkResources.inputs` and `checkResources.outputs`.       
 
@@ -25,11 +25,11 @@ Distributed traces received in any of W3C trace context, B3 or Baggage propagati
 
 == Changelog
 
-
 === Bug Fixes
 
 * Apply defaults when loading audit config (link:https://github.com/cerbos/cerbos/pull/952[#952])
 * Cerbosctl version should fail gracefully (link:https://github.com/cerbos/cerbos/pull/973[#973])
+* Combine conditions from principal and resource policies in query plans (link:https://github.com/cerbos/cerbos/pull/1009[#1009])
 * Handle `google.protobuf.Value` correctly in OpenAPI schemas (link:https://github.com/cerbos/cerbos/pull/968[#968])
 * Ignore test files when updating index from git (link:https://github.com/cerbos/cerbos/pull/985[#985])
 * Respect `WithRootDir` option in `(Index).ListSchemaIDs` (link:https://github.com/cerbos/cerbos/pull/992[#992])
@@ -41,8 +41,10 @@ Distributed traces received in any of W3C trace context, B3 or Baggage propagati
 === Enhancements
 
 * Add store polling metrics (link:https://github.com/cerbos/cerbos/pull/989[#989])
+* Allow multiple rules per action in principal policies (link:https://github.com/cerbos/cerbos/pull/1010[#1010])
 * Allow setting file mode of UDS (link:https://github.com/cerbos/cerbos/pull/966[#966])
 * Cache JWT verification status (link:https://github.com/cerbos/cerbos/pull/995[#995])
+* Deduplicate operands to and/or operations (link:https://github.com/cerbos/cerbos/pull/1012[#1012])
 * Expand aliases in PlanResources output (link:https://github.com/cerbos/cerbos/pull/963[#963])
 * #**BREAKING**# Ignore hidden directories and files (link:https://github.com/cerbos/cerbos/pull/993[#993])
 * #**BREAKING**# Log PlanResources calls in audit trail (link:https://github.com/cerbos/cerbos/pull/960[#960])
@@ -53,8 +55,10 @@ Distributed traces received in any of W3C trace context, B3 or Baggage propagati
 === Documentation
 
 * Add JavaScript SDK link to README (link:https://github.com/cerbos/cerbos/pull/990[#990])
+* Add links to .NET SDK (link:https://github.com/cerbos/cerbos/pull/1006[#1006])
 * Add new JavaScript SDK (link:https://github.com/cerbos/cerbos/pull/986[#986])
 * Showcase users (link:https://github.com/cerbos/cerbos/pull/983[#983])
+* Specify what happens when multiple rules match (link:https://github.com/cerbos/cerbos/pull/1007[#1007])
 * Update audit examples (link:https://github.com/cerbos/cerbos/pull/950[#950])
 
 === Chores
