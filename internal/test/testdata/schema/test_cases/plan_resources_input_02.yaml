@@ -1,0 +1,36 @@
+---
+description: Missing required fields in nested objects
+schemaRefs:
+  principalSchema:
+    ref: cerbos:///customer_relative.json
+  resourceSchema:
+    ref: cerbos:///customer_relative.json
+planResourcesInput:
+  action: "view:public"
+  principal:
+    id: "john"
+    policyVersion: "20210210"
+    roles: [ "employee" ]
+    attr: &customer
+      billing_address:
+        street_address: 20 W 34th St
+        city: 10001
+  resource:
+    kind: "leave_request"
+    policyVersion: "20210210"
+    attr: *customer
+wantValidationErrors:
+  - message: "missing properties: 'first_name', 'last_name', 'shipping_address'"
+    source: SOURCE_PRINCIPAL
+
+  - path: /billing_address
+    message: "missing properties: 'state'"
+    source: SOURCE_PRINCIPAL
+
+  - path: /billing_address/city
+    message: expected string, but got number
+    source: SOURCE_PRINCIPAL
+
+  - path: /billing_address/city
+    message: expected string, but got number
+    source: SOURCE_RESOURCE

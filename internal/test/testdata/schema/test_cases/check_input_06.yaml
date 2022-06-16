@@ -4,21 +4,21 @@ schemaRefs:
   principalSchema:
     ref: cerbos:///complex_object.json
     ignoreWhen:
-      actions: ["view:*"] 
+      actions: ["view:*"]
   resourceSchema:
     ref: cerbos:///complex_object.json
     ignoreWhen:
-      actions: ["view:public"] 
-input: 
+      actions: ["view:public"]
+checkInput:
   actions: [ "view:public" ]
-  principal: 
+  principal:
     id: "john"
     policyVersion: "20210210"
     roles: [ "employee" ]
-    attr: &myAttr 
+    attr: &myAttr
       stringField: 1
-  resource: 
+  resource:
     kind: "leave_request"
     policyVersion: "20210210"
     id: "XX125"
-    attr: *myAttr 
+    attr: *myAttr

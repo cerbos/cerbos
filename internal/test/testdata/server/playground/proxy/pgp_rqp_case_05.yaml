@@ -43,6 +43,10 @@ playgroundProxy:
           "employee"
         ],
         "attr": {
+          "department": "marketing",
+          "managed_geographies": "GB",
+          "geography": "GB",
+          "team": "design",
           "reader": false
         }
       },

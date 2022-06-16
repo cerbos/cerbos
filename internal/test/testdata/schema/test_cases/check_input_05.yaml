@@ -5,19 +5,19 @@ schemaRefs:
     ref: complex_object.json
   resourceSchema:
     ref: complex_object.json
-input: 
+checkInput:
   actions: [ "view:public" ]
-  principal: 
+  principal:
     id: "john"
     policyVersion: "20210210"
     roles: [ "employee" ]
-    attr: &myAttr 
+    attr: &myAttr
       stringField: hello
-  resource: 
+  resource:
     kind: "expense_request"
     policyVersion: "20210210"
     id: "XX125"
-    attr: *myAttr 
+    attr: *myAttr
 wantValidationErrors:
   - message: "Failed to load schema \"complex_object.json\""
     source: SOURCE_PRINCIPAL

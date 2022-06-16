@@ -2428,6 +2428,12 @@
         },
         "filterDebug": {
           "type": "string"
+        },
+        "validationErrors": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/v1ValidationError"
+          }
         }
       }
     },
@@ -2497,6 +2503,13 @@
         "meta": {
           "$ref": "#/definitions/v1PlanResourcesResponseMeta",
           "description": "Optional metadata about the request evaluation process"
+        },
+        "validationErrors": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/v1ValidationError"
+          },
+          "description": "List of validation errors (if schema validation is enabled)"
         }
       },
       "description": "Resources query plan response for a set of resources."

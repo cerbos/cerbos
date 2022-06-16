@@ -53,6 +53,29 @@
         "KIND_CONDITIONAL"
       ]
     },
+    "cerbos.schema.v1.ValidationError": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "message": {
+          "type": "string"
+        },
+        "path": {
+          "type": "string"
+        },
+        "source": {
+          "$ref": "#/definitions/cerbos.schema.v1.ValidationError.Source"
+        }
+      }
+    },
+    "cerbos.schema.v1.ValidationError.Source": {
+      "type": "string",
+      "enum": [
+        "SOURCE_UNSPECIFIED",
+        "SOURCE_PRINCIPAL",
+        "SOURCE_RESOURCE"
+      ]
+    },
     "google.protobuf.Value": {
       "title": "Value",
       "description": "A dynamically-typed value."
@@ -81,6 +104,12 @@
     },
     "scope": {
       "type": "string"
+    },
+    "validationErrors": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/cerbos.schema.v1.ValidationError"
+      }
     }
   }
 }

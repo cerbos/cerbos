@@ -137,9 +137,12 @@ message CelTestCase {
 message SchemaTestCase {
   string description = 1;
   cerbos.policy.v1.Schemas schema_refs = 2;
-  cerbos.engine.v1.CheckInput input = 3;
-  bool want_error = 4;
-  repeated cerbos.schema.v1.ValidationError want_validation_errors = 5;
+  oneof input {
+    cerbos.engine.v1.CheckInput check_input = 3;
+    cerbos.engine.v1.PlanResourcesInput plan_resources_input = 4;
+  }
+  bool want_error = 5;
+  repeated cerbos.schema.v1.ValidationError want_validation_errors = 6;
 }
 
 message ValidationErrContainer {

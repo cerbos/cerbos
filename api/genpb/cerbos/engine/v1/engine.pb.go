@@ -459,13 +459,14 @@ type PlanResourcesOutput struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	RequestId     string               `protobuf:"bytes,1,opt,name=request_id,json=requestId,proto3" json:"request_id,omitempty"`
-	Action        string               `protobuf:"bytes,2,opt,name=action,proto3" json:"action,omitempty"`
-	Kind          string               `protobuf:"bytes,3,opt,name=kind,proto3" json:"kind,omitempty"`
-	PolicyVersion string               `protobuf:"bytes,4,opt,name=policy_version,json=policyVersion,proto3" json:"policy_version,omitempty"`
-	Scope         string               `protobuf:"bytes,5,opt,name=scope,proto3" json:"scope,omitempty"`
-	Filter        *PlanResourcesFilter `protobuf:"bytes,6,opt,name=filter,proto3" json:"filter,omitempty"`
-	FilterDebug   string               `protobuf:"bytes,7,opt,name=filter_debug,json=filterDebug,proto3" json:"filter_debug,omitempty"`
+	RequestId        string                `protobuf:"bytes,1,opt,name=request_id,json=requestId,proto3" json:"request_id,omitempty"`
+	Action           string                `protobuf:"bytes,2,opt,name=action,proto3" json:"action,omitempty"`
+	Kind             string                `protobuf:"bytes,3,opt,name=kind,proto3" json:"kind,omitempty"`
+	PolicyVersion    string                `protobuf:"bytes,4,opt,name=policy_version,json=policyVersion,proto3" json:"policy_version,omitempty"`
+	Scope            string                `protobuf:"bytes,5,opt,name=scope,proto3" json:"scope,omitempty"`
+	Filter           *PlanResourcesFilter  `protobuf:"bytes,6,opt,name=filter,proto3" json:"filter,omitempty"`
+	FilterDebug      string                `protobuf:"bytes,7,opt,name=filter_debug,json=filterDebug,proto3" json:"filter_debug,omitempty"`
+	ValidationErrors []*v1.ValidationError `protobuf:"bytes,8,rep,name=validation_errors,json=validationErrors,proto3" json:"validation_errors,omitempty"`
 }
 
 func (x *PlanResourcesOutput) Reset() {
@@ -547,6 +548,13 @@ func (x *PlanResourcesOutput) GetFilterDebug() string {
 		return x.FilterDebug
 	}
 	return ""
+}
+
+func (x *PlanResourcesOutput) GetValidationErrors() []*v1.ValidationError {
+	if x != nil {
+		return x.ValidationErrors
+	}
+	return nil
 }
 
 type CheckInput struct {
@@ -1894,7 +1902,7 @@ var file_cerbos_engine_v1_engine_proto_rawDesc = []byte{
 	0x59, 0x53, 0x5f, 0x41, 0x4c, 0x4c, 0x4f, 0x57, 0x45, 0x44, 0x10, 0x01, 0x12, 0x16, 0x0a, 0x12,
 	0x4b, 0x49, 0x4e, 0x44, 0x5f, 0x41, 0x4c, 0x57, 0x41, 0x59, 0x53, 0x5f, 0x44, 0x45, 0x4e, 0x49,
 	0x45, 0x44, 0x10, 0x02, 0x12, 0x14, 0x0a, 0x10, 0x4b, 0x49, 0x4e, 0x44, 0x5f, 0x43, 0x4f, 0x4e,
-	0x44, 0x49, 0x54, 0x49, 0x4f, 0x4e, 0x41, 0x4c, 0x10, 0x03, 0x22, 0xff, 0x01, 0x0a, 0x13, 0x50,
+	0x44, 0x49, 0x54, 0x49, 0x4f, 0x4e, 0x41, 0x4c, 0x10, 0x03, 0x22, 0xcf, 0x02, 0x0a, 0x13, 0x50,
 	0x6c, 0x61, 0x6e, 0x52, 0x65, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x73, 0x4f, 0x75, 0x74, 0x70,
 	0x75, 0x74, 0x12, 0x1d, 0x0a, 0x0a, 0x72, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x5f, 0x69, 0x64,
 	0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x09, 0x72, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x49,
@@ -1910,7 +1918,12 @@ var file_cerbos_engine_v1_engine_proto_rawDesc = []byte{
 	0x61, 0x6e, 0x52, 0x65, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x73, 0x46, 0x69, 0x6c, 0x74, 0x65,
 	0x72, 0x52, 0x06, 0x66, 0x69, 0x6c, 0x74, 0x65, 0x72, 0x12, 0x21, 0x0a, 0x0c, 0x66, 0x69, 0x6c,
 	0x74, 0x65, 0x72, 0x5f, 0x64, 0x65, 0x62, 0x75, 0x67, 0x18, 0x07, 0x20, 0x01, 0x28, 0x09, 0x52,
-	0x0b, 0x66, 0x69, 0x6c, 0x74, 0x65, 0x72, 0x44, 0x65, 0x62, 0x75, 0x67, 0x22, 0x9e, 0x02, 0x0a,
+	0x0b, 0x66, 0x69, 0x6c, 0x74, 0x65, 0x72, 0x44, 0x65, 0x62, 0x75, 0x67, 0x12, 0x4e, 0x0a, 0x11,
+	0x76, 0x61, 0x6c, 0x69, 0x64, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x5f, 0x65, 0x72, 0x72, 0x6f, 0x72,
+	0x73, 0x18, 0x08, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x21, 0x2e, 0x63, 0x65, 0x72, 0x62, 0x6f, 0x73,
+	0x2e, 0x73, 0x63, 0x68, 0x65, 0x6d, 0x61, 0x2e, 0x76, 0x31, 0x2e, 0x56, 0x61, 0x6c, 0x69, 0x64,
+	0x61, 0x74, 0x69, 0x6f, 0x6e, 0x45, 0x72, 0x72, 0x6f, 0x72, 0x52, 0x10, 0x76, 0x61, 0x6c, 0x69,
+	0x64, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x45, 0x72, 0x72, 0x6f, 0x72, 0x73, 0x22, 0x9e, 0x02, 0x0a,
 	0x0a, 0x43, 0x68, 0x65, 0x63, 0x6b, 0x49, 0x6e, 0x70, 0x75, 0x74, 0x12, 0x1d, 0x0a, 0x0a, 0x72,
 	0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x5f, 0x69, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52,
 	0x09, 0x72, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x49, 0x64, 0x12, 0x44, 0x0a, 0x08, 0x72, 0x65,
@@ -2250,40 +2263,41 @@ var file_cerbos_engine_v1_engine_proto_depIdxs = []int32{
 	1,  // 4: cerbos.engine.v1.PlanResourcesFilter.kind:type_name -> cerbos.engine.v1.PlanResourcesFilter.Kind
 	19, // 5: cerbos.engine.v1.PlanResourcesFilter.condition:type_name -> cerbos.engine.v1.PlanResourcesFilter.Expression.Operand
 	6,  // 6: cerbos.engine.v1.PlanResourcesOutput.filter:type_name -> cerbos.engine.v1.PlanResourcesFilter
-	10, // 7: cerbos.engine.v1.CheckInput.resource:type_name -> cerbos.engine.v1.Resource
-	11, // 8: cerbos.engine.v1.CheckInput.principal:type_name -> cerbos.engine.v1.Principal
-	12, // 9: cerbos.engine.v1.CheckInput.aux_data:type_name -> cerbos.engine.v1.AuxData
-	21, // 10: cerbos.engine.v1.CheckOutput.actions:type_name -> cerbos.engine.v1.CheckOutput.ActionsEntry
-	28, // 11: cerbos.engine.v1.CheckOutput.validation_errors:type_name -> cerbos.schema.v1.ValidationError
-	22, // 12: cerbos.engine.v1.Resource.attr:type_name -> cerbos.engine.v1.Resource.AttrEntry
-	23, // 13: cerbos.engine.v1.Principal.attr:type_name -> cerbos.engine.v1.Principal.AttrEntry
-	24, // 14: cerbos.engine.v1.AuxData.jwt:type_name -> cerbos.engine.v1.AuxData.JwtEntry
-	25, // 15: cerbos.engine.v1.Trace.components:type_name -> cerbos.engine.v1.Trace.Component
-	26, // 16: cerbos.engine.v1.Trace.event:type_name -> cerbos.engine.v1.Trace.Event
-	15, // 17: cerbos.engine.v1.PlanResourcesInput.Resource.attr:type_name -> cerbos.engine.v1.PlanResourcesInput.Resource.AttrEntry
-	29, // 18: cerbos.engine.v1.PlanResourcesInput.Resource.AttrEntry.value:type_name -> google.protobuf.Value
-	17, // 19: cerbos.engine.v1.PlanResourcesAst.Node.logical_operation:type_name -> cerbos.engine.v1.PlanResourcesAst.LogicalOperation
-	30, // 20: cerbos.engine.v1.PlanResourcesAst.Node.expression:type_name -> google.api.expr.v1alpha1.CheckedExpr
-	0,  // 21: cerbos.engine.v1.PlanResourcesAst.LogicalOperation.operator:type_name -> cerbos.engine.v1.PlanResourcesAst.LogicalOperation.Operator
-	16, // 22: cerbos.engine.v1.PlanResourcesAst.LogicalOperation.nodes:type_name -> cerbos.engine.v1.PlanResourcesAst.Node
-	19, // 23: cerbos.engine.v1.PlanResourcesFilter.Expression.operands:type_name -> cerbos.engine.v1.PlanResourcesFilter.Expression.Operand
-	29, // 24: cerbos.engine.v1.PlanResourcesFilter.Expression.Operand.value:type_name -> google.protobuf.Value
-	18, // 25: cerbos.engine.v1.PlanResourcesFilter.Expression.Operand.expression:type_name -> cerbos.engine.v1.PlanResourcesFilter.Expression
-	31, // 26: cerbos.engine.v1.CheckOutput.ActionEffect.effect:type_name -> cerbos.effect.v1.Effect
-	20, // 27: cerbos.engine.v1.CheckOutput.ActionsEntry.value:type_name -> cerbos.engine.v1.CheckOutput.ActionEffect
-	29, // 28: cerbos.engine.v1.Resource.AttrEntry.value:type_name -> google.protobuf.Value
-	29, // 29: cerbos.engine.v1.Principal.AttrEntry.value:type_name -> google.protobuf.Value
-	29, // 30: cerbos.engine.v1.AuxData.JwtEntry.value:type_name -> google.protobuf.Value
-	2,  // 31: cerbos.engine.v1.Trace.Component.kind:type_name -> cerbos.engine.v1.Trace.Component.Kind
-	27, // 32: cerbos.engine.v1.Trace.Component.variable:type_name -> cerbos.engine.v1.Trace.Component.Variable
-	3,  // 33: cerbos.engine.v1.Trace.Event.status:type_name -> cerbos.engine.v1.Trace.Event.Status
-	31, // 34: cerbos.engine.v1.Trace.Event.effect:type_name -> cerbos.effect.v1.Effect
-	29, // 35: cerbos.engine.v1.Trace.Event.result:type_name -> google.protobuf.Value
-	36, // [36:36] is the sub-list for method output_type
-	36, // [36:36] is the sub-list for method input_type
-	36, // [36:36] is the sub-list for extension type_name
-	36, // [36:36] is the sub-list for extension extendee
-	0,  // [0:36] is the sub-list for field type_name
+	28, // 7: cerbos.engine.v1.PlanResourcesOutput.validation_errors:type_name -> cerbos.schema.v1.ValidationError
+	10, // 8: cerbos.engine.v1.CheckInput.resource:type_name -> cerbos.engine.v1.Resource
+	11, // 9: cerbos.engine.v1.CheckInput.principal:type_name -> cerbos.engine.v1.Principal
+	12, // 10: cerbos.engine.v1.CheckInput.aux_data:type_name -> cerbos.engine.v1.AuxData
+	21, // 11: cerbos.engine.v1.CheckOutput.actions:type_name -> cerbos.engine.v1.CheckOutput.ActionsEntry
+	28, // 12: cerbos.engine.v1.CheckOutput.validation_errors:type_name -> cerbos.schema.v1.ValidationError
+	22, // 13: cerbos.engine.v1.Resource.attr:type_name -> cerbos.engine.v1.Resource.AttrEntry
+	23, // 14: cerbos.engine.v1.Principal.attr:type_name -> cerbos.engine.v1.Principal.AttrEntry
+	24, // 15: cerbos.engine.v1.AuxData.jwt:type_name -> cerbos.engine.v1.AuxData.JwtEntry
+	25, // 16: cerbos.engine.v1.Trace.components:type_name -> cerbos.engine.v1.Trace.Component
+	26, // 17: cerbos.engine.v1.Trace.event:type_name -> cerbos.engine.v1.Trace.Event
+	15, // 18: cerbos.engine.v1.PlanResourcesInput.Resource.attr:type_name -> cerbos.engine.v1.PlanResourcesInput.Resource.AttrEntry
+	29, // 19: cerbos.engine.v1.PlanResourcesInput.Resource.AttrEntry.value:type_name -> google.protobuf.Value
+	17, // 20: cerbos.engine.v1.PlanResourcesAst.Node.logical_operation:type_name -> cerbos.engine.v1.PlanResourcesAst.LogicalOperation
+	30, // 21: cerbos.engine.v1.PlanResourcesAst.Node.expression:type_name -> google.api.expr.v1alpha1.CheckedExpr
+	0,  // 22: cerbos.engine.v1.PlanResourcesAst.LogicalOperation.operator:type_name -> cerbos.engine.v1.PlanResourcesAst.LogicalOperation.Operator
+	16, // 23: cerbos.engine.v1.PlanResourcesAst.LogicalOperation.nodes:type_name -> cerbos.engine.v1.PlanResourcesAst.Node
+	19, // 24: cerbos.engine.v1.PlanResourcesFilter.Expression.operands:type_name -> cerbos.engine.v1.PlanResourcesFilter.Expression.Operand
+	29, // 25: cerbos.engine.v1.PlanResourcesFilter.Expression.Operand.value:type_name -> google.protobuf.Value
+	18, // 26: cerbos.engine.v1.PlanResourcesFilter.Expression.Operand.expression:type_name -> cerbos.engine.v1.PlanResourcesFilter.Expression
+	31, // 27: cerbos.engine.v1.CheckOutput.ActionEffect.effect:type_name -> cerbos.effect.v1.Effect
+	20, // 28: cerbos.engine.v1.CheckOutput.ActionsEntry.value:type_name -> cerbos.engine.v1.CheckOutput.ActionEffect
+	29, // 29: cerbos.engine.v1.Resource.AttrEntry.value:type_name -> google.protobuf.Value
+	29, // 30: cerbos.engine.v1.Principal.AttrEntry.value:type_name -> google.protobuf.Value
+	29, // 31: cerbos.engine.v1.AuxData.JwtEntry.value:type_name -> google.protobuf.Value
+	2,  // 32: cerbos.engine.v1.Trace.Component.kind:type_name -> cerbos.engine.v1.Trace.Component.Kind
+	27, // 33: cerbos.engine.v1.Trace.Component.variable:type_name -> cerbos.engine.v1.Trace.Component.Variable
+	3,  // 34: cerbos.engine.v1.Trace.Event.status:type_name -> cerbos.engine.v1.Trace.Event.Status
+	31, // 35: cerbos.engine.v1.Trace.Event.effect:type_name -> cerbos.effect.v1.Effect
+	29, // 36: cerbos.engine.v1.Trace.Event.result:type_name -> google.protobuf.Value
+	37, // [37:37] is the sub-list for method output_type
+	37, // [37:37] is the sub-list for method input_type
+	37, // [37:37] is the sub-list for extension type_name
+	37, // [37:37] is the sub-list for extension extendee
+	0,  // [0:37] is the sub-list for field type_name
 }
 
 func init() { file_cerbos_engine_v1_engine_proto_init() }

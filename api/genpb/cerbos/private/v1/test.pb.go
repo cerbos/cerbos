@@ -605,11 +605,14 @@ type SchemaTestCase struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Description          string                 `protobuf:"bytes,1,opt,name=description,proto3" json:"description,omitempty"`
-	SchemaRefs           *v11.Schemas           `protobuf:"bytes,2,opt,name=schema_refs,json=schemaRefs,proto3" json:"schema_refs,omitempty"`
-	Input                *v1.CheckInput         `protobuf:"bytes,3,opt,name=input,proto3" json:"input,omitempty"`
-	WantError            bool                   `protobuf:"varint,4,opt,name=want_error,json=wantError,proto3" json:"want_error,omitempty"`
-	WantValidationErrors []*v12.ValidationError `protobuf:"bytes,5,rep,name=want_validation_errors,json=wantValidationErrors,proto3" json:"want_validation_errors,omitempty"`
+	Description string       `protobuf:"bytes,1,opt,name=description,proto3" json:"description,omitempty"`
+	SchemaRefs  *v11.Schemas `protobuf:"bytes,2,opt,name=schema_refs,json=schemaRefs,proto3" json:"schema_refs,omitempty"`
+	// Types that are assignable to Input:
+	//	*SchemaTestCase_CheckInput
+	//	*SchemaTestCase_PlanResourcesInput
+	Input                isSchemaTestCase_Input `protobuf_oneof:"input"`
+	WantError            bool                   `protobuf:"varint,5,opt,name=want_error,json=wantError,proto3" json:"want_error,omitempty"`
+	WantValidationErrors []*v12.ValidationError `protobuf:"bytes,6,rep,name=want_validation_errors,json=wantValidationErrors,proto3" json:"want_validation_errors,omitempty"`
 }
 
 func (x *SchemaTestCase) Reset() {
@@ -658,9 +661,23 @@ func (x *SchemaTestCase) GetSchemaRefs() *v11.Schemas {
 	return nil
 }
 
-func (x *SchemaTestCase) GetInput() *v1.CheckInput {
-	if x != nil {
-		return x.Input
+func (m *SchemaTestCase) GetInput() isSchemaTestCase_Input {
+	if m != nil {
+		return m.Input
+	}
+	return nil
+}
+
+func (x *SchemaTestCase) GetCheckInput() *v1.CheckInput {
+	if x, ok := x.GetInput().(*SchemaTestCase_CheckInput); ok {
+		return x.CheckInput
+	}
+	return nil
+}
+
+func (x *SchemaTestCase) GetPlanResourcesInput() *v1.PlanResourcesInput {
+	if x, ok := x.GetInput().(*SchemaTestCase_PlanResourcesInput); ok {
+		return x.PlanResourcesInput
 	}
 	return nil
 }
@@ -678,6 +695,22 @@ func (x *SchemaTestCase) GetWantValidationErrors() []*v12.ValidationError {
 	}
 	return nil
 }
+
+type isSchemaTestCase_Input interface {
+	isSchemaTestCase_Input()
+}
+
+type SchemaTestCase_CheckInput struct {
+	CheckInput *v1.CheckInput `protobuf:"bytes,3,opt,name=check_input,json=checkInput,proto3,oneof"`
+}
+
+type SchemaTestCase_PlanResourcesInput struct {
+	PlanResourcesInput *v1.PlanResourcesInput `protobuf:"bytes,4,opt,name=plan_resources_input,json=planResourcesInput,proto3,oneof"`
+}
+
+func (*SchemaTestCase_CheckInput) isSchemaTestCase_Input() {}
+
+func (*SchemaTestCase_PlanResourcesInput) isSchemaTestCase_Input() {}
 
 type ValidationErrContainer struct {
 	state         protoimpl.MessageState
@@ -2070,25 +2103,32 @@ var file_cerbos_private_v1_test_proto_rawDesc = []byte{
 	0x05, 0x69, 0x6e, 0x70, 0x75, 0x74, 0x12, 0x12, 0x0a, 0x04, 0x77, 0x61, 0x6e, 0x74, 0x18, 0x03,
 	0x20, 0x01, 0x28, 0x08, 0x52, 0x04, 0x77, 0x61, 0x6e, 0x74, 0x12, 0x1d, 0x0a, 0x0a, 0x77, 0x61,
 	0x6e, 0x74, 0x5f, 0x65, 0x72, 0x72, 0x6f, 0x72, 0x18, 0x04, 0x20, 0x01, 0x28, 0x08, 0x52, 0x09,
-	0x77, 0x61, 0x6e, 0x74, 0x45, 0x72, 0x72, 0x6f, 0x72, 0x22, 0x9a, 0x02, 0x0a, 0x0e, 0x53, 0x63,
+	0x77, 0x61, 0x6e, 0x74, 0x45, 0x72, 0x72, 0x6f, 0x72, 0x22, 0x8a, 0x03, 0x0a, 0x0e, 0x53, 0x63,
 	0x68, 0x65, 0x6d, 0x61, 0x54, 0x65, 0x73, 0x74, 0x43, 0x61, 0x73, 0x65, 0x12, 0x20, 0x0a, 0x0b,
 	0x64, 0x65, 0x73, 0x63, 0x72, 0x69, 0x70, 0x74, 0x69, 0x6f, 0x6e, 0x18, 0x01, 0x20, 0x01, 0x28,
 	0x09, 0x52, 0x0b, 0x64, 0x65, 0x73, 0x63, 0x72, 0x69, 0x70, 0x74, 0x69, 0x6f, 0x6e, 0x12, 0x3a,
 	0x0a, 0x0b, 0x73, 0x63, 0x68, 0x65, 0x6d, 0x61, 0x5f, 0x72, 0x65, 0x66, 0x73, 0x18, 0x02, 0x20,
 	0x01, 0x28, 0x0b, 0x32, 0x19, 0x2e, 0x63, 0x65, 0x72, 0x62, 0x6f, 0x73, 0x2e, 0x70, 0x6f, 0x6c,
 	0x69, 0x63, 0x79, 0x2e, 0x76, 0x31, 0x2e, 0x53, 0x63, 0x68, 0x65, 0x6d, 0x61, 0x73, 0x52, 0x0a,
-	0x73, 0x63, 0x68, 0x65, 0x6d, 0x61, 0x52, 0x65, 0x66, 0x73, 0x12, 0x32, 0x0a, 0x05, 0x69, 0x6e,
-	0x70, 0x75, 0x74, 0x18, 0x03, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x1c, 0x2e, 0x63, 0x65, 0x72, 0x62,
-	0x6f, 0x73, 0x2e, 0x65, 0x6e, 0x67, 0x69, 0x6e, 0x65, 0x2e, 0x76, 0x31, 0x2e, 0x43, 0x68, 0x65,
-	0x63, 0x6b, 0x49, 0x6e, 0x70, 0x75, 0x74, 0x52, 0x05, 0x69, 0x6e, 0x70, 0x75, 0x74, 0x12, 0x1d,
-	0x0a, 0x0a, 0x77, 0x61, 0x6e, 0x74, 0x5f, 0x65, 0x72, 0x72, 0x6f, 0x72, 0x18, 0x04, 0x20, 0x01,
-	0x28, 0x08, 0x52, 0x09, 0x77, 0x61, 0x6e, 0x74, 0x45, 0x72, 0x72, 0x6f, 0x72, 0x12, 0x57, 0x0a,
-	0x16, 0x77, 0x61, 0x6e, 0x74, 0x5f, 0x76, 0x61, 0x6c, 0x69, 0x64, 0x61, 0x74, 0x69, 0x6f, 0x6e,
-	0x5f, 0x65, 0x72, 0x72, 0x6f, 0x72, 0x73, 0x18, 0x05, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x21, 0x2e,
-	0x63, 0x65, 0x72, 0x62, 0x6f, 0x73, 0x2e, 0x73, 0x63, 0x68, 0x65, 0x6d, 0x61, 0x2e, 0x76, 0x31,
-	0x2e, 0x56, 0x61, 0x6c, 0x69, 0x64, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x45, 0x72, 0x72, 0x6f, 0x72,
-	0x52, 0x14, 0x77, 0x61, 0x6e, 0x74, 0x56, 0x61, 0x6c, 0x69, 0x64, 0x61, 0x74, 0x69, 0x6f, 0x6e,
-	0x45, 0x72, 0x72, 0x6f, 0x72, 0x73, 0x22, 0x53, 0x0a, 0x16, 0x56, 0x61, 0x6c, 0x69, 0x64, 0x61,
+	0x73, 0x63, 0x68, 0x65, 0x6d, 0x61, 0x52, 0x65, 0x66, 0x73, 0x12, 0x3f, 0x0a, 0x0b, 0x63, 0x68,
+	0x65, 0x63, 0x6b, 0x5f, 0x69, 0x6e, 0x70, 0x75, 0x74, 0x18, 0x03, 0x20, 0x01, 0x28, 0x0b, 0x32,
+	0x1c, 0x2e, 0x63, 0x65, 0x72, 0x62, 0x6f, 0x73, 0x2e, 0x65, 0x6e, 0x67, 0x69, 0x6e, 0x65, 0x2e,
+	0x76, 0x31, 0x2e, 0x43, 0x68, 0x65, 0x63, 0x6b, 0x49, 0x6e, 0x70, 0x75, 0x74, 0x48, 0x00, 0x52,
+	0x0a, 0x63, 0x68, 0x65, 0x63, 0x6b, 0x49, 0x6e, 0x70, 0x75, 0x74, 0x12, 0x58, 0x0a, 0x14, 0x70,
+	0x6c, 0x61, 0x6e, 0x5f, 0x72, 0x65, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x73, 0x5f, 0x69, 0x6e,
+	0x70, 0x75, 0x74, 0x18, 0x04, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x24, 0x2e, 0x63, 0x65, 0x72, 0x62,
+	0x6f, 0x73, 0x2e, 0x65, 0x6e, 0x67, 0x69, 0x6e, 0x65, 0x2e, 0x76, 0x31, 0x2e, 0x50, 0x6c, 0x61,
+	0x6e, 0x52, 0x65, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x73, 0x49, 0x6e, 0x70, 0x75, 0x74, 0x48,
+	0x00, 0x52, 0x12, 0x70, 0x6c, 0x61, 0x6e, 0x52, 0x65, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x73,
+	0x49, 0x6e, 0x70, 0x75, 0x74, 0x12, 0x1d, 0x0a, 0x0a, 0x77, 0x61, 0x6e, 0x74, 0x5f, 0x65, 0x72,
+	0x72, 0x6f, 0x72, 0x18, 0x05, 0x20, 0x01, 0x28, 0x08, 0x52, 0x09, 0x77, 0x61, 0x6e, 0x74, 0x45,
+	0x72, 0x72, 0x6f, 0x72, 0x12, 0x57, 0x0a, 0x16, 0x77, 0x61, 0x6e, 0x74, 0x5f, 0x76, 0x61, 0x6c,
+	0x69, 0x64, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x5f, 0x65, 0x72, 0x72, 0x6f, 0x72, 0x73, 0x18, 0x06,
+	0x20, 0x03, 0x28, 0x0b, 0x32, 0x21, 0x2e, 0x63, 0x65, 0x72, 0x62, 0x6f, 0x73, 0x2e, 0x73, 0x63,
+	0x68, 0x65, 0x6d, 0x61, 0x2e, 0x76, 0x31, 0x2e, 0x56, 0x61, 0x6c, 0x69, 0x64, 0x61, 0x74, 0x69,
+	0x6f, 0x6e, 0x45, 0x72, 0x72, 0x6f, 0x72, 0x52, 0x14, 0x77, 0x61, 0x6e, 0x74, 0x56, 0x61, 0x6c,
+	0x69, 0x64, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x45, 0x72, 0x72, 0x6f, 0x72, 0x73, 0x42, 0x07, 0x0a,
+	0x05, 0x69, 0x6e, 0x70, 0x75, 0x74, 0x22, 0x53, 0x0a, 0x16, 0x56, 0x61, 0x6c, 0x69, 0x64, 0x61,
 	0x74, 0x69, 0x6f, 0x6e, 0x45, 0x72, 0x72, 0x43, 0x6f, 0x6e, 0x74, 0x61, 0x69, 0x6e, 0x65, 0x72,
 	0x12, 0x39, 0x0a, 0x06, 0x65, 0x72, 0x72, 0x6f, 0x72, 0x73, 0x18, 0x01, 0x20, 0x03, 0x28, 0x0b,
 	0x32, 0x21, 0x2e, 0x63, 0x65, 0x72, 0x62, 0x6f, 0x73, 0x2e, 0x73, 0x63, 0x68, 0x65, 0x6d, 0x61,
@@ -2208,33 +2248,34 @@ var file_cerbos_private_v1_test_proto_goTypes = []interface{}{
 	(*v11.Policy)(nil),                     // 31: cerbos.policy.v1.Policy
 	(*v11.Match)(nil),                      // 32: cerbos.policy.v1.Match
 	(*v11.Schemas)(nil),                    // 33: cerbos.policy.v1.Schemas
-	(*v12.ValidationError)(nil),            // 34: cerbos.schema.v1.ValidationError
-	(*v1.Principal)(nil),                   // 35: cerbos.engine.v1.Principal
-	(*v11.TestTable)(nil),                  // 36: cerbos.policy.v1.TestTable
-	(*v11.Test)(nil),                       // 37: cerbos.policy.v1.Test
-	(*v1.PlanResourcesFilter)(nil),         // 38: cerbos.engine.v1.PlanResourcesFilter
-	(*v13.PlanResourcesRequest)(nil),       // 39: cerbos.request.v1.PlanResourcesRequest
-	(*v14.PlanResourcesResponse)(nil),      // 40: cerbos.response.v1.PlanResourcesResponse
-	(*v13.CheckResourceSetRequest)(nil),    // 41: cerbos.request.v1.CheckResourceSetRequest
-	(*v14.CheckResourceSetResponse)(nil),   // 42: cerbos.response.v1.CheckResourceSetResponse
-	(*v13.CheckResourceBatchRequest)(nil),  // 43: cerbos.request.v1.CheckResourceBatchRequest
-	(*v14.CheckResourceBatchResponse)(nil), // 44: cerbos.response.v1.CheckResourceBatchResponse
-	(*v13.CheckResourcesRequest)(nil),      // 45: cerbos.request.v1.CheckResourcesRequest
-	(*v14.CheckResourcesResponse)(nil),     // 46: cerbos.response.v1.CheckResourcesResponse
-	(*v13.PlaygroundValidateRequest)(nil),  // 47: cerbos.request.v1.PlaygroundValidateRequest
-	(*v14.PlaygroundValidateResponse)(nil), // 48: cerbos.response.v1.PlaygroundValidateResponse
-	(*v13.PlaygroundTestRequest)(nil),      // 49: cerbos.request.v1.PlaygroundTestRequest
-	(*v14.PlaygroundTestResponse)(nil),     // 50: cerbos.response.v1.PlaygroundTestResponse
-	(*v13.PlaygroundEvaluateRequest)(nil),  // 51: cerbos.request.v1.PlaygroundEvaluateRequest
-	(*v14.PlaygroundEvaluateResponse)(nil), // 52: cerbos.response.v1.PlaygroundEvaluateResponse
-	(*v13.PlaygroundProxyRequest)(nil),     // 53: cerbos.request.v1.PlaygroundProxyRequest
-	(*v14.PlaygroundProxyResponse)(nil),    // 54: cerbos.response.v1.PlaygroundProxyResponse
-	(*v13.AddOrUpdatePolicyRequest)(nil),   // 55: cerbos.request.v1.AddOrUpdatePolicyRequest
-	(*v14.AddOrUpdatePolicyResponse)(nil),  // 56: cerbos.response.v1.AddOrUpdatePolicyResponse
-	(*v13.AddOrUpdateSchemaRequest)(nil),   // 57: cerbos.request.v1.AddOrUpdateSchemaRequest
-	(*v14.AddOrUpdateSchemaResponse)(nil),  // 58: cerbos.response.v1.AddOrUpdateSchemaResponse
-	(*structpb.Value)(nil),                 // 59: google.protobuf.Value
-	(*v1.PlanResourcesInput_Resource)(nil), // 60: cerbos.engine.v1.PlanResourcesInput.Resource
+	(*v1.PlanResourcesInput)(nil),          // 34: cerbos.engine.v1.PlanResourcesInput
+	(*v12.ValidationError)(nil),            // 35: cerbos.schema.v1.ValidationError
+	(*v1.Principal)(nil),                   // 36: cerbos.engine.v1.Principal
+	(*v11.TestTable)(nil),                  // 37: cerbos.policy.v1.TestTable
+	(*v11.Test)(nil),                       // 38: cerbos.policy.v1.Test
+	(*v1.PlanResourcesFilter)(nil),         // 39: cerbos.engine.v1.PlanResourcesFilter
+	(*v13.PlanResourcesRequest)(nil),       // 40: cerbos.request.v1.PlanResourcesRequest
+	(*v14.PlanResourcesResponse)(nil),      // 41: cerbos.response.v1.PlanResourcesResponse
+	(*v13.CheckResourceSetRequest)(nil),    // 42: cerbos.request.v1.CheckResourceSetRequest
+	(*v14.CheckResourceSetResponse)(nil),   // 43: cerbos.response.v1.CheckResourceSetResponse
+	(*v13.CheckResourceBatchRequest)(nil),  // 44: cerbos.request.v1.CheckResourceBatchRequest
+	(*v14.CheckResourceBatchResponse)(nil), // 45: cerbos.response.v1.CheckResourceBatchResponse
+	(*v13.CheckResourcesRequest)(nil),      // 46: cerbos.request.v1.CheckResourcesRequest
+	(*v14.CheckResourcesResponse)(nil),     // 47: cerbos.response.v1.CheckResourcesResponse
+	(*v13.PlaygroundValidateRequest)(nil),  // 48: cerbos.request.v1.PlaygroundValidateRequest
+	(*v14.PlaygroundValidateResponse)(nil), // 49: cerbos.response.v1.PlaygroundValidateResponse
+	(*v13.PlaygroundTestRequest)(nil),      // 50: cerbos.request.v1.PlaygroundTestRequest
+	(*v14.PlaygroundTestResponse)(nil),     // 51: cerbos.response.v1.PlaygroundTestResponse
+	(*v13.PlaygroundEvaluateRequest)(nil),  // 52: cerbos.request.v1.PlaygroundEvaluateRequest
+	(*v14.PlaygroundEvaluateResponse)(nil), // 53: cerbos.response.v1.PlaygroundEvaluateResponse
+	(*v13.PlaygroundProxyRequest)(nil),     // 54: cerbos.request.v1.PlaygroundProxyRequest
+	(*v14.PlaygroundProxyResponse)(nil),    // 55: cerbos.response.v1.PlaygroundProxyResponse
+	(*v13.AddOrUpdatePolicyRequest)(nil),   // 56: cerbos.request.v1.AddOrUpdatePolicyRequest
+	(*v14.AddOrUpdatePolicyResponse)(nil),  // 57: cerbos.response.v1.AddOrUpdatePolicyResponse
+	(*v13.AddOrUpdateSchemaRequest)(nil),   // 58: cerbos.request.v1.AddOrUpdateSchemaRequest
+	(*v14.AddOrUpdateSchemaResponse)(nil),  // 59: cerbos.response.v1.AddOrUpdateSchemaResponse
+	(*structpb.Value)(nil),                 // 60: google.protobuf.Value
+	(*v1.PlanResourcesInput_Resource)(nil), // 61: cerbos.engine.v1.PlanResourcesInput.Resource
 }
 var file_cerbos_private_v1_test_proto_depIdxs = []int32{
 	29, // 0: cerbos.private.v1.EngineTestCase.inputs:type_name -> cerbos.engine.v1.CheckInput
@@ -2258,45 +2299,46 @@ var file_cerbos_private_v1_test_proto_depIdxs = []int32{
 	32, // 18: cerbos.private.v1.CelTestCase.condition:type_name -> cerbos.policy.v1.Match
 	29, // 19: cerbos.private.v1.CelTestCase.input:type_name -> cerbos.engine.v1.CheckInput
 	33, // 20: cerbos.private.v1.SchemaTestCase.schema_refs:type_name -> cerbos.policy.v1.Schemas
-	29, // 21: cerbos.private.v1.SchemaTestCase.input:type_name -> cerbos.engine.v1.CheckInput
-	34, // 22: cerbos.private.v1.SchemaTestCase.want_validation_errors:type_name -> cerbos.schema.v1.ValidationError
-	34, // 23: cerbos.private.v1.ValidationErrContainer.errors:type_name -> cerbos.schema.v1.ValidationError
-	27, // 24: cerbos.private.v1.AttrWrapper.attr:type_name -> cerbos.private.v1.AttrWrapper.AttrEntry
-	35, // 25: cerbos.private.v1.QueryPlannerTestSuite.principal:type_name -> cerbos.engine.v1.Principal
-	28, // 26: cerbos.private.v1.QueryPlannerTestSuite.tests:type_name -> cerbos.private.v1.QueryPlannerTestSuite.Test
-	36, // 27: cerbos.private.v1.VerifyTestFixtureGetTestsTestCase.table:type_name -> cerbos.policy.v1.TestTable
-	37, // 28: cerbos.private.v1.VerifyTestFixtureGetTestsTestCase.want_tests:type_name -> cerbos.policy.v1.Test
-	38, // 29: cerbos.private.v1.QueryPlannerFilterTestCase.input:type_name -> cerbos.engine.v1.PlanResourcesFilter
-	38, // 30: cerbos.private.v1.QueryPlannerFilterTestCase.want_filter:type_name -> cerbos.engine.v1.PlanResourcesFilter
-	39, // 31: cerbos.private.v1.ServerTestCase.PlanResourcesCall.input:type_name -> cerbos.request.v1.PlanResourcesRequest
-	40, // 32: cerbos.private.v1.ServerTestCase.PlanResourcesCall.want_response:type_name -> cerbos.response.v1.PlanResourcesResponse
-	41, // 33: cerbos.private.v1.ServerTestCase.CheckResourceSetCall.input:type_name -> cerbos.request.v1.CheckResourceSetRequest
-	42, // 34: cerbos.private.v1.ServerTestCase.CheckResourceSetCall.want_response:type_name -> cerbos.response.v1.CheckResourceSetResponse
-	43, // 35: cerbos.private.v1.ServerTestCase.CheckResourceBatchCall.input:type_name -> cerbos.request.v1.CheckResourceBatchRequest
-	44, // 36: cerbos.private.v1.ServerTestCase.CheckResourceBatchCall.want_response:type_name -> cerbos.response.v1.CheckResourceBatchResponse
-	45, // 37: cerbos.private.v1.ServerTestCase.CheckResourcesCall.input:type_name -> cerbos.request.v1.CheckResourcesRequest
-	46, // 38: cerbos.private.v1.ServerTestCase.CheckResourcesCall.want_response:type_name -> cerbos.response.v1.CheckResourcesResponse
-	47, // 39: cerbos.private.v1.ServerTestCase.PlaygroundValidateCall.input:type_name -> cerbos.request.v1.PlaygroundValidateRequest
-	48, // 40: cerbos.private.v1.ServerTestCase.PlaygroundValidateCall.want_response:type_name -> cerbos.response.v1.PlaygroundValidateResponse
-	49, // 41: cerbos.private.v1.ServerTestCase.PlaygroundTestCall.input:type_name -> cerbos.request.v1.PlaygroundTestRequest
-	50, // 42: cerbos.private.v1.ServerTestCase.PlaygroundTestCall.want_response:type_name -> cerbos.response.v1.PlaygroundTestResponse
-	51, // 43: cerbos.private.v1.ServerTestCase.PlaygroundEvaluateCall.input:type_name -> cerbos.request.v1.PlaygroundEvaluateRequest
-	52, // 44: cerbos.private.v1.ServerTestCase.PlaygroundEvaluateCall.want_response:type_name -> cerbos.response.v1.PlaygroundEvaluateResponse
-	53, // 45: cerbos.private.v1.ServerTestCase.PlaygroundProxyCall.input:type_name -> cerbos.request.v1.PlaygroundProxyRequest
-	54, // 46: cerbos.private.v1.ServerTestCase.PlaygroundProxyCall.want_response:type_name -> cerbos.response.v1.PlaygroundProxyResponse
-	55, // 47: cerbos.private.v1.ServerTestCase.AdminAddOrUpdatePolicyCall.input:type_name -> cerbos.request.v1.AddOrUpdatePolicyRequest
-	56, // 48: cerbos.private.v1.ServerTestCase.AdminAddOrUpdatePolicyCall.want_response:type_name -> cerbos.response.v1.AddOrUpdatePolicyResponse
-	57, // 49: cerbos.private.v1.ServerTestCase.AdminAddOrUpdateSchemaCall.input:type_name -> cerbos.request.v1.AddOrUpdateSchemaRequest
-	58, // 50: cerbos.private.v1.ServerTestCase.AdminAddOrUpdateSchemaCall.want_response:type_name -> cerbos.response.v1.AddOrUpdateSchemaResponse
-	31, // 51: cerbos.private.v1.CompileTestCase.InputDefsEntry.value:type_name -> cerbos.policy.v1.Policy
-	59, // 52: cerbos.private.v1.AttrWrapper.AttrEntry.value:type_name -> google.protobuf.Value
-	38, // 53: cerbos.private.v1.QueryPlannerTestSuite.Test.want:type_name -> cerbos.engine.v1.PlanResourcesFilter
-	60, // 54: cerbos.private.v1.QueryPlannerTestSuite.Test.resource:type_name -> cerbos.engine.v1.PlanResourcesInput.Resource
-	55, // [55:55] is the sub-list for method output_type
-	55, // [55:55] is the sub-list for method input_type
-	55, // [55:55] is the sub-list for extension type_name
-	55, // [55:55] is the sub-list for extension extendee
-	0,  // [0:55] is the sub-list for field type_name
+	29, // 21: cerbos.private.v1.SchemaTestCase.check_input:type_name -> cerbos.engine.v1.CheckInput
+	34, // 22: cerbos.private.v1.SchemaTestCase.plan_resources_input:type_name -> cerbos.engine.v1.PlanResourcesInput
+	35, // 23: cerbos.private.v1.SchemaTestCase.want_validation_errors:type_name -> cerbos.schema.v1.ValidationError
+	35, // 24: cerbos.private.v1.ValidationErrContainer.errors:type_name -> cerbos.schema.v1.ValidationError
+	27, // 25: cerbos.private.v1.AttrWrapper.attr:type_name -> cerbos.private.v1.AttrWrapper.AttrEntry
+	36, // 26: cerbos.private.v1.QueryPlannerTestSuite.principal:type_name -> cerbos.engine.v1.Principal
+	28, // 27: cerbos.private.v1.QueryPlannerTestSuite.tests:type_name -> cerbos.private.v1.QueryPlannerTestSuite.Test
+	37, // 28: cerbos.private.v1.VerifyTestFixtureGetTestsTestCase.table:type_name -> cerbos.policy.v1.TestTable
+	38, // 29: cerbos.private.v1.VerifyTestFixtureGetTestsTestCase.want_tests:type_name -> cerbos.policy.v1.Test
+	39, // 30: cerbos.private.v1.QueryPlannerFilterTestCase.input:type_name -> cerbos.engine.v1.PlanResourcesFilter
+	39, // 31: cerbos.private.v1.QueryPlannerFilterTestCase.want_filter:type_name -> cerbos.engine.v1.PlanResourcesFilter
+	40, // 32: cerbos.private.v1.ServerTestCase.PlanResourcesCall.input:type_name -> cerbos.request.v1.PlanResourcesRequest
+	41, // 33: cerbos.private.v1.ServerTestCase.PlanResourcesCall.want_response:type_name -> cerbos.response.v1.PlanResourcesResponse
+	42, // 34: cerbos.private.v1.ServerTestCase.CheckResourceSetCall.input:type_name -> cerbos.request.v1.CheckResourceSetRequest
+	43, // 35: cerbos.private.v1.ServerTestCase.CheckResourceSetCall.want_response:type_name -> cerbos.response.v1.CheckResourceSetResponse
+	44, // 36: cerbos.private.v1.ServerTestCase.CheckResourceBatchCall.input:type_name -> cerbos.request.v1.CheckResourceBatchRequest
+	45, // 37: cerbos.private.v1.ServerTestCase.CheckResourceBatchCall.want_response:type_name -> cerbos.response.v1.CheckResourceBatchResponse
+	46, // 38: cerbos.private.v1.ServerTestCase.CheckResourcesCall.input:type_name -> cerbos.request.v1.CheckResourcesRequest
+	47, // 39: cerbos.private.v1.ServerTestCase.CheckResourcesCall.want_response:type_name -> cerbos.response.v1.CheckResourcesResponse
+	48, // 40: cerbos.private.v1.ServerTestCase.PlaygroundValidateCall.input:type_name -> cerbos.request.v1.PlaygroundValidateRequest
+	49, // 41: cerbos.private.v1.ServerTestCase.PlaygroundValidateCall.want_response:type_name -> cerbos.response.v1.PlaygroundValidateResponse
+	50, // 42: cerbos.private.v1.ServerTestCase.PlaygroundTestCall.input:type_name -> cerbos.request.v1.PlaygroundTestRequest
+	51, // 43: cerbos.private.v1.ServerTestCase.PlaygroundTestCall.want_response:type_name -> cerbos.response.v1.PlaygroundTestResponse
+	52, // 44: cerbos.private.v1.ServerTestCase.PlaygroundEvaluateCall.input:type_name -> cerbos.request.v1.PlaygroundEvaluateRequest
+	53, // 45: cerbos.private.v1.ServerTestCase.PlaygroundEvaluateCall.want_response:type_name -> cerbos.response.v1.PlaygroundEvaluateResponse
+	54, // 46: cerbos.private.v1.ServerTestCase.PlaygroundProxyCall.input:type_name -> cerbos.request.v1.PlaygroundProxyRequest
+	55, // 47: cerbos.private.v1.ServerTestCase.PlaygroundProxyCall.want_response:type_name -> cerbos.response.v1.PlaygroundProxyResponse
+	56, // 48: cerbos.private.v1.ServerTestCase.AdminAddOrUpdatePolicyCall.input:type_name -> cerbos.request.v1.AddOrUpdatePolicyRequest
+	57, // 49: cerbos.private.v1.ServerTestCase.AdminAddOrUpdatePolicyCall.want_response:type_name -> cerbos.response.v1.AddOrUpdatePolicyResponse
+	58, // 50: cerbos.private.v1.ServerTestCase.AdminAddOrUpdateSchemaCall.input:type_name -> cerbos.request.v1.AddOrUpdateSchemaRequest
+	59, // 51: cerbos.private.v1.ServerTestCase.AdminAddOrUpdateSchemaCall.want_response:type_name -> cerbos.response.v1.AddOrUpdateSchemaResponse
+	31, // 52: cerbos.private.v1.CompileTestCase.InputDefsEntry.value:type_name -> cerbos.policy.v1.Policy
+	60, // 53: cerbos.private.v1.AttrWrapper.AttrEntry.value:type_name -> google.protobuf.Value
+	39, // 54: cerbos.private.v1.QueryPlannerTestSuite.Test.want:type_name -> cerbos.engine.v1.PlanResourcesFilter
+	61, // 55: cerbos.private.v1.QueryPlannerTestSuite.Test.resource:type_name -> cerbos.engine.v1.PlanResourcesInput.Resource
+	56, // [56:56] is the sub-list for method output_type
+	56, // [56:56] is the sub-list for method input_type
+	56, // [56:56] is the sub-list for extension type_name
+	56, // [56:56] is the sub-list for extension extendee
+	0,  // [0:56] is the sub-list for field type_name
 }
 
 func init() { file_cerbos_private_v1_test_proto_init() }
@@ -2629,6 +2671,10 @@ func file_cerbos_private_v1_test_proto_init() {
 		(*ServerTestCase_AdminAddOrUpdateSchema)(nil),
 		(*ServerTestCase_PlaygroundTest)(nil),
 		(*ServerTestCase_CheckResources)(nil),
+	}
+	file_cerbos_private_v1_test_proto_msgTypes[6].OneofWrappers = []interface{}{
+		(*SchemaTestCase_CheckInput)(nil),
+		(*SchemaTestCase_PlanResourcesInput)(nil),
 	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{

@@ -50,7 +50,8 @@ func (vr *ValidationResult) add(errs ...ValidationError) {
 }
 
 type Manager interface {
-	Validate(context.Context, *policyv1.Schemas, *enginev1.CheckInput) (*ValidationResult, error)
+	ValidateCheckInput(context.Context, *policyv1.Schemas, *enginev1.CheckInput) (*ValidationResult, error)
+	ValidatePlanResourcesInput(context.Context, *policyv1.Schemas, *enginev1.PlanResourcesInput) (*ValidationResult, error)
 	CheckSchema(context.Context, string) error
 }
 
@@ -65,7 +66,11 @@ func NewNopManager() NopManager {
 
 type NopManager struct{}
 
-func (NopManager) Validate(_ context.Context, _ *policyv1.Schemas, _ *enginev1.CheckInput) (*ValidationResult, error) {
+func (NopManager) ValidateCheckInput(_ context.Context, _ *policyv1.Schemas, _ *enginev1.CheckInput) (*ValidationResult, error) {
+	return alwaysValidResult, nil
+}
+
+func (NopManager) ValidatePlanResourcesInput(_ context.Context, _ *policyv1.Schemas, _ *enginev1.PlanResourcesInput) (*ValidationResult, error) {
 	return alwaysValidResult, nil
 }
 
@@ -111,7 +116,20 @@ func (m *manager) CheckSchema(ctx context.Context, url string) error {
 	return err
 }
 
-func (m *manager) Validate(ctx context.Context, schemas *policyv1.Schemas, input *enginev1.CheckInput) (*ValidationResult, error) {
+func (m *manager) ValidateCheckInput(ctx context.Context, schemas *policyv1.Schemas, input *enginev1.CheckInput) (*ValidationResult, error) {
+	log := logging.FromContext(ctx).With(zap.Any("input", input))
+	return m.validate(ctx, log, schemas, input.Principal.Attr, input.Resource.Attr, input.Actions, nil)
+}
+
+func (m *manager) ValidatePlanResourcesInput(ctx context.Context, schemas *policyv1.Schemas, input *enginev1.PlanResourcesInput) (*ValidationResult, error) {
+	log := logging.FromContext(ctx).With(zap.Any("input", input))
+	return m.validate(ctx, log, schemas, input.Principal.Attr, input.Resource.Attr, []string{input.Action}, func(err *jsonschema.ValidationError) bool {
+		// resource attributes are optional for query planning, so ignore errors from required properties
+		return !strings.HasSuffix(err.KeywordLocation, "/required")
+	})
+}
+
+func (m *manager) validate(ctx context.Context, log *zap.Logger, schemas *policyv1.Schemas, principalAttr, resourceAttr map[string]*structpb.Value, actions []string, resourceErrorFilter validationErrorFilter) (*ValidationResult, error) {
 	result := &ValidationResult{Reject: m.conf.Enforcement == EnforcementReject}
 	if schemas == nil {
 		return result, nil
@@ -120,7 +138,7 @@ func (m *manager) Validate(ctx context.Context, schemas *policyv1.Schemas, input
 	ctx, span := tracing.StartSpan(ctx, "schema.Validate")
 	defer span.End()
 
-	if err := m.validateAttr(ctx, ErrSourcePrincipal, schemas.PrincipalSchema, input.Principal.Attr, input.Actions); err != nil {
+	if err := m.validateAttr(ctx, ErrSourcePrincipal, schemas.PrincipalSchema, principalAttr, actions, nil); err != nil {
 		var principalErrs ValidationErrorList
 		if ok := errors.As(err, &principalErrs); !ok {
 			return result, fmt.Errorf("failed to validate the principal: %w", err)
@@ -128,7 +146,7 @@ func (m *manager) Validate(ctx context.Context, schemas *policyv1.Schemas, input
 		result.add(principalErrs...)
 	}
 
-	if err := m.validateAttr(ctx, ErrSourceResource, schemas.ResourceSchema, input.Resource.Attr, input.Actions); err != nil {
+	if err := m.validateAttr(ctx, ErrSourceResource, schemas.ResourceSchema, resourceAttr, actions, resourceErrorFilter); err != nil {
 		var resourceErrs ValidationErrorList
 		if ok := errors.As(err, &resourceErrs); !ok {
 			return result, fmt.Errorf("failed to validate the resource: %w", err)
@@ -137,13 +155,13 @@ func (m *manager) Validate(ctx context.Context, schemas *policyv1.Schemas, input
 	}
 
 	if len(result.Errors) > 0 {
-		logging.FromContext(ctx).Warn("Validation failed", zap.Any("input", input), zap.Strings("errors", result.Errors.ErrorMessages()))
+		log.Warn("Validation failed", zap.Strings("errors", result.Errors.ErrorMessages()))
 	}
 
 	return result, nil
 }
 
-func (m *manager) validateAttr(ctx context.Context, src ErrSource, schemaRef *policyv1.Schemas_Schema, attr map[string]*structpb.Value, actions []string) error {
+func (m *manager) validateAttr(ctx context.Context, src ErrSource, schemaRef *policyv1.Schemas_Schema, attr map[string]*structpb.Value, actions []string, errorFilter validationErrorFilter) error {
 	if schemaRef == nil || schemaRef.Ref == "" {
 		return nil
 	}
@@ -168,22 +186,34 @@ func (m *manager) validateAttr(ctx context.Context, src ErrSource, schemaRef *po
 		return newSchemaLoadErr(src, schemaRef.Ref)
 	}
 
-	jsonBytes, err := protojson.Marshal(&privatev1.AttrWrapper{Attr: attr})
+	attrJSON, err := attrToJSONObject(src, attr)
 	if err != nil {
-		return fmt.Errorf("failed to marshal %s: %w", src, err)
+		return err
 	}
 
-	attrJSON := gjson.GetBytes(jsonBytes, attrPath).Value()
 	if err := schema.Validate(attrJSON); err != nil {
 		var validationErr *jsonschema.ValidationError
 		if ok := errors.As(err, &validationErr); !ok {
 			return fmt.Errorf("unable to validate %s: %w", src, err)
 		}
 
-		return newValidationErrorList(validationErr, src)
+		return newValidationErrorList(validationErr, src, errorFilter)
 	}
 
 	return nil
+}
+
+func attrToJSONObject(src ErrSource, attr map[string]*structpb.Value) (interface{}, error) {
+	if attr == nil {
+		return map[string]interface{}{}, nil
+	}
+
+	jsonBytes, err := protojson.Marshal(&privatev1.AttrWrapper{Attr: attr})
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal %s: %w", src, err)
+	}
+
+	return gjson.GetBytes(jsonBytes, attrPath).Value(), nil
 }
 
 func (m *manager) loadSchema(ctx context.Context, url string) (*jsonschema.Schema, error) {
