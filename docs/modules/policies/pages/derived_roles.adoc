@@ -4,6 +4,8 @@ include::ROOT:partial$attributes.adoc[]
 
 Traditional RBAC roles are usually broad groupings with no context awareness. Derived roles are a way of augmenting those broad roles with contextual data to provide more fine-grained control at runtime. For example, a person with the broad `manager` role can be augmented to `manager_of_scranton_branch` by taking into account the geographic location (or another factor) and giving that derived role bearer extra privileges on resources that belong to the Scranton branch.
 
+NOTE: Derived roles are dynamically determined at runtime by matching the principal's `roles` sent in the xref:api:index.adoc#check-resources[API request] to the `parentRoles` specified in the derived roles definitions. Don't use the derived role names as `roles` in the API request as Cerbos only expects that field to contain "normal" roles.    
+
 [source,yaml,linenums]
 ----
 ---
@@ -34,3 +36,27 @@ A variable expression can contain anything that condition expression can have.
 <4> The static roles (from the identity provider) to which this derived role applies to. The special value ``*`` can be used to match any role.
 <5> An (optional) set of expressions that should evaluate to true for this role to activate.
 
+
+
+.Understanding derived roles
+****
+
+To explain the concept of derived roles, consider this example from the DC Comics universe: when billionaire playboy Bruce Wayne wears the bat costume he becomes Batman, the caped crusader. Becoming Batman gives Bruce extra privileges like being able to beat up criminals without any consequences and driving a tank through the streets of Gotham. In Cerbos terms, Batman is  the `derived role` and Bruce Wayne is the `parentRole`. The `condition` for activating the Batman derived role is: `Bruce Wayne is wearing the bat costume`. 
+
+Cerbos only ever deals with Bruce Wayne because he's the only real person in this scenario. However, Cerbos is smart enough to treat him as Batman whenever he's wearing his costume.
+
+[source,yaml,linenums]
+----
+---
+apiVersion: "api.cerbos.dev/v1"
+derivedRoles:
+  name: gotham_city
+  definitions:
+    - name: batman
+      parentRoles: ["bruce_wayne"]
+      condition:
+        match:
+          expr: P.attr.isWearingBatCostume
+---
+
+****
