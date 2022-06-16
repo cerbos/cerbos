@@ -1,0 +1,87 @@
+include::ROOT:partial$attributes.adoc[]
+
+[#v0.18.0]
+= Cerbos v0.18.0
+
+This release includes a whole host of quality-of-life improvements and fixes driven by real user feedback. 
+
+== Highlights
+
+The `cerbosctl` utility is now available as a container. It makes it easier to provision Cerbos on container orchestration systems using native constructs (for example, init containers on Kubernetes).
+
+Cerbos now caches the verification state of JWTs in memory to avoid repeating the expensive cryptographic operations on each and every request. The tokens are still validated each time to ensure that they haven't expired and are valid for use. See xref:0.18.0@configuration:auxdata.adoc[AuxData configuration] for information on how to configure the cache.
+
+There are several improvements to the `PlanResources` API. An optimisation pass has been introduced to simplify some of the logical expressions in the query plan and eliminate redundant conditions. For example, `NOT true` automatically gets simplified to just `false` and `true AND x == y` gets simplified to `x == y`. All aliases, such as `R` for `request.resource`, are expanded to their long form in the plan output to help make the API response predictable. The output of the `filterDebug` field in the query plan response is standardised to use S-expression format to ensure that it is easily verifiable by automated tools.  
+
+Calls to the `PlanResources` API are now captured by the audit logger and written to the decision log with the full serialized request and response. Previously, only access logs were produced for this API call. This involves a rare -- but, necessary -- breaking change to the decision log format where the data previously available in the `inputs` and `outputs` fields are now available as `checkResources.inputs` and `checkResources.outputs`.       
+
+Cerbos now reports metrics about store synchronization attempts and any failures encountered. They can be used to create alerts to detect when the policy store is drifting from the remote source due to network issues or credential expiry.
+
+Hidden directories are now ignored by the disk-based storage backends like `disk`, `git` and `blob` in order to ignore system metadata directories and other control files.
+
+`cerbosctl put schema --recursive` now generates schema IDs from the path of the schema file relative to the starting directory, instead of just using the file basename.
+
+Distributed traces received in any of W3C trace context, B3 or Baggage propagation formats are now automatically detected and handled by the Cerbos server. The `propagationFormat` configuration option is now deprecated in favour of auto propagation. 
+
+== Changelog
+
+=== Bug Fixes
+
+* Apply defaults when loading audit config (link:https://github.com/cerbos/cerbos/pull/952[#952])
+* Cerbosctl version should fail gracefully (link:https://github.com/cerbos/cerbos/pull/973[#973])
+* Combine conditions from principal and resource policies in query plans (link:https://github.com/cerbos/cerbos/pull/1009[#1009])
+* Handle `google.protobuf.Value` correctly in OpenAPI schemas (link:https://github.com/cerbos/cerbos/pull/968[#968])
+* Ignore test files when updating index from git (link:https://github.com/cerbos/cerbos/pull/985[#985])
+* Respect `WithRootDir` option in `(Index).ListSchemaIDs` (link:https://github.com/cerbos/cerbos/pull/992[#992])
+
+=== Features
+
+* Publish cerbosctl container (link:https://github.com/cerbos/cerbos/pull/972[#972])
+
+=== Enhancements
+
+* Add store polling metrics (link:https://github.com/cerbos/cerbos/pull/989[#989])
+* Allow multiple rules per action in principal policies (link:https://github.com/cerbos/cerbos/pull/1010[#1010])
+* Allow setting file mode of UDS (link:https://github.com/cerbos/cerbos/pull/966[#966])
+* Cache JWT verification status (link:https://github.com/cerbos/cerbos/pull/995[#995])
+* Deduplicate operands to and/or operations (link:https://github.com/cerbos/cerbos/pull/1012[#1012])
+* Expand aliases in PlanResources output (link:https://github.com/cerbos/cerbos/pull/963[#963])
+* #**BREAKING**# Ignore hidden directories and files (link:https://github.com/cerbos/cerbos/pull/993[#993])
+* #**BREAKING**# Log PlanResources calls in audit trail (link:https://github.com/cerbos/cerbos/pull/960[#960])
+* #**BREAKING**# Normalise query plan filterDebug field (link:https://github.com/cerbos/cerbos/pull/1003[#1003])
+* Optimise NOT conditions in query planner output (link:https://github.com/cerbos/cerbos/pull/981[#981])
+* Support auto-propagation for traces (link:https://github.com/cerbos/cerbos/pull/980[#980])
+
+=== Documentation
+
+* Add JavaScript SDK link to README (link:https://github.com/cerbos/cerbos/pull/990[#990])
+* Add links to .NET SDK (link:https://github.com/cerbos/cerbos/pull/1006[#1006])
+* Add new JavaScript SDK (link:https://github.com/cerbos/cerbos/pull/986[#986])
+* Showcase users (link:https://github.com/cerbos/cerbos/pull/983[#983])
+* Specify what happens when multiple rules match (link:https://github.com/cerbos/cerbos/pull/1007[#1007])
+* Update audit examples (link:https://github.com/cerbos/cerbos/pull/950[#950])
+
+=== Chores
+
+* Bump bufbuild/buf-setup-action from 1.4.0 to 1.5.0 (link:https://github.com/cerbos/cerbos/pull/974[#974])
+* Bump github.com/alecthomas/kong from 0.5.0 to 0.6.0 (link:https://github.com/cerbos/cerbos/pull/1000[#1000])
+* Bump github.com/alecthomas/participle/v2 (link:https://github.com/cerbos/cerbos/pull/1002[#1002])
+* Bump github.com/bojand/ghz in /tools (link:https://github.com/cerbos/cerbos/pull/958[#958])
+* Bump github.com/bufbuild/buf from 1.4.0 to 1.5.0 in /tools (link:https://github.com/cerbos/cerbos/pull/978[#978])
+* Bump github.com/fergusstrange/embedded-postgres (link:https://github.com/cerbos/cerbos/pull/998[#998])
+* Bump github.com/goreleaser/goreleaser in /tools (link:https://github.com/cerbos/cerbos/pull/957[#957])
+* Bump github.com/grpc-ecosystem/grpc-gateway/v2 (link:https://github.com/cerbos/cerbos/pull/976[#976])
+* Bump github.com/grpc-ecosystem/grpc-gateway/v2 in /tools (link:https://github.com/cerbos/cerbos/pull/956[#956])
+* Bump github.com/lestrrat-go/httprc from 1.0.1 to 1.0.2 (link:https://github.com/cerbos/cerbos/pull/999[#999])
+* Bump github.com/minio/minio-go/v7 from 7.0.26 to 7.0.27 (link:https://github.com/cerbos/cerbos/pull/955[#955])
+* Bump github.com/minio/minio-go/v7 from 7.0.27 to 7.0.28 (link:https://github.com/cerbos/cerbos/pull/997[#997])
+* Bump github.com/ory/dockertest/v3 from 3.8.1 to 3.9.1 (link:https://github.com/cerbos/cerbos/pull/954[#954])
+* Bump github.com/stretchr/testify from 1.7.1 to 1.7.2 (link:https://github.com/cerbos/cerbos/pull/977[#977])
+* Bump github.com/vektra/mockery/v2 from 2.12.2 to 2.12.3 in /tools (link:https://github.com/cerbos/cerbos/pull/959[#959])
+* Bump golang.org/x/tools from 0.1.10 to 0.1.11 (link:https://github.com/cerbos/cerbos/pull/1001[#1001])
+* Bump google.golang.org/grpc from 1.46.2 to 1.47.0 (link:https://github.com/cerbos/cerbos/pull/975[#975])
+* Bump version to 0.18.0
+* Parallelize generate and test jobs (link:https://github.com/cerbos/cerbos/pull/994[#994])
+* Publish cerbosctl snapshot container (link:https://github.com/cerbos/cerbos/pull/982[#982])
+* Update Minio config in tests (link:https://github.com/cerbos/cerbos/pull/965[#965])
+* Update changelog grouping configuration (link:https://github.com/cerbos/cerbos/pull/996[#996])
