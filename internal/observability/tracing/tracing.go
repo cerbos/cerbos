@@ -115,6 +115,12 @@ func configureOtel(ctx context.Context, svcName *string, exporter tracesdk.SpanE
 	)
 
 	otel.SetErrorHandler(otelErrHandler(func(err error) {
+		// this is a harmless error message that occurs because Otel doesn't recognise
+		// the OpenCensus sampler. We can remove this check when OpenCensus is replaced.
+		if strings.Contains(err.Error(), "unsupported sampler:") {
+			return
+		}
+
 		zap.L().Named("otel").Warn("OpenTelemetry error", zap.Error(err))
 	}))
 
