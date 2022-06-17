@@ -11,8 +11,26 @@ updates:
       - "bots"
     ignore:
       - dependency-name: github.com/aws/aws-sdk-go
-        update-types: 
+        update-types:
           - version-update:semver-patch
+
+  - package-ecosystem: "gomod"
+    directory: "/hack/tools/protoc-gen-jsonschema"
+    schedule:
+      interval: "weekly"
+    labels:
+      - "chore"
+      - "ci"
+      - "bots"
+
+  - package-ecosystem: "gomod"
+    directory: "/hack/tools/testsplit"
+    schedule:
+      interval: "weekly"
+    labels:
+      - "chore"
+      - "ci"
+      - "bots"
 
   - package-ecosystem: "gomod"
     directory: "/tools"

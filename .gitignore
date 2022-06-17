@@ -20,3 +20,5 @@ internal/confdocs/
 coverage.out
 unit.cover
 integration.cover
+junit.*.xml
+test-times.json
