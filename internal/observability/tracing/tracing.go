@@ -69,7 +69,12 @@ func configureJaeger(ctx context.Context) error {
 		return fmt.Errorf("failed to create Jaeger exporter: %w", err)
 	}
 
-	return configureOtel(ctx, conf.Jaeger.ServiceName, exporter)
+	svcName := conf.ServiceName
+	if svcName == nil {
+		svcName = &conf.Jaeger.ServiceName
+	}
+
+	return configureOtel(ctx, svcName, exporter)
 }
 
 func configureOTLP(ctx context.Context) error {
@@ -83,19 +88,19 @@ func configureOTLP(ctx context.Context) error {
 		return fmt.Errorf("failed to create otlp exporter: %w", err)
 	}
 
-	return configureOtel(ctx, conf.OTLP.ServiceName, exporter)
+	return configureOtel(ctx, conf.ServiceName, exporter)
 }
 
-func configureOtel(ctx context.Context, svcName string, exporter tracesdk.SpanExporter) error {
+func configureOtel(ctx context.Context, svcName *string, exporter tracesdk.SpanExporter) error {
 	sampler := mkSampler(conf.SampleProbability)
 
-	if svcName == "" {
-		svcName = util.AppName
+	if svcName == nil {
+		svcName = &util.AppName
 	}
 
 	res, err := resource.New(context.Background(),
 		resource.WithSchemaURL(semconv.SchemaURL),
-		resource.WithAttributes(semconv.ServiceNameKey.String(svcName)),
+		resource.WithAttributes(semconv.ServiceNameKey.String(*svcName)),
 		resource.WithProcessPID(),
 		resource.WithHost(),
 		resource.WithFromEnv())
