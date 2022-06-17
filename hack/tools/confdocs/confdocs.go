@@ -368,6 +368,10 @@ func indentf(out io.Writer, n int, format string, args ...any) error {
 }
 
 func parseTag(tag string) (*TagInfo, error) {
+	if tag == "" {
+		return nil, errTagNotExists
+	}
+
 	t, err := structtag.Parse(tag[1 : len(tag)-1])
 	if err != nil {
 		return nil, fmt.Errorf("structtag failed to parse tags: %w", err)
