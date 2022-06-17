@@ -45,6 +45,8 @@ jobs:
             ~/.cache/go-build
             ~/.cache/cerbos/bin
           key: generate-${{ runner.os }}-go-${{ hashFiles('**/go.mod') }}
+          restore-keys: |
+            generate-${{ runner.os }}-go-
 
       - name: Generate
         run: make generate

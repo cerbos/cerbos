@@ -26,6 +26,8 @@ jobs:
             ~/.cache/go-build
             ~/.cache/cerbos/bin
           key: ${{ runner.os }}-go-${{ hashFiles('**/go.mod') }}
+          restore-keys: |
+            ${{ runner.os }}-go-
 
       - name: Install Helm
         uses: azure/setup-helm@v2.1
