@@ -44,6 +44,8 @@ jobs:
             ~/.cache/go-build
             ~/.cache/cerbos/bin
           key: ${{ runner.os }}-go-${{ hashFiles('**/go.mod') }}
+          restore-keys: |
+            ${{ runner.os }}-go-
 
       - name: GoReleaser
         uses: goreleaser/goreleaser-action@v3
@@ -65,7 +67,7 @@ jobs:
       - name: Setup Buf
         uses: bufbuild/buf-setup-action@v1.5.0
 
-      - name: Push to BSR 
+      - name: Push to BSR
         uses: bufbuild/buf-push-action@v1.0.1
         with:
           buf_token: ${{ secrets.BUF_TOKEN }}
@@ -154,4 +156,3 @@ jobs:
           helm registry logout ${{ env.OCI_REGISTRY }}
         env:
           HELM_EXPERIMENTAL_OCI: '1'
-

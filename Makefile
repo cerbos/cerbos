@@ -85,12 +85,16 @@ test: $(GOTESTSUM)
 	@ $(GOTESTSUM) -- -tags=tests $(COVERPROFILE) -cover ./...
 
 .PHONY: test-race
-test-race: $(GOTESTSUM)
-	@ $(GOTESTSUM) -- -tags=tests -race -cover -coverprofile=unit.cover ./...
+test-race: $(GOTESTSUM) $(TESTSPLIT)
+	@ $(TESTSPLIT) split --kind=unit --index=$(TESTSPLIT_INDEX) --total=$(TESTSPLIT_TOTAL) | xargs $(GOTESTSUM) --junitfile=junit.unit.$(TESTSPLIT_INDEX).xml -- -tags=tests -race -cover -coverprofile=unit.cover
 
 .PHONY: test-integration
-test-integration: $(GOTESTSUM)
-	@ $(GOTESTSUM) -- -tags=tests,integration -cover -coverprofile=integration.cover ./...
+test-integration: $(GOTESTSUM) $(TESTSPLIT)
+	@ $(TESTSPLIT) split --kind=integration --index=$(TESTSPLIT_INDEX) --total=$(TESTSPLIT_TOTAL) | xargs $(GOTESTSUM) --junitfile=junit.integration.$(TESTSPLIT_INDEX).xml -- -tags=tests,integration -cover -coverprofile=integration.cover
+
+.PHONY: test-times
+test-times: $(TESTSPLIT)
+	@ $(TESTSPLIT) combine --kinds=unit,integration --total=$(TESTSPLIT_TOTAL)
 
 .PHONY: coverage
 coverage:
@@ -101,7 +105,7 @@ compile:
 	@ go build ./... && go test -tags="tests e2e" -run=ignore  ./... > /dev/null
 
 .PHONY: pre-commit
-pre-commit: lint-helm build test-race 
+pre-commit: lint-helm build test-race
 
 .PHONY: build
 build: generate lint test package

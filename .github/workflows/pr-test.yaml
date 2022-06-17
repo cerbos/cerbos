@@ -45,6 +45,8 @@ jobs:
             ~/.cache/go-build
             ~/.cache/cerbos/bin
           key: generate-${{ runner.os }}-go-${{ hashFiles('**/go.mod') }}
+          restore-keys: |
+            generate-${{ runner.os }}-go-
 
       - name: Generate
         run: make generate
@@ -58,10 +60,84 @@ jobs:
             exit 1
           fi
 
+  download-test-times:
+    name: Download test times
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download previous test times
+        continue-on-error: true
+        uses: dawidd6/action-download-artifact@v2
+        with:
+          workflow: pr-test.yaml
+          name: test-times
+          search_artifacts: true
+
+      - name: Upload previous test times
+        uses: actions/upload-artifact@v3
+        with:
+          name: previous-test-times
+          path: test-times.json
+
   test:
-    needs: changes
+    needs:
+      - changes
+      - download-test-times
     if: ${{ needs.changes.outputs.code == 'true' }}
     name: Test
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        split: [0, 1, 2, 3, 4, 5]
+    outputs:
+      job-total: ${{ strategy.job-total }}
+    steps:
+      - name: Install Go
+        uses: actions/setup-go@v3
+        with:
+          go-version: 1.18.x
+
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - uses: actions/cache@v3
+        with:
+          path: |
+            ~/go/pkg/mod
+            ~/.cache/go-build
+            ~/.cache/cerbos/bin
+          key: test-${{ runner.os }}-go-${{ hashFiles('**/go.mod') }}-${{ strategy.job-index }}
+          restore-keys: |
+            test-${{ runner.os }}-go-${{ hashFiles('**/go.mod') }}-
+            test-${{ runner.os }}-go-
+
+      - name: Download previous test times
+        uses: actions/download-artifact@v3
+        with:
+          name: previous-test-times
+
+      - name: Test
+        run: make test-all TESTSPLIT_INDEX=${{ strategy.job-index }} TESTSPLIT_TOTAL=${{ strategy.job-total }}
+        env:
+          CERBOS_TEST_LOG_LEVEL: "debug"
+          CERBOS_DEBUG_DB: "true"
+          CERBOS_DEBUG_ENGINE: "true"
+
+      - name: Upload JUnit reports
+        uses: actions/upload-artifact@v3
+        with:
+          name: junit-reports-${{ strategy.job-index }}
+          path: junit.*.xml
+
+      - name: Upload to CodeCov
+        uses: codecov/codecov-action@v3
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: "unit.cover,integration.cover"
+
+  upload-test-times:
+    needs: test
+    name: Upload test times
     runs-on: ubuntu-latest
     steps:
       - name: Install Go
@@ -78,20 +154,21 @@ jobs:
             ~/go/pkg/mod
             ~/.cache/go-build
             ~/.cache/cerbos/bin
-          key: test-${{ runner.os }}-go-${{ hashFiles('**/go.mod') }}
+          key: test-${{ runner.os }}-go-${{ hashFiles('**/go.mod') }}-0
 
-      - name: Test
-        run: make test-all
-        env:
-          CERBOS_TEST_LOG_LEVEL: "debug"
-          CERBOS_DEBUG_DB: "true"
-          CERBOS_DEBUG_ENGINE: "true"
+      - name: Download JUnit reports
+        uses: actions/download-artifact@v3
 
-      - name: Upload to CodeCov
-        uses: codecov/codecov-action@v3
+      - name: Combine JUnit reports
+        run: |-
+          mv junit-reports-*/junit.*.xml .
+          make test-times TESTSPLIT_TOTAL=${{ needs.test.outputs.job-total }}
+
+      - name: Upload new test times
+        uses: actions/upload-artifact@v3
         with:
-          token: ${{ secrets.CODECOV_TOKEN }}
-          files: "unit.cover,integration.cover"
+          name: test-times
+          path: test-times.json
 
   docs:
     needs: changes
