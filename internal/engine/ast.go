@@ -79,6 +79,10 @@ func opFromCLE(fn string) (string, error) {
 		return Mod, nil
 	case operators.Index:
 		return Index, nil
+	case operators.LogicalAnd:
+		return And, nil
+	case operators.LogicalOr:
+		return Or, nil
 	case operators.LogicalNot:
 		return Not, nil
 	default:

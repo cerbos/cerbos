@@ -178,5 +178,19 @@
       - value: "1h"
 
 "now()":
- expression:
-   operator: now
+  expression:
+    operator: now
+
+"a && b":
+  expression:
+    operator: and
+    operands:
+      - variable: a
+      - variable: b
+
+"a || b":
+  expression:
+    operator: or
+    operands:
+      - variable: a
+      - variable: b
