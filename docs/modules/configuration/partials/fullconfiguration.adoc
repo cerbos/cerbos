@@ -132,5 +132,8 @@ tracing:
   jaeger: # Jaeger configures the Jaeger exporter.
     agentEndpoint: "localhost:6831" # AgentEndpoint is the Jaeger agent endpoint to report to.
     collectorEndpoint: "http://localhost:14268/api/traces" # CollectorEndpoint is the Jaeger collector endpoint to report to.
-    serviceName: cerbos # ServiceName is the name of the service to report to Jaeger.
+    serviceName: cerbos # [Deprecated] Use top level ServiceName config. ServiceName is the name of the service to report to Jaeger.
+  otlp: # OTLP configures the OpenTelemetry exporter.
+    collectorEndpoint: "otel:4317" # CollectorEndpoint is the Open Telemetry collector endpoint to export to.
   sampleProbability: 0.1 # SampleProbability is the probability of sampling expressed as a number between 0 and 1.
+  serviceName: cerbos # ServiceName is the name of the service reported to the exporter.

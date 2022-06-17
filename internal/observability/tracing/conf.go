@@ -24,8 +24,8 @@ var (
 
 // Conf is optional configuration for tracing.
 type Conf struct {
-	// ServiceName is the name of the service reproted to the exporter.
-	ServiceName *string
+	// ServiceName is the name of the service reported to the exporter.
+	ServiceName *string `yaml:"serviceName" conf:",example=cerbos"`
 	// Jaeger configures the Jaeger exporter.
 	Jaeger *JaegerConf `yaml:"jaeger"`
 	// OTLP configures the OpenTelemetry exporter.
@@ -48,7 +48,7 @@ type JaegerConf struct {
 }
 
 type OTLPConf struct {
-	// CollectorEndpoint is the Jaeger collector endpoint to report to.
+	// CollectorEndpoint is the Open Telemetry collector endpoint to export to.
 	CollectorEndpoint string `yaml:"collectorEndpoint" conf:",example=\"otel:4317\""`
 }
 
