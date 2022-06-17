@@ -11,17 +11,23 @@ import (
 const (
 	confKey        = "tracing"
 	jaegerExporter = "jaeger"
+	otlpExporter   = "otlp"
 )
 
 var (
 	errJaegerConfigUndefined   = errors.New("jaeger configuration is empty")
 	errJaegerEndpointUndefined = errors.New("jaeger endpoint undefined")
+
+	errOTLPConfigUndefined   = errors.New("otlp configuration is empty")
+	errOTLPEndpointUndefined = errors.New("otlp endpoint undefined")
 )
 
 // Conf is optional configuration for tracing.
 type Conf struct {
 	// Jaeger configures the Jaeger exporter.
 	Jaeger *JaegerConf `yaml:"jaeger"`
+	// OTLP configures the OpenTelemetry exporter.
+	OTLP *OTLPConf `yaml:"otlp"`
 	// [Deprecated] PropagationFormat is no longer used. Traces in trace-context, baggage, or b3 formats are automatically detected and propagated.
 	PropagationFormat string `yaml:"propagationFormat" conf:",ignore"`
 	// Exporter is the type of trace exporter to use.
@@ -39,6 +45,14 @@ type JaegerConf struct {
 	CollectorEndpoint string `yaml:"collectorEndpoint" conf:",example=\"http://localhost:14268/api/traces\""`
 }
 
+type OTLPConf struct {
+	// ServiceName is the name of the service to report.
+	// TODO: Move ServiceName above exporter?
+	ServiceName string `yaml:"serviceName" conf:",example=cerbos"`
+	// CollectorEndpoint is the Jaeger collector endpoint to report to.
+	CollectorEndpoint string `yaml:"collectorEndpoint" conf:",example=\"otel:4317\""`
+}
+
 func (c *Conf) Key() string {
 	return confKey
 }
@@ -47,16 +61,25 @@ func (c *Conf) Validate() error {
 	switch c.Exporter {
 	case "":
 		return nil
+
 	case jaegerExporter:
 		if c.Jaeger == nil {
 			return errJaegerConfigUndefined
 		}
-
 		if c.Jaeger.AgentEndpoint == "" && c.Jaeger.CollectorEndpoint == "" {
 			return errJaegerEndpointUndefined
 		}
-
 		return nil
+
+	case otlpExporter:
+		if c.OTLP == nil {
+			return errOTLPConfigUndefined
+		}
+		if c.OTLP.CollectorEndpoint == "" {
+			return errOTLPEndpointUndefined
+		}
+		return nil
+
 	default:
 		return fmt.Errorf("unknown trace exporter %s", c.Exporter)
 	}
