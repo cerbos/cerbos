@@ -7,10 +7,10 @@ package responsev1
 import (
 	fmt "fmt"
 	v14 "github.com/cerbos/cerbos/api/genpb/cerbos/audit/v1"
-	v11 "github.com/cerbos/cerbos/api/genpb/cerbos/effect/v1"
+	v12 "github.com/cerbos/cerbos/api/genpb/cerbos/effect/v1"
 	v1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
 	v13 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
-	v12 "github.com/cerbos/cerbos/api/genpb/cerbos/schema/v1"
+	v11 "github.com/cerbos/cerbos/api/genpb/cerbos/schema/v1"
 	proto "google.golang.org/protobuf/proto"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	emptypb "google.golang.org/protobuf/types/known/emptypb"
@@ -101,6 +101,30 @@ func (m *PlanResourcesResponse) MarshalToSizedBufferVT(dAtA []byte) (int, error)
 	if m.unknownFields != nil {
 		i -= len(m.unknownFields)
 		copy(dAtA[i:], m.unknownFields)
+	}
+	if len(m.ValidationErrors) > 0 {
+		for iNdEx := len(m.ValidationErrors) - 1; iNdEx >= 0; iNdEx-- {
+			if marshalto, ok := interface{}(m.ValidationErrors[iNdEx]).(interface {
+				MarshalToSizedBufferVT([]byte) (int, error)
+			}); ok {
+				size, err := marshalto.MarshalToSizedBufferVT(dAtA[:i])
+				if err != nil {
+					return 0, err
+				}
+				i -= size
+				i = encodeVarint(dAtA, i, uint64(size))
+			} else {
+				encoded, err := proto.Marshal(m.ValidationErrors[iNdEx])
+				if err != nil {
+					return 0, err
+				}
+				i -= len(encoded)
+				copy(dAtA[i:], encoded)
+				i = encodeVarint(dAtA, i, uint64(len(encoded)))
+			}
+			i--
+			dAtA[i] = 0x3a
+		}
 	}
 	if m.Meta != nil {
 		size, err := m.Meta.MarshalToSizedBufferVT(dAtA[:i])
@@ -2214,6 +2238,18 @@ func (m *PlanResourcesResponse) SizeVT() (n int) {
 		l = m.Meta.SizeVT()
 		n += 1 + l + sov(uint64(l))
 	}
+	if len(m.ValidationErrors) > 0 {
+		for _, e := range m.ValidationErrors {
+			if size, ok := interface{}(e).(interface {
+				SizeVT() int
+			}); ok {
+				l = size.SizeVT()
+			} else {
+				l = proto.Size(e)
+			}
+			n += 1 + l + sov(uint64(l))
+		}
+	}
 	if m.unknownFields != nil {
 		n += len(m.unknownFields)
 	}
@@ -3468,6 +3504,48 @@ func (m *PlanResourcesResponse) UnmarshalVT(dAtA []byte) error {
 				return err
 			}
 			iNdEx = postIndex
+		case 7:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field ValidationErrors", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLength
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLength
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.ValidationErrors = append(m.ValidationErrors, &v11.ValidationError{})
+			if unmarshal, ok := interface{}(m.ValidationErrors[len(m.ValidationErrors)-1]).(interface {
+				UnmarshalVT([]byte) error
+			}); ok {
+				if err := unmarshal.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
+					return err
+				}
+			} else {
+				if err := proto.Unmarshal(dAtA[iNdEx:postIndex], m.ValidationErrors[len(m.ValidationErrors)-1]); err != nil {
+					return err
+				}
+			}
+			iNdEx = postIndex
 		default:
 			iNdEx = preIndex
 			skippy, err := skip(dAtA[iNdEx:])
@@ -3549,10 +3627,10 @@ func (m *CheckResourceSetResponse_ActionEffectMap) UnmarshalVT(dAtA []byte) erro
 				return io.ErrUnexpectedEOF
 			}
 			if m.Actions == nil {
-				m.Actions = make(map[string]v11.Effect)
+				m.Actions = make(map[string]v12.Effect)
 			}
 			var mapkey string
-			var mapvalue v11.Effect
+			var mapvalue v12.Effect
 			for iNdEx < postIndex {
 				entryPreIndex := iNdEx
 				var wire uint64
@@ -3610,7 +3688,7 @@ func (m *CheckResourceSetResponse_ActionEffectMap) UnmarshalVT(dAtA []byte) erro
 						}
 						b := dAtA[iNdEx]
 						iNdEx++
-						mapvalue |= v11.Effect(b&0x7F) << shift
+						mapvalue |= v12.Effect(b&0x7F) << shift
 						if b < 0x80 {
 							break
 						}
@@ -3661,7 +3739,7 @@ func (m *CheckResourceSetResponse_ActionEffectMap) UnmarshalVT(dAtA []byte) erro
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.ValidationErrors = append(m.ValidationErrors, &v12.ValidationError{})
+			m.ValidationErrors = append(m.ValidationErrors, &v11.ValidationError{})
 			if unmarshal, ok := interface{}(m.ValidationErrors[len(m.ValidationErrors)-1]).(interface {
 				UnmarshalVT([]byte) error
 			}); ok {
@@ -4542,10 +4620,10 @@ func (m *CheckResourceBatchResponse_ActionEffectMap) UnmarshalVT(dAtA []byte) er
 				return io.ErrUnexpectedEOF
 			}
 			if m.Actions == nil {
-				m.Actions = make(map[string]v11.Effect)
+				m.Actions = make(map[string]v12.Effect)
 			}
 			var mapkey string
-			var mapvalue v11.Effect
+			var mapvalue v12.Effect
 			for iNdEx < postIndex {
 				entryPreIndex := iNdEx
 				var wire uint64
@@ -4603,7 +4681,7 @@ func (m *CheckResourceBatchResponse_ActionEffectMap) UnmarshalVT(dAtA []byte) er
 						}
 						b := dAtA[iNdEx]
 						iNdEx++
-						mapvalue |= v11.Effect(b&0x7F) << shift
+						mapvalue |= v12.Effect(b&0x7F) << shift
 						if b < 0x80 {
 							break
 						}
@@ -4654,7 +4732,7 @@ func (m *CheckResourceBatchResponse_ActionEffectMap) UnmarshalVT(dAtA []byte) er
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.ValidationErrors = append(m.ValidationErrors, &v12.ValidationError{})
+			m.ValidationErrors = append(m.ValidationErrors, &v11.ValidationError{})
 			if unmarshal, ok := interface{}(m.ValidationErrors[len(m.ValidationErrors)-1]).(interface {
 				UnmarshalVT([]byte) error
 			}); ok {
@@ -5407,10 +5485,10 @@ func (m *CheckResourcesResponse_ResultEntry) UnmarshalVT(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if m.Actions == nil {
-				m.Actions = make(map[string]v11.Effect)
+				m.Actions = make(map[string]v12.Effect)
 			}
 			var mapkey string
-			var mapvalue v11.Effect
+			var mapvalue v12.Effect
 			for iNdEx < postIndex {
 				entryPreIndex := iNdEx
 				var wire uint64
@@ -5468,7 +5546,7 @@ func (m *CheckResourcesResponse_ResultEntry) UnmarshalVT(dAtA []byte) error {
 						}
 						b := dAtA[iNdEx]
 						iNdEx++
-						mapvalue |= v11.Effect(b&0x7F) << shift
+						mapvalue |= v12.Effect(b&0x7F) << shift
 						if b < 0x80 {
 							break
 						}
@@ -5519,7 +5597,7 @@ func (m *CheckResourcesResponse_ResultEntry) UnmarshalVT(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.ValidationErrors = append(m.ValidationErrors, &v12.ValidationError{})
+			m.ValidationErrors = append(m.ValidationErrors, &v11.ValidationError{})
 			if unmarshal, ok := interface{}(m.ValidationErrors[len(m.ValidationErrors)-1]).(interface {
 				UnmarshalVT([]byte) error
 			}); ok {
@@ -6423,7 +6501,7 @@ func (m *PlaygroundEvaluateResponse_EvalResult) UnmarshalVT(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				m.Effect |= v11.Effect(b&0x7F) << shift
+				m.Effect |= v12.Effect(b&0x7F) << shift
 				if b < 0x80 {
 					break
 				}
@@ -6521,7 +6599,7 @@ func (m *PlaygroundEvaluateResponse_EvalResult) UnmarshalVT(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.ValidationErrors = append(m.ValidationErrors, &v12.ValidationError{})
+			m.ValidationErrors = append(m.ValidationErrors, &v11.ValidationError{})
 			if unmarshal, ok := interface{}(m.ValidationErrors[len(m.ValidationErrors)-1]).(interface {
 				UnmarshalVT([]byte) error
 			}); ok {
@@ -7869,7 +7947,7 @@ func (m *GetSchemaResponse) UnmarshalVT(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.Schemas = append(m.Schemas, &v12.Schema{})
+			m.Schemas = append(m.Schemas, &v11.Schema{})
 			if unmarshal, ok := interface{}(m.Schemas[len(m.Schemas)-1]).(interface {
 				UnmarshalVT([]byte) error
 			}); ok {

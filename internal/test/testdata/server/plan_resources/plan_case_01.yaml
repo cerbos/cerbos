@@ -15,7 +15,10 @@ planResources:
           "employee"
       ],
       "attr": {
-        "reader": false
+        "reader": false,
+        "department": "marketing",
+        "geography": "GB",
+        "team": "design"
       }
     },
     "resource": {

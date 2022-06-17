@@ -136,6 +136,7 @@ message PlanResourcesOutput {
   string scope = 5;
   PlanResourcesFilter filter = 6;
   string filter_debug = 7;
+  repeated cerbos.schema.v1.ValidationError validation_errors = 8;
 }
 
 message CheckInput {

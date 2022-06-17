@@ -467,6 +467,16 @@ func cerbos_engine_v1_PlanResourcesOutput_hashpb_sum(m *v11.PlanResourcesOutput,
 		_, _ = hasher.Write(protowire.AppendString(nil, m.FilterDebug))
 
 	}
+	if _, ok := ignore["cerbos.engine.v1.PlanResourcesOutput.validation_errors"]; !ok {
+		if len(m.ValidationErrors) > 0 {
+			for _, v := range m.ValidationErrors {
+				if v != nil {
+					cerbos_schema_v1_ValidationError_hashpb_sum(v, hasher, ignore)
+				}
+
+			}
+		}
+	}
 }
 
 func cerbos_engine_v1_Principal_hashpb_sum(m *v11.Principal, hasher hash.Hash, ignore map[string]struct{}) {
@@ -1603,6 +1613,16 @@ func cerbos_response_v1_PlanResourcesResponse_hashpb_sum(m *PlanResourcesRespons
 			cerbos_response_v1_PlanResourcesResponse_Meta_hashpb_sum(m.Meta, hasher, ignore)
 		}
 
+	}
+	if _, ok := ignore["cerbos.response.v1.PlanResourcesResponse.validation_errors"]; !ok {
+		if len(m.ValidationErrors) > 0 {
+			for _, v := range m.ValidationErrors {
+				if v != nil {
+					cerbos_schema_v1_ValidationError_hashpb_sum(v, hasher, ignore)
+				}
+
+			}
+		}
 	}
 }
 

@@ -1,0 +1,30 @@
+---
+description: Bad string field and missing required int field
+schemaRefs:
+  principalSchema:
+    ref: cerbos:///complex_object.json
+  resourceSchema:
+    ref: cerbos:///complex_object.json
+planResourcesInput:
+  action: "view:public"
+  principal:
+    id: "john"
+    policyVersion: "20210210"
+    roles: [ "employee" ]
+    attr: &myAttr
+      stringField: 1
+  resource:
+    kind: "leave_request"
+    policyVersion: "20210210"
+    attr: *myAttr
+wantValidationErrors:
+  - path: "/stringField"
+    message: "expected string, but got number"
+    source: SOURCE_PRINCIPAL
+
+  - message: "missing properties: 'intField'"
+    source: SOURCE_PRINCIPAL
+
+  - path: "/stringField"
+    message: "expected string, but got number"
+    source: SOURCE_RESOURCE

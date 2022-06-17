@@ -69,6 +69,10 @@ message PlanResourcesResponse {
   Meta meta = 6 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
     description: "Optional metadata about the request evaluation process"
   }];
+
+  repeated cerbos.schema.v1.ValidationError validation_errors = 7 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+    description: "List of validation errors (if schema validation is enabled)"
+  }];
 }
 
 // Deprecated. See CheckResourcesResponse.

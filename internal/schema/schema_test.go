@@ -101,7 +101,8 @@ func TestValidate(t *testing.T) {
 				t.Run(tcase.Name, func(t *testing.T) {
 					tc := readTestCase(t, tcase.Input)
 
-					have, err := mgr.Validate(context.Background(), tc.SchemaRefs, tc.Input)
+					have, err := validate(mgr, tc)
+
 					if tc.WantError {
 						require.Error(t, err)
 						return
@@ -133,13 +134,24 @@ func TestValidate(t *testing.T) {
 				conf := schema.NewConf(schema.EnforcementNone)
 				mgr := schema.NewFromConf(context.Background(), store, conf)
 
-				have, err := mgr.Validate(context.Background(), tc.SchemaRefs, tc.Input)
+				have, err := validate(mgr, tc)
 				require.NoError(t, err)
 				require.False(t, have.Reject)
 				require.Empty(t, have.Errors)
 			})
 		}
 	})
+}
+
+func validate(mgr schema.Manager, tc *privatev1.SchemaTestCase) (*schema.ValidationResult, error) {
+	switch tc.Input.(type) {
+	case *privatev1.SchemaTestCase_CheckInput:
+		return mgr.ValidateCheckInput(context.Background(), tc.SchemaRefs, tc.GetCheckInput())
+	case *privatev1.SchemaTestCase_PlanResourcesInput:
+		return mgr.ValidatePlanResourcesInput(context.Background(), tc.SchemaRefs, tc.GetPlanResourcesInput())
+	default:
+		panic(fmt.Errorf("unexpected test case input %T", tc.Input))
+	}
 }
 
 func TestCache(t *testing.T) {

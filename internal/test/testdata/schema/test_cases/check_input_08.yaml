@@ -1,35 +1,26 @@
 ---
-description: Mix of validation ignored and validation required actions
+description: Only principal has an ignore clause
 schemaRefs:
   principalSchema:
     ref: cerbos:///complex_object.json
     ignoreWhen:
-      actions: ["view:*"] 
+      actions: ["view:*"]
   resourceSchema:
     ref: cerbos:///complex_object.json
-    ignoreWhen:
-      actions: ["view:public"] 
-input: 
-  actions: [ "view:public", "defer"]
-  principal: 
+checkInput:
+  actions: [ "view:public" ]
+  principal:
     id: "john"
     policyVersion: "20210210"
     roles: [ "employee" ]
-    attr: &myAttr 
+    attr: &myAttr
       stringField: 1
-  resource: 
+  resource:
     kind: "leave_request"
     policyVersion: "20210210"
     id: "XX125"
-    attr: *myAttr 
+    attr: *myAttr
 wantValidationErrors:
-  - path: "/stringField"
-    message: "expected string, but got number"
-    source: SOURCE_PRINCIPAL
-
-  - message: "missing properties: 'intField'"
-    source: SOURCE_PRINCIPAL
-
   - path: "/stringField"
     message: "expected string, but got number"
     source: SOURCE_RESOURCE

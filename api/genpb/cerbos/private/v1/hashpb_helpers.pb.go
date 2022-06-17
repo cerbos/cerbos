@@ -222,6 +222,39 @@ func cerbos_engine_v1_PlanResourcesInput_Resource_hashpb_sum(m *v1.PlanResources
 	}
 }
 
+func cerbos_engine_v1_PlanResourcesInput_hashpb_sum(m *v1.PlanResourcesInput, hasher hash.Hash, ignore map[string]struct{}) {
+	if _, ok := ignore["cerbos.engine.v1.PlanResourcesInput.request_id"]; !ok {
+		_, _ = hasher.Write(protowire.AppendString(nil, m.RequestId))
+
+	}
+	if _, ok := ignore["cerbos.engine.v1.PlanResourcesInput.action"]; !ok {
+		_, _ = hasher.Write(protowire.AppendString(nil, m.Action))
+
+	}
+	if _, ok := ignore["cerbos.engine.v1.PlanResourcesInput.principal"]; !ok {
+		if m.Principal != nil {
+			cerbos_engine_v1_Principal_hashpb_sum(m.Principal, hasher, ignore)
+		}
+
+	}
+	if _, ok := ignore["cerbos.engine.v1.PlanResourcesInput.resource"]; !ok {
+		if m.Resource != nil {
+			cerbos_engine_v1_PlanResourcesInput_Resource_hashpb_sum(m.Resource, hasher, ignore)
+		}
+
+	}
+	if _, ok := ignore["cerbos.engine.v1.PlanResourcesInput.aux_data"]; !ok {
+		if m.AuxData != nil {
+			cerbos_engine_v1_AuxData_hashpb_sum(m.AuxData, hasher, ignore)
+		}
+
+	}
+	if _, ok := ignore["cerbos.engine.v1.PlanResourcesInput.include_meta"]; !ok {
+		_, _ = hasher.Write(protowire.AppendVarint(nil, protowire.EncodeBool(m.IncludeMeta)))
+
+	}
+}
+
 func cerbos_engine_v1_Principal_hashpb_sum(m *v1.Principal, hasher hash.Hash, ignore map[string]struct{}) {
 	if _, ok := ignore["cerbos.engine.v1.Principal.id"]; !ok {
 		_, _ = hasher.Write(protowire.AppendString(nil, m.Id))
@@ -1382,11 +1415,21 @@ func cerbos_private_v1_SchemaTestCase_hashpb_sum(m *SchemaTestCase, hasher hash.
 		}
 
 	}
-	if _, ok := ignore["cerbos.private.v1.SchemaTestCase.input"]; !ok {
-		if m.Input != nil {
-			cerbos_engine_v1_CheckInput_hashpb_sum(m.Input, hasher, ignore)
-		}
+	if m.Input != nil {
+		if _, ok := ignore["cerbos.private.v1.SchemaTestCase.input"]; !ok {
+			switch t := m.Input.(type) {
+			case *SchemaTestCase_CheckInput:
+				if t.CheckInput != nil {
+					cerbos_engine_v1_CheckInput_hashpb_sum(t.CheckInput, hasher, ignore)
+				}
 
+			case *SchemaTestCase_PlanResourcesInput:
+				if t.PlanResourcesInput != nil {
+					cerbos_engine_v1_PlanResourcesInput_hashpb_sum(t.PlanResourcesInput, hasher, ignore)
+				}
+
+			}
+		}
 	}
 	if _, ok := ignore["cerbos.private.v1.SchemaTestCase.want_error"]; !ok {
 		_, _ = hasher.Write(protowire.AppendVarint(nil, protowire.EncodeBool(m.WantError)))
@@ -2423,6 +2466,16 @@ func cerbos_response_v1_PlanResourcesResponse_hashpb_sum(m *v13.PlanResourcesRes
 			cerbos_response_v1_PlanResourcesResponse_Meta_hashpb_sum(m.Meta, hasher, ignore)
 		}
 
+	}
+	if _, ok := ignore["cerbos.response.v1.PlanResourcesResponse.validation_errors"]; !ok {
+		if len(m.ValidationErrors) > 0 {
+			for _, v := range m.ValidationErrors {
+				if v != nil {
+					cerbos_schema_v1_ValidationError_hashpb_sum(v, hasher, ignore)
+				}
+
+			}
+		}
 	}
 }
 

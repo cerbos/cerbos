@@ -30,27 +30,32 @@ func (e ErrSource) toProto() schemav1.ValidationError_Source {
 	}
 }
 
-func newValidationError(err jsonschema.Detailed, source ErrSource) ValidationError {
+func newValidationError(err *jsonschema.ValidationError, source ErrSource) ValidationError {
 	return ValidationError{
 		Path:    err.InstanceLocation,
-		Message: err.Error,
+		Message: err.Message,
 		Source:  source,
 	}
 }
 
-func newValidationErrorList(validationErr *jsonschema.ValidationError, source ErrSource) ValidationErrorList {
+type validationErrorFilter func(*jsonschema.ValidationError) bool
+
+func newValidationErrorList(validationErr *jsonschema.ValidationError, source ErrSource, filter validationErrorFilter) ValidationErrorList {
 	if validationErr == nil {
 		return nil
 	}
 
-	details := validationErr.DetailedOutput()
-	if details.Valid {
+	if len(validationErr.Causes) == 0 {
+		if filter == nil || filter(validationErr) {
+			return ValidationErrorList{newValidationError(validationErr, source)}
+		}
+
 		return nil
 	}
 
-	errs := make([]ValidationError, len(details.Errors))
-	for i, err := range details.Errors {
-		errs[i] = newValidationError(err, source)
+	var errs ValidationErrorList
+	for _, err := range validationErr.Causes {
+		errs = append(errs, newValidationErrorList(err, source, filter)...)
 	}
 
 	return errs

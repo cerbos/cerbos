@@ -355,6 +355,12 @@
         },
         "scope": {
           "type": "string"
+        },
+        "validationErrors": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/cerbos.schema.v1.ValidationError"
+          }
         }
       }
     },

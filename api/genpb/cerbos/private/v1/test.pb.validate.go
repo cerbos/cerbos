@@ -1329,35 +1329,6 @@ func (m *SchemaTestCase) validate(all bool) error {
 		}
 	}
 
-	if all {
-		switch v := interface{}(m.GetInput()).(type) {
-		case interface{ ValidateAll() error }:
-			if err := v.ValidateAll(); err != nil {
-				errors = append(errors, SchemaTestCaseValidationError{
-					field:  "Input",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
-			}
-		case interface{ Validate() error }:
-			if err := v.Validate(); err != nil {
-				errors = append(errors, SchemaTestCaseValidationError{
-					field:  "Input",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
-			}
-		}
-	} else if v, ok := interface{}(m.GetInput()).(interface{ Validate() error }); ok {
-		if err := v.Validate(); err != nil {
-			return SchemaTestCaseValidationError{
-				field:  "Input",
-				reason: "embedded message failed validation",
-				cause:  err,
-			}
-		}
-	}
-
 	// no validation rules for WantError
 
 	for idx, item := range m.GetWantValidationErrors() {
@@ -1386,6 +1357,72 @@ func (m *SchemaTestCase) validate(all bool) error {
 			if err := v.Validate(); err != nil {
 				return SchemaTestCaseValidationError{
 					field:  fmt.Sprintf("WantValidationErrors[%v]", idx),
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	}
+
+	switch m.Input.(type) {
+
+	case *SchemaTestCase_CheckInput:
+
+		if all {
+			switch v := interface{}(m.GetCheckInput()).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, SchemaTestCaseValidationError{
+						field:  "CheckInput",
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, SchemaTestCaseValidationError{
+						field:  "CheckInput",
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(m.GetCheckInput()).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return SchemaTestCaseValidationError{
+					field:  "CheckInput",
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	case *SchemaTestCase_PlanResourcesInput:
+
+		if all {
+			switch v := interface{}(m.GetPlanResourcesInput()).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, SchemaTestCaseValidationError{
+						field:  "PlanResourcesInput",
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, SchemaTestCaseValidationError{
+						field:  "PlanResourcesInput",
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(m.GetPlanResourcesInput()).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return SchemaTestCaseValidationError{
+					field:  "PlanResourcesInput",
 					reason: "embedded message failed validation",
 					cause:  err,
 				}

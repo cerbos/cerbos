@@ -71,7 +71,7 @@ func (rpe *resourcePolicyEvaluator) Evaluate(ctx context.Context, tctx tracer.Co
 	pctx := tctx.StartPolicy(rpe.policy.Meta.Fqn)
 
 	// validate the input
-	vr, err := rpe.schemaMgr.Validate(ctx, rpe.policy.Schemas, input)
+	vr, err := rpe.schemaMgr.ValidateCheckInput(ctx, rpe.policy.Schemas, input)
 	if err != nil {
 		pctx.Failed(err, "Error during validation")
 

@@ -16,6 +16,7 @@ import (
 	effectv1 "github.com/cerbos/cerbos/api/genpb/cerbos/effect/v1"
 	enginev1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
 	runtimev1 "github.com/cerbos/cerbos/api/genpb/cerbos/runtime/v1"
+	schemav1 "github.com/cerbos/cerbos/api/genpb/cerbos/schema/v1"
 	"github.com/cerbos/cerbos/internal/conditions"
 	"github.com/cerbos/cerbos/internal/observability/tracing"
 	"github.com/cerbos/cerbos/internal/util"
@@ -33,9 +34,10 @@ type (
 	}
 
 	PolicyPlanResult struct {
-		Scope       string
-		DenyFilter  []*qpN
-		AllowFilter []*qpN
+		Scope            string
+		AllowFilter      []*qpN
+		DenyFilter       []*qpN
+		ValidationErrors []*schemav1.ValidationError
 	}
 )
 
@@ -49,9 +51,10 @@ func combinePlans(principalPolicyPlan, resourcePolicyPlan *PolicyPlanResult) *Po
 	}
 
 	return &PolicyPlanResult{
-		Scope:       fmt.Sprintf("principal: %q; resource: %q", principalPolicyPlan.Scope, resourcePolicyPlan.Scope),
-		AllowFilter: append(principalPolicyPlan.AllowFilter, resourcePolicyPlan.toAST()),
-		DenyFilter:  principalPolicyPlan.DenyFilter,
+		Scope:            fmt.Sprintf("principal: %q; resource: %q", principalPolicyPlan.Scope, resourcePolicyPlan.Scope),
+		AllowFilter:      append(principalPolicyPlan.AllowFilter, resourcePolicyPlan.toAST()),
+		DenyFilter:       principalPolicyPlan.DenyFilter,
+		ValidationErrors: resourcePolicyPlan.ValidationErrors, // schemas aren't validated for principal policies
 	}
 }
 
@@ -69,11 +72,12 @@ func (p *PolicyPlanResult) Empty() bool {
 
 func (p *PolicyPlanResult) ToPlanResourcesOutput(input *enginev1.PlanResourcesInput) (*enginev1.PlanResourcesOutput, error) {
 	result := &enginev1.PlanResourcesOutput{
-		RequestId:     input.RequestId,
-		Kind:          input.Resource.Kind,
-		PolicyVersion: input.Resource.PolicyVersion,
-		Action:        input.Action,
-		Scope:         p.Scope,
+		RequestId:        input.RequestId,
+		Kind:             input.Resource.Kind,
+		PolicyVersion:    input.Resource.PolicyVersion,
+		Action:           input.Action,
+		Scope:            p.Scope,
+		ValidationErrors: p.ValidationErrors,
 	}
 
 	var err error
@@ -169,7 +173,23 @@ func (rpe *resourcePolicyEvaluator) EvaluateResourcesQueryPlan(ctx context.Conte
 	defer span.End()
 
 	result := &PolicyPlanResult{}
+
+	vr, err := rpe.schemaMgr.ValidatePlanResourcesInput(ctx, rpe.policy.Schemas, input)
+	if err != nil {
+		return nil, fmt.Errorf("failed to validate input: %w", err)
+	}
+
+	if len(vr.Errors) > 0 {
+		result.ValidationErrors = vr.Errors.SchemaErrors()
+
+		if vr.Reject {
+			result.Add(mkTrueNode(), effectv1.Effect_EFFECT_DENY)
+			return result, nil
+		}
+	}
+
 	effectiveRoles := toSet(input.Principal.Roles)
+
 	for _, p := range rpe.policy.Policies { // there might be more than 1 policy if there are scoped policies
 		// if previous iteration has found a matching policy, then quit the loop
 		if !result.Empty() {

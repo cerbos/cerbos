@@ -72,11 +72,12 @@ func (cs *CerbosService) PlanResources(ctx context.Context, request *requestv1.P
 	}
 
 	response := &responsev1.PlanResourcesResponse{
-		RequestId:     output.RequestId,
-		Action:        output.Action,
-		ResourceKind:  output.Kind,
-		PolicyVersion: output.PolicyVersion,
-		Filter:        output.Filter,
+		RequestId:        output.RequestId,
+		Action:           output.Action,
+		ResourceKind:     output.Kind,
+		PolicyVersion:    output.PolicyVersion,
+		Filter:           output.Filter,
+		ValidationErrors: output.ValidationErrors,
 	}
 
 	if input.IncludeMeta {

@@ -1,21 +1,26 @@
 ---
-description: No resource schema
+description: Missing both schemas
 schemaRefs:
   principalSchema:
     ref: cerbos:///blah.json
-input: 
+  resourceSchema:
+    ref: cerbos:///blah.json
+checkInput:
   actions: [ "view:public" ]
-  principal: 
+  principal:
     id: "john"
     policyVersion: "20210210"
     roles: [ "employee" ]
-    attr: &myAttr 
+    attr: &myAttr
       stringField: hello
-  resource: 
+  resource:
     kind: "expense_request"
     policyVersion: "20210210"
     id: "XX125"
-    attr: *myAttr 
+    attr: *myAttr
 wantValidationErrors:
+  - message: "Failed to load schema \"cerbos:///blah.json\""
+    source: SOURCE_RESOURCE
+
   - message: "Failed to load schema \"cerbos:///blah.json\""
     source: SOURCE_PRINCIPAL
