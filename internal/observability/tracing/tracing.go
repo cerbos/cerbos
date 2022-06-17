@@ -17,12 +17,15 @@ import (
 	"go.opentelemetry.io/otel"
 	ocbridge "go.opentelemetry.io/otel/bridge/opencensus"
 	"go.opentelemetry.io/otel/exporters/jaeger"
+	otlp "go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc"
 	otelprop "go.opentelemetry.io/otel/propagation"
 	"go.opentelemetry.io/otel/sdk/resource"
 	tracesdk "go.opentelemetry.io/otel/sdk/trace"
 	semconv "go.opentelemetry.io/otel/semconv/v1.10.0"
 	"go.opentelemetry.io/otel/trace"
 	"go.uber.org/zap"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 
 	"github.com/cerbos/cerbos/internal/config"
 	"github.com/cerbos/cerbos/internal/util"
@@ -38,6 +41,8 @@ func Init(ctx context.Context) error {
 	switch conf.Exporter {
 	case jaegerExporter:
 		return configureJaeger(ctx)
+	case otlpExporter:
+		return configureOTLP(ctx)
 	case "":
 		otel.SetTracerProvider(trace.NewNoopTracerProvider())
 		return nil
@@ -64,20 +69,38 @@ func configureJaeger(ctx context.Context) error {
 		return fmt.Errorf("failed to create Jaeger exporter: %w", err)
 	}
 
-	return configureOtel(ctx, exporter)
+	svcName := conf.ServiceName
+	if svcName == nil {
+		svcName = &conf.Jaeger.ServiceName
+	}
+
+	return configureOtel(ctx, svcName, exporter)
 }
 
-func configureOtel(ctx context.Context, exporter tracesdk.SpanExporter) error {
+func configureOTLP(ctx context.Context) error {
+	conn, err := grpc.DialContext(ctx, conf.OTLP.CollectorEndpoint, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		return fmt.Errorf("failed to dial otlp collector: %w", err)
+	}
+
+	exporter, err := otlp.New(ctx, otlp.WithGRPCConn(conn))
+	if err != nil {
+		return fmt.Errorf("failed to create otlp exporter: %w", err)
+	}
+
+	return configureOtel(ctx, conf.ServiceName, exporter)
+}
+
+func configureOtel(ctx context.Context, svcName *string, exporter tracesdk.SpanExporter) error {
 	sampler := mkSampler(conf.SampleProbability)
 
-	svcName := conf.Jaeger.ServiceName
-	if svcName == "" {
-		svcName = util.AppName
+	if svcName == nil {
+		svcName = &util.AppName
 	}
 
 	res, err := resource.New(context.Background(),
 		resource.WithSchemaURL(semconv.SchemaURL),
-		resource.WithAttributes(semconv.ServiceNameKey.String(svcName)),
+		resource.WithAttributes(semconv.ServiceNameKey.String(*svcName)),
 		resource.WithProcessPID(),
 		resource.WithHost(),
 		resource.WithFromEnv())
