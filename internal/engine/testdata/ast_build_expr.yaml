@@ -194,3 +194,21 @@
     operands:
       - variable: a
       - variable: b
+
+"a in {\"x\": 1, \"z\": 2}":
+  expression:
+    operator: in
+    operands:
+      - variable: a
+      - value: ["x", "z"]
+
+"a in {x: 1, z: 2}":
+  expression:
+    operator: in
+    operands:
+      - variable: a
+      - expression:
+          operator: list
+          operands:
+            - variable: x
+            - variable: z
