@@ -385,9 +385,9 @@ func buildExprImpl(cur *exprpb.Expr, acc *enginev1.PlanResourcesFilter_Expressio
 		x := expr.StructExpr
 		if c := parent.GetCallExpr(); c != nil {
 			// convert struct to a list, if it is a key membership test operation
-			const argsCount = 2
+			const nArgs = 2
 			const rhsIndex = 1 // right-hand side arg index
-			if c.Function == operators.In && len(c.Args) == argsCount && c.Args[rhsIndex] == cur {
+			if c.Function == operators.In && len(c.Args) == nArgs && c.Args[rhsIndex] == cur {
 				elems := make([]*exprpb.Expr, 0, len(x.Entries))
 				var el *exprpb.Expr
 				for _, entry := range x.Entries {
