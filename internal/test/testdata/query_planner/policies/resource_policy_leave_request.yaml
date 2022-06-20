@@ -163,3 +163,9 @@ resourcePolicy:
       condition:
         match:
           expr: "42"
+    - actions: ["map-membership"]
+      roles: ["employee"]
+      effect: EFFECT_ALLOW
+      condition:
+        match:
+          expr: R.attr.teamId in P.attr.teams
