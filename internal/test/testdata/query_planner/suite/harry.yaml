@@ -6,6 +6,10 @@ principal:
   roles:
     - employee
     - user
+  attr:
+    teams:
+      team1: employee
+      team2: user
 tests:
   - action: view
     resource:
@@ -50,3 +54,15 @@ tests:
       policyVersion: default
     want:
       kind: KIND_ALWAYS_DENIED
+  - action: map-membership
+    resource:
+      kind: leave_request
+      policyVersion: default
+    want:
+      kind: KIND_CONDITIONAL
+      condition:
+        expression:
+          operator: in
+          operands:
+            - variable: request.resource.attr.teamId
+            - value: ["team1", "team2"]

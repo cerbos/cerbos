@@ -240,6 +240,28 @@ func convert(expr *enginev1.PlanResourcesAst_Node, acc *enginev1.PlanResourcesFi
 	return nil
 }
 
+func mkConstStringExpr(s string) *exprpb.Expr {
+	return &exprpb.Expr{
+		ExprKind: &exprpb.Expr_ConstExpr{
+			ConstExpr: &exprpb.Constant{
+				ConstantKind: &exprpb.Constant_StringValue{
+					StringValue: s,
+				},
+			},
+		},
+	}
+}
+
+func mkListExpr(elems []*exprpb.Expr) *exprpb.Expr {
+	return &exprpb.Expr{
+		ExprKind: &exprpb.Expr_ListExpr{
+			ListExpr: &exprpb.Expr_CreateList{
+				Elements: elems,
+			},
+		},
+	}
+}
+
 func mkExprOpExpr(op string, args ...*enginev1.PlanResourcesFilter_Expression_Operand) *enginev1.PlanResourcesFilter_Expression_Operand_Expression {
 	return &enginev1.PlanResourcesFilter_Expression_Operand_Expression{
 		Expression: &enginev1.PlanResourcesFilter_Expression{Operator: op, Operands: args},
@@ -247,6 +269,10 @@ func mkExprOpExpr(op string, args ...*enginev1.PlanResourcesFilter_Expression_Op
 }
 
 func buildExpr(expr *exprpb.Expr, acc *enginev1.PlanResourcesFilter_Expression_Operand) error {
+	return buildExprImpl(expr, acc, nil)
+}
+
+func buildExprImpl(cur *exprpb.Expr, acc *enginev1.PlanResourcesFilter_Expression_Operand, parent *exprpb.Expr) error {
 	type (
 		Expr        = enginev1.PlanResourcesFilter_Expression
 		ExprOp      = enginev1.PlanResourcesFilter_Expression_Operand
@@ -254,7 +280,7 @@ func buildExpr(expr *exprpb.Expr, acc *enginev1.PlanResourcesFilter_Expression_O
 		ExprOpValue = enginev1.PlanResourcesFilter_Expression_Operand_Value
 		ExprOpVar   = enginev1.PlanResourcesFilter_Expression_Operand_Variable
 	)
-	switch expr := expr.ExprKind.(type) {
+	switch expr := cur.ExprKind.(type) {
 	case *exprpb.Expr_CallExpr:
 		fn, _ := opFromCLE(expr.CallExpr.Function)
 		var offset int
@@ -264,7 +290,7 @@ func buildExpr(expr *exprpb.Expr, acc *enginev1.PlanResourcesFilter_Expression_O
 		operands := make([]*ExprOp, len(expr.CallExpr.Args)+offset)
 		if expr.CallExpr.Target != nil {
 			operands[0] = new(ExprOp)
-			err := buildExpr(expr.CallExpr.Target, operands[0])
+			err := buildExprImpl(expr.CallExpr.Target, operands[0], cur)
 			if err != nil {
 				return err
 			}
@@ -272,7 +298,7 @@ func buildExpr(expr *exprpb.Expr, acc *enginev1.PlanResourcesFilter_Expression_O
 
 		for i, arg := range expr.CallExpr.Args {
 			operands[i+offset] = new(ExprOp)
-			err := buildExpr(arg, operands[i+offset])
+			err := buildExprImpl(arg, operands[i+offset], cur)
 			if err != nil {
 				return err
 			}
@@ -319,7 +345,7 @@ func buildExpr(expr *exprpb.Expr, acc *enginev1.PlanResourcesFilter_Expression_O
 			acc.Node = &ExprOpVar{Variable: sb.String()}
 		} else {
 			op := new(ExprOp)
-			err := buildExpr(expr.SelectExpr.Operand, op)
+			err := buildExprImpl(expr.SelectExpr.Operand, op, cur)
 			if err != nil {
 				return err
 			}
@@ -348,7 +374,7 @@ func buildExpr(expr *exprpb.Expr, acc *enginev1.PlanResourcesFilter_Expression_O
 			operands := make([]*ExprOp, len(x.Elements))
 			for i := range operands {
 				operands[i] = new(ExprOp)
-				err := buildExpr(x.Elements[i], operands[i])
+				err := buildExprImpl(x.Elements[i], operands[i], cur)
 				if err != nil {
 					return err
 				}
@@ -357,19 +383,43 @@ func buildExpr(expr *exprpb.Expr, acc *enginev1.PlanResourcesFilter_Expression_O
 		}
 	case *exprpb.Expr_StructExpr:
 		x := expr.StructExpr
+		if c := parent.GetCallExpr(); c != nil {
+			// convert struct to a list, if it is a key membership test operation
+			const nArgs = 2
+			const rhsIndex = 1 // right-hand side arg index
+			if c.Function == operators.In && len(c.Args) == nArgs && c.Args[rhsIndex] == cur {
+				elems := make([]*exprpb.Expr, 0, len(x.Entries))
+				var el *exprpb.Expr
+				for _, entry := range x.Entries {
+					switch e := entry.KeyKind.(type) {
+					case *exprpb.Expr_CreateStruct_Entry_MapKey:
+						el = e.MapKey
+					case *exprpb.Expr_CreateStruct_Entry_FieldKey:
+						el = mkConstStringExpr(e.FieldKey)
+					}
+					elems = append(elems, el)
+				}
+				list := mkListExpr(elems)
+				err := buildExprImpl(list, acc, parent)
+				if err != nil {
+					return err
+				}
+				return nil
+			}
+		}
 		operands := make([]*ExprOp, len(x.Entries))
 		for i, entry := range x.Entries {
 			k, v := new(ExprOp), new(ExprOp)
 			switch entry := entry.KeyKind.(type) {
 			case *exprpb.Expr_CreateStruct_Entry_MapKey:
-				err := buildExpr(entry.MapKey, k)
+				err := buildExprImpl(entry.MapKey, k, cur)
 				if err != nil {
 					return err
 				}
 			case *exprpb.Expr_CreateStruct_Entry_FieldKey:
 				k.Node = &ExprOpValue{Value: structpb.NewStringValue(entry.FieldKey)}
 			}
-			err := buildExpr(entry.Value, v)
+			err := buildExprImpl(entry.Value, v, cur)
 			if err != nil {
 				return err
 			}
@@ -412,7 +462,7 @@ func buildExpr(expr *exprpb.Expr, acc *enginev1.PlanResourcesFilter_Expression_O
 			return fmt.Errorf("unexpected loop-step function: %q", step.CallExpr.Function)
 		}
 		lambda := new(ExprOp)
-		err := buildExpr(le, lambda)
+		err := buildExprImpl(le, lambda, cur)
 		if err != nil {
 			return err
 		}
@@ -422,7 +472,7 @@ func buildExpr(expr *exprpb.Expr, acc *enginev1.PlanResourcesFilter_Expression_O
 		}
 
 		op := new(ExprOp)
-		err = buildExpr(x.IterRange, op)
+		err = buildExprImpl(x.IterRange, op, cur)
 		if err != nil {
 			return err
 		}
@@ -430,7 +480,7 @@ func buildExpr(expr *exprpb.Expr, acc *enginev1.PlanResourcesFilter_Expression_O
 		acc.Node = mkExprOpExpr(operator, op,
 			&ExprOp{Node: mkExprOpExpr(Lambda, lambda, &ExprOp{Node: &ExprOpVar{Variable: x.IterVar}})})
 	default:
-		return fmt.Errorf("buildExpr: unsupported expression: %v", expr)
+		return fmt.Errorf("buildExprImpl: unsupported expression: %v", expr)
 	}
 
 	return nil

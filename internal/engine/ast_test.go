@@ -18,6 +18,7 @@ import (
 	enginev1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
 	"github.com/cerbos/cerbos/internal/conditions"
 	"github.com/cerbos/cerbos/internal/util"
+	"google.golang.org/protobuf/encoding/protojson"
 )
 
 //go:embed testdata/ast_build_expr.yaml
@@ -39,7 +40,7 @@ func getExpectedExpressions(t *testing.T) map[string]*exOp {
 		b, err := v.MarshalJSON()
 		require.NoError(t, err)
 		err = util.ReadJSONOrYAML(bytes.NewReader(b), expected)
-		require.NoError(t, err)
+		require.NoError(t, err, string(b))
 		res[k] = expected
 	}
 
@@ -62,7 +63,7 @@ func Test_buildExpr(t *testing.T) {
 			err := buildExpr(parse(k), acc)
 			is.NoError(err)
 
-			is.Empty(cmp.Diff(want, acc, protocmp.Transform()))
+			is.Empty(cmp.Diff(want, acc, protocmp.Transform()), "unexpected expression: %s", protojson.Format(acc))
 		})
 	}
 }
