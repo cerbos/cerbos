@@ -10,5 +10,6 @@
 ** xref:authentication/jwt/index.adoc[JWT]
 ** xref:authentication/magic/index.adoc[Magic]
 ** xref:authentication/okta/index.adoc[Okta]
+** xref:authentication/aws-cognito/index.adoc[AWS Cognito]
 * ORM Integration
 ** xref:orm/prisma/index.adoc[Prisma]
