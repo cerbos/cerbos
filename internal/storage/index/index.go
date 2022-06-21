@@ -65,7 +65,7 @@ type index struct {
 	schemaLoader *SchemaLoader
 	sfGroup      singleflight.Group
 	stats        storage.RepoStats
-	buildOpts    []BuildOpt
+	buildOpts    buildOptions
 	mu           sync.RWMutex
 }
 
@@ -422,7 +422,7 @@ func (idx *index) Reload(ctx context.Context) ([]storage.Event, error) {
 	log := ctxzap.Extract(ctx)
 	log.Info("Initiated a store reload")
 	ievts, err, shared := idx.sfGroup.Do("reload", func() (any, error) {
-		idxIface, err := Build(ctx, idx.fsys, idx.buildOpts...)
+		idxIface, err := build(ctx, idx.fsys, idx.buildOpts)
 		if err != nil {
 			log.Error("Failed to build index while re-indexing")
 			return nil, err
