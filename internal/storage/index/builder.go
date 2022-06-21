@@ -12,6 +12,7 @@ import (
 
 	"go.opencensus.io/stats"
 	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
 	"github.com/cerbos/cerbos/internal/namer"
@@ -21,6 +22,8 @@ import (
 	"github.com/cerbos/cerbos/internal/util"
 )
 
+const maxLoggableBuildErrors = 5
+
 // BuildError is an error type that contains details about the failures encountered during the index build.
 type BuildError struct {
 	Disabled       []string        `json:"disabled"`
@@ -28,6 +31,7 @@ type BuildError struct {
 	LoadFailures   []LoadFailure   `json:"loadFailures"`
 	MissingImports []MissingImport `json:"missingImports"`
 	MissingScopes  []MissingScope  `json:"missingScopes"`
+	nErr           int
 }
 
 func (ibe *BuildError) Error() string {
@@ -61,10 +65,17 @@ func (lf LoadFailure) MarshalJSON() ([]byte, error) {
 }
 
 type buildOptions struct {
-	rootDir string
+	rootDir              string
+	buildFailureLogLevel zapcore.Level
 }
 
 type BuildOpt func(*buildOptions)
+
+func WithBuildFailureLogLevel(level zapcore.Level) BuildOpt {
+	return func(o *buildOptions) {
+		o.buildFailureLogLevel = level
+	}
+}
 
 func WithRootDir(rootDir string) BuildOpt {
 	return func(o *buildOptions) {
@@ -73,7 +84,11 @@ func WithRootDir(rootDir string) BuildOpt {
 }
 
 func mkBuildOpts(opts ...BuildOpt) buildOptions {
-	o := buildOptions{rootDir: "."}
+	o := buildOptions{
+		buildFailureLogLevel: zap.ErrorLevel,
+		rootDir:              ".",
+	}
+
 	for _, optFn := range opts {
 		optFn(&o)
 	}
@@ -83,15 +98,17 @@ func mkBuildOpts(opts ...BuildOpt) buildOptions {
 
 // Build builds an index from the policy files stored in a directory.
 func Build(ctx context.Context, fsys fs.FS, opts ...BuildOpt) (Index, error) {
-	o := mkBuildOpts(opts...)
+	return build(ctx, fsys, mkBuildOpts(opts...))
+}
 
-	if err := checkValidDir(fsys, o.rootDir); err != nil {
+func build(ctx context.Context, fsys fs.FS, opts buildOptions) (Index, error) {
+	if err := checkValidDir(fsys, opts.rootDir); err != nil {
 		return nil, err
 	}
 
 	ib := newIndexBuilder()
 
-	err := fs.WalkDir(fsys, o.rootDir, func(filePath string, d fs.DirEntry, err error) error {
+	err := fs.WalkDir(fsys, opts.rootDir, func(filePath string, d fs.DirEntry, err error) error {
 		if err := ctx.Err(); err != nil {
 			return err
 		}
@@ -101,7 +118,7 @@ func Build(ctx context.Context, fsys fs.FS, opts ...BuildOpt) (Index, error) {
 		}
 
 		if d.IsDir() {
-			if filePath == path.Join(o.rootDir, schema.Directory) ||
+			if filePath == path.Join(opts.rootDir, schema.Directory) ||
 				d.Name() == util.TestDataDirectory ||
 				util.IsHidden(d.Name()) {
 				return fs.SkipDir
@@ -140,7 +157,7 @@ func Build(ctx context.Context, fsys fs.FS, opts ...BuildOpt) (Index, error) {
 		return nil, err
 	}
 
-	return ib.build(fsys, opts...)
+	return ib.build(fsys, opts)
 }
 
 type indexBuilder struct {
@@ -236,12 +253,13 @@ func (idx *indexBuilder) addDep(child, parent namer.ModuleID) {
 	idx.dependents[parent][child] = struct{}{}
 }
 
-func (idx *indexBuilder) build(fsys fs.FS, opts ...BuildOpt) (*index, error) {
+func (idx *indexBuilder) build(fsys fs.FS, opts buildOptions) (*index, error) {
 	logger := zap.L().Named("index")
 
 	nErr := len(idx.missing) + len(idx.duplicates) + len(idx.loadFailures) + len(idx.missingScopes)
 	if nErr > 0 {
 		err := &BuildError{
+			nErr:          nErr,
 			Disabled:      idx.disabled,
 			DuplicateDefs: idx.duplicates,
 			LoadFailures:  idx.loadFailures,
@@ -255,15 +273,7 @@ func (idx *indexBuilder) build(fsys fs.FS, opts ...BuildOpt) (*index, error) {
 			err.MissingScopes = append(err.MissingScopes, MissingScope(namer.PolicyKeyFromFQN(ms)))
 		}
 
-		if ce := logger.Check(zap.DebugLevel, "Index build failed"); ce != nil {
-			ce.Write(
-				zap.Any("missing", err.MissingImports),
-				zap.Any("missing_scopes", err.MissingScopes),
-				zap.Any("load_failures", err.LoadFailures),
-				zap.Any("duplicates", err.DuplicateDefs),
-				zap.Strings("disabled", err.Disabled),
-			)
-		}
+		logBuildFailure(logger, opts.buildFailureLogLevel, err)
 
 		return nil, err
 	}
@@ -280,9 +290,45 @@ func (idx *indexBuilder) build(fsys fs.FS, opts ...BuildOpt) (*index, error) {
 		dependents:   idx.dependents,
 		dependencies: idx.dependencies,
 		buildOpts:    opts,
-		schemaLoader: NewSchemaLoader(fsys, mkBuildOpts(opts...).rootDir),
+		schemaLoader: NewSchemaLoader(fsys, opts.rootDir),
 		stats:        idx.stats.collate(),
 	}, nil
+}
+
+func logBuildFailure(logger *zap.Logger, level zapcore.Level, err *BuildError) {
+	ce := logger.Check(level, "Index build failed")
+	if ce == nil {
+		return
+	}
+
+	if err.nErr > maxLoggableBuildErrors && !logger.Core().Enabled(zap.DebugLevel) {
+		ce.Write(zap.String("error", "too many errors; run `cerbos compile` to see a full list"))
+		return
+	}
+
+	var fields []zapcore.Field
+
+	if len(err.MissingImports) > 0 {
+		fields = append(fields, zap.Any("missing", err.MissingImports))
+	}
+
+	if len(err.MissingScopes) > 0 {
+		fields = append(fields, zap.Any("missing_scopes", err.MissingScopes))
+	}
+
+	if len(err.LoadFailures) > 0 {
+		fields = append(fields, zap.Any("load_failures", err.LoadFailures))
+	}
+
+	if len(err.DuplicateDefs) > 0 {
+		fields = append(fields, zap.Any("duplicates", err.DuplicateDefs))
+	}
+
+	if len(err.Disabled) > 0 {
+		fields = append(fields, zap.Strings("disabled", err.Disabled))
+	}
+
+	ce.Write(fields...)
 }
 
 func checkValidDir(fsys fs.FS, dir string) error {

@@ -14,6 +14,7 @@ import (
 	"github.com/alecthomas/kong"
 	"github.com/fatih/color"
 	"github.com/pterm/pterm"
+	"go.uber.org/zap"
 
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
 	internalcompile "github.com/cerbos/cerbos/cmd/cerbos/compile/internal/compilation"
@@ -75,7 +76,7 @@ func (c *Cmd) Run(k *kong.Kong) error {
 
 	p := printer.New(k.Stdout, k.Stderr)
 
-	idx, err := index.Build(ctx, os.DirFS(c.Dir))
+	idx, err := index.Build(ctx, os.DirFS(c.Dir), index.WithBuildFailureLogLevel(zap.DebugLevel))
 	if err != nil {
 		idxErr := new(index.BuildError)
 		if errors.As(err, &idxErr) {
