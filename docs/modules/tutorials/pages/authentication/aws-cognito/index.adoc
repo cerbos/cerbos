@@ -12,7 +12,7 @@ https://cerbos.dev/video/using-cerbos-with-aws-cognito[Demo Video]
 == Dependencies
 
 * Python 3.10
-* Docker for running the https://docs.cerbos.dev/cerbos/0.6.0/installation/container.html[Cerbos Policy Decision Point (PDP)]
+* Docker for running the https://docs.cerbos.dev/cerbos/latest/installation/container.html[Cerbos Policy Decision Point (PDP)]
 * A configured AWS Cognito User Pool (https://docs.aws.amazon.com/cognito/latest/developerguide/getting-started-with-cognito-user-pools.html[set-up guide])
 
 == Getting Started
