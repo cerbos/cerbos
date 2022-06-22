@@ -1,0 +1,33 @@
+---
+description: Missing scope
+wantStatus:
+  httpStatusCode: 400
+  grpcStatusCode: 0
+playgroundValidate:
+  input: {
+    "playgroundId": "test",
+    "files": [
+      {
+        "fileName": "derived_roles/derived_roles_01.yaml",
+        "contents": "{{ fileString `store/derived_roles/derived_roles_01.yaml` | b64enc }}",
+      },
+      {
+        "fileName": "derived_roles/derived_roles_02.yaml",
+        "contents": "{{ fileString `store/derived_roles/derived_roles_02.yaml` | b64enc }}",
+      },
+      {
+        "fileName": "resource_policies/policy_05_acme.hr.uk.yaml",
+        "contents": "{{ fileString `store/resource_policies/policy_05_acme.hr.uk.yaml` | b64enc }}",
+      }
+    ]
+  }
+  wantResponse: {
+    "playgroundId": "test",
+    "failure": {
+      "errors": [
+        { "error": "Missing scope 'resource.leave_request.vdefault'" },
+        { "error": "Missing scope 'resource.leave_request.vdefault/acme'" },
+        { "error": "Missing scope 'resource.leave_request.vdefault/acme.hr'" }
+      ]
+    }
+  }
