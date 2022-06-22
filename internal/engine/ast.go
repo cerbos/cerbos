@@ -6,6 +6,7 @@ package engine
 import (
 	"errors"
 	"fmt"
+	"sort"
 	"strings"
 
 	"github.com/google/cel-go/common/operators"
@@ -388,18 +389,38 @@ func buildExprImpl(cur *exprpb.Expr, acc *enginev1.PlanResourcesFilter_Expressio
 			const nArgs = 2
 			const rhsIndex = 1 // right-hand side arg index
 			if c.Function == operators.In && len(c.Args) == nArgs && c.Args[rhsIndex] == cur {
-				elems := make([]*exprpb.Expr, 0, len(x.Entries))
-				var el *exprpb.Expr
-				for _, entry := range x.Entries {
+				type element struct {
+					*exprpb.Expr
+					SortKey string
+				}
+
+				elems := make([]element, len(x.Entries))
+				for i, entry := range x.Entries {
+					var expr *exprpb.Expr
+
 					switch e := entry.KeyKind.(type) {
 					case *exprpb.Expr_CreateStruct_Entry_MapKey:
-						el = e.MapKey
+						expr = e.MapKey
 					case *exprpb.Expr_CreateStruct_Entry_FieldKey:
-						el = mkConstStringExpr(e.FieldKey)
+						expr = mkConstStringExpr(e.FieldKey)
 					}
-					elems = append(elems, el)
+
+					elems[i] = element{
+						Expr:    expr,
+						SortKey: (&exprpb.Expr{ExprKind: expr.ExprKind}).String(), // sort by expression, ignoring AST node id
+					}
 				}
-				list := mkListExpr(elems)
+
+				sort.Slice(elems, func(i, j int) bool {
+					return elems[i].SortKey < elems[j].SortKey
+				})
+
+				exprs := make([]*exprpb.Expr, len(elems))
+				for i, elem := range elems {
+					exprs[i] = elem.Expr
+				}
+
+				list := mkListExpr(exprs)
 				err := buildExprImpl(list, acc, parent)
 				if err != nil {
 					return err
