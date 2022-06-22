@@ -328,6 +328,12 @@ func processLintErrors(ctx context.Context, errs *index.BuildError) *responsev1.
 		})
 	}
 
+	for _, ms := range errs.MissingScopes {
+		errors = append(errors, &responsev1.PlaygroundFailure_Error{
+			Error: fmt.Sprintf("Missing scope '%s'", ms),
+		})
+	}
+
 	for _, lf := range errs.LoadFailures {
 		errors = append(errors, &responsev1.PlaygroundFailure_Error{
 			File:  lf.File,
