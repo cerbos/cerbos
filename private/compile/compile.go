@@ -18,9 +18,9 @@ import (
 )
 
 type Artefact struct {
-	SourceFile string
-	PolicySet  *runtimev1.RunnablePolicySet
 	Error      error
+	PolicySet  *runtimev1.RunnablePolicySet
+	SourceFile string
 }
 
 type ErrorList = internalcompile.ErrorList
