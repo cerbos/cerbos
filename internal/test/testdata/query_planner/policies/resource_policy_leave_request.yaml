@@ -169,3 +169,15 @@ resourcePolicy:
       condition:
         match:
           expr: R.attr.teamId in P.attr.teams
+    - actions: ["map-exists"]
+      roles: ["employee"]
+      effect: EFFECT_ALLOW
+      condition:
+        match:
+          expr: P.attr.teams.exists(t, t == R.attr.teamId)
+    - actions: ["map-all"]
+      roles: ["employee"]
+      effect: EFFECT_ALLOW
+      condition:
+        match:
+          expr: P.attr.teams.all(t, t.startsWith(R.attr.teamId))

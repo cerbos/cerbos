@@ -212,3 +212,22 @@
           operands:
             - variable: x
             - variable: z
+
+"{x: 1, z: 2}.all(t, t > 0)":
+  expression:
+    operator: all
+    operands:
+      - expression:
+          operator: list
+          operands:
+            - variable: x
+            - variable: z
+      - expression:
+          operator: lambda
+          operands:
+            - expression:
+                operator: gt
+                operands:
+                  - variable: t
+                  - value: 0
+            - variable: t
