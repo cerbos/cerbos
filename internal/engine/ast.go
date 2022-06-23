@@ -253,7 +253,7 @@ func mkConstStringExpr(s string) *exprpb.Expr {
 	}
 }
 
-func structKeys(x *exprpb.Expr_CreateStruct) *exprpb.Expr_CreateList {
+func structKeys(x *exprpb.Expr_CreateStruct) []*exprpb.Expr {
 	type element struct {
 		*exprpb.Expr
 		SortKey string
@@ -285,9 +285,18 @@ func structKeys(x *exprpb.Expr_CreateStruct) *exprpb.Expr_CreateList {
 		exprs[i] = elem.Expr
 	}
 
-	return &exprpb.Expr_CreateList{Elements: exprs}
+	return exprs
 }
 
+func mkListExpr(elems []*exprpb.Expr) *exprpb.Expr {
+	return &exprpb.Expr{
+		ExprKind: &exprpb.Expr_ListExpr{
+			ListExpr: &exprpb.Expr_CreateList{
+				Elements: elems,
+			},
+		},
+	}
+}
 func mkExprOpExpr(op string, args ...*enginev1.PlanResourcesFilter_Expression_Operand) *enginev1.PlanResourcesFilter_Expression_Operand_Expression {
 	return &enginev1.PlanResourcesFilter_Expression_Operand_Expression{
 		Expression: &enginev1.PlanResourcesFilter_Expression{Operator: op, Operands: args},
@@ -414,11 +423,7 @@ func buildExprImpl(cur *exprpb.Expr, acc *enginev1.PlanResourcesFilter_Expressio
 			const nArgs = 2
 			const rhsIndex = 1 // right-hand side arg index
 			if c.Function == operators.In && len(c.Args) == nArgs && c.Args[rhsIndex] == cur {
-				list := &exprpb.Expr{
-					ExprKind: &exprpb.Expr_ListExpr{
-						ListExpr: structKeys(x),
-					},
-				}
+				list := mkListExpr(structKeys(x))
 				err := buildExprImpl(list, acc, parent)
 				if err != nil {
 					return err
@@ -448,19 +453,15 @@ func buildExprImpl(cur *exprpb.Expr, acc *enginev1.PlanResourcesFilter_Expressio
 		acc.Node = mkExprOpExpr(Struct, operands...)
 	case *exprpb.Expr_ComprehensionExpr:
 		lambdaAst, err := BuildLambdaAST(expr.ComprehensionExpr)
-		iterRange := lambdaAst.IterRange
-		if x, ok := iterRange.ExprKind.(*exprpb.Expr_StructExpr); ok {
-			iterRange = &exprpb.Expr{
-				ExprKind: &exprpb.Expr_ListExpr{
-					ListExpr: structKeys(x.StructExpr),
-				},
-			}
-		}
 		if err != nil {
 			return err
 		}
+		iterRange := lambdaAst.iterRange
+		if x, ok := iterRange.ExprKind.(*exprpb.Expr_StructExpr); ok {
+			iterRange = mkListExpr(structKeys(x.StructExpr))
+		}
 		lambda := new(ExprOp)
-		err = buildExprImpl(lambdaAst.LambdaExpr, lambda, cur)
+		err = buildExprImpl(lambdaAst.lambdaExpr, lambda, cur)
 		if err != nil {
 			return err
 		}
@@ -473,7 +474,7 @@ func buildExprImpl(cur *exprpb.Expr, acc *enginev1.PlanResourcesFilter_Expressio
 			return err
 		}
 
-		acc.Node = mkExprOpExpr(lambdaAst.Operator, op, &ExprOp{Node: mkExprOpExpr(Lambda, lambda, &ExprOp{Node: &ExprOpVar{Variable: lambdaAst.IterVar}})})
+		acc.Node = mkExprOpExpr(lambdaAst.operator, op, &ExprOp{Node: mkExprOpExpr(Lambda, lambda, &ExprOp{Node: &ExprOpVar{Variable: lambdaAst.iterVar}})})
 	default:
 		return fmt.Errorf("buildExprImpl: unsupported expression: %v", expr)
 	}
