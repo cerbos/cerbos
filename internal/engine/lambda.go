@@ -4,16 +4,17 @@
 package engine
 
 import (
-	exprpb "google.golang.org/genproto/googleapis/api/expr/v1alpha1"
 	"fmt"
+
 	"github.com/google/cel-go/common/operators"
+	exprpb "google.golang.org/genproto/googleapis/api/expr/v1alpha1"
 )
 
 type LambdaAST struct {
-	Operator   string
 	IterRange  *exprpb.Expr
-	IterVar    string
 	LambdaExpr *exprpb.Expr
+	Operator   string
+	IterVar    string
 }
 
 func BuildLambdaAST(e *exprpb.Expr_Comprehension) (*LambdaAST, error) {
