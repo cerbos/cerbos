@@ -119,7 +119,8 @@ func TestUpdateStore(t *testing.T) {
 
 	rng := rand.New(rand.NewSource(time.Now().Unix())) //nolint:gosec
 	numPolicySets := 20
-	deletedFilesetNumber := 0
+	var deletedFilesetNumber int
+	var renamedFilesetNumber int
 
 	_ = createGitRepo(t, sourceGitDir, numPolicySets)
 
@@ -303,14 +304,13 @@ func TestUpdateStore(t *testing.T) {
 		}, nil)
 
 		checkEvents := storage.TestSubscription(store)
-		moveFilesetNumber := rng.Intn(numPolicySets)
 		for {
-			if moveFilesetNumber != deletedFilesetNumber {
+			renamedFilesetNumber = rng.Intn(numPolicySets)
+			if renamedFilesetNumber != deletedFilesetNumber {
 				break
 			}
-			moveFilesetNumber = rng.Intn(numPolicySets)
 		}
-		pset := genPolicySet(moveFilesetNumber)
+		pset := genPolicySet(renamedFilesetNumber)
 
 		require.NoError(t, commitToGitRepo(sourceGitDir, "Rename policy", func(wt *git.Worktree) error {
 			for file := range pset {
@@ -355,12 +355,12 @@ func TestUpdateStore(t *testing.T) {
 		}, nil)
 
 		checkEvents := storage.TestSubscription(store)
-		moveFilesetNumber := rng.Intn(numPolicySets)
+		var moveFilesetNumber int
 		for {
-			if moveFilesetNumber != deletedFilesetNumber {
+			moveFilesetNumber = rng.Intn(numPolicySets)
+			if moveFilesetNumber != deletedFilesetNumber && moveFilesetNumber != renamedFilesetNumber {
 				break
 			}
-			moveFilesetNumber = rng.Intn(numPolicySets)
 		}
 		pset := genPolicySet(moveFilesetNumber)
 
