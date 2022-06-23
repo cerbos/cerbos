@@ -297,6 +297,7 @@ func mkListExpr(elems []*exprpb.Expr) *exprpb.Expr {
 		},
 	}
 }
+
 func mkExprOpExpr(op string, args ...*enginev1.PlanResourcesFilter_Expression_Operand) *enginev1.PlanResourcesFilter_Expression_Operand_Expression {
 	return &enginev1.PlanResourcesFilter_Expression_Operand_Expression{
 		Expression: &enginev1.PlanResourcesFilter_Expression{Operator: op, Operands: args},
@@ -452,7 +453,7 @@ func buildExprImpl(cur *exprpb.Expr, acc *enginev1.PlanResourcesFilter_Expressio
 		}
 		acc.Node = mkExprOpExpr(Struct, operands...)
 	case *exprpb.Expr_ComprehensionExpr:
-		lambdaAst, err := BuildLambdaAST(expr.ComprehensionExpr)
+		lambdaAst, err := buildLambdaAST(expr.ComprehensionExpr)
 		if err != nil {
 			return err
 		}

@@ -17,7 +17,7 @@ type lambdaAST struct {
 	iterVar    string
 }
 
-func BuildLambdaAST(e *exprpb.Expr_Comprehension) (*lambdaAST, error) {
+func buildLambdaAST(e *exprpb.Expr_Comprehension) (*lambdaAST, error) {
 	obj := &lambdaAST{
 		iterVar:   e.IterVar,
 		iterRange: e.IterRange,
