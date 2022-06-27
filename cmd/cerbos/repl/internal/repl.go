@@ -23,6 +23,7 @@ import (
 	"github.com/google/cel-go/interpreter"
 	"github.com/peterh/liner"
 	"github.com/pterm/pterm"
+	"github.com/pterm/pterm/putils"
 	exprpb "google.golang.org/genproto/googleapis/api/expr/v1alpha1"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"
@@ -486,7 +487,7 @@ func (r *REPL) evalCondition(id int) error {
 	e := r.doEvalCondition(condition)
 	eo := buildEvalOutput(e)
 
-	return pterm.DefaultTree.WithRoot(pterm.NewTreeFromLeveledList(eo.tree)).Render()
+	return pterm.DefaultTree.WithRoot(putils.TreeFromLeveledList(eo.tree)).Render()
 }
 
 func (r *REPL) doEvalCondition(condition *runtimev1.Condition) *eval {

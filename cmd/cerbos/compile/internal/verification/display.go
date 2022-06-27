@@ -7,6 +7,7 @@ import (
 	"fmt"
 
 	"github.com/pterm/pterm"
+	"github.com/pterm/pterm/putils"
 
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
 	"github.com/cerbos/cerbos/cmd/cerbos/compile/internal/flagset"
@@ -60,7 +61,7 @@ func displayTree(p *printer.Printer, tp pterm.TreePrinter, results *policyv1.Tes
 
 	p.Println(colored.Header("Test results"))
 
-	err := tp.WithRoot(pterm.NewTreeFromLeveledList(output.tree)).Render()
+	err := tp.WithRoot(putils.TreeFromLeveledList(output.tree)).Render()
 	if err != nil {
 		return err
 	}
