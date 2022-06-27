@@ -163,6 +163,9 @@ func TestBuildIndex(t *testing.T) {
 						protocmp.Transform(),
 						protocmp.SortRepeatedFields(&runtimev1.IndexBuildErrors{},
 							"disabled", "duplicate_defs", "load_failures", "missing_imports", "missing_scopes"),
+						cmp.Comparer(func(s1, s2 string) bool {
+							return strings.ReplaceAll(s1, "\u00a0", " ") == strings.ReplaceAll(s2, "\u00a0", " ")
+						}),
 					),
 				)
 			case tc.WantErr != "":

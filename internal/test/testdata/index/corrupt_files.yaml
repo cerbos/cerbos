@@ -1,9 +1,11 @@
 ---
 wantErrList: 
   loadFailures: 
-    - error: 'failed to unmarshal JSON: proto: (line 1:2): unknown field "key"'
+    - error: |-
+        failed to unmarshal JSON: proto: (line 1:2): unknown field "key"
       file: principal.json
-    - error: 'failed to unmarshal JSON: proto: (line 1:2): unknown field "some"'
+    - error: |-
+        failed to unmarshal JSON: proto: (line 1:2): unknown field "some"
       file: resource.yaml
 files:
   "resource.yaml": |-
