@@ -158,3 +158,10 @@ message IndexBuildErrors {
   repeated MissingImport missing_imports = 4;
   repeated string missing_scopes = 5;
 }
+
+message Errors {
+  oneof kind {
+    IndexBuildErrors index_build_errors = 1;
+    CompileErrors compile_errors = 2;
+  }
+}

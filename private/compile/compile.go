@@ -5,6 +5,7 @@ package compile
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io/fs"
 
@@ -23,13 +24,33 @@ type Artefact struct {
 	SourceFile string
 }
 
-type ErrorList = internalcompile.ErrorList
+type Errors struct {
+	*runtimev1.Errors
+}
 
-type Error = internalcompile.Error
+func (e *Errors) Error() string {
+	switch e.Kind.(type) {
+	case *runtimev1.Errors_IndexBuildErrors:
+		return "index build failed"
+	case *runtimev1.Errors_CompileErrors:
+		return "compilation failed"
+	default:
+		return fmt.Sprintf("unhandled error kind %T", e.Kind)
+	}
+}
 
 func Files(ctx context.Context, fsys fs.FS) (<-chan Artefact, error) {
 	idx, err := index.Build(ctx, fsys)
 	if err != nil {
+		idxErrs := new(index.BuildError)
+		if errors.As(err, &idxErrs) {
+			return nil, &Errors{
+				Errors: &runtimev1.Errors{
+					Kind: &runtimev1.Errors_IndexBuildErrors{IndexBuildErrors: idxErrs.IndexBuildErrors},
+				},
+			}
+		}
+
 		return nil, fmt.Errorf("failed to build index: %w", err)
 	}
 
@@ -53,6 +74,14 @@ func Files(ctx context.Context, fsys fs.FS) (<-chan Artefact, error) {
 
 			if artefact.Error != nil {
 				log.Error("Compilation failed", zap.Error(artefact.Error))
+				compErrs := new(internalcompile.ErrorList)
+				if errors.As(artefact.Error, &compErrs) {
+					artefact.Error = &Errors{
+						Errors: &runtimev1.Errors{
+							Kind: &runtimev1.Errors_CompileErrors{CompileErrors: compErrs.CompileErrors},
+						},
+					}
+				}
 			} else {
 				log.Debug("Compilation succeeded")
 			}

@@ -22,7 +22,7 @@ const AnyRoleVal = "*"
 var emptyVal = &emptypb.Empty{}
 
 func BatchCompile(queue <-chan *policy.CompilationUnit, schemaMgr schema.Manager) error {
-	var errs ErrorList
+	errs := newErrorList()
 
 	for unit := range queue {
 		if _, err := Compile(unit, schemaMgr); err != nil {

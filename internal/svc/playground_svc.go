@@ -278,8 +278,8 @@ func doCompile(ctx context.Context, log *zap.Logger, files []*requestv1.File) (*
 
 	if err := compile.BatchCompile(idx.GetAllCompilationUnits(ctx), schemaMgr); err != nil {
 		compErr := new(compile.ErrorList)
-		if errors.As(err, compErr) {
-			pf := processCompileErrors(ctx, *compErr)
+		if errors.As(err, &compErr) {
+			pf := processCompileErrors(ctx, compErr)
 			return nil, pf, nil
 		}
 
@@ -353,13 +353,13 @@ func processLintErrors(ctx context.Context, errs *index.BuildError) *responsev1.
 	return &responsev1.PlaygroundFailure{Errors: errors}
 }
 
-func processCompileErrors(ctx context.Context, errs compile.ErrorList) *responsev1.PlaygroundFailure {
-	errors := make([]*responsev1.PlaygroundFailure_Error, len(errs))
+func processCompileErrors(ctx context.Context, errs *compile.ErrorList) *responsev1.PlaygroundFailure {
+	errors := make([]*responsev1.PlaygroundFailure_Error, len(errs.Errors))
 
-	for i, err := range errs {
+	for i, err := range errs.Errors {
 		errors[i] = &responsev1.PlaygroundFailure_Error{
 			File:  err.File,
-			Error: fmt.Sprintf("%s (%s)", err.Description, err.Err.Error()),
+			Error: fmt.Sprintf("%s (%s)", err.Description, err.Error),
 		}
 	}
 

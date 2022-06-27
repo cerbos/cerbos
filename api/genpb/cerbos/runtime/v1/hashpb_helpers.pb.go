@@ -124,6 +124,25 @@ func cerbos_runtime_v1_Condition_hashpb_sum(m *Condition, hasher hash.Hash, igno
 	}
 }
 
+func cerbos_runtime_v1_Errors_hashpb_sum(m *Errors, hasher hash.Hash, ignore map[string]struct{}) {
+	if m.Kind != nil {
+		if _, ok := ignore["cerbos.runtime.v1.Errors.kind"]; !ok {
+			switch t := m.Kind.(type) {
+			case *Errors_IndexBuildErrors:
+				if t.IndexBuildErrors != nil {
+					cerbos_runtime_v1_IndexBuildErrors_hashpb_sum(t.IndexBuildErrors, hasher, ignore)
+				}
+
+			case *Errors_CompileErrors:
+				if t.CompileErrors != nil {
+					cerbos_runtime_v1_CompileErrors_hashpb_sum(t.CompileErrors, hasher, ignore)
+				}
+
+			}
+		}
+	}
+}
+
 func cerbos_runtime_v1_Expr_hashpb_sum(m *Expr, hasher hash.Hash, ignore map[string]struct{}) {
 	if _, ok := ignore["cerbos.runtime.v1.Expr.original"]; !ok {
 		_, _ = hasher.Write(protowire.AppendString(nil, m.Original))
