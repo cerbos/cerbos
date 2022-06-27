@@ -10,7 +10,7 @@ import (
 	"github.com/alecthomas/participle/v2/lexer"
 )
 
-func NewParser() (*participle.Parser, error) {
+func NewParser() (*participle.Parser[REPLDirective], error) {
 	lex, err := lexer.New(lexer.Rules{
 		"Root": {
 			{Name: "Ident", Pattern: `[a-zA-Z]\w*(\.\w+)*`},
@@ -28,7 +28,7 @@ func NewParser() (*participle.Parser, error) {
 		return nil, fmt.Errorf("failed to create lexer: %w", err)
 	}
 
-	parser, err := participle.Build(&REPLDirective{},
+	parser, err := participle.Build[REPLDirective](
 		participle.Lexer(lex),
 		participle.Elide("Whitespace"),
 	)

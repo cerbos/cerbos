@@ -23,6 +23,7 @@ import (
 	"github.com/google/cel-go/interpreter"
 	"github.com/peterh/liner"
 	"github.com/pterm/pterm"
+	"github.com/pterm/pterm/putils"
 	exprpb "google.golang.org/genproto/googleapis/api/expr/v1alpha1"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"
@@ -78,7 +79,7 @@ type REPL struct {
 	vars     variables
 	decls    map[string]*exprpb.Decl
 	reader   *liner.State
-	parser   *participle.Parser
+	parser   *participle.Parser[REPLDirective]
 	toRefVal func(any) ref.Val
 	policy   *policyHolder
 	varV     map[string]any
@@ -169,8 +170,8 @@ func (r *REPL) handleInput(input string) error {
 }
 
 func (r *REPL) processDirective(line string) error {
-	var directive REPLDirective
-	if err := r.parser.ParseString("", line, &directive); err != nil {
+	directive, err := r.parser.ParseString("", line)
+	if err != nil {
 		return fmt.Errorf("invalid directive %q: %w", line, err)
 	}
 
@@ -486,7 +487,7 @@ func (r *REPL) evalCondition(id int) error {
 	e := r.doEvalCondition(condition)
 	eo := buildEvalOutput(e)
 
-	return pterm.DefaultTree.WithRoot(pterm.NewTreeFromLeveledList(eo.tree)).Render()
+	return pterm.DefaultTree.WithRoot(putils.TreeFromLeveledList(eo.tree)).Render()
 }
 
 func (r *REPL) doEvalCondition(condition *runtimev1.Condition) *eval {
