@@ -65,7 +65,12 @@ Cerbos is popular among large and small organizations:
       <a href="https://www.doorfeed.com/">
         <img src="https://cerbos.dev/assets/doorfeed.svg" width="256" />
       </a>
-    </td>  
+    </td>
+   <td valign="center">
+      <a href="https://www.debite.io/">
+        <img src="https://cerbos.dev/assets/debite.svg" width="256" />
+      </a>
+    </td>
   </tr>
 </table>
 
