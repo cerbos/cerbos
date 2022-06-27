@@ -214,7 +214,7 @@ jobs:
         uses: bufbuild/buf-setup-action@v1.5.0
 
       - name: Lint protos
-        uses: bufbuild/buf-lint-action@v1.0.0
+        uses: bufbuild/buf-lint-action@v1.0.1
 
       - name: Check formatting
         run: buf format --diff --exit-code
