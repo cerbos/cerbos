@@ -51,7 +51,7 @@ func displayList(p *printer.Printer, errs *index.BuildError) error {
 	if len(errs.LoadFailures) > 0 {
 		p.Println(colored.Header("Load failures"))
 		for _, lf := range errs.LoadFailures {
-			p.Printf("%s: %s\n", colored.FileName(lf.File), colored.ErrorMsg(lf.Err.Error()))
+			p.Printf("%s: %s\n", colored.FileName(lf.File), colored.ErrorMsg(lf.Error))
 		}
 		p.Println()
 	}

@@ -135,3 +135,51 @@ func (m *Condition_ExprList) HashPB(hasher hash.Hash, ignore map[string]struct{}
 		cerbos_runtime_v1_Condition_ExprList_hashpb_sum(m, hasher, ignore)
 	}
 }
+
+// HashPB computes a hash of the message using the given hash function
+// The ignore set must contain fully-qualified field names (pkg.msg.field) that should be ignored from the hash
+func (m *CompileErrors) HashPB(hasher hash.Hash, ignore map[string]struct{}) {
+	if m != nil {
+		cerbos_runtime_v1_CompileErrors_hashpb_sum(m, hasher, ignore)
+	}
+}
+
+// HashPB computes a hash of the message using the given hash function
+// The ignore set must contain fully-qualified field names (pkg.msg.field) that should be ignored from the hash
+func (m *CompileErrors_Err) HashPB(hasher hash.Hash, ignore map[string]struct{}) {
+	if m != nil {
+		cerbos_runtime_v1_CompileErrors_Err_hashpb_sum(m, hasher, ignore)
+	}
+}
+
+// HashPB computes a hash of the message using the given hash function
+// The ignore set must contain fully-qualified field names (pkg.msg.field) that should be ignored from the hash
+func (m *IndexBuildErrors) HashPB(hasher hash.Hash, ignore map[string]struct{}) {
+	if m != nil {
+		cerbos_runtime_v1_IndexBuildErrors_hashpb_sum(m, hasher, ignore)
+	}
+}
+
+// HashPB computes a hash of the message using the given hash function
+// The ignore set must contain fully-qualified field names (pkg.msg.field) that should be ignored from the hash
+func (m *IndexBuildErrors_DuplicateDef) HashPB(hasher hash.Hash, ignore map[string]struct{}) {
+	if m != nil {
+		cerbos_runtime_v1_IndexBuildErrors_DuplicateDef_hashpb_sum(m, hasher, ignore)
+	}
+}
+
+// HashPB computes a hash of the message using the given hash function
+// The ignore set must contain fully-qualified field names (pkg.msg.field) that should be ignored from the hash
+func (m *IndexBuildErrors_MissingImport) HashPB(hasher hash.Hash, ignore map[string]struct{}) {
+	if m != nil {
+		cerbos_runtime_v1_IndexBuildErrors_MissingImport_hashpb_sum(m, hasher, ignore)
+	}
+}
+
+// HashPB computes a hash of the message using the given hash function
+// The ignore set must contain fully-qualified field names (pkg.msg.field) that should be ignored from the hash
+func (m *IndexBuildErrors_LoadFailure) HashPB(hasher hash.Hash, ignore map[string]struct{}) {
+	if m != nil {
+		cerbos_runtime_v1_IndexBuildErrors_LoadFailure_hashpb_sum(m, hasher, ignore)
+	}
+}

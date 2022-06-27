@@ -125,3 +125,36 @@ message Condition {
     Expr expr = 4;
   }
 }
+
+message CompileErrors {
+  message Err {
+    string file = 1;
+    string error = 2;
+    string description = 3;
+  }
+
+  repeated Err errors = 1;
+}
+
+message IndexBuildErrors {
+  message DuplicateDef {
+    string file = 1;
+    string other_file = 2;
+  }
+
+  message MissingImport {
+    string importing_file = 1;
+    string desc = 2;
+  }
+
+  message LoadFailure {
+    string file = 1;
+    string error = 2;
+  }
+
+  repeated string disabled = 1;
+  repeated DuplicateDef duplicate_defs = 2;
+  repeated LoadFailure load_failures = 3;
+  repeated MissingImport missing_imports = 4;
+  repeated string missing_scopes = 5;
+}

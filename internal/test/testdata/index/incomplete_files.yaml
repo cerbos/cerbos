@@ -1,21 +1,10 @@
 ---
-wantErrJson: |-
-  {
-    "loadFailures": [
-      {
-        "error": "invalid Policy.DerivedRoles: embedded message failed validation | caused by: invalid DerivedRoles.Definitions: value must contain at least 1 item(s)",
-        "file": "derived.yaml"
-      },
-      {
-        "error": "invalid Policy.PolicyType: value is required",
-        "file": "resource.yaml"
-      }
-    ],
-    "disabled": null,
-    "duplicateDefs": null,
-    "missingImports": null,
-    "missingScopes": null
-  }
+wantErrList:
+  loadFailures:
+    - error: "invalid Policy.DerivedRoles: embedded message failed validation | caused by: invalid DerivedRoles.Definitions: value must contain at least 1 item(s)"
+      file: derived.yaml
+    - error: "invalid Policy.PolicyType: value is required"
+      file: resource.yaml
 files:
   "resource.yaml": |-
     ---

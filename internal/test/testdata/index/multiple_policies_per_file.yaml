@@ -1,17 +1,8 @@
 ---
-wantErrJson: |-
-  {
-    "disabled": null,
-    "duplicateDefs": null,
-    "loadFailures": [
-      {
-        "error": "more than one YAML document detected",
-        "file": "principal.yaml"
-      }
-    ],
-    "missingImports": null,
-    "missingScopes": null
-  }
+wantErrList:
+  loadFailures:
+    - error: more than one YAML document detected
+      file: principal.yaml
 files:
   "principal.yaml": |-
     ---

@@ -8,7 +8,8 @@ import (
 	v11 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
 	v12 "github.com/cerbos/cerbos/api/genpb/cerbos/request/v1"
 	v13 "github.com/cerbos/cerbos/api/genpb/cerbos/response/v1"
-	v14 "github.com/cerbos/cerbos/api/genpb/cerbos/schema/v1"
+	v14 "github.com/cerbos/cerbos/api/genpb/cerbos/runtime/v1"
+	v15 "github.com/cerbos/cerbos/api/genpb/cerbos/schema/v1"
 	protowire "google.golang.org/protobuf/encoding/protowire"
 	emptypb "google.golang.org/protobuf/types/known/emptypb"
 	structpb "google.golang.org/protobuf/types/known/structpb"
@@ -1315,8 +1316,10 @@ func cerbos_private_v1_IndexBuilderTestCase_hashpb_sum(m *IndexBuilderTestCase, 
 			}
 		}
 	}
-	if _, ok := ignore["cerbos.private.v1.IndexBuilderTestCase.want_err_json"]; !ok {
-		_, _ = hasher.Write(protowire.AppendString(nil, m.WantErrJson))
+	if _, ok := ignore["cerbos.private.v1.IndexBuilderTestCase.want_err_list"]; !ok {
+		if m.WantErrList != nil {
+			cerbos_runtime_v1_IndexBuildErrors_hashpb_sum(m.WantErrList, hasher, ignore)
+		}
 
 	}
 	if _, ok := ignore["cerbos.private.v1.IndexBuilderTestCase.want_err"]; !ok {
@@ -2665,7 +2668,89 @@ func cerbos_response_v1_PlaygroundValidateResponse_hashpb_sum(m *v13.PlaygroundV
 	}
 }
 
-func cerbos_schema_v1_Schema_hashpb_sum(m *v14.Schema, hasher hash.Hash, ignore map[string]struct{}) {
+func cerbos_runtime_v1_IndexBuildErrors_DuplicateDef_hashpb_sum(m *v14.IndexBuildErrors_DuplicateDef, hasher hash.Hash, ignore map[string]struct{}) {
+	if _, ok := ignore["cerbos.runtime.v1.IndexBuildErrors.DuplicateDef.file"]; !ok {
+		_, _ = hasher.Write(protowire.AppendString(nil, m.File))
+
+	}
+	if _, ok := ignore["cerbos.runtime.v1.IndexBuildErrors.DuplicateDef.other_file"]; !ok {
+		_, _ = hasher.Write(protowire.AppendString(nil, m.OtherFile))
+
+	}
+}
+
+func cerbos_runtime_v1_IndexBuildErrors_LoadFailure_hashpb_sum(m *v14.IndexBuildErrors_LoadFailure, hasher hash.Hash, ignore map[string]struct{}) {
+	if _, ok := ignore["cerbos.runtime.v1.IndexBuildErrors.LoadFailure.file"]; !ok {
+		_, _ = hasher.Write(protowire.AppendString(nil, m.File))
+
+	}
+	if _, ok := ignore["cerbos.runtime.v1.IndexBuildErrors.LoadFailure.error"]; !ok {
+		_, _ = hasher.Write(protowire.AppendString(nil, m.Error))
+
+	}
+}
+
+func cerbos_runtime_v1_IndexBuildErrors_MissingImport_hashpb_sum(m *v14.IndexBuildErrors_MissingImport, hasher hash.Hash, ignore map[string]struct{}) {
+	if _, ok := ignore["cerbos.runtime.v1.IndexBuildErrors.MissingImport.importing_file"]; !ok {
+		_, _ = hasher.Write(protowire.AppendString(nil, m.ImportingFile))
+
+	}
+	if _, ok := ignore["cerbos.runtime.v1.IndexBuildErrors.MissingImport.desc"]; !ok {
+		_, _ = hasher.Write(protowire.AppendString(nil, m.Desc))
+
+	}
+}
+
+func cerbos_runtime_v1_IndexBuildErrors_hashpb_sum(m *v14.IndexBuildErrors, hasher hash.Hash, ignore map[string]struct{}) {
+	if _, ok := ignore["cerbos.runtime.v1.IndexBuildErrors.disabled"]; !ok {
+		if len(m.Disabled) > 0 {
+			for _, v := range m.Disabled {
+				_, _ = hasher.Write(protowire.AppendString(nil, v))
+
+			}
+		}
+	}
+	if _, ok := ignore["cerbos.runtime.v1.IndexBuildErrors.duplicate_defs"]; !ok {
+		if len(m.DuplicateDefs) > 0 {
+			for _, v := range m.DuplicateDefs {
+				if v != nil {
+					cerbos_runtime_v1_IndexBuildErrors_DuplicateDef_hashpb_sum(v, hasher, ignore)
+				}
+
+			}
+		}
+	}
+	if _, ok := ignore["cerbos.runtime.v1.IndexBuildErrors.load_failures"]; !ok {
+		if len(m.LoadFailures) > 0 {
+			for _, v := range m.LoadFailures {
+				if v != nil {
+					cerbos_runtime_v1_IndexBuildErrors_LoadFailure_hashpb_sum(v, hasher, ignore)
+				}
+
+			}
+		}
+	}
+	if _, ok := ignore["cerbos.runtime.v1.IndexBuildErrors.missing_imports"]; !ok {
+		if len(m.MissingImports) > 0 {
+			for _, v := range m.MissingImports {
+				if v != nil {
+					cerbos_runtime_v1_IndexBuildErrors_MissingImport_hashpb_sum(v, hasher, ignore)
+				}
+
+			}
+		}
+	}
+	if _, ok := ignore["cerbos.runtime.v1.IndexBuildErrors.missing_scopes"]; !ok {
+		if len(m.MissingScopes) > 0 {
+			for _, v := range m.MissingScopes {
+				_, _ = hasher.Write(protowire.AppendString(nil, v))
+
+			}
+		}
+	}
+}
+
+func cerbos_schema_v1_Schema_hashpb_sum(m *v15.Schema, hasher hash.Hash, ignore map[string]struct{}) {
 	if _, ok := ignore["cerbos.schema.v1.Schema.id"]; !ok {
 		_, _ = hasher.Write(protowire.AppendString(nil, m.Id))
 
@@ -2676,7 +2761,7 @@ func cerbos_schema_v1_Schema_hashpb_sum(m *v14.Schema, hasher hash.Hash, ignore 
 	}
 }
 
-func cerbos_schema_v1_ValidationError_hashpb_sum(m *v14.ValidationError, hasher hash.Hash, ignore map[string]struct{}) {
+func cerbos_schema_v1_ValidationError_hashpb_sum(m *v15.ValidationError, hasher hash.Hash, ignore map[string]struct{}) {
 	if _, ok := ignore["cerbos.schema.v1.ValidationError.path"]; !ok {
 		_, _ = hasher.Write(protowire.AppendString(nil, m.Path))
 

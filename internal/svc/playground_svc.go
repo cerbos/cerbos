@@ -337,7 +337,7 @@ func processLintErrors(ctx context.Context, errs *index.BuildError) *responsev1.
 	for _, lf := range errs.LoadFailures {
 		errors = append(errors, &responsev1.PlaygroundFailure_Error{
 			File:  lf.File,
-			Error: fmt.Sprintf("Failed to read: %s", lf.Err.Error()),
+			Error: fmt.Sprintf("Failed to read: %s", lf.Error),
 		})
 	}
 

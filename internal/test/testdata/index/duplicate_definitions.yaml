@@ -1,17 +1,8 @@
 ---
-wantErrJson: |-
-  {
-    "disabled": null,
-    "duplicateDefs": [
-      {
-        "file": "derived2.yaml",
-        "otherFile": "derived1.yaml"
-      }
-    ],
-    "loadFailures": null,
-    "missingImports": null,
-    "missingScopes": null
-  }
+wantErrList:
+  duplicateDefs:
+    - file: derived2.yaml
+      otherFile: derived1.yaml
 files:
   "derived1.yaml": |-
     ---

@@ -1,14 +1,7 @@
 ---
-wantErrJson: |-
-  {
-    "disabled": ["resource_acme_hr.yaml"],
-    "duplicateDefs": null,
-    "loadFailures": null,
-    "missingImports": null,
-    "missingScopes": [
-       "resource.leave_request.v20210210/acme.hr" 
-    ]
-  }
+wantErrList: 
+  disabled: ["resource_acme_hr.yaml"]
+  missingScopes: ["resource.leave_request.v20210210/acme.hr"]
 files:
   "resource.yaml": |-
     ---
