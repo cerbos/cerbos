@@ -8,7 +8,7 @@ require (
 	github.com/adrg/xdg v0.4.0
 	github.com/alecthomas/chroma v0.10.0
 	github.com/alecthomas/kong v0.6.1
-	github.com/alecthomas/participle/v2 v2.0.0-alpha11
+	github.com/alecthomas/participle/v2 v2.0.0-beta.2
 	github.com/aws/aws-sdk-go v1.44.5
 	github.com/bluele/gcache v0.0.2
 	github.com/cespare/xxhash v1.1.0

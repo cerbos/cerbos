@@ -214,8 +214,7 @@ func TestDirectiveParser(t *testing.T) {
 	for _, tc := range testCases {
 		tc := tc
 		t.Run(tc.directive, func(t *testing.T) {
-			have := &REPLDirective{}
-			err := parser.ParseString("", tc.directive, have)
+			have, err := parser.ParseString("", tc.directive)
 			if tc.wantErr {
 				require.Error(t, err)
 				return
