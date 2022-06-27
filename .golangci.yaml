@@ -1,6 +1,6 @@
 ---
 run:
-  go: "1.17" # Until issues with Go 1.18 are fixed https://github.com/golangci/golangci-lint/issues/2649
+  go: "1.18" 
   timeout: 300s
   skip-dirs:
     - api

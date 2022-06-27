@@ -78,7 +78,7 @@ type REPL struct {
 	vars     variables
 	decls    map[string]*exprpb.Decl
 	reader   *liner.State
-	parser   *participle.Parser
+	parser   *participle.Parser[REPLDirective]
 	toRefVal func(any) ref.Val
 	policy   *policyHolder
 	varV     map[string]any
@@ -169,8 +169,8 @@ func (r *REPL) handleInput(input string) error {
 }
 
 func (r *REPL) processDirective(line string) error {
-	var directive REPLDirective
-	if err := r.parser.ParseString("", line, &directive); err != nil {
+	directive, err := r.parser.ParseString("", line)
+	if err != nil {
 		return fmt.Errorf("invalid directive %q: %w", line, err)
 	}
 

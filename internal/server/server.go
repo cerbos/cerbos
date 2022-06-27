@@ -301,7 +301,7 @@ func (s *Server) getTLSConfig() (*tls.Config, error) {
 
 	if conf.CACert != "" {
 		if _, err := os.Stat(conf.CACert); err != nil {
-			return tlsConfig, nil //nolint:nilerr
+			return tlsConfig, nil 
 		}
 
 		certPool := x509.NewCertPool()
