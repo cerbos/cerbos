@@ -96,7 +96,7 @@ func (c *Cmd) Run(k *kong.Kong) error {
 
 	if err := compile.BatchCompile(idx.GetAllCompilationUnits(ctx), schemaMgr); err != nil {
 		compErr := new(compile.ErrorList)
-		if errors.As(err, compErr) {
+		if errors.As(err, &compErr) {
 			return internalcompile.Display(p, *compErr, c.Output, colorLevel)
 		}
 

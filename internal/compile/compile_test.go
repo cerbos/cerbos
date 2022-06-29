@@ -54,8 +54,8 @@ func TestCompile(t *testing.T) {
 			haveRes, haveErr := compile.Compile(cu, schemaMgr)
 			if len(tc.WantErrors) > 0 {
 				errList := new(compile.ErrorList)
-				require.True(t, errors.As(haveErr, errList))
-				require.Len(t, *errList, len(tc.WantErrors))
+				require.True(t, errors.As(haveErr, &errList))
+				require.Len(t, errList.Errors, len(tc.WantErrors))
 
 				for _, we := range tc.WantErrors {
 					require.True(t, containsErr(we, *errList), "Needle not found:\nNEEDLE=[%+v]\nHAYSTACK=[%+v]\n", we, *errList)
@@ -109,12 +109,12 @@ func writeGoldenFile(t *testing.T, path string, contents proto.Message) {
 }
 
 func containsErr(needle *privatev1.CompileTestCase_Error, haystack compile.ErrorList) bool {
-	for _, item := range haystack {
+	for _, item := range haystack.Errors {
 		if needle.File != item.File {
 			continue
 		}
 
-		if needle.Error != item.Err.Error() {
+		if needle.Error != item.Error {
 			continue
 		}
 

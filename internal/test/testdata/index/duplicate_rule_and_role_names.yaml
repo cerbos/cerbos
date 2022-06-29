@@ -1,25 +1,15 @@
 ---
-wantErrJson: |-
-  {
-    "disabled": null,
-    "duplicateDefs": null,
-    "loadFailures": [
-      {
-        "error": "derived role definition #2 has the same name as definition #1: 'admin'",
-        "file": "derived.yaml"
-      },
-      {
-        "error": "action rule #2 for resource leave_request has the same name as action rule #1: 'myrule'",
-        "file": "principal.yaml"
-      },
-      {
-        "error": "rule #2 has the same name as rule #1: 'myrule'; rule #3 has the same name as rule #1: 'myrule'",
-        "file": "resource.yaml"
-      }
-    ],
-    "missingImports": null,
-    "missingScopes": null
-  }
+wantErrList:
+  loadFailures:
+    - error: |-
+        derived role definition #2 has the same name as definition #1: 'admin'
+      file: derived.yaml
+    - error: |-
+        action rule #2 for resource leave_request has the same name as action rule #1: 'myrule'
+      file: principal.yaml
+    - error: |-
+        rule #2 has the same name as rule #1: 'myrule'; rule #3 has the same name as rule #1: 'myrule'
+      file: resource.yaml
 files:
   "test.txt": |-
     this is some text

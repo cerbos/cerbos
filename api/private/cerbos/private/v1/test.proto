@@ -9,6 +9,7 @@ import "cerbos/engine/v1/engine.proto";
 import "cerbos/policy/v1/policy.proto";
 import "cerbos/request/v1/request.proto";
 import "cerbos/response/v1/response.proto";
+import "cerbos/runtime/v1/runtime.proto";
 import "cerbos/schema/v1/schema.proto";
 import "google/protobuf/struct.proto";
 
@@ -103,7 +104,7 @@ message IndexBuilderTestCase {
   }
 
   map<string, string> files = 1;
-  string want_err_json = 2;
+  cerbos.runtime.v1.IndexBuildErrors want_err_list = 2;
   string want_err = 3;
   repeated CompilationUnit want_compilation_units = 4;
 }

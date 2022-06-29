@@ -1,0 +1,13 @@
+// Copyright 2021-2022 Zenauth Ltd.
+// SPDX-License-Identifier: Apache-2.0
+
+syntax = "proto3";
+
+package cerbos.bundle.v1;
+
+option go_package = "github.com/cerbos/cerbos/api/genpb/cerbos/bundle/v1;bundlev1";
+
+message Manifest {
+  string version = 1;
+  map<string, string> policy_index = 2;
+}

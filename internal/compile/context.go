@@ -17,7 +17,7 @@ type unitCtx struct {
 }
 
 func newUnitCtx(unit *policy.CompilationUnit) *unitCtx {
-	return &unitCtx{unit: unit, errors: new(ErrorList)}
+	return &unitCtx{unit: unit, errors: newErrorList()}
 }
 
 func (uc *unitCtx) error() error {

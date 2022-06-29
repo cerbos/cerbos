@@ -1,17 +1,8 @@
 ---
-wantErrJson: |-
-  {
-    "disabled": null,
-    "duplicateDefs": null,
-    "loadFailures": null,
-    "missingImports": [
-      {
-        "importingFile": "resource.yaml",
-        "desc": "Import 'my_derived_roles' not found"
-      }
-    ],
-    "missingScopes": null
-  }
+wantErrList:
+  missingImports:
+    - importingFile: resource.yaml
+      desc: "Import 'my_derived_roles' not found"
 files:
   "test.txt": |-
     this is some text

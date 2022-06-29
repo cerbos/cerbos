@@ -1357,6 +1357,506 @@ var _ interface {
 	ErrorName() string
 } = ConditionValidationError{}
 
+// Validate checks the field values on CompileErrors with the rules defined in
+// the proto definition for this message. If any rules are violated, the first
+// error encountered is returned, or nil if there are no violations.
+func (m *CompileErrors) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on CompileErrors with the rules defined
+// in the proto definition for this message. If any rules are violated, the
+// result is a list of violation errors wrapped in CompileErrorsMultiError, or
+// nil if none found.
+func (m *CompileErrors) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *CompileErrors) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	for idx, item := range m.GetErrors() {
+		_, _ = idx, item
+
+		if all {
+			switch v := interface{}(item).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, CompileErrorsValidationError{
+						field:  fmt.Sprintf("Errors[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, CompileErrorsValidationError{
+						field:  fmt.Sprintf("Errors[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(item).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return CompileErrorsValidationError{
+					field:  fmt.Sprintf("Errors[%v]", idx),
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	}
+
+	if len(errors) > 0 {
+		return CompileErrorsMultiError(errors)
+	}
+
+	return nil
+}
+
+// CompileErrorsMultiError is an error wrapping multiple validation errors
+// returned by CompileErrors.ValidateAll() if the designated constraints
+// aren't met.
+type CompileErrorsMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m CompileErrorsMultiError) Error() string {
+	var msgs []string
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m CompileErrorsMultiError) AllErrors() []error { return m }
+
+// CompileErrorsValidationError is the validation error returned by
+// CompileErrors.Validate if the designated constraints aren't met.
+type CompileErrorsValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e CompileErrorsValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e CompileErrorsValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e CompileErrorsValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e CompileErrorsValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e CompileErrorsValidationError) ErrorName() string { return "CompileErrorsValidationError" }
+
+// Error satisfies the builtin error interface
+func (e CompileErrorsValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sCompileErrors.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = CompileErrorsValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = CompileErrorsValidationError{}
+
+// Validate checks the field values on IndexBuildErrors with the rules defined
+// in the proto definition for this message. If any rules are violated, the
+// first error encountered is returned, or nil if there are no violations.
+func (m *IndexBuildErrors) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on IndexBuildErrors with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// IndexBuildErrorsMultiError, or nil if none found.
+func (m *IndexBuildErrors) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *IndexBuildErrors) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	for idx, item := range m.GetDuplicateDefs() {
+		_, _ = idx, item
+
+		if all {
+			switch v := interface{}(item).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, IndexBuildErrorsValidationError{
+						field:  fmt.Sprintf("DuplicateDefs[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, IndexBuildErrorsValidationError{
+						field:  fmt.Sprintf("DuplicateDefs[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(item).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return IndexBuildErrorsValidationError{
+					field:  fmt.Sprintf("DuplicateDefs[%v]", idx),
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	}
+
+	for idx, item := range m.GetLoadFailures() {
+		_, _ = idx, item
+
+		if all {
+			switch v := interface{}(item).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, IndexBuildErrorsValidationError{
+						field:  fmt.Sprintf("LoadFailures[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, IndexBuildErrorsValidationError{
+						field:  fmt.Sprintf("LoadFailures[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(item).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return IndexBuildErrorsValidationError{
+					field:  fmt.Sprintf("LoadFailures[%v]", idx),
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	}
+
+	for idx, item := range m.GetMissingImports() {
+		_, _ = idx, item
+
+		if all {
+			switch v := interface{}(item).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, IndexBuildErrorsValidationError{
+						field:  fmt.Sprintf("MissingImports[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, IndexBuildErrorsValidationError{
+						field:  fmt.Sprintf("MissingImports[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(item).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return IndexBuildErrorsValidationError{
+					field:  fmt.Sprintf("MissingImports[%v]", idx),
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	}
+
+	if len(errors) > 0 {
+		return IndexBuildErrorsMultiError(errors)
+	}
+
+	return nil
+}
+
+// IndexBuildErrorsMultiError is an error wrapping multiple validation errors
+// returned by IndexBuildErrors.ValidateAll() if the designated constraints
+// aren't met.
+type IndexBuildErrorsMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m IndexBuildErrorsMultiError) Error() string {
+	var msgs []string
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m IndexBuildErrorsMultiError) AllErrors() []error { return m }
+
+// IndexBuildErrorsValidationError is the validation error returned by
+// IndexBuildErrors.Validate if the designated constraints aren't met.
+type IndexBuildErrorsValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e IndexBuildErrorsValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e IndexBuildErrorsValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e IndexBuildErrorsValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e IndexBuildErrorsValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e IndexBuildErrorsValidationError) ErrorName() string { return "IndexBuildErrorsValidationError" }
+
+// Error satisfies the builtin error interface
+func (e IndexBuildErrorsValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sIndexBuildErrors.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = IndexBuildErrorsValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = IndexBuildErrorsValidationError{}
+
+// Validate checks the field values on Errors with the rules defined in the
+// proto definition for this message. If any rules are violated, the first
+// error encountered is returned, or nil if there are no violations.
+func (m *Errors) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on Errors with the rules defined in the
+// proto definition for this message. If any rules are violated, the result is
+// a list of violation errors wrapped in ErrorsMultiError, or nil if none found.
+func (m *Errors) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *Errors) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	switch m.Kind.(type) {
+
+	case *Errors_IndexBuildErrors:
+
+		if all {
+			switch v := interface{}(m.GetIndexBuildErrors()).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, ErrorsValidationError{
+						field:  "IndexBuildErrors",
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, ErrorsValidationError{
+						field:  "IndexBuildErrors",
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(m.GetIndexBuildErrors()).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return ErrorsValidationError{
+					field:  "IndexBuildErrors",
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	case *Errors_CompileErrors:
+
+		if all {
+			switch v := interface{}(m.GetCompileErrors()).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, ErrorsValidationError{
+						field:  "CompileErrors",
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, ErrorsValidationError{
+						field:  "CompileErrors",
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(m.GetCompileErrors()).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return ErrorsValidationError{
+					field:  "CompileErrors",
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	}
+
+	if len(errors) > 0 {
+		return ErrorsMultiError(errors)
+	}
+
+	return nil
+}
+
+// ErrorsMultiError is an error wrapping multiple validation errors returned by
+// Errors.ValidateAll() if the designated constraints aren't met.
+type ErrorsMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m ErrorsMultiError) Error() string {
+	var msgs []string
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m ErrorsMultiError) AllErrors() []error { return m }
+
+// ErrorsValidationError is the validation error returned by Errors.Validate if
+// the designated constraints aren't met.
+type ErrorsValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e ErrorsValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e ErrorsValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e ErrorsValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e ErrorsValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e ErrorsValidationError) ErrorName() string { return "ErrorsValidationError" }
+
+// Error satisfies the builtin error interface
+func (e ErrorsValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sErrors.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = ErrorsValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = ErrorsValidationError{}
+
 // Validate checks the field values on RunnableResourcePolicySet_Metadata with
 // the rules defined in the proto definition for this message. If any rules
 // are violated, the first error encountered is returned, or nil if there are
@@ -2845,3 +3345,432 @@ var _ interface {
 	Cause() error
 	ErrorName() string
 } = Condition_ExprListValidationError{}
+
+// Validate checks the field values on CompileErrors_Err with the rules defined
+// in the proto definition for this message. If any rules are violated, the
+// first error encountered is returned, or nil if there are no violations.
+func (m *CompileErrors_Err) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on CompileErrors_Err with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// CompileErrors_ErrMultiError, or nil if none found.
+func (m *CompileErrors_Err) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *CompileErrors_Err) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for File
+
+	// no validation rules for Error
+
+	// no validation rules for Description
+
+	if len(errors) > 0 {
+		return CompileErrors_ErrMultiError(errors)
+	}
+
+	return nil
+}
+
+// CompileErrors_ErrMultiError is an error wrapping multiple validation errors
+// returned by CompileErrors_Err.ValidateAll() if the designated constraints
+// aren't met.
+type CompileErrors_ErrMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m CompileErrors_ErrMultiError) Error() string {
+	var msgs []string
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m CompileErrors_ErrMultiError) AllErrors() []error { return m }
+
+// CompileErrors_ErrValidationError is the validation error returned by
+// CompileErrors_Err.Validate if the designated constraints aren't met.
+type CompileErrors_ErrValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e CompileErrors_ErrValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e CompileErrors_ErrValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e CompileErrors_ErrValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e CompileErrors_ErrValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e CompileErrors_ErrValidationError) ErrorName() string {
+	return "CompileErrors_ErrValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e CompileErrors_ErrValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sCompileErrors_Err.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = CompileErrors_ErrValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = CompileErrors_ErrValidationError{}
+
+// Validate checks the field values on IndexBuildErrors_DuplicateDef with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *IndexBuildErrors_DuplicateDef) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on IndexBuildErrors_DuplicateDef with
+// the rules defined in the proto definition for this message. If any rules
+// are violated, the result is a list of violation errors wrapped in
+// IndexBuildErrors_DuplicateDefMultiError, or nil if none found.
+func (m *IndexBuildErrors_DuplicateDef) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *IndexBuildErrors_DuplicateDef) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for File
+
+	// no validation rules for OtherFile
+
+	if len(errors) > 0 {
+		return IndexBuildErrors_DuplicateDefMultiError(errors)
+	}
+
+	return nil
+}
+
+// IndexBuildErrors_DuplicateDefMultiError is an error wrapping multiple
+// validation errors returned by IndexBuildErrors_DuplicateDef.ValidateAll()
+// if the designated constraints aren't met.
+type IndexBuildErrors_DuplicateDefMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m IndexBuildErrors_DuplicateDefMultiError) Error() string {
+	var msgs []string
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m IndexBuildErrors_DuplicateDefMultiError) AllErrors() []error { return m }
+
+// IndexBuildErrors_DuplicateDefValidationError is the validation error
+// returned by IndexBuildErrors_DuplicateDef.Validate if the designated
+// constraints aren't met.
+type IndexBuildErrors_DuplicateDefValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e IndexBuildErrors_DuplicateDefValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e IndexBuildErrors_DuplicateDefValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e IndexBuildErrors_DuplicateDefValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e IndexBuildErrors_DuplicateDefValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e IndexBuildErrors_DuplicateDefValidationError) ErrorName() string {
+	return "IndexBuildErrors_DuplicateDefValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e IndexBuildErrors_DuplicateDefValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sIndexBuildErrors_DuplicateDef.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = IndexBuildErrors_DuplicateDefValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = IndexBuildErrors_DuplicateDefValidationError{}
+
+// Validate checks the field values on IndexBuildErrors_MissingImport with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *IndexBuildErrors_MissingImport) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on IndexBuildErrors_MissingImport with
+// the rules defined in the proto definition for this message. If any rules
+// are violated, the result is a list of violation errors wrapped in
+// IndexBuildErrors_MissingImportMultiError, or nil if none found.
+func (m *IndexBuildErrors_MissingImport) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *IndexBuildErrors_MissingImport) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for ImportingFile
+
+	// no validation rules for Desc
+
+	if len(errors) > 0 {
+		return IndexBuildErrors_MissingImportMultiError(errors)
+	}
+
+	return nil
+}
+
+// IndexBuildErrors_MissingImportMultiError is an error wrapping multiple
+// validation errors returned by IndexBuildErrors_MissingImport.ValidateAll()
+// if the designated constraints aren't met.
+type IndexBuildErrors_MissingImportMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m IndexBuildErrors_MissingImportMultiError) Error() string {
+	var msgs []string
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m IndexBuildErrors_MissingImportMultiError) AllErrors() []error { return m }
+
+// IndexBuildErrors_MissingImportValidationError is the validation error
+// returned by IndexBuildErrors_MissingImport.Validate if the designated
+// constraints aren't met.
+type IndexBuildErrors_MissingImportValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e IndexBuildErrors_MissingImportValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e IndexBuildErrors_MissingImportValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e IndexBuildErrors_MissingImportValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e IndexBuildErrors_MissingImportValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e IndexBuildErrors_MissingImportValidationError) ErrorName() string {
+	return "IndexBuildErrors_MissingImportValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e IndexBuildErrors_MissingImportValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sIndexBuildErrors_MissingImport.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = IndexBuildErrors_MissingImportValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = IndexBuildErrors_MissingImportValidationError{}
+
+// Validate checks the field values on IndexBuildErrors_LoadFailure with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *IndexBuildErrors_LoadFailure) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on IndexBuildErrors_LoadFailure with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// IndexBuildErrors_LoadFailureMultiError, or nil if none found.
+func (m *IndexBuildErrors_LoadFailure) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *IndexBuildErrors_LoadFailure) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for File
+
+	// no validation rules for Error
+
+	if len(errors) > 0 {
+		return IndexBuildErrors_LoadFailureMultiError(errors)
+	}
+
+	return nil
+}
+
+// IndexBuildErrors_LoadFailureMultiError is an error wrapping multiple
+// validation errors returned by IndexBuildErrors_LoadFailure.ValidateAll() if
+// the designated constraints aren't met.
+type IndexBuildErrors_LoadFailureMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m IndexBuildErrors_LoadFailureMultiError) Error() string {
+	var msgs []string
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m IndexBuildErrors_LoadFailureMultiError) AllErrors() []error { return m }
+
+// IndexBuildErrors_LoadFailureValidationError is the validation error returned
+// by IndexBuildErrors_LoadFailure.Validate if the designated constraints
+// aren't met.
+type IndexBuildErrors_LoadFailureValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e IndexBuildErrors_LoadFailureValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e IndexBuildErrors_LoadFailureValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e IndexBuildErrors_LoadFailureValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e IndexBuildErrors_LoadFailureValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e IndexBuildErrors_LoadFailureValidationError) ErrorName() string {
+	return "IndexBuildErrors_LoadFailureValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e IndexBuildErrors_LoadFailureValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sIndexBuildErrors_LoadFailure.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = IndexBuildErrors_LoadFailureValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = IndexBuildErrors_LoadFailureValidationError{}

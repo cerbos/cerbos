@@ -54,6 +54,34 @@ func cerbos_policy_v1_Schemas_hashpb_sum(m *v1.Schemas, hasher hash.Hash, ignore
 	}
 }
 
+func cerbos_runtime_v1_CompileErrors_Err_hashpb_sum(m *CompileErrors_Err, hasher hash.Hash, ignore map[string]struct{}) {
+	if _, ok := ignore["cerbos.runtime.v1.CompileErrors.Err.file"]; !ok {
+		_, _ = hasher.Write(protowire.AppendString(nil, m.File))
+
+	}
+	if _, ok := ignore["cerbos.runtime.v1.CompileErrors.Err.error"]; !ok {
+		_, _ = hasher.Write(protowire.AppendString(nil, m.Error))
+
+	}
+	if _, ok := ignore["cerbos.runtime.v1.CompileErrors.Err.description"]; !ok {
+		_, _ = hasher.Write(protowire.AppendString(nil, m.Description))
+
+	}
+}
+
+func cerbos_runtime_v1_CompileErrors_hashpb_sum(m *CompileErrors, hasher hash.Hash, ignore map[string]struct{}) {
+	if _, ok := ignore["cerbos.runtime.v1.CompileErrors.errors"]; !ok {
+		if len(m.Errors) > 0 {
+			for _, v := range m.Errors {
+				if v != nil {
+					cerbos_runtime_v1_CompileErrors_Err_hashpb_sum(v, hasher, ignore)
+				}
+
+			}
+		}
+	}
+}
+
 func cerbos_runtime_v1_Condition_ExprList_hashpb_sum(m *Condition_ExprList, hasher hash.Hash, ignore map[string]struct{}) {
 	if _, ok := ignore["cerbos.runtime.v1.Condition.ExprList.expr"]; !ok {
 		if len(m.Expr) > 0 {
@@ -96,6 +124,25 @@ func cerbos_runtime_v1_Condition_hashpb_sum(m *Condition, hasher hash.Hash, igno
 	}
 }
 
+func cerbos_runtime_v1_Errors_hashpb_sum(m *Errors, hasher hash.Hash, ignore map[string]struct{}) {
+	if m.Kind != nil {
+		if _, ok := ignore["cerbos.runtime.v1.Errors.kind"]; !ok {
+			switch t := m.Kind.(type) {
+			case *Errors_IndexBuildErrors:
+				if t.IndexBuildErrors != nil {
+					cerbos_runtime_v1_IndexBuildErrors_hashpb_sum(t.IndexBuildErrors, hasher, ignore)
+				}
+
+			case *Errors_CompileErrors:
+				if t.CompileErrors != nil {
+					cerbos_runtime_v1_CompileErrors_hashpb_sum(t.CompileErrors, hasher, ignore)
+				}
+
+			}
+		}
+	}
+}
+
 func cerbos_runtime_v1_Expr_hashpb_sum(m *Expr, hasher hash.Hash, ignore map[string]struct{}) {
 	if _, ok := ignore["cerbos.runtime.v1.Expr.original"]; !ok {
 		_, _ = hasher.Write(protowire.AppendString(nil, m.Original))
@@ -106,6 +153,88 @@ func cerbos_runtime_v1_Expr_hashpb_sum(m *Expr, hasher hash.Hash, ignore map[str
 			google_api_expr_v1alpha1_CheckedExpr_hashpb_sum(m.Checked, hasher, ignore)
 		}
 
+	}
+}
+
+func cerbos_runtime_v1_IndexBuildErrors_DuplicateDef_hashpb_sum(m *IndexBuildErrors_DuplicateDef, hasher hash.Hash, ignore map[string]struct{}) {
+	if _, ok := ignore["cerbos.runtime.v1.IndexBuildErrors.DuplicateDef.file"]; !ok {
+		_, _ = hasher.Write(protowire.AppendString(nil, m.File))
+
+	}
+	if _, ok := ignore["cerbos.runtime.v1.IndexBuildErrors.DuplicateDef.other_file"]; !ok {
+		_, _ = hasher.Write(protowire.AppendString(nil, m.OtherFile))
+
+	}
+}
+
+func cerbos_runtime_v1_IndexBuildErrors_LoadFailure_hashpb_sum(m *IndexBuildErrors_LoadFailure, hasher hash.Hash, ignore map[string]struct{}) {
+	if _, ok := ignore["cerbos.runtime.v1.IndexBuildErrors.LoadFailure.file"]; !ok {
+		_, _ = hasher.Write(protowire.AppendString(nil, m.File))
+
+	}
+	if _, ok := ignore["cerbos.runtime.v1.IndexBuildErrors.LoadFailure.error"]; !ok {
+		_, _ = hasher.Write(protowire.AppendString(nil, m.Error))
+
+	}
+}
+
+func cerbos_runtime_v1_IndexBuildErrors_MissingImport_hashpb_sum(m *IndexBuildErrors_MissingImport, hasher hash.Hash, ignore map[string]struct{}) {
+	if _, ok := ignore["cerbos.runtime.v1.IndexBuildErrors.MissingImport.importing_file"]; !ok {
+		_, _ = hasher.Write(protowire.AppendString(nil, m.ImportingFile))
+
+	}
+	if _, ok := ignore["cerbos.runtime.v1.IndexBuildErrors.MissingImport.desc"]; !ok {
+		_, _ = hasher.Write(protowire.AppendString(nil, m.Desc))
+
+	}
+}
+
+func cerbos_runtime_v1_IndexBuildErrors_hashpb_sum(m *IndexBuildErrors, hasher hash.Hash, ignore map[string]struct{}) {
+	if _, ok := ignore["cerbos.runtime.v1.IndexBuildErrors.disabled"]; !ok {
+		if len(m.Disabled) > 0 {
+			for _, v := range m.Disabled {
+				_, _ = hasher.Write(protowire.AppendString(nil, v))
+
+			}
+		}
+	}
+	if _, ok := ignore["cerbos.runtime.v1.IndexBuildErrors.duplicate_defs"]; !ok {
+		if len(m.DuplicateDefs) > 0 {
+			for _, v := range m.DuplicateDefs {
+				if v != nil {
+					cerbos_runtime_v1_IndexBuildErrors_DuplicateDef_hashpb_sum(v, hasher, ignore)
+				}
+
+			}
+		}
+	}
+	if _, ok := ignore["cerbos.runtime.v1.IndexBuildErrors.load_failures"]; !ok {
+		if len(m.LoadFailures) > 0 {
+			for _, v := range m.LoadFailures {
+				if v != nil {
+					cerbos_runtime_v1_IndexBuildErrors_LoadFailure_hashpb_sum(v, hasher, ignore)
+				}
+
+			}
+		}
+	}
+	if _, ok := ignore["cerbos.runtime.v1.IndexBuildErrors.missing_imports"]; !ok {
+		if len(m.MissingImports) > 0 {
+			for _, v := range m.MissingImports {
+				if v != nil {
+					cerbos_runtime_v1_IndexBuildErrors_MissingImport_hashpb_sum(v, hasher, ignore)
+				}
+
+			}
+		}
+	}
+	if _, ok := ignore["cerbos.runtime.v1.IndexBuildErrors.missing_scopes"]; !ok {
+		if len(m.MissingScopes) > 0 {
+			for _, v := range m.MissingScopes {
+				_, _ = hasher.Write(protowire.AppendString(nil, v))
+
+			}
+		}
 	}
 }
 

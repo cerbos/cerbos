@@ -5,7 +5,6 @@ package index
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"io/fs"
 	"path"
@@ -15,6 +14,7 @@ import (
 	"go.uber.org/zap/zapcore"
 
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
+	runtimev1 "github.com/cerbos/cerbos/api/genpb/cerbos/runtime/v1"
 	"github.com/cerbos/cerbos/internal/namer"
 	"github.com/cerbos/cerbos/internal/observability/metrics"
 	"github.com/cerbos/cerbos/internal/policy"
@@ -26,42 +26,13 @@ const maxLoggableBuildErrors = 5
 
 // BuildError is an error type that contains details about the failures encountered during the index build.
 type BuildError struct {
-	Disabled       []string        `json:"disabled"`
-	DuplicateDefs  []DuplicateDef  `json:"duplicateDefs"`
-	LoadFailures   []LoadFailure   `json:"loadFailures"`
-	MissingImports []MissingImport `json:"missingImports"`
-	MissingScopes  []MissingScope  `json:"missingScopes"`
-	nErr           int
+	*runtimev1.IndexBuildErrors
+	nErr int
 }
 
 func (ibe *BuildError) Error() string {
 	return fmt.Sprintf("failed to build index: missing imports=%d, missing scopes=%d, duplicate definitions=%d, load failures=%d",
 		len(ibe.MissingImports), len(ibe.MissingScopes), len(ibe.DuplicateDefs), len(ibe.LoadFailures))
-}
-
-// MissingImport describes an import that wasn't found.
-type MissingImport struct {
-	ImportingFile string `json:"importingFile"`
-	Desc          string `json:"desc"`
-}
-
-// MissingScope describes a scope that is missing from the policies.
-type MissingScope string
-
-// DuplicateDef describes a policy file that has a duplicate.
-type DuplicateDef struct {
-	File      string `json:"file"`
-	OtherFile string `json:"otherFile"`
-}
-
-// LoadFailure describes a failure to load a policy.
-type LoadFailure struct {
-	Err  error
-	File string
-}
-
-func (lf LoadFailure) MarshalJSON() ([]byte, error) {
-	return json.Marshal(map[string]string{"file": lf.File, "error": lf.Err.Error()})
 }
 
 type buildOptions struct {
@@ -166,11 +137,11 @@ type indexBuilder struct {
 	fileToModID   map[string]namer.ModuleID
 	dependents    map[namer.ModuleID]map[namer.ModuleID]struct{}
 	dependencies  map[namer.ModuleID]map[namer.ModuleID]struct{}
-	missing       map[namer.ModuleID][]MissingImport
+	missing       map[namer.ModuleID][]*runtimev1.IndexBuildErrors_MissingImport
 	missingScopes map[namer.ModuleID]string
 	stats         *statsCollector
-	duplicates    []DuplicateDef
-	loadFailures  []LoadFailure
+	duplicates    []*runtimev1.IndexBuildErrors_DuplicateDef
+	loadFailures  []*runtimev1.IndexBuildErrors_LoadFailure
 	disabled      []string
 }
 
@@ -181,14 +152,14 @@ func newIndexBuilder() *indexBuilder {
 		fileToModID:   make(map[string]namer.ModuleID),
 		dependents:    make(map[namer.ModuleID]map[namer.ModuleID]struct{}),
 		dependencies:  make(map[namer.ModuleID]map[namer.ModuleID]struct{}),
-		missing:       make(map[namer.ModuleID][]MissingImport),
+		missing:       make(map[namer.ModuleID][]*runtimev1.IndexBuildErrors_MissingImport),
 		missingScopes: make(map[namer.ModuleID]string),
 		stats:         newStatsCollector(),
 	}
 }
 
 func (idx *indexBuilder) addLoadFailure(file string, err error) {
-	idx.loadFailures = append(idx.loadFailures, LoadFailure{File: file, Err: err})
+	idx.loadFailures = append(idx.loadFailures, &runtimev1.IndexBuildErrors_LoadFailure{File: file, Error: err.Error()})
 }
 
 func (idx *indexBuilder) addDisabled(file string) {
@@ -198,7 +169,7 @@ func (idx *indexBuilder) addDisabled(file string) {
 func (idx *indexBuilder) addPolicy(file string, p policy.Wrapper) {
 	// Is this is a duplicate of another file?
 	if otherFile, ok := idx.modIDToFile[p.ID]; ok && (otherFile != file) {
-		idx.duplicates = append(idx.duplicates, DuplicateDef{
+		idx.duplicates = append(idx.duplicates, &runtimev1.IndexBuildErrors_DuplicateDef{
 			File:      file,
 			OtherFile: otherFile,
 		})
@@ -224,7 +195,7 @@ func (idx *indexBuilder) addPolicy(file string, p policy.Wrapper) {
 
 		// the dependent may not have been loaded by the indexer yet because it's still walking the directory.
 		if _, exists := idx.modIDToFile[depID]; !exists {
-			idx.missing[depID] = append(idx.missing[depID], MissingImport{
+			idx.missing[depID] = append(idx.missing[depID], &runtimev1.IndexBuildErrors_MissingImport{
 				ImportingFile: file,
 				Desc:          fmt.Sprintf("Import '%s' not found", namer.DerivedRolesSimpleName(dep)),
 			})
@@ -259,10 +230,12 @@ func (idx *indexBuilder) build(fsys fs.FS, opts buildOptions) (*index, error) {
 	nErr := len(idx.missing) + len(idx.duplicates) + len(idx.loadFailures) + len(idx.missingScopes)
 	if nErr > 0 {
 		err := &BuildError{
-			nErr:          nErr,
-			Disabled:      idx.disabled,
-			DuplicateDefs: idx.duplicates,
-			LoadFailures:  idx.loadFailures,
+			IndexBuildErrors: &runtimev1.IndexBuildErrors{
+				Disabled:      idx.disabled,
+				DuplicateDefs: idx.duplicates,
+				LoadFailures:  idx.loadFailures,
+			},
+			nErr: nErr,
 		}
 
 		for _, missing := range idx.missing {
@@ -270,7 +243,7 @@ func (idx *indexBuilder) build(fsys fs.FS, opts buildOptions) (*index, error) {
 		}
 
 		for _, ms := range idx.missingScopes {
-			err.MissingScopes = append(err.MissingScopes, MissingScope(namer.PolicyKeyFromFQN(ms)))
+			err.MissingScopes = append(err.MissingScopes, namer.PolicyKeyFromFQN(ms))
 		}
 
 		logBuildFailure(logger, opts.buildFailureLogLevel, err)

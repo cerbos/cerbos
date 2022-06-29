@@ -7,10 +7,11 @@ package privatev1
 import (
 	fmt "fmt"
 	v1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
-	v13 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
+	v14 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
 	v11 "github.com/cerbos/cerbos/api/genpb/cerbos/request/v1"
 	v12 "github.com/cerbos/cerbos/api/genpb/cerbos/response/v1"
-	v14 "github.com/cerbos/cerbos/api/genpb/cerbos/schema/v1"
+	v13 "github.com/cerbos/cerbos/api/genpb/cerbos/runtime/v1"
+	v15 "github.com/cerbos/cerbos/api/genpb/cerbos/schema/v1"
 	proto "google.golang.org/protobuf/proto"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	structpb "google.golang.org/protobuf/types/known/structpb"
@@ -1312,10 +1313,25 @@ func (m *IndexBuilderTestCase) MarshalToSizedBufferVT(dAtA []byte) (int, error) 
 		i--
 		dAtA[i] = 0x1a
 	}
-	if len(m.WantErrJson) > 0 {
-		i -= len(m.WantErrJson)
-		copy(dAtA[i:], m.WantErrJson)
-		i = encodeVarint(dAtA, i, uint64(len(m.WantErrJson)))
+	if m.WantErrList != nil {
+		if marshalto, ok := interface{}(m.WantErrList).(interface {
+			MarshalToSizedBufferVT([]byte) (int, error)
+		}); ok {
+			size, err := marshalto.MarshalToSizedBufferVT(dAtA[:i])
+			if err != nil {
+				return 0, err
+			}
+			i -= size
+			i = encodeVarint(dAtA, i, uint64(size))
+		} else {
+			encoded, err := proto.Marshal(m.WantErrList)
+			if err != nil {
+				return 0, err
+			}
+			i -= len(encoded)
+			copy(dAtA[i:], encoded)
+			i = encodeVarint(dAtA, i, uint64(len(encoded)))
+		}
 		i--
 		dAtA[i] = 0x12
 	}
@@ -2878,8 +2894,14 @@ func (m *IndexBuilderTestCase) SizeVT() (n int) {
 			n += mapEntrySize + 1 + sov(uint64(mapEntrySize))
 		}
 	}
-	l = len(m.WantErrJson)
-	if l > 0 {
+	if m.WantErrList != nil {
+		if size, ok := interface{}(m.WantErrList).(interface {
+			SizeVT() int
+		}); ok {
+			l = size.SizeVT()
+		} else {
+			l = proto.Size(m.WantErrList)
+		}
 		n += 1 + l + sov(uint64(l))
 	}
 	l = len(m.WantErr)
@@ -5875,9 +5897,9 @@ func (m *IndexBuilderTestCase) UnmarshalVT(dAtA []byte) error {
 			iNdEx = postIndex
 		case 2:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field WantErrJson", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field WantErrList", wireType)
 			}
-			var stringLen uint64
+			var msglen int
 			for shift := uint(0); ; shift += 7 {
 				if shift >= 64 {
 					return ErrIntOverflow
@@ -5887,23 +5909,35 @@ func (m *IndexBuilderTestCase) UnmarshalVT(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
+				msglen |= int(b&0x7F) << shift
 				if b < 0x80 {
 					break
 				}
 			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
+			if msglen < 0 {
 				return ErrInvalidLength
 			}
-			postIndex := iNdEx + intStringLen
+			postIndex := iNdEx + msglen
 			if postIndex < 0 {
 				return ErrInvalidLength
 			}
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.WantErrJson = string(dAtA[iNdEx:postIndex])
+			if m.WantErrList == nil {
+				m.WantErrList = &v13.IndexBuildErrors{}
+			}
+			if unmarshal, ok := interface{}(m.WantErrList).(interface {
+				UnmarshalVT([]byte) error
+			}); ok {
+				if err := unmarshal.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
+					return err
+				}
+			} else {
+				if err := proto.Unmarshal(dAtA[iNdEx:postIndex], m.WantErrList); err != nil {
+					return err
+				}
+			}
 			iNdEx = postIndex
 		case 3:
 			if wireType != 2 {
@@ -6231,10 +6265,10 @@ func (m *CompileTestCase) UnmarshalVT(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if m.InputDefs == nil {
-				m.InputDefs = make(map[string]*v13.Policy)
+				m.InputDefs = make(map[string]*v14.Policy)
 			}
 			var mapkey string
-			var mapvalue *v13.Policy
+			var mapvalue *v14.Policy
 			for iNdEx < postIndex {
 				entryPreIndex := iNdEx
 				var wire uint64
@@ -6308,7 +6342,7 @@ func (m *CompileTestCase) UnmarshalVT(dAtA []byte) error {
 					if postmsgIndex > l {
 						return io.ErrUnexpectedEOF
 					}
-					mapvalue = &v13.Policy{}
+					mapvalue = &v14.Policy{}
 					if unmarshal, ok := interface{}(mapvalue).(interface {
 						UnmarshalVT([]byte) error
 					}); ok {
@@ -6453,7 +6487,7 @@ func (m *CodeGenTestCase) UnmarshalVT(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if m.InputPolicy == nil {
-				m.InputPolicy = &v13.Policy{}
+				m.InputPolicy = &v14.Policy{}
 			}
 			if unmarshal, ok := interface{}(m.InputPolicy).(interface {
 				UnmarshalVT([]byte) error
@@ -6619,7 +6653,7 @@ func (m *CelTestCase) UnmarshalVT(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if m.Condition == nil {
-				m.Condition = &v13.Match{}
+				m.Condition = &v14.Match{}
 			}
 			if unmarshal, ok := interface{}(m.Condition).(interface {
 				UnmarshalVT([]byte) error
@@ -6830,7 +6864,7 @@ func (m *SchemaTestCase) UnmarshalVT(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if m.SchemaRefs == nil {
-				m.SchemaRefs = &v13.Schemas{}
+				m.SchemaRefs = &v14.Schemas{}
 			}
 			if unmarshal, ok := interface{}(m.SchemaRefs).(interface {
 				UnmarshalVT([]byte) error
@@ -7007,7 +7041,7 @@ func (m *SchemaTestCase) UnmarshalVT(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.WantValidationErrors = append(m.WantValidationErrors, &v14.ValidationError{})
+			m.WantValidationErrors = append(m.WantValidationErrors, &v15.ValidationError{})
 			if unmarshal, ok := interface{}(m.WantValidationErrors[len(m.WantValidationErrors)-1]).(interface {
 				UnmarshalVT([]byte) error
 			}); ok {
@@ -7100,7 +7134,7 @@ func (m *ValidationErrContainer) UnmarshalVT(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.Errors = append(m.Errors, &v14.ValidationError{})
+			m.Errors = append(m.Errors, &v15.ValidationError{})
 			if unmarshal, ok := interface{}(m.Errors[len(m.Errors)-1]).(interface {
 				UnmarshalVT([]byte) error
 			}); ok {
@@ -7734,7 +7768,7 @@ func (m *VerifyTestFixtureGetTestsTestCase) UnmarshalVT(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if m.Table == nil {
-				m.Table = &v13.TestTable{}
+				m.Table = &v14.TestTable{}
 			}
 			if unmarshal, ok := interface{}(m.Table).(interface {
 				UnmarshalVT([]byte) error
@@ -7777,7 +7811,7 @@ func (m *VerifyTestFixtureGetTestsTestCase) UnmarshalVT(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.WantTests = append(m.WantTests, &v13.Test{})
+			m.WantTests = append(m.WantTests, &v14.Test{})
 			if unmarshal, ok := interface{}(m.WantTests[len(m.WantTests)-1]).(interface {
 				UnmarshalVT([]byte) error
 			}); ok {

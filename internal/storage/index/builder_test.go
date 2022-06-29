@@ -6,20 +6,21 @@ package index
 import (
 	"bytes"
 	"context"
-	"encoding/json"
 	"errors"
 	"io"
 	"io/fs"
 	"os"
 	"path/filepath"
-	"sort"
 	"strings"
 	"testing"
 
+	"github.com/google/go-cmp/cmp"
 	"github.com/spf13/afero"
 	"github.com/stretchr/testify/require"
+	"google.golang.org/protobuf/testing/protocmp"
 
 	privatev1 "github.com/cerbos/cerbos/api/genpb/cerbos/private/v1"
+	runtimev1 "github.com/cerbos/cerbos/api/genpb/cerbos/runtime/v1"
 	"github.com/cerbos/cerbos/internal/namer"
 	"github.com/cerbos/cerbos/internal/policy"
 	"github.com/cerbos/cerbos/internal/storage"
@@ -154,19 +155,19 @@ func TestBuildIndex(t *testing.T) {
 
 			idx, haveErr := Build(context.Background(), fs)
 			switch {
-			case tc.WantErrJson != "":
+			case tc.WantErrList != nil:
 				errList := new(BuildError)
 				require.True(t, errors.As(haveErr, &errList))
-
-				sort.Slice(errList.MissingScopes, func(i, j int) bool { return errList.MissingScopes[i] < errList.MissingScopes[j] })
-
-				haveErrJSON, err := json.Marshal(errList)
-				require.NoError(t, err)
-
-				haveErrJSONStr := string(bytes.ReplaceAll(haveErrJSON, []byte{0xc2, 0xa0}, []byte{0x20}))
-				wantErrJSONStr := strings.ReplaceAll(tc.WantErrJson, "\u00a0", " ")
-
-				require.JSONEq(t, wantErrJSONStr, haveErrJSONStr)
+				require.Empty(t,
+					cmp.Diff(errList.IndexBuildErrors, tc.WantErrList,
+						protocmp.Transform(),
+						protocmp.SortRepeatedFields(&runtimev1.IndexBuildErrors{},
+							"disabled", "duplicate_defs", "load_failures", "missing_imports", "missing_scopes"),
+						cmp.Comparer(func(s1, s2 string) bool {
+							return strings.ReplaceAll(s1, "\u00a0", " ") == strings.ReplaceAll(s2, "\u00a0", " ")
+						}),
+					),
+				)
 			case tc.WantErr != "":
 				require.EqualError(t, haveErr, tc.WantErr)
 			default:
