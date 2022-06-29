@@ -60,7 +60,7 @@ Cerbos is popular among large and small organizations:
   <tr>
     <td valign="center">
       <a href="https://refine.dev">
-        <img src="https://cerbos.dev/assets/refine.png" width="256" height="35" />
+        <img src="https://cerbos.dev/assets/refine.png" width="256" />
       </a>
     </td>  
     <td valign="center">
@@ -75,7 +75,7 @@ Cerbos is popular among large and small organizations:
    </td>
    <td valign="center">
       <a href="https://www.wizeline.com/">
-        <img src="https://cerbos.dev/assets/wizeline.svg" width="256" />
+        <img src="https://cerbos.dev/assets/wizeline.svg" width="256" height="35"/>
       </a>
    </td>
   </tr>
