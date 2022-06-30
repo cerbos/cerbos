@@ -560,8 +560,29 @@ func normaliseFilterExprOp(cond *enginev1.PlanResourcesFilter_Expression_Operand
 	return cond
 }
 
+var (
+	falseExprOpValue = &enginev1.PlanResourcesFilter_Expression_Operand{
+		Node: &enginev1.PlanResourcesFilter_Expression_Operand_Value{
+			Value: structpb.NewBoolValue(false),
+		},
+	}
+	trueExprOpValue = &enginev1.PlanResourcesFilter_Expression_Operand{
+		Node: &enginev1.PlanResourcesFilter_Expression_Operand_Value{
+			Value: structpb.NewBoolValue(true),
+		},
+	}
+)
+
 //nolint: nestif
 func normaliseFilterExprOpExpr(expr *enginev1.PlanResourcesFilter_Expression_Operand_Expression) *enginev1.PlanResourcesFilter_Expression_Operand {
+	const nArgsInOp = 2
+	if expr.Expression.Operator == In && len(expr.Expression.Operands) == nArgsInOp {
+		if v := expr.Expression.Operands[nArgsInOp-1].GetValue(); v != nil {
+			if len(v.GetListValue().GetValues()) == 0 {
+				return falseExprOpValue
+			}
+		}
+	}
 	var logicalOperator string
 	var operandHashes map[uint64]struct{}
 	if expr.Expression.Operator == And || expr.Expression.Operator == Or || expr.Expression.Operator == Not {
@@ -590,18 +611,10 @@ func normaliseFilterExprOpExpr(expr *enginev1.PlanResourcesFilter_Expression_Ope
 					continue
 				case logicalOperator == And && !boolVal:
 					// A literal false makes the whole AND expression return false
-					return &enginev1.PlanResourcesFilter_Expression_Operand{
-						Node: &enginev1.PlanResourcesFilter_Expression_Operand_Value{
-							Value: structpb.NewBoolValue(false),
-						},
-					}
+					return falseExprOpValue
 				case logicalOperator == Or && boolVal:
 					// A literal true makes the whole OR expression return true
-					return &enginev1.PlanResourcesFilter_Expression_Operand{
-						Node: &enginev1.PlanResourcesFilter_Expression_Operand_Value{
-							Value: structpb.NewBoolValue(true),
-						},
-					}
+					return trueExprOpValue
 				}
 			}
 		}
