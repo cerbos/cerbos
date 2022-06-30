@@ -7,8 +7,15 @@
 package engine
 
 import (
+	"bytes"
 	"testing"
 
+	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
+	privatev1 "github.com/cerbos/cerbos/api/genpb/cerbos/private/v1"
+	"github.com/cerbos/cerbos/internal/compile"
+	"github.com/cerbos/cerbos/internal/engine/tracer"
+	"github.com/cerbos/cerbos/internal/test"
+	"github.com/cerbos/cerbos/internal/util"
 	"github.com/stretchr/testify/require"
 )
 
@@ -54,4 +61,37 @@ func TestSetIntersects(t *testing.T) {
 			require.Equal(t, tc.want, have)
 		})
 	}
+}
+
+func TestSatisfiesCondition(t *testing.T) {
+	testCases := test.LoadTestCases(t, "cel_eval")
+
+	for _, tcase := range testCases {
+		tcase := tcase
+		t.Run(tcase.Name, func(t *testing.T) {
+			tc := readCELTestCase(t, tcase.Input)
+			cond, err := compile.Condition(&policyv1.Condition{Condition: &policyv1.Condition_Match{Match: tc.Condition}})
+			require.NoError(t, err)
+
+			tctx := tracer.Start(newTestTraceSink(t))
+			retVal, err := satisfiesCondition(tctx.StartCondition(), cond, nil, tc.Input)
+
+			if tc.WantError {
+				require.Error(t, err)
+				return
+			}
+
+			require.NoError(t, err)
+			require.Equal(t, tc.Want, retVal)
+		})
+	}
+}
+
+func readCELTestCase(t *testing.T, data []byte) *privatev1.CelTestCase {
+	t.Helper()
+
+	tc := &privatev1.CelTestCase{}
+	require.NoError(t, util.ReadJSONOrYAML(bytes.NewReader(data), tc))
+
+	return tc
 }

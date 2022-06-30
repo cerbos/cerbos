@@ -345,6 +345,10 @@ func evaluateBoolCELExpr(expr *exprpb.CheckedExpr, variables map[string]any, inp
 		return false, err
 	}
 
+	if val == nil {
+		return false, nil
+	}
+
 	boolVal, ok := val.(bool)
 	if !ok {
 		return false, fmt.Errorf("unexpected result: wanted bool, got %T", val)

@@ -85,8 +85,6 @@ playgroundTest:
                               ],
                               "event": {
                                 "status": "STATUS_ACTIVATED",
-                                "error": "unexpected result: wanted bool, got <nil>",
-                                "message": "Failed to evaluate expression",
                                 "result": false
                               }
                             },
@@ -107,8 +105,7 @@ playgroundTest:
                               ],
                               "event": {
                                 "status": "STATUS_SKIPPED",
-                                "error": "failed to evaluate `request.resource.attr.owner == request.principal.id`: unexpected result: wanted bool, got <nil>",
-                                "message": "Error evaluating condition"
+                                "message": "Condition not satisfied"
                               }
                             },
                             {
