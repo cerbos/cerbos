@@ -1,0 +1,63 @@
+include::ROOT:partial$attributes.adoc[]
+
+[#v0.19.0]
+= Cerbos v0.19.0
+
+== Highlights
+
+The `PlanResources` API now validates requests using xref:0.19.0@policies:schemas.adoc[schemas] to flag any invalid or unknown attributes. Similar to the `CheckResources` API, the xref:0.19.0@configuration:schema.adoc[schema enforcement level] defined in the configuration file determines whether invalid requests are processed with warnings or completely rejected.
+
+This release also includes several fixes to the `PlanResources` output to simplify the plan produced for expressions that make use of higher-order functions like `in` and `exists`. The AST produced for logical operators like `and` and `or` is now more consistent regardless of the operator used as well.
+
+Distributed traces can now be exported to collectors that support link:https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/protocol/otlp.md[OTLP] by using the new xref:0.19.0@configuration:tracing.adoc#otlp[`otlp` exporter]. Thanks to community member @rcrowe for contributing this feature.
+
+
+== Changelog
+
+
+=== Bug Fixes
+
+* Avoid short-circuit when expressions access non-existent attributes (link:https://github.com/cerbos/cerbos/pull/1056[#1056])
+* Handle missing scopes in playground validate API (link:https://github.com/cerbos/cerbos/pull/1042[#1042])
+* Transform `_&&_`/`_||_` to `and`/`or` in ASTs (link:https://github.com/cerbos/cerbos/pull/1021[#1021])
+* Transform maps to lists for membership test   (link:https://github.com/cerbos/cerbos/pull/1032[#1032])
+* Transform maps to lists in comprehension expressions (link:https://github.com/cerbos/cerbos/pull/1044[#1044])
+
+=== Enhancements
+
+* Export traces via OTLP to a collector (link:https://github.com/cerbos/cerbos/pull/1017[#1017])
+* Output detailed index build errors when the number of errors is low (link:https://github.com/cerbos/cerbos/pull/1038[#1038])
+* Validate schemas when planning queries (link:https://github.com/cerbos/cerbos/pull/1013[#1013])
+
+=== Documentation
+
+* Add AWS Cognito integration demo docs (link:https://github.com/cerbos/cerbos/pull/1037[#1037])
+* Add link to AWS Cognito docs in sidebar (link:https://github.com/cerbos/cerbos/pull/1039[#1039])
+* Updating customer logos (link:https://github.com/cerbos/cerbos/pull/1054[#1054])
+* Use analogy to explain derived roles (link:https://github.com/cerbos/cerbos/pull/1015[#1015])
+
+=== Chores
+
+* Add function to compile a set of files (link:https://github.com/cerbos/cerbos/pull/1046[#1046])
+* Bump bufbuild/buf-lint-action from 1.0.0 to 1.0.1 (link:https://github.com/cerbos/cerbos/pull/1047[#1047])
+* Bump bufbuild/buf-setup-action from 1.5.0 to 1.6.0 (link:https://github.com/cerbos/cerbos/pull/1048[#1048])
+* Bump github.com/alecthomas/kong from 0.6.0 to 0.6.1 (link:https://github.com/cerbos/cerbos/pull/1028[#1028])
+* Bump github.com/alecthomas/participle/v2 (link:https://github.com/cerbos/cerbos/pull/1026[#1026])
+* Bump github.com/alecthomas/participle/v2 from 2.0.0-alpha11 to 2.0.0-beta.2 (link:https://github.com/cerbos/cerbos/pull/1051[#1051])
+* Bump github.com/bufbuild/buf from 1.5.0 to 1.6.0 in /tools (link:https://github.com/cerbos/cerbos/pull/1053[#1053])
+* Bump github.com/fergusstrange/embedded-postgres (link:https://github.com/cerbos/cerbos/pull/1029[#1029])
+* Bump github.com/google/gops from 0.3.23 to 0.3.24 (link:https://github.com/cerbos/cerbos/pull/1049[#1049])
+* Bump github.com/lestrrat-go/jwx/v2 from 2.0.2 to 2.0.3 (link:https://github.com/cerbos/cerbos/pull/1025[#1025])
+* Bump github.com/minio/minio-go/v7 from 7.0.28 to 7.0.29 (link:https://github.com/cerbos/cerbos/pull/1033[#1033])
+* Bump github.com/pterm/pterm from 0.12.41 to 0.12.42 (link:https://github.com/cerbos/cerbos/pull/1050[#1050])
+* Bump github.com/stretchr/testify from 1.7.2 to 1.7.5 (link:https://github.com/cerbos/cerbos/pull/1052[#1052])
+* Bump github.com/vektra/mockery/v2 from 2.12.3 to 2.13.1 in /tools (link:https://github.com/cerbos/cerbos/pull/1024[#1024])
+* Bump go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc (link:https://github.com/cerbos/cerbos/pull/1027[#1027])
+* Bump google.golang.org/protobuf (link:https://github.com/cerbos/cerbos/pull/1023[#1023])
+* Bump helm/kind-action from 1.2.0 to 1.3.0 (link:https://github.com/cerbos/cerbos/pull/1022[#1022])
+* Bump version to 0.19.0
+* Fix confdocs panic when no struct tag is provided (link:https://github.com/cerbos/cerbos/pull/1020[#1020])
+* Fix flaky query plan test by sorting map keys in deterministic order (link:https://github.com/cerbos/cerbos/pull/1043[#1043])
+* Fix flaky update store test (link:https://github.com/cerbos/cerbos/pull/1045[#1045])
+* Ignore OpenTelemetry error message about sampler (link:https://github.com/cerbos/cerbos/pull/1031[#1031])
+* Split tests across multiple runners (link:https://github.com/cerbos/cerbos/pull/1019[#1019])
