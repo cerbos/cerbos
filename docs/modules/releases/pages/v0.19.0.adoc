@@ -22,6 +22,7 @@ Distributed traces can now be exported to collectors that support link:https://g
 * Transform `_&&_`/`_||_` to `and`/`or` in ASTs (link:https://github.com/cerbos/cerbos/pull/1021[#1021])
 * Transform maps to lists for membership test   (link:https://github.com/cerbos/cerbos/pull/1032[#1032])
 * Transform maps to lists in comprehension expressions (link:https://github.com/cerbos/cerbos/pull/1044[#1044])
+* Transform membership test in empty list to false (link:https://github.com/cerbos/cerbos/pull/1059[#1059])
 
 === Enhancements
 
