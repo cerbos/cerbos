@@ -103,7 +103,7 @@ func main() {
 
 	absOutputFile, err := filepath.Abs(*outputFile)
 	if err != nil {
-		logger.Fatalf("Failed to find absoulte path to %q: %v", *outputFile, err)
+		logger.Fatalf("Failed to find absolute path to %q: %v", *outputFile, err)
 	}
 
 	pkgs, err := loadPackages(absRootDir)
