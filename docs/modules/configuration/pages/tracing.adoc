@@ -2,19 +2,19 @@ include::ROOT:partial$attributes.adoc[]
 
 = Tracing block
 
-Cerbos supports distributed tracing to provide insights into application performance and request lifecycle. To enable tracing, set `sampleProbability` to a value between 0.0 and 1.0. Setting the probability to 1.0 makes Cerbos capture tracing information for all requests and setting it to 0.0 disables capturing any traces. 
+Cerbos supports distributed tracing to provide insights into application performance and request lifecycle. To enable tracing, set `sampleProbability` to a value between 0.0 and 1.0. Setting the probability to 1.0 makes Cerbos capture tracing information for all requests and setting it to 0.0 disables capturing any traces.
 
-The system to export the trace data must be specified using the `exporter` setting. Currently only link:https://www.jaegertracing.io[Jaeger] is supported. Traces can be sent to either Jaeger Agent (compact Thrift format) or Jaeger Collector (Thrift format). 
+The system to export the trace data must be specified using the `exporter` setting. Currently link:https://www.jaegertracing.io[Jaeger] and link:https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/protocol/otlp.md[OTLP collectors] are supported. If using Jaeger, traces can be sent to either a Jaeger Agent (compact Thrift format) or a Jaeger Collector (Thrift format).
 
 
 .OpenTelemetry
 ****
-link:https://opentelemetry.io[OpenTelemetry] is the evolving standard for observability. Cerbos supports OpenTelemetry with a few caveats due to limitations in the current Go implementation of OpenTelemetry. 
+link:https://opentelemetry.io[OpenTelemetry] is the evolving standard for observability. Cerbos supports OpenTelemetry with a few caveats due to limitations in the current Go implementation of OpenTelemetry.
 
 
 * gRPC clients should use the link:https://github.com/open-telemetry/opentelemetry-go-contrib/tree/main/propagators/opencensus[OpenCensus binary propagation format] for distributed traces.
 
-* Metrics are not yet supported. 
+* Metrics are not yet supported.
 
 ****
 
@@ -24,21 +24,34 @@ link:https://opentelemetry.io[OpenTelemetry] is the evolving standard for observ
 [source,yaml,linenums]
 ----
 tracing:
+  serviceName: cerbos
   sampleProbability: 0.5
   exporter: jaeger
-  jaeger: 
-    serviceName: cerbos 
-    agentEndpoint: "localhost:6831" 
+  jaeger:
+    agentEndpoint: "localhost:6831"
 ----
 
 .Send trace data to Jaeger Collector (Thrift)
 [source,yaml,linenums]
 ----
 tracing:
+  serviceName: cerbos
   sampleProbability: 0.5
   exporter: jaeger
-  jaeger: 
-    serviceName: cerbos 
+  jaeger:
     collectorEndpoint: "http://localhost:14268/api/traces"
 ----
 
+[#otlp]
+== OTLP
+
+.Send trace data to an OTLP collector
+[source,yaml,linenums]
+----
+tracing:
+  serviceName: cerbos
+  sampleProbability: 0.5
+  exporter: otlp
+  otlp:
+    collectorEndpoint: "otel:4317"
+----
