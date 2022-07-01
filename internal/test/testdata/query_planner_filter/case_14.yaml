@@ -1,0 +1,29 @@
+---
+description: OR membership test in empty array with expression
+input:
+  kind: KIND_CONDITIONAL
+  condition:
+    expression:
+      operator: or
+      operands:
+        - expression:
+            operator: in
+            operands:
+              - variable: request.resource.attr.accountId
+              - value: []
+        - expression:
+            operator: eq
+            operands:
+              - variable: R.attr.department
+              - value: "marketing"
+wantFilter:
+  kind: KIND_CONDITIONAL
+  condition:
+    expression:
+      operator: eq
+      operands:
+        - variable: request.resource.attr.department
+        - value: "marketing"
+wantString: "(eq request.resource.attr.department \"marketing\")"
+
+
