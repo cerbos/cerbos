@@ -10,4 +10,5 @@ option go_package = "github.com/cerbos/cerbos/api/genpb/cerbos/bundle/v1;bundlev
 message Manifest {
   string version = 1;
   map<string, string> policy_index = 2;
+  repeated string schemas = 3;
 }

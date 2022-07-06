@@ -31,4 +31,12 @@ func cerbos_bundle_v1_Manifest_hashpb_sum(m *Manifest, hasher hash.Hash, ignore 
 			}
 		}
 	}
+	if _, ok := ignore["cerbos.bundle.v1.Manifest.schemas"]; !ok {
+		if len(m.Schemas) > 0 {
+			for _, v := range m.Schemas {
+				_, _ = hasher.Write(protowire.AppendString(nil, v))
+
+			}
+		}
+	}
 }
