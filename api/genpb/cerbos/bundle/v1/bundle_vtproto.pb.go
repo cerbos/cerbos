@@ -48,6 +48,15 @@ func (m *Manifest) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 		i -= len(m.unknownFields)
 		copy(dAtA[i:], m.unknownFields)
 	}
+	if len(m.Schemas) > 0 {
+		for iNdEx := len(m.Schemas) - 1; iNdEx >= 0; iNdEx-- {
+			i -= len(m.Schemas[iNdEx])
+			copy(dAtA[i:], m.Schemas[iNdEx])
+			i = encodeVarint(dAtA, i, uint64(len(m.Schemas[iNdEx])))
+			i--
+			dAtA[i] = 0x1a
+		}
+	}
 	if len(m.PolicyIndex) > 0 {
 		for k := range m.PolicyIndex {
 			v := m.PolicyIndex[k]
@@ -104,6 +113,12 @@ func (m *Manifest) SizeVT() (n int) {
 			_ = v
 			mapEntrySize := 1 + len(k) + sov(uint64(len(k))) + 1 + len(v) + sov(uint64(len(v)))
 			n += mapEntrySize + 1 + sov(uint64(mapEntrySize))
+		}
+	}
+	if len(m.Schemas) > 0 {
+		for _, s := range m.Schemas {
+			l = len(s)
+			n += 1 + l + sov(uint64(l))
 		}
 	}
 	if m.unknownFields != nil {
@@ -305,6 +320,38 @@ func (m *Manifest) UnmarshalVT(dAtA []byte) error {
 				}
 			}
 			m.PolicyIndex[mapkey] = mapvalue
+			iNdEx = postIndex
+		case 3:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Schemas", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLength
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLength
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Schemas = append(m.Schemas, string(dAtA[iNdEx:postIndex]))
 			iNdEx = postIndex
 		default:
 			iNdEx = preIndex
