@@ -395,7 +395,7 @@ func processEngineOutput(_ context.Context, playgroundID string, outputs []*engi
 
 type components struct {
 	idx       index.Index
-	store     storage.Store
+	store     storage.SourceStore
 	schemaMgr schema.Manager
 }
 

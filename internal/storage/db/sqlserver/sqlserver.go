@@ -32,7 +32,10 @@ import (
 
 const DriverName = "sqlserver"
 
-var _ storage.MutableStore = (*Store)(nil)
+var (
+	_ storage.SourceStore  = (*Store)(nil)
+	_ storage.MutableStore = (*Store)(nil)
+)
 
 func init() {
 	storage.RegisterDriver(DriverName, func(ctx context.Context, confW *config.Wrapper) (storage.Store, error) {
@@ -74,7 +77,7 @@ func (s *Store) Driver() string {
 
 func upsertPolicy(ctx context.Context, tx *goqu.TxDatabase, p policy.Wrapper) error {
 	stm, err := tx.Prepare(`
-UPDATE dbo.[policy] WITH (UPDLOCK, SERIALIZABLE) SET "definition"=@definition, "description"=@description,"disabled"=@disabled,"kind"=@kind,"name"=@name,"version"=@version,"scope"=@scope where [id] = @id 
+UPDATE dbo.[policy] WITH (UPDLOCK, SERIALIZABLE) SET "definition"=@definition, "description"=@description,"disabled"=@disabled,"kind"=@kind,"name"=@name,"version"=@version,"scope"=@scope where [id] = @id
 IF @@ROWCOUNT = 0
 BEGIN
   INSERT INTO dbo.[policy] ("definition", "description", "disabled", "kind", "name", "version", "scope", "id") VALUES (@definition, @description, @disabled, @kind, @name, @version, @scope, @id)
@@ -108,7 +111,7 @@ END
 
 func upsertSchema(ctx context.Context, tx *goqu.TxDatabase, schema internal.Schema) error {
 	stm, err := tx.Prepare(`
-UPDATE dbo.[attr_schema_defs] WITH (UPDLOCK, SERIALIZABLE) SET "definition"=@definition WHERE [id] = @id 
+UPDATE dbo.[attr_schema_defs] WITH (UPDLOCK, SERIALIZABLE) SET "definition"=@definition WHERE [id] = @id
 IF @@ROWCOUNT = 0
 BEGIN
   INSERT INTO dbo.[attr_schema_defs] ("definition", "id") VALUES (@definition, @id)

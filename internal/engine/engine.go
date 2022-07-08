@@ -19,9 +19,9 @@ import (
 	auditv1 "github.com/cerbos/cerbos/api/genpb/cerbos/audit/v1"
 	effectv1 "github.com/cerbos/cerbos/api/genpb/cerbos/effect/v1"
 	enginev1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
+	runtimev1 "github.com/cerbos/cerbos/api/genpb/cerbos/runtime/v1"
 	schemav1 "github.com/cerbos/cerbos/api/genpb/cerbos/schema/v1"
 	"github.com/cerbos/cerbos/internal/audit"
-	"github.com/cerbos/cerbos/internal/compile"
 	"github.com/cerbos/cerbos/internal/engine/tracer"
 	"github.com/cerbos/cerbos/internal/namer"
 	"github.com/cerbos/cerbos/internal/observability/logging"
@@ -39,6 +39,10 @@ const (
 	workerResetJitter    = 1 << 4
 	workerResetThreshold = 1 << 16
 )
+
+type PolicyLoader interface {
+	GetPolicySet(context.Context, namer.ModuleID) (*runtimev1.RunnablePolicySet, error)
+}
 
 type checkOptions struct {
 	tracerSink tracer.Sink
@@ -73,18 +77,18 @@ func WithZapTraceSink(log *zap.Logger) CheckOpt {
 }
 
 type Engine struct {
-	schemaMgr   schema.Manager
-	auditLog    audit.Log
-	conf        *Conf
-	compileMgr  *compile.Manager
-	workerPool  []chan<- workIn
-	workerIndex uint64
+	schemaMgr    schema.Manager
+	auditLog     audit.Log
+	conf         *Conf
+	policyLoader PolicyLoader
+	workerPool   []chan<- workIn
+	workerIndex  uint64
 }
 
 type Components struct {
-	AuditLog   audit.Log
-	CompileMgr *compile.Manager
-	SchemaMgr  schema.Manager
+	AuditLog     audit.Log
+	PolicyLoader PolicyLoader
+	SchemaMgr    schema.Manager
 }
 
 func New(ctx context.Context, components Components) (*Engine, error) {
@@ -112,21 +116,21 @@ func NewFromConf(ctx context.Context, conf *Conf, components Components) *Engine
 	return engine
 }
 
-func NewEphemeral(compileMgr *compile.Manager, schemaMgr schema.Manager) (*Engine, error) {
+func NewEphemeral(policyLoader PolicyLoader, schemaMgr schema.Manager) (*Engine, error) {
 	conf, err := GetConf()
 	if err != nil {
 		return nil, fmt.Errorf("failed to read engine configuration: %w", err)
 	}
 
-	return newEngine(conf, Components{CompileMgr: compileMgr, SchemaMgr: schemaMgr, AuditLog: audit.NewNopLog()}), nil
+	return newEngine(conf, Components{PolicyLoader: policyLoader, SchemaMgr: schemaMgr, AuditLog: audit.NewNopLog()}), nil
 }
 
 func newEngine(conf *Conf, c Components) *Engine {
 	return &Engine{
-		conf:       conf,
-		compileMgr: c.CompileMgr,
-		schemaMgr:  c.SchemaMgr,
-		auditLog:   c.AuditLog,
+		conf:         conf,
+		policyLoader: c.PolicyLoader,
+		schemaMgr:    c.SchemaMgr,
+		auditLog:     c.AuditLog,
 	}
 }
 
@@ -465,7 +469,7 @@ func (engine *Engine) buildEvaluationCtx(ctx context.Context, input *enginev1.Ch
 
 func (engine *Engine) getPrincipalPolicyEvaluator(ctx context.Context, principal, policyVer, scope string) (Evaluator, error) {
 	principalModID := namer.PrincipalPolicyModuleID(principal, policyVer, scope)
-	rps, err := engine.compileMgr.Get(ctx, principalModID)
+	rps, err := engine.policyLoader.GetPolicySet(ctx, principalModID)
 	if err != nil {
 		return nil, err
 	}
@@ -479,7 +483,7 @@ func (engine *Engine) getPrincipalPolicyEvaluator(ctx context.Context, principal
 
 func (engine *Engine) getResourcePolicyEvaluator(ctx context.Context, resource, policyVer, scope string) (Evaluator, error) {
 	resourceModID := namer.ResourcePolicyModuleID(resource, policyVer, scope)
-	rps, err := engine.compileMgr.Get(ctx, resourceModID)
+	rps, err := engine.policyLoader.GetPolicySet(ctx, resourceModID)
 	if err != nil {
 		return nil, err
 	}

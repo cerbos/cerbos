@@ -33,7 +33,10 @@ import (
 
 const DriverName = "git"
 
-var _ storage.Store = (*Store)(nil)
+var (
+	_ storage.SourceStore = (*Store)(nil)
+	_ storage.Reloadable  = (*Store)(nil)
+)
 
 func init() {
 	storage.RegisterDriver(DriverName, func(ctx context.Context, confW *config.Wrapper) (storage.Store, error) {

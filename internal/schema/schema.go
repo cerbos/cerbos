@@ -56,7 +56,6 @@ type Manager interface {
 }
 
 type Loader interface {
-	storage.Subscribable
 	LoadSchema(context.Context, string) (io.ReadCloser, error)
 }
 
@@ -106,7 +105,9 @@ func NewFromConf(_ context.Context, loader Loader, conf *Conf) Manager {
 		cache:  mkCache(int(conf.CacheSize)),
 	}
 
-	loader.Subscribe(mgr)
+	if s, ok := loader.(storage.Subscribable); ok {
+		s.Subscribe(mgr)
+	}
 
 	return mgr
 }

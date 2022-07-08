@@ -9,6 +9,7 @@ import (
 	"io"
 	"sync"
 
+	runtimev1 "github.com/cerbos/cerbos/api/genpb/cerbos/runtime/v1"
 	schemav1 "github.com/cerbos/cerbos/api/genpb/cerbos/schema/v1"
 	"github.com/cerbos/cerbos/internal/config"
 	"github.com/cerbos/cerbos/internal/namer"
@@ -92,21 +93,33 @@ func NewFromConf(ctx context.Context, confWrapper *config.Wrapper) (Store, error
 
 // Store is the common interface implemented by storage backends.
 type Store interface {
-	Subscribable
 	// Driver is the name of the storage backend implementation.
 	Driver() string
-	// GetCompilationUnits gets the compilation units for the given module IDs.
-	GetCompilationUnits(context.Context, ...namer.ModuleID) (map[namer.ModuleID]*policy.CompilationUnit, error)
-	// GetDependents returns the dependents of the given modules.
-	GetDependents(context.Context, ...namer.ModuleID) (map[namer.ModuleID][]namer.ModuleID, error)
 	// ListPolicyIDs returns the policy IDs in the store
 	ListPolicyIDs(context.Context) ([]string, error)
 	// ListSchemaIDs returns the schema ids in the store
 	ListSchemaIDs(context.Context) ([]string, error)
 	// LoadSchema loads the given schema from the store.
 	LoadSchema(context.Context, string) (io.ReadCloser, error)
+}
+
+// SourceStore is implemented by stores that have policies in their source format (uncompiled).
+type SourceStore interface {
+	Store
+	Subscribable
+	// GetCompilationUnits gets the compilation units for the given module IDs.
+	GetCompilationUnits(context.Context, ...namer.ModuleID) (map[namer.ModuleID]*policy.CompilationUnit, error)
+	// GetDependents returns the dependents of the given modules.
+	GetDependents(context.Context, ...namer.ModuleID) (map[namer.ModuleID][]namer.ModuleID, error)
 	// LoadPolicy loads the given policy from the store
 	LoadPolicy(context.Context, ...string) ([]*policy.Wrapper, error)
+}
+
+// BinaryStore is implemented by stores that have pre-compiled policies in binary format.
+type BinaryStore interface {
+	Store
+	// GetPolicySet gets the compiled policy set identified by the given module ID.
+	GetPolicySet(context.Context, namer.ModuleID) (*runtimev1.RunnablePolicySet, error)
 }
 
 // MutableStore is a store that allows mutations.
@@ -118,9 +131,8 @@ type MutableStore interface {
 	Delete(context.Context, ...namer.ModuleID) error
 }
 
-// ReloadableStore is a store that allows reloading (blob, disk, git).
-type ReloadableStore interface {
-	Store
+// Reloadable stores allow reloading their contents.
+type Reloadable interface {
 	Reload(context.Context) error
 }
 

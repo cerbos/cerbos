@@ -195,7 +195,7 @@ func mkEngine(tb testing.TB, p param) (*Engine, context.CancelFunc) {
 		auditLog = audit.NewNopLog()
 	}
 
-	eng, err := New(ctx, Components{CompileMgr: compiler, SchemaMgr: schemaMgr, AuditLog: auditLog})
+	eng, err := New(ctx, Components{PolicyLoader: compiler, SchemaMgr: schemaMgr, AuditLog: auditLog})
 	require.NoError(tb, err)
 
 	return eng, cancelFunc

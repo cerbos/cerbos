@@ -141,8 +141,13 @@ func (cas *CerbosAdminService) GetPolicy(ctx context.Context, req *requestv1.Get
 		return nil, status.Error(codes.NotFound, "store is not configured")
 	}
 
+	ss, ok := cas.store.(storage.SourceStore)
+	if !ok {
+		return nil, status.Error(codes.Unimplemented, "Configured store does not contain policy sources")
+	}
+
 	log := ctxzap.Extract(ctx)
-	wrappers, err := cas.store.LoadPolicy(ctx, req.Id...)
+	wrappers, err := ss.LoadPolicy(ctx, req.Id...)
 	if err != nil {
 		log.Error("Could not get policy", zap.Error(err))
 		return nil, status.Errorf(codes.Internal, "could not get policy")
@@ -239,7 +244,7 @@ func (cas *CerbosAdminService) ReloadStore(ctx context.Context, req *requestv1.R
 		return nil, err
 	}
 
-	rs, ok := cas.store.(storage.ReloadableStore)
+	rs, ok := cas.store.(storage.Reloadable)
 	if !ok {
 		return nil, status.Error(codes.Unimplemented, "Configured store is not reloadable")
 	}

@@ -43,12 +43,12 @@ func TestManager(t *testing.T) {
 			}, nil).
 			Once()
 
-		rps1, err := mgr.Get(context.Background(), rp.ID)
+		rps1, err := mgr.GetPolicySet(context.Background(), rp.ID)
 		require.NoError(t, err)
 		require.NotNil(t, rps1)
 
 		// should be read from the cache this time
-		rps2, err := mgr.Get(context.Background(), rp.ID)
+		rps2, err := mgr.GetPolicySet(context.Background(), rp.ID)
 		require.NoError(t, err)
 		require.NotNil(t, rps2)
 		require.Equal(t, rps1, rps2)
@@ -67,12 +67,12 @@ func TestManager(t *testing.T) {
 			Return(map[namer.ModuleID]*policy.CompilationUnit{}, nil).
 			Once()
 
-		rps1, err := mgr.Get(context.Background(), rp.ID)
+		rps1, err := mgr.GetPolicySet(context.Background(), rp.ID)
 		require.NoError(t, err)
 		require.Nil(t, rps1)
 
 		// should be read from the cache this time
-		rps2, err := mgr.Get(context.Background(), rp.ID)
+		rps2, err := mgr.GetPolicySet(context.Background(), rp.ID)
 		require.NoError(t, err)
 		require.Nil(t, rps2)
 
@@ -91,12 +91,12 @@ func TestManager(t *testing.T) {
 			Return(nil, wantErr).
 			Twice()
 
-		_, err := mgr.Get(context.Background(), rp.ID)
+		_, err := mgr.GetPolicySet(context.Background(), rp.ID)
 		require.Error(t, err)
 		require.ErrorIs(t, err, wantErr)
 
 		// should not hit the cache this time because the previous call errored
-		_, err = mgr.Get(context.Background(), rp.ID)
+		_, err = mgr.GetPolicySet(context.Background(), rp.ID)
 		require.Error(t, err)
 		require.ErrorIs(t, err, wantErr)
 
@@ -139,7 +139,7 @@ func TestManager(t *testing.T) {
 			Return(map[namer.ModuleID][]namer.ModuleID{dr.ID: {rp.ID}}, nil).
 			Once()
 
-		rps1, err := mgr.Get(context.Background(), rp.ID)
+		rps1, err := mgr.GetPolicySet(context.Background(), rp.ID)
 		require.NoError(t, err)
 		require.NotNil(t, rps1)
 
@@ -149,7 +149,7 @@ func TestManager(t *testing.T) {
 		yield()
 
 		// a new evaluator should have replaced the previous one
-		rps2, err := mgr.Get(context.Background(), rp.ID)
+		rps2, err := mgr.GetPolicySet(context.Background(), rp.ID)
 		require.NoError(t, err)
 		require.NotNil(t, rps2)
 		require.True(t, rps1 != rps2)
@@ -196,7 +196,7 @@ func TestManager(t *testing.T) {
 			Return(map[namer.ModuleID][]namer.ModuleID{dr.ID: {rp.ID}}, nil).
 			Once()
 
-		rps1, err := mgr.Get(context.Background(), rp.ID)
+		rps1, err := mgr.GetPolicySet(context.Background(), rp.ID)
 		require.NoError(t, err)
 		require.NotNil(t, rps1)
 
@@ -206,7 +206,7 @@ func TestManager(t *testing.T) {
 		yield()
 
 		// evaluator should be removed because it is now invalid and cannot be compiled
-		rps2, err := mgr.Get(context.Background(), rp.ID)
+		rps2, err := mgr.GetPolicySet(context.Background(), rp.ID)
 		require.Error(t, err)
 		require.Nil(t, rps2)
 

@@ -102,6 +102,8 @@ const (
 	zpagesEndpoint     = "/_cerbos/debug"
 )
 
+var ErrInvalidStore = errors.New("store does not implement either SourceStore or BinaryStore interfaces")
+
 func Start(ctx context.Context, zpagesEnabled bool) error {
 	// get configuration
 	conf, err := GetConf()
@@ -134,17 +136,25 @@ func Start(ctx context.Context, zpagesEnabled bool) error {
 		return fmt.Errorf("failed to create schema manager: %w", err)
 	}
 
-	// create compile manager
-	compileMgr, err := compile.NewManager(ctx, store, schemaMgr)
-	if err != nil {
-		return fmt.Errorf("failed to create compile manager: %w", err)
+	var policyLoader engine.PolicyLoader
+	if bs, ok := store.(storage.BinaryStore); ok {
+		policyLoader = bs
+	} else if ss, ok := store.(storage.SourceStore); ok {
+		// create compile manager
+		compileMgr, err := compile.NewManager(ctx, ss, schemaMgr)
+		if err != nil {
+			return fmt.Errorf("failed to create compile manager: %w", err)
+		}
+		policyLoader = compileMgr
+	} else {
+		return ErrInvalidStore
 	}
 
 	// create engine
 	eng, err := engine.New(ctx, engine.Components{
-		CompileMgr: compileMgr,
-		SchemaMgr:  schemaMgr,
-		AuditLog:   auditLog,
+		PolicyLoader: policyLoader,
+		SchemaMgr:    schemaMgr,
+		AuditLog:     auditLog,
 	})
 	if err != nil {
 		return fmt.Errorf("failed to create engine: %w", err)

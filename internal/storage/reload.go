@@ -14,7 +14,7 @@ import (
 
 var sfGroup singleflight.Group
 
-func Reload(ctx context.Context, rs ReloadableStore) error {
+func Reload(ctx context.Context, rs Reloadable) error {
 	_, err, shared := sfGroup.Do("admin_reload", func() (any, error) {
 		if err := rs.Reload(ctx); err != nil {
 			return nil, fmt.Errorf("failed to reload the store: %w", err)

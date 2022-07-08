@@ -28,7 +28,10 @@ import (
 
 const DriverName = "mysql"
 
-var _ storage.MutableStore = (*Store)(nil)
+var (
+	_ storage.SourceStore  = (*Store)(nil)
+	_ storage.MutableStore = (*Store)(nil)
+)
 
 func init() {
 	storage.RegisterDriver(DriverName, func(ctx context.Context, confW *config.Wrapper) (storage.Store, error) {
