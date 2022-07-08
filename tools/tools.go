@@ -12,7 +12,6 @@ import (
 	_ "github.com/cerbos/protoc-gen-go-hashpb"
 	_ "github.com/envoyproxy/protoc-gen-validate"
 	_ "github.com/fullstorydev/grpcurl/cmd/grpcurl"
-	_ "github.com/golangci/golangci-lint/cmd/golangci-lint"
 	_ "github.com/google/go-licenses"
 	_ "github.com/goreleaser/goreleaser"
 	_ "github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-grpc-gateway"
