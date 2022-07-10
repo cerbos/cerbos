@@ -123,7 +123,7 @@ $(GO_LICENCE_DETECTOR): $(TOOLS_BIN_DIR)
 	@ GOBIN=$(TOOLS_BIN_DIR) go install -modfile=$(TOOLS_MOD) go.elastic.co/go-licence-detector
 
 $(GOLANGCI_LINT): $(TOOLS_BIN_DIR)
-	@ GOBIN=$(TOOLS_BIN_DIR) go install -modfile=$(TOOLS_MOD) github.com/golangci/golangci-lint/cmd/golangci-lint
+	@ curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(TOOLS_BIN_DIR)
 
 $(GORELEASER): $(TOOLS_BIN_DIR)
 	@ GOBIN=$(TOOLS_BIN_DIR) go install -modfile=$(TOOLS_MOD) github.com/goreleaser/goreleaser
