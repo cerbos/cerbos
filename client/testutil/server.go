@@ -206,7 +206,7 @@ func startServer(conf *config.Wrapper) (*ServerInfo, error) {
 	ctx, cancelFunc := context.WithCancel(context.Background())
 
 	sb := &serverBldr{ctx: ctx, conf: conf}
-	sb.mkStore().mkAuditLog().mkAuxData().mkSchemaMgr().mkCompileMgr().mkEngine().mkServer()
+	sb.mkStore().mkAuditLog().mkAuxData().mkSchemaMgr().mkPolicyLoader().mkEngine().mkServer()
 	if sb.err != nil {
 		cancelFunc()
 		return nil, sb.err
@@ -222,17 +222,17 @@ func startServer(conf *config.Wrapper) (*ServerInfo, error) {
 }
 
 type serverBldr struct {
-	ctx        context.Context
-	conf       *config.Wrapper
-	store      storage.Store
-	auditLog   audit.Log
-	auxData    *auxdata.AuxData
-	schemaMgr  schema.Manager
-	compileMgr *compile.Manager
-	engine     *engine.Engine
-	serverConf *server.Conf
-	server     *server.Server
-	err        error
+	ctx          context.Context
+	conf         *config.Wrapper
+	store        storage.Store
+	auditLog     audit.Log
+	auxData      *auxdata.AuxData
+	schemaMgr    schema.Manager
+	policyLoader engine.PolicyLoader
+	engine       *engine.Engine
+	serverConf   *server.Conf
+	server       *server.Server
+	err          error
 }
 
 func (sb *serverBldr) mkStore() *serverBldr {
@@ -283,18 +283,28 @@ func (sb *serverBldr) mkSchemaMgr() *serverBldr {
 	return sb
 }
 
-func (sb *serverBldr) mkCompileMgr() *serverBldr {
+func (sb *serverBldr) mkPolicyLoader() *serverBldr {
 	if sb.err != nil {
 		return sb
 	}
 
-	compileConf := new(compile.Conf)
-	if err := sb.conf.GetSection(compileConf); err != nil {
-		sb.err = fmt.Errorf("failed to load compile configuration: %w", err)
+	if bs, ok := sb.store.(storage.BinaryStore); ok {
+		sb.policyLoader = bs
 		return sb
 	}
 
-	sb.compileMgr = compile.NewManagerFromConf(sb.ctx, compileConf, sb.store, sb.schemaMgr)
+	if ss, ok := sb.store.(storage.SourceStore); ok {
+		compileConf := new(compile.Conf)
+		if err := sb.conf.GetSection(compileConf); err != nil {
+			sb.err = fmt.Errorf("failed to load compile configuration: %w", err)
+			return sb
+		}
+
+		sb.policyLoader = compile.NewManagerFromConf(sb.ctx, compileConf, ss, sb.schemaMgr)
+		return sb
+	}
+
+	sb.err = server.ErrInvalidStore
 	return sb
 }
 
@@ -310,9 +320,9 @@ func (sb *serverBldr) mkEngine() *serverBldr {
 	}
 
 	sb.engine = engine.NewFromConf(sb.ctx, engineConf, engine.Components{
-		CompileMgr: sb.compileMgr,
-		SchemaMgr:  sb.schemaMgr,
-		AuditLog:   sb.auditLog,
+		PolicyLoader: sb.policyLoader,
+		SchemaMgr:    sb.schemaMgr,
+		AuditLog:     sb.auditLog,
 	})
 
 	return sb

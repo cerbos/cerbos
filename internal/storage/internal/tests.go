@@ -18,9 +18,12 @@ import (
 // MutateStoreFn points to a function which mutates the store (ex: add, delete a policy).
 type MutateStoreFn func() error
 
-func TestSuiteReloadable(store storage.ReloadableStore, addFn, deleteFn MutateStoreFn) func(*testing.T) {
+func TestSuiteReloadable(store storage.Store, addFn, deleteFn MutateStoreFn) func(*testing.T) {
 	//nolint:thelper
 	return func(t *testing.T) {
+		r, ok := store.(storage.Reloadable)
+		require.True(t, ok, "Store is not reloadable")
+
 		policies, err := store.ListPolicyIDs(context.Background())
 		require.NoError(t, err)
 		require.Len(t, policies, 0)
@@ -32,7 +35,7 @@ func TestSuiteReloadable(store storage.ReloadableStore, addFn, deleteFn MutateSt
 		require.NoError(t, err)
 		require.Len(t, policies, 0)
 
-		err = store.Reload(context.Background())
+		err = r.Reload(context.Background())
 		require.NoError(t, err)
 
 		policies, err = store.ListPolicyIDs(context.Background())
@@ -42,7 +45,7 @@ func TestSuiteReloadable(store storage.ReloadableStore, addFn, deleteFn MutateSt
 		err = deleteFn()
 		require.NoError(t, err)
 
-		err = store.Reload(context.Background())
+		err = r.Reload(context.Background())
 		require.NoError(t, err)
 
 		policies, err = store.ListPolicyIDs(context.Background())

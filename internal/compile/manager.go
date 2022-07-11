@@ -31,13 +31,13 @@ const (
 
 type Manager struct {
 	log         *zap.SugaredLogger
-	store       storage.Store
+	store       storage.SourceStore
 	schemaMgr   schema.Manager
 	updateQueue chan storage.Event
 	cache       gcache.Cache
 }
 
-func NewManager(ctx context.Context, store storage.Store, schemaMgr schema.Manager) (*Manager, error) {
+func NewManager(ctx context.Context, store storage.SourceStore, schemaMgr schema.Manager) (*Manager, error) {
 	conf := &Conf{}
 	if err := config.GetSection(conf); err != nil {
 		return nil, err
@@ -46,11 +46,11 @@ func NewManager(ctx context.Context, store storage.Store, schemaMgr schema.Manag
 	return NewManagerFromConf(ctx, conf, store, schemaMgr), nil
 }
 
-func NewManagerFromDefaultConf(ctx context.Context, store storage.Store, schemaMgr schema.Manager) *Manager {
+func NewManagerFromDefaultConf(ctx context.Context, store storage.SourceStore, schemaMgr schema.Manager) *Manager {
 	return NewManagerFromConf(ctx, DefaultConf(), store, schemaMgr)
 }
 
-func NewManagerFromConf(ctx context.Context, conf *Conf, store storage.Store, schemaMgr schema.Manager) *Manager {
+func NewManagerFromConf(ctx context.Context, conf *Conf, store storage.SourceStore, schemaMgr schema.Manager) *Manager {
 	c := &Manager{
 		log:         zap.S().Named("compiler"),
 		store:       store,
@@ -180,7 +180,7 @@ func (c *Manager) evict(modID namer.ModuleID) {
 	c.cache.Remove(modID)
 }
 
-func (c *Manager) Get(ctx context.Context, modID namer.ModuleID) (*runtimev1.RunnablePolicySet, error) {
+func (c *Manager) GetPolicySet(ctx context.Context, modID namer.ModuleID) (*runtimev1.RunnablePolicySet, error) {
 	rps, err := c.cache.GetIFPresent(modID)
 	if err == nil {
 		cacheHit()

@@ -39,7 +39,10 @@ import (
 
 const DriverName = "blob"
 
-var _ storage.Store = (*Store)(nil)
+var (
+	_ storage.SourceStore = (*Store)(nil)
+	_ storage.Reloadable  = (*Store)(nil)
+)
 
 var ErrUnsupportedBucketScheme = errors.New("currently only \"s3\" and \"gs\" bucket URL schemes are supported")
 

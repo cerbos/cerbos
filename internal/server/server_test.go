@@ -49,9 +49,9 @@ func TestServer(t *testing.T) {
 	schemaMgr := schema.NewFromConf(ctx, store, schema.NewConf(schema.EnforcementReject))
 
 	eng, err := engine.New(ctx, engine.Components{
-		CompileMgr: compile.NewManagerFromDefaultConf(ctx, store, schemaMgr),
-		SchemaMgr:  schemaMgr,
-		AuditLog:   auditLog,
+		PolicyLoader: compile.NewManagerFromDefaultConf(ctx, store, schemaMgr),
+		SchemaMgr:    schemaMgr,
+		AuditLog:     auditLog,
 	})
 	require.NoError(t, err)
 
@@ -175,9 +175,9 @@ func TestAdminService(t *testing.T) {
 	schemaMgr := schema.NewFromConf(ctx, store, schema.NewConf(schema.EnforcementReject))
 
 	eng, err := engine.New(ctx, engine.Components{
-		CompileMgr: compile.NewManagerFromDefaultConf(ctx, store, schemaMgr),
-		SchemaMgr:  schemaMgr,
-		AuditLog:   auditLog,
+		PolicyLoader: compile.NewManagerFromDefaultConf(ctx, store, schemaMgr),
+		SchemaMgr:    schemaMgr,
+		AuditLog:     auditLog,
 	})
 	require.NoError(t, err)
 
