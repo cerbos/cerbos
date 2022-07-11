@@ -45,7 +45,7 @@ require (
 	github.com/lestrrat-go/httprc v1.0.2
 	github.com/lestrrat-go/jwx/v2 v2.0.3
 	github.com/mattn/go-isatty v0.0.14
-	github.com/minio/minio-go/v7 v7.0.30
+	github.com/minio/minio-go/v7 v7.0.31
 	github.com/oklog/ulid/v2 v2.0.2
 	github.com/olekukonko/tablewriter v0.0.5
 	github.com/ory/dockertest/v3 v3.9.1
@@ -67,12 +67,12 @@ require (
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.32.0
 	go.opentelemetry.io/contrib/propagators/autoprop v0.0.0-20220603191935-427146bc07f1
 	go.opentelemetry.io/contrib/propagators/b3 v1.7.0
-	go.opentelemetry.io/otel v1.7.0
+	go.opentelemetry.io/otel v1.8.0
 	go.opentelemetry.io/otel/bridge/opencensus v0.30.0
 	go.opentelemetry.io/otel/exporters/jaeger v1.7.0
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc v1.7.0
 	go.opentelemetry.io/otel/sdk v1.7.0
-	go.opentelemetry.io/otel/trace v1.7.0
+	go.opentelemetry.io/otel/trace v1.8.0
 	go.uber.org/automaxprocs v1.5.1
 	go.uber.org/config v1.4.0
 	go.uber.org/multierr v1.8.0
