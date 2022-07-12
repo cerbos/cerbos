@@ -10,8 +10,8 @@ import (
 )
 
 func cerbos_bundle_v1_Manifest_hashpb_sum(m *Manifest, hasher hash.Hash, ignore map[string]struct{}) {
-	if _, ok := ignore["cerbos.bundle.v1.Manifest.version"]; !ok {
-		_, _ = hasher.Write(protowire.AppendString(nil, m.Version))
+	if _, ok := ignore["cerbos.bundle.v1.Manifest.api_version"]; !ok {
+		_, _ = hasher.Write(protowire.AppendString(nil, m.ApiVersion))
 
 	}
 	if _, ok := ignore["cerbos.bundle.v1.Manifest.policy_index"]; !ok {
@@ -38,5 +38,22 @@ func cerbos_bundle_v1_Manifest_hashpb_sum(m *Manifest, hasher hash.Hash, ignore 
 
 			}
 		}
+	}
+	if _, ok := ignore["cerbos.bundle.v1.Manifest.meta"]; !ok {
+		if m.Meta != nil {
+			cerbos_bundle_v1_Meta_hashpb_sum(m.Meta, hasher, ignore)
+		}
+
+	}
+}
+
+func cerbos_bundle_v1_Meta_hashpb_sum(m *Meta, hasher hash.Hash, ignore map[string]struct{}) {
+	if _, ok := ignore["cerbos.bundle.v1.Meta.identifier"]; !ok {
+		_, _ = hasher.Write(protowire.AppendString(nil, m.Identifier))
+
+	}
+	if _, ok := ignore["cerbos.bundle.v1.Meta.source"]; !ok {
+		_, _ = hasher.Write(protowire.AppendString(nil, m.Source))
+
 	}
 }
