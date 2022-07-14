@@ -8,13 +8,13 @@ import (
 	"reflect"
 	"strings"
 
+	"github.com/google/cel-go/cel"
 	"github.com/google/cel-go/checker/decls"
 	"github.com/google/cel-go/common/operators"
 	"github.com/google/cel-go/common/overloads"
 	"github.com/google/cel-go/common/types"
 	"github.com/google/cel-go/common/types/ref"
 	"github.com/google/cel-go/common/types/traits"
-	"github.com/google/cel-go/interpreter/functions"
 	exprpb "google.golang.org/genproto/googleapis/api/expr/v1alpha1"
 )
 
@@ -37,22 +37,34 @@ var (
 		traits.SizerType,
 		traits.ReceiverType)
 
-	HierarchyDeclrations = []*exprpb.Decl{
-		decls.NewFunction(hierarchyFn,
-			decls.NewOverload(fmt.Sprintf("%s_string", hierarchyFn),
-				[]*exprpb.Type{decls.String},
-				hierarchyTypeExpr,
-			),
-			decls.NewOverload(fmt.Sprintf("%s_string_string", hierarchyFn),
-				[]*exprpb.Type{decls.String, decls.String},
-				hierarchyTypeExpr,
-			),
-			decls.NewOverload(fmt.Sprintf("%s_stringarray", hierarchyFn),
-				[]*exprpb.Type{decls.NewListType(decls.String)},
-				hierarchyTypeExpr,
-			),
+	hierarchyCelType = cel.ObjectType(hierarchyTypeName)
+
+	HierarchyFunc = cel.Function(hierarchyFn,
+		cel.Overload(
+			fmt.Sprintf("%s_string", hierarchyFn),
+			[]*cel.Type{cel.StringType},
+			hierarchyCelType,
+			cel.UnaryBinding(unaryHierarchyFnImpl),
 		),
 
+		cel.Overload(
+			fmt.Sprintf("%s_string_string", hierarchyFn),
+			[]*cel.Type{cel.StringType, cel.StringType},
+			hierarchyCelType,
+			cel.BinaryBinding(binaryHierarchyFnImpl),
+		),
+
+		cel.Overload(
+			fmt.Sprintf("%s_stringarray", hierarchyFn),
+			[]*cel.Type{cel.ListType(cel.StringType)},
+			hierarchyCelType,
+			cel.UnaryBinding(unaryHierarchyFnImpl),
+		),
+	)
+
+	hierarchyTypeExpr = decls.NewObjectType(hierarchyTypeName)
+
+	HierarchyDeclrations = []*exprpb.Decl{
 		decls.NewFunction(overloadAncestorOf,
 			decls.NewInstanceOverload(overloadAncestorOf,
 				[]*exprpb.Type{hierarchyTypeExpr, hierarchyTypeExpr},
@@ -117,47 +129,6 @@ var (
 		),
 	}
 
-	HierarchyOverload = &functions.Overload{
-		Operator: hierarchyFn,
-		Unary: func(v ref.Val) ref.Val {
-			switch hv := v.(type) {
-			case Hierarchy:
-				return hv
-			case types.String:
-				return Hierarchy(strings.Split(string(hv), hierarchyDelim))
-			case traits.Lister:
-				hieraEls, err := hv.ConvertToNative(reflect.SliceOf(reflect.TypeOf("")))
-				if err != nil {
-					return types.NewErr("failed to convert list to string slice: %v", err)
-				}
-
-				h, ok := hieraEls.([]string)
-				if !ok {
-					return types.NewErr("expected string slice but got %T", hieraEls)
-				}
-
-				return Hierarchy(h)
-			default:
-				return types.MaybeNoSuchOverloadErr(v)
-			}
-		},
-		Binary: func(v, delim ref.Val) ref.Val {
-			vStr, ok := v.(types.String)
-			if !ok {
-				return types.NoSuchOverloadErr()
-			}
-
-			delimStr, ok := delim.(types.String)
-			if !ok {
-				return types.NoSuchOverloadErr()
-			}
-
-			return Hierarchy(strings.Split(string(vStr), string(delimStr)))
-		},
-	}
-
-	hierarchyTypeExpr = decls.NewAbstractType(hierarchyTypeName)
-
 	hierarchyOneArgOverloads = map[string]func(Hierarchy, ref.Val) ref.Val{
 		overloadAncestorOf:        hierarchyAncestorOf,
 		overloadCommonAncestors:   hierarchyCommonAncestors,
@@ -168,6 +139,43 @@ var (
 		overloadSiblingOf:         hierarchySiblingOf,
 	}
 )
+
+func unaryHierarchyFnImpl(v ref.Val) ref.Val {
+	switch hv := v.(type) {
+	case Hierarchy:
+		return hv
+	case types.String:
+		return Hierarchy(strings.Split(string(hv), hierarchyDelim))
+	case traits.Lister:
+		hieraEls, err := hv.ConvertToNative(reflect.SliceOf(reflect.TypeOf("")))
+		if err != nil {
+			return types.NewErr("failed to convert list to string slice: %v", err)
+		}
+
+		h, ok := hieraEls.([]string)
+		if !ok {
+			return types.NewErr("expected string slice but got %T", hieraEls)
+		}
+
+		return Hierarchy(h)
+	default:
+		return types.MaybeNoSuchOverloadErr(v)
+	}
+}
+
+func binaryHierarchyFnImpl(v, delim ref.Val) ref.Val {
+	vStr, ok := v.(types.String)
+	if !ok {
+		return types.NoSuchOverloadErr()
+	}
+
+	delimStr, ok := delim.(types.String)
+	if !ok {
+		return types.NoSuchOverloadErr()
+	}
+
+	return Hierarchy(strings.Split(string(vStr), string(delimStr)))
+}
 
 // Hierarchy is a type that represents a dot-separated hierarchy such as a.b.c.d.
 type Hierarchy []string

@@ -49,31 +49,65 @@ func CerbosCELLib() cel.EnvOption {
 type cerbosLib struct{}
 
 func (clib cerbosLib) CompileOptions() []cel.EnvOption {
-	listType := decls.NewListType(decls.NewTypeParamType("A"))
+	genericListType := cel.ListType(cel.TypeParamType("A"))
 
-	hasIntersectionOverload := decls.NewParameterizedOverload(
-		hasIntersectionFn,
-		[]*exprpb.Type{listType, listType},
-		decls.Bool,
-		[]string{"A"},
-	)
-
-	isSubsetOverload := decls.NewParameterizedInstanceOverload(
-		isSubsetFn,
-		[]*exprpb.Type{listType, listType},
-		decls.Bool,
-		[]string{"A"},
-	)
-
-	decls := []*exprpb.Decl{
-		decls.NewFunction(inIPAddrRangeFn,
-			decls.NewInstanceOverload(
-				fmt.Sprintf("%s_string", inIPAddrRangeFn),
-				[]*exprpb.Type{decls.String, decls.String},
-				decls.Bool,
+	// options for set operations like intersect and except
+	setOpFuncOverloads := func(name string, fn functions.BinaryOp) []cel.FunctionOpt {
+		return []cel.FunctionOpt{
+			cel.Overload(
+				fmt.Sprintf("%s_overload", name),
+				[]*cel.Type{genericListType, genericListType},
+				genericListType,
+				cel.BinaryBinding(fn),
 			),
-		),
+			cel.MemberOverload(
+				fmt.Sprintf("%s_member_overload", name),
+				[]*cel.Type{genericListType, genericListType},
+				genericListType,
+				cel.BinaryBinding(fn),
+			),
+		}
+	}
 
+	// options for set checks like isIntersection and isSubset
+	setCheckFuncOverloads := func(name string, fn functions.BinaryOp) []cel.FunctionOpt {
+		return []cel.FunctionOpt{
+			cel.Overload(
+				fmt.Sprintf("%s_overload", name),
+				[]*cel.Type{genericListType, genericListType},
+				cel.BoolType,
+				cel.BinaryBinding(fn),
+			),
+			cel.MemberOverload(
+				fmt.Sprintf("%s_member_overload", name),
+				[]*cel.Type{genericListType, genericListType},
+				cel.BoolType,
+				cel.BinaryBinding(fn),
+			),
+		}
+	}
+
+	return []cel.EnvOption{
+		cerbosLibDecls(),
+		cel.Types(customtypes.HierarchyType),
+		cel.Function(exceptFn, setOpFuncOverloads(exceptFn, exceptList)...),
+		cel.Function(hasIntersectionFn, setCheckFuncOverloads(hasIntersectionFn, hasIntersection)...),
+		cel.Function(hasIntersectionFnDeprecated, setCheckFuncOverloads(hasIntersectionFnDeprecated, hasIntersection)...),
+		cel.Function(inIPAddrRangeFn, cel.MemberOverload(
+			fmt.Sprintf("%s_string", inIPAddrRangeFn),
+			[]*cel.Type{cel.StringType, cel.StringType},
+			cel.BoolType,
+			cel.BinaryBinding(callInStringStringOutBool(clib.inIPAddrRangeFunc)),
+		)),
+		cel.Function(intersectFn, setOpFuncOverloads(intersectFn, intersect)...),
+		cel.Function(isSubsetFn, setCheckFuncOverloads(isSubsetFn, isSubset)...),
+		cel.Function(isSubsetFnDeprecated, setCheckFuncOverloads(isSubsetFnDeprecated, isSubset)...),
+		customtypes.HierarchyFunc,
+	}
+}
+
+func cerbosLibDecls() cel.EnvOption {
+	decls := []*exprpb.Decl{
 		decls.NewFunction(nowFn,
 			decls.NewOverload(
 				nowFn,
@@ -89,71 +123,15 @@ func (clib cerbosLib) CompileOptions() []cel.EnvOption {
 				decls.Duration,
 			),
 		),
-
-		decls.NewFunction(exceptFn,
-			decls.NewParameterizedInstanceOverload(
-				exceptFn,
-				[]*exprpb.Type{listType, listType},
-				listType,
-				[]string{"A"},
-			),
-		),
-
-		decls.NewFunction(isSubsetFnDeprecated, isSubsetOverload),
-		decls.NewFunction(isSubsetFn, isSubsetOverload),
-
-		decls.NewFunction(hasIntersectionFnDeprecated, hasIntersectionOverload),
-		decls.NewFunction(hasIntersectionFn, hasIntersectionOverload),
-
-		decls.NewFunction(intersectFn,
-			decls.NewParameterizedOverload(
-				intersectFn,
-				[]*exprpb.Type{listType, listType},
-				listType,
-				[]string{"A"},
-			),
-		),
 	}
 
 	decls = append(decls, customtypes.HierarchyDeclrations...)
 
-	return []cel.EnvOption{
-		cel.Declarations(decls...),
-		cel.Types(customtypes.HierarchyType),
-	}
+	return cel.Declarations(decls...)
 }
 
 func (clib cerbosLib) ProgramOptions() []cel.ProgramOption {
-	return []cel.ProgramOption{
-		cel.Functions(
-			&functions.Overload{
-				Operator: inIPAddrRangeFn,
-				Binary:   callInStringStringOutBool(clib.inIPAddrRangeFunc),
-			},
-
-			&functions.Overload{
-				Operator: hasIntersectionFn,
-				Binary:   hasIntersection,
-			},
-
-			&functions.Overload{
-				Operator: intersectFn,
-				Binary:   intersect,
-			},
-
-			&functions.Overload{
-				Operator: isSubsetFn,
-				Binary:   isSubset,
-			},
-
-			&functions.Overload{
-				Operator: exceptFn,
-				Binary:   exceptList,
-			},
-
-			customtypes.HierarchyOverload,
-		),
-	}
+	return nil
 }
 
 // Eval returns the result of an evaluation of the ast and environment against the input vars,
@@ -178,21 +156,32 @@ func Eval(env *cel.Env, ast *cel.Ast, vars any, opts ...cel.ProgramOption) (ref.
 func program(env *cel.Env, ast *cel.Ast, opts ...cel.ProgramOption) (cel.Program, error) {
 	now := time.Now()
 
-	opts = append(opts, cel.Functions(
-		&functions.Overload{
-			Operator: nowFn,
-			Function: callInNothingOutTimestamp(func() time.Time {
-				return now
-			}),
-		},
+	newEnv, err := env.Extend(
+		cel.Function(nowFn,
+			cel.Overload(nowFn,
+				nil,
+				cel.TimestampType,
+				cel.FunctionBinding(callInNothingOutTimestamp(func() time.Time { return now })),
+			),
+		),
+		cel.Function(timeSinceFn,
+			cel.Overload(fmt.Sprintf("%s_overload", timeSinceFn),
+				[]*cel.Type{cel.TimestampType},
+				cel.DurationType,
+				cel.UnaryBinding(callInTimestampOutDuration(now.Sub)),
+			),
+			cel.MemberOverload(fmt.Sprintf("%s_member_overload", timeSinceFn),
+				[]*cel.Type{cel.TimestampType},
+				cel.DurationType,
+				cel.UnaryBinding(callInTimestampOutDuration(now.Sub)),
+			),
+		),
+	)
+	if err != nil {
+		return nil, fmt.Errorf("failed to extend environment: %w", err)
+	}
 
-		&functions.Overload{
-			Operator: timeSinceFn,
-			Unary:    callInTimestampOutDuration(now.Sub),
-		},
-	))
-
-	return env.Program(ast, opts...)
+	return newEnv.Program(ast, opts...)
 }
 
 // hashable checks whether the type is hashable, i.e. can be used in a Go map.
