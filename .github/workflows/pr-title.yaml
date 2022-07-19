@@ -32,13 +32,11 @@ jobs:
         with:
           types: |
             chore
-            ci
             docs
             enhancement
             feat
             fix
             revert
-            test
           requireScope: false
           subjectPattern: '^[A-Z].+$'
           subjectPatternError: |
