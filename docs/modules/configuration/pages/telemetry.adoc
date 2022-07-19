@@ -1,4 +1,4 @@
-include::partial$attributes.adoc[]
+include::ROOT:partial$attributes.adoc[]
 
 = Telemetry
 

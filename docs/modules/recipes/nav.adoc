@@ -1,4 +1,4 @@
-.Tutorials
+.Recipes
 * link:https://book.cerbos.dev[Cerbos guide]
 * Example Apps
 ** xref:photo-share/index.adoc[Photo-share application]

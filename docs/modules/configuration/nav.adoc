@@ -6,3 +6,4 @@
 * xref:server.adoc[Server]
 * xref:storage.adoc[Storage]
 * xref:tracing.adoc[Tracing]
+* xref:telemetry.adoc[Telemetry]

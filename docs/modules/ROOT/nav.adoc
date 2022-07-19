@@ -1,10 +1,19 @@
 xref:index.adoc[Cerbos]
 
 .Getting started
-* xref:quickstart.adoc[Quickstart]
+* xref:what-is-cerbos.adoc[What is Cerbos?]
+* Tutorial
+** xref:tutorial/00_intro.adoc[Intro]
+** xref:tutorial/01_running-locally.adoc[Running locally]
+** xref:tutorial/02_resource-definition.adoc[Resource Definition]
+** xref:tutorial/03_calling-cerbos.adoc[Calling Cerbos]
+** xref:tutorial/04_testing-policies.adoc[Testing Policies]
+** xref:tutorial/05_adding-conditions.adoc[Adding Conditions]
+** xref:tutorial/06_derived-roles.adoc[Derived Roles]
+** xref:tutorial/07_principal-policies.adoc[Principal Policies]
+** xref:tutorial/08_attribute-schema.adoc[Attribute Schema]
+** xref:tutorial/09_integrating-cerbos.adoc[Integrating Cerbos]
 * Installation
 ** xref:installation/binary.adoc[Binaries]
 ** xref:installation/container.adoc[Container]
 ** xref:installation/helm.adoc[Helm chart]
-* xref:usage.adoc[Usage]
-* xref:telemetry.adoc[Telemetry]
