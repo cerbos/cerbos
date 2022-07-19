@@ -24,6 +24,7 @@ Cerbos helps you super-charge your authorization implementation by writing conte
     * [Java](https://github.com/cerbos/cerbos-sdk-java)
     * [JavaScript](https://github.com/cerbos/cerbos-sdk-javascript)
     * [.NET](https://github.com/cerbos/cerbos-sdk-net)
+    * [PHP](https://github.com/cerbos/cerbos-sdk-php)
     * [Python](https://github.com/cerbos/cerbos-sdk-python)
     * [Ruby](https://github.com/cerbos/cerbos-sdk-ruby)
     * [Rust](https://github.com/cerbos/cerbos-sdk-rust)
@@ -216,4 +217,3 @@ We collect anonymous usage data to help us improve the product. You can opt out 
 Stargazers
 -----------
 [![Stargazers repo roster for cerbos/cerbos](https://reporoster.com/stars/cerbos/cerbos)](https://github.com/cerbos/cerbos)
-
