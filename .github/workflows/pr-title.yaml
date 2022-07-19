@@ -7,6 +7,21 @@ on:
       - edited
       - synchronize
 jobs:
+  label:
+    name: Apply PR labels
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v3
+
+      - name: Apply PR labels
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run:
+          hack/scripts/apply-pr-labels.sh "${{ github.event.number }}" "${{ github.event.pull_request.title }}"
+
   validate:
     name: Validate PR title
     runs-on: ubuntu-latest
@@ -17,13 +32,11 @@ jobs:
         with:
           types: |
             chore
-            ci
             docs
             enhancement
             feat
             fix
             revert
-            test
           requireScope: false
           subjectPattern: '^[A-Z].+$'
           subjectPatternError: |
