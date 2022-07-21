@@ -2,6 +2,7 @@ xref:index.adoc[Cerbos]
 
 .Getting started
 * xref:what-is-cerbos.adoc[What is Cerbos?]
+* xref:quickstart.adoc[Quickstart]
 * Tutorial
 ** xref:tutorial/00_intro.adoc[Intro]
 ** xref:tutorial/01_running-locally.adoc[Running locally]
