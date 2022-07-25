@@ -1,0 +1,121 @@
+---
+name: ContactTestSuite
+description: Tests for verifying the contact resource policy
+
+principals:
+  admin:
+    id: admin
+    roles:
+      - admin
+
+  dpo1:
+    id: dpo1
+    roles:
+      - user
+
+  user1:
+    id: user1
+    roles:
+      - user
+
+  user2:
+    id: user2
+    roles:
+      - user
+
+resources:
+  contact1:
+    kind: contact
+    id: contact1
+    attr:
+      ownerId: user1
+
+  contact2:
+    kind: contact
+    id: contact2
+    attr:
+      ownerId: user2
+
+tests:
+  - name: Contact CRUD Actions
+    input:
+      principals:
+        - admin
+        - dpo1
+        - user1
+        - user2
+
+      resources:
+        - contact1
+        - contact2
+
+      actions:
+        - create
+        - read
+        - update
+        - delete
+
+    expected:
+      - principal: admin
+        resource: contact1
+        actions:
+          create: EFFECT_ALLOW
+          read: EFFECT_ALLOW
+          update: EFFECT_ALLOW
+          delete: EFFECT_ALLOW
+
+      - principal: admin
+        resource: contact2
+        actions:
+          create: EFFECT_ALLOW
+          read: EFFECT_ALLOW
+          update: EFFECT_ALLOW
+          delete: EFFECT_ALLOW
+
+      - principal: dpo1
+        resource: contact1
+        actions:
+          create: EFFECT_ALLOW
+          read: EFFECT_ALLOW
+          update: EFFECT_DENY
+          delete: EFFECT_ALLOW
+
+      - principal: dpo1
+        resource: contact2
+        actions:
+          create: EFFECT_ALLOW
+          read: EFFECT_ALLOW
+          update: EFFECT_DENY
+          delete: EFFECT_ALLOW
+
+      - principal: user1
+        resource: contact1
+        actions:
+          create: EFFECT_ALLOW
+          read: EFFECT_ALLOW
+          update: EFFECT_ALLOW
+          delete: EFFECT_ALLOW
+
+      - principal: user1
+        resource: contact2
+        actions:
+          create: EFFECT_ALLOW
+          read: EFFECT_ALLOW
+          update: EFFECT_DENY
+          delete: EFFECT_DENY
+
+      - principal: user2
+        resource: contact1
+        actions:
+          create: EFFECT_ALLOW
+          read: EFFECT_ALLOW
+          update: EFFECT_DENY
+          delete: EFFECT_DENY
+
+      - principal: user2
+        resource: contact2
+        actions:
+          create: EFFECT_ALLOW
+          read: EFFECT_ALLOW
+          update: EFFECT_ALLOW
+          delete: EFFECT_ALLOW

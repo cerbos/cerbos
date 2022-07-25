@@ -1,0 +1,27 @@
+---
+apiVersion: api.cerbos.dev/v1
+resourcePolicy:
+  version: "default"
+  resource: "contact"
+  importDerivedRoles:
+    - cerbforce_derived_roles
+  rules:
+    - actions:
+        - create
+        - read
+      effect: EFFECT_ALLOW
+      roles:
+        - user
+
+    - actions:
+        - update
+        - delete
+      effect: EFFECT_ALLOW
+      derivedRoles:
+        - owner
+
+    - actions:
+        - "*"
+      effect: EFFECT_ALLOW
+      roles:
+        - admin
