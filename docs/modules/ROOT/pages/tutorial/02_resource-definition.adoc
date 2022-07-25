@@ -66,19 +66,19 @@ To simplify things further, admins to be able to do every action so a special `*
 
 [source,yaml]
 ----
-{{#include ./cerbos/policies/user.yaml}}  
+include::example$tutorial/03-resource-definition/cerbos/policies/user.yaml[]
 ----
 
 The `contact` and `company` resources have a similar structure at this stage and can be modeled as so:
 
 [source,yaml]
 ----
-{{#include ./cerbos/policies/contact.yaml}}
+include::example$tutorial/03-resource-definition/cerbos/policies/contact.yaml[]
 ----
 
 [source,yaml]
 ----
-{{#include ./cerbos/policies/company.yaml}}
+include::example$tutorial/03-resource-definition/cerbos/policies/company.yaml[]
 ----
 
 == Validating policies

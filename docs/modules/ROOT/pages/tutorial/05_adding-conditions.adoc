@@ -100,5 +100,5 @@ Now that you have a conditional policy, you can add these as test cases in the u
 
 [source,yaml]
 ----
-{{#include ./cerbos/tests/user_test.yaml}}
+include::example$tutorial/06-adding-conditions/cerbos/tests/user_test.yaml[]
 ----

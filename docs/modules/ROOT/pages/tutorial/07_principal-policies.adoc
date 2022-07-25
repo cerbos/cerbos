@@ -10,7 +10,7 @@ In the case of Cerbforce there is a Data Protection Officer (DPO) that handles a
 
 [source,yaml]
 ----
-{{#include ./cerbos/policies/dpo.yaml}}
+include::example$tutorial/08-principal-policies/cerbos/policies/dpo.yaml[]
 ----
 
 With this policy in place, when an authorization check is made with the principal ID of `dpo1` the delete action on a `contact` resource is overridden to be allowed.

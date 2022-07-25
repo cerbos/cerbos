@@ -18,14 +18,14 @@ For the contact resource the schema looks like the following:
 
 [source,json]
 ----
-{{#include ./cerbos/policies/_schemas/contact.json}}
+include::example$tutorial/09-attribute-schema/cerbos/policies/_schemas/contact.json[]
 ----
 
 Once defined, it is then linked to the resource via adding a reference in the policy:
 
 [source,yaml]
 ----
-{{#include ./cerbos/policies/contact.yaml}}
+include::example$tutorial/09-attribute-schema/cerbos/policies/contact.yaml[]
 ----
 
 The same can be done with attributes of a principal - you can find out more in xref:policies:schemas.adoc[the documentation].
@@ -36,7 +36,7 @@ Validating the request against the schema is done at request time by the server 
 
 [source,yaml]
 ----
-{{#include ./cerbos/config/conf.yaml}}
+include::example$tutorial/09-attribute-schema/cerbos/config/conf.yaml[]
 ----
 
 With this now in place, any request that is made to check authorization of a `contact` resource is rejected if the attributes are not provided or of the wrong type:

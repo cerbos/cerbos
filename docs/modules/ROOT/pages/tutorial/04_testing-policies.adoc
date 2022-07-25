@@ -14,7 +14,7 @@ As an example, the `contact` policy states that a `user` can create, read and up
 
 [source,yaml]
 ----
-{{#include ./cerbos/tests/contact_test.yaml}}
+include::example$tutorial/05-testing-policies/cerbos/tests/contact_test.yaml[]
 ----
 
 With this defined, you can now extend the compile command to also run the tests for example:
