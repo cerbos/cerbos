@@ -42,8 +42,8 @@ require (
 	github.com/jwalton/gchalk v1.3.0
 	github.com/jwalton/go-supportscolor v1.1.0
 	github.com/kavu/go_reuseport v1.5.0
-	github.com/lestrrat-go/httprc v1.0.2
-	github.com/lestrrat-go/jwx/v2 v2.0.3
+	github.com/lestrrat-go/httprc v1.0.4
+	github.com/lestrrat-go/jwx/v2 v2.0.4
 	github.com/mattn/go-isatty v0.0.14
 	github.com/minio/minio-go/v7 v7.0.31
 	github.com/oklog/ulid/v2 v2.1.0
@@ -146,7 +146,7 @@ require (
 	github.com/go-logfmt/logfmt v0.5.0 // indirect
 	github.com/go-logr/logr v1.2.3 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
-	github.com/goccy/go-json v0.9.7 // indirect
+	github.com/goccy/go-json v0.9.10 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/golang-sql/civil v0.0.0-20190719163853-cb61b32ac6fe // indirect
 	github.com/golang-sql/sqlexp v0.1.0 // indirect
