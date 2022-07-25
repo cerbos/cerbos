@@ -2,7 +2,7 @@ include::partial$attributes.adoc[]
 
 = Adding conditions
 
-NOTE: The policies for this section can be found https://github.com/cerbos/tutorial/tree/main/src/06-adding-conditions/cerbos[on Github].
+NOTE: The policies for this section can be found https://github.com/Sambigeara/cerbos/tree/docs/main/docs/modules/ROOT/examples/tutorial/06-adding-conditions/cerbos[on Github].
 
 In the previous section, an RBAC policy was created that allowed anyone with a `user` role to update a user resource - this isn't what is intended as it would allow users to update other users' profiles. 
 
