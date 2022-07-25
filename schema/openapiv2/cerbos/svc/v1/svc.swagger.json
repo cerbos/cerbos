@@ -210,6 +210,7 @@
         "parameters": [
           {
             "name": "body",
+            "description": "Add/update policy request",
             "in": "body",
             "required": true,
             "schema": {
@@ -246,6 +247,7 @@
         "parameters": [
           {
             "name": "body",
+            "description": "Add/update policy request",
             "in": "body",
             "required": true,
             "schema": {
@@ -362,6 +364,7 @@
         "parameters": [
           {
             "name": "body",
+            "description": "Add/update schema request",
             "in": "body",
             "required": true,
             "schema": {
@@ -398,6 +401,7 @@
         "parameters": [
           {
             "name": "body",
+            "description": "Add/update schema request",
             "in": "body",
             "required": true,
             "schema": {
@@ -502,6 +506,7 @@
         "parameters": [
           {
             "name": "body",
+            "description": "PDP Request",
             "in": "body",
             "required": true,
             "schema": {
@@ -537,6 +542,7 @@
         "parameters": [
           {
             "name": "body",
+            "description": "Check resources request",
             "in": "body",
             "required": true,
             "schema": {
@@ -571,6 +577,7 @@
         "parameters": [
           {
             "name": "body",
+            "description": "PDP Request",
             "in": "body",
             "required": true,
             "schema": {
@@ -606,6 +613,7 @@
         "parameters": [
           {
             "name": "body",
+            "description": "PDP Resources Query Plan Request",
             "in": "body",
             "required": true,
             "schema": {
@@ -638,6 +646,7 @@
         "parameters": [
           {
             "name": "body",
+            "description": "Playground evaluate request",
             "in": "body",
             "required": true,
             "schema": {
@@ -670,6 +679,7 @@
         "parameters": [
           {
             "name": "body",
+            "description": "Playground proxy request",
             "in": "body",
             "required": true,
             "schema": {
@@ -702,6 +712,7 @@
         "parameters": [
           {
             "name": "body",
+            "description": "Playground test request",
             "in": "body",
             "required": true,
             "schema": {
@@ -734,6 +745,7 @@
         "parameters": [
           {
             "name": "body",
+            "description": "Playground validate request",
             "in": "body",
             "required": true,
             "schema": {
@@ -792,6 +804,7 @@
         "parameters": [
           {
             "name": "body",
+            "description": "PDP Resources Query Plan Request",
             "in": "body",
             "required": true,
             "schema": {
@@ -852,11 +865,11 @@
             "comment"
           ],
           "items": {
-            "type": "string"
+            "type": "string",
+            "uniqueItems": true
           },
           "description": "List of actions being performed on the resource.",
           "minItems": 1,
-          "uniqueItems": true,
           "required": [
             "actions"
           ]
@@ -879,11 +892,11 @@
             "comment"
           ],
           "items": {
-            "type": "string"
+            "type": "string",
+            "uniqueItems": true
           },
           "description": "List of actions being performed on the resource.",
           "minItems": 1,
-          "uniqueItems": true,
           "required": [
             "actions"
           ]
@@ -1444,12 +1457,12 @@
             "user"
           ],
           "items": {
-            "type": "string"
+            "type": "string",
+            "pattern": "^[[:word:]\\-\\.]+$",
+            "uniqueItems": true
           },
           "description": "Roles assigned to this principal from your identity management system.",
-          "pattern": "^[[:word:]\\-\\.]+$",
           "minItems": 1,
-          "uniqueItems": true,
           "required": [
             "roles"
           ]
@@ -1784,11 +1797,11 @@
             }
           ],
           "items": {
-            "$ref": "#/definitions/CheckResourceBatchRequestBatchEntry"
+            "$ref": "#/definitions/CheckResourceBatchRequestBatchEntry",
+            "uniqueItems": true
           },
           "description": "List of resources and actions.",
           "minItems": 1,
-          "uniqueItems": true,
           "required": [
             "resources"
           ]
@@ -1870,11 +1883,11 @@
             "comment"
           ],
           "items": {
-            "type": "string"
+            "type": "string",
+            "uniqueItems": true
           },
           "description": "List of actions being performed on the set of resources.",
           "minItems": 1,
-          "uniqueItems": true,
           "required": [
             "actions"
           ]
@@ -2043,11 +2056,11 @@
             }
           ],
           "items": {
-            "$ref": "#/definitions/CheckResourcesRequestResourceEntry"
+            "$ref": "#/definitions/CheckResourcesRequestResourceEntry",
+            "uniqueItems": true
           },
           "description": "List of resources and actions.",
           "minItems": 1,
-          "uniqueItems": true,
           "required": [
             "resources"
           ]
@@ -2556,12 +2569,12 @@
         "actions": {
           "type": "array",
           "items": {
-            "type": "string"
+            "type": "string",
+            "uniqueItems": true
           },
           "description": "List of actions being performed on the resource.",
           "maxItems": 50,
           "minItems": 1,
-          "uniqueItems": true,
           "required": [
             "actions"
           ]
