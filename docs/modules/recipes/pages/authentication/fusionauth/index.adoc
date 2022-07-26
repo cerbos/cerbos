@@ -2,6 +2,7 @@ include::ROOT:partial$attributes.adoc[]
 
 [#tutorial-auth-fusionauth]
 = Tutorial: Using Cerbos with FusionAuth
+:page-aliases: tutorials:authentication/fusionauth/index.adoc
 
 
 An example stack of integrating https://cerbos.dev[Cerbos] with an https://expressjs.com/[Express] server using https://fusionauth.com/[FusionAuth] for authentication.

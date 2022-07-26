@@ -2,6 +2,7 @@ include::ROOT:partial$attributes.adoc[]
 
 [#tutorial-photo-share]
 = Tutorial: Writing policies for a simple photo-sharing service
+:page-aliases: tutorials:photo-share/index.adoc
 
 .Getting started
 ****

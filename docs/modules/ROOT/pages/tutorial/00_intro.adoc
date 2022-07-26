@@ -1,6 +1,7 @@
 include::partial$attributes.adoc[]
 
 = Tutorial
+:page-aliases: ROOT:usage.adoc
 
 == Cerbforce
 

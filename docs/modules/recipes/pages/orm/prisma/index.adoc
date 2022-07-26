@@ -2,6 +2,7 @@ include::ROOT:partial$attributes.adoc[]
 
 [#tutorial-orm-prisma]
 = Tutorial: Using Cerbos with Prisma
+:page-aliases: tutorials:orm/prisma/index.adoc
 
 https://prisma.io[Prisma] has come onto the Node/Typescript scene recently as a new generation of ORM. With it’s strongly-typed client, schema abstraction and great documentation, it is turning into the natural choice for modern applications.
 

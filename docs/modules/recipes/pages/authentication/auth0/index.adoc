@@ -2,6 +2,7 @@ include::ROOT:partial$attributes.adoc[]
 
 [#tutorial-auth-auth0]
 = Tutorial: Using Cerbos with Auth0
+:page-aliases: tutorials:authentication/auth0/index.adoc
 
 
 An example application of integrating https://cerbos.dev[Cerbos] with an https://expressjs.com/[Express] server using https://auth0.com/[Auth0] for authentication.
