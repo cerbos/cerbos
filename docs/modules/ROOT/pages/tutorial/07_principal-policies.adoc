@@ -2,7 +2,7 @@ include::partial$attributes.adoc[]
 
 = Principal policies
 
-NOTE: The policies for this section can be found https://github.com/Sambigeara/cerbos/tree/docs/main/docs/modules/ROOT/examples/tutorial/08-principal-policies/cerbos[on Github].
+NOTE: The policies for this section can be found link:{app-github-url}/tree/docs/main/docs/modules/ROOT/examples/tutorial/08-principal-policies/cerbos[on Github].
 
 The final type of policy that Cerbos supports is a xref:policies:principal_policies.adoc[principal policy] which is a special type that allows user-specific overrides to be defined.
 

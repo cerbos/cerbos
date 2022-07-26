@@ -2,7 +2,7 @@ include::partial$attributes.adoc[]
 
 = Policy authoring
 
-NOTE: The policies for this section can be found https://github.com/Sambigeara/cerbos/tree/docs/main/docs/modules/ROOT/examples/tutorial/03-resource-definition/cerbos[on Github].
+NOTE: The policies for this section can be found link:{app-github-url}/tree/docs/main/docs/modules/ROOT/examples/tutorial/03-resource-definition/cerbos[on Github].
 
 == Authentication roles
 
