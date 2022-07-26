@@ -1,0 +1,127 @@
+include::ROOT:partial$attributes.adoc[]
+
+[#tutorial-auth-aws-cognito]
+= Tutorial: Using Cerbos with AWS Cognito
+:page-aliases: tutorials:authentication/aws-cognito/index.adoc
+
+An example application of integrating https://cerbos.dev[Cerbos] with a https://fastapi.tiangolo.com/[FastAPI] server using https://aws.amazon.com/cognito/[AWS Cognito] for authentication.
+
+image:aws-cognito-video.png[role="center-img", link="https://cerbos.dev/video/using-cerbos-with-aws-cognito"]
+
+https://cerbos.dev/video/using-cerbos-with-aws-cognito[Demo Video]
+
+== Dependencies
+
+* Python 3.10
+* Docker for running the https://docs.cerbos.dev/cerbos/latest/installation/container.html[Cerbos Policy Decision Point (PDP)]
+* A configured AWS Cognito User Pool (https://docs.aws.amazon.com/cognito/latest/developerguide/getting-started-with-cognito-user-pools.html[set-up guide])
+
+== Getting Started
+
+. Clone the repo
++
+[source,bash]
+----
+git clone git@github.com:cerbos/python-cognito-cerbos.git
+----
+
+. Start up the Cerbos PDP instance docker container. This will be called by the FastAPI app to check authorization.
++
+[source,bash]
+----
+cd cerbos
+./start.sh
+----
+
+. Install python dependencies
++
+[source,bash]
+----
+# from project root
+./pw install
+----
+
+. Set the appropriate environment variables
++
+[source,bash]
+----
+AWS_COGNITO_POOL_ID
+AWS_COGNITO_CLIENT_ID
+AWS_DEFAULT_REGION
+AWS_COGNITO_POOL_NAME
+
+# if you've configured your user pool with a client secret
+AWS_COGNITO_CLIENT_SECRET
+
+# optionally, to enable the hosted UI:
+AWS_COGNITO_HOSTED_UI_CALLBACK_URL # this needs to match the callback URL configured for the hosted UI
+AWS_COGNITO_HOSTED_UI_LOGOUT_URL
+----
+
+. Start the FastAPI dev server
++
+[source,bash]
+----
+./pw demo
+----
+
+== Cognito Configuration
+
+=== Groups
+
+This demo maps Cognito User Pool groups to Cerbos roles. The app will retrieve the groups from the access token, and use them to determine authorization.
+
+Any test users in your pool should be added to one or both of `admin` and/or `user` groups to demonstrate different access to the demo resources.
+
+== Policies
+
+This example has a simple CRUD policy in place for a resource kind of
+`contact` - like a CRM system would have. The policy file can be found
+in the `cerbos/policies` folder
+https://github.com/cerbos/python-cognito-cerbos/blob/main/cerbos/policies/contact.yaml[here].
+
+Should you wish to experiment with this policy, you can try it in the
+https://play.cerbos.dev/p/g561543292ospj7w0zOrFx7H5DzhmLu2[Cerbos Playground].
+
+The policy expects one of two roles to be set on the principal - `admin`
+and `user`. These roles are authorized as follows:
+
+[cols=",,",options="header",]
+|===
+|Action |User |Admin
+|list |Y |Y
+|read |Y |Y
+|create |Y |Y
+|update |If owner |Y
+|delete |If owner |Y
+|===
+
+This business logic is represented in Cerbos as a resource policy.
+
+[source,yaml]
+----
+---
+apiVersion: api.cerbos.dev/v1
+resourcePolicy:
+  version: default
+  resource: contact
+  rules:
+    - actions: ["read", "create"]
+      effect: EFFECT_ALLOW
+      roles:
+        - admin
+        - user
+
+    - actions: ["update", "delete"]
+      effect: EFFECT_ALLOW
+      roles:
+        - admin
+
+    - actions: ["update", "delete"]
+      effect: EFFECT_ALLOW
+      roles:
+        - user
+      condition:
+        match:
+          expr: request.resource.attr.owner == request.principal.id
+----

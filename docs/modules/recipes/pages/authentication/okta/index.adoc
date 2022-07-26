@@ -1,0 +1,161 @@
+include::ROOT:partial$attributes.adoc[]
+
+[#tutorial-auth-okta]
+= Tutorial: Using Cerbos with Okta
+:page-aliases: tutorials:authentication/okta/index.adoc
+
+An example application of integrating https://cerbos.dev[Cerbos] with an https://expressjs.com/[Express] server using https://okta.com/[Okta] for authentication.
+
+image:okta-video.png[role="center-img", link="https://cerbos.dev/video/using-cerbos-with-okta"]
+
+https://cerbos.dev/video/using-cerbos-with-okta[Demo Video]
+
+== Dependencies
+
+* Node.js
+* An https://okta.com/[Okta] account
+
+---
+For simplicity this demo is using the hosted Cerbos Demo PDP avaliable in the Playground so running the Cerbos container locally isn't required. For production use cases a deployed Cerbos PDP is required and the code updated to point to your instance. You can read more about the deployment options https://docs.cerbos.dev/cerbos/latest/deployment/index.html[here].
+---
+
+== Setup
+
+=== Install Deps
+
+. Clone the repo
++
+[source,bash]
+----
+git clone git@github.com:cerbos/express-okta-cerbos.git
+----
+
+=== Create an Okta Application
+
+In your Okta instance you need to create a new application. For this
+example we will be making use of Okta's ExpressOIDC package so the
+application's sign-in method needs to be `OIDC - OpenID Connect` and the
+application type is `Web Application`.
+
+image:okta-create-app.png[alt="Okta Create App",role="center-img"]
+
+=== Set Redirect URLs
+
+The default redirect URLs for sign-in and sign-out are correct if you
+are running this demo app on the default 8080 port. If you have chanaged
+this in your `.env` file then you will need to update accordingly.
+
+image:okta-app-settings.png[alt="Okta App Settings",role="center-img"]
+
+=== Enabling Groups in the Okta Token
+
+By default the groups the user belongs to are not passed to the
+application in the Okta token - this needs enabling as these groups will
+be passed from Okta to Cerbos for use in authorization decisions.
+
+To do this, goto _Security > API_ in the sidebar, and edit the default
+_Authorization Server_.
+
+On this page, got the _Claims_ tab and press _Add Claim_. Add a new
+claim called groups which includes the groups of the user in the ID
+token.
+
+image:okta-groups-claim.png[alt="Okta Groups Claim",role="center-img"]
+
+____
+In production you will likely want to filter this down, but for this
+example we are enabling all groups to be added to the token.
+____
+
+
+=== Create an example `admin` group.
+
+In a new Okta account the only group that exists is the _Everyone_
+group. For our demo application policies we expect users to be in
+`admin` or `user` group as this is what is checked.
+
+Under _Directory > Groups_ press _Add Group_ and create the two groups
+and add your example users to them.
+
+=== Setup Environment Variables
+
+Make a copy of the `.env.sample` file and call it `.env`. You will then
+need to populate the feilds that begin with `OKTA_` with the information
+provided in the new application you created.
+
+....
+PORT=8080
+CERBOS_HOSTNAME=https://demo-pdp.cerbos.cloud
+CERBOS_PLAYGROUND=ygW612cc9c9xXOsOZjI40ovY2LZvXf43
+OKTA_DOMAIN=
+OKTA_CLIENTID=
+OKTA_CLIENTSECRET=
+OKTA_APP_BASE_URL=http://localhost:8080
+....
+
+____
+This example is using the hosted Demo PDP of Cerbos and an example
+Playground instance. If you are running your own Cerbos PDP then update
+the `CERBOS_HOSTNAME` feild to your own instance and remove the
+`CERBOS_PLAYGROUND` feild.
+____
+
+=== Test the app
+
+Now that everything is wired up you should be able to goto
+http://localhost:8080[`http://localhost:8080`] and press the login link
+to authenticate with your Okta account.
+
+== Policies
+
+This example has a simple CRUD policy in place for a resource kind of
+`contact` - like a CRM system would have. Should you wish to experiment with this policy, you can try it in the
+https://play.cerbos.dev/p/g561543292ospj7w0zOrFx7H5DzhmLu2[Cerbos Playground].
+
+The policy expects one of two roles to be set on the principal - `admin`
+and `user`. These roles are authorized as follows:
+
+[cols=",,",options="header",]
+|===
+|Action |User |Admin
+|list |Y |Y
+|read |Y |Y
+|create |N |Y
+|update |N |Y
+|delete |N |Y
+|===
+
+== Request Flow
+
+. User access the application and clicks Login
+. User is directed to the Okta UI and authenticates
+. A token is returned back in the redirect URL to the application
+. That token is then exchanged for the user profile information
+. The user profile from Okta being stored (user Id, roles etc).
+. Any requests to the /contacts endpoints fetch the data required about the resource being accessed from the data store
+. Call the Cerbos PDP with the principal, resource and action to check the authorization and then return an error if the user is not authorized. The Cerbos package is used for this.
+[source,javascript]
+---
+const allowed = await cerbos.check({
+  principal: { //pass in the Okta user ID and groups
+    id: req.userContext.userinfo.sub,
+    roles: req.userContext.userinfo.groups,
+  },
+  resource: {
+    kind: "contact",
+    instances: {
+      //a map of the resource(s) being accessed
+      [contact.id]: {
+        attr: contact,
+      },
+    },
+  },
+  actions: ["read"], //the list of actions being performed
+});
+
+// not authorized for read action
+if (!allowed.isAuthorized(contact.id, "read")) {
+  return res.status(403).json({ error: "Unauthorized" });
+}
+---
+Implementation at this stage will be dependant on your business requirements.
