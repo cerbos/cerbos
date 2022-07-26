@@ -1,0 +1,11 @@
+---
+apiVersion: "api.cerbos.dev/v1"
+principalPolicy:
+  version: "default"
+  principal: "dpo1"
+  rules:
+    - resource: contact
+      actions:
+        - name: contact_delete
+          action: "delete"
+          effect: EFFECT_ALLOW

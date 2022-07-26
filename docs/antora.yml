@@ -9,7 +9,8 @@ nav:
   - modules/policies/nav.adoc
   - modules/configuration/nav.adoc
   - modules/deployment/nav.adoc
+  - modules/telemetry/nav.adoc
   - modules/cli/nav.adoc
-  - modules/tutorials/nav.adoc
+  - modules/recipes/nav.adoc
   - modules/releases/nav.adoc
   - modules/glossary/nav.adoc

@@ -1,0 +1,49 @@
+include::partial$attributes.adoc[]
+
+= Running locally
+
+As the developers of Cerbforce began their investigation of the system, the first step was getting a Cerbos instance up and running locally.
+
+== Container
+
+If you have Docker, you can simply use the published images. The container already ships with a default configuration that has a `disk` driver configured to look for policies mounted at `/policies`. Create an empty policy folder at `policies/`, and then run the following:
+
+[source,sh]
+----
+docker run --rm --name cerbos -t \
+  -v $(pwd)/policies:/policies \
+  -p 3592:3592 \
+  ghcr.io/cerbos/cerbos:latest server
+----
+
+== Binary
+
+Alternatively, if you don't have Docker running, you can opt to use the release binary directly which you can download from xref:ROOT:installation/binary.adoc[here].
+
+=== Config file
+
+In order to run the binary, you'll need to create a minimal server configuration file. The simplest configuration to get up and running (using a local folder for storage of policies) requires only the port and location to be set:
+
+[source,yaml]
+----
+---
+server:
+  httpListenAddr: ":3592"
+storage:
+  driver: "disk"
+  disk:
+    directory: policies
+----
+
+NOTE: You can find the full configuration schema in the xref:configuration:index.adoc[Cerbos docs].
+
+Save this file to a directory `config/conf.yaml`. You'll also need to create an empty policy folder `policies/`.
+
+Now, extract the binary and run:
+
+[source,sh]
+----
+./cerbos server --config=config/conf.yaml
+----
+
+Once started you can open `http://localhost:3592` to see the API documentation.

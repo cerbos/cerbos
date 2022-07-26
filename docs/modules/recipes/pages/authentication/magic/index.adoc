@@ -1,0 +1,41 @@
+include::ROOT:partial$attributes.adoc[]
+
+[#tutorial-auth-magic]
+= Tutorial: Using Cerbos with Magic
+:page-aliases: tutorials:authentication/magic/index.adoc
+
+The demise of passwords has https://www.forbes.com/sites/forbestechcouncil/2020/03/06/the-inevitable-death-of-passwords/[long been predicted] due to the ongoing leaks, hacks and breaches in recent years.
+
+There has been a lot of innovation in this space and https://magic.link[Magic] has become a leader with their novel approach to eradicating the need to store passwords at all by making use of ‘magic links’ which are sent via the provided email address and log you in to the site once clicked.
+
+[quote,Magic Whitepaper,https://www.dropbox.com/s/3flqaszoigwis5b/Magic%20Whitepaper.pdf]
+Magic provides a key-based identity solution built on top of the Decentralized Identity (DID) standard, where users’ identities are self-sovereign by leveraging blockchain public-private key pairs. These keypairs are used to generate zero-knowledge proofs to authenticate users instead of having to rely on users providing passwords to Magic or any identity provider
+
+This approach is a great way to securely establish a user’s identity without running authentication infrastructure.
+
+At this point, you can use this identity to fetch extra data such as roles and group memberships about the user from your directory, profile store or other database system to further add context about the user. The exact mechanism for this is out of the scope of this article, but Active Directory, LDAP or just a plain old DB are all good places to store this extra user information.
+
+Once a user has authenticated (and the profile enriched with profile information) the next step is to establish what the user has permissions to do in the application - this is where Cerbos steps in and through it’s policy based approach can do context-aware authorization using the user (or principal in Cerbos speak) from Magic.
+
+## Example Implementation with Cerbos
+
+Implementing this requires passing the token provided from the Magic Client SDK to your backend code and then verifying it with the Magic Admin SDK.
+
+As an example, we have forked Magic’s Node/Express/Passport demo repo and added in calls to Cerbos to demonstrate how the two systems can work together - you can find a live https://demo-magiclink.cerbos.cloud/[demo here] and https://github.com/cerbos/express-magiclink-cerbos[view source code Github].
+
+The logical data flow for how this is implemented is as follows:
+
+. User visits site and and enters their email address
+. Magic send an email to that address with a link which authenticates the user
+. The website gets a call back when a user clicks the link from the email with the authenticated identity and token client side
+. Calls to the authenticated endpoint can now be made with the token passed as a Bearer token which is parsed by Passport.js’s Magic integration
+. App code fetches the resource being accessed from the data store
+. App sends the user information from the verified Magic token along with the resource and desired actions to the Cerbos PDP instance
+. Cerbos PDP evaluates the policies and returns an ALLOW or DENY
+. App conditionally returns based on the authorization response
+
+The key part of this are Steps #4-7 where the context about the principal and the resource is gathered and sent to Cerbos to determine the authorization. In this stage all the attributes about the resource and the user can now be used to make a decision.
+
+## Conclusion
+
+Magic’s approach to passwordless authentication and identity is a game changer in how to secure your application, and when paired with Cerbos for authorization, it is possible to deploy context-aware access controls without complex rules or token-bloat.

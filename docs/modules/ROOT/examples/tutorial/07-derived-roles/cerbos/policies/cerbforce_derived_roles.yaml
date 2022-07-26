@@ -1,0 +1,12 @@
+---
+apiVersion: "api.cerbos.dev/v1"
+description: |-
+  Common dynamic roles used within the Cerbforce app
+derivedRoles:
+  name: cerbforce_derived_roles
+  definitions:
+    - name: owner
+      parentRoles: ["user"]
+      condition:
+        match:
+          expr: request.resource.attr.ownerId == request.principal.id

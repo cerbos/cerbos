@@ -1,0 +1,18 @@
+include::partial$attributes.adoc[]
+
+= Principal policies
+
+NOTE: The policies for this section can be found link:{app-github-url}/tree/docs/main/docs/modules/ROOT/examples/tutorial/08-principal-policies/cerbos[on Github].
+
+The final type of policy that Cerbos supports is a xref:policies:principal_policies.adoc[principal policy] which is a special type that allows user-specific overrides to be defined.
+
+In the case of Cerbforce there is a Data Protection Officer (DPO) that handles any data deletion requests. By default, they would not have any delete access to contacts unless they were the owner of the record or have the `admin` role. To overcome this a principal policy has been created which targets their userId and overrides this for the delete action on a contact resource:
+
+[source,yaml]
+----
+include::example$tutorial/08-principal-policies/cerbos/policies/dpo.yaml[]
+----
+
+With this policy in place, when an authorization check is made with the principal ID of `dpo1` the delete action on a `contact` resource is overridden to be allowed.
+
+Full documentation can be found xref:policies:principal_policies.adoc[here].
