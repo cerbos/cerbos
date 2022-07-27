@@ -1,0 +1,66 @@
+/* based on https://gitlab.com/antora/antora-asciidoctor-extensions/-/blob/main/tabs-block/styles.css */
+.tabs ul {
+  display: flex;
+  flex-wrap: wrap;
+  list-style: none;
+  margin: 0 -0.25rem 0 0;
+  padding: 0;
+}
+
+.tabs li {
+  align-items: center;
+  border: 1px solid #ccc;
+  border-bottom: 0;
+  cursor: pointer;
+  display: flex;
+  font-weight: bold;
+  height: 2.5rem;
+  line-height: 1;
+  margin-right: 0.25rem;
+  padding: 0 1.5rem;
+  position: relative;
+}
+
+.tabs.ulist li {
+  margin-bottom: 0;
+}
+
+.tabs li + li {
+  margin-top: 0;
+}
+
+.tabset.is-loading .tabs li:not(:first-child),
+.tabset:not(.is-loading) .tabs li:not(.is-active) {
+  background-color: black;
+  color: white;
+}
+
+.tabset.is-loading .tabs li:first-child::after,
+.tabs li.is-active::after {
+  background-color: white;
+  content: "";
+  display: block;
+  height: 3px; /* Chrome doesn't always paint the line accurately, so add a little extra */
+  position: absolute;
+  bottom: -1.5px;
+  left: 0;
+  right: 0;
+}
+
+.tabset > .content {
+  border: 1px solid #ccc;
+  padding: 1.25rem;
+}
+
+.tabset.is-loading .tab-pane:not(:first-child),
+.tabset:not(.is-loading) .tab-pane:not(.is-active) {
+  display: none;
+}
+
+.tab-pane > :first-child {
+  margin-top: 0;
+}
+
+.doc .ulist li + li {
+  margin-top: 0;
+}

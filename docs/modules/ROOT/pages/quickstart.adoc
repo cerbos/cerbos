@@ -21,11 +21,35 @@ Time to try out a simple request.
 
 NOTE: If you prefer to use link:https://www.postman.com[Postman], link:https://insomnia.rest[Insomnia] or any other software that supports OpenAPI, you can follow this guide along on those tools by downloading the OpenAPI definitions from http://localhost:3592{cerbos-openapi-schema}. You can also use the built-in API browser by pointing your browser to http://localhost:3592.
 
-
+[tabs]
+====
+cURL::
++
+--
 [source,shell,linenums]
 ----
 include::example$quickstart_request.txt[]
 ----
+--
+python::
++
+--
+[source,python]
+----
+def some_function():
+    # I'd be implemented here
+    ...
+----
+--
+another language::
++
+--
+[source,shell,linenums]
+----
+# another language
+----
+--
+====
 
 In this example, the `bugs_bunny` principal is trying to perform two actions (`view:public` and `comment`) on two `album:object` resources. The resource instance with the ID `BUGS001` belongs to `bugs_bunny` and is private (`public` attribute is `false`). The other resource instance with the ID `DAFFY002` belongs to `daffy_duck` and is public.
 
