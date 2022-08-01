@@ -311,6 +311,7 @@ func (s *Server) getTLSConfig() (*tls.Config, error) {
 
 	if conf.CACert != "" {
 		if _, err := os.Stat(conf.CACert); err != nil {
+			//nolint:nilerr
 			return tlsConfig, nil
 		}
 
