@@ -129,7 +129,7 @@ jobs:
         uses: actions/checkout@v3
 
       - name: Install Helm
-        uses: azure/setup-helm@v3.1
+        uses: azure/setup-helm@v3.3
 
       - name: Install Cloud SDK
         uses: google-github-actions/setup-gcloud@v0.6.0
