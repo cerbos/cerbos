@@ -20,7 +20,7 @@ require (
 	github.com/fatih/color v1.13.0
 	github.com/fatih/structtag v1.2.0
 	github.com/fergusstrange/embedded-postgres v1.17.0
-	github.com/gdamore/tcell/v2 v2.5.1
+	github.com/gdamore/tcell/v2 v2.5.2
 	github.com/ghodss/yaml v1.0.0
 	github.com/go-cmd/cmd v1.4.1
 	github.com/go-git/go-git/v5 v5.4.2
@@ -87,7 +87,7 @@ require (
 	google.golang.org/protobuf v1.28.0
 	gopkg.in/yaml.v2 v2.4.0
 	helm.sh/helm/v3 v3.9.2
-	modernc.org/sqlite v1.17.3
+	modernc.org/sqlite v1.18.0
 )
 
 require (
