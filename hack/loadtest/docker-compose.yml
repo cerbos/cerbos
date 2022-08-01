@@ -19,6 +19,14 @@ services:
       - "3592:3592"
       - "3593:3593"
       - "6666:6666"
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 200M
+        reservations:
+          cpus: '0.5'
+          memory: 30M
 
   postgres:
     container_name: postgres
