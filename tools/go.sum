@@ -671,8 +671,8 @@ github.com/goreleaser/chglog v0.1.2 h1:tdzAb/ILeMnphzI9zQ7Nkq+T8R9qyXli8GydD8plF
 github.com/goreleaser/chglog v0.1.2/go.mod h1:tTZsFuSZK4epDXfjMkxzcGbrIOXprf0JFp47BjIr3B8=
 github.com/goreleaser/fileglob v1.3.0 h1:/X6J7U8lbDpQtBvGcwwPS6OpzkNVlVEsFUVRx9+k+7I=
 github.com/goreleaser/fileglob v1.3.0/go.mod h1:Jx6BoXv3mbYkEzwm9THo7xbr5egkAraxkGorbJb4RxU=
-github.com/goreleaser/goreleaser v1.10.2 h1:MxgA0hDbDbTLep0u3pnu7Uh1Q1p0q60mpb88eApZbgw=
-github.com/goreleaser/goreleaser v1.10.2/go.mod h1:i+eGc/m/nN2aV/O00zCNP67H2m+ePuQfVOcUcmrhjcU=
+github.com/goreleaser/goreleaser v1.10.3 h1:mNSqSgqOwCyJCEmL35aDvGsZaucKF9yQyARxznqCtDM=
+github.com/goreleaser/goreleaser v1.10.3/go.mod h1:i+eGc/m/nN2aV/O00zCNP67H2m+ePuQfVOcUcmrhjcU=
 github.com/goreleaser/nfpm/v2 v2.16.0 h1:RtItVwSL3xqe698CkmIOfiQh4/BQANIa4yvyBERrNeo=
 github.com/goreleaser/nfpm/v2 v2.16.0/go.mod h1:NlB1cCZj68NG7ZJA6eJ1dSeX3V0UWfw30itwHvT6HPw=
 github.com/gorhill/cronexpr v0.0.0-20180427100037-88b0669f7d75/go.mod h1:g2644b03hfBX9Ov0ZBDgXXens4rxSxmqFBbhvKv2yVA=
