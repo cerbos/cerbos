@@ -9,7 +9,7 @@
 
 .tabs li {
   align-items: center;
-  border: 1px solid #ccc;
+  border: 1px solid #e1e1e1;
   border-bottom: 0;
   cursor: pointer;
   display: flex;
@@ -31,8 +31,9 @@
 
 .tabset.is-loading .tabs li:not(:first-child),
 .tabset:not(.is-loading) .tabs li:not(.is-active) {
-  background-color: black;
-  color: white;
+  /*background-color: black;*/
+  /*color: white;*/
+  color: #c1c1c1;
 }
 
 .tabset.is-loading .tabs li:first-child::after,
@@ -48,7 +49,7 @@
 }
 
 .tabset > .content {
-  border: 1px solid #ccc;
+  border: 1px solid #e1e1e1;
   padding: 1.25rem;
 }
 
