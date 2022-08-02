@@ -105,7 +105,7 @@ func (clib cerbosLib) CompileOptions() []cel.EnvOption {
 			cel.Overload(nowFn,
 				nil,
 				cel.TimestampType,
-				cel.FunctionBinding(callInNothingOutTimestamp(func() time.Time { return time.Now() })),
+				cel.FunctionBinding(callInNothingOutTimestamp(time.Now)),
 			),
 		),
 		cel.Function(timeSinceFn,
@@ -148,7 +148,7 @@ func Eval(env *cel.Env, ast *cel.Ast, vars any, opts ...cel.ProgramOption) (ref.
 // program generates an evaluable instance of the ast within the environment,
 // providing time-based functions with a static definition of the current time.
 func program(env *cel.Env, ast *cel.Ast, opts ...cel.ProgramOption) (cel.Program, error) {
-	programOpts := append(opts, cel.CustomDecorator(newTimeDecorator()))
+	programOpts := append([]cel.ProgramOption{cel.CustomDecorator(newTimeDecorator())}, opts...)
 	return env.Program(ast, programOpts...)
 }
 
