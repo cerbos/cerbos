@@ -10,12 +10,11 @@ import (
 	"time"
 
 	"github.com/google/cel-go/cel"
-	"github.com/google/cel-go/checker/decls"
 	"github.com/google/cel-go/common/types"
 	"github.com/google/cel-go/common/types/ref"
 	"github.com/google/cel-go/common/types/traits"
+	"github.com/google/cel-go/interpreter"
 	"github.com/google/cel-go/interpreter/functions"
-	exprpb "google.golang.org/genproto/googleapis/api/expr/v1alpha1"
 
 	customtypes "github.com/cerbos/cerbos/internal/conditions/types"
 )
@@ -88,7 +87,7 @@ func (clib cerbosLib) CompileOptions() []cel.EnvOption {
 	}
 
 	return []cel.EnvOption{
-		cerbosLibDecls(),
+		cel.Declarations(customtypes.HierarchyDeclrations...),
 		cel.Types(customtypes.HierarchyType),
 		cel.Function(exceptFn, setOpFuncOverloads(exceptFn, exceptList)...),
 		cel.Function(hasIntersectionFn, setCheckFuncOverloads(hasIntersectionFn, hasIntersection)...),
@@ -102,32 +101,27 @@ func (clib cerbosLib) CompileOptions() []cel.EnvOption {
 		cel.Function(intersectFn, setOpFuncOverloads(intersectFn, intersect)...),
 		cel.Function(isSubsetFn, setCheckFuncOverloads(isSubsetFn, isSubset)...),
 		cel.Function(isSubsetFnDeprecated, setCheckFuncOverloads(isSubsetFnDeprecated, isSubset)...),
+		cel.Function(nowFn,
+			cel.Overload(nowFn,
+				nil,
+				cel.TimestampType,
+				cel.FunctionBinding(callInNothingOutTimestamp(func() time.Time { return time.Now() })),
+			),
+		),
+		cel.Function(timeSinceFn,
+			cel.Overload(fmt.Sprintf("%s_overload", timeSinceFn),
+				[]*cel.Type{cel.TimestampType},
+				cel.DurationType,
+				cel.UnaryBinding(callInTimestampOutDuration(time.Now().Sub)),
+			),
+			cel.MemberOverload(fmt.Sprintf("%s_member_overload", timeSinceFn),
+				[]*cel.Type{cel.TimestampType},
+				cel.DurationType,
+				cel.UnaryBinding(callInTimestampOutDuration(time.Now().Sub)),
+			),
+		),
 		customtypes.HierarchyFunc,
 	}
-}
-
-func cerbosLibDecls() cel.EnvOption {
-	decls := []*exprpb.Decl{
-		decls.NewFunction(nowFn,
-			decls.NewOverload(
-				nowFn,
-				nil,
-				decls.Timestamp,
-			),
-		),
-
-		decls.NewFunction(timeSinceFn,
-			decls.NewInstanceOverload(
-				timeSinceFn,
-				[]*exprpb.Type{decls.Timestamp},
-				decls.Duration,
-			),
-		),
-	}
-
-	decls = append(decls, customtypes.HierarchyDeclrations...)
-
-	return cel.Declarations(decls...)
 }
 
 func (clib cerbosLib) ProgramOptions() []cel.ProgramOption {
@@ -154,34 +148,46 @@ func Eval(env *cel.Env, ast *cel.Ast, vars any, opts ...cel.ProgramOption) (ref.
 // program generates an evaluable instance of the ast within the environment,
 // providing time-based functions with a static definition of the current time.
 func program(env *cel.Env, ast *cel.Ast, opts ...cel.ProgramOption) (cel.Program, error) {
-	now := time.Now()
+	programOpts := append(opts, cel.CustomDecorator(newTimeDecorator()))
+	return env.Program(ast, programOpts...)
+}
 
-	newEnv, err := env.Extend(
-		cel.Function(nowFn,
-			cel.Overload(nowFn,
-				nil,
-				cel.TimestampType,
-				cel.FunctionBinding(callInNothingOutTimestamp(func() time.Time { return now })),
-			),
-		),
-		cel.Function(timeSinceFn,
-			cel.Overload(fmt.Sprintf("%s_overload", timeSinceFn),
-				[]*cel.Type{cel.TimestampType},
-				cel.DurationType,
-				cel.UnaryBinding(callInTimestampOutDuration(now.Sub)),
-			),
-			cel.MemberOverload(fmt.Sprintf("%s_member_overload", timeSinceFn),
-				[]*cel.Type{cel.TimestampType},
-				cel.DurationType,
-				cel.UnaryBinding(callInTimestampOutDuration(now.Sub)),
-			),
-		),
-	)
-	if err != nil {
-		return nil, fmt.Errorf("failed to extend environment: %w", err)
+func newTimeDecorator() interpreter.InterpretableDecorator {
+	td := timeDecorator{now: time.Now()}
+	return td.decorate
+}
+
+type timeDecorator struct {
+	now time.Time
+}
+
+func (t *timeDecorator) decorate(in interpreter.Interpretable) (interpreter.Interpretable, error) {
+	call, ok := in.(interpreter.InterpretableCall)
+	if !ok {
+		return in, nil
 	}
 
-	return newEnv.Program(ast, opts...)
+	funcName := call.Function()
+	switch funcName {
+	case nowFn:
+		return interpreter.NewConstValue(call.ID(), types.DefaultTypeAdapter.NativeToValue(t.now)), nil
+	case timeSinceFn:
+		return interpreter.NewCall(call.ID(), funcName, call.OverloadID(), call.Args(), func(values ...ref.Val) ref.Val {
+			if len(values) != 1 {
+				return types.NoSuchOverloadErr()
+			}
+
+			tsVal := values[0].Value()
+			ts, ok := tsVal.(time.Time)
+			if !ok {
+				return types.NoSuchOverloadErr()
+			}
+
+			return types.DefaultTypeAdapter.NativeToValue(t.now.Sub(ts))
+		}), nil
+	default:
+		return in, nil
+	}
 }
 
 // hashable checks whether the type is hashable, i.e. can be used in a Go map.
