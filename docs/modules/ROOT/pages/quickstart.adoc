@@ -14,7 +14,7 @@ Now start the Cerbos server. We are using the container image in this guide but 
 
 [source,shell,subs="attributes"]
 ----
-docker run --rm --name cerbos -d -v $(pwd)/cerbos-quickstart/policies:/policies -p 3592:3592 {app-docker-img} 
+docker run --rm --name cerbos -d -v $(pwd)/cerbos-quickstart/policies:/policies -p 3592:3592 -p 3593:3593  {app-docker-img}
 ----
 
 Time to try out a simple request.
@@ -28,25 +28,39 @@ cURL::
 --
 [source,shell,linenums]
 ----
-include::example$quickstart_request.txt[]
+include::example$quickstart/curl.txt[]
 ----
 --
-python::
+Go::
++
+--
+[source,go,linenums]
+----
+include::example$quickstart/example.go[]
+----
+--
+Python::
 +
 --
 [source,python]
 ----
-def some_function():
-    # I'd be implemented here
-    ...
+include::example$quickstart/example.py[]
 ----
 --
-another language::
+JS::
 +
 --
-[source,shell,linenums]
+[source,javascript,linenums]
 ----
-# another language
+include::example$quickstart/example.js[]
+----
+--
+Ruby::
++
+--
+[source,ruby,linenums]
+----
+include::example$quickstart/example.rb[]
 ----
 --
 ====
@@ -134,7 +148,7 @@ Try the request again. This time `bugs_bunny` should be allowed access to his ow
 
 [source,shell,linenums]
 ----
-include::example$quickstart_request.txt[]
+include::example$quickstart/curl.txt[]
 ----
 
 ====
@@ -207,7 +221,7 @@ If you try the request again, `bugs_bunny` now has `view:public` access to the a
 .Request
 [source,shell,linenums]
 ----
-include::example$quickstart_request.txt[]
+include::example$quickstart/curl.txt[]
 ----
 
 
