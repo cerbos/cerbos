@@ -23,6 +23,8 @@ asciidoc:
     app-version: "0.20.0@"
     experimental: true
     page-pagination: true
+  extensions:
+  - ./supplemental-ui/tabs-block/extension.js
 ui:
   bundle:
     url: https://gitlab.com/antora/antora-ui-default/-/jobs/artifacts/master/raw/build/ui-bundle.zip?job=bundle-stable
