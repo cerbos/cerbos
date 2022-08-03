@@ -33,7 +33,7 @@ jobs:
       - name: Install Go
         uses: actions/setup-go@v3
         with:
-          go-version: 1.18.x
+          go-version: 1.19.x
 
       - name: Checkout code
         uses: actions/checkout@v3
@@ -95,7 +95,7 @@ jobs:
       - name: Install Go
         uses: actions/setup-go@v3
         with:
-          go-version: 1.18.x
+          go-version: 1.19.x
 
       - name: Checkout code
         uses: actions/checkout@v3
@@ -143,7 +143,7 @@ jobs:
       - name: Install Go
         uses: actions/setup-go@v3
         with:
-          go-version: 1.18.x
+          go-version: 1.19.x
 
       - name: Checkout code
         uses: actions/checkout@v3
@@ -195,7 +195,7 @@ jobs:
       - name: Install Go
         uses: actions/setup-go@v3
         with:
-          go-version: 1.18.x
+          go-version: 1.19.x
       - name: golangci-lint
         uses: golangci/golangci-lint-action@v3.2.0
         with:
