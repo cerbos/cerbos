@@ -34,6 +34,7 @@ type RunnablePolicySet struct {
 
 	Fqn string `protobuf:"bytes,1,opt,name=fqn,proto3" json:"fqn,omitempty"`
 	// Types that are assignable to PolicySet:
+	//
 	//	*RunnablePolicySet_ResourcePolicy
 	//	*RunnablePolicySet_PrincipalPolicy
 	//	*RunnablePolicySet_DerivedRoles
@@ -448,6 +449,7 @@ type Condition struct {
 	unknownFields protoimpl.UnknownFields
 
 	// Types that are assignable to Op:
+	//
 	//	*Condition_All
 	//	*Condition_Any
 	//	*Condition_None
@@ -682,6 +684,7 @@ type Errors struct {
 	unknownFields protoimpl.UnknownFields
 
 	// Types that are assignable to Kind:
+	//
 	//	*Errors_IndexBuildErrors
 	//	*Errors_CompileErrors
 	Kind isErrors_Kind `protobuf_oneof:"kind"`

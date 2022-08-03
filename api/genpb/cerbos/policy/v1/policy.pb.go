@@ -92,6 +92,7 @@ type Policy struct {
 	Description string    `protobuf:"bytes,3,opt,name=description,proto3" json:"description,omitempty"`
 	Metadata    *Metadata `protobuf:"bytes,4,opt,name=metadata,proto3" json:"metadata,omitempty"`
 	// Types that are assignable to PolicyType:
+	//
 	//	*Policy_ResourcePolicy
 	//	*Policy_PrincipalPolicy
 	//	*Policy_DerivedRoles
@@ -711,6 +712,7 @@ type Condition struct {
 	unknownFields protoimpl.UnknownFields
 
 	// Types that are assignable to Condition:
+	//
 	//	*Condition_Match
 	//	*Condition_Script
 	Condition isCondition_Condition `protobuf_oneof:"condition"`
@@ -791,6 +793,7 @@ type Match struct {
 	unknownFields protoimpl.UnknownFields
 
 	// Types that are assignable to Op:
+	//
 	//	*Match_All
 	//	*Match_Any
 	//	*Match_None
@@ -2245,6 +2248,7 @@ type TestResults_Details struct {
 
 	Result TestResults_Result `protobuf:"varint,1,opt,name=result,proto3,enum=cerbos.policy.v1.TestResults_Result" json:"result,omitempty"`
 	// Types that are assignable to Outcome:
+	//
 	//	*TestResults_Details_Failure
 	//	*TestResults_Details_Error
 	Outcome     isTestResults_Details_Outcome `protobuf_oneof:"outcome"`

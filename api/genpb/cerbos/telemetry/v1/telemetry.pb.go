@@ -164,6 +164,7 @@ type Event struct {
 	unknownFields protoimpl.UnknownFields
 
 	// Types that are assignable to Data:
+	//
 	//	*Event_ApiActivity_
 	Data isEvent_Data `protobuf_oneof:"data"`
 }
@@ -656,6 +657,7 @@ type ServerLaunch_Features_Storage struct {
 
 	Driver string `protobuf:"bytes,1,opt,name=driver,proto3" json:"driver,omitempty"`
 	// Types that are assignable to Store:
+	//
 	//	*ServerLaunch_Features_Storage_Disk_
 	//	*ServerLaunch_Features_Storage_Git_
 	//	*ServerLaunch_Features_Storage_Blob_

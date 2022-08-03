@@ -1052,6 +1052,7 @@ type PlanResourcesAst_Node struct {
 	unknownFields protoimpl.UnknownFields
 
 	// Types that are assignable to Node:
+	//
 	//	*PlanResourcesAst_Node_LogicalOperation
 	//	*PlanResourcesAst_Node_Expression
 	Node isPlanResourcesAst_Node_Node `protobuf_oneof:"node"`
@@ -1242,6 +1243,7 @@ type PlanResourcesFilter_Expression_Operand struct {
 	unknownFields protoimpl.UnknownFields
 
 	// Types that are assignable to Node:
+	//
 	//	*PlanResourcesFilter_Expression_Operand_Value
 	//	*PlanResourcesFilter_Expression_Operand_Expression
 	//	*PlanResourcesFilter_Expression_Operand_Variable
@@ -1403,6 +1405,7 @@ type Trace_Component struct {
 
 	Kind Trace_Component_Kind `protobuf:"varint,1,opt,name=kind,proto3,enum=cerbos.engine.v1.Trace_Component_Kind" json:"kind,omitempty"`
 	// Types that are assignable to Details:
+	//
 	//	*Trace_Component_Action
 	//	*Trace_Component_DerivedRole
 	//	*Trace_Component_Expr
