@@ -111,6 +111,7 @@ type ServerTestCase struct {
 	WantError   bool                   `protobuf:"varint,3,opt,name=want_error,json=wantError,proto3" json:"want_error,omitempty"`
 	WantStatus  *ServerTestCase_Status `protobuf:"bytes,4,opt,name=want_status,json=wantStatus,proto3" json:"want_status,omitempty"`
 	// Types that are assignable to CallKind:
+	//
 	//	*ServerTestCase_CheckResourceSet
 	//	*ServerTestCase_CheckResourceBatch
 	//	*ServerTestCase_PlaygroundValidate
@@ -609,6 +610,7 @@ type SchemaTestCase struct {
 	Description string       `protobuf:"bytes,1,opt,name=description,proto3" json:"description,omitempty"`
 	SchemaRefs  *v12.Schemas `protobuf:"bytes,2,opt,name=schema_refs,json=schemaRefs,proto3" json:"schema_refs,omitempty"`
 	// Types that are assignable to Input:
+	//
 	//	*SchemaTestCase_CheckInput
 	//	*SchemaTestCase_PlanResourcesInput
 	Input                isSchemaTestCase_Input `protobuf_oneof:"input"`

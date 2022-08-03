@@ -354,6 +354,7 @@ type PlaygroundValidateResponse struct {
 
 	PlaygroundId string `protobuf:"bytes,1,opt,name=playground_id,json=playgroundId,proto3" json:"playground_id,omitempty"`
 	// Types that are assignable to Outcome:
+	//
 	//	*PlaygroundValidateResponse_Failure
 	//	*PlaygroundValidateResponse_Success
 	Outcome isPlaygroundValidateResponse_Outcome `protobuf_oneof:"outcome"`
@@ -442,6 +443,7 @@ type PlaygroundTestResponse struct {
 
 	PlaygroundId string `protobuf:"bytes,1,opt,name=playground_id,json=playgroundId,proto3" json:"playground_id,omitempty"`
 	// Types that are assignable to Outcome:
+	//
 	//	*PlaygroundTestResponse_Failure
 	//	*PlaygroundTestResponse_Success
 	Outcome isPlaygroundTestResponse_Outcome `protobuf_oneof:"outcome"`
@@ -530,6 +532,7 @@ type PlaygroundEvaluateResponse struct {
 
 	PlaygroundId string `protobuf:"bytes,1,opt,name=playground_id,json=playgroundId,proto3" json:"playground_id,omitempty"`
 	// Types that are assignable to Outcome:
+	//
 	//	*PlaygroundEvaluateResponse_Failure
 	//	*PlaygroundEvaluateResponse_Success
 	Outcome isPlaygroundEvaluateResponse_Outcome `protobuf_oneof:"outcome"`
@@ -618,6 +621,7 @@ type PlaygroundProxyResponse struct {
 
 	PlaygroundId string `protobuf:"bytes,1,opt,name=playground_id,json=playgroundId,proto3" json:"playground_id,omitempty"`
 	// Types that are assignable to Outcome:
+	//
 	//	*PlaygroundProxyResponse_Failure
 	//	*PlaygroundProxyResponse_CheckResourceSet
 	//	*PlaygroundProxyResponse_CheckResourceBatch
@@ -794,6 +798,7 @@ type ListAuditLogEntriesResponse struct {
 	unknownFields protoimpl.UnknownFields
 
 	// Types that are assignable to Entry:
+	//
 	//	*ListAuditLogEntriesResponse_AccessLogEntry
 	//	*ListAuditLogEntriesResponse_DecisionLogEntry
 	Entry isListAuditLogEntriesResponse_Entry `protobuf_oneof:"entry"`
