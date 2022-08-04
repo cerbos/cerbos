@@ -47,6 +47,14 @@ JS::
 include::example$quickstart/example.js[]
 ----
 --
+PHP::
++
+--
+[source,php,linenums]
+----
+include::example$quickstart/example.php[]
+----
+--
 Python::
 +
 --
