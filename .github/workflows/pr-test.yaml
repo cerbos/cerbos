@@ -187,13 +187,13 @@ jobs:
         id: docs
 
       - name: Deploy preview
-        uses: nwtgck/actions-netlify@v1.2
+        uses: netlify/actions/cli@master
         with:
-          publish-dir: docs/build
-          netlify-config-path: netlify.toml
+          args: deploy
         env:
           NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
           NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+
 
   golangci:
     needs: changes
