@@ -1,6 +1,5 @@
 [build]
-  base = "docs"
-  publish = "build"
+  publish = "docs/build"
 
 # Only required until Antora LFS support lands. https://gitlab.com/antora/antora/-/issues/185
 

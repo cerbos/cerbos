@@ -188,11 +188,16 @@ jobs:
 
       - name: Deploy preview
         uses: netlify/actions/cli@master
+        id: netlify
         with:
           args: deploy
         env:
           NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
           NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+
+      - name: Add comment with deploy URL
+        run: |-
+          gh pr comment ${{ github.event.number }} --body "Docs preview: ${{ steps.netlify.outputs.NETLIFY_URL }}"
 
 
   golangci:
