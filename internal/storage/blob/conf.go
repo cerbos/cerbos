@@ -25,7 +25,7 @@ const (
 )
 
 // Conf is required (if driver is set to 'blob') configuration for cloud storage driver.
-//+desc=This section is required only if storage.driver is blob.
+// +desc=This section is required only if storage.driver is blob.
 type Conf struct {
 	// DownloadTimeout specifies the timeout for downloading from cloud storage.
 	DownloadTimeout *time.Duration `yaml:"downloadTimeout,omitempty" conf:",example=30s"`

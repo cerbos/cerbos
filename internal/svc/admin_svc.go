@@ -9,7 +9,7 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"sort"
 	"strings"
 	"time"
@@ -203,7 +203,7 @@ func (cas *CerbosAdminService) GetSchema(ctx context.Context, req *requestv1.Get
 			return nil, status.Errorf(codes.Internal, "could not get the schema with id %s", id)
 		}
 
-		schBytes, err := ioutil.ReadAll(sch)
+		schBytes, err := io.ReadAll(sch)
 		if err != nil {
 			log.Error(fmt.Sprintf("Could not read the schema with id %s", id), zap.Error(err))
 			return nil, status.Errorf(codes.Internal, "could not read the schema with id %s", id)

@@ -18,6 +18,7 @@ import (
 var invalidIdentifierChars = regexp.MustCompile(`[^\w.]+`)
 
 // validKinds holds valid policy kinds and the minimum number of components that must be contained in the policy key.
+//
 //nolint:gomnd
 var validKinds = map[string]int{"derived_roles": 2, "principal": 3, "resource": 3}
 
