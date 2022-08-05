@@ -14,18 +14,72 @@ Now start the Cerbos server. We are using the container image in this guide but 
 
 [source,shell,subs="attributes"]
 ----
-docker run --rm --name cerbos -d -v $(pwd)/cerbos-quickstart/policies:/policies -p 3592:3592 {app-docker-img} 
+docker run --rm --name cerbos -d -v $(pwd)/cerbos-quickstart/policies:/policies -p 3592:3592 -p 3593:3593  {app-docker-img}
 ----
 
 Time to try out a simple request.
 
 NOTE: If you prefer to use link:https://www.postman.com[Postman], link:https://insomnia.rest[Insomnia] or any other software that supports OpenAPI, you can follow this guide along on those tools by downloading the OpenAPI definitions from http://localhost:3592{cerbos-openapi-schema}. You can also use the built-in API browser by pointing your browser to http://localhost:3592.
 
-
+[tabs]
+====
+cURL::
++
+--
 [source,shell,linenums]
 ----
-include::example$quickstart_request.txt[]
+include::example$quickstart/curl.txt[]
 ----
+--
+Go::
++
+--
+[source,go,linenums]
+----
+include::example$quickstart/example.go[]
+----
+--
+JS::
++
+--
+[source,javascript,linenums]
+----
+include::example$quickstart/example.js[]
+----
+--
+PHP::
++
+--
+[source,php,linenums]
+----
+include::example$quickstart/example.php[]
+----
+--
+Python::
++
+--
+[source,python,linenums]
+----
+include::example$quickstart/example.py[]
+----
+--
+Ruby::
++
+--
+[source,ruby,linenums]
+----
+include::example$quickstart/example.rb[]
+----
+--
+Rust::
++
+--
+[source,rust,linenums]
+----
+include::example$quickstart/example.rs[]
+----
+--
+====
 
 In this example, the `bugs_bunny` principal is trying to perform two actions (`view:public` and `comment`) on two `album:object` resources. The resource instance with the ID `BUGS001` belongs to `bugs_bunny` and is private (`public` attribute is `false`). The other resource instance with the ID `DAFFY002` belongs to `daffy_duck` and is public.
 
@@ -110,7 +164,7 @@ Try the request again. This time `bugs_bunny` should be allowed access to his ow
 
 [source,shell,linenums]
 ----
-include::example$quickstart_request.txt[]
+include::example$quickstart/curl.txt[]
 ----
 
 ====
@@ -183,7 +237,7 @@ If you try the request again, `bugs_bunny` now has `view:public` access to the a
 .Request
 [source,shell,linenums]
 ----
-include::example$quickstart_request.txt[]
+include::example$quickstart/curl.txt[]
 ----
 
 
