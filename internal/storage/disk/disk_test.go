@@ -7,7 +7,6 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
 	"path"
 	"path/filepath"
@@ -39,7 +38,7 @@ func mkDeleteFn(t *testing.T, storeDir string) internal.MutateStoreFn {
 	t.Helper()
 
 	return func() error {
-		dir, err := ioutil.ReadDir(storeDir)
+		dir, err := os.ReadDir(storeDir)
 		if err != nil {
 			return fmt.Errorf("failed to read directory while deleting from the store: %w", err)
 		}

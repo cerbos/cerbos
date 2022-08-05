@@ -11,7 +11,7 @@ import (
 const confKey = storage.ConfKey + ".postgres"
 
 // Conf is required (if driver is set to 'postres') configuration for postres driver.
-//+desc=This section is required only if storage.driver is postgres.
+// +desc=This section is required only if storage.driver is postgres.
 type Conf struct {
 	ConnPool *internal.ConnPoolConf `yaml:"connPool" conf:",example=\n  maxLifeTime: 60m\n  maxIdleTime: 45s\n  maxOpen: 4\n  maxIdle: 1"`
 	// URL is the Postgres connection URL. See https://www.postgresql.org/docs/current/libpq-connect.html#LIBPQ-CONNSTRING

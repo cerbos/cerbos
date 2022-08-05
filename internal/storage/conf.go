@@ -14,7 +14,7 @@ import (
 const ConfKey = "storage"
 
 // Conf is required configuration for storage.
-//+desc=This section is required. The field driver must be set to indicate which driver to use.
+// +desc=This section is required. The field driver must be set to indicate which driver to use.
 type Conf struct {
 	confHolder
 }
