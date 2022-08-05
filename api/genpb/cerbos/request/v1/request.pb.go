@@ -833,6 +833,7 @@ type PlaygroundProxyRequest struct {
 	PlaygroundId string  `protobuf:"bytes,1,opt,name=playground_id,json=playgroundId,proto3" json:"playground_id,omitempty"`
 	Files        []*File `protobuf:"bytes,2,rep,name=files,proto3" json:"files,omitempty"`
 	// Types that are assignable to ProxyRequest:
+	//
 	//	*PlaygroundProxyRequest_CheckResourceSet
 	//	*PlaygroundProxyRequest_CheckResourceBatch
 	//	*PlaygroundProxyRequest_PlanResources
@@ -1003,6 +1004,7 @@ type ListAuditLogEntriesRequest struct {
 
 	Kind ListAuditLogEntriesRequest_Kind `protobuf:"varint,1,opt,name=kind,proto3,enum=cerbos.request.v1.ListAuditLogEntriesRequest_Kind" json:"kind,omitempty"`
 	// Types that are assignable to Filter:
+	//
 	//	*ListAuditLogEntriesRequest_Tail
 	//	*ListAuditLogEntriesRequest_Between
 	//	*ListAuditLogEntriesRequest_Since

@@ -27,7 +27,7 @@ const (
 )
 
 // Conf is required (if driver is set to 'git') configuration for Git storage driver.
-//+desc=This section is required only if storage.driver is git.
+// +desc=This section is required only if storage.driver is git.
 type Conf struct {
 	// SSH holds auth details for the SSH protocol.
 	SSH *SSHAuth `yaml:"ssh,omitempty"`

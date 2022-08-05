@@ -8,7 +8,7 @@ package internal
 
 import (
 	"context"
-	"io/ioutil"
+	"io"
 	"testing"
 	"time"
 
@@ -262,7 +262,7 @@ func TestSuite(store DBStorage) func(*testing.T) {
 				schema, err := store.LoadSchema(ctx, schID)
 				require.NoError(t, err)
 				require.NotEmpty(t, schema)
-				schBytes, err := ioutil.ReadAll(schema)
+				schBytes, err := io.ReadAll(schema)
 				require.NoError(t, err)
 				require.NotEmpty(t, schBytes)
 				require.JSONEq(t, string(sch), string(schBytes))

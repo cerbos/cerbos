@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"io"
 	"io/fs"
-	"io/ioutil"
 	"math/rand"
 	"os"
 	"path"
@@ -159,7 +158,7 @@ func TestUpdateStore(t *testing.T) {
 		checkEvents := storage.TestSubscription(store)
 		pset := genPolicySet(rng.Intn(numPolicySets))
 
-		require.NoError(t, commitToGitRepo(sourceGitDir, "Modify policy", func(wt *git.Worktree) error {
+		require.NoError(t, commitToGitRepo(sourceGitDir, "Modify policy", func(_ *git.Worktree) error {
 			for _, p := range pset {
 				modifyPolicy(p)
 			}
@@ -531,7 +530,7 @@ func mkDeleteFn(t *testing.T, sourceGitDir string) internal.MutateStoreFn {
 
 	return func() error {
 		err := commitToGitRepo(sourceGitDir, "Delete all", func(wt *git.Worktree) error {
-			dir, err := ioutil.ReadDir(sourceGitDir)
+			dir, err := os.ReadDir(sourceGitDir)
 			if err != nil {
 				return fmt.Errorf("failed to read directory while deleting from the store: %w", err)
 			}

@@ -147,14 +147,15 @@ type Case struct {
 // |- test01.yaml.out
 //
 // The above files will be converted to a Case object as follows:
-// Case {
-//   Name: "test01",
-//   Input: <contents_of_test01.yaml>,
-//   Want: map[string][]byte{
-//     "err": <contents_of_test01.yaml.err>,
-//     "out": <contents_of_test01.yaml.out>,
-//   }
-// }.
+//
+//	Case {
+//	  Name: "test01",
+//	  Input: <contents_of_test01.yaml>,
+//	  Want: map[string][]byte{
+//	    "err": <contents_of_test01.yaml.err>,
+//	    "out": <contents_of_test01.yaml.out>,
+//	  }
+//	}.
 func LoadTestCases(tb testing.TB, subDir string) []Case {
 	tb.Helper()
 

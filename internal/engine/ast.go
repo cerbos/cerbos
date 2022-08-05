@@ -573,7 +573,6 @@ var (
 	}
 )
 
-//nolint: nestif
 func normaliseFilterExprOpExpr(expr *enginev1.PlanResourcesFilter_Expression_Operand_Expression) *enginev1.PlanResourcesFilter_Expression_Operand {
 	const nArgsInOp = 2
 	if expr.Expression.Operator == In && len(expr.Expression.Operands) == nArgsInOp {
@@ -632,6 +631,7 @@ func normaliseFilterExprOpExpr(expr *enginev1.PlanResourcesFilter_Expression_Ope
 	}
 
 	// AND or OR of a single value is the value itself
+	//nolint:nestif
 	if logicalOperator != "" {
 		switch len(operands) {
 		case 0:

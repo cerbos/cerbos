@@ -127,6 +127,7 @@ type DecisionLogEntry struct {
 	// Deprecated. Use method.check_resources.error instead.
 	Error string `protobuf:"bytes,6,opt,name=error,proto3" json:"error,omitempty"`
 	// Types that are assignable to Method:
+	//
 	//	*DecisionLogEntry_CheckResources_
 	//	*DecisionLogEntry_PlanResources_
 	Method isDecisionLogEntry_Method `protobuf_oneof:"method"`
