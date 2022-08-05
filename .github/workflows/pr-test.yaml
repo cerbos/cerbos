@@ -19,6 +19,11 @@ jobs:
           filters: |
             code:
               - '!(docs/**)'
+              - '!(deploy/**)'
+              - '!(e2e/**)'
+              - '!(hack/**)'
+              - '!(schema/**)'
+              - '!(.github/**)'
             docs:
               - 'docs/**'
             protos:
@@ -198,6 +203,8 @@ jobs:
       - name: Add comment with deploy URL
         run: |-
           gh pr comment ${{ github.event.number }} --body "Docs preview: ${{ steps.netlify.outputs.NETLIFY_URL }}"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
 
   golangci:
