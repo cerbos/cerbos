@@ -35,7 +35,8 @@ jobs:
       - name: Install Helmfile and Telepresence
         run: |
           mkdir bin
-          curl -fL https://github.com/roboll/helmfile/releases/download/v0.143.0/helmfile_linux_amd64 -o bin/helmfile
+          curl -fL https://github.com/helmfile/helmfile/releases/download/v0.145.2/helmfile_0.145.2_linux_amd64.tar.gz -o bin/helmfile.tar.gz
+          tar -xf bin/helmfile.tar.gz -C bin
           chmod +x bin/helmfile
           curl -fL https://app.getambassador.io/download/tel2/linux/amd64/latest/telepresence -o bin/telepresence
           chmod +x bin/telepresence
