@@ -29,12 +29,13 @@ stop_kind() {
 run_tests() {
     (
         cd "$SCRIPT_DIR"
+        telepresence helm install
         telepresence connect --no-report -- go test -v -failfast -p=1 --tags="tests e2e" "$@"
     )
 }
 
 check_prerequisites
-start_kind 
+start_kind
 trap stop_kind EXIT
 
 if [[ "$#" -gt "0" ]]; then
