@@ -58,6 +58,12 @@ func (p *Principal) WithRoles(roles ...string) *Principal {
 	return p
 }
 
+// WithScope sets the scope this principal belongs to.
+func (p *Principal) WithScope(scope string) *Principal {
+	p.p.Scope = scope
+	return p
+}
+
 // WithAttributes merges the given attributes to principal's existing attributes.
 func (p *Principal) WithAttributes(attr map[string]any) *Principal {
 	if p.p.Attr == nil {
@@ -158,6 +164,12 @@ func (r *Resource) WithAttr(key string, value any) *Resource {
 	}
 
 	r.r.Attr[key] = pbVal
+	return r
+}
+
+// WithScope sets the scope this resource belongs to.
+func (r *Resource) WithScope(scope string) *Resource {
+	r.r.Scope = scope
 	return r
 }
 
