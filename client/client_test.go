@@ -303,6 +303,75 @@ func testGRPCClient(c client.Client) func(*testing.T) {
 			})
 		})
 
+		t.Run("CheckResourcesScoped", func(t *testing.T) {
+			principal := client.NewPrincipal("john").
+				WithRoles("employee").
+				WithScope("acme.hr").
+				WithAttributes(map[string]any{
+					"department": "marketing",
+					"geography":  "GB",
+					"team":       "design",
+					"ip_address": "10.20.5.5",
+				})
+
+			resources := client.NewResourceBatch().
+				Add(client.
+					NewResource("leave_request", "XX125").
+					WithScope("acme.hr.uk").
+					WithAttributes(map[string]any{
+						"department": "marketing",
+						"geography":  "GB",
+						"id":         "XX125",
+						"owner":      "john",
+						"team":       "design",
+					}), "view:public", "delete", "create").
+				Add(client.
+					NewResource("leave_request", "XX225").
+					WithScope("acme.hr").
+					WithAttributes(map[string]any{
+						"department": "marketing",
+						"geography":  "GB",
+						"id":         "XX225",
+						"owner":      "john",
+						"team":       "design",
+					}), "view:public", "delete", "create")
+
+			check := func(t *testing.T, have *client.CheckResourcesResponse, err error) {
+				t.Helper()
+				require.NoError(t, err)
+
+				haveXX125 := have.GetResource("XX125", client.MatchResourceKind("leave_request"))
+				require.NoError(t, haveXX125.Err())
+				require.True(t, haveXX125.IsAllowed("view:public"))
+				require.True(t, haveXX125.IsAllowed("delete"))
+				require.True(t, haveXX125.IsAllowed("create"))
+				require.Equal(t, "acme.hr.uk", haveXX125.Resource.Scope)
+
+				haveXX225 := have.GetResource("XX225", client.MatchResourceKind("leave_request"))
+				require.NoError(t, haveXX225.Err())
+				require.True(t, haveXX225.IsAllowed("view:public"))
+				require.False(t, haveXX225.IsAllowed("delete"))
+				require.True(t, haveXX225.IsAllowed("create"))
+				require.Equal(t, "acme.hr", haveXX225.Resource.Scope)
+			}
+
+			t.Run("Direct", func(t *testing.T) {
+				ctx, cancelFunc := context.WithTimeout(context.Background(), timeout)
+				defer cancelFunc()
+
+				have, err := c.CheckResources(ctx, principal, resources)
+				check(t, have, err)
+			})
+
+			t.Run("WithPrincipal", func(t *testing.T) {
+				ctx, cancelFunc := context.WithTimeout(context.Background(), timeout)
+				defer cancelFunc()
+
+				have, err := c.WithPrincipal(principal).CheckResources(ctx, resources)
+				check(t, have, err)
+			})
+		})
+
 		t.Run("IsAllowed", func(t *testing.T) {
 			principal := client.NewPrincipal("john").
 				WithRoles("employee").
