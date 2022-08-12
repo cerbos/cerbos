@@ -1,0 +1,17 @@
+include::ROOT:partial$attributes.adoc[]
+
+[#v0.19.1]
+= Cerbos v0.19.1
+
+This is a minor patch release to update the Go client SDK with ability to set scopes on resources and principals. See xref:v0.19.0.adoc[v0.19.0 release notes] for full set of changes available in this release.
+
+== Highlights
+
+
+== Changelog
+
+
+=== Bug Fixes
+
+* Allow setting scope on SDK requests (link:https://github.com/cerbos/cerbos/pull/1151[#1151])
+
