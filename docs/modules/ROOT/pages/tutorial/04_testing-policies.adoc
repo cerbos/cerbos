@@ -2,7 +2,7 @@ include::partial$attributes.adoc[]
 
 = Testing policies
 
-NOTE: The policies for this section can be found link:{app-github-url}/tree/docs/main/docs/modules/ROOT/examples/tutorial/05-testing-policies/cerbos[on Github].
+NOTE: The policies for this section can be found link:{tutorial-base}/05-testing-policies/cerbos[on Github].
 
 Cerbos allows you to write xref:policies:compile.adoc[tests for policies] and run them as part of the compilation stage to make sure that the policies do exactly what you expect. This saves the manual effort of running example requests over and over to ensure the policy logic is as you expect.
 
