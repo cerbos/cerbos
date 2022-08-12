@@ -2,7 +2,7 @@ include::partial$attributes.adoc[]
 
 = Policy authoring
 
-NOTE: The policies for this section can be found link:{app-github-url}/tree/docs/main/docs/modules/ROOT/examples/tutorial/03-resource-definition/cerbos[on Github].
+NOTE: The policies for this section can be found link:{tutorial-base}/03-resource-definition/cerbos[on Github].
 
 == Authentication roles
 
@@ -17,7 +17,7 @@ In the case of Cerbforce some of the resources and actions are as follows:
 [caption=]
 [%header,cols=".^1,.^1,3m",grid=rows]
 |===
-|Resource | Actions 
+|Resource | Actions
 |User | Create, Read, Update, Delete
 |Company | Create, Read, Update, Delete
 |Contact | Create, Read, Update, Delete
@@ -34,24 +34,24 @@ Taking the user resource as an example, the most basic resource policy can be de
 ----
 apiVersion: api.cerbos.dev/v1
 resourcePolicy:
-  version: "default" 
+  version: "default"
   resource: "user"
   rules:
-    - actions: 
+    - actions:
         - create
         - read
       effect: EFFECT_ALLOW
       roles:
-        - user 
+        - user
 
-    - actions: 
+    - actions:
         - create
         - read
         - update
         - delete
       effect: EFFECT_ALLOW
       roles:
-        - admin         
+        - admin
 ----
 
 The structure of a resource policy requires a name to be set on the `resource` key and then a list of rules is defined. A rule defines a list of actions on the resource, the effect of the rule (`EFFECT_ALLOW` or `EFFECT_DENY`) and then fields to state who this applies to - in this simple case a list of `roles` which is checked for in the roles of the user making the request.

@@ -2,7 +2,7 @@ include::partial$attributes.adoc[]
 
 = Calling Cerbos
 
-NOTE: The policies for this section can be found link:{app-github-url}/tree/docs/main/docs/modules/ROOT/examples/tutorial/04-calling-cerbos/cerbos[on Github].
+NOTE: The policies for this section can be found link:{tutorial-base}/04-calling-cerbos/cerbos[on Github].
 
 Now that you know the policies are valid, it is time to make your first call to Cerbos to make an authorization check.
 
