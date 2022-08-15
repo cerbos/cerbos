@@ -114,7 +114,6 @@ message PrincipalRule {
   }
 
   string resource = 1 [(validate.rules).string = {
-    pattern: "^[[:alpha:]][[:word:]\\@\\.\\-/]*(\\:[[:alpha:]][[:word:]\\@\\.\\-/]*)*$",
     min_len: 1
   }];
   repeated Action actions = 2 [(validate.rules).repeated.min_items = 1];
