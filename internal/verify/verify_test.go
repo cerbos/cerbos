@@ -44,11 +44,11 @@ func TestVerify(t *testing.T) {
 				switch sr.File {
 				case "suite_test.yaml", "inline_fixture_test.yaml":
 					is.Equal(policyv1.TestResults_RESULT_PASSED, sr.Summary.OverallResult, "unexpected result for %s", sr.File)
-					is.Equal(uint32(3), sr.Summary.TestsCount, "unexpected tests count for %s", sr.File)
+					is.Equal(uint32(5), sr.Summary.TestsCount, "unexpected tests count for %s", sr.File)
 					is.Len(sr.Summary.ResultCounts, 1, "unexpected result counts for %s", sr.File)
 					is.Equal(policyv1.TestResults_RESULT_PASSED, sr.Summary.ResultCounts[0].Result, "unexpected result count for %s", sr.File)
-					is.Equal(uint32(3), sr.Summary.ResultCounts[0].Count, "unexpected result count for %s", sr.File)
-					is.Len(sr.Principals, 1, "unexpected principals for %s", sr.File)
+					is.Equal(uint32(5), sr.Summary.ResultCounts[0].Count, "unexpected result count for %s", sr.File)
+					is.Len(sr.Principals, 2, "unexpected principals for %s", sr.File)
 					for _, action := range sr.Principals[0].Resources[0].Actions {
 						is.Equal(policyv1.TestResults_RESULT_PASSED, action.Details.Result, "unexpected result for %s in %s", action.Name, sr.File)
 					}

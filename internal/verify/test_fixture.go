@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"io/fs"
 	"path/filepath"
+	"time"
 
 	"google.golang.org/protobuf/proto"
 
@@ -164,7 +165,13 @@ func runTest(ctx context.Context, eng *engine.Engine, test *policyv1.Test, actio
 		AuxData:   test.Input.AuxData,
 	}}
 
-	actual, traces, err := performCheck(ctx, eng, inputs, trace)
+	nowFunc := time.Now
+	if test.Options != nil && test.Options.Now != nil {
+		ts := test.Options.Now.AsTime()
+		nowFunc = func() time.Time { return ts }
+	}
+
+	actual, traces, err := performCheck(ctx, eng, inputs, trace, nowFunc)
 	details.EngineTrace = traces
 
 	if err != nil {
@@ -194,14 +201,14 @@ func runTest(ctx context.Context, eng *engine.Engine, test *policyv1.Test, actio
 	return details
 }
 
-func performCheck(ctx context.Context, eng *engine.Engine, inputs []*enginev1.CheckInput, trace bool) ([]*enginev1.CheckOutput, []*enginev1.Trace, error) {
+func performCheck(ctx context.Context, eng *engine.Engine, inputs []*enginev1.CheckInput, trace bool, nowFunc func() time.Time) ([]*enginev1.CheckOutput, []*enginev1.Trace, error) {
 	if !trace {
-		output, err := eng.Check(ctx, inputs)
+		output, err := eng.Check(ctx, inputs, engine.WithNowFunc(nowFunc))
 		return output, nil, err
 	}
 
 	traceCollector := tracer.NewCollector()
-	output, err := eng.Check(ctx, inputs, engine.WithTraceSink(traceCollector))
+	output, err := eng.Check(ctx, inputs, engine.WithTraceSink(traceCollector), engine.WithNowFunc(nowFunc))
 	return output, traceCollector.Traces(), err
 }
 
@@ -307,6 +314,11 @@ func (tf *testFixture) buildTest(suite *policyv1.TestSuite, table *policyv1.Test
 		return nil, err
 	}
 
+	options := table.Options
+	if options == nil {
+		options = suite.Options
+	}
+
 	return &policyv1.Test{
 		Name:        name,
 		Description: table.Description,
@@ -319,6 +331,7 @@ func (tf *testFixture) buildTest(suite *policyv1.TestSuite, table *policyv1.Test
 			AuxData:   auxData,
 		},
 		Expected: matrixElement.Expected,
+		Options:  options,
 	}, nil
 }
 

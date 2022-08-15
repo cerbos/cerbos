@@ -1,6 +1,8 @@
 ---
 name: TestSuite
 description: Tests for verifying something
+options:
+  now: "2022-08-02T15:00:00Z"
 tests:
   - name: John and his leave request
     input:
@@ -20,3 +22,35 @@ tests:
           view:public: EFFECT_ALLOW
           approve: EFFECT_DENY
           defer: EFFECT_ALLOW
+
+  - name: With global now
+    input:
+      principals:
+        - bev
+      resources:
+        - stale_leave_request
+      actions:
+        - remind
+      auxData: myJWT
+    expected:
+      - principal: bev
+        resource: stale_leave_request
+        actions:
+          remind: EFFECT_ALLOW
+
+  - name: With local now
+    options:
+      now: "2022-08-03T15:00:00Z"
+    input:
+      principals:
+        - bev
+      resources:
+        - stale_pending_leave_request
+      actions:
+        - remind
+      auxData: myJWT
+    expected:
+      - principal: bev
+        resource: stale_pending_leave_request
+        actions:
+          remind: EFFECT_DENY

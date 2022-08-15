@@ -17,3 +17,18 @@ resources:
     attr:
       << : *attr
       status: PENDING_APPROVAL
+  stale_leave_request:
+    kind: leave_request
+    policyVersion: '20210210'
+    id: XX225
+    attr:
+      << : *attr
+      modifiedAt: "2022-08-01T15:00:00Z"
+  stale_pending_leave_request:
+    kind: leave_request
+    policyVersion: '20210210'
+    id: XX225
+    attr:
+      << : *attr
+      modifiedAt: "2022-08-01T15:00:00Z"
+      status: PENDING_APPROVAL

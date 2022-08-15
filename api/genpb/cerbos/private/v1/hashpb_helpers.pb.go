@@ -13,6 +13,7 @@ import (
 	protowire "google.golang.org/protobuf/encoding/protowire"
 	emptypb "google.golang.org/protobuf/types/known/emptypb"
 	structpb "google.golang.org/protobuf/types/known/structpb"
+	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
 	wrapperspb "google.golang.org/protobuf/types/known/wrapperspb"
 	hash "hash"
 	math "math"
@@ -803,6 +804,15 @@ func cerbos_policy_v1_Schemas_hashpb_sum(m *v11.Schemas, hasher hash.Hash, ignor
 	}
 }
 
+func cerbos_policy_v1_TestOptions_hashpb_sum(m *v11.TestOptions, hasher hash.Hash, ignore map[string]struct{}) {
+	if _, ok := ignore["cerbos.policy.v1.TestOptions.now"]; !ok {
+		if m.Now != nil {
+			google_protobuf_Timestamp_hashpb_sum(m.Now, hasher, ignore)
+		}
+
+	}
+}
+
 func cerbos_policy_v1_TestResults_Action_hashpb_sum(m *v11.TestResults_Action, hasher hash.Hash, ignore map[string]struct{}) {
 	if _, ok := ignore["cerbos.policy.v1.TestResults.Action.name"]; !ok {
 		_, _ = hasher.Write(protowire.AppendString(nil, m.Name))
@@ -1066,6 +1076,12 @@ func cerbos_policy_v1_TestTable_hashpb_sum(m *v11.TestTable, hasher hash.Hash, i
 			}
 		}
 	}
+	if _, ok := ignore["cerbos.policy.v1.TestTable.options"]; !ok {
+		if m.Options != nil {
+			cerbos_policy_v1_TestOptions_hashpb_sum(m.Options, hasher, ignore)
+		}
+
+	}
 }
 
 func cerbos_policy_v1_Test_TestName_hashpb_sum(m *v11.Test_TestName, hasher hash.Hash, ignore map[string]struct{}) {
@@ -1124,6 +1140,12 @@ func cerbos_policy_v1_Test_hashpb_sum(m *v11.Test, hasher hash.Hash, ignore map[
 
 			}
 		}
+	}
+	if _, ok := ignore["cerbos.policy.v1.Test.options"]; !ok {
+		if m.Options != nil {
+			cerbos_policy_v1_TestOptions_hashpb_sum(m.Options, hasher, ignore)
+		}
+
 	}
 }
 
@@ -2811,6 +2833,17 @@ func google_protobuf_Struct_hashpb_sum(m *structpb.Struct, hasher hash.Hash, ign
 
 			}
 		}
+	}
+}
+
+func google_protobuf_Timestamp_hashpb_sum(m *timestamppb.Timestamp, hasher hash.Hash, ignore map[string]struct{}) {
+	if _, ok := ignore["google.protobuf.Timestamp.seconds"]; !ok {
+		_, _ = hasher.Write(protowire.AppendVarint(nil, uint64(m.Seconds)))
+
+	}
+	if _, ok := ignore["google.protobuf.Timestamp.nanos"]; !ok {
+		_, _ = hasher.Write(protowire.AppendVarint(nil, uint64(m.Nanos)))
+
 	}
 }
 
