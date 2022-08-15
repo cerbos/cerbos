@@ -12,6 +12,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       pull-requests: write
+    continue-on-error: true
     steps:
       - name: Check out code
         uses: actions/checkout@v3
