@@ -9,7 +9,13 @@ condition:
       - expr: |-
           timestamp(P.attr.lastLogin).timeSince() > duration("24h")
       - expr: |-
+          timestamp(P.attr.lastLogin).timeSince() == duration("48h")
+      - expr: |-
           now() > timestamp(P.attr.lastLogin)
+      - expr: |-
+          now() == now()
+      - expr: |-
+          now() == timestamp("2021-04-22T10:05:20.021-05:00")
 input: {
   "requestId": "test",
   "actions": ["*"],

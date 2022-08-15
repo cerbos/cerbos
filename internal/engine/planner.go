@@ -7,6 +7,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/google/cel-go/cel"
 	"github.com/google/cel-go/checker/decls"
@@ -499,7 +500,7 @@ func evaluateCELExprPartially(expr *exprpb.CheckedExpr, input *enginev1.PlanReso
 		return nil, err
 	}
 
-	val, details, err := conditions.Eval(env, ast, vars, cel.EvalOptions(cel.OptPartialEval, cel.OptTrackState))
+	val, details, err := conditions.Eval(env, ast, vars, time.Now, cel.EvalOptions(cel.OptPartialEval, cel.OptTrackState))
 	if err != nil {
 		// ignore expressions that access non-existent keys
 		noSuchKey := &conditions.NoSuchKeyError{}
@@ -572,7 +573,7 @@ func evalComprehensionBody(env *cel.Env, pvars interpreter.PartialActivation, e 
 		if err != nil {
 			return err
 		}
-		_, det, err := conditions.Eval(env1, ast, partialVars, cel.EvalOptions(cel.OptTrackState, cel.OptPartialEval))
+		_, det, err := conditions.Eval(env1, ast, partialVars, time.Now, cel.EvalOptions(cel.OptTrackState, cel.OptPartialEval))
 		if err != nil {
 			return err
 		}

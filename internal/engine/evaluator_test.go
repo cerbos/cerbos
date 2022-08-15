@@ -9,6 +9,7 @@ package engine
 import (
 	"bytes"
 	"testing"
+	"time"
 
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
 	privatev1 "github.com/cerbos/cerbos/api/genpb/cerbos/private/v1"
@@ -66,6 +67,11 @@ func TestSetIntersects(t *testing.T) {
 func TestSatisfiesCondition(t *testing.T) {
 	testCases := test.LoadTestCases(t, "cel_eval")
 
+	timeNow, err := time.Parse(time.RFC3339, "2021-04-22T10:05:20.021-05:00")
+	require.NoError(t, err, "Failed to parse timestamp")
+
+	eparams := evalParams{nowFunc: func() time.Time { return timeNow }}
+
 	for _, tcase := range testCases {
 		tcase := tcase
 		t.Run(tcase.Name, func(t *testing.T) {
@@ -74,7 +80,7 @@ func TestSatisfiesCondition(t *testing.T) {
 			require.NoError(t, err)
 
 			tctx := tracer.Start(newTestTraceSink(t))
-			retVal, err := satisfiesCondition(tctx.StartCondition(), cond, nil, tc.Input)
+			retVal, err := eparams.satisfiesCondition(tctx.StartCondition(), cond, nil, tc.Input)
 
 			if tc.WantError {
 				require.Error(t, err)

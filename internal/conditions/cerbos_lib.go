@@ -132,8 +132,9 @@ func (clib cerbosLib) ProgramOptions() []cel.ProgramOption {
 // providing time-based functions with a static definition of the current time.
 //
 // See https://pkg.go.dev/github.com/google/cel-go/cel#Program.Eval.
-func Eval(env *cel.Env, ast *cel.Ast, vars any, opts ...cel.ProgramOption) (ref.Val, *cel.EvalDetails, error) {
-	prg, err := program(env, ast, opts...)
+func Eval(env *cel.Env, ast *cel.Ast, vars any, nowFunc func() time.Time, opts ...cel.ProgramOption) (ref.Val, *cel.EvalDetails, error) {
+	programOpts := append([]cel.ProgramOption{cel.CustomDecorator(newTimeDecorator(nowFunc))}, opts...)
+	prg, err := env.Program(ast, programOpts...)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -145,15 +146,8 @@ func Eval(env *cel.Env, ast *cel.Ast, vars any, opts ...cel.ProgramOption) (ref.
 	return result, details, err
 }
 
-// program generates an evaluable instance of the ast within the environment,
-// providing time-based functions with a static definition of the current time.
-func program(env *cel.Env, ast *cel.Ast, opts ...cel.ProgramOption) (cel.Program, error) {
-	programOpts := append([]cel.ProgramOption{cel.CustomDecorator(newTimeDecorator())}, opts...)
-	return env.Program(ast, programOpts...)
-}
-
-func newTimeDecorator() interpreter.InterpretableDecorator {
-	td := timeDecorator{now: time.Now()}
+func newTimeDecorator(nowFunc func() time.Time) interpreter.InterpretableDecorator {
+	td := timeDecorator{now: nowFunc()}
 	return td.decorate
 }
 

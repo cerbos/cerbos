@@ -13,6 +13,7 @@ import (
 	"reflect"
 	"sort"
 	"strings"
+	"time"
 
 	"github.com/alecthomas/participle/v2"
 	"github.com/google/cel-go/cel"
@@ -373,7 +374,7 @@ func (r *REPL) evalExpr(expr string) (ref.Val, *exprpb.Type, error) {
 		return nil, nil, errInvalidExpr
 	}
 
-	val, _, err := conditions.Eval(env, ast, r.vars)
+	val, _, err := conditions.Eval(env, ast, r.vars, time.Now)
 	if err != nil {
 		return nil, nil, err
 	}
