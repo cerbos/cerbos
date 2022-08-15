@@ -1723,6 +1723,23 @@ func cerbos_private_v1_ValidationErrContainer_hashpb_sum(m *ValidationErrContain
 	}
 }
 
+func cerbos_private_v1_VerifyTestCase_hashpb_sum(m *VerifyTestCase, hasher hash.Hash, ignore map[string]struct{}) {
+	if _, ok := ignore["cerbos.private.v1.VerifyTestCase.description"]; !ok {
+		_, _ = hasher.Write(protowire.AppendString(nil, m.Description))
+
+	}
+	if _, ok := ignore["cerbos.private.v1.VerifyTestCase.want_err"]; !ok {
+		_, _ = hasher.Write(protowire.AppendVarint(nil, protowire.EncodeBool(m.WantErr)))
+
+	}
+	if _, ok := ignore["cerbos.private.v1.VerifyTestCase.want"]; !ok {
+		if m.Want != nil {
+			cerbos_policy_v1_TestResults_hashpb_sum(m.Want, hasher, ignore)
+		}
+
+	}
+}
+
 func cerbos_private_v1_VerifyTestFixtureGetTestsTestCase_hashpb_sum(m *VerifyTestFixtureGetTestsTestCase, hasher hash.Hash, ignore map[string]struct{}) {
 	if _, ok := ignore["cerbos.private.v1.VerifyTestFixtureGetTestsTestCase.table"]; !ok {
 		if m.Table != nil {

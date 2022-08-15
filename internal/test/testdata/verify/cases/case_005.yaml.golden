@@ -1,0 +1,15 @@
+{
+  "suites":  [
+    {
+      "file":  "invalid_test.yaml",
+      "name":  "Unknown",
+      "summary":  {
+        "overallResult":  "RESULT_ERRORED"
+      },
+      "error":  "failed to load test suite: invalid TestSuite.Tests: value must contain at least 1 item(s)"
+    }
+  ],
+  "summary":  {
+    "overallResult":  "RESULT_ERRORED"
+  }
+}

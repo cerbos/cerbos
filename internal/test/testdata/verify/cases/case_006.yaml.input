@@ -1,0 +1,24 @@
+-- testdata/principals.yaml --
+principals:
+  invalid: {}
+
+-- suite_test.yaml --
+---
+name: TestSuite
+description: Tests for verifying something
+tests:
+  - name: John and his leave request
+    input:
+      principals:
+        - john
+      resources:
+        - john_leave_request
+      actions:
+        - view:public
+        - approve
+    expected:
+      - principal: john
+        resource: john_leave_request
+        actions:
+          view:public: EFFECT_ALLOW
+          approve: EFFECT_DENY
