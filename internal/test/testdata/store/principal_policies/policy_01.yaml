@@ -6,7 +6,7 @@ principalPolicy:
   principal: donald_duck
   version: "20210210"
   rules:
-    - resource: leave_request
+    - resource: "*"
       actions:
         - action: "*"
           condition:

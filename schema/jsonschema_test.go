@@ -162,15 +162,6 @@ func TestValidatePoliciesWithJSONSchema(t *testing.T) {
 			valid: false,
 		},
 		{
-			title: "invalid principal policy: rule resource doesn't match pattern",
-			policy: func() interface{} {
-				policy := test.GenPrincipalPolicy(test.NoMod())
-				policy.GetPrincipalPolicy().Rules[0].Resource = "?"
-				return jsonify(t, policy)
-			}(),
-			valid: false,
-		},
-		{
 			title: "invalid principal policy: rule action missing action",
 			policy: func() interface{} {
 				policy := test.GenPrincipalPolicy(test.NoMod())

@@ -1152,17 +1152,6 @@ func (m *PrincipalRule) validate(all bool) error {
 		errors = append(errors, err)
 	}
 
-	if !_PrincipalRule_Resource_Pattern.MatchString(m.GetResource()) {
-		err := PrincipalRuleValidationError{
-			field:  "Resource",
-			reason: "value does not match regex pattern \"^[[:alpha:]][[:word:]\\\\@\\\\.\\\\-/]*(\\\\:[[:alpha:]][[:word:]\\\\@\\\\.\\\\-/]*)*$\"",
-		}
-		if !all {
-			return err
-		}
-		errors = append(errors, err)
-	}
-
 	if len(m.GetActions()) < 1 {
 		err := PrincipalRuleValidationError{
 			field:  "Actions",
@@ -1285,8 +1274,6 @@ var _ interface {
 	Cause() error
 	ErrorName() string
 } = PrincipalRuleValidationError{}
-
-var _PrincipalRule_Resource_Pattern = regexp.MustCompile("^[[:alpha:]][[:word:]\\@\\.\\-/]*(\\:[[:alpha:]][[:word:]\\@\\.\\-/]*)*$")
 
 // Validate checks the field values on DerivedRoles with the rules defined in
 // the proto definition for this message. If any rules are violated, the first
