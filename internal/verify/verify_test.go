@@ -65,7 +65,12 @@ func TestVerify(t *testing.T) {
 			}
 
 			require.NoError(t, err, "Test suite failed")
-			require.Empty(t, cmp.Diff(tc.want, have, protocmp.Transform()))
+			require.Empty(t, cmp.Diff(tc.want, have,
+				protocmp.Transform(),
+				cmp.Comparer(func(s1, s2 string) bool {
+					return strings.ReplaceAll(s1, "\u00a0", " ") == strings.ReplaceAll(s2, "\u00a0", " ")
+				}),
+			))
 		})
 	}
 }
