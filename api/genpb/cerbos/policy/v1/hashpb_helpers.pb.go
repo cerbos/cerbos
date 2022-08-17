@@ -7,6 +7,7 @@ import (
 	v1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
 	protowire "google.golang.org/protobuf/encoding/protowire"
 	structpb "google.golang.org/protobuf/types/known/structpb"
+	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
 	wrapperspb "google.golang.org/protobuf/types/known/wrapperspb"
 	hash "hash"
 	math "math"
@@ -618,6 +619,15 @@ func cerbos_policy_v1_Schemas_hashpb_sum(m *Schemas, hasher hash.Hash, ignore ma
 func cerbos_policy_v1_TestFixture_hashpb_sum(m *TestFixture, hasher hash.Hash, ignore map[string]struct{}) {
 }
 
+func cerbos_policy_v1_TestOptions_hashpb_sum(m *TestOptions, hasher hash.Hash, ignore map[string]struct{}) {
+	if _, ok := ignore["cerbos.policy.v1.TestOptions.now"]; !ok {
+		if m.Now != nil {
+			google_protobuf_Timestamp_hashpb_sum(m.Now, hasher, ignore)
+		}
+
+	}
+}
+
 func cerbos_policy_v1_TestResults_Action_hashpb_sum(m *TestResults_Action, hasher hash.Hash, ignore map[string]struct{}) {
 	if _, ok := ignore["cerbos.policy.v1.TestResults.Action.name"]; !ok {
 		_, _ = hasher.Write(protowire.AppendString(nil, m.Name))
@@ -873,6 +883,12 @@ func cerbos_policy_v1_TestSuite_hashpb_sum(m *TestSuite, hasher hash.Hash, ignor
 			}
 		}
 	}
+	if _, ok := ignore["cerbos.policy.v1.TestSuite.options"]; !ok {
+		if m.Options != nil {
+			cerbos_policy_v1_TestOptions_hashpb_sum(m.Options, hasher, ignore)
+		}
+
+	}
 }
 
 func cerbos_policy_v1_TestTable_Expectation_hashpb_sum(m *TestTable_Expectation, hasher hash.Hash, ignore map[string]struct{}) {
@@ -967,6 +983,12 @@ func cerbos_policy_v1_TestTable_hashpb_sum(m *TestTable, hasher hash.Hash, ignor
 			}
 		}
 	}
+	if _, ok := ignore["cerbos.policy.v1.TestTable.options"]; !ok {
+		if m.Options != nil {
+			cerbos_policy_v1_TestOptions_hashpb_sum(m.Options, hasher, ignore)
+		}
+
+	}
 }
 
 func cerbos_policy_v1_Test_TestName_hashpb_sum(m *Test_TestName, hasher hash.Hash, ignore map[string]struct{}) {
@@ -1026,6 +1048,12 @@ func cerbos_policy_v1_Test_hashpb_sum(m *Test, hasher hash.Hash, ignore map[stri
 			}
 		}
 	}
+	if _, ok := ignore["cerbos.policy.v1.Test.options"]; !ok {
+		if m.Options != nil {
+			cerbos_policy_v1_TestOptions_hashpb_sum(m.Options, hasher, ignore)
+		}
+
+	}
 }
 
 func google_protobuf_ListValue_hashpb_sum(m *structpb.ListValue, hasher hash.Hash, ignore map[string]struct{}) {
@@ -1060,6 +1088,17 @@ func google_protobuf_Struct_hashpb_sum(m *structpb.Struct, hasher hash.Hash, ign
 
 			}
 		}
+	}
+}
+
+func google_protobuf_Timestamp_hashpb_sum(m *timestamppb.Timestamp, hasher hash.Hash, ignore map[string]struct{}) {
+	if _, ok := ignore["google.protobuf.Timestamp.seconds"]; !ok {
+		_, _ = hasher.Write(protowire.AppendVarint(nil, uint64(m.Seconds)))
+
+	}
+	if _, ok := ignore["google.protobuf.Timestamp.nanos"]; !ok {
+		_, _ = hasher.Write(protowire.AppendVarint(nil, uint64(m.Nanos)))
+
 	}
 }
 

@@ -46,6 +46,7 @@ type PolicyLoader interface {
 
 type checkOptions struct {
 	tracerSink tracer.Sink
+	evalParams evalParams
 }
 
 func newCheckOptions(ctx context.Context, opts ...CheckOpt) *checkOptions {
@@ -54,7 +55,7 @@ func newCheckOptions(ctx context.Context, opts ...CheckOpt) *checkOptions {
 		tracerSink = tracer.NewZapSink(logging.FromContext(ctx).Named("tracer"))
 	}
 
-	co := &checkOptions{tracerSink: tracerSink}
+	co := &checkOptions{tracerSink: tracerSink, evalParams: defaultEvalParams()}
 	for _, opt := range opts {
 		opt(co)
 	}
@@ -74,6 +75,13 @@ func WithTraceSink(tracerSink tracer.Sink) CheckOpt {
 // WithZapTraceSink sets an engine tracer with Zap set as the sink.
 func WithZapTraceSink(log *zap.Logger) CheckOpt {
 	return WithTraceSink(tracer.NewZapSink(log))
+}
+
+// WithNowFunc sets the function for determining `now` during condition evaluation.
+func WithNowFunc(nowFunc func() time.Time) CheckOpt {
+	return func(co *checkOptions) {
+		co.evalParams.nowFunc = nowFunc
+	}
 }
 
 type Engine struct {
@@ -295,9 +303,11 @@ func (engine *Engine) doPlanResources(ctx context.Context, input *enginev1.PlanR
 		return nil, err
 	}
 
+	eparams := defaultEvalParams()
+
 	// get the principal policy check
 	ppName, ppVersion, ppScope := engine.policyAttr(input.Principal.Id, input.Principal.PolicyVersion, input.Principal.Scope)
-	policyEvaluator, err := engine.getPrincipalPolicyEvaluator(ctx, ppName, ppVersion, ppScope)
+	policyEvaluator, err := engine.getPrincipalPolicyEvaluator(ctx, eparams, ppName, ppVersion, ppScope)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get check for [%s.%s]: %w", ppName, ppVersion, err)
 	}
@@ -315,7 +325,7 @@ func (engine *Engine) doPlanResources(ctx context.Context, input *enginev1.PlanR
 
 	// get the resource policy check
 	rpName, rpVersion, rpScope := engine.policyAttr(input.Resource.Kind, input.Resource.PolicyVersion, input.Resource.Scope)
-	policyEvaluator, err = engine.getResourcePolicyEvaluator(ctx, rpName, rpVersion, rpScope)
+	policyEvaluator, err = engine.getResourcePolicyEvaluator(ctx, eparams, rpName, rpVersion, rpScope)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get check for [%s.%s]: %w", rpName, rpVersion, err)
 	}
@@ -396,7 +406,7 @@ func (engine *Engine) evaluate(ctx context.Context, input *enginev1.CheckInput, 
 		Actions:    make(map[string]*enginev1.CheckOutput_ActionEffect, len(input.Actions)),
 	}
 
-	ec, err := engine.buildEvaluationCtx(ctx, input)
+	ec, err := engine.buildEvaluationCtx(ctx, checkOpts.evalParams, input)
 	if err != nil {
 		return nil, err
 	}
@@ -445,12 +455,12 @@ func (engine *Engine) evaluate(ctx context.Context, input *enginev1.CheckInput, 
 	return output, nil
 }
 
-func (engine *Engine) buildEvaluationCtx(ctx context.Context, input *enginev1.CheckInput) (*evaluationCtx, error) {
+func (engine *Engine) buildEvaluationCtx(ctx context.Context, eparams evalParams, input *enginev1.CheckInput) (*evaluationCtx, error) {
 	ec := &evaluationCtx{}
 
 	// get the principal policy check
 	ppName, ppVersion, ppScope := engine.policyAttr(input.Principal.Id, input.Principal.PolicyVersion, input.Principal.Scope)
-	ppCheck, err := engine.getPrincipalPolicyEvaluator(ctx, ppName, ppVersion, ppScope)
+	ppCheck, err := engine.getPrincipalPolicyEvaluator(ctx, eparams, ppName, ppVersion, ppScope)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get check for [%s.%s]: %w", ppName, ppVersion, err)
 	}
@@ -458,7 +468,7 @@ func (engine *Engine) buildEvaluationCtx(ctx context.Context, input *enginev1.Ch
 
 	// get the resource policy check
 	rpName, rpVersion, rpScope := engine.policyAttr(input.Resource.Kind, input.Resource.PolicyVersion, input.Resource.Scope)
-	rpCheck, err := engine.getResourcePolicyEvaluator(ctx, rpName, rpVersion, rpScope)
+	rpCheck, err := engine.getResourcePolicyEvaluator(ctx, eparams, rpName, rpVersion, rpScope)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get check for [%s.%s]: %w", rpName, rpVersion, err)
 	}
@@ -467,7 +477,7 @@ func (engine *Engine) buildEvaluationCtx(ctx context.Context, input *enginev1.Ch
 	return ec, nil
 }
 
-func (engine *Engine) getPrincipalPolicyEvaluator(ctx context.Context, principal, policyVer, scope string) (Evaluator, error) {
+func (engine *Engine) getPrincipalPolicyEvaluator(ctx context.Context, eparams evalParams, principal, policyVer, scope string) (Evaluator, error) {
 	principalModID := namer.PrincipalPolicyModuleID(principal, policyVer, scope)
 	rps, err := engine.policyLoader.GetPolicySet(ctx, principalModID)
 	if err != nil {
@@ -478,10 +488,10 @@ func (engine *Engine) getPrincipalPolicyEvaluator(ctx context.Context, principal
 		return nil, nil
 	}
 
-	return NewEvaluator(rps, engine.schemaMgr), nil
+	return NewEvaluator(rps, engine.schemaMgr, eparams), nil
 }
 
-func (engine *Engine) getResourcePolicyEvaluator(ctx context.Context, resource, policyVer, scope string) (Evaluator, error) {
+func (engine *Engine) getResourcePolicyEvaluator(ctx context.Context, eparams evalParams, resource, policyVer, scope string) (Evaluator, error) {
 	resourceModID := namer.ResourcePolicyModuleID(resource, policyVer, scope)
 	rps, err := engine.policyLoader.GetPolicySet(ctx, resourceModID)
 	if err != nil {
@@ -492,7 +502,7 @@ func (engine *Engine) getResourcePolicyEvaluator(ctx context.Context, resource, 
 		return nil, nil
 	}
 
-	return NewEvaluator(rps, engine.schemaMgr), nil
+	return NewEvaluator(rps, engine.schemaMgr, eparams), nil
 }
 
 func (engine *Engine) policyAttr(name, version, scope string) (pName, pVersion, pScope string) {

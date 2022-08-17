@@ -7,6 +7,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/google/cel-go/cel"
 	"go.uber.org/multierr"
@@ -28,17 +29,25 @@ import (
 
 var ErrPolicyNotExecutable = errors.New("policy not executable")
 
+type evalParams struct {
+	nowFunc func() time.Time
+}
+
+func defaultEvalParams() evalParams {
+	return evalParams{nowFunc: time.Now}
+}
+
 type Evaluator interface {
 	Evaluate(context.Context, tracer.Context, *enginev1.CheckInput) (*PolicyEvalResult, error)
 	EvaluateResourcesQueryPlan(ctx context.Context, request *enginev1.PlanResourcesInput) (*PolicyPlanResult, error)
 }
 
-func NewEvaluator(rps *runtimev1.RunnablePolicySet, schemaMgr schema.Manager) Evaluator {
+func NewEvaluator(rps *runtimev1.RunnablePolicySet, schemaMgr schema.Manager, eparams evalParams) Evaluator {
 	switch rp := rps.PolicySet.(type) {
 	case *runtimev1.RunnablePolicySet_ResourcePolicy:
-		return &resourcePolicyEvaluator{policy: rp.ResourcePolicy, schemaMgr: schemaMgr}
+		return &resourcePolicyEvaluator{policy: rp.ResourcePolicy, schemaMgr: schemaMgr, evalParams: eparams}
 	case *runtimev1.RunnablePolicySet_PrincipalPolicy:
-		return &principalPolicyEvaluator{policy: rp.PrincipalPolicy}
+		return &principalPolicyEvaluator{policy: rp.PrincipalPolicy, evalParams: eparams}
 	default:
 		return noopEvaluator{}
 	}
@@ -55,8 +64,9 @@ func (noopEvaluator) Evaluate(_ context.Context, _ tracer.Context, _ *enginev1.C
 }
 
 type resourcePolicyEvaluator struct {
-	policy    *runtimev1.RunnableResourcePolicySet
-	schemaMgr schema.Manager
+	policy     *runtimev1.RunnableResourcePolicySet
+	schemaMgr  schema.Manager
+	evalParams evalParams
 }
 
 func (rpe *resourcePolicyEvaluator) Evaluate(ctx context.Context, tctx tracer.Context, input *enginev1.CheckInput) (*PolicyEvalResult, error) {
@@ -107,7 +117,7 @@ func (rpe *resourcePolicyEvaluator) Evaluate(ctx context.Context, tctx tracer.Co
 		sctx := pctx.StartScope(p.Scope)
 
 		// evaluate the variables of this policy
-		variables, err := evaluateVariables(sctx.StartVariables(), p.Variables, input)
+		variables, err := rpe.evalParams.evaluateVariables(sctx.StartVariables(), p.Variables, input)
 		if err != nil {
 			sctx.Failed(err, "Failed to evaluate variables")
 			return nil, fmt.Errorf("failed to evaluate variables: %w", err)
@@ -123,13 +133,13 @@ func (rpe *resourcePolicyEvaluator) Evaluate(ctx context.Context, tctx tracer.Co
 			}
 
 			// evaluate variables of this derived roles set
-			drVariables, err := evaluateVariables(dctx.StartVariables(), dr.Variables, input)
+			drVariables, err := rpe.evalParams.evaluateVariables(dctx.StartVariables(), dr.Variables, input)
 			if err != nil {
 				dctx.Skipped(err, "Error evaluating variables")
 				continue
 			}
 
-			ok, err := satisfiesCondition(dctx.StartCondition(), dr.Condition, drVariables, input)
+			ok, err := rpe.evalParams.satisfiesCondition(dctx.StartCondition(), dr.Condition, drVariables, input)
 			if err != nil {
 				dctx.Skipped(err, "Error evaluating condition")
 				continue
@@ -158,7 +168,7 @@ func (rpe *resourcePolicyEvaluator) Evaluate(ctx context.Context, tctx tracer.Co
 				matchedActions := util.FilterGlob(actionGlob, actionsToResolve)
 				for _, action := range matchedActions {
 					actx := rctx.StartAction(action)
-					ok, err := satisfiesCondition(actx.StartCondition(), rule.Condition, variables, input)
+					ok, err := rpe.evalParams.satisfiesCondition(actx.StartCondition(), rule.Condition, variables, input)
 					if err != nil {
 						actx.Skipped(err, "Error evaluating condition")
 						continue
@@ -183,7 +193,8 @@ func (rpe *resourcePolicyEvaluator) Evaluate(ctx context.Context, tctx tracer.Co
 }
 
 type principalPolicyEvaluator struct {
-	policy *runtimev1.RunnablePrincipalPolicySet
+	policy     *runtimev1.RunnablePrincipalPolicySet
+	evalParams evalParams
 }
 
 func (ppe *principalPolicyEvaluator) Evaluate(ctx context.Context, tctx tracer.Context, input *enginev1.CheckInput) (*PolicyEvalResult, error) {
@@ -203,7 +214,7 @@ func (ppe *principalPolicyEvaluator) Evaluate(ctx context.Context, tctx tracer.C
 
 		sctx := pctx.StartScope(p.Scope)
 		// evaluate the variables of this policy
-		variables, err := evaluateVariables(sctx.StartVariables(), p.Variables, input)
+		variables, err := ppe.evalParams.evaluateVariables(sctx.StartVariables(), p.Variables, input)
 		if err != nil {
 			sctx.Failed(err, "Failed to evaluate variables")
 			return nil, fmt.Errorf("failed to evaluate variables: %w", err)
@@ -220,7 +231,7 @@ func (ppe *principalPolicyEvaluator) Evaluate(ctx context.Context, tctx tracer.C
 				matchedActions := util.FilterGlob(rule.Action, actionsToResolve)
 				for _, action := range matchedActions {
 					actx := rctx.StartAction(action)
-					ok, err := satisfiesCondition(actx.StartCondition(), rule.Condition, variables, input)
+					ok, err := ppe.evalParams.satisfiesCondition(actx.StartCondition(), rule.Condition, variables, input)
 					if err != nil {
 						actx.Skipped(err, "Error evaluating condition")
 						continue
@@ -241,12 +252,12 @@ func (ppe *principalPolicyEvaluator) Evaluate(ctx context.Context, tctx tracer.C
 	return result, nil
 }
 
-func evaluateVariables(tctx tracer.Context, variables map[string]*runtimev1.Expr, input *enginev1.CheckInput) (map[string]any, error) {
+func (ep evalParams) evaluateVariables(tctx tracer.Context, variables map[string]*runtimev1.Expr, input *enginev1.CheckInput) (map[string]any, error) {
 	var errs error
 	evalVars := make(map[string]any, len(variables))
 	for varName, varExpr := range variables {
 		vctx := tctx.StartVariable(varName, varExpr.Original)
-		val, err := evaluateCELExpr(varExpr.Checked, evalVars, input)
+		val, err := ep.evaluateCELExpr(varExpr.Checked, evalVars, input)
 		if err != nil {
 			vctx.Skipped(err, "Failed to evaluate expression")
 			errs = multierr.Append(errs, fmt.Errorf("error evaluating `%s := %s`: %w", varName, varExpr.Original, err))
@@ -260,7 +271,7 @@ func evaluateVariables(tctx tracer.Context, variables map[string]*runtimev1.Expr
 	return evalVars, errs
 }
 
-func satisfiesCondition(tctx tracer.Context, cond *runtimev1.Condition, variables map[string]any, input *enginev1.CheckInput) (bool, error) {
+func (ep evalParams) satisfiesCondition(tctx tracer.Context, cond *runtimev1.Condition, variables map[string]any, input *enginev1.CheckInput) (bool, error) {
 	if cond == nil {
 		tctx.ComputedBoolResult(true, nil, "")
 		return true, nil
@@ -269,7 +280,7 @@ func satisfiesCondition(tctx tracer.Context, cond *runtimev1.Condition, variable
 	switch t := cond.Op.(type) {
 	case *runtimev1.Condition_Expr:
 		ectx := tctx.StartExpr(t.Expr.Original)
-		val, err := evaluateBoolCELExpr(t.Expr.Checked, variables, input)
+		val, err := ep.evaluateBoolCELExpr(t.Expr.Checked, variables, input)
 		if err != nil {
 			ectx.ComputedBoolResult(false, err, "Failed to evaluate expression")
 			return false, fmt.Errorf("failed to evaluate `%s`: %w", t.Expr.Original, err)
@@ -281,7 +292,7 @@ func satisfiesCondition(tctx tracer.Context, cond *runtimev1.Condition, variable
 	case *runtimev1.Condition_All:
 		actx := tctx.StartConditionAll()
 		for i, expr := range t.All.Expr {
-			val, err := satisfiesCondition(actx.StartNthCondition(i), expr, variables, input)
+			val, err := ep.satisfiesCondition(actx.StartNthCondition(i), expr, variables, input)
 			if err != nil {
 				actx.ComputedBoolResult(false, err, "Short-circuited")
 				return false, err
@@ -299,7 +310,7 @@ func satisfiesCondition(tctx tracer.Context, cond *runtimev1.Condition, variable
 	case *runtimev1.Condition_Any:
 		actx := tctx.StartConditionAny()
 		for i, expr := range t.Any.Expr {
-			val, err := satisfiesCondition(actx.StartNthCondition(i), expr, variables, input)
+			val, err := ep.satisfiesCondition(actx.StartNthCondition(i), expr, variables, input)
 			if err != nil {
 				actx.ComputedBoolResult(false, err, "Short-circuited")
 				return false, err
@@ -317,7 +328,7 @@ func satisfiesCondition(tctx tracer.Context, cond *runtimev1.Condition, variable
 	case *runtimev1.Condition_None:
 		actx := tctx.StartConditionNone()
 		for i, expr := range t.None.Expr {
-			val, err := satisfiesCondition(actx.StartNthCondition(i), expr, variables, input)
+			val, err := ep.satisfiesCondition(actx.StartNthCondition(i), expr, variables, input)
 			if err != nil {
 				actx.ComputedBoolResult(false, err, "Short-circuited")
 				return false, err
@@ -339,8 +350,8 @@ func satisfiesCondition(tctx tracer.Context, cond *runtimev1.Condition, variable
 	}
 }
 
-func evaluateBoolCELExpr(expr *exprpb.CheckedExpr, variables map[string]any, input *enginev1.CheckInput) (bool, error) {
-	val, err := evaluateCELExpr(expr, variables, input)
+func (ep evalParams) evaluateBoolCELExpr(expr *exprpb.CheckedExpr, variables map[string]any, input *enginev1.CheckInput) (bool, error) {
+	val, err := ep.evaluateCELExpr(expr, variables, input)
 	if err != nil {
 		return false, err
 	}
@@ -357,7 +368,7 @@ func evaluateBoolCELExpr(expr *exprpb.CheckedExpr, variables map[string]any, inp
 	return boolVal, nil
 }
 
-func evaluateCELExpr(expr *exprpb.CheckedExpr, variables map[string]any, input *enginev1.CheckInput) (any, error) {
+func (ep evalParams) evaluateCELExpr(expr *exprpb.CheckedExpr, variables map[string]any, input *enginev1.CheckInput) (any, error) {
 	if expr == nil {
 		return nil, nil
 	}
@@ -368,7 +379,7 @@ func evaluateCELExpr(expr *exprpb.CheckedExpr, variables map[string]any, input *
 		conditions.CELPrincipalAbbrev: input.Principal,
 		conditions.CELVariablesIdent:  variables,
 		conditions.CELVariablesAbbrev: variables,
-	})
+	}, ep.nowFunc)
 	if err != nil {
 		// ignore expressions that access non-existent keys
 		noSuchKey := &conditions.NoSuchKeyError{}

@@ -178,3 +178,9 @@ message QueryPlannerFilterTestCase {
   cerbos.engine.v1.PlanResourcesFilter want_filter = 3;
   string want_string = 4;
 }
+
+message VerifyTestCase {
+  string description = 1;
+  bool want_err = 2;
+  cerbos.policy.v1.TestResults want = 3;
+}

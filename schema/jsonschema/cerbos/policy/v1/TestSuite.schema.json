@@ -93,6 +93,15 @@
         }
       }
     },
+    "cerbos.policy.v1.TestOptions": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "now": {
+          "$ref": "#/definitions/google.protobuf.Timestamp"
+        }
+      }
+    },
     "cerbos.policy.v1.TestTable": {
       "type": "object",
       "required": [
@@ -118,6 +127,9 @@
         "name": {
           "type": "string",
           "minLength": 1
+        },
+        "options": {
+          "$ref": "#/definitions/cerbos.policy.v1.TestOptions"
         },
         "skip": {
           "type": "boolean"
@@ -198,6 +210,12 @@
         }
       }
     },
+    "google.protobuf.Timestamp": {
+      "title": "Timestamp",
+      "description": "A point in time, independent of any time zone or calendar.",
+      "type": "string",
+      "format": "date-time"
+    },
     "google.protobuf.Value": {
       "title": "Value",
       "description": "A dynamically-typed value."
@@ -222,6 +240,9 @@
     "name": {
       "type": "string",
       "minLength": 1
+    },
+    "options": {
+      "$ref": "#/definitions/cerbos.policy.v1.TestOptions"
     },
     "principals": {
       "type": "object",

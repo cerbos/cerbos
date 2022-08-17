@@ -1,0 +1,85 @@
+{
+  "suites":  [
+    {
+      "file":  "suite_test.yaml",
+      "name":  "TestSuite",
+      "principals":  [
+        {
+          "name":  "john",
+          "resources":  [
+            {
+              "name":  "john_leave_request",
+              "actions":  [
+                {
+                  "name":  "view:public",
+                  "details":  {
+                    "result":  "RESULT_PASSED"
+                  }
+                },
+                {
+                  "name":  "approve",
+                  "details":  {
+                    "result":  "RESULT_PASSED"
+                  }
+                },
+                {
+                  "name":  "defer",
+                  "details":  {
+                    "result":  "RESULT_PASSED"
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name":  "bev",
+          "resources":  [
+            {
+              "name":  "stale_leave_request",
+              "actions":  [
+                {
+                  "name":  "remind",
+                  "details":  {
+                    "result":  "RESULT_PASSED"
+                  }
+                }
+              ]
+            },
+            {
+              "name":  "stale_pending_leave_request",
+              "actions":  [
+                {
+                  "name":  "remind",
+                  "details":  {
+                    "result":  "RESULT_PASSED"
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "summary":  {
+        "overallResult":  "RESULT_PASSED",
+        "testsCount":  5,
+        "resultCounts":  [
+          {
+            "result":  "RESULT_PASSED",
+            "count":  5
+          }
+        ]
+      }
+    }
+  ],
+  "summary":  {
+    "overallResult":  "RESULT_PASSED",
+    "testsCount":  5,
+    "resultCounts":  [
+      {
+        "result":  "RESULT_PASSED",
+        "count":  5
+      }
+    ]
+  }
+}

@@ -1,6 +1,9 @@
+-- suite_test.yaml --
 ---
 name: TestSuite
 description: Tests for verifying something
+options:
+  now: "blah"
 tests:
   - name: John and his leave request
     input:
@@ -11,12 +14,9 @@ tests:
       actions:
         - view:public
         - approve
-        - defer
-      auxData: myJWT
     expected:
       - principal: john
         resource: john_leave_request
         actions:
           view:public: EFFECT_ALLOW
           approve: EFFECT_DENY
-          defer: EFFECT_ALLOW

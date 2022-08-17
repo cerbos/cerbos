@@ -215,3 +215,11 @@ func (m *QueryPlannerFilterTestCase) HashPB(hasher hash.Hash, ignore map[string]
 		cerbos_private_v1_QueryPlannerFilterTestCase_hashpb_sum(m, hasher, ignore)
 	}
 }
+
+// HashPB computes a hash of the message using the given hash function
+// The ignore set must contain fully-qualified field names (pkg.msg.field) that should be ignored from the hash
+func (m *VerifyTestCase) HashPB(hasher hash.Hash, ignore map[string]struct{}) {
+	if m != nil {
+		cerbos_private_v1_VerifyTestCase_hashpb_sum(m, hasher, ignore)
+	}
+}

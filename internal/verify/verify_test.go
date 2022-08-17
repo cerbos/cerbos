@@ -4,7 +4,9 @@
 package verify
 
 import (
+	"bytes"
 	"context"
+	"flag"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -14,10 +16,15 @@ import (
 	"testing/fstest"
 	"text/template"
 
-	"github.com/stretchr/testify/assert"
+	"github.com/google/go-cmp/cmp"
+	"github.com/rogpeppe/go-internal/txtar"
 	"github.com/stretchr/testify/require"
+	"google.golang.org/protobuf/encoding/protojson"
+	"google.golang.org/protobuf/proto"
+	"google.golang.org/protobuf/testing/protocmp"
 
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
+	privatev1 "github.com/cerbos/cerbos/api/genpb/cerbos/private/v1"
 	"github.com/cerbos/cerbos/internal/audit"
 	"github.com/cerbos/cerbos/internal/compile"
 	"github.com/cerbos/cerbos/internal/engine"
@@ -27,80 +34,104 @@ import (
 	"github.com/cerbos/cerbos/internal/util"
 )
 
+var updateGolden = flag.Bool("updateGolden", false, "Update the golden values for the tests")
+
+type TestCase struct {
+	*privatev1.VerifyTestCase
+	archive *txtar.Archive
+	want    *policyv1.TestResults
+}
+
 func TestVerify(t *testing.T) {
+	testCases := test.LoadTestCases(t, filepath.Join("verify", "cases"))
+
 	eng := mkEngine(t)
-	runSuites := func(dir string) (*policyv1.TestResults, error) {
-		return Verify(context.Background(), os.DirFS(test.PathToDir(t, filepath.Join("verify", dir))), eng, Config{})
+
+	// go test -v -tags=tests ./internal/verify/... --args -updateGolden
+	if *updateGolden {
+		updateGoldenFiles(t, eng, testCases)
+		// reload to populate with new golden values
+		testCases = test.LoadTestCases(t, filepath.Join("verify", "cases"))
 	}
 
-	t.Run("valid", func(t *testing.T) {
-		result, err := runSuites("valid")
-		require.NoError(t, err)
-		require.Len(t, result.Suites, 3)
-
-		for _, sr := range result.Suites {
-			t.Run(sr.File, func(t *testing.T) {
-				is := assert.New(t)
-				switch sr.File {
-				case "suite_test.yaml", "inline_fixture_test.yaml":
-					is.Equal(policyv1.TestResults_RESULT_PASSED, sr.Summary.OverallResult, "unexpected result for %s", sr.File)
-					is.Equal(uint32(3), sr.Summary.TestsCount, "unexpected tests count for %s", sr.File)
-					is.Len(sr.Summary.ResultCounts, 1, "unexpected result counts for %s", sr.File)
-					is.Equal(policyv1.TestResults_RESULT_PASSED, sr.Summary.ResultCounts[0].Result, "unexpected result count for %s", sr.File)
-					is.Equal(uint32(3), sr.Summary.ResultCounts[0].Count, "unexpected result count for %s", sr.File)
-					is.Len(sr.Principals, 1, "unexpected principals for %s", sr.File)
-					for _, action := range sr.Principals[0].Resources[0].Actions {
-						is.Equal(policyv1.TestResults_RESULT_PASSED, action.Details.Result, "unexpected result for %s in %s", action.Name, sr.File)
-					}
-				case "udf_test.yaml":
-					is.Equal(policyv1.TestResults_RESULT_PASSED, sr.Summary.OverallResult)
-					is.Equal(uint32(4), sr.Summary.TestsCount)
-					is.Len(sr.Summary.ResultCounts, 1)
-					is.Equal(policyv1.TestResults_RESULT_PASSED, sr.Summary.ResultCounts[0].Result)
-					is.Equal(uint32(4), sr.Summary.ResultCounts[0].Count)
-					is.Len(sr.Principals, 2)
-					for _, principal := range sr.Principals {
-						for _, resource := range principal.Resources {
-							for _, action := range resource.Actions {
-								is.Equal(policyv1.TestResults_RESULT_PASSED, action.Details.Result, "unexpected result for %s/%s/%s in %s", principal.Name, resource.Name, action.Name, sr.File)
-							}
-						}
-					}
-				}
-			})
-		}
-	})
-
-	t.Run("invalid_fixture", func(t *testing.T) {
-		result, err := runSuites("invalid_fixture")
-		is := assert.New(t)
-		is.NoError(err)
-		is.Equal(policyv1.TestResults_RESULT_ERRORED, result.Summary.OverallResult)
-		is.Len(result.Suites, 1)
-		is.True(strings.HasPrefix(result.Suites[0].Error, "failed to load test fixtures from testdata:"))
-	})
-
-	t.Run("invalid_test", func(t *testing.T) {
-		result, err := runSuites("invalid_test")
-
-		is := require.New(t)
-		is.NoError(err)
-		is.Equal(policyv1.TestResults_RESULT_ERRORED, result.Summary.OverallResult)
-		is.Len(result.Suites, 2)
-
-		for _, sr := range result.Suites {
-			switch sr.File {
-			case "invalid_test.yaml":
-				is.Equal(policyv1.TestResults_RESULT_ERRORED, sr.Summary.OverallResult)
-				is.True(strings.HasPrefix(sr.Error, "failed to load test suite"))
-				is.Empty(sr.Principals)
-			case "did_not_expected_key_test.yaml":
-				is.Equal(policyv1.TestResults_RESULT_ERRORED, sr.Summary.OverallResult)
-				is.Equal(sr.Error, "failed to load test suite: invalid TestSuite.Tests: value must contain at least 1 item(s)")
-				is.Empty(sr.Principals)
+	for _, tcase := range testCases {
+		tc := readVerifyTestCase(t, tcase)
+		t.Run(tcase.Name, func(t *testing.T) {
+			have, err := runPolicyTests(t, eng, tc.archive)
+			t.Log(protojson.Format(have))
+			if tc.WantErr {
+				require.Error(t, err, "Expected error")
+				return
 			}
+
+			require.NoError(t, err, "Test suite failed")
+			require.Empty(t, cmp.Diff(tc.want, have,
+				protocmp.Transform(),
+				cmp.Comparer(func(s1, s2 string) bool {
+					return strings.ReplaceAll(s1, "\u00a0", " ") == strings.ReplaceAll(s2, "\u00a0", " ")
+				}),
+			))
+		})
+	}
+}
+
+func updateGoldenFiles(t *testing.T, eng *engine.Engine, testCases []test.Case) {
+	t.Helper()
+
+	for _, tcase := range testCases {
+		tc := readVerifyTestCase(t, tcase)
+		if tc.WantErr {
+			continue
 		}
-	})
+
+		result, err := runPolicyTests(t, eng, tc.archive)
+		require.NoError(t, err, "Failed to produce golden file for %q due to error from test run: %v", tcase.SourceFile, err)
+
+		writeGoldenFile(t, tcase.SourceFile+".golden", result)
+	}
+}
+
+func writeGoldenFile(t *testing.T, path string, contents proto.Message) {
+	t.Helper()
+	f, err := os.Create(path)
+	if err != nil {
+		t.Fatalf("Failed to create %q: %v", path, err)
+	}
+
+	defer f.Close()
+
+	_, err = f.WriteString(protojson.Format(contents))
+	if err != nil {
+		f.Close()
+		t.Fatalf("Failed to write to %q: %v", path, err)
+	}
+}
+
+func readVerifyTestCase(t *testing.T, tcase test.Case) *TestCase {
+	t.Helper()
+
+	outTC := &TestCase{VerifyTestCase: &privatev1.VerifyTestCase{}}
+	require.NoError(t, util.ReadJSONOrYAML(bytes.NewReader(tcase.Input), outTC.VerifyTestCase), "Failed to read verify test case")
+
+	if golden, ok := tcase.Want["golden"]; ok {
+		outTC.want = &policyv1.TestResults{}
+		require.NoError(t, util.ReadJSONOrYAML(bytes.NewReader(golden), outTC.want), "Failed to read golden result")
+	}
+
+	if input, ok := tcase.Want["input"]; ok {
+		outTC.archive = txtar.Parse(input)
+	}
+
+	return outTC
+}
+
+func runPolicyTests(t *testing.T, eng *engine.Engine, archive *txtar.Archive) (*policyv1.TestResults, error) {
+	t.Helper()
+
+	dir := t.TempDir()
+	require.NoError(t, txtar.Write(archive, dir), "Failed to expand archive")
+
+	return Verify(context.Background(), os.DirFS(dir), eng, Config{})
 }
 
 const (

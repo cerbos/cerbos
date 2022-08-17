@@ -25,7 +25,9 @@ Tests are defined using the familiar YAML format as well. Make sure that your te
 ---
 name: AlbumObjectTestSuite <1>
 description: Tests for verifying the album:object resource policy <2>
-principals: <3>
+options:
+  now: "2022-08-02T15:00:00Z" <3>
+principals: <4>
   alicia:
     id: aliciaID
     roles:
@@ -34,7 +36,7 @@ principals: <3>
     id: bradleyID
     roles:
       - user
-resources: <4>
+resources: <5>
   alicia_album:
     id: XX125
     kind: album:object
@@ -49,29 +51,31 @@ resources: <4>
       owner: bradleyID
       public: false
       flagged: false
-auxData: <5>
+auxData: <6>
   validJWT:
     jwt:
       iss: my.domain
       aud: ["x", "y"]
       myField: value
-tests: <6>
-  - name: Accessing an album <7>
-    input: <8>
-      principals: <9>
+tests: <7>
+  - name: Accessing an album <8>
+    options:
+      now: "2022-08-03T15:00:00Z" <9>
+    input: <10>
+      principals: <11>
         - alicia
         - bradley
-      resources: <10>
+      resources: <12>
         - alicia_album
         - bradley_album
-      actions: <11>
+      actions: <13>
         - view
         - delete
-      auxData: validJWT <12>
-    expected: <13>
-      - principal: alicia <14>
-        resource: alicia_album <15>
-        actions: <16>
+      auxData: validJWT <14>
+    expected: <15>
+      - principal: alicia <16>
+        resource: alicia_album <17>
+        actions: <18>
           view: EFFECT_ALLOW
           delete: EFFECT_ALLOW
       - principal: bradley
@@ -82,20 +86,22 @@ tests: <6>
 ----
 <1> Name of the test suite
 <2> Description of the test suite
-<3> Map of principal fixtures. The key is a string that can be used to refer to the associated principal.
-<4> Map of resource fixtures. The key is a string that can be used to refer to the associated resource.
-<5> Map of (optional) auxiliary data fixtures required to evaluate some requests. The key is a string that can be used to refer to the associated auxData.
-<6> List of tests in this suite
-<7> Name of the test
-<8> Input to the policy engine
-<9> List of keys of principal fixtures to test
-<10> List of keys of resource fixtures to test
-<11> List of actions to test
-<12> Key of auxiliary data fixture to test (optional)
-<13> List of outcomes expected for each principal and resource. If a principal+resource pair specified in `input` is not listed in `expected`, then `EFFECT_DENY` is expected for all actions for that pair.
-<14> Key of the principal fixture under test
-<15> Key of the resource fixture under test
-<16> Expected outcomes for each action for the principal+resource pair
+<3> Optional RFC3339 timestamp to be used as the return value of the `now` function. Applies to all tests in the suite unless overridden locally.
+<4> Map of principal fixtures. The key is a string that can be used to refer to the associated principal.
+<5> Map of resource fixtures. The key is a string that can be used to refer to the associated resource.
+<6> Map of (optional) auxiliary data fixtures required to evaluate some requests. The key is a string that can be used to refer to the associated auxData.
+<7> List of tests in this suite
+<8> Name of the test
+<9> Optional RFC3339 timestamp to be used as the return value of the `now` function. Applies to this test only and takes precedence over the global suite option.
+<10> Input to the policy engine
+<11> List of keys of principal fixtures to test
+<12> List of keys of resource fixtures to test
+<13> List of actions to test
+<14> Key of auxiliary data fixture to test (optional)
+<15> List of outcomes expected for each principal and resource. If a principal+resource pair specified in `input` is not listed in `expected`, then `EFFECT_DENY` is expected for all actions for that pair.
+<16> Key of the principal fixture under test
+<17> Key of the resource fixture under test
+<18> Expected outcomes for each action for the principal+resource pair
 
 === Sharing test fixtures
 
@@ -155,13 +161,13 @@ auxData:
 [NOTE]
 ====
 
-link:https://www.educative.io/blog/advanced-yaml-syntax-cheatsheet#anchors[YAML anchors and overrides] are a great way to reduce repetition and reuse definitions in test cases. 
+link:https://www.educative.io/blog/advanced-yaml-syntax-cheatsheet#anchors[YAML anchors and overrides] are a great way to reduce repetition and reuse definitions in test cases.
 
 For example, the following definitions are equivalent:
 
 [options="header",cols="a,a"]
 |===
-| Without anchors and overrides 
+| Without anchors and overrides
 | With anchors and overrides
 |
 [source,yaml]
@@ -170,7 +176,7 @@ resources:
   alicias_album1:
     id: "XX125"
     kind: "album:object"
-    attr: 
+    attr:
       owner: "alicia"
       public: false
       flagged: false
@@ -178,7 +184,7 @@ resources:
   alicias_album2:
     id: "XX525"
     kind: "album:object"
-    attr: 
+    attr:
       owner: "alicia"
       public: false
       flagged: false
@@ -186,7 +192,7 @@ resources:
   alicias_album3:
     id: "XX925"
     kind: "album:object"
-    attr: 
+    attr:
       owner: "alicia"
       public: false
       flagged: false
@@ -277,7 +283,7 @@ tests:
 Because Cerbos artefacts are distributed as self-contained containers and binaries, you should be able to easily integrate Cerbos into any CI environment. Simply configure your workflow to execute the commands described in the sections above using either the Cerbos container (you may need to configure mount points to suit your repo structure) or the binary.
 
 
-=== GitHub Actions 
+=== GitHub Actions
 
 - link:https://github.com/cerbos/cerbos-setup-action[cerbos-setup-action]: Install `cerbos` and `cerbosctl` binaries into your workflow tools cache
 - link:https://github.com/cerbos/cerbos-compile-action[cerbos-compile-action]: Compile and (optionally) test Cerbos policies

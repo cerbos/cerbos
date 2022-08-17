@@ -55,6 +55,7 @@ require (
 	github.com/pterm/pterm v0.12.45
 	github.com/rivo/tview v0.0.0-20210624165335-29d673af0ce2
 	github.com/rjeczalik/notify v0.9.3-0.20201210012515-e2a77dcc14cf
+	github.com/rogpeppe/go-internal v1.8.1
 	github.com/rs/cors v1.8.2
 	github.com/rudderlabs/analytics-go v3.3.2+incompatible
 	github.com/santhosh-tekuri/jsonschema/v5 v5.0.0

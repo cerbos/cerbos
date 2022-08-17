@@ -7,6 +7,7 @@ import (
 	"bytes"
 	"fmt"
 	"testing"
+	"time"
 
 	"github.com/google/cel-go/cel"
 	"github.com/google/cel-go/checker/decls"
@@ -177,13 +178,13 @@ func TestResidualExpr(t *testing.T) {
 			e, err = replaceVars(e, variables)
 			is.NoError(err)
 			ast = cel.ParsedExprToAst(&expr.ParsedExpr{Expr: e})
-			_, det, err := conditions.Eval(env, ast, pvars, cel.EvalOptions(cel.OptTrackState, cel.OptPartialEval))
+			_, det, err := conditions.Eval(env, ast, pvars, time.Now, cel.EvalOptions(cel.OptTrackState, cel.OptPartialEval))
 			is.NoError(err)
 
 			residualAst, err := env.ResidualAst(ast, det)
 			is.NoError(err)
 			ast = cel.ParsedExprToAst(&expr.ParsedExpr{Expr: e})
-			_, det, err = conditions.Eval(env, ast, pvars, cel.EvalOptions(cel.OptTrackState, cel.OptPartialEval))
+			_, det, err = conditions.Eval(env, ast, pvars, time.Now, cel.EvalOptions(cel.OptTrackState, cel.OptPartialEval))
 			is.NoError(err)
 			residualExpr := ResidualExpr(ast, det)
 			is.NoError(err)
@@ -260,7 +261,7 @@ func TestPartialEvaluationWithGlobalVars(t *testing.T) {
 			e, err = replaceVars(e, variables)
 			is.NoError(err)
 			ast = cel.ParsedExprToAst(&expr.ParsedExpr{Expr: e})
-			_, det, err := conditions.Eval(env, ast, pvars, cel.EvalOptions(cel.OptTrackState, cel.OptPartialEval))
+			_, det, err := conditions.Eval(env, ast, pvars, time.Now, cel.EvalOptions(cel.OptTrackState, cel.OptPartialEval))
 			is.NoError(err)
 
 			residualExpr := ResidualExpr(ast, det)

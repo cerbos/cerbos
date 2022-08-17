@@ -61,7 +61,7 @@ func prepareProgram(tb testing.TB, expr string) cel.Program {
 	ast, issues := env.Compile(expr)
 	is.NoError(issues.Err())
 
-	prg, err := program(env, ast)
+	prg, err := env.Program(ast, cel.CustomDecorator(newTimeDecorator(time.Now)))
 	is.NoError(err)
 	return prg
 }

@@ -2318,6 +2318,139 @@ var _ interface {
 	ErrorName() string
 } = QueryPlannerFilterTestCaseValidationError{}
 
+// Validate checks the field values on VerifyTestCase with the rules defined in
+// the proto definition for this message. If any rules are violated, the first
+// error encountered is returned, or nil if there are no violations.
+func (m *VerifyTestCase) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on VerifyTestCase with the rules defined
+// in the proto definition for this message. If any rules are violated, the
+// result is a list of violation errors wrapped in VerifyTestCaseMultiError,
+// or nil if none found.
+func (m *VerifyTestCase) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *VerifyTestCase) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for Description
+
+	// no validation rules for WantErr
+
+	if all {
+		switch v := interface{}(m.GetWant()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, VerifyTestCaseValidationError{
+					field:  "Want",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, VerifyTestCaseValidationError{
+					field:  "Want",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetWant()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return VerifyTestCaseValidationError{
+				field:  "Want",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if len(errors) > 0 {
+		return VerifyTestCaseMultiError(errors)
+	}
+
+	return nil
+}
+
+// VerifyTestCaseMultiError is an error wrapping multiple validation errors
+// returned by VerifyTestCase.ValidateAll() if the designated constraints
+// aren't met.
+type VerifyTestCaseMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m VerifyTestCaseMultiError) Error() string {
+	var msgs []string
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m VerifyTestCaseMultiError) AllErrors() []error { return m }
+
+// VerifyTestCaseValidationError is the validation error returned by
+// VerifyTestCase.Validate if the designated constraints aren't met.
+type VerifyTestCaseValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e VerifyTestCaseValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e VerifyTestCaseValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e VerifyTestCaseValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e VerifyTestCaseValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e VerifyTestCaseValidationError) ErrorName() string { return "VerifyTestCaseValidationError" }
+
+// Error satisfies the builtin error interface
+func (e VerifyTestCaseValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sVerifyTestCase.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = VerifyTestCaseValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = VerifyTestCaseValidationError{}
+
 // Validate checks the field values on ServerTestCase_PlanResourcesCall with
 // the rules defined in the proto definition for this message. If any rules
 // are violated, the first error encountered is returned, or nil if there are
