@@ -155,7 +155,6 @@ func TestAdminAPICredentials(t *testing.T) {
 	testCases := []struct {
 		name           string
 		conf           map[string]any
-		unsafe         bool
 		wantUsername   string
 		wantPasswdHash []byte
 		wantErr        bool
@@ -169,7 +168,6 @@ func TestAdminAPICredentials(t *testing.T) {
 					},
 				},
 			},
-			unsafe:         true,
 			wantUsername:   defaultAdminUsername,
 			wantPasswdHash: []byte(defaultRawAdminPasswordHash),
 		},
@@ -189,40 +187,6 @@ func TestAdminAPICredentials(t *testing.T) {
 			wantUsername:   nonDefaultUsername,
 			wantPasswdHash: nonDefaultPasswordHash,
 		},
-		{
-			name: "userProvidedDefaultUsername",
-			conf: map[string]any{
-				"server": map[string]any{
-					"adminAPI": map[string]any{
-						"enabled": true,
-						"adminCredentials": map[string]any{
-							"username":     defaultAdminUsername,
-							"passwordHash": nonDefaultPasswordHashEncoded,
-						},
-					},
-				},
-			},
-			unsafe:         true,
-			wantUsername:   defaultAdminUsername,
-			wantPasswdHash: nonDefaultPasswordHash,
-		},
-		{
-			name: "userProvidedDefaultPasswordHash",
-			conf: map[string]any{
-				"server": map[string]any{
-					"adminAPI": map[string]any{
-						"enabled": true,
-						"adminCredentials": map[string]any{
-							"username":     nonDefaultUsername,
-							"passwordHash": defaultAdminPasswordHash,
-						},
-					},
-				},
-			},
-			unsafe:         true,
-			wantUsername:   nonDefaultUsername,
-			wantPasswdHash: []byte(defaultRawAdminPasswordHash),
-		},
 	}
 
 	for _, tc := range testCases {
@@ -233,7 +197,6 @@ func TestAdminAPICredentials(t *testing.T) {
 			var sc Conf
 			err := config.GetSection(&sc)
 			require.NoError(t, err)
-			require.Equal(t, tc.unsafe, sc.AdminAPI.AdminCredentials.isUnsafe())
 
 			adminUser, adminPasswdHash, err := sc.AdminAPI.AdminCredentials.usernameAndPasswordHash()
 			if tc.wantErr {
@@ -242,6 +205,50 @@ func TestAdminAPICredentials(t *testing.T) {
 				require.NoError(t, err)
 				require.Equal(t, tc.wantUsername, adminUser)
 				require.Equal(t, tc.wantPasswdHash, adminPasswdHash)
+			}
+		})
+	}
+}
+
+func TestAdminCredentialsAreUnsafe(t *testing.T) {
+	testCases := []struct {
+		name         string
+		passwordHash string
+		wantUnsafe   bool
+		wantErr      error
+	}{
+		{
+			name:         "default hash",
+			passwordHash: defaultRawAdminPasswordHash,
+			wantUnsafe:   true,
+		},
+		{
+			name:         "different hash of default password",
+			passwordHash: "$2y$10$02xMlSOEujPEUfAubRYSTOrmY91lLUhtNMvqBtP3PwA95g5WKokkS",
+			wantUnsafe:   true,
+		},
+		{
+			name:         "hash of different password",
+			passwordHash: "$2y$10$vPtxKpM/nSlTNhigYx0AteBxm2A2b4XbxUgDE4FuFlk6PNFL5o7Jq",
+			wantUnsafe:   false,
+		},
+		{
+			name:         "invalid hash",
+			passwordHash: "",
+			wantErr:      bcrypt.ErrHashTooShort,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			unsafe, err := adminCredentialsAreUnsafe([]byte(tc.passwordHash))
+
+			require.Equal(t, tc.wantUnsafe, unsafe)
+
+			if tc.wantErr == nil {
+				require.NoError(t, err)
+			} else {
+				require.ErrorIs(t, err, tc.wantErr)
 			}
 		})
 	}
