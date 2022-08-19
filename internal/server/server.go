@@ -352,15 +352,14 @@ func (s *Server) startGRPCServer(l net.Listener, param Param) (*grpc.Server, err
 	if s.conf.AdminAPI.Enabled {
 		log.Info("Starting admin service")
 		creds := s.conf.AdminAPI.AdminCredentials
-		if creds.isUnsafe() {
-			log.Warn("[SECURITY RISK] Admin API uses default credentials which are unsafe for production use. Please change the credentials by updating the configuration file.")
-		}
 
 		adminUser, adminPasswdHash, err := creds.usernameAndPasswordHash()
 		if err != nil {
 			log.Error("Failed to get admin API credentials", zap.Error(err))
 			return nil, err
 		}
+
+		go checkForUnsafeAdminCredentials(log, adminPasswdHash)
 
 		svcv1.RegisterCerbosAdminServiceServer(server, svc.NewCerbosAdminService(param.Store, param.AuditLog, adminUser, adminPasswdHash))
 		s.health.SetServingStatus(svcv1.CerbosAdminService_ServiceDesc.ServiceName, healthpb.HealthCheckResponse_SERVING)
@@ -392,6 +391,15 @@ func (s *Server) startGRPCServer(l net.Listener, param Param) (*grpc.Server, err
 	})
 
 	return server, nil
+}
+
+func checkForUnsafeAdminCredentials(log *zap.Logger, passwordHash []byte) {
+	unsafe, err := adminCredentialsAreUnsafe(passwordHash)
+	if err != nil {
+		log.Error("Failed to check admin API credentials", zap.Error(err))
+	} else if unsafe {
+		log.Warn("[SECURITY RISK] Admin API uses default credentials which are unsafe for production use. Please change the credentials by updating the configuration file.")
+	}
 }
 
 func (s *Server) mkGRPCServer(log *zap.Logger, auditLog audit.Log) *grpc.Server {

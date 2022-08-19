@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"go.uber.org/multierr"
+	"golang.org/x/crypto/bcrypt"
 
 	"github.com/cerbos/cerbos/internal/config"
 	"github.com/cerbos/cerbos/internal/util"
@@ -21,6 +22,7 @@ const (
 	defaultHTTPListenAddr         = ":3592"
 	defaultGRPCListenAddr         = ":3593"
 	defaultAdminUsername          = "cerbos"
+	defaultAdminPassword          = "cerbosAdmin"
 	defaultRawAdminPasswordHash   = "$2y$10$VlPwcwpgcGZ5KjTaN1Pzk.vpFiQVG6F2cSWzQa9RtrNo3IacbzsEi" //nolint:gosec
 	defaultMaxActionsPerResource  = 50
 	defaultMaxResourcesPerRequest = 50
@@ -92,14 +94,6 @@ type AdminCredentialsConf struct {
 	PasswordHash string `yaml:"passwordHash" conf:",example=JDJ5JDEwJEdEOVFzZDE2VVhoVkR0N2VkUFBVM09nalc0QnNZaC9xc2E4bS9mcUJJcEZXenp5OUpjMi91Cgo="`
 }
 
-func (a *AdminCredentialsConf) isUnsafe() bool {
-	if a == nil {
-		return false
-	}
-
-	return a.Username == defaultAdminUsername || a.PasswordHash == defaultAdminPasswordHash
-}
-
 func (a *AdminCredentialsConf) usernameAndPasswordHash() (string, []byte, error) {
 	if a == nil {
 		return "", nil, errAdminCredsUndefined
@@ -111,6 +105,17 @@ func (a *AdminCredentialsConf) usernameAndPasswordHash() (string, []byte, error)
 	}
 
 	return a.Username, passwordHashBytes, nil
+}
+
+func adminCredentialsAreUnsafe(passwordHash []byte) (bool, error) {
+	err := bcrypt.CompareHashAndPassword(passwordHash, []byte(defaultAdminPassword))
+	if err == nil {
+		return true, nil
+	} else if errors.Is(err, bcrypt.ErrMismatchedHashAndPassword) {
+		return false, nil
+	}
+
+	return false, err
 }
 
 type RequestLimitsConf struct {
