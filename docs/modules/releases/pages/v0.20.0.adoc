@@ -1,0 +1,145 @@
+include::ROOT:partial$attributes.adoc[]
+
+[#v0.20.0]
+= Cerbos v0.20.0
+
+== Highlights
+
+Writing policy tests for policies that have time-based conditions is now easier because the value returned by the `now` function can be fixed for the entire test suite or individual tests. This also influences the `timeSince` calculations and gives you the ability to write deterministic tests to ensure that your logic is sound. See xref:policies:compile.adoc#testing[the policy testing documentation] to learn more.
+
+.Examples
+[%collapsible]
+====
+
+.Setting the value of `now` for the entire test suite
+[source,yaml,linenums]
+----
+name: TestSuite
+description: Tests for verifying something
+options:
+  now: "2022-08-02T15:00:00Z"
+tests:
+...
+----
+
+.Setting the value of `now` for a single test
+[source,yaml,linenums]
+----
+tests:
+  - name: With local now
+    options:
+      now: "2022-08-03T15:00:00Z"
+    ...
+----
+
+====
+
+The security warnings for default Admin API credentials are now smarter.
+
+An overly strict validation rule that prevented single wildcards from being used for resource names in principal policies has been relaxed.
+
+
+== Changelog
+
+
+=== Bug Fixes
+
+* Allow setting scope on SDK requests (link:https://github.com/cerbos/cerbos/pull/1151[#1151])
+* Allow wildcards for principal policy resource names (link:https://github.com/cerbos/cerbos/pull/1166[#1166])
+
+=== Features
+
+* Allow policy tests to use deterministic time functions (link:https://github.com/cerbos/cerbos/pull/1169[#1169])
+
+=== Enhancements
+
+* Use plan decorator to provide consistent time functions (link:https://github.com/cerbos/cerbos/pull/1125[#1125])
+* Warn if (and only if) using the default admin password (link:https://github.com/cerbos/cerbos/pull/1171[#1171])
+
+=== Documentation
+
+* Add links to PHP SDK (link:https://github.com/cerbos/cerbos/pull/1092[#1092])
+* Fix broken links to tutorial files (link:https://github.com/cerbos/cerbos/pull/1157[#1157])
+* Merge cerbos guide into main docs (link:https://github.com/cerbos/cerbos/pull/1095[#1095])
+* Tabs-block multi language quickstart examples (link:https://github.com/cerbos/cerbos/pull/1126[#1126])
+
+=== Chores
+
+* Add 0.19.1 release notes (link:https://github.com/cerbos/cerbos/pull/1153[#1153])
+* Add Go report card and Codecov badges (link:https://github.com/cerbos/cerbos/pull/1060[#1060])
+* Add docs preview (link:https://github.com/cerbos/cerbos/pull/1128[#1128])
+* Add function to run policy tests (link:https://github.com/cerbos/cerbos/pull/1107[#1107])
+* Add metadata field to bundle manifest (link:https://github.com/cerbos/cerbos/pull/1082[#1082])
+* Add schema list field to manifest (link:https://github.com/cerbos/cerbos/pull/1066[#1066])
+* Add template for CheckResources request (link:https://github.com/cerbos/cerbos/pull/1108[#1108])
+* Bump azure/setup-helm from 2.1 to 3.0 (link:https://github.com/cerbos/cerbos/pull/1061[#1061])
+* Bump azure/setup-helm from 3.0 to 3.1 (link:https://github.com/cerbos/cerbos/pull/1085[#1085])
+* Bump azure/setup-helm from 3.1 to 3.3 (link:https://github.com/cerbos/cerbos/pull/1110[#1110])
+* Bump bufbuild/buf-setup-action from 1.6.0 to 1.7.0 (link:https://github.com/cerbos/cerbos/pull/1109[#1109])
+* Bump github.com/alecthomas/participle/v2 from 2.0.0-beta.2 to 2.0.0-beta.4 (link:https://github.com/cerbos/cerbos/pull/1064[#1064])
+* Bump github.com/alecthomas/participle/v2 from 2.0.0-beta.4 to 2.0.0-beta.5 (link:https://github.com/cerbos/cerbos/pull/1135[#1135])
+* Bump github.com/bufbuild/buf from 1.6.0 to 1.7.0 in /tools (link:https://github.com/cerbos/cerbos/pull/1118[#1118])
+* Bump github.com/fullstorydev/grpcurl from 1.8.6 to 1.8.7 in /tools (link:https://github.com/cerbos/cerbos/pull/1165[#1165])
+* Bump github.com/gdamore/tcell/v2 from 2.5.1 to 2.5.2 (link:https://github.com/cerbos/cerbos/pull/1122[#1122])
+* Bump github.com/google/cel-go from 0.12.2 to 0.12.3 (link:https://github.com/cerbos/cerbos/pull/1084[#1084])
+* Bump github.com/google/cel-go from 0.12.3 to 0.12.4 (link:https://github.com/cerbos/cerbos/pull/1086[#1086])
+* Bump github.com/google/gops from 0.3.24 to 0.3.25 (link:https://github.com/cerbos/cerbos/pull/1080[#1080])
+* Bump github.com/goreleaser/goreleaser from 1.10.2 to 1.10.3 in /tools (link:https://github.com/cerbos/cerbos/pull/1117[#1117])
+* Bump github.com/goreleaser/goreleaser from 1.9.2 to 1.10.2 in /tools (link:https://github.com/cerbos/cerbos/pull/1074[#1074])
+* Bump github.com/grpc-ecosystem/grpc-gateway/v2 from 2.10.3 to 2.11.0 (link:https://github.com/cerbos/cerbos/pull/1099[#1099])
+* Bump github.com/grpc-ecosystem/grpc-gateway/v2 from 2.10.3 to 2.11.0 in /tools (link:https://github.com/cerbos/cerbos/pull/1102[#1102])
+* Bump github.com/grpc-ecosystem/grpc-gateway/v2 from 2.11.0 to 2.11.1 (link:https://github.com/cerbos/cerbos/pull/1115[#1115])
+* Bump github.com/grpc-ecosystem/grpc-gateway/v2 from 2.11.0 to 2.11.1 in /tools (link:https://github.com/cerbos/cerbos/pull/1116[#1116])
+* Bump github.com/grpc-ecosystem/grpc-gateway/v2 from 2.11.1 to 2.11.2 (link:https://github.com/cerbos/cerbos/pull/1134[#1134])
+* Bump github.com/grpc-ecosystem/grpc-gateway/v2 from 2.11.1 to 2.11.2 in /tools (link:https://github.com/cerbos/cerbos/pull/1139[#1139])
+* Bump github.com/jackc/pgtype from 1.11.0 to 1.12.0 (link:https://github.com/cerbos/cerbos/pull/1142[#1142])
+* Bump github.com/jackc/pgx/v4 from 4.16.1 to 4.17.0 (link:https://github.com/cerbos/cerbos/pull/1148[#1148])
+* Bump github.com/lestrrat-go/jwx/v2 from 2.0.3 to 2.0.4 (link:https://github.com/cerbos/cerbos/pull/1098[#1098])
+* Bump github.com/lestrrat-go/jwx/v2 from 2.0.4 to 2.0.5 (link:https://github.com/cerbos/cerbos/pull/1162[#1162])
+* Bump github.com/mattn/go-isatty from 0.0.14 to 0.0.16 (link:https://github.com/cerbos/cerbos/pull/1163[#1163])
+* Bump github.com/minio/minio-go/v7 from 7.0.29 to 7.0.30 (link:https://github.com/cerbos/cerbos/pull/1062[#1062])
+* Bump github.com/minio/minio-go/v7 from 7.0.30 to 7.0.31 (link:https://github.com/cerbos/cerbos/pull/1071[#1071])
+* Bump github.com/minio/minio-go/v7 from 7.0.31 to 7.0.32 (link:https://github.com/cerbos/cerbos/pull/1104[#1104])
+* Bump github.com/minio/minio-go/v7 from 7.0.32 to 7.0.34 (link:https://github.com/cerbos/cerbos/pull/1146[#1146])
+* Bump github.com/oklog/ulid/v2 from 2.0.2 to 2.1.0 (link:https://github.com/cerbos/cerbos/pull/1089[#1089])
+* Bump github.com/prometheus/client_golang from 1.12.2 to 1.13.0 (link:https://github.com/cerbos/cerbos/pull/1141[#1141])
+* Bump github.com/pterm/pterm from 0.12.42 to 0.12.44 (link:https://github.com/cerbos/cerbos/pull/1103[#1103])
+* Bump github.com/pterm/pterm from 0.12.44 to 0.12.45 (link:https://github.com/cerbos/cerbos/pull/1112[#1112])
+* Bump github.com/spf13/afero from 1.8.2 to 1.9.0 (link:https://github.com/cerbos/cerbos/pull/1088[#1088])
+* Bump github.com/spf13/afero from 1.9.0 to 1.9.2 (link:https://github.com/cerbos/cerbos/pull/1101[#1101])
+* Bump github.com/stretchr/testify from 1.7.5 to 1.8.0 (link:https://github.com/cerbos/cerbos/pull/1063[#1063])
+* Bump github.com/tidwall/sjson from 1.2.4 to 1.2.5 (link:https://github.com/cerbos/cerbos/pull/1143[#1143])
+* Bump github.com/vektra/mockery/v2 from 2.13.1 to 2.14.0 in /tools (link:https://github.com/cerbos/cerbos/pull/1065[#1065])
+* Bump go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp from 0.32.0 to 0.33.0 (link:https://github.com/cerbos/cerbos/pull/1078[#1078])
+* Bump go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp from 0.33.0 to 0.34.0 (link:https://github.com/cerbos/cerbos/pull/1144[#1144])
+* Bump go.opentelemetry.io/contrib/propagators/b3 from 1.7.0 to 1.8.0 (link:https://github.com/cerbos/cerbos/pull/1075[#1075])
+* Bump go.opentelemetry.io/contrib/propagators/b3 from 1.8.0 to 1.9.0 (link:https://github.com/cerbos/cerbos/pull/1137[#1137])
+* Bump go.opentelemetry.io/otel/bridge/opencensus from 0.30.0 to 0.31.0 (link:https://github.com/cerbos/cerbos/pull/1073[#1073])
+* Bump go.opentelemetry.io/otel/exporters/jaeger from 1.7.0 to 1.8.0 (link:https://github.com/cerbos/cerbos/pull/1070[#1070])
+* Bump go.opentelemetry.io/otel/exporters/jaeger from 1.8.0 to 1.9.0 (link:https://github.com/cerbos/cerbos/pull/1136[#1136])
+* Bump go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc from 1.7.0 to 1.8.0 (link:https://github.com/cerbos/cerbos/pull/1079[#1079])
+* Bump go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc from 1.8.0 to 1.9.0 (link:https://github.com/cerbos/cerbos/pull/1138[#1138])
+* Bump go.uber.org/zap from 1.21.0 to 1.22.0 (link:https://github.com/cerbos/cerbos/pull/1160[#1160])
+* Bump gocloud.dev from 0.25.0 to 0.26.0 (link:https://github.com/cerbos/cerbos/pull/1145[#1145])
+* Bump golang.org/x/tools from 0.1.11 to 0.1.12 (link:https://github.com/cerbos/cerbos/pull/1113[#1113])
+* Bump golang.org/x/tools from 0.1.11 to 0.1.12 in /hack/tools/testsplit (link:https://github.com/cerbos/cerbos/pull/1121[#1121])
+* Bump google.golang.org/grpc from 1.47.0 to 1.48.0 (link:https://github.com/cerbos/cerbos/pull/1087[#1087])
+* Bump google.golang.org/protobuf from 1.28.0 to 1.28.1 (link:https://github.com/cerbos/cerbos/pull/1114[#1114])
+* Bump google.golang.org/protobuf from 1.28.0 to 1.28.1 in /hack/tools/protoc-gen-jsonschema (link:https://github.com/cerbos/cerbos/pull/1120[#1120])
+* Bump helm.sh/helm/v3 from 3.9.0 to 3.9.1 (link:https://github.com/cerbos/cerbos/pull/1090[#1090])
+* Bump helm.sh/helm/v3 from 3.9.1 to 3.9.2 (link:https://github.com/cerbos/cerbos/pull/1097[#1097])
+* Bump helm.sh/helm/v3 from 3.9.2 to 3.9.3 (link:https://github.com/cerbos/cerbos/pull/1161[#1161])
+* Bump modernc.org/sqlite from 1.17.3 to 1.18.0 (link:https://github.com/cerbos/cerbos/pull/1111[#1111])
+* Bump modernc.org/sqlite from 1.18.0 to 1.18.1 (link:https://github.com/cerbos/cerbos/pull/1164[#1164])
+* Bump version to 0.20.0
+* Deploy docs previews (link:https://github.com/cerbos/cerbos/pull/1129[#1129])
+* Make PR labels job optional (link:https://github.com/cerbos/cerbos/pull/1155[#1155])
+* Remove docs preview generation (link:https://github.com/cerbos/cerbos/pull/1158[#1158])
+* Replace deprecated CEL options (link:https://github.com/cerbos/cerbos/pull/1083[#1083])
+* Split store interface (link:https://github.com/cerbos/cerbos/pull/1068[#1068])
+* Update E2E setup script (link:https://github.com/cerbos/cerbos/pull/1150[#1150])
+* Update Netlify conf (link:https://github.com/cerbos/cerbos/pull/1133[#1133])
+* Use Go 1.19 in CI (link:https://github.com/cerbos/cerbos/pull/1127[#1127])
+* Use golangci-lint binary distribution (link:https://github.com/cerbos/cerbos/pull/1067[#1067])
+* Use latest otel semconv version (link:https://github.com/cerbos/cerbos/pull/1149[#1149])
+* Use pull request title to apply labels (link:https://github.com/cerbos/cerbos/pull/1091[#1091])
