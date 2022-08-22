@@ -12,7 +12,7 @@ docker run -i -t -v /path/to/policy/dir:/policies {app-docker-img} compile /poli
 ----
 
 
-
+[#testing]
 == Testing policies
 
 You can write optional tests for policies and run them as part of the compilation stage to make sure that the policies do exactly what you expect.
