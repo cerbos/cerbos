@@ -825,10 +825,7 @@
         "token": {
           "type": "string",
           "example": "eyJhbGciOiJFUzM4NCIsImtpZCI6IjE5TGZaYXRFZGc4M1lOYzVyMjNndU1KcXJuND0iLCJ0eXAiOiJKV1QifQ.eyJhdWQiOlsiY2VyYm9zLWp3dC10ZXN0cyJdLCJjdXN0b21BcnJheSI6WyJBIiwiQiIsIkMiXSwiY3VzdG9tSW50Ijo0MiwiY3VzdG9tTWFwIjp7IkEiOiJBQSIsIkIiOiJCQiIsIkMiOiJDQyJ9LCJjdXN0b21TdHJpbmciOiJmb29iYXIiLCJleHAiOjE5NDk5MzQwMzksImlzcyI6ImNlcmJvcy10ZXN0LXN1aXRlIn0.WN_tOScSpd_EI-P5EI1YlagxEgExSfBjAtcrgcF6lyWj1lGpR_GKx9goZEp2p_t5AVWXN_bjz_sMUmJdJa4cVd55Qm1miR-FKu6oNRHnSEWdMFmnArwPw-YDJWfylLFX",
-          "description": "JWT from the original request",
-          "required": [
-            "token"
-          ]
+          "description": "JWT from the original request"
         },
         "keySetId": {
           "type": "string",
@@ -869,10 +866,7 @@
             "uniqueItems": true
           },
           "description": "List of actions being performed on the resource.",
-          "minItems": 1,
-          "required": [
-            "actions"
-          ]
+          "minItems": 1
         },
         "resource": {
           "$ref": "#/definitions/enginev1Resource"
@@ -896,10 +890,7 @@
             "uniqueItems": true
           },
           "description": "List of actions being performed on the resource.",
-          "minItems": 1,
-          "required": [
-            "actions"
-          ]
+          "minItems": 1
         },
         "resource": {
           "$ref": "#/definitions/enginev1Resource"
@@ -1090,19 +1081,13 @@
           "type": "string",
           "format": "date-time",
           "example": "2021-07-05T07:27:01+00:00",
-          "description": "Start date in ISO 8601 format.",
-          "required": [
-            "start"
-          ]
+          "description": "Start date in ISO 8601 format."
         },
         "end": {
           "type": "string",
           "format": "date-time",
           "example": "2021-07-05T07:27:01+00:00",
-          "description": "End date in ISO 8601 format.",
-          "required": [
-            "end"
-          ]
+          "description": "End date in ISO 8601 format."
         }
       },
       "description": "Entries between a time range.",
@@ -1440,10 +1425,7 @@
         "id": {
           "type": "string",
           "example": "bugs_bunny",
-          "description": "ID of the principal",
-          "required": [
-            "id"
-          ]
+          "description": "ID of the principal"
         },
         "policyVersion": {
           "type": "string",
@@ -1462,10 +1444,7 @@
             "uniqueItems": true
           },
           "description": "Roles assigned to this principal from your identity management system.",
-          "minItems": 1,
-          "required": [
-            "roles"
-          ]
+          "minItems": 1
         },
         "attr": {
           "type": "object",
@@ -1495,10 +1474,7 @@
           "type": "string",
           "example": "album:photo",
           "description": "Name of the resource kind being accessed.",
-          "pattern": "^[[:alpha:]][[:word:]\\@\\.\\-]*(\\:[[:alpha:]][[:word:]\\@\\.\\-]*)*$",
-          "required": [
-            "kind"
-          ]
+          "pattern": "^[[:alpha:]][[:word:]\\@\\.\\-]*(\\:[[:alpha:]][[:word:]\\@\\.\\-]*)*$"
         },
         "policyVersion": {
           "type": "string",
@@ -1509,10 +1485,7 @@
         "id": {
           "type": "string",
           "example": "XX125",
-          "description": "ID of the resource instance",
-          "required": [
-            "id"
-          ]
+          "description": "ID of the resource instance"
         },
         "attr": {
           "type": "object",
@@ -1589,10 +1562,7 @@
         "id": {
           "type": "string",
           "example": "principal.json",
-          "description": "Unique identifier for the schema",
-          "required": [
-            "id"
-          ]
+          "description": "Unique identifier for the schema"
         },
         "definition": {
           "type": "string",
@@ -1601,10 +1571,7 @@
             "type": "object",
             "properties": {}
           },
-          "description": "JSON schema definition",
-          "required": [
-            "definition"
-          ]
+          "description": "JSON schema definition"
         }
       },
       "required": [
@@ -1650,10 +1617,7 @@
           },
           "description": "List of policies.",
           "maxItems": 10,
-          "minItems": 1,
-          "required": [
-            "policies"
-          ]
+          "minItems": 1
         }
       },
       "description": "Add/update policy request",
@@ -1681,10 +1645,7 @@
           },
           "description": "List of schemas.",
           "maxItems": 10,
-          "minItems": 1,
-          "required": [
-            "schemas"
-          ]
+          "minItems": 1
         }
       },
       "description": "Add/update schema request",
@@ -1723,10 +1684,7 @@
           "type": "array",
           "items": {
             "type": "string"
-          },
-          "required": [
-            "actions"
-          ]
+          }
         },
         "auxData": {
           "$ref": "#/definitions/cerbosenginev1AuxData"
@@ -1801,10 +1759,7 @@
             "uniqueItems": true
           },
           "description": "List of resources and actions.",
-          "minItems": 1,
-          "required": [
-            "resources"
-          ]
+          "minItems": 1
         },
         "auxData": {
           "$ref": "#/definitions/cerbosrequestv1AuxData"
@@ -1887,10 +1842,7 @@
             "uniqueItems": true
           },
           "description": "List of actions being performed on the set of resources.",
-          "minItems": 1,
-          "required": [
-            "actions"
-          ]
+          "minItems": 1
         },
         "principal": {
           "$ref": "#/definitions/enginev1Principal"
@@ -2060,10 +2012,7 @@
             "uniqueItems": true
           },
           "description": "List of resources and actions.",
-          "minItems": 1,
-          "required": [
-            "resources"
-          ]
+          "minItems": 1
         },
         "auxData": {
           "$ref": "#/definitions/cerbosrequestv1AuxData"
@@ -2186,17 +2135,11 @@
       "type": "object",
       "properties": {
         "fileName": {
-          "type": "string",
-          "required": [
-            "fileName"
-          ]
+          "type": "string"
         },
         "contents": {
           "type": "string",
-          "format": "byte",
-          "required": [
-            "contents"
-          ]
+          "format": "byte"
         }
       },
       "required": [
@@ -2392,10 +2335,7 @@
           "type": "string",
           "example": "album:object",
           "description": "Resource kind.",
-          "pattern": "^[[:alpha:]][[:word:]\\@\\.\\-]*(\\:[[:alpha:]][[:word:]\\@\\.\\-]*)*$",
-          "required": [
-            "kind"
-          ]
+          "pattern": "^[[:alpha:]][[:word:]\\@\\.\\-]*(\\:[[:alpha:]][[:word:]\\@\\.\\-]*)*$"
         },
         "attr": {
           "type": "object",
@@ -2461,10 +2401,7 @@
         "action": {
           "type": "string",
           "example": "view:public",
-          "description": "Action to be applied to each resource in the list.",
-          "required": [
-            "action"
-          ]
+          "description": "Action to be applied to each resource in the list."
         },
         "principal": {
           "$ref": "#/definitions/enginev1Principal"
@@ -2555,10 +2492,7 @@
           },
           "description": "List of files.",
           "maxItems": 30,
-          "minItems": 1,
-          "required": [
-            "files"
-          ]
+          "minItems": 1
         },
         "principal": {
           "$ref": "#/definitions/enginev1Principal"
@@ -2574,10 +2508,7 @@
           },
           "description": "List of actions being performed on the resource.",
           "maxItems": 50,
-          "minItems": 1,
-          "required": [
-            "actions"
-          ]
+          "minItems": 1
         },
         "auxData": {
           "$ref": "#/definitions/cerbosrequestv1AuxData"
@@ -2629,10 +2560,7 @@
           },
           "description": "List of files.",
           "maxItems": 30,
-          "minItems": 1,
-          "required": [
-            "files"
-          ]
+          "minItems": 1
         },
         "checkResourceSet": {
           "$ref": "#/definitions/v1CheckResourceSetRequest"
@@ -2689,10 +2617,7 @@
           },
           "description": "List of files.",
           "maxItems": 30,
-          "minItems": 1,
-          "required": [
-            "files"
-          ]
+          "minItems": 1
         }
       },
       "description": "Playground test request",
@@ -2736,10 +2661,7 @@
           },
           "description": "List of files.",
           "maxItems": 30,
-          "minItems": 1,
-          "required": [
-            "files"
-          ]
+          "minItems": 1
         }
       },
       "description": "Playground validate request",
@@ -2918,10 +2840,7 @@
           "type": "string",
           "example": "album:object",
           "description": "Resource kind.",
-          "pattern": "^[[:alpha:]][[:word:]\\@\\.\\-]*(\\:[[:alpha:]][[:word:]\\@\\.\\-]*)*$",
-          "required": [
-            "kind"
-          ]
+          "pattern": "^[[:alpha:]][[:word:]\\@\\.\\-]*(\\:[[:alpha:]][[:word:]\\@\\.\\-]*)*$"
         },
         "policyVersion": {
           "type": "string",
@@ -2951,10 +2870,7 @@
             "$ref": "#/definitions/v1AttributesMap"
           },
           "description": "Set of resource instances to check. Each instance must be keyed by an application-specific unique identifier.",
-          "minProperties": 1,
-          "required": [
-            "instances"
-          ]
+          "minProperties": 1
         },
         "scope": {
           "type": "string",
