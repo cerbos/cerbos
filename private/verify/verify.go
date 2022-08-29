@@ -59,7 +59,7 @@ type simpleChecker interface {
 }
 
 func WithCustomChecker(ctx context.Context, fsys fs.FS, eng simpleChecker) (*policyv1.TestResults, error) {
-	results, err := verify.Verify(ctx, fsys, inputCheckFunc(eng.Check), verify.Config{})
+	results, err := verify.Verify(ctx, fsys, checkFunc(eng.Check), verify.Config{})
 	if err != nil {
 		return nil, fmt.Errorf("failed to run tests: %w", err)
 	}
@@ -67,8 +67,8 @@ func WithCustomChecker(ctx context.Context, fsys fs.FS, eng simpleChecker) (*pol
 	return results, nil
 }
 
-type inputCheckFunc func(ctx context.Context, inputs []*enginev1.CheckInput) ([]*enginev1.CheckOutput, error)
+type checkFunc func(ctx context.Context, inputs []*enginev1.CheckInput) ([]*enginev1.CheckOutput, error)
 
-func (f inputCheckFunc) Check(ctx context.Context, inputs []*enginev1.CheckInput, _opts ...engine.CheckOpt) ([]*enginev1.CheckOutput, error) {
+func (f checkFunc) Check(ctx context.Context, inputs []*enginev1.CheckInput, _opts ...engine.CheckOpt) ([]*enginev1.CheckOutput, error) {
 	return f(ctx, inputs)
 }
