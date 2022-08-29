@@ -19,6 +19,7 @@ import (
 	"github.com/cerbos/cerbos/internal/verify"
 	"github.com/cerbos/cerbos/private/compile"
 
+	enginev1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
 	"go.uber.org/zap"
 )
 
@@ -51,4 +52,23 @@ func Files(ctx context.Context, fsys fs.FS) (*policyv1.TestResults, error) {
 	}
 
 	return results, nil
+}
+
+type simpleInputChecker interface {
+	Check(ctx context.Context, inputs []*enginev1.CheckInput) ([]*enginev1.CheckOutput, error)
+}
+
+func WithCustomChecker(ctx context.Context, fsys fs.FS, eng simpleInputChecker) (*policyv1.TestResults, error) {
+	results, err := verify.Verify(ctx, fsys, inputCheckFunc(eng.Check), verify.Config{})
+	if err != nil {
+		return nil, fmt.Errorf("failed to run tests: %w", err)
+	}
+
+	return results, nil
+}
+
+type inputCheckFunc func(ctx context.Context, inputs []*enginev1.CheckInput) ([]*enginev1.CheckOutput, error)
+
+func (receiver inputCheckFunc) Check(ctx context.Context, inputs []*enginev1.CheckInput, _opts ...engine.CheckOpt) ([]*enginev1.CheckOutput, error) {
+	return receiver(ctx, inputs)
 }

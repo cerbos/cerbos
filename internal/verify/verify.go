@@ -12,6 +12,7 @@ import (
 	"regexp"
 	"sort"
 
+	enginev1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
 	"github.com/cerbos/cerbos/internal/engine"
 	"github.com/cerbos/cerbos/internal/util"
@@ -24,8 +25,12 @@ type Config struct {
 
 var ErrTestFixtureNotFound = errors.New("test fixture not found")
 
+type InputChecker interface {
+	Check(ctx context.Context, inputs []*enginev1.CheckInput, opts ...engine.CheckOpt) ([]*enginev1.CheckOutput, error)
+}
+
 // Verify runs the test suites from the provided directory.
-func Verify(ctx context.Context, fsys fs.FS, eng *engine.Engine, conf Config) (*policyv1.TestResults, error) {
+func Verify(ctx context.Context, fsys fs.FS, eng InputChecker, conf Config) (*policyv1.TestResults, error) {
 	var shouldRun func(string) bool
 
 	if conf.Run == "" {
