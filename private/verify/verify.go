@@ -54,11 +54,11 @@ func Files(ctx context.Context, fsys fs.FS) (*policyv1.TestResults, error) {
 	return results, nil
 }
 
-type simpleInputChecker interface {
+type simpleChecker interface {
 	Check(ctx context.Context, inputs []*enginev1.CheckInput) ([]*enginev1.CheckOutput, error)
 }
 
-func WithCustomChecker(ctx context.Context, fsys fs.FS, eng simpleInputChecker) (*policyv1.TestResults, error) {
+func WithCustomChecker(ctx context.Context, fsys fs.FS, eng simpleChecker) (*policyv1.TestResults, error) {
 	results, err := verify.Verify(ctx, fsys, inputCheckFunc(eng.Check), verify.Config{})
 	if err != nil {
 		return nil, fmt.Errorf("failed to run tests: %w", err)
