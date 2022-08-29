@@ -116,7 +116,7 @@ func loadFixtureElement(fsys fs.FS, path string, pb validatableMessage) error {
 	return pb.Validate()
 }
 
-func (tf *testFixture) runTestSuite(ctx context.Context, eng *engine.Engine, shouldRun func(string) bool, file string, suite *policyv1.TestSuite, trace bool) *policyv1.TestResults_Suite {
+func (tf *testFixture) runTestSuite(ctx context.Context, eng Checker, shouldRun func(string) bool, file string, suite *policyv1.TestSuite, trace bool) *policyv1.TestResults_Suite {
 	suiteResult := &policyv1.TestResults_Suite{
 		File:    file,
 		Name:    suite.Name,
@@ -149,7 +149,7 @@ func (tf *testFixture) runTestSuite(ctx context.Context, eng *engine.Engine, sho
 	return suiteResult
 }
 
-func runTest(ctx context.Context, eng *engine.Engine, test *policyv1.Test, action string, shouldRun func(string) bool, suite *policyv1.TestSuite, trace bool) *policyv1.TestResults_Details {
+func runTest(ctx context.Context, eng Checker, test *policyv1.Test, action string, shouldRun func(string) bool, suite *policyv1.TestSuite, trace bool) *policyv1.TestResults_Details {
 	details := &policyv1.TestResults_Details{}
 
 	if test.Skip || !shouldRun(fmt.Sprintf("%s/%s", suite.Name, test.Name.String())) {
@@ -201,7 +201,7 @@ func runTest(ctx context.Context, eng *engine.Engine, test *policyv1.Test, actio
 	return details
 }
 
-func performCheck(ctx context.Context, eng *engine.Engine, inputs []*enginev1.CheckInput, trace bool, nowFunc func() time.Time) ([]*enginev1.CheckOutput, []*enginev1.Trace, error) {
+func performCheck(ctx context.Context, eng Checker, inputs []*enginev1.CheckInput, trace bool, nowFunc func() time.Time) ([]*enginev1.CheckOutput, []*enginev1.Trace, error) {
 	if !trace {
 		output, err := eng.Check(ctx, inputs, engine.WithNowFunc(nowFunc))
 		return output, nil, err
