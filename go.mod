@@ -84,7 +84,7 @@ require (
 	golang.org/x/sync v0.0.0-20220722155255-886fb9371eb4
 	golang.org/x/tools v0.1.12
 	google.golang.org/genproto v0.0.0-20220822174746-9e6da59bd2fc
-	google.golang.org/grpc v1.48.0
+	google.golang.org/grpc v1.49.0
 	google.golang.org/protobuf v1.28.1
 	gopkg.in/yaml.v2 v2.4.0
 	helm.sh/helm/v3 v3.9.4
