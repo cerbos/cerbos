@@ -584,6 +584,10 @@ func google_api_expr_v1alpha1_CheckedExpr_hashpb_sum(m *v1alpha1.CheckedExpr, ha
 		}
 
 	}
+	if _, ok := ignore["google.api.expr.v1alpha1.CheckedExpr.expr_version"]; !ok {
+		_, _ = hasher.Write(protowire.AppendString(nil, m.ExprVersion))
+
+	}
 }
 
 func google_api_expr_v1alpha1_Constant_hashpb_sum(m *v1alpha1.Constant, hasher hash.Hash, ignore map[string]struct{}) {
