@@ -27,6 +27,13 @@ principalPolicy:
                 R.attr.geos.all(x, "US" in x.countries)
           effect: EFFECT_ALLOW
           name: all
+        - action: P:all
+          condition:
+            match:
+              expr: |-
+                P.attr.forbidden.all(x, R.attr.country != x)
+          effect: EFFECT_ALLOW
+          name: P-all
         - action: exists
           condition:
             match:
@@ -34,6 +41,13 @@ principalPolicy:
                 R.attr.geos.exists(x, "US" in x.countries)
           effect: EFFECT_ALLOW
           name: exists
+        - action: P:exists
+          condition:
+            match:
+              expr: |-
+                P.roles.exists(x, x in R.attr.roles)
+          effect: EFFECT_ALLOW
+          name: P-exists
         - action: exists_one
           condition:
             match:
