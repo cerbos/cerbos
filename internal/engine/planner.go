@@ -581,7 +581,7 @@ func evalComprehensionBody(env *cel.Env, pvars interpreter.PartialActivation, e 
 		}
 		le = ResidualExpr(ast, det)
 		loopStep.CallExpr.Args[i] = le
-		err = evalComprehensionBody(env1, pvars, le)
+		err = evalComprehensionBody(env1, activation, le)
 		if err != nil {
 			return err
 		}

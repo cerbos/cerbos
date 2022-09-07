@@ -62,6 +62,13 @@ principalPolicy:
                 R.attr.geos.all(x, !x.countries.exists(t, t in P.attr.forbidden))
           effect: EFFECT_ALLOW
           name: embedded
+        - action: alt-embedded
+          condition:
+            match:
+              expr: |-
+                R.attr.geos.all(x, P.attr.forbidden.all(t, t != x))
+          effect: EFFECT_ALLOW
+          name: alt-embedded
         - action: timestamp
           condition:
             match:
