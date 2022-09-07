@@ -75,7 +75,7 @@ tests:
                   - expression:
                       operator: ne
                       operands:
-                        - variable: request.resource.country
+                        - variable: request.resource.attr.country
                         - variable: x
                   - variable: x
   - action: all
