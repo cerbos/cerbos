@@ -569,17 +569,19 @@ func evalComprehensionBody(env *cel.Env, pvars interpreter.PartialActivation, e 
 		}
 		updateIds(le)
 		ast := cel.ParsedExprToAst(&exprpb.ParsedExpr{Expr: le})
-		partialVars, err := cel.PartialVars(pvars, cel.AttributePattern(ce.IterVar))
+
+		unknowns := append(pvars.UnknownAttributePatterns(), cel.AttributePattern(ce.IterVar))
+		activation, err := cel.PartialVars(pvars, unknowns...)
 		if err != nil {
 			return err
 		}
-		_, det, err := conditions.Eval(env1, ast, partialVars, time.Now, cel.EvalOptions(cel.OptTrackState, cel.OptPartialEval))
+		_, det, err := conditions.Eval(env1, ast, activation, time.Now, cel.EvalOptions(cel.OptTrackState, cel.OptPartialEval))
 		if err != nil {
 			return err
 		}
 		le = ResidualExpr(ast, det)
 		loopStep.CallExpr.Args[i] = le
-		err = evalComprehensionBody(env1, partialVars, le)
+		err = evalComprehensionBody(env1, activation, le)
 		if err != nil {
 			return err
 		}

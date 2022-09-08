@@ -231,3 +231,31 @@
                   - variable: t
                   - value: 0
             - variable: t
+"[1, 2, 3].exists(t, x > t)":
+  expression:
+    operator: exists
+    operands:
+      - value: [1, 2, 3]
+      - expression:
+          operator: lambda
+          operands:
+            - expression:
+                operator: gt
+                operands:
+                  - variable: x
+                  - variable: t
+            - variable: t
+"['a', 'b'].exists(t, x.contains(t))":
+  expression:
+    operator: exists
+    operands:
+      - value: ['a', 'b']
+      - expression:
+          operator: lambda
+          operands:
+            - expression:
+                operator: contains
+                operands:
+                  - variable: x
+                  - variable: t
+            - variable: t

@@ -58,6 +58,54 @@ tests:
                               - variable: t
                               - value: "U"
                         - variable: t
+  - action: alt-filter
+    resource:
+      kind: macro
+      policyVersion: default
+    want:
+      kind: KIND_CONDITIONAL
+      condition:
+        expression:
+          operator: all
+          operands:
+            - variable: request.resource.attr.geos
+            - expression:
+                operator: lambda
+                operands:
+                  - expression:
+                      operator: exists
+                      operands:
+                        - value: ["US", "UK"]
+                        - expression:
+                            operator: lambda
+                            operands:
+                              - expression:
+                                  operator: startsWith
+                                  operands:
+                                    - variable: t
+                                    - variable: x
+                              - variable: x
+                  - variable: t
+  - action: P:all
+    resource:
+      kind: macro
+      policyVersion: default
+    want:
+      kind: KIND_CONDITIONAL
+      condition:
+        expression:
+          operator: all
+          operands:
+            - value: ["US", "UK"]
+            - expression:
+                operator: lambda
+                operands:
+                  - expression:
+                      operator: ne
+                      operands:
+                        - variable: request.resource.attr.country
+                        - variable: x
+                  - variable: x
   - action: all
     resource:
       kind: macro
@@ -97,6 +145,26 @@ tests:
                       operands:
                         - value: "US"
                         - variable: x.countries
+                  - variable: x
+  - action: P:exists
+    resource:
+      kind: macro
+      policyVersion: default
+    want:
+      kind: KIND_CONDITIONAL
+      condition:
+        expression:
+          operator: exists
+          operands:
+            - value: ["employee", "user"]
+            - expression:
+                operator: lambda
+                operands:
+                  - expression:
+                      operator: in
+                      operands:
+                        - variable: x
+                        - variable: request.resource.attr.roles
                   - variable: x
   - action: exists_one
     resource:
@@ -150,6 +218,34 @@ tests:
                                               - "US"
                                               - "UK"
                                     - variable: t
+                  - variable: x
+  - action: alt-embedded
+    resource:
+      kind: macro
+      policyVersion: default
+    want:
+      kind: KIND_CONDITIONAL
+      condition:
+        expression:
+          operator: all
+          operands:
+            - variable: request.resource.attr.geos
+            - expression:
+                operator: lambda
+                operands:
+                  - expression:
+                      operator: all
+                      operands:
+                        - value: ["US", "UK"]
+                        - expression:
+                            operator: lambda
+                            operands:
+                              - expression:
+                                  operator: ne
+                                  operands:
+                                    - variable: t
+                                    - variable: x
+                              - variable: t
                   - variable: x
   - action: timestamp
     resource:
