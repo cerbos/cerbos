@@ -20,6 +20,13 @@ principalPolicy:
                 "US" in R.attr.geos.filter(t, t.startsWith("U"))
           effect: EFFECT_ALLOW
           name: filter
+        - action: alt-filter
+          condition:
+            match:
+              expr: |-
+                R.attr.geos.all(t, P.attr.forbidden.exists(x, t.startsWith(x)))
+          effect: EFFECT_ALLOW
+          name: alt-filter
         - action: all
           condition:
             match:
