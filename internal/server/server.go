@@ -335,7 +335,10 @@ func (s *Server) getTLSConfig() (*tls.Config, error) {
 
 func (s *Server) startGRPCServer(l net.Listener, param Param) (*grpc.Server, error) {
 	log := zap.L().Named("grpc")
-	server := s.mkGRPCServer(log, param.AuditLog)
+	server, err := s.mkGRPCServer(log, param.AuditLog)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create a gRPC server: %w", err)
+	}
 
 	healthpb.RegisterHealthServer(server, s.health)
 	reflection.Register(server)
@@ -402,9 +405,14 @@ func checkForUnsafeAdminCredentials(log *zap.Logger, passwordHash []byte) {
 	}
 }
 
-func (s *Server) mkGRPCServer(log *zap.Logger, auditLog audit.Log) *grpc.Server {
+func (s *Server) mkGRPCServer(log *zap.Logger, auditLog audit.Log) (*grpc.Server, error) {
 	payloadLog := zap.L().Named("payload")
 	telemetryInt := telemetry.Intercept()
+
+	auditConf, err := audit.GetConf()
+	if err != nil {
+		return nil, fmt.Errorf("failed to read audit configuration: %w", err)
+	}
 
 	opts := []grpc.ServerOption{
 		grpc.ChainStreamInterceptor(
@@ -429,14 +437,14 @@ func (s *Server) mkGRPCServer(log *zap.Logger, auditLog audit.Log) *grpc.Server 
 				grpc_zap.WithMessageProducer(messageProducer),
 			),
 			grpc_zap.PayloadUnaryServerInterceptor(payloadLog, payloadLoggingDecider(s.conf)),
-			audit.NewUnaryInterceptor(auditLog, accessLogExclude),
+			audit.NewUnaryInterceptor(auditLog, accessLogExclude, MkMetadataIncludedInLogMethod(auditConf)),
 		),
 		grpc.StatsHandler(&ocgrpc.ServerHandler{}),
 		grpc.KeepaliveParams(keepalive.ServerParameters{MaxConnectionAge: maxConnectionAge}),
 		grpc.UnknownServiceHandler(handleUnknownServices),
 	}
 
-	return grpc.NewServer(opts...)
+	return grpc.NewServer(opts...), nil
 }
 
 func (s *Server) startHTTPServer(ctx context.Context, l net.Listener, grpcSrv *grpc.Server, zpagesEnabled bool) (*http.Server, error) {
@@ -634,4 +642,33 @@ func initOCPromExporter(conf *Conf) (*prometheus.Exporter, error) {
 	view.SetReportingPeriod(metricsReportingInterval)
 
 	return exporter, nil
+}
+
+func MkMetadataIncludedInLogMethod(conf *audit.Conf) audit.MetadataIncludedInLogMethod {
+	var includeMetadataKeys map[string]struct{}
+	var excludeMetadataKeys map[string]struct{}
+	if conf != nil {
+		includeMetadataKeys = sliceToLookupMap(conf.IncludeMetadataKeys)
+		excludeMetadataKeys = sliceToLookupMap(conf.ExcludeMetadataKeys)
+	}
+
+	return func(key string) bool {
+		_, existsInExcludeKeys := excludeMetadataKeys[key]
+		_, existsInIncludeKeys := includeMetadataKeys[key]
+
+		if !existsInExcludeKeys && existsInIncludeKeys {
+			return true
+		}
+
+		return false
+	}
+}
+
+func sliceToLookupMap(slice []string) map[string]struct{} {
+	m := make(map[string]struct{})
+	for _, k := range slice {
+		m[k] = struct{}{}
+	}
+
+	return m
 }
