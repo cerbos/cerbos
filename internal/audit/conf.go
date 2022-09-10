@@ -22,9 +22,9 @@ type Conf struct {
 type confHolder struct {
 	// Backend states which backend to use for Audits.
 	Backend string `yaml:"backend" conf:",example=local"`
-	// IncludeMetadataKeys defines which grpc request metadata keys are going to be included in the logs.
+	// IncludeMetadataKeys defines which gRPC request metadata keys should be included in access logs.
 	IncludeMetadataKeys []string `yaml:"includeMetadataKeys" conf:",example=['content-type']"`
-	// ExcludeMetadataKeys defines which grpc request metadata keys are going to be excluded from the logs. Takes precedence over IncludeKeys.
+	// ExcludeMetadataKeys defines which gRPC request metadata keys should be excluded from access logs. Takes precedence over includeMetadataKeys.
 	ExcludeMetadataKeys []string `yaml:"excludeMetadataKeys" conf:",example=['content-type']"`
 	// Enabled defines whether audit logging is enabled.
 	Enabled bool `yaml:"enabled" conf:",example=false"`
