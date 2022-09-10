@@ -337,7 +337,7 @@ func (s *Server) startGRPCServer(l net.Listener, param Param) (*grpc.Server, err
 	log := zap.L().Named("grpc")
 	server, err := s.mkGRPCServer(log, param.AuditLog)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create a gRPC server: %w", err)
+		return nil, fmt.Errorf("failed to create gRPC server: %w", err)
 	}
 
 	healthpb.RegisterHealthServer(server, s.health)
@@ -409,9 +409,9 @@ func (s *Server) mkGRPCServer(log *zap.Logger, auditLog audit.Log) (*grpc.Server
 	payloadLog := zap.L().Named("payload")
 	telemetryInt := telemetry.Intercept()
 
-	auditConf, err := audit.GetConf()
+	auditInterceptor, err := audit.NewUnaryInterceptor(auditLog, accessLogExclude)
 	if err != nil {
-		return nil, fmt.Errorf("failed to read audit configuration: %w", err)
+		return nil, fmt.Errorf("failed to create audit unary interceptor: %w", err)
 	}
 
 	opts := []grpc.ServerOption{
@@ -437,7 +437,7 @@ func (s *Server) mkGRPCServer(log *zap.Logger, auditLog audit.Log) (*grpc.Server
 				grpc_zap.WithMessageProducer(messageProducer),
 			),
 			grpc_zap.PayloadUnaryServerInterceptor(payloadLog, payloadLoggingDecider(s.conf)),
-			audit.NewUnaryInterceptor(auditLog, accessLogExclude, MkMetadataIncludedInLogMethod(auditConf)),
+			auditInterceptor,
 		),
 		grpc.StatsHandler(&ocgrpc.ServerHandler{}),
 		grpc.KeepaliveParams(keepalive.ServerParameters{MaxConnectionAge: maxConnectionAge}),
@@ -642,33 +642,4 @@ func initOCPromExporter(conf *Conf) (*prometheus.Exporter, error) {
 	view.SetReportingPeriod(metricsReportingInterval)
 
 	return exporter, nil
-}
-
-func MkMetadataIncludedInLogMethod(conf *audit.Conf) audit.MetadataIncludedInLogMethod {
-	var includeMetadataKeys map[string]struct{}
-	var excludeMetadataKeys map[string]struct{}
-	if conf != nil {
-		includeMetadataKeys = sliceToLookupMap(conf.IncludeMetadataKeys)
-		excludeMetadataKeys = sliceToLookupMap(conf.ExcludeMetadataKeys)
-	}
-
-	return func(key string) bool {
-		_, existsInExcludeKeys := excludeMetadataKeys[key]
-		_, existsInIncludeKeys := includeMetadataKeys[key]
-
-		if !existsInExcludeKeys && existsInIncludeKeys {
-			return true
-		}
-
-		return false
-	}
-}
-
-func sliceToLookupMap(slice []string) map[string]struct{} {
-	m := make(map[string]struct{})
-	for _, k := range slice {
-		m[k] = struct{}{}
-	}
-
-	return m
 }
