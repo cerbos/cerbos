@@ -29,7 +29,11 @@ func NewUnaryInterceptor(log Log, exclude ExcludeMethod) (grpc.UnaryServerInterc
 		return nil, fmt.Errorf("failed to read audit configuration: %w", err)
 	}
 
-	includeKeys := mkIncludeKeysMethod(conf.ExcludeMetadataKeys, conf.IncludeMetadataKeys)
+	var keysPresent bool
+	var includeKeys IncludeKeysMethod
+	if keysPresent = !(len(conf.ExcludeMetadataKeys) == 0 && len(conf.IncludeMetadataKeys) == 0); keysPresent {
+		includeKeys = mkIncludeKeysMethod(conf.ExcludeMetadataKeys, conf.IncludeMetadataKeys)
+	}
 
 	return func(ctx context.Context, req any, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (any, error) {
 		if exclude(info.FullMethod) {
@@ -54,7 +58,7 @@ func NewUnaryInterceptor(log Log, exclude ExcludeMethod) (grpc.UnaryServerInterc
 				StatusCode: uint32(status.Code(err)),
 			}
 
-			if !(len(conf.ExcludeMetadataKeys) == 0 && len(conf.IncludeMetadataKeys) == 0) {
+			if keysPresent {
 				md, ok := metadata.FromIncomingContext(ctx)
 				if ok {
 					entry.Metadata = make(map[string]*auditv1.MetaValues, len(md))

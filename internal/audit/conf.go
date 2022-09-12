@@ -25,7 +25,7 @@ type confHolder struct {
 	// IncludeMetadataKeys defines which gRPC request metadata keys should be included in access logs.
 	IncludeMetadataKeys []string `yaml:"includeMetadataKeys" conf:",example=['content-type']"`
 	// ExcludeMetadataKeys defines which gRPC request metadata keys should be excluded from access logs. Takes precedence over includeMetadataKeys.
-	ExcludeMetadataKeys []string `yaml:"excludeMetadataKeys" conf:",example=['content-type']"`
+	ExcludeMetadataKeys []string `yaml:"excludeMetadataKeys" conf:",example=['authorization']"`
 	// Enabled defines whether audit logging is enabled.
 	Enabled bool `yaml:"enabled" conf:",example=false"`
 	// AccessLogsEnabled defines whether access logging is enabled.
