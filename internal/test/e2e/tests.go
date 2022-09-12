@@ -10,10 +10,12 @@ import (
 	"testing"
 	"time"
 
+	"github.com/cerbos/cerbos/client"
 	"github.com/cerbos/cerbos/internal/server"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
+	"google.golang.org/grpc/credentials/insecure"
 )
 
 const (
@@ -25,9 +27,10 @@ const (
 type Opt func(*suiteOpt)
 
 type suiteOpt struct {
-	contextID string
-	suites    []string
-	postSetup func(Ctx)
+	contextID   string
+	suites      []string
+	postSetup   func(Ctx)
+	tlsDisabled bool
 }
 
 func WithContextID(contextID string) Opt {
@@ -60,6 +63,12 @@ func WithImmutableStoreSuites() Opt {
 	}
 }
 
+func WithTLSDisabled() Opt {
+	return func(so *suiteOpt) {
+		so.tlsDisabled = true
+	}
+}
+
 func RunSuites(t *testing.T, opts ...Opt) {
 	sopt := suiteOpt{}
 	for _, o := range opts {
@@ -81,9 +90,23 @@ func RunSuites(t *testing.T, opts ...Opt) {
 	tr := server.LoadTestCases(t, sopt.suites...)
 	tr.Timeout = 30 * time.Second // Things are slower inside Kind
 
-	tlsConf := &tls.Config{InsecureSkipVerify: true} //nolint:gosec
 	creds := &server.AuthCreds{Username: "cerbos", Password: "cerbosAdmin"}
+	var grpcDialOpts []grpc.DialOption
+	var clientOpts []client.Opt
+	var httpAddr string
 
-	t.Run("grpc", tr.RunGRPCTests(ctx.GRPCAddr(), grpc.WithPerRPCCredentials(creds), grpc.WithTransportCredentials(credentials.NewTLS(tlsConf))))
-	t.Run("http", tr.RunHTTPTests(ctx.HTTPAddr(), creds))
+	if sopt.tlsDisabled {
+		grpcDialOpts = []grpc.DialOption{grpc.WithPerRPCCredentials(creds), grpc.WithTransportCredentials(insecure.NewCredentials())}
+		clientOpts = []client.Opt{client.WithPlaintext()}
+		httpAddr = ctx.HTTPAddr()
+	} else {
+		tlsConf := &tls.Config{InsecureSkipVerify: true} //nolint:gosec
+		grpcDialOpts = []grpc.DialOption{grpc.WithPerRPCCredentials(creds), grpc.WithTransportCredentials(credentials.NewTLS(tlsConf))}
+		clientOpts = []client.Opt{client.WithTLSInsecure()}
+		httpAddr = ctx.HTTPAddr()
+	}
+
+	t.Run("grpc", tr.RunGRPCTests(ctx.GRPCAddr(), grpcDialOpts...))
+	t.Run("http", tr.RunHTTPTests(httpAddr, creds))
+	t.Run("client", client.RunE2ETests(ctx.GRPCAddr(), clientOpts...))
 }

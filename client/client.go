@@ -17,7 +17,7 @@ import (
 	grpc_retry "github.com/grpc-ecosystem/go-grpc-middleware/retry"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
-	"google.golang.org/grpc/credentials/local"
+	"google.golang.org/grpc/credentials/insecure"
 
 	effectv1 "github.com/cerbos/cerbos/api/genpb/cerbos/effect/v1"
 	enginev1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
@@ -212,7 +212,7 @@ func mkDialOpts(conf *config) ([]grpc.DialOption, error) {
 	}
 
 	if conf.plaintext {
-		dialOpts = append(dialOpts, grpc.WithTransportCredentials(local.NewCredentials()))
+		dialOpts = append(dialOpts, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	} else {
 		tlsConf, err := mkTLSConfig(conf)
 		if err != nil {
