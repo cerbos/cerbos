@@ -28,7 +28,7 @@ require (
 	github.com/gobwas/glob v0.2.3
 	github.com/golang-migrate/migrate/v4 v4.15.2
 	github.com/google/cel-go v0.12.5
-	github.com/google/go-cmp v0.5.8
+	github.com/google/go-cmp v0.5.9
 	github.com/google/gops v0.3.25
 	github.com/google/uuid v1.3.0
 	github.com/gorilla/mux v1.8.0
