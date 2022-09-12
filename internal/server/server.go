@@ -335,7 +335,10 @@ func (s *Server) getTLSConfig() (*tls.Config, error) {
 
 func (s *Server) startGRPCServer(l net.Listener, param Param) (*grpc.Server, error) {
 	log := zap.L().Named("grpc")
-	server := s.mkGRPCServer(log, param.AuditLog)
+	server, err := s.mkGRPCServer(log, param.AuditLog)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create gRPC server: %w", err)
+	}
 
 	healthpb.RegisterHealthServer(server, s.health)
 	reflection.Register(server)
@@ -402,9 +405,14 @@ func checkForUnsafeAdminCredentials(log *zap.Logger, passwordHash []byte) {
 	}
 }
 
-func (s *Server) mkGRPCServer(log *zap.Logger, auditLog audit.Log) *grpc.Server {
+func (s *Server) mkGRPCServer(log *zap.Logger, auditLog audit.Log) (*grpc.Server, error) {
 	payloadLog := zap.L().Named("payload")
 	telemetryInt := telemetry.Intercept()
+
+	auditInterceptor, err := audit.NewUnaryInterceptor(auditLog, accessLogExclude)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create audit unary interceptor: %w", err)
+	}
 
 	opts := []grpc.ServerOption{
 		grpc.ChainStreamInterceptor(
@@ -429,14 +437,14 @@ func (s *Server) mkGRPCServer(log *zap.Logger, auditLog audit.Log) *grpc.Server 
 				grpc_zap.WithMessageProducer(messageProducer),
 			),
 			grpc_zap.PayloadUnaryServerInterceptor(payloadLog, payloadLoggingDecider(s.conf)),
-			audit.NewUnaryInterceptor(auditLog, accessLogExclude),
+			auditInterceptor,
 		),
 		grpc.StatsHandler(&ocgrpc.ServerHandler{}),
 		grpc.KeepaliveParams(keepalive.ServerParameters{MaxConnectionAge: maxConnectionAge}),
 		grpc.UnknownServiceHandler(handleUnknownServices),
 	}
 
-	return grpc.NewServer(opts...)
+	return grpc.NewServer(opts...), nil
 }
 
 func (s *Server) startHTTPServer(ctx context.Context, l net.Listener, grpcSrv *grpc.Server, zpagesEnabled bool) (*http.Server, error) {

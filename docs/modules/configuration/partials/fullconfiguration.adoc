@@ -3,6 +3,8 @@ audit:
   backend: local # Backend states which backend to use for Audits.
   decisionLogsEnabled: false # DecisionLogsEnabled defines whether logging of policy decisions is enabled.
   enabled: false # Enabled defines whether audit logging is enabled.
+  excludeMetadataKeys: ['authorization'] # ExcludeMetadataKeys defines which gRPC request metadata keys should be excluded from access logs. Takes precedence over includeMetadataKeys.
+  includeMetadataKeys: ['content-type'] # IncludeMetadataKeys defines which gRPC request metadata keys should be included in access logs.
   file:
     path: /path/to/file.log # Path to the log file to use as output. The special values stdout and stderr can be used to write to stdout or stderr respectively.
   local:
