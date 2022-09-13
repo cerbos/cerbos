@@ -139,7 +139,7 @@ storage:
   driver: "git" 
   git: 
     protocol: ssh 
-    url: ssh://github.com:cerbos/policy-test.git
+    url: github.com:cerbos/policy-test.git
     branch: main
     subDir: policies
     checkoutDir: ${HOME}/tmp/cerbos/work 
