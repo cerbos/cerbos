@@ -78,7 +78,7 @@ func RunSuites(t *testing.T, opts ...Opt) {
 	require.NotEmpty(t, sopt.contextID, "Context ID must not be empty")
 	require.NotEmpty(t, sopt.suites, "At least one suite must be defined")
 
-	ctx := NewCtx(t, sopt.contextID)
+	ctx := NewCtx(t, sopt.contextID, sopt.tlsDisabled)
 	require.NoError(t, Setup(ctx))
 
 	if sopt.postSetup != nil {
@@ -93,20 +93,17 @@ func RunSuites(t *testing.T, opts ...Opt) {
 	creds := &server.AuthCreds{Username: "cerbos", Password: "cerbosAdmin"}
 	var grpcDialOpts []grpc.DialOption
 	var clientOpts []client.Opt
-	var httpAddr string
 
 	if sopt.tlsDisabled {
-		grpcDialOpts = []grpc.DialOption{grpc.WithPerRPCCredentials(creds), grpc.WithTransportCredentials(insecure.NewCredentials())}
+		grpcDialOpts = []grpc.DialOption{grpc.WithTransportCredentials(insecure.NewCredentials()), grpc.WithPerRPCCredentials(creds)}
 		clientOpts = []client.Opt{client.WithPlaintext()}
-		httpAddr = ctx.HTTPAddr()
 	} else {
 		tlsConf := &tls.Config{InsecureSkipVerify: true} //nolint:gosec
-		grpcDialOpts = []grpc.DialOption{grpc.WithPerRPCCredentials(creds), grpc.WithTransportCredentials(credentials.NewTLS(tlsConf))}
+		grpcDialOpts = []grpc.DialOption{grpc.WithTransportCredentials(credentials.NewTLS(tlsConf)), grpc.WithPerRPCCredentials(creds)}
 		clientOpts = []client.Opt{client.WithTLSInsecure()}
-		httpAddr = ctx.HTTPAddr()
 	}
 
 	t.Run("grpc", tr.RunGRPCTests(ctx.GRPCAddr(), grpcDialOpts...))
-	t.Run("http", tr.RunHTTPTests(httpAddr, creds))
+	t.Run("http", tr.RunHTTPTests(ctx.HTTPAddr(), creds))
 	t.Run("client", client.RunE2ETests(ctx.GRPCAddr(), clientOpts...))
 }

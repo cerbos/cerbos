@@ -7,14 +7,20 @@ package client
 
 import (
 	"context"
+	"os"
+	"path/filepath"
 	"testing"
 	"time"
 
 	enginev1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
+	"github.com/cerbos/cerbos/internal/test"
+	"github.com/lestrrat-go/jwx/v2/jwa"
+	"github.com/lestrrat-go/jwx/v2/jwk"
+	"github.com/lestrrat-go/jwx/v2/jwt"
 	"github.com/stretchr/testify/require"
 )
 
-const timeout = 15 * time.Second
+const timeout = 30 * time.Second
 
 func RunE2ETests(addr string, opts ...Opt) func(*testing.T) {
 	c, err := New(addr, opts...)
@@ -26,7 +32,10 @@ func RunE2ETests(addr string, opts ...Opt) func(*testing.T) {
 }
 
 func TestGRPCClient(c Client) func(*testing.T) {
+	//nolint:thelper
 	return func(t *testing.T) {
+		token := GenerateToken(t, time.Now().Add(5*time.Minute)) //nolint:gomnd
+		c := c.With(AuxDataJWT(token, ""))
 		t.Run("CheckResourceSet", func(t *testing.T) {
 			ctx, cancelFunc := context.WithTimeout(context.Background(), timeout)
 			defer cancelFunc()
@@ -298,6 +307,8 @@ func TestGRPCClient(c Client) func(*testing.T) {
 			principal := NewPrincipal("maggie").
 				WithRoles("manager").
 				WithAttr("geography", "US").
+				WithAttr("department", "marketing").
+				WithAttr("team", "design").
 				WithAttr("managed_geographies", "US").
 				WithAttr("reader", false)
 
@@ -312,12 +323,12 @@ func TestGRPCClient(c Client) func(*testing.T) {
 				is := require.New(t)
 
 				is.NoError(err)
-				is.Equal(have.Filter.Kind, enginev1.PlanResourcesFilter_KIND_CONDITIONAL)
+				is.Equal(enginev1.PlanResourcesFilter_KIND_CONDITIONAL, have.Filter.Kind, "Expected conditional filter")
 				expression := have.Filter.Condition.GetExpression()
 				is.NotNil(expression)
-				is.Equal(expression.Operator, "eq")
-				is.Equal(expression.Operands[0].GetVariable(), "request.resource.attr.status")
-				is.Equal(expression.Operands[1].GetValue().GetStringValue(), "PENDING_APPROVAL")
+				is.Equal("eq", expression.Operator)
+				is.Equal("request.resource.attr.status", expression.Operands[0].GetVariable())
+				is.Equal("PENDING_APPROVAL", expression.Operands[1].GetValue().GetStringValue())
 				t.Log(have.Meta.FilterDebug)
 			}
 
@@ -338,4 +349,28 @@ func TestGRPCClient(c Client) func(*testing.T) {
 			})
 		})
 	}
+}
+
+func GenerateToken(t *testing.T, expiry time.Time) string {
+	t.Helper()
+
+	token := jwt.New()
+	require.NoError(t, token.Set(jwt.IssuerKey, "cerbos-test-suite"))
+	require.NoError(t, token.Set(jwt.AudienceKey, "cerbos-jwt-tests"))
+	require.NoError(t, token.Set(jwt.ExpirationKey, expiry))
+	require.NoError(t, token.Set("customString", "foobar"))
+	require.NoError(t, token.Set("customInt", 42)) //nolint:gomnd
+	require.NoError(t, token.Set("customArray", []string{"A", "B", "C"}))
+	require.NoError(t, token.Set("customMap", map[string]any{"A": "AA", "B": "BB", "C": "CC"}))
+
+	keyData, err := os.ReadFile(filepath.Join(test.PathToDir(t, "auxdata"), "signing_key.jwk"))
+	require.NoError(t, err)
+
+	keySet, err := jwk.ParseKey(keyData)
+	require.NoError(t, err)
+
+	tokenBytes, err := jwt.Sign(token, jwt.WithKey(jwa.ES384, keySet))
+	require.NoError(t, err)
+
+	return string(tokenBytes)
 }
