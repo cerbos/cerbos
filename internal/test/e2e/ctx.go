@@ -71,12 +71,13 @@ type Config struct {
 	NoCleanup      bool          `json:"no_cleanup"`
 }
 
-func NewCtx(t *testing.T, contextID string) Ctx {
-	return Ctx{ContextID: contextID, Config: conf, T: t}
+func NewCtx(t *testing.T, contextID string, noTLS bool) Ctx {
+	return Ctx{ContextID: contextID, Config: conf, T: t, NoTLS: noTLS}
 }
 
 type Ctx struct {
 	ContextID string
+	NoTLS     bool
 	*testing.T
 	Config
 }
@@ -122,7 +123,11 @@ func (c Ctx) GRPCAddr() string {
 }
 
 func (c Ctx) HTTPAddr() string {
-	return fmt.Sprintf("https://%s:%d", c.CerbosHost(), HTTPPort)
+	protocol := "https"
+	if c.NoTLS {
+		protocol = "http"
+	}
+	return fmt.Sprintf("%s://%s:%d", protocol, c.CerbosHost(), HTTPPort)
 }
 
 func (c Ctx) HealthURL() string {

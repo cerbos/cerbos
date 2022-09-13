@@ -52,7 +52,7 @@ func (ac AuthCreds) GetRequestMetadata(ctx context.Context, in ...string) (map[s
 }
 
 func (AuthCreds) RequireTransportSecurity() bool {
-	return true
+	return false
 }
 
 func LoadTestCases(tb testing.TB, dirs ...string) *TestRunner {

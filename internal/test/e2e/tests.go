@@ -10,10 +10,12 @@ import (
 	"testing"
 	"time"
 
+	"github.com/cerbos/cerbos/client"
 	"github.com/cerbos/cerbos/internal/server"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
+	"google.golang.org/grpc/credentials/insecure"
 )
 
 const (
@@ -25,9 +27,10 @@ const (
 type Opt func(*suiteOpt)
 
 type suiteOpt struct {
-	contextID string
-	suites    []string
-	postSetup func(Ctx)
+	contextID   string
+	suites      []string
+	postSetup   func(Ctx)
+	tlsDisabled bool
 }
 
 func WithContextID(contextID string) Opt {
@@ -60,6 +63,12 @@ func WithImmutableStoreSuites() Opt {
 	}
 }
 
+func WithTLSDisabled() Opt {
+	return func(so *suiteOpt) {
+		so.tlsDisabled = true
+	}
+}
+
 func RunSuites(t *testing.T, opts ...Opt) {
 	sopt := suiteOpt{}
 	for _, o := range opts {
@@ -69,7 +78,7 @@ func RunSuites(t *testing.T, opts ...Opt) {
 	require.NotEmpty(t, sopt.contextID, "Context ID must not be empty")
 	require.NotEmpty(t, sopt.suites, "At least one suite must be defined")
 
-	ctx := NewCtx(t, sopt.contextID)
+	ctx := NewCtx(t, sopt.contextID, sopt.tlsDisabled)
 	require.NoError(t, Setup(ctx))
 
 	if sopt.postSetup != nil {
@@ -81,9 +90,20 @@ func RunSuites(t *testing.T, opts ...Opt) {
 	tr := server.LoadTestCases(t, sopt.suites...)
 	tr.Timeout = 30 * time.Second // Things are slower inside Kind
 
-	tlsConf := &tls.Config{InsecureSkipVerify: true} //nolint:gosec
 	creds := &server.AuthCreds{Username: "cerbos", Password: "cerbosAdmin"}
+	var grpcDialOpts []grpc.DialOption
+	var clientOpts []client.Opt
 
-	t.Run("grpc", tr.RunGRPCTests(ctx.GRPCAddr(), grpc.WithPerRPCCredentials(creds), grpc.WithTransportCredentials(credentials.NewTLS(tlsConf))))
+	if sopt.tlsDisabled {
+		grpcDialOpts = []grpc.DialOption{grpc.WithTransportCredentials(insecure.NewCredentials()), grpc.WithPerRPCCredentials(creds)}
+		clientOpts = []client.Opt{client.WithPlaintext()}
+	} else {
+		tlsConf := &tls.Config{InsecureSkipVerify: true} //nolint:gosec
+		grpcDialOpts = []grpc.DialOption{grpc.WithTransportCredentials(credentials.NewTLS(tlsConf)), grpc.WithPerRPCCredentials(creds)}
+		clientOpts = []client.Opt{client.WithTLSInsecure()}
+	}
+
+	t.Run("grpc", tr.RunGRPCTests(ctx.GRPCAddr(), grpcDialOpts...))
 	t.Run("http", tr.RunHTTPTests(ctx.HTTPAddr(), creds))
+	t.Run("client", client.RunE2ETests(ctx.GRPCAddr(), clientOpts...))
 }
