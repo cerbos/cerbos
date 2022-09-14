@@ -244,8 +244,7 @@ func TestQueryPlan(t *testing.T) {
 					} else {
 						is.NoError(err)
 						is.NotNil(response)
-						is.Empty(cmp.Diff(tt.Want, response.Filter, protocmp.Transform()))
-						t.Log(response.FilterDebug)
+						is.Empty(cmp.Diff(tt.Want, response.Filter, protocmp.Transform()), "AST: %s", response.FilterDebug)
 					}
 				})
 			}

@@ -1,0 +1,25 @@
+---
+apiVersion: "api.cerbos.dev/v1"
+derivedRoles:
+  name: tiers
+  definitions:
+    - name: gold
+      parentRoles:
+        - user
+      condition:
+        match:
+          any:
+            of:
+              - expr: request.principal.attr.package == "PRO"
+              - expr: request.principal.attr.package == "PREMIUM"
+              - expr: request.principal.attr.package == "PREMIUM_PLUS"
+
+    - name: platinum
+      parentRoles:
+        - user
+      condition:
+        match:
+          any:
+            of:
+              - expr: request.principal.attr.package == "PREMIUM_XTRA"
+              - expr: request.principal.attr.package == "PREMIUM_PLUS"
