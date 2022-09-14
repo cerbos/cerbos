@@ -91,16 +91,16 @@ func RunSuites(t *testing.T, opts ...Opt) {
 	tr.Timeout = 30 * time.Second // Things are slower inside Kind
 
 	creds := &server.AuthCreds{Username: "cerbos", Password: "cerbosAdmin"}
-	var grpcDialOpts []grpc.DialOption
-	var clientOpts []client.Opt
+	grpcDialOpts := []grpc.DialOption{grpc.WithPerRPCCredentials(creds)}
+	clientOpts := []client.Opt{client.WithRetryTimeout(30 * time.Second), client.WithMaxRetries(1)}
 
 	if sopt.tlsDisabled {
-		grpcDialOpts = []grpc.DialOption{grpc.WithTransportCredentials(insecure.NewCredentials()), grpc.WithPerRPCCredentials(creds)}
-		clientOpts = []client.Opt{client.WithPlaintext()}
+		grpcDialOpts = append(grpcDialOpts, grpc.WithTransportCredentials(insecure.NewCredentials()))
+		clientOpts = append(clientOpts, client.WithPlaintext())
 	} else {
 		tlsConf := &tls.Config{InsecureSkipVerify: true} //nolint:gosec
-		grpcDialOpts = []grpc.DialOption{grpc.WithTransportCredentials(credentials.NewTLS(tlsConf)), grpc.WithPerRPCCredentials(creds)}
-		clientOpts = []client.Opt{client.WithTLSInsecure()}
+		grpcDialOpts = append(grpcDialOpts, grpc.WithTransportCredentials(credentials.NewTLS(tlsConf)))
+		clientOpts = append(clientOpts, client.WithTLSInsecure())
 	}
 
 	t.Run("grpc", tr.RunGRPCTests(ctx.GRPCAddr(), grpcDialOpts...))
