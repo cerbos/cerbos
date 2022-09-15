@@ -1,0 +1,26 @@
+---
+apiVersion: api.cerbos.dev/v1
+resourcePolicy:
+  importDerivedRoles:
+    - tiers
+  resource: NEWS
+  version: default
+  rules:
+    - actions: [ "SHOW" ]
+      derivedRoles:
+        - gold
+      condition:
+        match:
+          expr: |-
+            !("PRO" in R.attr.tags)
+      effect: EFFECT_ALLOW
+
+    - actions: [ "SHOW" ]
+      derivedRoles:
+        - silver
+        - platinum
+      condition:
+        match:
+          expr: |-
+            ("PRO" in R.attr.tags)
+      effect: EFFECT_ALLOW

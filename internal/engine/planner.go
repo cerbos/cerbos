@@ -374,23 +374,17 @@ func evaluateCondition(condition *runtimev1.Condition, input *enginev1.PlanResou
 				return nil, err
 			}
 
-			add := true
-
 			if b, ok := isNodeConstBool(node); ok {
 				if b {
-					res.Node = &qpNE{Expression: conditions.TrueExpr}
-					return res, nil
+					return mkTrueNode(), nil
 				}
-				add = false
-			}
-
-			if add {
+			} else {
 				nodes = append(nodes, node)
 			}
 		}
 		switch len(nodes) {
 		case 0:
-			res.Node = &qpNE{Expression: conditions.TrueExpr}
+			res.Node = &qpNE{Expression: conditions.FalseExpr}
 		case 1:
 			res.Node = nodes[0].Node
 		default:
@@ -403,17 +397,11 @@ func evaluateCondition(condition *runtimev1.Condition, input *enginev1.PlanResou
 			if err != nil {
 				return nil, err
 			}
-			add := true
-
 			if b, ok := isNodeConstBool(node); ok {
 				if !b {
-					res.Node = &qpNE{Expression: conditions.FalseExpr}
-					return res, nil
+					return mkFalseNode(), nil
 				}
-				add = false
-			}
-
-			if add {
+			} else {
 				nodes = append(nodes, node)
 			}
 		}
