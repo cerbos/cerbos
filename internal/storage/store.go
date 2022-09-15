@@ -163,6 +163,7 @@ const (
 	EventDeletePolicy
 	EventAddOrUpdateSchema
 	EventDeleteSchema
+	EventReload
 	EventNop
 )
 
@@ -187,6 +188,8 @@ func (evt Event) String() string {
 	case EventDeleteSchema:
 		kind = "DELETE SCHEMA"
 		id = evt.SchemaFile
+	case EventReload:
+		kind = "RELOAD"
 	case EventNop:
 		kind = "NOP"
 	default:
@@ -204,6 +207,11 @@ func NewPolicyEvent(kind EventKind, policyID namer.ModuleID) Event {
 // NewSchemaEvent creates a new storage event for a schema.
 func NewSchemaEvent(kind EventKind, schemaFile string) Event {
 	return Event{Kind: kind, SchemaFile: schemaFile}
+}
+
+// NewReloadEvent creates a new reload event.
+func NewReloadEvent() Event {
+	return Event{Kind: EventReload}
 }
 
 type RepoStats struct {

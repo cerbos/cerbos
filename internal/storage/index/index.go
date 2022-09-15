@@ -420,8 +420,8 @@ func (idx *index) RepoStats(_ context.Context) storage.RepoStats {
 
 func (idx *index) Reload(ctx context.Context) ([]storage.Event, error) {
 	log := ctxzap.Extract(ctx)
-	log.Info("Initiated a store reload")
-	ievts, err, shared := idx.sfGroup.Do("reload", func() (any, error) {
+	log.Info("Start index reload")
+	_, err, _ := idx.sfGroup.Do("reload", func() (any, error) {
 		idxIface, err := build(ctx, idx.fsys, idx.buildOpts)
 		if err != nil {
 			log.Error("Failed to build index while re-indexing")
@@ -431,20 +431,6 @@ func (idx *index) Reload(ctx context.Context) ([]storage.Event, error) {
 		newIdx, ok := idxIface.(*index)
 		if !ok {
 			return nil, err
-		}
-
-		var evts []storage.Event
-		for mID := range newIdx.modIDToFile {
-			if _, ok := idx.modIDToFile[mID]; !ok {
-				log.Debug("Detected added policy with while re-indexing", zap.String("moduleID", mID.String()))
-				evts = append(evts, storage.NewPolicyEvent(storage.EventAddOrUpdatePolicy, mID))
-			}
-		}
-		for mID := range idx.modIDToFile {
-			if _, ok := newIdx.modIDToFile[mID]; !ok {
-				log.Debug("Detected deleted policy while re-indexing", zap.String("moduleID", mID.String()))
-				evts = append(evts, storage.NewPolicyEvent(storage.EventDeletePolicy, mID))
-			}
 		}
 
 		idx.mu.RLock()
@@ -457,20 +443,13 @@ func (idx *index) Reload(ctx context.Context) ([]storage.Event, error) {
 		idx.schemaLoader = newIdx.schemaLoader
 		idx.stats = newIdx.stats
 
-		return evts, nil
+		return nil, nil
 	})
 	if err != nil {
+		log.Warn("Index reload failed", zap.Error(err))
 		return nil, err
 	}
-	if shared {
-		log.Debug("shared multiple calls to the reload index function")
-	}
-	log.Info("Successfully reloaded the store")
+	log.Info("Index reload successful")
 
-	evts, ok := ievts.([]storage.Event)
-	if !ok {
-		return nil, fmt.Errorf("failed to type assert storage events")
-	}
-
-	return evts, nil
+	return []storage.Event{storage.NewReloadEvent()}, nil
 }

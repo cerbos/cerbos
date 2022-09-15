@@ -83,8 +83,16 @@ func (c *Manager) processUpdateQueue(ctx context.Context) {
 			return
 		case evt := <-c.updateQueue:
 			c.log.Debugw("Processing storage event", "event", evt)
-			if err := c.recompile(evt); err != nil {
-				c.log.Warnw("Error while processing storage event", "event", evt, "error", err)
+			switch evt.Kind {
+			case storage.EventReload:
+				c.log.Info("Purging compile cache")
+				c.cache.Purge()
+			case storage.EventAddOrUpdatePolicy, storage.EventDeletePolicy:
+				if err := c.recompile(evt); err != nil {
+					c.log.Warnw("Error while processing storage event", "event", evt, "error", err)
+				}
+			default:
+				c.log.Debugw("Ignoring storage event", "event", evt)
 			}
 		}
 	}
@@ -92,10 +100,6 @@ func (c *Manager) processUpdateQueue(ctx context.Context) {
 
 func (c *Manager) recompile(evt storage.Event) error {
 	// if this is a delete event, remove the module from the cache
-	if evt.Kind == storage.EventDeleteSchema || evt.Kind == storage.EventAddOrUpdateSchema {
-		return nil
-	}
-
 	if evt.Kind == storage.EventDeletePolicy {
 		c.evict(evt.PolicyID)
 	}
