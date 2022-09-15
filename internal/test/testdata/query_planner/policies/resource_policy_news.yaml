@@ -17,6 +17,7 @@ resourcePolicy:
 
     - actions: [ "SHOW" ]
       derivedRoles:
+        - silver
         - platinum
       condition:
         match:
