@@ -67,16 +67,15 @@ func TestServer(t *testing.T) {
 		testdataDir := test.PathToDir(t, "server")
 
 		t.Run("tcp", func(t *testing.T) {
-			conf := &Conf{
-				HTTPListenAddr: getFreeListenAddr(t),
-				GRPCListenAddr: getFreeListenAddr(t),
-				TLS: &TLSConf{
-					Cert: filepath.Join(testdataDir, "tls.crt"),
-					Key:  filepath.Join(testdataDir, "tls.key"),
-				},
-				PlaygroundEnabled: true,
-				RequestLimits:     reqLimits,
+			conf := defaultConf()
+			conf.HTTPListenAddr = getFreeListenAddr(t)
+			conf.GRPCListenAddr = getFreeListenAddr(t)
+			conf.TLS = &TLSConf{
+				Cert: filepath.Join(testdataDir, "tls.crt"),
+				Key:  filepath.Join(testdataDir, "tls.key"),
 			}
+			conf.PlaygroundEnabled = true
+			conf.RequestLimits = reqLimits
 
 			ctx, cancelFunc := context.WithCancel(context.Background())
 			defer cancelFunc()
@@ -93,16 +92,15 @@ func TestServer(t *testing.T) {
 		t.Run("uds", func(t *testing.T) {
 			tempDir := t.TempDir()
 
-			conf := &Conf{
-				HTTPListenAddr: fmt.Sprintf("unix:%s", filepath.Join(tempDir, "http.sock")),
-				GRPCListenAddr: fmt.Sprintf("unix:%s", filepath.Join(tempDir, "grpc.sock")),
-				TLS: &TLSConf{
-					Cert: filepath.Join(testdataDir, "tls.crt"),
-					Key:  filepath.Join(testdataDir, "tls.key"),
-				},
-				PlaygroundEnabled: true,
-				RequestLimits:     reqLimits,
+			conf := defaultConf()
+			conf.HTTPListenAddr = fmt.Sprintf("unix:%s", filepath.Join(tempDir, "http.sock"))
+			conf.GRPCListenAddr = fmt.Sprintf("unix:%s", filepath.Join(tempDir, "grpc.sock"))
+			conf.TLS = &TLSConf{
+				Cert: filepath.Join(testdataDir, "tls.crt"),
+				Key:  filepath.Join(testdataDir, "tls.key"),
 			}
+			conf.PlaygroundEnabled = true
+			conf.RequestLimits = reqLimits
 
 			ctx, cancelFunc := context.WithCancel(context.Background())
 			defer cancelFunc()
@@ -118,12 +116,11 @@ func TestServer(t *testing.T) {
 
 	t.Run("without_tls", func(t *testing.T) {
 		t.Run("tcp", func(t *testing.T) {
-			conf := &Conf{
-				HTTPListenAddr:    getFreeListenAddr(t),
-				GRPCListenAddr:    getFreeListenAddr(t),
-				PlaygroundEnabled: true,
-				RequestLimits:     reqLimits,
-			}
+			conf := defaultConf()
+			conf.HTTPListenAddr = getFreeListenAddr(t)
+			conf.GRPCListenAddr = getFreeListenAddr(t)
+			conf.PlaygroundEnabled = true
+			conf.RequestLimits = reqLimits
 
 			ctx, cancelFunc := context.WithCancel(context.Background())
 			defer cancelFunc()
@@ -138,12 +135,11 @@ func TestServer(t *testing.T) {
 		t.Run("uds", func(t *testing.T) {
 			tempDir := t.TempDir()
 
-			conf := &Conf{
-				HTTPListenAddr:    fmt.Sprintf("unix:%s", filepath.Join(tempDir, "http.sock")),
-				GRPCListenAddr:    fmt.Sprintf("unix:%s", filepath.Join(tempDir, "grpc.sock")),
-				PlaygroundEnabled: true,
-				RequestLimits:     reqLimits,
-			}
+			conf := defaultConf()
+			conf.HTTPListenAddr = fmt.Sprintf("unix:%s", filepath.Join(tempDir, "http.sock"))
+			conf.GRPCListenAddr = fmt.Sprintf("unix:%s", filepath.Join(tempDir, "grpc.sock"))
+			conf.PlaygroundEnabled = true
+			conf.RequestLimits = reqLimits
 
 			ctx, cancelFunc := context.WithCancel(context.Background())
 			defer cancelFunc()
@@ -182,24 +178,23 @@ func TestAdminService(t *testing.T) {
 	require.NoError(t, err)
 
 	testdataDir := test.PathToDir(t, "server")
-	conf := &Conf{
-		HTTPListenAddr: getFreeListenAddr(t),
-		GRPCListenAddr: getFreeListenAddr(t),
-		TLS: &TLSConf{
-			Cert: filepath.Join(testdataDir, "tls.crt"),
-			Key:  filepath.Join(testdataDir, "tls.key"),
+	conf := defaultConf()
+	conf.HTTPListenAddr = getFreeListenAddr(t)
+	conf.GRPCListenAddr = getFreeListenAddr(t)
+	conf.TLS = &TLSConf{
+		Cert: filepath.Join(testdataDir, "tls.crt"),
+		Key:  filepath.Join(testdataDir, "tls.key"),
+	}
+	conf.AdminAPI = AdminAPIConf{
+		Enabled: true,
+		AdminCredentials: &AdminCredentialsConf{
+			Username:     "cerbos",
+			PasswordHash: base64.StdEncoding.EncodeToString([]byte("$2y$10$yOdMOoQq6g7s.ogYRBDG3e2JyJFCyncpOEmkEyV.mNGKNyg68uPZS")),
 		},
-		AdminAPI: AdminAPIConf{
-			Enabled: true,
-			AdminCredentials: &AdminCredentialsConf{
-				Username:     "cerbos",
-				PasswordHash: base64.StdEncoding.EncodeToString([]byte("$2y$10$yOdMOoQq6g7s.ogYRBDG3e2JyJFCyncpOEmkEyV.mNGKNyg68uPZS")),
-			},
-		},
-		RequestLimits: RequestLimitsConf{
-			MaxActionsPerResource:  5,
-			MaxResourcesPerRequest: 5,
-		},
+	}
+	conf.RequestLimits = RequestLimitsConf{
+		MaxActionsPerResource:  5,
+		MaxResourcesPerRequest: 5,
 	}
 
 	startServer(ctx, conf, Param{Store: store, Engine: eng, AuditLog: auditLog, AuxData: auxData})
@@ -232,4 +227,10 @@ func startServer(ctx context.Context, conf *Conf, param Param) {
 		}
 	}()
 	runtime.Gosched()
+}
+
+func defaultConf() *Conf {
+	conf := &Conf{}
+	conf.SetDefaults()
+	return conf
 }

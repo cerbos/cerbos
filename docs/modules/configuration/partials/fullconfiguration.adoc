@@ -42,6 +42,16 @@ server:
       passwordHash: JDJ5JDEwJEdEOVFzZDE2VVhoVkR0N2VkUFBVM09nalc0QnNZaC9xc2E4bS9mcUJJcEZXenp5OUpjMi91Cgo= # PasswordHash is the base64-encoded bcrypt hash of the password to use for authentication.
       username: cerbos # Username is the hardcoded username to use for authentication.
     enabled: true # Enabled defines whether the admin API is enabled.
+  advanced: # Advanced server settings.
+    grpc: # GRPC server settings.
+      connectionTimeout: 60s # ConnectionTimeout sets the timeout for establishing a new connection.
+      maxConnectionAge: 600s # MaxConnectionAge sets the maximum age of a connection.
+      maxRecvMsgSizeBytes: 4194304 # MaxRecvMsgSizeBytes sets the maximum size of a single request message. Defaults to 4MiB. Affects performance and resource utilisation.
+    http: # HTTP server settings.
+      writeTimeout: 120s # IdleTimeout sets the keepalive timeout.
+      readHeaderTimeout: 15s # ReadHeaderTimeout sets the timeout for reading request headers.
+      readTimeout: 30s # ReadTimeout sets the timeout for reading a request.
+      writeTimeout: 30s # WriteTimeout sets the timeout for writing a response.
   cors: # CORS defines the CORS configuration for the server.
     allowedHeaders: ['content-type'] # AllowedHeaders is the contents of the allowed-headers header.
     allowedOrigins: ['*'] # AllowedOrigins is the contents of the allowed-origins header.

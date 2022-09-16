@@ -89,7 +89,6 @@ import (
 
 const (
 	defaultTimeout           = 30 * time.Second
-	maxConnectionAge         = 10 * time.Minute
 	metricsReportingInterval = 15 * time.Second
 	minGRPCConnectTimeout    = 20 * time.Second
 
@@ -440,7 +439,9 @@ func (s *Server) mkGRPCServer(log *zap.Logger, auditLog audit.Log) (*grpc.Server
 			auditInterceptor,
 		),
 		grpc.StatsHandler(&ocgrpc.ServerHandler{}),
-		grpc.KeepaliveParams(keepalive.ServerParameters{MaxConnectionAge: maxConnectionAge}),
+		grpc.KeepaliveParams(keepalive.ServerParameters{MaxConnectionAge: s.conf.Advanced.GRPC.MaxConnectionAge}),
+		grpc.ConnectionTimeout(s.conf.Advanced.GRPC.ConnectionTimeout),
+		grpc.MaxRecvMsgSize(int(s.conf.Advanced.GRPC.MaxRecvMsgSizeBytes)),
 		grpc.UnknownServiceHandler(handleUnknownServices),
 	}
 
@@ -515,9 +516,10 @@ func (s *Server) startHTTPServer(ctx context.Context, l net.Listener, grpcSrv *g
 	h := &http.Server{
 		ErrorLog:          zap.NewStdLog(zap.L().Named("http.error")),
 		Handler:           h2c.NewHandler(httpHandler, &http2.Server{}),
-		ReadHeaderTimeout: defaultTimeout,
-		ReadTimeout:       defaultTimeout,
-		WriteTimeout:      defaultTimeout,
+		ReadHeaderTimeout: s.conf.Advanced.HTTP.ReadHeaderTimeout,
+		ReadTimeout:       s.conf.Advanced.HTTP.ReadTimeout,
+		WriteTimeout:      s.conf.Advanced.HTTP.WriteTimeout,
+		IdleTimeout:       s.conf.Advanced.HTTP.IdleTimeout,
 	}
 
 	s.group.Go(func() error {

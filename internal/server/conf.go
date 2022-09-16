@@ -18,16 +18,23 @@ import (
 )
 
 const (
-	confKey                       = "server"
-	defaultHTTPListenAddr         = ":3592"
-	defaultGRPCListenAddr         = ":3593"
-	defaultAdminUsername          = "cerbos"
-	defaultAdminPassword          = "cerbosAdmin"
-	defaultRawAdminPasswordHash   = "$2y$10$VlPwcwpgcGZ5KjTaN1Pzk.vpFiQVG6F2cSWzQa9RtrNo3IacbzsEi" //nolint:gosec
-	defaultMaxActionsPerResource  = 50
-	defaultMaxResourcesPerRequest = 50
-	defaultUDSFileMode            = "0o766"
-	requestItemsMax               = 500
+	confKey                        = "server"
+	defaultAdminPassword           = "cerbosAdmin"
+	defaultAdminUsername           = "cerbos"
+	defaultGRPCConnectionTimeout   = 60 * time.Second
+	defaultGRPCListenAddr          = ":3593"
+	defaultGRPCMaxConnectionAge    = 10 * time.Minute
+	defaultGRPCMaxRecvMsgSizeBytes = 4 * 1024 * 1024 // 4MiB
+	defaultHTTPIdleTimeout         = 120 * time.Second
+	defaultHTTPListenAddr          = ":3592"
+	defaultHTTPReadHeaderTimeout   = 15 * time.Second
+	defaultHTTPReadTimeout         = 30 * time.Second
+	defaultHTTPWriteTimeout        = 30 * time.Second
+	defaultMaxActionsPerResource   = 50
+	defaultMaxResourcesPerRequest  = 50
+	defaultRawAdminPasswordHash    = "$2y$10$VlPwcwpgcGZ5KjTaN1Pzk.vpFiQVG6F2cSWzQa9RtrNo3IacbzsEi" //nolint:gosec
+	defaultUDSFileMode             = "0o766"
+	requestItemsMax                = 500
 )
 
 var (
@@ -57,6 +64,8 @@ type Conf struct {
 	LogRequestPayloads bool `yaml:"logRequestPayloads" conf:",example=false"`
 	// PlaygroundEnabled defines whether the playground API is enabled.
 	PlaygroundEnabled bool `yaml:"playgroundEnabled" conf:",example=false"`
+	// Advanced server settings.
+	Advanced AdvancedConf `yaml:"advanced"`
 }
 
 // TLSConf holds TLS configuration.
@@ -125,6 +134,33 @@ type RequestLimitsConf struct {
 	MaxResourcesPerRequest uint `yaml:"maxResourcesPerRequest" conf:",example=50"`
 }
 
+type AdvancedConf struct {
+	// HTTP server settings.
+	HTTP AdvancedHTTPConf `yaml:"http"`
+	// GRPC server settings.
+	GRPC AdvancedGRPCConf `yaml:"grpc"`
+}
+
+type AdvancedHTTPConf struct {
+	// ReadTimeout sets the timeout for reading a request.
+	ReadTimeout time.Duration `yaml:"readTimeout" conf:",example=30s"`
+	// ReadHeaderTimeout sets the timeout for reading request headers.
+	ReadHeaderTimeout time.Duration `yaml:"readHeaderTimeout" conf:",example=15s"`
+	// WriteTimeout sets the timeout for writing a response.
+	WriteTimeout time.Duration `yaml:"writeTimeout" conf:",example=30s"`
+	// IdleTimeout sets the keepalive timeout.
+	IdleTimeout time.Duration `yaml:"writeTimeout" conf:",example=120s"`
+}
+
+type AdvancedGRPCConf struct {
+	// MaxRecvMsgSizeBytes sets the maximum size of a single request message. Defaults to 4MiB. Affects performance and resource utilisation.
+	MaxRecvMsgSizeBytes uint `yaml:"maxRecvMsgSizeBytes" conf:",example=4194304"`
+	// MaxConnectionAge sets the maximum age of a connection.
+	MaxConnectionAge time.Duration `yaml:"maxConnectionAge" conf:",example=600s"`
+	// ConnectionTimeout sets the timeout for establishing a new connection.
+	ConnectionTimeout time.Duration `yaml:"connectionTimeout" conf:",example=60s"`
+}
+
 func (c *Conf) Key() string {
 	return confKey
 }
@@ -144,6 +180,20 @@ func (c *Conf) SetDefaults() {
 			Username:     defaultAdminUsername,
 			PasswordHash: defaultAdminPasswordHash,
 		}
+	}
+
+	c.Advanced = AdvancedConf{
+		HTTP: AdvancedHTTPConf{
+			ReadTimeout:       defaultHTTPReadTimeout,
+			ReadHeaderTimeout: defaultHTTPReadHeaderTimeout,
+			WriteTimeout:      defaultHTTPWriteTimeout,
+			IdleTimeout:       defaultHTTPIdleTimeout,
+		},
+		GRPC: AdvancedGRPCConf{
+			MaxRecvMsgSizeBytes: defaultGRPCMaxRecvMsgSizeBytes,
+			MaxConnectionAge:    defaultGRPCMaxConnectionAge,
+			ConnectionTimeout:   defaultGRPCConnectionTimeout,
+		},
 	}
 }
 
