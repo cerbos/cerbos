@@ -149,7 +149,7 @@ type AdvancedHTTPConf struct {
 	// WriteTimeout sets the timeout for writing a response.
 	WriteTimeout time.Duration `yaml:"writeTimeout" conf:",example=30s"`
 	// IdleTimeout sets the keepalive timeout.
-	IdleTimeout time.Duration `yaml:"writeTimeout" conf:",example=120s"`
+	IdleTimeout time.Duration `yaml:"idleTimeout" conf:",example=120s"`
 }
 
 type AdvancedGRPCConf struct {

@@ -48,7 +48,7 @@ server:
       maxConnectionAge: 600s # MaxConnectionAge sets the maximum age of a connection.
       maxRecvMsgSizeBytes: 4194304 # MaxRecvMsgSizeBytes sets the maximum size of a single request message. Defaults to 4MiB. Affects performance and resource utilisation.
     http: # HTTP server settings.
-      writeTimeout: 120s # IdleTimeout sets the keepalive timeout.
+      idleTimeout: 120s # IdleTimeout sets the keepalive timeout.
       readHeaderTimeout: 15s # ReadHeaderTimeout sets the timeout for reading request headers.
       readTimeout: 30s # ReadTimeout sets the timeout for reading a request.
       writeTimeout: 30s # WriteTimeout sets the timeout for writing a response.
