@@ -30,6 +30,7 @@ import (
 type DBStorage interface {
 	storage.Subscribable
 	storage.Instrumented
+	storage.Reloadable
 	AddOrUpdate(ctx context.Context, policies ...policy.Wrapper) error
 	GetCompilationUnits(ctx context.Context, ids ...namer.ModuleID) (map[namer.ModuleID]*policy.CompilationUnit, error)
 	GetDependents(ctx context.Context, ids ...namer.ModuleID) (map[namer.ModuleID][]namer.ModuleID, error)
@@ -579,4 +580,9 @@ func (s *dbStorage) RepoStats(ctx context.Context) storage.RepoStats {
 		ScanValContext(ctx, &stats.SchemaCount)
 
 	return stats
+}
+
+func (s *dbStorage) Reload(context.Context) error {
+	s.NotifySubscribers(storage.NewReloadEvent())
+	return nil
 }

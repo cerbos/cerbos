@@ -16,10 +16,10 @@ import (
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-git/go-git/v5/plumbing/object"
-	"github.com/grpc-ecosystem/go-grpc-middleware/logging/zap/ctxzap"
 	"go.opencensus.io/stats"
 	"go.opencensus.io/tag"
 	"go.uber.org/zap"
+	"golang.org/x/sync/singleflight"
 
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
 	"github.com/cerbos/cerbos/internal/config"
@@ -54,6 +54,7 @@ type Store struct {
 	conf *Conf
 	idx  index.Index
 	repo *git.Repository
+	sf   singleflight.Group
 	*storage.SubscriptionManager
 }
 
@@ -162,23 +163,17 @@ func (s *Store) RepoStats(ctx context.Context) storage.RepoStats {
 }
 
 func (s *Store) Reload(ctx context.Context) error {
-	changes, err := s.pullAndCompare(ctx)
+	_, err := s.pullAndCompare(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to pull: %w", err)
 	}
 
-	if changes == nil {
-		ctxzap.Extract(ctx).Info("No new commits: reload not required")
-		return nil
-	}
-
 	evts, err := s.idx.Reload(ctx)
 	if err != nil {
-		return fmt.Errorf("failed to reload the index: %w", err)
+		return fmt.Errorf("failed to reload index: %w", err)
 	}
 
 	s.NotifySubscribers(evts...)
-
 	return nil
 }
 
@@ -244,54 +239,66 @@ func (s *Store) loadAll(ctx context.Context) error {
 }
 
 func (s *Store) pullAndCompare(ctx context.Context) (object.Changes, error) {
-	// open the repo if it's not already open.
-	if s.repo == nil {
-		if err := s.openRepo(); err != nil {
+	changes, err, _ := s.sf.Do("pullAndCompare", func() (interface{}, error) {
+		// open the repo if it's not already open.
+		if s.repo == nil {
+			if err := s.openRepo(); err != nil {
+				return nil, err
+			}
+		}
+
+		// Make sure we are in the correct branch and get the current HEAD
+		headHash, err := s.ensureCorrectBranch()
+		if err != nil {
 			return nil, err
 		}
-	}
 
-	// Make sure we are in the correct branch and get the current HEAD
-	headHash, err := s.ensureCorrectBranch()
+		wt, err := s.repo.Worktree()
+		if err != nil {
+			return nil, fmt.Errorf("failed to get work tree: %w", err)
+		}
+
+		branch := s.conf.getBranch()
+
+		auth, err := s.conf.getAuth()
+		if err != nil {
+			return nil, fmt.Errorf("failed to create git auth credentials: %w", err)
+		}
+
+		// Now pull from remote
+		opts := &git.PullOptions{
+			Auth:          auth,
+			ReferenceName: plumbing.NewBranchReferenceName(branch),
+			SingleBranch:  true,
+		}
+
+		pullCtx, pullCancel := s.conf.getOpCtx(ctx)
+		defer pullCancel()
+
+		s.log.Debugw("Pulling from remote", "branch", branch)
+		if err := wt.PullContext(pullCtx, opts); err != nil {
+			if !errors.Is(err, git.NoErrAlreadyUpToDate) {
+				s.log.Errorw("Failed to pull from remote", "error", err)
+				return nil, fmt.Errorf("failed to pull from remote: %w", err)
+			}
+
+			// branch is already up-to-date: nothing to do.
+			return nil, nil
+		}
+
+		// compare the head with the prev state.
+		return s.compareWithHEAD(ctx, headHash)
+	})
+
 	if err != nil {
 		return nil, err
 	}
 
-	wt, err := s.repo.Worktree()
-	if err != nil {
-		return nil, fmt.Errorf("failed to get work tree: %w", err)
+	if c, ok := changes.(object.Changes); ok {
+		return c, nil
 	}
 
-	branch := s.conf.getBranch()
-
-	auth, err := s.conf.getAuth()
-	if err != nil {
-		return nil, fmt.Errorf("failed to create git auth credentials: %w", err)
-	}
-
-	// Now pull from remote
-	opts := &git.PullOptions{
-		Auth:          auth,
-		ReferenceName: plumbing.NewBranchReferenceName(branch),
-		SingleBranch:  true,
-	}
-
-	pullCtx, pullCancel := s.conf.getOpCtx(ctx)
-	defer pullCancel()
-
-	s.log.Debugw("Pulling from remote", "branch", branch)
-	if err := wt.PullContext(pullCtx, opts); err != nil {
-		if !errors.Is(err, git.NoErrAlreadyUpToDate) {
-			s.log.Errorw("Failed to pull from remote", "error", err)
-			return nil, fmt.Errorf("failed to pull from remote: %w", err)
-		}
-
-		// branch is already up-to-date: nothing to do.
-		return nil, nil
-	}
-
-	// compare the head with the prev state.
-	return s.compareWithHEAD(ctx, headHash)
+	return nil, nil
 }
 
 func (s *Store) openRepo() error {
