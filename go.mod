@@ -16,7 +16,7 @@ require (
 	github.com/denisenkom/go-mssqldb v0.12.2
 	github.com/dgraph-io/badger/v3 v3.2103.2
 	github.com/doug-martin/goqu/v9 v9.18.0
-	github.com/envoyproxy/protoc-gen-validate v0.6.7
+	github.com/envoyproxy/protoc-gen-validate v0.6.8
 	github.com/fatih/color v1.13.0
 	github.com/fatih/structtag v1.2.0
 	github.com/fergusstrange/embedded-postgres v1.17.0
@@ -80,7 +80,7 @@ require (
 	go.uber.org/zap v1.23.0
 	gocloud.dev v0.26.0
 	golang.org/x/crypto v0.0.0-20220722155217-630584e8d5aa
-	golang.org/x/net v0.0.0-20220722155237-a158d28d115b
+	golang.org/x/net v0.0.0-20220907135653-1e95f45603a7
 	golang.org/x/sync v0.0.0-20220722155255-886fb9371eb4
 	golang.org/x/tools v0.1.12
 	google.golang.org/genproto v0.0.0-20220822174746-9e6da59bd2fc
@@ -245,10 +245,10 @@ require (
 	golang.org/x/lint v0.0.0-20210508222113-6edffad5e616 // indirect
 	golang.org/x/mod v0.6.0-dev.0.20220419223038-86c51ed26bb4 // indirect
 	golang.org/x/oauth2 v0.0.0-20220822191816-0ebed06d0094 // indirect
-	golang.org/x/sys v0.0.0-20220811171246-fbc7d0a398ab // indirect
+	golang.org/x/sys v0.0.0-20220908150016-7ac13a9a928d // indirect
 	golang.org/x/term v0.0.0-20220526004731-065cf7ba2467 // indirect
 	golang.org/x/text v0.3.7 // indirect
-	golang.org/x/xerrors v0.0.0-20220609144429-65e65417b02f // indirect
+	golang.org/x/xerrors v0.0.0-20220907171357-04be3eba64a2 // indirect
 	google.golang.org/api v0.88.0 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
 	gopkg.in/ini.v1 v1.66.6 // indirect
