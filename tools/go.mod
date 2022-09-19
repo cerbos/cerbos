@@ -9,7 +9,7 @@ require (
 	github.com/envoyproxy/protoc-gen-validate v0.6.7
 	github.com/fullstorydev/grpcurl v1.8.7
 	github.com/google/go-licenses v0.0.0-20210715153004-8751804a5b80
-	github.com/goreleaser/goreleaser v1.11.2
+	github.com/goreleaser/goreleaser v1.11.4
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.11.3
 	github.com/planetscale/vtprotobuf v0.3.0
 	github.com/vektra/mockery/v2 v2.14.0
@@ -77,15 +77,15 @@ require (
 	github.com/blakesmith/ar v0.0.0-20190502131153-809d4375e1fb // indirect
 	github.com/bufbuild/connect-go v0.2.0 // indirect
 	github.com/caarlos0/ctrlc v1.2.0 // indirect
-	github.com/caarlos0/env/v6 v6.10.0 // indirect
+	github.com/caarlos0/env/v6 v6.10.1 // indirect
 	github.com/caarlos0/go-reddit/v3 v3.0.1 // indirect
 	github.com/caarlos0/go-shellwords v1.0.12 // indirect
-	github.com/caarlos0/log v0.1.2 // indirect
+	github.com/caarlos0/log v0.1.6 // indirect
 	github.com/cavaliergopher/cpio v1.0.1 // indirect
 	github.com/cenkalti/backoff/v4 v4.1.2 // indirect
 	github.com/census-instrumentation/opencensus-proto v0.3.0 // indirect
 	github.com/cespare/xxhash/v2 v2.1.2 // indirect
-	github.com/charmbracelet/lipgloss v0.5.1-0.20220615005615-2e17a8a06096 // indirect
+	github.com/charmbracelet/lipgloss v0.6.1-0.20220911181249-6304a734e792 // indirect
 	github.com/cncf/udpa/go v0.0.0-20210930031921-04548b0d99d4 // indirect
 	github.com/cncf/xds/go v0.0.0-20211216145620-d92e9ce0af51 // indirect
 	github.com/containerd/containerd v1.6.6 // indirect
@@ -96,7 +96,7 @@ require (
 	github.com/dghubble/oauth1 v0.7.1 // indirect
 	github.com/dghubble/sling v1.4.0 // indirect
 	github.com/dimchansky/utfbom v1.1.1 // indirect
-	github.com/disgoorg/disgo v0.13.17 // indirect
+	github.com/disgoorg/disgo v0.13.20 // indirect
 	github.com/disgoorg/log v1.2.0 // indirect
 	github.com/disgoorg/snowflake/v2 v2.0.0 // indirect
 	github.com/dnephin/pflag v1.0.7 // indirect
@@ -167,7 +167,7 @@ require (
 	github.com/markbates/pkger v0.17.0 // indirect
 	github.com/mattn/go-colorable v0.1.12 // indirect
 	github.com/mattn/go-ieproxy v0.0.1 // indirect
-	github.com/mattn/go-isatty v0.0.14 // indirect
+	github.com/mattn/go-isatty v0.0.16 // indirect
 	github.com/mattn/go-runewidth v0.0.13 // indirect
 	github.com/matttproud/golang_protobuf_extensions v1.0.2-0.20181231171920-c182affec369 // indirect
 	github.com/mitchellh/copystructure v1.2.0 // indirect
@@ -182,7 +182,7 @@ require (
 	github.com/muesli/mango-pflag v0.1.0 // indirect
 	github.com/muesli/reflow v0.3.0 // indirect
 	github.com/muesli/roff v0.1.0 // indirect
-	github.com/muesli/termenv v0.12.1-0.20220615005108-4e9068de9898 // indirect
+	github.com/muesli/termenv v0.12.1-0.20220901123159-d729275e0977 // indirect
 	github.com/opencontainers/go-digest v1.0.0 // indirect
 	github.com/opencontainers/image-spec v1.0.3-0.20211202183452-c5a74bcca799 // indirect
 	github.com/otiai10/copy v1.6.0 // indirect
@@ -193,7 +193,7 @@ require (
 	github.com/pkg/profile v1.6.0 // indirect
 	github.com/prometheus/client_model v0.2.0 // indirect
 	github.com/prometheus/common v0.32.1 // indirect
-	github.com/rivo/uniseg v0.2.0 // indirect
+	github.com/rivo/uniseg v0.4.2 // indirect
 	github.com/rs/cors v1.8.2 // indirect
 	github.com/rs/zerolog v1.27.0 // indirect
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
@@ -201,7 +201,7 @@ require (
 	github.com/sergi/go-diff v1.2.0 // indirect
 	github.com/shopspring/decimal v1.2.0 // indirect
 	github.com/sirupsen/logrus v1.9.0 // indirect
-	github.com/slack-go/slack v0.11.2 // indirect
+	github.com/slack-go/slack v0.11.3 // indirect
 	github.com/spf13/afero v1.8.2 // indirect
 	github.com/spf13/cast v1.5.0 // indirect
 	github.com/spf13/cobra v1.5.0 // indirect
@@ -231,7 +231,7 @@ require (
 	golang.org/x/net v0.0.0-20220805013720-a33c5aa5df48 // indirect
 	golang.org/x/oauth2 v0.0.0-20220822191816-0ebed06d0094 // indirect
 	golang.org/x/sync v0.0.0-20220722155255-886fb9371eb4 // indirect
-	golang.org/x/sys v0.0.0-20220728004956-3c1f35247d10 // indirect
+	golang.org/x/sys v0.0.0-20220909162455-aba9fc2a8ff2 // indirect
 	golang.org/x/term v0.0.0-20220722155259-a9ba230a4035 // indirect
 	golang.org/x/text v0.3.7 // indirect
 	golang.org/x/time v0.0.0-20220722155302-e5dcc9cfc0b9 // indirect
