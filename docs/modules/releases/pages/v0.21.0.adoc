@@ -1,0 +1,89 @@
+include::ROOT:partial$attributes.adoc[]
+
+[#v0.21.0]
+= Cerbos v0.21.0
+
+== Highlights
+
+Advanced server tuning knobs are now available to help users who have special deployment requirements. Most users won't need to adjust these as the built-in defaults are suitable for most common deployment scenarios.
+
+Users now have more control over which request metadata keys are logged to the request logs produced by the Audit logging system. Keys can be included or excluded based on your requirements. The default behaviour is to not log anything.
+
+This release includes fixes to two edge cases found in the query planner:
+
+- Handle the case when all expressions in an `any` block evaluates to `false`
+- Gracefully handle self-referential lambda expressions with unknown values
+
+When the Admin API is used to reload a store, it now automatically purges the compile cache.
+
+The Go SDK client was previously restricted to local connections when TLS was disabled. Now it can connect to any host even when TLS is disabled.
+
+
+== Changelog
+
+
+=== Bug Fixes
+
+* Allow plaintext connections to any host  (link:https://github.com/cerbos/cerbos/pull/1210[#1210])
+* Change the query planner handling of the condition "any" (link:https://github.com/cerbos/cerbos/pull/1216[#1216])
+* Purge compile cache on store reload (link:https://github.com/cerbos/cerbos/pull/1217[#1217])
+* Query planner partially evaluates a lambda body (link:https://github.com/cerbos/cerbos/pull/1198[#1198])
+
+=== Enhancements
+
+* Advanced server configuration (link:https://github.com/cerbos/cerbos/pull/1218[#1218])
+* Allow specification of gRPC request metadata keys to be logged (link:https://github.com/cerbos/cerbos/pull/1202[#1202])
+
+=== Documentation
+
+* Add Java and .NET code examples to quickstart (link:https://github.com/cerbos/cerbos/pull/1179[#1179])
+* Add clarification about who provides parentRoles (link:https://github.com/cerbos/cerbos/pull/1207[#1207])
+
+=== Chores
+
+* Bump bufbuild/buf-lint-action from 1.0.1 to 1.0.2 (link:https://github.com/cerbos/cerbos/pull/1193[#1193])
+* Bump bufbuild/buf-setup-action from 1.7.0 to 1.8.0 (link:https://github.com/cerbos/cerbos/pull/1220[#1220])
+* Bump contrib.go.opencensus.io/exporter/prometheus from 0.4.1 to 0.4.2 (link:https://github.com/cerbos/cerbos/pull/1184[#1184])
+* Bump github.com/bojand/ghz from 0.109.0 to 0.110.0 in /tools (link:https://github.com/cerbos/cerbos/pull/1206[#1206])
+* Bump github.com/bufbuild/buf from 1.7.0 to 1.8.0 in /tools (link:https://github.com/cerbos/cerbos/pull/1228[#1228])
+* Bump github.com/envoyproxy/protoc-gen-validate from 0.6.7 to 0.6.8 (link:https://github.com/cerbos/cerbos/pull/1230[#1230])
+* Bump github.com/envoyproxy/protoc-gen-validate from 0.6.7 to 0.6.8 in /hack/tools/protoc-gen-jsonschema (link:https://github.com/cerbos/cerbos/pull/1229[#1229])
+* Bump github.com/envoyproxy/protoc-gen-validate from 0.6.7 to 0.6.8 in /tools (link:https://github.com/cerbos/cerbos/pull/1227[#1227])
+* Bump github.com/gdamore/tcell/v2 from 2.5.2 to 2.5.3 (link:https://github.com/cerbos/cerbos/pull/1174[#1174])
+* Bump github.com/google/cel-go from 0.12.4 to 0.12.5 (link:https://github.com/cerbos/cerbos/pull/1176[#1176])
+* Bump github.com/google/go-cmp from 0.5.8 to 0.5.9 (link:https://github.com/cerbos/cerbos/pull/1205[#1205])
+* Bump github.com/goreleaser/goreleaser from 1.10.3 to 1.11.0 in /tools (link:https://github.com/cerbos/cerbos/pull/1189[#1189])
+* Bump github.com/goreleaser/goreleaser from 1.11.0 to 1.11.2 in /tools (link:https://github.com/cerbos/cerbos/pull/1197[#1197])
+* Bump github.com/goreleaser/goreleaser from 1.11.2 to 1.11.4 in /tools (link:https://github.com/cerbos/cerbos/pull/1226[#1226])
+* Bump github.com/grpc-ecosystem/grpc-gateway/v2 from 2.11.2 to 2.11.3 (link:https://github.com/cerbos/cerbos/pull/1186[#1186])
+* Bump github.com/grpc-ecosystem/grpc-gateway/v2 from 2.11.2 to 2.11.3 in /tools (link:https://github.com/cerbos/cerbos/pull/1188[#1188])
+* Bump github.com/jackc/pgx/v4 from 4.17.0 to 4.17.1 (link:https://github.com/cerbos/cerbos/pull/1191[#1191])
+* Bump github.com/jackc/pgx/v4 from 4.17.1 to 4.17.2 (link:https://github.com/cerbos/cerbos/pull/1194[#1194])
+* Bump github.com/lestrrat-go/jwx/v2 from 2.0.5 to 2.0.6 (link:https://github.com/cerbos/cerbos/pull/1183[#1183])
+* Bump github.com/lyft/protoc-gen-star from 0.6.0 to 0.6.1 in /hack/tools/protoc-gen-jsonschema (link:https://github.com/cerbos/cerbos/pull/1178[#1178])
+* Bump github.com/minio/minio-go/v7 from 7.0.34 to 7.0.35 (link:https://github.com/cerbos/cerbos/pull/1196[#1196])
+* Bump github.com/minio/minio-go/v7 from 7.0.35 to 7.0.36 (link:https://github.com/cerbos/cerbos/pull/1203[#1203])
+* Bump github.com/minio/minio-go/v7 from 7.0.36 to 7.0.37 (link:https://github.com/cerbos/cerbos/pull/1232[#1232])
+* Bump github.com/pterm/pterm from 0.12.45 to 0.12.46 (link:https://github.com/cerbos/cerbos/pull/1195[#1195])
+* Bump github.com/rudderlabs/analytics-go from 3.3.2+incompatible to 3.3.3+incompatible (link:https://github.com/cerbos/cerbos/pull/1175[#1175])
+* Bump github.com/santhosh-tekuri/jsonschema/v5 from 5.0.0 to 5.0.1 (link:https://github.com/cerbos/cerbos/pull/1224[#1224])
+* Bump github.com/tidwall/gjson from 1.14.2 to 1.14.3 (link:https://github.com/cerbos/cerbos/pull/1173[#1173])
+* Bump go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp from 0.34.0 to 0.35.0 (link:https://github.com/cerbos/cerbos/pull/1221[#1221])
+* Bump go.opentelemetry.io/contrib/propagators/autoprop from 0.34.0 to 0.35.0 (link:https://github.com/cerbos/cerbos/pull/1234[#1234])
+* Bump go.opentelemetry.io/contrib/propagators/b3 from 1.9.0 to 1.10.0 (link:https://github.com/cerbos/cerbos/pull/1222[#1222])
+* Bump go.opentelemetry.io/otel/exporters/jaeger from 1.9.0 to 1.10.0 (link:https://github.com/cerbos/cerbos/pull/1231[#1231])
+* Bump go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc from 1.9.0 to 1.10.0 (link:https://github.com/cerbos/cerbos/pull/1223[#1223])
+* Bump go.uber.org/zap from 1.22.0 to 1.23.0 (link:https://github.com/cerbos/cerbos/pull/1187[#1187])
+* Bump google.golang.org/grpc from 1.48.0 to 1.49.0 (link:https://github.com/cerbos/cerbos/pull/1190[#1190])
+* Bump gotest.tools/gotestsum from 1.8.1 to 1.8.2 in /tools (link:https://github.com/cerbos/cerbos/pull/1177[#1177])
+* Bump helm.sh/helm/v3 from 3.9.3 to 3.9.4 (link:https://github.com/cerbos/cerbos/pull/1185[#1185])
+* Bump modernc.org/sqlite from 1.18.1 to 1.18.2 (link:https://github.com/cerbos/cerbos/pull/1204[#1204])
+* Bump modernc.org/sqlite from 1.18.2 to 1.19.1 (link:https://github.com/cerbos/cerbos/pull/1225[#1225])
+* Bump version to 0.21.0
+* Fix git storage driver configuration example (link:https://github.com/cerbos/cerbos/pull/1211[#1211])
+* Increase client timeout in E2E tests (link:https://github.com/cerbos/cerbos/pull/1213[#1213])
+* Private API buf mod update (link:https://github.com/cerbos/cerbos/pull/1200[#1200])
+* Refactor private/verify package (link:https://github.com/cerbos/cerbos/pull/1182[#1182])
+* Update buf modules (link:https://github.com/cerbos/cerbos/pull/1199[#1199])
+* Update dependencies (link:https://github.com/cerbos/cerbos/pull/1181[#1181])
+
