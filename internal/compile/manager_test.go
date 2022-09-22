@@ -236,8 +236,8 @@ func anyCtx(ctx context.Context) bool {
 }
 
 type MockStore struct {
-	mock.Mock
 	subscriber storage.Subscriber
+	mock.Mock
 }
 
 func (ms *MockStore) Driver() string {

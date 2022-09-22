@@ -12,6 +12,7 @@ import (
 	"go.opencensus.io/stats"
 	"go.opencensus.io/tag"
 	"go.uber.org/zap"
+	"golang.org/x/sync/singleflight"
 
 	runtimev1 "github.com/cerbos/cerbos/api/genpb/cerbos/runtime/v1"
 	"github.com/cerbos/cerbos/internal/config"
@@ -35,6 +36,7 @@ type Manager struct {
 	schemaMgr   schema.Manager
 	updateQueue chan storage.Event
 	cache       gcache.Cache
+	sf          singleflight.Group
 }
 
 func NewManager(ctx context.Context, store storage.SourceStore, schemaMgr schema.Manager) (*Manager, error) {
@@ -185,46 +187,61 @@ func (c *Manager) evict(modID namer.ModuleID) {
 }
 
 func (c *Manager) GetPolicySet(ctx context.Context, modID namer.ModuleID) (*runtimev1.RunnablePolicySet, error) {
-	rps, err := c.cache.GetIFPresent(modID)
-	if err == nil {
-		cacheHit()
+	key := modID.String()
+	defer c.sf.Forget(key)
 
-		// If the value is nil, it indicates a negative cache entry (see below)
-		// Essentially, we tried to find this evaluator before and it wasn't found.
-		// We don't want to hit the store over and over again because we know it doesn't exist.
-		if rps == nil {
+	rpsVal, err, _ := c.sf.Do(key, func() (any, error) {
+		rps, err := c.cache.GetIFPresent(modID)
+		if err == nil {
+			cacheHit()
+
+			// If the value is nil, it indicates a negative cache entry (see below)
+			// Essentially, we tried to find this evaluator before and it wasn't found.
+			// We don't want to hit the store over and over again because we know it doesn't exist.
+			if rps == nil {
+				return nil, nil
+			}
+
+			return rps.(*runtimev1.RunnablePolicySet), nil //nolint:forcetypeassert
+		}
+
+		cacheMiss()
+
+		compileUnits, err := c.store.GetCompilationUnits(ctx, modID)
+		if err != nil {
+			return nil, fmt.Errorf("failed to get compilation units: %w", err)
+		}
+
+		if len(compileUnits) == 0 {
+			// store a nil value in the cache as a negative entry to prevent hitting the database again and again
+			_ = c.cache.SetWithExpire(modID, nil, negativeCacheEntryTTL)
 			return nil, nil
 		}
 
-		return rps.(*runtimev1.RunnablePolicySet), nil //nolint:forcetypeassert
-	}
+		var retVal *runtimev1.RunnablePolicySet
+		for mID, cu := range compileUnits {
+			rps, err := c.compile(cu)
+			if err != nil {
+				return nil, PolicyCompilationErr{underlying: err}
+			}
 
-	cacheMiss()
+			if mID == modID {
+				retVal = rps
+			}
+		}
 
-	compileUnits, err := c.store.GetCompilationUnits(ctx, modID)
+		return retVal, nil
+	})
 	if err != nil {
-		return nil, fmt.Errorf("failed to get compilation units: %w", err)
+		return nil, err
 	}
 
-	if len(compileUnits) == 0 {
-		// store a nil value in the cache as a negative entry to prevent hitting the database again and again
-		_ = c.cache.SetWithExpire(modID, nil, negativeCacheEntryTTL)
+	if rpsVal == nil {
 		return nil, nil
 	}
 
-	var retVal *runtimev1.RunnablePolicySet
-	for mID, cu := range compileUnits {
-		rps, err := c.compile(cu)
-		if err != nil {
-			return nil, PolicyCompilationErr{underlying: err}
-		}
-
-		if mID == modID {
-			retVal = rps
-		}
-	}
-
-	return retVal, nil
+	//nolint:forcetypeassert
+	return rpsVal.(*runtimev1.RunnablePolicySet), nil
 }
 
 func mkCache(size int) gcache.Cache {
