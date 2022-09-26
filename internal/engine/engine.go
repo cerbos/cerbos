@@ -205,6 +205,9 @@ func (engine *Engine) Check(ctx context.Context, inputs []*enginev1.CheckInput, 
 
 func (engine *Engine) logCheckDecision(ctx context.Context, inputs []*enginev1.CheckInput, outputs []*enginev1.CheckOutput, checkErr error) ([]*enginev1.CheckOutput, error) {
 	if err := engine.auditLog.WriteDecisionLogEntry(ctx, func() (*auditv1.DecisionLogEntry, error) {
+		ctx, span := tracing.StartSpan(ctx, "audit.WriteDecisionLog")
+		defer span.End()
+
 		callID, ok := audit.CallIDFromContext(ctx)
 		if !ok {
 			var err error
@@ -241,6 +244,9 @@ func (engine *Engine) logCheckDecision(ctx context.Context, inputs []*enginev1.C
 }
 
 func (engine *Engine) checkSerial(ctx context.Context, inputs []*enginev1.CheckInput, checkOpts *checkOptions) ([]*enginev1.CheckOutput, error) {
+	ctx, span := tracing.StartSpan(ctx, "engine.CheckSerial")
+	defer span.End()
+
 	outputs := make([]*enginev1.CheckOutput, len(inputs))
 
 	for i, input := range inputs {
@@ -256,6 +262,9 @@ func (engine *Engine) checkSerial(ctx context.Context, inputs []*enginev1.CheckI
 }
 
 func (engine *Engine) checkParallel(ctx context.Context, inputs []*enginev1.CheckInput, checkOpts *checkOptions) ([]*enginev1.CheckOutput, error) {
+	ctx, span := tracing.StartSpan(ctx, "engine.CheckParallel")
+	defer span.End()
+
 	outputs := make([]*enginev1.CheckOutput, len(inputs))
 	collector := make(chan workOut, len(inputs))
 
@@ -478,9 +487,14 @@ func (engine *Engine) buildEvaluationCtx(ctx context.Context, eparams evalParams
 }
 
 func (engine *Engine) getPrincipalPolicyEvaluator(ctx context.Context, eparams evalParams, principal, policyVer, scope string) (Evaluator, error) {
+	ctx, span := tracing.StartSpan(ctx, "engine.GetPrincipalPolicy")
+	defer span.End()
+	span.SetAttributes(tracing.PolicyName(principal), tracing.PolicyVersion(policyVer), tracing.PolicyScope(scope))
+
 	principalModID := namer.PrincipalPolicyModuleID(principal, policyVer, scope)
 	rps, err := engine.policyLoader.GetPolicySet(ctx, principalModID)
 	if err != nil {
+		tracing.MarkFailed(span, http.StatusInternalServerError, err)
 		return nil, err
 	}
 
@@ -492,9 +506,14 @@ func (engine *Engine) getPrincipalPolicyEvaluator(ctx context.Context, eparams e
 }
 
 func (engine *Engine) getResourcePolicyEvaluator(ctx context.Context, eparams evalParams, resource, policyVer, scope string) (Evaluator, error) {
+	ctx, span := tracing.StartSpan(ctx, "engine.GetResourcePolicy")
+	defer span.End()
+	span.SetAttributes(tracing.PolicyName(resource), tracing.PolicyVersion(policyVer), tracing.PolicyScope(scope))
+
 	resourceModID := namer.ResourcePolicyModuleID(resource, policyVer, scope)
 	rps, err := engine.policyLoader.GetPolicySet(ctx, resourceModID)
 	if err != nil {
+		tracing.MarkFailed(span, http.StatusInternalServerError, err)
 		return nil, err
 	}
 

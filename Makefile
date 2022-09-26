@@ -105,7 +105,7 @@ compile:
 	@ go build ./... && go test -tags="tests e2e" -run=ignore  ./... > /dev/null
 
 .PHONY: pre-commit
-pre-commit: lint-helm build test-race
+pre-commit: lint-helm generate lint test-all
 
 .PHONY: build
 build: generate lint test package

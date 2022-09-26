@@ -16,6 +16,7 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	auditv1 "github.com/cerbos/cerbos/api/genpb/cerbos/audit/v1"
+	"github.com/cerbos/cerbos/internal/observability/tracing"
 )
 
 type (
@@ -50,6 +51,9 @@ func NewUnaryInterceptor(log Log, exclude ExcludeMethod) (grpc.UnaryServerInterc
 		resp, err := handler(NewContextWithCallID(ctx, callID), req)
 
 		if logErr := log.WriteAccessLogEntry(ctx, func() (*auditv1.AccessLogEntry, error) {
+			ctx, span := tracing.StartSpan(ctx, "audit.WriteAccessLog")
+			defer span.End()
+
 			entry := &auditv1.AccessLogEntry{
 				CallId:     string(callID),
 				Timestamp:  timestamppb.New(ts),
