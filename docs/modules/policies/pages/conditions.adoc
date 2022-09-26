@@ -32,7 +32,7 @@ Every condition expression must evaluate to a boolean true/false value. You can 
 ----
 condition:
   match:
-    expr: matches(P.id, "^dev_.*")
+    expr: P.id.matches("^dev_.*")
 ----
 
 .``all`` operator: all expressions must evaluate to true (logical AND)
@@ -84,7 +84,7 @@ condition:
         - any:
             of: 
               - expr: R.attr.dev == true
-              - expr: matches(R.attr.id, "^[98][0-9]+")
+              - expr: R.attr.id.matches("^[98][0-9]+")
         - none:
             of:
               - expr: R.attr.qa == true
@@ -99,7 +99,7 @@ condition:
   match:
     expr: |-
       (R.attr.status == "DRAFT" && 
-        (R.attr.dev == true || matches(R.attr.id, "^[98][0-9]+")) &&
+        (R.attr.dev == true || R.attr.id.matches("^[98][0-9]+")) &&
         !(R.attr.qa == true || R.attr.canary == true))
 ----
 
