@@ -85,8 +85,12 @@ envFrom: []
 # Cerbos service settings.
 service:
   type: ClusterIP
-  httpPort: 3592
-  grpcPort: 3593
+  http:
+    port: 3592
+    nodePort: 103592
+  grpc:
+    port: 3593
+    nodePort: 103593
 
 # Cerbos deployment settings.
 cerbos:
