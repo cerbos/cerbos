@@ -7,19 +7,19 @@ metadata:
 spec:
   type: {{ .Values.service.type }}
   ports:
-    - port: {{ .Values.service.http.port }}
+    - port: {{ .Values.service.httpPort }}
       targetPort: http
       protocol: TCP
       name: http
       {{ if eq .Values.service.type "NodePort" -}}
-      nodePort: {{ .Values.service.http.nodePort }}
+      nodePort: {{ .Values.service.httpNodePort }}
       {{- end }}
-    - port: {{ .Values.service.grpc.port }}
+    - port: {{ .Values.service.grpcPort }}
       targetPort: grpc
       protocol: TCP
       name: grpc
       {{ if eq .Values.service.type "NodePort" -}}
-      nodePort: {{ .Values.service.grpc.nodePort }}
+      nodePort: {{ .Values.service.grpcNodePort }}
       {{- end }}
   selector:
     {{- include "cerbos.selectorLabels" . | nindent 4 }}
