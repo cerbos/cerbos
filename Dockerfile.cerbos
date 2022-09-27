@@ -1,4 +1,4 @@
-FROM alpine:3.15 AS base
+FROM alpine:3.16 AS base
 RUN apk add -U --no-cache ca-certificates && update-ca-certificates
 
 FROM scratch
