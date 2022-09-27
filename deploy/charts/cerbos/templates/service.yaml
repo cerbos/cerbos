@@ -11,9 +11,15 @@ spec:
       targetPort: http
       protocol: TCP
       name: http
+      {{ if eq .Values.service.type "NodePort" -}}
+      nodePort: {{ .Values.service.httpNodePort }}
+      {{- end }}
     - port: {{ .Values.service.grpcPort }}
       targetPort: grpc
       protocol: TCP
       name: grpc
+      {{ if eq .Values.service.type "NodePort" -}}
+      nodePort: {{ .Values.service.grpcNodePort }}
+      {{- end }}
   selector:
     {{- include "cerbos.selectorLabels" . | nindent 4 }}

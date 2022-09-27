@@ -87,6 +87,8 @@ service:
   type: ClusterIP
   httpPort: 3592
   grpcPort: 3593
+  httpNodePort: 13592
+  grpcNodePort: 13593
 
 # Cerbos deployment settings.
 cerbos:
