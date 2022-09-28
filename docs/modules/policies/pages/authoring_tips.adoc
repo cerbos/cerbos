@@ -18,7 +18,7 @@ include::ROOT:partial$attributes.adoc[]
 ** `metadata.annotations`: Optional. Key-value pairs of strings holding free-form data for auditing purposes.
 * Resource names, actions, and principal names can be hierarchical. Use `:` as the delimiter. For example: `app:component:resource`.
 * Wildcard matches are allowed on certain fields. Wildcards respect the hierarchy delimiter `:`.
-* xref:scoped_policies.adoc[Scoped policies] are handy for use cases like multi-tenancy where you may want to override particular rules for some tenants.   
+* xref:scoped_policies.adoc[Scoped policies] (optional) are handy for use cases like multi-tenancy where you may want to override particular rules for some tenants.
 * See xref:conditions.adoc[Conditions] to learn how to write conditions in policy rules.
 * See xref:schemas.adoc[Schemas] to learn how you can define schemas for validating requests.
 
