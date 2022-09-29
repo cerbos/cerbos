@@ -624,7 +624,7 @@ func (m *ResourceSet) validate(all bool) error {
 	if !_ResourceSet_Scope_Pattern.MatchString(m.GetScope()) {
 		err := ResourceSetValidationError{
 			field:  "Scope",
-			reason: "value does not match regex pattern \"^([[:alpha:]][[:word:]\\\\-]+(\\\\.[[:alpha:]][[:word:]\\\\-]*)*)*$\"",
+			reason: "value does not match regex pattern \"^([[:alnum:]][[:word:]\\\\-]*(\\\\.[[:word:]\\\\-]*)*)*$\"",
 		}
 		if !all {
 			return err
@@ -713,7 +713,7 @@ var _ResourceSet_Kind_Pattern = regexp.MustCompile("^[[:alpha:]][[:word:]\\@\\.\
 
 var _ResourceSet_PolicyVersion_Pattern = regexp.MustCompile("^[[:word:]]*$")
 
-var _ResourceSet_Scope_Pattern = regexp.MustCompile("^([[:alpha:]][[:word:]\\-]+(\\.[[:alpha:]][[:word:]\\-]*)*)*$")
+var _ResourceSet_Scope_Pattern = regexp.MustCompile("^([[:alnum:]][[:word:]\\-]*(\\.[[:word:]\\-]*)*)*$")
 
 // Validate checks the field values on AttributesMap with the rules defined in
 // the proto definition for this message. If any rules are violated, the first

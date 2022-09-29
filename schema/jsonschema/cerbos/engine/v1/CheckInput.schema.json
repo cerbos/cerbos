@@ -47,7 +47,7 @@
         },
         "scope": {
           "type": "string",
-          "pattern": "^([A-Za-z][\\-0-9A-Z_a-z]+(\\.[A-Za-z][\\-0-9A-Z_a-z]*)*)*$"
+          "pattern": "^([0-9A-Za-z][\\-0-9A-Z_a-z]*(\\.[\\-0-9A-Z_a-z]*)*)*$"
         }
       }
     },
@@ -80,7 +80,7 @@
         },
         "scope": {
           "type": "string",
-          "pattern": "^([A-Za-z][\\-0-9A-Z_a-z]+(\\.[A-Za-z][\\-0-9A-Z_a-z]*)*)*$"
+          "pattern": "^([0-9A-Za-z][\\-0-9A-Z_a-z]*(\\.[\\-0-9A-Z_a-z]*)*)*$"
         }
       }
     },

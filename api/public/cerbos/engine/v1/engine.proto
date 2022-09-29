@@ -50,11 +50,11 @@ message PlanResourcesInput {
     ];
 
     string scope = 4 [
-      (validate.rules).string.pattern = "^([[:alpha:]][[:word:]\\-]+(\\.[[:alpha:]][[:word:]\\-]*)*)*$",
+      (validate.rules).string.pattern = "^([[:alnum:]][[:word:]\\-]*(\\.[[:word:]\\-]*)*)*$",
       (google.api.field_behavior) = OPTIONAL,
       (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
         description: "A dot-separated scope that describes the hierarchy this resource belongs to. This is used for determining policy inheritance."
-        pattern: "^([[:alpha:]][[:word:]\\-]+(\\.[[:alpha:]][[:word:]\\-]*)*)*$"
+        pattern: "^([[:alnum:]][[:word:]\\-]*(\\.[[:word:]\\-]*)*)*$"
       }
     ];
   }
@@ -217,11 +217,11 @@ message Resource {
     }
   ];
   string scope = 5 [
-    (validate.rules).string.pattern = "^([[:alpha:]][[:word:]\\-]+(\\.[[:alpha:]][[:word:]\\-]*)*)*$",
+    (validate.rules).string.pattern = "^([[:alnum:]][[:word:]\\-]*(\\.[[:word:]\\-]*)*)*$",
     (google.api.field_behavior) = OPTIONAL,
     (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
       description: "A dot-separated scope that describes the hierarchy this resource belongs to. This is used for determining policy inheritance."
-      pattern: "^([[:alpha:]][[:word:]\\-]+(\\.[[:alpha:]][[:word:]\\-]*)*)*$"
+      pattern: "^([[:alnum:]][[:word:]\\-]*(\\.[[:word:]\\-]*)*)*$"
       example: "\"acme.corp\""
     }
   ];
@@ -279,11 +279,11 @@ message Principal {
     }
   ];
   string scope = 5 [
-    (validate.rules).string.pattern = "^([[:alpha:]][[:word:]\\-]+(\\.[[:alpha:]][[:word:]\\-]*)*)*$",
+    (validate.rules).string.pattern = "^([[:alnum:]][[:word:]\\-]*(\\.[[:word:]\\-]*)*)*$",
     (google.api.field_behavior) = OPTIONAL,
     (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
       description: "A dot-separated scope that describes the hierarchy this principal belongs to. This is used for determining policy inheritance."
-      pattern: "^([[:alpha:]][[:word:]\\-]+(\\.[[:alpha:]][[:word:]\\-]*)*)*$"
+      pattern: "^([[:alnum:]][[:word:]\\-]*(\\.[[:word:]\\-]*)*)*$"
       example: "\"acme.corp\""
     }
   ];

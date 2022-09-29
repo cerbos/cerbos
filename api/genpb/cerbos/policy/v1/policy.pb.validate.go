@@ -547,7 +547,7 @@ func (m *ResourcePolicy) validate(all bool) error {
 	if !_ResourcePolicy_Scope_Pattern.MatchString(m.GetScope()) {
 		err := ResourcePolicyValidationError{
 			field:  "Scope",
-			reason: "value does not match regex pattern \"^([[:alpha:]][[:word:]\\\\-]+(\\\\.[[:alpha:]][[:word:]\\\\-]*)*)*$\"",
+			reason: "value does not match regex pattern \"^([[:alnum:]][[:word:]\\\\-]*(\\\\.[[:word:]\\\\-]*)*)*$\"",
 		}
 		if !all {
 			return err
@@ -668,7 +668,7 @@ var _ResourcePolicy_Version_Pattern = regexp.MustCompile("^[[:word:]]+$")
 
 var _ResourcePolicy_ImportDerivedRoles_Pattern = regexp.MustCompile("^[[:word:]\\-\\.]+$")
 
-var _ResourcePolicy_Scope_Pattern = regexp.MustCompile("^([[:alpha:]][[:word:]\\-]+(\\.[[:alpha:]][[:word:]\\-]*)*)*$")
+var _ResourcePolicy_Scope_Pattern = regexp.MustCompile("^([[:alnum:]][[:word:]\\-]*(\\.[[:word:]\\-]*)*)*$")
 
 // Validate checks the field values on ResourceRule with the rules defined in
 // the proto definition for this message. If any rules are violated, the first
@@ -1027,7 +1027,7 @@ func (m *PrincipalPolicy) validate(all bool) error {
 	if !_PrincipalPolicy_Scope_Pattern.MatchString(m.GetScope()) {
 		err := PrincipalPolicyValidationError{
 			field:  "Scope",
-			reason: "value does not match regex pattern \"^([[:alpha:]][[:word:]\\\\-]+(\\\\.[[:alpha:]][[:word:]\\\\-]*)*)*$\"",
+			reason: "value does not match regex pattern \"^([[:alnum:]][[:word:]\\\\-]*(\\\\.[[:word:]\\\\-]*)*)*$\"",
 		}
 		if !all {
 			return err
@@ -1117,7 +1117,7 @@ var _PrincipalPolicy_Principal_Pattern = regexp.MustCompile("^[[:alpha:]][[:word
 
 var _PrincipalPolicy_Version_Pattern = regexp.MustCompile("^[[:word:]]+$")
 
-var _PrincipalPolicy_Scope_Pattern = regexp.MustCompile("^([[:alpha:]][[:word:]\\-]+(\\.[[:alpha:]][[:word:]\\-]*)*)*$")
+var _PrincipalPolicy_Scope_Pattern = regexp.MustCompile("^([[:alnum:]][[:word:]\\-]*(\\.[[:word:]\\-]*)*)*$")
 
 // Validate checks the field values on PrincipalRule with the rules defined in
 // the proto definition for this message. If any rules are violated, the first

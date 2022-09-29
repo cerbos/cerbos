@@ -207,7 +207,7 @@ message CheckResourcesResponse {
       }];
       string scope = 4 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
         description: "A dot-separated scope that describes the hierarchy this resource belongs to. This is used for determining policy inheritance."
-        pattern: "^([[:alpha:]][[:word:]\\-]+(\\.[[:alpha:]][[:word:]\\-]*)*)*$"
+        pattern: "^([[:alnum:]][[:word:]\\-]*(\\.[[:word:]\\-]*)*)*$"
         example: "\"acme.corp\""
       }];
     }

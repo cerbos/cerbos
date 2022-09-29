@@ -51,7 +51,7 @@ message ResourcePolicy {
     }
   }];
   repeated ResourceRule rules = 4;
-  string scope = 5 [(validate.rules).string.pattern = "^([[:alpha:]][[:word:]\\-]+(\\.[[:alpha:]][[:word:]\\-]*)*)*$"];
+  string scope = 5 [(validate.rules).string.pattern = "^([[:alnum:]][[:word:]\\-]*(\\.[[:word:]\\-]*)*)*$"];
   Schemas schemas = 6;
 }
 
@@ -98,7 +98,7 @@ message PrincipalPolicy {
   }];
   string version = 2 [(validate.rules).string.pattern = "^[[:word:]]+$"];
   repeated PrincipalRule rules = 3;
-  string scope = 4 [(validate.rules).string.pattern = "^([[:alpha:]][[:word:]\\-]+(\\.[[:alpha:]][[:word:]\\-]*)*)*$"];
+  string scope = 4 [(validate.rules).string.pattern = "^([[:alnum:]][[:word:]\\-]*(\\.[[:word:]\\-]*)*)*$"];
 }
 
 message PrincipalRule {

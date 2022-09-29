@@ -1223,7 +1223,7 @@ func (m *Resource) validate(all bool) error {
 	if !_Resource_Scope_Pattern.MatchString(m.GetScope()) {
 		err := ResourceValidationError{
 			field:  "Scope",
-			reason: "value does not match regex pattern \"^([[:alpha:]][[:word:]\\\\-]+(\\\\.[[:alpha:]][[:word:]\\\\-]*)*)*$\"",
+			reason: "value does not match regex pattern \"^([[:alnum:]][[:word:]\\\\-]*(\\\\.[[:word:]\\\\-]*)*)*$\"",
 		}
 		if !all {
 			return err
@@ -1312,7 +1312,7 @@ var _Resource_Kind_Pattern = regexp.MustCompile("^[[:alpha:]][[:word:]\\@\\.\\-/
 
 var _Resource_PolicyVersion_Pattern = regexp.MustCompile("^[[:word:]]*$")
 
-var _Resource_Scope_Pattern = regexp.MustCompile("^([[:alpha:]][[:word:]\\-]+(\\.[[:alpha:]][[:word:]\\-]*)*)*$")
+var _Resource_Scope_Pattern = regexp.MustCompile("^([[:alnum:]][[:word:]\\-]*(\\.[[:word:]\\-]*)*)*$")
 
 // Validate checks the field values on Principal with the rules defined in the
 // proto definition for this message. If any rules are violated, the first
@@ -1460,7 +1460,7 @@ func (m *Principal) validate(all bool) error {
 	if !_Principal_Scope_Pattern.MatchString(m.GetScope()) {
 		err := PrincipalValidationError{
 			field:  "Scope",
-			reason: "value does not match regex pattern \"^([[:alpha:]][[:word:]\\\\-]+(\\\\.[[:alpha:]][[:word:]\\\\-]*)*)*$\"",
+			reason: "value does not match regex pattern \"^([[:alnum:]][[:word:]\\\\-]*(\\\\.[[:word:]\\\\-]*)*)*$\"",
 		}
 		if !all {
 			return err
@@ -1549,7 +1549,7 @@ var _Principal_PolicyVersion_Pattern = regexp.MustCompile("^[[:word:]]*$")
 
 var _Principal_Roles_Pattern = regexp.MustCompile("^[[:word:]\\-\\.]+$")
 
-var _Principal_Scope_Pattern = regexp.MustCompile("^([[:alpha:]][[:word:]\\-]+(\\.[[:alpha:]][[:word:]\\-]*)*)*$")
+var _Principal_Scope_Pattern = regexp.MustCompile("^([[:alnum:]][[:word:]\\-]*(\\.[[:word:]\\-]*)*)*$")
 
 // Validate checks the field values on AuxData with the rules defined in the
 // proto definition for this message. If any rules are violated, the first
@@ -1971,7 +1971,7 @@ func (m *PlanResourcesInput_Resource) validate(all bool) error {
 	if !_PlanResourcesInput_Resource_Scope_Pattern.MatchString(m.GetScope()) {
 		err := PlanResourcesInput_ResourceValidationError{
 			field:  "Scope",
-			reason: "value does not match regex pattern \"^([[:alpha:]][[:word:]\\\\-]+(\\\\.[[:alpha:]][[:word:]\\\\-]*)*)*$\"",
+			reason: "value does not match regex pattern \"^([[:alnum:]][[:word:]\\\\-]*(\\\\.[[:word:]\\\\-]*)*)*$\"",
 		}
 		if !all {
 			return err
@@ -2064,7 +2064,7 @@ var _PlanResourcesInput_Resource_Kind_Pattern = regexp.MustCompile("^[[:alpha:]]
 
 var _PlanResourcesInput_Resource_PolicyVersion_Pattern = regexp.MustCompile("^[[:word:]]*$")
 
-var _PlanResourcesInput_Resource_Scope_Pattern = regexp.MustCompile("^([[:alpha:]][[:word:]\\-]+(\\.[[:alpha:]][[:word:]\\-]*)*)*$")
+var _PlanResourcesInput_Resource_Scope_Pattern = regexp.MustCompile("^([[:alnum:]][[:word:]\\-]*(\\.[[:word:]\\-]*)*)*$")
 
 // Validate checks the field values on PlanResourcesAst_Node with the rules
 // defined in the proto definition for this message. If any rules are
