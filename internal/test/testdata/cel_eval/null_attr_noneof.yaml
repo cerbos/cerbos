@@ -1,0 +1,21 @@
+---
+condition:
+  none:
+    of:
+      - expr: P.attr.x
+      - expr: R.attr.department == "engineering"
+input: {
+  "requestId": "test",
+  "actions": ["*"],
+  "principal": {
+    "id": "john",
+    "roles": ["employee"]
+  },
+  "resource": {
+    "kind": "leave_request",
+    "attr": {
+      "department": "marketing"
+    }
+  }
+}
+want: true

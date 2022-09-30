@@ -362,7 +362,7 @@ func (ep evalParams) evaluateBoolCELExpr(expr *exprpb.CheckedExpr, variables map
 
 	boolVal, ok := val.(bool)
 	if !ok {
-		return false, fmt.Errorf("unexpected result: wanted bool, got %T", val)
+		return false, nil
 	}
 
 	return boolVal, nil
