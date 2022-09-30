@@ -75,16 +75,16 @@ type Cmd struct {
 }
 
 func (c *Cmd) Run(k *kong.Kong) error {
-	logging.InitLogging(c.LogLevel)
+	notifyCtx, stopFunc := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer stopFunc()
+
+	logging.InitLogging(notifyCtx, c.LogLevel)
 	defer zap.L().Sync() //nolint:errcheck
 
 	log := zap.S().Named("run")
 
 	undo, _ := maxprocs.Set(maxprocs.Logger(log.Infof))
 	defer undo()
-
-	notifyCtx, stopFunc := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
-	defer stopFunc()
 
 	if err := c.loadConfig(); err != nil {
 		log.Errorw("Failed to load configuration", "error", err)

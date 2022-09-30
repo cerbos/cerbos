@@ -55,7 +55,10 @@ type Cmd struct {
 }
 
 func (c *Cmd) Run() error {
-	logging.InitLogging(string(c.LogLevel))
+	ctx, stopFunc := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer stopFunc()
+
+	logging.InitLogging(ctx, string(c.LogLevel))
 	defer zap.L().Sync() //nolint:errcheck
 
 	log := zap.S().Named("server")
@@ -71,9 +74,6 @@ func (c *Cmd) Run() error {
 		startDebugListener(c.DebugListenAddr)
 		defer agent.Close()
 	}
-
-	ctx, stopFunc := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
-	defer stopFunc()
 
 	// load any config overrides
 	confOverrides := map[string]any{}
