@@ -66,7 +66,7 @@ require (
 	go.elastic.co/ecszap v1.0.1
 	go.opencensus.io v0.23.0
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.36.0
-	go.opentelemetry.io/contrib/propagators/autoprop v0.36.0
+	go.opentelemetry.io/contrib/propagators/autoprop v0.36.1
 	go.opentelemetry.io/contrib/propagators/b3 v1.10.0
 	go.opentelemetry.io/otel v1.10.0
 	go.opentelemetry.io/otel/bridge/opencensus v0.32.1
