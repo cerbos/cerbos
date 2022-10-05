@@ -303,12 +303,15 @@
     "cerbos.request.v1.PlanResourcesRequest": {
       "type": "object",
       "required": [
-        "principal"
+        "action",
+        "principal",
+        "resource"
       ],
       "additionalProperties": false,
       "properties": {
         "action": {
-          "type": "string"
+          "type": "string",
+          "minLength": 1
         },
         "auxData": {
           "$ref": "#/definitions/cerbos.request.v1.AuxData"

@@ -32,6 +32,7 @@ message PlanResourcesRequest {
   }];
 
   string action = 2 [
+    (validate.rules).string.min_len = 1,
     (google.api.field_behavior) = REQUIRED,
     (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
       description: "Action to be applied to each resource in the list."
@@ -44,7 +45,10 @@ message PlanResourcesRequest {
     (google.api.field_behavior) = REQUIRED
   ];
 
-  cerbos.engine.v1.PlanResourcesInput.Resource resource = 4 [(google.api.field_behavior) = REQUIRED];
+  cerbos.engine.v1.PlanResourcesInput.Resource resource = 4 [
+    (validate.rules).message.required = true,
+    (google.api.field_behavior) = REQUIRED
+  ];
 
   AuxData aux_data = 5 [(google.api.field_behavior) = OPTIONAL];
 
