@@ -59,7 +59,16 @@ func (m *PlanResourcesRequest) validate(all bool) error {
 
 	// no validation rules for RequestId
 
-	// no validation rules for Action
+	if utf8.RuneCountInString(m.GetAction()) < 1 {
+		err := PlanResourcesRequestValidationError{
+			field:  "Action",
+			reason: "value length must be at least 1 runes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
 
 	if m.GetPrincipal() == nil {
 		err := PlanResourcesRequestValidationError{
@@ -99,6 +108,17 @@ func (m *PlanResourcesRequest) validate(all bool) error {
 				cause:  err,
 			}
 		}
+	}
+
+	if m.GetResource() == nil {
+		err := PlanResourcesRequestValidationError{
+			field:  "Resource",
+			reason: "value is required",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
 	}
 
 	if all {
