@@ -1,0 +1,7 @@
+include::ROOT:partial$attributes.adoc[]
+
+= Why we built Cerbos this way
+
+Welcome! The purpose of this section is to give some insight into how the decisions were made when designing and building Cerbos, for the more _curious_ of our users.
+
+* xref:why_does_cerbos_use_containers.adoc[Why does Cerbos user containers?]
