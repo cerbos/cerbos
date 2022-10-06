@@ -13,3 +13,4 @@ nav:
   - modules/recipes/nav.adoc
   - modules/releases/nav.adoc
   - modules/glossary/nav.adoc
+  - modules/engineering/nav.adoc
