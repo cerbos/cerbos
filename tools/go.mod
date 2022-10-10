@@ -9,7 +9,7 @@ require (
 	github.com/envoyproxy/protoc-gen-validate v0.6.8
 	github.com/fullstorydev/grpcurl v1.8.7
 	github.com/google/go-licenses v0.0.0-20210715153004-8751804a5b80
-	github.com/goreleaser/goreleaser v1.11.4
+	github.com/goreleaser/goreleaser v1.11.5
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.11.3
 	github.com/planetscale/vtprotobuf v0.3.0
 	github.com/vektra/mockery/v2 v2.14.0
@@ -125,8 +125,8 @@ require (
 	github.com/golang/glog v1.0.0 // indirect
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
-	github.com/google/go-cmp v0.5.8 // indirect
-	github.com/google/go-github/v47 v47.0.0 // indirect
+	github.com/google/go-cmp v0.5.9 // indirect
+	github.com/google/go-github/v47 v47.1.0 // indirect
 	github.com/google/go-querystring v1.1.0 // indirect
 	github.com/google/licenseclassifier v0.0.0-20210325184830-bb04aff29e72 // indirect
 	github.com/google/rpmpack v0.0.0-20220314092521-38642b5e571e // indirect

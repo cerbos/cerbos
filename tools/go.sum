@@ -483,10 +483,11 @@ github.com/google/go-cmp v0.5.4/go.mod h1:v8dTdLbMG2kIc/vJvl+f65V22dbkXbowE6jgT/
 github.com/google/go-cmp v0.5.5/go.mod h1:v8dTdLbMG2kIc/vJvl+f65V22dbkXbowE6jgT/gNBxE=
 github.com/google/go-cmp v0.5.6/go.mod h1:v8dTdLbMG2kIc/vJvl+f65V22dbkXbowE6jgT/gNBxE=
 github.com/google/go-cmp v0.5.7/go.mod h1:n+brtR0CgQNWTVd5ZUFpTBC8YFBDLK/h/bpaJ8/DtOE=
-github.com/google/go-cmp v0.5.8 h1:e6P7q2lk1O+qJJb4BtCQXlK8vWEO8V1ZeuEdJNOqZyg=
 github.com/google/go-cmp v0.5.8/go.mod h1:17dUlkBOakJ0+DkrSSNjCkIjxS6bF9zb3elmeNGIjoY=
-github.com/google/go-github/v47 v47.0.0 h1:eQap5bIRZibukP0VhngWgpuM0zhY4xntqOzn6DhdkE4=
-github.com/google/go-github/v47 v47.0.0/go.mod h1:DRjdvizXE876j0YOZwInB1ESpOcU/xFBClNiQLSdorE=
+github.com/google/go-cmp v0.5.9 h1:O2Tfq5qg4qc4AmwVlvv0oLiVAGB7enBSJ2x2DqQFi38=
+github.com/google/go-cmp v0.5.9/go.mod h1:17dUlkBOakJ0+DkrSSNjCkIjxS6bF9zb3elmeNGIjoY=
+github.com/google/go-github/v47 v47.1.0 h1:Cacm/WxQBOa9lF0FT0EMjZ2BWMetQ1TQfyurn4yF1z8=
+github.com/google/go-github/v47 v47.1.0/go.mod h1:VPZBXNbFSJGjyjFRUKo9vZGawTajnWzC/YjGw/oFKi0=
 github.com/google/go-licenses v0.0.0-20210715153004-8751804a5b80 h1:LFxfYF9RntrK2cRV7vr+xpNle/lNmeQ4+XOr1iWUL1o=
 github.com/google/go-licenses v0.0.0-20210715153004-8751804a5b80/go.mod h1:yrUa7XR4KpFKeb+/N8/NokREkP3p25uqXDSfIFMO4fA=
 github.com/google/go-querystring v1.1.0 h1:AnCroh3fv4ZBgVIf1Iwtovgjaw/GiKJo8M8yD/fhyJ8=
@@ -554,8 +555,8 @@ github.com/goreleaser/chglog v0.2.2 h1:V7nf07baXtGAgGevvqgW2MM4kZ6gOr12vKNSAU3VI
 github.com/goreleaser/chglog v0.2.2/go.mod h1:2s5JwtCOWjZa8AIneL+xdUl9SRuigCjRHNHsX30dupE=
 github.com/goreleaser/fileglob v1.3.0 h1:/X6J7U8lbDpQtBvGcwwPS6OpzkNVlVEsFUVRx9+k+7I=
 github.com/goreleaser/fileglob v1.3.0/go.mod h1:Jx6BoXv3mbYkEzwm9THo7xbr5egkAraxkGorbJb4RxU=
-github.com/goreleaser/goreleaser v1.11.4 h1:bmXfkrBa6xv3WzzZM7U0QCOmpFAanIm+91tFB4DYUnI=
-github.com/goreleaser/goreleaser v1.11.4/go.mod h1:bkcZB72KGQK5mg+TvmFS+0n1tRJ2ZioUUm0lTefb/uo=
+github.com/goreleaser/goreleaser v1.11.5 h1:b4OReinilkNM28t8DIJncnzPzqnHCAemzux0TABL+TU=
+github.com/goreleaser/goreleaser v1.11.5/go.mod h1:J+nqBKEUTeKnX8v5RmMTu8Up+ZHHKGM//PZEEaavLc4=
 github.com/goreleaser/nfpm/v2 v2.18.1 h1:TuZQvnOLCXVv/wdDwS1luoQKRQo0vtjwP09YWcXMhR8=
 github.com/goreleaser/nfpm/v2 v2.18.1/go.mod h1:CCNOctcFfuzGLbaA8D4trDCa4xfSMtp9uoempUcG8gE=
 github.com/gorilla/websocket v1.4.1/go.mod h1:YR8l580nyteQvAITg2hZ9XVh4b55+EU/adAjf1fMHhE=
