@@ -16,7 +16,7 @@ require (
 	github.com/denisenkom/go-mssqldb v0.12.2
 	github.com/dgraph-io/badger/v3 v3.2103.2
 	github.com/doug-martin/goqu/v9 v9.18.0
-	github.com/envoyproxy/protoc-gen-validate v0.6.8
+	github.com/envoyproxy/protoc-gen-validate v0.6.13
 	github.com/fatih/color v1.13.0
 	github.com/fatih/structtag v1.2.0
 	github.com/fergusstrange/embedded-postgres v1.19.0
