@@ -10,6 +10,37 @@ Painless access control for your software
 Cerbos helps you super-charge your authorization implementation by writing context-aware access control policies for your application resources. Author access rules using an intuitive YAML configuration language, use your Git-ops infrastructure to test and deploy them and, make simple API requests to the Cerbos PDP to evaluate the policies and make dynamic access decisions.
 
 
+## Key concepts, at a glance ⌛
+
+**_Principal:_** oftentimes just the "user", but can also represent: other applications, services, bots or anything you can think of. The "thing" that's trying to access the... ↙️
+
+**_Resource:_** the thing you're controlling access to. Could be anything, e.g. in an expense management system; reports, receipts, card details, payment records, etc. You define resources in Cerbos by writing... ↙️
+
+**_Policies:_** YAML files where you define the access rules for each resource<sup>1</sup>, following a simple, structured format. Stored either: [on disk](https://docs.cerbos.dev/cerbos/latest/configuration/storage.html#disk-driver), in [cloud object stores](https://docs.cerbos.dev/cerbos/latest/configuration/storage.html#blob-driver), [git repos](https://docs.cerbos.dev/cerbos/latest/configuration/storage.html#git-driver), or dynamically in [supported databases](https://docs.cerbos.dev/cerbos/latest/configuration/storage.html#sqlite3). These are continually monitored by the... ↙️
+
+<!--\> **Note**-->
+<!--\> There are [other policy types](https://docs.cerbos.dev/cerbos/latest/policies/index.html) too for _much_ more powerful access control, but we'll concentrate on the simple case for now...-->
+
+**_Cerbos PDP:_** the Policy Decision Point: the stateless service where policies are executed and decisions are made. This runs as a separate process, in kube (as a [service](https://docs.cerbos.dev/cerbos/latest/deployment/k8s-service.html) or a [sidecar](https://docs.cerbos.dev/cerbos/latest/deployment/k8s-sidecar.html)), directly as a [systemd service](https://docs.cerbos.dev/cerbos/latest/deployment/systemd.html) or as an [AWS Lambda function](https://docs.cerbos.dev/cerbos/latest/deployment/serverless-faas.html). Once deployed, the PDP provides two primary APIs...
+
+* **_CheckResources:_** Can this principal access this resource?
+* **_PlanResources:_** Which of resource kind "X" can this principal access?
+
+These APIs can be called via [cURL](https://docs.cerbos.dev/cerbos/latest/quickstart.html), or in production via one of our many... ↙️
+
+**_SDKs:_** you can see the list [here](#client-sdks). There are also a growing number of [query plan adapters](#query-plan-adapters), to convert the SDK `PlanResources` responses to a convenient query instance.
+
+**_RBAC -> ABAC:_** If simple role-based access doesn't cut it, you can extend the decision making by implementing dynamic attribute based rules.
+
+_1) there are [other policy types](https://docs.cerbos.dev/cerbos/latest/policies/index.html) too for _much_ more powerful access control._
+
+<p align="center">
+  <img src="https://github.com/cerbos/cerbos/blob/main/docs/modules/ROOT/assets/images/how_cerbos_works.png?raw=true" alt="Cerbos"/>
+</p>
+
+
+### Further reading
+
 * [Try online with the Cerbos playground](https://play.cerbos.dev)
 * [Explore demo repositories](https://github.com/cerbos)
 * [Read the documentation](https://docs.cerbos.dev)
@@ -19,16 +50,23 @@ Cerbos helps you super-charge your authorization implementation by writing conte
     * [Container](https://docs.cerbos.dev/cerbos/latest/installation/container.html)
     * [Binary/OS packages](https://docs.cerbos.dev/cerbos/latest/installation/binary.html)
     * [Helm Chart](https://docs.cerbos.dev/cerbos/latest/installation/helm.html)
-* Get the client SDKs
-    * [Go](client/README.md)
-    * [Java](https://github.com/cerbos/cerbos-sdk-java)
-    * [JavaScript](https://github.com/cerbos/cerbos-sdk-javascript)
-    * [.NET](https://github.com/cerbos/cerbos-sdk-net)
-    * [PHP](https://github.com/cerbos/cerbos-sdk-php)
-    * [Python](https://github.com/cerbos/cerbos-sdk-python)
-    * [Ruby](https://github.com/cerbos/cerbos-sdk-ruby)
-    * [Rust](https://github.com/cerbos/cerbos-sdk-rust)
 * [Contribute](CONTRIBUTING.md)
+
+## Client SDKs
+
+* [Go](client/README.md)
+* [Java](https://github.com/cerbos/cerbos-sdk-java)
+* [JavaScript](https://github.com/cerbos/cerbos-sdk-javascript)
+* [.NET](https://github.com/cerbos/cerbos-sdk-net)
+* [PHP](https://github.com/cerbos/cerbos-sdk-php)
+* [Python](https://github.com/cerbos/cerbos-sdk-python)
+* [Ruby](https://github.com/cerbos/cerbos-sdk-ruby)
+* [Rust](https://github.com/cerbos/cerbos-sdk-rust)
+
+#### Query plan adapters
+
+* [Prisma](https://github.com/cerbos/query-plan-adapters/tree/main/prisma)
+* [SQLAlchemy](https://github.com/cerbos/query-plan-adapters/tree/main/sqlalchemy)
 
 
 Used by
@@ -83,13 +121,6 @@ Cerbos is popular among large and small organizations:
 </table>
 
 _Using Cerbos? Open a PR to add your company._
-
-How it works
-------------
-
-<p align="center">
-  <img src="https://github.com/cerbos/cerbos/blob/main/docs/modules/ROOT/assets/images/how_cerbos_works.png?raw=true" alt="Cerbos"/>
-</p>
 
 
 Example
