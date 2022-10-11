@@ -20,10 +20,10 @@ Cerbos helps you super-charge your authorization implementation by writing conte
 
 **_CERBOS PDP:_** the Policy Decision Point: the stateless service where policies are executed and decisions are made. This runs as a separate process, in kube (as a [service](https://docs.cerbos.dev/cerbos/latest/deployment/k8s-service.html) or a [sidecar](https://docs.cerbos.dev/cerbos/latest/deployment/k8s-sidecar.html)), directly as a [systemd service](https://docs.cerbos.dev/cerbos/latest/deployment/systemd.html) or as an [AWS Lambda function](https://docs.cerbos.dev/cerbos/latest/deployment/serverless-faas.html). Once deployed, the PDP provides two primary APIs...
 
-* **_CheckResources:_** Can this principal access this resource?
-* **_PlanResources:_** Which of resource kind "X" can this principal access?
+* **_CheckResources:_** "Can this principal access this resource?"
+* **_PlanResources:_** "Which of resource kind=X can this principal access?"
 
-These APIs can be called via [cURL](https://docs.cerbos.dev/cerbos/latest/quickstart.html), or in production via one of our many... ↙️
+These APIs can be called via [cURL](#api-request), or in production via one of our many... ↙️
 
 **_SDKs:_** you can see the list [here](#client-sdks). There are also a growing number of [query plan adapters](#query-plan-adapters), to convert the SDK `PlanResources` responses to a convenient query instance.
 
