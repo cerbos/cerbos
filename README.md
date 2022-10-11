@@ -27,7 +27,7 @@ These APIs can be called via [cURL](#api-request), or in production via one of o
 
 **_SDKs:_** you can see the list [here](#client-sdks). There are also a growing number of [query plan adapters](#query-plan-adapters), to convert the SDK `PlanResources` responses to a convenient query instance.
 
-**_RBAC -> ABAC:_** If simple RBAC doesn't cut it, you can extend the decision-making by implementing attribute based rules. Use [derived roles](https://docs.cerbos.dev/cerbos/latest/policies/derived_roles.html) to augment the RBAC roles with contextual data, dynamically at run-time, for much more granular control. Or use [principal policies](https://docs.cerbos.dev/cerbos/latest/policies/principal_policies.html) for more particular overrides for a specific user.
+**_RBAC -> ABAC:_** If simple RBAC doesn't cut it, you can extend the decision-making by implementing attribute based rules. Implement attribute based `conditions` in your resource policies. Use [derived roles](https://docs.cerbos.dev/cerbos/latest/policies/derived_roles.html) to augment the RBAC roles with contextual data, dynamically at run-time, for much more granular control. Or use [principal policies](https://docs.cerbos.dev/cerbos/latest/policies/principal_policies.html) for more particular overrides for a specific user.
 
 <p align="center">
   <img src="https://github.com/cerbos/cerbos/blob/main/docs/modules/ROOT/assets/images/how_cerbos_works.png?raw=true" alt="Cerbos"/>
