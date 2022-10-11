@@ -12,16 +12,16 @@ Cerbos helps you super-charge your authorization implementation by writing conte
 
 ## Key concepts, at a glance ⌛
 
-**_Principal:_** oftentimes just the "user", but can also represent: other applications, services, bots or anything you can think of. The "thing" that's trying to access the... ↙️
+**_PRINCIPAL:_** oftentimes just the "user", but can also represent: other applications, services, bots or anything you can think of. The "thing" that's trying to access the... ↙️
 
-**_Resource:_** the thing you're controlling access to. Could be anything, e.g. in an expense management system; reports, receipts, card details, payment records, etc. You define resources in Cerbos by writing... ↙️
+**_RESOURCE:_** the thing you're controlling access to. Could be anything, e.g. in an expense management system; reports, receipts, card details, payment records, etc. You define resources in Cerbos by writing... ↙️
 
-**_Policies:_** YAML files where you define the access rules for each resource<sup>1</sup>, following a simple, structured format. Stored either: [on disk](https://docs.cerbos.dev/cerbos/latest/configuration/storage.html#disk-driver), in [cloud object stores](https://docs.cerbos.dev/cerbos/latest/configuration/storage.html#blob-driver), [git repos](https://docs.cerbos.dev/cerbos/latest/configuration/storage.html#git-driver), or dynamically in [supported databases](https://docs.cerbos.dev/cerbos/latest/configuration/storage.html#sqlite3). These are continually monitored by the... ↙️
+**_POLICIES:_** YAML files where you define the access rules for each resource<sup>1</sup>, following a simple, structured format. Stored either: [on disk](https://docs.cerbos.dev/cerbos/latest/configuration/storage.html#disk-driver), in [cloud object stores](https://docs.cerbos.dev/cerbos/latest/configuration/storage.html#blob-driver), [git repos](https://docs.cerbos.dev/cerbos/latest/configuration/storage.html#git-driver), or dynamically in [supported databases](https://docs.cerbos.dev/cerbos/latest/configuration/storage.html#sqlite3). These are continually monitored by the... ↙️
 
 <!--\> **Note**-->
 <!--\> There are [other policy types](https://docs.cerbos.dev/cerbos/latest/policies/index.html) too for _much_ more powerful access control, but we'll concentrate on the simple case for now...-->
 
-**_Cerbos PDP:_** the Policy Decision Point: the stateless service where policies are executed and decisions are made. This runs as a separate process, in kube (as a [service](https://docs.cerbos.dev/cerbos/latest/deployment/k8s-service.html) or a [sidecar](https://docs.cerbos.dev/cerbos/latest/deployment/k8s-sidecar.html)), directly as a [systemd service](https://docs.cerbos.dev/cerbos/latest/deployment/systemd.html) or as an [AWS Lambda function](https://docs.cerbos.dev/cerbos/latest/deployment/serverless-faas.html). Once deployed, the PDP provides two primary APIs...
+**_CERBOS PDP:_** the Policy Decision Point: the stateless service where policies are executed and decisions are made. This runs as a separate process, in kube (as a [service](https://docs.cerbos.dev/cerbos/latest/deployment/k8s-service.html) or a [sidecar](https://docs.cerbos.dev/cerbos/latest/deployment/k8s-sidecar.html)), directly as a [systemd service](https://docs.cerbos.dev/cerbos/latest/deployment/systemd.html) or as an [AWS Lambda function](https://docs.cerbos.dev/cerbos/latest/deployment/serverless-faas.html). Once deployed, the PDP provides two primary APIs...
 
 * **_CheckResources:_** Can this principal access this resource?
 * **_PlanResources:_** Which of resource kind "X" can this principal access?
