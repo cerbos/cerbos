@@ -32,45 +32,27 @@ These APIs can be called via [cURL](https://docs.cerbos.dev/cerbos/latest/quicks
 
 **_RBAC -> ABAC:_** If simple role-based access doesn't cut it, you can extend the decision making by implementing dynamic attribute based rules.
 
-_1) there are [other policy types](https://docs.cerbos.dev/cerbos/latest/policies/index.html) too for _much_ more powerful access control._
+_<sub>1) there are [other policy types](https://docs.cerbos.dev/cerbos/latest/policies/index.html) too for _much_ more powerful access control.</sub>_
 
 <p align="center">
   <img src="https://github.com/cerbos/cerbos/blob/main/docs/modules/ROOT/assets/images/how_cerbos_works.png?raw=true" alt="Cerbos"/>
 </p>
 
+### Further reading 📚
 
-### Further reading
+Read the full documentation [here](https://docs.cerbos.dev), explore some of our [demo repositories](https://github.com/cerbos), or try online with the [Cerbos playground](https://play.cerbos.dev).
 
-* [Try online with the Cerbos playground](https://play.cerbos.dev)
-* [Explore demo repositories](https://github.com/cerbos)
-* [Read the documentation](https://docs.cerbos.dev)
-* [Subscribe to the newsletter](https://cerbos.dev/subscribe)
-* [Join the community on Slack](http://go.cerbos.io/slack)
-* Install Cerbos
-    * [Container](https://docs.cerbos.dev/cerbos/latest/installation/container.html)
-    * [Binary/OS packages](https://docs.cerbos.dev/cerbos/latest/installation/binary.html)
-    * [Helm Chart](https://docs.cerbos.dev/cerbos/latest/installation/helm.html)
-* [Contribute](CONTRIBUTING.md)
+### Join the community 💬
 
-## Client SDKs
+Subscribe to our [newsletter](https://cerbos.dev/subscribe), or join the community on [Slack](http://go.cerbos.io/slack).
 
-* [Go](client/README.md)
-* [Java](https://github.com/cerbos/cerbos-sdk-java)
-* [JavaScript](https://github.com/cerbos/cerbos-sdk-javascript)
-* [.NET](https://github.com/cerbos/cerbos-sdk-net)
-* [PHP](https://github.com/cerbos/cerbos-sdk-php)
-* [Python](https://github.com/cerbos/cerbos-sdk-python)
-* [Ruby](https://github.com/cerbos/cerbos-sdk-ruby)
-* [Rust](https://github.com/cerbos/cerbos-sdk-rust)
+### Contributing ⌨️
 
-#### Query plan adapters
-
-* [Prisma](https://github.com/cerbos/query-plan-adapters/tree/main/prisma)
-* [SQLAlchemy](https://github.com/cerbos/query-plan-adapters/tree/main/sqlalchemy)
+Check out [how to contribute](CONTRIBUTING.md).
 
 
-Used by
-------------
+## Used by
+
 Cerbos is popular among large and small organizations:
 
 <table cellspacing="1" cellpadding="0">
@@ -121,6 +103,16 @@ Cerbos is popular among large and small organizations:
 </table>
 
 _Using Cerbos? Open a PR to add your company._
+
+
+# Quickstart
+
+## Installation
+
+
+* [Container](https://docs.cerbos.dev/cerbos/latest/installation/container.html)
+* [Binary/OS packages](https://docs.cerbos.dev/cerbos/latest/installation/binary.html)
+* [Helm Chart](https://docs.cerbos.dev/cerbos/latest/installation/helm.html)
 
 
 Example
@@ -240,11 +232,26 @@ EOF
 }
 ```
 
-Telemetry
----------
+## Client SDKs
+
+* [Go](client/README.md)
+* [Java](https://github.com/cerbos/cerbos-sdk-java)
+* [JavaScript](https://github.com/cerbos/cerbos-sdk-javascript)
+* [.NET](https://github.com/cerbos/cerbos-sdk-net)
+* [PHP](https://github.com/cerbos/cerbos-sdk-php)
+* [Python](https://github.com/cerbos/cerbos-sdk-python)
+* [Ruby](https://github.com/cerbos/cerbos-sdk-ruby)
+* [Rust](https://github.com/cerbos/cerbos-sdk-rust)
+
+#### Query plan adapters
+
+* [Prisma](https://github.com/cerbos/query-plan-adapters/tree/main/prisma)
+* [SQLAlchemy](https://github.com/cerbos/query-plan-adapters/tree/main/sqlalchemy)
+
+## Telemetry
 
 We collect anonymous usage data to help us improve the product. You can opt out by setting the `CERBOS_NO_TELEMETRY=1` environment variable. For more information about what data we collect and other ways to opt out, see the [telemetry documentation](https://docs.cerbos.dev/cerbos/latest/telemetry.html).
 
-Stargazers
------------
+## Stargazers
+
 [![Stargazers repo roster for cerbos/cerbos](https://reporoster.com/stars/cerbos/cerbos)](https://github.com/cerbos/cerbos)
