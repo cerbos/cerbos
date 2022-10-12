@@ -244,7 +244,11 @@ We collect anonymous usage data to help us improve the product. You can opt out 
 
 ## Join the community 💬
 
-Subscribe to our [newsletter](https://cerbos.dev/subscribe), or join the community on [Slack](http://go.cerbos.io/slack).
+Join Slack 👇
+
+<a href="http://go.cerbos.io/slack"><img src="https://i.ibb.co/GxJfc1Q/cerbos-slack-btn.png" width="200"></a>
+
+Subscribe to our [Newsletter](https://cerbos.dev/subscribe)
 
 ## Contributing ⌨️
 
