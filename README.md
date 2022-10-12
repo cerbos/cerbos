@@ -4,13 +4,11 @@
   <img src="https://github.com/cerbos/cerbos/blob/main/docs/supplemental-ui/logo.png?raw=true" alt="Cerbos"/>
 </p>
 
-Painless access control for your software
-========================================================
+## What is Cerbos?
 
-Cerbos helps you super-charge your authorization implementation by writing context-aware access control policies for your application resources. Author access rules using an intuitive YAML configuration language, use your Git-ops infrastructure to test and deploy them and, make simple API requests to the Cerbos PDP to evaluate the policies and make dynamic access decisions.
+Cerbos is an authorization layer that evolves with your product. It enables you to define powerful, context-aware access control rules for your application resources in simple, intuitive YAML policies; managed and deployed via your Git-ops infrastructure. It provides highly available APIs to make simple requests to evaluate policies and make dynamic access decisions for your application.
 
-
-## Key concepts, at a glance
+## Key concepts, at a glance 👀
 
 **_PRINCIPAL:_** oftentimes just the "user", but can also represent: other applications, services, bots or anything you can think of. The "thing" that's trying to carry out an... ↙️
 
@@ -35,9 +33,13 @@ These APIs can be called via [cURL](#api-request), or in production via one of o
   <img src="https://github.com/cerbos/cerbos/blob/main/docs/modules/ROOT/assets/images/how_cerbos_works.png?raw=true" alt="Cerbos"/>
 </p>
 
-## Further reading
+## Learn more
 
-Read the full documentation [here](https://docs.cerbos.dev), explore some of our [demo repositories](https://github.com/cerbos), or try online with the [Cerbos playground](https://play.cerbos.dev).
+* Get up and running quickly with our [quickstart](https://docs.cerbos.dev/cerbos/latest/quickstart.html), or build an example implemention in our [tutorial](https://docs.cerbos.dev/cerbos/latest/tutorial/00_intro.html)
+* See [example policies and requests](#examples)
+* Read the [full documentation](https://docs.cerbos.dev)
+* Explore some of our [demo repositories](https://github.com/cerbos)
+* Try online with the [Cerbos playground](https://play.cerbos.dev)
 
 ## Used by
 
