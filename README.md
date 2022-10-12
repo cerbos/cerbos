@@ -10,7 +10,7 @@ Painless access control for your software
 Cerbos helps you super-charge your authorization implementation by writing context-aware access control policies for your application resources. Author access rules using an intuitive YAML configuration language, use your Git-ops infrastructure to test and deploy them and, make simple API requests to the Cerbos PDP to evaluate the policies and make dynamic access decisions.
 
 
-## Key concepts, at a glance ⌛
+## Key concepts, at a glance
 
 **_PRINCIPAL:_** oftentimes just the "user", but can also represent: other applications, services, bots or anything you can think of. The "thing" that's trying to carry out an... ↙️
 
@@ -35,7 +35,7 @@ These APIs can be called via [cURL](#api-request), or in production via one of o
   <img src="https://github.com/cerbos/cerbos/blob/main/docs/modules/ROOT/assets/images/how_cerbos_works.png?raw=true" alt="Cerbos"/>
 </p>
 
-## Further reading 📚
+## Further reading
 
 Read the full documentation [here](https://docs.cerbos.dev), explore some of our [demo repositories](https://github.com/cerbos), or try online with the [Cerbos playground](https://play.cerbos.dev).
 
@@ -248,6 +248,6 @@ Subscribe to our [newsletter](https://cerbos.dev/subscribe), or join the communi
 
 Check out [how to contribute](CONTRIBUTING.md).
 
-## Stargazers
+## Stargazers ⭐
 
 [![Stargazers repo roster for cerbos/cerbos](https://reporoster.com/stars/cerbos/cerbos)](https://github.com/cerbos/cerbos)
