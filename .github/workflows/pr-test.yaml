@@ -20,8 +20,10 @@ jobs:
             code:
               - '!(docs/**)'
             docs:
+              - .github/workflows/pr-test.yaml
               - 'docs/**'
             protos:
+              - .github/workflows/pr-test.yaml
               - '**/*.proto'
 
   generate:
@@ -226,7 +228,7 @@ jobs:
 
       - name: Find latest release
         id: latest-release
-        run: gh release view --json tagName --jq '"::set-output name=tag::\(.tagName)"'
+        run: gh release view --json tagName --jq '"tag=\(.tagName)"' >> $GITHUB_OUTPUT
         env:
           GH_TOKEN: ${{ github.token }}
 
