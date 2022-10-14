@@ -76,6 +76,7 @@ func (clib cerbosLib) CompileOptions() []cel.EnvOption {
 				[]*cel.Type{genericListType, genericListType},
 				cel.BoolType,
 				cel.BinaryBinding(fn),
+				cel.OverloadIsNonStrict(),
 			),
 			cel.MemberOverload(
 				fmt.Sprintf("%s_member_overload", name),
@@ -291,11 +292,17 @@ func convertToMap(b traits.Lister) map[ref.Val]struct{} {
 func hasIntersection(lhs, rhs ref.Val) ref.Val {
 	a, ok := lhs.(traits.Lister)
 	if !ok {
+		if types.IsUnknown(lhs) {
+			return lhs
+		}
 		return types.ValOrErr(a, "no such overload")
 	}
 
 	b, ok := rhs.(traits.Lister)
 	if !ok {
+		if types.IsUnknown(rhs) {
+			return rhs
+		}
 		return types.ValOrErr(b, "no such overload")
 	}
 
