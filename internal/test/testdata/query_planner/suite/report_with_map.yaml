@@ -55,6 +55,18 @@ tests:
           operands:
             - value: ["workspaceA"]
             - variable: request.resource.attr.workspaces
+  - action: write-member-rev
+    resource:
+      kind: report_with_map
+      policyVersion: default
+    want:
+      kind: KIND_CONDITIONAL
+      condition:
+        expression:
+          operator: hasIntersection
+          operands:
+            - value: ["workspaceA"]
+            - variable: request.resource.attr.workspaces
   - action: handle
     resource:
       kind: report_with_map
