@@ -1,0 +1,38 @@
+---
+apiVersion: "api.cerbos.dev/v1"
+resourcePolicy:
+  version: "default"
+  resource: "report_with_map"
+  rules:
+    - actions:
+        - write
+      effect: EFFECT_ALLOW
+      roles:
+        - USER
+      condition:
+        match:
+          expr: hasIntersection(R.attr.workspaces, P.attr.workspaces.filter(w, w.role=="MANAGER").map(w, w.name))
+    - actions:
+        - write-rev
+      effect: EFFECT_ALLOW
+      roles:
+        - USER
+      condition:
+        match:
+          expr: hasIntersection(P.attr.workspaces.filter(w, w.role=="MANAGER").map(w, w.name), R.attr.workspaces)
+    - actions:
+        - write-member
+      effect: EFFECT_ALLOW
+      roles:
+        - USER
+      condition:
+        match:
+          expr: R.attr.workspaces.hasIntersection(P.attr.workspaces.filter(w, w.role=="MANAGER").map(w, w.name))
+    - actions:
+        - handle
+      effect: EFFECT_ALLOW
+      roles:
+        - USER
+      condition:
+        match:
+          expr: P.attr.workspaces.filter(w, w.role=="MANAGER").all(w, w.name.startsWith("workspace"))

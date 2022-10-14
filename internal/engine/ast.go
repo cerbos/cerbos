@@ -467,7 +467,7 @@ func buildExprImpl(cur *exprpb.Expr, acc *enginev1.PlanResourcesFilter_Expressio
 			return err
 		}
 		if _, ok := lambda.Node.(*ExprOpExpr); !ok {
-			return fmt.Errorf("expect expression, got %T", lambda.Node)
+			return fmt.Errorf("expected expression, got %T", lambda.Node)
 		}
 		op := new(ExprOp)
 		err = buildExprImpl(iterRange, op, cur)
