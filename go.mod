@@ -13,7 +13,7 @@ require (
 	github.com/bluele/gcache v0.0.2
 	github.com/cespare/xxhash v1.1.0
 	github.com/cespare/xxhash/v2 v2.1.2
-	github.com/denisenkom/go-mssqldb v0.12.2
+	github.com/denisenkom/go-mssqldb v0.12.3
 	github.com/dgraph-io/badger/v3 v3.2103.2
 	github.com/doug-martin/goqu/v9 v9.18.0
 	github.com/envoyproxy/protoc-gen-validate v0.6.13
