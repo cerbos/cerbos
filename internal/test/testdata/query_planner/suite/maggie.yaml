@@ -25,7 +25,7 @@ tests:
                   - expression:
                         operator: or
                         operands:
-                            - expression:
+                            - expression: &geography_is_US
                                   operator: eq
                                   operands:
                                       - variable: request.resource.attr.geography
@@ -38,12 +38,12 @@ tests:
                   - expression:
                         operator: and
                         operands:
-                            - expression:
+                            - expression: &pending_approval_status
                                   operator: eq
                                   operands:
                                       - variable: request.resource.attr.status
                                       - value: "PENDING_APPROVAL"
-                            - expression:
+                            - expression: &maggie_is_not_owner
                                   operator: ne
                                   operands:
                                       - variable: request.resource.attr.owner
@@ -91,15 +91,9 @@ tests:
             operator: and
             operands:
               - expression:
-                  operator: eq
-                  operands:
-                    - variable: request.resource.attr.status
-                    - value: "PENDING_APPROVAL"
+                  <<: *pending_approval_status
               - expression:
-                  operator: ne
-                  operands:
-                    - variable: request.resource.attr.owner
-                    - value: "maggie"
+                  <<: *maggie_is_not_owner
 
     - action: "approve:allow-allow-deny"
       resource:
@@ -114,24 +108,16 @@ tests:
               - expression:
                   operator: not
                   operands:
-                    - expression:
+                    - expression: &maggie_is_owner
+                        <<: *maggie_is_not_owner
                         operator: eq
-                        operands:
-                          - variable: request.resource.attr.owner
-                          - value: "maggie"
               - expression:
                   operator: or
                   operands:
                     - expression:
-                        operator: eq
-                        operands:
-                          - variable: request.resource.attr.status
-                          - value: "PENDING_APPROVAL"
+                        <<: *pending_approval_status
                     - expression:
-                        operator: eq
-                        operands:
-                          - variable: request.resource.attr.geography
-                          - value: "US"
+                        <<: *geography_is_US
     - action: "approve:allow-allow"
       resource:
         kind: leave_request
@@ -143,15 +129,9 @@ tests:
             operator: or
             operands:
               - expression:
-                  operator: eq
-                  operands:
-                    - variable: request.resource.attr.status
-                    - value: "PENDING_APPROVAL"
+                  <<: *pending_approval_status
               - expression:
-                  operator: eq
-                  operands:
-                    - variable: request.resource.attr.geography
-                    - value: "US"
+                  <<: *geography_is_US
 
     - action: "approve:allow-deny"
       resource:
@@ -167,15 +147,9 @@ tests:
                   operator: not
                   operands:
                   - expression:
-                      operator: eq
-                      operands:
-                        - variable: request.resource.attr.owner
-                        - value: "maggie"
+                      <<: *maggie_is_owner
               - expression:
-                  operator: eq
-                  operands:
-                    - variable: request.resource.attr.status
-                    - value: "PENDING_APPROVAL"
+                  <<: *pending_approval_status
 
     - action: "approve:false-in-and-condition"
       resource:
@@ -236,15 +210,9 @@ tests:
             operator: and
             operands:
               - expression:
-                  operator: eq
-                  operands:
-                    - variable: request.resource.attr.status
-                    - value: "PENDING_APPROVAL"
+                  <<: *pending_approval_status
               - expression:
-                  operator: ne
-                  operands:
-                    - variable: request.resource.attr.owner
-                    - value: "maggie"
+                  <<: *maggie_is_not_owner
     - action: "approve"
       resource:
         kind: leave_request
@@ -258,15 +226,9 @@ tests:
             operator: and
             operands:
               - expression:
-                  operator: eq
-                  operands:
-                    - variable: request.resource.attr.status
-                    - value: "PENDING_APPROVAL"
+                  <<: *pending_approval_status
               - expression:
-                  operator: ne
-                  operands:
-                    - variable: request.resource.attr.owner
-                    - value: "maggie"
+                  <<: *maggie_is_not_owner
     - action: "approve"
       resource:
         kind: leave_request
@@ -278,10 +240,7 @@ tests:
         kind: KIND_CONDITIONAL
         condition:
           expression:
-            operator: eq
-            operands:
-              - variable: request.resource.attr.status
-              - value: "PENDING_APPROVAL"
+            <<: *pending_approval_status
 
     - action: approve:non-boolean-condition
       resource:

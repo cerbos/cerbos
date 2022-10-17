@@ -1,0 +1,14 @@
+---
+apiVersion: "api.cerbos.dev/v1"
+resourcePolicy:
+  version: default
+  resource: hierarchy_resource
+  rules:
+    - actions:
+        - write
+      effect: EFFECT_ALLOW
+      roles:
+        - USER
+      condition:
+        match:
+          expr: hierarchy(R.attr.structure).ancestorOf(hierarchy(P.attr.structure))

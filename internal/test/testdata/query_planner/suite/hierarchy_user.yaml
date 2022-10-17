@@ -1,0 +1,31 @@
+---
+description: Report with map tests
+principal: {
+  "id": "123",
+  "roles": [
+    "USER"
+  ],
+  "attr": {
+    "structure": "a.b.c"
+  }
+}
+tests:
+  - action: write
+    resource:
+      kind: hierarchy_resource
+      policyVersion: default
+    want:
+      kind: KIND_CONDITIONAL
+      condition:
+        expression:
+          operator: ancestorOf
+          operands:
+            - expression:
+                operator: hierarchy
+                operands:
+                  - variable: request.resource.attr.structure
+            - expression:
+                operator: hierarchy
+                operands:
+                  - value: "a.b.c"
+
