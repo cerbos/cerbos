@@ -66,7 +66,7 @@ require (
 	go.elastic.co/ecszap v1.0.1
 	go.opencensus.io v0.23.0
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.36.1
-	go.opentelemetry.io/contrib/propagators/autoprop v0.36.1
+	go.opentelemetry.io/contrib/propagators/autoprop v0.36.3
 	go.opentelemetry.io/contrib/propagators/b3 v1.11.0
 	go.opentelemetry.io/otel v1.11.0
 	go.opentelemetry.io/otel/bridge/opencensus v0.32.3
@@ -229,9 +229,9 @@ require (
 	github.com/xi2/xz v0.0.0-20171230120015-48954b6210f8 // indirect
 	github.com/xo/terminfo v0.0.0-20210125001918-ca9a967f8778 // indirect
 	github.com/xtgo/uuid v0.0.0-20140804021211-a0b114877d4c // indirect
-	go.opentelemetry.io/contrib/propagators/aws v1.10.0 // indirect
-	go.opentelemetry.io/contrib/propagators/jaeger v1.10.0 // indirect
-	go.opentelemetry.io/contrib/propagators/ot v1.10.0 // indirect
+	go.opentelemetry.io/contrib/propagators/aws v1.11.0 // indirect
+	go.opentelemetry.io/contrib/propagators/jaeger v1.11.0 // indirect
+	go.opentelemetry.io/contrib/propagators/ot v1.11.0 // indirect
 	go.opentelemetry.io/otel/exporters/otlp/internal/retry v1.11.0 // indirect
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace v1.11.0 // indirect
 	go.opentelemetry.io/otel/metric v0.32.3 // indirect
