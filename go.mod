@@ -14,7 +14,7 @@ require (
 	github.com/cespare/xxhash v1.1.0
 	github.com/cespare/xxhash/v2 v2.1.2
 	github.com/denisenkom/go-mssqldb v0.12.3
-	github.com/dgraph-io/badger/v3 v3.2103.2
+	github.com/dgraph-io/badger/v3 v3.2103.3
 	github.com/doug-martin/goqu/v9 v9.18.0
 	github.com/envoyproxy/protoc-gen-validate v0.6.13
 	github.com/fatih/color v1.13.0
@@ -131,7 +131,7 @@ require (
 	github.com/containerd/continuity v0.3.0 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/decred/dcrd/dcrec/secp256k1/v4 v4.1.0 // indirect
-	github.com/dgraph-io/ristretto v0.1.0 // indirect
+	github.com/dgraph-io/ristretto v0.1.1 // indirect
 	github.com/dgryski/go-farm v0.0.0-20200201041132-a6ae2369ad13 // indirect
 	github.com/dlclark/regexp2 v1.4.0 // indirect
 	github.com/docker/cli v20.10.17+incompatible // indirect
@@ -241,7 +241,7 @@ require (
 	golang.org/x/lint v0.0.0-20210508222113-6edffad5e616 // indirect
 	golang.org/x/mod v0.6.0-dev.0.20220419223038-86c51ed26bb4 // indirect
 	golang.org/x/oauth2 v0.0.0-20220822191816-0ebed06d0094 // indirect
-	golang.org/x/sys v0.0.0-20220919091848-fb04ddd9f9c8 // indirect
+	golang.org/x/sys v0.0.0-20221010170243-090e33056c14 // indirect
 	golang.org/x/term v0.0.0-20220526004731-065cf7ba2467 // indirect
 	golang.org/x/text v0.3.7 // indirect
 	golang.org/x/xerrors v0.0.0-20220907171357-04be3eba64a2 // indirect
