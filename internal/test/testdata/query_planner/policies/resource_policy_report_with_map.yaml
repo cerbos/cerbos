@@ -1,5 +1,7 @@
 ---
 apiVersion: "api.cerbos.dev/v1"
+variables:
+  workspaces: P.attr.workspaces.filter(w, w.role=="MANAGER").map(w, w.name)
 resourcePolicy:
   version: "default"
   resource: "report_with_map"
@@ -11,7 +13,12 @@ resourcePolicy:
         - USER
       condition:
         match:
-          expr: hasIntersection(R.attr.workspaces, P.attr.workspaces.filter(w, w.role=="MANAGER").map(w, w.name))
+          all:
+            of:
+              - expr: hasIntersection(R.attr.workspaces, V.workspaces)
+              - expr: isSubset(R.attr.workspaces, V.workspaces)
+              - expr: intersect(R.attr.workspaces, V.workspaces) == []
+              - expr: except(R.attr.workspaces, V.workspaces) == []
     - actions:
         - write-rev
       effect: EFFECT_ALLOW
@@ -19,7 +26,7 @@ resourcePolicy:
         - USER
       condition:
         match:
-          expr: hasIntersection(P.attr.workspaces.filter(w, w.role=="MANAGER").map(w, w.name), R.attr.workspaces)
+          expr: hasIntersection(V.workspaces, R.attr.workspaces)
     - actions:
         - write-member
       effect: EFFECT_ALLOW
@@ -27,7 +34,7 @@ resourcePolicy:
         - USER
       condition:
         match:
-          expr: R.attr.workspaces.hasIntersection(P.attr.workspaces.filter(w, w.role=="MANAGER").map(w, w.name))
+          expr: R.attr.workspaces.hasIntersection(V.workspaces)
     - actions:
         - write-member-rev
       effect: EFFECT_ALLOW
@@ -35,7 +42,7 @@ resourcePolicy:
         - USER
       condition:
         match:
-          expr: P.attr.workspaces.filter(w, w.role=="MANAGER").map(w, w.name).hasIntersection(R.attr.workspaces)
+          expr: V.workspaces.hasIntersection(R.attr.workspaces)
     - actions:
         - handle
       effect: EFFECT_ALLOW

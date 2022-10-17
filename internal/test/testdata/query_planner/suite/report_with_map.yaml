@@ -27,10 +27,30 @@ tests:
       kind: KIND_CONDITIONAL
       condition:
         expression:
-          operator: hasIntersection
+          operator: and
           operands:
-            - variable: request.resource.attr.workspaces
-            - value: ["workspaceA"]
+            - expression: &workspaceExpr
+                operator: hasIntersection
+                operands:
+                  - variable: request.resource.attr.workspaces
+                  - value: ["workspaceA"]
+            - expression:
+                <<: *workspaceExpr
+                operator: isSubset
+            - expression:
+                operator: eq
+                operands:
+                  - expression:
+                      <<: *workspaceExpr
+                      operator: intersect
+                  - value: []
+            - expression:
+                operator: eq
+                operands:
+                  - expression:
+                      <<: *workspaceExpr
+                      operator: except
+                  - value: []
   - action: write-member
     resource:
       kind: report_with_map

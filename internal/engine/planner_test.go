@@ -247,6 +247,10 @@ func TestPartialEvaluationWithGlobalVars(t *testing.T) {
 			expr: `timestamp(R.attr.lastAccessed) > now()`,
 			want: `timestamp(R.attr.lastAccessed) > now()`,
 		},
+		{
+			expr: `intersect(R.attr.workspaces, V.gb_us)`,
+			want: `intersect(R.attr.workspaces, ["GB", "US"])`,
+		},
 	}
 
 	env, pvars, variables := setupEnv(t)
