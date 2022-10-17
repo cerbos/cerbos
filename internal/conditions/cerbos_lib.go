@@ -58,6 +58,7 @@ func (clib cerbosLib) CompileOptions() []cel.EnvOption {
 				[]*cel.Type{genericListType, genericListType},
 				genericListType,
 				cel.BinaryBinding(fn),
+				cel.OverloadIsNonStrict(),
 			),
 			cel.MemberOverload(
 				fmt.Sprintf("%s_member_overload", name),
@@ -200,11 +201,17 @@ func hashable(t ref.Type) bool {
 func exceptList(lhs, rhs ref.Val) ref.Val {
 	a, ok := lhs.(traits.Lister)
 	if !ok {
+		if types.IsUnknown(lhs) {
+			return lhs
+		}
 		return types.ValOrErr(a, "no such overload")
 	}
 
 	b, ok := rhs.(traits.Lister)
 	if !ok {
+		if types.IsUnknown(rhs) {
+			return rhs
+		}
 		return types.ValOrErr(b, "no such overload")
 	}
 
@@ -230,11 +237,17 @@ func exceptList(lhs, rhs ref.Val) ref.Val {
 func isSubset(lhs, rhs ref.Val) ref.Val {
 	a, ok := lhs.(traits.Lister)
 	if !ok {
+		if types.IsUnknown(lhs) {
+			return lhs
+		}
 		return types.ValOrErr(a, "no such overload")
 	}
 
 	b, ok := rhs.(traits.Lister)
 	if !ok {
+		if types.IsUnknown(rhs) {
+			return rhs
+		}
 		return types.ValOrErr(b, "no such overload")
 	}
 
@@ -334,11 +347,17 @@ func hasIntersection(lhs, rhs ref.Val) ref.Val {
 func intersect(lhs, rhs ref.Val) ref.Val {
 	a, ok := lhs.(traits.Lister)
 	if !ok {
+		if types.IsUnknown(lhs) {
+			return lhs
+		}
 		return types.ValOrErr(a, "no such overload")
 	}
 
 	b, ok := rhs.(traits.Lister)
 	if !ok {
+		if types.IsUnknown(rhs) {
+			return rhs
+		}
 		return types.ValOrErr(b, "no such overload")
 	}
 
