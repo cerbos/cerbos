@@ -1,5 +1,5 @@
 ---
-description: membership test
+description: membership test in a single-item array
 input:
   kind: KIND_CONDITIONAL
   condition:
@@ -7,15 +7,15 @@ input:
       operator: in
       operands:
         - variable: request.resource.attr.accountId
-        - value: ["accountId1", "accountId2"]
+        - value: ["abc123"]
 wantFilter:
   kind: KIND_CONDITIONAL
   condition:
     expression:
-      operator: in
+      operator: eq
       operands:
         - variable: request.resource.attr.accountId
-        - value: ["accountId1", "accountId2"]
-wantString: "(in request.resource.attr.accountId [\"accountId1\",\"accountId2\"])"
+        - value: "abc123"
+wantString: "(eq request.resource.attr.accountId \"abc123\")"
 
 
