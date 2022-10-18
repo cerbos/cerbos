@@ -577,8 +577,18 @@ func normaliseFilterExprOpExpr(expr *enginev1.PlanResourcesFilter_Expression_Ope
 	const nArgsInOp = 2
 	if expr.Expression.Operator == In && len(expr.Expression.Operands) == nArgsInOp {
 		if v := expr.Expression.Operands[nArgsInOp-1].GetValue(); v != nil {
-			if len(v.GetListValue().GetValues()) == 0 {
+			values := v.GetListValue().GetValues()
+			n := len(values)
+			if n == 0 {
 				return falseExprOpValue
+			} else if n == 1 {
+				// replace `a in [x]` with `a eq x`
+				expr.Expression.Operator = Equals
+				expr.Expression.Operands[nArgsInOp-1] = &enginev1.PlanResourcesFilter_Expression_Operand{
+					Node: &enginev1.PlanResourcesFilter_Expression_Operand_Value{
+						Value: values[0],
+					},
+				}
 			}
 		}
 	}
