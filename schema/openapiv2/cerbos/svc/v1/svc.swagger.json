@@ -873,7 +873,8 @@
         }
       },
       "required": [
-        "actions"
+        "actions",
+        "resource"
       ]
     },
     "CheckResourcesRequestResourceEntry": {
@@ -897,7 +898,8 @@
         }
       },
       "required": [
-        "actions"
+        "actions",
+        "resource"
       ]
     },
     "CheckResourcesResponseResultEntry": {
@@ -924,21 +926,7 @@
           "description": "List of validation errors (if schema validation is enabled)"
         },
         "meta": {
-          "$ref": "#/definitions/CheckResourcesResponseResultEntryMeta",
-          "example": {
-            "actions": {
-              "view:*": {
-                "matched_policy": "album:object:default"
-              },
-              "comment": {
-                "matched_policy": "album:object:default"
-              }
-            },
-            "effective_derived_roles": [
-              "owner"
-            ]
-          },
-          "description": "Metadata about policy evaluation"
+          "$ref": "#/definitions/CheckResourcesResponseResultEntryMeta"
         }
       }
     },
@@ -1691,6 +1679,8 @@
         }
       },
       "required": [
+        "resource",
+        "principal",
         "actions"
       ]
     },
@@ -1767,6 +1757,7 @@
       },
       "description": "PDP Request",
       "required": [
+        "principal",
         "resources"
       ]
     },
@@ -1860,7 +1851,9 @@
       },
       "description": "PDP Request",
       "required": [
-        "actions"
+        "actions",
+        "principal",
+        "resource"
       ]
     },
     "v1CheckResourceSetResponse": {
@@ -1893,8 +1886,7 @@
           "description": "Results for each resource instance, keyed by the ID supplied in the request"
         },
         "meta": {
-          "$ref": "#/definitions/v1CheckResourceSetResponseMeta",
-          "description": "Optional metadata about the request evaluation process"
+          "$ref": "#/definitions/v1CheckResourceSetResponseMeta"
         }
       },
       "description": "Policy evaluation response for a set of resources."
@@ -2020,6 +2012,7 @@
       },
       "description": "Check resources request",
       "required": [
+        "principal",
         "resources"
       ]
     },
@@ -2286,12 +2279,10 @@
       "type": "object",
       "properties": {
         "kind": {
-          "$ref": "#/definitions/v1PlanResourcesFilterKind",
-          "description": "Filter kind. Defines whether the given action is always allowed, always denied or allowed conditionally."
+          "$ref": "#/definitions/v1PlanResourcesFilterKind"
         },
         "condition": {
-          "$ref": "#/definitions/ExpressionOperand",
-          "description": "Filter condition. Only populated if kind is KIND_CONDITIONAL."
+          "$ref": "#/definitions/ExpressionOperand"
         }
       }
     },
@@ -2419,7 +2410,9 @@
       },
       "description": "PDP Resources Query Plan Request",
       "required": [
-        "action"
+        "action",
+        "principal",
+        "resource"
       ]
     },
     "v1PlanResourcesResponse": {
@@ -2447,12 +2440,10 @@
           "description": "The policy version."
         },
         "filter": {
-          "$ref": "#/definitions/v1PlanResourcesFilter",
-          "description": "Filter"
+          "$ref": "#/definitions/v1PlanResourcesFilter"
         },
         "meta": {
-          "$ref": "#/definitions/v1PlanResourcesResponseMeta",
-          "description": "Optional metadata about the request evaluation process"
+          "$ref": "#/definitions/v1PlanResourcesResponseMeta"
         },
         "validationErrors": {
           "type": "array",
@@ -2517,6 +2508,8 @@
       "description": "Playground evaluate request",
       "required": [
         "files",
+        "principal",
+        "resource",
         "actions"
       ]
     },
