@@ -1,0 +1,48 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:base",
+    "group:allNonMajor",
+    "schedule:weekly",
+    ":automergeDisabled",
+    ":combinePatchMinorReleases",
+    ":gitSignOff",
+    ":renovatePrefix",
+    ":semanticCommitTypeAll(chore)",
+    ":separateMultipleMajorReleases"
+  ],
+  "packageRules": [
+    {
+      "matchManagers": ["helmfile"],
+      "groupName": "Helm deps",
+      "groupSlug": "helm-deps"
+    },
+    {
+      "matchManagers": ["github-actions"],
+      "groupName": "GitHub Actions deps",
+      "groupSlug": "gh-actions-deps"
+    },
+    {
+      "matchManagers": ["gomod"],
+      "groupName": "Go deps",
+      "groupSlug": "go-deps",
+      "postUpdateOptions": [
+        "gomodtidy1.17"
+      ]
+    },
+    {
+      "matchManagers": ["dockerfile", "docker-compose"],
+      "matchUpdateTypes": ["major", "minor", "patch"],
+      "digest": {
+        "enabled": false
+      },
+      "groupName": "Docker deps",
+      "groupSlug": "docker-deps"
+    }
+  ],
+  "labels": [
+    "chore",
+    "ci",
+    "bots"
+  ]
+}
