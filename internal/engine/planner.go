@@ -211,7 +211,7 @@ func (rpe *resourcePolicyEvaluator) EvaluateResourcesQueryPlan(ctx context.Conte
 				role: drName,
 				f: func() (*qpN, error) {
 					if dr.Condition == nil {
-						return nil, nil
+						return mkTrueNode(), nil
 					}
 					drVariables := make(map[string]*exprpb.Expr, len(dr.Variables))
 					for k, v := range dr.Variables {
