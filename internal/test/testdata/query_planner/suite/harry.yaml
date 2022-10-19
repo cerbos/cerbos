@@ -5,6 +5,7 @@ principal:
   policyVersion: default
   roles:
     - employee
+    - ex_intern
     - user
   attr:
     teams:
@@ -30,6 +31,30 @@ tests:
                 operands:
                   - variable: request.resource.attr.owner
                   - value: harry
+  - action: view:refer-derived-role-no-condition
+    resource:
+      kind: leave_request
+      policyVersion: default
+    want:
+      kind: KIND_CONDITIONAL
+      condition:
+        expression:
+          operator: eq
+          operands:
+            - variable: request.resource.attr.owner
+            - value: harry
+  - action: view:refer-parent-and-derived-roles
+    resource:
+      kind: leave_request
+      policyVersion: default
+    want:
+      kind: KIND_CONDITIONAL
+      condition:
+        expression:
+          operator: eq
+          operands:
+            - variable: request.resource.attr.owner
+            - value: harry
   - action: view:refer-derived-role
     resource:
       kind: leave_request
