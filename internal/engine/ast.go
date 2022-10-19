@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/google/cel-go/common/operators"
+	"github.com/tidwall/pretty"
 	"go.uber.org/multierr"
 	exprpb "google.golang.org/genproto/googleapis/api/expr/v1alpha1"
 	"google.golang.org/protobuf/encoding/protojson"
@@ -736,7 +737,7 @@ func filterExprOpToString(b *strings.Builder, cond *enginev1.PlanResourcesFilter
 		if val, err := protojson.Marshal(t.Value); err != nil {
 			b.WriteString("<ERROR>")
 		} else {
-			b.Write(val)
+			b.Write(pretty.UglyInPlace(val))
 		}
 	case *enginev1.PlanResourcesFilter_Expression_Operand_Variable:
 		b.WriteString(t.Variable)

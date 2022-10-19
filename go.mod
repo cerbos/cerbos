@@ -62,6 +62,7 @@ require (
 	github.com/spf13/afero v1.9.2
 	github.com/stretchr/testify v1.8.0
 	github.com/tidwall/gjson v1.14.3
+	github.com/tidwall/pretty v1.2.0
 	github.com/tidwall/sjson v1.2.5
 	go.elastic.co/ecszap v1.0.1
 	go.opencensus.io v0.23.0
@@ -221,7 +222,6 @@ require (
 	github.com/stoewer/go-strcase v1.2.0 // indirect
 	github.com/stretchr/objx v0.4.0 // indirect
 	github.com/tidwall/match v1.1.1 // indirect
-	github.com/tidwall/pretty v1.2.0 // indirect
 	github.com/xanzy/ssh-agent v0.3.1 // indirect
 	github.com/xeipuuv/gojsonpointer v0.0.0-20180127040702-4e3ac2762d5f // indirect
 	github.com/xeipuuv/gojsonreference v0.0.0-20180127040603-bd5ef7bd5415 // indirect
