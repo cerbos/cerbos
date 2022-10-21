@@ -1,7 +1,7 @@
 // Copyright 2021-2022 Zenauth Ltd.
 // SPDX-License-Identifier: Apache-2.0
 
-package engine
+package planner
 
 import (
 	"bytes"
@@ -20,6 +20,7 @@ import (
 	privatev1 "github.com/cerbos/cerbos/api/genpb/cerbos/private/v1"
 	runtimev1 "github.com/cerbos/cerbos/api/genpb/cerbos/runtime/v1"
 	"github.com/cerbos/cerbos/internal/conditions"
+	"github.com/cerbos/cerbos/internal/engine/planner/internal"
 	"github.com/cerbos/cerbos/internal/test"
 	"github.com/cerbos/cerbos/internal/util"
 	"github.com/google/cel-go/interpreter"
@@ -188,7 +189,8 @@ func TestResidualExpr(t *testing.T) {
 			is.NoError(err)
 			residualExpr := ResidualExpr(ast, det)
 			is.NoError(err)
-			err = evalComprehensionBody(env, pvars, residualExpr)
+			p := partialEvaluator{env, pvars}
+			err = p.evalComprehensionBody(residualExpr)
 			is.NoError(err)
 			is.Empty(cmp.Diff(residualExpr, residualAst.Expr(), protocmp.Transform(), ignoreID))
 		})
@@ -269,12 +271,13 @@ func TestPartialEvaluationWithGlobalVars(t *testing.T) {
 			is.NoError(err)
 
 			residualExpr := ResidualExpr(ast, det)
-			err = evalComprehensionBody(env, pvars, residualExpr)
-			updateIds(residualExpr)
+			p := partialEvaluator{env, pvars}
+			err = p.evalComprehensionBody(residualExpr)
+			internal.UpdateIds(residualExpr)
 			is.NoError(err)
 			wantAst, iss := env.Parse(tt.want)
 			wantExpr := wantAst.Expr()
-			updateIds(wantExpr)
+			internal.UpdateIds(wantExpr)
 			is.Nil(iss, iss.Err())
 			is.Empty(cmp.Diff(residualExpr, wantExpr, protocmp.Transform(), ignoreID),
 				"{\"got\": %s,\n\"want\": %s}", protojson.Format(residualExpr), protojson.Format(wantExpr))

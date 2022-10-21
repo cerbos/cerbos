@@ -6,6 +6,10 @@ principal: {
     "USER"
   ],
   "attr": {
+    "workspaceMap": {
+      "A": "MANAGER",
+      "B": "MEMBER",
+    },
     "workspaces": [
       {
         "name": "workspaceA",
@@ -93,3 +97,21 @@ tests:
       policyVersion: default
     want:
       kind: KIND_ALWAYS_ALLOWED
+  - action: edit
+    resource:
+      kind: report_with_map
+      policyVersion: default
+    want:
+      kind: KIND_CONDITIONAL
+      condition:
+        expression:
+          operator: eq
+          operands:
+            - variable: request.resource.attr.workspaceId
+            - value: "A"
+  - action: delete
+    resource:
+      kind: report_with_map
+      policyVersion: default
+    want:
+      kind: KIND_ALWAYS_DENIED

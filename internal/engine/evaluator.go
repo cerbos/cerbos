@@ -9,22 +9,20 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/google/cel-go/cel"
-	"go.uber.org/multierr"
-	exprpb "google.golang.org/genproto/googleapis/api/expr/v1alpha1"
-	"google.golang.org/protobuf/types/known/emptypb"
-
 	effectv1 "github.com/cerbos/cerbos/api/genpb/cerbos/effect/v1"
 	enginev1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
 	runtimev1 "github.com/cerbos/cerbos/api/genpb/cerbos/runtime/v1"
 	schemav1 "github.com/cerbos/cerbos/api/genpb/cerbos/schema/v1"
-	"github.com/cerbos/cerbos/internal/compile"
 	"github.com/cerbos/cerbos/internal/conditions"
+	"github.com/cerbos/cerbos/internal/engine/internal"
 	"github.com/cerbos/cerbos/internal/engine/tracer"
 	"github.com/cerbos/cerbos/internal/namer"
 	"github.com/cerbos/cerbos/internal/observability/tracing"
 	"github.com/cerbos/cerbos/internal/schema"
 	"github.com/cerbos/cerbos/internal/util"
+	"github.com/google/cel-go/cel"
+	"go.uber.org/multierr"
+	exprpb "google.golang.org/genproto/googleapis/api/expr/v1alpha1"
 )
 
 var ErrPolicyNotExecutable = errors.New("policy not executable")
@@ -39,7 +37,6 @@ func defaultEvalParams() evalParams {
 
 type Evaluator interface {
 	Evaluate(context.Context, tracer.Context, *enginev1.CheckInput) (*PolicyEvalResult, error)
-	EvaluateResourcesQueryPlan(ctx context.Context, request *enginev1.PlanResourcesInput) (*PolicyPlanResult, error)
 }
 
 func NewEvaluator(rps *runtimev1.RunnablePolicySet, schemaMgr schema.Manager, eparams evalParams) Evaluator {
@@ -54,10 +51,6 @@ func NewEvaluator(rps *runtimev1.RunnablePolicySet, schemaMgr schema.Manager, ep
 }
 
 type noopEvaluator struct{}
-
-func (e noopEvaluator) EvaluateResourcesQueryPlan(ctx context.Context, request *enginev1.PlanResourcesInput) (*PolicyPlanResult, error) {
-	return nil, ErrPolicyNotExecutable
-}
 
 func (noopEvaluator) Evaluate(_ context.Context, _ tracer.Context, _ *enginev1.CheckInput) (*PolicyEvalResult, error) {
 	return nil, ErrPolicyNotExecutable
@@ -76,7 +69,7 @@ func (rpe *resourcePolicyEvaluator) Evaluate(ctx context.Context, tctx tracer.Co
 
 	policyKey := namer.PolicyKeyFromFQN(rpe.policy.Meta.Fqn)
 	result := newEvalResult(input.Actions)
-	effectiveRoles := toSet(input.Principal.Roles)
+	effectiveRoles := internal.ToSet(input.Principal.Roles)
 
 	pctx := tctx.StartPolicy(rpe.policy.Meta.Fqn)
 
@@ -124,10 +117,10 @@ func (rpe *resourcePolicyEvaluator) Evaluate(ctx context.Context, tctx tracer.Co
 		}
 
 		// calculate the set of effective derived roles
-		effectiveDerivedRoles := stringSet{}
+		effectiveDerivedRoles := internal.StringSet{}
 		for drName, dr := range p.DerivedRoles {
 			dctx := sctx.StartDerivedRole(drName)
-			if !setIntersects(dr.ParentRoles, effectiveRoles) {
+			if !internal.SetIntersects(dr.ParentRoles, effectiveRoles) {
 				dctx.Skipped(nil, "No matching roles")
 				continue
 			}
@@ -159,7 +152,7 @@ func (rpe *resourcePolicyEvaluator) Evaluate(ctx context.Context, tctx tracer.Co
 		// evaluate each rule until all actions have a result
 		for _, rule := range p.Rules {
 			rctx := sctx.StartRule(rule.Name)
-			if !setIntersects(rule.Roles, effectiveRoles) && !setIntersects(rule.DerivedRoles, effectiveDerivedRoles) {
+			if !internal.SetIntersects(rule.Roles, effectiveRoles) && !internal.SetIntersects(rule.DerivedRoles, effectiveDerivedRoles) {
 				rctx.Skipped(nil, "No matching roles or derived roles")
 				continue
 			}
@@ -391,33 +384,6 @@ func (ep evalParams) evaluateCELExpr(expr *exprpb.CheckedExpr, variables map[str
 	}
 
 	return result.Value(), nil
-}
-
-type protoSet map[string]*emptypb.Empty
-
-type stringSet map[string]struct{}
-
-func toSet(values []string) stringSet {
-	s := make(stringSet, len(values))
-	for _, v := range values {
-		s[v] = struct{}{}
-	}
-
-	return s
-}
-
-func setIntersects(s1 protoSet, s2 stringSet) bool {
-	for v := range s1 {
-		if v == compile.AnyRoleVal {
-			return true
-		}
-
-		if _, ok := s2[v]; ok {
-			return true
-		}
-	}
-
-	return false
 }
 
 type EffectInfo struct {
