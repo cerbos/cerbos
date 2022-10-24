@@ -39,9 +39,7 @@ message Schema {
   ];
   bytes definition = 2 [
     (google.api.field_behavior) = REQUIRED,
-    (validate.rules).bytes = {
-      min_len: 10
-    },
+    (validate.rules).bytes = {min_len: 10},
     (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
       description: "JSON schema definition"
       example: "{\"type\":\"object\", \"properties\":{}}"

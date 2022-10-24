@@ -206,7 +206,6 @@ func (c *Conf) Validate() (errs error) {
 		errs = multierr.Append(errs, fmt.Errorf("invalid grpcListenAddr '%s': %w", c.GRPCListenAddr, err))
 	}
 
-	//nolint:gomnd
 	if mode, err := strconv.ParseInt(c.UDSFileMode, 0, 32); err != nil {
 		errs = multierr.Append(errs, fmt.Errorf("invalid udsFileMode %q: %w", c.UDSFileMode, err))
 	} else if mode <= 0 {
