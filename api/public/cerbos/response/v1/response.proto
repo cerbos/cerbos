@@ -19,21 +19,15 @@ option java_package = "dev.cerbos.api.v1.response";
 
 message PlanResourcesResponse {
   option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
-    json_schema: {
-      description: "Resources query plan response for a set of resources."
-    }
+    json_schema: {description: "Resources query plan response for a set of resources."}
   };
 
   message Meta {
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
-      json_schema: {
-        description: "Metadata about request evaluation."
-      }
+      json_schema: {description: "Metadata about request evaluation."}
     };
 
-    string filter_debug = 1 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
-      description: "Filter textual representation for debugging purposes.",
-    }];
+    string filter_debug = 1 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "Filter textual representation for debugging purposes."}];
 
     string matched_scope = 2 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
       description: "Policy scope that matched to produce this effect."
@@ -62,48 +56,32 @@ message PlanResourcesResponse {
     example: "\"default\""
   }];
 
-  cerbos.engine.v1.PlanResourcesFilter filter = 5 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
-    description: "Filter",
-  }];
+  cerbos.engine.v1.PlanResourcesFilter filter = 5 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "Filter"}];
 
-  Meta meta = 6 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
-    description: "Optional metadata about the request evaluation process"
-  }];
+  Meta meta = 6 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "Optional metadata about the request evaluation process"}];
 
-  repeated cerbos.schema.v1.ValidationError validation_errors = 7 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
-    description: "List of validation errors (if schema validation is enabled)"
-  }];
+  repeated cerbos.schema.v1.ValidationError validation_errors = 7 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "List of validation errors (if schema validation is enabled)"}];
 }
 
 // Deprecated. See CheckResourcesResponse.
 message CheckResourceSetResponse {
   option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
-    json_schema: {
-      description: "Policy evaluation response for a set of resources."
-    }
+    json_schema: {description: "Policy evaluation response for a set of resources."}
   };
 
   message ActionEffectMap {
-    map<string, cerbos.effect.v1.Effect> actions = 1 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
-      description: "Mapping of each action to an effect."
-    }];
-    repeated cerbos.schema.v1.ValidationError validation_errors = 2 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
-      description: "List of validation errors (if schema validation is enabled)"
-    }];
+    map<string, cerbos.effect.v1.Effect> actions = 1 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "Mapping of each action to an effect."}];
+    repeated cerbos.schema.v1.ValidationError validation_errors = 2 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "List of validation errors (if schema validation is enabled)"}];
   }
 
   message Meta {
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
-      json_schema: {
-        description: "Metadata about request evaluation."
-      }
+      json_schema: {description: "Metadata about request evaluation."}
     };
 
     message EffectMeta {
       option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
-        json_schema: {
-          description: "Name of the action."
-        }
+        json_schema: {description: "Name of the action."}
       };
       string matched_policy = 1 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
         description: "Policy that matched to produce this effect."
@@ -117,9 +95,7 @@ message CheckResourceSetResponse {
 
     message ActionMeta {
       option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
-        json_schema: {
-          description: "Unique resource instance ID supplied in the request."
-        }
+        json_schema: {description: "Unique resource instance ID supplied in the request."}
       };
       map<string, EffectMeta> actions = 1 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
         description: "Metadata about the effect calculated for each action on this resource instance."
@@ -145,17 +121,13 @@ message CheckResourceSetResponse {
     description: "Results for each resource instance, keyed by the ID supplied in the request"
     example: "{\"XX125\":{\"actions\":{\"view:*\":\"EFFECT_ALLOW\", \"comment\": \"EFFECT_ALLOW\"}}, \"XX225\":{\"actions\":{\"view:*\":\"EFFECT_DENY\", \"comment\": \"EFFECT_DENY\"}}}"
   }];
-  Meta meta = 3 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
-    description: "Optional metadata about the request evaluation process"
-  }];
+  Meta meta = 3 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "Optional metadata about the request evaluation process"}];
 }
 
 // Deprecated. See CheckResourcesResponse.
 message CheckResourceBatchResponse {
   option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
-    json_schema: {
-      description: "Policy evaluation response for a batch of resources."
-    }
+    json_schema: {description: "Policy evaluation response for a batch of resources."}
   };
 
   message ActionEffectMap {
@@ -167,9 +139,7 @@ message CheckResourceBatchResponse {
       description: "Mapping of each action to an effect."
       example: "{\"view\":\"EFFECT_ALLOW\"}"
     }];
-    repeated cerbos.schema.v1.ValidationError validation_errors = 3 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
-      description: "List of validation errors (if schema validation is enabled)"
-    }];
+    repeated cerbos.schema.v1.ValidationError validation_errors = 3 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "List of validation errors (if schema validation is enabled)"}];
   }
 
   string request_id = 1 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
@@ -184,9 +154,7 @@ message CheckResourceBatchResponse {
 
 message CheckResourcesResponse {
   option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
-    json_schema: {
-      description: "Response from the check resources API call."
-    }
+    json_schema: {description: "Response from the check resources API call."}
   };
 
   message ResultEntry {
@@ -214,16 +182,12 @@ message CheckResourcesResponse {
 
     message Meta {
       option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
-        json_schema: {
-          description: "Metadata about request evaluation."
-        }
+        json_schema: {description: "Metadata about request evaluation."}
       };
 
       message EffectMeta {
         option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
-          json_schema: {
-            description: "Name of the action."
-          }
+          json_schema: {description: "Name of the action."}
         };
         string matched_policy = 1 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
           description: "Policy that matched to produce this effect."
@@ -250,9 +214,7 @@ message CheckResourcesResponse {
       description: "Mapping of each action to an effect."
       example: "{\"view\":\"EFFECT_ALLOW\"}"
     }];
-    repeated cerbos.schema.v1.ValidationError validation_errors = 3 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
-      description: "List of validation errors (if schema validation is enabled)"
-    }];
+    repeated cerbos.schema.v1.ValidationError validation_errors = 3 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "List of validation errors (if schema validation is enabled)"}];
     Meta meta = 4 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
       description: "Metadata about policy evaluation"
       example: "{\"actions\": {\"view:*\":{\"matched_policy\": \"album:object:default\"},\"comment\":{\"matched_policy\": \"album:object:default\"}}, \"effective_derived_roles\": [\"owner\"]}"
@@ -271,9 +233,7 @@ message CheckResourcesResponse {
 
 message PlaygroundFailure {
   option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
-    json_schema: {
-      description: "Playground response"
-    }
+    json_schema: {description: "Playground response"}
   };
 
   message Error {
@@ -286,9 +246,7 @@ message PlaygroundFailure {
 
 message PlaygroundValidateResponse {
   option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
-    json_schema: {
-      description: "Playground validate response"
-    }
+    json_schema: {description: "Playground validate response"}
   };
 
   string playground_id = 1;
@@ -301,9 +259,7 @@ message PlaygroundValidateResponse {
 
 message PlaygroundTestResponse {
   option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
-    json_schema: {
-      description: "Playground test response"
-    }
+    json_schema: {description: "Playground test response"}
   };
 
   message TestResults {
@@ -319,9 +275,7 @@ message PlaygroundTestResponse {
 
 message PlaygroundEvaluateResponse {
   option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
-    json_schema: {
-      description: "Playground evaluate response"
-    }
+    json_schema: {description: "Playground evaluate response"}
   };
 
   message EvalResult {
@@ -345,9 +299,7 @@ message PlaygroundEvaluateResponse {
 
 message PlaygroundProxyResponse {
   option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
-    json_schema: {
-      description: "Playground proxy response"
-    }
+    json_schema: {description: "Playground proxy response"}
   };
 
   string playground_id = 1;
@@ -362,9 +314,7 @@ message PlaygroundProxyResponse {
 
 message AddOrUpdatePolicyResponse {
   option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
-    json_schema: {
-      description: "Add/update policy response"
-    }
+    json_schema: {description: "Add/update policy response"}
   };
 
   google.protobuf.Empty success = 1;
@@ -372,9 +322,7 @@ message AddOrUpdatePolicyResponse {
 
 message ListAuditLogEntriesResponse {
   option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
-    json_schema: {
-      description: "Audit log stream."
-    }
+    json_schema: {description: "Audit log stream."}
   };
 
   oneof entry {
@@ -385,9 +333,7 @@ message ListAuditLogEntriesResponse {
 
 message ServerInfoResponse {
   option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
-    json_schema: {
-      description: "Server info response"
-    }
+    json_schema: {description: "Server info response"}
   };
 
   string version = 1;
@@ -397,9 +343,7 @@ message ServerInfoResponse {
 
 message ListPoliciesResponse {
   option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
-    json_schema: {
-      description: "List of policies stored in the Cerbos server"
-    }
+    json_schema: {description: "List of policies stored in the Cerbos server"}
   };
 
   repeated string policy_ids = 1;
@@ -407,9 +351,7 @@ message ListPoliciesResponse {
 
 message GetPolicyResponse {
   option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
-    json_schema: {
-      description: "Get policy response"
-    }
+    json_schema: {description: "Get policy response"}
   };
 
   repeated cerbos.policy.v1.Policy policies = 1;
@@ -417,17 +359,13 @@ message GetPolicyResponse {
 
 message AddOrUpdateSchemaResponse {
   option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
-    json_schema: {
-      description: "Add/update schema response"
-    }
+    json_schema: {description: "Add/update schema response"}
   };
 }
 
 message ListSchemasResponse {
   option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
-    json_schema: {
-      description: "List schema ids response"
-    }
+    json_schema: {description: "List schema ids response"}
   };
 
   repeated string schema_ids = 1;
@@ -435,9 +373,7 @@ message ListSchemasResponse {
 
 message GetSchemaResponse {
   option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
-    json_schema: {
-      description: "Get schema(s) response"
-    }
+    json_schema: {description: "Get schema(s) response"}
   };
 
   repeated cerbos.schema.v1.Schema schemas = 1;
@@ -445,16 +381,12 @@ message GetSchemaResponse {
 
 message DeleteSchemaResponse {
   option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
-    json_schema: {
-      description: "Delete schema(s) response"
-    }
+    json_schema: {description: "Delete schema(s) response"}
   };
 }
 
 message ReloadStoreResponse {
   option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
-    json_schema: {
-      description: "Reload store response"
-    }
+    json_schema: {description: "Reload store response"}
   };
 }
