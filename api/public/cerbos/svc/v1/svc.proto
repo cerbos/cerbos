@@ -29,17 +29,13 @@ option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_swagger) = {
   security_definitions: {
     security: {
       key: "BasicAuth";
-      value: {
-        type: TYPE_BASIC;
-      }
+      value: {type: TYPE_BASIC}
     }
   };
 };
 
 service CerbosService {
-  option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_tag) = {
-    description: "Cerbos Policy Decision Point"
-  };
+  option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_tag) = {description: "Cerbos Policy Decision Point"};
 
   rpc CheckResourceSet(cerbos.request.v1.CheckResourceSetRequest) returns (cerbos.response.v1.CheckResourceSetResponse) {
     option (google.api.http) = {
@@ -77,9 +73,7 @@ service CerbosService {
   }
 
   rpc ServerInfo(cerbos.request.v1.ServerInfoRequest) returns (cerbos.response.v1.ServerInfoResponse) {
-    option (google.api.http) = {
-      get: "/api/server_info"
-    };
+    option (google.api.http) = {get: "/api/server_info"};
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
       summary: "Get server information"
       description: "Get information about the server e.g. server version"
@@ -103,9 +97,7 @@ service CerbosService {
 }
 
 service CerbosAdminService {
-  option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_tag) = {
-    description: "Cerbos administration service"
-  };
+  option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_tag) = {description: "Cerbos administration service"};
 
   rpc AddOrUpdatePolicy(cerbos.request.v1.AddOrUpdatePolicyRequest) returns (cerbos.response.v1.AddOrUpdatePolicyResponse) {
     option (google.api.http) = {
@@ -128,9 +120,7 @@ service CerbosAdminService {
   }
 
   rpc ListPolicies(cerbos.request.v1.ListPoliciesRequest) returns (cerbos.response.v1.ListPoliciesResponse) {
-    option (google.api.http) = {
-      get: "/admin/policies",
-    };
+    option (google.api.http) = {get: "/admin/policies"};
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
       summary: "List policies",
       security: {
@@ -143,9 +133,7 @@ service CerbosAdminService {
   }
 
   rpc GetPolicy(cerbos.request.v1.GetPolicyRequest) returns (cerbos.response.v1.GetPolicyResponse) {
-    option (google.api.http) = {
-      get: "/admin/policy",
-    };
+    option (google.api.http) = {get: "/admin/policy"};
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
       summary: "Get policy",
       security: {
@@ -158,9 +146,7 @@ service CerbosAdminService {
   }
 
   rpc ListAuditLogEntries(cerbos.request.v1.ListAuditLogEntriesRequest) returns (stream cerbos.response.v1.ListAuditLogEntriesResponse) {
-    option (google.api.http) = {
-      get: "/admin/auditlog/list/{kind}",
-    };
+    option (google.api.http) = {get: "/admin/auditlog/list/{kind}"};
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
       summary: "List audit log entries",
       security: {
@@ -193,9 +179,7 @@ service CerbosAdminService {
   }
 
   rpc ListSchemas(cerbos.request.v1.ListSchemasRequest) returns (cerbos.response.v1.ListSchemasResponse) {
-    option (google.api.http) = {
-      get: "/admin/schemas",
-    };
+    option (google.api.http) = {get: "/admin/schemas"};
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
       summary: "List schemas",
       security: {
@@ -208,9 +192,7 @@ service CerbosAdminService {
   }
 
   rpc GetSchema(cerbos.request.v1.GetSchemaRequest) returns (cerbos.response.v1.GetSchemaResponse) {
-    option (google.api.http) = {
-      get: "/admin/schema",
-    };
+    option (google.api.http) = {get: "/admin/schema"};
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
       summary: "Get schema",
       security: {
@@ -223,9 +205,7 @@ service CerbosAdminService {
   }
 
   rpc DeleteSchema(cerbos.request.v1.DeleteSchemaRequest) returns (cerbos.response.v1.DeleteSchemaResponse) {
-    option (google.api.http) = {
-      delete: "/admin/schema",
-    };
+    option (google.api.http) = {delete: "/admin/schema"};
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
       summary: "Delete schema",
       security: {
@@ -238,9 +218,7 @@ service CerbosAdminService {
   }
 
   rpc ReloadStore(cerbos.request.v1.ReloadStoreRequest) returns (cerbos.response.v1.ReloadStoreResponse) {
-    option (google.api.http) = {
-      get: "/admin/store/reload",
-    };
+    option (google.api.http) = {get: "/admin/store/reload"};
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
       summary: "Reload store",
       security: {
