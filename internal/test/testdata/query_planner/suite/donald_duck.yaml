@@ -25,6 +25,26 @@ tests:
           operands:
             - variable: request.resource.attr.ownerId
             - value: donald_duck
+  - action: handle_null
+    resource:
+      kind: contact
+      policyVersion: default
+    want:
+      kind: KIND_CONDITIONAL
+      condition:
+        expression:
+          operator: and
+          operands:
+            - expression:
+                operator: eq
+                operands:
+                  - variable: request.resource.attr.missing
+                  - value: null
+            - expression:
+                operator: ne
+                operands:
+                  - variable: request.resource.attr.present
+                  - value: null
   - action: view
     resource:
       kind: leave_request
