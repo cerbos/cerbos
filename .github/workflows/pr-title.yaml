@@ -42,4 +42,3 @@ jobs:
           subjectPattern: '^[A-Z].+$'
           subjectPatternError: |
             Subject "{subject}" does not start with an uppercase letter
-          validateSingleCommit: true

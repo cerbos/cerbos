@@ -495,7 +495,7 @@ func visitConst(c *exprpb.Constant) (*structpb.Value, error) {
 	case *exprpb.Constant_Int64Value:
 		return structpb.NewValue(v.Int64Value)
 	case *exprpb.Constant_NullValue:
-		return structpb.NewValue(v.NullValue)
+		return structpb.NewNullValue(), nil
 	case *exprpb.Constant_StringValue:
 		return structpb.NewValue(v.StringValue)
 	case *exprpb.Constant_Uint64Value:

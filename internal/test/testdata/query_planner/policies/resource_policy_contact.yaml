@@ -24,3 +24,14 @@ resourcePolicy:
       condition:
         match:
           expr: request.resource.attr.ownerId == request.principal.id
+
+    - actions: ["handle_null"]
+      effect: EFFECT_ALLOW
+      roles:
+        - user
+      condition:
+        match:
+          all:
+            of:
+              - expr: request.resource.attr.missing == null
+              - expr: has(request.resource.attr.present) && request.resource.attr.present != null

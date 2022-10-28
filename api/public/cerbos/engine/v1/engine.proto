@@ -34,9 +34,7 @@ message PlanResourcesInput {
 
     map<string, google.protobuf.Value> attr = 2 [
       (validate.rules).map.no_sparse = true,
-      (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
-        description: "Key-value pairs of contextual data about the resource that are known at a time of the request."
-      }
+      (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "Key-value pairs of contextual data about the resource that are known at a time of the request."}
     ];
 
     string policy_version = 3 [
@@ -92,14 +90,10 @@ message PlanResourcesAst {
 message PlanResourcesFilter {
   message Expression {
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
-      json_schema: {
-        description: "CEL expression"
-      }
+      json_schema: {description: "CEL expression"}
     };
 
-    string operator = 1 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
-      description: "Operator",
-    }];
+    string operator = 1 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "Operator"}];
 
     message Operand {
       oneof node {
@@ -119,13 +113,9 @@ message PlanResourcesFilter {
     KIND_CONDITIONAL = 3;
   }
 
-  Kind kind = 1 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
-    description: "Filter kind. Defines whether the given action is always allowed, always denied or allowed conditionally.",
-  }];
+  Kind kind = 1 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "Filter kind. Defines whether the given action is always allowed, always denied or allowed conditionally."}];
 
-  Expression.Operand condition = 2 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
-    description: "Filter condition. Only populated if kind is KIND_CONDITIONAL.",
-  }];
+  Expression.Operand condition = 2 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "Filter condition. Only populated if kind is KIND_CONDITIONAL."}];
 }
 
 message PlanResourcesOutput {
@@ -153,9 +143,7 @@ message CheckInput {
     (validate.rules).repeated = {
       unique: true,
       items {
-        string {
-          min_len: 1
-        }
+        string {min_len: 1}
       }
     },
     (google.api.field_behavior) = REQUIRED
@@ -200,9 +188,7 @@ message Resource {
     }
   ];
   string id = 3 [
-    (validate.rules).string = {
-      min_len: 1
-    },
+    (validate.rules).string = {min_len: 1},
     (google.api.field_behavior) = REQUIRED,
     (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
       description: "ID of the resource instance"
@@ -229,14 +215,10 @@ message Resource {
 
 message Principal {
   option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
-    json_schema: {
-      description: "A person or application attempting to perform the actions on the set of resources."
-    }
+    json_schema: {description: "A person or application attempting to perform the actions on the set of resources."}
   };
   string id = 1 [
-    (validate.rules).string = {
-      min_len: 1
-    },
+    (validate.rules).string = {min_len: 1},
     (google.api.field_behavior) = REQUIRED,
     (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
       description: "ID of the principal"
@@ -257,9 +239,7 @@ message Principal {
       unique: true,
       min_items: 1,
       items {
-        string {
-          pattern: "^[[:word:]\\-\\.]+$"
-        }
+        string {pattern: "^[[:word:]\\-\\.]+$"}
       }
     },
     (google.api.field_behavior) = REQUIRED,
@@ -291,9 +271,7 @@ message Principal {
 
 message AuxData {
   option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
-    json_schema: {
-      description: "Structured auxiliary data"
-    }
+    json_schema: {description: "Structured auxiliary data"}
   };
 
   map<string, google.protobuf.Value> jwt = 1;
