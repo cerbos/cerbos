@@ -45,77 +45,12 @@ These APIs can be called via [cURL](#api-request), or in production via one of o
 
 Cerbos is popular among large and small organizations:
 
-<table cellspacing="1" cellpadding="0">
-  <tr>
-  <td valign="center">
-      <a href="https://blockchain.com">
-        <img src="https://cerbos.dev/assets/blockchain.svg" width="256" />
-      </a>
-    </td>
-    <td valign="center">
-      <a href="https://uw.co.uk">
-        <img src="https://cerbos.dev/assets/uw.svg" width="256" />
-      </a>
-    </td>
-    <td valign="center">
-      <a href="https://salesroom.com">
-        <img src="https://cerbos.dev/assets/logos/salesroom-dark.svg" width="256" />
-      </a>
-    </td>
-    <td valign="center">
-      <a href="https://9fin.com">
-        <img src="https://cerbos.dev/assets/9fin.svg" width="256" height="35" />
-      </a>
-    </td>
-    
-  </tr>
-  <tr>
-    <td valign="center">
-      <a href="https://withloop.co/">
-        <img src="https://cerbos.dev/assets/loop.png"  width="256" />
-      </a>
-    </td>
-    <td valign="center">
-      <a href="https://www.captifytechnologies.com/">
-        <img src="https://cerbos.dev/assets/captify.svg" width="256" />
-      </a>
-    </td>
-    <td valign="center">
-      <a href="https://www.doorfeed.com/">
-        <img src="https://cerbos.dev/assets/doorfeed.svg" width="256" />
-      </a>
-    </td>
-   <td valign="center">
-      <a href="https://www.wizeline.com/">
-        <img src="https://cerbos.dev/assets/wizeline.svg" width="256" height="35"/>
-      </a>
-   </td>
-  </tr>
-  <tr>
-    <td valign="center">
-      <a href="https://www.debite.io/">
-        <img src="https://cerbos.dev/assets/debite.svg" width="256" />
-      </a>
-   </td>
-   <td valign="center">
-      <a href="https://www.our.space/">
-        <img src="https://cerbos.dev/assets/logos/ourspace.svg" width="256" />
-      </a>
-   </td>
-   <td valign="center">
-      <a href="https://nook.io/">
-        <img src="https://cerbos.dev//assets/nook.png" width="256" />
-      </a>
-   </td>
-   <td valign="center">
-      <a href="https://refine.dev">
-        <img src="https://cerbos.dev/assets/refine.png" width="256" />
-      </a>
-    </td>
-  </tr>
-</table>
+<p align="center">
+  <img src="https://cerbos.dev/assets/logos/readme_logos.png" alt="Cerbos"/>
+</p>
 
-_Using Cerbos? Open a PR to add your company._
+
+_Using Cerbos? Please email us at devrel@cerbos.dev to get your logo added._
 
 
 ## Installation
