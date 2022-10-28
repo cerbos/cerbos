@@ -50,7 +50,7 @@ Cerbos is popular among large and small organizations:
 </p>
 
 
-_Using Cerbos? Please email us at devrel@cerbos.dev to get your logo added._
+_Using Cerbos? Let us know by emailing devrel@cerbos.dev._
 
 
 ## Installation
