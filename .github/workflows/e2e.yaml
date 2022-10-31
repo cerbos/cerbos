@@ -31,7 +31,7 @@ jobs:
             ${{ runner.os }}-go-
 
       - name: Install Helm
-        uses: azure/setup-helm@v3.3
+        uses: azure/setup-helm@v3.4
 
       - name: Install Helmfile and Telepresence
         run: |
