@@ -458,7 +458,7 @@ func MatchResourcePolicyVersion(version string) MatchResource {
 	}
 }
 
-// MatchResourceKindVersionScope is a matcher that checks that the resource policy kind, version and scope matches the given values.
+// MatchResourcePolicyKindScopeVersion is a matcher that checks that the resource policy kind, version and scope matches the given values.
 func MatchResourcePolicyKindScopeVersion(kind, version, scope string) MatchResource {
 	return func(r *responsev1.CheckResourcesResponse_ResultEntry_Resource) bool {
 		return r.Kind == kind && r.PolicyVersion == version && r.Scope == scope
@@ -714,7 +714,7 @@ func (ss *SchemaSet) AddSchemaFromFileWithErr(file string, ignorePathInID bool) 
 	return ss.AddSchemaFromFileWithIDAndErr(file, id)
 }
 
-// AddSchemaFromFileWithErr adds a schema with the given id from the given file to the set and returns the error.
+// AddSchemaFromFileWithIDAndErr adds a schema with the given id from the given file to the set and returns the error.
 func (ss *SchemaSet) AddSchemaFromFileWithIDAndErr(file, id string) (*SchemaSet, error) {
 	f, err := os.Open(file)
 	if err != nil {
@@ -763,6 +763,40 @@ func (ss *SchemaSet) Err() error {
 	return ss.err
 }
 
+// Schema is a builder for Schemas_Schema.
+type Schema struct {
+	s *policyv1.Schemas_Schema
+}
+
+func NewSchema(ref string) *Schema {
+	return (&Schema{
+		s: &policyv1.Schemas_Schema{
+			Ref:        "",
+			IgnoreWhen: &policyv1.Schemas_IgnoreWhen{},
+		},
+	}).WithRef(ref)
+}
+
+// WithRef sets the ref of this schema.
+func (s *Schema) WithRef(ref string) *Schema {
+	s.s.Ref = ref
+	return s
+}
+
+// AddIgnoredActions adds action(s) to the ignoreWhen field of the schema.
+func (s *Schema) AddIgnoredActions(actions ...string) *Schema {
+	s.s.IgnoreWhen.Actions = append(s.s.IgnoreWhen.Actions, actions...)
+	return s
+}
+
+func (s *Schema) Validate() error {
+	return s.s.Validate()
+}
+
+func (s *Schema) build() *policyv1.Schemas_Schema {
+	return s.s
+}
+
 // ResourcePolicy is a builder for resource policies.
 type ResourcePolicy struct {
 	p   *policyv1.ResourcePolicy
@@ -782,6 +816,21 @@ func NewResourcePolicy(resource, version string) *ResourcePolicy {
 // WithDerivedRolesImports adds import statements for derived roles.
 func (rp *ResourcePolicy) WithDerivedRolesImports(imp ...string) *ResourcePolicy {
 	rp.p.ImportDerivedRoles = append(rp.p.ImportDerivedRoles, imp...)
+	return rp
+}
+
+func (rp *ResourcePolicy) WithScope(scope string) *ResourcePolicy {
+	rp.p.Scope = scope
+	return rp
+}
+
+func (rp *ResourcePolicy) WithPrincipalSchema(principalSchema *Schema) *ResourcePolicy {
+	rp.p.Schemas.PrincipalSchema = principalSchema.build()
+	return rp
+}
+
+func (rp *ResourcePolicy) WithResourceSchema(resourceSchema *Schema) *ResourcePolicy {
+	rp.p.Schemas.ResourceSchema = resourceSchema.build()
 	return rp
 }
 
@@ -819,19 +868,17 @@ func (rp *ResourcePolicy) Validate() error {
 }
 
 func (rp *ResourcePolicy) build() (*policyv1.Policy, error) {
-	if err := rp.Validate(); err != nil {
-		return nil, err
-	}
-
-	return &policyv1.Policy{
+	p := &policyv1.Policy{
 		ApiVersion: apiVersion,
 		PolicyType: &policyv1.Policy_ResourcePolicy{
 			ResourcePolicy: rp.p,
 		},
-	}, nil
+	}
+
+	return p, policy.Validate(p)
 }
 
-// ResourceRules is a rule in a resource policy.
+// ResourceRule is a rule in a resource policy.
 type ResourceRule struct {
 	rule *policyv1.ResourceRule
 }
@@ -854,6 +901,12 @@ func NewDenyResourceRule(actions ...string) *ResourceRule {
 			Effect:  effectv1.Effect_EFFECT_DENY,
 		},
 	}
+}
+
+// WithName sets the name of the ResourceRule.
+func (rr *ResourceRule) WithName(name string) *ResourceRule {
+	rr.rule.Name = name
+	return rr
 }
 
 // WithRoles adds roles to which this rule applies.
@@ -920,6 +973,18 @@ func (pp *PrincipalPolicy) AddPrincipalRules(rules ...*PrincipalRule) *Principal
 		pp.pp.Rules = append(pp.pp.Rules, r.rule)
 	}
 
+	return pp
+}
+
+// WithScope sets the scope of this policy.
+func (pp *PrincipalPolicy) WithScope(scope string) *PrincipalPolicy {
+	pp.pp.Scope = scope
+	return pp
+}
+
+// WithVersion sets the version of this policy.
+func (pp *PrincipalPolicy) WithVersion(version string) *PrincipalPolicy {
+	pp.pp.Version = version
 	return pp
 }
 
@@ -1000,7 +1065,7 @@ func (pr *PrincipalRule) Err() error {
 	return nil
 }
 
-// Vaidate checks whether the rule is valid.
+// Validate checks whether the rule is valid.
 func (pr *PrincipalRule) Validate() error {
 	return pr.rule.Validate()
 }
@@ -1060,7 +1125,7 @@ func MatchExpr(expr string) match {
 	return matchExpr(expr)
 }
 
-// MatchAllOf  matches all of the expressions (logical AND).
+// MatchAllOf matches all of the expressions (logical AND).
 func MatchAllOf(m ...match) match {
 	return matchList{
 		list: m,
