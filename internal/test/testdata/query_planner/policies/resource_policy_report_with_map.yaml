@@ -51,3 +51,19 @@ resourcePolicy:
       condition:
         match:
           expr: P.attr.workspaces.filter(w, w.role=="MANAGER").all(w, w.name.startsWith("workspace"))
+    - actions:
+        - edit
+      effect: EFFECT_ALLOW
+      roles:
+        - USER
+      condition:
+        match:
+          expr: P.attr.workspaceMap[R.attr.workspaceId] == "MANAGER"
+    - actions:
+        - delete
+      effect: EFFECT_ALLOW
+      roles:
+        - USER
+      condition:
+        match:
+          expr: P.attr.workspaceMap[R.attr.workspaceId] == "ADMIN"

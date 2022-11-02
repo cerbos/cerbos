@@ -22,6 +22,7 @@ import (
 	runtimev1 "github.com/cerbos/cerbos/api/genpb/cerbos/runtime/v1"
 	schemav1 "github.com/cerbos/cerbos/api/genpb/cerbos/schema/v1"
 	"github.com/cerbos/cerbos/internal/audit"
+	"github.com/cerbos/cerbos/internal/engine/planner"
 	"github.com/cerbos/cerbos/internal/engine/tracer"
 	"github.com/cerbos/cerbos/internal/namer"
 	"github.com/cerbos/cerbos/internal/observability/logging"
@@ -312,20 +313,17 @@ func (engine *Engine) doPlanResources(ctx context.Context, input *enginev1.PlanR
 		return nil, err
 	}
 
-	eparams := defaultEvalParams()
-
 	// get the principal policy check
 	ppName, ppVersion, ppScope := engine.policyAttr(input.Principal.Id, input.Principal.PolicyVersion, input.Principal.Scope)
-	policyEvaluator, err := engine.getPrincipalPolicyEvaluator(ctx, eparams, ppName, ppVersion, ppScope)
+	policySet, err := engine.getPrincipalPolicySet(ctx, ppName, ppVersion, ppScope)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get check for [%s.%s]: %w", ppName, ppVersion, err)
 	}
 
-	var result *PolicyPlanResult
+	result := new(planner.PolicyPlanResult)
 
-	if policyEvaluator == nil {
-		result = &PolicyPlanResult{}
-	} else {
+	if policy := policySet.GetPrincipalPolicy(); policy != nil {
+		policyEvaluator := planner.PrincipalPolicyEvaluator{Policy: policy}
 		result, err = policyEvaluator.EvaluateResourcesQueryPlan(ctx, input)
 		if err != nil {
 			return nil, err
@@ -334,18 +332,19 @@ func (engine *Engine) doPlanResources(ctx context.Context, input *enginev1.PlanR
 
 	// get the resource policy check
 	rpName, rpVersion, rpScope := engine.policyAttr(input.Resource.Kind, input.Resource.PolicyVersion, input.Resource.Scope)
-	policyEvaluator, err = engine.getResourcePolicyEvaluator(ctx, eparams, rpName, rpVersion, rpScope)
+	policySet, err = engine.getResourcePolicySet(ctx, rpName, rpVersion, rpScope)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get check for [%s.%s]: %w", rpName, rpVersion, err)
 	}
 
-	if policyEvaluator != nil {
+	if policy := policySet.GetResourcePolicy(); policy != nil {
+		policyEvaluator := planner.ResourcePolicyEvaluator{Policy: policy, SchemaMgr: engine.schemaMgr}
 		plan, err := policyEvaluator.EvaluateResourcesQueryPlan(ctx, input)
 		if err != nil {
 			return nil, err
 		}
 
-		result = combinePlans(result, plan)
+		result = planner.CombinePlans(result, plan)
 	}
 
 	output, err := result.ToPlanResourcesOutput(input)
@@ -486,7 +485,7 @@ func (engine *Engine) buildEvaluationCtx(ctx context.Context, eparams evalParams
 	return ec, nil
 }
 
-func (engine *Engine) getPrincipalPolicyEvaluator(ctx context.Context, eparams evalParams, principal, policyVer, scope string) (Evaluator, error) {
+func (engine *Engine) getPrincipalPolicySet(ctx context.Context, principal, policyVer, scope string) (*runtimev1.RunnablePolicySet, error) {
 	ctx, span := tracing.StartSpan(ctx, "engine.GetPrincipalPolicy")
 	defer span.End()
 	span.SetAttributes(tracing.PolicyName(principal), tracing.PolicyVersion(policyVer), tracing.PolicyScope(scope))
@@ -498,6 +497,15 @@ func (engine *Engine) getPrincipalPolicyEvaluator(ctx context.Context, eparams e
 		return nil, err
 	}
 
+	return rps, nil
+}
+
+func (engine *Engine) getPrincipalPolicyEvaluator(ctx context.Context, eparams evalParams, principal, policyVer, scope string) (Evaluator, error) {
+	rps, err := engine.getPrincipalPolicySet(ctx, principal, policyVer, scope)
+	if err != nil {
+		return nil, err
+	}
+
 	if rps == nil {
 		return nil, nil
 	}
@@ -505,7 +513,7 @@ func (engine *Engine) getPrincipalPolicyEvaluator(ctx context.Context, eparams e
 	return NewEvaluator(rps, engine.schemaMgr, eparams), nil
 }
 
-func (engine *Engine) getResourcePolicyEvaluator(ctx context.Context, eparams evalParams, resource, policyVer, scope string) (Evaluator, error) {
+func (engine *Engine) getResourcePolicySet(ctx context.Context, resource, policyVer, scope string) (*runtimev1.RunnablePolicySet, error) {
 	ctx, span := tracing.StartSpan(ctx, "engine.GetResourcePolicy")
 	defer span.End()
 	span.SetAttributes(tracing.PolicyName(resource), tracing.PolicyVersion(policyVer), tracing.PolicyScope(scope))
@@ -514,6 +522,15 @@ func (engine *Engine) getResourcePolicyEvaluator(ctx context.Context, eparams ev
 	rps, err := engine.policyLoader.GetPolicySet(ctx, resourceModID)
 	if err != nil {
 		tracing.MarkFailed(span, http.StatusInternalServerError, err)
+		return nil, err
+	}
+
+	return rps, nil
+}
+
+func (engine *Engine) getResourcePolicyEvaluator(ctx context.Context, eparams evalParams, resource, policyVer, scope string) (Evaluator, error) {
+	rps, err := engine.getResourcePolicySet(ctx, resource, policyVer, scope)
+	if err != nil {
 		return nil, err
 	}
 

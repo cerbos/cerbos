@@ -1,7 +1,7 @@
 // Copyright 2021-2022 Zenauth Ltd.
 // SPDX-License-Identifier: Apache-2.0
 
-package engine
+package planner
 
 import (
 	"context"
@@ -19,8 +19,13 @@ import (
 	runtimev1 "github.com/cerbos/cerbos/api/genpb/cerbos/runtime/v1"
 	schemav1 "github.com/cerbos/cerbos/api/genpb/cerbos/schema/v1"
 	"github.com/cerbos/cerbos/internal/conditions"
+	"github.com/cerbos/cerbos/internal/engine/internal"
+	plannerutils "github.com/cerbos/cerbos/internal/engine/planner/internal"
+	"github.com/cerbos/cerbos/internal/engine/planner/matchers"
 	"github.com/cerbos/cerbos/internal/observability/tracing"
+	"github.com/cerbos/cerbos/internal/schema"
 	"github.com/cerbos/cerbos/internal/util"
+	"github.com/google/cel-go/common/types/ref"
 	"github.com/google/cel-go/interpreter"
 )
 
@@ -42,7 +47,16 @@ type (
 	}
 )
 
-func combinePlans(principalPolicyPlan, resourcePolicyPlan *PolicyPlanResult) *PolicyPlanResult {
+type ResourcePolicyEvaluator struct {
+	Policy    *runtimev1.RunnableResourcePolicySet
+	SchemaMgr schema.Manager
+}
+
+type PrincipalPolicyEvaluator struct {
+	Policy *runtimev1.RunnablePrincipalPolicySet
+}
+
+func CombinePlans(principalPolicyPlan, resourcePolicyPlan *PolicyPlanResult) *PolicyPlanResult {
 	if principalPolicyPlan.Empty() {
 		return resourcePolicyPlan
 	}
@@ -127,13 +141,13 @@ func (p *PolicyPlanResult) toAST() *qpN {
 	}
 }
 
-func (ppe *principalPolicyEvaluator) EvaluateResourcesQueryPlan(ctx context.Context, input *enginev1.PlanResourcesInput) (*PolicyPlanResult, error) {
+func (ppe *PrincipalPolicyEvaluator) EvaluateResourcesQueryPlan(ctx context.Context, input *enginev1.PlanResourcesInput) (*PolicyPlanResult, error) {
 	_, span := tracing.StartSpan(ctx, "principal_policy.EvaluateResourcesQueryPlan")
-	span.SetAttributes(tracing.PolicyFQN(ppe.policy.Meta.Fqn))
+	span.SetAttributes(tracing.PolicyFQN(ppe.Policy.Meta.Fqn))
 	defer span.End()
 
 	result := &PolicyPlanResult{}
-	for _, p := range ppe.policy.Policies { // there might be more than 1 policy if there are scoped policies
+	for _, p := range ppe.Policy.Policies { // there might be more than 1 policy if there are scoped policies
 		// if previous iteration has found a matching policy, then quit the loop
 		if !result.Empty() {
 			break
@@ -168,14 +182,14 @@ func (ppe *principalPolicyEvaluator) EvaluateResourcesQueryPlan(ctx context.Cont
 	return result, nil
 }
 
-func (rpe *resourcePolicyEvaluator) EvaluateResourcesQueryPlan(ctx context.Context, input *enginev1.PlanResourcesInput) (*PolicyPlanResult, error) {
+func (rpe *ResourcePolicyEvaluator) EvaluateResourcesQueryPlan(ctx context.Context, input *enginev1.PlanResourcesInput) (*PolicyPlanResult, error) {
 	_, span := tracing.StartSpan(ctx, "resource_policy.EvaluateResourcesQueryPlan")
-	span.SetAttributes(tracing.PolicyFQN(rpe.policy.Meta.Fqn))
+	span.SetAttributes(tracing.PolicyFQN(rpe.Policy.Meta.Fqn))
 	defer span.End()
 
 	result := &PolicyPlanResult{}
 
-	vr, err := rpe.schemaMgr.ValidatePlanResourcesInput(ctx, rpe.policy.Schemas, input)
+	vr, err := rpe.SchemaMgr.ValidatePlanResourcesInput(ctx, rpe.Policy.Schemas, input)
 	if err != nil {
 		return nil, fmt.Errorf("failed to validate input: %w", err)
 	}
@@ -189,9 +203,9 @@ func (rpe *resourcePolicyEvaluator) EvaluateResourcesQueryPlan(ctx context.Conte
 		}
 	}
 
-	effectiveRoles := toSet(input.Principal.Roles)
+	effectiveRoles := internal.ToSet(input.Principal.Roles)
 
-	for _, p := range rpe.policy.Policies { // there might be more than 1 policy if there are scoped policies
+	for _, p := range rpe.Policy.Policies { // there might be more than 1 policy if there are scoped policies
 		// if previous iteration has found a matching policy, then quit the loop
 		if !result.Empty() {
 			break
@@ -203,7 +217,7 @@ func (rpe *resourcePolicyEvaluator) EvaluateResourcesQueryPlan(ctx context.Conte
 
 		for drName, dr := range p.DerivedRoles {
 			dr := dr
-			if !setIntersects(dr.ParentRoles, effectiveRoles) {
+			if !internal.SetIntersects(dr.ParentRoles, effectiveRoles) {
 				continue
 			}
 
@@ -229,7 +243,7 @@ func (rpe *resourcePolicyEvaluator) EvaluateResourcesQueryPlan(ctx context.Conte
 
 		for _, rule := range p.Rules {
 			var drNode *qpN
-			if !setIntersects(rule.Roles, effectiveRoles) {
+			if !internal.SetIntersects(rule.Roles, effectiveRoles) {
 				nodes, err := getDerivedRoleConditions(derivedRoles, rule)
 				if err != nil {
 					return nil, err
@@ -443,7 +457,7 @@ func evaluateCondition(condition *runtimev1.Condition, input *enginev1.PlanResou
 			res.Node = &qpNLO{LogicalOperation: mkAndLogicalOperation(nodes)}
 		}
 	case *runtimev1.Condition_Expr:
-		residual, err := evaluateCELExprPartially(t.Expr.Checked, input, variables)
+		residual, err := evaluateConditionExpression(t.Expr.Checked, input, variables)
 		if err != nil {
 			return nil, fmt.Errorf("error evaluating condition %q: %w", t.Expr.Original, err)
 		}
@@ -454,41 +468,18 @@ func evaluateCondition(condition *runtimev1.Condition, input *enginev1.PlanResou
 	return res, nil
 }
 
-func evaluateCELExprPartially(expr *exprpb.CheckedExpr, input *enginev1.PlanResourcesInput, variables map[string]*exprpb.Expr) (*exprpb.CheckedExpr, error) {
-	e := expr.Expr
-	e, err := replaceVars(e, variables)
-	if err != nil {
-		return nil, err
-	}
-	ast := cel.ParsedExprToAst(&exprpb.ParsedExpr{Expr: e})
-	knownVars := make(map[string]any)
-	env := conditions.StdPartialEnv
-	if len(input.Resource.GetAttr()) > 0 {
-		var ds []*exprpb.Decl
-		for name, value := range input.Resource.Attr {
-			for _, s := range conditions.ResourceAttributeNames(name) {
-				ds = append(ds, decls.NewVar(s, decls.Dyn))
-				knownVars[s] = value
-			}
-		}
-		env, err = env.Extend(cel.Declarations(ds...))
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	knownVars[conditions.CELRequestIdent] = input
-	knownVars[conditions.CELPrincipalAbbrev] = input.Principal
-	knownVars[conditions.Fqn(conditions.CELPrincipalField)] = input.Principal
-
-	vars, err := cel.PartialVars(knownVars,
-		cel.AttributePattern(conditions.CELResourceAbbrev),
-		cel.AttributePattern(conditions.CELRequestIdent).QualString(conditions.CELResourceField))
+func evaluateConditionExpression(expr *exprpb.CheckedExpr, input *enginev1.PlanResourcesInput, variables map[string]*exprpb.Expr) (*exprpb.CheckedExpr, error) {
+	p, err := newEvaluator(input)
 	if err != nil {
 		return nil, err
 	}
 
-	val, details, err := conditions.Eval(env, ast, vars, time.Now, cel.EvalOptions(cel.OptPartialEval, cel.OptTrackState))
+	e, err := replaceVars(expr.Expr, variables)
+	if err != nil {
+		return nil, err
+	}
+
+	val, residual, err := p.evalPartially(e)
 	if err != nil {
 		// ignore expressions that access non-existent keys
 		noSuchKey := &conditions.NoSuchKeyError{}
@@ -498,33 +489,96 @@ func evaluateCELExprPartially(expr *exprpb.CheckedExpr, input *enginev1.PlanReso
 
 		return nil, err
 	}
-
-	residual := ResidualExpr(ast, details)
-	checkedExpr := &exprpb.CheckedExpr{Expr: residual}
-
 	if types.IsUnknown(val) {
-		err = evalComprehensionBody(env, vars, residual)
+		err = p.evalComprehensionBody(residual)
+		if err != nil {
+			return nil, err
+		}
+		sm := matchers.NewStructMatcher()
+		var r bool
+		r, e, err = sm.Process(residual)
+		if err != nil {
+			return nil, err
+		}
+		if !r {
+			return &exprpb.CheckedExpr{Expr: residual}, nil
+		}
+		_, residual, err = p.evalPartially(e)
 		if err != nil {
 			return nil, err
 		}
 
-		return checkedExpr, nil
+		return &exprpb.CheckedExpr{Expr: residual}, nil
 	}
 
 	if _, ok := val.Value().(bool); ok {
-		return checkedExpr, nil
+		return &exprpb.CheckedExpr{Expr: residual}, nil
 	}
 
 	return conditions.FalseExpr, nil
 }
 
-func evalComprehensionBody(env *cel.Env, pvars interpreter.PartialActivation, e *exprpb.Expr) (err error) {
+type partialEvaluator struct {
+	env  *cel.Env
+	vars interpreter.PartialActivation
+}
+
+func (p *partialEvaluator) evalPartially(e *exprpb.Expr) (ref.Val, *exprpb.Expr, error) {
+	ast := cel.ParsedExprToAst(&exprpb.ParsedExpr{Expr: e})
+	val, details, err := conditions.Eval(p.env, ast, p.vars, time.Now, cel.EvalOptions(cel.OptPartialEval, cel.OptTrackState))
+	if err != nil {
+		return nil, nil, err
+	}
+
+	residual := ResidualExpr(ast, details)
+
+	return val, residual, nil
+}
+
+func newEvaluator(input *enginev1.PlanResourcesInput) (p *partialEvaluator, err error) {
+	p = new(partialEvaluator)
+	knownVars := make(map[string]any)
+	p.env = conditions.StdPartialEnv
+	if len(input.Resource.GetAttr()) > 0 {
+		var ds []*exprpb.Decl
+		for name, value := range input.Resource.Attr {
+			for _, s := range conditions.ResourceAttributeNames(name) {
+				ds = append(ds, decls.NewVar(s, decls.Dyn))
+				knownVars[s] = value
+			}
+		}
+		p.env, err = p.env.Extend(cel.Declarations(ds...))
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	knownVars[conditions.CELRequestIdent] = input
+	knownVars[conditions.CELPrincipalAbbrev] = input.Principal
+	knownVars[conditions.Fqn(conditions.CELPrincipalField)] = input.Principal
+
+	p.vars, err = cel.PartialVars(knownVars,
+		cel.AttributePattern(conditions.CELResourceAbbrev),
+		cel.AttributePattern(conditions.CELRequestIdent).QualString(conditions.CELResourceField))
+
+	if err != nil {
+		return nil, err
+	}
+
+	return p, nil
+}
+
+func (p *partialEvaluator) evalComprehensionBody(e *exprpb.Expr) (err error) {
+	return evalComprehensionBodyImpl(p.env, p.vars, e)
+}
+
+func evalComprehensionBodyImpl(env *cel.Env, pvars interpreter.PartialActivation, e *exprpb.Expr) (err error) {
 	if e == nil {
 		return nil
 	}
 	impl := func(e1 *exprpb.Expr) {
 		if err == nil {
-			err = evalComprehensionBody(env, pvars, e1)
+			err = evalComprehensionBodyImpl(env, pvars, e1)
 		}
 	}
 	switch e := e.ExprKind.(type) {
@@ -551,25 +605,28 @@ func evalComprehensionBody(env *cel.Env, pvars interpreter.PartialActivation, e 
 			i++
 		}
 		le := loopStep.CallExpr.Args[i]
-		env1, err := env.Extend(cel.Declarations(decls.NewVar(ce.IterVar, decls.Dyn)))
+		var env1 *cel.Env
+		env1, err = env.Extend(cel.Declarations(decls.NewVar(ce.IterVar, decls.Dyn)))
 		if err != nil {
 			return err
 		}
-		updateIds(le)
+		plannerutils.UpdateIds(le)
 		ast := cel.ParsedExprToAst(&exprpb.ParsedExpr{Expr: le})
 
 		unknowns := append(pvars.UnknownAttributePatterns(), cel.AttributePattern(ce.IterVar))
-		activation, err := cel.PartialVars(pvars, unknowns...)
+		var pvars1 interpreter.PartialActivation
+		pvars1, err = cel.PartialVars(pvars, unknowns...)
 		if err != nil {
 			return err
 		}
-		_, det, err := conditions.Eval(env1, ast, activation, time.Now, cel.EvalOptions(cel.OptTrackState, cel.OptPartialEval))
+		var det *cel.EvalDetails
+		_, det, err = conditions.Eval(env1, ast, pvars1, time.Now, cel.EvalOptions(cel.OptTrackState, cel.OptPartialEval))
 		if err != nil {
 			return err
 		}
 		le = ResidualExpr(ast, det)
 		loopStep.CallExpr.Args[i] = le
-		err = evalComprehensionBody(env1, activation, le)
+		err = evalComprehensionBodyImpl(env1, pvars1, le)
 		if err != nil {
 			return err
 		}
