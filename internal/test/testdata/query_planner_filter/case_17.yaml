@@ -1,0 +1,15 @@
+---
+description: membership test in an empty map
+input:
+  kind: KIND_CONDITIONAL
+  condition:
+    expression:
+      operator: in
+      operands:
+        - variable: request.resource.attr.accountId
+        - value: {}
+wantFilter:
+  kind: KIND_ALWAYS_DENIED
+wantString: "(false)"
+
+

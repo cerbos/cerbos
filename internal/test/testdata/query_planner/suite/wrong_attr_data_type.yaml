@@ -1,0 +1,34 @@
+---
+description: Wrong attribute data type
+principal:
+    id: adam
+    policyVersion: default
+    roles:
+        - customer-user
+    attr:
+      custAllowedValues: "VALUE1"
+      salhAllowedValues: "VALUE2"
+tests:
+    - action: "VIEW"
+      resource:
+        kind: top
+        policyVersion: default
+      want:
+        kind: KIND_CONDITIONAL
+        condition:
+          expression:
+            operator: not
+            operands:
+              - expression:
+                  operator: or
+                  operands:
+                    - expression:
+                        operator: eq
+                        operands:
+                          - variable: request.resource.attr.custAnal
+                          - value: VALUE1
+                    - expression:
+                        operator: eq
+                        operands:
+                          - variable: request.resource.attr.salhAnal
+                          - value: VALUE2

@@ -1,0 +1,16 @@
+apiVersion: api.cerbos.dev/v1
+resourcePolicy:
+  resource: top
+  version: default
+  rules:
+    - actions:
+        - VIEW
+      roles:
+        - customer-user
+      condition:
+        match:
+          any:
+            of:
+              - expr: R.attr.custAnal in P.attr.custAllowedValues
+              - expr: R.attr.salhAnal in P.attr.salhAllowedValues
+      effect: EFFECT_DENY
