@@ -1,0 +1,111 @@
+include::ROOT:partial$attributes.adoc[]
+
+[#v0.22.0]
+= Cerbos v0.22.0
+
+== Highlights
+
+The query planner is now smarter and is able produce simpler, optimized plans for some of the commonly seen filter patterns. For example, checking for membership in a single-item list can be converted to a comparison operation and checking for membership in an empty list can be reduced to simply return `false`. This should help you build better database queries for building lists of resources filtered using access control logic.
+
+There are several more improvements and fixes to the query planner in this release:
+
+- Query plan requests are now validated using schemas if they are available. This should help catch invalid requests and schema drifts early.
+- All the custom CEL functions provided by Cerbos are now supported for query plan generation.
+- A few more edge cases and bugs found by production users have been addressed.
+
+The Cerbos engine now coordinates all parallel requests to changed policies while they're being compiled. This should help reduce latency spikes in busy servers during policy recompilation.
+
+To aid with debugging, if the Cerbos process receives a `USR1` signal, it will now temporarily switch the log level to debug level for 10 minutes.
+
+Validation rules for scopes have been relaxed. Scope components no longer need to be at least two characters long.
+
+== Changelog
+
+
+=== Bug Fixes
+
+* Derived role condition is optional (link:https://github.com/cerbos/cerbos/pull/1301[#1301])
+* Handling of null value by the query planner (link:https://github.com/cerbos/cerbos/pull/1317[#1317])
+* Missing setters in policy builders (link:https://github.com/cerbos/cerbos/pull/1325[#1325])
+* Treat non-boolean expression results as `false` (link:https://github.com/cerbos/cerbos/pull/1256[#1256])
+* Update hasIntersection function to support partial eval (link:https://github.com/cerbos/cerbos/pull/1278[#1278])
+* Validate required fields in `PlanResourcesRequest` (link:https://github.com/cerbos/cerbos/pull/1262[#1262])
+
+=== Features
+
+* Optimise a query plan of a membership test in a single-item list (link:https://github.com/cerbos/cerbos/pull/1299[#1299])
+* Optimise query plan for index into struct (link:https://github.com/cerbos/cerbos/pull/1327[#1327])
+* Temporary log level change with USR1 signal (link:https://github.com/cerbos/cerbos/pull/1255[#1255])
+* Update list functions to support partial eval (link:https://github.com/cerbos/cerbos/pull/1281[#1281])
+
+=== Enhancements
+
+* Group compile requests (link:https://github.com/cerbos/cerbos/pull/1235[#1235])
+* Relax validation rule for scopes (link:https://github.com/cerbos/cerbos/pull/1254[#1254])
+
+=== Documentation
+
+* Added `Engineering` section with post on single process usage (link:https://github.com/cerbos/cerbos/pull/1264[#1264])
+* Fix formatting of table in tutorial (link:https://github.com/cerbos/cerbos/pull/1329[#1329])
+* Fix usage of CEL matches operator (link:https://github.com/cerbos/cerbos/pull/1245[#1245])
+* Make optionality of Scoped Policies more explicit (link:https://github.com/cerbos/cerbos/pull/1251[#1251])
+* README key concepts (link:https://github.com/cerbos/cerbos/pull/1274[#1274])
+* Updated the user logos on the readme (link:https://github.com/cerbos/cerbos/pull/1321[#1321])
+* Updating the logos (link:https://github.com/cerbos/cerbos/pull/1313[#1313])
+
+=== Chores
+
+* Allow configuring a custom nodePort in helm chart values (link:https://github.com/cerbos/cerbos/pull/1250[#1250])
+* Bump amannn/action-semantic-pull-request from 4.5.0 to 4.6.0 (link:https://github.com/cerbos/cerbos/pull/1239[#1239])
+* Bump amannn/action-semantic-pull-request from 4.6.0 to 5.0.2 (link:https://github.com/cerbos/cerbos/pull/1283[#1283])
+* Bump github.com/denisenkom/go-mssqldb from 0.12.2 to 0.12.3 (link:https://github.com/cerbos/cerbos/pull/1285[#1285])
+* Bump github.com/dgraph-io/badger/v3 from 3.2103.2 to 3.2103.3 (link:https://github.com/cerbos/cerbos/pull/1291[#1291])
+* Bump github.com/envoyproxy/protoc-gen-validate from 0.6.8 to 0.6.13 (link:https://github.com/cerbos/cerbos/pull/1270[#1270])
+* Bump github.com/envoyproxy/protoc-gen-validate from 0.6.8 to 0.6.13 in /hack/tools/protoc-gen-jsonschema (link:https://github.com/cerbos/cerbos/pull/1273[#1273])
+* Bump github.com/envoyproxy/protoc-gen-validate from 0.6.8 to 0.6.13 in /tools (link:https://github.com/cerbos/cerbos/pull/1271[#1271])
+* Bump github.com/fergusstrange/embedded-postgres from 1.17.0 to 1.18.0 (link:https://github.com/cerbos/cerbos/pull/1241[#1241])
+* Bump github.com/fergusstrange/embedded-postgres from 1.18.0 to 1.19.0 (link:https://github.com/cerbos/cerbos/pull/1267[#1267])
+* Bump github.com/goreleaser/goreleaser from 1.11.4 to 1.11.5 in /tools (link:https://github.com/cerbos/cerbos/pull/1272[#1272])
+* Bump github.com/minio/minio-go/v7 from 7.0.37 to 7.0.38 (link:https://github.com/cerbos/cerbos/pull/1244[#1244])
+* Bump github.com/minio/minio-go/v7 from 7.0.38 to 7.0.39 (link:https://github.com/cerbos/cerbos/pull/1258[#1258])
+* Bump github.com/minio/minio-go/v7 from 7.0.39 to 7.0.40 (link:https://github.com/cerbos/cerbos/pull/1266[#1266])
+* Bump github.com/minio/minio-go/v7 from 7.0.40 to 7.0.41 (link:https://github.com/cerbos/cerbos/pull/1295[#1295])
+* Bump github.com/pterm/pterm from 0.12.46 to 0.12.48 (link:https://github.com/cerbos/cerbos/pull/1260[#1260])
+* Bump github.com/pterm/pterm from 0.12.48 to 0.12.49 (link:https://github.com/cerbos/cerbos/pull/1269[#1269])
+* Bump go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp from 0.35.0 to 0.36.0 (link:https://github.com/cerbos/cerbos/pull/1242[#1242])
+* Bump go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp from 0.36.0 to 0.36.1 (link:https://github.com/cerbos/cerbos/pull/1259[#1259])
+* Bump go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp from 0.36.1 to 0.36.3 (link:https://github.com/cerbos/cerbos/pull/1294[#1294])
+* Bump go.opentelemetry.io/contrib/propagators/autoprop from 0.35.0 to 0.36.0 (link:https://github.com/cerbos/cerbos/pull/1243[#1243])
+* Bump go.opentelemetry.io/contrib/propagators/autoprop from 0.36.0 to 0.36.1 (link:https://github.com/cerbos/cerbos/pull/1257[#1257])
+* Bump go.opentelemetry.io/contrib/propagators/autoprop from 0.36.1 to 0.36.3 (link:https://github.com/cerbos/cerbos/pull/1293[#1293])
+* Bump go.opentelemetry.io/contrib/propagators/b3 from 1.10.0 to 1.11.0 (link:https://github.com/cerbos/cerbos/pull/1288[#1288])
+* Bump go.opentelemetry.io/otel from 1.10.0 to 1.11.0 (link:https://github.com/cerbos/cerbos/pull/1286[#1286])
+* Bump go.opentelemetry.io/otel/bridge/opencensus from 0.32.1 to 0.32.3 (link:https://github.com/cerbos/cerbos/pull/1290[#1290])
+* Bump go.opentelemetry.io/otel/exporters/jaeger from 1.10.0 to 1.11.0 (link:https://github.com/cerbos/cerbos/pull/1287[#1287])
+* Bump go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc from 1.10.0 to 1.11.0 (link:https://github.com/cerbos/cerbos/pull/1292[#1292])
+* Bump gocloud.dev from 0.26.0 to 0.27.0 (link:https://github.com/cerbos/cerbos/pull/1261[#1261])
+* Bump google-github-actions/setup-gcloud from 0.6.0 to 0.6.2 (link:https://github.com/cerbos/cerbos/pull/1284[#1284])
+* Bump google.golang.org/grpc from 1.49.0 to 1.50.0 (link:https://github.com/cerbos/cerbos/pull/1268[#1268])
+* Bump google.golang.org/grpc from 1.50.0 to 1.50.1 (link:https://github.com/cerbos/cerbos/pull/1298[#1298])
+* Bump helm.sh/helm/v3 from 3.10.0 to 3.10.1 (link:https://github.com/cerbos/cerbos/pull/1296[#1296])
+* Bump helm.sh/helm/v3 from 3.9.4 to 3.10.0 (link:https://github.com/cerbos/cerbos/pull/1240[#1240])
+* Bump helm/kind-action from 1.3.0 to 1.4.0 (link:https://github.com/cerbos/cerbos/pull/1238[#1238])
+* Bump modernc.org/sqlite from 1.19.1 to 1.19.2 (link:https://github.com/cerbos/cerbos/pull/1297[#1297])
+* Bump version to 0.22.0
+* Configure Renovate (link:https://github.com/cerbos/cerbos/pull/1302[#1302])
+* Confirm hierarchy funcs support partial eval (link:https://github.com/cerbos/cerbos/pull/1282[#1282])
+* Re-generate mocks (link:https://github.com/cerbos/cerbos/pull/1324[#1324])
+* Remove single commit validation (link:https://github.com/cerbos/cerbos/pull/1316[#1316])
+* Run Go vulnerability check periodically (link:https://github.com/cerbos/cerbos/pull/1236[#1236])
+* Set output via environment file rather than stdout (link:https://github.com/cerbos/cerbos/pull/1277[#1277])
+* Stable string representation for query filter (link:https://github.com/cerbos/cerbos/pull/1307[#1307])
+* Update alpine base image from 3.15 to 3.16 (link:https://github.com/cerbos/cerbos/pull/1248[#1248])
+* Update azure/setup-helm action to v3.4 (link:https://github.com/cerbos/cerbos/pull/1322[#1322])
+* Update github actions deps (link:https://github.com/cerbos/cerbos/pull/1314[#1314])
+* Update go deps (link:https://github.com/cerbos/cerbos/pull/1304[#1304])
+* Update go deps (link:https://github.com/cerbos/cerbos/pull/1315[#1315])
+* Update go deps (link:https://github.com/cerbos/cerbos/pull/1323[#1323])
+* Update go.opentelemetry.io/otel/bridge/opencensus to 0.32.1 (link:https://github.com/cerbos/cerbos/pull/1237[#1237])
+* Update module github.com/google/go-licenses to v1 (link:https://github.com/cerbos/cerbos/pull/1305[#1305])
+* Update voxmedia/github-action-slack-notify-build action to v2 (link:https://github.com/cerbos/cerbos/pull/1306[#1306])
+* Use latest Go version in builds (link:https://github.com/cerbos/cerbos/pull/1275[#1275])
