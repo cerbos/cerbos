@@ -1,13 +1,13 @@
 ---
-description: membership test in a single-item array
+description: membership test in a single-item map
 input:
   kind: KIND_CONDITIONAL
   condition:
     expression:
       operator: in
       operands:
-        - variable: R.attr.accountId
-        - value: ["abc123"]
+        - variable: request.resource.attr.accountId
+        - value: {"abc123": "def456"}
 wantFilter:
   kind: KIND_CONDITIONAL
   condition:

@@ -530,24 +530,12 @@ var (
 )
 
 func normaliseFilterExprOpExpr(expr *enginev1.PlanResourcesFilter_Expression_Operand_Expression) *enginev1.PlanResourcesFilter_Expression_Operand {
-	const nArgsInOp = 2
-	if expr.Expression.Operator == In && len(expr.Expression.Operands) == nArgsInOp {
-		if v := expr.Expression.Operands[nArgsInOp-1].GetValue(); v != nil {
-			values := v.GetListValue().GetValues()
-			n := len(values)
-			if n == 0 {
-				return falseExprOpValue
-			} else if n == 1 {
-				// replace `a in [x]` with `a eq x`
-				expr.Expression.Operator = Equals
-				expr.Expression.Operands[nArgsInOp-1] = &enginev1.PlanResourcesFilter_Expression_Operand{
-					Node: &enginev1.PlanResourcesFilter_Expression_Operand_Value{
-						Value: values[0],
-					},
-				}
-			}
+	if expr.Expression.Operator == In && len(expr.Expression.Operands) == 2 {
+		if s := normaliseInExpr(expr); s != nil {
+			return s
 		}
 	}
+
 	var logicalOperator string
 	var operandHashes map[uint64]struct{}
 	if expr.Expression.Operator == And || expr.Expression.Operator == Or || expr.Expression.Operator == Not {
@@ -640,6 +628,51 @@ func normaliseFilterExprOpExpr(expr *enginev1.PlanResourcesFilter_Expression_Ope
 
 	expr.Expression.Operands = operands
 	return &enginev1.PlanResourcesFilter_Expression_Operand{Node: expr}
+}
+
+// normaliseInExpr normalises an IN expression in place.
+// If the return value is nil, then the expression can be simplified further by other normalisers.
+func normaliseInExpr(expr *enginev1.PlanResourcesFilter_Expression_Operand_Expression) *enginev1.PlanResourcesFilter_Expression_Operand {
+	if v := expr.Expression.Operands[1].GetValue(); v != nil {
+		switch vt := v.Kind.(type) {
+		case *structpb.Value_StructValue:
+			mapVals := vt.StructValue.Fields
+			switch len(mapVals) {
+			case 0:
+				return falseExprOpValue
+			case 1:
+				var keyVal *structpb.Value
+				for k := range mapVals {
+					keyVal = structpb.NewStringValue(k)
+				}
+				expr.Expression.Operator = Equals
+				expr.Expression.Operands[1] = &enginev1.PlanResourcesFilter_Expression_Operand{
+					Node: &enginev1.PlanResourcesFilter_Expression_Operand_Value{
+						Value: keyVal,
+					},
+				}
+			}
+
+		case *structpb.Value_ListValue:
+			listVals := vt.ListValue.Values
+			switch len(listVals) {
+			case 0:
+				return falseExprOpValue
+			case 1:
+				expr.Expression.Operator = Equals
+				expr.Expression.Operands[1] = &enginev1.PlanResourcesFilter_Expression_Operand{
+					Node: &enginev1.PlanResourcesFilter_Expression_Operand_Value{
+						Value: listVals[0],
+					},
+				}
+			}
+		default:
+			// operand is not a list or map so convert it to a EQ
+			expr.Expression.Operator = Equals
+		}
+	}
+
+	return nil
 }
 
 func normaliseFilterExprOpVar(v *enginev1.PlanResourcesFilter_Expression_Operand_Variable) *enginev1.PlanResourcesFilter_Expression_Operand {

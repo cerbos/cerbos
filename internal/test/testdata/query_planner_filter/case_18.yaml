@@ -1,0 +1,35 @@
+---
+description: Using IN with a value that is not a container
+input:
+  kind: KIND_CONDITIONAL
+  condition:
+    expression:
+      operator: or
+      operands:
+        - expression:
+            operator: in
+            operands:
+              - variable: R.attr.accountId
+              - value: "test"
+        - expression:
+            operator: in
+            operands:
+              - variable: R.attr.rank
+              - value: 1
+wantFilter:
+  kind: KIND_CONDITIONAL
+  condition:
+    expression:
+      operator: or
+      operands:
+        - expression:
+            operator: eq
+            operands:
+              - variable: request.resource.attr.accountId
+              - value: "test"
+        - expression:
+            operator: eq
+            operands:
+              - variable: request.resource.attr.rank
+              - value: 1
+wantString: "(or (eq request.resource.attr.accountId \"test\") (eq request.resource.attr.rank 1))"
