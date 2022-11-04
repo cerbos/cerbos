@@ -15,7 +15,7 @@ The best place to start with defining xref:policies:index.adoc[policies] is list
 In the case of Cerbforce some of the resources and actions are as follows:
 
 [caption=]
-[%header,cols=".^1,.^1,3m",grid=rows]
+[%header,cols=".^1,.^3m",grid=rows]
 |===
 |Resource | Actions
 |User | Create, Read, Update, Delete
