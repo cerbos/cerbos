@@ -16,7 +16,7 @@ The disk driver is a way to serve the policies from a directory on the filesyste
 ----
 storage:
   driver: disk
-  disk: 
+  disk:
     directory: /etc/cerbos/policies
 ----
 
@@ -25,7 +25,7 @@ storage:
 ----
 storage:
   driver: disk
-  disk: 
+  disk:
     directory: /etc/cerbos/policies
     watchForChanges: true
 ----
@@ -92,33 +92,34 @@ storage:
 
 Git is the preferred method of storing Cerbos policies. The server is smart enough to detect when new commits are made to the git repository and refresh its state based on the changes.
 
-* Git repositories can be local (`file` protocol) or remote (`ssh` or `https`). 
-* If no `branch` is specified, the default branch would be the `master` branch. 
+NOTE: Azure DevOps repositories use a protocol that is currently not supported by the Git library used by Cerbos. We are working to address this issue. In the mean time, please consider using the Cerbos `disk` storage in conjunction with an external Git sync implementation or using a CI pipeline to publish your policies to another storage implementation supported by Cerbos.
+
+* Git repositories can be local (`file` protocol) or remote (`ssh` or `https`).
+* If no `branch` is specified, the default branch would be the `master` branch.
 * If no `subDir` is specified, the entire repository would be scanned for policies (`.yaml`, `.yml` or `.json`).
 * The `checkoutDir` is the working directory of the server and must be writable by the server process.
 * If `updatePollInterval` is set to 0, the source repository will not be polled to pick up any new commits.
 * If `operationTimeout` is not specified, the default timeout for git operations is 60 seconds.
 
-CAUTION: If the git repository is remote, setting the `updatePollInterval` to a low value could increase resource consumption in both the client and the server systems. Some managed service providers may even impose rate limits or temporary suspensions on your account if the number of requests is too high. 
-
+CAUTION: If the git repository is remote, setting the `updatePollInterval` to a low value could increase resource consumption in both the client and the server systems. Some managed service providers may even impose rate limits or temporary suspensions on your account if the number of requests is too high.
 
 .Local git repository
 [source,yaml,linenums]
 ----
 storage:
-  driver: "git" 
-  git: 
-    protocol: file 
-    url: file://${HOME}/tmp/cerbos/policies 
-    checkoutDir: ${HOME}/tmp/cerbos/work 
-    updatePollInterval: 10s 
+  driver: "git"
+  git:
+    protocol: file
+    url: file://${HOME}/tmp/cerbos/policies
+    checkoutDir: ${HOME}/tmp/cerbos/work
+    updatePollInterval: 10s
 ----
 
 .Remote git repository accessed over HTTPS
 [source,yaml,linenums]
 ----
 storage:
-  driver: "git" 
+  driver: "git"
   git:
     protocol: https
     url: https://github.com/cerbos/policy-test.git
@@ -136,15 +137,15 @@ storage:
 [source,yaml,linenums]
 ----
 storage:
-  driver: "git" 
-  git: 
-    protocol: ssh 
+  driver: "git"
+  git:
+    protocol: ssh
     url: github.com:cerbos/policy-test.git
     branch: main
     subDir: policies
-    checkoutDir: ${HOME}/tmp/cerbos/work 
-    updatePollInterval: 60s 
-    ssh: 
+    checkoutDir: ${HOME}/tmp/cerbos/work
+    updatePollInterval: 60s
+    ssh:
       user: git
       privateKeyFile: ${HOME}/.ssh/id_rsa
 ----
@@ -153,6 +154,8 @@ storage:
 == SQLite3 Driver
 
 The SQLite3 storage backend is one of the dynamic stores that supports adding or updating policies at runtime through the xref:server.adoc#admin-api[Admin API].
+
+include::partial$cerbosctl.adoc[]
 
 .In-memory ephemeral database
 [source,yaml,linenums]
@@ -175,7 +178,9 @@ storage:
 [#postgres]
 == Postgres Driver
 
-The Postgres storage backend is one of the dynamic stores that supports adding or updating policies at runtime through the xref:server.adoc#admin-api[Admin API]. 
+The Postgres storage backend is one of the dynamic stores that supports adding or updating policies at runtime through the xref:server.adoc#admin-api[Admin API].
+
+include::partial$cerbosctl.adoc[]
 
 NOTE: Unlike the SQLite3 driver, the tables and other database objects are not created automatically by the Cerbos Postgres driver. This is to minimize the privileges the Cerbos instance has on the Postgres installation. You must create the required tables using the provided script before configuring Cerbos to connect to the database.
 
@@ -202,7 +207,7 @@ storage:
   driver: "postgres"
   postgres:
     url: "postgres://${PG_USER}:${PG_PASSWORD}@localhost:5432/postgres?sslmode=disable&search_path=cerbos"
-    connPool: 
+    connPool:
       maxLifeTime: 5m
       maxIdleTime: 3m
       maxOpen: 10
@@ -211,9 +216,9 @@ storage:
 
 
 
-=== Database object definitions 
+=== Database object definitions
 
-You can customise the script below to suit your environment. Make sure to specify a strong password for the `cerbos_user` user. 
+You can customise the script below to suit your environment. Make sure to specify a strong password for the `cerbos_user` user.
 
 [source,sql,linenums]
 ----
@@ -224,11 +229,13 @@ include::example$postgres_schema.sql[]
 [#mysql]
 == MySQL Driver
 
-The MySQL storage backend is one of the dynamic stores that supports adding or updating policies at runtime through the xref:server.adoc#admin-api[Admin API]. 
+The MySQL storage backend is one of the dynamic stores that supports adding or updating policies at runtime through the xref:server.adoc#admin-api[Admin API].
+
+include::partial$cerbosctl.adoc[]
 
 NOTE: Unlike the SQLite3 driver, the tables and other database objects are not created automatically by the Cerbos MySQL driver. This is to minimize the privileges the Cerbos instance has on the MySQL installation. You must create the required tables using the provided script before configuring Cerbos to connect to the database.
 
-The driver configuration expects the connection details to be provided as a DSN in the following form: 
+The driver configuration expects the connection details to be provided as a DSN in the following form:
 
 ----
 [username[:password]@][protocol[(address)]]/dbname[?param1=value1&...&paramN=valueN]
@@ -247,7 +254,7 @@ storage:
     dsn: "${MYSQL_USER}:${MYSQL_PASSWORD}@tcp(localhost:3306)/cerbos"
 ----
 
-=== Secure connections 
+=== Secure connections
 
 If your MySQL server requires TLS or if you want to use RSA key pair-based password exchange, you can configure those settings as follows:
 
@@ -287,16 +294,16 @@ storage:
   driver: "mysql"
   mysql:
     dsn: "${MYSQL_USER}:${MYSQL_PASSWORD}@tcp(localhost:3306)/cerbos"
-    connPool: 
+    connPool:
       maxLifeTime: 5m
       maxIdleTime: 3m
       maxOpen: 10
       maxIdle: 5
 ----
 
-=== Database object definitions 
+=== Database object definitions
 
-You can customise the script below to suit your environment. Make sure to specify a strong password for the `cerbos_user` user. 
+You can customise the script below to suit your environment. Make sure to specify a strong password for the `cerbos_user` user.
 
 [source,sql,linenums]
 ----
@@ -307,6 +314,8 @@ include::example$mysql_schema.sql[]
 == Microsoft SQL Server Driver
 
 The SQL Server storage backend is one of the dynamic stores that supports adding or updating policies at runtime through the xref:server.adoc#admin-api[Admin API].
+
+include::partial$cerbosctl.adoc[]
 
 NOTE: Unlike the SQLite3 driver, the tables and other database objects are not created automatically by the Cerbos SQL Server driver. This is to minimize the privileges the Cerbos instance has on the SQL Server installation. You must create the required tables using the provided script before configuring Cerbos to connect to the database.
 
@@ -350,5 +359,4 @@ You can customise the script below to suit your environment. Make sure to specif
 ----
 include::example$sqlserver_schema.sql[]
 ----
-
 
