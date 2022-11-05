@@ -19,12 +19,14 @@ To aid with debugging, if the Cerbos process receives a `USR1` signal, it will n
 
 Validation rules for scopes have been relaxed. Scope components no longer need to be at least two characters long.
 
+
 == Changelog
 
 
 === Bug Fixes
 
 * Derived role condition is optional (link:https://github.com/cerbos/cerbos/pull/1301[#1301])
+* Handle other data types while optimizing IN expression (link:https://github.com/cerbos/cerbos/pull/1334[#1334])
 * Handling of null value by the query planner (link:https://github.com/cerbos/cerbos/pull/1317[#1317])
 * Missing setters in policy builders (link:https://github.com/cerbos/cerbos/pull/1325[#1325])
 * Treat non-boolean expression results as `false` (link:https://github.com/cerbos/cerbos/pull/1256[#1256])
@@ -45,6 +47,7 @@ Validation rules for scopes have been relaxed. Scope components no longer need t
 
 === Documentation
 
+* Add tip about using cerbosctl to load policies (link:https://github.com/cerbos/cerbos/pull/1332[#1332])
 * Added `Engineering` section with post on single process usage (link:https://github.com/cerbos/cerbos/pull/1264[#1264])
 * Fix formatting of table in tutorial (link:https://github.com/cerbos/cerbos/pull/1329[#1329])
 * Fix usage of CEL matches operator (link:https://github.com/cerbos/cerbos/pull/1245[#1245])
