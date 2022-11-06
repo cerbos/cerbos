@@ -82,7 +82,7 @@ test-all: test-race test-integration
 
 .PHONY: test
 test: $(GOTESTSUM)
-	@ $(GOTESTSUM) -- -tags=tests $(COVERPROFILE) -cover ./...
+	@ CGO_ENABLED=0 $(GOTESTSUM) -- -tags=tests $(COVERPROFILE) -cover ./...
 
 .PHONY: test-race
 test-race: $(GOTESTSUM) $(TESTSPLIT)
@@ -102,7 +102,7 @@ coverage:
 
 .PHONY: compile
 compile:
-	@ go build ./... && go test -tags="tests e2e" -run=ignore  ./... > /dev/null
+	@ CGO_ENABLED=0 go build ./... && CGO_ENABLED=0 go test -tags="tests e2e" -run=ignore  ./... > /dev/null
 
 .PHONY: pre-commit
 pre-commit: lint-helm generate lint test-all
