@@ -397,9 +397,18 @@ func (m *DecisionLogEntry) validate(all bool) error {
 
 	// no validation rules for Error
 
-	switch m.Method.(type) {
-
+	switch v := m.Method.(type) {
 	case *DecisionLogEntry_CheckResources_:
+		if v == nil {
+			err := DecisionLogEntryValidationError{
+				field:  "Method",
+				reason: "oneof value cannot be a typed-nil",
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
+		}
 
 		if all {
 			switch v := interface{}(m.GetCheckResources()).(type) {
@@ -431,6 +440,16 @@ func (m *DecisionLogEntry) validate(all bool) error {
 		}
 
 	case *DecisionLogEntry_PlanResources_:
+		if v == nil {
+			err := DecisionLogEntryValidationError{
+				field:  "Method",
+				reason: "oneof value cannot be a typed-nil",
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
+		}
 
 		if all {
 			switch v := interface{}(m.GetPlanResources()).(type) {
@@ -461,6 +480,8 @@ func (m *DecisionLogEntry) validate(all bool) error {
 			}
 		}
 
+	default:
+		_ = v // ensures v is used
 	}
 
 	if len(errors) > 0 {

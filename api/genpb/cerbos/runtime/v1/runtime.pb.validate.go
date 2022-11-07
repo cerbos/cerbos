@@ -63,9 +63,18 @@ func (m *RunnablePolicySet) validate(all bool) error {
 
 	// no validation rules for Fqn
 
-	switch m.PolicySet.(type) {
-
+	switch v := m.PolicySet.(type) {
 	case *RunnablePolicySet_ResourcePolicy:
+		if v == nil {
+			err := RunnablePolicySetValidationError{
+				field:  "PolicySet",
+				reason: "oneof value cannot be a typed-nil",
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
+		}
 
 		if all {
 			switch v := interface{}(m.GetResourcePolicy()).(type) {
@@ -97,6 +106,16 @@ func (m *RunnablePolicySet) validate(all bool) error {
 		}
 
 	case *RunnablePolicySet_PrincipalPolicy:
+		if v == nil {
+			err := RunnablePolicySetValidationError{
+				field:  "PolicySet",
+				reason: "oneof value cannot be a typed-nil",
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
+		}
 
 		if all {
 			switch v := interface{}(m.GetPrincipalPolicy()).(type) {
@@ -128,6 +147,16 @@ func (m *RunnablePolicySet) validate(all bool) error {
 		}
 
 	case *RunnablePolicySet_DerivedRoles:
+		if v == nil {
+			err := RunnablePolicySetValidationError{
+				field:  "PolicySet",
+				reason: "oneof value cannot be a typed-nil",
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
+		}
 
 		if all {
 			switch v := interface{}(m.GetDerivedRoles()).(type) {
@@ -158,6 +187,8 @@ func (m *RunnablePolicySet) validate(all bool) error {
 			}
 		}
 
+	default:
+		_ = v // ensures v is used
 	}
 
 	if len(errors) > 0 {
@@ -1152,9 +1183,18 @@ func (m *Condition) validate(all bool) error {
 
 	var errors []error
 
-	switch m.Op.(type) {
-
+	switch v := m.Op.(type) {
 	case *Condition_All:
+		if v == nil {
+			err := ConditionValidationError{
+				field:  "Op",
+				reason: "oneof value cannot be a typed-nil",
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
+		}
 
 		if all {
 			switch v := interface{}(m.GetAll()).(type) {
@@ -1186,6 +1226,16 @@ func (m *Condition) validate(all bool) error {
 		}
 
 	case *Condition_Any:
+		if v == nil {
+			err := ConditionValidationError{
+				field:  "Op",
+				reason: "oneof value cannot be a typed-nil",
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
+		}
 
 		if all {
 			switch v := interface{}(m.GetAny()).(type) {
@@ -1217,6 +1267,16 @@ func (m *Condition) validate(all bool) error {
 		}
 
 	case *Condition_None:
+		if v == nil {
+			err := ConditionValidationError{
+				field:  "Op",
+				reason: "oneof value cannot be a typed-nil",
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
+		}
 
 		if all {
 			switch v := interface{}(m.GetNone()).(type) {
@@ -1248,6 +1308,16 @@ func (m *Condition) validate(all bool) error {
 		}
 
 	case *Condition_Expr:
+		if v == nil {
+			err := ConditionValidationError{
+				field:  "Op",
+				reason: "oneof value cannot be a typed-nil",
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
+		}
 
 		if all {
 			switch v := interface{}(m.GetExpr()).(type) {
@@ -1278,6 +1348,8 @@ func (m *Condition) validate(all bool) error {
 			}
 		}
 
+	default:
+		_ = v // ensures v is used
 	}
 
 	if len(errors) > 0 {
@@ -1714,9 +1786,18 @@ func (m *Errors) validate(all bool) error {
 
 	var errors []error
 
-	switch m.Kind.(type) {
-
+	switch v := m.Kind.(type) {
 	case *Errors_IndexBuildErrors:
+		if v == nil {
+			err := ErrorsValidationError{
+				field:  "Kind",
+				reason: "oneof value cannot be a typed-nil",
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
+		}
 
 		if all {
 			switch v := interface{}(m.GetIndexBuildErrors()).(type) {
@@ -1748,6 +1829,16 @@ func (m *Errors) validate(all bool) error {
 		}
 
 	case *Errors_CompileErrors:
+		if v == nil {
+			err := ErrorsValidationError{
+				field:  "Kind",
+				reason: "oneof value cannot be a typed-nil",
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
+		}
 
 		if all {
 			switch v := interface{}(m.GetCompileErrors()).(type) {
@@ -1778,6 +1869,8 @@ func (m *Errors) validate(all bool) error {
 			}
 		}
 
+	default:
+		_ = v // ensures v is used
 	}
 
 	if len(errors) > 0 {

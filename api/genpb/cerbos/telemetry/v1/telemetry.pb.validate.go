@@ -376,9 +376,18 @@ func (m *Event) validate(all bool) error {
 
 	var errors []error
 
-	switch m.Data.(type) {
-
+	switch v := m.Data.(type) {
 	case *Event_ApiActivity_:
+		if v == nil {
+			err := EventValidationError{
+				field:  "Data",
+				reason: "oneof value cannot be a typed-nil",
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
+		}
 
 		if all {
 			switch v := interface{}(m.GetApiActivity()).(type) {
@@ -409,6 +418,8 @@ func (m *Event) validate(all bool) error {
 			}
 		}
 
+	default:
+		_ = v // ensures v is used
 	}
 
 	if len(errors) > 0 {
@@ -1456,9 +1467,18 @@ func (m *ServerLaunch_Features_Storage) validate(all bool) error {
 
 	// no validation rules for Driver
 
-	switch m.Store.(type) {
-
+	switch v := m.Store.(type) {
 	case *ServerLaunch_Features_Storage_Disk_:
+		if v == nil {
+			err := ServerLaunch_Features_StorageValidationError{
+				field:  "Store",
+				reason: "oneof value cannot be a typed-nil",
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
+		}
 
 		if all {
 			switch v := interface{}(m.GetDisk()).(type) {
@@ -1490,6 +1510,16 @@ func (m *ServerLaunch_Features_Storage) validate(all bool) error {
 		}
 
 	case *ServerLaunch_Features_Storage_Git_:
+		if v == nil {
+			err := ServerLaunch_Features_StorageValidationError{
+				field:  "Store",
+				reason: "oneof value cannot be a typed-nil",
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
+		}
 
 		if all {
 			switch v := interface{}(m.GetGit()).(type) {
@@ -1521,6 +1551,16 @@ func (m *ServerLaunch_Features_Storage) validate(all bool) error {
 		}
 
 	case *ServerLaunch_Features_Storage_Blob_:
+		if v == nil {
+			err := ServerLaunch_Features_StorageValidationError{
+				field:  "Store",
+				reason: "oneof value cannot be a typed-nil",
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
+		}
 
 		if all {
 			switch v := interface{}(m.GetBlob()).(type) {
@@ -1551,6 +1591,8 @@ func (m *ServerLaunch_Features_Storage) validate(all bool) error {
 			}
 		}
 
+	default:
+		_ = v // ensures v is used
 	}
 
 	if len(errors) > 0 {

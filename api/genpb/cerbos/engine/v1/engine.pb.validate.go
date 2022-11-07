@@ -2088,9 +2088,18 @@ func (m *PlanResourcesAst_Node) validate(all bool) error {
 
 	var errors []error
 
-	switch m.Node.(type) {
-
+	switch v := m.Node.(type) {
 	case *PlanResourcesAst_Node_LogicalOperation:
+		if v == nil {
+			err := PlanResourcesAst_NodeValidationError{
+				field:  "Node",
+				reason: "oneof value cannot be a typed-nil",
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
+		}
 
 		if all {
 			switch v := interface{}(m.GetLogicalOperation()).(type) {
@@ -2122,6 +2131,16 @@ func (m *PlanResourcesAst_Node) validate(all bool) error {
 		}
 
 	case *PlanResourcesAst_Node_Expression:
+		if v == nil {
+			err := PlanResourcesAst_NodeValidationError{
+				field:  "Node",
+				reason: "oneof value cannot be a typed-nil",
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
+		}
 
 		if all {
 			switch v := interface{}(m.GetExpression()).(type) {
@@ -2152,6 +2171,8 @@ func (m *PlanResourcesAst_Node) validate(all bool) error {
 			}
 		}
 
+	default:
+		_ = v // ensures v is used
 	}
 
 	if len(errors) > 0 {
@@ -2538,9 +2559,18 @@ func (m *PlanResourcesFilter_Expression_Operand) validate(all bool) error {
 
 	var errors []error
 
-	switch m.Node.(type) {
-
+	switch v := m.Node.(type) {
 	case *PlanResourcesFilter_Expression_Operand_Value:
+		if v == nil {
+			err := PlanResourcesFilter_Expression_OperandValidationError{
+				field:  "Node",
+				reason: "oneof value cannot be a typed-nil",
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
+		}
 
 		if all {
 			switch v := interface{}(m.GetValue()).(type) {
@@ -2572,6 +2602,16 @@ func (m *PlanResourcesFilter_Expression_Operand) validate(all bool) error {
 		}
 
 	case *PlanResourcesFilter_Expression_Operand_Expression:
+		if v == nil {
+			err := PlanResourcesFilter_Expression_OperandValidationError{
+				field:  "Node",
+				reason: "oneof value cannot be a typed-nil",
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
+		}
 
 		if all {
 			switch v := interface{}(m.GetExpression()).(type) {
@@ -2603,8 +2643,19 @@ func (m *PlanResourcesFilter_Expression_Operand) validate(all bool) error {
 		}
 
 	case *PlanResourcesFilter_Expression_Operand_Variable:
+		if v == nil {
+			err := PlanResourcesFilter_Expression_OperandValidationError{
+				field:  "Node",
+				reason: "oneof value cannot be a typed-nil",
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
+		}
 		// no validation rules for Variable
-
+	default:
+		_ = v // ensures v is used
 	}
 
 	if len(errors) > 0 {
@@ -2821,33 +2872,114 @@ func (m *Trace_Component) validate(all bool) error {
 
 	// no validation rules for Kind
 
-	switch m.Details.(type) {
-
+	switch v := m.Details.(type) {
 	case *Trace_Component_Action:
+		if v == nil {
+			err := Trace_ComponentValidationError{
+				field:  "Details",
+				reason: "oneof value cannot be a typed-nil",
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
+		}
 		// no validation rules for Action
-
 	case *Trace_Component_DerivedRole:
+		if v == nil {
+			err := Trace_ComponentValidationError{
+				field:  "Details",
+				reason: "oneof value cannot be a typed-nil",
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
+		}
 		// no validation rules for DerivedRole
-
 	case *Trace_Component_Expr:
+		if v == nil {
+			err := Trace_ComponentValidationError{
+				field:  "Details",
+				reason: "oneof value cannot be a typed-nil",
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
+		}
 		// no validation rules for Expr
-
 	case *Trace_Component_Index:
+		if v == nil {
+			err := Trace_ComponentValidationError{
+				field:  "Details",
+				reason: "oneof value cannot be a typed-nil",
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
+		}
 		// no validation rules for Index
-
 	case *Trace_Component_Policy:
+		if v == nil {
+			err := Trace_ComponentValidationError{
+				field:  "Details",
+				reason: "oneof value cannot be a typed-nil",
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
+		}
 		// no validation rules for Policy
-
 	case *Trace_Component_Resource:
+		if v == nil {
+			err := Trace_ComponentValidationError{
+				field:  "Details",
+				reason: "oneof value cannot be a typed-nil",
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
+		}
 		// no validation rules for Resource
-
 	case *Trace_Component_Rule:
+		if v == nil {
+			err := Trace_ComponentValidationError{
+				field:  "Details",
+				reason: "oneof value cannot be a typed-nil",
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
+		}
 		// no validation rules for Rule
-
 	case *Trace_Component_Scope:
+		if v == nil {
+			err := Trace_ComponentValidationError{
+				field:  "Details",
+				reason: "oneof value cannot be a typed-nil",
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
+		}
 		// no validation rules for Scope
-
 	case *Trace_Component_Variable_:
+		if v == nil {
+			err := Trace_ComponentValidationError{
+				field:  "Details",
+				reason: "oneof value cannot be a typed-nil",
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
+		}
 
 		if all {
 			switch v := interface{}(m.GetVariable()).(type) {
@@ -2878,6 +3010,8 @@ func (m *Trace_Component) validate(all bool) error {
 			}
 		}
 
+	default:
+		_ = v // ensures v is used
 	}
 
 	if len(errors) > 0 {
