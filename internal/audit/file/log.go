@@ -18,8 +18,10 @@ import (
 	"google.golang.org/protobuf/reflect/protoreflect"
 )
 
+const Backend = "file"
+
 func init() {
-	audit.RegisterBackend("file", func(_ context.Context, confW *config.Wrapper) (audit.Log, error) {
+	audit.RegisterBackend(Backend, func(_ context.Context, confW *config.Wrapper) (audit.Log, error) {
 		conf := new(Conf)
 		if err := confW.GetSection(conf); err != nil {
 			return nil, fmt.Errorf("failed to read local audit log configuration: %w", err)
@@ -57,6 +59,14 @@ func NewLog(conf *Conf) (*Log, error) {
 		accessLog:   logger.Named("cerbos.audit").With(zap.String("log.kind", "access")),
 		decisionLog: logger.Named("cerbos.audit").With(zap.String("log.kind", "decision")),
 	}, nil
+}
+
+func (l *Log) Backend() string {
+	return Backend
+}
+
+func (l *Log) Enabled() bool {
+	return true
 }
 
 func (l *Log) WriteAccessLogEntry(_ context.Context, record audit.AccessLogEntryMaker) error {

@@ -305,6 +305,14 @@ func (cas *CerbosAdminService) ListAuditLogEntries(req *requestv1.ListAuditLogEn
 }
 
 func (cas *CerbosAdminService) getAuditLogStream(ctx context.Context, req *requestv1.ListAuditLogEntriesRequest) (auditLogStream, error) {
+	if !cas.auditLog.Enabled() {
+		return nil, status.Error(codes.Unimplemented, "Audit logs are not enabled")
+	}
+
+	if cas.auditLog.Backend() == "" {
+		return nil, status.Error(codes.Unimplemented, "No audit log backend is configured")
+	}
+
 	queryableLog, ok := cas.auditLog.(audit.QueryableLog)
 	if !ok {
 		return nil, status.Error(codes.Unimplemented, "Audit log backend does not support querying")
