@@ -856,9 +856,18 @@ func (m *PlaygroundValidateResponse) validate(all bool) error {
 
 	// no validation rules for PlaygroundId
 
-	switch m.Outcome.(type) {
-
+	switch v := m.Outcome.(type) {
 	case *PlaygroundValidateResponse_Failure:
+		if v == nil {
+			err := PlaygroundValidateResponseValidationError{
+				field:  "Outcome",
+				reason: "oneof value cannot be a typed-nil",
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
+		}
 
 		if all {
 			switch v := interface{}(m.GetFailure()).(type) {
@@ -890,6 +899,16 @@ func (m *PlaygroundValidateResponse) validate(all bool) error {
 		}
 
 	case *PlaygroundValidateResponse_Success:
+		if v == nil {
+			err := PlaygroundValidateResponseValidationError{
+				field:  "Outcome",
+				reason: "oneof value cannot be a typed-nil",
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
+		}
 
 		if all {
 			switch v := interface{}(m.GetSuccess()).(type) {
@@ -920,6 +939,8 @@ func (m *PlaygroundValidateResponse) validate(all bool) error {
 			}
 		}
 
+	default:
+		_ = v // ensures v is used
 	}
 
 	if len(errors) > 0 {
@@ -1026,9 +1047,18 @@ func (m *PlaygroundTestResponse) validate(all bool) error {
 
 	// no validation rules for PlaygroundId
 
-	switch m.Outcome.(type) {
-
+	switch v := m.Outcome.(type) {
 	case *PlaygroundTestResponse_Failure:
+		if v == nil {
+			err := PlaygroundTestResponseValidationError{
+				field:  "Outcome",
+				reason: "oneof value cannot be a typed-nil",
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
+		}
 
 		if all {
 			switch v := interface{}(m.GetFailure()).(type) {
@@ -1060,6 +1090,16 @@ func (m *PlaygroundTestResponse) validate(all bool) error {
 		}
 
 	case *PlaygroundTestResponse_Success:
+		if v == nil {
+			err := PlaygroundTestResponseValidationError{
+				field:  "Outcome",
+				reason: "oneof value cannot be a typed-nil",
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
+		}
 
 		if all {
 			switch v := interface{}(m.GetSuccess()).(type) {
@@ -1090,6 +1130,8 @@ func (m *PlaygroundTestResponse) validate(all bool) error {
 			}
 		}
 
+	default:
+		_ = v // ensures v is used
 	}
 
 	if len(errors) > 0 {
@@ -1196,9 +1238,18 @@ func (m *PlaygroundEvaluateResponse) validate(all bool) error {
 
 	// no validation rules for PlaygroundId
 
-	switch m.Outcome.(type) {
-
+	switch v := m.Outcome.(type) {
 	case *PlaygroundEvaluateResponse_Failure:
+		if v == nil {
+			err := PlaygroundEvaluateResponseValidationError{
+				field:  "Outcome",
+				reason: "oneof value cannot be a typed-nil",
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
+		}
 
 		if all {
 			switch v := interface{}(m.GetFailure()).(type) {
@@ -1230,6 +1281,16 @@ func (m *PlaygroundEvaluateResponse) validate(all bool) error {
 		}
 
 	case *PlaygroundEvaluateResponse_Success:
+		if v == nil {
+			err := PlaygroundEvaluateResponseValidationError{
+				field:  "Outcome",
+				reason: "oneof value cannot be a typed-nil",
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
+		}
 
 		if all {
 			switch v := interface{}(m.GetSuccess()).(type) {
@@ -1260,6 +1321,8 @@ func (m *PlaygroundEvaluateResponse) validate(all bool) error {
 			}
 		}
 
+	default:
+		_ = v // ensures v is used
 	}
 
 	if len(errors) > 0 {
@@ -1366,9 +1429,18 @@ func (m *PlaygroundProxyResponse) validate(all bool) error {
 
 	// no validation rules for PlaygroundId
 
-	switch m.Outcome.(type) {
-
+	switch v := m.Outcome.(type) {
 	case *PlaygroundProxyResponse_Failure:
+		if v == nil {
+			err := PlaygroundProxyResponseValidationError{
+				field:  "Outcome",
+				reason: "oneof value cannot be a typed-nil",
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
+		}
 
 		if all {
 			switch v := interface{}(m.GetFailure()).(type) {
@@ -1400,6 +1472,16 @@ func (m *PlaygroundProxyResponse) validate(all bool) error {
 		}
 
 	case *PlaygroundProxyResponse_CheckResourceSet:
+		if v == nil {
+			err := PlaygroundProxyResponseValidationError{
+				field:  "Outcome",
+				reason: "oneof value cannot be a typed-nil",
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
+		}
 
 		if all {
 			switch v := interface{}(m.GetCheckResourceSet()).(type) {
@@ -1431,6 +1513,16 @@ func (m *PlaygroundProxyResponse) validate(all bool) error {
 		}
 
 	case *PlaygroundProxyResponse_CheckResourceBatch:
+		if v == nil {
+			err := PlaygroundProxyResponseValidationError{
+				field:  "Outcome",
+				reason: "oneof value cannot be a typed-nil",
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
+		}
 
 		if all {
 			switch v := interface{}(m.GetCheckResourceBatch()).(type) {
@@ -1462,6 +1554,16 @@ func (m *PlaygroundProxyResponse) validate(all bool) error {
 		}
 
 	case *PlaygroundProxyResponse_PlanResources:
+		if v == nil {
+			err := PlaygroundProxyResponseValidationError{
+				field:  "Outcome",
+				reason: "oneof value cannot be a typed-nil",
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
+		}
 
 		if all {
 			switch v := interface{}(m.GetPlanResources()).(type) {
@@ -1493,6 +1595,16 @@ func (m *PlaygroundProxyResponse) validate(all bool) error {
 		}
 
 	case *PlaygroundProxyResponse_CheckResources:
+		if v == nil {
+			err := PlaygroundProxyResponseValidationError{
+				field:  "Outcome",
+				reason: "oneof value cannot be a typed-nil",
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
+		}
 
 		if all {
 			switch v := interface{}(m.GetCheckResources()).(type) {
@@ -1523,6 +1635,8 @@ func (m *PlaygroundProxyResponse) validate(all bool) error {
 			}
 		}
 
+	default:
+		_ = v // ensures v is used
 	}
 
 	if len(errors) > 0 {
@@ -1758,9 +1872,18 @@ func (m *ListAuditLogEntriesResponse) validate(all bool) error {
 
 	var errors []error
 
-	switch m.Entry.(type) {
-
+	switch v := m.Entry.(type) {
 	case *ListAuditLogEntriesResponse_AccessLogEntry:
+		if v == nil {
+			err := ListAuditLogEntriesResponseValidationError{
+				field:  "Entry",
+				reason: "oneof value cannot be a typed-nil",
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
+		}
 
 		if all {
 			switch v := interface{}(m.GetAccessLogEntry()).(type) {
@@ -1792,6 +1915,16 @@ func (m *ListAuditLogEntriesResponse) validate(all bool) error {
 		}
 
 	case *ListAuditLogEntriesResponse_DecisionLogEntry:
+		if v == nil {
+			err := ListAuditLogEntriesResponseValidationError{
+				field:  "Entry",
+				reason: "oneof value cannot be a typed-nil",
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
+		}
 
 		if all {
 			switch v := interface{}(m.GetDecisionLogEntry()).(type) {
@@ -1822,6 +1955,8 @@ func (m *ListAuditLogEntriesResponse) validate(all bool) error {
 			}
 		}
 
+	default:
+		_ = v // ensures v is used
 	}
 
 	if len(errors) > 0 {

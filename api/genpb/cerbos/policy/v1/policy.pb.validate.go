@@ -106,9 +106,20 @@ func (m *Policy) validate(all bool) error {
 
 	// no validation rules for Variables
 
-	switch m.PolicyType.(type) {
-
+	oneofPolicyTypePresent := false
+	switch v := m.PolicyType.(type) {
 	case *Policy_ResourcePolicy:
+		if v == nil {
+			err := PolicyValidationError{
+				field:  "PolicyType",
+				reason: "oneof value cannot be a typed-nil",
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
+		}
+		oneofPolicyTypePresent = true
 
 		if all {
 			switch v := interface{}(m.GetResourcePolicy()).(type) {
@@ -140,6 +151,17 @@ func (m *Policy) validate(all bool) error {
 		}
 
 	case *Policy_PrincipalPolicy:
+		if v == nil {
+			err := PolicyValidationError{
+				field:  "PolicyType",
+				reason: "oneof value cannot be a typed-nil",
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
+		}
+		oneofPolicyTypePresent = true
 
 		if all {
 			switch v := interface{}(m.GetPrincipalPolicy()).(type) {
@@ -171,6 +193,17 @@ func (m *Policy) validate(all bool) error {
 		}
 
 	case *Policy_DerivedRoles:
+		if v == nil {
+			err := PolicyValidationError{
+				field:  "PolicyType",
+				reason: "oneof value cannot be a typed-nil",
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
+		}
+		oneofPolicyTypePresent = true
 
 		if all {
 			switch v := interface{}(m.GetDerivedRoles()).(type) {
@@ -202,6 +235,9 @@ func (m *Policy) validate(all bool) error {
 		}
 
 	default:
+		_ = v // ensures v is used
+	}
+	if !oneofPolicyTypePresent {
 		err := PolicyValidationError{
 			field:  "PolicyType",
 			reason: "value is required",
@@ -210,7 +246,6 @@ func (m *Policy) validate(all bool) error {
 			return err
 		}
 		errors = append(errors, err)
-
 	}
 
 	if len(errors) > 0 {
@@ -1649,9 +1684,20 @@ func (m *Condition) validate(all bool) error {
 
 	var errors []error
 
-	switch m.Condition.(type) {
-
+	oneofConditionPresent := false
+	switch v := m.Condition.(type) {
 	case *Condition_Match:
+		if v == nil {
+			err := ConditionValidationError{
+				field:  "Condition",
+				reason: "oneof value cannot be a typed-nil",
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
+		}
+		oneofConditionPresent = true
 
 		if all {
 			switch v := interface{}(m.GetMatch()).(type) {
@@ -1683,9 +1729,22 @@ func (m *Condition) validate(all bool) error {
 		}
 
 	case *Condition_Script:
+		if v == nil {
+			err := ConditionValidationError{
+				field:  "Condition",
+				reason: "oneof value cannot be a typed-nil",
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
+		}
+		oneofConditionPresent = true
 		// no validation rules for Script
-
 	default:
+		_ = v // ensures v is used
+	}
+	if !oneofConditionPresent {
 		err := ConditionValidationError{
 			field:  "Condition",
 			reason: "value is required",
@@ -1694,7 +1753,6 @@ func (m *Condition) validate(all bool) error {
 			return err
 		}
 		errors = append(errors, err)
-
 	}
 
 	if len(errors) > 0 {
@@ -1795,9 +1853,20 @@ func (m *Match) validate(all bool) error {
 
 	var errors []error
 
-	switch m.Op.(type) {
-
+	oneofOpPresent := false
+	switch v := m.Op.(type) {
 	case *Match_All:
+		if v == nil {
+			err := MatchValidationError{
+				field:  "Op",
+				reason: "oneof value cannot be a typed-nil",
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
+		}
+		oneofOpPresent = true
 
 		if all {
 			switch v := interface{}(m.GetAll()).(type) {
@@ -1829,6 +1898,17 @@ func (m *Match) validate(all bool) error {
 		}
 
 	case *Match_Any:
+		if v == nil {
+			err := MatchValidationError{
+				field:  "Op",
+				reason: "oneof value cannot be a typed-nil",
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
+		}
+		oneofOpPresent = true
 
 		if all {
 			switch v := interface{}(m.GetAny()).(type) {
@@ -1860,6 +1940,17 @@ func (m *Match) validate(all bool) error {
 		}
 
 	case *Match_None:
+		if v == nil {
+			err := MatchValidationError{
+				field:  "Op",
+				reason: "oneof value cannot be a typed-nil",
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
+		}
+		oneofOpPresent = true
 
 		if all {
 			switch v := interface{}(m.GetNone()).(type) {
@@ -1891,9 +1982,22 @@ func (m *Match) validate(all bool) error {
 		}
 
 	case *Match_Expr:
+		if v == nil {
+			err := MatchValidationError{
+				field:  "Op",
+				reason: "oneof value cannot be a typed-nil",
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
+		}
+		oneofOpPresent = true
 		// no validation rules for Expr
-
 	default:
+		_ = v // ensures v is used
+	}
+	if !oneofOpPresent {
 		err := MatchValidationError{
 			field:  "Op",
 			reason: "value is required",
@@ -1902,7 +2006,6 @@ func (m *Match) validate(all bool) error {
 			return err
 		}
 		errors = append(errors, err)
-
 	}
 
 	if len(errors) > 0 {
@@ -5787,9 +5890,18 @@ func (m *TestResults_Details) validate(all bool) error {
 
 	}
 
-	switch m.Outcome.(type) {
-
+	switch v := m.Outcome.(type) {
 	case *TestResults_Details_Failure:
+		if v == nil {
+			err := TestResults_DetailsValidationError{
+				field:  "Outcome",
+				reason: "oneof value cannot be a typed-nil",
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
+		}
 
 		if all {
 			switch v := interface{}(m.GetFailure()).(type) {
@@ -5821,8 +5933,19 @@ func (m *TestResults_Details) validate(all bool) error {
 		}
 
 	case *TestResults_Details_Error:
+		if v == nil {
+			err := TestResults_DetailsValidationError{
+				field:  "Outcome",
+				reason: "oneof value cannot be a typed-nil",
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
+		}
 		// no validation rules for Error
-
+	default:
+		_ = v // ensures v is used
 	}
 
 	if len(errors) > 0 {

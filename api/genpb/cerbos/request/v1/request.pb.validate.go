@@ -2244,9 +2244,20 @@ func (m *PlaygroundProxyRequest) validate(all bool) error {
 
 	}
 
-	switch m.ProxyRequest.(type) {
-
+	oneofProxyRequestPresent := false
+	switch v := m.ProxyRequest.(type) {
 	case *PlaygroundProxyRequest_CheckResourceSet:
+		if v == nil {
+			err := PlaygroundProxyRequestValidationError{
+				field:  "ProxyRequest",
+				reason: "oneof value cannot be a typed-nil",
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
+		}
+		oneofProxyRequestPresent = true
 
 		if all {
 			switch v := interface{}(m.GetCheckResourceSet()).(type) {
@@ -2278,6 +2289,17 @@ func (m *PlaygroundProxyRequest) validate(all bool) error {
 		}
 
 	case *PlaygroundProxyRequest_CheckResourceBatch:
+		if v == nil {
+			err := PlaygroundProxyRequestValidationError{
+				field:  "ProxyRequest",
+				reason: "oneof value cannot be a typed-nil",
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
+		}
+		oneofProxyRequestPresent = true
 
 		if all {
 			switch v := interface{}(m.GetCheckResourceBatch()).(type) {
@@ -2309,6 +2331,17 @@ func (m *PlaygroundProxyRequest) validate(all bool) error {
 		}
 
 	case *PlaygroundProxyRequest_PlanResources:
+		if v == nil {
+			err := PlaygroundProxyRequestValidationError{
+				field:  "ProxyRequest",
+				reason: "oneof value cannot be a typed-nil",
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
+		}
+		oneofProxyRequestPresent = true
 
 		if all {
 			switch v := interface{}(m.GetPlanResources()).(type) {
@@ -2340,6 +2373,17 @@ func (m *PlaygroundProxyRequest) validate(all bool) error {
 		}
 
 	case *PlaygroundProxyRequest_CheckResources:
+		if v == nil {
+			err := PlaygroundProxyRequestValidationError{
+				field:  "ProxyRequest",
+				reason: "oneof value cannot be a typed-nil",
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
+		}
+		oneofProxyRequestPresent = true
 
 		if all {
 			switch v := interface{}(m.GetCheckResources()).(type) {
@@ -2371,6 +2415,9 @@ func (m *PlaygroundProxyRequest) validate(all bool) error {
 		}
 
 	default:
+		_ = v // ensures v is used
+	}
+	if !oneofProxyRequestPresent {
 		err := PlaygroundProxyRequestValidationError{
 			field:  "ProxyRequest",
 			reason: "value is required",
@@ -2379,7 +2426,6 @@ func (m *PlaygroundProxyRequest) validate(all bool) error {
 			return err
 		}
 		errors = append(errors, err)
-
 	}
 
 	if len(errors) > 0 {
@@ -2642,9 +2688,20 @@ func (m *ListAuditLogEntriesRequest) validate(all bool) error {
 		errors = append(errors, err)
 	}
 
-	switch m.Filter.(type) {
-
+	oneofFilterPresent := false
+	switch v := m.Filter.(type) {
 	case *ListAuditLogEntriesRequest_Tail:
+		if v == nil {
+			err := ListAuditLogEntriesRequestValidationError{
+				field:  "Filter",
+				reason: "oneof value cannot be a typed-nil",
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
+		}
+		oneofFilterPresent = true
 
 		if m.GetTail() > 1000 {
 			err := ListAuditLogEntriesRequestValidationError{
@@ -2658,6 +2715,17 @@ func (m *ListAuditLogEntriesRequest) validate(all bool) error {
 		}
 
 	case *ListAuditLogEntriesRequest_Between:
+		if v == nil {
+			err := ListAuditLogEntriesRequestValidationError{
+				field:  "Filter",
+				reason: "oneof value cannot be a typed-nil",
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
+		}
+		oneofFilterPresent = true
 
 		if all {
 			switch v := interface{}(m.GetBetween()).(type) {
@@ -2689,6 +2757,17 @@ func (m *ListAuditLogEntriesRequest) validate(all bool) error {
 		}
 
 	case *ListAuditLogEntriesRequest_Since:
+		if v == nil {
+			err := ListAuditLogEntriesRequestValidationError{
+				field:  "Filter",
+				reason: "oneof value cannot be a typed-nil",
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
+		}
+		oneofFilterPresent = true
 
 		if all {
 			switch v := interface{}(m.GetSince()).(type) {
@@ -2720,6 +2799,17 @@ func (m *ListAuditLogEntriesRequest) validate(all bool) error {
 		}
 
 	case *ListAuditLogEntriesRequest_Lookup:
+		if v == nil {
+			err := ListAuditLogEntriesRequestValidationError{
+				field:  "Filter",
+				reason: "oneof value cannot be a typed-nil",
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
+		}
+		oneofFilterPresent = true
 
 		if !_ListAuditLogEntriesRequest_Lookup_Pattern.MatchString(m.GetLookup()) {
 			err := ListAuditLogEntriesRequestValidationError{
@@ -2733,6 +2823,9 @@ func (m *ListAuditLogEntriesRequest) validate(all bool) error {
 		}
 
 	default:
+		_ = v // ensures v is used
+	}
+	if !oneofFilterPresent {
 		err := ListAuditLogEntriesRequestValidationError{
 			field:  "Filter",
 			reason: "value is required",
@@ -2741,7 +2834,6 @@ func (m *ListAuditLogEntriesRequest) validate(all bool) error {
 			return err
 		}
 		errors = append(errors, err)
-
 	}
 
 	if len(errors) > 0 {

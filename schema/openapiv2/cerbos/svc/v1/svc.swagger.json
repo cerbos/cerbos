@@ -926,7 +926,21 @@
           "description": "List of validation errors (if schema validation is enabled)"
         },
         "meta": {
-          "$ref": "#/definitions/CheckResourcesResponseResultEntryMeta"
+          "$ref": "#/definitions/CheckResourcesResponseResultEntryMeta",
+          "example": {
+            "actions": {
+              "view:*": {
+                "matched_policy": "album:object:default"
+              },
+              "comment": {
+                "matched_policy": "album:object:default"
+              }
+            },
+            "effective_derived_roles": [
+              "owner"
+            ]
+          },
+          "description": "Metadata about policy evaluation"
         }
       }
     },
@@ -1886,7 +1900,8 @@
           "description": "Results for each resource instance, keyed by the ID supplied in the request"
         },
         "meta": {
-          "$ref": "#/definitions/v1CheckResourceSetResponseMeta"
+          "$ref": "#/definitions/v1CheckResourceSetResponseMeta",
+          "description": "Optional metadata about the request evaluation process"
         }
       },
       "description": "Policy evaluation response for a set of resources."
@@ -2279,10 +2294,12 @@
       "type": "object",
       "properties": {
         "kind": {
-          "$ref": "#/definitions/v1PlanResourcesFilterKind"
+          "$ref": "#/definitions/v1PlanResourcesFilterKind",
+          "description": "Filter kind. Defines whether the given action is always allowed, always denied or allowed conditionally."
         },
         "condition": {
-          "$ref": "#/definitions/ExpressionOperand"
+          "$ref": "#/definitions/ExpressionOperand",
+          "description": "Filter condition. Only populated if kind is KIND_CONDITIONAL."
         }
       }
     },
@@ -2440,10 +2457,12 @@
           "description": "The policy version."
         },
         "filter": {
-          "$ref": "#/definitions/v1PlanResourcesFilter"
+          "$ref": "#/definitions/v1PlanResourcesFilter",
+          "description": "Filter"
         },
         "meta": {
-          "$ref": "#/definitions/v1PlanResourcesResponseMeta"
+          "$ref": "#/definitions/v1PlanResourcesResponseMeta",
+          "description": "Optional metadata about the request evaluation process"
         },
         "validationErrors": {
           "type": "array",

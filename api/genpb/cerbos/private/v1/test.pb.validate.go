@@ -264,9 +264,18 @@ func (m *ServerTestCase) validate(all bool) error {
 		}
 	}
 
-	switch m.CallKind.(type) {
-
+	switch v := m.CallKind.(type) {
 	case *ServerTestCase_CheckResourceSet:
+		if v == nil {
+			err := ServerTestCaseValidationError{
+				field:  "CallKind",
+				reason: "oneof value cannot be a typed-nil",
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
+		}
 
 		if all {
 			switch v := interface{}(m.GetCheckResourceSet()).(type) {
@@ -298,6 +307,16 @@ func (m *ServerTestCase) validate(all bool) error {
 		}
 
 	case *ServerTestCase_CheckResourceBatch:
+		if v == nil {
+			err := ServerTestCaseValidationError{
+				field:  "CallKind",
+				reason: "oneof value cannot be a typed-nil",
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
+		}
 
 		if all {
 			switch v := interface{}(m.GetCheckResourceBatch()).(type) {
@@ -329,6 +348,16 @@ func (m *ServerTestCase) validate(all bool) error {
 		}
 
 	case *ServerTestCase_PlaygroundValidate:
+		if v == nil {
+			err := ServerTestCaseValidationError{
+				field:  "CallKind",
+				reason: "oneof value cannot be a typed-nil",
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
+		}
 
 		if all {
 			switch v := interface{}(m.GetPlaygroundValidate()).(type) {
@@ -360,6 +389,16 @@ func (m *ServerTestCase) validate(all bool) error {
 		}
 
 	case *ServerTestCase_PlaygroundEvaluate:
+		if v == nil {
+			err := ServerTestCaseValidationError{
+				field:  "CallKind",
+				reason: "oneof value cannot be a typed-nil",
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
+		}
 
 		if all {
 			switch v := interface{}(m.GetPlaygroundEvaluate()).(type) {
@@ -391,6 +430,16 @@ func (m *ServerTestCase) validate(all bool) error {
 		}
 
 	case *ServerTestCase_AdminAddOrUpdatePolicy:
+		if v == nil {
+			err := ServerTestCaseValidationError{
+				field:  "CallKind",
+				reason: "oneof value cannot be a typed-nil",
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
+		}
 
 		if all {
 			switch v := interface{}(m.GetAdminAddOrUpdatePolicy()).(type) {
@@ -422,6 +471,16 @@ func (m *ServerTestCase) validate(all bool) error {
 		}
 
 	case *ServerTestCase_PlaygroundProxy:
+		if v == nil {
+			err := ServerTestCaseValidationError{
+				field:  "CallKind",
+				reason: "oneof value cannot be a typed-nil",
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
+		}
 
 		if all {
 			switch v := interface{}(m.GetPlaygroundProxy()).(type) {
@@ -453,6 +512,16 @@ func (m *ServerTestCase) validate(all bool) error {
 		}
 
 	case *ServerTestCase_PlanResources:
+		if v == nil {
+			err := ServerTestCaseValidationError{
+				field:  "CallKind",
+				reason: "oneof value cannot be a typed-nil",
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
+		}
 
 		if all {
 			switch v := interface{}(m.GetPlanResources()).(type) {
@@ -484,6 +553,16 @@ func (m *ServerTestCase) validate(all bool) error {
 		}
 
 	case *ServerTestCase_AdminAddOrUpdateSchema:
+		if v == nil {
+			err := ServerTestCaseValidationError{
+				field:  "CallKind",
+				reason: "oneof value cannot be a typed-nil",
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
+		}
 
 		if all {
 			switch v := interface{}(m.GetAdminAddOrUpdateSchema()).(type) {
@@ -515,6 +594,16 @@ func (m *ServerTestCase) validate(all bool) error {
 		}
 
 	case *ServerTestCase_PlaygroundTest:
+		if v == nil {
+			err := ServerTestCaseValidationError{
+				field:  "CallKind",
+				reason: "oneof value cannot be a typed-nil",
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
+		}
 
 		if all {
 			switch v := interface{}(m.GetPlaygroundTest()).(type) {
@@ -546,6 +635,16 @@ func (m *ServerTestCase) validate(all bool) error {
 		}
 
 	case *ServerTestCase_CheckResources:
+		if v == nil {
+			err := ServerTestCaseValidationError{
+				field:  "CallKind",
+				reason: "oneof value cannot be a typed-nil",
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
+		}
 
 		if all {
 			switch v := interface{}(m.GetCheckResources()).(type) {
@@ -576,6 +675,8 @@ func (m *ServerTestCase) validate(all bool) error {
 			}
 		}
 
+	default:
+		_ = v // ensures v is used
 	}
 
 	if len(errors) > 0 {
@@ -1392,9 +1493,18 @@ func (m *SchemaTestCase) validate(all bool) error {
 
 	}
 
-	switch m.Input.(type) {
-
+	switch v := m.Input.(type) {
 	case *SchemaTestCase_CheckInput:
+		if v == nil {
+			err := SchemaTestCaseValidationError{
+				field:  "Input",
+				reason: "oneof value cannot be a typed-nil",
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
+		}
 
 		if all {
 			switch v := interface{}(m.GetCheckInput()).(type) {
@@ -1426,6 +1536,16 @@ func (m *SchemaTestCase) validate(all bool) error {
 		}
 
 	case *SchemaTestCase_PlanResourcesInput:
+		if v == nil {
+			err := SchemaTestCaseValidationError{
+				field:  "Input",
+				reason: "oneof value cannot be a typed-nil",
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
+		}
 
 		if all {
 			switch v := interface{}(m.GetPlanResourcesInput()).(type) {
@@ -1456,6 +1576,8 @@ func (m *SchemaTestCase) validate(all bool) error {
 			}
 		}
 
+	default:
+		_ = v // ensures v is used
 	}
 
 	if len(errors) > 0 {
