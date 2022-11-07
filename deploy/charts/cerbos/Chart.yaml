@@ -16,5 +16,5 @@ keywords:
   - policies
   - rbac
   - security
-version: "0.22.0"
-appVersion: "0.22.0"
+version: "0.23.0"
+appVersion: "0.23.0"

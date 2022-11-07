@@ -20,7 +20,7 @@ urls:
 asciidoc:
   attributes:
     app-name: "cerbos"
-    app-version: "0.22.0@"
+    app-version: "0.23.0@"
     experimental: true
     page-pagination: true
   extensions:
