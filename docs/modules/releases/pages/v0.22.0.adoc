@@ -5,7 +5,7 @@ include::ROOT:partial$attributes.adoc[]
 
 == Highlights
 
-The query planner is now smarter and is able produce simpler, optimized plans for some of the commonly seen filter patterns. For example, checking for membership in a single-item list can be converted to a comparison operation and checking for membership in an empty list can be reduced to simply return `false`. This should help you build better database queries for building lists of resources filtered using access control logic.
+The query planner is now smarter and able to produce simpler, optimized plans for some of the commonly seen filter patterns. For example, checking for membership in a single-item list can be converted to a comparison operation and checking for membership in an empty list can be reduced to simply return `false`. This should help you build better database queries for building lists of resources filtered using access control logic.
 
 There are several more improvements and fixes to the query planner in this release:
 
