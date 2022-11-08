@@ -6,6 +6,8 @@ package put
 import (
 	"context"
 	"fmt"
+	"path/filepath"
+	"strings"
 
 	"github.com/alecthomas/kong"
 
@@ -29,7 +31,10 @@ cerbosctl put schema ./dir/to/schemas ./other/dir/to/schemas
 
 # Put schemas under a directory recursively
 cerbosctl put schema --recursive ./dir/to/schemas
-cerbosctl put schema -R ./dir/to/schemas`
+cerbosctl put schema -R ./dir/to/schemas
+
+# Put schemas from a zip file
+cerbosctl put schema ./dir/to/schemas.zip`
 
 type SchemaCmd struct {
 	Paths []string `arg:"" type:"path" help:"Path to schema file or directory"`
@@ -42,10 +47,19 @@ func (sc *SchemaCmd) Run(k *kong.Kong, put *Cmd, ctx *cmdclient.Context) error {
 
 	schemas := client.NewSchemaSet()
 	var errs []error
-	err := files.Find(sc.Paths, put.Recursive, util.FileTypeSchema, func(file files.Found) error {
-		_, err := schemas.AddSchemaFromFileWithIDAndErr(file.AbsolutePath, file.RelativePath)
-		if err != nil {
-			errs = append(errs, errors.NewPutError(file.AbsolutePath, err.Error()))
+	err := files.Find(sc.Paths, put.Recursive, util.FileTypeSchema, func(found files.Found) error {
+		switch f := found.(type) {
+		case files.FoundFile:
+			_, err := schemas.AddSchemaFromFileWithIDAndErr(f.AbsolutePath(), f.Path())
+			if err != nil {
+				errs = append(errs, errors.NewPutError(f.AbsolutePath(), err.Error()))
+			}
+		case files.FoundZip:
+			id := strings.TrimPrefix(f.Path(), fmt.Sprintf("%s%s", util.SchemasDirectory, string(filepath.Separator)))
+			_, err := schemas.AddSchemaFromZipFile(f.File(), id, f.Path())
+			if err != nil {
+				errs = append(errs, errors.NewPutError(fmt.Sprintf("from zip file: %s", f.Path()), err.Error()))
+			}
 		}
 
 		return nil

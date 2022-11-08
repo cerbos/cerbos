@@ -271,6 +271,11 @@ cerbosctl put policy --recursive ./dir/to/policies
 cerbosctl put policy -R ./dir/to/policies
 ----
 
+.Put policies from a zip file
+----
+cerbosctl put policy ./dir/to/policies.zip
+----
+
 .Put schemas
 ----
 cerbosctl put schemas ./path/to/schema.json
@@ -292,6 +297,11 @@ cerbosctl put schema ./dir/to/schemas ./other/dir/to/schemas
 ----
 cerbosctl put schema --recursive ./dir/to/schemas
 cerbosctl put schema -R ./dir/to/schemas
+----
+
+.Put schemas from a zip file
+----
+cerbosctl put schema ./dir/to/schemas.zip
 ----
 
 [#store]

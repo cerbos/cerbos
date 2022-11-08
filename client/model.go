@@ -4,6 +4,7 @@
 package client
 
 import (
+	"archive/zip"
 	"errors"
 	"fmt"
 	"io"
@@ -584,6 +585,16 @@ func (ps *PolicySet) AddPolicyFromReader(r io.Reader) *PolicySet {
 	return ps
 }
 
+func (ps *PolicySet) AddPolicyFromZipFile(file *zip.ReadCloser, path string) (*PolicySet, error) {
+	r, err := file.Open(path)
+	if err != nil {
+		return nil, err
+	}
+
+	ps.AddPolicyFromReader(r)
+	return ps, nil
+}
+
 // AddPolicies adds the given policies to the set.
 func (ps *PolicySet) AddPolicies(policies ...*policyv1.Policy) *PolicySet {
 	ps.policies = append(ps.policies, policies...)
@@ -728,6 +739,16 @@ func (ss *SchemaSet) AddSchemaFromFileWithIDAndErr(file, id string) (*SchemaSet,
 	}
 
 	return ss.AddSchemas(s), nil
+}
+
+func (ss *SchemaSet) AddSchemaFromZipFile(file *zip.ReadCloser, id, path string) (*SchemaSet, error) {
+	r, err := file.Open(path)
+	if err != nil {
+		return nil, err
+	}
+
+	ss.AddSchemaFromReader(r, id)
+	return ss, nil
 }
 
 // AddSchemaFromReader adds a schema from the given reader to the set.

@@ -4,27 +4,34 @@
 package files
 
 import (
+	"archive/zip"
+	"fmt"
 	"io/fs"
 	"os"
 	"path/filepath"
+	"strings"
+
+	"go.uber.org/multierr"
 
 	"github.com/cerbos/cerbos/internal/util"
 )
 
-type Found struct {
-	AbsolutePath string
-	RelativePath string
-}
+type callback func(file Found) error
 
-func Find(paths []string, recursive bool, fileType util.IndexedFileType, callback func(file Found) error) error {
+func Find(paths []string, recursive bool, fileType util.IndexedFileType, callback callback) error {
 	for _, path := range paths {
 		fileInfo, err := os.Stat(path)
 		if err != nil {
 			return err
 		}
 
-		//nolint:nestif
-		if fileInfo.IsDir() {
+		switch {
+		case util.IsZip(path):
+			err = fromZip(path, fileType, callback)
+			if err != nil {
+				return err
+			}
+		case fileInfo.IsDir():
 			err := filepath.WalkDir(path, func(walkPath string, d fs.DirEntry, err error) error {
 				if err != nil {
 					return err
@@ -46,9 +53,9 @@ func Find(paths []string, recursive bool, fileType util.IndexedFileType, callbac
 						return err
 					}
 
-					return callback(Found{
-						AbsolutePath: walkPath,
-						RelativePath: filepath.ToSlash(relativePath),
+					return callback(foundFileImpl{
+						absolutePath: walkPath,
+						relativePath: filepath.ToSlash(relativePath),
 					})
 				}
 
@@ -57,10 +64,10 @@ func Find(paths []string, recursive bool, fileType util.IndexedFileType, callbac
 			if err != nil {
 				return err
 			}
-		} else {
-			err = callback(Found{
-				AbsolutePath: path,
-				RelativePath: filepath.Base(path),
+		default:
+			err = callback(foundFileImpl{
+				absolutePath: path,
+				relativePath: filepath.Base(path),
 			})
 			if err != nil {
 				return err
@@ -69,6 +76,52 @@ func Find(paths []string, recursive bool, fileType util.IndexedFileType, callbac
 	}
 
 	return nil
+}
+
+func fromZip(path string, fileType util.IndexedFileType, callback callback) error {
+	zipFile, err := zip.OpenReader(path)
+	if err != nil {
+		return fmt.Errorf("failed to open zip file %s: %w", path, err)
+	}
+	defer zipFile.Close()
+
+	var errs error
+	for _, f := range zipFile.File {
+		if f.FileInfo().IsDir() {
+			continue
+		}
+
+		if !isSupportedFile(filepath.Base(f.Name), fileType) {
+			continue
+		}
+
+		if isInHiddenDir(f.Name) {
+			continue
+		}
+
+		if _, ok := util.RelativeSchemaPath(f.Name); fileType == util.FileTypePolicy && ok {
+			continue
+		}
+
+		if err := callback(foundZipImpl{
+			relativePath: f.Name,
+			zipFile:      zipFile,
+		}); err != nil {
+			errs = multierr.Append(errs, err)
+		}
+	}
+
+	return errs
+}
+
+func isInHiddenDir(path string) bool {
+	for _, part := range strings.Split(filepath.Dir(path), string(filepath.Separator)) {
+		if util.IsHidden(part) {
+			return true
+		}
+	}
+
+	return false
 }
 
 func isSupportedFile(fileName string, fileType util.IndexedFileType) bool {
