@@ -479,6 +479,12 @@ func evaluateConditionExpression(expr *exprpb.CheckedExpr, input *enginev1.PlanR
 		return nil, err
 	}
 
+	if m := input.Resource.GetAttr(); len(m) > 0 {
+		e, err = replaceResourceVals(e, m, p.env)
+		if err != nil {
+			return nil, err
+		}
+	}
 	val, residual, err := p.evalPartially(e)
 	if err != nil {
 		// ignore expressions that access non-existent keys
@@ -538,6 +544,10 @@ func (p *partialEvaluator) evalPartially(e *exprpb.Expr) (ref.Val, *exprpb.Expr,
 func newEvaluator(input *enginev1.PlanResourcesInput) (p *partialEvaluator, err error) {
 	p = new(partialEvaluator)
 	knownVars := make(map[string]any)
+	knownVars[conditions.CELRequestIdent] = input
+	knownVars[conditions.CELPrincipalAbbrev] = input.Principal
+	knownVars[conditions.Fqn(conditions.CELPrincipalField)] = input.Principal
+
 	p.env = conditions.StdPartialEnv
 	if len(input.Resource.GetAttr()) > 0 {
 		var ds []*exprpb.Decl
@@ -552,14 +562,9 @@ func newEvaluator(input *enginev1.PlanResourcesInput) (p *partialEvaluator, err 
 			return nil, err
 		}
 	}
-
-	knownVars[conditions.CELRequestIdent] = input
-	knownVars[conditions.CELPrincipalAbbrev] = input.Principal
-	knownVars[conditions.Fqn(conditions.CELPrincipalField)] = input.Principal
-
 	p.vars, err = cel.PartialVars(knownVars,
-		cel.AttributePattern(conditions.CELResourceAbbrev),
-		cel.AttributePattern(conditions.CELRequestIdent).QualString(conditions.CELResourceField))
+		cel.AttributePattern(conditions.CELResourceAbbrev).QualString(conditions.CELAttrField),
+		cel.AttributePattern(conditions.CELRequestIdent).QualString(conditions.CELResourceField).QualString(conditions.CELAttrField))
 
 	if err != nil {
 		return nil, err

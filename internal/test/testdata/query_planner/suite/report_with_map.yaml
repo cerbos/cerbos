@@ -3,9 +3,13 @@ description: Report with map tests
 principal: {
   "id": "123",
   "roles": [
-    "USER"
+    "USER",
   ],
   "attr": {
+    "workspaceRolesMap": {
+      "1": ["Global Admin"],
+      "B": ["MEMBER"],
+    },
     "workspaceMap": {
       "A": "MANAGER",
       "B": "MEMBER",
@@ -115,3 +119,12 @@ tests:
       policyVersion: default
     want:
       kind: KIND_ALWAYS_DENIED
+#  - action: delete_vehemently
+#    resource:
+#      kind: report_with_map
+#      policyVersion: default
+#      attr: {
+#        "location_id": "1"
+#      }
+#    want:
+#      kind: KIND_ALWAYS_ALLOWED
