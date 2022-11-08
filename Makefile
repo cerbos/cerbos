@@ -70,7 +70,7 @@ generate-notice: $(GO_LICENCE_DETECTOR)
 confdocs:
 	@ mkdir -p ./internal/confdocs
 	@ go run ./hack/tools/confdocs/confdocs.go > ./internal/confdocs/generated.go
-	@ go run ./internal/confdocs/generated.go
+	@ CGO_ENABLED=0 go run ./internal/confdocs/generated.go
 	@ rm -rf ./internal/confdocs
 
 .PHONY: deps
