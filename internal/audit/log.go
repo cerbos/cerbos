@@ -21,7 +21,13 @@ var (
 	backends   = map[string]Constructor{}
 )
 
+type Info interface {
+	Backend() string
+	Enabled() bool
+}
+
 type Log interface {
+	Info
 	WriteAccessLogEntry(context.Context, AccessLogEntryMaker) error
 	WriteDecisionLogEntry(context.Context, DecisionLogEntryMaker) error
 	Close()
@@ -108,6 +114,14 @@ func NewNopLog() Log {
 type logWrapper struct {
 	conf    *Conf
 	backend Log
+}
+
+func (lw *logWrapper) Backend() string {
+	return lw.conf.Backend
+}
+
+func (lw *logWrapper) Enabled() bool {
+	return lw.conf.Enabled
 }
 
 func (lw *logWrapper) WriteAccessLogEntry(ctx context.Context, entry AccessLogEntryMaker) error {

@@ -47,6 +47,9 @@ func TestBadgerLog(t *testing.T) {
 	db, err := local.NewLog(conf)
 	require.NoError(t, err)
 
+	require.Equal(t, local.Backend, db.Backend())
+	require.True(t, db.Enabled())
+
 	loadData(t, db, startDate)
 	db.Close()
 

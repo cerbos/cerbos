@@ -23,6 +23,7 @@ const (
 	badgerDiscardRatio      = 0.5
 	goroutineResetThreshold = 1 << 16
 
+	Backend    = "local"
 	keyLen     = 20
 	keyTSStart = 4
 	keyTSEnd   = 10
@@ -34,7 +35,7 @@ var (
 )
 
 func init() {
-	audit.RegisterBackend("local", func(_ context.Context, confW *config.Wrapper) (audit.Log, error) {
+	audit.RegisterBackend(Backend, func(_ context.Context, confW *config.Wrapper) (audit.Log, error) {
 		conf := new(Conf)
 		if err := confW.GetSection(conf); err != nil {
 			return nil, fmt.Errorf("failed to read local audit log configuration: %w", err)
@@ -56,7 +57,7 @@ type Log struct {
 }
 
 func NewLog(conf *Conf) (*Log, error) {
-	logger := zap.L().Named("auditlog").With(zap.String("backend", "local"))
+	logger := zap.L().Named("auditlog").With(zap.String("backend", Backend))
 	opts := badgerv3.DefaultOptions(conf.StoragePath)
 	opts = opts.WithCompactL0OnClose(true)
 	opts = opts.WithMetricsEnabled(false)
@@ -150,6 +151,14 @@ func (l *Log) gc(gcInterval time.Duration) {
 
 	// restart goroutine with a fresh stack
 	go l.gc(gcInterval)
+}
+
+func (l *Log) Backend() string {
+	return Backend
+}
+
+func (l *Log) Enabled() bool {
+	return true
 }
 
 func (l *Log) WriteAccessLogEntry(ctx context.Context, record audit.AccessLogEntryMaker) error {

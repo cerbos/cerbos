@@ -32,6 +32,9 @@ func TestLog(t *testing.T) {
 
 	t.Cleanup(log.Close)
 
+	require.Equal(t, file.Backend, log.Backend())
+	require.True(t, log.Enabled())
+
 	ch := make(chan int, 100)
 	g, ctx := errgroup.WithContext(context.Background())
 
