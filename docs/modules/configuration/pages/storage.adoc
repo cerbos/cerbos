@@ -92,7 +92,7 @@ storage:
 
 Git is the preferred method of storing Cerbos policies. The server is smart enough to detect when new commits are made to the git repository and refresh its state based on the changes.
 
-NOTE: Azure DevOps repositories use a protocol that is currently not supported by the Git library used by Cerbos. We are working to address this issue. In the mean time, please consider using the Cerbos `disk` storage in conjunction with an external Git sync implementation or using a CI pipeline to publish your policies to another storage implementation supported by Cerbos.
+NOTE: Azure DevOps repositories use a newer protocol that is currently not supported by the Git library used by Cerbos. We are working to address this issue. In the mean time, please consider using the Cerbos `disk` storage in conjunction with an external Git sync implementation such as https://github.com/kubernetes/git-sync or using a CI pipeline to publish your policies to another storage implementation supported by Cerbos.
 
 * Git repositories can be local (`file` protocol) or remote (`ssh` or `https`).
 * If no `branch` is specified, the default branch would be the `master` branch.
