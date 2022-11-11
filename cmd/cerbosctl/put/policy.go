@@ -46,17 +46,13 @@ func (pc *PolicyCmd) Run(k *kong.Kong, put *Cmd, ctx *cmdclient.Context) error {
 	policies := client.NewPolicySet()
 	var errs []error
 	err := files.Find(pc.Paths, put.Recursive, util.FileTypePolicy, func(found files.Found) error {
-		switch f := found.(type) {
-		case files.FoundFile:
-			_, err := policies.AddPolicyFromFileWithErr(f.AbsolutePath())
-			if err != nil {
-				errs = append(errs, errors.NewPutError(f.AbsolutePath(), err.Error()))
-			}
-		case files.FoundZip:
-			_, err := policies.AddPolicyFromZipFile(f.File(), f.Path())
-			if err != nil {
-				errs = append(errs, errors.NewPutError(fmt.Sprintf("from zip file: %s", f.Path()), err.Error()))
-			}
+		f, err := found.Open()
+		if err != nil {
+			errs = append(errs, errors.NewPutError(found.Path(), err.Error()))
+		}
+
+		if _ = policies.AddPolicyFromReader(f); policies.Err() != nil {
+			errs = append(errs, errors.NewPutError(found.Path(), policies.Err().Error()))
 		}
 
 		return nil

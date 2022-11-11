@@ -9,9 +9,6 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
-	"strings"
-
-	"go.uber.org/multierr"
 
 	"github.com/cerbos/cerbos/internal/util"
 )
@@ -20,108 +17,89 @@ type callback func(file Found) error
 
 func Find(paths []string, recursive bool, fileType util.IndexedFileType, callback callback) error {
 	for _, path := range paths {
-		fileInfo, err := os.Stat(path)
-		if err != nil {
-			return err
-		}
-
-		switch {
-		case util.IsZip(path):
-			err = fromZip(path, fileType, callback)
-			if err != nil {
-				return err
-			}
-		case fileInfo.IsDir():
-			err := filepath.WalkDir(path, func(walkPath string, d fs.DirEntry, err error) error {
-				if err != nil {
-					return err
-				}
-
-				if d.IsDir() {
-					if (walkPath != path && !recursive) ||
-						util.IsHidden(d.Name()) ||
-						(fileType == util.FileTypePolicy && d.Name() == util.TestDataDirectory) {
-						return fs.SkipDir
-					}
-
-					return nil
-				}
-
-				if isSupportedFile(d.Name(), fileType) {
-					relativePath, err := filepath.Rel(path, walkPath)
-					if err != nil {
-						return err
-					}
-
-					return callback(foundFileImpl{
-						absolutePath: walkPath,
-						relativePath: filepath.ToSlash(relativePath),
-					})
-				}
-
-				return nil
-			})
-			if err != nil {
-				return err
-			}
-		default:
-			err = callback(foundFileImpl{
-				absolutePath: path,
-				relativePath: filepath.Base(path),
-			})
-			if err != nil {
-				return err
-			}
+		if err := find(path, recursive, fileType, callback); err != nil {
+			return fmt.Errorf("failed to find: %w", err)
 		}
 	}
 
 	return nil
 }
 
-func fromZip(path string, fileType util.IndexedFileType, callback callback) error {
-	zipFile, err := zip.OpenReader(path)
+func find(path string, recursive bool, fileType util.IndexedFileType, callback callback) error {
+	fileInfo, err := os.Stat(path)
 	if err != nil {
-		return fmt.Errorf("failed to open zip file %s: %w", path, err)
-	}
-	defer zipFile.Close()
-
-	var errs error
-	for _, f := range zipFile.File {
-		if f.FileInfo().IsDir() {
-			continue
-		}
-
-		if !isSupportedFile(filepath.Base(f.Name), fileType) {
-			continue
-		}
-
-		if isInHiddenDir(f.Name) {
-			continue
-		}
-
-		if _, ok := util.RelativeSchemaPath(f.Name); fileType == util.FileTypePolicy && ok {
-			continue
-		}
-
-		if err := callback(foundZipImpl{
-			relativePath: f.Name,
-			zipFile:      zipFile,
-		}); err != nil {
-			errs = multierr.Append(errs, err)
-		}
+		return err
 	}
 
-	return errs
+	switch {
+	case util.IsZip(path):
+		zipFile, err := zip.OpenReader(path)
+		if err != nil {
+			return fmt.Errorf("failed to open zip file %s: %w", path, err)
+		}
+		defer zipFile.Close()
+
+		if err := doFind(zipFile, fileType, recursive, callback); err != nil {
+			return fmt.Errorf("failed to find files %s: %w", path, err)
+		}
+	case fileInfo.IsDir():
+		if err := doFind(os.DirFS(path), fileType, recursive, callback); err != nil {
+			return fmt.Errorf("failed to find files %s: %w", path, err)
+		}
+	default:
+		fis := foundInFs{
+			path: filepath.Base(path),
+			id:   filepath.Base(path),
+			fsys: os.DirFS(filepath.Dir(path)),
+		}
+
+		if id, ok := util.RelativeSchemaPath(path); fileType == util.FileTypeSchema && ok {
+			fis.id = id
+		}
+
+		err = callback(fis)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
-func isInHiddenDir(path string) bool {
-	for _, part := range strings.Split(filepath.Dir(path), string(filepath.Separator)) {
-		if util.IsHidden(part) {
-			return true
+func doFind(fsys fs.FS, fileType util.IndexedFileType, recursive bool, callback callback) error {
+	return fs.WalkDir(fsys, ".", func(path string, d fs.DirEntry, err error) error {
+		if err != nil {
+			return err
 		}
-	}
 
-	return false
+		if d.IsDir() {
+			if !recursive ||
+				util.IsHidden(d.Name()) ||
+				(fileType == util.FileTypePolicy && d.Name() == util.TestDataDirectory) {
+				return fs.SkipDir
+			}
+
+			return nil
+		}
+
+		fis := foundInFs{
+			fsys: fsys,
+			id:   filepath.ToSlash(path),
+			path: filepath.ToSlash(path),
+		}
+
+		if id, ok := util.RelativeSchemaPath(path); fileType == util.FileTypePolicy && ok {
+			return nil
+		} else if fileType == util.FileTypeSchema && ok {
+			fis.id = id
+		}
+
+		if isSupportedFile(d.Name(), fileType) {
+			return callback(fis)
+		}
+
+		return nil
+	})
 }
 
 func isSupportedFile(fileName string, fileType util.IndexedFileType) bool {

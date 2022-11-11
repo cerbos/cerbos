@@ -3,44 +3,37 @@
 
 package files
 
-import "archive/zip"
+import (
+	"fmt"
+	"io"
+	"io/fs"
+)
 
 type Found interface {
+	Open() (io.Reader, error)
+	ID() string
 	Path() string
 }
 
-type FoundFile interface {
-	Found
-	AbsolutePath() string
+type foundInFs struct {
+	fsys fs.FS
+	id   string
+	path string
 }
 
-type FoundZip interface {
-	Found
-	File() *zip.ReadCloser
+func (f foundInFs) Open() (io.Reader, error) {
+	file, err := f.fsys.Open(f.path)
+	if err != nil {
+		return nil, fmt.Errorf("failed to open found file from %s: %w", f.path, err)
+	}
+
+	return file, nil
 }
 
-type foundFileImpl struct {
-	absolutePath string
-	relativePath string
+func (f foundInFs) ID() string {
+	return f.id
 }
 
-func (f foundFileImpl) AbsolutePath() string {
-	return f.absolutePath
-}
-
-func (f foundFileImpl) Path() string {
-	return f.relativePath
-}
-
-type foundZipImpl struct {
-	zipFile      *zip.ReadCloser
-	relativePath string
-}
-
-func (f foundZipImpl) Path() string {
-	return f.relativePath
-}
-
-func (f foundZipImpl) File() *zip.ReadCloser {
-	return f.zipFile
+func (f foundInFs) Path() string {
+	return f.path
 }

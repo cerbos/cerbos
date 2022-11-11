@@ -76,11 +76,11 @@ func testPutCmd(clientCtx *cmdclient.Context, globals *flagset.Globals) func(*te
 				require.Error(t, err)
 			})
 
-			t.Run("put policies recursive and zip", func(t *testing.T) {
+			t.Run("put policies recursive", func(t *testing.T) {
 				put(t, clientCtx, globals, policyKind, "--recursive", test.PathToDir(t, "store/derived_roles"))
 				put(t, clientCtx, globals, policyKind, "--recursive", test.PathToDir(t, "store/principal_policies"))
 				put(t, clientCtx, globals, policyKind, "--recursive", test.PathToDir(t, "store/resource_policies"))
-				put(t, clientCtx, globals, policyKind, pathToZip)
+				put(t, clientCtx, globals, policyKind, "--recursive", pathToZip)
 
 				require.Equal(t, []string{
 					"derived_roles.alpha",
@@ -119,9 +119,9 @@ func testPutCmd(clientCtx *cmdclient.Context, globals *flagset.Globals) func(*te
 				require.JSONEq(t, string(expectedRp), outRp)
 			})
 
-			t.Run("put schemas recursive and zip", func(t *testing.T) {
+			t.Run("put schemas recursive", func(t *testing.T) {
 				put(t, clientCtx, globals, schemaKind, "--recursive", test.PathToDir(t, "store/_schemas"))
-				put(t, clientCtx, globals, schemaKind, pathToZip)
+				put(t, clientCtx, globals, schemaKind, "--recursive", pathToZip)
 				require.Equal(t, []string{
 					"principal.json",
 					"principal_package.json",
