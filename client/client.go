@@ -299,6 +299,7 @@ func (gc *grpcClient) PlanResources(ctx context.Context, principal *Principal, r
 			Kind:          resource.r.Kind,
 			Attr:          resource.r.Attr,
 			PolicyVersion: resource.r.PolicyVersion,
+			Scope:         resource.r.Scope,
 		},
 	}
 
