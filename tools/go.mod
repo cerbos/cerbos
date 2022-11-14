@@ -6,7 +6,7 @@ require (
 	github.com/bojand/ghz v0.111.0
 	github.com/bufbuild/buf v1.9.0
 	github.com/cerbos/protoc-gen-go-hashpb v0.1.0
-	github.com/envoyproxy/protoc-gen-validate v0.8.0
+	github.com/envoyproxy/protoc-gen-validate v0.9.0
 	github.com/fullstorydev/grpcurl v1.8.7
 	github.com/google/go-licenses v1.5.0
 	github.com/goreleaser/goreleaser v1.12.3

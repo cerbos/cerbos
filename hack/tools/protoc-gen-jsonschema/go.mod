@@ -3,7 +3,7 @@ module github.com/cerbos/cerbos/hack/tools/protoc-gen-jsonschema
 go 1.19
 
 require (
-	github.com/envoyproxy/protoc-gen-validate v0.8.0
+	github.com/envoyproxy/protoc-gen-validate v0.9.0
 	github.com/lyft/protoc-gen-star v0.6.1
 	google.golang.org/protobuf v1.28.1
 )
