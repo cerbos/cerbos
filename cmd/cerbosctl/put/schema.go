@@ -29,7 +29,10 @@ cerbosctl put schema ./dir/to/schemas ./other/dir/to/schemas
 
 # Put schemas under a directory recursively
 cerbosctl put schema --recursive ./dir/to/schemas
-cerbosctl put schema -R ./dir/to/schemas`
+cerbosctl put schema -R ./dir/to/schemas
+
+# Put schemas from a zip file
+cerbosctl put schema ./dir/to/schemas.zip`
 
 type SchemaCmd struct {
 	Paths []string `arg:"" type:"path" help:"Path to schema file or directory"`
@@ -42,10 +45,14 @@ func (sc *SchemaCmd) Run(k *kong.Kong, put *Cmd, ctx *cmdclient.Context) error {
 
 	schemas := client.NewSchemaSet()
 	var errs []error
-	err := files.Find(sc.Paths, put.Recursive, util.FileTypeSchema, func(file files.Found) error {
-		_, err := schemas.AddSchemaFromFileWithIDAndErr(file.AbsolutePath, file.RelativePath)
+	err := files.Find(sc.Paths, put.Recursive, util.FileTypeSchema, func(found files.Found) error {
+		f, err := found.Open()
 		if err != nil {
-			errs = append(errs, errors.NewPutError(file.AbsolutePath, err.Error()))
+			errs = append(errs, errors.NewPutError(found.Path(), err.Error()))
+		}
+
+		if schemas = schemas.AddSchemaFromReader(f, found.ID()); schemas.Err() != nil {
+			errs = append(errs, errors.NewPutError(found.Path(), schemas.Err().Error()))
 		}
 
 		return nil

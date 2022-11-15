@@ -61,6 +61,10 @@ func IsHidden(fileName string) bool {
 	}
 }
 
+func IsZip(fileName string) bool {
+	return strings.HasSuffix(fileName, ".zip")
+}
+
 // LoadFromJSONOrYAML reads a JSON or YAML encoded protobuf from the given path.
 func LoadFromJSONOrYAML(fsys fs.FS, path string, dest proto.Message) error {
 	f, err := fsys.Open(path)

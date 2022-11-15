@@ -4,6 +4,8 @@
 package files
 
 import (
+	"archive/zip"
+	"fmt"
 	"io/fs"
 	"os"
 	"path/filepath"
@@ -11,64 +13,93 @@ import (
 	"github.com/cerbos/cerbos/internal/util"
 )
 
-type Found struct {
-	AbsolutePath string
-	RelativePath string
-}
+type callback func(file Found) error
 
-func Find(paths []string, recursive bool, fileType util.IndexedFileType, callback func(file Found) error) error {
+func Find(paths []string, recursive bool, fileType util.IndexedFileType, callback callback) error {
 	for _, path := range paths {
-		fileInfo, err := os.Stat(path)
-		if err != nil {
-			return err
-		}
-
-		//nolint:nestif
-		if fileInfo.IsDir() {
-			err := filepath.WalkDir(path, func(walkPath string, d fs.DirEntry, err error) error {
-				if err != nil {
-					return err
-				}
-
-				if d.IsDir() {
-					if (walkPath != path && !recursive) ||
-						util.IsHidden(d.Name()) ||
-						(fileType == util.FileTypePolicy && d.Name() == util.TestDataDirectory) {
-						return fs.SkipDir
-					}
-
-					return nil
-				}
-
-				if isSupportedFile(d.Name(), fileType) {
-					relativePath, err := filepath.Rel(path, walkPath)
-					if err != nil {
-						return err
-					}
-
-					return callback(Found{
-						AbsolutePath: walkPath,
-						RelativePath: filepath.ToSlash(relativePath),
-					})
-				}
-
-				return nil
-			})
-			if err != nil {
-				return err
-			}
-		} else {
-			err = callback(Found{
-				AbsolutePath: path,
-				RelativePath: filepath.Base(path),
-			})
-			if err != nil {
-				return err
-			}
+		if err := find(path, recursive, fileType, callback); err != nil {
+			return fmt.Errorf("failed to find: %w", err)
 		}
 	}
 
 	return nil
+}
+
+func find(path string, recursive bool, fileType util.IndexedFileType, callback callback) error {
+	fileInfo, err := os.Stat(path)
+	if err != nil {
+		return err
+	}
+
+	switch {
+	case util.IsZip(path):
+		zipFile, err := zip.OpenReader(path)
+		if err != nil {
+			return fmt.Errorf("failed to open zip file %s: %w", path, err)
+		}
+		defer zipFile.Close()
+
+		if err := doFind(zipFile, fileType, recursive, callback); err != nil {
+			return fmt.Errorf("failed to find files %s: %w", path, err)
+		}
+	case fileInfo.IsDir():
+		if err := doFind(os.DirFS(path), fileType, recursive, callback); err != nil {
+			return fmt.Errorf("failed to find files %s: %w", path, err)
+		}
+	default:
+		fis := foundInFs{
+			path: filepath.Base(path),
+			id:   filepath.Base(path),
+			fsys: os.DirFS(filepath.Dir(path)),
+		}
+
+		if id, ok := util.RelativeSchemaPath(path); fileType == util.FileTypeSchema && ok {
+			fis.id = id
+		}
+
+		err = callback(fis)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func doFind(fsys fs.FS, fileType util.IndexedFileType, recursive bool, callback callback) error {
+	return fs.WalkDir(fsys, ".", func(path string, d fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+
+		if d.IsDir() {
+			if !recursive ||
+				util.IsHidden(d.Name()) ||
+				(fileType == util.FileTypePolicy && d.Name() == util.TestDataDirectory) {
+				return fs.SkipDir
+			}
+
+			return nil
+		}
+
+		fis := foundInFs{
+			fsys: fsys,
+			id:   filepath.ToSlash(path),
+			path: filepath.ToSlash(path),
+		}
+
+		if id, ok := util.RelativeSchemaPath(path); fileType == util.FileTypePolicy && ok {
+			return nil
+		} else if fileType == util.FileTypeSchema && ok {
+			fis.id = id
+		}
+
+		if isSupportedFile(d.Name(), fileType) {
+			return callback(fis)
+		}
+
+		return nil
+	})
 }
 
 func isSupportedFile(fileName string, fileType util.IndexedFileType) bool {

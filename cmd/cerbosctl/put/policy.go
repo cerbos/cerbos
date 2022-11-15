@@ -29,7 +29,10 @@ cerbosctl put policy ./dir/to/policies ./other/dir/to/policies
 
 # Put policies under a directory recursively
 cerbosctl put policy --recursive ./dir/to/policies
-cerbosctl put policy -R ./dir/to/policies`
+cerbosctl put policy -R ./dir/to/policies
+
+# Put policies from a zip file
+cerbosctl put policy ./dir/to/policies.zip`
 
 type PolicyCmd struct {
 	Paths []string `arg:"" type:"path" help:"Path to policy file or directory"`
@@ -42,10 +45,14 @@ func (pc *PolicyCmd) Run(k *kong.Kong, put *Cmd, ctx *cmdclient.Context) error {
 
 	policies := client.NewPolicySet()
 	var errs []error
-	err := files.Find(pc.Paths, put.Recursive, util.FileTypePolicy, func(file files.Found) error {
-		_, err := policies.AddPolicyFromFileWithErr(file.AbsolutePath)
+	err := files.Find(pc.Paths, put.Recursive, util.FileTypePolicy, func(found files.Found) error {
+		f, err := found.Open()
 		if err != nil {
-			errs = append(errs, errors.NewPutError(file.AbsolutePath, err.Error()))
+			errs = append(errs, errors.NewPutError(found.Path(), err.Error()))
+		}
+
+		if _ = policies.AddPolicyFromReader(f); policies.Err() != nil {
+			errs = append(errs, errors.NewPutError(found.Path(), policies.Err().Error()))
 		}
 
 		return nil

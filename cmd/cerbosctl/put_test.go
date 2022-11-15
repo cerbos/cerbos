@@ -68,6 +68,7 @@ func testPutCmd(clientCtx *cmdclient.Context, globals *flagset.Globals) func(*te
 		expectedRp, err := protojson.Marshal(rp)
 		require.NoError(t, err)
 
+		pathToZip := filepath.Join("testdata", "store.zip")
 		t.Run("cerbosctl put", func(t *testing.T) {
 			t.Run("no arguments provided", func(t *testing.T) {
 				p := mustNew(t, &root.Cli{})
@@ -79,12 +80,14 @@ func testPutCmd(clientCtx *cmdclient.Context, globals *flagset.Globals) func(*te
 				put(t, clientCtx, globals, policyKind, "--recursive", test.PathToDir(t, "store/derived_roles"))
 				put(t, clientCtx, globals, policyKind, "--recursive", test.PathToDir(t, "store/principal_policies"))
 				put(t, clientCtx, globals, policyKind, "--recursive", test.PathToDir(t, "store/resource_policies"))
+				put(t, clientCtx, globals, policyKind, "--recursive", pathToZip)
 
 				require.Equal(t, []string{
 					"derived_roles.alpha",
 					"derived_roles.apatr_common_roles",
 					"derived_roles.beta",
 					"derived_roles.buyer_derived_roles",
+					"derived_roles.package_roles",
 					"principal.donald_duck.v20210210",
 					"principal.donald_duck.vdefault",
 					"principal.donald_duck.vdefault/acme",
@@ -97,6 +100,7 @@ func testPutCmd(clientCtx *cmdclient.Context, globals *flagset.Globals) func(*te
 					"resource.leave_request.vdefault/acme.hr",
 					"resource.leave_request.vdefault/acme.hr.uk",
 					"resource.leave_request.vstaging",
+					"resource.products.vdefault",
 					"resource.purchase_order.vdefault",
 				}, listPolicies(t, clientCtx))
 			})
@@ -117,8 +121,10 @@ func testPutCmd(clientCtx *cmdclient.Context, globals *flagset.Globals) func(*te
 
 			t.Run("put schemas recursive", func(t *testing.T) {
 				put(t, clientCtx, globals, schemaKind, "--recursive", test.PathToDir(t, "store/_schemas"))
+				put(t, clientCtx, globals, schemaKind, "--recursive", pathToZip)
 				require.Equal(t, []string{
 					"principal.json",
+					"principal_package.json",
 					"resources/leave_request.json",
 					"resources/purchase_order.json",
 					"resources/salary_record.json",
