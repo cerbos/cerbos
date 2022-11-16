@@ -480,7 +480,7 @@ func evaluateConditionExpression(expr *exprpb.CheckedExpr, input *enginev1.PlanR
 	}
 
 	if m := input.Resource.GetAttr(); len(m) > 0 {
-		e, err = replaceResourceVals(e, m, p.env)
+		e, err = replaceResourceVals(e, m)
 		if err != nil {
 			return nil, err
 		}

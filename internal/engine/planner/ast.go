@@ -21,7 +21,6 @@ import (
 	"github.com/cerbos/cerbos/internal/conditions"
 	"github.com/cerbos/cerbos/internal/engine/planner/internal"
 	"github.com/cerbos/cerbos/internal/util"
-	"github.com/google/cel-go/cel"
 )
 
 const (
@@ -114,11 +113,9 @@ func replaceVarsGen(e *exprpb.Expr, f replaceVarsFunc) (output *exprpb.Expr, err
 				break
 			}
 			if matched {
-				//nolint:forcetypeassert
 				return e1
-			} else {
-				ex.SelectExpr.Operand = r(ex.SelectExpr.Operand)
 			}
+			ex.SelectExpr.Operand = r(ex.SelectExpr.Operand)
 		case *exprpb.Expr_CallExpr:
 			ex.CallExpr.Target = r(ex.CallExpr.Target)
 			for i, arg := range ex.CallExpr.Args {
@@ -160,7 +157,7 @@ func replaceVarsGen(e *exprpb.Expr, f replaceVarsFunc) (output *exprpb.Expr, err
 // E.g. Replace R.attr.field1 with id(R.attr.field1) iif R.attr.field1 is passed in the request to the Query Planner API.
 // This trick is necessary evaluate expression like `P.attr.struct1[R.attr.field1]`, otherwise CEL tries to use `R.attr.field1`
 // as a qualifier for `P.attr.struct1` and produces the error https://github.com/cerbos/cerbos/issues/1340
-func replaceResourceVals(e *exprpb.Expr, vals map[string]*structpb.Value, env *cel.Env) (output *exprpb.Expr, err error) {
+func replaceResourceVals(e *exprpb.Expr, vals map[string]*structpb.Value) (output *exprpb.Expr, err error) {
 	return replaceVarsGen(e, func(ex *exprpb.Expr) (output *exprpb.Expr, matched bool, err error) {
 		se, ok := ex.ExprKind.(*exprpb.Expr_SelectExpr)
 		if !ok {
@@ -176,7 +173,7 @@ func replaceResourceVals(e *exprpb.Expr, vals map[string]*structpb.Value, env *c
 			}
 			// match R.attr.<field>
 			if ident := sel.Operand.GetIdentExpr(); ident != nil && ident.Name == conditions.CELResourceAbbrev {
-				return internal.MkCallExpr(conditions.IdFn, ex), true, nil
+				return internal.MkCallExpr(conditions.IDFn, ex), true, nil
 			}
 			sel = sel.GetOperand().GetSelectExpr()
 			if sel == nil || sel.Field != conditions.CELResourceField {
@@ -184,7 +181,7 @@ func replaceResourceVals(e *exprpb.Expr, vals map[string]*structpb.Value, env *c
 			}
 			// match request.resource.attr.<field>
 			if ident := sel.Operand.GetIdentExpr(); ident != nil && ident.Name == conditions.CELRequestIdent {
-				return internal.MkCallExpr(conditions.IdFn, ex), true, nil
+				return internal.MkCallExpr(conditions.IDFn, ex), true, nil
 			}
 		}
 		return nil, false, nil
@@ -202,7 +199,8 @@ func replaceVars(e *exprpb.Expr, vars map[string]*exprpb.Expr) (output *exprpb.E
 		if ident != nil && (ident.Name == conditions.CELVariablesAbbrev || ident.Name == conditions.CELVariablesIdent) {
 			matched = true
 			if e1, ok := vars[sel.Field]; ok {
-				output = e1
+				//nolint:forcetypeassert
+				output = proto.Clone(e1).(*exprpb.Expr)
 			} else {
 				err = multierr.Append(err, fmt.Errorf("unknown variable %q", sel.Field))
 			}
