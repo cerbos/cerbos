@@ -7,7 +7,7 @@ principal: {
   ],
   "attr": {
     "workspaceRolesMap": {
-      "1": ["Global Admin"],
+      "1": ["ADMIN"],
       "B": ["MEMBER"],
     },
     "workspaceMap": {
@@ -119,12 +119,12 @@ tests:
       policyVersion: default
     want:
       kind: KIND_ALWAYS_DENIED
-#  - action: delete_vehemently
-#    resource:
-#      kind: report_with_map
-#      policyVersion: default
-#      attr: {
-#        "location_id": "1"
-#      }
-#    want:
-#      kind: KIND_ALWAYS_ALLOWED
+  - action: delete_easily
+    resource:
+      kind: report_with_map
+      policyVersion: default
+      attr: {
+        "location_id": "1"
+      }
+    want:
+      kind: KIND_ALWAYS_ALLOWED

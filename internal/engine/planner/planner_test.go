@@ -96,7 +96,7 @@ func Test_evaluateCondition(t *testing.T) {
 			}),
 			want: `R.attr.owner == "harry"`,
 		},
-		{
+		{ // this test case reproduced the issue #1340
 			args: compile(`P.attr.department_role[R.attr.department] == "ADMIN"`, &enginev1.PlanResourcesInput{
 				Principal: &enginev1.Principal{
 					Attr: map[string]*structpb.Value{
@@ -106,6 +106,21 @@ func Test_evaluateCondition(t *testing.T) {
 				Resource: &enginev1.PlanResourcesInput_Resource{
 					Attr: map[string]*structpb.Value{
 						"department": structpb.NewStringValue("marketing"),
+					},
+				},
+			}),
+			want: "true",
+		},
+		{ // swap struct and index
+			args: compile(`R.attr.department_role[P.attr.department] == "ADMIN"`, &enginev1.PlanResourcesInput{
+				Principal: &enginev1.Principal{
+					Attr: map[string]*structpb.Value{
+						"department": structpb.NewStringValue("marketing"),
+					},
+				},
+				Resource: &enginev1.PlanResourcesInput_Resource{
+					Attr: map[string]*structpb.Value{
+						"department_role": structpb.NewStructValue(&structpb.Struct{Fields: map[string]*structpb.Value{"marketing": structpb.NewStringValue("ADMIN")}}),
 					},
 				},
 			}),

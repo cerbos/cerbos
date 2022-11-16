@@ -1,0 +1,12 @@
+---
+apiVersion: "api.cerbos.dev/v1"
+variables:
+  roles: P.attr.workspaceRolesMap[R.attr.location_id]
+derivedRoles:
+  name: workspace
+  definitions:
+    - name: workspace_admin
+      parentRoles: ["USER"]
+      condition:
+        match:
+          expr: ("ADMIN" in V.roles)
