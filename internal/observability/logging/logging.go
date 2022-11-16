@@ -20,7 +20,7 @@ import (
 	"github.com/cerbos/cerbos/internal/util"
 )
 
-const tmpLogLevelDuration = 10 * time.Minute
+const defaultTmpLogLevelDuration = 10 * time.Minute
 
 type ctxLog struct{}
 
@@ -105,14 +105,17 @@ func handleUSR1Signal(ctx context.Context, originalLevel zapcore.Level, atomicLe
 	go func() {
 		inProgress := false
 		doneChan := make(chan struct{}, 1)
+		extendChan := make(chan struct{}, 1)
 		for {
 			select {
 			case <-ctx.Done():
 				return
 			case <-sigusr1:
-				if !inProgress {
+				if inProgress {
+					extendChan <- struct{}{}
+				} else {
 					inProgress = true
-					go setLogLevelForDuration(ctx, doneChan, originalLevel, atomicLevel)
+					go setLogLevelForDuration(ctx, doneChan, extendChan, originalLevel, atomicLevel)
 				}
 			case <-doneChan:
 				inProgress = false
@@ -122,23 +125,45 @@ func handleUSR1Signal(ctx context.Context, originalLevel zapcore.Level, atomicLe
 }
 
 // setLogLevelForDuration temporarily sets the global log level to the given level for a period of time.
-func setLogLevelForDuration(ctx context.Context, doneChan chan<- struct{}, originalLevel zapcore.Level, atomicLevel *zap.AtomicLevel) {
+func setLogLevelForDuration(ctx context.Context, doneChan chan<- struct{}, extendChan <-chan struct{}, originalLevel zapcore.Level, atomicLevel *zap.AtomicLevel) {
 	log := zap.S().Named("logging")
 
-	log.Infof("Temporarily setting global log level to DEBUG for %s", tmpLogLevelDuration)
+	tmpLogLevelDuration := defaultTmpLogLevelDuration
+	if td := os.Getenv("CERBOS_TEMP_LOG_LEVEL_DURATION"); td != "" {
+		if d, err := time.ParseDuration(td); err == nil {
+			tmpLogLevelDuration = d
+		}
+	}
+
+	log.Infof("Temporarily setting global log level to %s for %s", zap.DebugLevel, tmpLogLevelDuration)
 	atomicLevel.SetLevel(zap.DebugLevel)
 
 	timer := time.NewTimer(tmpLogLevelDuration)
-	defer timer.Stop()
+	defer func() {
+		timer.Stop()
+		log.Infof("Reverting global log level to %s", originalLevel)
+		atomicLevel.SetLevel(originalLevel)
+		doneChan <- struct{}{}
+	}()
 
-	select {
-	case <-ctx.Done():
-	case <-timer.C:
+	extendCount := 0
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-timer.C:
+			if extendCount <= 0 {
+				return
+			}
+
+			log.Infof("Extending %s log level for further %s", zap.DebugLevel, tmpLogLevelDuration)
+			extendCount--
+			timer.Reset(tmpLogLevelDuration)
+		case <-extendChan:
+			log.Infof("Log level will be %s for further %s", zap.DebugLevel, tmpLogLevelDuration)
+			extendCount++
+		}
 	}
-
-	log.Infof("Reverting global log level to %s", originalLevel)
-	atomicLevel.SetLevel(originalLevel)
-	doneChan <- struct{}{}
 }
 
 // FromContext returns the logger from the context if one exists. Otherwise it returns a new logger.
