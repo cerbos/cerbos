@@ -93,46 +93,51 @@ func opFromCLE(fn string) (string, error) {
 	}
 }
 
-func replaceVars(e *exprpb.Expr, vars map[string]*exprpb.Expr) (output *exprpb.Expr, err error) {
+type replaceVarsFunc func(e *exprpb.Expr) (output *exprpb.Expr, matched bool, err error)
+
+func replaceVarsGen(e *exprpb.Expr, f replaceVarsFunc) (output *exprpb.Expr, err error) {
 	var r func(e *exprpb.Expr) *exprpb.Expr
+
 	r = func(e *exprpb.Expr) *exprpb.Expr {
 		if e == nil {
 			return nil
 		}
-		switch e := e.ExprKind.(type) {
+
+		switch ex := e.ExprKind.(type) {
 		case *exprpb.Expr_SelectExpr:
-			ident := e.SelectExpr.Operand.GetIdentExpr()
-			if ident != nil && (ident.Name == conditions.CELVariablesAbbrev || ident.Name == conditions.CELVariablesIdent) {
-				if v, ok := vars[e.SelectExpr.Field]; ok {
-					//nolint:forcetypeassert
-					return proto.Clone(v).(*exprpb.Expr)
-				}
-				err = multierr.Append(err, fmt.Errorf("unknown variable %q", e.SelectExpr.Field))
-			} else {
-				e.SelectExpr.Operand = r(e.SelectExpr.Operand)
+			var e1 *exprpb.Expr
+			var matched bool
+
+			e1, matched, err = f(e)
+			if err != nil {
+				break
 			}
+			if matched {
+				return e1
+			}
+			ex.SelectExpr.Operand = r(ex.SelectExpr.Operand)
 		case *exprpb.Expr_CallExpr:
-			e.CallExpr.Target = r(e.CallExpr.Target)
-			for i, arg := range e.CallExpr.Args {
-				e.CallExpr.Args[i] = r(arg)
+			ex.CallExpr.Target = r(ex.CallExpr.Target)
+			for i, arg := range ex.CallExpr.Args {
+				ex.CallExpr.Args[i] = r(arg)
 			}
 		case *exprpb.Expr_StructExpr:
-			for _, entry := range e.StructExpr.Entries {
+			for _, entry := range ex.StructExpr.Entries {
 				if k, ok := entry.KeyKind.(*exprpb.Expr_CreateStruct_Entry_MapKey); ok {
 					k.MapKey = r(k.MapKey)
 				}
 				entry.Value = r(entry.Value)
 			}
 		case *exprpb.Expr_ComprehensionExpr:
-			ce := e.ComprehensionExpr
+			ce := ex.ComprehensionExpr
 			ce.IterRange = r(ce.IterRange)
 			ce.AccuInit = r(ce.AccuInit)
 			ce.LoopStep = r(ce.LoopStep)
 			ce.LoopCondition = r(ce.LoopCondition)
 			// ce.Result seems to be always an identifier, so isn't necessary to process
 		case *exprpb.Expr_ListExpr:
-			for i, element := range e.ListExpr.Elements {
-				e.ListExpr.Elements[i] = r(element)
+			for i, element := range ex.ListExpr.Elements {
+				ex.ListExpr.Elements[i] = r(element)
 			}
 		}
 		return e
@@ -146,6 +151,62 @@ func replaceVars(e *exprpb.Expr, vars map[string]*exprpb.Expr) (output *exprpb.E
 	internal.UpdateIds(output)
 
 	return output, err
+}
+
+// This functions wraps references to known resource attributes in an `id` function call, which simply returns its argument.
+// E.g. Replace R.attr.field1 with id(R.attr.field1) iif R.attr.field1 is passed in the request to the Query Planner API.
+// This trick is necessary evaluate expression like `P.attr.struct1[R.attr.field1]`, otherwise CEL tries to use `R.attr.field1`
+// as a qualifier for `P.attr.struct1` and produces the error https://github.com/cerbos/cerbos/issues/1340
+func replaceResourceVals(e *exprpb.Expr, vals map[string]*structpb.Value) (output *exprpb.Expr, err error) {
+	return replaceVarsGen(e, func(ex *exprpb.Expr) (output *exprpb.Expr, matched bool, err error) {
+		se, ok := ex.ExprKind.(*exprpb.Expr_SelectExpr)
+		if !ok {
+			return nil, false, nil
+		}
+		sel := se.SelectExpr
+
+		field := sel.Field
+		if _, ok = vals[field]; ok {
+			sel = sel.GetOperand().GetSelectExpr()
+			if sel == nil || sel.Field != conditions.CELAttrField {
+				return nil, false, nil
+			}
+			// match R.attr.<field>
+			if ident := sel.Operand.GetIdentExpr(); ident != nil && ident.Name == conditions.CELResourceAbbrev {
+				return internal.MkCallExpr(conditions.IDFn, ex), true, nil
+			}
+			sel = sel.GetOperand().GetSelectExpr()
+			if sel == nil || sel.Field != conditions.CELResourceField {
+				return nil, false, nil
+			}
+			// match request.resource.attr.<field>
+			if ident := sel.Operand.GetIdentExpr(); ident != nil && ident.Name == conditions.CELRequestIdent {
+				return internal.MkCallExpr(conditions.IDFn, ex), true, nil
+			}
+		}
+		return nil, false, nil
+	})
+}
+
+func replaceVars(e *exprpb.Expr, vars map[string]*exprpb.Expr) (output *exprpb.Expr, err error) {
+	return replaceVarsGen(e, func(ex *exprpb.Expr) (output *exprpb.Expr, matched bool, err error) {
+		se, ok := ex.ExprKind.(*exprpb.Expr_SelectExpr)
+		if !ok {
+			return nil, false, nil
+		}
+		sel := se.SelectExpr
+		ident := sel.Operand.GetIdentExpr()
+		if ident != nil && (ident.Name == conditions.CELVariablesAbbrev || ident.Name == conditions.CELVariablesIdent) {
+			matched = true
+			if e1, ok := vars[sel.Field]; ok {
+				//nolint:forcetypeassert
+				output = proto.Clone(e1).(*exprpb.Expr)
+			} else {
+				err = multierr.Append(err, fmt.Errorf("unknown variable %q", sel.Field))
+			}
+		}
+		return
+	})
 }
 
 func convert(expr *enginev1.PlanResourcesAst_Node, acc *enginev1.PlanResourcesFilter_Expression_Operand) error {

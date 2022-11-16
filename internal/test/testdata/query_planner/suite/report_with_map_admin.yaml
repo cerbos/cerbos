@@ -1,0 +1,24 @@
+---
+description: Report with map tests
+principal: {
+  "id": "123",
+  "roles": [
+    "ADMIN",
+  ],
+  "attr": {
+    "workspaceRolesMap": {
+      "1": ["ADMIN"],
+      "B": ["MEMBER"],
+    }
+  }
+}
+tests:
+  - action: delete_vehemently
+    resource:
+      kind: report_with_map
+      policyVersion: default
+      attr: {
+        "location_id": "1"
+      }
+    want:
+      kind: KIND_ALWAYS_ALLOWED

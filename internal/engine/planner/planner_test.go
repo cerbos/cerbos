@@ -61,40 +61,100 @@ func Test_evaluateCondition(t *testing.T) {
 		}
 	}
 	tests := []struct {
-		args           args
-		wantExpression string
+		args args
+		want string
 	}{
 		{
-			args:           compile("false", &enginev1.PlanResourcesInput{}),
-			wantExpression: "false",
+			args: compile("false", &enginev1.PlanResourcesInput{}),
+			want: "false",
 		},
 		{
 			args: compile("P.attr.authenticated", &enginev1.PlanResourcesInput{
 				Principal: &enginev1.Principal{
-					Attr: map[string]*structpb.Value{"authenticated": {Kind: &structpb.Value_BoolValue{BoolValue: true}}},
+					Attr: map[string]*structpb.Value{"authenticated": structpb.NewBoolValue(true)},
 				},
 			}),
-			wantExpression: "true",
+			want: "true",
 		},
 		{
 			args: compile("request.principal.attr.authenticated", &enginev1.PlanResourcesInput{
 				Principal: &enginev1.Principal{
-					Attr: map[string]*structpb.Value{"authenticated": {Kind: &structpb.Value_BoolValue{BoolValue: true}}},
+					Attr: map[string]*structpb.Value{"authenticated": structpb.NewBoolValue(true)},
 				},
 			}),
-			wantExpression: "true",
+			want: "true",
 		},
 		{
-			args:           compile(`R.attr.department == "marketing"`, &enginev1.PlanResourcesInput{}),
-			wantExpression: `R.attr.department == "marketing"`,
+			args: compile(`R.attr.department == "marketing"`, &enginev1.PlanResourcesInput{}),
+			want: `R.attr.department == "marketing"`,
 		},
 		{
 			args: compile("R.attr.owner == P.attr.name", &enginev1.PlanResourcesInput{
 				Principal: &enginev1.Principal{
-					Attr: map[string]*structpb.Value{"name": {Kind: &structpb.Value_StringValue{StringValue: "harry"}}},
+					Attr: map[string]*structpb.Value{"name": structpb.NewStringValue("harry")},
 				},
 			}),
-			wantExpression: `R.attr.owner == "harry"`,
+			want: `R.attr.owner == "harry"`,
+		},
+		{ // this test case reproduced the issue #1340
+			args: compile(`P.attr.department_role[R.attr.department] == "ADMIN"`, &enginev1.PlanResourcesInput{
+				Principal: &enginev1.Principal{
+					Attr: map[string]*structpb.Value{
+						"department_role": structpb.NewStructValue(&structpb.Struct{Fields: map[string]*structpb.Value{"marketing": structpb.NewStringValue("ADMIN")}}),
+					},
+				},
+				Resource: &enginev1.PlanResourcesInput_Resource{
+					Attr: map[string]*structpb.Value{
+						"department": structpb.NewStringValue("marketing"),
+					},
+				},
+			}),
+			want: "true",
+		},
+		{ // swap struct and index
+			args: compile(`R.attr.department_role[P.attr.department] == "ADMIN"`, &enginev1.PlanResourcesInput{
+				Principal: &enginev1.Principal{
+					Attr: map[string]*structpb.Value{
+						"department": structpb.NewStringValue("marketing"),
+					},
+				},
+				Resource: &enginev1.PlanResourcesInput_Resource{
+					Attr: map[string]*structpb.Value{
+						"department_role": structpb.NewStructValue(&structpb.Struct{Fields: map[string]*structpb.Value{"marketing": structpb.NewStringValue("ADMIN")}}),
+					},
+				},
+			}),
+			want: "true",
+		},
+		{
+			args: compile(`request.principal.attr.department_role[request.resource.attr.department] == "ADMIN"`, &enginev1.PlanResourcesInput{
+				Principal: &enginev1.Principal{
+					Attr: map[string]*structpb.Value{
+						"department_role": structpb.NewStructValue(&structpb.Struct{Fields: map[string]*structpb.Value{"marketing": structpb.NewStringValue("ADMIN")}}),
+					},
+				},
+				Resource: &enginev1.PlanResourcesInput_Resource{
+					Attr: map[string]*structpb.Value{
+						"department": structpb.NewStringValue("marketing"),
+					},
+				},
+			}),
+			want: "true",
+		},
+		{
+			args: compile(`P.attr.role_department["ADMIN"] == R.attr.department`, &enginev1.PlanResourcesInput{
+				Principal: &enginev1.Principal{
+					Attr: map[string]*structpb.Value{
+						"role_department": structpb.NewStructValue(&structpb.Struct{Fields: map[string]*structpb.Value{"ADMIN": structpb.NewStringValue("marketing")}}),
+					},
+				},
+				Resource: &enginev1.PlanResourcesInput_Resource{
+					Attr: map[string]*structpb.Value{
+						"department": structpb.NewStringValue("marketing"),
+					},
+				},
+			}),
+			want: "true",
 		},
 	}
 	for _, tt := range tests {
@@ -103,46 +163,68 @@ func Test_evaluateCondition(t *testing.T) {
 			got, err := evaluateCondition(tt.args.condition, tt.args.input, nil)
 			is.NoError(err)
 			expression := got.GetExpression()
-			is.Equal(tt.wantExpression, unparse(t, expression))
+			is.Equal(tt.want, unparse(t, expression))
 		})
 	}
 
-	tests = tests[len(tests)-2:] // Skip degenerate cases
-	for _, op := range []enginev1.PlanResourcesAst_LogicalOperation_Operator{enginev1.PlanResourcesAst_LogicalOperation_OPERATOR_AND, enginev1.PlanResourcesAst_LogicalOperation_OPERATOR_OR} {
-		attr := make(map[string]*structpb.Value)
+	// filter test cases with "complex" expression, i.e. having calls.
+	// then group these expressions in logical expressions
+	j := 0
+	for i := 0; i < len(tests); i++ {
+		if tests[i].want != "true" && tests[i].want != "false" {
+			tests[j] = tests[i]
+			j++
+		}
+	}
+	tests = tests[:j]
+	for _, opStr := range []string{"OPERATOR_AND", "OPERATOR_OR"} {
+		op := enginev1.PlanResourcesAst_LogicalOperation_Operator_value[opStr]
+		resourceAttr := make(map[string]*structpb.Value)
+		principalAttr := make(map[string]*structpb.Value)
 		conds := make([]*runtimev1.Condition, len(tests))
 
 		exprList := &runtimev1.Condition_ExprList{}
-		var c *runtimev1.Condition
-		if op == enginev1.PlanResourcesAst_LogicalOperation_OPERATOR_AND {
-			c = &runtimev1.Condition{Op: &runtimev1.Condition_All{All: exprList}}
+		c := new(runtimev1.Condition)
+		if opStr == "OPERATOR_AND" {
+			c.Op = &runtimev1.Condition_All{All: exprList}
 		} else {
-			c = &runtimev1.Condition{Op: &runtimev1.Condition_Any{Any: exprList}}
+			c.Op = &runtimev1.Condition_Any{Any: exprList}
 		}
-		t.Run(enginev1.PlanResourcesAst_LogicalOperation_Operator_name[int32(op)], func(t *testing.T) {
+		t.Run(opStr, func(t *testing.T) {
 			is := require.New(t)
 			for i := 0; i < len(tests); i++ {
 				exprList.Expr = append(exprList.Expr, tests[i].args.condition)
 				conds[i] = tests[i].args.condition
 				input := tests[i].args.input
-				if input.Principal != nil && input.Principal.Attr != nil {
+				if input.GetPrincipal().GetAttr() != nil {
 					for k, v := range input.Principal.Attr {
-						if _, ok := attr[k]; ok {
+						if v1, ok := principalAttr[k]; ok && !cmp.Equal(v, v1, protocmp.Transform()) {
 							t.Fatalf("Duplicate key %q", k)
 						}
-						attr[k] = v
+						principalAttr[k] = v
+					}
+				}
+				if input.GetResource().GetAttr() != nil {
+					for k, v := range input.Resource.Attr {
+						if v1, ok := resourceAttr[k]; ok && !cmp.Equal(v, v1, protocmp.Transform()) {
+							t.Fatalf("Duplicate key %q", k)
+						}
+						resourceAttr[k] = v
 					}
 				}
 			}
-			got, err := evaluateCondition(c, &enginev1.PlanResourcesInput{Principal: &enginev1.Principal{Attr: attr}}, nil)
+			got, err := evaluateCondition(c, &enginev1.PlanResourcesInput{
+				Principal: &enginev1.Principal{Attr: principalAttr},
+				Resource:  &enginev1.PlanResourcesInput_Resource{Attr: resourceAttr},
+			}, nil)
 			is.NotNil(got)
 			is.NoError(err)
 			operation := got.GetLogicalOperation()
 			is.NotNil(operation)
-			is.Equal(op, operation.Operator)
+			is.Equal(op, int32(operation.Operator))
 			for i := 0; i < len(tests); i++ {
 				expression := operation.Nodes[i].GetExpression()
-				is.Equal(tests[i].wantExpression, unparse(t, expression))
+				is.Equal(tests[i].want, unparse(t, expression))
 			}
 		})
 	}
@@ -301,7 +383,7 @@ func setupEnv(t *testing.T) (*cel.Env, interpreter.PartialActivation, map[string
 		"gb_us": []string{"GB", "US"},
 		"ca":    "ca",
 		"T":     100,
-	}, cel.AttributePattern("R"))
+	}, cel.AttributePattern("R").QualString("attr"))
 
 	variables := make(map[string]*expr.Expr)
 	for k, txt := range map[string]string{

@@ -143,19 +143,9 @@ func NewStructMatcher() *StructMatcher {
 func mkLogicalOr(args []*exprpb.Expr) *exprpb.Expr {
 	const logicalOrArity = 2
 	if len(args) == logicalOrArity {
-		return mkCallExpr(operators.LogicalOr, args...)
+		return internal.MkCallExpr(operators.LogicalOr, args...)
 	}
-	return mkCallExpr(operators.LogicalOr, args[0], mkLogicalOr(args[1:]))
-}
-
-func mkCallExpr(op string, args ...*exprpb.Expr) *exprpb.Expr {
-	e := &exprpb.Expr{
-		ExprKind: &exprpb.Expr_CallExpr{CallExpr: &exprpb.Expr_Call{
-			Function: op,
-			Args:     args,
-		}},
-	}
-	return e
+	return internal.MkCallExpr(operators.LogicalOr, args[0], mkLogicalOr(args[1:]))
 }
 
 func constToExpr(c *exprpb.Constant) *exprpb.Expr {
@@ -163,7 +153,7 @@ func constToExpr(c *exprpb.Constant) *exprpb.Expr {
 }
 
 func mkOption(op string, key, val *exprpb.Constant, expr *exprpb.Expr, constExpr *exprpb.Constant) *exprpb.Expr {
-	lhs := mkCallExpr(operators.Equals, expr, constToExpr(key))
-	rhs := mkCallExpr(op, constToExpr(constExpr), constToExpr(val))
-	return mkCallExpr(operators.LogicalAnd, lhs, rhs)
+	lhs := internal.MkCallExpr(operators.Equals, expr, constToExpr(key))
+	rhs := internal.MkCallExpr(op, constToExpr(constExpr), constToExpr(val))
+	return internal.MkCallExpr(operators.LogicalAnd, lhs, rhs)
 }

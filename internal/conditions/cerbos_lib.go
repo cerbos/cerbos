@@ -29,6 +29,7 @@ const (
 	isSubsetFn                  = "isSubset"
 	nowFn                       = "now"
 	timeSinceFn                 = "timeSince"
+	IDFn                        = "id"
 	noSuchKeyErrorPrefix        = "no such key: "
 )
 
@@ -123,6 +124,12 @@ func (clib cerbosLib) CompileOptions() []cel.EnvOption {
 			),
 		),
 		customtypes.HierarchyFunc,
+		cel.Function(IDFn, cel.Overload(fmt.Sprintf("%s_overload", IDFn),
+			[]*cel.Type{cel.DynType},
+			cel.DynType,
+			cel.UnaryBinding(func(value ref.Val) ref.Val {
+				return value
+			}))),
 	}
 }
 

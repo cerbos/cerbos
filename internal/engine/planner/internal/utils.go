@@ -50,3 +50,13 @@ func UpdateIds(e *exprpb.Expr) {
 	}
 	impl(e)
 }
+
+func MkCallExpr(op string, args ...*exprpb.Expr) *exprpb.Expr {
+	e := &exprpb.Expr{
+		ExprKind: &exprpb.Expr_CallExpr{CallExpr: &exprpb.Expr_Call{
+			Function: op,
+			Args:     args,
+		}},
+	}
+	return e
+}

@@ -4,6 +4,8 @@ variables:
   workspaces: P.attr.workspaces.filter(w, w.role=="MANAGER").map(w, w.name)
 resourcePolicy:
   version: "default"
+  importDerivedRoles:
+    - workspace
   resource: "report_with_map"
   rules:
     - actions:
@@ -67,3 +69,16 @@ resourcePolicy:
       condition:
         match:
           expr: P.attr.workspaceMap[R.attr.workspaceId] == "ADMIN"
+    - actions:
+        - delete_vehemently
+      effect: EFFECT_ALLOW
+      roles:
+        - ADMIN
+      condition:
+        match:
+          expr: ("ADMIN" in P.attr.workspaceRolesMap[R.attr.location_id])
+    - actions:
+        - delete_easily
+      effect: EFFECT_ALLOW
+      derivedRoles:
+        - workspace_admin
