@@ -8,7 +8,6 @@ import (
 	"os"
 	"os/signal"
 	"strings"
-	"sync/atomic"
 	"syscall"
 	"time"
 
@@ -21,7 +20,7 @@ import (
 	"github.com/cerbos/cerbos/internal/util"
 )
 
-const tmpLogLevelDuration = 10 * time.Minute
+const defaultTmpLogLevelDuration = 10 * time.Minute
 
 type ctxLog struct{}
 
@@ -93,43 +92,78 @@ func doInitLogging(ctx context.Context, level string) {
 		}))),
 	)
 
-	handleUSR1Signal(ctx, minLogLevel, &atomicLevel)
+	if minLogLevel > zap.DebugLevel {
+		handleUSR1Signal(ctx, minLogLevel, &atomicLevel)
+	}
 }
 
-// setLevelForDuration sets the global log level to the given level for a given duration. Reverts to the original
-// level after the duration.
-func setLevelForDuration(level, originalLevel zapcore.Level, duration time.Duration, inProgress *atomic.Bool, atomicLevel *zap.AtomicLevel) {
-	log := zap.S().Named("logging")
-
-	log.Infof("Temporarily setting global log level to %s for %s", level, duration)
-	atomicLevel.SetLevel(level)
-
-	time.AfterFunc(duration, func() {
-		log.Infof("Reverting global log level to %s", originalLevel)
-		atomicLevel.SetLevel(originalLevel)
-		inProgress.Store(false)
-	})
-}
-
-// handleUSR1Signal sets the log level to zapcore.DebugLevel for some duration in case syscall.SIGUSR1 received.
+// handleUSR1Signal temporarily sets the log level to debug when a SIGUSR1 signal is received.
 func handleUSR1Signal(ctx context.Context, originalLevel zapcore.Level, atomicLevel *zap.AtomicLevel) {
 	sigusr1 := make(chan os.Signal, 1)
 	signal.Notify(sigusr1, syscall.SIGUSR1)
 
 	go func() {
-		inProgress := atomic.Bool{}
+		inProgress := false
+		doneChan := make(chan struct{}, 1)
+		extendChan := make(chan struct{}, 1)
 		for {
 			select {
 			case <-ctx.Done():
 				return
 			case <-sigusr1:
-				if !inProgress.Load() {
-					inProgress.Store(true)
-					setLevelForDuration(zapcore.DebugLevel, originalLevel, tmpLogLevelDuration, &inProgress, atomicLevel)
+				if inProgress {
+					extendChan <- struct{}{}
+				} else {
+					inProgress = true
+					go setLogLevelForDuration(ctx, doneChan, extendChan, originalLevel, atomicLevel)
 				}
+			case <-doneChan:
+				inProgress = false
 			}
 		}
 	}()
+}
+
+// setLogLevelForDuration temporarily sets the global log level to the given level for a period of time.
+func setLogLevelForDuration(ctx context.Context, doneChan chan<- struct{}, extendChan <-chan struct{}, originalLevel zapcore.Level, atomicLevel *zap.AtomicLevel) {
+	log := zap.S().Named("logging")
+
+	tmpLogLevelDuration := defaultTmpLogLevelDuration
+	if td := os.Getenv("CERBOS_TEMP_LOG_LEVEL_DURATION"); td != "" {
+		if d, err := time.ParseDuration(td); err == nil {
+			tmpLogLevelDuration = d
+		}
+	}
+
+	log.Infof("Temporarily setting global log level to %s for %s", zap.DebugLevel, tmpLogLevelDuration)
+	atomicLevel.SetLevel(zap.DebugLevel)
+
+	timer := time.NewTimer(tmpLogLevelDuration)
+	defer func() {
+		timer.Stop()
+		log.Infof("Reverting global log level to %s", originalLevel)
+		atomicLevel.SetLevel(originalLevel)
+		doneChan <- struct{}{}
+	}()
+
+	extendCount := 0
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-timer.C:
+			if extendCount <= 0 {
+				return
+			}
+
+			log.Infof("Extending %s log level for further %s", zap.DebugLevel, tmpLogLevelDuration)
+			extendCount--
+			timer.Reset(tmpLogLevelDuration)
+		case <-extendChan:
+			log.Infof("Log level will be %s for further %s", zap.DebugLevel, tmpLogLevelDuration)
+			extendCount++
+		}
+	}
 }
 
 // FromContext returns the logger from the context if one exists. Otherwise it returns a new logger.
