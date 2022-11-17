@@ -147,44 +147,38 @@ var supportedOps = map[string]struct{}{
 }
 
 func NewExpressionProcessor() ExpressionProcessor {
-	p := make([]ExpressionProcessor, 0, 2)
-
-	s := new(structMatcher)
-	s.rootMatch = &exprMatcher{
+	s1 := new(structMatcher)
+	s1.rootMatch = &exprMatcher{
 		f: func(e *exprpb.Expr) (res bool, args []*exprpb.Expr) {
 			if ce := e.GetCallExpr(); ce != nil && len(ce.Args) == 2 {
 				if _, ok := supportedOps[ce.Function]; ok {
-					s.function = ce.Function
+					s1.function = ce.Function
 					return true, ce.Args
 				}
 			}
 			return false, nil
 		},
 		ns: []*exprMatcher{
-			getStructIndexerExprMatcher(s),
-			getConstExprMatcher(s),
+			getStructIndexerExprMatcher(s1),
+			getConstExprMatcher(s1),
 		},
 	}
-	p = append(p, s)
-
-	s = new(structMatcher)
-	s.rootMatch = &exprMatcher{
+	s2 := new(structMatcher)
+	s2.rootMatch = &exprMatcher{
 		f: func(e *exprpb.Expr) (res bool, args []*exprpb.Expr) {
 			if ce := e.GetCallExpr(); ce != nil && len(ce.Args) == 2 && ce.Function == operators.In {
-				s.function = ce.Function
+				s2.function = ce.Function
 				return true, ce.Args
 			}
 			return false, nil
 		},
 		ns: []*exprMatcher{
-			getConstExprMatcher(s),
-			getStructIndexerExprMatcher(s),
+			getConstExprMatcher(s2),
+			getStructIndexerExprMatcher(s2),
 		},
 	}
 
-	p = append(p, s)
-
-	return processors(p)
+	return processors([]ExpressionProcessor{s1, s2})
 }
 
 func mkLogicalOr(args []*exprpb.Expr) *exprpb.Expr {
@@ -199,7 +193,10 @@ func constToExpr(c *exprpb.Constant) *exprpb.Expr {
 	return &exprpb.Expr{ExprKind: &exprpb.Expr_ConstExpr{ConstExpr: c}}
 }
 
-func mkOption(op string, key *exprpb.Constant, val *exprpb.Expr, expr *exprpb.Expr, constExpr *exprpb.Constant) *exprpb.Expr {
+func mkOption(op string, key *exprpb.Constant, val, expr *exprpb.Expr, constExpr *exprpb.Constant) *exprpb.Expr {
+	if op == "" {
+		panic("mkOption: operation is empty")
+	}
 	lhs := internal.MkCallExpr(operators.Equals, expr, constToExpr(key))
 	rhs := internal.MkCallExpr(op, constToExpr(constExpr), val)
 	return internal.MkCallExpr(operators.LogicalAnd, lhs, rhs)
