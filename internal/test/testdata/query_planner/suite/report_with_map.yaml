@@ -123,9 +123,8 @@ tests:
     resource:
       kind: report_with_map
       policyVersion: default
-      attr: {
-        "location_id": "1"
-      }
+      attr:
+        location_id: "1"
     want:
       kind: KIND_ALWAYS_ALLOWED
   - action: delete_easily
