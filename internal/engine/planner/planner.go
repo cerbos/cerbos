@@ -500,9 +500,9 @@ func evaluateConditionExpression(expr *exprpb.CheckedExpr, input *enginev1.PlanR
 		if err != nil {
 			return nil, err
 		}
-		sm := matchers.NewStructMatcher()
+		m := matchers.NewExpressionProcessor()
 		var r bool
-		r, e, err = sm.Process(residual)
+		r, e, err = m.Process(residual)
 		if err != nil {
 			return nil, err
 		}

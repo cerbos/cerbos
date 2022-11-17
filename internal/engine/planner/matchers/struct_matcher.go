@@ -18,6 +18,25 @@ type exprMatcher struct {
 	ns []*exprMatcher
 }
 
+type ExpressionProcessor interface {
+	Process(e *exprpb.Expr) (bool, *exprpb.Expr, error)
+}
+
+type processors []ExpressionProcessor
+
+func (p processors) Process(e *exprpb.Expr) (bool, *exprpb.Expr, error) {
+	for _, v := range p {
+		r, expr, err := v.Process(e)
+		if err != nil {
+			return false, nil, err
+		}
+		if r {
+			return true, expr, nil
+		}
+	}
+	return false, nil, nil
+}
+
 func (m *exprMatcher) run(e *exprpb.Expr) (bool, error) {
 	r, args := m.f(e)
 	if r {
@@ -33,9 +52,52 @@ func (m *exprMatcher) run(e *exprpb.Expr) (bool, error) {
 	return r, nil
 }
 
+func getConstExprMatcher(s *structMatcher) *exprMatcher {
+	return &exprMatcher{
+		f: func(e *exprpb.Expr) (bool, []*exprpb.Expr) {
+			if c := e.GetConstExpr(); c != nil {
+				s.constExpr = c
+				return true, nil
+			}
+			return false, nil
+		},
+	}
+}
+
+func getStructIndexerExprMatcher(s *structMatcher) *exprMatcher {
+	return &exprMatcher{
+		f: func(e *exprpb.Expr) (bool, []*exprpb.Expr) {
+			if indexExpr := e.GetCallExpr(); indexExpr != nil && indexExpr.Function == operators.Index {
+				return true, indexExpr.Args
+			}
+			return false, nil
+		},
+		ns: []*exprMatcher{
+			{
+				f: func(e *exprpb.Expr) (bool, []*exprpb.Expr) {
+					if structExpr := e.GetStructExpr(); structExpr != nil {
+						s.structExpr = structExpr
+						return true, nil
+					}
+					return false, nil
+				},
+			},
+			{
+				f: func(e *exprpb.Expr) (bool, []*exprpb.Expr) {
+					if indexerExpr := e.GetSelectExpr(); indexerExpr != nil {
+						s.indexerExpr = e
+						return true, nil
+					}
+					return false, nil
+				},
+			},
+		},
+	}
+}
+
 // expression: indexExpr <function> <const>
 // indexExpr: structExpr[indexerExpr].
-type StructMatcher struct {
+type structMatcher struct {
 	structExpr  *exprpb.Expr_CreateStruct
 	indexerExpr *exprpb.Expr
 	constExpr   *exprpb.Constant
@@ -43,7 +105,7 @@ type StructMatcher struct {
 	function    string
 }
 
-func (s *StructMatcher) Process(e *exprpb.Expr) (bool, *exprpb.Expr, error) {
+func (s *structMatcher) Process(e *exprpb.Expr) (bool, *exprpb.Expr, error) {
 	r, err := s.rootMatch.run(e)
 	if err != nil {
 		return false, nil, err
@@ -52,8 +114,8 @@ func (s *StructMatcher) Process(e *exprpb.Expr) (bool, *exprpb.Expr, error) {
 		var opts []*exprpb.Expr
 		for _, entry := range s.structExpr.Entries {
 			key := entry.GetMapKey().GetConstExpr()
-			val := entry.GetValue().GetConstExpr()
-			if key != nil && val != nil {
+			val := entry.GetValue()
+			if key != nil {
 				opts = append(opts, mkOption(s.function, key, val, s.indexerExpr, s.constExpr))
 			}
 		}
@@ -84,60 +146,39 @@ var supportedOps = map[string]struct{}{
 	operators.GreaterEquals: {},
 }
 
-func NewStructMatcher() *StructMatcher {
-	s := new(StructMatcher)
-	s.rootMatch = &exprMatcher{
+func NewExpressionProcessor() ExpressionProcessor {
+	s1 := new(structMatcher)
+	s1.rootMatch = &exprMatcher{
 		f: func(e *exprpb.Expr) (res bool, args []*exprpb.Expr) {
 			if ce := e.GetCallExpr(); ce != nil && len(ce.Args) == 2 {
 				if _, ok := supportedOps[ce.Function]; ok {
-					s.function = ce.Function
+					s1.function = ce.Function
 					return true, ce.Args
 				}
 			}
 			return false, nil
 		},
 		ns: []*exprMatcher{
-			{
-				f: func(e *exprpb.Expr) (bool, []*exprpb.Expr) {
-					if indexExpr := e.GetCallExpr(); indexExpr != nil && indexExpr.Function == operators.Index {
-						return true, indexExpr.Args
-					}
-					return false, nil
-				},
-				ns: []*exprMatcher{
-					{
-						f: func(e *exprpb.Expr) (bool, []*exprpb.Expr) {
-							if structExpr := e.GetStructExpr(); structExpr != nil {
-								s.structExpr = structExpr
-								return true, nil
-							}
-							return false, nil
-						},
-					},
-					{
-						f: func(e *exprpb.Expr) (bool, []*exprpb.Expr) {
-							if indexerExpr := e.GetSelectExpr(); indexerExpr != nil {
-								s.indexerExpr = e
-								return true, nil
-							}
-							return false, nil
-						},
-					},
-				},
-			},
-			{
-				f: func(e *exprpb.Expr) (bool, []*exprpb.Expr) {
-					if c := e.GetConstExpr(); c != nil {
-						s.constExpr = c
-						return true, nil
-					}
-					return false, nil
-				},
-			},
+			getStructIndexerExprMatcher(s1),
+			getConstExprMatcher(s1),
+		},
+	}
+	s2 := new(structMatcher)
+	s2.rootMatch = &exprMatcher{
+		f: func(e *exprpb.Expr) (res bool, args []*exprpb.Expr) {
+			if ce := e.GetCallExpr(); ce != nil && len(ce.Args) == 2 && ce.Function == operators.In {
+				s2.function = ce.Function
+				return true, ce.Args
+			}
+			return false, nil
+		},
+		ns: []*exprMatcher{
+			getConstExprMatcher(s2),
+			getStructIndexerExprMatcher(s2),
 		},
 	}
 
-	return s
+	return processors([]ExpressionProcessor{s1, s2})
 }
 
 func mkLogicalOr(args []*exprpb.Expr) *exprpb.Expr {
@@ -152,8 +193,11 @@ func constToExpr(c *exprpb.Constant) *exprpb.Expr {
 	return &exprpb.Expr{ExprKind: &exprpb.Expr_ConstExpr{ConstExpr: c}}
 }
 
-func mkOption(op string, key, val *exprpb.Constant, expr *exprpb.Expr, constExpr *exprpb.Constant) *exprpb.Expr {
+func mkOption(op string, key *exprpb.Constant, val, expr *exprpb.Expr, constExpr *exprpb.Constant) *exprpb.Expr {
+	if op == "" {
+		panic("mkOption: operation is empty")
+	}
 	lhs := internal.MkCallExpr(operators.Equals, expr, constToExpr(key))
-	rhs := internal.MkCallExpr(op, constToExpr(constExpr), constToExpr(val))
+	rhs := internal.MkCallExpr(op, constToExpr(constExpr), val)
 	return internal.MkCallExpr(operators.LogicalAnd, lhs, rhs)
 }
