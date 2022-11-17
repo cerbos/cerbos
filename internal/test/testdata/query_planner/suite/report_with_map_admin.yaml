@@ -7,8 +7,9 @@ principal: {
   ],
   "attr": {
     "workspaceRolesMap": {
-      "1": ["ADMIN"],
-      "B": ["MEMBER"],
+      "1": ["ADMIN", "MEMBER"],
+      "2": ["MEMBER"],
+      "3": ["MANAGER", "ADMIN"]
     }
   }
 }
@@ -21,10 +22,27 @@ tests:
       kind: KIND_CONDITIONAL
       condition:
         expression:
-          operator: eq
+          operator: or
           operands:
-            - variable: request.resource.attr.location_id
-            - value: "1"
+            - expression:
+                operator: eq
+                operands:
+                  - variable: request.resource.attr.location_id
+                  - value: "1"
+            - expression:
+                operator: eq
+                operands:
+                  - variable: request.resource.attr.location_id
+                  - value: "3"
+  - action: delete_vehemently
+    resource:
+      kind: report_with_map
+      policyVersion: default
+      attr: {
+        "location_id": "2"
+      }
+    want:
+      kind: KIND_ALWAYS_DENIED
   - action: delete_vehemently
     resource:
       kind: report_with_map
