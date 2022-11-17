@@ -28,12 +28,19 @@ func TestStructMatcher(t *testing.T) {
 		{
 			expr: "P.attr.anyMap[R.attr.Id][R.attr.value]",
 		},
+		{
+			expr: "3 in {\"a\": [3, 4]}[R.attr.Id]",
+			res:  true,
+		},
+		{
+			expr: "3 in P.attr.anyMap[R.attr.Id]",
+		},
 	}
 	for _, test := range tests {
 		t.Run(test.expr, func(t *testing.T) {
 			ast, issues := conditions.StdEnv.Compile(test.expr)
 			require.Nil(t, issues.Err())
-			s := NewStructMatcher()
+			s := NewExpressionProcessor()
 			res, _, err := s.Process(ast.Expr())
 			require.NoError(t, err)
 			require.Equal(t, res, test.res)
