@@ -23,6 +23,12 @@
       "groupSlug": "gh-actions-deps"
     },
     {
+      "description": "Opt-out of go.mod Go version updates: https://github.com/renovatebot/renovate/issues/16715",
+      "matchManagers": ["gomod"],
+      "matchDepTypes": ["golang"],
+      "enabled": false
+    },
+    {
       "matchManagers": ["gomod"],
       "groupName": "Go deps",
       "groupSlug": "go-deps",
