@@ -4,7 +4,7 @@ name: cerbos
 home: https://cerbos.dev
 icon: https://download.cerbos.dev/helm-charts/cerbie.png
 description: |-
-  A Helm chart to deploy Cerbos. Cerbos is an open core, language agnostic, scalable solution that makes user permissions and authorization simple to implement and manage by writing context-aware access control policies for your application resources.
+  A Helm chart to deploy Cerbos. Cerbos is an open core, language agnostic, scalable solution that makes user permissions and authorization simple to implement and manage by writing context-aware access control policies for your application resources. 
 type: application
 maintainers:
   - name: Cerbos authors
@@ -16,5 +16,5 @@ keywords:
   - policies
   - rbac
   - security
-version: "0.22.1"
-appVersion: "0.22.1"
+version: "0.23.0"
+appVersion: "0.23.0"
