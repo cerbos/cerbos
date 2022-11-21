@@ -1,0 +1,46 @@
+include::ROOT:partial$attributes.adoc[]
+
+[#v0.22.1]
+= Cerbos v0.22.1
+
+This is a minor patch release containing some bug fixes and usability improvements. See xref:v0.22.0.adoc[v0.22.0 release notes] for full set of changes available in the 0.22.x series.
+
+== Highlights
+
+The Cerbos CLI (`cerbosctl`) now supports using zip files for loading policies and schemas through the Admin API. This streamlines the process of exporting policies and schemas from the link:https://play.cerbos.dev[Cerbos Playground] into your own Cerbos instance.
+
+It is now possible to set scopes for `PlanResources` requests made through the Go SDK. We have also re-written some code that accidentally relied on Go 1.19 features so that the SDK remains usable for users who have not yet upgraded to Go 1.19.
+
+The generated query plan for certain indexing expressions is now much simpler. A query plan bug that manifested when known values were used to index into unknown containers has also been fixed.
+
+The error message produced when users try to use the audit log while it's not enabled is now more informative.
+
+
+== Changelog
+
+
+=== Bug Fixes
+
+* Known resource attribute as an index into a struct (link:https://github.com/cerbos/cerbos/pull/1351[#1351])
+* Rewrite log level change without Go 1.19 features (link:https://github.com/cerbos/cerbos/pull/1350[#1350])
+* Set scope of the plan resources request (link:https://github.com/cerbos/cerbos/pull/1347[#1347])
+
+=== Enhancements
+
+* Clearer errors when trying to query audit logs (link:https://github.com/cerbos/cerbos/pull/1342[#1342])
+* Optimize membership test expression having index into struct (link:https://github.com/cerbos/cerbos/pull/1353[#1353])
+* Support zip files in cerbosctl put (link:https://github.com/cerbos/cerbos/pull/1343[#1343])
+
+=== Documentation
+
+* Add link to git-sync (link:https://github.com/cerbos/cerbos/pull/1344[#1344])
+* Add recipe link to admin API demo (link:https://github.com/cerbos/cerbos/pull/1338[#1338])
+
+=== Chores
+
+* Bump version to 0.23.0
+* Disable CGO for "all" make target (link:https://github.com/cerbos/cerbos/pull/1341[#1341])
+* Enable LFS for snapshot build (link:https://github.com/cerbos/cerbos/pull/1352[#1352])
+* Update go deps (link:https://github.com/cerbos/cerbos/pull/1337[#1337])
+* Update go deps (link:https://github.com/cerbos/cerbos/pull/1348[#1348])
+* Update golangci/golangci-lint-action action to v3.3.1 (link:https://github.com/cerbos/cerbos/pull/1349[#1349])
