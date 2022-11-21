@@ -1,9 +1,9 @@
 include::ROOT:partial$attributes.adoc[]
 
-[#v0.22.1]
-= Cerbos v0.22.1
+[#v0.23.0]
+= Cerbos v0.23.0
 
-This is a minor patch release containing some bug fixes and usability improvements. See xref:v0.22.0.adoc[v0.22.0 release notes] for full set of changes available in the 0.22.x series.
+This is a quick release containing some usability improvements and fixes to bugs discovered since the xref:v0.22.0.adoc[release of v0.22.0].
 
 == Highlights
 
