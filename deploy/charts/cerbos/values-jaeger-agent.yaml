@@ -1,0 +1,48 @@
+# Illustrates how to deploy Cerbos with an auto-injected Jaeger agent.
+
+cerbos:
+  config:
+    # Configure the SQLite3 storage driver
+    storage:
+      driver: "sqlite3"
+      sqlite3:
+        dsn: "file:/data/cerbos.sqlite?mode=rwc&_fk=true"
+    # Configure tracing
+    tracing:
+      serviceName: cerbos
+      sampleProbability: 0.5
+      exporter: jaeger
+      jaeger:
+        agentEndpoint: "localhost:6831"
+
+
+# Annotate the deployment to inject the Jaeger agent.
+deployment:
+  annotations:
+    sidecar.jaegertracing.io/inject: "true"
+
+# Optional common labels for resources.
+commonLabels:
+  app.kubernetes.io/part-of: my-awesome-app
+
+# Optional annotations for the service.
+service:
+  annotations:
+    a8r.io/owner: my-awesome-team
+    a8r.io/uptime: dashboard.example.com/cerbos
+
+# Optional annotations for the Cerbos pod.
+podAnnotations:
+  a8r.io/owner: my-awesome-team
+
+# Create volumes to hold the SQLite3 database.
+# Note that this example uses emptyDir volumes that lose data when the pod or node is killed.
+# Use persistent volumes in production to preserve the data between pod restarts.
+volumes:
+  - name: cerbos-policies
+    emptyDir: {}
+
+volumeMounts:
+  - name: cerbos-policies
+    mountPath: /data
+

@@ -40,6 +40,9 @@ helm.sh/chart: {{ include "cerbos.chart" . }}
 app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
 {{- end }}
 app.kubernetes.io/managed-by: {{ .Release.Service }}
+{{- with .Values.commonLabels }}
+{{ toYaml . }}
+{{- end }}
 {{- end }}
 
 {{/*
@@ -57,7 +60,7 @@ Determine the scheme based on whether the TLS secret is defined or not
 {{- if empty .Values.cerbos.tlsSecretName -}}
 http
 {{- else -}}
-https  
+https
 {{- end -}}
 {{- end }}
 
