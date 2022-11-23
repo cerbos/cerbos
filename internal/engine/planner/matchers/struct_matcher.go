@@ -5,6 +5,7 @@ package matchers
 
 import (
 	"errors"
+	"sort"
 
 	"github.com/cerbos/cerbos/internal/engine/planner/internal"
 	"github.com/google/cel-go/common/operators"
@@ -112,12 +113,21 @@ func (s *structMatcher) Process(e *exprpb.Expr) (bool, *exprpb.Expr, error) {
 	}
 	if r {
 		var opts []*exprpb.Expr
-		for _, entry := range s.structExpr.Entries {
-			key := entry.GetMapKey().GetConstExpr()
-			val := entry.GetValue()
-			if key != nil {
-				opts = append(opts, mkOption(s.function, key, val, s.indexerExpr, s.constExpr))
+		type entry struct {
+			key   *exprpb.Constant
+			value *exprpb.Expr
+		}
+		entries := make([]entry, 0, len(s.structExpr.Entries))
+		for _, item := range s.structExpr.Entries {
+			if key := item.GetMapKey().GetConstExpr(); key != nil {
+				entries = append(entries, entry{key: key, value: item.GetValue()})
 			}
+		}
+		sort.Slice(entries, func(i, j int) bool {
+			return entries[i].key.String() < entries[j].key.String()
+		})
+		for _, item := range entries {
+			opts = append(opts, mkOption(s.function, item.key, item.value, s.indexerExpr, s.constExpr))
 		}
 		n := len(opts)
 		if n == 0 {
