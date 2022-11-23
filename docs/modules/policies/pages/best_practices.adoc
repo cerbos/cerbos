@@ -2,7 +2,99 @@ include::ROOT:partial$attributes.adoc[]
 
 = Best Practices
 
-A collection of tips and code snippets desgined to help you write cleaner, more optimised Cerbos policies.
+A collection of tips and code snippets designed to help you write cleaner, more optimised Cerbos policies.
+
+== Modelling techniques
+
+The way you model your policies is up you - you can achieve the same logical outcome in _many_ ways. That said, some patterns will lend themselves more naturally to certain scenarios. Consider this business model:
+
+[%noheader,cols="2h,5*^"]
+|===
+^e|Actions
+5+e|Roles
+|
+h|IT_ADMIN
+h|JR_MANAGER
+h|SR_MANAGER
+h|USER
+h|CFO
+|run    |         |x          |x          |     |x
+|view   |x        |x          |x          |x    |x
+|edit   |         |           |x          |     |x
+|save   |         |           |x          |     |x
+|share  |         |x          |x          |     |x
+|===
+
+Representing this a resource policy could be achieved in a variety of ways. Let's take a look at each:
+
+Action-led:: Here, we focus on an action, and list all the roles that can perform that action:
+
+[source,yaml,linenums]
+----
+# Principals in the following three roles can perform the `run` action
+  - actions:
+      - "run"
+    effect: EFFECT_ALLOW
+    roles:
+      - JR_MANAGER
+      - SR_MANAGER
+      - CFO
+
+# All principals can perform the `view` action
+  - actions:
+      - "view"
+    effect: EFFECT_ALLOW
+    roles:
+      - ["*"]
+----
+
+Role-led:: Or we can focus on a role, and list all the actions the role can perform:
+
+[source,yaml,linenums]
+----
+# These three actions can be performed by principals in the `JR_MANAGER` role
+  - actions:
+      - "run"
+      - "view"
+      - "share"
+    effect: EFFECT_ALLOW
+    roles:
+      - JR_MANAGER
+----
+
+Hybrid:: Perhaps we want to use a combination of the two:
+
+[source,yaml,linenums]
+----
+# Principals in the `SR_MANAGER` or `CFO` roles can perform all actions
+  - actions:
+      - "*"
+    effect: EFFECT_ALLOW
+    roles:
+      - SR_MANAGER
+      - CFO
+----
+
+Blanket allow, granular deny:: Or perhaps we have the case where a principal can perform _nearly_ every action:
+
+[source,yaml,linenums]
+----
+# Principals in the `JR_MANAGER` role can perform all actions, other than `edit` and `save`
+  - actions:
+      - "*"
+    effect: EFFECT_ALLOW
+    roles:
+      - "JR_MANAGER"
+
+  - actions:
+      - "edit"
+      - "save"
+    effect: EFFECT_DENY
+    roles:
+      - "JR_MANAGER"
+----
+
+Which approach you take will largely depend on the application itself, but you certainly don't have to abide by any single approach - choose what works best for the given scenario! Do you have key actions over which you want clear and explicit control? Then perhaps the "action-led" approach will fit. Or alternatively, do you want granular control over a particular role? Perhaps your roles have fewer similarities, so explicitly defining each action for each might work better? The "role-led" approach might be the way to go!
 
 == Map of relations
 
