@@ -10,6 +10,9 @@ include::ROOT:partial$attributes.adoc[]
 
 * Policies can be in either YAML or JSON formats. Accepted file extensions are `.yml`, `.yaml` or `.json`. All other extensions are ignored.
 * The JSON schema for Cerbos policies is available at `{current-schema-url}`. If you prefer to always use the latest version, it can be accessed at `{latest-schema-url}` as well. 
+
+== Policy structure
+
 * The policy header is common for all policy types:
 ** `apiVersion`: Required. Must be `api.cerbos.dev/v1`.
 ** `description`: Optional. Description of the policy.
@@ -21,6 +24,7 @@ include::ROOT:partial$attributes.adoc[]
 * xref:scoped_policies.adoc[Scoped policies] (optional) are handy for use cases like multi-tenancy where you may want to override particular rules for some tenants.
 * See xref:conditions.adoc[Conditions] to learn how to write conditions in policy rules.
 * See xref:schemas.adoc[Schemas] to learn how you can define schemas for validating requests.
+* See xref:best-practices.adoc[Best practices] to check out a growing collection of snippets detailing the optimal way to write policies.
 
 == Editing policies
 

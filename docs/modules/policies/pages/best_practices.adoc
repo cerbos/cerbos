@@ -1,0 +1,50 @@
+include::ROOT:partial$attributes.adoc[]
+
+= Best Practices
+
+A collection of tips and code snippets desgined to help you write cleaner, more optimised Cerbos policies.
+
+== Map of relations
+
+Avoiding complex query planner outputs with pre evaluations:
+
+.Before
+[source,yaml,linenums]
+----
+apiVersion: api.cerbos.dev/v1
+resourcePolicy:
+  resource: example_resource
+  version: default
+  rules:
+    - actions:
+        - "*"
+      effect: EFFECT_ALLOW
+      roles:
+        - USER
+      condition:
+        match:
+          expr: P.attr.relations[R.id] == "owner"
+----
+
+//https://github.com/cerbos/cerbos/issues/1263
+Notice how, in the above match condition, we reference both the Principal and the Resource within a single struct indexing expression: `P.attr.relations[R.id]`. Syntactically (and logically), this is correct, but in some scenarios (namely, when producing query plans via the `PlanResources` API) can produce overly complex results.
+
+To improve this, we can separate these parts into subexpressions and pre evaluate the respective result sets:
+
+.After
+[source,yaml,linenums]
+----
+apiVersion: api.cerbos.dev/v1
+resourcePolicy:
+  resource: example_resource
+  version: default
+  rules:
+    - actions:
+        - "*"
+      effect: EFFECT_ALLOW
+      roles:
+        - USER
+      condition:
+        match:
+          expr: R.id in P.attr.relations.filter(x, P.attr.relations[x] == "owner")
+----
