@@ -38,10 +38,6 @@ commonLabels: {}
 deployment:
   annotations: {}
 
-# Annotations to add to the service.
-service:
-  annotations: {}
-
 # Security context for the whole pod.
 podSecurityContext: {}
   # fsGroup: 2000
@@ -93,6 +89,13 @@ env: []
 # Source environment variables from config maps or secrets.
 envFrom: []
 
+# Spec of the cert-manager certificate to create for the Cerbos deployment.
+# If certSpec is not empty, a cert-manager.io/v1/Certificate resource will be created with its spec populated with values from certSpec.
+# The certSpec value must be a valid Certificate spec. This Helm chart does not provide any defaults or inject any values into it.
+# If cerbos.tlsSecretName is defined, it takes precedence over the generated certificate.
+certManager:
+  certSpec: {}
+
 # Cerbos service settings.
 service:
   type: ClusterIP
@@ -100,6 +103,7 @@ service:
   grpcPort: 3593
   httpNodePort: 13592
   grpcNodePort: 13593
+  annotations: {}
 
 # Cerbos deployment settings.
 cerbos:
