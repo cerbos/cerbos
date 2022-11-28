@@ -58,7 +58,7 @@ This approach might be suitable if either of the following apply to your system:
 
 === Role-led
 
-Or we can focus on a role, and list all the actions the role can perform:
+Alternatively, we can focus on a role, and list all the actions the role can perform:
 
 [source,yaml,linenums]
 ----
@@ -96,7 +96,7 @@ This might apply if your scenario doesn't strictly fall into one of the previous
 
 === Blanket allow, granular deny
 
-Or we can opt to explicitly state which actions a user *cannot* do:
+Finally, we can opt to explicitly state which actions a user *cannot* do:
 
 [source,yaml,linenums]
 ----
@@ -117,11 +117,9 @@ Or we can opt to explicitly state which actions a user *cannot* do:
 
 This would suit scenarios where a principal can perform _nearly_ every action.
 
-Which approach you take will largely depend on the application itself, but you certainly don't have to abide by any single approach - choose what works best for the given scenario! Do you have key actions over which you want clear and explicit control? Then perhaps the "action-led" approach will fit. Or alternatively, do you want granular control over a particular role? Perhaps your roles have fewer similarities, so explicitly defining each action for each might work better? The "role-led" approach might be the way to go!
-
 == Map of relations
 
-Avoiding complex query planner outputs with pre evaluations:
+Avoiding complex query planner outputs with sub-expressions:
 
 .Before
 [source,yaml,linenums]
@@ -141,10 +139,9 @@ resourcePolicy:
           expr: P.attr.relations[R.id] == "owner"
 ----
 
-//https://github.com/cerbos/cerbos/issues/1263
 Notice how, in the above match condition, we reference both the Principal and the Resource within a single struct indexing expression: `P.attr.relations[R.id]`. Syntactically (and logically), this is correct, but in some scenarios (namely, when producing query plans via the `PlanResources` API) can produce overly complex results.
 
-To improve this, we can separate these parts into subexpressions and pre evaluate the respective result sets:
+To improve this, we can separate these parts into sub-expressions and pre evaluate the respective result sets:
 
 .After
 [source,yaml,linenums]
