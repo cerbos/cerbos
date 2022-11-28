@@ -4,7 +4,7 @@ include::ROOT:partial$attributes.adoc[]
 
 A collection of tips and code snippets designed to help you write cleaner, more optimised Cerbos policies.
 
-== Modelling techniques
+== Modelling policies
 
 The way you model your policies is up you - you can achieve the same logical outcome in _many_ ways. That said, some patterns will lend themselves more naturally to certain scenarios. Consider this business model:
 
@@ -25,9 +25,11 @@ h|CFO
 |share  |         |x          |x          |     |x
 |===
 
-Representing this a resource policy could be achieved in a variety of ways. Let's take a look at each:
+Representing this as a resource policy could be achieved in a variety of ways. Let's take a look at each:
 
-Action-led:: Here, we focus on an action, and list all the roles that can perform that action:
+=== Action-led
+
+Here, we focus on an action, and list all the roles that can perform that action:
 
 [source,yaml,linenums]
 ----
@@ -48,7 +50,15 @@ Action-led:: Here, we focus on an action, and list all the roles that can perfor
       - ["*"]
 ----
 
-Role-led:: Or we can focus on a role, and list all the actions the role can perform:
+This approach might be suitable if either of the following apply to your system:
+
+* Your roles are "similar" in what they can do, e.g. `JR_MANAGER` and `SR_MANAGER`; it's likely that `JR_MANAGER` will have a subset of the permissions of `SR_MANAGER`. There will of course be duplication in either direction, but it's often easier to reason about this from an action perspective.
+* You have "high-risk" actions - you want to be able to tell at a glance which roles have access to a particular action. The act of explicitly listing roles per action makes it much more difficult to accidentally give permission to an unwanted user.
+* You have a relatively high number of roles to a low number of actions.
+
+=== Role-led
+
+Or we can focus on a role, and list all the actions the role can perform:
 
 [source,yaml,linenums]
 ----
@@ -62,7 +72,14 @@ Role-led:: Or we can focus on a role, and list all the actions the role can perf
       - JR_MANAGER
 ----
 
-Hybrid:: Perhaps we want to use a combination of the two:
+You might opt for a role-led approach if:
+
+* You have distinct roles, e.g. it's rare for your roles to share common actions.
+* You have a relatively low number of roles to a high number of actions.
+
+=== Hybrid
+
+Perhaps we want to use a combination of the two:
 
 [source,yaml,linenums]
 ----
@@ -75,7 +92,11 @@ Hybrid:: Perhaps we want to use a combination of the two:
       - CFO
 ----
 
-Blanket allow, granular deny:: Or perhaps we have the case where a principal can perform _nearly_ every action:
+This might apply if your scenario doesn't strictly fall into one of the previous two sections, individually (or at all).
+
+=== Blanket allow, granular deny
+
+Or we can opt to explicitly state which actions a user *cannot* do:
 
 [source,yaml,linenums]
 ----
@@ -93,6 +114,8 @@ Blanket allow, granular deny:: Or perhaps we have the case where a principal can
     roles:
       - "JR_MANAGER"
 ----
+
+This would suit scenarios where a principal can perform _nearly_ every action.
 
 Which approach you take will largely depend on the application itself, but you certainly don't have to abide by any single approach - choose what works best for the given scenario! Do you have key actions over which you want clear and explicit control? Then perhaps the "action-led" approach will fit. Or alternatively, do you want granular control over a particular role? Perhaps your roles have fewer similarities, so explicitly defining each action for each might work better? The "role-led" approach might be the way to go!
 

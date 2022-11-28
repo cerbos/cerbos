@@ -24,7 +24,7 @@ include::ROOT:partial$attributes.adoc[]
 * xref:scoped_policies.adoc[Scoped policies] (optional) are handy for use cases like multi-tenancy where you may want to override particular rules for some tenants.
 * See xref:conditions.adoc[Conditions] to learn how to write conditions in policy rules.
 * See xref:schemas.adoc[Schemas] to learn how you can define schemas for validating requests.
-* See xref:best-practices.adoc[Best practices] to check out a growing collection of snippets detailing the optimal way to write policies.
+* See xref:best_practices.adoc[Best practices] to check out a growing collection of snippets detailing the optimal way to write policies.
 
 == Editing policies
 
