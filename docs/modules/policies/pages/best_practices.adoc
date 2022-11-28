@@ -1,6 +1,6 @@
 include::ROOT:partial$attributes.adoc[]
 
-= Best Practices
+= Best Practices and Recipes
 
 A collection of tips and code snippets designed to help you write cleaner, more optimised Cerbos policies.
 
@@ -162,3 +162,111 @@ resourcePolicy:
         match:
           expr: R.id in P.attr.relations.filter(x, P.attr.relations[x] == "owner")
 ----
+
+== Adding self-service custom roles
+
+Imagine this scenario: you're an admin in a multi-tenant system, and you want a method by which you can copy an existing role, and then select which permissions/actions to enable or disable for each.
+
+There are two ways of approaching this:
+
+=== Static Policy / Dynamic Context
+
+This is the "idiomatic" way of solving this use-case in Cerbos. In the vast majority of cases, it is possible to have the policies statically defined and to pass in dynamic context as attributes of a principal. This dynamic context can be any arbitrary data, e.g. the principal's location, age, or perhaps which roles it has in a specific context - eg a tenant or project. This contextual data would be retrieved at request time, from your application's chosen user/profile service or data store. Let's look at an example.
+
+Here is a resource policy for a resource of type `"workspace"`:
+
+[source,yaml,linenums]
+----
+apiVersion: "api.cerbos.dev/v1"
+resourcePolicy:
+  version: "default"
+  resource: "workspace"
+  rules:
+    - actions:
+        - workspace:view
+        - pii:view
+      effect: EFFECT_ALLOW
+      roles:
+        - USER
+      condition:
+        match:
+          expr: P.attr.workspaces[R.id].role == "OWNER"
+----
+
+Notice how the condition relies on context passed in within the `P.attr.workspaces` map, with the key being the resource ID, and the value being a predefined value `"OWNER"`. We can grant access to a principal with the `USER` role, by constructing the following request payload:
+
+[tabs]
+====
+cURL::
++
+--
+[source,shell,linenums]
+----
+include::example$curl.txt[]
+----
+--
+.NET::
++
+--
+[source,csharp,linenums]
+----
+include::example$example.cs[]
+----
+--
+Go::
++
+--
+[source,go,linenums]
+----
+include::example$example.go[]
+----
+--
+Java::
++
+--
+[source,java,linenums]
+----
+include::example$example.java[]
+----
+--
+JS::
++
+--
+[source,javascript,linenums]
+----
+include::example$example.js[]
+----
+--
+PHP::
++
+--
+[source,php,linenums]
+----
+include::example$example.php[]
+----
+--
+Python::
++
+--
+[source,python,linenums]
+----
+include::example$example.py[]
+----
+--
+Ruby::
++
+--
+[source,ruby,linenums]
+----
+include::example$example.rb[]
+----
+--
+Rust::
++
+--
+[source,rust,linenums]
+----
+include::example$example.rs[]
+----
+--
+====

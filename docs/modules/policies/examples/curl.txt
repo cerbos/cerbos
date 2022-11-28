@@ -1,0 +1,66 @@
+cat <<EOF | curl --silent "http://localhost:3592/api/check/resources?pretty" -d @-
+{
+  "requestId": "quickstart",
+  "principal": {
+    "id": "123",
+    "roles": [
+      "USER"
+    ],
+    "attr": {
+      "workspaces": {
+        "workspaceA": {
+          "role": "OWNER"
+        },
+        "workspaceB": {
+          "role": "MEMBER",
+          "pii": true,
+          "functions": {
+            "view": {
+              "all": true
+            },
+            "manage": {
+              "all": false,
+              "functions": [
+                "function2"
+              ]
+            }
+          },
+          "sources": {
+            "tags": [
+              "env:stg"
+            ]
+          }
+        }
+      }
+    }
+  },
+  "resources": [
+    {
+      "actions": [
+        "workspace:view",
+        "pii:view"
+      ],
+      "resource": {
+        "id": "workspaceA",
+        "kind": "workspace",
+        "attr": {
+          "location": "EU"
+        }
+      }
+    },
+    {
+      "actions": [
+        "workspace:view",
+        "pii:view"
+      ],
+      "resource": {
+        "id": "workspaceB",
+        "kind": "workspace",
+        "attr": {
+          "location": "US"
+        }
+      }
+    }
+  ]
+}
+EOF
