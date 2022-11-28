@@ -4,4 +4,4 @@ include::partial$attributes.adoc[]
 
 With the policies now defined the authorization logic inside the app can be replaced with a call out to a running Cerbos instance.
 
-Cerbos has SDKs available for Go, Node, Java, .NET, Python, Ruby, PHP, Rust. Documentation for these and other examples can be found xref:api:index.adoc[here].
+Cerbos has SDKs available for Go, Java, .NET, Node, PHP, Python, Ruby, and Rust. Documentation for these and other examples can be found xref:api:index.adoc[here].
