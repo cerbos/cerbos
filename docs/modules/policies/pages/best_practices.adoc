@@ -6,7 +6,9 @@ A collection of tips and code snippets designed to help you write cleaner, more 
 
 == Modelling policies
 
-The way you model your policies is up you - you can achieve the same logical outcome in _many_ ways. That said, some patterns will lend themselves more naturally to certain scenarios. Consider this business model:
+The way you model your policies is up you - you can achieve the same logical outcome in numerous ways. That said, some patterns will lend themselves more naturally to certain scenarios.
+
+Consider this business model:
 
 [%noheader,cols="2h,5*^"]
 |===
@@ -50,10 +52,10 @@ Here, we focus on an action, and list all the roles that can perform that action
       - ["*"]
 ----
 
-This approach might be suitable if either of the following apply to your system:
+This approach might be suitable if any of the following apply to your system:
 
 * Your roles are "similar" in what they can do, e.g. `JR_MANAGER` and `SR_MANAGER`; it's likely that `JR_MANAGER` will have a subset of the permissions of `SR_MANAGER`. There will of course be duplication in either direction, but it's often easier to reason about this from an action perspective.
-* You have "high-risk" actions - you want to be able to tell at a glance which roles have access to a particular action. The act of explicitly listing roles per action makes it much more difficult to accidentally give permission to an unwanted user.
+* You have "high-risk" actions - you want to be able to tell at a glance which roles have access to a particular action. The act of explicitly listing roles per action makes it much more difficult to accidentally give unwanted permissions to the wrong user.
 * You have a relatively high number of roles to a low number of actions.
 
 === Role-led
@@ -92,7 +94,7 @@ Perhaps we want to use a combination of the two:
       - CFO
 ----
 
-This might apply if your scenario doesn't strictly fall into one of the previous two sections, individually (or at all).
+This might apply if your scenario doesn't strictly fall into one of the previous two sections; individually, or at all.
 
 === Blanket allow, granular deny
 
@@ -115,7 +117,7 @@ Finally, we can opt to explicitly state which actions a user *cannot* do:
       - "JR_MANAGER"
 ----
 
-This would suit scenarios where a principal can perform _nearly_ every action.
+This would suit scenarios where a principal can perform _nearly_ every action, and you want to explicitly list disallowed actions.
 
 == Map of relations
 
