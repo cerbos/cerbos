@@ -141,7 +141,8 @@ resourcePolicy:
           expr: P.attr.relations[R.id] == "owner"
 ----
 
-Notice how, in the above match condition, we reference both the Principal and the Resource within a single struct indexing expression: `P.attr.relations[R.id]`. Syntactically (and logically), this is correct, but in some scenarios (namely, when producing query plans via the `PlanResources` API) can produce overly complex results.
+Notice how, in the above match condition, we reference both the Principal and the Resource within a single struct indexing expression: `P.attr.relations[R.id]`. This is correct both syntactically and logically. However, when using the `PlanResources` API to produce a query plan, the generated plan can sometimes be quite complicated due to how these expressions are represented internally.
+
 
 To improve this, we can separate these parts into sub-expressions and pre evaluate the respective result sets:
 
