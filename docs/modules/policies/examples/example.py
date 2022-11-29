@@ -10,27 +10,10 @@ principal = Principal(
     attr={
         "workspaces": {
             "workspaceA": {
-                "role": "OWNER"
+                "role": "OWNER",
             },
             "workspaceB": {
                 "role": "MEMBER",
-                "pii": True,
-                "functions": {
-                    "view": {
-                        "all": True
-                    },
-                    "manage": {
-                        "all": False,
-                        "functions": [
-                            "function2"
-                        ]
-                    }
-                },
-                "sources": {
-                    "tags": [
-                        "env:stg"
-                    ]
-                }
             }
         }
     }
@@ -43,9 +26,6 @@ resource_list = ResourceList(
             Resource(
                 "workspaceA",
                 "workspace",
-                attr={
-                    "location": "EU",
-                },
             ),
             actions=actions,
         ),
@@ -53,9 +33,6 @@ resource_list = ResourceList(
             Resource(
                 "workspaceB",
                 "workspace",
-                attr={
-                    "location": "US",
-                },
             ),
             actions=actions,
         ),

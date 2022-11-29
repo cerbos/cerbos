@@ -12,24 +12,7 @@ cat <<EOF | curl --silent "http://localhost:3592/api/check/resources?pretty" -d 
           "role": "OWNER"
         },
         "workspaceB": {
-          "role": "MEMBER",
-          "pii": true,
-          "functions": {
-            "view": {
-              "all": true
-            },
-            "manage": {
-              "all": false,
-              "functions": [
-                "function2"
-              ]
-            }
-          },
-          "sources": {
-            "tags": [
-              "env:stg"
-            ]
-          }
+          "role": "MEMBER"
         }
       }
     }
@@ -42,10 +25,7 @@ cat <<EOF | curl --silent "http://localhost:3592/api/check/resources?pretty" -d 
       ],
       "resource": {
         "id": "workspaceA",
-        "kind": "workspace",
-        "attr": {
-          "location": "EU"
-        }
+        "kind": "workspace"
       }
     },
     {
@@ -55,10 +35,7 @@ cat <<EOF | curl --silent "http://localhost:3592/api/check/resources?pretty" -d 
       ],
       "resource": {
         "id": "workspaceB",
-        "kind": "workspace",
-        "attr": {
-          "location": "US"
-        }
+        "kind": "workspace"
       }
     }
   ]
