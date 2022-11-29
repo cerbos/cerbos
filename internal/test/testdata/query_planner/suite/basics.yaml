@@ -20,3 +20,15 @@ tests:
             operands:
               - value: z0
               - variable: request.resource.id
+    - action: edit
+      resource:
+        kind: x
+        policyVersion: default
+      want:
+        kind: KIND_CONDITIONAL
+        condition:
+          expression:
+            operator: eq
+            operands:
+              - value: z0
+              - variable: request.resource.id

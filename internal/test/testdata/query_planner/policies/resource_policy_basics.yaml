@@ -13,3 +13,12 @@ resourcePolicy:
         match:
           expr: |-
             P.attr.userQid == R.id
+    - actions:
+        - edit
+      effect: EFFECT_ALLOW
+      roles:
+        - USER
+      condition:
+        match:
+          expr: |-
+            P.attr.userQid == request.resource.id
