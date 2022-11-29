@@ -1,5 +1,5 @@
 ---
-description: Adam tests
+description: Basics tests
 principal:
     id: user123
     policyVersion: default
