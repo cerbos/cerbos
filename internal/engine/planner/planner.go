@@ -474,12 +474,9 @@ func evaluateConditionExpression(expr *exprpb.CheckedExpr, input *enginev1.PlanR
 		return nil, err
 	}
 
-	e := expr.Expr
-	if len(variables) > 0 {
-		e, err = replaceVars(e, variables)
-		if err != nil {
-			return nil, err
-		}
+	e, err := replaceVars(expr.Expr, variables)
+	if err != nil {
+		return nil, err
 	}
 
 	if m := input.Resource.GetAttr(); len(m) > 0 {
