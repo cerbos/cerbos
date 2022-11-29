@@ -1,0 +1,15 @@
+---
+apiVersion: "api.cerbos.dev/v1"
+resourcePolicy:
+  version: default
+  resource: x
+  rules:
+    - actions:
+        - write
+      effect: EFFECT_ALLOW
+      roles:
+        - USER
+      condition:
+        match:
+          expr: |-
+            P.attr.userQid == R.id
