@@ -144,7 +144,7 @@ resourcePolicy:
 Notice how, in the above match condition, we reference both the Principal and the Resource within a single struct indexing expression: `P.attr.relations[R.id]`. This is correct both syntactically and logically. However, when using the `PlanResources` API to produce a query plan, the generated plan can sometimes be quite complicated due to how these expressions are represented internally.
 
 
-To improve this, we can separate these parts into sub-expressions and pre evaluate the respective result sets:
+To improve this, we can apply a little bit of mechanical-sympathy and rewrite the expression in a way where the known values (principal attributes) are separated from unknown values (resource attributes) as follows:
 
 .After
 [source,yaml,linenums]
