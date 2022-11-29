@@ -563,8 +563,8 @@ func newEvaluator(input *enginev1.PlanResourcesInput) (p *partialEvaluator, err 
 		}
 	}
 	p.vars, err = cel.PartialVars(knownVars,
-		cel.AttributePattern(conditions.CELResourceAbbrev).QualString(conditions.CELAttrField),
-		cel.AttributePattern(conditions.CELRequestIdent).QualString(conditions.CELResourceField).QualString(conditions.CELAttrField))
+		cel.AttributePattern(conditions.CELResourceAbbrev),
+		cel.AttributePattern(conditions.CELRequestIdent).QualString(conditions.CELResourceField))
 
 	if err != nil {
 		return nil, err
