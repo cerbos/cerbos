@@ -54,10 +54,18 @@ app.kubernetes.io/instance: {{ .Release.Name }}
 {{- end }}
 
 {{/*
+Name of the secret used to read the TLS certificates from
+*/}}
+{{- define "cerbos.tlsSecretName" -}}
+{{ coalesce .Values.cerbos.tlsSecretName .Values.certManager.certSpec.secretName "None" }}
+{{- end }}
+
+{{/*
 Determine the scheme based on whether the TLS secret is defined or not
 */}}
 {{- define "cerbos.httpScheme" -}}
-{{- if empty .Values.cerbos.tlsSecretName -}}
+{{- $tlsDisabled := (eq (include "cerbos.tlsSecretName" .) "None") -}}
+{{- if $tlsDisabled -}}
 http
 {{- else -}}
 https
@@ -117,10 +125,11 @@ storage:
 Configuration derived from values provided by the user
 */}}
 {{- define "cerbos.derivedConfig" -}}
+{{- $tlsDisabled := (eq (include "cerbos.tlsSecretName" .) "None") -}}
 server:
   httpListenAddr: ":{{ .Values.cerbos.httpPort }}"
   grpcListenAddr: ":{{ .Values.cerbos.grpcPort }}"
-  {{- with .Values.cerbos.tlsSecretName }}
+  {{- if not $tlsDisabled }}
   tls:
     cert: /certs/tls.crt
     key: /certs/tls.key
@@ -137,3 +146,4 @@ Merge the configurations to obtain the final configuration file
 {{- $derivedConf := (include "cerbos.derivedConfig" .) | fromYaml -}}
 {{ mustMergeOverwrite $defaultConf .Values.cerbos.config $derivedConf | toYaml }}
 {{- end }}
+

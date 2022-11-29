@@ -1,0 +1,40 @@
+# Illustrates how to deploy Cerbos with a TLS certificate issued by cert-manager.
+
+cerbos:
+  config:
+    # Configure the SQLite3 storage driver
+    storage:
+      driver: "sqlite3"
+      sqlite3:
+        dsn: "file:/data/cerbos.sqlite?mode=rwc&_fk=true"
+
+certManager:
+  certSpec:
+    secretName: cerbos-certs
+    secretTemplate:
+      labels:
+        app.kubernetes.io/component: certificate
+        app.kubernetes.io/part-of: cerbos
+    duration: 48h
+    renewBefore: 36h
+    subject:
+      organizations:
+        - cerbos
+    isCA: false
+    dnsNames: ["cerbos.security.svc.cluster.local"]
+    issuerRef:
+      name: ca-cluster-issuer
+      kind: ClusterIssuer
+
+
+# Create volumes to hold the SQLite3 database.
+# Note that this example uses emptyDir volumes that lose data when the pod or node is killed.
+# Use persistent volumes in production to preserve the data between pod restarts.
+volumes:
+  - name: cerbos-policies
+    emptyDir: {}
+
+volumeMounts:
+  - name: cerbos-policies
+    mountPath: /data
+
