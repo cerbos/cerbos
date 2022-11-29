@@ -4,6 +4,10 @@ metadata:
   name: {{ include "cerbos.fullname" . }}
   labels:
     {{- include "cerbos.labels" . | nindent 4 }}
+  {{- with .Values.deployment.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
 spec:
   {{- if not .Values.autoscaling.enabled }}
   replicas: {{ .Values.replicaCount }}
@@ -15,6 +19,9 @@ spec:
     metadata:
       labels:
         {{- include "cerbos.selectorLabels" . | nindent 8 }}
+        {{- with .Values.commonLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
       {{- include "cerbos.podAnnotations" . | nindent 6 }}
     spec:
       {{- with .Values.imagePullSecrets }}
@@ -28,7 +35,7 @@ spec:
       {{- end }}
       {{- with .Values.initContainers }}
       initContainers:
-        {{- toYaml . | nindent 8 }} 
+        {{- toYaml . | nindent 8 }}
       {{- end }}
       containers:
         - name: {{ .Chart.Name }}
@@ -70,7 +77,7 @@ spec:
             {{- toYaml . | nindent 12 }}
           {{- end }}
           volumeMounts:
-            - name: config 
+            - name: config
               mountPath: /config
               readOnly: true
             - name: work
@@ -91,7 +98,7 @@ spec:
           emptyDir: {}
       {{- with .Values.cerbos.tlsSecretName }}
         - name: certs
-          secret: 
+          secret:
             secretName: {{ . }}
       {{- end }}
       {{- with .Values.volumes }}

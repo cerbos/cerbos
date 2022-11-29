@@ -31,6 +31,17 @@ serviceAccount:
 # Annotations to add to the pod.
 podAnnotations: {}
 
+# Common labels to add to the resources.
+commonLabels: {}
+
+# Annotations to add to the deployment.
+deployment:
+  annotations: {}
+
+# Annotations to add to the service.
+service:
+  annotations: {}
+
 # Security context for the whole pod.
 podSecurityContext: {}
   # fsGroup: 2000
@@ -108,5 +119,5 @@ cerbos:
   # Add Prometheus service discovery annotations to the pod.
   prometheusPodAnnotationsEnabled: true
   # Cerbos config file contents.
-  # Some server settings like server.httpListenAddr, server.grpcListenAddr, server.tls will be overwritten by the chart based on values provided above. 
+  # Some server settings like server.httpListenAddr, server.grpcListenAddr, server.tls will be overwritten by the chart based on values provided above.
   config: {}
