@@ -1,4 +1,4 @@
-# Illustrates how to deploy Cerbos with an auto-injected Jaeger agent.
+# Illustrates how to deploy Cerbos with a TLS certificate issued by cert-manager.
 
 cerbos:
   config:
