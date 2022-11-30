@@ -11,7 +11,8 @@ This article covers setting up a basic CRM web application using Prisma for data
 * Admins can do all actions
 * Users in the Sales department can read and create contacts
 * Only the user who created the contact can update and delete it
-* The last point is an important one as the authorization decision requires context of what is being accessed to make the decision if an action can be performed.
+
+The last point is an important one as the authorization decision requires context of what is being accessed to make the decision if an action can be performed.
 
 Note that whilst authentication is out of scope of this article, Cerbos is compatible with any authentication system - be it basic auth, JWT or a service like https://auth0.com[Auth0].
 
