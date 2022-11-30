@@ -3,12 +3,12 @@ package demo;
 import static dev.cerbos.sdk.builders.AttributeValue.boolValue;
 import static dev.cerbos.sdk.builders.AttributeValue.stringValue;
 
-import java.security.Principal;
 import java.util.Map;
 
 import dev.cerbos.sdk.CerbosBlockingClient;
 import dev.cerbos.sdk.CerbosClientBuilder;
 import dev.cerbos.sdk.CheckResult;
+import dev.cerbos.sdk.builders.Principal;
 import dev.cerbos.sdk.builders.ResourceAction;
 
 
