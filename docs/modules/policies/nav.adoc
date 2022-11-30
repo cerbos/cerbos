@@ -7,3 +7,4 @@
 * xref:conditions.adoc[Conditions]
 * xref:schemas.adoc[Schemas]
 * xref:compile.adoc[Validating and testing]
+* xref:best_practices.adoc[Best practices]
