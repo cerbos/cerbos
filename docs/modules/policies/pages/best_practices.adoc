@@ -172,7 +172,7 @@ There are two ways of approaching this:
 
 === Static Policies / Dynamic Context
 
-This is the "idiomatic" way of solving this use-case in Cerbos. In the vast majority of cases, it is possible to have the policies statically defined and to pass in dynamic context as attributes of a principal. This dynamic context can be any arbitrary data, e.g. the principal's location, age, or perhaps which roles it has in a specific context - eg a tenant or project. This contextual data would be retrieved at request time, from your application's chosen user/profile service or data store. Let's look at an example.
+This is the "idiomatic" way of solving this use-case in Cerbos. In the vast majority of cases, it is possible to have the policies statically defined and to pass in dynamic context as attributes of a principal. This dynamic context can be any arbitrary data, e.g. the principal's location, age, or perhaps which roles it has in a specific context - e.g. a tenant or project. This contextual data would be retrieved at request time, from your application's chosen user/profile service or data store. Let's look at an example.
 
 Here is a resource policy for a resource of type `"workspace"`:
 
@@ -263,14 +263,14 @@ Ruby::
 include::example$example.rb[]
 ----
 --
-//Rust::
-//+
-//--
-//[source,rust,linenums]
-//----
-//include::example$example.rs[]
-//----
-//--
+Rust::
++
+--
+[source,rust,linenums]
+----
+include::example$example.rs[]
+----
+--
 ====
 
 You can find a full (and extended) example of the above in our https://play.cerbos.dev/p/IJxlK6131f642ND65F1EhPmiT18Ap1A5[SaaS Workspace Policy playground example].
