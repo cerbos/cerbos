@@ -1,0 +1,284 @@
+include::ROOT:partial$attributes.adoc[]
+
+= Best Practices and Recipes
+
+A collection of tips and code snippets designed to help you write cleaner, more optimised Cerbos policies.
+
+== Modelling policies
+
+The way you model your policies is up you -- you can achieve the same logical outcome in numerous ways. That said, some patterns will lend themselves more naturally to certain scenarios.
+
+Consider this business model:
+
+[%noheader,cols="2h,5*^"]
+|===
+^e|Actions
+5+e|Roles
+|
+h|IT_ADMIN
+h|JR_MANAGER
+h|SR_MANAGER
+h|USER
+h|CFO
+|run    |         |x          |x          |     |x
+|view   |x        |x          |x          |x    |x
+|edit   |         |           |x          |     |x
+|save   |         |           |x          |     |x
+|share  |         |x          |x          |     |x
+|===
+
+Representing this as a resource policy could be achieved in a variety of ways. Let's take a look at each:
+
+=== Action-led
+
+Here, we focus on an action, and list all the roles that can perform that action:
+
+[source,yaml,linenums]
+----
+# Principals in the following three roles can perform the `run` action
+  - actions:
+      - "run"
+    effect: EFFECT_ALLOW
+    roles:
+      - JR_MANAGER
+      - SR_MANAGER
+      - CFO
+
+# All principals can perform the `view` action
+  - actions:
+      - "view"
+    effect: EFFECT_ALLOW
+    roles:
+      - ["*"]
+----
+
+This approach might be suitable if any of the following apply to your system:
+
+* Your roles are "similar" in what they can do like `JR_MANAGER` and `SR_MANAGER`; it's likely that `JR_MANAGER` will have a subset of the permissions of `SR_MANAGER`. There will of course be duplication in either direction, but it's often easier to reason about this from an action perspective.
+* You have "high-risk" actions -- you want to be able to tell at a glance which roles have access to a particular action. The act of explicitly listing roles per action makes it much more difficult to accidentally give unwanted permissions to the wrong user.
+* You have a relatively high number of roles to a low number of actions.
+
+=== Role-led
+
+Alternatively, we can focus on a role, and list all the actions the role can perform:
+
+[source,yaml,linenums]
+----
+# These three actions can be performed by principals in the `JR_MANAGER` role
+  - actions:
+      - "run"
+      - "view"
+      - "share"
+    effect: EFFECT_ALLOW
+    roles:
+      - JR_MANAGER
+----
+
+You might opt for a role-led approach if:
+
+* You have distinct roles where it's rare for your roles to share common actions.
+* You have a relatively low number of roles to a high number of actions.
+
+=== Hybrid
+
+Perhaps we want to use a combination of the two:
+
+[source,yaml,linenums]
+----
+# Principals in the `SR_MANAGER` or `CFO` roles can perform all actions
+  - actions:
+      - "*"
+    effect: EFFECT_ALLOW
+    roles:
+      - SR_MANAGER
+      - CFO
+----
+
+This might apply if your scenario doesn't strictly fall into one of the previous two sections; individually, or at all.
+
+=== Blanket allow, granular deny
+
+Finally, we can opt to explicitly state which actions a user *cannot* do:
+
+[source,yaml,linenums]
+----
+# Principals in the `JR_MANAGER` role can perform all actions, other than `edit` and `save`
+  - actions:
+      - "*"
+    effect: EFFECT_ALLOW
+    roles:
+      - "JR_MANAGER"
+
+  - actions:
+      - "edit"
+      - "save"
+    effect: EFFECT_DENY
+    roles:
+      - "JR_MANAGER"
+----
+
+This would suit scenarios where a principal can perform _nearly_ every action, and you want to explicitly list disallowed actions.
+
+== Map of relations
+
+Avoiding complex query planner outputs with sub-expressions:
+
+.Before
+[source,yaml,linenums]
+----
+apiVersion: api.cerbos.dev/v1
+resourcePolicy:
+  resource: example_resource
+  version: default
+  rules:
+    - actions:
+        - "*"
+      effect: EFFECT_ALLOW
+      roles:
+        - USER
+      condition:
+        match:
+          expr: P.attr.relations[R.id] == "owner"
+----
+
+Notice how, in the above match condition, we reference both the Principal and the Resource within a single struct indexing expression: `P.attr.relations[R.id]`. This is correct both syntactically and logically. However, when using the `PlanResources` API to produce a query plan, the generated plan can sometimes be quite complicated due to how these expressions are represented internally.
+
+
+To improve this, we can apply a little bit of mechanical-sympathy and rewrite the expression in a way where the known values (principal attributes) are separated from unknown values (resource attributes) as follows:
+
+.After
+[source,yaml,linenums]
+----
+apiVersion: api.cerbos.dev/v1
+resourcePolicy:
+  resource: example_resource
+  version: default
+  rules:
+    - actions:
+        - "*"
+      effect: EFFECT_ALLOW
+      roles:
+        - USER
+      condition:
+        match:
+          expr: R.id in P.attr.relations.filter(x, P.attr.relations[x] == "owner")
+----
+
+== Adding self-service custom roles
+
+Imagine this scenario: you're an admin in a multi-tenant system, and you want a method by which you can copy an existing role, and then select which permissions/actions to enable or disable for each.
+
+There are two ways of approaching this:
+
+=== Static Policies / Dynamic Context
+
+This is the _idiomatic_ way of solving this use-case in Cerbos. In the vast majority of cases, it is possible to have the policies statically defined and to pass in dynamic context as attributes of a principal. This dynamic context can be any arbitrary data such as the principal's location, age, or specific roles it has within the context of an organizational unit (a department, a tenant or a project, for example). This contextual data would be retrieved at request time from another service or a data store. Let's look at an example.
+
+Here is a resource policy for a resource of type `"workspace"`:
+
+.workspace.yaml
+[source,yaml,linenums]
+----
+apiVersion: "api.cerbos.dev/v1"
+resourcePolicy:
+  version: "default"
+  resource: "workspace"
+  rules:
+    - actions:
+        - workspace:view
+        - pii:view
+      effect: EFFECT_ALLOW
+      roles:
+        - USER
+      condition:
+        match:
+          expr: P.attr.workspaces[R.id].role == "OWNER"
+----
+
+Notice how the condition relies on context passed in within the `P.attr.workspaces` map, with the key being the resource ID, and the value being a predefined value `"OWNER"`. We can grant access to a principal with the `USER` role, by constructing the following request payload:
+
+[tabs]
+====
+cURL::
++
+--
+[source,shell,linenums]
+----
+include::example$curl.txt[]
+----
+--
+.NET::
++
+--
+[source,csharp,linenums]
+----
+include::example$example.cs[]
+----
+--
+Go::
++
+--
+[source,go,linenums]
+----
+include::example$example.go[]
+----
+--
+Java::
++
+--
+[source,java,linenums]
+----
+include::example$example.java[]
+----
+--
+JS::
++
+--
+[source,javascript,linenums]
+----
+include::example$example.js[]
+----
+--
+PHP::
++
+--
+[source,php,linenums]
+----
+include::example$example.php[]
+----
+--
+Python::
++
+--
+[source,python,linenums]
+----
+include::example$example.py[]
+----
+--
+Ruby::
++
+--
+[source,ruby,linenums]
+----
+include::example$example.rb[]
+----
+--
+Rust::
++
+--
+[source,rust,linenums]
+----
+include::example$example.rs[]
+----
+--
+====
+
+You can find a full (and extended) example of the above in our https://play.cerbos.dev/p/IJxlK6131f642ND65F1EhPmiT18Ap1A5[SaaS Workspace Policy playground example].
+
+=== Dynamic Policies
+
+There might be circumstances where you want to create or update resources and actions on the fly; an example of this might be a multi-tenant platform that provides tenants the ability to manage their own policies.
+
+If this is the case, then you can use the xref:api:admin_api.adoc[Admin API] configured alongside a mutable xref:configuration:storage.adoc#sqlite3[database storage engine] to provide this functionality. This would be handled within your application layer, with the desired policy contents provided to the PDP via the API.
+
+For a full example implementation, check out https://github.com/cerbos/demo-admin-api[this demo].

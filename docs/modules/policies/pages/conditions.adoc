@@ -17,7 +17,7 @@ condition:
         - expr: "GB" in request.resource.attr.geographies
 ----
 
-Within a condition block you have access to serveral special variables:
+Within a condition block you have access to several special variables:
 
 `request`:: The entire request object containing data provided about the resource and the principal. Use dots to access nested fields. For example, the expression to get the principal's department attribute is `request.principal.attr.department`.
 `variables`:: Access variables declared in the `variables` section of the policy.
