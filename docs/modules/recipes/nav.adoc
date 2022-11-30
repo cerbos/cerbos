@@ -13,3 +13,4 @@
 ** xref:authentication/aws-cognito/index.adoc[AWS Cognito]
 * ORM Integration
 ** xref:orm/prisma/index.adoc[Prisma]
+** xref:orm/sqlalchemy/index.adoc[SQLAlchemy]
