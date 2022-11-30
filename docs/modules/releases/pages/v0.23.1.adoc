@@ -1,0 +1,29 @@
+include::ROOT:partial$attributes.adoc[]
+
+[#v0.23.1]
+= Cerbos v0.23.1
+
+This is a patch release to fix a bug discovered since the release of xref:v0.23.0.adoc[version 0.23.0].
+
+== Highlights
+
+This patch release fixes a bug where the query planner fails to produce a plan when an expression references non-attribute fields of the resource such as `R.id`.
+
+The Helm chart now supports user-defined annotations to be added to the `Deployment` and `Service` resources. This is useful for integrating with annotation-driven Kubernetes tools and utilities such as the Jaeger operator.
+
+== Changelog
+
+
+=== Bug Fixes
+
+* Flaky query plan test (link:https://github.com/cerbos/cerbos/pull/1364[#1364])
+* R.id unresolved (link:https://github.com/cerbos/cerbos/pull/1371[#1371])
+
+=== Enhancements
+
+* Annotations for deployment and service (link:https://github.com/cerbos/cerbos/pull/1363[#1363])
+
+=== Documentation
+
+* Remove unstable warning from Linux packages (link:https://github.com/cerbos/cerbos/pull/1368[#1368])
+
