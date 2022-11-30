@@ -277,6 +277,8 @@ You can find a full (and extended) example of the above in our https://play.cerb
 
 === Dynamic Policies
 
-There might be circumstances where you want to create brand new resources and actions on the fly. If this is the case, then you can use the xref:api:admin_api.adoc[Admin API] configured alongside a mutable xref:configuration:storage.adoc[database storage engine] to provide this functionality. This would be handled within your application layer, with the desired policy contents provided to the PDP via the API.
+There might be circumstances where you want to create or update resources and actions on the fly; an example of this might be a multi-tenant platform which provides tenants the ability to manage their own policies.
+
+If this is the case, then you can use the xref:api:admin_api.adoc[Admin API] configured alongside a mutable xref:configuration:storage.adoc#sqlite3[database storage engine] to provide this functionality. This would be handled within your application layer, with the desired policy contents provided to the PDP via the API.
 
 For a full example implementation, check out https://github.com/cerbos/demo-admin-api[this demo].
