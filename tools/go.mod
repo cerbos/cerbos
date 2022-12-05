@@ -9,7 +9,7 @@ require (
 	github.com/envoyproxy/protoc-gen-validate v0.9.0
 	github.com/fullstorydev/grpcurl v1.8.7
 	github.com/google/go-licenses v1.5.0
-	github.com/goreleaser/goreleaser v1.13.0
+	github.com/goreleaser/goreleaser v1.13.1
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.14.0
 	github.com/planetscale/vtprotobuf v0.3.0
 	github.com/vektra/mockery/v2 v2.15.0
