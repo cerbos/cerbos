@@ -12,6 +12,7 @@ import (
 )
 
 var alwaysExcludeMetadataKeys = map[string]struct{}{
+	"authorization":  {},
 	"grpc-trace-bin": {},
 }
 

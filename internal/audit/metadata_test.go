@@ -38,7 +38,7 @@ func TestMetadataExtractor(t *testing.T) {
 		{
 			name:        "OnlyExclude",
 			excludeKeys: []string{"foo", "bar"},
-			input:       map[string]string{"foo": "a", "bar": "b", "baz": "c"},
+			input:       map[string]string{"foo": "a", "bar": "b", "baz": "c", "authorization": "d"},
 			want: map[string]*auditv1.MetaValues{
 				"baz": {Values: []string{"c"}},
 			},
@@ -47,7 +47,7 @@ func TestMetadataExtractor(t *testing.T) {
 			name:        "BothIncludeAndExclude",
 			includeKeys: []string{"foo"},
 			excludeKeys: []string{"bar"},
-			input:       map[string]string{"foo": "a", "bar": "b", "baz": "c"},
+			input:       map[string]string{"foo": "a", "bar": "b", "baz": "c", "authorization": "d"},
 			want: map[string]*auditv1.MetaValues{
 				"foo": {Values: []string{"a"}},
 			},
