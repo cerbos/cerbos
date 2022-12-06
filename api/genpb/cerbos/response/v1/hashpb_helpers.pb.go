@@ -167,6 +167,25 @@ func cerbos_audit_v1_DecisionLogEntry_hashpb_sum(m *v1.DecisionLogEntry, hasher 
 			}
 		}
 	}
+	if _, ok := ignore["cerbos.audit.v1.DecisionLogEntry.metadata"]; !ok {
+		if len(m.Metadata) > 0 {
+			keys := make([]string, len(m.Metadata))
+			i := 0
+			for k := range m.Metadata {
+				keys[i] = k
+				i++
+			}
+
+			sort.Slice(keys, func(i, j int) bool { return keys[i] < keys[j] })
+
+			for _, k := range keys {
+				if m.Metadata[k] != nil {
+					cerbos_audit_v1_MetaValues_hashpb_sum(m.Metadata[k], hasher, ignore)
+				}
+
+			}
+		}
+	}
 }
 
 func cerbos_audit_v1_MetaValues_hashpb_sum(m *v1.MetaValues, hasher hash.Hash, ignore map[string]struct{}) {

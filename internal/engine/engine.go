@@ -86,18 +86,20 @@ func WithNowFunc(nowFunc func() time.Time) CheckOpt {
 }
 
 type Engine struct {
-	schemaMgr    schema.Manager
-	auditLog     audit.Log
-	conf         *Conf
-	policyLoader PolicyLoader
-	workerPool   []chan<- workIn
-	workerIndex  uint64
+	schemaMgr         schema.Manager
+	auditLog          audit.Log
+	policyLoader      PolicyLoader
+	conf              *Conf
+	metadataExtractor audit.MetadataExtractor
+	workerPool        []chan<- workIn
+	workerIndex       uint64
 }
 
 type Components struct {
-	AuditLog     audit.Log
-	PolicyLoader PolicyLoader
-	SchemaMgr    schema.Manager
+	AuditLog          audit.Log
+	PolicyLoader      PolicyLoader
+	SchemaMgr         schema.Manager
+	MetadataExtractor audit.MetadataExtractor
 }
 
 func New(ctx context.Context, components Components) (*Engine, error) {
@@ -136,10 +138,11 @@ func NewEphemeral(policyLoader PolicyLoader, schemaMgr schema.Manager) (*Engine,
 
 func newEngine(conf *Conf, c Components) *Engine {
 	return &Engine{
-		conf:         conf,
-		policyLoader: c.PolicyLoader,
-		schemaMgr:    c.SchemaMgr,
-		auditLog:     c.AuditLog,
+		conf:              conf,
+		policyLoader:      c.PolicyLoader,
+		schemaMgr:         c.SchemaMgr,
+		auditLog:          c.AuditLog,
+		metadataExtractor: c.MetadataExtractor,
 	}
 }
 
@@ -234,6 +237,10 @@ func (engine *Engine) logCheckDecision(ctx context.Context, inputs []*enginev1.C
 			Method: &auditv1.DecisionLogEntry_CheckResources_{
 				CheckResources: checkRes,
 			},
+		}
+
+		if engine.metadataExtractor != nil {
+			entry.Metadata = engine.metadataExtractor(ctx)
 		}
 
 		return entry, nil
@@ -386,6 +393,10 @@ func (engine *Engine) logPlanDecision(ctx context.Context, input *enginev1.PlanR
 			Method: &auditv1.DecisionLogEntry_PlanResources_{
 				PlanResources: planRes,
 			},
+		}
+
+		if engine.metadataExtractor != nil {
+			entry.Metadata = engine.metadataExtractor(ctx)
 		}
 
 		return entry, nil

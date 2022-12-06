@@ -123,6 +123,11 @@ func Start(ctx context.Context, zpagesEnabled bool) error {
 		return fmt.Errorf("failed to create audit log: %w", err)
 	}
 
+	mdExtractor, err := audit.NewMetadataExtractor()
+	if err != nil {
+		return fmt.Errorf("failed to create metadata extractor: %w", err)
+	}
+
 	// create store
 	store, err := storage.New(ctx)
 	if err != nil {
@@ -151,9 +156,10 @@ func Start(ctx context.Context, zpagesEnabled bool) error {
 
 	// create engine
 	eng, err := engine.New(ctx, engine.Components{
-		PolicyLoader: policyLoader,
-		SchemaMgr:    schemaMgr,
-		AuditLog:     auditLog,
+		PolicyLoader:      policyLoader,
+		SchemaMgr:         schemaMgr,
+		AuditLog:          auditLog,
+		MetadataExtractor: mdExtractor,
 	})
 	if err != nil {
 		return fmt.Errorf("failed to create engine: %w", err)

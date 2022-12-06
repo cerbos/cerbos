@@ -11,6 +11,10 @@ import (
 	"google.golang.org/grpc/metadata"
 )
 
+var alwaysExcludeMetadataKeys = map[string]struct{}{
+	"grpc-trace-bin": {},
+}
+
 type MetadataExtractor func(context.Context) map[string]*auditv1.MetaValues
 
 func NewMetadataExtractor() (MetadataExtractor, error) {
@@ -36,6 +40,10 @@ func NewMetadataExtractorFromConf(conf *Conf) MetadataExtractor {
 	switch {
 	case len(exclude) > 0 && len(include) == 0:
 		shouldInclude = func(k string) bool {
+			if _, ok := alwaysExcludeMetadataKeys[k]; ok {
+				return false
+			}
+
 			if _, ok := exclude[k]; ok {
 				return false
 			}
@@ -43,11 +51,19 @@ func NewMetadataExtractorFromConf(conf *Conf) MetadataExtractor {
 		}
 	case len(exclude) == 0 && len(include) > 0:
 		shouldInclude = func(k string) bool {
+			if _, ok := alwaysExcludeMetadataKeys[k]; ok {
+				return false
+			}
+
 			_, ok := include[k]
 			return ok
 		}
 	default:
 		shouldInclude = func(k string) bool {
+			if _, ok := alwaysExcludeMetadataKeys[k]; ok {
+				return false
+			}
+
 			if _, ok := exclude[k]; ok {
 				return false
 			}

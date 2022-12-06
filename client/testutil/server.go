@@ -222,17 +222,18 @@ func startServer(conf *config.Wrapper) (*ServerInfo, error) {
 }
 
 type serverBldr struct {
-	ctx          context.Context
-	conf         *config.Wrapper
-	store        storage.Store
-	auditLog     audit.Log
-	auxData      *auxdata.AuxData
-	schemaMgr    schema.Manager
-	policyLoader engine.PolicyLoader
-	engine       *engine.Engine
-	serverConf   *server.Conf
-	server       *server.Server
-	err          error
+	ctx               context.Context
+	conf              *config.Wrapper
+	store             storage.Store
+	auditLog          audit.Log
+	auxData           *auxdata.AuxData
+	schemaMgr         schema.Manager
+	policyLoader      engine.PolicyLoader
+	engine            *engine.Engine
+	serverConf        *server.Conf
+	server            *server.Server
+	err               error
+	metadataExtractor audit.MetadataExtractor
 }
 
 func (sb *serverBldr) mkStore() *serverBldr {
@@ -250,6 +251,15 @@ func (sb *serverBldr) mkAuditLog() *serverBldr {
 	}
 
 	sb.auditLog, sb.err = audit.NewLogFromConf(sb.ctx, sb.conf)
+	if sb.err == nil {
+		auditConf := new(audit.Conf)
+		if err := sb.conf.GetSection(auditConf); err != nil {
+			sb.err = fmt.Errorf("failed to load audit configuration: %w", err)
+			return sb
+		}
+
+		sb.metadataExtractor = audit.NewMetadataExtractorFromConf(auditConf)
+	}
 	return sb
 }
 
@@ -320,9 +330,10 @@ func (sb *serverBldr) mkEngine() *serverBldr {
 	}
 
 	sb.engine = engine.NewFromConf(sb.ctx, engineConf, engine.Components{
-		PolicyLoader: sb.policyLoader,
-		SchemaMgr:    sb.schemaMgr,
-		AuditLog:     sb.auditLog,
+		PolicyLoader:      sb.policyLoader,
+		SchemaMgr:         sb.schemaMgr,
+		AuditLog:          sb.auditLog,
+		MetadataExtractor: sb.metadataExtractor,
 	})
 
 	return sb
