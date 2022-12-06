@@ -14,7 +14,9 @@ audit:
   enabled: true # Set to false to completely disable audit logging.
   accessLogsEnabled: true # Log API access attempts
   decisionLogsEnabled: true # Log policy decisions
-  backend: local # Audit backend to use. 
+  excludeMetadataKeys: ['authorization'] # Excludes given gRPC request metadata keys from access logs. (Takes precedence over includeMetadataKeys)
+  includeMetadataKeys: ['content-type'] # Includes given gRPC request metadata keys in access logs.
+  backend: local # Audit backend to use.
   local: # Configuration for the local audit backend
     storagePath: /path/to/dir # Path to store the data
     retentionPeriod: 168h # Records older than this will be automatically deleted
