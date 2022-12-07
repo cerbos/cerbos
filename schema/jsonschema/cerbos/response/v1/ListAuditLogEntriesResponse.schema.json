@@ -49,6 +49,12 @@
             "$ref": "#/definitions/cerbos.engine.v1.CheckInput"
           }
         },
+        "metadata": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/cerbos.audit.v1.MetaValues"
+          }
+        },
         "outputs": {
           "type": "array",
           "items": {

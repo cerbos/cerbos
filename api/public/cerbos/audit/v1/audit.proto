@@ -47,6 +47,7 @@ message DecisionLogEntry {
     CheckResources check_resources = 7;
     PlanResources plan_resources = 8;
   }
+  map<string, MetaValues> metadata = 15;
 }
 
 message MetaValues {

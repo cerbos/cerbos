@@ -27,7 +27,8 @@ func TestLog(t *testing.T) {
 	output := filepath.Join(t.TempDir(), "audit.log")
 	startDate := time.Now()
 
-	log, err := file.NewLog(&file.Conf{Path: output})
+	decisionFilter := audit.NewDecisionLogEntryFilterFromConf(&audit.Conf{})
+	log, err := file.NewLog(&file.Conf{Path: output}, decisionFilter)
 	require.NoError(t, err)
 
 	t.Cleanup(log.Close)

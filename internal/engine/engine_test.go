@@ -189,13 +189,19 @@ func mkEngine(tb testing.TB, p param) (*Engine, context.CancelFunc) {
 		}
 		conf.SetDefaults()
 
-		auditLog, err = local.NewLog(conf)
+		decisionFilter := audit.NewDecisionLogEntryFilterFromConf(&audit.Conf{})
+		auditLog, err = local.NewLog(conf, decisionFilter)
 		require.NoError(tb, err)
 	} else {
 		auditLog = audit.NewNopLog()
 	}
 
-	eng, err := New(ctx, Components{PolicyLoader: compiler, SchemaMgr: schemaMgr, AuditLog: auditLog})
+	eng, err := New(ctx, Components{
+		PolicyLoader:      compiler,
+		SchemaMgr:         schemaMgr,
+		AuditLog:          auditLog,
+		MetadataExtractor: audit.NewMetadataExtractorFromConf(&audit.Conf{}),
+	})
 	require.NoError(tb, err)
 
 	return eng, cancelFunc

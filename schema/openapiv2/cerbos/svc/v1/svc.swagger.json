@@ -2108,6 +2108,12 @@
         },
         "planResources": {
           "$ref": "#/definitions/DecisionLogEntryPlanResources"
+        },
+        "metadata": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/v1MetaValues"
+          }
         }
       }
     },

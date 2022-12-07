@@ -21,22 +21,23 @@ import (
 const Backend = "file"
 
 func init() {
-	audit.RegisterBackend(Backend, func(_ context.Context, confW *config.Wrapper) (audit.Log, error) {
+	audit.RegisterBackend(Backend, func(_ context.Context, confW *config.Wrapper, decisionFilter audit.DecisionLogEntryFilter) (audit.Log, error) {
 		conf := new(Conf)
 		if err := confW.GetSection(conf); err != nil {
 			return nil, fmt.Errorf("failed to read local audit log configuration: %w", err)
 		}
 
-		return NewLog(conf)
+		return NewLog(conf, decisionFilter)
 	})
 }
 
 type Log struct {
-	accessLog   *zap.Logger
-	decisionLog *zap.Logger
+	accessLog      *zap.Logger
+	decisionLog    *zap.Logger
+	decisionFilter audit.DecisionLogEntryFilter
 }
 
-func NewLog(conf *Conf) (*Log, error) {
+func NewLog(conf *Conf, decisionFilter audit.DecisionLogEntryFilter) (*Log, error) {
 	// remove level, time and message because they are not useful in this context
 	encoderConf := ecszap.NewDefaultEncoderConfig().ToZapCoreEncoderConfig()
 	encoderConf.LevelKey = ""
@@ -56,8 +57,9 @@ func NewLog(conf *Conf) (*Log, error) {
 	}
 
 	return &Log{
-		accessLog:   logger.Named("cerbos.audit").With(zap.String("log.kind", "access")),
-		decisionLog: logger.Named("cerbos.audit").With(zap.String("log.kind", "decision")),
+		accessLog:      logger.Named("cerbos.audit").With(zap.String("log.kind", "access")),
+		decisionLog:    logger.Named("cerbos.audit").With(zap.String("log.kind", "decision")),
+		decisionFilter: decisionFilter,
 	}, nil
 }
 
@@ -83,6 +85,13 @@ func (l *Log) WriteDecisionLogEntry(_ context.Context, record audit.DecisionLogE
 	rec, err := record()
 	if err != nil {
 		return err
+	}
+
+	if l.decisionFilter != nil {
+		rec = l.decisionFilter(rec)
+		if rec == nil {
+			return nil
+		}
 	}
 
 	l.decisionLog.Info("", zap.Inline(protoMsg{msg: rec}))

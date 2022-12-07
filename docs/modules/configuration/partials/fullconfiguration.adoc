@@ -1,10 +1,16 @@
 audit:
   accessLogsEnabled: false # AccessLogsEnabled defines whether access logging is enabled.
   backend: local # Backend states which backend to use for Audits.
+  decisionLogFilters: # DecisionLogFilters define the filters to apply while producing decision logs.
+    checkResources: # CheckResources defines the filters that apply to CheckResources calls.
+      ignoreAllowAll: false # IgnoreAllowAll ignores responses that don't contain an EFFECT_DENY.
+    planResources: # PlanResources defines the filters that apply to PlanResources calls.
+      ignoreAll: false # IgnoreAll prevents any plan responses from being logged. Takes precedence over other filters.
+      ignoreAlwaysAllow: false # IgnoreAlwaysAllow ignores ALWAYS_ALLOWED plans.
   decisionLogsEnabled: false # DecisionLogsEnabled defines whether logging of policy decisions is enabled.
   enabled: false # Enabled defines whether audit logging is enabled.
-  excludeMetadataKeys: ['authorization'] # ExcludeMetadataKeys defines which gRPC request metadata keys should be excluded from access logs. Takes precedence over includeMetadataKeys.
-  includeMetadataKeys: ['content-type'] # IncludeMetadataKeys defines which gRPC request metadata keys should be included in access logs.
+  excludeMetadataKeys: ['authorization'] # ExcludeMetadataKeys defines which gRPC request metadata keys should be excluded from the audit logs. Takes precedence over includeMetadataKeys.
+  includeMetadataKeys: ['content-type'] # IncludeMetadataKeys defines which gRPC request metadata keys should be included in the audit logs.
   file:
     path: /path/to/file.log # Path to the log file to use as output. The special values stdout and stderr can be used to write to stdout or stderr respectively.
   local:

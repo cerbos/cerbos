@@ -9,7 +9,7 @@ jsonpath "$.action" == "approve"
 jsonpath "$.resourceKind" == "leave_request"
 jsonpath "$.policyVersion" == "20210210"
 jsonpath "$.filter" != null
-jsonpath "$.meta.filterDebug" == "(request.resource.attr.status == \"PENDING_APPROVAL\")"
+jsonpath "$.meta.filterDebug" == "(eq request.resource.attr.status \"PENDING_APPROVAL\")"
 
 
 # Plan resources request 1 (deprecated endpoint)
@@ -23,7 +23,7 @@ jsonpath "$.action" == "approve"
 jsonpath "$.resourceKind" == "leave_request"
 jsonpath "$.policyVersion" == "20210210"
 jsonpath "$.filter" != null
-jsonpath "$.meta.filterDebug" == "(request.resource.attr.status == \"PENDING_APPROVAL\")"
+jsonpath "$.meta.filterDebug" == "(eq request.resource.attr.status \"PENDING_APPROVAL\")"
 
 
 # Plan resources request 2
@@ -58,22 +58,28 @@ jsonpath "$.meta.filterDebug" == "(true)"
 POST {{protocol}}://{{host}}:{{port}}/api/plan/resources
 Content-Type: application/json
 file,requests/plan_resources/req3.json;
-HTTP/* 400
+HTTP/* 200
 [Asserts]
 header "Content-Type" == "application/json"
-jsonpath "$.code" == 3
-jsonpath "$.message" == "Bad request: missing principal attribute \"vip\""
+jsonpath "$.action" == "view-as-vip"
+jsonpath "$.resourceKind" == "album:object"
+jsonpath "$.policyVersion" == "default"
+jsonpath "$.filter.kind" == "KIND_CONDITIONAL"
+jsonpath "$.meta.filterDebug" == "(eq request.resource.attr.owner \"1\")"
 
 
 # Plan resources request 3 (deprecated endpoint)
 POST {{protocol}}://{{host}}:{{port}}/api/x/plan/resources
 Content-Type: application/json
 file,requests/plan_resources/req3.json;
-HTTP/* 400
+HTTP/* 200
 [Asserts]
 header "Content-Type" == "application/json"
-jsonpath "$.code" == 3
-jsonpath "$.message" == "Bad request: missing principal attribute \"vip\""
+jsonpath "$.action" == "view-as-vip"
+jsonpath "$.resourceKind" == "album:object"
+jsonpath "$.policyVersion" == "default"
+jsonpath "$.filter.kind" == "KIND_CONDITIONAL"
+jsonpath "$.meta.filterDebug" == "(eq request.resource.attr.owner \"1\")"
 
 
 # Plan resources request 4
@@ -114,7 +120,7 @@ header "Content-Type" == "application/json"
 jsonpath "$.action" == "delete"
 jsonpath "$.resourceKind" == "leave_request"
 jsonpath "$.filter.kind" == "KIND_CONDITIONAL"
-jsonpath "$.meta.filterDebug" == "((R.attr.owner == \"john\") AND (true))"
+jsonpath "$.meta.filterDebug" == "(eq request.resource.attr.owner \"john\")"
 jsonpath "$.meta.matchedScope" == "acme.hr.uk"
 
 
@@ -128,5 +134,5 @@ header "Content-Type" == "application/json"
 jsonpath "$.action" == "delete"
 jsonpath "$.resourceKind" == "leave_request"
 jsonpath "$.filter.kind" == "KIND_CONDITIONAL"
-jsonpath "$.meta.filterDebug" == "((R.attr.owner == \"john\") AND (true))"
+jsonpath "$.meta.filterDebug" == "(eq request.resource.attr.owner \"john\")"
 jsonpath "$.meta.matchedScope" == "acme.hr.uk"
