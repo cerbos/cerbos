@@ -165,121 +165,22 @@ Now, to initialize our DB, generate the Prisma client and seed the database, run
 npx prisma migrate dev --name init
 ----
 
-=== Setting up the server
-
-Having now set up our Prisma database, it is time to implement our web server. For this example we will be using Express to set up a simple server running on port 3000. We will also import our Prisma and Cerbos clients which we will use later on.
-
-[source,js]
-----
-mkdir src
-cat << EOF > src/index.ts
-import { PrismaClient } from "@prisma/client";
-import express, { Request, Response } from "express";
-import { GRPC } from "@cerbos/grpc";
-
-const prisma = new PrismaClient({ log: ["query", "info", "warn", "error"] });
-const cerbos = new GRPC("localhost:3592", { tls: false }); // The Cerbos PDP instance
-
-const app = express();
-
-app.use(express.json());
-
-const server = app.listen(3000, () =>
-  console.log("🚀 Server ready at: http://localhost:3000")
-);
-EOF
-----
-
-Now we need to create our routes which we will authorize. For this simple example, we will create a `GET` for a contact resource. 
-
-Using the Prisma client, query for the contact which matches the ID of the URL parameter. If it is not found, return an error message. Add the following to `src/index.ts`:
-
-[source,js]
-----
-// Implementing an authentication provider is out of scope of this article and you will more than likely already have one in place,
-// So we build a static one here for indicative use
-const user = {
-  "id": "1", // user id
-  "role": "user", // single role (user, admin)
-  //"role": "admin",
-  "department": "Sales" // department of the user
-  //"department": "Marketing"
-};
-
-app.get("/contacts/:id", async ({ params }, res) => {
-  // load the contact
-  const contact = await prisma.contact.findUnique({
-    where: {
-      id: params.id,
-    },
-  });
-  if (!contact) return res.status(404).json({ error: "Contact not found" });
-
-  // TODO check authz and return a response
-});
-----
-
-=== Setting up Cerbos
-
-As Cerbos is self-hosted, the first step is to run an instance locally for development. For this we need to create a few files and a folder to hold the policies.
-
-NOTE: We will be using a docker container to run the instance so ensure you have this setup first.
-
-First, create a `cerbos` directory (https://github.com/cerbos/express-prisma-cerbos/tree/main/cerbos[see repo]) with the subdirectories; `config` and `policies`. Then create a file `config.yaml` inside the `cerbos` subdirectory. The contents of the config will tell the Cerbos instance which port to run on and where the policies are located. Run the following to create the files, and populate the config:
-
-[source,bash]
-----
-mkdir -p cerbos/config cerbos/policies && cat << EOF > cerbos/config/config.yaml
----
-server:
-  httpListenAddr: ":3592"
-storage:
-  driver: "disk"
-  disk:
-    directory: /policies
-    watchForChanges: true
-EOF
-----
-
-Now we will start the Cerbos container, mounting the config and policies folder into the container:
-
-[source,bash,subs="attributes"]
-----
-cd cerbos
-docker run -i -t -p 3592:3592 \
-  -v $(pwd)/config:/config \
-  -v $(pwd)/policies:/policies \
-  {app-docker-img} \
-  server --config=/config/config.yaml
-----
-
-If everything is correct, we should see the following output:
-
-[source,bash]
-----
-2022-12-06T16:43:55.445Z        INFO    cerbos.server   maxprocs: Leaving GOMAXPROCS=4: CPU quota undefined
-2022-12-06T16:43:55.445Z        INFO    cerbos.server   Loading configuration from /config/config.yaml
-2022-12-06T16:43:55.447Z        INFO    cerbos.index    Found 0 executable policies
-2022-12-06T16:43:55.448Z        INFO    cerbos.telemetry        Anonymous telemetry enabled. Disable via the config file or by setting the CERBOS_NO_TELEMETRY=1 environment variable
-2022-12-06T16:43:55.448Z        INFO    cerbos.dir.watch        Watching directory for changes  {"dir": "/policies"}
-2022-12-06T16:43:55.449Z        INFO    cerbos.grpc     Starting gRPC server at :3593
-2022-12-06T16:43:55.449Z        INFO    cerbos.http     Starting HTTP server at :3592
-----
-
 === Creating an access policy
 
-Now that our server is set up, it is time to define our resource policy as per the requirements, which as a reminder, were:
+NOTE: We will be using a Docker container to run the Cerbos PDP instance, so ensure you have https://docs.docker.com/get-docker/[Docker] set up first!
+
+The first step is to create a resource policy file. Our requirements, as a reminder, were:
 
 * Admins can do all actions
 * Users in the Sales department can read and create contacts
 * Only the user who created the contact can update and delete it
 * A resource policy file called ‘contacts.yaml’ should be created in the policies folder with the following:
 
-Run the following to create the file, and populate it with the policy:
+Let's create a `cerbos` directory (https://github.com/cerbos/express-prisma-cerbos/tree/main/cerbos[see repo]) with a subdirectory; `policies`, and a file `contacts.yaml` inside there. To do this, run the following:
 
 [source,yaml]
 ----
-cat << EOF > cerbos/policies/contacts.yaml
+mkdir -p cerbos/policies && cat << EOF > cerbos/policies/contacts.yaml
 ---
 apiVersion: api.cerbos.dev/v1
 resourcePolicy:
@@ -318,15 +219,93 @@ As you are working on the policies, you can run the following to check that they
 
 [source,bash,subs="attributes"]
 ----
+cd cerbos
 docker run -i -t -p 3592:3592 \
   -v $(pwd)/policies:/policies \
   {app-docker-img} \
   compile /policies
 ----
 
+Now let's fire up the Cerbos PDP. We provide an image to do this easily -- simply run the following:
+
+[source,bash,subs="attributes"]
+----
+docker run -i -t -p 3592:3592 \
+  -v $(pwd)/policies:/policies \
+  {app-docker-img} \
+  server
+----
+
+If everything is correct, we should see the following output:
+
+[source,bash]
+----
+2022-12-07T16:43:40.626Z        INFO    cerbos.server   maxprocs: Leaving GOMAXPROCS=4: CPU quota undefined
+2022-12-07T16:43:40.626Z        INFO    cerbos.server   Loading configuration from /conf.default.yaml
+2022-12-07T16:43:40.630Z        INFO    cerbos.index    Found 1 executable policies
+2022-12-07T16:43:40.631Z        INFO    cerbos.telemetry        Anonymous telemetry enabled. Disable via the config file or by setting the CERBOS_NO_TELEMETRY=1 environment variable
+2022-12-07T16:43:40.631Z        INFO    cerbos.dir.watch        Watching directory for changes  {"dir": "/policies"}
+2022-12-07T16:43:40.632Z        INFO    cerbos.http     Starting HTTP server at :3592
+2022-12-07T16:43:40.632Z        INFO    cerbos.grpc     Starting gRPC server at :3593
+----
+
+=== Setting up the server
+
+Having now set up both our Cerbos policy and our Prisma database, it is time to implement our web server. For this example we will be using Express to set up a simple server running on port 3000. We will also import our Prisma and Cerbos clients which we will use later on.
+
+[source,js]
+----
+mkdir src
+cat << EOF > src/index.ts
+import { PrismaClient } from "@prisma/client";
+import express, { Request, Response } from "express";
+import { GRPC } from "@cerbos/grpc";
+
+const prisma = new PrismaClient({ log: ["query", "info", "warn", "error"] });
+const cerbos = new GRPC("localhost:3592", { tls: false }); // The Cerbos PDP instance
+
+const app = express();
+
+app.use(express.json());
+
+const server = app.listen(3000, () =>
+  console.log("🚀 Server ready at: http://localhost:3000")
+);
+EOF
+----
+
+Now we need to create our routes which we will authorize. For this simple example, we will create a `GET` for a contact resource.
+
+Using the Prisma client, query for the contact which matches the ID of the URL parameter. If it is not found, return an error message. Add the following to `src/index.ts`:
+
+[source,js]
+----
+// Implementing an authentication provider is out of scope of this article and you will more than likely already have one in place,
+// So we build a static one here for indicative use
+const user = {
+  "id": "1", // user id
+  "role": "user", // single role (user, admin)
+  //"role": "admin",
+  "department": "Sales" // department of the user
+  //"department": "Marketing"
+};
+
+app.get("/contacts/:id", async ({ params }, res) => {
+  // load the contact
+  const contact = await prisma.contact.findUnique({
+    where: {
+      id: params.id,
+    },
+  });
+  if (!contact) return res.status(404).json({ error: "Contact not found" });
+
+  // TODO check authz and return a response
+});
+----
+
 === Authorizing requests
 
-Now that our policy is set, we can call Cerbos from our request handler to authorize the principal to take the action on the resource. 
+With our policy defined, we can call Cerbos from our request handler to authorize the principal to take the action on the resource.
 
 To do this, we need to update our `GET` handler and replace the `TODO` with a call to Cerbos; passing in the details about the user and the attributes of the contact resource, as well as the action being made:
 
