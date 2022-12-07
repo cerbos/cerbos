@@ -45,7 +45,7 @@ func NewMetadataExtractorFromConf(conf *Conf) MetadataExtractor {
 				return false
 			}
 
-			_, ok = exclude[k]
+			_, ok := exclude[k]
 			return !ok
 		}
 	case len(exclude) == 0 && len(include) > 0:
