@@ -167,7 +167,7 @@ npx prisma migrate dev --name init
 
 === Creating an access policy
 
-NOTE: We will be using a Docker container to run the Cerbos PDP instance, so ensure you have https://docs.docker.com/get-docker/[Docker] set up first!
+NOTE: We will be using a Docker container to run the Cerbos PDP instance, so ensure that you have https://docs.docker.com/get-docker/[Docker] set up first!
 
 The first step is to create a resource policy file. Our requirements, as a reminder, were:
 
