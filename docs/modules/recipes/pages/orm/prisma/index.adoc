@@ -41,7 +41,7 @@ npm i --save-dev @types/express ts-node
 
 For this simplified tutorial, we will use a simple Prisma model to represent a CRM contact. We'll also opt to use a SQLite database, but this can be swapped out to your DB of choice. You can find the Prisma documentation https://www.prisma.io/docs/[here] for more details.
 
-Create a `prisma` folder and add in basic Prisma schema in `prisma/schema.prisma`, by copying and running the following:
+Create a `prisma` folder and add the basic Prisma schema to `prisma/schema.prisma`, by copying and running the following:
 
 [source]
 ----
@@ -71,7 +71,7 @@ model Contact {
 EOF
 ----
 
-Next, we define the seed script which will be used to populate the database with contacts:
+Next, we define the seed script which will be used to populate the database with the following contacts:
 
 [cols="2,1,1,1,1", options="header"]
 |===
@@ -83,6 +83,8 @@ Next, we define the seed script which will be used to populate the database with
 | 4 | Christina | Yes | No | 2
 | 5 | Aleks | Yes | Yes | 2
 |===
+
+Run the following to generate the script:
 
 [source,bash]
 ----
@@ -156,7 +158,7 @@ main()
 EOF
 ----
 
-Now to initialize our DB, generate the Prisma client and seed the database, run the following:
+Now, to initialize our DB, generate the Prisma client and seed the database, run the following:
 
 [source,bash]
 ----
@@ -165,7 +167,7 @@ npx prisma migrate dev --name init
 
 === Setting up the server
 
-Having now setup our Prisma database, it is time to implement our web server. For this example we will be using Express to setup a simple server running on port 3000. We will also import our Prisma and Cerbos clients which we will use later on.
+Having now set up our Prisma database, it is time to implement our web server. For this example we will be using Express to set up a simple server running on port 3000. We will also import our Prisma and Cerbos clients which we will use later on.
 
 [source,js]
 ----
@@ -188,9 +190,9 @@ const server = app.listen(3000, () =>
 EOF
 ----
 
-Now we need to create our routes which we will authorize. For this simple example we will create a GET for a contact resource. 
+Now we need to create our routes which we will authorize. For this simple example, we will create a `GET` for a contact resource. 
 
-Using the Prisma client, query for the contact which matches the ID of the URL parameter. If it is not found, return an error message. Add this to `src/index.ts`:
+Using the Prisma client, query for the contact which matches the ID of the URL parameter. If it is not found, return an error message. Add the following to `src/index.ts`:
 
 [source,js]
 ----
@@ -219,16 +221,15 @@ app.get("/contacts/:id", async ({ params }, res) => {
 
 === Setting up Cerbos
 
-As Cerbos is self-hosted the first step is to run an instance locally for development. For this we need to create a few files and a folder to hold the policies.
+As Cerbos is self-hosted, the first step is to run an instance locally for development. For this we need to create a few files and a folder to hold the policies.
 
-Note: We will be using a docker container to run the instance so ensure you have this setup first.
+NOTE: We will be using a docker container to run the instance so ensure you have this setup first.
 
-First create a `cerbos` directory (https://github.com/cerbos/express-prisma-cerbos/tree/main/cerbos[see repo]) with the subdirectories; `config` and `policies`. Then create a file `config.yaml` inside the `cerbos` subdirectory. This contents of the config will tell the Cerbos instance which port to run on and where the policies are located:
+First, create a `cerbos` directory (https://github.com/cerbos/express-prisma-cerbos/tree/main/cerbos[see repo]) with the subdirectories; `config` and `policies`. Then create a file `config.yaml` inside the `cerbos` subdirectory. The contents of the config will tell the Cerbos instance which port to run on and where the policies are located. Run the following to create the files, and populate the config:
 
 [source,bash]
 ----
-mkdir -p cerbos/config cerbos/policies
-cat << EOF > cerbos/config/config.yaml
+mkdir -p cerbos/config cerbos/policies && cat << EOF > cerbos/config/config.yaml
 ---
 server:
   httpListenAddr: ":3592"
@@ -267,12 +268,14 @@ If everything is correct, we should see the following output:
 
 === Creating an access policy
 
-Now that our server is setup, it is time to define our resource policy as per the requirements, which as a reminder where:
+Now that our server is set up, it is time to define our resource policy as per the requirements, which as a reminder, were:
 
 * Admins can do all actions
 * Users in the Sales department can read and create contacts
 * Only the user who created the contact can update and delete it
 * A resource policy file called ‘contacts.yaml’ should be created in the policies folder with the following:
+
+Run the following to create the file, and populate it with the policy:
 
 [source,yaml]
 ----
@@ -311,7 +314,7 @@ EOF
 
 xref:policies:conditions.adoc[Conditions] are the powerful part of Cerbos which enables authorization decisions to be made at request time using context from both the principal (the user) and the resource they are trying to access. In this policy we are using conditions to check the department of the user for read and create actions, then again in the update and delete policy to check that the owner of the resource is the principal making the request.
 
-As you are working on the policies you can run the following to check that they are valid. If no errors are logged then you are good to go.
+As you are working on the policies, you can run the following to check that they are valid. If no errors are logged then you are good to go.
 
 [source,bash,subs="attributes"]
 ----
@@ -323,9 +326,9 @@ docker run -i -t -p 3592:3592 \
 
 === Authorizing requests
 
-Now that our policy is set we can call Cerbos from our request handler to authorize the principal to take the action on the resource. 
+Now that our policy is set, we can call Cerbos from our request handler to authorize the principal to take the action on the resource. 
 
-To do this we need to update our GET handler and replace the TODO with a call to the Cerbos passing in the details about the user and the attributes of the contact of the resource as well as the action being made:
+To do this, we need to update our `GET` handler and replace the `TODO` with a call to Cerbos; passing in the details about the user and the attributes of the contact resource, as well as the action being made:
 
 [source,js]
 ----
@@ -354,7 +357,7 @@ To do this we need to update our GET handler and replace the TODO with a call to
   }
 ----
 
-In this case we are only checking a single contact, using the `checkResource` method. There is also a `checkResources` method available which supports batching resources into a single request (perhaps for use in a `list` endpoint). That could be used like this:
+In this case, we are only checking a single contact using the `checkResource` method. There is also a `checkResources` method available which supports batching resources into a single request (perhaps for use in a `list` endpoint). A `checkResources` call could be used like this:
 
 [source,js]
 ----
@@ -385,7 +388,7 @@ In this case we are only checking a single contact, using the `checkResource` me
   }); // => true
 ----
 
-Once we get the response back from Cerbos, calling the `.isAllowed` method for the required action (and optionally, the given resource ID in the `checkResources` case) will return a simple boolean of whether the user is authorized or not. Using this we can either return the contact or throw an HTTP 403 Unauthorized response.
+Once we get the response back from Cerbos, calling the `.isAllowed` method for the required action (and optionally, the given resource ID in the `checkResources` case) will return a simple boolean of whether the user is authorized or not. Using this, we can either return the contact or throw an `HTTP 403 Unauthorized` response.
 
 === The query planner
 
@@ -476,16 +479,17 @@ Run the Cerbos PDP, as described above, and separately, fire up the node server 
 npx ts-node src/index.ts
 ----
 
-Then, hit it with a request:
+Then, hit it with some requests:
 
 [source,bash]
 ----
 curl -i http://localhost:3000/contacts/1
+curl -i http://localhost:3000/contacts
 ----
 
 === Conclusion
 
-Through this simple example we have used Primsa as our ORM to create a REST API which is authorized using Cerbos for a simple CRM system. This can be built upon to add more complex requirements for example:
+Through this simple example, we have used Primsa as our ORM to create a REST API which is authorized using Cerbos for a simple CRM system. This can be built upon to add more complex requirements, for example:
 
 * Checking the IP address of the request to ensure it is within the corporate IP range
 * Check if the incoming change is within an acceptable boundary eg only allow 20% discounts on a product unless an admin
