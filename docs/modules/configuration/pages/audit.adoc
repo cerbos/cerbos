@@ -16,7 +16,15 @@ audit:
   decisionLogsEnabled: true # Log policy decisions
   excludeMetadataKeys: ['authorization'] # Excludes given gRPC request metadata keys from audit logs.(Takes precedence over includeMetadataKeys)
   includeMetadataKeys: ['content-type'] # Includes given gRPC request metadata keys in audit logs.
+  decisionLogFilters: # DecisionLogFilters define the filters to apply while producing decision logs.
+    checkResources: # CheckResources defines the filters that apply to CheckResources calls.
+      ignoreAllowAll: false # IgnoreAllowAll ignores responses that don't contain an EFFECT_DENY.
+    planResources: # PlanResources defines the filters that apply to PlanResources calls.
+      ignoreAll: false # IgnoreAll prevents any plan responses from being logged. Takes precedence over other filters.
+      ignoreAlwaysAllow: false # IgnoreAlwaysAllow ignores ALWAYS_ALLOWED plans.
   backend: local # Audit backend to use.
+  file: # Configuration for the file audit backend
+    path: /path/to/file.log # Path to the log file to use as output. The special values stdout and stderr can be used to write to stdout or stderr respectively.
   local: # Configuration for the local audit backend
     storagePath: /path/to/dir # Path to store the data
     retentionPeriod: 168h # Records older than this will be automatically deleted

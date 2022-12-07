@@ -16,11 +16,11 @@ import (
 
 func TestMetadataExtractor(t *testing.T) {
 	testCases := []struct {
+		input       map[string]string
+		want        map[string]*auditv1.MetaValues
 		name        string
 		includeKeys []string
 		excludeKeys []string
-		input       map[string]string
-		want        map[string]*auditv1.MetaValues
 	}{
 		{
 			name:  "NoIncludeOrExclude",

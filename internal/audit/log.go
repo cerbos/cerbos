@@ -58,7 +58,7 @@ type DecisionLogIterator interface {
 }
 
 // Constructor for backends.
-type Constructor func(context.Context, *config.Wrapper) (Log, error)
+type Constructor func(context.Context, *config.Wrapper, DecisionLogEntryFilter) (Log, error)
 
 // RegisterBackend registers an audit log backend.
 func RegisterBackend(name string, cons Constructor) {
@@ -90,7 +90,8 @@ func NewLogFromConf(ctx context.Context, confW *config.Wrapper) (Log, error) {
 		return nil, fmt.Errorf("unknown backend [%s]", conf.Backend)
 	}
 
-	backend, err := cons(ctx, confW)
+	decisionFilter := NewDecisionLogEntryFilterFromConf(conf)
+	backend, err := cons(ctx, confW, decisionFilter)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create backend: %w", err)
 	}

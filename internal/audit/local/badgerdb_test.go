@@ -44,7 +44,8 @@ func TestBadgerLog(t *testing.T) {
 	startDate, err := time.Parse(time.RFC3339, "2021-01-01T10:00:00Z")
 	require.NoError(t, err)
 
-	db, err := local.NewLog(conf)
+	decisionFilter := audit.NewDecisionLogEntryFilterFromConf(&audit.Conf{})
+	db, err := local.NewLog(conf, decisionFilter)
 	require.NoError(t, err)
 
 	require.Equal(t, local.Backend, db.Backend())
@@ -54,7 +55,7 @@ func TestBadgerLog(t *testing.T) {
 	db.Close()
 
 	// re-open the db
-	db, err = local.NewLog(conf)
+	db, err = local.NewLog(conf, decisionFilter)
 	require.NoError(t, err)
 
 	defer db.Close()

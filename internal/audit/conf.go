@@ -32,6 +32,27 @@ type confHolder struct {
 	AccessLogsEnabled bool `yaml:"accessLogsEnabled" conf:",example=false"`
 	// DecisionLogsEnabled defines whether logging of policy decisions is enabled.
 	DecisionLogsEnabled bool `yaml:"decisionLogsEnabled" conf:",example=false"`
+	// DecisionLogFilters define the filters to apply while producing decision logs.
+	DecisionLogFilters DecisionLogFilters `yaml:"decisionLogFilters"`
+}
+
+type DecisionLogFilters struct {
+	// CheckResources defines the filters that apply to CheckResources calls.
+	CheckResources CheckResourcesFilter `yaml:"checkResources"`
+	// PlanResources defines the filters that apply to PlanResources calls.
+	PlanResources PlanResourcesFilter `yaml:"planResources"`
+}
+
+type CheckResourcesFilter struct {
+	// IgnoreAllowAll ignores responses that don't contain an EFFECT_DENY.
+	IgnoreAllowAll bool `yaml:"ignoreAllowAll" conf:",example=false"`
+}
+
+type PlanResourcesFilter struct {
+	// IgnoreAll prevents any plan responses from being logged. Takes precedence over other filters.
+	IgnoreAll bool `yaml:"ignoreAll" conf:",example=false"`
+	// IgnoreAlwaysAllow ignores ALWAYS_ALLOWED plans.
+	IgnoreAlwaysAllow bool `yaml:"ignoreAlwaysAllow" conf:",example=false"`
 }
 
 func (c *Conf) UnmarshalYAML(unmarshal func(any) error) error {
