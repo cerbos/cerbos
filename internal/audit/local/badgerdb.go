@@ -35,28 +35,29 @@ var (
 )
 
 func init() {
-	audit.RegisterBackend(Backend, func(_ context.Context, confW *config.Wrapper) (audit.Log, error) {
+	audit.RegisterBackend(Backend, func(_ context.Context, confW *config.Wrapper, decisionFilter audit.DecisionLogEntryFilter) (audit.Log, error) {
 		conf := new(Conf)
 		if err := confW.GetSection(conf); err != nil {
 			return nil, fmt.Errorf("failed to read local audit log configuration: %w", err)
 		}
 
-		return NewLog(conf)
+		return NewLog(conf, decisionFilter)
 	})
 }
 
 // Log implements the decisionlog interface with Badger as the backing store.
 type Log struct {
-	logger   *zap.Logger
-	db       *badgerv3.DB
-	buffer   chan *badgerv3.Entry
-	stopChan chan struct{}
-	ttl      time.Duration
-	wg       sync.WaitGroup
-	stopOnce sync.Once
+	logger         *zap.Logger
+	db             *badgerv3.DB
+	buffer         chan *badgerv3.Entry
+	stopChan       chan struct{}
+	decisionFilter audit.DecisionLogEntryFilter
+	wg             sync.WaitGroup
+	ttl            time.Duration
+	stopOnce       sync.Once
 }
 
-func NewLog(conf *Conf) (*Log, error) {
+func NewLog(conf *Conf, decisionFilter audit.DecisionLogEntryFilter) (*Log, error) {
 	logger := zap.L().Named("auditlog").With(zap.String("backend", Backend))
 	opts := badgerv3.DefaultOptions(conf.StoragePath)
 	opts = opts.WithCompactL0OnClose(true)
@@ -76,11 +77,12 @@ func NewLog(conf *Conf) (*Log, error) {
 	ttl := conf.RetentionPeriod
 
 	l := &Log{
-		logger:   logger,
-		db:       db,
-		buffer:   make(chan *badgerv3.Entry, bufferSize),
-		stopChan: make(chan struct{}),
-		ttl:      ttl,
+		logger:         logger,
+		db:             db,
+		buffer:         make(chan *badgerv3.Entry, bufferSize),
+		stopChan:       make(chan struct{}),
+		ttl:            ttl,
+		decisionFilter: decisionFilter,
 	}
 
 	l.wg.Add(1)
@@ -186,6 +188,13 @@ func (l *Log) WriteDecisionLogEntry(ctx context.Context, record audit.DecisionLo
 	rec, err := record()
 	if err != nil {
 		return err
+	}
+
+	if l.decisionFilter != nil {
+		rec = l.decisionFilter(rec)
+		if rec == nil {
+			return nil
+		}
 	}
 
 	value, err := rec.MarshalVT()
