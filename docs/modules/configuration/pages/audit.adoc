@@ -3,24 +3,38 @@ include::ROOT:partial$attributes.adoc[]
 = Audit block
 
 The `audit` block configures the audit logging settings for the Cerbos instance. Audit logs capture access records and decisions made by the engine along with the associated context data.
- 
 
-NOTE: Audit logging has some overhead in terms of resource usage (disk IO, CPU and memory). This overhead is usually negligible unless Cerbos is running in a resource-constrained environment. If resources are scarce or if you are expecting heavy traffic, disabling audit logging might have a positive impact on performance. 
+
+NOTE: Audit logging has some overhead in terms of resource usage (disk IO, CPU and memory). This overhead is usually negligible unless Cerbos is running in a resource-constrained environment. If resources are scarce or if you are expecting heavy traffic, disabling audit logging might have a positive impact on performance.
 
 
 [source,yaml,linenums]
 ----
-audit: 
+audit:
   enabled: true # Set to false to completely disable audit logging.
   accessLogsEnabled: true # Log API access attempts
   decisionLogsEnabled: true # Log policy decisions
-  excludeMetadataKeys: ['authorization'] # Excludes given gRPC request metadata keys from access logs. (Takes precedence over includeMetadataKeys)
-  includeMetadataKeys: ['content-type'] # Includes given gRPC request metadata keys in access logs.
+  excludeMetadataKeys: ['authorization'] # Excludes given gRPC request metadata keys from audit logs.(Takes precedence over includeMetadataKeys)
+  includeMetadataKeys: ['content-type'] # Includes given gRPC request metadata keys in audit logs.
   backend: local # Audit backend to use.
   local: # Configuration for the local audit backend
     storagePath: /path/to/dir # Path to store the data
     retentionPeriod: 168h # Records older than this will be automatically deleted
 ----
+
+.Including or excluding request metadata in log entries
+****
+
+To tune how request metadata (headers) is logged to access and decision log entries, configure `includeMetadataKeys` and `excludeMetadataKeys` as follows:
+
+-  Both `includeMetadataKeys` and `excludeMetadataKeys` are empty: no metadata will be logged
+- Only `includeMetadataKeys` is defined: only the metadata keys in the list will be logged
+- Only `excludeMetadataKeys` is defined: everything except the keys defined in the list will be logged
+- Both `includeMetadataKeys` and `excludeMetadataKeys` are defined: Only the keys in the include list will be logged if, and only if, they are not in the exclude list
+
+CAUTION: If requests contain sensitive data such as authorization tokens, they will be captured by the audit logs and visible to anyone with access to the log files. Cerbos automatically excludes the `authorization` header. However, if you use other header keys to store sensitive data, always exclude them using the `excludeMetadataKeys` configuration setting.
+
+****
 
 
 == Local backend
@@ -32,19 +46,19 @@ The only required setting for the `local` backend is the `storagePath` field whi
 
 [source,yaml,linenums]
 ----
-audit: 
-  enabled: true 
-  accessLogsEnabled: true 
-  decisionLogsEnabled: true 
-  backend: local 
-  local: 
-    storagePath: /path/to/dir 
-    retentionPeriod: 168h 
+audit:
+  enabled: true
+  accessLogsEnabled: true
+  decisionLogsEnabled: true
+  backend: local
+  local:
+    storagePath: /path/to/dir
+    retentionPeriod: 168h
     advanced:
-      bufferSize: 16 # Size of the memory buffer. Increasing this will use more memory and the chances of losing data during a crash. 
-      maxBatchSize: 16 # Write batch size. If your records are small, increasing this will reduce disk IO. 
-      flushInterval: 30s # Time to keep records in memory before committing. 
-      gcInterval: 15m # How often the garbage collector runs to remove old entries from the log. 
+      bufferSize: 16 # Size of the memory buffer. Increasing this will use more memory and the chances of losing data during a crash.
+      maxBatchSize: 16 # Write batch size. If your records are small, increasing this will reduce disk IO.
+      flushInterval: 30s # Time to keep records in memory before committing.
+      gcInterval: 15m # How often the garbage collector runs to remove old entries from the log.
 ----
 
 
@@ -59,16 +73,16 @@ NOTE: This backend cannot be queried using the Admin API, `cerbosctl audit` or `
 
 [source,yaml,linenums]
 ----
-audit: 
-  enabled: true 
-  accessLogsEnabled: true 
-  decisionLogsEnabled: true 
+audit:
+  enabled: true
+  accessLogsEnabled: true
+  decisionLogsEnabled: true
   backend: file
-  file: 
+  file:
     path: /path/to/audit.log
 ----
 
 
 The `path` field can be set to special names `stdout` or `stderr` to log to stdout or stderr. Note that this would result in audit logs being mixed up with normal Cerbos operational logs. It is recommended to use an actual file for audit log output if your container orchestrator has support for collecting logs from files in addition to stdout/stderr.
 
-Audit log entries can be selected by setting a filter on `log.logger == "cerbos.audit"`. Access log entries have `log.kind == "access"` and decision log entries have `log.kind == "decision"`. 
+Audit log entries can be selected by setting a filter on `log.logger == "cerbos.audit"`. Access log entries have `log.kind == "access"` and decision log entries have `log.kind == "decision"`.

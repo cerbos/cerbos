@@ -397,6 +397,52 @@ func (m *DecisionLogEntry) validate(all bool) error {
 
 	// no validation rules for Error
 
+	{
+		sorted_keys := make([]string, len(m.GetMetadata()))
+		i := 0
+		for key := range m.GetMetadata() {
+			sorted_keys[i] = key
+			i++
+		}
+		sort.Slice(sorted_keys, func(i, j int) bool { return sorted_keys[i] < sorted_keys[j] })
+		for _, key := range sorted_keys {
+			val := m.GetMetadata()[key]
+			_ = val
+
+			// no validation rules for Metadata[key]
+
+			if all {
+				switch v := interface{}(val).(type) {
+				case interface{ ValidateAll() error }:
+					if err := v.ValidateAll(); err != nil {
+						errors = append(errors, DecisionLogEntryValidationError{
+							field:  fmt.Sprintf("Metadata[%v]", key),
+							reason: "embedded message failed validation",
+							cause:  err,
+						})
+					}
+				case interface{ Validate() error }:
+					if err := v.Validate(); err != nil {
+						errors = append(errors, DecisionLogEntryValidationError{
+							field:  fmt.Sprintf("Metadata[%v]", key),
+							reason: "embedded message failed validation",
+							cause:  err,
+						})
+					}
+				}
+			} else if v, ok := interface{}(val).(interface{ Validate() error }); ok {
+				if err := v.Validate(); err != nil {
+					return DecisionLogEntryValidationError{
+						field:  fmt.Sprintf("Metadata[%v]", key),
+						reason: "embedded message failed validation",
+						cause:  err,
+					}
+				}
+			}
+
+		}
+	}
+
 	switch v := m.Method.(type) {
 	case *DecisionLogEntry_CheckResources_:
 		if v == nil {

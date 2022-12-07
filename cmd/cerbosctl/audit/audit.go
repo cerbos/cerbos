@@ -37,7 +37,7 @@ between: View records captured between two timestamps. The timestamps must be fo
 since: View records from X hours/minutes/seconds ago to now. Unit suffixes are: h=hours, m=minutes s=seconds
 lookup: View a specific record using the Cerbos Call ID
 
-# View the last 10 access logs 
+# View the last 10 access logs
 cerbosctl audit --kind=access --tail=10
 
 # View the decision logs from midnight 2021-07-01 to midnight 2021-07-02
