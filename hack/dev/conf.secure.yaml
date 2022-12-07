@@ -22,8 +22,7 @@ auxData:
 
 audit:
   enabled: true
-  backend: "local"
-  decisionLogsEnabled: false
+  backend: "file"
   local:
     storagePath: /tmp/cerbos_auditlog
     advanced:

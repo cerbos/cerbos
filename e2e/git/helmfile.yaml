@@ -77,7 +77,7 @@ releases:
                 maxResourcesPerRequest: 5
               adminAPI:
                 enabled: true
-                adminCredentials: 
+                adminCredentials:
                   username: cerbos
                   passwordHash: JDJ5JDEwJC5BYjQyY2RJNG5QR2NWMmJPdnNtQU93c09RYVA0eFFGdHBrbmFEeXh1NnlIVTE1cHJNY05PCgo=
             auxData:
@@ -89,8 +89,14 @@ releases:
               enabled: true
               accessLogsEnabled: true
               decisionLogsEnabled: true
+              decisionLogFilters:
+                checkResources:
+                  ignoreAllowAll: true
+                planResources:
+                  ignoreAll: true
+              excludeMetadataKeys: ["authorization"]
               backend: local
-              local: 
+              local:
                 storagePath: /audit/cerbos
             storage:
               driver: "git"
