@@ -45,10 +45,8 @@ func NewMetadataExtractorFromConf(conf *Conf) MetadataExtractor {
 				return false
 			}
 
-			if _, ok := exclude[k]; ok {
-				return false
-			}
-			return true
+			_, ok = exclude[k]
+			return !ok
 		}
 	case len(exclude) == 0 && len(include) > 0:
 		shouldInclude = func(k string) bool {
