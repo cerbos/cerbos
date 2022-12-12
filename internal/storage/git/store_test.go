@@ -626,6 +626,7 @@ func createGitRepo(t *testing.T, dir string, policyCount int) []string {
 	require.NoError(t, err, "Failed to get worktree")
 
 	_, err = wt.Commit("Initial commit", &git.CommitOptions{
+		AllowEmptyCommits: true,
 		Author: &object.Signature{
 			Name:  "Daffy Duck",
 			Email: "daffy@mallard.dev",
@@ -787,7 +788,8 @@ func commitToGitRepo(dir, msg string, work func(*git.Worktree) error) error {
 	}
 
 	if _, err := wt.Commit(msg, &git.CommitOptions{
-		All: true,
+		All:               true,
+		AllowEmptyCommits: true,
 		Author: &object.Signature{
 			Name:  "Daffy Duck",
 			Email: "daffy@mallard.dev",
