@@ -9,12 +9,12 @@ require (
 	github.com/alecthomas/chroma v0.10.0
 	github.com/alecthomas/kong v0.7.1
 	github.com/alecthomas/participle/v2 v2.0.0-beta.5
-	github.com/aws/aws-sdk-go v1.44.157
+	github.com/aws/aws-sdk-go v1.44.164
 	github.com/bluele/gcache v0.0.2
 	github.com/cespare/xxhash v1.1.0
 	github.com/cespare/xxhash/v2 v2.2.0
 	github.com/denisenkom/go-mssqldb v0.12.3
-	github.com/dgraph-io/badger/v3 v3.2103.4
+	github.com/dgraph-io/badger/v3 v3.2103.5
 	github.com/doug-martin/goqu/v9 v9.18.0
 	github.com/envoyproxy/protoc-gen-validate v0.9.1
 	github.com/fatih/color v1.13.0
@@ -53,8 +53,8 @@ require (
 	github.com/planetscale/vtprotobuf v0.3.0
 	github.com/prometheus/client_golang v1.14.0
 	github.com/pterm/pterm v0.12.50
-	github.com/rivo/tview v0.0.0-20221211160934-55d1ca9d3392
-	github.com/rjeczalik/notify v0.9.3-0.20221207082217-11c1ede835b2
+	github.com/rivo/tview v0.0.0-20221217182043-ccce554c3803
+	github.com/rjeczalik/notify v0.9.3-0.20221214002951-cbbb2084a278
 	github.com/rogpeppe/go-internal v1.9.0
 	github.com/rs/cors v1.8.2
 	github.com/rudderlabs/analytics-go v3.3.3+incompatible
@@ -77,7 +77,7 @@ require (
 	go.opentelemetry.io/otel/trace v1.11.2
 	go.uber.org/automaxprocs v1.5.1
 	go.uber.org/config v1.4.0
-	go.uber.org/multierr v1.8.0
+	go.uber.org/multierr v1.9.0
 	go.uber.org/zap v1.24.0
 	gocloud.dev v0.27.0
 	golang.org/x/crypto v0.4.0
