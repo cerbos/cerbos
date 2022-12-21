@@ -4,7 +4,7 @@ go 1.19
 
 require (
 	github.com/envoyproxy/protoc-gen-validate v0.9.1
-	github.com/lyft/protoc-gen-star v0.6.1
+	github.com/lyft/protoc-gen-star v0.6.2
 	google.golang.org/protobuf v1.28.1
 )
 
