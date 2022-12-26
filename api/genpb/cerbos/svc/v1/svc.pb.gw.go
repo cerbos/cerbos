@@ -343,7 +343,7 @@ func local_request_CerbosAdminService_GetPolicy_0(ctx context.Context, marshaler
 }
 
 var (
-	filter_CerbosAdminService_ListAuditLogEntries_0 = &utilities.DoubleArray{Encoding: map[string]int{"kind": 0}, Base: []int{1, 1, 0}, Check: []int{0, 1, 2}}
+	filter_CerbosAdminService_ListAuditLogEntries_0 = &utilities.DoubleArray{Encoding: map[string]int{"kind": 0}, Base: []int{1, 2, 0, 0}, Check: []int{0, 1, 2, 2}}
 )
 
 func request_CerbosAdminService_ListAuditLogEntries_0(ctx context.Context, marshaler runtime.Marshaler, client CerbosAdminServiceClient, req *http.Request, pathParams map[string]string) (CerbosAdminService_ListAuditLogEntriesClient, runtime.ServerMetadata, error) {
