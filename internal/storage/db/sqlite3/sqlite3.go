@@ -17,7 +17,6 @@ import (
 	migrate "github.com/golang-migrate/migrate/v4"
 	migratesqlite3 "github.com/golang-migrate/migrate/v4/database/sqlite3"
 	"github.com/golang-migrate/migrate/v4/source/iofs"
-	"github.com/jmoiron/sqlx"
 	"go.uber.org/zap"
 
 	// import sqlite3 driver.
@@ -57,7 +56,7 @@ func NewStore(ctx context.Context, conf *Conf) (*Store, error) {
 	log := logging.FromContext(ctx).Named("sqlite3")
 	log.Info("Initializing sqlite3 storage", zap.String("DSN", conf.DSN))
 
-	db, err := sqlx.Connect("sqlite", conf.DSN)
+	db, err := internal.ConnectWithRetries("sqlite", conf.DSN, internal.DBConnectionRetries)
 	if err != nil {
 		return nil, fmt.Errorf("failed to open database: %w", err)
 	}

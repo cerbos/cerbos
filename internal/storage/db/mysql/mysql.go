@@ -18,7 +18,6 @@ import (
 	// Import the MySQL dialect.
 	_ "github.com/doug-martin/goqu/v9/dialect/mysql"
 	"github.com/go-sql-driver/mysql"
-	"github.com/jmoiron/sqlx"
 
 	"github.com/cerbos/cerbos/internal/config"
 	"github.com/cerbos/cerbos/internal/observability/logging"
@@ -53,7 +52,7 @@ func NewStore(ctx context.Context, conf *Conf) (*Store, error) {
 		return nil, err
 	}
 
-	db, err := sqlx.Connect("mysql", dsn)
+	db, err := internal.ConnectWithRetries("mysql", dsn, internal.DBConnectionRetries)
 	if err != nil {
 		return nil, fmt.Errorf("failed to connect to database: %w", err)
 	}

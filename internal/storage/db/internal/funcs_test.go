@@ -4,6 +4,9 @@
 package internal_test
 
 import (
+	"database/sql"
+	"database/sql/driver"
+	"errors"
 	"fmt"
 	"testing"
 
@@ -90,4 +93,69 @@ func TestConcatWithSep(t *testing.T) {
 			}
 		})
 	}
+}
+
+// Inspired by https://go.dev/src/database/sql/fakedb_test.go
+type fakeDB struct{}
+
+type fakeConn struct {
+	db *fakeDB
+}
+
+func (c *fakeConn) Begin() (driver.Tx, error)                 { return nil, nil }
+func (c *fakeConn) Close() (err error)                        { return nil }
+func (c *fakeConn) Prepare(query string) (driver.Stmt, error) { panic("use PrepareContext") }
+
+type fakeDriver struct {
+	nFailures, attempts int
+}
+
+func (c *fakeDriver) Open(name string) (driver.Conn, error) {
+	if c.attempts < c.nFailures {
+		c.attempts++
+		return nil, errors.New("connection error")
+	}
+	fakeConn := &fakeConn{db: &fakeDB{}}
+	return fakeConn, nil
+}
+
+func TestConnectWithRetries(t *testing.T) {
+	driverName := "mock"
+	mc := &fakeDriver{}
+	sql.Register(driverName, mc)
+
+	resetConn := func() {
+		mc.attempts = 0
+		mc.nFailures = 0
+	}
+
+	t.Run("connect_with_no_retries", func(t *testing.T) {
+		defer resetConn()
+		_, err := internal.ConnectWithRetries(driverName, "", 0)
+		require.NoError(t, err)
+		require.Equal(t, 0, mc.attempts)
+	})
+
+	t.Run("connect_with_no_failures", func(t *testing.T) {
+		defer resetConn()
+		_, err := internal.ConnectWithRetries(driverName, "", 1)
+		require.NoError(t, err)
+		require.Equal(t, 0, mc.attempts)
+	})
+
+	t.Run("connect_with_retry", func(t *testing.T) {
+		defer resetConn()
+		mc.nFailures = 1
+		_, err := internal.ConnectWithRetries(driverName, "", 1)
+		require.NoError(t, err)
+		require.Equal(t, 1, mc.attempts)
+	})
+
+	t.Run("connect_with_error", func(t *testing.T) {
+		defer resetConn()
+		mc.nFailures = 2
+		_, err := internal.ConnectWithRetries(driverName, "", 1)
+		require.Error(t, err)
+		require.Equal(t, 2, mc.attempts)
+	})
 }

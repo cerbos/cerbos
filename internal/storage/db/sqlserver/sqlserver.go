@@ -52,7 +52,7 @@ func NewStore(ctx context.Context, conf *Conf) (*Store, error) {
 	log := logging.FromContext(ctx).Named("sqlserver")
 	log.Info("Initialising SQL Server storage")
 
-	db, err := sqlx.Connect(DriverName, conf.URL)
+	db, err := internal.ConnectWithRetries(DriverName, conf.URL, internal.DBConnectionRetries)
 	if err != nil {
 		return nil, fmt.Errorf("failed to open database: %w", err)
 	}
