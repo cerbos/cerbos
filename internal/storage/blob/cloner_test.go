@@ -35,6 +35,7 @@ func TestCloneResult(t *testing.T) {
 		"principal_policies/policy_02.yaml",
 		"principal_policies/policy_02_acme.hr.yaml",
 		"principal_policies/policy_02_acme.yaml",
+		"principal_policies/policy_03.yaml",
 		"resource_policies/policy_01.yaml",
 		"resource_policies/policy_02.yaml",
 		"resource_policies/policy_03.yaml",

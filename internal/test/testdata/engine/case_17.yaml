@@ -1,0 +1,48 @@
+---
+description: "Only principal policy with no matching resource policy (#1397)"
+inputs: [
+  {
+    "requestId": "test",
+    "actions": [
+      "view",
+      "edit"
+    ],
+    "principal": {
+      "id": "daisy_duck",
+      "roles": [
+        "employee"
+      ],
+      "attr": {
+        "department": "finance",
+        "geography": "GB",
+      }
+    },
+    "resource": {
+      "kind": "expenses",
+      "id": "XX125",
+      "attr": {
+        "department": "marketing",
+        "geography": "GB",
+        "id": "XX125",
+        "owner": "john",
+        "team": "design",
+      }
+    }
+  }
+]
+wantOutputs: [
+  {
+    "requestId": "test",
+    "resourceId": "XX125",
+    "actions": {
+      "view": {
+        "effect": "EFFECT_ALLOW",
+        "policy": "principal.daisy_duck.vdefault"
+      },
+      "edit": {
+        "effect": "EFFECT_DENY",
+        "policy": "NO_MATCH"
+      }
+    }
+  }
+]
