@@ -6,9 +6,7 @@ package logging
 import (
 	"context"
 	"os"
-	"os/signal"
 	"strings"
-	"syscall"
 	"time"
 
 	grpc_zap "github.com/grpc-ecosystem/go-grpc-middleware/logging/zap"
@@ -91,37 +89,9 @@ func doInitLogging(ctx context.Context, level string) {
 			return lvl > zapcore.ErrorLevel
 		}))),
 	)
-
 	if minLogLevel > zap.DebugLevel {
 		handleUSR1Signal(ctx, minLogLevel, &atomicLevel)
 	}
-}
-
-// handleUSR1Signal temporarily sets the log level to debug when a SIGUSR1 signal is received.
-func handleUSR1Signal(ctx context.Context, originalLevel zapcore.Level, atomicLevel *zap.AtomicLevel) {
-	sigusr1 := make(chan os.Signal, 1)
-	signal.Notify(sigusr1, syscall.SIGUSR1)
-
-	go func() {
-		inProgress := false
-		doneChan := make(chan struct{}, 1)
-		extendChan := make(chan struct{}, 1)
-		for {
-			select {
-			case <-ctx.Done():
-				return
-			case <-sigusr1:
-				if inProgress {
-					extendChan <- struct{}{}
-				} else {
-					inProgress = true
-					go setLogLevelForDuration(ctx, doneChan, extendChan, originalLevel, atomicLevel)
-				}
-			case <-doneChan:
-				inProgress = false
-			}
-		}
-	}()
 }
 
 // setLogLevelForDuration temporarily sets the global log level to the given level for a period of time.
