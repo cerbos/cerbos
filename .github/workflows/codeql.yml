@@ -1,12 +1,8 @@
 name: "CodeQL"
-
 on:
-  push:
-    branches: [ "main" ]
-  pull_request:
-    # The branches below must be a subset of the branches above
-    branches: [ "main" ]
-
+  workflow_dispatch:
+  schedule:
+    - cron: '0 6 * * 1'
 jobs:
   analyze:
     name: Analyze
@@ -61,3 +57,14 @@ jobs:
       uses: github/codeql-action/analyze@v2
       with:
         category: "/language:${{matrix.language}}"
+
+
+    - name: Notify Slack
+      if: failure()
+      env:
+        SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
+      uses: voxmedia/github-action-slack-notify-build@v2
+      with:
+        channel_id: C02TMGNNL4V
+        status: FAILED
+        color: danger
