@@ -1,25 +1,25 @@
 {
-  "suites":  [
+  "suites": [
     {
-      "file":  "udf_test.yaml",
-      "name":  "TestSuite",
-      "principals":  [
+      "file": "udf_test.yaml",
+      "name": "TestSuite",
+      "principals": [
         {
-          "name":  "bev",
-          "resources":  [
+          "name": "bev",
+          "resources": [
             {
-              "name":  "pending_leave_request",
-              "actions":  [
+              "name": "pending_leave_request",
+              "actions": [
                 {
-                  "name":  "delete",
-                  "details":  {
-                    "result":  "RESULT_PASSED"
+                  "name": "delete",
+                  "details": {
+                    "result": "RESULT_PASSED"
                   }
                 },
                 {
-                  "name":  "approve",
-                  "details":  {
-                    "result":  "RESULT_PASSED"
+                  "name": "approve",
+                  "details": {
+                    "result": "RESULT_PASSED"
                   }
                 }
               ]
@@ -27,21 +27,21 @@
           ]
         },
         {
-          "name":  "matt",
-          "resources":  [
+          "name": "matt",
+          "resources": [
             {
-              "name":  "pending_leave_request",
-              "actions":  [
+              "name": "pending_leave_request",
+              "actions": [
                 {
-                  "name":  "delete",
-                  "details":  {
-                    "result":  "RESULT_PASSED"
+                  "name": "delete",
+                  "details": {
+                    "result": "RESULT_PASSED"
                   }
                 },
                 {
-                  "name":  "approve",
-                  "details":  {
-                    "result":  "RESULT_PASSED"
+                  "name": "approve",
+                  "details": {
+                    "result": "RESULT_PASSED"
                   }
                 }
               ]
@@ -49,25 +49,25 @@
           ]
         }
       ],
-      "summary":  {
-        "overallResult":  "RESULT_PASSED",
-        "testsCount":  4,
-        "resultCounts":  [
+      "summary": {
+        "overallResult": "RESULT_PASSED",
+        "testsCount": 4,
+        "resultCounts": [
           {
-            "result":  "RESULT_PASSED",
-            "count":  4
+            "result": "RESULT_PASSED",
+            "count": 4
           }
         ]
       }
     }
   ],
-  "summary":  {
-    "overallResult":  "RESULT_PASSED",
-    "testsCount":  4,
-    "resultCounts":  [
+  "summary": {
+    "overallResult": "RESULT_PASSED",
+    "testsCount": 4,
+    "resultCounts": [
       {
-        "result":  "RESULT_PASSED",
-        "count":  4
+        "result": "RESULT_PASSED",
+        "count": 4
       }
     ]
   }

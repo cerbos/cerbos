@@ -21,36 +21,29 @@
                   "details": {
                     "result": "RESULT_PASSED"
                   }
-                },
-                {
-                  "name": "defer",
-                  "details": {
-                    "result": "RESULT_PASSED"
-                  }
                 }
               ]
             }
           ]
         },
         {
-          "name": "bev",
+          "name": "alicia",
           "resources": [
             {
-              "name": "stale_leave_request",
+              "name": "john_leave_request",
               "actions": [
                 {
-                  "name": "remind",
+                  "name": "view:public",
                   "details": {
-                    "result": "RESULT_PASSED"
+                    "result": "RESULT_FAILED",
+                    "failure": {
+                      "expected": "EFFECT_DENY",
+                      "actual": "EFFECT_ALLOW"
+                    }
                   }
-                }
-              ]
-            },
-            {
-              "name": "stale_pending_leave_request",
-              "actions": [
+                },
                 {
-                  "name": "remind",
+                  "name": "approve",
                   "details": {
                     "result": "RESULT_PASSED"
                   }
@@ -61,24 +54,33 @@
         }
       ],
       "summary": {
-        "overallResult": "RESULT_PASSED",
-        "testsCount": 5,
+        "overallResult": "RESULT_ERRORED",
+        "testsCount": 4,
         "resultCounts": [
           {
             "result": "RESULT_PASSED",
-            "count": 5
+            "count": 3
+          },
+          {
+            "result": "RESULT_FAILED",
+            "count": 1
           }
         ]
-      }
+      },
+      "error": "Duplicate test: The combination [alicia|john_leave_request|approve] in test \"Alicia approves John leave request\" was already exercised in test \"John and his leave request\""
     }
   ],
   "summary": {
-    "overallResult": "RESULT_PASSED",
-    "testsCount": 5,
+    "overallResult": "RESULT_ERRORED",
+    "testsCount": 4,
     "resultCounts": [
       {
         "result": "RESULT_PASSED",
-        "count": 5
+        "count": 3
+      },
+      {
+        "result": "RESULT_FAILED",
+        "count": 1
       }
     ]
   }

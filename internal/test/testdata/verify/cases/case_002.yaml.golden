@@ -1,31 +1,31 @@
 {
-  "suites":  [
+  "suites": [
     {
-      "file":  "inline_test.yaml",
-      "name":  "TestSuite",
-      "principals":  [
+      "file": "inline_test.yaml",
+      "name": "TestSuite",
+      "principals": [
         {
-          "name":  "johnny",
-          "resources":  [
+          "name": "johnny",
+          "resources": [
             {
-              "name":  "john_leave_request",
-              "actions":  [
+              "name": "john_leave_request",
+              "actions": [
                 {
-                  "name":  "view:public",
-                  "details":  {
-                    "result":  "RESULT_PASSED"
+                  "name": "view:public",
+                  "details": {
+                    "result": "RESULT_PASSED"
                   }
                 },
                 {
-                  "name":  "approve",
-                  "details":  {
-                    "result":  "RESULT_PASSED"
+                  "name": "approve",
+                  "details": {
+                    "result": "RESULT_PASSED"
                   }
                 },
                 {
-                  "name":  "defer",
-                  "details":  {
-                    "result":  "RESULT_PASSED"
+                  "name": "defer",
+                  "details": {
+                    "result": "RESULT_PASSED"
                   }
                 }
               ]
@@ -33,25 +33,25 @@
           ]
         }
       ],
-      "summary":  {
-        "overallResult":  "RESULT_PASSED",
-        "testsCount":  3,
-        "resultCounts":  [
+      "summary": {
+        "overallResult": "RESULT_PASSED",
+        "testsCount": 3,
+        "resultCounts": [
           {
-            "result":  "RESULT_PASSED",
-            "count":  3
+            "result": "RESULT_PASSED",
+            "count": 3
           }
         ]
       }
     }
   ],
-  "summary":  {
-    "overallResult":  "RESULT_PASSED",
-    "testsCount":  3,
-    "resultCounts":  [
+  "summary": {
+    "overallResult": "RESULT_PASSED",
+    "testsCount": 3,
+    "resultCounts": [
       {
-        "result":  "RESULT_PASSED",
-        "count":  3
+        "result": "RESULT_PASSED",
+        "count": 3
       }
     ]
   }

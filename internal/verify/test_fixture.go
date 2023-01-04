@@ -135,12 +135,24 @@ func (tf *testFixture) runTestSuite(ctx context.Context, eng Checker, shouldRun 
 		return suiteResult
 	}
 
+	dupes := make(map[string]string)
 	for _, test := range tests {
 		if err := ctx.Err(); err != nil {
 			return suiteResult
 		}
 
 		for _, action := range test.Input.Actions {
+			testKey := fmt.Sprintf("%s|%s|%s", test.Name.PrincipalKey, test.Name.ResourceKey, action)
+			if prevTest, ok := dupes[testKey]; ok {
+				suiteResult.Summary.OverallResult = policyv1.TestResults_RESULT_ERRORED
+				suiteResult.Error = fmt.Sprintf(
+					"Duplicate test: The combination [%s] in test %q was already exercised in test %q",
+					testKey, test.Name.TestTableName, prevTest,
+				)
+				return suiteResult
+			}
+
+			dupes[testKey] = test.Name.TestTableName
 			testResult := runTest(ctx, eng, test, action, shouldRun, suite, trace)
 			addTestResult(suiteResult, test.Name.PrincipalKey, test.Name.ResourceKey, action, testResult)
 		}
