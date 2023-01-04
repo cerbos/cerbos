@@ -435,21 +435,7 @@ func (engine *Engine) evaluate(ctx context.Context, input *enginev1.CheckInput, 
 	// evaluate the policies
 	result, err := ec.evaluate(ctx, tctx, input)
 	if err != nil {
-		if errors.Is(err, errNoPoliciesMatched) {
-			for _, action := range input.Actions {
-				tctx.StartAction(action).AppliedEffect(defaultEffect, "No matching policies")
-
-				output.Actions[action] = &enginev1.CheckOutput_ActionEffect{
-					Effect: defaultEffect,
-					Policy: noPolicyMatch,
-				}
-			}
-
-			return output, nil
-		}
-
 		logging.FromContext(ctx).Error("Failed to evaluate policies", zap.Error(err))
-
 		return nil, fmt.Errorf("failed to evaluate policies: %w", err)
 	}
 
@@ -580,13 +566,13 @@ func (ec *evaluationCtx) evaluate(ctx context.Context, tctx tracer.Context, inpu
 	ctx, span := tracing.StartSpan(ctx, "engine.EvalCtxEvaluate")
 	defer span.End()
 
+	resp := &evaluationResult{}
 	if ec.numChecks == 0 {
 		tracing.MarkFailed(span, http.StatusNotFound, errNoPoliciesMatched)
 
-		return nil, errNoPoliciesMatched
+		resp.setDefaultsForUnmatchedActions(tctx, input)
+		return resp, nil
 	}
-
-	resp := &evaluationResult{}
 
 	for i := 0; i < ec.numChecks; i++ {
 		c := ec.checks[i]
@@ -606,8 +592,9 @@ func (ec *evaluationCtx) evaluate(ctx context.Context, tctx tracer.Context, inpu
 	}
 
 	tracing.MarkFailed(span, http.StatusNotFound, errNoPoliciesMatched)
+	resp.setDefaultsForUnmatchedActions(tctx, input)
 
-	return resp, errNoPoliciesMatched
+	return resp, nil
 }
 
 type evaluationResult struct {
@@ -647,6 +634,24 @@ func (er *evaluationResult) merge(res *PolicyEvalResult) bool {
 	}
 
 	return hasNoMatches
+}
+
+func (er *evaluationResult) setDefaultsForUnmatchedActions(tctx tracer.Context, input *enginev1.CheckInput) {
+	if er.effects == nil {
+		er.effects = make(map[string]EffectInfo, len(input.Actions))
+	}
+
+	for _, action := range input.Actions {
+		if ce, ok := er.effects[action]; ok && ce.Effect != effectv1.Effect_EFFECT_UNSPECIFIED && ce.Effect != effectv1.Effect_EFFECT_NO_MATCH {
+			continue
+		}
+
+		tctx.StartAction(action).AppliedEffect(defaultEffect, "No matching policies")
+		er.effects[action] = EffectInfo{
+			Effect: defaultEffect,
+			Policy: noPolicyMatch,
+		}
+	}
 }
 
 type workOut struct {

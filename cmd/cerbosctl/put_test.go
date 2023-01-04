@@ -88,6 +88,7 @@ func testPutCmd(clientCtx *cmdclient.Context, globals *flagset.Globals) func(*te
 					"derived_roles.beta",
 					"derived_roles.buyer_derived_roles",
 					"derived_roles.package_roles",
+					"principal.daisy_duck.vdefault",
 					"principal.donald_duck.v20210210",
 					"principal.donald_duck.vdefault",
 					"principal.donald_duck.vdefault/acme",
