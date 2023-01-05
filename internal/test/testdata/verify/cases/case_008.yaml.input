@@ -1,0 +1,74 @@
+-- testdata/principals.yaml --
+---
+principals:
+  john:
+    id: john
+    policyVersion: '20210210'
+    roles:
+      - employee
+    attr:
+      department: marketing
+      geography: GB
+      team: design
+  alicia:
+    id: alicia
+    policyVersion: '20210210'
+    roles:
+      - employee
+      - manager
+    attr:
+      department: marketing
+      geography: GB
+      managed_geographies: GB
+      ip_address: 10.20.1.2
+      team: design
+
+-- testdata/resources.yaml --
+---
+resources:
+  john_leave_request:
+    kind: leave_request
+    policyVersion: '20210210'
+    id: XX125
+    attr: &attr
+      department: marketing
+      geography: GB
+      id: XX125
+      owner: john
+      team: design
+
+-- suite_test.yaml --
+---
+name: TestSuite
+description: Tests for verifying something
+tests:
+  - name: John and his leave request
+    input:
+      principals:
+        - john
+        - alicia
+      resources:
+        - john_leave_request
+      actions:
+        - view:public
+        - approve
+    expected:
+      - principal: john
+        resource: john_leave_request
+        actions:
+          view:public: EFFECT_ALLOW
+          approve: EFFECT_DENY
+
+  - name: Alicia approves John leave request
+    input:
+      principals:
+        - alicia
+      resources:
+        - john_leave_request
+      actions:
+        - approve
+    expected:
+      - principal: alicia
+        resource: john_leave_request
+        actions:
+          approve: EFFECT_ALLOW
