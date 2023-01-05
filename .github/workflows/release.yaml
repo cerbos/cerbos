@@ -67,6 +67,8 @@ jobs:
 
       - name: Setup Buf
         uses: bufbuild/buf-setup-action@v1.11.0
+        with:
+          github_token: ${{ github.token }}
 
       - name: Push to BSR
         uses: bufbuild/buf-push-action@v1.1.1
