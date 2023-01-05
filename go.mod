@@ -11,6 +11,7 @@ require (
 	github.com/alecthomas/participle/v2 v2.0.0-beta.5
 	github.com/aws/aws-sdk-go v1.44.171
 	github.com/bluele/gcache v0.0.2
+	github.com/cenkalti/backoff/v4 v4.2.0
 	github.com/cespare/xxhash v1.1.0
 	github.com/cespare/xxhash/v2 v2.2.0
 	github.com/denisenkom/go-mssqldb v0.12.3
@@ -128,7 +129,6 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/sts v1.16.10 // indirect
 	github.com/aws/smithy-go v1.12.0 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
-	github.com/cenkalti/backoff/v4 v4.2.0 // indirect
 	github.com/cloudflare/circl v1.1.0 // indirect
 	github.com/containerd/console v1.0.3 // indirect
 	github.com/containerd/continuity v0.3.0 // indirect

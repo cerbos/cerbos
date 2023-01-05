@@ -6,8 +6,10 @@ package internal
 import (
 	"strings"
 
+	"github.com/cenkalti/backoff/v4"
 	"github.com/doug-martin/goqu/v9"
 	"github.com/doug-martin/goqu/v9/exp"
+	"github.com/jmoiron/sqlx"
 )
 
 func ConcatWithSepFunc(dialect string) func(string, ...any) exp.Expression {
@@ -48,4 +50,23 @@ func ansiConcatWithSep(sep string, args ...any) exp.Expression {
 
 		return goqu.L(f, a...)
 	}
+}
+
+const DBConnectionRetries = 3
+
+func ConnectWithRetries(driverName, connStr string, retries uint64) (*sqlx.DB, error) {
+	var db *sqlx.DB
+
+	connectFn := func() error {
+		var err error
+		db, err = sqlx.Connect(driverName, connStr)
+		return err
+	}
+
+	err := backoff.Retry(connectFn, backoff.WithMaxRetries(backoff.NewExponentialBackOff(), retries))
+	if err != nil {
+		return nil, err
+	}
+
+	return db, nil
 }

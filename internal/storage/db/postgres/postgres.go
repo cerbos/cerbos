@@ -14,7 +14,6 @@ import (
 	"github.com/jackc/pgx/v4"
 	"github.com/jackc/pgx/v4/log/zapadapter"
 	"github.com/jackc/pgx/v4/stdlib"
-	"github.com/jmoiron/sqlx"
 	"go.uber.org/zap"
 
 	"github.com/cerbos/cerbos/internal/config"
@@ -56,7 +55,7 @@ func NewStore(ctx context.Context, conf *Conf) (*Store, error) {
 	log.Info("Initializing Postgres storage", zap.String("host", pgConf.Host), zap.String("database", pgConf.Database))
 
 	connStr := stdlib.RegisterConnConfig(pgConf)
-	db, err := sqlx.Connect("pgx", connStr)
+	db, err := internal.ConnectWithRetries("pgx", connStr, internal.DBConnectionRetries)
 	if err != nil {
 		return nil, fmt.Errorf("failed to open database: %w", err)
 	}
