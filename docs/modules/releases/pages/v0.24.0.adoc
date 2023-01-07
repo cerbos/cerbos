@@ -1,0 +1,93 @@
+include::ROOT:partial$attributes.adoc[]
+
+[#v0.24.0]
+= Cerbos v0.24.0
+
+== Highlights
+
+=== More control over audit logging
+
+Cerbos audit log decision entries now include request metadata. Previously, request metadata was only logged with access log entries. Which metadata gets logged is determined by the `includeMetadataKeys` and `excludeMetadataKeys` settings. The behaviour of these settings has changed slightly and users are advised to test the Cerbos deployment with the new version to ensure that the audit logs are still produced in the way they expect. The new behaviour is as follows:
+
+- If both `includeMetadataKeys` and `excludeMetadataKeys` are empty, no metadata will be logged
+- If only `includeMetadataKeys` is defined, only those metadata keys will be logged
+- If only `excludeMetadataKeys` is defined, _all_ metadata keys not in the exclusion list will be logged
+- If both `includeMetadataKeys` and `excludeMetadataKeys` are defined, only included keys will be logged as long as they're not in the exclusion list.
+
+A new setting named `decisionLogFilters` has been introduced to allow users to reduce the amount of audit log entries generated. With these filter settings, it's now possible to do the following:
+
+- Ignore `CheckResources` calls where none of the actions were denied
+- Ignore all `PlanResources` calls
+- Ignore `PlanResources` calls that produce `ALWAYS_ALLOW` plans
+
+See xref:0.24.0@configuration:audit.adoc[] for more information.
+
+=== Database connectivity improvement
+
+If a database store is configured as the policy repository and if the database is unavailable at the time Cerbos starts, Cerbos now attempts to reconnect to the database a few times before giving up. Previously, Cerbos exited immediately if the database was unavailable.
+
+=== Helm deployment enhancements
+
+It's now possible to add custom annotations to the `Deployment` and `Service` resources created by the Cerbos Helm chart. This is useful for integrating with Kubernetes operators and utilities that work with annotated resources.
+
+If you have link:https://cert-manager.io[cert-manager] installed in your cluster, the Cerbos Helm chart can be configured to automatically request a certificate from one of the issuers. This gets rid of the manual step required to create a `Certificate` resource for Cerbos before the chart is deployed.
+
+=== Other improvements and fixes
+
+The Cerbos engine used to operate on the assumption that a resource policy always existed as a fallback for principal policies. This led to certain requests that referenced non-existent resources from being completely denied even when a principal policy existed to provide decisions for some actions. This limitation has been removed in this release.
+
+Policy testing framework gains the ability to detect tests that exercise the same combination of (principal, resource, action) more than once. Previously this led to confusing outputs when the duplicate tests produced conflicting results.
+
+
+== Changelog
+
+
+=== Bug Fixes
+
+* Fix handling of the SIGUSR1 on Windows (link:https://github.com/cerbos/cerbos/pull/1401[#1401])
+* Flaky query plan test (link:https://github.com/cerbos/cerbos/pull/1364[#1364])
+* Handle principal-policy-only cases (link:https://github.com/cerbos/cerbos/pull/1406[#1406])
+* R.id unresolved (link:https://github.com/cerbos/cerbos/pull/1371[#1371])
+* Reject duplicate tests (link:https://github.com/cerbos/cerbos/pull/1412[#1412])
+
+=== Features
+
+* #**BREAKING**# Include metadata in decision logs (link:https://github.com/cerbos/cerbos/pull/1385[#1385])
+* Support for filtering decision logs (link:https://github.com/cerbos/cerbos/pull/1387[#1387])
+
+=== Enhancements
+
+* Add wrapper function for `sqlx.Connect` call, incorporating basic retries (link:https://github.com/cerbos/cerbos/pull/1405[#1405])
+* Annotations for deployment and service (link:https://github.com/cerbos/cerbos/pull/1363[#1363])
+* Optional cert-manager integration (link:https://github.com/cerbos/cerbos/pull/1365[#1365])
+
+=== Documentation
+
+* Add excludeMetadataKeys and includeMetadataKeys to audit page on docs (link:https://github.com/cerbos/cerbos/pull/1383[#1383])
+* Add policy best practices section (link:https://github.com/cerbos/cerbos/pull/1361[#1361])
+* List available SDKs (link:https://github.com/cerbos/cerbos/pull/1366[#1366])
+* Port SQLAlchemy integration guide from blog to docs (link:https://github.com/cerbos/cerbos/pull/1378[#1378])
+* Remove unstable warning from Linux packages (link:https://github.com/cerbos/cerbos/pull/1368[#1368])
+* Update Prisma recipe to bring in line with demo repo (link:https://github.com/cerbos/cerbos/pull/1386[#1386])
+
+=== Chores
+
+* Add 0.23.1 release notes (link:https://github.com/cerbos/cerbos/pull/1375[#1375])
+* Add CodeQL analyzer (link:https://github.com/cerbos/cerbos/pull/1396[#1396])
+* Bump version to 0.24.0
+* Disable Renovate go.mod Go version update (link:https://github.com/cerbos/cerbos/pull/1359[#1359])
+* Exercise audit log filtering in E2E tests (link:https://github.com/cerbos/cerbos/pull/1388[#1388])
+* Update bufbuild/buf-push-action action to v1.1.0 (link:https://github.com/cerbos/cerbos/pull/1393[#1393])
+* Update bufbuild/buf-setup-action action to v1.11.0 (link:https://github.com/cerbos/cerbos/pull/1409[#1409])
+* Update copyright notice (link:https://github.com/cerbos/cerbos/pull/1407[#1407])
+* Update github actions deps (link:https://github.com/cerbos/cerbos/pull/1399[#1399])
+* Update go deps (link:https://github.com/cerbos/cerbos/pull/1356[#1356])
+* Update go deps (link:https://github.com/cerbos/cerbos/pull/1367[#1367])
+* Update go deps (link:https://github.com/cerbos/cerbos/pull/1382[#1382])
+* Update go deps (link:https://github.com/cerbos/cerbos/pull/1392[#1392])
+* Update go deps (link:https://github.com/cerbos/cerbos/pull/1398[#1398])
+* Update go deps (link:https://github.com/cerbos/cerbos/pull/1404[#1404])
+* Update go deps (link:https://github.com/cerbos/cerbos/pull/1408[#1408])
+* Update google-github-actions/setup-gcloud action to v1 (link:https://github.com/cerbos/cerbos/pull/1357[#1357])
+* Update module helm.sh/helm/v3 to v3.10.3 [security] (link:https://github.com/cerbos/cerbos/pull/1395[#1395])
+* Use token with Buf setup action (link:https://github.com/cerbos/cerbos/pull/1413[#1413])
