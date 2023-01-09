@@ -10,6 +10,7 @@
 {"name": "github.com/lightstep/lightstep-tracer-common/golang/gogo", "licenceTextOverrideFile": "licences/github.com/lightstep/lightstep-tracer-common/golang/gogo/LICENSE"}
 {"name": "github.com/miekg/dns", "licenceType": "BSD-2-Clause"}
 {"name": "github.com/pascaldekloe/goe", "licenceType": "Public Domain"}
+{"name": "github.com/pjbgf/sha1cd", "licenceTextOverrideFile": "licences/github.com/pjbgf/sha1cd/LICENSE"}
 {"name": "github.com/streadway/handy", "licenceTextOverrideFile": "licences/github.com/streadway/handy/LICENSE"}
 {"name": "github.com/xeipuuv/gojsonpointer", "licenceType": "Apache-2.0"}
 {"name": "github.com/xeipuuv/gojsonreference", "licenceType": "Apache-2.0"}
