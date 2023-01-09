@@ -9,13 +9,13 @@ require (
 	github.com/envoyproxy/protoc-gen-validate v0.9.1
 	github.com/fullstorydev/grpcurl v1.8.7
 	github.com/google/go-licenses v1.5.0
-	github.com/goreleaser/goreleaser v1.14.0
+	github.com/goreleaser/goreleaser v1.14.1
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.15.0
 	github.com/planetscale/vtprotobuf v0.3.0
 	github.com/vektra/mockery/v2 v2.16.0
 	go.elastic.co/go-licence-detector v0.5.0
 	google.golang.org/grpc/cmd/protoc-gen-go-grpc v1.2.0
-	google.golang.org/protobuf v1.28.2-0.20221201153618-b2a7dfe48b6a
+	google.golang.org/protobuf v1.28.2-0.20230105081712-a8d446d548e4
 	gotest.tools/gotestsum v1.8.2
 )
 
@@ -147,9 +147,11 @@ require (
 	github.com/googleapis/gax-go/v2 v2.7.0 // indirect
 	github.com/goreleaser/chglog v0.2.2 // indirect
 	github.com/goreleaser/fileglob v1.3.0 // indirect
-	github.com/goreleaser/nfpm/v2 v2.22.2 // indirect
+	github.com/goreleaser/nfpm/v2 v2.23.0 // indirect
 	github.com/gorilla/websocket v1.5.0 // indirect
+	github.com/hashicorp/errwrap v1.1.0 // indirect
 	github.com/hashicorp/go-cleanhttp v0.5.2 // indirect
+	github.com/hashicorp/go-multierror v1.1.1 // indirect
 	github.com/hashicorp/go-retryablehttp v0.7.1 // indirect
 	github.com/hashicorp/go-version v1.4.0 // indirect
 	github.com/hashicorp/hcl v1.0.0 // indirect
