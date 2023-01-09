@@ -1,0 +1,25 @@
+---
+name: WIF
+on:
+  pull_request:
+    branches:
+      - main
+jobs:
+  testWIF:
+    name: WIF test
+    runs-on: ubuntu-latest
+    steps:
+      - name: GCloud Auth
+        uses: google-github-actions/auth@v1
+        with:
+          workload_identity_provider: ${{ secrets.GCP_WIF_PROVIDER }}
+          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+
+      - name: Install Cloud SDK
+        uses: google-github-actions/setup-gcloud@v1.0.1
+
+      - name: Touch file
+        run: |-
+          echo "test" > ce_test.txt
+          gsutil cp ce_test.txt "gs://${{ secrets.API_GCS_BUCKET }}/ce_test.txt"
+          gsutil cp ce_test.txt "gs://${{ secrets.DOWNLOAD_GCS_BUCKET }}/ce_test.txt"
