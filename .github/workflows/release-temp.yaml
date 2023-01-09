@@ -12,6 +12,9 @@ jobs:
       id-token: write
       contents: read
     steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
       - name: GCloud Auth
         uses: google-github-actions/auth@v1
         with:
@@ -20,6 +23,8 @@ jobs:
 
       - name: Install Cloud SDK
         uses: google-github-actions/setup-gcloud@v1.0.1
+        with:
+          project_id: ${{ secrets.GCP_PROJECT }}
 
       - name: Touch file
         run: |-
