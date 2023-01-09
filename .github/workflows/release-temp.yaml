@@ -8,6 +8,9 @@ jobs:
   testWIF:
     name: WIF test
     runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
     steps:
       - name: GCloud Auth
         uses: google-github-actions/auth@v1

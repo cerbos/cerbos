@@ -79,6 +79,9 @@ jobs:
   releaseJSONSchemas:
     name: Release JSON schemas
     runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
     steps:
       - name: Check out code
         uses: actions/checkout@v3
@@ -126,6 +129,9 @@ jobs:
   publishHelm:
     name: Publish Helm chart
     runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
     env:
       CHARTS_DIR: deploy/out/helm-charts
       OCI_REGISTRY: ghcr.io/cerbos/helm-charts
