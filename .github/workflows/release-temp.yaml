@@ -26,7 +26,7 @@ jobs:
 
       - name: Touch file
         run: |-
-          gcloud info
+          gcloud storage ls gs://${{ secrets.API_GCS_BUCKET }}/latest/cerbos
           echo "test" > ce_test.txt
           gsutil cp ce_test.txt "gs://${{ secrets.API_GCS_BUCKET }}/ce_test.txt"
           gsutil cp ce_test.txt "gs://${{ secrets.DOWNLOAD_GCS_BUCKET }}/ce_test.txt"
