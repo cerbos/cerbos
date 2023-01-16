@@ -79,16 +79,20 @@ jobs:
   releaseJSONSchemas:
     name: Release JSON schemas
     runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
     steps:
       - name: Check out code
         uses: actions/checkout@v3
 
+      - name: GCloud Auth
+        uses: google-github-actions/auth@v1
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY}}
+
       - name: Install Cloud SDK
         uses: google-github-actions/setup-gcloud@v1.0.1
-        with:
-          project_id: ${{ secrets.GCP_PROJECT }}
-          service_account_key: ${{ secrets.GCP_SA_KEY }}
-          export_default_credentials: true
 
       - name: Publish JSON schemas
         run: |-
@@ -124,6 +128,9 @@ jobs:
   publishHelm:
     name: Publish Helm chart
     runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
     env:
       CHARTS_DIR: deploy/out/helm-charts
       OCI_REGISTRY: ghcr.io/cerbos/helm-charts
@@ -134,12 +141,13 @@ jobs:
       - name: Install Helm
         uses: azure/setup-helm@v3.5
 
+      - name: GCloud Auth
+        uses: google-github-actions/auth@v1
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY}}
+
       - name: Install Cloud SDK
         uses: google-github-actions/setup-gcloud@v1.0.1
-        with:
-          project_id: ${{ secrets.GCP_PROJECT }}
-          service_account_key: ${{ secrets.GCP_SA_KEY }}
-          export_default_credentials: true
 
       - name: Package Helm chart
         run: |-
