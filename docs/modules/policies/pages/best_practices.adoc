@@ -119,6 +119,46 @@ Finally, we can opt to explicitly state which actions a user *cannot* do:
 
 This would suit scenarios where a principal can perform _nearly_ every action, and you want to explicitly list disallowed actions.
 
+=== Resource-led
+
+Arguably, all Cerbos policies are inherently _resource-led_, but you can opt to approach policy design with a stronger bias towards the resources within your system, rather than by initially considering _who_ is accessing them and _what_ they can do.
+
+Consider the following hypothetical scenario; you are responsible for creating and managing access to a new analytical reports screen. Perhaps this is a UI showing a specific metric relating to your business. How you'd approach this would be heavily influenced by your organizational structure, or the context:
+
+**Action/role-biased:**
+
+* You have specific (possibly non-technical) personnel or departments responsible for managing access to applications and resources globally.
+* These applications are probably built by other engineering teams.
+* The new report in question is an addition to a pre-existing dashboard, and access is common between all reports in that dashboard.
+
+In this situation, it's likely that the resource policy has already been written, so handling this new report is as simple as it assuming the existing resource `kind`.
+
+**Resource-biased:**
+
+* You are a developer or technically-minded person responsible for building and managing applications in the system, as well as writing the policies to govern access.
+* The new report is unique, and doesn't share similarities with other pre-existing UIs; maybe it's a one-off UI which has been built as a temporary demo to a varied audience.
+
+In this situation, you'll want to define a new resource policy and then explicitly define who can access it. Given that the policy will map to very few resources (1, in this scenario), it'll likely only require minimal configuration data, but _will_ need a method to map to the unique resource. The policy below shows how this can be done via a list attribute passed in the request:
+
+[source,yaml,linenums]
+----
+---
+apiVersion: api.cerbos.dev/v1
+resourcePolicy:
+  version: default
+  resource: report
+  rules:
+    - actions: ["view"]
+      effect: EFFECT_ALLOW
+      roles:
+        - user
+      condition:
+        match:
+          expr: "demo_001" in request.principal.attr.demos
+----
+
+Note: there are numerous ways of mapping access to this resource. You could use a temporary role (handled and administered in the application layer), xref:policies:derived_roles.adoc[derived roles], or via other attribute-based methods.
+
 == Map of relations
 
 Avoiding complex query planner outputs with sub-expressions:
