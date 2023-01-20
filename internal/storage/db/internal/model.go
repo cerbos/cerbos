@@ -21,6 +21,7 @@ const (
 	PolicyTblNameCol       = "name"
 	PolicyTblVerCol        = "version"
 	PolicyTblScopeCol      = "scope"
+	PolicyTblDescCol       = "description"
 	PolicyTblDefinitionCol = "definition"
 	PolicyTblDisabledCol   = "disabled"
 

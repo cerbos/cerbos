@@ -145,6 +145,19 @@ service CerbosAdminService {
     };
   }
 
+  rpc DisablePolicy(cerbos.request.v1.DisablePolicyRequest) returns (cerbos.response.v1.DisablePolicyResponse) {
+    option (google.api.http) = {delete: "/admin/policy"};
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Disable policy",
+      security: {
+        security_requirement: {
+          key: "BasicAuth";
+          value: {};
+        }
+      }
+    };
+  }
+
   rpc ListAuditLogEntries(cerbos.request.v1.ListAuditLogEntriesRequest) returns (stream cerbos.response.v1.ListAuditLogEntriesResponse) {
     option (google.api.http) = {get: "/admin/auditlog/list/{kind}"};
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {

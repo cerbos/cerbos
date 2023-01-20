@@ -156,6 +156,23 @@ curl -k -u cerbos:cerbosAdmin \
     'https://localhost:3592/admin/policy?id=x.yaml&id=y.yaml'
 ----
 
+=== Disable Policies
+
+----
+DELETE /admin/policy?id=policy_id
+----
+
+NOTE: This endpoint requires a mutable storage driver such as xref:configuration:storage.adoc#sqlite3[sqlite3] to be configured.
+
+Issue a DELETE request to the endpoint with the list of IDs (the `id` query parameter can be repeated multiple times) to disable.
+
+----
+curl -k -u cerbos:cerbosAdmin -X DELETE \
+    'https://localhost:3592/admin/policy?id=principal.donald_duck.vdefault&id=derived_roles.my_derived_roles'
+----
+
+NOTE: If the policy being disabled has scope, its descendants must be disabled first. Otherwise, the storage index will
+be corrupt.
 
 == Schema Management
 

@@ -38,6 +38,7 @@ type DBStorage interface {
 	ListPolicyIDs(ctx context.Context) ([]string, error)
 	ListSchemaIDs(ctx context.Context) ([]string, error)
 	AddOrUpdateSchema(ctx context.Context, schemas ...*schemav1.Schema) error
+	Disable(ctx context.Context, policyKey ...string) (int64, error)
 	DeleteSchema(ctx context.Context, ids ...string) error
 	LoadSchema(ctx context.Context, url string) (io.ReadCloser, error)
 	LoadPolicy(ctx context.Context, policyKey ...string) ([]*policy.Wrapper, error)
@@ -152,7 +153,20 @@ func (s *dbStorage) LoadPolicy(ctx context.Context, policyKey ...string) ([]*pol
 
 	var recs []Policy
 	if err := s.db.From(PolicyTbl).
-		Where(goqu.C(PolicyTblIDCol).In(moduleIDs)).
+		Select(
+			goqu.C(PolicyTblIDCol),
+			goqu.C(PolicyTblKindCol),
+			goqu.C(PolicyTblNameCol),
+			goqu.C(PolicyTblVerCol),
+			goqu.COALESCE(goqu.C(PolicyTblScopeCol), "").As(PolicyTblScopeCol),
+			goqu.C(PolicyTblDescCol),
+			goqu.C(PolicyTblDisabledCol),
+			goqu.C(PolicyTblDefinitionCol),
+		).
+		Where(
+			goqu.C(PolicyTblIDCol).In(moduleIDs),
+			goqu.C(PolicyTblDisabledCol).Neq(goqu.V(true)),
+		).
 		ScanStructsContext(ctx, &recs); err != nil {
 		return nil, fmt.Errorf("failed to get policies: %w", err)
 	}
@@ -464,6 +478,55 @@ func (s *dbStorage) GetDependents(ctx context.Context, ids ...namer.ModuleID) (m
 	return out, nil
 }
 
+func (s *dbStorage) Disable(ctx context.Context, policyKey ...string) (int64, error) {
+	if len(policyKey) == 1 {
+		mID := namer.GenModuleIDFromFQN(namer.FQNFromPolicyKey(policyKey[0]))
+		res, err := s.db.Update(PolicyTbl).Prepared(true).
+			Set(goqu.Record{PolicyTblDisabledCol: true}).
+			Where(goqu.C(PolicyTblIDCol).Eq(mID)).
+			Executor().ExecContext(ctx)
+		if err != nil {
+			return 0, err
+		}
+
+		affected, err := res.RowsAffected()
+		if err != nil {
+			return 0, fmt.Errorf("failed to discover whether the policy got disabled or not: %w", err)
+		} else if affected == 0 {
+			return 0, fmt.Errorf("failed to find the policy for disabling")
+		}
+
+		s.NotifySubscribers(storage.NewPolicyEvent(storage.EventAddOrUpdatePolicy, mID))
+
+		return affected, nil
+	}
+
+	mIDList := make([]any, len(policyKey))
+	events := make([]storage.Event, len(policyKey))
+	for i, pk := range policyKey {
+		mID := namer.GenModuleIDFromFQN(namer.FQNFromPolicyKey(pk))
+		mIDList[i] = mID
+		events[i] = storage.Event{Kind: storage.EventAddOrUpdatePolicy, PolicyID: mID}
+	}
+	res, err := s.db.Update(PolicyTbl).Prepared(true).
+		Set(goqu.Record{PolicyTblDisabledCol: true}).
+		Where(goqu.C(PolicyTblIDCol).In(mIDList...)).
+		Executor().ExecContext(ctx)
+	if err != nil {
+		return 0, err
+	}
+
+	affected, err := res.RowsAffected()
+	if err != nil {
+		return 0, fmt.Errorf("failed to discover whether the policies got disabled or not: %w", err)
+	} else if affected == 0 {
+		return 0, fmt.Errorf("failed to find the policies for disabling")
+	}
+
+	s.NotifySubscribers(events...)
+	return affected, nil
+}
+
 func (s *dbStorage) Delete(ctx context.Context, ids ...namer.ModuleID) error {
 	if len(ids) == 1 {
 		_, err := s.db.Delete(PolicyTbl).Prepared(true).
@@ -503,7 +566,7 @@ func (s *dbStorage) ListPolicyIDs(ctx context.Context) ([]string, error) {
 			goqu.C(PolicyTblKindCol),
 			goqu.C(PolicyTblNameCol),
 			goqu.C(PolicyTblVerCol),
-			goqu.C(PolicyTblScopeCol),
+			goqu.COALESCE(goqu.C(PolicyTblScopeCol), "").As(PolicyTblScopeCol),
 		).
 		Where(goqu.C(PolicyTblDisabledCol).Neq(goqu.V(true))).
 		Order(
