@@ -9,7 +9,7 @@ import (
 	"strings"
 
 	"github.com/cerbos/cerbos/hack/tools/protoc-gen-jsonschema/jsonschema"
-	pgs "github.com/lyft/protoc-gen-star"
+	pgs "github.com/lyft/protoc-gen-star/v2"
 )
 
 type Module struct {
