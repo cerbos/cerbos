@@ -6,7 +6,7 @@ package module
 import (
 	"github.com/cerbos/cerbos/hack/tools/protoc-gen-jsonschema/jsonschema"
 	"github.com/envoyproxy/protoc-gen-validate/validate"
-	pgs "github.com/lyft/protoc-gen-star"
+	pgs "github.com/lyft/protoc-gen-star/v2"
 )
 
 func (m *Module) schemaForMap(value pgs.FieldTypeElem, rules *validate.MapRules) (jsonschema.Schema, bool) {

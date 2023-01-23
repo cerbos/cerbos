@@ -4,9 +4,8 @@
 package main
 
 import (
-	pgs "github.com/lyft/protoc-gen-star"
-
 	"github.com/cerbos/cerbos/hack/tools/protoc-gen-jsonschema/module"
+	pgs "github.com/lyft/protoc-gen-star/v2"
 )
 
 func main() {
