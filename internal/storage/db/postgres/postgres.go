@@ -11,10 +11,9 @@ import (
 
 	// Import the postgres dialect.
 	_ "github.com/doug-martin/goqu/v9/dialect/postgres"
-	pgxzap "github.com/jackc/pgx-zap"
-	"github.com/jackc/pgx/v5"
-	"github.com/jackc/pgx/v5/stdlib"
-	"github.com/jackc/pgx/v5/tracelog"
+	"github.com/jackc/pgx/v4"
+	"github.com/jackc/pgx/v4/log/zapadapter"
+	"github.com/jackc/pgx/v4/stdlib"
 	"go.uber.org/zap"
 
 	"github.com/cerbos/cerbos/internal/config"
@@ -50,10 +49,8 @@ func NewStore(ctx context.Context, conf *Conf) (*Store, error) {
 		return nil, err
 	}
 
-	pgConf.Tracer = &tracelog.TraceLog{
-		Logger:   pgxzap.NewLogger(log),
-		LogLevel: tracelog.LogLevelWarn,
-	}
+	pgConf.Logger = zapadapter.NewLogger(log)
+	pgConf.LogLevel = pgx.LogLevelWarn
 
 	log.Info("Initializing Postgres storage", zap.String("host", pgConf.Host), zap.String("database", pgConf.Database))
 
