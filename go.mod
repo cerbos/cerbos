@@ -9,7 +9,7 @@ require (
 	github.com/alecthomas/chroma/v2 v2.4.0
 	github.com/alecthomas/kong v0.7.1
 	github.com/alecthomas/participle/v2 v2.0.0-beta.5
-	github.com/aws/aws-sdk-go v1.44.184
+	github.com/aws/aws-sdk-go v1.44.189
 	github.com/bluele/gcache v0.0.2
 	github.com/cenkalti/backoff/v4 v4.2.0
 	github.com/cespare/xxhash v1.1.0
@@ -18,9 +18,9 @@ require (
 	github.com/dgraph-io/badger/v3 v3.2103.5
 	github.com/doug-martin/goqu/v9 v9.18.0
 	github.com/envoyproxy/protoc-gen-validate v0.9.1
-	github.com/fatih/color v1.14.0
+	github.com/fatih/color v1.14.1
 	github.com/fatih/structtag v1.2.0
-	github.com/fergusstrange/embedded-postgres v1.19.0
+	github.com/fergusstrange/embedded-postgres v1.20.0
 	github.com/gdamore/tcell/v2 v2.5.4
 	github.com/ghodss/yaml v1.0.0
 	github.com/go-cmd/cmd v1.4.1
@@ -51,7 +51,7 @@ require (
 	github.com/olekukonko/tablewriter v0.0.5
 	github.com/ory/dockertest/v3 v3.9.1
 	github.com/peterh/liner v1.2.2
-	github.com/planetscale/vtprotobuf v0.3.0
+	github.com/planetscale/vtprotobuf v0.4.0
 	github.com/prometheus/client_golang v1.14.0
 	github.com/pterm/pterm v0.12.54
 	github.com/rivo/tview v0.0.0-20230104153304-892d1a2eb0da
@@ -85,8 +85,8 @@ require (
 	golang.org/x/net v0.5.0
 	golang.org/x/sync v0.1.0
 	golang.org/x/tools v0.5.0
-	google.golang.org/genproto v0.0.0-20230119192704-9d59e20e5cd1
-	google.golang.org/grpc v1.52.0
+	google.golang.org/genproto v0.0.0-20230127162408-596548ed4efa
+	google.golang.org/grpc v1.52.3
 	google.golang.org/protobuf v1.28.1
 	gopkg.in/yaml.v2 v2.4.0
 	helm.sh/helm/v3 v3.11.0
@@ -236,7 +236,7 @@ require (
 	go.opentelemetry.io/contrib/propagators/aws v1.12.0 // indirect
 	go.opentelemetry.io/contrib/propagators/jaeger v1.12.0 // indirect
 	go.opentelemetry.io/contrib/propagators/ot v1.12.0 // indirect
-	go.opentelemetry.io/otel/exporters/otlp/internal/retry v1.11.2 // indirect
+	go.opentelemetry.io/otel/exporters/otlp/internal/retry v1.12.0 // indirect
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace v1.11.2 // indirect
 	go.opentelemetry.io/otel/metric v0.34.0 // indirect
 	go.opentelemetry.io/otel/sdk/metric v0.34.0 // indirect
