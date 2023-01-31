@@ -178,8 +178,7 @@ cerbosctl disable policy derived_roles.my_derived_roles resource.leave_request.d
 cerbosctl disable p derived_roles.my_derived_roles resource.leave_request.default
 ----
 
-NOTE: If the policy being disabled has scope, its descendants must be disabled first. Otherwise, the storage index will
-be corrupt.
+CAUTION: Scoped policies must have unbroken scope chains. If you're disabling a scoped policy, make sure that its descendant policies are disabled as well.
 
 [#get]
 == `get`

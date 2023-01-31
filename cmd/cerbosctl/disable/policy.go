@@ -33,10 +33,10 @@ func (c *Cmd) Run(k *kong.Kong, ctx *client.Context) error {
 
 	disabledPolicies, err := policy.Disable(ctx.AdminClient, c.Policy.PolicyIds...)
 	if err != nil {
-		return fmt.Errorf("failed to disable policy(s): %w", err)
+		return fmt.Errorf("failed to disable policies: %w", err)
 	}
 
-	_, _ = fmt.Fprintf(k.Stdout, "Successfully disabled %d policy(s)", disabledPolicies)
+	_, _ = fmt.Fprintf(k.Stdout, "Number of policies disabled is %d", disabledPolicies)
 	return nil
 }
 

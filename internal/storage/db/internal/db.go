@@ -479,28 +479,6 @@ func (s *dbStorage) GetDependents(ctx context.Context, ids ...namer.ModuleID) (m
 }
 
 func (s *dbStorage) Disable(ctx context.Context, policyKey ...string) (int64, error) {
-	if len(policyKey) == 1 {
-		mID := namer.GenModuleIDFromFQN(namer.FQNFromPolicyKey(policyKey[0]))
-		res, err := s.db.Update(PolicyTbl).Prepared(true).
-			Set(goqu.Record{PolicyTblDisabledCol: true}).
-			Where(goqu.C(PolicyTblIDCol).Eq(mID)).
-			Executor().ExecContext(ctx)
-		if err != nil {
-			return 0, err
-		}
-
-		affected, err := res.RowsAffected()
-		if err != nil {
-			return 0, fmt.Errorf("failed to discover whether the policy got disabled or not: %w", err)
-		} else if affected == 0 {
-			return 0, fmt.Errorf("failed to find the policy for disabling")
-		}
-
-		s.NotifySubscribers(storage.NewPolicyEvent(storage.EventAddOrUpdatePolicy, mID))
-
-		return affected, nil
-	}
-
 	mIDList := make([]any, len(policyKey))
 	events := make([]storage.Event, len(policyKey))
 	for i, pk := range policyKey {
@@ -519,8 +497,6 @@ func (s *dbStorage) Disable(ctx context.Context, policyKey ...string) (int64, er
 	affected, err := res.RowsAffected()
 	if err != nil {
 		return 0, fmt.Errorf("failed to discover whether the policies got disabled or not: %w", err)
-	} else if affected == 0 {
-		return 0, fmt.Errorf("failed to find the policies for disabling")
 	}
 
 	s.NotifySubscribers(events...)

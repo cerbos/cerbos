@@ -171,7 +171,7 @@ curl -k -u cerbos:cerbosAdmin -X DELETE \
     'https://localhost:3592/admin/policy?id=principal.donald_duck.vdefault&id=derived_roles.my_derived_roles'
 ----
 
-NOTE: If the policy being disabled has scope, its descendants must be disabled first. Otherwise, the storage index will
+CAUTION: Scoped policies must have unbroken scope chains. If you're disabling a scoped policy, make sure that its descendant policies are disabled as well. 
 be corrupt.
 
 == Schema Management

@@ -126,7 +126,7 @@ func testDisableCmd(ctx context.Context, cctx *cmdclient.Context, globals *flags
 					require.NoError(t, err)
 					require.Nil(t, policies)
 
-					require.Contains(t, out.String(), "Successfully disabled 1 policy(s)")
+					require.Contains(t, out.String(), "Number of policies disabled is 1")
 				}
 			})
 		})
