@@ -1526,6 +1526,13 @@ func cerbos_response_v1_CheckResourcesResponse_hashpb_sum(m *CheckResourcesRespo
 func cerbos_response_v1_DeleteSchemaResponse_hashpb_sum(m *DeleteSchemaResponse, hasher hash.Hash, ignore map[string]struct{}) {
 }
 
+func cerbos_response_v1_DisablePolicyResponse_hashpb_sum(m *DisablePolicyResponse, hasher hash.Hash, ignore map[string]struct{}) {
+	if _, ok := ignore["cerbos.response.v1.DisablePolicyResponse.disabled_policies"]; !ok {
+		_, _ = hasher.Write(protowire.AppendVarint(nil, uint64(m.DisabledPolicies)))
+
+	}
+}
+
 func cerbos_response_v1_GetPolicyResponse_hashpb_sum(m *GetPolicyResponse, hasher hash.Hash, ignore map[string]struct{}) {
 	if _, ok := ignore["cerbos.response.v1.GetPolicyResponse.policies"]; !ok {
 		if len(m.Policies) > 0 {

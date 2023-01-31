@@ -64,6 +64,7 @@ Available Commands:
   audit       View audit logs
   completion  Generate the autocompletion script for the specified shell
   decisions   Interactive decision log viewer
+  disable     Disable policies
   get         List or view policies and schemas
   help        Help about any command
   put         Put policies or schemas
@@ -158,6 +159,26 @@ Use the arrow keys (or Vim keys kbd:[h], kbd:[j], kbd:[k], kbd:[l]) to scroll ho
 cerbosctl decisions --tail=20
 ----
 
+[#disable]
+== `disable`
+
+This command disables the policies with the specified ids.
+
+.Disable policies
+----
+cerbosctl disable policies derived_roles.my_derived_roles
+cerbosctl disable policy derived_roles.my_derived_roles
+cerbosctl disable p derived_roles.my_derived_roles
+----
+
+.Disable multiple policies
+----
+cerbosctl disable policies derived_roles.my_derived_roles resource.leave_request.default
+cerbosctl disable policy derived_roles.my_derived_roles resource.leave_request.default
+cerbosctl disable p derived_roles.my_derived_roles resource.leave_request.default
+----
+
+CAUTION: Scoped policies must have unbroken scope chains. If you're disabling a scoped policy, make sure that its descendant policies are disabled as well.
 
 [#get]
 == `get`

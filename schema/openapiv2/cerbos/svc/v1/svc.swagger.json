@@ -190,6 +190,45 @@
           }
         ]
       },
+      "delete": {
+        "summary": "Disable policy",
+        "operationId": "CerbosAdminService_DisablePolicy",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1DisablePolicyResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/googlerpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "description": "Unique identifier for the policy",
+            "in": "query",
+            "required": true,
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "collectionFormat": "multi"
+          }
+        ],
+        "tags": [
+          "CerbosAdminService"
+        ],
+        "security": [
+          {
+            "BasicAuth": []
+          }
+        ]
+      },
       "post": {
         "summary": "Add or update policies",
         "operationId": "CerbosAdminService_AddOrUpdatePolicy",
@@ -2134,6 +2173,16 @@
           }
         }
       }
+    },
+    "v1DisablePolicyResponse": {
+      "type": "object",
+      "properties": {
+        "disabledPolicies": {
+          "type": "string",
+          "format": "int64"
+        }
+      },
+      "description": "Disable policy response"
     },
     "v1Effect": {
       "type": "string",
