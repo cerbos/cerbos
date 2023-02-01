@@ -40,6 +40,7 @@ resources: <5>
   alicia_album:
     id: XX125
     kind: album:object
+    policyVersion: default
     attr:
       owner: aliciaID
       public: false
@@ -47,6 +48,7 @@ resources: <5>
   bradley_album:
     id: XX250
     kind: album:object
+    policyVersion: staging
     attr:
       owner: bradleyID
       public: false
