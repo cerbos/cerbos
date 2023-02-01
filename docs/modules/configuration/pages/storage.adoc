@@ -48,9 +48,14 @@ Cerbos policies can be stored in AWS S3, Google Cloud Storage, or any other S3-c
 * `requestTimeout`: Optional. HTTP request timeout. It takes an HTTP request to download a policy file. Defaults to 5s.
 * `downloadTimeout`: Optional. Timeout to download all policies from the the storage provider. Must be greater than the `requestTimeout`. Defaults to 60s.
 
-NOTE: Cloud provider credentials are taken from the environment using default credential provider chain.
-
 CAUTION: Setting the `updatePollInterval` to a low value could increase resource consumption in both the client and the server systems. Some managed service providers may even impose rate limits or temporary suspensions on your account if the number of requests is too high.
+
+
+Credentials for accessing the storage buckets are retrieved from the environment. The method of specifying credentials in the environment vary by cloud provider and security configuration. Usually, it involves defining environment variables such as `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY` for S3 and `GOOGLE_APPLICATION_CREDENTIALS` for GCS. Refer to the relevant cloud provider documentation for more details.
+
+- AWS: https://docs.aws.amazon.com/sdk-for-go/api/aws/session/
+- Google: https://cloud.google.com/docs/authentication/provide-credentials-adc
+
 
 .AWS S3
 [source,yaml,linenums]
