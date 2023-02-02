@@ -133,6 +133,11 @@ func (c *Manager) recompile(evt storage.Event) error {
 	}
 
 	for modID, cu := range compileUnits {
+		if cu.MainPolicy() == nil || cu.MainPolicy().Disabled {
+			c.evict(cu.ModID)
+			c.log.Debugw("Evicted the disabled policy", "id", cu.ModID.String())
+			continue
+		}
 		if _, err := c.compile(cu); err != nil {
 			// log and remove the module that failed to compile.
 			c.log.Errorw("Failed to recompile", "id", modID, "error", err)
