@@ -122,9 +122,6 @@ jobs:
         with:
           name: previous-test-times
 
-      - name: Clear Test cache
-        run: go clean -testcache
-
       - name: Test
         run: make test-all TESTSPLIT_INDEX=${{ strategy.job-index }} TESTSPLIT_TOTAL=${{ strategy.job-total }}
         env:
