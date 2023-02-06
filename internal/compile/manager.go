@@ -31,12 +31,13 @@ const (
 )
 
 type Manager struct {
-	log         *zap.SugaredLogger
-	store       storage.SourceStore
-	schemaMgr   schema.Manager
-	updateQueue chan storage.Event
-	cache       gcache.Cache
-	sf          singleflight.Group
+	log           *zap.SugaredLogger
+	store         storage.SourceStore
+	schemaMgr     schema.Manager
+	updateQueue   chan storage.Event
+	cache         gcache.Cache
+	sf            singleflight.Group
+	cacheDuration time.Duration
 }
 
 func NewManager(ctx context.Context, store storage.SourceStore, schemaMgr schema.Manager) (*Manager, error) {
@@ -54,11 +55,12 @@ func NewManagerFromDefaultConf(ctx context.Context, store storage.SourceStore, s
 
 func NewManagerFromConf(ctx context.Context, conf *Conf, store storage.SourceStore, schemaMgr schema.Manager) *Manager {
 	c := &Manager{
-		log:         zap.S().Named("compiler"),
-		store:       store,
-		schemaMgr:   schemaMgr,
-		updateQueue: make(chan storage.Event, updateQueueSize),
-		cache:       mkCache(int(conf.CacheSize)),
+		log:           zap.S().Named("compiler"),
+		store:         store,
+		schemaMgr:     schemaMgr,
+		updateQueue:   make(chan storage.Event, updateQueueSize),
+		cache:         mkCache(int(conf.CacheSize)),
+		cacheDuration: conf.CacheDuration,
 	}
 
 	go c.processUpdateQueue(ctx)
@@ -110,6 +112,11 @@ func (c *Manager) recompile(evt storage.Event) error {
 	var toRecompile []namer.ModuleID
 	if evt.Kind == storage.EventAddOrUpdatePolicy {
 		toRecompile = append(toRecompile, evt.PolicyID)
+
+		// if the policy ID has changed, remove the old cached entry
+		if evt.OldPolicyID != nil {
+			c.evict(*evt.OldPolicyID)
+		}
 	}
 
 	dependents, err := c.getDependents(evt.PolicyID)
@@ -170,7 +177,11 @@ func (c *Manager) compile(unit *policy.CompilationUnit) (*runtimev1.RunnablePoli
 	durationMs := float64(time.Since(startTime)) / float64(time.Millisecond)
 
 	if err == nil && rps != nil {
-		_ = c.cache.Set(unit.ModID, rps)
+		if c.cacheDuration > 0 {
+			_ = c.cache.SetWithExpire(unit.ModID, rps, c.cacheDuration)
+		} else {
+			_ = c.cache.Set(unit.ModID, rps)
+		}
 	}
 
 	status := "success"

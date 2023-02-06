@@ -170,9 +170,10 @@ const (
 
 // Event is an event detected by the storage layer.
 type Event struct {
-	SchemaFile string
-	Kind       EventKind
-	PolicyID   namer.ModuleID
+	OldPolicyID *namer.ModuleID
+	SchemaFile  string
+	Kind        EventKind
+	PolicyID    namer.ModuleID
 }
 
 func (evt Event) String() string {

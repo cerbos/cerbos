@@ -178,6 +178,51 @@ func TestUpdateStore(t *testing.T) {
 		checkEvents(t, timeout, wantEvents...)
 	})
 
+	t.Run("modify policy version", func(t *testing.T) {
+		mockIdx := setupMock()
+		mockIdx.On("AddOrUpdate", mock.MatchedBy(anyIndexEntry)).Return(func(entry index.Entry) storage.Event {
+			evt, err := idx.AddOrUpdate(entry)
+			if err != nil {
+				panic(err)
+			}
+
+			return evt
+		}, nil)
+
+		checkEvents := storage.TestSubscription(store)
+		pset := genPolicySet(rng.Intn(numPolicySets))
+
+		wantEvents := make([]storage.Event, len(pset))
+		psetEventIdx := make(map[string]int, len(pset))
+		idx := 0
+		for k, p := range pset {
+			policyID := namer.GenModuleID(p)
+			evt := storage.Event{Kind: storage.EventAddOrUpdatePolicy, OldPolicyID: &policyID}
+
+			wantEvents[idx] = evt
+			psetEventIdx[k] = idx
+			idx++
+		}
+
+		require.NoError(t, commitToGitRepo(sourceGitDir, "Modify policy version", func(_ *git.Worktree) error {
+			for _, p := range pset {
+				modifyPolicyVersion(p)
+			}
+
+			return writePolicySet(filepath.Join(sourceGitDir, policyDir), pset)
+		}))
+
+		require.NoError(t, store.updateIndex(context.Background()))
+		mockIdx.AssertExpectations(t)
+		mockIdx.AssertNumberOfCalls(t, "AddOrUpdate", len(pset))
+
+		for k, i := range psetEventIdx {
+			wantEvents[i].PolicyID = namer.GenModuleID(pset[k])
+		}
+
+		checkEvents(t, timeout, wantEvents...)
+	})
+
 	t.Run("add policy", func(t *testing.T) {
 		mockIdx := setupMock()
 		mockIdx.On("AddOrUpdate", mock.MatchedBy(anyIndexEntry)).Return(func(entry index.Entry) storage.Event {
@@ -830,6 +875,22 @@ func modifyPolicy(p *policyv1.Policy) *policyv1.Policy {
 			ParentRoles: []string{"some_role", "another_role"},
 		})
 
+		return p
+	default:
+		return p
+	}
+}
+
+func modifyPolicyVersion(p *policyv1.Policy) *policyv1.Policy {
+	switch pt := p.PolicyType.(type) {
+	case *policyv1.Policy_ResourcePolicy:
+		pt.ResourcePolicy.Version = "changed"
+		return p
+	case *policyv1.Policy_PrincipalPolicy:
+		pt.PrincipalPolicy.Version = "changed"
+		return p
+	case *policyv1.Policy_DerivedRoles:
+		pt.DerivedRoles.Name = "changed"
 		return p
 	default:
 		return p
