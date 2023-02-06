@@ -48,8 +48,9 @@ func generateExpr(size int) string {
 	}
 	rhs := make([]string, size)
 	copy(rhs, lhs)
-	rand.Seed(time.Now().UnixNano())
-	rand.Shuffle(len(rhs), func(i, j int) { rhs[i], rhs[j] = rhs[j], rhs[i] })
+
+	rnd := rand.New(rand.NewSource(time.Now().UnixNano())) //nolint:gosec
+	rnd.Shuffle(len(rhs), func(i, j int) { rhs[i], rhs[j] = rhs[j], rhs[i] })
 	return fmt.Sprintf("intersect([%s], [%s])", strings.Join(lhs, ","), strings.Join(rhs, ","))
 }
 
