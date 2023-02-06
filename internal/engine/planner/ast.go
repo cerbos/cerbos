@@ -210,13 +210,7 @@ func replaceVars(e *exprpb.Expr, vars map[string]*exprpb.Expr) (output *exprpb.E
 }
 
 func convert(expr *enginev1.PlanResourcesAst_Node, acc *enginev1.PlanResourcesFilter_Expression_Operand) error {
-	type (
-		Expr        = enginev1.PlanResourcesFilter_Expression
-		ExprOp      = enginev1.PlanResourcesFilter_Expression_Operand
-		ExprOpExpr  = enginev1.PlanResourcesFilter_Expression_Operand_Expression
-		ExprOpValue = enginev1.PlanResourcesFilter_Expression_Operand_Value
-		ExprOpVar   = enginev1.PlanResourcesFilter_Expression_Operand_Variable
-	)
+	type ExprOp = enginev1.PlanResourcesFilter_Expression_Operand
 
 	if expr == nil || expr.Node == nil {
 		return nil
@@ -327,7 +321,6 @@ func buildExpr(expr *exprpb.Expr, acc *enginev1.PlanResourcesFilter_Expression_O
 
 func buildExprImpl(cur *exprpb.Expr, acc *enginev1.PlanResourcesFilter_Expression_Operand, parent *exprpb.Expr) error {
 	type (
-		Expr        = enginev1.PlanResourcesFilter_Expression
 		ExprOp      = enginev1.PlanResourcesFilter_Expression_Operand
 		ExprOpExpr  = enginev1.PlanResourcesFilter_Expression_Operand_Expression
 		ExprOpValue = enginev1.PlanResourcesFilter_Expression_Operand_Value

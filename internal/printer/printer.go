@@ -24,6 +24,8 @@ import (
 	"github.com/cerbos/cerbos/internal/printer/colored"
 )
 
+var style = styles.Get("solarized-dark256")
+
 func New(stdout, stderr io.Writer) *Printer {
 	return &Printer{stdout: stdout, stderr: stderr}
 }
@@ -64,7 +66,7 @@ func (p *Printer) coloredJSON(data string, colorLevel outputcolor.Level) error {
 		return fmt.Errorf("failed to tokenise JSON: %w", err)
 	}
 
-	return formatter.Format(p.stdout, styles.SolarizedDark256, iterator)
+	return formatter.Format(p.stdout, style, iterator)
 }
 
 func (p *Printer) PrintJSON(val any, colorLevel outputcolor.Level) error {
@@ -112,7 +114,7 @@ func (p *Printer) coloredYAML(data string, colorLevel outputcolor.Level) ([]byte
 	}
 
 	var yml bytes.Buffer
-	err = formatter.Format(&yml, styles.SolarizedDark256, iterator)
+	err = formatter.Format(&yml, style, iterator)
 	if err != nil {
 		return nil, fmt.Errorf("failed to format yaml: %w", err)
 	}

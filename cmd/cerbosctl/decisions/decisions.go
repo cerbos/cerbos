@@ -565,7 +565,7 @@ func newPrettyJSON() *prettyJSON {
 	return &prettyJSON{
 		lexer:     chroma.Coalesce(lexer),
 		formatter: formatters.TTY16m,
-		style:     styles.Monokai,
+		style:     styles.Get("monokai"),
 	}
 }
 

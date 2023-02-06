@@ -157,6 +157,7 @@ type richAuditLogWriter struct {
 	lexer     chroma.Lexer
 	formatter chroma.Formatter
 	rowStyle  func(...string) string
+	jsonStyle *chroma.Style
 }
 
 func newRichAuditLogWriter(out io.Writer) *richAuditLogWriter {
@@ -180,6 +181,7 @@ func newRichAuditLogWriter(out io.Writer) *richAuditLogWriter {
 		lexer:     chroma.Coalesce(lexer),
 		formatter: formatter,
 		rowStyle:  gchalk.WithHex("#eeeeee").WithBgHex("#005fff").Bold,
+		jsonStyle: styles.Get("solarized-dark256"),
 	}
 }
 
@@ -208,7 +210,7 @@ func (r *richAuditLogWriter) formattedJSON(msg proto.Message) error {
 		return err
 	}
 
-	if err := r.formatter.Format(r.out, styles.SolarizedDark256, iterator); err != nil {
+	if err := r.formatter.Format(r.out, r.jsonStyle, iterator); err != nil {
 		return err
 	}
 

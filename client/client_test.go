@@ -23,8 +23,9 @@ const (
 	adminUsername = "cerbos"
 	adminPassword = "cerbosAdmin"
 
-	readyTimeout      = 60 * time.Second
-	readyPollInterval = 50 * time.Millisecond
+	readyTimeout       = 90 * time.Second
+	readyPollInterval  = 100 * time.Millisecond
+	healthCheckTimeout = 80 * time.Millisecond
 )
 
 func TestClient(t *testing.T) {
@@ -54,7 +55,7 @@ func TestClient(t *testing.T) {
 				require.NoError(t, err)
 
 				defer s.Stop() //nolint:errcheck
-				require.Eventually(t, serverIsReady(s), readyTimeout, readyPollInterval)
+				require.Eventually(t, serverIsReady(t, s), readyTimeout, readyPollInterval)
 
 				ac, err := client.NewAdminClientWithCredentials(s.GRPCAddr(), adminUsername, adminPassword, tc.opts...)
 				require.NoError(t, err)
@@ -93,7 +94,7 @@ func TestClient(t *testing.T) {
 				require.NoError(t, err)
 
 				defer s.Stop() //nolint:errcheck
-				require.Eventually(t, serverIsReady(s), readyTimeout, readyPollInterval)
+				require.Eventually(t, serverIsReady(t, s), readyTimeout, readyPollInterval)
 
 				ac, err := client.NewAdminClientWithCredentials(s.GRPCAddr(), adminUsername, adminPassword, tc.opts...)
 				require.NoError(t, err)
@@ -142,16 +143,19 @@ func loadPolicies(t *testing.T, ac client.AdminClient) {
 	require.NoError(t, ac.AddOrUpdatePolicy(context.Background(), ps))
 }
 
-func serverIsReady(s *testutil.ServerInfo) func() bool {
+func serverIsReady(t *testing.T, s *testutil.ServerInfo) func() bool {
+	t.Helper()
 	return func() bool {
-		ctx, cancelFunc := context.WithTimeout(context.Background(), readyPollInterval)
+		ctx, cancelFunc := context.WithTimeout(context.Background(), healthCheckTimeout)
 		defer cancelFunc()
 
 		ready, err := s.IsReady(ctx)
 		if err != nil {
+			t.Logf("Server is not ready: %v", err)
 			return false
 		}
 
+		t.Logf("Server ready = %T", ready)
 		return ready
 	}
 }
