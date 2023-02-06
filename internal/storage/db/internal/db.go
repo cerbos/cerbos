@@ -25,6 +25,7 @@ import (
 	"github.com/cerbos/cerbos/internal/policy"
 	"github.com/cerbos/cerbos/internal/schema"
 	"github.com/cerbos/cerbos/internal/storage"
+	"github.com/cerbos/cerbos/internal/storage/db"
 )
 
 type DBStorage interface {
@@ -34,11 +35,12 @@ type DBStorage interface {
 	AddOrUpdate(ctx context.Context, policies ...policy.Wrapper) error
 	GetCompilationUnits(ctx context.Context, ids ...namer.ModuleID) (map[namer.ModuleID]*policy.CompilationUnit, error)
 	GetDependents(ctx context.Context, ids ...namer.ModuleID) (map[namer.ModuleID][]namer.ModuleID, error)
+	HasDescendants(ctx context.Context, ids ...namer.ModuleID) (map[namer.ModuleID]bool, error)
 	Delete(ctx context.Context, ids ...namer.ModuleID) error
 	ListPolicyIDs(ctx context.Context) ([]string, error)
 	ListSchemaIDs(ctx context.Context) ([]string, error)
 	AddOrUpdateSchema(ctx context.Context, schemas ...*schemav1.Schema) error
-	Disable(ctx context.Context, policyKey ...string) (int64, error)
+	Disable(ctx context.Context, policyKey ...string) (uint32, error)
 	DeleteSchema(ctx context.Context, ids ...string) error
 	LoadSchema(ctx context.Context, url string) (io.ReadCloser, error)
 	LoadPolicy(ctx context.Context, policyKey ...string) ([]*policy.Wrapper, error)
@@ -478,7 +480,72 @@ func (s *dbStorage) GetDependents(ctx context.Context, ids ...namer.ModuleID) (m
 	return out, nil
 }
 
-func (s *dbStorage) Disable(ctx context.Context, policyKey ...string) (int64, error) {
+func (s *dbStorage) HasDescendants(ctx context.Context, ids ...namer.ModuleID) (map[namer.ModuleID]bool, error) {
+	// SELECT 1
+	// FROM policy_ancestor pa1 JOIN policy p1 ON (pa1.policy_id = p1.id AND p1.disabled = false)
+	// WHERE pa1.ancestor_id = p.id;
+	innerQuery := s.db.Select(goqu.L("1")).
+		From(goqu.T(PolicyAncestorTbl).As("pa1")).
+		Join(
+			goqu.T(PolicyTbl).As("p1"),
+			goqu.On(
+				goqu.And(
+					goqu.C(PolicyAncestorTblPolicyIDCol).Table("pa1").Eq(goqu.C(PolicyTblIDCol).Table("p1")),
+					goqu.C(PolicyTblDisabledCol).Table("p1").Eq(goqu.V(false)),
+				),
+			),
+		).
+		Where(goqu.C(PolicyAncestorTblAncestorIDCol).Table("pa1").Eq(goqu.C(PolicyTblIDCol).Table("p")))
+
+	// SELECT p.id, EXISTS(<innerQuery>) AS has_descendants
+	// FROM policy p
+	// WHERE p.id IN (?);
+	query := s.db.Select(
+		goqu.C(PolicyTblIDCol).Table("p"),
+		goqu.L("EXISTS ?", innerQuery).As("has_descendants"),
+	).
+		From(goqu.T(PolicyTbl).As("p")).
+		Where(goqu.C(PolicyTblIDCol).Table("p").In(ids))
+	result, err := query.Executor().ScannerContext(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("could not execute %q query: %w", "GetAncestorsAndDescendants", err)
+	}
+	defer result.Close()
+
+	out := make(map[namer.ModuleID]bool)
+	for result.Next() {
+		var rec struct {
+			ID             namer.ModuleID `db:"id"`
+			HasDescendants bool           `db:"has_descendants"`
+		}
+		if err := result.ScanStruct(&rec); err != nil {
+			return nil, err
+		}
+
+		out[rec.ID] = rec.HasDescendants
+	}
+
+	return out, nil
+}
+
+func (s *dbStorage) Disable(ctx context.Context, policyKey ...string) (uint32, error) {
+	var brokenChainPolicies []string
+	for _, pk := range policyKey {
+		mID := namer.GenModuleIDFromFQN(namer.FQNFromPolicyKey(pk))
+		hasDescendants, err := s.HasDescendants(ctx, mID)
+		if err != nil {
+			return 0, fmt.Errorf("failed to get ancestors and descendants for policy %s: %w", pk, err)
+		}
+
+		if has, ok := hasDescendants[mID]; !ok || has {
+			brokenChainPolicies = append(brokenChainPolicies, pk)
+		}
+	}
+
+	if len(brokenChainPolicies) > 0 {
+		return 0, db.ErrBreaksScopeChain{PolicyKeys: brokenChainPolicies}
+	}
+
 	mIDList := make([]any, len(policyKey))
 	events := make([]storage.Event, len(policyKey))
 	for i, pk := range policyKey {
@@ -500,7 +567,7 @@ func (s *dbStorage) Disable(ctx context.Context, policyKey ...string) (int64, er
 	}
 
 	s.NotifySubscribers(events...)
-	return affected, nil
+	return uint32(affected), nil
 }
 
 func (s *dbStorage) Delete(ctx context.Context, ids ...namer.ModuleID) error {

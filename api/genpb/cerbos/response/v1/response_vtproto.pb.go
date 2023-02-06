@@ -7768,7 +7768,7 @@ func (m *DisablePolicyResponse) UnmarshalVT(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				m.DisabledPolicies |= int64(b&0x7F) << shift
+				m.DisabledPolicies |= uint32(b&0x7F) << shift
 				if b < 0x80 {
 					break
 				}

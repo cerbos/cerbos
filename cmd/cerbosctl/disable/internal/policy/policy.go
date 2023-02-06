@@ -11,8 +11,8 @@ import (
 	"github.com/cerbos/cerbos/cmd/cerbosctl/internal"
 )
 
-func Disable(c client.AdminClient, ids ...string) (int64, error) {
-	var disabledPolicies int64
+func Disable(c client.AdminClient, ids ...string) (uint32, error) {
+	var disabledPolicies uint32
 	for idx := range ids {
 		if idx%internal.MaxIDPerReq == 0 {
 			idxEnd := internal.MinInt(idx+internal.MaxIDPerReq, len(ids))
