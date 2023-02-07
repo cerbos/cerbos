@@ -215,18 +215,24 @@ func (idx *index) AddOrUpdate(entry Entry) (evt storage.Event, err error) {
 	}
 
 	// if this is an existing file, clear its state first
-	if _, ok := idx.fileToModID[entry.File]; ok {
+	if oldModID, ok := idx.fileToModID[entry.File]; ok {
 		// go through the dependencies and remove self from the dependents list of each dependency.
-		if deps, ok := idx.dependencies[modID]; ok {
+		if deps, ok := idx.dependencies[oldModID]; ok {
 			for dep := range deps {
 				if refs, ok := idx.dependents[dep]; ok {
-					delete(refs, modID)
+					delete(refs, oldModID)
 				}
 			}
 		}
 
-		// remove the dependencies set because it could have changed.
-		delete(idx.dependencies, modID)
+		delete(idx.dependencies, oldModID)
+		delete(idx.modIDToFile, oldModID)
+		delete(idx.executables, oldModID)
+		delete(idx.fileToModID, entry.File)
+
+		if oldModID != modID {
+			evt.OldPolicyID = &oldModID
+		}
 		crudKind = "update"
 	}
 

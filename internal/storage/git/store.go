@@ -405,11 +405,13 @@ func (s *Store) updateIndex(ctx context.Context) error {
 		if fromPath != toPath || fromType != toType {
 			switch fromType {
 			case util.FileTypePolicy:
+				s.log.Debugf("Removing policy %s", fromPath)
 				if err := s.applyIndexUpdate(c.From, storage.EventDeletePolicy); err != nil {
 					return err
 				}
 
 			case util.FileTypeSchema:
+				s.log.Debugf("Removing schema %s", fromPath)
 				s.NotifySubscribers(storage.NewSchemaEvent(storage.EventDeleteSchema, fromPath))
 
 			default:
@@ -419,11 +421,13 @@ func (s *Store) updateIndex(ctx context.Context) error {
 
 		switch toType {
 		case util.FileTypePolicy:
+			s.log.Debugf("Add/update policy %s", toPath)
 			if err := s.applyIndexUpdate(c.To, storage.EventAddOrUpdatePolicy); err != nil {
 				return err
 			}
 
 		case util.FileTypeSchema:
+			s.log.Debugf("Add/update schema %s", toPath)
 			s.NotifySubscribers(storage.NewSchemaEvent(storage.EventAddOrUpdateSchema, toPath))
 
 		default:
