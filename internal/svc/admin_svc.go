@@ -182,7 +182,7 @@ func (cas *CerbosAdminService) DisablePolicy(ctx context.Context, req *requestv1
 	if err != nil {
 		ctxzap.Extract(ctx).Error("Failed to disable policies", zap.Error(err))
 		if errors.As(err, &db.ErrBreaksScopeChain{}) {
-			return nil, status.Error(codes.Internal, fmt.Sprintf("Failed to disable policies: %s", err.Error()))
+			return nil, status.Error(codes.InvalidArgument, err.Error())
 		}
 		return nil, status.Error(codes.Internal, "Failed to disable policies")
 	}

@@ -508,7 +508,7 @@ func (s *dbStorage) HasDescendants(ctx context.Context, ids ...namer.ModuleID) (
 		Where(goqu.C(PolicyTblIDCol).Table("p").In(ids))
 	result, err := query.Executor().ScannerContext(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("could not execute %q query: %w", "GetAncestorsAndDescendants", err)
+		return nil, fmt.Errorf("could not execute %q query: %w", "HasDescendants", err)
 	}
 	defer result.Close()
 
@@ -529,14 +529,19 @@ func (s *dbStorage) HasDescendants(ctx context.Context, ids ...namer.ModuleID) (
 }
 
 func (s *dbStorage) Disable(ctx context.Context, policyKey ...string) (uint32, error) {
+	mIDs := make([]namer.ModuleID, len(policyKey))
+	for idx, pk := range policyKey {
+		mIDs[idx] = namer.GenModuleIDFromFQN(namer.FQNFromPolicyKey(pk))
+	}
+
+	hasDescendants, err := s.HasDescendants(ctx, mIDs...)
+	if err != nil {
+		return 0, fmt.Errorf("failed to get descendants for policies: %w", err)
+	}
+
 	var brokenChainPolicies []string
 	for _, pk := range policyKey {
 		mID := namer.GenModuleIDFromFQN(namer.FQNFromPolicyKey(pk))
-		hasDescendants, err := s.HasDescendants(ctx, mID)
-		if err != nil {
-			return 0, fmt.Errorf("failed to get ancestors and descendants for policy %s: %w", pk, err)
-		}
-
 		if has, ok := hasDescendants[mID]; !ok || has {
 			brokenChainPolicies = append(brokenChainPolicies, pk)
 		}
