@@ -2178,7 +2178,7 @@
       "type": "object",
       "properties": {
         "disabledPolicies": {
-          "type": "string",
+          "type": "integer",
           "format": "int64"
         }
       },

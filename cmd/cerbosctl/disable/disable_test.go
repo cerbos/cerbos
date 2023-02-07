@@ -84,49 +84,64 @@ func testDisableCmd(ctx context.Context, cctx *cmdclient.Context, globals *flags
 				testCases := []struct {
 					policy    *policyv1.Policy
 					policyKey string
+					wantErr   bool
 				}{
 					{
 						policy:    withMeta(test.GenDerivedRoles(test.Suffix(strconv.Itoa(1)))),
 						policyKey: "derived_roles.my_derived_roles_1",
+						wantErr:   false,
 					},
 					{
 						policy:    withMeta(test.GenPrincipalPolicy(test.Suffix(strconv.Itoa(1)))),
 						policyKey: "principal.donald_duck_1.vdefault",
+						wantErr:   true,
 					},
 					{
 						policy:    withMeta(withScope(test.GenPrincipalPolicy(test.Suffix(strconv.Itoa(1))), "acme.hr")),
 						policyKey: "principal.donald_duck_1.vdefault/acme.hr",
+						wantErr:   false,
 					},
 					{
 						policy:    withMeta(test.GenResourcePolicy(test.Suffix(strconv.Itoa(1)))),
 						policyKey: "resource.leave_request_1.vdefault",
+						wantErr:   true,
 					},
 					{
 						policy:    withMeta(withScope(test.GenResourcePolicy(test.Suffix(strconv.Itoa(1))), "acme.hr.uk")),
 						policyKey: "resource.leave_request_1.vdefault/acme.hr.uk",
+						wantErr:   false,
 					},
 				}
-				for _, tc := range testCases {
-					p := mustNew(t, &root.Cli{})
-					out := bytes.NewBufferString("")
-					p.Stdout = out
+				for idx, tc := range testCases {
+					t.Run(fmt.Sprintf("%d", idx), func(t *testing.T) {
+						p := mustNew(t, &root.Cli{})
+						out := bytes.NewBufferString("")
+						p.Stdout = out
 
-					policies, err := cctx.AdminClient.GetPolicy(ctx, tc.policyKey)
-					require.NoError(t, err)
-					require.NotNil(t, policies)
-					require.NotNil(t, policies[0])
-					require.False(t, policies[0].Disabled)
+						policies, err := cctx.AdminClient.GetPolicy(ctx, tc.policyKey)
+						require.NoError(t, err)
+						require.NotNil(t, policies)
+						require.NotNil(t, policies[0])
+						require.False(t, policies[0].Disabled)
 
-					kctx, err := p.Parse([]string{"disable", "policy", tc.policyKey})
-					require.NoError(t, err)
-					err = kctx.Run(cctx, globals)
-					require.NoError(t, err)
+						kctx, err := p.Parse([]string{"disable", "policy", tc.policyKey})
+						require.NoError(t, err)
+						err = kctx.Run(cctx, globals)
+						if tc.wantErr {
+							require.Error(t, err)
+						} else {
+							require.NoError(t, err)
+						}
 
-					policies, err = cctx.AdminClient.GetPolicy(ctx, tc.policyKey)
-					require.NoError(t, err)
-					require.Nil(t, policies)
-
-					require.Contains(t, out.String(), "Number of policies disabled is 1")
+						policies, err = cctx.AdminClient.GetPolicy(ctx, tc.policyKey)
+						require.NoError(t, err)
+						if tc.wantErr {
+							require.NotNil(t, policies)
+						} else {
+							require.Nil(t, policies)
+							require.Contains(t, out.String(), "Number of policies disabled is 1")
+						}
+					})
 				}
 			})
 		})

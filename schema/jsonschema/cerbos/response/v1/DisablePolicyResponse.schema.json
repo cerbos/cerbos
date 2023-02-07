@@ -5,15 +5,8 @@
   "additionalProperties": false,
   "properties": {
     "disabledPolicies": {
-      "oneOf": [
-        {
-          "type": "integer"
-        },
-        {
-          "type": "string",
-          "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?(?:[eE][+-]?\\d+)?$"
-        }
-      ]
+      "type": "integer",
+      "minimum": 0
     }
   }
 }

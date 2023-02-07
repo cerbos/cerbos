@@ -30,7 +30,7 @@ type AdminClient interface {
 	AuditLogs(ctx context.Context, opts AuditLogOptions) (<-chan *AuditLogEntry, error)
 	ListPolicies(ctx context.Context) ([]string, error)
 	GetPolicy(ctx context.Context, ids ...string) ([]*policyv1.Policy, error)
-	DisablePolicy(ctx context.Context, ids ...string) (int64, error)
+	DisablePolicy(ctx context.Context, ids ...string) (uint32, error)
 	AddOrUpdateSchema(ctx context.Context, schemas *SchemaSet) error
 	ListSchemas(ctx context.Context) ([]string, error)
 	GetSchema(ctx context.Context, ids ...string) ([]*schemav1.Schema, error)
@@ -204,7 +204,7 @@ func (c *GrpcAdminClient) GetPolicy(ctx context.Context, ids ...string) ([]*poli
 	return res.Policies, nil
 }
 
-func (c *GrpcAdminClient) DisablePolicy(ctx context.Context, ids ...string) (int64, error) {
+func (c *GrpcAdminClient) DisablePolicy(ctx context.Context, ids ...string) (uint32, error) {
 	req := &requestv1.DisablePolicyRequest{
 		Id: ids,
 	}

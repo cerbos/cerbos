@@ -4,7 +4,14 @@
 package db
 
 import (
-	"errors"
+	"fmt"
+	"strings"
 )
 
-var ErrNoResults = errors.New("no results")
+type ErrBreaksScopeChain struct {
+	PolicyKeys []string
+}
+
+func (e ErrBreaksScopeChain) Error() string {
+	return fmt.Sprintf("removing the following scoped policies will break the scope chain: %s", strings.Join(e.PolicyKeys, ", "))
+}

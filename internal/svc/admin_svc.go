@@ -30,6 +30,7 @@ import (
 	"github.com/cerbos/cerbos/internal/audit"
 	"github.com/cerbos/cerbos/internal/policy"
 	"github.com/cerbos/cerbos/internal/storage"
+	"github.com/cerbos/cerbos/internal/storage/db"
 )
 
 var _ svcv1.CerbosAdminServiceServer = (*CerbosAdminService)(nil)
@@ -180,6 +181,9 @@ func (cas *CerbosAdminService) DisablePolicy(ctx context.Context, req *requestv1
 	disabledPolicies, err := ms.Disable(ctx, req.Id...)
 	if err != nil {
 		ctxzap.Extract(ctx).Error("Failed to disable policies", zap.Error(err))
+		if errors.As(err, &db.ErrBreaksScopeChain{}) {
+			return nil, status.Error(codes.InvalidArgument, err.Error())
+		}
 		return nil, status.Error(codes.Internal, "Failed to disable policies")
 	}
 
