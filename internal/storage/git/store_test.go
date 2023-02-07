@@ -107,19 +107,19 @@ func TestNewStore(t *testing.T) {
 	})
 }
 
-func TestUpdateStore(t *testing.T) {
-	if testing.Short() {
-		t.Skip("Skipping git store tests")
-	}
+type testParams struct {
+	store        *Store
+	idx          index.Index
+	mockIdx      *mocks.Index
+	sourceGitDir string
+}
+
+func setupUpdateStoreTest(t *testing.T, numPolicySets int) testParams {
+	t.Helper()
 
 	tempDir := t.TempDir()
 	sourceGitDir := filepath.Join(tempDir, "source")
 	checkoutDir := filepath.Join(tempDir, "checkout")
-
-	rng := rand.New(rand.NewSource(time.Now().Unix())) //nolint:gosec
-	numPolicySets := 20
-	var deletedFilesetNumber int
-	var renamedFilesetNumber int
 
 	_ = createGitRepo(t, sourceGitDir, numPolicySets)
 
@@ -127,27 +127,42 @@ func TestUpdateStore(t *testing.T) {
 	store, err := NewStore(context.Background(), conf)
 	require.NoError(t, err)
 
+	mockIdx := &mocks.Index{}
 	idx := store.idx
+	store.idx = mockIdx
 
-	setupMock := func() *mocks.Index {
-		m := &mocks.Index{}
-		store.idx = m
-		return m
+	return testParams{
+		store:        store,
+		idx:          idx,
+		mockIdx:      mockIdx,
+		sourceGitDir: sourceGitDir,
+	}
+}
+
+func TestUpdateStore(t *testing.T) {
+	t.Parallel()
+
+	if testing.Short() {
+		t.Skip("Skipping git store tests")
 	}
 
-	t.Run("no changes", func(t *testing.T) {
-		mockIdx := setupMock()
-		checkEvents := storage.TestSubscription(store)
+	numPolicySets := 10
+	rng := rand.New(rand.NewSource(time.Now().Unix())) //nolint:gosec
 
-		require.NoError(t, store.updateIndex(context.Background()))
-		mockIdx.AssertExpectations(t)
+	t.Run("no changes", func(t *testing.T) {
+		param := setupUpdateStoreTest(t, numPolicySets)
+		checkEvents := storage.TestSubscription(param.store)
+
+		require.NoError(t, param.store.updateIndex(context.Background()))
+		param.mockIdx.AssertExpectations(t)
 		checkEvents(t, timeout)
 	})
 
 	t.Run("modify policy", func(t *testing.T) {
-		mockIdx := setupMock()
-		mockIdx.On("AddOrUpdate", mock.MatchedBy(anyIndexEntry)).Return(func(entry index.Entry) storage.Event {
-			evt, err := idx.AddOrUpdate(entry)
+		t.Parallel()
+		param := setupUpdateStoreTest(t, numPolicySets)
+		param.mockIdx.On("AddOrUpdate", mock.MatchedBy(anyIndexEntry)).Return(func(entry index.Entry) storage.Event {
+			evt, err := param.idx.AddOrUpdate(entry)
 			if err != nil {
 				panic(err)
 			}
@@ -155,20 +170,20 @@ func TestUpdateStore(t *testing.T) {
 			return evt
 		}, nil)
 
-		checkEvents := storage.TestSubscription(store)
+		checkEvents := storage.TestSubscription(param.store)
 		pset := genPolicySet(rng.Intn(numPolicySets))
 
-		require.NoError(t, commitToGitRepo(sourceGitDir, "Modify policy", func(_ *git.Worktree) error {
+		require.NoError(t, commitToGitRepo(param.sourceGitDir, "Modify policy", func(_ *git.Worktree) error {
 			for _, p := range pset {
 				modifyPolicy(p)
 			}
 
-			return writePolicySet(filepath.Join(sourceGitDir, policyDir), pset)
+			return writePolicySet(filepath.Join(param.sourceGitDir, policyDir), pset)
 		}))
 
-		require.NoError(t, store.updateIndex(context.Background()))
-		mockIdx.AssertExpectations(t)
-		mockIdx.AssertNumberOfCalls(t, "AddOrUpdate", len(pset))
+		require.NoError(t, param.store.updateIndex(context.Background()))
+		param.mockIdx.AssertExpectations(t)
+		param.mockIdx.AssertNumberOfCalls(t, "AddOrUpdate", len(pset))
 
 		wantEvents := make([]storage.Event, 0, len(pset))
 		for _, p := range pset {
@@ -179,9 +194,10 @@ func TestUpdateStore(t *testing.T) {
 	})
 
 	t.Run("modify policy version", func(t *testing.T) {
-		mockIdx := setupMock()
-		mockIdx.On("AddOrUpdate", mock.MatchedBy(anyIndexEntry)).Return(func(entry index.Entry) storage.Event {
-			evt, err := idx.AddOrUpdate(entry)
+		t.Parallel()
+		param := setupUpdateStoreTest(t, numPolicySets)
+		param.mockIdx.On("AddOrUpdate", mock.MatchedBy(anyIndexEntry)).Return(func(entry index.Entry) storage.Event {
+			evt, err := param.idx.AddOrUpdate(entry)
 			if err != nil {
 				panic(err)
 			}
@@ -189,7 +205,7 @@ func TestUpdateStore(t *testing.T) {
 			return evt
 		}, nil)
 
-		checkEvents := storage.TestSubscription(store)
+		checkEvents := storage.TestSubscription(param.store)
 		pset := genPolicySet(rng.Intn(numPolicySets))
 
 		wantEvents := make([]storage.Event, len(pset))
@@ -204,17 +220,17 @@ func TestUpdateStore(t *testing.T) {
 			idx++
 		}
 
-		require.NoError(t, commitToGitRepo(sourceGitDir, "Modify policy version", func(_ *git.Worktree) error {
+		require.NoError(t, commitToGitRepo(param.sourceGitDir, "Modify policy version", func(_ *git.Worktree) error {
 			for _, p := range pset {
 				modifyPolicyVersion(p)
 			}
 
-			return writePolicySet(filepath.Join(sourceGitDir, policyDir), pset)
+			return writePolicySet(filepath.Join(param.sourceGitDir, policyDir), pset)
 		}))
 
-		require.NoError(t, store.updateIndex(context.Background()))
-		mockIdx.AssertExpectations(t)
-		mockIdx.AssertNumberOfCalls(t, "AddOrUpdate", len(pset))
+		require.NoError(t, param.store.updateIndex(context.Background()))
+		param.mockIdx.AssertExpectations(t)
+		param.mockIdx.AssertNumberOfCalls(t, "AddOrUpdate", len(pset))
 
 		for k, i := range psetEventIdx {
 			wantEvents[i].PolicyID = namer.GenModuleID(pset[k])
@@ -224,9 +240,10 @@ func TestUpdateStore(t *testing.T) {
 	})
 
 	t.Run("add policy", func(t *testing.T) {
-		mockIdx := setupMock()
-		mockIdx.On("AddOrUpdate", mock.MatchedBy(anyIndexEntry)).Return(func(entry index.Entry) storage.Event {
-			evt, err := idx.AddOrUpdate(entry)
+		t.Parallel()
+		param := setupUpdateStoreTest(t, numPolicySets)
+		param.mockIdx.On("AddOrUpdate", mock.MatchedBy(anyIndexEntry)).Return(func(entry index.Entry) storage.Event {
+			evt, err := param.idx.AddOrUpdate(entry)
 			if err != nil {
 				panic(err)
 			}
@@ -234,11 +251,11 @@ func TestUpdateStore(t *testing.T) {
 			return evt
 		}, nil)
 
-		checkEvents := storage.TestSubscription(store)
+		checkEvents := storage.TestSubscription(param.store)
 		pset := genPolicySet(numPolicySets)
 
-		require.NoError(t, commitToGitRepo(sourceGitDir, "Add policy", func(wt *git.Worktree) error {
-			if err := writePolicySet(filepath.Join(sourceGitDir, policyDir), pset); err != nil {
+		require.NoError(t, commitToGitRepo(param.sourceGitDir, "Add policy", func(wt *git.Worktree) error {
+			if err := writePolicySet(filepath.Join(param.sourceGitDir, policyDir), pset); err != nil {
 				return err
 			}
 
@@ -246,10 +263,10 @@ func TestUpdateStore(t *testing.T) {
 			return err
 		}))
 
-		require.NoError(t, store.updateIndex(context.Background()))
+		require.NoError(t, param.store.updateIndex(context.Background()))
 
-		mockIdx.AssertExpectations(t)
-		mockIdx.AssertNumberOfCalls(t, "AddOrUpdate", len(pset))
+		param.mockIdx.AssertExpectations(t)
+		param.mockIdx.AssertNumberOfCalls(t, "AddOrUpdate", len(pset))
 
 		wantEvents := make([]storage.Event, 0, len(pset))
 		for _, p := range pset {
@@ -260,12 +277,13 @@ func TestUpdateStore(t *testing.T) {
 	})
 
 	t.Run("add policy to ignored dir", func(t *testing.T) {
-		mockIdx := setupMock()
-		checkEvents := storage.TestSubscription(store)
+		t.Parallel()
+		param := setupUpdateStoreTest(t, numPolicySets)
+		checkEvents := storage.TestSubscription(param.store)
 		pset := genPolicySet(numPolicySets)
 
-		require.NoError(t, commitToGitRepo(sourceGitDir, "Add ignored policy", func(wt *git.Worktree) error {
-			if err := writePolicySet(filepath.Join(sourceGitDir, ignoredDir), pset); err != nil {
+		require.NoError(t, commitToGitRepo(param.sourceGitDir, "Add ignored policy", func(wt *git.Worktree) error {
+			if err := writePolicySet(filepath.Join(param.sourceGitDir, ignoredDir), pset); err != nil {
 				return err
 			}
 
@@ -278,16 +296,17 @@ func TestUpdateStore(t *testing.T) {
 			return nil
 		}))
 
-		require.NoError(t, store.updateIndex(context.Background()))
-		mockIdx.AssertExpectations(t)
-		mockIdx.AssertNotCalled(t, "AddOrUpdate", mock.MatchedBy(anyIndexEntry))
+		require.NoError(t, param.store.updateIndex(context.Background()))
+		param.mockIdx.AssertExpectations(t)
+		param.mockIdx.AssertNotCalled(t, "AddOrUpdate", mock.MatchedBy(anyIndexEntry))
 		checkEvents(t, timeout)
 	})
 
 	t.Run("delete policy", func(t *testing.T) {
-		mockIdx := setupMock()
-		mockIdx.On("Delete", mock.MatchedBy(anyIndexEntry)).Return(func(entry index.Entry) storage.Event {
-			evt, err := idx.Delete(entry)
+		t.Parallel()
+		param := setupUpdateStoreTest(t, numPolicySets)
+		param.mockIdx.On("Delete", mock.MatchedBy(anyIndexEntry)).Return(func(entry index.Entry) storage.Event {
+			evt, err := param.idx.Delete(entry)
 			if err != nil {
 				panic(err)
 			}
@@ -295,14 +314,13 @@ func TestUpdateStore(t *testing.T) {
 			return evt
 		}, nil)
 
-		checkEvents := storage.TestSubscription(store)
-		deletedFilesetNumber = rng.Intn(numPolicySets)
-		pset := genPolicySet(deletedFilesetNumber)
+		checkEvents := storage.TestSubscription(param.store)
+		pset := genPolicySet(rng.Intn(numPolicySets))
 
-		require.NoError(t, commitToGitRepo(sourceGitDir, "Delete policy", func(wt *git.Worktree) error {
+		require.NoError(t, commitToGitRepo(param.sourceGitDir, "Delete policy", func(wt *git.Worktree) error {
 			for file := range pset {
 				fp := filepath.Join(policyDir, file)
-				if err := os.Remove(filepath.Join(sourceGitDir, fp)); err != nil {
+				if err := os.Remove(filepath.Join(param.sourceGitDir, fp)); err != nil {
 					return err
 				}
 
@@ -314,9 +332,9 @@ func TestUpdateStore(t *testing.T) {
 			return nil
 		}))
 
-		require.NoError(t, store.updateIndex(context.Background()))
-		mockIdx.AssertExpectations(t)
-		mockIdx.AssertNumberOfCalls(t, "Delete", len(pset))
+		require.NoError(t, param.store.updateIndex(context.Background()))
+		param.mockIdx.AssertExpectations(t)
+		param.mockIdx.AssertNumberOfCalls(t, "Delete", len(pset))
 
 		wantEvents := make([]storage.Event, 0, len(pset))
 		for _, p := range pset {
@@ -327,10 +345,10 @@ func TestUpdateStore(t *testing.T) {
 	})
 
 	t.Run("rename policy", func(t *testing.T) {
-		mockIdx := setupMock()
-
-		mockIdx.On("AddOrUpdate", mock.MatchedBy(anyIndexEntry)).Return(func(entry index.Entry) storage.Event {
-			evt, err := idx.AddOrUpdate(entry)
+		t.Parallel()
+		param := setupUpdateStoreTest(t, numPolicySets)
+		param.mockIdx.On("AddOrUpdate", mock.MatchedBy(anyIndexEntry)).Return(func(entry index.Entry) storage.Event {
+			evt, err := param.idx.AddOrUpdate(entry)
 			if err != nil {
 				panic(err)
 			}
@@ -338,8 +356,8 @@ func TestUpdateStore(t *testing.T) {
 			return evt
 		}, nil)
 
-		mockIdx.On("Delete", mock.MatchedBy(anyIndexEntry)).Return(func(entry index.Entry) storage.Event {
-			evt, err := idx.Delete(entry)
+		param.mockIdx.On("Delete", mock.MatchedBy(anyIndexEntry)).Return(func(entry index.Entry) storage.Event {
+			evt, err := param.idx.Delete(entry)
 			if err != nil {
 				panic(err)
 			}
@@ -347,19 +365,13 @@ func TestUpdateStore(t *testing.T) {
 			return evt
 		}, nil)
 
-		checkEvents := storage.TestSubscription(store)
-		for {
-			renamedFilesetNumber = rng.Intn(numPolicySets)
-			if renamedFilesetNumber != deletedFilesetNumber {
-				break
-			}
-		}
-		pset := genPolicySet(renamedFilesetNumber)
+		checkEvents := storage.TestSubscription(param.store)
+		pset := genPolicySet(rng.Intn(numPolicySets))
 
-		require.NoError(t, commitToGitRepo(sourceGitDir, "Rename policy", func(wt *git.Worktree) error {
+		require.NoError(t, commitToGitRepo(param.sourceGitDir, "Rename policy", func(wt *git.Worktree) error {
 			for file := range pset {
-				from := filepath.Join(sourceGitDir, filepath.Join(policyDir, file))
-				to := filepath.Join(sourceGitDir, filepath.Join(policyDir, strings.Replace(file, ".yaml", ".renamed.yaml", 1)))
+				from := filepath.Join(param.sourceGitDir, filepath.Join(policyDir, file))
+				to := filepath.Join(param.sourceGitDir, filepath.Join(policyDir, strings.Replace(file, ".yaml", ".renamed.yaml", 1)))
 				if err := os.Rename(from, to); err != nil {
 					return err
 				}
@@ -373,10 +385,10 @@ func TestUpdateStore(t *testing.T) {
 			return err
 		}))
 
-		require.NoError(t, store.updateIndex(context.Background()))
-		mockIdx.AssertExpectations(t)
-		mockIdx.AssertNumberOfCalls(t, "AddOrUpdate", len(pset))
-		mockIdx.AssertNumberOfCalls(t, "Delete", len(pset))
+		require.NoError(t, param.store.updateIndex(context.Background()))
+		param.mockIdx.AssertExpectations(t)
+		param.mockIdx.AssertNumberOfCalls(t, "AddOrUpdate", len(pset))
+		param.mockIdx.AssertNumberOfCalls(t, "Delete", len(pset))
 
 		wantEvents := make([]storage.Event, 0, len(pset))
 		for _, p := range pset {
@@ -388,9 +400,10 @@ func TestUpdateStore(t *testing.T) {
 	})
 
 	t.Run("move policy out of policy dir", func(t *testing.T) {
-		mockIdx := setupMock()
-		mockIdx.On("Delete", mock.MatchedBy(anyIndexEntry)).Return(func(entry index.Entry) storage.Event {
-			evt, err := idx.Delete(entry)
+		t.Parallel()
+		param := setupUpdateStoreTest(t, numPolicySets)
+		param.mockIdx.On("Delete", mock.MatchedBy(anyIndexEntry)).Return(func(entry index.Entry) storage.Event {
+			evt, err := param.idx.Delete(entry)
 			if err != nil {
 				panic(err)
 			}
@@ -398,20 +411,13 @@ func TestUpdateStore(t *testing.T) {
 			return evt
 		}, nil)
 
-		checkEvents := storage.TestSubscription(store)
-		var moveFilesetNumber int
-		for {
-			moveFilesetNumber = rng.Intn(numPolicySets)
-			if moveFilesetNumber != deletedFilesetNumber && moveFilesetNumber != renamedFilesetNumber {
-				break
-			}
-		}
-		pset := genPolicySet(moveFilesetNumber)
+		checkEvents := storage.TestSubscription(param.store)
+		pset := genPolicySet(rng.Intn(numPolicySets))
 
-		require.NoError(t, commitToGitRepo(sourceGitDir, "Move policy out", func(wt *git.Worktree) error {
+		require.NoError(t, commitToGitRepo(param.sourceGitDir, "Move policy out", func(wt *git.Worktree) error {
 			for file := range pset {
-				from := filepath.Join(sourceGitDir, filepath.Join(policyDir, file))
-				to := filepath.Join(sourceGitDir, filepath.Join(ignoredDir, file))
+				from := filepath.Join(param.sourceGitDir, filepath.Join(policyDir, file))
+				to := filepath.Join(param.sourceGitDir, filepath.Join(ignoredDir, file))
 				if err := os.Rename(from, to); err != nil {
 					return err
 				}
@@ -425,9 +431,9 @@ func TestUpdateStore(t *testing.T) {
 			return err
 		}))
 
-		require.NoError(t, store.updateIndex(context.Background()))
-		mockIdx.AssertExpectations(t)
-		mockIdx.AssertNumberOfCalls(t, "Delete", len(pset))
+		require.NoError(t, param.store.updateIndex(context.Background()))
+		param.mockIdx.AssertExpectations(t)
+		param.mockIdx.AssertNumberOfCalls(t, "Delete", len(pset))
 
 		wantEvents := make([]storage.Event, 0, len(pset))
 		for _, p := range pset {
@@ -438,10 +444,11 @@ func TestUpdateStore(t *testing.T) {
 	})
 
 	t.Run("ignore unsupported file", func(t *testing.T) {
-		mockIdx := setupMock()
-		checkEvents := storage.TestSubscription(store)
-		require.NoError(t, commitToGitRepo(sourceGitDir, "Add unsupported file", func(wt *git.Worktree) error {
-			fp := filepath.Join(sourceGitDir, policyDir, "file1.txt")
+		t.Parallel()
+		param := setupUpdateStoreTest(t, numPolicySets)
+		checkEvents := storage.TestSubscription(param.store)
+		require.NoError(t, commitToGitRepo(param.sourceGitDir, "Add unsupported file", func(wt *git.Worktree) error {
+			fp := filepath.Join(param.sourceGitDir, policyDir, "file1.txt")
 			if err := os.WriteFile(fp, []byte("something"), 0o600); err != nil {
 				return err
 			}
@@ -451,17 +458,18 @@ func TestUpdateStore(t *testing.T) {
 			return err
 		}))
 
-		require.NoError(t, store.updateIndex(context.Background()))
-		mockIdx.AssertExpectations(t)
-		mockIdx.AssertNotCalled(t, "Delete", mock.MatchedBy(anyIndexEntry))
+		require.NoError(t, param.store.updateIndex(context.Background()))
+		param.mockIdx.AssertExpectations(t)
+		param.mockIdx.AssertNotCalled(t, "Delete", mock.MatchedBy(anyIndexEntry))
 		checkEvents(t, timeout)
 	})
 
 	t.Run("ignore test", func(t *testing.T) {
-		mockIdx := setupMock()
-		checkEvents := storage.TestSubscription(store)
-		require.NoError(t, commitToGitRepo(sourceGitDir, "Add test", func(wt *git.Worktree) error {
-			fp := filepath.Join(sourceGitDir, policyDir, "policy_test.yaml")
+		t.Parallel()
+		param := setupUpdateStoreTest(t, numPolicySets)
+		checkEvents := storage.TestSubscription(param.store)
+		require.NoError(t, commitToGitRepo(param.sourceGitDir, "Add test", func(wt *git.Worktree) error {
+			fp := filepath.Join(param.sourceGitDir, policyDir, "policy_test.yaml")
 			if err := os.WriteFile(fp, []byte("name: Test suite\n"), 0o600); err != nil {
 				return err
 			}
@@ -471,23 +479,24 @@ func TestUpdateStore(t *testing.T) {
 			return err
 		}))
 
-		require.NoError(t, store.updateIndex(context.Background()))
-		mockIdx.AssertExpectations(t)
-		mockIdx.AssertNotCalled(t, "Delete", mock.MatchedBy(anyIndexEntry))
+		require.NoError(t, param.store.updateIndex(context.Background()))
+		param.mockIdx.AssertExpectations(t)
+		param.mockIdx.AssertNotCalled(t, "Delete", mock.MatchedBy(anyIndexEntry))
 		checkEvents(t, timeout)
 	})
 
 	t.Run("add schema", func(t *testing.T) {
-		mockIdx := setupMock()
-		checkEvents := storage.TestSubscription(store)
+		t.Parallel()
+		param := setupUpdateStoreTest(t, numPolicySets)
+		checkEvents := storage.TestSubscription(param.store)
 
-		require.NoError(t, commitToGitRepo(sourceGitDir, "Add schema", func(wt *git.Worktree) error {
-			fp := filepath.Join(sourceGitDir, policyDir, schema.Directory, "test_policy1.json")
+		require.NoError(t, commitToGitRepo(param.sourceGitDir, "Add schema", func(wt *git.Worktree) error {
+			fp := filepath.Join(param.sourceGitDir, policyDir, schema.Directory, "test_policy1.json")
 			if err := os.WriteFile(fp, []byte("{}"), 0o600); err != nil {
 				return err
 			}
 
-			fp = filepath.Join(sourceGitDir, policyDir, schema.Directory, schemaSubDir, "test_policy2.json")
+			fp = filepath.Join(param.sourceGitDir, policyDir, schema.Directory, schemaSubDir, "test_policy2.json")
 			if err := os.WriteFile(fp, []byte("{}"), 0o600); err != nil {
 				return err
 			}
@@ -496,8 +505,8 @@ func TestUpdateStore(t *testing.T) {
 			return err
 		}))
 
-		require.NoError(t, store.updateIndex(context.Background()))
-		mockIdx.AssertExpectations(t)
+		require.NoError(t, param.store.updateIndex(context.Background()))
+		param.mockIdx.AssertExpectations(t)
 
 		checkEvents(t, timeout,
 			storage.NewSchemaEvent(storage.EventAddOrUpdateSchema, "test_policy1.json"),
@@ -505,11 +514,12 @@ func TestUpdateStore(t *testing.T) {
 	})
 
 	t.Run("delete schema", func(t *testing.T) {
-		mockIdx := setupMock()
-		checkEvents := storage.TestSubscription(store)
+		t.Parallel()
+		param := setupUpdateStoreTest(t, numPolicySets)
+		checkEvents := storage.TestSubscription(param.store)
 
-		require.NoError(t, commitToGitRepo(sourceGitDir, "Delete schema", func(wt *git.Worktree) error {
-			fp := filepath.Join(sourceGitDir, policyDir, schema.Directory, "customer_absolute.json")
+		require.NoError(t, commitToGitRepo(param.sourceGitDir, "Delete schema", func(wt *git.Worktree) error {
+			fp := filepath.Join(param.sourceGitDir, policyDir, schema.Directory, "customer_absolute.json")
 			if err := os.Remove(fp); err != nil {
 				return err
 			}
@@ -517,7 +527,7 @@ func TestUpdateStore(t *testing.T) {
 				return err
 			}
 
-			fp = filepath.Join(sourceGitDir, policyDir, schema.Directory, schemaSubDir, "customer_absolute.json")
+			fp = filepath.Join(param.sourceGitDir, policyDir, schema.Directory, schemaSubDir, "customer_absolute.json")
 			if err := os.Remove(fp); err != nil {
 				return err
 			}
@@ -529,8 +539,8 @@ func TestUpdateStore(t *testing.T) {
 			return err
 		}))
 
-		require.NoError(t, store.updateIndex(context.Background()))
-		mockIdx.AssertExpectations(t)
+		require.NoError(t, param.store.updateIndex(context.Background()))
+		param.mockIdx.AssertExpectations(t)
 
 		checkEvents(t, timeout,
 			storage.NewSchemaEvent(storage.EventDeleteSchema, "customer_absolute.json"),
@@ -538,11 +548,12 @@ func TestUpdateStore(t *testing.T) {
 	})
 
 	t.Run("move schema out", func(t *testing.T) {
-		mockIdx := setupMock()
-		checkEvents := storage.TestSubscription(store)
-		require.NoError(t, commitToGitRepo(sourceGitDir, "Move schema out", func(wt *git.Worktree) error {
-			from := filepath.Join(sourceGitDir, policyDir, schema.Directory, "invalid.json")
-			to := filepath.Join(sourceGitDir, ignoredDir, "invalid.json")
+		t.Parallel()
+		param := setupUpdateStoreTest(t, numPolicySets)
+		checkEvents := storage.TestSubscription(param.store)
+		require.NoError(t, commitToGitRepo(param.sourceGitDir, "Move schema out", func(wt *git.Worktree) error {
+			from := filepath.Join(param.sourceGitDir, policyDir, schema.Directory, "invalid.json")
+			to := filepath.Join(param.sourceGitDir, ignoredDir, "invalid.json")
 			if err := os.Rename(from, to); err != nil {
 				return err
 			}
@@ -554,8 +565,8 @@ func TestUpdateStore(t *testing.T) {
 			return err
 		}))
 
-		require.NoError(t, store.updateIndex(context.Background()))
-		mockIdx.AssertExpectations(t)
+		require.NoError(t, param.store.updateIndex(context.Background()))
+		param.mockIdx.AssertExpectations(t)
 
 		checkEvents(t, timeout, storage.NewSchemaEvent(storage.EventDeleteSchema, "invalid.json"))
 	})
