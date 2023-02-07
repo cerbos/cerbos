@@ -6,10 +6,10 @@ require (
 	contrib.go.opencensus.io/exporter/prometheus v0.4.2
 	github.com/Masterminds/sprig/v3 v3.2.3
 	github.com/adrg/xdg v0.4.0
-	github.com/alecthomas/chroma/v2 v2.4.0
+	github.com/alecthomas/chroma/v2 v2.5.0
 	github.com/alecthomas/kong v0.7.1
 	github.com/alecthomas/participle/v2 v2.0.0-beta.5
-	github.com/aws/aws-sdk-go v1.44.189
+	github.com/aws/aws-sdk-go v1.44.195
 	github.com/bluele/gcache v0.0.2
 	github.com/cenkalti/backoff/v4 v4.2.0
 	github.com/cespare/xxhash v1.1.0
@@ -54,12 +54,12 @@ require (
 	github.com/planetscale/vtprotobuf v0.4.0
 	github.com/prometheus/client_golang v1.14.0
 	github.com/pterm/pterm v0.12.54
-	github.com/rivo/tview v0.0.0-20230104153304-892d1a2eb0da
+	github.com/rivo/tview v0.0.0-20230206063056-c1eadf1b0bf6
 	github.com/rjeczalik/notify v0.9.3
 	github.com/rogpeppe/go-internal v1.9.0
 	github.com/rs/cors v1.8.3
 	github.com/rudderlabs/analytics-go v3.3.3+incompatible
-	github.com/santhosh-tekuri/jsonschema/v5 v5.1.1
+	github.com/santhosh-tekuri/jsonschema/v5 v5.2.0
 	github.com/spf13/afero v1.9.3
 	github.com/stretchr/testify v1.8.1
 	github.com/tidwall/gjson v1.14.4
@@ -67,15 +67,15 @@ require (
 	github.com/tidwall/sjson v1.2.5
 	go.elastic.co/ecszap v1.0.1
 	go.opencensus.io v0.24.0
-	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.37.0
-	go.opentelemetry.io/contrib/propagators/autoprop v0.37.0
-	go.opentelemetry.io/contrib/propagators/b3 v1.12.0
-	go.opentelemetry.io/otel v1.11.2
-	go.opentelemetry.io/otel/bridge/opencensus v0.34.0
-	go.opentelemetry.io/otel/exporters/jaeger v1.11.2
-	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc v1.11.2
-	go.opentelemetry.io/otel/sdk v1.11.2
-	go.opentelemetry.io/otel/trace v1.11.2
+	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.38.0
+	go.opentelemetry.io/contrib/propagators/autoprop v0.38.0
+	go.opentelemetry.io/contrib/propagators/b3 v1.13.0
+	go.opentelemetry.io/otel v1.12.0
+	go.opentelemetry.io/otel/bridge/opencensus v0.35.0
+	go.opentelemetry.io/otel/exporters/jaeger v1.12.0
+	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc v1.12.0
+	go.opentelemetry.io/otel/sdk v1.12.0
+	go.opentelemetry.io/otel/trace v1.12.0
 	go.uber.org/automaxprocs v1.5.1
 	go.uber.org/config v1.4.0
 	go.uber.org/multierr v1.9.0
@@ -85,7 +85,7 @@ require (
 	golang.org/x/net v0.5.0
 	golang.org/x/sync v0.1.0
 	golang.org/x/tools v0.5.0
-	google.golang.org/genproto v0.0.0-20230127162408-596548ed4efa
+	google.golang.org/genproto v0.0.0-20230202175211-008b39050e57
 	google.golang.org/grpc v1.52.3
 	google.golang.org/protobuf v1.28.1
 	gopkg.in/yaml.v2 v2.4.0
@@ -233,13 +233,13 @@ require (
 	github.com/xi2/xz v0.0.0-20171230120015-48954b6210f8 // indirect
 	github.com/xo/terminfo v0.0.0-20210125001918-ca9a967f8778 // indirect
 	github.com/xtgo/uuid v0.0.0-20140804021211-a0b114877d4c // indirect
-	go.opentelemetry.io/contrib/propagators/aws v1.12.0 // indirect
-	go.opentelemetry.io/contrib/propagators/jaeger v1.12.0 // indirect
-	go.opentelemetry.io/contrib/propagators/ot v1.12.0 // indirect
+	go.opentelemetry.io/contrib/propagators/aws v1.13.0 // indirect
+	go.opentelemetry.io/contrib/propagators/jaeger v1.13.0 // indirect
+	go.opentelemetry.io/contrib/propagators/ot v1.13.0 // indirect
 	go.opentelemetry.io/otel/exporters/otlp/internal/retry v1.12.0 // indirect
-	go.opentelemetry.io/otel/exporters/otlp/otlptrace v1.11.2 // indirect
-	go.opentelemetry.io/otel/metric v0.34.0 // indirect
-	go.opentelemetry.io/otel/sdk/metric v0.34.0 // indirect
+	go.opentelemetry.io/otel/exporters/otlp/otlptrace v1.12.0 // indirect
+	go.opentelemetry.io/otel/metric v0.35.0 // indirect
+	go.opentelemetry.io/otel/sdk/metric v0.35.0 // indirect
 	go.opentelemetry.io/proto/otlp v0.19.0 // indirect
 	go.uber.org/atomic v1.10.0 // indirect
 	golang.org/x/lint v0.0.0-20210508222113-6edffad5e616 // indirect
