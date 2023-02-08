@@ -124,10 +124,10 @@ This would suit scenarios where a principal can perform _nearly_ every action, a
 Consider the following hypothetical scenario:
 
 ****
-An organization models it's resources as specific _data sets_. Each data set is unique, as are the principals trying to access them. The organization uses JWTs extensively to manage and transmit identity/contextual information. The resource policies map 1:1 to each data set, and access is governed by arbitrary information (in this case, passed within the JWT).
+An organization models its resources as specific _data sets_. Each data set is unique, as are the principals trying to access them. The organization uses JWTs extensively to manage and transmit identity/contextual information. The resource policies map 1:1 to each data set, and access is governed by arbitrary information (in this case, passed within the JWT).
 ****
 
-Given the changeable nature of the accessing audiences, it doesn't necessarily make sense to rely on roles for access. What we could do instead is to globally allow all roles and actions and then determine access based on attributes passed in the JWT. Take a look at the following example policy:
+Given the dynamic nature of audiences, it's not practical to enumerate all roles that have access. What we could do instead is to globally allow all roles and actions and then determine access based on attributes passed in the JWT. Take a look at the following example policy:
 
 [source,yaml,linenums]
 ----
