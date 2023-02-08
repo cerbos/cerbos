@@ -39,6 +39,10 @@ func Init(ctx context.Context) error {
 		return fmt.Errorf("failed to load tracing config: %w", err)
 	}
 
+	return InitFromConf(ctx, conf)
+}
+
+func InitFromConf(ctx context.Context, conf Conf) error {
 	switch conf.Exporter {
 	case jaegerExporter:
 		return configureJaeger(ctx)
