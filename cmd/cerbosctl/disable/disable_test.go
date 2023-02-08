@@ -21,7 +21,6 @@ import (
 	cmdclient "github.com/cerbos/cerbos/cmd/cerbosctl/internal/client"
 	"github.com/cerbos/cerbos/cmd/cerbosctl/internal/flagset"
 	"github.com/cerbos/cerbos/cmd/cerbosctl/root"
-	"github.com/cerbos/cerbos/internal/namer"
 	"github.com/cerbos/cerbos/internal/policy"
 	"github.com/cerbos/cerbos/internal/test"
 	"github.com/stretchr/testify/require"
@@ -82,32 +81,26 @@ func testDisableCmd(ctx context.Context, cctx *cmdclient.Context, globals *flags
 			})
 			t.Run("disable and check", func(t *testing.T) {
 				testCases := []struct {
-					policy    *policyv1.Policy
 					policyKey string
 					wantErr   bool
 				}{
 					{
-						policy:    withMeta(test.GenDerivedRoles(test.Suffix(strconv.Itoa(1)))),
 						policyKey: "derived_roles.my_derived_roles_1",
 						wantErr:   false,
 					},
 					{
-						policy:    withMeta(test.GenPrincipalPolicy(test.Suffix(strconv.Itoa(1)))),
 						policyKey: "principal.donald_duck_1.vdefault",
 						wantErr:   true,
 					},
 					{
-						policy:    withMeta(withScope(test.GenPrincipalPolicy(test.Suffix(strconv.Itoa(1))), "acme.hr")),
 						policyKey: "principal.donald_duck_1.vdefault/acme.hr",
 						wantErr:   false,
 					},
 					{
-						policy:    withMeta(test.GenResourcePolicy(test.Suffix(strconv.Itoa(1)))),
 						policyKey: "resource.leave_request_1.vdefault",
 						wantErr:   true,
 					},
 					{
-						policy:    withMeta(withScope(test.GenResourcePolicy(test.Suffix(strconv.Itoa(1))), "acme.hr.uk")),
 						policyKey: "resource.leave_request_1.vdefault/acme.hr.uk",
 						wantErr:   false,
 					},
@@ -143,6 +136,16 @@ func testDisableCmd(ctx context.Context, cctx *cmdclient.Context, globals *flags
 						}
 					})
 				}
+			})
+			t.Run("disable nonexisting policy", func(t *testing.T) {
+				p := mustNew(t, &root.Cli{})
+				out := bytes.NewBufferString("")
+				p.Stdout = out
+
+				kctx, err := p.Parse([]string{"disable", "policy", "resource.nonexistent.vnone/none"})
+				require.NoError(t, err)
+				err = kctx.Run(cctx, globals)
+				require.NoError(t, err)
 			})
 		})
 	}
@@ -246,8 +249,4 @@ func withScope(p *policyv1.Policy, scope string) *policyv1.Policy {
 		p.GetResourcePolicy().Scope = scope
 	}
 	return p
-}
-
-func withMeta(p *policyv1.Policy) *policyv1.Policy {
-	return policy.WithMetadata(p, "", nil, namer.PolicyKey(p))
 }
