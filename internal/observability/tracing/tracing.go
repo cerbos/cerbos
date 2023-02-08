@@ -21,7 +21,8 @@ import (
 	otelprop "go.opentelemetry.io/otel/propagation"
 	"go.opentelemetry.io/otel/sdk/resource"
 	tracesdk "go.opentelemetry.io/otel/sdk/trace"
-	semconv "go.opentelemetry.io/otel/semconv/v1.12.0"
+	semconv "go.opentelemetry.io/otel/semconv/v1.17.0"
+	"go.opentelemetry.io/otel/semconv/v1.17.0/httpconv"
 	"go.opentelemetry.io/otel/trace"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
@@ -38,6 +39,10 @@ func Init(ctx context.Context) error {
 		return fmt.Errorf("failed to load tracing config: %w", err)
 	}
 
+	return InitFromConf(ctx, conf)
+}
+
+func InitFromConf(ctx context.Context, conf Conf) error {
 	switch conf.Exporter {
 	case jaegerExporter:
 		return configureJaeger(ctx)
@@ -182,7 +187,7 @@ func MarkFailed(span trace.Span, code int, err error) {
 		span.RecordError(err)
 	}
 
-	c, desc := semconv.SpanStatusFromHTTPStatusCode(code)
+	c, desc := httpconv.ServerStatus(code)
 	span.SetStatus(c, desc)
 }
 
