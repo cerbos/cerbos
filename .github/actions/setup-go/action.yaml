@@ -1,0 +1,80 @@
+name: Set up Go
+
+description: Install Go and cache dependencies
+
+inputs:
+  cross_compiling:
+    description: true if cross-compiling (which generates a much larger build cache that we only want to use on snapshot builds)
+    required: false
+    default: "false"
+
+  write_deps_cache:
+    description: true to save dependencies cache at the end of the workflow
+    required: false
+    default: "false"
+
+  write_build_cache:
+    description: true to save build cache at the end of the workflow
+    required: false
+    default: "false"
+
+outputs:
+  cache_hit:
+    description: true if an exact match was found for both the dependency and build cache keys
+    value: ${{ (steps.cache_deps.outputs.cache-hit == 'true' || steps.restore_deps.outputs.cache-hit == 'true') && (steps.cache_build.outputs.cache-hit == 'true' || steps.restore_build.outputs.cache-hit == 'true') }}
+
+runs:
+  using: composite
+
+  steps:
+    - name: Install Go
+      uses: actions/setup-go@v3
+      with:
+        go-version: 1.20.x
+        check-latest: true
+
+    - name: Cache dependencies
+      id: cache_deps
+      if: ${{ inputs.write_deps_cache == 'true' }}
+      uses: actions/cache@v3
+      with:
+        path: |
+          ~/go/pkg/mod
+          ~/.cache/cerbos/bin
+        key: ${{ runner.os }}-go-deps-${{ hashFiles('**/go.mod') }}
+        restore-keys: |
+          ${{ runner.os }}-go-deps-
+
+    - name: Restore cached dependencies
+      id: restore_deps
+      if: ${{ inputs.write_deps_cache != 'true' }}
+      uses: actions/cache/restore@v3
+      with:
+        path: |
+          ~/go/pkg/mod
+          ~/.cache/cerbos/bin
+        key: ${{ runner.os }}-go-deps-${{ hashFiles('**/go.mod') }}
+        restore-keys: |
+          ${{ runner.os }}-go-deps-
+
+    - name: Cache build outputs
+      id: cache_build
+      if: ${{ inputs.write_build_cache == 'true' }}
+      uses: actions/cache@v3
+      with:
+        path: |
+          ~/.cache/go-build
+        key: ${{ runner.os }}-go-build-${{ inputs.cross_compiling }}-${{ hashFiles('**/go.mod') }}
+        restore-keys: |
+          ${{ runner.os }}-go-build-${{ inputs.cross_compiling }}-
+
+    - name: Restore cached build outputs
+      id: restore_build
+      if: ${{ inputs.write_build_cache != 'true' }}
+      uses: actions/cache/restore@v3
+      with:
+        path: |
+          ~/.cache/go-build
+        key: ${{ runner.os }}-go-build-${{ inputs.cross_compiling }}-${{ hashFiles('**/go.mod') }}
+        restore-keys: |
+          ${{ runner.os }}-go-build-${{ inputs.cross_compiling }}-

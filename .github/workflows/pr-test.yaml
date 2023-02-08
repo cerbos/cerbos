@@ -26,30 +26,20 @@ jobs:
               - .github/workflows/pr-test.yaml
               - '**/*.proto'
 
+  cache:
+    uses: ./.github/workflows/cache.yaml
+
   generate:
     needs: changes
     if: ${{ needs.changes.outputs.code == 'true' }}
     name: Generate
     runs-on: ubuntu-latest
     steps:
-      - name: Install Go
-        uses: actions/setup-go@v3
-        with:
-          go-version: 1.20.x
-          check-latest: true
-
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - uses: actions/cache@v3
-        with:
-          path: |
-            ~/go/pkg/mod
-            ~/.cache/go-build
-            ~/.cache/cerbos/bin
-          key: generate-${{ runner.os }}-go-${{ hashFiles('**/go.mod') }}
-          restore-keys: |
-            generate-${{ runner.os }}-go-
+      - name: Install Go and restore cached dependencies
+        uses: ./.github/actions/setup-go
 
       - name: Generate
         run: make generate
@@ -95,27 +85,13 @@ jobs:
     outputs:
       job-total: ${{ strategy.job-total }}
     steps:
-      - name: Install Go
-        uses: actions/setup-go@v3
-        with:
-          go-version: 1.20.x
-          check-latest: true
-
       - name: Checkout code
         uses: actions/checkout@v3
         with:
           lfs: true
 
-      - uses: actions/cache@v3
-        with:
-          path: |
-            ~/go/pkg/mod
-            ~/.cache/go-build
-            ~/.cache/cerbos/bin
-          key: test-${{ runner.os }}-go-${{ hashFiles('**/go.mod') }}-${{ strategy.job-index }}
-          restore-keys: |
-            test-${{ runner.os }}-go-${{ hashFiles('**/go.mod') }}-
-            test-${{ runner.os }}-go-
+      - name: Install Go and restore cached dependencies
+        uses: ./.github/actions/setup-go
 
       - name: Download previous test times
         uses: actions/download-artifact@v3
@@ -146,21 +122,11 @@ jobs:
     name: Upload test times
     runs-on: ubuntu-latest
     steps:
-      - name: Install Go
-        uses: actions/setup-go@v3
-        with:
-          go-version: 1.20.x
-
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - uses: actions/cache@v3
-        with:
-          path: |
-            ~/go/pkg/mod
-            ~/.cache/go-build
-            ~/.cache/cerbos/bin
-          key: test-${{ runner.os }}-go-${{ hashFiles('**/go.mod') }}-0
+      - name: Install Go and restore cached dependencies
+        uses: ./.github/actions/setup-go
 
       - name: Download JUnit reports
         uses: actions/download-artifact@v3

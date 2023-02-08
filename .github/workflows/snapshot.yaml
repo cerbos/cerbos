@@ -11,12 +11,6 @@ jobs:
     name: Publish Dev Containers
     runs-on: ubuntu-latest
     steps:
-      - name: Install Go
-        uses: actions/setup-go@v3
-        with:
-          go-version: 1.20.x
-          check-latest: true
-
       - name: Checkout code
         uses: actions/checkout@v3
         with:
@@ -41,15 +35,11 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - uses: actions/cache@v3
+      - name: Install Go and cache dependencies
+        uses: ./.github/actions/setup-go
         with:
-          path: |
-            ~/go/pkg/mod
-            ~/.cache/go-build
-            ~/.cache/cerbos/bin
-          key: ${{ runner.os }}-go-${{ hashFiles('**/go.mod') }}
-          restore-keys: |
-            ${{ runner.os }}-go-
+          cross_compiling: true
+          write_build_cache: true
 
       - name: Generate
         run: make generate

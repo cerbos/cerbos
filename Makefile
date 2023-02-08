@@ -144,3 +144,6 @@ install-cerbosctl:
 			exit -1; \
 		fi; \
 	fi; \
+
+.PHONY: warm-cache
+warm-cache: compile proto-gen-deps $(GOTESTSUM) $(MOCKERY) $(TESTSPLIT)
