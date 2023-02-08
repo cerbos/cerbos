@@ -272,8 +272,9 @@ func TestSuite(store DBStorage) func(*testing.T) {
 		t.Run("delete_schema", func(t *testing.T) {
 			checkEvents := storage.TestSubscription(store)
 
-			err := store.DeleteSchema(ctx, schID)
+			deletedSchemas, err := store.DeleteSchema(ctx, schID)
 			require.NoError(t, err)
+			require.Equal(t, uint32(1), deletedSchemas)
 
 			have, err := store.LoadSchema(ctx, schID)
 			require.Error(t, err)

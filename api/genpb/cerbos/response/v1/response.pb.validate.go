@@ -2852,6 +2852,8 @@ func (m *DeleteSchemaResponse) validate(all bool) error {
 
 	var errors []error
 
+	// no validation rules for DeletedSchemas
+
 	if len(errors) > 0 {
 		return DeleteSchemaResponseMultiError(errors)
 	}
