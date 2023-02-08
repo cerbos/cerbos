@@ -6,7 +6,7 @@ A collection of tips and code snippets designed to help you write cleaner, more 
 
 == Modelling policies
 
-With Cerbos, access rules are always resource oriented, and the policies you write map to these resources within your system. A _resource_ can be anything, and the way you model your policies is up you -- you can achieve the same logical outcome in numerous ways; action-led, role-led, attribute-led, or with combinations thereof.
+With Cerbos, access rules are always resource-oriented and the policies you write map to these resources within your system. A _resource_ can be anything, and the way you model your policies is up you -- you can achieve the same logical outcome in numerous ways; action-led, role-led, attribute-led, or with combinations thereof.
 
 That said, some patterns will lend themselves more naturally to certain scenarios -- let's take a look at some different approaches. Consider this business model:
 
