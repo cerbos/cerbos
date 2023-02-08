@@ -29,7 +29,7 @@ stop_kind() {
 run_tests() {
     (
         cd "$SCRIPT_DIR"
-        telepresence helm install --upgrade
+        telepresence helm upgrade
         telepresence connect --no-report -- go test -v -failfast -p=1 --tags="tests e2e" "$@"
     )
 }
