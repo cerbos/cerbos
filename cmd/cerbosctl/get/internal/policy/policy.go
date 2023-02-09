@@ -64,7 +64,7 @@ func List(k *kong.Kong, c client.AdminClient, filters *flagset.Filters, format *
 			sorted := sort(filtered, sortFlags.SortBy)
 			for _, p := range sorted {
 				row := make([]string, 2, 4) //nolint:gomnd
-				row[0] = p.Metadata.StoreIdentifer
+				row[0] = p.Metadata.StoreIdentifier
 				row[1] = p.Name
 				if kind != policy.DerivedRolesKind {
 					row = append(row, p.Version)

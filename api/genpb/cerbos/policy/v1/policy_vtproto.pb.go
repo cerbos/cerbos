@@ -205,10 +205,10 @@ func (m *Metadata) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 		i -= len(m.unknownFields)
 		copy(dAtA[i:], m.unknownFields)
 	}
-	if len(m.StoreIdentifer) > 0 {
-		i -= len(m.StoreIdentifer)
-		copy(dAtA[i:], m.StoreIdentifer)
-		i = encodeVarint(dAtA, i, uint64(len(m.StoreIdentifer)))
+	if len(m.StoreIdentifier) > 0 {
+		i -= len(m.StoreIdentifier)
+		copy(dAtA[i:], m.StoreIdentifier)
+		i = encodeVarint(dAtA, i, uint64(len(m.StoreIdentifier)))
 		i--
 		dAtA[i] = 0x22
 	}
@@ -2614,7 +2614,7 @@ func (m *Metadata) SizeVT() (n int) {
 		}
 		n += 1 + l + sov(uint64(l))
 	}
-	l = len(m.StoreIdentifer)
+	l = len(m.StoreIdentifier)
 	if l > 0 {
 		n += 1 + l + sov(uint64(l))
 	}
@@ -4228,7 +4228,7 @@ func (m *Metadata) UnmarshalVT(dAtA []byte) error {
 			iNdEx = postIndex
 		case 4:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field StoreIdentifer", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field StoreIdentifier", wireType)
 			}
 			var stringLen uint64
 			for shift := uint(0); ; shift += 7 {
@@ -4256,7 +4256,7 @@ func (m *Metadata) UnmarshalVT(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.StoreIdentifer = string(dAtA[iNdEx:postIndex])
+			m.StoreIdentifier = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
 		default:
 			iNdEx = preIndex

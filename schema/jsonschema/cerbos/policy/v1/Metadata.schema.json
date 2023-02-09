@@ -25,7 +25,7 @@
     "sourceFile": {
       "type": "string"
     },
-    "storeIdentifer": {
+    "storeIdentifier": {
       "type": "string"
     }
   }
