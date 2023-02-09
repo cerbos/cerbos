@@ -1,0 +1,46 @@
+name: Cache dependencies
+
+on:
+  push:
+    branches:
+      - main
+  workflow_call:
+
+jobs:
+  changes:
+    name: Check for changes
+    runs-on: ubuntu-latest
+    outputs:
+      deps: ${{ steps.filter.outputs.deps }}
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v3
+
+      - name: Check for changes
+        id: filter
+        uses: dorny/paths-filter@v2
+        with:
+          filters: |
+            deps:
+              - .github/workflows/cache.yaml
+              - "**/go.mod"
+
+  cache:
+    name: Cache dependencies
+    needs: changes
+    if: ${{ needs.changes.outputs.deps == 'true' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v3
+
+      - name: Install Go and cache dependencies
+        id: setup
+        uses: ./.github/actions/setup-go
+        with:
+          write_deps_cache: true
+          write_build_cache: true
+
+      - name: Warm cache
+        if: ${{ steps.setup.outputs.cache_hit != 'true' }}
+        run: make warm-cache
