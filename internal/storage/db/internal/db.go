@@ -542,7 +542,7 @@ func (s *dbStorage) Disable(ctx context.Context, policyKey ...string) (uint32, e
 	var brokenChainPolicies []string
 	for _, pk := range policyKey {
 		mID := namer.GenModuleIDFromFQN(namer.FQNFromPolicyKey(pk))
-		if has, ok := hasDescendants[mID]; !ok || has {
+		if has, ok := hasDescendants[mID]; ok && has {
 			brokenChainPolicies = append(brokenChainPolicies, pk)
 		}
 	}
