@@ -25,6 +25,7 @@ import (
 	"google.golang.org/protobuf/proto"
 
 	svcv1 "github.com/cerbos/cerbos/api/genpb/cerbos/svc/v1"
+	"github.com/cerbos/cerbos/internal/util"
 )
 
 const (
@@ -197,4 +198,9 @@ func handleRoutingError(ctx context.Context, mux *runtime.ServeMux, marshaler ru
 	}
 
 	runtime.DefaultRoutingErrorHandler(ctx, mux, marshaler, w, r, httpStatus)
+}
+
+func cerbosVersionUnaryServerInterceptor(ctx context.Context, req any, _ *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (any, error) {
+	_ = grpc.SetHeader(ctx, metadata.Pairs("cerbos-version", util.Version))
+	return handler(ctx, req)
 }
