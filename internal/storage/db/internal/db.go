@@ -41,7 +41,7 @@ type DBStorage interface {
 	ListSchemaIDs(ctx context.Context) ([]string, error)
 	AddOrUpdateSchema(ctx context.Context, schemas ...*schemav1.Schema) error
 	Disable(ctx context.Context, policyKey ...string) (uint32, error)
-	DeleteSchema(ctx context.Context, ids ...string) error
+	DeleteSchema(ctx context.Context, ids ...string) (uint32, error)
 	LoadSchema(ctx context.Context, url string) (io.ReadCloser, error)
 	LoadPolicy(ctx context.Context, policyKey ...string) ([]*policy.Wrapper, error)
 }
@@ -118,7 +118,7 @@ func (s *dbStorage) AddOrUpdateSchema(ctx context.Context, schemas ...*schemav1.
 	return nil
 }
 
-func (s *dbStorage) DeleteSchema(ctx context.Context, ids ...string) error {
+func (s *dbStorage) DeleteSchema(ctx context.Context, ids ...string) (uint32, error) {
 	events := make([]storage.Event, 0, len(ids))
 	for _, id := range ids {
 		events = append(events, storage.NewSchemaEvent(storage.EventDeleteSchema, id))
@@ -130,21 +130,17 @@ func (s *dbStorage) DeleteSchema(ctx context.Context, ids ...string) error {
 		Executor().
 		ExecContext(ctx)
 	if err != nil {
-		return fmt.Errorf("failed to delete schema(s): %w", err)
+		return 0, fmt.Errorf("failed to delete schema(s): %w", err)
 	}
 
 	affected, err := res.RowsAffected()
 	if err != nil {
-		return fmt.Errorf("failed to discover whether the schema(s) got deleted or not: %w", err)
-	}
-
-	if affected == 0 {
-		return fmt.Errorf("failed to find the schema(s) for deletion")
+		return 0, fmt.Errorf("failed to discover whether the schema(s) got deleted or not: %w", err)
 	}
 
 	s.NotifySubscribers(events...)
 
-	return nil
+	return uint32(affected), nil
 }
 
 func (s *dbStorage) LoadPolicy(ctx context.Context, policyKey ...string) ([]*policy.Wrapper, error) {

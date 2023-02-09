@@ -2158,6 +2158,12 @@
     },
     "v1DeleteSchemaResponse": {
       "type": "object",
+      "properties": {
+        "deletedSchemas": {
+          "type": "integer",
+          "format": "int64"
+        }
+      },
       "description": "Delete schema(s) response"
     },
     "v1DerivedRoles": {

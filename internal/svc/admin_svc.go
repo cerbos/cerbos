@@ -259,12 +259,13 @@ func (cas *CerbosAdminService) DeleteSchema(ctx context.Context, req *requestv1.
 		return nil, status.Error(codes.Unimplemented, "Configured store is not mutable")
 	}
 
-	if err := ms.DeleteSchema(ctx, req.Id...); err != nil {
+	deletedSchemas, err := ms.DeleteSchema(ctx, req.Id...)
+	if err != nil {
 		ctxzap.Extract(ctx).Error("Failed to delete the schema(s)", zap.Error(err))
 		return nil, status.Errorf(codes.Internal, "Failed to delete the schema(s)")
 	}
 
-	return &responsev1.DeleteSchemaResponse{}, nil
+	return &responsev1.DeleteSchemaResponse{DeletedSchemas: deletedSchemas}, nil
 }
 
 func (cas *CerbosAdminService) ReloadStore(ctx context.Context, req *requestv1.ReloadStoreRequest) (*responsev1.ReloadStoreResponse, error) {
