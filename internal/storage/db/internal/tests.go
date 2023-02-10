@@ -214,7 +214,7 @@ func TestSuite(store DBStorage) func(*testing.T) {
 					require.Empty(t, cmp.Diff(want.Policy, have.Policy,
 						protocmp.Transform(), protocmp.IgnoreMessages(&policyv1.Metadata{})))
 					require.NotNil(t, have.Metadata)
-					require.Equal(t, namer.PolicyKeyFromFQN(want.FQN), have.Metadata.StoreIdentifier)
+					require.Equal(t, namer.PolicyKeyFromFQN(want.FQN), have.Metadata.StoreIdentifer)
 				})
 			}
 		})

@@ -67,7 +67,7 @@ func TestIndexLoadPolicy(t *testing.T) {
 			require.NoError(t, err)
 
 			for idx, p := range policies {
-				require.Equal(t, policyFiles[idx], p.Metadata.StoreIdentifier)
+				require.Equal(t, policyFiles[idx], p.Metadata.StoreIdentifer)
 			}
 		})
 

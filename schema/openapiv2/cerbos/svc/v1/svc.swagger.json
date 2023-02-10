@@ -2329,7 +2329,7 @@
           "type": "string",
           "format": "uint64"
         },
-        "storeIdentifier": {
+        "storeIdentifer": {
           "type": "string"
         }
       }
