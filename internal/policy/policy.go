@@ -151,7 +151,7 @@ func WithMetadata(p *policyv1.Policy, source string, annotations map[string]stri
 	p.Metadata.SourceFile = source
 	p.Metadata.Annotations = annotations
 
-	if p.Metadata.StoreIdentifier == "" {
+	if p.Metadata.StoreIdentifer == "" {
 		p = WithStoreIdentifier(p, storeIdentifier)
 	}
 
@@ -168,7 +168,7 @@ func WithStoreIdentifier(p *policyv1.Policy, storeIdentifier string) *policyv1.P
 		p.Metadata = &policyv1.Metadata{}
 	}
 
-	p.Metadata.StoreIdentifier = storeIdentifier
+	p.Metadata.StoreIdentifer = storeIdentifier
 
 	return p
 }

@@ -139,7 +139,7 @@ func TestListPolicies(t *testing.T) {
 				require.NoError(t, err)
 				require.Len(t, have, 1)
 				require.NotNil(t, have[0].Metadata)
-				require.Equal(t, want, have[0].Metadata.StoreIdentifier)
+				require.Equal(t, want, have[0].Metadata.StoreIdentifer)
 			})
 		}
 	})

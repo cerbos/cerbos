@@ -14,7 +14,7 @@ func sort(policies []policy.Wrapper, sortBy flagset.SortBy) []policy.Wrapper {
 	switch sortBy {
 	case flagset.SortByPolicyID, flagset.SortByNone:
 		gosort.SliceStable(policies, func(i, j int) bool {
-			return policies[i].Metadata.StoreIdentifier < policies[j].Metadata.StoreIdentifier
+			return policies[i].Metadata.StoreIdentifer < policies[j].Metadata.StoreIdentifer
 		})
 	case flagset.SortByName:
 		gosort.SliceStable(policies, func(i, j int) bool {

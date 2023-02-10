@@ -33,7 +33,7 @@ message Metadata {
   string source_file = 1;
   map<string, string> annotations = 2;
   google.protobuf.UInt64Value hash = 3;
-  string store_identifier = 4;
+  string store_identifer = 4;
 }
 
 message ResourcePolicy {

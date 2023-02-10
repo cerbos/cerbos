@@ -147,7 +147,7 @@
         "sourceFile": {
           "type": "string"
         },
-        "storeIdentifier": {
+        "storeIdentifer": {
           "type": "string"
         }
       }

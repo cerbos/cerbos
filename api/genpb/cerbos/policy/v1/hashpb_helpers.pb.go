@@ -348,8 +348,8 @@ func cerbos_policy_v1_Metadata_hashpb_sum(m *Metadata, hasher hash.Hash, ignore 
 		}
 
 	}
-	if _, ok := ignore["cerbos.policy.v1.Metadata.store_identifier"]; !ok {
-		_, _ = hasher.Write(protowire.AppendString(nil, m.StoreIdentifier))
+	if _, ok := ignore["cerbos.policy.v1.Metadata.store_identifer"]; !ok {
+		_, _ = hasher.Write(protowire.AppendString(nil, m.StoreIdentifer))
 
 	}
 }
