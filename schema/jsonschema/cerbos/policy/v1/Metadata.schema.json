@@ -27,6 +27,9 @@
     },
     "storeIdentifer": {
       "type": "string"
+    },
+    "storeIdentifier": {
+      "type": "string"
     }
   }
 }

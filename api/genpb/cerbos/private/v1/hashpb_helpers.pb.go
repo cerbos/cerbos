@@ -540,6 +540,10 @@ func cerbos_policy_v1_Metadata_hashpb_sum(m *v11.Metadata, hasher hash.Hash, ign
 		_, _ = hasher.Write(protowire.AppendString(nil, m.StoreIdentifer))
 
 	}
+	if _, ok := ignore["cerbos.policy.v1.Metadata.store_identifier"]; !ok {
+		_, _ = hasher.Write(protowire.AppendString(nil, m.StoreIdentifier))
+
+	}
 }
 
 func cerbos_policy_v1_Policy_hashpb_sum(m *v11.Policy, hasher hash.Hash, ignore map[string]struct{}) {
