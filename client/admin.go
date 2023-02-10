@@ -32,6 +32,7 @@ type AdminClient interface {
 	GetPolicy(ctx context.Context, ids ...string) ([]*policyv1.Policy, error)
 	DisablePolicy(ctx context.Context, ids ...string) (uint32, error)
 	AddOrUpdateSchema(ctx context.Context, schemas *SchemaSet) error
+	DeleteSchema(ctx context.Context, ids ...string) (uint32, error)
 	ListSchemas(ctx context.Context) ([]string, error)
 	GetSchema(ctx context.Context, ids ...string) ([]*schemav1.Schema, error)
 	ReloadStore(ctx context.Context, wait bool) error
@@ -235,6 +236,22 @@ func (c *GrpcAdminClient) AddOrUpdateSchema(ctx context.Context, schemas *Schema
 	}
 
 	return nil
+}
+
+func (c *GrpcAdminClient) DeleteSchema(ctx context.Context, ids ...string) (uint32, error) {
+	req := &requestv1.DeleteSchemaRequest{
+		Id: ids,
+	}
+	if err := req.Validate(); err != nil {
+		return 0, fmt.Errorf("could not validate delete schema request: %w", err)
+	}
+
+	resp, err := c.client.DeleteSchema(ctx, req, grpc.PerRPCCredentials(c.creds))
+	if err != nil {
+		return 0, fmt.Errorf("could not delete schema: %w", err)
+	}
+
+	return resp.DeletedSchemas, nil
 }
 
 func (c *GrpcAdminClient) ListSchemas(ctx context.Context) ([]string, error) {
