@@ -30,7 +30,7 @@ func TestSort(t *testing.T) {
 		policies = sort(policies, flagset.SortByPolicyID)
 		require.NotEmpty(t, policies)
 		for idx, p := range policies {
-			require.Equal(t, expected[idx], p.Metadata.StoreIdentifer)
+			require.Equal(t, expected[idx], p.Metadata.StoreIdentifier)
 		}
 	})
 
@@ -77,7 +77,7 @@ func mkPoliciesForSortByVersion(t *testing.T, noOfPolicies int) []policy.Wrapper
 	policies := mkPoliciesForSort(t, noOfPolicies)
 	for i := 0; i < noOfPolicies; i++ {
 		policies[i].Version = fmt.Sprintf("%s_%d", policies[i].Version, noOfPolicies-i-1)
-		policies[i].Policy = policy.WithStoreIdentifier(policies[i].Policy, fmt.Sprintf("%s_%d", policies[i].Metadata.StoreIdentifer, noOfPolicies-i-1))
+		policies[i].Policy = policy.WithStoreIdentifier(policies[i].Policy, fmt.Sprintf("%s_%d", policies[i].Metadata.StoreIdentifier, noOfPolicies-i-1))
 	}
 	return policies
 }
