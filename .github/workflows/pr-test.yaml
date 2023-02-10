@@ -5,6 +5,7 @@ on:
     branches:
       - main
       - 'v*'
+  merge_group:
 jobs:
   changes:
     runs-on: ubuntu-latest
