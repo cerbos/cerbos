@@ -33,7 +33,7 @@ func TestWith(t *testing.T) {
 		require.Empty(t, p.Metadata)
 
 		p = policy.WithStoreIdentifier(p, policyKey)
-		require.NotEmpty(t, p.Metadata.StoreIdentifer)
+		require.NotEmpty(t, p.Metadata.StoreIdentifier)
 		require.Equal(t, fmt.Sprintf(derivedRolesFmt, 1), policyKey)
 	})
 
