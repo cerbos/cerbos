@@ -32,6 +32,7 @@ This release includes a bug fix for the situation whereby if a user edited a pol
 
 === Enhancements
 
+* Add DeleteSchema RPC to the SDK AdminClient (link:https://github.com/cerbos/cerbos/pull/1459[#1459])
 * Prevent scoped policies being disabled (link:https://github.com/cerbos/cerbos/pull/1441[#1441])
 * #**BREAKING**# Return number of schemas deleted, and don't error if none (link:https://github.com/cerbos/cerbos/pull/1445[#1445])
 
