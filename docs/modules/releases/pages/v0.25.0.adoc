@@ -1,0 +1,68 @@
+include::ROOT:partial$attributes.adoc[]
+
+[#v0.25.0]
+= Cerbos v0.25.0
+
+This release contains improvements to the Admin API to make administrative tasks easier and error-free.
+
+== Highlights
+
+When using database-backed policy stores, it's now possible to disable policies by name xref:0.25.0@cli:cerbosctl.adoc#disable[using `cerbosctl`] or the xref:0.25.0@api:admin_api.adoc#disable-policies[Admin API]. Previously this required re-submitting the whole policy to the Admin API with its `disabled` field set to `true`. The new endpoint detects whether disabling a scoped policy would break the scope chain and warns the user about it. That helps prevent users from making changes that leaves the policy store in an invalid state.
+
+The `DeleteSchema` Admin API endpoint now returns the number of schemas deleted and does not throw an error if none were deleted.
+
+This release includes a bug fix for the situation whereby if a user edited a policy in-place while Cerbos was running and changed its identifiers (kind, name, version), the old policy definition would still be available in the compiled policy cache and can be used for making decisions. Now Cerbos detects when a policy file has changed its identifiers and evicts the old state from the cache.
+
+
+== Changelog
+
+
+=== Bug Fixes
+
+* Evict disabled policy from the cache (link:https://github.com/cerbos/cerbos/pull/1436[#1436])
+* Evict policies that are changed in-place (link:https://github.com/cerbos/cerbos/pull/1439[#1439])
+* Fix erroneous check in the Disable command (link:https://github.com/cerbos/cerbos/pull/1447[#1447])
+* Fix typo in policy metadata field (link:https://github.com/cerbos/cerbos/pull/1454[#1454])
+* Fix typo in policy metadata field (link:https://github.com/cerbos/cerbos/pull/1458[#1458])
+
+=== Features
+
+* Add Cerbos version to response headers (link:https://github.com/cerbos/cerbos/pull/1448[#1448])
+* Admin API endpoint to disable policy(s) (link:https://github.com/cerbos/cerbos/pull/1426[#1426])
+
+=== Enhancements
+
+* Prevent scoped policies being disabled (link:https://github.com/cerbos/cerbos/pull/1441[#1441])
+* #**BREAKING**# Return number of schemas deleted, and don't error if none (link:https://github.com/cerbos/cerbos/pull/1445[#1445])
+
+=== Documentation
+
+* Add note on resource-led policy design in `Best practices` section (link:https://github.com/cerbos/cerbos/pull/1423[#1423])
+* Add policyVersion example to tests (link:https://github.com/cerbos/cerbos/pull/1430[#1430])
+* Clarify how to provide blob store credentials (link:https://github.com/cerbos/cerbos/pull/1433[#1433])
+
+=== Chores
+
+* Add licence file for pjbgf/sha1cd (link:https://github.com/cerbos/cerbos/pull/1418[#1418])
+* Bump helm.sh/helm/v3 from 3.11.0 to 3.11.1 (link:https://github.com/cerbos/cerbos/pull/1450[#1450])
+* Bump version to 0.25.0
+* Improve caching (link:https://github.com/cerbos/cerbos/pull/1446[#1446])
+* Revert update of github.com/jackc/pgx/v4 to v5 (link:https://github.com/cerbos/cerbos/pull/1425[#1425])
+* Update bufbuild/buf-setup-action action to v1.12.0 (link:https://github.com/cerbos/cerbos/pull/1422[#1422])
+* Update gcloud auth (link:https://github.com/cerbos/cerbos/pull/1420[#1420])
+* Update github actions deps (link:https://github.com/cerbos/cerbos/pull/1429[#1429])
+* Update go deps (link:https://github.com/cerbos/cerbos/pull/1416[#1416])
+* Update go deps (link:https://github.com/cerbos/cerbos/pull/1421[#1421])
+* Update go deps (link:https://github.com/cerbos/cerbos/pull/1424[#1424])
+* Update go deps (link:https://github.com/cerbos/cerbos/pull/1428[#1428])
+* Update go deps (link:https://github.com/cerbos/cerbos/pull/1437[#1437])
+* Update go deps to v2 (major) (link:https://github.com/cerbos/cerbos/pull/1417[#1417])
+* Update google-github-actions/setup-gcloud action to v1.1.0 (link:https://github.com/cerbos/cerbos/pull/1438[#1438])
+* Update module github.com/jackc/pgx/v4 to v5 (link:https://github.com/cerbos/cerbos/pull/1425[#1425])
+* Update module go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp to v0.39.0 [security] (link:https://github.com/cerbos/cerbos/pull/1452[#1452])
+* Upgrade Otel semconv version (link:https://github.com/cerbos/cerbos/pull/1444[#1444])
+* Use Go 1.20 in CI (link:https://github.com/cerbos/cerbos/pull/1440[#1440])
+
+=== Other
+
+* Fix typo in policy metadata field (link:https://github.com/cerbos/cerbos/pull/1454[#1454])
