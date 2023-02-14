@@ -6,6 +6,7 @@ package root
 import (
 	"github.com/cerbos/cerbos/cmd/cerbosctl/audit"
 	"github.com/cerbos/cerbos/cmd/cerbosctl/decisions"
+	"github.com/cerbos/cerbos/cmd/cerbosctl/del"
 	"github.com/cerbos/cerbos/cmd/cerbosctl/disable"
 	"github.com/cerbos/cerbos/cmd/cerbosctl/get"
 	"github.com/cerbos/cerbos/cmd/cerbosctl/internal/flagset"
@@ -38,6 +39,7 @@ type Cli struct {
 	Version version.Cmd `cmd:"" help:"Show cerbosctl and PDP version"`
 	Get     get.Cmd     `cmd:"" help:"List or view policies and schemas"`
 	flagset.Globals
+	Delete    del.Cmd       `cmd:"" help:"Delete schemas"`
 	Disable   disable.Cmd   `cmd:"" help:"Disable policies"`
 	Put       put.Cmd       `cmd:"" help:"Put policies or schemas"`
 	Decisions decisions.Cmd `cmd:"" help:"Interactive decision log viewer"`

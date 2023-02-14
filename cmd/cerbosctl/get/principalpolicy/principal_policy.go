@@ -40,6 +40,7 @@ cerbosctl get principal_policies principal.donald_duck.default -ojson
 # Get principal policy definition as pretty json
 cerbosctl get principal_policies principal.donald_duck.default -oprettyjson`
 
+//nolint:govet
 type Cmd struct {
 	flagset.Filters
 	flagset.Format

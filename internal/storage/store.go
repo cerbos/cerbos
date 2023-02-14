@@ -96,7 +96,7 @@ type Store interface {
 	// Driver is the name of the storage backend implementation.
 	Driver() string
 	// ListPolicyIDs returns the policy IDs in the store
-	ListPolicyIDs(context.Context) ([]string, error)
+	ListPolicyIDs(context.Context, bool) ([]string, error)
 	// ListSchemaIDs returns the schema ids in the store
 	ListSchemaIDs(context.Context) ([]string, error)
 	// LoadSchema loads the given schema from the store.
@@ -112,7 +112,7 @@ type SourceStore interface {
 	// GetDependents returns the dependents of the given modules.
 	GetDependents(context.Context, ...namer.ModuleID) (map[namer.ModuleID][]namer.ModuleID, error)
 	// LoadPolicy loads the given policy from the store
-	LoadPolicy(context.Context, ...string) ([]*policy.Wrapper, error)
+	LoadPolicy(context.Context, bool, ...string) ([]*policy.Wrapper, error)
 }
 
 // BinaryStore is implemented by stores that have pre-compiled policies in binary format.

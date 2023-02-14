@@ -3,65 +3,64 @@
 
 //go:build !race
 
-package disable_test
+package del_test
 
 import (
 	"bytes"
 	"context"
 	"fmt"
+	"os"
 	"path/filepath"
-	"strconv"
 	"testing"
 	"time"
 
 	"github.com/alecthomas/kong"
-	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
+	"github.com/stretchr/testify/require"
+
 	"github.com/cerbos/cerbos/client"
 	"github.com/cerbos/cerbos/client/testutil"
 	cmdclient "github.com/cerbos/cerbos/cmd/cerbosctl/internal/client"
 	"github.com/cerbos/cerbos/cmd/cerbosctl/internal/flagset"
 	"github.com/cerbos/cerbos/cmd/cerbosctl/root"
-	"github.com/cerbos/cerbos/internal/policy"
+	"github.com/cerbos/cerbos/internal/schema"
 	"github.com/cerbos/cerbos/internal/test"
-	"github.com/stretchr/testify/require"
 )
 
 const (
 	adminUsername     = "cerbos"
 	adminPassword     = "cerbosAdmin"
-	policiesPerType   = 30
 	readyTimeout      = 60 * time.Second
 	timeout           = 30 * time.Second
 	readyPollInterval = 50 * time.Millisecond
 )
 
-func TestDisableCmd(t *testing.T) {
+func TestDeleteCmd(t *testing.T) {
 	s := mkServer(t)
 	defer s.Stop() //nolint:errcheck
 
 	globals := mkGlobals(t, s.GRPCAddr())
 	ctx, _ := context.WithTimeout(context.Background(), timeout)
 	cctx := mkClients(t, globals)
-	loadPolicies(t, cctx.AdminClient)
-	testDisableCmd(ctx, cctx, globals)(t)
+	loadSchemas(t, cctx.AdminClient)
+	testDeleteCmd(ctx, cctx, globals)(t)
 }
 
-func testDisableCmd(ctx context.Context, cctx *cmdclient.Context, globals *flagset.Globals) func(*testing.T) {
+func testDeleteCmd(ctx context.Context, cctx *cmdclient.Context, globals *flagset.Globals) func(*testing.T) {
 	//nolint:thelper
 	return func(t *testing.T) {
-		t.Run("cerbosctl disable", func(t *testing.T) {
+		t.Run("cerbosctl delete", func(t *testing.T) {
 			t.Run("no arguments provided", func(t *testing.T) {
 				p := mustNew(t, &root.Cli{})
-				_, err := p.Parse([]string{"disable"})
+				_, err := p.Parse([]string{"delete"})
 				require.Error(t, err)
 			})
-			t.Run("possible arguments after disable command", func(t *testing.T) {
+			t.Run("possible arguments after delete command", func(t *testing.T) {
 				testCases := []struct {
 					args    []string
 					wantErr bool
 				}{
 					{
-						[]string{"policy", "policies", "p"},
+						[]string{"schemas", "schema", "s"},
 						false,
 					},
 				}
@@ -70,7 +69,7 @@ func testDisableCmd(ctx context.Context, cctx *cmdclient.Context, globals *flags
 					for _, arg := range tc.args {
 						cli := root.Cli{}
 						p := mustNew(t, &cli)
-						_, err := p.Parse([]string{"disable", arg})
+						_, err := p.Parse([]string{"delete", arg})
 						if tc.wantErr {
 							require.Error(t, err)
 						} else {
@@ -79,30 +78,15 @@ func testDisableCmd(ctx context.Context, cctx *cmdclient.Context, globals *flags
 					}
 				}
 			})
-			t.Run("disable and check", func(t *testing.T) {
+			t.Run("delete and check", func(t *testing.T) {
 				testCases := []struct {
-					policyKey string
-					wantErr   bool
+					schemaID string
 				}{
 					{
-						policyKey: "derived_roles.my_derived_roles_1",
-						wantErr:   false,
+						schemaID: "address.json",
 					},
 					{
-						policyKey: "principal.donald_duck_1.vdefault",
-						wantErr:   true,
-					},
-					{
-						policyKey: "principal.donald_duck_1.vdefault/acme.hr",
-						wantErr:   false,
-					},
-					{
-						policyKey: "resource.leave_request_1.vdefault",
-						wantErr:   true,
-					},
-					{
-						policyKey: "resource.leave_request_1.vdefault/acme.hr.uk",
-						wantErr:   false,
+						schemaID: "complex_object.json",
 					},
 				}
 				for idx, tc := range testCases {
@@ -111,38 +95,30 @@ func testDisableCmd(ctx context.Context, cctx *cmdclient.Context, globals *flags
 						out := bytes.NewBufferString("")
 						p.Stdout = out
 
-						policies, err := cctx.AdminClient.GetPolicy(ctx, false, tc.policyKey)
+						schemas, err := cctx.AdminClient.GetSchema(ctx, tc.schemaID)
 						require.NoError(t, err)
-						require.NotNil(t, policies)
-						require.NotNil(t, policies[0])
-						require.False(t, policies[0].Disabled)
+						require.NotNil(t, schemas)
+						require.NotNil(t, schemas[0])
 
-						kctx, err := p.Parse([]string{"disable", "policy", tc.policyKey})
+						kctx, err := p.Parse([]string{"delete", "schema", tc.schemaID})
 						require.NoError(t, err)
 						err = kctx.Run(cctx, globals)
-						if tc.wantErr {
-							require.Error(t, err)
-						} else {
-							require.NoError(t, err)
-						}
-
-						policies, err = cctx.AdminClient.GetPolicy(ctx, false, tc.policyKey)
 						require.NoError(t, err)
-						if tc.wantErr {
-							require.NotNil(t, policies)
-						} else {
-							require.Nil(t, policies)
-							require.Contains(t, out.String(), "Number of policies disabled is 1")
-						}
+
+						require.Contains(t, out.String(), "Number of schemas deleted is 1")
+
+						schemas, err = cctx.AdminClient.GetSchema(ctx, tc.schemaID)
+						require.Error(t, err)
+						require.Nil(t, schemas)
 					})
 				}
 			})
-			t.Run("disable nonexisting policy", func(t *testing.T) {
+			t.Run("delete nonexisting schema", func(t *testing.T) {
 				p := mustNew(t, &root.Cli{})
 				out := bytes.NewBufferString("")
 				p.Stdout = out
 
-				kctx, err := p.Parse([]string{"disable", "policy", "resource.nonexistent.vnone/none"})
+				kctx, err := p.Parse([]string{"delete", "schema", "nonexistent.json"})
 				require.NoError(t, err)
 				err = kctx.Run(cctx, globals)
 				require.NoError(t, err)
@@ -151,23 +127,20 @@ func testDisableCmd(ctx context.Context, cctx *cmdclient.Context, globals *flags
 	}
 }
 
-func loadPolicies(t *testing.T, ac client.AdminClient) {
+func loadSchemas(t *testing.T, ac client.AdminClient) {
 	t.Helper()
 
-	for i := 0; i < policiesPerType; i++ {
-		ps := client.NewPolicySet()
+	fsys := os.DirFS(test.PathToDir(t, filepath.Join("schema", "fs", schema.Directory)))
 
-		ps.AddPolicies(test.GenPrincipalPolicy(test.Suffix(strconv.Itoa(i))))
-		ps.AddPolicies(test.GenResourcePolicy(test.Suffix(strconv.Itoa(i))))
-		ps.AddPolicies(test.GenDerivedRoles(test.Suffix(strconv.Itoa(i))))
-		ps.AddPolicies(withScope(test.GenResourcePolicy(test.Suffix(strconv.Itoa(i))), "acme"))
-		ps.AddPolicies(withScope(test.GenResourcePolicy(test.Suffix(strconv.Itoa(i))), "acme.hr"))
-		ps.AddPolicies(withScope(test.GenResourcePolicy(test.Suffix(strconv.Itoa(i))), "acme.hr.uk"))
-		ps.AddPolicies(withScope(test.GenPrincipalPolicy(test.Suffix(strconv.Itoa(i))), "acme"))
-		ps.AddPolicies(withScope(test.GenPrincipalPolicy(test.Suffix(strconv.Itoa(i))), "acme.hr"))
+	s, err := schema.ReadSchemaFromFile(fsys, "address.json")
+	require.NoError(t, err)
+	s2, err := schema.ReadSchemaFromFile(fsys, "complex_object.json")
+	require.NoError(t, err)
 
-		require.NoError(t, ac.AddOrUpdatePolicy(context.Background(), ps))
-	}
+	ss := client.NewSchemaSet()
+	ss.AddSchemas(s)
+	ss.AddSchemas(s2)
+	require.NoError(t, ac.AddOrUpdateSchema(context.Background(), ss))
 }
 
 func mkServerOpts(t *testing.T) []testutil.ServerOpt {
@@ -238,15 +211,4 @@ func mustNew(t *testing.T, cli any) *kong.Kong {
 	parser, err := kong.New(cli, options...)
 	require.NoError(t, err)
 	return parser
-}
-
-func withScope(p *policyv1.Policy, scope string) *policyv1.Policy {
-	//nolint:exhaustive
-	switch policy.GetKind(p) {
-	case policy.PrincipalKind:
-		p.GetPrincipalPolicy().Scope = scope
-	case policy.ResourceKind:
-		p.GetResourcePolicy().Scope = scope
-	}
-	return p
 }

@@ -24,21 +24,21 @@ func TestSuiteReloadable(store storage.Store, addFn, deleteFn MutateStoreFn) fun
 		r, ok := store.(storage.Reloadable)
 		require.True(t, ok, "Store is not reloadable")
 
-		policies, err := store.ListPolicyIDs(context.Background())
+		policies, err := store.ListPolicyIDs(context.Background(), false)
 		require.NoError(t, err)
 		require.Len(t, policies, 0)
 
 		err = addFn()
 		require.NoError(t, err)
 
-		policies, err = store.ListPolicyIDs(context.Background())
+		policies, err = store.ListPolicyIDs(context.Background(), false)
 		require.NoError(t, err)
 		require.Len(t, policies, 0)
 
 		err = r.Reload(context.Background())
 		require.NoError(t, err)
 
-		policies, err = store.ListPolicyIDs(context.Background())
+		policies, err = store.ListPolicyIDs(context.Background(), false)
 		require.NoError(t, err)
 		require.NotZero(t, len(policies))
 
@@ -48,7 +48,7 @@ func TestSuiteReloadable(store storage.Store, addFn, deleteFn MutateStoreFn) fun
 		err = r.Reload(context.Background())
 		require.NoError(t, err)
 
-		policies, err = store.ListPolicyIDs(context.Background())
+		policies, err = store.ListPolicyIDs(context.Background(), false)
 		require.NoError(t, err)
 		require.Len(t, policies, 0)
 	}

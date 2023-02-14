@@ -517,6 +517,10 @@ message ListPoliciesRequest {
   option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
     json_schema: {description: "List policies request"}
   };
+  bool include_disabled = 1 [
+    (google.api.field_behavior) = OPTIONAL,
+    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "Include disabled policies"}
+  ];
 }
 
 message GetPolicyRequest {
@@ -540,6 +544,10 @@ message GetPolicyRequest {
       description: "For blob, disk, git stores use file name (<filename>.yaml). For mysql, postgres, sqlite3 use id (<kind>.<name>.<version>) of the policy"
       example: "\"principal.sarah.vdefault\""
     }
+  ];
+  bool include_disabled = 2 [
+    (google.api.field_behavior) = OPTIONAL,
+    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "Include disabled policies"}
   ];
 }
 

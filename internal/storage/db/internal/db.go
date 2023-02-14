@@ -14,6 +14,7 @@ import (
 	"strings"
 
 	"github.com/doug-martin/goqu/v9"
+	"github.com/doug-martin/goqu/v9/exp"
 	"github.com/jackc/pgtype"
 	"go.opencensus.io/stats"
 	"go.opencensus.io/tag"
@@ -37,13 +38,13 @@ type DBStorage interface {
 	GetDependents(ctx context.Context, ids ...namer.ModuleID) (map[namer.ModuleID][]namer.ModuleID, error)
 	HasDescendants(ctx context.Context, ids ...namer.ModuleID) (map[namer.ModuleID]bool, error)
 	Delete(ctx context.Context, ids ...namer.ModuleID) error
-	ListPolicyIDs(ctx context.Context) ([]string, error)
+	ListPolicyIDs(ctx context.Context, includeDisabled bool) ([]string, error)
 	ListSchemaIDs(ctx context.Context) ([]string, error)
 	AddOrUpdateSchema(ctx context.Context, schemas ...*schemav1.Schema) error
 	Disable(ctx context.Context, policyKey ...string) (uint32, error)
 	DeleteSchema(ctx context.Context, ids ...string) (uint32, error)
 	LoadSchema(ctx context.Context, url string) (io.ReadCloser, error)
-	LoadPolicy(ctx context.Context, policyKey ...string) ([]*policy.Wrapper, error)
+	LoadPolicy(ctx context.Context, includeDisabled bool, policyKey ...string) ([]*policy.Wrapper, error)
 }
 
 func NewDBStorage(ctx context.Context, db *goqu.Database, dbOpts ...DBOpt) (DBStorage, error) {
@@ -143,10 +144,17 @@ func (s *dbStorage) DeleteSchema(ctx context.Context, ids ...string) (uint32, er
 	return uint32(affected), nil
 }
 
-func (s *dbStorage) LoadPolicy(ctx context.Context, policyKey ...string) ([]*policy.Wrapper, error) {
+func (s *dbStorage) LoadPolicy(ctx context.Context, includeDisabled bool, policyKey ...string) ([]*policy.Wrapper, error) {
 	moduleIDs := make([]namer.ModuleID, len(policyKey))
 	for i, pk := range policyKey {
 		moduleIDs[i] = namer.GenModuleIDFromFQN(namer.FQNFromPolicyKey(pk))
+	}
+
+	whereExprs := []exp.Expression{
+		goqu.C(PolicyTblIDCol).In(moduleIDs),
+	}
+	if !includeDisabled {
+		whereExprs = append(whereExprs, goqu.C(PolicyTblDisabledCol).Neq(goqu.V(true)))
 	}
 
 	var recs []Policy
@@ -161,10 +169,7 @@ func (s *dbStorage) LoadPolicy(ctx context.Context, policyKey ...string) ([]*pol
 			goqu.C(PolicyTblDisabledCol),
 			goqu.C(PolicyTblDefinitionCol),
 		).
-		Where(
-			goqu.C(PolicyTblIDCol).In(moduleIDs),
-			goqu.C(PolicyTblDisabledCol).Neq(goqu.V(true)),
-		).
+		Where(whereExprs...).
 		ScanStructsContext(ctx, &recs); err != nil {
 		return nil, fmt.Errorf("failed to get policies: %w", err)
 	}
@@ -603,8 +608,13 @@ func (s *dbStorage) Delete(ctx context.Context, ids ...namer.ModuleID) error {
 	return nil
 }
 
-func (s *dbStorage) ListPolicyIDs(ctx context.Context) ([]string, error) {
+func (s *dbStorage) ListPolicyIDs(ctx context.Context, includeDisabled bool) ([]string, error) {
 	var policyCoords []namer.PolicyCoords
+	var whereExprs []exp.Expression
+	if !includeDisabled {
+		whereExprs = append(whereExprs, goqu.C(PolicyTblDisabledCol).Neq(goqu.V(true)))
+	}
+
 	err := s.db.From(PolicyTbl).
 		Select(
 			goqu.C(PolicyTblKindCol),
@@ -612,7 +622,7 @@ func (s *dbStorage) ListPolicyIDs(ctx context.Context) ([]string, error) {
 			goqu.C(PolicyTblVerCol),
 			goqu.COALESCE(goqu.C(PolicyTblScopeCol), "").As(PolicyTblScopeCol),
 		).
-		Where(goqu.C(PolicyTblDisabledCol).Neq(goqu.V(true))).
+		Where(whereExprs...).
 		Order(
 			goqu.C(PolicyTblKindCol).Asc(),
 			goqu.C(PolicyTblNameCol).Asc(),

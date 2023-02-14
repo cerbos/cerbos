@@ -288,7 +288,7 @@ func (ms *MockStore) Delete(ctx context.Context, ids ...namer.ModuleID) error {
 	return args.Error(0)
 }
 
-func (ms *MockStore) ListPolicyIDs(ctx context.Context) ([]string, error) {
+func (ms *MockStore) ListPolicyIDs(ctx context.Context, _ bool) ([]string, error) {
 	args := ms.MethodCalled("ListPolicyIDs", ctx)
 	if res := args.Get(0); res == nil {
 		return nil, args.Error(0)
@@ -304,7 +304,7 @@ func (ms *MockStore) ListSchemaIDs(ctx context.Context) ([]string, error) {
 	return args.Get(0).([]string), args.Error(0)
 }
 
-func (ms *MockStore) LoadPolicy(ctx context.Context, file ...string) ([]*policy.Wrapper, error) {
+func (ms *MockStore) LoadPolicy(ctx context.Context, _ bool, file ...string) ([]*policy.Wrapper, error) {
 	args := ms.MethodCalled("LoadPolicy", ctx)
 	if res := args.Get(0); res == nil {
 		return nil, args.Error(0)

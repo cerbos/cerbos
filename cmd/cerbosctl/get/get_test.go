@@ -127,20 +127,24 @@ func testGetCmd(clientCtx *cmdclient.Context, globals *flagset.Globals) func(*te
 			})
 			t.Run("compare policy count", func(t *testing.T) {
 				testCases := []struct {
-					args      []string
-					wantCount int
+					args                  []string
+					wantCount             int
+					wantCountWithDisabled int
 				}{
 					{
-						args:      []string{"principal_policy", "principal_policies", "pp"},
-						wantCount: policiesPerType * 3,
+						args:                  []string{"principal_policy", "principal_policies", "pp"},
+						wantCount:             policiesPerType * 3,
+						wantCountWithDisabled: policiesPerType * 4,
 					},
 					{
-						args:      []string{"derived_role", "derived_roles", "dr"},
-						wantCount: policiesPerType,
+						args:                  []string{"derived_role", "derived_roles", "dr"},
+						wantCount:             policiesPerType,
+						wantCountWithDisabled: policiesPerType * 2,
 					},
 					{
-						args:      []string{"resource_policy", "resource_policies", "rp"},
-						wantCount: policiesPerType * 4,
+						args:                  []string{"resource_policy", "resource_policies", "rp"},
+						wantCount:             policiesPerType * 4,
+						wantCountWithDisabled: policiesPerType * 5,
 					},
 				}
 
@@ -155,6 +159,14 @@ func testGetCmd(clientCtx *cmdclient.Context, globals *flagset.Globals) func(*te
 						err = ctx.Run(clientCtx, globals)
 						require.NoError(t, err)
 						require.Equal(t, tc.wantCount, noOfPoliciesInCmdOutput(t, out.String()))
+
+						out = bytes.NewBufferString("")
+						p.Stdout = out
+						ctx, err = p.Parse([]string{"get", arg, "--include-disabled", "--no-headers"})
+						require.NoError(t, err)
+						err = ctx.Run(clientCtx, globals)
+						require.NoError(t, err)
+						require.Equal(t, tc.wantCountWithDisabled, noOfPoliciesInCmdOutput(t, out.String()))
 					}
 				}
 			})
@@ -266,12 +278,16 @@ func loadPolicies(t *testing.T, ac client.AdminClient) {
 		ps.AddPolicies(test.GenPrincipalPolicy(test.Suffix(strconv.Itoa(i))))
 		ps.AddPolicies(test.GenResourcePolicy(test.Suffix(strconv.Itoa(i))))
 		ps.AddPolicies(test.GenDerivedRoles(test.Suffix(strconv.Itoa(i))))
+
+		ps.AddPolicies(test.GenDisabledPrincipalPolicy(test.Suffix(fmt.Sprintf("_disabled_%d", i))))
+		ps.AddPolicies(test.GenDisabledResourcePolicy(test.Suffix(fmt.Sprintf("_disabled_%d", i))))
+		ps.AddPolicies(test.GenDisabledDerivedRoles(test.Suffix(fmt.Sprintf("_disabled_%d", i))))
+
 		ps.AddPolicies(withScope(test.GenResourcePolicy(test.Suffix(strconv.Itoa(i))), "acme"))
 		ps.AddPolicies(withScope(test.GenResourcePolicy(test.Suffix(strconv.Itoa(i))), "acme.hr"))
 		ps.AddPolicies(withScope(test.GenResourcePolicy(test.Suffix(strconv.Itoa(i))), "acme.hr.uk"))
 		ps.AddPolicies(withScope(test.GenPrincipalPolicy(test.Suffix(strconv.Itoa(i))), "acme"))
 		ps.AddPolicies(withScope(test.GenPrincipalPolicy(test.Suffix(strconv.Itoa(i))), "acme.hr"))
-
 		require.NoError(t, ac.AddOrUpdatePolicy(context.Background(), ps))
 	}
 }

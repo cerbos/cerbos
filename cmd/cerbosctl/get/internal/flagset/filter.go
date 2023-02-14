@@ -10,8 +10,9 @@ import (
 )
 
 type Filters struct {
-	Name    []string `help:"Filter policies by name"`
-	Version []string `help:"Filter policies by version"`
+	Name            []string `help:"Filter policies by name"`
+	Version         []string `help:"Filter policies by version"`
+	IncludeDisabled bool     `help:"Include disabled policies"`
 }
 
 func (f Filters) Validate(kind policy.Kind, listing bool) error {

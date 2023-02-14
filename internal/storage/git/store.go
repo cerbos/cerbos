@@ -142,7 +142,7 @@ func (s *Store) GetDependents(_ context.Context, ids ...namer.ModuleID) (map[nam
 	return s.idx.GetDependents(ids...)
 }
 
-func (s *Store) ListPolicyIDs(ctx context.Context) ([]string, error) {
+func (s *Store) ListPolicyIDs(ctx context.Context, _ bool) ([]string, error) {
 	return s.idx.ListPolicyIDs(ctx)
 }
 
@@ -154,7 +154,7 @@ func (s *Store) LoadSchema(ctx context.Context, url string) (io.ReadCloser, erro
 	return s.idx.LoadSchema(ctx, url)
 }
 
-func (s *Store) LoadPolicy(ctx context.Context, file ...string) ([]*policy.Wrapper, error) {
+func (s *Store) LoadPolicy(ctx context.Context, _ bool, file ...string) ([]*policy.Wrapper, error) {
 	return s.idx.LoadPolicy(ctx, file...)
 }
 
