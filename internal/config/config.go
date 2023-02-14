@@ -4,15 +4,24 @@
 package config
 
 import (
+	"bytes"
+	_ "embed"
 	"errors"
 	"fmt"
+	"html/template"
 	"io"
 	"os"
+	"path/filepath"
 	"strings"
 	"sync"
 
 	"go.uber.org/config"
 )
+
+const DefaultMarker = "__default__"
+
+//go:embed conf.yaml.gotmpl
+var defaultConfTmpl string
 
 var ErrConfigNotLoaded = errors.New("config not loaded")
 
@@ -32,6 +41,10 @@ type Validator interface {
 
 // Load loads the config file at the given path.
 func Load(confFile string, overrides map[string]any) error {
+	if confFile == "" || confFile == DefaultMarker {
+		return loadDefault(overrides)
+	}
+
 	finfo, err := os.Stat(confFile)
 	if err != nil {
 		return fmt.Errorf("failed to stat %s: %w", confFile, err)
@@ -42,6 +55,25 @@ func Load(confFile string, overrides map[string]any) error {
 	}
 
 	return doLoad(config.File(confFile), config.Static(overrides))
+}
+
+func loadDefault(overrides map[string]any) error {
+	tmpl, err := template.New("conf").Parse(defaultConfTmpl)
+	if err != nil {
+		return fmt.Errorf("failed to parse default config template: %w", err)
+	}
+
+	currDir, err := os.Getwd()
+	if err != nil {
+		return fmt.Errorf("failed to determine current working directory: %w", err)
+	}
+
+	renderedConf := new(bytes.Buffer)
+	if err := tmpl.Execute(renderedConf, map[string]string{"directory": filepath.Join(currDir, "policies")}); err != nil {
+		return fmt.Errorf("failed to render default config template: %w", err)
+	}
+
+	return doLoad(config.Source(renderedConf), config.Static(overrides))
 }
 
 func LoadReader(reader io.Reader, overrides map[string]any) error {

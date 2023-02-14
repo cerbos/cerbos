@@ -26,13 +26,13 @@ import (
 const help = `
 Examples:
 
-# Start the server 
+# Start the server
 
-cerbos server --config=/path/to/config.yaml
+cerbos server
 
 # Start the server with the Admin API enabled and the 'sqlite' storage driver
 
-cerbos server --config=/path/to/config.yaml --set=server.adminAPI.enabled=true --set=storage.driver=sqlite3 --set=storage.sqlite3.dsn=':memory:'`
+cerbos server --set=server.adminAPI.enabled=true --set=storage.driver=sqlite3 --set=storage.sqlite3.dsn=':memory:'`
 
 type LogLevelFlag string
 
@@ -49,7 +49,7 @@ func (ll *LogLevelFlag) Decode(ctx *kong.DecodeContext) error {
 type Cmd struct {
 	DebugListenAddr string       `help:"Address to start the gops listener" placeholder:":6666"`
 	LogLevel        LogLevelFlag `help:"Log level (${enum})" default:"info" enum:"debug,info,warn,error"`
-	Config          string       `help:"Path to config file" type:"existingfile" required:"" placeholder:"./config.yaml" env:"CERBOS_CONFIG"`
+	Config          string       `help:"Path to config file" type:"existingfile" optional:"" placeholder:"./config.yaml" env:"CERBOS_CONFIG"`
 	Set             []string     `help:"Config overrides" placeholder:"server.adminAPI.enabled=true"`
 	ZPagesEnabled   bool         `help:"Enable zpages" hidden:""`
 }
@@ -84,7 +84,11 @@ func (c *Cmd) Run() error {
 	}
 
 	// load configuration
-	log.Infof("Loading configuration from %s", c.Config)
+	if c.Config == "" {
+		log.Info("Loading default configuration")
+	} else {
+		log.Infof("Loading configuration from %s", c.Config)
+	}
 	if err := config.Load(c.Config, confOverrides); err != nil {
 		log.Errorw("Failed to load configuration", "error", err)
 		return err
@@ -95,7 +99,12 @@ func (c *Cmd) Run() error {
 		return err
 	}
 
-	return server.Start(ctx, c.ZPagesEnabled)
+	if err := server.Start(ctx, c.ZPagesEnabled); err != nil {
+		log.Errorw("Failed to start server", "error", err)
+		return err
+	}
+
+	return nil
 }
 
 func (c *Cmd) Help() string {

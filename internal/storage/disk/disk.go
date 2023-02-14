@@ -15,6 +15,7 @@ import (
 	"github.com/cerbos/cerbos/internal/policy"
 	"github.com/cerbos/cerbos/internal/storage"
 	"github.com/cerbos/cerbos/internal/storage/index"
+	"go.uber.org/zap"
 )
 
 const DriverName = "disk"
@@ -47,6 +48,7 @@ func NewStore(ctx context.Context, conf *Conf) (*Store, error) {
 		return nil, fmt.Errorf("failed to determine absolute path of directory [%s]: %w", conf.Directory, err)
 	}
 
+	zap.S().Named("disk.store").Infof("Initializing disk store from %s", dir)
 	idx, err := index.Build(ctx, os.DirFS(dir))
 	if err != nil {
 		return nil, err

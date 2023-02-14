@@ -13,15 +13,10 @@ The Cerbos server is configured with a YAML file. Start the server by passing th
 NOTE: Config values can reference environment variables by enclosing them between `${}`. E.g. `$$${HOME}$$`.
 
 
-[source,sh,subs="attributes"]
-----
-./{app-name} server --config=/path/to/config.yaml --set=server.httpListenAddr=:3592 --set=engine.defaultPolicyVersion=staging
-----
-
-
 == Minimal Configuration
-At a minimum, Cerbos requires a storage driver to be configured in order to start. You must provide a configuration file when starting the Cerbos binary. The Cerbos container ships with a default configuration that has a `disk` driver configured to  look for policies mounted at `/policies`.
-.Default configuration file shipped in the container
+At a minimum, Cerbos requires a storage driver to be configured. If no explicit configuration is provided using the `--config` flag, Cerbos defaults to a `disk` driver configured to  look for policies in a directory named `policies` in the current working directory.
+
+.Default configuration
 [source,yaml,linenums]
 ----
 ---
@@ -29,10 +24,17 @@ server:
   httpListenAddr: ":3592"
   grpcListenAddr: ":3593"
 
+engine:
+  defaultPolicyVersion: "default"
+
+auxData:
+  jwt:
+    disableVerification: true
+
 storage:
   driver: "disk"
   disk:
-    directory: /policies 
+    directory: "${PWD}/policies"
     watchForChanges: true
 ----
 
