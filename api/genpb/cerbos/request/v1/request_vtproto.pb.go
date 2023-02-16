@@ -1542,16 +1542,6 @@ func (m *GetPolicyRequest) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 		i -= len(m.unknownFields)
 		copy(dAtA[i:], m.unknownFields)
 	}
-	if m.IncludeDisabled {
-		i--
-		if m.IncludeDisabled {
-			dAtA[i] = 1
-		} else {
-			dAtA[i] = 0
-		}
-		i--
-		dAtA[i] = 0x10
-	}
 	if len(m.Id) > 0 {
 		for iNdEx := len(m.Id) - 1; iNdEx >= 0; iNdEx-- {
 			i -= len(m.Id[iNdEx])
@@ -2469,9 +2459,6 @@ func (m *GetPolicyRequest) SizeVT() (n int) {
 			l = len(s)
 			n += 1 + l + sov(uint64(l))
 		}
-	}
-	if m.IncludeDisabled {
-		n += 2
 	}
 	n += len(m.unknownFields)
 	return n
@@ -5960,26 +5947,6 @@ func (m *GetPolicyRequest) UnmarshalVT(dAtA []byte) error {
 			}
 			m.Id = append(m.Id, string(dAtA[iNdEx:postIndex]))
 			iNdEx = postIndex
-		case 2:
-			if wireType != 0 {
-				return fmt.Errorf("proto: wrong wireType = %d for field IncludeDisabled", wireType)
-			}
-			var v int
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflow
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				v |= int(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			m.IncludeDisabled = bool(v != 0)
 		default:
 			iNdEx = preIndex
 			skippy, err := skip(dAtA[iNdEx:])

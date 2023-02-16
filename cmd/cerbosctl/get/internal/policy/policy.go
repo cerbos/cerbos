@@ -25,7 +25,7 @@ func DoCmd(k *kong.Kong, ac client.AdminClient, kind policy.Kind, filters *flags
 		return nil
 	}
 
-	if err := Get(k, ac, format, kind, filters.IncludeDisabled, args...); err != nil {
+	if err := Get(k, ac, format, kind, args...); err != nil {
 		return fmt.Errorf("failed to get: %w", err)
 	}
 
@@ -33,7 +33,7 @@ func DoCmd(k *kong.Kong, ac client.AdminClient, kind policy.Kind, filters *flags
 }
 
 func List(k *kong.Kong, c client.AdminClient, filters *flagset.Filters, format *flagset.Format, sortFlags *flagset.Sort, kind policy.Kind) error {
-	policyIds, err := c.ListPolicies(context.Background(), filters.IncludeDisabled)
+	policyIds, err := c.ListPolicies(context.Background(), client.WithIncludeDisabled(filters.IncludeDisabled))
 	if err != nil {
 		return fmt.Errorf("error while requesting policies: %w", err)
 	}
@@ -43,12 +43,12 @@ func List(k *kong.Kong, c client.AdminClient, filters *flagset.Filters, format *
 		tw.SetHeader(getHeaders(kind))
 	}
 
-	fd := newFilterDef(kind, filters.Name, filters.Version)
+	fd := newFilterDef(kind, filters.Name, filters.Version, filters.IncludeDisabled)
 
 	for idx := range policyIds {
 		if idx%internal.MaxIDPerReq == 0 {
 			idxEnd := internal.MinInt(idx+internal.MaxIDPerReq, len(policyIds))
-			policies, err := c.GetPolicy(context.Background(), filters.IncludeDisabled, policyIds[idx:idxEnd]...)
+			policies, err := c.GetPolicy(context.Background(), policyIds[idx:idxEnd]...)
 			if err != nil {
 				return fmt.Errorf("error while requesting policy: %w", err)
 			}
@@ -79,14 +79,14 @@ func List(k *kong.Kong, c client.AdminClient, filters *flagset.Filters, format *
 	return nil
 }
 
-func Get(k *kong.Kong, c client.AdminClient, format *flagset.Format, kind policy.Kind, includeDisabled bool, ids ...string) error {
+func Get(k *kong.Kong, c client.AdminClient, format *flagset.Format, kind policy.Kind, ids ...string) error {
 	foundPolicy := false
-	fd := newFilterDef(kind, nil, nil)
+	fd := newFilterDef(kind, nil, nil, true)
 
 	for idx := range ids {
 		if idx%internal.MaxIDPerReq == 0 {
 			idxEnd := internal.MinInt(idx+internal.MaxIDPerReq, len(ids))
-			policies, err := c.GetPolicy(context.Background(), includeDisabled, ids[idx:idxEnd]...)
+			policies, err := c.GetPolicy(context.Background(), ids[idx:idxEnd]...)
 			if err != nil {
 				return fmt.Errorf("error while requesting policy: %w", err)
 			}

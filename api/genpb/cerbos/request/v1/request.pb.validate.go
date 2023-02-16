@@ -3193,8 +3193,6 @@ func (m *GetPolicyRequest) validate(all bool) error {
 
 	}
 
-	// no validation rules for IncludeDisabled
-
 	if len(errors) > 0 {
 		return GetPolicyRequestMultiError(errors)
 	}

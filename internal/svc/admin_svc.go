@@ -148,7 +148,7 @@ func (cas *CerbosAdminService) GetPolicy(ctx context.Context, req *requestv1.Get
 	}
 
 	log := ctxzap.Extract(ctx)
-	wrappers, err := ss.LoadPolicy(ctx, req.IncludeDisabled, req.Id...)
+	wrappers, err := ss.LoadPolicy(ctx, req.Id...)
 	if err != nil {
 		log.Error("Could not get policy", zap.Error(err))
 		return nil, status.Errorf(codes.Internal, "could not get policy")

@@ -748,10 +748,6 @@ func cerbos_request_v1_GetPolicyRequest_hashpb_sum(m *GetPolicyRequest, hasher h
 			}
 		}
 	}
-	if _, ok := ignore["cerbos.request.v1.GetPolicyRequest.include_disabled"]; !ok {
-		_, _ = hasher.Write(protowire.AppendVarint(nil, protowire.EncodeBool(m.IncludeDisabled)))
-
-	}
 }
 
 func cerbos_request_v1_GetSchemaRequest_hashpb_sum(m *GetSchemaRequest, hasher hash.Hash, ignore map[string]struct{}) {

@@ -160,7 +160,7 @@ func put(t *testing.T, clientCtx *cmdclient.Context, globals *flagset.Globals, a
 
 func listPolicies(t *testing.T, clientCtx *cmdclient.Context) []string {
 	t.Helper()
-	policies, err := clientCtx.AdminClient.ListPolicies(context.Background(), false)
+	policies, err := clientCtx.AdminClient.ListPolicies(context.Background())
 	require.NoError(t, err, "failed to list policies")
 	return policies
 }

@@ -118,7 +118,7 @@ func TestListPolicies(t *testing.T) {
 	require.NoError(t, ac.AddOrUpdatePolicy(context.Background(), ps))
 
 	t.Run("should get the list of policies", func(t *testing.T) {
-		have, err := ac.ListPolicies(context.Background(), true)
+		have, err := ac.ListPolicies(context.Background(), WithIncludeDisabled(true))
 		require.NoError(t, err)
 		require.NotEmpty(t, have)
 
@@ -135,7 +135,7 @@ func TestListPolicies(t *testing.T) {
 		for _, p := range policyList {
 			want := namer.PolicyKey(p)
 			t.Run(want, func(t *testing.T) {
-				have, err := ac.GetPolicy(context.Background(), true, want)
+				have, err := ac.GetPolicy(context.Background(), want)
 				require.NoError(t, err)
 				require.Len(t, have, 1)
 				require.NotNil(t, have[0].Metadata)

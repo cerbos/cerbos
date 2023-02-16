@@ -206,7 +206,7 @@ func TestSuite(store DBStorage) func(*testing.T) {
 			for _, want := range policyList {
 				want := want
 				t.Run(want.FQN, func(t *testing.T) {
-					haveRes, err := store.LoadPolicy(ctx, false, namer.PolicyKeyFromFQN(want.FQN))
+					haveRes, err := store.LoadPolicy(ctx, namer.PolicyKeyFromFQN(want.FQN))
 					require.NoError(t, err)
 					require.Len(t, haveRes, 1)
 

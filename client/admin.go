@@ -28,8 +28,8 @@ const (
 type AdminClient interface {
 	AddOrUpdatePolicy(ctx context.Context, policies *PolicySet) error
 	AuditLogs(ctx context.Context, opts AuditLogOptions) (<-chan *AuditLogEntry, error)
-	ListPolicies(ctx context.Context, includeDisabled bool) ([]string, error)
-	GetPolicy(ctx context.Context, includeDisabled bool, ids ...string) ([]*policyv1.Policy, error)
+	ListPolicies(ctx context.Context, opts ...ListPoliciesOption) ([]string, error)
+	GetPolicy(ctx context.Context, ids ...string) ([]*policyv1.Policy, error)
 	DisablePolicy(ctx context.Context, ids ...string) (uint32, error)
 	AddOrUpdateSchema(ctx context.Context, schemas *SchemaSet) error
 	DeleteSchema(ctx context.Context, ids ...string) (uint32, error)
@@ -175,9 +175,12 @@ func (c *GrpcAdminClient) auditLogs(ctx context.Context, opts AuditLogOptions) (
 	return resp, nil
 }
 
-func (c *GrpcAdminClient) ListPolicies(ctx context.Context, includeDisabled bool) ([]string, error) {
+func (c *GrpcAdminClient) ListPolicies(ctx context.Context, opts ...ListPoliciesOption) ([]string, error) {
 	req := &requestv1.ListPoliciesRequest{
-		IncludeDisabled: includeDisabled,
+		IncludeDisabled: false,
+	}
+	for _, opt := range opts {
+		opt(req)
 	}
 	if err := req.Validate(); err != nil {
 		return nil, fmt.Errorf("could not validate list policies request: %w", err)
@@ -191,10 +194,9 @@ func (c *GrpcAdminClient) ListPolicies(ctx context.Context, includeDisabled bool
 	return p.PolicyIds, nil
 }
 
-func (c *GrpcAdminClient) GetPolicy(ctx context.Context, includeDisabled bool, ids ...string) ([]*policyv1.Policy, error) {
+func (c *GrpcAdminClient) GetPolicy(ctx context.Context, ids ...string) ([]*policyv1.Policy, error) {
 	req := &requestv1.GetPolicyRequest{
-		Id:              ids,
-		IncludeDisabled: includeDisabled,
+		Id: ids,
 	}
 	if err := req.Validate(); err != nil {
 		return nil, fmt.Errorf("could not validate get policy request: %w", err)

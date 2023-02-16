@@ -157,18 +157,10 @@ NOTE: This endpoint is still under development and should be considered unstable
 
 Issue a GET request to the endpoint with the list of IDs (the `id` query parameter can be repeated multiple times) to retrieve. The list of IDs available in the store can be retrieved using the `ListPolicies` API call described above.
 
-Use `includeDisabled=true` query parameter in order to include disabled policies in the response.
-
 [source,shell]
 ----
 curl -k -u cerbos:cerbosAdmin \
     'https://localhost:3592/admin/policy?id=x.yaml&id=y.yaml'
-----
-
-[source,shell]
-----
-curl -k -u cerbos:cerbosAdmin \
-    'https://localhost:3592/admin/policy?id=x.yaml&id=y.yaml&includeDisabled=true'
 ----
 
 [#disable-policies]

@@ -44,7 +44,7 @@ type DBStorage interface {
 	Disable(ctx context.Context, policyKey ...string) (uint32, error)
 	DeleteSchema(ctx context.Context, ids ...string) (uint32, error)
 	LoadSchema(ctx context.Context, url string) (io.ReadCloser, error)
-	LoadPolicy(ctx context.Context, includeDisabled bool, policyKey ...string) ([]*policy.Wrapper, error)
+	LoadPolicy(ctx context.Context, policyKey ...string) ([]*policy.Wrapper, error)
 }
 
 func NewDBStorage(ctx context.Context, db *goqu.Database, dbOpts ...DBOpt) (DBStorage, error) {
@@ -144,17 +144,10 @@ func (s *dbStorage) DeleteSchema(ctx context.Context, ids ...string) (uint32, er
 	return uint32(affected), nil
 }
 
-func (s *dbStorage) LoadPolicy(ctx context.Context, includeDisabled bool, policyKey ...string) ([]*policy.Wrapper, error) {
+func (s *dbStorage) LoadPolicy(ctx context.Context, policyKey ...string) ([]*policy.Wrapper, error) {
 	moduleIDs := make([]namer.ModuleID, len(policyKey))
 	for i, pk := range policyKey {
 		moduleIDs[i] = namer.GenModuleIDFromFQN(namer.FQNFromPolicyKey(pk))
-	}
-
-	whereExprs := []exp.Expression{
-		goqu.C(PolicyTblIDCol).In(moduleIDs),
-	}
-	if !includeDisabled {
-		whereExprs = append(whereExprs, goqu.C(PolicyTblDisabledCol).Neq(goqu.V(true)))
 	}
 
 	var recs []Policy
@@ -169,7 +162,7 @@ func (s *dbStorage) LoadPolicy(ctx context.Context, includeDisabled bool, policy
 			goqu.C(PolicyTblDisabledCol),
 			goqu.C(PolicyTblDefinitionCol),
 		).
-		Where(whereExprs...).
+		Where(goqu.C(PolicyTblIDCol).In(moduleIDs)).
 		ScanStructsContext(ctx, &recs); err != nil {
 		return nil, fmt.Errorf("failed to get policies: %w", err)
 	}
@@ -178,6 +171,7 @@ func (s *dbStorage) LoadPolicy(ctx context.Context, includeDisabled bool, policy
 	for i, rec := range recs {
 		pk := namer.PolicyKey(rec.Definition.Policy)
 		wp := policy.Wrap(policy.WithMetadata(rec.Definition.Policy, "", nil, pk))
+		wp.Disabled = rec.Disabled
 		policies[i] = &wp
 	}
 

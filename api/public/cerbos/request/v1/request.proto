@@ -545,10 +545,6 @@ message GetPolicyRequest {
       example: "\"principal.sarah.vdefault\""
     }
   ];
-  bool include_disabled = 2 [
-    (google.api.field_behavior) = OPTIONAL,
-    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "Include disabled policies"}
-  ];
 }
 
 message DisablePolicyRequest {

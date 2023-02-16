@@ -70,7 +70,7 @@ func testDisableCmd(ctx context.Context, cctx *cmdclient.Context, globals *flags
 					for _, arg := range tc.args {
 						cli := root.Cli{}
 						p := mustNew(t, &cli)
-						_, err := p.Parse([]string{"disable", arg})
+						_, err := p.Parse([]string{"disable", arg, "resource.leave_request.vdefault"})
 						if tc.wantErr {
 							require.Error(t, err)
 						} else {
@@ -81,28 +81,28 @@ func testDisableCmd(ctx context.Context, cctx *cmdclient.Context, globals *flags
 			})
 			t.Run("disable and check", func(t *testing.T) {
 				testCases := []struct {
-					policyKey string
-					wantErr   bool
+					policyKey    string
+					wantDisabled bool
 				}{
 					{
-						policyKey: "derived_roles.my_derived_roles_1",
-						wantErr:   false,
+						policyKey:    "derived_roles.my_derived_roles_1",
+						wantDisabled: true,
 					},
 					{
-						policyKey: "principal.donald_duck_1.vdefault",
-						wantErr:   true,
+						policyKey:    "principal.donald_duck_1.vdefault",
+						wantDisabled: false,
 					},
 					{
-						policyKey: "principal.donald_duck_1.vdefault/acme.hr",
-						wantErr:   false,
+						policyKey:    "principal.donald_duck_1.vdefault/acme.hr",
+						wantDisabled: true,
 					},
 					{
-						policyKey: "resource.leave_request_1.vdefault",
-						wantErr:   true,
+						policyKey:    "resource.leave_request_1.vdefault",
+						wantDisabled: false,
 					},
 					{
-						policyKey: "resource.leave_request_1.vdefault/acme.hr.uk",
-						wantErr:   false,
+						policyKey:    "resource.leave_request_1.vdefault/acme.hr.uk",
+						wantDisabled: true,
 					},
 				}
 				for idx, tc := range testCases {
@@ -111,7 +111,7 @@ func testDisableCmd(ctx context.Context, cctx *cmdclient.Context, globals *flags
 						out := bytes.NewBufferString("")
 						p.Stdout = out
 
-						policies, err := cctx.AdminClient.GetPolicy(ctx, false, tc.policyKey)
+						policies, err := cctx.AdminClient.GetPolicy(ctx, tc.policyKey)
 						require.NoError(t, err)
 						require.NotNil(t, policies)
 						require.NotNil(t, policies[0])
@@ -120,19 +120,23 @@ func testDisableCmd(ctx context.Context, cctx *cmdclient.Context, globals *flags
 						kctx, err := p.Parse([]string{"disable", "policy", tc.policyKey})
 						require.NoError(t, err)
 						err = kctx.Run(cctx, globals)
-						if tc.wantErr {
-							require.Error(t, err)
-						} else {
+						if tc.wantDisabled {
 							require.NoError(t, err)
+						} else {
+							require.Error(t, err)
 						}
 
-						policies, err = cctx.AdminClient.GetPolicy(ctx, false, tc.policyKey)
+						policies, err = cctx.AdminClient.GetPolicy(ctx, tc.policyKey)
 						require.NoError(t, err)
-						if tc.wantErr {
+						if tc.wantDisabled {
 							require.NotNil(t, policies)
-						} else {
-							require.Nil(t, policies)
+							require.NotNil(t, policies[0])
+							require.True(t, policies[0].Disabled)
 							require.Contains(t, out.String(), "Number of policies disabled is 1")
+						} else {
+							require.NotNil(t, policies)
+							require.NotNil(t, policies[0])
+							require.False(t, policies[0].Disabled)
 						}
 					})
 				}

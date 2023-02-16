@@ -23,7 +23,7 @@ cerbosctl disable policy derived_roles.my_derived_roles resource.leave_request.d
 cerbosctl disable p derived_roles.my_derived_roles resource.leave_request.default`
 
 type PolicyCmd struct {
-	PolicyIds []string `arg:"" name:"id" optional:"" help:"list of policy ids to disable"`
+	PolicyIds []string `arg:"" name:"id" help:"list of policy ids to disable"`
 }
 
 func (c *Cmd) Run(k *kong.Kong, ctx *client.Context) error {

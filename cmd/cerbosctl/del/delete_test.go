@@ -69,7 +69,7 @@ func testDeleteCmd(ctx context.Context, cctx *cmdclient.Context, globals *flagse
 					for _, arg := range tc.args {
 						cli := root.Cli{}
 						p := mustNew(t, &cli)
-						_, err := p.Parse([]string{"delete", arg})
+						_, err := p.Parse([]string{"delete", arg, "principal.json"})
 						if tc.wantErr {
 							require.Error(t, err)
 						} else {
