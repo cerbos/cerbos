@@ -33,7 +33,12 @@ func DoCmd(k *kong.Kong, ac client.AdminClient, kind policy.Kind, filters *flags
 }
 
 func List(k *kong.Kong, c client.AdminClient, filters *flagset.Filters, format *flagset.Format, sortFlags *flagset.Sort, kind policy.Kind) error {
-	policyIds, err := c.ListPolicies(context.Background(), client.WithIncludeDisabled(filters.IncludeDisabled))
+	var opts []client.ListPoliciesOption
+	if filters.IncludeDisabled {
+		opts = append(opts, client.WithIncludeDisabled())
+	}
+
+	policyIds, err := c.ListPolicies(context.Background(), opts...)
 	if err != nil {
 		return fmt.Errorf("error while requesting policies: %w", err)
 	}

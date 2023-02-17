@@ -118,7 +118,7 @@ func TestListPolicies(t *testing.T) {
 	require.NoError(t, ac.AddOrUpdatePolicy(context.Background(), ps))
 
 	t.Run("should get the list of policies", func(t *testing.T) {
-		have, err := ac.ListPolicies(context.Background(), WithIncludeDisabled(true))
+		have, err := ac.ListPolicies(context.Background(), WithIncludeDisabled())
 		require.NoError(t, err)
 		require.NotEmpty(t, have)
 

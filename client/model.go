@@ -1230,8 +1230,8 @@ type (
 	ListPoliciesOption func(*requestv1.ListPoliciesRequest)
 )
 
-func WithIncludeDisabled(value bool) ListPoliciesOption {
+func WithIncludeDisabled() ListPoliciesOption {
 	return func(request *requestv1.ListPoliciesRequest) {
-		request.IncludeDisabled = value
+		request.IncludeDisabled = true
 	}
 }
