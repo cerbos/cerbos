@@ -210,3 +210,19 @@ func TestStrictParsing(t *testing.T) {
 		})
 	}
 }
+
+func TestBuiltInConfig(t *testing.T) {
+	require.NoError(t, config.Load("", nil))
+
+	var serverConf server.Conf
+	require.NoError(t, config.Get("server", &serverConf))
+	require.Equal(t, ":3592", serverConf.HTTPListenAddr)
+	require.Equal(t, ":3593", serverConf.GRPCListenAddr)
+
+	cwd, err := os.Getwd()
+	require.NoError(t, err, "Failed to determine working directory")
+
+	var diskDir string
+	require.NoError(t, config.Get("storage.disk.directory", &diskDir))
+	require.Equal(t, filepath.Join(cwd, "policies"), diskDir)
+}

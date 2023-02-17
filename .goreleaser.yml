@@ -15,8 +15,8 @@ builds:
       - amd64
       - arm64
     goarm:
-      - 6
-      - 7
+      - "6"
+      - "7"
     mod_timestamp: '{{ .CommitTimestamp }}'
     flags:
       - -trimpath
@@ -35,8 +35,8 @@ builds:
       - amd64
       - arm64
     goarm:
-      - 6
-      - 7
+      - "6"
+      - "7"
     mod_timestamp: '{{ .CommitTimestamp }}'
     flags:
       - -trimpath
@@ -54,18 +54,11 @@ archives:
     builds:
       - cerbos
       - cerbosctl
-    replacements:
-      darwin: Darwin
-      linux: Linux
-      amd64: x86_64
+    name_template: 'cerbos_{{ .Version }}_{{ title .Os }}_{{ if eq .Arch "amd64" }}x86_64{{ else }}{{ .Arch }}{{ end }}{{ if .Arm }}v{{ .Arm }}{{ end }}'
   - id: cerbosctl
     builds:
       - cerbosctl
-    name_template: "cerbosctl_{{ .Version }}_{{ .Os }}_{{ .Arch }}{{ if .Arm }}v{{ .Arm }}{{ end }}{{ if .Mips }}_{{ .Mips }}{{ end }}"
-    replacements:
-      darwin: Darwin
-      linux: Linux
-      amd64: x86_64
+    name_template: 'cerbosctl_{{ .Version }}_{{ title .Os }}_{{ if eq .Arch "amd64" }}x86_64{{ else }}{{ .Arch }}{{ end }}{{ if .Arm }}v{{ .Arm }}{{ end }}'
 nfpms:
   - id: cerbos
     package_name: cerbos
@@ -101,8 +94,6 @@ dockers:
       - cerbos
     goarch: amd64
     use: buildx
-    extra_files:
-      - conf.default.yaml
     build_flag_templates:
       - "--pull"
       - "--label=org.opencontainers.image.created={{.Date}}"
@@ -122,8 +113,6 @@ dockers:
       - cerbos
     goarch: arm64
     use: buildx
-    extra_files:
-      - conf.default.yaml
     build_flag_templates:
       - "--pull"
       - "--label=org.opencontainers.image.created={{.Date}}"
@@ -220,8 +209,8 @@ release:
   header: |-
     Cerbos {{ .Version }}
     ---------------------
-    
-    View the full release notes at https://docs.cerbos.dev/cerbos/latest/releases/v{{ .Version }}.html 
+
+    View the full release notes at https://docs.cerbos.dev/cerbos/latest/releases/v{{ .Version }}.html
 
 changelog:
   sort: asc

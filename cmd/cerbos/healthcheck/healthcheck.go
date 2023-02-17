@@ -34,8 +34,8 @@ const (
 
 	help = `
 Performs a healthcheck on a Cerbos PDP. This can be used as a Docker HEALTHCHECK command.
-When the path to the Cerbos config file is provided via the '--config' flag or the CERBOS_CONFIG environment variable, the healthcheck will be automatically configured based on the settings from the file. 
-By default, the gRPC endpoint will be checked using the gRPC healthcheck protocol. This is usually sufficient for most cases as the Cerbos REST API is built on top of the gRPC API as well.   
+When the path to the Cerbos config file is provided via the '--config' flag or the CERBOS_CONFIG environment variable, the healthcheck will be automatically configured based on the settings from the file.
+By default, the gRPC endpoint will be checked using the gRPC healthcheck protocol. This is usually sufficient for most cases as the Cerbos REST API is built on top of the gRPC API as well.
 
 Examples:
 
@@ -54,7 +54,7 @@ cerbos healthcheck --kind=http --host-port=10.0.1.5:3592 --no-tls
 )
 
 type Cmd struct {
-	Config   string        `help:"Cerbos config file" type:"existingfile" group:"config" xor:"hostport,cacert,notls" env:"CERBOS_CONFIG"`
+	Config   string        `help:"Cerbos config file" group:"config" xor:"hostport,cacert,notls" env:"CERBOS_CONFIG"`
 	Kind     string        `help:"Healthcheck kind (${enum})" default:"grpc" enum:"grpc,http" env:"CERBOS_HC_KIND"`
 	HostPort string        `help:"Host and port to connect to" group:"manual" xor:"hostport" env:"CERBOS_HC_HOSTPORT"`
 	CACert   string        `help:"Path to CA cert for validating server cert" type:"existingfile" group:"manual" xor:"cacert" env:"CERBOS_HC_CACERT"`
