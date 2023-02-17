@@ -1225,3 +1225,13 @@ func (e *AuditLogEntry) DecisionLog() (*auditv1.DecisionLogEntry, error) {
 type PlanResourcesResponse struct {
 	*responsev1.PlanResourcesResponse
 }
+
+type (
+	ListPoliciesOption func(*requestv1.ListPoliciesRequest)
+)
+
+func WithIncludeDisabled() ListPoliciesOption {
+	return func(request *requestv1.ListPoliciesRequest) {
+		request.IncludeDisabled = true
+	}
+}

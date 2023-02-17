@@ -221,7 +221,7 @@ func TestSuite(store DBStorage) func(*testing.T) {
 
 		t.Run("list_policies", func(t *testing.T) {
 			t.Run("should be able to list policies", func(t *testing.T) {
-				have, err := store.ListPolicyIDs(ctx)
+				have, err := store.ListPolicyIDs(ctx, false)
 				require.NoError(t, err)
 				require.Len(t, have, len(policyList))
 

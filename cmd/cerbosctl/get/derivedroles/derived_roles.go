@@ -24,6 +24,11 @@ cerbosctl get derived_roles --name my_derived_roles
 cerbosctl get derived_roles --sort-by policyId
 cerbosctl get derived_roles --sort-by name
 
+# List all policies including disabled policies
+cerbosctl get derived_roles --include-disabled
+cerbosctl get principal_policy --include-disabled
+cerbosctl get resource_policy --include-disabled
+
 # Get derived role policy definition (disk, git, blob stores)
 cerbosctl get derived_roles blog_derived_roles.yaml
 
@@ -39,6 +44,7 @@ cerbosctl get derived_roles derived_roles.my_derived_roles -ojson
 # Get derived role policy definition as pretty json
 cerbosctl get derived_roles derived_roles.my_derived_roles -oprettyjson`
 
+//nolint:govet
 type Cmd struct {
 	flagset.Filters
 	flagset.Format

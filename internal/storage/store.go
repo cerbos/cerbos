@@ -96,7 +96,7 @@ type Store interface {
 	// Driver is the name of the storage backend implementation.
 	Driver() string
 	// ListPolicyIDs returns the policy IDs in the store
-	ListPolicyIDs(context.Context) ([]string, error)
+	ListPolicyIDs(context.Context, bool) ([]string, error)
 	// ListSchemaIDs returns the schema ids in the store
 	ListSchemaIDs(context.Context) ([]string, error)
 	// LoadSchema loads the given schema from the store.

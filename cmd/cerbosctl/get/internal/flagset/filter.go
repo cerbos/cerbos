@@ -10,11 +10,16 @@ import (
 )
 
 type Filters struct {
-	Name    []string `help:"Filter policies by name"`
-	Version []string `help:"Filter policies by version"`
+	Name            []string `help:"Filter policies by name"`
+	Version         []string `help:"Filter policies by version"`
+	IncludeDisabled bool     `help:"Include disabled policies"`
 }
 
 func (f Filters) Validate(kind policy.Kind, listing bool) error {
+	if !listing && f.IncludeDisabled {
+		return fmt.Errorf("--include-disabled is only available when listing")
+	}
+
 	if !listing && (len(f.Name) > 0 || len(f.Version) > 0) {
 		return fmt.Errorf("--name and --version flags are only available when listing")
 	}

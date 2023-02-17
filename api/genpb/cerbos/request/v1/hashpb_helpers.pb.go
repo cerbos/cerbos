@@ -806,6 +806,10 @@ func cerbos_request_v1_ListAuditLogEntriesRequest_hashpb_sum(m *ListAuditLogEntr
 }
 
 func cerbos_request_v1_ListPoliciesRequest_hashpb_sum(m *ListPoliciesRequest, hasher hash.Hash, ignore map[string]struct{}) {
+	if _, ok := ignore["cerbos.request.v1.ListPoliciesRequest.include_disabled"]; !ok {
+		_, _ = hasher.Write(protowire.AppendVarint(nil, protowire.EncodeBool(m.IncludeDisabled)))
+
+	}
 }
 
 func cerbos_request_v1_ListSchemasRequest_hashpb_sum(m *ListSchemasRequest, hasher hash.Hash, ignore map[string]struct{}) {

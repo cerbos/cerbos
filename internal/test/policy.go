@@ -120,6 +120,12 @@ func buildAndCondition(expr ...string) *policyv1.Condition {
 	}
 }
 
+func GenDisabledResourcePolicy(mod NameMod) *policyv1.Policy {
+	p := GenResourcePolicy(mod)
+	p.Disabled = true
+	return p
+}
+
 // GenResourcePolicy generates a sample resource policy with some names modified by the NameMod.
 func GenResourcePolicy(mod NameMod) *policyv1.Policy {
 	return &policyv1.Policy{
@@ -245,6 +251,12 @@ func (ppb *PrincipalPolicyBuilder) Build() *policyv1.Policy {
 	}
 }
 
+func GenDisabledPrincipalPolicy(mod NameMod) *policyv1.Policy {
+	p := GenPrincipalPolicy(mod)
+	p.Disabled = true
+	return p
+}
+
 func GenPrincipalPolicy(mod NameMod) *policyv1.Policy {
 	return &policyv1.Policy{
 		ApiVersion: "api.cerbos.dev/v1",
@@ -314,6 +326,12 @@ func (drb *DerivedRolesBuilder) Build() *policyv1.Policy {
 			DerivedRoles: drb.dr,
 		},
 	}
+}
+
+func GenDisabledDerivedRoles(mod NameMod) *policyv1.Policy {
+	p := GenDerivedRoles(mod)
+	p.Disabled = true
+	return p
 }
 
 func GenDerivedRoles(mod NameMod) *policyv1.Policy {

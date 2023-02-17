@@ -10,13 +10,17 @@ import (
 )
 
 type filterDef struct {
-	names    map[string]struct{}
-	versions map[string]struct{}
-	kind     policy.Kind
+	names           map[string]struct{}
+	versions        map[string]struct{}
+	kind            policy.Kind
+	includeDisabled bool
 }
 
-func newFilterDef(kind policy.Kind, names, versions []string) *filterDef {
-	f := &filterDef{kind: kind}
+func newFilterDef(kind policy.Kind, names, versions []string, includeDisabled bool) *filterDef {
+	f := &filterDef{
+		kind:            kind,
+		includeDisabled: includeDisabled,
+	}
 	if len(names) > 0 {
 		f.names = make(map[string]struct{}, len(names))
 		for _, n := range names {
@@ -35,6 +39,10 @@ func newFilterDef(kind policy.Kind, names, versions []string) *filterDef {
 }
 
 func (fd *filterDef) filter(p policy.Wrapper) bool {
+	if !fd.includeDisabled && p.Disabled {
+		return false
+	}
+
 	if p.Kind != fd.kind {
 		return false
 	}

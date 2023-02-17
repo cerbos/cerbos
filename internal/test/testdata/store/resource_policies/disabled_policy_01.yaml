@@ -1,0 +1,21 @@
+---
+apiVersion: "api.cerbos.dev/v1"
+disabled: true
+resourcePolicy:
+  version: "default"
+  resource: disabled_leave_request
+  rules:
+    - actions: ["*"]
+      effect: EFFECT_ALLOW
+      roles:
+        - support
+        - admin
+
+    - actions:
+        - create
+        - view
+        - update
+        - delete
+      effect: EFFECT_ALLOW
+      derivedRoles:
+        - buyer

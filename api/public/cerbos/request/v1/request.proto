@@ -517,6 +517,10 @@ message ListPoliciesRequest {
   option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
     json_schema: {description: "List policies request"}
   };
+  bool include_disabled = 1 [
+    (google.api.field_behavior) = OPTIONAL,
+    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "Include disabled policies"}
+  ];
 }
 
 message GetPolicyRequest {

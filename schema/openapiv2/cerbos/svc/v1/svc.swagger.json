@@ -140,6 +140,15 @@
             }
           }
         },
+        "parameters": [
+          {
+            "name": "includeDisabled",
+            "description": "Include disabled policies",
+            "in": "query",
+            "required": false,
+            "type": "boolean"
+          }
+        ],
         "tags": [
           "CerbosAdminService"
         ],

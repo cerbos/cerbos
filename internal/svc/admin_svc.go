@@ -121,7 +121,7 @@ func (cas *CerbosAdminService) ListPolicies(ctx context.Context, req *requestv1.
 		return nil, status.Error(codes.NotFound, "store is not configured")
 	}
 
-	policyIds, err := cas.store.ListPolicyIDs(context.Background())
+	policyIds, err := cas.store.ListPolicyIDs(context.Background(), req.IncludeDisabled)
 	if err != nil {
 		ctxzap.Extract(ctx).Error("Could not get policy ids", zap.Error(err))
 		return nil, status.Error(codes.Internal, "could not get policy ids")

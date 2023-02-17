@@ -133,10 +133,18 @@ NOTE: This endpoint is still under development and should be considered unstable
 
 Issue a GET request to the endpoint to list the policies available in the store.
 
+Use `includeDisabled=true` query parameter in order to include disabled policies in the response.
+
 [source,shell]
 ----
 curl -k -u cerbos:cerbosAdmin \
     'https://localhost:3592/admin/policies?pretty'
+----
+
+[source,shell]
+----
+curl -k -u cerbos:cerbosAdmin \
+    'https://localhost:3592/admin/policies?pretty&includeDisabled=true'
 ----
 
 === Get Policies
@@ -148,7 +156,6 @@ GET /admin/policy?id=policy_id
 NOTE: This endpoint is still under development and should be considered unstable.
 
 Issue a GET request to the endpoint with the list of IDs (the `id` query parameter can be repeated multiple times) to retrieve. The list of IDs available in the store can be retrieved using the `ListPolicies` API call described above.
-
 
 [source,shell]
 ----
@@ -173,6 +180,14 @@ curl -k -u cerbos:cerbosAdmin -X DELETE \
     'https://localhost:3592/admin/policy?id=principal.donald_duck.vdefault&id=derived_roles.my_derived_roles'
 ----
 
+.Response
+[source,json,linenums]
+----
+{
+  "disabledPolicies": 2 <1>
+}
+----
+<1> Number of policies disabled
 
 == Schema Management
 
@@ -282,8 +297,11 @@ curl -k -u cerbos:cerbosAdmin -X DELETE \
 .Response
 [source,json,linenums]
 ----
-{}
+{
+  "deletedSchemas": 2 <1>
+}
 ----
+<1> Number of schemas deleted
 
 [#store-management]
 == Store Management
