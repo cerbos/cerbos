@@ -6,7 +6,7 @@ The main API endpoint for making policy decisions is the `/api/check` REST endpo
 
 [source,sh,subs="attributes"]
 ----
-docker run --rm --name cerbos -p 3592:3592 -p 3593:3593 {app-docker-img} 
+docker run --rm --name cerbos -p 3592:3592 -p 3593:3593 {app-docker-img}
 ----
 
 Navigate to link:http://localhost:3592/[] using your browser to explore the Cerbos API documentation.
@@ -48,14 +48,14 @@ Other languages coming soon
 [#check-resources]
 === `CheckResources` (`/api/check/resources`)
 
-This is the main API entrypoint for checking permissions for a set of resources. 
+This is the main API entrypoint for checking permissions for a set of resources.
 
 .Request
 [source,json,linenums]
 ----
 {
   "requestId": "test", <1>
-  "principal": { 
+  "principal": {
     "id": "alice", <2>
     "policyVersion": "20210210", <3>
     "scope": "acme.corp", <4>
@@ -70,8 +70,8 @@ This is the main API entrypoint for checking permissions for a set of resources.
   },
   "resources": [ <7>
     {
-      "resource": { 
-        "id": "XX125", <8> 
+      "resource": {
+        "id": "XX125", <8>
         "kind": "leave_request", <9>
         "policyVersion": "20210210", <10>
         "scope": "acme.corp", <11>
@@ -83,16 +83,16 @@ This is the main API entrypoint for checking permissions for a set of resources.
           "team": "design"
         }
       },
-      "actions": [ <13> 
+      "actions": [ <13>
         "view:public",
         "approve",
         "create"
       ]
     }
   ],
-  "auxData": { <14> 
+  "auxData": { <14>
     "jwt": {
-        "token": "xxx.yyy.zzz", <15> 
+        "token": "xxx.yyy.zzz", <15>
         "keySetId": "ks1" <16>
     }
   },
@@ -101,19 +101,19 @@ This is the main API entrypoint for checking permissions for a set of resources.
 ----
 <1> Request ID is an optional, application-provided identifier useful for correlating logs.
 <2> ID of the principal whose permissions are being checked. This usually comes from the identity provider (IdP).
-<3> Principal policy version. Optional. The server falls back to the xref:configuration:engine.adoc[configured default version] if this is not specified. 
+<3> Principal policy version. Optional. The server falls back to the xref:configuration:engine.adoc[configured default version] if this is not specified.
 <4> Principal policy scope. Optional. See xref:policies:scoped_policies.adoc[].
 <5> The roles attached to this principal by the identity provider.
 <6> Free-form context data about this principal. Policy rule conditions are evaluated based on these values.
 <7> List of resources the principal is attempting to access. Up to 50 resources may be provided in a single request by default. This xref:configuration:server.adoc#request-limits[limit can be configured].
 <8> ID of the resource.
 <9> Resource kind. This is used to determine the resource policy that applies to this resource.
-<10> Resource policy version. Optional. The server falls back to the xref:configuration:engine.adoc[configured default version] if this is not specified. 
+<10> Resource policy version. Optional. The server falls back to the xref:configuration:engine.adoc[configured default version] if this is not specified.
 <11> Resource policy scope. Optional. See xref:policies:scoped_policies.adoc[].
 <12> Free-form context data about this resource. Policy rule conditions are evaluated based on these values.
 <13> List of actions being performed on the resource. Up to 50 actions per resource may be provided by default. This xref:configuration:server.adoc#request-limits[limit can be configured].
 <14> Optional section for providing auxiliary data.
-<15> JWT to use as an auxiliary data source. 
+<15> JWT to use as an auxiliary data source.
 <16> ID of the keyset to use to verify the JWT. Optional if only a single xref:configuration:auxdata.adoc[keyset is configured].
 <17> Optional flag to receive metadata about request evaluation.
 
@@ -129,7 +129,7 @@ This is the main API entrypoint for checking permissions for a set of resources.
         "id": "XX125",
         "kind": "leave_request",
         "policyVersion": "20210210",
-        "scope": "acme.corp" 
+        "scope": "acme.corp"
       },
       "actions": { <4>
         "view:public": "EFFECT_ALLOW",
@@ -170,7 +170,7 @@ This is the main API entrypoint for checking permissions for a set of resources.
 <2> List of results. Items are in the same order as they were sent in the request.
 <3> Resource identifiers.
 <4> Access decisions for each of the actions.
-<5> Validation errors, if xref:policies:schemas.adoc[schema enforcement] is enabled and the request didn't conform to the schema. 
+<5> Validation errors, if xref:policies:schemas.adoc[schema enforcement] is enabled and the request didn't conform to the schema.
 <6> Metadata (if `includeMeta` was true in the request)
 <7> Name of the policy that produced the decision for this action.
 <8> Name of the scope that was active when the decision was made for the action.
@@ -179,7 +179,7 @@ This is the main API entrypoint for checking permissions for a set of resources.
 
 === `CheckResourceSet` (`/api/check`)
 
-NOTE: Deprecated since Cerbos 0.16.0. Use xref:index.adoc#check-resources[CheckResources] instead. 
+NOTE: Deprecated since Cerbos 0.16.0. Use xref:index.adoc#check-resources[CheckResources] instead.
 
 Checks permissions for a set of homogeneous resources.
 
@@ -231,9 +231,9 @@ Checks permissions for a set of homogeneous resources.
 <1> Request ID can be anything that uniquely identifies a request.
 <2> Actions being performed on the resource instances. Required. Up to 10 actions may be provided in a single request.
 <3> Resource policy version. Optional. The server falls back to the xref:configuration:engine.adoc[configured default version] if this is not specified.
-<4> Resource kind. Required. This value is used to determine the resource policy to evaluate. 
+<4> Resource kind. Required. This value is used to determine the resource policy to evaluate.
 <5> Resource scope. Optional. See xref:policies:scoped_policies.adoc[].
-<6> Container for the set of resource instances to check. You can check access to multiple resource instances in a single request by adding them under this field. 
+<6> Container for the set of resource instances to check. You can check access to multiple resource instances in a single request by adding them under this field.
 <7> A unique identifier for a resource instance. This identifier will be used in the response to indicate the result of the policy evaluation.
 <8> Free-form context data about this resource instance. Policy rule conditions are evaluated based on these values.
 <9> ID of the principal performing the actions. Required.
@@ -243,7 +243,7 @@ Checks permissions for a set of homogeneous resources.
 <13> Free-form context data about this principal. Policy rule conditions are evaluated based on these values.
 <14> An optional flag to signal that the response should include metadata about policy evaluation. Useful for debugging.
 <15> Optional section for providing auxiliary data.
-<16> JWT to use as an auxiliary data source. 
+<16> JWT to use as an auxiliary data source.
 <17> ID of the keyset to use to verify the JWT. Optional if only a single xref:configuration:auxdata.adoc[keyset is configured].
 
 
@@ -296,9 +296,9 @@ Checks permissions for a set of homogeneous resources.
 
 === `CheckResourceBatch` (`/api/check_resource_batch`)
 
-NOTE: Deprecated since Cerbos 0.16.0. Use xref:index.adoc#check-resources[CheckResources] instead. 
+NOTE: Deprecated since Cerbos 0.16.0. Use xref:index.adoc#check-resources[CheckResources] instead.
 
-Unlike `CheckResourceSet` -- which checks access to resource instances of the _same_ kind, `CheckResourceBatch` allows checking access to multiple heterogeneous resource instances.  
+Unlike `CheckResourceSet` -- which checks access to resource instances of the _same_ kind, `CheckResourceBatch` allows checking access to multiple heterogeneous resource instances.
 
 
 .Request and Response
@@ -364,10 +364,10 @@ Unlike `CheckResourceSet` -- which checks access to resource instances of the _s
       }
     }
   ],
-  "auxData": { 
+  "auxData": {
     "jwt": {
-        "token": "xxx.yyy.zzz", 
-        "keySetId": "ks1" 
+        "token": "xxx.yyy.zzz",
+        "keySetId": "ks1"
     }
   }
 }
@@ -412,7 +412,7 @@ Unlike `CheckResourceSet` -- which checks access to resource instances of the _s
 [#resources-query-plan]
 === `PlanResources` (`/api/plan/resources`)
 
-Produces a query plan that can be used to obtain a list of resources that a principal is allowed to perform a particular action on. 
+Produces a query plan that can be used to obtain a list of resources that a principal is allowed to perform a particular action on.
 
 .Request
 [source,json,linenums]
@@ -467,7 +467,7 @@ Produces a query plan that can be used to obtain a list of resources that a prin
 [source,json,linenums]
 ----
 {
-  "requestId": "test01", 
+  "requestId": "test01",
   "action": "approve",
   "resourceKind": "leave_request",
   "policyVersion": "dev",
@@ -483,7 +483,7 @@ Produces a query plan that can be used to obtain a list of resources that a prin
         }
     }
   },
-  "meta": { 
+  "meta": {
     "filterDebug": "(request.resource.attr.status == \"PENDING_APPROVAL\")" <3>
   },
 }
@@ -507,15 +507,15 @@ The `condition` field holds the AST of the condition that must be satisfied. It 
 [caption=]
 [%header,cols=".^1m,.^4",grid=rows]
 |===
-| Operator | Description 
+| Operator | Description
 | add               | Addition (+)
-| and               | Logical AND (&&)  
+| and               | Logical AND (&&)
 | div               | Division (/)
 | eq                | Equality (==)
 | ge                | Greater than or equal (>=)
 | gt                | Greater than (>)
 | in                | List membership (in)
-| index             | Array or map index 
+| index             | Array or map index
 | lambda            | Anonymous function
 | le                | Less than or equal (<=)
 | list              | List constructor
@@ -622,6 +622,23 @@ The `condition` field holds the AST of the condition that must be satisfied. It 
 }
 
 ----
+
+
+[#server-info]
+=== `ServerInfo` (`/api/server_info`)
+
+Returns Cerbos server version.
+
+.Response
+[source,json,linenums]
+----
+{
+  "version": "0.25.0",
+  "commit": "6b5a051a160398a3c04370f742e6090fab2ed0b8",
+  "buildDate": "2023-02-13T09:31:48Z"
+}
+----
+
 == Accessing the API
 
 === Using curl to access the REST API
@@ -632,10 +649,10 @@ The `condition` field holds the AST of the condition that must be satisfied. It 
 cat <<EOF | curl --silent "localhost:3592/api/check/resources?pretty" -d @-
 {
   "requestId": "test",
-  "principal": { 
+  "principal": {
     "id": "alice",
     "roles": ["employee"],
-    "attr": { 
+    "attr": {
       "department": "accounting",
       "geography": "GB",
       "team": "design"
@@ -643,7 +660,7 @@ cat <<EOF | curl --silent "localhost:3592/api/check/resources?pretty" -d @-
   },
   "resources": [
     {
-      "resource": { 
+      "resource": {
         "id": "XX125",
         "kind": "leave_request",
         "attr": {
@@ -672,10 +689,10 @@ EOF
 cat <<EOF | grpcurl -plaintext -d @ localhost:3593 cerbos.svc.v1.CerbosService/CheckResources
 {
   "requestId": "test",
-  "principal": { 
+  "principal": {
     "id": "alice",
     "roles": ["employee"],
-    "attr": { 
+    "attr": {
       "department": "accounting",
       "geography": "GB",
       "team": "design"
@@ -683,7 +700,7 @@ cat <<EOF | grpcurl -plaintext -d @ localhost:3593 cerbos.svc.v1.CerbosService/C
   },
   "resources": [
     {
-      "resource": { 
+      "resource": {
         "id": "XX125",
         "kind": "leave_request",
         "attr": {
@@ -710,9 +727,9 @@ EOF
 
 The Cerbos OpenAPI specification can be obtained from a running Cerbos instance by accessing link:http://localhost:3592{cerbos-openapi-schema}[]. Cerbos gRPC API definitions are published to the link:https://buf.build/cerbos/cerbos-api[Buf schema registry (BSR)] and can be easily added to your project if you use the link:https://docs.buf.build[Buf build system for protobufs].
 
-=== REST 
+=== REST
 
-There are many tools available to generate clients from an OpenAPI specification. https://openapi.tools/#sdk is a good resource for finding a tool suitable for your preferred language. 
+There are many tools available to generate clients from an OpenAPI specification. https://openapi.tools/#sdk is a good resource for finding a tool suitable for your preferred language.
 
 
 ==== Example: Generating a Java client using OpenAPI Generator
