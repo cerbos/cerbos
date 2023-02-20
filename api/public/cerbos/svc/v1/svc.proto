@@ -8,6 +8,7 @@ package cerbos.svc.v1;
 import "cerbos/request/v1/request.proto";
 import "cerbos/response/v1/response.proto";
 import "google/api/annotations.proto";
+import "google/api/visibility.proto";
 import "protoc-gen-openapiv2/options/annotations.proto";
 
 option csharp_namespace = "Cerbos.Api.V1.Svc";
@@ -245,6 +246,8 @@ service CerbosAdminService {
 }
 
 service CerbosPlaygroundService {
+  option (google.api.api_visibility).restriction = "INTERNAL";
+
   rpc PlaygroundValidate(cerbos.request.v1.PlaygroundValidateRequest) returns (cerbos.response.v1.PlaygroundValidateResponse) {
     option (google.api.http) = {
       post: "/api/playground/validate",

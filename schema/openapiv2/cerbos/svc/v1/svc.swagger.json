@@ -17,9 +17,6 @@
     {
       "name": "CerbosAdminService",
       "description": "Cerbos administration service"
-    },
-    {
-      "name": "CerbosPlaygroundService"
     }
   ],
   "schemes": [
@@ -671,138 +668,6 @@
         ],
         "tags": [
           "CerbosService"
-        ]
-      }
-    },
-    "/api/playground/evaluate": {
-      "post": {
-        "operationId": "CerbosPlaygroundService_PlaygroundEvaluate",
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "$ref": "#/definitions/v1PlaygroundEvaluateResponse"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/googlerpcStatus"
-            }
-          }
-        },
-        "parameters": [
-          {
-            "name": "body",
-            "description": "Playground evaluate request",
-            "in": "body",
-            "required": true,
-            "schema": {
-              "$ref": "#/definitions/v1PlaygroundEvaluateRequest"
-            }
-          }
-        ],
-        "tags": [
-          "CerbosPlaygroundService"
-        ]
-      }
-    },
-    "/api/playground/proxy": {
-      "post": {
-        "operationId": "CerbosPlaygroundService_PlaygroundProxy",
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "$ref": "#/definitions/v1PlaygroundProxyResponse"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/googlerpcStatus"
-            }
-          }
-        },
-        "parameters": [
-          {
-            "name": "body",
-            "description": "Playground proxy request",
-            "in": "body",
-            "required": true,
-            "schema": {
-              "$ref": "#/definitions/v1PlaygroundProxyRequest"
-            }
-          }
-        ],
-        "tags": [
-          "CerbosPlaygroundService"
-        ]
-      }
-    },
-    "/api/playground/test": {
-      "post": {
-        "operationId": "CerbosPlaygroundService_PlaygroundTest",
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "$ref": "#/definitions/v1PlaygroundTestResponse"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/googlerpcStatus"
-            }
-          }
-        },
-        "parameters": [
-          {
-            "name": "body",
-            "description": "Playground test request",
-            "in": "body",
-            "required": true,
-            "schema": {
-              "$ref": "#/definitions/v1PlaygroundTestRequest"
-            }
-          }
-        ],
-        "tags": [
-          "CerbosPlaygroundService"
-        ]
-      }
-    },
-    "/api/playground/validate": {
-      "post": {
-        "operationId": "CerbosPlaygroundService_PlaygroundValidate",
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "$ref": "#/definitions/v1PlaygroundValidateResponse"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/googlerpcStatus"
-            }
-          }
-        },
-        "parameters": [
-          {
-            "name": "body",
-            "description": "Playground validate request",
-            "in": "body",
-            "required": true,
-            "schema": {
-              "$ref": "#/definitions/v1PlaygroundValidateRequest"
-            }
-          }
-        ],
-        "tags": [
-          "CerbosPlaygroundService"
         ]
       }
     },
@@ -2562,49 +2427,6 @@
       },
       "description": "Metadata about request evaluation."
     },
-    "v1PlaygroundEvaluateRequest": {
-      "type": "object",
-      "properties": {
-        "playgroundId": {
-          "type": "string"
-        },
-        "files": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/v1File"
-          },
-          "description": "List of files.",
-          "maxItems": 30,
-          "minItems": 1
-        },
-        "principal": {
-          "$ref": "#/definitions/enginev1Principal"
-        },
-        "resource": {
-          "$ref": "#/definitions/enginev1Resource"
-        },
-        "actions": {
-          "type": "array",
-          "items": {
-            "type": "string",
-            "uniqueItems": true
-          },
-          "description": "List of actions being performed on the resource.",
-          "maxItems": 50,
-          "minItems": 1
-        },
-        "auxData": {
-          "$ref": "#/definitions/cerbosrequestv1AuxData"
-        }
-      },
-      "description": "Playground evaluate request",
-      "required": [
-        "files",
-        "principal",
-        "resource",
-        "actions"
-      ]
-    },
     "v1PlaygroundEvaluateResponse": {
       "type": "object",
       "properties": {
@@ -2632,39 +2454,6 @@
       },
       "description": "Playground response"
     },
-    "v1PlaygroundProxyRequest": {
-      "type": "object",
-      "properties": {
-        "playgroundId": {
-          "type": "string"
-        },
-        "files": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/v1File"
-          },
-          "description": "List of files.",
-          "maxItems": 30,
-          "minItems": 1
-        },
-        "checkResourceSet": {
-          "$ref": "#/definitions/v1CheckResourceSetRequest"
-        },
-        "checkResourceBatch": {
-          "$ref": "#/definitions/v1CheckResourceBatchRequest"
-        },
-        "planResources": {
-          "$ref": "#/definitions/v1PlanResourcesRequest"
-        },
-        "checkResources": {
-          "$ref": "#/definitions/v1CheckResourcesRequest"
-        }
-      },
-      "description": "Playground proxy request",
-      "required": [
-        "files"
-      ]
-    },
     "v1PlaygroundProxyResponse": {
       "type": "object",
       "properties": {
@@ -2689,27 +2478,6 @@
       },
       "description": "Playground proxy response"
     },
-    "v1PlaygroundTestRequest": {
-      "type": "object",
-      "properties": {
-        "playgroundId": {
-          "type": "string"
-        },
-        "files": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/v1File"
-          },
-          "description": "List of files.",
-          "maxItems": 30,
-          "minItems": 1
-        }
-      },
-      "description": "Playground test request",
-      "required": [
-        "files"
-      ]
-    },
     "v1PlaygroundTestResponse": {
       "type": "object",
       "properties": {
@@ -2732,27 +2500,6 @@
           "$ref": "#/definitions/policyv1TestResults"
         }
       }
-    },
-    "v1PlaygroundValidateRequest": {
-      "type": "object",
-      "properties": {
-        "playgroundId": {
-          "type": "string"
-        },
-        "files": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/v1File"
-          },
-          "description": "List of files.",
-          "maxItems": 30,
-          "minItems": 1
-        }
-      },
-      "description": "Playground validate request",
-      "required": [
-        "files"
-      ]
     },
     "v1PlaygroundValidateResponse": {
       "type": "object",
