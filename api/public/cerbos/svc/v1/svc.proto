@@ -85,10 +85,6 @@ service CerbosService {
     option (google.api.http) = {
       post: "/api/plan/resources",
       body: "*"
-      additional_bindings: {
-        post: "/api/x/plan/resources",
-        body: "*"
-      }
     };
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
       summary: "Plan resources"

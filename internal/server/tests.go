@@ -323,7 +323,6 @@ func (tr *TestRunner) checkCORS(c *http.Client, hostAddr string) func(*testing.T
 		"/admin/policy",
 		"/admin/schema",
 		"/admin/store",
-		"/api/x/plan/resources",
 		"/api/plan/resources",
 	}
 
