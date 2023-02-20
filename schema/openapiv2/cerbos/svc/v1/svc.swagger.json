@@ -694,41 +694,6 @@
           "CerbosService"
         ]
       }
-    },
-    "/api/x/plan/resources": {
-      "post": {
-        "summary": "Plan resources",
-        "description": "Produce a query plan with conditions that must be satisfied for accessing a set of instances of a resource",
-        "operationId": "CerbosService_PlanResources2",
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "$ref": "#/definitions/v1PlanResourcesResponse"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/googlerpcStatus"
-            }
-          }
-        },
-        "parameters": [
-          {
-            "name": "body",
-            "description": "PDP Resources Query Plan Request",
-            "in": "body",
-            "required": true,
-            "schema": {
-              "$ref": "#/definitions/v1PlanResourcesRequest"
-            }
-          }
-        ],
-        "tags": [
-          "CerbosService"
-        ]
-      }
     }
   },
   "definitions": {
