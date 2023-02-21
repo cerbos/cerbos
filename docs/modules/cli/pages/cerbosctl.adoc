@@ -65,6 +65,7 @@ Available Commands:
   completion  Generate the autocompletion script for the specified shell
   decisions   Interactive decision log viewer
   disable     Disable policies
+  enable      Enable policies
   get         List or view policies and schemas
   help        Help about any command
   put         Put policies or schemas
@@ -198,6 +199,25 @@ cerbosctl disable p derived_roles.my_derived_roles resource.leave_request.defaul
 ----
 
 CAUTION: Scoped policies must have unbroken scope chains. If you're disabling a scoped policy, make sure that its descendant policies are disabled as well.
+
+[#enable]
+== `enable`
+
+This command enables the policies with the specified ids.
+
+.Enable policies
+----
+cerbosctl enable policies derived_roles.my_derived_roles
+cerbosctl enable policy derived_roles.my_derived_roles
+cerbosctl enable p derived_roles.my_derived_roles
+----
+
+.Enable multiple policies
+----
+cerbosctl enable policies derived_roles.my_derived_roles resource.leave_request.default
+cerbosctl enable policy derived_roles.my_derived_roles resource.leave_request.default
+cerbosctl enable p derived_roles.my_derived_roles resource.leave_request.default
+----
 
 [#get]
 == `get`

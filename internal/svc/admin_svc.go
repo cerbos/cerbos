@@ -192,6 +192,31 @@ func (cas *CerbosAdminService) DisablePolicy(ctx context.Context, req *requestv1
 	}, nil
 }
 
+func (cas *CerbosAdminService) EnablePolicy(ctx context.Context, req *requestv1.EnablePolicyRequest) (*responsev1.EnablePolicyResponse, error) {
+	if err := cas.checkCredentials(ctx); err != nil {
+		return nil, err
+	}
+
+	if cas.store == nil {
+		return nil, status.Error(codes.NotFound, "store is not configured")
+	}
+
+	ms, ok := cas.store.(storage.MutableStore)
+	if !ok {
+		return nil, status.Error(codes.Unimplemented, "Configured store is not mutable")
+	}
+
+	enabledPolicies, err := ms.Enable(ctx, req.Id...)
+	if err != nil {
+		ctxzap.Extract(ctx).Error("Failed to enable policies", zap.Error(err))
+		return nil, status.Error(codes.Internal, "Failed to enable policies")
+	}
+
+	return &responsev1.EnablePolicyResponse{
+		EnabledPolicies: enabledPolicies,
+	}, nil
+}
+
 func (cas *CerbosAdminService) ListSchemas(ctx context.Context, req *requestv1.ListSchemasRequest) (*responsev1.ListSchemasResponse, error) {
 	if err := cas.checkCredentials(ctx); err != nil {
 		return nil, err

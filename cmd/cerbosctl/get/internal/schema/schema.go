@@ -13,7 +13,6 @@ import (
 	"github.com/cerbos/cerbos/client"
 	"github.com/cerbos/cerbos/cmd/cerbosctl/get/internal/flagset"
 	"github.com/cerbos/cerbos/cmd/cerbosctl/get/internal/printer"
-	"github.com/cerbos/cerbos/cmd/cerbosctl/internal"
 )
 
 func List(k *kong.Kong, c client.AdminClient, format *flagset.Format) error {
@@ -38,8 +37,9 @@ func List(k *kong.Kong, c client.AdminClient, format *flagset.Format) error {
 
 func Get(k *kong.Kong, c client.AdminClient, format *flagset.Format, policyIds ...string) error {
 	for idx := range policyIds {
-		if idx%internal.MaxIDPerReq == 0 {
-			schemas, err := c.GetSchema(context.Background(), policyIds[idx:internal.MinInt(idx+internal.MaxIDPerReq, len(policyIds)-idx)]...)
+		if idx%client.MaxIDPerReq == 0 {
+			idxEnd := client.MinInt(idx+client.MaxIDPerReq, len(policyIds)-idx)
+			schemas, err := c.GetSchema(context.Background(), policyIds[idx:idxEnd]...)
 			if err != nil {
 				return fmt.Errorf("error while requesting schema: %w", err)
 			}

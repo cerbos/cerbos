@@ -344,6 +344,14 @@ func (ms *MockStore) Disable(ctx context.Context, _ ...string) (uint32, error) {
 	return 0, nil
 }
 
+func (ms *MockStore) Enable(ctx context.Context, _ ...string) (uint32, error) {
+	args := ms.MethodCalled("Enable", ctx)
+	if res := args.Get(0); res == nil {
+		return 0, args.Error(0)
+	}
+	return 0, nil
+}
+
 func (ms *MockStore) DeleteSchema(ctx context.Context, ids ...string) error {
 	args := ms.MethodCalled("DeleteSchema", ctx)
 	if res := args.Get(0); res == nil {

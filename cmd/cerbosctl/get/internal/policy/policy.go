@@ -12,7 +12,6 @@ import (
 	"github.com/cerbos/cerbos/client"
 	"github.com/cerbos/cerbos/cmd/cerbosctl/get/internal/flagset"
 	"github.com/cerbos/cerbos/cmd/cerbosctl/get/internal/printer"
-	"github.com/cerbos/cerbos/cmd/cerbosctl/internal"
 	"github.com/cerbos/cerbos/internal/policy"
 )
 
@@ -51,8 +50,8 @@ func List(k *kong.Kong, c client.AdminClient, filters *flagset.Filters, format *
 	fd := newFilterDef(kind, filters.Name, filters.Version, filters.IncludeDisabled)
 
 	for idx := range policyIds {
-		if idx%internal.MaxIDPerReq == 0 {
-			idxEnd := internal.MinInt(idx+internal.MaxIDPerReq, len(policyIds))
+		if idx%client.MaxIDPerReq == 0 {
+			idxEnd := client.MinInt(idx+client.MaxIDPerReq, len(policyIds))
 			policies, err := c.GetPolicy(context.Background(), policyIds[idx:idxEnd]...)
 			if err != nil {
 				return fmt.Errorf("error while requesting policy: %w", err)
@@ -89,8 +88,8 @@ func Get(k *kong.Kong, c client.AdminClient, format *flagset.Format, kind policy
 	fd := newFilterDef(kind, nil, nil, true)
 
 	for idx := range ids {
-		if idx%internal.MaxIDPerReq == 0 {
-			idxEnd := internal.MinInt(idx+internal.MaxIDPerReq, len(ids))
+		if idx%client.MaxIDPerReq == 0 {
+			idxEnd := client.MinInt(idx+client.MaxIDPerReq, len(ids))
 			policies, err := c.GetPolicy(context.Background(), ids[idx:idxEnd]...)
 			if err != nil {
 				return fmt.Errorf("error while requesting policy: %w", err)

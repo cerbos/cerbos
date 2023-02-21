@@ -364,6 +364,13 @@ message DisablePolicyResponse {
   uint32 disabled_policies = 1;
 }
 
+message EnablePolicyResponse {
+  option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
+    json_schema: {description: "Enable policy response"}
+  };
+  uint32 enabled_policies = 1;
+}
+
 message AddOrUpdateSchemaResponse {
   option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
     json_schema: {description: "Add/update schema response"}
