@@ -96,13 +96,13 @@ func OpenDirectoryFS(path string) fs.FS {
 	// We don't use `switch filepath.Ext(path)` here because it only suffixes from the final `.`, so `.tar.gz` won't be
 	// correctly handled
 	switch {
-	case strings.HasSuffix(path, ".zip"):
+	case IsZip(path):
 		zr, err := zip.OpenReader(path)
 		if err != nil {
 			panic(fmt.Errorf("failed to open zip file: %w", err))
 		}
 		return zr
-	case strings.HasSuffix(path, ".tar"):
+	case IsTar(path):
 		f, err := os.Open(path)
 		if err != nil {
 			panic(fmt.Errorf("failed to open tar file: %w", err))
@@ -110,7 +110,7 @@ func OpenDirectoryFS(path string) fs.FS {
 		defer f.Close()
 
 		return getFsFromTar(f)
-	case strings.HasSuffix(path, ".tar.gz") || strings.HasSuffix(path, ".tgz"):
+	case IsGzip(path):
 		f, err := os.Open(path)
 		if err != nil {
 			panic(fmt.Errorf("failed to open gzip file: %w", err))
