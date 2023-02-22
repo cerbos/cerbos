@@ -49,7 +49,13 @@ func NewStore(ctx context.Context, conf *Conf) (*Store, error) {
 	}
 
 	zap.S().Named("disk.store").Infof("Initializing disk store from %s", dir)
-	idx, err := index.Build(ctx, util.OpenDirectoryFS(dir))
+
+	fsys, err := util.OpenDirectoryFS(dir)
+	if err != nil {
+		return nil, err
+	}
+
+	idx, err := index.Build(ctx, fsys)
 	if err != nil {
 		return nil, err
 	}

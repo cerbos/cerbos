@@ -82,30 +82,30 @@ func IsArchiveFile(fileName string) bool {
 	return IsZip(fileName) || IsTar(fileName) || IsGzip(fileName)
 }
 
-func getFsFromTar(r io.Reader) fs.FS {
+func getFsFromTar(r io.Reader) (fs.FS, error) {
 	tfs, err := tarfs.New(r)
 	if err != nil {
-		panic(fmt.Errorf("failed to open tar file: %w", err))
+		return nil, fmt.Errorf("failed to open tar file: %w", err)
 	}
-	return tfs
+	return tfs, nil
 }
 
 // OpenDirectoryFS attempts to open a directory FS at the given location. It'll initially check if the target file is a zip,
 // and if so, will return a zip Reader (which implements fs.FS).
-func OpenDirectoryFS(path string) fs.FS {
+func OpenDirectoryFS(path string) (fs.FS, error) {
 	// We don't use `switch filepath.Ext(path)` here because it only suffixes from the final `.`, so `.tar.gz` won't be
 	// correctly handled
 	switch {
 	case IsZip(path):
 		zr, err := zip.OpenReader(path)
 		if err != nil {
-			panic(fmt.Errorf("failed to open zip file: %w", err))
+			return nil, fmt.Errorf("failed to open zip file: %w", err)
 		}
-		return zr
+		return zr, nil
 	case IsTar(path):
 		f, err := os.Open(path)
 		if err != nil {
-			panic(fmt.Errorf("failed to open tar file: %w", err))
+			return nil, fmt.Errorf("failed to open tar file: %w", err)
 		}
 		defer f.Close()
 
@@ -113,20 +113,20 @@ func OpenDirectoryFS(path string) fs.FS {
 	case IsGzip(path):
 		f, err := os.Open(path)
 		if err != nil {
-			panic(fmt.Errorf("failed to open gzip file: %w", err))
+			return nil, fmt.Errorf("failed to open gzip file: %w", err)
 		}
 		defer f.Close()
 
 		gzr, err := gzip.NewReader(f)
 		if err != nil {
-			panic(fmt.Errorf("failed to open gzip file: %w", err))
+			return nil, fmt.Errorf("failed to open gzip file: %w", err)
 		}
 		defer gzr.Close()
 
 		return getFsFromTar(gzr)
 	}
 
-	return os.DirFS(path)
+	return os.DirFS(path), nil
 }
 
 // LoadFromJSONOrYAML reads a JSON or YAML encoded protobuf from the given path.

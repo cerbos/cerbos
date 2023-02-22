@@ -45,7 +45,9 @@ func TestIndexLoadPolicy(t *testing.T) {
 		t.Helper()
 
 		base := test.PathToDir(t, path)
-		idx, err := index.Build(context.Background(), util.OpenDirectoryFS(base))
+		fsys, err := util.OpenDirectoryFS(base)
+		require.NoError(t, err)
+		idx, err := index.Build(context.Background(), fsys)
 		require.NoError(t, err)
 
 		t.Run("should load the policies", func(t *testing.T) {
