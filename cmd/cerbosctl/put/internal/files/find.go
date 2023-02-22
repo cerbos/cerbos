@@ -31,8 +31,8 @@ func find(path string, recursive bool, fileType util.IndexedFileType, callback c
 	}
 
 	switch {
-	case fileInfo.IsDir():
-		if err := doFind(os.DirFS(path), fileType, recursive, callback); err != nil {
+	case fileInfo.IsDir() || util.IsArchiveFile(path):
+		if err := doFind(util.OpenDirectoryFS(path), fileType, recursive, callback); err != nil {
 			return fmt.Errorf("failed to find files %s: %w", path, err)
 		}
 	default:

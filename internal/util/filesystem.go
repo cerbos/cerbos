@@ -66,6 +66,22 @@ func IsHidden(fileName string) bool {
 	}
 }
 
+func IsZip(fileName string) bool {
+	return strings.HasSuffix(fileName, ".zip")
+}
+
+func IsTar(fileName string) bool {
+	return strings.HasSuffix(fileName, ".tar")
+}
+
+func IsGzip(fileName string) bool {
+	return strings.HasSuffix(fileName, ".tar.gz") || strings.HasSuffix(fileName, ".tgz")
+}
+
+func IsArchiveFile(fileName string) bool {
+	return IsZip(fileName) || IsTar(fileName) || IsGzip(fileName)
+}
+
 func getFsFromTar(r io.Reader) fs.FS {
 	tfs, err := tarfs.New(r)
 	if err != nil {
