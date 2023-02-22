@@ -7,7 +7,6 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"os"
 	"path/filepath"
 
 	"github.com/cerbos/cerbos/internal/config"
@@ -15,6 +14,7 @@ import (
 	"github.com/cerbos/cerbos/internal/policy"
 	"github.com/cerbos/cerbos/internal/storage"
 	"github.com/cerbos/cerbos/internal/storage/index"
+	"github.com/cerbos/cerbos/internal/util"
 	"go.uber.org/zap"
 )
 
@@ -49,7 +49,7 @@ func NewStore(ctx context.Context, conf *Conf) (*Store, error) {
 	}
 
 	zap.S().Named("disk.store").Infof("Initializing disk store from %s", dir)
-	idx, err := index.Build(ctx, os.DirFS(dir))
+	idx, err := index.Build(ctx, util.OpenDirectoryFS(dir))
 	if err != nil {
 		return nil, err
 	}

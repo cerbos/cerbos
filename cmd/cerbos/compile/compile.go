@@ -29,6 +29,7 @@ import (
 	"github.com/cerbos/cerbos/internal/schema"
 	"github.com/cerbos/cerbos/internal/storage/disk"
 	"github.com/cerbos/cerbos/internal/storage/index"
+	"github.com/cerbos/cerbos/internal/util"
 	"github.com/cerbos/cerbos/internal/verify"
 )
 
@@ -76,7 +77,7 @@ func (c *Cmd) Run(k *kong.Kong) error {
 
 	p := printer.New(k.Stdout, k.Stderr)
 
-	idx, err := index.Build(ctx, os.DirFS(c.Dir), index.WithBuildFailureLogLevel(zap.DebugLevel))
+	idx, err := index.Build(ctx, util.OpenDirectoryFS(c.Dir), index.WithBuildFailureLogLevel(zap.DebugLevel))
 	if err != nil {
 		idxErr := new(index.BuildError)
 		if errors.As(err, &idxErr) {
@@ -137,10 +138,10 @@ func (c *Cmd) Run(k *kong.Kong) error {
 
 func (c *Cmd) testsDir() fs.FS {
 	if c.Tests == "" {
-		return os.DirFS(c.Dir)
+		return util.OpenDirectoryFS(c.Dir)
 	}
 
-	return os.DirFS(c.Tests)
+	return util.OpenDirectoryFS(c.Tests)
 }
 
 func (c *Cmd) Help() string {

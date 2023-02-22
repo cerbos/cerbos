@@ -50,7 +50,7 @@ func find(path string, recursive bool, fileType util.IndexedFileType, callback c
 		fis := foundInFs{
 			path: filepath.Base(path),
 			id:   filepath.Base(path),
-			fsys: os.DirFS(filepath.Dir(path)),
+			fsys: util.OpenDirectoryFS(filepath.Dir(path)),
 		}
 
 		if id, ok := util.RelativeSchemaPath(path); fileType == util.FileTypeSchema && ok {
