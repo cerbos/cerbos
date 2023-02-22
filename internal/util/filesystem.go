@@ -66,18 +66,6 @@ func IsHidden(fileName string) bool {
 	}
 }
 
-func IsZip(fileName string) bool {
-	return strings.HasSuffix(fileName, ".zip")
-}
-
-func IsTar(fileName string) bool {
-	return strings.HasSuffix(fileName, ".tar")
-}
-
-func IsGzip(fileName string) bool {
-	return strings.HasSuffix(fileName, ".tar.gz") || strings.HasSuffix(fileName, ".tgz")
-}
-
 func getFsFromTar(r io.Reader) fs.FS {
 	tfs, err := tarfs.New(r)
 	if err != nil {
@@ -89,14 +77,16 @@ func getFsFromTar(r io.Reader) fs.FS {
 // OpenDirectoryFS attempts to open a directory FS at the given location. It'll initially check if the target file is a zip,
 // and if so, will return a zip Reader (which implements fs.FS).
 func OpenDirectoryFS(path string) fs.FS {
+	// We don't use `switch filepath.Ext(path)` here because it only suffixes from the final `.`, so `.tar.gz` won't be
+	// correctly handled
 	switch {
-	case IsZip(path):
+	case strings.HasSuffix(path, ".zip"):
 		zr, err := zip.OpenReader(path)
 		if err != nil {
 			panic(fmt.Errorf("failed to open zip file: %w", err))
 		}
 		return zr
-	case IsTar(path):
+	case strings.HasSuffix(path, ".tar"):
 		f, err := os.Open(path)
 		if err != nil {
 			panic(fmt.Errorf("failed to open tar file: %w", err))
@@ -104,7 +94,7 @@ func OpenDirectoryFS(path string) fs.FS {
 		defer f.Close()
 
 		return getFsFromTar(f)
-	case IsGzip(path):
+	case strings.HasSuffix(path, ".tar.gz") || strings.HasSuffix(path, ".tgz"):
 		f, err := os.Open(path)
 		if err != nil {
 			panic(fmt.Errorf("failed to open gzip file: %w", err))
