@@ -147,3 +147,25 @@ func TestRelativeSchemaPath(t *testing.T) {
 		})
 	}
 }
+
+func TestIsArchiveFile(t *testing.T) {
+	tests := []struct {
+		fileName string
+		want     bool
+	}{
+		{"foo.zip", true},
+		{"foo.tar", true},
+		{"foo.tgz", true},
+		{"foo.tar.gz", true},
+		// Unsupported files
+		{"foo/", false},
+		{"foo.yaml", false},
+	}
+	for _, tt := range tests {
+		t.Run(tt.fileName, func(t *testing.T) {
+			if got := util.IsArchiveFile(tt.fileName); got != tt.want {
+				t.Errorf("IsArchiveFile() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
