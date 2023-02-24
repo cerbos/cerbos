@@ -65,7 +65,7 @@ func NewStore(ctx context.Context, conf *Conf) (*Store, error) {
 		idx:                 idx,
 		SubscriptionManager: storage.NewSubscriptionManager(ctx),
 	}
-	if conf.WatchForChanges {
+	if conf.WatchForChanges && !util.IsArchiveFile(dir) {
 		if err := watchDir(ctx, dir, s.idx, s.SubscriptionManager, defaultCooldownPeriod); err != nil {
 			return nil, err
 		}
