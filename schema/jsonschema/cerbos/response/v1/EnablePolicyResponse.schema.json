@@ -1,0 +1,12 @@
+{
+  "$id": "https://api.cerbos.dev/cerbos/response/v1/EnablePolicyResponse.schema.json",
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "enabledPolicies": {
+      "type": "integer",
+      "minimum": 0
+    }
+  }
+}

@@ -42,6 +42,7 @@ type DBStorage interface {
 	ListSchemaIDs(ctx context.Context) ([]string, error)
 	AddOrUpdateSchema(ctx context.Context, schemas ...*schemav1.Schema) error
 	Disable(ctx context.Context, policyKey ...string) (uint32, error)
+	Enable(ctx context.Context, policyKey ...string) (uint32, error)
 	DeleteSchema(ctx context.Context, ids ...string) (uint32, error)
 	LoadSchema(ctx context.Context, url string) (io.ReadCloser, error)
 	LoadPolicy(ctx context.Context, policyKey ...string) ([]*policy.Wrapper, error)
@@ -412,7 +413,6 @@ func (s *dbStorage) GetCompilationUnits(ctx context.Context, ids ...namer.Module
 	if err != nil {
 		return nil, err
 	}
-
 	defer results.Close()
 
 	units := make(map[namer.ModuleID]*policy.CompilationUnit)
@@ -421,12 +421,13 @@ func (s *dbStorage) GetCompilationUnits(ctx context.Context, ids ...namer.Module
 			Definition PolicyDefWrapper
 			Parent     namer.ModuleID
 			ID         namer.ModuleID
+			Disabled   bool
 		}
-
 		if err := results.ScanStruct(&row); err != nil {
 			return nil, err
 		}
 
+		row.Definition.Disabled = row.Disabled
 		unit, ok := units[row.Parent]
 		if !ok {
 			unit = &policy.CompilationUnit{ModID: row.Parent}
@@ -546,16 +547,13 @@ func (s *dbStorage) Disable(ctx context.Context, policyKey ...string) (uint32, e
 		return 0, db.ErrBreaksScopeChain{PolicyKeys: brokenChainPolicies}
 	}
 
-	mIDList := make([]any, len(policyKey))
 	events := make([]storage.Event, len(policyKey))
 	for i, pk := range policyKey {
-		mID := namer.GenModuleIDFromFQN(namer.FQNFromPolicyKey(pk))
-		mIDList[i] = mID
-		events[i] = storage.Event{Kind: storage.EventAddOrUpdatePolicy, PolicyID: mID}
+		events[i] = storage.Event{Kind: storage.EventAddOrUpdatePolicy, PolicyID: namer.GenModuleIDFromFQN(namer.FQNFromPolicyKey(pk))}
 	}
 	res, err := s.db.Update(PolicyTbl).Prepared(true).
 		Set(goqu.Record{PolicyTblDisabledCol: true}).
-		Where(goqu.C(PolicyTblIDCol).In(mIDList...)).
+		Where(goqu.C(PolicyTblIDCol).In(mIDs)).
 		Executor().ExecContext(ctx)
 	if err != nil {
 		return 0, err
@@ -564,6 +562,31 @@ func (s *dbStorage) Disable(ctx context.Context, policyKey ...string) (uint32, e
 	affected, err := res.RowsAffected()
 	if err != nil {
 		return 0, fmt.Errorf("failed to discover whether the policies got disabled or not: %w", err)
+	}
+
+	s.NotifySubscribers(events...)
+	return uint32(affected), nil
+}
+
+func (s *dbStorage) Enable(ctx context.Context, policyKey ...string) (uint32, error) {
+	mIDs := make([]namer.ModuleID, len(policyKey))
+	events := make([]storage.Event, len(policyKey))
+	for idx, pk := range policyKey {
+		mIDs[idx] = namer.GenModuleIDFromFQN(namer.FQNFromPolicyKey(pk))
+		events[idx] = storage.Event{Kind: storage.EventAddOrUpdatePolicy, PolicyID: namer.GenModuleIDFromFQN(namer.FQNFromPolicyKey(pk))}
+	}
+
+	res, err := s.db.Update(PolicyTbl).Prepared(true).
+		Set(goqu.Record{PolicyTblDisabledCol: false}).
+		Where(goqu.C(PolicyTblIDCol).In(mIDs)).
+		Executor().ExecContext(ctx)
+	if err != nil {
+		return 0, err
+	}
+
+	affected, err := res.RowsAffected()
+	if err != nil {
+		return 0, fmt.Errorf("failed to discover whether the policies got enabled or not: %w", err)
 	}
 
 	s.NotifySubscribers(events...)

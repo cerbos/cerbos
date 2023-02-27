@@ -143,9 +143,34 @@ service CerbosAdminService {
   }
 
   rpc DisablePolicy(cerbos.request.v1.DisablePolicyRequest) returns (cerbos.response.v1.DisablePolicyResponse) {
-    option (google.api.http) = {delete: "/admin/policy"};
+    option (google.api.http) = {
+      post: "/admin/policy/disable",
+      additional_bindings: {
+        put: "/admin/policy/disable",
+        body: "*"
+      }
+    };
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
       summary: "Disable policy",
+      security: {
+        security_requirement: {
+          key: "BasicAuth";
+          value: {};
+        }
+      }
+    };
+  }
+
+  rpc EnablePolicy(cerbos.request.v1.EnablePolicyRequest) returns (cerbos.response.v1.EnablePolicyResponse) {
+    option (google.api.http) = {
+      post: "/admin/policy/enable",
+      additional_bindings: {
+        put: "/admin/policy/enable",
+        body: "*"
+      }
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Enable policy",
       security: {
         security_requirement: {
           key: "BasicAuth";

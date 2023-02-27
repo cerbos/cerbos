@@ -8,6 +8,7 @@ import (
 	"github.com/cerbos/cerbos/cmd/cerbosctl/decisions"
 	"github.com/cerbos/cerbos/cmd/cerbosctl/del"
 	"github.com/cerbos/cerbos/cmd/cerbosctl/disable"
+	"github.com/cerbos/cerbos/cmd/cerbosctl/enable"
 	"github.com/cerbos/cerbos/cmd/cerbosctl/get"
 	"github.com/cerbos/cerbos/cmd/cerbosctl/internal/flagset"
 	"github.com/cerbos/cerbos/cmd/cerbosctl/put"
@@ -41,6 +42,7 @@ type Cli struct {
 	flagset.Globals
 	Delete    del.Cmd       `cmd:"" help:"Delete schemas"`
 	Disable   disable.Cmd   `cmd:"" help:"Disable policies"`
+	Enable    enable.Cmd    `cmd:"" help:"Enable policies"`
 	Put       put.Cmd       `cmd:"" help:"Put policies or schemas"`
 	Decisions decisions.Cmd `cmd:"" help:"Interactive decision log viewer"`
 	Audit     audit.Cmd     `cmd:"" help:"View audit logs"`

@@ -31,6 +31,7 @@ type AdminClient interface {
 	ListPolicies(ctx context.Context, opts ...ListPoliciesOption) ([]string, error)
 	GetPolicy(ctx context.Context, ids ...string) ([]*policyv1.Policy, error)
 	DisablePolicy(ctx context.Context, ids ...string) (uint32, error)
+	EnablePolicy(ctx context.Context, ids ...string) (uint32, error)
 	AddOrUpdateSchema(ctx context.Context, schemas *SchemaSet) error
 	DeleteSchema(ctx context.Context, ids ...string) (uint32, error)
 	ListSchemas(ctx context.Context) ([]string, error)
@@ -224,6 +225,22 @@ func (c *GrpcAdminClient) DisablePolicy(ctx context.Context, ids ...string) (uin
 	}
 
 	return resp.DisabledPolicies, nil
+}
+
+func (c *GrpcAdminClient) EnablePolicy(ctx context.Context, ids ...string) (uint32, error) {
+	req := &requestv1.EnablePolicyRequest{
+		Id: ids,
+	}
+	if err := req.Validate(); err != nil {
+		return 0, fmt.Errorf("could not validate enable policy request: %w", err)
+	}
+
+	resp, err := c.client.EnablePolicy(ctx, req, grpc.PerRPCCredentials(c.creds))
+	if err != nil {
+		return 0, fmt.Errorf("could not enable policy: %w", err)
+	}
+
+	return resp.EnabledPolicies, nil
 }
 
 func (c *GrpcAdminClient) AddOrUpdateSchema(ctx context.Context, schemas *SchemaSet) error {

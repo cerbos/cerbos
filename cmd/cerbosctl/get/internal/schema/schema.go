@@ -10,10 +10,10 @@ import (
 
 	"github.com/alecthomas/kong"
 
+	schemav1 "github.com/cerbos/cerbos/api/genpb/cerbos/schema/v1"
 	"github.com/cerbos/cerbos/client"
 	"github.com/cerbos/cerbos/cmd/cerbosctl/get/internal/flagset"
 	"github.com/cerbos/cerbos/cmd/cerbosctl/get/internal/printer"
-	"github.com/cerbos/cerbos/cmd/cerbosctl/internal"
 )
 
 func List(k *kong.Kong, c client.AdminClient, format *flagset.Format) error {
@@ -36,18 +36,16 @@ func List(k *kong.Kong, c client.AdminClient, format *flagset.Format) error {
 	return nil
 }
 
-func Get(k *kong.Kong, c client.AdminClient, format *flagset.Format, policyIds ...string) error {
-	for idx := range policyIds {
-		if idx%internal.MaxIDPerReq == 0 {
-			schemas, err := c.GetSchema(context.Background(), policyIds[idx:internal.MinInt(idx+internal.MaxIDPerReq, len(policyIds)-idx)]...)
-			if err != nil {
-				return fmt.Errorf("error while requesting schema: %w", err)
-			}
-
-			if err = printSchema(k.Stdout, schemas, format.Output); err != nil {
-				return fmt.Errorf("could not print schemas: %w", err)
-			}
+func Get(k *kong.Kong, c client.AdminClient, format *flagset.Format, ids ...string) error {
+	if err := client.BatchAdminClientCall2(context.Background(), c.GetSchema, func(ctx context.Context, schemas []*schemav1.Schema) error {
+		if err := printSchema(k.Stdout, schemas, format.Output); err != nil {
+			return fmt.Errorf("could not print schemas: %w", err)
 		}
+
+		return nil
+	}, ids...); err != nil {
+		return fmt.Errorf("error while getting schemas: %w", err)
 	}
+
 	return nil
 }

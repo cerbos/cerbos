@@ -3,7 +3,7 @@
 
 //go:build !race
 
-package disable_test
+package enable_test
 
 import (
 	"bytes"
@@ -36,7 +36,7 @@ const (
 	readyPollInterval = 50 * time.Millisecond
 )
 
-func TestDisableCmd(t *testing.T) {
+func TestEnableCmd(t *testing.T) {
 	s := mkServer(t)
 	defer s.Stop() //nolint:errcheck
 
@@ -44,19 +44,19 @@ func TestDisableCmd(t *testing.T) {
 	ctx, _ := context.WithTimeout(context.Background(), timeout)
 	cctx := mkClients(t, globals)
 	loadPolicies(t, cctx.AdminClient)
-	testDisableCmd(ctx, cctx, globals)(t)
+	testEnableCmd(ctx, cctx, globals)(t)
 }
 
-func testDisableCmd(ctx context.Context, cctx *cmdclient.Context, globals *flagset.Globals) func(*testing.T) {
+func testEnableCmd(ctx context.Context, cctx *cmdclient.Context, globals *flagset.Globals) func(*testing.T) {
 	//nolint:thelper
 	return func(t *testing.T) {
-		t.Run("cerbosctl disable", func(t *testing.T) {
+		t.Run("cerbosctl enable", func(t *testing.T) {
 			t.Run("no arguments provided", func(t *testing.T) {
 				p := mustNew(t, &root.Cli{})
-				_, err := p.Parse([]string{"disable"})
+				_, err := p.Parse([]string{"enable"})
 				require.Error(t, err)
 			})
-			t.Run("possible arguments after disable command", func(t *testing.T) {
+			t.Run("possible arguments after enable command", func(t *testing.T) {
 				testCases := []struct {
 					args    []string
 					wantErr bool
@@ -71,7 +71,7 @@ func testDisableCmd(ctx context.Context, cctx *cmdclient.Context, globals *flags
 					for _, arg := range tc.args {
 						cli := root.Cli{}
 						p := mustNew(t, &cli)
-						_, err := p.Parse([]string{"disable", arg, "resource.leave_request.vdefault"})
+						_, err := p.Parse([]string{"enable", arg, "resource.leave_request.vdefault"})
 						if tc.wantErr {
 							require.Error(t, err)
 						} else {
@@ -80,30 +80,24 @@ func testDisableCmd(ctx context.Context, cctx *cmdclient.Context, globals *flags
 					}
 				}
 			})
-			t.Run("disable and check", func(t *testing.T) {
+			t.Run("enable and check", func(t *testing.T) {
 				testCases := []struct {
-					policyKey    string
-					wantDisabled bool
+					policyKey string
 				}{
 					{
-						policyKey:    "derived_roles.my_derived_roles_1",
-						wantDisabled: true,
+						policyKey: "derived_roles.my_derived_roles_1",
 					},
 					{
-						policyKey:    "principal.donald_duck_1.vdefault",
-						wantDisabled: false,
+						policyKey: "principal.donald_duck_1.vdefault",
 					},
 					{
-						policyKey:    "principal.donald_duck_1.vdefault/acme.hr",
-						wantDisabled: true,
+						policyKey: "principal.donald_duck_1.vdefault/acme.hr",
 					},
 					{
-						policyKey:    "resource.leave_request_1.vdefault",
-						wantDisabled: false,
+						policyKey: "resource.leave_request_1.vdefault",
 					},
 					{
-						policyKey:    "resource.leave_request_1.vdefault/acme.hr.uk",
-						wantDisabled: true,
+						policyKey: "resource.leave_request_1.vdefault/acme.hr.uk",
 					},
 				}
 				for idx, tc := range testCases {
@@ -116,38 +110,28 @@ func testDisableCmd(ctx context.Context, cctx *cmdclient.Context, globals *flags
 						require.NoError(t, err)
 						require.NotNil(t, policies)
 						require.NotNil(t, policies[0])
-						require.False(t, policies[0].Disabled)
+						require.True(t, policies[0].Disabled)
 
-						kctx, err := p.Parse([]string{"disable", "policy", tc.policyKey})
+						kctx, err := p.Parse([]string{"enable", "policy", tc.policyKey})
 						require.NoError(t, err)
 						err = kctx.Run(cctx, globals)
-						if tc.wantDisabled {
-							require.NoError(t, err)
-						} else {
-							require.Error(t, err)
-						}
+						require.NoError(t, err)
 
 						policies, err = cctx.AdminClient.GetPolicy(ctx, tc.policyKey)
 						require.NoError(t, err)
-						if tc.wantDisabled {
-							require.NotNil(t, policies)
-							require.NotNil(t, policies[0])
-							require.True(t, policies[0].Disabled)
-							require.Contains(t, out.String(), "Number of policies disabled is 1")
-						} else {
-							require.NotNil(t, policies)
-							require.NotNil(t, policies[0])
-							require.False(t, policies[0].Disabled)
-						}
+						require.NotNil(t, policies)
+						require.NotNil(t, policies[0])
+						require.False(t, policies[0].Disabled)
+						require.Contains(t, out.String(), "Number of policies enabled is 1")
 					})
 				}
 			})
-			t.Run("disable nonexisting policy", func(t *testing.T) {
+			t.Run("enable nonexisting policy", func(t *testing.T) {
 				p := mustNew(t, &root.Cli{})
 				out := bytes.NewBufferString("")
 				p.Stdout = out
 
-				kctx, err := p.Parse([]string{"disable", "policy", "resource.nonexistent.vnone/none"})
+				kctx, err := p.Parse([]string{"enable", "policy", "resource.nonexistent.vnone/none"})
 				require.NoError(t, err)
 				err = kctx.Run(cctx, globals)
 				require.NoError(t, err)
@@ -161,15 +145,14 @@ func loadPolicies(t *testing.T, ac client.AdminClient) {
 
 	for i := 0; i < policiesPerType; i++ {
 		ps := client.NewPolicySet()
-
-		ps.AddPolicies(test.GenPrincipalPolicy(test.Suffix(strconv.Itoa(i))))
-		ps.AddPolicies(test.GenResourcePolicy(test.Suffix(strconv.Itoa(i))))
-		ps.AddPolicies(test.GenDerivedRoles(test.Suffix(strconv.Itoa(i))))
-		ps.AddPolicies(withScope(test.GenResourcePolicy(test.Suffix(strconv.Itoa(i))), "acme"))
-		ps.AddPolicies(withScope(test.GenResourcePolicy(test.Suffix(strconv.Itoa(i))), "acme.hr"))
-		ps.AddPolicies(withScope(test.GenResourcePolicy(test.Suffix(strconv.Itoa(i))), "acme.hr.uk"))
-		ps.AddPolicies(withScope(test.GenPrincipalPolicy(test.Suffix(strconv.Itoa(i))), "acme"))
-		ps.AddPolicies(withScope(test.GenPrincipalPolicy(test.Suffix(strconv.Itoa(i))), "acme.hr"))
+		ps.AddPolicies(test.GenDisabledPrincipalPolicy(test.Suffix(strconv.Itoa(i))))
+		ps.AddPolicies(test.GenDisabledResourcePolicy(test.Suffix(strconv.Itoa(i))))
+		ps.AddPolicies(test.GenDisabledDerivedRoles(test.Suffix(strconv.Itoa(i))))
+		ps.AddPolicies(withScope(test.GenDisabledResourcePolicy(test.Suffix(strconv.Itoa(i))), "acme"))
+		ps.AddPolicies(withScope(test.GenDisabledResourcePolicy(test.Suffix(strconv.Itoa(i))), "acme.hr"))
+		ps.AddPolicies(withScope(test.GenDisabledResourcePolicy(test.Suffix(strconv.Itoa(i))), "acme.hr.uk"))
+		ps.AddPolicies(withScope(test.GenDisabledPrincipalPolicy(test.Suffix(strconv.Itoa(i))), "acme"))
+		ps.AddPolicies(withScope(test.GenDisabledPrincipalPolicy(test.Suffix(strconv.Itoa(i))), "acme.hr"))
 
 		require.NoError(t, ac.AddOrUpdatePolicy(context.Background(), ps))
 	}

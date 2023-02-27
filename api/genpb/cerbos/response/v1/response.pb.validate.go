@@ -2490,6 +2490,110 @@ var _ interface {
 	ErrorName() string
 } = DisablePolicyResponseValidationError{}
 
+// Validate checks the field values on EnablePolicyResponse with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *EnablePolicyResponse) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on EnablePolicyResponse with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// EnablePolicyResponseMultiError, or nil if none found.
+func (m *EnablePolicyResponse) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *EnablePolicyResponse) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for EnabledPolicies
+
+	if len(errors) > 0 {
+		return EnablePolicyResponseMultiError(errors)
+	}
+
+	return nil
+}
+
+// EnablePolicyResponseMultiError is an error wrapping multiple validation
+// errors returned by EnablePolicyResponse.ValidateAll() if the designated
+// constraints aren't met.
+type EnablePolicyResponseMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m EnablePolicyResponseMultiError) Error() string {
+	var msgs []string
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m EnablePolicyResponseMultiError) AllErrors() []error { return m }
+
+// EnablePolicyResponseValidationError is the validation error returned by
+// EnablePolicyResponse.Validate if the designated constraints aren't met.
+type EnablePolicyResponseValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e EnablePolicyResponseValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e EnablePolicyResponseValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e EnablePolicyResponseValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e EnablePolicyResponseValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e EnablePolicyResponseValidationError) ErrorName() string {
+	return "EnablePolicyResponseValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e EnablePolicyResponseValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sEnablePolicyResponse.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = EnablePolicyResponseValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = EnablePolicyResponseValidationError{}
+
 // Validate checks the field values on AddOrUpdateSchemaResponse with the rules
 // defined in the proto definition for this message. If any rules are
 // violated, the first error encountered is returned, or nil if there are no violations.

@@ -9,10 +9,10 @@ import (
 
 	"github.com/alecthomas/kong"
 
+	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
 	"github.com/cerbos/cerbos/client"
 	"github.com/cerbos/cerbos/cmd/cerbosctl/get/internal/flagset"
 	"github.com/cerbos/cerbos/cmd/cerbosctl/get/internal/printer"
-	"github.com/cerbos/cerbos/cmd/cerbosctl/internal"
 	"github.com/cerbos/cerbos/internal/policy"
 )
 
@@ -49,36 +49,32 @@ func List(k *kong.Kong, c client.AdminClient, filters *flagset.Filters, format *
 	}
 
 	fd := newFilterDef(kind, filters.Name, filters.Version, filters.IncludeDisabled)
-
-	for idx := range policyIds {
-		if idx%internal.MaxIDPerReq == 0 {
-			idxEnd := internal.MinInt(idx+internal.MaxIDPerReq, len(policyIds))
-			policies, err := c.GetPolicy(context.Background(), policyIds[idx:idxEnd]...)
-			if err != nil {
-				return fmt.Errorf("error while requesting policy: %w", err)
-			}
-
-			filtered := make([]policy.Wrapper, 0, len(policies))
-			for _, p := range policies {
-				wp := policy.Wrap(p)
-				if fd.filter(wp) {
-					filtered = append(filtered, wp)
-				}
-			}
-
-			sorted := sort(filtered, sortFlags.SortBy)
-			for _, p := range sorted {
-				row := make([]string, 2, 4) //nolint:gomnd
-				row[0] = p.Metadata.StoreIdentifier
-				row[1] = p.Name
-				if kind != policy.DerivedRolesKind {
-					row = append(row, p.Version)
-					row = append(row, p.Scope)
-				}
-				tw.Append(row)
+	if err := client.BatchAdminClientCall2(context.Background(), c.GetPolicy, func(ctx context.Context, policies []*policyv1.Policy) error {
+		filtered := make([]policy.Wrapper, 0, len(policies))
+		for _, p := range policies {
+			wp := policy.Wrap(p)
+			if fd.filter(wp) {
+				filtered = append(filtered, wp)
 			}
 		}
+
+		sorted := sort(filtered, sortFlags.SortBy)
+		for _, p := range sorted {
+			row := make([]string, 2, 4) //nolint:gomnd
+			row[0] = p.Metadata.StoreIdentifier
+			row[1] = p.Name
+			if kind != policy.DerivedRolesKind {
+				row = append(row, p.Version)
+				row = append(row, p.Scope)
+			}
+			tw.Append(row)
+		}
+
+		return nil
+	}, policyIds...); err != nil {
+		return fmt.Errorf("error while listing policies: %w", err)
 	}
+
 	tw.Render()
 
 	return nil
@@ -88,30 +84,26 @@ func Get(k *kong.Kong, c client.AdminClient, format *flagset.Format, kind policy
 	foundPolicy := false
 	fd := newFilterDef(kind, nil, nil, true)
 
-	for idx := range ids {
-		if idx%internal.MaxIDPerReq == 0 {
-			idxEnd := internal.MinInt(idx+internal.MaxIDPerReq, len(ids))
-			policies, err := c.GetPolicy(context.Background(), ids[idx:idxEnd]...)
-			if err != nil {
-				return fmt.Errorf("error while requesting policy: %w", err)
-			}
-
-			filtered := make([]policy.Wrapper, 0, len(policies))
-			for _, p := range policies {
-				wp := policy.Wrap(p)
-				if fd.filter(wp) {
-					filtered = append(filtered, wp)
-				}
-			}
-
-			if len(filtered) != 0 {
-				foundPolicy = true
-			}
-
-			if err = printPolicy(k.Stdout, filtered, format.Output); err != nil {
-				return fmt.Errorf("could not print policies: %w", err)
+	if err := client.BatchAdminClientCall2(context.Background(), c.GetPolicy, func(ctx context.Context, policies []*policyv1.Policy) error {
+		filtered := make([]policy.Wrapper, 0, len(policies))
+		for _, p := range policies {
+			wp := policy.Wrap(p)
+			if fd.filter(wp) {
+				filtered = append(filtered, wp)
 			}
 		}
+
+		if len(filtered) != 0 {
+			foundPolicy = true
+		}
+
+		if err := printPolicy(k.Stdout, filtered, format.Output); err != nil {
+			return fmt.Errorf("could not print policies: %w", err)
+		}
+
+		return nil
+	}, ids...); err != nil {
+		return fmt.Errorf("error while getting policies: %w", err)
 	}
 
 	if !foundPolicy {
