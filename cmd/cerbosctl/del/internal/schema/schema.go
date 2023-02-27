@@ -4,13 +4,14 @@
 package schema
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/cerbos/cerbos/client"
 )
 
 func Delete(c client.AdminClient, ids ...string) (uint32, error) {
-	deletedSchemas, err := client.BatchAdminClientCall(c.DeleteSchema, ids...)
+	deletedSchemas, err := client.BatchAdminClientCall(context.Background(), c.DeleteSchema, ids...)
 	if err != nil {
 		return 0, fmt.Errorf("error while deleting schema: %w", err)
 	}

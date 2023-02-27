@@ -4,6 +4,7 @@
 package disable
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/alecthomas/kong"
@@ -35,7 +36,7 @@ func (c *Cmd) Run(k *kong.Kong, ctx *internalclient.Context) error {
 		return fmt.Errorf("no policy id(s) provided")
 	}
 
-	disabledPolicies, err := client.BatchAdminClientCall(ctx.AdminClient.DisablePolicy, c.Policy.PolicyIds...)
+	disabledPolicies, err := client.BatchAdminClientCall(context.Background(), ctx.AdminClient.DisablePolicy, c.Policy.PolicyIds...)
 	if err != nil {
 		return fmt.Errorf("failed to disable policies: %w", err)
 	}

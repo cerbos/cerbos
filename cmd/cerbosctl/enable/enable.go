@@ -4,6 +4,7 @@
 package enable
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/alecthomas/kong"
@@ -35,7 +36,7 @@ func (c *Cmd) Run(k *kong.Kong, ctx *internalclient.Context) error {
 		return fmt.Errorf("no policy id(s) provided")
 	}
 
-	enabledPolicies, err := client.BatchAdminClientCall(ctx.AdminClient.EnablePolicy, c.Policy.PolicyIds...)
+	enabledPolicies, err := client.BatchAdminClientCall(context.Background(), ctx.AdminClient.EnablePolicy, c.Policy.PolicyIds...)
 	if err != nil {
 		return fmt.Errorf("failed to enable policies: %w", err)
 	}
