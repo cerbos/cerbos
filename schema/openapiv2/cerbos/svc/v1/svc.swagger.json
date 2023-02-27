@@ -799,6 +799,7 @@
         "validationErrors": {
           "type": "array",
           "items": {
+            "type": "object",
             "$ref": "#/definitions/v1ValidationError"
           },
           "description": "List of validation errors (if schema validation is enabled)"
@@ -914,12 +915,14 @@
         "inputs": {
           "type": "array",
           "items": {
+            "type": "object",
             "$ref": "#/definitions/v1CheckInput"
           }
         },
         "outputs": {
           "type": "array",
           "items": {
+            "type": "object",
             "$ref": "#/definitions/v1CheckOutput"
           }
         },
@@ -982,6 +985,7 @@
         "of": {
           "type": "array",
           "items": {
+            "type": "object",
             "$ref": "#/definitions/v1Match"
           }
         }
@@ -1028,6 +1032,7 @@
         "operands": {
           "type": "array",
           "items": {
+            "type": "object",
             "$ref": "#/definitions/ExpressionOperand"
           }
         }
@@ -1055,6 +1060,7 @@
         "validationErrors": {
           "type": "array",
           "items": {
+            "type": "object",
             "$ref": "#/definitions/v1ValidationError"
           }
         }
@@ -1066,6 +1072,7 @@
         "results": {
           "type": "array",
           "items": {
+            "type": "object",
             "$ref": "#/definitions/PlaygroundEvaluateResponseEvalResult"
           }
         }
@@ -1108,6 +1115,7 @@
         "engineTrace": {
           "type": "array",
           "items": {
+            "type": "object",
             "$ref": "#/definitions/v1Trace"
           }
         }
@@ -1147,6 +1155,7 @@
         "principals": {
           "type": "array",
           "items": {
+            "type": "object",
             "$ref": "#/definitions/v1TestResultsPrincipal"
           }
         },
@@ -1171,6 +1180,7 @@
         "resultCounts": {
           "type": "array",
           "items": {
+            "type": "object",
             "$ref": "#/definitions/TestResultsTally"
           }
         }
@@ -1400,6 +1410,7 @@
         "details": {
           "type": "array",
           "items": {
+            "type": "object",
             "$ref": "#/definitions/protobufAny"
           }
         }
@@ -1411,6 +1422,7 @@
         "suites": {
           "type": "array",
           "items": {
+            "type": "object",
             "$ref": "#/definitions/TestResultsSuite"
           }
         },
@@ -1493,6 +1505,7 @@
         "policies": {
           "type": "array",
           "items": {
+            "type": "object",
             "$ref": "#/definitions/v1Policy"
           },
           "description": "List of policies.",
@@ -1521,6 +1534,7 @@
         "schemas": {
           "type": "array",
           "items": {
+            "type": "object",
             "$ref": "#/definitions/schemav1Schema"
           },
           "description": "List of schemas.",
@@ -1600,6 +1614,7 @@
         "validationErrors": {
           "type": "array",
           "items": {
+            "type": "object",
             "$ref": "#/definitions/v1ValidationError"
           }
         }
@@ -1637,6 +1652,7 @@
             }
           ],
           "items": {
+            "type": "object",
             "$ref": "#/definitions/CheckResourceBatchRequestBatchEntry",
             "uniqueItems": true
           },
@@ -1672,6 +1688,7 @@
             }
           ],
           "items": {
+            "type": "object",
             "$ref": "#/definitions/v1CheckResourceBatchResponseActionEffectMap"
           },
           "description": "Result for each resource"
@@ -1700,6 +1717,7 @@
         "validationErrors": {
           "type": "array",
           "items": {
+            "type": "object",
             "$ref": "#/definitions/v1ValidationError"
           },
           "description": "List of validation errors (if schema validation is enabled)"
@@ -1797,6 +1815,7 @@
         "validationErrors": {
           "type": "array",
           "items": {
+            "type": "object",
             "$ref": "#/definitions/v1ValidationError"
           },
           "description": "List of validation errors (if schema validation is enabled)"
@@ -1893,6 +1912,7 @@
             }
           ],
           "items": {
+            "type": "object",
             "$ref": "#/definitions/CheckResourcesRequestResourceEntry",
             "uniqueItems": true
           },
@@ -1932,6 +1952,7 @@
             }
           ],
           "items": {
+            "type": "object",
             "$ref": "#/definitions/CheckResourcesResponseResultEntry"
           },
           "description": "Result for each resource"
@@ -1966,6 +1987,7 @@
         "inputs": {
           "type": "array",
           "items": {
+            "type": "object",
             "$ref": "#/definitions/v1CheckInput"
           },
           "description": "Deprecated. Use method.check_resources.inputs instead."
@@ -1973,6 +1995,7 @@
         "outputs": {
           "type": "array",
           "items": {
+            "type": "object",
             "$ref": "#/definitions/v1CheckOutput"
           },
           "description": "Deprecated. Use method.check_resources.outputs instead."
@@ -2014,6 +2037,7 @@
         "definitions": {
           "type": "array",
           "items": {
+            "type": "object",
             "$ref": "#/definitions/v1RoleDef"
           }
         }
@@ -2061,6 +2085,7 @@
         "policies": {
           "type": "array",
           "items": {
+            "type": "object",
             "$ref": "#/definitions/v1Policy"
           }
         }
@@ -2073,6 +2098,7 @@
         "schemas": {
           "type": "array",
           "items": {
+            "type": "object",
             "$ref": "#/definitions/schemav1Schema"
           }
         }
@@ -2296,6 +2322,7 @@
         "validationErrors": {
           "type": "array",
           "items": {
+            "type": "object",
             "$ref": "#/definitions/v1ValidationError"
           }
         }
@@ -2370,6 +2397,7 @@
         "validationErrors": {
           "type": "array",
           "items": {
+            "type": "object",
             "$ref": "#/definitions/v1ValidationError"
           },
           "description": "List of validation errors (if schema validation is enabled)"
@@ -2413,6 +2441,7 @@
         "errors": {
           "type": "array",
           "items": {
+            "type": "object",
             "$ref": "#/definitions/PlaygroundFailureError"
           }
         }
@@ -2526,6 +2555,7 @@
         "rules": {
           "type": "array",
           "items": {
+            "type": "object",
             "$ref": "#/definitions/v1PrincipalRule"
           }
         },
@@ -2543,6 +2573,7 @@
         "actions": {
           "type": "array",
           "items": {
+            "type": "object",
             "$ref": "#/definitions/v1PrincipalRuleAction"
           }
         }
@@ -2587,6 +2618,7 @@
         "rules": {
           "type": "array",
           "items": {
+            "type": "object",
             "$ref": "#/definitions/v1ResourceRule"
           }
         },
@@ -2755,6 +2787,7 @@
         "resources": {
           "type": "array",
           "items": {
+            "type": "object",
             "$ref": "#/definitions/v1TestResultsResource"
           }
         }
@@ -2769,6 +2802,7 @@
         "actions": {
           "type": "array",
           "items": {
+            "type": "object",
             "$ref": "#/definitions/v1TestResultsAction"
           }
         }
@@ -2780,6 +2814,7 @@
         "components": {
           "type": "array",
           "items": {
+            "type": "object",
             "$ref": "#/definitions/TraceComponent"
           }
         },

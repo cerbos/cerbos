@@ -226,7 +226,7 @@ type Metadata struct {
 	SourceFile  string                  `protobuf:"bytes,1,opt,name=source_file,json=sourceFile,proto3" json:"source_file,omitempty"`
 	Annotations map[string]string       `protobuf:"bytes,2,rep,name=annotations,proto3" json:"annotations,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
 	Hash        *wrapperspb.UInt64Value `protobuf:"bytes,3,opt,name=hash,proto3" json:"hash,omitempty"`
-	// Deprecated: Do not use.
+	// Deprecated: Marked as deprecated in cerbos/policy/v1/policy.proto.
 	StoreIdentifer  string `protobuf:"bytes,4,opt,name=store_identifer,json=storeIdentifer,proto3" json:"store_identifer,omitempty"`
 	StoreIdentifier string `protobuf:"bytes,5,opt,name=store_identifier,json=storeIdentifier,proto3" json:"store_identifier,omitempty"`
 }
@@ -284,7 +284,7 @@ func (x *Metadata) GetHash() *wrapperspb.UInt64Value {
 	return nil
 }
 
-// Deprecated: Do not use.
+// Deprecated: Marked as deprecated in cerbos/policy/v1/policy.proto.
 func (x *Metadata) GetStoreIdentifer() string {
 	if x != nil {
 		return x.StoreIdentifer
