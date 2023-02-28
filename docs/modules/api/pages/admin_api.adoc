@@ -167,17 +167,19 @@ curl -k -u cerbos:cerbosAdmin \
 === Disable Policies
 
 ----
-DELETE /admin/policy?id=policy_id
+POST   /admin/policy/disable?id=policy_id
+PUT    /admin/policy/disable?id=policy_id
+DELETE /admin/policy?id=policy_id [DEPRECATED]
 ----
 
 NOTE: This endpoint requires a mutable storage driver such as xref:configuration:storage.adoc#sqlite3[sqlite3] to be configured.
 
-Issue a DELETE request to the endpoint with the list of IDs (the `id` query parameter can be repeated multiple times) to disable.
+Issue a POST request to the endpoint with the list of IDs (the `id` query parameter can be repeated multiple times) to disable.
 The ID is of the form `<kind>.<name>.v<version>/<scope>`. A resource policy for `leave_request` with version `default` and scope `acme.hr` would therefore have the ID `resource.leave_request.vdefault/acme.hr`.
 
 ----
-curl -k -u cerbos:cerbosAdmin -X DELETE \
-    'https://localhost:3592/admin/policy?id=principal.donald_duck.vdefault&id=derived_roles.my_derived_roles'
+curl -k -u cerbos:cerbosAdmin -X POST \
+    'https://localhost:3592/admin/policy/disable?id=principal.donald_duck.vdefault&id=derived_roles.my_derived_roles'
 ----
 
 .Response
@@ -194,6 +196,7 @@ curl -k -u cerbos:cerbosAdmin -X DELETE \
 
 ----
 POST /admin/policy/enable?id=policy_id
+PUT  /admin/policy/enable?id=policy_id
 ----
 
 NOTE: This endpoint requires a mutable storage driver such as xref:configuration:storage.adoc#sqlite3[sqlite3] to be configured.
