@@ -148,7 +148,8 @@ service CerbosAdminService {
       additional_bindings: {
         put: "/admin/policy/disable",
         body: "*"
-      }
+      },
+      additional_bindings: {delete: "/admin/policy"}
     };
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
       summary: "Disable policy",

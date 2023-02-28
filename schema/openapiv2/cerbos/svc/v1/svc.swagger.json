@@ -196,6 +196,45 @@
           }
         ]
       },
+      "delete": {
+        "summary": "Disable policy",
+        "operationId": "CerbosAdminService_DisablePolicy3",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1DisablePolicyResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/googlerpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "description": "Unique identifier for the policy",
+            "in": "query",
+            "required": true,
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "collectionFormat": "multi"
+          }
+        ],
+        "tags": [
+          "CerbosAdminService"
+        ],
+        "security": [
+          {
+            "BasicAuth": []
+          }
+        ]
+      },
       "post": {
         "summary": "Add or update policies",
         "operationId": "CerbosAdminService_AddOrUpdatePolicy",
