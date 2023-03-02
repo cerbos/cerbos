@@ -90,8 +90,8 @@ func getFsFromTar(r io.Reader) (fs.FS, error) {
 	return tfs, nil
 }
 
-// OpenDirectoryFS attempts to open a directory FS at the given location. It'll initially check if the target file is a zip,
-// and if so, will return a zip Reader (which implements fs.FS).
+// OpenDirectoryFS attempts to open a directory FS at the given location. It'll initially check if the target file is an archive,
+// and if so, will return the appropriate type which implements the fs.FS interface.
 func OpenDirectoryFS(path string) (fs.FS, error) {
 	// We don't use `switch filepath.Ext(path)` here because it only suffixes from the final `.`, so `.tar.gz` won't be
 	// correctly handled
