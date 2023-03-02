@@ -34,7 +34,9 @@ CAUTION: On some platforms the automatic change detection feature can be ineffic
 
 === Archive Files
 
-Alternatively, you can opt to archive and/or compress your policies directory into a Zip (`.zip`), Tar (`.tar`) or Gzip file (`.tgz` or `.tar.gz`). You can then specify the file in your config like so:
+Alternatively, you can opt to archive and/or compress your policies directory into a Zip (`.zip`), Tar (`.tar`) or Gzip file (`.tgz` or `.tar.gz`). The archive is assumed to be laid out like a standard policy directory. It must contain no non-policy YAML files.
+
+You specify the file in your config like so:
 
 .Archived fileset using a Zip file
 [source,yaml,linenums]
