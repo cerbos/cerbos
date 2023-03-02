@@ -241,7 +241,7 @@ docker run -i -t \
 ----
 
 
-Machine readable output can be produced by passing `--format=json` flag to the command.
+The output format can be controlled using the `--output` flag, which accepts the values `tree` (default), `list` and `json`. The `--color` flag controls the coloring of the output. To produce machine readable output from the tests, pass `--output=json --color=never` to the command.
 
 
 By default, all discovered tests are run. To run just some of the tests, provide a regular expression that matches the test using the `--run` flag.
