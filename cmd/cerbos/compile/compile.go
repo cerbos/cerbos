@@ -29,6 +29,7 @@ import (
 	"github.com/cerbos/cerbos/internal/schema"
 	"github.com/cerbos/cerbos/internal/storage/disk"
 	"github.com/cerbos/cerbos/internal/storage/index"
+	"github.com/cerbos/cerbos/internal/util"
 	"github.com/cerbos/cerbos/internal/verify"
 )
 
@@ -76,7 +77,12 @@ func (c *Cmd) Run(k *kong.Kong) error {
 
 	p := printer.New(k.Stdout, k.Stderr)
 
-	idx, err := index.Build(ctx, os.DirFS(c.Dir), index.WithBuildFailureLogLevel(zap.DebugLevel))
+	fsys, err := util.OpenDirectoryFS(c.Dir)
+	if err != nil {
+		return err
+	}
+
+	idx, err := index.Build(ctx, fsys, index.WithBuildFailureLogLevel(zap.DebugLevel))
 	if err != nil {
 		idxErr := new(index.BuildError)
 		if errors.As(err, &idxErr) {
@@ -115,7 +121,11 @@ func (c *Cmd) Run(k *kong.Kong) error {
 			return fmt.Errorf("failed to create engine: %w", err)
 		}
 
-		results, err := verify.Verify(ctx, c.testsDir(), eng, verifyConf)
+		testFsys, err := c.testsDir()
+		if err != nil {
+			return err
+		}
+		results, err := verify.Verify(ctx, testFsys, eng, verifyConf)
 		if err != nil {
 			return fmt.Errorf("failed to run tests: %w", err)
 		}
@@ -135,12 +145,12 @@ func (c *Cmd) Run(k *kong.Kong) error {
 	return nil
 }
 
-func (c *Cmd) testsDir() fs.FS {
+func (c *Cmd) testsDir() (fs.FS, error) {
 	if c.Tests == "" {
-		return os.DirFS(c.Dir)
+		return util.OpenDirectoryFS(c.Dir)
 	}
 
-	return os.DirFS(c.Tests)
+	return util.OpenDirectoryFS(c.Tests)
 }
 
 func (c *Cmd) Help() string {

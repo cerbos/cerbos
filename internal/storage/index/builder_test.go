@@ -9,7 +9,6 @@ import (
 	"errors"
 	"io"
 	"io/fs"
-	"os"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -31,7 +30,10 @@ import (
 func TestBuildIndexWithDisk(t *testing.T) {
 	dir := test.PathToDir(t, "store")
 
-	idx, err := Build(context.Background(), os.DirFS(dir))
+	fsys, err := util.OpenDirectoryFS(dir)
+	require.NoError(t, err)
+
+	idx, err := Build(context.Background(), fsys)
 	require.NoError(t, err)
 	require.NotNil(t, idx)
 

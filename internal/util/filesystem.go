@@ -4,12 +4,17 @@
 package util
 
 import (
+	"archive/zip"
+	"compress/gzip"
 	"errors"
 	"fmt"
+	"io"
 	"io/fs"
+	"os"
 	"path/filepath"
 	"strings"
 
+	"github.com/nlepage/go-tarfs"
 	"google.golang.org/protobuf/proto"
 )
 
@@ -63,6 +68,65 @@ func IsHidden(fileName string) bool {
 
 func IsZip(fileName string) bool {
 	return strings.HasSuffix(fileName, ".zip")
+}
+
+func IsTar(fileName string) bool {
+	return strings.HasSuffix(fileName, ".tar")
+}
+
+func IsGzip(fileName string) bool {
+	return strings.HasSuffix(fileName, ".tar.gz") || strings.HasSuffix(fileName, ".tgz")
+}
+
+func IsArchiveFile(fileName string) bool {
+	return IsZip(fileName) || IsTar(fileName) || IsGzip(fileName)
+}
+
+func getFsFromTar(r io.Reader) (fs.FS, error) {
+	tfs, err := tarfs.New(r)
+	if err != nil {
+		return nil, fmt.Errorf("failed to open tar file: %w", err)
+	}
+	return tfs, nil
+}
+
+// OpenDirectoryFS attempts to open a directory FS at the given location. It'll initially check if the target file is an archive,
+// and if so, will return the appropriate type which implements the fs.FS interface.
+func OpenDirectoryFS(path string) (fs.FS, error) {
+	// We don't use `switch filepath.Ext(path)` here because it only suffixes from the final `.`, so `.tar.gz` won't be
+	// correctly handled
+	switch {
+	case IsZip(path):
+		zr, err := zip.OpenReader(path)
+		if err != nil {
+			return nil, fmt.Errorf("failed to open zip file: %w", err)
+		}
+		return zr, nil
+	case IsTar(path):
+		f, err := os.Open(path)
+		if err != nil {
+			return nil, fmt.Errorf("failed to open tar file: %w", err)
+		}
+		defer f.Close()
+
+		return getFsFromTar(f)
+	case IsGzip(path):
+		f, err := os.Open(path)
+		if err != nil {
+			return nil, fmt.Errorf("failed to open gzip file: %w", err)
+		}
+		defer f.Close()
+
+		gzr, err := gzip.NewReader(f)
+		if err != nil {
+			return nil, fmt.Errorf("failed to open gzip file: %w", err)
+		}
+		defer gzr.Close()
+
+		return getFsFromTar(gzr)
+	}
+
+	return os.DirFS(path), nil
 }
 
 // LoadFromJSONOrYAML reads a JSON or YAML encoded protobuf from the given path.

@@ -4,7 +4,6 @@
 package files
 
 import (
-	"archive/zip"
 	"fmt"
 	"io/fs"
 	"os"
@@ -32,18 +31,12 @@ func find(path string, recursive bool, fileType util.IndexedFileType, callback c
 	}
 
 	switch {
-	case util.IsZip(path):
-		zipFile, err := zip.OpenReader(path)
+	case fileInfo.IsDir() || util.IsArchiveFile(path):
+		fsys, err := util.OpenDirectoryFS(path)
 		if err != nil {
-			return fmt.Errorf("failed to open zip file %s: %w", path, err)
+			return err
 		}
-		defer zipFile.Close()
-
-		if err := doFind(zipFile, fileType, recursive, callback); err != nil {
-			return fmt.Errorf("failed to find files %s: %w", path, err)
-		}
-	case fileInfo.IsDir():
-		if err := doFind(os.DirFS(path), fileType, recursive, callback); err != nil {
+		if err := doFind(fsys, fileType, recursive, callback); err != nil {
 			return fmt.Errorf("failed to find files %s: %w", path, err)
 		}
 	default:

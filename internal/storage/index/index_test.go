@@ -21,11 +21,6 @@ import (
 )
 
 func TestIndexLoadPolicy(t *testing.T) {
-	base := test.PathToDir(t, "store")
-	fsys := os.DirFS(base)
-	idx, err := index.Build(context.Background(), fsys)
-	require.NoError(t, err)
-
 	policyFiles := []string{
 		"derived_roles/common_roles.yaml",
 		"derived_roles/derived_roles_01.yaml",
@@ -46,7 +41,15 @@ func TestIndexLoadPolicy(t *testing.T) {
 		"resource_policies/policy_06.yaml",
 	}
 
-	t.Run("load policy", func(t *testing.T) {
+	testLoadPolicy := func(t *testing.T, path string) {
+		t.Helper()
+
+		base := test.PathToDir(t, path)
+		fsys, err := util.OpenDirectoryFS(base)
+		require.NoError(t, err)
+		idx, err := index.Build(context.Background(), fsys)
+		require.NoError(t, err)
+
 		t.Run("should load the policies", func(t *testing.T) {
 			policies, err := idx.LoadPolicy(context.Background(), policyFiles...)
 			require.NoError(t, err)
@@ -79,6 +82,19 @@ func TestIndexLoadPolicy(t *testing.T) {
 				require.Equal(t, wrapperspb.UInt64(util.HashPB(p, policy.IgnoreHashFields)), p.Metadata.Hash)
 			}
 		})
+	}
+
+	t.Run("load policy", func(t *testing.T) {
+		testLoadPolicy(t, "store")
+	})
+	t.Run("load policy zip", func(t *testing.T) {
+		testLoadPolicy(t, "store_archive/policies.zip")
+	})
+	t.Run("load policy tar", func(t *testing.T) {
+		testLoadPolicy(t, "store_archive/policies.tar")
+	})
+	t.Run("load policy gzip", func(t *testing.T) {
+		testLoadPolicy(t, "store_archive/policies.tgz")
 	})
 }
 
