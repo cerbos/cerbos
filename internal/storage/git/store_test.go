@@ -595,8 +595,8 @@ func mkDeleteFn(t *testing.T, sourceGitDir string) internal.MutateStoreFn {
 				if d.Name() == ".git" {
 					continue
 				}
-				err = os.RemoveAll(path.Join([]string{sourceGitDir, d.Name()}...))
-				if err != nil {
+
+				if err := os.RemoveAll(path.Join(sourceGitDir, d.Name())); err != nil {
 					return fmt.Errorf("failed to remove contents while deleting from the store: %w", err)
 				}
 			}

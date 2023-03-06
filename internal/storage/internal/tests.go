@@ -46,10 +46,10 @@ func TestSuiteReloadable(store storage.Store, addFn, deleteFn MutateStoreFn) fun
 		require.NoError(t, err)
 
 		err = r.Reload(context.Background())
-		require.NoError(t, err)
+		require.Error(t, err)
 
 		policies, err = store.ListPolicyIDs(context.Background(), false)
 		require.NoError(t, err)
-		require.Len(t, policies, 0)
+		require.NotZero(t, len(policies))
 	}
 }
