@@ -22,7 +22,7 @@ func TestReloadable(t *testing.T) {
 	storeDir := t.TempDir()
 	store := mkStore(t, storeDir)
 
-	internal.TestSuiteReloadable(store, mkAddFn(t, storeDir), mkDeleteFn(t, storeDir))(t)
+	internal.TestSuiteReloadable(store, nil, mkAddFn(t, storeDir), mkDeleteFn(t, storeDir))(t)
 }
 
 func mkStore(t *testing.T, dir string) *Store {

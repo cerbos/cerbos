@@ -10,7 +10,6 @@ import (
 	"io/fs"
 	"math/rand"
 	"os"
-	"path"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -578,7 +577,32 @@ func TestReloadable(t *testing.T) {
 	checkoutDir := t.TempDir()
 	store := mkEmptyStoreAndRepo(t, sourceGitDir, checkoutDir)
 
-	internal.TestSuiteReloadable(store, mkAddFn(t, sourceGitDir, ps), mkDeleteFn(t, sourceGitDir))(t)
+	internal.TestSuiteReloadable(store, mkInitFn(t, sourceGitDir), mkAddFn(t, sourceGitDir, ps), mkDeleteFn(t, sourceGitDir))(t)
+}
+
+func mkInitFn(t *testing.T, sourceGitDir string) internal.MutateStoreFn {
+	t.Helper()
+
+	relDir := filepath.Join("..", "testdata")
+	testdataDir, err := filepath.Abs(relDir)
+	require.NoError(t, err)
+
+	p := test.LoadPolicy(t, filepath.Join(testdataDir, "policy.yaml"))
+	return func() error {
+		err := commitToGitRepo(sourceGitDir, "Add initial policy", func(wt *git.Worktree) error {
+			if err := writePolicy(filepath.Join(sourceGitDir, policyDir, "policy.yaml"), p); err != nil {
+				return err
+			}
+
+			_, err := wt.Add(".")
+			return err
+		})
+		if err != nil {
+			return err
+		}
+
+		return nil
+	}
 }
 
 func mkDeleteFn(t *testing.T, sourceGitDir string) internal.MutateStoreFn {
@@ -586,22 +610,33 @@ func mkDeleteFn(t *testing.T, sourceGitDir string) internal.MutateStoreFn {
 
 	return func() error {
 		err := commitToGitRepo(sourceGitDir, "Delete all", func(wt *git.Worktree) error {
-			dir, err := os.ReadDir(sourceGitDir)
-			if err != nil {
-				return fmt.Errorf("failed to read directory while deleting from the store: %w", err)
-			}
-
-			for _, d := range dir {
-				if d.Name() == ".git" {
-					continue
-				}
-				err = os.RemoveAll(path.Join([]string{sourceGitDir, d.Name()}...))
+			if err := filepath.WalkDir(sourceGitDir, func(path string, d fs.DirEntry, err error) error {
 				if err != nil {
-					return fmt.Errorf("failed to remove contents while deleting from the store: %w", err)
+					return err
 				}
+
+				if d.Name() == ".git" {
+					return fs.SkipDir
+				}
+
+				if d.IsDir() {
+					return nil
+				}
+
+				if d.Name() == "policy.yaml" {
+					return nil
+				}
+
+				if err := os.Remove(path); err != nil {
+					return fmt.Errorf("failed to remove while deleting from the store: %w", err)
+				}
+
+				return nil
+			}); err != nil {
+				return fmt.Errorf("failed to walk git directory: %w", err)
 			}
 
-			_, err = wt.Add(".")
+			_, err := wt.Add(".")
 			return err
 		})
 		if err != nil {
