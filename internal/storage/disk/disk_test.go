@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"path"
 	"path/filepath"
 	"testing"
 
@@ -21,7 +22,7 @@ func TestReloadable(t *testing.T) {
 	storeDir := t.TempDir()
 	store := mkStore(t, storeDir)
 
-	internal.TestSuiteReloadable(store, mkAddFn(t, storeDir), mkDeleteFn(t, storeDir))(t)
+	internal.TestSuiteReloadable(store, nil, mkAddFn(t, storeDir), mkDeleteFn(t, storeDir))(t)
 }
 
 func mkStore(t *testing.T, dir string) *Store {
@@ -37,9 +38,17 @@ func mkDeleteFn(t *testing.T, storeDir string) internal.MutateStoreFn {
 	t.Helper()
 
 	return func() error {
-		if err := os.RemoveAll(storeDir); err != nil {
-			return fmt.Errorf("failed to delete store dir: %w", err)
+		dir, err := os.ReadDir(storeDir)
+		if err != nil {
+			return fmt.Errorf("failed to read directory while deleting from the store: %w", err)
 		}
+		for _, d := range dir {
+			err = os.RemoveAll(path.Join([]string{storeDir, d.Name()}...))
+			if err != nil {
+				return fmt.Errorf("failed to remove contents while deleting from the store: %w", err)
+			}
+		}
+
 		return nil
 	}
 }

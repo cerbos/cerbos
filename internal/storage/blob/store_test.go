@@ -81,7 +81,24 @@ func TestReloadable(t *testing.T) {
 
 	dir := t.TempDir()
 	store, bucket := mkStore(t, dir)
-	internal.TestSuiteReloadable(store, mkAddFn(t, bucket), mkDeleteFn(t, bucket))(t)
+	internal.TestSuiteReloadable(store, mkInitFn(t, bucket), mkAddFn(t, bucket), mkDeleteFn(t, bucket))(t)
+}
+
+func mkInitFn(t *testing.T, bucket *blob.Bucket) internal.MutateStoreFn {
+	t.Helper()
+
+	relDir := filepath.Join("..", "testdata")
+	testdataDir, err := filepath.Abs(relDir)
+	require.NoError(t, err)
+
+	return func() error {
+		var err error
+		keysInStore, err = uploadDirToBucket(t, context.Background(), testdataDir, bucket)
+		if err != nil {
+			return fmt.Errorf("failed to add to the store: %w", err)
+		}
+		return nil
+	}
 }
 
 func mkDeleteFn(t *testing.T, bucket *blob.Bucket) internal.MutateStoreFn {

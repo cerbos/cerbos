@@ -18,38 +18,48 @@ import (
 // MutateStoreFn points to a function which mutates the store (ex: add, delete a policy).
 type MutateStoreFn func() error
 
-func TestSuiteReloadable(store storage.Store, addFn, deleteFn MutateStoreFn) func(*testing.T) {
+func TestSuiteReloadable(store storage.Store, initFn, addFn, deleteFn MutateStoreFn) func(*testing.T) {
 	//nolint:thelper
 	return func(t *testing.T) {
 		r, ok := store.(storage.Reloadable)
 		require.True(t, ok, "Store is not reloadable")
 
+		expectedLen := 0
+		if initFn != nil {
+			expectedLen = 1
+			err := initFn()
+			require.NoError(t, err)
+
+			err = r.Reload(context.Background())
+			require.NoError(t, err)
+		}
+
 		policies, err := store.ListPolicyIDs(context.Background(), false)
 		require.NoError(t, err)
-		require.Len(t, policies, 0)
+		require.Len(t, policies, expectedLen)
 
 		err = addFn()
 		require.NoError(t, err)
 
 		policies, err = store.ListPolicyIDs(context.Background(), false)
 		require.NoError(t, err)
-		require.Len(t, policies, 0)
+		require.Len(t, policies, expectedLen)
 
 		err = r.Reload(context.Background())
 		require.NoError(t, err)
 
 		policies, err = store.ListPolicyIDs(context.Background(), false)
 		require.NoError(t, err)
-		require.NotZero(t, len(policies))
+		require.Greater(t, len(policies), expectedLen)
 
 		err = deleteFn()
 		require.NoError(t, err)
 
 		err = r.Reload(context.Background())
-		require.Error(t, err)
+		require.NoError(t, err)
 
 		policies, err = store.ListPolicyIDs(context.Background(), false)
 		require.NoError(t, err)
-		require.NotZero(t, len(policies))
+		require.Len(t, policies, expectedLen)
 	}
 }
