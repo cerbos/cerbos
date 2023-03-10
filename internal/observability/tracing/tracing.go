@@ -104,7 +104,6 @@ func configureOtel(ctx context.Context, svcName *string, exporter tracesdk.SpanE
 	}
 
 	res, err := resource.New(context.Background(),
-		resource.WithSchemaURL(semconv.SchemaURL),
 		resource.WithAttributes(semconv.ServiceNameKey.String(*svcName)),
 		resource.WithProcessPID(),
 		resource.WithHost(),
