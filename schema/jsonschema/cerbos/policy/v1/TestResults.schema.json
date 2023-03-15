@@ -221,14 +221,14 @@
         "name": {
           "type": "string"
         },
-        "principals": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/cerbos.policy.v1.TestResults.Principal"
-          }
-        },
         "summary": {
           "$ref": "#/definitions/cerbos.policy.v1.TestResults.Summary"
+        },
+        "testCases": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/cerbos.policy.v1.TestResults.TestCase"
+          }
         }
       }
     },
@@ -261,6 +261,21 @@
         },
         "result": {
           "$ref": "#/definitions/cerbos.policy.v1.TestResults.Result"
+        }
+      }
+    },
+    "cerbos.policy.v1.TestResults.TestCase": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "principals": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/cerbos.policy.v1.TestResults.Principal"
+          }
         }
       }
     },

@@ -142,19 +142,21 @@ func (tf *testFixture) runTestSuite(ctx context.Context, eng Checker, shouldRun 
 		}
 
 		for _, action := range test.Input.Actions {
-			testKey := fmt.Sprintf("%s|%s|%s", test.Name.PrincipalKey, test.Name.ResourceKey, action)
+			testKey := fmt.Sprintf("%s|%s|%s|%s", test.Name.TestTableName, test.Name.PrincipalKey, test.Name.ResourceKey, action)
 			if prevTest, ok := dupes[testKey]; ok {
 				suiteResult.Summary.OverallResult = policyv1.TestResults_RESULT_ERRORED
 				suiteResult.Error = fmt.Sprintf(
 					"Duplicate test: The combination [%s] in test %q was already exercised in test %q",
-					testKey, test.Name.TestTableName, prevTest,
+					testKey,
+					test.Name.TestTableName,
+					prevTest,
 				)
 				return suiteResult
 			}
 
 			dupes[testKey] = test.Name.TestTableName
 			testResult := runTest(ctx, eng, test, action, shouldRun, suite, trace)
-			addTestResult(suiteResult, test.Name.PrincipalKey, test.Name.ResourceKey, action, testResult)
+			addTestResult(suiteResult, test.Name.PrincipalKey, test.Name.ResourceKey, action, test.Name.TestTableName, testResult)
 		}
 	}
 
@@ -224,9 +226,8 @@ func performCheck(ctx context.Context, eng Checker, inputs []*enginev1.CheckInpu
 	return output, traceCollector.Traces(), err
 }
 
-func addTestResult(suite *policyv1.TestResults_Suite, principal, resource, action string, details *policyv1.TestResults_Details) {
-	addAction(addResource(addPrincipal(suite, principal), resource), action).Details = details
-
+func addTestResult(suite *policyv1.TestResults_Suite, principal, resource, action, testName string, details *policyv1.TestResults_Details) {
+	addAction(addResource(addPrincipal(addTestCase(suite, testName), principal), resource), action).Details = details
 	suite.Summary.TestsCount++
 	incrementTally(suite.Summary, details.Result, 1)
 
@@ -235,15 +236,27 @@ func addTestResult(suite *policyv1.TestResults_Suite, principal, resource, actio
 	}
 }
 
-func addPrincipal(suite *policyv1.TestResults_Suite, name string) *policyv1.TestResults_Principal {
-	for _, principal := range suite.Principals {
+func addTestCase(suite *policyv1.TestResults_Suite, name string) *policyv1.TestResults_TestCase {
+	for _, tc := range suite.TestCases {
+		if tc.Name == name {
+			return tc
+		}
+	}
+
+	tc := &policyv1.TestResults_TestCase{Name: name}
+	suite.TestCases = append(suite.TestCases, tc)
+	return tc
+}
+
+func addPrincipal(testCaseResult *policyv1.TestResults_TestCase, name string) *policyv1.TestResults_Principal {
+	for _, principal := range testCaseResult.Principals {
 		if principal.Name == name {
 			return principal
 		}
 	}
 
 	principal := &policyv1.TestResults_Principal{Name: name}
-	suite.Principals = append(suite.Principals, principal)
+	testCaseResult.Principals = append(testCaseResult.Principals, principal)
 	return principal
 }
 

@@ -1,5 +1,5 @@
 {
-  "$id": "https://api.cerbos.dev/cerbos/policy/v1/TestResults/Suite.schema.json",
+  "$id": "https://api.cerbos.dev/cerbos/policy/v1/TestResults/TestCase.schema.json",
   "$schema": "http://json-schema.org/draft-07/schema#",
   "definitions": {
     "cerbos.effect.v1.Effect": {
@@ -208,53 +208,6 @@
         "RESULT_ERRORED"
       ]
     },
-    "cerbos.policy.v1.TestResults.Summary": {
-      "type": "object",
-      "additionalProperties": false,
-      "properties": {
-        "overallResult": {
-          "$ref": "#/definitions/cerbos.policy.v1.TestResults.Result"
-        },
-        "resultCounts": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/cerbos.policy.v1.TestResults.Tally"
-          }
-        },
-        "testsCount": {
-          "type": "integer",
-          "minimum": 0
-        }
-      }
-    },
-    "cerbos.policy.v1.TestResults.Tally": {
-      "type": "object",
-      "additionalProperties": false,
-      "properties": {
-        "count": {
-          "type": "integer",
-          "minimum": 0
-        },
-        "result": {
-          "$ref": "#/definitions/cerbos.policy.v1.TestResults.Result"
-        }
-      }
-    },
-    "cerbos.policy.v1.TestResults.TestCase": {
-      "type": "object",
-      "additionalProperties": false,
-      "properties": {
-        "name": {
-          "type": "string"
-        },
-        "principals": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/cerbos.policy.v1.TestResults.Principal"
-          }
-        }
-      }
-    },
     "google.protobuf.Value": {
       "title": "Value",
       "description": "A dynamically-typed value."
@@ -263,22 +216,13 @@
   "type": "object",
   "additionalProperties": false,
   "properties": {
-    "error": {
-      "type": "string"
-    },
-    "file": {
-      "type": "string"
-    },
     "name": {
       "type": "string"
     },
-    "summary": {
-      "$ref": "#/definitions/cerbos.policy.v1.TestResults.Summary"
-    },
-    "testCases": {
+    "principals": {
       "type": "array",
       "items": {
-        "$ref": "#/definitions/cerbos.policy.v1.TestResults.TestCase"
+        "$ref": "#/definitions/cerbos.policy.v1.TestResults.Principal"
       }
     }
   }

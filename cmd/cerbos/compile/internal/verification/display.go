@@ -19,10 +19,11 @@ import (
 
 const (
 	suiteLevel     = 0
-	principalLevel = 1
-	resourceLevel  = 2
-	actionLevel    = 3
-	resultLevel    = 4
+	testCaseLevel  = 1
+	principalLevel = 2
+	resourceLevel  = 3
+	actionLevel    = 4
+	resultLevel    = 5
 
 	listIndent = 2
 )
@@ -118,9 +119,35 @@ func (o *testOutput) addSuite(suite *policyv1.TestResults_Suite) {
 
 	o.appendNode(suiteLevel, suiteText)
 
-	for _, principal := range suite.Principals {
+	for _, testCase := range suite.TestCases {
+		o.addTestCase(suite, testCase)
+	}
+}
+
+func (o *testOutput) addTestCase(suite *policyv1.TestResults_Suite, testCase *policyv1.TestResults_TestCase) {
+	if !o.shouldAddTestCase(testCase) {
+		return
+	}
+
+	o.appendNode(testCaseLevel, colored.TestCase(testCase.Name))
+
+	for _, principal := range testCase.Principals {
 		o.addPrincipal(suite, principal)
 	}
+}
+
+func (o *testOutput) shouldAddTestCase(testCase *policyv1.TestResults_TestCase) bool {
+	if o.verbose {
+		return true
+	}
+
+	for _, principal := range testCase.Principals {
+		if o.shouldAddPrincipal(principal) {
+			return true
+		}
+	}
+
+	return false
 }
 
 func (o *testOutput) addPrincipal(suite *policyv1.TestResults_Suite, principal *policyv1.TestResults_Principal) {

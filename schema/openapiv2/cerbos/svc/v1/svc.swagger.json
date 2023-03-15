@@ -1308,11 +1308,11 @@
         "name": {
           "type": "string"
         },
-        "principals": {
+        "testCases": {
           "type": "array",
           "items": {
             "type": "object",
-            "$ref": "#/definitions/v1TestResultsPrincipal"
+            "$ref": "#/definitions/TestResultsTestCase"
           }
         },
         "summary": {
@@ -1351,6 +1351,21 @@
         "count": {
           "type": "integer",
           "format": "int64"
+        }
+      }
+    },
+    "TestResultsTestCase": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "principals": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1TestResultsPrincipal"
+          }
         }
       }
     },

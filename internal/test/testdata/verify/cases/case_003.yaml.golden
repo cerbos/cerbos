@@ -3,46 +3,51 @@
     {
       "file": "udf_test.yaml",
       "name": "TestSuite",
-      "principals": [
+      "testCases": [
         {
-          "name": "bev",
-          "resources": [
+          "name": "John and his leave request",
+          "principals": [
             {
-              "name": "pending_leave_request",
-              "actions": [
+              "name": "bev",
+              "resources": [
                 {
-                  "name": "delete",
-                  "details": {
-                    "result": "RESULT_PASSED"
-                  }
-                },
-                {
-                  "name": "approve",
-                  "details": {
-                    "result": "RESULT_PASSED"
-                  }
+                  "name": "pending_leave_request",
+                  "actions": [
+                    {
+                      "name": "delete",
+                      "details": {
+                        "result": "RESULT_PASSED"
+                      }
+                    },
+                    {
+                      "name": "approve",
+                      "details": {
+                        "result": "RESULT_PASSED"
+                      }
+                    }
+                  ]
                 }
               ]
-            }
-          ]
-        },
-        {
-          "name": "matt",
-          "resources": [
+            },
             {
-              "name": "pending_leave_request",
-              "actions": [
+              "name": "matt",
+              "resources": [
                 {
-                  "name": "delete",
-                  "details": {
-                    "result": "RESULT_PASSED"
-                  }
-                },
-                {
-                  "name": "approve",
-                  "details": {
-                    "result": "RESULT_PASSED"
-                  }
+                  "name": "pending_leave_request",
+                  "actions": [
+                    {
+                      "name": "delete",
+                      "details": {
+                        "result": "RESULT_PASSED"
+                      }
+                    },
+                    {
+                      "name": "approve",
+                      "details": {
+                        "result": "RESULT_PASSED"
+                      }
+                    }
+                  ]
                 }
               ]
             }

@@ -42,6 +42,12 @@ type TestCase struct {
 	want    *policyv1.TestResults
 }
 
+func TestReloadGolden(t *testing.T) {
+	testCases := test.LoadTestCases(t, filepath.Join("verify", "cases"))
+	eng := mkEngine(t)
+	updateGoldenFiles(t, eng, testCases)
+}
+
 func TestVerify(t *testing.T) {
 	testCases := test.LoadTestCases(t, filepath.Join("verify", "cases"))
 
@@ -352,8 +358,9 @@ func Test_doVerify(t *testing.T) {
 		is.NoError(err)
 		is.Len(result.Suites, 3)
 		for i := 0; i < len(result.Suites); i++ {
-			is.Len(result.Suites[i].Principals, 2)
-			is.Len(result.Suites[i].Principals[0].Resources, 2)
+			is.Len(result.Suites[i].TestCases, 2)
+			is.Len(result.Suites[i].TestCases[0].Principals, 2)
+			is.Len(result.Suites[i].TestCases[0].Principals[0].Resources, 1)
 		}
 		is.Equal(policyv1.TestResults_RESULT_PASSED, result.Summary.OverallResult)
 	})
