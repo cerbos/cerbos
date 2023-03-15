@@ -4,7 +4,9 @@
 package verification
 
 import (
+	"encoding/xml"
 	"fmt"
+	"strings"
 
 	"github.com/pterm/pterm"
 	"github.com/pterm/pterm/putils"
@@ -15,6 +17,7 @@ import (
 	"github.com/cerbos/cerbos/internal/outputcolor"
 	"github.com/cerbos/cerbos/internal/printer"
 	"github.com/cerbos/cerbos/internal/printer/colored"
+	"github.com/cerbos/cerbos/internal/verify/junit"
 )
 
 const (
@@ -52,9 +55,26 @@ func Display(p *printer.Printer, results *policyv1.TestResults, output flagset.O
 		return displayTree(p, pterm.DefaultTree, results, verbose)
 	case flagset.OutputFormatList:
 		return displayTree(p, pterm.TreePrinter{Indent: listIndent, VerticalString: " "}, results, verbose)
+	case flagset.OutputFormatJUnit:
+		return displayJUnit(p, results, verbose)
 	default:
 		return nil
 	}
+}
+
+func displayJUnit(p *printer.Printer, results *policyv1.TestResults, verbose bool) error {
+	r, err := junit.Build(results, verbose)
+	if err != nil {
+		return fmt.Errorf("failed to build JUnit XML: %w", err)
+	}
+
+	output, err := xml.MarshalIndent(r, "", strings.Repeat(" ", listIndent))
+	if err != nil {
+		return fmt.Errorf("failed to marshal xml: %w", err)
+	}
+
+	p.Println(string(output))
+	return nil
 }
 
 func displayTree(p *printer.Printer, tp pterm.TreePrinter, results *policyv1.TestResults, verbose bool) error {

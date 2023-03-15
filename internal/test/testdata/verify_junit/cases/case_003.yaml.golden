@@ -1,0 +1,42 @@
+<testsuites errors="0" failures="1" skipped="1" tests="2">
+  <testsuite description="Tests for verifying the company resource policy" name="CompanyTestSuite" file="suite_test.yaml" errors="0" failures="1" skipped="1" tests="2">
+    <properties>
+      <property name="step[Company Test 2 - admin.company.create]">
+        <traces>
+          <trace id="1">
+            <policy>cerbos.resource.company.vdefault</policy>
+            <rule>rule-001</rule>
+            <message>No matching roles or derived roles</message>
+            <skipped>true</skipped>
+          </trace>
+          <trace id="2">
+            <condition>KIND_CONDITION</condition>
+            <action>create</action>
+            <policy>cerbos.resource.company.vdefault</policy>
+            <rule>rule-002</rule>
+            <result>true</result>
+            <activated>true</activated>
+          </trace>
+          <trace id="3">
+            <action>create</action>
+            <policy>cerbos.resource.company.vdefault</policy>
+            <rule>rule-002</rule>
+            <effect>EFFECT_ALLOW</effect>
+            <activated>true</activated>
+          </trace>
+        </traces>
+      </property>
+    </properties>
+    <testcase file="suite_test.yaml" classname="admin.company.create" name="Company Test 1">
+      <skipped message="This test was skipped"></skipped>
+      <properties></properties>
+    </testcase>
+    <testcase file="suite_test.yaml" classname="admin.company.create" name="Company Test 2">
+      <failure type="RESULT_FAILED">
+        <actual>EFFECT_ALLOW</actual>
+        <expected>EFFECT_DENY</expected>
+      </failure>
+      <properties></properties>
+    </testcase>
+  </testsuite>
+</testsuites>

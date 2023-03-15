@@ -117,8 +117,9 @@ func Verify(ctx context.Context, fsys fs.FS, eng Checker, conf Config) (*policyv
 		fixture, err := getFixture(fixtureDir)
 		if err != nil {
 			return &policyv1.TestResults_Suite{
-				File: file,
-				Name: suite.Name,
+				File:        file,
+				Name:        suite.Name,
+				Description: suite.Description,
 				Summary: &policyv1.TestResults_Summary{
 					OverallResult: policyv1.TestResults_RESULT_ERRORED,
 				},

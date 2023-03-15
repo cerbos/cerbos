@@ -55,7 +55,7 @@ type Cmd struct { //nolint:govet // Kong prints fields in order, so we don't wan
 	Tests         string               `help:"Path to the directory containing tests. Defaults to policy directory." type:"existingdir"`
 	RunRegex      string               `help:"Run only tests that match this regex" name:"run"`
 	SkipTests     bool                 `help:"Skip tests"`
-	Output        flagset.OutputFormat `help:"Output format (${enum})" default:"tree" enum:"tree,list,json" short:"o"`
+	Output        flagset.OutputFormat `help:"Output format (${enum})" default:"tree" enum:"tree,list,json,junit" short:"o"`
 	Color         *outputcolor.Level   `help:"Output color level (auto,never,always,256,16m). Defaults to auto." xor:"color"`
 	NoColor       bool                 `help:"Disable colored output" xor:"color"`
 	Verbose       bool                 `help:"Verbose output on test failure"`
