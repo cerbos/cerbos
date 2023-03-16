@@ -16,6 +16,7 @@ principals:
 resources:
   contact:
     kind: contact
+    id: contact
 
 tests:
   - name: Contact CRUD Actions
