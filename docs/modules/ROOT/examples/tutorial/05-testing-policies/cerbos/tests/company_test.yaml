@@ -16,6 +16,7 @@ principals:
 resources:
   company:
     kind: company
+    id: company
 
 tests:
   - name: Company CRUD Actions
