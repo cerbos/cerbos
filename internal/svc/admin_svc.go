@@ -217,7 +217,7 @@ func (cas *CerbosAdminService) EnablePolicy(ctx context.Context, req *requestv1.
 	}, nil
 }
 
-func (cas *CerbosAdminService) ListSchemas(ctx context.Context, req *requestv1.ListSchemasRequest) (*responsev1.ListSchemasResponse, error) {
+func (cas *CerbosAdminService) ListSchemas(ctx context.Context, _ *requestv1.ListSchemasRequest) (*responsev1.ListSchemasResponse, error) {
 	if err := cas.checkCredentials(ctx); err != nil {
 		return nil, err
 	}

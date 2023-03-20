@@ -174,7 +174,7 @@ func (ba basicAuthCredentials) Insecure() basicAuthCredentials {
 	return basicAuthCredentials{headerVal: ba.headerVal, requireTLS: false}
 }
 
-func (ba basicAuthCredentials) GetRequestMetadata(ctx context.Context, uri ...string) (map[string]string, error) {
+func (ba basicAuthCredentials) GetRequestMetadata(_ context.Context, _ ...string) (map[string]string, error) {
 	return map[string]string{authorizationHeader: ba.headerVal}, nil
 }
 

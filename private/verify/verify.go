@@ -69,6 +69,6 @@ func WithCustomChecker(ctx context.Context, fsys fs.FS, eng simpleChecker) (*pol
 
 type checkFunc func(ctx context.Context, inputs []*enginev1.CheckInput) ([]*enginev1.CheckOutput, error)
 
-func (f checkFunc) Check(ctx context.Context, inputs []*enginev1.CheckInput, _opts ...engine.CheckOpt) ([]*enginev1.CheckOutput, error) {
+func (f checkFunc) Check(ctx context.Context, inputs []*enginev1.CheckInput, _ ...engine.CheckOpt) ([]*enginev1.CheckOutput, error) {
 	return f(ctx, inputs)
 }

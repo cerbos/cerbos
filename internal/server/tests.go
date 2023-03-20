@@ -43,7 +43,7 @@ type AuthCreds struct {
 	Password string
 }
 
-func (ac AuthCreds) GetRequestMetadata(ctx context.Context, in ...string) (map[string]string, error) {
+func (ac AuthCreds) GetRequestMetadata(_ context.Context, _ ...string) (map[string]string, error) {
 	auth := ac.Username + ":" + ac.Password
 	enc := base64.StdEncoding.EncodeToString([]byte(auth))
 	return map[string]string{

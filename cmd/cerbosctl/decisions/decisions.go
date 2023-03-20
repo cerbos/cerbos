@@ -55,7 +55,7 @@ type Cmd struct {
 	flagset.AuditFilters
 }
 
-func (c *Cmd) Run(k *kong.Kong, ctx *cmdclient.Context) error {
+func (c *Cmd) Run(_ *kong.Kong, ctx *cmdclient.Context) error {
 	logOptions := c.AuditFilters.GenOptions()
 	logOptions.Type = client.DecisionLogs
 

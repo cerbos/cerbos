@@ -3,17 +3,27 @@ run:
   go: "1.19"
   timeout: 300s
   skip-dirs:
-    - api
-    - deploy
-    - docs
-    - hack
-    - internal/test/mocks
+    - "^api/"
+    - "^deploy/"
+    - "^docs/"
+    - "^hack/"
+    - "^internal/test/mocks/"
   build-tags:
     - tests
 
 linters-settings:
   exhaustive:
     default-signifies-exhaustive: true
+
+  gci:
+    sections:
+      - standard
+      - default
+      - prefix(github.com/cerbos/cerbos)
+      - blank
+      - dot
+    skip-generated: true
+    custom-order: true
 
   gofumpt:
     extra-rules: true
@@ -88,31 +98,6 @@ linters:
     - unparam
     - wastedassign
     - whitespace
-  disable:
-    - cyclop
-    - depguard
-    - dogsled
-    - exhaustivestruct
-    - funlen
-    - gochecknoglobals
-    - gochecknoinits
-    - gocognit
-    - gocyclo
-    - godox
-    - goerr113
-    - gofmt
-    - golint
-    - gomodguard
-    - goprintffuncname
-    - interfacer
-    - lll
-    - maligned
-    - nlreturn
-    - paralleltest
-    - stylecheck
-    - testpackage
-    - wrapcheck
-    - wsl
 
 issues:
   max-same-issues: 30
