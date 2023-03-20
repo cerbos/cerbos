@@ -63,7 +63,7 @@ jobs:
           files: "unit.cover,integration.cover"
 
       - name: GoReleaser
-        uses: goreleaser/goreleaser-action@v3
+        uses: goreleaser/goreleaser-action@v4
         with:
           version: latest
           args: release --config=.goreleaser.yml --clean --snapshot --skip-publish
