@@ -12,7 +12,7 @@ require (
 	github.com/aws/aws-sdk-go v1.44.214
 	github.com/bluele/gcache v0.0.2
 	github.com/cenkalti/backoff/v4 v4.2.0
-	github.com/cespare/xxhash v1.1.0
+	github.com/cespare/xxhash/v2 v2.2.0
 	github.com/cespare/xxhash/v2 v2.2.0
 	github.com/denisenkom/go-mssqldb v0.12.3
 	github.com/dgraph-io/badger/v3 v3.2103.5
