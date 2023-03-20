@@ -231,7 +231,7 @@ func mkManager() (*compile.Manager, *MockStore, context.CancelFunc) {
 	return mgr, mockStore, cancelFunc
 }
 
-func anyCtx(ctx context.Context) bool {
+func anyCtx(context.Context) bool {
 	return true
 }
 
@@ -304,7 +304,7 @@ func (ms *MockStore) ListSchemaIDs(ctx context.Context) ([]string, error) {
 	return args.Get(0).([]string), args.Error(0)
 }
 
-func (ms *MockStore) LoadPolicy(ctx context.Context, file ...string) ([]*policy.Wrapper, error) {
+func (ms *MockStore) LoadPolicy(ctx context.Context, _ ...string) ([]*policy.Wrapper, error) {
 	args := ms.MethodCalled("LoadPolicy", ctx)
 	if res := args.Get(0); res == nil {
 		return nil, args.Error(0)
@@ -312,7 +312,7 @@ func (ms *MockStore) LoadPolicy(ctx context.Context, file ...string) ([]*policy.
 	return nil, nil
 }
 
-func (ms *MockStore) LoadSchema(ctx context.Context, url string) (io.ReadCloser, error) {
+func (ms *MockStore) LoadSchema(ctx context.Context, _ string) (io.ReadCloser, error) {
 	args := ms.MethodCalled("LoadSchema", ctx)
 	if res := args.Get(0); res == nil {
 		return nil, args.Error(0)
@@ -320,7 +320,7 @@ func (ms *MockStore) LoadSchema(ctx context.Context, url string) (io.ReadCloser,
 	return nil, nil
 }
 
-func (ms *MockStore) GetSchema(ctx context.Context, id string) ([]byte, error) {
+func (ms *MockStore) GetSchema(ctx context.Context, _ string) ([]byte, error) {
 	args := ms.MethodCalled("GetSchema", ctx)
 	if res := args.Get(0); res == nil {
 		return nil, args.Error(0)
@@ -328,7 +328,7 @@ func (ms *MockStore) GetSchema(ctx context.Context, id string) ([]byte, error) {
 	return nil, nil
 }
 
-func (ms *MockStore) AddOrUpdateSchema(ctx context.Context, schemas ...*schemav1.Schema) error {
+func (ms *MockStore) AddOrUpdateSchema(ctx context.Context, _ ...*schemav1.Schema) error {
 	args := ms.MethodCalled("AddOrUpdateSchema", ctx)
 	if res := args.Get(0); res == nil {
 		return args.Error(0)
@@ -352,7 +352,7 @@ func (ms *MockStore) Enable(ctx context.Context, _ ...string) (uint32, error) {
 	return 0, nil
 }
 
-func (ms *MockStore) DeleteSchema(ctx context.Context, ids ...string) error {
+func (ms *MockStore) DeleteSchema(ctx context.Context, _ ...string) error {
 	args := ms.MethodCalled("DeleteSchema", ctx)
 	if res := args.Get(0); res == nil {
 		return args.Error(0)

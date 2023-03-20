@@ -217,7 +217,7 @@ func errorString(err error) string {
 
 type noopContext struct{}
 
-func (c noopContext) StartAction(action string) Context { return c }
+func (c noopContext) StartAction(string) Context { return c }
 
 func (c noopContext) StartConditionAll() Context { return c }
 
@@ -227,32 +227,32 @@ func (c noopContext) StartConditionNone() Context { return c }
 
 func (c noopContext) StartCondition() Context { return c }
 
-func (c noopContext) StartDerivedRole(name string) Context { return c }
+func (c noopContext) StartDerivedRole(string) Context { return c }
 
-func (c noopContext) StartExpr(expr string) Context { return c }
+func (c noopContext) StartExpr(string) Context { return c }
 
-func (c noopContext) StartNthCondition(index int) Context { return c }
+func (c noopContext) StartNthCondition(int) Context { return c }
 
-func (c noopContext) StartPolicy(name string) Context { return c }
+func (c noopContext) StartPolicy(string) Context { return c }
 
-func (c noopContext) StartResource(kind string) Context { return c }
+func (c noopContext) StartResource(string) Context { return c }
 
-func (c noopContext) StartRule(name string) Context { return c }
+func (c noopContext) StartRule(string) Context { return c }
 
-func (c noopContext) StartScope(scope string) Context { return c }
+func (c noopContext) StartScope(string) Context { return c }
 
-func (c noopContext) StartVariable(name, expr string) Context { return c }
+func (c noopContext) StartVariable(string, string) Context { return c }
 
 func (c noopContext) StartVariables() Context { return c }
 
 func (noopContext) Activated() {}
 
-func (noopContext) AppliedEffect(effect effectv1.Effect, message string) {}
+func (noopContext) AppliedEffect(effectv1.Effect, string) {}
 
-func (noopContext) ComputedBoolResult(result bool, err error, message string) {}
+func (noopContext) ComputedBoolResult(bool, error, string) {}
 
-func (noopContext) ComputedResult(result any) {}
+func (noopContext) ComputedResult(any) {}
 
-func (noopContext) Failed(err error, message string) {}
+func (noopContext) Failed(error, string) {}
 
-func (noopContext) Skipped(err error, message string) {}
+func (noopContext) Skipped(error, string) {}

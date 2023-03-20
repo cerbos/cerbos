@@ -102,15 +102,15 @@ type fakeConn struct {
 	db *fakeDB
 }
 
-func (c *fakeConn) Begin() (driver.Tx, error)                 { return nil, nil }
-func (c *fakeConn) Close() (err error)                        { return nil }
-func (c *fakeConn) Prepare(query string) (driver.Stmt, error) { panic("use PrepareContext") }
+func (c *fakeConn) Begin() (driver.Tx, error)           { return nil, nil }
+func (c *fakeConn) Close() error                        { return nil }
+func (c *fakeConn) Prepare(string) (driver.Stmt, error) { panic("use PrepareContext") }
 
 type fakeDriver struct {
 	nFailures, attempts int
 }
 
-func (c *fakeDriver) Open(name string) (driver.Conn, error) {
+func (c *fakeDriver) Open(string) (driver.Conn, error) {
 	if c.attempts < c.nFailures {
 		c.attempts++
 		return nil, errors.New("connection error")

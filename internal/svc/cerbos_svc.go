@@ -302,7 +302,7 @@ func (cs *CerbosService) checkNumActionsLimit(n int) error {
 	return nil
 }
 
-func (CerbosService) ServerInfo(ctx context.Context, req *requestv1.ServerInfoRequest) (*responsev1.ServerInfoResponse, error) {
+func (CerbosService) ServerInfo(_ context.Context, _ *requestv1.ServerInfoRequest) (*responsev1.ServerInfoResponse, error) {
 	return &responsev1.ServerInfoResponse{
 		Version:   util.Version,
 		Commit:    util.Commit,
