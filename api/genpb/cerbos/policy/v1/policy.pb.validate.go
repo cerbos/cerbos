@@ -5280,7 +5280,7 @@ func (m *TestResults_Suite) validate(all bool) error {
 
 	// no validation rules for Name
 
-	for idx, item := range m.GetTestCases() {
+	for idx, item := range m.GetPrincipals() {
 		_, _ = idx, item
 
 		if all {
@@ -5288,7 +5288,7 @@ func (m *TestResults_Suite) validate(all bool) error {
 			case interface{ ValidateAll() error }:
 				if err := v.ValidateAll(); err != nil {
 					errors = append(errors, TestResults_SuiteValidationError{
-						field:  fmt.Sprintf("TestCases[%v]", idx),
+						field:  fmt.Sprintf("Principals[%v]", idx),
 						reason: "embedded message failed validation",
 						cause:  err,
 					})
@@ -5296,7 +5296,7 @@ func (m *TestResults_Suite) validate(all bool) error {
 			case interface{ Validate() error }:
 				if err := v.Validate(); err != nil {
 					errors = append(errors, TestResults_SuiteValidationError{
-						field:  fmt.Sprintf("TestCases[%v]", idx),
+						field:  fmt.Sprintf("Principals[%v]", idx),
 						reason: "embedded message failed validation",
 						cause:  err,
 					})
@@ -5305,7 +5305,7 @@ func (m *TestResults_Suite) validate(all bool) error {
 		} else if v, ok := interface{}(item).(interface{ Validate() error }); ok {
 			if err := v.Validate(); err != nil {
 				return TestResults_SuiteValidationError{
-					field:  fmt.Sprintf("TestCases[%v]", idx),
+					field:  fmt.Sprintf("Principals[%v]", idx),
 					reason: "embedded message failed validation",
 					cause:  err,
 				}
@@ -5344,6 +5344,40 @@ func (m *TestResults_Suite) validate(all bool) error {
 	}
 
 	// no validation rules for Error
+
+	for idx, item := range m.GetTestCases() {
+		_, _ = idx, item
+
+		if all {
+			switch v := interface{}(item).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, TestResults_SuiteValidationError{
+						field:  fmt.Sprintf("TestCases[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, TestResults_SuiteValidationError{
+						field:  fmt.Sprintf("TestCases[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(item).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return TestResults_SuiteValidationError{
+					field:  fmt.Sprintf("TestCases[%v]", idx),
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	}
 
 	if len(errors) > 0 {
 		return TestResults_SuiteMultiError(errors)

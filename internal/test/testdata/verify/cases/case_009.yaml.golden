@@ -1,36 +1,30 @@
 {
   "suites":  [
     {
-      "file":  "udf_test.yaml",
+      "file":  "suite_test.yaml",
       "name":  "TestSuite",
       "summary":  {
         "overallResult":  "RESULT_PASSED",
-        "testsCount":  4,
+        "testsCount":  2,
         "resultCounts":  [
           {
             "result":  "RESULT_PASSED",
-            "count":  4
+            "count":  2
           }
         ]
       },
       "testCases":  [
         {
-          "name":  "John and his leave request",
+          "name":  "Test 1",
           "principals":  [
             {
-              "name":  "bev",
+              "name":  "john",
               "resources":  [
                 {
-                  "name":  "pending_leave_request",
+                  "name":  "john_leave_request",
                   "actions":  [
                     {
-                      "name":  "delete",
-                      "details":  {
-                        "result":  "RESULT_PASSED"
-                      }
-                    },
-                    {
-                      "name":  "approve",
+                      "name":  "view:public",
                       "details":  {
                         "result":  "RESULT_PASSED"
                       }
@@ -38,21 +32,20 @@
                   ]
                 }
               ]
-            },
+            }
+          ]
+        },
+        {
+          "name":  "Test 2",
+          "principals":  [
             {
-              "name":  "matt",
+              "name":  "john",
               "resources":  [
                 {
-                  "name":  "pending_leave_request",
+                  "name":  "john_leave_request",
                   "actions":  [
                     {
-                      "name":  "delete",
-                      "details":  {
-                        "result":  "RESULT_PASSED"
-                      }
-                    },
-                    {
-                      "name":  "approve",
+                      "name":  "view:public",
                       "details":  {
                         "result":  "RESULT_PASSED"
                       }
@@ -68,11 +61,11 @@
   ],
   "summary":  {
     "overallResult":  "RESULT_PASSED",
-    "testsCount":  4,
+    "testsCount":  2,
     "resultCounts":  [
       {
         "result":  "RESULT_PASSED",
-        "count":  4
+        "count":  2
       }
     ]
   }

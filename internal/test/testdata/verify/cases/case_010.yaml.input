@@ -1,0 +1,59 @@
+-- testdata/principals.yaml --
+---
+principals:
+  john:
+    policyVersion: '20210210'
+    id: john
+    roles:
+      - employee
+    attr:
+      department: marketing
+      geography: GB
+      team: design
+
+-- testdata/resources.yaml --
+---
+resources:
+  john_leave_request:
+    policyVersion: '20210210'
+    kind: leave_request
+    id: XX125
+    attr: &attr
+      department: marketing
+      geography: GB
+      id: XX125
+      owner: john
+      team: design
+
+-- suite_test.yaml --
+---
+name: TestSuite
+description: Tests
+tests:
+  - name: Test 1
+    input:
+      principals:
+        - john
+      resources:
+        - john_leave_request
+      actions:
+        - view:public
+    expected:
+      - principal: john
+        resource: john_leave_request
+        actions:
+          view:public: EFFECT_ALLOW
+
+  - name: Test 1
+    input:
+      principals:
+        - john
+      resources:
+        - john_leave_request
+      actions:
+        - view:public
+    expected:
+      - principal: john
+        resource: john_leave_request
+        actions:
+          view:public: EFFECT_ALLOW

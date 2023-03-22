@@ -1,42 +1,31 @@
 {
   "suites":  [
     {
-      "file":  "inline_test.yaml",
+      "file":  "suite_test.yaml",
       "name":  "TestSuite",
       "summary":  {
-        "overallResult":  "RESULT_PASSED",
-        "testsCount":  3,
+        "overallResult":  "RESULT_ERRORED",
+        "testsCount":  1,
         "resultCounts":  [
           {
             "result":  "RESULT_PASSED",
-            "count":  3
+            "count":  1
           }
         ]
       },
+      "error":  "Duplicate test: The combination [john|john_leave_request|view:public] in test \"Test 1\" was already exercised in test \"Test 1\"",
       "testCases":  [
         {
-          "name":  "John and his leave request",
+          "name":  "Test 1",
           "principals":  [
             {
-              "name":  "johnny",
+              "name":  "john",
               "resources":  [
                 {
                   "name":  "john_leave_request",
                   "actions":  [
                     {
                       "name":  "view:public",
-                      "details":  {
-                        "result":  "RESULT_PASSED"
-                      }
-                    },
-                    {
-                      "name":  "approve",
-                      "details":  {
-                        "result":  "RESULT_PASSED"
-                      }
-                    },
-                    {
-                      "name":  "defer",
                       "details":  {
                         "result":  "RESULT_PASSED"
                       }
@@ -51,12 +40,12 @@
     }
   ],
   "summary":  {
-    "overallResult":  "RESULT_PASSED",
-    "testsCount":  3,
+    "overallResult":  "RESULT_ERRORED",
+    "testsCount":  1,
     "resultCounts":  [
       {
         "result":  "RESULT_PASSED",
-        "count":  3
+        "count":  1
       }
     ]
   }

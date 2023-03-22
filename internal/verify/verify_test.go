@@ -42,12 +42,6 @@ type TestCase struct {
 	want    *policyv1.TestResults
 }
 
-func TestReloadGolden(t *testing.T) {
-	testCases := test.LoadTestCases(t, filepath.Join("verify", "cases"))
-	eng := mkEngine(t)
-	updateGoldenFiles(t, eng, testCases)
-}
-
 func TestVerify(t *testing.T) {
 	testCases := test.LoadTestCases(t, filepath.Join("verify", "cases"))
 

@@ -236,6 +236,12 @@
         "name": {
           "type": "string"
         },
+        "principals": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/cerbos.policy.v1.TestResults.Principal"
+          }
+        },
         "summary": {
           "$ref": "#/definitions/cerbos.policy.v1.TestResults.Summary"
         },

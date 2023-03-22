@@ -147,7 +147,7 @@ func (tf *testFixture) runTestSuite(ctx context.Context, eng Checker, shouldRun 
 				suiteResult.Summary.OverallResult = policyv1.TestResults_RESULT_ERRORED
 				suiteResult.Error = fmt.Sprintf(
 					"Duplicate test: The combination [%s] in test %q was already exercised in test %q",
-					testKey,
+					fmt.Sprintf("%s|%s|%s", test.Name.PrincipalKey, test.Name.ResourceKey, action),
 					test.Name.TestTableName,
 					prevTest,
 				)

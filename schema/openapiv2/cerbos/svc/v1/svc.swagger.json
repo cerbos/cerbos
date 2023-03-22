@@ -1308,11 +1308,11 @@
         "name": {
           "type": "string"
         },
-        "testCases": {
+        "principals": {
           "type": "array",
           "items": {
             "type": "object",
-            "$ref": "#/definitions/TestResultsTestCase"
+            "$ref": "#/definitions/v1TestResultsPrincipal"
           }
         },
         "summary": {
@@ -1320,6 +1320,13 @@
         },
         "error": {
           "type": "string"
+        },
+        "testCases": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/TestResultsTestCase"
+          }
         }
       }
     },

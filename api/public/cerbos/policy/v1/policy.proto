@@ -291,9 +291,10 @@ message TestResults {
   message Suite {
     string file = 1;
     string name = 2;
-    repeated TestCase test_cases = 3;
+    repeated Principal principals = 3 [deprecated = true];
     Summary summary = 4;
     string error = 5;
+    repeated TestCase test_cases = 6;
   }
 
   message TestCase {
