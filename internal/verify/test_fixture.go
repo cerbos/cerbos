@@ -11,6 +11,7 @@ import (
 	"path/filepath"
 	"time"
 
+	"go.uber.org/multierr"
 	"google.golang.org/protobuf/proto"
 
 	enginev1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
@@ -118,15 +119,15 @@ func loadFixtureElement(fsys fs.FS, path string, pb validatableMessage) error {
 
 func (tf *testFixture) checkDupes(suite *policyv1.TestSuite) error {
 	dupes := make(map[string]struct{})
+	var errs error
 	for _, t := range suite.Tests {
 		if _, ok := dupes[t.Name]; ok {
-			return fmt.Errorf("the test %q already exists", t.Name)
+			errs = multierr.Append(errs, fmt.Errorf("another test named %q already exists", t.Name))
 		}
-
 		dupes[t.Name] = struct{}{}
 	}
 
-	return nil
+	return errs
 }
 
 func (tf *testFixture) runTestSuite(ctx context.Context, eng Checker, shouldRun func(string) bool, file string, suite *policyv1.TestSuite, trace bool) *policyv1.TestResults_Suite {
@@ -143,7 +144,7 @@ func (tf *testFixture) runTestSuite(ctx context.Context, eng Checker, shouldRun 
 
 	if err := tf.checkDupes(suite); err != nil {
 		suiteResult.Summary.OverallResult = policyv1.TestResults_RESULT_ERRORED
-		suiteResult.Error = fmt.Sprintf("Duplicate test: %s", err.Error())
+		suiteResult.Error = fmt.Sprintf("Invalid test suite: %v", err)
 		return suiteResult
 	}
 

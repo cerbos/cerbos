@@ -1,15 +1,15 @@
 {
-  "suites":  [
+  "suites": [
     {
-      "file":  "bad_test.yaml",
-      "name":  "Unknown",
-      "summary":  {
-        "overallResult":  "RESULT_ERRORED"
+      "file": "bad_test.yaml",
+      "name": "Unknown",
+      "summary": {
+        "overallResult": "RESULT_ERRORED"
       },
-      "error":  "failed to load test suite: failed to unmarshal JSON: proto: syntax error (line 1:1): unexpected token \"x\""
+      "error": "failed to load test suite: failed to unmarshal JSON: proto: syntax error (line 1:1): unexpected token \"x\""
     }
   ],
-  "summary":  {
-    "overallResult":  "RESULT_ERRORED"
+  "summary": {
+    "overallResult": "RESULT_ERRORED"
   }
 }

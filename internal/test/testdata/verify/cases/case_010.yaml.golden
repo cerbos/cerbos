@@ -1,15 +1,15 @@
 {
-  "suites":  [
+  "suites": [
     {
-      "file":  "suite_test.yaml",
-      "name":  "TestSuite",
-      "summary":  {
-        "overallResult":  "RESULT_ERRORED"
+      "file": "suite_test.yaml",
+      "name": "TestSuite",
+      "summary": {
+        "overallResult": "RESULT_ERRORED"
       },
-      "error":  "Duplicate test: the test \"Test 1\" already exists"
+      "error": "Invalid test suite: another test named \"Test 1\" already exists"
     }
   ],
-  "summary":  {
-    "overallResult":  "RESULT_ERRORED"
+  "summary": {
+    "overallResult": "RESULT_ERRORED"
   }
 }
