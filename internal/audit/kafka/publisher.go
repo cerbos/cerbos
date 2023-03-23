@@ -10,12 +10,16 @@ import (
 	"github.com/grpc-ecosystem/go-grpc-middleware/logging/zap/ctxzap"
 	"github.com/twmb/franz-go/pkg/kgo"
 	"go.uber.org/zap"
+	"google.golang.org/protobuf/encoding/protojson"
 
+	auditv1 "github.com/cerbos/cerbos/api/genpb/cerbos/audit/v1"
 	"github.com/cerbos/cerbos/internal/audit"
 	"github.com/cerbos/cerbos/internal/config"
 )
 
 const Backend = "kafka"
+
+const encodingHeaderKey = "cerbos.audit.encoding"
 
 func init() {
 	audit.RegisterBackend(Backend, func(ctx context.Context, confW *config.Wrapper, decisionFilter audit.DecisionLogEntryFilter) (audit.Log, error) {
@@ -28,32 +32,35 @@ func init() {
 	})
 }
 
+type Client interface {
+	Close()
+	Produce(context.Context, *kgo.Record, func(*kgo.Record, error))
+}
+
 type Publisher struct {
+	Client         Client
 	decisionFilter audit.DecisionLogEntryFilter
-	client         *kgo.Client
-	async          bool
+	marshaller     recordMarshaller
 }
 
 func NewPublisher(conf *Conf, decisionFilter audit.DecisionLogEntryFilter) (*Publisher, error) {
 	client, err := kgo.NewClient(
 		kgo.SeedBrokers(conf.Brokers...),
 		kgo.DefaultProduceTopic(conf.Topic),
-
-		// kgo.BrokerMaxWriteBytes(100),
 	)
 	if err != nil {
 		return nil, err
 	}
 
 	return &Publisher{
+		Client:         client,
 		decisionFilter: decisionFilter,
-		client:         client,
-		async:          conf.Async,
+		marshaller:     recordMarshaller{Encoding: conf.Encoding},
 	}, nil
 }
 
 func (p *Publisher) Close() {
-	p.client.Close()
+	p.Client.Close()
 }
 
 func (p *Publisher) Backend() string {
@@ -70,36 +77,12 @@ func (p *Publisher) WriteAccessLogEntry(ctx context.Context, record audit.Access
 		return err
 	}
 
-	value, err := rec.MarshalVT()
+	msg, err := p.marshaller.MarshalAccessLogEntry(rec)
 	if err != nil {
-		return fmt.Errorf("failed to marshal data: %w", err)
+		return err
 	}
 
-	callID, err := audit.ID(rec.CallId).Repr()
-	if err != nil {
-		return fmt.Errorf("invalid call ID: %w", err)
-	}
-
-	// Write to Kafka
-	msg := &kgo.Record{
-		Key:   callID.Bytes(),
-		Value: value,
-	}
-
-	if !p.async {
-		// Wait for acknowledgement message has been written
-		return p.client.ProduceSync(ctx, msg).FirstErr()
-	}
-
-	// Async gives us improved performance, at the cost of potentially loosing messages
-	p.client.Produce(ctx, msg, func(r *kgo.Record, err error) {
-		if err != nil {
-			// TODO: Metrics
-			// TODO: Convert `WriteAccessLogEntry` to take err channel??
-			ctxzap.Extract(ctx).Warn("Failed to write access log entry", zap.Error(err))
-		}
-	})
-	return nil
+	return p.write(ctx, msg)
 }
 
 func (p *Publisher) WriteDecisionLogEntry(ctx context.Context, record audit.DecisionLogEntryMaker) error {
@@ -115,34 +98,84 @@ func (p *Publisher) WriteDecisionLogEntry(ctx context.Context, record audit.Deci
 		}
 	}
 
-	value, err := rec.MarshalVT()
+	msg, err := p.marshaller.MarshalDecisionLogEntry(rec)
 	if err != nil {
-		return fmt.Errorf("failed to marshal data: %w", err)
+		return err
 	}
 
-	callID, err := audit.ID(rec.CallId).Repr()
-	if err != nil {
-		return fmt.Errorf("invalid call ID: %w", err)
-	}
+	return p.write(ctx, msg)
+}
 
-	// Write to Kafka
-	msg := &kgo.Record{
-		Key:   callID.Bytes(),
-		Value: value,
-	}
-
-	if !p.async {
-		// Wait for acknowledgement message has been written
-		return p.client.ProduceSync(ctx, msg).FirstErr()
-	}
-
-	// Async gives us improved performance, at the cost of potentially loosing messages
-	p.client.Produce(ctx, msg, func(r *kgo.Record, err error) {
+func (p *Publisher) write(ctx context.Context, msg *kgo.Record) error {
+	p.Client.Produce(ctx, msg, func(r *kgo.Record, err error) {
 		if err != nil {
 			// TODO: Metrics
 			// TODO: Convert `WriteAccessLogEntry` to take err channel??
-			ctxzap.Extract(ctx).Warn("Failed to write decision log entry", zap.Error(err))
+			ctxzap.Extract(ctx).Warn("failed to write audit log entry", zap.Error(err))
 		}
 	})
 	return nil
+}
+
+type recordMarshaller struct {
+	Encoding string
+}
+
+func (m recordMarshaller) MarshalAccessLogEntry(rec *auditv1.AccessLogEntry) (*kgo.Record, error) {
+	callID, err := audit.ID(rec.CallId).Repr()
+	if err != nil {
+		return nil, fmt.Errorf("invalid call ID: %w", err)
+	}
+
+	var payload []byte
+	switch m.Encoding {
+	default:
+		return nil, fmt.Errorf("invalid encoding format: %s", m.Encoding)
+	case EncodingJSON:
+		payload, err = protojson.Marshal(rec)
+	case EncodingProtobuf:
+		payload, err = rec.MarshalVT()
+	}
+
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal entry: %w", err)
+	}
+
+	return m.record(callID.Bytes(), payload)
+}
+
+func (m recordMarshaller) MarshalDecisionLogEntry(rec *auditv1.DecisionLogEntry) (*kgo.Record, error) {
+	callID, err := audit.ID(rec.CallId).Repr()
+	if err != nil {
+		return nil, fmt.Errorf("invalid call ID: %w", err)
+	}
+
+	var payload []byte
+	switch m.Encoding {
+	default:
+		return nil, fmt.Errorf("invalid encoding format: %s", m.Encoding)
+	case EncodingJSON:
+		payload, err = protojson.Marshal(rec)
+	case EncodingProtobuf:
+		payload, err = rec.MarshalVT()
+	}
+
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal entry: %w", err)
+	}
+
+	return m.record(callID.Bytes(), payload)
+}
+
+func (m recordMarshaller) record(key, payload []byte) (*kgo.Record, error) {
+	return &kgo.Record{
+		Key:   key,
+		Value: payload,
+		Headers: []kgo.RecordHeader{
+			{
+				Key:   encodingHeaderKey,
+				Value: []byte(m.Encoding),
+			},
+		},
+	}, nil
 }
