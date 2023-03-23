@@ -21,7 +21,9 @@ var id = audit.ID("01ARZ3NDEKTSV4RRFFQ69G5FAV")
 
 func TestWriteAccessLogEntry(t *testing.T) {
 	t.Run("json encoded message", func(t *testing.T) {
-		publisher, kafkaClient := newPublisher(t, kafka.EncodingJSON)
+		publisher, kafkaClient := newPublisher(t, kafka.Conf{
+			Encoding: kafka.EncodingJSON,
+		})
 
 		err := publisher.WriteAccessLogEntry(context.Background(), func() (*auditv1.AccessLogEntry, error) {
 			return &auditv1.AccessLogEntry{
@@ -35,7 +37,9 @@ func TestWriteAccessLogEntry(t *testing.T) {
 	})
 
 	t.Run("protobuf encoded message", func(t *testing.T) {
-		publisher, kafkaClient := newPublisher(t, kafka.EncodingProtobuf)
+		publisher, kafkaClient := newPublisher(t, kafka.Conf{
+			Encoding: kafka.EncodingProtobuf,
+		})
 
 		err := publisher.WriteAccessLogEntry(context.Background(), func() (*auditv1.AccessLogEntry, error) {
 			return &auditv1.AccessLogEntry{
@@ -47,11 +51,30 @@ func TestWriteAccessLogEntry(t *testing.T) {
 		expectPartitionKey(t, kafkaClient)
 		expectProtobuf(t, kafkaClient)
 	})
+
+	t.Run("async message", func(t *testing.T) {
+		publisher, kafkaClient := newPublisher(t, kafka.Conf{
+			Encoding: kafka.EncodingJSON,
+			Async:    true,
+		})
+
+		err := publisher.WriteAccessLogEntry(context.Background(), func() (*auditv1.AccessLogEntry, error) {
+			return &auditv1.AccessLogEntry{
+				CallId: string(id),
+			}, nil
+		})
+		require.NoError(t, err)
+
+		expectPartitionKey(t, kafkaClient)
+		expectJSON(t, kafkaClient)
+	})
 }
 
 func TestWriteDecisionLogEntry(t *testing.T) {
 	t.Run("json encoded message", func(t *testing.T) {
-		publisher, kafkaClient := newPublisher(t, kafka.EncodingJSON)
+		publisher, kafkaClient := newPublisher(t, kafka.Conf{
+			Encoding: kafka.EncodingJSON,
+		})
 
 		err := publisher.WriteDecisionLogEntry(context.Background(), func() (*auditv1.DecisionLogEntry, error) {
 			return &auditv1.DecisionLogEntry{
@@ -65,7 +88,9 @@ func TestWriteDecisionLogEntry(t *testing.T) {
 	})
 
 	t.Run("protobuf encoded message", func(t *testing.T) {
-		publisher, kafkaClient := newPublisher(t, kafka.EncodingProtobuf)
+		publisher, kafkaClient := newPublisher(t, kafka.Conf{
+			Encoding: kafka.EncodingProtobuf,
+		})
 
 		err := publisher.WriteAccessLogEntry(context.Background(), func() (*auditv1.AccessLogEntry, error) {
 			return &auditv1.AccessLogEntry{
@@ -109,11 +134,14 @@ func expectProtobuf(t *testing.T, kafkaClient *mockClient) {
 	assert.Equal(t, entry.CallId, string(id))
 }
 
-func newPublisher(t *testing.T, encoding string) (*kafka.Publisher, *mockClient) {
-	publisher, err := kafka.NewPublisher(&kafka.Conf{
+func newPublisher(t *testing.T, cfg kafka.Conf) (*kafka.Publisher, *mockClient) {
+	config := &kafka.Conf{
 		Brokers:  []string{"localhost:9092"},
-		Encoding: encoding,
-	}, nil)
+		Encoding: cfg.Encoding,
+		Async:    cfg.Async,
+	}
+
+	publisher, err := kafka.NewPublisher(config, nil)
 	require.NoError(t, err)
 
 	kafkaClient := &mockClient{}
@@ -134,4 +162,9 @@ func (m *mockClient) Close() {}
 
 func (m *mockClient) Produce(_ context.Context, record *kgo.Record, _ func(*kgo.Record, error)) {
 	m.Records = append(m.Records, record)
+}
+
+func (m *mockClient) ProduceSync(_ context.Context, records ...*kgo.Record) kgo.ProduceResults {
+	m.Records = append(m.Records, records...)
+	return kgo.ProduceResults{}
 }

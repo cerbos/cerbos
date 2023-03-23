@@ -35,10 +35,12 @@ func init() {
 type Client interface {
 	Close()
 	Produce(context.Context, *kgo.Record, func(*kgo.Record, error))
+	ProduceSync(context.Context, ...*kgo.Record) kgo.ProduceResults
 }
 
 type Publisher struct {
 	Client         Client
+	async          bool
 	decisionFilter audit.DecisionLogEntryFilter
 	marshaller     recordMarshaller
 }
@@ -54,6 +56,7 @@ func NewPublisher(conf *Conf, decisionFilter audit.DecisionLogEntryFilter) (*Pub
 
 	return &Publisher{
 		Client:         client,
+		async:          conf.Async,
 		decisionFilter: decisionFilter,
 		marshaller:     recordMarshaller{Encoding: conf.Encoding},
 	}, nil
@@ -107,10 +110,13 @@ func (p *Publisher) WriteDecisionLogEntry(ctx context.Context, record audit.Deci
 }
 
 func (p *Publisher) write(ctx context.Context, msg *kgo.Record) error {
+	if !p.async {
+		return p.Client.ProduceSync(ctx, msg).FirstErr()
+	}
+
 	p.Client.Produce(ctx, msg, func(r *kgo.Record, err error) {
 		if err != nil {
-			// TODO: Metrics
-			// TODO: Convert `WriteAccessLogEntry` to take err channel??
+			// TODO: Handle via interceptor
 			ctxzap.Extract(ctx).Warn("failed to write audit log entry", zap.Error(err))
 		}
 	})

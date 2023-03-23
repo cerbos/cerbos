@@ -26,6 +26,8 @@ type Conf struct {
 	Topic string `yaml:"topic" conf:",example=cerbos.audit.log"`
 	// Data format written to Kafka, accepts either json (default) or protobuf
 	Encoding string `yaml:"format" conf:",example=protobuf"`
+	// Improve performance by not waiting for confirmation from Kafka
+	Async bool `yaml:"async" conf:",example=true"`
 }
 
 func (c *Conf) Key() string {
