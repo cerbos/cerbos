@@ -116,6 +116,19 @@ func loadFixtureElement(fsys fs.FS, path string, pb validatableMessage) error {
 	return pb.Validate()
 }
 
+func (tf *testFixture) checkDupes(suite *policyv1.TestSuite) error {
+	dupes := make(map[string]struct{})
+	for _, t := range suite.Tests {
+		if _, ok := dupes[t.Name]; ok {
+			return fmt.Errorf("the test %q already exists", t.Name)
+		}
+
+		dupes[t.Name] = struct{}{}
+	}
+
+	return nil
+}
+
 func (tf *testFixture) runTestSuite(ctx context.Context, eng Checker, shouldRun func(string) bool, file string, suite *policyv1.TestSuite, trace bool) *policyv1.TestResults_Suite {
 	suiteResult := &policyv1.TestResults_Suite{
 		File:    file,
@@ -128,6 +141,12 @@ func (tf *testFixture) runTestSuite(ctx context.Context, eng Checker, shouldRun 
 		return suiteResult
 	}
 
+	if err := tf.checkDupes(suite); err != nil {
+		suiteResult.Summary.OverallResult = policyv1.TestResults_RESULT_ERRORED
+		suiteResult.Error = fmt.Sprintf("Duplicate test: %s", err.Error())
+		return suiteResult
+	}
+
 	tests, err := tf.getTests(suite)
 	if err != nil {
 		suiteResult.Summary.OverallResult = policyv1.TestResults_RESULT_ERRORED
@@ -135,26 +154,12 @@ func (tf *testFixture) runTestSuite(ctx context.Context, eng Checker, shouldRun 
 		return suiteResult
 	}
 
-	dupes := make(map[string]string)
 	for _, test := range tests {
 		if err := ctx.Err(); err != nil {
 			return suiteResult
 		}
 
 		for _, action := range test.Input.Actions {
-			testKey := fmt.Sprintf("%s|%s|%s|%s", test.Name.TestTableName, test.Name.PrincipalKey, test.Name.ResourceKey, action)
-			if prevTest, ok := dupes[testKey]; ok {
-				suiteResult.Summary.OverallResult = policyv1.TestResults_RESULT_ERRORED
-				suiteResult.Error = fmt.Sprintf(
-					"Duplicate test: The combination [%s] in test %q was already exercised in test %q",
-					fmt.Sprintf("%s|%s|%s", test.Name.PrincipalKey, test.Name.ResourceKey, action),
-					test.Name.TestTableName,
-					prevTest,
-				)
-				return suiteResult
-			}
-
-			dupes[testKey] = test.Name.TestTableName
 			testResult := runTest(ctx, eng, test, action, shouldRun, suite, trace)
 			addTestResult(suiteResult, test.Name.PrincipalKey, test.Name.ResourceKey, action, test.Name.TestTableName, testResult)
 		}

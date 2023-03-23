@@ -11,6 +11,16 @@ principals:
       geography: GB
       team: design
 
+  alicia:
+    id: alicia
+    policyVersion: '20210210'
+    roles:
+      - employee
+    attr:
+      department: marketing
+      geography: GB
+      team: design
+
 -- testdata/resources.yaml --
 ---
 resources:
@@ -47,7 +57,7 @@ tests:
   - name: Test 1
     input:
       principals:
-        - john
+        - alicia
       resources:
         - john_leave_request
       actions:
@@ -57,3 +67,8 @@ tests:
         resource: john_leave_request
         actions:
           view:public: EFFECT_ALLOW
+
+      - principal: alicia
+        resource: john_leave_request
+        actions:
+          view:public: EFFECT_DENY
