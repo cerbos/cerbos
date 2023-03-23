@@ -13,6 +13,7 @@ var (
 	FileName                = color.New(color.FgCyan).SprintFunc()
 	Header                  = color.New(color.FgHiWhite, color.Bold).SprintFunc()
 	PassedTest              = color.New(color.FgGreen).SprintFunc()
+	TestCase                = color.New(color.FgBlue).SprintFunc()
 	Principal               = color.New(color.FgCyan).SprintFunc()
 	REPLCmd                 = color.New(color.FgYellow).SprintFunc()
 	REPLError               = color.New(color.FgRed).SprintFunc()

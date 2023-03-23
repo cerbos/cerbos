@@ -1320,6 +1320,13 @@
         },
         "error": {
           "type": "string"
+        },
+        "testCases": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/TestResultsTestCase"
+          }
         }
       }
     },
@@ -1351,6 +1358,21 @@
         "count": {
           "type": "integer",
           "format": "int64"
+        }
+      }
+    },
+    "TestResultsTestCase": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "principals": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1TestResultsPrincipal"
+          }
         }
       }
     },

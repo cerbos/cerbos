@@ -4,235 +4,259 @@ wantStatus:
   httpStatusCode: 200
   grpcStatusCode: 0
 playgroundTest:
-  input: {
-    "playgroundId": "test",
-    "files": [
-      {
-        "fileName": "common_roles.yaml",
-        "contents": "{{ fileString `store/derived_roles/common_roles.yaml` | b64enc }}",
-      },
-      {
-        "fileName": "policy_04.yaml",
-        "contents": "{{ fileString `store/resource_policies/policy_04.yaml` | b64enc }}",
-      },
-      {
-        "fileName": "policy_04_test.yaml",
-        "contents": "{{ fileString `store/tests/policy_04_test.yaml` | b64enc }}"
-      }
-    ]
-  }
-  wantResponse: {
-    "playgroundId": "test",
-    "success": {
-      "results": {
-        "suites": [
+  input:
+    {
+      "playgroundId": "test",
+      "files":
+        [
           {
-            "file": "policy_04_test.yaml",
-            "name": "album:object resource policy tests",
-            "principals": [
-              {
-                "name": "user",
-                "resources": [
-                  {
-                    "name": "album",
-                    "actions": [
-                      {
-                        "name": "view",
-                        "details": {
-                          "result": "RESULT_PASSED",
-                          "engineTrace": [
-                            {
-                              "components": [
-                                {
-                                  "kind": "KIND_POLICY",
-                                  "policy": "cerbos.resource.album_object.vdefault"
-                                },
-                                {
-                                  "kind": "KIND_SCOPE",
-                                  "scope": ""
-                                },
-                                {
-                                  "kind": "KIND_DERIVED_ROLE",
-                                  "derivedRole": "abuse_moderator"
-                                }
-                              ],
-                              "event": {
-                                "status": "STATUS_SKIPPED",
-                                "message": "No matching roles"
-                              }
-                            },
-                            {
-                              "components": [
-                                {
-                                  "kind": "KIND_POLICY",
-                                  "policy": "cerbos.resource.album_object.vdefault"
-                                },
-                                {
-                                  "kind": "KIND_SCOPE",
-                                  "scope": ""
-                                },
-                                {
-                                  "kind": "KIND_DERIVED_ROLE",
-                                  "derivedRole": "owner"
-                                },
-                                {
-                                  "kind": "KIND_CONDITION"
-                                },
-                                {
-                                  "kind": "KIND_EXPR",
-                                  "expr": "request.resource.attr.owner == request.principal.id"
-                                }
-                              ],
-                              "event": {
-                                "status": "STATUS_ACTIVATED",
-                                "result": false
-                              }
-                            },
-                            {
-                              "components": [
-                                {
-                                  "kind": "KIND_POLICY",
-                                  "policy": "cerbos.resource.album_object.vdefault"
-                                },
-                                {
-                                  "kind": "KIND_SCOPE",
-                                  "scope": ""
-                                },
-                                {
-                                  "kind": "KIND_DERIVED_ROLE",
-                                  "derivedRole": "owner"
-                                }
-                              ],
-                              "event": {
-                                "status": "STATUS_SKIPPED",
-                                "message": "Condition not satisfied"
-                              }
-                            },
-                            {
-                              "components": [
-                                {
-                                  "kind": "KIND_POLICY",
-                                  "policy": "cerbos.resource.album_object.vdefault"
-                                },
-                                {
-                                  "kind": "KIND_SCOPE",
-                                  "scope": ""
-                                },
-                                {
-                                  "kind": "KIND_RULE",
-                                  "rule": "rule-001"
-                                }
-                              ],
-                              "event": {
-                                "status": "STATUS_SKIPPED",
-                                "message": "No matching roles or derived roles"
-                              }
-                            },
-                            {
-                              "components": [
-                                {
-                                  "kind": "KIND_POLICY",
-                                  "policy": "cerbos.resource.album_object.vdefault"
-                                },
-                                {
-                                  "kind": "KIND_SCOPE",
-                                  "scope": ""
-                                },
-                                {
-                                  "kind": "KIND_RULE",
-                                  "rule": "rule-002"
-                                },
-                                {
-                                  "kind": "KIND_ACTION",
-                                  "action": "view"
-                                },
-                                {
-                                  "kind": "KIND_CONDITION"
-                                },
-                                {
-                                  "kind": "KIND_EXPR",
-                                  "expr": "request.resource.attr.public == true"
-                                }
-                              ],
-                              "event": {
-                                "status": "STATUS_ACTIVATED",
-                                "result": true
-                              }
-                            },
-                            {
-                              "components": [
-                                {
-                                  "kind": "KIND_POLICY",
-                                  "policy": "cerbos.resource.album_object.vdefault"
-                                },
-                                {
-                                  "kind": "KIND_SCOPE",
-                                  "scope": ""
-                                },
-                                {
-                                  "kind": "KIND_RULE",
-                                  "rule": "rule-002"
-                                },
-                                {
-                                  "kind": "KIND_ACTION",
-                                  "action": "view"
-                                }
-                              ],
-                              "event": {
-                                "status": "STATUS_ACTIVATED",
-                                "effect": "EFFECT_ALLOW"
-                              }
-                            },
-                            {
-                              "components": [
-                                {
-                                  "kind": "KIND_POLICY",
-                                  "policy": "cerbos.resource.album_object.vdefault"
-                                },
-                                {
-                                  "kind": "KIND_SCOPE",
-                                  "scope": ""
-                                },
-                                {
-                                  "kind": "KIND_RULE",
-                                  "rule": "rule-003"
-                                }
-                              ],
-                              "event": {
-                                "status": "STATUS_SKIPPED",
-                                "message": "No matching roles or derived roles"
-                              }
-                            }
-                          ]
-                        }
-                      }
-                    ]
-                  }
-                ]
-              }
-            ],
-            "summary": {
-              "overallResult": "RESULT_PASSED",
-              "testsCount": 1,
-              "resultCounts": [
-                {
-                  "result": "RESULT_PASSED",
-                  "count": 1
-                }
-              ]
-            }
-          }
+            "fileName": "common_roles.yaml",
+            "contents": "{{ fileString `store/derived_roles/common_roles.yaml` | b64enc }}",
+          },
+          {
+            "fileName": "policy_04.yaml",
+            "contents": "{{ fileString `store/resource_policies/policy_04.yaml` | b64enc }}",
+          },
+          {
+            "fileName": "policy_04_test.yaml",
+            "contents": "{{ fileString `store/tests/policy_04_test.yaml` | b64enc }}",
+          },
         ],
-        "summary": {
-          "overallResult": "RESULT_PASSED",
-          "testsCount": 1,
-          "resultCounts": [
-            {
-              "result": "RESULT_PASSED",
-              "count": 1
-            }
-          ]
-        }
-      }
     }
-  }
+  wantResponse:
+    {
+      "playgroundId": "test",
+      "success":
+        {
+          "results":
+            {
+              "suites":
+                [
+                  {
+                    "file": "policy_04_test.yaml",
+                    "name": "album:object resource policy tests",
+                    "testCases":
+                      [
+                        {
+                          name: "User can view public album",
+                          "principals":
+                            [
+                              {
+                                "name": "user",
+                                "resources":
+                                  [
+                                    {
+                                      "name": "album",
+                                      "actions":
+                                        [
+                                          {
+                                            "name": "view",
+                                            "details":
+                                              {
+                                                "result": "RESULT_PASSED",
+                                                "engineTrace":
+                                                  [
+                                                    {
+                                                      "components":
+                                                        [
+                                                          {
+                                                            "kind": "KIND_POLICY",
+                                                            "policy": "cerbos.resource.album_object.vdefault",
+                                                          },
+                                                          {
+                                                            "kind": "KIND_SCOPE",
+                                                            "scope": "",
+                                                          },
+                                                          {
+                                                            "kind": "KIND_DERIVED_ROLE",
+                                                            "derivedRole": "abuse_moderator",
+                                                          },
+                                                        ],
+                                                      "event":
+                                                        {
+                                                          "status": "STATUS_SKIPPED",
+                                                          "message": "No matching roles",
+                                                        },
+                                                    },
+                                                    {
+                                                      "components":
+                                                        [
+                                                          {
+                                                            "kind": "KIND_POLICY",
+                                                            "policy": "cerbos.resource.album_object.vdefault",
+                                                          },
+                                                          {
+                                                            "kind": "KIND_SCOPE",
+                                                            "scope": "",
+                                                          },
+                                                          {
+                                                            "kind": "KIND_DERIVED_ROLE",
+                                                            "derivedRole": "owner",
+                                                          },
+                                                          {
+                                                            "kind": "KIND_CONDITION",
+                                                          },
+                                                          {
+                                                            "kind": "KIND_EXPR",
+                                                            "expr": "request.resource.attr.owner == request.principal.id",
+                                                          },
+                                                        ],
+                                                      "event":
+                                                        {
+                                                          "status": "STATUS_ACTIVATED",
+                                                          "result": false,
+                                                        },
+                                                    },
+                                                    {
+                                                      "components":
+                                                        [
+                                                          {
+                                                            "kind": "KIND_POLICY",
+                                                            "policy": "cerbos.resource.album_object.vdefault",
+                                                          },
+                                                          {
+                                                            "kind": "KIND_SCOPE",
+                                                            "scope": "",
+                                                          },
+                                                          {
+                                                            "kind": "KIND_DERIVED_ROLE",
+                                                            "derivedRole": "owner",
+                                                          },
+                                                        ],
+                                                      "event":
+                                                        {
+                                                          "status": "STATUS_SKIPPED",
+                                                          "message": "Condition not satisfied",
+                                                        },
+                                                    },
+                                                    {
+                                                      "components":
+                                                        [
+                                                          {
+                                                            "kind": "KIND_POLICY",
+                                                            "policy": "cerbos.resource.album_object.vdefault",
+                                                          },
+                                                          {
+                                                            "kind": "KIND_SCOPE",
+                                                            "scope": "",
+                                                          },
+                                                          {
+                                                            "kind": "KIND_RULE",
+                                                            "rule": "rule-001",
+                                                          },
+                                                        ],
+                                                      "event":
+                                                        {
+                                                          "status": "STATUS_SKIPPED",
+                                                          "message": "No matching roles or derived roles",
+                                                        },
+                                                    },
+                                                    {
+                                                      "components":
+                                                        [
+                                                          {
+                                                            "kind": "KIND_POLICY",
+                                                            "policy": "cerbos.resource.album_object.vdefault",
+                                                          },
+                                                          {
+                                                            "kind": "KIND_SCOPE",
+                                                            "scope": "",
+                                                          },
+                                                          {
+                                                            "kind": "KIND_RULE",
+                                                            "rule": "rule-002",
+                                                          },
+                                                          {
+                                                            "kind": "KIND_ACTION",
+                                                            "action": "view",
+                                                          },
+                                                          {
+                                                            "kind": "KIND_CONDITION",
+                                                          },
+                                                          {
+                                                            "kind": "KIND_EXPR",
+                                                            "expr": "request.resource.attr.public == true",
+                                                          },
+                                                        ],
+                                                      "event":
+                                                        {
+                                                          "status": "STATUS_ACTIVATED",
+                                                          "result": true,
+                                                        },
+                                                    },
+                                                    {
+                                                      "components":
+                                                        [
+                                                          {
+                                                            "kind": "KIND_POLICY",
+                                                            "policy": "cerbos.resource.album_object.vdefault",
+                                                          },
+                                                          {
+                                                            "kind": "KIND_SCOPE",
+                                                            "scope": "",
+                                                          },
+                                                          {
+                                                            "kind": "KIND_RULE",
+                                                            "rule": "rule-002",
+                                                          },
+                                                          {
+                                                            "kind": "KIND_ACTION",
+                                                            "action": "view",
+                                                          },
+                                                        ],
+                                                      "event":
+                                                        {
+                                                          "status": "STATUS_ACTIVATED",
+                                                          "effect": "EFFECT_ALLOW",
+                                                        },
+                                                    },
+                                                    {
+                                                      "components":
+                                                        [
+                                                          {
+                                                            "kind": "KIND_POLICY",
+                                                            "policy": "cerbos.resource.album_object.vdefault",
+                                                          },
+                                                          {
+                                                            "kind": "KIND_SCOPE",
+                                                            "scope": "",
+                                                          },
+                                                          {
+                                                            "kind": "KIND_RULE",
+                                                            "rule": "rule-003",
+                                                          },
+                                                        ],
+                                                      "event":
+                                                        {
+                                                          "status": "STATUS_SKIPPED",
+                                                          "message": "No matching roles or derived roles",
+                                                        },
+                                                    },
+                                                  ],
+                                              },
+                                          },
+                                        ],
+                                    },
+                                  ],
+                              },
+                            ],
+                        },
+                      ],
+                    "summary":
+                      {
+                        "overallResult": "RESULT_PASSED",
+                        "testsCount": 1,
+                        "resultCounts":
+                          [{ "result": "RESULT_PASSED", "count": 1 }],
+                      },
+                  },
+                ],
+              "summary":
+                {
+                  "overallResult": "RESULT_PASSED",
+                  "testsCount": 1,
+                  "resultCounts": [{ "result": "RESULT_PASSED", "count": 1 }],
+                },
+            },
+        },
+    }

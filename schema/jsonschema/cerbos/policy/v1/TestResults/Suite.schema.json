@@ -240,6 +240,21 @@
         }
       }
     },
+    "cerbos.policy.v1.TestResults.TestCase": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "principals": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/cerbos.policy.v1.TestResults.Principal"
+          }
+        }
+      }
+    },
     "google.protobuf.Value": {
       "title": "Value",
       "description": "A dynamically-typed value."
@@ -265,6 +280,12 @@
     },
     "summary": {
       "$ref": "#/definitions/cerbos.policy.v1.TestResults.Summary"
+    },
+    "testCases": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/cerbos.policy.v1.TestResults.TestCase"
+      }
     }
   }
 }

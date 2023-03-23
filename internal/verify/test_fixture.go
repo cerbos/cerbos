@@ -11,6 +11,7 @@ import (
 	"path/filepath"
 	"time"
 
+	"go.uber.org/multierr"
 	"google.golang.org/protobuf/proto"
 
 	enginev1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
@@ -116,6 +117,19 @@ func loadFixtureElement(fsys fs.FS, path string, pb validatableMessage) error {
 	return pb.Validate()
 }
 
+func (tf *testFixture) checkDupes(suite *policyv1.TestSuite) error {
+	dupes := make(map[string]struct{})
+	var errs error
+	for _, t := range suite.Tests {
+		if _, ok := dupes[t.Name]; ok {
+			errs = multierr.Append(errs, fmt.Errorf("another test named %q already exists", t.Name))
+		}
+		dupes[t.Name] = struct{}{}
+	}
+
+	return errs
+}
+
 func (tf *testFixture) runTestSuite(ctx context.Context, eng Checker, shouldRun func(string) bool, file string, suite *policyv1.TestSuite, trace bool) *policyv1.TestResults_Suite {
 	suiteResult := &policyv1.TestResults_Suite{
 		File:    file,
@@ -128,6 +142,12 @@ func (tf *testFixture) runTestSuite(ctx context.Context, eng Checker, shouldRun 
 		return suiteResult
 	}
 
+	if err := tf.checkDupes(suite); err != nil {
+		suiteResult.Summary.OverallResult = policyv1.TestResults_RESULT_ERRORED
+		suiteResult.Error = fmt.Sprintf("Invalid test suite: %v", err)
+		return suiteResult
+	}
+
 	tests, err := tf.getTests(suite)
 	if err != nil {
 		suiteResult.Summary.OverallResult = policyv1.TestResults_RESULT_ERRORED
@@ -135,26 +155,14 @@ func (tf *testFixture) runTestSuite(ctx context.Context, eng Checker, shouldRun 
 		return suiteResult
 	}
 
-	dupes := make(map[string]string)
 	for _, test := range tests {
 		if err := ctx.Err(); err != nil {
 			return suiteResult
 		}
 
 		for _, action := range test.Input.Actions {
-			testKey := fmt.Sprintf("%s|%s|%s", test.Name.PrincipalKey, test.Name.ResourceKey, action)
-			if prevTest, ok := dupes[testKey]; ok {
-				suiteResult.Summary.OverallResult = policyv1.TestResults_RESULT_ERRORED
-				suiteResult.Error = fmt.Sprintf(
-					"Duplicate test: The combination [%s] in test %q was already exercised in test %q",
-					testKey, test.Name.TestTableName, prevTest,
-				)
-				return suiteResult
-			}
-
-			dupes[testKey] = test.Name.TestTableName
 			testResult := runTest(ctx, eng, test, action, shouldRun, suite, trace)
-			addTestResult(suiteResult, test.Name.PrincipalKey, test.Name.ResourceKey, action, testResult)
+			addTestResult(suiteResult, test.Name.PrincipalKey, test.Name.ResourceKey, action, test.Name.TestTableName, testResult)
 		}
 	}
 
@@ -224,9 +232,8 @@ func performCheck(ctx context.Context, eng Checker, inputs []*enginev1.CheckInpu
 	return output, traceCollector.Traces(), err
 }
 
-func addTestResult(suite *policyv1.TestResults_Suite, principal, resource, action string, details *policyv1.TestResults_Details) {
-	addAction(addResource(addPrincipal(suite, principal), resource), action).Details = details
-
+func addTestResult(suite *policyv1.TestResults_Suite, principal, resource, action, testName string, details *policyv1.TestResults_Details) {
+	addAction(addResource(addPrincipal(addTestCase(suite, testName), principal), resource), action).Details = details
 	suite.Summary.TestsCount++
 	incrementTally(suite.Summary, details.Result, 1)
 
@@ -235,15 +242,27 @@ func addTestResult(suite *policyv1.TestResults_Suite, principal, resource, actio
 	}
 }
 
-func addPrincipal(suite *policyv1.TestResults_Suite, name string) *policyv1.TestResults_Principal {
-	for _, principal := range suite.Principals {
+func addTestCase(suite *policyv1.TestResults_Suite, name string) *policyv1.TestResults_TestCase {
+	for _, tc := range suite.TestCases {
+		if tc.Name == name {
+			return tc
+		}
+	}
+
+	tc := &policyv1.TestResults_TestCase{Name: name}
+	suite.TestCases = append(suite.TestCases, tc)
+	return tc
+}
+
+func addPrincipal(testCaseResult *policyv1.TestResults_TestCase, name string) *policyv1.TestResults_Principal {
+	for _, principal := range testCaseResult.Principals {
 		if principal.Name == name {
 			return principal
 		}
 	}
 
 	principal := &policyv1.TestResults_Principal{Name: name}
-	suite.Principals = append(suite.Principals, principal)
+	testCaseResult.Principals = append(testCaseResult.Principals, principal)
 	return principal
 }
 
