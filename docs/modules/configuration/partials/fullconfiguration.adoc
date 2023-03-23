@@ -13,6 +13,11 @@ audit:
   includeMetadataKeys: ['content-type'] # IncludeMetadataKeys defines which gRPC request metadata keys should be included in the audit logs.
   file:
     path: /path/to/file.log # Path to the log file to use as output. The special values stdout and stderr can be used to write to stdout or stderr respectively.
+  kafka:
+    async: true # Improve performance by not waiting for confirmation from Kafka
+    brokers: localhost:9092 # Seed brokers Kafka client will connect to
+    format: protobuf # Data format written to Kafka, accepts either json (default) or protobuf
+    topic: cerbos.audit.log # Name of the topic audit entries are written to
   local:
     advanced: 
       bufferSize: 256 
