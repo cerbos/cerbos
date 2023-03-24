@@ -70,6 +70,7 @@ func NewPublisher(conf *Conf, decisionFilter audit.DecisionLogEntryFilter) (*Pub
 		kgo.SeedBrokers(conf.Brokers...),
 		kgo.DefaultProduceTopic(conf.Topic),
 		kgo.WithLogger(logger),
+		kgo.MaxBufferedRecords(conf.MaxBufferedLogs),
 	)
 	if err != nil {
 		return nil, err

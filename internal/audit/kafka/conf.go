@@ -22,12 +22,14 @@ type Conf struct {
 	Encoding string `yaml:"format" conf:",example=protobuf"`
 	// Timeout for flushing messages to Kafka
 	FlushTimeout string `yaml:"flushTimeout" conf:",example=30s"`
-	//
+	// Identifier sent with all requests to Kafka
 	ClientID string `yaml:"clientID" conf:",example=cerbos"`
 	// Seed brokers Kafka client will connect to
 	Brokers []string `yaml:"brokers" conf:",example=['localhost:9092', 'localhost:9093']"`
 	// Increase reliability by stopping asynchronous publishing at the cost of reduced performance
 	ProduceSync bool `yaml:"produceSync" conf:",example=true"`
+	// MaxBufferedLogs sets the max amount of logs the client will buffer before blocking
+	MaxBufferedLogs int `yaml:"maxBufferedLogs" conf:",example=1000"`
 }
 
 func (c *Conf) Key() string {
@@ -38,6 +40,7 @@ func (c *Conf) SetDefaults() {
 	c.Encoding = EncodingJSON
 	c.FlushTimeout = "30s"
 	c.ClientID = "cerbos"
+	c.MaxBufferedLogs = 250
 }
 
 func (c *Conf) Validate() error {
