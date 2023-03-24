@@ -15,7 +15,7 @@ audit:
     path: /path/to/file.log # Path to the log file to use as output. The special values stdout and stderr can be used to write to stdout or stderr respectively.
   kafka:
     async: true # Improve performance by not waiting for confirmation from Kafka
-    brokers: localhost:9092 # Seed brokers Kafka client will connect to
+    brokers: ['localhost:9092' # Seed brokers Kafka client will connect to
     format: protobuf # Data format written to Kafka, accepts either json (default) or protobuf
     topic: cerbos.audit.log # Name of the topic audit entries are written to
   local:
