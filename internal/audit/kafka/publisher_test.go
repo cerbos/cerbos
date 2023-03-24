@@ -33,6 +33,7 @@ func TestWriteAccessLogEntry(t *testing.T) {
 		require.NoError(t, err)
 
 		expectPartitionKey(t, kafkaClient)
+		expectKind(t, kafkaClient, kafka.KindAccess)
 		expectJSON(t, kafkaClient)
 	})
 
@@ -49,6 +50,7 @@ func TestWriteAccessLogEntry(t *testing.T) {
 		require.NoError(t, err)
 
 		expectPartitionKey(t, kafkaClient)
+		expectKind(t, kafkaClient, kafka.KindAccess)
 		expectProtobuf(t, kafkaClient)
 	})
 
@@ -66,6 +68,7 @@ func TestWriteAccessLogEntry(t *testing.T) {
 		require.NoError(t, err)
 
 		expectPartitionKey(t, kafkaClient)
+		expectKind(t, kafkaClient, kafka.KindAccess)
 		expectJSON(t, kafkaClient)
 	})
 }
@@ -84,6 +87,7 @@ func TestWriteDecisionLogEntry(t *testing.T) {
 		require.NoError(t, err)
 
 		expectPartitionKey(t, kafkaClient)
+		expectKind(t, kafkaClient, kafka.KindDecision)
 		expectJSON(t, kafkaClient)
 	})
 
@@ -92,14 +96,15 @@ func TestWriteDecisionLogEntry(t *testing.T) {
 			Encoding: kafka.EncodingProtobuf,
 		})
 
-		err := publisher.WriteAccessLogEntry(context.Background(), func() (*auditv1.AccessLogEntry, error) {
-			return &auditv1.AccessLogEntry{
+		err := publisher.WriteDecisionLogEntry(context.Background(), func() (*auditv1.DecisionLogEntry, error) {
+			return &auditv1.DecisionLogEntry{
 				CallId: string(id),
 			}, nil
 		})
 		require.NoError(t, err)
 
 		expectPartitionKey(t, kafkaClient)
+		expectKind(t, kafkaClient, kafka.KindDecision)
 		expectProtobuf(t, kafkaClient)
 	})
 }
@@ -110,10 +115,13 @@ func expectPartitionKey(t *testing.T, kafkaClient *mockClient) {
 	assert.Equal(t, expectedID.Bytes(), kafkaClient.Records[0].Key)
 }
 
+func expectKind(t *testing.T, kafkaClient *mockClient, kind string) {
+	assert.Equal(t, []byte(kind), getHeader(kafkaClient.Records[0].Headers, kafka.HeaderKeyKind))
+}
+
 func expectJSON(t *testing.T, kafkaClient *mockClient) {
 	// expected encoding
-	assert.Len(t, kafkaClient.Records[0].Headers, 1)
-	assert.Equal(t, []byte(kafka.EncodingJSON), kafkaClient.Records[0].Headers[0].Value)
+	assert.Equal(t, []byte(kafka.EncodingJSON), getHeader(kafkaClient.Records[0].Headers, kafka.HeaderKeyEncoding))
 
 	// decode json
 	var entry auditv1.AccessLogEntry
@@ -124,8 +132,7 @@ func expectJSON(t *testing.T, kafkaClient *mockClient) {
 
 func expectProtobuf(t *testing.T, kafkaClient *mockClient) {
 	// expected encoding
-	assert.Len(t, kafkaClient.Records[0].Headers, 1)
-	assert.Equal(t, []byte(kafka.EncodingProtobuf), kafkaClient.Records[0].Headers[0].Value)
+	assert.Equal(t, []byte(kafka.EncodingProtobuf), getHeader(kafkaClient.Records[0].Headers, kafka.HeaderKeyEncoding))
 
 	// decode protobuf
 	var entry auditv1.AccessLogEntry
@@ -148,6 +155,15 @@ func newPublisher(t *testing.T, cfg kafka.Conf) (*kafka.Publisher, *mockClient) 
 	publisher.Client = kafkaClient
 
 	return publisher, kafkaClient
+}
+
+func getHeader(headers []kgo.RecordHeader, key string) []byte {
+	for _, h := range headers {
+		if h.Key == key {
+			return h.Value
+		}
+	}
+	return nil
 }
 
 type mockClient struct {

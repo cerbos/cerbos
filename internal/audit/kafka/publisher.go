@@ -19,7 +19,16 @@ import (
 
 const Backend = "kafka"
 
-const encodingHeaderKey = "cerbos.audit.encoding"
+const (
+	EncodingJSON     = "json"
+	EncodingProtobuf = "protobuf"
+
+	HeaderKeyEncoding = "cerbos.audit.encoding"
+	HeaderKeyKind     = "cerbos.audit.kind"
+
+	KindAccess   = "access"
+	KindDecision = "decision"
+)
 
 func init() {
 	audit.RegisterBackend(Backend, func(ctx context.Context, confW *config.Wrapper, decisionFilter audit.DecisionLogEntryFilter) (audit.Log, error) {
@@ -147,7 +156,20 @@ func (m recordMarshaller) MarshalAccessLogEntry(rec *auditv1.AccessLogEntry) (*k
 		return nil, fmt.Errorf("failed to marshal entry: %w", err)
 	}
 
-	return m.record(callID.Bytes(), payload)
+	return &kgo.Record{
+		Key:   callID.Bytes(),
+		Value: payload,
+		Headers: []kgo.RecordHeader{
+			{
+				Key:   HeaderKeyEncoding,
+				Value: []byte(m.Encoding),
+			},
+			{
+				Key:   HeaderKeyKind,
+				Value: []byte(KindAccess),
+			},
+		},
+	}, nil
 }
 
 func (m recordMarshaller) MarshalDecisionLogEntry(rec *auditv1.DecisionLogEntry) (*kgo.Record, error) {
@@ -170,17 +192,17 @@ func (m recordMarshaller) MarshalDecisionLogEntry(rec *auditv1.DecisionLogEntry)
 		return nil, fmt.Errorf("failed to marshal entry: %w", err)
 	}
 
-	return m.record(callID.Bytes(), payload)
-}
-
-func (m recordMarshaller) record(key, payload []byte) (*kgo.Record, error) {
 	return &kgo.Record{
-		Key:   key,
+		Key:   callID.Bytes(),
 		Value: payload,
 		Headers: []kgo.RecordHeader{
 			{
-				Key:   encodingHeaderKey,
+				Key:   HeaderKeyEncoding,
 				Value: []byte(m.Encoding),
+			},
+			{
+				Key:   HeaderKeyKind,
+				Value: []byte(KindDecision),
 			},
 		},
 	}, nil

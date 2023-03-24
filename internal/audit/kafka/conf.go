@@ -13,11 +13,6 @@ import (
 
 const confKey = audit.ConfKey + ".kafka"
 
-const (
-	EncodingJSON     = "json"
-	EncodingProtobuf = "protobuf"
-)
-
 // Conf is optional configuration for kafka Audit.
 type Conf struct {
 	// Seed brokers Kafka client will connect to
