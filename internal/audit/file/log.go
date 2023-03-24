@@ -11,6 +11,7 @@ import (
 	"github.com/cerbos/cerbos/internal/audit"
 	"github.com/cerbos/cerbos/internal/config"
 	"go.elastic.co/ecszap"
+	"go.uber.org/multierr"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 	"google.golang.org/protobuf/encoding/protojson"
@@ -98,9 +99,11 @@ func (l *Log) WriteDecisionLogEntry(_ context.Context, record audit.DecisionLogE
 	return nil
 }
 
-func (l *Log) Close() {
-	_ = l.accessLog.Sync()
-	_ = l.decisionLog.Sync()
+func (l *Log) Close() error {
+	return multierr.Combine(
+		l.accessLog.Sync(),
+		l.decisionLog.Sync(),
+	)
 }
 
 type protoMsg struct {

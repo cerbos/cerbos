@@ -265,7 +265,9 @@ func (s *Server) Start(ctx context.Context, param Param) error {
 		}
 
 		log.Debug("Shutting down the audit log")
-		param.AuditLog.Close()
+		if err := param.AuditLog.Close(); err != nil {
+			log.Error("Failed to cleanly close audit log", zap.Error(err))
+		}
 
 		log.Info("Shutdown complete")
 		return nil

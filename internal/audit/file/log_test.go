@@ -31,7 +31,9 @@ func TestLog(t *testing.T) {
 	log, err := file.NewLog(&file.Conf{Path: output}, decisionFilter)
 	require.NoError(t, err)
 
-	t.Cleanup(log.Close)
+	t.Cleanup(func() {
+		log.Close()
+	})
 
 	require.Equal(t, file.Backend, log.Backend())
 	require.True(t, log.Enabled())
