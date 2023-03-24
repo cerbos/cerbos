@@ -152,11 +152,11 @@ func expectProtobuf(t *testing.T, kafkaClient *mockClient) {
 func newPublisher(t *testing.T, cfg kafka.Conf) (*kafka.Publisher, *mockClient) {
 	t.Helper()
 
-	config := &kafka.Conf{
-		Brokers:     []string{"localhost:9092"},
-		Encoding:    cfg.Encoding,
-		ProduceSync: cfg.ProduceSync,
-	}
+	config := &kafka.Conf{}
+	config.SetDefaults()
+	config.Brokers = []string{"localhost:9092"}
+	config.Encoding = cfg.Encoding
+	config.ProduceSync = cfg.ProduceSync
 
 	publisher, err := kafka.NewPublisher(config, nil)
 	require.NoError(t, err)
@@ -185,6 +185,10 @@ func (m *mockClient) Reset() {
 }
 
 func (m *mockClient) Close() {}
+
+func (m *mockClient) Flush(_ context.Context) error {
+	return nil
+}
 
 func (m *mockClient) Produce(_ context.Context, record *kgo.Record, _ func(*kgo.Record, error)) {
 	m.Records = append(m.Records, record)

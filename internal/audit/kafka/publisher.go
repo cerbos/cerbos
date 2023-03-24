@@ -6,6 +6,7 @@ package kafka
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/grpc-ecosystem/go-grpc-middleware/logging/zap/ctxzap"
 	"github.com/twmb/franz-go/pkg/kgo"
@@ -43,6 +44,7 @@ func init() {
 
 type Client interface {
 	Close()
+	Flush(context.Context) error
 	Produce(context.Context, *kgo.Record, func(*kgo.Record, error))
 	ProduceSync(context.Context, ...*kgo.Record) kgo.ProduceResults
 }
@@ -52,6 +54,7 @@ type Publisher struct {
 	decisionFilter audit.DecisionLogEntryFilter
 	marshaller     recordMarshaller
 	sync           bool
+	flushTimeout   time.Duration
 }
 
 func NewPublisher(conf *Conf, decisionFilter audit.DecisionLogEntryFilter) (*Publisher, error) {
@@ -63,15 +66,26 @@ func NewPublisher(conf *Conf, decisionFilter audit.DecisionLogEntryFilter) (*Pub
 		return nil, err
 	}
 
+	flushTimeout, err := time.ParseDuration(conf.FlushTimeout)
+	if err != nil {
+		return nil, err
+	}
+
 	return &Publisher{
 		Client:         client,
-		sync:           conf.ProduceSync,
 		decisionFilter: decisionFilter,
 		marshaller:     recordMarshaller{Encoding: conf.Encoding},
+		sync:           conf.ProduceSync,
+		flushTimeout:   flushTimeout,
 	}, nil
 }
 
 func (p *Publisher) Close() {
+	flushCtx, flushCancel := context.WithTimeout(context.Background(), p.flushTimeout)
+	defer flushCancel()
+	// TODO: Change log.Close to return an error & then log
+	_ = p.Client.Flush(flushCtx)
+
 	p.Client.Close()
 }
 

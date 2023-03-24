@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/cerbos/cerbos/internal/audit"
 )
@@ -19,9 +20,11 @@ type Conf struct {
 	Topic string `yaml:"topic" conf:",example=cerbos.audit.log"`
 	// Data format written to Kafka, accepts either json (default) or protobuf
 	Encoding string `yaml:"format" conf:",example=protobuf"`
+	// Timeout for flushing messages to Kafka
+	FlushTimeout string `yaml:"flushTimeout" conf:",example=30s"`
 	// Seed brokers Kafka client will connect to
 	Brokers []string `yaml:"brokers" conf:",example=['localhost:9092', 'localhost:9093']"`
-	// Reduce performance by disabling asynchronous publishing for increased reliability
+	// Increase reliability by stopping asynchronous publishing at the cost of reduced performance
 	ProduceSync bool `yaml:"produceSync" conf:",example=true"`
 }
 
@@ -31,13 +34,10 @@ func (c *Conf) Key() string {
 
 func (c *Conf) SetDefaults() {
 	c.Encoding = EncodingJSON
+	c.FlushTimeout = "30s"
 }
 
 func (c *Conf) Validate() error {
-	if len(c.Brokers) == 0 {
-		return errors.New("empty brokers")
-	}
-
 	if strings.TrimSpace(c.Topic) == "" {
 		return errors.New("invalid topic")
 	}
@@ -46,6 +46,14 @@ func (c *Conf) Validate() error {
 	case EncodingJSON, EncodingProtobuf:
 	default:
 		return fmt.Errorf("invalid encoding format: %s", c.Encoding)
+	}
+
+	if _, err := time.ParseDuration(c.FlushTimeout); err != nil {
+		return fmt.Errorf("invalid flush timeout: %w", err)
+	}
+
+	if len(c.Brokers) == 0 {
+		return errors.New("empty brokers")
 	}
 
 	return nil
