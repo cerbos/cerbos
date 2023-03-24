@@ -6,10 +6,12 @@ package kafka
 import (
 	"context"
 	"fmt"
+	"os"
 	"time"
 
 	"github.com/grpc-ecosystem/go-grpc-middleware/logging/zap/ctxzap"
 	"github.com/twmb/franz-go/pkg/kgo"
+	"github.com/twmb/franz-go/plugin/kzap"
 	"go.uber.org/zap"
 	"google.golang.org/protobuf/encoding/protojson"
 
@@ -58,9 +60,15 @@ type Publisher struct {
 }
 
 func NewPublisher(conf *Conf, decisionFilter audit.DecisionLogEntryFilter) (*Publisher, error) {
+	var logger kgo.Logger
+	if _, ok := os.LookupEnv("CERBOS_DEBUG_KAFKA"); ok {
+		logger = kzap.New(zap.L().Named("kafka"), kzap.Level(kgo.LogLevelDebug))
+	}
+
 	client, err := kgo.NewClient(
 		kgo.SeedBrokers(conf.Brokers...),
 		kgo.DefaultProduceTopic(conf.Topic),
+		kgo.WithLogger(logger),
 	)
 	if err != nil {
 		return nil, err
