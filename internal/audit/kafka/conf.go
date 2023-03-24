@@ -21,8 +21,8 @@ type Conf struct {
 	Encoding string `yaml:"format" conf:",example=protobuf"`
 	// Seed brokers Kafka client will connect to
 	Brokers []string `yaml:"brokers" conf:",example=['localhost:9092', 'localhost:9093']"`
-	// Improve performance by not waiting for confirmation from Kafka
-	Async bool `yaml:"async" conf:",example=true"`
+	// Reduce performance by disabling asynchronous publishing for increased reliability
+	ProduceSync bool `yaml:"produceSync" conf:",example=true"`
 }
 
 func (c *Conf) Key() string {

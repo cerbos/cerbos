@@ -51,7 +51,7 @@ type Publisher struct {
 	Client         Client
 	decisionFilter audit.DecisionLogEntryFilter
 	marshaller     recordMarshaller
-	async          bool
+	sync           bool
 }
 
 func NewPublisher(conf *Conf, decisionFilter audit.DecisionLogEntryFilter) (*Publisher, error) {
@@ -65,7 +65,7 @@ func NewPublisher(conf *Conf, decisionFilter audit.DecisionLogEntryFilter) (*Pub
 
 	return &Publisher{
 		Client:         client,
-		async:          conf.Async,
+		sync:           conf.ProduceSync,
 		decisionFilter: decisionFilter,
 		marshaller:     recordMarshaller{Encoding: conf.Encoding},
 	}, nil
@@ -119,7 +119,7 @@ func (p *Publisher) WriteDecisionLogEntry(ctx context.Context, record audit.Deci
 }
 
 func (p *Publisher) write(ctx context.Context, msg *kgo.Record) error {
-	if !p.async {
+	if p.sync {
 		return p.Client.ProduceSync(ctx, msg).FirstErr()
 	}
 

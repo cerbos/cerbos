@@ -54,10 +54,10 @@ func TestWriteAccessLogEntry(t *testing.T) {
 		expectProtobuf(t, kafkaClient)
 	})
 
-	t.Run("async message", func(t *testing.T) {
+	t.Run("sync message", func(t *testing.T) {
 		publisher, kafkaClient := newPublisher(t, kafka.Conf{
-			Encoding: kafka.EncodingJSON,
-			Async:    true,
+			Encoding:    kafka.EncodingJSON,
+			ProduceSync: true,
 		})
 
 		err := publisher.WriteAccessLogEntry(context.Background(), func() (*auditv1.AccessLogEntry, error) {
@@ -153,9 +153,9 @@ func newPublisher(t *testing.T, cfg kafka.Conf) (*kafka.Publisher, *mockClient) 
 	t.Helper()
 
 	config := &kafka.Conf{
-		Brokers:  []string{"localhost:9092"},
-		Encoding: cfg.Encoding,
-		Async:    cfg.Async,
+		Brokers:     []string{"localhost:9092"},
+		Encoding:    cfg.Encoding,
+		ProduceSync: cfg.ProduceSync,
 	}
 
 	publisher, err := kafka.NewPublisher(config, nil)
