@@ -22,6 +22,8 @@ type Conf struct {
 	Encoding string `yaml:"format" conf:",example=protobuf"`
 	// Timeout for flushing messages to Kafka
 	FlushTimeout string `yaml:"flushTimeout" conf:",example=30s"`
+	//
+	ClientID string `yaml:"clientID" conf:",example=cerbos"`
 	// Seed brokers Kafka client will connect to
 	Brokers []string `yaml:"brokers" conf:",example=['localhost:9092', 'localhost:9093']"`
 	// Increase reliability by stopping asynchronous publishing at the cost of reduced performance
@@ -35,6 +37,7 @@ func (c *Conf) Key() string {
 func (c *Conf) SetDefaults() {
 	c.Encoding = EncodingJSON
 	c.FlushTimeout = "30s"
+	c.ClientID = "cerbos"
 }
 
 func (c *Conf) Validate() error {
@@ -50,6 +53,10 @@ func (c *Conf) Validate() error {
 
 	if _, err := time.ParseDuration(c.FlushTimeout); err != nil {
 		return fmt.Errorf("invalid flush timeout: %w", err)
+	}
+
+	if strings.TrimSpace(c.ClientID) == "" {
+		return errors.New("invalid client ID")
 	}
 
 	if len(c.Brokers) == 0 {

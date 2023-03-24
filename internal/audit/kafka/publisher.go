@@ -66,6 +66,7 @@ func NewPublisher(conf *Conf, decisionFilter audit.DecisionLogEntryFilter) (*Pub
 	}
 
 	client, err := kgo.NewClient(
+		kgo.ClientID(conf.ClientID),
 		kgo.SeedBrokers(conf.Brokers...),
 		kgo.DefaultProduceTopic(conf.Topic),
 		kgo.WithLogger(logger),
