@@ -49,9 +49,9 @@ type Client interface {
 
 type Publisher struct {
 	Client         Client
-	async          bool
 	decisionFilter audit.DecisionLogEntryFilter
 	marshaller     recordMarshaller
+	async          bool
 }
 
 func NewPublisher(conf *Conf, decisionFilter audit.DecisionLogEntryFilter) (*Publisher, error) {

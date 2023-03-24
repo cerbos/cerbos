@@ -15,12 +15,12 @@ const confKey = audit.ConfKey + ".kafka"
 
 // Conf is optional configuration for kafka Audit.
 type Conf struct {
-	// Seed brokers Kafka client will connect to
-	Brokers []string `yaml:"brokers" conf:",example=['localhost:9092', 'localhost:9093']"`
 	// Name of the topic audit entries are written to
 	Topic string `yaml:"topic" conf:",example=cerbos.audit.log"`
 	// Data format written to Kafka, accepts either json (default) or protobuf
 	Encoding string `yaml:"format" conf:",example=protobuf"`
+	// Seed brokers Kafka client will connect to
+	Brokers []string `yaml:"brokers" conf:",example=['localhost:9092', 'localhost:9093']"`
 	// Improve performance by not waiting for confirmation from Kafka
 	Async bool `yaml:"async" conf:",example=true"`
 }
