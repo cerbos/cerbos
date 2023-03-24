@@ -110,16 +110,22 @@ func TestWriteDecisionLogEntry(t *testing.T) {
 }
 
 func expectPartitionKey(t *testing.T, kafkaClient *mockClient) {
+	t.Helper()
+
 	expectedID, err := id.Repr()
 	require.NoError(t, err)
 	assert.Equal(t, expectedID.Bytes(), kafkaClient.Records[0].Key)
 }
 
 func expectKind(t *testing.T, kafkaClient *mockClient, kind string) {
+	t.Helper()
+
 	assert.Equal(t, []byte(kind), getHeader(kafkaClient.Records[0].Headers, kafka.HeaderKeyKind))
 }
 
 func expectJSON(t *testing.T, kafkaClient *mockClient) {
+	t.Helper()
+
 	// expected encoding
 	assert.Equal(t, []byte(kafka.EncodingJSON), getHeader(kafkaClient.Records[0].Headers, kafka.HeaderKeyEncoding))
 
@@ -131,6 +137,8 @@ func expectJSON(t *testing.T, kafkaClient *mockClient) {
 }
 
 func expectProtobuf(t *testing.T, kafkaClient *mockClient) {
+	t.Helper()
+
 	// expected encoding
 	assert.Equal(t, []byte(kafka.EncodingProtobuf), getHeader(kafkaClient.Records[0].Headers, kafka.HeaderKeyEncoding))
 
@@ -142,6 +150,8 @@ func expectProtobuf(t *testing.T, kafkaClient *mockClient) {
 }
 
 func newPublisher(t *testing.T, cfg kafka.Conf) (*kafka.Publisher, *mockClient) {
+	t.Helper()
+
 	config := &kafka.Conf{
 		Brokers:  []string{"localhost:9092"},
 		Encoding: cfg.Encoding,
