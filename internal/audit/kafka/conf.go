@@ -10,12 +10,15 @@ import (
 	"time"
 
 	"github.com/cerbos/cerbos/internal/audit"
+	"github.com/twmb/franz-go/pkg/kgo"
 )
 
 const confKey = audit.ConfKey + ".kafka"
 
 // Conf is optional configuration for kafka Audit.
 type Conf struct {
+	// Required acknowledgement for messages, accepts none, leader or the default all. Idempotency disabled when not all
+	Ack string `yaml:"ack" conf:",example=all"`
 	// Name of the topic audit entries are written to
 	Topic string `yaml:"topic" conf:",example=cerbos.audit.log"`
 	// Data format written to Kafka, accepts either json (default) or protobuf
@@ -37,6 +40,7 @@ func (c *Conf) Key() string {
 }
 
 func (c *Conf) SetDefaults() {
+	c.Ack = AckAll
 	c.Encoding = EncodingJSON
 	c.FlushTimeout = "30s"
 	c.ClientID = "cerbos"
@@ -44,6 +48,16 @@ func (c *Conf) SetDefaults() {
 }
 
 func (c *Conf) Validate() error {
+	switch c.Ack {
+	case AckNone, AckAll, AckLeader:
+	default:
+		return fmt.Errorf("invalid ack value: %s", c.Ack)
+	}
+
+	if _, err := formatAck(c.Ack); err != nil {
+		return err
+	}
+
 	if strings.TrimSpace(c.Topic) == "" {
 		return errors.New("invalid topic")
 	}
@@ -67,4 +81,17 @@ func (c *Conf) Validate() error {
 	}
 
 	return nil
+}
+
+func formatAck(ack string) (kgo.Acks, error) {
+	switch ack {
+	case AckNone:
+		return kgo.NoAck(), nil
+	case AckAll:
+		return kgo.AllISRAcks(), nil
+	case AckLeader:
+		return kgo.LeaderAck(), nil
+	default:
+		return kgo.NoAck(), fmt.Errorf("invalid ack value: %s", ack)
+	}
 }

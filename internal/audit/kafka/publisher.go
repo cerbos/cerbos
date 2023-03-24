@@ -23,6 +23,10 @@ import (
 const Backend = "kafka"
 
 const (
+	AckNone   = "none"
+	AckAll    = "all"
+	AckLeader = "leader"
+
 	EncodingJSON     = "json"
 	EncodingProtobuf = "protobuf"
 
@@ -60,18 +64,29 @@ type Publisher struct {
 }
 
 func NewPublisher(conf *Conf, decisionFilter audit.DecisionLogEntryFilter) (*Publisher, error) {
-	var logger kgo.Logger
-	if _, ok := os.LookupEnv("CERBOS_DEBUG_KAFKA"); ok {
-		logger = kzap.New(zap.L().Named("kafka"), kzap.Level(kgo.LogLevelDebug))
-	}
-
-	client, err := kgo.NewClient(
+	clientOpts := []kgo.Opt{
 		kgo.ClientID(conf.ClientID),
 		kgo.SeedBrokers(conf.Brokers...),
 		kgo.DefaultProduceTopic(conf.Topic),
-		kgo.WithLogger(logger),
 		kgo.MaxBufferedRecords(conf.MaxBufferedLogs),
-	)
+	}
+
+	if _, ok := os.LookupEnv("CERBOS_DEBUG_KAFKA"); ok {
+		clientOpts = append(clientOpts, kgo.WithLogger(
+			kzap.New(zap.L().Named("kafka"), kzap.Level(kgo.LogLevelDebug)),
+		))
+	}
+
+	ack, err := formatAck(conf.Ack)
+	if err != nil {
+		return nil, err
+	}
+	clientOpts = append(clientOpts, kgo.RequiredAcks(ack))
+	if conf.Ack != AckAll {
+		clientOpts = append(clientOpts, kgo.DisableIdempotentWrite())
+	}
+
+	client, err := kgo.NewClient(clientOpts...)
 	if err != nil {
 		return nil, err
 	}
