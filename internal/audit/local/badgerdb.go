@@ -366,12 +366,14 @@ func (l *Log) getByID(ctx context.Context, prefix []byte, id audit.ID, c collect
 	c.done(err)
 }
 
-func (l *Log) Close() {
+func (l *Log) Close() error {
+	var err error
 	l.stopOnce.Do(func() {
 		close(l.stopChan)
 		l.wg.Wait()
-		l.db.Close()
+		err = l.db.Close()
 	})
+	return err
 }
 
 func genKey(prefix []byte, id audit.IDBytes) []byte {

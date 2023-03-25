@@ -7,6 +7,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
 	"sync"
 	"time"
 
@@ -28,9 +29,9 @@ type Info interface {
 
 type Log interface {
 	Info
+	io.Closer
 	WriteAccessLogEntry(context.Context, AccessLogEntryMaker) error
 	WriteDecisionLogEntry(context.Context, DecisionLogEntryMaker) error
-	Close()
 }
 
 type QueryableLog interface {
@@ -141,10 +142,11 @@ func (lw *logWrapper) WriteDecisionLogEntry(ctx context.Context, entry DecisionL
 	return lw.backend.WriteDecisionLogEntry(ctx, entry)
 }
 
-func (lw *logWrapper) Close() {
+func (lw *logWrapper) Close() error {
 	if lw.backend != nil {
-		lw.backend.Close()
+		return lw.backend.Close()
 	}
+	return nil
 }
 
 type queryableLogWrapper struct {
