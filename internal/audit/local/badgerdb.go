@@ -11,7 +11,7 @@ import (
 	"sync"
 	"time"
 
-	badgerv3 "github.com/dgraph-io/badger/v3"
+	badgerv4 "github.com/dgraph-io/badger/v4"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 
@@ -48,8 +48,8 @@ func init() {
 // Log implements the decisionlog interface with Badger as the backing store.
 type Log struct {
 	logger         *zap.Logger
-	db             *badgerv3.DB
-	buffer         chan *badgerv3.Entry
+	db             *badgerv4.DB
+	buffer         chan *badgerv4.Entry
 	stopChan       chan struct{}
 	decisionFilter audit.DecisionLogEntryFilter
 	wg             sync.WaitGroup
@@ -59,13 +59,13 @@ type Log struct {
 
 func NewLog(conf *Conf, decisionFilter audit.DecisionLogEntryFilter) (*Log, error) {
 	logger := zap.L().Named("auditlog").With(zap.String("backend", Backend))
-	opts := badgerv3.DefaultOptions(conf.StoragePath)
+	opts := badgerv4.DefaultOptions(conf.StoragePath)
 	opts = opts.WithCompactL0OnClose(true)
 	opts = opts.WithMetricsEnabled(false)
 	opts = opts.WithLogger(newDBLogger(logger))
 
 	logger.Info("Initializing audit log", zap.String("path", conf.StoragePath))
-	db, err := badgerv3.Open(opts)
+	db, err := badgerv4.Open(opts)
 	if err != nil {
 		return nil, fmt.Errorf("failed to open database: %w", err)
 	}
@@ -79,7 +79,7 @@ func NewLog(conf *Conf, decisionFilter audit.DecisionLogEntryFilter) (*Log, erro
 	l := &Log{
 		logger:         logger,
 		db:             db,
-		buffer:         make(chan *badgerv3.Entry, bufferSize),
+		buffer:         make(chan *badgerv4.Entry, bufferSize),
 		stopChan:       make(chan struct{}),
 		ttl:            ttl,
 		decisionFilter: decisionFilter,
@@ -143,7 +143,7 @@ func (l *Log) gc(gcInterval time.Duration) {
 		case <-ticker.C:
 			logger.Debug("Running value log GC")
 			if err := l.db.RunValueLogGC(badgerDiscardRatio); err != nil {
-				if !errors.Is(err, badgerv3.ErrNoRewrite) {
+				if !errors.Is(err, badgerv4.ErrNoRewrite) {
 					logger.Error("Failed to run value log GC", zap.Error(err))
 				}
 			}
@@ -214,7 +214,7 @@ func (l *Log) WriteDecisionLogEntry(ctx context.Context, record audit.DecisionLo
 
 func (l *Log) write(ctx context.Context, key, value []byte) error {
 	select {
-	case l.buffer <- badgerv3.NewEntry(key, value).WithTTL(l.ttl):
+	case l.buffer <- badgerv4.NewEntry(key, value).WithTTL(l.ttl):
 		return nil
 	case <-ctx.Done():
 		return ctx.Err()
@@ -236,8 +236,8 @@ func (l *Log) LastNDecisionLogEntries(ctx context.Context, n uint) audit.Decisio
 }
 
 func (l *Log) listLastN(ctx context.Context, prefix []byte, n uint, c collector) {
-	err := l.db.View(func(txn *badgerv3.Txn) error {
-		opts := badgerv3.DefaultIteratorOptions
+	err := l.db.View(func(txn *badgerv4.Txn) error {
+		opts := badgerv4.DefaultIteratorOptions
 		opts.Reverse = true
 
 		it := txn.NewIterator(opts)
@@ -295,8 +295,8 @@ func (l *Log) listBetweenTimestamps(ctx context.Context, prefix []byte, fromTS, 
 		return
 	}
 
-	err = l.db.View(func(txn *badgerv3.Txn) error {
-		opts := badgerv3.DefaultIteratorOptions
+	err = l.db.View(func(txn *badgerv4.Txn) error {
+		opts := badgerv4.DefaultIteratorOptions
 
 		it := txn.NewIterator(opts)
 		defer it.Close()
@@ -350,10 +350,10 @@ func (l *Log) getByID(ctx context.Context, prefix []byte, id audit.ID, c collect
 	}
 
 	key := genKey(prefix, idBytes)
-	err = l.db.View(func(txn *badgerv3.Txn) error {
+	err = l.db.View(func(txn *badgerv4.Txn) error {
 		item, err := txn.Get(key)
 		if err != nil {
-			if errors.Is(err, badgerv3.ErrKeyNotFound) {
+			if errors.Is(err, badgerv4.ErrKeyNotFound) {
 				return audit.ErrIteratorClosed
 			}
 
@@ -435,21 +435,21 @@ func scanKeyForPrefix(prefix []byte, filler byte) []byte {
 }
 
 type batcher struct {
-	db      *badgerv3.DB
-	batch   []*badgerv3.Entry
+	db      *badgerv4.DB
+	batch   []*badgerv4.Entry
 	maxSize int
 	ptr     int
 }
 
-func newBatcher(db *badgerv3.DB, maxSize int) *batcher {
+func newBatcher(db *badgerv4.DB, maxSize int) *batcher {
 	return &batcher{
 		db:      db,
-		batch:   make([]*badgerv3.Entry, maxSize),
+		batch:   make([]*badgerv4.Entry, maxSize),
 		maxSize: maxSize,
 	}
 }
 
-func (b *batcher) add(entry *badgerv3.Entry) error {
+func (b *batcher) add(entry *badgerv4.Entry) error {
 	b.batch[b.ptr] = entry
 	b.ptr++
 
@@ -474,7 +474,7 @@ func (b *batcher) flush() error {
 		}
 
 		if err := wb.SetEntry(entry); err != nil {
-			if errors.Is(err, badgerv3.ErrDiscardedTxn) {
+			if errors.Is(err, badgerv4.ErrDiscardedTxn) {
 				wb = b.db.NewWriteBatch()
 				_ = wb.SetEntry(entry)
 			} else {
@@ -487,7 +487,7 @@ func (b *batcher) flush() error {
 	return wb.Flush()
 }
 
-func newDBLogger(logger *zap.Logger) badgerv3.Logger {
+func newDBLogger(logger *zap.Logger) badgerv4.Logger {
 	l := logger.Named("badger").WithOptions(zap.IncreaseLevel(zap.LevelEnablerFunc(func(lvl zapcore.Level) bool {
 		return lvl > zapcore.WarnLevel
 	})))
