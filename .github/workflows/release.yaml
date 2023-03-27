@@ -8,6 +8,7 @@ jobs:
   releaseBinaries:
     name: Release Binaries
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -61,6 +62,7 @@ jobs:
   releaseProtos:
     name: Release Protobufs
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v3
 
@@ -78,6 +80,7 @@ jobs:
   releaseJSONSchemas:
     name: Release JSON schemas
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     permissions:
       id-token: write
       contents: read
@@ -103,6 +106,7 @@ jobs:
   releaseDocs:
     name: Release Documentation
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -127,6 +131,7 @@ jobs:
   publishHelm:
     name: Publish Helm chart
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     permissions:
       id-token: write
       contents: read
