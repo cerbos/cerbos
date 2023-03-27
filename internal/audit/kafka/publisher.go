@@ -91,17 +91,12 @@ func NewPublisher(conf *Conf, decisionFilter audit.DecisionLogEntryFilter) (*Pub
 		return nil, err
 	}
 
-	flushTimeout, err := time.ParseDuration(conf.FlushTimeout)
-	if err != nil {
-		return nil, err
-	}
-
 	return &Publisher{
 		Client:         client,
 		decisionFilter: decisionFilter,
 		marshaller:     recordMarshaller{Encoding: conf.Encoding},
 		sync:           conf.ProduceSync,
-		flushTimeout:   flushTimeout,
+		flushTimeout:   conf.FlushTimeout,
 	}, nil
 }
 

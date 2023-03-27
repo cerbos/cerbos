@@ -24,7 +24,7 @@ type Conf struct {
 	// Data format written to Kafka, accepts either json (default) or protobuf
 	Encoding string `yaml:"format" conf:",example=protobuf"`
 	// Timeout for flushing messages to Kafka
-	FlushTimeout string `yaml:"flushTimeout" conf:",example=30s"`
+	FlushTimeout time.Duration `yaml:"flushTimeout" conf:",example=30s"`
 	// Identifier sent with all requests to Kafka
 	ClientID string `yaml:"clientID" conf:",example=cerbos"`
 	// Seed brokers Kafka client will connect to
@@ -42,7 +42,7 @@ func (c *Conf) Key() string {
 func (c *Conf) SetDefaults() {
 	c.Ack = AckAll
 	c.Encoding = EncodingJSON
-	c.FlushTimeout = "30s"
+	c.FlushTimeout = 30 * time.Second
 	c.ClientID = "cerbos"
 	c.MaxBufferedLogs = 250
 }
@@ -68,8 +68,8 @@ func (c *Conf) Validate() error {
 		return fmt.Errorf("invalid encoding format: %s", c.Encoding)
 	}
 
-	if _, err := time.ParseDuration(c.FlushTimeout); err != nil {
-		return fmt.Errorf("invalid flush timeout: %w", err)
+	if c.FlushTimeout <= 0 {
+		return errors.New("invalid flush timeout")
 	}
 
 	if strings.TrimSpace(c.ClientID) == "" {
