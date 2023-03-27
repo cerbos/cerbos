@@ -56,12 +56,6 @@ func (c *Conf) SetDefaults() {
 }
 
 func (c *Conf) Validate() error {
-	switch c.Ack {
-	case AckNone, AckAll, AckLeader:
-	default:
-		return fmt.Errorf("invalid ack value: %s", c.Ack)
-	}
-
 	if _, err := formatAck(c.Ack); err != nil {
 		return err
 	}
