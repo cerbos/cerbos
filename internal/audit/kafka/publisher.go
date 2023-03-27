@@ -108,13 +108,15 @@ func NewPublisher(conf *Conf, decisionFilter audit.DecisionLogEntryFilter) (*Pub
 	}, nil
 }
 
-func (p *Publisher) Close() {
+func (p *Publisher) Close() error {
 	flushCtx, flushCancel := context.WithTimeout(context.Background(), p.flushTimeout)
 	defer flushCancel()
-	// TODO: Change log.Close to return an error & then log
-	_ = p.Client.Flush(flushCtx)
+	if err := p.Client.Flush(flushCtx); err != nil {
+		return err
+	}
 
 	p.Client.Close()
+	return nil
 }
 
 func (p *Publisher) Backend() string {
