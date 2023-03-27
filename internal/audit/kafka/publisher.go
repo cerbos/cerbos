@@ -27,14 +27,20 @@ const (
 	AckAll    = "all"
 	AckLeader = "leader"
 
-	EncodingJSON     = "json"
-	EncodingProtobuf = "protobuf"
-
 	HeaderKeyEncoding = "cerbos.audit.encoding"
 	HeaderKeyKind     = "cerbos.audit.kind"
+)
 
-	KindAccess   = "access"
-	KindDecision = "decision"
+type Encoding string
+
+var (
+	EncodingJSON     Encoding = "json"
+	EncodingProtobuf Encoding = "protobuf"
+)
+
+var (
+	KindAccess   = []byte("access")
+	KindDecision = []byte("decision")
 )
 
 func init() {
@@ -94,7 +100,7 @@ func NewPublisher(conf *Conf, decisionFilter audit.DecisionLogEntryFilter) (*Pub
 	return &Publisher{
 		Client:         client,
 		decisionFilter: decisionFilter,
-		marshaller:     recordMarshaller{Encoding: conf.Encoding},
+		marshaller:     newMarshaller(conf.Encoding),
 		sync:           conf.ProduceSync,
 		flushTimeout:   conf.FlushTimeout,
 	}, nil
@@ -166,8 +172,16 @@ func (p *Publisher) write(ctx context.Context, msg *kgo.Record) error {
 	return nil
 }
 
+func newMarshaller(enc Encoding) recordMarshaller {
+	return recordMarshaller{
+		encoding:    enc,
+		encodingKey: []byte(enc),
+	}
+}
+
 type recordMarshaller struct {
-	Encoding string
+	encoding    Encoding
+	encodingKey []byte
 }
 
 func (m recordMarshaller) MarshalAccessLogEntry(rec *auditv1.AccessLogEntry) (*kgo.Record, error) {
@@ -177,9 +191,9 @@ func (m recordMarshaller) MarshalAccessLogEntry(rec *auditv1.AccessLogEntry) (*k
 	}
 
 	var payload []byte
-	switch m.Encoding {
+	switch m.encoding {
 	default:
-		return nil, fmt.Errorf("invalid encoding format: %s", m.Encoding)
+		return nil, fmt.Errorf("invalid encoding format: %s", m.encoding)
 	case EncodingJSON:
 		payload, err = protojson.Marshal(rec)
 	case EncodingProtobuf:
@@ -196,11 +210,11 @@ func (m recordMarshaller) MarshalAccessLogEntry(rec *auditv1.AccessLogEntry) (*k
 		Headers: []kgo.RecordHeader{
 			{
 				Key:   HeaderKeyEncoding,
-				Value: []byte(m.Encoding),
+				Value: m.encodingKey,
 			},
 			{
 				Key:   HeaderKeyKind,
-				Value: []byte(KindAccess),
+				Value: KindAccess,
 			},
 		},
 	}, nil
@@ -213,9 +227,9 @@ func (m recordMarshaller) MarshalDecisionLogEntry(rec *auditv1.DecisionLogEntry)
 	}
 
 	var payload []byte
-	switch m.Encoding {
+	switch m.encoding {
 	default:
-		return nil, fmt.Errorf("invalid encoding format: %s", m.Encoding)
+		return nil, fmt.Errorf("invalid encoding format: %s", m.encoding)
 	case EncodingJSON:
 		payload, err = protojson.Marshal(rec)
 	case EncodingProtobuf:
@@ -232,11 +246,11 @@ func (m recordMarshaller) MarshalDecisionLogEntry(rec *auditv1.DecisionLogEntry)
 		Headers: []kgo.RecordHeader{
 			{
 				Key:   HeaderKeyEncoding,
-				Value: []byte(m.Encoding),
+				Value: m.encodingKey,
 			},
 			{
 				Key:   HeaderKeyKind,
-				Value: []byte(KindDecision),
+				Value: KindDecision,
 			},
 		},
 	}, nil

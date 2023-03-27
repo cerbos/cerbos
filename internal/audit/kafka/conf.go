@@ -22,7 +22,7 @@ type Conf struct {
 	// Name of the topic audit entries are written to
 	Topic string `yaml:"topic" conf:",example=cerbos.audit.log"`
 	// Data format written to Kafka, accepts either json (default) or protobuf
-	Encoding string `yaml:"format" conf:",example=protobuf"`
+	Encoding Encoding `yaml:"encoding" conf:",example=protobuf"`
 	// Timeout for flushing messages to Kafka
 	FlushTimeout time.Duration `yaml:"flushTimeout" conf:",example=30s"`
 	// Identifier sent with all requests to Kafka

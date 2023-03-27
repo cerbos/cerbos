@@ -117,7 +117,7 @@ func expectPartitionKey(t *testing.T, kafkaClient *mockClient) {
 	assert.Equal(t, expectedID.Bytes(), kafkaClient.Records[0].Key)
 }
 
-func expectKind(t *testing.T, kafkaClient *mockClient, kind string) {
+func expectKind(t *testing.T, kafkaClient *mockClient, kind []byte) {
 	t.Helper()
 
 	assert.Equal(t, []byte(kind), getHeader(kafkaClient.Records[0].Headers, kafka.HeaderKeyKind))
