@@ -865,7 +865,7 @@ func (m *ResourceRule) validate(all bool) error {
 	if _, ok := _ResourceRule_Effect_InLookup[m.GetEffect()]; !ok {
 		err := ResourceRuleValidationError{
 			field:  "Effect",
-			reason: "value must be in list [1 2]",
+			reason: "value must be in list [EFFECT_ALLOW EFFECT_DENY]",
 		}
 		if !all {
 			return err
@@ -3506,7 +3506,7 @@ func (m *PrincipalRule_Action) validate(all bool) error {
 	if _, ok := _PrincipalRule_Action_Effect_InLookup[m.GetEffect()]; !ok {
 		err := PrincipalRule_ActionValidationError{
 			field:  "Effect",
-			reason: "value must be in list [1 2]",
+			reason: "value must be in list [EFFECT_ALLOW EFFECT_DENY]",
 		}
 		if !all {
 			return err
