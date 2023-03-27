@@ -15,6 +15,14 @@ import (
 
 const confKey = audit.ConfKey + ".kafka"
 
+const (
+	defaultAcknowledgement = AckAll
+	defaultEncoding        = EncodingJSON
+	defaultFlushTimeout    = 30 * time.Second
+	defaultClientID        = "cerbos"
+	defaultMaxBufferedLogs = 250
+)
+
 // Conf is optional configuration for kafka Audit.
 type Conf struct {
 	// Required acknowledgement for messages, accepts none, leader or the default all. Idempotency disabled when not all
@@ -23,16 +31,16 @@ type Conf struct {
 	Topic string `yaml:"topic" conf:",example=cerbos.audit.log"`
 	// Data format written to Kafka, accepts either json (default) or protobuf
 	Encoding Encoding `yaml:"encoding" conf:",example=protobuf"`
-	// Timeout for flushing messages to Kafka
-	FlushTimeout time.Duration `yaml:"flushTimeout" conf:",example=30s"`
 	// Identifier sent with all requests to Kafka
 	ClientID string `yaml:"clientID" conf:",example=cerbos"`
 	// Seed brokers Kafka client will connect to
 	Brokers []string `yaml:"brokers" conf:",example=['localhost:9092']"`
-	// Increase reliability by stopping asynchronous publishing at the cost of reduced performance
-	ProduceSync bool `yaml:"produceSync" conf:",example=true"`
+	// Timeout for flushing messages to Kafka
+	FlushTimeout time.Duration `yaml:"flushTimeout" conf:",example=30s"`
 	// MaxBufferedLogs sets the max amount of logs the client will buffer before blocking
 	MaxBufferedLogs int `yaml:"maxBufferedLogs" conf:",example=1000"`
+	// Increase reliability by stopping asynchronous publishing at the cost of reduced performance
+	ProduceSync bool `yaml:"produceSync" conf:",example=true"`
 }
 
 func (c *Conf) Key() string {
@@ -40,11 +48,11 @@ func (c *Conf) Key() string {
 }
 
 func (c *Conf) SetDefaults() {
-	c.Ack = AckAll
-	c.Encoding = EncodingJSON
-	c.FlushTimeout = 30 * time.Second
-	c.ClientID = "cerbos"
-	c.MaxBufferedLogs = 250
+	c.Ack = defaultAcknowledgement
+	c.Encoding = defaultEncoding
+	c.FlushTimeout = defaultFlushTimeout
+	c.ClientID = defaultClientID
+	c.MaxBufferedLogs = defaultMaxBufferedLogs
 }
 
 func (c *Conf) Validate() error {

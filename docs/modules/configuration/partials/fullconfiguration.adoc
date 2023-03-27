@@ -17,7 +17,7 @@ audit:
     ack: all # Required acknowledgement for messages, accepts none, leader or the default all. Idempotency disabled when not all
     brokers: ['localhost:9092'] # Seed brokers Kafka client will connect to
     clientID: cerbos # Identifier sent with all requests to Kafka
-    format: protobuf # Data format written to Kafka, accepts either json (default) or protobuf
+    encoding: protobuf # Data format written to Kafka, accepts either json (default) or protobuf
     flushTimeout: 30s # Timeout for flushing messages to Kafka
     maxBufferedLogs: 1000 # MaxBufferedLogs sets the max amount of logs the client will buffer before blocking
     produceSync: true # Increase reliability by stopping asynchronous publishing at the cost of reduced performance

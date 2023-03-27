@@ -14,8 +14,8 @@ import (
 	"github.com/twmb/franz-go/plugin/kzap"
 	"go.uber.org/zap"
 	"google.golang.org/protobuf/encoding/protojson"
+	"google.golang.org/protobuf/proto"
 
-	auditv1 "github.com/cerbos/cerbos/api/genpb/cerbos/audit/v1"
 	"github.com/cerbos/cerbos/internal/audit"
 	"github.com/cerbos/cerbos/internal/config"
 )
@@ -33,14 +33,16 @@ const (
 
 type Encoding string
 
-var (
+const (
 	EncodingJSON     Encoding = "json"
 	EncodingProtobuf Encoding = "protobuf"
 )
 
+type Kind []byte
+
 var (
-	KindAccess   = []byte("access")
-	KindDecision = []byte("decision")
+	KindAccess   Kind = []byte("access")
+	KindDecision Kind = []byte("decision")
 )
 
 func init() {
@@ -129,7 +131,7 @@ func (p *Publisher) WriteAccessLogEntry(ctx context.Context, record audit.Access
 		return err
 	}
 
-	msg, err := p.marshaller.MarshalAccessLogEntry(rec)
+	msg, err := p.marshaller.Marshal(rec, audit.ID(rec.CallId), KindAccess)
 	if err != nil {
 		return err
 	}
@@ -150,7 +152,7 @@ func (p *Publisher) WriteDecisionLogEntry(ctx context.Context, record audit.Deci
 		}
 	}
 
-	msg, err := p.marshaller.MarshalDecisionLogEntry(rec)
+	msg, err := p.marshaller.Marshal(rec, audit.ID(rec.CallId), KindDecision)
 	if err != nil {
 		return err
 	}
@@ -184,8 +186,8 @@ type recordMarshaller struct {
 	encodingKey []byte
 }
 
-func (m recordMarshaller) MarshalAccessLogEntry(rec *auditv1.AccessLogEntry) (*kgo.Record, error) {
-	callID, err := audit.ID(rec.CallId).Repr()
+func (m recordMarshaller) Marshal(msg proto.Message, id audit.ID, kind Kind) (*kgo.Record, error) {
+	partitionKey, err := id.Repr()
 	if err != nil {
 		return nil, fmt.Errorf("invalid call ID: %w", err)
 	}
@@ -195,8 +197,12 @@ func (m recordMarshaller) MarshalAccessLogEntry(rec *auditv1.AccessLogEntry) (*k
 	default:
 		return nil, fmt.Errorf("invalid encoding format: %s", m.encoding)
 	case EncodingJSON:
-		payload, err = protojson.Marshal(rec)
+		payload, err = protojson.Marshal(msg)
 	case EncodingProtobuf:
+		rec, ok := msg.(interface{ MarshalVT() ([]byte, error) })
+		if !ok {
+			return nil, fmt.Errorf("unable to marshal, no MarshalVT method: %w", err)
+		}
 		payload, err = rec.MarshalVT()
 	}
 
@@ -205,7 +211,7 @@ func (m recordMarshaller) MarshalAccessLogEntry(rec *auditv1.AccessLogEntry) (*k
 	}
 
 	return &kgo.Record{
-		Key:   callID.Bytes(),
+		Key:   partitionKey.Bytes(),
 		Value: payload,
 		Headers: []kgo.RecordHeader{
 			{
@@ -214,43 +220,7 @@ func (m recordMarshaller) MarshalAccessLogEntry(rec *auditv1.AccessLogEntry) (*k
 			},
 			{
 				Key:   HeaderKeyKind,
-				Value: KindAccess,
-			},
-		},
-	}, nil
-}
-
-func (m recordMarshaller) MarshalDecisionLogEntry(rec *auditv1.DecisionLogEntry) (*kgo.Record, error) {
-	callID, err := audit.ID(rec.CallId).Repr()
-	if err != nil {
-		return nil, fmt.Errorf("invalid call ID: %w", err)
-	}
-
-	var payload []byte
-	switch m.encoding {
-	default:
-		return nil, fmt.Errorf("invalid encoding format: %s", m.encoding)
-	case EncodingJSON:
-		payload, err = protojson.Marshal(rec)
-	case EncodingProtobuf:
-		payload, err = rec.MarshalVT()
-	}
-
-	if err != nil {
-		return nil, fmt.Errorf("failed to marshal entry: %w", err)
-	}
-
-	return &kgo.Record{
-		Key:   callID.Bytes(),
-		Value: payload,
-		Headers: []kgo.RecordHeader{
-			{
-				Key:   HeaderKeyEncoding,
-				Value: m.encodingKey,
-			},
-			{
-				Key:   HeaderKeyKind,
-				Value: KindDecision,
+				Value: kind,
 			},
 		},
 	}, nil

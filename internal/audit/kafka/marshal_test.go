@@ -1,3 +1,6 @@
+// Copyright 2021-2023 Zenauth Ltd.
+// SPDX-License-Identifier: Apache-2.0
+
 package kafka
 
 import (
@@ -5,6 +8,7 @@ import (
 	"testing"
 
 	auditv1 "github.com/cerbos/cerbos/api/genpb/cerbos/audit/v1"
+	"github.com/cerbos/cerbos/internal/audit"
 )
 
 var encoding = []Encoding{EncodingJSON, EncodingProtobuf}
@@ -21,7 +25,9 @@ func BenchmarkRecordMarshaller_AccessLog(b *testing.B) {
 			b.ReportAllocs()
 
 			for i := 0; i < b.N; i++ {
-				m.MarshalAccessLogEntry(rec)
+				if _, err := m.Marshal(rec, audit.ID(rec.CallId), KindAccess); err != nil {
+					b.Fatal(err)
+				}
 			}
 		})
 	}
@@ -39,7 +45,9 @@ func BenchmarkRecordMarshaller_DecisionLog(b *testing.B) {
 			b.ReportAllocs()
 
 			for i := 0; i < b.N; i++ {
-				m.MarshalDecisionLogEntry(rec)
+				if _, err := m.Marshal(rec, audit.ID(rec.CallId), KindDecision); err != nil {
+					b.Fatal(err)
+				}
 			}
 		})
 	}

@@ -120,7 +120,7 @@ func expectPartitionKey(t *testing.T, kafkaClient *mockClient) {
 func expectKind(t *testing.T, kafkaClient *mockClient, kind []byte) {
 	t.Helper()
 
-	assert.Equal(t, []byte(kind), getHeader(kafkaClient.Records[0].Headers, kafka.HeaderKeyKind))
+	assert.Equal(t, kind, getHeader(kafkaClient.Records[0].Headers, kafka.HeaderKeyKind))
 }
 
 func expectJSON(t *testing.T, kafkaClient *mockClient) {
