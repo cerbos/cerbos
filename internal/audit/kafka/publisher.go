@@ -133,7 +133,7 @@ func (p *Publisher) WriteAccessLogEntry(ctx context.Context, record audit.Access
 		return err
 	}
 
-	msg, err := p.marshaller.Marshal(rec, audit.ID(rec.CallId), KindAccess)
+	msg, err := p.marshaller.Marshal(rec, KindAccess)
 	if err != nil {
 		return err
 	}
@@ -154,7 +154,7 @@ func (p *Publisher) WriteDecisionLogEntry(ctx context.Context, record audit.Deci
 		}
 	}
 
-	msg, err := p.marshaller.Marshal(rec, audit.ID(rec.CallId), KindDecision)
+	msg, err := p.marshaller.Marshal(rec, KindDecision)
 	if err != nil {
 		return err
 	}
@@ -188,8 +188,14 @@ type recordMarshaller struct {
 	encodingKey []byte
 }
 
-func (m recordMarshaller) Marshal(msg proto.Message, id audit.ID, kind Kind) (*kgo.Record, error) {
-	partitionKey, err := id.Repr()
+type auditEntry interface {
+	proto.Message
+	GetCallId() string
+	MarshalVT() ([]byte, error)
+}
+
+func (m recordMarshaller) Marshal(entry auditEntry, kind Kind) (*kgo.Record, error) {
+	partitionKey, err := audit.ID(entry.GetCallId()).Repr()
 	if err != nil {
 		return nil, fmt.Errorf("invalid call ID: %w", err)
 	}
@@ -199,13 +205,9 @@ func (m recordMarshaller) Marshal(msg proto.Message, id audit.ID, kind Kind) (*k
 	default:
 		return nil, fmt.Errorf("invalid encoding format: %s", m.encoding)
 	case EncodingJSON:
-		payload, err = protojson.Marshal(msg)
+		payload, err = protojson.Marshal(entry)
 	case EncodingProtobuf:
-		rec, ok := msg.(interface{ MarshalVT() ([]byte, error) })
-		if !ok {
-			return nil, fmt.Errorf("unable to marshal, no MarshalVT method: %w", err)
-		}
-		payload, err = rec.MarshalVT()
+		payload, err = entry.MarshalVT()
 	}
 
 	if err != nil {

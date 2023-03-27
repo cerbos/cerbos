@@ -8,7 +8,6 @@ import (
 	"testing"
 
 	auditv1 "github.com/cerbos/cerbos/api/genpb/cerbos/audit/v1"
-	"github.com/cerbos/cerbos/internal/audit"
 )
 
 var encoding = []Encoding{EncodingJSON, EncodingProtobuf}
@@ -25,7 +24,7 @@ func BenchmarkRecordMarshaller_AccessLog(b *testing.B) {
 			b.ReportAllocs()
 
 			for i := 0; i < b.N; i++ {
-				if _, err := m.Marshal(rec, audit.ID(rec.CallId), KindAccess); err != nil {
+				if _, err := m.Marshal(rec, KindAccess); err != nil {
 					b.Fatal(err)
 				}
 			}
@@ -45,7 +44,7 @@ func BenchmarkRecordMarshaller_DecisionLog(b *testing.B) {
 			b.ReportAllocs()
 
 			for i := 0; i < b.N; i++ {
-				if _, err := m.Marshal(rec, audit.ID(rec.CallId), KindDecision); err != nil {
+				if _, err := m.Marshal(rec, KindDecision); err != nil {
 					b.Fatal(err)
 				}
 			}
