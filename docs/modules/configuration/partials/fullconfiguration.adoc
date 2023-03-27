@@ -13,6 +13,15 @@ audit:
   includeMetadataKeys: ['content-type'] # IncludeMetadataKeys defines which gRPC request metadata keys should be included in the audit logs.
   file:
     path: /path/to/file.log # Path to the log file to use as output. The special values stdout and stderr can be used to write to stdout or stderr respectively.
+  kafka:
+    ack: all # Required acknowledgement for messages, accepts none, leader or the default all. Idempotency disabled when not all
+    brokers: ['localhost:9092'] # Seed brokers Kafka client will connect to
+    clientID: cerbos # Identifier sent with all requests to Kafka
+    encoding: protobuf # Data format written to Kafka, accepts either json (default) or protobuf
+    flushTimeout: 30s # Timeout for flushing messages to Kafka
+    maxBufferedLogs: 1000 # MaxBufferedLogs sets the max amount of logs the client will buffer before blocking
+    produceSync: true # Increase reliability by stopping asynchronous publishing at the cost of reduced performance
+    topic: cerbos.audit.log # Name of the topic audit entries are written to
   local:
     advanced: 
       bufferSize: 256 
