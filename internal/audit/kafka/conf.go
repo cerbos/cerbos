@@ -28,7 +28,7 @@ type Conf struct {
 	// Identifier sent with all requests to Kafka
 	ClientID string `yaml:"clientID" conf:",example=cerbos"`
 	// Seed brokers Kafka client will connect to
-	Brokers []string `yaml:"brokers" conf:",example=['localhost:9092', 'localhost:9093']"`
+	Brokers []string `yaml:"brokers" conf:",example=['localhost:9092']"`
 	// Increase reliability by stopping asynchronous publishing at the cost of reduced performance
 	ProduceSync bool `yaml:"produceSync" conf:",example=true"`
 	// MaxBufferedLogs sets the max amount of logs the client will buffer before blocking

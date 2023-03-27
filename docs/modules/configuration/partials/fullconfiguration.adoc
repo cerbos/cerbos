@@ -15,7 +15,7 @@ audit:
     path: /path/to/file.log # Path to the log file to use as output. The special values stdout and stderr can be used to write to stdout or stderr respectively.
   kafka:
     ack: all # Required acknowledgement for messages, accepts none, leader or the default all. Idempotency disabled when not all
-    brokers: ['localhost:9092' # Seed brokers Kafka client will connect to
+    brokers: ['localhost:9092'] # Seed brokers Kafka client will connect to
     clientID: cerbos # Identifier sent with all requests to Kafka
     format: protobuf # Data format written to Kafka, accepts either json (default) or protobuf
     flushTimeout: 30s # Timeout for flushing messages to Kafka
