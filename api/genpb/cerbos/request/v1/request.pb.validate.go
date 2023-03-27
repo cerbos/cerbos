@@ -2680,7 +2680,7 @@ func (m *ListAuditLogEntriesRequest) validate(all bool) error {
 	if _, ok := _ListAuditLogEntriesRequest_Kind_InLookup[m.GetKind()]; !ok {
 		err := ListAuditLogEntriesRequestValidationError{
 			field:  "Kind",
-			reason: "value must be in list [1 2]",
+			reason: "value must be in list [KIND_ACCESS KIND_DECISION]",
 		}
 		if !all {
 			return err
