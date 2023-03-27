@@ -76,7 +76,7 @@ func NewPublisher(conf *Conf, decisionFilter audit.DecisionLogEntryFilter) (*Pub
 		kgo.ClientID(conf.ClientID),
 		kgo.SeedBrokers(conf.Brokers...),
 		kgo.DefaultProduceTopic(conf.Topic),
-		kgo.MaxBufferedRecords(conf.MaxBufferedLogs),
+		kgo.MaxBufferedRecords(conf.MaxBufferedRecords),
 	}
 
 	if _, ok := os.LookupEnv("CERBOS_DEBUG_KAFKA"); ok {

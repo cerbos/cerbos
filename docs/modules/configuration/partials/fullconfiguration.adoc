@@ -14,14 +14,14 @@ audit:
   file:
     path: /path/to/file.log # Path to the log file to use as output. The special values stdout and stderr can be used to write to stdout or stderr respectively.
   kafka:
-    ack: all # Required acknowledgement for messages, accepts none, leader or the default all. Idempotency disabled when not all
-    brokers: ['localhost:9092'] # Seed brokers Kafka client will connect to
-    clientID: cerbos # Identifier sent with all requests to Kafka
-    encoding: protobuf # Data format written to Kafka, accepts either json (default) or protobuf
-    flushTimeout: 30s # Timeout for flushing messages to Kafka
-    maxBufferedLogs: 1000 # MaxBufferedLogs sets the max amount of logs the client will buffer before blocking
-    produceSync: true # Increase reliability by stopping asynchronous publishing at the cost of reduced performance
-    topic: cerbos.audit.log # Name of the topic audit entries are written to
+    ack: all # Ack mode for producing messages. Valid values are "none", "leader" or "all" (default). Idempotency is disabled when mode is not "all".
+    brokers: ['localhost:9092'] # Required. Brokers list to seed the Kafka client.
+    clientID: cerbos # ClientID reported in Kafka connections.
+    encoding: json # Encoding format. Valid values are "json" (default) or "protobuf".
+    flushTimeout: 30s # FlushTimeout sets how often messages are flushed to the remote Kafka server.
+    maxBufferedRecords: 1000 # MaxBufferedRecords sets the maximum number of records the client should buffer in memory in async mode.
+    produceSync: false # ProduceSync forces the client to produce messages to Kafka synchronously. This can have a significant impact on performance.
+    topic: cerbos.audit.log # Required. Topic to write audit entries to.
   local:
     advanced: 
       bufferSize: 256 

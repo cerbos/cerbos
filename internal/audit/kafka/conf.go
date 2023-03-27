@@ -16,31 +16,31 @@ import (
 const confKey = audit.ConfKey + ".kafka"
 
 const (
-	defaultAcknowledgement = AckAll
-	defaultEncoding        = EncodingJSON
-	defaultFlushTimeout    = 30 * time.Second
-	defaultClientID        = "cerbos"
-	defaultMaxBufferedLogs = 250
+	defaultAcknowledgement    = AckAll
+	defaultEncoding           = EncodingJSON
+	defaultFlushTimeout       = 30 * time.Second
+	defaultClientID           = "cerbos"
+	defaultMaxBufferedRecords = 250
 )
 
 // Conf is optional configuration for kafka Audit.
 type Conf struct {
-	// Required acknowledgement for messages, accepts none, leader or the default all. Idempotency disabled when not all
+	// Ack mode for producing messages. Valid values are "none", "leader" or "all" (default). Idempotency is disabled when mode is not "all".
 	Ack string `yaml:"ack" conf:",example=all"`
-	// Name of the topic audit entries are written to
-	Topic string `yaml:"topic" conf:",example=cerbos.audit.log"`
-	// Data format written to Kafka, accepts either json (default) or protobuf
-	Encoding Encoding `yaml:"encoding" conf:",example=protobuf"`
-	// Identifier sent with all requests to Kafka
+	// Topic to write audit entries to.
+	Topic string `yaml:"topic" conf:"required,example=cerbos.audit.log"`
+	// Encoding format. Valid values are "json" (default) or "protobuf".
+	Encoding Encoding `yaml:"encoding" conf:",example=json"`
+	// ClientID reported in Kafka connections.
 	ClientID string `yaml:"clientID" conf:",example=cerbos"`
-	// Seed brokers Kafka client will connect to
-	Brokers []string `yaml:"brokers" conf:",example=['localhost:9092']"`
-	// Timeout for flushing messages to Kafka
+	// Brokers list to seed the Kafka client.
+	Brokers []string `yaml:"brokers" conf:"required,example=['localhost:9092']"`
+	// FlushTimeout sets how often messages are flushed to the remote Kafka server.
 	FlushTimeout time.Duration `yaml:"flushTimeout" conf:",example=30s"`
-	// MaxBufferedLogs sets the max amount of logs the client will buffer before blocking
-	MaxBufferedLogs int `yaml:"maxBufferedLogs" conf:",example=1000"`
-	// Increase reliability by stopping asynchronous publishing at the cost of reduced performance
-	ProduceSync bool `yaml:"produceSync" conf:",example=true"`
+	// MaxBufferedRecords sets the maximum number of records the client should buffer in memory in async mode.
+	MaxBufferedRecords int `yaml:"maxBufferedRecords" conf:",example=1000"`
+	// ProduceSync forces the client to produce messages to Kafka synchronously. This can have a significant impact on performance.
+	ProduceSync bool `yaml:"produceSync" conf:",example=false"`
 }
 
 func (c *Conf) Key() string {
@@ -52,7 +52,7 @@ func (c *Conf) SetDefaults() {
 	c.Encoding = defaultEncoding
 	c.FlushTimeout = defaultFlushTimeout
 	c.ClientID = defaultClientID
-	c.MaxBufferedLogs = defaultMaxBufferedLogs
+	c.MaxBufferedRecords = defaultMaxBufferedRecords
 }
 
 func (c *Conf) Validate() error {
