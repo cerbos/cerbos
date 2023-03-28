@@ -10,6 +10,7 @@ jobs:
   changes:
     name: Check for changes
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     outputs:
       deps: ${{ steps.filter.outputs.deps }}
     steps:
@@ -30,6 +31,7 @@ jobs:
     needs: changes
     if: ${{ needs.changes.outputs.deps == 'true' }}
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - name: Check out code
         uses: actions/checkout@v3

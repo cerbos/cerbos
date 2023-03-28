@@ -10,6 +10,7 @@ jobs:
   label:
     name: Apply PR labels
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     permissions:
       pull-requests: write
     continue-on-error: true
@@ -26,6 +27,7 @@ jobs:
   validate:
     name: Validate PR title
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     steps:
       - uses: amannn/action-semantic-pull-request@v5.2.0
         env:

@@ -8,6 +8,7 @@ on:
 jobs:
   changes:
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     outputs:
       code: ${{ steps.filter.outputs.code }}
       docs: ${{ steps.filter.outputs.docs }}
@@ -34,6 +35,7 @@ jobs:
     if: ${{ needs.changes.outputs.code == 'true' }}
     name: Generate
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -56,6 +58,7 @@ jobs:
   download-test-times:
     name: Download test times
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     steps:
       - name: Download previous test times
         continue-on-error: true
@@ -78,6 +81,7 @@ jobs:
     if: ${{ needs.changes.outputs.code == 'true' }}
     name: Test
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     strategy:
       fail-fast: false
       matrix:
@@ -121,6 +125,7 @@ jobs:
     needs: test
     name: Upload test times
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -147,6 +152,7 @@ jobs:
     if: ${{ needs.changes.outputs.docs == 'true' }}
     name: Build docs
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -164,6 +170,7 @@ jobs:
     if: ${{ needs.changes.outputs.code == 'true' }}
     name: Lint
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v3
       - name: Install Go
@@ -182,6 +189,7 @@ jobs:
     if: ${{ needs.changes.outputs.protos == 'true' }}
     name: Proto check
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v3
 
