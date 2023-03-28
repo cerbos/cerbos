@@ -28,6 +28,15 @@ audit:
   local: # Configuration for the local audit backend
     storagePath: /path/to/dir # Path to store the data
     retentionPeriod: 168h # Records older than this will be automatically deleted
+  kafka:
+    ack: all # Ack mode for producing messages. Valid values are "none", "leader" or "all" (default). Idempotency is disabled when mode is not "all".
+    brokers: ['localhost:9092'] # Required. Brokers list to seed the Kafka client.
+    clientID: cerbos # ClientID reported in Kafka connections.
+    encoding: json # Encoding format. Valid values are "json" (default) or "protobuf".
+    flushTimeout: 30s # FlushTimeout sets how often messages are flushed to the remote Kafka server.
+    maxBufferedRecords: 1000 # MaxBufferedRecords sets the maximum number of records the client should buffer in memory in async mode.
+    produceSync: false # ProduceSync forces the client to produce messages to Kafka synchronously. This can have a significant impact on performance.
+    topic: cerbos.audit.log # Required. Topic to write audit entries to.
 ----
 
 .Including or excluding request metadata in log entries
@@ -94,3 +103,44 @@ audit:
 The `path` field can be set to special names `stdout` or `stderr` to log to stdout or stderr. Note that this would result in audit logs being mixed up with normal Cerbos operational logs. It is recommended to use an actual file for audit log output if your container orchestrator has support for collecting logs from files in addition to stdout/stderr.
 
 Audit log entries can be selected by setting a filter on `log.logger == "cerbos.audit"`. Access log entries have `log.kind == "access"` and decision log entries have `log.kind == "decision"`.
+
+
+[#kafka]
+== Kafka backend
+
+The `kafka` backend writes audit records to a Kafka topic. By default, the messages are published asynchronously to the specified topic in JSON format. The message header named `cerbos.audit.kind` would have the value `access` for access log entries and `decision` for decision log entries.
+
+You can configure the audit logger to produce data in the Protocol Buffers binary encoding format as well. The schema for messages is available at https://buf.build/cerbos/cerbos-api/docs/main:cerbos.audit.v1.
+
+
+.Minimal configuration
+[source,yaml,linenums]
+----
+audit:
+  enabled: true
+  accessLogsEnabled: true
+  decisionLogsEnabled: true
+  backend: kafka
+  kafka:
+    brokers: ['broker1.kafka:9092', 'broker2.kafka:9092']
+    topic: cerbos.audit.log
+----
+
+.Full configuration
+[source,yaml,linenums]
+----
+audit:
+  enabled: true
+  accessLogsEnabled: true
+  decisionLogsEnabled: true
+  backend: kafka
+  kafka:
+    ack: all # Ack mode for producing messages. Valid values are "none", "leader" or "all" (default). Idempotency is disabled when mode is not "all".
+    brokers: ['localhost:9092'] # Required. Brokers list to seed the Kafka client.
+    clientID: cerbos # ClientID reported in Kafka connections.
+    encoding: json # Encoding format. Valid values are "json" (default) or "protobuf".
+    flushTimeout: 30s # FlushTimeout sets how often messages are flushed to the remote Kafka server.
+    maxBufferedRecords: 1000 # MaxBufferedRecords sets the maximum number of records the client should buffer in memory in async mode.
+    produceSync: false # ProduceSync forces the client to produce messages to Kafka synchronously. This can have a significant impact on performance.
+    topic: cerbos.audit.log # Required. Topic to write audit entries to.
+----
