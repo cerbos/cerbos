@@ -9,7 +9,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/grpc-ecosystem/go-grpc-middleware/logging/zap/ctxzap"
+	"github.com/cerbos/cerbos/internal/observability/logging"
 	"github.com/twmb/franz-go/pkg/kgo"
 	"github.com/twmb/franz-go/plugin/kzap"
 	"go.uber.org/zap"
@@ -170,7 +170,7 @@ func (p *Publisher) write(ctx context.Context, msg *kgo.Record) error {
 	p.Client.Produce(ctx, msg, func(r *kgo.Record, err error) {
 		if err != nil {
 			// TODO: Handle via interceptor
-			ctxzap.Extract(ctx).Warn("failed to write audit log entry", zap.Error(err))
+			logging.FromContext(ctx).Warn("failed to write audit log entry", zap.Error(err))
 		}
 	})
 	return nil
