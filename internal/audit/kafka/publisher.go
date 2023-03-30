@@ -68,7 +68,7 @@ type Publisher struct {
 	decisionFilter audit.DecisionLogEntryFilter
 	marshaller     recordMarshaller
 	sync           bool
-	flushTimeout   time.Duration
+	closeTimeout   time.Duration
 }
 
 func NewPublisher(conf *Conf, decisionFilter audit.DecisionLogEntryFilter) (*Publisher, error) {
@@ -104,12 +104,12 @@ func NewPublisher(conf *Conf, decisionFilter audit.DecisionLogEntryFilter) (*Pub
 		decisionFilter: decisionFilter,
 		marshaller:     newMarshaller(conf.Encoding),
 		sync:           conf.ProduceSync,
-		flushTimeout:   conf.FlushTimeout,
+		closeTimeout:   conf.CloseTimeout,
 	}, nil
 }
 
 func (p *Publisher) Close() error {
-	flushCtx, flushCancel := context.WithTimeout(context.Background(), p.flushTimeout)
+	flushCtx, flushCancel := context.WithTimeout(context.Background(), p.closeTimeout)
 	defer flushCancel()
 	if err := p.Client.Flush(flushCtx); err != nil {
 		return err

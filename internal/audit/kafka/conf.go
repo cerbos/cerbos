@@ -35,8 +35,8 @@ type Conf struct {
 	ClientID string `yaml:"clientID" conf:",example=cerbos"`
 	// Brokers list to seed the Kafka client.
 	Brokers []string `yaml:"brokers" conf:"required,example=['localhost:9092']"`
-	// FlushTimeout sets how long when closing the client to wait for any remaining messages to be flushed.
-	FlushTimeout time.Duration `yaml:"flushTimeout" conf:",example=30s"`
+	// CloseTimeout sets how long when closing the client to wait for any remaining messages to be flushed.
+	CloseTimeout time.Duration `yaml:"flushTimeout" conf:",example=30s"`
 	// MaxBufferedRecords sets the maximum number of records the client should buffer in memory in async mode.
 	MaxBufferedRecords int `yaml:"maxBufferedRecords" conf:",example=1000"`
 	// ProduceSync forces the client to produce messages to Kafka synchronously. This can have a significant impact on performance.
@@ -50,7 +50,7 @@ func (c *Conf) Key() string {
 func (c *Conf) SetDefaults() {
 	c.Ack = defaultAcknowledgement
 	c.Encoding = defaultEncoding
-	c.FlushTimeout = defaultFlushTimeout
+	c.CloseTimeout = defaultFlushTimeout
 	c.ClientID = defaultClientID
 	c.MaxBufferedRecords = defaultMaxBufferedRecords
 }
@@ -70,8 +70,8 @@ func (c *Conf) Validate() error {
 		return fmt.Errorf("invalid encoding format: %s", c.Encoding)
 	}
 
-	if c.FlushTimeout <= 0 {
-		return errors.New("invalid flush timeout")
+	if c.CloseTimeout <= 0 {
+		return errors.New("invalid close timeout")
 	}
 
 	if strings.TrimSpace(c.ClientID) == "" {
