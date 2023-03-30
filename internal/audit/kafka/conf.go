@@ -35,7 +35,7 @@ type Conf struct {
 	ClientID string `yaml:"clientID" conf:",example=cerbos"`
 	// Brokers list to seed the Kafka client.
 	Brokers []string `yaml:"brokers" conf:"required,example=['localhost:9092']"`
-	// FlushTimeout sets how often messages are flushed to the remote Kafka server.
+	// FlushTimeout sets how long when closing the client to wait for any remaining messages to be flushed.
 	FlushTimeout time.Duration `yaml:"flushTimeout" conf:",example=30s"`
 	// MaxBufferedRecords sets the maximum number of records the client should buffer in memory in async mode.
 	MaxBufferedRecords int `yaml:"maxBufferedRecords" conf:",example=1000"`
