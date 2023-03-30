@@ -69,6 +69,7 @@ type Publisher struct {
 	marshaller     recordMarshaller
 	sync           bool
 	closeTimeout   time.Duration
+	publishTimeout time.Duration
 }
 
 func NewPublisher(conf *Conf, decisionFilter audit.DecisionLogEntryFilter) (*Publisher, error) {
@@ -105,6 +106,7 @@ func NewPublisher(conf *Conf, decisionFilter audit.DecisionLogEntryFilter) (*Pub
 		marshaller:     newMarshaller(conf.Encoding),
 		sync:           conf.ProduceSync,
 		closeTimeout:   conf.CloseTimeout,
+		publishTimeout: conf.PublishTimeout,
 	}, nil
 }
 
@@ -164,10 +166,18 @@ func (p *Publisher) WriteDecisionLogEntry(ctx context.Context, record audit.Deci
 
 func (p *Publisher) write(ctx context.Context, msg *kgo.Record) error {
 	if p.sync {
-		return p.Client.ProduceSync(ctx, msg).FirstErr()
+		publishCtx, publishCancel := context.WithTimeout(ctx, p.publishTimeout)
+		defer publishCancel()
+
+		return p.Client.ProduceSync(publishCtx, msg).FirstErr()
 	}
 
-	p.Client.Produce(ctx, msg, func(r *kgo.Record, err error) {
+	// detach the context from the caller so the request can return
+	// without cancelling any async kafka operations
+	publishCtx, publishCancel := context.WithTimeout(context.Background(), p.publishTimeout)
+	defer publishCancel()
+
+	p.Client.Produce(publishCtx, msg, func(r *kgo.Record, err error) {
 		if err != nil {
 			// TODO: Handle via interceptor
 			logging.FromContext(ctx).Warn("failed to write audit log entry", zap.Error(err))

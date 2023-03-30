@@ -18,7 +18,8 @@ const confKey = audit.ConfKey + ".kafka"
 const (
 	defaultAcknowledgement    = AckAll
 	defaultEncoding           = EncodingJSON
-	defaultFlushTimeout       = 30 * time.Second
+	defaultCloseTimeout       = 30 * time.Second
+	defaultPublishTimeout     = 5 * time.Second
 	defaultClientID           = "cerbos"
 	defaultMaxBufferedRecords = 250
 )
@@ -36,7 +37,9 @@ type Conf struct {
 	// Brokers list to seed the Kafka client.
 	Brokers []string `yaml:"brokers" conf:"required,example=['localhost:9092']"`
 	// CloseTimeout sets how long when closing the client to wait for any remaining messages to be flushed.
-	CloseTimeout time.Duration `yaml:"flushTimeout" conf:",example=30s"`
+	CloseTimeout time.Duration `yaml:"closeTimeout" conf:",example=30s"`
+	// PublishTimeout sets how long to attempt to publish a message before giving up.
+	PublishTimeout time.Duration `yaml:"publishTimeout" conf:",example=5s"`
 	// MaxBufferedRecords sets the maximum number of records the client should buffer in memory in async mode.
 	MaxBufferedRecords int `yaml:"maxBufferedRecords" conf:",example=1000"`
 	// ProduceSync forces the client to produce messages to Kafka synchronously. This can have a significant impact on performance.
@@ -50,7 +53,8 @@ func (c *Conf) Key() string {
 func (c *Conf) SetDefaults() {
 	c.Ack = defaultAcknowledgement
 	c.Encoding = defaultEncoding
-	c.CloseTimeout = defaultFlushTimeout
+	c.CloseTimeout = defaultCloseTimeout
+	c.PublishTimeout = defaultPublishTimeout
 	c.ClientID = defaultClientID
 	c.MaxBufferedRecords = defaultMaxBufferedRecords
 }
@@ -72,6 +76,10 @@ func (c *Conf) Validate() error {
 
 	if c.CloseTimeout <= 0 {
 		return errors.New("invalid close timeout")
+	}
+
+	if c.PublishTimeout <= 0 {
+		return errors.New("invalid publish timeout")
 	}
 
 	if strings.TrimSpace(c.ClientID) == "" {
