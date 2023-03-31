@@ -18,7 +18,8 @@ const confKey = audit.ConfKey + ".kafka"
 const (
 	defaultAcknowledgement    = AckAll
 	defaultEncoding           = EncodingJSON
-	defaultFlushTimeout       = 30 * time.Second
+	defaultCloseTimeout       = 30 * time.Second
+	defaultProduceTimeout     = 5 * time.Second
 	defaultClientID           = "cerbos"
 	defaultMaxBufferedRecords = 250
 )
@@ -35,12 +36,14 @@ type Conf struct {
 	ClientID string `yaml:"clientID" conf:",example=cerbos"`
 	// Brokers list to seed the Kafka client.
 	Brokers []string `yaml:"brokers" conf:"required,example=['localhost:9092']"`
-	// FlushTimeout sets how often messages are flushed to the remote Kafka server.
-	FlushTimeout time.Duration `yaml:"flushTimeout" conf:",example=30s"`
+	// CloseTimeout sets how long when closing the client to wait for any remaining messages to be flushed.
+	CloseTimeout time.Duration `yaml:"closeTimeout" conf:",example=30s"`
 	// MaxBufferedRecords sets the maximum number of records the client should buffer in memory in async mode.
 	MaxBufferedRecords int `yaml:"maxBufferedRecords" conf:",example=1000"`
 	// ProduceSync forces the client to produce messages to Kafka synchronously. This can have a significant impact on performance.
 	ProduceSync bool `yaml:"produceSync" conf:",example=false"`
+	// ProduceTimeout sets how long to attempt to publish a message before giving up.
+	ProduceTimeout time.Duration `yaml:"produceTimeout" conf:",example=5s"`
 }
 
 func (c *Conf) Key() string {
@@ -50,7 +53,8 @@ func (c *Conf) Key() string {
 func (c *Conf) SetDefaults() {
 	c.Ack = defaultAcknowledgement
 	c.Encoding = defaultEncoding
-	c.FlushTimeout = defaultFlushTimeout
+	c.CloseTimeout = defaultCloseTimeout
+	c.ProduceTimeout = defaultProduceTimeout
 	c.ClientID = defaultClientID
 	c.MaxBufferedRecords = defaultMaxBufferedRecords
 }
@@ -70,8 +74,12 @@ func (c *Conf) Validate() error {
 		return fmt.Errorf("invalid encoding format: %s", c.Encoding)
 	}
 
-	if c.FlushTimeout <= 0 {
-		return errors.New("invalid flush timeout")
+	if c.CloseTimeout <= 0 {
+		return errors.New("invalid close timeout")
+	}
+
+	if c.ProduceTimeout <= 0 {
+		return errors.New("invalid produce timeout")
 	}
 
 	if strings.TrimSpace(c.ClientID) == "" {

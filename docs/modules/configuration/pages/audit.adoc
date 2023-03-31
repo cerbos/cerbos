@@ -32,10 +32,11 @@ audit:
     ack: all # Ack mode for producing messages. Valid values are "none", "leader" or "all" (default). Idempotency is disabled when mode is not "all".
     brokers: ['localhost:9092'] # Required. Brokers list to seed the Kafka client.
     clientID: cerbos # ClientID reported in Kafka connections.
+    closeTimeout: 30s # CloseTimeout sets how long when closing the client to wait for any remaining messages to be flushed.
     encoding: json # Encoding format. Valid values are "json" (default) or "protobuf".
-    flushTimeout: 30s # FlushTimeout sets how often messages are flushed to the remote Kafka server.
     maxBufferedRecords: 1000 # MaxBufferedRecords sets the maximum number of records the client should buffer in memory in async mode.
     produceSync: false # ProduceSync forces the client to produce messages to Kafka synchronously. This can have a significant impact on performance.
+    produceTimeout: 5s # ProduceTimeout sets how long to attempt to publish a message before giving up.
     topic: cerbos.audit.log # Required. Topic to write audit entries to.
 ----
 
@@ -138,9 +139,10 @@ audit:
     ack: all # Ack mode for producing messages. Valid values are "none", "leader" or "all" (default). Idempotency is disabled when mode is not "all".
     brokers: ['localhost:9092'] # Required. Brokers list to seed the Kafka client.
     clientID: cerbos # ClientID reported in Kafka connections.
+    closeTimeout: 30s # CloseTimeout sets how long when closing the client to wait for any remaining messages to be flushed.
     encoding: json # Encoding format. Valid values are "json" (default) or "protobuf".
-    flushTimeout: 30s # FlushTimeout sets how often messages are flushed to the remote Kafka server.
     maxBufferedRecords: 1000 # MaxBufferedRecords sets the maximum number of records the client should buffer in memory in async mode.
     produceSync: false # ProduceSync forces the client to produce messages to Kafka synchronously. This can have a significant impact on performance.
+    produceTimeout: 5s # ProduceTimeout sets how long to attempt to publish a message before giving up.
     topic: cerbos.audit.log # Required. Topic to write audit entries to.
 ----
