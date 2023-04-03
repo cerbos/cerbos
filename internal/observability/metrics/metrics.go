@@ -32,6 +32,7 @@ func init() {
 }
 
 var (
+	KeyAuditKind            = tag.MustNewKey("kind")
 	KeyCacheKind            = tag.MustNewKey("kind")
 	KeyCacheResult          = tag.MustNewKey("result")
 	KeyCompileStatus        = tag.MustNewKey("status")
@@ -42,6 +43,18 @@ var (
 )
 
 var (
+	AuditErrorCount = stats.Int64(
+		"cerbos.dev/audit/error_count",
+		"Number of errors encountered while writing audit log entry",
+		stats.UnitDimensionless,
+	)
+
+	AuditErrorCountView = &view.View{
+		Measure:     AuditErrorCount,
+		TagKeys:     []tag.Key{KeyAuditKind},
+		Aggregation: view.Count(),
+	}
+
 	CacheAccessCount = stats.Int64(
 		"cerbos.dev/cache/access_count",
 		"Counter of cache access",
@@ -162,6 +175,7 @@ var (
 )
 
 var DefaultCerbosViews = []*view.View{
+	AuditErrorCountView,
 	CacheAccessCountView,
 	CacheMaxSizeView,
 	CompileDurationView,

@@ -41,8 +41,9 @@ const (
 type Kind []byte
 
 var (
-	KindAccess   Kind = []byte("access")
-	KindDecision Kind = []byte("decision")
+	// reallocate once ahead of time to avoid allocations in the hot path.
+	KindAccess   Kind = []byte(audit.KindAccess)
+	KindDecision Kind = []byte(audit.KindDecision)
 )
 
 func init() {
