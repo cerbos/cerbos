@@ -10,8 +10,11 @@ import (
 	"time"
 
 	"github.com/cerbos/cerbos/internal/observability/logging"
+	"github.com/cerbos/cerbos/internal/observability/metrics"
 	"github.com/twmb/franz-go/pkg/kgo"
 	"github.com/twmb/franz-go/plugin/kzap"
+	"go.opencensus.io/stats"
+	"go.opencensus.io/tag"
 	"go.uber.org/zap"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"
@@ -179,10 +182,25 @@ func (p *Publisher) write(ctx context.Context, msg *kgo.Record) error {
 	defer produceCancel()
 
 	p.Client.Produce(produceCtx, msg, func(r *kgo.Record, err error) {
-		if err != nil {
-			// TODO: Handle via interceptor
-			logging.FromContext(ctx).Warn("failed to write audit log entry", zap.Error(err))
+		if err == nil {
+			return
 		}
+
+		// TODO: Currently have to duplicate logWrapper as it does not support async audit publishing.
+		logging.FromContext(ctx).Warn("failed to write audit log entry", zap.Error(err))
+
+		// Due to async nature of this callback, we need to pull the `kind` out of the header
+		var kind string
+		for _, h := range r.Headers {
+			if h.Key == HeaderKeyKind {
+				kind = string(h.Value)
+				break
+			}
+		}
+		_ = stats.RecordWithTags(ctx,
+			[]tag.Mutator{tag.Upsert(metrics.KeyAuditKind, kind)},
+			metrics.AuditErrorCount.M(1),
+		)
 	})
 	return nil
 }
