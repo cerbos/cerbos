@@ -4,8 +4,6 @@
 package lint
 
 import (
-	"fmt"
-
 	internalerrors "github.com/cerbos/cerbos/cmd/cerbos/compile/internal/errors"
 	"github.com/cerbos/cerbos/cmd/cerbos/compile/internal/flagset"
 	"github.com/cerbos/cerbos/internal/outputcolor"
@@ -20,8 +18,6 @@ func Display(p *printer.Printer, errs *index.BuildError, output flagset.OutputFo
 		return displayJSON(p, errs, colorLevel)
 	case flagset.OutputFormatList, flagset.OutputFormatTree:
 		return displayList(p, errs)
-	case flagset.OutputFormatJUnit:
-		return fmt.Errorf("invalid option %s", flagset.OutputFormatJUnit)
 	}
 
 	return internalerrors.ErrFailed

@@ -47,15 +47,15 @@ var (
 	}
 )
 
-func Display(p *printer.Printer, results *policyv1.TestResults, output flagset.OutputFormat, verbose bool, colorLevel outputcolor.Level) error {
+func Display(p *printer.Printer, results *policyv1.TestResults, output flagset.VerificationOutputFormat, verbose bool, colorLevel outputcolor.Level) error {
 	switch output {
-	case flagset.OutputFormatJSON:
+	case flagset.VerificationOutputFormatJSON:
 		return p.PrintProtoJSON(results, colorLevel)
-	case flagset.OutputFormatTree:
+	case flagset.VerificationOutputFormatTree:
 		return displayTree(p, pterm.DefaultTree, results, verbose)
-	case flagset.OutputFormatList:
+	case flagset.VerificationOutputFormatList:
 		return displayTree(p, pterm.TreePrinter{Indent: listIndent, VerticalString: " "}, results, verbose)
-	case flagset.OutputFormatJUnit:
+	case flagset.VerificationOutputFormatJUnit:
 		return displayJUnit(p, results, verbose)
 	default:
 		return nil

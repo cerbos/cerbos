@@ -6,8 +6,16 @@ package flagset
 type OutputFormat string
 
 const (
-	OutputFormatTree  OutputFormat = "tree"
-	OutputFormatList  OutputFormat = "list"
-	OutputFormatJSON  OutputFormat = "json"
-	OutputFormatJUnit OutputFormat = "junit"
+	OutputFormatTree OutputFormat = "tree"
+	OutputFormatList OutputFormat = "list"
+	OutputFormatJSON OutputFormat = "json"
+)
+
+type VerificationOutputFormat string
+
+const (
+	VerificationOutputFormatTree  VerificationOutputFormat = "tree"
+	VerificationOutputFormatList  VerificationOutputFormat = "list"
+	VerificationOutputFormatJSON  VerificationOutputFormat = "json"
+	VerificationOutputFormatJUnit VerificationOutputFormat = "junit"
 )

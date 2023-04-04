@@ -50,15 +50,16 @@ cerbos compile --skip-tests /path/to/policy/repo
 `
 
 type Cmd struct { //nolint:govet // Kong prints fields in order, so we don't want to reorder fields to save bytes.
-	Dir           string               `help:"Policy directory" arg:"" required:"" type:"existingdir"`
-	IgnoreSchemas bool                 `help:"Ignore schemas during compilation"`
-	Tests         string               `help:"Path to the directory containing tests. Defaults to policy directory." type:"existingdir"`
-	RunRegex      string               `help:"Run only tests that match this regex" name:"run"`
-	SkipTests     bool                 `help:"Skip tests"`
-	Output        flagset.OutputFormat `help:"Output format (${enum})" default:"tree" enum:"tree,list,json,junit" short:"o"`
-	Color         *outputcolor.Level   `help:"Output color level (auto,never,always,256,16m). Defaults to auto." xor:"color"`
-	NoColor       bool                 `help:"Disable colored output" xor:"color"`
-	Verbose       bool                 `help:"Verbose output on test failure"`
+	Dir           string                           `help:"Policy directory" arg:"" required:"" type:"existingdir"`
+	IgnoreSchemas bool                             `help:"Ignore schemas during compilation"`
+	Tests         string                           `help:"Path to the directory containing tests. Defaults to policy directory." type:"existingdir"`
+	RunRegex      string                           `help:"Run only tests that match this regex" name:"run"`
+	SkipTests     bool                             `help:"Skip tests"`
+	Output        flagset.OutputFormat             `help:"Output format (${enum})" default:"tree" enum:"tree,list,json" short:"o"`
+	TestOutput    flagset.VerificationOutputFormat `help:"Test output format (${enum})" default:"tree" enum:"tree,list,json,junit"`
+	Color         *outputcolor.Level               `help:"Output color level (auto,never,always,256,16m). Defaults to auto." xor:"color"`
+	NoColor       bool                             `help:"Disable colored output" xor:"color"`
+	Verbose       bool                             `help:"Verbose output on test failure"`
 }
 
 func (c *Cmd) Run(k *kong.Kong) error {
@@ -130,7 +131,7 @@ func (c *Cmd) Run(k *kong.Kong) error {
 			return fmt.Errorf("failed to run tests: %w", err)
 		}
 
-		err = verification.Display(p, results, c.Output, c.Verbose, colorLevel)
+		err = verification.Display(p, results, c.TestOutput, c.Verbose, colorLevel)
 		if err != nil {
 			return fmt.Errorf("failed to display test results: %w", err)
 		}
