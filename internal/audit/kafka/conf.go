@@ -19,7 +19,6 @@ const (
 	defaultAcknowledgement    = AckAll
 	defaultEncoding           = EncodingJSON
 	defaultCloseTimeout       = 30 * time.Second
-	defaultProduceTimeout     = 5 * time.Second
 	defaultClientID           = "cerbos"
 	defaultMaxBufferedRecords = 250
 )
@@ -42,8 +41,6 @@ type Conf struct {
 	MaxBufferedRecords int `yaml:"maxBufferedRecords" conf:",example=1000"`
 	// ProduceSync forces the client to produce messages to Kafka synchronously. This can have a significant impact on performance.
 	ProduceSync bool `yaml:"produceSync" conf:",example=false"`
-	// ProduceTimeout sets how long to attempt to publish a message before giving up.
-	ProduceTimeout time.Duration `yaml:"produceTimeout" conf:",example=5s"`
 }
 
 func (c *Conf) Key() string {
@@ -54,7 +51,6 @@ func (c *Conf) SetDefaults() {
 	c.Ack = defaultAcknowledgement
 	c.Encoding = defaultEncoding
 	c.CloseTimeout = defaultCloseTimeout
-	c.ProduceTimeout = defaultProduceTimeout
 	c.ClientID = defaultClientID
 	c.MaxBufferedRecords = defaultMaxBufferedRecords
 }
@@ -76,10 +72,6 @@ func (c *Conf) Validate() error {
 
 	if c.CloseTimeout <= 0 {
 		return errors.New("invalid close timeout")
-	}
-
-	if c.ProduceTimeout <= 0 {
-		return errors.New("invalid produce timeout")
 	}
 
 	if strings.TrimSpace(c.ClientID) == "" {
