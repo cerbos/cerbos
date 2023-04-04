@@ -7,10 +7,6 @@ import (
 	"encoding/xml"
 	"fmt"
 
-	"google.golang.org/protobuf/encoding/protojson"
-
-	effectv1 "github.com/cerbos/cerbos/api/genpb/cerbos/effect/v1"
-	enginev1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
 )
 
@@ -46,11 +42,10 @@ func Build(results *policyv1.TestResults, verbose bool) (*TestSuites, error) {
 			suite.Skipped++
 			skippedCount++
 		case policyv1.TestResults_RESULT_PASSED, policyv1.TestResults_RESULT_FAILED:
-			testCases, properties, summary, err := processTestCases(s, verbose)
+			testCases, summary, err := processTestCases(s, verbose)
 			if err != nil {
 				return nil, fmt.Errorf("failed to process test cases: %w", err)
 			}
-			suite.Properties = properties
 			suite.Summary = summary
 			suite.TestCases = testCases
 		default:
@@ -87,9 +82,8 @@ func Build(results *policyv1.TestResults, verbose bool) (*TestSuites, error) {
 	}, nil
 }
 
-func processTestCases(s *policyv1.TestResults_Suite, verbose bool) ([]testCase, []property, Summary, error) {
+func processTestCases(s *policyv1.TestResults_Suite, verbose bool) ([]testCase, Summary, error) {
 	var testCases []testCase
-	var properties []property
 	var summary Summary
 	for _, tc := range s.TestCases {
 		for _, p := range tc.Principals {
@@ -115,14 +109,6 @@ func processTestCases(s *policyv1.TestResults_Suite, verbose bool) ([]testCase, 
 							},
 						}
 						summary.Failures++
-
-						if verbose {
-							name := fmt.Sprintf("step[%s - %s.%s.%s]", tc.Name, p.Name, r.Name, a.Name)
-							properties = append(properties, property{
-								Name:   name,
-								Traces: processTraces(a.Details.EngineTrace),
-							})
-						}
 					case policyv1.TestResults_RESULT_PASSED:
 						if !verbose {
 							continue
@@ -133,7 +119,7 @@ func processTestCases(s *policyv1.TestResults_Suite, verbose bool) ([]testCase, 
 							Message: skipTestCaseMessage,
 						}
 					default:
-						return nil, nil, Summary{}, fmt.Errorf("unspecified result")
+						return nil, Summary{}, fmt.Errorf("unspecified result")
 					}
 
 					testCases = append(testCases, testCase)
@@ -142,60 +128,7 @@ func processTestCases(s *policyv1.TestResults_Suite, verbose bool) ([]testCase, 
 		}
 	}
 
-	return testCases, properties, summary, nil
-}
-
-func processTraces(engineTraces []*enginev1.Trace) []trace {
-	traces := make([]trace, len(engineTraces))
-	for idx, engineTrace := range engineTraces {
-		traces[idx] = trace{
-			ID:             idx + 1,
-			traceComponent: processTraceComponents(engineTrace.Components),
-			traceEvent:     processTraceEvent(engineTrace.Event),
-		}
-	}
-
-	return traces
-}
-
-func processTraceComponents(components []*enginev1.Trace_Component) traceComponent {
-	var c traceComponent
-	for _, component := range components {
-		c.Apply(component)
-	}
-
-	return c
-}
-
-func processTraceEvent(event *enginev1.Trace_Event) traceEvent {
-	te := traceEvent{}
-	switch event.Status {
-	case enginev1.Trace_Event_STATUS_ACTIVATED:
-		te.Activated = true
-	case enginev1.Trace_Event_STATUS_SKIPPED:
-		te.Skipped = true
-	default:
-	}
-
-	if event.Result != nil {
-		result, err := protojson.Marshal(event.Result)
-		if err != nil {
-			te.Result = fmt.Sprintf("<failed to encode JSON: %s>", err)
-		} else {
-			te.Result = string(result)
-		}
-	}
-
-	switch event.Effect {
-	case effectv1.Effect_EFFECT_ALLOW, effectv1.Effect_EFFECT_DENY:
-		te.Effect = event.Effect.String()
-	default:
-	}
-
-	te.Message = event.Message
-	te.Error = event.Error
-
-	return te
+	return testCases, summary, nil
 }
 
 type TestSuites struct {
@@ -255,86 +188,6 @@ type skipped struct {
 type property struct {
 	XMLName xml.Name `xml:"property"`
 	Name    string   `xml:"name,attr"`
-	Traces  []trace  `xml:"traces>trace,omitempty"`
-}
-
-type trace struct {
-	XMLName xml.Name `xml:"trace"`
-	traceComponent
-	traceEvent
-	ID int `xml:"id,attr"`
-}
-
-type traceComponent struct {
-	Condition   *condition `xml:"condition,omitempty"`
-	Variable    *variable  `xml:"variable,omitempty"`
-	Action      string     `xml:"action,omitempty"`
-	DerivedRole string     `xml:"derivedRole,omitempty"`
-	Expr        string     `xml:"expr,omitempty"`
-	Policy      string     `xml:"policy,omitempty"`
-	Resource    string     `xml:"resource,omitempty"`
-	Rule        string     `xml:"rule,omitempty"`
-	Scope       string     `xml:"scope,omitempty"`
-	Variables   bool       `xml:"variables,omitempty"`
-}
-
-func (tc *traceComponent) Apply(component *enginev1.Trace_Component) {
-	switch component.Kind {
-	case enginev1.Trace_Component_KIND_ACTION:
-		tc.Action = component.GetAction()
-	case enginev1.Trace_Component_KIND_CONDITION_ALL:
-		tc.Condition = &condition{Value: enginev1.Trace_Component_KIND_CONDITION_ALL.String()}
-	case enginev1.Trace_Component_KIND_CONDITION_ANY:
-		tc.Condition = &condition{Value: enginev1.Trace_Component_KIND_CONDITION_ANY.String()}
-	case enginev1.Trace_Component_KIND_CONDITION_NONE:
-		tc.Condition = &condition{Value: enginev1.Trace_Component_KIND_CONDITION_NONE.String()}
-	case enginev1.Trace_Component_KIND_CONDITION:
-		tc.Condition = &condition{Value: enginev1.Trace_Component_KIND_CONDITION.String()}
-		if details, ok := component.Details.(*enginev1.Trace_Component_Index); ok {
-			tc.Condition.Index = int(details.Index)
-		}
-	case enginev1.Trace_Component_KIND_DERIVED_ROLE:
-		tc.DerivedRole = component.GetDerivedRole()
-	case enginev1.Trace_Component_KIND_EXPR:
-		tc.Expr = component.GetExpr()
-	case enginev1.Trace_Component_KIND_POLICY:
-		tc.Policy = component.GetPolicy()
-	case enginev1.Trace_Component_KIND_RESOURCE:
-		tc.Resource = component.GetResource()
-	case enginev1.Trace_Component_KIND_RULE:
-		tc.Rule = component.GetRule()
-	case enginev1.Trace_Component_KIND_SCOPE:
-		tc.Scope = component.GetScope()
-	case enginev1.Trace_Component_KIND_VARIABLE:
-		tc.Variable = &variable{
-			Name:  component.GetVariable().Name,
-			Value: component.GetVariable().Expr,
-		}
-	case enginev1.Trace_Component_KIND_VARIABLES:
-		tc.Variables = true
-	default:
-	}
-}
-
-type traceEvent struct {
-	Effect    string `xml:"effect,omitempty"`
-	Result    string `xml:"result,omitempty"`
-	Message   string `xml:"message,omitempty"`
-	Error     string `xml:"error,omitempty"`
-	Activated bool   `xml:"activated,omitempty"`
-	Skipped   bool   `xml:"skipped,omitempty"`
-}
-
-type condition struct {
-	XMLName xml.Name `xml:"condition"`
-	Value   string   `xml:",chardata"` //nolint:tagliatelle
-	Index   int      `xml:"index,attr,omitempty"`
-}
-
-type variable struct {
-	XMLName xml.Name `xml:"variable"`
-	Name    string   `xml:"name,attr"`
-	Value   string   `xml:",chardata"` //nolint:tagliatelle
 }
 
 type Summary struct {
