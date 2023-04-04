@@ -17,11 +17,14 @@ import (
 	"github.com/cerbos/cerbos/internal/config"
 )
 
-const defaultIntegrationTopic = "cerbos"
+const (
+	redpandaImage   = "redpandadata/redpanda"
+	redpandaVersion = "v23.1.5"
+
+	defaultIntegrationTopic = "cerbos"
+)
 
 func TestSyncProduce(t *testing.T) {
-	// t.Parallel()
-
 	ctx := context.Background()
 
 	// setup kafka
@@ -64,8 +67,6 @@ func TestSyncProduce(t *testing.T) {
 }
 
 func TestAsyncProduce(t *testing.T) {
-	// t.Parallel()
-
 	ctx := context.Background()
 
 	// setup kafka
@@ -113,7 +114,7 @@ func newKafkaBroker(t *testing.T) string {
 
 	// start container
 	req := testcontainers.ContainerRequest{
-		Image: fmt.Sprintf("%s:%s", "redpandadata/redpanda", "v23.1.5"),
+		Image: fmt.Sprintf("%s:%s", redpandaImage, redpandaVersion),
 		ExposedPorts: []string{
 			"9092:9092/tcp",
 		},

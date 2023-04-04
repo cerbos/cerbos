@@ -178,10 +178,7 @@ func (p *Publisher) write(ctx context.Context, msg *kgo.Record) error {
 
 	// detach the context from the caller so the request can return
 	// without cancelling any async kafka operations
-	produceCtx, produceCancel := context.WithTimeout(context.Background(), p.produceTimeout)
-	defer produceCancel()
-
-	p.Client.Produce(produceCtx, msg, func(r *kgo.Record, err error) {
+	p.Client.Produce(context.Background(), msg, func(r *kgo.Record, err error) {
 		if err == nil {
 			return
 		}
