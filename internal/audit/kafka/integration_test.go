@@ -1,3 +1,6 @@
+// Copyright 2021-2023 Zenauth Ltd.
+// SPDX-License-Identifier: Apache-2.0
+
 package kafka_test
 
 import (
@@ -102,6 +105,7 @@ func TestAsyncProduce(t *testing.T) {
 	})
 	require.NoError(t, err)
 
+	// validate we see this entries in kafka, eventually
 	require.Eventually(t, func() bool {
 		records, err := fetchKafkaTopic(uri, defaultIntegrationTopic)
 		require.NoError(t, err)
@@ -110,6 +114,8 @@ func TestAsyncProduce(t *testing.T) {
 }
 
 func newKafkaBroker(t *testing.T) string {
+	t.Helper()
+
 	ctx := context.Background()
 
 	// start container
