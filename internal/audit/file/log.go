@@ -33,9 +33,10 @@ func init() {
 }
 
 type Log struct {
-	accessLog      *zap.Logger
-	decisionLog    *zap.Logger
-	decisionFilter audit.DecisionLogEntryFilter
+	accessLog        *zap.Logger
+	decisionLog      *zap.Logger
+	decisionFilter   audit.DecisionLogEntryFilter
+	ignoreSyncErrors bool
 }
 
 func NewLog(conf *Conf, decisionFilter audit.DecisionLogEntryFilter) (*Log, error) {
@@ -58,9 +59,10 @@ func NewLog(conf *Conf, decisionFilter audit.DecisionLogEntryFilter) (*Log, erro
 	}
 
 	return &Log{
-		accessLog:      logger.Named("cerbos.audit").With(zap.String("log.kind", "access")),
-		decisionLog:    logger.Named("cerbos.audit").With(zap.String("log.kind", "decision")),
-		decisionFilter: decisionFilter,
+		accessLog:        logger.Named("cerbos.audit").With(zap.String("log.kind", "access")),
+		decisionLog:      logger.Named("cerbos.audit").With(zap.String("log.kind", "decision")),
+		decisionFilter:   decisionFilter,
+		ignoreSyncErrors: (conf.Path == "stdout") || (conf.Path == "stderr"),
 	}, nil
 }
 
@@ -100,10 +102,15 @@ func (l *Log) WriteDecisionLogEntry(_ context.Context, record audit.DecisionLogE
 }
 
 func (l *Log) Close() error {
-	return multierr.Combine(
-		l.accessLog.Sync(),
-		l.decisionLog.Sync(),
-	)
+	err1 := l.accessLog.Sync()
+	err2 := l.decisionLog.Sync()
+
+	// See https://github.com/uber-go/zap/issues/328
+	if !l.ignoreSyncErrors {
+		return multierr.Combine(err1, err2)
+	}
+
+	return nil
 }
 
 type protoMsg struct {
