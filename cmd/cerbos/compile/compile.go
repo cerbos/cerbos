@@ -11,10 +11,6 @@ import (
 	"os"
 	"os/signal"
 
-	"github.com/cerbos/cerbos/cmd/cerbos/compile/internal/verification"
-
-	"github.com/cerbos/cerbos/cmd/cerbos/compile/internal/verification"
-
 	"github.com/alecthomas/kong"
 	"github.com/fatih/color"
 	"github.com/pterm/pterm"
@@ -25,6 +21,7 @@ import (
 	internalcompile "github.com/cerbos/cerbos/cmd/cerbos/compile/internal/compilation"
 	"github.com/cerbos/cerbos/cmd/cerbos/compile/internal/flagset"
 	"github.com/cerbos/cerbos/cmd/cerbos/compile/internal/lint"
+	"github.com/cerbos/cerbos/cmd/cerbos/compile/internal/verification"
 	"github.com/cerbos/cerbos/internal/compile"
 	"github.com/cerbos/cerbos/internal/engine"
 	"github.com/cerbos/cerbos/internal/outputcolor"
