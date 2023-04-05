@@ -67,6 +67,7 @@ require (
 	github.com/tidwall/pretty v1.2.1
 	github.com/tidwall/sjson v1.2.5
 	github.com/twmb/franz-go v1.13.2
+	github.com/twmb/franz-go/pkg/kadm v1.8.0
 	github.com/twmb/franz-go/plugin/kzap v1.1.2
 	go.elastic.co/ecszap v1.0.1
 	go.opencensus.io v0.24.0

@@ -73,7 +73,6 @@ type Publisher struct {
 	marshaller     recordMarshaller
 	sync           bool
 	closeTimeout   time.Duration
-	produceTimeout time.Duration
 }
 
 func NewPublisher(conf *Conf, decisionFilter audit.DecisionLogEntryFilter) (*Publisher, error) {
@@ -110,7 +109,6 @@ func NewPublisher(conf *Conf, decisionFilter audit.DecisionLogEntryFilter) (*Pub
 		marshaller:     newMarshaller(conf.Encoding),
 		sync:           conf.ProduceSync,
 		closeTimeout:   conf.CloseTimeout,
-		produceTimeout: conf.ProduceTimeout,
 	}, nil
 }
 
@@ -170,18 +168,12 @@ func (p *Publisher) WriteDecisionLogEntry(ctx context.Context, record audit.Deci
 
 func (p *Publisher) write(ctx context.Context, msg *kgo.Record) error {
 	if p.sync {
-		produceCtx, produceCancel := context.WithTimeout(ctx, p.produceTimeout)
-		defer produceCancel()
-
-		return p.Client.ProduceSync(produceCtx, msg).FirstErr()
+		return p.Client.ProduceSync(ctx, msg).FirstErr()
 	}
 
 	// detach the context from the caller so the request can return
 	// without cancelling any async kafka operations
-	produceCtx, produceCancel := context.WithTimeout(context.Background(), p.produceTimeout)
-	defer produceCancel()
-
-	p.Client.Produce(produceCtx, msg, func(r *kgo.Record, err error) {
+	p.Client.Produce(context.Background(), msg, func(r *kgo.Record, err error) {
 		if err == nil {
 			return
 		}

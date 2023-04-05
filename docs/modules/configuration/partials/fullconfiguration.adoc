@@ -21,7 +21,6 @@ audit:
     encoding: json # Encoding format. Valid values are "json" (default) or "protobuf".
     maxBufferedRecords: 1000 # MaxBufferedRecords sets the maximum number of records the client should buffer in memory in async mode.
     produceSync: false # ProduceSync forces the client to produce messages to Kafka synchronously. This can have a significant impact on performance.
-    produceTimeout: 5s # ProduceTimeout sets how long to attempt to publish a message before giving up.
     topic: cerbos.audit.log # Required. Topic to write audit entries to.
   local:
     advanced: 
