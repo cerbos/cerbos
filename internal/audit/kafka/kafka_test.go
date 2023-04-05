@@ -6,17 +6,20 @@ package kafka_test
 import (
 	"context"
 	"fmt"
+	"net"
+	"strconv"
 	"testing"
 	"time"
 
+	"github.com/ory/dockertest/v3"
+	"github.com/ory/dockertest/v3/docker"
 	"github.com/stretchr/testify/require"
-	"github.com/testcontainers/testcontainers-go"
-	"github.com/testcontainers/testcontainers-go/wait"
 	"github.com/twmb/franz-go/pkg/kadm"
 	"github.com/twmb/franz-go/pkg/kgo"
 
 	auditv1 "github.com/cerbos/cerbos/api/genpb/cerbos/audit/v1"
 	"github.com/cerbos/cerbos/internal/audit"
+	_ "github.com/cerbos/cerbos/internal/audit/kafka"
 	"github.com/cerbos/cerbos/internal/config"
 )
 
@@ -28,13 +31,12 @@ const (
 )
 
 func TestSyncProduce(t *testing.T) {
+	t.Parallel()
+
 	ctx := context.Background()
 
 	// setup kafka
-	uri := newKafkaBroker(t)
-	err := newKafkaTopic(uri, defaultIntegrationTopic)
-	require.NoError(t, err)
-	// kafka audit backend with synchronous publishing
+	uri := newKafkaBroker(t, defaultIntegrationTopic)
 	log, err := newLog(map[string]any{
 		"audit": map[string]any{
 			"enabled": true,
@@ -70,13 +72,12 @@ func TestSyncProduce(t *testing.T) {
 }
 
 func TestAsyncProduce(t *testing.T) {
+	t.Parallel()
+
 	ctx := context.Background()
 
 	// setup kafka
-	uri := newKafkaBroker(t)
-	err := newKafkaTopic(uri, defaultIntegrationTopic)
-	require.NoError(t, err)
-	// kafka audit backend with synchronous publishing
+	uri := newKafkaBroker(t, defaultIntegrationTopic)
 	log, err := newLog(map[string]any{
 		"audit": map[string]any{
 			"enabled": true,
@@ -113,58 +114,52 @@ func TestAsyncProduce(t *testing.T) {
 	}, 10*time.Second, 100*time.Millisecond, "expected to see audit log entries in kafka")
 }
 
-func newKafkaBroker(t *testing.T) string {
+func newKafkaBroker(t *testing.T, topic string) string {
 	t.Helper()
 
-	ctx := context.Background()
+	hostPort, err := freePort()
+	require.NoError(t, err, "Unable to get free port")
 
-	// start container
-	req := testcontainers.ContainerRequest{
-		Image: fmt.Sprintf("%s:%s", redpandaImage, redpandaVersion),
-		ExposedPorts: []string{
-			"9092:9092/tcp",
+	pool, err := dockertest.NewPool("")
+	require.NoError(t, err, "Failed to connect to Docker")
+
+	resource, err := pool.RunWithOptions(&dockertest.RunOptions{
+		Repository: redpandaImage,
+		Tag:        redpandaVersion,
+		Cmd: []string{
+			"redpanda",
+			"start",
+			"--mode", "dev-container",
+			"--advertise-kafka-addr", fmt.Sprintf("localhost:%d", hostPort),
 		},
-		Cmd:        []string{"redpanda", "start", "--mode", "dev-container"},
-		WaitingFor: wait.ForLog("Successfully started Redpanda!"),
-		AutoRemove: true,
-	}
-
-	cntr, err := testcontainers.GenericContainer(ctx, testcontainers.GenericContainerRequest{
-		ContainerRequest: req,
-		Started:          true,
+		ExposedPorts: []string{
+			"9092/tcp",
+		},
+		PortBindings: map[docker.Port][]docker.PortBinding{
+			"9092/tcp": {{HostIP: "localhost", HostPort: strconv.Itoa(hostPort)}},
+		},
+	}, func(config *docker.HostConfig) {
+		config.AutoRemove = true
 	})
-	require.NoError(t, err)
+	require.NoError(t, err, "Failed to start container")
 
-	// shutdown container when test completes
 	t.Cleanup(func() {
-		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
-		defer cancel()
-
-		if err := cntr.Terminate(ctx); err != nil {
-			t.Logf("failed to terminate kafka container: %s", err)
-		}
+		_ = pool.Purge(resource)
 	})
 
-	// broker URI
-	mappedPort, err := cntr.MappedPort(ctx, "9092")
+	brokerDSN := fmt.Sprintf("localhost:%d", hostPort)
+	client, err := kgo.NewClient(kgo.SeedBrokers(brokerDSN))
 	require.NoError(t, err)
 
-	hostIP, err := cntr.Host(ctx)
-	require.NoError(t, err)
+	require.NoError(t, pool.Retry(func() error {
+		return client.Ping(context.Background())
+	}), "Failed to connect to Kafka")
 
-	return fmt.Sprintf("%s:%s", hostIP, mappedPort.Port())
-}
+	// create topic
+	_, err = kadm.NewClient(client).CreateTopic(context.Background(), 1, 1, nil, topic)
+	require.NoError(t, err, "Failed to create Kafka topic")
 
-func newKafkaTopic(uri, topic string) error {
-	client, err := kgo.NewClient(kgo.SeedBrokers(uri))
-	if err != nil {
-		return err
-	}
-
-	aclient := kadm.NewClient(client)
-
-	_, err = aclient.CreateTopic(context.Background(), 1, 1, nil, topic)
-	return err
+	return brokerDSN
 }
 
 func fetchKafkaTopic(uri, topic string) ([]*kgo.Record, error) {
@@ -185,4 +180,19 @@ func newLog(m map[string]any) (audit.Log, error) {
 		return nil, err
 	}
 	return audit.NewLogFromConf(context.Background(), cfg)
+}
+
+func freePort() (int, error) {
+	addr, err := net.ResolveTCPAddr("tcp", "localhost:0")
+	if err != nil {
+		return 0, err
+	}
+
+	l, err := net.ListenTCP("tcp", addr)
+	if err != nil {
+		return 0, err
+	}
+	defer l.Close()
+
+	return l.Addr().(*net.TCPAddr).Port, nil
 }
