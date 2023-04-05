@@ -9,7 +9,6 @@ package kafka_test
 import (
 	"context"
 	"fmt"
-	"net"
 	"strconv"
 	"testing"
 	"time"
@@ -24,6 +23,7 @@ import (
 	"github.com/cerbos/cerbos/internal/audit"
 	_ "github.com/cerbos/cerbos/internal/audit/kafka"
 	"github.com/cerbos/cerbos/internal/config"
+	"github.com/cerbos/cerbos/internal/util"
 )
 
 const (
@@ -120,7 +120,7 @@ func TestAsyncProduce(t *testing.T) {
 func newKafkaBroker(t *testing.T, topic string) string {
 	t.Helper()
 
-	hostPort, err := freePort()
+	hostPort, err := util.GetFreePort()
 	require.NoError(t, err, "Unable to get free port")
 
 	pool, err := dockertest.NewPool("")
@@ -133,6 +133,8 @@ func newKafkaBroker(t *testing.T, topic string) string {
 			"redpanda",
 			"start",
 			"--mode", "dev-container",
+			// kafka admin client will retrieve the advertised address from the broker
+			// so we need it to use the same port that is exposed on the container
 			"--advertise-kafka-addr", fmt.Sprintf("localhost:%d", hostPort),
 		},
 		ExposedPorts: []string{
@@ -183,19 +185,4 @@ func newLog(m map[string]any) (audit.Log, error) {
 		return nil, err
 	}
 	return audit.NewLogFromConf(context.Background(), cfg)
-}
-
-func freePort() (int, error) {
-	addr, err := net.ResolveTCPAddr("tcp", "localhost:0")
-	if err != nil {
-		return 0, err
-	}
-
-	l, err := net.ListenTCP("tcp", addr)
-	if err != nil {
-		return 0, err
-	}
-	defer l.Close()
-
-	return l.Addr().(*net.TCPAddr).Port, nil
 }
