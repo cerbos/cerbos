@@ -168,7 +168,6 @@ func WithStoreIdentifier(p *policyv1.Policy, storeIdentifier string) *policyv1.P
 		p.Metadata = &policyv1.Metadata{}
 	}
 
-	//nolint:staticcheck
 	p.Metadata.StoreIdentifer = storeIdentifier // TODO: Remove this after deprecated StoreIdentifer no longer exists
 	p.Metadata.StoreIdentifier = storeIdentifier
 

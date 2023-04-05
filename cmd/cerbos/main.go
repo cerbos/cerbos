@@ -4,15 +4,23 @@
 package main
 
 import (
+	"errors"
+
 	"github.com/alecthomas/kong"
 
 	"github.com/cerbos/cerbos/cmd/cerbos/compile"
+	compileerr "github.com/cerbos/cerbos/cmd/cerbos/compile/errors"
 	"github.com/cerbos/cerbos/cmd/cerbos/healthcheck"
 	"github.com/cerbos/cerbos/cmd/cerbos/repl"
 	"github.com/cerbos/cerbos/cmd/cerbos/run"
 	"github.com/cerbos/cerbos/cmd/cerbos/server"
 	"github.com/cerbos/cerbos/internal/outputcolor"
 	"github.com/cerbos/cerbos/internal/util"
+)
+
+const (
+	CompileFailureExitCode = 3
+	TestFailureExitCode    = 4
 )
 
 func main() {
@@ -34,5 +42,16 @@ func main() {
 		outputcolor.TypeMapper,
 	)
 
-	ctx.FatalIfErrorf(ctx.Run())
+	if err := ctx.Run(); err != nil {
+		switch {
+		case errors.Is(err, compileerr.ErrFailed):
+			ctx.Errorf("%v", err)
+			ctx.Exit(CompileFailureExitCode)
+		case errors.Is(err, compileerr.ErrTestsFailed):
+			ctx.Errorf("%v", err)
+			ctx.Exit(TestFailureExitCode)
+		default:
+			ctx.FatalIfErrorf(err)
+		}
+	}
 }

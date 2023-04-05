@@ -4,7 +4,7 @@
 package lint
 
 import (
-	internalerrors "github.com/cerbos/cerbos/cmd/cerbos/compile/internal/errors"
+	compileerrors "github.com/cerbos/cerbos/cmd/cerbos/compile/errors"
 	"github.com/cerbos/cerbos/cmd/cerbos/compile/internal/flagset"
 	"github.com/cerbos/cerbos/internal/outputcolor"
 	"github.com/cerbos/cerbos/internal/printer"
@@ -20,7 +20,7 @@ func Display(p *printer.Printer, errs *index.BuildError, output flagset.OutputFo
 		return displayList(p, errs)
 	}
 
-	return internalerrors.ErrFailed
+	return compileerrors.ErrFailed
 }
 
 func displayJSON(p *printer.Printer, errs *index.BuildError, colorLevel outputcolor.Level) error {
@@ -28,7 +28,7 @@ func displayJSON(p *printer.Printer, errs *index.BuildError, colorLevel outputco
 		return err
 	}
 
-	return internalerrors.ErrFailed
+	return compileerrors.ErrFailed
 }
 
 func displayList(p *printer.Printer, errs *index.BuildError) error {
@@ -72,5 +72,5 @@ func displayList(p *printer.Printer, errs *index.BuildError) error {
 		p.Println()
 	}
 
-	return internalerrors.ErrFailed
+	return compileerrors.ErrFailed
 }

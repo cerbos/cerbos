@@ -1,0 +1,6 @@
+<testsuites errors="1" failures="0" skipped="0" tests="0">
+  <testsuite description="Tests for verifying the company resource policy" name="CompanyTestSuite" file="suite_test.yaml" errors="1" failures="0" skipped="0" tests="0">
+    <error type="RESULT_ERRORED">Invalid test suite: another test named Company Test 1 already exists</error>
+    <properties></properties>
+  </testsuite>
+</testsuites>

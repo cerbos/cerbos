@@ -1327,6 +1327,9 @@
             "type": "object",
             "$ref": "#/definitions/TestResultsTestCase"
           }
+        },
+        "description": {
+          "type": "string"
         }
       }
     },

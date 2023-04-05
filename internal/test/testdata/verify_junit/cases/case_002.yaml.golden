@@ -1,0 +1,6 @@
+<testsuites errors="0" failures="0" skipped="1" tests="0">
+  <testsuite description="Tests for verifying the company resource policy" name="CompanyTestSuite" file="suite_test.yaml" errors="0" failures="0" skipped="1" tests="0">
+    <skipped message="This test suite was skipped"></skipped>
+    <properties></properties>
+  </testsuite>
+</testsuites>

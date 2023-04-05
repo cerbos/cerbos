@@ -17,8 +17,8 @@ import (
 	"go.uber.org/zap"
 
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
+	compileerrors "github.com/cerbos/cerbos/cmd/cerbos/compile/errors"
 	internalcompile "github.com/cerbos/cerbos/cmd/cerbos/compile/internal/compilation"
-	internalerrors "github.com/cerbos/cerbos/cmd/cerbos/compile/internal/errors"
 	"github.com/cerbos/cerbos/cmd/cerbos/compile/internal/flagset"
 	"github.com/cerbos/cerbos/cmd/cerbos/compile/internal/lint"
 	"github.com/cerbos/cerbos/cmd/cerbos/compile/internal/verification"
@@ -33,7 +33,8 @@ import (
 	"github.com/cerbos/cerbos/internal/verify"
 )
 
-const help = `
+const (
+	help = `
 Examples:
 
 # Compile and run tests found in /path/to/policy/repo
@@ -48,17 +49,19 @@ cerbos compile --run=Delete /path/to/policy/repo
 
 cerbos compile --skip-tests /path/to/policy/repo
 `
+)
 
 type Cmd struct { //nolint:govet // Kong prints fields in order, so we don't want to reorder fields to save bytes.
-	Dir           string               `help:"Policy directory" arg:"" required:"" type:"existingdir"`
-	IgnoreSchemas bool                 `help:"Ignore schemas during compilation"`
-	Tests         string               `help:"Path to the directory containing tests. Defaults to policy directory." type:"existingdir"`
-	RunRegex      string               `help:"Run only tests that match this regex" name:"run"`
-	SkipTests     bool                 `help:"Skip tests"`
-	Output        flagset.OutputFormat `help:"Output format (${enum})" default:"tree" enum:"tree,list,json" short:"o"`
-	Color         *outputcolor.Level   `help:"Output color level (auto,never,always,256,16m). Defaults to auto." xor:"color"`
-	NoColor       bool                 `help:"Disable colored output" xor:"color"`
-	Verbose       bool                 `help:"Verbose output on test failure"`
+	Dir           string                            `help:"Policy directory" arg:"" required:"" type:"existingdir"`
+	IgnoreSchemas bool                              `help:"Ignore schemas during compilation"`
+	Tests         string                            `help:"Path to the directory containing tests. Defaults to policy directory." type:"existingdir"`
+	RunRegex      string                            `help:"Run only tests that match this regex" name:"run"`
+	SkipTests     bool                              `help:"Skip tests"`
+	Output        flagset.OutputFormat              `help:"Output format (${enum})" default:"tree" enum:"tree,list,json" short:"o"`
+	TestOutput    *flagset.VerificationOutputFormat `help:"Test output format. If unspecified matches the value of the output flag. (tree,list,json,junit)"`
+	Color         *outputcolor.Level                `help:"Output color level (auto,never,always,256,16m). Defaults to auto." xor:"color"`
+	NoColor       bool                              `help:"Disable colored output" xor:"color"`
+	Verbose       bool                              `help:"Verbose output on test failure"`
 }
 
 func (c *Cmd) Run(k *kong.Kong) error {
@@ -109,6 +112,19 @@ func (c *Cmd) Run(k *kong.Kong) error {
 		return fmt.Errorf("failed to create engine: %w", err)
 	}
 
+	if c.TestOutput == nil {
+		var value flagset.VerificationOutputFormat
+		switch c.Output {
+		case flagset.OutputFormatTree:
+			value = flagset.VerificationOutputFormatTree
+		case flagset.OutputFormatList:
+			value = flagset.VerificationOutputFormatList
+		case flagset.OutputFormatJSON:
+			value = flagset.VerificationOutputFormatJSON
+		}
+		c.TestOutput = &value
+	}
+
 	if !c.SkipTests {
 		verifyConf := verify.Config{
 			Run:   c.RunRegex,
@@ -130,14 +146,13 @@ func (c *Cmd) Run(k *kong.Kong) error {
 			return fmt.Errorf("failed to run tests: %w", err)
 		}
 
-		err = verification.Display(p, results, c.Output, c.Verbose, colorLevel)
-		if err != nil {
+		if err = verification.Display(p, results, *c.TestOutput, c.Verbose, colorLevel); err != nil {
 			return fmt.Errorf("failed to display test results: %w", err)
 		}
 
 		switch results.Summary.OverallResult {
 		case policyv1.TestResults_RESULT_FAILED, policyv1.TestResults_RESULT_ERRORED:
-			return internalerrors.ErrTestsFailed
+			return compileerrors.ErrTestsFailed
 		default:
 		}
 	}

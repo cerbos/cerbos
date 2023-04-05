@@ -1,15 +1,15 @@
 {
-  "suites": [
+  "suites":  [
     {
-      "file": "suite_test.yaml",
-      "name": "Unknown",
-      "summary": {
-        "overallResult": "RESULT_ERRORED"
+      "file":  "suite_test.yaml",
+      "name":  "Unknown",
+      "summary":  {
+        "overallResult":  "RESULT_ERRORED"
       },
-      "error": "failed to load test suite: failed to unmarshal JSON: proto: (line 1:84): invalid google.protobuf.Timestamp value \"blah\""
+      "error":  "failed to load test suite: failed to unmarshal JSON: proto: (line 1:84): invalid google.protobuf.Timestamp value \"blah\""
     }
   ],
-  "summary": {
-    "overallResult": "RESULT_ERRORED"
+  "summary":  {
+    "overallResult":  "RESULT_ERRORED"
   }
 }

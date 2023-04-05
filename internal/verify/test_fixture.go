@@ -122,7 +122,7 @@ func (tf *testFixture) checkDupes(suite *policyv1.TestSuite) error {
 	var errs error
 	for _, t := range suite.Tests {
 		if _, ok := dupes[t.Name]; ok {
-			errs = multierr.Append(errs, fmt.Errorf("another test named %q already exists", t.Name))
+			errs = multierr.Append(errs, fmt.Errorf("another test named %s already exists", t.Name))
 		}
 		dupes[t.Name] = struct{}{}
 	}
@@ -132,9 +132,10 @@ func (tf *testFixture) checkDupes(suite *policyv1.TestSuite) error {
 
 func (tf *testFixture) runTestSuite(ctx context.Context, eng Checker, shouldRun func(string) bool, file string, suite *policyv1.TestSuite, trace bool) *policyv1.TestResults_Suite {
 	suiteResult := &policyv1.TestResults_Suite{
-		File:    file,
-		Name:    suite.Name,
-		Summary: &policyv1.TestResults_Summary{},
+		File:        file,
+		Name:        suite.Name,
+		Description: suite.Description,
+		Summary:     &policyv1.TestResults_Summary{},
 	}
 
 	if suite.Skip {

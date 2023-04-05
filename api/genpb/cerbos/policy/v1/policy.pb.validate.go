@@ -5379,6 +5379,8 @@ func (m *TestResults_Suite) validate(all bool) error {
 
 	}
 
+	// no validation rules for Description
+
 	if len(errors) > 0 {
 		return TestResults_SuiteMultiError(errors)
 	}

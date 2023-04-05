@@ -4,7 +4,7 @@
 package compilation
 
 import (
-	internalerrors "github.com/cerbos/cerbos/cmd/cerbos/compile/internal/errors"
+	compileerrors "github.com/cerbos/cerbos/cmd/cerbos/compile/errors"
 	"github.com/cerbos/cerbos/cmd/cerbos/compile/internal/flagset"
 	"github.com/cerbos/cerbos/internal/compile"
 	"github.com/cerbos/cerbos/internal/outputcolor"
@@ -20,7 +20,7 @@ func Display(p *printer.Printer, errs compile.ErrorList, output flagset.OutputFo
 		return displayList(p, errs)
 	}
 
-	return internalerrors.ErrFailed
+	return compileerrors.ErrFailed
 }
 
 func displayJSON(p *printer.Printer, errs compile.ErrorList, colorLevel outputcolor.Level) error {
@@ -28,7 +28,7 @@ func displayJSON(p *printer.Printer, errs compile.ErrorList, colorLevel outputco
 		return err
 	}
 
-	return internalerrors.ErrFailed
+	return compileerrors.ErrFailed
 }
 
 func displayList(p *printer.Printer, errs compile.ErrorList) error {
@@ -37,5 +37,5 @@ func displayList(p *printer.Printer, errs compile.ErrorList) error {
 		p.Printf("%s: %s (%s)\n", colored.FileName(err.File), colored.ErrorMsg(err.Description), err.Error)
 	}
 
-	return internalerrors.ErrFailed
+	return compileerrors.ErrFailed
 }

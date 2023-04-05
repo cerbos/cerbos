@@ -295,6 +295,7 @@ message TestResults {
     Summary summary = 4;
     string error = 5;
     repeated TestCase test_cases = 6;
+    string description = 7;
   }
 
   message TestCase {

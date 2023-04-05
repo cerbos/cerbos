@@ -263,6 +263,9 @@
   "type": "object",
   "additionalProperties": false,
   "properties": {
+    "description": {
+      "type": "string"
+    },
     "error": {
       "type": "string"
     },
