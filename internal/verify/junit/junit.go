@@ -93,6 +93,20 @@ func processTestCases(s *policyv1.TestResults_Suite, verbose bool) ([]testCase, 
 						Name:      tc.Name,
 						File:      s.File,
 						Classname: fmt.Sprintf("%s.%s.%s", p.Name, r.Name, a.Name),
+						Properties: []property{
+							{
+								Name:  "principal",
+								Value: p.Name,
+							},
+							{
+								Name:  "resource",
+								Value: r.Name,
+							},
+							{
+								Name:  "action",
+								Value: a.Name,
+							},
+						},
 					}
 
 					switch a.Details.Result {
@@ -188,6 +202,7 @@ type skipped struct {
 type property struct {
 	XMLName xml.Name `xml:"property"`
 	Name    string   `xml:"name,attr"`
+	Value   string   `xml:",chardata"` //nolint:tagliatelle
 }
 
 type Summary struct {

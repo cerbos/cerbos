@@ -6,28 +6,44 @@
         <actual>EFFECT_ALLOW</actual>
         <expected>EFFECT_DENY</expected>
       </failure>
-      <properties></properties>
+      <properties>
+        <property name="principal">admin</property>
+        <property name="resource">company</property>
+        <property name="action">create</property>
+      </properties>
     </testcase>
     <testcase file="suite_test.yaml" classname="admin.company.read" name="Company Test 1">
       <failure type="RESULT_FAILED">
         <actual>EFFECT_ALLOW</actual>
         <expected>EFFECT_DENY</expected>
       </failure>
-      <properties></properties>
+      <properties>
+        <property name="principal">admin</property>
+        <property name="resource">company</property>
+        <property name="action">read</property>
+      </properties>
     </testcase>
     <testcase file="suite_test.yaml" classname="user.company.create" name="Company Test 2">
       <failure type="RESULT_FAILED">
         <actual>EFFECT_ALLOW</actual>
         <expected>EFFECT_DENY</expected>
       </failure>
-      <properties></properties>
+      <properties>
+        <property name="principal">user</property>
+        <property name="resource">company</property>
+        <property name="action">create</property>
+      </properties>
     </testcase>
     <testcase file="suite_test.yaml" classname="user.company.read" name="Company Test 2">
       <failure type="RESULT_FAILED">
         <actual>EFFECT_ALLOW</actual>
         <expected>EFFECT_DENY</expected>
       </failure>
-      <properties></properties>
+      <properties>
+        <property name="principal">user</property>
+        <property name="resource">company</property>
+        <property name="action">read</property>
+      </properties>
     </testcase>
   </testsuite>
 </testsuites>
