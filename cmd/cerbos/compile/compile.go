@@ -14,6 +14,7 @@ import (
 	"github.com/alecthomas/kong"
 	"github.com/fatih/color"
 	"github.com/pterm/pterm"
+	"github.com/santhosh-tekuri/jsonschema/v5"
 	"go.uber.org/zap"
 
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
@@ -24,13 +25,15 @@ import (
 	"github.com/cerbos/cerbos/cmd/cerbos/compile/internal/verification"
 	"github.com/cerbos/cerbos/internal/compile"
 	"github.com/cerbos/cerbos/internal/engine"
+	internaljsonschema "github.com/cerbos/cerbos/internal/jsonschema"
 	"github.com/cerbos/cerbos/internal/outputcolor"
 	"github.com/cerbos/cerbos/internal/printer"
-	"github.com/cerbos/cerbos/internal/schema"
+	internalschema "github.com/cerbos/cerbos/internal/schema"
 	"github.com/cerbos/cerbos/internal/storage/disk"
 	"github.com/cerbos/cerbos/internal/storage/index"
 	"github.com/cerbos/cerbos/internal/util"
 	"github.com/cerbos/cerbos/internal/verify"
+	"github.com/cerbos/cerbos/schema"
 )
 
 const (
@@ -85,6 +88,15 @@ func (c *Cmd) Run(k *kong.Kong) error {
 		return err
 	}
 
+	policySchema, err := jsonschema.CompileString("Policy.schema.json", string(schema.Policy))
+	if err != nil {
+		return fmt.Errorf("failed to compile from embedded schema: %w", err)
+	}
+
+	if err := internaljsonschema.ValidatePolicies(ctx, policySchema, fsys); err != nil {
+		return fmt.Errorf("failed to validate policies using JSON schema: %w", err)
+	}
+
 	idx, err := index.Build(ctx, fsys, index.WithBuildFailureLogLevel(zap.DebugLevel))
 	if err != nil {
 		idxErr := new(index.BuildError)
@@ -97,11 +109,11 @@ func (c *Cmd) Run(k *kong.Kong) error {
 
 	store := disk.NewFromIndexWithConf(idx, &disk.Conf{})
 
-	enforcement := schema.EnforcementReject
+	enforcement := internalschema.EnforcementReject
 	if c.IgnoreSchemas {
-		enforcement = schema.EnforcementNone
+		enforcement = internalschema.EnforcementNone
 	}
-	schemaMgr := schema.NewFromConf(ctx, store, schema.NewConf(enforcement))
+	schemaMgr := internalschema.NewFromConf(ctx, store, internalschema.NewConf(enforcement))
 
 	if err := compile.BatchCompile(idx.GetAllCompilationUnits(ctx), schemaMgr); err != nil {
 		compErr := new(compile.ErrorList)
@@ -125,6 +137,7 @@ func (c *Cmd) Run(k *kong.Kong) error {
 		c.TestOutput = &value
 	}
 
+	//nolint:nestif
 	if !c.SkipTests {
 		verifyConf := verify.Config{
 			Run:   c.RunRegex,
@@ -141,6 +154,16 @@ func (c *Cmd) Run(k *kong.Kong) error {
 		if err != nil {
 			return err
 		}
+
+		testSchema, err := jsonschema.CompileString("TestSuite.schema.json", string(schema.TestSuite))
+		if err != nil {
+			return fmt.Errorf("failed to compile from embedded schema: %w", err)
+		}
+
+		if err := internaljsonschema.ValidateTests(ctx, testSchema, testFsys); err != nil {
+			return fmt.Errorf("failed to validate tests using JSON Schema: %w", err)
+		}
+
 		results, err := verify.Verify(ctx, testFsys, eng, verifyConf)
 		if err != nil {
 			return fmt.Errorf("failed to run tests: %w", err)
