@@ -651,6 +651,6 @@ func evalComprehensionBodyImpl(env *cel.Env, pvars interpreter.PartialActivation
 // 2. ResidualExpr()
 // The former is the built-in approach, but unlike the latter doesn't support CEL comprehensions.
 func ResidualExpr(a *cel.Ast, details *cel.EvalDetails) *exprpb.Expr {
-	pruned := interpreter.PruneAst(a.Expr(), details.State())
-	return pruned
+	pruned := interpreter.PruneAst(a.Expr(), a.SourceInfo().GetMacroCalls(), details.State())
+	return pruned.Expr
 }
