@@ -6,6 +6,7 @@ package tracing
 import "go.opentelemetry.io/otel/attribute"
 
 const (
+	bundleSourceKey  = attribute.Key("cerbos.bundle.source")
 	requestIDKey     = attribute.Key("cerbos.request.id")
 	reqResourceIDKey = attribute.Key("cerbos.request.resource_id")
 	policyFQNKey     = attribute.Key("cerbos.policy.fqn")
@@ -15,6 +16,7 @@ const (
 )
 
 var (
+	BundleSource  = bundleSourceKey.String
 	RequestID     = requestIDKey.String
 	ReqResourceID = reqResourceIDKey.String
 	PolicyFQN     = policyFQNKey.String

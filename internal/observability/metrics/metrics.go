@@ -33,6 +33,10 @@ func init() {
 
 var (
 	KeyAuditKind            = tag.MustNewKey("kind")
+	KeyBundleSource         = tag.MustNewKey("source")
+	KeyBundleOp             = tag.MustNewKey("op")
+	KeyBundleOpStatus       = tag.MustNewKey("status")
+	KeyBundleRemoteEvent    = tag.MustNewKey("remote_event")
 	KeyCacheKind            = tag.MustNewKey("kind")
 	KeyCacheResult          = tag.MustNewKey("result")
 	KeyCompileStatus        = tag.MustNewKey("status")
@@ -52,6 +56,63 @@ var (
 	AuditErrorCountView = &view.View{
 		Measure:     AuditErrorCount,
 		TagKeys:     []tag.Key{KeyAuditKind},
+		Aggregation: view.Count(),
+	}
+
+	BundleFetchErrorsCount = stats.Int64(
+		"cerbos.dev/store/bundle_fetch_errors_count",
+		"Count of errors encountered during bundle downloads",
+		stats.UnitNone,
+	)
+
+	BundleFetchErrorsCountView = &view.View{
+		Measure:     BundleFetchErrorsCount,
+		Aggregation: view.Count(),
+	}
+
+	BundleNotFoundErrorsCount = stats.Int64(
+		"cerbos.dev/store/bundle_not_found_errors_count",
+		"Count of bundle not found errors",
+		stats.UnitNone,
+	)
+
+	BundleNotFoundErrorsCountView = &view.View{
+		Measure:     BundleNotFoundErrorsCount,
+		Aggregation: view.Count(),
+	}
+
+	BundleStoreLatency = stats.Float64(
+		"cerbos.dev/store/bundle_op_latency",
+		"Time to do an operation with the bundle store",
+		stats.UnitMilliseconds,
+	)
+
+	BundleStoreLatencyView = &view.View{
+		Measure:     BundleStoreLatency,
+		TagKeys:     []tag.Key{KeyBundleSource, KeyBundleOp, KeyBundleOpStatus},
+		Aggregation: defaultLatencyDistribution(),
+	}
+
+	BundleStoreRemoteEventsCount = stats.Int64(
+		"cerbos.dev/store/bundle_remote_events_count",
+		"Count of remote server events received by the bundle store",
+		stats.UnitNone,
+	)
+
+	BundleStoreRemoteEventsCountView = &view.View{
+		Measure:     BundleStoreRemoteEventsCount,
+		TagKeys:     []tag.Key{KeyBundleRemoteEvent},
+		Aggregation: view.Count(),
+	}
+
+	BundleStoreUpdatesCount = stats.Int64(
+		"cerbos.dev/store/bundle_updates_count",
+		"Count of bundle updates from remote source",
+		stats.UnitNone,
+	)
+
+	BundleStoreUpdatesCountView = &view.View{
+		Measure:     BundleStoreUpdatesCount,
 		Aggregation: view.Count(),
 	}
 
@@ -76,6 +137,17 @@ var (
 	CacheMaxSizeView = &view.View{
 		Measure:     CacheMaxSize,
 		TagKeys:     []tag.Key{KeyCacheKind},
+		Aggregation: view.LastValue(),
+	}
+
+	CloudConnectedCount = stats.Int64(
+		"cerbos.dev/cloud/connected",
+		"Is the instance connected to Cerbos Cloud",
+		stats.UnitDimensionless,
+	)
+
+	CloudConnectedCountView = &view.View{
+		Measure:     CloudConnectedCount,
 		Aggregation: view.LastValue(),
 	}
 
@@ -176,8 +248,14 @@ var (
 
 var DefaultCerbosViews = []*view.View{
 	AuditErrorCountView,
+	BundleFetchErrorsCountView,
+	BundleNotFoundErrorsCountView,
+	BundleStoreLatencyView,
+	BundleStoreRemoteEventsCountView,
+	BundleStoreUpdatesCountView,
 	CacheAccessCountView,
 	CacheMaxSizeView,
+	CloudConnectedCountView,
 	CompileDurationView,
 	EngineCheckLatencyView,
 	EngineCheckBatchSizeView,

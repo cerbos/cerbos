@@ -12,6 +12,7 @@ require (
 	github.com/aws/aws-sdk-go v1.44.240
 	github.com/bluele/gcache v0.0.2
 	github.com/cenkalti/backoff/v4 v4.2.0
+	github.com/cerbos/cloud-api v0.1.0
 	github.com/cespare/xxhash v1.1.0
 	github.com/cespare/xxhash/v2 v2.2.0
 	github.com/denisenkom/go-mssqldb v0.12.3
@@ -25,6 +26,7 @@ require (
 	github.com/ghodss/yaml v1.0.0
 	github.com/go-cmd/cmd v1.4.1
 	github.com/go-git/go-git/v5 v5.6.1
+	github.com/go-logr/zapr v1.2.3
 	github.com/go-sql-driver/mysql v1.7.0
 	github.com/gobwas/glob v0.2.3
 	github.com/golang-migrate/migrate/v4 v4.15.2
@@ -105,6 +107,7 @@ require (
 	cloud.google.com/go/compute/metadata v0.2.3 // indirect
 	cloud.google.com/go/iam v0.13.0 // indirect
 	cloud.google.com/go/storage v1.29.0 // indirect
+	filippo.io/age v1.1.1 // indirect
 	github.com/Azure/go-ansiterm v0.0.0-20210617225240-d185dfc1b5a1 // indirect
 	github.com/Masterminds/goutils v1.1.1 // indirect
 	github.com/Masterminds/semver/v3 v3.2.0 // indirect
@@ -134,6 +137,8 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/sts v1.18.3 // indirect
 	github.com/aws/smithy-go v1.13.5 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
+	github.com/bufbuild/connect-go v1.5.2 // indirect
+	github.com/bufbuild/connect-opentelemetry-go v0.1.0 // indirect
 	github.com/cloudflare/circl v1.1.0 // indirect
 	github.com/containerd/console v1.0.3 // indirect
 	github.com/containerd/continuity v0.3.0 // indirect
@@ -154,7 +159,7 @@ require (
 	github.com/go-git/go-billy/v5 v5.4.1 // indirect
 	github.com/go-kit/log v0.2.1 // indirect
 	github.com/go-logfmt/logfmt v0.5.1 // indirect
-	github.com/go-logr/logr v1.2.3 // indirect
+	github.com/go-logr/logr v1.2.4 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/goccy/go-json v0.10.2 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
@@ -171,7 +176,9 @@ require (
 	github.com/googleapis/gax-go/v2 v2.7.1 // indirect
 	github.com/gookit/color v1.5.3 // indirect
 	github.com/hashicorp/errwrap v1.1.0 // indirect
+	github.com/hashicorp/go-cleanhttp v0.5.2 // indirect
 	github.com/hashicorp/go-multierror v1.1.1 // indirect
+	github.com/hashicorp/go-retryablehttp v0.7.2 // indirect
 	github.com/huandu/xstrings v1.4.0 // indirect
 	github.com/imdario/mergo v0.3.13 // indirect
 	github.com/jackc/chunkreader/v2 v2.0.1 // indirect
@@ -227,13 +234,14 @@ require (
 	github.com/shopspring/decimal v1.3.1 // indirect
 	github.com/sirupsen/logrus v1.9.0 // indirect
 	github.com/skeema/knownhosts v1.1.0 // indirect
+	github.com/sourcegraph/conc v0.3.0 // indirect
 	github.com/spf13/cast v1.5.0 // indirect
 	github.com/stoewer/go-strcase v1.2.0 // indirect
 	github.com/stretchr/objx v0.5.0 // indirect
 	github.com/tidwall/match v1.1.1 // indirect
 	github.com/twmb/franz-go/pkg/kmsg v1.4.0 // indirect
 	github.com/xanzy/ssh-agent v0.3.3 // indirect
-	github.com/xeipuuv/gojsonpointer v0.0.0-20180127040702-4e3ac2762d5f // indirect
+	github.com/xeipuuv/gojsonpointer v0.0.0-20190905194746-02993c407bfb // indirect
 	github.com/xeipuuv/gojsonreference v0.0.0-20180127040603-bd5ef7bd5415 // indirect
 	github.com/xeipuuv/gojsonschema v1.2.0 // indirect
 	github.com/xi2/xz v0.0.0-20171230120015-48954b6210f8 // indirect

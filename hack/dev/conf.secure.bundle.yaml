@@ -1,0 +1,49 @@
+---
+server:
+  httpListenAddr: ":3592"
+  grpcListenAddr: ":3593"
+  logRequestPayloads: false
+  playgroundEnabled: true
+  adminAPI:
+    enabled: true
+    adminCredentials:
+      username: cerbos
+      passwordHash: JDJ5JDEwJC5BYjQyY2RJNG5QR2NWMmJPdnNtQU93c09RYVA0eFFGdHBrbmFEeXh1NnlIVTE1cHJNY05PCgo=
+  tls:
+    cert: hack/dev/tls.crt
+    key: hack/dev/tls.key
+
+auxData:
+  jwt:
+    keySets:
+      - id: default
+        local:
+          file: internal/test/testdata/auxdata/verify_key.jwk
+
+audit:
+  enabled: true
+  backend: "file"
+  local:
+    storagePath: /tmp/cerbos_auditlog
+    advanced:
+      flushInterval: 5s
+  file:
+    path: stdout
+
+tracing:
+  sampleProbability: 1.0
+  exporter: jaeger
+  jaeger:
+    agentEndpoint: "localhost:6831"
+    serviceName: "cerbos"
+
+storage:
+  driver: "bundle"
+  bundle:
+    local:
+      bundlePath: internal/test/testdata/bundle/bundle.crbp
+    credentials:
+      secretKey: CERBOS-1H9GPRZXCE5XDSG3FFNAACXCEK8G7MZGX57J09WKYZNCKQ5GU30PSTRK0R8
+
+schema:
+  enforcement: reject
