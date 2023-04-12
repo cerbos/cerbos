@@ -14,7 +14,6 @@ import (
 	"github.com/alecthomas/kong"
 	"github.com/fatih/color"
 	"github.com/pterm/pterm"
-	"github.com/santhosh-tekuri/jsonschema/v5"
 	"go.uber.org/zap"
 
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
@@ -33,7 +32,6 @@ import (
 	"github.com/cerbos/cerbos/internal/storage/index"
 	"github.com/cerbos/cerbos/internal/util"
 	"github.com/cerbos/cerbos/internal/verify"
-	"github.com/cerbos/cerbos/schema"
 )
 
 const (
@@ -88,12 +86,7 @@ func (c *Cmd) Run(k *kong.Kong) error {
 		return err
 	}
 
-	policySchema, err := jsonschema.CompileString("Policy.schema.json", string(schema.Policy))
-	if err != nil {
-		return fmt.Errorf("failed to compile from embedded schema: %w", err)
-	}
-
-	if err := internaljsonschema.ValidatePolicies(ctx, policySchema, fsys); err != nil {
+	if err := internaljsonschema.ValidatePolicies(ctx, fsys); err != nil {
 		return fmt.Errorf("failed to validate policies using JSON schema: %w", err)
 	}
 
@@ -155,12 +148,7 @@ func (c *Cmd) Run(k *kong.Kong) error {
 			return err
 		}
 
-		testSchema, err := jsonschema.CompileString("TestSuite.schema.json", string(schema.TestSuite))
-		if err != nil {
-			return fmt.Errorf("failed to compile from embedded schema: %w", err)
-		}
-
-		if err := internaljsonschema.ValidateTests(ctx, testSchema, testFsys); err != nil {
+		if err := internaljsonschema.ValidateTests(ctx, testFsys); err != nil {
 			return fmt.Errorf("failed to validate tests using JSON Schema: %w", err)
 		}
 

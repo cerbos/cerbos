@@ -5,10 +5,12 @@ package jsonschema
 
 import (
 	"context"
+	"fmt"
 	"io"
 	"io/fs"
 	"path"
 
+	"github.com/cerbos/cerbos/schema"
 	"github.com/santhosh-tekuri/jsonschema/v5"
 	"gopkg.in/yaml.v3"
 
@@ -17,8 +19,13 @@ import (
 )
 
 // ValidatePolicies validates the policies in the fsys with the given schema.
-func ValidatePolicies(ctx context.Context, s *jsonschema.Schema, fsys fs.FS) error {
-	err := fs.WalkDir(fsys, ".", func(p string, d fs.DirEntry, err error) error {
+func ValidatePolicies(ctx context.Context, fsys fs.FS) error {
+	s, err := jsonschema.CompileString("Policy.schema.json", string(schema.PolicyJSONSchema))
+	if err != nil {
+		return fmt.Errorf("failed to compile policy schema: %w", err)
+	}
+
+	if err := fs.WalkDir(fsys, ".", func(p string, d fs.DirEntry, err error) error {
 		if err := ctx.Err(); err != nil {
 			return err
 		}
@@ -59,13 +66,21 @@ func ValidatePolicies(ctx context.Context, s *jsonschema.Schema, fsys fs.FS) err
 		}
 
 		return s.Validate(y)
-	})
-	return err
+	}); err != nil {
+		return fmt.Errorf("failed to walk policy directory: %w", err)
+	}
+
+	return nil
 }
 
 // ValidateTests validates the tests in the fsys with the given schema.
-func ValidateTests(ctx context.Context, s *jsonschema.Schema, fsys fs.FS) error {
-	err := fs.WalkDir(fsys, ".", func(p string, d fs.DirEntry, err error) error {
+func ValidateTests(ctx context.Context, fsys fs.FS) error {
+	s, err := jsonschema.CompileString("TestSuite.schema.json", string(schema.TestSuiteJSONSchema))
+	if err != nil {
+		return fmt.Errorf("failed to compile test schema: %w", err)
+	}
+
+	if err := fs.WalkDir(fsys, ".", func(p string, d fs.DirEntry, err error) error {
 		if err := ctx.Err(); err != nil {
 			return err
 		}
@@ -74,7 +89,7 @@ func ValidateTests(ctx context.Context, s *jsonschema.Schema, fsys fs.FS) error 
 			return err
 		}
 
-		if d.IsDir() && d.Name() == util.TestDataDirectory {
+		if d.IsDir() {
 			if d.Name() == util.TestDataDirectory {
 				return fs.SkipDir
 			}
@@ -104,6 +119,9 @@ func ValidateTests(ctx context.Context, s *jsonschema.Schema, fsys fs.FS) error 
 		}
 
 		return nil
-	})
-	return err
+	}); err != nil {
+		return fmt.Errorf("failed to walk test directory: %w", err)
+	}
+
+	return nil
 }
