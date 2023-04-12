@@ -363,12 +363,11 @@ NOTE: The IP address functions are Cerbos-specific extensions to CEL.
 | charAt   | Get the character at given index | R.attr.department.chartAt(1) == 'a'
 | contains | Check whether a string contains the given substring | R.attr.department.contains("arket")
 | endsWith | Check whether a string has the given suffix | R.attr.department.endsWith("ing")
-| format   | Format a string with the given arguments | "department_%s_%s_%d".format(["marketing", "US"])
+| format   | Format a string with the given arguments | "department_%s_%d".format(["marketing", 1])
 | indexOf  | Index of the first occurrence of the given character | R.attr.department.indexOf('a') == 1
 | lastIndexOf | Index of the last occurrence of the given character | R.attr.department.lastIndexOf('g') == 8
 | lowerAscii  | Convert ASCII characters to lowercase | "MARKETING".lowerAscii() == R.attr.department
 | matches  | Check whether a string matches a link:https://github.com/google/re2/wiki/Syntax[RE2] regular expression | R.attr.department.matches("^[mM].*g$")
-| quote    | Quote escape sequences | strings.quote("'single-quote with "double quote"'")
 | replace  | Replace all occurrences of a substring | R.attr.department.replace("market", "engineer") == "engineering"
 | replace  | Replace with limits. Limit 0 replaces nothing, -1 replaces all. | "engineering".replace("e", "a", 1) == "angineering" && "engineering".replace("e", "a", -1) == "anginaaring"
 | size     | Get the length of the string | size(R.attr.department) == 9  
