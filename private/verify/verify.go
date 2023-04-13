@@ -8,12 +8,14 @@ import (
 	"errors"
 	"fmt"
 	"io/fs"
+	"os"
 
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
 	runtimev1 "github.com/cerbos/cerbos/api/genpb/cerbos/runtime/v1"
 	internalcompile "github.com/cerbos/cerbos/internal/compile"
 	"github.com/cerbos/cerbos/internal/engine"
 	"github.com/cerbos/cerbos/internal/schema"
+	"github.com/cerbos/cerbos/internal/storage/bundle"
 	"github.com/cerbos/cerbos/internal/storage/disk"
 	"github.com/cerbos/cerbos/internal/storage/index"
 	"github.com/cerbos/cerbos/internal/verify"
@@ -23,6 +25,7 @@ import (
 	"go.uber.org/zap"
 )
 
+// Files runs tests using the policy files in the given file system.
 func Files(ctx context.Context, fsys fs.FS) (*policyv1.TestResults, error) {
 	idx, err := index.Build(ctx, fsys, index.WithBuildFailureLogLevel(zap.DebugLevel))
 	if err != nil {
@@ -46,7 +49,37 @@ func Files(ctx context.Context, fsys fs.FS) (*policyv1.TestResults, error) {
 		return nil, fmt.Errorf("failed to create engine: %w", err)
 	}
 
-	results, err := verify.Verify(ctx, fsys, eng, verify.Config{})
+	results, err := verify.Verify(ctx, fsys, eng, verify.Config{Trace: true})
+	if err != nil {
+		return nil, fmt.Errorf("failed to run tests: %w", err)
+	}
+
+	return results, nil
+}
+
+type BundleParams struct {
+	BundlePath string
+	TestsDir   string
+	WorkDir    string
+}
+
+// Bundle runs tests using the given policy bundle.
+func Bundle(ctx context.Context, params BundleParams) (*policyv1.TestResults, error) {
+	bundleSrc, err := bundle.NewLocalSource(bundle.LocalParams{
+		BundlePath: params.BundlePath,
+		TempDir:    params.WorkDir,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to create local bundle source from %q: %w", params.BundlePath, err)
+	}
+
+	schemaMgr := schema.NewFromConf(ctx, bundleSrc, schema.NewConf(schema.EnforcementReject))
+	eng, err := engine.NewEphemeral(bundleSrc, schemaMgr)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create engine: %w", err)
+	}
+
+	results, err := verify.Verify(ctx, os.DirFS(params.TestsDir), eng, verify.Config{Trace: true})
 	if err != nil {
 		return nil, fmt.Errorf("failed to run tests: %w", err)
 	}

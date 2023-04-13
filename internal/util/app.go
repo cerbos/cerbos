@@ -37,3 +37,19 @@ func AppVersion() string {
 
 	return sb.String()
 }
+
+func AppShortVersion() string {
+	var sb strings.Builder
+	_, _ = sb.WriteString(Version)
+
+	if info, ok := debug.ReadBuildInfo(); ok {
+		for _, bs := range info.Settings {
+			if bs.Key == "vcs.revision" {
+				_, _ = sb.WriteString("-")
+				_, _ = sb.WriteString(bs.Value)
+			}
+		}
+	}
+
+	return sb.String()
+}

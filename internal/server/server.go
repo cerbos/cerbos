@@ -9,6 +9,7 @@ import (
 	"crypto/x509"
 	"errors"
 	"fmt"
+	"io"
 	"net"
 	"net/http"
 	"os"
@@ -38,6 +39,10 @@ import (
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/local"
 
+	svcv1 "github.com/cerbos/cerbos/api/genpb/cerbos/svc/v1"
+	"github.com/cerbos/cerbos/internal/audit"
+	"github.com/cerbos/cerbos/internal/telemetry"
+
 	// Import the default grpc encoding to ensure that it gets replaced by VT.
 	_ "google.golang.org/grpc/encoding/proto"
 	"google.golang.org/grpc/health"
@@ -45,10 +50,6 @@ import (
 	"google.golang.org/grpc/keepalive"
 	"google.golang.org/grpc/reflection"
 	"google.golang.org/protobuf/encoding/protojson"
-
-	svcv1 "github.com/cerbos/cerbos/api/genpb/cerbos/svc/v1"
-	"github.com/cerbos/cerbos/internal/audit"
-	"github.com/cerbos/cerbos/internal/telemetry"
 
 	// Import to register the Badger audit log backend.
 	_ "github.com/cerbos/cerbos/internal/audit/local"
@@ -64,24 +65,20 @@ import (
 	internalSchema "github.com/cerbos/cerbos/internal/schema"
 	"github.com/cerbos/cerbos/internal/storage"
 
-	// Import cloud to register the storage driver.
+	// Import blob to register the storage driver.
 	_ "github.com/cerbos/cerbos/internal/storage/blob"
-
+	// Import bundle to register the storage driver.
+	_ "github.com/cerbos/cerbos/internal/storage/bundle"
 	// Import mysql to register the storage driver.
 	_ "github.com/cerbos/cerbos/internal/storage/db/mysql"
-
 	// Import postgres to register the storage driver.
 	_ "github.com/cerbos/cerbos/internal/storage/db/postgres"
-
 	// Import sqlite3 to register the storage driver.
 	_ "github.com/cerbos/cerbos/internal/storage/db/sqlite3"
-
 	// Import sqlserver to register the storage driver.
 	_ "github.com/cerbos/cerbos/internal/storage/db/sqlserver"
-
 	// Import disk to register the storage driver.
 	_ "github.com/cerbos/cerbos/internal/storage/disk"
-
 	// Import git to register the storage driver.
 	_ "github.com/cerbos/cerbos/internal/storage/git"
 	"github.com/cerbos/cerbos/internal/svc"
@@ -266,12 +263,6 @@ func (s *Server) Start(ctx context.Context, param Param) error {
 			log.Error("Failed to cleanly shutdown HTTP server", zap.Error(err))
 		}
 
-		log.Debug("Shutting down the audit log")
-		if err := param.AuditLog.Close(); err != nil {
-			log.Error("Failed to cleanly close audit log", zap.Error(err))
-		}
-
-		log.Info("Shutdown complete")
 		return nil
 	})
 
@@ -281,6 +272,19 @@ func (s *Server) Start(ctx context.Context, param Param) error {
 		return err
 	}
 
+	log.Debug("Shutting down the audit log")
+	if err := param.AuditLog.Close(); err != nil {
+		log.Error("Failed to cleanly close audit log", zap.Error(err))
+	}
+
+	if closer, ok := param.Store.(io.Closer); ok {
+		log.Debug("Shutting down store")
+		if err := closer.Close(); err != nil {
+			log.Error("Store didn't shutdown correctly", zap.Error(err))
+		}
+	}
+
+	log.Info("Shutdown complete")
 	return nil
 }
 

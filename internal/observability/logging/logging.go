@@ -6,6 +6,7 @@ package logging
 import (
 	"context"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 
@@ -47,6 +48,12 @@ func doInitLogging(ctx context.Context, level string) {
 		minLogLevel = zapcore.WarnLevel
 	case "ERROR":
 		minLogLevel = zapcore.ErrorLevel
+	default:
+		if strings.HasPrefix(level, "V") {
+			if vLevel, err := strconv.Atoi(strings.TrimPrefix(level, "V")); err == nil {
+				minLogLevel = zapcore.Level(-vLevel)
+			}
+		}
 	}
 
 	encoderConf := ecszap.NewDefaultEncoderConfig().ToZapCoreEncoderConfig()
@@ -89,6 +96,7 @@ func doInitLogging(ctx context.Context, level string) {
 			return lvl > zapcore.ErrorLevel
 		}))),
 	)
+
 	if minLogLevel > zap.DebugLevel {
 		handleUSR1Signal(ctx, minLogLevel, &atomicLevel)
 	}

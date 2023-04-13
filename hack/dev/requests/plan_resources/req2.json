@@ -6,7 +6,10 @@
     "id":  "harry",
     "policyVersion":  "20210210",
     "attr": {
-      "reader": false
+      "reader": false,
+      "department": "marketing",
+      "team": "design",
+      "geography": "GB"
     },
     "roles":  [
       "employee"

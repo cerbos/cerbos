@@ -277,7 +277,7 @@ func inspectStruct(node ast.Expr) []FieldInfo {
 func genDocs(si *StructInfo) string {
 	buf := new(bytes.Buffer)
 	if err := doGenDocs(buf, si, 0); err != nil {
-		logger.Fatalf("failed to generate docs for %s.%s", si.Pkg, si.Name)
+		logger.Fatalw("Failed to generate docs", "pkg", si.Pkg, "struct", si.Name, "error", err)
 	}
 
 	return buf.String()
