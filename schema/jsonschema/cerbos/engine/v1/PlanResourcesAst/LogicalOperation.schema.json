@@ -204,6 +204,12 @@
           "items": {
             "$ref": "#/definitions/google.api.expr.v1alpha1.Expr"
           }
+        },
+        "optionalIndices": {
+          "type": "array",
+          "items": {
+            "type": "integer"
+          }
         }
       }
     },
@@ -242,6 +248,9 @@
         },
         "mapKey": {
           "$ref": "#/definitions/google.api.expr.v1alpha1.Expr"
+        },
+        "optionalEntry": {
+          "type": "boolean"
         },
         "value": {
           "$ref": "#/definitions/google.api.expr.v1alpha1.Expr"
