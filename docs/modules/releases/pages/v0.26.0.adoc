@@ -25,8 +25,10 @@ The `--config` flag is now optional for starting a Cerbos server. If no configur
 
 === Bug Fixes
 
+* Fix passing tests not being visible in JUnit test output (link:https://github.com/cerbos/cerbos/pull/1534[#1534])
 * Kafka async produce context cancellation (link:https://github.com/cerbos/cerbos/pull/1516[#1516])
 * Kafka async publish fails when the API request returns (link:https://github.com/cerbos/cerbos/pull/1510[#1510])
+* Prevent default config from being turned into a path (link:https://github.com/cerbos/cerbos/pull/1533[#1533])
 
 === Features
 
