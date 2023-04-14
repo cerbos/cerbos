@@ -22,7 +22,7 @@ This binary provides the following sub commands:
 .Example: Running `compile` using the container
 [source,sh,subs="attributes"]
 ----
-docker run -i -t {app-docker-img} compile --help 
+docker run -i -t {app-docker-img} compile --help
 ----
 
 
@@ -30,6 +30,17 @@ docker run -i -t {app-docker-img} compile --help
 == `compile` Command
 
 Runs the Cerbos compiler to validate policy definitions and run any test suites. See xref:policies:compile.adoc[Policy compilation] for more information.
+
+This command exits with different exit codes depending on the kind of failure.
+
+[cols="1m,3"]
+|===
+| 0 | No compile or test failures
+| 1 | Unknown failure
+| 2 | Invalid arguments to command
+| 3 | Compilation failed
+| 4 | Tests failed
+|===
 
 [source]
 ----
@@ -72,7 +83,7 @@ Flags:
 [#healthcheck]
 == `healthcheck` Command
 
-Utility to perform healthchecks on a Cerbos PDP. Can be used as a link:https://docs.docker.com/engine/reference/builder/#healthcheck[Docker HEALTHCHECK] command. 
+Utility to perform healthchecks on a Cerbos PDP. Can be used as a link:https://docs.docker.com/engine/reference/builder/#healthcheck[Docker HEALTHCHECK] command.
 
 You can share the configuration between Cerbos PDP and the healthcheck by using the `CERBOS_CONFIG` environment variable to define the path to the config file.
 
@@ -129,7 +140,7 @@ manual
 [#repl]
 == `repl` Command
 
-The REPL is an interactive utility to experiment with xref:policies:conditions.adoc[CEL conditions] used in Cerbos policy rules. All Cerbos library functions and special variables (`request`, `R`, `P` and so on) are available in this environment. 
+The REPL is an interactive utility to experiment with xref:policies:conditions.adoc[CEL conditions] used in Cerbos policy rules. All Cerbos library functions and special variables (`request`, `R`, `P` and so on) are available in this environment.
 
 .Example: Running the REPL using the binary
 [source,sh,subs="attributes"]
@@ -201,7 +212,7 @@ _ = true
 
 Type `:vars` to display the values of all the variables currently defined in the environment.
 
-You can load a Cerbos policy into the REPL by typing `:load path/to/policy_file.yaml`. This will read the policy and load any rules that have conditions attached. These can be viewed by typing `:rules`. Execute any rule by providing its number to the `:exec` directive (for example, `:exec #2`). Rules are executed using the variables defined in the current REPL session. You can set or update them using the `:let` directive and re-execute the rules to see the effects.  
+You can load a Cerbos policy into the REPL by typing `:load path/to/policy_file.yaml`. This will read the policy and load any rules that have conditions attached. These can be viewed by typing `:rules`. Execute any rule by providing its number to the `:exec` directive (for example, `:exec #2`). Rules are executed using the variables defined in the current REPL session. You can set or update them using the `:let` directive and re-execute the rules to see the effects.
 
 [listing]
 ----
@@ -231,9 +242,9 @@ Conditional rules in 'resource.leave_request.v20210210'
 └──request.resource.attr.status == V.pending_approval [false]
 ----
 
-Type `:help` or `:h` to display help. Type `:quit`, `:q` or `:exit` to exit the REPL. 
+Type `:help` or `:h` to display help. Type `:quit`, `:q` or `:exit` to exit the REPL.
 
-TIP: Use the up/down arrow keys (or kbd:[Ctrl+P]/kbd:[Ctrl+N]) to navigate command history. Most of the standard line-editing commands such as kbd:[Ctrl+a], kbd:[Ctrl+h], kbd:[Ctrl+r] are supported as well. 
+TIP: Use the up/down arrow keys (or kbd:[Ctrl+P]/kbd:[Ctrl+N]) to navigate command history. Most of the standard line-editing commands such as kbd:[Ctrl+a], kbd:[Ctrl+h], kbd:[Ctrl+r] are supported as well.
 
 
 [#run]
@@ -246,7 +257,7 @@ This provides a quick way to try out Cerbos. It launches a Cerbos PDP instance a
 cerbos run -- python -m unittest
 ----
 
-By default, the policies are loaded from the `policies` directory in the current working directory and HTTP and gRPC endpoints will be exposed on `127.0.0.1:3592` and `127.0.0.1:3593` respectively. Your application can obtain the actual endpoint addresses by inspecting the `CERBOS_HTTP` or `CERBOS_GRPC` environment variables. 
+By default, the policies are loaded from the `policies` directory in the current working directory and HTTP and gRPC endpoints will be exposed on `127.0.0.1:3592` and `127.0.0.1:3593` respectively. Your application can obtain the actual endpoint addresses by inspecting the `CERBOS_HTTP` or `CERBOS_GRPC` environment variables.
 
 If a file named `cerbos.yaml` exists in the current working directory, that file will be used as the Cerbos xref:configuration:index.adoc[configuration file]. You can use a different config file or override specific config values using the same flags as the `server` command above.
 
@@ -294,7 +305,7 @@ Flags:
 [#server]
 == `server` Command
 
-Starts the Cerbos PDP. 
+Starts the Cerbos PDP.
 
 [source]
 ----
