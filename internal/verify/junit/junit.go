@@ -42,7 +42,7 @@ func Build(results *policyv1.TestResults, verbose bool) (*TestSuites, error) {
 			suite.Skipped++
 			skippedCount++
 		case policyv1.TestResults_RESULT_PASSED, policyv1.TestResults_RESULT_FAILED:
-			testCases, summary, err := processTestCases(s, verbose)
+			testCases, summary, err := processTestCases(s)
 			if err != nil {
 				return nil, fmt.Errorf("failed to process test cases: %w", err)
 			}
@@ -82,7 +82,7 @@ func Build(results *policyv1.TestResults, verbose bool) (*TestSuites, error) {
 	}, nil
 }
 
-func processTestCases(s *policyv1.TestResults_Suite, verbose bool) ([]testCase, Summary, error) {
+func processTestCases(s *policyv1.TestResults_Suite) ([]testCase, Summary, error) {
 	var testCases []testCase
 	var summary Summary
 	for _, tc := range s.TestCases {
@@ -124,9 +124,6 @@ func processTestCases(s *policyv1.TestResults_Suite, verbose bool) ([]testCase, 
 						}
 						summary.Failures++
 					case policyv1.TestResults_RESULT_PASSED:
-						if !verbose {
-							continue
-						}
 					case policyv1.TestResults_RESULT_SKIPPED:
 						summary.Skipped++
 						testCase.Skipped = &skipped{
