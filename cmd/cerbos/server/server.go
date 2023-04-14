@@ -49,7 +49,7 @@ func (ll *LogLevelFlag) Decode(ctx *kong.DecodeContext) error {
 type Cmd struct {
 	DebugListenAddr string       `help:"Address to start the gops listener" placeholder:":6666"`
 	LogLevel        LogLevelFlag `help:"Log level (${enum})" default:"info" enum:"debug,info,warn,error"`
-	Config          string       `help:"Path to config file" type:"existingfile" optional:"" placeholder:"./config.yaml" env:"CERBOS_CONFIG"`
+	Config          string       `help:"Path to config file" optional:"" placeholder:"./config.yaml" env:"CERBOS_CONFIG"`
 	CloudBundle     string       `help:"Use Cerbos Cloud to pull the policy bundle with the given label. Overrides the store defined in the configuration." optional:"" env:"CERBOS_CLOUD_BUNDLE"`
 	Set             []string     `help:"Config overrides" placeholder:"server.adminAPI.enabled=true"`
 	ZPagesEnabled   bool         `help:"Enable zpages" hidden:""`
