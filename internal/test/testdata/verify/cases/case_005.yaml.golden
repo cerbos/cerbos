@@ -1,15 +1,15 @@
 {
-  "suites":  [
+  "suites": [
     {
-      "file":  "invalid_test.yaml",
-      "name":  "Unknown",
-      "summary":  {
-        "overallResult":  "RESULT_ERRORED"
+      "file": "invalid_test.yaml",
+      "name": "Unknown",
+      "summary": {
+        "overallResult": "RESULT_ERRORED"
       },
-      "error":  "failed to load test suite: invalid TestSuite.Tests: value must contain at least 1 item(s)"
+      "error": "failed to validate with the schema: jsonschema: '' does not validate with https://api.cerbos.dev/cerbos/policy/v1/TestSuite.schema.json#/required: missing properties: 'tests'"
     }
   ],
-  "summary":  {
-    "overallResult":  "RESULT_ERRORED"
+  "summary": {
+    "overallResult": "RESULT_ERRORED"
   }
 }

@@ -24,7 +24,6 @@ import (
 	"github.com/cerbos/cerbos/cmd/cerbos/compile/internal/verification"
 	"github.com/cerbos/cerbos/internal/compile"
 	"github.com/cerbos/cerbos/internal/engine"
-	internaljsonschema "github.com/cerbos/cerbos/internal/jsonschema"
 	"github.com/cerbos/cerbos/internal/outputcolor"
 	"github.com/cerbos/cerbos/internal/printer"
 	internalschema "github.com/cerbos/cerbos/internal/schema"
@@ -86,10 +85,6 @@ func (c *Cmd) Run(k *kong.Kong) error {
 		return err
 	}
 
-	if err := internaljsonschema.ValidatePolicies(ctx, fsys); err != nil {
-		return fmt.Errorf("failed to validate policies using JSON schema: %w", err)
-	}
-
 	idx, err := index.Build(ctx, fsys, index.WithBuildFailureLogLevel(zap.DebugLevel))
 	if err != nil {
 		idxErr := new(index.BuildError)
@@ -130,7 +125,6 @@ func (c *Cmd) Run(k *kong.Kong) error {
 		c.TestOutput = &value
 	}
 
-	//nolint:nestif
 	if !c.SkipTests {
 		verifyConf := verify.Config{
 			Run:   c.RunRegex,
@@ -146,10 +140,6 @@ func (c *Cmd) Run(k *kong.Kong) error {
 		testFsys, err := c.testsDir()
 		if err != nil {
 			return err
-		}
-
-		if err := internaljsonschema.ValidateTests(ctx, testFsys); err != nil {
-			return fmt.Errorf("failed to validate tests using JSON Schema: %w", err)
 		}
 
 		results, err := verify.Verify(ctx, testFsys, eng, verifyConf)

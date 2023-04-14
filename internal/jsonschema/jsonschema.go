@@ -4,124 +4,58 @@
 package jsonschema
 
 import (
-	"context"
 	"fmt"
 	"io"
 	"io/fs"
-	"path"
+	"log"
 
-	"github.com/cerbos/cerbos/schema"
 	"github.com/santhosh-tekuri/jsonschema/v5"
 	"gopkg.in/yaml.v3"
 
-	internalschema "github.com/cerbos/cerbos/internal/schema"
-	"github.com/cerbos/cerbos/internal/util"
+	"github.com/cerbos/cerbos/schema"
 )
 
-// ValidatePolicies validates the policies in the fsys with the given schema.
-func ValidatePolicies(ctx context.Context, fsys fs.FS) error {
-	s, err := jsonschema.CompileString("Policy.schema.json", string(schema.PolicyJSONSchema))
-	if err != nil {
-		return fmt.Errorf("failed to compile policy schema: %w", err)
+var (
+	policySchema *jsonschema.Schema
+	testSchema   *jsonschema.Schema
+)
+
+func init() {
+	var err error
+	if policySchema, err = jsonschema.CompileString("Policy.schema.json", string(schema.PolicyJSONSchema)); err != nil {
+		log.Fatalf("failed to compile policy schema: %v", err)
 	}
 
-	if err := fs.WalkDir(fsys, ".", func(p string, d fs.DirEntry, err error) error {
-		if err := ctx.Err(); err != nil {
-			return err
-		}
-
-		if err != nil {
-			return err
-		}
-
-		if d.IsDir() {
-			if p == path.Join(".", internalschema.Directory) ||
-				d.Name() == util.TestDataDirectory ||
-				util.IsHidden(d.Name()) {
-				return fs.SkipDir
-			}
-
-			return nil
-		}
-
-		if !util.IsSupportedFileType(d.Name()) ||
-			util.IsSupportedTestFile(d.Name()) ||
-			util.IsHidden(d.Name()) {
-			return nil
-		}
-
-		f, err := fsys.Open(p)
-		if err != nil {
-			return err
-		}
-
-		data, err := io.ReadAll(f)
-		if err != nil {
-			return err
-		}
-
-		var y interface{}
-		if err := yaml.Unmarshal(data, &y); err != nil {
-			return err
-		}
-
-		return s.Validate(y)
-	}); err != nil {
-		return fmt.Errorf("failed to walk policy directory: %w", err)
+	if testSchema, err = jsonschema.CompileString("TestSuite.schema.json", string(schema.TestSuiteJSONSchema)); err != nil {
+		log.Fatalf("failed to compile test schema: %v", err)
 	}
-
-	return nil
 }
 
-// ValidateTests validates the tests in the fsys with the given schema.
-func ValidateTests(ctx context.Context, fsys fs.FS) error {
-	s, err := jsonschema.CompileString("TestSuite.schema.json", string(schema.TestSuiteJSONSchema))
+// ValidatePolicy validates the policy in the fsys with the JSON schema.
+func ValidatePolicy(fsys fs.FS, path string) error {
+	return validate(policySchema, fsys, path)
+}
+
+// ValidateTest validates the test in the fsys with the JSON schema.
+func ValidateTest(fsys fs.FS, path string) error {
+	return validate(testSchema, fsys, path)
+}
+
+func validate(s *jsonschema.Schema, fsys fs.FS, path string) error {
+	f, err := fsys.Open(path)
 	if err != nil {
-		return fmt.Errorf("failed to compile test schema: %w", err)
+		return fmt.Errorf("failed to open file %s: %w", path, err)
 	}
 
-	if err := fs.WalkDir(fsys, ".", func(p string, d fs.DirEntry, err error) error {
-		if err := ctx.Err(); err != nil {
-			return err
-		}
-
-		if err != nil {
-			return err
-		}
-
-		if d.IsDir() {
-			if d.Name() == util.TestDataDirectory {
-				return fs.SkipDir
-			}
-
-			return nil
-		}
-
-		if util.IsSupportedTestFile(p) {
-			f, err := fsys.Open(p)
-			if err != nil {
-				return err
-			}
-
-			data, err := io.ReadAll(f)
-			if err != nil {
-				return err
-			}
-
-			var y interface{}
-			if err := yaml.Unmarshal(data, &y); err != nil {
-				return err
-			}
-
-			if err := s.Validate(y); err != nil {
-				return err
-			}
-		}
-
-		return nil
-	}); err != nil {
-		return fmt.Errorf("failed to walk test directory: %w", err)
+	data, err := io.ReadAll(f)
+	if err != nil {
+		return fmt.Errorf("failed to read file %s: %w", path, err)
 	}
 
-	return nil
+	var y interface{}
+	if err := yaml.Unmarshal(data, &y); err != nil {
+		return fmt.Errorf("failed to unmarshal file %s: %w", path, err)
+	}
+
+	return s.Validate(y)
 }

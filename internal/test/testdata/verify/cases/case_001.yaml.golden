@@ -1,44 +1,44 @@
 {
-  "suites":  [
+  "suites": [
     {
-      "file":  "suite_test.yaml",
-      "name":  "TestSuite",
-      "summary":  {
-        "overallResult":  "RESULT_PASSED",
-        "testsCount":  5,
-        "resultCounts":  [
+      "file": "suite_test.yaml",
+      "name": "TestSuite",
+      "summary": {
+        "overallResult": "RESULT_PASSED",
+        "testsCount": 5,
+        "resultCounts": [
           {
-            "result":  "RESULT_PASSED",
-            "count":  5
+            "result": "RESULT_PASSED",
+            "count": 5
           }
         ]
       },
-      "testCases":  [
+      "testCases": [
         {
-          "name":  "John and his leave request",
-          "principals":  [
+          "name": "John and his leave request",
+          "principals": [
             {
-              "name":  "john",
-              "resources":  [
+              "name": "john",
+              "resources": [
                 {
-                  "name":  "john_leave_request",
-                  "actions":  [
+                  "name": "john_leave_request",
+                  "actions": [
                     {
-                      "name":  "view:public",
-                      "details":  {
-                        "result":  "RESULT_PASSED"
+                      "name": "view:public",
+                      "details": {
+                        "result": "RESULT_PASSED"
                       }
                     },
                     {
-                      "name":  "approve",
-                      "details":  {
-                        "result":  "RESULT_PASSED"
+                      "name": "approve",
+                      "details": {
+                        "result": "RESULT_PASSED"
                       }
                     },
                     {
-                      "name":  "defer",
-                      "details":  {
-                        "result":  "RESULT_PASSED"
+                      "name": "defer",
+                      "details": {
+                        "result": "RESULT_PASSED"
                       }
                     }
                   ]
@@ -48,18 +48,18 @@
           ]
         },
         {
-          "name":  "With global now",
-          "principals":  [
+          "name": "With global now",
+          "principals": [
             {
-              "name":  "bev",
-              "resources":  [
+              "name": "bev",
+              "resources": [
                 {
-                  "name":  "stale_leave_request",
-                  "actions":  [
+                  "name": "stale_leave_request",
+                  "actions": [
                     {
-                      "name":  "remind",
-                      "details":  {
-                        "result":  "RESULT_PASSED"
+                      "name": "remind",
+                      "details": {
+                        "result": "RESULT_PASSED"
                       }
                     }
                   ]
@@ -69,18 +69,18 @@
           ]
         },
         {
-          "name":  "With local now",
-          "principals":  [
+          "name": "With local now",
+          "principals": [
             {
-              "name":  "bev",
-              "resources":  [
+              "name": "bev",
+              "resources": [
                 {
-                  "name":  "stale_pending_leave_request",
-                  "actions":  [
+                  "name": "stale_pending_leave_request",
+                  "actions": [
                     {
-                      "name":  "remind",
-                      "details":  {
-                        "result":  "RESULT_PASSED"
+                      "name": "remind",
+                      "details": {
+                        "result": "RESULT_PASSED"
                       }
                     }
                   ]
@@ -90,16 +90,16 @@
           ]
         }
       ],
-      "description":  "Tests for verifying something"
+      "description": "Tests for verifying something"
     }
   ],
-  "summary":  {
-    "overallResult":  "RESULT_PASSED",
-    "testsCount":  5,
-    "resultCounts":  [
+  "summary": {
+    "overallResult": "RESULT_PASSED",
+    "testsCount": 5,
+    "resultCounts": [
       {
-        "result":  "RESULT_PASSED",
-        "count":  5
+        "result": "RESULT_PASSED",
+        "count": 5
       }
     ]
   }
