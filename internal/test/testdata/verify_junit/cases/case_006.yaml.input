@@ -1,0 +1,46 @@
+-- suite_test.yaml --
+---
+name: CompanyTestSuite
+description: Tests for verifying the company resource policy
+principals:
+  admin:
+    id: admin
+    roles:
+      - admin
+  user:
+    id: user
+    roles:
+      - user
+resources:
+  company:
+    id: xx1
+    kind: company
+
+tests:
+  - name: Company Test 1
+    input:
+      principals:
+        - admin
+      resources:
+        - company
+      actions:
+        - create
+    expected:
+      - principal: admin
+        resource: company
+        actions:
+          create: EFFECT_ALLOW
+
+  - name: Company Test 2
+    input:
+      principals:
+        - admin
+      resources:
+        - company
+      actions:
+        - create
+    expected:
+      - principal: admin
+        resource: company
+        actions:
+          create: EFFECT_ALLOW
